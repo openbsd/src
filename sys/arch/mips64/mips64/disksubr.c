@@ -1,7 +1,8 @@
-/*	$OpenBSD: disksubr.c,v 1.4 2004/08/11 10:21:08 deraadt Exp $	*/
-/*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.5 2004/08/23 14:24:56 pefo Exp $	*/
 
 /*
+ * Copyright (c) 1999 Michael Shalayeff
+ * Copyright (c) 1997 Niklas Hallqvist
  * Copyright (c) 1996 Theo de Raadt
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
  * All rights reserved.
@@ -14,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -37,6 +34,19 @@
  *	@(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
  */
 
+/*
+ * This disksubr.c module started to take it's present form on OpenBSD/alpha
+ * but it was always thought it should be made completely MI and not need to
+ * be in that alpha-specific tree at all.
+ *
+ * XXX The DOS partitioning code is not endian-independent, only native
+ * endian DOS partition tables can be parsed yet.
+ *
+ * XXX Amiga RDB partitioning is not understood yet.
+ *
+ * XXX HPUX disklabel is not understood yet.
+ */
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
@@ -45,12 +55,45 @@
 #include <sys/syslog.h>
 #include <sys/disk.h>
 
-#include <mips64/archtype.h>
+/* The native defaults... */
+#if defined(alpha) && !defined(DISKLABEL_ALPHA)
+#define DISKLABEL_ALPHA
+#elif (defined(i386) || defined(arc)) && !defined(DISKLABEL_I386)
+#define DISKLABEL_I386
+#elif defined(amiga) && !defined(DISKLABEL_AMIGA)
+#define DISKLABEL_AMIGA
+#elif defined(hppa) && !defined(DISKLABEL_HPPA)
+#define DISKLABEL_HPPA
+#elif defined(__sgi__) && !defined(DISKLABEL_SGI)
+#define DISKLABEL_SGI
+#endif
 
 #define	b_cylin	b_resid
 
-#define BOOT_MAGIC 0xAA55
-#define BOOT_MAGIC_OFF (DOSPARTOFF+NDOSPART*sizeof(struct dos_partition))
+#if defined(DISKLABEL_I386) || defined(DISKLABEL_ALPHA) || defined(DISKLABEL_AMIGA) || defined(DISKLABEL_HPPA) || defined(DISKLABEL_SGI) || defined(DISKLABEL_ALL)
+void	swapdisklabel(struct disklabel *d);
+char   *readbsdlabel(struct buf *, void (*)(struct buf *), int, int,
+    int, int, struct disklabel *, int);
+#endif
+#if defined(DISKLABEL_I386) || defined(DISKLABEL_ALL)
+char   *readdoslabel(struct buf *, void (*)(struct buf *),
+    struct disklabel *, struct cpu_disklabel *, int *, int *, int);
+#endif
+#if defined(DISKLABEL_AMIGA) || defined(DISKLABEL_ALL)
+char   *readamigalabel(struct buf *, void (*)(struct buf *),
+    struct disklabel *, struct cpu_disklabel *, int);
+#endif
+#if defined(DISKLABEL_HPPA) || defined(DISKLABEL_ALL)
+char   *readliflabel(struct buf *, void (*)(struct buf *),
+    struct disklabel *, struct cpu_disklabel *, int *, int *, int);
+#endif
+#if defined(DISKLABEL_SGI) || defined(DISKLABEL_ALL)
+char   *readsgilabel(struct buf *, void (*)(struct buf *),
+    struct disklabel *, struct cpu_disklabel *, int *, int *, int);
+void map_sgi_label(struct disklabel *, struct sgilabel *);
+#endif
+
+static enum disklabel_tag probe_order[] = { LABELPROBES, -1 };
 
 void
 dk_establish(dk, dev)
@@ -59,42 +102,158 @@ dk_establish(dk, dev)
 {
 }
 
+#if defined(DISKLABEL_I386) || defined(DISKLABEL_ALPHA) || defined(DISKLABEL_AMIGA) || defined(DISKLABEL_HPPA) || defined(DISKLABEL_SGI) || defined(DISKLABEL_ALL)
+
+/*
+ * Byteswap all the fields that might be swapped.
+ */
+void
+swapdisklabel(dlp)
+	struct disklabel *dlp;
+{
+	int i;
+	struct partition *pp;
+
+	swap32(dlp->d_magic);
+	swap16(dlp->d_type);
+	swap16(dlp->d_subtype);
+	swap32(dlp->d_secsize);
+	swap32(dlp->d_nsectors);
+	swap32(dlp->d_ntracks);
+	swap32(dlp->d_ncylinders);
+	swap32(dlp->d_secpercyl);
+	swap32(dlp->d_secperunit);
+	swap16(dlp->d_sparespertrack);
+	swap16(dlp->d_sparespercyl);
+	swap32(dlp->d_acylinders);
+	swap16(dlp->d_rpm);
+	swap16(dlp->d_interleave);
+	swap16(dlp->d_trackskew);
+	swap16(dlp->d_cylskew);
+	swap32(dlp->d_headswitch);
+	swap32(dlp->d_trkseek);
+	swap32(dlp->d_flags);
+	for (i = 0; i < NDDATA; i++)
+		swap32(dlp->d_drivedata[i]);
+	for (i = 0; i < NSPARE; i++)
+		swap32(dlp->d_spare[i]);
+	swap32(dlp->d_magic2);
+	swap16(dlp->d_checksum);
+	swap16(dlp->d_npartitions);
+	swap32(dlp->d_bbsize);
+	swap32(dlp->d_sbsize);
+	for (i = 0; i < MAXPARTITIONS; i++) {
+		pp = &dlp->d_partitions[i];
+		swap32(pp->p_size);
+		swap32(pp->p_offset);
+		swap32(pp->p_fsize);
+		swap16(pp->p_cpg);
+	}
+}
+
+/*
+ * Try to read a standard BSD disklabel at a certain sector.
+ */
+char *
+readbsdlabel(bp, strat, cyl, sec, off, endian, lp, spoofonly)
+	struct buf *bp;
+	void (*strat)(struct buf *);
+	int cyl, sec, off, endian;
+	struct disklabel *lp;
+	int spoofonly;
+{
+	struct disklabel *dlp;
+	char *msg = NULL;
+	u_int16_t cksum;
+	u_int32_t magic;
+
+	if (endian != LITTLE_ENDIAN && endian != BIG_ENDIAN)
+		panic("readbsdlabel: unsupported byteorder %d", endian);
+
+	/* don't read the on-disk label if we are in spoofed-only mode */
+	if (spoofonly)
+		return (NULL);
+
+	bp->b_blkno = sec;
+	bp->b_cylin = cyl;
+	bp->b_bcount = lp->d_secsize;
+	bp->b_flags = B_BUSY | B_READ;
+	(*strat)(bp);
+
+	/* if successful, locate disk label within block and validate */
+	if (biowait(bp)) {
+		/* XXX we return the faked label built so far */
+		msg = "disk label I/O error";
+		return (msg);
+	}
+
+	magic = endian == BIG_ENDIAN ? htobe32(DISKMAGIC) : htole32(DISKMAGIC);
+
+	/*
+	 * If off is negative, search until the end of the sector for
+	 * the label, otherwise, just look at the specific location
+	 * we're given.
+	 */
+	dlp = (struct disklabel *)(bp->b_data + (off >= 0 ? off : 0));
+	do {
+		if (dlp->d_magic != magic || dlp->d_magic2 != magic) {
+			if (msg == NULL)
+				msg = "no disk label";
+		} else {
+			cksum = dkcksum(dlp);
+			if (endian != BYTE_ORDER)
+				swapdisklabel(dlp);
+			if (dlp->d_npartitions > MAXPARTITIONS || cksum != 0) {
+				msg = "disk label corrupted";
+				/* swap back if necessary.  */
+				if (off < 0 && endian != BYTE_ORDER)
+					swapdisklabel(dlp);
+			} else {
+				*lp = *dlp;
+				/* Recalc magic on foreign labels */
+				if (endian != BYTE_ORDER) {
+					lp->d_checksum = 0;
+					lp->d_checksum = dkcksum(lp);
+				}
+				msg = NULL;
+				break;
+			}
+		}
+		if (off >= 0)
+			break;
+		dlp = (struct disklabel *)((char *)dlp + sizeof(int32_t));
+	} while (dlp <= (struct disklabel *)(bp->b_data + lp->d_secsize -
+	    sizeof(*dlp)));
+	return (msg);
+}
+#endif
+
 /*
  * Attempt to read a disk label from a device
- * using the indicated stategy routine.
+ * using the indicated strategy routine.
  * The label must be partly set up before this:
  * secpercyl, secsize and anything required for a block i/o read
  * operation in the driver's strategy/start routines
  * must be filled in before calling us.
- *
- * If dos partition table requested, attempt to load it and
- * find disklabel inside a DOS partition. Also, if bad block
- * table needed, attempt to extract it as well. Return buffer
- * for use in signalling errors if requested.
- *
- * We would like to check if each MBR has a valid BOOT_MAGIC, but
- * we cannot because it doesn't always exist. So.. we assume the
- * MBR is valid.
  *
  * Returns null on success and an error string on failure.
  */
 char *
 readdisklabel(dev, strat, lp, osdep, spoofonly)
 	dev_t dev;
-	void (*strat) __P((struct buf *));
+	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 	int spoofonly;
 {
-	struct dos_partition *dp = osdep->dosparts, *dp2;
-	struct dkbad *bdp = &DKBAD(osdep);
-	struct buf *bp;
-	struct disklabel *dlp;
-	char *msg = NULL, *cp;
-	int dospartoff, cyl, i, ourpart = -1;
+	struct buf *bp = NULL;
+	char *msg = "no disk label";
+	enum disklabel_tag *tp;
+	int i;
+	struct disklabel minilabel, fallbacklabel;
 
 	/* minimal requirements for archtypal disk label */
-	if (lp->d_secsize == 0)
+	if (lp->d_secsize < DEV_BSIZE)
 		lp->d_secsize = DEV_BSIZE;
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
@@ -110,14 +269,120 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 	if (lp->d_partitions[i].p_size == 0)
 		lp->d_partitions[i].p_size = 0x1fffffff;
 	lp->d_partitions[i].p_offset = 0;
+	minilabel = fallbacklabel = *lp;
 
 	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
+	for (tp = probe_order; msg && *tp != -1; tp++) {
+		switch (*tp) {
+		case DLT_ALPHA:
+#if defined(DISKLABEL_ALPHA) || defined(DISKLABEL_ALL)
+			msg = readbsdlabel(bp, strat, 0, ALPHA_LABELSECTOR,
+			    ALPHA_LABELOFFSET, LITTLE_ENDIAN, lp, spoofonly);
+#endif
+			break;
+
+		case DLT_I386:
+#if defined(DISKLABEL_I386) || defined(DISKLABEL_ALL)
+			msg = readdoslabel(bp, strat, lp, osdep, 0, 0, spoofonly);
+			if (msg)
+				/* Fallback alternative */
+				fallbacklabel = *lp;
+#endif
+			break;
+
+		case DLT_AMIGA:
+#if defined(DISKLABEL_AMIGA) || defined(DISKLABEL_ALL)
+			msg = readamigalabel(bp, strat, lp, osdep, spoofonly);
+#endif
+			break;
+
+		case DLT_HPPA:
+#if defined(DISKLABEL_HPPA) || defined(DISKLABEL_ALL)
+			msg = readliflabel(bp, strat, lp, osdep, 0, 0, spoofonly);
+#endif
+			break;
+
+		case DLT_SGI:
+#if defined(DISKLABEL_SGI) || defined(DISKLABEL_ALL)
+			msg = readsgilabel(bp, strat, lp, osdep, 0, 0, spoofonly);
+			if (msg)
+				/* Fallback alternative */
+				fallbacklabel = *lp;
+#endif
+			break;
+
+		default:
+			panic("unrecognized disklabel tag %d", *tp);
+		}
+		if (msg)
+			*lp = minilabel;
+	}
+
+	/* Record metainformation about the disklabel.  */
+	if (msg == NULL) {
+		osdep->labelsector = bp->b_blkno;
+		osdep->labeltag = *tp;
+	}
+
+#if defined(CD9660)
+	if (msg && iso_disklabelspoof(dev, strat, lp) == 0)
+		msg = NULL;
+#endif
+
+	/* If there was an error, still provide a decent fake one.  */
+	if (msg)
+		*lp = fallbacklabel;
+
+done:
+	if (bp) {
+		bp->b_flags |= B_INVAL;
+		brelse(bp);
+	}
+	return (msg);
+}
+
+#if defined(DISKLABEL_I386) || defined(DISKLABEL_ALL)
+/*
+ * If dos partition table requested, attempt to load it and
+ * find disklabel inside a DOS partition. Also, if bad block
+ * table needed, attempt to extract it as well. Return buffer
+ * for use in signalling errors if requested.
+ *
+ * We would like to check if each MBR has a valid BOOT_MAGIC, but
+ * we cannot because it doesn't always exist. So.. we assume the
+ * MBR is valid.
+ */
+char *
+readdoslabel(bp, strat, lp, osdep, partoffp, cylp, spoofonly)
+	struct buf *bp;
+	void (*strat)(struct buf *);
+	struct disklabel *lp;
+	struct cpu_disklabel *osdep;
+	int *partoffp;
+	int *cylp;
+	int spoofonly;
+{
+	struct dos_partition *dp = osdep->u._i386.dosparts, *dp2;
+	struct dkbad *db, *bdp = &DKBAD(osdep);
+	char *msg = NULL, *cp;
+	int dospartoff, cyl, i, ourpart = -1;
+	dev_t dev;
+
+	if (lp->d_secpercyl == 0) {
+		msg = "invalid label, d_secpercyl == 0";
+		return (msg);
+	}
+	if (lp->d_secsize == 0) {
+		msg = "invalid label, d_secsize == 0";
+		return (msg);
+	}
+
 	/* do dos partitions in the process of getting disklabel? */
 	dospartoff = 0;
-	cyl = LABELSECTOR / lp->d_secpercyl;
+	cyl = I386_LABELSECTOR / lp->d_secpercyl;
 	if (dp) {
 		daddr_t part_blkno = DOSBBSECTOR;
 		unsigned long extoff = 0;
@@ -130,6 +395,8 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 		while (wander && n < 8 && loop < 8) {
 			loop++;
 			wander = 0;
+			if (part_blkno < extoff)
+				part_blkno = extoff;
 
 			/* read boot record */
 			bp->b_blkno = part_blkno;
@@ -141,45 +408,45 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 			/* if successful, wander through dos partition table */
 			if (biowait(bp)) {
 				msg = "dos partition I/O error";
-				goto done;
+				if (partoffp)
+					*partoffp = -1;
+				return (msg);
 			}
-			if (((int *)bp->b_data)[0] == 0x01084025 &&
-			   ((int *)bp->b_data)[1] == 0x01294825) {
-				goto nodoslabel;
-			}
-			bcopy(bp->b_data + DOSPARTOFF, dp, NDOSPART * sizeof(*dp));
+			bcopy(bp->b_data + DOSPARTOFF, dp,
+			    NDOSPART * sizeof(*dp));
 
 			if (ourpart == -1) {
 				/* Search for our MBR partition */
-				for (dp2=dp, i=0; i < NDOSPART && ourpart == -1;
-				    i++, dp2++)
-					if (get_le(&dp2->dp_size) &&
+				for (dp2=dp, i=0;
+				    i < NDOSPART && ourpart == -1; i++, dp2++)
+					if (dp2->dp_size &&
 					    dp2->dp_typ == DOSPTYP_OPENBSD)
 						ourpart = i;
-				for (dp2=dp, i=0; i < NDOSPART && ourpart == -1;
-				    i++, dp2++)
-					if (get_le(&dp2->dp_size) &&
+				for (dp2=dp, i=0;
+				    i < NDOSPART && ourpart == -1; i++, dp2++)
+					if (dp2->dp_size &&
 					    dp2->dp_typ == DOSPTYP_FREEBSD)
 						ourpart = i;
-				for (dp2=dp, i=0; i < NDOSPART && ourpart == -1;
-				    i++, dp2++)
-					if (get_le(&dp2->dp_size) &&
+				for (dp2=dp, i=0;
+				    i < NDOSPART && ourpart == -1; i++, dp2++)
+					if (dp2->dp_size &&
 					    dp2->dp_typ == DOSPTYP_NETBSD)
 						ourpart = i;
 				if (ourpart == -1)
 					goto donot;
 				/*
-				 * This is our MBR partition. need sector address
-				 * for SCSI/IDE, cylinder for ESDI/ST506/RLL
+				 * This is our MBR partition. need sector
+				 * address for SCSI/IDE, cylinder for
+				 * ESDI/ST506/RLL
 				 */
 				dp2 = &dp[ourpart];
-				dospartoff = get_le(&dp2->dp_start) + part_blkno;
+				dospartoff = dp2->dp_start + part_blkno;
 				cyl = DPCYL(dp2->dp_scyl, dp2->dp_ssect);
 
 				/* XXX build a temporary disklabel */
-				lp->d_partitions[0].p_size = get_le(&dp2->dp_size);
-				lp->d_partitions[0].p_offset =
-					get_le(&dp2->dp_start) + part_blkno;
+				lp->d_partitions[0].p_size = dp2->dp_size;
+				lp->d_partitions[0].p_offset = dp2->dp_start +
+				    part_blkno;
 				if (lp->d_ntracks == 0)
 					lp->d_ntracks = dp2->dp_ehd + 1;
 				if (lp->d_nsectors == 0)
@@ -198,13 +465,11 @@ donot:
 
 				if (dp2->dp_typ == DOSPTYP_OPENBSD)
 					continue;
-				if (get_le(&dp2->dp_size) > lp->d_secperunit)
-					continue;
-				if (get_le(&dp2->dp_size))
-					pp->p_size = get_le(&dp2->dp_size);
-				if (get_le(&dp2->dp_start))
+				if (dp2->dp_size)
+					pp->p_size = dp2->dp_size;
+				if (dp2->dp_start)
 					pp->p_offset =
-					    get_le(&dp2->dp_start) + part_blkno;
+					    dp2->dp_start + part_blkno;
 
 				switch (dp2->dp_typ) {
 				case DOSPTYP_UNUSED:
@@ -238,9 +503,11 @@ donot:
 					n++;
 					break;
 				case DOSPTYP_EXTEND:
-					part_blkno = get_le(&dp2->dp_start) + extoff;
-					if (!extoff)
-						extoff = get_le(&dp2->dp_start);
+					part_blkno = dp2->dp_start + extoff;
+					if (!extoff) {
+						extoff = dp2->dp_start;
+						part_blkno = 0;
+					}
 					wander = 1;
 					break;
 				default:
@@ -252,54 +519,30 @@ donot:
 		}
 		lp->d_bbsize = 8192;
 		lp->d_sbsize = 64*1024;		/* XXX ? */
-		lp->d_npartitions = MAXPARTITIONS;
+		lp->d_npartitions = n > 0 ? n + 8 : 3;
 	}
 
-nodoslabel:
-	/* don't read the on-disk label if we are in spoofed-only mode */
-	if (spoofonly)
-		goto done;
+	/* record the OpenBSD partition's placement for the caller */
+	if (partoffp)
+		*partoffp = dospartoff;
+	if (cylp)
+		*cylp = cyl;
 
 	/* next, dig out disk label */
-	bp->b_blkno = dospartoff + LABELSECTOR;
-	bp->b_cylin = cyl;
-	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ;
-	(*strat)(bp);
-
-	/* if successful, locate disk label within block and validate */
-	if (biowait(bp)) {
-		/* XXX we return the faked label built so far */
-		msg = "disk label I/O error";
-		goto done;
-	}
-	for (dlp = (struct disklabel *)bp->b_data;
-	    dlp <= (struct disklabel *)(bp->b_data + lp->d_secsize - sizeof(*dlp));
-	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
-		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
-			if (msg == NULL)
-				msg = "no disk label";
-		} else if (dlp->d_npartitions > MAXPARTITIONS ||
-			   dkcksum(dlp) != 0)
-			msg = "disk label corrupted";
-		else {
-			*lp = *dlp;
-			msg = NULL;
-			break;
-		}
-	}
-
-	if (msg) {
-#if defined(CD9660)
-		if (iso_disklabelspoof(dev, strat, lp) == 0)
-			msg = NULL;
-#endif
-		goto done;
-	}
+	msg = readbsdlabel(bp, strat, cyl, dospartoff + I386_LABELSECTOR, -1,
+	    LITTLE_ENDIAN, lp, spoofonly);
+	if (msg)
+		return (msg);
 
 	/* obtain bad sector table if requested and present */
 	if (bdp && (lp->d_flags & D_BADSECT)) {
-		struct dkbad *db;
+		/*
+		 * get a new buffer and initialize it as callers trust the
+		 * buffer given to us, to point at the disklabel sector.
+		 */
+		dev = bp->b_dev;
+		bp = geteblk((int)lp->d_secsize);
+		bp->b_dev = dev;
 
 		i = 0;
 		do {
@@ -315,13 +558,13 @@ nodoslabel:
 			(*strat)(bp);
 
 			/* if successful, validate, otherwise try another */
-			if (biowait(bp)) {
+			if (biowait(bp))
 				msg = "bad sector table I/O error";
-			} else {
+			else {
 				db = (struct dkbad *)(bp->b_data);
 #define DKBAD_MAGIC 0x4321
-				if (db->bt_mbz == 0
-					&& db->bt_flag == DKBAD_MAGIC) {
+				if (db->bt_mbz == 0 &&
+				    db->bt_flag == DKBAD_MAGIC) {
 					msg = NULL;
 					*bdp = *db;
 					break;
@@ -329,14 +572,305 @@ nodoslabel:
 					msg = "bad sector table corrupted";
 			}
 		} while ((bp->b_flags & B_ERROR) && (i += 2) < 10 &&
-			i < lp->d_nsectors);
-	}
+		    i < lp->d_nsectors);
 
-done:
-	bp->b_flags |= B_INVAL;
-	brelse(bp);
+		/* Give back the bad block buffer.  */
+		bp->b_flags |= B_INVAL;
+		brelse(bp);
+	}
 	return (msg);
 }
+#endif
+
+#if defined(DISKLABEL_AMIGA) || defined(DISKLABEL_ALL)
+/*
+ * XXX RDB parsing is missing still.
+ */
+char *
+readamigalabel(bp, strat, lp, osdep, spoofonly)
+	struct buf *bp;
+	void (*strat)(struct buf *);
+	struct disklabel *lp;
+	struct cpu_disklabel *osdep;
+	int spoofonly;
+{
+	char *msg;
+
+	msg = readbsdlabel(bp, strat, 0, AMIGA_LABELSECTOR, AMIGA_LABELOFFSET,
+	    BIG_ENDIAN, lp, spoofonly);
+	return (msg);
+}
+#endif
+
+#if defined(DISKLABEL_HPPA) || defined(DISKLABEL_ALL)
+char *
+readliflabel (bp, strat, lp, osdep, partoffp, cylp, spoofonly)
+	struct buf *bp;
+	void (*strat)(struct buf *);
+	struct disklabel *lp;
+	struct cpu_disklabel *osdep;
+	int *partoffp;
+	int *cylp;
+	int spoofonly;
+{
+	int fsoff;
+
+	/* read LIF volume header */
+	bp->b_blkno = btodb(LIF_VOLSTART);
+	bp->b_bcount = lp->d_secsize;
+	bp->b_flags = B_BUSY | B_READ;
+	bp->b_cylin = btodb(LIF_VOLSTART) / lp->d_secpercyl;
+	(*strat)(bp);
+
+	if (biowait(bp)) {
+		if (partoffp)
+			*partoffp = -1;
+		return "LIF volume header I/O error";
+	}
+
+	bcopy (bp->b_data, &osdep->u._hppa.lifvol, sizeof(struct lifvol));
+	if (osdep->u._hppa.lifvol.vol_id != LIF_VOL_ID) {
+		fsoff = 0;
+	} else {
+		struct lifdir *p;
+		struct buf *dbp;
+		dev_t dev;
+
+		dev = bp->b_dev;
+		dbp = geteblk(LIF_DIRSIZE);
+		dbp->b_dev = dev;
+
+		/* read LIF directory */
+		dbp->b_blkno = lifstodb(osdep->u._hppa.lifvol.vol_addr);
+		dbp->b_bcount = lp->d_secsize;
+		dbp->b_flags = B_BUSY | B_READ;
+		dbp->b_cylin = dbp->b_blkno / lp->d_secpercyl;
+		(*strat)(dbp);
+
+		if (biowait(dbp)) {
+			if (partoffp)
+				*partoffp = -1;
+
+			dbp->b_flags |= B_INVAL;
+			brelse(dbp);
+			return ("LIF directory I/O error");
+		}
+
+		bcopy(dbp->b_data, osdep->u._hppa.lifdir, LIF_DIRSIZE);
+		dbp->b_flags |= B_INVAL;
+		brelse(dbp);
+
+		/* scan for LIF_DIR_FS dir entry */
+		for (fsoff = -1,  p = &osdep->u._hppa.lifdir[0];
+		    fsoff < 0 && p < &osdep->u._hppa.lifdir[LIF_NUMDIR]; p++) {
+			if (p->dir_type == LIF_DIR_FS ||
+			    p->dir_type == LIF_DIR_HPLBL)
+				break;
+		}
+
+		if (p->dir_type == LIF_DIR_FS)
+			fsoff = lifstodb(p->dir_addr);
+		else if (p->dir_type == LIF_DIR_HPLBL) {
+			struct hpux_label *hl;
+			struct partition *pp;
+			u_int8_t fstype;
+			int i;
+
+			dev = bp->b_dev;
+			dbp = geteblk(LIF_DIRSIZE);
+			dbp->b_dev = dev;
+
+			/* read LIF directory */
+			dbp->b_blkno = lifstodb(p->dir_addr);
+			dbp->b_bcount = lp->d_secsize;
+			dbp->b_flags = B_BUSY | B_READ;
+			dbp->b_cylin = dbp->b_blkno / lp->d_secpercyl;
+			(*strat)(dbp);
+
+			if (biowait(dbp)) {
+				if (partoffp)
+					*partoffp = -1;
+
+				dbp->b_flags |= B_INVAL;
+				brelse(dbp);
+				return ("HOUX label I/O error");
+			}
+
+			bcopy(dbp->b_data, &osdep->u._hppa.hplabel,
+			    sizeof(osdep->u._hppa.hplabel));
+			dbp->b_flags |= B_INVAL;
+			brelse(dbp);
+
+			hl = &osdep->u._hppa.hplabel;
+			if (hl->hl_magic1 != hl->hl_magic2 ||
+			    hl->hl_magic != HPUX_MAGIC ||
+			    hl->hl_version != 1) {
+				if (partoffp)
+					*partoffp = -1;
+
+				return "HPUX label magic mismatch";
+			}
+
+			lp->d_bbsize = 8192;
+			lp->d_sbsize = 8192;
+			for (i = 0; i < MAXPARTITIONS; i++) {
+				lp->d_partitions[i].p_size = 0;
+				lp->d_partitions[i].p_offset = 0;
+				lp->d_partitions[i].p_fstype = 0;
+			}
+
+			for (i = 0; i < HPUX_MAXPART; i++) {
+				if (!hl->hl_flags[i])
+					continue;
+
+				if (hl->hl_flags[i] == HPUX_PART_ROOT) {
+					pp = &lp->d_partitions[0];
+					fstype = FS_BSDFFS;
+				} else if (hl->hl_flags[i] == HPUX_PART_SWAP) {
+					pp = &lp->d_partitions[1];
+					fstype = FS_SWAP;
+				} else if (hl->hl_flags[i] == HPUX_PART_BOOT) {
+					pp = &lp->d_partitions[RAW_PART + 1];
+					fstype = FS_BSDFFS;
+				} else
+					continue;
+
+				pp->p_size = hl->hl_parts[i].hlp_length * 2;
+				pp->p_offset = hl->hl_parts[i].hlp_start * 2;
+				pp->p_fstype = fstype;
+			}
+
+			lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
+			lp->d_partitions[RAW_PART].p_offset = 0;
+			lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
+			lp->d_npartitions = MAXPARTITIONS;
+			lp->d_magic = DISKMAGIC;
+			lp->d_magic2 = DISKMAGIC;
+			lp->d_checksum = 0;
+			lp->d_checksum = dkcksum(lp);
+
+			return (NULL);
+		}
+
+		/* if no suitable lifdir entry found assume zero */
+		if (fsoff < 0) {
+			fsoff = 0;
+		}
+	}
+
+	if (partoffp)
+		*partoffp = fsoff;
+
+	return readbsdlabel(bp, strat, 0,  fsoff + HPPA_LABELSECTOR,
+	    HPPA_LABELOFFSET, BIG_ENDIAN, lp, spoofonly);
+}
+#endif
+
+#if defined(DISKLABEL_SGI) || defined(DISKLABEL_ALL)
+/*
+ * 
+ */
+char *
+readsgilabel(bp, strat, lp, osdep, partoffp, cylp, spoofonly)
+	struct buf *bp;
+	void (*strat)(struct buf *);
+	struct disklabel *lp;
+	struct cpu_disklabel *osdep;
+	int *partoffp;
+	int *cylp;
+	int spoofonly;
+{
+	struct sgilabel *dlp;
+	char *msg = NULL;
+	int fsoffs = 0;
+
+	/* don't read the on-disk label if we are in spoofed-only mode */
+	if (spoofonly)
+		return (NULL);
+
+	if (partoffp)
+		*partoffp = -1;
+
+	bp->b_blkno = 0;
+	bp->b_cylin = 0;
+	bp->b_bcount = lp->d_secsize;
+	bp->b_flags = B_BUSY | B_READ;
+	(*strat)(bp);
+
+	/* if successful, locate disk label within block and validate */
+	if (biowait(bp)) {
+		if (partoffp)
+			*partoffp = -1;
+		return "disk label I/O error";
+	}
+
+	dlp = (struct sgilabel *)(bp->b_data);
+	if (dlp->magic != htobe32(SGILABEL_MAGIC)) {
+		fsoffs = 0;
+	} else {
+		int i, *p, cs;
+
+		cs = 0;
+		p = (int *)dlp;
+		i = sizeof(struct sgilabel) / sizeof(int);
+		while(i--)
+			cs += *p++;
+		if (cs != 0) 
+			return "sgilabel checksum error";
+
+		/* Set up partitions i-l if there is no BSD label. */
+		lp->d_secsize    = dlp->dp.dp_secbytes;
+		lp->d_nsectors   = dlp->dp.dp_secs;
+		lp->d_ntracks    = dlp->dp.dp_trks0;
+		lp->d_ncylinders = dlp->dp.dp_cyls;
+		lp->d_interleave = dlp->dp.dp_interleave;
+		lp->d_npartitions = MAXPARTITIONS;
+
+		map_sgi_label(lp, dlp);
+
+		fsoffs = dlp->partitions[0].first;
+		if (dlp->partitions[0].blocks == 0)
+			msg = "no BSD partition";
+	}
+
+	if (msg)
+		return msg;
+
+	if (partoffp)
+		*partoffp = fsoffs;
+
+	msg = readbsdlabel(bp, strat, 0, fsoffs + SGI_LABELSECTOR,
+	    SGI_LABELOFFSET, BIG_ENDIAN, lp, spoofonly);
+	return msg;
+}
+
+void
+map_sgi_label(struct disklabel *lp, struct sgilabel *dlp)
+{
+static struct {int m; int b;} maptab[] = {
+        { 0,      FS_BSDFFS}, { 1,      FS_SWAP}, { 10,     FS_BSDFFS},
+        { 3,      FS_BSDFFS}, { 4,      FS_BSDFFS}, { 5,      FS_BSDFFS},
+        { 6,      FS_BSDFFS}, { 7,      FS_BSDFFS}, { 8,      FS_OTHER},
+        { 9,      FS_BSDFFS}, { 2,      FS_UNUSED}, { 11,     FS_BSDFFS},
+        { 12,     FS_BSDFFS}, { 13,     FS_BSDFFS}, { 14,     FS_BSDFFS},
+        { 15,     FS_BSDFFS}
+};
+	int i;
+
+	for (i = 0; i < 16; i++) {
+		int bsd = maptab[i].m;
+
+		lp->d_partitions[bsd].p_offset = dlp->partitions[i].first;
+		lp->d_partitions[bsd].p_size = dlp->partitions[i].blocks;
+		lp->d_partitions[bsd].p_fstype = maptab[i].b;
+		if (lp->d_partitions[bsd].p_fstype == FS_BSDFFS) {
+			lp->d_partitions[bsd].p_fsize = 1024;
+			lp->d_partitions[bsd].p_frag = 8;
+			lp->d_partitions[bsd].p_cpg = 16;
+		}
+	}
+}
+#endif
 
 /*
  * Check new disk label for sensibility
@@ -356,7 +890,14 @@ setdisklabel(olp, nlp, openmask, osdep)
 	    (nlp->d_secsize % DEV_BSIZE) != 0)
 		return(EINVAL);
 
-	/* special case to allow disklabel to be invalidated */
+	/*
+	 * XXX Nice thought, but it doesn't work, if the intention was to
+	 * force a reread at the next *readdisklabel call.  That does not
+	 * happen.  There's still some use for it though as you can pseudo-
+	 * partitition the disk.
+	 *
+	 * Special case to allow disklabel to be invalidated.
+	 */
 	if (nlp->d_magic == 0xffffffff) {
 		*olp = *nlp;
 		return (0);
@@ -369,13 +910,14 @@ setdisklabel(olp, nlp, openmask, osdep)
 	/* XXX missing check if other dos partitions will be overwritten */
 
 	while (openmask != 0) {
-		i = ffs(openmask) - 1;
+		i = ffs((long)openmask) - 1;
 		openmask &= ~(1 << i);
 		if (nlp->d_npartitions <= i)
 			return (EBUSY);
 		opp = &olp->d_partitions[i];
 		npp = &nlp->d_partitions[i];
-		if (npp->p_offset != opp->p_offset || npp->p_size < opp->p_size)
+		if (npp->p_offset != opp->p_offset ||
+		    npp->p_size < opp->p_size)
 			return (EBUSY);
 		/*
 		 * Copy internally-set partition information
@@ -397,101 +939,118 @@ setdisklabel(olp, nlp, openmask, osdep)
 
 /*
  * Write disk label back to device after modification.
- * XXX cannot handle OpenBSD partitions in extended partitions!
  */
 int
 writedisklabel(dev, strat, lp, osdep)
 	dev_t dev;
-	void (*strat) __P((struct buf *));
+	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
-	struct dos_partition *dp = osdep->dosparts, *dp2;
+	enum disklabel_tag *tp;
+	char *msg = "no disk label";
 	struct buf *bp;
-	struct disklabel *dlp;
-	int error, dospartoff, cyl, i;
-	int ourpart = -1;
+	struct disklabel dl;
+#if defined(DISKLABEL_I386) || defined(DISKLABEL_HPPA) || defined(DISKLABEL_SGI) || defined(DISKLABEL_ALL)
+	struct cpu_disklabel cdl;
+#endif
+	int labeloffset, error, i, endian, partoff = 0, cyl = 0;
+	u_int64_t csum, *p;
 
 	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
-	/* do dos partitions in the process of getting disklabel? */
-	dospartoff = 0;
-	cyl = LABELSECTOR / lp->d_secpercyl;
-	if (dp) {
-		/* read master boot record */
-		bp->b_blkno = DOSBBSECTOR;
+	/*
+	 * I once played with the thought of using osdep->label{tag,sector}
+	 * as a cache for knowing where (and what) to write.  However, now I
+	 * think it might be useful to reprobe if someone has written
+	 * a newer disklabel of another type with disklabel(8) and -r.
+	 */
+	for (tp = probe_order; msg && *tp != -1; tp++) {
+		dl = *lp;
+		switch (*tp) {
+		case DLT_ALPHA:
+#if defined(DISKLABEL_ALPHA) || defined(DISKLABEL_ALL)
+			msg = readbsdlabel(bp, strat, 0, ALPHA_LABELSECTOR,
+			    ALPHA_LABELOFFSET, LITTLE_ENDIAN, &dl, 0);
+			labeloffset = ALPHA_LABELOFFSET;
+			endian = LITTLE_ENDIAN;
+#endif
+			break;
+
+		case DLT_I386:
+#if defined(DISKLABEL_I386) || defined(DISKLABEL_ALL)
+			msg = readdoslabel(bp, strat, &dl, &cdl, &partoff,
+			    &cyl, 0);
+			labeloffset = I386_LABELOFFSET;
+			endian = LITTLE_ENDIAN;
+#endif
+			break;
+
+		case DLT_AMIGA:
+#if defined(DISKLABEL_AMIGA) || defined(DISKLABEL_ALL)
+			msg = readamigalabel(bp, strat, &dl, &cdl, 0);
+			labeloffset = AMIGA_LABELOFFSET;
+			endian = BIG_ENDIAN;
+#endif
+			break;
+
+		case DLT_HPPA:
+#if defined(DISKLABEL_HPPA) || defined(DISKLABEL_ALL)
+			msg = readliflabel(bp, strat, &dl, &cdl, &partoff,
+			    &cyl, 0);
+			labeloffset = HPPA_LABELOFFSET;
+			endian = BIG_ENDIAN;
+#endif
+			break;
+
+		case DLT_SGI:
+#if defined(DISKLABEL_SGI) || defined(DISKLABEL_ALL)
+			msg = readsgilabel(bp, strat, &dl, &cdl, &partoff,
+			    &cyl, 0);
+			labeloffset = SGI_LABELOFFSET;
+			endian = BIG_ENDIAN;
+#endif
+			break;
+
+		default:
+			panic("unrecognized disklabel tag %d", *tp);
+		}
+	}
+
+	if (msg) {
+		if (partoff == -1)
+			return EIO;
+
+		/* Write it in the regular place with native byte order. */
+		labeloffset = LABELOFFSET;
+		endian = BYTE_ORDER;
+		bp->b_blkno = partoff + LABELSECTOR;
+		bp->b_cylin = cyl;
 		bp->b_bcount = lp->d_secsize;
-		bp->b_flags = B_BUSY | B_READ;
-		bp->b_cylin = DOSBBSECTOR / lp->d_secpercyl;
-		(*strat)(bp);
-
-		if ((error = biowait(bp)) != 0)
-			goto done;
-
-		if (((int *)bp->b_data)[0] == 0x01084025 &&
-		    ((int *)bp->b_data)[1] == 0x01294825) {
-			goto nodoslabel;
-		}
-		/* XXX how do we check veracity/bounds of this? */
-		bcopy(bp->b_data + DOSPARTOFF, dp,
-		    NDOSPART * sizeof(*dp));
-
-		for (dp2=dp, i=0; i < NDOSPART && ourpart == -1; i++, dp2++)
-			if (get_le(&dp2->dp_size) && dp2->dp_typ == DOSPTYP_OPENBSD)
-				ourpart = i;
-		for (dp2=dp, i=0; i < NDOSPART && ourpart == -1; i++, dp2++)
-			if (get_le(&dp2->dp_size) && dp2->dp_typ == DOSPTYP_FREEBSD)
-				ourpart = i;
-		for (dp2=dp, i=0; i < NDOSPART && ourpart == -1; i++, dp2++)
-			if (get_le(&dp2->dp_size) && dp2->dp_typ == DOSPTYP_NETBSD)
-				ourpart = i;
-
-		if (ourpart != -1) {
-			dp2 = &dp[ourpart];
-
-			/*
-			 * need sector address for SCSI/IDE,
-			 * cylinder for ESDI/ST506/RLL
-			 */
-			dospartoff = get_le(&dp2->dp_start);
-			cyl = DPCYL(dp2->dp_scyl, dp2->dp_ssect);
-		}
 	}
 
-nodoslabel:
-	/* next, dig out disk label */
-	bp->b_blkno = dospartoff + LABELSECTOR;
-	bp->b_cylin = cyl;
-	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ;
-	(*strat)(bp);
-
-	/* if successful, locate disk label within block and validate */
-	if ((error = biowait(bp)) != 0)
-		goto done;
-	for (dlp = (struct disklabel *)bp->b_data;
-	    dlp <= (struct disklabel *)(bp->b_data + lp->d_secsize - sizeof(*dlp));
-	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
-		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC &&
-		    dkcksum(dlp) == 0) {
-			*dlp = *lp;
-			bp->b_flags = B_BUSY | B_WRITE;
-			(*strat)(bp);
-			error = biowait(bp);
-			goto done;
-		}
+	if (endian != BYTE_ORDER) {
+		swapdisklabel(lp);
+		/* recalc checksum */
+		lp->d_checksum = 0;
+		lp->d_checksum = dkcksum(lp);
 	}
 
-	/* Write it in the regular place. */
-	*(struct disklabel *)bp->b_data = *lp;
+	*(struct disklabel *)(bp->b_data + labeloffset) = *lp;
+
+	/* Alpha bootblocks are checksummed.  */
+	if (*tp == DLT_ALPHA) {
+		for (csum = i = 0, p = (u_int64_t *)bp->b_data; i < 63; i++)
+			csum += *p++;
+		*p = csum;
+	}
+
 	bp->b_flags = B_BUSY | B_WRITE;
 	(*strat)(bp);
 	error = biowait(bp);
-	goto done;
 
-done:
 	bp->b_flags |= B_INVAL;
 	brelse(bp);
 	return (error);
@@ -511,10 +1070,17 @@ bounds_check_with_label(bp, lp, osdep, wlabel)
 {
 #define blockpersec(count, lp) ((count) * (((lp)->d_secsize) / DEV_BSIZE))
 	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
-	int labelsector = blockpersec(lp->d_partitions[RAW_PART].p_offset, lp) +
-	    LABELSECTOR;
+	int labelsector = blockpersec(lp->d_partitions[RAW_PART].p_offset,
+	    lp) + osdep->labelsector;
 	int sz = howmany(bp->b_bcount, DEV_BSIZE);
 
+	/* avoid division by zero */
+	if (lp->d_secpercyl == 0) {
+		bp->b_error = EINVAL;
+		goto bad;
+	}
+
+	/* beyond partition? */
 	if (bp->b_blkno + sz > blockpersec(p->p_size, lp)) {
 		sz = blockpersec(p->p_size, lp) - bp->b_blkno;
 		if (sz == 0) {
@@ -533,9 +1099,7 @@ bounds_check_with_label(bp, lp, osdep, wlabel)
 
 	/* Overwriting disk label? */
 	if (bp->b_blkno + blockpersec(p->p_offset, lp) <= labelsector &&
-#if LABELSECTOR != 0
 	    bp->b_blkno + blockpersec(p->p_offset, lp) + sz > labelsector &&
-#endif
 	    (bp->b_flags & B_READ) == 0 && !wlabel) {
 		bp->b_error = EROFS;
 		goto bad;
