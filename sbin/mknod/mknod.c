@@ -1,4 +1,4 @@
-/*	$OpenBSD: mknod.c,v 1.2 1996/06/23 14:31:03 deraadt Exp $	*/
+/*	$OpenBSD: mknod.c,v 1.3 1996/08/02 11:16:47 deraadt Exp $	*/
 /*	$NetBSD: mknod.c,v 1.8 1995/08/11 00:08:18 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mknod.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: mknod.c,v 1.2 1996/06/23 14:31:03 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mknod.c,v 1.3 1996/08/02 11:16:47 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,9 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
+	dev_t dev;
+	char *endp;
+	u_int major, minor;
 	mode_t mode;
 
 	if (argc != 5) {
@@ -82,7 +85,22 @@ main(argc, argv)
 		/* NOTREACHED */
 	}
 
-	if (mknod(argv[1], mode, makedev(atoi(argv[3]), atoi(argv[4]))) < 0) {
+	major = (long)strtoul(argv[3], &endp, 0);
+	if (endp == argv[3] || *endp != '\0') {
+		errx(1, "non-numeric major number.");
+		/* NOTREACHED */
+	}
+	minor = (long)strtoul(argv[4], &endp, 0);
+	if (endp == argv[3] || *endp != '\0') {
+		errx(1, "non-numeric minor number.");
+		/* NOTREACHED */
+	}
+	dev = makedev(major, minor);
+	if (major(dev) != major || minor(dev) != minor) {
+		errx(1, "major or minor number too large");
+		/* NOTREACHED */
+	}
+	if (mknod(argv[1], mode, dev) < 0) {
 		err(1, "%s", argv[1]);
 		/* NOTREACHED */
 	}
