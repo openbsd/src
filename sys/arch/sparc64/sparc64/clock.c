@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.17 2003/02/28 21:30:30 jason Exp $	*/
+/*	$OpenBSD: clock.c,v 1.18 2003/05/18 15:32:10 henric Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -481,13 +481,6 @@ clockattach_rtc(parent, self, aux)
 #endif
 	printf(": %s\n", model);
 
-	/* 
-	 * Turn interrupts off, just in case. (Although they shouldn't
-	 * be wired to an interrupt controller on sparcs).
-	 */
-	rtc_write_reg(bt, cwi.cwi_bh, 
-		MC_REGB, MC_REGB_BINARY | MC_REGB_24HR);
-
 	/* Setup our todr_handle */
 	sz = ALIGN(sizeof(struct todr_chip_handle)) + sizeof(struct rtc_info);
 	handle = malloc(sz, M_DEVBUF, M_NOWAIT);
@@ -510,6 +503,16 @@ clockattach_rtc(parent, self, aux)
 	handle->todr_setwen = (ea->ea_memtag == bt) ?
 	    clock_bus_wenable : NULL;
 	todr_handle = handle;
+
+	/* 
+	 * Turn interrupts off, just in case. (Although they shouldn't
+	 * be wired to an interrupt controller on sparcs).
+	 */
+	todr_wenable(handle, 1);
+	rtc_write_reg(bt, cwi.cwi_bh, 
+		MC_REGB, MC_REGB_BINARY | MC_REGB_24HR);
+	todr_wenable(handle, 0);
+
 }
 
 /*
