@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.47 2000/10/18 00:42:30 angelos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.48 2000/10/25 19:08:57 jason Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -657,7 +657,7 @@ main(int argc, char **argv)
 
         if (!strcmp(argv[i] + 1, "spi") && iscmd(mode, FLOW))
         {
-            fprintf(stderr, "%s: use of flag \"-spi\" is deprecated with"
+            fprintf(stderr, "%s: use of flag \"-spi\" is deprecated with "
                     "flow creation or deletion\n", argv[0]);
             i++;
             continue;
