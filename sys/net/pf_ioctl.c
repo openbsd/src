@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.47 2003/01/09 15:58:35 dhartmei Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.48 2003/01/09 18:36:48 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -177,7 +177,7 @@ pf_get_pool(char *anchorname, char *rulesetname, u_int32_t ticket,
 			rule = TAILQ_NEXT(rule, entries);
 	}
 	if (rule == NULL)
-		return(NULL);
+		return (NULL);
 
 	return (&rule->rpool);
 }
@@ -217,7 +217,7 @@ pf_init_ruleset(struct pf_ruleset *ruleset)
 	int	i;
 
 	memset(ruleset, 0, sizeof(struct pf_ruleset));
-	for(i = 0; i < PF_RULESET_MAX; i++) {
+	for (i = 0; i < PF_RULESET_MAX; i++) {
 		TAILQ_INIT(&ruleset->rules[i].queues[0]);
 		TAILQ_INIT(&ruleset->rules[i].queues[1]);
 		ruleset->rules[i].active.ptr = &ruleset->rules[i].queues[0];
