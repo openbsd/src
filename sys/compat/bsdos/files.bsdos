@@ -1,0 +1,11 @@
+#	$OpenBSD: files.bsdos,v 1.1 1997/09/02 08:54:16 downsj Exp $
+#
+# Config file description for machine-independent BSD/OS compat code.
+# Included by ports that need it.
+
+# ports should define any machine-specific files they need in their
+# own file lists.
+
+file	compat/bsdos/bsdos_exec.c		compat_bsdos
+file	compat/bsdos/bsdos_sysent.c		compat_bsdos
+file	compat/bsdos/bsdos_syscalls.c		compat_bsdos
