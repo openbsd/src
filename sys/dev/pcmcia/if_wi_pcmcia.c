@@ -1,4 +1,4 @@
-/* $OpenBSD: if_wi_pcmcia.c,v 1.45 2003/12/16 03:20:00 millert Exp $ */
+/* $OpenBSD: if_wi_pcmcia.c,v 1.46 2004/04/06 21:08:57 millert Exp $ */
 /* $NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $ */
 
 /*
@@ -244,6 +244,10 @@ static const struct wi_pcmcia_product {
 	{ PCMCIA_VENDOR_SIEMENS,
 	  PCMCIA_PRODUCT_SIEMENS_SS1021,
 	  PCMCIA_CIS_SIEMENS_SS1021
+	},
+	{ PCMCIA_VENDOR_MICROSOFT,
+	  PCMCIA_PRODUCT_MICROSOFT_MN520,
+	  PCMCIA_CIS_MICROSOFT_MN520
 	}
 };
 
