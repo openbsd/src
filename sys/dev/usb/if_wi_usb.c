@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.13 2004/08/05 05:17:58 dlg Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.14 2004/10/17 22:31:19 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -232,7 +232,8 @@ const struct wi_usb_type {
 	{{ USB_VENDOR_MELCO, USB_PRODUCT_MELCO_S11 }, 0 },
 	{{ USB_VENDOR_MICROSOFT, USB_PRODUCT_MICROSOFT_MN510 }, 0 },
 	{{ USB_VENDOR_NETGEAR, USB_PRODUCT_NETGEAR_MA111NA }, 0 },
-	{{ USB_VENDOR_SIEMENS, USB_PRODUCT_SIEMENS_SPEEDSTREAM22 }, 0 }
+	{{ USB_VENDOR_SIEMENS, USB_PRODUCT_SIEMENS_SPEEDSTREAM22 }, 0 },
+	{{ USB_VENDOR_COREGA, USB_PRODUCT_COREGA_WLUSB_11_KEY }, 0 }
 };
 #define wi_usb_lookup(v, p) ((struct wi_usb_type *)usb_lookup(wi_usb_devs, v, p))
 

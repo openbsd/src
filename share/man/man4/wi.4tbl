@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.55 2004/10/11 15:17:56 mickey Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.56 2004/10/17 22:31:19 deraadt Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -161,6 +161,7 @@ Corega PCCA-11:Prism-2:PCMCIA
 Corega PCCB-11:Prism-2:PCMCIA
 Corega CGWLPCIA11:Prism-2:PCI
 Corega WLUSB-11:Prism-3:USB
+Corega WLUSB-11 Key:Prism-3:USB
 Dlink DWL520 (rev A and B only):Prism-2.5:PCI
 Dlink DWL650 (rev A1-J3 only):Prism-2.5:PCMCIA
 ELSA XI300:Prism-2:PCMCIA
