@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.h,v 1.3 2002/03/14 01:27:11 millert Exp $ */
+/*      $OpenBSD: ip_gre.h,v 1.4 2002/03/24 01:26:05 angelos Exp $ */
 /*	$NetBSD: ip_gre.h,v 1.3 1998/10/07 23:33:02 thorpej Exp $ */
 
 /*
@@ -39,6 +39,12 @@
 
 #ifndef _NETINET_IP_GRE_H_
 #define _NETINET_IP_GRE_H_
+
+/* Protocol number for Cisco's WCCP
+ * The Internet Draft is:
+ *   draft-forster-wrec-wccp-v1-00.txt
+ */
+#define GREPROTO_WCCP	0x883e
 
 /*
  * Names for GRE sysctl objects

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.15 2002/03/15 18:19:52 millert Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.16 2002/03/24 01:26:05 angelos Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -141,6 +141,17 @@ gre_input2(m , hlen, proto)
 			hlen += 4;
 
 		switch (ntohs(gip->gi_ptype)) { /* ethertypes */
+		case GREPROTO_WCCP:
+			/* WCCP/GRE:
+			 *   So far as I can see (and test) it seems that Cisco's WCCP
+			 *   GRE tunnel is precisely a IP-in-GRE tunnel that differs
+			 *   only in it's protocol number.  At least, it works for me.
+			 *
+			 *   The Internet Draft can be found if you look for
+			 *     draft-forster-wrec-wccp-v1-00.txt
+			 *
+			 *   So yes, we're doing a fall-through.
+			 */
 		case ETHERTYPE_IP: /* shouldn't need a schednetisr(), as */
 			ifq = &ipintrq;          /* we are in ip_input */
 			af = AF_INET;
