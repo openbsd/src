@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.13 1998/02/05 00:26:24 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.14 1998/02/05 03:22:18 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1996/10/11 20:15:48 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.13 1998/02/05 00:26:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.14 1998/02/05 03:22:18 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -129,7 +129,7 @@ main(argc, argv)
 			break;
 
 		default:
-			errexit("usage: %s -p [-f] [-m mode]\n       %s [-f] [-b block#] [-c level] [-y] [-n] [-m mode] [filesystem] ...", __progname, __progname);
+			errexit("usage: %s -p [-f] [-m mode]\n       %s [-f] [-b block#] [-c level] [-y] [-n] [-m mode] [filesystem] ...\n", __progname, __progname);
 		}
 	}
 	argc -= optind;
