@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.31 2001/09/18 14:05:14 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.32 2001/09/18 14:10:55 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.31 2001/09/18 14:05:14 espie Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.32 2001/09/18 14:10:55 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,6 +82,7 @@ static void	map __P((char *, const char *, const char *, const char *));
 static const char *handledash __P((char *, char *, const char *));
 static void	expand_builtin __P((const char *[], int, int));
 static void	expand_macro __P((const char *[], int));
+static void	dump_one_def __P((ndptr));
 
 
 /*
@@ -464,8 +465,6 @@ expand_builtin(argv, argc, td)
 	}
 }
 
-char *dumpfmt = "`%s'\t`%s'\n";	       /* format string for dumpdef   */
-
 /*
  * expand_macro - user-defined macro expansion
  */
@@ -623,6 +622,16 @@ dopushdef(name, defn)
 }
 
 /*
+ * dump_one_def - dump the specified definition.
+ */
+static void
+dump_one_def(p)
+	ndptr p;
+{
+	fprintf(stderr, "`%s'\t`%s'\n", p->name, p->defn);
+}
+
+/*
  * dodumpdef - dump the specified definitions in the hash
  *      table to stderr. If nothing is specified, the entire
  *      hash table is dumped.
@@ -638,13 +647,11 @@ dodump(argv, argc)
 	if (argc > 2) {
 		for (n = 2; n < argc; n++)
 			if ((p = lookup(argv[n])) != nil)
-				fprintf(stderr, dumpfmt, p->name,
-					p->defn);
+				dump_one_def(p);
 	} else {
 		for (n = 0; n < HASHSIZE; n++)
 			for (p = hashtab[n]; p != nil; p = p->nxtptr)
-				fprintf(stderr, dumpfmt, p->name,
-					p->defn);
+				dump_one_def(p);
 	}
 }
 
