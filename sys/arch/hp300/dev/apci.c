@@ -1,4 +1,4 @@
-/*	$OpenBSD: apci.c,v 1.7 2001/05/10 20:17:54 millert Exp $	*/
+/*	$OpenBSD: apci.c,v 1.8 2001/05/10 20:18:46 millert Exp $	*/
 /*	$NetBSD: apci.c,v 1.9 2000/11/02 00:35:05 eeh Exp $	*/
 
 /*-
@@ -752,7 +752,7 @@ apciparam(tp, t)
 		apci->ap_ier = (ospeed >> 8) & 0xff;
 		apci->ap_cfcr = cfcr;
 	} else
-		apci->ap_cfcr;
+		apci->ap_cfcr = cfcr;
 
 	/* and copy to tty */
 	tp->t_ispeed = t->c_ispeed;
