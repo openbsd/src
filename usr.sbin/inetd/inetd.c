@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.16 1996/08/02 06:47:41 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.17 1996/08/02 07:18:35 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.16 1996/08/02 06:47:41 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.17 1996/08/02 07:18:35 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -309,8 +309,10 @@ main(argc, argv, envp)
 	if (argc > 0)
 		CONFIG = argv[0];
 
-	if (debug == 0)
+	if (debug == 0) {
 		daemon(0, 0);
+		(void) setlogin("");
+	}
 	openlog(progname, LOG_PID | LOG_NOWAIT, LOG_DAEMON);
 	logpid();
 
@@ -448,8 +450,6 @@ main(argc, argv, envp)
 		}
 		sigsetmask(0L);
 		if (pid == 0) {
-			if (debug && dofork)
-				setsid();
 			if (sep->se_bi)
 				(*sep->se_bi->bi_fn)(ctrl, sep);
 			else {
@@ -461,16 +461,23 @@ main(argc, argv, envp)
 						recv(0, buf, sizeof (buf), 0);
 					_exit(1);
 				}
+				if (setsid() <0)
+					syslog(LOG_ERR, "%s: setsid: %m",
+					    sep->se_service);
 				if (sep->se_group &&
 				    (grp = getgrnam(sep->se_group)) == NULL) {
 					syslog(LOG_ERR,
-						"getgrnam: %s: No such group",
-						sep->se_group);
+					    "getgrnam: %s: No such group",
+					    sep->se_group);
 					if (sep->se_socktype != SOCK_STREAM)
 						recv(0, buf, sizeof (buf), 0);
 					_exit(1);
 				}
 				if (pwd->pw_uid) {
+					if (setlogin(sep->se_user) < 0)
+						syslog(LOG_ERR,
+						    "%s: setlogin: %m",
+						    sep->se_service);
 					if (sep->se_group)
 						pwd->pw_gid = grp->gr_gid;
 					(void) setgid((gid_t)pwd->pw_gid);
