@@ -1,4 +1,4 @@
-.\"	$OpenBSD: semget.2,v 1.15 2004/03/23 17:35:04 jmc Exp $
+.\"	$OpenBSD: semget.2,v 1.16 2004/04/15 19:52:18 jmc Exp $
 .\"	$NetBSD: semget.2,v 1.2 1997/03/27 08:20:41 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -66,14 +66,13 @@ The access modes of the created semaphores is specified in
 by
 .Tn OR Ns 'ing
 the following values:
-.Pp
-.Bd -literal -offset indent -compact
+.Bd -literal -offset indent
 SEM_A        alter permission for owner
 SEM_R        read permission for owner
-.Pp
+
 SEM_A >> 3   alter permission for group
 SEM_R >> 3   read permission for group
-.Pp
+
 SEM_A >> 6   alter permission for other
 SEM_R >> 6   read permission for other
 .Ed

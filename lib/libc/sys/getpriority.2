@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getpriority.2,v 1.10 2003/12/11 23:02:30 millert Exp $
+.\"	$OpenBSD: getpriority.2,v 1.11 2004/04/15 19:52:18 jmc Exp $
 .\"	$NetBSD: getpriority.2,v 1.4 1995/02/27 12:33:15 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -123,10 +123,10 @@ or
 .Dv PRIO_USER .
 .El
 .Pp
-.Bl -tag -width Er
 In addition to the errors indicated above,
 .Fn setpriority
 will fail if:
+.Bl -tag -width Er
 .It Bq Er EPERM
 A process was located, but neither its effective nor real user
 ID matched the effective user ID of the caller.

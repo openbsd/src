@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigaction.2,v 1.40 2003/12/02 23:41:15 deraadt Exp $
+.\"	$OpenBSD: sigaction.2,v 1.41 2004/04/15 19:52:18 jmc Exp $
 .\"	$NetBSD: sigaction.2,v 1.7 1995/10/12 15:41:16 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -351,7 +351,6 @@ The following functions are either reentrant or not interruptible
 by signals and are async-signal safe.
 Therefore applications may invoke them, without restriction, from
 signal-catching functions:
-.Pp
 .Bd -ragged -offset indent
 .Xr _exit 2 ,
 .Xr access 2 ,

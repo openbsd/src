@@ -1,4 +1,4 @@
-.\"	$OpenBSD: select.2,v 1.26 2004/02/08 19:20:23 otto Exp $
+.\"	$OpenBSD: select.2,v 1.27 2004/04/15 19:52:18 jmc Exp $
 .\"	$NetBSD: select.2,v 1.5 1995/06/27 22:32:28 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -200,21 +200,20 @@ The idea is to permit a program to work properly even if it is
 with 4000 file descriptors pre-allocated.
 The following illustrates the technique which is used by
 userland libraries:
-.Pp
-.Bd -literal -offset indent -compact
-	fd_set *fdsr;
-	int max = fd;
+.Bd -literal -offset indent
+fd_set *fdsr;
+int max = fd;
 
-	fdsr = (fd_set *)calloc(howmany(max+1, NFDBITS),
-	    sizeof(fd_mask));
-	if (fdsr == NULL) {
-		...
-		return (-1);
-	}
-	FD_SET(fd, fdsr);
-	n = select(max+1, fdsr, NULL, NULL, &tv);
+fdsr = (fd_set *)calloc(howmany(max+1, NFDBITS),
+    sizeof(fd_mask));
+if (fdsr == NULL) {
 	...
-	free(fdsr);
+	return (-1);
+}
+FD_SET(fd, fdsr);
+n = select(max+1, fdsr, NULL, NULL, &tv);
+\&...
+free(fdsr);
 .Ed
 .Pp
 Alternatively, it is possible to use the

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: write.2,v 1.27 2003/06/02 20:18:39 millert Exp $
+.\"	$OpenBSD: write.2,v 1.28 2004/04/15 19:52:18 jmc Exp $
 .\"	$NetBSD: write.2,v 1.6 1995/02/27 12:39:43 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -81,8 +81,7 @@ and
 the
 .Fa iovec
 structure is defined as:
-.Pp
-.Bd -literal -offset indent -compact
+.Bd -literal -offset indent
 struct iovec {
 	void *iov_base;
 	size_t iov_len;
@@ -263,8 +262,8 @@ function call appeared in
 .Sh CAVEATS
 Error checks should explicitly test for \-1.
 Code such as
-.Bd -literal
-	while ((nr = write(fd, buf, sizeof(buf))) > 0)
+.Bd -literal -offset indent
+while ((nr = write(fd, buf, sizeof(buf))) > 0)
 .Ed
 .Pp
 is not maximally portable, as some platforms allow for
@@ -277,6 +276,6 @@ and
 .Fn write
 may appear as a negative number distinct from \-1.
 Proper loops should use
-.Bd -literal
-	while ((nr = write(fd, buf, sizeof(buf))) != -1 && nr != 0)
+.Bd -literal -offset indent
+while ((nr = write(fd, buf, sizeof(buf))) != -1 && nr != 0)
 .Ed

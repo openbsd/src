@@ -1,4 +1,4 @@
-.\"	$OpenBSD: msync.2,v 1.17 2003/06/02 20:18:39 millert Exp $
+.\"	$OpenBSD: msync.2,v 1.18 2004/04/15 19:52:18 jmc Exp $
 .\"	$NetBSD: msync.2,v 1.8 1995/10/12 15:41:09 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -72,8 +72,7 @@ The
 argument is formed by
 .Tn OR Ns 'ing
 the following values
-.Pp
-.Bd -literal -offset indent -compact
+.Bd -literal -offset indent
 MS_ASYNC	Perform asynchronous writes.
 MS_SYNC		Perform synchronous writes.
 MS_INVALIDATE	Invalidate cached data after writing.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chmod.2,v 1.12 2003/12/20 09:09:46 jmc Exp $
+.\"	$OpenBSD: chmod.2,v 1.13 2004/04/15 19:52:18 jmc Exp $
 .\"	$NetBSD: chmod.2,v 1.7 1995/02/27 12:32:06 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -64,8 +64,7 @@ A mode is created from
 .Em or'd
 permission bit masks defined in
 .Aq Pa sys/stat.h :
-.Pp
-.Bd -literal -offset indent -compact
+.Bd -literal -offset indent
 #define S_IRWXU 0000700    /* RWX mask for owner */
 #define S_IRUSR 0000400    /* R for owner */
 #define S_IWUSR 0000200    /* W for owner */

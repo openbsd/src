@@ -1,4 +1,4 @@
-.\"	$OpenBSD: recv.2,v 1.28 2003/06/11 10:22:47 jmc Exp $
+.\"	$OpenBSD: recv.2,v 1.29 2004/04/15 19:52:18 jmc Exp $
 .\"	$NetBSD: recv.2,v 1.6 1995/02/27 12:36:08 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -148,7 +148,6 @@ call uses a
 structure to minimize the number of directly supplied parameters.
 This structure has the following form, as defined in
 .Ao Pa sys/socket.h Ac :
-.Pp
 .Bd -literal
 struct msghdr {
 	void		*msg_name;	/* optional address */
