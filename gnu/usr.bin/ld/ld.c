@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.c,v 1.15 2000/02/21 16:56:56 art Exp $	*/
+/*	$OpenBSD: ld.c,v 1.16 2000/09/20 22:57:20 espie Exp $	*/
 /*	$NetBSD: ld.c,v 1.52 1998/02/20 03:12:51 jonathan Exp $	*/
 
 /*-
@@ -1469,7 +1469,7 @@ enter_global_ref(lsp, name, entry)
 			if (com)
 				common_defined_global_count--;
 			sp->common_size = 0;
-			if (sp != dynamic_symbol)
+			if (sp != dynamic_symbol && sp != got_symbol)
 				sp->defined = 0;
 		}
 
