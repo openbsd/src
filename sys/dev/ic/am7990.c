@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.8 1995/12/11 19:48:53 mycroft Exp $	*/
+/*	$NetBSD: am7990.c,v 1.10 1996/01/02 21:51:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -582,19 +582,11 @@ letint(sc)
 /*
  * Controller interrupt.
  */
-#ifdef LEINTR_UNIT
-int
-leintr(unit)
-	int unit;
-{
-	register struct le_softc *sc = LE_SOFTC(unit);
-#else
 int
 leintr(arg)
 	register void *arg;
 {
 	register struct le_softc *sc = arg;
-#endif
 	register u_int16_t isr;
 
 	isr = lerdcsr(sc, LE_CSR0);
