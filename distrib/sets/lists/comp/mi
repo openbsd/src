@@ -926,7 +926,6 @@
 ./usr/include/ssl/buffer.h
 ./usr/include/ssl/cast.h
 ./usr/include/ssl/conf.h
-./usr/include/ssl/cryptall.h
 ./usr/include/ssl/crypto.h
 ./usr/include/ssl/des.h
 ./usr/include/ssl/dh.h
@@ -2867,3 +2866,15 @@
 ./usr/include/dev/ic/i82596var.h
 ./usr/include/dev/usb/usbcdc.h
 ./usr/include/dev/ic/ac97.h
+./usr/include/ssl/opensslconf.h
+./usr/include/ssl/opensslv.h
+./usr/include/ssl/pem2.h
+./usr/include/ssl/pkcs12.h
+./usr/include/ssl/rsaref.h
+./usr/include/ssl/safestack.h
+./usr/include/ssl/comp.h
+./usr/include/ssl/e_os2.h
+./usr/include/ssl/ebcdic.h
+./usr/include/ssl/ssl_locl.h
+./usr/include/ssl/tmdiff.h
+./usr/include/ssl/x509v3.h

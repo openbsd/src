@@ -103,7 +103,7 @@
 ./etc/sshd_config
 ./etc/ssl
 ./etc/ssl/lib
-./etc/ssl/lib/ssleay.cnf
+./etc/ssl/openssl.cnf
 ./etc/ssl/private
 ./etc/sysctl.conf
 ./etc/syslog.conf
