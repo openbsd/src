@@ -125,8 +125,6 @@
 ./usr/lib/libcurses++_pic.a
 ./usr/lib/libcurses_pic.a
 ./usr/lib/libdes_pic.a
-./usr/lib/libdl.a
-./usr/lib/libdl_pic.a
 ./usr/lib/libedit_pic.a
 ./usr/lib/libform_pic.a
 ./usr/lib/libg2c_pic.a
