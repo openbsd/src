@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg.pl,v 1.3 2001/04/24 22:14:10 espie Exp $
+# $OpenBSD: pkg.pl,v 1.4 2001/07/14 14:20:11 espie Exp $
 #
 # Copyright (c) 2001 Marc Espie.
 # 
@@ -113,7 +113,10 @@ sub check_version
 		return 1 if $v =~ /^$_$/;
 		return 1 if $v =~ /^${_}p\d+$/; # allows for recent patches
 	}
-	for (grep !/^\d/, @specs) { 		# dewey match, all of them
+
+	# Last chance: dewey specs ?
+	my @deweys = grep !/^\d/, @specs;		
+	for (@deweys) {
 		if (m/^\<\=|\>\=|\<|\>/) {
 			my ($op, $dewey) = ($&, $');
 			my $compare = dewey_compare($v, $dewey);
@@ -121,9 +124,11 @@ sub check_version
 			return 0 if $op eq '<=' && $compare > 0;
 			return 0 if $op eq '>' && $compare <= 0;
 			return 0 if $op eq '>=' && $compare < 0;
+		} else {
+			return 0;	# unknown spec type
 		}
 	}
-	return 1;
+	return @deweys == 0 ? 0 : 1;
 }
 
 sub check_1flavor
