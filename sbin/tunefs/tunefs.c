@@ -1,4 +1,4 @@
-/*	$OpenBSD: tunefs.c,v 1.9 2001/03/22 21:30:00 gluk Exp $	*/
+/*	$OpenBSD: tunefs.c,v 1.10 2001/04/06 20:43:31 gluk Exp $	*/
 /*	$NetBSD: tunefs.c,v 1.10 1995/03/18 15:01:31 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.2 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: tunefs.c,v 1.9 2001/03/22 21:30:00 gluk Exp $";
+static char rcsid[] = "$OpenBSD: tunefs.c,v 1.10 2001/04/06 20:43:31 gluk Exp $";
 #endif
 #endif /* not lint */
 
@@ -172,6 +172,20 @@ again:
 				sblock.fs_maxbpg = i;
 				continue;
 
+			case 'f':
+				name = "average file size";
+				if (argc < 1)
+					errx(10, "-f: missing %s", name);
+				argc--, argv++;
+				i = atoi(*argv);
+				if (i < 0)
+					errx(10, "%s must be >= 0 (was %s)",
+					    name, *argv);
+				warnx("%s changes from %d to %d",
+				    name, sblock.fs_avgfilesize, i);
+				sblock.fs_avgfilesize = i;
+				continue;
+
 			case 'm':
 				name = "minimum percentage of free space";
 				if (argc < 1)
@@ -189,6 +203,20 @@ again:
 				if (i < MINFREE &&
 				    sblock.fs_optim == FS_OPTTIME)
 					warnx(OPTWARN, "space", "<", MINFREE);
+				continue;
+
+			case 'n':
+				name = "expected number of files per directory";
+				if (argc < 1)
+					errx(10, "-n: missing %s", name);
+				argc--, argv++;
+				i = atoi(*argv);
+				if (i < 0)
+					errx(10, "%s must be >= 0 (was %s)",
+					    name, *argv);
+				warnx("%s changes from %d to %d",
+				    name, sblock.fs_avgfpdir, i);
+				sblock.fs_avgfpdir = i;
 				continue;
 
 			case 's':
@@ -263,7 +291,9 @@ usage()
 		"\t-a maximum contiguous blocks\n"
 		"\t-d rotational delay between contiguous blocks\n"
 		"\t-e maximum blocks per file in a cylinder group\n"
+		"\t-f expected average file size\n"
 		"\t-m minimum percentage of free space\n"
+		"\t-n expected number of files per directory\n"
 		"\t-o optimization preference (`space' or `time')\n"
 		"\t-p no change - just prints current tuneable settings\n"
 		"\t-s soft updates ('enable' or 'disable')\n",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fs.h,v 1.8 1998/11/29 00:45:30 art Exp $	*/
+/*	$OpenBSD: fs.h,v 1.9 2001/04/06 20:43:30 gluk Exp $	*/
 /*	$NetBSD: fs.h,v 1.6 1995/04/12 21:21:02 mycroft Exp $	*/
 
 /*
@@ -229,7 +229,11 @@ struct fs {
 	int32_t	 *fs_maxcluster;	/* max cluster in each cyl group */
 	int32_t	 fs_cpc;		/* cyl per cycle in postbl */
 	int16_t	 fs_opostbl[16][8];	/* old rotation block list head */
-	int32_t	 fs_sparecon[49];	/* reserved for future constants */
+	int32_t	 fs_sparecon[46];	/* reserved for future constants */
+/* these fields used in dirpref routine for optimization */
+	u_int8_t *fs_contigdirs;	/* # of contiguously allocated dirs */
+	int32_t	 fs_avgfilesize;	/* expected average file size */
+	int32_t	 fs_avgfpdir;		/* expected # of files per directory */
 	time_t	 fs_fscktime;		/* last time fsck(8)ed */
 	int32_t	 fs_contigsumsize;	/* size of cluster summary array */ 
 	int32_t	 fs_maxsymlinklen;	/* max length of an internal symlink */

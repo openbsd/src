@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.35 2001/04/04 20:19:04 gluk Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.36 2001/04/06 20:43:31 gluk Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -194,6 +194,7 @@ ffs_mount(mp, path, data, ndp, p)
 				mp->mnt_flag &= ~MNT_SOFTDEP;
 			} else
 				error = ffs_flushfiles(mp, flags, p);
+			free(fs->fs_contigdirs, M_WAITOK);
 			ronly = 1;
 		}
 
@@ -282,6 +283,9 @@ ffs_mount(mp, path, data, ndp, p)
 				if (error)
 					goto error_1;
 			}
+			fs->fs_contigdirs=(u_int8_t*)malloc((u_long)fs->fs_ncg,
+							    M_UFSMNT, M_WAITOK);
+			bzero(fs->fs_contigdirs, fs->fs_ncg);
 
 			ronly = 0;
 		}
@@ -715,6 +719,14 @@ ffs_mountfs(devvp, mp, p)
 	devvp->v_specmountpoint = mp;
 	ffs_oldfscompat(fs);
 
+	if (ronly)
+		fs->fs_contigdirs = NULL;
+	else {
+		fs->fs_contigdirs = (u_int8_t*)malloc((u_long)fs->fs_ncg,
+						      M_UFSMNT, M_WAITOK);
+		bzero(fs->fs_contigdirs, fs->fs_ncg);
+	}
+
 	/*
 	 * Set FS local "last mounted on" information (NULL pad)
 	 */
@@ -743,6 +755,7 @@ ffs_mountfs(devvp, mp, p)
 		if ((fs->fs_flags & FS_DOSOFTDEP) &&
 		    (error = softdep_mount(devvp, mp, fs, cred)) != 0) {
 			free(base, M_UFSMNT);
+			free(fs->fs_contigdirs, M_UFSMNT);
 			goto out;
 		}
 		fs->fs_fmod = 1;
@@ -829,6 +842,7 @@ ffs_unmount(mp, mntflags, p)
 			fs->fs_clean = 0;
 			return (error);
 		}
+		free(fs->fs_contigdirs, M_UFSMNT);
 	}
 	ump->um_devvp->v_specmountpoint = NULL;
 
