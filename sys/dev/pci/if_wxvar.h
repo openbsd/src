@@ -80,7 +80,6 @@
 #endif
 #include <vm/vm.h>
 #include <vm/vm_param.h>
-#include <vm/vm_kern.h>
 #include <net/if_ether.h>
 #if defined(INET)
 #include <netinet/if_inarp.h>

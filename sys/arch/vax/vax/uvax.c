@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvax.c,v 1.5 2001/05/05 21:26:42 art Exp $ */
+/*	$OpenBSD: uvax.c,v 1.6 2001/09/11 20:05:25 miod Exp $ */
 /*	$NetBSD: uvax.c,v 1.4 1997/02/19 10:04:27 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -42,7 +42,6 @@
 #include <sys/types.h>
 #include <sys/device.h>
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <machine/pte.h>
 #include <machine/mtpr.h>

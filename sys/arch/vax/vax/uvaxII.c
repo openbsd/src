@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvaxII.c,v 1.7 1997/05/29 00:05:28 niklas Exp $	*/
+/*	$OpenBSD: uvaxII.c,v 1.8 2001/09/11 20:05:25 miod Exp $	*/
 /*	$NetBSD: uvaxII.c,v 1.10 1996/10/13 03:36:04 christos Exp $	*/
 
 /*-
@@ -44,7 +44,6 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <machine/uvaxII.h>
 #include <machine/pte.h>

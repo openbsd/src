@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.21 2001/08/21 14:06:25 hugh Exp $ */
+/*	$OpenBSD: pmap.c,v 1.22 2001/09/11 20:05:25 miod Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
@@ -57,7 +57,6 @@
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
-#include <vm/vm_kern.h>
 
 
 /* QDSS console mapping hack */

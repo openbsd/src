@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_os.c,v 1.5 2001/08/25 10:13:30 art Exp $	*/
+/*	$OpenBSD: bktr_os.c,v 1.6 2001/09/11 20:05:25 miod Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp $ */
 
 /*
@@ -78,7 +78,6 @@
 #include <sys/vnode.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 #include <vm/pmap.h>
 #include <vm/vm_extern.h>
 

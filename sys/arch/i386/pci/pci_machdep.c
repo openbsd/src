@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.20 2001/08/27 08:20:04 art Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.21 2001/09/11 20:05:24 miod Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -88,7 +88,6 @@
 #include <sys/device.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #define _I386_BUS_DMA_PRIVATE
 #include <machine/bus.h>

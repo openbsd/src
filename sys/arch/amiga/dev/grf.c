@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf.c,v 1.10 2001/08/11 23:07:11 art Exp $	*/
+/*	$OpenBSD: grf.c,v 1.11 2001/09/11 20:05:20 miod Exp $	*/
 /*	$NetBSD: grf.c,v 1.32 1996/12/23 09:10:01 veego Exp $	*/
 
 /*
@@ -59,7 +59,6 @@
 #include <sys/vnode.h>
 #include <sys/mman.h>
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 #include <machine/cpu.h>
 #include <machine/fbio.h>
 #include <amiga/amiga/color.h>	/* DEBUG */

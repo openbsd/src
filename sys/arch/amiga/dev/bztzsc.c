@@ -1,4 +1,4 @@
-/*	$OpenBSD: bztzsc.c,v 1.2 1997/01/18 12:26:26 niklas Exp $	*/
+/*	$OpenBSD: bztzsc.c,v 1.3 2001/09/11 20:05:20 miod Exp $	*/
 /*	$NetBSD: bztzsc.c,v 1.2 1996/12/23 09:09:54 veego Exp $	*/
 
 /*
@@ -43,7 +43,6 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 #include <vm/vm_page.h>
 #include <machine/pmap.h>
 #include <amiga/amiga/custom.h>

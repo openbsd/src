@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsi64854.c,v 1.2 2001/08/25 14:58:32 jason Exp $	*/
+/*	$OpenBSD: lsi64854.c,v 1.3 2001/09/11 20:05:25 miod Exp $	*/
 /*	$NetBSD: lsi64854.c,v 1.18 2001/06/04 20:56:51 mrg Exp $ */
 
 /*-
@@ -45,7 +45,6 @@
 #include <sys/device.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 #include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>

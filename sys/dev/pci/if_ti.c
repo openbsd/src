@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.29 2001/08/25 10:13:29 art Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.30 2001/09/11 20:05:25 miod Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -111,7 +111,6 @@
 #endif
 
 #include <vm/vm.h>              /* for vtophys */
-#include <vm/vm_kern.h>
 #include <machine/bus.h>
 
 #include <dev/pci/pcireg.h>

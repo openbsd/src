@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka410.c,v 1.6 2000/04/27 01:10:12 bjc Exp $ */
+/*	$OpenBSD: ka410.c,v 1.7 2001/09/11 20:05:25 miod Exp $ */
 /*	$NetBSD: ka410.c,v 1.21 1999/09/06 19:52:53 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -40,7 +40,6 @@
 #include <sys/systm.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <machine/pte.h>
 #include <machine/cpu.h>

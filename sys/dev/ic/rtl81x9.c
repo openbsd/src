@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.8 2001/08/12 20:12:12 mickey Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.9 2001/09/11 20:05:25 miod Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -115,7 +115,6 @@
 #endif
 
 #include <vm/vm.h>              /* for vtophys */
-#include <vm/vm_kern.h>
 #include <machine/bus.h>
 
 #include <dev/mii/mii.h>

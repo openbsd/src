@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppc1_machdep.c,v 1.1 2001/06/26 21:57:54 smurph Exp $	*/
+/*	$OpenBSD: ppc1_machdep.c,v 1.2 2001/09/11 20:05:24 miod Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -44,7 +44,6 @@
 #include <sys/systm.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <machine/powerpc.h>
 #include <machine/autoconf.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdb.c,v 1.3 2000/06/08 12:33:10 art Exp $ */
+/*	$OpenBSD: kdb.c,v 1.4 2001/09/11 20:05:25 miod Exp $ */
 /*	$NetBSD: kdb.c,v 1.5 1997/01/11 11:34:39 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -48,7 +48,6 @@
 #include <sys/malloc.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <machine/sid.h>
 #include <machine/pte.h>

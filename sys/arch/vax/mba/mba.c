@@ -1,4 +1,4 @@
-/*	$OpenBSD: mba.c,v 1.6 2000/04/27 03:14:45 bjc Exp $ */
+/*	$OpenBSD: mba.c,v 1.7 2001/09/11 20:05:25 miod Exp $ */
 /*	$NetBSD: mba.c,v 1.18 2000/01/24 02:40:36 matt Exp $ */
 /*
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -46,7 +46,6 @@
 #include <sys/proc.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <machine/trap.h>
 #include <machine/scb.h>

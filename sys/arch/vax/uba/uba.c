@@ -1,4 +1,4 @@
-/*	$OpenBSD: uba.c,v 1.10 2001/08/25 13:33:37 hugh Exp $	   */
+/*	$OpenBSD: uba.c,v 1.11 2001/09/11 20:05:25 miod Exp $	   */
 /*	$NetBSD: uba.c,v 1.43 2000/01/24 02:40:36 matt Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
@@ -53,7 +53,6 @@
 #include <sys/device.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <machine/pte.h>
 #include <machine/cpu.h>

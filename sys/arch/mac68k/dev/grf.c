@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf.c,v 1.15 2001/08/11 23:07:12 art Exp $	*/
+/*	$OpenBSD: grf.c,v 1.16 2001/09/11 20:05:24 miod Exp $	*/
 /*	$NetBSD: grf.c,v 1.41 1997/02/24 06:20:04 scottr Exp $	*/
 
 /*
@@ -68,7 +68,6 @@
 #include <miscfs/specfs/specdev.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm.h>
 

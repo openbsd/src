@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka48.c,v 1.3 2001/04/01 19:17:38 hugh Exp $	*/
+/*	$OpenBSD: ka48.c,v 1.4 2001/09/11 20:05:25 miod Exp $	*/
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,7 +41,6 @@
 #include <sys/systm.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <machine/pte.h>
 #include <machine/cpu.h>

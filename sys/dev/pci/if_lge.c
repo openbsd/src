@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.2 2001/09/05 20:58:54 nate Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.3 2001/09/11 20:05:25 miod Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -108,7 +108,6 @@
 
 #include <vm/vm.h>              /* for vtophys */
 #include <vm/pmap.h>            /* for vtophys */
-#include <vm/vm_kern.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.19 2001/08/11 10:57:22 art Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.20 2001/09/11 20:05:26 miod Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.41 2000/05/23 02:19:20 enami Exp $	*/
 
 /*
@@ -67,7 +67,6 @@
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
-#include <vm/vm_kern.h>
 
 #include <sys/syscallargs.h>
 

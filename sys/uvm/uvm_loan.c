@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_loan.c,v 1.8 2001/08/11 10:57:22 art Exp $	*/
+/*	$OpenBSD: uvm_loan.c,v 1.9 2001/09/11 20:05:26 miod Exp $	*/
 /*	$NetBSD: uvm_loan.c,v 1.20 2000/04/10 00:32:46 thorpej Exp $	*/
 
 /*
@@ -48,7 +48,6 @@
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm.h>
 

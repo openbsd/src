@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_device.c,v 1.11 2001/08/11 10:57:22 art Exp $	*/
+/*	$OpenBSD: uvm_device.c,v 1.12 2001/09/11 20:05:26 miod Exp $	*/
 /*	$NetBSD: uvm_device.c,v 1.22 2000/05/28 10:21:55 drochner Exp $	*/
 
 /*
@@ -48,7 +48,6 @@
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_device.h>

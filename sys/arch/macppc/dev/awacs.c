@@ -1,4 +1,4 @@
-/*	$OpenBSD: awacs.c,v 1.2 2001/09/01 17:43:09 drahn Exp $	*/
+/*	$OpenBSD: awacs.c,v 1.3 2001/09/11 20:05:24 miod Exp $	*/
 /*	$NetBSD: awacs.c,v 1.4 2001/02/26 21:07:51 wiz Exp $	*/
 
 /*-
@@ -39,7 +39,6 @@
 #include <dev/mulaw.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 #include <uvm/uvm.h>
 
 #include <machine/autoconf.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.19 2001/09/05 19:22:23 deraadt Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.20 2001/09/11 20:05:26 miod Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.33 2000/05/19 03:45:05 thorpej Exp $	*/
 
 /*
@@ -64,7 +64,6 @@
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_vnode.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_table.c,v 1.7 2001/08/26 14:31:12 miod Exp $	*/
+/*	$OpenBSD: pmap_table.c,v 1.8 2001/09/11 20:05:24 miod Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,7 +33,6 @@
 #include <sys/param.h>
 #include <machine/m882xx.h>		/* CMMU stuff */
 #include <vm/vm.h>
-#include <vm/vm_kern.h>			/* vm/vm_kern.h */
 #include <machine/pmap_table.h>		/* pmap_table.h*/
 
 #define R VM_PROT_READ
