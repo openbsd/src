@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.8 1997/08/30 17:42:53 millert Exp $
+#	$OpenBSD: list,v 1.9 1997/09/02 23:06:24 deraadt Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -57,6 +57,7 @@ LINK	instbin			usr/sbin/bad144
 LINK	instbin			usr/sbin/chat
 LINK	instbin			usr/sbin/chown usr/sbin/chgrp
 LINK	instbin			usr/sbin/pppd
+LINK	instbin			usr/mdec/installboot
 SPECIAL	/bin/rm instbin
 
 # `internal' crunchgen links
@@ -68,6 +69,9 @@ SPECIAL	cd dev; sh MAKEDEV ramdisk
 SPECIAL	/bin/rm dev/MAKEDEV
 
 # we need the contents of /usr/mdec
+COPY	${DESTDIR}/usr/mdec/biosboot	usr/mdec/biosboot
+COPY	${DESTDIR}/usr/mdec/mbr		usr/mdec/mbr
+COPY	${DESTDIR}/usr/mdec/boot	usr/mdec/boot
 COPY	${DESTDIR}/usr/mdec/bootsd	usr/mdec/bootsd
 COPY	${DESTDIR}/usr/mdec/sdboot	usr/mdec/sdboot
 LINK	usr/mdec/bootsd			usr/mdec/bootwd
