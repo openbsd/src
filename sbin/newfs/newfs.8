@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs.8,v 1.39 2004/07/28 21:27:52 jmc Exp $
+.\"	$OpenBSD: newfs.8,v 1.40 2004/08/15 12:20:47 otto Exp $
 .\"	$NetBSD: newfs.8,v 1.12 1995/03/18 14:58:41 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
@@ -222,6 +222,8 @@ See
 for more details on how to set this option.
 .It Fl s Ar size
 The size of the file system in sectors.
+The maximum size of a file system is 2,147,483,647 (2^31 - 1) sectors,
+which is slightly less than 1TB.
 .El
 .Pp
 The following options override the standard sizes for the disk geometry.
@@ -351,3 +353,9 @@ The
 .Nm
 command appeared in
 .Bx 4.2 .
+.Sh BUGS
+Certain combinations of block and fragment sizes may not produce a valid
+file system.
+If a non-default block or fragment size is specified,
+.Xr fsck 8
+should be run on the newly created filesystem before use.
