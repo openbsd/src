@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.35 2003/03/20 15:42:06 jason Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.36 2003/03/27 18:06:48 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -100,6 +100,8 @@ void cgsix_ras_erasecols(void *, int, int, int, long int);
 void cgsix_ras_eraserows(void *, int, int, long int);
 void cgsix_ras_do_cursor(struct rasops_info *);
 void cgsix_ras_updatecursor(struct rasops_info *);
+int cgsix_setcursor(struct cgsix_softc *, struct wsdisplay_cursor *);
+int cgsix_updatecursor(struct cgsix_softc *, u_int);
 
 struct wsdisplay_accessops cgsix_accessops = {
 	cgsix_ioctl,
@@ -334,7 +336,10 @@ cgsix_ioctl(v, cmd, data, flags, p)
 	struct cgsix_softc *sc = v;
 	struct wsdisplay_cmap *cm;
 	struct wsdisplay_fbinfo *wdf;
-	int error;
+	struct wsdisplay_cursor *curs;
+	struct wsdisplay_curpos *pos;
+	u_char r[2], g[2], b[2];
+	int error, s;
 	u_int mode;
 
 	switch (cmd) {
@@ -358,14 +363,12 @@ cgsix_ioctl(v, cmd, data, flags, p)
 	case WSDISPLAYIO_LINEBYTES:
 		*(u_int *)data = sc->sc_linebytes;
 		break;
-
 	case WSDISPLAYIO_GETCMAP:
 		cm = (struct wsdisplay_cmap *)data;
 		error = cg6_bt_getcmap(&sc->sc_cmap, cm);
 		if (error)
 			return (error);
 		break;
-
 	case WSDISPLAYIO_PUTCMAP:
 		cm = (struct wsdisplay_cmap *)data;
 		error = cg6_bt_putcmap(&sc->sc_cmap, cm);
@@ -373,17 +376,190 @@ cgsix_ioctl(v, cmd, data, flags, p)
 			return (error);
 		cgsix_loadcmap_deferred(sc, cm->index, cm->count);
 		break;
+	case WSDISPLAYIO_SCURSOR:
+		curs = (struct wsdisplay_cursor *)data;
+		return (cgsix_setcursor(sc, curs));
+	case WSDISPLAYIO_GCURSOR:
+		curs = (struct wsdisplay_cursor *)data;
+		if (curs->which & WSDISPLAY_CURSOR_DOCUR)
+			curs->enable = sc->sc_curs_enabled;
+		if (curs->which & WSDISPLAY_CURSOR_DOPOS) {
+			curs->pos.x = sc->sc_curs_pos.x;
+			curs->pos.y = sc->sc_curs_pos.y;
+		}
+		if (curs->which & WSDISPLAY_CURSOR_DOHOT) {
+			curs->hot.x = sc->sc_curs_hot.x;
+			curs->hot.y = sc->sc_curs_hot.y;
+		}
+		if (curs->which & WSDISPLAY_CURSOR_DOCMAP) {
+			curs->cmap.index = 0;
+			curs->cmap.count = 2;
+			r[0] = sc->sc_curs_fg >> 16;
+			g[0] = sc->sc_curs_fg >> 8;
+			b[0] = sc->sc_curs_fg >> 0;
+			r[1] = sc->sc_curs_bg >> 16;
+			g[1] = sc->sc_curs_bg >> 8;
+			b[1] = sc->sc_curs_bg >> 0;
+			error = copyout(r, curs->cmap.red, sizeof(r));
+			if (error)
+				return (error);
+			error = copyout(g, curs->cmap.green, sizeof(g));
+			if (error)
+				return (error);
+			error = copyout(b, curs->cmap.blue, sizeof(b));
+			if (error)
+				return (error);
+		}
+		if (curs->which & WSDISPLAY_CURSOR_DOSHAPE) {
+			size_t l;
 
+			curs->size.x = sc->sc_curs_size.x;
+			curs->size.y = sc->sc_curs_size.y;
+			l = (sc->sc_curs_size.x * sc->sc_curs_size.y) / NBBY;
+			error = copyout(sc->sc_curs_image, curs->image, l);
+			if (error)
+				return (error);
+			error = copyout(sc->sc_curs_mask, curs->mask, l);
+			if (error)
+				return (error);
+		}
+		break;
+	case WSDISPLAYIO_GCURPOS:
+		pos = (struct wsdisplay_curpos *)data;
+		pos->x = sc->sc_curs_pos.x;
+		pos->y = sc->sc_curs_pos.y;
+		break;
+	case WSDISPLAYIO_SCURPOS:
+		pos = (struct wsdisplay_curpos *)data;
+		s = spltty();
+		sc->sc_curs_pos.x = pos->x;
+		sc->sc_curs_pos.y = pos->y;
+		cgsix_updatecursor(sc, WSDISPLAY_CURSOR_DOPOS);
+		splx(s);
+		break;
+	case WSDISPLAYIO_GCURMAX:
+		pos = (struct wsdisplay_curpos *)data;
+		pos->x = pos->y = 32;
+		break;
 	case WSDISPLAYIO_SVIDEO:
 	case WSDISPLAYIO_GVIDEO:
-	case WSDISPLAYIO_GCURPOS:
-	case WSDISPLAYIO_SCURPOS:
-	case WSDISPLAYIO_GCURMAX:
-	case WSDISPLAYIO_GCURSOR:
-	case WSDISPLAYIO_SCURSOR:
 	default:
-		return -1; /* not supported yet */
+		return -1; /* not supported */
         }
+
+	return (0);
+}
+
+int
+cgsix_setcursor(struct cgsix_softc *sc, struct wsdisplay_cursor *curs)
+{
+	u_int8_t r[2], g[2], b[2], image[128], mask[128];
+	int s, error;
+	size_t imcount;
+
+	/*
+	 * Do stuff that can generate errors first, then we'll blast it
+	 * all at once.
+	 */
+	if (curs->which & WSDISPLAY_CURSOR_DOCMAP) {
+		if (curs->cmap.count < 2)
+			return (EINVAL);
+		error = copyin(curs->cmap.red, r, sizeof(r));
+		if (error)
+			return (error);
+		error = copyin(curs->cmap.green, g, sizeof(g));
+		if (error)
+			return (error);
+		error = copyin(curs->cmap.blue, b, sizeof(b));
+		if (error)
+			return (error);
+	}
+
+	if (curs->which & WSDISPLAY_CURSOR_DOSHAPE) {
+		if (curs->size.x > CG6_MAX_CURSOR ||
+		    curs->size.y > CG6_MAX_CURSOR)
+			return (EINVAL);
+		imcount = (curs->size.x * curs->size.y) / NBBY;
+		error = copyin(curs->image, image, imcount);
+		if (error)
+			return (error);
+		error = copyin(curs->mask, mask, imcount);
+		if (error)
+			return (error);
+	}
+
+	/*
+	 * Ok, everything is in kernel space and sane, update state.
+	 */
+	s = spltty();
+
+	if (curs->which & WSDISPLAY_CURSOR_DOCUR)
+		sc->sc_curs_enabled = curs->enable;
+	if (curs->which & WSDISPLAY_CURSOR_DOPOS) {
+		sc->sc_curs_pos.x = curs->pos.x;
+		sc->sc_curs_pos.y = curs->pos.y;
+	}
+	if (curs->which & WSDISPLAY_CURSOR_DOHOT) {
+		sc->sc_curs_hot.x = curs->hot.x;
+		sc->sc_curs_hot.y = curs->hot.y;
+	}
+	if (curs->which & WSDISPLAY_CURSOR_DOCMAP) {
+		sc->sc_curs_fg = ((r[0] << 16) | (g[0] << 8) | (b[0] << 0));
+		sc->sc_curs_bg = ((r[1] << 16) | (g[1] << 8) | (b[1] << 0));
+	}
+	if (curs->which & WSDISPLAY_CURSOR_DOSHAPE) {
+		sc->sc_curs_size.x = curs->size.x;
+		sc->sc_curs_size.y = curs->size.y;
+		bcopy(image, sc->sc_curs_image, imcount);
+		bcopy(mask, sc->sc_curs_mask, imcount);
+	}
+
+	cgsix_updatecursor(sc, curs->which);
+	splx(s);
+
+	return (0);
+}
+
+int
+cgsix_updatecursor(struct cgsix_softc *sc, u_int which)
+{
+	if (which & WSDISPLAY_CURSOR_DOCMAP) {
+		BT_WRITE(sc, BT_ADDR, 1 << 24);
+		BT_WRITE(sc, BT_OMAP, ((sc->sc_curs_fg & 0x00ff0000)>> 16) << 24);
+		BT_WRITE(sc, BT_OMAP, ((sc->sc_curs_fg & 0x0000ff00)>> 8) << 24);
+		BT_WRITE(sc, BT_OMAP, ((sc->sc_curs_fg & 0x000000ff)>> 0) << 24);
+
+		BT_WRITE(sc, BT_ADDR, 3 << 24);
+		BT_WRITE(sc, BT_OMAP, ((sc->sc_curs_bg & 0x00ff0000)>> 16) << 24);
+		BT_WRITE(sc, BT_OMAP, ((sc->sc_curs_bg & 0x0000ff00)>> 8) << 24);
+		BT_WRITE(sc, BT_OMAP, ((sc->sc_curs_bg & 0x000000ff)>> 0) << 24);
+	}
+
+	if (which & (WSDISPLAY_CURSOR_DOPOS | WSDISPLAY_CURSOR_DOHOT)) {
+		u_int32_t x, y;
+
+		x = sc->sc_curs_pos.x + CG6_MAX_CURSOR - sc->sc_curs_hot.x;
+		y = sc->sc_curs_pos.y + CG6_MAX_CURSOR - sc->sc_curs_hot.y;
+		THC_WRITE(sc, CG6_THC_CURSXY,
+		    ((x & 0xffff) << 16) | (y & 0xffff));
+	}
+
+	if (which & WSDISPLAY_CURSOR_DOCUR) {
+		u_int32_t c;
+
+		if (sc->sc_curs_enabled) {
+			BT_WRITE(sc, BT_ADDR, 6 << 24);
+			c = BT_READ(sc, BT_CTRL);
+			c |= 3 << 24;
+			BT_WRITE(sc, BT_CTRL, c);
+		} else {
+			BT_WRITE(sc, BT_ADDR, 6 << 24);
+			c = BT_READ(sc, BT_CTRL);
+			c &= ~(3 << 24);
+			BT_WRITE(sc, BT_CTRL, c);
+			THC_WRITE(sc, CG6_THC_CURSXY, THC_CURSOFF);
+		}
+	}
 
 	return (0);
 }
