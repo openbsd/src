@@ -41,207 +41,6 @@
  * Look further below for more generic structures.
  */
 
-#if defined(__NetBSD__)
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/mbuf.h>
-#include <sys/protosw.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <sys/errno.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <sys/proc.h>
-#include <sys/device.h>
-#include <net/if.h>
-#if defined(SIOCSIFMEDIA)
-#include <net/if_media.h>
-#endif
-#include <net/if_types.h>
-#include <net/if_dl.h>
-#include <net/route.h>
-#include <net/netisr.h>
-
-#include "bpfilter.h"
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
-#endif
-
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/in_var.h>
-#include <netinet/ip.h>
-#endif
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
-#include <vm/vm.h>
-#include <vm/vm_param.h>
-#include <net/if_ether.h>
-#if defined(INET)
-#include <netinet/if_inarp.h>
-#endif
-#include <machine/bus.h>
-#include <machine/intr.h>
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcivar.h>
-#include <dev/pci/pcidevs.h>
-#include <dev/pci/if_wxreg.h>
-#include <dev/mii/mii.h>
-#include <dev/mii/miivar.h>
-
-struct wxmdvar {
-	struct device 		dev;		/* generic device structures */
-	void *			ih;		/* interrupt handler cookie */
-	struct ethercom		ethercom;	/* ethernet common part */
-	pci_chipset_tag_t	pci_pc;
-	pcitag_t		pci_tag;
-	u_int8_t		enaddr[6];	/* our mac address */
-	u_int32_t		cmdw;
-	bus_space_tag_t		st;		/* bus space tag */
-	bus_space_handle_t	sh;		/* bus space handle */
-	struct ifmedia 		ifm;
-	struct mii_data		mii_data;
-	int			spl;
-};
-#define	wx_dev		w.dev
-#define	wx_enaddr	w.enaddr
-#define	wx_cmdw		w.cmdw
-#define	wx_media	w.ifm
-
-#define	wx_if		w.ethercom.ec_if
-#define	wx_name		w.dev.dv_xname
-
-#define	IOCTL_CMD_TYPE			u_long
-#define	WXMALLOC(len)			malloc(len, M_DEVBUF, M_NOWAIT)
-#define	WXFREE(ptr)			free(ptr, M_DEVBUF)
-#define	SOFTC_IFP(ifp)			ifp->if_softc
-#define	WX_BPFTAP_ARG(ifp)		(ifp)->if_bpf
-#define	TIMEOUT(sc, func, arg, time)	timeout(func, arg, time)
-#define	VTIMEOUT(sc, func, arg, time)	timeout(func, arg, time)
-#define	UNTIMEOUT(f, arg, sc)		untimeout(f, arg)
-#define	INLINE				inline
-#define	WX_LOCK(_sc)			_sc->w.spl = splimp()
-#define	WX_UNLOCK(_sc)			splx(_sc->w.spl)
-#define	WX_ILOCK(_sc)
-#define	WX_IUNLK(_sc)
-#define	WX_SOFTC_FROM_MII_ARG(x)	(wx_softc_t *) x
-
-#define	vm_offset_t		vaddr_t
-#ifndef	IFM_1000_SX
-#define	IFM_1000_SX		IFM_1000_FX
-#endif
-#define	READ_CSR	_read_csr
-#define	WRITE_CSR	_write_csr
-
-typedef	unsigned long intptr_t;
-
-#elif	defined(__FreeBSD__)
-/*
- * Enable for FreeBSD 5.0 SMP code
- */
-/* #define	SMPNG		1 */
-
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/mbuf.h>
-#include <sys/protosw.h>
-#include <sys/socket.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <net/if.h>
-#include <net/if_dl.h>
-#include <net/if_media.h>
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
-#include <net/bpf.h>
-#include <sys/sockio.h>
-#include <sys/bus.h>
-#include <machine/bus.h>
-#include <sys/rman.h>
-#include <machine/resource.h>
-#include <net/ethernet.h>
-#include <net/if_arp.h>
-#include <vm/vm.h>
-#include <machine/clock.h>
-#include <pci/pcivar.h>
-#include <pci/pcireg.h>
-#include <pci/if_wxreg.h>
-#include <dev/mii/mii.h>
-#include <dev/mii/miivar.h>
-
-#define	NBPFILTER	1
-
-#include "miibus_if.h"
-
-#include "opt_bdg.h"
-#ifdef BRIDGE
-#include <net/if_types.h>
-#include <net/bridge.h>
-#endif
-
-struct wxmdvar {
-	struct device *		dev;	/* backpointer to device */
-	struct arpcom 		arpcom;	/* per-interface network data */
-	struct resource *	mem;	/* resource descriptor for registers */
-	struct resource *	irq;	/* resource descriptor for interrupt */
-	void *			ih;	/* interrupt handler cookie */
-	u_int16_t		cmdw;
-	struct callout_handle	sch;	/* handle for timeouts */
-	char 			name[8];
-	bus_space_tag_t		st;	/* bus space tag */
-	bus_space_handle_t	sh;	/* bus space handle */
-	struct ifmedia 		ifm;
-	device_t		miibus;
-#ifdef	SMPNG
-	struct mtx		wxmtx;
-#else
-	int			spl;
-#endif
-};
-#define	wx_dev		w.dev
-#define	wx_enaddr	w.arpcom.ac_enaddr
-#define	wx_cmdw		w.cmdw
-#define	wx_media	w.ifm
-
-#define	wx_if		w.arpcom.ac_if
-#define	wx_name		w.name
-#define	wx_mtx		w.wxmtx
-
-#define	IOCTL_CMD_TYPE			u_long
-#define	WXMALLOC(len)			malloc(len, M_DEVBUF, M_NOWAIT)
-#define	WXFREE(ptr)			free(ptr, M_DEVBUF)
-#define	SOFTC_IFP(ifp)			ifp->if_softc
-#define	WX_BPFTAP_ARG(ifp)		ifp
-#define	VTIMEOUT(sc, func, arg, time)	(void) timeout(func, arg, time)
-#define	TIMEOUT(sc, func, arg, time)	(sc)->w.sch = timeout(func, arg, time)
-#define	UNTIMEOUT(f, arg, sc)		untimeout(f, arg, (sc)->w.sch)
-#define	INLINE				__inline
-#ifdef	SMPNG
-#define WX_LOCK(_sc)			mtx_lock(&(_sc)->wx_mtx)
-#define WX_UNLOCK(_sc)			mtx_unlock(&(_sc)->wx_mtx)
-#define	WX_ILOCK(_sc)			mtx_lock(&(_sc)->wx_mtx)
-#define	WX_IUNLK(_sc)			mtx_unlock(&(_sc)->wx_mtx)
-#else
-#define	WX_LOCK(_sc)			_sc->w.spl = splimp()
-#define	WX_UNLOCK(_sc)			splx(_sc->w.spl)
-#define	WX_ILOCK(_sc)
-#define	WX_IUNLK(_sc)
-#endif
-#define	WX_SOFTC_FROM_MII_ARG(x)	device_get_softc(x)
-
-
-#define	READ_CSR(sc, reg)						\
-	bus_space_read_4((sc)->w.st, (sc)->w.sh, (reg))
-#define	WRITE_CSR(sc, reg, val)						\
-	bus_space_write_4((sc)->w.st, (sc)->w.sh, (reg), (val))
-
-#elif defined(__OpenBSD__)
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -332,13 +131,13 @@ struct wxmdvar {
 #define	WX_ILOCK(_sc)
 #define	WX_IUNLK(_sc)
 #define	WX_SOFTC_FROM_MII_ARG(x)	(wx_softc_t *) x
+#define	WX_MII_FROM_SOFTC(x)		(&x->w.mii_data)
 
 #define	vm_offset_t		vaddr_t
 #define	READ_CSR	_read_csr
 #define	WRITE_CSR	_write_csr
 
 typedef	unsigned long intptr_t;
-#endif
 
 
 /*
@@ -370,7 +169,8 @@ typedef struct wx_softc {
 	/*
 	 * misc goodies
 	 */
-	u_int32_t		:	24,
+	u_int32_t		:	23,
+		wx_mii		:	1,	/* non-zero if we have a PHY */
 		wx_no_flow 	:	1,
 		wx_ilos		:	1,
 		wx_no_ilos	:	1,
@@ -385,8 +185,6 @@ typedef struct wx_softc {
 	u_int32_t wx_ienable;		/* current ienable to use */
 	u_int32_t wx_dcr;		/* dcr used */
 	u_int32_t wx_icr;		/* last icr */
-
-	mii_data_t	*wx_mii;	/* non-NULL if we have a PHY */
 
 	/*
 	 * Statistics, soft && hard
@@ -452,7 +250,7 @@ typedef struct wx_softc {
 #define	WX_MAX_TDESC	256	/* number of transmit descriptors */
 #define	T_NXT_IDX(x)	((x + 1) & (WX_MAX_TDESC - 1))
 #define	T_PREV_IDX(x)	((x - 1) & (WX_MAX_TDESC - 1))
-#define	WX_MAX_RDESC	64	/* number of receive descriptors */
+#define	WX_MAX_RDESC	256	/* number of receive descriptors */
 #ifdef	PADDED_CELL
 #define	RXINCR		2
 #else

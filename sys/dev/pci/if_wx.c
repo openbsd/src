@@ -1,6 +1,6 @@
-/* $OpenBSD: if_wx.c,v 1.16 2001/09/05 19:22:39 mjacob Exp $ */
+/* $OpenBSD: if_wx.c,v 1.17 2001/10/06 22:42:53 mjacob Exp $ */
 /*
- * Principal Author: Matthew Jacob
+ * Principal Author: Matthew Jacob <mjacob@feral.com>
  * Copyright (c) 1999, 2001 by Traakan Software
  * All rights reserved.
  *
@@ -37,6 +37,12 @@
  */
 
 /*
+ * Many bug fixes gratefully acknowledged from:
+ *
+ *	The folks at Sitara Networks
+ */
+
+/*
  * Options
  */
 
@@ -50,20 +56,12 @@
  * This isn't debugged yet.
  */
 /* #define	PADDED_CELL	1 */
-/*
- * Enable JumboGrams. This seems to work.
- */
-/* #define	WX_JUMBO	1 */
 
 /*
  * Since the includes are a mess, they'll all be in if_wxvar.h
  */
 
-#if	defined(__NetBSD__) || defined(__OpenBSD__)
 #include <dev/pci/if_wxvar.h>
-#elif	defined(__FreeBSD__)
-#include <pci/if_wxvar.h>
-#endif
 
 #ifdef __alpha__
 #undef vtophys
@@ -119,12 +117,7 @@ static void wx_mii_shift_out(wx_softc_t *, u_int32_t, u_int32_t);
 #define	WX_DISABLE_INT(sc)	WRITE_CSR(sc, WXREG_IMCLR, WXDISABLE)
 #define	WX_ENABLE_INT(sc)	WRITE_CSR(sc, WXREG_IMASK, sc->wx_ienable)
 
-#define	JUMBOMTU	(WX_MAX_PKT_SIZE_JUMBO - sizeof (struct ether_header))
-#ifdef	WX_JUMBO
-#define	WX_MAXMTU	JUMBOMTU
-#else
-#define	WX_MAXMTU	ETHERMTU
-#endif
+#define	WX_MAXMTU	(WX_MAX_PKT_SIZE_JUMBO - sizeof (struct ether_header))
 
 #define	DPRINTF(sc, x)	if (sc->wx_debug) printf x
 #define	IPRINTF(sc, x)	if (sc->wx_verbose) printf x
@@ -136,12 +129,7 @@ static const char ane[] = "%s: /C/ ordered sets seen- enabling ANE\n";
 static const char inane[] = "%s: no /C/ ordered sets seen- disabling ANE\n";
 
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-#if defined(__BROKEN_INDIRECT_CONFIG) || defined(__OpenBSD__)
 #define	MATCHARG	void *
-#else
-#define	MATCHARG	struct cfdata *
-#endif
 
 static int	wx_match(struct device *, MATCHARG, void *);
 static void	wx_attach(struct device *, struct device *, void *);
@@ -175,11 +163,9 @@ struct cfattach wx_ca = {
 	sizeof (wx_softc_t), wx_match, wx_attach
 };
 
-#ifdef __OpenBSD__
 struct cfdriver wx_cd = {
 	0, "wx", DV_IFNET
 };
-#endif
 
 /*
  * Check if a device is an 82452.
@@ -217,11 +203,6 @@ wx_attach(struct device *parent, struct device *self, void *aux)
 	sc->w.pci_pc = pa->pa_pc;
 	sc->w.pci_tag = pa->pa_tag;
 
-#if	defined(__NetBSD__)
-	if (bootverbose)
-		sc->wx_verbose = 1;
-#endif
-
 	/*
 	 * Map control/status registers.
 	 */
@@ -230,71 +211,56 @@ wx_attach(struct device *parent, struct device *self, void *aux)
 		printf(": can't map registers\n");
 		return;
 	}
-#ifndef __OpenBSD__
-	printf(": Intel GigaBit Ethernet\n");
-#endif
 
 	sc->wx_idnrev = (PCI_PRODUCT(pa->pa_id) << 16) |
 		(pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CLASS_REG) & 0xff);
 
+        /*
+         * Let the BIOS do it's job- but check for sanity.
+         */
 	data = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG);
-	data &= ~(PCI_CACHELINE_MASK << PCI_CACHELINE_SHIFT);
-	data |= (WX_CACHELINE_SIZE << PCI_CACHELINE_SHIFT);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG, data);
+	switch ((data >> PCI_CACHELINE_SHIFT) & PCI_CACHELINE_MASK) {
+	case 4:
+	case 8:
+	case 16:
+	case 32:
+		break;
+	default:
+		data &= ~(PCI_CACHELINE_MASK << PCI_CACHELINE_SHIFT);
+		data |= (8 << PCI_CACHELINE_SHIFT);
+		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG, data);
+		break;
+	}
 
 	if (wx_attach_common(sc)) {
-#ifdef __OpenBSD__
 		printf("\n");
-#endif
 		return;
 	}
 
-#ifndef __OpenBSD__
-	printf("%s: Ethernet address %s\n",
-	    sc->wx_name, ether_sprintf(sc->wx_enaddr));
-#else
 	if (!IS_LIVENGOOD_CU(sc)) {
 		printf(": address %s", ether_sprintf(sc->wx_enaddr));
 	}
-#endif
 
 	/*
 	 * Allocate our interrupt.
 	 */
 	if (pci_intr_map(pa, &ih)) {
-#ifndef __OpenBSD__
-		printf("%s: couldn't map interrupt\n", sc->wx_name);
-#else
 		printf(", couldn't map interrupt\n");
-#endif
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
-#if defined(__OpenBSD__)
 	sc->w.ih = pci_intr_establish(pc, ih, IPL_NET, wx_intr, sc,
 	    self->dv_xname);
-#else
-	sc->w.ih = pci_intr_establish(pc, ih, IPL_NET, wx_intr, sc);
-#endif
 	if (sc->w.ih == NULL) {
-#ifndef __OpenBSD__
-		printf("%s: couldn't establish interrupt", sc->wx_name);
-#else
 		printf(", couldn't establish interrupt\n");
-#endif
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
-#ifndef __OpenBSD__
-	printf("%s: interrupting at %s\n", sc->wx_name, intrstr);
-#else
 	if (!IS_LIVENGOOD_CU(sc)) {
 		printf(", %s\n", intrstr);
 	}
-#endif
-
 	ifp = &sc->wx_if;
 	bcopy(sc->wx_name, ifp->if_xname, IFNAMSIZ);
 	ifp->if_mtu = WX_MAXMTU;
@@ -308,16 +274,8 @@ wx_attach(struct device *parent, struct device *self, void *aux)
 	 * Attach the interface.
 	 */
 	if_attach(ifp);
-#ifdef __OpenBSD__
 	ether_ifattach(ifp);
-#else
-	ether_ifattach(ifp, sc->wx_enaddr);
 
-#if	NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB,
-	    sizeof (struct ether_header));
-#endif
-#endif
 	/*
 	 * Add shutdown hook so that DMA is disabled prior to reboot. Not
 	 * doing do could allow DMA to corrupt kernel memory during the
@@ -330,19 +288,18 @@ static int
 wx_attach_phy(wx_softc_t *sc)
 {
 
-	sc->wx_mii = &sc->w.mii_data;
-	ifmedia_init(&sc->wx_mii->mii_media, 0, wx_ifmedia_upd, wx_ifmedia_sts);
-        sc->wx_mii->mii_ifp = &sc->wx_if;
-	sc->wx_mii->mii_readreg = (mii_readreg_t) wx_miibus_readreg;
-	sc->wx_mii->mii_writereg = (mii_writereg_t) wx_miibus_writereg;
-	sc->wx_mii->mii_statchg = (mii_statchg_t) wx_miibus_statchg;
-	mii_phy_probe(&sc->w.dev, sc->wx_mii, 0xffffffff);
-	if (LIST_FIRST(&sc->wx_mii->mii_phys) == NULL) {
-		ifmedia_add(&sc->wx_mii->mii_media,
-		    IFM_ETHER|IFM_NONE, 0, NULL);
-		ifmedia_set(&sc->wx_mii->mii_media, IFM_ETHER|IFM_NONE);
+	mii_data_t *mii = WX_MII_FROM_SOFTC(sc);
+	ifmedia_init(&mii->mii_media, 0, wx_ifmedia_upd, wx_ifmedia_sts);
+        mii->mii_ifp = &sc->wx_if;
+	mii->mii_readreg = (mii_readreg_t) wx_miibus_readreg;
+	mii->mii_writereg = (mii_writereg_t) wx_miibus_writereg;
+	mii->mii_statchg = (mii_statchg_t) wx_miibus_statchg;
+	mii_phy_probe(&sc->w.dev, mii, 0xffffffff);
+	if (LIST_FIRST(&mii->mii_phys) == NULL) {
+		ifmedia_add(&mii->mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
+		ifmedia_set(&mii->mii_media, IFM_ETHER|IFM_NONE);
 	} else {
-		ifmedia_set(&sc->wx_mii->mii_media, IFM_ETHER|IFM_AUTO);
+		ifmedia_set(&mii->mii_media, IFM_ETHER|IFM_AUTO);
 	}
 	return 0;
 }
@@ -376,11 +333,7 @@ wx_ether_ioctl(struct ifnet *ifp, IOCTL_CMD_TYPE cmd, caddr_t data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-#ifdef __OpenBSD__
 			arp_ifinit(&sc->w.arpcom, ifa);
-#else
-			arp_ifinit(ifp, ifa);
-#endif
 			break;
 #endif
 #ifdef NS
@@ -423,7 +376,7 @@ wx_mc_setup(wx_softc_t *sc)
 	struct ether_multi *enm;
 
 	/*
-	 * XXX: drain TX queue- use a tsleep/wakeup until done.
+	 * XXX: drain TX queue
 	 */
 	if (sc->tactive) {
 		return (EBUSY);
@@ -436,12 +389,7 @@ wx_mc_setup(wx_softc_t *sc)
 		return (wx_init(sc));
 	}
 
-#ifdef __OpenBSD__
 	ETHER_FIRST_MULTI(step, &sc->w.arpcom, enm);
-#else
-	ETHER_FIRST_MULTI(step, &sc->w.ethercom, enm);
-#endif
-
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, 6) != 0)
 			continue;
@@ -532,344 +480,6 @@ wx_dring_teardown(wx_softc_t *sc)
 	}
 }
 
-#elif	defined(__FreeBSD__)
-static int wx_mc_setup(wx_softc_t *);
-/*
- * Program multicast addresses.
- *
- * This function must be called at splimp, but it may sleep.
- */
-static int
-wx_mc_setup(wx_softc_t *sc)
-{
-	struct ifnet *ifp = &sc->wx_if;
-	struct ifmultiaddr *ifma;
-
-	/*
-	 * XXX: drain TX queue- use a tsleep/wakeup until done.
-	 */
-	if (sc->tactive) {
-		return (EBUSY);
-	}
-
-	wx_stop(sc);
-
-	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
-		sc->all_mcasts = 1;
-		return (wx_init(sc));
-	}
-
-	sc->wx_nmca = 0;
-	TAILQ_FOREACH(ifma, &ifp->if_multiaddrs, ifma_link) {
-		if (ifma->ifma_addr->sa_family != AF_LINK) {
-			continue;
-		}
-		if (sc->wx_nmca >= WX_RAL_TAB_SIZE-1) {
-			sc->wx_nmca = 0;
-			sc->all_mcasts = 1;
-			break;
-		}
-		bcopy(LLADDR((struct sockaddr_dl *)ifma->ifma_addr),
-		    (void *) &sc->wx_mcaddr[sc->wx_nmca++][0], 6);
-	}
-	return (wx_init(sc));
-}
-
-/*
- * Return identification string if this is device is ours.
- */
-static int
-wx_probe(device_t dev)
-{
-	if (pci_get_vendor(dev) != WX_VENDOR_INTEL) {
-		return (ENXIO);
-	}
-	switch (pci_get_device(dev)) {
-	case WX_PRODUCT_82452:
-		device_set_desc(dev, "Intel PRO/1000 Gigabit (WISEMAN)");
-		break;
-	case WX_PRODUCT_LIVENGOOD:
-		device_set_desc(dev, "Intel PRO/1000 (LIVENGOOD)");
-		break;
-	case WX_PRODUCT_82452_SC:
-		device_set_desc(dev, "Intel PRO/1000 F Gigabit Ethernet");
-		break;
-	case WX_PRODUCT_82543:
-		device_set_desc(dev, "Intel PRO/1000 T Gigabit Ethernet");
-		break;
-	default:
-		return (ENXIO);
-	}
-	return (0);
-}
-
-static int
-wx_attach(device_t dev)
-{
-	int error = 0;
-	wx_softc_t *sc = device_get_softc(dev);
-	struct ifnet *ifp;
-	u_int32_t val;
-	int rid;
-
-	bzero(sc, sizeof (wx_softc_t));
-
-	callout_handle_init(&sc->w.sch);
-	sc->w.dev = dev;
-
-	if (bootverbose)
-		sc->wx_verbose = 1;
-
-	if (getenv_int ("wx_debug", &rid)) {
-		if (rid & (1 << device_get_unit(dev))) {
-			sc->wx_debug = 1;
-		}
-	}
-
-	if (getenv_int("wx_no_ilos", &rid)) {
-		if (rid & (1 << device_get_unit(dev))) {
-			sc->wx_no_ilos = 1;
-		}
-	}
-
-	if (getenv_int("wx_ilos", &rid)) {
-		if (rid & (1 << device_get_unit(dev))) {
-			sc->wx_ilos = 1;
-		}
-	}
-
-	if (getenv_int("wx_no_flow", &rid)) {
-		if (rid & (1 << device_get_unit(dev))) {
-			sc->wx_no_flow = 1;
-		}
-	}
-
-#ifdef	SMPNG
-	mtx_init(&sc->wx_mtx, device_get_nameunit(dev), MTX_DEF | MTX_RECURSE);
-#endif
-
-	WX_LOCK(sc);
-	/*
- 	 * get revision && id...
-	 */
-	sc->wx_idnrev = (pci_get_device(dev) << 16) | (pci_get_revid(dev));
-
-	/*
-	 * Enable bus mastering, make sure that the cache line size is right.
-	 */
-	val = pci_read_config(dev, PCIR_COMMAND, 2);
-	val |= (PCIM_CMD_MEMEN|PCIM_CMD_BUSMASTEREN);
-	pci_write_config(dev, PCIR_COMMAND, val, 2);
-
-	val = pci_read_config(dev, PCIR_CACHELNSZ, 1);
-	if (val != 0x10) {
-		pci_write_config(dev, PCIR_CACHELNSZ, 0x10, 1);
-	}
-
-
-	/*
-	 * Map control/status registers.
-	 */
-	rid = WX_MMBA;
-	sc->w.mem = bus_alloc_resource(dev, SYS_RES_MEMORY,
-	    &rid, 0, ~0, 1, RF_ACTIVE);
-	if (!sc->w.mem) {
-		device_printf(dev, "could not map memory\n");
-		error = ENXIO;
-		goto out;
-        }
-	sc->w.st = rman_get_bustag(sc->w.mem);
-	sc->w.sh = rman_get_bushandle(sc->w.mem);
-
-	rid = 0;
-	sc->w.irq = bus_alloc_resource(dev, SYS_RES_IRQ,
-	    &rid, 0, ~0, 1, RF_SHAREABLE | RF_ACTIVE);
-	if (sc->w.irq == NULL) {
-		device_printf(dev, "could not map interrupt\n");
-		error = ENXIO;
-		goto out;
-	}
-	error = bus_setup_intr(dev, sc->w.irq, INTR_TYPE_NET,
-	    (void (*)(void *))wx_intr, sc, &sc->w.ih);
-	if (error) {
-		device_printf(dev, "could not setup irq\n");
-		goto out;
-	}
-	if (wx_attach_common(sc)) {
-		bus_teardown_intr(dev, sc->w.irq, sc->w.ih);
-		bus_release_resource(dev, SYS_RES_IRQ, 0, sc->w.irq);
-		bus_release_resource(dev, SYS_RES_MEMORY, WX_MMBA, sc->w.mem);
-		error = ENXIO;
-		goto out;
-	}
-	device_printf(dev, "Ethernet address %02x:%02x:%02x:%02x:%02x:%02x\n",
-	    sc->w.arpcom.ac_enaddr[0], sc->w.arpcom.ac_enaddr[1],
-	    sc->w.arpcom.ac_enaddr[2], sc->w.arpcom.ac_enaddr[3],
-	    sc->w.arpcom.ac_enaddr[4], sc->w.arpcom.ac_enaddr[5]);
-	(void) snprintf(sc->wx_name, sizeof (sc->wx_name) - 1, "wx%d",
-	    device_get_unit(dev));
-
-	ifp = &sc->w.arpcom.ac_if;
-	ifp->if_unit = device_get_unit(dev);
-	ifp->if_name = "wx";
-	ifp->if_mtu = WX_MAXMTU;
-	ifp->if_output = ether_output;
-	ifp->if_baudrate = 1000000000;
-	ifp->if_init = (void (*)(void *))wx_init;
-	ifp->if_softc = sc;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_ioctl = wx_ioctl;
-	ifp->if_start = wx_start;
-	ifp->if_watchdog = wx_txwatchdog;
-	IFQ_SET_MAXLEN(&ifp->if_snd, WX_MAX_TDESC - 1);
-	IFQ_SET_READY(&ifp->if_snd);
-	ether_ifattach(ifp, ETHER_BPF_SUPPORTED);
-out:
-	WX_UNLOCK(sc);
-	return (error);
-}
-
-static int
-wx_attach_phy(wx_softc_t *sc)
-{
-	if (mii_phy_probe(sc->w.dev, &sc->w.miibus, wx_ifmedia_upd,
-	    wx_ifmedia_sts)) {
-		printf("%s: no PHY probed!\n", sc->wx_name);
-		return (-1);
-	}
-	sc->wx_mii = device_get_softc(sc->w.miibus);
-	return 0;
-}
-
-static int
-wx_detach(device_t dev)
-{
-	wx_softc_t *sc = device_get_softc(dev);
-
-	WX_LOCK(sc);
-	ether_ifdetach(&sc->w.arpcom.ac_if, ETHER_BPF_SUPPORTED);
-	wx_stop(sc);
-
-	bus_generic_detach(dev);
-	device_delete_child(dev, sc->w.miibus);
-
-	bus_teardown_intr(dev, sc->w.irq, sc->w.ih);
-	bus_release_resource(dev, SYS_RES_IRQ, 0, sc->w.irq);
-	bus_release_resource(dev, SYS_RES_MEMORY, WX_MMBA, sc->w.mem);
-	WX_UNLOCK(sc);
-	return (0);
-}
-
-static int
-wx_shutdown(device_t dev)
-{
-	wx_hw_stop((wx_softc_t *) device_get_softc(dev));
-	return (0);
-}
-
-static INLINE void
-wx_mwi_whackon(wx_softc_t *sc)
-{
-	sc->wx_cmdw = pci_read_config(sc->w.dev, PCIR_COMMAND, 2);
-	pci_write_config(sc->w.dev, PCIR_COMMAND, sc->wx_cmdw & ~MWI, 2);
-}
-
-static INLINE void
-wx_mwi_unwhack(wx_softc_t *sc)
-{
-	if (sc->wx_cmdw & MWI) {
-		pci_write_config(sc->w.dev, PCIR_COMMAND, sc->wx_cmdw, 2);
-	}
-}
-
-static int
-wx_dring_setup(wx_softc_t *sc)
-{
-	size_t len;
-
-	len = sizeof (wxrd_t) * WX_MAX_RDESC;
-	sc->rdescriptors = (wxrd_t *)
-	    contigmalloc(len, M_DEVBUF, M_NOWAIT, 0, ~0, 4096, 0);
-	if (sc->rdescriptors == NULL) {
-		printf("%s: could not allocate rcv descriptors\n", sc->wx_name);
-		return (-1);
-	}
-	if (((intptr_t)sc->rdescriptors) & 0xfff) {
-		contigfree(sc->rdescriptors, len, M_DEVBUF);
-		sc->rdescriptors = NULL;
-		printf("%s: rcv descriptors not 4KB aligned\n", sc->wx_name);
-		return (-1);
-	}
-        bzero(sc->rdescriptors, len);
-
-	len = sizeof (wxtd_t) * WX_MAX_TDESC;
-	sc->tdescriptors = (wxtd_t *)
-	    contigmalloc(len, M_DEVBUF, M_NOWAIT, 0, ~0, 4096, 0);
-	if (sc->tdescriptors == NULL) {
-		contigfree(sc->rdescriptors,
-		    sizeof (wxrd_t) * WX_MAX_RDESC, M_DEVBUF);
-		sc->rdescriptors = NULL;
-		printf("%s: could not allocate xmt descriptors\n", sc->wx_name);
-		return (-1);
-	}
-	if (((intptr_t)sc->tdescriptors) & 0xfff) {
-		contigfree(sc->rdescriptors,
-		    sizeof (wxrd_t) * WX_MAX_RDESC, M_DEVBUF);
-		sc->rdescriptors = NULL;
-		printf("%s: xmt descriptors not 4KB aligned\n", sc->wx_name);
-		return (-1);
-	}
-        bzero(sc->tdescriptors, len);
-	return (0);
-}
-
-static void
-wx_dring_teardown(wx_softc_t *sc)
-{
-	if (sc->rdescriptors) {
-		contigfree(sc->rdescriptors,
-		    sizeof (wxrd_t) * WX_MAX_RDESC, M_DEVBUF);
-		sc->rdescriptors = NULL;
-	}
-	if (sc->tdescriptors) {
-		contigfree(sc->tdescriptors,
-		    sizeof (wxtd_t) * WX_MAX_TDESC, M_DEVBUF);
-		sc->tdescriptors = NULL;
-	}
-}
-
-static void
-wx_miibus_mediainit(void *arg)
-{
-}
-
-static device_method_t wx_methods[] = {
-	/* Device interface */
-	DEVMETHOD(device_probe,		wx_probe),
-	DEVMETHOD(device_attach,	wx_attach),
-	DEVMETHOD(device_detach,	wx_detach),
-	DEVMETHOD(device_shutdown,	wx_shutdown),
-
-	/* bus interface */
-	DEVMETHOD(bus_print_child,	bus_generic_print_child),
-	DEVMETHOD(bus_driver_added,	bus_generic_driver_added),
-
-	/* MII interface */
-	DEVMETHOD(miibus_readreg,	wx_miibus_readreg),
-	DEVMETHOD(miibus_writereg,	wx_miibus_writereg),
-	DEVMETHOD(miibus_statchg,	wx_miibus_statchg),
-	DEVMETHOD(miibus_mediainit,	wx_miibus_mediainit),
-
-	{ 0, 0 }
-};
-
-static driver_t wx_driver = {
-	"wx", wx_methods, sizeof(wx_softc_t),
-};
-static devclass_t wx_devclass;
-DRIVER_MODULE(if_wx, pci, wx_driver, wx_devclass, 0, 0);
-DRIVER_MODULE(miibus, wx, miibus_driver, miibus_devclass, 0, 0);
-#endif
 
 /*
  * Do generic parts of attach. Our registers have been mapped
@@ -915,6 +525,8 @@ wx_attach_common(wx_softc_t *sc)
 
 	if (IS_LIVENGOOD_CU(sc)) {
 
+		sc->wx_mii = 1;
+
 		/* settings to talk to PHY */
 		sc->wx_dcr |= WXDCR_FRCSPD | WXDCR_FRCDPX | WXDCR_SLU;
 		WRITE_CSR(sc, WXREG_DCR, sc->wx_dcr);
@@ -937,9 +549,7 @@ wx_attach_common(wx_softc_t *sc)
 		WRITE_CSR(sc, WXREG_EXCT, tmp);
 		DELAY(20*1000);
 
-#ifdef __OpenBSD__
 		printf(": address %s\n", ether_sprintf(sc->wx_enaddr));
-#endif
 		if (wx_attach_phy(sc)) {
 			goto fail;
 		}
@@ -947,8 +557,7 @@ wx_attach_common(wx_softc_t *sc)
 		ifmedia_init(&sc->wx_media, IFM_IMASK,
 		    wx_ifmedia_upd, wx_ifmedia_sts);
 
-		ifmedia_add(&sc->wx_media,
-		    IFM_ETHER|IFM_1000_SX, 0, NULL);
+		ifmedia_add(&sc->wx_media, IFM_ETHER|IFM_1000_SX, 0, NULL);
 		ifmedia_add(&sc->wx_media,
 		    IFM_ETHER|IFM_1000_SX|IFM_FDX, 0, NULL);
 		ifmedia_set(&sc->wx_media, IFM_ETHER|IFM_1000_SX|IFM_FDX);
@@ -1120,12 +729,12 @@ wx_start(struct ifnet *ifp)
 	WX_LOCK(sc);
 	DPRINTF(sc, ("%s: wx_start\n", sc->wx_name));
 	nactv = sc->tactive;
-	while (nactv < WX_MAX_TDESC) {
+	while (nactv < WX_MAX_TDESC - 1) {
 		int ndesc;
 		int gctried = 0;
 		struct mbuf *m, *mb_head;
 
-		IFQ_DEQUEUE(&ifp->if_snd, mb_head);
+		IF_DEQUEUE(&ifp->if_snd, mb_head);
 		if (mb_head == NULL) {
 			break;
 		}
@@ -1174,7 +783,7 @@ wx_start(struct ifnet *ifp)
 
 			/*
 			 * If this packet is too small for the chip's minimum,
-			 * break out to to cluster it.
+			 * break out to cluster it.
 			 */
 			if (m->m_len < WX_MIN_RPKT_SIZE) {
 				sc->wx_xmitrunt++;
@@ -1309,7 +918,7 @@ wx_start(struct ifnet *ifp)
 		goto again;
 	}
 
-	if (sc->tactive == WX_MAX_TDESC) {
+	if (sc->tactive == WX_MAX_TDESC - 1) {
 		sc->wx_xmitblocked++;
 		ifp->if_flags |= IFF_OACTIVE;
 	}
@@ -1344,9 +953,6 @@ wx_intr(void *arg)
 			wx_handle_link_intr(sc);
 		}
 		wx_handle_rxint(sc);
-		if (sc->tactive) {
-			wx_gc(sc);
-		}
 		if (IFQ_IS_EMPTY(&sc->wx_if.if_snd) == 0) {
 			wx_start(&sc->wx_if);
 		}
@@ -1367,10 +973,10 @@ wx_handle_link_intr(wx_softc_t *sc)
 	DPRINTF(sc, ("%s: handle_link_intr: icr=%#x dcr=%#x\n",
 	    sc->wx_name, sc->wx_icr, dcr));
 	if (sc->wx_mii) {
-		mii_pollstat(sc->wx_mii);
-		if (sc->wx_mii->mii_media_status & IFM_ACTIVE) {
-			if (IFM_SUBTYPE(sc->wx_mii->mii_media_active) ==
-			    IFM_NONE) {
+		mii_data_t *mii = WX_MII_FROM_SOFTC(sc);
+		mii_pollstat(mii);
+		if (mii->mii_media_status & IFM_ACTIVE) {
+			if (IFM_SUBTYPE(mii->mii_media_active) == IFM_NONE) {
 				IPRINTF(sc, (ldn, sc->wx_name));
 				sc->linkup = 0;
 			} else {
@@ -1424,7 +1030,7 @@ wx_check_link(wx_softc_t *sc)
 	u_int32_t rxcw, dcr, dsr;
 
 	if (sc->wx_mii) {
-		mii_pollstat(sc->wx_mii);
+		mii_pollstat(WX_MII_FROM_SOFTC(sc));
 		return;
 	}
 
@@ -1470,6 +1076,9 @@ wx_handle_rxint(wx_softc_t *sc)
 		int length, offset, lastframe;
 
 		rd = &sc->rdescriptors[idx];
+		/*
+		 * XXX: DMA Flush descriptor
+		 */
 		if ((rd->status & RDSTAT_DD) == 0) {
 			if (m0) {
 				if (sc->rpending == NULL) {
@@ -1622,15 +1231,7 @@ wx_handle_rxint(wx_softc_t *sc)
 		ifp->if_ipackets++;
 		DPRINTF(sc, ("%s: RECV packet length %d\n",
 		    sc->wx_name, mb->m_pkthdr.len));
-#if defined(__FreeBSD__)
-		eh = mtod(mb, struct ether_header *);
-		m_adj(mb, sizeof (struct ether_header));
-		ether_input(ifp, eh, mb);
-#elif defined(__OpenBSD__)
 		ether_input_mbuf(ifp, mb);
-#else
-                (*ifp->if_input)(ifp, mb);
-#endif
 	}
 }
 
@@ -1719,7 +1320,7 @@ wx_gc(wx_softc_t *sc)
 		sc->tbsyf = txpkt->next;
 		txpkt = sc->tbsyf;
 	}
-	if (sc->tactive < WX_MAX_TDESC) {
+	if (sc->tactive < WX_MAX_TDESC - 1) {
 		ifp->if_timer = 0;
 		ifp->if_flags &= ~IFF_OACTIVE;
 	}
@@ -2126,14 +1727,8 @@ wx_init(void *xsc)
 	 */
 	WX_ENABLE_INT(sc);
 
-	/*
-	 * Mark that we're up and running...
-	 */
-	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
-
 	if (sc->wx_mii) {
-		mii_mediachg(sc->wx_mii);
+		mii_mediachg(WX_MII_FROM_SOFTC(sc));
 	} else {
 		ifm = &sc->wx_media;
 		i = ifm->ifm_media;
@@ -2142,13 +1737,19 @@ wx_init(void *xsc)
 		ifm->ifm_media = i;
 	}
 
-	WX_UNLOCK(sc);
+	/*
+	 * Mark that we're up and running...
+	 */
+	ifp->if_flags |= IFF_RUNNING;
+	ifp->if_flags &= ~IFF_OACTIVE;
+
 
 	/*
 	 * Start stats updater.
 	 */
 	TIMEOUT(sc, wx_watchdog, sc, hz);
 
+	WX_UNLOCK(sc);
 	/*
 	 * And we're outta here...
 	 */
@@ -2158,7 +1759,10 @@ wx_init(void *xsc)
 /*
  * Get a receive buffer for our use (and dma map the data area).
  * 
- * This chip can have buffers be 256, 512, 1024 or 2048 bytes in size.
+ * The Wiseman chip can have buffers be 256, 512, 1024 or 2048 bytes in size.
+ * The LIVENGOOD chip can go higher (up to 16K), but what's the point as
+ * we aren't doing non-MCLGET memory management.
+ *
  * It wants them aligned on 256 byte boundaries, but can actually cope
  * with an offset in the first 255 bytes of the head of a receive frame.
  *
@@ -2202,13 +1806,9 @@ wx_ioctl(struct ifnet *ifp, IOCTL_CMD_TYPE command, caddr_t data)
 	WX_LOCK(sc);
 	switch (command) {
 	case SIOCSIFADDR:
-#if !defined(__NetBSD__) && !defined(__OpenBSD__)
 	case SIOCGIFADDR:
-#endif
 		error = ether_ioctl(ifp, command, data);
 		break;
-
-#ifdef	SIOCSIFMTU
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu > WX_MAXMTU || ifr->ifr_mtu < ETHERMIN) {
 			error = EINVAL;
@@ -2217,8 +1817,6 @@ wx_ioctl(struct ifnet *ifp, IOCTL_CMD_TYPE command, caddr_t data)
 			error = wx_init(sc);
                 }
                 break;
-#endif
-
 	case SIOCSIFFLAGS:
 		sc->all_mcasts = (ifp->if_flags & IFF_ALLMULTI) ? 1 : 0;
 
@@ -2237,39 +1835,24 @@ wx_ioctl(struct ifnet *ifp, IOCTL_CMD_TYPE command, caddr_t data)
 		}
 		break;
 
-#ifdef	SIOCADDMULTI
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-#if defined(__NetBSD__)
-	{
-		int all_mc_change = (sc->all_mcasts ==
-		    ((ifp->if_flags & IFF_ALLMULTI) ? 1 : 0));
-		error = (command == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->w.ethercom) :
-		    ether_delmulti(ifr, &sc->w.ethercom);
-		if (error != ENETRESET && all_mc_change == 0) {
-			break;
-		}
-	}
-#endif
 		sc->all_mcasts = (ifp->if_flags & IFF_ALLMULTI) ? 1 : 0;
 		error = wx_mc_setup(sc);
 		break;
-#endif
-#ifdef	SIOCGIFMEDIA
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
 		DPRINTF(sc, ("%s: ioctl SIOC[GS]IFMEDIA: command=%#lx\n",
 		    sc->wx_name, command));
 		if (sc->wx_mii) {
+			mii_data_t *mii = WX_MII_FROM_SOFTC(sc);
 			error = ifmedia_ioctl(ifp, ifr,
-			    &sc->wx_mii->mii_media, command);
+			    &mii->mii_media, command);
 		} else {
 			error = ifmedia_ioctl(ifp, ifr, &sc->wx_media, command);
 		}
 
 		break;
-#endif
 	default:
 		error = EINVAL;
 	}
@@ -2287,7 +1870,7 @@ wx_ifmedia_upd(struct ifnet *ifp)
 	DPRINTF(sc, ("%s: ifmedia_upd\n", sc->wx_name));
 
 	if (sc->wx_mii) {
-		mii_mediachg(sc->wx_mii);
+		mii_mediachg(WX_MII_FROM_SOFTC(sc));
 		return 0;
 	}
 
@@ -2309,9 +1892,10 @@ wx_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 	DPRINTF(sc, ("%s: ifmedia_sts: ", sc->wx_name));
 
 	if (sc->wx_mii) {
-		mii_pollstat(sc->wx_mii);
-		ifmr->ifm_active = sc->wx_mii->mii_media_active;
-		ifmr->ifm_status = sc->wx_mii->mii_media_status;
+		mii_data_t *mii = WX_MII_FROM_SOFTC(sc);
+		mii_pollstat(mii);
+		ifmr->ifm_active = mii->mii_media_active;
+		ifmr->ifm_status = mii->mii_media_status;
 		DPRINTF(sc, ("active=%#x status=%#x\n",
 		    ifmr->ifm_active, ifmr->ifm_status));
 		return;
@@ -2437,7 +2021,7 @@ static void
 wx_miibus_statchg(void *arg)
 {
 	wx_softc_t *sc = WX_SOFTC_FROM_MII_ARG(arg);
-	mii_data_t *mii = sc->wx_mii;
+	mii_data_t *mii = WX_MII_FROM_SOFTC(sc);
 	u_int32_t dcr, tctl;
 
 	if (mii == NULL)
