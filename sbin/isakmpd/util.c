@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.23 2001/10/26 13:29:26 ho Exp $	*/
+/*	$OpenBSD: util.c,v 1.24 2002/01/19 20:12:02 angelos Exp $	*/
 /*	$EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	*/
 
 /*
@@ -461,7 +461,15 @@ util_ntoa (char **buf, int af, u_int8_t *addr)
   memset (&from, 0, fromlen);
   sfrom->sa_family = af;
 #ifndef USE_OLD_SOCKADDR
-  sfrom->sa_len = sysdep_sa_len (sfrom);
+  switch (af)
+    {
+    case AF_INET:
+      sfrom->sa_len = sizeof (struct sockaddr_in);
+      break;
+    case AF_INET6:
+      sfrom->sa_len = sizeof (struct sockaddr_in6);
+      break;
+    }
 #endif
   memcpy (sockaddr_addrdata (sfrom), addr, sockaddr_addrlen (sfrom));
 
