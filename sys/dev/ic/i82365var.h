@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365var.h,v 1.10 2000/09/05 05:06:58 fgsch Exp $	*/
+/*	$OpenBSD: i82365var.h,v 1.11 2001/06/24 20:34:22 fgsch Exp $	*/
 /*	$NetBSD: i82365var.h,v 1.4 1998/05/23 18:32:29 matt Exp $	*/
 
 /*
@@ -39,6 +39,8 @@
 #include <dev/ic/i82365reg.h>
 
 struct proc;
+
+extern int cold;
 
 struct pcic_event {
 	SIMPLEQ_ENTRY(pcic_event) pe_q;
