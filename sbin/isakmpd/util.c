@@ -1,4 +1,4 @@
-/* $OpenBSD: util.c,v 1.50 2005/02/27 13:12:12 hshoexer Exp $	 */
+/* $OpenBSD: util.c,v 1.51 2005/03/04 16:51:52 hshoexer Exp $	 */
 /* $EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	 */
 
 /*
@@ -240,6 +240,29 @@ hex2raw(char *s, u_int8_t *buf, size_t sz)
 		}
 	}
 	return 0;
+}
+
+in_port_t
+text2port(char *port_str)
+{
+	char           *port_str_end;
+	long            port_long;
+	struct servent *service;
+
+	port_long = strtol(port_str, &port_str_end, 0);
+	if (port_str == port_str_end) {
+		service = getservbyname(port_str, "udp");
+		if (!service) {
+			log_print("text2port: service \"%s\" unknown",
+			    port_str);
+			return 0;
+		}
+		return ntohs(service->s_port);
+	} else if (port_long < 1 || port_long > (long)USHRT_MAX) {
+		log_print("text2port: port %ld out of range", port_long);
+		return 0;
+	}
+	return port_long;
 }
 
 int

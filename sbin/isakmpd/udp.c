@@ -1,4 +1,4 @@
-/* $OpenBSD: udp.c,v 1.82 2005/03/04 16:09:59 hshoexer Exp $	 */
+/* $OpenBSD: udp.c,v 1.83 2005/03/04 16:51:52 hshoexer Exp $	 */
 /* $EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	 */
 
 /*
@@ -83,9 +83,6 @@ static void     udp_report(struct transport *);
 static void     udp_handle_message(struct transport *);
 static struct transport *udp_make(struct sockaddr *);
 static int      udp_send_message(struct message *, struct transport *);
-#if 0
-static in_port_t udp_decode_port(char *);
-#endif
 
 static struct transport_vtbl udp_transport_vtbl = {
 	{0}, "udp_physical",
@@ -540,33 +537,3 @@ udp_decode_ids(struct transport *t)
 	snprintf(result, sizeof result, "src: %s dst: %s", idsrc, iddst);
 	return result;
 }
-
-#if 0
-/*
- * Take a string containing an ext representation of port and return a
- * binary port number in host byte order.  Return zero if anything goes wrong.
- * XXX Currently unused.
- */
-static in_port_t
-udp_decode_port(char *port_str)
-{
-	char           *port_str_end;
-	long            port_long;
-	struct servent *service;
-
-	port_long = ntohl(strtol(port_str, &port_str_end, 0));
-	if (port_str == port_str_end) {
-		service = getservbyname(port_str, "udp");
-		if (!service) {
-			log_print("udp_decode_port: service \"%s\" unknown",
-			    port_str);
-			return 0;
-		}
-		return ntohs(service->s_port);
-	} else if (port_long < 1 || port_long > 65535) {
-		log_print("udp_decode_port: port %ld out of range", port_long);
-		return 0;
-	}
-	return port_long;
-}
-#endif
