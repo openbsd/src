@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.11 1997/07/08 00:33:02 millert Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.12 1997/08/25 22:27:59 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.11 1997/07/08 00:33:02 millert Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.12 1997/08/25 22:27:59 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -110,12 +110,6 @@ struct  filestat {
 	u_int64_t	size;
 	dev_t		rdev;
 };
-
-#ifdef notdef
-struct nlist nl[] = {
-	{ "" },
-};
-#endif
 
 int 	fsflg,	/* show files on same filesystem as file(s) argument */
 	pflg,	/* show files open by a particular pid */
@@ -249,12 +243,6 @@ main(argc, argv)
 		fprintf(stderr, "fstat: %s\n", buf);
 		exit(1);
 	}
-#ifdef notdef
-	if (kvm_nlist(kd, nl) != 0) {
-		fprintf(stderr, "fstat: no namelist: %s\n", kvm_geterr(kd));
-		exit(1);
-	}
-#endif
 	if ((p = kvm_getprocs(kd, what, arg, &cnt)) == NULL) {
 		fprintf(stderr, "fstat: %s\n", kvm_geterr(kd));
 		exit(1);
@@ -392,7 +380,7 @@ vtrans(vp, i, flag)
 {
 	struct vnode vn;
 	struct filestat fst;
-	char rw[3], mode[15];
+	char rw[3], mode[17];
 	char *badtype = NULL, *filename, *getmnton();
 
 	filename = badtype = NULL;
@@ -421,7 +409,7 @@ vtrans(vp, i, flag)
 				badtype = "error";
 			break;
 		default: {
-			static char unknown[20];
+			static char unknown[30];
 			sprintf(badtype = unknown, "?(%x)", vn.v_tag);
 			break;
 		}
