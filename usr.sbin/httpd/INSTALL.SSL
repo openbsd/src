@@ -124,6 +124,7 @@
      $ cd openssl-0.9.x                                                    ALL
      $ sh config \                                                         ALL
             no-idea \                                                       EU
+            no-threads \                                              OPTIONAL
             -fPIC                                                     OPTIONAL
      $ make                                                                ALL
      $ make test                                                      OPTIONAL
@@ -148,6 +149,17 @@
            Dynamic Shared Object (DSO). Please notice, that you really
            have to use -fPIC and not -fpic, as the latter will usually
            cause the build to fail. See below for more details.
+
+     NOTE: The optional `no-threads' keyword above is to increase
+           performance inside OpenSSL, because Apache 1.3 does not
+           use threads anyway. However, OpenSSL, if built without
+           `no-threads', by default builds with multi-threading support.
+           This multi-threading support involves using locking around a
+           lot of internal object manipulation (esp. reference counts).
+           The fact that it is not possible in Apache 1.3 to have
+           threads racing on any kind of object internal to OpenSSL
+           means that any overhead (memory and/or time) relating to
+           these locking mechanisms is wasted by default.
 
   4. Optionally you now can build the MM Shared Memory library when you want
      shared memory support in Apache/EAPI. For instance this allows mod_ssl to
