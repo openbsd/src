@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha_pci.c,v 1.1 2001/01/23 04:19:42 krw Exp $ */
+/*	$OpenBSD: iha_pci.c,v 1.2 2001/03/29 23:53:38 krw Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -70,6 +70,7 @@ iha_pci_probe(parent, match, aux)
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INITIO)
 		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_INITIO_INIC940:
 		case PCI_PRODUCT_INITIO_INIC950:
 			return (1);
 	}
