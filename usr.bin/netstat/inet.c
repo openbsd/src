@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.6 1997/02/16 10:26:36 deraadt Exp $	*/
+/*	$OpenBSD: inet.c,v 1.7 1997/02/16 10:31:23 deraadt Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.6 1997/02/16 10:26:36 deraadt Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.7 1997/02/16 10:31:23 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -447,10 +447,10 @@ getrpcportnam(port)
 	
 	if (first == 0) {
 		first = 1;
-		bzero((char *)&server_addr, sizeof server_addr);
+		memset((char *)&server_addr, 0, sizeof server_addr);
 		server_addr.sin_family = AF_INET;
 		if ((hp = gethostbyname("localhost")) != NULL)
-			bcopy(hp->h_addr, (caddr_t)&server_addr.sin_addr,
+			memmove((caddr_t)&server_addr.sin_addr, hp->h_addr,
 			    hp->h_length);
 		else
 			(void) inet_aton("0.0.0.0", &server_addr.sin_addr);
@@ -459,15 +459,12 @@ getrpcportnam(port)
 		minutetimeout.tv_usec = 0;
 		server_addr.sin_port = htons(PMAPPORT);
 		if ((client = clnttcp_create(&server_addr, PMAPPROG,
-		    PMAPVERS, &socket, 50, 500)) == NULL) {
-			clnt_pcreateerror("rpcinfo: can't contact portmapper");
-			exit(1);
-		}
+		    PMAPVERS, &socket, 50, 500)) == NULL)
+			return (NULL);
 		if (clnt_call(client, PMAPPROC_DUMP, xdr_void, NULL,
-		    xdr_pmaplist, &head, minutetimeout) != RPC_SUCCESS) {
-			fprintf(stderr, "rpcinfo: can't contact portmapper: ");
-			clnt_perror(client, "rpcinfo");
-			exit(1);
+		    xdr_pmaplist, &head, minutetimeout) != RPC_SUCCESS)
+			clnt_destroy(client);
+			return (NULL);
 		}
 		for (; head != NULL; head = head->pml_next) {
 			n = (struct rpcnams *)malloc(sizeof(struct rpcnams));
