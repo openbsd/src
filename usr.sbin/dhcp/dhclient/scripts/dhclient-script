@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: dhclient-script,v 1.6 2000/06/25 08:41:12 dugsong Exp $
+# $OpenBSD: dhclient-script,v 1.7 2000/07/03 22:33:19 niklas Exp $
 #
 
 if [ "x$new_network_number" != "x" ]; then
@@ -69,7 +69,7 @@ if [ "x$reason" = "xBOUND" ] || [ "x$reason" = "xRENEW" ] || \
 	shift; shift
       done
     fi
-    arp -n -a | sed -n -e 's/^.*(\(.*\)) at .*$/arp -n -d \1/p' |sh
+    arp -n -a | sed -n -e 's/^.*(\(.*\)) at .*$/arp -d \1/p' |sh
   fi
   if [ "x$old_ip_address" = "x" ] || [ "x$old_ip_address" != "x$new_ip_address" ] || \
      [ "x$reason" = "xBOUND" ] || [ "x$reason" = "xREBOOT" ]; then
@@ -135,7 +135,7 @@ if [ "x$reason" = "xEXPIRE" ] || [ "x$reason" = "xFAIL" ]; then
 	shift; shift
       done
     fi
-    arp -n -a | sed -n -e 's/^.*(\(.*\)) at .*$/arp -n -d \1/p' \
+    arp -n -a | sed -n -e 's/^.*(\(.*\)) at .*$/arp -d \1/p' \
 						|sh >/dev/null 2>&1
   fi
   if [ "x$alias_ip_address" != "x" ]; then
@@ -210,7 +210,7 @@ if [ "x$reason" = "xTIMEOUT" ]; then
       shift; shift
     done
   fi
-  arp -n -a | sed -n -e 's/^.*(\(.*\)) at .*$/arp -n -d \1/p' \
+  arp -n -a | sed -n -e 's/^.*(\(.*\)) at .*$/arp -d \1/p' \
 							|sh >/dev/null 2>&1
   exit 1
 fi
