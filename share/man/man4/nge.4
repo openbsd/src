@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nge.4,v 1.12 2002/09/26 07:55:40 miod Exp $
+.\"	$OpenBSD: nge.4,v 1.13 2002/11/26 22:28:20 nate Exp $
 .\" Copyright (c) 2001 Wind River Systems
 .\" Copyright (c) 1997, 1998, 1999, 2000, 2001
 .\"	Bill Paul <wpaul@bsdi.com>. All rights reserved.
@@ -101,7 +101,7 @@ as the NIC cannot handle this case.
 The
 .Nm
 driver supports the following media types:
-.Bl -tag -width 1000baseTX
+.Bl -tag -width 1000baseSX
 .It Cm autoselect
 Enable autoselection of the media type and options.
 The user can manually override
@@ -128,8 +128,8 @@ option can also be used to select either
 or
 .Cm half-duplex
 modes.
-.It Cm 1000baseTX
-Set 1000baseTX operation over twisted pair.
+.It Cm 1000baseT
+Set 1000baseT operation over twisted pair.
 .Cm full-duplex
 and
 .Cm half-duplex
@@ -155,10 +155,10 @@ Force half duplex operation.
 .Pp
 The
 .Nm
-driver also supports one special link option for 1000baseTX cards:
+driver also supports one special link option for 1000baseT cards:
 .Bl -tag -width link0
 .It Cm link0
-With 1000baseTX cards, establishing a link between two ports requires
+With 1000baseT cards, establishing a link between two ports requires
 that one port be configured as a master and the other a slave.
 With autonegotiation,
 the master/slave settings will be chosen automatically.
