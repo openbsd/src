@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.9 2004/08/13 02:16:29 jfb Exp $	*/
+/*	$OpenBSD: util.c,v 1.10 2004/08/13 12:48:51 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -123,12 +123,15 @@ cvs_readrepo(const char *dir, char *dst, size_t len)
 /*
  * cvs_datesec()
  *
- * Take a ctime(3)-style date string and transform it into the number of
- * seconds since the Epoch.
+ * Take a date string and transform it into the number of seconds since the
+ * Epoch.  The <type> argument specifies whether the timestamp is in ctime(3)
+ * format or RFC 822 format (as CVS uses in its protocol).  If the <adj>
+ * parameter is not 0, the returned time will be adjusted according to the
+ * machine's local timezone.
  */
 
 time_t
-cvs_datesec(const char *date)
+cvs_datesec(const char *date, int type, int adj)
 {
 	int i;
 	long off;
@@ -136,41 +139,53 @@ cvs_datesec(const char *date)
 	struct tm cvs_tm;
 
 	memset(&cvs_tm, 0, sizeof(cvs_tm));
-	sscanf(date, "%d %3s %d %2d:%2d:%2d %5s", &cvs_tm.tm_mday, mon,
-	    &cvs_tm.tm_year, &cvs_tm.tm_hour, &cvs_tm.tm_min,
-	    &cvs_tm.tm_sec, gmt);
-	cvs_tm.tm_year -= 1900;
 	cvs_tm.tm_isdst = -1;
 
-	if (*gmt == '-') {
-		sscanf(gmt, "%c%2s%2s", &sign, hr, min);
-		cvs_tm.tm_gmtoff = strtol(hr, &ep, 10);
-		if ((cvs_tm.tm_gmtoff == LONG_MIN) ||
-		    (cvs_tm.tm_gmtoff == LONG_MAX) ||
-		    (*ep != '\0')) {
-			cvs_log(LP_ERR,
-			    "parse error in GMT hours specification `%s'", hr);
-			cvs_tm.tm_gmtoff = 0;
-		}
-		else {
-			/* get seconds */
-			cvs_tm.tm_gmtoff *= 3600;
+	if (type == CVS_DATE_RFC822) {
+		if (sscanf(date, "%d %3s %d %2d:%2d:%2d %5s", &cvs_tm.tm_mday,
+		    mon, &cvs_tm.tm_year, &cvs_tm.tm_hour, &cvs_tm.tm_min,
+		    &cvs_tm.tm_sec, gmt) < 7)
+			return (-1);
+		cvs_tm.tm_year -= 1900;
 
-			/* add the minutes */
-			off = strtol(min, &ep, 10);
+		if (*gmt == '-') {
+			sscanf(gmt, "%c%2s%2s", &sign, hr, min);
+			cvs_tm.tm_gmtoff = strtol(hr, &ep, 10);
 			if ((cvs_tm.tm_gmtoff == LONG_MIN) ||
 			    (cvs_tm.tm_gmtoff == LONG_MAX) ||
 			    (*ep != '\0')) {
 				cvs_log(LP_ERR,
-				    "parse error in GMT minutes "
-				    "specification `%s'", min);
+				    "parse error in GMT hours specification `%s'", hr);
+				cvs_tm.tm_gmtoff = 0;
 			}
-			else
-				cvs_tm.tm_gmtoff += off * 60;
+			else {
+				/* get seconds */
+				cvs_tm.tm_gmtoff *= 3600;
+
+				/* add the minutes */
+				off = strtol(min, &ep, 10);
+				if ((cvs_tm.tm_gmtoff == LONG_MIN) ||
+				    (cvs_tm.tm_gmtoff == LONG_MAX) ||
+				    (*ep != '\0')) {
+					cvs_log(LP_ERR,
+					    "parse error in GMT minutes "
+					    "specification `%s'", min);
+				}
+				else
+					cvs_tm.tm_gmtoff += off * 60;
+			}
 		}
+		if (sign == '-')
+			cvs_tm.tm_gmtoff = -cvs_tm.tm_gmtoff;
 	}
-	if (sign == '-')
-		cvs_tm.tm_gmtoff = -cvs_tm.tm_gmtoff;
+	else if (type == CVS_DATE_CTIME) {
+		/* gmt is used for the weekday */
+		sscanf(date, "%3s %3s %d %2d:%2d:%2d %d", gmt, mon,
+		    &cvs_tm.tm_mday, &cvs_tm.tm_hour, &cvs_tm.tm_min,
+		    &cvs_tm.tm_sec, &cvs_tm.tm_year);
+		cvs_tm.tm_year -= 1900;
+		cvs_tm.tm_gmtoff = 0; 
+	}
 
 	for (i = 0; i < (int)(sizeof(cvs_months)/sizeof(cvs_months[0])); i++) {
 		if (strcmp(cvs_months[i], mon) == 0) {
