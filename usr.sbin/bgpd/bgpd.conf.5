@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.1 2003/12/23 17:06:32 henning Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.2 2003/12/24 11:38:56 henning Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2002 Daniel Hartmeier <dhartmei@openbsd.org>
@@ -29,7 +29,7 @@ in RFC 1771.
 .Sh SECTIONS
 The
 .Nm
-config file is devided into three main sections.
+config file is divided into three main sections.
 .Bl -tag -width xxxx
 .It Cm Macros
 User-defined variables may be defined and used later, simplifying the
@@ -132,7 +132,7 @@ listen on 127.0.0.1
 .El
 .Sh NEIGHBORS AND GROUPS
 .Ar bgpd
-estables tcp connections to other bgp speakers, called neighbors.
+establishes TCP connections to other BGP speakers, called neighbors.
 Each neighbor is specified by a neighbor section, specifying properties for
 that neighbor:
 .Bd -literal -offset indent
@@ -169,7 +169,7 @@ reports etc and has no further meaning to
 .It Ar local-addr
 When
 .Ar bgpd
-initiates the tcp connection to the neighbor system, it normaly does not
+initiates the TCP connection to the neighbor system, it normally does not
 bind to a specific IP address.
 If a local-addr is given it binds
 to this address before.
