@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random.c,v 1.5 2004/08/10 09:47:59 ho Exp $	*/
+/*	$OpenBSD: arc4random.c,v 1.6 2004/10/08 15:18:26 hshoexer Exp $	*/
 
 /*
  * Arc4 random number generator for OpenBSD.
@@ -45,9 +45,10 @@ struct arc4_stream {
 int     rs_initialized;
 static struct arc4_stream rs;
 
+static inline u_int8_t arc4_getbyte(struct arc4_stream *);
+
 static inline void
-arc4_init(as)
-	struct arc4_stream *as;
+arc4_init(struct arc4_stream *as)
 {
 	int     n;
 
@@ -58,10 +59,7 @@ arc4_init(as)
 }
 
 static inline void
-arc4_addrandom(as, dat, datlen)
-	struct arc4_stream *as;
-	u_char *dat;
-	int     datlen;
+arc4_addrandom(struct arc4_stream *as, u_char *dat, int datlen)
 {
 	int     n;
 	u_int8_t si;
@@ -74,11 +72,11 @@ arc4_addrandom(as, dat, datlen)
 		as->s[as->i] = as->s[as->j];
 		as->s[as->j] = si;
 	}
+	as->j = as->i;
 }
 
 static void
-arc4_stir(as)
-	struct arc4_stream *as;
+arc4_stir(struct arc4_stream *as)
 {
 	int     fd;
 	struct {
@@ -97,12 +95,18 @@ arc4_stir(as)
 	/* fd < 0?  Ah, what the heck. We'll just take whatever was on the
 	 * stack... */
 
-	arc4_addrandom(as, (void *) &rdat, sizeof(rdat));
+	arc4_addrandom(as, (void *)&rdat, sizeof(rdat));
+
+	/*
+	 * Discard early keystream, as per recommendations in:
+	 * http://www.wisdom.weizmann.ac.il/~itsik/RC4/Papers/Rc4_ksa.ps
+	 */
+	for (i = 0; i < 256; i++)
+		(void)arc4_getbyte(as);
 }
 
 static inline u_int8_t
-arc4_getbyte(as)
-	struct arc4_stream *as;
+arc4_getbyte(struct arc4_stream *as)
 {
 	u_int8_t si, sj;
 
@@ -116,8 +120,7 @@ arc4_getbyte(as)
 }
 
 static inline u_int32_t
-arc4_getword(as)
-	struct arc4_stream *as;
+arc4_getword(struct arc4_stream *as)
 {
 	u_int32_t val;
 	val = arc4_getbyte(as) << 24;
@@ -128,7 +131,7 @@ arc4_getword(as)
 }
 
 void
-arc4random_stir()
+arc4random_stir(void)
 {
 	if (!rs_initialized) {
 		arc4_init(&rs);
@@ -138,9 +141,7 @@ arc4random_stir()
 }
 
 void
-arc4random_addrandom(dat, datlen)
-	u_char *dat;
-	int     datlen;
+arc4random_addrandom(u_char *dat, int datlen)
 {
 	if (!rs_initialized)
 		arc4random_stir();
@@ -148,7 +149,7 @@ arc4random_addrandom(dat, datlen)
 }
 
 u_int32_t
-arc4random()
+arc4random(void)
 {
 	if (!rs_initialized)
 		arc4random_stir();
