@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_pcmcia.c,v 1.16 1999/08/08 01:34:15 niklas Exp $	*/
+/*	$OpenBSD: com_pcmcia.c,v 1.17 1999/08/09 22:16:05 fgsch Exp $	*/
 /*	$NetBSD: com_pcmcia.c,v 1.15 1998/08/22 17:47:58 msaitoh Exp $	*/
 
 /*-
@@ -298,8 +298,6 @@ found:
 	sc->enable = com_pcmcia_enable;
 	sc->disable = com_pcmcia_disable;
 	
-	printf(": serial device");
-
 #ifdef notyet
 	sc->sc_frequency = COM_FREQ;
 
