@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: command.c,v 1.26 1998/01/29 00:34:31 brian Exp $
+ * $Id: command.c,v 1.27 1998/03/12 02:40:40 brian Exp $
  *
  */
 #include <sys/param.h>
@@ -1189,7 +1189,7 @@ SetPreferredMTU(struct cmdargs const *arg)
 }
 
 static int
-SetIdleTimeout(struct cmdargs const *arg)
+SetTimeout(struct cmdargs const *arg)
 {
   if (arg->argc > 0) {
     VarIdleTimeout = atoi(arg->argv[0]);
@@ -1480,8 +1480,8 @@ static struct cmdtab const SetCommands[] = {
   "Set server port", "set server|socket TcpPort|LocalName|none [mask]"},
   {"speed", NULL, SetModemSpeed, LOCAL_AUTH,
   "Set modem speed", "set speed value"},
-  {"timeout", NULL, SetIdleTimeout, LOCAL_AUTH,
-  "Set Idle timeout", "set timeout value"},
+  {"timeout", NULL, SetTimeout, LOCAL_AUTH,
+  "Set Idle timeout", "set timeout idle LQR FSM-resend"},
   {"vj", NULL, SetInitVJ, LOCAL_AUTH,
   "Set vj values", "set vj slots|slotcomp"},
   {"help", "?", HelpCommand, LOCAL_AUTH | LOCAL_NO_AUTH,
