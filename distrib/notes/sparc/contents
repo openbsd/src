@@ -31,12 +31,8 @@ or net booting.  This can be convenient if you have a existing installation
 of OpenBSD, NetBSD, SunOS, or Solaris and wish to test or upgrade the
 existing system to OpenBSD.
 
-The "floppy{:--:}OSrev.fs" is a new bootable floppy image, with contents similar
-to a miniroot stored in a compressed kernel with pre-loaded ramdisk.  As
-of release time, this version has not received adequate testing and may
-not work reliably on many systems, but is provided as a convenience for
-for people installing on Sun4m systems where the other floppy installation
-method doesn't work due to lack of Sun4m floppy driver support.
+The "floppy{:--:}OSrev.fs" is a bootable floppy image, with contents similar
+to a miniroot stored in a compressed kernel with pre-loaded ramdisk.
 
 These bootable images are also useful as "failsafe" boots for system
 maintenance and disaster recovery.

@@ -20,7 +20,7 @@ below).
 This section of the install document is really broken into several parts:
 
 	- booting from the installation media
-	- the single floppy or miniroot install script
+	- the floppy or miniroot install script
 	- after completing an installation
 	- installing from Sun OS
 	- net boot or diskless setup information

@@ -5,11 +5,6 @@ If you are upgrading with the miniroot or the new single floppy image,
 select the (U)pdate option rather than the (I)nstall option at the prompt
 in the install process. 
 
-If you are using the old multi-floppy installation procedure, use the
-"upgr{:--:}OSrev.fs" floppy rather than the "inst{:--:}OSrev.fs" floppy when prompted to
-put in the filesystem diskette.  When you arrive at the shell prompt,
-run the "upgrade" script rather than "install" script.
-
 The upgrade script will use the existing disk partitions to install the
 new system in, and also preserves files in `/etc' which you are likely
 to have customized since a previous installation.
