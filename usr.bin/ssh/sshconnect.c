@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect.c,v 1.110 2001/07/25 14:35:18 markus Exp $");
+RCSID("$OpenBSD: sshconnect.c,v 1.111 2001/10/01 21:51:16 markus Exp $");
 
 #include <openssl/bn.h>
 
@@ -575,7 +575,8 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 		local = 0;
 		break;
 	}
-	if (local && options.host_key_alias == NULL) {
+	if (options.no_host_authentication_for_localhost == 1 && local &&
+	    options.host_key_alias == NULL) {
 		debug("Forcing accepting of host key for "
 		    "loopback/localhost.");
 		return 0;
