@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.16 1996/05/07 07:21:46 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.17 1996/05/07 15:27:51 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.200 1996/05/03 19:42:15 christos Exp $	*/
 
 /*-
@@ -734,6 +734,12 @@ boot(howto)
 
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
+		extern struct proc proc0;
+
+		/* protect against curproc->p_stats.foo refs in sync()   XXX */
+		if (curproc == NULL)
+			curproc = &proc0;
+
 		waittime = 0;
 		vfs_shutdown();
 		/*
