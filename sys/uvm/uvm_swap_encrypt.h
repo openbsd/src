@@ -31,11 +31,36 @@
 #ifndef _UVM_SWAP_ENCRYPT_H
 #define _UVM_SWAP_ENCRYPT_H
 
-void swap_encrypt_init __P((caddr_t, size_t));
-void swap_encrypt __P((caddr_t, caddr_t, u_int64_t, size_t));
-void swap_decrypt __P((caddr_t, caddr_t, u_int64_t, size_t));
+#define SWAP_KEY_EXPIRE (120 /*60 * 60*/)	/* time after that keys expire */
+#define SWAP_KEY_SIZE	4		/* 128-bit keys */
+
+struct swap_key {
+	u_int32_t key[SWAP_KEY_SIZE];	/* secret key for swap range */
+	u_int16_t refcount;		/* pages that still need it */
+};
+
+void swap_encrypt __P((struct swap_key *,caddr_t, caddr_t, u_int64_t, size_t));
+void swap_decrypt __P((struct swap_key *,caddr_t, caddr_t, u_int64_t, size_t));
+
+void swap_key_cleanup __P((struct swap_key *));
+void swap_key_prepare __P((struct swap_key *, int));
+
+#define SWAP_KEY_GET(s,x) do { if ((x)->refcount == 0) {\
+					swap_key_create(x); \
+			       } \
+			       (x)->refcount++; } while(0);
+#define SWAP_KEY_PUT(s,x) do { (x)->refcount--; \
+			       if ((x)->refcount == 0) { \
+					swap_key_delete(x); \
+			       } \
+			     } while(0);
+
+void swap_key_create __P((struct swap_key *));
+void swap_key_delete __P((struct swap_key *));
 
 extern int uvm_doswapencrypt;		/* swapencrypt enabled/disabled */
+extern int uvm_swprekeyprint;
+extern u_int uvm_swpkeyexpire;		/* expiry time for keys (tR) */
 extern int swap_encrypt_initalized;
 
 #endif /* _UVM_SWAP_ENCRYPT_H */

@@ -57,6 +57,9 @@
 #include <uvm/uvm_pager.h>
 #include <uvm/uvm_pdaemon.h>
 #include <uvm/uvm_swap.h>
+#ifdef UVM_SWAP_ENCRYPT
+#include <uvm/uvm_swap_encrypt.h>
+#endif
 
 /*
  * pull in VM_NFREELIST

@@ -53,7 +53,7 @@
 
 #include <uvm/uvm.h>
 #ifdef UVM_SWAP_ENCRYPT
-#include <uvm/uvm_swap_encrypt.h>
+#include <sys/syslog.h>
 #endif
 
 #include <miscfs/specfs/specdev.h>
@@ -154,6 +154,9 @@ struct swapdev {
 	struct ucred		*swd_cred;	/* cred for file access */
 #endif
 #ifdef UVM_SWAP_ENCRYPT
+#define SWD_KEY_SHIFT		7		/* One key per 0.5 MByte */
+#define SWD_KEY(x,y)		&((x)->swd_keys[((y) - (x)->swd_drumoffset) >> SWD_KEY_SHIFT])
+
 #define SWD_DCRYPT_SHIFT	5
 #define SWD_DCRYPT_BITS		32
 #define SWD_DCRYPT_MASK		(SWD_DCRYPT_BITS - 1)
@@ -161,6 +164,8 @@ struct swapdev {
 #define SWD_DCRYPT_BIT(x)	((x) & SWD_DCRYPT_MASK)
 #define SWD_DCRYPT_SIZE(x)	(SWD_DCRYPT_OFF((x) + SWD_DCRYPT_MASK) * sizeof(u_int32_t))
 	u_int32_t		*swd_decrypt;	/* bitmap for decryption */
+	struct swap_key		*swd_keys;	/* keys for different parts */
+	int			swd_nkeys;	/* active keys */
 #endif
 };
 
@@ -390,6 +395,10 @@ uvm_swap_initcrypt(struct swapdev *sdp, int npages)
 	 */
 	sdp->swd_decrypt = malloc(SWD_DCRYPT_SIZE(npages), M_VMSWAP, M_WAITOK);
 	bzero(sdp->swd_decrypt, SWD_DCRYPT_SIZE(npages));
+	sdp->swd_keys = malloc((npages >> SWD_KEY_SHIFT) * sizeof(struct swap_key),
+			       M_VMSWAP, M_WAITOK);
+	bzero(sdp->swd_keys, (npages >> SWD_KEY_SHIFT) * sizeof(struct swap_key));
+	sdp->swd_nkeys = 0;
 }
 
 boolean_t
@@ -1247,8 +1256,11 @@ swap_off(p, sdp)
 	return ENODEV;
 
 #ifdef UVM_SWAP_ENCRYPT
-	if (sdp->swd_decrypt)
+	if (sdp->swd_decrypt) {
 		free(sdp->swd_decrypt);
+		bzero(sdp->swd_keys, (sdp->swd_npages >> SWD_KEY_SHIFT) * sizeof(struct swap_key));
+		free(sdp->swd_keys);
+	}
 #endif
 	extent_free(swapmap, sdp->swd_mapoffset, sdp->swd_mapsize, EX_WAITOK);
 	name = sdp->swd_ex->ex_name;
@@ -1826,6 +1838,20 @@ uvm_swap_free(startslot, nslots)
 	if (sdp->swd_npginuse < 0)
 		panic("uvm_swap_free: inuse < 0");
 #endif
+#ifdef UVM_SWAP_ENCRYPT
+	{
+		int i;
+		if (swap_encrypt_initalized) {
+			/* Dereference keys */
+			for (i = 0; i < nslots; i++)
+				if (uvm_swap_needdecrypt(sdp, startslot + i))
+					SWAP_KEY_PUT(sdp, SWD_KEY(sdp, startslot + i));
+
+			/* Mark range as not decrypt */
+			uvm_swap_markdecrypt(sdp, startslot, nslots, 0);
+		}
+	}
+#endif UVM_SWAP_ENCRYPT
 	simple_unlock(&uvm.swap_data_lock);
 }
 
@@ -1937,14 +1963,7 @@ uvm_swap_io(pps, startslot, npages, flags)
 		return (VM_PAGER_AGAIN);
 
 #ifdef UVM_SWAP_ENCRYPT
-	/* 
-	 * encrypt to swap
-	 */
 	if ((flags & B_READ) == 0) {
-		int i, opages;
-		caddr_t src, dst;
-		u_int64_t block;
-
 		/*
 		 * Check if we need to do swap encryption on old pages.
 		 * Later we need a different scheme, that swap encrypts
@@ -1953,8 +1972,31 @@ uvm_swap_io(pps, startslot, npages, flags)
 		 * in the cluster, and avoid the memory overheard in 
 		 * swapping.
 		 */
-		if (!uvm_doswapencrypt)
-				goto noswapencrypt;
+		if (uvm_doswapencrypt)
+			encrypt = 1;
+	}
+
+	if (swap_encrypt_initalized  || encrypt) { 
+		/*
+		 * we need to know the swap device that we are swapping to/from
+		 * to see if the pages need to be marked for decryption or
+		 * actually need to be decrypted.
+		 * XXX - does this information stay the same over the whole 
+		 * execution of this function?
+		 */
+		simple_lock(&uvm.swap_data_lock);
+		sdp = swapdrum_getsdp(startslot);
+		simple_unlock(&uvm.swap_data_lock);
+	}
+
+	/* 
+	 * encrypt to swap
+	 */
+	if ((flags & B_READ) == 0 && encrypt) {
+		int i, opages;
+		caddr_t src, dst;
+		struct swap_key *key;
+		u_int64_t block;
 
 		if (!uvm_swap_allocpages(tpps, npages)) {
 			uvm_pagermapout(kva, npages);
@@ -1972,9 +2014,12 @@ uvm_swap_io(pps, startslot, npages, flags)
 		dst = (caddr_t) dstkva;
 		block = startblk;
 		for (i = 0; i < npages; i++) {
+			key = SWD_KEY(sdp, startslot + i);
+			SWAP_KEY_GET(sdp, key);	/* add reference */
+
 			/* mark for async writes */
 			tpps[i]->pqflags |= PQ_ENCRYPT;
-			swap_encrypt(src, dst, block, 1 << PAGE_SHIFT);
+			swap_encrypt(key, src, dst, block, 1 << PAGE_SHIFT);
 			src += 1 << PAGE_SHIFT;
 			dst += 1 << PAGE_SHIFT;
 			block += btodb(1 << PAGE_SHIFT);
@@ -1988,9 +2033,6 @@ uvm_swap_io(pps, startslot, npages, flags)
 				      PGO_PDFREECLUST, 0);
 
 		kva = dstkva;
-
-		encrypt = 1;
-	noswapencrypt:
 	}
 #endif /* UVM_SWAP_ENCRYPT */
 
@@ -2011,7 +2053,12 @@ uvm_swap_io(pps, startslot, npages, flags)
 	if (sbp == NULL) {
 #ifdef UVM_SWAP_ENCRYPT
 		if ((flags & B_READ) == 0 && encrypt) {
+			int i;
+
 			/* swap encrypt needs cleanup */
+			for (i = 0; i < npages; i++)
+				SWAP_KEY_PUT(sdp, SWD_KEY(sdp, startslot + i));
+
 			uvm_pagermapout(kva, npages);
 			uvm_swap_freepages(tpps, npages);
 		}
@@ -2049,21 +2096,6 @@ uvm_swap_io(pps, startslot, npages, flags)
 	if (swapdev_vp->v_type == VBLK)
 		bp->b_dev = swapdev_vp->v_rdev;
 	bp->b_bcount = npages << PAGE_SHIFT;
-
-#ifdef UVM_SWAP_ENCRYPT
-	if (swap_encrypt_initalized) { 
-		/*
-		 * we need to know the swap device that we are swapping to/from
-		 * to see if the pages need to be marked for decryption or
-		 * actually need to be decrypted.
-		 * XXX - does this information stay the same over the whole 
-		 * execution of this function?
-		 */
-		simple_lock(&uvm.swap_data_lock);
-		sdp = swapdrum_getsdp(startslot);
-		simple_unlock(&uvm.swap_data_lock);
-	}
-#endif
 
 	/* 
 	 * for pageouts we must set "dirtyoff" [NFS client code needs it].
@@ -2121,11 +2153,15 @@ uvm_swap_io(pps, startslot, npages, flags)
 		int i;
 		caddr_t data = bp->b_data;
 		u_int64_t block = startblk;
+		struct swap_key *key = NULL;
+
 		for (i = 0; i < npages; i++) {
 			/* Check if we need to decrypt */
-			if (uvm_swap_needdecrypt(sdp, startslot + i))
-				swap_decrypt(data, data, block,
+			if (uvm_swap_needdecrypt(sdp, startslot + i)) {
+				key = SWD_KEY(sdp, startslot + i);
+				swap_decrypt(key, data, data, block,
 					     1 << PAGE_SHIFT);
+			}
 			data += 1 << PAGE_SHIFT;
 			block += btodb(1 << PAGE_SHIFT);
 		}
