@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.101 2003/04/25 20:12:02 grange Exp $
+.\"	$OpenBSD: sysctl.3,v 1.102 2003/05/03 19:04:40 jmc Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -237,7 +237,7 @@ privileges may change the value.
 .It Dv HW_MACHINE
 The machine class.
 .It Dv HW_MODEL
-The machine model
+The machine model.
 .It Dv HW_NCPU
 The number of CPUs.
 .It Dv HW_BYTEORDER
@@ -407,7 +407,7 @@ The size of the kernel message buffer.
 A
 .Li struct nchstats
 structure is returned.
-This structure contains information the
+This structure contains information about the
 filename to
 .Xr inode 5
 mapping cache.
@@ -640,7 +640,7 @@ The default value is 80.
 Return System V style IPC configuration and run-time information.
 The third level name selects the System V style IPC facility.
 .Bl -column "KERN_SYSVIPC_MSG_INFOXXX" "struct shm_sysctl_infoXXX" -offset indent
-.It Sy Pa Third level name	Type
+.It Sy Third level name	Type
 .It KERN\_SYSVIPC\_MSG\_INFO	struct msg_sysctl_info
 .It KERN\_SYSVIPC\_SEM\_INFO	struct sem_sysctl_info
 .It KERN\_SYSVIPC\_SHM\_INFO	struct shm_sysctl_info
@@ -1167,7 +1167,7 @@ The third level name is the protocol.
 The fourth level name is the variable name.
 The currently defined protocols and names are:
 .Bl -column "Protocol name" "Variable nameXX" "integer" "yes" -offset indent
-.It Pa Protocol name	Variable name	Type	Changeable
+.It Sy Protocol name	Variable name	Type	Changeable
 .It ip6	forwarding	integer	yes
 .It ip6	redirect	integer	yes
 .It ip6	hlim	integer	yes

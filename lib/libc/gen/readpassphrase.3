@@ -1,4 +1,4 @@
-.\"	$OpenBSD: readpassphrase.3,v 1.9 2002/06/28 01:43:58 millert Exp $
+.\"	$OpenBSD: readpassphrase.3,v 1.10 2003/05/03 19:04:40 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -150,10 +150,11 @@ default action is taken as per
 .Pp
 The
 .Dv SIGTSTP ,
-.Dv SIGTTIN ,
-.Dv SIGTTOU ,
-signals (stop signal generated from keyboard or due to terminal I/O
-from a background proccess) are treated specially.
+.Dv SIGTTIN
+and
+.Dv SIGTTOU
+signals (stop signals generated from keyboard or due to terminal I/O
+from a background process) are treated specially.
 When the process is resumed after it has been stopped,
 .Fn readpassphrase
 will reprint the prompt and the user may then enter a passphrase.
