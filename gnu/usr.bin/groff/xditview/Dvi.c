@@ -345,12 +345,13 @@ static void OpenFile (dw)
 	DviWidget	dw;
 {
 	char	tmpName[sizeof ("/tmp/dviXXXXXX")];
+	int fd;
 
 	dw->dvi.tmpFile = 0;
 	if (!dw->dvi.seek) {
 		strcpy (tmpName, "/tmp/dviXXXXXX");
-		mktemp (tmpName);
-		dw->dvi.tmpFile = fopen (tmpName, "w+");
+		fd = mkstemp (tmpName);
+		dw->dvi.tmpFile = fdopen (fd, "w+");
 		unlink (tmpName);
 	}
 	dw->dvi.requested_page = 1;
