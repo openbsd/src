@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: compat.c,v 1.2 1996/11/01 23:27:28 millert Exp $";
+static char rcsid[] = "$Id: compat.c,v 1.3 2000/08/21 21:08:55 deraadt Exp $";
 #endif
 
 /* vix 30dec93 [broke this out of misc.c - see RCS log for history]
@@ -76,7 +76,7 @@ strerror(error)
 		return sys_errlist[error];
 	}
 
-	sprintf(buf, "Unknown error: %d", error);
+	snprintf(buf, sizeof buf, "Unknown error: %d", error);
 	return buf;
 }
 #endif
@@ -221,16 +221,18 @@ setenv(name, value, overwrite)
 	int overwrite;
 {
 	char *tmp;
+	int len;
 
 	if (overwrite && getenv(name))
 		return -1;
 
-	if (!(tmp = malloc(strlen(name) + strlen(value) + 2))) {
+	len = strlen(name) + strlen(value) + 2;
+	if (!(tmp = malloc(len))) {
 		errno = ENOMEM;
 		return -1;
 	}
 
-	sprintf(tmp, "%s=%s", name, value);
+	snprintf(tmp, len, "%s=%s", name, value);
 	return putenv(tmp);	/* intentionally orphan 'tmp' storage */
 }
 #endif

@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: crontab.c,v 1.17 2000/08/21 21:04:22 deraadt Exp $";
+static char rcsid[] = "$Id: crontab.c,v 1.18 2000/08/21 21:08:55 deraadt Exp $";
 #endif
 
 /* crontab - install and manage per-user crontab files
@@ -132,7 +132,7 @@ main(argc, argv)
 }
 	
 #if DEBUGGING
-char *getoptarg = "u:lerx:"
+char *getoptarg = "u:lerx:";
 #else
 char *getoptarg = "u:ler";
 #endif
@@ -261,7 +261,7 @@ list_cmd() {
 	int	ch;
 
 	log_it(RealUser, Pid, "LIST", User);
-	(void) sprintf(n, CRON_TAB(User));
+	(void) snprintf(n, sizeof n, CRON_TAB(User));
 	if (!(f = fopen(n, "r"))) {
 		if (errno == ENOENT)
 			fprintf(stderr, "no crontab for %s\n", User);
@@ -284,7 +284,7 @@ delete_cmd() {
 	char	n[MAX_FNAME];
 
 	log_it(RealUser, Pid, "DELETE", User);
-	(void) sprintf(n, CRON_TAB(User));
+	(void) snprintf(n, sizeof n, CRON_TAB(User));
 	if (unlink(n)) {
 		if (errno == ENOENT)
 			fprintf(stderr, "no crontab for %s\n", User);
@@ -317,7 +317,7 @@ edit_cmd() {
 	PID_T		pid, xpid;
 
 	log_it(RealUser, Pid, "BEGIN EDIT", User);
-	(void) sprintf(n, CRON_TAB(User));
+	(void) snprintf(n, sizeof n, CRON_TAB(User));
 	if (!(f = fopen(n, "r"))) {
 		if (errno != ENOENT) {
 			perror(n);
@@ -336,7 +336,7 @@ edit_cmd() {
 	(void)signal(SIGINT, SIG_IGN);
 	(void)signal(SIGQUIT, SIG_IGN);
 
-	(void) sprintf(Filename, "/tmp/crontab.XXXXXXXXXX");
+	(void) snprintf(Filename, sizeof Filename, "/tmp/crontab.XXXXXXXXXX");
 	if ((t = mkstemp(Filename)) == -1) {
 		perror(Filename);
 		goto fatal;
@@ -358,7 +358,7 @@ edit_cmd() {
 
 	/* ignore the top few comments since we probably put them there.
 	 */
-	for (x = 0;  x < NHEADER_LINES;  x++) {
+	for (x = 0; x < NHEADER_LINES; x++) {
 		ch = get_char(f);
 		if (EOF == ch)
 			break;
@@ -423,15 +423,15 @@ edit_cmd() {
 			exit(ERROR_EXIT);
 		}
 		if (chdir("/tmp") < 0) {
-			perror("chdir(/tmp)");
+			perror("chdir(\"/tmp\")");
 			exit(ERROR_EXIT);
 		}
-		if (strlen(editor) + strlen(Filename) + 2 >= MAX_TEMPSTR) {
+		if (strlen(editor) + strlen(Filename) + 2 >= sizeof(q)) {
 			fprintf(stderr, "%s: editor or filename too long\n",
 				ProgramName);
 			exit(ERROR_EXIT);
 		}
-		sprintf(q, "%s %s", editor, Filename);
+		snprintf(q, sizeof q, "%s %s", editor, Filename);
 		execlp(_PATH_BSHELL, _PATH_BSHELL, "-c", q, NULL);
 		perror(editor);
 		exit(ERROR_EXIT);
@@ -640,8 +640,8 @@ replace_cmd() {
 		goto done;
 	}
 
-	(void) sprintf(n, CRON_TAB(User));
-	if (rename(TempFilename, n)) {
+	if (snprintf(n, sizeof n, CRON_TAB(User)) >= sizeof n ||
+	    rename(TempFilename, n)) {
 		fprintf(stderr, "%s: error renaming %s to %s\n",
 			ProgramName, TempFilename, n);
 		perror("rename");

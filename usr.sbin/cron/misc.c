@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: misc.c,v 1.6 1999/08/06 20:41:07 deraadt Exp $";
+static char rcsid[] = "$Id: misc.c,v 1.7 2000/08/21 21:08:57 deraadt Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the rest of the log]
@@ -263,10 +263,10 @@ acquire_daemonlock(closeflag)
 		char	buf[MAX_TEMPSTR];
 		int	fd, otherpid;
 
-		(void) sprintf(pidfile, PIDFILE, PIDDIR);
-		if ((-1 == (fd = open(pidfile, O_RDWR|O_CREAT, 0644)))
-		    || (NULL == (fp = fdopen(fd, "r+")))
-		    ) {
+		if (snprintf(pidfile, sizeof pidfile, PIDFILE,
+		    PIDDIR) >= sizeof pidfile ||
+		    (fd = open(pidfile, O_RDWR|O_CREAT, 0644)) == -1 ||
+		    (fp = fdopen(fd, "r+")) == NULL) {
 			snprintf(buf, sizeof buf, "can't open or create %s: %s",
 				pidfile, strerror(errno));
 			fprintf(stderr, "%s: %s\n", ProgramName, buf);
@@ -467,6 +467,7 @@ log_it(username, xpid, event, detail)
 	char			*msg;
 	TIME_T			now = time((TIME_T) 0);
 	register struct tm	*t = localtime(&now);
+	int			msglen;
 #endif /*LOG_FILE*/
 
 #if defined(SYSLOG)
@@ -476,10 +477,11 @@ log_it(username, xpid, event, detail)
 #if defined(LOG_FILE)
 	/* we assume that MAX_TEMPSTR will hold the date, time, &punctuation.
 	 */
-	msg = malloc(strlen(username)
-		     + strlen(event)
-		     + strlen(detail)
-		     + MAX_TEMPSTR);
+	msglen = strlen(username) + strlen(event) + strlen(detail) +
+	    MAX_TEMPSTR);
+	msg = malloc(msglen);
+	if (!msg)
+		return;
 
 	if (LogFD < OK) {
 		LogFD = open(LOG_FILE, O_WRONLY|O_APPEND|O_CREAT, 0600);
@@ -492,17 +494,15 @@ log_it(username, xpid, event, detail)
 		}
 	}
 
-	/* we have to sprintf() it because fprintf() doesn't always write
+	/* we have to snprintf() it because fprintf() doesn't always write
 	 * everything out in one chunk and this has to be atomically appended
 	 * to the log file.
 	 */
-	sprintf(msg, "%s (%02d/%02d-%02d:%02d:%02d-%d) %s (%s)\n",
-		username,
-		t->tm_mon+1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec, pid,
-		event, detail);
+	snprintf(msg, msglen, "%s (%02d/%02d-%02d:%02d:%02d-%d) %s (%s)\n",
+	    username,
+	    t->tm_mon+1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec, pid,
+	    event, detail);
 
-	/* we have to run strlen() because sprintf() returns (char*) on old BSD
-	 */
 	if (LogFD < OK || write(LogFD, msg, strlen(msg)) < OK) {
 		if (LogFD >= OK)
 			perror(LOG_FILE);
@@ -605,7 +605,7 @@ mkprint(dst, src, len)
 			*dst++ = '^';
 			*dst++ = '?';
 		} else {			/* parity character */
-			sprintf(dst, "\\%03o", ch);
+			snprintf(dst, 5, "\\%03o", ch);
 			dst += 4;
 		}
 	}
