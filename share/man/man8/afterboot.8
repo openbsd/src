@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.105 2005/03/02 14:53:07 jmc Exp $
+.\"	$OpenBSD: afterboot.8,v 1.106 2005/03/02 16:08:47 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -791,8 +791,6 @@ The standard
 .Ox
 kernel configuration (GENERIC) is suitable for most purposes.
 Use of an alternative kernel configuration is not recommended.
-.Xr sendbug 1
-reports for non-GENERIC kernels will be rejected.
 .Pp
 First, review the system message buffer using the
 .Xr dmesg 8
@@ -872,7 +870,6 @@ boot time in the kernel image.
 .Xr passwd 1 ,
 .Xr pkg_add 1 ,
 .Xr ps 1 ,
-.Xr sendbug 1 ,
 .Xr ssh 1 ,
 .Xr su 1 ,
 .Xr xdm 1 ,
