@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.108 1999/06/04 16:37:47 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.109 1999/07/06 07:59:54 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -208,6 +208,8 @@ vm_map_t buffer_map;
 
 extern	vm_offset_t avail_start, avail_end;
 vm_offset_t hole_start, hole_end;
+
+int kbd_reset;
 
 /*
  * Extent maps to manage I/O and ISA memory hole space.  Allocate
@@ -2115,6 +2117,13 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case CPU_APMWARN:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &cpu_apmwarn));
 #endif
+	case CPU_KBDRESET:
+		if (securelevel > 0) 
+			return (sysctl_rdint(oldp, oldlenp, newp, 
+			    kbd_reset));
+		else
+			return (sysctl_int(oldp, oldlenp, newp, newlen, 
+			    &kbd_reset));
 	default:
 		return EOPNOTSUPP;
 	}

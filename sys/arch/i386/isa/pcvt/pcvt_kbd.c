@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_kbd.c,v 1.19 1998/09/06 23:00:03 niklas Exp $	*/
+/*	$OpenBSD: pcvt_kbd.c,v 1.20 1999/07/06 07:59:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -114,6 +114,8 @@ static int	ledstate  = LEDSTATE_UPDATE_PENDING;	/* keyboard led's */
 static int	tpmrate   = KBD_TPD500|KBD_TPM100;
 static u_char	altkpflag = 0;
 static u_short	altkpval  = 0;
+
+extern int kbd_reset;
 
 #if PCVT_SHOWKEYS
 u_char rawkeybuf[80];
@@ -1472,10 +1474,11 @@ regular:
 
 	kbd_status.extended = kbd_status.ext1 = 0;
 
-#if PCVT_CTRL_ALT_DEL		/*   Check for cntl-alt-del	*/
-	if((key == 76) && ctrl_down && (meta_down||altgr_down))
-		cpu_reset();
-#endif /* PCVT_CTRL_ALT_DEL */
+	if(kbd_reset && (key == 76) && ctrl_down && (meta_down||altgr_down)) {
+		printf("\nconsole halt requested: going down.\n");
+		kbd_reset = 0;
+		psignal(initproc, SIGUSR1);
+	}
 
 #if NDDB > 0 || defined(DDB)		 /*   Check for cntl-alt-esc	*/
 
