@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.48 2003/08/08 16:09:26 otto Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.49 2003/08/13 20:44:15 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -65,7 +65,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.48 2003/08/08 16:09:26 otto Exp $";
+static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.49 2003/08/13 20:44:15 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -634,7 +634,7 @@ stone(int *a, int n, int *b, int *c)
 {
 	int i, k, y, j, l;
 	int oldc, tc, oldl;
-	u_int loopcount;
+	u_int numtries;
 
 	const u_int bound = dflag ? UINT_MAX : max(256, isqrt(n));
 
@@ -647,9 +647,8 @@ stone(int *a, int n, int *b, int *c)
 		y = -b[j];
 		oldl = 0;
 		oldc = c[0];
-		loopcount = 0;
+		numtries = 0;
 		do {
-			loopcount++;
 			if (y <= clist[oldc].y)
 				continue;
 			l = search(c, k, y);
@@ -662,12 +661,13 @@ stone(int *a, int n, int *b, int *c)
 				c[l] = newcand(i, y, oldc);
 				oldc = tc;
 				oldl = l;
+				numtries++;
 			} else {
 				c[l] = newcand(i, y, oldc);
 				k++;
 				break;
 			}
-		} while ((y = b[++j]) > 0 && loopcount < bound);
+		} while ((y = b[++j]) > 0 && numtries < bound);
 	}
 	return (k);
 }
