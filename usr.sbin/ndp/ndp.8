@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ndp.8,v 1.10 2002/05/29 08:05:39 itojun Exp $
+.\"	$OpenBSD: ndp.8,v 1.11 2002/05/29 09:13:22 itojun Exp $
 .\"	$KAME: ndp.8,v 1.20 2002/05/29 07:37:51 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@ The following information will be printed:
 IPv6 address of the neighbor.
 .It Linklayer Address
 Linklayer address of the neighbor.
-It could be 
+It could be
 .Dq Li (incomplete)
 when the address is not available.
 .It Netif
@@ -114,7 +114,7 @@ Flags on the neighbor cache entry, in a single letter.
 They are: Router, proxy neighbor advertisement
 .Pq Dq p .
 The field could be followed by a decimal number,
-which means the number of NS probes the node have sent during the current state.
+which means the number of NS probes the node has sent during the current state.
 .El
 .It Fl A Ar wait
 Repeat
@@ -190,7 +190,7 @@ even though the host address is not its own.
 .It Fl t
 Print timestamp on each entries,
 to make it possible to merge output with
-.Xr tcpdump 1 .
+.Xr tcpdump 8 .
 Most useful when used with
 .Fl A .
 .El
@@ -206,7 +206,7 @@ command will exit with 0 on success, and non-zero on errors.
 .Sh HISTORY
 The
 .Nm
-command first appeared in WIDE Hydrangea IPv6 protocol stack kit.
+command first appeared in the WIDE Hydrangea IPv6 protocol stack kit.
 .\"
 .\" .Sh BUGS
 .\" (to be written)
