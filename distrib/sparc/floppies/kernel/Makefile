@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.5 1996/12/21 05:20:38 deraadt Exp $
+#	$Id: Makefile,v 1.6 1997/03/31 07:34:38 deraadt Exp $
 
 .include "../Makefile.inc"
 
@@ -20,12 +20,10 @@ bsd:
 	cp ${.CURDIR}/../../../../sys/arch/sparc/compile/FLOPPY/bsd bsd
 
 all:	bsd
-.if ${VND} == vnd0
 	dd if=/dev/zero of=${REALIMAGE} bs=10k count=144
 	vnconfig -v -c ${VND} ${REALIMAGE}
-.endif
 	disklabel -w ${VND} floppy
-	newfs -O -m 0 -o space -i 8192 -c 80 ${VND_RDEV} floppy
+	newfs -O -m 0 -o space -i 20480 -c 80 ${VND_RDEV} floppy
 	mount ${VND_DEV} ${MOUNT_POINT}
 	sync; /usr/mdec/binstall -v ffs ${MOUNT_POINT}
 	TOPDIR=${.CURDIR}/.. CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
@@ -33,22 +31,14 @@ all:	bsd
 	mtree -def ${.CURDIR}/mtree.conf -p ${MOUNT_POINT}/ -u
 	df -i ${MOUNT_POINT}
 	umount ${MOUNT_POINT}
-.if ${VND} == vnd0
 	vnconfig -u ${VND}
 	cat /bin/* > /dev/null		# flush buffer cache (yuck)
 	cp ${REALIMAGE} ${IMAGE}
 	rm ${REALIMAGE}
-	echo you have just produced a perfectly wonderful disfunctional floppy
-.else
-	dd if=${VND_RDEV} of=${IMAGE} bs=10k
-.endif
-
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
-.if ${VND} == vnd0
 	-vnconfig -u ${VND}
-.endif
 	-/bin/rm -f ${IMAGE}
 
 clean cleandir:
