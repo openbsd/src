@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.6 1998/12/13 07:31:08 pjanzen Exp $	*/
+/*	$OpenBSD: io.c,v 1.7 1999/04/20 23:03:25 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: io.c,v 1.6 1998/12/13 07:31:08 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.7 1999/04/20 23:03:25 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -384,7 +384,7 @@ closecal(fp)
 		(void)setuid(geteuid());
 		(void)setgid(getegid());
 		execl(_PATH_SENDMAIL, "sendmail", "-i", "-t", "-F",
-		    "\"Reminder Service\"", "-f", "root", NULL);
+		    "\"Reminder Service\"", NULL);
 		warn(_PATH_SENDMAIL);
 		_exit(1);
 	}
