@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.306 2004/07/14 05:34:14 tedu Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.307 2004/07/15 07:20:40 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -225,8 +225,8 @@ u_int ndumpmem;
  * These variables are needed by /sbin/savecore
  */
 u_long	dumpmag = 0x8fca0101;	/* magic number */
-int 	dumpsize = 0;		/* pages */
-long	dumplo = 0; 		/* blocks */
+int	dumpsize = 0;		/* pages */
+long	dumplo = 0;		/* blocks */
 
 int	cpu_class;
 int	i386_fpu_present;
@@ -501,7 +501,7 @@ i386_init_pcb_tss_ldt(struct cpu_info *ci)
 	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0();
 	ci->ci_idle_tss_sel = tss_alloc(pcb);
-}  
+}
 #endif	/* MULTIPROCESSOR */
 
 
@@ -551,7 +551,7 @@ allocsys(v)
 	/* Restrict to at most 35% filled kvm */
 	/* XXX - This needs UBC... */
 	if (nbuf >
-	    (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) / MAXBSIZE * 35 / 100) 
+	    (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) / MAXBSIZE * 35 / 100)
 		nbuf = (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) /
 		    MAXBSIZE * 35 / 100;
 
@@ -663,7 +663,7 @@ setup_buffers(maxaddr)
 	pmap_update(pmap_kernel());
 }
 
-/*  
+/*
  * Info for CTL_HW
  */
 char	cpu_model[120];
@@ -710,7 +710,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		"Intel",
 		/* Family 4 */
 		{ {
-			CPUCLASS_486, 
+			CPUCLASS_486,
 			{
 				"486DX", "486DX", "486SX", "486DX2", "486SL",
 				"486SX2", 0, "486DX2 W/B",
@@ -801,7 +801,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		"AMD",
 		/* Family 4 */
 		{ {
-			CPUCLASS_486, 
+			CPUCLASS_486,
 			{
 				0, 0, 0, "Am486DX2 W/T",
 				0, 0, 0, "Am486DX2 W/B",
@@ -832,7 +832,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"Duron Model 3",
 				"Athlon Model 4",
 				0, "Athlon XP Model 6",
-				"Duron Model 7", 
+				"Duron Model 7",
 				"Athlon XP Model 8",
 				0, "Athlon XP Model 10",
 				0, 0, 0, 0, 0,
@@ -925,7 +925,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		"IDT",
 		/* Family 4, not available from IDT */
 		{ {
-			CPUCLASS_486, 
+			CPUCLASS_486,
 			{
 				0, 0, 0, 0, 0, 0, 0, 0,
 				0, 0, 0, 0, 0, 0, 0, 0,
@@ -963,7 +963,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		"Rise",
 		/* Family 4, not available from Rise */
 		{ {
-			CPUCLASS_486, 
+			CPUCLASS_486,
 			{
 				0, 0, 0, 0, 0, 0, 0, 0,
 				0, 0, 0, 0, 0, 0, 0, 0,
@@ -998,7 +998,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		"Transmeta",
 		/* Family 4, not available from Transmeta */
 		{ {
-			CPUCLASS_486, 
+			CPUCLASS_486,
 			{
 				0, 0, 0, 0, 0, 0, 0, 0,
 				0, 0, 0, 0, 0, 0, 0, 0,
@@ -1127,7 +1127,7 @@ winchip_cpu_setup(cpu_device, model, step)
 {
 #if defined(I586_CPU)
 
-  	switch ((curcpu()->ci_signature >> 4) & 15) { /* model */
+	switch ((curcpu()->ci_signature >> 4) & 15) { /* model */
 	case 4: /* WinChip C6 */
 		curcpu()->ci_feature_flags &= ~CPUID_TSC;
 		/* Disable RDTSC instruction from user-level. */
@@ -1169,11 +1169,11 @@ cyrix3_cpu_setup(cpu_device, model, step)
 	case 9:
 		if (step < 3)
 			break;
-		/* 
+		/*
 		 * C3 Nehemiah: fall through.
 		 */
 	case 10:
-		/* 
+		/*
 		 * C3 Nehemiah/Esther:
 		 * First we check for extended feature flags, and then
 		 * (if present) retrieve the ones at 0xC0000001.  In this
@@ -1261,7 +1261,7 @@ cyrix6x86_cpu_setup(cpu_device, model, step)
 #if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
 	extern int clock_broken_latch;
 
-  	switch ((curcpu()->ci_signature >> 4) & 15) { /* model */
+	switch ((curcpu()->ci_signature >> 4) & 15) { /* model */
 	case -1: /* M1 w/o cpuid */
 	case 2:	/* M1 */
 		/* set up various cyrix registers */
@@ -1277,7 +1277,7 @@ cyrix6x86_cpu_setup(cpu_device, model, step)
 		/* disable access to ccr4/ccr5 */
 		cyrix_write_reg(0xC3, cyrix_read_reg(0xC3) & ~0x10);
 
-		printf("%s: xchg bug workaround performed\n", 
+		printf("%s: xchg bug workaround performed\n",
 		       curcpu()->ci_dev.dv_xname);
 		break;	/* fallthrough? */
 	case 4:	/* GXm */
@@ -1331,7 +1331,7 @@ intel586_cpu_setup(cpu_device, model, step)
 #if defined(I586_CPU)
 	if (!cpu_f00f_bug) {
 		fix_f00f();
-		printf("%s: F00F bug workaround installed\n", 
+		printf("%s: F00F bug workaround installed\n",
 		    curcpu()->ci_dev.dv_xname);
 	}
 #endif
@@ -1421,7 +1421,7 @@ void
 intel686_cpu_setup(const char *cpu_device, int model, int step)
 {
         struct cpu_info *ci = curcpu();
-  	/* XXX SMP int model = (ci->ci_signature >> 4) & 15; */
+	/* XXX SMP int model = (ci->ci_signature >> 4) & 15; */
 	/* XXX SMP int step = ci->ci_signature & 15; */
 	u_quad_t msr119;
 
@@ -1442,7 +1442,7 @@ intel686_cpu_setup(const char *cpu_device, int model, int step)
 		msr119 |= 0x0000000000200000LL;
 		wrmsr(MSR_BBL_CR_CTL, msr119);
 
-		printf("%s: disabling processor serial number\n", 
+		printf("%s: disabling processor serial number\n",
 		       ci->ci_dev.dv_xname);
 		ci->ci_feature_flags &= ~CPUID_SER;
 		ci->ci_level = 2;
@@ -1549,7 +1549,7 @@ cyrix3_cpu_name(model, step)
  * ever *working* is sufficiently low that it's probably safe to assume
  * all processors are of the same vendor.
  */
- 
+
 void
 identifycpu(struct cpu_info *ci)
 {
@@ -1655,7 +1655,7 @@ identifycpu(struct cpu_info *ci)
 				   model == 7) {
 				name = cyrix3_cpu_name(model, step);
 			/* Special hack for the TMS5x00 series. */
-			} else if (vendor == CPUVENDOR_TRANSMETA && 
+			} else if (vendor == CPUVENDOR_TRANSMETA &&
 				  family == 5 && model == 4) {
 				name = tm86_cpu_name(model);
 			} else
@@ -1742,12 +1742,12 @@ identifycpu(struct cpu_info *ci)
 
 		if (ci->ci_feature_flags) {
 			int numbits = 0;
-	
+
 			printf("%s: ", cpu_device);
 			max = sizeof(i386_cpuid_features)
 				/ sizeof(i386_cpuid_features[0]);
 			for (i = 0; i < max; i++) {
-				if (ci->ci_feature_flags & 
+				if (ci->ci_feature_flags &
 				    i386_cpuid_features[i].feature_bit) {
 					printf("%s%s", (numbits == 0 ? "" : ","),
 					    i386_cpuid_features[i].feature_name);
@@ -1833,7 +1833,7 @@ tm86_cpu_name(model)
 	case 4:
 		if (((regs[1] >> 16) & 0xff) >= 0x3)
 			name = "TMS5800";
-		else 
+		else
 			name = "TMS5600";
 	}
 
@@ -1945,7 +1945,7 @@ old_identifycpu()
 				   model == 7) {
 				name = cyrix3_cpu_name(model, step);
 			/* Special hack for the TMS5x00 series. */
-			} else if (vendor == CPUVENDOR_TRANSMETA && 
+			} else if (vendor == CPUVENDOR_TRANSMETA &&
 				  family == 5 && model == 4) {
 				name = tm86_cpu_name(model);
 			} else
@@ -2275,7 +2275,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	struct sigacts *psp = p->p_sigacts;
 	int oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 
-	/* 
+	/*
 	 * Build the argument list for the signal handler.
 	 */
 	frame.sf_signum = sig;
@@ -2358,7 +2358,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = p->p_sigcode;
-	tf->tf_cs = pmap->pm_hiexec > I386_MAX_EXE_ADDR ? 
+	tf->tf_cs = pmap->pm_hiexec > I386_MAX_EXE_ADDR ?
 	    GSEL(GUCODE1_SEL, SEL_UPL) : GSEL(GUCODE_SEL, SEL_UPL);
 	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
 	tf->tf_esp = (int)fp;
@@ -2504,12 +2504,12 @@ haltsys:
 			printf("\nAttempting to power down...\n");
 			/*
 			 * Turn off, if we can.  But try to turn disk off and
-		 	 * wait a bit first--some disk drives are slow to
+			 * wait a bit first--some disk drives are slow to
 			 * clean up and users have reported disk corruption.
 			 *
 			 * If apm_set_powstate() fails the first time, don't
 			 * try to turn the system off.
-		 	 */
+			 */
 			delay(500000);
 			/*
 			 * It's been reported that the following bit of code
@@ -2771,7 +2771,7 @@ setregs(p, pack, stack, retval)
 	tf->tf_ebp = 0;
 	tf->tf_ebx = (int)PS_STRINGS;
 	tf->tf_eip = pack->ep_entry;
-	tf->tf_cs = pmap->pm_hiexec > I386_MAX_EXE_ADDR ? 
+	tf->tf_cs = pmap->pm_hiexec > I386_MAX_EXE_ADDR ?
 	    LSEL(LUCODE1_SEL, SEL_UPL) : LSEL(LUCODE_SEL, SEL_UPL);
 	tf->tf_eflags = PSL_USERSET;
 	tf->tf_esp = stack;
@@ -3313,7 +3313,7 @@ cpu_reset()
 	 * entire address space.
 	 */
 	bzero((caddr_t)PTD, NBPG);
-	tlbflush(); 
+	tlbflush();
 #endif
 
 	for (;;);
@@ -3361,9 +3361,9 @@ idt_vec_free(int vec)
 }
 #endif	/* MULTIPROCESSOR */
 
-/*  
+/*
  * machine dependent system variables.
- */ 
+ */
 int
 cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
@@ -3408,11 +3408,11 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return sysctl_rdstruct(oldp, oldlenp, newp, &dev, sizeof(dev));
 	case CPU_ALLOWAPERTURE:
 #ifdef APERTURE
-		if (securelevel > 0) 
-			return (sysctl_rdint(oldp, oldlenp, newp, 
+		if (securelevel > 0)
+			return (sysctl_rdint(oldp, oldlenp, newp,
 			    allowaperture));
 		else
-			return (sysctl_int(oldp, oldlenp, newp, newlen, 
+			return (sysctl_int(oldp, oldlenp, newp, newlen,
 			    &allowaperture));
 #else
 		return (sysctl_rdint(oldp, oldlenp, newp, 0));
@@ -3430,11 +3430,11 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &cpu_apmhalt));
 #endif
 	case CPU_KBDRESET:
-		if (securelevel > 0) 
-			return (sysctl_rdint(oldp, oldlenp, newp, 
+		if (securelevel > 0)
+			return (sysctl_rdint(oldp, oldlenp, newp,
 			    kbd_reset));
 		else
-			return (sysctl_int(oldp, oldlenp, newp, newlen, 
+			return (sysctl_int(oldp, oldlenp, newp, newlen,
 			    &kbd_reset));
 #ifdef USER_LDT
 	case CPU_USERLDT:
@@ -3769,7 +3769,7 @@ ok:
 	}
 }
 
-void    
+void
 bus_space_free(t, bsh, size)
 	bus_space_tag_t t;
 	bus_space_handle_t bsh;
