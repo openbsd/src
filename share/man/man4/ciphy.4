@@ -1,0 +1,36 @@
+.\"	$OpenBSD: ciphy.4,v 1.1 2004/12/01 01:29:37 pvalchev Exp $
+.\"
+.\" Copyright (c) 2004 Peter Valchev <pvalchev@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd November 30, 2004
+.Dt CIPHY 4
+.Os
+.Sh NAME
+.Nm ciphy
+.Nd Cicada CS8201 10/100/1000 copper PHY driver
+.Sh SYNOPSIS
+.Cd "ciphy* at mii?"
+.Sh DESCRIPTION
+The
+.Nm
+driver supports the copper PHY found on VIA VT612x
+Gigabit Ethernet adapters (see
+.Xr vge 4 ) .
+.Sh SEE ALSO
+.Xr ifmedia 4 ,
+.Xr intro 4 ,
+.Xr mii 4 ,
+.Xr vge 4 ,
+.Xr ifconfig 8
