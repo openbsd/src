@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.57 2003/08/04 00:39:06 brad Exp $
+dnl	$OpenBSD: hardware,v 1.58 2003/09/06 22:38:38 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
     * sun4: the VME series
 	- 4/100: Original sparc with VME. Many hardware bugs.
@@ -48,7 +48,7 @@ OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- DTKstation/Classic+
 	- Transtec SS5/170
 
-For sun4m machines, the following Mbus CPU modules are supported:
+For sun4m machines, the following mbus CPU modules are supported:
 	- SM30: 30 or 36 MHz SuperSPARC with no secondary cache
 	- SM40: 40 MHz SuperSPARC with no secondary cache
 	- SM41: 40 MHz SuperSPARC with 1MB of secondary cache
@@ -314,23 +314,4 @@ Hardware the we do NOT currently support, but get many questions about:
     * SBus FDDI cards
 
 The supplied GENERIC kernel is the best attempt at a configuration that
-works on the widest range of machinery (sun4, sun4c, and sun4m).
-If you have problems with the OpenBSD OSREV kernel in this distribution,
-please visit the OpenBSD web page (http://www.openbsd.org) and the mailing
-lists to review the current status and check for updates and distribution
-errata.
-
-If you have Sparc hardware you can donate or make available at nominal
-cost, please mention this on the lists, many things aren't being tested
-or developed simply because developers usually have only a Sparcstation
-at hand, not an array of systems.  Donation or mid/long term loan of
-UltraSparc (sun4u) or HyperSparc (sun4m) systems would help ensure the
-long-term viability of OpenBSD on Sparc based systems.
-
-Your support in terms of documenting previously unknown problems with
-OpenBSD/MACHINE, helping debug known problems, implementing missing pieces,
-and testing OpenBSD on various architectures is actively encouraged.
-The OpenBSD mailing lists, web-pages and sendbug utility are your best
-tools for helping make OpenBSD/MACHINE a better release.
-
-
+works on the widest range of machines (sun4, sun4c, and sun4m).
