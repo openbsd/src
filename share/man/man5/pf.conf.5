@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.253 2003/06/07 20:27:56 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.254 2003/06/07 20:31:13 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -2175,16 +2175,19 @@ filteropt      = user | group | flags | icmp-type | icmp6-type | tos |
                  "queue" "(" string | ( string [ [ "," ] string ] ) ")"
 
 nat-rule       = [ "no" ] "nat" [ "on" ifspec ] [ af ] [ protospec ]
-                 hosts [ "->" ( redirhost | "{" redirhost-list "}" )
+                 hosts [ "tag" string ]
+                 [ "->" ( redirhost | "{" redirhost-list "}" )
                  [ portspec ] [ pooltype ] [ "static-port" ] ]
 
 binat-rule     = [ "no" ] "binat" [ "on" interface-name ] [ af ]
                  [ "proto" ( proto-name | proto-number ) ]
                  "from" address [ "/" mask-bits ] "to" ipspec
+                 [ "tag" string ]
                  [ "->" address [ "/" mask-bits ] ]
 
 rdr-rule       = [ "no" ] "rdr" [ "on" ifspec ] [ af ] [ protospec ]
-                 hosts [ "->" ( redirhost | "{" redirhost-list "}" )
+                 hosts [ "tag" string ]
+                 [ "->" ( redirhost | "{" redirhost-list "}" )
                  [ portspec ] [ pooltype ] ]
 
 antispoof-rule = "antispoof" [ "log" ] [ "quick" ]
