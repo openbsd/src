@@ -1,6 +1,20 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.44 1998/10/06 23:25:21 deraadt Exp $
+#	$OpenBSD: netstart,v 1.45 1998/10/28 19:17:10 millert Exp $
+
+# Returns true if $1 contains only alphanumerics
+isalphanumeric() {
+	local _n
+	_n=$1
+	while [ ${#_n} != 0 ]; do
+		case $_n in
+			[A-Za-z0-9]*)	;;
+			*)		return 1;;
+		esac
+		_n=${_n#?}
+	done
+	return 0
+}
 
 # /etc/myname contains my symbolic name
 #
@@ -60,29 +74,32 @@ route -n add -net 127 127.0.0.1 -reject
 # and the hostname.
 
 (
-    tmp="$IFS"
-    IFS="$IFS."
-    set -- `echo /etc/hostname*`
-    IFS=$tmp
-    unset tmp
+    for hn in /etc/hostname.*; do
+	# Strip off /etc/hostname. prefix
+	if=${hn#/etc/hostname.}
 
-    while [ $# -ge 2 ] ; do
-        shift            # get rid of "hostname"
+	# Interface names must be alphanumeric only.  We check to avoid
+	# configuring backup or temp files, and to catch the "*" case.
+	if ! isalphanumeric "$if"; then
+	    continue
+	fi
+
+	# Now parse the hostname.* file
         (
             read af name mask bcaddr extras
             read dt dtaddr
 
 	    # check to see if device should be configure by dhcp
 	    if [ "$af" = "dhcp" ]; then
-		ifconfig $1 $extras down
-		cmd="/sbin/dhclient $1";
+		ifconfig $if $extras down
+		cmd="/sbin/dhclient $if";
 	    else
 		if [ ! -n "$name" ]; then
-		    echo "/etc/hostname.$1: invalid network configuration file"
+		    echo "/etc/hostname.$if: invalid network configuration file"
 		    exit
 		fi
 
-		cmd="ifconfig $1 $af $name "
+		cmd="ifconfig $if $af $name "
 		if [ "${dt}" = "dest" ]; then cmd="$cmd $dtaddr"; fi
 		if [ -n "$mask" ]; then cmd="$cmd netmask $mask"; fi
 		if [ -n "$bcaddr" -a "X$bcaddr" != "XNONE" ]; then
@@ -92,8 +109,7 @@ route -n add -net 127 127.0.0.1 -reject
 	    fi
 
 	    $cmd
-        ) < /etc/hostname.$1
-        shift
+        ) < /etc/hostname.$if
     done
 )
 
@@ -116,4 +132,3 @@ if [ "${ipnat}" = "YES" -a "${ipfilter}" = "YES" -a -f "${ipnat_rules}" ]; then
 else
 	ipnat=NO
 fi
-
