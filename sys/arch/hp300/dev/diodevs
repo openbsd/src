@@ -1,5 +1,4 @@
-$OpenBSD: diodevs,v 1.2 1997/02/03 04:47:18 downsj Exp $
-$NetBSD: diodevs,v 1.2 1997/01/30 09:18:38 thorpej Exp $
+$OpenBSD: diodevs,v 1.3 1997/03/07 23:44:39 downsj Exp $
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -52,6 +51,7 @@ device DCM		0x05	1	98642A serial MUX
 device DCMREM		0x85	1	98642A serial MUX
 
 device LAN		0x15	1	98643A LAN
+device LANREM		0x95	1	98643A LAN
 
 device FHPIB		0x08	1	98625A/98625B HP-IB
 device NHPIB		0x80	1	98624A HP-IB

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: diodevs,v 1.2 1997/01/30 09:18:38 thorpej Exp 
+ *	OpenBSD: diodevs,v 1.2 1997/02/03 04:47:18 downsj Exp 
  */
 
 /*-
@@ -41,7 +41,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define DIO_NDEVICES	45
+#define DIO_NDEVICES	46
 
 struct dio_devdata dio_devdatas[] = {
 	{ 0x02,	0,	1 },
@@ -51,6 +51,7 @@ struct dio_devdata dio_devdatas[] = {
 	{ 0x05,	0,	1 },
 	{ 0x85,	0,	1 },
 	{ 0x15,	0,	1 },
+	{ 0x95,	0,	1 },
 	{ 0x08,	0,	1 },
 	{ 0x80,	0,	1 },
 	{ 0x00,	0,	1 },
@@ -100,6 +101,7 @@ struct dio_devdesc dio_devdescs[] = {
 	{ 0x05,	0,	DIO_DEVICE_DESC_DCM },
 	{ 0x85,	0,	DIO_DEVICE_DESC_DCMREM },
 	{ 0x15,	0,	DIO_DEVICE_DESC_LAN },
+	{ 0x95,	0,	DIO_DEVICE_DESC_LANREM },
 	{ 0x08,	0,	DIO_DEVICE_DESC_FHPIB },
 	{ 0x80,	0,	DIO_DEVICE_DESC_NHPIB },
 	{ 0x00,	0,	DIO_DEVICE_DESC_IHPIB },

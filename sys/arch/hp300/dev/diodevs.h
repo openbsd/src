@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: diodevs,v 1.2 1997/01/30 09:18:38 thorpej Exp 
+ *	OpenBSD: diodevs,v 1.2 1997/02/03 04:47:18 downsj Exp 
  */
 
 /*-
@@ -64,6 +64,9 @@
 
 #define	DIO_DEVICE_ID_LAN	0x15
 #define	DIO_DEVICE_DESC_LAN	"98643A LAN"
+
+#define	DIO_DEVICE_ID_LANREM	0x95
+#define	DIO_DEVICE_DESC_LANREM	"98643A LAN"
 
 
 #define	DIO_DEVICE_ID_FHPIB	0x08

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.7 1997/02/03 04:47:35 downsj Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.8 1997/03/07 23:44:40 downsj Exp $	*/
 /*	$NetBSD: if_le.c,v 1.37 1997/01/30 09:18:53 thorpej Exp $	*/
 
 /*-
@@ -131,7 +131,8 @@ lematch(parent, match, aux)
 {
 	struct dio_attach_args *da = aux;
 
-	if (da->da_id == DIO_DEVICE_ID_LAN)
+	if ((da->da_id == DIO_DEVICE_ID_LAN) ||
+	    (da->da_id == DIO_DEVICE_ID_LANREM))
 		return (1);
 	return (0);
 }
