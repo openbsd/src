@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.37 2003/07/17 20:06:01 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.38 2003/07/18 20:43:18 millert Exp $	*/
 
 static const char copyright[] =
 "@(#) Copyright (c) 1992, 1993\n\
@@ -35,7 +35,7 @@ static const char license[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.37 2003/07/17 20:06:01 millert Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.38 2003/07/18 20:43:18 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -138,6 +138,7 @@ main(int argc, char *argv[])
 	int bits, exists, oreg, ch, error, i, rc, oflag;
 
 	bits = cat = oflag = decomp = 0;
+	nosave = -1;
 	p = __progname;
 	if (p[0] == 'g') {
 		method = M_DEFLATE;
@@ -232,7 +233,7 @@ main(int argc, char *argv[])
 			nosave = 1;
 			break;
 		case 'N':
-			nosave = -1;
+			nosave = 0;
 			break;
 		case 'O':
 			method = M_COMPRESS;
@@ -304,6 +305,8 @@ main(int argc, char *argv[])
 
 	if ((cat && argc) + testmode + oflag > 1)
 		errx(1, "may not mix -o, -c, or -t options");
+	if (nosave == -1)
+		nosave = decomp;
 
 	if ((ftsp = fts_open(argv, FTS_PHYSICAL|FTS_NOCHDIR, 0)) == NULL)
 		err(1, NULL);
@@ -461,7 +464,7 @@ compress(const char *in, char *out, const struct compressor *method,
 		return (FAILURE);
 	}
 
-	if (!pipin && nosave <= 0) {
+	if (!pipin && !nosave) {
 		name = basename(in);
 		mtime = (u_int32_t)sb->st_mtime;
 	}
@@ -562,7 +565,7 @@ decompress(const char *in, char *out, const struct compressor *method,
 	}
 
 	/* XXX - open constrains outfile to MAXPATHLEN so this is safe */
-	if ((cookie = (*method->open)(ifd, "r", nosave < 0 ? out : NULL,
+	if ((cookie = (*method->open)(ifd, "r", nosave ? NULL : out,
 	    bits, 0, 1)) == NULL) {
 		if (verbose >= 0)
 			warn("%s", in);
@@ -601,7 +604,7 @@ decompress(const char *in, char *out, const struct compressor *method,
 		error = FAILURE;
 	}
 
-	if (nosave < 0) {
+	if (!nosave) {
 		sb->st_mtimespec.tv_sec = info.mtime;
 		sb->st_mtimespec.tv_nsec = 0;
 	}
