@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.h,v 1.11 1998/02/22 19:57:33 mickey Exp $	*/
+/*	$OpenBSD: make.h,v 1.12 1998/06/29 19:57:10 art Exp $	*/
 /*	$NetBSD: make.h,v 1.15 1997/03/10 21:20:00 christos Exp $	*/
 
 /*
@@ -65,11 +65,13 @@
 #   define	__P(protos)	()		/* traditional C preprocessor */
 #  endif
 # endif
-# ifndef const
-#  define const
-# endif
-# ifndef volatile
-#  define volatile
+# ifndef __STDC__
+#  ifndef const
+#   define const
+#  endif
+#  ifndef volatile
+#   define volatile
+#  endif
 # endif
 #endif
 
