@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rmgroup.8,v 1.6 1999/07/09 13:35:53 aaron Exp $
+.\"	$OpenBSD: rmgroup.8,v 1.7 1999/11/13 22:13:42 ericj Exp $
 .\"
 .\" Copyright (c) 1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" All rights reserved.
@@ -44,6 +44,10 @@ from group database.
 will not delete the system groups wheel, daemon, kmem, sys, tty,
 operator, bin, nogroup, nobody,
 or groups with gid 0. Do not delete these groups.
+.Sh FILES
+.Bl -tag -width /etc/groupX -compact
+.It Pa /etc/group
+group database
 .Sh SEE ALSO
 .Xr group 5 ,
 .Xr adduser 8 ,
