@@ -304,12 +304,17 @@ wr_fputs(s)
 		c = toascii(*s);
 		if (c == '\n') {
 			PUTC('\r');
-			PUTC('\n');
 		} else if (!isprint(c) && !isspace(c) && c != '\007') {
-			PUTC('^');
-			PUTC(c^0x40);	/* DEL to ?, others to alpha */
-		} else
-			PUTC(c);
+			if (c & 0x80) {
+				PUTC('M');
+				PUTC('-');
+				c &= ~0x80;
+			} else {
+				PUTC('^');
+				c &= ~0x40;
+			}
+		}
+		PUTC(c);
 	}
 	return;
 
