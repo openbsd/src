@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncurses_cfg.h,v 1.15 1999/11/28 17:53:40 millert Exp $	*/
+/*	$OpenBSD: ncurses_cfg.h,v 1.16 2000/01/08 06:26:25 millert Exp $	*/
 
 /* include/ncurses_cfg.h.  Generated automatically by configure.  */
 /****************************************************************************
@@ -68,7 +68,6 @@
 /* #define HAVE_LIBMENU 1 */
 /* #define HAVE_LIBPANEL 1 */
 #define HAVE_LIMITS_H 1
-#define HAVE_LINK 1
 #define HAVE_LOCALE_H 1
 #define HAVE_LONG_FILE_NAMES 1
 #define HAVE_MEMCCPY 1
@@ -90,7 +89,6 @@
 #define HAVE_SIZECHANGE 1
 #define HAVE_STRDUP 1
 #define HAVE_STRSTR 1
-#define HAVE_SYMLINK 1
 #define HAVE_SYS_IOCTL_H 1
 #define HAVE_SYS_PARAM_H 1
 #define HAVE_SYS_SELECT_H 1

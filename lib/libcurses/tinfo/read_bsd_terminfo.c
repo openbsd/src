@@ -1,8 +1,7 @@
-/*	$OpenBSD: read_bsd_terminfo.c,v 1.6 1999/12/28 23:15:16 millert Exp $	*/
+/*	$OpenBSD: read_bsd_terminfo.c,v 1.7 2000/01/08 06:26:25 millert Exp $	*/
 
 /*
- * Copyright (c) 1998, 1999 Todd C. Miller <Todd.Miller@courtesan.com>
- * Copyright (c) 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
+ * Copyright (c) 1998, 1999, 2000 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -13,16 +12,13 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by SigmaSoft, Th.  Lockert.
- * 4. The name of the authors may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
  * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
- * THE AUTHORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
  * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
  * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
  * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
@@ -32,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: read_bsd_terminfo.c,v 1.6 1999/12/28 23:15:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: read_bsd_terminfo.c,v 1.7 2000/01/08 06:26:25 millert Exp $";
 #endif
 
 #include <curses.priv.h>
@@ -134,63 +130,87 @@ _nc_lookup_bsd_terminfo_entry(tn, filename, tp)
     TERMTYPE *const tp;
 {
     char  *pathvec[2];
-    char  *capbuf, *p;
-    char   namecpy[MAX_NAME_SIZE+1];
-    long   num;
-    int    i;
+    char  *capbuf, *cptr, *infobuf, *iptr, lastc;
+    int    error;
+    size_t len;
 
-    capbuf = NULL;
     pathvec[0] = (char *)filename;
     pathvec[1] = NULL;
+    capbuf = NULL;
+    infobuf = NULL;
 
-    /* Don't prepent any hardcoded entries. */
+    _nc_set_source(filename);		/* For useful error messages */
+
+    /* Don't prepend any hardcoded entries. */
     (void) cgetset(NULL);
 
-    /* Lookup tn in filename */
-    i = cgetent(&capbuf, pathvec, (char *)tn);      
-    if (i == 0) {
-	_nc_init_entry(tp);
+    /* Lookup tn in 'filename' */
+    error = cgetent(&capbuf, pathvec, (char *)tn);      
+    if (error == 0) {
+	/*
+	 * To make the terminfo parser happy we need to, as a minimum,
+	 * 1) convert ':' separators to ','
+	 * 2) add a newline after the name field
+	 * 3) add a newline at the end of the entry
+	 */
 
-	/* Set terminal name(s) */
-	if ((p = strchr(capbuf, ':')) != NULL)
-	    *p = '\0';
-	if ((tp->str_table = tp->term_names = strdup(capbuf)) == NULL) {
-	    if (capbuf)
-		free(capbuf);
-	    return (0);
+	/* Add space for 2 extra newlines and the final NUL */
+	infobuf = malloc(strlen(capbuf) + 3);
+	if (infobuf == NULL) {
+	    error = TRUE;
+	    goto done;
 	}
-	_nc_set_type(_nc_first_name(tp->term_names));
-	if (p)
-	    *p = ':';
 
-	/* Check for overly-long names and aliases */
-	(void)strlcpy(namecpy, tp->term_names, sizeof(namecpy));
-	if ((p = strrchr(namecpy, '|')) != (char *)NULL)
-	    *p = '\0';
-	p = strtok(namecpy, "|");
-	if (strlen(p) > MAX_ALIAS)
-	    _nc_warning("primary name may be too long");
-	while ((p = strtok((char *)NULL, "|")) != (char *)NULL)
-	    if (strlen(p) > MAX_ALIAS)
-		_nc_warning("alias `%s' may be too long", p);
+	/* Copy name and aliases, adding a newline. */
+	cptr = strchr(capbuf, ':');
+	if (cptr == NULL) {
+	    error = TRUE;
+	    goto done;
+	}
+	len = cptr - capbuf;
+	memcpy(infobuf, capbuf, len);
+	iptr = infobuf + len;
+	*iptr++ = ',';
+	*iptr++ = '\n';
 
-	/* Copy existing capabilities */
-	for_each_boolean(i, tp)
-	    if (cgetcap(capbuf, (char *)boolnames[i], ':') != NULL)
-		tp->Booleans[i] = TRUE;
-	for_each_number(i, tp)
-	    if (cgetnum(capbuf, (char *)numnames[i], &num) == 0)
-		tp->Numbers[i] = (short)num;
-	for_each_string(i, tp)
-	    if (cgetstr(capbuf, (char *)strnames[i], &p) >= 0)
-		tp->Strings[i] = p;
-	i = 0;
+	/* Copy the rest of capbuf, converting ':' -> ',' */
+	for (++cptr, lastc = '\0'; *cptr; cptr++) {
+	    /* XXX - somewhat simplistic */
+	    if (*cptr == ':' && lastc != '\\')
+		*iptr++ = ',';
+	    else
+		*iptr++ = *cptr;
+	    lastc = *cptr;
+	}
+	*iptr++ = '\n';
+	*iptr = '\0';
+
+	/*
+	 * Parse the terminfo entry; sets _nc_head as a side effect.
+	 * (_nc_head is actually a linked list but since we only parse
+	 *  a single entry we know there is only one entry in the list).
+	 */
+	_nc_read_entry_source(NULL, infobuf, FALSE, FALSE, NULLHOOK);
+	if (_nc_head == 0) {
+	    error = TRUE;
+	    goto done;
+	}
+
+	/*
+	 * Save term entry and prevent _nc_free_entries() from freeing
+	 * up the string table (since we use it in tp).
+	 */
+	*tp = _nc_head->tterm;
+	_nc_head->tterm.str_table = NULL;
+	_nc_free_entries(_nc_head);
     }
 
-    /* We are done with the returned getcap buffer now; free it */
-    cgetclose();
+done:
     if (capbuf)
 	free(capbuf);
+    if (infobuf)
+	free(infobuf);
+    cgetclose();
 
-    return ((i == 0));
+    return ((error == 0));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.h,v 1.7 1999/11/28 17:53:40 millert Exp $	*/
+/*	$OpenBSD: term.h,v 1.8 2000/01/08 06:26:25 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -62,6 +62,7 @@ extern "C" {
 #define BROKEN_LINKER 0
 #define TERMIOS 1
 #define NCURSES_CONST /*nothing*/
+#define NCURSES_XNAMES 1
 
 #include <termios.h>
 #define TTY struct termios
@@ -84,7 +85,7 @@ extern "C" {
 #define NCURSES_CONST /*nothing*/
 
 #undef  NCURSES_XNAMES
-#define NCURSES_XNAMES 0
+#define NCURSES_XNAMES 1
 
 /* We will use these symbols to hide differences between
  * termios/termio/sgttyb interfaces.

@@ -1,5 +1,5 @@
 '\" t
-.\" $OpenBSD: infocmp.1tbl,v 1.5 1999/12/12 04:49:19 millert Exp $
+.\" $OpenBSD: infocmp.1tbl,v 1.6 2000/01/08 06:26:24 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -349,8 +349,8 @@ The \fB-r\fR option's notion of `termcap' capabilities is System V Release 4's.
 Actual BSD curses versions will have a more restricted set.  To see only the
 4.4BSD set, use -r -RBSD.
 .SH SEE ALSO
-\fBinfocmp\fR(1), \fBcaptoinfo\fR(1), \fBinfotocap\fR(1),
-\fBtic\fR(1), \fBcurses\fR(3), \fBterminfo\fR(\*n).
+\fBcaptoinfo\fR(1), \fBinfotocap\fR(1), \fBtic\fR(1),
+\fBcurses\fR(3), \fBterminfo\fR(\*n).
 .SH AUTHOR
 Eric S. Raymond <esr@snark.thyrsus.com>
 and
