@@ -1672,3 +1672,4 @@
 ./usr/share/info/ld.info-4
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/mii/brgphyreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/mii/xmphyreg.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/i386/pcvt_mouse.ph

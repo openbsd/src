@@ -650,6 +650,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/midisynvar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/midivar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/mii
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/mii/brgphyreg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/mii/dmphyreg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/mii/icsphyreg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/mii/inphyreg.ph
@@ -667,6 +668,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/mii/tlphyvar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/mii/tqphyreg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/mii/txphyreg.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/mii/xmphyreg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/mulaw.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ofw
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ofw/openfirm.ph
@@ -1729,6 +1731,7 @@
 ./usr/sbin/kcon
 ./usr/sbin/loadfont
 ./usr/sbin/memconfig
+./usr/sbin/moused
 ./usr/sbin/scon
 ./usr/sbin/vt220keys
 ./usr/sbin/vttest
@@ -1747,5 +1750,4 @@
 ./usr/share/misc/pcvtfonts/vt220l.810
 ./usr/share/misc/pcvtfonts/vt220l.814
 ./usr/share/misc/pcvtfonts/vt220l.816
-./usr/libdata/perl5/site_perl/i386-openbsd/dev/mii/brgphyreg.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/dev/mii/xmphyreg.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/i386/pcvt_mouse.ph

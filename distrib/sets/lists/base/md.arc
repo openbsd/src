@@ -485,3 +485,4 @@
 ./usr/mipsel-unknown-openbsd2.8/lib/ldscripts
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/mii/brgphyreg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/mii/xmphyreg.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/i386/pcvt_mouse.ph

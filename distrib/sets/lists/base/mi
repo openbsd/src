@@ -340,6 +340,7 @@
 ./usr/bin/otp-sha1
 ./usr/bin/page
 ./usr/bin/pagesize
+./usr/bin/pagsh
 ./usr/bin/passwd
 ./usr/bin/paste
 ./usr/bin/patch
@@ -1073,6 +1074,7 @@
 ./usr/libexec/safe_finger
 ./usr/libexec/sendmail
 ./usr/libexec/sendmail/sendmail
+./usr/libexec/sftp-server
 ./usr/libexec/smrsh
 ./usr/libexec/smtpd
 ./usr/libexec/smtpfwdd

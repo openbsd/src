@@ -47,3 +47,4 @@
 ./usr/mdec/xxboot
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/mii/brgphyreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/mii/xmphyreg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/i386/pcvt_mouse.ph

@@ -398,6 +398,7 @@
 ./usr/share/man/cat1/otp-sha1.0
 ./usr/share/man/cat1/page.0
 ./usr/share/man/cat1/pagesize.0
+./usr/share/man/cat1/pagsh.0
 ./usr/share/man/cat1/passwd.0
 ./usr/share/man/cat1/paste.0
 ./usr/share/man/cat1/patch.0
@@ -1490,6 +1491,7 @@
 ./usr/share/man/cat8/i386/ispcvt.0
 ./usr/share/man/cat8/i386/makedev.0
 ./usr/share/man/cat8/i386/memconfig.0
+./usr/share/man/cat8/i386/moused.0
 ./usr/share/man/cat8/i386/wicontrol.0
 ./usr/share/man/cat8/i386/zzz.0
 ./usr/share/man/cat8/identd.0
@@ -1666,6 +1668,7 @@
 ./usr/share/man/cat8/sesd.0
 ./usr/share/man/cat8/setencstat.0
 ./usr/share/man/cat8/setobjstat.0
+./usr/share/man/cat8/sftp-server.0
 ./usr/share/man/cat8/showmount.0
 ./usr/share/man/cat8/shutdown.0
 ./usr/share/man/cat8/skeyprune.0
