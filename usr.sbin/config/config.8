@@ -1,4 +1,4 @@
-.\"	$OpenBSD: config.8,v 1.18 2000/04/12 21:47:52 aaron Exp $
+.\"	$OpenBSD: config.8,v 1.19 2000/05/29 07:19:29 deraadt Exp $
 .\"	$NetBSD: config.8,v 1.10 1996/08/31 20:58:16 mycroft Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -204,6 +204,35 @@ directory using the
 option or by using the
 .Dq Li source
 directive at the beginning of the system configuration file.
+.Pp
+The configuration files consists of various statements which
+include the following:
+.Pp
+.Bl -tag -offset indent -width indent
+.It machine Ar var
+Required.  Specifies the machine architecture.
+.It include Ar file
+la la la
+.It option Ar name
+Set a kernel option.  Kernel options may take either the form
+.Ar NAME
+or the form
+.Ar NAME=value .
+.It rmoption Ar name
+Delete a previously set option.
+.It maxusers Ar number
+Required.  Used to size various system tables and maximum operating conditions
+in an approximate fashion.
+.It config Ar bsd root on "dev [swap on dev [and dev ...]] [dump on dev [and dev ...]]"
+Required.  Specifies the swap and dump devices which the system should use.
+.It config Ar bsd swap generic
+Otherwise, if generic is specified, the system follows generic routines to
+device what should happen.
+.El
+.Pp
+Many other statements exist, and the file format is fairly rich; for more
+information see the various configuration files included in the system.
+.Pp
 .Ss Kernel modification
 When
 .Fl e
