@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_ip.c,v 1.13 2002/09/18 07:46:56 mickey Exp $	*/
+/*	$OpenBSD: ipx_ip.c,v 1.14 2003/05/03 21:16:30 deraadt Exp $	*/
 
 /*-
  *
@@ -94,7 +94,7 @@ ipxipattach(void)
 
 	if (ipxipif.if_mtu == 0) {
 		ifp = &ipxipif;
-		sprintf(ifp->if_xname, "ipx0");
+		snprintf(ifp->if_xname, sizeof ifp->if_xname, "ipx0");
 		ifp->if_mtu = LOMTU;
 		ifp->if_ioctl = ipxipioctl;
 		ifp->if_output = ipxipoutput;
@@ -111,7 +111,7 @@ ipxipattach(void)
 	ipxip_list = m;
 	ifp = &m->ifen_ifnet;
 
-	sprintf(ifp->if_xname, "ipx0");
+	snprintf(ifp->if_xname, sizeof ifp->if_xname, "ipx0");
 	ifp->if_mtu = LOMTU;
 	ifp->if_ioctl = ipxipioctl;
 	ifp->if_output = ipxipoutput;

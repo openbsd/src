@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.36 2003/05/03 01:43:07 itojun Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.37 2003/05/03 21:15:11 deraadt Exp $ */
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -113,7 +113,7 @@ vlanattach(int count)
 		LIST_INIT(&ifv_softc[i].vlan_mc_listhead);
 		ifp = &ifv_softc[i].ifv_if;
 		ifp->if_softc = &ifv_softc[i];
-		sprintf(ifp->if_xname, "vlan%d", i);
+		snprintf(ifp->if_xname, sizeof ifp->if_xname, "vlan%d", i);
 		/* NB: flags are not set here */
 		/* NB: mtu is not set here */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.7 2002/10/29 19:51:04 mickey Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.8 2003/05/03 21:15:11 deraadt Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -93,7 +93,7 @@ pflogattach(int npflog)
 
 	for (i = 0; i < NPFLOG; i++) {
 		ifp = &pflogif[i].sc_if;
-		sprintf(ifp->if_xname, "pflog%d", i);
+		snprintf(ifp->if_xname, sizeof ifp->if_xname, "pflog%d", i);
 		ifp->if_softc = &pflogif[i];
 		ifp->if_mtu = PFLOGMTU;
 		ifp->if_ioctl = pflogioctl;

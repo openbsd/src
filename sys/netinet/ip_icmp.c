@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.57 2003/02/12 14:41:07 jason Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.58 2003/05/03 21:16:30 deraadt Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -324,7 +324,7 @@ icmp_input(struct mbuf *m, ...)
 	if (icmpprintfs) {
 		char buf[4 * sizeof("123")];
 
-		strcpy(buf, inet_ntoa(ip->ip_dst));
+		strlcpy(buf, inet_ntoa(ip->ip_dst), sizeof buf);
 		printf("icmp_input from %s to %s, len %d\n",
 		    inet_ntoa(ip->ip_src), buf, icmplen);
 	}
@@ -560,7 +560,8 @@ reflect:
 #ifdef	ICMPPRINTFS
 		if (icmpprintfs) {
 			char buf[4 * sizeof("123")];
-			strcpy(buf, inet_ntoa(icp->icmp_ip.ip_dst));
+			strlcpy(buf, inet_ntoa(icp->icmp_ip.ip_dst),
+			    sizeof buf);
 
 			printf("redirect dst %s to %s\n",
 			    buf, inet_ntoa(icp->icmp_gwaddr));
@@ -779,7 +780,7 @@ icmp_send(struct mbuf *m, struct mbuf *opts)
 	if (icmpprintfs) {
 		char buf[4 * sizeof("123")];
 
-		strcpy(buf, inet_ntoa(ip->ip_dst));
+		strlcpy(buf, inet_ntoa(ip->ip_dst), sizeof buf);
 		printf("icmp_send dst %s src %s\n",
 		    buf, inet_ntoa(ip->ip_src));
 	}

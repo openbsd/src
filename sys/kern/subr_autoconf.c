@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.34 2003/04/19 19:08:53 krw Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.35 2003/05/03 21:14:59 deraadt Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -848,6 +848,6 @@ evcnt_attach(dev, name, ev)
 	/* ev->ev_next = NULL; */
 	ev->ev_dev = dev;
 	/* ev->ev_count = 0; */
-	strcpy(ev->ev_name, name);
+	strlcpy(ev->ev_name, name, sizeof ev->ev_name);
 	TAILQ_INSERT_TAIL(&allevents, ev, ev_list);
 }

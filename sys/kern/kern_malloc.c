@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.50 2003/04/10 08:48:34 tedu Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.51 2003/05/03 21:14:59 deraadt Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -536,9 +536,12 @@ sysctl_malloc(name, namelen, oldp, oldlenp, newp, newlen, p)
 		if (buckstring_init == 0) {
 			buckstring_init = 1;
 			bzero(buckstring, sizeof(buckstring));
-			for (siz = 0, i = MINBUCKET; i < MINBUCKET + 16; i++)
-			    siz += sprintf(buckstring + siz,
-			    "%d,", (u_int)(1<<i));
+			for (siz = 0, i = MINBUCKET; i < MINBUCKET + 16; i++) {
+				snprintf(buckstring + siz,
+				    sizeof buckstring - siz,
+				    "%d,", (u_int)(1<<i));
+				siz += strlen(buckstring + siz);
+			}
 			/* Remove trailing comma */
 			if (siz)
 				buckstring[siz - 1] = '\0';
@@ -575,10 +578,12 @@ sysctl_malloc(name, namelen, oldp, oldlenp, newp, newlen, p)
 			}
 			memall = malloc(totlen + M_LAST, M_SYSCTL, M_WAITOK);
 			bzero(memall, totlen + M_LAST);
-			for (siz = 0, i = 0; i < M_LAST; i++)
-				siz += sprintf(memall + siz, "%s,",
-				    memname[i] ? memname[i] : "");
-
+			for (siz = 0, i = 0; i < M_LAST; i++) {
+				snprintf(memall + siz, 
+				    totlen + M_LAST - siz,
+				    "%s,", memname[i] ? memname[i] : "");
+				siz += strlen(memall + siz);
+			}
 			/* Remove trailing comma */
 			if (siz)
 				memall[siz - 1] = '\0';

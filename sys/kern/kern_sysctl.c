@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.80 2003/04/25 20:06:41 grange Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.81 2003/05/03 21:14:59 deraadt Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1284,8 +1284,9 @@ sysctl_diskinit(update, p)
 
 		for (dk = TAILQ_FIRST(&disklist), i = 0, l = 0; dk;
 		    dk = TAILQ_NEXT(dk, dk_link), i++) {
-			l += sprintf(disknames + l, "%s,",
+			snprintf(disknames + l, tlen - l, "%s,",
 			    dk->dk_name ? dk->dk_name : "");
+			l += strlen(disknames + l);
 			sdk = diskstats + i;
 			sdk->ds_busy = dk->dk_busy;
 			sdk->ds_xfer = dk->dk_xfer;
