@@ -1,4 +1,4 @@
-	$OpenBSD: na.phone,v 1.27 2003/01/15 22:05:20 deraadt Exp $
+	$OpenBSD: na.phone,v 1.28 2003/01/15 23:12:03 millert Exp $
 #	@(#)na.phone	8.1 (Berkeley) 6/8/93
 #
 # Area Code : City : State/Province : State/Province Abbrev.
@@ -98,6 +98,8 @@
 267:Levittown:Pennsylvania:PA
 267:Philadelphia:Pennsylvania:PA
 268::Antigua and Barbuda:AG
+269:Battle Creek:Michigan:MI
+269:Kalamazoo:Michigan:MI
 270:Bowling Green:Kentucky:KY
 270:Owensboro:Kentucky:KY
 270:Paducah:Kentucky:KY
@@ -555,9 +557,7 @@
 615:Hendersonville:Tennessee:TN
 615:Murfreesboro:Tennessee:TN
 615:Nashville:Tennessee:TN
-269:Battle Creek:Michigan:MI
 616:Grand Rapids:Michigan:MI
-269:Kalamazoo:Michigan:MI
 617:Boston:Massachusetts:MA
 617:Cambridge:Massachusetts:MA
 617:Dorchester:Massachusetts:MA
