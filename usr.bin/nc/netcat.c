@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.11 2000/09/26 01:15:49 ericj Exp $ */
+/* $OpenBSD: netcat.c,v 1.12 2000/09/26 02:51:22 ericj Exp $ */
 
 /* Netcat 1.10 RELEASE 960320
  *
@@ -511,7 +511,7 @@ newskt:
 	x = 1;
 	rr = setsockopt(nnetfd, SOL_SOCKET, SO_REUSEADDR, &x, sizeof(x));
 	if (rr == -1)
-		warn("nnetfd reuseaddr failed");	/* ??? */
+		errx(1, NULL);
 
 	/* fill in all the right sockaddr crud */
 	lclend->sin_family = AF_INET;
@@ -620,7 +620,7 @@ dolisten(rad, rp, lad, lp)
 			strcat(bigbuf_net, "any");
 		strcat(bigbuf_net, "] %d ...");
 		z = ntohs(lclend->sin_port);
-		warn(bigbuf_net, z);
+		warn("%s %d", bigbuf_net, z);
 	}			/* verbose -- whew!! */
 	/*
 	 * UDP is a speeeeecial case -- we have to do I/O *and* get the
@@ -670,7 +670,7 @@ whoisit:
 	cp = &bigbuf_net[32];
 	x = sizeof(struct sockaddr);
 	rr = getsockname(nnetfd, (struct sockaddr *) lclend, &x);
-	if (rr < 0)
+	if (rr < 0 && o_verbose)
 		warn("post-rcv getsockname failed");
 	strcpy(cp, inet_ntoa(lclend->sin_addr));
 
@@ -691,8 +691,10 @@ whoisit:
 		errx(1, "invalid connection to [%s] from %s [%s] %d",
 		    cp, whozis->name, whozis->addrs[0], z);
 	}
-	warn("connect to [%s] from %s [%s] %d",	
-	    cp, whozis->name, whozis->addrs[0], z);
+	if (o_verbose) {
+		warn("connect to [%s] from %s [%s] %d",	
+	    		cp, whozis->name, whozis->addrs[0], z);
+	}
 	return (nnetfd);
 
 dol_tmo:
@@ -721,7 +723,7 @@ udptest(fd, where)
 	int rr;
 
 	rr = write(fd, bigbuf_in, 1);
-	if (rr != 1)
+	if (rr != 1 && o_verbose)
 		warn("udptest first write failed?! errno %d", errno);
 	if (o_wait)
 		sleep(o_wait);
@@ -966,7 +968,7 @@ readwrite(fd)
 				netretry--;	/* we actually try a coupla
 						 * times. */
 			if (!netretry) {
-				if (o_verbose > 1)	/* normally we don't
+				if (o_verbose)	/* normally we don't
 							 * care */
 					warn("net timeout");
 				close(fd);
@@ -1018,7 +1020,6 @@ readwrite(fd)
 shovel:
 		/* sanity check.  Works because they're both unsigned... */
 		if ((rzleft > 8200) || (rnleft > 8200)) {
-			warn("Bogus buffers: %d, %d", rzleft, rnleft);
 			rzleft = rnleft = 0;
 		}
 		/* net write retries sometimes happen on UDP connections */
@@ -1279,7 +1280,7 @@ main(argc, argv)
 		netfd = dolisten(themaddr, curport, ouraddr, o_lport);
 		if (netfd > 0) {
 			x = readwrite(netfd);
-			if (o_verbose > 1)
+			if (o_verbose)
 				warn("Sent %i Rcvd %i", wrote_net, wrote_out);
 			exit(x);
 		} else	
