@@ -1,5 +1,5 @@
 /* info.c -- Display nodes of Info files in multiple windows.
-   $Id: info.c,v 1.7 2003/03/15 19:16:10 deraadt Exp $
+   $Id: info.c,v 1.8 2003/10/03 23:39:58 deraadt Exp $
 
    Copyright (C) 1993, 96, 97, 98, 99, 2000, 01, 02
    Free Software Foundation, Inc.
@@ -120,9 +120,9 @@ static struct option long_options[] = {
 
 /* String describing the shorthand versions of the long options found above. */
 #ifdef __MSDOS__
-static char *short_options = "d:n:f:o:ORsb";
+static char *short_options = "d:n:f:ho:ORsb";
 #else
-static char *short_options = "d:n:f:o:ORs";
+static char *short_options = "d:n:f:ho:ORs";
 #endif
 
 /* When non-zero, the Info window system has been initialized. */
@@ -197,6 +197,10 @@ main (argc, argv)
             free (user_filename);
 
           user_filename = xstrdup (optarg);
+          break;
+
+        case 'h':
+          print_help_p = 1;
           break;
 
           /* User is specifying the name of a file to output to. */
