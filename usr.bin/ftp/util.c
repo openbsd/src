@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.20 1998/09/19 22:38:56 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.21 1998/09/22 04:42:49 deraadt Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.20 1998/09/19 22:38:56 millert Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.21 1998/09/22 04:42:49 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -823,7 +823,7 @@ setttywidth(a)
 	struct winsize winsize;
 
 	if (ioctl(fileno(ttyout), TIOCGWINSZ, &winsize) != -1)
-		ttywidth = winsize.ws_col;
+		ttywidth = winsize.ws_col ? winsize.ws_col : 80;
 	else
 		ttywidth = 80;
 	errno = save_errno;
