@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.78 2001/06/23 19:44:45 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.79 2001/10/14 02:35:57 millert Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -346,7 +346,7 @@ while [ "X${resp}" = X"" ]; do
 	getresp -n "${_password}"
 	stty echo
 	echo
-	_password=$resp
+	_password="$resp"
 
 	echo -n "Password (again): "
 	stty -echo
@@ -408,7 +408,7 @@ cd /
 remount_fs /tmp/fstab.shadow
 md_installboot ${ROOTDISK}
 
-_encr=`echo ${_password} | /mnt/usr/bin/encrypt -b 7`
+_encr=`echo "${_password}" | /mnt/usr/bin/encrypt -b 7`
 echo "1,s@^root::@root:${_encr}:@
 w
 q" | ed /mnt/etc/master.passwd 2> /dev/null
