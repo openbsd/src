@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.45 2004/10/14 07:40:29 otto Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.46 2005/01/06 08:57:30 otto Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$OpenBSD: mkfs.c,v 1.45 2004/10/14 07:40:29 otto Exp $";
+static char rcsid[] = "$OpenBSD: mkfs.c,v 1.46 2005/01/06 08:57:30 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -183,11 +183,16 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo,
 	time(&utime);
 #endif
 	if (mfs) {
-		membase = mmap(NULL, fssize * sectorsize, PROT_READ|PROT_WRITE,
+		quad_t sz = (quad_t)fssize * sectorsize;
+		if (sz > SIZE_T_MAX) {
+			errno = ENOMEM;
+			err(12, "mmap");
+		}
+		membase = mmap(NULL, sz, PROT_READ|PROT_WRITE,
 		    MAP_ANON|MAP_PRIVATE, -1, (off_t)0);
 		if (membase == MAP_FAILED)
 			err(12, "mmap");
-		madvise(membase, fssize * sectorsize, MADV_RANDOM);
+		madvise(membase, sz, MADV_RANDOM);
 	}
 	fsi = fi;
 	fso = fo;
