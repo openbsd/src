@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.114 2004/02/17 20:48:05 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.115 2004/02/17 21:59:09 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -919,11 +919,8 @@ session_open(struct peer *p)
 	errs += buf_add(buf, &msg.optparamlen, sizeof(msg.optparamlen));
 
 	if (errs == 0) {
-		if ((n = buf_close(&p->wbuf, buf)) < 0) {
-			if (n == -2)
-				log_peer_warnx(&p->conf, "Connection closed");
-			else
-				log_peer_warn(&p->conf, "Write error");
+		if ((n = buf_close(&p->wbuf, buf)) == -1) {
+			log_peer_warn(&p->conf, "session_open buf_close");
 			buf_free(buf);
 			bgp_fsm(p, EVNT_CON_FATAL);
 			return;
@@ -965,11 +962,8 @@ session_keepalive(struct peer *peer)
 		return;
 	}
 
-	if ((n = buf_close(&peer->wbuf, buf)) < 0) {
-		if (n == -2)
-			log_peer_warnx(&peer->conf, "Connection closed");
-		else
-			log_peer_warn(&peer->conf, "Write error");
+	if ((n = buf_close(&peer->wbuf, buf)) == -1) {
+		log_peer_warn(&peer->conf, "session_keepalive buf_close");
 		buf_free(buf);
 		bgp_fsm(peer, EVNT_CON_FATAL);
 		return;
@@ -1014,11 +1008,8 @@ session_update(u_int32_t peerid, void *data, size_t datalen)
 		return;
 	}
 
-	if ((n = buf_close(&p->wbuf, buf)) < 0) {
-		if (n == -2)
-			log_peer_warnx(&p->conf, "Connection closed");
-		else
-			log_peer_warn(&p->conf, "Write error");
+	if ((n = buf_close(&p->wbuf, buf)) == -1) {
+		log_peer_warn(&p->conf, "session_update: buf_close");
 		buf_free(buf);
 		bgp_fsm(p, EVNT_CON_FATAL);
 		return;
@@ -1062,11 +1053,8 @@ session_notification(struct peer *peer, u_int8_t errcode, u_int8_t subcode,
 		return;
 	}
 
-	if ((n = buf_close(&peer->wbuf, buf)) < 0) {
-		if (n == -2)
-			log_peer_warnx(&peer->conf, "Connection closed");
-		else
-			log_peer_warn(&peer->conf, "Write error");
+	if ((n = buf_close(&peer->wbuf, buf)) == -1) {
+		log_peer_warn(&peer->conf, "session_notification: buf_close");
 		buf_free(buf);
 		bgp_fsm(peer, EVNT_CON_FATAL);
 		return;
@@ -1125,7 +1113,7 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *p)
 			if (error == -2)
 				log_peer_warnx(&p->conf, "Connection closed");
 			else
-				log_peer_warn(&p->conf, "Write error");
+				log_peer_warn(&p->conf, "write error");
 			bgp_fsm(p, EVNT_CON_FATAL);
 			return (1);
 		}
