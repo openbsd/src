@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.78 2004/08/03 00:43:49 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.79 2004/08/27 22:03:02 drahn Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -358,3 +358,4 @@ pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter 1		# packet filter
 pseudo-device	rd	1		# ramdisk
 pseudo-device	ccd	4		# concatenated disk devices
+pseudo-device	wsmux	2
