@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.25 1998/02/08 22:45:14 tholo Exp $
+#	$OpenBSD: Makefile.inc,v 1.26 1998/09/18 00:48:35 art Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -52,8 +52,8 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
 	setuid.o shmat.o shmctl.o shmdt.o shmget.o shutdown.o sigaction.o \
 	sigaltstack.o socket.o socketpair.o stat.o statfs.o swapon.o \
 	symlink.o sync.o sysarch.o umask.o undelete.o unlink.o unmount.o \
-	utimes.o vadvise.o wait4.o write.o writev.o __semctl.o __syscall.o \
-	__sysctl.o
+	utimes.o vadvise.o wait4.o write.o writev.o xfspioctl.o __semctl.o \
+	__syscall.o __sysctl.o
 
 PASM=	${ASM:.o=.po}
 SASM=	${ASM:.o=.so}
