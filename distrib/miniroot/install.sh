@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.24 1998/06/02 02:22:18 millert Exp $
+#	$OpenBSD: install.sh,v 1.25 1998/06/08 02:01:15 jason Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -508,6 +508,8 @@ while [ "X${resp}" = X"" ]; do
 	fi
 done
 
+md_copy_kernel
+
 install_sets $THESETS
 
 # Copy in configuration information and make devices in target root.
@@ -545,8 +547,6 @@ else
 	echo "done."
 fi
 
-
-md_copy_kernel
 
 md_installboot ${ROOTDISK}
 
