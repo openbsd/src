@@ -16,8 +16,6 @@
 ./usr/lib/libcurses++.so.1.1
 ./usr/lib/libcurses.so.8.0
 ./usr/lib/libdes.so.6.0
-./usr/lib/libdl.a
-./usr/lib/libdl.so.1.0
 ./usr/lib/libedit.so.0.0
 ./usr/lib/libform.so.1.1
 ./usr/lib/libg2c.so.5.24
