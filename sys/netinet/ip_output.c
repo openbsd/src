@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.53 1999/12/04 23:20:21 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.54 1999/12/06 07:14:36 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -74,6 +74,10 @@
 #define DPRINTF(x)	if (encdebug) printf x
 #else
 #define DPRINTF(x)
+#endif
+
+#ifndef offsetof
+#define offsetof(s, e) ((int)&((s *)0)->e)
 #endif
 
 extern u_int8_t get_sa_require  __P((struct inpcb *));
@@ -470,7 +474,7 @@ sendit:
 		    sunion.sin.sin_len = sizeof(struct sockaddr_in);
 		    sunion.sin.sin_addr = gw->sen_ipsp_dst;
 		}
-#if INET6
+#ifdef INET6
 		else {
 		    sunion.sin6.sin6_family = AF_INET6;
 		    sunion.sin6.sin6_len = sizeof(struct sockaddr_in6);
@@ -541,7 +545,7 @@ sendit:
 			  DPRINTF(("ip_output(): non-existant TDB for SA %s/%08x/%u\n", inet_ntoa4(gw->sen_ipsp_dst), ntohl(gw->sen_ipsp_spi), gw->sen_ipsp_sproto));
 #if INET6
 			else
-			  DPRINTF(("ip_output(): non-existant TDB for SA %s/%08x/%u\n", inet_ntoa4(gw->sen_ipsp_dst), ntohl(gw->sen_ipsp_spi), gw->sen_ipsp_sproto));
+			  DPRINTF(("ip_output(): non-existant TDB for SA %s/%08x/%u\n", inet6_ntoa4(gw->sen_ipsp_dst), ntohl(gw->sen_ipsp_spi), gw->sen_ipsp_sproto));
 #endif /* INET6 */	  
 
 			if (re->re_rt)
@@ -598,12 +602,12 @@ sendit:
 			      ip->ip_dst.s_addr)) ||
 			    ((tdb->tdb_flags & TDBF_TUNNELING) &&
 			     (tdb->tdb_xform->xf_type != XF_IP4))) {
-				/*
-				 * Fix checksum here, AH and ESP fix the
-				 * checksum in their output routines.
-				 */
-				ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
-				error = ipe4_output(m, tdb, &mp);
+			        /* Fix length and checksum */
+			        ip->ip_len = htons(m->m_pkthdr.len);
+			        ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
+				error = ipe4_output(m, tdb, &mp,
+						    ip->ip_hl << 2,
+						    offsetof(struct ip, ip_p));
 				if (mp == NULL)
 					error = EFAULT;
 				if (error) {
@@ -613,20 +617,16 @@ sendit:
 					return error;
 				}
 				m = mp;
+				mp = NULL;
 			}
 
 			if (tdb->tdb_xform->xf_type == XF_IP4) {
-				/*
-				 * Fix checksum if IP-IP; AH and ESP fix the
-				 * IP header checksum in their 
-				 * output routines.
-				 */
 			        ip = mtod(m, struct ip *);
+				ip->ip_len = htons(m->m_pkthdr.len);
 				ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
 			}
 
-
-			error = (*(tdb->tdb_xform->xf_output))(m, tdb, &mp);
+			error = (*(tdb->tdb_xform->xf_output))(m, tdb, &mp, ip->ip_hl << 2, offsetof(struct ip, ip_p));
 			if (!error && mp == NULL)
 				error = EFAULT;
 			if (error) {
@@ -639,13 +639,15 @@ sendit:
 			}
 
 			m = mp;
+			mp = NULL;
 			ip = mtod(m, struct ip *);
-			if (tdb->tdb_xform->xf_type == XF_IP4)
-			  ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
+			ip->ip_len = htons(m->m_pkthdr.len);
 
 			tdb = tdb->tdb_onext;
 		}
 		splx(s);
+
+		ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
 
 		/*
 		 * At this point, m is pointing to an mbuf chain with the

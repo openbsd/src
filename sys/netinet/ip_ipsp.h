@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.47 1999/12/04 23:20:21 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.48 1999/12/06 07:14:36 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -385,8 +385,8 @@ struct xformsw
     int		(*xf_attach)(void);	/* called at config time */
     int		(*xf_init)(struct tdb *, struct xformsw *, struct ipsecinit *);
     int		(*xf_zeroize)(struct tdb *); /* termination */
-    struct mbuf 	*(*xf_input)(struct mbuf *, struct tdb *); /* input */
-    int		(*xf_output)(struct mbuf *, struct tdb *, struct mbuf **);        /* output */
+    struct mbuf 	*(*xf_input)(struct mbuf *, struct tdb *, int, int); /* input */
+    int		(*xf_output)(struct mbuf *, struct tdb *, struct mbuf **, int, int);        /* output */
 };
 
 /* xform IDs */
@@ -505,41 +505,46 @@ extern struct flow *find_global_flow(union sockaddr_union *,
 extern int ipe4_attach(void);
 extern int ipe4_init(struct tdb *, struct xformsw *, struct ipsecinit *);
 extern int ipe4_zeroize(struct tdb *);
-extern int ipe4_output(struct mbuf *, struct tdb *, struct mbuf **);
+extern int ipe4_output(struct mbuf *, struct tdb *, struct mbuf **, int, int);
 extern void ipe4_input __P((struct mbuf *, ...));
 extern void ip4_input __P((struct mbuf *, ...));
 
 /* XF_ETHERIP */
-extern int etherip_output(struct mbuf *, struct tdb *, struct mbuf **);
+extern int etherip_output(struct mbuf *, struct tdb *, struct mbuf **,
+			  int, int);
 extern void etherip_input __P((struct mbuf *, ...));
 
 /* XF_OLD_AH */
 extern int ah_old_attach(void);
 extern int ah_old_init(struct tdb *, struct xformsw *, struct ipsecinit *);
 extern int ah_old_zeroize(struct tdb *);
-extern int ah_old_output(struct mbuf *, struct tdb *, struct mbuf **);
-extern struct mbuf *ah_old_input(struct mbuf *, struct tdb *);
+extern int ah_old_output(struct mbuf *, struct tdb *, struct mbuf **,
+			 int, int);
+extern struct mbuf *ah_old_input(struct mbuf *, struct tdb *, int, int);
 
 /* XF_NEW_AH */
 extern int ah_new_attach(void);
 extern int ah_new_init(struct tdb *, struct xformsw *, struct ipsecinit *);
 extern int ah_new_zeroize(struct tdb *);
-extern int ah_new_output(struct mbuf *, struct tdb *, struct mbuf **);
-extern struct mbuf *ah_new_input(struct mbuf *, struct tdb *);
+extern int ah_new_output(struct mbuf *, struct tdb *, struct mbuf **,
+			 int, int);
+extern struct mbuf *ah_new_input(struct mbuf *, struct tdb *, int, int);
 
 /* XF_OLD_ESP */
 extern int esp_old_attach(void);
 extern int esp_old_init(struct tdb *, struct xformsw *, struct ipsecinit *);
 extern int esp_old_zeroize(struct tdb *);
-extern int esp_old_output(struct mbuf *, struct tdb *, struct mbuf **);
-extern struct mbuf *esp_old_input(struct mbuf *, struct tdb *);
+extern int esp_old_output(struct mbuf *, struct tdb *, struct mbuf **,
+			  int, int);
+extern struct mbuf *esp_old_input(struct mbuf *, struct tdb *, int, int);
 
 /* XF_NEW_ESP */
 extern int esp_new_attach(void);
 extern int esp_new_init(struct tdb *, struct xformsw *, struct ipsecinit *);
 extern int esp_new_zeroize(struct tdb *);
-extern int esp_new_output(struct mbuf *, struct tdb *, struct mbuf **);
-extern struct mbuf *esp_new_input(struct mbuf *, struct tdb *);
+extern int esp_new_output(struct mbuf *, struct tdb *, struct mbuf **,
+			  int, int);
+extern struct mbuf *esp_new_input(struct mbuf *, struct tdb *, int, int);
 
 /* XF_TCPSIGNATURE */
 extern int tcp_signature_tdb_attach __P((void));

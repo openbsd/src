@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_old.c,v 1.37 1999/10/29 02:10:02 angelos Exp $	*/
+/*	$OpenBSD: ip_esp_old.c,v 1.38 1999/12/06 07:14:35 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -161,7 +161,7 @@ esp_old_zeroize(struct tdb *tdbp)
  * esp_old_input() gets called to decrypt an input packet
  */
 struct mbuf *
-esp_old_input(struct mbuf *m, struct tdb *tdb)
+esp_old_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 {
     struct enc_xform *espx = (struct enc_xform *) tdb->tdb_encalgxform;
     struct ip *ip, ipo;
@@ -428,7 +428,8 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
 }
 
 int
-esp_old_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp)
+esp_old_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
+	       int protoff)
 {
     struct enc_xform *espx = (struct enc_xform *) tdb->tdb_encalgxform;
     struct ip *ip, ipo;

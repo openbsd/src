@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.26 1999/11/04 11:23:43 ho Exp $	*/
+/*	$OpenBSD: ip_esp.c,v 1.27 1999/12/06 07:14:35 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -82,6 +82,10 @@ extern struct enc_softc encif[];
 #define DPRINTF(x)	if (encdebug) printf x
 #else
 #define DPRINTF(x)
+#endif
+
+#ifndef offsetof
+#define offsetof(s, e) ((int)&((s *)0)->e)
 #endif
 
 int esp_enable = 0;
@@ -188,7 +192,8 @@ esp_input(m, va_alist)
     
     ipn = *ipo;
 
-    m = (*(tdbp->tdb_xform->xf_input))(m, tdbp);
+    m = (*(tdbp->tdb_xform->xf_input))(m, tdbp, ipo->ip_hl << 2,
+				       offsetof(struct ip, ip_p));
 
     if (m == NULL)
     {
@@ -197,7 +202,17 @@ esp_input(m, va_alist)
 	return;
     }
 
+    if ((m = m_pullup(m, ipn.ip_hl << 2)) == 0)
+    {
+	espstat.esps_hdrops++;
+	return;
+    }
+
     ipo = mtod(m, struct ip *);
+    ipo->ip_len = htons(m->m_pkthdr.len);
+    ipo->ip_sum = 0;
+    ipo->ip_sum = in_cksum(m, ipo->ip_hl << 2);
+
     if (ipo->ip_p == IPPROTO_IPIP)	/* IP-in-IP encapsulation */
     {
 	/* ipn will now contain the inner IP header */

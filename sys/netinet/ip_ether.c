@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.3 1999/11/04 05:16:32 jason Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.4 1999/12/06 07:14:35 angelos Exp $  */
 
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
@@ -197,7 +197,8 @@ va_dcl
 
 #ifdef IPSEC
 int
-etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp)
+etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
+	       int protoff)
 {
     struct ip *ipo;
     ushort ilen;

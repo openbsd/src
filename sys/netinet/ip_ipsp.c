@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.57 1999/12/05 22:09:18 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.58 1999/12/06 07:14:36 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -133,7 +133,7 @@ u_int8_t hmac_opad_buffer[64] = {
 struct xformsw xformsw[] = {
     { XF_IP4,	         0,               "IPv4 Simple Encapsulation",
       ipe4_attach,       ipe4_init,       ipe4_zeroize,
-      (struct mbuf * (*)(struct mbuf *, struct tdb *))ipe4_input, 
+      (struct mbuf * (*)(struct mbuf *, struct tdb *, int, int))ipe4_input, 
       ipe4_output, },
     { XF_OLD_AH,         XFT_AUTH,	 "Keyed Authentication, RFC 1828/1852",
       ah_old_attach,     ah_old_init,     ah_old_zeroize,

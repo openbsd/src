@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ip4.c,v 1.33 1999/10/29 02:02:33 angelos Exp $	*/
+/*	$OpenBSD: ip_ip4.c,v 1.34 1999/12/06 07:14:36 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -69,6 +69,14 @@
 #include <netinet/ip_mroute.h>
 #endif
 
+#ifdef INET6
+#include <netinet6/in6.h>
+#include <netinet6/ip6.h>
+#include <netinet6/in6_pcb.h>
+#include <netinet6/ip6_var.h>
+#include <netinet6/icmp6.h>
+#endif /* INET6 */
+
 #include <sys/socketvar.h>
 #include <net/raw_cb.h>
 
@@ -106,14 +114,18 @@ ip4_input(m, va_alist)
 	va_dcl
 #endif
 {
+    register struct sockaddr_in *sin;
     register struct ifnet *ifp;
     register struct ifaddr *ifa;
-    register struct sockaddr_in *sin;
-    int iphlen;
-    struct ip *ipo, *ipi;
     struct ifqueue *ifq = NULL;
-    int s;
+    struct ip *ipo, *ipi;
+    int s, iphlen;
     va_list ap;
+
+#ifdef INET6
+    register struct sockaddr_in6 *sin6;
+    struct ip6_hdr *ipv6;
+#endif /* INET6 */
 
     va_start(ap, m);
     iphlen = va_arg(ap, int);
@@ -171,34 +183,56 @@ ip4_input(m, va_alist)
 	ipo = mtod(m, struct ip *);
     }
 
-    ipi = (struct ip *) ((caddr_t) ipo + iphlen);
-
     /*
      * RFC 1853 specifies that the inner TTL should not be touched on
      * decapsulation. There's no reason this comment should be here, but
      * this is as good as any a position.
      */
 
-    if (ipi->ip_v != IPVERSION)
+    if (ipo->ip_p == IPPROTO_IPIP)
     {
-	DPRINTF(("ip4_input(): wrong version %d on packet from %s to %s (%s->%s)\n", ipi->ip_v, inet_ntoa4(ipo->ip_src), inet_ntoa4(ipo->ip_dst), inet_ntoa4(ipi->ip_src), inet_ntoa4(ipi->ip_dst)));
-	ip4stat.ip4s_notip4++;
-	m_freem(m);
-	return;
+	ipi = (struct ip *) ((caddr_t) ipo + iphlen);
+
+	if (ipi->ip_v != IPVERSION)
+	{
+	    DPRINTF(("ip4_input(): wrong version %d on packet from %s to %s (%s->%s)\n", ipi->ip_v, inet_ntoa4(ipo->ip_src), inet_ntoa4(ipo->ip_dst), inet_ntoa4(ipi->ip_src), inet_ntoa4(ipi->ip_dst)));
+	    ip4stat.ip4s_notip4++;
+	    m_freem(m);
+	    return;
+	}
+
+	/*
+	 * If we do not accept IP4 other than as part of ESP & AH, we should
+	 * not accept a packet with double ip4 headers neither.
+	 */
+ 
+	if (!ip4_allow &&
+	    ((ipi->ip_p == IPPROTO_IPIP) ||
+	     (ipi->ip_p == IPPROTO_IPV6)))
+	{
+	    DPRINTF(("ip4_input(): dropped due to policy\n"));
+	    ip4stat.ip4s_pdrops++;
+	    m_freem(m);
+	    return;
+	}
     }
 
-    /*
-     * If we do not accept IP4 other than part of ESP & AH, we should
-     * not accept a packet with double ip4 headers neither.
-     */
- 
-    if (!ip4_allow && ipi->ip_p == IPPROTO_IPIP)
+#ifdef INET6
+    if (ipo->ip_p == IPPROTO_IPIP)
     {
- 	DPRINTF(("ip4_input(): dropped due to policy\n"));
- 	ip4stat.ip4s_pdrops++;
- 	m_freem(m);
- 	return;
+	ipv6 = (struct ip6_hdr *) ((caddr_t) ipo + iphlen);
+
+	if (ipv6->ip6_vfc != IPV6_VERSION)
+	{
+	    DPRINTF(("ip4_input(): wrong version %d on packet from %s to %s (%s->%s)\n", ipi->ip_v, inet_ntoa4(ipo->ip_src), inet_ntoa4(ipo->ip_dst), inet6_ntoa4(ipv6->ip6_src), inet6_ntoa4(ipv6->ip6_dst)));
+	    ip4stat.ip4s_notip4++;
+	    m_freem(m);
+	    return;
+	}
+
+	/* XXX Do we need to check that we don't have double-headers ? */
     }
+#endif /* INET6 */
 
     /*
      * Check remote packets for local address spoofing.
@@ -212,23 +246,57 @@ ip4_input(m, va_alist)
 	       ifa != 0;
 	       ifa = ifa->ifa_list.tqe_next)
 	  {
-	      if (ifa->ifa_addr->sa_family != AF_INET)
-		continue;
-
-	      sin = (struct sockaddr_in *) ifa->ifa_addr;
-
-	      if (sin->sin_addr.s_addr == ipi->ip_src.s_addr)
+	      switch (ipo->ip_p)
 	      {
-		  DPRINTF(("ip_input(): possible local address spoofing detected on packet from %s to %s (%s->%s)\n", inet_ntoa4(ipo->ip_src), inet_ntoa4(ipo->ip_dst), inet_ntoa4(ipi->ip_src), inet_ntoa4(ipi->ip_dst)));
-		  ip4stat.ip4s_spoof++;
-		  m_freem(m);
-		  return;
+		  case IPPROTO_IPIP:
+		      if (ifa->ifa_addr->sa_family != AF_INET)
+			continue;
+
+		      sin = (struct sockaddr_in *) ifa->ifa_addr;
+
+		      if (sin->sin_addr.s_addr == ipi->ip_src.s_addr)
+		      {
+			  DPRINTF(("ip_input(): possible local address spoofing detected on packet from %s to %s (%s->%s)\n", inet_ntoa4(ipo->ip_src), inet_ntoa4(ipo->ip_dst), inet_ntoa4(ipi->ip_src), inet_ntoa4(ipi->ip_dst)));
+			  ip4stat.ip4s_spoof++;
+			  m_freem(m);
+			  return;
+		      }
+
+		      break;
+
+#ifdef INET6
+		  case IPPROTO_IPV6:
+		      if (ifa->ifa_addr->sa_family != AF_INET6)
+			continue;
+
+		      sin6 = (struct sockaddr_in6 *) ifa->ifa_addr;
+
+		      if (!bcmp(&sin6->sin6_addr, &ipv6->sin6_addr,
+				sizeof(struct in6_addr)))
+		      {
+			  DPRINTF(("ip_input(): possible local address spoofing detected on packet from %s to %s (%s->%s)\n", inet_ntoa4(ipo->ip_src), inet_ntoa4(ipo->ip_dst), inet6_ntoa4(ipv6->ip6_src), inet6_ntoa4(ipv6->ip6_dst)));
+			  ip4stat.ip4s_spoof++;
+			  m_freem(m);
+			  return;
+		      }
+
+		      break;
+#endif /* INET6 */
 	      }
+	      
 	  }
     }
     
     /* Statistics */
-    ip4stat.ip4s_ibytes += ntohs(ipi->ip_len);
+    ip4stat.ip4s_ibytes += m->m_pkthdr.len - iphlen;
+
+    /* Determine whether we need to queue in IPv4 or IPv6 input queue */
+    ifq = &ipintrq;
+
+#ifdef INET6
+    if (ipo->ip_p == IPPROTO_IPV6)
+      ifq = &ip6intrq;
+#endif
 
     /*
      * Interface pointer is already in first mbuf; chop off the 
@@ -239,7 +307,7 @@ ip4_input(m, va_alist)
     m->m_pkthdr.len -= iphlen;
     m->m_data += iphlen;
 
-    /* tdbi is only set in esp or ah, if next protocol is udp or tcp */
+    /* tdbi is only set in ESP or AH, if the next protocol is UDP or TCP */
     if (m->m_flags & (M_CONF|M_AUTH))
 	m->m_pkthdr.tdbi = NULL;
 
@@ -250,8 +318,6 @@ ip4_input(m, va_alist)
      * will allow a packet filter to distinguish between secure and
      * untrusted packets.
      */
-
-    ifq = &ipintrq;
 
     s = splimp();			/* isn't it already? */
     if (IF_QFULL(ifq))
@@ -266,14 +332,23 @@ ip4_input(m, va_alist)
     }
 
     IF_ENQUEUE(ifq, m);
-    schednetisr(NETISR_IP);
+
+    if (ifq == &ipintrq)
+      schednetisr(NETISR_IP);
+
+#ifdef INET6
+    if (ifq == &ip6intrq)
+      schednetisr(NETISR_IP6);
+#endif /* INET6 */
+
     splx(s);
     return;
 }
 
 #ifdef IPSEC
 int
-ipe4_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp)
+ipe4_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
+	    int protoff)
 {
     struct ip *ipo, *ipi;
     ushort ilen;

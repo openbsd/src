@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.26 1999/11/04 11:23:43 ho Exp $	*/
+/*	$OpenBSD: ip_ah.c,v 1.27 1999/12/06 07:14:35 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -82,6 +82,10 @@ extern struct enc_softc encif[];
 #define DPRINTF(x)	if (encdebug) printf x
 #else
 #define DPRINTF(x)
+#endif
+
+#ifndef offsetof
+#define offsetof(s, e) ((int)&((s *)0)->e)
 #endif
 
 int ah_enable = 0;
@@ -190,7 +194,8 @@ ah_input(m, va_alist)
     ipn = *ipo;
     ahn = *ahp;
 
-    m = (*(tdbp->tdb_xform->xf_input))(m, tdbp);
+    m = (*(tdbp->tdb_xform->xf_input))(m, tdbp, ipo->ip_hl << 2,
+				       offsetof(struct ip, ip_p));
     if (m == NULL)
     {
 	DPRINTF(("ah_input(): authentication failed for AH packet from %s to %s, spi %08x\n", inet_ntoa4(ipn.ip_src), ipsp_address(sunion), ntohl(ahn.ah_spi)));

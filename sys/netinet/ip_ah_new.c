@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah_new.c,v 1.28 1999/10/29 02:10:01 angelos Exp $	*/
+/*	$OpenBSD: ip_ah_new.c,v 1.29 1999/12/06 07:14:35 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -191,7 +191,7 @@ ah_new_zeroize(struct tdb *tdbp)
  */
 
 struct mbuf *
-ah_new_input(struct mbuf *m, struct tdb *tdb)
+ah_new_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 {
     struct auth_hash *ahx = (struct auth_hash *) tdb->tdb_authalgxform;
     struct ip *ip, ipo;
@@ -432,7 +432,8 @@ ah_new_input(struct mbuf *m, struct tdb *tdb)
 }
 
 int
-ah_new_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp)
+ah_new_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
+	      int protoff)
 {
     struct auth_hash *ahx = (struct auth_hash *) tdb->tdb_authalgxform;
     struct ip *ip, ipo;
