@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.327 2004/02/08 01:01:10 krw Exp $
+#	$OpenBSD: install.sub,v 1.328 2004/02/08 11:31:43 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2003 Todd Miller, Theo de Raadt, Ken Westerback
@@ -648,12 +648,9 @@ enable_network() {
 
 	DIDNET=y
 
-	# set the address for the loopback interface
+	# Set the address for the loopback interface. Bringing the
+	# interface up, automatically invokes the IPv6 address ::1.
 	ifconfig lo0 inet localhost
-
-	# use loopback, not the wire
-	route -n add -host `hostname` localhost > /dev/null
-	route -n add -net 127 127.0.0.1 -reject > /dev/null
 
 	# configure all of the non-loopback interfaces which we know about.
 	# refer to hostname.if(5)
@@ -744,15 +741,19 @@ enable_network() {
 				;;
 			esac
 			eval "$cmd"
-		done < /mnt/etc/hostname.$if
+		done </mnt/etc/hostname.$if
 	done
 
 	# /mnt/etc/mygate, if it exists, contains the name of my gateway host
 	# that name must be in /etc/hosts.
 	if [ -f /mnt/etc/mygate ]; then
-		route delete default > /dev/null 2>&1
-		route -n add -host default `cat /mnt/etc/mygate`
+		route delete default >/dev/null 2>&1
+		route -n add -host default $(< /mnt/etc/mygate)
 	fi
+
+	# Use loopback, not the wire.
+	route -qn add -host `hostname` 127.0.0.1 >/dev/null
+	route -qn add -net 127 127.0.0.1 -reject >/dev/null
 
 	# Display results...
 	echo "Network interface configuration:"
