@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: __strerror.c,v 1.10 2003/06/02 20:18:38 millert Exp $";
+static char *rcsid = "$OpenBSD: __strerror.c,v 1.11 2004/04/30 17:13:02 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef NLS
@@ -46,20 +46,52 @@ static char *rcsid = "$OpenBSD: __strerror.c,v 1.10 2003/06/02 20:18:38 millert 
 #include <stdio.h>
 #include <string.h>
 
-static char *
-itoa(num)
-	int num;
+static size_t
+__digits10(unsigned int num)
 {
-	static char buffer[11];
-	char *p;
+	size_t i = 0;
 
-	p = buffer + 4;
-	while (num >= 10) {
-		*--p = (num % 10) + '0';
+	do {
 		num /= 10;
+		i++;
+	} while (num != 0);
+
+	return i;
+}
+
+static char *
+__itoa(int num, char *buffer, size_t maxlen)
+{
+	char *p;
+	size_t len;
+	unsigned int a;
+	int neg;
+
+	if (num < 0) {
+		a = -num;
+		neg = 1;
 	}
-	*p = (num % 10) + '0';
-	return p;
+	else {
+		a = num;
+		neg = 0;
+	}
+
+	len = __digits10(a);
+	if (neg)
+	    len++;
+
+	if (len >= maxlen)
+		return NULL;
+
+	buffer[len--] = '\0';
+	do {
+		buffer[len--] = (a % 10) + '0';
+		a /= 10;
+	} while (a != 0);
+	if (neg)
+	    *buffer = '-';
+
+	return buffer;
 }
 
 /*
@@ -69,12 +101,10 @@ itoa(num)
  */
 
 char *
-__strerror(num, buf)
-	int num;
-	char *buf;
+__strerror(int num, char *buf)
 {
 #define	UPREFIX	"Unknown error: "
-	register unsigned int errnum;
+	int len;
 #ifdef NLS
 	int save_errno;
 	nl_catd catd;
@@ -82,21 +112,21 @@ __strerror(num, buf)
 	catd = catopen("libc", 0);
 #endif
 
-	errnum = num;				/* convert to unsigned */
-	if (errnum < sys_nerr) {
+	if (num >= 0 && num < sys_nerr) {
 #ifdef NLS
-		strlcpy(buf, catgets(catd, 1, errnum,
-		    (char *)sys_errlist[errnum]), NL_TEXTMAX);
+		strlcpy(buf, catgets(catd, 1, num,
+		    (char *)sys_errlist[num]), NL_TEXTMAX);
 #else
-		return(sys_errlist[errnum]);
+		return(sys_errlist[num]);
 #endif
 	} else {
 #ifdef NLS
-		strlcpy(buf, catgets(catd, 1, 0xffff, UPREFIX), NL_TEXTMAX);
+		len = strlcpy(buf, catgets(catd, 1, 0xffff, UPREFIX), NL_TEXTMAX);
 #else
-		strlcpy(buf, UPREFIX, NL_TEXTMAX);
+		len = strlcpy(buf, UPREFIX, NL_TEXTMAX);
 #endif
-		strlcat(buf, itoa(errnum), NL_TEXTMAX);
+		if (len < NL_TEXTMAX)
+			__itoa(num, buf + len, NL_TEXTMAX - len);
 		errno = EINVAL;
 	}
 
