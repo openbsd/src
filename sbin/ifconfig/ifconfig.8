@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.57 2002/06/09 08:13:06 todd Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.58 2002/06/14 09:14:24 itojun Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -471,6 +471,11 @@ Set the IPv6 tentative address bit.
 .It Fl tentative
 (inet6 only)
 Clear the IPv6 tentative address bit.
+.It eui64
+(inet6 only)
+Fill interface index
+.Pq lowermost 64bit of an IPv6 address
+automatically.
 .It Cm trailers
 Request the use of a
 .Dq trailer
