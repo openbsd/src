@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2004/09/16 18:54:49 pefo Exp $
+#	$OpenBSD: Makefile,v 1.3 2004/09/22 22:06:18 miod Exp $
 
 LIB=	sa
 
@@ -13,6 +13,7 @@ CFLAGS= ${CEXTRAFLAGS} -O2 ${SAABI} -nostdinc -mno-abicalls -D_NO_ABICALLS \
 	-I${.OBJDIR}
 
 CPPFLAGS+= -D__INTERNAL_LIBSA_CREAD ${STANDALONE}
+CPPFLAGS+= -DLIBSA_LONGLONG_PRINTF
 
 # stand routines
 SRCS=	alloc.c exit.c exec.c getfile.c gets.c globals.c \
