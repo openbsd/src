@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.16 2003/01/10 14:21:21 cedric Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.17 2003/01/10 16:09:19 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -448,10 +448,12 @@ next_token(char buf[BUF_SIZE], FILE *fp)
 void
 append_addr(char *s, int test)
 {
-	char		 buf[BUF_SIZE], *p, *q;
+	char		 buf[BUF_SIZE], *p, *q, *r;
 	struct addrinfo *res, *ai, hints;
-	int		 not = (*s == '!'), net = -1, rv;
+	int		 not = 0, net = -1, rv;
 
+	for (r = s; *r == '!'; r++)
+		not = !not;
 	bzero(&hints, sizeof(hints));
 	hints.ai_socktype = SOCK_DGRAM;
 	if (strlen(s) >= BUF_SIZE) {
@@ -459,7 +461,7 @@ append_addr(char *s, int test)
 		    __progname, (long)strlen(s));
 		exit(1);
 	}
-	if (strlcpy(buf, s+not, sizeof(buf)) >= sizeof(buf))
+	if (strlcpy(buf, r, sizeof(buf)) >= sizeof(buf))
 		errx(1, "append_addr: strlcpy");
 	p = strrchr(buf, '/');
 	if (test && (not || p))
@@ -520,14 +522,15 @@ append_addr(char *s, int test)
 void
 print_addrx(struct pfr_addr *ad, struct pfr_addr *rad, int dns)
 {
-	char		buf[BUF_SIZE] = "{error}";
-	const char	fb[] = { ' ', 'M', 'A', 'D', 'C', 'Z', 'X', ' ' };
-	int		fback, hostnet;
+	char		ch, buf[BUF_SIZE] = "{error}";
+	char		fb[] = { ' ', 'M', 'A', 'D', 'C', 'Z', 'X', ' ', 'Y' };
+	unsigned	fback, hostnet;
 
 	fback = (rad != NULL) ? rad->pfra_fback : ad->pfra_fback;
+	ch = (fback < sizeof(fb)/sizeof(*fb)) ? fb[fback] : '?';
 	hostnet = (ad->pfra_af == AF_INET6) ? 128 : 32;
 	inet_ntop(ad->pfra_af, &ad->pfra_u, buf, sizeof(buf));
-	printf("%c %c%s", fb[fback], (ad->pfra_not?'!':' '), buf);
+	printf("%c %c%s", ch, (ad->pfra_not?'!':' '), buf);
 	if (ad->pfra_net < hostnet)
 		printf("/%d", ad->pfra_net);
 	if (rad != NULL && fback != PFR_FB_NONE) {

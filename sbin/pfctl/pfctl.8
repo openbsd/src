@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.64 2003/01/10 10:51:48 cedric Exp $
+.\" $OpenBSD: pfctl.8,v 1.65 2003/01/10 16:09:19 cedric Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -263,6 +263,8 @@ The address/network has been deleted.
 The address match (test operation only).
 .It X
 The address/network is duplicated and therefore ignored.
+.It Y
+The address/network cannot be added/deleted due to conflicting "!" attribute.
 .El
 .It Fl v
 Produce more verbose output.  A second use of

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.131 2003/01/09 15:58:35 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.132 2003/01/10 16:09:19 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -487,7 +487,7 @@ struct pfr_table {
 
 enum { PFR_FB_NONE, PFR_FB_MATCH, PFR_FB_ADDED, PFR_FB_DELETED,
 	PFR_FB_CHANGED, PFR_FB_CLEARED, PFR_FB_DUPLICATE,
-	PFR_FB_NOTMATCH, PFR_FB_MAX };
+	PFR_FB_NOTMATCH, PFR_FB_CONFLICT, PFR_FB_MAX };
 
 struct pfr_addr {
 	union {

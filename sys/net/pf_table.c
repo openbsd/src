@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.18 2003/01/10 13:21:35 cedric Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.19 2003/01/10 16:09:19 cedric Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -227,8 +227,14 @@ pfr_add_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 		p = pfr_lookup_addr(kt, &ad, 1);
 		q = pfr_lookup_addr(tmpkt, &ad, 1);
 		if (flags & PFR_FLAG_FEEDBACK) {
-			ad.pfra_fback = (q != NULL) ? PFR_FB_DUPLICATE :
-			    ((p == NULL) ? PFR_FB_ADDED : PFR_FB_NONE);
+			if (q != NULL)
+				ad.pfra_fback = PFR_FB_DUPLICATE;
+			else if (p == NULL)
+				ad.pfra_fback = PFR_FB_ADDED;
+			else if (p->pfrke_not != ad.pfra_not)
+				ad.pfra_fback = PFR_FB_CONFLICT;
+			else
+				ad.pfra_fback = PFR_FB_NONE;
 			if (copyout(&ad, addr+i, sizeof(ad)))
 				senderr(EFAULT);
 		}
@@ -241,8 +247,7 @@ pfr_add_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 			SLIST_INSERT_HEAD(&workq, p, pfrke_workq);
 			pfr_route_kentry(tmpkt, p);
 			xadd++;
-		} else if (p->pfrke_not != ad.pfra_not)
-			senderr(EEXIST);
+		}
 	}
 	if (!(flags & PFR_FLAG_DUMMY)) {
 		if (flags & PFR_FLAG_ATOMIC)
@@ -290,13 +295,18 @@ pfr_del_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 			senderr(EINVAL);
 		p = pfr_lookup_addr(kt, &ad, 1);
 		if (flags & PFR_FLAG_FEEDBACK) {
-			ad.pfra_fback = (p == NULL) ? PFR_FB_NONE :
-			    (p->pfrke_mark ? PFR_FB_DUPLICATE :
-			    PFR_FB_DELETED);
+			if (p == NULL)
+				ad.pfra_fback = PFR_FB_NONE;
+			else if (p->pfrke_not != ad.pfra_not)
+				ad.pfra_fback = PFR_FB_CONFLICT;
+			else if (p->pfrke_mark)
+				ad.pfra_fback = PFR_FB_DUPLICATE;
+			else
+				ad.pfra_fback = PFR_FB_DELETED;
 			if (copyout(&ad, addr+i, sizeof(ad)))
 				senderr(EFAULT);
 		}
-		if (p != NULL) {
+		if (p != NULL && p->pfrke_not == ad.pfra_not) {
 			if (p->pfrke_mark)
 				continue;
 			p->pfrke_mark = 1;
