@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.391 2003/06/18 11:04:14 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.392 2003/06/18 11:38:19 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3192,29 +3192,42 @@ expand_label_addr(const char *name, char *label, sa_family_t af,
 	char tmp[64], tmp_not[66];
 
 	if (strstr(label, name) != NULL) {
-		if (h->addr.type == PF_ADDR_DYNIFTL)
+		switch (h->addr.type) {
+		case PF_ADDR_DYNIFTL:
 			snprintf(tmp, sizeof(tmp), "(%s)", h->addr.v.ifname);
-		else if (h->addr.type == PF_ADDR_TABLE)
+			break;
+		case PF_ADDR_TABLE:
 			snprintf(tmp, sizeof(tmp), "<%s>", h->addr.v.tblname);
-		else if (!af || (PF_AZERO(&h->addr.v.a.addr, af) &&
-		    PF_AZERO(&h->addr.v.a.mask, af)))
-			snprintf(tmp, sizeof(tmp), "any");
-		else {
-			char	a[48];
-			int	bits;
-
-			if (inet_ntop(af, &h->addr.v.a.addr, a, sizeof(a)) ==
-			    NULL)
-				snprintf(tmp, sizeof(tmp), "?");
+			break;
+		case PF_ADDR_NOROUTE:
+			snprintf(tmp, sizeof(tmp), "no-route");
+			break;
+		case PF_ADDR_ADDRMASK:
+			if (!af || (PF_AZERO(&h->addr.v.a.addr, af) &&
+			    PF_AZERO(&h->addr.v.a.mask, af)))
+				snprintf(tmp, sizeof(tmp), "any");
 			else {
-				bits = unmask(&h->addr.v.a.mask, af);
-				if ((af == AF_INET && bits < 32) ||
-				    (af == AF_INET6 && bits < 128))
-					snprintf(tmp, sizeof(tmp), "%s/%d",
-					    a, bits);
-				else
-					snprintf(tmp, sizeof(tmp), "%s", a);
+				char	a[48];
+				int	bits;
+
+				if (inet_ntop(af, &h->addr.v.a.addr, a,
+				    sizeof(a)) == NULL)
+					snprintf(tmp, sizeof(tmp), "?");
+				else {
+					bits = unmask(&h->addr.v.a.mask, af);
+					if ((af == AF_INET && bits < 32) ||
+					    (af == AF_INET6 && bits < 128))
+						snprintf(tmp, sizeof(tmp),
+						   "%s/%d", a, bits);
+					else
+						snprintf(tmp, sizeof(tmp),
+						    "%s", a);
+				}
 			}
+			break;
+		default:
+			snprintf(tmp, sizeof(tmp), "?");
+			break;
 		}
 
 		if (h->not) {
