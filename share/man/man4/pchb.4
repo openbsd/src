@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pchb.4,v 1.1 2000/04/17 21:35:18 mickey Exp $
+.\"	$OpenBSD: pchb.4,v 1.2 2000/04/26 19:04:49 mickey Exp $
 .\"
 .\" Copyright (c) 2000 Michael Shalayeff. All rights reserved.
 .\"
@@ -18,10 +18,16 @@ driver provides support for PCI-Host adapter-specific functions for
 the following devices:
 .Pp
 .Bl -tag -width -offset indent -compact
-.It 450 PCIset (Orion)
+.It i450 PCIset (Orion)
+.It Reliance Computer ROSB4, CNB20HE, CNB20LE
 Supports secondary PCI bus.
-.It 82424ZX (Saturn)
+.It i82424ZX (Saturn)
 Disables CPU-PCI write posting.
+.It i82443BX
+Provides workaround for the following errata:
+"An incorrect address may be driven on the
+DRAM bus, resulting in memory data being
+fetched from the wrong location."
 .It i82810/810E
 Supports the random numbers generator,
 supplying random bytes from the system's thermal noise.
