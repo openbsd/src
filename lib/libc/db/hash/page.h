@@ -1,4 +1,4 @@
-/*	$NetBSD: page.h,v 1.5 1995/02/27 13:22:52 cgd Exp $	*/
+/*	$NetBSD: page.h,v 1.6 1996/05/03 21:43:59 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994

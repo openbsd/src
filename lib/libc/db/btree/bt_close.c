@@ -1,7 +1,7 @@
-/*	$NetBSD: bt_close.c,v 1.6 1995/02/27 13:19:59 cgd Exp $	*/
+/*	$NetBSD: bt_close.c,v 1.7 1996/05/03 21:50:38 cgd Exp $	*/
 
 /*-
- * Copyright (c) 1990, 1993
+ * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -38,9 +38,9 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char sccsid[] = "@(#)bt_close.c	8.3 (Berkeley) 2/21/94";
+static char sccsid[] = "@(#)bt_close.c	8.7 (Berkeley) 8/17/94";
 #else
-static char rcsid[] = "$NetBSD: bt_close.c,v 1.6 1995/02/27 13:19:59 cgd Exp $";
+static char rcsid[] = "$NetBSD: bt_close.c,v 1.7 1996/05/03 21:50:38 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -81,25 +81,30 @@ __bt_close(dbp)
 		t->bt_pinned = NULL;
 	}
 
-	/*
-	 * Delete any already deleted record that we've been saving
-	 * because the cursor pointed to it.
-	 */
-	if (ISSET(t, B_DELCRSR) && __bt_crsrdel(t, &t->bt_bcursor))
-		return (RET_ERROR);
-
+	/* Sync the tree. */
 	if (__bt_sync(dbp, 0) == RET_ERROR)
 		return (RET_ERROR);
 
+	/* Close the memory pool. */
 	if (mpool_close(t->bt_mp) == RET_ERROR)
 		return (RET_ERROR);
 
-	if (t->bt_stack)
-		free(t->bt_stack);
-	if (t->bt_kbuf)
-		free(t->bt_kbuf);
-	if (t->bt_dbuf)
-		free(t->bt_dbuf);
+	/* Free random memory. */
+	if (t->bt_cursor.key.data != NULL) {
+		free(t->bt_cursor.key.data);
+		t->bt_cursor.key.size = 0;
+		t->bt_cursor.key.data = NULL;
+	}
+	if (t->bt_rkey.data) {
+		free(t->bt_rkey.data);
+		t->bt_rkey.size = 0;
+		t->bt_rkey.data = NULL;
+	}
+	if (t->bt_rdata.data) {
+		free(t->bt_rdata.data);
+		t->bt_rdata.size = 0;
+		t->bt_rdata.data = NULL;
+	}
 
 	fd = t->bt_fd;
 	free(t);
@@ -123,8 +128,6 @@ __bt_sync(dbp, flags)
 {
 	BTREE *t;
 	int status;
-	PAGE *h;
-	void *p;
 
 	t = dbp->internal;
 
@@ -140,40 +143,15 @@ __bt_sync(dbp, flags)
 		return (RET_ERROR);
 	}
 
-	if (ISSET(t, B_INMEM | B_RDONLY) || !ISSET(t, B_MODIFIED))
+	if (F_ISSET(t, B_INMEM | B_RDONLY) || !F_ISSET(t, B_MODIFIED))
 		return (RET_SUCCESS);
 
-	if (ISSET(t, B_METADIRTY) && bt_meta(t) == RET_ERROR)
+	if (F_ISSET(t, B_METADIRTY) && bt_meta(t) == RET_ERROR)
 		return (RET_ERROR);
 
-	/*
-	 * Nastiness.  If the cursor has been marked for deletion, but not
-	 * actually deleted, we have to make a copy of the page, delete the
-	 * key/data item, sync the file, and then restore the original page
-	 * contents.
-	 */
-	if (ISSET(t, B_DELCRSR)) {
-		if ((p = (void *)malloc(t->bt_psize)) == NULL)
-			return (RET_ERROR);
-		if ((h = mpool_get(t->bt_mp, t->bt_bcursor.pgno, 0)) == NULL)
-			return (RET_ERROR);
-		memmove(p, h, t->bt_psize);
-		if ((status =
-		    __bt_dleaf(t, h, t->bt_bcursor.index)) == RET_ERROR)
-			goto ecrsr;
-		mpool_put(t->bt_mp, h, MPOOL_DIRTY);
-	}
-		
 	if ((status = mpool_sync(t->bt_mp)) == RET_SUCCESS)
-		CLR(t, B_MODIFIED);
+		F_CLR(t, B_MODIFIED);
 
-ecrsr:	if (ISSET(t, B_DELCRSR)) {
-		if ((h = mpool_get(t->bt_mp, t->bt_bcursor.pgno, 0)) == NULL)
-			return (RET_ERROR);
-		memmove(h, p, t->bt_psize);
-		free(p);
-		mpool_put(t->bt_mp, h, MPOOL_DIRTY);
-	}
 	return (status);
 }
 
@@ -197,12 +175,12 @@ bt_meta(t)
 		return (RET_ERROR);
 
 	/* Fill in metadata. */
-	m.m_magic = BTREEMAGIC;
-	m.m_version = BTREEVERSION;
-	m.m_psize = t->bt_psize;
-	m.m_free = t->bt_free;
-	m.m_nrecs = t->bt_nrecs;
-	m.m_flags = t->bt_flags & SAVEMETA;
+	m.magic = BTREEMAGIC;
+	m.version = BTREEVERSION;
+	m.psize = t->bt_psize;
+	m.free = t->bt_free;
+	m.nrecs = t->bt_nrecs;
+	m.flags = F_ISSET(t, SAVEMETA);
 
 	memmove(p, &m, sizeof(BTMETA));
 	mpool_put(t->bt_mp, p, MPOOL_DIRTY);

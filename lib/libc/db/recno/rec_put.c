@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_put.c,v 1.7 1995/02/27 13:25:13 cgd Exp $	*/
+/*	$NetBSD: rec_put.c,v 1.8 1996/05/03 21:38:50 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -35,9 +35,9 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char sccsid[] = "@(#)rec_put.c	8.4 (Berkeley) 5/31/94";
+static char sccsid[] = "@(#)rec_put.c	8.7 (Berkeley) 8/18/94";
 #else
-static char rcsid[] = "$NetBSD: rec_put.c,v 1.7 1995/02/27 13:25:13 cgd Exp $";
+static char rcsid[] = "$NetBSD: rec_put.c,v 1.8 1996/05/03 21:38:50 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -72,7 +72,7 @@ __rec_put(dbp, key, data, flags)
 	u_int flags;
 {
 	BTREE *t;
-	DBT tdata;
+	DBT fdata, tdata;
 	recno_t nrec;
 	int status;
 
@@ -84,11 +84,38 @@ __rec_put(dbp, key, data, flags)
 		t->bt_pinned = NULL;
 	}
 
+	/*
+	 * If using fixed-length records, and the record is long, return
+	 * EINVAL.  If it's short, pad it out.  Use the record data return
+	 * memory, it's only short-term.
+	 */
+	if (F_ISSET(t, R_FIXLEN) && data->size != t->bt_reclen) {
+		if (data->size > t->bt_reclen)
+			goto einval;
+
+		if (t->bt_rdata.size < t->bt_reclen) {
+			t->bt_rdata.data = t->bt_rdata.data == NULL ?
+			    malloc(t->bt_reclen) :
+			    realloc(t->bt_rdata.data, t->bt_reclen);
+			if (t->bt_rdata.data == NULL)
+				return (RET_ERROR);
+			t->bt_rdata.size = t->bt_reclen;
+		}
+		memmove(t->bt_rdata.data, data->data, data->size);
+		memset((char *)t->bt_rdata.data + data->size,
+		    t->bt_bval, t->bt_reclen - data->size);
+		fdata.data = t->bt_rdata.data;
+		fdata.size = t->bt_reclen;
+	} else {
+		fdata.data = data->data;
+		fdata.size = data->size;
+	}
+
 	switch (flags) {
 	case R_CURSOR:
-		if (!ISSET(t, B_SEQINIT))
+		if (!F_ISSET(&t->bt_cursor, CURS_INIT))
 			goto einval;
-		nrec = t->bt_rcursor;
+		nrec = t->bt_cursor.rcursor;
 		break;
 	case R_SETCURSOR:
 		if ((nrec = *(recno_t *)key->data) == 0)
@@ -121,11 +148,11 @@ einval:		errno = EINVAL;
 	 * already in the database.  If skipping records, create empty ones.
 	 */
 	if (nrec > t->bt_nrecs) {
-		if (!ISSET(t, R_EOF | R_INMEM) &&
+		if (!F_ISSET(t, R_EOF | R_INMEM) &&
 		    t->bt_irec(t, nrec) == RET_ERROR)
 			return (RET_ERROR);
 		if (nrec > t->bt_nrecs + 1) {
-			if (ISSET(t, R_FIXLEN)) {
+			if (F_ISSET(t, R_FIXLEN)) {
 				if ((tdata.data =
 				    (void *)malloc(t->bt_reclen)) == NULL)
 					return (RET_ERROR);
@@ -139,18 +166,18 @@ einval:		errno = EINVAL;
 				if (__rec_iput(t,
 				    t->bt_nrecs, &tdata, 0) != RET_SUCCESS)
 					return (RET_ERROR);
-			if (ISSET(t, R_FIXLEN))
+			if (F_ISSET(t, R_FIXLEN))
 				free(tdata.data);
 		}
 	}
 
-	if ((status = __rec_iput(t, nrec - 1, data, flags)) != RET_SUCCESS)
+	if ((status = __rec_iput(t, nrec - 1, &fdata, flags)) != RET_SUCCESS)
 		return (status);
 
 	if (flags == R_SETCURSOR)
-		t->bt_rcursor = nrec;
+		t->bt_cursor.rcursor = nrec;
 	
-	SET(t, R_MODIFIED);
+	F_SET(t, R_MODIFIED);
 	return (__rec_ret(t, NULL, nrec, key, NULL));
 }
 
@@ -252,7 +279,7 @@ __rec_iput(t, nrec, data, flags)
 	WR_RLEAF(dest, data, dflags);
 
 	++t->bt_nrecs;
-	SET(t, B_MODIFIED);
+	F_SET(t, B_MODIFIED);
 	mpool_put(t->bt_mp, h, MPOOL_DIRTY);
 
 	return (RET_SUCCESS);

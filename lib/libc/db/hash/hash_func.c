@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_func.c,v 1.5 1995/02/27 13:22:27 cgd Exp $	*/
+/*	$NetBSD: hash_func.c,v 1.6 1996/05/03 21:43:52 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)hash_func.c	8.2 (Berkeley) 2/21/94";
 #else
-static char rcsid[] = "$NetBSD: hash_func.c,v 1.5 1995/02/27 13:22:27 cgd Exp $";
+static char rcsid[] = "$NetBSD: hash_func.c,v 1.6 1996/05/03 21:43:52 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 

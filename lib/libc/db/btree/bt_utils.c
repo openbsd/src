@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_utils.c,v 1.6 1995/02/27 13:21:04 cgd Exp $	*/
+/*	$NetBSD: bt_utils.c,v 1.7 1996/05/03 21:50:58 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,9 +38,9 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char sccsid[] = "@(#)bt_utils.c	8.5 (Berkeley) 6/20/94";
+static char sccsid[] = "@(#)bt_utils.c	8.8 (Berkeley) 7/20/94";
 #else
-static char rcsid[] = "$NetBSD: bt_utils.c,v 1.6 1995/02/27 13:21:04 cgd Exp $";
+static char rcsid[] = "$NetBSD: bt_utils.c,v 1.7 1996/05/03 21:50:58 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,81 +54,91 @@ static char rcsid[] = "$NetBSD: bt_utils.c,v 1.6 1995/02/27 13:21:04 cgd Exp $";
 #include "btree.h"
 
 /*
- * __BT_RET -- Build return key/data pair as a result of search or scan.
+ * __bt_ret --
+ *	Build return key/data pair.
  *
  * Parameters:
  *	t:	tree
- *	d:	LEAF to be returned to the user.
+ *	e:	key/data pair to be returned
  *	key:	user's key structure (NULL if not to be filled in)
- *	data:	user's data structure
+ *	rkey:	memory area to hold key
+ *	data:	user's data structure (NULL if not to be filled in)
+ *	rdata:	memory area to hold data
+ *       copy:	always copy the key/data item
  *
  * Returns:
  *	RET_SUCCESS, RET_ERROR.
  */
 int
-__bt_ret(t, e, key, data)
+__bt_ret(t, e, key, rkey, data, rdata, copy)
 	BTREE *t;
 	EPG *e;
-	DBT *key, *data;
+	DBT *key, *rkey, *data, *rdata;
+	int copy;
 {
-	register BLEAF *bl;
-	register void *p;
+	BLEAF *bl;
+	void *p;
 
 	bl = GETBLEAF(e->page, e->index);
 
 	/*
-	 * We always copy big keys/data to make them contigous.  Otherwise,
-	 * we leave the page pinned and don't copy unless the user specified
+	 * We must copy big keys/data to make them contigous.  Otherwise,
+	 * leave the page pinned and don't copy unless the user specified
 	 * concurrent access.
 	 */
-	if (bl->flags & P_BIGDATA) {
-		if (__ovfl_get(t, bl->bytes + bl->ksize,
-		    &data->size, &t->bt_dbuf, &t->bt_dbufsz))
+	if (key == NULL)
+		goto dataonly;
+
+	if (bl->flags & P_BIGKEY) {
+		if (__ovfl_get(t, bl->bytes,
+		    &key->size, &rkey->data, &rkey->size))
 			return (RET_ERROR);
-		data->data = t->bt_dbuf;
-	} else if (ISSET(t, B_DB_LOCK)) {
-		/* Use +1 in case the first record retrieved is 0 length. */
-		if (bl->dsize + 1 > t->bt_dbufsz) {
-			p = (void *)(t->bt_dbuf == NULL ?
-			    malloc(bl->dsize + 1) :
-			    realloc(t->bt_dbuf, bl->dsize + 1));
+		key->data = rkey->data;
+	} else if (copy || F_ISSET(t, B_DB_LOCK)) {
+		if (bl->ksize > rkey->size) {
+			p = (void *)(rkey->data == NULL ?
+			    malloc(bl->ksize) : realloc(rkey->data, bl->ksize));
 			if (p == NULL)
 				return (RET_ERROR);
-			t->bt_dbuf = p;
-			t->bt_dbufsz = bl->dsize + 1;
+			rkey->data = p;
+			rkey->size = bl->ksize;
 		}
-		memmove(t->bt_dbuf, bl->bytes + bl->ksize, bl->dsize);
+		memmove(rkey->data, bl->bytes, bl->ksize);
+		key->size = bl->ksize;
+		key->data = rkey->data;
+	} else {
+		key->size = bl->ksize;
+		key->data = bl->bytes;
+	}
+
+dataonly:
+	if (data == NULL)
+		return (RET_SUCCESS);
+
+	if (bl->flags & P_BIGDATA) {
+		if (__ovfl_get(t, bl->bytes + bl->ksize,
+		    &data->size, &rdata->data, &rdata->size))
+			return (RET_ERROR);
+		data->data = rdata->data;
+	} else if (copy || F_ISSET(t, B_DB_LOCK)) {
+		/* Use +1 in case the first record retrieved is 0 length. */
+		if (bl->dsize + 1 > rdata->size) {
+			p = (void *)(rdata->data == NULL ?
+			    malloc(bl->dsize + 1) :
+			    realloc(rdata->data, bl->dsize + 1));
+			if (p == NULL)
+				return (RET_ERROR);
+			rdata->data = p;
+			rdata->size = bl->dsize + 1;
+		}
+		memmove(rdata->data, bl->bytes + bl->ksize, bl->dsize);
 		data->size = bl->dsize;
-		data->data = t->bt_dbuf;
+		data->data = rdata->data;
 	} else {
 		data->size = bl->dsize;
 		data->data = bl->bytes + bl->ksize;
 	}
 
-	if (key == NULL)
-		return (RET_SUCCESS);
-
-	if (bl->flags & P_BIGKEY) {
-		if (__ovfl_get(t, bl->bytes,
-		    &key->size, &t->bt_kbuf, &t->bt_kbufsz))
-			return (RET_ERROR);
-		key->data = t->bt_kbuf;
-	} else if (ISSET(t, B_DB_LOCK)) {
-		if (bl->ksize > t->bt_kbufsz) {
-			p = (void *)(t->bt_kbuf == NULL ?
-			    malloc(bl->ksize) : realloc(t->bt_kbuf, bl->ksize));
-			if (p == NULL)
-				return (RET_ERROR);
-			t->bt_kbuf = p;
-			t->bt_kbufsz = bl->ksize;
-		}
-		memmove(t->bt_kbuf, bl->bytes, bl->ksize);
-		key->size = bl->ksize;
-		key->data = t->bt_kbuf;
-	} else {
-		key->size = bl->ksize;
-		key->data = bl->bytes;
-	}
 	return (RET_SUCCESS);
 }
 
@@ -189,9 +199,9 @@ __bt_cmp(t, k1, e)
 
 	if (bigkey) {
 		if (__ovfl_get(t, bigkey,
-		    &k2.size, &t->bt_dbuf, &t->bt_dbufsz))
+		    &k2.size, &t->bt_rdata.data, &t->bt_rdata.size))
 			return (RET_ERROR);
-		k2.data = t->bt_dbuf;
+		k2.data = t->bt_rdata.data;
 	}
 	return ((*t->bt_cmp)(k1, &k2));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.4 1995/02/27 13:21:55 cgd Exp $	*/
+/*	$NetBSD: extern.h,v 1.5 1996/05/03 21:43:45 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994

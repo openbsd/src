@@ -1,4 +1,4 @@
-/*	$NetBSD: recno.h,v 1.4 1995/02/27 13:25:35 cgd Exp $	*/
+/*	$NetBSD: recno.h,v 1.5 1996/05/03 21:38:55 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
