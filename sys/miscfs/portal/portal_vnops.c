@@ -1,4 +1,4 @@
-/*	$OpenBSD: portal_vnops.c,v 1.13 2003/01/31 17:37:50 art Exp $	*/
+/*	$OpenBSD: portal_vnops.c,v 1.14 2003/02/24 03:54:22 tedu Exp $	*/
 /*	$NetBSD: portal_vnops.c,v 1.17 1996/02/13 13:12:57 mycroft Exp $	*/
 
 /*
@@ -541,7 +541,7 @@ portal_getattr(v)
 	microtime(&tv);
 	TIMEVAL_TO_TIMESPEC(&tv, &vap->va_atime);
 	vap->va_mtime = vap->va_atime;
-	vap->va_ctime = vap->va_ctime;
+	vap->va_ctime = vap->va_atime;
 	vap->va_gen = 0;
 	vap->va_flags = 0;
 	vap->va_rdev = 0;
