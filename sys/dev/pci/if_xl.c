@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl.c,v 1.33 1999/12/07 20:23:19 jason Exp $	*/
+/*	$OpenBSD: if_xl.c,v 1.34 1999/12/16 21:53:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -52,7 +52,8 @@
  * 3Com 3c905B-COMBO	10/100Mbps/RJ-45,AUI,BNC
  * 3Com 3c905B-TX	10/100Mbps/RJ-45
  * 3Com 3c900-FL/FX	10/100Mbps/Fiber-optic
- * 3Com 3c905C-TX	10/100Mbs/RJ45 (Tornado ASIC)
+ * 3Com 3c905C-TX	10/100Mbps/RJ-45 (Tornado ASIC)
+ * 3Com 3c450-TX	10/100Mbps/RJ-45 (Tornado ASIC)
  * 3Com 3c980-TX	10/100Mbps server adapter (Hurricane ASIC)
  * 3Com 3c980C-TX	10/100Mbps server adapter (Tornado ASIC)
  * 3Com 3cSOHO100-TX	10/100Mbps/RJ-45 (Hurricane ASIC)
@@ -1001,6 +1002,7 @@ void xl_choose_xcvr(sc, verbose)
 	case TC_DEVICEID_TORNADO_10_100BT_SERV:	/* 3c980C-TX */
 	case TC_DEVICEID_HURRICANE_SOHO100TX:	/* 3cSOHO100-TX */
 	case TC_DEVICEID_TORNADO_10_100BT:	/* 3c905C-TX */
+	case TC_DEVICEID_TORNADO_HOMECONNECT:	/* 3c450-TX */
 		sc->xl_media = XL_MEDIAOPT_BTX;
 		sc->xl_xcvr = XL_XCVR_AUTO;
 		if (verbose)
