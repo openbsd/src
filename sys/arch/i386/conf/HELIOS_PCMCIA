@@ -47,7 +47,7 @@ options		FDSCRIPTS	# secure setuid scripts
 
 options		INET		# IP + ICMP + TCP + UDP
 
-config		bsd	root on wd0g swap on wd0b dumps on wd0b
+config		bsd	root on wd0a swap on wd0b and vnd0b dumps on wd0b
 
 isa0	at root
 pci0	at root
