@@ -1,4 +1,4 @@
-/*	$OpenBSD: strlcpy.c,v 1.2 1998/11/06 04:33:16 wvdputte Exp $	*/
+/*	$OpenBSD: strlcpy.c,v 1.3 1999/04/24 01:17:37 millert Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strlcpy.c,v 1.2 1998/11/06 04:33:16 wvdputte Exp $";
+static char *rcsid = "$OpenBSD: strlcpy.c,v 1.3 1999/04/24 01:17:37 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -48,16 +48,17 @@ size_t strlcpy(dst, src, siz)
 	register const char *s = src;
 	register size_t n = siz;
 
-	if (n == 0)
-		return(strlen(s));
-	while (*s != '\0') {
-		if (n != 1) {
+	if (n)
+		n--;		/* don't count the NUL */
+	while (*s) {
+		if (n) {
 			*d++ = *s;
 			n--;
 		}
 		s++;
 	}
-	*d = '\0';
+	if (siz)
+		*d = '\0';
 
 	return(s - src);	/* count does not include NUL */
 }
