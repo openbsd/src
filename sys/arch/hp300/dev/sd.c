@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.13 1998/03/06 22:52:42 millert Exp $	*/
+/*	$OpenBSD: sd.c,v 1.14 1998/03/27 07:47:54 millert Exp $	*/
 /*	$NetBSD: sd.c,v 1.34 1997/07/10 18:14:10 kleink Exp $	*/
 
 /*
@@ -389,11 +389,10 @@ sdgetinfo(dev)
 	int unit = sdunit(dev);
 	struct sd_softc *sc = sd_cd.cd_devs[unit];
 	struct disklabel *lp = sc->sc_dkdev.dk_label;
-	struct partition *pi;
-	char *msg;
+	char *errstring;
 
 	bzero((caddr_t)lp, sizeof *lp);
-	msg = NULL;
+	errstring = NULL;
 
 	/*
 	 * If removable media or the size unavailable at boot time
@@ -416,42 +415,82 @@ sdgetinfo(dev)
 			 * We set the error flag so they cannot do much else.
 			 */
 			sc->sc_flags |= SDF_ERROR;
-			msg = "unformatted/missing media";
+			/* XXX set magic here or it will never be set */
+			lp->d_magic = DISKMAGIC;
+			lp->d_magic2 = DISKMAGIC;
+			errstring = "unformatted/missing media";
 			break;
 		}
 	}
 
 	/*
-	 * Set some default values to use while reading the label
-	 * (or to use if there isn't a label) and try reading it.
+	 * Create a default disk label based on scsi info.
+	 * This will get overridden if there is a real label on the disk.
 	 */
-	if (msg == NULL) {
-		lp->d_type = DTYPE_SCSI;
-		lp->d_secsize = DEV_BSIZE;
-		lp->d_nsectors = 32;
-		lp->d_ntracks = 20;
-		lp->d_ncylinders = 1;
-		lp->d_secpercyl = 32*20;
-		lp->d_npartitions = 3;
-		lp->d_partitions[2].p_offset = 0;
+	if (errstring == NULL) {
 		/* XXX we can open a device even without SDF_ALIVE */
 		if (sc->sc_blksize == 0)
 			sc->sc_blksize = DEV_BSIZE;
-		/* XXX ensure size is at least one device block */
-		lp->d_partitions[2].p_size =
-			roundup(LABELSECTOR+1, btodb(sc->sc_blksize));
-		msg = readdisklabel(sdlabdev(dev), sdstrategy, lp, NULL);
-		if (msg == NULL)
-			return (0);
+
+		/* Fill in info from disk geometry if it exists. */
+		if (sc->sc_blks != 0 && sc->sc_heads != 0 && sc->sc_cyls != 0) {
+			lp->d_secperunit = sc->sc_blks >> sc->sc_bshift;
+			lp->d_ntracks = sc->sc_heads;
+			lp->d_ncylinders = sc->sc_cyls;
+			lp->d_nsectors = lp->d_secperunit / (lp->d_ntracks * lp->d_ncylinders);
+		} else {
+			lp->d_ntracks = 20;
+			lp->d_ncylinders = 1;
+			lp->d_nsectors = 32;
+		}
+
+		switch (sc->sc_type) {
+		case 4:	
+			strcpy(lp->d_typename, "SCSI WORM");
+			break;
+		case 5:
+			strcpy(lp->d_typename, "SCSI CD-ROM");
+			break;
+		case 7:
+			strcpy(lp->d_typename, "SCSI optical");
+			break;
+		default:
+			strcpy(lp->d_typename, "SCSI disk");
+			break;
+		}
+		lp->d_type = DTYPE_SCSI;
+		strcpy(lp->d_packname, "fictitious");
+		lp->d_secsize = sc->sc_blksize;
+		lp->d_secpercyl = lp->d_nsectors * lp->d_ntracks;
+		lp->d_rpm = 3600;
+		lp->d_interleave = 1;
+
+		lp->d_partitions[RAW_PART].p_offset = 0;
+		lp->d_partitions[RAW_PART].p_size =
+		    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
+		lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
+		lp->d_npartitions = RAW_PART + 1;
+
+		lp->d_magic = DISKMAGIC;
+		lp->d_magic2 = DISKMAGIC;
+		lp->d_checksum = dkcksum(lp);
+
+		errstring = readdisklabel(sdlabdev(dev), sdstrategy, lp, NULL);
 	}
 
-	pi = lp->d_partitions;
-	printf("%s: WARNING: %s, defining `c' partition as entire disk\n",
-	    sc->sc_dev.dv_xname, msg);
-	pi[2].p_size = sc->sc_blks;
-	/* XXX reset other info since readdisklabel screws with it */
-	lp->d_npartitions = 3;
-	pi[0].p_size = 0;
+	if (errstring) {
+		printf("%s: WARNING: %s, defining `c' partition as entire disk\n",
+		    sc->sc_dev.dv_xname, errstring);
+		/* XXX reset partition info as readdisklabel screws with it */
+		lp->d_partitions[0].p_size = 0;
+		lp->d_partitions[RAW_PART].p_offset = 0;
+		lp->d_partitions[RAW_PART].p_size =
+		    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
+		lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
+		lp->d_npartitions = RAW_PART + 1;
+		lp->d_checksum = dkcksum(lp);
+	}
+
 	return(0);
 }
 
