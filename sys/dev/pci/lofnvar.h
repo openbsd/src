@@ -1,4 +1,4 @@
-/*	$OpenBSD: lofnvar.h,v 1.2 2001/06/26 03:41:31 jason Exp $	*/
+/*	$OpenBSD: lofnvar.h,v 1.3 2001/06/26 05:03:10 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -31,24 +31,27 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define	LOFN_RNGBUF_SIZE	8	/* size in 32 bit elements */
+
 struct lofn_softc {
 	struct device		sc_dv;
 	void *			sc_ih;
 	bus_space_handle_t	sc_sh;
 	bus_space_tag_t		sc_st;
 	bus_dma_tag_t		sc_dmat;
+	u_int32_t		sc_rngbuf[LOFN_RNGBUF_SIZE];
 };
 
 #define	READ_REG(sc,r)		\
-    bus_space_read_4((sc)->sc_st, (sc)->sc_sh, reg)
+    bus_space_read_4((sc)->sc_st, (sc)->sc_sh, (r))
 #define	READ_REG_0(sc,r)	READ_REG((sc), (r) | LOFN_WIN_0)
 #define	READ_REG_1(sc,r)	READ_REG((sc), (r) | LOFN_WIN_1)
 #define	READ_REG_2(sc,r)	READ_REG((sc), (r) | LOFN_WIN_2)
 #define	READ_REG_3(sc,r)	READ_REG((sc), (r) | LOFN_WIN_3)
 
 #define	WRITE_REG(sc,r,v)	\
-    bus_space_write_4((sc)->sc_st, (sc)->sc_sh, reg, val)
-#define	WRITE_REG_0(sc,r,v)	READ_REG((sc), (r) | LOFN_WIN_0, (v))
-#define	WRITE_REG_1(sc,r,v)	READ_REG((sc), (r) | LOFN_WIN_1, (v))
-#define	WRITE_REG_2(sc,r,v)	READ_REG((sc), (r) | LOFN_WIN_2, (v))
-#define	WRITE_REG_3(sc,r,v)	READ_REG((sc), (r) | LOFN_WIN_3, (v))
+    bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (r), (v))
+#define	WRITE_REG_0(sc,r,v)	WRITE_REG((sc), (r) | LOFN_WIN_0, (v))
+#define	WRITE_REG_1(sc,r,v)	WRITE_REG((sc), (r) | LOFN_WIN_1, (v))
+#define	WRITE_REG_2(sc,r,v)	WRITE_REG((sc), (r) | LOFN_WIN_2, (v))
+#define	WRITE_REG_3(sc,r,v)	WRITE_REG((sc), (r) | LOFN_WIN_3, (v))
