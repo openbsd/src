@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.4 2003/12/24 11:39:43 henning Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.5 2003/12/26 18:07:33 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <claudio@openbsd.org>
@@ -170,7 +170,7 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 		return (p2->peer->conf.remote_addr.sin_addr.s_addr -
 		    p1->peer->conf.remote_addr.sin_addr.s_addr);
 
-	fatal("Uh, oh a politician in the decision process", 0);
+	fatalx("Uh, oh a politician in the decision process");
 	/* NOTREACHED */
 	return 0;
 }

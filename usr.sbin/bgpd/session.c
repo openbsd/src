@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.44 2003/12/26 16:37:04 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.45 2003/12/26 18:07:33 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -143,7 +143,7 @@ session_main(struct bgpd_config *config, int pipe_m2s[2], int pipe_s2r[2])
 
 	switch (pid = fork()) {
 	case -1:
-		fatal("cannot fork", errno);
+		fatal("cannot fork");
 	case 0:
 		break;
 	default:
@@ -151,22 +151,22 @@ session_main(struct bgpd_config *config, int pipe_m2s[2], int pipe_s2r[2])
 	}
 
 	if ((pw = getpwnam(BGPD_USER)) == NULL)
-		fatal(NULL, errno);
+		fatal(NULL);
 
 	if (chroot(pw->pw_dir) == -1)
-		fatal("chroot failed", errno);
+		fatal("chroot failed");
 	chdir("/");
 
 	setproctitle("session engine");
 	bgpd_process = PROC_SE;
 
 	if ((sock = setup_listener()) == -1)
-		fatal("listener setup failed", 0);
+		fatal("listener setup failed");
 
 	if (setgroups(1, &pw->pw_gid) ||
 	    setegid(pw->pw_gid) || setgid(pw->pw_gid) ||
 	    seteuid(pw->pw_uid) || setuid(pw->pw_uid))
-		fatal("can't drop privileges", errno);
+		fatal("can't drop privileges");
 
 	endpwent();
 
@@ -275,7 +275,7 @@ session_main(struct bgpd_config *config, int pipe_m2s[2], int pipe_s2r[2])
 
 		if (nfds > 0 && pfd[PFD_PIPE_ROUTE].revents & POLLOUT)
 			if (msgbuf_write(&ibuf_rde.w) < 0)
-				fatal("pipe write error", errno);
+				fatal("pipe write error");
 
 		if (nfds > 0 && pfd[PFD_PIPE_ROUTE].revents & POLLIN) {
 			nfds--;
@@ -329,7 +329,7 @@ bgp_fsm(struct peer *peer, enum session_events event)
 			/* allocate read buffer */
 			peer->rbuf = calloc(1, sizeof(struct peer_buf_read));
 			if (peer->rbuf == NULL)
-				fatal(NULL, errno);
+				fatal(NULL);
 			peer->rbuf->wpos = 0;
 
 			/* init write buffer */
@@ -755,7 +755,7 @@ session_socket_blockmode(int fd, enum blockmodes bm)
 	int	flags;
 
 	if ((flags = fcntl(fd, F_GETFL, 0)) == -1)
-		fatal("fnctl F_GETFL", errno);
+		fatal("fnctl F_GETFL");
 
 	if (bm == BM_NONBLOCK)
 		flags |= O_NONBLOCK;
@@ -763,7 +763,7 @@ session_socket_blockmode(int fd, enum blockmodes bm)
 		flags &= ~O_NONBLOCK;
 
 	if ((flags = fcntl(fd, F_SETFL, flags)) == -1)
-		fatal("fnctl F_SETFL", errno);
+		fatal("fnctl F_SETFL");
 }
 
 void
@@ -1240,10 +1240,10 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 		switch (imsg.hdr.type) {
 		case IMSG_RECONF_CONF:
 			if (idx != PFD_PIPE_MAIN)
-				fatal("reconf request not from parent", 0);
+				fatal("reconf request not from parent");
 			if ((nconf = malloc(sizeof(struct bgpd_config))) ==
 			    NULL)
-				fatal(NULL, errno);
+				fatal(NULL);
 			memcpy(nconf, imsg.data, sizeof(struct bgpd_config));
 			nconf->peers = NULL;
 			init_conf(nconf);
@@ -1251,13 +1251,13 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 			break;
 		case IMSG_RECONF_PEER:
 			if (idx != PFD_PIPE_MAIN)
-				fatal("reconf request not from parent", 0);
+				fatal("reconf request not from parent");
 			pconf = imsg.data;
 			p = getpeerbyip(pconf->remote_addr.sin_addr.s_addr);
 			if (p == NULL) {
 				if ((p = calloc(1, sizeof(struct peer))) ==
 				    NULL)
-					fatal("new_peer", errno);
+					fatal("new_peer");
 				p->state = STATE_NONE;
 				p->sock = -1;
 				p->next = nconf->peers;
@@ -1298,9 +1298,9 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 			break;
 		case IMSG_RECONF_DONE:
 			if (idx != PFD_PIPE_MAIN)
-				fatal("reconf request not from parent", 0);
+				fatal("reconf request not from parent");
 			if (nconf == NULL)
-				fatal("got IMSG_RECONF_DONE but no config", 0);
+				fatal("got IMSG_RECONF_DONE but no config");
 			conf->as = nconf->as;
 			conf->holdtime = nconf->holdtime;
 			conf->bgpid = nconf->bgpid;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.9 2003/12/24 13:28:02 henning Exp $ */
+/*	$OpenBSD: imsg.c,v 1.10 2003/12/26 18:07:32 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -55,7 +55,7 @@ imsg_get(struct imsgbuf *ibuf, struct imsg *imsg)
 		if ((n = read(ibuf->sock, ibuf->r.wptr,
 		    ibuf->r.pkt_len - ibuf->r.read_len)) == -1) {
 			if (errno != EAGAIN && errno != EINTR)
-				fatal("pipe read error", errno);
+				fatal("pipe read error");
 			return (0);
 		}
 		read_total += n;
@@ -69,7 +69,7 @@ imsg_get(struct imsgbuf *ibuf, struct imsg *imsg)
 				ibuf->r.peerid = hdr->peerid;
 				if (hdr->len < IMSG_HEADER_SIZE ||
 				    hdr->len > MAX_IMSGSIZE)
-					fatal("wrong imsg header len", 0);
+					fatalx("wrong imsg header len");
 				ibuf->r.seen_hdr = 1;
 			} else {		/* we got the full packet */
 				imsg->hdr.type = ibuf->r.type;
@@ -78,7 +78,7 @@ imsg_get(struct imsgbuf *ibuf, struct imsg *imsg)
 				datalen = ibuf->r.pkt_len - IMSG_HEADER_SIZE;
 				rptr = ibuf->r.buf + IMSG_HEADER_SIZE;
 				if ((imsg->data = malloc(datalen)) == NULL)
-					fatal("get_imsg malloc", errno);
+					fatal("get_imsg malloc");
 				memcpy(imsg->data, rptr, datalen);
 				n = 0;	/* give others a chance */
 				imsg_init_readbuf(ibuf);
@@ -105,14 +105,14 @@ imsg_compose(struct imsgbuf *ibuf, int type, u_int32_t peerid, void *data,
 	hdr.peerid = peerid;
 	wbuf = buf_open(hdr.len);
 	if (wbuf == NULL)
-		fatal("imsg_compose: buf_open error", 0);
+		fatalx("imsg_compose: buf_open error");
 	if (buf_add(wbuf, &hdr, sizeof(hdr)) == -1)
-		fatal("imsg_compose: buf_add error", 0);
+		fatalx("imsg_compose: buf_add error");
 	if (datalen)
 		if (buf_add(wbuf, data, datalen) == -1)
-			fatal("imsg_compose: buf_add error", 0);
+			fatalx("imsg_compose: buf_add error");
 	if ((n = buf_close(&ibuf->w, wbuf)) < 0)
-		fatal("imsg_compose: buf_close error", errno);
+		fatal("imsg_compose: buf_close error");
 
 	return (n);
 }

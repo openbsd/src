@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.4 2003/12/24 11:39:43 henning Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.5 2003/12/26 18:07:33 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <cjeker@diehard.n-r-g.com>
@@ -106,7 +106,7 @@ pt_init(void)
 		pttable[i].pt_hashtbl = calloc(pthashsize[i],
 		    sizeof(struct pt_entryhead));
 		if (pttable[i].pt_hashtbl == NULL)
-			fatal("pt_init", errno);
+			fatal("pt_init");
 
 		for (j = 0; j < pthashsize[i]; j++)
 			LIST_INIT(&pttable[i].pt_hashtbl[j]);
@@ -222,7 +222,7 @@ pt_alloc(void)
 	PT_STAT(pt_alloc);
 	p = calloc(1, sizeof(*p));
 	if (p == NULL)
-		fatal("pt_alloc", errno);
+		fatal("pt_alloc");
 	return p;
 }
 

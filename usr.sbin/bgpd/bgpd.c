@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.37 2003/12/26 17:47:04 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.38 2003/12/26 18:07:32 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -156,20 +156,20 @@ main(int argc, char *argv[])
 	logit(LOG_INFO, "startup");
 
 	if (pipe(pipe_m2s) == -1)
-		fatal("pipe", errno);
+		fatal("pipe");
 	if (fcntl(pipe_m2s[0], F_SETFL, O_NONBLOCK) == -1 ||
 	    fcntl(pipe_m2s[1], F_SETFL, O_NONBLOCK) == -1)
-		fatal("fcntl", errno);
+		fatal("fcntl");
 	if (pipe(pipe_m2r) == -1)
-		fatal("pipe", errno);
+		fatal("pipe");
 	if (fcntl(pipe_m2r[0], F_SETFL, O_NONBLOCK) == -1 ||
 	    fcntl(pipe_m2r[1], F_SETFL, O_NONBLOCK) == -1)
-		fatal("fcntl", errno);
+		fatal("fcntl");
 	if (pipe(pipe_s2r) == -1)
-		fatal("pipe", errno);
+		fatal("pipe");
 	if (fcntl(pipe_s2r[0], F_SETFL, O_NONBLOCK) == -1 ||
 	    fcntl(pipe_s2r[1], F_SETFL, O_NONBLOCK) == -1)
-		fatal("fcntl", errno);
+		fatal("fcntl");
 
 	/* fork children */
 	rde_main(&conf, pipe_m2r, pipe_s2r);

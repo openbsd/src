@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.18 2003/12/25 23:23:51 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.19 2003/12/26 18:07:32 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Henning Brauer <henning@openbsd.org>
@@ -115,7 +115,7 @@ number		: STRING			{
 
 string		: string STRING				{
 			if (asprintf(&$$, "%s %s", $1, $2) == -1)
-				fatal("string: asprintf", errno);
+				fatal("string: asprintf");
 			free($1);
 			free($2);
 		}
@@ -126,7 +126,7 @@ varset		: STRING '=' string		{
 			if (conf->opts & BGPD_OPT_VERBOSE)
 				printf("%s = \"%s\"\n", $1, $3);
 			if (symset($1, $3, 0) == -1)
-				fatal("cannot store variable", errno);
+				fatal("cannot store variable");
 		}
 		;
 
@@ -287,7 +287,7 @@ yyerror(const char *fmt, ...)
 	errors = 1;
 	va_start(ap, fmt);
 	if (asprintf(&nfmt, "%s:%d: %s", infile, yylval.lineno, fmt) == -1)
-		fatal("yyerror asprintf", 0);
+		fatal("yyerror asprintf");
 	vlog(LOG_CRIT, nfmt, ap);
 	va_end(ap);
 	free(nfmt);
@@ -492,7 +492,7 @@ top:
 		}
 		yylval.v.string = strdup(buf);
 		if (yylval.v.string == NULL)
-			fatal("yylex: strdup", errno);
+			fatal("yylex: strdup");
 		return (STRING);
 	}
 
@@ -515,7 +515,7 @@ top:
 		token = lookup(buf);
 		yylval.v.string = strdup(buf);
 		if (yylval.v.string == NULL)
-			fatal("yylex: strdup", errno);
+			fatal("yylex: strdup");
 		return (token);
 	}
 	if (c == '\n') {
@@ -534,9 +534,9 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	struct sym	*sym, *next;
 
 	if ((conf = calloc(1, sizeof(struct bgpd_config))) == NULL)
-		fatal(NULL, errno);
+		fatal(NULL);
 	if ((mrtconf = calloc(1, sizeof(struct mrt_config))) == NULL)
-		fatal(NULL, errno);
+		fatal(NULL);
 	LIST_INIT(mrtconf);
 
 	curpeer = NULL;
@@ -634,7 +634,7 @@ cmdline_symset(char *s)
 		return (-1);
 
 	if ((sym = malloc(strlen(s) - strlen(val) + 1)) == NULL)
-		fatal("cmdline_symset: malloc", errno);
+		fatal("cmdline_symset: malloc");
 
 	strlcpy(sym, s, strlen(s) - strlen(val) + 1);
 
@@ -679,16 +679,16 @@ new_peer(void)
 	struct peer	*p;
 
 	if ((p = calloc(1, sizeof(struct peer))) == NULL)
-		fatal("new_peer", errno);
+		fatal("new_peer");
 
 	if (curgroup != NULL) {
 		memcpy(p, curgroup, sizeof(struct peer));
 		if (strlcpy(p->conf.group, curgroup->conf.group,
 		    sizeof(p->conf.group)) > sizeof(p->conf.group))
-			fatal("new_peer strlcpy", 0);
+			fatalx("new_peer strlcpy");
 		if (strlcpy(p->conf.descr, curgroup->conf.descr,
 		    sizeof(p->conf.descr)) > sizeof(p->conf.descr))
-			fatal("new_peer strlcpy", 0);
+			fatalx("new_peer strlcpy");
 	}
 	p->state = STATE_NONE;
 	p->next = NULL;
@@ -705,7 +705,7 @@ new_group(void)
 	struct peer	*p;
 
 	if ((p = calloc(1, sizeof(struct peer))) == NULL)
-		fatal("new_group", errno);
+		fatal("new_group");
 
 	return (p);
 }
@@ -723,7 +723,7 @@ add_mrtconfig(enum mrtdump_type type, char *name, time_t timeout)
 	}
 
 	if ((n = calloc(1, sizeof(struct mrtdump_config))) == NULL)
-		fatal("add_mrtconfig", errno);
+		fatal("add_mrtconfig");
 
 	n->type = MRT_TABLE_DUMP;
 	n->msgbuf.sock = -1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.9 2003/12/26 16:48:07 henning Exp $ */
+/*	$OpenBSD: log.c,v 1.10 2003/12/26 18:07:32 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -121,10 +121,10 @@ log_fmt_peer(struct peer *peer)
 	if (peer->conf.descr[0]) {
 		if (asprintf(&pfmt, "neighbor %s (%s)", ip, peer->conf.descr) ==
 		    -1)
-			fatal(NULL, errno);
+			fatal(NULL);
 	} else {
 		if (asprintf(&pfmt, "neighbor %s", ip) == -1)
-			fatal(NULL, errno);
+			fatal(NULL);
 	}
 	return (pfmt);
 }
@@ -168,11 +168,11 @@ log_peer_err(struct peer *peer, const char *emsg, ...)
 	p = log_fmt_peer(peer);
 	if (emsg == NULL) {
 		if (asprintf(&nfmt, "%s: %s", p, strerror(errno)) == -1)
-			fatal(NULL, errno);
+			fatal(NULL);
 	} else {
 		if (asprintf(&nfmt, "%s: %s: %s", p, emsg, strerror(errno)) ==
 		    -1)
-			fatal(NULL, errno);
+			fatal(NULL);
 	}
 	va_start(ap, emsg);
 	vlog(LOG_CRIT, nfmt, ap);
@@ -188,7 +188,7 @@ log_peer_errx(struct peer *peer, const char *emsg, ...)
 
 	p = log_fmt_peer(peer);
 	if (asprintf(&nfmt, "%s: %s", p, emsg) == -1)
-		fatal(NULL, errno);
+		fatal(NULL);
 	va_start(ap, emsg);
 	vlog(LOG_CRIT, nfmt, ap);
 	va_end(ap);
@@ -219,15 +219,15 @@ log_err(const char *emsg, ...)
 }
 
 void
-fatal(const char *emsg, int error)
+fatal(const char *emsg)
 {
 	if (emsg == NULL)
 		logit(LOG_CRIT, "fatal in %s: %s", procnames[bgpd_process],
-		    strerror(error));
+		    strerror(errno));
 	else
-		if (error)
+		if (errno)
 			logit(LOG_CRIT, "fatal in %s: %s: %s",
-			    procnames[bgpd_process], emsg, strerror(error));
+			    procnames[bgpd_process], emsg, strerror(errno));
 		else
 			logit(LOG_CRIT, "fatal in %s: %s",
 			    procnames[bgpd_process], emsg);
@@ -236,6 +236,13 @@ fatal(const char *emsg, int error)
 		exit(1);
 	else				/* parent copes via SIGCHLD */
 		_exit(1);
+}
+
+void
+fatalx(const char *emsg)
+{
+	errno = 0;
+	fatal(emsg);
 }
 
 void

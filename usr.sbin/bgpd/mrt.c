@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.12 2003/12/26 00:34:01 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.13 2003/12/26 18:07:32 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <claudio@openbsd.org>
@@ -47,7 +47,7 @@ static int	mrt_open(struct mrtdump_config *);
 	do {								\
 		u_char		t = (b);				\
 		if (buf_add((x), &t, sizeof(t)) == -1)			\
-			fatal("buf_add error", 0);			\
+			fatalx("buf_add error");			\
 	} while (0)
 
 #define DUMP_SHORT(x, s)						\
@@ -55,7 +55,7 @@ static int	mrt_open(struct mrtdump_config *);
 		u_int16_t	t;					\
 		t = htons((s));						\
 		if (buf_add((x), &t, sizeof(t)) == -1)			\
-			fatal("buf_add error", 0);			\
+			fatalx("buf_add error");			\
 	} while (0)
 
 #define DUMP_LONG(x, l)							\
@@ -63,14 +63,14 @@ static int	mrt_open(struct mrtdump_config *);
 		u_int32_t	t;					\
 		t = htonl((l));						\
 		if (buf_add((x), &t, sizeof(t)) == -1)			\
-			fatal("buf_add error", 0);			\
+			fatalx("buf_add error");			\
 	} while (0)
 
 #define DUMP_NLONG(x, l)						\
 	do {								\
 		u_int32_t	t = (l);				\
 		if (buf_add((x), &t, sizeof(t)) == -1)			\
-			fatal("buf_add error", 0);			\
+			fatalx("buf_add error");			\
 	} while (0)
 
 int
@@ -89,9 +89,9 @@ mrt_dump_bgp_msg(struct mrt *mrt, void *pkg, u_int16_t pkglen, int type,
 	hdr.peerid = mrt->id;
 	buf = buf_open(hdr.len);
 	if (buf == NULL)
-		fatal("mrt_dump_bgp_msg", errno);
+		fatal("mrt_dump_bgp_msg");
 	if (buf_add(buf, &hdr, sizeof(hdr)) == -1)
-		fatal("buf_add error", 0);
+		fatalx("buf_add error");
 
 	mrt_dump_header(buf, MSG_PROTOCOL_BGP4MP, BGP4MP_MESSAGE, len);
 
@@ -111,10 +111,10 @@ mrt_dump_bgp_msg(struct mrt *mrt, void *pkg, u_int16_t pkglen, int type,
 	}
 
 	if (buf_add(buf, pkg, pkglen) == -1)
-		fatal("buf_add error", 0);
+		fatalx("buf_add error");
 
 	if ((n = buf_close(mrt->msgbuf, buf)) < 0)
-		fatal("buf_close error", 0);
+		fatalx("buf_close error");
 
 	return (n);
 }
@@ -137,9 +137,9 @@ mrt_dump_entry(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 	hdr.peerid = mrt->id;
 	buf = buf_open(hdr.len);
 	if (buf == NULL)
-		fatal("mrt_dump_entry", errno);
+		fatal("mrt_dump_entry");
 	if (buf_add(buf, &hdr, sizeof(hdr)) == -1)
-		fatal("buf_add error", 0);
+		fatalx("buf_add error");
 
 	mrt_dump_header(buf, MSG_TABLE_DUMP, AFI_IPv4, len);
 
@@ -154,13 +154,13 @@ mrt_dump_entry(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 	DUMP_SHORT(buf, attr_len);
 
 	if ((bptr = buf_reserve(buf, attr_len)) == NULL)
-		fatal("buf_reserve error", 0);
+		fatalx("buf_reserve error");
 
 	if (attr_dump(bptr, attr_len, &p->aspath->flags) == -1)
-		fatal("attr_dump error", 0);
+		fatalx("attr_dump error");
 
 	if ((n = buf_close(mrt->msgbuf, buf)) < 0)
-		fatal("buf_close error", 0);
+		fatalx("buf_close error");
 
 	return (n);
 }
@@ -203,7 +203,7 @@ mrt_dump_header(struct buf *buf, u_int16_t type, u_int16_t subtype,
 	mrt.length = htonl(len);
 
 	if (buf_add(buf, &mrt, sizeof(mrt)) == -1)
-		fatal("buf_add error", 0);
+		fatalx("buf_add error");
 }
 
 static int
@@ -399,7 +399,7 @@ mrt_mergeconfig(struct mrt_config *xconf, struct mrt_config *conf)
 			/* NEW */
 			if ((xm = calloc(1, sizeof(struct mrtdump_config))) ==
 			    NULL)
-				fatal("mrt_mergeconfig", errno);
+				fatal("mrt_mergeconfig");
 			memcpy(xm, m, sizeof(struct mrtdump_config));
 			xm->id = max_id++;
 			if (xm->ReopenTimerInterval != 0) {
@@ -413,7 +413,7 @@ mrt_mergeconfig(struct mrt_config *xconf, struct mrt_config *conf)
 			/* MERGE */
 			if (strlcpy(xm->name, m->name, sizeof(xm->name)) >
 			    sizeof(xm->name))
-				fatal("mrt_mergeconfig: strlcpy", 0);
+				fatalx("mrt_mergeconfig: strlcpy");
 			xm->ReopenTimerInterval = m->ReopenTimerInterval;
 			if (xm->ReopenTimerInterval != 0) {
 				xm->ReopenTimer = now + xm->ReopenTimerInterval;

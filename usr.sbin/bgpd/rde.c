@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.31 2003/12/25 23:41:23 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.32 2003/12/26 18:07:33 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -79,7 +79,7 @@ rde_main(struct bgpd_config *config, int pipe_m2r[2], int pipe_s2r[2])
 
 	switch (pid = fork()) {
 	case -1:
-		fatal("cannot fork", errno);
+		fatal("cannot fork");
 	case 0:
 		break;
 	default:
@@ -89,10 +89,10 @@ rde_main(struct bgpd_config *config, int pipe_m2r[2], int pipe_s2r[2])
 	conf = config;
 
 	if ((pw = getpwnam(BGPD_USER)) == NULL)
-		fatal("getpwnam", errno);
+		fatal("getpwnam");
 
 	if (chroot(pw->pw_dir) == -1)
-		fatal("chroot failed", errno);
+		fatal("chroot failed");
 	chdir("/");
 
 	setproctitle("route decision engine");
@@ -101,7 +101,7 @@ rde_main(struct bgpd_config *config, int pipe_m2r[2], int pipe_s2r[2])
 	if (setgroups(1, &pw->pw_gid) ||
 	    setegid(pw->pw_gid) || setgid(pw->pw_gid) ||
 	    seteuid(pw->pw_uid) || setuid(pw->pw_uid)) {
-		fatal("can't drop privileges", errno);
+		fatal("can't drop privileges");
 	}
 
 	endpwent();
@@ -135,7 +135,7 @@ rde_main(struct bgpd_config *config, int pipe_m2r[2], int pipe_s2r[2])
 
 		if ((nfds = poll(pfd, 2, INFTIM)) == -1)
 			if (errno != EINTR)
-				fatal("poll error", errno);
+				fatal("poll error");
 
 		if (nfds > 0 && pfd[PFD_PIPE_MAIN].revents & POLLIN)
 			rde_dispatch_imsg(&ibuf_main, PFD_PIPE_MAIN);
@@ -147,14 +147,14 @@ rde_main(struct bgpd_config *config, int pipe_m2r[2], int pipe_s2r[2])
 		    ibuf_main.w.queued) {
 			nfds--;
 			if ((n = msgbuf_write(&ibuf_main.w)) < 0)
-				fatal("pipe write error", errno);
+				fatal("pipe write error");
 		}
 
 		if (nfds > 0 && (pfd[PFD_PIPE_SESSION].revents & POLLOUT) &&
 		    ibuf_se.w.queued) {
 			nfds--;
 			if ((n = msgbuf_write(&ibuf_se.w)) < 0)
-				fatal("pipe write error", errno);
+				fatal("pipe write error");
 		}
 	}
 
@@ -175,16 +175,16 @@ rde_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 		switch (imsg.hdr.type) {
 		case IMSG_RECONF_CONF:
 			if (idx != PFD_PIPE_MAIN)
-				fatal("reconf request not from parent", 0);
+				fatalx("reconf request not from parent");
 			if ((nconf = malloc(sizeof(struct bgpd_config))) ==
 			    NULL)
-				fatal(NULL, errno);
+				fatal(NULL);
 			memcpy(nconf, imsg.data, sizeof(struct bgpd_config));
 			nconf->peers = NULL;
 			break;
 		case IMSG_RECONF_PEER:
 			if (idx != PFD_PIPE_MAIN)
-				fatal("reconf request not from parent", 0);
+				fatalx("reconf request not from parent");
 			pconf = imsg.data;
 			p = peer_get(pconf->id); /* will always fail atm */
 			if (p == NULL)
@@ -196,9 +196,9 @@ rde_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 			break;
 		case IMSG_RECONF_DONE:
 			if (idx != PFD_PIPE_MAIN)
-				fatal("reconf request not from parent", 0);
+				fatalx("reconf request not from parent");
 			if (nconf == NULL)
-				fatal("got IMSG_RECONF_DONE but no config", 0);
+				fatalx("got IMSG_RECONF_DONE but no config");
 			for (p = LIST_FIRST(&peerlist);
 			    p != LIST_END(&peerlist);
 			    p = np) {
@@ -222,37 +222,37 @@ rde_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 			break;
 		case IMSG_UPDATE:
 			if (idx != PFD_PIPE_SESSION)
-				fatal("update msg not from session engine", 0);
+				fatalx("update msg not from session engine");
 			rde_update_dispatch(&imsg);
 			break;
 		case IMSG_SESSION_UP:
 			if (idx != PFD_PIPE_SESSION)
-				fatal("session msg not from session engine", 0);
+				fatalx("session msg not from session engine");
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(rid))
-				fatal("incorrect size of session request", 0);
+				fatalx("incorrect size of session request");
 			memcpy(&rid, imsg.data, sizeof(rid));
 			peer_up(imsg.hdr.peerid, rid);
 			break;
 		case IMSG_SESSION_DOWN:
 			if (idx != PFD_PIPE_SESSION)
-				fatal("session msg not from session engine", 0);
+				fatalx("session msg not from session engine");
 			peer_down(imsg.hdr.peerid);
 			break;
 		case IMSG_NEXTHOP_UPDATE:
 			if (idx != PFD_PIPE_MAIN)
-				fatal("nexthop response not from parent", 0);
+				fatalx("nexthop response not from parent");
 			nexthop_update(imsg.data);
 			break;
 		case IMSG_MRT_REQ:
 			if (idx != PFD_PIPE_MAIN)
-				fatal("mrt request not from parent", 0);
+				fatalx("mrt request not from parent");
 			mrtdump.id = imsg.hdr.peerid;
 			mrtdump.msgbuf = &ibuf_main.w;
 			pt_dump(mrt_dump_upcall, &mrtdump);
 			/* FALLTHROUGH */
 		case IMSG_MRT_END:
 			if (idx != PFD_PIPE_MAIN)
-				fatal("mrt request not from parent", 0);
+				fatalx("mrt request not from parent");
 			/* ignore end message because a dump is atomic */
 			imsg_compose(&ibuf_main, IMSG_MRT_END,
 			    imsg.hdr.peerid, NULL, 0);
@@ -563,7 +563,7 @@ peer_init(struct bgpd_config *bgpconf, u_long hashsize)
 		;
 	peertable.peer_hashtbl = calloc(hs, sizeof(struct rde_peer_head));
 	if (peertable.peer_hashtbl == NULL)
-		fatal("peer_init", errno);
+		fatal("peer_init");
 
 	for (i = 0; i < hs; i++)
 		LIST_INIT(&peertable.peer_hashtbl[i]);
@@ -606,7 +606,7 @@ peer_add(u_int32_t id, struct peer_config *p_conf)
 
 	peer = calloc(1, sizeof(struct rde_peer));
 	if (peer == NULL)
-		fatal("peer_add", errno);
+		fatal("peer_add");
 
 	LIST_INIT(&peer->path_h);
 	memcpy(&peer->conf, p_conf, sizeof(struct peer_config));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.8 2003/12/25 23:41:23 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.9 2003/12/26 18:07:33 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <claudio@openbsd.org>
@@ -270,7 +270,7 @@ aspath_create(void *data, u_int16_t len)
 	/* The aspath must already have been checked for correctness. */
 	aspath = malloc(ASPATH_HEADER_SIZE + len);
 	if (aspath == NULL)
-		fatal("aspath_create", errno);
+		fatal("aspath_create");
 	aspath->hdr.len = len;
 	memcpy(aspath->data, data, len);
 
@@ -332,7 +332,7 @@ aspath_neighbour(struct aspath *aspath)
 	 */
 
 	if (aspath->hdr.len < 2)
-		fatal("aspath_neighbour: aspath has no data", 0);
+		fatalx("aspath_neighbour: aspath has no data");
 
 	if (aspath->data[1] > 0)
 		return aspath_extract(aspath->data, 0);
@@ -399,7 +399,7 @@ path_init(u_long hashsize)
 		;
 	pathtable.path_hashtbl = calloc(hs, sizeof(struct aspath_head));
 	if (pathtable.path_hashtbl == NULL)
-		fatal("path_init", errno);
+		fatal("path_init");
 
 	for (i = 0; i < hs; i++)
 		LIST_INIT(&pathtable.path_hashtbl[i]);
@@ -576,7 +576,7 @@ path_alloc(void)
 
 	asp = calloc(1, sizeof(*asp));
 	if (asp == NULL)
-		fatal("path_alloc", errno);
+		fatal("path_alloc");
 	LIST_INIT(&asp->prefix_h);
 	return asp;
 }
@@ -859,7 +859,7 @@ prefix_alloc(void)
 
 	p = calloc(1, sizeof(*p));
 	if (p == NULL)
-		fatal("prefix_alloc", errno);
+		fatal("prefix_alloc");
 	return p;
 }
 
@@ -928,7 +928,7 @@ nexthop_init(u_long hashsize)
 		;
 	nexthoptable.nexthop_hashtbl = calloc(hs, sizeof(struct aspath_head));
 	if (nexthoptable.nexthop_hashtbl == NULL)
-		fatal("nextop_init", errno);
+		fatal("nextop_init");
 
 	for (i = 0; i < hs; i++)
 		LIST_INIT(&nexthoptable.nexthop_hashtbl[i]);
@@ -1029,7 +1029,7 @@ nexthop_alloc(void)
 
 	nh = calloc(1, sizeof(*nh));
 	if (nh == NULL)
-		fatal("nexthop_alloc", errno);
+		fatal("nexthop_alloc");
 	return nh;
 }
 
