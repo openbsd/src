@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.272 2000/06/18 16:52:30 form Exp $
+	$OpenBSD: pcidevs,v 1.273 2000/06/19 15:48:21 chris Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -819,13 +819,14 @@ product CIRRUS CL_GD7541	0x1204	CL-GD7541
 product CIRRUS CS4610		0x6001	CS4610 SoundFusion Audio
 product CIRRUS CS4280		0x6003	CS4280 CrystalClear Audio
 
-/* CMD Technology products -- info gleaned from their web site */
-product CMDTECH 640		0x0640	PCI640
-/* No data on the CMD Tech. web site for the following as of Mar. 3 '98 */
-product CMDTECH 642		0x0642	PCI0642
-product CMDTECH 643		0x0643	PCI0643
-product CMDTECH 646		0x0646	PCI0646
-product CMDTECH 647		0x0647	PCI0647
+/* CMD Technology products -- info gleaned from www.cmd.com */
+product	CMDTECH 640		0x0640	PCI0640
+product	CMDTECH 642		0x0642	PCI0642
+product	CMDTECH 643		0x0643	PCI0643
+product	CMDTECH 646		0x0646	PCI0646
+product	CMDTECH 647		0x0647	PCI0647
+product	CMDTECH 648		0x0648	PCI0648
+product	CMDTECH 649		0x0649	PCI0649
 /* Inclusion of 'A' in the following entry is probably wrong. */
 /* No data on the CMD Tech. web site for the following as of Mar. 3 '98 */
 product CMDTECH 650A		0x0650	PCI0650A
