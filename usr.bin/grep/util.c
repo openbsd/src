@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.8 2003/06/24 18:45:30 tedu Exp $	*/
+/*	$OpenBSD: util.c,v 1.9 2003/06/24 22:36:40 millert Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -48,7 +48,7 @@
 
 static int	linesqueued;
 static int	procline(str_t *l, int);
-static int	grep_search(fastgrep_t *, unsigned char *, int);
+static int	grep_search(fastgrep_t *, unsigned char *, int, regmatch_t *pmatch);
 static int	grep_cmp(const unsigned char *, const unsigned char *, size_t);
 static void	grep_revstr(unsigned char *, int);
 
@@ -177,14 +177,14 @@ procline(str_t *l, int nottext)
 	}
 
 	t = vflag ? REG_NOMATCH : 0;
-	pmatch.rm_so = 0;
-	pmatch.rm_eo = l->len;
 	for (c = i = 0; i < patterns; i++) {
+		pmatch.rm_so = 0;
+		pmatch.rm_eo = l->len;
 		if (fg_pattern[i].pattern)
 			r = grep_search(&fg_pattern[i], (unsigned char *)l->dat,
-			    l->len);
+			    l->len, &pmatch);
 		else
-			r = regexec(&r_pattern[i], l->dat, 0, &pmatch, eflags);
+			r = regexec(&r_pattern[i], l->dat, 1, &pmatch, eflags);
 		if (r == REG_NOMATCH && t == 0)
 			continue;
 		if (r == 0) {
@@ -370,10 +370,14 @@ fastcomp(fastgrep_t *fg, const char *pattern)
 	return (0);
 }
 
-static int grep_search(fastgrep_t *fg, unsigned char *data, int dataLen)
+static int
+grep_search(fastgrep_t *fg, unsigned char *data, int dataLen, regmatch_t *pmatch)
 {
 	int j;
 	int rtrnVal = REG_NOMATCH;
+
+	pmatch->rm_so = -1;
+	pmatch->rm_eo = -1;
 
 	/* No point in going farther if we do not have enough data. */
 	if (dataLen < fg->patternLen)
@@ -390,8 +394,11 @@ static int grep_search(fastgrep_t *fg, unsigned char *data, int dataLen)
 			else
 				j = 0;
 			if (!((fg->bol && fg->eol) && (dataLen != fg->patternLen)))
-				if (grep_cmp(fg->pattern, data + j, fg->patternLen) == -1)
+				if (grep_cmp(fg->pattern, data + j, fg->patternLen) == -1) {
 					rtrnVal = 0;
+					pmatch->rm_so = j;
+					pmatch->rm_eo = j + fg->patternLen;
+				}
 		}
 	} else if (fg->reversedSearch) {
 		/* Quick Search algorithm. */
@@ -400,6 +407,8 @@ static int grep_search(fastgrep_t *fg, unsigned char *data, int dataLen)
 			if (grep_cmp(fg->pattern, data + j - fg->patternLen,
 			    fg->patternLen) == -1) {
 				rtrnVal = 0;
+				pmatch->rm_so = j - fg->patternLen;
+				pmatch->rm_eo = j;
 				break;
 			}
 
@@ -415,6 +424,8 @@ static int grep_search(fastgrep_t *fg, unsigned char *data, int dataLen)
 		do {
 			if (grep_cmp(fg->pattern, data + j, fg->patternLen) == -1) {
 				rtrnVal = 0;
+				pmatch->rm_so = j;
+				pmatch->rm_eo = j + fg->patternLen;
 				break;
 			}
 
@@ -463,8 +474,7 @@ grep_strdup(const char *str)
  *		-1 on success
  */
 int
-grep_cmp(const unsigned char *pattern, const unsigned char *data,
-    size_t len)
+grep_cmp(const unsigned char *pattern, const unsigned char *data, size_t len)
 {
 	int i;
 
