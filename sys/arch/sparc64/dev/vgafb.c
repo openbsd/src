@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.29 2002/11/09 22:51:48 miod Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.30 2002/12/10 02:12:33 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -82,7 +82,7 @@ struct vgafb_softc {
 };
 
 struct wsscreen_descr vgafb_stdscreen = {
-	"sun",
+	"std",
 	0, 0,	/* will be filled in -- XXX shouldn't, it's global. */
 	NULL,
 	0, 0,
