@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.11 1999/04/05 20:58:52 niklas Exp $	*/
-/*	$EOM: ike_quick_mode.c,v 1.78 1999/04/05 20:18:32 niklas Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.12 1999/04/06 17:08:53 niklas Exp $	*/
+/*	$EOM: ike_quick_mode.c,v 1.81 1999/04/06 14:11:35 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -502,8 +502,6 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
 	  ie->group = 0;
 	  return -1;
 	}
-      group_free (ie->group);
-      ie->group = 0;
     }
 
   /* Generate optional client ID payloads.  XXX Share with responder.  */
@@ -725,10 +723,10 @@ initiator_recv_HASH_SA_NONCE (struct message *msg)
   hashp->flags |= PL_MARK;
 
   isa = sa->data;
-  ie->group = group_get (isa->group_desc);
-  if (!ie->group)
+  if ((isa->group_desc && (!ie->group || ie->group->id != isa->group_desc))
+      || (!isa->group_desc && ie->group))
     {
-      /* XXX Notify peer?  */
+      log_print ("initiator_recv_HASH_SA_NONCE: disagreement on PFS");
       return -1;
     }
 
