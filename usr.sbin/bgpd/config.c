@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.31 2004/03/03 10:13:48 henning Exp $ */
+/*	$OpenBSD: config.c,v 1.32 2004/03/16 18:35:30 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -41,7 +41,8 @@ int
 merge_config(struct bgpd_config *xconf, struct bgpd_config *conf,
     struct peer *peer_l)
 {
-	struct peer		*p;
+	struct peer	*p;
+	int		 errs = 0;
 
 	/* preserve cmd line opts */
 	conf->opts = xconf->opts;
@@ -65,11 +66,16 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf,
 		if (p->conf.enforce_as == ENFORCE_AS_UNDEF)
 			p->conf.enforce_as = p->conf.ebgp == 0 ?
 			    ENFORCE_AS_OFF : ENFORCE_AS_ON;
+		if (p->conf.tcp_md5_key[0] && p->conf.local_addr.af == 0) {
+			log_peer_warnx(&p->conf, "\"tcp md5sig\" requires "
+			    "\"local-address\" to be set");
+			errs++;
+		}
 	}
 
 	memcpy(xconf, conf, sizeof(struct bgpd_config));
 
-	return (0);
+	return (errs);
 }
 
 u_int32_t
