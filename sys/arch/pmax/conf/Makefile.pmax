@@ -47,7 +47,7 @@ CDIAGFLAGS=	-Werror -Wno-main
 
 CMACHFLAGS=	-mno-abicalls -mcpu=r3000
 
-CFLAGS=		${DEBUG} -O2 ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS}
+CFLAGS=		${DEBUG} -O ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -Ttext 80030000 -e start
 STRIPFLAGS=	-d
