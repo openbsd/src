@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.14 1998/02/06 22:17:18 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.15 1998/05/17 03:09:39 mickey Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -68,6 +68,7 @@
 #define	DISKPART(dev)	(minor(dev) % MAXPARTITIONS)
 #define	MAKEDISKDEV(maj, unit, part) \
     (makedev((maj), ((unit) * MAXPARTITIONS) + (part)))
+#define	DISKLABELDEV(dev)     (MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART))
 
 #define DISKMAGIC	((u_int32_t)0x82564557)	/* The disk magic number */
 
