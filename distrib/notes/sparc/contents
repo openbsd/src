@@ -48,10 +48,10 @@ OpenBSDman(5.6,20.2)
 
 OpenBSDmisc(1.7,5.6)
 
-OpenBSDxbase(4.6,12.9)
+OpenBSDxbase(7.9,22.5)
 
-OpenBSDxfont(6.0,7.3)
+OpenBSDxfont(31.4,34.1)
 
-OpenBSDxserv(5.4,14.6)
+OpenBSDxserv(8.6,22.8)
 
-OpenBSDxshare(1.4,8.3)
+OpenBSDxshare(1.7,8.1)
