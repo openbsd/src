@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.138 2003/02/24 20:36:02 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.139 2003/03/13 20:08:06 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -694,18 +694,23 @@ report:
 	WRITE_REG_0(sc, HIFN_0_PUCNFG, ramcfg);
 	WRITE_REG_1(sc, HIFN_1_DMA_CNFG, dmacfg);
 
-	printf(": ");
 	switch (encl) {
-	case HIFN_PUSTAT_ENA_1:
-	case HIFN_PUSTAT_ENA_2:
-		break;
 	case HIFN_PUSTAT_ENA_0:
+		offtbl = "LZS-only";
+		break;
+	case HIFN_PUSTAT_ENA_1:
+		offtbl = "DES";
+		break;
+	case HIFN_PUSTAT_ENA_2:
+		offtbl = "3DES";
+		break;
 	default:
-		printf("disabled, ");
+		offtbl = "disabled";
 		break;
 	}
+	printf(": %s, ", offtbl);
 
-	return 0;
+	return (0);
 }
 
 /*
