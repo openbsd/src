@@ -1904,6 +1904,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/reboot.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/resource.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/resourcevar.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/sys/rwlock.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/scanio.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/sched.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/scsiio.ph

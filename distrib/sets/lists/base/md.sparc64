@@ -40,7 +40,7 @@
 ./usr/lib/libform.so.2.0
 ./usr/lib/libg2c.so.7.0
 ./usr/lib/libgssapi.so.2.1
-./usr/lib/libiberty.so.5.0
+./usr/lib/libiberty.so.6.0
 ./usr/lib/libkafs.so.13.0
 ./usr/lib/libkrb5.so.13.0
 ./usr/lib/libkvm.so.7.0
@@ -1470,6 +1470,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/reboot.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/resource.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/resourcevar.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/rwlock.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/scanio.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/sched.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/scsiio.ph
