@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.17 2001/11/23 04:18:22 deraadt Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.18 2002/02/17 19:24:56 deraadt Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -58,7 +58,7 @@ const struct puc_device_description puc_devices[] = {
 	 * into the subsystem fields, and claims that it's a
 	 * network/misc (0x02/0x80) device.
 	 */
-	{   /* "Dolphin Peripherals 4014", */
+	{   /* "Dolphin Peripherals 4014" */
 	    {	PCI_VENDOR_PLX,	PCI_PRODUCT_PLX_9050,		0xd84d,	0x6810	},
 	    {	0xffff,	0xffff,					0xffff,	0xffff	},
 	    {
@@ -78,7 +78,7 @@ const struct puc_device_description puc_devices[] = {
 	 * into the subsystem fields, and claims that it's a
 	 * network/misc (0x02/0x80) device.
 	 */
-	{   /* "Dolphin Peripherals 4035", */
+	{   /* "Dolphin Peripherals 4035" */
 	    {	PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9050,		0xd84d,	0x6808	},
 	    {	0xffff,	0xffff,					0xffff,	0xffff	},
 	    {
@@ -847,12 +847,64 @@ const struct puc_device_description puc_devices[] = {
 	},
 
 	/* Topic/SmartLink 5634PCV SurfRider */
-	{   /* "Topic/SmartLink 5634PCV SurfRider", */
-	    /* "Topic/SmartLink 5634PCV SurfRider" */
+	{   /* "Topic/SmartLink 5634PCV SurfRider" */
 	    {	PCI_VENDOR_TOPIC, PCI_PRODUCT_TOPIC_5634PCV,		0, 0	},
 	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* SD-LAB PCI I/O Card 4S2P */
+	{   /* "Syba Tech Ltd. PCI-4S2P-550-ECP" */
+	    {   PCI_VENDOR_SYBA, PCI_PRODUCT_SYBA_4S2P,			0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x2e8, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x2f8, COM_FREQ },
+		{ PUC_PORT_TYPE_LPT, 0x10, 0x000, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x3e8, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x3f8, COM_FREQ },
+		{ PUC_PORT_TYPE_LPT, 0x10, 0x000, 0x00 },
+	    },
+	},
+
+	/* Moxa Technologies Co., Ltd. PCI I/O Card 4S RS232/422/485 */
+	{   /* "Moxa Technologies, Industio CP-114" */
+	    {	PCI_VENDOR_MOXA, PCI_PRODUCT_MOXA_CP114,		0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x08, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x10, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x18, COM_FREQ * 8 },
+	    },
+	},
+
+	/* Moxa Technologies Co., Ltd. PCI I/O Card 8S RS232 */
+	{   /* "Moxa Technologies, Industio C168H" */
+	    {	PCI_VENDOR_MOXA, PCI_PRODUCT_MOXA_C168H,		0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x08, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x10, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x18, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x20, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x28, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x30, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x38, COM_FREQ * 8 },
+	    },
+	},
+
+	/* NetMos 2S1P PCI 16C650 : 2S, 1P */
+	{   /* "NetMos NM9835 Dual UART and 1284 Printer port" */
+	    {   PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_2S1P,		0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_LPT, 0x18, 0x00, 0x00 },
 	    },
 	},
 
