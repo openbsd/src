@@ -1,4 +1,4 @@
-/*	$OpenBSD: screen.c,v 1.8 2001/11/19 19:02:14 mpech Exp $	*/
+/*	$OpenBSD: screen.c,v 1.9 2003/04/05 01:03:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
@@ -703,7 +703,7 @@ get_term()
  	if ((term = getenv("TERM")) == NULL)
  		term = DEFAULT_TERM;
  	if (tgetent(termbuf, term) <= 0)
- 		strcpy(termbuf, "dumb:hc:");
+ 		strlcpy(termbuf, "dumb:hc:", sizeof termbuf);
 
  	hard = tgetflag("hc");
 

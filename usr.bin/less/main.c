@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.5 2001/11/19 19:02:14 mpech Exp $	*/
+/*	$OpenBSD: main.c,v 1.6 2003/04/05 01:03:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
@@ -283,9 +283,11 @@ save(s)
 	char *s;
 {
 	char *p;
+	size_t len;
 
-	p = (char *) ecalloc(strlen(s)+1, sizeof(char));
-	strcpy(p, s);
+	len = strlen(s)+1;
+	p = (char *) ecalloc(len, sizeof(char));
+	strlcpy(p, s, len);
 	return (p);
 }
 

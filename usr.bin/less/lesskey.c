@@ -1,4 +1,4 @@
-/*	$OpenBSD: lesskey.c,v 1.3 2001/11/19 19:02:14 mpech Exp $	*/
+/*	$OpenBSD: lesskey.c,v 1.4 2003/04/05 01:03:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
@@ -223,15 +223,17 @@ mkpathname(dirname, filename)
 	char *filename;
 {
 	char *pathname;
+	size_t len;
 
-	pathname = calloc(strlen(dirname) + strlen(filename) + 2, sizeof(char));
-	strcpy(pathname, dirname);
+	len = strlen(dirname) + strlen(filename) + 2;
+	pathname = calloc(len, sizeof(char));
+	strlcpy(pathname, dirname, len);
 #if MSOFTC || OS2
-	strcat(pathname, "\\");
+	strlcat(pathname, "\\", len);
 #else
-	strcat(pathname, "/");
+	strlcat(pathname, "/", len);
 #endif
-	strcat(pathname, filename);
+	strlcat(pathname, filename, len);
 	return (pathname);
 }
 

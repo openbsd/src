@@ -1,4 +1,4 @@
-/*	$OpenBSD: filename.c,v 1.4 2003/03/13 09:09:32 deraadt Exp $	*/
+/*	$OpenBSD: filename.c,v 1.5 2003/04/05 01:03:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
@@ -329,7 +329,7 @@ readfd(fd)
 			len *= 2;
 			*p = '\0';
 			p = (char *) ecalloc(len, sizeof(char));
-			strcpy(p, buf);
+			strlcpy(p, buf, len);
 			free(buf);
 			buf = p;
 			p = buf + strlen(buf);
@@ -567,7 +567,7 @@ glob(filename)
 			len *= 2;
 			*p = '\0';
 			p = (char *) ecalloc(len, sizeof(char));
-			strcpy(p, gfilename);
+			strlcpy(p, gfilename, len);
 			free(gfilename);
 			gfilename = p;
 			p = gfilename + strlen(gfilename);
@@ -654,19 +654,23 @@ bad_file(filename)
 	if (S_ISDIR(statbuf.st_mode))
 	{
 		static char is_dir[] = " is a directory";
-		m = (char *) ecalloc(strlen(filename) + sizeof(is_dir), 
-			sizeof(char));
-		strcpy(m, filename);
-		strcat(m, is_dir);
+		size_t len;
+
+		len = strlen(filename) + sizeof(is_dir);
+		m = (char *) ecalloc(len, sizeof(char));
+		strlcpy(m, filename, len);
+		strlcat(m, is_dir, len);
 		return (m);
 	}
 	if (!S_ISREG(statbuf.st_mode))
 	{
 		static char not_reg[] = " is not a regular file";
-		m = (char *) ecalloc(strlen(filename) + sizeof(not_reg), 
-			sizeof(char));
-		strcpy(m, filename);
-		strcat(m, not_reg);
+		size_t len;
+
+		len = strlen(filename) + sizeof(not_reg);
+		m = (char *) ecalloc(len, sizeof(char));
+		strlcpy(m, filename, len);
+		strlcat(m, not_reg, len);
 		return (m);
 	}
 
