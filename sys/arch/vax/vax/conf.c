@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.30 2001/09/28 02:53:14 mickey Exp $ */
+/*	$OpenBSD: conf.c,v 1.31 2001/12/11 23:19:02 miod Exp $ */
 /*	$NetBSD: conf.c,v 1.44 1999/10/27 16:38:54 ragge Exp $	*/
 
 /*-
@@ -97,26 +97,18 @@ bdev_decl(rl);
 #endif
 
 #include "ccd.h"
-bdev_decl(ccd);
 
 #include "raid.h"
-bdev_decl(raid);
 
 #include "vnd.h"
-bdev_decl(vnd);
 
 #include "hdc.h"
 bdev_decl(hd);
 bdev_decl(ry);
 
 #include "sd.h"
-bdev_decl(sd);
-
 #include "st.h"
-bdev_decl(st);
-
 #include "cd.h"
-bdev_decl(cd);
 
 #include "ksyms.h"
 cdev_decl(ksyms);
@@ -197,6 +189,8 @@ int	bdevtomaj (bdev)
 #include <dev/cons.h>
 
 #include "wskbd.h"
+#include "smg.h"
+#if NSMG > 0
 #if NWSKBD > 0
 #define smgcngetc wskbd_cngetc
 #else
@@ -205,7 +199,8 @@ smgcngetc(dev_t dev)
 {
 	return 0;
 }
-#endif
+#endif	/* NWSKBD > 0 */
+#endif	/* NSMG > 0 */
 
 #define smgcnputc wsdisplay_cnputc
 #define	smgcnpollc nullcnpollc
@@ -216,7 +211,6 @@ cons_decl(qd);
 cons_decl(smg);
 #include "qv.h"
 #include "qd.h"
-#include "smg.h"
 
 struct	consdev constab[]={
 #if VAX8600 || VAX8200 || VAX780 || VAX750 || VAX650 || VAX630 || VAX660 || \
@@ -282,19 +276,10 @@ struct	consdev constab[]={
 	(dev_type_stop((*))) nullop, 0, (dev_type_select((*))) nullop, \
 	(dev_type_mmap((*))) enodev }
 
-cdev_decl(cn);
-cdev_decl(ctty);
 #define mmread	mmrw
 #define mmwrite mmrw
 cdev_decl(mm);
 #include "pty.h"
-#define ptstty		ptytty
-#define ptsioctl	ptyioctl
-cdev_decl(pts);
-#define ptctty		ptytty
-#define ptcioctl	ptyioctl
-cdev_decl(ptc);
-cdev_decl(log);
 
 cdev_decl(hp);
 cdev_decl(rk);
@@ -312,14 +297,8 @@ cdev_decl(rx);
 #if 0
 cdev_decl(rl);
 #endif
-cdev_decl(ccd);
-cdev_decl(raid);
 cdev_decl(hd);
 cdev_decl(ry);
-cdev_decl(sd);
-cdev_decl(st);
-
-cdev_decl(rd);
 
 #include "ct.h"
 cdev_decl(ct);
@@ -404,29 +383,17 @@ cdev_decl(dl);
 #endif
 cdev_decl(ii);
 
-cdev_decl(vnd);
-
 #include "bpfilter.h"
-cdev_decl(bpf);
 
 #include "tun.h" 
-cdev_decl(tun);
-cdev_decl(cd);
 #include "ch.h"
-cdev_decl(ch);
 #include "ss.h"
-cdev_decl(ss);
 #include "uk.h"
-cdev_decl(uk);
-
-bdev_decl(rd);
 
 #ifdef XFS
 #include <xfs/nxfs.h>
 cdev_decl(xfs_dev);
 #endif
-
-dev_decl(filedesc,open);
 
 #include "wsdisplay.h"
 #include "wskbd.h"

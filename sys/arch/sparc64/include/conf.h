@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.5 2001/11/15 03:59:08 jason Exp $	*/
+/*	$OpenBSD: conf.h,v 1.6 2001/12/11 23:19:02 miod Exp $	*/
 /*	$NetBSD: conf.h,v 1.9 2001/03/26 12:33:26 lukem Exp $	*/
 
 /*-
@@ -83,15 +83,6 @@ cdev_decl(cgeight);
 cdev_decl(tcx);
 
 cdev_decl(cgfourteen);
-
-bdev_decl(sw);
-cdev_decl(sw);
-
-bdev_decl(raid);
-cdev_decl(raid);
-
-bdev_decl(md);
-cdev_decl(md);
 
 cdev_decl(bpp);
 cdev_decl(lpt);

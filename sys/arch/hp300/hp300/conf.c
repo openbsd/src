@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.27 2001/09/28 02:53:13 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.28 2001/12/11 23:19:02 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.39 1997/05/12 08:17:53 thorpej Exp $	*/
 
 /*-
@@ -51,15 +51,10 @@ bdev_decl(mt);
 #include "hd.h"
 bdev_decl(hd);
 #include "sd.h"
-bdev_decl(sd);
 #include "ccd.h"
-bdev_decl(ccd);
 #include "vnd.h"
-bdev_decl(vnd);
 #include "st.h"
-bdev_decl(st);
 #include "rd.h"
-bdev_decl(rd);
 
 struct bdevsw	bdevsw[] =
 {
@@ -101,21 +96,11 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	(dev_type_stop((*))) enodev, 0, dev_init(c,n,select), \
 	dev_init(c,n,mmap) }
 
-cdev_decl(cn);
-cdev_decl(ctty);
 #define	mmread	mmrw
 #define	mmwrite	mmrw
 cdev_decl(mm);
 #include "pty.h"
-#define	ptstty		ptytty
-#define	ptsioctl	ptyioctl
-cdev_decl(pts);
-#define	ptctty		ptytty
-#define	ptcioctl	ptyioctl
-cdev_decl(ptc);
-cdev_decl(log);
 cdev_decl(ct);
-cdev_decl(sd);
 cdev_decl(hd);
 #include "grf.h"
 cdev_decl(grf);
@@ -132,17 +117,9 @@ cdev_decl(hil);
 #include "dcm.h"
 cdev_decl(dcm);
 cdev_decl(mt);
-cdev_decl(ccd);
-cdev_decl(vnd);
-cdev_decl(st);
 cdev_decl(fd);
-dev_decl(filedesc,open);
 #include "bpfilter.h"
-cdev_decl(bpf);
 #include "tun.h"
-cdev_decl(tun);
-cdev_decl(random);
-cdev_decl(rd);
 #include "ksyms.h"
 cdev_decl(ksyms);   
 #ifdef XFS

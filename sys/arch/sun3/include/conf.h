@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.9 2001/06/27 06:24:05 angelos Exp $	*/
+/*	$OpenBSD: conf.h,v 1.10 2001/12/11 23:19:02 miod Exp $	*/
 
 /*-
  * Copyright (c) 1996 Kenneth Stailey.  All rights reserved.
@@ -33,10 +33,6 @@
 bdev_decl(rd);
 cdev_decl(rd);
 
-/* swap device (required) */
-bdev_decl(sw);
-cdev_decl(sw);
-
 bdev_decl(xd);
 cdev_decl(xd);
 
@@ -52,8 +48,6 @@ cdev_decl(xy);
  */
 
 cdev_decl(fd);
-
-dev_decl(filedesc,open);
 
 cdev_decl(idprom);
 

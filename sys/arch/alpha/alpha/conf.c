@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.34 2001/10/26 01:28:06 nate Exp $	*/
+/*	$OpenBSD: conf.c,v 1.35 2001/12/11 23:18:59 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -91,7 +91,6 @@ int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 cdev_decl(mm);
 #include "pty.h"
 #include "tun.h"
-dev_type_open(filedescopen);
 #include "bpfilter.h"
 #include "iop.h"
 #include "ch.h"
@@ -293,7 +292,7 @@ static int chrtoblktbl[] = {
 	/* 40 */	NODEV,
 	/* 41 */	NODEV,
 	/* 42 */	NODEV,
-	/* 43 */	16,
+	/* 43 */	16,		/* raid */
 	/* 44 */	NODEV,
 	/* 45 */	NODEV,
 	/* 46 */	NODEV,

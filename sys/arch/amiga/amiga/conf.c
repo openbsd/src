@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.32 2001/09/28 02:53:13 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.33 2001/12/11 23:19:02 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.42 1997/01/07 11:35:03 mrg Exp $	*/
 
 /*-
@@ -100,14 +100,12 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "ms.h"
 #include "view.h"
 #include "mfcs.h"
-dev_decl(filedesc,open);
 #include "bpfilter.h"
 #include "tun.h"
 #include "com.h"
 #include "lpt.h"
 #include "uk.h"
 #include "audio.h"
-cdev_decl(audio);
 
 /* open, close, read */
 #define cdev_joy_init(c,n) { \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.83 2001/12/05 23:58:41 tdeval Exp $	*/
+/*	$OpenBSD: conf.c,v 1.84 2001/12/11 23:19:02 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -63,8 +63,6 @@ bdev_decl(scd);
 #include "ccd.h"
 #include "raid.h"
 #include "rd.h"
-bdev_decl(rd);
-cdev_decl(rd);
 
 struct bdevsw	bdevsw[] =
 {
@@ -162,7 +160,6 @@ cdev_decl(pc);
 #include "lpt.h"
 cdev_decl(lpt);
 #include "ch.h"
-dev_decl(filedesc,open);
 #include "bpfilter.h"
 #if 0
 #include "pcmcia.h"
@@ -183,12 +180,9 @@ cdev_decl(cy);
 cdev_decl(mcd);
 #include "tun.h"
 #include "audio.h"
-cdev_decl(audio);
 #include "midi.h"
-cdev_decl(midi);
 #include "sequencer.h"
 cdev_decl(music);
-cdev_decl(svr4_net);
 #include "joy.h"
 #include "apm.h"
 #include "pctr.h"
@@ -221,7 +215,6 @@ cdev_decl(uscanner);
 #include "cz.h"
 cdev_decl(cztty);
 #include "radio.h"
-cdev_decl(radio);
 
 /* XXX -- this needs to be supported by config(8)! */
 #if (NCOM > 0) && (NPCCOM > 0)
@@ -232,7 +225,6 @@ cdev_decl(radio);
 #include "wskbd.h"
 #include "wsmouse.h"
 #include "wsmux.h"
-cdev_decl(wsmux);
 
 #ifdef USER_PCICONF
 #include "pci.h"

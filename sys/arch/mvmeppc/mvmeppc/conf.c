@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.9 2001/12/05 23:58:41 tdeval Exp $ */
+/*	$OpenBSD: conf.c,v 1.10 2001/12/11 23:19:02 miod Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -43,19 +43,13 @@
 #include "wd.h"
 bdev_decl(wd);
 #include "sd.h"
-bdev_decl(sd);
 #include "cd.h"
-bdev_decl(cd);
 
 #include "rd.h"
-bdev_decl(rd);
 
 #include "vnd.h"
-bdev_decl(vnd);
 #include "ccd.h"
-bdev_decl(ccd);
 #include "raid.h"
-bdev_decl(raid);
 
 struct bdevsw bdevsw[] = {
 	bdev_disk_init(NWD,wd),		/* 0: ST506/ESDI/IDE disk */
@@ -85,19 +79,10 @@ struct bdevsw bdevsw[] = {
 };
 int nblkdev = sizeof bdevsw / sizeof bdevsw[0];
 
-cdev_decl(cn);
-cdev_decl(ctty);
 #define mmread	mmrw
 #define	mmwrite	mmrw
 cdev_decl(mm);
 #include "pty.h"
-#define	ptstty		ptytty
-#define	ptsioctl	ptyioctl
-cdev_decl(pts);
-#define	ptctty		ptytty
-#define	ptcioctl	ptyioctl
-cdev_decl(ptc);
-cdev_decl(log);
 
 #include "bugtty.h"
 cdev_decl(bugtty);
@@ -110,26 +95,13 @@ cdev_decl(ms);
 #include <cd.h>
 #include <uk.h>
 #include <ss.h>
-cdev_decl(st);  
-cdev_decl(sd);
-cdev_decl(cd);
-cdev_decl(vnd);
-cdev_decl(ccd);
-cdev_decl(rd);  
-#include "raid.h"
-cdev_decl(raid);
 
 #include <wd.h>
 cdev_decl(wd);
 
-dev_decl(filedesc,open);
-
 #include "bpfilter.h"
-cdev_decl(bpf); 
 
 #include "tun.h"
-cdev_decl(tun);
-cdev_decl(random); 
 
 #ifdef XFS
 #include <xfs/nxfs.h>
@@ -142,8 +114,6 @@ cdev_decl(xfs_dev);
 #define NLKM 0
 #endif  
  
-cdev_decl(lkm);
-
 #include "ksyms.h"
 cdev_decl(ksyms);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.15 2001/12/05 23:58:41 tdeval Exp $	*/
+/*	$OpenBSD: conf.c,v 1.16 2001/12/11 23:19:02 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -104,7 +104,6 @@
 
 #include "rd.h"
 #include "ses.h"
-cdev_decl(ses);
 
 #include "pf.h"
 
@@ -124,7 +123,7 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),			/* 1 */
 	bdev_notdef(),			/* 2 */
 	bdev_notdef(),			/* 3: SMD disk -- not this arch */
-	bdev_swap_init(1,sw),		/* 4 */
+	bdev_swap_init(1,sw),		/* 4 swap pseudo-device */
 	bdev_disk_init(NRD,rd),		/* 5: ram disk */
 	bdev_notdef(),			/* 6 */
 	bdev_disk_init(NSD,sd),		/* 7: SCSI disk */

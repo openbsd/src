@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.7 2001/12/05 23:58:41 tdeval Exp $ */
+/*	$OpenBSD: conf.c,v 1.8 2001/12/11 23:19:02 miod Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -115,8 +115,6 @@ cdev_decl(xfs_dev);
 #else
 #define NLKM 0
 #endif
-
-cdev_decl(lkm);
 
 #include "ksyms.h"
 cdev_decl(ksyms);

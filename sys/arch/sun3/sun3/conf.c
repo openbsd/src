@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.30 2001/09/28 02:53:14 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.31 2001/12/11 23:19:02 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.51 1996/11/04 16:16:09 gwr Exp $	*/
 
 /*-
@@ -46,8 +46,6 @@
 #include <sys/vnode.h>
 
 #include <machine/conf.h>
-
-int	ttselect	__P((dev_t, int, struct proc *));
 
 #include "bpfilter.h"
 #include "bwtwo.h"
