@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.40 2005/04/01 09:40:43 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.41 2005/04/01 09:49:01 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -128,6 +128,8 @@ void		ral_set_bssid(struct ral_softc *, uint8_t *);
 void		ral_set_macaddr(struct ral_softc *, uint8_t *);
 void		ral_get_macaddr(struct ral_softc *, uint8_t *);
 void		ral_update_promisc(struct ral_softc *);
+void		ral_set_txantenna(struct ral_softc *, int);
+void		ral_set_rxantenna(struct ral_softc *, int);
 const char	*ral_get_rf(int);
 void		ral_read_eeprom(struct ral_softc *);
 int		ral_bbp_init(struct ral_softc *);
@@ -2489,6 +2491,53 @@ ral_update_promisc(struct ral_softc *sc)
 	    "entering" : "leaving"));
 }
 
+void
+ral_set_txantenna(struct ral_softc *sc, int antenna)
+{
+	uint32_t tmp;
+	uint8_t tx;
+
+	tx = ral_bbp_read(sc, RAL_BBP_TX) & ~RAL_BBP_ANTMASK;
+	if (antenna == 1)
+		tx |= RAL_BBP_ANTA;
+	else if (antenna == 2)
+		tx |= RAL_BBP_ANTB;
+	else
+		tx |= RAL_BBP_DIVERSITY;
+
+	/* need to force I/Q flip for RF 2525e, 2526 and 5222 */
+	if (sc->rf_rev == RAL_RF_2525E || sc->rf_rev == RAL_RF_2526 ||
+	    sc->rf_rev == RAL_RF_5222)
+		tx |= RAL_BBP_FLIPIQ;
+
+	ral_bbp_write(sc, RAL_BBP_TX, tx);
+
+	/* update values for CCK and OFDM in BBPCSR1 */
+	tmp = RAL_READ(sc, RAL_BBPCSR1) & ~0x00070007;
+	tmp |= (tx & 0x7) << 16 | (tx & 0x7);
+	RAL_WRITE(sc, RAL_BBPCSR1, tmp);
+}
+
+void
+ral_set_rxantenna(struct ral_softc *sc, int antenna)
+{
+	uint8_t rx;
+
+	rx = ral_bbp_read(sc, RAL_BBP_RX) & ~RAL_BBP_ANTMASK;
+	if (antenna == 1)
+		rx |= RAL_BBP_ANTA;
+	else if (antenna == 2)
+		rx |= RAL_BBP_ANTB;
+	else
+		rx |= RAL_BBP_DIVERSITY;
+
+	/* need to force no I/Q flip for RF 2525e and 2526 */
+	if (sc->rf_rev == RAL_RF_2525E || sc->rf_rev == RAL_RF_2526)
+		rx &= ~RAL_BBP_FLIPIQ;
+
+	ral_bbp_write(sc, RAL_BBP_RX, rx);
+}
+
 const char *
 ral_get_rf(int rev)
 {
@@ -2613,6 +2662,8 @@ ral_init(struct ifnet *ifp)
 	/* set supported basic rates (1, 2, 6, 12, 24) */
 	RAL_WRITE(sc, RAL_ARCSR1, 0x153);
 
+	ral_set_txantenna(sc, 1);
+	ral_set_rxantenna(sc, 1);
 	ral_update_slot(sc);
 	ral_update_plcp(sc);
 	ral_update_led(sc, 0, 0);

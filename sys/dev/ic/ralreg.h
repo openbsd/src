@@ -1,4 +1,4 @@
-/*	$OpenBSD: ralreg.h,v 1.3 2005/04/01 09:40:43 damien Exp $  */
+/*	$OpenBSD: ralreg.h,v 1.4 2005/04/01 09:49:01 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -265,6 +265,14 @@ struct ral_rx_desc {
 #define RAL_RF_5222	0x10
 
 #define RAL_BBP_VERSION	0
+#define RAL_BBP_TX	2
+#define RAL_BBP_RX	14
+
+#define RAL_BBP_ANTA		0x00
+#define RAL_BBP_DIVERSITY	0x01
+#define RAL_BBP_ANTB		0x02
+#define RAL_BBP_ANTMASK		0x03
+#define RAL_BBP_FLIPIQ		0x04
 
 #define RAL_LED_MODE_DEFAULT		0
 #define RAL_LED_MODE_TXRX_ACTIVITY	1
