@@ -1,0 +1,40 @@
+.\"     $OpenBSD: le.4,v 1.1 1998/05/05 06:11:03 imp Exp $
+.\"
+.\" Copyright (c) 1998 The OpenBSD Project 
+.\" All rights reserved.
+.\"
+.Dd March 7, 1998
+.Dt LE 4 alpha
+.Os
+.Sh NAME
+.Nm le
+.Nd Alpha on-board or PCI LANCE ethernet interface 
+.Sh SYNOPSIS
+.Cd "le* at  tc? slot ? offset ? " Pq "TurboChannel Alphas"
+.Cd "le* at pci? dev ? function ?" Pq "PCI LANCE Ethernet (untested)"
+.Sh DESCRIPTION
+The 
+.Nm
+interface provides access to the Ethernet network via the
+.Tn AMD
+.Tn LANCE
+Ethernet chip set.
+.Pp
+Each of the host's network addresses
+is specified at boot time with an
+.Dv SIOCSIFADDR
+.Xr ioctl .
+The
+.Nm
+interface employs the address resolution protocol described in
+.Xr arp 4
+to dynamically map between Internet and Ethernet addresses on the local
+network.
+.Pp
+.Sh BUGS
+The PCI form of the Lance driver is untested.
+.Pp
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr inet 4 ,
+.Xr arp 4
