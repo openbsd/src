@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.100 2004/05/30 21:52:49 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.101 2004/07/06 21:05:36 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -987,6 +987,7 @@ mapdev(phys, virt, offset, size)
 	return (ret);
 }
 
+#ifdef COMPAT_SUNOS
 int
 cpu_exec_aout_makecmds(p, epp)
 	struct proc *p;
@@ -994,13 +995,12 @@ cpu_exec_aout_makecmds(p, epp)
 {
 	int error = ENOEXEC;
 
-#ifdef COMPAT_SUNOS
 	extern int sunos_exec_aout_makecmds(struct proc *, struct exec_package *);
 	if ((error = sunos_exec_aout_makecmds(p, epp)) == 0)
 		return 0;
-#endif
 	return error;
 }
+#endif
 
 #ifdef SUN4
 void
