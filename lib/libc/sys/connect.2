@@ -99,6 +99,9 @@ A TCP connection with a local broadcast or the all-ones address as
 the peer was attempted.
 .It Bq Er ECONNREFUSED
 The attempt to connect was forcefully rejected.
+.It Bq Er EINTR
+A connect was interrupted before it succeeded
+by the delivery of a signal.
 .It Bq Er ENETUNREACH
 The network isn't reachable from this host.
 .It Bq Er EADDRINUSE
