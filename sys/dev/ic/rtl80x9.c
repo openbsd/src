@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl80x9.c,v 1.3 1999/08/15 22:49:09 deraadt Exp $	*/
+/*	$OpenBSD: rtl80x9.c,v 1.4 2000/06/11 09:26:18 fgsch Exp $	*/
 /*	$NetBSD: rtl80x9.c,v 1.1 1998/10/31 00:44:33 thorpej Exp $	*/
 
 /*-
@@ -140,6 +140,10 @@ rtl80x9_init_card(sc)
 	/* Set NIC to page 3 registers. */
 	NIC_PUT(sc->sc_regt, sc->sc_regh, ED_P0_CR, cr_proto | ED_CR_PAGE_3);
 
+	/* write enable config1-3. */
+	NIC_PUT(sc->sc_regt, sc->sc_regh, NERTL_RTL3_EECR,
+	    RTL3_EECR_EEM1|RTL3_EECR_EEM0);
+
 	/* First, set basic media type. */
 	reg = NIC_GET(sc->sc_regt, sc->sc_regh, NERTL_RTL3_CONFIG2);
 	reg &= ~(RTL3_CONFIG2_PL1|RTL3_CONFIG2_PL0);
@@ -149,7 +153,11 @@ rtl80x9_init_card(sc)
 		break;
 
 	case IFM_10_T:
-		reg |= RTL3_CONFIG2_PL0;
+		/*
+		 * According to docs, this should be:
+		 * reg |= RTL3_CONFIG2_PL0;
+		 * but this doesn't work, so make it the same as AUTO.
+		 */
 		break;
 
 	case IFM_10_2:
@@ -165,6 +173,9 @@ rtl80x9_init_card(sc)
 	else
 		reg &= ~RTL3_CONFIG3_FUDUP;
 	NIC_PUT(sc->sc_regt, sc->sc_regh, NERTL_RTL3_CONFIG3, reg);
+
+	/* write disable config1-3 */
+	NIC_PUT(sc->sc_regt, sc->sc_regh, NERTL_RTL3_EECR, 0);
 
 	/* Set NIC to page 0 registers. */
 	NIC_PUT(sc->sc_regt, sc->sc_regh, ED_P0_CR, cr_proto | ED_CR_PAGE_0);
@@ -182,7 +193,37 @@ rtl80x9_init_media(sc, mediap, nmediap, defmediap)
 		IFM_ETHER|IFM_10_2,
 	};
 
+	u_int8_t conf2, conf3;
+
 	*mediap = rtl80x9_media;
 	*nmediap = sizeof(rtl80x9_media) / sizeof(rtl80x9_media[0]);
-	*defmediap = IFM_ETHER|IFM_AUTO;
+
+	/* Set NIC to page 3 registers. */
+	bus_space_write_1(sc->sc_regt, sc->sc_regh, ED_P0_CR, ED_CR_PAGE_3);
+
+	conf2 = bus_space_read_1(sc->sc_regt, sc->sc_regh, NERTL_RTL3_CONFIG2);
+	conf3 = bus_space_read_1(sc->sc_regt, sc->sc_regh, NERTL_RTL3_CONFIG3);
+
+	conf2 &= RTL3_CONFIG2_PL1|RTL3_CONFIG2_PL0;
+
+	switch (conf2) {
+	case 0:
+		*defmediap = IFM_ETHER|IFM_AUTO;
+		break;
+
+	case RTL3_CONFIG2_PL1|RTL3_CONFIG2_PL0:
+	case RTL3_CONFIG2_PL1:	/* XXX rtl docs sys 10base5, but chip cant do */
+		*defmediap = IFM_ETHER|IFM_10_2;
+		break;
+
+	case RTL3_CONFIG2_PL0:
+		if (conf3 & RTL3_CONFIG3_FUDUP)
+			*defmediap = IFM_ETHER|IFM_10_T|IFM_FDX;
+		else
+			*defmediap = IFM_ETHER|IFM_10_T;
+		break;
+	}
+
+	/* Set NIC to page 0 registers. */
+	bus_space_write_1(sc->sc_regt, sc->sc_regh, ED_P0_CR, ED_CR_PAGE_0);
 }
