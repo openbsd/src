@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.18 2001/11/09 02:43:09 art Exp $ */
+/* $OpenBSD: pmap.c,v 1.19 2001/11/09 02:44:46 art Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -1695,7 +1695,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
 		printf("pmap_enter(%p, %lx, %lx, %x, %x)\n",
-		       pmap, va, pa, prot, access_type);
+		       pmap, va, pa, prot, flags);
 #endif
 	managed = PAGE_IS_MANAGED(pa);
 	isactive = PMAP_ISACTIVE(pmap, cpu_id);
