@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.196 2004/10/19 12:02:50 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.197 2004/11/02 10:56:48 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -879,6 +879,7 @@ change_state(struct peer *peer, enum session_state state,
 			mrt_dump_state(mrt, peer->state, state,
 			    peer, conf);
 	}
+	peer->prev_state = peer->state;
 	peer->state = state;
 }
 
@@ -2071,7 +2072,7 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 				if ((p = calloc(1, sizeof(struct peer))) ==
 				    NULL)
 					fatal("new_peer");
-				p->state = STATE_NONE;
+				p->state = p->prev_state = STATE_NONE;
 				p->next = npeers;
 				npeers = p;
 				reconf = RECONF_REINIT;
@@ -2402,7 +2403,7 @@ getpeerbyip(struct sockaddr *ip)
 		}
 		newpeer->conf.template = 0;
 		newpeer->conf.cloned = 1;
-		newpeer->state = STATE_NONE;
+		newpeer->state = newpeer->prev_state = STATE_NONE;
 		newpeer->rbuf = NULL;
 		init_peer(newpeer);
 		bgp_fsm(newpeer, EVNT_START);
