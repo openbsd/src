@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cluster.c,v 1.5 1996/06/11 03:25:13 tholo Exp $	*/
+/*	$OpenBSD: vfs_cluster.c,v 1.6 1997/01/10 23:18:40 niklas Exp $	*/
 /*	$NetBSD: vfs_cluster.c,v 1.12 1996/04/22 01:39:05 christos Exp $	*/
 
 /*-
@@ -349,7 +349,7 @@ cluster_rbuild(vp, filesize, bp, lbn, blkno, size, run, flags)
 			 */
 			if (tbp->b_bufsize + size > MAXBSIZE) {
 #ifdef DIAGNOSTIC
-				if (tbp->b_bufsize != MAXBSIZE)
+				if (tbp->b_bufsize > MAXBSIZE)
 					panic("cluster_rbuild: too much memory");
 #endif
 				brelse(tbp);
