@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_kn20aa.c,v 1.13 2001/08/17 22:26:58 mickey Exp $	*/
+/*	$OpenBSD: pci_kn20aa.c,v 1.14 2001/09/29 07:14:35 mickey Exp $	*/
 /*	$NetBSD: pci_kn20aa.c,v 1.21 1996/11/17 02:05:27 cgd Exp $	*/
 
 /*
@@ -226,7 +226,21 @@ void
 dec_kn20aa_intr_disestablish(ccv, cookie)
         void *ccv, *cookie;
 {
-	panic("dec_kn20aa_intr_disestablish not implemented"); /* XXX */
+	struct alpha_shared_intrhand *ih = cookie;
+	unsigned int irq = ih->ih_num;
+	int s;
+
+	s = splhigh();
+
+	alpha_shared_intr_disestablish(kn20aa_pci_intr, cookie,
+	    "kn20aa irq");
+	if (alpha_shared_intr_isactive(kn20aa_pci_intr, irq) == 0) {
+		kn20aa_disable_intr(irq);
+		alpha_shared_intr_set_dfltsharetype(kn20aa_pci_intr, irq,
+		    IST_NONE);
+		/* scb_free(0x900 + SCB_IDXTOVEC(irq)); */
+	}
+	splx(s);
 }
 
 void
