@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_file.c,v 1.5 1997/01/27 00:33:04 downsj Exp $	*/
+/*	$OpenBSD: linux_file.c,v 1.6 1997/01/27 00:50:30 downsj Exp $	*/
 /*	$NetBSD: linux_file.c,v 1.15 1996/05/20 01:59:09 fvdl Exp $	*/
 
 /*
@@ -678,7 +678,7 @@ linux_sys_chown(p, v, retval)
 	SCARG(&bca, gid) = ((linux_gid_t)SCARG(uap, gid) == (linux_gid_t)-1) ?
 		(gid_t)-1 : SCARG(uap, gid);
 	
-	return sys_lchown(p, &bca, retval);
+	return sys_chown(p, &bca, retval);
 }
 
 int
