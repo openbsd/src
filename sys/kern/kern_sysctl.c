@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.27 1999/02/26 04:57:15 art Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.28 1999/06/01 08:23:51 art Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -804,15 +804,11 @@ fill_eproc(p, ep)
 	} else {
 		register struct vmspace *vm = p->p_vmspace;
 
-#ifdef pmap_resident_count
-		ep->e_vm.vm_rssize = pmap_resident_count(&vm->vm_pmap); /*XXX*/
-#else
-		ep->e_vm.vm_rssize = vm->vm_rssize;
-#endif
+		ep->e_vm.vm_rssize = vm_resident_count(vm);
 		ep->e_vm.vm_tsize = vm->vm_tsize;
 		ep->e_vm.vm_dsize = vm->vm_dsize;
 		ep->e_vm.vm_ssize = vm->vm_ssize;
-		ep->e_vm.vm_pmap = vm->vm_pmap;
+		ep->e_vm.vm_pmap = *vm->vm_map.pmap;
 	}
 	if (p->p_pptr)
 		ep->e_ppid = p->p_pptr->p_pid;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.36 1998/03/28 10:03:04 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.37 1999/06/01 08:23:52 art Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -2037,12 +2037,7 @@ ttyinfo(tp)
 		ttyprintf(tp, "%d%% %ldk\n",
 		    tmp / 100,
 		    pick->p_stat == SIDL || pick->p_stat == SZOMB ? 0 :
-#ifdef pmap_resident_count
-			pgtok(pmap_resident_count(&pick->p_vmspace->vm_pmap))
-#else
-			pgtok(pick->p_vmspace->vm_rssize)
-#endif
-			);
+			vm_resident_count(pick->p_vmspace));
 	}
 	tp->t_rocount = 0;	/* so pending input will be retyped if BS */
 }

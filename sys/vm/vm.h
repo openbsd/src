@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.h,v 1.7 1998/09/11 21:17:52 mickey Exp $	*/
+/*	$OpenBSD: vm.h,v 1.8 1999/06/01 08:23:51 art Exp $	*/
 /*	$NetBSD: vm.h,v 1.13 1994/06/29 06:47:52 cgd Exp $	*/
 
 /*
@@ -103,4 +103,11 @@ struct vmspace {
 	caddr_t	vm_daddr;	/* user virtual address of data XXX */
 	caddr_t vm_maxsaddr;	/* user VA at max stack growth */
 };
+
+#ifdef  pmap_resident_count
+#define vm_resident_count(vm) (pmap_resident_count((vm)->vm_map.pmap))
+#else
+#define vm_resident_count(vm) ((vm)->vm_rssize)
+#endif
+
 #endif /* VM_H */
