@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.h,v 1.18 2001/12/07 09:33:10 itojun Exp $	*/
+/*	$OpenBSD: icmp6.h,v 1.19 2001/12/28 02:29:13 itojun Exp $	*/
 /*	$KAME: icmp6.h,v 1.39 2001/02/06 03:48:06 itojun Exp $	*/
 
 /*
@@ -121,10 +121,10 @@ struct icmp6_hdr {
 #define ICMP6_NI_REPLY			140	/* node information reply */
 
 /* The definitions below are experimental. TBA */
-#define MLD6_MTRACE_RESP		141	/* mtrace response(to sender) */
-#define MLD6_MTRACE			142	/* mtrace messages */
+#define MLD6_MTRACE_RESP		200	/* mtrace response(to sender) */
+#define MLD6_MTRACE			201	/* mtrace messages */
 
-#define ICMP6_MAXTYPE			142
+#define ICMP6_MAXTYPE			201
 
 #define ICMP6_DST_UNREACH_NOROUTE	0	/* no route to destination */
 #define ICMP6_DST_UNREACH_ADMIN	 	1	/* administratively prohibited */
