@@ -1,5 +1,5 @@
-#	$OpenBSD: files.isa,v 1.15 1996/05/05 12:42:34 deraadt Exp $
-#	$NetBSD: files.isa,v 1.18 1996/04/25 02:15:42 thorpej Exp $
+#	$OpenBSD: files.isa,v 1.16 1996/05/10 12:33:24 deraadt Exp $
+#	$NetBSD: files.isa,v 1.20 1996/05/07 01:50:09 thorpej Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -179,6 +179,12 @@ device	ie: ether, ifnet, elink
 attach	ie at isa
 file	dev/isa/if_ie.c			ie
 
+# Intel i82595-based boards.
+# (Intel EtherExpress PRO)
+device  iy: ether, ifnet         
+attach	iy at isa
+file    dev/isa/if_iy.c			iy
+
 # XXX ???
 # XXX NOT IN TREE?
 #device	ix: ether, ifnet
@@ -187,10 +193,9 @@ file	dev/isa/if_ie.c			ie
 
 # AMD am7990 (Lance) -based boards
 # (BICC Isolan, NE2100, DEPCA)
-# XXX conflicts with alpha if_le.c
-#device	le: ether, ifnet, isadma
-#attach	le at isa with le_isa
-#file	dev/isa/if_le.c			le
+# device declaration in sys/conf/files
+attach	le at isa with le_isa: isadma
+file	dev/isa/if_le_isa.c		le_isa
 
 #
 # ISA Sound hardware

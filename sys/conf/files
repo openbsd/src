@@ -1,5 +1,5 @@
-#	$OpenBSD: files,v 1.19 1996/05/05 12:42:09 deraadt Exp $
-#	$NetBSD: files,v 1.83 1996/04/25 02:18:25 thorpej Exp $
+#	$OpenBSD: files,v 1.20 1996/05/10 12:33:26 deraadt Exp $
+#	$NetBSD: files,v 1.84 1996/05/07 08:56:54 mycroft Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -33,6 +33,10 @@ define	aic7xxx		# Adaptec aic7770 and aic7870 SCSI controllers
 # 3Com Etherlink-III Ethernet controller
 device	ep: ether, ifnet
 file	dev/ic/elink3.c		ep
+
+# LANCE and PCnet Ethernet controllers
+device	le: ether, ifnet
+file	dev/ic/am7990.c		le
 
 # Attributes which machine-independent bus support can be attached to.
 # These should be defined here, because some of these busses can have

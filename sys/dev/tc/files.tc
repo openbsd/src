@@ -1,5 +1,5 @@
-#	$OpenBSD: files.tc,v 1.3 1996/04/21 22:26:22 deraadt Exp $
-#	$NetBSD: files.tc,v 1.3 1996/03/17 00:58:33 thorpej Exp $
+#	$OpenBSD: files.tc,v 1.4 1996/05/10 12:33:25 deraadt Exp $
+#	$NetBSD: files.tc,v 1.4 1996/05/07 02:25:00 thorpej Exp $
 #
 # Config.new file and device description for machine-independent
 # TurboChannel code.  Included by ports that need it.
@@ -8,7 +8,9 @@ device	tc {[slot = -1], [offset = -1]}
 attach	tc at tcbus
 file	dev/tc/tc.c			tc	needs-flag
 
-# XXX conflicts with ISA if_le.c
-#device le: ether, ifnet		# XXX PMAX BASEBOARD OPTIONS
-#attach le at ioasic, tc with le_tc
-#file	dev/tc/if_le.c			le	needs-flag	# for le_iomem
+# device defined in sys/conf/files
+# attach le at ioasic with le_ioasic
+# attach le at tc with le_tc
+# file	dev/tc/if_le_dec.c		(le_ioasic | le_tc)
+# file	dev/tc/if_le_ioasic.c		le_ioasic needs-flag # for le_iomem
+# file	dev/tc/if_le_tc.c		le_tc
