@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.34 2003/06/16 21:46:23 miod Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.35 2004/08/10 21:57:51 millert Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -159,10 +159,10 @@ vgafbattach(parent, self, aux)
 	sc->sc_node = PCITAG_NODE(pa->pa_tag);
 	sc->sc_pcitag = pa->pa_tag;
 
-	printf("\n");
-
 	if (vgafb_mapregs(sc, pa))
 		return;
+
+	printf("\n");
 
 	sc->sc_console = vgafb_is_console(sc->sc_node);
 
