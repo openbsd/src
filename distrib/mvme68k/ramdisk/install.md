@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.14 2002/04/17 01:59:57 deraadt Exp $
+#       $OpenBSD: install.md,v 1.15 2002/04/25 21:28:13 miod Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -126,7 +126,7 @@ md_prep_disklabel()
 	esac
 
 	# display example
-	cat << \__md_prep_disklabel_1
+	cat << __EOT
 
 Here is an example of what the partition information will look like once
 you have entered the disklabel editor. Disk partition sizes and offsets
@@ -135,11 +135,11 @@ pairs are on cylinder boundaries (the number of sector per cylinder is
 given in the `sectors/cylinder' entry, which is not shown here).
 
 Do not change any parameters except the partition layout and the label name.
-It's probably also wisest not to touch the `8 partitions:' line, even
-in case you have defined less than eight partitions.
+It's probably also wisest not to touch the `16 partitions:' line, even
+in case you have defined less than sixteen partitions.
 
 [Example]
-8 partitions:
+16 partitions:
 #        size   offset    fstype   [fsize bsize   cpg]
   a:    50176        0    4.2BSD     1024  8192    16   # (Cyl.    0 - 111)
   b:    64512    50176      swap                        # (Cyl.  112 - 255)
@@ -147,7 +147,7 @@ in case you have defined less than eight partitions.
   d:   525504   114688    4.2BSD     1024  8192    16   # (Cyl.  256 - 1428)
 [End of example]
 
-__md_prep_disklabel_1
+__EOT
 	echo -n "Press [Enter] to continue "
 	getresp ""
 	disklabel -W ${_disk}

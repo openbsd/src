@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.7 2002/03/31 17:30:30 deraadt Exp $
+#	$OpenBSD: install.md,v 1.8 2002/04/25 21:28:13 miod Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -154,23 +154,26 @@ md_init_mbr() {
 md_init_hfs() {
 	pdisk /dev/${1}c
 }
+
 md_checkfordisklabel() {
 	# $1 is the disk to check
 	local rval
 
-	echo
-	echo "Apple systems have two methods to label/partition a boot disk."
-	echo "Either the disk can be partitioned with Apple HFS partition"
-	echo "tools to contain an \"Unused\" partition, or without any"
-	echo "MacOS tools, the disk can be labled using an MBR partition table"
-	echo "If the HFS (DPME) partition table is used, after the disk is"
-	echo "partitioned with the Apple software, the \"Unused\" section"
-	echo "must be changed to type \"OpenBSD\" name \"OpenBSD\" using the"
-	echo "pdisk tool contained on this ramdisk. The disklabel can"
-	echo "then be edited normally"
-	echo "WARNING: the MBR partitioning code will HAPPILY overwrite/destroy"
-	echo "any HFS partitions on the disk, including the partition table."
-	echo "Choose the MBR option carefully, knowing this fact."
+	cat << __EOT
+
+Apple systems have two methods to label/partition a boot disk.
+
+Either the disk can be partitioned with Apple HFS partition tools to contain
+an "Unused" partition, or without any MacOS tools, the disk can be labled
+using an MBR partition table.
+If the HFS (DPME) partition table is used, after the disk is partitioned with
+the Apple software, the "Unused" section must be changed to type "OpenBSD" name
+"OpenBSD" using the pdisk tool contained on this ramdisk. The disklabel can
+then be edited normally.
+WARNING: the MBR partitioning code will HAPPILY overwrite/destroy any HFS
+partitions on the disk, including the partition table.
+Choose the MBR option carefully, knowing this fact.
+__EOT
 
 	echo -n "Do you want to choose (H)FS labeling or (M)BR labeling [H] "
 	getresp "h"
@@ -200,15 +203,16 @@ md_checkforMBRdisklabel() {
 	getresp "n"
 	case "$resp" in
 	n*|N*)	md_init_mbr $1;;
-	*)	echo
-		echo "You may keep your current setup if you want to be able to use any"
-		echo "already loaded OS. However you will be asked to prepare an empty"
-		echo "partition for OpenBSD later. There must also be at least ~0.5MB free space"
-		echo "in the boot partition to hold the OpenBSD bootloader."
-		echo
-		echo "Also note that the boot partition must be included as partition"
-		echo "'i' in the OpenBSD disklabel."
-		echo
+	*)	cat << __EOT
+You may keep your current setup if you want to be able to use any already
+loaded OS. However you will be asked to prepare an empty partition for OpenBSD
+later. There must also be at least ~0.5MB free space in the boot partition to
+hold the OpenBSD bootloader.
+
+Also note that the boot partition must be included as partition 'i' in the
+OpenBSD disklabel.
+
+__EOT
 		echo -n "Do you want to keep the current MSDOS partition setup? [y]"
 		getresp "y"
 		case "$resp" in
@@ -236,18 +240,19 @@ md_prep_fdisk()
 	local _done
 
 	_disk=$1
-	echo
-	echo "This disk has not previously been used with OpenBSD. You may share"
-	echo "this disk with other operating systems. However, to be able to boot"
-	echo "the system you will need a small DOS partition in the beginning of"
-	echo "the disk to hold the kernel boot. OpenFirmware understands"
-	echo "how to read an MSDOS style format from the disk."
-	echo
-	echo "This DOS style partitioning has been taken care of if"
-	echo "you chose to do that initialization earlier in the install."
-	echo
-	echo "WARNING: Wrong information in the BIOS partition table might"
-	echo "render the disk unusable."
+	cat << __EOT
+
+This disk has not previously been used with OpenBSD. You may share this disk
+with other operating systems. However, to be able to boot the system you will
+need a small DOS partition in the beginning of the disk to hold the kernel
+boot. OpenFirmware understands how to read an MSDOS style format from the disk.
+
+This DOS style partitioning has been taken care of if you chose to do that
+initialization earlier in the install"
+
+WARNING: Wrong information in the BIOS partition table might render the disk
+unusable.
+__EOT
 
 	echo -n "Press [Enter] to continue "
 	getresp ""
@@ -261,7 +266,7 @@ md_prep_fdisk()
 	_done=0
 	while [ $_done = 0 ]; do
 		echo
-		cat << \__md_prep_fdisk_1
+		cat << __EOT
 
 An OpenBSD partition should have type (i.d.) of 166 (A6), and should be the
 only partition marked as active. Also make sure that the size of the partition
@@ -272,7 +277,7 @@ The fdisk utility will be started update mode (interactive.)
 You will be able to add / modify this information as needed.
 If you make a mistake, simply exit fdisk without storing the new
 information, and you will be allowed to start over.
-__md_prep_fdisk_1
+__EOT
 		echo
 		echo -n "Press [Enter] to continue "
 		getresp ""
@@ -331,7 +336,7 @@ md_prep_disklabel()
 	esac
 
 	# display example
-	cat << \__md_prep_disklabel_1
+	cat << __EOT
 
 Disk partition sizes and offsets are in sector (most likely 512 bytes) units.
 You may set these size/offset pairs on cylinder boundaries
@@ -356,7 +361,7 @@ Do not change any parameters except the partition layout and the label name.
   h:  2008403  4256797    4.2BSD     1024  8192    16   # (Cyl. 4626*- 6809*)
   i:    10208       32     MSDOS                        # (Cyl.    0*- 11*)
 [End of example]
-__md_prep_disklabel_1
+__EOT
 	echo -n "Press [Enter] to continue "
 	getresp ""
 	if [[ $disklabeltype = "HFS" ]]

@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.9 2002/03/31 17:30:31 deraadt Exp $
+#       $OpenBSD: install.md,v 1.10 2002/04/25 21:28:13 miod Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -140,7 +140,7 @@ md_prep_disklabel()
 	esac
 
 	# display example
-	cat << \__md_prep_disklabel_1
+	cat << __EOT
 
 Here is an example of what the partition information will look like once
 you have entered the disklabel editor. Disk partition sizes and offsets
@@ -149,11 +149,11 @@ pairs are on cylinder boundaries (the number of sector per cylinder is
 given in the `sectors/cylinder' entry, which is not shown here).
 
 Do not change any parameters except the partition layout and the label name.
-It's probably also wisest not to touch the `8 partitions:' line, even
-in case you have defined less than eight partitions.
+It's probably also wisest not to touch the `16 partitions:' line, even
+in case you have defined less than sixteen partitions.
 
 [Example]
-8 partitions:
+16 partitions:
 #        size   offset    fstype   [fsize bsize   cpg]
   a:    50176        0    4.2BSD     1024  8192    16   # (Cyl.    0 - 111)
   b:    64512    50176      swap                        # (Cyl.  112 - 255)
@@ -161,7 +161,7 @@ in case you have defined less than eight partitions.
   d:   525504   114688    4.2BSD     1024  8192    16   # (Cyl.  256 - 1428)
 [End of example]
 
-__md_prep_disklabel_1
+__EOT
 	echo -n "Press [Enter] to continue "
 	getresp ""
 	disklabel -W ${_disk}
@@ -172,18 +172,18 @@ md_welcome_banner() {
 	if [ "$MODE" = "install" ]; then
 		echo ""
 		echo "Welcome to the OpenBSD/mvme88k ${VERSION_MAJOR}.${VERSION_MINOR} installation program."
-		cat << \__welcome_banner_1
+		cat << __EOT
 
 This program is designed to help you put OpenBSD on your disk,
 in a simple and rational way.  You'll be asked several questions,
 and it would probably be useful to have your disk's hardware
 manual, the installation notes, and a calculator handy.
-__welcome_banner_1
+__EOT
 
 	else
 		echo ""
 		echo "Welcome to the OpenBSD/mvme88k ${VERSION_MAJOR}.${VERSION_MINOR} upgrade program."
-		cat << \__welcome_banner_2
+		cat << __EOT
 
 This program is designed to help you upgrade your OpenBSD system in a
 simple and rational way.
@@ -192,10 +192,10 @@ As a reminder, installing the `etc' binary set is NOT recommended.
 Once the rest of your system has been upgraded, you should manually
 merge any changes to files in the `etc' set into those files which
 already exist on your system.
-__welcome_banner_2
+__EOT
 	fi
 
-cat << \__welcome_banner_3
+cat << __EOT
 
 As with anything which modifies your disk's contents, this
 program can cause SIGNIFICANT data loss, and you are advised
@@ -207,16 +207,16 @@ You can hit Control-C at any time to quit, but if you do so at a
 prompt, you may have to hit return.  Also, quitting in the middle of
 installation may leave your system in an inconsistent state.
 
-__welcome_banner_3
+__EOT
 }
 
 md_not_going_to_install() {
-	cat << \__not_going_to_install_1
+	cat << __EOT
 
 OK, then.  Enter `halt' at the prompt to halt the machine.  Once the
 machine has halted, power-cycle the system to load new boot code.
 
-__not_going_to_install_1
+__EOT
 }
 
 md_congrats() {
@@ -226,13 +226,13 @@ md_congrats() {
 	else
 		what="upgraded";
 	fi
-	cat << __congratulations_1
+	cat << __EOT
 
 CONGRATULATIONS!  You have successfully $what OpenBSD!
 To boot the installed system, enter halt at the command prompt. Once the
 system has halted, reset the machine and boot from the disk.
 
-__congratulations_1
+__EOT
 }
 
 md_native_fstype() {

@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.12 2002/03/31 17:30:30 deraadt Exp $
+#	$OpenBSD: install.md,v 1.13 2002/04/25 21:28:10 miod Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -125,16 +125,16 @@ md_welcome_banner() {
 	if [ "$MODE" = "install" ]; then
 		echo ""
 		echo "Welcome to the OpenBSD/amiga ${VERSION_MAJOR}.${VERSION_MINOR} installation program."
-		cat << \__welcome_banner_1
+		cat << __EOT
 
 This program is designed to help you put OpenBSD on your disk in a simple and
 rational way.
-__welcome_banner_1
+__EOT
 
 	else
 		echo ""
 		echo "Welcome to the OpenBSD/amiga ${VERSION_MAJOR}.${VERSION_MINOR} upgrade program."
-		cat << \__welcome_banner_2
+		cat << __EOT
 
 This program is designed to help you upgrade your OpenBSD system in a
 simple and rational way.
@@ -143,10 +143,10 @@ As a reminder, installing the `etc' binary set is NOT recommended.
 Once the rest of your system has been upgraded, you should manually
 merge any changes to files in the `etc' set into those files which
 already exist on your system.
-__welcome_banner_2
+__EOT
 	fi
 
-cat << \__welcome_banner_3
+cat << __EOT
 
 As with anything which modifies your disk's contents, this
 program can cause SIGNIFICANT data loss, and you are advised
@@ -158,17 +158,17 @@ You can hit Control-C at any time to quit, but if you do so at a
 prompt, you may have to hit return.  Also, quitting in the middle of
 installation may leave your system in an inconsistent state.
 
-__welcome_banner_3
+__EOT
 } | more
 }
 
 md_not_going_to_install() {
-	cat << \__not_going_to_install_1
+	cat << __EOT
 
 OK, then.  Enter `halt' at the prompt to halt the machine.  Once the
 machine has halted, power-cycle the system and you'll get back to AmigaOS.
 
-__not_going_to_install_1
+__EOT
 }
 
 md_congrats() {
@@ -178,12 +178,12 @@ md_congrats() {
 	else
 		what="upgraded";
 	fi
-	cat << __congratulations_1
+	cat << __EOT
 
 CONGRATULATIONS!  You have successfully $what OpenBSD!
 To boot the installed system, enter halt at the command prompt. Once the
 system has halted, reset the machine, enter AmigaOS and boot via loadbsd
 without the -b flag, per the install document.
 
-__congratulations_1
+__EOT
 }

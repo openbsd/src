@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.5 2002/03/31 17:30:31 deraadt Exp $
+#	$OpenBSD: install.md,v 1.6 2002/04/25 21:28:13 miod Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -249,7 +249,7 @@ md_prep_fdisk()
 	_done=0
 	while [ $_done = 0 ]; do
 		echo
-		cat << \__md_prep_fdisk_1
+		cat << __EOT
 
 An OpenBSD partition should have type (i.d.) of 166 (A6), and should be the
 only partition marked as active. Also make sure that the size of the partition
@@ -260,7 +260,7 @@ The fdisk utility will be started update mode (interactive.)
 You will be able to add / modify this information as needed.
 If you make a mistake, simply exit fdisk without storing the new
 information, and you will be allowed to start over.
-__md_prep_fdisk_1
+__EOT
 		echo
 		echo -n "Press [Enter] to continue "
 		getresp ""
@@ -318,7 +318,7 @@ md_prep_disklabel()
 	esac
 
 	# display example
-	cat << \__md_prep_disklabel_1
+	cat << __EOT
 
 Disk partition sizes and offsets are in sector (most likely 512 bytes) units.
 You may set these size/offset pairs on cylinder boundaries
@@ -343,7 +343,7 @@ Do not change any parameters except the partition layout and the label name.
   h:  2008403  4256797    4.2BSD     1024  8192    16   # (Cyl. 4626*- 6809*)
   i:    10208       32     MSDOS                        # (Cyl.    0*- 11*)
 [End of example]
-__md_prep_disklabel_1
+__EOT
 	echo -n "Press [Enter] to continue "
 	getresp ""
 	if [[ $disklabeltype = "HFS" ]]
