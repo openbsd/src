@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.22 2002/06/02 06:42:29 deraadt Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.23 2002/06/09 02:15:54 deraadt Exp $	*/
 /*	$KAME: traceroute6.c,v 1.50 2002/05/26 13:12:07 itojun Exp $	*/
 
 /*
@@ -1291,7 +1291,7 @@ inetname(sa)
 	if (first && !nflag) {
 		first = 0;
 		if (gethostname(domain, sizeof(domain)) == 0 &&
-		    (cp = index(domain, '.')))
+		    (cp = strchr(domain, '.')))
 			(void) strlcpy(domain, cp + 1, sizeof(domain));
 		else
 			domain[0] = 0;
@@ -1300,7 +1300,7 @@ inetname(sa)
 	if (!nflag) {
 		if (getnameinfo(sa, sa->sa_len, line, sizeof(line), NULL, 0,
 		    NI_NAMEREQD) == 0) {
-			if ((cp = index(line, '.')) &&
+			if ((cp = strchr(line, '.')) &&
 			    !strcmp(cp + 1, domain))
 				*cp = 0;
 			cp = line;

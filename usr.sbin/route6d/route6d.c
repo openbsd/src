@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.29 2002/06/07 16:42:07 itojun Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.30 2002/06/09 02:15:54 deraadt Exp $	*/
 /*	$KAME: route6d.c,v 1.85 2002/06/07 16:39:41 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #if 0
-static char _rcsid[] = "$OpenBSD: route6d.c,v 1.29 2002/06/07 16:42:07 itojun Exp $";
+static char _rcsid[] = "$OpenBSD: route6d.c,v 1.30 2002/06/09 02:15:54 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -3016,11 +3016,11 @@ filterconfig()
 			iflp = ap;
 			goto ifonly;
 		}
-		if ((p = index(ap, ',')) != NULL) {
+		if ((p = strchr(ap, ',')) != NULL) {
 			*p++ = '\0';
 			iflp = p;
 		}
-		if ((p = index(ap, '/')) == NULL) {
+		if ((p = strchr(ap, '/')) == NULL) {
 			fatal("no prefixlen specified for '%s'", ap);
 			/*NOTREACHED*/
 		}
@@ -3041,7 +3041,7 @@ ifonly:
 		/* parse the interface listing portion */
 		while (iflp) {
 			ifname = iflp;
-			if ((iflp = index(iflp, ',')) != NULL)
+			if ((iflp = strchr(iflp, ',')) != NULL)
 				*iflp++ = '\0';
 			ifcp = ifc_find(ifname);
 			if (ifcp == NULL) {

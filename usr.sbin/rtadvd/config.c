@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.16 2002/06/08 18:11:13 itojun Exp $	*/
+/*	$OpenBSD: config.c,v 1.17 2002/06/09 02:15:54 deraadt Exp $	*/
 /*	$KAME: config.c,v 1.62 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -507,7 +507,7 @@ makeentry(buf, len, id, string, add)
 	if (add) {
 		char *cp;
 
-		cp = (char *)index(buf, '\0');
+		cp = (char *)strchr(buf, '\0');
 		snprintf(cp, ep - cp, "%d", id);
 	}
 }
