@@ -1,4 +1,4 @@
-/*	$OpenBSD: read_bsd_terminfo.c,v 1.2 1998/07/24 06:10:42 downsj Exp $	*/
+/*	$OpenBSD: read_bsd_terminfo.c,v 1.3 1998/07/25 19:36:11 millert Exp $	*/
 
 /*
  * Copyright (c) 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: read_bsd_terminfo.c,v 1.2 1998/07/24 06:10:42 downsj Exp $";
+static char rcsid[] = "$OpenBSD: read_bsd_terminfo.c,v 1.3 1998/07/25 19:36:11 millert Exp $";
 #endif
 
 #include <curses.priv.h>
@@ -69,15 +69,11 @@ _nc_read_bsd_terminfo_entry(tn, tp)
     fname = pathvec;
     p = pathbuf;
     /*
-     * TERMINFO can have one of two things in it. It can be the name
-     * of a file to use instead of /usr/share/misc/terminfo. In this
-     * case it better start with a "/". Or it can be an entry to use
-     * so we don't have to read the file. In this case it has to
-     * already have the newlines crunched out.  If TERMINFO does not
-     * hold a file name then a path of names is searched instead.
-     * The path is found in the TERMINFO variable, or becomes
-     * "$HOME/.terminfo /usr/share/misc/terminfo" if no TERMINFO
-     * exists.
+     * TERMINFO can have the name of a file to use instead of
+     * /usr/share/misc/terminfo.  If TERMINFO does not hold a file
+     * name then a path of names is searched instead. The path is
+     * found in the TERMINFO variable, or becomes "$HOME/.terminfo
+     * /usr/share/misc/terminfo" if no TERMINFO exists.
      */
     if ((termpath = getenv("TERMINFO")) != NULL)
 	strlcpy(pathbuf, termpath, sizeof(pathbuf));
