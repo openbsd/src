@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.93 2004/03/18 20:52:13 mcbride Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.94 2004/04/27 17:33:52 pb Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.93 2004/03/18 20:52:13 mcbride Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.94 2004/04/27 17:33:52 pb Exp $";
 #endif
 #endif /* not lint */
 
@@ -753,7 +753,7 @@ printif(struct ifreq *ifrm, int ifaliases)
 		inb = realloc(inbuf, len);
 		if (inb == NULL) {
 			if (inbuf)
-				free(inbuf)
+				free(inbuf);
 			err(1, "malloc");
 		}
 		ifc.ifc_buf = inbuf = inb;
