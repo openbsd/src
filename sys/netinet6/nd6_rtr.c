@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.1 1999/12/08 06:50:23 itojun Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.2 1999/12/10 10:04:28 angelos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -38,9 +38,7 @@
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 #include <sys/ioctl.h>
-#endif
 #include <sys/syslog.h>
 
 #include <net/if.h>
@@ -213,9 +211,7 @@ nd6_ra_input(m, off, icmp6len)
     {
 	struct nd_defrouter dr0;
 	u_int32_t advreachable = nd_ra->nd_ra_reachable;
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 	long time_second = time.tv_sec;
-#endif
 
 	dr0.rtaddr = saddr6;
 	dr0.flags  = nd_ra->nd_ra_flags_reserved;
@@ -400,11 +396,8 @@ defrouter_addreq(new)
 	gate.sin6_addr = new->rtaddr;
 
 #if 1
-#ifdef __NetBSD__
-	s = splsoftnet();
-#else
 	s = splnet();
-#endif
+
 	(void)rtrequest(RTM_ADD, (struct sockaddr *)&def,
 		(struct sockaddr *)&gate, (struct sockaddr *)&mask,
 		RTF_GATEWAY, NULL);
@@ -417,16 +410,8 @@ defrouter_addreq(new)
 	if ((rnh = rt_tables[AF_INET6]) == 0)
 		return;
 
-#ifdef __NetBSD__
-	s = splsoftnet();
-#else
 	s = splnet();
-#endif
-#ifdef __NetBSD__
-	rt = pool_get(&rtentry_pool, PR_NOWAIT);
-#else
 	R_Malloc(rt, struct rtentry *, sizeof(*rt));
-#endif
 	if (!rt)
 		goto bad;
 	Bzero(rt, sizeof(*rt));
@@ -549,11 +534,7 @@ defrtrlist_update(new)
 	struct nd_defrouter *new;
 {
 	struct nd_defrouter *dr, *n;
-#ifdef __NetBSD__
-	int s = splsoftnet();
-#else
 	int s = splnet();
-#endif
 
 	if ((dr = defrouter_lookup(&new->rtaddr, new->ifp)) != NULL) {
 		/* entry exists */
@@ -681,11 +662,8 @@ prelist_add(pr, dr)
 
 	/* xxx ND_OPT_PI_FLAG_ONLINK processing */
 
-#ifdef __NetBSD__
-	s = splsoftnet();
-#else
 	s = splnet();
-#endif
+
 	/* link ndpr_entry to nd_prefix list */
 	LIST_INSERT_HEAD(&nd_prefix, new, ndpr_entry);
 	splx(s);
@@ -703,11 +681,8 @@ prelist_remove(pr)
 	struct nd_pfxrouter *pfr, *next;
 	int s;
 
-#ifdef __NetBSD__
-	s = splsoftnet();
-#else
 	s = splnet();
-#endif
+
 	/* unlink ndpr_entry from nd_prefix list */
 	LIST_REMOVE(pr, ndpr_entry);
 	splx(s);
@@ -737,11 +712,8 @@ prelist_update(new, dr, m)
 {
 	struct in6_ifaddr *ia6 = NULL;
 	struct nd_prefix *pr;
-#ifdef __NetBSD__
-	int s = splsoftnet();
-#else
 	int s = splnet();
-#endif
+
 	int error = 0;
 	int auth;
 	struct in6_addrlifetime *lt6;
@@ -1134,18 +1106,10 @@ in6_ifadd(ifp, in6, addr, prefixlen)
 		in6_ifaddr = ia;
 
 	/* link to if_addrlist */
-#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
-	if ((ifa = ifp->if_addrlist) != NULL) {
-		for ( ; ifa->ifa_next; ifa = ifa->ifa_next)
-			continue;
-		ifa->ifa_next = (struct ifaddr *)ia;
-	}
-#else
 	if (ifp->if_addrlist.tqh_first != NULL) {
 		TAILQ_INSERT_TAIL(&ifp->if_addrlist, (struct ifaddr *)ia,
 			ifa_list);
 	}
-#endif
 #if 0
 	else {
 		/*
@@ -1203,10 +1167,8 @@ in6_ifadd(ifp, in6, addr, prefixlen)
 		int error;	/* not used */
 		struct in6_addr sol6;
 
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 		/* Restore saved multicast addresses(if any). */
 		in6_restoremkludge(ia, ifp);
-#endif
 
 		/* join solicited node multicast address */
 		bzero(&sol6, sizeof(sol6));
@@ -1242,9 +1204,6 @@ in6_ifdel(ifp, in6)
 	struct ifnet *ifp;
 	struct in6_addr *in6;
 {
-#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
-	struct ifaddr *ifa;
-#endif
 	struct in6_ifaddr *ia = (struct in6_ifaddr *)NULL;
 	struct in6_ifaddr *oia = (struct in6_ifaddr *)NULL;
 
@@ -1280,21 +1239,7 @@ in6_ifdel(ifp, in6)
 		ia->ia_flags &= ~IFA_ROUTE;
 	}
 
-#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
-	if ((ifa = ifp->if_addrlist) == (struct ifaddr *)ia) {
-		ifp->if_addrlist = ifa->ifa_next;
-	} else {
-		while (ifa->ifa_next &&
-		      (ifa->ifa_next != (struct ifaddr *)ia))
-			ifa = ifa->ifa_next;
-		if (ifa->ifa_next)
-			ifa->ifa_next = ((struct ifaddr *)ia)->ifa_next;
-		else
-			return -1;
-	}
-#else
 	TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
-#endif
 
 	/* lladdr is never deleted */
 	oia = ia;
@@ -1309,9 +1254,7 @@ in6_ifdel(ifp, in6)
 			return -1;
 	}
 
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 	in6_savemkludge(oia);
-#endif
 	IFAFREE((&oia->ia_ifa));
 /* xxx
 	rtrequest(RTM_DELETE,
@@ -1327,9 +1270,7 @@ in6_ifdel(ifp, in6)
 int
 in6_init_prefix_ltimes(struct nd_prefix *ndpr)
 {
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 	long time_second = time.tv_sec;
-#endif
 
 	/* check if preferred lifetime > valid lifetime */
 	if (ndpr->ndpr_pltime > ndpr->ndpr_vltime) {
@@ -1355,9 +1296,7 @@ in6_init_address_ltimes(struct nd_prefix *new,
 			struct in6_addrlifetime *lt6,
 			int update_vltime)
 {
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 	long time_second = time.tv_sec;
-#endif
 
 	/* Valid lifetime must not be updated unless explicitly specified. */
 	if (update_vltime) {
@@ -1398,11 +1337,7 @@ rt6_flush(gateway, ifp)
     struct ifnet *ifp;
 {
 	struct radix_node_head *rnh = rt_tables[AF_INET6];
-#ifdef __NetBSD__
-	int s = splsoftnet();
-#else
 	int s = splnet();
-#endif
 
 	/* We'll care only link-local addresses */
 	if (!IN6_IS_ADDR_LINKLOCAL(gateway)) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.h,v 1.1 1999/12/08 06:50:20 itojun Exp $	*/
+/*	$OpenBSD: icmp6.h,v 1.2 1999/12/10 10:04:27 angelos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -578,13 +578,7 @@ void	icmp6_reflect __P((struct mbuf *, size_t));
 void	icmp6_prepare __P((struct mbuf *));
 void	icmp6_redirect_input __P((struct mbuf *, int));
 void	icmp6_redirect_output __P((struct mbuf *, struct rtentry *));
-#ifdef __bsdi__
 int	icmp6_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
-void	icmp6_mtuexpire __P((struct rtentry *, struct rttimer *));
-#endif /*__bsdi__*/
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-int	icmp6_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
-#endif
 
 /* XXX: is this the right place for these macros? */
 #define icmp6_ifstat_inc(ifp, tag) \

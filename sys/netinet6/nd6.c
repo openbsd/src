@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.1 1999/12/08 06:50:23 itojun Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.2 1999/12/10 10:04:28 angelos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -46,34 +46,19 @@
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 #include <sys/ioctl.h>
-#endif
 #include <sys/syslog.h>
 #include <sys/queue.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
-#if !(defined(__bsdi__) && _BSDI_VERSION >= 199802)
 #include <net/if_atm.h>
-#endif
 #include <net/route.h>
 
 #include <netinet/in.h>
-#ifndef __NetBSD__
 #include <netinet/if_ether.h>
-#ifdef __FreeBSD__
-#include <netinet/if_fddi.h>
-#endif
-#ifdef __bsdi__
-#include <net/if_fddi.h>
-#endif
-#else /* __NetBSD__ */
-#include <net/if_ether.h>
-#include <netinet/if_inarp.h>
-#include <net/if_fddi.h>
-#endif /* __NetBSD__ */
+
 #include <netinet6/in6_var.h>
 #include <netinet6/ip6.h>
 #include <netinet6/ip6_var.h>
@@ -81,12 +66,9 @@
 #include <netinet6/in6_prefix.h>
 #include <netinet6/icmp6.h>
 
-#ifndef __bsdi__
 #include "loop.h"
-#endif
-#if defined(__NetBSD__) || defined(__OpenBSD__)
+
 extern struct ifnet loif[NLOOP];
-#endif
 
 #include <net/net_osdep.h>
 
@@ -204,20 +186,9 @@ nd6_setmtu(ifp)
 	 case IFT_ETHER:
 		 ndi->maxmtu = MIN(ETHERMTU, ifp->if_mtu);
 		 break;
-#if defined(__FreeBSD__) || defined(__bsdi__)
-	 case IFT_FDDI:
-#if defined(__bsdi__) && _BSDI_VERSION >= 199802
-		 ndi->maxmtu = MIN(FDDIMTU, ifp->if_mtu);
-#else
-		 ndi->maxmtu = MIN(FDDIIPMTU, ifp->if_mtu);
-#endif
-		 break;
-#endif
-#if !(defined(__bsdi__) && _BSDI_VERSION >= 199802)
 	 case IFT_ATM:
 		 ndi->maxmtu = MIN(ATMMTU, ifp->if_mtu);
 		 break;
-#endif
 	 default:
 		 ndi->maxmtu = ifp->if_mtu;
 		 break;
@@ -397,15 +368,10 @@ nd6_timer(ignored_arg)
 	register struct llinfo_nd6 *ln;
 	register struct nd_defrouter *dr;
 	register struct nd_prefix *pr;
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 	long time_second = time.tv_sec;
-#endif
 	
-#ifdef __NetBSD__
-	s = splsoftnet();
-#else
 	s = splnet();
-#endif
+
 	timeout(nd6_timer, (caddr_t)0, nd6_prune * hz);
 
 	ln = llinfo_nd6.ln_next;
@@ -575,11 +541,7 @@ nd6_lookup(addr6, create, ifp)
 	sin6.sin6_len = sizeof(struct sockaddr_in6);
 	sin6.sin6_family = AF_INET6;
 	sin6.sin6_addr = *addr6;
-	rt = rtalloc1((struct sockaddr *)&sin6, create
-#ifdef __FreeBSD__
-		      , 0UL
-#endif /*__FreeBSD__*/
-		      );
+	rt = rtalloc1((struct sockaddr *)&sin6, create);
 	if (rt && (rt->rt_flags & RTF_LLINFO) == 0) {
 		/*
 		 * This is the case for the default route.
@@ -676,13 +638,9 @@ nd6_is_addr_neighbor(addr, ifp)
 	 * If the address matches one of our addresses,
 	 * it should be a neighbor.
 	 */
-#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
-	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next)
-#else
 	for (ifa = ifp->if_addrlist.tqh_first;
 	     ifa;
 	     ifa = ifa->ifa_list.tqe_next)
-#endif
 	{
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			next: continue;
@@ -724,11 +682,8 @@ nd6_free(rt)
 		int s;
 		in6 = &((struct sockaddr_in6 *)rt_key(rt))->sin6_addr;
 
-#ifdef __NetBSD__
-		s = splsoftnet();
-#else
 		s = splnet();
-#endif
+
 		dr = defrouter_lookup(&((struct sockaddr_in6 *)rt_key(rt))->
 				      sin6_addr,
 				      rt->rt_ifp);
@@ -767,9 +722,7 @@ nd6_nud_hint(rt, dst6)
 	struct in6_addr *dst6;
 {
 	struct llinfo_nd6 *ln;
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 	long time_second = time.tv_sec;
-#endif
 
 	/*
 	 * If the caller specified "rt", use that.  Otherwise, resolve the
@@ -822,9 +775,7 @@ nd6_resolve(ifp, rt, m, dst, desten)
 {
 	struct llinfo_nd6 *ln = (struct llinfo_nd6 *)NULL;
 	struct sockaddr_dl *sdl;
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 	long time_second = time.tv_sec;
-#endif
 
 	if (m->m_flags & M_MCAST) {
 		switch (ifp->if_type) {
@@ -900,26 +851,17 @@ nd6_resolve(ifp, rt, m, dst, desten)
 #endif /* OLDIP6OUTPUT */
 
 void
-#if defined(__bsdi__) && _BSDI_VERSION >= 199802
-nd6_rtrequest(req, rt, info)
-	int	req;
-	struct rtentry *rt;
-	struct rt_addrinfo *info; /* xxx unused */
-#else
 nd6_rtrequest(req, rt, sa)
 	int	req;
 	struct rtentry *rt;
 	struct sockaddr *sa; /* xxx unused */
-#endif
 {
 	struct sockaddr *gate = rt->rt_gateway;
 	struct llinfo_nd6 *ln = (struct llinfo_nd6 *)rt->rt_llinfo;
 	static struct sockaddr_dl null_sdl = {sizeof(null_sdl), AF_LINK};
 	struct ifnet *ifp = rt->rt_ifp;
 	struct ifaddr *ifa;
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 	long time_second = time.tv_sec;
-#endif
 
 	if (rt->rt_flags & RTF_GATEWAY)
 		return;
@@ -1033,17 +975,7 @@ nd6_rtrequest(req, rt, sa)
 				SDL(gate)->sdl_alen = ifp->if_addrlen;
 			}
 			if (nd6_useloopback) {
-#ifdef __bsdi__
-#if _BSDI_VERSION >= 199802
-				extern struct ifnet *loifp;
-				rt->rt_ifp = loifp;	/*XXX*/
-#else
-				extern struct ifnet loif;
-				rt->rt_ifp = &loif;	/*XXX*/
-#endif
-#else /* non-bsdi */
 				rt->rt_ifp = &loif[0];	/*XXX*/
-#endif
 				/*
 				 * Make sure rt_ifa be equal to the ifaddr
 				 * corresponding to the address.
@@ -1081,17 +1013,10 @@ nd6_rtrequest(req, rt, sa)
 }
 
 void
-#if defined(__bsdi__) && _BSDI_VERSION >= 199802
-nd6_p2p_rtrequest(req, rt, info)
-	int	req;
-	struct rtentry *rt;
-	struct rt_addrinfo *info; /* xxx unused */
-#else
 nd6_p2p_rtrequest(req, rt, sa)
 	int	req;
 	struct rtentry *rt;
 	struct sockaddr *sa; /* xxx unused */
-#endif
 {
 	struct sockaddr *gate = rt->rt_gateway;
 	static struct sockaddr_dl null_sdl = {sizeof(null_sdl), AF_LINK};
@@ -1139,17 +1064,7 @@ nd6_p2p_rtrequest(req, rt, sa)
 					  &SIN6(rt_key(rt))->sin6_addr);
 		if (ifa) {
 			if (nd6_useloopback) {
-#ifdef __bsdi__
-#if _BSDI_VERSION >= 199802
-				extern struct ifnet *loifp;
-				rt->rt_ifp = loifp;	/*XXX*/
-#else
-				extern struct ifnet loif;
-				rt->rt_ifp = &loif;	/*XXX*/
-#endif
-#else
 				rt->rt_ifp = &loif[0];	/*XXX*/
-#endif /*__bsdi__*/
 			}
 		}
 		break;
@@ -1175,11 +1090,9 @@ nd6_ioctl(cmd, data, ifp)
 	switch (cmd) {
 	case SIOCGDRLST_IN6:
 		bzero(drl, sizeof(*drl));
-#ifdef __NetBSD__
-		s = splsoftnet();
-#else
+
 		s = splnet();
-#endif
+
 		dr = nd_defrouter.lh_first;
 		while (dr && i < DRLSTSIZ) {
 			drl->defrouter[i].rtaddr = dr->rtaddr;
@@ -1204,11 +1117,9 @@ nd6_ioctl(cmd, data, ifp)
 		break;
 	case SIOCGPRLST_IN6:
 		bzero(prl, sizeof(*prl));
-#ifdef __NetBSD__
-		s = splsoftnet();
-#else
+
 		s = splnet();
-#endif
+
 		pr = nd_prefix.lh_first;
 		while (pr && i < PRLSTSIZ) {
 			struct nd_pfxrouter *pfr;
@@ -1287,11 +1198,8 @@ nd6_ioctl(cmd, data, ifp)
 		/* flush all the prefix advertised by routers */
 		struct nd_prefix *pr, *next;
 
-#ifdef __NetBSD__
-		s = splsoftnet();
-#else
 		s = splnet();
-#endif
+
 		for (pr = nd_prefix.lh_first; pr; pr = next) {
 			next = pr->ndpr_next;
 			if (!IN6_IS_ADDR_UNSPECIFIED(&pr->ndpr_addr))
@@ -1306,11 +1214,8 @@ nd6_ioctl(cmd, data, ifp)
 		/* flush all the default routers */
 		struct nd_defrouter *dr, *next;
 
-#ifdef __NetBSD__
-		s = splsoftnet();
-#else
 		s = splnet();
-#endif
+
 		if ((dr = nd_defrouter.lh_first) != NULL) {
 			/*
 			 * The first entry of the list may be stored in
@@ -1342,11 +1247,8 @@ nd6_ioctl(cmd, data, ifp)
 				*idp = htons(ifp->if_index);
 		}
 
-#ifdef __NetBSD__
-		s = splsoftnet();
-#else
 		s = splnet();
-#endif
+
 		if ((rt = nd6_lookup(&nb_addr, 0, ifp)) == NULL) {
 			error = EINVAL;
 			break;
@@ -1385,9 +1287,7 @@ nd6_cache_lladdr(ifp, from, lladdr, lladdrlen, type, code)
 	int olladdr;
 	int llchange;
 	int newstate = 0;
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 	long time_second = time.tv_sec;
-#endif
 
 	if (!ifp)
 		panic("ifp == NULL in nd6_cache_lladdr");
@@ -1579,11 +1479,8 @@ static void
 nd6_slowtimo(ignored_arg)
     void *ignored_arg;
 {
-#ifdef __NetBSD__
-	int s = splsoftnet();
-#else
 	int s = splnet();
-#endif
+
 	register int i;
 	register struct nd_ifinfo *nd6if;
 
@@ -1617,9 +1514,7 @@ nd6_output(ifp, m0, dst, rt0)
 	register struct rtentry *rt = rt0;
 	struct llinfo_nd6 *ln = NULL;
 	int error = 0;
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 	long time_second = time.tv_sec;
-#endif
 
 	if (IN6_IS_ADDR_MULTICAST(&dst->sin6_addr))
 		goto sendpkt;
@@ -1642,13 +1537,8 @@ nd6_output(ifp, m0, dst, rt0)
 	 */
 	if (rt) {
 		if ((rt->rt_flags & RTF_UP) == 0) {
-#ifdef __FreeBSD__
-			if ((rt0 = rt = rtalloc1((struct sockaddr *)dst, 1, 0UL)) !=
-				NULL)
-#else
 			if ((rt0 = rt = rtalloc1((struct sockaddr *)dst, 1)) !=
 				NULL)
-#endif 
 			{
 				rt->rt_refcnt--;
 				if (rt->rt_ifp != ifp)
@@ -1661,22 +1551,9 @@ nd6_output(ifp, m0, dst, rt0)
 				goto lookup;
 			if (((rt = rt->rt_gwroute)->rt_flags & RTF_UP) == 0) {
 				rtfree(rt); rt = rt0;
-#ifdef __FreeBSD__
-			lookup: rt->rt_gwroute = rtalloc1(rt->rt_gateway, 1, 0UL);
-#else
 			lookup: rt->rt_gwroute = rtalloc1(rt->rt_gateway, 1);
-#endif 
 				if ((rt = rt->rt_gwroute) == 0)
 					senderr(EHOSTUNREACH);
-#ifdef __bsdi__
-				/* the "G" test below also prevents rt == rt0 */
-				if ((rt->rt_flags & RTF_GATEWAY) ||
-				    (rt->rt_ifp != ifp)) {
-					rt->rt_refcnt--;
-					rt0->rt_gwroute = 0;
-					senderr(EHOSTUNREACH);
-				}
-#endif 
 			}
 		}
 		if (rt->rt_flags & RTF_REJECT)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.1 1999/12/08 06:50:21 itojun Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.2 1999/12/10 10:04:28 angelos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -64,10 +64,6 @@
  *	@(#)in_pcb.c	8.2 (Berkeley) 1/4/94
  */
 
-#ifdef __NetBSD__	/*XXX*/
-#include "opt_ipsec.h"
-#endif
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -96,12 +92,9 @@
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
 
-#ifndef __bsdi__
 #include "loop.h"
-#endif
-#if defined(__NetBSD__) || defined(__OpenBSD__)
+
 extern struct ifnet loif[NLOOP];
-#endif
 
 /*
  * Return an IPv6 address, which is the most appropriate for given
@@ -196,21 +189,9 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, errorp)
 	 */
 	if (IN6_IS_ADDR_MULTICAST(dst)) {
 		struct ifnet *ifp = mopts ? mopts->im6o_multicast_ifp : NULL;
-#ifdef __bsdi__
-#if _BSDI_VERSION >= 199802
-		extern struct ifnet *loifp;
-#else
-		extern struct ifnet loif;
-		struct ifnet *loifp = &loif;
-#endif
-#endif
 
 		if (ifp == NULL && IN6_IS_ADDR_MC_NODELOCAL(dst)) {
-#ifdef __bsdi__
-			ifp = loifp;
-#else
 			ifp = &loif[0];
-#endif
 		}
 
 		if (ifp) {
@@ -265,21 +246,8 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, errorp)
 			ro->ro_dst.sin6_family = AF_INET6;
 			ro->ro_dst.sin6_len = sizeof(struct sockaddr_in6);
 			ro->ro_dst.sin6_addr = *dst;
-			if (IN6_IS_ADDR_MULTICAST(dst)) {
-#ifdef __FreeBSD__
-				ro->ro_rt = rtalloc1(&((struct route *)ro)
-						     ->ro_dst, 0, 0UL);
-#endif /*__FreeBSD__*/
-#if defined(__bsdi__) || defined(__NetBSD__)
-				ro->ro_rt = rtalloc1(&((struct route *)ro)
-						     ->ro_dst, 0);
-#endif /*__bsdi__*/
-			} else {
-#ifdef __FreeBSD__
-				rtcalloc((struct route *)ro);
-#else
+			if (!IN6_IS_ADDR_MULTICAST(dst)) {
 				rtalloc((struct route *)ro);
-#endif
 			}
 		}
 

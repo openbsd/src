@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.1 1999/12/08 06:50:21 itojun Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.2 1999/12/10 10:04:27 angelos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -35,13 +35,7 @@
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/kernel.h>
-#ifdef __bsdi__
-#include <crypto/md5.h>
-#elif defined(__OpenBSD__)
 #include <sys/md5k.h>
-#else
-#include <sys/md5.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -50,9 +44,7 @@
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
-#ifndef __NetBSD__
 #include <netinet/if_ether.h>
-#endif
 
 #include <netinet6/ip6.h>
 #include <netinet6/ip6_var.h>
@@ -124,9 +116,6 @@ gen_rand_eui64(dst)
 {
 	MD5_CTX ctxt;
 	u_int8_t digest[16];
-#ifdef __FreeBSD__
-	int hostnamelen	= strlen(hostname);
-#endif
 
 	/* generate 8bytes of pseudo-random value. */
 	bzero(&ctxt, sizeof(ctxt));
@@ -162,21 +151,13 @@ in6_ifattach_getifid(ifp0)
 	if (found_first_ifid)
 		return 0;
 
-#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
-	for (ifp = ifnet; ifp; ifp = ifp->if_next)
-#else
 	for (ifp = ifnet.tqh_first; ifp; ifp = ifp->if_list.tqe_next)
-#endif
 	{
 		if (ifp0 != NULL && ifp0 != ifp)
 			continue;
-#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
-		for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next)
-#else
 		for (ifa = ifp->if_addrlist.tqh_first;
 		     ifa;
 		     ifa = ifa->ifa_list.tqe_next)
-#endif
 		{
 			if (ifa->ifa_addr->sa_family != AF_LINK)
 				continue;
@@ -254,10 +235,6 @@ in6_ifattach(ifp, type, laddr, noloop)
 	struct sockaddr_in6 mltmask;
 	struct sockaddr_in6 gate;
 	struct sockaddr_in6 mask;
-#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
-	struct ifaddr **ifap;
-#endif 
-
 	struct in6_ifaddr *ia, *ib, *oia;
 	struct ifaddr *ifa;
 	int rtflag = 0;
@@ -340,19 +317,6 @@ in6_ifattach(ifp, type, laddr, noloop)
 	 * cards multiple times. 
 	 * This is lengthy for P2P and LOOP but works.
 	 */
-#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
-	ifa = ifp->if_addrlist;
-	if (ifa != NULL) {
-		for ( ; ifa; ifa = ifa->ifa_next) {
-			ifap = &ifa->ifa_next;
-			if (ifa->ifa_addr->sa_family != AF_INET6)
-				continue;
-			if (IN6_IS_ADDR_LINKLOCAL(&satosin6(ifa->ifa_addr)->sin6_addr))
-				return;
-		}
-	} else
-		ifap = &ifp->if_addrlist;
-#else
 	ifa = TAILQ_FIRST(&ifp->if_addrlist);
 	if (ifa != NULL) {
 		for ( ; ifa; ifa = TAILQ_NEXT(ifa, ifa_list)) {
@@ -364,7 +328,6 @@ in6_ifattach(ifp, type, laddr, noloop)
 	} else {
 		TAILQ_INIT(&ifp->if_addrlist);
 	}
-#endif
 
 	/*
 	 * link-local address
@@ -375,11 +338,9 @@ in6_ifattach(ifp, type, laddr, noloop)
 	ia->ia_ifa.ifa_dstaddr = (struct sockaddr *)&ia->ia_dstaddr;
 	ia->ia_ifa.ifa_netmask = (struct sockaddr *)&ia->ia_prefixmask;
 	ia->ia_ifp = ifp;
-#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
-	*ifap = (struct ifaddr *)ia;
-#else
+
 	TAILQ_INSERT_TAIL(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
-#endif
+
 	/*
 	 * Also link into the IPv6 address chain beginning with in6_ifaddr.
 	 * kazu opposed it, but itojun & jinmei wanted.
@@ -475,11 +436,7 @@ in6_ifattach(ifp, type, laddr, noloop)
 			}
 
 			/* undo changes */
-#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
-			*ifap = NULL;
-#else
 			TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
-#endif
 			if (oia)
 				oia->ia_next = ia->ia_next;
 			else
@@ -532,12 +489,8 @@ in6_ifattach(ifp, type, laddr, noloop)
 		ib->ia_ifp = ifp;
 
 		ia->ia_next = ib;
-#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
-		ia->ia_ifa.ifa_next = (struct ifaddr *)ib;
-#else
 		TAILQ_INSERT_TAIL(&ifp->if_addrlist, (struct ifaddr *)ib,
 			ifa_list);
-#endif
 
 		ib->ia_prefixmask.sin6_len = sizeof(struct sockaddr_in6);
 		ib->ia_prefixmask.sin6_family = AF_INET6;
@@ -545,18 +498,6 @@ in6_ifattach(ifp, type, laddr, noloop)
 		ib->ia_addr.sin6_len = sizeof(struct sockaddr_in6);
 		ib->ia_addr.sin6_family = AF_INET6;
 		ib->ia_addr.sin6_addr = in6addr_loopback;
-#ifdef __bsdi__
-		/*
-		 * It is necessary to set the loopback address to the dstaddr
-		 * field at least for BSDI. Without this setting, the BSDI
-		 * version of ifa_ifwithroute() rejects to add a route
-		 * to the loopback interface. 
-		 */
-		ib->ia_dstaddr.sin6_len = sizeof(struct sockaddr_in6);
-		ib->ia_dstaddr.sin6_family = AF_INET6;
-		ib->ia_dstaddr.sin6_addr = in6addr_loopback;
-#endif
-
 		ib->ia_ifa.ifa_metric = ifp->if_metric;
 
 		rtrequest(RTM_ADD,
@@ -575,10 +516,8 @@ in6_ifattach(ifp, type, laddr, noloop)
 	if (ifp->if_flags & IFF_MULTICAST) {
 		int error;	/* not used */
 
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 		/* Restore saved multicast addresses(if any). */
 		in6_restoremkludge(ia, ifp);
-#endif
 
 		bzero(&mltmask, sizeof(mltmask));
 		mltmask.sin6_len = sizeof(struct sockaddr_in6);
@@ -676,23 +615,13 @@ in6_ifdetach(ifp)
 {
 	struct in6_ifaddr *ia, *oia;
 	struct ifaddr *ifa;
-#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
-	struct ifaddr *ifaprev = NULL;
-#endif 
 	struct rtentry *rt;
 	short rtflags;
 
-#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
-	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next)
-#else
 	for (ifa = ifp->if_addrlist.tqh_first; ifa; ifa = ifa->ifa_list.tqe_next)
-#endif
 	{
 		if (ifa->ifa_addr->sa_family != AF_INET6
 		 || !IN6_IS_ADDR_LINKLOCAL(&satosin6(&ifa->ifa_addr)->sin6_addr)) {
-#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
-			ifaprev = ifa;
-#endif
 			continue;
 		}
 
@@ -700,11 +629,7 @@ in6_ifdetach(ifp)
 
 		/* remove from the routing table */
 		if ((ia->ia_flags & IFA_ROUTE)
-		 && (rt = rtalloc1((struct sockaddr *)&ia->ia_addr, 0
-#ifdef __FreeBSD__
-				, 0UL
-#endif
-				))) {
+		 && (rt = rtalloc1((struct sockaddr *)&ia->ia_addr, 0))) {
 			rtflags = rt->rt_flags;
 			rtfree(rt);
 			rtrequest(RTM_DELETE,
@@ -715,14 +640,7 @@ in6_ifdetach(ifp)
 		}
 
 		/* remove from the linked list */
-#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
-		if (ifaprev)
-			ifaprev->ifa_next = ifa->ifa_next;
-		else
-			ifp->if_addrlist = ifa->ifa_next;
-#else
 		TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
-#endif
 
 		/* also remove from the IPv6 address chain(itojun&jinmei) */
 		oia = ia;

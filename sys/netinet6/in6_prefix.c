@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_prefix.c,v 1.1 1999/12/08 06:50:21 itojun Exp $	*/
+/*	$OpenBSD: in6_prefix.c,v 1.2 1999/12/10 10:04:28 angelos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,9 +65,7 @@
  */
 
 #include <sys/param.h>
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 #include <sys/ioctl.h>
-#endif
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
@@ -75,9 +73,7 @@
 #include <sys/sockio.h>
 #include <sys/systm.h>
 #include <sys/syslog.h>
-#if !defined(__bsdi__) && !(defined(__FreeBSD__) && __FreeBSD__ < 3)
 #include <sys/proc.h>
-#endif
 
 #include <net/if.h>
 
@@ -86,11 +82,6 @@
 #include <netinet6/ip6.h>
 #include <netinet6/in6_prefix.h>
 #include <netinet6/ip6_var.h>
-
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-static MALLOC_DEFINE(M_IP6RR, "ip6rr", "IPv6 Router Renumbering Prefix");
-static MALLOC_DEFINE(M_RR_ADDR, "rp_addr", "IPv6 Router Renumbering Ifid");
-#endif
 
 struct rr_prhead rr_prefix;
 
@@ -189,11 +180,7 @@ search_matched_prefix(struct ifnet *ifp, struct in6_prefixreq *ipr)
 	 * which matches the addr
 	 */
 
-#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
-	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next)
-#else
 	for (ifa = ifp->if_addrlist.tqh_first; ifa; ifa = ifa->ifa_list.tqe_next)
-#endif
 	{
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
@@ -256,11 +243,7 @@ mark_matched_prefixes(u_long cmd, struct ifnet *ifp, struct in6_rrenumreq *irr)
 	 * search matched addr, and then search prefixes
 	 * which matche the addr
 	 */
-#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
-	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next)
-#else
 	for (ifa = ifp->if_addrlist.tqh_first; ifa; ifa = ifa->ifa_list.tqe_next)
-#endif
 	{
 		struct rr_prefix *rpp;
 
@@ -326,9 +309,7 @@ unmark_prefixes(struct ifnet *ifp)
 static void
 init_prefix_ltimes(struct rr_prefix *rpp)
 {
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 	long time_second = time.tv_sec;
-#endif
 
 	if (rpp->rp_pltime == RR_INFINITE_LIFETIME ||
 	    rpp->rp_rrf_decrprefd == 0)
@@ -455,9 +436,7 @@ in6_prefix_add_ifid(int iilen, struct in6_ifaddr *ia)
 
 		/* XXX: init dummy so */
 		bzero(&so, sizeof(so));
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3) && !defined(__NetBSD__)
 		so.so_state |= SS_PRIV;
-#endif
 
 		error = add_each_prefix(&so, &rp);
 
@@ -569,11 +548,7 @@ add_each_addr(struct socket *so, struct rr_prefix *rpp, struct rp_addr *rap)
 	/* propagate ANYCAST flag if it is set for ancestor addr */
 	if (rap->ra_flags.anycast != 0)
 		ifra.ifra_flags |= IN6_IFF_ANYCAST;
-	error = in6_control(so, SIOCAIFADDR_IN6, (caddr_t)&ifra, rpp->rp_ifp
-#if !defined(__bsdi__) && !(defined(__FreeBSD__) && __FreeBSD__ < 3)
-			    , curproc
-#endif
-			    );
+	error = in6_control(so, SIOCAIFADDR_IN6, (caddr_t)&ifra, rpp->rp_ifp, curproc);
 	if (error != 0)
 		log(LOG_ERR, "in6_prefix.c: add_each_addr: addition of an addr"
 		    "%s/%d failed because in6_control failed for error %d",
@@ -631,11 +606,7 @@ rrpr_update(struct socket *so, struct rr_prefix *new)
 		 *  add rp_addr entries in new into rpp, if they have not
 		 *  been already included in rpp.
 		 */
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-		while (!LIST_EMPTY(&new->rp_addrhead))
-#else
 		while (new->rp_addrhead.lh_first != NULL)
-#endif
 		{
 			rap = LIST_FIRST(&new->rp_addrhead);
 			LIST_REMOVE(rap, ra_entry);
@@ -664,11 +635,7 @@ rrpr_update(struct socket *so, struct rr_prefix *new)
 		*rpp = *new;
 		LIST_INIT(&rpp->rp_addrhead);
 		/*  move rp_addr entries of new to rpp */
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-		while (!LIST_EMPTY(&new->rp_addrhead))
-#else
 		while (new->rp_addrhead.lh_first != NULL)
-#endif
 		{
 			rap = LIST_FIRST(&new->rp_addrhead);
 			LIST_REMOVE(rap, ra_entry);
@@ -826,11 +793,7 @@ free_rp_entries(struct rr_prefix *rpp)
 	 * This func is only called with rpp on stack(not on list).
 	 * So no splnet() here
 	 */
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-	while (!LIST_EMPTY(&rpp->rp_addrhead))
-#else
 	while (rpp->rp_addrhead.lh_first != NULL)
-#endif
 	{
 		struct rp_addr *rap;
 
@@ -870,9 +833,7 @@ static void
 unprefer_prefix(struct rr_prefix *rpp)
 {
 	struct rp_addr *rap;
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 	long time_second = time.tv_sec;
-#endif
 
 	for (rap = rpp->rp_addrhead.lh_first; rap != NULL;
 	     rap = rap->ra_entry.le_next) {
@@ -916,11 +877,7 @@ delete_each_prefix(struct socket *so, struct rr_prefix *rpp, u_char origin)
 		ifra.ifra_prefixmask = rap->ra_addr->ia_prefixmask;
 
 		error = in6_control(so, SIOCDIFADDR_IN6, (caddr_t)&ifra,
-				    rpp->rp_ifp
-#if !defined(__bsdi__) && !(defined(__FreeBSD__) && __FreeBSD__ < 3)
-				    , curproc
-#endif
-				    );
+				    rpp->rp_ifp, curproc);
 		if (error != 0)
 			log(LOG_ERR, "in6_prefix.c: delete_each_prefix:"
 			    "deletion of an addr %s/%d failed because"
@@ -956,12 +913,8 @@ link_stray_ia6s(struct rr_prefix *rpp)
 {
 	struct ifaddr *ifa;
 
-#if (defined(__FreeBSD__) && __FreeBSD__ < 3) || defined(__bsdi__)
-	for (ifa = rpp->rp_ifp->if_addrlist; ifa; ifa = ifa->ifa_next)
-#else
 	for (ifa = rpp->rp_ifp->if_addrlist.tqh_first; ifa;
 	     ifa = ifa->ifa_list.tqe_next)
-#endif
 	{
 		struct rp_addr *rap;
 		struct rr_prefix *orpp;
@@ -1116,9 +1069,7 @@ in6_rr_timer(void *ignored_arg)
 {
 	int s;
 	struct rr_prefix *rpp;
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 	long time_second = time.tv_sec;
-#endif
 
 	timeout(in6_rr_timer, (caddr_t)0, ip6_rr_prune * hz);
 
@@ -1132,9 +1083,7 @@ in6_rr_timer(void *ignored_arg)
 
 			/* XXX: init dummy so */
 			bzero(&so, sizeof(so));
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3) && !defined(__NetBSD__)
 			so.so_state |= SS_PRIV;
-#endif
 
 			next_rpp = LIST_NEXT(rpp, rp_entry);
 			delete_each_prefix(&so, rpp, PR_ORIG_KERNEL);

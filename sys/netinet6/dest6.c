@@ -1,4 +1,4 @@
-/*	$OpenBSD: dest6.c,v 1.1 1999/12/08 06:50:20 itojun Exp $	*/
+/*	$OpenBSD: dest6.c,v 1.2 1999/12/10 10:04:27 angelos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -46,9 +46,6 @@
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet6/ip6.h>
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3) && !defined(__OpenBSD__)
-#include <netinet6/in6_pcb.h>
-#endif
 #include <netinet6/ip6_var.h>
 #include <netinet6/icmp6.h>
 

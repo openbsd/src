@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.1 1999/12/08 06:50:20 itojun Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.2 1999/12/10 10:04:27 angelos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -47,9 +47,6 @@
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet6/ip6.h>
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3) && !defined(__OpenBSD__)
-#include <netinet6/in6_pcb.h>
-#endif
 #include <netinet6/ip6_var.h>
 #include <netinet6/icmp6.h>
 
@@ -71,11 +68,6 @@ static void frag6_freef __P((struct ip6q *));
 int frag6_doing_reass;
 u_int frag6_nfragpackets;
 struct	ip6q ip6q;	/* ip6 reassemble queue */
-
-/* FreeBSD tweak */
-#if !defined(M_FTABLE) && (defined(__FreeBSD__) && __FreeBSD__ >= 3)
-MALLOC_DEFINE(M_FTABLE, "fragment", "fragment reassembly header");
-#endif
 
 /*
  * Initialise reassembly queue and fragment identifier.
@@ -142,11 +134,9 @@ frag6_input(mp, offp, proto)
 		dst->sin6_len = sizeof(struct sockaddr_in6);
 		dst->sin6_addr = ip6->ip6_dst;
 	}
-#if defined(__NetBSD__) || defined(__OpenBSD__)
+
 	rtalloc((struct route *)&ro);
-#else
-	rtcalloc((struct route *)&ro);
-#endif
+
 	if (ro.ro_rt != NULL && ro.ro_rt->rt_ifa != NULL)
 		dstifp = ((struct in6_ifaddr *)ro.ro_rt->rt_ifa)->ia_ifp;
 #else
@@ -600,11 +590,7 @@ void
 frag6_slowtimo()
 {
 	struct ip6q *q6;
-#ifdef __NetBSD__
-	int s = splsoftnet();
-#else
 	int s = splnet();
-#endif
 #if 0
 	extern struct	route_in6 ip6_forward_rt;
 #endif

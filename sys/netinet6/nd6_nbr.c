@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.3 1999/12/08 19:53:39 deraadt Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.4 1999/12/10 10:04:28 angelos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -29,13 +29,6 @@
  * SUCH DAMAGE.
  */
 
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
-#include "opt_inet.h"
-#ifdef __NetBSD__	/*XXX*/
-#include "opt_ipsec.h"
-#endif
-#endif
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -45,9 +38,7 @@
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 #include <sys/ioctl.h>
-#endif 
 #include <sys/syslog.h>
 #include <sys/queue.h>
 
@@ -197,11 +188,7 @@ nd6_ns_input(m, off, icmp6len)
 		tsin6.sin6_family = AF_INET6;
 		tsin6.sin6_addr = taddr6;
 
-		rt = rtalloc1((struct sockaddr *)&tsin6, 0
-#ifdef __FreeBSD__
-			      , 0
-#endif /* __FreeBSD__ */
-			      );
+		rt = rtalloc1((struct sockaddr *)&tsin6, 0);
 		if (rt && rt->rt_ifp != ifp) {
 			/*
 			 * search link local addr for ifp, and use it for
@@ -462,11 +449,6 @@ nd6_ns_output(ifp, daddr6, taddr6, ln, dad)
 	nd_ns->nd_ns_cksum
 		= in6_cksum(m, IPPROTO_ICMPV6, sizeof(*ip6), icmp6len);
 
-#ifdef IPSEC
-#ifndef __OpenBSD__ /*KAME IPSEC*/
-	m->m_pkthdr.rcvif = NULL;
-#endif
-#endif /*IPSEC*/
 	ip6_output(m, NULL, NULL, dad ? IPV6_DADOUTPUT : 0, &im6o, &outif);
 	if (outif) {
 		icmp6_ifstat_inc(outif, ifs6_out_msg);
@@ -598,11 +580,7 @@ nd6_na_input(m, off, icmp6len)
 		if (is_solicited) {
 			ln->ln_state = ND6_LLINFO_REACHABLE;
 			if (ln->ln_expire)
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 				ln->ln_expire = time.tv_sec +
-#else
-				ln->ln_expire = time_second +
-#endif
 					nd_ifinfo[rt->rt_ifp->if_index].reachable;
 		} else
 			ln->ln_state = ND6_LLINFO_STALE;
@@ -671,11 +649,7 @@ nd6_na_input(m, off, icmp6len)
 			if (is_solicited) {
 				ln->ln_state = ND6_LLINFO_REACHABLE;
 				if (ln->ln_expire) {
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 					ln->ln_expire = time.tv_sec +
-#else
-					ln->ln_expire = time_second +
-#endif
 						nd_ifinfo[ifp->if_index].reachable;
 				}
 			} else {
@@ -695,11 +669,9 @@ nd6_na_input(m, off, icmp6len)
 			int s;
 
 			in6 = &((struct sockaddr_in6 *)rt_key(rt))->sin6_addr;
-#ifdef __NetBSD__
-			s = splsoftnet();
-#else
+
 			s = splnet();
-#endif
+
 			dr = defrouter_lookup(in6, rt->rt_ifp);
 			if (dr)
 				defrtrlist_del(dr);
@@ -831,11 +803,6 @@ nd6_na_output(ifp, daddr6, taddr6, flags, tlladdr)
 	nd_na->nd_na_cksum =
 		in6_cksum(m, IPPROTO_ICMPV6, sizeof(struct ip6_hdr), icmp6len);
 
-#ifdef IPSEC
-#ifndef __OpenBSD__ /*KAME IPSEC*/
-	m->m_pkthdr.rcvif = NULL;
-#endif
-#endif /*IPSEC*/
 	ip6_output(m, NULL, NULL, 0, &im6o, &outif);
 	if (outif) {
 		icmp6_ifstat_inc(outif, ifs6_out_msg);
@@ -852,11 +819,7 @@ nd6_ifptomac(ifp)
 	case IFT_ARCNET:
 	case IFT_ETHER:
 	case IFT_FDDI:
-#ifdef __NetBSD__
-		return LLADDR(ifp->if_sadl);
-#else
 		return ((caddr_t)(ifp + 1));
-#endif
 		break;
 	default:
 		return NULL;
@@ -872,9 +835,6 @@ struct dadq {
 	int dad_ns_ocount;	/* NS sent so far */
 	int dad_ns_icount;
 	int dad_na_icount;
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-	struct callout_handle dad_timer;
-#endif
 };
 
 static struct dadq_head dadq;
@@ -969,9 +929,6 @@ nd6_dad_start(ifa, tick)
 	dp->dad_ns_ocount = dp->dad_ns_tcount = 0;
 	if (!tick) {
 		nd6_dad_ns_output(dp, ifa);
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-		dp->dad_timer =
-#endif
 		timeout((void (*) __P((void *)))nd6_dad_timer, (void *)ifa,
 			nd_ifinfo[ifa->ifa_ifp->if_index].retrans * hz / 1000);
 	} else {
@@ -982,9 +939,6 @@ nd6_dad_start(ifa, tick)
 		else
 			ntick = *tick + random() % (hz / 2);
 		*tick = ntick;
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-		dp->dad_timer =
-#endif
 		timeout((void (*) __P((void *)))nd6_dad_timer, (void *)ifa,
 			ntick);
 	}
@@ -998,11 +952,7 @@ nd6_dad_timer(ifa)
 	struct in6_ifaddr *ia = (struct in6_ifaddr *)ifa;
 	struct dadq *dp;
 
-#ifdef __NetBSD__
-	s = splsoftnet();	/*XXX*/
-#else
 	s = splnet();		/*XXX*/
-#endif
 
 	/* Sanity check */
 	if (ia == NULL) {
@@ -1047,9 +997,6 @@ nd6_dad_timer(ifa)
 		 * We have more NS to go.  Send NS packet for DAD.
 		 */
 		nd6_dad_ns_output(dp, ifa);
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-		dp->dad_timer =
-#endif
 		timeout((void (*) __P((void *)))nd6_dad_timer, (void *)ifa,
 			nd_ifinfo[ifa->ifa_ifp->if_index].retrans * hz / 1000);
 	} else {
@@ -1150,11 +1097,7 @@ nd6_dad_duplicated(ifa)
 	ia->ia6_flags |= IN6_IFF_DUPLICATED;
 
 	/* We are done with DAD, with duplicated address found. (failure) */
-	untimeout((void (*) __P((void *)))nd6_dad_timer, (void *)ifa
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-		, dp->dad_timer
-#endif
-		);
+	untimeout((void (*) __P((void *)))nd6_dad_timer, (void *)ifa);
 
 	printf("%s: DAD complete for %s - duplicate found\n",
 	    if_name(ifa->ifa_ifp), ip6_sprintf(&ia->ia_addr.sin6_addr));
