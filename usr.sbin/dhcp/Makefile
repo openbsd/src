@@ -30,6 +30,6 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-SUBDIR=	common server relay
+SUBDIR=	common server
 
 .include <bsd.subdir.mk>
