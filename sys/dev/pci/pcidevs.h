@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.460 2001/11/04 19:48:32 lebel Exp 
+ *		OpenBSD: pcidevs,v 1.461 2001/11/08 19:52:19 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -506,6 +506,7 @@
 #define	PCI_VENDOR_ESSTECH	0x125d		/* ESS */
 #define	PCI_VENDOR_INTERSIL	0x126c		/* Intersil */
 #define	PCI_VENDOR_NORTEL	0x126c		/* Nortel Networks */
+#define	PCI_VENDOR_SMI	0x126f		/* Silicon Motion */
 #define	PCI_VENDOR_ENSONIQ	0x1274		/* Ensoniq */
 #define	PCI_VENDOR_NETAPP	0x1275		/* Network Appliance */
 #define	PCI_VENDOR_TRANSMETA	0x1279		/* Transmeta */
@@ -1123,12 +1124,16 @@
 #define	PCI_PRODUCT_ENSONIQ_CT5880	0x5880		/* CT5880 */
 
 /* ESS Technology Inc products */
+#define	PCI_PRODUCT_ESSTECH_ES336H	0x0000		/* ES366H Fax/Modem (early) */
 #define	PCI_PRODUCT_ESSTECH_MAESTROII	0x1968		/* Maestro II */
 #define	PCI_PRODUCT_ESSTECH_SOLO1	0x1969		/* SOLO-1 AudioDrive */
 #define	PCI_PRODUCT_ESSTECH_MAESTRO2E	0x1978		/* Maestro 2E */
 #define	PCI_PRODUCT_ESSTECH_ES1989	0x1988		/* ES1989 */
+#define	PCI_PRODUCT_ESSTECH_ES1989M	0x1989		/* ES1989 Modem */
 #define	PCI_PRODUCT_ESSTECH_MAESTRO3	0x1998		/* Maestro 3 */
 #define	PCI_PRODUCT_ESSTECH_ES1983	0x1999		/* ES1983 Modem */
+#define	PCI_PRODUCT_ESSTECH_ES336H_N	0x2808		/* ES366H Fax/Modem */
+#define	PCI_PRODUCT_ESSTECH_SUPERLINK	0x2838		/* ES2838/2839 SuperLink Modem */
 #define	PCI_PRODUCT_ESSTECH_2898	0x2898		/* ES2898 Modem */
 
 /* Essential Communications products */
@@ -1372,18 +1377,18 @@
 #define	PCI_PRODUCT_LMC_DS1	0x0006		/* DS1 */
 
 /* Lava */
+#define	PCI_PRODUCT_LAVA_TWOSP_2S	0x0100		/* Dual Serial */
+#define	PCI_PRODUCT_LAVA_IOFLEX_2S_0	0x0110		/* Serial */
+#define	PCI_PRODUCT_LAVA_IOFLEX_2S_1	0x0111		/* Serial */
+#define	PCI_PRODUCT_LAVA_OCTOPUS550_0	0x0180		/* Quad Serial */
+#define	PCI_PRODUCT_LAVA_OCTOPUS550_1	0x0181		/* Quad Serial */
+#define	PCI_PRODUCT_LAVA_LAVAPORT_0	0x0201		/* Serial */
+#define	PCI_PRODUCT_LAVA_LAVAPORT_1	0x0202		/* Serial */
+#define	PCI_PRODUCT_LAVA_650	0x0600		/* Serial */
 #define	PCI_PRODUCT_LAVA_TWOSP_1P	0x8000		/* Parallel */
 #define	PCI_PRODUCT_LAVA_PARALLEL2	0x8001		/* Dual Parallel */
 #define	PCI_PRODUCT_LAVA_PARALLEL2A	0x8002		/* Dual Parallel */
 #define	PCI_PRODUCT_LAVA_PARALLELB	0x8003		/* Dual Parallel B */
-#define	PCI_PRODUCT_LAVA_TWOSP_2S	0x0100		/* Dual Serial */
-#define	PCI_PRODUCT_LAVA_IOFLEX_2S_0	0x0110		/* Serial */
-#define	PCI_PRODUCT_LAVA_IOFLEX_2S_1	0x0111		/* Serial */
-#define	PCI_PRODUCT_LAVA_LAVAPORT_0	0x0201		/* Serial */
-#define	PCI_PRODUCT_LAVA_LAVAPORT_1	0x0202		/* Serial */
-#define	PCI_PRODUCT_LAVA_650	0x0600		/* Serial */
-#define	PCI_PRODUCT_LAVA_OCTOPUS950_0	0x0180		/* Quad Serial */
-#define	PCI_PRODUCT_LAVA_OCTOPUS950_1	0x0181		/* Quad Serial */
 
 /* LeadTek Research */
 #define	PCI_PRODUCT_LEADTEK_S3_805	0x0000		/* S3 805 */
@@ -1438,6 +1443,15 @@
 #define	PCI_PRODUCT_MACRONIX_MX86250	0x8625		/* MX86250 */
 
 /* Madge Networks products */
+#define	PCI_PRODUCT_MADGE_SMARTRN	0x0001		/* Smart 16/4 PCI Ringnode */
+#define	PCI_PRODUCT_MADGE_SMARTRN2	0x0002		/* Smart 16/4 PCI Ringnode Mk2 */
+#define	PCI_PRODUCT_MADGE_SMARTRN3	0x0003		/* Smart 16/4 PCI Ringnode Mk3 */
+#define	PCI_PRODUCT_MADGE_SMARTRN1	0x0004		/* Smart 16/4 PCI Ringnode Mk1 */
+#define	PCI_PRODUCT_MADGE_164CB	0x0006		/* 16/4 Cardbus Adapter */
+#define	PCI_PRODUCT_MADGE_PRESTO	0x0007		/* Presto PCI Adapter */
+#define	PCI_PRODUCT_MADGE_SMARTHSRN100	0x0009		/* Smart 100/16/4 PCI-HS Ringnode */
+#define	PCI_PRODUCT_MADGE_SMARTRN100	0x000a		/* Smart 100/16/4 PCI Ringnode */
+#define	PCI_PRODUCT_MADGE_164CB2	0x000b		/* 16/4 CardBus Adapter Mk2 */
 #define	PCI_PRODUCT_MADGE_COLLAGE25	0x1000		/* Collage 25 ATM adapter */
 #define	PCI_PRODUCT_MADGE_COLLAGE155	0x1001		/* Collage 155 ATM adapter */
 
@@ -1788,6 +1802,7 @@
 #define	PCI_PRODUCT_SIS_85C601	0x0601		/* 85C601 EIDE */
 #define	PCI_PRODUCT_SIS_620	0x0620		/* 620 Host-PCI */
 #define	PCI_PRODUCT_SIS_630	0x0630		/* 630 Host-PCI */
+#define	PCI_PRODUCT_SIS_730	0x0730		/* 730 Host-PCI */
 #define	PCI_PRODUCT_SIS_900	0x0900		/* 900 10/100BaseTX */
 #define	PCI_PRODUCT_SIS_7016	0x7016		/* 7016 10/100BaseTX */
 #define	PCI_PRODUCT_SIS_5511	0x5511		/* 5511 */
@@ -1811,6 +1826,15 @@
 #define	PCI_PRODUCT_SMC_37C665	0x1000		/* FDC 37C665 */
 #define	PCI_PRODUCT_SMC_37C922	0x1001		/* FDC 37C922 */
 #define	PCI_PRODUCT_SMC_83C170	0x0005		/* 83C170 (EPIC/100) */
+
+/* Silicon Motion, Inc. products */
+#define	PCI_PRODUCT_SMI_SM710	0x0710		/* LynxEM */
+#define	PCI_PRODUCT_SMI_SM712	0x0712		/* LynxEM+ */
+#define	PCI_PRODUCT_SMI_SM720	0x0720		/* Lynx3DM */
+#define	PCI_PRODUCT_SMI_SM810	0x0810		/* LynxE */
+#define	PCI_PRODUCT_SMI_SM811	0x0811		/* LynxE+ */
+#define	PCI_PRODUCT_SMI_SM820	0x0820		/* Lynx3D */
+#define	PCI_PRODUCT_SMI_SM910	0x0910		/* 910 */
 
 /* SNC products */
 #define	PCI_PRODUCT_SNI_PIRAHNA	0x0002		/* Pirahna 2-port */
@@ -2102,7 +2126,7 @@
 #define	PCI_PRODUCT_VLSI_82C925	0x0280		/* 82C925 */
 
 /* VMware */
-#define	PCI_PRODUCT_VMWARE_VIRTUAL	0x0710		/* Virtual */
+#define	PCI_PRODUCT_VMWARE_VIRTUAL	0x0710		/* Virtual SVGA */
 
 /* Weitek products */
 #define	PCI_PRODUCT_WEITEK_P9000	0x9001		/* P9000 */

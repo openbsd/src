@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.460 2001/11/04 19:48:32 lebel Exp 
+ *		OpenBSD: pcidevs,v 1.461 2001/11/08 19:52:19 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1695,6 +1695,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "CT5880",
 	},
 	{
+	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_ES336H,
+	    "ES366H Fax/Modem (early)",
+	},
+	{
 	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTROII,
 	    "Maestro II",
 	},
@@ -1711,12 +1715,24 @@ static const struct pci_known_product pci_known_products[] = {
 	    "ES1989",
 	},
 	{
+	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_ES1989M,
+	    "ES1989 Modem",
+	},
+	{
 	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO3,
 	    "Maestro 3",
 	},
 	{
 	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_ES1983,
 	    "ES1983 Modem",
+	},
+	{
+	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_ES336H_N,
+	    "ES366H Fax/Modem",
+	},
+	{
+	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_SUPERLINK,
+	    "ES2838/2839 SuperLink Modem",
 	},
 	{
 	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_2898,
@@ -2475,22 +2491,6 @@ static const struct pci_known_product pci_known_products[] = {
 	    "DS1",
 	},
 	{
-	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_TWOSP_1P,
-	    "Parallel",
-	},
-	{
-	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_PARALLEL2,
-	    "Dual Parallel",
-	},
-	{
-	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_PARALLEL2A,
-	    "Dual Parallel",
-	},
-	{
-	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_PARALLELB,
-	    "Dual Parallel B",
-	},
-	{
 	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_TWOSP_2S,
 	    "Dual Serial",
 	},
@@ -2501,6 +2501,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_IOFLEX_2S_1,
 	    "Serial",
+	},
+	{
+	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_OCTOPUS550_0,
+	    "Quad Serial",
+	},
+	{
+	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_OCTOPUS550_1,
+	    "Quad Serial",
 	},
 	{
 	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_LAVAPORT_0,
@@ -2515,12 +2523,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Serial",
 	},
 	{
-	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_OCTOPUS950_0,
-	    "Quad Serial",
+	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_TWOSP_1P,
+	    "Parallel",
 	},
 	{
-	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_OCTOPUS950_1,
-	    "Quad Serial",
+	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_PARALLEL2,
+	    "Dual Parallel",
+	},
+	{
+	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_PARALLEL2A,
+	    "Dual Parallel",
+	},
+	{
+	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_PARALLELB,
+	    "Dual Parallel B",
 	},
 	{
 	    PCI_VENDOR_LEADTEK, PCI_PRODUCT_LEADTEK_S3_805,
@@ -2681,6 +2697,42 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_MACRONIX, PCI_PRODUCT_MACRONIX_MX86250,
 	    "MX86250",
+	},
+	{
+	    PCI_VENDOR_MADGE, PCI_PRODUCT_MADGE_SMARTRN,
+	    "Smart 16/4 PCI Ringnode",
+	},
+	{
+	    PCI_VENDOR_MADGE, PCI_PRODUCT_MADGE_SMARTRN2,
+	    "Smart 16/4 PCI Ringnode Mk2",
+	},
+	{
+	    PCI_VENDOR_MADGE, PCI_PRODUCT_MADGE_SMARTRN3,
+	    "Smart 16/4 PCI Ringnode Mk3",
+	},
+	{
+	    PCI_VENDOR_MADGE, PCI_PRODUCT_MADGE_SMARTRN1,
+	    "Smart 16/4 PCI Ringnode Mk1",
+	},
+	{
+	    PCI_VENDOR_MADGE, PCI_PRODUCT_MADGE_164CB,
+	    "16/4 Cardbus Adapter",
+	},
+	{
+	    PCI_VENDOR_MADGE, PCI_PRODUCT_MADGE_PRESTO,
+	    "Presto PCI Adapter",
+	},
+	{
+	    PCI_VENDOR_MADGE, PCI_PRODUCT_MADGE_SMARTHSRN100,
+	    "Smart 100/16/4 PCI-HS Ringnode",
+	},
+	{
+	    PCI_VENDOR_MADGE, PCI_PRODUCT_MADGE_SMARTRN100,
+	    "Smart 100/16/4 PCI Ringnode",
+	},
+	{
+	    PCI_VENDOR_MADGE, PCI_PRODUCT_MADGE_164CB2,
+	    "16/4 CardBus Adapter Mk2",
 	},
 	{
 	    PCI_VENDOR_MADGE, PCI_PRODUCT_MADGE_COLLAGE25,
@@ -3707,6 +3759,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "630 Host-PCI",
 	},
 	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_730,
+	    "730 Host-PCI",
+	},
+	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_900,
 	    "900 10/100BaseTX",
 	},
@@ -3789,6 +3845,34 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_SMC, PCI_PRODUCT_SMC_83C170,
 	    "83C170 (EPIC/100)",
+	},
+	{
+	    PCI_VENDOR_SMI, PCI_PRODUCT_SMI_SM710,
+	    "LynxEM",
+	},
+	{
+	    PCI_VENDOR_SMI, PCI_PRODUCT_SMI_SM712,
+	    "LynxEM+",
+	},
+	{
+	    PCI_VENDOR_SMI, PCI_PRODUCT_SMI_SM720,
+	    "Lynx3DM",
+	},
+	{
+	    PCI_VENDOR_SMI, PCI_PRODUCT_SMI_SM810,
+	    "LynxE",
+	},
+	{
+	    PCI_VENDOR_SMI, PCI_PRODUCT_SMI_SM811,
+	    "LynxE+",
+	},
+	{
+	    PCI_VENDOR_SMI, PCI_PRODUCT_SMI_SM820,
+	    "Lynx3D",
+	},
+	{
+	    PCI_VENDOR_SMI, PCI_PRODUCT_SMI_SM910,
+	    "910",
 	},
 	{
 	    PCI_VENDOR_SNI, PCI_PRODUCT_SNI_PIRAHNA,
@@ -4740,7 +4824,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_VIRTUAL,
-	    "Virtual",
+	    "Virtual SVGA",
 	},
 	{
 	    PCI_VENDOR_WEITEK, PCI_PRODUCT_WEITEK_P9000,
@@ -6697,6 +6781,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_NORTEL,
 	    "Nortel Networks",
+	},
+	{
+	    PCI_VENDOR_SMI,
+	    "Silicon Motion",
 	},
 	{
 	    PCI_VENDOR_ENSONIQ,
