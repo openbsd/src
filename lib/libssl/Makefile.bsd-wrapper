@@ -1,4 +1,5 @@
 # Build wrapper for SSLeay.
+# $OpenBSD: Makefile.bsd-wrapper,v 1.7 1999/03/12 17:31:01 espie Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -55,29 +56,29 @@ SSL_SRC=src
 .endif 	  
 
 all: 	prereq
-	(cd ${.OBJDIR}; ${MAKE})
+	cd ${.OBJDIR} && ${MAKE}
 
 includes: prereq
-	(cd ${.OBJDIR}; ${MAKE} includes)
+	cd ${.OBJDIR} && ${MAKE} includes
 
 prereq:	${.OBJDIR}/${SSL_SRC}/crypto/md2/md2.h
 
 install:
-	(cd ${.OBJDIR}; ${MAKE} install)
+	cd ${.OBJDIR} && ${MAKE} install
 
 ${.OBJDIR}/${SSL_SRC}/crypto/md2/md2.h : ${.OBJDIR}/${SSL_SRC}/Makefile.ssl
-	(cd ${.OBJDIR}/${SSL_SRC}; /usr/bin/perl Configure ${SSLCONF}) 
+	cd ${.OBJDIR}/${SSL_SRC} && /usr/bin/perl Configure ${SSLCONF}
 
 .if !exists(${.OBJDIR}/${SSL_SRC}/Makefile.ssl)
 ${.OBJDIR}/${SSL_SRC}/Makefile.ssl: ${.CURDIR}/${SSL_SRC}/Makefile.ssl
-	(${LNDIR} -s -e obj -e obj.${MACHINE_ARCH} -e Makefile.bsd-wrapper -e Makefile.ssl ${.CURDIR}; cp ${.CURDIR}/${SSL_SRC}/Makefile.ssl ${.OBJDIR}/${SSL_SRC})
+	${LNDIR} -s -e obj -e obj.${MACHINE_ARCH} -e Makefile.bsd-wrapper -e Makefile.ssl ${.CURDIR} && cp ${.CURDIR}/${SSL_SRC}/Makefile.ssl ${.OBJDIR}/${SSL_SRC}
 .endif
 
 clean:	${.OBJDIR}/${SSL_SRC}/Makefile.ssl
-	(cd ${.OBJDIR}; ${MAKE} clean)
+	cd ${.OBJDIR} && ${MAKE} clean
 
 cleandir: ${.OBJDIR}/${SSL_SRC}/Makefile.ssl
-	(cd ${.OBJDIR}; rm -f ${MUNGEDFILES}; ${MAKE} cleandir)
+	cd ${.OBJDIR} && rm -f ${MUNGEDFILES} && ${MAKE} cleandir
 
 test:
 	# Nothing here so far...
