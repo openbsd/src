@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.95 2002/01/23 05:06:39 ericj Exp $
+#	$OpenBSD: GENERIC,v 1.96 2002/01/23 05:21:03 ericj Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 
 machine	alpha
@@ -308,4 +308,4 @@ hifn*	at pci? dev ? function ?	# Hi/fn 7751 crypto card
 
 #pseudo-device	raid		4	# RAIDframe disk driver
 pseudo-device	crypto		1
-
+pseudo-device	sequencer	1

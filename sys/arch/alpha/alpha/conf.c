@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.36 2002/01/23 05:06:39 ericj Exp $	*/
+/*	$OpenBSD: conf.c,v 1.37 2002/01/23 05:21:03 ericj Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -102,6 +102,10 @@ cdev_decl(com);
 #include "wsdisplay.h"
 #include "wskbd.h"
 #include "wsmouse.h"
+#include "midi.h"
+cdev_decl(midi);
+#include "sequencer.h"
+cdev_decl(music);
 
 #include "spkr.h"
 cdev_decl(spkr);
@@ -183,9 +187,9 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NFD,fd),		/* 37: Floppy disk */
         cdev_tty_init(NCY,cy),          /* 38: Cyclom serial port */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 39: Kernel symbols device */
-	cdev_notdef(),			/* 40 */
-	cdev_spkr_init(NSPKR,spkr),	/* 41: PC speaker */
-	cdev_notdef(),			/* 42 */
+	cdev_spkr_init(NSPKR,spkr),	/* 40: PC speaker */
+	cdev_midi_init(NMIDI,midi),     /* 41: MIDI I/O */
+        cdev_midi_init(NSEQUENCER,sequencer),   /* 42: sequencer I/O */
 	cdev_disk_init(NRAID,raid),	/* 43: RAIDframe disk driver */
 	cdev_notdef(),			/* 44 */
 	cdev_usb_init(NUSB,usb),	/* 45: USB controller */
