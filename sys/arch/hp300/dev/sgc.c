@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgc.c,v 1.1 2005/01/14 22:39:26 miod Exp $	*/
+/*	$OpenBSD: sgc.c,v 1.2 2005/01/23 00:03:10 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -34,13 +34,10 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/device.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/hp300spu.h>
-
-#include <hp300/dev/dmavar.h>
 
 #include <hp300/dev/sgcreg.h>
 #include <hp300/dev/sgcvar.h>
