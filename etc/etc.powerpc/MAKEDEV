@@ -1,5 +1,5 @@
 #!/bin/sh -
-#       $OpenBSD: MAKEDEV,v 1.19 1998/09/16 04:18:11 rahnds Exp $
+#       $OpenBSD: MAKEDEV,v 1.20 1998/09/24 04:26:10 rahnds Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -90,7 +90,7 @@ all)
 	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
 	sh MAKEDEV rd0 ipl
 	sh MAKEDEV ttyo0
-	sh MAKEDEV tty00 tty01 pty0
+	sh MAKEDEV tty00 tty01 tty02 tty03 pty0
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 	sh MAKEDEV tun0 tun1 tun2 tun3
 	sh MAKEDEV random uk0 uk1 ss0 ss1
@@ -248,18 +248,13 @@ ttyo*)
 		;;
 	esac
 	;;
+
 tty0*)
 	unit=`expr $i : 'tty0\(.*\)'`
-	rm -f ser${unit} tty${unit} tty0${unit}
-	case ${unit} in
-	0|1)
-		mknod tty0${unit} c 7 ${unit}
-		chown uucp.wheel tty0${unit}
-		;;
-	*)
-		echo bad unit for serial tty in: $i
-		;;
-	esac
+	rm -f com0$unit tty0$unit cua0$unit
+	mknod tty0$unit c 7 $unit
+	mknod cua0$unit c 7 `expr $unit + 128`
+	chown uucp.wheel tty0$unit cua0$unit
 	;;
 
 ttye*)
