@@ -1,4 +1,4 @@
-#	$OpenBSD: na.phone,v 1.8 1997/10/11 16:55:00 deraadt Exp $
+#	$OpenBSD: na.phone,v 1.9 1997/11/18 07:36:36 mickey Exp $
 #	@(#)na.phone	8.1 (Berkeley) 6/8/93
 #
 # Area Code : City : State/Province : State/Province Abbrev.
@@ -258,6 +258,7 @@
 719:Fairplay:Colorado:CO
 719:Lamar:Colorado:CO
 719:South Fork:Colorado:CO
+732::New Jersey:NJ
 757:Norfolk:Virginia:VI
 758::St Lucia:LC
 765:Kokomo:Indiana:IN
