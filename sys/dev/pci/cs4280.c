@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.6 2001/01/26 22:37:48 mickey Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.7 2001/03/14 12:15:11 mickey Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -334,7 +334,7 @@ cs4280_read_codec(sc_, add, data)
 	    ACCTL_RSTN | ACCTL_ESYN | ACCTL_VFRM | ACCTL_CRW  | ACCTL_DCV );
 
 	if (cs4280_src_wait(sc) < 0) {
-		printf("%s: AC97 read prob. (DCV!=0) for add=0x%0x\n",
+		printf("%s: AC97 read prob. (DCV!=0) for add=0x%02x\n",
 		       sc->sc_dev.dv_xname, add);
 		return (1);
 	}
@@ -344,7 +344,7 @@ cs4280_read_codec(sc_, add, data)
 	while (!(BA0READ4(sc, CS4280_ACSTS) & ACSTS_VSTS)) {
 		delay(1);
 		while (++n > 1000) {
-			printf("%s: AC97 read fail (VSTS==0) for add=0x%0x\n", 
+			printf("%s: AC97 read fail (VSTS==0) for add=0x%02x\n", 
 			       sc->sc_dev.dv_xname, add);
 			return (1);
 		}
