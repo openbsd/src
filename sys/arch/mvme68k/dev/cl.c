@@ -1,4 +1,4 @@
-/*	$Id: cl.c,v 1.3 1995/11/07 08:48:52 deraadt Exp $ */
+/*	$Id: cl.c,v 1.4 1995/11/19 03:04:16 chuck Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -814,8 +814,8 @@ struct consdev *cp;
 	cl_cons.cl_vaddr = mapiodev(cl_cons.cl_paddr,size);
 	cd_pcc2_base = mapiodev(0xfff42000,pcc2_size);
 #else
-	cl_cons.cl_vaddr   = (struct clreg *)cl_cons.cl_paddr;
-	cl_cons.pcctwoaddr = (void *)0xfff42000;
+	cl_cons.cl_vaddr   = (struct clreg *)IIOV(cl_cons.cl_paddr);
+	cl_cons.pcctwoaddr = (void *)IIOV(0xfff42000);
 #endif
 	cl_reg = cl_cons.cl_vaddr;
 	/* reset the chip? */
