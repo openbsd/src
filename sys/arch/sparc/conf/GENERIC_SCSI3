@@ -1,10 +1,11 @@
-#	$OpenBSD: GENERIC_SCSI3,v 1.31 1999/10/29 14:14:27 art Exp $
-# 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
+#	$OpenBSD: GENERIC_SCSI3,v 1.32 2000/01/22 10:01:57 deraadt Exp $
+# 	$NetBSD: GENERIC,v 1.48 1997/08/23 19:19:01 mjacob Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc
 
 include "../../../conf/GENERIC"
+
 
 # Options for variants of the Sun SPARC architecure.
 # At least one is required.
@@ -142,6 +143,9 @@ dma*	at sbus? slot ? offset ?			# SBus SCSI
 esp*	at sbus? slot ? offset ? flags 0xff0f		# two flavours
 esp*	at dma? flags 0xff0f				# depending on model
 
+#sun4c, sun4m
+isp*	at sbus? slot ? offset ?
+
 # sun4m Ethernet - an AMD 7990 LANCE behind
 # specialized DMA glue
 ledma0	at sbus0 slot ? offset ?			# sun4m on-board
@@ -259,16 +263,18 @@ cgfourteen0	at obio0			# sun4m
 
 # Weitek p9100 found on Tadpole 3GS/3GX
 pnozz0	at sbus? slot ? offset ?
+# Microcontroller found on Tadpole
+tctrl0	at obio0
 
 # SCSI bus layer.  SCSI devices attach to the SCSI bus, which attaches
 # to the underlying hardware controller.
 scsibus* at esp?
-#scsibus* at isp?
 scsibus* at si?
 scsibus* at sw?
+scsibus* at isp?
 
 # Map the SCSI disk at target 3 to unit 0, a'la SunOS.
-sd0	at scsibus? target 3 lun ?
+sd0    at scsibus? target 3 lun ?
 
 # These entries find devices on all SCSI busses and assign
 # unit numers dynamically.
@@ -284,7 +290,16 @@ fdc0	at mainbus0				# sun4c controller
 fdc0	at obio0				# sun4m controller
 fd*	at fdc0					# the drive itself
 
+# flash memory, sysconfig regs, and VME for Force boards
+#scf0	at mainbus0				# FORCE CPU-5V sysconfig
+#flash0	at obio0				# FORCE CPU-5V flash-memory
+#fga0	at iommu0				# FORCE CPU-5V VME/SBus bridge
+#fvme*	at fga0					# FORCE CPU-5V
+#daadio*	at fvme? addr 0x0 level 1 vect 0x1f	# Matrix MD-DAADIO board
+
 pseudo-device	kbd		# Sun keyboard
 #pseudo-device	strip	1	# radio clock
 pseudo-device	rd 2
-
+# for IPv6
+pseudo-device	gif		4
+#pseudo-device	faith		1
