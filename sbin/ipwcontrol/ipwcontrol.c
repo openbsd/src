@@ -1,4 +1,4 @@
-/*	$Id: ipwcontrol.c,v 1.5 2004/10/27 21:37:40 damien Exp $	*/
+/*	$Id: ipwcontrol.c,v 1.6 2004/11/03 17:40:49 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: ipwcontrol.c,v 1.5 2004/10/27 21:37:40 damien Exp $";
+static char rcsid[] = "$Id: ipwcontrol.c,v 1.6 2004/11/03 17:40:49 damien Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -227,8 +227,8 @@ static const struct statistic tbl[] = {
 	{ 31, "Number of beacons transmitted", INT },
 	{ 32, "Number of ATIM frames transmitted", INT },
 	{ 33, "Number of disassociation requests transmitted", INT },
-	{ 34, "Number of authentification requests transmitted", INT },
-	{ 35, "Number of deauthentification requests transmitted", INT },
+	{ 34, "Number of authentication requests transmitted", INT },
+	{ 35, "Number of deauthentication requests transmitted", INT },
 
 	{ 41, "Number of bytes transmitted", INT },
 	{ 42, "Number of transmission retries", INT },
@@ -275,8 +275,8 @@ static const struct statistic tbl[] = {
 	{ 93, "Number of beacons received", INT },
 	{ 94, "Number of ATIM frames received", INT },
 	{ 95, "Number of disassociation requests received", INT },
-	{ 96, "Number of authentification requests received", INT },
-	{ 97, "Number of deauthentification requests received", INT },
+	{ 96, "Number of authentication requests received", INT },
+	{ 97, "Number of deauthentication requests received", INT },
 
 	{ 101, "Number of bytes received", INT },
 	{ 102, "Number of frames with a bad CRC received", INT },
@@ -328,8 +328,8 @@ static const struct statistic tbl[] = {
 	{ 164, "Number of reassociations due to access point RSSI level", INT },
 	{ 165, "Number of reassociations due to load leveling", INT },
 
-	{ 170, "Number of times authentification failed", INT },
-	{ 171, "Number of times authentification response failed", INT },
+	{ 170, "Number of times authentication failed", INT },
+	{ 171, "Number of times authentication response failed", INT },
 	{ 172, "Number of entries in association table", INT },
 	{ 173, "Average RSSI", INT },
 
@@ -356,7 +356,7 @@ static const struct statistic tbl[] = {
 	{ 196, "Adapter highest rate", HEX },
 	{ 197, "Access point highest rate", HEX },
 	{ 198, "Management frame capability", BOOL },
-	{ 199, "Type of authentification", INT },
+	{ 199, "Type of authentication", INT },
 	{ 200, "Adapter card platform type", INT },
 	{ 201, "RTS threshold", INT },
 	{ 202, "International mode", BOOL },
