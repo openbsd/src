@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.26 1998/03/25 11:49:56 pefo Exp $
+#	$OpenBSD: GENERIC,v 1.27 1998/05/05 05:48:48 imp Exp $
 #
 #	Generic configuration file for MIPS R4x00 ARC Systems
 #
@@ -56,6 +56,9 @@ com3		at isa? port 0x2e8 irq 3
 ast0		at isa? port 0x1a0 irq 3	# AST 4-port serial cards
 com*		at ast? slave ?
 lpt0		at isa? port 0x378 irq 7
+
+# Joystick driver. Probe is a little strange; add only if you have one.
+# joy0		at isa? port 0x201
 
 wdc0		at isa? port 0x1f0 irq 14	# ST506, ESDI, IDE controllers
 wdc1		at isa? port 0x170 irq 15
