@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.18 2003/09/24 20:21:40 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.19 2003/09/25 09:45:46 jmc Exp $	*/
 /*	$NetBSD: main.c,v 1.6 1995/05/21 16:54:10 mycroft Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: main.c,v 1.18 2003/09/24 20:21:40 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.19 2003/09/25 09:45:46 jmc Exp $";
 #endif /* not lint */
 
 /* Many bug fixes are from Jim Guyton <guyton@rand-unix> */
@@ -196,7 +196,7 @@ setpeer(int argc, char *argv[])
 		argv = margv;
 	}
 	if ((argc < 2) || (argc > 3)) {
-		printf("usage: %s host-name [port]\n", argv[0]);
+		printf("usage: %s [host] [port]\n", argv[0]);
 		return;
 	}
 	if (inet_aton(argv[1], &peeraddr.sin_addr) != 0) {
@@ -384,8 +384,8 @@ put(int argc, char *argv[])
 static void
 putusage(char *s)
 {
-	printf("usage: %s file ... host:target, or\n", s);
-	printf("       %s file ... target (when already connected)\n", s);
+	printf("usage: %s file [[host:]remotename]\n", s);
+	printf("       %s file1 file2 ... fileN [[host:]remote-directory]\n", s);
 }
 
 /*
@@ -469,8 +469,8 @@ get(int argc, char *argv[])
 static void
 getusage(char *s)
 {
-	printf("usage: %s host:file host:file ... file, or\n", s);
-	printf("       %s file file ... file if connected\n", s);
+	printf("usage: %s [host:]file [localname]\n", s);
+	printf("       %s [host1:]file1 [host2:]file2 ... [hostN:]fileN\n", s);
 }
 
 int	rexmtval = TIMEOUT;
