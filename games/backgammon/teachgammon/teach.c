@@ -84,6 +84,8 @@ char	**argv;
 {
 	register int	i;
 
+	/* revoke privs */
+	setegid(getgid());
 	setgid(getgid());
 
 	signal (2,getout);

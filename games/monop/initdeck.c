@@ -82,6 +82,8 @@ int	ac;
 char	*av[]; {
 	int n;
 
+	/* revoke */
+	setegid(getgid());
 	setgid(getgid());
 
 	getargs(ac, av);

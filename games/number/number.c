@@ -96,6 +96,8 @@ main(argc, argv)
 	int ch, first;
 	char line[256];
 
+	/* revoke */
+	setegid(getgid());
 	setgid(getgid());
 
 	lflag = 0;

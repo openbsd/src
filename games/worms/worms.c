@@ -211,6 +211,8 @@ main(argc, argv)
 	struct winsize ws;
 #endif
 
+	/* revoke */
+	setegid(getgid());
 	setgid(getgid());
 
 	length = 16;

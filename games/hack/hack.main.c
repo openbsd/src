@@ -468,8 +468,9 @@ boolean wr;
 	       && strcmp(dir, HACKDIR)		/* and not the default? */
 #endif
 		) {
-		(void) setuid(getuid());		/* Ron Wessels */
-		(void) setgid(getgid());
+		/* revoke */
+		setegid(getgid());
+		setgid(getgid());
 	}
 #endif
 

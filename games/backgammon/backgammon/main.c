@@ -109,6 +109,8 @@ char	**argv;
 	register char	c;		/* non-descript character storage */
 	long	t;			/* time for random num generator */
 
+	/* revoke privs */
+	setegid(getgid());
 	setgid(getgid());
 
 	/* initialization */

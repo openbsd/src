@@ -65,7 +65,9 @@ register char	*av[]; {
 
 	register bool	restore;
 
-	setgid(getgid());	/* run as the user */
+	/* revoke */
+	setegid(getgid());
+	setgid(getgid());
 
 	if (strcmp(av[0], "a.out") == 0) {
 		outf = fopen("q", "w");

@@ -58,6 +58,8 @@ main(argc, argv)
 	register int c;
 	register char *p;
 
+	/* revoke */
+	setegid(getgid());
 	setgid(getgid());
 
 	(void) puts("___________");

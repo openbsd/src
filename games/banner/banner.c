@@ -1036,6 +1036,8 @@ main(argc, argv)
 { 
 	int ch;
 
+	/* revoke */
+	setegid(getgid());
 	setgid(getgid());
 
 	while ((ch = getopt(argc, argv, "w:td")) != EOF)

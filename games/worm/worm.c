@@ -89,6 +89,8 @@ main(argc, argv)
 {
 	char ch;
 
+	/* revoke */
+	setegid(getgid());
 	setgid(getgid());
 
 	if (argc == 2)

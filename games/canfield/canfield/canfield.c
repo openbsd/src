@@ -1699,7 +1699,11 @@ main(argc, argv)
 	raw();
 	noecho();
 	initall();
-	setgid(getgid());		/* revoke */
+
+	/* revoke privs */
+	setegid(getgid());
+	setgid(getgid());
+
 	instruct();
 	makeboard();
 	for (;;) {

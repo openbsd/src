@@ -81,6 +81,8 @@ main(argc, argv)
 	struct winsize ws;
 #endif
 
+	/* revoke */
+	setegid(getgid());
 	setgid(getgid());
 
 	if (!(term = getenv("TERM"))) {

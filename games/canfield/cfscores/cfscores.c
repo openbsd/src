@@ -80,7 +80,11 @@ main(argc, argv)
 		perror(_PATH_SCORE);
 		exit(2);
 	}
-	setgid(getgid());		/* revoke */
+
+	/* revoke privs */
+	setegid(getgid());
+	setgid(getgid());
+
 	setpwent();
 	if (argc == 1) {
 		uid = getuid();

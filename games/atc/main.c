@@ -77,6 +77,8 @@ main(ac, av)
 	extern char		*default_game(), *okay_game();
 	extern void		log_score(), quit(), update();
 
+	/* revoke privs */
+	setegid(getgid());
 	setgid(getgid());
 
 	start_time = seed = time(0);

@@ -86,6 +86,8 @@ main()
 	double days, today, tomorrow;
 	int cnt;
 
+	/* revoke */
+	setegid(getgid());
 	setgid(getgid());
 
 	if (gettimeofday(&tp,&tzp)) {

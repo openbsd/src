@@ -84,6 +84,8 @@ main(argc, argv)
 	register int ch;
 	char *indexfile;
 
+	/* revoke */
+	setegid(getgid());
 	setgid(getgid());
 
 	indexfile = _PATH_QUIZIDX;

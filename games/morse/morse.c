@@ -103,6 +103,8 @@ main(argc, argv)
 	register int ch;
 	register char *p;
 
+	/* revoke */
+	setegid(getgid());
 	setgid(getgid());
 
 	while ((ch = getopt(argc, argv, "s")) != EOF)

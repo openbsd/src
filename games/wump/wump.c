@@ -118,6 +118,8 @@ main(argc, argv)
 	extern char *optarg;
 	int c;
 
+	/* revoke */
+	setegid(getgid());
 	setgid(getgid());
 
 #ifdef DEBUG

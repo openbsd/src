@@ -99,6 +99,8 @@ main(argc, argv)
 	int ch;
 	char *p, buf[100];		/* > max number of digits. */
 
+	/* revoke privs */
+	setegid(getgid());
 	setgid(getgid());
 
 	while ((ch = getopt(argc, argv, "")) != EOF)

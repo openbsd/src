@@ -114,6 +114,9 @@ char **argv;
 
 	rawscores = open(_PATH_RAWSCORES, O_RDWR|O_CREAT, 0644);
 	logfile = fopen(_PATH_LOGFILE, "a");
+
+	/* revoke privs */
+	setegid(getgid());
 	setgid(getgid());
 
 	(void)time(&tv);
