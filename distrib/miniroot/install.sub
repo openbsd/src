@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.283 2002/12/08 19:30:40 krw Exp $
+#	$OpenBSD: install.sub,v 1.284 2002/12/08 20:24:56 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1674,7 +1674,7 @@ get_fqdn() {
 }
 
 donetconfig() {
-	local _ns
+	local _dn _ns
 
 	[[ -n $DIDNET ]] && return
 
@@ -1687,41 +1687,36 @@ donetconfig() {
 	# so it will eventually be copied to /mnt/etc/resolv.conf and will
 	# not in the meantime remove the user's ability to choose to use it
 	# or not, during the rest of the install.
-	resp=
 	if [ -f /tmp/resolv.conf.shadow ]; then
 		mv /tmp/resolv.conf.shadow /tmp/resolv.conf
+		# Get nameserver address(es).
+		_ns=$(sed -ne '/^nameserver /s///p' /tmp/resolv.conf)
 		# Get default fully qualified domain name from *first* domain
-		# given on *last* search or domain statement
-		resp=$(sed -n \
+		# given on *last* search or domain statement.
+		_dn=$(sed -n \
 			-e '/^domain[[:space:]][[:space:]]*/{s///;s/\([^[:space:]]*\).*$/\1/;h;}' \
 			-e '/^search[[:space:]][[:space:]]*/{s///;s/\([^[:space:]]*\).*$/\1/;h;}' \
 			-e '${g;p;}' /tmp/resolv.conf)
 	fi
 
 	# Get & apply fully qualified domain name to hostname.
-	ask "DNS domain name? (e.g. 'bar.com')" "${resp:=$(get_fqdn)}"
+	ask "DNS domain name? (e.g. 'bar.com')" "${_dn:=$(get_fqdn)}"
 	hostname "$(hostname -s).$resp"
 
 	# Get/Confirm the default route.
 	resp=$(route -n show | sed -ne '/^default */{s///; s/ .*//; p;}')
-	[[ -z $resp && -f /tmp/mygate ]] && resp=$(< /tmp/mygate)
 	route delete default > /dev/null 2>&1
-	rm -f /tmp/mygate
 	while : ; do
 		ask "IP address of default route? (or 'none')" "${resp:=none}"
 		[[ $resp == none ]] && break
 		route add default $resp || { resp= ; continue; }
 		# Save default route if DHCP wasn't used. 
- 		[[ -f /tmp/dhclient.conf ]] || echo $resp > /tmp/mygate
+ 		[ -f /tmp/dhclient.conf ] || echo $resp > /tmp/mygate
 		break
 	done
 
 	# Get/Confirm nameservers, and construct appropriate resolv.conf.
-	resp=
-	if [ -f /tmp/resolv.conf ]; then
-		resp=$(sed -ne '/^nameserver /s///p' /tmp/resolv.conf)
-	fi
-	ask "IP address of DNS nameserver? (or 'none')" "${resp:=none}"
+	ask "IP address of DNS nameserver? (or 'none')" "${_ns:=none}"
 	if [[ $resp != none ]]; then
 		echo "lookup file bind" > /tmp/resolv.conf
 		for _ns in $resp; do

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.127 2002/12/08 19:30:40 krw Exp $
+#	$OpenBSD: install.sh,v 1.128 2002/12/08 20:24:56 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -380,11 +380,6 @@ echo -n "Saving configuration files..."
 ( cd /var/db
 [ -f dhclient.leases ] && mv dhclient.leases /mnt/var/db/. )
 
-# Prepend interesting comments from installed hosts and dhclient.conf files
-# to /tmp/hosts and /tmp/dhclient.conf.
-save_comments hosts
-save_comments dhclient.conf
-
 # Move configuration files from /tmp to /mnt/etc.
 ( cd /tmp
 hostname > myname
@@ -401,6 +396,11 @@ while read _addr _hn _aliases; do
 	fi
 done < hosts > hosts.new
 mv hosts.new hosts
+
+# Prepend interesting comments from installed hosts and dhclient.conf files
+# to /tmp/hosts and /tmp/dhclient.conf.
+save_comments hosts
+save_comments dhclient.conf
 
 # Possible files: fstab, kbdtype, myname, mygate, sysctl.conf
 #                 dhclient.conf resolv.conf resolv.conf.tail
