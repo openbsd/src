@@ -1,4 +1,4 @@
-/* $OpenBSD: auxil.c,v 1.2 2000/01/30 06:32:02 angelos Exp $ */
+/* $OpenBSD: auxil.c,v 1.3 2000/02/01 03:17:36 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -126,9 +126,9 @@ keynote_in_action_authorizers(void *key, int algorithm)
 	 kl = kl->key_next)
       if ((kl->key_alg == alg) ||
 	  ((kl->key_alg == KEYNOTE_ALGORITHM_RSA) &&
-	   (alg = KEYNOTE_ALGORITHM_X509)) ||
+	   (alg == KEYNOTE_ALGORITHM_X509)) ||
 	  ((kl->key_alg == KEYNOTE_ALGORITHM_X509) &&
-	   (alg = KEYNOTE_ALGORITHM_RSA)))
+	   (alg == KEYNOTE_ALGORITHM_RSA)))
 	if (kn_keycompare(kl->key_key, s, alg) == RESULT_TRUE)
 	  return RESULT_TRUE;
 
@@ -517,7 +517,7 @@ keynote_stringhash(char *name, u_int size)
     for (; *name; name++) 
     {
         hash_val = (hash_val << 2) + *name;
-        if (i = hash_val & 0x3fff)
+        if ((i = hash_val & 0x3fff) != 0)
 	  hash_val = ((hash_val ^ (i >> 12)) & 0x3fff);
     }
 
