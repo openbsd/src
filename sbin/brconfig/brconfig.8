@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.50 2004/05/04 18:50:48 jmc Exp $
+.\"	$OpenBSD: brconfig.8,v 1.51 2004/09/29 02:25:19 mcbride Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -228,6 +228,7 @@ Enable spanning tree protocol on
 .It Cm -stp Ar interface
 Disable spanning tree protocol on
 .Ar interface .
+This is the default for interfaces added to the bridge.
 .It Cm maxage Ar time
 Set the time (in seconds) that a spanning tree protocol configuration is valid.
 Defaults to 20 seconds, minimum of 1, maximum of 255.
