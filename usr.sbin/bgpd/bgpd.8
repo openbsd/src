@@ -1,0 +1,65 @@
+.\" $OpenBSD: bgpd.8,v 1.1 2003/12/22 00:10:33 henning Exp $
+.\"
+.\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd December 22, 2003
+.Dt BGPD 8
+.Os
+.Sh NAME
+.Nm bgpd
+.Nd "Border Gateway Protocol daemon"
+.Sh SYNOPSIS
+.Nm bgpd
+.Bk -words
+.Op Fl dv
+.Op Fl D Ar macro=value
+.Op Fl f Ar file
+.Ek
+.Sh DESCRIPTION
+The
+.Nm
+daemon implements the Border Gateway Protocol version 4 as described
+in RFC 1771.
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl d
+Do not daemonize and log to stderr.
+.It Fl D Ar macro=value
+Define
+.Ar macro
+to be set to
+.Ar value
+on the command line.
+Overrides the definition of
+.Ar macro
+in the configuration file.
+.It Fl f Ar file
+Specify an alternate location,
+.Ar file ,
+for the configuration file.
+.It Fl v
+Produce more verbose output.
+.El
+.Sh FILES
+.Bl -tag -width "/etc/bgpd.conf" -compact
+.It Pa /etc/bgpd.conf
+.Nm
+configuration file.
+.El
+.Sh HISTORY
+The
+.Nm
+program first appeared in
+.Ox 3.5 .
