@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.63 2003/02/01 01:51:31 deraadt Exp $	*/
+/*	$OpenBSD: inet.c,v 1.64 2003/02/19 19:15:13 jason Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.63 2003/02/01 01:51:31 deraadt Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.64 2003/02/19 19:15:13 jason Exp $";
 #endif
 #endif /* not lint */
 
@@ -840,6 +840,7 @@ ipcomp_stats(u_long off, char *name)
 	p(ipcomps_invalid, "\t%u packet%s attempted to use an invalid TDB\n");
 	p(ipcomps_toobig, "\t%u packet%s got larger than max IP packet size\n");
 	p(ipcomps_crypto, "\t%u packet%s that failed (de)compression processing\n");
+	p(ipcomps_minlen, "\t%u packet%s less than minimum compression length\n");
 	p(ipcomps_ibytes, "\t%qu input byte%s\n");
 	p(ipcomps_obytes, "\t%qu output byte%s\n");
 
