@@ -1,4 +1,4 @@
-/*	$OpenBSD: ms.c,v 1.7 1997/08/08 08:17:20 downsj Exp $	*/
+/*	$OpenBSD: ms.c,v 1.8 1997/08/08 21:21:37 niklas Exp $	*/
 /*	$NetBSD: ms.c,v 1.12 1997/07/17 01:17:47 jtk Exp $	*/
 
 /*
@@ -76,7 +76,6 @@
 #include <machine/z8530var.h>
 
 #include "event_var.h"
-#include "locators.h"
 
 /*
  * How many input characters we can buffer.
@@ -171,7 +170,7 @@ ms_match(parent, vcf, aux)
 	struct zsc_attach_args *args = aux;
 
 	/* Exact match required for keyboard. */
-	if (cf->cf_loc[ZSCCF_CHANNEL] == args->channel)
+	if (cf->cf_loc[0] == args->channel)
 		return 2;
 
 	return 0;
