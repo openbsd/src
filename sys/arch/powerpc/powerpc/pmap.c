@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.40 2001/08/18 06:18:49 drahn Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.41 2001/08/25 05:06:29 drahn Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -90,6 +90,7 @@ dump_avail()
 }
 #endif
 
+#ifdef USE_PMAP_VP
 struct pool pmap_vp_pool;
 
 int pmap_vp_valid(pmap_t pm, vaddr_t va);
@@ -112,7 +113,7 @@ VP_IDX1(paddr_t va)
 static inline int
 VP_IDX2(paddr_t va)
 {
-	return (va >> VP_IDX2_POS) & VP_SR_MASK;
+	return (va >> VP_IDX2_POS) & VP_IDX2_MASK;
 }
 
 int
@@ -170,6 +171,8 @@ pmap_vp_enter(pmap_t pm, vaddr_t va, paddr_t pa)
 		s = splimp();
 		mem1 = pool_get(&pmap_vp_pool, PR_NOWAIT);
 		splx(s);
+
+		bzero (mem1, NBPG);
 
 		pm->vps[idx] = mem1;
 #ifdef DEBUG
@@ -231,6 +234,7 @@ pmap_vp_preinit()
 	pm->vps[VP_SR(0xe0000000)] = vp_page0;
 	pm->vps[VP_SR(0xe8000000)] = vp_page1;
 }
+#endif
 
 
 /*
@@ -664,7 +668,9 @@ avail_end = npgs * NBPG;
 	asm volatile ("sync; mtsdr1 %0; isync"
 		      :: "r"((u_int)ptable | (ptab_mask >> 10)));
 	tlbia();
+#ifdef USE_PMAP_VP
 	pmap_vp_preinit();
+#endif /*  USE_PMAP_VP */
 	nextavail = avail->start;
 }
 
@@ -714,8 +720,10 @@ pmap_init()
 	pv = (struct pv_entry *)addr;
 	for (i = npgs; --i >= 0;)
 		pv++->pv_idx = -1;
+#ifdef USE_PMAP_VP
 	pool_init(&pmap_vp_pool, NBPG, 0, 0, 0, "ppvl",
             0, NULL, NULL, M_VMPMAP);
+#endif
 	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pvpl",
             0, NULL, NULL, M_VMPMAP);
 	pool_init(&pmap_po_pool, sizeof(struct pte_ovfl), 0, 0, 0, "popl",
@@ -906,7 +914,9 @@ pmap_release(pm)
 	int i, j;
 	int s;
 
+#ifdef USE_PMAP_VP
 	pmap_vp_destroy(pm);
+#endif /*  USE_PMAP_VP */
 	if (!pm->pm_sr[0])
 		panic("pmap_release");
 	i = pm->pm_sr[0] / 16;
@@ -1196,7 +1206,9 @@ pmap_enter(pm, va, pa, prot, flags)
 
 	pm->pm_stats.resident_count++;
 
+#ifdef USE_PMAP_VP
 	pmap_vp_enter(pm, va, pa);
+#endif /*  USE_PMAP_VP */
 	
 	/*
 	 * Compute the HTAB index.
@@ -1304,10 +1316,12 @@ pmap_remove(pm, va, endva)
 	
 	s = splimp();
 	for (; va < endva; va += NBPG) {
+#ifdef USE_PMAP_VP
 		if (0 == pmap_vp_remove(pm, va)) {
 			/* no mapping */
 			continue;
 		}
+#endif /*  USE_PMAP_VP */
 		found = 0;
 		sr = ptesr(pm->pm_sr, va);
 		idx = pteidx(sr, va);
