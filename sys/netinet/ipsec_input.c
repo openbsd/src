@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.12 2000/01/10 02:45:12 angelos Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.13 2000/01/10 04:16:52 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -494,7 +494,7 @@ ipsec_common_input(struct mbuf **m0, int skip, int protoff, int af, int sproto)
 	      continue;
 
 	    /* Match for transport protocol */
-	    if (flow->flow_proto != prot)
+	    if (flow->flow_proto && flow->flow_proto != prot)
 	      continue;
 
 	    /* Netmask handling */

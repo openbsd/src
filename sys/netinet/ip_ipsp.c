@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.64 2000/01/10 01:19:16 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.65 2000/01/10 04:16:52 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -64,7 +64,7 @@
 
 #ifdef INET6
 #include <netinet6/in6.h>
-#include <netinet6/ip6.h>
+#include <netinet6/in6.h>
 #endif /* INET6 */
 
 #include <net/pfkeyv2.h>
@@ -96,7 +96,7 @@ void tdb_hashstats(void);
 
 int		ipsp_kern __P((int, char **, int));
 u_int8_t       	get_sa_require  __P((struct inpcb *));
-int		check_ipsec_policy  __P((struct inpcb *, u_int32_t));
+int		check_ipsec_policy  __P((struct inpcb *, void *));
 void		tdb_rehash __P((void));
 
 extern int	ipsec_auth_default_level;
@@ -203,21 +203,19 @@ get_sa_require(struct inpcb *inp)
 
 /*
  * Check the socket policy and request a new SA with a key management
- * daemon. Sometime the inp does not contain the destination address
+ * daemon. Sometime the inp does not contain the destination address;
  * in that case use dst.
  */
-
-/* XXX Make IPv6 compliant */
 int
-check_ipsec_policy(struct inpcb *inp, u_int32_t daddr)
+check_ipsec_policy(struct inpcb *inp, void *daddr)
 {
+    struct route_enc re0, *re = &re0;
+    struct sockaddr_encap *dst *gw;
+    u_int8_t sa_require, sa_have;
+    struct tdb tdb2, *tdb = NULL;
     union sockaddr_union sunion;
     struct socket *so;
-    struct route_enc re0, *re = &re0;
-    struct sockaddr_encap *dst; 
-    u_int8_t sa_require, sa_have;
     int error, i, s;
-    struct tdb *tdb = NULL;
 
     if (inp == NULL || ((so = inp->inp_socket) == 0))
       return (EINVAL);
@@ -232,33 +230,72 @@ check_ipsec_policy(struct inpcb *inp, u_int32_t daddr)
 	bzero((caddr_t) re, sizeof(*re));
 	dst = (struct sockaddr_encap *) &re->re_dst;
 	dst->sen_family = PF_KEY;
-	dst->sen_len = SENT_IP4_LEN;
-	dst->sen_type = SENT_IP4;
-	dst->sen_ip_src = inp->inp_laddr;
-	dst->sen_ip_dst.s_addr = inp->inp_faddr.s_addr ? 
-	  inp->inp_faddr.s_addr : daddr;
-	dst->sen_proto = so->so_proto->pr_protocol;
-	switch (dst->sen_proto)
+
+#ifdef INET6
+	if (inp->inp_flags & INP_IPV6)
 	{
-	  case IPPROTO_UDP:
-	  case IPPROTO_TCP:
-	    dst->sen_sport = htons(inp->inp_lport);
-	    dst->sen_dport = htons(inp->inp_fport);
-	    break;
-	  default:
-	    dst->sen_sport = 0;
-	    dst->sen_dport = 0;
+	    dst->sen_len = SENT_IP6_LEN;
+	    dst->sen_type = SENT_IP6;
+	    dst->sen_ip6_src = inp->inp_laddr6;
+	    if (inp->inp_faddr6.s6_addr)
+	      dst->sen_ip6_dst = inp->inp_faddr6;
+	    else
+	      dst->sen_ip6_dst =  (*((struct in6_addr *) daddr));
+
+	    dst->sen_ip6_proto = so->so_proto->pr_protocol;
+
+	    switch (dst->sen_ip6_proto)
+	    {
+		case IPPROTO_UDP:
+		case IPPROTO_TCP:
+		    dst->sen_ip6_sport = htons(inp->inp_lport);
+		    dst->sen_ip6_dport = htons(inp->inp_fport);
+		    break;
+
+		default:
+		    dst->sen_ip6_sport = 0;
+		    dst->sen_ip6_dport = 0;
+	    }
 	}
-    
+#endif /* INET6 */
+
+#ifdef INET
+	if (!(inp->inp_flags & INP_IPV6))
+	{
+	    dst->sen_len = SENT_IP4_LEN;
+	    dst->sen_type = SENT_IP4;
+	    dst->sen_ip_src = inp->inp_laddr;
+
+	    if (inp->inp_faddr.s_addr)
+	      dst->sen_ip_dst = inp->inp_faddr;
+	    else
+	      dst->sen_ip_dst = (*((struct in_addr *) daddr));
+
+	    dst->sen_proto = so->so_proto->pr_protocol;
+
+	    switch (dst->sen_proto)
+	    {
+		case IPPROTO_UDP:
+		case IPPROTO_TCP:
+		    dst->sen_sport = htons(inp->inp_lport);
+		    dst->sen_dport = htons(inp->inp_fport);
+		    break;
+
+		default:
+		    dst->sen_sport = 0;
+		    dst->sen_dport = 0;
+	    }
+	}
+#endif /* INET */
+
 	/* Try to find a flow */
 	rtalloc((struct route *) re);
-    
+
 	if (re->re_rt != NULL)
 	{
-	    struct sockaddr_encap *gw;
-	    
 	    gw = (struct sockaddr_encap *) (re->re_rt->rt_gateway);
-	    
+
+#ifdef INET
 	    if (gw->sen_type == SENT_IPSP)
 	    {
 		bzero(&sunion, sizeof(sunion));
@@ -269,15 +306,32 @@ check_ipsec_policy(struct inpcb *inp, u_int32_t daddr)
 		tdb = (struct tdb *) gettdb(gw->sen_ipsp_spi, &sunion,
 					    gw->sen_ipsp_sproto);
 	    }
+#endif /* INET */
+
+#ifdef INET6
+	    if (gw->sen_type == SENT_IPSP6)
+	    {
+		bzero(&sunion, sizeof(sunion));
+	        sunion.sin6.sin6_family = AF_INET6;
+		sunion.sin6.sin6_len = sizeof(struct sockaddr_in6);
+		sunion.sin6.sin6_addr = gw->sen_ipsp6_dst;
+	      
+		tdb = (struct tdb *) gettdb(gw->sen_ipsp6_spi, &sunion,
+					    gw->sen_ipsp6_sproto);
+	    }
+#endif /* INET6 */
+
 	    RTFREE(re->re_rt);
 	}
-    } else
+    }
+    else
       tdb = inp->inp_tdb;
 
     if (tdb)
       SPI_CHAIN_ATTRIB(sa_have, tdb_onext, tdb);
     else
       sa_have = 0;
+
     splx(s);
 
     /* Check if our requirements are met */
@@ -293,9 +347,11 @@ check_ipsec_policy(struct inpcb *inp, u_int32_t daddr)
     {
 	switch (dst->sen_type)
 	{
+#ifdef INET
 	    case SENT_IPSP:
 		DPRINTF(("ipsec: send SA request (%d), remote IPv4 address: %s, SA type: %d\n", i + 1, inet_ntoa4(dst->sen_ip_dst), sa_require));
 		break;
+#endif /* INET */
 
 #ifdef INET6
 	    case SENT_IPSP6:
@@ -308,9 +364,13 @@ check_ipsec_policy(struct inpcb *inp, u_int32_t daddr)
 		return EPFNOSUPPORT;
 	}
 
-	/* Send notify */
-	/* XXX PF_KEYv2 Notify */
-	 
+	/* Initialize TDB for PF_KEY notification */
+	/* XXX */
+
+	/* Send PF_KEYv2 Notify */
+	if ((error = pfkeyv2_acquire(tdb2, 0)) != 0)
+	  return error;
+
 	/* 
 	 * Wait for the keymanagement daemon to establich a new SA,
 	 * even on error check again, perhaps some other process
@@ -328,13 +388,17 @@ check_ipsec_policy(struct inpcb *inp, u_int32_t daddr)
 	 */
 	if (inp->inp_secresult == SR_SUCCESS)
 	  return (0);
+
 	/*
 	 * Key Management returned a permanent failure, we do not
-	 * need to retry again. XXX - when more than one key
-	 * management daemon is available we can not do that.
+	 * need to retry again.
+	 *
+	 * XXX when more than one key management daemon is available
+	 * XXX we can not do that.
 	 */
 	if (inp->inp_secresult == SR_FAILED)
 	  break;
+
 	i++;
     }
 
@@ -344,8 +408,6 @@ check_ipsec_policy(struct inpcb *inp, u_int32_t daddr)
 /*
  * Add an inpcb to the list of inpcb which reference this tdb directly.
  */
-
-/* XXX Make IPv6 compliant */
 void
 tdb_add_inp(struct tdb *tdb, struct inpcb *inp)
 {
@@ -358,8 +420,10 @@ tdb_add_inp(struct tdb *tdb, struct inpcb *inp)
 	    splx(s);
 	    return;
 	}
+
 	TAILQ_REMOVE(&inp->inp_tdb->tdb_inp, inp, inp_tdb_next);
     }
+
     inp->inp_tdb = tdb;
     TAILQ_INSERT_TAIL(&tdb->tdb_inp, inp, inp_tdb_next);
     splx(s);
@@ -395,7 +459,7 @@ reserve_spi(u_int32_t sspi, u_int32_t tspi, union sockaddr_union *src,
     if (sspi == tspi)   /* Asking for a specific SPI */
       nums = 1;
     else
-      nums = 50;  /* XXX figure out some good value */
+      nums = 100;  /* XXX figure out some good value */
 
     while (nums--)
     {
@@ -435,7 +499,10 @@ reserve_spi(u_int32_t sspi, u_int32_t tspi, union sockaddr_union *src,
 	tdbp->tdb_epoch = kernfs_epoch - 1;
 	puttdb(tdbp);
 
-	/* XXX Should set up a silent expiration for this */
+	/* Setup a "silent" expiration (since TDBF_INVALID's set) */
+	tdbp->tdb_flags |= TDBF_TIMER;
+	tdbp->tdb_exp_timeout = time.tv_sec + ipsec_keep_invalid;
+	tdb_expiration(tdbp, TDBEXP_EARLY | TDBEXP_TIMEOUT);
 	
 	return spi;
     }
@@ -615,7 +682,9 @@ handle_expirations(void *arg)
 	if ((tdb->tdb_flags & TDBF_TIMER) &&
 	    (tdb->tdb_exp_timeout <= time.tv_sec))
 	{
-	    pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
+	    /* If it's an "invalid" TDB, do a silent expiration */
+	    if (!(tdb->tdb_flags & TDBF_INVALID))
+	      pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
 	    tdb_delete(tdb, 0, 0);
 	    continue;
 	}
@@ -656,13 +725,12 @@ handle_expirations(void *arg)
 /*
  * Ensure the tdb is in the right place in the expiration list.
  */
-
 void
 tdb_expiration(struct tdb *tdb, int flags)
 {
-    u_int64_t next_timeout = 0;
     struct tdb *t, *former_expirer, *next_expirer;
     int will_be_first, sole_reason, early;
+    u_int64_t next_timeout = 0;
     int s = spltdb();
 
     /*
