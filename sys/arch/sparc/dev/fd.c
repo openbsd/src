@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.21 1997/08/25 08:38:44 downsj Exp $	*/
+/*	$OpenBSD: fd.c,v 1.22 1997/09/20 12:24:17 deraadt Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -1855,9 +1855,9 @@ fd_mountroot_hook(dev)
 {
 	int c;
 
-	fd_do_eject((struct fd_softc *)dev);
-
 	if (dev) {
+		fd_do_eject((struct fd_softc *)dev);
+
 		printf("Insert filesystem floppy and press return.");
 		for (;;) {
 			c = cngetc();
