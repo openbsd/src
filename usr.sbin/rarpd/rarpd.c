@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.39 2003/06/01 15:53:43 deraadt Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.40 2003/07/21 19:44:05 deraadt Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -28,7 +28,7 @@ char    copyright[] =
 #endif				/* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rarpd.c,v 1.39 2003/06/01 15:53:43 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rarpd.c,v 1.40 2003/07/21 19:44:05 deraadt Exp $";
 #endif
 
 
@@ -62,6 +62,7 @@ static char rcsid[] = "$OpenBSD: rarpd.c,v 1.39 2003/06/01 15:53:43 deraadt Exp 
 #include <dirent.h>
 #include <util.h>
 #include <ifaddrs.h>
+#include <paths.h>
 
 #define FATAL		1	/* fatal error occurred */
 #define NONFATAL	0	/* non fatal error occurred */
@@ -78,7 +79,7 @@ struct if_addr {
 struct if_info {
 	int	ii_fd;			/* BPF file descriptor */
 	char	ii_name[IFNAMSIZ];	/* if name, e.g. "en0" */
-	u_char	ii_eaddr[6];		/* Ethernet address of this iface */
+	u_char	ii_eaddr[ETHER_ADDR_LEN];	/* Ethernet address of this iface */
 	struct if_addr *ii_addrs;	/* Networks this interface is on */
 	struct if_info *ii_next;
 };
@@ -173,7 +174,7 @@ main(int argc, char *argv[])
 		pidfile(NULL);
 
 		/* Fade into the background */
-		f = open("/dev/tty", O_RDWR);
+		f = open(_PATH_TTY, O_RDWR);
 		if (f >= 0) {
 			if (ioctl(f, TIOCNOTTY, 0) < 0) {
 				err(FATAL, "TIOCNOTTY: %s", strerror(errno));
@@ -183,11 +184,11 @@ main(int argc, char *argv[])
 		}
 		(void) chdir("/");
 		(void) setpgrp(0, getpid());
-		devnull = open("/dev/null", O_RDWR);
+		devnull = open(_PATH_DEVNULL, O_RDWR);
 		if (devnull >= 0) {
-			(void) dup2(devnull, 0);
-			(void) dup2(devnull, 1);
-			(void) dup2(devnull, 2);
+			(void) dup2(devnull, STDIN_FILENO);
+			(void) dup2(devnull, STDOUT_FILENO);
+			(void) dup2(devnull, STDERR_FILENO);
 			if (devnull > 2)
 				(void) close(devnull);
 		}
