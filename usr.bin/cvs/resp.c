@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.19 2005/01/06 18:40:33 jfb Exp $	*/
+/*	$OpenBSD: resp.c,v 1.20 2005/01/13 05:39:07 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -161,7 +161,7 @@ cvs_resp_handle(struct cvsroot *root, char *line)
 	if (resp == NULL) {
 		return (-1);
 	} else if (cvs_resp_swtab[resp->resp_id].hdlr == NULL) {
-		cvs_log(LP_ERRNO, "handler for `%s' not implemented", cmd);
+		cvs_log(LP_ERR, "handler for `%s' not implemented", cmd);
 		return (-1);
 	}
 

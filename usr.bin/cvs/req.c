@@ -1,4 +1,4 @@
-/*	$OpenBSD: req.c,v 1.9 2004/12/28 20:46:13 jfb Exp $	*/
+/*	$OpenBSD: req.c,v 1.10 2005/01/13 05:39:07 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -175,7 +175,7 @@ cvs_req_handle(char *line)
 	if (req == NULL)
 		return (-1);
 	else if (cvs_req_swtab[req->req_id].hdlr == NULL) {
-		cvs_log(LP_ERRNO, "handler for `%s' not implemented", cmd);
+		cvs_log(LP_ERR, "handler for `%s' not implemented", cmd);
 		return (-1);
 	}
 
