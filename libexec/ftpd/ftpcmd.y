@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.43 2003/12/10 22:57:12 deraadt Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.44 2004/11/28 18:49:29 henning Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
 static const char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
 static const char rcsid[] =
-    "$OpenBSD: ftpcmd.y,v 1.43 2003/12/10 22:57:12 deraadt Exp $";
+    "$OpenBSD: ftpcmd.y,v 1.44 2004/11/28 18:49:29 henning Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,6 +70,7 @@ static const char rcsid[] =
 #include <netdb.h>
 
 #include "extern.h"
+#include "monitor.h"
 
 extern	union sockunion data_dest;
 extern	int logged_in;
@@ -97,6 +98,7 @@ static	int cmd_type;
 static	int cmd_form;
 static	int cmd_bytesz;
 static	int state;
+static	int quit;
 char	cbuf[512];
 char	*fromname;
 
@@ -155,14 +157,18 @@ cmd_list
 cmd
 	: USER SP username CRLF
 		{
-			user($3);
+			monitor_user($3);
 			free($3);
 		}
 	| PASS SP password CRLF
 		{
-			pass($3);
+			quit = monitor_pass($3);
 			memset($3, 0, strlen($3));
 			free($3);
+
+			/* Terminate unprivileged pre-auth slave */
+			if (quit)
+				_exit(PREAUTH_SLAVE_DIED);
 		}
 	| PORT check_login_epsvall SP host_port CRLF
 		{

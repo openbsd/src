@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.13 2003/12/10 22:57:12 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.14 2004/11/28 18:49:29 henning Exp $	*/
 /*	$NetBSD: extern.h,v 1.2 1995/04/11 02:44:49 cgd Exp $	*/
 
 /*
@@ -74,7 +74,8 @@ void	ftpdlogwtmp(char *, char *, char *);
 void	lreply(int, const char *, ...);
 void	makedir(char *);
 void	nack(char *);
-void	pass(char *);
+enum auth_ret
+	pass(char *);
 void	passive(void);
 int	lpsvproto2af(int);
 int	af2lpsvproto(int);

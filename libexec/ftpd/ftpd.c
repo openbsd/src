@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.155 2004/11/22 00:05:15 millert Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.156 2004/11/28 18:49:29 henning Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
 static const char rcsid[] =
-    "$OpenBSD: ftpd.c,v 1.155 2004/11/22 00:05:15 millert Exp $";
+    "$OpenBSD: ftpd.c,v 1.156 2004/11/28 18:49:29 henning Exp $";
 #endif
 #endif /* not lint */
 
@@ -124,6 +124,7 @@ static const char rcsid[] =
 
 #include "pathnames.h"
 #include "extern.h"
+#include "monitor.h"
 
 static char version[] = "Version 6.5/OpenBSD";
 
@@ -253,6 +254,7 @@ static int	 check_host(struct sockaddr *);
 static void	 usage(void);
 
 void	 logxfer(char *, off_t, time_t);
+void	 set_slave_signals(void);
 
 static char *
 curdir(void)
@@ -385,6 +387,13 @@ main(int argc, char *argv[])
 	 */
 	openlog("ftpd", LOG_PID | LOG_NDELAY, LOG_FTP);
 
+	if (getpwnam(FTPD_PRIVSEP_USER) == NULL) {
+		syslog(LOG_ERR, "privilege separation user %s not found",
+		    FTPD_PRIVSEP_USER);
+		exit(1);
+	}
+	endpwent();
+
 	if (daemon_mode) {
 		int *fds, n, error, i, fd;
 		struct pollfd *pfds;
@@ -512,26 +521,7 @@ main(int argc, char *argv[])
 	/* set this here so klogin can use it... */
 	(void)snprintf(ttyline, sizeof(ttyline), "ftp%ld", (long)getpid());
 
-	sa.sa_handler = SIG_DFL;
-	(void) sigaction(SIGCHLD, &sa, NULL);
-
-	sa.sa_handler = sigurg;
-	sa.sa_flags = 0;		/* don't restart syscalls for SIGURG */
-	(void) sigaction(SIGURG, &sa, NULL);
-
-	sigfillset(&sa.sa_mask);	/* block all signals in handler */
-	sa.sa_flags = SA_RESTART;
-	sa.sa_handler = sigquit;
-	(void) sigaction(SIGHUP, &sa, NULL);
-	(void) sigaction(SIGINT, &sa, NULL);
-	(void) sigaction(SIGQUIT, &sa, NULL);
-	(void) sigaction(SIGTERM, &sa, NULL);
-
-	sa.sa_handler = lostconn;
-	(void) sigaction(SIGPIPE, &sa, NULL);
-
-	sa.sa_handler = toolong;
-	(void) sigaction(SIGALRM, &sa, NULL);
+	set_slave_signals();
 
 	addrlen = sizeof(ctrl_addr);
 	if (getsockname(0, (struct sockaddr *)&ctrl_addr, &addrlen) < 0) {
@@ -594,10 +584,6 @@ main(int argc, char *argv[])
 		syslog(LOG_ERR, "setsockopt: %m");
 #endif
 
-#ifdef	F_SETOWN
-	if (fcntl(fileno(stdin), F_SETOWN, getpid()) == -1)
-		syslog(LOG_ERR, "fcntl F_SETOWN: %m");
-#endif
 	dolog((struct sockaddr *)&his_addr);
 	/*
 	 * Set up default state
@@ -645,6 +631,9 @@ main(int argc, char *argv[])
 
 	reply(220, "%s FTP server (%s) ready.",
 	    (multihome ? dhostname : hostname), version);
+
+	monitor_init();
+
 	for (;;)
 		(void) yyparse();
 	/* NOTREACHED */
@@ -721,8 +710,10 @@ user(char *name)
 	char *cp, *shell, *style, *host;
 	char *class = NULL;
 
-	if (logged_in)
+	if (logged_in) {
+		kill_slave();
 		end_login();
+	}
 
 	/* Close session from previous user if there was one. */
 	if (as) {
@@ -879,7 +870,6 @@ checkuser(char *fname, char *name)
 static void
 end_login(void)
 {
-
 	sigprocmask (SIG_BLOCK, &allsigs, NULL);
 	if (logged_in) {
 		ftpdlogwtmp(ttyline, "", "");
@@ -887,10 +877,10 @@ end_login(void)
 			ftpd_logout(utmp.ut_line);
 	}
 	reply(530, "Please reconnect to work as another user");
-	exit(0);
+	_exit(0);
 }
 
-void
+enum auth_ret
 pass(char *passwd)
 {
 	int authok, flags;
@@ -901,7 +891,7 @@ pass(char *passwd)
 
 	if (logged_in || askpasswd == 0) {
 		reply(503, "Login with USER first.");
-		return;
+		return (AUTH_FAILED);
 	}
 	askpasswd = 0;
 	if (!guest) {		/* "ftp" is only account allowed no password */
@@ -931,17 +921,20 @@ pass(char *passwd)
 				syslog(LOG_NOTICE,
 				    "repeated login failures from %s",
 				    remotehost);
-				exit(0);
+				kill_slave();
+				_exit(0);
 			}
-			return;
+			return (AUTH_FAILED);
 		}
 	} else if (lc != NULL) {
 		/* Save anonymous' password. */
 		if (guestpw != NULL)
 			free(guestpw);
 		guestpw = strdup(passwd);
-		if (guestpw == NULL)
+		if (guestpw == NULL) {
+			kill_slave();
 			fatal("Out of memory.");
+		}
 
 		authok = auth_approval(as, lc, pw->pw_name, "ftp");
 		auth_close(as);
@@ -951,15 +944,24 @@ pass(char *passwd)
 			    "FTP LOGIN FAILED (HOST) as %s: approval failure.",
 			    pw->pw_name);
 			reply(530, "Approval failure.");
-			exit(0);
+			kill_slave();
+			_exit(0);
 		}
 	} else {
 		syslog(LOG_INFO|LOG_AUTH,
 		    "FTP LOGIN CLASS %s MISSING for %s: approval failure.",
 		    pw->pw_class, pw->pw_name);
 		reply(530, "Permission denied.");
-		exit(0);
+		kill_slave();
+		_exit(0);
 	}
+
+	if (monitor_post_auth() == 1) {
+		/* Post-auth monitor process */
+		logged_in = 1;
+		return (AUTH_MONITOR);
+	}
+
 	login_attempts = 0;		/* this time successful */
 	/* set umask via setusercontext() unless -u flag was given. */
 	flags = LOGIN_SETGROUP|LOGIN_SETPRIORITY|LOGIN_SETRESOURCES;
@@ -1064,7 +1066,11 @@ pass(char *passwd)
 		} else
 			lreply(230, "No directory! Logging in with home=/");
 	}
-	if (seteuid(pw->pw_uid) < 0) {
+	if (setegid(pw->pw_gid) < 0 || setgid(pw->pw_gid) < 0) {
+		reply(550, "Can't set gid.");
+		goto bad;
+	}
+	if (seteuid(pw->pw_uid) < 0 || setuid(pw->pw_uid) < 0) {
 		reply(550, "Can't set uid.");
 		goto bad;
 	}
@@ -1128,12 +1134,13 @@ pass(char *passwd)
 	}
 	login_close(lc);
 	lc = NULL;
-	return;
+	return (AUTH_SLAVE);
 bad:
 	/* Forget all about it... */
 	login_close(lc);
 	lc = NULL;
 	end_login();
+	return (AUTH_FAILED);
 }
 
 void
@@ -1295,9 +1302,7 @@ getdatasock(char *mode)
 	if (data >= 0)
 		return (fdopen(data, mode));
 	sigprocmask (SIG_BLOCK, &allsigs, NULL);
-	(void) seteuid(0);
 	s = socket(ctrl_addr.su_family, SOCK_STREAM, 0);
-	(void) seteuid((uid_t)pw->pw_uid);
 	if (s < 0)
 		goto bad;
 	if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
@@ -1306,18 +1311,14 @@ getdatasock(char *mode)
 	/* anchor socket to avoid multi-homing problems */
 	data_source = ctrl_addr;
 	data_source.su_port = htons(20); /* ftp-data port */
-	(void) seteuid(0);
 	for (tries = 1; ; tries++) {
-		if (bind(s, (struct sockaddr *)&data_source,
+		if (monitor_bind(s, (struct sockaddr *)&data_source,
 		    data_source.su_len) >= 0)
 			break;
-		if (errno != EADDRINUSE || tries > 10) {
-			(void) seteuid(pw->pw_uid);
+		if (errno != EADDRINUSE || tries > 10)
 			goto bad;
-		}
 		sleep(tries);
 	}
-	(void) seteuid((uid_t)pw->pw_uid);
 	sigprocmask (SIG_UNBLOCK, &allsigs, NULL);
 
 #ifdef IP_TOS
@@ -1350,7 +1351,8 @@ bad:
 	/* Return the real value of errno (close may change it) */
 	t = errno;
 	sigprocmask (SIG_UNBLOCK, &allsigs, NULL);
-	(void) close(s);
+	if (s >= 0)
+		(void) close(s);
 	errno = t;
 	return (NULL);
 }
@@ -2773,6 +2775,41 @@ logxfer(char *name, off_t size, time_t start)
 		write(statfd, buf, len);
 		free(vpw);
 	}
+}
+
+void
+set_slave_signals(void)
+{
+	struct sigaction sa;
+
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = SA_RESTART;
+
+	sa.sa_handler = SIG_DFL;
+	(void) sigaction(SIGCHLD, &sa, NULL);
+
+	sa.sa_handler = sigurg;
+	sa.sa_flags = 0;		/* don't restart syscalls for SIGURG */
+	(void) sigaction(SIGURG, &sa, NULL);
+
+	sigfillset(&sa.sa_mask);	/* block all signals in handler */
+	sa.sa_flags = SA_RESTART;
+	sa.sa_handler = sigquit;
+	(void) sigaction(SIGHUP, &sa, NULL);
+	(void) sigaction(SIGINT, &sa, NULL);
+	(void) sigaction(SIGQUIT, &sa, NULL);
+	(void) sigaction(SIGTERM, &sa, NULL);
+
+	sa.sa_handler = lostconn;
+	(void) sigaction(SIGPIPE, &sa, NULL);
+
+	sa.sa_handler = toolong;
+	(void) sigaction(SIGALRM, &sa, NULL);
+
+#ifdef F_SETOWN
+	if (fcntl(fileno(stdin), F_SETOWN, getpid()) == -1)
+		syslog(LOG_ERR, "fcntl F_SETOWN: %m");
+#endif
 }
 
 #if defined(TCPWRAPPERS)
