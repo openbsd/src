@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.23 2002/02/16 21:28:03 millert Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.24 2002/02/20 23:07:49 pefo Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)nlist.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: nlist.c,v 1.23 2002/02/16 21:28:03 millert Exp $";
+static char *rcsid = "$OpenBSD: nlist.c,v 1.24 2002/02/20 23:07:49 pefo Exp $";
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,7 @@ static char *rcsid = "$OpenBSD: nlist.c,v 1.23 2002/02/16 21:28:03 millert Exp $
 #include <fcntl.h>
 #include <kvm.h>
 #include <limits.h>
+#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -82,9 +83,10 @@ static char *fmterr;
 static u_long get_kerntext(char *kfn, u_int magic);
 
 int
-__aout_knlist(fd, db)
+__aout_knlist(fd, db, ksyms)
 	int fd;
 	DB *db;
+	int ksyms;
 {
 	register int nsyms;
 	struct exec ebuf;
@@ -185,9 +187,9 @@ __aout_knlist(fd, db)
 			err(1, "record enter");
 
 		if (strcmp((char *)key.data, VRS_SYM) == 0) {
-			long cur_off = -1;
+			long cur_off;
 
-			if (ebuf.a_data && ebuf.a_text > __LDPGSZ) {
+			if (!ksyms) {
 				/*
 				 * Calculate offset relative to a normal
 				 * (non-kernel) a.out.  Kerntextoff is where the
@@ -219,8 +221,7 @@ __aout_knlist(fd, db)
 				}
 			} else {
 				/*
-				 * No data segment and text is __LDPGSZ.
-				 * This must be /dev/ksyms or a look alike.
+				 * This is /dev/ksyms or a look alike.
 				 * Use sysctl() to get version since we
 				 * don't have real text or data.
 				 */
@@ -246,7 +247,7 @@ __aout_knlist(fd, db)
 			/* Restore to original values. */
 			data.data = (u_char *)&nbuf;
 			data.size = sizeof(NLIST);
-			if (cur_off != -1 && fseek(fp, cur_off, SEEK_SET) == -1) {
+			if (!ksyms && fseek(fp, cur_off, SEEK_SET) == -1) {
 				fmterr = "corrupted string table";
 				return (-1);
 			}
@@ -289,9 +290,10 @@ get_kerntext(name, magic)
 
 #ifdef _NLIST_DO_ELF
 int
-__elf_knlist(fd, db)
+__elf_knlist(fd, db, ksyms)
 	int fd;
 	DB *db;
+	int ksyms;
 {
 	register caddr_t strtab;
 	register off_t symstroff, symoff;
@@ -446,27 +448,50 @@ __elf_knlist(fd, db)
 			err(1, "record enter");
 
 		if (strcmp((char *)key.data, VRS_SYM) == 0) {
-			long cur_off, voff;
-			/*
-			 * Calculate offset to the version string in the
-			 * file.  kernvma is where the kernel is really
-			 * loaded; kernoffs is where in the file it starts.
-			 */
-			voff = nbuf.n_value - kernvma + kernoffs;
-			cur_off = ftell(fp);
-			if (fseek(fp, voff, SEEK_SET) == -1) {
-				fmterr = "corrupted string table";
-				return (-1);
-			}
+			long cur_off;
+			if (!ksyms) {
+				/*
+				 * Calculate offset to the version string in
+				 * the file. kernvma is where the kernel is
+				 * really loaded; kernoffs is where in the
+				 * file it starts.
+				 */
+				long voff;
+				voff = nbuf.n_value - kernvma + kernoffs;
+				cur_off = ftell(fp);
+				if (fseek(fp, voff, SEEK_SET) == -1) {
+					fmterr = "corrupted string table";
+					return (-1);
+				}
 
-			/*
-			 * Read version string up to, and including newline.
-			 * This code assumes that a newline terminates the
-			 * version line.
-			 */
-			if (fgets(buf, sizeof(buf), fp) == NULL) {
-				fmterr = "corrupted string table";
-				return (-1);
+				/*
+				 * Read version string up to, and including
+				 * newline. This code assumes that a newline
+				 * terminates the version line.
+				 */
+				if (fgets(buf, sizeof(buf), fp) == NULL) {
+					fmterr = "corrupted string table";
+					return (-1);
+				}
+			} else {
+				/*
+				 * This is /dev/ksyms or a look alike.
+				 * Use sysctl() to get version since we
+				 * don't have real text or data.
+				 */
+				int mib[2];
+				int len;
+				char *p;
+
+				mib[0] = CTL_KERN;
+				mib[1] = KERN_VERSION;
+				len = sizeof(buf);
+				if (sysctl(mib, 2, buf, &len, NULL, 0) == -1) {
+					err(1, "sysctl can't find kernel "
+					    "version string");
+				}
+				if ((p = strchr(buf, '\n')) != NULL)
+					*(p+1) = '\0';
 			}
 
 			key.data = (u_char *)VRS_KEY;
@@ -479,7 +504,7 @@ __elf_knlist(fd, db)
 			/* Restore to original values. */
 			data.data = (u_char *)&nbuf;
 			data.size = sizeof(NLIST);
-			if (fseek(fp, cur_off, SEEK_SET) == -1) {
+			if (!ksyms && fseek(fp, cur_off, SEEK_SET) == -1) {
 				fmterr = "corrupted string table";
 				return (-1);
 			}
@@ -505,9 +530,10 @@ __elf_knlist(fd, db)
 				 (p) < (e)->a.data_start + (e)->a.dsize)
 
 int
-__ecoff_knlist(fd, db)
+__ecoff_knlist(fd, db, ksyms)
 	int fd;
 	DB *db;
+	int ksyms;
 {
 	struct ecoff_exechdr *exechdrp;
 	struct ecoff_symhdr *symhdrp;
@@ -626,7 +652,7 @@ out:
 #endif /* _NLIST_DO_ECOFF */
 
 static struct knlist_handlers {
-	int	(*fn)(int fd, DB *db);
+	int	(*fn)(int fd, DB *db, int ksyms);
 } nlist_fn[] = {
 #ifdef _NLIST_DO_AOUT
 	{ __aout_knlist },
@@ -645,13 +671,19 @@ create_knlist(name, fd, db)
 	int fd;
 	DB *db;
 {
-	int i, error;
+	int i, error, ksyms;
+
+	if (strcmp(name, _PATH_KSYMS) == 0) {
+		ksyms = 1;
+	} else {
+		ksyms = 0;
+	}
 
 	for (i = 0; i < sizeof(nlist_fn)/sizeof(nlist_fn[0]); i++) {
 		fmterr = NULL;
 		kfile = name;
 		/* rval of 1 means wrong executable type */
-		if ((error = (nlist_fn[i].fn)(fd, db)) != 1)
+		if ((error = (nlist_fn[i].fn)(fd, db, ksyms)) != 1)
 			break;
 	}
 	if (fmterr != NULL)
