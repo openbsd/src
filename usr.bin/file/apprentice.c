@@ -1,4 +1,4 @@
-/*	$OpenBSD: apprentice.c,v 1.14 2002/06/05 13:46:44 itojun Exp $	*/
+/*	$OpenBSD: apprentice.c,v 1.15 2002/08/12 00:42:56 aaron Exp $	*/
 
 /*
  * apprentice - make one pass through /etc/magic, learning its secrets.
@@ -36,7 +36,7 @@
 #include "file.h"
 
 #ifndef	lint
-static char *moduleid = "$OpenBSD: apprentice.c,v 1.14 2002/06/05 13:46:44 itojun Exp $";
+static char *moduleid = "$OpenBSD: apprentice.c,v 1.15 2002/08/12 00:42:56 aaron Exp $";
 #endif	/* lint */
 
 #define	EATAB {while (isascii((unsigned char) *l) && \
@@ -65,7 +65,7 @@ int check;			/* non-zero? checking-only run. */
 	int file_err, errs = -1;
 
         maxmagic = MAXMAGIS;
-	magic = (struct magic *) calloc(sizeof(struct magic), maxmagic);
+	magic = (struct magic *) calloc(maxmagic, sizeof(struct magic));
 	mfn = malloc(strlen(fn)+1);
 	if (magic == NULL || mfn == NULL) {
 		warn("malloc");

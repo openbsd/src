@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.7 2002/06/09 05:47:27 todd Exp $	*/
+/*	$OpenBSD: dir.c,v 1.8 2002/08/12 00:42:56 aaron Exp $	*/
 /*	$NetBSD: dir.c,v 1.9 1995/03/21 09:02:42 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: dir.c,v 1.7 2002/06/09 05:47:27 todd Exp $";
+static char rcsid[] = "$OpenBSD: dir.c,v 1.8 2002/08/12 00:42:56 aaron Exp $";
 #endif
 #endif /* not lint */
 
@@ -129,7 +129,7 @@ dinit(hp)
 	}
     }
 
-    dp = (struct directory *) xcalloc(sizeof(struct directory), 1);
+    dp = (struct directory *) xcalloc(1, sizeof(struct directory));
     dp->di_name = Strsave(cp);
     dp->di_count = 0;
     dhead.di_next = dhead.di_prev = dp;
@@ -372,7 +372,7 @@ dochngd(v, t)
     }
     else
 	cp = dfollow(*v);
-    dp = (struct directory *) xcalloc(sizeof(struct directory), 1);
+    dp = (struct directory *) xcalloc(1, sizeof(struct directory));
     dp->di_name = cp;
     dp->di_count = 0;
     dp->di_next = dcwd->di_next;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gzopen.c,v 1.3 2002/02/16 21:27:45 millert Exp $	*/
+/*	$OpenBSD: gzopen.c,v 1.4 2002/08/12 00:42:56 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -135,7 +135,7 @@ gz_open (fd, mode, bits)
 		errno = EINVAL;
 		return NULL;
 	}
-	if ((s = (gz_stream *)calloc(sizeof(gz_stream), 1)) == NULL)
+	if ((s = (gz_stream *)calloc(1, sizeof(gz_stream))) == NULL)
 		return NULL;
 
 	s->z_stream.zalloc = (alloc_func)0;

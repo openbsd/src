@@ -1,5 +1,5 @@
 /* $OpenPackages$ */
-/* $OpenBSD: stats.c,v 1.5 2001/06/12 22:44:22 espie Exp $ */
+/* $OpenBSD: stats.c,v 1.6 2002/08/12 00:42:56 aaron Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie.
@@ -165,7 +165,7 @@ Init_Stats()
 	}
     } else
     /* or we don't -> simple stats gathering */
-	statarray = ecalloc(sizeof(unsigned long), STAT_NUMBER);
+	statarray = ecalloc(STAT_NUMBER, sizeof(unsigned long));
     STAT_INVOCATIONS++;
     atexit(print_stats);
 }

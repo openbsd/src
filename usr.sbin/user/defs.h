@@ -1,4 +1,4 @@
-/* $OpenBSD: defs.h,v 1.2 2000/04/24 22:31:29 jakob Exp $ */
+/* $OpenBSD: defs.h,v 1.3 2002/08/12 00:42:56 aaron Exp $ */
 /* $NetBSD: defs.h,v 1.5 1999/12/24 09:08:49 agc Exp $ */
 
 /*
@@ -35,7 +35,7 @@
 #define DEFS_H_
 
 #define NEWARRAY(type,ptr,size,action) do {				\
-	if ((ptr = (type *) calloc(sizeof(type), size)) == (type *) NULL) { \
+	if ((ptr = (type *) calloc(size, sizeof(type))) == (type *) NULL) { \
 		warn("can't allocate %ld bytes", (long)(size * sizeof(type))); \
 		action;							\
 	}								\

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cards.c,v 1.6 2002/07/28 08:44:14 pjanzen Exp $	*/
+/*	$OpenBSD: cards.c,v 1.7 2002/08/12 00:42:56 aaron Exp $	*/
 /*	$NetBSD: cards.c,v 1.3 1995/03/23 08:34:35 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cards.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: cards.c,v 1.6 2002/07/28 08:44:14 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: cards.c,v 1.7 2002/08/12 00:42:56 aaron Exp $";
 #endif
 #endif /* not lint */
 
@@ -100,7 +100,7 @@ set_up(dp)
 	int	r1, r2;
 	int	i;
 
-	if ((dp->offsets = (int32_t *) calloc(sizeof (int32_t), dp->num_cards)) == NULL)
+	if ((dp->offsets = (int32_t *) calloc(dp->num_cards, sizeof (int32_t))) == NULL)
 		err(1, NULL);
 	for (i = 0 ; i < dp->num_cards ; i++) {
 		if (fread(&dp->offsets[i], sizeof(dp->offsets[i]), 1, deckf) != 1)

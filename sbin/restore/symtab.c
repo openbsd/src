@@ -1,4 +1,4 @@
-/*	$OpenBSD: symtab.c,v 1.7 2002/02/16 21:27:37 millert Exp $	*/
+/*	$OpenBSD: symtab.c,v 1.8 2002/08/12 00:42:56 aaron Exp $	*/
 /*	$NetBSD: symtab.c,v 1.10 1997/03/19 08:42:54 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)symtab.c	8.2 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$OpenBSD: symtab.c,v 1.7 2002/02/16 21:27:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: symtab.c,v 1.8 2002/08/12 00:42:56 aaron Exp $";
 #endif
 #endif /* not lint */
 
@@ -575,7 +575,7 @@ initsymtable(filename)
 		panic("cannot stat symbol table file %s\n", filename);
 	}
 	tblsize = stbuf.st_size - sizeof(struct symtableheader);
-	base = calloc(sizeof(char), (unsigned)tblsize);
+	base = calloc((unsigned)tblsize, sizeof(char));
 	if (base == NULL)
 		panic("cannot allocate space for symbol table\n");
 	if (read(fd, base, (int)tblsize) < 0 ||

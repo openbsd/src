@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.13 2002/07/11 21:23:29 deraadt Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.14 2002/08/12 00:42:56 aaron Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.13 2002/07/11 21:23:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.14 2002/08/12 00:42:56 aaron Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -193,7 +193,7 @@ getino(ino_t inum)
 	if ((inum / sblock->fs_ipg) != iblk || itab == NULL) {
 		iblk = inum / sblock->fs_ipg;
 		if (itab == NULL &&
-		    (itab = calloc(sizeof(struct dinode), sblock->fs_ipg)) == NULL)
+		    (itab = calloc(sblock->fs_ipg, sizeof(struct dinode))) == NULL)
 			errx(1, "no memory for inodes");
 		bread(fsbtodb(sblock, cgimin(sblock, iblk)), (char *)itab,
 		      sblock->fs_ipg * sizeof(struct dinode));

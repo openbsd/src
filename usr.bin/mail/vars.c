@@ -1,4 +1,4 @@
-/*	$OpenBSD: vars.c,v 1.8 2001/11/21 20:41:56 millert Exp $	*/
+/*	$OpenBSD: vars.c,v 1.9 2002/08/12 00:42:56 aaron Exp $	*/
 /*	$NetBSD: vars.c,v 1.4 1996/06/08 19:48:45 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)vars.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: vars.c,v 1.8 2001/11/21 20:41:56 millert Exp $";
+static const char rcsid[] = "$OpenBSD: vars.c,v 1.9 2002/08/12 00:42:56 aaron Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ assign(char *name, char *value)
 	h = hash(name);
 	vp = lookup(name);
 	if (vp == NULL) {
-		if ((vp = (struct var *)calloc(sizeof(*vp), 1)) == NULL)
+		if ((vp = (struct var *)calloc(1, sizeof(*vp))) == NULL)
 			errx(1, "Out of memory");
 		vp->v_name = vcopy(name);
 		vp->v_link = variables[h];

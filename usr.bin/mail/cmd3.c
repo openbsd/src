@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd3.c,v 1.18 2001/11/21 20:41:55 millert Exp $	*/
+/*	$OpenBSD: cmd3.c,v 1.19 2002/08/12 00:42:56 aaron Exp $	*/
 /*	$NetBSD: cmd3.c,v 1.8 1997/07/09 05:29:49 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-static const char rcsid[] = "$OpenBSD: cmd3.c,v 1.18 2001/11/21 20:41:55 millert Exp $";
+static const char rcsid[] = "$OpenBSD: cmd3.c,v 1.19 2002/08/12 00:42:56 aaron Exp $";
 #endif
 #endif /* not lint */
 
@@ -491,7 +491,7 @@ group(void *v)
 	gname = *argv;
 	h = hash(gname);
 	if ((gh = findgroup(gname)) == NULL) {
-		if ((gh = (struct grouphead *)calloc(sizeof(*gh), 1)) == NULL)
+		if ((gh = (struct grouphead *)calloc(1, sizeof(*gh))) == NULL)
 			errx(1, "Out of memory");
 		gh->g_name = vcopy(gname);
 		gh->g_list = NULL;
@@ -506,7 +506,7 @@ group(void *v)
 	 */
 
 	for (ap = argv+1; *ap != NULL; ap++) {
-		if ((gp = (struct group *)calloc(sizeof(*gp), 1)) == NULL)
+		if ((gp = (struct group *)calloc(1, sizeof(*gp))) == NULL)
 			errx(1, "Out of memory");
 		gp->ge_name = vcopy(*ap);
 		gp->ge_link = gh->g_list;

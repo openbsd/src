@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.45 2002/06/26 23:36:14 wcobb Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.46 2002/08/12 00:42:56 aaron Exp $	*/
 
 /*
  * Copyright (c) 1999 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -88,7 +88,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.45 2002/06/26 23:36:14 wcobb Exp $";
+static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.46 2002/08/12 00:42:56 aaron Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -202,7 +202,7 @@ main(argc, argv)
 	p = q = parse_file(&listlen);
 	signal(SIGCHLD, child_killer);
 
-	pidlist = (struct pidinfo *)calloc(sizeof(struct pidinfo), listlen + 1);
+	pidlist = (struct pidinfo *)calloc(listlen + 1, sizeof(struct pidinfo));
 	if (pidlist == NULL)
 		err(1, "calloc");
 
