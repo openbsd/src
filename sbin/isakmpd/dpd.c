@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpd.c,v 1.7 2004/12/28 15:15:08 deraadt Exp $	*/
+/*	$OpenBSD: dpd.c,v 1.8 2005/02/24 16:05:42 markus Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -245,7 +245,7 @@ dpd_find_sa(struct sa *sa, void *v_sa)
 
 	if (!isakmp_sa->id_i || !isakmp_sa->id_r)
 		return (0);
-	return (sa->phase == 2 && 
+	return (sa->phase == 2 && (sa->flags & SA_FLAG_READY) &&
 	    memcmp(sa->id_i, isakmp_sa->id_i, sa->id_i_len) == 0 &&
 	    memcmp(sa->id_r, isakmp_sa->id_r, sa->id_r_len) == 0);
 }
