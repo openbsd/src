@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.10 2004/08/04 15:39:10 jfb Exp $	*/
+/*	$OpenBSD: entries.c,v 1.11 2004/08/06 20:10:02 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -402,11 +402,11 @@ cvs_ent_free(struct cvs_ent *ent)
 struct cvs_ent*
 cvs_ent_getent(const char *path)
 {
-	char base[MAXPATHLEN], file[MAXPATHLEN];
+	char base[MAXPATHLEN], *file;
 	CVSENTRIES *entf;
 	struct cvs_ent *ep;
 
-	cvs_splitpath(path, base, sizeof(base), file, sizeof(file));
+	cvs_splitpath(path, base, sizeof(base), &file);
 
 	entf = cvs_ent_open(base, O_RDONLY);
 	if (entf == NULL)
