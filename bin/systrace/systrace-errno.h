@@ -1,0 +1,120 @@
+/*	$OpenBSD: systrace-errno.h,v 1.1 2002/06/04 17:20:04 provos Exp $	*/
+/*
+ * Copyright 2002 Niels Provos <provos@citi.umich.edu>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Niels Provos.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#ifndef _SYSTRACE_ERRNO_H_
+#define _SYSTRACE_ERRNO_H_
+
+#define SYSTRACE_EPERM 1
+#define SYSTRACE_ENOENT 2
+#define SYSTRACE_ESRCH 3
+#define SYSTRACE_EINTR 4
+#define SYSTRACE_EIO 5
+#define SYSTRACE_ENXIO 6
+#define SYSTRACE_E2BIG 7
+#define SYSTRACE_ENOEXEC 8
+#define SYSTRACE_EBADF 9
+#define SYSTRACE_ECHILD 10
+#define SYSTRACE_EDEADLK 11
+#define SYSTRACE_ENOMEM 12
+#define SYSTRACE_EACCES 13
+#define SYSTRACE_EFAULT 14
+#define SYSTRACE_ENOTBLK 15
+#define SYSTRACE_EBUSY 16
+#define SYSTRACE_EEXIST 17
+#define SYSTRACE_EXDEV 18
+#define SYSTRACE_ENODEV 19
+#define SYSTRACE_ENOTDIR 20
+#define SYSTRACE_EISDIR 21
+#define SYSTRACE_EINVAL 22
+#define SYSTRACE_ENFILE 23
+#define SYSTRACE_EMFILE 24
+#define SYSTRACE_ENOTTY 25
+#define SYSTRACE_ETXTBSY 26
+#define SYSTRACE_EFBIG 27
+#define SYSTRACE_ENOSPC 28
+#define SYSTRACE_ESPIPE 29
+#define SYSTRACE_EROFS 30
+#define SYSTRACE_EMLINK 31
+#define SYSTRACE_EPIPE 32
+#define SYSTRACE_EDOM 33
+#define SYSTRACE_ERANGE 34
+#define SYSTRACE_EAGAIN 35
+#define SYSTRACE_EWOULDBLOCK 35
+#define SYSTRACE_EINPROGRESS 36
+#define SYSTRACE_EALREADY 37
+#define SYSTRACE_ENOTSOCK 38
+#define SYSTRACE_EDESTADDRREQ 39
+#define SYSTRACE_EMSGSIZE 40
+#define SYSTRACE_EPROTOTYPE 41
+#define SYSTRACE_ENOPROTOOPT 42
+#define SYSTRACE_EPROTONOSUPPORT 43
+#define SYSTRACE_ESOCKTNOSUPPORT 44
+#define SYSTRACE_EOPNOTSUPP 45
+#define SYSTRACE_EPFNOSUPPORT 46
+#define SYSTRACE_EAFNOSUPPORT 47
+#define SYSTRACE_EADDRINUSE 48
+#define SYSTRACE_EADDRNOTAVAIL 49
+#define SYSTRACE_ENETDOWN 50
+#define SYSTRACE_ENETUNREACH 51
+#define SYSTRACE_ENETRESET 52
+#define SYSTRACE_ECONNABORTED 53
+#define SYSTRACE_ECONNRESET 54
+#define SYSTRACE_ENOBUFS 55
+#define SYSTRACE_EISCONN 56
+#define SYSTRACE_ENOTCONN 57
+#define SYSTRACE_ESHUTDOWN 58
+#define SYSTRACE_ETOOMANYREFS 59
+#define SYSTRACE_ETIMEDOUT 60
+#define SYSTRACE_ECONNREFUSED 61
+#define SYSTRACE_ELOOP 62
+#define SYSTRACE_ENAMETOOLONG 63
+#define SYSTRACE_EHOSTDOWN 64
+#define SYSTRACE_EHOSTUNREACH 65
+#define SYSTRACE_ENOTEMPTY 66
+#define SYSTRACE_EPROCLIM 67
+#define SYSTRACE_EUSERS 68
+#define SYSTRACE_EDQUOT 69
+#define SYSTRACE_ESTALE 70
+#define SYSTRACE_EREMOTE 71
+#define SYSTRACE_EBADRPC 72
+#define SYSTRACE_ERPCMISMATCH 73
+#define SYSTRACE_EPROGUNAVAIL 74
+#define SYSTRACE_EPROGMISMATCH 75
+#define SYSTRACE_EPROCUNAVAIL 76
+#define SYSTRACE_ENOLCK 77
+#define SYSTRACE_ENOSYS 78
+#define SYSTRACE_EFTYPE 79
+#define SYSTRACE_EAUTH 80
+#define SYSTRACE_ENEEDAUTH 81
+#define SYSTRACE_EIPSEC 82
+#define SYSTRACE_ELAST 82
+
+#endif
