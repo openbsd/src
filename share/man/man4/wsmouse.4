@@ -1,4 +1,4 @@
-.\" $OpenBSD: wsmouse.4,v 1.5 2002/09/26 22:09:53 miod Exp $
+.\" $OpenBSD: wsmouse.4,v 1.6 2003/02/12 01:49:39 miod Exp $
 .\" $NetBSD: wsmouse.4,v 1.3 1999/12/06 14:52:08 augustss Exp $
 .\"
 .Dd March 20, 1999
@@ -22,6 +22,8 @@
 (Microsoft InPort mouse, i386 only)
 .Cd "wsmouse*   at ams? mux 0"
 (Apple ADB mouse)
+.Cd "wsmouse*	at hil? mux 0"
+(HIL mouse)
 .Sh DESCRIPTION
 The
 .Nm
@@ -48,6 +50,7 @@ utility gives access to these variables.
 .El
 .Sh SEE ALSO
 .Xr ams 4 ,
+.Xr hilms 4 ,
 .Xr intro 4 ,
 .Xr lms 4 ,
 .Xr mms 4 ,

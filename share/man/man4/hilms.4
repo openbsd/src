@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hil.4,v 1.3 2003/02/12 01:49:39 miod Exp $
+.\"	$OpenBSD: hilms.4,v 1.1 2003/02/12 01:49:39 miod Exp $
 .\"
 .\" Copyright (c) 2003 Miodrag Vallat.
 .\" All rights reserved.
@@ -24,31 +24,24 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd February 11, 2003
-.Dt HIL 4
+.Dd February 12, 2003
+.Dt HILMS 4
 .Os
 .Sh NAME
-.Nm hil
-.Nd HP-HIL driver
+.Nm hilms
+.Nd HIL mouse and graphics tablet driver
 .Sh SYNOPSIS
-.Cd "hil* at gsc? irq 1"
-.Cd "hilkbd* at hil?"
 .Cd "hilms* at hil?"
-.\" .Cd "hilid* at hil?"
+.Cd "wsmouse* at hilms?"
 .Sh DESCRIPTION
-The
-.Nm
-interface provides access to the
-.Dq Human Interface Loop
-controller found on many
-.Tn HP
-workstations.
-.Pp
-It provides generic HIL management and interfaces for child devices,
-such as keyboards, button boxes, mice, graphics tablet, and ID modules.
+This driver supports HIL mice and graphics tablet within the
+.Xr wscons 4
+framework.
+It doesn't prowide direct device driver entry points, but makes its
+functions available through the internal
+.Xr wsmouse 4
+interface.
 .Sh SEE ALSO
-.Xr gsc 4 ,
-.\" .Xr hilid 4 ,
-.Xr hilkbd 4 ,
-.Xr hilms 4 ,
-.Xr intro 4
+.Xr hil 4 ,
+.Xr intro 4 ,
+.Xr wsmouse 4
