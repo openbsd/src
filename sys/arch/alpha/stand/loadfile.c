@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadfile.c,v 1.4 1997/07/08 10:42:24 niklas Exp $	*/
+/*	$OpenBSD: loadfile.c,v 1.5 1997/07/08 18:13:14 niklas Exp $	*/
 /*	$NetBSD: loadfile.c,v 1.3 1997/04/06 08:40:59 cgd Exp $	*/
 
 /*
@@ -52,9 +52,7 @@
 #include <machine/rpb.h>
 #include <machine/prom.h>
 
-/* XXX this is a userland header!!! must go. */
-#define _AOUT_INCLUDE_
-#include <nlist.h>
+#include <ddb/db_aout.h>
 
 #define _KERNEL
 #include "include/pte.h"
@@ -190,6 +188,8 @@ coff_exec(fd, coff, entryp)
 			symtab->n_un.n_strx = sym.es_strindex;
 			symtab->n_value = sym.es_value;
 			symtab->n_type = N_EXT;
+			if (sym.es_class == 1)		/* scText */
+				symtab->n_type != N_TEXT;
 			symtab++;
 		}
 		ffp_save += symsize;
