@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.34 1999/05/23 09:04:46 niklas Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.35 1999/06/06 23:53:02 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -184,9 +184,9 @@ struct route_enc {
 
 struct flow
 {
-    struct flow           *flow_next;	/* Next in flow chain */
-    struct flow           *flow_prev;	/* Previous in flow chain */
-    struct tdb            *flow_sa;	/* Pointer to the SA */
+    struct flow          *flow_next;	/* Next in flow chain */
+    struct flow          *flow_prev;	/* Previous in flow chain */
+    struct tdb           *flow_sa;	/* Pointer to the SA */
     union sockaddr_union  flow_src;   	/* Source address */
     union sockaddr_union  flow_srcmask; /* Source netmask */
     union sockaddr_union  flow_dst;	/* Destination address */
