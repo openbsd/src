@@ -116,6 +116,7 @@ sigstk.ss_flags = 0;
 if (sigaltstack(&sigstk,0) < 0)
 	perror("sigaltstack");
 .Ed
+.Pp
 An alternative approach is provided for programs with signal handlers
 that require a specific amount of stack space other than the default size.
 The value
