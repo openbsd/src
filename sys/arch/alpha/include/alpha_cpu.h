@@ -1,4 +1,4 @@
-/*	$OpenBSD: alpha_cpu.h,v 1.2 1997/01/24 19:57:05 niklas Exp $	*/
+/*	$OpenBSD: alpha_cpu.h,v 1.3 1997/08/01 21:22:42 deraadt Exp $	*/
 /*	$NetBSD: alpha_cpu.h,v 1.7 1996/11/23 06:25:31 cgd Exp $	*/
 
 /*
@@ -201,7 +201,7 @@ struct alpha_logout_area {
 #define	ALPHA_PTE_KW			0x1000
 #define	ALPHA_PTE_UW			0x2000
 
-#define	ALPHA_PTE_WRITE			(ALPHA_PTE_KW | ALPHA_PTE_KW)
+#define	ALPHA_PTE_WRITE			(ALPHA_PTE_KW | ALPHA_PTE_UW)
 
 #define	ALPHA_PTE_SOFTWARE		0xffff0000
 
