@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.47 2002/07/04 05:49:28 nate Exp $
+$OpenBSD: usbdevs,v 1.48 2002/07/09 14:44:29 nate Exp $
 /* $NetBSD: usbdevs,v 1.257 2002/06/20 09:20:36 augustss Exp $ */
 
 /*
@@ -1179,6 +1179,7 @@ product SMARTBRIDGES SMARTNIC	0x0003	smartNIC 2 PnP Adapter
 /* SMC products */
 product SMC 2102USB		0x0100	10Mbps Ethernet
 product SMC 2202USB		0x0200	10/100 Ethernet
+product SMC 2206USB		0x0201	EZ Connect Ethernet
 product SMC2 2020HUB            0x2020  USB Hub
 
 /* SOHOware products */
