@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.10 1997/11/14 00:23:52 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.11 1998/09/27 21:16:42 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.7 1997/05/13 06:15:57 mikel Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.10 1997/11/14 00:23:52 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.11 1998/09/27 21:16:42 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -116,6 +116,7 @@ main(argc, argv)
 			 */
 			unsetenv("MAIL");
 			myname = optarg;
+			uflag = 1;
 			break;
 		case 'i':
 			/*

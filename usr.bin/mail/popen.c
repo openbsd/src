@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.22 1998/09/10 16:18:37 millert Exp $	*/
+/*	$OpenBSD: popen.c,v 1.23 1998/09/27 21:16:42 millert Exp $	*/
 /*	$NetBSD: popen.c,v 1.6 1997/05/13 06:48:42 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: popen.c,v 1.22 1998/09/10 16:18:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: popen.c,v 1.23 1998/09/27 21:16:42 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -451,13 +451,21 @@ handle_spool_locks(action)
 		(void)Pclose(lockfp);
 		lockfp = NULL;
 	} else if (action == 1) {
+		char *cmd = _PATH_LOCKSPOOL;
+
+		/* XXX - lockspool requires root for user arg, we do not */
+		if (uflag && asprintf(&cmd, "%s %s", _PATH_LOCKSPOOL,
+		    myname) == -1)
+			errx(1, "Out of memory");
+
 		/* Create the lock */
-		if ((lockfp = Popen(_PATH_LOCKSPOOL, "r")) == NULL ||
-		    getc(lockfp) != '1') {
+		lockfp = Popen(cmd, "r");
+		if (uflag)
+			free(cmd);
+		if (lockfp == NULL || getc(lockfp) != '1') {
 			lockfp = NULL;
 			return(0);
 		}
-
 		lock_pid = fp_head->pid;	/* new entries added at head */
 	} else {
 		(void)fprintf(stderr, "handle_spool_locks: unknown action %d\n",

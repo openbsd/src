@@ -1,4 +1,4 @@
-/*	$OpenBSD: glob.h,v 1.3 1997/07/18 18:12:56 millert Exp $	*/
+/*	$OpenBSD: glob.h,v 1.4 1998/09/27 21:16:42 millert Exp $	*/
 /*	$NetBSD: glob.h,v 1.4 1996/06/08 19:48:25 christos Exp $	*/
 
 /*
@@ -83,6 +83,7 @@ int	screenwidth;			/* Screen width, or best guess */
 int	screenheight;			/* Screen height, or best guess,
 					   for "header" command */
 int	realscreenheight;		/* the real screen height */
+int	uflag;				/* Are we in -u mode? */
 
 #include <setjmp.h>
 
