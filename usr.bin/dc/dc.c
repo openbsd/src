@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.3 2003/09/19 19:06:29 deraadt Exp $	*/
+/*	$OpenBSD: dc.c,v 1.4 2003/12/01 09:13:24 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,12 +17,11 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: dc.c,v 1.3 2003/09/19 19:06:29 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: dc.c,v 1.4 2003/12/01 09:13:24 otto Exp $";
 #endif /* not lint */
 
 #include <err.h>
-#include <stdlib.h>
-#include <string.h>
+#include <unistd.h>
 
 #include "extern.h"
 
@@ -33,26 +32,43 @@ extern char		*__progname;
 static __dead void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [file]\n", __progname);
+	fprintf(stderr, "usage: %s [-x] [file]\n", __progname);
 	exit(1);
 }
 
 int
 main(int argc, char *argv[])
 {
+	int		ch;
+	bool		extended_regs = false;
 	FILE		*file;
 	struct source	src;
 
-	if (argc > 2)
-		usage();
+	/* accept and ignore a single dash to be 4.4BSD dc(1) compatible */
+	while ((ch = getopt(argc, argv, "x-")) != -1) {
+		switch (ch) {
+		case 'x':
+			extended_regs = true;
+			break;
+		case '-':
+			break;
+		default:
+			usage();
+		}
+	}
+	argc -= optind;
+	argv += optind;
 
-	init_bmachine();
+	init_bmachine(extended_regs);
 	setlinebuf(stdout);
 	setlinebuf(stderr);
-	if (argc == 2 && strcmp(argv[1], "-") != 0) {
-		file = fopen(argv[1], "r");
+
+	if (argc > 1)
+		usage();
+	else if (argc == 1) {
+		file = fopen(argv[0], "r");
 		if (file == NULL)
-			err(1, "cannot open file %s", argv[1]);
+			err(1, "cannot open file %s", argv[0]);
 		src_setstream(&src, file);
 		reset_bmachine(&src);
 		eval();

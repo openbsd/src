@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.17 2003/11/17 11:12:35 otto Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.18 2003/12/01 09:13:24 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bcode.c,v 1.17 2003/11/17 11:12:35 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bcode.c,v 1.18 2003/12/01 09:13:24 otto Exp $";
 #endif /* not lint */
 
 #include <ssl/ssl.h>
@@ -37,6 +37,8 @@ BIGNUM		zero;
 #define MAX_RECURSION		100
 
 #define NO_ELSE			-2	/* -1 is EOF */
+#define REG_ARRAY_SIZE_SMALL	(UCHAR_MAX + 1)
+#define REG_ARRAY_SIZE_BIG	(UCHAR_MAX + 1 + USHRT_MAX + 1)
 
 struct bmachine {
 	struct stack		stack;
@@ -44,7 +46,9 @@ struct bmachine {
 	u_int			obase;
 	u_int			ibase;
 	int			readsp;
-	struct stack		reg[UCHAR_MAX];
+	bool			extended_regs;
+	size_t			reg_array_size;
+	struct stack		*reg;
 	struct source		readstack[MAX_RECURSION];
 };
 
@@ -68,7 +72,7 @@ static __inline void	clear_stack(void);
 static __inline void	print_tos(void);
 static void		pop_print(void);
 static void		pop_printn(void);
-static __inline void	print_stack();
+static __inline void	print_stack(void);
 static __inline void	dup(void);
 static void		swap(void);
 static void		drop(void);
@@ -110,6 +114,7 @@ static void		not_compare(void);
 static bool		compare_numbers(enum bcode_compare, struct number *,
 			    struct number *);
 static void		compare(enum bcode_compare);
+static int		readreg(void);
 static void		load(void);
 static void		store(void);
 static void		load_stack(void);
@@ -216,9 +221,18 @@ static const struct jump_entry jump_table_data[] = {
 	(sizeof(jump_table_data)/sizeof(jump_table_data[0]))
 
 void
-init_bmachine(void)
+init_bmachine(bool extended_registers)
 {
 	int i;
+
+	bmachine.extended_regs = extended_registers;
+	bmachine.reg_array_size = bmachine.extended_regs ?
+	    REG_ARRAY_SIZE_BIG : REG_ARRAY_SIZE_SMALL;
+
+	bmachine.reg = malloc(bmachine.reg_array_size *
+	    sizeof(bmachine.reg[0]));
+	if (bmachine.reg == NULL)
+		err(1, NULL);
 
 	for (i = 0; i < UCHAR_MAX; i++)
 		jump_table[i] = unknown;
@@ -227,7 +241,7 @@ init_bmachine(void)
 
 	stack_init(&bmachine.stack);
 
-	for (i = 0; i < UCHAR_MAX; i++)
+	for (i = 0; i < bmachine.reg_array_size; i++)
 		stack_init(&bmachine.reg[i]);
 
 	bmachine.obase = bmachine.ibase = 10;
@@ -730,6 +744,28 @@ to_ascii(void)
 	}
 }
 
+static int
+readreg(void)
+{
+	int index, ch1, ch2;
+
+	index = readch();
+	if (index == 0xff && bmachine.extended_regs) {
+		ch1 = readch();
+		ch2 = readch();
+		if (ch1 == EOF || ch2 == EOF) {
+			warnx("unexpected eof");
+			index = -1;
+		} else
+			index = (ch1 << 8) + ch2 + UCHAR_MAX + 1;
+	}
+	if (index < 0 || index >= bmachine.reg_array_size) {
+		warnx("internal error: reg num = %d", index);
+		index = -1;
+	}
+	return index;
+}
+
 static void
 load(void)
 {
@@ -737,8 +773,8 @@ load(void)
 	struct value	*v, copy;
 	struct number	*n;
 
-	index = readch();
-	if (0 <= index && index < UCHAR_MAX) {
+	index = readreg();
+	if (index >= 0) {
 		v = stack_tos(&bmachine.reg[index]);
 		if (v == NULL) {
 			n = new_number();
@@ -746,8 +782,7 @@ load(void)
 			push_number(n);
 		} else
 			push(stack_dup_value(v, &copy));
-	} else
-		warnx("internal error: reg num = %d", index);
+	}
 }
 
 static void
@@ -756,15 +791,14 @@ store(void)
 	int		index;
 	struct value	*val;
 
-	index = readch();
-	if (0 <= index && index < UCHAR_MAX) {
+	index = readreg();
+	if (index >= 0) {
 		val = pop();
 		if (val == NULL) {
 			return;
 		}
 		stack_set_tos(&bmachine.reg[index], val);
-	} else
-		warnx("internal error: reg num = %d", index);
+	}
 }
 
 static void
@@ -774,8 +808,8 @@ load_stack(void)
 	struct stack	*stack;
 	struct value	*value, copy;
 
-	index = readch();
-	if (0 <= index && index < UCHAR_MAX) {
+	index = readreg();
+	if (index >= 0) {
 		stack = &bmachine.reg[index];
 		value = NULL;
 		if (stack_size(stack) > 0) {
@@ -786,8 +820,7 @@ load_stack(void)
 		else
 			warnx("stack register '%c' (0%o) is empty",
 			    index, index);
-	} else
-		warnx("internal error: reg num = %d", index);
+	}
 }
 
 static void
@@ -796,14 +829,13 @@ store_stack(void)
 	int		index;
 	struct value	*value;
 
-	index = readch();
-	if (0 <= index && index < UCHAR_MAX) {
+	index = readreg();
+	if (index >= 0) {
 		value = pop();
 		if (value == NULL)
 			return;
 		stack_push(&bmachine.reg[index], value);
-	} else
-		warnx("internal error: reg num = %d", index);
+	}
 }
 
 static void
@@ -815,8 +847,8 @@ load_array(void)
 	struct stack		*stack;
 	struct value		*v, copy;
 
-	reg = readch();
-	if (0 <= reg && reg < UCHAR_MAX) {
+	reg = readreg();
+	if (reg >= 0) {
 		inumber = pop_number();
 		if (inumber == NULL)
 			return;
@@ -837,8 +869,7 @@ load_array(void)
 				push(stack_dup_value(v, &copy));
 		}
 		free_number(inumber);
-	} else
-		warnx("internal error: reg num = %d", reg);
+	}
 }
 
 static void
@@ -850,8 +881,8 @@ store_array(void)
 	struct value		*value;
 	struct stack		*stack;
 
-	reg = readch();
-	if (0 <= reg && reg < UCHAR_MAX) {
+	reg = readreg();
+	if (reg >= 0) {
 		inumber = pop_number();
 		if (inumber == NULL)
 			return;
@@ -872,8 +903,7 @@ store_array(void)
 			frame_assign(stack, index, value);
 		}
 		free_number(inumber);
-	} else
-		warnx("internal error: reg num = %d", reg);
+	}
 }
 
 static void
@@ -1432,9 +1462,9 @@ compare(enum bcode_compare type)
 	struct value	*v;
 
 	elseindex = NO_ELSE;
-	index = readch();
+	index = readreg();
 	if (readch() == 'e')
-		elseindex = readch();
+		elseindex = readreg();
 	else
 		unreadch();
 
@@ -1452,9 +1482,7 @@ compare(enum bcode_compare type)
 	if (!ok && elseindex != NO_ELSE)
 		index = elseindex;
 
-	if (index < 0 || index > UCHAR_MAX)
-		warnx("internal error: reg num = %d", index);
-	else if (ok || (!ok && elseindex != NO_ELSE)) {
+	if (index >= 0 && (ok || (!ok && elseindex != NO_ELSE))) {
 		v = stack_tos(&bmachine.reg[index]);
 		if (v == NULL)
 			warnx("register '%c' (0%o) is empty", index, index);
@@ -1559,9 +1587,9 @@ skip_until_mark(void)
 		case '<':
 		case '>':
 		case '=':
-			readch();
+			readreg();
 			if (readch() == 'e')
-				readch();
+				readreg();
 			else
 				unreadch();
 			break;
@@ -1573,9 +1601,9 @@ skip_until_mark(void)
 				case '<':
 				case '>':
 				case '=':
-					readch();
+					readreg();
 					if (readch() == 'e')
-						readch();
+						readreg();
 					else
 						unreadch();
 					break;
