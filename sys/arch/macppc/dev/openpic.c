@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.10 2002/01/26 15:22:52 drahn Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.11 2002/03/02 17:17:37 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -61,11 +61,11 @@
 #define ICU_LEN 128
 #define LEGAL_IRQ(x) ((x >= 0) && (x < ICU_LEN))
 
-static int intrtype[ICU_LEN], intrmask[ICU_LEN], intrlevel[ICU_LEN];
-static struct intrhand *intrhand[ICU_LEN] = { 0 };
-static int hwirq[ICU_LEN], virq[ICU_LEN];
-unsigned int imen /* = 0xffffffff */; /* XXX */
-static int virq_max = 0;
+int o_intrtype[ICU_LEN], o_intrmask[ICU_LEN], o_intrlevel[ICU_LEN];
+struct intrhand *o_intrhand[ICU_LEN] = { 0 };
+int o_hwirq[ICU_LEN], o_virq[ICU_LEN];
+unsigned int imen_o = 0xffffffff;
+int o_virq_max;
 
 struct evcnt evirq[ICU_LEN];
 
@@ -204,6 +204,7 @@ fakeintr(arg)
 
 void nameinterrupt( int replace, char *newstr);
 
+
 /*
  * Register an interrupt handler.
  */
@@ -241,18 +242,18 @@ printf("vI %d ", irq);
 	if (!LEGAL_IRQ(irq) || type == IST_NONE)
 		panic("intr_establish: bogus irq or type");
 
-	switch (intrtype[irq]) {
+	switch (o_intrtype[irq]) {
 	case IST_NONE:
-		intrtype[irq] = type;
+		o_intrtype[irq] = type;
 		break;
 	case IST_EDGE:
 	case IST_LEVEL:
-		if (type == intrtype[irq])
+		if (type == o_intrtype[irq])
 			break;
 	case IST_PULSE:
 		if (type != IST_NONE)
 			panic("intr_establish: can't share %s with %s",
-			    intr_typename(intrtype[irq]),
+			    intr_typename(o_intrtype[irq]),
 			    intr_typename(type));
 		break;
 	}
@@ -262,7 +263,7 @@ printf("vI %d ", irq);
 	 * This is O(N^2), but we want to preserve the order, and N is
 	 * generally small.
 	 */
-	for (p = &intrhand[irq]; (q = *p) != NULL; p = &q->ih_next)
+	for (p = &o_intrhand[irq]; (q = *p) != NULL; p = &q->ih_next)
 		;
 
 	/*
@@ -308,7 +309,7 @@ openpic_intr_disestablish(lcp, arg)
 	 * Remove the handler from the chain.
 	 * This is O(n^2), too.
 	 */
-	for (p = &intrhand[irq]; (q = *p) != NULL && q != ih; p = &q->ih_next)
+	for (p = &o_intrhand[irq]; (q = *p) != NULL && q != ih; p = &q->ih_next)
 		;
 	if (q)
 		*p = q->ih_next;
@@ -318,8 +319,8 @@ openpic_intr_disestablish(lcp, arg)
 
 	intr_calculatemasks();
 
-	if (intrhand[irq] == NULL)
-		intrtype[irq] = IST_NONE;
+	if (o_intrhand[irq] == NULL)
+		o_intrtype[irq] = IST_NONE;
 }
 
 
@@ -360,16 +361,16 @@ intr_calculatemasks()
 	/* First, figure out which levels each IRQ uses. */
 	for (irq = 0; irq < ICU_LEN; irq++) {
 		register int levels = 0;
-		for (q = intrhand[irq]; q; q = q->ih_next)
+		for (q = o_intrhand[irq]; q; q = q->ih_next)
 			levels |= 1 << q->ih_level;
-		intrlevel[irq] = levels;
+		o_intrlevel[irq] = levels;
 	}
 
 	/* Then figure out which IRQs use each level. */
 	for (level = 0; level < 5; level++) {
 		register int irqs = 0;
 		for (irq = 0; irq < ICU_LEN; irq++)
-			if (intrlevel[irq] & (1 << level))
+			if (o_intrlevel[irq] & (1 << level))
 				irqs |= 1 << irq;
 		imask[level] = irqs | SINT_MASK;
 	}
@@ -395,23 +396,24 @@ intr_calculatemasks()
 	/* And eventually calculate the complete masks. */
 	for (irq = 0; irq < ICU_LEN; irq++) {
 		register int irqs = 1 << irq;
-		for (q = intrhand[irq]; q; q = q->ih_next)
+		for (q = o_intrhand[irq]; q; q = q->ih_next)
 			irqs |= imask[q->ih_level];
-		intrmask[irq] = irqs | SINT_MASK;
+		o_intrmask[irq] = irqs | SINT_MASK;
 	}
 
 	/* Lastly, determine which IRQs are actually in use. */
 	{
 		register int irqs = 0;
 		for (irq = 0; irq < ICU_LEN; irq++) {
-			if (intrhand[irq]) {
+			if (o_intrhand[irq]) {
 				irqs |= 1 << irq;
-				openpic_enable_irq(hwirq[irq], intrtype[irq]);
+				openpic_enable_irq(o_hwirq[irq],
+				    o_intrtype[irq]);
 			} else {
-				openpic_disable_irq(hwirq[irq]);
+				openpic_disable_irq(o_hwirq[irq]);
 			}
 		}
-		imen = ~irqs;
+		imen_o = ~irqs;
 	}
 }
 /*
@@ -425,13 +427,13 @@ mapirq(irq)
 
 	if (irq < 0 || irq >= ICU_LEN)
 		panic("invalid irq");
-	virq_max++;
-	v = virq_max;
+	o_virq_max++;
+	v = o_virq_max;
 	if (v > HWIRQ_MAX)
 		panic("virq overflow");
 
-	hwirq[v] = irq;
-	virq[irq] = v;
+	o_hwirq[v] = irq;
+	o_virq[irq] = v;
 #if 0
 printf("\nmapirq %x to %x\n", irq, v);
 #endif
@@ -474,22 +476,22 @@ openpic_do_pending_int()
 	asm volatile("mtmsr %0" :: "r"(dmsr));
 
 	hwpend = ipending & ~pcpl;	/* Do now unmasked pendings */
-	imen &= ~hwpend;
-	openpic_enable_irq_mask(~imen);
+	imen_o &= ~hwpend;
+	openpic_enable_irq_mask(~imen_o);
 	hwpend &= HWIRQ_MASK;
 	while (hwpend) {
 		irq = 31 - cntlzw(hwpend);
 		hwpend &= ~(1L << irq);
-		ih = intrhand[irq];
+		ih = o_intrhand[irq];
 		while(ih) {
 			(*ih->ih_fun)(ih->ih_arg);
 			ih = ih->ih_next;
 		}
 
-		evirq[hwirq[irq]].ev_count++;
+		evirq[o_hwirq[irq]].ev_count++;
 	}
 
-	/*out32rb(INT_ENABLE_REG, ~imen);*/
+	/*out32rb(INT_ENABLE_REG, ~imen_o);*/
 
 	do {
 		if((ipending & SINT_CLOCK) & ~pcpl) {
@@ -538,11 +540,11 @@ openpic_enable_irq_mask(irq_mask)
 int irq_mask;
 {
 	int irq;
-	for ( irq = 0; irq <= virq_max; irq++) {
+	for ( irq = 0; irq <= o_virq_max; irq++) {
 		if (irq_mask & (1 << irq)) {
-			openpic_enable_irq(hwirq[irq], intrtype[irq]);
+			openpic_enable_irq(o_hwirq[irq], o_intrtype[irq]);
 		} else {
-			openpic_disable_irq(hwirq[irq]);
+			openpic_disable_irq(o_hwirq[irq]);
 		}
 	}
 }
@@ -614,7 +616,7 @@ ext_intr_openpic()
 	realirq = openpic_read_irq(0);
 
 	while (realirq != 255) {
-		irq = virq[realirq];
+		irq = o_virq[realirq];
 		intrcnt[realirq]++;
 
 		/* XXX check range */
@@ -625,14 +627,14 @@ ext_intr_openpic()
 			ipending |= r_imen;     /* Masked! Mark this as pending */
 			openpic_disable_irq(realirq);
 		} else {
-			splraise(intrmask[irq]);
+			splraise(o_intrmask[irq]);
 
 			/*
 			 * enable interrupts for the duration of the
 			 * interrupt handler 
 			 */
 			ppc_intr_enable(1);
-			ih = intrhand[irq];
+			ih = o_intrhand[irq];
 			while (ih) {
 				(*ih->ih_fun)(ih->ih_arg);
 				ih = ih->ih_next;
