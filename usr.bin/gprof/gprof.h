@@ -1,4 +1,4 @@
-/*	$OpenBSD: gprof.h,v 1.3 1996/06/26 05:33:51 deraadt Exp $	*/
+/*	$OpenBSD: gprof.h,v 1.4 1996/12/22 20:24:24 rahnds Exp $	*/
 /*	$NetBSD: gprof.h,v 1.13 1996/04/01 21:54:06 mark Exp $	*/
 
 /*
@@ -61,6 +61,9 @@
 #endif
 #if ns32k
 #   include "ns32k.h"
+#endif
+#if powerpc
+#   include "powerpc.h"
 #endif
 #if pmax
 #   include "pmax.h"
