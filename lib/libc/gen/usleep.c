@@ -32,22 +32,23 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: usleep.c,v 1.5 1997/04/25 04:20:42 tholo Exp $";
+static char rcsid[] = "$OpenBSD: usleep.c,v 1.6 1997/11/06 01:25:48 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#include <sys/types.h>
 #include <sys/time.h>
 
-void
+int
 usleep(useconds)
-	unsigned int useconds;
+	useconds_t useconds;
 {
 	struct timespec rqt;
 
 	if (useconds == 0)
-		return;
+		return(0);
 
 	rqt.tv_sec = useconds / 1000000;
 	rqt.tv_nsec = (useconds % 1000000) * 1000;
 
-	nanosleep(&rqt, NULL);
+	return(nanosleep(&rqt, NULL));
 }

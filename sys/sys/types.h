@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.10 1997/04/20 20:47:33 tholo Exp $	*/
+/*	$OpenBSD: types.h,v 1.11 1997/11/06 01:25:47 millert Exp $	*/
 /*	$NetBSD: types.h,v 1.29 1996/11/15 22:48:25 jtc Exp $	*/
 
 /*-
@@ -81,6 +81,7 @@ typedef quad_t		rlim_t;		/* resource limit */
 typedef	int32_t		segsz_t;	/* segment size */
 typedef	int32_t		swblk_t;	/* swap offset */
 typedef	u_int32_t	uid_t;		/* user id */
+typedef	u_int32_t	useconds_t;	/* microseconds */
 
 /*
  * These belong in unistd.h, but are placed here too to ensure that
