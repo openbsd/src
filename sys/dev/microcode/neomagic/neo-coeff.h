@@ -1,4 +1,4 @@
-/*      $OpenBSD: neo-coeff.h,v 1.1 2001/06/18 19:27:19 deraadt Exp $       */
+/*      $OpenBSD: neo-coeff.h,v 1.2 2004/11/22 04:29:06 deraadt Exp $       */
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -4630,7 +4630,7 @@ static const char coefficients[NM_TOTAL_COEFF_COUNT * 4] = {
 };
 
 static const u_int16_t
-coefficientSizes[] = {
+coefficientSizes[NM_COEFF_SIZES] = {
     /* Playback */
     0x00C0, 0x5000, 0x0060, 0x2800, 0x0040, 0x0060, 0x1400, 0x0000,
     /* Record */

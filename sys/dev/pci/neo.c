@@ -1,4 +1,4 @@
-/*      $OpenBSD: neo.c,v 1.16 2003/04/27 11:22:53 ho Exp $       */
+/*      $OpenBSD: neo.c,v 1.17 2004/11/22 04:29:06 deraadt Exp $       */
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -48,7 +48,7 @@
 #include <dev/ic/ac97.h>
 
 #include <dev/pci/neoreg.h>
-#include <dev/microcode/neomagic/neo-coeff.h>
+//#include <dev/microcode/neomagic/neo-coeff.h>
 
 /* -------------------------------------------------------------------- */
 /*
@@ -158,6 +158,8 @@ struct neo_softc {
 
 	void *powerhook;
 };
+
+static struct neo_firmware *nf;
 
 /* -------------------------------------------------------------------- */
 
@@ -393,15 +395,26 @@ nm_loadcoeff(struct neo_softc *sc, int dir, int num)
 	int ofs, sz, i;
 	u_int32_t addr;
 
+	if (nf == NULL) {
+		size_t buflen;
+		u_char *buf;
+		int error;
+
+		error = loadfirmware("neo-coefficients", &buf, &buflen);
+		if (error)
+			return (error);
+		nf = (struct neo_firmware *)buf;
+	}
+
 	addr = (dir == AUMODE_PLAY)? 0x01c : 0x21c;
 	if (dir == AUMODE_RECORD)
 		num += 8;
-	sz = coefficientSizes[num];
+	sz = nf->coefficientSizes[num];
 	ofs = 0;
 	while (num-- > 0)
-		ofs+= coefficientSizes[num];
+		ofs+= nf->coefficientSizes[num];
 	for (i = 0; i < sz; i++)
-		nm_wrbuf(sc, sc->cbuf + i, coefficients[ofs + i], 1);
+		nm_wrbuf(sc, sc->cbuf + i, nf->coefficients[ofs + i], 1);
 	nm_wr(sc, addr, sc->cbuf, 4);
 	if (dir == AUMODE_PLAY)
 		sz--;
