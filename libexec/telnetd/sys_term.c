@@ -1376,10 +1376,18 @@ start_login(const char *host, int autologin, char *name)
 static void
 addarg(struct arg_val *argv, const char *val)
 {
-    if(argv->size <= argv->argc+1) {
-	argv->argv = realloc(argv->argv, sizeof(char*) * (argv->size + 10));
-	if (argv->argv == NULL)
+    const char **tmp;
+
+    if (argv->size <= argv->argc+1) {
+	tmp = realloc(argv->argv, sizeof(char*) * (argv->size + 10));
+	if (tmp == NULL) {
+	    if (argv->argv)
+		    free(argv->argv);
+	    argv->argv = NULL;
+	    argv->size = 0;
 	    fatal (net, "realloc: out of memory");
+	}
+	argv->argv = tmp;
 	argv->size+=10;
     }
     argv->argv[argv->argc++] = val;
