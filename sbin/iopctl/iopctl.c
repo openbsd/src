@@ -1,4 +1,4 @@
-/*	$OpenBSD: iopctl.c,v 1.4 2003/07/29 18:38:36 deraadt Exp $	*/
+/*	$OpenBSD: iopctl.c,v 1.5 2003/11/16 21:06:14 avsm Exp $	*/
 /*	$NetBSD: iopctl.c,v 1.8 2001/03/20 13:07:51 ad Exp $	*/
 
 /*-
@@ -338,7 +338,7 @@ showddmid(char **argv)
 		struct	i2o_param_read_results prr;
 		struct	i2o_param_ddm_identity di;
 		char padding[128];
-	} __attribute__ ((__packed__)) p;
+	} __packed p;
 	char ident[128];
 
 	getparam(atoi(argv[0]), I2O_PARAM_DDM_IDENTITY, &p, sizeof(p));
