@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.69 2000/01/10 06:59:22 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.70 2000/01/11 00:44:32 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -373,14 +373,29 @@ check_ipsec_policy(struct inpcb *inp, void *daddr)
 	  tdb2.tdb_flags |= TDBF_PFS;
 
 	/* Initialize expirations */
-	tdb2.tdb_soft_allocations = ipsec_soft_allocations;
-	tdb2.tdb_exp_allocations = ipsec_exp_allocations;
-	tdb2.tdb_soft_bytes = ipsec_soft_bytes;
-	tdb2.tdb_exp_bytes = ipsec_exp_bytes;
-	tdb2.tdb_soft_timeout = ipsec_soft_timeout;
-	tdb2.tdb_exp_timeout = ipsec_exp_timeout;
-	tdb2.tdb_soft_first_use = ipsec_soft_first_use;
-	tdb2.tdb_exp_first_use = ipsec_exp_first_use;
+	if (ipsec_soft_allocations > 0)
+	  tdb2.tdb_soft_allocations = ipsec_soft_allocations;
+
+	if (ipsec_exp_allocations > 0)
+	  tdb2.tdb_exp_allocations = ipsec_exp_allocations;
+
+	if (ipsec_soft_bytes > 0)
+	  tdb2.tdb_soft_bytes = ipsec_soft_bytes;
+
+	if (ipsec_exp_bytes > 0)
+	  tdb2.tdb_exp_bytes = ipsec_exp_bytes;
+
+	if (ipsec_soft_timeout > 0)
+	  tdb2.tdb_soft_timeout = ipsec_soft_timeout;
+
+	if (ipsec_exp_timeout > 0)
+	  tdb2.tdb_exp_timeout = ipsec_exp_timeout;
+
+	if (ipsec_soft_first_use > 0)
+	  tdb2.tdb_soft_first_use = ipsec_soft_first_use;
+
+	if (ipsec_exp_first_use > 0)
+	  tdb2.tdb_exp_first_use = ipsec_exp_first_use;
 
 	if (tdb2.tdb_satype & NOTIFY_SATYPE_CONF)
 	{
