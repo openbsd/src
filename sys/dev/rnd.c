@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.25 1997/06/18 05:09:09 mickey Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.26 1997/06/20 20:28:41 mickey Exp $	*/
 
 /*
  * random.c -- A strong random number generator
@@ -384,6 +384,7 @@ arc4_getbyte (void)
 	register u_int8_t si, sj;
 
 	rndstats.arc4_reads++;
+	arc4_state.cnt++;
 	arc4_state.i = (arc4_state.i + 1) & 0xff;
 	si = arc4_state.s[arc4_state.i];
 	arc4_state.j = (arc4_state.j + si) & 0xff;
@@ -627,7 +628,7 @@ dequeue_randomness(v)
 
 		/* Prevent overflow */
 		if ((random_state.entropy_count + nbits) > POOLBITS &&
-		    arc4_state.cnt > 256)
+		    arc4_state.cnt > 253)
 			arc4_stir();
 
 		add_entropy_word(val);
