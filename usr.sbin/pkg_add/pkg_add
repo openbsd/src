@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.15 2003/12/09 19:08:44 espie Exp $
+# $OpenBSD: pkg_add,v 1.16 2003/12/09 19:10:35 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -220,7 +220,8 @@ sub solve_dependencies
 	}
 
 	if (@{$to_register} > 0) {
-	    print "Dependencies resolve to: ", join(',', @$to_register);
+	    print "Dependencies for ", $plist->pkgname(), " resolve to: ", 
+	    	join(',', @$to_register);
 	    print " (todo: ", join(',', @deps), ")" if @deps > 0;
 	    print "\n";
 	}
