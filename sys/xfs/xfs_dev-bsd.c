@@ -108,7 +108,7 @@ xfs_devpoll(dev_t dev, int events, d_thread_t * p)
 		     xfs_devtoname_r (dev, devname, sizeof(devname)),
 		     events));
 
-    if (!(events & POLLRDNORM))
+    if (!(events & (POLLIN | POLLRDNORM)))
 	return 0;
 
     return xfs_realselect(dev, p, NULL);
