@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.3 1999/05/28 21:53:16 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.4 2000/05/15 06:10:20 niklas Exp $
 
 LIBIO=		io
 LIBIOSTREAM=	iostream
@@ -57,10 +57,12 @@ iostream.list: _G_config.h
 clean:
 	rm -f a.out [Ee]rrs mklog core *.core $(CLEANFILES)
 	rm -f lib$(LIBIO).a $(LIBIO_SRCS:.c=.o)
+	rm -f lib$(LIBIO)_g.a $(LIBIO_SRCS:.c=.go)
 	rm -f lib$(LIBIO)_p.a $(LIBIO_SRCS:.c=.po)
 	rm -f lib$(LIBIO)_pic.a lib$(LIBIO).so.*.* $(LIBIO_SRCS:.c=.so)
 	rm -f llib-lib$(LIBIO).ln $(LIBIO_SRCS:.c=.ln)
 	rm -f lib$(LIBIOSTREAM).a $(IOSTREAM_SRCS:.cc=.o)
+	rm -f lib$(LIBIOSTREAM)_g.a $(IOSTREAM_SRCS:.cc=.go)
 	rm -f lib$(LIBIOSTREAM)_p.a $(IOSTREAM_SRCS:.cc=.po)
 	rm -f lib$(LIBIOSTREAM)_pic.a lib$(LIBIOSTREAM).so.*.* \
 		 $(IOSTREAM_SRCS:.cc=.so)

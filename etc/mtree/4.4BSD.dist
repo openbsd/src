@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.90 2000/05/02 10:18:23 niklas Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.91 2000/05/15 06:10:20 niklas Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -248,6 +248,11 @@ xml		gname=bin uname=root mode=0755
 ..
 
 # ./usr/lib/apache
+..
+
+# ./usr/lib/debug
+debug		gname=bin uname=root mode=0755
+# ./usr/lib/debug
 ..
 
 # ./usr/lib

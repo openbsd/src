@@ -116,10 +116,10 @@ Boston, MA 02111-1307, USA.  */
 #undef LINK_SPEC
 #ifdef OBSD_NO_DYNAMIC_LIBRARIES
 #define LINK_SPEC \
-  "%{!nostdlib:%{!r*:%{!e*:-e start}}} -dc -dp %{assert*}"
+  "%{g:%{!nostdlib:-L/usr/lib/debug}} %{!nostdlib:%{!r*:%{!e*:-e start}}} -dc -dp %{assert*}"
 #else
 #define LINK_SPEC \
-  "%{!shared:%{!nostdlib:%{!r*:%{!e*:-e start}}}} %{shared:-Bshareable -x} -dc -dp %{R*} %{static:-Bstatic} %{assert*}"
+  "%{g:%{!nostdlib:-L/usr/lib/debug}} %{!shared:%{!nostdlib:%{!r*:%{!e*:-e start}}}} %{shared:-Bshareable -x} -dc -dp %{R*} %{static:-Bstatic} %{assert*}"
 #endif
 
 #undef LIB_SPEC

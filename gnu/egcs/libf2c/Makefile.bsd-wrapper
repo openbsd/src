@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.3 1999/11/20 18:08:34 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.4 2000/05/15 06:10:20 niklas Exp $
 
 EGCS_DIR= $(.CURDIR)/..
 .if defined(OBJMACHINE)
@@ -75,6 +75,7 @@ F2CEXT = abort derf derfc ef1asc ef1cmc erf erfc exit getarg getenv iargc \
 
 F2CO=${F2CEXT:S/^/libE77\/L/:S/$/.o/}
 OBJS+=${F2CO}
+F2CGO=${F2CO:.o=.go}
 F2CPO=${F2CO:.o=.po}
 F2CSO=${F2CO:.o=.so}
 
@@ -82,6 +83,12 @@ ${F2CO}: f2cext.c
 	@echo "${COMPILE.c} -D${.TARGET:T:R} $> -o ${.TARGET}"
 	@${COMPILE.c} -D${.TARGET:T:R} $> -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
+${F2CGO}: f2cext.c
+	@echo "${COMPILE.c} -g -D${.TARGET:T:R} $> -o ${.TARGET}"
+	@${COMPILE.c} -g -D${.TARGET:T:R} $> -o ${.TARGET}.o
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 ${F2CPO}: f2cext.c

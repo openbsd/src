@@ -1,4 +1,4 @@
-#	$OpenBSD: sys.mk,v 1.22 2000/04/08 05:06:25 deraadt Exp $
+#	$OpenBSD: sys.mk,v 1.23 2000/05/15 06:10:21 niklas Exp $
 #	$NetBSD: sys.mk,v 1.27 1996/04/10 05:47:19 mycroft Exp $
 #	@(#)sys.mk	5.11 (Berkeley) 3/13/91
 
@@ -65,7 +65,7 @@ LFLAGS?=
 LEX.l?=		${LEX} ${LFLAGS}
 
 LD?=		ld
-LDFLAGS?=
+LDFLAGS+=	${DEBUG}
 
 LINT?=		lint
 LINTFLAGS?=	-chapbx
