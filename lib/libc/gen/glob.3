@@ -1,4 +1,4 @@
-.\"	$OpenBSD: glob.3,v 1.16 2000/12/24 00:30:49 aaron Exp $
+.\"	$OpenBSD: glob.3,v 1.17 2001/03/18 17:18:58 deraadt Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -255,6 +255,13 @@ compatibility with older sources.
 Expand patterns that start with
 .Ql ~
 to user name home directories.
+.It Dv GLOB_LIMIT
+Limit the amount of memory used by matches to
+.Li ARG_MAX
+This option should be set for programs that can be coerced to a denial of
+service attack via patterns that expand to a very large number of matches,
+such as a long string of 
+.Li */../*/..
 .El
 .Pp
 If, during the search, a directory is encountered that cannot be opened
@@ -364,7 +371,13 @@ in the include file
 .Aq Pa glob.h :
 .Bl -tag -width GLOB_NOCHECK
 .It Dv GLOB_NOSPACE
-An attempt to allocate memory failed.
+An attempt to allocate memory failed, or if
+.Va errno 
+was 0
+.Li GLOB_LIMIT
+was specified in the flags and
+.Li ARG_MAX or more
+patterns were matched.
 .It Dv GLOB_ABORTED
 The scan was stopped because an error was encountered and either
 .Dv GLOB_ERR
@@ -416,8 +429,9 @@ Note, however, that the flags
 .Dv GLOB_MAGCHAR ,
 .Dv GLOB_NOMAGIC ,
 .Dv GLOB_QUOTE ,
-and
 .Dv GLOB_TILDE ,
+and
+.Dv GLOB_LIMIT
 and the fields
 .Fa gl_matchc
 and
