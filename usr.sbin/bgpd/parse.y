@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.138 2004/08/24 15:30:07 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.139 2004/08/24 15:33:48 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1096,7 +1096,8 @@ filter_set_opt	: LOCALPREF number		{
 		}
 		| PFTABLE string		{
 			$$.flags = SET_PFTABLE;
-			if (pftable_exists($2) != 0) {
+			if (!(conf->opts & BGPD_OPT_NOACTION) &&
+			    pftable_exists($2) != 0) {
 				yyerror("pftable name does not exist");
 				free($2);
 				YYERROR;
