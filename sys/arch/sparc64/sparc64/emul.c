@@ -1,4 +1,4 @@
-/*	$OpenBSD: emul.c,v 1.5 2003/07/10 15:26:54 jason Exp $	*/
+/*	$OpenBSD: emul.c,v 1.6 2003/07/12 03:58:42 jason Exp $	*/
 /*	$NetBSD: emul.c,v 1.8 2001/06/29 23:58:40 eeh Exp $	*/
 
 /*-
@@ -41,11 +41,13 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
+#include <sys/malloc.h>
 #include <machine/reg.h>
 #include <machine/instr.h>
 #include <machine/cpu.h>
 #include <machine/psl.h>
 #include <sparc64/sparc64/cpuvar.h>
+#include <uvm/uvm_extern.h>
 
 #define DEBUG_EMUL
 #ifdef DEBUG_EMUL
@@ -65,6 +67,7 @@ static __inline int writefpreg(struct proc *, int, const void *);
 static __inline int decodeaddr(struct trapframe64 *, union instr *, void *);
 static int muldiv(struct trapframe64 *, union instr *, int32_t *, int32_t *,
     int32_t *);
+void swap_quad(int64_t *);
 
 #define	REGNAME(i)	"goli"[i >> 3], i & 7
 
@@ -459,16 +462,28 @@ emulinstr(pc, tf)
 
 #define	SIGN_EXT13(v)	(((int64_t)(v) << 51) >> 51)
 
+void
+swap_quad(int64_t *p)
+{
+	int64_t t;
+
+	t = htole64(p[0]);
+	p[0] = htole64(p[1]);
+	p[1] = t;
+}
+
 /*
  * emulate STQF, STQFA, LDQF, and LDQFA
  */
 int
 emul_qf(int32_t insv, struct proc *p, union sigval sv, struct trapframe *tf)
 {
+	extern struct fpstate64 initfpstate;
+	struct fpstate64 *fs = p->p_md.md_fpstate;
+	int64_t addr, buf[2];
 	union instr ins;
-	int freg, isload;
+	int freg, isload, err;
 	u_int8_t asi;
-	int64_t addr;
 
 	ins.i_int = insv;
 	freg = ins.i_op3.i_rd & ~1;
@@ -482,7 +497,10 @@ emul_qf(int32_t insv, struct proc *p, union sigval sv, struct trapframe *tf)
 	if (ins.i_op3.i_op3 == IOP3_STQF || ins.i_op3.i_op3 == IOP3_LDQF)
 		asi = ASI_PRIMARY;
 	else if (ins.i_loadstore.i_i) {
-		/* XXX asi = %asi, how do I get %asi here? kill it for now */
+		/*
+		 * XXX asi = %asi, how do I get %asi the proc's %asi here?
+		 * XXX kill it for now
+		 */
 		trapsignal(p, SIGILL, 0, ILL_PRVOPC, sv);
 		return (0);
 	} else
@@ -494,10 +512,15 @@ emul_qf(int32_t insv, struct proc *p, union sigval sv, struct trapframe *tf)
 	else
 		addr += tf->tf_global[ins.i_asi.i_rs2];
 
-	if ((asi & 0x80) == 0) {
+	if (asi < ASI_PRIMARY) {
 		/* priviledged asi */
 		trapsignal(p, SIGILL, 0, ILL_PRVOPC, sv);
 		return (0);
+	}
+	if (asi > ASI_SECONDARY_NOFAULT_LITTLE ||
+	    (asi > ASI_SECONDARY_NOFAULT && asi < ASI_PRIMARY_LITTLE)) {
+		/* architecturally undefined user ASI's */
+		goto segv;
 	}
 
 	if ((freg & 3) != 0) {
@@ -506,7 +529,56 @@ emul_qf(int32_t insv, struct proc *p, union sigval sv, struct trapframe *tf)
 		return (0);
 	}
 
-	trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
+	if ((p->p_md.md_flags & MDP_FIXALIGN) == 0 && (addr & 3) != 0) {
+		/*
+		 * If process doesn't want us to fix alignment and the
+		 * request isn't aligned, kill it.
+		 */
+		trapsignal(p, SIGBUS, 0, BUS_ADRALN, sv);
+		return (0);
+	}
+
+	fs = p->p_md.md_fpstate;
+	if (fs == NULL) {
+		/* don't currently have an fpu context, get one */
+		fs = malloc(sizeof(*fs), M_SUBPROC, M_WAITOK);
+		*fs = initfpstate;
+		fs->fs_qsize = 0;
+		p->p_md.md_fpstate = fs;
+	}
+	if (fpproc != p) {
+		/* make this process the current holder of the fpu */
+		if (fpproc != NULL)
+			savefpstate(fpproc->p_md.md_fpstate);
+		fpproc = p;
+	}
+	tf->tf_tstate |= TSTATE_PEF;
+
+	/* Ok, try to do the actual operation (finally) */
+	if (isload) {
+		err = copyin((caddr_t)addr, buf, sizeof(buf));
+		if (err != 0 && (asi & 2) == 0)
+			goto segv;
+		if (err == 0) {
+			savefpstate(fs);
+			if (asi & 8)
+				swap_quad(buf);
+			bcopy(buf, &fs->fs_regs[freg], sizeof(buf));
+			loadfpstate(fs);
+		}
+	} else {
+		bcopy(&fs->fs_regs[freg], buf, sizeof(buf));
+		if (asi & 8)
+			swap_quad(buf);
+		if (copyout(buf, (caddr_t)addr, sizeof(buf)) && (asi & 2) == 0)
+			goto segv;
+	}
+
+	return (1);
+
+segv:
+	trapsignal(p, SIGSEGV, isload ? VM_PROT_READ : VM_PROT_WRITE,
+	    SEGV_MAPERR, sv);
 	return (0);
 }
 
@@ -523,8 +595,7 @@ emul_popc(int32_t insv, struct proc *p, union sigval sv, struct trapframe *tf)
 		val = SIGN_EXT13(ins.i_simm13.i_simm13);
 
 	for (; val != 0; val >>= 1)
-		if (val & 1)
-			ret++;
+		ret += val & 1;
 
 	tf->tf_global[ins.i_asi.i_rd] = ret;
 	return (1);
