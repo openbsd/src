@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.18 2005/01/14 00:35:15 jfb Exp $	*/
+/*	$OpenBSD: diff.c,v 1.19 2005/01/29 15:47:51 jfb Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -605,7 +605,7 @@ cvs_diff_file(struct cvs_file *cfp, void *arg)
 		strlcpy(path_tmp1, "/tmp/diff1.XXXXXXXXXX", sizeof(path_tmp1));
 		if (cvs_buf_write_stmp(b1, path_tmp1, 0600) == -1)
 			return (-1);
-		strlcpy(path_tmp2, "/tmp/diff2.XXXXXXXXXX", sizeof(path_tmp1));
+		strlcpy(path_tmp2, "/tmp/diff2.XXXXXXXXXX", sizeof(path_tmp2));
 		if (cvs_buf_write_stmp(b2, path_tmp2, 0600) == -1) {
 			(void)unlink(path_tmp1);
 			return (-1);
