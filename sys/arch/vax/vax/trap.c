@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.22 2002/03/14 03:16:02 millert Exp $     */
+/*	$OpenBSD: trap.c,v 1.23 2002/05/16 07:37:44 miod Exp $     */
 /*	$NetBSD: trap.c,v 1.47 1999/08/21 19:26:20 matt Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -313,8 +313,25 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 	}
 
 	if (trapsig) { 
-		sv.sival_ptr = (caddr_t)frame->pc;		
+		sv.sival_ptr = (caddr_t)frame->pc;
 		trapsignal(p, sig, frame->code, typ, sv);
+
+		/*
+		 * Arithmetic exceptions can be of two kinds:
+		 * - traps (codes 1..7), where pc points to the
+		 *   next instruction to execute.
+		 * - faults (codes 8..10), where pc points to the
+		 *   faulting instruction.
+		 * In the latter case, we need to advance pc by ourselves
+		 * to prevent a signal loop.
+		 *
+		 * XXX this is gross -- miod
+		 */
+		if (type == (T_ARITHFLT | T_USER) && frame->code >= 8) {
+			extern long skip_opcode(long);
+
+			frame->pc = skip_opcode(frame->pc);
+		}
 	}
 
 	if (umode == 0)

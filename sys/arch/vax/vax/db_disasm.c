@@ -1,6 +1,7 @@
-/*	$OpenBSD: db_disasm.c,v 1.10 2002/03/14 01:26:48 millert Exp $ */
+/*	$OpenBSD: db_disasm.c,v 1.11 2002/05/16 07:37:44 miod Exp $ */
 /*	$NetBSD: db_disasm.c,v 1.10 1998/04/13 12:10:27 ragge Exp $ */
 /*
+ * Copyright (c) 2002, Miodrag Vallat.
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
  *
@@ -103,18 +104,11 @@ typedef struct {
 	char		dasm[256];	/* disassebled instruction as text */
 	char	       *curp;	/* pointer into result */
 	char	       *ppc;	/* pseudo PC */
-	int		opc;	/* op-code */
+	u_int		opc;	/* op-code */
 	char	       *argp;	/* pointer into argument-list */
-	int		itype;	/* instruction-type, eg. branch, call, unspec */
-	int		atype;	/* argument-type, eg. byte, long, address */
 	int		off;	/* offset specified by last argument */
 	int		addr;	/* address specified by last argument */
-}	inst_buffer;
-
-#define ITYPE_INVALID  -1
-#define ITYPE_UNSPEC	0
-#define ITYPE_BRANCH	1
-#define ITYPE_CALL	2
+} inst_buffer;
 
 int get_byte(inst_buffer * ib);
 int get_word(inst_buffer * ib);
@@ -181,29 +175,20 @@ get_opcode(ib)
 	inst_buffer    *ib;
 {
 	ib->opc = get_byte(ib);
-	if (ib->opc >> 2 == 0x3F) {	/* two byte op-code */
+	if (ib->opc >= 0xfd) {
+		/* two byte op-code */
 		ib->opc = ib->opc << 8;
 		ib->opc += get_byte(ib);
 	}
-	switch (ib->opc) {
-	case 0xFA:		/* CALLG */
-	case 0xFB:		/* CALLS */
-	case 0xFC:		/* XFC */
-		ib->itype = ITYPE_CALL;
-		break;
-	case 0x16:		/* JSB */
-	case 0x17:		/* JMP */
-		ib->itype = ITYPE_BRANCH;
-		break;
-	default:
-		ib->itype = ITYPE_UNSPEC;
-	}
-	if (ib->opc < 0 || ib->opc > 0xFF) {
-		add_str(ib, "invalid or two-byte opcode ");
+
+	if (ib->opc > 0xffff) {
+		add_str(ib, "invalid opcode ");
 		add_xint(ib, ib->opc);
-		ib->itype = ITYPE_INVALID;
 	} else {
-		add_str(ib, vax_inst[ib->opc].mnemonic);
+		if (ib->opc > 0xff)
+			add_str(ib, vax_inst2[INDEX_OPCODE(ib->opc)].mnemonic);
+		else
+			add_str(ib, vax_inst[ib->opc].mnemonic);
 		add_char(ib, '\t');
 	}
 	return (ib->opc);
@@ -216,12 +201,18 @@ get_operands(ib)
 	int		aa = 0; /* absolute address mode ? */
 	int		size;
 
-	if (ib->opc < 0 || ib->opc > 0xFF) {
-		/* invalid or two-byte opcode */
+	if (ib->opc > 0xffff) {
+		/* invalid opcode */
 		ib->argp = NULL;
 		return (-1);
-	}
-	ib->argp = vax_inst[ib->opc].argdesc;
+	} else if (ib->opc > 0xff) {
+		/* two-byte opcode */
+		ib->argp = vax_inst2[INDEX_OPCODE(ib->opc)].argdesc;
+	} else
+		ib->argp = vax_inst[ib->opc].argdesc;
+
+	if (ib->argp == NULL)
+		return (0);
 
 	while (*ib->argp) {
 		switch (*ib->argp) {
@@ -238,7 +229,8 @@ get_operands(ib)
 				ib->off = get_long(ib);
 				break;
 			default:
-				err_print("XXX eror\n");
+				err_print("invalid branch-type %X (%c) found.\n",
+					  *ib->argp, *ib->argp);
 			}
 			/* add_int(ib, ib->off); */
 			ib->addr = (u_int) ib->ppc + ib->off;
@@ -246,7 +238,8 @@ get_operands(ib)
 			break;
 
 		case 'a':	/* absolute adressing mode */
-			aa = 1; /* do not break here ! */
+			aa = 1;
+			/* FALLTHROUGH */
 
 		default:
 			switch (*(++ib->argp)) {
@@ -291,7 +284,7 @@ get_operands(ib)
 			add_char(ib, ',');
 			add_char(ib, ' ');
 		} else {
-			err_print("XXX error\n");
+			err_print("error in opcodes.c\n");
 			add_char(ib, '\0');
 			return (-1);
 		}
@@ -453,6 +446,7 @@ get_word(ib)
 {
 	int		tmp;
 	char	       *p = (void *) &tmp;
+
 	*p++ = get_byte(ib);
 	*p++ = get_byte(ib);
 	return (tmp);
@@ -464,6 +458,7 @@ get_long(ib)
 {
 	int		tmp;
 	char	       *p = (void *) &tmp;
+
 	*p++ = get_byte(ib);
 	*p++ = get_byte(ib);
 	*p++ = get_byte(ib);
@@ -484,6 +479,10 @@ add_str(ib, s)
 	inst_buffer    *ib;
 	char	       *s;
 {
+
+	if (s == NULL)
+		s = "-reserved-";
+
 	while ((*ib->curp++ = *s++));
 	*--ib->curp = '\0';
 }
@@ -494,6 +493,7 @@ add_int(ib, i)
 	int		i;
 {
 	char		buf[32];
+
 	if (i < 100 && i > -100)
 		sprintf(buf, "%d", i);
 	else
@@ -507,6 +507,7 @@ add_xint(ib, val)
 	int		val;
 {
 	char		buf[32];
+
 	sprintf(buf, "0x%x", val);
 	add_str(ib, buf);
 }
@@ -520,7 +521,7 @@ add_sym(ib, loc)
 	db_sym_t	sym;
 	char	       *symname;
 
-	if (! loc)
+	if (!loc)
 		return;
 
 	diff = INT_MAX;
