@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fparseln.3,v 1.1 1999/07/20 16:38:56 jakob Exp $
+.\"	$OpenBSD: fparseln.3,v 1.2 1999/07/20 16:45:30 aaron Exp $
 .\"	$NetBSD: fparseln.3,v 1.7 1999/07/02 15:49:12 simonb Exp $
 .\"
 .\" Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -73,7 +73,7 @@ by the number of lines actually read from the file.
 .It Fa delim
 Contains the escape, continuation, and comment characters.
 If a character is
-.Dv NUL
+.Tn NUL
 then processing for that character is disabled.
 If
 .Dv NULL ,
@@ -115,6 +115,7 @@ Remove escape preceeding an escaped escape.
 Remove escape preceeding any other character.
 .It Dv FPARSELN_UNESCALL
 All of the above.
+.El
 .El
 .Sh RETURN VALUES
 Upon successful completion a pointer to the parsed line is returned;
