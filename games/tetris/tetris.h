@@ -163,6 +163,7 @@ long	fallrate;		/* less than 1 million; smaller => faster */
  * still be moved or rotated).
  */
 int	score;			/* the obvious thing */
+gid_t	gid, egid;
 
 char	key_msg[100];
 

@@ -126,6 +126,10 @@ main(argc, argv)
 
 	keys = "jkl pq";
 
+	gid = getgid();
+	egid = getegid();
+	setegid(gid);
+
 	while ((ch = getopt(argc, argv, "k:l:s")) != EOF)
 		switch(ch) {
 		case 'k':

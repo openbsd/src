@@ -53,6 +53,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
 /*
  * XXX - need a <termcap.h>
@@ -99,7 +100,7 @@ static void
 getscores(fpp)
 	FILE **fpp;
 {
-	int sd, mint, lck;
+	int sd, mint, lck, mask;
 	char *mstr, *human;
 	FILE *sf;
 
@@ -114,7 +115,10 @@ getscores(fpp)
 		human = "reading";
 		lck = LOCK_SH;
 	}
+	setegid(egid);
+	mask = umask(S_IWOTH);
 	sd = open(_PATH_SCOREFILE, mint, 0666);
+	(void)umask(mask);
 	if (sd < 0) {
 		if (fpp == NULL) {
 			nscores = 0;
@@ -129,6 +133,7 @@ getscores(fpp)
 		    _PATH_SCOREFILE, human, strerror(errno));
 		exit(1);
 	}
+	setegid(gid);
 
 	/*
 	 * Grab a lock.

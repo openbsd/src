@@ -44,7 +44,7 @@
  * Note that the first 7 are `well known'.
  */
 
-#include <sys/cdefs.h>
+#include <unistd.h>
 #include "tetris.h"
 
 #define	TL	-B_COLS-1	/* top left */
