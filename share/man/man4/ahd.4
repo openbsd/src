@@ -1,4 +1,4 @@
-.\" $OpenBSD: ahd.4,v 1.8 2004/09/30 19:59:24 mickey Exp $
+.\" $OpenBSD: ahd.4,v 1.9 2004/10/15 13:51:51 robert Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998, 2000
 .\" 	Justin T. Gibbs.  All rights reserved.
@@ -82,14 +82,14 @@ support
 .Pp
 To compile in debugging code:
 .Bd -ragged -offset indent
-.Cd options AHD_DEBUG
-.Cd options AHD_DEBUG_OPTS=<bitmask of options>
-.Cd options AHD_REG_PRETTY_PRINT
+.Cd option AHD_DEBUG
+.Cd option AHD_DEBUG_OPTS=<bitmask of options>
+.Cd option AHD_REG_PRETTY_PRINT
 .Ed
 .Pp
 To configure one or more controllers to assume the target role:
 .Bd -ragged -offset indent
-.Cd options AHD_TMODE_ENABLE=<bitmask of units>
+.Cd option AHD_TMODE_ENABLE=<bitmask of units>
 .Ed
 .Pp
 The
