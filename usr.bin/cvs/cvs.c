@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.46 2005/03/31 17:18:24 joris Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.47 2005/04/03 17:32:50 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -369,7 +369,7 @@ main(int argc, char **argv)
 				cvs_log(LP_ERR,
 				    "failed to load default arguments to %s",
 				    __progname);
-				exit(EX_OSERR);
+				exit(1);
 			}
 
 			cvs_getopt(i, targv);
@@ -416,7 +416,7 @@ main(int argc, char **argv)
 		if (ret < 0) {
 			cvs_log(LP_ERRNO, "failed to generate argument vector "
 			    "from default arguments");
-			exit(EX_DATAERR);
+			exit(1);
 		}
 		cmd_argc += ret;
 	}

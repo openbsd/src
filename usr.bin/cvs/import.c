@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.7 2005/03/30 17:43:04 joris Exp $	*/
+/*	$OpenBSD: import.c,v 1.8 2005/04/03 17:32:50 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -92,7 +92,7 @@ cvs_import_options(char *opt, int argc, char **argv, int *arg)
 			cvs_msg = strdup(optarg);
 			if (cvs_msg == NULL) {
 				cvs_log(LP_ERRNO, "failed to copy message");
-				return (EX_DATAERR);
+				return (-1);
 			}
 			break;
 		default:
@@ -128,7 +128,7 @@ cvs_import_sendflags(struct cvsroot *root)
 	    (cvs_sendarg(root, module, 0) < 0) ||
 	    (cvs_sendarg(root, vendor, 0) < 0) ||
 	    (cvs_sendarg(root, release, 0) < 0))
-		return (EX_PROTOCOL);
+		return (-1);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvsd.c,v 1.18 2005/02/22 22:33:01 jfb Exp $	*/
+/*	$OpenBSD: cvsd.c,v 1.19 2005/04/03 17:32:50 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -210,11 +210,11 @@ main(int argc, char **argv)
 
 	pwd = getpwnam(cvsd_user);
 	if (pwd == NULL)
-		err(EX_NOUSER, "failed to get user `%s'", cvsd_user);
+		err(1, "failed to get user `%s'", cvsd_user);
 
 	grp = getgrnam(cvsd_group);
 	if (grp == NULL)
-		err(EX_NOUSER, "failed to get group `%s'", cvsd_group);
+		err(1, "failed to get group `%s'", cvsd_group);
 
 	endpwent();
 	endgrent();
@@ -231,12 +231,12 @@ main(int argc, char **argv)
 
 	if (!cvsd_fg && daemon(0, 0) == -1) {
 		cvs_log(LP_ERRNO, "failed to become a daemon");
-		exit(EX_OSERR);
+		exit(1);
 	}
 
 	if ((cvsd_repo = cvs_repo_load(cvsd_root, repo_flags)) == NULL) {
 		cvs_log(LP_ERR, "failed to load repository");
-		exit(EX_OSERR);
+		exit(1);
 	};
 
 	if (cvsd_sock_open() < 0) {
@@ -245,11 +245,11 @@ main(int argc, char **argv)
 
 	if (setegid(cvsd_gid) == -1) {
 		cvs_log(LP_ERRNO, "failed to drop group privileges");
-		exit(EX_OSERR);
+		exit(1);
 	}
 	if (seteuid(cvsd_uid) == -1) {
 		cvs_log(LP_ERRNO, "failed to drop user privileges");
-		exit(EX_OSERR);
+		exit(1);
 	}
 
 	signal(SIGINFO, cvsd_sighdlr);
@@ -323,7 +323,7 @@ cvsd_child_fork(int sock)
 		 */
 		if (dup2(sock, CVSD_CHILD_SOCKFD) == -1) {
 			cvs_log(LP_ERRNO, "failed to dup child socket");
-			exit(EX_OSERR);
+			exit(1);
 		}
 		(void)close(sock);
 
@@ -345,7 +345,7 @@ cvsd_child_fork(int sock)
 
 		execv(CVSD_PATH_CHILD, argv);
 		err(1, "FUCK");
-		exit(EX_OSERR);
+		exit(1);
 	}
 
 	cvs_log(LP_INFO, "spawning child %d", pid);

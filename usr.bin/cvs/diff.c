@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.24 2005/03/31 14:57:32 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.25 2005/04/03 17:32:50 xsa Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -359,7 +359,7 @@ cvs_diff_options(char *opt, int argc, char **argv, int *arg)
 
 	dap = (struct diff_arg *)malloc(sizeof(*dap));
 	if (dap == NULL)
-		return (EX_DATAERR);
+		return (-1);
 	dap->date1 = dap->date2 = dap->rev1 = dap->rev2 = NULL;
 	strlcpy(diffargs, argv[0], sizeof(diffargs));
 

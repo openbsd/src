@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.19 2005/03/31 15:10:51 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.20 2005/04/03 17:32:50 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -81,7 +81,7 @@ cvs_commit_options(char *opt, int argc, char **argv, int *arg)
 			cvs_msg = strdup(optarg);
 			if (cvs_msg == NULL) {
 				cvs_log(LP_ERRNO, "failed to copy message");
-				return (EX_DATAERR);
+				return (-1);
 			}
 			break;
 		case 'R':
@@ -98,7 +98,7 @@ cvs_commit_options(char *opt, int argc, char **argv, int *arg)
 	}
 
 	if ((mfile != NULL) && (cvs_msg = cvs_logmsg_open(mfile)) == NULL)
-		return (EX_DATAERR);
+		return (-1);
 
 	*arg = optind;
 	return (0);
@@ -126,7 +126,7 @@ cvs_commit_helper(void)
 	}
 
 	if (cvs_msg == NULL)
-		return (1);
+		return (-1);
 
 	return (0);
 }

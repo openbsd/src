@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.9 2005/03/30 17:43:04 joris Exp $	*/
+/*	$OpenBSD: history.c,v 1.10 2005/04/03 17:32:50 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -153,26 +153,26 @@ cvs_history_sendflags(struct cvsroot *root)
 {
 
 	if ((flags & CVS_HF_C) && (cvs_sendarg(root, "-c", 0) < 0))
-		return (EX_PROTOCOL);
+		return (-1);
 
 	if ((flags & CVS_HF_O) && (cvs_sendarg(root, "-o", 0) < 0))
-		return (EX_PROTOCOL);
+		return (-1);
 
 	if (tag != NULL) {
 		if ((cvs_sendarg(root, "-t", 0) < 0) ||
 		    (cvs_sendarg(root, tag, 0) < 0))
-			return (EX_PROTOCOL);
+			return (-1);
 	}
 
 	if (user != NULL) {
 		if ((cvs_sendarg(root, "-u", 0) < 0) ||
 		    (cvs_sendarg(root, user, 0) < 0))
-			return (EX_PROTOCOL);
+			return (-1);
 	}
 
 	if ((cvs_sendarg(root, "-z", 0) < 0) ||
 	    (cvs_sendarg(root, zone, 0) < 0))
-		return (EX_PROTOCOL);
+		return (-1);
 
 	return (0);
 }

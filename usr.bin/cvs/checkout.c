@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.14 2005/03/30 17:43:04 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.15 2005/04/03 17:32:50 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -129,21 +129,21 @@ int
 cvs_checkout_sendflags(struct cvsroot *root)
 {
 	if (cvs_senddir(root, cvs_files) < 0)
-		return (EX_PROTOCOL);
+		return (-1);
 	if (cvs_sendreq(root, CVS_REQ_XPANDMOD, NULL) < 0)
 		cvs_log(LP_ERR, "failed to expand module");
 
 	/* XXX not too sure why we have to send this arg */
 	if (cvs_sendarg(root, "-N", 0) < 0)
-		return (EX_PROTOCOL);
+		return (-1);
 
 	if ((statmod == CVS_LISTMOD) &&
 	    (cvs_sendarg(root, "-c", 0) < 0))
-		return (EX_PROTOCOL);
+		return (-1);
 
 	if ((statmod == CVS_STATMOD) &&
 	    (cvs_sendarg(root, "-s", 0) < 0))
-		return (EX_PROTOCOL);
+		return (-1);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.12 2005/03/30 17:43:04 joris Exp $	*/
+/*	$OpenBSD: init.c,v 1.13 2005/04/03 17:32:50 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -33,7 +33,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <sysexits.h>
 
 #include "cvs.h"
 #include "rcs.h"
@@ -80,7 +79,7 @@ struct cvs_cmd_info cvs_init = {
  * cvs_init_local()
  *
  * Local handler for the "cvs init" command.
- * Returns 0 on success, or the appropriate exit status on failure.
+ * Returns 0 on success, -1 on failure.
  */
 int
 cvs_init_local(struct cvsroot *root)
@@ -98,7 +97,7 @@ cvs_init_local(struct cvsroot *root)
 			if (mkdir(path, cvsroot_files[i].cf_mode) == -1) {
 				cvs_log(LP_ERRNO, "failed to create `%s'",
 				    path);
-				return (EX_CANTCREAT);
+				return (-1);
 			}
 		} else if (cvsroot_files[i].cf_type == CFT_FILE) {
 			fd = open(path, O_WRONLY|O_CREAT|O_EXCL,
@@ -106,7 +105,7 @@ cvs_init_local(struct cvsroot *root)
 			if (fd == -1) {
 				cvs_log(LP_ERRNO, "failed to create `%s'",
 				    path);
-				return (EX_CANTCREAT);
+				return (-1);
 			}
 
 			(void)close(fd);
@@ -114,7 +113,7 @@ cvs_init_local(struct cvsroot *root)
 			strlcat(path, RCS_FILE_EXT, sizeof(path));
 			rfp = rcs_open(path, RCS_WRITE|RCS_CREATE, 0640);
 			if (rfp == NULL) {
-				return (EX_CANTCREAT);
+				return (-1);
 			}
 
 			rcs_close(rfp);

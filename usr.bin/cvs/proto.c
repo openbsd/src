@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.45 2005/03/30 17:43:04 joris Exp $	*/
+/*	$OpenBSD: proto.c,v 1.46 2005/04/03 17:32:50 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -50,7 +50,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <sysexits.h>
 
 #include "buf.h"
 #include "cvs.h"
@@ -260,7 +259,7 @@ cvs_connect(struct cvsroot *root)
 
 		execvp(argv[0], argv);
 		cvs_log(LP_ERRNO, "failed to exec");
-		exit(EX_OSERR);
+		exit(1);
 	}
 
 	/* we are the parent */

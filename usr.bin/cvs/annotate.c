@@ -1,4 +1,4 @@
-/*	$OpenBSD: annotate.c,v 1.5 2005/03/30 17:43:04 joris Exp $	*/
+/*	$OpenBSD: annotate.c,v 1.6 2005/04/03 17:32:50 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -104,18 +104,18 @@ int
 cvs_annotate_sendflags(struct cvsroot *root)
 {
 	if (usehead && (cvs_sendarg(root, "-f", 0) < 0))
-		return (EX_PROTOCOL);
+		return (-1);
 
 	if (rev != NULL) {
 		if ((cvs_sendarg(root, "-r", 0) < 0) ||
 		    (cvs_sendarg(root, rev, 0) < 0))
-			return (EX_PROTOCOL);
+			return (-1);
 	}
 
 	if (date != NULL) {
 		if ((cvs_sendarg(root, "-D", 0) < 0) ||
 		    (cvs_sendarg(root, date, 0) < 0))
-			return (EX_PROTOCOL);
+			return (-1);
 	}
 
 	return (0);

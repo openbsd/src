@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.9 2005/04/01 09:52:39 joris Exp $	*/
+/*	$OpenBSD: server.c,v 1.10 2005/04/03 17:32:50 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -78,7 +78,7 @@ cvs_server(int argc, char **argv)
 			if (feof(stdin))
 				break;
 			else if (ferror(stdin))
-				return (EX_DATAERR);
+				return (-1);
 		}
 
 		len = strlen(reqbuf);
@@ -86,7 +86,7 @@ cvs_server(int argc, char **argv)
 			continue;
 		else if (reqbuf[len - 1] != '\n') {
 			cvs_log(LP_ERR, "truncated request");
-			return (EX_DATAERR);
+			return (-1);
 		}
 		reqbuf[--len] = '\0';
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.10 2005/03/30 17:43:04 joris Exp $	*/
+/*	$OpenBSD: status.c,v 1.11 2005/04/03 17:32:50 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -96,7 +96,7 @@ int
 cvs_status_sendflags(struct cvsroot *root)
 {
 	if (verbose && (cvs_sendarg(root, "-v", 0) < 0))
-		return (EX_PROTOCOL);
+		return (-1);
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.15 2005/03/30 17:43:04 joris Exp $	*/
+/*	$OpenBSD: add.c,v 1.16 2005/04/03 17:32:50 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -80,7 +80,7 @@ cvs_add_options(char *opt, int argc, char **argv, int *arg)
 		case 'm':
 			if ((cvs_msg = strdup(optarg)) == NULL) {
 				cvs_log(LP_ERRNO, "failed to copy message");
-				return (EX_DATAERR);
+				return (-1);
 			}
 			break;
 		default:
@@ -101,7 +101,7 @@ cvs_add_sendflags(struct cvsroot *root)
 		strlcpy(buf, "-k", sizeof(buf));
 		strlcat(buf, koptstr, sizeof(buf));
 		if (cvs_sendarg(root, buf, 0) < 0)
-			return (EX_PROTOCOL);
+			return (-1);
 	}
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.6 2005/04/01 09:44:00 joris Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.7 2005/04/03 17:32:50 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -60,7 +60,7 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 	}
 
 	if (c->cmd_options != NULL) {
-		if ((ret = c->cmd_options(cmd->cmd_opts, argc, argv, &i)))
+		if ((ret = c->cmd_options(cmd->cmd_opts, argc, argv, &i)) < 0)
 			return (ret);
 
 		argc -= i;
@@ -73,9 +73,9 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 		cvs_files = cvs_file_get(".", c->file_flags);
 
 	if (cvs_files == NULL)
-		return (EX_DATAERR);
+		return (-1);
 
-	if ((c->cmd_helper != NULL) && ((ret = c->cmd_helper())))
+	if ((c->cmd_helper != NULL) && ((ret = c->cmd_helper()) < 0))
 		return (ret);
 
 	root = CVS_DIR_ROOT(cvs_files);
@@ -89,23 +89,23 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 
 	if (root->cr_method != CVS_METHOD_LOCAL) {
 		if (cvs_connect(root) < 0)
-			return (EX_PROTOCOL);
+			return (-1);
 
 		if (c->cmd_flags & CVS_CMD_SENDARGS1) {
 			for (i = 0; i < argc; i++) {
 				if (cvs_sendarg(root, argv[i], 0) < 0)
-					return (EX_PROTOCOL);
+					return (-1);
 			}
 		}
 
 		if (c->cmd_sendflags != NULL) {
-			if ((ret = c->cmd_sendflags(root)))
+			if ((ret = c->cmd_sendflags(root)) < 0)
 				return (ret);
 		}
 
 		if (c->cmd_flags & CVS_CMD_NEEDLOG) {
 			if (cvs_logmsg_send(root, cvs_msg) < 0)
-				return (EX_PROTOCOL);
+				return (-1);
 		}
 	}
 
@@ -121,19 +121,19 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 	if (root->cr_method != CVS_METHOD_LOCAL) {
 		if (c->cmd_flags & CVS_CMD_SENDDIR) {
 			if (cvs_senddir(root, cvs_files) < 0)
-				return (EX_PROTOCOL);
+				return (-1);
 		}
 
 		if (c->cmd_flags & CVS_CMD_SENDARGS2) {
 			for (i = 0; i < argc; i++) {
 				if (cvs_sendarg(root, argv[i], 0) < 0)
-					return (EX_PROTOCOL);
+					return (-1);
 			}
 		}
 
 		if (cvs_sendreq(root, c->cmd_req,
 		    (cmd->cmd_op == CVS_OP_INIT) ? root->cr_dir : NULL) < 0)
-			return (EX_PROTOCOL);
+			return (-1);
 	}
 
 	return (0);

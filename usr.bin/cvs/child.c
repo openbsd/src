@@ -1,4 +1,4 @@
-/*	$OpenBSD: child.c,v 1.2 2005/02/22 22:36:09 jfb Exp $	*/
+/*	$OpenBSD: child.c,v 1.3 2005/04/03 17:32:50 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -130,7 +130,7 @@ main(int argc, char **argv)
 	cvsd_sess_fd = CVSD_CHILD_SOCKFD;
 	if (getpeereid(cvsd_sess_fd, &cvsd_sess_ruid, &cvsd_sess_rgid) == -1) {
 		cvs_log(LP_ERRNO, "failed to get remote credentials");
-		exit(EX_OSERR);
+		exit(1);
 	}
 
 	while ((ret = getopt(argc, argv, "dfg:hr:u:v")) != -1) {
@@ -176,7 +176,7 @@ main(int argc, char **argv)
 	 */
 	if (chroot(cvsd_root) == -1) {
 		cvs_log(LP_ERRNO, "failed to chroot to %s", cvsd_root);
-		exit(EX_OSERR);
+		exit(1);
 	}
 	(void)chdir("/");
 	cvs_log(LP_INFO, "dropping privileges to %d:%d", cvsd_uid, cvsd_gid);
