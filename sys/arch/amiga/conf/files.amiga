@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amiga,v 1.44 2001/11/21 00:29:56 miod Exp $
+#	$OpenBSD: files.amiga,v 1.45 2001/11/23 00:39:39 miod Exp $
 #	$NetBSD: files.amiga,v 1.62 1997/08/27 19:32:47 is Exp $
 
 
@@ -349,8 +349,8 @@ file	arch/amiga/dev/com_supio.c	com_supio
 # list of standard files...
 include	"arch/m68k/fpe/files.fpe"
 
-file	dev/cons.c			ite | ser
-file	dev/cninit.c			ite | ser
+file	dev/cons.c
+file	dev/cninit.c
 file	arch/amiga/amiga/amiga_init.c
 file	arch/amiga/amiga/autoconf.c
 file	arch/amiga/amiga/cia.c
