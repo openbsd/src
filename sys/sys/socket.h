@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.15 1997/03/12 13:30:42 downsj Exp $	*/
+/*	$OpenBSD: socket.h,v 1.16 1997/04/24 21:34:50 angelos Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -127,7 +127,8 @@ struct	linger {
 #define AF_NATM		27		/* native ATM access */
 #define	AF_ENCAP	28
 #define	AF_SIP		29		/* Simple Internet Protocol */
-#define	AF_MAX		30
+#define AF_KEY		30
+#define	AF_MAX		31
 
 /*
  * Structure used by kernel to store most
@@ -183,6 +184,7 @@ struct sockproto {
 #define PF_NATM		AF_NATM
 #define PF_ENCAP	AF_ENCAP
 #define	PF_SIP		AF_SIP
+#define PF_KEY		AF_KEY
 #define	PF_MAX		AF_MAX
 
 /*
@@ -224,6 +226,7 @@ struct sockproto {
 	{ "pip", CTLTYPE_NODE }, \
 	{ "natm", CTLTYPE_NODE }, \
 	{ "ipsec", CTLTYPE_NODE }, \
+	{ "pfkey", CTLTYPE_NODE }, \
 }
 
 /*
