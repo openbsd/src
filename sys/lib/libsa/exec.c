@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.19 1998/02/23 20:32:25 niklas Exp $	*/
+/*	$OpenBSD: exec.c,v 1.20 1998/04/25 18:31:58 millert Exp $	*/
 /*	$NetBSD: exec.c,v 1.15 1996/10/13 02:29:01 christos Exp $	*/
 
 /*-
@@ -86,7 +86,7 @@ exec(path, loadaddr, howto)
 #endif
 
         /* Text */
-	printf("%ld", x.a_text);
+	printf("%u", x.a_text);
 	addr = loadaddr;
 	sz = x.a_text;
 	if (N_GETMAGIC(x) == ZMAGIC) {
@@ -110,13 +110,13 @@ exec(path, loadaddr, howto)
 #ifdef EXEC_DEBUG
 	daddr = addr;
 #endif
-	printf("+%ld", x.a_data);
+	printf("+%u", x.a_data);
 	if (read(io, addr, x.a_data) != (ssize_t)x.a_data)
 		goto shread;
 	addr += x.a_data;
 
         /* Bss */
-	printf("+%ld", x.a_bss);
+	printf("+%u", x.a_bss);
 	for (i = 0; i < x.a_bss; i++)
 		*addr++ = 0;
 
@@ -125,7 +125,7 @@ exec(path, loadaddr, howto)
 		ssym = addr;
 		bcopy(&x.a_syms, addr, sizeof(x.a_syms));
 		addr += sizeof(x.a_syms);
-		printf("+[%ld", x.a_syms);
+		printf("+[%u", x.a_syms);
 		if (read(io, addr, x.a_syms) != (ssize_t)x.a_syms)
 			goto shread;
 		addr += x.a_syms;
@@ -162,7 +162,7 @@ exec(path, loadaddr, howto)
 
 	x.a_entry += (long)loadaddr;
 */
-	printf(" start=0x%lx\n", x.a_entry);
+	printf(" start=0x%x\n", x.a_entry);
 
 #ifdef EXEC_DEBUG
         printf("loadaddr=%p etxt=%p daddr=%p ssym=%p esym=%p\n",
