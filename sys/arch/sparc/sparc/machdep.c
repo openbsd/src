@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.39 1999/08/24 09:54:55 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.40 1999/09/03 18:01:58 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -250,7 +250,8 @@ cpu_startup()
 				panic("cpu_startup: "
 				    "not enough RAM for buffer cache");
 			pmap_enter(kernel_map->pmap, curbuf,
-			    VM_PAGE_TO_PHYS(pg), VM_PROT_ALL, TRUE);
+			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ | VM_PROT_WRITE,
+			    TRUE, VM_PROT_READ | VM_PROT_WRITE);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
@@ -386,7 +387,8 @@ cpu_startup()
 	 * fix message buffer mapping, note phys addr of msgbuf is 0
 	 */
 
-	pmap_enter(pmap_kernel(), MSGBUF_VA, 0x0, VM_PROT_READ|VM_PROT_WRITE, 1);
+	pmap_enter(pmap_kernel(), MSGBUF_VA, 0x0, VM_PROT_READ|VM_PROT_WRITE,
+		   TRUE, VM_PROT_READ | VM_PROT_WRITE);
 	if (CPU_ISSUN4)
 		msgbufp = (struct msgbuf *)(MSGBUF_VA + 4096);
 	else
@@ -1082,7 +1084,7 @@ mapdev(phys, virt, offset, size)
 
 	do {
 		pmap_enter(pmap_kernel(), v, pa | pmtype | PMAP_NC,
-			   VM_PROT_READ | VM_PROT_WRITE, 1);
+			   VM_PROT_READ | VM_PROT_WRITE, 1, 0);
 		v += PAGE_SIZE;
 		pa += PAGE_SIZE;
 	} while ((size -= PAGE_SIZE) > 0);

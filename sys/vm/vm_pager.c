@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_pager.c,v 1.8 1997/11/06 05:59:37 csapuntz Exp $	*/
+/*	$OpenBSD: vm_pager.c,v 1.9 1999/09/03 18:02:29 art Exp $	*/
 /*	$NetBSD: vm_pager.c,v 1.21 1996/03/16 23:15:25 christos Exp $	*/
 
 /* 
@@ -341,7 +341,7 @@ vm_pager_map_pages(mlist, npages, canwait)
 		m->flags |= PG_PAGEROWNED;
 #endif
 		pmap_enter(vm_map_pmap(pager_map), va, VM_PAGE_TO_PHYS(m),
-			   VM_PROT_DEFAULT, TRUE);
+			   VM_PROT_DEFAULT, TRUE, 0);
 	}
 	return (kva);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.11 1999/07/18 18:00:06 deraadt Exp $ */
+/*	$OpenBSD: pmap.c,v 1.12 1999/09/03 18:01:23 art Exp $ */
 
 /* 
  * Copyright (c) 1995 Theo de Raadt
@@ -751,7 +751,7 @@ pmap_map(va, spa, epa, prot)
 #endif
 
 	while (spa < epa) {
-		pmap_enter(pmap_kernel(), va, spa, prot, FALSE);
+		pmap_enter(pmap_kernel(), va, spa, prot, FALSE, 0);
 		va += NBPG;
 		spa += NBPG;
 	}
@@ -1156,12 +1156,13 @@ pmap_protect(pmap, sva, eva, prot)
  *	insert this page into the given map NOW.
  */
 void
-pmap_enter(pmap, va, pa, prot, wired)
+pmap_enter(pmap, va, pa, prot, wired, access_type)
 	register pmap_t pmap;
 	vm_offset_t va;
 	register vm_offset_t pa;
 	vm_prot_t prot;
 	boolean_t wired;
+	vm_prot_t access_type;
 {
 	register pt_entry_t *pte;
 	register int npte;
@@ -1699,7 +1700,8 @@ pmap_zero_page(phys)
 		printf("pmap_zero_page(%x)\n", phys);
 #endif
 	kva = (vm_offset_t) CADDR1;
-	pmap_enter(pmap_kernel(), kva, phys, VM_PROT_READ|VM_PROT_WRITE, TRUE);
+	pmap_enter(pmap_kernel(), kva, phys, VM_PROT_READ|VM_PROT_WRITE, TRUE,
+		   0);
 	zeropage((caddr_t)kva);
 	pmap_remove_mapping(pmap_kernel(), kva, PT_ENTRY_NULL,
 			    PRM_TFLUSH|PRM_CFLUSH);
@@ -1731,8 +1733,9 @@ pmap_copy_page(src, dst)
 #endif
 	skva = (vm_offset_t) CADDR1;
 	dkva = (vm_offset_t) CADDR2;
-	pmap_enter(pmap_kernel(), skva, src, VM_PROT_READ, TRUE);
-	pmap_enter(pmap_kernel(), dkva, dst, VM_PROT_READ|VM_PROT_WRITE, TRUE);
+	pmap_enter(pmap_kernel(), skva, src, VM_PROT_READ, TRUE, 0);
+	pmap_enter(pmap_kernel(), dkva, dst, VM_PROT_READ|VM_PROT_WRITE, TRUE,
+		   0);
 	copypage((caddr_t)skva, (caddr_t)dkva);
 	/* CADDR1 and CADDR2 are virtually contiguous */
 	pmap_remove(pmap_kernel(), skva, skva + (2 * NBPG));
@@ -2418,7 +2421,8 @@ pmap_enter_ptpage(pmap, va)
 		kpt_used_list = kpt;
 		ptpa = kpt->kpt_pa;
 		bzero((caddr_t)kpt->kpt_va, NBPG);
-		pmap_enter(pmap, va, ptpa, VM_PROT_DEFAULT, TRUE);
+		pmap_enter(pmap, va, ptpa, VM_PROT_DEFAULT, TRUE,
+			   VM_PROT_DEFAULT);
 #ifdef DEBUG
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE)) {
 			int ix = pmap_ste(pmap, va) - pmap_ste(pmap, 0);

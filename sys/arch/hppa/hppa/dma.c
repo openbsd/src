@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.3 1999/07/12 17:43:40 mickey Exp $	*/
+/*	$OpenBSD: dma.c,v 1.4 1999/09/03 18:00:46 art Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -174,7 +174,7 @@ _dmamem_alloc(v, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	for (epa = size + (spa = kvtop((caddr_t)va)); spa < epa;
 	     spa += NBPG, va += NBPG) {
 		pmap_enter(pmap_kernel(), va, spa,
-			   VM_PROT_READ | VM_PROT_WRITE, TRUE);
+			   VM_PROT_READ | VM_PROT_WRITE, TRUE, 0);
 		pmap_changebit(spa, TLB_UNCACHEABLE, 0);
 	}
 

@@ -438,10 +438,15 @@ uvm_pageboot_alloc(size)
 
 		/* XXX: should be wired, but some pmaps don't like that ... */
 #if defined(PMAP_NEW)
+		/*
+		 * Note this memory is no longer managed, so using
+		 * pmap_kenter is safe.
+		 */
 		pmap_kenter_pa(vaddr, paddr, VM_PROT_READ|VM_PROT_WRITE);
 #else
 		pmap_enter(pmap_kernel(), vaddr, paddr,
-		    VM_PROT_READ|VM_PROT_WRITE, FALSE);
+		    VM_PROT_READ|VM_PROT_WRITE, FALSE,
+		    VM_PROT_READ|VM_PROT_WRITE);
 #endif
 
 	}
@@ -982,8 +987,9 @@ uvm_pagealloc_contig(size, low, high, alignment)
 		pmap_kenter_pa(temp_addr, VM_PAGE_TO_PHYS(pg), 
 			       VM_PROT_READ|VM_PROT_WRITE);
 #else
-		pmap_enter(kernel_map->pmap, temp_addr, VM_PAGE_TO_PHYS(pg),
-		    UVM_PROT_READ|UVM_PROT_WRITE, TRUE);
+		pmap_enter(pmap_kernel(), temp_addr, VM_PAGE_TO_PHYS(pg),
+			   VM_PROT_READ|VM_PROT_WRITE, TRUE,
+			   VM_PROT_READ|VM_PROT_WRITE);
 #endif
 		temp_addr += PAGE_SIZE;
 	}

@@ -314,7 +314,7 @@ vmapbuf(bp, len)
 		if (pa == 0)
 			panic("vmapbuf: null page frame");
 		pmap_enter(vm_map_pmap(phys_map), taddr, trunc_page(pa),
-			VM_PROT_READ|VM_PROT_WRITE, TRUE);
+			VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
 		faddr += PAGE_SIZE;
 		taddr += PAGE_SIZE;
 	}

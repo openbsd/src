@@ -208,7 +208,7 @@ uvm_chgkprot(addr, len, rw)
 		pa = pmap_extract(pmap_kernel(), sva|1);
 		if (pa == 0)
 			panic("chgkprot: invalid page");
-		pmap_enter(pmap_kernel(), sva, pa&~1, prot, TRUE);
+		pmap_enter(pmap_kernel(), sva, pa&~1, prot, TRUE, 0);
 	}
 }
 #endif

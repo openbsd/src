@@ -474,7 +474,8 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 		UVMHIST_LOG(maphist,
 		    "  MAPPING: device: pm=0x%x, va=0x%x, pa=0x%x, at=%d",
 		    ufi->orig_map->pmap, curr_va, (int)paddr, access_type);
-		pmap_enter(ufi->orig_map->pmap, curr_va, paddr, access_type, 0);
+		pmap_enter(ufi->orig_map->pmap, curr_va, paddr, access_type, 0,
+		    access_type);
 
 	}
 

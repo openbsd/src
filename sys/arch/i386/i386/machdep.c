@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.112 1999/08/20 10:33:34 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.113 1999/09/03 18:00:50 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -291,8 +291,10 @@ cpu_startup()
 	/* avail_end was pre-decremented in pmap_bootstrap to compensate */
 	for (i = 0; i < btoc(sizeof(struct msgbuf)); i++, pa += NBPG)
 		pmap_enter(pmap_kernel(),
-		    (vm_offset_t)((caddr_t)msgbufp + i * NBPG),
-		    pa, VM_PROT_ALL, TRUE);
+		    (vm_offset_t)((caddr_t)msgbufp + i * NBPG), pa,
+		    VM_PROT_READ|VM_PROT_WRITE, TRUE,
+		    VM_PROT_READ|VM_PROT_WRITE);
+
 	msgbufmapped = 1;
 
 	/* Boot arguments are in page 1 */
@@ -300,8 +302,9 @@ cpu_startup()
 		pa = (vm_offset_t)bootargv;
 		for (i = 0; i < btoc(bootargc); i++, pa += NBPG)
 			pmap_enter(pmap_kernel(),
-			    (vm_offset_t)((caddr_t)bootargp + i * NBPG),
-			    pa, VM_PROT_READ|VM_PROT_WRITE, TRUE);
+			    (vm_offset_t)((caddr_t)bootargp + i * NBPG), pa,
+			    VM_PROT_READ|VM_PROT_WRITE, TRUE,
+			    VM_PROT_READ|VM_PROT_WRITE);
 	} else
 		bootargp = NULL;
 
@@ -609,7 +612,8 @@ setup_buffers(maxaddr)
 		for (size = CLBYTES * (i < residual ? base + 1 : base);
 		     size > 0; size -= NBPG, addr += NBPG) {
 			pmap_enter(pmap_kernel(), addr, pg->phys_addr,
-			    VM_PROT_READ|VM_PROT_WRITE, TRUE);
+			    VM_PROT_READ|VM_PROT_WRITE, TRUE,
+			    VM_PROT_READ|VM_PROT_WRITE);
 			pg = pg->pageq.tqe_next;
 		}
 	}
@@ -2368,7 +2372,8 @@ bus_mem_add_mapping(bpa, size, cacheable, bshp)
 
 	for (; pa < endpa; pa += NBPG, va += NBPG) {
 		pmap_enter(pmap_kernel(), va, pa,
-		    VM_PROT_READ | VM_PROT_WRITE, TRUE);
+		    VM_PROT_READ | VM_PROT_WRITE, TRUE,
+		    VM_PROT_READ | VM_PROT_WRITE);
 		if (!cacheable)
 			pmap_changebit(pa, PG_N, ~0);
 		else
@@ -2775,7 +2780,8 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
 			pmap_enter(pmap_kernel(), va, addr,
-			    VM_PROT_READ | VM_PROT_WRITE, TRUE);
+			    VM_PROT_READ | VM_PROT_WRITE, TRUE,
+			    VM_PROT_READ | VM_PROT_WRITE);
 		}
 	}
 

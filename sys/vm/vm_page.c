@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_page.c,v 1.16 1999/02/19 02:54:36 deraadt Exp $	*/
+/*	$OpenBSD: vm_page.c,v 1.17 1999/09/03 18:02:28 art Exp $	*/
 /*	$NetBSD: vm_page.c,v 1.41 1998/02/08 18:24:52 thorpej Exp $	*/
 
 #define	VM_PAGE_ALLOC_MEMORY_STATS
@@ -410,7 +410,7 @@ vm_bootstrap_steal_memory(size)
 
 		/* XXX: should be wired, but some pmaps don't like that ... */
 		pmap_enter(pmap_kernel(), vaddr, paddr,
-		    VM_PROT_READ|VM_PROT_WRITE, FALSE);
+		    VM_PROT_READ|VM_PROT_WRITE, FALSE, 0);
 	}
 	return(addr);
 #endif /* PMAP_STEAL_MEMORY */
@@ -1007,7 +1007,7 @@ vm_bootstrap_steal_memory(size)
 		 */
 		
 		pmap_enter(pmap_kernel(), vaddr, paddr,
-			   VM_PROT_READ|VM_PROT_WRITE, FALSE);
+			   VM_PROT_READ|VM_PROT_WRITE, FALSE, 0);
 	}
 	
 	return addr;
@@ -1840,7 +1840,7 @@ vm_page_alloc_contig(size, low, high, alignment)
 		    tmp_addr - VM_MIN_KERNEL_ADDRESS);
 		vm_page_wire(m);
 		pmap_enter(pmap_kernel(), tmp_addr, VM_PAGE_TO_PHYS(m),
-		    VM_PROT_READ|VM_PROT_WRITE, TRUE);
+		    VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
 		tmp_addr += PAGE_SIZE;
 	}
 	return addr;

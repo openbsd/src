@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.10 1999/07/09 21:33:37 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.11 1999/09/03 18:01:55 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.30 1997/08/04 20:00:47 pk Exp $ */
 
 /*
@@ -284,7 +284,7 @@ void		pmap_clear_modify4_4c __P((paddr_t pa));
 void		pmap_clear_reference4_4c __P((paddr_t pa));
 void		pmap_copy_page4_4c __P((paddr_t, paddr_t));
 void		pmap_enter4_4c __P((pmap_t, vaddr_t, paddr_t, vm_prot_t,
-				    boolean_t));
+				    boolean_t, vm_prot_t));
 paddr_t		pmap_extract4_4c __P((pmap_t, vaddr_t));
 boolean_t	pmap_is_modified4_4c __P((paddr_t pa));
 boolean_t	pmap_is_referenced4_4c __P((paddr_t pa));
@@ -301,7 +301,7 @@ void		pmap_clear_modify4m __P((paddr_t pa));
 void		pmap_clear_reference4m __P((paddr_t pa));
 void		pmap_copy_page4m __P((paddr_t, paddr_t));
 void		pmap_enter4m __P((pmap_t, vaddr_t, paddr_t, vm_prot_t,
-				  boolean_t));
+				  boolean_t, vm_prot_t));
 paddr_t		pmap_extract4m __P((pmap_t, vaddr_t));
 boolean_t	pmap_is_modified4m __P((paddr_t pa));
 boolean_t	pmap_is_referenced4m __P((paddr_t pa));
@@ -345,7 +345,7 @@ extern void		(*pmap_clear_modify_p) __P((paddr_t pa));
 extern void		(*pmap_clear_reference_p) __P((paddr_t pa));
 extern void		(*pmap_copy_page_p) __P((paddr_t, paddr_t));
 extern void		(*pmap_enter_p) __P((pmap_t, vaddr_t, paddr_t,
-					     vm_prot_t, boolean_t));
+					     vm_prot_t, boolean_t, vm_prot_t));
 extern paddr_t		(*pmap_extract_p) __P((pmap_t, vaddr_t));
 extern boolean_t	(*pmap_is_modified_p) __P((paddr_t pa));
 extern boolean_t	(*pmap_is_referenced_p) __P((paddr_t pa));

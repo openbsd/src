@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.31 1999/08/20 09:30:55 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.32 1999/09/03 18:01:59 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -493,7 +493,7 @@ void		(*pmap_clear_modify_p) __P((paddr_t pa));
 void		(*pmap_clear_reference_p) __P((paddr_t pa));
 void		(*pmap_copy_page_p) __P((paddr_t, paddr_t));
 void		(*pmap_enter_p) __P((pmap_t, vaddr_t, paddr_t, vm_prot_t,
-				     boolean_t));
+				     boolean_t, vm_prot_t));
 paddr_t		(*pmap_extract_p) __P((pmap_t, vaddr_t));
 boolean_t	(*pmap_is_modified_p) __P((paddr_t pa));
 boolean_t	(*pmap_is_referenced_p) __P((paddr_t pa));
@@ -3588,7 +3588,8 @@ pass2:
 		/* Map this piece of pv_table[] */
 		for (va = sva; va < eva; va += PAGE_SIZE) {
 			pmap_enter(pmap_kernel(), va, pa,
-				   VM_PROT_READ|VM_PROT_WRITE, 1);
+				   VM_PROT_READ|VM_PROT_WRITE, 1,
+				   VM_PROT_READ|VM_PROT_WRITE);
 			pa += PAGE_SIZE;
 		}
 		bzero((caddr_t)sva, eva - sva);
@@ -3624,7 +3625,7 @@ pmap_map(va, pa, endpa, prot)
 	int pgsize = PAGE_SIZE;
 
 	while (pa < endpa) {
-		pmap_enter(pmap_kernel(), va, pa, prot, 1);
+		pmap_enter(pmap_kernel(), va, pa, prot, 1, 0);
 		va += pgsize;
 		pa += pgsize;
 	}
@@ -5110,12 +5111,13 @@ out:
 #if defined(SUN4) || defined(SUN4C)
 
 void
-pmap_enter4_4c(pm, va, pa, prot, wired)
+pmap_enter4_4c(pm, va, pa, prot, wired, access_prot)
 	struct pmap *pm;
 	vaddr_t va;
 	paddr_t pa;
 	vm_prot_t prot;
 	int wired;
+	vm_prot_t access_prot;
 {
 	struct pvlist *pv;
 	int pteproto, ctx;
@@ -5477,12 +5479,13 @@ printf("%s[%d]: pmap_enu: changing existing va(0x%x)=>pa entry\n",
  */
 
 void
-pmap_enter4m(pm, va, pa, prot, wired)
+pmap_enter4m(pm, va, pa, prot, wired, access_prot)
 	struct pmap *pm;
 	vaddr_t va;
 	paddr_t pa;
 	vm_prot_t prot;
 	int wired;
+	vm_prot_t access_prot;
 {
 	struct pvlist *pv;
 	int pteproto, ctx;
@@ -5996,7 +5999,7 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 				   (pte & PPROT_WRITE)
 					? (VM_PROT_WRITE | VM_PROT_READ)
 					: VM_PROT_READ,
-				   0);
+				   0, 0);
 			src_addr += NBPG;
 			dst_addr += NBPG;
 		}

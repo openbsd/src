@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.10 1999/07/18 18:00:08 deraadt Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.11 1999/09/03 18:02:26 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.16 1996/03/31 22:15:32 pk Exp $	*/
 
 /* 
@@ -139,7 +139,7 @@ pmap_t		 pmap_create __P((vsize_t));
 #endif
 void		 pmap_destroy __P((pmap_t));
 void		 pmap_enter __P((pmap_t,
-		    vaddr_t, paddr_t, vm_prot_t, boolean_t));
+		    vaddr_t, paddr_t, vm_prot_t, boolean_t, vm_prot_t));
 paddr_t		 pmap_extract __P((pmap_t, vaddr_t));
 #if defined(PMAP_NEW) && defined(PMAP_GROWKERNEL)
 void		 pmap_growkernel __P((vaddr_t));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.12 1999/08/14 03:19:42 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.13 1999/09/03 18:00:46 art Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -544,7 +544,9 @@ cpu_startup()
 				panic("cpu_startup: not enough memory for "
 				      "buffer cache");
 			pmap_enter(kernel_map->pmap, curbuf,
-				   VM_PAGE_TO_PHYS(pg), VM_PROT_ALL, TRUE);
+				   VM_PAGE_TO_PHYS(pg),
+				   VM_PROT_READ|VM_PROT_WRITE, TRUE,
+				   VM_PROT_READ|VM_PROT_WRITE);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
@@ -964,7 +966,7 @@ bus_mem_add_mapping(bpa, size, cacheable, bshp)
 
 		for (; spa < epa; spa += NBPG, va += NBPG) {
 			pmap_enter(pmap_kernel(), va, spa,
-				   VM_PROT_READ | VM_PROT_WRITE, TRUE);
+				   VM_PROT_READ | VM_PROT_WRITE, TRUE, 0);
 			if (!cacheable)
 				pmap_changebit(spa, TLB_UNCACHEABLE, ~0);
 			else

@@ -811,12 +811,13 @@ pmap_page_cache(pa,mode)
  *	insert this page into the given map NOW.
  */
 void
-pmap_enter(pmap, va, pa, prot, wired)
+pmap_enter(pmap, va, pa, prot, wired, access_type)
 	register pmap_t pmap;
 	vm_offset_t va;
 	register vm_offset_t pa;
 	vm_prot_t prot;
 	boolean_t wired;
+	vm_prot_t access_type;
 {
 	register pt_entry_t *pte;
 	register u_int npte;

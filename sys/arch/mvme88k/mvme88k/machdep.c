@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.15 1999/05/29 04:41:46 smurph Exp $	*/
+/* $OpenBSD: machdep.c,v 1.16 1999/09/03 18:01:30 art Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -408,7 +408,8 @@ cpu_startup()
 
 	for (i = 0; i < btoc(sizeof(struct msgbuf)); i++)
 		pmap_enter(kernel_pmap, (vm_offset_t)msgbufp,
-			avail_end + i * NBPG, VM_PROT_ALL, TRUE);
+			avail_end + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
+			VM_PROT_READ|VM_PROT_WRITE, TRUE);
 
 	msgbufmapped = 1;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.15 1999/07/18 18:00:03 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.16 1999/09/03 18:00:29 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.39 1997/06/10 18:26:41 veego Exp $	*/
 
 /* 
@@ -859,7 +859,7 @@ pmap_map(virt, start, end, prot)
 		    prot);
 #endif
 	while (start < end) {
-		pmap_enter(pmap_kernel(), virt, start, prot, FALSE);
+		pmap_enter(pmap_kernel(), virt, start, prot, FALSE, 0);
 		virt += PAGE_SIZE;
 		start += PAGE_SIZE;
 	}
@@ -1405,12 +1405,13 @@ pmap_protect(pmap, sva, eva, prot)
 extern int kernel_copyback;
 
 void
-pmap_enter(pmap, va, pa, prot, wired)
+pmap_enter(pmap, va, pa, prot, wired, access_type)
 	register pmap_t pmap;
 	vm_offset_t va;
 	register vm_offset_t pa;
 	vm_prot_t prot;
 	boolean_t wired;
+	vm_prot_t access_type;
 {
 	register u_int *pte;
 	register int npte;
@@ -2416,7 +2417,8 @@ pmap_enter_ptpage(pmap, va)
 		kpt_used_list = kpt;
 		ptpa = kpt->kpt_pa;
 		bzero((char *)kpt->kpt_va, NBPG);
-		pmap_enter(pmap, va, ptpa, VM_PROT_DEFAULT, TRUE);
+		pmap_enter(pmap, va, ptpa, VM_PROT_DEFAULT, TRUE,
+			   VM_PROT_DEFAULT);
 #if defined(M68060)
 		if (machineid & AMIGA_68060) {
 			pmap_changebit(ptpa, PG_CCB, 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.5 1996/10/30 22:38:20 niklas Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.6 1999/09/03 18:00:11 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.17 1996/10/13 02:59:42 christos Exp $	*/
 
 /*
@@ -1722,12 +1722,13 @@ db_printf("[%d]pmap_protect(%x,%x,%x,%x)\n", cpu_number(), map, s, e, prot);
  *	insert this page into the given map NOW.
  */
 void
-pmap_enter(pmap, v, pa, prot, wired)
+pmap_enter(pmap, v, pa, prot, wired, access_type)
 	register pmap_t		pmap;
 	vm_offset_t		v;
 	register vm_offset_t	pa;
 	vm_prot_t		prot;
 	boolean_t		wired;
+	vm_prot_t		access_type;
 {
 	register pt_entry_t	*pte;
 	register pv_entry_t	pv_h;

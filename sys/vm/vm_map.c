@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_map.c,v 1.17 1999/01/10 21:19:50 art Exp $	*/
+/*	$OpenBSD: vm_map.c,v 1.18 1999/09/03 18:02:28 art Exp $	*/
 /*	$NetBSD: vm_map.c,v 1.23 1996/02/10 00:08:08 christos Exp $	*/
 
 /* 
@@ -357,7 +357,7 @@ vm_map_entry_create(map)
 				PAGE_WAKEUP(m);
 				pmap_enter(pmap_kernel(), mapvm,
 				    VM_PAGE_TO_PHYS(m), 
-				    VM_PROT_READ|VM_PROT_WRITE, FALSE);
+				    VM_PROT_READ|VM_PROT_WRITE, FALSE, 0);
 
 				entry = (vm_map_entry_t) mapvm;
 				mapvm += PAGE_SIZE;

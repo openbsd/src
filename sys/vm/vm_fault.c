@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_fault.c,v 1.16 1998/03/30 18:50:59 niklas Exp $	*/
+/*	$OpenBSD: vm_fault.c,v 1.17 1999/09/03 18:02:27 art Exp $	*/
 /*	$NetBSD: vm_fault.c,v 1.21 1998/01/31 04:02:39 ross Exp $	*/
 
 /* 
@@ -816,7 +816,7 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 	 * that the page-out daemon won't find us (yet).
 	 */
 
-	pmap_enter(map->pmap, vaddr, VM_PAGE_TO_PHYS(m), prot, wired);
+	pmap_enter(map->pmap, vaddr, VM_PAGE_TO_PHYS(m), prot, wired, 0);
 
 	/*
 	 * If the page is not wired down, then put it where the
@@ -1016,7 +1016,7 @@ vm_fault_copy_entry(dst_map, src_map, dst_entry, src_entry)
 		vm_object_unlock(dst_object);
 
 		pmap_enter(dst_map->pmap, vaddr, VM_PAGE_TO_PHYS(dst_m), prot,
-		    FALSE);
+		    FALSE, 0);
 
 		/*
 		 * Mark it no longer busy, and put it on the active list.

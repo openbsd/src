@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.6 1998/08/31 17:42:35 millert Exp $ */
+/*	$OpenBSD: mem.c,v 1.7 1999/09/03 18:01:22 art Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -162,7 +162,7 @@ mmrw(dev, uio, flags)
 #endif
 			pmap_enter(pmap_kernel(), (vm_offset_t)vmmap,
 			    trunc_page(v), uio->uio_rw == UIO_READ ?
-			    VM_PROT_READ : VM_PROT_WRITE, TRUE);
+			    VM_PROT_READ : VM_PROT_WRITE, TRUE, 0);
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.10 1999/07/18 18:00:07 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.11 1999/09/03 18:01:31 art Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -2729,7 +2729,8 @@ pmap_expand(pmap_t map, vm_offset_t v)
  */
 void
 pmap_enter(pmap_t pmap, vm_offset_t va, vm_offset_t pa,
-					vm_prot_t prot, boolean_t wired)
+					vm_prot_t prot, boolean_t wired,
+	                                vm_prot_t access_type)
 {
     int				ap;
     int				spl, spl_sav;

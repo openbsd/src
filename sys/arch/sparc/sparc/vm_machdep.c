@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.10 1999/08/17 10:32:18 niklas Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.11 1999/09/03 18:02:00 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/03/10 23:55:40 pk Exp $ */
 
 /*
@@ -88,7 +88,8 @@ pagemove(from, to, size)
 		pmap_remove(pmap_kernel(),
 		    (vaddr_t)from, (vaddr_t)from + PAGE_SIZE);
 		pmap_enter(pmap_kernel(),
-		    (vaddr_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1);
+		    (vaddr_t)to, pa, VM_PROT_READ | VM_PROT_WRITE, 1,
+		     VM_PROT_READ | VM_PROT_WRITE);
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
@@ -215,9 +216,9 @@ dvma_mapin(map, va, len, canwait)
 				pa |= PG_IOC;
 #endif
 #endif
-			pmap_enter(pmap_kernel(), tva,
-				   pa | PMAP_NC,
-				   VM_PROT_READ|VM_PROT_WRITE, 1);
+			pmap_enter(pmap_kernel(), tva, pa | PMAP_NC,
+				   VM_PROT_READ | VM_PROT_WRITE, 1,
+				   0);
 		}
 
 		tva += PAGE_SIZE;
@@ -306,9 +307,8 @@ vmapbuf(bp, sz)
 		 * pmap_enter distributes this mapping to all
 		 * contexts... maybe we should avoid this extra work
 		 */
-		pmap_enter(pmap_kernel(), kva,
-			   pa | PMAP_NC,
-			   VM_PROT_READ|VM_PROT_WRITE, 1);
+		pmap_enter(pmap_kernel(), kva, pa | PMAP_NC,
+			   VM_PROT_READ | VM_PROT_WRITE, 1, 0);
 
 		addr += PAGE_SIZE;
 		kva += PAGE_SIZE;

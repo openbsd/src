@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.37 1999/05/22 21:22:22 weingart Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.38 1999/09/03 18:00:41 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.94 1997/06/12 15:46:29 mrg Exp $	*/
 
 /*
@@ -249,7 +249,8 @@ cpu_startup()
 	 */
 	for (i = 0; i < btoc(sizeof (struct msgbuf)); i++)
 		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufp,
-		    avail_end + i * NBPG, VM_PROT_ALL, TRUE);
+		    avail_end + i * NBPG, VM_PROT_READ|VM_PROT_WRITE, TRUE,
+		    VM_PROT_READ|VM_PROT_WRITE);
 	msgbufmapped = 1;
 
 	/*
@@ -972,7 +973,7 @@ dumpsys()
 			printf("%d ", pg / NPGMB);
 #undef NPGMB
 		pmap_enter(pmap_kernel(), (vm_offset_t)vmmap, maddr,
-		    VM_PROT_READ, TRUE);
+		    VM_PROT_READ, TRUE, 0);
 
 		error = (*dump)(dumpdev, blkno, vmmap, NBPG);
 		switch (error) {
@@ -1270,7 +1271,7 @@ parityerrorfind()
 	ecacheoff();
 	for (pg = btoc(lowram); pg < btoc(lowram)+physmem; pg++) {
 		pmap_enter(pmap_kernel(), (vm_offset_t)vmmap, ctob(pg),
-		    VM_PROT_READ, TRUE);
+		    VM_PROT_READ, TRUE, VM_PROT_READ);
 		ip = (int *)vmmap;
 		for (o = 0; o < NBPG; o += sizeof(int))
 			i = *ip++;

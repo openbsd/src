@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.3 1999/04/24 06:39:41 downsj Exp $	*/
+/*	$OpenBSD: bus_space.c,v 1.4 1999/09/03 18:01:11 art Exp $	*/
 /*	$NetBSD: bus_space.c,v 1.2 1998/04/24 05:27:24 scottr Exp $	*/
 
 /*-
@@ -186,7 +186,7 @@ bus_mem_add_mapping(bpa, size, flags, bshp)
 
 	for (; pa < endpa; pa += NBPG, va += NBPG) {
 		pmap_enter(pmap_kernel(), va, pa,
-		    VM_PROT_READ | VM_PROT_WRITE, TRUE);
+		    VM_PROT_READ | VM_PROT_WRITE, TRUE, 0);
 		if (!(flags & BUS_SPACE_MAP_CACHEABLE))
 			pmap_changebit(pa, PG_CI, TRUE);
 	}

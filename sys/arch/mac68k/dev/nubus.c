@@ -1,4 +1,4 @@
-/*	$OpenBSD: nubus.c,v 1.13 1999/04/24 06:39:40 downsj Exp $	*/
+/*	$OpenBSD: nubus.c,v 1.14 1999/09/03 18:01:09 art Exp $	*/
 /*	$NetBSD: nubus.c,v 1.35 1997/04/22 20:20:32 scottr Exp $	*/
 
 /*
@@ -828,7 +828,8 @@ nubus_mapin(paddr, sz)
 	pmap_map((int)va, pa | pmt, pa + sz, VM_PROT_ALL);
 #else
 	do {
-		pmap_enter(pmap_kernel(), va, pa | pmt, VM_PROT_ALL, FALSE);
+		pmap_enter(pmap_kernel(), va, pa | pmt,
+			   VM_PROT_READ|VM_PROT_WRITE, FALSE, 0);
 		va += NBPG;
 		pa += NBPG;
 	} while ((sz -= NBPG) > 0);

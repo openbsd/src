@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.62 1999/06/11 06:19:08 downsj Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.63 1999/09/03 18:01:12 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.134 1997/02/14 06:15:30 scottr Exp $	*/
 
 /*
@@ -312,7 +312,9 @@ cpu_startup(void)
 	 */
 	for (i = 0; i < btoc(sizeof(struct msgbuf)); i++)
 		pmap_enter(pmap_kernel(), (vm_offset_t) msgbufp,
-		    high[numranges - 1] + i * NBPG, VM_PROT_ALL, TRUE);
+		    high[numranges - 1] + i * NBPG,
+		    VM_PROT_READ|VM_PROT_WRITE, TRUE,
+		    VM_PROT_READ|VM_PROT_WRITE);
 	msgbufmapped = 1;
 
 	/*
@@ -841,7 +843,7 @@ dumpsys()
 			maddr = h->ram_segs[seg].start;
 		}
 		pmap_enter(pmap_kernel(), (vm_offset_t)vmmap, maddr,
-		    VM_PROT_READ, TRUE);
+		    VM_PROT_READ, TRUE, VM_PROT_READ);
 
 		error = (*dump)(dumpdev, blkno, vmmap, NBPG);
  bad:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_glue.c,v 1.34 1999/08/17 18:48:59 niklas Exp $    */
+/*	$OpenBSD: vm_glue.c,v 1.35 1999/09/03 18:02:27 art Exp $    */
 /*	$NetBSD: vm_glue.c,v 1.55.4.1 1996/06/13 17:25:45 cgd Exp $	*/
 
 /* 
@@ -169,7 +169,7 @@ chgkprot(addr, len, rw)
 		pa = pmap_extract(pmap_kernel(), sva|1);
 		if (pa == 0)
 			panic("chgkprot: invalid page");
-		pmap_enter(pmap_kernel(), sva, pa&~1, prot, TRUE);
+		pmap_enter(pmap_kernel(), sva, pa&~1, prot, TRUE, 0);
 	}
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.6 1999/08/17 10:32:17 niklas Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.7 1999/09/03 18:01:18 art Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -317,7 +317,7 @@ vmapbuf(bp, len)
 		if (pa == 0)
 			panic("vmapbuf: null page frame");
 		pmap_enter(vm_map_pmap(phys_map), kva, trunc_page(pa),
-			VM_PROT_READ|VM_PROT_WRITE, TRUE);
+			VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
 		addr += PAGE_SIZE;
 		kva += PAGE_SIZE;
 	}

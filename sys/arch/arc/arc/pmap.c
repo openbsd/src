@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.14 1998/07/13 05:03:30 imp Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.15 1999/09/03 18:00:34 art Exp $	*/
 /* 
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	8.4 (Berkeley) 1/26/94
- *      $Id: pmap.c,v 1.14 1998/07/13 05:03:30 imp Exp $
+ *      $Id: pmap.c,v 1.15 1999/09/03 18:00:34 art Exp $
  */
 
 /*
@@ -993,12 +993,13 @@ pmap_page_cache(pa,mode)
  *	insert this page into the given map NOW.
  */
 void
-pmap_enter(pmap, va, pa, prot, wired)
+pmap_enter(pmap, va, pa, prot, wired, access_type)
 	register pmap_t pmap;
 	vm_offset_t va;
 	register vm_offset_t pa;
 	vm_prot_t prot;
 	boolean_t wired;
+	vm_prot_t access_type;
 {
 	register pt_entry_t *pte;
 	register u_int npte;
