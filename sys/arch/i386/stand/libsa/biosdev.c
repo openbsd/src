@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.19 1997/07/21 15:33:32 mickey Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.20 1997/08/04 21:53:34 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -35,6 +35,7 @@
 #include <sys/param.h>
 #include <sys/reboot.h>
 #include <sys/disklabel.h>
+#include <machine/tss.h>
 #include <machine/biosvar.h>
 #include <lib/libsa/saerrno.h>
 #include "libsa.h"
@@ -151,7 +152,7 @@ biosopen(struct open_file *f, ...)
 	}
 
 	bd->edd_flags = EDDcheck((dev_t)bd->biosdev);
-	bd->dinfo = biosdinfo((dev_t)bd->biosdev);
+	bootdev_geometry = bd->dinfo = biosdinfo((dev_t)bd->biosdev);
 
 #ifdef BIOS_DEBUG
 	if (debug) {

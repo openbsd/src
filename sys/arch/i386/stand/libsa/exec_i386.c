@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.9 1997/07/18 00:50:53 mickey Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.10 1997/08/04 21:53:35 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -37,9 +37,10 @@
 #include <sys/param.h>
 #include <sys/exec.h>
 #include <sys/reboot.h>
+#include <machine/biosvar.h>
 #include "libsa.h"
 
-dev_t	bootdev;
+int	bootdev, bootdev_geometry;
 
 #define round_to_size(x) (((int)(x) + sizeof(int) - 1) & ~(sizeof(int) - 1))
 
@@ -65,9 +66,9 @@ machdep_start(startaddr, howto, loadaddr, ssym, esym)
 
 	printf("entry point at 0x%x\n", (int)startaddr);
 	/* stack and the gung is ok at this point, so, no need for asm setup */
-	(*(int __attribute__((noreturn))(*)(int,int,int,int,int,int,int))
+	(*(int __attribute__((noreturn))(*)(int,int,int,int,int,int,int,int))
 		startaddr)(howto, bootdev, 0, round_to_size(esym),
-			   extmem, cnvmem, (int)&apminfo);
+			   extmem, cnvmem, (int)&apminfo, (int)&kentry);
 	/* not reached */
 }
 
