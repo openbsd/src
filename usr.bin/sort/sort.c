@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.7 1998/07/20 19:14:37 mickey Exp $	*/
+/*	$OpenBSD: sort.c,v 1.8 1998/07/20 19:46:15 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: sort.c,v 1.7 1998/07/20 19:14:37 mickey Exp $";
+static char rcsid[] = "$OpenBSD: sort.c,v 1.8 1998/07/20 19:46:15 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -176,7 +176,8 @@ main(argc, argv)
 			/* accept -y for backwards compat. */
 			break;
 		case '?':
-		default: usage("");
+		default:
+			usage(NULL);
 		}
 	}
 
@@ -307,10 +308,11 @@ static void
 usage(msg)
 	char *msg;
 {
+	extern char *__progname;
 
 	if (msg)
 		(void)fprintf(stderr, "sort: %s\n", msg);
-	(void)fprintf(stderr, "usage: [-T dir] [-o output] [-cmubdfinr] "
-		              "[-t char] [-R char] [-k keydef] ... [files]\n");
+	(void)fprintf(stderr, "usage: %s [-T dir] [-o output] [-cmubdfinr] "
+	"[-t char] [-R char] [-k keydef] ... [files]\n", __progname);
 	exit(2);
 }
