@@ -1,5 +1,5 @@
-	$OpenBSD: usbdevs,v 1.1 1999/08/13 05:28:05 fgsch Exp $
-/*	$NetBSD: usbdevs,v 1.35 1999/06/28 04:09:53 augustss Exp $	*/
+	$OpenBSD: usbdevs,v 1.2 1999/08/27 08:57:54 fgsch Exp $
+/* $NetBSD: usbdevs,v 1.36 1999/08/23 16:53:32 augustss Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,6 +65,7 @@ vendor KONICA		0x04c8	Konica Corporation
 vendor SHUTTLE		0x04e6	Shuttle Technology
 vendor BROTHER		0x04f9	Brother Industries Corp.
 vendor JAZZ		0x04fa	Dallas Semiconductor
+vendor KAWATSU		0x050f	Kawatsu Semiconductor, Inc.
 vendor AKS		0x0529	Fast Security AG
 vendor VISION		0x0533	Alcatel Mobile Phones
 vendor ATEN		0x0557	ATEN International Co. ltd.
@@ -157,6 +158,9 @@ product	BROTHER HL1050		0x0002	HL-1050 laser printer
 
 /* Jazz products */
 product JAZZ J6502		0x4201	J-6502 speakers
+
+/* Kawatsu products */
+product KAWATSU MH4000P		0x0003	MiniHub 4000P
 
 /* AKS products */
 product AKS USBHASP		0x0001	USB-HASP 0.06
