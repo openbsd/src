@@ -1,4 +1,4 @@
-/*	$OpenBSD: modload.c,v 1.16 1997/09/11 11:49:51 deraadt Exp $	*/
+/*	$OpenBSD: modload.c,v 1.17 1997/09/17 00:56:42 weingart Exp $	*/
 /*	$NetBSD: modload.c,v 1.13 1995/05/28 05:21:58 jtc Exp $	*/
 
 /*
@@ -74,9 +74,9 @@ int dounlink = 0;
 #define LDTEXTSTART	"-Ttext"
 #define LDSYMPREFIX	""
 #else
-#define LDSYMTABLE	"-R"
-#define LDTEXTSTART	"-Ttext"
-#define LDSYMPREFIX	""
+#define LDSYMTABLE	"-A"
+#define LDTEXTSTART	"-T"
+#define LDSYMPREFIX	"_"
 #define MAGICCHECK
 #endif
 
@@ -513,7 +513,7 @@ main(argc, argv)
 			err(15, "error fetching module stats for post-install");
 		sprintf(id, "%d", sbuf.id);
 		sprintf(type, "0x%x", sbuf.type);
-		sprintf(offset, "%lx", sbuf.offset);
+		sprintf(offset, "%d", sbuf.offset);
 		/*
 		 * XXX
 		 * The modload docs say that drivers can install bdevsw &
