@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ulimit.c,v 1.3 1997/06/19 13:58:39 kstailey Exp $	*/
+/*	$OpenBSD: c_ulimit.c,v 1.4 1998/01/17 19:00:44 millert Exp $	*/
 
 /*
 	ulimit -- handle "ulimit" builtin
@@ -167,7 +167,10 @@ c_ulimit(wp)
 			val = RLIM_INFINITY;
 		else
 #endif /* RLIM_INFINITY */
-		{
+		if (!isdigit(*p)) {
+			bi_errorf("\"%s\" is not a valid limit", p);
+			return 1;
+		} else {
 			long rval;
 
 			if (!evaluate(p, &rval, TRUE))
