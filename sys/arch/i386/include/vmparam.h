@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.29 2004/01/01 20:18:32 millert Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.30 2004/11/28 01:36:38 mickey Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.15 1994/10/27 04:16:34 cgd Exp $	*/
 
 /*-
@@ -86,17 +86,6 @@
  * Size of User Raw I/O map
  */
 #define	USRIOSIZE 	300
-
-/*
- * The time for a process to be blocked before being very swappable.
- * This is a number of seconds which the system takes as being a non-trivial
- * amount of real time.  You probably shouldn't change this;
- * it is used in subtle ways (fractions and multiples of it are, that is, like
- * half of a ``long time'', almost a long time, etc.)
- * It is related to human patience and other factors which don't really
- * change over time.
- */
-#define	MAXSLP 		20
 
 /* XXX Compatibility */
 #define APTDPTDI	PDSLOT_APTE

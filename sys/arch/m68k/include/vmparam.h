@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.2 2003/06/02 23:27:48 millert Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.3 2004/11/28 01:36:38 mickey Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -96,17 +96,6 @@
 #ifndef SHMMAXPGS
 #define SHMMAXPGS	1024		/* 4mb */
 #endif
-
-/*
- * The time for a process to be blocked before being very swappable.
- * This is a number of seconds which the system takes as being a non-trivial
- * amount of real time.  You probably shouldn't change this;
- * it is used in subtle ways (fractions and multiples of it are, that is, like
- * half of a ``long time'', almost a long time, etc.)
- * It is related to human patience and other factors which don't really
- * change over time.
- */
-#define	MAXSLP 		20
 
 /* user/kernel map constants */
 #define VM_MIN_ADDRESS		((vaddr_t)0)

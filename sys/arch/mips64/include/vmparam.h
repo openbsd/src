@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.7 2004/11/11 16:12:59 pefo Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.8 2004/11/28 01:36:39 mickey Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.5 1994/10/26 21:10:10 cgd Exp $	*/
 
 /*
@@ -89,17 +89,6 @@
 #ifndef SHMMAXPGS
 #define SHMMAXPGS	8192		/* 8mb */
 #endif
-
-/*
- * The time for a process to be blocked before being very swappable.
- * This is a number of seconds which the system takes as being a non-trivial
- * amount of real time.  You probably shouldn't change this;
- * it is used in subtle ways (fractions and multiples of it are, that is, like
- * half of a ``long time'', almost a long time, etc.)
- * It is related to human patience and other factors which don't really
- * change over time.
- */
-#define	MAXSLP		20
 
 #define	VM_PHYSSEG_MAX	8	/* Max number of physical memory segments */
 #define VM_PHYSSEG_STRAT VM_PSTRAT_BSEARCH
