@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmp_cfg.c,v 1.2 2001/07/04 07:29:10 niklas Exp $	*/
+/*	$OpenBSD: isakmp_cfg.c,v 1.3 2001/07/04 07:41:19 niklas Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist.  All rights reserved.
@@ -356,59 +356,74 @@ responder_send_ATTR (struct message *msg)
       switch (attr->type)
 	{
 	case ISAKMP_CFG_ATTR_INTERNAL_IP4_ADDRESS:
+	case ISAKMP_CFG_ATTR_INTERNAL_IP6_ADDRESS:
 	  /* XXX The section should be tagged off the peer somehow.  */
 	  sa = conf_get_address ("ISAKMP-cfg", "Address");
 	  if (!sa)
 	    /* XXX What to do?  */
 	    continue;
-	  if (sa->sa_family != AF_INET)
+	  if ((attr->type == ISAKMP_CFG_ATTR_INTERNAL_IP4_ADDRESS
+	       && sa->sa_family != AF_INET)
+	      || (attr->type == ISAKMP_CFG_ATTR_INTERNAL_IP6_ADDRESS
+		  && sa->sa_family != AF_INET6))
 	    /* XXX What to do?  */
 	    free (sa);
 	    continue;
 
-	  memcpy (attrp + off + ISAKMP_ATTR_VALUE_OFF,
-		  &((struct sockaddr_in *)sa)->sin_addr, attr->length);
+	  memcpy (attrp + off + ISAKMP_ATTR_VALUE_OFF, sockaddr_data (sa),
+		  attr->length);
 	  free (sa);
 	  break;
 
 	case ISAKMP_CFG_ATTR_INTERNAL_IP4_NETMASK:
+	case ISAKMP_CFG_ATTR_INTERNAL_IP6_NETMASK:
 	  break;
 
 	case ISAKMP_CFG_ATTR_INTERNAL_IP4_SUBNET:
+	case ISAKMP_CFG_ATTR_INTERNAL_IP6_SUBNET:
 	  break;
 
 	case ISAKMP_CFG_ATTR_INTERNAL_IP4_DHCP:
+	case ISAKMP_CFG_ATTR_INTERNAL_IP6_DHCP:
 	  break;
 
 	case ISAKMP_CFG_ATTR_INTERNAL_IP4_DNS:
+	case ISAKMP_CFG_ATTR_INTERNAL_IP6_DNS:
 	  /* XXX The section should be tagged off the peer somehow.  */
 	  sa = conf_get_address ("ISAKMP-cfg", "Nameserver");
 	  if (!sa)
 	    /* XXX What to do?  */
 	    continue;
-	  if (sa->sa_family != AF_INET)
+	  if ((attr->type == ISAKMP_CFG_ATTR_INTERNAL_IP4_ADDRESS
+	       && sa->sa_family != AF_INET)
+	      || (attr->type == ISAKMP_CFG_ATTR_INTERNAL_IP6_ADDRESS
+		  && sa->sa_family != AF_INET6))
 	    /* XXX What to do?  */
 	    free (sa);
-	    continue;
+	  continue;
 
-	  memcpy (attrp + off + ISAKMP_ATTR_VALUE_OFF,
-		  &((struct sockaddr_in *)sa)->sin_addr, attr->length);
+	  memcpy (attrp + off + ISAKMP_ATTR_VALUE_OFF, sockaddr_data (sa),
+		  attr->length);
 	  free (sa);
 	  break;
 
 	case ISAKMP_CFG_ATTR_INTERNAL_IP4_NBNS:
+	case ISAKMP_CFG_ATTR_INTERNAL_IP6_NBNS:
 	  /* XXX The section should be tagged off the peer somehow.  */
 	  sa = conf_get_address ("ISAKMP-cfg", "WINS-server");
 	  if (!sa)
 	    /* XXX What to do?  */
 	    continue;
-	  if (sa->sa_family != AF_INET)
+	  if ((attr->type == ISAKMP_CFG_ATTR_INTERNAL_IP4_ADDRESS
+	       && sa->sa_family != AF_INET)
+	      || (attr->type == ISAKMP_CFG_ATTR_INTERNAL_IP6_ADDRESS
+		  && sa->sa_family != AF_INET6))
 	    /* XXX What to do?  */
 	    free (sa);
-	    continue;
+	  continue;
 
-	  memcpy (attrp + off + ISAKMP_ATTR_VALUE_OFF,
-		  &((struct sockaddr_in *)sa)->sin_addr, attr->length);
+	  memcpy (attrp + off + ISAKMP_ATTR_VALUE_OFF, sockaddr_data (sa),
+		  attr->length);
 	  free (sa);
 	  break;
 
@@ -423,24 +438,6 @@ responder_send_ATTR (struct message *msg)
 	  break;
 
 	case ISAKMP_CFG_ATTR_SUPPORTED_ATTRIBUTES:
-	  break;
-
-	case ISAKMP_CFG_ATTR_INTERNAL_IP6_ADDRESS:
-	  break;
-
-	case ISAKMP_CFG_ATTR_INTERNAL_IP6_NETMASK:
-	  break;
-
-	case ISAKMP_CFG_ATTR_INTERNAL_IP6_SUBNET:
-	  break;
-
-	case ISAKMP_CFG_ATTR_INTERNAL_IP6_DHCP:
-	  break;
-
-	case ISAKMP_CFG_ATTR_INTERNAL_IP6_DNS:
-	  break;
-
-	case ISAKMP_CFG_ATTR_INTERNAL_IP6_NBNS:
 	  break;
 
 	default:
