@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.57 2004/01/08 17:06:50 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.58 2004/01/09 01:23:12 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -980,25 +980,27 @@ dispatch_rtmsg(void)
 		if (rtm->rtm_errno)			/* failed attempts... */
 			continue;
 
-		switch (sa->sa_family) {
-		case AF_INET:
-			prefix = ((struct sockaddr_in *)sa)->sin_addr.s_addr;
-			sa_in = (struct sockaddr_in *)rti_info[RTAX_NETMASK];
-			if (sa_in != NULL) {
-				if (sa_in->sin_family != AF_INET)
-					continue;
-				prefixlen =
-				    mask2prefixlen(sa_in->sin_addr.s_addr);
-			} else if (rtm->rtm_flags & RTF_HOST)
-				prefixlen = 32;
-			else
-				prefixlen = prefixlen_classful(prefix);
-			break;
-		default:
-			if (rtm->rtm_type != RTM_IFINFO)
+		if (rtm->rtm_type != RTM_IFINFO)
+			switch (sa->sa_family) {
+			case AF_INET:
+				prefix =
+				    ((struct sockaddr_in *)sa)->sin_addr.s_addr;
+				sa_in = (struct sockaddr_in *)
+				    rti_info[RTAX_NETMASK];
+				if (sa_in != NULL) {
+					if (sa_in->sin_family != AF_INET)
+						continue;
+					prefixlen = mask2prefixlen(
+					    sa_in->sin_addr.s_addr);
+				} else if (rtm->rtm_flags & RTF_HOST)
+					prefixlen = 32;
+				else
+					prefixlen = prefixlen_classful(prefix);
+				break;
+			default:
 				continue;
-			break;
-		}
+				/* not reached */
+			}
 
 		if ((sa = rti_info[RTAX_GATEWAY]) != NULL)
 			switch (sa->sa_family) {
