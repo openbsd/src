@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xl.4,v 1.1 1998/09/09 22:10:58 jason Exp $
+.\"	$OpenBSD: xl.4,v 1.2 1998/09/09 22:20:39 jason Exp $
 .\"
 .\" Copyright (c) 1997, 1998
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -33,7 +33,7 @@
 .\"	$FreeBSD: xl.4,v 1.1 1998/08/16 17:19:58 wpaul Exp $
 .\"
 .Dd August 16, 1998
-.Dt XL 4 i386
+.Dt XL 4
 .Os FreeBSD
 .Sh NAME
 .Nm xl
@@ -46,10 +46,11 @@ The
 .Nm
 driver provides support for PCI ethernet adapters and embedded
 controllers based on the 3Com "boomerang" and "cyclone" bus-master
-Etherlink XL chips. This includes the 3c900-TP, 3c900-COMBO, 3c905-TX,
+Etherlink XL chips. This includes the 3c900-TP, 3c900-COMBO, 3c900B-TP,
+3c900B-COMBO, 3c905-TX,
 3c905-T4, 3c905B-TP, 3c905B-T4 and 3c905B-TX, and embedded 3c905-TX
 and 3c905B-TX ethernet hardware in certain Dell Optiplex and Dell
-Precision dexktop machines, and certain Dell Latitude laptop docking
+Precision desktop machines, and certain Dell Latitude laptop docking
 stations.
 .Pp
 The Etherlink XL chips support built-in 10baseT, 10base2 and 10base5
