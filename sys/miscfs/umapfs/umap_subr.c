@@ -1,4 +1,4 @@
-/*	$OpenBSD: umap_subr.c,v 1.5 1996/03/19 21:10:42 mickey Exp $	*/
+/*	$OpenBSD: umap_subr.c,v 1.6 1996/03/25 18:02:56 mickey Exp $	*/
 /*	$NetBSD: umap_subr.c,v 1.7 1996/02/09 22:41:02 christos Exp $	*/
 
 /*
@@ -67,7 +67,7 @@
 LIST_HEAD(umap_node_hashhead, umap_node) *umap_node_hashtbl;
 u_long umap_node_hash;
 
-static u_long umap_findid __P((u_long, u_long [][2], int));
+static id_t umap_findid __P((id_t, id_map_t, int));
 static struct vnode *umap_node_find __P((struct mount *, struct vnode *));
 static int umap_node_alloc __P((struct mount *, struct vnode *,
 				struct vnode **));
@@ -89,15 +89,15 @@ umapfs_init()
  * umap_findid is called by various routines in umap_vnodeops.c to
  * find a user or group id in a map.
  */
-static u_long
+static id_t
 umap_findid(id, map, nentries)
-	u_long id;
-	u_long map[][2];
-	int nentries;
+	id_t	id;
+	id_map_t map;
+	int	nentries;
 {
 	int i;
 
-	/* Find uid entry in map */
+	/* Find {g,u}id entry in map */
 	i = 0;
 	while ((i<nentries) && ((map[i][0]) != id))
 		i++;
@@ -113,11 +113,11 @@ umap_findid(id, map, nentries)
  * umap_reverse_findid is called by umap_getattr() in umap_vnodeops.c to
  * find a user or group id in a map, in reverse.
  */
-u_long
+id_t
 umap_reverse_findid(id, map, nentries)
-	u_long id;
-	u_long map[][2];
-	int nentries;
+	id_t	id;
+	id_map_t map;
+	int	nentries;
 {
 	int i;
 
@@ -396,18 +396,18 @@ umap_mapids(v_mount, credp)
 	struct mount *v_mount;
 	struct ucred *credp;
 {
-	int i, unentries, gnentries;
-	uid_t uid;
-	gid_t gid;
-	u_long (*usermap)[2], (*groupmap)[2];
+	int	i, unentries, gnentries;
+	uid_t	uid;
+	gid_t	gid;
+	id_map_t usermap, groupmap;
 
 	if (credp == NOCRED)
 		return;
 
-	unentries =  MOUNTTOUMAPMOUNT(v_mount)->info_nentries;
-	usermap =  MOUNTTOUMAPMOUNT(v_mount)->info_mapdata;
+	unentries =  MOUNTTOUMAPMOUNT(v_mount)->info_unentries;
+	usermap   =  MOUNTTOUMAPMOUNT(v_mount)->info_umapdata;
 	gnentries =  MOUNTTOUMAPMOUNT(v_mount)->info_gnentries;
-	groupmap =  MOUNTTOUMAPMOUNT(v_mount)->info_gmapdata;
+	groupmap  =  MOUNTTOUMAPMOUNT(v_mount)->info_gmapdata;
 
 	/* Find uid entry in map */
 

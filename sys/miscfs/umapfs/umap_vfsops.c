@@ -1,4 +1,4 @@
-/*	$OpenBSD: umap_vfsops.c,v 1.4 1996/03/19 21:10:43 mickey Exp $	*/
+/*	$OpenBSD: umap_vfsops.c,v 1.5 1996/03/25 18:02:57 mickey Exp $	*/
 /*	$NetBSD: umap_vfsops.c,v 1.9 1996/02/09 22:41:05 christos Exp $	*/
 
 /*
@@ -85,7 +85,7 @@ umapfs_mount(mp, path, data, ndp, p)
 	struct vnode *umapm_rootvp;
 	struct umap_mount *amp;
 	size_t size;
-	int error,i;
+	int	error,i;
 
 #ifdef UMAPFS_DIAGNOSTIC
 	printf("umapfs_mount(mp = %x)\n", mp);
@@ -144,22 +144,22 @@ umapfs_mount(mp, path, data, ndp, p)
 	/* 
 	 * Now copy in the number of entries and maps for umap mapping.
 	 */
-	amp->info_nentries = args.nentries;
+	amp->info_unentries = args.unentries;
 	amp->info_gnentries = args.gnentries;
-	error = copyin(args.mapdata, (caddr_t)amp->info_mapdata, 
-	    2*sizeof(u_long)*args.nentries);
+	error = copyin(args.umapdata, (caddr_t)amp->info_umapdata, 
+	    2*sizeof(**amp->info_umapdata)*args.unentries);
 	if (error)
 		return (error);
 
 #ifdef UMAPFS_DIAGNOSTIC
-	printf("umap_mount:nentries %d\n",args.nentries);
+	printf("umap_mount:unentries %d\n",args.unentries);
 	for (i = 0; i < args.nentries; i++)
-		printf("   %d maps to %d\n", amp->info_mapdata[i][0],
-	 	    amp->info_mapdata[i][1]);
+		printf("   %d maps to %d\n", amp->info_umapdata[i][0],
+	 	    amp->info_umapdata[i][1]);
 #endif
 
 	error = copyin(args.gmapdata, (caddr_t)amp->info_gmapdata, 
-	    2*sizeof(u_long)*args.nentries);
+	    2*sizeof(**amp->info_gmapdata)*args.gnentries);
 	if (error)
 		return (error);
 

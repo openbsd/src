@@ -1,4 +1,4 @@
-/*	$OpenBSD: umap_vnops.c,v 1.3 1996/02/29 13:08:07 niklas Exp $	*/
+/*	$OpenBSD: umap_vnops.c,v 1.4 1996/03/25 18:02:58 mickey Exp $	*/
 /*	$NetBSD: umap_vnops.c,v 1.5 1996/02/09 22:41:06 christos Exp $	*/
 
 /*
@@ -304,13 +304,12 @@ umap_getattr(v)
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
-	uid_t uid;
-	gid_t gid;
-	int error, tmpid, nentries, gnentries;
-	u_long (*mapdata)[2];
-	u_long (*gmapdata)[2];
-	struct vnode **vp1p;
-	struct vnodeop_desc *descp = ap->a_desc;
+	uid_t	uid;
+	gid_t	gid;
+	int	error, tmpid, unentries, gnentries;
+	id_map_t	umapdata, gmapdata;
+	struct vnode	**vp1p;
+	struct vnodeop_desc	*descp = ap->a_desc;
 
 	if ((error = umap_bypass(ap)) != 0)
 		return (error);
@@ -337,15 +336,15 @@ umap_getattr(v)
 		    gid);
 
 	vp1p = VOPARG_OFFSETTO(struct vnode**, descp->vdesc_vp_offsets[0], ap);
-	nentries =  MOUNTTOUMAPMOUNT((*vp1p)->v_mount)->info_nentries;
-	mapdata =  (MOUNTTOUMAPMOUNT((*vp1p)->v_mount)->info_mapdata);
+	unentries =  MOUNTTOUMAPMOUNT((*vp1p)->v_mount)->info_unentries;
+	umapdata  = (MOUNTTOUMAPMOUNT((*vp1p)->v_mount)->info_umapdata);
 	gnentries =  MOUNTTOUMAPMOUNT((*vp1p)->v_mount)->info_gnentries;
-	gmapdata =  (MOUNTTOUMAPMOUNT((*vp1p)->v_mount)->info_gmapdata);
+	gmapdata  = (MOUNTTOUMAPMOUNT((*vp1p)->v_mount)->info_gmapdata);
 
 	/* Reverse map the uid for the vnode.  Since it's a reverse
 		map, we can't use umap_mapids() to do it. */
 
-	tmpid = umap_reverse_findid(uid, mapdata, nentries);
+	tmpid = umap_reverse_findid(uid, umapdata, unentries);
 
 	if (tmpid != -1) {
 		ap->a_vap->va_uid = (uid_t) tmpid;
@@ -478,7 +477,7 @@ umap_rename(v)
 
 	/*
 	 * Rename is irregular, having two componentname structures.
-	 * We need to map the cre in the second structure,
+	 * We need to map the cred in the second structure,
 	 * and then bypass takes care of the rest.
 	 */
 
