@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.h,v 1.5 2003/06/02 23:32:09 millert Exp $	*/
+/*	$OpenBSD: ps.h,v 1.6 2004/01/08 18:18:35 millert Exp $	*/
 /*	$NetBSD: ps.h,v 1.11 1995/09/29 21:57:03 cgd Exp $	*/
 
 /*-
@@ -34,8 +34,7 @@
 
 #define	UNLIMITED	0	/* unlimited terminal width */
 enum type {
-	CHAR, UCHAR, SHORT, USHORT, INT, UINT, LONG, ULONG, KPTR,
-	INT32, UINT32
+	INT8, UINT8, INT16, UINT16, INT32, UINT32, INT64, UINT64
 };
 
 struct usave {
@@ -46,20 +45,13 @@ struct usave {
 	char	u_valid;
 };
 
-#define KI_PROC(ki) (&(ki)->ki_p->kp_proc)
-#define KI_EPROC(ki) (&(ki)->ki_p->kp_eproc)
-
-typedef struct kinfo {
-	struct kinfo_proc *ki_p;	/* proc structure */
-	struct usave ki_u;	/* interesting parts of user */
-} KINFO;
-
 /* Variables. */
 typedef struct varent {
 	struct varent *next;
 	struct var *var;
 } VARENT;
 
+struct kinfo_proc2;
 typedef struct var {
 	char	*name;		/* name(s) of variable */
 	char	*header;	/* default header */
@@ -70,7 +62,7 @@ typedef struct var {
 #define	INF127	0x08		/* 127 = infinity: if > 127, print 127. */
 	u_int	flag;
 				/* output routine */
-	void	(*oproc)(struct kinfo *, struct varent *);
+	void	(*oproc)(const struct kinfo_proc2 *, struct varent *);
 	short	width;		/* printing width */
 	char	parsed;		/* have we been parsed yet? (avoid dupes) */
 	/*

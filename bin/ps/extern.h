@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.9 2003/06/02 23:32:09 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.10 2004/01/08 18:18:35 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.10 1995/05/21 13:38:27 mycroft Exp $	*/
 
 /*-
@@ -32,7 +32,6 @@
  *	@(#)extern.h	8.3 (Berkeley) 4/2/94
  */
 
-struct kinfo;
 struct nlist;
 struct var;
 struct varent;
@@ -44,44 +43,41 @@ extern VAR var[];
 extern VARENT *vhead;
 
 __BEGIN_DECLS
-void	 command(KINFO *, VARENT *);
-void	 cputime(KINFO *, VARENT *);
+void	 command(const struct kinfo_proc2 *, VARENT *);
+void	 cputime(const struct kinfo_proc2 *, VARENT *);
 int	 donlist(void);
-void	 evar(KINFO *, VARENT *);
-void	 emulname(KINFO *, VARENT *);
-void	 fmt_puts(char *, int *);
+void	 emulname(const struct kinfo_proc2 *, VARENT *);
+void	 fmt_puts(const char *, int *);
 void	 fmt_putc(int, int *);
-double	 getpcpu(KINFO *);
-double	 getpmem(KINFO *);
-void	 gname(KINFO *, VARENT *);
-void	 logname(KINFO *, VARENT *);
-void	 longtname(KINFO *, VARENT *);
-void	 lstarted(KINFO *, VARENT *);
-void	 maxrss(KINFO *, VARENT *);
+double	 getpcpu(const struct kinfo_proc2 *);
+double	 getpmem(const struct kinfo_proc2 *);
+void	 gname(const struct kinfo_proc2 *, VARENT *);
+void	 logname(const struct kinfo_proc2 *, VARENT *);
+void	 longtname(const struct kinfo_proc2 *, VARENT *);
+void	 lstarted(const struct kinfo_proc2 *, VARENT *);
+void	 maxrss(const struct kinfo_proc2 *, VARENT *);
 void	 nlisterr(struct nlist *);
-void	 p_rssize(KINFO *, VARENT *);
-void	 pagein(KINFO *, VARENT *);
+void	 p_rssize(const struct kinfo_proc2 *, VARENT *);
+void	 pagein(const struct kinfo_proc2 *, VARENT *);
 void	 parsefmt(char *);
-void	 pcpu(KINFO *, VARENT *);
-void	 pmem(KINFO *, VARENT *);
-void	 pri(KINFO *, VARENT *);
+void	 pcpu(const struct kinfo_proc2 *, VARENT *);
+void	 pmem(const struct kinfo_proc2 *, VARENT *);
+void	 pri(const struct kinfo_proc2 *, VARENT *);
 void	 printheader(void);
-void	 pvar(KINFO *, VARENT *);
-void	 rgname(KINFO *, VARENT *);
-void	 rssize(KINFO *, VARENT *);
-void	 runame(KINFO *, VARENT *);
-void	 rvar(KINFO *, VARENT *);
+void	 pvar(const struct kinfo_proc2 *kp, VARENT *);
+void	 rgname(const struct kinfo_proc2 *, VARENT *);
+void	 rssize(const struct kinfo_proc2 *, VARENT *);
+void	 runame(const struct kinfo_proc2 *, VARENT *);
 void	 showkey(void);
-void	 started(KINFO *, VARENT *);
-void	 state(KINFO *, VARENT *);
-void	 tdev(KINFO *, VARENT *);
-void	 tname(KINFO *, VARENT *);
-void	 tsize(KINFO *, VARENT *);
-void	 dsize(KINFO *, VARENT *);
-void	 ssize(KINFO *, VARENT *);
-void	 ucomm(KINFO *, VARENT *);
-void	 uname(KINFO *, VARENT *);
-void	 uvar(KINFO *, VARENT *);
-void	 vsize(KINFO *, VARENT *);
-void	 wchan(KINFO *, VARENT *);
+void	 started(const struct kinfo_proc2 *, VARENT *);
+void	 state(const struct kinfo_proc2 *, VARENT *);
+void	 tdev(const struct kinfo_proc2 *, VARENT *);
+void	 tname(const struct kinfo_proc2 *, VARENT *);
+void	 tsize(const struct kinfo_proc2 *, VARENT *);
+void	 dsize(const struct kinfo_proc2 *, VARENT *);
+void	 ssize(const struct kinfo_proc2 *, VARENT *);
+void	 ucomm(const struct kinfo_proc2 *, VARENT *);
+void	 uname(const struct kinfo_proc2 *, VARENT *);
+void	 vsize(const struct kinfo_proc2 *, VARENT *);
+void	 wchan(const struct kinfo_proc2 *, VARENT *);
 __END_DECLS

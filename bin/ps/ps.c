@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.34 2003/07/29 00:24:15 deraadt Exp $	*/
+/*	$OpenBSD: ps.c,v 1.35 2004/01/08 18:18:35 millert Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: ps.c,v 1.34 2003/07/29 00:24:15 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ps.c,v 1.35 2004/01/08 18:18:35 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,6 @@ static char rcsid[] = "$OpenBSD: ps.c,v 1.34 2003/07/29 00:24:15 deraadt Exp $";
 
 extern char *__progname;
 
-KINFO *kinfo;
 struct varent *vhead, *vtail;
 
 int	eval;			/* exit value */
@@ -87,7 +86,6 @@ enum sort { DEFAULT, SORTMEM, SORTCPU } sortby = DEFAULT;
 
 static char	*kludge_oldps_options(char *);
 static int	 pscomp(const void *, const void *);
-static void	 saveuser(KINFO *);
 static void	 scanvars(void);
 static void	 usage(void);
 
@@ -105,14 +103,14 @@ int kvm_sysctl_only;
 int
 main(int argc, char *argv[])
 {
-	struct kinfo_proc *kp;
+	struct kinfo_proc2 *kp, **kinfo;
 	struct varent *vent;
 	struct winsize ws;
 	struct passwd *pwd;
 	dev_t ttydev;
 	pid_t pid;
 	uid_t uid;
-	int all, ch, flag, i, fmt, lineno, nentries, mib[4], mibcnt, nproc;
+	int all, ch, flag, i, fmt, lineno, nentries, mib[6];
 	int prtheader, wflag, kflag, what, xflg;
 	char *nlistf, *memf, *swapf, errbuf[_POSIX2_LINE_MAX];
 	size_t size;
@@ -297,56 +295,51 @@ main(int argc, char *argv[])
 	 * get proc list
 	 */
 	if (uid != (uid_t) -1) {
-		what = mib[2] = KERN_PROC_UID;
-		flag = mib[3] = uid;
-		mibcnt = 4;
+		what = KERN_PROC_UID;
+		flag = uid;
 	} else if (ttydev != NODEV) {
-		what = mib[2] = KERN_PROC_TTY;
-		flag = mib[3] = ttydev;
-		mibcnt = 4;
+		what = KERN_PROC_TTY;
+		flag = ttydev;
 	} else if (pid != -1) {
-		what = mib[2] = KERN_PROC_PID;
-		flag = mib[3] = pid;
-		mibcnt = 4;
+		what = KERN_PROC_PID;
+		flag = pid;
 	} else if (kflag) {
-		what = mib[2] = KERN_PROC_KTHREAD;
+		what = KERN_PROC_KTHREAD;
 		flag = 0;
-		mibcnt = 3;
 	} else {
-		what = mib[2] = KERN_PROC_ALL;
+		what = KERN_PROC_ALL;
 		flag = 0;
-		mibcnt = 3;
 	}
 	/*
 	 * select procs
 	 */
 	if (kd != NULL) {
-		if ((kp = kvm_getprocs(kd, what, flag, &nentries)) == 0)
-			errx(1, "%s", kvm_geterr(kd));
-	}
-	else {
-		mib[0] = CTL_KERN;
-		mib[1] = KERN_NPROCS;
-		size = sizeof (nproc);
-		if (sysctl(mib, 2, &nproc, &size, NULL, 0) < 0)
-			err(1, "could not get kern.nproc");
-		/* Allocate more memory than is needed, just in case */
-		size = (5 * nproc * sizeof(struct kinfo_proc)) / 4;
-		kp = calloc(size, sizeof(char));
+		kp = kvm_getproc2(kd, what, flag, sizeof(*kp), &nentries);
 		if (kp == NULL)
+			errx(1, "%s", kvm_geterr(kd));
+	} else {
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_PROC2;
+		mib[2] = what;
+		mib[3] = flag;
+		mib[4] = sizeof(struct kinfo_proc2);
+		mib[5] = 0;
+	    retry:
+		if (sysctl(mib, 6, NULL, &size, NULL, 0) < 0)
+			err(1, "could not get kern.proc2 size");
+		size = 5 * size / 4;		/* extra slop */
+		if ((kp = malloc(size)) == NULL)
 			err(1,
-			    "failed to allocated memory for proc structures");
-		mib[1] = KERN_PROC;
-		if (sysctl(mib, mibcnt, kp, &size, NULL, 0) < 0)
-			err(1, "could not read kern.proc");
-		nentries = size / sizeof(struct kinfo_proc);
-	}
-
-	if ((kinfo = malloc(nentries * sizeof(*kinfo))) == NULL)
-		err(1, NULL);
-	for (i = nentries; --i >= 0; ++kp) {
-		kinfo[i].ki_p = kp;
-		saveuser(&kinfo[i]);
+			    "failed to allocate memory for proc structures");
+		mib[5] = (int)(size / sizeof(struct kinfo_proc2));
+		if (sysctl(mib, 6, kp, &size, NULL, 0) < 0) {
+			if (errno == ENOMEM) {
+				free(kp);
+				goto retry;
+			}
+			err(1, "could not read kern.proc2");
+		}
+		nentries = (int)(size / sizeof(struct kinfo_proc2));
 	}
 	/*
 	 * print header
@@ -355,20 +348,23 @@ main(int argc, char *argv[])
 	if (nentries == 0)
 		exit(1);
 	/*
-	 * sort proc list
+	 * sort proc list, we convert from an array of structs to an array
+	 * of pointers to make the sort cheaper.
 	 */
-	qsort(kinfo, nentries, sizeof(KINFO), pscomp);
+	if ((kinfo = malloc(sizeof(*kinfo) * nentries)) == NULL)
+		err(1, "failed to allocate memory for proc pointers");
+	for (i = 0; i < nentries; i++)
+		kinfo[i] = &kp[i];
+	qsort(kinfo, nentries, sizeof(*kinfo), pscomp);
 	/*
 	 * for each proc, call each variable output function.
 	 */
 	for (i = lineno = 0; i < nentries; i++) {
-		KINFO *ki = &kinfo[i];
-
-		if (xflg == 0 && (KI_EPROC(ki)->e_tdev == NODEV ||
-		    (KI_PROC(ki)->p_flag & P_CONTROLT ) == 0))
+		if (xflg == 0 && (kinfo[i]->p_tdev == NODEV ||
+		    (kinfo[i]->p_flag & P_CONTROLT ) == 0))
 			continue;
 		for (vent = vhead; vent; vent = vent->next) {
-			(vent->var->oproc)(ki, vent);
+			(vent->var->oproc)(kinfo[i], vent);
 			if (vent->next != NULL)
 				(void)putchar(' ');
 		}
@@ -401,38 +397,21 @@ scanvars(void)
 	totwidth--;
 }
 
-static void
-saveuser(KINFO *ki)
-{
-	struct usave *usp;
-
-	usp = &ki->ki_u;
-	usp->u_valid = KI_EPROC(ki)->e_pstats_valid;
-	if (!usp->u_valid)
-		return;
-	usp->u_start = KI_EPROC(ki)->e_pstats.p_start;
-	usp->u_ru = KI_EPROC(ki)->e_pstats.p_ru;
-	usp->u_cru = KI_EPROC(ki)->e_pstats.p_cru;
-}
-
 static int
-pscomp(const void *a, const void *b)
+pscomp(const void *v1, const void *v2)
 {
+	const struct kinfo_proc2 *kp1 = *(const struct kinfo_proc2 **)v1;
+	const struct kinfo_proc2 *kp2 = *(const struct kinfo_proc2 **)v2;
 	int i;
-#define VSIZE(k) (KI_EPROC(k)->e_vm.vm_dsize + KI_EPROC(k)->e_vm.vm_ssize + \
-		  KI_EPROC(k)->e_vm.vm_tsize)
-#define STARTTIME(k) (k->ki_u.u_start.tv_sec)
-#define STARTuTIME(k) (k->ki_u.u_start.tv_usec)
+#define VSIZE(k) ((k)->p_vm_dsize + (k)->p_vm_ssize + (k)->p_vm_tsize)
 
-	if (sortby == SORTCPU)
-		return (getpcpu((KINFO *)b) - getpcpu((KINFO *)a));
-	if (sortby == SORTMEM)
-		return (VSIZE((KINFO *)b) - VSIZE((KINFO *)a));
-	i =  KI_EPROC((KINFO *)a)->e_tdev - KI_EPROC((KINFO *)b)->e_tdev;
-	if (i == 0)
-		i = STARTTIME(((KINFO *)a)) - STARTTIME(((KINFO *)b));
-		if (i == 0)
-			i = STARTuTIME(((KINFO *)a)) - STARTuTIME(((KINFO *)b));
+	if (sortby == SORTCPU && (i = getpcpu(kp2) - getpcpu(kp1)) != 0)
+		return (i);
+	if (sortby == SORTMEM && (i = VSIZE(kp2) - VSIZE(kp1)) != 0)
+		return (i);
+	if ((i = kp1->p_tdev - kp2->p_tdev) == 0 &&
+	    (i = kp1->p_ustart_sec - kp2->p_ustart_sec) == 0)
+		i = kp1->p_ustart_usec - kp2->p_ustart_usec;
 	return (i);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt.c,v 1.6 2003/09/26 00:48:44 deraadt Exp $	*/
+/*	$OpenBSD: fmt.c,v 1.7 2004/01/08 18:18:35 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -47,7 +47,7 @@
 #include "extern.h"
 
 void
-fmt_puts(char *s, int *leftp)
+fmt_puts(const char *s, int *leftp)
 {
 	static char *v = NULL, *nv;
 	static int maxlen = 0;
