@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.39 2001/01/19 17:53:19 deraadt Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.40 2001/02/07 06:15:46 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static char rcsid[] = "$OpenBSD: syslogd.c,v 1.39 2001/01/19 17:53:19 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: syslogd.c,v 1.40 2001/02/07 06:15:46 fgsch Exp $";
 #endif
 #endif /* not lint */
 
@@ -1012,18 +1012,13 @@ init(signo)
 	while (fgets(cline, sizeof(cline), cf) != NULL) {
 		/*
 		 * check for end-of-section, comments, strip off trailing
-		 * spaces and newline character. #!prog  and !prog are treated
+		 * spaces and newline character. !prog is treated
 		 * specially: the following lines apply only to that program.
 		 */
 		for (p = cline; isspace(*p); ++p)
 			continue;
-		if (*p == '\0')
+		if (*p == '\0' || *p == '#')
 			continue;
-		if (*p == '#') {
-			p++;
-			if (*p != '!')
-				continue;
-		}
 		if (*p == '!') {
 			p++;
 			while (isspace(*p))

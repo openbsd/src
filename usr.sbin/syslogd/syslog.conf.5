@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)syslog.conf.5	8.1 (Berkeley) 6/9/93
-.\"     $OpenBSD: syslog.conf.5,v 1.7 2000/03/19 17:57:16 aaron Exp $
+.\"     $OpenBSD: syslog.conf.5,v 1.8 2001/02/07 06:15:46 fgsch Exp $
 .\"	$NetBSD: syslog.conf.5,v 1.4 1996/01/02 17:41:46 perry Exp $
 .\"
 .Dd June 9, 1993
@@ -107,11 +107,7 @@ library routine.
 .Pp
 Each block of lines is separated from the previous block by a tag.
 The tag is a line beginning with
-.Em #!prog
-or
 .Em !prog
-(the former is for compatibility with the previous syslogd, if one is sharing
-syslog.conf files, for example)
 and each block will be associated with calls to syslog from that specific
 program.
 .Pp
@@ -215,16 +211,7 @@ Selected messages are written to all logged-in users.
 .Pp
 Blank lines and lines whose first non-blank character is a hash
 .Pq Ql #
-character are ignored with the exception of lines beginning with
-.Ql #! .
-These lines are treated as section headers in the same way as lines
-beginning with
-.Ql ! .
-This allows
-.Nm
-files to be shared with systems that don't recognise the
-.Ql !
-syntax.
+character are ignored.
 .Sh EXAMPLES
 A configuration file might appear as follows:
 .Bd -literal
