@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.626 2003/05/17 21:50:24 jason Exp 
+ *		OpenBSD: pcidevs,v 1.627 2003/05/20 22:00:53 jason Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -860,11 +860,11 @@
 #define	PCI_PRODUCT_AMD_8151_AGP	0x7455		/* 8151 AGP */
 #define	PCI_PRODUCT_AMD_8111_PPB	0x7460		/* 8111 PCI-PCI */
 #define	PCI_PRODUCT_AMD_8111_USB	0x7464		/* 8111 USB */
+#define	PCI_PRODUCT_AMD_PBC8111_LPC	0x7468		/* AMD8111 LPC */
 #define	PCI_PRODUCT_AMD_8111_IDE	0x7469		/* 8111 IDE */
 #define	PCI_PRODUCT_AMD_8111_SMB	0x746a		/* 8111 SMBus */
 #define	PCI_PRODUCT_AMD_8111_ACPI	0x746b		/* 8111 ACPI */
 #define	PCI_PRODUCT_AMD_8111_ACA	0x746d		/* 8111 AC97 Audio */
-#define	PCI_PRODUCT_AMD_PBC8111_LPC	0x7468		/* AMD8111 LPC */
 
 /* AMI */
 #define	PCI_PRODUCT_AMI_MEGARAID	0x1960		/* MegaRAID */
