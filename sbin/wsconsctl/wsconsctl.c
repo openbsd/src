@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsconsctl.c,v 1.8 2001/08/26 17:35:13 deraadt Exp $	*/
+/*	$OpenBSD: wsconsctl.c,v 1.9 2001/10/24 17:45:59 miod Exp $	*/
 /*	$NetBSD: wsconsctl.c,v 1.2 1998/12/29 22:40:20 hannken Exp $ */
 
 /*-
@@ -82,9 +82,9 @@ usage(msg)
 		fprintf(stderr, "%s: %s\n", __progname, msg);
 
 	fprintf(stderr,
-	    "usage: %s [-f file] [-n] name ...\n"
-	    "       %s [-f file] [-n] -w name=value ...\n"
-	    "       %s [-f file] [-n] -a\n", __progname,
+	    "usage: %s [-n] name ...\n"
+	    "       %s [-n] -w name=value ...\n"
+	    "       %s [-n] -a\n", __progname,
 		__progname, __progname);
 
 	exit(1);
@@ -117,7 +117,6 @@ main(argc, argv)
 		case 'w':
 			wflag = 1;
 			break;
-		case '?':
 		default:
 			usage(NULL);
 		}

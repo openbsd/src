@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.4 2001/07/06 04:11:26 pvalchev Exp $	*/
+/*	$OpenBSD: display.c,v 1.5 2001/10/24 17:45:59 miod Exp $	*/
 /*	$NetBSD: display.c,v 1.1 1998/12/28 14:01:16 hannken Exp $ */
 
 /*-
@@ -68,15 +68,13 @@ display_get_values(pre, fd)
 
 	if (field_by_value(display_field_tab, &dpytype)->flags & FLG_GET)
 		if (ioctl(fd, WSDISPLAYIO_GTYPE, &dpytype) < 0)
-			err(1, "WSDISPLAYIO_GTYPE");
+			warn("WSDISPLAYIO_GTYPE");
 
-	gscr.idx = -1;
+	focus = gscr.idx = -1;
 	if (field_by_value(display_field_tab, &focus)->flags & FLG_GET) {
 		if (ioctl(fd, WSDISPLAYIO_GETSCREEN, &gscr) < 0)
-			err(1, "WSDISPLAYIO_GETSCREEN");
+			warn("WSDISPLAYIO_GETSCREEN");
 	}
-	else
-		focus = gscr.idx;
 
 	if (field_by_value(display_field_tab, &burnon)->flags & FLG_GET ||
 	    field_by_value(display_field_tab, &burnoff)->flags & FLG_GET ||
@@ -88,25 +86,26 @@ display_get_values(pre, fd)
 		struct wsdisplay_burner burners;
 
 		if (ioctl(fd, WSDISPLAYIO_GBURNER, &burners) < 0)
-			err(1, "WSDISPLAYIO_GBURNER");
+			warn("WSDISPLAYIO_GBURNER");
+		else {
+			if (field_by_value(display_field_tab, &burnon)->flags & FLG_GET)
+				burnon = burners.on;
 
-		if (field_by_value(display_field_tab, &burnon)->flags & FLG_GET)
-			burnon = burners.on;
+			if (field_by_value(display_field_tab, &burnoff)->flags & FLG_GET)
+				burnoff = burners.off;
 
-		if (field_by_value(display_field_tab, &burnoff)->flags & FLG_GET)
-			burnoff = burners.off;
+			if (field_by_value(display_field_tab, &vblank)->flags & FLG_GET)
+				vblank = burners.flags & WSDISPLAY_BURN_VBLANK;
 
-		if (field_by_value(display_field_tab, &vblank)->flags & FLG_GET)
-			vblank = burners.flags & WSDISPLAY_BURN_VBLANK;
+			if (field_by_value(display_field_tab, &kbdact)->flags & FLG_GET)
+				kbdact = burners.flags & WSDISPLAY_BURN_KBD;
 
-		if (field_by_value(display_field_tab, &kbdact)->flags & FLG_GET)
-			kbdact = burners.flags & WSDISPLAY_BURN_KBD;
+			if (field_by_value(display_field_tab, &msact )->flags & FLG_GET)
+				msact = burners.flags & WSDISPLAY_BURN_MOUSE;
 
-		if (field_by_value(display_field_tab, &msact )->flags & FLG_GET)
-			msact = burners.flags & WSDISPLAY_BURN_MOUSE;
-
-		if (field_by_value(display_field_tab, &outact)->flags & FLG_GET)
-			outact = burners.flags & WSDISPLAY_BURN_OUTPUT;
+			if (field_by_value(display_field_tab, &outact)->flags & FLG_GET)
+				outact = burners.flags & WSDISPLAY_BURN_OUTPUT;
+		}
 	}
 }
 
@@ -117,7 +116,7 @@ display_put_values(pre, fd)
 {
 	if (field_by_value(display_field_tab, &focus)->flags & FLG_SET)
 		if (ioctl(fd, WSDISPLAYIO_SETSCREEN, &focus) < 0)
-			err(1, "WSDISPLAYIO_SETSCREEN");
+			warn("WSDISPLAYIO_SETSCREEN");
 
 	if (field_by_value(display_field_tab, &burnon)->flags & FLG_SET ||
 	    field_by_value(display_field_tab, &burnoff)->flags & FLG_SET ||
@@ -129,43 +128,58 @@ display_put_values(pre, fd)
 		struct wsdisplay_burner burners;
 
 		if (ioctl(fd, WSDISPLAYIO_GBURNER, &burners) < 0)
-			err(1, "WSDISPLAYIO_GBURNER");
+			warn("WSDISPLAYIO_GBURNER");
+		else {
+			if (field_by_value(display_field_tab, &burnon)->flags & FLG_SET)
+				burners.on = burnon;
 
-		if (field_by_value(display_field_tab, &burnon)->flags & FLG_SET)
-			burners.on = burnon;
+			if (field_by_value(display_field_tab, &burnoff)->flags & FLG_SET)
+				burners.off = burnoff;
 
-		if (field_by_value(display_field_tab, &burnoff)->flags & FLG_SET)
-			burners.off = burnoff;
+			if (field_by_value(display_field_tab, &vblank)->flags & FLG_SET) {
+				if (vblank)
+					burners.flags |= WSDISPLAY_BURN_VBLANK;
+				else
+					burners.flags &= ~WSDISPLAY_BURN_VBLANK;
+			}
 
-		if (field_by_value(display_field_tab, &vblank)->flags & FLG_SET) {
-			if (vblank)
-				burners.flags |= WSDISPLAY_BURN_VBLANK;
-			else
-				burners.flags &= ~WSDISPLAY_BURN_VBLANK;
+			if (field_by_value(display_field_tab, &kbdact)->flags & FLG_SET) {
+				if (kbdact)
+					burners.flags |= WSDISPLAY_BURN_KBD;
+				else
+					burners.flags &= ~WSDISPLAY_BURN_KBD;
+			}
+
+			if (field_by_value(display_field_tab, &msact )->flags & FLG_SET) {
+				if (msact)
+					burners.flags |= WSDISPLAY_BURN_MOUSE;
+				else
+					burners.flags &= ~WSDISPLAY_BURN_MOUSE;
+			}
+
+			if (field_by_value(display_field_tab, &outact)->flags & FLG_SET) {
+				if (outact)
+					burners.flags |= WSDISPLAY_BURN_OUTPUT;
+				else
+					burners.flags &= ~WSDISPLAY_BURN_OUTPUT;
+			}
+
+			if (ioctl(fd, WSDISPLAYIO_SBURNER, &burners) < 0)
+				warn("WSDISPLAYIO_SBURNER");
+			else {
+				if (field_by_value(display_field_tab, &burnon)->flags & FLG_SET)
+					pr_field(pre, field_by_value(display_field_tab, &burnon), " -> ");
+				if (field_by_value(display_field_tab, &burnoff)->flags & FLG_SET)
+					pr_field(pre, field_by_value(display_field_tab, &burnoff), " -> ");
+				if (field_by_value(display_field_tab, &vblank)->flags & FLG_SET)
+					pr_field(pre, field_by_value(display_field_tab, &vblank), " -> ");
+				if (field_by_value(display_field_tab, &kbdact)->flags & FLG_SET)
+					pr_field(pre, field_by_value(display_field_tab, &kbdact), " -> ");
+				if (field_by_value(display_field_tab, &msact )->flags & FLG_SET)
+					pr_field(pre, field_by_value(display_field_tab, &msact), " -> ");
+				if (field_by_value(display_field_tab, &outact)->flags & FLG_SET)
+					pr_field(pre, field_by_value(display_field_tab, &outact), " -> ");
+			}
 		}
-
-		if (field_by_value(display_field_tab, &kbdact)->flags & FLG_SET) {
-			if (kbdact)
-				burners.flags |= WSDISPLAY_BURN_KBD;
-			else
-				burners.flags &= ~WSDISPLAY_BURN_KBD;
-		}
-
-		if (field_by_value(display_field_tab, &msact )->flags & FLG_SET) {
-			if (msact)
-				burners.flags |= WSDISPLAY_BURN_MOUSE;
-			else
-				burners.flags &= ~WSDISPLAY_BURN_MOUSE;
-		}
-
-		if (field_by_value(display_field_tab, &outact)->flags & FLG_SET) {
-			if (outact)
-				burners.flags |= WSDISPLAY_BURN_OUTPUT;
-			else
-				burners.flags &= ~WSDISPLAY_BURN_OUTPUT;
-		}
-
-		if (ioctl(fd, WSDISPLAYIO_SBURNER, &burners) < 0)
-			err(1, "WSDISPLAYIO_SBURNER");
 	}
 }
