@@ -1,3 +1,3 @@
-# $OpenBSD: Makefile.inc,v 1.1 2004/01/29 12:44:40 mickey Exp $
+# $OpenBSD: Makefile.inc,v 1.2 2004/02/28 18:51:32 deraadt Exp $
 
-SRCS+=	x86_64.c
+SRCS+=	amd64.c

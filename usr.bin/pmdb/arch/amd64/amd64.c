@@ -1,4 +1,4 @@
-/*	$OpenBSD: x86_64.c,v 1.2 2004/02/10 23:36:02 mickey Exp $	*/
+/*	$OpenBSD: amd64.c,v 1.1 2004/02/28 18:51:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Federico Schwindt <fgsch@openbsd.org>
