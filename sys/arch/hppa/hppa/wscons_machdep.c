@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.3 2002/11/08 22:27:17 mickey Exp $	*/
+/*	$OpenBSD: wscons_machdep.c,v 1.4 2003/01/31 22:50:19 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -50,9 +50,7 @@
 #include <dev/ic/stivar.h>
 #endif
 
-#include "ps2p.h"
-#if NPS2P > 0
-#include <hppa/gsc/ps2pvar.h>
+#if NGSCKBD > 0
 #endif
 
 #include "wsdisplay.h"
@@ -89,7 +87,7 @@ wscnprobe(cp)
 #else
 	return;
 #endif
-#if NPS2P > 0
+#if NGSCKBD > 0
 	if (PAGE0->mem_kbd.pz_class == PCL_KEYBD) {
 
 	} else
