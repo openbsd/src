@@ -1,4 +1,4 @@
-/*	$OpenBSD: aacreg.h,v 1.5 2003/11/16 20:30:06 avsm Exp $	*/
+/*	$OpenBSD: aacreg.h,v 1.6 2004/05/21 20:34:52 marco Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -248,6 +248,7 @@ typedef enum {
 	CPUARM_xxx,
 	CPUPPC_603e,
 	CPUPPC_xxx,
+	CPUI960_302,
 	CPUSUBTYPE__last
 } AAC_CpuSubType;
 
