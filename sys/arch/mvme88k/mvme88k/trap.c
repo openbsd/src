@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.63 2004/01/02 23:45:03 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.64 2004/01/09 00:24:25 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -165,18 +165,33 @@ panictrap(int type, struct m88100_saved_state *frame)
 	static int panicing = 0;
 
 	if (panicing++ == 0) {
-		if (type == 2 && cputyp == CPU_88100) {
-			/* instruction exception */
-			db_printf("\nInstr access fault (%s) v = %x, frame %p\n",
-				  pbus_exception_type[(frame->ipfsr >> 16) & 0x7],
-				  frame->sxip & XIP_ADDR, frame);
-		} else if (type == 3 && cputyp == CPU_88100) {
-			/* data access exception */
-			db_printf("\nData access fault (%s) v = %x, frame %p\n",
-				  pbus_exception_type[(frame->dpfsr >> 16) & 0x7],
-				  frame->sxip & XIP_ADDR, frame);
-		} else
-			db_printf("\ntrap type %d, v = %x, frame %p\n", type, frame->sxip & XIP_ADDR, frame);
+		switch (cputyp) {
+#ifdef M88100
+		case CPU_88100:
+			if (type == 2) {
+				/* instruction exception */
+				db_printf("\nInstr access fault (%s) v = %x, "
+				    "frame %p\n",
+				    pbus_exception_type[(frame->ipfsr >> 16) & 0x7],
+				    frame->sxip & XIP_ADDR, frame);
+			} else if (type == 3) {
+				/* data access exception */
+				db_printf("\nData access fault (%s) v = %x, "
+				    "frame %p\n",
+				    pbus_exception_type[(frame->dpfsr >> 16) & 0x7],
+				    frame->sxip & XIP_ADDR, frame);
+			} else
+				db_printf("\nTrap type %d, v = %x, frame %p\n",
+				    type, frame->sxip & XIP_ADDR, frame);
+			break;
+#endif
+#ifdef M88110
+		case CPU_88110:
+			db_printf("\nTrap type %d, v = %x, frame %p\n",
+			    type, frame->exip, frame);
+			break;
+#endif
+		}
 		regdump(frame);
 	}
 #endif
@@ -188,9 +203,6 @@ panictrap(int type, struct m88100_saved_state *frame)
 }
 
 #ifdef M88100
-unsigned last_trap[4] = {0,0,0,0};
-unsigned last_vector = 0;
-
 void
 m88100_trap(unsigned type, struct m88100_saved_state *frame)
 {
@@ -216,12 +228,6 @@ m88100_trap(unsigned type, struct m88100_saved_state *frame)
 	extern caddr_t guarded_access_end;
 	extern caddr_t guarded_access_bad;
 
-	if (type != last_trap[3]) {
-		last_trap[0] = last_trap[1];
-		last_trap[1] = last_trap[2];
-		last_trap[2] = last_trap[3];
-		last_trap[3] = type;
-	}
 	uvmexp.traps++;
 	if ((p = curproc) == NULL)
 		p = &proc0;
@@ -1150,11 +1156,6 @@ error_fatal(struct m88100_saved_state *frame)
 		break;
 	}
 	regdump((struct trapframe*)frame);
-#ifdef M88100
-	db_printf("trap trace %d -> %d -> %d -> %d  ", last_trap[0], last_trap[1], last_trap[2], last_trap[3]);
-	db_printf("last exception vector = %d\n", last_vector);
-#endif
-	Debugger();
 #endif /* DDB */
 	panic("unrecoverable exception %d", frame->vector);
 }

@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.46 2003/11/03 06:54:26 david Exp $   */
+/*   $OpenBSD: eh.S,v 1.47 2004/01/09 00:24:25 miod Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -345,9 +345,6 @@ ASLOCAL(Lbadcpupanic)
 	/* TMP2 now free -- use to set EF_VECTOR */	  \
 	or	TMP2, r0, NUM				; \
 	st	TMP2, r31, REG_OFF(EF_VECTOR)		; \
-	/* TMP3 also free -- use to set last_vector */	  \
-	or.u	TMP3, r0,   hi16(_C_LABEL(last_vector))	; \
-	st	TMP2, TMP3, lo16(_C_LABEL(last_vector))	; \
 	/* Clear any bits in the SSBR (held in TMP) */	  \
 	/* SSBR_STUFF may be empty, though.         */	  \
 	SSBR_STUFF					; \
