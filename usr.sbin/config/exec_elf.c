@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.5 2002/03/14 06:51:42 mpech Exp $ */
+/*	$OpenBSD: exec_elf.c,v 1.6 2002/08/05 00:26:56 art Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: exec_elf.c,v 1.5 2002/03/14 06:51:42 mpech Exp $";
+static char rcsid[] = "$OpenBSD: exec_elf.c,v 1.6 2002/08/05 00:26:56 art Exp $";
 #endif
 
 #include <err.h>
@@ -93,7 +93,8 @@ elf_readjust(x)
 			continue;
 		if (((x - elf_total) >= s[i].sh_offset) &&
 		    ((x - elf_total) <= (s[i].sh_offset + s[i].sh_size)))
-			y = x - elf_total + s[i].sh_addr;
+			y = (unsigned long)x - (unsigned long)elf_total +
+			    (unsigned long)s[i].sh_addr - s[i].sh_offset;
 	}
 
 	return((caddr_t)y);
