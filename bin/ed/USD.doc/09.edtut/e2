@@ -1,4 +1,4 @@
-.\"	$OpenBSD: e2,v 1.2 2003/06/26 16:24:16 mickey Exp $
+.\"	$OpenBSD: e2,v 1.3 2003/07/26 20:22:13 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -302,12 +302,12 @@ Experiment with the
 command \-
 try reading and printing various files.
 You may get an error
-.UL ?name ,
+.UL "name: No such file or directory" ,
 where
 .UL name
 is the name of a file;
 this means that the file doesn't exist,
-typically because you spelled the file name wrong,
+typically because you spelled the file name wrongly,
 or perhaps that you are not allowed to read or write it.
 Try alternately reading and appending to see that they work
 similarly.
@@ -380,17 +380,6 @@ This will print
 .ul
 all
 the lines in the buffer (line 1 to last line.)
-If you want to stop the printing before it is finished,
-push the
-.UC DEL
-or Delete key;
-.ul
-ed
-will type
-.P1
-?
-.P2
-and wait for the next command.
 .PP
 To print the
 .ul

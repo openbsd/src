@@ -1,4 +1,4 @@
-.\"	$OpenBSD: e3,v 1.2 2003/06/26 16:24:16 mickey Exp $
+.\"	$OpenBSD: e3,v 1.3 2003/07/26 20:22:13 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -175,7 +175,7 @@ d
 .P2
 Except that
 .UL d
-deletes lines instead of printing them,
+deletes lines instead of printing them;
 its action is similar to that of
 .UL p .
 The lines to be deleted are specified for

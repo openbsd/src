@@ -1,4 +1,4 @@
-.\"	$OpenBSD: e7,v 1.2 2003/06/26 16:24:16 mickey Exp $
+.\"	$OpenBSD: e7,v 1.3 2003/07/26 20:22:13 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -76,7 +76,7 @@ as with
 .UL a .
 If no lines are specified,
 replace line dot.
-Dot is set to last line changed.
+Dot is set to the last line changed.
 .LP
 .UL d :
 Delete the lines specified.
@@ -158,7 +158,7 @@ into
 .UL string2
 in the specified lines.
 If no lines are specified, make the substitution in line dot.
-Dot is set to last line in which a
+Dot is set to the last line in which a
 substitution took place, which means that if no substitution took place, dot is not changed.
 .UL s
 changes only the first occurrence of
