@@ -8,7 +8,7 @@
  *
  * S/KEY verification check, lookups, and authentication.
  * 
- * $Id: skeylogin.c,v 1.12 1997/07/10 21:11:11 millert Exp $
+ * $Id: skeylogin.c,v 1.13 1997/07/23 03:52:12 millert Exp $
  */
 
 #include <sys/param.h>
@@ -123,10 +123,12 @@ skeylookup(mp, name)
 	if (stat(_PATH_KEYFILE, &statbuf) == -1 && errno == ENOENT) {
 		mp->keyfile = fopen(_PATH_KEYFILE, "w+");
 		if (mp->keyfile)
-			chmod(_PATH_KEYFILE, 0644);
+			fchmod(fileno(mp->keyfile), 0600);
 	} else {
 		/* Otherwise open normally for update */
 		mp->keyfile = fopen(_PATH_KEYFILE, "r+");
+		if (mp->keyfile && (statbuf.st_mode & 0007777) != 0600)
+			fchmod(fileno(mp->keyfile), 0600);
 	}
 	if (mp->keyfile == NULL)
 		return -1;
