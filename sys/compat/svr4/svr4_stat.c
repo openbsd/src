@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_stat.c,v 1.9 1997/10/08 14:57:31 kstailey Exp $	 */
+/*	$OpenBSD: svr4_stat.c,v 1.10 1997/11/13 06:16:27 deraadt Exp $	 */
 /*	$NetBSD: svr4_stat.c,v 1.21 1996/04/22 01:16:07 christos Exp $	 */
 
 /*
@@ -569,7 +569,7 @@ svr4_sys_utime(p, v, retval)
 
 	SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&ap, path) = SCARG(uap, path);
-	if (SCARG(uap, ubuf) == NULL) {
+	if (SCARG(uap, ubuf) != NULL) {
 		if ((error = copyin(SCARG(uap, ubuf), &ub, sizeof(ub))) != 0)
 			return error;
 		tbuf[0].tv_sec = ub.actime;
