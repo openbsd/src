@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.156 2000/08/21 21:13:40 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.157 2000/09/13 05:11:35 rahnds Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -266,7 +266,7 @@ get_ifdevs() {
 }
 
 bsort() {
-	local _a=$1
+	local _l _a=$1
 
 	if [ $# == 0 ]; then
 		return
