@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncurses_cfg.h,v 1.4 1998/07/23 21:19:57 millert Exp $	*/
+/*	$OpenBSD: ncurses_cfg.h,v 1.5 1998/09/12 04:38:02 millert Exp $	*/
 
 /* include/ncurses_cfg.h.  Generated automatically by configure.  */
 /****************************************************************************
@@ -101,7 +101,7 @@
 #define HAVE_VSSCANF 1
 #define NCURSES_EXT_FUNCS 1
 #define NDEBUG 1
-#define PURE_TERMINFO 1
+/* #define PURE_TERMINFO 1 */
 #define RETSIGTYPE void
 #define STDC_HEADERS 1
 #define SYSTEM_NAME "openbsd2.3"
