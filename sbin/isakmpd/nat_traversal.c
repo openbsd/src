@@ -1,4 +1,4 @@
-/*	$OpenBSD: nat_traversal.c,v 1.7 2004/08/08 19:11:06 deraadt Exp $	*/
+/*	$OpenBSD: nat_traversal.c,v 1.8 2004/11/18 18:15:46 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -58,7 +58,6 @@
  * products today.
  */
 static const char *isakmp_nat_t_cap_text[] = {
-	"draft-ietf-ipsec-nat-t-ike-00",	/* V1 (XXX: may be obsolete) */
 	"draft-ietf-ipsec-nat-t-ike-02\n",	/* V2 */
 	"draft-ietf-ipsec-nat-t-ike-03",	/* V3 */
 #ifdef notyet
@@ -233,10 +232,8 @@ nat_t_generate_nat_d_hash(struct message *msg, struct sockaddr *sa,
 {
 	struct ipsec_exch *ie = (struct ipsec_exch *)msg->exchange->data;
 	struct hash	 *hash;
-	struct prf	 *prf;
 	u_int8_t	 *res;
 	in_port_t	  port;
-	int		  prf_type = PRF_HMAC; /* XXX */
 
 	hash = hash_get(ie->hash->type);
 	if (hash == NULL) {
@@ -244,19 +241,12 @@ nat_t_generate_nat_d_hash(struct message *msg, struct sockaddr *sa,
 		return NULL;
 	}
 
-	prf = prf_alloc(prf_type, hash->type, msg->exchange->cookies,
-	    ISAKMP_HDR_COOKIES_LEN);
-	if(!prf) {
-		log_print("nat_t_generate_nat_d_hash: prf_alloc failed");
-		return NULL;
-	}
+	*hashlen = hash->hashsize;
 
-	*hashlen = prf->blocksize;
 	res = (u_int8_t *)malloc((unsigned long)*hashlen);
 	if (!res) {
 		log_print("nat_t_generate_nat_d_hash: malloc (%lu) failed",
 		    (unsigned long)*hashlen);
-		prf_free(prf);
 		*hashlen = 0;
 		return NULL;
 	}
@@ -264,10 +254,12 @@ nat_t_generate_nat_d_hash(struct message *msg, struct sockaddr *sa,
 	port = sockaddr_port(sa);
 	memset(res, 0, *hashlen);
 
-	prf->Update(prf->prfctx, sockaddr_addrdata(sa), sockaddr_addrlen(sa));
-	prf->Update(prf->prfctx, (unsigned char *)&port, sizeof port);
-	prf->Final(res, prf->prfctx);
-	prf_free (prf);
+	hash->Init(hash->ctx);
+	hash->Update(hash->ctx, msg->exchange->cookies,
+	    sizeof msg->exchange->cookies);
+	hash->Update(hash->ctx, sockaddr_addrdata(sa), sockaddr_addrlen(sa));
+	hash->Update(hash->ctx, (unsigned char *)&port, sizeof port);
+	hash->Final(res, hash->ctx);
 
 	return res;
 }
@@ -312,11 +304,12 @@ nat_t_exchange_add_nat_d(struct message *msg)
 {
 	struct sockaddr *sa;
 
-	msg->transport->vtbl->get_src(msg->transport, &sa);
+	/* Remote address first. */
+	msg->transport->vtbl->get_dst(msg->transport, &sa);
 	if (nat_t_add_nat_d(msg, sa))
 		return -1;
 
-	msg->transport->vtbl->get_dst(msg->transport, &sa);
+	msg->transport->vtbl->get_src(msg->transport, &sa);
 	if (nat_t_add_nat_d(msg, sa))
 		return -1;
 
