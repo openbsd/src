@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.29 2003/01/15 06:31:24 art Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.30 2003/06/30 02:52:51 avsm Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -477,8 +477,8 @@ u_int8_t tl_eeprom_getbyte(sc, addr, dest)
 	 * Send write control code to EEPROM.
 	 */
 	if (tl_eeprom_putbyte(sc, EEPROM_CTL_WRITE)) {
-		printf("tl%d: failed to send write command, status: %x\n",
-				sc->tl_unit, tl_dio_read8(sc, TL_NETSIO));
+		printf("%s: failed to send write command, status: %x\n",
+			sc->sc_dev.dv_xname, tl_dio_read8(sc, TL_NETSIO));
 		return(1);
 	}
 
@@ -486,8 +486,8 @@ u_int8_t tl_eeprom_getbyte(sc, addr, dest)
 	 * Send address of byte we want to read.
 	 */
 	if (tl_eeprom_putbyte(sc, addr)) {
-		printf("tl%d: failed to send address, status: %x\n",
-				sc->tl_unit, tl_dio_read8(sc, TL_NETSIO));
+		printf("%s: failed to send address, status: %x\n",
+			sc->sc_dev.dv_xname, tl_dio_read8(sc, TL_NETSIO));
 		return(1);
 	}
 
@@ -497,8 +497,8 @@ u_int8_t tl_eeprom_getbyte(sc, addr, dest)
 	 * Send read control code to EEPROM.
 	 */
 	if (tl_eeprom_putbyte(sc, EEPROM_CTL_READ)) {
-		printf("tl%d: failed to send write command, status: %x\n",
-				sc->tl_unit, tl_dio_read8(sc, TL_NETSIO));
+		printf("%s: failed to send write command, status: %x\n",
+			sc->sc_dev.dv_xname, tl_dio_read8(sc, TL_NETSIO));
 		return(1);
 	}
 
@@ -1301,7 +1301,7 @@ int tl_intvec_adchk(xsc, type)
 	sc = xsc;
 
 	if (type)
-		printf("tl%d: adapter check: %x\n", sc->tl_unit,
+		printf("%s: adapter check: %x\n", sc->sc_dev.dv_xname,
 			(unsigned int)CSR_READ_4(sc, TL_CH_PARM));
 
 	tl_softreset(sc, 1);
@@ -1324,7 +1324,7 @@ int tl_intvec_netsts(xsc, type)
 	netsts = tl_dio_read16(sc, TL_NETSTS);
 	tl_dio_write16(sc, TL_NETSTS, netsts);
 
-	printf("tl%d: network status: %x\n", sc->tl_unit, netsts);
+	printf("%s: network status: %x\n", sc->sc_dev.dv_xname, netsts);
 
 	return(1);
 }
@@ -1370,7 +1370,7 @@ int tl_intr(xsc)
 		r = tl_intvec_rxeof((void *)sc, type);
 		break;
 	case (TL_INTR_DUMMY):
-		printf("tl%d: got a dummy interrupt\n", sc->tl_unit);
+		printf("%s: got a dummy interrupt\n", sc->sc_dev.dv_xname);
 		r = 1;
 		break;
 	case (TL_INTR_ADCHK):
@@ -1383,7 +1383,7 @@ int tl_intr(xsc)
 		r = tl_intvec_rxeoc((void *)sc, type);
 		break;
 	default:
-		printf("tl%d: bogus interrupt type\n", sc->tl_unit);
+		printf("%s: bogus interrupt type\n", sc->sc_dev.dv_xname);
 		break;
 	}
 
@@ -1685,8 +1685,8 @@ void tl_init(xsc)
 
 	/* Init circular RX list. */
 	if (tl_list_rx_init(sc) == ENOBUFS) {
-		printf("tl%d: initialization failed: no "
-			"memory for rx buffers\n", sc->tl_unit);
+		printf("%s: initialization failed: no memory for rx buffers\n",
+			sc->sc_dev.dv_xname);
 		tl_stop(sc);
 		splx(s);
 		return;
@@ -1862,7 +1862,7 @@ void tl_watchdog(ifp)
 
 	sc = ifp->if_softc;
 
-	printf("tl%d: device timeout\n", sc->tl_unit);
+	printf("%s: device timeout\n", sc->sc_dev.dv_xname);
 
 	ifp->if_oerrors++;
 
@@ -2105,7 +2105,6 @@ tl_attach(parent, self, aux)
 			break;
 	}
 		
-	sc->tl_unit = sc->sc_dev.dv_unit;
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_COMPAQ ||
 	    PCI_VENDOR(pa->pa_id) == PCI_VENDOR_TI)
 		sc->tl_eeaddr = TL_EEPROM_EADDR;

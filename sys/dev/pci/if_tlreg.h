@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tlreg.h,v 1.7 2001/04/05 02:03:13 jason Exp $	*/
+/*	$OpenBSD: if_tlreg.h,v 1.8 2003/06/30 02:52:51 avsm Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -129,7 +129,6 @@ struct tl_softc {
 	struct tl_type		*tl_pinfo;	/* PHY info struct */
 	int			tl_if_flags;
 	u_int8_t		tl_ctlr;	/* chip number */
-	u_int8_t		tl_unit;	/* interface number */
 	u_int8_t		tl_eeaddr;
 	struct tl_list_data	*tl_ldata;	/* TX/RX lists and mbufs */
 	struct tl_chain_data	tl_cdata;
