@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.77 1999/07/14 19:27:20 deraadt Exp $
+#	$OpenBSD: pnpdevs,v 1.78 1999/07/19 19:47:40 deraadt Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -326,7 +326,7 @@ sb		PNPB002	# Sound Blaster Pro-compatible sound device
 sb		PNPB003	# Sound Blaster 16-compatible sound device
 #		PNPB004	# Thunderboard-compatible sound device
 #		PNPB005	# Adlib-compatible FM synthesizer device
-#		PNPB006	# MPU401 compatible 
+mpu		PNPB006	# MPU401 compatible 
 #		PNPB007	# Microsoft Windows Sound System-compatible sound device
 #		PNPB008	# Compaq Business Audio
 #		PNPB009	# Plug and Play Microsoft Windows Sound System Device
@@ -389,6 +389,7 @@ com/pccom	AKY0000	# 56K Plug&Play Modem
 com/pccom	BRI3400	# Internal ACF Modem
 com/pccom	BRI1500	# Internal Fax Data
 com/pccom	AEI0276	# 56K v.90 Fax Modem (LKT)
+com/pccom	WCI0003	# Fax/Voice/Modem/Speakphone/Asvd
 
 # Ethernet:
 #ep		TCM5090	# 3COM 3c509B		(PNP80F7)
@@ -410,11 +411,12 @@ we		SMC8416 # SMC EtherEZ
 
 # Sound:
 #		@H@1001	# ALS100+ (Internal Midi (OPL3) device)
-#		@X@1001	# ALS100+ (External Midi (MPU401)
-#		AZT2001	# AZT1008 PnP SOUND DEVICE (MPU401 MIDI)
-#		CSC0003 # AW35/pro MPU
+mpu		@X@1001	# ALS100+ (External Midi (MPU401)
+mpu		AZT2001	# AZT1008 PnP SOUND DEVICE (MPU401 MIDI)
+mpu		CSC0003 # AW35/pro MPU
+#		YMH002F	# OPL3-SAX Sound Board (0x100/8, no irq)
 #		CSC0010	# AW35/Pro CTRL
-#		OPT0002	# OPTi Audio 16 MPU401
+mpu		OPT0002	# OPTi Audio 16 MPU401
 gus		GRV0000	# Advanced Gravis InterWave Audio
 #wdc		AZT0500 # AZT1008 PnP SOUND DEVICE (IDE CDROM DISAB)
 #wdc		CTL2011	# Creative SB32 PnP (PNP0600)
