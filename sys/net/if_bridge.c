@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.15 1999/08/20 04:53:17 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.16 1999/09/01 21:38:48 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -608,6 +608,16 @@ bridge_output(ifp, m, sa, rt)
 	s = splimp();
 
 	/*
+	 * If bridge is down, but original output interface is up,
+	 * go ahead and send out that interface.  Otherwise the packet
+	 * is dropped below.
+	 */
+	if ((sc->sc_if.if_flags & IFF_RUNNING) == 0) {
+		dst_if = ifp;
+		goto sendunicast;
+	}
+
+	/*
 	 * If the packet is a broadcast or we don't know a better way to
 	 * get there, we must broadcast with header rewriting.
 	 */
@@ -665,6 +675,8 @@ bridge_output(ifp, m, sa, rt)
 	}
 
 	bcopy(ac->ac_enaddr, src, ETHER_ADDR_LEN);
+
+sendunicast:
 	if ((dst_if->if_flags & IFF_RUNNING) == 0) {
 		m_freem(m);
 		splx(s);
@@ -860,11 +872,10 @@ bridgeintr(void)
  * bridge members.
  */
 struct mbuf *
-bridge_input(ifp, eh, m, forme)
+bridge_input(ifp, eh, m)
 	struct ifnet *ifp;
 	struct ether_header *eh;
 	struct mbuf *m;
-	int *forme;
 {
 	struct bridge_softc *sc;
 	int s;
@@ -912,10 +923,8 @@ bridge_input(ifp, eh, m, forme)
 		while (ifl != NULL) {
 			ac = (struct arpcom *)ifl->ifp;
 			if (bcmp(ac->ac_enaddr, eh->ether_dhost,
-			    ETHER_ADDR_LEN) == 0) {
-				*forme = 1;
+			    ETHER_ADDR_LEN) == 0)
 				return (m);
-			}
 			ifl = LIST_NEXT(ifl, next);
 		}
 		M_PREPEND(m, sizeof(*eh), M_DONTWAIT);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.30 1999/08/08 02:42:58 niklas Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.31 1999/09/01 21:38:48 jason Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -506,7 +506,7 @@ ether_input(ifp, eh, m)
 {
 	register struct ifqueue *inq;
 	u_int16_t etype;
-	int s, llcfound = 0, forme = 0;
+	int s, llcfound = 0;
 	register struct llc *l;
 	struct arpcom *ac = (struct arpcom *)ifp;
 
@@ -534,16 +534,18 @@ ether_input(ifp, eh, m)
 	 * gets processed as normal.
 	 */
 	if (ifp->if_bridge) {
-		m = bridge_input(ifp, eh, m, &forme);
+		m = bridge_input(ifp, eh, m);
 		if (m == NULL)
 			return;
+		/* The bridge has determined it's for us. */
+		goto decapsulate;
 	}
 #endif
 	/*
 	 * If packet is unicast and we're in promiscuous mode, make sure it
 	 * is for us.  Drop otherwise.
 	 */
-	if (!forme && (m->m_flags & (M_BCAST|M_MCAST)) == 0 &&
+	if ((m->m_flags & (M_BCAST|M_MCAST)) == 0 &&
 	    (ifp->if_flags & IFF_PROMISC)) {
 		if (bcmp(ac->ac_enaddr, (caddr_t)eh->ether_dhost,
 		    ETHER_ADDR_LEN)) {
