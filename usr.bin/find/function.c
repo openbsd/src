@@ -1,4 +1,4 @@
-/*	$OpenBSD: function.c,v 1.15 1999/10/04 21:17:32 millert Exp $	*/
+/*	$OpenBSD: function.c,v 1.16 1999/10/04 21:26:10 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)function.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: function.c,v 1.15 1999/10/04 21:17:32 millert Exp $";
+static char rcsid[] = "$OpenBSD: function.c,v 1.16 1999/10/04 21:26:10 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -453,7 +453,7 @@ f_execdir(plan, entry)
 			return (0);
 		}
 		if (chdir(entry->fts_accpath)) {
-			warn("cannot chdir to %s", entry->fts_accpath);
+			(void) close(fd);
 			return (0);
 		}
 	}
@@ -484,8 +484,10 @@ f_execdir(plan, entry)
 	if (entry->fts_level == FTS_ROOTLEVEL) {
 		if (fchdir(fd) == -1) {
 			warn("unable to chdir back to starting directory");
+			(void) close(fd);
 			return (0);
 		}
+		(void) close(fd);
 	}
 
 	pid = waitpid(pid, &status, 0);
