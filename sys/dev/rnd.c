@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.67 2004/03/15 14:17:25 mickey Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.68 2004/04/02 20:17:45 mickey Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -582,15 +582,6 @@ arc4_reinit(v)
 	arc4random_initialized = 0;
 }
 
-static int arc4random_8(void);
-
-static int
-arc4random_8(void)
-{
-	arc4maybeinit();
-	return arc4_getbyte();
-}
-
 u_int32_t
 arc4random(void)
 {
@@ -1023,8 +1014,9 @@ randomread(dev, uio, ioflag)
 		{
 			u_int8_t *cp = (u_int8_t *) buf;
 			u_int8_t *end = cp + n;
+			arc4maybeinit();
 			while (cp < end)
-				*cp++ = arc4random_8();
+				*cp++ = arc4_getbyte();
 			break;
 		}
 		default:
