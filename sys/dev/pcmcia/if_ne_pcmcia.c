@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.75 2004/05/11 04:38:17 deraadt Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.76 2004/12/12 07:05:49 deraadt Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -413,6 +413,18 @@ const struct ne2000dev {
     { PCMCIA_VENDOR_MELCO, PCMCIA_PRODUCT_MELCO_LPC3_TX,
       PCMCIA_CIS_MELCO_LPC3_TX,
       0, -1, { 0x00, 0x40, 0x26 }, NE2000DVF_AX88190 },
+
+    { PCMCIA_VENDOR_BUFFALO, PCMCIA_PRODUCT_BUFFALO_LPC_CF_CLT,
+      PCMCIA_CIS_INVALID,
+      0, -1, { 0x00, 0x07, 0x40 } },
+
+    { PCMCIA_VENDOR_BUFFALO, PCMCIA_PRODUCT_BUFFALO_LPC3_CLT,
+      PCMCIA_CIS_INVALID,
+      0, -1, { 0x00, 0x07, 0x40 } },
+
+    { PCMCIA_VENDOR_BUFFALO, PCMCIA_PRODUCT_BUFFALO_LPC4_CLX,
+      PCMCIA_CIS_INVALID,
+      0, -1, { 0x00, 0x40, 0xfa }, NE2000DVF_AX88190 },
 
     { PCMCIA_VENDOR_DUAL, PCMCIA_PRODUCT_DUAL_NE2000,
       PCMCIA_CIS_DUAL_NE2000,

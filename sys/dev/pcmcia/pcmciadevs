@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.119 2004/10/22 08:39:54 jsg Exp $
+	$OpenBSD: pcmciadevs,v 1.120 2004/12/12 07:05:49 deraadt Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -169,6 +169,9 @@ product BELKIN F5D5020		0x2328 F5D5020
 product BREEZECOM BREEZENET	0x0102 BreezeCOM BreezeNET
 
 /* BUFFALO Products */
+product BUFFALO LPC_CF_CLT	0x0307 BUFFALO LPC-CF-CLT
+product BUFFALO LPC4_CLX	0x0309 BUFFALO LPC4-CLX
+product BUFFALO LPC3_CLT	0x030a BUFFALO LPC3-CLT
 product BUFFALO WLI_PCM_S11	0x0305 BUFFALO AirStation 11Mbps WLAN
 product BUFFALO WLI_CF_S11G	0x030b BUFFALO AirStation 11Mbps CF WLAN
 
