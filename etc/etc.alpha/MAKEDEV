@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.13 1997/04/07 06:19:48 millert Exp $
+#	$OpenBSD: MAKEDEV,v 1.14 1997/05/06 19:49:56 niklas Exp $
 #	$NetBSD: MAKEDEV,v 1.8.4.1 1996/06/18 00:41:56 cgd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -72,6 +72,7 @@
 #	*random	inkernel random number generator
 #	uk*	unknown SCSI
 #	ss*	SCSI scanners
+#	ipl	IP filter log
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 umask 77
@@ -85,7 +86,7 @@ all)
 	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2 tun3
 	sh MAKEDEV ttyB0 ttyB1 ttyC0 ttyC1 ttyE0 ttyE1 lkm
-	sh MAKEDEV mmclock kbd mouse lpa0 lpt0 random
+	sh MAKEDEV mmclock kbd mouse lpa0 lpt0 random ipl
 	sh MAKEDEV uk0 uk1 ss0 ss1
 	sh MAKEDEV local
 	;;
@@ -326,6 +327,12 @@ random|srandom|urandom|prandom|arandom)
 	mknod arandom c 34 4
 	chown root.wheel random srandom urandom prandom arandom
 	chmod 644 random srandom urandom prandom arandom
+	;;
+
+ipl)
+	rm -f ipl
+	mknod ipl c 35 0
+	chown root.wheel ipl
 	;;
 
 uk*)
