@@ -528,6 +528,14 @@ main(argc, argv)
 						++unreachable;
 						Printf(" !S");
 						break;
+					case ICMP_UNREACH_NET_PROHIB:
+						++unreachable;
+						Printf(" !A");
+						break;
+					case ICMP_UNREACH_HOST_PROHIB:
+						++unreachable;
+						Printf(" !C");
+						break;
 					}
 					break;
 				}
