@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.11 2001/10/26 20:55:05 mickey Exp $
+ * $OpenBSD: calendar.birthday,v 1.12 2001/11/30 19:37:13 mickey Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -69,7 +69,6 @@
 02/23	W.E.B. DuBois born, 1868
 02/24	Wilhelm Grimm born, 1786
 02/24	Winslow Homer born, 1836
-02/25	George Harrison born in Liverpool, England, 1943
 02/25	Renoir born, 1841
 02/26	Dominique Francois Jean Arago born, 1786;
 		observed "Poisson's spot" cf June 21
