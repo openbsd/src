@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_devar.h,v 1.3 1997/10/20 20:56:14 pefo Exp $	*/
+/*	$OpenBSD: if_devar.h,v 1.4 1997/11/13 21:15:21 rees Exp $	*/
 /*	$NetBSD: if_devar.h,v 1.13 1997/06/08 18:46:36 thorpej Exp $	*/
 
 /*-
@@ -259,6 +259,7 @@ typedef enum {
 
 typedef struct {
     enum {
+	TULIP_MEDIAINFO_NONE,
 	TULIP_MEDIAINFO_SIA,
 	TULIP_MEDIAINFO_GPR,
 	TULIP_MEDIAINFO_MII,
@@ -358,6 +359,7 @@ typedef enum {
     TULIP_21140_COGENT_EM100,		/* Cogent EM100 100 only */
     TULIP_21140_ZNYX_ZX34X,		/* ZNYX ZX342 10/100 */
     TULIP_21140_ASANTE,			/* AsanteFast 10/100 */
+    TULIP_21140_EN1207,			/* Accton EN2107 10/100 BNC */
     TULIP_21041_GENERIC			/* Generic 21041 card */
 } tulip_board_t;
 
@@ -463,8 +465,10 @@ typedef struct {
     u_int32_t dot3StatsDeferredTransmissions;
     u_int32_t dot3StatsLateCollisions;
     u_int32_t dot3StatsExcessiveCollisions;
-    u_int32_t dot3StatsInternalMacTransmitErrors;
     u_int32_t dot3StatsCarrierSenseErrors;
+    u_int32_t dot3StatsInternalMacTransmitErrors;
+    u_int32_t dot3StatsInternalTransmitUnderflows;	/* not in rfc1650! */
+    u_int32_t dot3StatsInternalTransmitBabbles;		/* not in rfc1650! */
     /*
      * Receive Statistics
      */
@@ -529,9 +533,9 @@ struct _tulip_softc_t {
 #define	TULIP_INRESET		0x00000200
 #define	TULIP_NEEDRESET		0x00000400
 #define	TULIP_SQETEST		0x00000800
-#define	TULIP_TXINTPENDING	0x00001000
-#define	TULIP_xxxxxx0		0x00002000
-#define	TULIP_xxxxxx1		0x00004000
+#define	TULIP_xxxxxx0		0x00001000
+#define	TULIP_xxxxxx1		0x00002000
+#define	TULIP_WANTTXSTART	0x00004000
 #define	TULIP_NEWTXTHRESH	0x00008000
 #define	TULIP_NOAUTOSENSE	0x00010000
 #define	TULIP_PRINTLINKUP	0x00020000
@@ -540,7 +544,7 @@ struct _tulip_softc_t {
 #define	TULIP_NOMESSAGES	0x00100000
 #define	TULIP_SYSTEMERROR	0x00200000
 #define	TULIP_TIMEOUTPENDING	0x00400000
-#define	TULIP_FASTTIMEOUTPENDING	0x00800000
+#define	TULIP_xxxxxx2		0x00800000
 #define	TULIP_TRYNWAY		0x01000000
 #define	TULIP_DIDNWAY		0x02000000
 #define	TULIP_RXIGNORE		0x04000000
@@ -548,7 +552,8 @@ struct _tulip_softc_t {
 #define	TULIP_DEVICEPROBE	0x10000000
 #define	TULIP_PROMISC		0x20000000
 #define	TULIP_HASHONLY		0x40000000
-    /* only 1 bit left! */
+#define	TULIP_xxxxxx3		0x80000000
+    /* only 4 bits left! */
     u_int32_t tulip_features;	/* static bits indicating features of chip */
 #define	TULIP_HAVE_GPR		0x00000001	/* have gp register (140[A]) */
 #define	TULIP_HAVE_RXBADOVRFLW	0x00000002	/* RX corrupts on overflow */
@@ -566,6 +571,8 @@ struct _tulip_softc_t {
 #define	TULIP_HAVE_OKROM	0x00002000	/* ROM was recognized */
 #define	TULIP_HAVE_NOMEDIA	0x00004000	/* did not detect any media */
 #define	TULIP_HAVE_STOREFWD	0x00008000	/* have CMD_STOREFWD */
+#define	TULIP_HAVE_SIA100	0x00010000	/* has LS100 in SIA status */
+#define	TULIP_HAVE_OKSROM	0x00020000	/* SROM CRC is OK */
     u_int32_t tulip_intrmask;	/* our copy of csr_intr */
     u_int32_t tulip_cmdmode;	/* our copy of csr_cmdmode */
     u_int32_t tulip_last_system_error : 3;	/* last system error (only value is TULIP_SYSTEMERROR is also set) */
@@ -627,9 +634,36 @@ struct _tulip_softc_t {
 	u_int32_t dbg_txprobes_failed[TULIP_MEDIA_MAX];
 	u_int32_t dbg_events[TULIP_MEDIAPOLL_MAX];
 	u_int32_t dbg_rxpktsperintr[TULIP_RXDESCS];
-	u_int32_t dbg_txpipe;
-	u_int32_t dbg_txpipestats[TULIP_TXDESCS];
     } tulip_dbg;
+#endif
+#if defined(TULIP_PERFSTATS)
+#define	TULIP_PERF_CURRENT	0
+#define	TULIP_PERF_PREVIOUS	1
+#define	TULIP_PERF_TOTAL	2
+#define	TULIP_PERF_MAX		3
+    struct tulip_perfstats {
+	u_quad_t perf_intr_cycles;
+	u_quad_t perf_ifstart_cycles;
+	u_quad_t perf_ifstart_one_cycles;
+	u_quad_t perf_ifioctl_cycles;
+	u_quad_t perf_ifwatchdog_cycles;
+	u_quad_t perf_timeout_cycles;
+	u_quad_t perf_txput_cycles;
+	u_quad_t perf_txintr_cycles;
+	u_quad_t perf_rxintr_cycles;
+	u_quad_t perf_rxget_cycles;
+	unsigned perf_intr;
+	unsigned perf_ifstart;
+	unsigned perf_ifstart_one;
+	unsigned perf_ifioctl;
+	unsigned perf_ifwatchdog;
+	unsigned perf_timeout;
+	unsigned perf_txput;
+	unsigned perf_txintr;
+	unsigned perf_rxintr;
+	unsigned perf_rxget;
+    } tulip_perfstats[TULIP_PERF_MAX];
+#define	tulip_curperfstats		tulip_perfstats[TULIP_PERF_CURRENT]
 #endif
     struct ifqueue tulip_txq;
     struct ifqueue tulip_rxq;
@@ -646,12 +680,19 @@ struct _tulip_softc_t {
     u_int32_t tulip_setupdata[192/sizeof(u_int32_t)];
     char tulip_boardid[16];		/* buffer for board ID */
     u_int8_t tulip_rombuf[128];
+#if defined(__NetBSD__)
+    struct device *tulip_pci_busno;	/* needed for multiport boards */
+#else
     u_int8_t tulip_pci_busno;		/* needed for multiport boards */
+#endif
     u_int8_t tulip_pci_devno;		/* needed for multiport boards */
     u_int8_t tulip_connidx;
     tulip_srom_connection_t tulip_conntype;
     tulip_desc_t tulip_rxdescs[TULIP_RXDESCS];
     tulip_desc_t tulip_txdescs[TULIP_TXDESCS];
+#if defined(__NetBSD__) && NRND > 0
+    rndsource_element_t    tulip_rndsource;
+#endif
 };
 
 #if defined(IFM_ETHER)
@@ -857,6 +898,7 @@ typedef u_long ioctl_cmd_t;
 extern struct cfdriver decd;
 #define	TULIP_UNIT_TO_SOFTC(unit)	((tulip_softc_t *) decd.cd_devs[unit])
 #define TULIP_IFP_TO_SOFTC(ifp)		(TULIP_UNIT_TO_SOFTC((ifp)->if_unit))
+#define	TULIP_ETHER_IFATTACH(sc)	ether_attach(&(sc)->tulip_if)
 #if _BSDI_VERSION >= 199510
 #if 0
 #define	TULIP_BURSTSIZE(unit)		log2_burst_size
@@ -864,9 +906,6 @@ extern struct cfdriver decd;
 #define	loudprintf			aprint_verbose
 #define	printf				(*sc->tulip_pf)
 #define	MCNT(x) (sizeof(x) / sizeof(struct ifmedia_entry))
-#if (_BSD_VERSION == 199510)
-#define TULIP_ETHER_IFATTACH(sc)	ether_attach(&(sc)->tulip_if)
-#endif
 #elif _BSDI_VERSION <= 199401
 #define	DRQNONE				0
 #define	loudprintf			printf
@@ -898,6 +937,7 @@ extern struct cfdriver de_cd;
 #define	TULIP_RAISESPL()		splnet()
 #define	TULIP_RAISESOFTSPL()		splsoftnet()
 #define	TULIP_RESTORESPL(s)		splx(s)
+#define	loudprintf			printf
 
 #if !defined(__OpenBSD__)
 #define	tulip_if			tulip_ec.ec_if
@@ -908,18 +948,22 @@ extern struct cfdriver de_cd;
 #define	TULIP_ETHER_IFATTACH(sc)	ether_ifattach(&(sc)->tulip_if, (sc)->tulip_enaddr)
 #define	TULIP_PRINTF_FMT		"%s"
 #define	TULIP_PRINTF_ARGS		sc->tulip_xname
-#else
-#define	TULIP_PRINTF_FMT		"%s%d"
-#define	TULIP_PRINTF_ARGS		sc->tulip_xname, sc->tulip_unit
-#endif
-
-#define	loudprintf			printf
-
 #if defined(__alpha__)
 /* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
 #define TULIP_KVATOPHYS(sc, va)		alpha_XXX_dmamap((vm_offset_t)(va))
 #endif
+#else
+#define	TULIP_PRINTF_FMT		"%s%d"
+#define	TULIP_PRINTF_ARGS		sc->tulip_xname, sc->tulip_unit
+#endif
 #endif	/* __NetBSD__ */
+
+#ifndef TULIP_PRINTF_FMT
+#define	TULIP_PRINTF_FMT		"%s%d"
+#endif
+#ifndef TULIP_PRINTF_ARGS
+#define	TULIP_PRINTF_ARGS		sc->tulip_name, sc->tulip_unit
+#endif
 
 #ifndef TULIP_BURSTSIZE
 #define	TULIP_BURSTSIZE(unit)		3
@@ -928,26 +972,15 @@ extern struct cfdriver de_cd;
 #ifndef	tulip_if
 #define	tulip_if	tulip_ac.ac_if
 #endif
-
 #ifndef tulip_unit
 #define	tulip_unit	tulip_if.if_unit
 #endif
-
 #define	tulip_name	tulip_if.if_name
-
 #ifndef tulip_enaddr
 #define	tulip_enaddr	tulip_ac.ac_enaddr
 #endif
-
 #ifndef tulip_multicnt
 #define	tulip_multicnt	tulip_ac.ac_multicnt
-#endif
-
-#ifndef TULIP_PRINTF_FMT
-#define	TULIP_PRINTF_FMT		"%s%d"
-#endif
-#ifndef TULIP_PRINTF_ARGS
-#define	TULIP_PRINTF_ARGS		sc->tulip_name, sc->tulip_unit
 #endif
 
 #if !defined(TULIP_ETHERCOM)
@@ -993,6 +1026,47 @@ extern struct cfdriver de_cd;
 #define	TULIP_BPF_TAP(sc, p, l)	bpf_tap((sc)->tulip_bpf, p, l)
 #define	TULIP_BPF_ATTACH(sc)	bpfattach(&(sc)->tulip_bpf, &(sc)->tulip_if, DLT_EN10MB, sizeof(struct ether_header))
 #endif
+
+#if defined(TULIP_PERFSTATS)
+#define	TULIP_PERFMERGE(sc, member) \
+	do { (sc)->tulip_perfstats[TULIP_PERF_TOTAL].member \
+	     += (sc)->tulip_perfstats[TULIP_PERF_CURRENT].member; \
+	 (sc)->tulip_perfstats[TULIP_PERF_PREVIOUS].member \
+	      = (sc)->tulip_perfstats[TULIP_PERF_CURRENT].member; \
+	    (sc)->tulip_perfstats[TULIP_PERF_CURRENT].member = 0; } while (0)
+#define	TULIP_PERFSTART(name) const tulip_cycle_t perfstart_ ## name = TULIP_PERFREAD();
+#define	TULIP_PERFEND(name)	do { \
+	    (sc)->tulip_curperfstats.perf_ ## name ## _cycles += TULIP_PERFDIFF(perfstart_ ## name, TULIP_PERFREAD()); \
+	    (sc)->tulip_curperfstats.perf_ ## name ++; \
+	} while (0)
+#if defined(__i386__)
+typedef u_quad_t tulip_cycle_t;
+static __inline__ tulip_cycle_t
+TULIP_PERFREAD(
+    void)
+{
+    tulip_cycle_t x;
+    __asm__ volatile (".byte 0x0f, 0x31" : "=A" (x));
+    return x;
+}
+#define	TULIP_PERFDIFF(s, f)	((f) - (s))
+#elif defined(__alpha__)
+typedef unsigned long tulip_cycle_t;
+static __inline__ tulip_cycle_t
+TULIP_PERFREAD(
+    void)
+{
+    tulip_cycle_t x;
+    __asm__ volatile ("rpcc %0" : "=r" (x));
+    return x;
+}
+#define	TULIP_PERFDIFF(s, f)	((unsigned int) ((f) - (s)))
+#endif
+#else
+#define	TULIP_PERFSTART(name)	
+#define	TULIP_PERFEND(name)	do { } while (0)
+#define	TULIP_PERFMERGE(s,n)	do { } while (0)
+#endif /* TULIP_PERFSTATS */
 
 /*
  * However, this change to FreeBSD I am much less enamored with.
