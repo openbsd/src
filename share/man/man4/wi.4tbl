@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.69 2005/03/06 21:49:00 jmc Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.70 2005/03/12 10:32:40 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -325,7 +325,7 @@ I-O DATA WN-B11/USB:Prism-3:USB
 Intel PRO/Wireless 2011:Spectrum24:PCMCIA
 Intel PRO/Wireless 2011B:Prism-3:USB
 Intersil Prism II:Prism-2:PCMCIA
-Intersil Mini-PCI:Prism-2.5:PCI
+Intersil Mini PCI:Prism-2.5:PCI
 Intersil ISL3872:Prism-3:PCI
 Intersil Prism 2X:Prism-3:USB
 JVC MP-XP7250:Prism-3:USB
