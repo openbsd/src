@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.23 1999/02/07 00:14:25 deraadt Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.24 1999/04/20 19:04:34 weingart Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -522,7 +522,7 @@ sc_err1(xs, async)
 	 * If it has a buf, we might be working with
 	 * a request from the buffer cache or some other
 	 * piece of code that requires us to process
-	 * errors at inetrrupt time. We have probably
+	 * errors at interrupt time. We have probably
 	 * been called by scsi_done()
 	 */
 	switch (xs->error) {
