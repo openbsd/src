@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.151 2003/05/17 01:08:50 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.152 2003/05/17 02:01:21 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -385,6 +385,7 @@ struct pf_rule {
 	u_int8_t		 log;
 	u_int8_t		 quick;
 	u_int8_t		 ifnot;
+	u_int8_t		 match_tag_not;
 
 #define PF_STATE_NORMAL		0x1
 #define PF_STATE_MODULATE	0x2
