@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.19 1999/03/02 22:19:08 niklas Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.20 1999/03/12 17:49:37 deraadt Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -296,6 +296,13 @@ again:
 			VREF(p2->p_tracep);
 	}
 #endif
+
+	/*
+	 * set priority of child to be that of parent
+	 * XXX should move p_estcpu into the region of struct proc which gets
+	 * copied.
+	 */
+	p2->p_estcpu = p1->p_estcpu;
 
 	/*
 	 * This begins the section where we must prevent the parent

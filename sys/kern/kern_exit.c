@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.16 1999/03/02 22:19:09 niklas Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.17 1999/03/12 17:49:37 deraadt Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -368,6 +368,10 @@ loop:
 				wakeup((caddr_t)t);
 				return (0);
 			}
+
+			/* Charge us for our child's sins */
+			curproc->p_estcpu = min(curproc->p_estcpu +
+			    p->p_estcpu, UCHAR_MAX);
 			p->p_xstat = 0;
 			ruadd(&q->p_stats->p_cru, p->p_ru);
 			FREE(p->p_ru, M_ZOMBIE);
