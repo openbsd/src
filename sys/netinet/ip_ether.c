@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.19 2001/02/01 20:14:26 jason Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.20 2001/02/01 20:19:24 jason Exp $  */
 
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
@@ -136,13 +136,14 @@ va_dcl
 
     /* Verify EtherIP version number */
     m_copydata(m, iphlen, sizeof(u_int8_t), &v);
-    if ((v & ETHERIP_VERSION_MASK) != ETHERIP_VERSION) {
+    if ((v & ETHERIP_VERSION_MASK) != ETHERIP_VERSION)
+    {
 	/*
 	 * Note that the other potential failure of the above check is that the
 	 * second nibble of the EtherIP header (the reserved part) is not
 	 * zero; this is also invalid protocol behaviour.
 	 */
-	if (v & 0x0f)
+	if (v & ETHERIP_RSVD_MASK)
 	{
 	    DPRINTF(("etherip_input(): received invalid EtherIP header (reserved field non-zero\n"));
 	}
