@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.504 2002/04/28 20:54:56 nate Exp 
+ *		OpenBSD: pcidevs,v 1.505 2002/04/29 22:30:34 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2639,12 +2639,28 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Dual Serial",
 	},
 	{
+	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_QUATTRO_AB,
+	    "Dual Serial",
+	},
+	{
+	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_QUATTRO_CD,
+	    "Dual Serial",
+	},
+	{
 	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_IOFLEX_2S_0,
 	    "Serial",
 	},
 	{
 	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_IOFLEX_2S_1,
 	    "Serial",
+	},
+	{
+	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_QUATTRO_AB2,
+	    "Dual Serial",
+	},
+	{
+	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_QUATTRO_CD2,
+	    "Dual Serial",
 	},
 	{
 	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_OCTOPUS550_0,

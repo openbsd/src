@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.504 2002/04/28 20:54:56 nate Exp 
+ *		OpenBSD: pcidevs,v 1.505 2002/04/29 22:30:34 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1426,8 +1426,12 @@
 
 /* Lava */
 #define	PCI_PRODUCT_LAVA_TWOSP_2S	0x0100		/* Dual Serial */
+#define	PCI_PRODUCT_LAVA_QUATTRO_AB	0x0101		/* Dual Serial */
+#define	PCI_PRODUCT_LAVA_QUATTRO_CD	0x0102		/* Dual Serial */
 #define	PCI_PRODUCT_LAVA_IOFLEX_2S_0	0x0110		/* Serial */
 #define	PCI_PRODUCT_LAVA_IOFLEX_2S_1	0x0111		/* Serial */
+#define	PCI_PRODUCT_LAVA_QUATTRO_AB2	0x0120		/* Dual Serial */
+#define	PCI_PRODUCT_LAVA_QUATTRO_CD2	0x0121		/* Dual Serial */
 #define	PCI_PRODUCT_LAVA_OCTOPUS550_0	0x0180		/* Quad Serial */
 #define	PCI_PRODUCT_LAVA_OCTOPUS550_1	0x0181		/* Quad Serial */
 #define	PCI_PRODUCT_LAVA_LAVAPORT_0	0x0201		/* Serial */
