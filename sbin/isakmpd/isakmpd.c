@@ -1,5 +1,5 @@
-/*	$OpenBSD: isakmpd.c,v 1.6 1998/12/22 02:25:16 niklas Exp $	*/
-/*	$EOM: isakmpd.c,v 1.25 1998/12/22 02:23:44 niklas Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.7 1998/12/22 15:27:40 niklas Exp $	*/
+/*	$EOM: isakmpd.c,v 1.26 1998/12/22 15:22:03 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -189,8 +189,9 @@ sigusr1 (int sig)
 int
 main (int argc, char *argv[])
 {
-  fd_set rfds, wfds;
+  fd_set *rfds, *wfds;
   int n, m;
+  size_t mask_size;
   struct timeval tv, *timeout = &tv;
 
   parse_args (argc, argv);
@@ -198,7 +199,7 @@ main (int argc, char *argv[])
   if (!debug)
     {
       if (daemon (0, 0))
-	log_fatal ("daemon");
+	log_fatal ("main: daemon");
       /* Switch to syslog.  */
       log_to (0);
     }
@@ -208,6 +209,16 @@ main (int argc, char *argv[])
 
   /* Report state on USR1 reception.  */
   signal (SIGUSR1, sigusr1);
+
+  /* Allocate the file descriptor sets just big enough.  */
+  n = getdtablesize ();
+  mask_size = howmany (n, NFDBITS) * sizeof (fd_mask);
+  rfds = (fd_set *)malloc (mask_size);
+  if (!rfds)
+    log_fatal ("main: malloc (%d)", mask_size);
+  wfds = (fd_set *)malloc (mask_size);
+  if (!wfds)
+    log_fatal ("main: malloc (%d)", mask_size);
 
   while (1)
     {
@@ -220,9 +231,9 @@ main (int argc, char *argv[])
 	report ();
 
       /* Setup the descriptors to look for incoming messages at.  */
-      FD_ZERO (&rfds);
-      n = transport_fd_set (&rfds);
-      FD_SET (ui_socket, &rfds);
+      memset (rfds, 0, mask_size);
+      n = transport_fd_set (rfds);
+      FD_SET (ui_socket, rfds);
       if (ui_socket + 1 > n)
 	n = ui_socket + 1;
 
@@ -232,21 +243,21 @@ main (int argc, char *argv[])
        */
       if (!app_none)
 	{
-	  FD_SET (app_socket, &rfds);
+	  FD_SET (app_socket, rfds);
 	  if (app_socket + 1 > n)
 	    n = app_socket + 1;
 	}
 
       /* Setup the descriptors that have pending messages to send.  */
-      FD_ZERO (&wfds);
-      m = transport_pending_wfd_set (&wfds);
+      memset (wfds, 0, mask_size);
+      m = transport_pending_wfd_set (wfds);
       if (m > n)
 	n = m;
 
       /* Find out when the next timed event is.  */
       timer_next_event (&timeout);
 
-      n = select (n, &rfds, &wfds, 0, timeout);
+      n = select (n, rfds, wfds, 0, timeout);
       if (n == -1)
 	{
 	  if (errno != EINTR)
@@ -263,11 +274,11 @@ main (int argc, char *argv[])
 	}
       else if (n)
 	{
-	  transport_handle_messages (&rfds);
-	  transport_send_messages (&wfds);
-	  if (FD_ISSET (ui_socket, &rfds))
+	  transport_handle_messages (rfds);
+	  transport_send_messages (wfds);
+	  if (FD_ISSET (ui_socket, rfds))
 	    ui_handler ();
-	  if (!app_none && FD_ISSET (app_socket, &rfds))
+	  if (!app_none && FD_ISSET (app_socket, rfds))
 	    app_handler ();
 	}
       timer_handle_expirations ();
