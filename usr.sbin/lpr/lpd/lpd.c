@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.31 2002/05/22 18:26:03 millert Exp $ */
+/*	$OpenBSD: lpd.c,v 1.32 2002/05/28 18:17:22 millert Exp $ */
 /*	$NetBSD: lpd.c,v 1.33 2002/01/21 14:42:29 wiz Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpd.c,v 1.31 2002/05/22 18:26:03 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lpd.c,v 1.32 2002/05/28 18:17:22 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -150,7 +150,7 @@ main(int argc, char **argv)
 
 	euid = geteuid();	/* these shouldn't be different */
 	uid = getuid();
-	maxfd = options = check_options = 0;
+	options = check_options = 0;
 	gethostname(host, sizeof(host));
 
 	if (euid != 0)
@@ -295,8 +295,6 @@ main(int argc, char **argv)
 	sigprocmask(SIG_SETMASK, &omask, NULL);
 	FD_ZERO(&defreadfds);
 	FD_SET(funix, &defreadfds);
-	if (funix > maxfd)
-		maxfd = funix;
 	listen(funix, 5);
 	if (!sflag || blist_addrs)
 		finet = socksetup(PF_UNSPEC, options, port);
@@ -309,10 +307,13 @@ main(int argc, char **argv)
 		free(blist);
 	}
 
+	maxfd = funix;
 	if (finet) {
 		for (i = 1; i <= *finet; i++) {
 			FD_SET(finet[i], &defreadfds);
 			listen(finet[i], 5);
+			if (finet[i] > maxfd)
+				maxfd = finet[i];
 		}
 	}
 	/*
@@ -338,7 +339,7 @@ main(int argc, char **argv)
 		}
 
 		FD_COPY(&defreadfds, &readfds);
-		nfds = select(maxfd + 1, &readfds, 0, 0, 0);
+		nfds = select(maxfd + 1, &readfds, NULL, NULL, NULL);
 		if (nfds <= 0) {
 			if (nfds < 0 && errno != EINTR)
 				syslog(LOG_WARNING, "select: %m");
