@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.313 2003/01/31 19:22:11 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.314 2003/01/31 19:36:39 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -249,11 +249,12 @@ struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] =
 			*state = pf_find_state(&tree_lan_ext, &key);	\
 		if (*state == NULL)					\
 			return (PF_DROP);				\
-		if ((*state)->rule.ptr != NULL &&			\
+		if (direction == PF_OUT &&				\
+		    (*state)->rule.ptr != NULL &&			\
 		    (((*state)->rule.ptr->rt == PF_ROUTETO &&		\
-		    (*state)->rule.ptr->direction == direction) ||	\
+		    (*state)->rule.ptr->direction == PF_OUT) ||		\
 		    ((*state)->rule.ptr->rt == PF_REPLYTO &&		\
-		    (*state)->rule.ptr->direction != direction)) &&	\
+		    (*state)->rule.ptr->direction == PF_IN)) &&		\
 		    (*state)->rt_ifp != NULL &&				\
 		    (*state)->rt_ifp != ifp)				\
 			return (PF_PASS);				\
