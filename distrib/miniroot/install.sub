@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.102 1998/10/10 08:42:29 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.103 1998/10/10 20:54:24 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -1319,8 +1319,8 @@ esac
 # Extract the files one at a time and keep track of which ones failed
 while test -n "${_get_files}" ; do
 	_failed_files=""
+	echo ""
 	for _f in $_get_files ; do
-		echo ""
 		echo "$1/${_f}:"
 		if [ "X${_f}" = "X${_kernel}" ]; then
 			ftp -V -m -o /mnt/$_f file:$1/$_f
