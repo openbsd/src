@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_bsd.c,v 1.5 1998/03/12 04:57:40 art Exp $	*/
+/*	$OpenBSD: sys_bsd.c,v 1.6 1998/12/28 11:13:51 deraadt Exp $	*/
 /*	$NetBSD: sys_bsd.c,v 1.11 1996/02/28 21:04:10 thorpej Exp $	*/
 
 /*
@@ -88,17 +88,14 @@ extern struct termios new_tc;
 # endif
 #endif	/* USE_TERMIO */
 
-static fd_set ibits, obits, xbits;
-
+fd_set *ibitsp, *obitsp, *xbitsp;
+int fdsn;
 
     void
 init_sys()
 {
     tout = fileno(stdout);
     tin = fileno(stdin);
-    FD_ZERO(&ibits);
-    FD_ZERO(&obits);
-    FD_ZERO(&xbits);
 
     errno = 0;
 }
@@ -969,36 +966,48 @@ process_rings(netin, netout, netex, ttyin, ttyout, poll)
 		 */
     int returnValue = 0;
     static struct timeval TimeValue = { 0 };
+    int maxfd = -1;
+    int tmp;
 
-    if (netout) {
-	FD_SET(net, &obits);
+    if ((netout || netin || netex) && net > maxfd)
+	maxfd = net;
+    if (ttyout && tout > maxfd)
+	maxfd = tout;
+    if (ttyin && tin > maxfd)
+	maxfd = tin;
+    tmp = howmany(maxfd+1, NFDBITS) * sizeof(fd_mask);
+    if (tmp > fdsn) {
+	if (ibitsp)
+	    free(ibitsp);
+	if (obitsp)
+	    free(obitsp);
+	if (xbitsp)
+	    free(xbitsp);
+	fdsn = tmp;
+	if ((ibitsp = (fd_set *)malloc(fdsn)) == NULL)
+	    err(1, "malloc");
+	if ((obitsp = (fd_set *)malloc(fdsn)) == NULL)
+	    err(1, "malloc");
+	if ((xbitsp = (fd_set *)malloc(fdsn)) == NULL)
+	    err(1, "malloc");
+	memset(ibitsp, 0, fdsn);
+	memset(obitsp, 0, fdsn);
+	memset(xbitsp, 0, fdsn);
     }
-    if (ttyout) {
-	FD_SET(tout, &obits);
-    }
-#if	defined(TN3270)
-    if (ttyin) {
-	FD_SET(tin, &ibits);
-    }
-#else	/* defined(TN3270) */
-    if (ttyin) {
-	FD_SET(tin, &ibits);
-    }
-#endif	/* defined(TN3270) */
-#if	defined(TN3270)
-    if (netin) {
-	FD_SET(net, &ibits);
-    }
-#   else /* !defined(TN3270) */
-    if (netin) {
-	FD_SET(net, &ibits);
-    }
-#   endif /* !defined(TN3270) */
-    if (netex) {
-	FD_SET(net, &xbits);
-    }
-    if ((c = select(16, &ibits, &obits, &xbits,
-			(poll == 0)? (struct timeval *)0 : &TimeValue)) < 0) {
+
+    if (netout)
+	FD_SET(net, obitsp);
+    if (ttyout)
+	FD_SET(tout, obitsp);
+    if (ttyin)
+	FD_SET(tin, ibitsp);
+    if (netin)
+	FD_SET(net, ibitsp);
+    if (netex)
+	FD_SET(net, xbitsp);
+
+    if ((c = select(maxfd+1, ibitsp, obitsp, xbitsp,
+      (poll == 0)? (struct timeval *)0 : &TimeValue)) < 0) {
 	if (c == -1) {
 		    /*
 		     * we can get EINTR if we are in line mode,
@@ -1019,9 +1028,9 @@ process_rings(netin, netout, netex, ttyin, ttyout, poll)
 			 * to make sure we are selecting on the right
 			 * ones.
 			*/
-		FD_ZERO(&ibits);
-		FD_ZERO(&obits);
-		FD_ZERO(&xbits);
+		memset(ibitsp, 0, fdsn);
+		memset(obitsp, 0, fdsn);
+		memset(xbitsp, 0, fdsn);
 		return 0;
 	    }
 #	    endif /* defined(TN3270) */
@@ -1035,8 +1044,8 @@ process_rings(netin, netout, netex, ttyin, ttyout, poll)
     /*
      * Any urgent data?
      */
-    if (FD_ISSET(net, &xbits)) {
-	FD_CLR(net, &xbits);
+    if (FD_ISSET(net, xbitsp)) {
+	FD_CLR(net, xbitsp);
 	SYNCHing = 1;
 	(void) ttyflush(1);	/* flush already enqueued data */
     }
@@ -1044,10 +1053,10 @@ process_rings(netin, netout, netex, ttyin, ttyout, poll)
     /*
      * Something to read from the network...
      */
-    if (FD_ISSET(net, &ibits)) {
+    if (FD_ISSET(net, ibitsp)) {
 	int canread;
 
-	FD_CLR(net, &ibits);
+	FD_CLR(net, ibitsp);
 	canread = ring_empty_consecutive(&netiring);
 #if	!defined(SO_OOBINLINE)
 	    /*
@@ -1157,8 +1166,8 @@ process_rings(netin, netout, netex, ttyin, ttyout, poll)
     /*
      * Something to read from the tty...
      */
-    if (FD_ISSET(tin, &ibits)) {
-	FD_CLR(tin, &ibits);
+    if (FD_ISSET(tin, ibitsp)) {
+	FD_CLR(tin, ibitsp);
 	c = TerminalRead(ttyiring.supply, ring_empty_consecutive(&ttyiring));
 	if (c < 0 && errno == EIO)
 	    c = 0;
@@ -1182,12 +1191,12 @@ process_rings(netin, netout, netex, ttyin, ttyout, poll)
 	returnValue = 1;		/* did something useful */
     }
 
-    if (FD_ISSET(net, &obits)) {
-	FD_CLR(net, &obits);
+    if (FD_ISSET(net, obitsp)) {
+	FD_CLR(net, obitsp);
 	returnValue |= netflush();
     }
-    if (FD_ISSET(tout, &obits)) {
-	FD_CLR(tout, &obits);
+    if (FD_ISSET(tout, obitsp)) {
+	FD_CLR(tout, obitsp);
 	returnValue |= (ttyflush(SYNCHing|flushout) > 0);
     }
 
