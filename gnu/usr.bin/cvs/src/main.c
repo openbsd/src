@@ -873,10 +873,10 @@ parseopts()
 		char *RCS_citag = strdup(buf+4);
 		setenv("RCSLOCALID", RCS_citag, 1);
 	    } else if (!strncmp(buf, "umask=", 6)) {
-		int mode;
+		mode_t mode;
 
-		mode = strtol(buf+6, NULL, 8);
-		umask((mode_t)mode);
+		mode = (mode_t)strtol(buf+6, NULL, 8);
+		(void) umask(mode);
 	    }
 	    else if (!strncmp(buf, "dlimit=", 7)) {
 #ifdef __OpenBSD__
