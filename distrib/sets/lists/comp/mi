@@ -267,6 +267,7 @@
 ./usr/include/dev/midisynvar.h
 ./usr/include/dev/midivar.h
 ./usr/include/dev/mii
+./usr/include/dev/mii/brgphyreg.h
 ./usr/include/dev/mii/dmphyreg.h
 ./usr/include/dev/mii/icsphyreg.h
 ./usr/include/dev/mii/inphyreg.h
@@ -284,6 +285,7 @@
 ./usr/include/dev/mii/tlphyvar.h
 ./usr/include/dev/mii/tqphyreg.h
 ./usr/include/dev/mii/txphyreg.h
+./usr/include/dev/mii/xmphyreg.h
 ./usr/include/dev/mulaw.h
 ./usr/include/dev/ofw
 ./usr/include/dev/ofw/openfirm.h

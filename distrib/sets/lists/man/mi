@@ -921,6 +921,7 @@
 ./usr/share/man/cat4/auvia.0
 ./usr/share/man/cat4/awi.0
 ./usr/share/man/cat4/bpf.0
+./usr/share/man/cat4/brgphy.0
 ./usr/share/man/cat4/bridge.0
 ./usr/share/man/cat4/cardbus.0
 ./usr/share/man/cat4/ccd.0
@@ -1214,6 +1215,7 @@
 ./usr/share/man/cat4/wx.0
 ./usr/share/man/cat4/xe.0
 ./usr/share/man/cat4/xl.0
+./usr/share/man/cat4/xmphy.0
 ./usr/share/man/cat4/ym.0
 ./usr/share/man/cat4/zero.0
 ./usr/share/man/cat5

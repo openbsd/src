@@ -736,3 +736,5 @@
 ./usr/share/info/ld.info-
 ./usr/share/info/ld.info-1
 ./usr/share/info/ld.info-2
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/mii/brgphyreg.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/mii/xmphyreg.ph

@@ -1729,3 +1729,5 @@
 ./usr/mdec/rboot
 ./usr/mdec/sboot
 ./usr/mdec/stboot
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/mii/brgphyreg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/mii/xmphyreg.ph

@@ -45,3 +45,5 @@
 ./usr/mdec/rdboot
 ./usr/mdec/sdboot
 ./usr/mdec/xxboot
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/mii/brgphyreg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/mii/xmphyreg.ph
