@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart.c,v 1.41 2004/08/24 18:44:49 miod Exp $	*/
+/*	$OpenBSD: dart.c,v 1.42 2004/11/13 14:47:35 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -322,7 +322,7 @@ dartstart(tp)
 	int s;
 	union dart_pt_io *ptaddr;
 	union dartreg *addr;
-	int port;
+	int port, tries;
 	int c;
 
 	dev = tp->t_dev;
@@ -347,9 +347,9 @@ dartstart(tp)
 			tp->t_state &= ~TS_ASLEEP;
 			wakeup((caddr_t)&tp->t_outq);
 		}
+		selwakeup(&tp->t_wsel);
 		if (tp->t_outq.c_cc == 0)
 			goto bail;
-		selwakeup(&tp->t_wsel);
 	}
 
 	dprintf(("dartstart: dev(%d, %d)\n", major(dev), minor(dev)));
@@ -358,11 +358,19 @@ dartstart(tp)
 		dprintf(("dartstart: ptaddr = 0x%08x from uart at 0x%08x\n",
 			 ptaddr, addr));
 
-	if (tp->t_outq.c_cc != 0) {
-		tp->t_state |= TS_BUSY;
+	tp->t_state |= TS_BUSY;
+	while (tp->t_outq.c_cc != 0) {
 
 		/* load transmitter until it is full */
-		while (ptaddr->read.rd_sr & TXRDY) {
+		for (tries = 10000; tries != 0; tries --)
+			if (ptaddr->read.rd_sr & TXRDY)
+				break;
+
+		if (tries == 0) {
+			timeout_add(&tp->t_rstrt_to, 1);
+			tp->t_state |= TS_TIMEOUT;
+			break;
+		} else {
 			c = getc(&tp->t_outq);
 
 			if (port != CONS_PORT)
@@ -373,22 +381,14 @@ dartstart(tp)
 			if (port != CONS_PORT)
 				dprintf(("dartstart: enabling Tx int\n"));
 			if (port == A_PORT)
-				dart_sv_reg.sv_imr = dart_sv_reg.sv_imr | ITXRDYA;
+				dart_sv_reg.sv_imr |= ITXRDYA;
 			else
-				dart_sv_reg.sv_imr = dart_sv_reg.sv_imr | ITXRDYB;
+				dart_sv_reg.sv_imr |= ITXRDYB;
 			addr->write.wr_imr = dart_sv_reg.sv_imr;
-
-			if (tp->t_outq.c_cc == 0)
-				break;
-		}
-
-		tp->t_state &= ~TS_BUSY;
-
-		if (tp->t_outq.c_cc != 0) {
-			timeout_add(&tp->t_rstrt_to, 1);
-			tp->t_state |= TS_TIMEOUT;
 		}
 	}
+	tp->t_state &= ~TS_BUSY;
+
 bail:
 	splx(s);
 }
