@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.787 2004/10/30 00:35:28 deraadt Exp $
+$OpenBSD: pcidevs,v 1.788 2004/10/30 14:11:23 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -732,7 +732,7 @@ product AMCIRCUITS S5933	0x4750	S5933 PCI Matchmaker
 product AMCIRCUITS LANAI	0x8043	Myrinet LANai
 
 /* Atheros products */
-product ATHEROS AR5201		0x0007 AR5201
+product ATHEROS AR5210		0x0007 AR5210
 product ATHEROS AR5311		0x0011 AR5211
 product ATHEROS AR5211		0x0012 AR5211
 product ATHEROS AR5212		0x0013 AR5212
