@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.31 2003/08/11 20:45:17 miod Exp $   */
+/*   $OpenBSD: eh.S,v 1.32 2003/08/13 08:52:44 miod Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -1017,8 +1017,8 @@ GLOBAL(badaddr)
 	 */
 	ldcr	r8, PSR
 	set	r4, r8, 1<PSR_INTERRUPT_DISABLE_BIT>
-	FLUSH_PIPELINE
 	stcr	r4, PSR
+	FLUSH_PIPELINE
 
 	ldcr	r5, SR1
 	set	r5, r5, 1<FLAG_IGNORE_DATA_EXCEPTION>
@@ -1103,8 +1103,8 @@ ASGLOBAL(badaddr__return)
 	 * we do not want to turn them on now, so we just restore from
 	 * where we saved it.
 	 */
-	FLUSH_PIPELINE
 	stcr	r8, PSR
+	FLUSH_PIPELINE
 	jmp	r1
 
 ASLOCAL(m88110_badaddr__return_nonzero)
@@ -1873,9 +1873,7 @@ ASLOCAL(fpu_enable)
 	 ldcr	r2,   PSR
 	clr	r2,   r2,   1<PSR_INTERRUPT_DISABLE_BIT>
 	stcr	r2,   PSR
-#ifdef DDB
 	FLUSH_PIPELINE
-#endif
 
 	/* service any outstanding data pipeline stuff
 	   - check dmt0 anything outstanding? */
@@ -2004,8 +2002,8 @@ ASLOCAL(return_from_exception_handler)
         bb1	PSR_INTERRUPT_DISABLE_BIT, r2, 1f	/* skip if disabled */
 	ldcr	r2, PSR
 	clr	r2, r2, 1<PSR_INTERRUPT_DISABLE_BIT>	/* enable interrupts */
-	FLUSH_PIPELINE
         stcr	r2, PSR
+	FLUSH_PIPELINE
 1:
 	ld	r2, FPTR, REG_OFF(EF_DMT0)
 	bb0	DMT_VALID_BIT, r2, 2f
@@ -2047,8 +2045,8 @@ ASLOCAL(m88110_return_code)
 	bb1	PSR_INTERRUPT_DISABLE_BIT, r2, 1f	/* skip if disabled */
 	ldcr	r2, PSR
 	clr	r2, r2, 1<PSR_INTERRUPT_DISABLE_BIT>	/* enable interrupts */
-	FLUSH_PIPELINE
 	stcr	r2, PSR
+	FLUSH_PIPELINE
 1:
 	br	2f	/* temp XXX smurph */
 	ld	r2, FPTR, REG_OFF(EF_VECTOR)
@@ -2125,8 +2123,8 @@ ASLOCAL(no_ast)
 	/* disable interrupts */
 	ldcr	r1, PSR
 	set	r1, r1, 1<PSR_INTERRUPT_DISABLE_BIT>
-	FLUSH_PIPELINE
 	stcr	r1, PSR
+	FLUSH_PIPELINE
 
 	/* now ready to return....*/
 	subu	r31, r31, 40
@@ -2159,8 +2157,8 @@ ASLOCAL(no_ast)
 	/* disable shadowing */
 	ldcr	r1, PSR
 	set	r1, r1, 1<PSR_SHADOW_FREEZE_BIT>
-	FLUSH_PIPELINE
 	stcr	r1, PSR
+	FLUSH_PIPELINE
 
 	/* reload the control regs*/
 #ifdef M88110
@@ -2964,9 +2962,7 @@ ASLOCAL(m88110_fpu_enable)
 	 ldcr	r2,   PSR
 	clr	r2,   r2,   1<PSR_INTERRUPT_DISABLE_BIT>
 	stcr	r2,   PSR
-#ifdef DDB
 	FLUSH_PIPELINE
-#endif
 #if 1 /* XXX test */
 	br	8f
 #else

@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_asm_routines.S,v 1.23 2003/08/11 20:45:17 miod Exp $	*/
+/* $OpenBSD: locore_asm_routines.S,v 1.24 2003/08/13 08:52:44 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -1631,6 +1631,7 @@ ENTRY(set_cpu_number)
 	ldcr	r4, PSR
 	set	r5, r4, 1<PSR_INTERRUPT_DISABLE_BIT>
 	stcr	r5, PSR
+	FLUSH_PIPELINE
 	tcnd	ne0,r0,10 /* make sure interrupts are really disabled */
 			  /* if they are not, branch to error_handler() */
 	/* put in the cpu number */
@@ -1641,6 +1642,7 @@ ENTRY(set_cpu_number)
 
 	/* put back the PSR to what it was before and return */
 	stcr	r4, PSR
+	FLUSH_PIPELINE
 	jmp	r1
 
 1:	/* bad cpu number*/

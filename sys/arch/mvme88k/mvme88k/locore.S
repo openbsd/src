@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.28 2003/08/11 20:45:17 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.29 2003/08/13 08:52:44 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -215,6 +215,7 @@ GLOBAL(start_text)
 /*	set	r11, r11, 1<PSR_SERIAL_MODE_BIT> */
 	set	r11, r11, 1<PSR_SERIALIZE_BIT>
 	stcr	r11, PSR
+	FLUSH_PIPELINE
 	stcr	r0,  VBR	/* set Vector Base Register to 0, ALWAYS! */
 	FLUSH_PIPELINE
 	cmp	r2, r8, CPU_88110	/* r8 contains cputyp */

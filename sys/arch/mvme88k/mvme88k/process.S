@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.S,v 1.20 2003/08/12 18:06:48 miod Exp $	*/
+/*	$OpenBSD: process.S,v 1.21 2003/08/13 08:52:44 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -87,8 +87,7 @@ ENTRY(switch_exit)
 	bsr.n	_C_LABEL(exit2)
 	 subu	r31, r31, 48		/* allocate stack  */
 	addu	r31, r31, 48		/* restore stack */
-	bsr.n	_C_LABEL(cpu_switch)	/* goto final switch */
-	 or	r2, r0, r10
+	bsr	_C_LABEL(cpu_switch)	/* goto final switch */
 
 /*
  * cpu_switch()
@@ -104,7 +103,7 @@ ENTRY(cpu_switch)
 
 	or.u	r10, r0, hi16(_C_LABEL(curpcb))
 	ld	r10,r10, lo16(_C_LABEL(curpcb))
-	st	r1, r10, PCB_PC		/*  save r1 in pcb */
+	st	r1, r10, PCB_PC
 	st	r14,r10, PCB_R14
 	st	r15,r10, PCB_R15
 	st	r16,r10, PCB_R16
@@ -126,11 +125,7 @@ ENTRY(cpu_switch)
 
 	bsr.n	_C_LABEL(getipl)
 	 or	r14,r10, 0		/* save r10 in r14 */
-
 	st	r2, r14, PCB_IPL	/* save ipl in pcb */
-
-	or.u	r11, r0, hi16(_C_LABEL(curproc))
-	ld	r11,r11, lo16(_C_LABEL(curproc))
 
 	or.u	r11, r0, hi16(_C_LABEL(curproc))
 	st	r0, r11, lo16(_C_LABEL(curproc))	/* curproc = NULL */
@@ -149,7 +144,7 @@ ASLOCAL(Lidleloop)
 
 ASLOCAL(Lloopchk)			/* if whichqs is zero, keep checking */
 	bsr.n	_C_LABEL(setipl)	/* unmask all ints... */
-	 or	r2, r0, 0
+	 or	r2, r0, IPL_NONE
 
 	ldcr	r2, PSR
 	bb0	PSR_INTERRUPT_DISABLE_BIT, r2, 1f
@@ -161,8 +156,8 @@ ASLOCAL(Lloopchk)			/* if whichqs is zero, keep checking */
 	ldcr	r2, PSR
 #endif
 	clr	r2, r2, 1<PSR_INTERRUPT_DISABLE_BIT>	/* ...and enable them */
-	FLUSH_PIPELINE
 	stcr	r2, PSR
+	FLUSH_PIPELINE
 1:
 	br	_ASM_LABEL(Lidleloop)
 
