@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.52 1999/12/09 13:59:57 itojun Exp $
+#	$OpenBSD: netstart,v 1.53 1999/12/09 14:22:38 itojun Exp $
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -156,6 +156,14 @@ EOF
 	echo 'config error, multicasting disabled until rc.conf is fixed'
 	route -n add -net 224.0.0.0/4 -interface 127.0.0.1 -reject;;
 esac
+
+# IPv6 configurations.
+# disallow scoped unicast dest without outgoing scope identifiers.
+route add -inet6 fe80:: -prefixlen 10 ::1 -reject
+route add -inet6 fc80:: -prefixlen 10 ::1 -reject
+# disallow "internal" addresses to appear on the wire.
+route add -inet6 ::ffff:0.0.0.0 -prefixlen 96 ::1 -reject
+route add -inet6 ::0.0.0.0 -prefixlen 96 ::1 -reject
 	
 # Configure NAT after configuring network interfaces
 if [ "${ipnat}" = "YES" -a "${ipfilter}" = "YES" -a -f "${ipnat_rules}" ]; then
