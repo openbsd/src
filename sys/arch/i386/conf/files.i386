@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.24 1996/08/27 10:46:51 downsj Exp $
+#	$OpenBSD: files.i386,v 1.25 1996/09/01 20:56:31 downsj Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -149,7 +149,8 @@ device	fdc {drive = -1}
 attach	fdc at isa
 device	fd: disk, isa_dma
 attach	fd at fdc
-file	arch/i386/isa/fd.c		fdc needs-flag
+file	arch/i386/isa/fdc.c		fdc needs-flag
+file	arch/i386/isa/fd.c		fd needs-flag
 major	{fd = 2}
 
 # PC speaker

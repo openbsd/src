@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.22 1996/08/29 09:26:04 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.23 1996/09/01 20:55:20 downsj Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 bdev_decl(wd);
 bdev_decl(sw);
 #include "fdc.h"
+#include "fd.h"
 bdev_decl(fd);
 #include "wt.h"
 bdev_decl(wt);
@@ -71,7 +72,7 @@ struct bdevsw	bdevsw[] =
 {
 	bdev_disk_init(NWDC,wd),	/* 0: ST506/ESDI/IDE disk */
 	bdev_swap_init(1,sw),		/* 1: swap pseudo-device */
-	bdev_disk_init(NFDC,fd),	/* 2: floppy diskette */
+	bdev_disk_init(NFD,fd),		/* 2: floppy diskette */
 	bdev_tape_init(NWT,wt),		/* 3: QIC-02/QIC-36 tape */
 	bdev_disk_init(NSD,sd),		/* 4: SCSI disk */
 	bdev_tape_init(NST,st),		/* 5: SCSI tape */
@@ -217,7 +218,7 @@ struct cdevsw	cdevsw[] =
 #else
 	cdev_tty_init(NCOM,com),	/* 8: serial port */
 #endif
-	cdev_disk_init(NFDC,fd),	/* 9: floppy disk */
+	cdev_disk_init(NFD,fd),		/* 9: floppy disk */
 	cdev_tape_init(NWT,wt),		/* 10: QIC-02/QIC-36 tape */
 	cdev_disk_init(NSCD,scd),	/* 11: Sony CD-ROM */
 	cdev_pc_init(NPC + NVT,pc),	/* 12: PC console */
