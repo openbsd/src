@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_gif.c,v 1.4 2000/01/12 06:35:04 angelos Exp $	*/
+/*	$OpenBSD: in6_gif.c,v 1.5 2000/01/21 03:15:06 angelos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@ in6_gif_output(ifp, family, m, rt)
 		return ENETUNREACH;
 	}
 
-	/* setup dummy tdb.  it highly depends on ipe4_output() code. */
+	/* setup dummy tdb.  it highly depends on ipip_output() code. */
 	bzero(&tdb, sizeof(tdb));
 	bzero(&xfs, sizeof(xfs));
 	tdb.tdb_src.sin6.sin6_family = AF_INET6;
@@ -146,7 +146,7 @@ in6_gif_output(ifp, family, m, rt)
 	
 	/* encapsulate into IPv6 packet */
 	mp = NULL;
-	error = ipe4_output(m, &tdb, &mp, hlen, poff);
+	error = ipip_output(m, &tdb, &mp, hlen, poff);
 	if (error)
 	        return error;
 	else if (mp == NULL)
@@ -224,10 +224,14 @@ int in6_gif_input(mp, offp, proto)
 		}
 	}
 
-	if (gifp && (m->m_flags & (M_AUTH | M_CONF)) == 0)
+	if (gifp) {
 	        m->m_pkthdr.rcvif = gifp;
+		ipip_input(m, *offp);
+		return IPPROTO_DONE;
+	}
 
 inject:
-	ip4_input(m, *offp);
+	/* No GIF tunnel configured */
+	ip4_input6(&m, offp, 0); /* XXX last argument ignored */
 	return IPPROTO_DONE;
 }

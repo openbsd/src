@@ -1,4 +1,4 @@
-/* $OpenBSD: in6_proto.c,v 1.13 2000/01/13 06:01:22 angelos Exp $ */
+/* $OpenBSD: in6_proto.c,v 1.14 2000/01/21 03:15:06 angelos Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_ah.h>
 #include <netinet/ip_esp.h>
-#include <netinet/ip_ip4.h>
+#include <netinet/ip_ipip.h>
 
 #include <netinet6/pim6_var.h>
 
@@ -197,31 +197,31 @@ struct ip6protosw inet6sw[] = {
 #endif /* 0 */
 #endif /* IPSEC */
 #if NGIF > 0
-{ SOCK_RAW,	&inet6domain,	IPPROTO_IPV4,	PR_ATOMIC|PR_ADDR,
-  in6_gif_input,0,	 	0,		0,
-  0,	  
-  0,		0,		0,		0,
-},
-#ifdef INET6
 { SOCK_RAW,	&inet6domain,	IPPROTO_IPV6,	PR_ATOMIC|PR_ADDR,
   in6_gif_input,0,	 	0,		0,
   0,	  
   0,		0,		0,		0,
 },
-#endif /* INET6 */
-#else /* NFIG */
-{ SOCK_RAW,     &inet6domain,    IPPROTO_IPV4,  PR_ATOMIC|PR_ADDR,
-  ip4_input6,   rip6_output,     0,              rip6_ctloutput,
-  rip6_usrreq,   /* XXX */
-  0,            0,              0,              0,              ip4_sysctl
+#ifdef INET
+{ SOCK_RAW,	&inet6domain,	IPPROTO_IPV6,	PR_ATOMIC|PR_ADDR,
+  in6_gif_input,0,	 	0,		0,
+  0,	  
+  0,		0,		0,		0,
 },
-#ifdef INET6
+#endif /* INET */
+#else /* NFIG */
 { SOCK_RAW,     &inet6domain,    IPPROTO_IPV6,  PR_ATOMIC|PR_ADDR,
   ip4_input6,   rip6_output,     0,              rip6_ctloutput,
+  rip6_usrreq,   /* XXX */
+  0,            0,              0,              0,              ipip_sysctl
+},
+#ifdef INET
+{ SOCK_RAW,     &inet6domain,    IPPROTO_IPV4,  PR_ATOMIC|PR_ADDR,
+  ip4_input,   rip6_output,     0,              rip6_ctloutput,
   0,   
   0,            0,              0,              0,
 },
-#endif /* INET6 */
+#endif /* INET */
 #endif /* GIF */
 { SOCK_RAW,     &inet6domain,	IPPROTO_PIM,	PR_ATOMIC|PR_ADDR,
   pim6_input,    rip6_output,	0,              rip6_ctloutput, 

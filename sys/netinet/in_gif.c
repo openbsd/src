@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_gif.c,v 1.6 2000/01/11 07:47:09 angelos Exp $	*/
+/*	$OpenBSD: in_gif.c,v 1.7 2000/01/21 03:15:04 angelos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -110,7 +110,7 @@ in_gif_output(ifp, family, m, rt)
 		return ENETUNREACH;
 	}
 
-	/* setup dummy tdb.  it highly depends on ipe4_output() code. */
+	/* setup dummy tdb.  it highly depends on ipipoutput() code. */
 	bzero(&tdb, sizeof(tdb));
 	bzero(&xfs, sizeof(xfs));
 	tdb.tdb_src.sin.sin_family = AF_INET;
@@ -149,7 +149,7 @@ in_gif_output(ifp, family, m, rt)
 
 	/* encapsulate into IPv4 packet */
 	mp = NULL;
-	error = ipe4_output(m, &tdb, &mp, hlen, poff);
+	error = ipip_output(m, &tdb, &mp, hlen, poff);
 	if (error)
 		return error;
 	else if (mp == NULL)
@@ -223,10 +223,13 @@ in_gif_input(m, va_alist)
 		}
 	}
 
-	if (gifp && (m->m_flags & (M_AUTH | M_CONF)) == 0)
+	if (gifp) {
 		m->m_pkthdr.rcvif = gifp;
+		ipip_input(m, off); /* We have a configured GIF */
+		return;
+	}
 
 inject:
-	ip4_input(m, off);
+	ip4_input(m, off); /* No GIF interface was configured */
 	return;
 }

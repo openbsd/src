@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.23 2000/01/17 05:17:24 itojun Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.24 2000/01/21 03:15:05 angelos Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -159,7 +159,7 @@ void	iplinit __P((void));
 #include <netinet/ip_ether.h>
 #endif
 
-#include <netinet/ip_ip4.h>
+#include <netinet/ip_ipip.h>
 
 #include "gre.h"
 #if NGRE > 0
@@ -199,7 +199,7 @@ struct protosw inetsw[] = {
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPV4,	PR_ATOMIC|PR_ADDR,
   in_gif_input,	rip_output, 	0,		rip_ctloutput,
   rip_usrreq,
-  0,		0,		0,		0,		ip4_sysctl
+  0,		0,		0,		0,		ipip_sysctl
 },
 #ifdef INET6
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPV6,	PR_ATOMIC|PR_ADDR,
@@ -212,7 +212,7 @@ struct protosw inetsw[] = {
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPIP,	PR_ATOMIC|PR_ADDR,
   ip4_input,	rip_output,	0,		rip_ctloutput,
   rip_usrreq,
-  0,		0,		0,		0,		ip4_sysctl
+  0,		0,		0,		0,		ipip_sysctl
 },
 #ifdef INET6
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPV6,	PR_ATOMIC|PR_ADDR,

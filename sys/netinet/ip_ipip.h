@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ip4.h,v 1.17 2000/01/13 05:03:45 angelos Exp $	*/
+/*	$OpenBSD: ip_ipip.h,v 1.1 2000/01/21 03:15:05 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -35,46 +35,46 @@
  * PURPOSE.
  */
 
-#ifndef _NETINET_IP4_H_
-#define _NETINET_IP4_H_
+#ifndef _NETINET_IPIP_H_
+#define _NETINET_IPIP_H_
 
 /*
  * IP-inside-IP processing.
  * Not quite all the functionality of RFC-1853, but the main idea is there.
  */
 
-struct ip4stat
+struct ipipstat
 {
-    u_int32_t	ip4s_ipackets;		/* total input packets */
-    u_int32_t	ip4s_opackets;		/* total output packets */
-    u_int32_t	ip4s_hdrops;		/* packet shorter than header shows */
-    u_int32_t	ip4s_qfull;
-    u_int64_t   ip4s_ibytes;
-    u_int64_t   ip4s_obytes;
-    u_int32_t	ip4s_pdrops;		/* packet dropped due to policy */
-    u_int32_t	ip4s_spoof;		/* IP spoofing attempts */
-    u_int32_t   ip4s_family;		/* Protocol family mismatch */
-    u_int32_t   ip4s_unspec;            /* Missing tunnel endpoint address */
+    u_int32_t	ipips_ipackets;		/* total input packets */
+    u_int32_t	ipips_opackets;		/* total output packets */
+    u_int32_t	ipips_hdrops;		/* packet shorter than header shows */
+    u_int32_t	ipips_qfull;
+    u_int64_t   ipips_ibytes;
+    u_int64_t   ipips_obytes;
+    u_int32_t	ipips_pdrops;		/* packet dropped due to policy */
+    u_int32_t	ipips_spoof;		/* IP spoofing attempts */
+    u_int32_t   ipips_family;		/* Protocol family mismatch */
+    u_int32_t   ipips_unspec;            /* Missing tunnel endpoint address */
 };
 
 #define IP4_DEFAULT_TTL    0
 #define IP4_SAME_TTL	  -1
 
 /*
- * Names for IP4 sysctl objects
+ * Names for IPIP sysctl objects
  */
-#define	IP4CTL_ALLOW	1		/* accept incoming IP4 packets */
-#define IP4CTL_MAXID	2
+#define	IPIPCTL_ALLOW	1		/* accept incoming IP4 packets */
+#define IPIPCTL_MAXID	2
 
-#define IP4CTL_NAMES { \
+#define IPIPCTL_NAMES { \
 	{ 0, 0 }, \
 	{ "allow", CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL
-int	ip4_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
+int	ipip_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 
-extern int ip4_allow;
-extern struct ip4stat ip4stat;
+extern int ipip_allow;
+extern struct ipipstat ipipstat;
 #endif /* _KERNEL */
-#endif /* _NETINET_IP4_H_ */
+#endif /* _NETINET_IPIP_H_ */

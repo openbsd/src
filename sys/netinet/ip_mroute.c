@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.18 1999/08/08 15:04:22 niklas Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.19 2000/01/21 03:15:05 angelos Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.27 1996/05/07 02:40:50 thorpej Exp $	*/
 
 /*
@@ -163,7 +163,7 @@ static vifi_t	   numvifs = 0;
 static int have_encap_tunnel = 0;
 
 /*
- * one-back cache used by ipip_input to locate a tunnel's vif
+ * one-back cache used by ipip_mroute_input to locate a tunnel's vif
  * given a datagram's src ip address.
  */
 static u_int32_t last_encap_src;
@@ -565,7 +565,10 @@ add_vif(m)
 		/* Prepare cached route entry. */
 		bzero(&vifp->v_route, sizeof(vifp->v_route));
 
-		/* Tell ipip_input() to start looking at encapsulated packets. */
+		/*
+		 * Tell ipip_mroute_input() to start looking at
+		 * encapsulated packets.
+		 */
 		have_encap_tunnel = 1;
 	} else {
 		/* Use the physical interface associated with the address. */
@@ -1449,9 +1452,9 @@ encap_send(ip, vifp, m)
  */
 void
 #if __STDC__
-ipip_input(struct mbuf *m, ...)
+ipip_mroute_input(struct mbuf *m, ...)
 #else
-ipip_input(m, va_alist)
+ipip_mroute_input(m, va_alist)
 	struct mbuf *m;
 	va_dcl
 #endif

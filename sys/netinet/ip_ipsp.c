@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.75 2000/01/13 05:30:11 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.76 2000/01/21 03:15:05 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -139,7 +139,7 @@ struct xformsw xformsw[] = {
     { XF_IP4,	         0,               "IPv4 Simple Encapsulation",
       ipe4_attach,       ipe4_init,       ipe4_zeroize,
       (struct mbuf * (*)(struct mbuf *, struct tdb *, int, int))ipe4_input, 
-      ipe4_output, },
+      ipip_output, },
     { XF_OLD_AH,         XFT_AUTH,	 "Keyed Authentication, RFC 1828/1852",
       ah_old_attach,     ah_old_init,     ah_old_zeroize,
       ah_old_input,      ah_old_output, },
@@ -1822,7 +1822,7 @@ ipsp_process_packet(struct mbuf *m, struct mbuf **mp, struct tdb *tdb, int *af,
 #endif /* INET6 */
 
 		/* Encapsulate -- the last two arguments are unused */
-		error = ipe4_output(m, tdb, mp, 0, 0);
+		error = ipip_output(m, tdb, mp, 0, 0);
 		if (((*mp) == NULL) && (!error))
 		  error = EFAULT;
 		if (error)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.58 2000/01/13 06:02:31 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.59 2000/01/21 03:15:05 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -547,9 +547,13 @@ extern struct flow *find_global_flow(union sockaddr_union *,
 extern int ipe4_attach(void);
 extern int ipe4_init(struct tdb *, struct xformsw *, struct ipsecinit *);
 extern int ipe4_zeroize(struct tdb *);
-extern int ipe4_output(struct mbuf *, struct tdb *, struct mbuf **, int, int);
+extern int ipip_output(struct mbuf *, struct tdb *, struct mbuf **, int, int);
 extern void ipe4_input __P((struct mbuf *, ...));
+extern void ipip_input __P((struct mbuf *, int));
+
+#ifdef INET
 extern void ip4_input __P((struct mbuf *, ...));
+#endif /* INET */
 
 #ifdef INET6
 extern int ip4_input6 __P((struct mbuf **, int *, int));

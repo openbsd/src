@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.35 2000/01/18 19:06:07 angelos Exp $	*/
+/*	$OpenBSD: in.h,v 1.36 2000/01/21 03:15:04 angelos Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -318,7 +318,7 @@ struct ip_mreq {
 	{ "icmp", CTLTYPE_NODE }, \
 	{ "igmp", CTLTYPE_NODE }, \
 	{ "ggp", CTLTYPE_NODE }, \
-	{ "ip4", CTLTYPE_NODE }, \
+	{ "ipip", CTLTYPE_NODE }, \
 	{ 0, 0 }, \
 	{ "tcp", CTLTYPE_NODE }, \
 	{ 0, 0 }, \
