@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ohash_init.3,v 1.1 2001/03/02 13:27:07 espie Exp $
+.\"	$OpenBSD: ohash_init.3,v 1.2 2001/03/09 14:54:45 art Exp $
 .\"
 .\" Copyright (c) 1999 Marc Espie.
 .\"
@@ -47,7 +47,7 @@
 .Ft void
 .Fn ohash_init "struct ohash *h" "unsigned int size" "struct ohash_info *info"
 .Ft void
-.Fn ohash_delete "struct oohash *h"
+.Fn ohash_delete "struct ohash *h"
 .Ft "unsigned int"
 .Fn ohash_lookup_interval "struct ohash *h" "const char *start" "const char *end" "u_int32_t hv"
 .Ft "unsigned int"
