@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3var.h,v 1.10 1998/09/11 12:06:56 fgsch Exp $	*/
+/*	$OpenBSD: elink3var.h,v 1.11 1998/09/19 10:08:05 maja Exp $	*/
 /*	$NetBSD: elink3var.h,v 1.12 1997/03/30 22:47:11 jonathan Exp $	*/
 
 /*
@@ -40,11 +40,10 @@ struct ep_softc {
 
 #ifdef __NetBSD__
 	struct ethercom sc_ethercom;	/* Ethernet common part		*/
-	struct ifmedia sc_media;	/* media control		*/
 #else
 	struct arpcom sc_arpcom;	/* Ethernet common part		*/
-	int sc_media;			/* default media type		*/
 #endif
+	struct ifmedia sc_media;	/* media control		*/
 	bus_space_tag_t sc_iot;		/* bus cookie			*/
 	bus_space_handle_t sc_ioh;	/* bus i/o handle		*/
 	u_int	ep_connectors;		/* Connectors on this card.	*/

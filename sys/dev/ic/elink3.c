@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.27 1998/09/16 21:16:19 deraadt Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.28 1998/09/19 10:08:05 maja Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #include <net/if_dl.h>
 #include <net/if_types.h>
 #include <net/netisr.h>
+#include <net/if_media.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -96,20 +97,20 @@ struct ep_media {
  *  Note that 3 is reserved.
  */
 struct ep_media ep_vortex_media[8] = {
-  { EP_PCI_UTP,        EPC_UTP, "utp",	    /*IFM_ETHER|IFM_10_T*/0,
+  { EP_PCI_UTP,        EPC_UTP, "utp",	    IFM_ETHER|IFM_10_T,
        EPMEDIA_10BASE_T },
-  { EP_PCI_AUI,        EPC_AUI, "aui",	    /*IFM_ETHER|IFM_10_5*/0,
+  { EP_PCI_AUI,        EPC_AUI, "aui",	    IFM_ETHER|IFM_10_5,
        EPMEDIA_AUI },
-  { 0,                 0,  	"reserved", /*IFM_NONE*/0,  EPMEDIA_RESV1 },
-  { EP_PCI_BNC,        EPC_BNC, "bnc",	    /*IFM_ETHER|IFM_10_2*/0,
+  { 0,                 0,  	"reserved", IFM_NONE,  EPMEDIA_RESV1 },
+  { EP_PCI_BNC,        EPC_BNC, "bnc",	    IFM_ETHER|IFM_10_2,
        EPMEDIA_10BASE_2 },
-  { EP_PCI_100BASE_TX, EPC_100TX, "100-TX", /*IFM_ETHER|IFM_100_TX*/0,
+  { EP_PCI_100BASE_TX, EPC_100TX, "100-TX", IFM_ETHER|IFM_100_TX,
        EPMEDIA_100BASE_TX },
-  { EP_PCI_100BASE_FX, EPC_100FX, "100-FX", /*IFM_ETHER|IFM_100_FX*/0,
+  { EP_PCI_100BASE_FX, EPC_100FX, "100-FX", IFM_ETHER|IFM_100_FX,
        EPMEDIA_100BASE_FX },
-  { EP_PCI_100BASE_MII,EPC_MII,   "mii",    /*IFM_ETHER|IFM_100_TX*/0,
+  { EP_PCI_100BASE_MII,EPC_MII,   "mii",    IFM_ETHER|IFM_100_TX,
        EPMEDIA_MII },
-  { EP_PCI_100BASE_T4, EPC_100T4, "100-T4", /*IFM_ETHER|IFM_100_T4*/0,
+  { EP_PCI_100BASE_T4, EPC_100T4, "100-T4", IFM_ETHER|IFM_100_T4,
        EPMEDIA_100BASE_T4 }
 };
 
@@ -119,12 +120,11 @@ struct ep_media ep_vortex_media[8] = {
  * (window 0, offset ?) to  ifmedia "media words" and printable names.
  */
 struct ep_media ep_isa_media[3] = {
-  { EP_W0_CC_UTP,  EPC_UTP, "utp",   /*IFM_ETHER|IFM_10_T*/0, EPMEDIA_10BASE_T },
-  { EP_W0_CC_AUI,  EPC_AUI, "aui",   /*IFM_ETHER|IFM_10_5*/0, EPMEDIA_AUI },
-  { EP_W0_CC_BNC,  EPC_BNC, "bnc",   /*IFM_ETHER|IFM_10_2*/0, EPMEDIA_10BASE_2 },
+  { EP_W0_CC_UTP,  EPC_UTP, "utp",   IFM_ETHER|IFM_10_T, EPMEDIA_10BASE_T },
+  { EP_W0_CC_AUI,  EPC_AUI, "aui",   IFM_ETHER|IFM_10_5, EPMEDIA_AUI },
+  { EP_W0_CC_BNC,  EPC_BNC, "bnc",   IFM_ETHER|IFM_10_2, EPMEDIA_10BASE_2 },
 };
 
-#ifdef __NetBSD__
 /* Map vortex reset_options bits to if_media codes. */
 const u_int ep_default_to_media[8] = {
 	IFM_ETHER | IFM_10_T,
@@ -136,7 +136,6 @@ const u_int ep_default_to_media[8] = {
 	IFM_ETHER | IFM_100_TX,	/* XXX really MII: need to talk to PHY */
 	IFM_ETHER | IFM_100_T4,
 };
-#endif
 
 /* Autoconfig defintion of driver back-end */
 struct cfdriver ep_cd = {
@@ -162,6 +161,11 @@ void	epmbuffill __P((void *));
 void	epmbufempty __P((struct ep_softc *));
 void	epsetfilter __P((struct ep_softc *));
 int	epsetmedia __P((struct ep_softc *, int));
+
+/* ifmedia callbacks */
+int	ep_media_change __P((struct ifnet *));
+void	ep_media_status __P((struct ifnet *, struct ifmediareq *));
+
 int	epbusyeeprom __P((struct ep_softc *));
 static inline void ep_complete_cmd __P((struct ep_softc *sc, u_int cmd,
     u_int arg));
@@ -303,9 +307,7 @@ epconfig(sc, chipset, enaddr)
 #endif
 	GO_WINDOW(0);
 
-#ifdef __NetBSD__
 	ifmedia_init(&sc->sc_media, 0, ep_media_change, ep_media_status);
-#endif
 
 	/*
 	 * If we've got an indirect (ISA, PCMCIA?) board, the chipset
@@ -412,9 +414,7 @@ ep_isa_probemedia(sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-#ifdef __NetBSD__
 	struct ifmedia *ifm = &sc->sc_media;
-#endif
 	int	conn, i;
 	u_int16_t ep_w0_config, port;
 
@@ -425,9 +425,7 @@ ep_isa_probemedia(sc)
 		struct ep_media * epm = ep_isa_media + i;
 
 		if ((ep_w0_config & epm->epm_eeprom_data) != 0) {
-#ifdef __NetBSD__
 			ifmedia_add(ifm, epm->epm_ifmedia, epm->epm_ifdata, 0);
-#endif
 			if (conn)
 				printf("/");
 			printf(epm->epm_name);
@@ -447,10 +445,8 @@ ep_isa_probemedia(sc)
 	port = port >> 14;
 
 	printf(" (default %s)\n", ep_vortex_media[port].epm_name);
-#ifdef __NetBSD__
 	/* tell ifconfig what currently-active media is. */
 	ifmedia_set(ifm, ep_default_to_media[port]);
-#endif
 
 	/* XXX autoselect not yet implemented */
 }
@@ -470,9 +466,7 @@ ep_vortex_probemedia(sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-#ifdef __NetBSD__
 	struct ifmedia *ifm = &sc->sc_media;
-#endif
 	u_int config1, conn;
 	int reset_options;
 	int default_media;	/* 3-bit encoding of default (EEPROM) media */
@@ -497,9 +491,7 @@ ep_vortex_probemedia(sc)
 			if (conn) printf("/");
 			printf(epm->epm_name);
 			conn |= epm->epm_conn;
-#ifdef __NetBSD__
 			ifmedia_add(ifm, epm->epm_ifmedia, epm->epm_ifdata, 0);
-#endif	/* __NetBSD__ */
 		}
 	}
 
@@ -511,7 +503,7 @@ ep_vortex_probemedia(sc)
 		: ep_vortex_media[default_media].epm_name;
 	printf(" default %s%s",
 	       medium_name,  (autoselect)? "/autoselect" : "" );
-	sc->sc_media = ep_vortex_media[default_media].epm_ifdata;
+/*	sc->sc_media = ep_vortex_media[default_media].epm_ifdata;*/
 
 #ifdef notyet	
 	/*
@@ -523,10 +515,8 @@ ep_vortex_probemedia(sc)
 	 */
 #endif	/* notyet */
 
-#ifdef __NetBSD__
 	/* tell ifconfig what currently-active media is. */
 	ifmedia_set(ifm, ep_default_to_media[default_media]);
-#endif	/* __NetBSD__ */
 }
 
 /*
@@ -601,11 +591,7 @@ epinit(sc)
 	bus_space_write_2(iot, ioh, EP_COMMAND, ACK_INTR | 0xff);
 
 	epsetfilter(sc);
-#ifdef __NetBSD__
 	epsetmedia(sc, sc->sc_media.ifm_cur->ifm_data);
-#else
-	epsetmedia(sc, sc->sc_media);
-#endif
 
 	bus_space_write_2(iot, ioh, EP_COMMAND, RX_ENABLE);
 	bus_space_write_2(iot, ioh, EP_COMMAND, TX_ENABLE);
@@ -638,6 +624,16 @@ epsetfilter(sc)
 	    ((ifp->if_flags & IFF_PROMISC) ? FIL_PROMISC : 0 ));
 }
 
+
+int
+ep_media_change(ifp)
+	struct ifnet *ifp;
+{
+	register struct ep_softc *sc = ifp->if_softc;
+
+	return	epsetmedia(sc, sc->sc_media.ifm_cur->ifm_data);
+}
+
 /*
  * Set active media to a specific given EPMEDIA_<> value.
  * For vortex/demon/boomerang cards, update media field in w3_internal_config,
@@ -650,7 +646,7 @@ epsetmedia(sc, medium)
 	struct ep_softc *sc;
 	int medium;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+/*	struct ifnet *ifp = &sc->sc_arpcom.ac_if;*/
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int w4_media;
@@ -678,16 +674,6 @@ epsetmedia(sc, medium)
 	/* Turn off coax */
 	bus_space_write_2(iot, ioh, EP_COMMAND, STOP_TRANSCEIVER);
 	delay(1000);
-
-#ifndef __NetBSD__
-	/* XXX what media?  */
-	if (!(ifp->if_flags & IFF_LINK0) && (sc->ep_connectors & EPC_BNC))
-		medium = EPMEDIA_10BASE_2;
-	else if (ifp->if_flags & IFF_LINK0)
-		medium = ((ifp->if_flags & IFF_LINK1) &&
-		    (sc->ep_connectors & EPC_UTP)) ?
-		    EPMEDIA_10BASE_T :  EPMEDIA_AUI;
-#endif
 
 	/*
 	 * Now turn on the selected media/transceiver.
@@ -768,6 +754,67 @@ epsetmedia(sc, medium)
 	GO_WINDOW(1);		/* Window 1 is operating window */
 	return (0);
 }
+
+
+/*
+ * Get currently-selected media from card.
+ * (if_media callback, may be called before interface is brought up).
+ */
+void
+ep_media_status(ifp, req)
+	struct ifnet *ifp;
+	struct ifmediareq *req;
+{
+	register struct ep_softc *sc = ifp->if_softc;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+	u_int config1;
+	u_int ep_mediastatus;
+
+	/* XXX read from softc when we start autosensing media */
+	req->ifm_active = sc->sc_media.ifm_cur->ifm_media;
+	
+	switch (sc->ep_chipset) {
+	case EP_CHIPSET_VORTEX:
+	case EP_CHIPSET_BOOMERANG:
+		GO_WINDOW(3);
+		delay(5000);
+
+		config1 = bus_space_read_2(iot, ioh, EP_W3_INTERNAL_CONFIG + 2);
+		GO_WINDOW(1);
+
+		config1 = 
+		    (config1 & CONFIG_MEDIAMASK) >> CONFIG_MEDIAMASK_SHIFT;
+		req->ifm_active = ep_default_to_media[config1];
+
+		/* XXX check full-duplex bits? */
+
+		GO_WINDOW(4);
+		req->ifm_status = IFM_AVALID;	/* XXX */
+		ep_mediastatus = bus_space_read_2(iot, ioh, EP_W4_MEDIA_TYPE);
+		if (ep_mediastatus & LINKBEAT_DETECT)
+			req->ifm_status |= IFM_ACTIVE; 	/* XXX  automedia */
+
+		break;
+
+	case EP_CHIPSET_UNKNOWN:
+	case EP_CHIPSET_3C509:
+		req->ifm_status = 0;	/* XXX */
+		break;
+
+	default:
+		printf("%s: media_status on unknown chipset 0x%x\n",
+		       ifp->if_xname, sc->ep_chipset);
+		break;
+	}
+
+	/* XXX look for softc heartbeat for other chips or media */
+
+	GO_WINDOW(1);
+	return;
+}
+
+
 
 /*
  * Start outputting on the interface.
@@ -1317,6 +1364,11 @@ epioctl(ifp, cmd, data)
 		}
 		break;
 
+	case SIOCSIFMEDIA:
+	case SIOCGIFMEDIA:
+		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
+		break;
+
 	case SIOCSIFFLAGS:
 		if ((ifp->if_flags & IFF_UP) == 0 &&
 		    (ifp->if_flags & IFF_RUNNING) != 0) {
@@ -1340,7 +1392,8 @@ epioctl(ifp, cmd, data)
 			 * IFF_LINK0, IFF_LINK1.
 			 */
 			epsetfilter(sc);
-			epsetmedia(sc, sc->sc_media);	/* XXX */
+/*			epsetmedia(sc, sc->sc_media);*/	/* XXX */
+			epsetmedia(sc, sc->sc_media.ifm_cur->ifm_data);
 		}
 		break;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_isapnp.c,v 1.4 1998/09/16 21:16:37 deraadt Exp $	*/
+/*	$OpenBSD: if_ep_isapnp.c,v 1.5 1998/09/19 10:08:05 maja Exp $	*/
 /*	$NetBSD: if_ep_isapnp.c,v 1.5 1996/05/12 23:52:36 mycroft Exp $	*/
 
 /*
@@ -53,6 +53,7 @@
 #include <net/if_dl.h>
 #include <net/if_types.h>
 #include <net/netisr.h>
+#include <net/if_media.h>
 
 #ifdef INET
 #include <netinet/in.h>
