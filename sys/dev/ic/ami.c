@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.2 2001/03/09 15:46:30 mickey Exp $	*/
+/*	$OpenBSD: ami.c,v 1.3 2001/03/14 23:42:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -892,7 +892,7 @@ ami_scsi_cmd(xs)
 		inq.version = 2;
 		inq.response_format = 2;
 		inq.additional_length = 32;
-		strcpy(inq.vendor, "3WARE  ");
+		strcpy(inq.vendor, "AMI    ");
 		sprintf(inq.product, "Host drive  #%02d", target);
 		strcpy(inq.revision, "   ");
 		ami_copy_internal_data(xs, &inq, sizeof inq);
