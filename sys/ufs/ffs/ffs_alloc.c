@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.11 1998/03/01 08:07:11 niklas Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.12 1998/03/03 17:05:32 ryker Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -1482,7 +1482,7 @@ ffs_checkblk(ip, bno, size)
 
 	fs = ip->i_fs;
 	if ((u_int)size > fs->fs_bsize || fragoff(fs, size) != 0) {
-		printf("bsize = %d, size = %d, fs = %s\n",
+		printf("bsize = %d, size = %ld, fs = %s\n",
 		    fs->fs_bsize, size, fs->fs_fsmnt);
 		panic("checkblk: bad size");
 	}
