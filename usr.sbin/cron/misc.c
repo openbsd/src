@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.17 2002/05/22 18:17:53 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.18 2002/05/28 01:20:19 deraadt Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: misc.c,v 1.17 2002/05/22 18:17:53 millert Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.18 2002/05/28 01:20:19 deraadt Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the rest of the log]
@@ -562,10 +562,10 @@ log_it(username, xpid, event, detail)
 	 * everything out in one chunk and this has to be atomically appended
 	 * to the log file.
 	 */
-	snprintf(msg, msglen, "%s (%02d/%02d-%02d:%02d:%02d-%d) %s (%s)\n",
+	snprintf(msg, msglen, "%s (%02d/%02d-%02d:%02d:%02d-%ld) %s (%s)\n",
 		username,
-		t->tm_mon+1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec, pid,
-		event, detail);
+		t->tm_mon+1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec,
+		(long)pid, event, detail);
 
 	/* we have to run strlen() because sprintf() returns (char*) on old BSD
 	 */

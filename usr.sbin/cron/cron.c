@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.23 2002/05/22 17:19:15 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.24 2002/05/28 01:20:19 deraadt Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: cron.c,v 1.23 2002/05/22 17:19:15 millert Exp $";
+static char rcsid[] = "$OpenBSD: cron.c,v 1.24 2002/05/28 01:20:19 deraadt Exp $";
 #endif
 
 #define	MAIN_PROGRAM
@@ -190,8 +190,8 @@ main(int argc, char *argv[]) {
 				 * (wokeup late) run jobs for each virtual
 				 * minute until caught up.
 				 */
-				Debug(DSCH, ("[%d], normal case %d minutes to go\n",
-				    getpid(), timeDiff))
+				Debug(DSCH, ("[%ld], normal case %d minutes to go\n",
+				    (long)getpid(), timeDiff))
 				do {
 					if (job_runqueue())
 						sleep(10);
@@ -213,8 +213,8 @@ main(int argc, char *argv[]) {
 				 * have a chance to run, and we do our
 				 * housekeeping.
 				 */
-				Debug(DSCH, ("[%d], DST begins %d minutes to go\n",
-				    getpid(), timeDiff))
+				Debug(DSCH, ("[%ld], DST begins %d minutes to go\n",
+				    (long)getpid(), timeDiff))
 				/* run wildcard jobs for current minute */
 				find_jobs(timeRunning, &database, TRUE, FALSE);
 	
@@ -239,8 +239,8 @@ main(int argc, char *argv[]) {
 				 * not be repeated.  Virtual time does not
 				 * change until we are caught up.
 				 */
-				Debug(DSCH, ("[%d], DST ends %d minutes to go\n",
-				    getpid(), timeDiff))
+				Debug(DSCH, ("[%ld], DST ends %d minutes to go\n",
+				    (long)getpid(), timeDiff))
 				find_jobs(timeRunning, &database, TRUE, FALSE);
 				break;
 			default:
@@ -248,7 +248,8 @@ main(int argc, char *argv[]) {
 				 * other: time has changed a *lot*,
 				 * jump virtual time, and run everything
 				 */
-				Debug(DSCH, ("[%d], clock jumped\n", getpid()))
+				Debug(DSCH, ("[%ld], clock jumped\n",
+				    (long)getpid()))
 				virtualTime = timeRunning;
 				find_jobs(timeRunning, &database, TRUE, TRUE);
 			}
