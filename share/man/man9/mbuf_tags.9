@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mbuf_tags.9,v 1.17 2003/06/06 20:56:32 jmc Exp $
+.\"	$OpenBSD: mbuf_tags.9,v 1.18 2003/12/08 07:07:35 mcbride Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -193,6 +193,18 @@ The tag contains the ID of the queue this packet should go to.
 Used by
 .Xr pf 4
 to tag packets and filtering on those later on.
+.It PACKET_TAG_PF_TRANSLATE_LOCALHOST
+Used by
+.Xr pf 4
+to mark TCP and UDP packets redirected to loopback addresses.
+The functions tcp_input() and udp_input() reverse the order of
+lookups in in_pcblookup_listen(), when this tag is present, so
+unspecific listeners are matched before specific ones.
+This prevents external connections from appearing local to daemons
+such as
+.Xr portmap 8
+listening on both unspecific and specific loopback sockets in order to
+grant higher privileges to local users.
 .El
 .Pp
 .Fn m_tag_free

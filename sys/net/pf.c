@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.404 2003/11/28 01:06:59 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.405 2003/12/08 07:07:35 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -204,6 +204,7 @@ int			 pf_check_proto_cksum(struct mbuf *, int, int,
 			    u_int8_t, sa_family_t);
 int			 pf_addr_wrap_neq(struct pf_addr_wrap *,
 			    struct pf_addr_wrap *);
+static int		 pf_add_mbuf_tag(struct mbuf *, u_int);
 
 
 struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] =
@@ -2001,7 +2002,7 @@ pf_socket_lookup(uid_t *uid, gid_t *gid, int direction, struct pf_pdesc *pd)
 	case AF_INET:
 		inp = in_pcbhashlookup(tb, saddr->v4, sport, daddr->v4, dport);
 		if (inp == NULL) {
-			inp = in_pcblookup_listen(tb, daddr->v4, dport);
+			inp = in_pcblookup_listen(tb, daddr->v4, dport, 0);
 			if (inp == NULL)
 				return (0);
 		}
@@ -2011,7 +2012,7 @@ pf_socket_lookup(uid_t *uid, gid_t *gid, int direction, struct pf_pdesc *pd)
 		inp = in6_pcbhashlookup(tb, &saddr->v6, sport, &daddr->v6,
 		    dport);
 		if (inp == NULL) {
-			inp = in6_pcblookup_listen(tb, &daddr->v6, dport);
+			inp = in6_pcblookup_listen(tb, &daddr->v6, dport, 0);
 			if (inp == NULL)
 				return (0);
 		}
@@ -4829,6 +4830,20 @@ pf_check_proto_cksum(struct mbuf *m, int off, int len, u_int8_t p, sa_family_t a
 	return (0);
 }
 
+static int
+pf_add_mbuf_tag(struct mbuf *m, u_int tag)
+{
+	struct m_tag *mtag;
+
+	if (m_tag_find(m, tag, NULL) != NULL)
+		return (0);
+	mtag = m_tag_get(tag, 0, M_NOWAIT);
+	if (mtag == NULL)
+		return (1);
+	m_tag_prepend(m, mtag);
+	return (0);
+}
+
 #ifdef INET
 int
 pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
@@ -5015,6 +5030,21 @@ done:
 		}
 	}
 #endif
+
+	/*
+	 * connections redirected to loopback should not match sockets
+	 * bound specifically to loopback due to security implications,
+	 * see tcp_input() and in_pcblookup_listen().
+	 */
+	if (dir == PF_IN && action == PF_PASS && (pd.proto == IPPROTO_TCP ||
+	    pd.proto == IPPROTO_UDP) && s != NULL && s->nat_rule.ptr != NULL &&
+	    (s->nat_rule.ptr->action == PF_RDR ||
+	    s->nat_rule.ptr->action == PF_BINAT) &&
+	    (ntohl(pd.dst->v4.s_addr) >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET &&
+	    pf_add_mbuf_tag(m, PACKET_TAG_PF_TRANSLATE_LOCALHOST)) {
+		action = PF_DROP;
+		REASON_SET(&reason, PFRES_MEMORY);
+	}
 
 	if (log)
 		PFLOG_PACKET(ifp, h, m, AF_INET, dir, reason, r, a, ruleset);
@@ -5270,6 +5300,16 @@ done:
 		}
 	}
 #endif
+
+	if (dir == PF_IN && action == PF_PASS && (pd.proto == IPPROTO_TCP ||
+	    pd.proto == IPPROTO_UDP) && s != NULL && s->nat_rule.ptr != NULL &&
+	    (s->nat_rule.ptr->action == PF_RDR ||
+	    s->nat_rule.ptr->action == PF_BINAT) &&
+	    IN6_IS_ADDR_LOOPBACK(&pd.dst->v6) &&
+	    pf_add_mbuf_tag(m, PACKET_TAG_PF_TRANSLATE_LOCALHOST)) {
+		action = PF_DROP;
+		REASON_SET(&reason, PFRES_MEMORY);
+	}
 
 	if (log)
 		PFLOG_PACKET(ifp, h, m, AF_INET6, dir, reason, r, a, ruleset);

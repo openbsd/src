@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.134 2003/11/04 21:43:16 markus Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.135 2003/12/08 07:07:36 mcbride Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -671,12 +671,14 @@ findpcb:
 #ifdef INET6
 		case AF_INET6:
 			inp = in6_pcblookup_listen(&tcbtable,
-			    &ip6->ip6_dst, th->th_dport);
+			    &ip6->ip6_dst, th->th_dport, m_tag_find(m,
+			    PACKET_TAG_PF_TRANSLATE_LOCALHOST, NULL) != NULL);
 			break;
 #endif /* INET6 */
 		case AF_INET:
 			inp = in_pcblookup_listen(&tcbtable,
-			    ip->ip_dst, th->th_dport);
+			    ip->ip_dst, th->th_dport, m_tag_find(m,
+			    PACKET_TAG_PF_TRANSLATE_LOCALHOST, NULL) != NULL);
 			break;
 		}
 		/*

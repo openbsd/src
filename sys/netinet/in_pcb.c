@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.69 2003/11/04 21:43:16 markus Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.70 2003/12/08 07:07:36 mcbride Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -1055,35 +1055,45 @@ in6_pcbhashlookup(table, faddr, fport_arg, laddr, lport_arg)
  *		*.*     <->     *.lport
  */
 struct inpcb *
-in_pcblookup_listen(table, laddr, lport_arg)
+in_pcblookup_listen(table, laddr, lport_arg, reverse)
 	struct inpcbtable *table;
 	struct in_addr laddr;
 	u_int lport_arg;
+	int reverse;
 {
 	struct inpcbhead *head;
+	struct in_addr *key1, *key2;
 	register struct inpcb *inp;
 	u_int16_t lport = lport_arg;
 
-	head = INPCBHASH(table, &zeroin_addr, 0, &laddr, lport);
+	if (reverse) {
+		key1 = &zeroin_addr;
+		key2 = &laddr;
+	} else {
+		key1 = &laddr;
+		key2 = &zeroin_addr;
+	}
+
+	head = INPCBHASH(table, &zeroin_addr, 0, key1, lport);
 	LIST_FOREACH(inp, head, inp_hash) {
 #ifdef INET6
 		if (inp->inp_flags & INP_IPV6)
 			continue;	/*XXX*/
 #endif
 		if (inp->inp_lport == lport && inp->inp_fport == 0 &&
-		    inp->inp_laddr.s_addr == laddr.s_addr &&
+		    inp->inp_laddr.s_addr == key1->s_addr &&
 		    inp->inp_faddr.s_addr == INADDR_ANY)
 			break;
 	}
-	if (inp == NULL && laddr.s_addr != INADDR_ANY) {
-		head = INPCBHASH(table, &zeroin_addr, 0, &zeroin_addr, lport);
+	if (inp == NULL && key1->s_addr != key2->s_addr) {
+		head = INPCBHASH(table, &zeroin_addr, 0, key2, lport);
 		LIST_FOREACH(inp, head, inp_hash) {
 #ifdef INET6
 			if (inp->inp_flags & INP_IPV6)
 				continue;	/*XXX*/
 #endif
 			if (inp->inp_lport == lport && inp->inp_fport == 0 &&
-			    inp->inp_laddr.s_addr == INADDR_ANY &&
+			    inp->inp_laddr.s_addr == key2->s_addr &&
 			    inp->inp_faddr.s_addr == INADDR_ANY)
 				break;
 		}
@@ -1108,32 +1118,41 @@ in_pcblookup_listen(table, laddr, lport_arg)
 
 #ifdef INET6
 struct inpcb *
-in6_pcblookup_listen(table, laddr, lport_arg)
+in6_pcblookup_listen(table, laddr, lport_arg, reverse)
 	struct inpcbtable *table;
 	struct in6_addr *laddr;
 	u_int lport_arg;
+	int reverse;
 {
 	struct inpcbhead *head;
+	struct in6_addr *key1, *key2;
 	register struct inpcb *inp;
 	u_int16_t lport = lport_arg;
 
-	head = IN6PCBHASH(table, &zeroin6_addr, 0, laddr, lport);
+	if (reverse) {
+		key1 = &zeroin6_addr;
+		key2 = laddr;
+	} else {
+		key1 = laddr;
+		key2 = &zeroin6_addr;
+	}
+
+	head = IN6PCBHASH(table, &zeroin6_addr, 0, key1, lport);
 	LIST_FOREACH(inp, head, inp_hash) {
 		if (!(inp->inp_flags & INP_IPV6))
 			continue;
 		if (inp->inp_lport == lport && inp->inp_fport == 0 &&
-		    IN6_ARE_ADDR_EQUAL(&inp->inp_laddr6, laddr) &&
+		    IN6_ARE_ADDR_EQUAL(&inp->inp_laddr6, key1) &&
 		    IN6_IS_ADDR_UNSPECIFIED(&inp->inp_faddr6))
 			break;
 	}
-	if (inp == NULL && !IN6_IS_ADDR_UNSPECIFIED(laddr)) {
-		head = IN6PCBHASH(table, &zeroin6_addr, 0,
-		    &zeroin6_addr, lport);
+	if (inp == NULL && ! IN6_ARE_ADDR_EQUAL(key1, key2)) {
+		head = IN6PCBHASH(table, &zeroin6_addr, 0, key2, lport);
 		LIST_FOREACH(inp, head, inp_hash) {
 			if (!(inp->inp_flags & INP_IPV6))
 				continue;
 			if (inp->inp_lport == lport && inp->inp_fport == 0 &&
-			    IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6) &&
+		    	    IN6_ARE_ADDR_EQUAL(&inp->inp_laddr6, key2) &&
 			    IN6_IS_ADDR_UNSPECIFIED(&inp->inp_faddr6))
 				break;
 		}

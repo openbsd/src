@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.93 2003/12/02 23:16:29 markus Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.94 2003/12/08 07:07:36 mcbride Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -525,11 +525,13 @@ udp_input(struct mbuf *m, ...)
 #ifdef INET6
 		if (ip6) {
 			inp = in6_pcblookup_listen(&udbtable,
-			    &ip6->ip6_dst, uh->uh_dport);
+			    &ip6->ip6_dst, uh->uh_dport, m_tag_find(m,
+			    PACKET_TAG_PF_TRANSLATE_LOCALHOST, NULL) != NULL);
 		} else
 #endif /* INET6 */
 		inp = in_pcblookup_listen(&udbtable,
-		    ip->ip_dst, uh->uh_dport);
+		    ip->ip_dst, uh->uh_dport, m_tag_find(m,
+		    PACKET_TAG_PF_TRANSLATE_LOCALHOST, NULL) != NULL);
 		if (inp == 0) {
 			udpstat.udps_noport++;
 			if (m->m_flags & (M_BCAST | M_MCAST)) {
@@ -820,7 +822,7 @@ udp6_ctlinput(cmd, sa, d)
 			 * is really ours.
 			 */
 			else if (in6_pcblookup_listen(&udbtable,
-			    &sa6_src.sin6_addr, uh.uh_sport))
+			    &sa6_src.sin6_addr, uh.uh_sport, 0);
 				valid = 1;
 #endif
 
