@@ -119,7 +119,7 @@ static Bool
 tfid_free(void *p, void *arg)
 {
     struct transform_fid *t = (struct transform_fid *)p;
-    memset(t, 0, sizeof(t));
+    memset(t, 0, sizeof(*t));
     free(t);
     return TRUE;
 }
