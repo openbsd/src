@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_delete.1,v 1.10 2000/04/15 02:15:19 aaron Exp $
+.\"	$OpenBSD: pkg_delete.1,v 1.11 2000/11/08 19:37:36 aaron Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -43,35 +43,8 @@ Package names may be specified either as the package name itself, or as filename
 , or the
 .Dq .tar
 suffix.
-.Sh WARNING
-.Bf -emphasis
-Since the
-.Nm
-command may execute scripts or programs provided by a package file,
-your system may be susceptible to ``trojan horses'' or other subtle
-attacks from miscreants who create dangerous package files.
 .Pp
-You are advised to verify the competence and identity of those who
-provide installable package files.
-For extra protection, examine all
-the package control files in the package record directory
-.Pq Pa /var/db/pkg/<pkg-name>/ .
-Pay particular
-attention to any +INSTALL, +DEINSTALL, +REQUIRE or +MTREE_DIRS files,
-and inspect the +CONTENTS file for
-.Cm @cwd ,
-.Cm @mode
-(check for setuid),
-.Cm @dirrm ,
-.Cm @exec ,
-and
-.Cm @unexec
-directives, and/or use the
-.Xr pkg_info 1
-command to examine the installed package control files.
-.Ef
-.Sh OPTIONS
-The following command line options are supported:
+The options are as follows:
 .Bl -tag -width indent
 .It Ar pkg-name Op Ar ...
 The named packages are deinstalled.
@@ -187,5 +160,30 @@ most of the work
 .It "John Kohl"
 refined it for NetBSD
 .El
-.Sh BUGS
-Sure to be some.
+.Sh WARNING
+.Bf -emphasis
+Since the
+.Nm
+command may execute scripts or programs provided by a package file,
+your system may be susceptible to ``trojan horses'' or other subtle
+attacks from miscreants who create dangerous package files.
+.Pp
+You are advised to verify the competence and identity of those who
+provide installable package files.
+For extra protection, examine all
+the package control files in the package record directory
+.Pq Pa /var/db/pkg/<pkg-name>/ .
+Pay particular
+attention to any +INSTALL, +DEINSTALL, +REQUIRE or +MTREE_DIRS files,
+and inspect the +CONTENTS file for
+.Cm @cwd ,
+.Cm @mode
+(check for setuid),
+.Cm @dirrm ,
+.Cm @exec ,
+and
+.Cm @unexec
+directives, and/or use the
+.Xr pkg_info 1
+command to examine the installed package control files.
+.Ef

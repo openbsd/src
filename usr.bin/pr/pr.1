@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pr.1,v 1.11 2000/03/10 20:17:49 aaron Exp $
+.\"	$OpenBSD: pr.1,v 1.12 2000/11/08 19:37:33 aaron Exp $
 .\"
 .\" Copyright (c) 1991 Keith Muller.
 .\" Copyright (c) 1993
@@ -135,7 +135,7 @@ If standard output is associated with a terminal,
 diagnostic messages are suppressed until the
 .Nm pr
 utility has completed processing.
-.Sh OPTIONS
+.Pp
 In the following option descriptions,
 .Em column ,
 .Em lines ,
@@ -146,6 +146,8 @@ and
 are positive decimal integers and
 .Em gap
 is a non-negative decimal integer.
+.Pp
+The options are as follows:
 .Bl -tag -width 4n
 .It Ar \&+page
 Begin output at page number
@@ -403,25 +405,6 @@ or
 .Em <return>
 characters, and except in the case of unmodified single-column output,
 use of these characters will cause formatting errors.
-.Sh BUGS
-The lack of a line wrapping option, and the specification that truncation
-does not apply to single-column output frequently results in formatting
-errors when input lines are longer than actual line width of the output device.
-.Pp
-The default width of 72 is archaic and non-obvious since it is normally
-ignored in the default single column mode.
-Using the
-.Fl m
-option with one column provides a way to truncate single column output but
-there's no way to wrap long times to a fixed line width.
-.Pp
-The default of
-.Em <tab>
-for the separator for the
-.Fl n
-and
-.Fl s
-options often results in lines apparently wider than expected.
 .Sh SEE ALSO
 .Xr cat 1 ,
 .Xr more 1 ,
@@ -441,3 +424,22 @@ A
 .Nm
 command appeared in
 .At v1 .
+.Sh BUGS
+The lack of a line wrapping option, and the specification that truncation
+does not apply to single-column output frequently results in formatting
+errors when input lines are longer than actual line width of the output device.
+.Pp
+The default width of 72 is archaic and non-obvious since it is normally
+ignored in the default single column mode.
+Using the
+.Fl m
+option with one column provides a way to truncate single column output but
+there's no way to wrap long times to a fixed line width.
+.Pp
+The default of
+.Em <tab>
+for the separator for the
+.Fl n
+and
+.Fl s
+options often results in lines apparently wider than expected.

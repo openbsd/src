@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdmatch.8,v 1.6 2000/10/30 17:46:27 aaron Exp $
+.\"	$OpenBSD: tcpdmatch.8,v 1.7 2000/11/08 19:37:38 aaron Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -71,7 +71,23 @@ In addition, it displays the optional
 shell commands or options in a pretty-printed format; this makes it
 easier for you to spot any discrepancies between what you want and what
 the program understands.
-.Sh ARGUMENTS
+.Pp
+The options are as follows:
+.Bl -tag -width XXXXXXXXXXXX
+.It Fl d
+Examine
+.Pa hosts.allow
+and
+.Pa hosts.deny
+files in the current directory instead of the default ones.
+.It Fl i Ar inet_conf
+Specify this option when
+.Nm
+is unable to find your
+.Pa inetd.conf
+network configuration file, or when you wish to test with a non-default one.
+.El
+.Pp
 The following two arguments are always required:
 .Pp
 .Bl -tag -width XXXXXX -compact
@@ -122,21 +138,6 @@ Typically, a login name or a numeric user ID.
 The default user name is
 .Dq unknown .
 .El
-.Sh OPTIONS
-.Bl -tag -width XXXXXXXXXXXX
-.It Fl d
-Examine
-.Pa hosts.allow
-and
-.Pa hosts.deny
-files in the current directory instead of the default ones.
-.It Fl i Ar inet_conf
-Specify this option when
-.Nm
-is unable to find your
-.Pa inetd.conf
-network configuration file, or when you wish to test with a non-default one.
-.El
 .Sh EXAMPLES
 To predict how
 .Xr tcpd 8
@@ -170,9 +171,9 @@ access control tables are:
 .Pp
 .Bl -tag -width /etc/hosts.allow -compact
 .It Pa /etc/hosts.allow
-Access control table (allow list)
+access control table (allow list)
 .It Pa /etc/hosts.deny
-Access control table (deny list)
+access control table (deny list)
 .El
 .Sh SEE ALSO
 .Xr hosts_access 5 ,

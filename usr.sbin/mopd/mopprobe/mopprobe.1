@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mopprobe.1,v 1.8 2000/03/19 17:57:08 aaron Exp $
+.\"	$OpenBSD: mopprobe.1,v 1.9 2000/11/08 19:37:36 aaron Exp $
 .\"
 .\" Copyright (c) 1996 Mats O Jansson.  All rights reserved.
 .\"
@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" @(#) $OpenBSD: mopprobe.1,v 1.8 2000/03/19 17:57:08 aaron Exp $
+.\" @(#) $OpenBSD: mopprobe.1,v 1.9 2000/11/08 19:37:36 aaron Exp $
 .\"
 .Dd October 2, 1995
 .Dt MOPPROBE 1
@@ -48,7 +48,7 @@
 .Op Fl v
 .Ar interface
 .Sh DESCRIPTION
-.Nm mopprobe
+.Nm
 prints the Ethernet address and nodename of DECserver 100/200/250/300 on the
 Ethernet connected to
 .Ar interface
@@ -63,7 +63,8 @@ inhibits all messages but the first from a node.
 With
 .Sq Fl v
 all MOP/RC SID messages will be shown (e.g., machines running DECnet).
-.Sh OPTIONS
+.Pp
+The options are as follows:
 .Bl -tag -width indent
 .It Fl a
 Listen on all the Ethernets attached to the system.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mopchk.1,v 1.6 1999/07/07 10:50:13 aaron Exp $
+.\"	$OpenBSD: mopchk.1,v 1.7 2000/11/08 19:37:35 aaron Exp $
 .\"
 .\" Copyright (c) 1996 Mats O Jansson.  All rights reserved.
 .\"
@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" @(#) $OpenBSD: mopchk.1,v 1.6 1999/07/07 10:50:13 aaron Exp $
+.\" @(#) $OpenBSD: mopchk.1,v 1.7 2000/11/08 19:37:35 aaron Exp $
 .\"
 .Dd October 2, 1995
 .Dt MOPCHK 1
@@ -49,15 +49,14 @@ If
 .Ar filename
 is given, information about the MOP-image is read from the header of the
 file.
-.Sh OPTIONS
+.Pp
+The options are as follows:
 .Bl -tag -width indent
 .It Fl a
 Show all the Ethernets attached to the system.
 .It Fl v
 Show version of mopprobe.
 .El
-.Sh BUGS
-In some implementations the same interface can occur more than once.
 .Sh SEE ALSO
 .Xr mopa.out 1 ,
 .Xr mopprobe 1 ,
@@ -65,3 +64,5 @@ In some implementations the same interface can occur more than once.
 .Xr mopd 8
 .Sh AUTHORS
 Mats O Jansson (moj@stacken.kth.se).
+.Sh BUGS
+In some implementations the same interface can occur more than once.

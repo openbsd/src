@@ -36,7 +36,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)amq.8	8.3 (Berkeley) 4/18/94
-.\"	$Id: amq.8,v 1.5 2000/03/19 17:57:01 aaron Exp $
+.\"	$Id: amq.8,v 1.6 2000/11/08 19:37:34 aaron Exp $
 .\"
 .Dd March 16, 1991
 .Dt AMQ 8
@@ -71,7 +71,8 @@ option.
 .Pp
 If directory names are given, as output by default,
 then per-filesystem information is displayed.
-.Sh OPTIONS
+.Pp
+The options are as follows:
 .Bl -tag -width Ds
 .It Fl f
 Request automounter to flush the internal caches.
@@ -113,15 +114,6 @@ option.
 .Tn RPC
 protocol description
 .El
-.Sh CAVEATS
-.Nm amq
-uses a Sun registered
-.Tn RPC
-program number (300019 decimal) which may not
-be in the
-.Pa /etc/rpc
-database.
-.El
 .Sh SEE ALSO
 .Xr amd 8
 .Sh AUTHOR
@@ -130,3 +122,11 @@ database.
 .\" .Sh HISTORY
 .\" .Nm amq
 .\" .At
+.Sh CAVEATS
+.Nm amq
+uses a Sun registered
+.Tn RPC
+program number (300019 decimal) which may not
+be in the
+.Pa /etc/rpc
+database.

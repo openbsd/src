@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mopd.8,v 1.8 2000/03/19 17:57:08 aaron Exp $
+.\"	$OpenBSD: mopd.8,v 1.9 2000/11/08 19:37:36 aaron Exp $
 .\"
 .\" Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
 .\"
@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" @(#) $OpenBSD: mopd.8,v 1.8 2000/03/19 17:57:08 aaron Exp $
+.\" @(#) $OpenBSD: mopd.8,v 1.9 2000/11/08 19:37:36 aaron Exp $
 .\"
 .Dd September 24, 1995
 .Dt MOPD 8
@@ -40,22 +40,22 @@
 .Op Fl adf
 .Op Ar interface
 .Sh DESCRIPTION
-.Nm mopd
+.Nm
 services MOP Load requests on the Ethernet connected to
 .Ar interface
 or all interfaces if
 .Fl a
 is given.
 In a load request received by
-.Nm mopd
+.Nm
 a filename can be given.
 This is the normal case for, e.g., terminal servers.
 If a filename isn't given
-.Nm mopd
+.Nm
 must know what image to load.
 .Pp
 Upon receiving a request,
-.Nm mopd
+.Nm
 checks if the requested file exists in
 .Pa /tftpboot/mop .
 The filename is normally all uppercase and with an extension of
@@ -65,7 +65,7 @@ filename (e.g.,
 .Pa 08002b09f4de.SYS ) ,
 and it might be a soft link to another file.
 .Pp
-.Nm mopd
+.Nm
 supports two kinds of files.
 The file is first checked to see if it is in
 .Xr a.out 5
@@ -73,7 +73,7 @@ format.
 If not, a few of Digital's formats are checked.
 .Pp
 In normal operation,
-.Nm mopd
+.Nm
 forks a copy of itself and runs in
 the background.
 Anomalies and errors are reported via
