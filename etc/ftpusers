@@ -1,4 +1,4 @@
-#	$OpenBSD: ftpusers,v 1.7 2002/05/20 21:19:44 deraadt Exp $
+#	$OpenBSD: ftpusers,v 1.8 2002/07/17 19:52:43 deraadt Exp $
 #
 # list of users disallowed any ftp access.
 # read by ftpd(8).
@@ -14,3 +14,8 @@ www
 named
 proxy
 nobody
+_portmap
+_rstatd
+_identd
+_rusersd
+_fingerd
