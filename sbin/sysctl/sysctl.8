@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.66 2001/06/03 04:41:38 angelos Exp $
+.\"	$OpenBSD: sysctl.8,v 1.67 2001/07/05 08:42:14 jjbg Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -179,6 +179,7 @@ privilege can change the value.
 .It net.inet.ip.ipsec-firstuse	integer	yes
 .It net.inet.ip.ipsec-enc-alg	string	yes
 .It net.inet.ip.ipsec-auth-alg	string	yes
+.It net.inet.ip.ipsec-comp-alg	string	yes
 .It net.inet.ip.ipsec-expire-acquire	integer	yes
 .It net.inet.ip.ipsec-invalid-life	integer	yes
 .It net.inet.ip.mtudisc	integer	yes
@@ -205,6 +206,7 @@ privilege can change the value.
 .It net.inet.udp.sendspace	integer	yes
 .It net.inet.esp.enable	integer	yes
 .It net.inet.ah.enable	integer	yes
+.It net.inet.ipcomp.enable integer yes
 .It net.inet.gre.allow	integer	yes
 .It net.inet.mobileip.allow	integer	yes
 .It net.inet6.ip6.forwarding	integer	yes

@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.39 2001/06/27 03:31:38 angelos Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.40 2001/07/05 08:38:36 jjbg Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -46,11 +46,13 @@ Before
 can be used, IPsec must be enabled by setting one or more of the following
 .Xr sysctl 3
 variables:
-.Bl -tag -width xxxxxxxxxxxxxxxxxxxxx
+.Bl -tag -width xxxxxxxxxxxxxxxxxxxxxx
 .It net.inet.esp.enable
 Enable the ESP IPsec protocol
 .It net.inet.ah.enable
 Enable the AH IPsec protocol
+.It net.inet.ipcomp.enable
+Enable the IPComp protocol
 .El
 .Pp
 To enable these operations across reboots, see
@@ -280,10 +282,27 @@ Allowed modifiers are:
 .Fl esp ,
 .Fl oldah ,
 .Fl oldesp ,
+.Fl ip4 ,
 and
-.Fl ip4 .
+.Fl ipcomp .
 Default action is to flush all types of security associations
 from the kernel.
+.It ipcomp
+Setup an IP Compression Association (IPCA) which will uses the IPcomp
+transforms. Just like an SA, an IPCA consists of the destination
+address, a Compression Parameter Index (CPI) and a protocol (which is
+fixed to IPcomp). Compression algorithms are applied. Allowed
+modifiers are: 
+.Fl dst ,
+.Fl src ,
+.Fl cpi ,
+.Fl comp ,
+and
+.Fl forcetunnel .
+To create an IPsec SA using compression, an IPCA and an SA must first
+be created. After this a IPCA/SA bundle must be created using the 
+.Nm group
+keyword. The IPCA must be applied first. 
 .El
 .Pp
 If no command is given
@@ -320,6 +339,8 @@ The Security Parameter Index (SPI), given as a hexadecimal number.
 .It Fl spi2
 The second SPI used by
 .Nm group .
+.It Fl cpi
+The Compression Parameter Index (CPI), given as a hexadecimal number.
 .It Fl tunnel
 This option has been deprecated.
 The arguments are ignored, and it otherwise has the same effect as the
@@ -381,6 +402,10 @@ for both old and new ah and also new esp.
 Also
 .Nm rmd160
 for both new ah and esp.
+.It Fl comp
+The compression algorithm to be used with the IPCA. The only possible value
+currently is:
+.Nm deflate .
 .It Fl key
 The secret symmetric key used for encryption and authentication.
 The size for

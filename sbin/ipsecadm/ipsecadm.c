@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.59 2001/06/26 21:10:28 itojun Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.60 2001/07/05 08:38:36 jjbg Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -71,6 +71,7 @@
 #define ESP_NEW		0x02
 #define AH_OLD		0x04
 #define AH_NEW		0x08
+#define IPCOMP          0x10
 
 #define XF_ENC		0x10
 #define XF_AUTH		0x20
@@ -79,6 +80,7 @@
 #define FLOW		0x50
 #define FLUSH		0x70
 #define ENC_IP		0x80
+#define XF_COMP         0x90
 
 #define CMD_MASK	0xf0
 
@@ -102,6 +104,7 @@ transform xf[] = {
     {"md5", SADB_X_AALG_MD5,  XF_AUTH|AH_OLD},
     {"sha1", SADB_X_AALG_SHA1,XF_AUTH|AH_OLD},
     {"rmd160", SADB_AALG_RIPEMD160HMAC, XF_AUTH|AH_NEW|ESP_NEW},
+    {"deflate", SADB_X_CALG_DEFLATE, XF_COMP|IPCOMP},
 };
 
 #define ROUNDUP(x) (((x) + sizeof(u_int64_t) - 1) & ~(sizeof(u_int64_t) - 1))
@@ -271,11 +274,12 @@ void
 usage()
 {
     fprintf(stderr, "usage: ipsecadm [command] <modifier...>\n"
-	    "\tCommands: new esp, old esp, new ah, old ah, group, delspi, ip4,\n"
+	    "\tCommands: new esp, old esp, new ah, old ah, group, delspi, ip4, ipcomp,\n"
 	    "\t\t  flow, flush\n"
 	    "\tPossible modifiers:\n"
 	    "\t  -enc <alg>\t\t\tencryption algorithm\n"
 	    "\t  -auth <alg>\t\t\tauthentication algorithm\n"
+	    "\t  -comp <alg>\t\t\tcompression algorithm\n"
 	    "\t  -src <ip>\t\t\tsource address to be used\n"
 	    "\t  -halfiv\t\t\tuse 4-byte IV in old ESP\n"
 	    "\t  -forcetunnel\t\t\tforce IP-in-IP encapsulation\n"
@@ -283,6 +287,7 @@ usage()
 	    "\t  -proto <val>\t\t\tsecurity protocol\n"
 	    "\t  -proxy <ip>\t\t\tproxy address to be used\n"
 	    "\t  -spi <val>\t\t\tSPI to be used\n"
+	    "\t  -cpi <val>\t\t\tCPI to be used\n"
 	    "\t  -key <val>\t\t\tkey material to be used\n"
 	    "\t  -keyfile <file>\t\tfile to read key material from\n"
 	    "\t  -authkey <val>\t\tkey material for auth in new esp\n"
@@ -301,7 +306,7 @@ usage()
 	    "\t  -dontacq\t\t\trequire, without using key mgmt.\n"
             "\t  -in\t\t\t\tspecify incoming-packet policy\n"
             "\t  -out\t\t\t\tspecify outgoing-packet policy\n"
-	    "\t  -[ah|esp|ip4]\t\t\tflush a particular protocol\n"
+	    "\t  -[ah|esp|ip4|ipcomp]\t\t\tflush a particular protocol\n"
 	    "\t  -srcid\t\t\tsource identity for flows\n"
 	    "\t  -dstid\t\t\tdestination identity for flows\n"
 	    "\t  -srcid_type\t\t\tsource identity type\n"
@@ -315,8 +320,10 @@ main(int argc, char **argv)
 {
     int auth = 0, enc = 0, klen = 0, alen = 0, mode = ESP_NEW, i = 0;
     int proto = IPPROTO_ESP, proto2 = IPPROTO_AH, sproto2 = SADB_SATYPE_AH;
+    int comp = 0;
     int dport = -1, sport = -1, tproto = -1;
     u_int32_t spi = SPI_LOCAL_USE, spi2 = SPI_LOCAL_USE;
+    u_int32_t cpi = SPI_LOCAL_USE;
     union sockaddr_union *src, *dst, *dst2, *osrc, *odst, *osmask;
     union sockaddr_union *odmask, *proxy;
     u_char srcbuf[256], dstbuf[256], dst2buf[256], osrcbuf[256];
@@ -518,13 +525,21 @@ main(int argc, char **argv)
 		    smsg.sadb_msg_satype = SADB_X_SATYPE_IPIP;
 		    i++;
 		}
-		else
-		{
-		    fprintf(stderr, "%s: unknown command: %s\n", argv[0],
-			    argv[1]);
-		    usage();
-		    exit(1);
-		}
+                else
+		 if (!strcmp(argv[1], "ipcomp"))
+		 {
+		     mode = IPCOMP;
+		     smsg.sadb_msg_type = SADB_ADD;
+		     smsg.sadb_msg_satype = SADB_X_SATYPE_IPCOMP;
+		     i++;
+		 }
+		 else
+		 {
+		     fprintf(stderr, "%s: unknown command: %s\n", argv[0],
+			     argv[1]);
+		     usage();
+		     exit(1);
+		 }
     
     for (i++; i < argc; i++)
     {
@@ -561,6 +576,24 @@ main(int argc, char **argv)
 
 	    skey2.sadb_key_exttype = SADB_EXT_KEY_AUTH;
 	    sa.sadb_sa_auth = auth;
+	    i++;
+	    continue;
+	}
+
+	if (!strcmp(argv[i] + 1, "comp") && comp == 0 && (i + 1 < argc))
+	{
+	    if ((comp = isvalid(argv[i + 1], XF_COMP, mode)) == 0)
+	    {
+		fprintf(stderr, "%s: invalid comp algorithm %s\n",
+			argv[0], argv[i + 1]);
+		exit(1);
+	    }
+
+	    /*
+	     * Use encryption algo slot to store compression algo
+	     * since we cannot modify sadb_sa
+	     */
+	    sa.sadb_sa_encrypt = comp;
 	    i++;
 	    continue;
 	}
@@ -734,11 +767,14 @@ main(int argc, char **argv)
 		if(!strcmp(argv[i] + 1, "ip4"))
 		  smsg.sadb_msg_satype = SADB_X_SATYPE_IPIP;
 		else
-		{
-		    fprintf(stderr, "%s: invalid SA type %s\n",
-			    argv[0], argv[i + 1]);
-		    exit(1);
-		}
+		    if(!strcmp(argv[i] + 1, "ipcomp"))
+			smsg.sadb_msg_satype = SADB_X_SATYPE_IPCOMP;  
+		    else
+		    {
+			fprintf(stderr, "%s: invalid SA type %s\n",
+				argv[0], argv[i + 1]);
+			exit(1);
+		    }
 	    i++;
 	    continue;
 	}
@@ -782,6 +818,21 @@ main(int argc, char **argv)
 	    continue;
 	}
 
+	if (!strcmp(argv[i] + 1, "cpi") && cpi == SPI_LOCAL_USE &&
+	    (i + 1 < argc) && !bypass && !deny)
+	{
+	    cpi = strtoul(argv[i + 1], NULL, 16);
+	    if (cpi >= CPI_RESERVED_MIN && (cpi <= CPI_RESERVED_MAX ||
+					    cpi >= CPI_PRIVATE_MAX))
+	    {
+		fprintf(stderr, "%s: invalid cpi %s\n", argv[0], argv[i + 1]);
+		exit(1);
+	    }
+
+	    sa.sadb_sa_spi = ntohl(cpi);
+	    i++;
+	    continue;
+	}
 
 	if (!strcmp(argv[i] + 1, "dst2") && 
 	    iscmd(mode, GRP_SPI) && (i + 1 < argc))
@@ -1301,19 +1352,24 @@ main(int argc, char **argv)
 			proto2 = IPPROTO_IPIP;
 		    }
 		    else
-		    {
-			fprintf(stderr,
-				"%s: unknown security protocol2 type %s\n",
-				argv[0], argv[i+1]);
-			exit(1);
-		    }
+		      if (!strcasecmp(argv[i + 1], "ipcomp"))
+		      {
+			  sprotocol.sadb_protocol_proto = sproto2 = SADB_X_SATYPE_IPCOMP;
+		      }
+		      else
+		      {
+			  fprintf(stderr,
+				  "%s: unknown security protocol2 type %s\n",
+				  argv[0], argv[i+1]);
+			  exit(1);
+		      }
 	    }
 	    else
 	    {
 		proto2 = atoi(argv[i + 1]);
 
 		if (proto2 != IPPROTO_ESP && proto2 != IPPROTO_AH &&
-		    proto2 != IPPROTO_IPIP)
+		    proto2 != IPPROTO_IPIP && proto2 != IPPROTO_IPCOMP)
 		{
 		    fprintf(stderr,
 			    "%s: unknown security protocol2 %d\n",
@@ -1329,6 +1385,9 @@ main(int argc, char **argv)
 		  else
 		    if (proto2 == IPPROTO_IPIP)
 		      sprotocol.sadb_protocol_proto = sproto2 = SADB_X_SATYPE_IPIP;
+		    else
+		      if (proto2 == IPPROTO_IPCOMP)
+			sprotocol.sadb_protocol_proto = sproto2 = SADB_X_SATYPE_IPCOMP;
 	    }
 
 	    i++;
@@ -1359,18 +1418,24 @@ main(int argc, char **argv)
 			proto = IPPROTO_IPIP;
 		    }
 		    else
-		    {
-			fprintf(stderr,
-				"%s: unknown security protocol type %s\n",
-				argv[0], argv[i + 1]);
-				exit(1);
-		    }
+		      if (!strcasecmp(argv[i + 1], "ipcomp"))
+		      {
+			  smsg.sadb_msg_satype = SADB_X_SATYPE_IPCOMP;
+			  proto = IPPROTO_IPCOMP;
+		      }
+		      else
+		      {
+			  fprintf(stderr,
+				  "%s: unknown security protocol type %s\n",
+				  argv[0], argv[i + 1]);
+			  exit(1);
+		      }
 	    }
 	    else
 	    {
 		proto = atoi(argv[i + 1]);
 		if (proto != IPPROTO_ESP && proto != IPPROTO_AH &&
-		    proto != IPPROTO_IPIP)
+		    proto != IPPROTO_IPIP && proto != IPPROTO_IPCOMP)
 		{
 		    fprintf(stderr,
 			    "%s: unknown security protocol %d\n",
@@ -1386,6 +1451,9 @@ main(int argc, char **argv)
 		  else
 		    if (proto == IPPROTO_IPIP)
 		      smsg.sadb_msg_satype = SADB_X_SATYPE_IPIP;
+		    else
+		      if (proto == IPPROTO_IPCOMP)
+			smsg.sadb_msg_satype = SADB_X_SATYPE_IPCOMP;
 	    }
 	    
 	    i++;
@@ -1416,6 +1484,13 @@ argfail:
     if ((mode & (AH_NEW | AH_OLD)) && auth == 0)
     {
 	fprintf(stderr, "%s: no authentication algorithm specified\n", 
+		argv[0]);
+	exit(1);
+    }
+
+    if (iscmd(mode, IPCOMP) && comp == 0)
+    {
+	fprintf(stderr, "%s: no compression algorithm specified\n",
 		argv[0]);
 	exit(1);
     }
@@ -1459,9 +1534,16 @@ argfail:
 	exit(1);
     }
 
-    if (spi == SPI_LOCAL_USE && !iscmd(mode, FLUSH) && !iscmd(mode, FLOW))
+    if (spi == SPI_LOCAL_USE && !iscmd(mode, FLUSH) && !iscmd(mode, FLOW)
+	&& !iscmd(mode, IPCOMP))
     {
 	fprintf(stderr, "%s: no SPI specified\n", argv[0]);
+	exit(1);
+    }
+
+    if (iscmd(mode, IPCOMP) && cpi == SPI_LOCAL_USE)
+    {
+	fprintf(stderr, "%s: no CPI specified\n", argv[0]);
 	exit(1);
     }
 
@@ -1495,6 +1577,11 @@ argfail:
     {
 	fprintf(stderr, "%s: key too long\n", argv[0]);
 	exit(1);
+    }
+
+    if (iscmd(mode, FLOW) && proto == IPPROTO_IPCOMP)
+    {
+	sprotocol2.sadb_protocol_proto = SADB_X_FLOW_TYPE_USE;
     }
 
     if (keyp != NULL)
@@ -1677,6 +1764,32 @@ argfail:
 		    smsg.sadb_msg_len += sad1.sadb_address_len;
 		}
 		break;
+
+	     case IPCOMP:
+		 /* SA header */
+		 iov[cnt].iov_base = &sa;
+		 iov[cnt++].iov_len = sizeof(sa);
+		 smsg.sadb_msg_len += sa.sadb_sa_len;
+
+		 /* Destination address header */
+		 iov[cnt].iov_base = &sad2;
+		 iov[cnt++].iov_len = sizeof(sad2);
+		 /* Destination address */
+		 iov[cnt].iov_base = dst;
+		 iov[cnt++].iov_len = ROUNDUP(dst->sa.sa_len);
+		 smsg.sadb_msg_len += sad2.sadb_address_len;
+
+		 if (sad1.sadb_address_exttype)
+		 {
+		     /* Source address header */
+		     iov[cnt].iov_base = &sad1;
+		     iov[cnt++].iov_len = sizeof(sad1);
+		     /* Source address */
+		     iov[cnt].iov_base = src;
+		     iov[cnt++].iov_len = ROUNDUP(src->sa.sa_len);
+		     smsg.sadb_msg_len += sad1.sadb_address_len;
+		 }
+		 break;
 
 	     case FLOW:
 		 if ((smsg.sadb_msg_type != SADB_X_DELFLOW) &&
