@@ -32,11 +32,13 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: getenv.c,v 1.4 1998/07/16 18:02:33 deraadt Exp $";
+static char *rcsid = "$OpenBSD: getenv.c,v 1.5 2002/12/10 22:44:12 mickey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
 #include <string.h>
+
+char *__findenv(const char *name, int *offset);
 
 /*
  * __findenv --
@@ -48,9 +50,7 @@ static char *rcsid = "$OpenBSD: getenv.c,v 1.4 1998/07/16 18:02:33 deraadt Exp $
  *	This routine *should* be a static; don't use it.
  */
 char *
-__findenv(name, offset)
-	register const char *name;
-	int *offset;
+__findenv(const char *name, int *offset)
 {
 	extern char **environ;
 	register int len, i;
@@ -83,7 +83,6 @@ getenv(name)
 	const char *name;
 {
 	int offset;
-	char *__findenv();
 
-	return(__findenv(name, &offset));
+	return (__findenv(name, &offset));
 }
