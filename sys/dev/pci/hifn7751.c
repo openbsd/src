@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.148 2004/03/14 23:26:11 hshoexer Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.149 2004/08/12 18:10:12 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -1565,10 +1565,8 @@ hifn_crypto(struct hifn_softc *sc, struct hifn_command *cmd,
 	 * interrupt salvages us from), unless there is more than one command
 	 * in the queue.
 	 */
-	if (dma->cmdu > 1) {
-		sc->sc_dmaier |= HIFN_DMAIER_C_WAIT;
-		WRITE_REG_1(sc, HIFN_1_DMA_IER, sc->sc_dmaier);
-	}
+	sc->sc_dmaier |= HIFN_DMAIER_C_WAIT;
+	WRITE_REG_1(sc, HIFN_1_DMA_IER, sc->sc_dmaier);
 
 	hifnstats.hst_ipackets++;
 	hifnstats.hst_ibytes += cmd->src_map->dm_mapsize;
@@ -2568,10 +2566,8 @@ hifn_compress_enter(struct hifn_softc *sc, struct hifn_command *cmd)
 	 * interrupt salvages us from), unless there is more than one command
 	 * in the queue.
 	 */
-	if (dma->cmdu > 1) {
-		sc->sc_dmaier |= HIFN_DMAIER_C_WAIT;
-		WRITE_REG_1(sc, HIFN_1_DMA_IER, sc->sc_dmaier);
-	}
+	sc->sc_dmaier |= HIFN_DMAIER_C_WAIT;
+	WRITE_REG_1(sc, HIFN_1_DMA_IER, sc->sc_dmaier);
 
 	hifnstats.hst_ipackets++;
 	hifnstats.hst_ibytes += cmd->src_map->dm_mapsize;
