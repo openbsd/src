@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.33 1999/09/03 18:55:21 deraadt Exp $
+#       $OpenBSD: install.md,v 1.34 2000/04/24 16:33:44 millert Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -60,8 +60,8 @@ md_set_term() {
 md_get_msgbuf() {
 	# Only want to see one boot's worth of info
 	sed -n -f /dev/stdin /kern/msgbuf <<- OOF
-		/^Copyright (c)/h
-		/^Copyright (c)/!H
+		/^OpenBSD /h
+		/^OpenBSD /!H
 		\${
 			g
 			p
