@@ -1,4 +1,4 @@
-.\"	$OpenBSD: adduser.8,v 1.3 1998/08/29 21:11:15 deraadt Exp $
+.\"	$OpenBSD: adduser.8,v 1.4 1998/09/22 01:40:30 weingart Exp $
 .\"
 .\" Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" All rights reserved.
@@ -39,7 +39,8 @@
     [-check_only] [-config_create] [-dotdir dotdir] 
     [-e|-encrypt method] [-group login_group] [-h|-help] 
     [-home home] [-message message_file] [-noconfig] 
-    [-shell shell] [-s|-silent|-q|-quiet] [-uid uid_start] 
+    [-shell shell] [-s|-silent|-q|-quiet]
+    [-uid_start uid_start] [-uid_end uid_end]
     [-v|-verbose]
 
 .Sh DESCRIPTION
@@ -75,9 +76,14 @@ is not permitted.
 Only valid entries from the 
 .Xr shells 5
 database or entries corresponding to sliplogin and pppd are permitted.
-.It Sy uid
-This value is automatically generated or assigned at the invoker's 
-discretion; however, it must be less than 32000.
+.It Sy uid_start
+This value is the start of the range where free uid values are
+searched for.  This value must be less than the value of uid_end.
+The default value is 1000 or as configured in the configuration file.
+.It Sy uid_end
+This value is the end of the range where free uid values are
+searched for.  This value must be more than the value of uid_start.
+The default value is 32000 or as configured in the configuration file.
 .It Sy gid/login group
 This value is generated automatically, but it can be specified at the
 discretion of the person invoking the program. 
@@ -223,10 +229,10 @@ from /usr/share/skel to /home/falken. Send user falken
 a welcome message.
 
 .Pp
-$ adduser -uid 5000 -group guest -message no -batch vehlefanz
+$ adduser -uid_start 5000 -group guest -message no -batch vehlefanz
 .Pp
-Create user 'vehlefanz' in login group guest. Uid is up to
-5000, for instance 5007. No other groups, no realname, no password.
+Create user 'vehlefanz' in login group guest. Start the free
+UID search at 5000. No other groups, no realname, no password.
 Do not send a welcome message.
 
 .Sh FILES
