@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.10 1998/05/18 21:11:06 provos Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.11 1998/10/28 21:34:33 provos Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -194,7 +194,7 @@ again:
 			goto send;
 		if (tp->t_force)
 			goto send;
-		if (len >= tp->max_sndwnd / 2)
+		if (len >= tp->max_sndwnd / 2 && tp->max_sndwnd > 0)
 			goto send;
 		if (SEQ_LT(tp->snd_nxt, tp->snd_max))
 			goto send;
@@ -330,10 +330,10 @@ send:
  
 	/*
 	 * Adjust data length if insertion of options will
-	 * bump the packet length beyond the t_maxseg length.
+	 * bump the packet length beyond the t_maxopd length.
 	 */
-	if (len > tp->t_maxseg - optlen) {
-		len = tp->t_maxseg - optlen;
+	if (len > tp->t_maxopd - optlen) {
+		len = tp->t_maxopd - optlen;
 		sendalot = 1;
 		flags &= ~TH_FIN;
 	 }

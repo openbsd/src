@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.11 1998/06/10 03:40:05 beck Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.12 1998/10/28 21:34:33 provos Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -98,6 +98,8 @@ struct tcpcb {
 					 * for slow start exponential to
 					 * linear switch
 					 */
+	u_int	t_maxopd;		/* mss plus options */
+
 /*
  * transmit timing stuff.  See below for scale of srtt and rttvar.
  * "Variance" is actually smoothed difference.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.19 1998/06/27 02:42:40 deraadt Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.20 1998/10/28 21:34:32 provos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -641,9 +641,9 @@ findpcb:
 		/* 
 		 * If last ACK falls within this segment's sequence numbers,
 		 *  record the timestamp.
+		 * Fix from Braden, see Stevens p. 870
 		 */
-		if (ts_present && SEQ_LEQ(ti->ti_seq, tp->last_ack_sent) &&
-		   SEQ_LT(tp->last_ack_sent, ti->ti_seq + ti->ti_len)) {
+		if (ts_present && SEQ_LEQ(ti->ti_seq, tp->last_ack_sent)) {
 			tp->ts_recent_age = tcp_now;
 			tp->ts_recent = ts_val;
 		}
@@ -980,7 +980,8 @@ trimthenstep6:
 				tiflags &= ~TH_URG;
 			todrop--;
 		}
-		if (todrop >= ti->ti_len) {
+		if (todrop >= ti->ti_len ||
+		    (todrop == ti->ti_len && (tiflags & TH_FIN) == 0)) {
 			/*
 			 * Any valid FIN must be to the left of the
 			 * window.  At this point, FIN must be a
@@ -1064,10 +1065,10 @@ trimthenstep6:
 	/*
 	 * If last ACK falls within this segment's sequence numbers,
 	 * record its timestamp.
+	 * Fix from Braden, see Stevens p. 870
 	 */
-	if (ts_present && SEQ_LEQ(ti->ti_seq, tp->last_ack_sent) &&
-	    SEQ_LT(tp->last_ack_sent, ti->ti_seq + ti->ti_len +
-		   ((tiflags & (TH_SYN|TH_FIN)) != 0))) {
+	if (ts_present && TSTMP_GEQ(ts_val, tp->ts_recent) &&
+	    SEQ_LEQ(ti->ti_seq, tp->last_ack_sent)) {
 		tp->ts_recent_age = tcp_now;
 		tp->ts_recent = ts_val;
 	}
@@ -1579,7 +1580,7 @@ tcp_dooptions(tp, cp, cnt, ti, ts_present, ts_val, ts_ecr)
 	int *ts_present;
 	u_int32_t *ts_val, *ts_ecr;
 {
-	u_int16_t mss;
+	u_int16_t mss = 0;
 	int opt, optlen;
 
 	for (; cnt > 0; cnt -= optlen, cp += optlen) {
@@ -1605,7 +1606,6 @@ tcp_dooptions(tp, cp, cnt, ti, ts_present, ts_val, ts_ecr)
 				continue;
 			bcopy((char *) cp + 2, (char *) &mss, sizeof(mss));
 			NTOHS(mss);
-			(void) tcp_mss(tp, mss);	/* sets t_maxseg */
 			break;
 
 		case TCPOPT_WINDOW:
@@ -1638,6 +1638,9 @@ tcp_dooptions(tp, cp, cnt, ti, ts_present, ts_val, ts_ecr)
 			break;
 		}
 	}
+	/* Update t_maxopd and t_maxseg after all options are processed */
+	if (ti->ti_flags & TH_SYN)
+		(void) tcp_mss(tp, mss);	/* sets t_maxseg */
 }
 
 /*
@@ -1762,6 +1765,12 @@ tcp_xmit_timer(tp, rtt)
  * window to be a single segment if the destination isn't local.
  * While looking at the routing entry, we also initialize other path-dependent
  * parameters from pre-set or cached values in the routing entry.
+ *
+ * Also take into account the space needed for options that we
+ * send regularly.  Make maxseg shorter by that amount to assure
+ * that we can send maxseg amount of data even when the options
+ * are present.  Store the upper limit of the length of options plus
+ * data in maxopd.
  */
 int
 tcp_mss(tp, offer)
@@ -1788,8 +1797,10 @@ tcp_mss(tp, offer)
 			satosin(&ro->ro_dst)->sin_addr = inp->inp_faddr;
 			rtalloc(ro);
 		}
-		if ((rt = ro->ro_rt) == (struct rtentry *)0)
+		if ((rt = ro->ro_rt) == (struct rtentry *)0) {
+			tp->t_maxopd = tp->t_maxseg = tcp_mssdflt;
 			return (tcp_mssdflt);
+		}
 	}
 	ifp = rt->rt_ifp;
 	so = inp->inp_socket;
@@ -1828,13 +1839,6 @@ tcp_mss(tp, offer)
 #endif /* RTV_MTU */
 	{
 		mss = ifp->if_mtu - sizeof(struct tcpiphdr);
-#if	(MCLBYTES & (MCLBYTES - 1)) == 0
-		if (mss > MCLBYTES)
-			mss &= ~(MCLBYTES-1);
-#else
-		if (mss > MCLBYTES)
-			mss = mss / MCLBYTES * MCLBYTES;
-#endif
 		if (!in_localaddr(inp->inp_faddr))
 			mss = min(mss, tcp_mssdflt);
 	}
@@ -1848,38 +1852,56 @@ tcp_mss(tp, offer)
 	 */
 	if (offer)
 		mss = min(mss, offer);
-	mss = max(mss, 32);		/* sanity */
-	if (mss < tp->t_maxseg || offer != 0) {
-		/*
-		 * If there's a pipesize, change the socket buffer
-		 * to that size.  Make the socket buffers an integral
-		 * number of mss units; if the mss is larger than
-		 * the socket buffer, decrease the mss.
-		 */
-#ifdef RTV_SPIPE
-		if ((bufsize = rt->rt_rmx.rmx_sendpipe) == 0)
+	mss = max(mss, 64);		/* sanity - at least max opt. space */
+	/*
+	 * maxopd stores the maximum length of data AND options
+	 * in a segment; maxseg is the amount of data in a normal
+	 * segment.  We need to store this value (maxopd) apart
+	 * from maxseg, because now every segment carries options
+	 * and thus we normally have somewhat less data in segments.
+	 */
+	tp->t_maxopd = mss;
+
+ 	if ((tp->t_flags & (TF_REQ_TSTMP|TF_NOOPT)) == TF_REQ_TSTMP &&
+	    (tp->t_flags & TF_RCVD_TSTMP) == TF_RCVD_TSTMP)
+		mss -= TCPOLEN_TSTAMP_APPA;
+
+#if	(MCLBYTES & (MCLBYTES - 1)) == 0
+		if (mss > MCLBYTES)
+			mss &= ~(MCLBYTES-1);
+#else
+		if (mss > MCLBYTES)
+			mss = mss / MCLBYTES * MCLBYTES;
 #endif
-			bufsize = so->so_snd.sb_hiwat;
-		if (bufsize < mss)
-			mss = bufsize;
-		else {
-			bufsize = roundup(bufsize, mss);
-			if (bufsize > sb_max)
-				bufsize = sb_max;
-			(void)sbreserve(&so->so_snd, bufsize);
-		}
-		tp->t_maxseg = mss;
+	/*
+	 * If there's a pipesize, change the socket buffer
+	 * to that size.  Make the socket buffers an integral
+	 * number of mss units; if the mss is larger than
+	 * the socket buffer, decrease the mss.
+	 */
+#ifdef RTV_SPIPE
+	if ((bufsize = rt->rt_rmx.rmx_sendpipe) == 0)
+#endif
+		bufsize = so->so_snd.sb_hiwat;
+	if (bufsize < mss)
+		mss = bufsize;
+	else {
+		bufsize = roundup(bufsize, mss);
+		if (bufsize > sb_max)
+			bufsize = sb_max;
+		(void)sbreserve(&so->so_snd, bufsize);
+	}
+	tp->t_maxseg = mss;
 
 #ifdef RTV_RPIPE
-		if ((bufsize = rt->rt_rmx.rmx_recvpipe) == 0)
+	if ((bufsize = rt->rt_rmx.rmx_recvpipe) == 0)
 #endif
-			bufsize = so->so_rcv.sb_hiwat;
-		if (bufsize > mss) {
-			bufsize = roundup(bufsize, mss);
-			if (bufsize > sb_max)
-				bufsize = sb_max;
-			(void)sbreserve(&so->so_rcv, bufsize);
-		}
+		bufsize = so->so_rcv.sb_hiwat;
+	if (bufsize > mss) {
+		bufsize = roundup(bufsize, mss);
+		if (bufsize > sb_max)
+			bufsize = sb_max;
+		(void)sbreserve(&so->so_rcv, bufsize);
 	}
 	tp->snd_cwnd = mss;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.10 1998/05/18 21:11:07 provos Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.11 1998/10/28 21:34:33 provos Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -235,7 +235,7 @@ tcp_newtcpcb(inp)
 		return ((struct tcpcb *)0);
 	bzero((char *) tp, sizeof(struct tcpcb));
 	LIST_INIT(&tp->segq);
-	tp->t_maxseg = tcp_mssdflt;
+	tp->t_maxseg = tp->t_maxopd = tcp_mssdflt;
 
 	tp->t_flags = tcp_do_rfc1323 ? (TF_REQ_SCALE|TF_REQ_TSTMP) : 0;
 	tp->t_inpcb = inp;
