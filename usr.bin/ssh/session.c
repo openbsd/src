@@ -33,7 +33,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.73 2001/04/16 08:19:31 djm Exp $");
+RCSID("$OpenBSD: session.c,v 1.74 2001/04/17 19:34:25 markus Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -105,8 +105,8 @@ extern char *__progname;
 extern int log_stderr;
 extern int debug_flag;
 extern u_int utmp_len;
-
 extern int startup_pipe;
+extern void destroy_sensitive_data(void);
 
 /* Local Xauthority file. */
 static char *xauthfile;
@@ -139,6 +139,12 @@ do_authenticated(Authctxt *authctxt)
 		error("unable to get login class");
 		return;
 	}
+#ifdef BSD_AUTH
+	if (auth_approval(NULL, lc, authctxt->pw->pw_name, "ssh") <= 0) {
+		packet_disconnect("Approval failure for %s",
+		    authctxt->pw->pw_name);
+	}
+#endif
 #endif
 	/* setup the channel layer */
 	if (!no_port_forwarding_flag && options.allow_tcp_forwarding)
@@ -825,6 +831,9 @@ do_child(Session *s, const char *command)
 	char *argv[10];
 	int do_xauth = s->auth_proto != NULL && s->auth_data != NULL;
 
+	/* remove hostkey from the child's memory */
+	destroy_sensitive_data();
+
 	/* login(1) is only called if we execute the login shell */
 	if (options.use_login && command != NULL)
 		options.use_login = 0;
@@ -857,13 +866,6 @@ do_child(Session *s, const char *command)
 				perror("unable to set user context");
 				exit(1);
 			}
-#ifdef BSD_AUTH
-			if (auth_approval(NULL, lc, pw->pw_name, "ssh") <= 0) {
-				error("approval failure for %s", pw->pw_name);
-				fprintf(stderr, "Approval failure");
-				exit(1);
-			}
-#endif
 #else
 			if (setlogin(pw->pw_name) < 0)
 				error("setlogin failed: %s", strerror(errno));
@@ -1049,7 +1051,8 @@ do_child(Session *s, const char *command)
 	 * in this order).
 	 */
 	if (!options.use_login) {
-		if (stat(_PATH_SSH_USER_RC, &st) >= 0) {
+		/* ignore _PATH_SSH_USER_RC for subsystems */
+		if (!s->is_subsystem && (stat(_PATH_SSH_USER_RC, &st) >= 0)) {
 			if (debug_flag)
 				fprintf(stderr, "Running %s %s\n", _PATH_BSHELL,
 				    _PATH_SSH_USER_RC);
