@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.40 2002/05/29 12:32:51 vincent Exp $	*/
+/*	$OpenBSD: def.h,v 1.41 2002/05/29 12:41:42 vincent Exp $	*/
 
 #include <sys/queue.h>
 
@@ -588,6 +588,11 @@ int	 undo_add_insert(LINE *, int, int);
 int	 undo_add_delete(LINE *, int, int);
 int	 undo_add_change(LINE *, int, int);
 int	 undo(int, int);
+
+/* autoexec.c X */
+int	 auto_execute(int, int);
+PF	*find_autoexec(const char *);
+int	 add_autoexec(const char *, const char *);
 
 /*
  * Externals.

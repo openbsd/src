@@ -1,4 +1,4 @@
-/*	$OpenBSD: funmap.c,v 1.8 2002/05/29 12:33:36 vincent Exp $	*/
+/*	$OpenBSD: funmap.c,v 1.9 2002/05/29 12:41:42 vincent Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.  All rights reserved.
  *
@@ -43,6 +43,7 @@ static struct funmap functnames[] = {
 #ifndef	NO_HELP
 	{apropos_command, "apropos",},
 #endif /* !NO_HELP */
+	{ auto_execute, "auto-execute", },
 	{fillmode, "auto-fill-mode",},
 	{indentmode, "auto-indent-mode",},
 	{backchar, "backward-char",},
