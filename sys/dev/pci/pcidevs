@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.394 2001/05/07 19:42:51 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.395 2001/05/11 14:56:02 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -527,6 +527,8 @@ vendor LAVA		0x1407	Lava
 vendor OXFORD		0x14d2	Oxford
 vendor INVERTEX		0x14e1	Invertex
 vendor AIRONET		0x14b9	Aironet
+vendor COMPAL		0x14c0	COMPAL
+vendor TITAN		0x14d2	Titan
 vendor BROADCOM		0x14e4	Broadcom
 vendor CONEXANT		0x14f1	Conexant
 vendor DELTA		0x1500	Delta
@@ -555,6 +557,7 @@ vendor ADP		0x9004	Adaptec
 vendor ADP2		0x9005	Adaptec
 vendor ATRONICS		0x907f	Atronics
 vendor ARC		0xedd8	ARC Logic
+vendor CHRYSALIS	0xcafe	Chrysalis-ITS
 vendor INVALID		0xffff	INVALID VENDOR ID
 
 /*
@@ -1382,6 +1385,7 @@ product NETSEC 7751		0x7751	7751
 product CMI CMI8338A		0x0100	CMI8338A Audio
 product CMI CMI8338B		0x0101	CMI8338B Audio
 product CMI CMI8738		0x0111	CMI8738/C3DX Audio
+product CMI CMI8738B		0x0112  CMI8738B Audio
 product CMI HSP56		0x0211	HSP56 AMR
 
 /* NetVin */
