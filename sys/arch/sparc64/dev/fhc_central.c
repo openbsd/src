@@ -1,4 +1,4 @@
-/*	$OpenBSD: fhc_central.c,v 1.2 2004/09/23 16:26:59 jason Exp $	*/
+/*	$OpenBSD: fhc_central.c,v 1.3 2004/09/24 20:48:26 jason Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net).
@@ -39,6 +39,7 @@
 #include <machine/openfirm.h>
 
 #include <sparc64/dev/centralvar.h>
+#include <sparc64/dev/fhcreg.h>
 #include <sparc64/dev/fhcvar.h>
 
 int	fhc_central_match(struct device *, void *, void *);
@@ -86,29 +87,29 @@ fhc_central_attach(parent, self, aux)
 	}
 
 	if (central_bus_map(sc->sc_bt, ca->ca_reg[2].cbr_slot,
-	    ca->ca_reg[2].cbr_offset, ca->ca_reg[2].cbr_size, 0,
-	    &sc->sc_freg)) {
+	    ca->ca_reg[2].cbr_offset, ca->ca_reg[2].cbr_size,
+	    BUS_SPACE_MAP_LINEAR, &sc->sc_freg)) {
 		printf(": failed to map freg\n");
 		return;
 	}
 
 	if (central_bus_map(sc->sc_bt, ca->ca_reg[3].cbr_slot,
-	    ca->ca_reg[3].cbr_offset, ca->ca_reg[3].cbr_size, 0,
-	    &sc->sc_sreg)) {
+	    ca->ca_reg[3].cbr_offset, ca->ca_reg[3].cbr_size,
+	    BUS_SPACE_MAP_LINEAR, &sc->sc_sreg)) {
 		printf(": failed to map sreg\n");
 		return;
 	}
 
 	if (central_bus_map(sc->sc_bt, ca->ca_reg[4].cbr_slot,
-	    ca->ca_reg[4].cbr_offset, ca->ca_reg[4].cbr_size, 0,
-	    &sc->sc_ureg)) {
+	    ca->ca_reg[4].cbr_offset, ca->ca_reg[4].cbr_size,
+	    BUS_SPACE_MAP_LINEAR, &sc->sc_ureg)) {
 		printf(": failed to map ureg\n");
 		return;
 	}
 
 	if (central_bus_map(sc->sc_bt, ca->ca_reg[5].cbr_slot,
-	    ca->ca_reg[5].cbr_offset, ca->ca_reg[5].cbr_size, 0,
-	    &sc->sc_treg)) {
+	    ca->ca_reg[5].cbr_offset, ca->ca_reg[5].cbr_size,
+	    BUS_SPACE_MAP_LINEAR, &sc->sc_treg)) {
 		printf(": failed to map treg\n");
 		return;
 	}
