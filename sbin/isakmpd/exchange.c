@@ -1,5 +1,5 @@
-/*	$OpenBSD: exchange.c,v 1.10 1999/03/24 14:42:18 niklas Exp $	*/
-/*	$EOM: exchange.c,v 1.68 1999/03/24 10:59:11 niklas Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.11 1999/03/31 01:50:29 niklas Exp $	*/
+/*	$EOM: exchange.c,v 1.69 1999/03/31 01:29:52 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -283,7 +283,7 @@ exchange_run (struct message *msg)
 	       * Unify?
 	       */
 	      msg->flags |= MSG_NO_RETRANS | MSG_KEEP;
-	      if (msg->isakmp_sa)
+	      if (exchange->phase == 1 && msg->isakmp_sa)
 		{
 		  if (msg->isakmp_sa->last_sent_in_setup)
 		    message_free (msg->isakmp_sa->last_sent_in_setup);
@@ -440,12 +440,19 @@ exchange_lookup_by_name (char *name, int phase)
   for (i = 0; i < bucket_mask; i++)
     for (exchange = LIST_FIRST (&exchange_tab[i]); exchange;
 	 exchange = LIST_NEXT (exchange, link))
-      if (strcmp (exchange->name, name) == 0 && exchange->phase == phase)
-	return exchange;
+      {
+	log_debug(LOG_MISC, 90,
+		  "exchange_lookup_by_name: %s == %s && %d == %d?", name,
+		  exchange->name ? exchange->name : "<unnamed>", phase,
+		  exchange->phase);
+	if (exchange->name && strcasecmp (exchange->name, name) == 0
+	    && exchange->phase == phase)
+	  return exchange;
+      }
   return 0;
 }
 
-int
+static void
 exchange_enter (struct exchange *exchange)
 {
   u_int16_t bucket = 0;
@@ -468,7 +475,6 @@ exchange_enter (struct exchange *exchange)
     }
   bucket &= bucket_mask;
   LIST_INSERT_HEAD (&exchange_tab[bucket], exchange, link);
-  return 1;
 }
 
 /*
@@ -575,23 +581,76 @@ exchange_create (int phase, int initiator, int doi, int type)
   return exchange;
 }
 
+struct exchange_finalization_node
+{
+  void (*first) (void *);
+  void *first_arg;
+  void (*second) (void *);
+  void *second_arg;
+};
+
+/* Run the finalization functions of ARG.  */
+static void
+exchange_run_finalizations (void *arg)
+{
+  struct exchange_finalization_node *node = arg;
+
+  node->first (node->first_arg);
+  node->second (node->second_arg);
+  free (node);
+}
+
+/*
+ * Add a finalization function FINALIZE with argument ARG to the tail
+ * of the finalization function list of EXCHANGE.
+ */
+static void
+exchange_add_finalization (struct exchange *exchange,
+			   void (*finalize) (void *), void *arg)
+{
+  struct exchange_finalization_node *node;
+
+  if (!finalize)
+    return;
+
+  if (!exchange->finalize)
+    {
+      exchange->finalize = finalize;
+      exchange->finalize_arg = arg;
+      return;
+    }
+
+  node = malloc (sizeof *node);
+  if (!node)
+    {
+      log_error ("exchange_add_finalization: malloc (%d) failed",
+		 sizeof *node);
+      free (arg);
+      return;
+    }
+  node->first = exchange->finalize;
+  node->first_arg = exchange->finalize_arg;
+  node->second = finalize;
+  node->second_arg = arg;
+  exchange->finalize = exchange_run_finalizations;
+  exchange->finalize_arg = node;
+}
+
 /* Establish a phase 1 exchange.  */
 void
 exchange_establish_p1 (struct transport *t, u_int8_t type, u_int32_t doi,
-		       void *args, void (*finalize) (void *), void *arg)
+		       char *name, void *args, void (*finalize) (void *),
+		       void *arg)
 {
   struct exchange *exchange;
   struct message *msg;
   char *tag = 0;
   char *str;
-  char *name = args;
 
-  if (exchange_lookup_by_name (name, 1))
+  exchange = exchange_lookup_by_name (name, 1);
+  if (exchange)
     {
-      /*
-       * Another exchange for this name is already being run.
-       * XXX What about the finalize routine?
-       */
+      exchange_add_finalization (exchange, finalize, arg);
       return;
     }
 
@@ -699,51 +758,63 @@ exchange_establish_p1 (struct transport *t, u_int8_t type, u_int32_t doi,
 
 /* Establish a phase 2 exchange.  XXX With just one SA for now.  */
 void
-exchange_establish_p2 (struct sa *isakmp_sa, u_int8_t type, void *args)
+exchange_establish_p2 (struct sa *isakmp_sa, u_int8_t type, char *name,
+		       void *args, void (*finalize) (void *), void *arg)
 {
   struct exchange *exchange;
   struct message *msg;
   int i;
-  char *tag, *str, *name = args;
-  u_int32_t doi;
+  char *tag, *str;
+  u_int32_t doi = ISAKMP_DOI_ISAKMP;
 
-  /* Find out our phase 2 modes.  */
-  tag = conf_get_str (name, "Configuration");
-  if (!tag)
+  if (name)
     {
-      log_print ("exchange_establish_p2: no configuration for peer \"%s\"",
-		 name);
-      return;
-    }
-
-  /* Figure out the DOI.  */
-  str = conf_get_str (tag, "DOI");
-  if (!str)
-    doi = isakmp_sa->doi->id;
-  else if (strcasecmp (str, "IPSEC") == 0)
-    doi = IPSEC_DOI_IPSEC;
-  else
-    {
-      log_print ("exchange_establish_p2: DOI \"%s\" unsupported", str);
-      return;
-    }
-
-  /* What exchange type do we want?  */
-  if (!type)
-    {
-      str = conf_get_str (tag, "EXCHANGE_TYPE");
-      if (!str)
+      exchange = exchange_lookup_by_name (name, 2);
+      if (exchange)
 	{
-	  log_print ("exchange_establish_p2: "
-		     "no \"EXCHANGE_TYPE\" tag in [%s] section", tag);
+	  exchange_add_finalization (exchange, finalize, arg);
 	  return;
 	}
-      /* XXX IKE dependent.  */
-      type = constant_value (ike_exch_cst, str);
+
+      /* Find out our phase 2 modes.  */
+      tag = conf_get_str (name, "Configuration");
+      if (!tag)
+	{
+	  log_print ("exchange_establish_p2: no configuration for peer \"%s\"",
+		     name);
+	  return;
+	}
+
+      /* Figure out the DOI.  */
+      str = conf_get_str (tag, "DOI");
+      if (!str)
+	doi = isakmp_sa->doi->id;
+      else if (strcasecmp (str, "IPSEC") == 0)
+	doi = IPSEC_DOI_IPSEC;
+      else
+	{
+	  log_print ("exchange_establish_p2: DOI \"%s\" unsupported", str);
+	  return;
+	}
+
+      /* What exchange type do we want?  */
       if (!type)
 	{
-	  log_print ("exchange_establish_p2: unknown exchange type %s", str);
-	  return;
+	  str = conf_get_str (tag, "EXCHANGE_TYPE");
+	  if (!str)
+	    {
+	      log_print ("exchange_establish_p2: "
+			 "no \"EXCHANGE_TYPE\" tag in [%s] section", tag);
+	      return;
+	    }
+	  /* XXX IKE dependent.  */
+	  type = constant_value (ike_exch_cst, str);
+	  if (!type)
+	    {
+	      log_print ("exchange_establish_p2: unknown exchange type %s",
+			 str);
+	      return;
+	    }
 	}
     }
 
@@ -762,6 +833,8 @@ exchange_establish_p2 (struct sa *isakmp_sa, u_int8_t type, void *args)
       return;
     }
   exchange->policy = name ? conf_get_str (name, "Configuration") : 0;
+  exchange->finalize = finalize;
+  exchange->finalize_arg = arg;
   memcpy (exchange->cookies, isakmp_sa->cookies, ISAKMP_HDR_COOKIES_LEN);
   getrandom (exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN);
   exchange->flags |= EXCHANGE_FLAG_ENCRYPT;
@@ -917,7 +990,8 @@ exchange_dump (char *header, struct exchange *exchange)
 {
   log_debug (LOG_MISC, 10,
 	     "%s: %p %s %s policy %s phase %d doi %d exchange %d step %d",
-	     header, exchange, exchange->name, exchange->policy,
+	     header, exchange, exchange->name ? exchange->name : "<unnamed>",
+	     exchange->policy ? exchange->policy : "<no policy>",
 	     exchange->initiator ? "initiator" : "responder", exchange->phase,
 	     exchange->doi->id, exchange->type, exchange->step);
   log_debug (LOG_MISC, 10,
@@ -1019,6 +1093,9 @@ exchange_finalize (struct message *msg)
    */
   for (sa = TAILQ_FIRST (&exchange->sa_list); sa; sa = TAILQ_NEXT (sa, next))
     {
+      /* Move over the name to the SA.  */
+      sa->name = exchange->name;
+
       if (exchange->flags & EXCHANGE_FLAG_I_COMMITTED)
 	{
 	  for (proto = TAILQ_FIRST (&sa->protos); proto;
@@ -1034,7 +1111,7 @@ exchange_finalize (struct message *msg)
       sa->flags |= SA_FLAG_READY;
       if (exchange->name)
 	{
-	  attrs = conf_get_list (exchange->name, "Attributes");
+	  attrs = conf_get_list (exchange->name, "Flags");
 	  if (attrs)
 	    for (attr = TAILQ_FIRST (&attrs->fields); attr;
 		 attr = TAILQ_NEXT (attr, link))
@@ -1212,7 +1289,7 @@ exchange_establish_finalize (void *arg)
   if (!peer)
     {
       log_print ("exchange_establish_finalize: "
-		 "No ISAKMP-peer given for \"%s\"",
+		 "no ISAKMP-peer given for \"%s\"",
 		 name);
       return;
     }
@@ -1224,9 +1301,14 @@ exchange_establish_finalize (void *arg)
 		 peer);
       return;
     }
-  exchange_establish_p2 (isakmp_sa, 0, name);
+
+  exchange_establish_p2 (isakmp_sa, 0, name, 0, 0, 0);
 }
 
+/*
+ * Establish an exchange named NAME, and record the FINALIZE function
+ * taking ARG as an argument to be run after the exchange is ready.
+ */
 void
 exchange_establish (char *name, void (*finalize) (void *), void *arg)
 {
@@ -1257,7 +1339,7 @@ exchange_establish (char *name, void (*finalize) (void *), void *arg)
 	  return;
 	}
 
-      exchange_establish_p1 (transport, 0, 0, name, finalize, arg);
+      exchange_establish_p1 (transport, 0, 0, name, 0, finalize, arg);
       break;
 
     case 2:
@@ -1272,20 +1354,18 @@ exchange_establish (char *name, void (*finalize) (void *), void *arg)
       isakmp_sa = sa_lookup_by_name (peer, 1);
       if (!isakmp_sa)
 	{
-	  /* XXX Check that peer is really a phase 1 peer.  */
-
 	  /* XXX We leak these names.  */
 	  name = strdup (name);
 	  if (!name)
 	    {
-	      log_error ("exchange_establish: strdup failed",
-			 name);
+	      log_error ("exchange_establish: strdup(\"%s\") failed", name);
 	      return;
 	    }
+
 	  exchange_establish (peer, exchange_establish_finalize, name);
 	}
       else
-	exchange_establish_p2 (isakmp_sa, 0, name);
+	exchange_establish_p2 (isakmp_sa, 0, name, 0, finalize, arg);
       break;
 
     default:
