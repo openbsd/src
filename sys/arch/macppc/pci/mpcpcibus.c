@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.10 2002/04/22 21:39:58 miod Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.11 2002/07/23 17:53:25 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -445,7 +445,7 @@ mpcpcibrattach(parent, self, aux)
 					" compatible %s\n", compat);
 				return;
 			}
-#ifdef PCI_DEBUG
+#ifdef DEBUG_FIXUP
 			printf(" mem base %x sz %x io base %x sz %x\n config addr %x"
 				" config data %x\n",
 				sc->sc_membus_space.bus_base,
@@ -492,9 +492,7 @@ mpcpcibrattach(parent, self, aux)
 			printf(": %s, Revision 0x%x\n", compat, 
 				mpc_cfg_read_1(lcp, MPC106_PCI_REVID));
 
-#if 0
-			pci_addr_fixup(sc, &lcp->lc_pc, 32, &null_reserve);
-#endif
+			pci_addr_fixup(sc, &lcp->lc_pc, 32);
 		}
 		break;
 
@@ -523,9 +521,6 @@ mpcpcibrattach(parent, self, aux)
 			len = OF_getprop(node, "name", name,
 				sizeof(name));
 			name[len] = 0;
-#ifdef DEBUG_FIXUP
-			printf("checking node %s", name);
-#endif
 			fix_node_irq(node, &pba);
 
 			/* iterate section */
@@ -574,9 +569,6 @@ find_node_intr(int parent, u_int32_t *addr, u_int32_t *intr)
 	len = OF_getprop(parent, "interrupt-map", map, sizeof(map));
 	mlen = OF_getprop(parent, "interrupt-map-mask", imask, sizeof(imask));
 
-#ifdef DEBUG_FIXUP
-	printf("parent %x len %x mlen %x\n", parent, len, mlen);
-#endif
 	if ((len == -1) || (mlen == -1))
 		goto nomap;
 	n_mlen = mlen/sizeof(u_int32_t);
@@ -601,11 +593,6 @@ find_node_intr(int parent, u_int32_t *addr, u_int32_t *intr)
 	}
 
 	while (len > mlen) {
-#ifdef DEBUG_FIXUP
-		printf ("[%x %x %x %x] [%x %x %x %x] %x\n",
-		    maskedaddr[0], maskedaddr[1], maskedaddr[2], maskedaddr[3],
-		    mp[0], mp[1], mp[2], mp[3], step);
-#endif
 		match = bcmp(maskedaddr, mp, mlen);
 		mp1 = mp + n_mlen;
 
@@ -672,11 +659,6 @@ fix_node_irq(node, pba)
 		pcifunc(addr[0].phys_hi));
 
 	intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
-#ifdef DEBUG_FIXUP
-	printf("changing interrupt from %x to %x\n",
-		intr & PCI_INTERRUPT_LINE_MASK,
-		irq & PCI_INTERRUPT_LINE_MASK);
-#endif
 	intr &= ~PCI_INTERRUPT_LINE_MASK;
 	intr |= irq & PCI_INTERRUPT_LINE_MASK;
 	pci_conf_write(pc, tag, PCI_INTERRUPT_REG, intr);
@@ -1125,4 +1107,11 @@ mpc_cfg_read_4(cp, reg)
 	_v_ = bus_space_read_4(cp->lc_iot, cp->ioh_cfc, 0);
 	splx(s);
 	return(_v_);
+}
+
+int
+pci_intr_line(ih)
+	pci_intr_handle_t ih;
+{
+	return (ih);
 }

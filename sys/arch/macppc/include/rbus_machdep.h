@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus_machdep.h,v 1.3 2002/07/23 17:53:24 drahn Exp $ */
+/*	$OpenBSD: rbus_machdep.h,v 1.1 2002/07/23 17:53:24 drahn Exp $ */
 /*	$NetBSD: rbus_machdep.h,v 1.2 1999/10/15 06:43:05 haya Exp $	*/
 
 /*
@@ -32,8 +32,8 @@
  */
 
 
-#if !defined _ARCH_I386_I386_RBUS_MACHDEP_H_
-#define _ARCH_I386_I386_RBUS_MACHDEP_H_
+#if !defined _ARCH_MACPPC_MACPPC_RBUS_MACHDEP_H_
+#define _ARCH_MACPPC_MACPPC_RBUS_MACHDEP_H_
 
 struct pci_attach_args;		/* XXX */
 
@@ -41,15 +41,21 @@ void _bus_space_unmap(bus_space_tag_t, bus_space_handle_t,
 			     bus_size_t, bus_addr_t *);
 
 #define md_space_map(bt, physaddr, size, flags, bshp) \
-	_bus_space_map((bt), (physaddr), (size), (flags), (bshp))
+	bus_space_map((bt), (physaddr), (size), (flags), (bshp))
+
+/* XXX */
+bus_addr_t bus_space_unmap_p(bus_space_tag_t t, bus_space_handle_t bsh,
+                          bus_size_t size);
+
 
 #define md_space_unmap(bt, bsh, size, adrp) \
-	_bus_space_unmap((bt), (bsh), (size), (adrp))
-
+	do { \
+		*adrp = bus_space_unmap_p((bt), (bsh), (size)); \
+	} while (0)
 
 rbus_tag_t rbus_pccbb_parent_io(struct device *self,
     struct pci_attach_args *pa);
 rbus_tag_t rbus_pccbb_parent_mem(struct device *self,
     struct pci_attach_args *pa);
 
-#endif /* _ARCH_I386_I386_RBUS_MACHDEP_H_ */
+#endif /* _ARCH_MACPPC_MACPPC_RBUS_MACHDEP_H_ */

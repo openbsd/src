@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.36 2002/07/20 19:24:56 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.37 2002/07/23 17:53:24 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -1168,30 +1168,31 @@ bus_space_unmap(t, bsh, size)
 {
 	bus_addr_t sva;
 	bus_size_t off, len;
+	bus_addr_t bpa;
 
 	/* should this verify that the proper size is freed? */
 	sva = trunc_page(bsh);
 	off = bsh - sva;
 	len = size+off;
 
+	if (pmap_extract(pmap_kernel(), sva, &bpa) == TRUE) {
+		if (extent_free(devio_ex, bpa, size, EX_NOWAIT |
+			(ppc_malloc_ok ? EX_MALLOCOK : 0)))
+		{
+			printf("bus_space_map: pa 0x%x, size 0x%x\n",
+				bpa, size);
+			printf("bus_space_map: can't free region\n");
+		}
+	}
 	/* do not free memory which was stolen from the vm system */
 	if (ppc_malloc_ok &&
 	  ((sva >= VM_MIN_KERNEL_ADDRESS) && (sva < VM_MAX_KERNEL_ADDRESS)) )
 	{
 		uvm_km_free(phys_map, sva, len);
+	} else {
+		pmap_remove(vm_map_pmap(phys_map), sva, sva+len);
+		pmap_update(pmap_kernel());
 	}
-#if 0
-	pmap_extract(pmap_kernel(), sva, &bpa);
-	if (extent_free(devio_ex, bpa, size, EX_NOWAIT |
-		(ppc_malloc_ok ? EX_MALLOCOK : 0)))
-	{
-		printf("bus_space_map: pa 0x%x, size 0x%x\n",
-			bpa, size);
-		printf("bus_space_map: can't free region\n");
-	}
-#endif
-	pmap_remove(vm_map_pmap(phys_map), sva, sva+len);
-	pmap_update(pmap_kernel());
 }
 
 vm_offset_t ppc_kvm_stolen = VM_KERN_ADDRESS_SIZE;

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.12 2002/06/25 17:11:49 itojun Exp $
+#	$OpenBSD: files.macppc,v 1.13 2002/07/23 17:53:24 drahn Exp $
 
 #
 # macppc-specific configuration info
@@ -71,7 +71,7 @@ file	arch/macppc/pci/pciide_machdep.c		pciide
 device	mpcpcibr {} : pcibus
 attach	mpcpcibr at mainbus
 file	arch/macppc/pci/mpcpcibus.c			mpcpcibr
-#file	arch/macppc/pci/pci_addr_fixup.c		mpcpcibr
+file	arch/macppc/pci/pci_addr_fixup.c		mpcpcibr
 
 #
 # "workstation console" routines
@@ -204,7 +204,7 @@ file	arch/macppc/pci/vgafb_pci.c			vgafb_pci needs-flag
 # CARDBUS
 #
 include	"dev/cardbus/files.cardbus"
-#file	arch/macppc/macppc/rbus_machdep.c		cardbus
+file	arch/macppc/macppc/rbus_machdep.c		cardbus
 
 #
 # Machine-independent PCMCIA drivers

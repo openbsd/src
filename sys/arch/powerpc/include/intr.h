@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.18 2002/04/29 07:35:22 miod Exp $ */
+/*	$OpenBSD: intr.h,v 1.19 2002/07/23 17:53:25 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -36,6 +36,7 @@
 #define _POWERPC_INTR_H_
 
 #define	IPL_BIO		0
+#define	IPL_AUDIO	IPL_BIO /* XXX - was defined this val in audio_if.h */
 #define	IPL_NET		1
 #define	IPL_TTY		2
 #define	IPL_IMP		3
@@ -134,6 +135,7 @@ set_sint(int pending)
 #define splnet()	splraise(imask[IPL_NET])
 #define spltty()	splraise(imask[IPL_TTY])
 #define splimp()	splraise(imask[IPL_IMP])
+#define splaudio()	splraise(imask[IPL_AUDIO])
 #define splclock()	splraise(imask[IPL_CLOCK])
 #define splvm()		splraise(imask[IPL_IMP])
 #define splstatclock()	splhigh()
