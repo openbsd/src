@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ipv6.c,v 1.17 2000/05/13 21:31:18 deraadt Exp $	*/
+/*	$OpenBSD: raw_ipv6.c,v 1.18 2000/06/13 11:47:23 itojun Exp $	*/
 
 /*
 %%% copyright-nrl-95
@@ -44,7 +44,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
  * SUCH DAMAGE.
  *
  *	@(#)raw_ip.c	8.7 (Berkeley) 5/15/95
- *	$Id: raw_ipv6.c,v 1.17 2000/05/13 21:31:18 deraadt Exp $
+ *	$Id: raw_ipv6.c,v 1.18 2000/06/13 11:47:23 itojun Exp $
  */
 
 #include <sys/param.h>
@@ -224,6 +224,9 @@ rip6_input(mp, offp, proto)
   bzero(&srcsa, sizeof(struct sockaddr_in6));
   srcsa.sin6_family = AF_INET6;
   srcsa.sin6_len = sizeof(struct sockaddr_in6);
+#if 0 /*XXX inbound flowinfo */
+  srcsa.sin6_flowinfo = ip6->ip6_flow & IPV6_FLOWINFO_MASK;
+#endif
   srcsa.sin6_addr = ip6->ip6_src;
 
 	if (IN6_IS_SCOPE_LINKLOCAL(&srcsa.sin6_addr))
