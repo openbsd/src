@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.366 2001/02/18 18:20:41 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.367 2001/02/20 03:52:05 jason Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -979,6 +979,7 @@
 
 /* D-Link products */
 #define	PCI_PRODUCT_DLINK_550TX	0x1002		/* 550TX */
+#define	PCI_PRODUCT_DLINK_530TXPLUS	0x1300		/* 530TX+ */
 
 /* Davicom Technologies */
 #define	PCI_PRODUCT_DAVICOM_DM9100	0x9100		/* DM9100 */
