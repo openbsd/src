@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.84 2003/11/07 10:16:44 jmc Exp $	*/
+/*	$OpenBSD: x509.c,v 1.85 2004/01/06 00:09:19 hshoexer Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -675,7 +675,7 @@ x509_read_from_dir (X509_STORE *ctx, char *name, int hash)
   dir = opendir (name);
   if (!dir)
     {
-      LOG_DBG ((LOG_CRYPTO, 10, "x509_read_from_dir: opendir (\"%s\") failed:"
+      LOG_DBG ((LOG_CRYPTO, 10, "x509_read_from_dir: opendir (\"%s\") failed: "
 		"%s", name, strerror (errno)));
       return 0;
     }
@@ -700,9 +700,6 @@ x509_read_from_dir (X509_STORE *ctx, char *name, int hash)
 	if (stat (fullname, &sb) == -1 || !(sb.st_mode & S_IFREG))
           continue;
       }
-
-      if (file->d_type != DT_REG && file->d_type != DT_LNK)
-	continue;
 
       LOG_DBG ((LOG_CRYPTO, 60, "x509_read_from_dir: reading certificate %s",
 		file->d_name));
@@ -773,7 +770,7 @@ x509_read_crls_from_dir (X509_STORE *ctx, char *name)
 
   if (strlen (name) >= sizeof fullname - 1)
     {
-      log_print ("x509_read_from_dir: directory name too long");
+      log_print ("x509_read_crls_from_dir: directory name too long");
       return 0;
     }
 
@@ -808,9 +805,6 @@ x509_read_crls_from_dir (X509_STORE *ctx, char *name)
 	if (stat (fullname, &sb) == -1 || !(sb.st_mode & S_IFREG))
 	  continue;
       }
-
-      if (file->d_type != DT_REG && file->d_type != DT_LNK)
-	continue;
 
       LOG_DBG ((LOG_CRYPTO, 60, "x509_read_crls_from_dir: reading CRL %s",
 		file->d_name));
@@ -944,7 +938,7 @@ x509_crl_init (void)
 
   if (!x509_read_crls_from_dir (x509_cas, dirname))
     {
-      LOG_DBG ((LOG_MISC, 10, "x509_crl_init: x509_read_from_dir failed"));
+      LOG_DBG ((LOG_MISC, 10, "x509_crl_init: x509_read_crls_from_dir failed"));
       return 0;
     }
 #else
