@@ -1,4 +1,0 @@
-#!/bin/sh
-
-find . -type f \! -name \*~ \! -exec grep -q Begin-Header \{\} \; -print \
-	| grep -v ^./build

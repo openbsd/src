@@ -1,9 +1,0 @@
-00000000 T _uuid_clear          libuuid       clear
-00000000 T _uuid_compare        libuuid       compare
-00000000 T _uuid_copy           libuuid       copy
-00000000 T _uuid_generate       libuuid       gen_uuid
-00000000 T _uuid_is_null        libuuid       isnull
-00000000 T _uuid_pack           libuuid       pack
-00000000 T _uuid_parse          libuuid       parse
-00000000 T _uuid_unpack         libuuid       unpack
-00000000 T _uuid_unparse        libuuid       unparse

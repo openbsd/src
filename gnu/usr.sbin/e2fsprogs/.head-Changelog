@@ -1,9 +1,0 @@
-#!/bin/sh
-
-for i in `find . -name ChangeLog -print`
-do
-	echo "=========================================="
-	echo $i
-	sed -n '1,/Release/p'  $i
-done
-

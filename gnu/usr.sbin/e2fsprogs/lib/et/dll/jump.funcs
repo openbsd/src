@@ -1,6 +1,0 @@
-00000000 T _error_message       libcom_err       jump/error_message
-00000000 T _init_error_table    libcom_err       jump/init_et
-00000000 T _com_err_va          libcom_err       jump/com_err
-00000000 T _com_err             libcom_err       jump/com_err
-00000000 T _set_com_err_hook    libcom_err       jump/com_err
-00000000 T _reset_com_err_hook  libcom_err       jump/com_err

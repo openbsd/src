@@ -1,6 +1,0 @@
-Name=libuuid
-Text=0x67900000
-Data=0x00000000
-Jump=0x00001000
-GOT=0x00001000
-Version=0.0.0
