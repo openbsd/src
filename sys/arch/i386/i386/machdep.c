@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.300 2004/06/22 08:58:16 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.301 2004/06/28 17:38:04 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1201,8 +1201,6 @@ cyrix3_cpu_setup(cpu_device, model, step)
 			extern int viac3_rnd_present;
 
 			if (!(val & 0x8)) {
-				u_int64_t msreg;
-
 				msreg = rdmsr(0x110B);
 				msreg |= 0x40;
 				wrmsr(0x110B, msreg);
