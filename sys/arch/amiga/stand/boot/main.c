@@ -1,5 +1,5 @@
 /*
- * $OpenBSD: main.c,v 1.2 1997/03/25 17:05:53 niklas Exp $
+ * $OpenBSD: main.c,v 1.3 1997/05/13 16:15:55 niklas Exp $
  * $NetBSD: main.c,v 1.1.1.1 1996/11/29 23:36:29 is Exp $
  *
  *
@@ -78,7 +78,7 @@ int get_cpuid __P((u_int32_t *));
 
 static long get_number(char **);
 
-const char version[] = "2.0";
+const char version[] = "2.1";
 char default_command[] = "bsd -Sn2";
 
 int
@@ -139,7 +139,7 @@ pain()
 		goto out;
 	}
 
-	printf("\2337mOpenBSD/Amiga %s\2330m\n%s : ",version, kernel_name);
+	printf("\2337mOpenBSD/Amiga %s\2330m\n%s : ", version, kernel_name);
 
 	timelimit = 3;
 	gets(linebuf);
@@ -234,7 +234,7 @@ pain()
 
 	/* find memory list */
 
-	memseg = (struct boot_memseg *)alloc(16*sizeof(struct boot_memseg));
+	memseg = (struct boot_memseg *)alloc(16 * sizeof(struct boot_memseg));
 
 	/* Forbid(); */
 
@@ -332,14 +332,13 @@ pain()
 	esym = 0;
 
 	ksize = textsz + eh->a_data + eh->a_bss 
-	    + sizeof(*nkcd) + ncd*sizeof(*cd)
+	    + sizeof(*nkcd) + ncd * sizeof(*cd)
 	    + sizeof(*nkcd) + nseg * sizeof(struct boot_memseg);
 
 	if (S_flag && eh->a_syms) {
-		if (lseek(io, eh->a_text+ eh->a_data+ eh->a_syms, SEEK_CUR)
-		    <= 0
-		    || read(io, &stringsz, 4) != 4
-		    || lseek(io, sizeof(*eh), SEEK_SET) < 0)
+		if (lseek(io, eh->a_text+ eh->a_data+ eh->a_syms, SEEK_CUR) <=
+		    0 || read(io, &stringsz, 4) != 4 ||
+		    lseek(io, sizeof(*eh), SEEK_SET) < 0)
 			goto err;
 		ksize += eh->a_syms + 4 + ((stringsz + 3) & ~3);
 	}
@@ -363,7 +362,9 @@ pain()
 	kvers = (u_short *)(kp + eh->a_entry - 2);
 
 	if (*kvers > KERNEL_STARTUP_VERSION_MAX && *kvers != 0x4e73) {
+#ifndef notdef
                 printf("\nbootblock < V%ld\n", (long)*kvers);
+#endif
 		goto freeall;
 	}
 #if 0
@@ -431,8 +432,10 @@ pain()
 		 * fits into chipmem.
 		 */
 		if (ksize >= cmemsz) {
+#if notdef
 			printf("Kernel size %d > chipmem size %d\n",
 			    ksize, cmemsz);
+#endif
 			return 20;
 		}
 		Z_flag = 1;
