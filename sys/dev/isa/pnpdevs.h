@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	#	OpenBSD: pnpdevs,v 1.45 1998/12/20 20:44:12 deraadt Exp 
+ *	#	OpenBSD: pnpdevs,v 1.46 1998/12/20 23:28:36 deraadt Exp 
  */
 
 struct isapnp_knowndev isapnp_knowndevs[] = {
@@ -66,6 +66,8 @@ struct isapnp_knowndev isapnp_knowndevs[] = {
 	{ "SUP1381", "pccom" },
 	{ "GVC5000", "com" },
 	{ "GVC5000", "pccom" },
+	{ "MOT0000", "com" },
+	{ "MOT0000", "pccom" },
 	{ "MOT15F0", "com" },
 	{ "MOT15F0", "pccom" },
 	{ "CIR3000", "com" },
