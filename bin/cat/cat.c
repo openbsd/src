@@ -1,4 +1,4 @@
-/*	$OpenBSD: cat.c,v 1.4 1996/08/02 17:39:50 tholo Exp $	*/
+/*	$OpenBSD: cat.c,v 1.5 1996/09/28 19:36:38 imp Exp $	*/
 /*	$NetBSD: cat.c,v 1.11 1995/09/07 06:12:54 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: cat.c,v 1.4 1996/08/02 17:39:50 tholo Exp $";
+static char rcsid[] = "$OpenBSD: cat.c,v 1.5 1996/09/28 19:36:38 imp Exp $";
 #endif
 #endif /* not lint */
 
@@ -83,7 +83,7 @@ main(argc, argv)
 
 	setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "benstuv")) != -1)
+	while ((ch = getopt(argc, argv, "benstuv")) != EOF)
 		switch (ch) {
 		case 'b':
 			bflag = nflag = 1;	/* -b implies -n */
