@@ -37,6 +37,9 @@ void
 ttopen()
 {
 
+	if (!isatty(STDIN_FILENO) || !isatty(STDOUT_FILENO))
+		panic("standard input and output must be a terminal");  
+
 	if (ttraw() == FALSE)
 		panic("aborting due to terminal initialize failure");
 }
@@ -205,7 +208,7 @@ panic(s)
 	(void) fputs("panic: ", stderr);
 	(void) fputs(s, stderr);
 	(void) fputc('\n', stderr);
-	abort();		/* To leave a core image. */
+	exit(1);
 }
 
 #ifndef NO_DPROMPT
