@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.29 2003/11/09 20:13:57 otto Exp $	*/
+/*	$OpenBSD: last.c,v 1.30 2004/01/08 13:36:52 otto Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: last.c,v 1.29 2003/11/09 20:13:57 otto Exp $";
+static char rcsid[] = "$OpenBSD: last.c,v 1.30 2004/01/08 13:36:52 otto Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -231,7 +231,7 @@ wtmp(void)
 	TTY	*T;			/* tty list entry */
 	struct stat	stb;		/* stat of file for size */
 	time_t	delta;			/* time difference */
-	time_t	total;
+	time_t	total = 0;
 	off_t	bl;
 	int	timesize;		/* how long time string gonna be */
 	int	bytes, wfd;
