@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2000/12/31 16:44:14 espie Exp $
+# $OpenBSD: Makefile,v 1.7 2001/05/14 13:19:24 espie Exp $
 
 NOMAN=
 NOPROG=
@@ -38,6 +38,7 @@ t5:
 t6:
 	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} A=good -r -f mk6 | diff - t6.out
 
+# This test currently fails, and will until the cond parser is rewritten.
 t7:
 	if cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk7 2>/dev/null; then false; fi
 
