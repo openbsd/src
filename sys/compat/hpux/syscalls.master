@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.6 1999/06/07 07:17:46 deraadt Exp $
+	$OpenBSD: syscalls.master,v 1.7 2001/10/10 23:43:44 art Exp $
 ;	$NetBSD: syscalls.master,v 1.13 1997/03/16 03:48:04 thorpej Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -89,7 +89,7 @@
 38	STD		{ int hpux_sys_stat(char *path, struct hpux_stat *sb); }
 39	STD		{ int hpux_sys_setpgrp_6x(void); }
 40	STD		{ int hpux_sys_lstat(char *path, struct hpux_stat *sb); }
-41	STD		{ int hpux_sys_dup(int fd); }
+41	NOARGS		{ int sys_dup(int fd); }
 42	NOARGS		{ int sys_opipe(void); }
 43	STD		{ int hpux_sys_times_6x(struct tms *tms); }
 44	NOARGS		{ int sys_profil(caddr_t samples, u_int size, \
