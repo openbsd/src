@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.4 2002/03/14 01:26:34 millert Exp $	*/
+/*	$OpenBSD: reg.h,v 1.5 2003/05/31 13:39:48 miod Exp $	*/
 /*	$NetBSD: reg.h,v 1.12 1996/12/17 19:24:31 gwr Exp $	*/
 
 /*
@@ -91,13 +91,6 @@ struct fpreg {
 #define	PC	(17)
 
 #ifdef _KERNEL
-/*
- * Due to a mental lapse somewhere down the line, wait returns its values
- * in strange registers.  Kludge it up here so we don't have to in the
- * machine-independent code.
- */
-#define	R0	D1
-#define	R1	A0
 
 struct proc;
 int process_read_regs(struct proc *, struct reg *);
