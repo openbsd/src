@@ -26,7 +26,7 @@ DPADD+=	 ${LIBKRB}
 .endif # KERBEROS
 
 .if (${SKEY:L} == "yes")
-SRCS+=	auth-skey.c
+SRCS+=	auth-skey.c auth2-skey.c
 .endif
 
 .include <bsd.prog.mk>

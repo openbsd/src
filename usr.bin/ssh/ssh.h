@@ -12,7 +12,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* RCSID("$OpenBSD: ssh.h,v 1.52 2000/10/11 04:02:17 provos Exp $"); */
+/* RCSID("$OpenBSD: ssh.h,v 1.53 2000/10/11 20:14:39 markus Exp $"); */
 
 #ifndef SSH_H
 #define SSH_H
@@ -381,7 +381,7 @@ int     auth_rsa_challenge_dialog(RSA *pk);
  * passphrase (allocated with xmalloc).  Exits if EOF is encountered. If
  * from_stdin is true, the passphrase will be read from stdin instead.
  */
-char   *read_passphrase(const char *prompt, int from_stdin);
+char   *read_passphrase(char *prompt, int from_stdin);
 
 
 /*------------ Definitions for logging. -----------------------*/

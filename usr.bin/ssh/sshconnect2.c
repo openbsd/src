@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect2.c,v 1.22 2000/10/11 04:02:17 provos Exp $");
+RCSID("$OpenBSD: sshconnect2.c,v 1.23 2000/10/11 20:14:39 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
@@ -49,6 +49,7 @@ RCSID("$OpenBSD: sshconnect2.c,v 1.22 2000/10/11 04:02:17 provos Exp $");
 #include "dsa.h"
 #include "sshconnect.h"
 #include "authfile.h"
+#include "cli.h"
 #include "dispatch.h"
 #include "authfd.h"
 
@@ -457,8 +458,8 @@ struct Authctxt {
 	const char *host;
 	const char *service;
 	AuthenticationConnection *agent;
-	int success;
 	Authmethod *method;
+	int success;
 };
 struct Authmethod {
 	char	*name;		/* string to compare against server's list */
@@ -470,11 +471,16 @@ struct Authmethod {
 void	input_userauth_success(int type, int plen, void *ctxt);
 void	input_userauth_failure(int type, int plen, void *ctxt);
 void	input_userauth_error(int type, int plen, void *ctxt);
+void	input_userauth_info_req(int type, int plen, void *ctxt);
+
+int	userauth_none(Authctxt *authctxt);
 int	userauth_pubkey(Authctxt *authctxt);
 int	userauth_passwd(Authctxt *authctxt);
+int	userauth_kbdint(Authctxt *authctxt);
 
 void	authmethod_clear();
-Authmethod *authmethod_get(char *auth_list);
+Authmethod *authmethod_get(char *authlist);
+Authmethod *authmethod_lookup(const char *name);
 
 Authmethod authmethods[] = {
 	{"publickey",
@@ -485,6 +491,14 @@ Authmethod authmethods[] = {
 		userauth_passwd,
 		&options.password_authentication,
 		&options.batch_mode},
+	{"keyboard-interactive",
+		userauth_kbdint,
+		&options.kbd_interactive_authentication,
+		&options.batch_mode},
+	{"none",
+		userauth_none,
+		NULL,
+		NULL},
 	{NULL, NULL, NULL, NULL}
 };
 
@@ -521,17 +535,13 @@ ssh_userauth2(const char *server_user, char *host)
 	authctxt.host = host;
 	authctxt.service = "ssh-connection";		/* service name */
 	authctxt.success = 0;
-	authctxt.method = NULL;
+	authctxt.method = authmethod_lookup("none");
+	if (authctxt.method == NULL)
+		fatal("ssh_userauth2: internal error: cannot send userauth none request");
+	authmethod_clear();
 
 	/* initial userauth request */
-	packet_start(SSH2_MSG_USERAUTH_REQUEST);
-	packet_put_cstring(authctxt.server_user);
-	packet_put_cstring(authctxt.service);
-	packet_put_cstring("none");
-	packet_send();
-	packet_write_wait();
-
-	authmethod_clear();
+	userauth_none(&authctxt);
 
 	dispatch_init(&input_userauth_error);
 	dispatch_set(SSH2_MSG_USERAUTH_SUCCESS, &input_userauth_success);
@@ -541,7 +551,7 @@ ssh_userauth2(const char *server_user, char *host)
 	if (authctxt.agent != NULL)
 		ssh_close_authentication_connection(authctxt.agent);
 
-	debug("ssh-userauth2 successfull");
+	debug("ssh-userauth2 successfull: method %s", authctxt.method->name);
 }
 void
 input_userauth_error(int type, int plen, void *ctxt)
@@ -563,12 +573,11 @@ input_userauth_failure(int type, int plen, void *ctxt)
 	Authctxt *authctxt = ctxt;
 	char *authlist = NULL;
 	int partial;
-	int dlen;
 
 	if (authctxt == NULL)
 		fatal("input_userauth_failure: no authentication context");
 
-	authlist = packet_get_string(&dlen);
+	authlist = packet_get_string(NULL);
 	partial = packet_get_char();
 	packet_done();
 
@@ -577,12 +586,12 @@ input_userauth_failure(int type, int plen, void *ctxt)
 	debug("authentications that can continue: %s", authlist);
 
 	for (;;) {
-		/* try old method or get next method */
 		method = authmethod_get(authlist);
 		if (method == NULL)
                         fatal("Unable to find an authentication method");
+		authctxt->method = method;
 		if (method->userauth(authctxt) != 0) {
-			debug2("we sent a packet, wait for reply");
+			debug2("we sent a %s packet, wait for reply", method->name);
 			break;
 		} else {
 			debug2("we did not send a packet, disable method");
@@ -590,6 +599,19 @@ input_userauth_failure(int type, int plen, void *ctxt)
 		}
 	}	
 	xfree(authlist);
+}
+
+int
+userauth_none(Authctxt *authctxt)
+{
+	/* initial userauth request */
+	packet_start(SSH2_MSG_USERAUTH_REQUEST);
+	packet_put_cstring(authctxt->server_user);
+	packet_put_cstring(authctxt->service);
+	packet_put_cstring(authctxt->method->name);
+	packet_send();
+	packet_write_wait();
+	return 1;
 }
 
 int
@@ -611,7 +633,7 @@ userauth_passwd(Authctxt *authctxt)
 	packet_start(SSH2_MSG_USERAUTH_REQUEST);
 	packet_put_cstring(authctxt->server_user);
 	packet_put_cstring(authctxt->service);
-	packet_put_cstring("password");
+	packet_put_cstring(authctxt->method->name);
 	packet_put_char(0);
 	packet_put_cstring(password);
 	memset(password, 0, strlen(password));
@@ -629,6 +651,7 @@ sign_and_send_pubkey(Authctxt *authctxt, Key *k, sign_cb_fn *sign_callback)
 	int bloblen, slen;
 	int skip = 0;
 	int ret = -1;
+	int have_sig = 1;
 
 	dsa_make_key_blob(k, &blob, &bloblen);
 
@@ -647,8 +670,8 @@ sign_and_send_pubkey(Authctxt *authctxt, Key *k, sign_cb_fn *sign_callback)
 	    datafellows & SSH_BUG_PUBKEYAUTH ?
 	    "ssh-userauth" :
 	    authctxt->service);
-	buffer_put_cstring(&b, "publickey");
-	buffer_put_char(&b, 1);
+	buffer_put_cstring(&b, authctxt->method->name);
+	buffer_put_char(&b, have_sig);
 	buffer_put_cstring(&b, KEX_DSS); 
 	buffer_put_string(&b, blob, bloblen);
 
@@ -668,8 +691,8 @@ sign_and_send_pubkey(Authctxt *authctxt, Key *k, sign_cb_fn *sign_callback)
 		buffer_put_char(&b, SSH2_MSG_USERAUTH_REQUEST);
 		buffer_put_cstring(&b, authctxt->server_user);
 		buffer_put_cstring(&b, authctxt->service);
-		buffer_put_cstring(&b, "publickey");
-		buffer_put_char(&b, 1);
+		buffer_put_cstring(&b, authctxt->method->name);
+		buffer_put_char(&b, have_sig);
 		buffer_put_cstring(&b, KEX_DSS); 
 		buffer_put_string(&b, blob, bloblen);
 	}
@@ -793,6 +816,92 @@ userauth_pubkey(Authctxt *authctxt)
 	return sent;
 }
 
+/*
+ * Send userauth request message specifying keyboard-interactive method.
+ */
+int
+userauth_kbdint(Authctxt *authctxt)
+{
+	static int attempt = 0;
+
+	if (attempt++ >= options.number_of_password_prompts)
+		return 0;
+
+	debug2("userauth_kbdint");
+	packet_start(SSH2_MSG_USERAUTH_REQUEST);
+	packet_put_cstring(authctxt->server_user);
+	packet_put_cstring(authctxt->service);
+	packet_put_cstring(authctxt->method->name);
+	packet_put_cstring("");					/* lang */
+	packet_put_cstring(options.kbd_interactive_devices ?
+	    options.kbd_interactive_devices : "");
+	packet_send();
+	packet_write_wait();
+
+	dispatch_set(SSH2_MSG_USERAUTH_INFO_REQUEST, &input_userauth_info_req);
+	return 1;
+}
+
+/*
+ * parse SSH2_MSG_USERAUTH_INFO_REQUEST, prompt user and send
+ * SSH2_MSG_USERAUTH_INFO_RESPONSE
+ */
+void
+input_userauth_info_req(int type, int plen, void *ctxt)
+{
+	Authctxt *authctxt = ctxt;
+	char *name = NULL;
+	char *inst = NULL;
+	char *lang = NULL;
+	char *prompt = NULL;
+	char *response = NULL;
+	unsigned int num_prompts, i;
+	int echo = 0;
+
+	debug2("input_userauth_info_req");
+
+	if (authctxt == NULL)
+		fatal("input_userauth_info_req: no authentication context");
+
+	name = packet_get_string(NULL);
+	inst = packet_get_string(NULL);
+	lang = packet_get_string(NULL);
+
+	if (strlen(name) > 0)
+		cli_mesg(name);
+	xfree(name);
+
+	if (strlen(inst) > 0)
+		cli_mesg(inst);
+	xfree(inst);
+	xfree(lang); 				/* unused */
+
+	num_prompts = packet_get_int();
+	/*
+	 * Begin to build info response packet based on prompts requested.
+	 * We commit to providing the correct number of responses, so if
+	 * further on we run into a problem that prevents this, we have to
+	 * be sure and clean this up and send a correct error response.
+	 */
+	packet_start(SSH2_MSG_USERAUTH_INFO_RESPONSE);
+	packet_put_int(num_prompts);
+
+	for (i = 0; i < num_prompts; i++) {
+		prompt = packet_get_string(NULL);
+		echo = packet_get_char();
+
+		response = cli_prompt(prompt, echo);
+
+		packet_put_cstring(response);
+		memset(response, 0, strlen(response));
+		xfree(response);
+		xfree(prompt);
+	}
+	packet_done(); /* done with parsing incoming message. */
+
+	packet_send();
+	packet_write_wait();
+}
 
 /* find auth method */
 
@@ -879,6 +988,7 @@ authmethod_get(char *authlist)
 
 	if (authlist_current == NULL || strcmp(authlist, authlist_current) != 0) {
 		/* start over if passed a different list */
+		debug3("start over, passed a different list");
 		authmethod_clear();
 		authlist_current = xstrdup(authlist);
 		authlist_working = xstrdup(authlist);
@@ -893,16 +1003,20 @@ authmethod_get(char *authlist)
 	}
 
 	while (name != NULL) {
+		debug3("authmethod_lookup %s", name);
 		method = authmethod_lookup(name);
-		if (method != NULL && authmethod_is_enabled(method))
+		if (method != NULL && authmethod_is_enabled(method)) {
+			debug3("authmethod_is_enabled %s", name);
 			break;
+		}
 		name = strtok_r(NULL, DELIM, &authlist_state);
+		method = NULL;
 	}
 
 	if (authname_current != NULL)
 		xfree(authname_current);
 
-	if (name != NULL) {
+	if (method != NULL) {
 		debug("next auth method to try is %s", name);
 		authname_current = xstrdup(name);
 		return method;
