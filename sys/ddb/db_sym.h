@@ -1,5 +1,4 @@
-/*	$OpenBSD: db_sym.h,v 1.11 1997/05/29 03:28:45 mickey Exp $	*/
-/*	$NetBSD: db_sym.h,v 1.7 1996/02/05 01:57:16 christos Exp $	*/
+/*	$NetBSD: db_sym.h,v 1.13 2000/05/25 19:57:36 jhawk Exp $	*/
 
 /* 
  * Mach Operating System
@@ -30,27 +29,17 @@
  *	Date:	8/90
  */
 
-#ifndef _DDB_DB_SYM_
-#define _DDB_DB_SYM_
-
 /*
  * This module can handle multiple symbol tables
  */
-
-#include <sys/queue.h>
-
-typedef struct db_symtab {
-	TAILQ_ENTRY(db_symtab)	list;	/* all the tabs */
-	char		*name;		/* symtab name */
-	u_int		id;		/* id */
+typedef struct {
+	const char	*name;		/* symtab name */
 	char		*start;		/* symtab location */
-	char		*end;		/* end of symtab */
-	char		*rend;		/* real end (as it passed) */
+	char		*end;
 	char		*private;	/* optional machdep pointer */
-}	*db_symtab_t;
+} db_symtab_t;
 
-extern db_symtab_t	db_last_symtab; /* where last symbol was found */
-extern size_t		db_nsymtabs;	/* number of symbol tables */
+extern db_symtab_t	*db_last_symtab; /* where last symbol was found */
 
 /*
  * Symbol representation is specific to the symtab style:
@@ -72,23 +61,57 @@ typedef int		db_strategy_t;	/* search strategy */
 #define DB_STGY_XTRN	1			/* only external symbols */
 #define DB_STGY_PROC	2			/* only procedures */
 
+
+/*
+ * Internal db_forall function calling convention:
+ *
+ * (*db_forall_func)(stab, sym, name, suffix, prefix, arg);
+ *
+ * stab is the symbol table, symbol the (opaque) symbol pointer,
+ * name the name of the symbol, suffix a string representing
+ * the type, prefix an initial ignorable function prefix (e.g. "_"
+ * in a.out), and arg an opaque argument to be passed in.
+ */
+typedef void (db_forall_func_t)
+	__P((db_symtab_t *, db_sym_t, char *, char *, int, void *));
+
+void		X_db_forall __P((db_symtab_t *,
+		    db_forall_func_t db_forall_func, void *));
+
+/*
+ * A symbol table may be in one of many formats.  All symbol tables
+ * must be of the same format as the master kernel symbol table.
+ */
+typedef struct {
+	const char *sym_format;
+	boolean_t (*sym_init) __P((int, void *, void *, const char *));
+	db_sym_t (*sym_lookup) __P((db_symtab_t *, char *));
+	db_sym_t (*sym_search) __P((db_symtab_t *, db_addr_t, db_strategy_t,
+		db_expr_t *));
+	void	(*sym_value) __P((db_symtab_t *, db_sym_t, char **,
+		db_expr_t *));
+	boolean_t (*sym_line_at_pc) __P((db_symtab_t *, db_sym_t,
+		char **, int *, db_expr_t));
+	boolean_t (*sym_numargs) __P((db_symtab_t *, db_sym_t, int *,
+		char **));
+	void	(*sym_forall) __P((db_symtab_t *,
+		db_forall_func_t *db_forall_func, void *));
+} db_symformat_t;
+
 extern boolean_t	db_qualify_ambiguous_names;
 					/* if TRUE, check across symbol tables
 					 * for multiple occurrences of a name.
 					 * Might slow down quite a bit */
 
+extern unsigned int db_maxoff;		/* like gdb's "max-symbolic-offset" */
 /*
  * Functions exported by the symtable module
  */
-void db_sym_init __P((void));
-int db_add_symbol_table __P((char *, char *, char *, char *, char *));
+int db_add_symbol_table __P((char *, char *, const char *, char *));
 					/* extend the list of symbol tables */
 
 void db_del_symbol_table __P((char *));
 					/* remove a symbol table from list */
-db_symtab_t db_istab __P((size_t));
-db_symtab_t db_symiter __P((db_symtab_t));
-				/* iterate through all the symtabs, if any */
 
 boolean_t db_eqname __P((char *, char *, int));
 					/* strcmp, modulo leading char */
@@ -98,7 +121,8 @@ int db_value_of_name __P((char *, db_expr_t *));
 
 db_sym_t db_lookup __P((char *));
 
-char *db_qualify __P((db_sym_t, char *));
+void db_sifting __P((char *, int));
+				/* print partially matching symbol names */
 
 boolean_t db_symbol_is_ambiguous __P((db_sym_t));
 
@@ -122,12 +146,18 @@ void db_printsym __P((db_expr_t, db_strategy_t));
 boolean_t db_line_at_pc __P((db_sym_t, char **, int *, db_expr_t));
 
 int db_sym_numargs __P((db_sym_t, int *, char **));
-struct exec;
-void db_stub_xh __P((db_symtab_t, struct exec *));
-int db_symtablen __P((db_symtab_t));
-int db_symatoff __P((db_symtab_t, int, void*, int*));
+char *db_qualify __P((db_sym_t, const char *));
 
-/* db_hangman.c */
-void db_hangman __P((db_expr_t, int, db_expr_t, char *));
+/*
+ * XXX - should explicitly ask for aout symbols in machine/db_machdep.h
+ */
+#ifndef DB_NO_AOUT
+#define DB_AOUT_SYMBOLS
+#endif
 
-#endif /* _DDB_DB_SYM_H_ */
+#ifdef DB_AOUT_SYMBOLS
+extern	db_symformat_t db_symformat_aout;
+#endif
+#ifdef DB_ELF_SYMBOLS
+extern	db_symformat_t db_symformat_elf;
+#endif

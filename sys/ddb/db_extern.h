@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_extern.h,v 1.9 1997/07/08 10:48:32 niklas Exp $	*/
+/*	$OpenBSD: db_extern.h,v 1.10 2001/02/10 10:42:35 niklas Exp $	*/
 /*	$NetBSD: db_extern.h,v 1.1 1996/02/05 01:57:00 christos Exp $	*/
 
 /*
@@ -32,22 +32,7 @@
 #ifndef _DDB_DB_EXTERN_H_
 #define _DDB_DB_EXTERN_H_
 
-/* db_aout.c */
-void X_db_sym_init __P((long *, char *, char *));
-size_t X_db_nsyms __P((db_symtab_t));
-db_sym_t X_db_isym __P((db_symtab_t, size_t));
-db_sym_t X_db_lookup __P((db_symtab_t, char *));
-db_sym_t X_db_search_symbol __P((db_symtab_t, db_addr_t, db_strategy_t,
-				 db_expr_t *));
-void X_db_symbol_values __P((db_sym_t, char **, db_expr_t *));
-void db_printsym __P((db_expr_t, db_strategy_t));
-boolean_t X_db_line_at_pc __P((db_symtab_t, db_sym_t, char **,
-			       int *, db_expr_t));
-int X_db_sym_numargs __P((db_symtab_t, db_sym_t, int *, char **));
-struct exec;
-void X_db_stub_xh __P((db_symtab_t, struct exec *));
-int X_db_symtablen __P((db_symtab_t));
-int X_db_symatoff __P((db_symtab_t, int, void*, int*));
+/* db_sym.c */
 void ddb_init __P((void));
 
 /* db_examine.c */
@@ -66,6 +51,9 @@ boolean_t db_mult_expr __P((db_expr_t *));
 boolean_t db_add_expr __P((db_expr_t *));
 boolean_t db_shift_expr __P((db_expr_t *));
 int db_expression __P((db_expr_t *));
+
+/* db_hangman.c */
+void db_hangman __P((db_expr_t, int, db_expr_t, char *));
 
 /* db_input.c */
 void db_putstring __P((char *, int));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_hangman.c,v 1.15 2001/02/08 23:06:32 niklas Exp $	*/
+/*	$OpenBSD: db_hangman.c,v 1.16 2001/02/10 10:42:35 niklas Exp $	*/
 
 /*
  * Copyright (c) 1996 Theo de Raadt, Michael Shalayeff
@@ -39,6 +39,7 @@
 
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
+#include <ddb/db_output.h>
 
 #include <dev/cons.h>
 #include <dev/rndvar.h>
@@ -57,49 +58,96 @@
 static __inline size_t db_random __P((size_t));
 static __inline char *db_randomsym __P((size_t *));
 void	 db_hang __P((int, char *, char *));
-int	 db_hangon __P((void));
+static __inline int db_hangon __P((void));
 
 static int	skill;
 
 static __inline size_t
 db_random(mod)
-	register size_t	mod;
+	size_t	mod;
 {
 	return arc4random() % mod;
+}
+
+struct db_hang_forall_arg {
+	int cnt;
+	db_sym_t sym;
+};
+
+/*
+ * Horrible abuse of the forall function, but we're not in a hurry.
+ */
+static void db_hang_forall __P((db_symtab_t *, db_sym_t, char *, char *, int,
+			void *));
+
+static void
+db_hang_forall(stab, sym, name, suff, pre, varg)
+	db_symtab_t *stab;
+	db_sym_t sym;
+	char *name;
+	char *suff;
+	int pre;
+	void *varg;
+{
+	struct db_hang_forall_arg *arg = (struct db_hang_forall_arg *)varg;
+
+	if (--arg->cnt == 0)
+		arg->sym = sym;
 }
 
 static __inline char *
 db_randomsym(lenp)
 	size_t	*lenp;
 {
-	register char	*p, *q;
-		/* choose random symtab */
-	register db_symtab_t	stab = db_istab(db_random(db_nsymtabs));
+	extern db_symtab_t db_symtabs[];
+	db_symtab_t *stab;
+	int nsymtabs, nsyms;
+	char	*p, *q;
+	struct db_hang_forall_arg dfa;
 
-		/* choose random symbol from the table */
-	q = db_qualify(X_db_isym(stab, db_random(X_db_nsyms(stab))),stab->name);
+	for (nsymtabs = 0; db_symtabs[nsymtabs].name != NULL; nsymtabs++)
+		;
 
-		/* don't show symtab name if there are less than 3 of 'em */
-	if (db_nsymtabs < 3)
+	if (nsymtabs == 0)
+		return (NULL);
+
+	stab = &db_symtabs[db_random(nsymtabs)];
+
+	dfa.cnt = 1000000;
+	X_db_forall(stab, db_hang_forall, &dfa);
+	if (dfa.cnt <= 0)
+		return (NULL);
+	nsyms = 1000000 - dfa.cnt;
+
+	if (nsyms == 0)
+		return (NULL);
+
+	dfa.cnt = db_random(nsyms);
+	X_db_forall(stab, db_hang_forall, &dfa);
+
+	q = db_qualify(dfa.sym, stab->name);
+
+	/* don't show symtab name if there are less than 3 of 'em */
+	if (nsymtabs < 3)
 		while(*q++ != ':');
 
-		/* strlen(q) && ignoring underscores and colons */
+	/* strlen(q) && ignoring underscores and colons */
 	for ((*lenp) = 0, p = q; *p; p++)
 		if (ISALPHA(*p))
 			(*lenp)++;
 
-	return q;
+	return (q);
 }
 
 static char hangpic[]=
-	"\n88888 \r\n"
-	  "9 7 6 \r\n"
-	  "97  5 \r\n"
-	  "9  423\r\n"
-	  "9   2 \r\n"
-	  "9  1 0\r\n"
-	  "9\r\n"
-	  "9  ";
+    "\n88888 \r\n"
+    "9 7 6 \r\n"
+    "97  5 \r\n"
+    "9  423\r\n"
+    "9   2 \r\n"
+    "9  1 0\r\n"
+    "9\r\n"
+    "9  ";
 static char substchar[]="\\/|\\/O|/-|";
 
 void
@@ -110,35 +158,24 @@ db_hang(tries, word, abc)
 {
 	register char	*p;
 
-	for(p=hangpic; *p; p++) {
-		if(*p>='0' && *p<='9') {
-			if(tries<=(*p)-'0')
-				cnputc(substchar[(*p)-'0']);
-			else
-				cnputc(' ');
-		} else
-			cnputc(*p);
-	}
+	for(p=hangpic; *p; p++)
+		cnputc((*p>='0' && *p<='9') ? ((tries<=(*p)-'0') ?
+		    substchar[(*p)-'0'] : ' ') : *p);
 
 	for (p = word; *p; p++)
-		if (ISALPHA(*p) && abc[TOLOWER(*p) - 'a'] == '-')
-			cnputc('-');
-		else
-			cnputc(*p);
+		cnputc(ISALPHA(*p) && abc[TOLOWER(*p) - 'a'] == '-'?'-':*p);
 
-	cnputc(' ');
-	cnputc('(');
+	db_printf(" (");
 
 	for (p = abc; *p; p++)
 		if (*p == '_')
 			cnputc('a' + (p - abc));
 
-	cnputc(')');
-	cnputc('\r');
+	db_printf(")\r");
 }
 
 
-int
+static __inline int
 db_hangon(void)
 {
 	static size_t	len;
@@ -153,8 +190,10 @@ db_hangon(void)
 			*p = '-';
 		*p = '\0';
 
-		tries = 2 * (1 + skill / 3);
+		tries = skill + 1;
 		word = db_randomsym(&len);
+		if (word == NULL)
+			return (0);
 	}
 
 	{
@@ -184,7 +223,7 @@ db_hangon(void)
 	}
 
 	if (tries && len)
-		return 1;
+		return (1);
 
 	if (!tries && skill > 2) {
 		register char	*p = word;
@@ -196,7 +235,7 @@ db_hangon(void)
 	cnputc('\n');
 	word = NULL;
 
-	return !tries;
+	return (!tries);
 }
 
 void
@@ -209,7 +248,7 @@ db_hangman(addr, haddr, count, modif)
 	if (modif[0] == 's' && '0' <= modif[1] && modif[1] <= '9')
 		skill = modif[1] - '0';
 	else
-		skill = 5;
+		skill = 3;
 
 	while (db_hangon());
 }
