@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.8 2001/07/30 14:16:00 art Exp $	*/
+/*	$OpenBSD: dma.c,v 1.9 2001/08/01 23:53:09 pvalchev Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -410,7 +410,7 @@ paddr_t
 _dmamem_mmap(t, segs, nsegs, off, prot, flags)
 	bus_dma_tag_t t;
 	bus_dma_segment_t *segs;
-	int nsegs, 
+	int nsegs;
 	off_t off;
 	int prot, flags;
 {
