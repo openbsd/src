@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.10 1999/02/26 17:01:31 jason Exp $	*/
+/*	$OpenBSD: if.h,v 1.11 1999/03/13 19:06:16 deraadt Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -238,7 +238,7 @@ struct ifaddr {
 	void	(*ifa_rtrequest)	/* check or clean routes (+ or -)'d */
 		    __P((int, struct rtentry *, struct sockaddr *));
 	u_short	ifa_flags;		/* mostly rt_flags for cloning */
-	short	ifa_refcnt;		/* count of references */
+	u_int	ifa_refcnt;		/* count of references */
 	int	ifa_metric;		/* cost of going out this interface */
 };
 #define	IFA_ROUTE	RTF_UP		/* route installed */
