@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.5 2001/06/27 01:55:28 niklas Exp $	*/
+/*	$OpenBSD: aac.c,v 1.6 2001/07/04 06:49:28 niklas Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -639,6 +639,8 @@ aac_scsi_cmd(xs)
 	while ((xs = aac_dequeue(sc))) {
 		xs->error = XS_NOERROR;
 		ccb = NULL;
+		link = xs->sc_link;
+		target = link->target;
 
 		switch (xs->cmd->opcode) {
 		case TEST_UNIT_READY:
