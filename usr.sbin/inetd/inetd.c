@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.62 2000/06/19 01:28:45 itojun Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.63 2000/07/08 01:57:27 itojun Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.62 2000/06/19 01:28:45 itojun Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.63 2000/07/08 01:57:27 itojun Exp $";
 #endif /* not lint */
 
 /*
@@ -225,11 +225,13 @@ struct	servtab {
 		struct	sockaddr_in se_un_ctrladdr_in;
 		struct	sockaddr_in6 se_un_ctrladdr_in6;
 		struct	sockaddr_un se_un_ctrladdr_un;
+		struct	sockaddr_storage se_un_ctrladdr_storage;
 	} se_un;			/* bound address */
 #define se_ctrladdr	se_un.se_un_ctrladdr
 #define se_ctrladdr_in	se_un.se_un_ctrladdr_in
 #define se_ctrladdr_in6	se_un.se_un_ctrladdr_in6
 #define se_ctrladdr_un	se_un.se_un_ctrladdr_un
+#define se_ctrladdr_storage	se_un.se_un_ctrladdr_storage
 	int	se_ctrladdr_size;
 	int	se_max;			/* max # of instances of this service */
 	int	se_count;		/* number started since se_time */
@@ -1227,7 +1229,11 @@ more:
 	hostdelim = strrchr(arg, ':');
 	if (hostdelim) {
 		*hostdelim = '\0';
-		sep->se_hostaddr = newstr(arg);
+		if (arg[0] == '[' && hostdelim > arg && hostdelim[-1] == ']') {
+			hostdelim[-1] = '\0';
+			sep->se_hostaddr = newstr(arg + 1);
+		} else
+			sep->se_hostaddr = newstr(arg);
 		arg = hostdelim + 1;
 		/*
 		 * If the line is of the form `host:', then just change the
@@ -1404,55 +1410,73 @@ more:
 	nsep = sep;
 	while (nsep != NULL) {
 		nsep->se_checked = 1;
-		if (nsep->se_family == AF_INET) {
-			if (!strcmp(nsep->se_hostaddr,"*"))
-				nsep->se_ctrladdr_in.sin_addr.s_addr =
-				    INADDR_ANY;
-			else if (!inet_aton(nsep->se_hostaddr,
-			    &nsep->se_ctrladdr_in.sin_addr)) {
-				struct hostent *hp;
+		switch (nsep->se_family) {
+		case AF_INET:
+		case AF_INET6:
+		    {
+			struct addrinfo hints, *res0, *res;
+			char *host, *port;
+			int error;
+			int s;
 
-				hp = gethostbyname(nsep->se_hostaddr);
-				if (hp == 0) {
-					syslog(LOG_ERR, "%s: unknown host",
-					    nsep->se_hostaddr);
-					nsep->se_checked = 0;
-					goto skip;
-				} else if (hp->h_addrtype != AF_INET) {
-					syslog(LOG_ERR,
-					    "%s: address isn't an Internet "
-					    "address",
-					    nsep->se_hostaddr);
-					nsep->se_checked = 0;
-					goto skip;
-				} else {
-					int i = 1;
-
-					memmove(&nsep->se_ctrladdr_in.sin_addr,
-					    hp->h_addr_list[0],
-					    sizeof(struct in_addr));
-					while (hp->h_addr_list[i] != NULL) {
-						psep = dupconfig(nsep);
-						psep->se_hostaddr = newstr(
-						    nsep->se_hostaddr);
-						psep->se_checked = 1;
-						memmove(&psep->se_ctrladdr_in.sin_addr,
-						    hp->h_addr_list[i],
-						    sizeof(struct in_addr));
-						psep->se_ctrladdr_size =
-						    sizeof(psep->se_ctrladdr_in);
-						i++;
-
-						/*
-						 * Prepend to list, don't
-						 * want to look up its
-						 * hostname again.
-						 */
-						psep->se_next = sep;
-						sep = psep;
-					}
-				}
+			/* check if the family is supported */
+			s = socket(nsep->se_family, SOCK_DGRAM, 0);
+			if (s < 0) {
+				syslog(LOG_WARNING,
+"%s/%s: %s: the address family is not supported by the kernel",
+				    nsep->se_service, nsep->se_proto,
+				    nsep->se_hostaddr);
+				nsep->se_checked = 0;
+				goto skip;
 			}
+			close(s);
+
+			memset(&hints, 0, sizeof(hints));
+			hints.ai_family = nsep->se_family;
+			hints.ai_socktype = nsep->se_socktype;
+			hints.ai_flags = AI_PASSIVE;
+			if (!strcmp(nsep->se_hostaddr, "*"))
+				host = NULL;
+			else
+				host = nsep->se_hostaddr;
+			port = "0";
+			/* XXX shortened IPv4 syntax is now forbidden */
+			error = getaddrinfo(host, port, &hints, &res0);
+			if (error) {
+				syslog(LOG_ERR, "%s/%s: %s: %s",
+				    nsep->se_service, nsep->se_proto,
+				    nsep->se_hostaddr,
+				    gai_strerror(error));
+				nsep->se_checked = 0;
+				goto skip;
+			}
+			for (res = res0; res; res = res->ai_next) {
+				if (res->ai_addrlen >
+				    sizeof(nsep->se_ctrladdr_storage))
+					continue;
+				if (res == res0) {
+					memcpy(&nsep->se_ctrladdr_storage,
+					    res->ai_addr, res->ai_addrlen);
+					continue;
+				}
+
+				psep = dupconfig(nsep);
+				psep->se_hostaddr = newstr(nsep->se_hostaddr);
+				psep->se_checked = 1;
+				memcpy(&psep->se_ctrladdr_storage, res->ai_addr,
+				    res->ai_addrlen);
+				psep->se_ctrladdr_size = res->ai_addrlen;
+
+				/*
+				 * Prepend to list, don't want to look up its
+				 * hostname again.
+				 */
+				psep->se_next = sep;
+				sep = psep;
+			}
+			freeaddrinfo(res0);
+			break;
+		    }
 		}
 skip:
 		nsep = nsep->se_next;
