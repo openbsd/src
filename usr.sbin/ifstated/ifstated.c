@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.2 2004/02/04 23:47:49 mcbride Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.3 2004/02/05 02:18:55 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -87,7 +87,7 @@ void	remove_expression(struct ifsd_expression *, struct ifsd_state *);
 void
 usage(void)
 {
-	fprintf(stderr, "usage: ifstated [-hdi] [-f config]\n");
+	fprintf(stderr, "usage: ifstated [-dhinv] [-f config]\n");
 	exit(1);
 }
 
@@ -98,7 +98,7 @@ main(int argc, char *argv[])
 	int rt_fd, ch;
 	struct timeval tv;
 	
-	while ((ch = getopt(argc, argv, "dD:f:hi")) != -1) {
+	while ((ch = getopt(argc, argv, "dD:f:hniv")) != -1) {
 		switch (ch) {
 		case 'd':
 			opt_debug = 1;
@@ -113,6 +113,9 @@ main(int argc, char *argv[])
 			break;
 		case 'h':
 			usage();
+			break;
+		case 'n':
+			conf.opts |= IFSD_OPT_NOACTION;
 			break;
 		case 'i':
 			opt_inhibit = 1;
@@ -129,9 +132,12 @@ main(int argc, char *argv[])
 
 	event_init();
 
-	if (parse_config(configfile, &conf) != 0)
-		errx(1, NULL);
-
+	if (conf.opts & IFSD_OPT_NOACTION) {
+		if (parse_config(configfile, &conf) != 0)
+			exit(1);
+		printf("configuration OK\n");
+		exit(0);
+	}
 
 	if (!opt_debug) {
 		daemon(0, 0);

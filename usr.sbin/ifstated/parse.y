@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.1 2004/02/04 23:47:49 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.2 2004/02/05 02:18:55 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2004 Ryan McBride <mcbride@openbsd.org>
@@ -614,6 +614,7 @@ parse_config(char *filename, struct ifsd_config *xconf)
 	init_state(&conf->always);
 	curaction = conf->always.always;
 	conf->loglevel = IFSD_LOG_NORMAL;
+	conf->opts = xconf->opts;
 
 	if ((fin = fopen(filename, "r")) == NULL) {
 		warn("%s", filename);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.h,v 1.1 2004/02/04 23:47:49 mcbride Exp $	*/
+/*	$OpenBSD: ifstated.h,v 1.2 2004/02/05 02:18:55 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2004 Ryan McBride
@@ -127,6 +127,7 @@ struct ifsd_config {
 	u_int32_t			 opts;
 #define IFSD_OPT_VERBOSE	0x00000001
 #define IFSD_OPT_VERBOSE2	0x00000002
+#define IFSD_OPT_NOACTION	0x00000004
 	int				 maxdepth;
 	u_int8_t			 loglevel;
 #define IFSD_LOG_NONE		0
