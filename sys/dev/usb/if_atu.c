@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.1 2004/11/08 22:09:11 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.2 2004/11/08 22:41:55 deraadt Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -2284,6 +2284,7 @@ atu_handle_mgmt_packet(struct atu_softc *sc, struct atu_rxpkt *pkt)
 		DPRINTF((" mac=%s signal=%d\n",
 		    ether_sprintf(pkt->WiHeader.addr2), pkt->AtHeader.rssi));
 
+#ifdef ATU_DEBUG
 		if (atudebug & FLAG_SIGNAL) {
 			/*
 			 * calculate average signal strength, can be very
@@ -2307,6 +2308,7 @@ atu_handle_mgmt_packet(struct atu_softc *sc, struct atu_rxpkt *pkt)
 			    (sc->atu_signaltotal * 100 / ATU_AVG_TIME) %
 			    100));
 		}
+#endif
 
 		DPRINTF(("%s: mgmt capabilities=%04x "
 		    "(mode=%s, wep=%s, short-preamble=%s)\n", USBDEVNAME(sc->atu_dev),
@@ -2318,9 +2320,10 @@ atu_handle_mgmt_packet(struct atu_softc *sc, struct atu_rxpkt *pkt)
 		    (beacon->flags & IEEE80211_CAPINFO_SHORT_PREAMBLE) ?
 		    "yes" : "no"));
 
+#ifdef ATU_DEBUG
 		if (atudebug & FLAG_BEACONSFULL)
 			atu_print_beacon(sc, pkt);
-
+#endif
 		if (!(sc->atu_mgmt_flags & ATU_SEARCHING))
 			break;
 
