@@ -1,4 +1,4 @@
-/*	$OpenBSD: pms.c,v 1.27 2000/09/21 15:52:47 mickey Exp $	*/
+/*	$OpenBSD: pms.c,v 1.28 2000/12/19 06:58:39 csapuntz Exp $	*/
 /*	$NetBSD: pms.c,v 1.29 1996/05/12 23:12:42 mycroft Exp $	*/
 
 /*-
@@ -244,6 +244,8 @@ pmsattach(parent, self, aux)
 
 	sc->sc_ih = isa_intr_establish(ic, irq, IST_EDGE, IPL_TTY,
 	    pmsintr, sc, sc->sc_dev.dv_xname);
+
+	pms_pit_cmd(PMS_INT_ENABLE);
 }
 
 int
@@ -318,9 +320,10 @@ pmsclose(dev, flag, mode, p)
 
 	/* Disable interrupts. */
 	/* pms_dev_cmd(PMS_DEV_DISABLE); */
+#if 0
 	pms_pit_cmd(PMS_INT_DISABLE);
 	pms_aux_cmd(PMS_AUX_DISABLE);
-
+#endif
 	sc->sc_state &= ~PMS_OPEN;
 	sc->sc_io = NULL;
 
