@@ -3985,6 +3985,15 @@
 ./usr/share/man/cat3/secure_path.0
 ./usr/share/man/cat3/seed48.0
 ./usr/share/man/cat3/seekdir.0
+./usr/share/man/cat3/sem_close.0
+./usr/share/man/cat3/sem_destroy.0
+./usr/share/man/cat3/sem_getvalue.0
+./usr/share/man/cat3/sem_init.0
+./usr/share/man/cat3/sem_open.0
+./usr/share/man/cat3/sem_post.0
+./usr/share/man/cat3/sem_trywait.0
+./usr/share/man/cat3/sem_unlink.0
+./usr/share/man/cat3/sem_wait.0
 ./usr/share/man/cat3/set_current_field.0
 ./usr/share/man/cat3/set_current_item.0
 ./usr/share/man/cat3/set_curterm.0
