@@ -1,4 +1,4 @@
-.\" $OpenBSD: gcc-local.1,v 1.8 2005/01/11 09:16:33 jmc Exp $
+.\" $OpenBSD: gcc-local.1,v 1.9 2005/01/18 03:37:46 david Exp $
 .\"
 .\" Copyright (c) 2002 Marc Espie
 .\" Copyright (c) 2003 Anil Madhavapeddy
@@ -316,8 +316,3 @@ The
 flag only works with statically allocated fixed-size buffers.
 Since it is applied at compile-time, dynamically allocated memory buffers
 and non-constant arguments are ignored.
-.Sh BUGS
-The
-.Dv __sentinel__
-attribute is not yet fully implemented for
-.Nm gcc 3.3.5 .
