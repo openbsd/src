@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.2 2003/10/19 18:42:55 espie Exp $
+# $OpenBSD: pkg_add,v 1.3 2003/10/20 17:29:56 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -146,6 +146,7 @@ sub preadd
 	$handle->{conflicts} = $l;
 	if ($l->conflicts_with(installed_packages())) {
 		print "package $pkg has conflicts\n";
+		return undef;
 	}
 	return $handle;
 }
