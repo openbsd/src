@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.24 2004/04/22 18:01:15 itojun Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.25 2004/06/11 08:09:29 itojun Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -480,10 +480,8 @@ rip6_output(struct mbuf *m, ...)
 	}
 
 	flags = 0;
-#ifdef IN6P_MINMTU
 	if (in6p->in6p_flags & IN6P_MINMTU)
 		flags |= IPV6_MINMTU;
-#endif
 
 	error = ip6_output(m, optp, &in6p->in6p_route, flags,
 	    in6p->in6p_moptions, &oifp);
