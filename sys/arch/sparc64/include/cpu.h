@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.12 2002/06/11 10:57:51 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.13 2002/06/14 04:17:59 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -54,7 +54,8 @@
 #define	CPU_BOOTED_KERNEL	1	/* string: booted kernel name */
 #define	CPU_LED_BLINK		2	/* int: blink leds? */
 #define	CPU_ALLOWAPERTURE	3	/* allow xf86 operations */
-#define	CPU_MAXID		4	/* number of valid machdep ids */
+#define CPU_CPUTYPE		4	/* cpu type */
+#define	CPU_MAXID		5	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES {			\
 	{ 0, 0 },				\
