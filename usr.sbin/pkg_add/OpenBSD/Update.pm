@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.47 2004/12/21 01:43:58 espie Exp $
+# $OpenBSD: Update.pm,v 1.48 2004/12/27 22:40:42 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -339,6 +339,10 @@ sub convert_to_requiring
 	my $pkg = shift;
 
 	my $plist = OpenBSD::PackingList->from_installation($pkg);
+	if (!defined $plist) {
+		Warn "Couldn't read plist for $pkg\n";
+		return;
+	}
 	my $r = OpenBSD::Requiring->new($pkg);
 	for my $item (@{$plist->{pkgdep}}) {
 		$r->add($item->{name});
