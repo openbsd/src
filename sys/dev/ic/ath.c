@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.18 2005/04/03 08:06:14 uwe Exp $  */
+/*      $OpenBSD: ath.c,v 1.19 2005/04/05 17:10:43 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -2055,7 +2055,7 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni,
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ath_hal *ah = sc->sc_ah;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
-	int i, error, iswep, hdrlen, pktlen, s;
+	int i, error, iswep, hdrlen, pktlen, len, s;
 	u_int8_t rix, cix, txrate, ctsrate;
 	struct ath_desc *ds;
 	struct mbuf *m;
@@ -2128,10 +2128,13 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni,
 		ivp[3] = ic->ic_wep_txkey << 6; /* Key ID and pad */
 		bcopy(hdrbuf, mtod(m0, caddr_t), sizeof(hdrbuf));
 		/*
-		 * The ICV length must be included into hdrlen and pktlen.
+		 * The length of hdrlen and pktlen must be increased for WEP
 		 */
-		hdrlen = sizeof(hdrbuf) + IEEE80211_WEP_CRCLEN;
-		pktlen = m0->m_pkthdr.len + IEEE80211_WEP_CRCLEN;
+		len = IEEE80211_WEP_IVLEN +
+		    IEEE80211_WEP_KIDLEN +
+		    IEEE80211_WEP_CRCLEN;
+		hdrlen += len;
+		pktlen += len;
 	}
 	pktlen += IEEE80211_CRC_LEN;
 
