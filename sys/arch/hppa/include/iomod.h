@@ -1,4 +1,4 @@
-/*	$OpenBSD: iomod.h,v 1.8 2000/05/15 15:16:41 mickey Exp $	*/
+/*	$OpenBSD: iomod.h,v 1.9 2001/12/02 04:10:25 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -125,9 +125,6 @@
 
 #define	FPA_IOMOD	((FPA_HIGH-FPA_LOW)/sizeof(struct iomod))
 #define	MAXMODBUS	((int)(FPA_IOMOD))	/* maximum modules/bus */
-
-#define	FLEX_MASK	0xFFFC0000	/* (see below) */
-#define	HPPA_FLEX(a)	(((a) & FLEX_MASK) >> 18)
 
 /* size of HPA space for any device */
 #define	IOMOD_HPASIZE	0x1000

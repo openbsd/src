@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.18 2001/12/02 04:03:57 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.19 2001/12/02 04:10:25 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -104,9 +104,9 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int cachable,
 
 		/* need a new mapping */
 		if (!(bmm[flex / 32] & (1 << (flex % 32)))) {
-			spa = bpa & FLEX_MASK;
+			spa = bpa & HPPA_FLEX_MASK;
 			epa = ((u_long)((u_int64_t)bpa + size +
-				~FLEX_MASK - 1) & FLEX_MASK) - 1;
+				~HPPA_FLEX_MASK - 1) & HPPA_FLEX_MASK) - 1;
 #ifdef BTLBDEBUG
 			printf ("bus_mem_add_mapping: adding flex=%x "
 				"%qx-%qx, ", flex, spa, epa);
@@ -832,11 +832,11 @@ mbattach(parent, self, aux)
 	/*
 	 * Local-Broadcast the HPA to all modules on the bus
 	 */
-	((struct iomod *)(pdc_hpa.hpa & FLEX_MASK))[FPA_IOMOD].io_flex =
-		(void *)((pdc_hpa.hpa & FLEX_MASK) | DMA_ENABLE);
+	((struct iomod *)(pdc_hpa.hpa & HPPA_FLEX_MASK))[FPA_IOMOD].io_flex =
+		(void *)((pdc_hpa.hpa & HPPA_FLEX_MASK) | DMA_ENABLE);
 
 	sc->sc_hpa = pdc_hpa.hpa;
-	printf (" [flex %x]\n", pdc_hpa.hpa & FLEX_MASK);
+	printf (" [flex %x]\n", pdc_hpa.hpa & HPPA_FLEX_MASK);
 
 	/* PDC first */
 	bzero (&nca, sizeof(nca));

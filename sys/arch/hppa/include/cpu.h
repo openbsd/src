@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.22 2001/11/08 23:57:35 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.23 2001/12/02 04:10:25 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Michael Shalayeff
@@ -98,6 +98,7 @@ extern const char *cpu_typename;
 #define	HPPA_FLEX_DATA	0xfff80001
 #define	HPPA_DMA_ENABLE	0x00000001
 #define	HPPA_FLEX_MASK	0xfffc0000
+#define	HPPA_FLEX(a)	(((a) & FLEX_MASK) >> 18)
 #define	HPPA_SPA_ENABLE	0x00000020
 #define	HPPA_NMODSPBUS	64
 
