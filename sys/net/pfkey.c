@@ -29,7 +29,6 @@ you didn't get a copy, you may request one from <license@inner.net>.
 #include <netinet/in.h>
 #include <net/pfkeyv2.h>
 
-
 #include <sys/protosw.h>
 #include <sys/domain.h>
 #include <net/raw_cb.h>
@@ -315,8 +314,5 @@ void pfkey_init(void)
 
   pfkey_domain.dom_next = domains;
   domains = &pfkey_domain;
-
-#if KEY || CONFIG_PFKEY_V2
   pfkeyv2_init();
-#endif /* KEY || CONFIG_PFKEY_V2 */
 }
