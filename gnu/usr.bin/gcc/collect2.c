@@ -642,10 +642,12 @@ choose_temp_base ()
 
   if (base == (char *)0)
     {
+#if 0 /* XXX - P_tmpdir is not /tmp - etheisen */
 #ifdef P_tmpdir
       if (access (P_tmpdir, R_OK | W_OK) == 0)
 	base = P_tmpdir;
 #endif
+#endif /* XXX */
       if (base == (char *)0)
 	{
 	  if (access ("/usr/tmp", R_OK | W_OK) == 0)

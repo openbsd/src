@@ -3961,11 +3961,13 @@ make_temp_file ()
 
   if (base == (char *)0)
     {
+#ifdef 0 /* XXX - P_tmpdir is not /tmp - erik */
 #ifdef P_tmpdir
       if (access (P_tmpdir, R_OK | W_OK) == 0)
 	base = P_tmpdir;
       else
 #endif
+#endif /* XXX */
 	if (access ("/usr/tmp", R_OK | W_OK) == 0)
 	  base = "/usr/tmp/";
 	else
