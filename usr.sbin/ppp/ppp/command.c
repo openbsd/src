@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: command.c,v 1.30 1999/06/23 16:49:03 brian Exp $
+ * $Id: command.c,v 1.31 1999/08/02 21:45:45 brian Exp $
  *
  */
 #include <sys/param.h>
@@ -144,7 +144,7 @@
 #define NEG_VJCOMP	53
 
 const char Version[] = "2.22";
-const char VersionDate[] = "$Date: 1999/06/23 16:49:03 $";
+const char VersionDate[] = "$Date: 1999/08/02 21:45:45 $";
 
 static int ShowCommand(struct cmdargs const *);
 static int TerminalCommand(struct cmdargs const *);
@@ -1814,7 +1814,7 @@ static struct cmdtab const SetCommands[] = {
   "escape characters", "set escape hex-digit ..."},
   {"filter", NULL, filter_Set, LOCAL_AUTH,
   "packet filters", "set filter alive|dial|in|out rule-no permit|deny "
-  "[src_addr[/width]] [dst_addr[/width]] [tcp|udp|icmp|igmp "
+  "[src_addr[/width]] [dst_addr[/width]] [tcp|udp|icmp|ospf|igmp "
   "[src [lt|eq|gt port]] [dst [lt|eq|gt port]] [estab] [syn] [finrst]]"},
   {"hangup", NULL, SetVariable, LOCAL_AUTH | LOCAL_CX,
   "hangup script", "set hangup chat-script", (const void *) VAR_HANGUP},
