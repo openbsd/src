@@ -1238,10 +1238,10 @@ memfault_sun4m:
 	st	%g1, [%sp + CCFSZ + 20]	! save g1
 	rd	%y, %l4			! save y
 
-	mov	SRMMU_FAULTSTAT, %o0
+	mov	SRMMU_SFSTAT, %o0
 	std	%g2, [%sp + CCFSZ + 24]	! save g2, g3
 	lda	[%o0] ASI_SRMMU, %o1	! srmmu fault status
-	mov	SRMMU_FAULTADDR, %o0
+	mov	SRMMU_SFADDR, %o0
 	std	%g4, [%sp + CCFSZ + 32]	! (sneak g4,g5 in here)
 	lda	[%o0] ASI_SRMMU, %o2	! srmmu fault address
 	! XXX check for memory errors?
