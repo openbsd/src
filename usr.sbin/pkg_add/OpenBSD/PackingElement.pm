@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.55 2004/10/13 18:39:07 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.56 2004/10/16 11:01:29 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -809,6 +809,21 @@ sub destate
 	my ($self, $state) = @_;
 	$state->{cwd} = $self->{name};
 }
+
+package OpenBSD::PackingElement::EndFake;
+our @ISA=qw(OpenBSD::PackingElement::State);
+
+__PACKAGE__->setKeyword('endfake');
+
+sub keyword() { 'endfake' }
+
+sub new
+{
+	my ($class, @args) = @_;
+	bless {}, $class;
+}
+
+sub stringize() { '' }
 
 package OpenBSD::PackingElement::Owner;
 our @ISA=qw(OpenBSD::PackingElement::State);

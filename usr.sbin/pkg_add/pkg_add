@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.76 2004/10/13 18:39:07 espie Exp $
+# $OpenBSD: pkg_add,v 1.77 2004/10/16 11:01:29 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -38,6 +38,7 @@ sub ensure_ldconfig
 {
 	my $state = shift;
 	return if $state->{not};
+	return if $state->{do_faked};
 	return unless defined $OpenBSD::PackingElement::Lib::todo;
 	VSystem($state->{verbose}, 
 	    @OpenBSD::PackingElement::Lib::ldconfig, "-m", 
@@ -193,8 +194,20 @@ sub install
 	$file->{name} = $fullname;
 	$file->{cwd} = $self->{cwd};
 	$file->{destdir} = $destdir;
+	# faked installation are VERY weird
+	if (defined $self->{symlink} && $state->{do_faked}) {
+		$file->{linkname} = $destdir.$file->{linkname};
+	}
 	$file->create();
 	$self->set_modes($destdir.$fullname);
+}
+
+package OpenBSD::PackingElement::EndFake;
+sub install
+{
+	my ($self, $state) = @_;
+
+	$state->{end_faked} = 1;
 }
 
 package OpenBSD::PackingElement::Sample;
@@ -328,6 +341,7 @@ sub install
 {
 	my ($self, $state) = @_;
 	$self->SUPER::install($state);
+	return if $state->{do_faked};
 	$self->mark_ldconfig_directory($state->{destdir});
 }
 
@@ -377,8 +391,8 @@ sub fill_conflict_lists
 
 my $errors = 0;
 
-our ($opt_a, $opt_v, $opt_n, $opt_I, $opt_f, $opt_L, $opt_B, $opt_A, $opt_P);
-getopts('avnIL:f:B:A:P:');
+our ($opt_a, $opt_v, $opt_n, $opt_I, $opt_f, $opt_L, $opt_B, $opt_A, $opt_P, $opt_Q);
+getopts('avnIL:f:B:A:P:Q:');
 if ($opt_f) {
 	%forced = map {($_, 1)} split(/,/, $opt_f);
 }
@@ -398,7 +412,14 @@ $opt_L = '/usr/local' unless defined $opt_L;
 
 my $state = {};
 $state->{cache} = {};
-if (defined $opt_B) {
+$state->{do_faked} = 0;
+if (defined $opt_Q and defined $opt_B) {
+	Fatal "-Q and -B are incompatible options";
+}
+if (defined $opt_Q) {
+	$state->{destdir} = $opt_Q;
+	$state->{do_faked} = 1;
+} elsif (defined $opt_B) {
 	$state->{destdir} = $opt_B;
 } elsif (defined $ENV{'PKG_PREFIX'}) {
 	$state->{destdir} = $ENV{'PKG_PREFIX'};
@@ -750,7 +771,7 @@ sub really_add($$)
 	$state->{dir} = $dir;
 	$state->{pkgname} = $pkgname;
 
-	validate_plist($plist, $destdir);
+	validate_plist($plist, $destdir) unless $state->{do_faked};
 
 	if (!defined $handle) {
 		Fatal "Archive in $pkgname broken";
@@ -768,6 +789,7 @@ sub really_add($$)
 	do_script($plist, INSTALL, $state, "PRE-INSTALL");
 
 	$plist->{done} = [];
+	$state->{end_faked} = 0;
 	for my $item (@{$plist->{groups}}, @{$plist->{users}}, @{$plist->{items}}) {
 		eval { $item->install($state); };
 		if ($@) {
@@ -777,6 +799,10 @@ sub really_add($$)
 		}
 		push(@{$plist->{done}}, $item);
 		last if $interrupted;
+		# stop faked installation there...
+		if ($state->{do_faked} && $state->{end_faked}) {
+			last;
+		}
 	}
 
 	$handle->close();
