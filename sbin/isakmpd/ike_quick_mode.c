@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.30 2000/02/11 10:21:28 niklas Exp $	*/
-/*	$EOM: ike_quick_mode.c,v 1.113 2000/02/10 16:25:00 angelos Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.31 2000/02/12 09:21:23 niklas Exp $	*/
+/*	$EOM: ike_quick_mode.c,v 1.114 2000/02/12 00:11:28 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -856,8 +856,12 @@ initiator_recv_HASH_SA_NONCE (struct message *msg)
       ipsec_decode_transform (msg, sa, proto, xf->p);
 
 #if defined (USE_KEYNOTE)
-      if (check_policy (exchange, sa, msg->isakmp_sa))
-	return -1;
+      if (!check_policy (exchange, sa, msg->isakmp_sa))
+	{
+	  message_drop (msg, ISAKMP_NOTIFY_NO_PROPOSAL_CHOSEN, 0, 1, 0);
+	  log_print ("initiator_recv_HASH_SA_NONCE: policy check failed");
+	  return -1;
+	}
 #endif
     }
 
