@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_aout.h,v 1.8 1997/03/16 02:54:19 downsj Exp $	*/
+/*	$OpenBSD: exec_aout.h,v 1.9 1998/04/25 06:28:14 niklas Exp $	*/
 /*	$NetBSD: exec_aout.h,v 1.15 1996/05/18 17:20:54 christos Exp $	*/
 
 /*
@@ -41,14 +41,14 @@
  * N_SETMAGIC/N_GET{MAGIC,MID,FLAG} macros below.
  */
 struct exec {
-	u_long	a_midmag;	/* htonl(flags<<26 | mid<<16 | magic) */
-	u_long	a_text;		/* text segment size */
-	u_long	a_data;		/* initialized data size */
-	u_long	a_bss;		/* uninitialized data size */
-	u_long	a_syms;		/* symbol table size */
-	u_long	a_entry;	/* entry point */
-	u_long	a_trsize;	/* text relocation size */
-	u_long	a_drsize;	/* data relocation size */
+	u_int32_t	a_midmag;	/* htonl(flags<<26|mid<<16|magic) */
+	u_int32_t	a_text;		/* text segment size */
+	u_int32_t	a_data;		/* initialized data size */
+	u_int32_t	a_bss;		/* uninitialized data size */
+	u_int32_t	a_syms;		/* symbol table size */
+	u_int32_t	a_entry;	/* entry point */
+	u_int32_t	a_trsize;	/* text relocation size */
+	u_int32_t	a_drsize;	/* data relocation size */
 };
 
 /* a_magic */
