@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.10 2002/07/24 04:11:10 deraadt Exp $ */
+/*	$OpenBSD: syscall.h,v 1.11 2002/12/18 19:20:02 drahn Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -37,6 +37,7 @@
 
 #include <sys/syscall.h>
 #include <sys/stat.h>
+#include <sys/signal.h>
 
 #ifndef _dl_MAX_ERRNO
 #define _dl_MAX_ERRNO 4096
@@ -57,6 +58,7 @@ ssize_t	_dl_write(int, const char*, size_t);
 int	_dl_fstat(int, struct stat *);
 int	_dl_fcntl(int, int, ...);
 int	_dl_getdirentries(int, char*, int, long *);
+int	_dl_sigprocmask(int, const sigset_t *, sigset_t *);
 
 static inline off_t
 _dl_lseek(int fildes, off_t offset, int whence)

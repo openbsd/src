@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.9 2002/11/14 15:15:54 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.10 2002/12/18 19:20:02 drahn Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -129,6 +129,8 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	const Elf32_Sym  *symp;
 	const Elf32_Sym  *this;
 	const char *strt;
+	Elf_Addr ooff;
+	const Elf_Sym *this;
 
 	if (object->status & STAT_GOT_DONE)
 		return;
@@ -158,6 +160,34 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	symp += object->Dyn.info[DT_MIPS_GOTSYM - DT_LOPROC + DT_NUM];
 	n =  object->Dyn.info[DT_MIPS_SYMTABNO - DT_LOPROC + DT_NUM] -
 	    object->Dyn.info[DT_MIPS_GOTSYM - DT_LOPROC + DT_NUM];
+
+	this = NULL;
+	ooff = _dl_find_symbol("__got_start", object, &this,
+	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, SYM_NOTPLT,
+	    NULL);
+	if (this != NULL)
+		object->got_addr = ooff + this->st_value;
+
+	this = NULL;
+	ooff = _dl_find_symbol("__got_end", object, &this,
+	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, SYM_NOTPLT,
+	    NULL);
+	if (this != NULL)
+		object->got_size = ooff + this->st_value  - object->got_addr;
+
+	this = NULL;
+	ooff = _dl_find_symbol("__plt_start", object, &this,
+	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, SYM_NOTPLT,
+	    NULL);
+	if (this != NULL)
+		object->plt_addr = ooff + this->st_value;
+
+	this = NULL;
+	ooff = _dl_find_symbol("__plt_end", object, &this,
+	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, SYM_NOTPLT,
+	    NULL);
+	if (this != NULL)
+		object->plt_size = ooff + this->st_value  - object->plt_addr;
 
 	/*
 	 *  Then do all global references according to the ABI.
@@ -195,4 +225,11 @@ DL_DEB(("got: '%s' = %x\n", strt + symp->st_name, symp->st_value));
 		symp++;
 	}
 	object->status |= STAT_GOT_DONE;
+
+	if (object->got_addr != NULL && object->got_size != 0) 
+		_dl_mprotect((void*)object->got_addr, object->got_size,
+		    PROT_READ); 
+	if (object->plt_addr != NULL && object->plt_size != 0) 
+		_dl_mprotect((void*)object->plt_addr, object->plt_size,
+		    PROT_READ|PROT_EXEC);
 }

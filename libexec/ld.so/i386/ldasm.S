@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.2 2002/10/21 16:01:55 drahn Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.3 2002/12/18 19:20:02 drahn Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -223,6 +223,31 @@ _dl_getdirentries:
 
 1:
 	/* error: result = -errno; - handled here. */
+	neg	%eax
+	ret
+
+
+	/* _dl_sigprocmask: does not handle NULL new set */
+
+	.section	".text"
+	.align		4
+	.global _dl_sigprocmask
+	.type _dl_sigprocmask,@function
+_dl_sigprocmask:
+	movl	8(%esp), %ecx
+	movl    (%ecx),%ecx
+	movl	%ecx,8(%esp)		# to new mask arg
+	mov	$SYS_sigprocmask, %eax
+	int	$0x80
+	jb	1f		 /* error: result = -errno */
+	movl	12(%esp),%ecx		# fetch old mask requested
+	testl	%ecx,%ecx		# test if old mask requested
+	jz	2f
+	movl	%eax,(%ecx)		# store old mask
+	xorl	%eax,%eax
+2:	ret
+
+1:	/* error: result = -errno; - handled here. */
 	neg	%eax
 	ret
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.18 2002/11/14 15:15:54 drahn Exp $ */
+/*	$OpenBSD: resolve.h,v 1.19 2002/12/18 19:20:01 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -61,6 +61,10 @@ typedef struct elf_object {
 	struct load_list *load_list;
 
 	u_int32_t  load_size;
+	Elf_Addr	got_addr;
+	size_t		got_size;
+	Elf_Addr	plt_addr;
+	size_t		plt_size;
 
 	union {
 		u_long		info[DT_NUM + DT_PROCNUM];

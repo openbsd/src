@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.18 2002/11/22 22:21:23 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.19 2002/12/18 19:20:02 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -39,6 +39,7 @@
 
 #include <nlist.h>
 #include <link.h>
+#include <signal.h>
 
 #include "syscall.h"
 #include "archdep.h"
@@ -450,9 +451,39 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	int i;
 	int index;
 	Elf32_Addr *r_addr;
+	Elf_Addr ooff;
+	const Elf_Sym *this;
 
 	if (object->Dyn.info[DT_PLTREL] != DT_RELA)
 		return;
+
+	this = NULL;
+	ooff = _dl_find_symbol("__got_start", object, &this,
+	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, SYM_NOTPLT,
+	    NULL);
+	if (this != NULL)
+		object->got_addr = ooff + this->st_value;
+
+	this = NULL;
+	ooff = _dl_find_symbol("__got_end", object, &this,
+	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, SYM_NOTPLT,
+	    NULL);
+	if (this != NULL)
+		object->got_size = ooff + this->st_value  - object->got_addr;
+
+	this = NULL;
+	ooff = _dl_find_symbol("__plt_start", object, &this,
+	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, SYM_NOTPLT,
+	    NULL);
+	if (this != NULL)
+		object->plt_addr = ooff + this->st_value;
+
+	this = NULL;
+	ooff = _dl_find_symbol("__plt_end", object, &this,
+	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, SYM_NOTPLT,
+	    NULL);
+	if (this != NULL)
+		object->plt_size = ooff + this->st_value  - object->plt_addr;
 
 	if (!lazy) {
 		_dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
@@ -483,6 +514,12 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		_dl_dcbf(&r_addr[0]);
 		_dl_dcbf(&r_addr[2]);
 	}
+	if (object->got_addr != NULL && object->got_size != 0) 
+		_dl_mprotect((void*)object->got_addr, object->got_size,
+		    PROT_READ|PROT_EXEC); /* only PPC is PROT_EXE */
+	if (object->plt_addr != NULL && object->plt_size != 0) 
+		_dl_mprotect((void*)object->plt_addr, object->plt_size,
+		    PROT_READ|PROT_EXEC);
 }
 
 Elf_Addr
@@ -498,6 +535,7 @@ _dl_bind(elf_object_t *object, int reloff)
 	Elf32_Addr *pltcall;
 	Elf32_Addr *pltinfo;
 	Elf32_Addr *plttable;
+	sigset_t omask, nmask;
 
 	relas = ((Elf_RelA *)object->Dyn.info[DT_JMPREL]) + (reloff>>2);
 
@@ -513,6 +551,14 @@ _dl_bind(elf_object_t *object, int reloff)
 	if (this == NULL) {
 		_dl_printf("lazy binding failed!\n");
 		*((int *)0) = 0;	/* XXX */
+	}
+
+	/* if PLT is protected, allow the write */
+	if (object->plt_addr != NULL && object->plt_size != 0)  {
+		sigfillset(&nmask);
+		_dl_sigprocmask(SIG_BLOCK, &nmask, &omask);
+		_dl_mprotect((void*)object->plt_addr, object->plt_size,
+		    PROT_READ|PROT_WRITE|PROT_EXEC); 
 	}
 
 	value = ooff + this->st_value;
@@ -558,6 +604,12 @@ _dl_bind(elf_object_t *object, int reloff)
 		_dl_dcbf(&r_addr[0]);
 	}
 
+	/* if PLT is (to be protected, change back to RO/X */
+	if (object->plt_addr != NULL && object->plt_size != 0) {
+		_dl_mprotect((void*)object->plt_addr, object->plt_size,
+		    PROT_READ|PROT_EXEC); /* only PPC is PROT_EXE */
+		_dl_sigprocmask(SIG_SETMASK, &omask, NULL);
+	}
 	return (value);
 }
 

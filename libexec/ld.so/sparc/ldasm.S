@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.9 2002/11/23 19:50:45 drahn Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.10 2002/12/18 19:20:02 drahn Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -291,6 +291,24 @@ _dl_sysctl:
 	t ST_SYSCALL					! off to wonderland
 	retl
 	 sub %g0, %o0, %o0                      ! error: result = -errno
+
+
+	/* _dl_sigprocmask does not support NULL new mask */
+	.section ".text"
+	.align 4
+	.globl _dl_sigprocmask
+	.type _dl_sigprocmask,@function
+_dl_sigprocmask:
+	ld	[%o1], %o1
+	mov	SYS_sigprocmask, %g1			! call sys___sigprocmask
+	t	ST_SYSCALL				! off to wonderland
+
+	cmp	%o2, 0
+	bne,a	1f
+	 st	%o0, [%o2]
+1:	
+	retl
+	 clr	%o0
 
 /*
  * V8 sparc .{,u}{mul,div,rem} replacements.

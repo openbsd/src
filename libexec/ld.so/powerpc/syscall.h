@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.13 2002/07/24 04:11:10 deraadt Exp $ */
+/*	$OpenBSD: syscall.h,v 1.14 2002/12/18 19:20:02 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -37,6 +37,7 @@
 #include <sys/stat.h>
 
 #include <sys/syscall.h>
+#include <sys/signal.h>
 
 
 static off_t	_dl_lseek(int, off_t, int);
@@ -305,5 +306,30 @@ static inline off_t
 _dl_lseek(int fildes, off_t offset, int whence)
 {
 	return _dl__syscall((quad_t)SYS_lseek, fildes, 0, offset, whence);
+}
+
+static inline int
+_dl_sigprocmask (int how, const sigset_t *set, sigset_t *oset)
+{
+	sigset_t sig_store;
+	sigset_t sig_store1;
+	if (set != NULL) {
+		sig_store1 = *set;
+	} else {
+		sig_store1 = 0;
+	}
+
+	__asm__ volatile ("li    0,%1\n\t"
+	    "mr    3,%2\n\t"
+	    "mr    4,%3\n\t"
+	    "sc\n\t"
+	    "mr    %0, 3"
+	    : "=r" (sig_store)
+	    : "I" (SYS_sigprocmask), "r" (how), "r" (sig_store1)
+	    : "0", "3", "4");
+	if (oset != NULL)
+		*oset = sig_store;
+
+	return 0;
 }
 #endif /*__DL_SYSCALL_H__*/
