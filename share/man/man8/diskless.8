@@ -1,4 +1,4 @@
-.\"	$OpenBSD: diskless.8,v 1.15 2001/09/20 15:39:57 miod Exp $
+.\"	$OpenBSD: diskless.8,v 1.16 2001/10/05 14:45:54 mpech Exp $
 .\"	$NetBSD: diskless.8,v 1.7.4.1 1996/05/30 18:58:10 cgd Exp $
 .\"
 .\"
@@ -78,8 +78,8 @@ Other machines may load a
 network boot program either from diskette or
 using a special PROM on the network card.
 .Pp
-In phase 2, the boot program loads a kernel.  Operation in
-this phase depends on the design of the boot program.
+In phase 2, the boot program loads a kernel.
+Operation in this phase depends on the design of the boot program.
 The boot program:
 .Pp
 .Bl -tag -width 2.2 -compact
@@ -207,7 +207,8 @@ For example:
 .Ed
 .Pp
 Some architectures, such as the Sun3 and Ultrasparc machines, do not append the
-architecture name. It this case, the name would be just C0C5600C.
+architecture name.
+It this case, the name would be just C0C5600C.
 The name used is architecture dependent, it simply has to match what the
 booting client's PROM wishes to it to be.
 If the client's PROM fails to fetch the expected file,
@@ -230,10 +231,10 @@ Add myclient to the bootparams database
 myclient  root=server:/export/myclient/root \\
           swap=server:/export/myclient/swap
 .Ed
-Note that some bootparam servers are somewhat sensitive.  Some require
-fully qualified hostnames or partially qualified hostnames (which can
-be solved by having both fully and partially qualified entries). Other
-servers are case sensitive.
+Note that some bootparam servers are somewhat sensitive.
+Some require fully qualified hostnames or partially qualified hostnames
+(which can be solved by having both fully and partially qualified entries).
+Other servers are case sensitive.
 .Pp
 .It 6.
 Build the swap file for myclient:
@@ -247,8 +248,8 @@ This creates a 16 Megabyte swap file.
 .It 7.
 Populate myclient's
 .Pa /
-filesystem on the server.  How this is done depends on the
-client architecture and the version of the 
+filesystem on the server.
+How this is done depends on the client architecture and the version of the 
 .Ox
 distribution.
 It can be as simple as copying and modifying the server's root

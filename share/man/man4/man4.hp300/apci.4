@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apci.4,v 1.1 2001/05/11 01:39:54 millert Exp $
+.\"	$OpenBSD: apci.4,v 1.2 2001/10/05 14:45:53 mpech Exp $
 .\
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -51,7 +51,8 @@ all series 400 machines.
 The first UART is used to communicate with the Domain keyboard.
 The second is the serial console port when the firmware is in Domain/OS
 mode, and is mapped to select code 9 by the HP-UX firmware (except
-on 425e models).  As such, the second UART is handled by the
+on 425e models).
+As such, the second UART is handled by the
 .Xr dca 4
 driver on all models but the 425e.
 .Pp

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf.4,v 1.11 2001/10/02 18:04:35 deraadt Exp $
+.\"	$OpenBSD: bpf.4,v 1.12 2001/10/05 14:45:53 mpech Exp $
 .\"     $NetBSD: bpf.4,v 1.7 1995/09/27 18:31:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -272,11 +272,12 @@ It defaults to
 .It Xo Dv BIOCSHDRCMPLT , Dv BIOCGHDRCMPLT (
 .Li u_int Ns No )
 .Xc
-Set or get the status of the ``header complete'' flag.  Set to zero if
-the link level source address should be filled in automatically by the
-the interface output routine.  Set to one if the link level source
-address will be written, as provided, to the wire.  This flag is
-initialized to zero by default.
+Set or get the status of the ``header complete'' flag.
+Set to zero if the link level source address should be filled in
+automatically by the the interface output routine.
+Set to one if the link level source address will be written,
+as provided, to the wire.
+This flag is initialized to zero by default.
 .El
 .Ss Standard ioctls
 .Nm

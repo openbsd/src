@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lkm.4,v 1.11 2001/06/22 12:15:46 mpech Exp $
+.\"	$OpenBSD: lkm.4,v 1.12 2001/10/05 14:45:53 mpech Exp $
 .\"	$NetBSD: lkm.4,v 1.4 1994/11/30 16:22:22 jtc Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
@@ -43,9 +43,9 @@ test their changes.
 .Pp
 Various types of modules can be loaded into the system.
 There are several defined module types, listed below, which can
-be added to the system in a predefined way.  In addition, there
-is a generic type, for which the module itself handles loading and
-unloading.
+be added to the system in a predefined way.
+In addition, there is a generic type, for which the module itself handles
+loading and unloading.
 .Pp
 The
 .Nm
@@ -53,13 +53,14 @@ interface is used by performing
 .Xr ioctl 2
 calls on the
 .Pa /dev/lkm
-device.  Normally all operations involving
-Loadable Kernel Modules are handled by the
+device.
+Normally all operations involving Loadable Kernel Modules are handled by the
 .Xr modload 8 ,
 .Xr modunload 8 ,
 and
 .Xr modstat 8
-programs.  Users should never have to interact with
+programs.
+Users should never have to interact with
 .Pa /dev/lkm
 directly.
 .Sh "MODULE TYPES"
@@ -68,9 +69,8 @@ directly.
 System calls may be replaced by loading
 new ones via the
 .Nm
-interface.  All system calls may be
-replaced, but special care should
-be taken with the
+interface.
+All system calls may be replaced, but special care should be taken with the
 .Xr ioctl 2
 system call, as it is used to load and
 unload modules.
@@ -92,8 +92,8 @@ drivers may be loaded into the system with
 The major problem with loading
 a device driver is that the driver's
 device nodes must be exist for the
-devices to be accessed.  They are usually
-created by instructing
+devices to be accessed.
+They are usually created by instructing
 .Xr modload 8
 to run an appropriate program when
 the driver has been successfully loaded.
@@ -106,10 +106,9 @@ usable by the operating system.
 Miscellaneous modules are modules
 for which there are not currently
 well-defined or well-used interfaces
-for extension.  The user is expected
-to write their own loader to manipulate
-whatever kernel data structures necessary
-to enable and disable the new module
+for extension.
+The user is expected to write their own loader to manipulate
+whatever kernel data structures necessary to enable and disable the new module
 when it is loaded and unloaded.
 .El
 .Sh FILES

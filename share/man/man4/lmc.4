@@ -1,4 +1,4 @@
-.\" $OpenBSD: lmc.4,v 1.13 2001/08/03 15:21:16 mpech Exp $
+.\" $OpenBSD: lmc.4,v 1.14 2001/10/05 14:45:53 mpech Exp $
 .\"
 .\" Copyright (c) 1999 Chris Cappuccio
 .\"
@@ -37,11 +37,12 @@
 The
 .Nm
 driver provides support for the Lan Media Corporation SSI, DS1, HSSI, and DS3
-PCI WAN adapters based on the DEC 21140 Ethernet chip.  The adapters use
-a DEC 21140 Ethernet chip for the PCI bus interface.  Leaving the bus
-interface chip, the data path goes through a field programmable gate array,
-where HDLC processing is accomplished.  Leaving the FPGA, there are FIFO
-buffers and the DS1, DS3, and V.35 drive circuitry.
+PCI WAN adapters based on the DEC 21140 Ethernet chip.
+The adapters use a DEC 21140 Ethernet chip for the PCI bus interface.
+Leaving the bus interface chip, the data path goes through a field programmable
+gate array, where HDLC processing is accomplished.
+Leaving the FPGA, there are FIFO buffers and the DS1, DS3, and V.35 drive
+circuitry.
 .Pp
 The intent is to provide a synchronous serial link with HDLC framing at speeds
 of up to 10Mbps (for the SSI card), 52Mbps (for the HSSI card), BNC connectors
@@ -49,14 +50,16 @@ for 45Mbps operation without a CSU/DSU (DS3 card), and an RJ45 jack for
 T1/E1 operation without a CSU/DSU (DS1 card).
 .Pp
 The card will automatically use HDLC framing and defaults to external clock
-source.  For the DS1 and DS3 cards with built in CSU/DSU functionality,
-the clock source is always external (from CSU/DSU).  The ability to set cable
-length is not currently implemented.
+source.
+For the DS1 and DS3 cards with built in CSU/DSU functionality,
+the clock source is always external (from CSU/DSU).
+The ability to set cable length is not currently implemented.
 .Pp
 Using the
 .Xr sppp 4
-driver, you can also use the ppp protocol.  In either
-case, the lmc interface should be configured as a point-to-point link.
+driver, you can also use the ppp protocol.
+In either case, the lmc interface should be configured as a point-to-point
+link.
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "lmc%d: couldn't map interrupt"
@@ -76,8 +79,8 @@ The card is sending DTR and RTS signals on the line
 .It "lmc%d: deasserting DTR and RTS"
 The card is not sending DTR and RTS signals on the line
 .It "lmc%d: Abnormal interrupt"
-The card received an incomplete request.  This may be a sign of a hardware
-fault.
+The card received an incomplete request.
+This may be a sign of a hardware fault.
 .It "lmc%d: tx_intr: failed to dequeue mbuf?!?"
 Only available if compiled with LMC_DEBUG
 .It "lmc%d: txput: tx not running"
@@ -102,5 +105,6 @@ Matt Thomas'
 driver.
 The
 .Ox
-port and manual page are from Chris Cappuccio.  Later
-enhancements to support the LMC1200 card are based on LMC's Linux driver.
+port and manual page are from Chris Cappuccio.
+Later enhancements to support the LMC1200 card are based on LMC's
+Linux driver.

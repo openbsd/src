@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcl.4,v 1.6 2001/06/23 07:04:24 pjanzen Exp $
+.\"	$OpenBSD: pcl.4,v 1.7 2001/10/05 14:45:54 mpech Exp $
 .\"	$NetBSD: pcl.4,v 1.3 1996/03/03 17:13:57 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991 Regents of the University of California.
@@ -96,8 +96,8 @@ An interrupt occurred when no output had previously been started.
 The
 .Tn TDM
 bus had no station providing ``bus master'' timing signals,
-so this interface has assumed the ``master'' role.  This message should
-only appear at most once per
+so this interface has assumed the ``master'' role.
+This message should only appear at most once per
 .Tn UNIBUS INIT
 on a single system.
 Unless there is a hardware failure, only one station may be master at a time.
@@ -108,8 +108,8 @@ If a ``receiver offline'' error is detected, it is not normally logged
 unless the option
 .Dv PCL_TESTING
 has been selected, as this causes a lot
-of console chatter when sending to a down machine.  However, this option
-is quite useful when debugging problems with the
+of console chatter when sending to a down machine.
+However, this option is quite useful when debugging problems with the
 .Tn PCL
 interfaces.
 .Pp

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tun.4,v 1.19 2001/06/22 12:15:47 mpech Exp $
+.\"	$OpenBSD: tun.4,v 1.20 2001/10/05 14:45:53 mpech Exp $
 .\"
 .Dd March 10, 1996
 .Dt TUN 4
@@ -40,7 +40,8 @@ etc, as many in all as the
 .Ar count
 figure given on the
 .Sy pseudo-device
-line.  Each one supports the usual network-interface
+line.
+Each one supports the usual network-interface
 .Xr ioctl 2 Ns s ,
 such as
 .Dv SIOCSIFADDR
@@ -48,18 +49,20 @@ and
 .Dv SIOCSIFNETMASK ,
 and thus can be used with
 .Xr ifconfig 8
-like any other interface.  At boot time, they are
+like any other interface.
+At boot time, they are
 .Dv POINTOPOINT
 interfaces, but this can be changed; see the description of the control
-device, below.  When the system chooses to transmit a packet on the
-network interface, the packet can be read from the control device (it
-appears as
+device, below.
+When the system chooses to transmit a packet on the network interface,
+the packet can be read from the control device (it appears as
 .Dq input
 there); writing a packet to the control device generates an input
 packet on the network interface, as if the (nonexistent) hardware had
 just received it.
 .Pp
-There are two control interfaces.  The
+There are two control interfaces.
+The
 .Em data
 interface, normally
 .Pa /dev/tun Ns Sy N ,
@@ -68,7 +71,8 @@ normally restricted to the superuser, and can
 .Dq transmit
 and
 .Dq receive
-packets.  The
+packets.
+The
 .Em control
 interface, normally
 .Pa /dev/tunc Ns Sy N ,
@@ -76,10 +80,10 @@ cannot send and receive packets, but can be opened by many processes at
 once; it is intended for status queries and changes (many of which can
 also be implemented with
 .Fn ioctl
-calls on the data interface).  There are a number of status bits that
-can be set or cleared via the control interfaces; they are mentioned
-below where applicable, and they are all summarized in the discussions
-of the control interfaces.
+calls on the data interface).
+There are a number of status bits that can be set or cleared via the control
+interfaces; they are mentioned below where applicable, and they are all
+summarized in the discussions of the control interfaces.
 .\" Why isn't .Ss documented in mdoc(7) and mdoc.samples(7)?
 .Ss The data interface
 The data interface supports
@@ -91,11 +95,12 @@ calls to, respectively, collect
 .Dq output
 packets, generate
 .Dq input
-packets, and perform control functions.  As mentioned above, this
-interface is exclusive-open; if the
+packets, and perform control functions.
+As mentioned above, this interface is exclusive-open; if the
 .Dv SUONLY
 bit is set (which it is by default), it cannot be opened at all except
-by the superuser.  By default, a
+by the superuser.
+By default, a
 .Fn read
 call will return an error
 .Pf ( Er EHOSTDOWN )
@@ -107,25 +112,26 @@ address has been set); if preferred, the
 bit can be set, in which case a
 .Fn read
 call will block (even if non-blocking I/O has been enabled) until the
-interface is ready.  Once the interface is ready,
+interface is ready.
+Once the interface is ready,
 .Fn read
 will return a packet if one is available; if not, it will either block
 until one is or return
 .Er EWOULDBLOCK ,
-depending on whether non-blocking I/O has been enabled.  If the packet
-is longer than is allowed for in the buffer passed to
+depending on whether non-blocking I/O has been enabled.
+If the packet is longer than is allowed for in the buffer passed to
 .Fn read ,
 the extra data will be silently dropped.
 .Pp
 The first u_int32_t of data will always be the address family (eg,
 .Dv AF_INET )
-of the packet in network byte order.  By default, the packet data follows
-immediately, but if
+of the packet in network byte order.
+By default, the packet data follows immediately, but if
 the
 .Dv PREPADDR
 bit is set, the address to which the packet is to be sent is placed
-after the address family u_int32_t and before the packet data.  The size and
-layout of the address depends on the address family; for
+after the address family u_int32_t and before the packet data.
+The size and layout of the address depends on the address family; for
 .Dv AF_INET ,
 for example, it is a
 .Va struct in_addr .
@@ -133,7 +139,8 @@ A
 .Xr write 2
 call passes a packet in to be
 .Dq received
-on the pseudo-interface.  Each
+on the pseudo-interface.
+Each
 .Fn write
 call supplies exactly one packet; the packet length is taken from the
 amount of data provided to
@@ -144,20 +151,21 @@ byte order, much as in packets returned by
 the packet data always follows immediately.
 A
 .Fn write
-with an invalid address family (e.g. not specified or in the wrong byte
-order) will return
+with an invalid address family (e.g.
+not specified or in the wrong byte order) will return
 .Er ENOSUPPORT .
 A large number of
 .Xr ioctl 2
-calls are also supported.  They are defined in
+calls are also supported.
+They are defined in
 .Aq Pa net/if_tun.h Ns .
 .Bl -tag -width TUN_PREPADDR
 .It Dv TUNSDEBUG
 The argument should be a pointer to an
 .Va int ;
-this sets the internal debugging variable to that value.  What, if
-anything, this variable controls is not documented here; see the source
-code.
+this sets the internal debugging variable to that value.
+What, if anything, this variable controls is not documented here;
+see the source code.
 .It Dv TUNGDEBUG
 The argument should be a pointer to an
 .Va int ;
@@ -171,10 +179,11 @@ or
 .Dv IFF_BROADCAST .
 The type of the corresponding
 .Em tun Ns Sy n
-interface is set to the supplied type.  If the value is anything else,
-an
+interface is set to the supplied type.
+If the value is anything else, an
 .Er EINVAL
-error occurs.  The interface must be down at the time; if it is up, an
+error occurs.
+The interface must be down at the time; if it is up, an
 .Er EBUSY
 error occurs.
 .\" X .It Dv TUNSFLAG
@@ -245,8 +254,8 @@ The data control device also supports
 .Xr select 2
 for read; selecting for write is pointless, and always succeeds, since
 writes are always nonblocking (if the packet cannot be accepted for a
-transient reason (eg, no buffer space available), it is silently
-dropped; if the reason is not transient (eg, packet too large), an
+transient reason (e.g., no buffer space available), it is silently
+dropped; if the reason is not transient (e.g., packet too large), an
 error is returned).
 .Pp
 On the last close of the data device, by default, the interface is
@@ -254,9 +263,10 @@ brought down (as if with
 .Dq ifconfig tun Ns Sy n down ) ;
 if the
 .Dv STAYUP
-bit is set, this is not done.  In either case, all queued packets are
-thrown away.  (If the interface is up when the data device is not open,
-either because of
+bit is set, this is not done.
+In either case, all queued packets are thrown away.
+(If the interface is up when the data device is not open, either
+because of
 .Dv STAYUP
 or because it was explicitly brought up, output packets are always
 thrown away rather than letting them pile up.)
@@ -271,8 +281,8 @@ calls on the data interface, and a few more as well.
 on the control interface always return a single line of text (or just
 the beginning of the line, if the buffer passed to
 .Xr read 2
-was too small to take the whole line).  The line contains items in the
-general format
+was too small to take the whole line).
+The line contains items in the general format
 .Do
 .Li item=value
 .Dc ,
@@ -280,11 +290,11 @@ where
 .Li item
 is a keyword and
 .Li value
-is a value appropriate to the keyword.  This line is intended for human
-use; programs should use the
+is a value appropriate to the keyword.
+This line is intended for human use; programs should use the
 .Fn ioctl
-interface.  Here is an actual example (broken because of width
-restrictions):
+interface.
+Here is an actual example (broken because of width restrictions):
 .Bd -literal
 unit=0 flags=(open,inited,!rcoll,iaset,!dstaddr,!rwait,!async,
 !nbio,!brdaddr,prepaddr,stayup,suonly,rrwait) type=broadcast
@@ -293,19 +303,23 @@ mtu=1500 coll=0 ipkts=0/0 opkts=0/0 pgrp=0
 .Pp
 Note that the current file offset is ignored for reads, so using a tool like
 .Xr cat 1
-will result in infinite output.  Use something more like
+will result in infinite output.
+Use something more like
 .Dq head\ \&-1
-for command-line use.  It is possible to
+for command-line use.
+It is possible to
 .Xr select 2
 for reading on this device, which will indicate that the device is
 readable whenever the state is changed.
 .Pp
 Writes to the control interface are interpreted as modifications to the
-state.  Each
+state.
+Each
 .Fn write
-call is treated separately.  The data written is broken at whitespace
-(blanks, tabs, newlines); each resulting fragment has its first
-character examined.  If this character is a
+call is treated separately.
+The data written is broken at whitespace (blanks, tabs, newlines);
+each resulting fragment has its first character examined.
+If this character is a
 .Ql \&+
 or
 .Ql \&\- ,
@@ -318,7 +332,8 @@ or off (for
 .Dv TUN_ Ns Em xxx
 constants, with the leading
 .Dv TUN_
-removed and the rest lowercased.)  If the first character is
+removed and the rest lowercased.)
+If the first character is
 .Ql t ,
 the second character must be
 .Ql b
@@ -328,7 +343,8 @@ and the interface type is set to
 .Dv IFF_BROADCAST
 or
 .Dv IFF_POINTOPOINT ,
-respectively.  If the first character is
+respectively.
+If the first character is
 .Ql g
 or
 .Ql m ,
@@ -348,8 +364,8 @@ or MTU, for
 The
 .Dv SUONLY
 bit is a botch, especially since the control interface, which is never
-restricted by the kernel, can change it.  Access control really should
-be handled by the permission bits on the
+restricted by the kernel, can change it.
+Access control really should be handled by the permission bits on the
 .Pa /dev
 entries for the data and control devices; this bit is a historical
 artifact.
@@ -358,17 +374,17 @@ The process-group values for
 .Dv SIGIO
 signals should be checked; as it stands, the driver can be used (by
 anyone who can open the control or data device) to send any desired
-signal to an arbitrary process or process group.  (Until this is fixed,
-you should be careful to set the permission bits to allow only root to
-open the control device, and either do the same for the data device or
-leave the
+signal to an arbitrary process or process group.
+(Until this is fixed, you should be careful to set the permission bits to
+allow only root to open the control device, and either do the same for
+the data device or leave the
 .Dv SUONLY
 bit set.)
 .Sh NOTES
 Very old versions of the tunnel device did not include the address
-family at the start of the packet.  More recent versions passed the
-address family as a single byte, but this caused problems with bpf,
-hence the current version passes a u_int32_t of address family.  This was
-initially pass in host byte order, but the current version now uses
+family at the start of the packet.
+More recent versions passed the address family as a single byte, but this
+caused problems with bpf, hence the current version passes a u_int32_t
+of address family.
+This was initially pass in host byte order, but the current version now uses
 network byte order.
-

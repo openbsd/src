@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login.conf.5,v 1.13 2001/08/20 05:57:55 mpech Exp $
+.\" $OpenBSD: login.conf.5,v 1.14 2001/10/05 14:45:54 mpech Exp $
 .\" BSDI $From: login.conf.5,v 2.20 2000/06/26 14:50:38 prb Exp $
 .\"
 .Dd June 18, 2001
@@ -231,8 +231,8 @@ Maximum number of open files per process.
 Length of time a password may be expired but not quite dead yet.
 When set (for both the client and remote server machine when doing
 remote authentication), a user is allowed to log in just one more
-time after their password (but not account) has expired.  This allows
-a grace period for updating their password.
+time after their password (but not account) has expired.
+This allows a grace period for updating their password.
 .\"
 .sp
 .It password-warn Ta time Ta Dv 2w Ta
@@ -405,24 +405,29 @@ For example, to indicate 1 and 1/2 hours, the following string could be used:
 .\"
 .Sh AUTHENTICATION
 \*(oSuses BSD Authentication, which is made up of a variety of
-authentication styles. The authentication styles currently provided are:
+authentication styles.
+The authentication styles currently provided are:
 .Bl -tag -width kerberosxx
 .\"
 .It Li activ
-Authenticate using an ActivCard token.  See
+Authenticate using an ActivCard token. 
+See
 .Xr login_activ 8 .
 .\"
 .It Li auth
 Authenticate using the remote authentication protocol.
-Normally linked to another authentication type.  See
+Normally linked to another authentication type.
+See
 .Xr login_auth 8 .
 .\"
 .It Li chpass
-Change user's password.  See
+Change user's password.
+See
 .Xr login_chpass 8 .
 .\"
 .It Li crypto
-Authenticate using a CRYPTOCard token.  See
+Authenticate using a CRYPTOCard token.
+See
 .Xr login_crypto 8 .
 .\"
 .It Li kerberos
@@ -440,7 +445,8 @@ See
 .Xr kerberos 1 .
 .\"
 .It Li lchpass
-Change user's local password.  See
+Change user's local password.
+See
 .Xr login_chpass 8 .
 .\"
 .It Li passwd
@@ -448,15 +454,18 @@ Request a password and check it against the password in the master.passwd file.
 .\"
 .It Li radius
 Normally linked to another authentication type, contact the radius server
-to do authentication.  See
+to do authentication.
+See
 .Xr login_radius 8 .
 .\"
 .It Li rchpass
-Change user's rpasswd password.  See
+Change user's rpasswd password.
+See
 .Xr login_rchpass 8 .
 .\"
 .It Li reject
-Request a password and reject any request.  See
+Request a password and reject any request.
+See
 .Xr login_reject 8 .
 .\"
 .It Li rpasswd
@@ -464,20 +473,24 @@ Request a password and check it against the password in the rpasswd.db file.
 .\"
 .It Li skey
 Send a challenge and request a response, checking it
-with S/Key\(tm authentication.  See
+with S/Key\(tm authentication.
+See
 .Xr skey 1 .
 .\"
 .It Li snk
-Authenticate using a SecureNet Key token.  See
+Authenticate using a SecureNet Key token.
+See
 .Xr login_snk 8 .
 .\"
 .It Li token
-Authenticate using a generic X9.9 token.  See
+Authenticate using a generic X9.9 token.
+See
 .Xr login_token 8 .
 .El
 .Pp
 Local authentication styles may be added by creating the login script
-for the style (see below).  To prevent collisions with future official BSD
+for the style (see below).
+To prevent collisions with future official BSD
 Authentication style names all local style names should start with a dash (-).
 Current plans are for all official BSD Authentication style names to begin
 with a lower case alphabetic character.
@@ -542,7 +555,7 @@ Users may enter usernames of the form
 to optionally specify the authentication style.)
 The requesting program may also specify the type of authentication
 that will be done.
-Most programs will only have a single type, if any at all, i.e.
+Most programs will only have a single type, if any at all, i.e.,
 .Xr ftpd 8
 will always request the
 .Li ftp
@@ -598,7 +611,8 @@ The synopsis of this program is:
 The
 .Fl v
 option is used to specify arbitrary information to the authentication
-programs.  Any number of
+programs.
+Any number of
 .Fl v
 options may be used.
 The
@@ -668,8 +682,9 @@ The user has been authorized.
 .\"
 .It Li authorize secure
 The user has been authorized and root should be allowed to
-login even if this is not a secure terminal.  This should only be
-sent by authentication styles that are secure over insecure lines.
+login even if this is not a secure terminal.
+This should only be sent by authentication styles that are secure
+over insecure lines.
 .\"
 .It Li reject
 Authorization is rejected.
@@ -736,8 +751,8 @@ The following values are currently defined:
 .It Li challenge
 See section on challenges below.
 .It Li errormsg
-If set, the value is the reason authentication failed.  The calling
-program may choose to display this when rejecting the user, but
+If set, the value is the reason authentication failed.
+The calling program may choose to display this when rejecting the user, but
 display is not required.
 .El
 .El
@@ -751,9 +766,10 @@ or
 statement on file descriptor 3.
 .Pp
 An authentication program must not assume it will be called as root,
-nor must it assume it will not be called as root.  If it needs special
-permissions to access files it should be setuid or setgid to the
-appropriate user/group.  See
+nor must it assume it will not be called as root.
+If it needs special permissions to access files it should be setuid or
+setgid to the appropriate user/group.
+See
 .Xr chmod 1 .
 .Sh CHALLENGES
 When an authentication program is called with a service of
@@ -763,8 +779,8 @@ it should do one of three things:
 If this style of authentication supports challenge response
 it should set the internal variable
 .Li challenge
-to be the appropriate challenge for the user.  This is done
-by the
+to be the appropriate challenge for the user.
+This is done by the
 .Li value
 command listed above.
 The program should also issue a

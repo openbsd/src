@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_ultrix.8,v 1.9 2001/10/04 16:56:52 mpech Exp $
+.\"	$OpenBSD: compat_ultrix.8,v 1.10 2001/10/05 14:45:54 mpech Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -38,22 +38,24 @@
 .Nd setup procedure for running Ultrix binaries under emulation
 .Sh DESCRIPTION
 OpenBSD/mips and OpenBSD/vax architectures can run Risc ULTRIX and Vax
-ULTRIX executables, respectively.  However, you have to worry about
+ULTRIX executables, respectively.
+However, you have to worry about
 the legal issues of ensuring that you have a right to use any ULTRIX
 binaries on your machine.
 .Pp
-Most executables will work.  The exceptions include programs that use
+Most executables will work.
+The exceptions include programs that use
 proprietary, Ultrix-specific features (LAT, CI support, DECnet
 support) and various system calls, ioctl()'s, or Ultrix kernel
 semantics that are difficult to emulate (e.g., Ultrix packetfilter) or
 buggy (e.g., Ultrix YP).
 .Pp
 All Ultrix executables are static, so no shared libraries are required
-for Ultrix compatibility. However, Ultrix is based on a
+for Ultrix compatibility.
+However, Ultrix is based on a
 .Bx 4.3
-alpha
-release.  Ultrix commands and libraries are often much older than
-their
+alpha release.
+Ultrix commands and libraries are often much older than their
 .Ox
 or even SunOS 4.x equivalents, and may require incompatible
 configuration files.
@@ -77,22 +79,22 @@ and
 lines in
 .Xr  /etc/resolv.conf 5 .
 You should create a copy of /etc/resolv.conf containing only those
-commands and put it in /emul/ultrix/etc/resolv.conf.  Note that the
-domain search order used by Ultrix executables may not be the same as
-native binaries; there is no good way around this.
+commands and put it in /emul/ultrix/etc/resolv.conf.
+Note that the domain search order used by Ultrix executables may
+not be the same as native binaries; there is no good way around this.
 .Ss /etc/svc.conf
 Ultrix uses /etc/svc.conf to select an ordered search of YP, Hesiod,
-or local flat-file mappings.  You should create an
-/emul/ultrix/etc/svc.conf specifying either local files or bind (DNS)
-lookups for all Ultrix name services.
+or local flat-file mappings.
+You should create an /emul/ultrix/etc/svc.conf specifying either
+local files or bind (DNS) lookups for all Ultrix name services.
 .Sh BUGS
-RISC Ultrix YP(NIS) is known to not work.  The Ultrix YP libraries have
-a consistent endian-ness bug. Ultrix YP client will not inter-operate
-with the
+RISC Ultrix YP(NIS) is known to not work.
+The Ultrix YP libraries have a consistent endian-ness bug.
+Ultrix YP client will not inter-operate with the
 .Ox
 .Xr ypbind 8
-process.  The only workaround is to use
-/etc/svc.conf to disable YP(NIS).
+process.
+The only workaround is to use /etc/svc.conf to disable YP(NIS).
 .Pp
 The ndbm hashed-password file used by Ultrix are incompatible with the
 db hashed-password file used by
@@ -101,8 +103,9 @@ There is no good solution for this.
 (YP would be a good one, if Ultrix YP worked.)
 .Pp
 The API used by Xservers to talk to the kernel is currently compatible
-with Ultrix 4.1.  An implementation of the Ultrix 4.2 Xws interface
-(used by X11R6) is in progress.
+with Ultrix 4.1.
+An implementation of the Ultrix 4.2 Xws interface (used by X11R6) is
+in progress.
 .Pp
 A complete list of things which fail to work in Ultrix compatibility
 mode should be added here.

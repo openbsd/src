@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ec.4,v 1.10 2001/06/22 12:15:44 mpech Exp $
+.\"	$OpenBSD: ec.4,v 1.11 2001/10/05 14:45:53 mpech Exp $
 .\"     $NetBSD: ec.4,v 1.4 1998/08/09 00:39:02 thorpej Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -58,9 +58,10 @@ and
 .Xr xl 4
 drivers.
 .Pp
-The Etherlink II supports two media types on a single card.  All support
-the AUI media type.  The other media is either BNC or UTP behind a
-transceiver.  Software cannot differentiate between BNC and UTP cards.
+The Etherlink II supports two media types on a single card.
+All support the AUI media type.
+The other media is either BNC or UTP behind a transceiver.
+Software cannot differentiate between BNC and UTP cards.
 .Pp
 The following media types and options (as given to
 .Xr ifconfig 8 )
@@ -82,15 +83,16 @@ For example,
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "ec0: wildcarded IRQ is not allowed"
-The IRQ was wildcarded in the kernel configuration file.  This is not
-supported.
+The IRQ was wildcarded in the kernel configuration file.
+This is not supported.
 .It "ec0: invalid IRQ <n>, must be 3, 4, 5, or 9"
 An IRQ other than the above listed IRQs was specified in the kernel
-configuration file.  The Etherlink II hardware only supports the
-above listed IRQs.
+configuration file.
+The Etherlink II hardware only supports the above listed IRQs.
 .It "ec0: failed to clear shared memory at offset <off>"
 The memory test was unable to clear the interface's shared memory
-region.  This often indicates that the card is configured at a conflicting
+region.
+This often indicates that the card is configured at a conflicting
 .Em iomem
 address.
 .El

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mt.4,v 1.4 2000/07/22 05:01:13 bjc Exp $
+.\"	$OpenBSD: mt.4,v 1.5 2001/10/05 14:45:54 mpech Exp $
 .\"	$NetBSD: mt.4,v 1.3 1996/03/03 17:13:52 thorpej Exp $
 .\"
 .\" Copyright (c) 1980, 1991 Regents of the University of California.
@@ -81,8 +81,8 @@ A tape error occurred
 at block
 .Em bn ;
 the mt error register and drive status register are
-printed in octal with the bits symbolically decoded.  Any error is
-fatal on non-raw tape; when possible the driver will have retried
+printed in octal with the bits symbolically decoded.
+Any error is fatal on non-raw tape; when possible the driver will have retried
 the operation which failed several times before reporting the error.
 .Pp
 .It mu%d: blank tape.
@@ -90,8 +90,8 @@ An attempt was made to read a blank tape (a tape without even
 end-of-file marks).
 .Pp
 .It mu%d: offline.
-During an i/o operation the device was set offline.  If a
-non-raw tape was used in the access it is closed.
+During an i/o operation the device was set offline.
+If a non-raw tape was used in the access it is closed.
 .El
 .Sh SEE ALSO
 .Xr mt 1 ,

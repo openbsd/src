@@ -1,4 +1,4 @@
-.\"	$OpenBSD: random.4,v 1.12 2001/06/22 12:15:46 mpech Exp $
+.\"	$OpenBSD: random.4,v 1.13 2001/10/05 14:45:53 mpech Exp $
 .\"
 .\" Copyright (c) 1996, 1997 Michael Shalayeff
 .\"
@@ -55,7 +55,8 @@ hash or message digest functions to generate the output.
 This device is reserved for future support of hardware
 random generators.
 .It /dev/srandom
-Strong random data.  This device returns reliable random data.
+Strong random data.
+This device returns reliable random data.
 If sufficient entropy is not currently available (i.e., the entropy
 pool quality starts to run low), the driver pauses while more of
 such data is collected.
@@ -96,6 +97,7 @@ No randomness testing suite provided.
 .Sh HISTORY
 A
 .Nm
-device first appeared in Linux operating system.  This is a cloned interface.
+device first appeared in Linux operating system.
+This is a cloned interface.
 .Pp
 ARC4 routines added by David Mazieres.

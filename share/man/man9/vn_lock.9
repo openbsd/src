@@ -1,6 +1,6 @@
 .Dd March 9, 2001
-.Dt vn_lock 9
-.Os OpenBSD 2.9
+.Dt VN_LOCK 9
+.Os
 .Sh NAME
 .Nm vn_lock
 .Nd acquire the vnode lock
@@ -12,17 +12,19 @@
 .Sh DESCRIPTION
 The
 .Fn vn_lock
-function is used to acquire the vnode lock. Certain file system
-operations require that the vnode lock be held when they are
-called. See sys/kern/vnode_if.src for more details.
-
+function is used to acquire the vnode lock.
+Certain file system operations require that the vnode lock be held when
+they are called.
+See sys/kern/vnode_if.src for more details.
+.Pp
 The
 .Fn vn_lock
 function must not be called when the vnode's reference count is
-zero. Instead, the
+zero.
+Instead, the
 .Fn vget
 function should be used.
-
+.Pp
 The 
 .Fa flags 
 fields may contain the following flags:
@@ -33,57 +35,56 @@ Return the vnode even if it has been reclaimed.
 Must be set if the caller owns the vnode interlock.
 .It Dv LK_NOWAIT Ta
 Don't wait if the vnode lock is held by someone else (may still
-wait on reclamation lock on or interlock). Must not be used
-with LK_RETRY.
+wait on reclamation lock on or interlock).
+Must not be used with LK_RETRY.
 .It Dv LK_EXCLUSIVE Ta
 Acquire an exclusive lock
 .It Dv LK_SHARED Ta
 Acquire a shared lock
 .El
-
+.Pp
 The
 .Fn vn_lock
-function can sleep. The
+function can sleep.
+The
 .Fn vn_lock
 releases the vnode interlock before exit.
-
-
 .Sh RETURN VALUES
 Upon successful completion, a value of 0 is returned.
 Otherwise, one of the following errors is returned.
-
 .Sh ERRORS
 .Bl -tag -width Er
 .It Bq Er ENOENT
-The vnode has been reclaimed and is dead. This error is only
-returned if the LK_RETRY flag is not passed.
+The vnode has been reclaimed and is dead.
+This error is only returned if the LK_RETRY flag is not passed.
 .It Bq Er EBUSY
 The LK_NOWAIT flag was set and the vn_lock would have slept.
 .El
-
 .Sh SEE ALSO
 .Xr vnode 9
-
 .Sh BUGS 
-The locking discipline is bizarre. Many vnode operations are
-passed locked vnodes on entry but release the lock before they
-exit. Discussions with Kirk McKusick indicate that locking
+The locking discipline is bizarre.
+Many vnode operations are passed locked vnodes on entry but release
+the lock before they exit.
+Discussions with Kirk McKusick indicate that locking
 discipline evolved out of the pre-VFS way of doing inode locking.
 In addition, the current locking discipline may actually save
 lines of code, esp. if the number of file systems is fewer
-then the number of call sites. However, the VFS interface would
+then the number of call sites.
+However, the VFS interface would
 require less wizardry if the locking discipline were simpler.
-
+.Pp
 The locking discipline is used in some places to attempt to make a
-series of operations atomic (e.g. permissions check +
-operation). This does not work for non-local file systems that do not
-support locking (e.g. NFS).
-
-Are vnode locks even necessary? The security checks can be
-moved into the individual file systems. Each file system can
-have the responsibility of ensuring that vnode operations are suitably
-atomic.
-
+series of operations atomic (e.g., permissions check +
+operation).
+This does not work for non-local file systems that do not
+support locking (e.g., NFS).
+.Pp
+Are vnode locks even necessary?
+The security checks can be moved into the individual file systems.
+Each file system can have the responsibility of ensuring that vnode
+operations are suitably atomic.
+.Pp
 The LK_NOWAIT flag does prevent the caller from sleeping.
-
+.Pp
 The locking discipline as it relates to shared locks has yet to be defined.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_bsdos.8,v 1.4 2001/08/17 11:13:58 mpech Exp $
+.\"	$OpenBSD: compat_bsdos.8,v 1.5 2001/10/05 14:45:54 mpech Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -53,7 +53,8 @@ follows the standard
 .Dq emul
 filesystem scheme, using
 .Pa /emul/bsdos
-as the prefix.  This means that all BSDI executables first look in
+as the prefix.
+This means that all BSDI executables first look in
 .Pa /emul/bsdos
 whenever opening a file; configuration information, shared library images,
 etc., for BSDI binaries should all be installed under the emulation
@@ -65,13 +66,14 @@ Although many commercial BSDI binaries are
 compiled/linked with the BSDI
 .\" no .Xr here because we don't have junk like shlicc.
 .Nm shlicc
-program require the appropriate shared library images.  These may be
-found in the
+program require the appropriate shared library images.
+These may be found in the
 .Pa /shlib
 directory on a BSDI system, and must be copied to
 .Pa /emul/bsdos/shlib
-in order for such binaries to work.  The user is responsible for having
-the appropriate BSDI licenses in order to use the shared library images.
+in order for such binaries to work.
+The user is responsible for having the appropriate BSDI licenses in order
+to use the shared library images.
 .Sh BUGS
 If BSDI ever manages to port their system to more architectures or switch
 to real dynamically linked libraries these instructions may have to change.

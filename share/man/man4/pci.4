@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.46 2001/10/04 16:56:51 mpech Exp $
+.\"	$OpenBSD: pci.4,v 1.47 2001/10/05 14:45:53 mpech Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -71,7 +71,8 @@ for additional information.
 Note that interrupt mappings on the i386 may require that you configure
 your BIOS to reserve sufficient interrupts as "PCI/ISAPnP" so that there
 are sufficient interrupts remaining to configure the discovered PCI
-devices.  For more information, see
+devices.
+For more information, see
 .Xr pcibios 4 .
 .Sh SUPPORTED DEVICES
 The system includes machine-independent
@@ -117,7 +118,8 @@ Adaptec "FSA" family (Adaptec AAC, Dell PERC, HP NetRaid)
 .Tn RAID
 controllers.
 .It Xr ami 4
-American Megatrends Inc. MegaRAID family
+American Megatrends Inc.
+MegaRAID family
 .Tn RAID
 controllers.
 .It Xr cac 4
@@ -174,7 +176,8 @@ instances on the
 .Tn PCI
 bus on the other side of the bridge.
 .It Xr en 4
-Midway-based Efficient Networks Inc. and Adaptec ATM interfaces.
+Midway-based Efficient Networks Inc.
+and Adaptec ATM interfaces.
 .It Xr ep 4
 3Com 3c590 and 3c595 Ethernet interfaces.
 .It Xr fpa 4
@@ -314,7 +317,8 @@ kernel option, the following
 .Xr ioctl 2
 calls are supported by the
 .Nm
-driver.  They are defined in the header file
+driver.
+They are defined in the header file
 .Aq Pa sys/pciio.h .
 .Bl -tag -width 012345678901234
 .Pp
@@ -325,7 +329,8 @@ reads the
 .Tn PCI
 configuration registers specified by the passed-in
 .Va pci_io
-structure.  The
+structure.
+The
 .Va pci_io
 structure consists of the following fields:
 .Bl -tag -width pi_width
@@ -339,9 +344,9 @@ The
 .Tn PCI
 configuration register the user would like to access.
 .It pi_width
-The width, in bytes, of the data the user would like to read.  This value
-may be either 1, 2, or 4.  3-byte reads and reads larger than 4 bytes are
-not supported.
+The width, in bytes, of the data the user would like to read.
+This value may be either 1, 2, or 4.  3-byte reads and reads larger than
+4 bytes are not supported.
 .It pi_data
 The data returned by the kernel.
 .El
@@ -352,9 +357,11 @@ allows users to write to the
 .Tn PCI
 specified in the passed-in
 .Va pci_io
-structure.  The
+structure.
+The
 .Va pci_io
-structure is described above.  The limitations on data width described for
+structure is described above.
+The limitations on data width described for
 reading registers, above, also apply to writing
 .Tn PCI
 configuration registers.

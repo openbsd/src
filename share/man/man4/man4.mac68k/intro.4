@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.4,v 1.5 2001/10/04 22:03:45 miod Exp $
+.\"	$OpenBSD: intro.4,v 1.6 2001/10/05 14:45:54 mpech Exp $
 .\"	$NetBSD: intro.4,v 1.4 1997/03/28 00:29:35 veego Exp $
 .\"
 .\" Copyright (c) 1990, 1991 Regents of the University of California.
@@ -69,8 +69,8 @@ The networking support is introduced in
 .Sh DEVICE SUPPORT
 This section describes the hardware supported on the
 .Tn Mac .
-Software support for these devices comes in two forms.  A hardware
-device may be supported with a character or block
+Software support for these devices comes in two forms.
+A hardware device may be supported with a character or block
 .Em device driver ,
 or it may be used within the networking subsystem and have a
 .Em network interface driver .
@@ -83,9 +83,10 @@ communication facilities provided by the system; see
 .Pp
 A hardware device is identified to the system at configuration time
 and the appropriate device or network interface driver is then compiled
-into the system.  When the resultant system is booted, the
-autoconfiguration facilities in the system probe for the device
-and, if found, enable the software support for it.
+into the system.
+When the resultant system is booted, the autoconfiguration facilities
+in the system probe for the device and, if found, enable the software
+support for it.
 If a device does not respond at autoconfiguration
 time it is not accessible at any time afterwards.
 To enable a device which did not autoconfigure,
@@ -96,7 +97,8 @@ The autoconfiguration system is described in
 A list of the supported devices is given below.
 .Sh LIST OF DEVICES
 The devices listed below are supported in this incarnation of
-the system.  Pseudo-devices are not listed.
+the system.
+Pseudo-devices are not listed.
 Devices are indicated by their functional interface.
 Not all supported devices are listed.
 .Pp

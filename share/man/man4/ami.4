@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ami.4,v 1.7 2001/08/05 22:32:34 brad Exp $
+.\"	$OpenBSD: ami.4,v 1.8 2001/10/05 14:45:53 mpech Exp $
 .\"
 .\" Copyright (c) 2001 Michael Shalayeff.  All rights reserved.
 .\"
@@ -21,14 +21,15 @@ These controllers support RAID 0, RAID 1, RAID 5, JBOD
 and superpositions of those configurations.
 .Pp
 Some cards support both I2O and so called `Mass Storage' mode
-of operation. This driver only supports the `Mass Storage' mode, I2O
-mode is supported by the
+of operation.
+This driver only supports the `Mass Storage' mode, I2O mode is supported
+by the
 .Xr iop 4
 driver.
 .Pp
 Although the controllers are actual RAID controllers the driver makes them
-look just like SCSI controllers.  All RAID configuration is done through
-the controllers' BIOSes.
+look just like SCSI controllers.
+All RAID configuration is done through the controllers' BIOSes.
 .Xr iop 4
 driver.
 .Sh SEE ALSO

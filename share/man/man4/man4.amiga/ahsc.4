@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ahsc.4,v 1.8 2001/09/07 15:05:41 mpech Exp $
+.\"	$OpenBSD: ahsc.4,v 1.9 2001/10/05 14:45:53 mpech Exp $
 .\"
 .\" Copyright (c) 1994 Christian E. Hopps
 .\" All rights reserved.
@@ -41,9 +41,10 @@
 The
 .Tn Amiga
 architecture uses a common machine independent scsi sub-system
-provided in the kernel source.  The machine independent
-drivers that use this code access the hardware through a
-common interface. (see
+provided in the kernel source.
+The machine independent drivers that use this code access the hardware
+through a common interface.
+(see
 .Xr scsibus 4 )
 This common interface interacts with a machine dependent interface,
 such as
@@ -62,10 +63,11 @@ uses is based on the WD33c93 SCSI chip.
 .Bl -diag
 .It sbicwait TIMEO @%d with asr=x%x csr=x%x
 The 33c93 code (sbic) has been waiting too long for a SCSI chip
-operation to complete. %d is the line in the source file
+operation to complete.
+%d is the line in the source file
 .Pa amiga/dev/sbic.c
-at which the SCSI chip timed-out.  Asr and csr are status registers
-withing the SCSI chip.
+at which the SCSI chip timed-out.
+Asr and csr are status registers withing the SCSI chip.
 .It ahsc%d: abort %s: csr = 0x%02x, asr = 0x%02x
 A SCSI operation %s was aborted due to an error.
 .It ahsc%d: csr == 0x%02i

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.18 2001/10/04 16:56:52 mpech Exp $
+.\"	$OpenBSD: release.8,v 1.19 2001/10/05 14:45:54 mpech Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"
@@ -319,7 +319,9 @@ the build process is:
 .Pa XF86Setup ,
 built and installed above, requires version 8.3 of the
 .Pa tcl/tk
-libraries.   They must be installed to do a proper build. Version 8.3 of
+libraries.
+They must be installed to do a proper build.
+Version 8.3 of
 .Pa tcl/tk
 can be found in the ports tree at
 .Pa /usr/ports/lang/tcl/8.3/
@@ -340,7 +342,8 @@ However, the install phase of the build does
 .Em not
 overwrite
 .Pa /etc/X11/xdm .
-That directory must be installed by hand.   Or you can
+That directory must be installed by hand.
+Or you can
 .Ic "cd /etc/X11 && mv xdm xdm-"
 before the build and copy any local configuration from
 .Pa xdm-
@@ -357,7 +360,8 @@ mechanism noted in the section on building a system release, above.
 They may be the same values used above, but be warned that the
 contents of
 .Va DESTDIR
-will be removed if you follow this procedure.   However,
+will be removed if you follow this procedure.
+However,
 .Va DESTDIR
 should not be the same directory used to build the system release.  
 It may be the same if you don't care to keep the contents of the

@@ -1,4 +1,4 @@
-.\"   $OpenBSD: bah.4,v 1.7 2000/11/10 20:02:18 todd Exp $
+.\"   $OpenBSD: bah.4,v 1.8 2001/10/05 14:45:53 mpech Exp $
 .\"	$NetBSD: bah.4,v 1.2 1995/06/06 23:41:37 cgd Exp $
 .\"
 .\" Copyright (c) 1995 Ignatios Souvatzis
@@ -57,8 +57,9 @@ The
 interface does not employ the address resolution protocol described in
 .Xr arp 4
 to dynamically map between Internet and Ethernet addresses on the local
-network. Instead, it uses the least significant 8 bits of the IP address
-as hardware address, as described in
+network.
+Instead, it uses the least significant 8 bits of the IP address as hardware
+address, as described in
 .Xr RFC 1051
 and
 .Xr RFC 1201
@@ -69,8 +70,8 @@ deprecated, but popular among Amiga users, RFC 1051 encoding (that
 is, with simple header, packet type 240), and the MTU is 507.
 .Pp
 With the IFF_LINK0 flag set, IP encoding is done according to RFC 1201 (that
-is, with Packet Header Definition Standard header and packet type 212). The MTU
-is normally 1500.
+is, with Packet Header Definition Standard header and packet type 212).
+The MTU is normally 1500.
 .Pp
 When switching between the two modes, do a
 .Cd ifconfig interfacename down up

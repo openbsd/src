@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_config.8,v 1.16 2001/08/17 11:13:58 mpech Exp $
+.\"	$OpenBSD: boot_config.8,v 1.17 2001/10/05 14:45:54 mpech Exp $
 .\"
 .\" Copyright (c) 1996 Mats O Jansson
 .\" All rights reserved.
@@ -121,10 +121,11 @@ driver.
 UKC>
 .Ed
 .Pp
-ne1 seems to match the configuration except it uses IRQ 5 instead of IRQ 10. So
-the irq on ne1 should be changed via the
+ne1 seems to match the configuration except it uses IRQ 5 instead of IRQ 10.
+So the irq on ne1 should be changed via the
 .Fa change
-command. The device can be specified by either name or number.
+command.
+The device can be specified by either name or number.
 .Pp
 .Bd -literal
 .No UKC> Ic change ne1
@@ -146,8 +147,8 @@ UKC>
 Another case is a mistakenly detected non-existing device instead of another
 device at the probed location.
 One known case is the Mitsumi
-CD-ROM in OpenBSD/i386. The simplest thing to solve that problem is to
-disable mcd0.
+CD-ROM in OpenBSD/i386.
+The simplest thing to solve that problem is to disable mcd0.
 .Pp
 .Bd -literal
 .No UKC> Ic find mcd0
@@ -178,7 +179,8 @@ UKC>
 .Ed
 .Pp
 It is possible to add new devices, but only devices that were linked into the
-kernel. If a new device is added, following devices will be renumbered.
+kernel.
+If a new device is added, following devices will be renumbered.
 .Pp
 .Bd -literal
 .No UKC> Ic find ep

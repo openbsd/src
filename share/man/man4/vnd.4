@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vnd.4,v 1.13 2000/06/28 19:01:17 art Exp $
+.\"	$OpenBSD: vnd.4,v 1.14 2001/10/05 14:45:53 mpech Exp $
 .\"	$NetBSD: vnd.4,v 1.1 1995/12/30 18:10:48 thorpej Exp $
 .\"
 .\" Copyright (c) 1995 Jason R. Thorpe.
@@ -43,9 +43,10 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides a disk-like interface to a file.  This is useful for
-a variety of applications, including swap files and building miniroot
-or floppy disk images.  There are two variants, the traditional
+driver provides a disk-like interface to a file.
+This is useful for a variety of applications, including swap files and
+building miniroot or floppy disk images.
+There are two variants, the traditional
 .Nm
 that bypasses the buffercache and thus is suitable for swap on files, but
 not for building disk-images, and the
@@ -71,7 +72,8 @@ pseudo-device	vnd	4	# vnode disk driver
 .Pp
 The count argument is how many
 .Nm vnds
-memory is allocated for a boot time.  In this example, no more than 4
+memory is allocated for a boot time.
+In this example, no more than 4
 .Nm vnds
 may be configured.
 .Pp
@@ -91,7 +93,8 @@ variant does.
 /dev/{,r}{,s}vnd* - vnd device special files.
 .Sh HISTORY
 The vnode disk driver was originally written at the University of
-Utah.  The svnd variant was first seen in
+Utah.
+The svnd variant was first seen in
 .Ox 2.1 .
 .Sh SEE ALSO
 .Xr MAKEDEV 8 ,

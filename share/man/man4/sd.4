@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sd.4,v 1.6 2001/08/03 15:21:16 mpech Exp $
+.\"	$OpenBSD: sd.4,v 1.7 2001/10/05 14:45:53 mpech Exp $
 .\"	$NetBSD: sd.4,v 1.3 1996/10/20 23:15:23 explorer Exp $
 .\"
 .\" Copyright (c) 1996
@@ -40,8 +40,8 @@ The
 .Nm
 driver provides support for a
 .Tn SCSI
-disk. It allows the disk
-to be divided up into a set of pseudo devices called
+disk.
+It allows the disk to be divided up into a set of pseudo devices called
 .Em partitions .
 In general the interfaces are similar to those described by
 .Xr wd 4 .
@@ -67,7 +67,8 @@ When the
 .Tn SCSI
 adapter is probed during boot, the
 .Tn SCSI
-bus is scanned for devices. Any devices found which answer as
+bus is scanned for devices.
+Any devices found which answer as
 .Sq Em Direct
 type devices will be attached to the
 .Nm
@@ -110,7 +111,8 @@ driver.
 .\"respectively.)
 On many systems
 .Xr disklabel 8
-is used to partition the drive into filesystems.  On some systems the
+is used to partition the drive into filesystems.
+On some systems the
 .Nx
 portion of the disk resides within a native partition, and another
 program is used to create the
@@ -119,8 +121,8 @@ portion.
 .Pp
 For example, the i386 port uses
 .Xr fdisk 8
-to partition the disk into a BIOS level partition.  This allows sharing
-the disk with other operating systems.
+to partition the disk into a BIOS level partition.
+This allows sharing the disk with other operating systems.
 .\"If an uninitialized disk is opened, the slice table will be
 .\"initialized with a fictitious
 .\".Fx
@@ -143,7 +145,8 @@ The following
 .Xr ioctl 2
 calls apply to
 .Tn SCSI
-disks as well as to other disks.  They are defined in the header file
+disks as well as to other disks.
+They are defined in the header file
 .Aq Pa disklabel.h .
 .Pp
 .Bl -tag -width DIOCSDINFO
@@ -154,13 +157,15 @@ disks as well as to other disks.  They are defined in the header file
 .\"implemented.
 .It Dv DIOCGDINFO
 Read, from the kernel, the in-core copy of the disklabel for the
-drive. This may be a fictitious disklabel if the drive has never
+drive.
+This may be a fictitious disklabel if the drive has never
 been initialized, in which case it will contain information read
 from the
 .Tn SCSI
 inquiry commands.
 .It Dv DIOCSDINFO
-Give the driver a new disklabel to use. The driver
+Give the driver a new disklabel to use.
+The driver
 .Em will not
 write the new
 disklabel to the disk.
@@ -168,13 +173,14 @@ disklabel to the disk.
 Enable or disable the driver's software
 write protect of the disklabel on the disk.
 .It Dv DIOCWDINFO
-Give the driver a new disklabel to use. The driver
+Give the driver a new disklabel to use.
+The driver
 .Em will
 write the new disklabel to the disk.
 .It Dv DIOCLOCK
 Lock the media cartridge into the device, or unlock a cartridge previously
-locked.  Used to prevent user and software eject while the media is in
-use.
+locked.
+Used to prevent user and software eject while the media is in use.
 .It Dv DIOCEJECT
 Eject the media cartridge from a removable device.
 .El
@@ -192,12 +198,12 @@ driver, but only against the
 If a removable device is attached to the
 .Nm
 driver, then the act of changing the media will invalidate the
-disklabel and information held within the kernel.  To avoid
-corruption, all accesses to the device will be discarded until there
-are no more open file descriptors referencing the device.  During this
-period, all new open attempts will be rejected.  When no more open
-file descriptors reference the device, the first next open will load a
-new set of parameters (including disklabel) for the drive.
+disklabel and information held within the kernel.
+To avoid corruption, all accesses to the device will be discarded until there
+are no more open file descriptors referencing the device.
+During this period, all new open attempts will be rejected.
+When no more open file descriptors reference the device, the first next 
+open will load a new set of parameters (including disklabel) for the drive.
 .Sh FILES
 .Bl -tag -width /dev/rsdXXXXX -compact
 .It Pa /dev/sd Ns Ar u Ns Ar p

@@ -1,4 +1,4 @@
-.\" $OpenBSD: pcibios.4,v 1.11 2001/08/03 15:21:16 mpech Exp $
+.\" $OpenBSD: pcibios.4,v 1.12 2001/10/05 14:45:54 mpech Exp $
 .\" $NetBSD: pcibios.4,v 1.7 2000/08/03 13:32:39 soda Exp $
 .\"
 .\" Copyright (c) 2000 Michale Shalayeff, All rights reserved.
@@ -53,13 +53,15 @@ using information extracted from the BIOS.
 .Pp
 Ideally, the boot firmware of a machine (a.k.a. BIOS) should set
 up all PCI devices; assigning them I/O and memory addresses and
-interrupts.  Alas, this does not always happen, so there is some
+interrupts.
+Alas, this does not always happen, so there is some
 PC specific code that can do the initialization when
 .Ox
 boots.
 .Pp
 Flags is a bit mask each bit of which specifies a fixup procedure to
-omit. The following list specifies these procedures and gives
+omit.
+The following list specifies these procedures and gives
 flags bit values to disable them in case they cause problems.
 .Pp
 .Bl -tag -width 0x0000
@@ -67,8 +69,8 @@ flags bit values to disable them in case they cause problems.
 Fixup PCI I/O and memory addresses.
 .Pp
 Some BIOS implementations don't allocate I/O space and
-memory space for all PCI devices. Especially, a BIOS
-which has
+memory space for all PCI devices.
+Especially, a BIOS which has
 .Qq PnP OS mode
 enabled shows this behavior.
 Since necessary space isn't allocated, those devices
@@ -91,16 +93,16 @@ bridges.
 .Pp
 Each PCI bus and CardBus should have a unique bus number.
 But some BIOS implementations don't assign a bus number
-for subordinate PCI buses. And many BIOS implementations
-don't assign a bus number for CardBuses.
+for subordinate PCI buses.
+And many BIOS implementations don't assign a bus number for CardBuses.
 .Pp
 A typical symptom of this is the following boot message:
 .D1 Sy cardbus0 at cardslot0: bus 0 device 0...
 Please note that this cardbus0 has a bus number
 .Sq 0 ,
 but normally the bus number 0 is used by the machine's
-primary PCI bus. Thus, this bus number for cardbus is
-incorrect
+primary PCI bus.
+Thus, this bus number for cardbus is incorrect
 .Pq not assigned .
 In this situation, a device located in cardbus0 doesn't
 show correct device ID,

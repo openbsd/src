@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.55 2001/10/04 16:56:52 mpech Exp $
+.\" $OpenBSD: vpn.8,v 1.56 2001/10/05 14:45:54 mpech Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -38,7 +38,8 @@
 .Nd configuring the system for virtual private networks
 .Sh DESCRIPTION
 A virtual private network is used to securely connect two or more subnets
-over the internet. For each subnet there is a security gateway which is
+over the internet.
+For each subnet there is a security gateway which is
 linked via a cryptographically secured tunnel to the security gateway of
 the other subnet.
 .Xr ipsec 4
@@ -107,12 +108,14 @@ For more permanent operation, these options should be enabled in your
 .Ss Generating Manual Keys [manual keying]
 The shared secret symmetric keys used to create a VPN can
 be any hexadecimal value, so long as both sides of the connection use
-the same values. Since the security of the VPN is based on these keys
+the same values.
+Since the security of the VPN is based on these keys
 being unguessable, it is very important that the keys be chosen using a
-strong random source. One practical method of generating them
-is by using the
+strong random source.
+One practical method of generating them is by using the
 .Xr random 4
-device. To produce 160 bits (20 bytes) of randomness, for example, do:
+device.
+To produce 160 bits (20 bytes) of randomness, for example, do:
 .Bd -literal
 	# openssl rand 20 | hexdump -e '20/1 "%02x"'
 .Ed
@@ -139,8 +142,9 @@ Furthermore, recent attacks on SKIPJACK have shown severe weaknesses
 in its structure.
 .Pp
 Note that DES requires 8 bytes to form a 56-bit key and 3DES requires 24 bytes
-to form its 168-bit key. This is because the most significant bit of each byte
-is ignored by both algorithms.
+to form its 168-bit key.
+This is because the most significant bit of each byte is ignored by both
+algorithms.
 .Ss Creating Security Associations [manual keying]
 Before the IPsec flows can be defined, two Security Associations (SAs)
 must be defined on each end of the VPN, e.g.:
@@ -161,7 +165,8 @@ and
 .Fl authkey
 options may be used to specify the keys directly in the
 .Xr ipsecadm 8
-command line.  However, another user could view the keys by using the
+command line.
+However, another user could view the keys by using the
 .Xr ps 1
 command at the appropriate time (or use a program for doing so).
 .Ss Creating IPsec Flows [manual keying]
@@ -250,7 +255,8 @@ either the
 .Xr isakmpd 8
 or
 .Xr photurisd 8
-key management daemon. To make sure the daemon is properly configured
+key management daemon.
+To make sure the daemon is properly configured
 to provide the required security services (typically, encryption and
 authentication) start the daemon with debugging or verbose output.
 .Pp
@@ -591,10 +597,11 @@ Suites=			QM-ESP-3DES-SHA-SUITE
 .Ed
 .Pp
 .It
-Read through the configuration one more time. The only real
-differences between the two files in this example is
+Read through the configuration one more time.
+The only real differences between the two files in this example is
 the IP-addresses, and ordering of Local- and Remote-ID for the VPN
-itself. Note that the shared secret (the
+itself.
+Note that the shared secret (the
 .Em Authentication
 tag) must match between machineA and machineB.
 .Pp

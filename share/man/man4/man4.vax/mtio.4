@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mtio.4,v 1.8 2001/08/03 15:21:16 mpech Exp $
+.\"	$OpenBSD: mtio.4,v 1.9 2001/10/05 14:45:54 mpech Exp $
 .\"	$NetBSD: mtio.4,v 1.4 1996/03/03 17:13:54 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991 The Regents of the University of California.
@@ -99,13 +99,15 @@ it will operate at 6250
 .Pp
 The rewind devices automatically rewind
 when the last requested read, write or seek has finished, or the end of the tape
-has been reached. The letter
+has been reached.
+The letter
 .Ql n
 is usually prepended to
 the name of the no-rewind devices.
 .Pp
 Unix tapes are written in multiples of 1024 byte block
-records. Two end-of-file markers mark the end of a tape, and
+records.
+Two end-of-file markers mark the end of a tape, and
 one end-of-file marker marks the end of a tape file.
 If the tape is not to be rewound it is positioned with the
 head in between the two tape marks, where the next write

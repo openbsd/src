@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gtsc.4,v 1.8 2001/09/07 15:05:41 mpech Exp $
+.\"	$OpenBSD: gtsc.4,v 1.9 2001/10/05 14:45:53 mpech Exp $
 .\"
 .\" Copyright (c) 1994 Christian E. Hopps
 .\" All rights reserved.
@@ -41,9 +41,10 @@
 The
 .Tn Amiga
 architecture uses a common machine independent scsi sub-system
-provided in the kernel source.  The machine independent
-drivers that use this code access the hardware through a
-common interface. (see
+provided in the kernel source.
+The machine independent drivers that use this code access the hardware
+through a common interface.
+(see
 .Xr scsibus 4 )
 This common interface interacts with a machine dependent interface,
 such as

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bus_space.9,v 1.5 2001/06/28 22:14:23 millert Exp $ 
+.\"	$OpenBSD: bus_space.9,v 1.6 2001/10/05 14:45:54 mpech Exp $ 
 .\" $NetBSD: bus_space.9,v 1.15 2000/08/09 03:11:00 tv Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -451,7 +451,7 @@ In that case, they may cause the system to halt, either intentionally
 (via panic) or unintentionally (by causing a fatal trap of by some other
 means) or may cause improper operation which is not immediately fatal.
 Functions which return void or which return data read from bus space
-(i.e., functions which don't obviously return an error code) do not
+(i.e. functions which don't obviously return an error code) do not
 fail.
 They could only fail if given invalid arguments, and in that case their
 behaviour is undefined.

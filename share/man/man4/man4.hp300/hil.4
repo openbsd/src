@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hil.4,v 1.5 2001/08/20 05:57:55 mpech Exp $
+.\"	$OpenBSD: hil.4,v 1.6 2001/10/05 14:45:53 mpech Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,8 @@ there can only be one keyboard and it must be the first device
 The device file that corresponds to a particular
 .Tn HIL
 device is determined
-by the order of the devices on the loop. For instance, if the
+by the order of the devices on the loop.
+For instance, if the
 .Tn ID
 module
 is the second physical device on the loop, then
@@ -111,7 +112,8 @@ and a header containing the size of the queue, and its head and tail indices.
 The system deposits event data at the tail of the queue,
 a process extracts it from the head.
 Extracting an event is done by copying it from the queue and then updating
-the head appropriately (i.e. head = (head + 1) % qsize).
+the head appropriately (i.e.
+head = (head + 1) % qsize).
 It is up to the process to ensure that packets are removed from the
 queue quickly enough to prevent the queue from filling.
 The system, when it determines that the queue is full,
@@ -184,8 +186,8 @@ ioctl.
 .It Dv HILIOCSC
 Report Security Code
 .Pp
-Request the security code record from a device. The security code can
-vary from 1 byte to 15, and is only supported by some
+Request the security code record from a device.
+The security code can vary from 1 byte to 15, and is only supported by some
 .Tn HIL
 devices.
 Identical to the

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rx.4,v 1.5 2000/07/22 05:01:13 bjc Exp $
+.\"	$OpenBSD: rx.4,v 1.6 2001/10/05 14:45:54 mpech Exp $
 .\"	$NetBSD: rx.4,v 1.3 1996/03/03 17:14:03 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991 Regents of the University of California.
@@ -64,9 +64,9 @@ either single or double density.
 Floppy disks handled by the
 .Tn RX02
 contain 77 tracks, each with 26
-sectors (for a total of 2,002 sectors).  The sector size is 128
-bytes for single density, 256 bytes for double density.  Single
-density disks are compatible with the
+sectors (for a total of 2,002 sectors).
+The sector size is 128 bytes for single density, 256 bytes for double density.
+Single density disks are compatible with the
 .Tn RX01
 floppy disk unit and with
 .Tn IBM
@@ -95,7 +95,8 @@ Other	Drive number
 The two drives in a single
 .Tn RX02
 unit are treated as
-two disks attached to a single controller.  Thus, if there are two
+two disks attached to a single controller.
+Thus, if there are two
 .Tn RX02 Ns 's
 on a system, the drives on the first
 .Tn RX02
@@ -109,8 +110,8 @@ and
 .Dq Li rx3 .
 .Pp
 When the device is opened, the density of the disk
-currently in the drive is automatically determined. If there
-is no floppy in the device, open will fail.
+currently in the drive is automatically determined.
+If there is no floppy in the device, open will fail.
 .Pp
 The interleaving parameters are represented in raw device
 names by the letters
@@ -177,8 +178,8 @@ int *arg;
 The applicable codes are:
 .Bl -tag -width RXIOC_GETDENS
 .It Dv RXIOC_FORMAT
-Format the diskette. The density to use is specified
-by the
+Format the diskette.
+The density to use is specified by the
 .Ar arg
 argument, zero gives single density while non-zero
 gives double density.
@@ -203,12 +204,13 @@ return 0.
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "rx%d: hard error, trk %d psec %d cs=%b, db=%b, err=%x, %x, %x, %x."
-An unrecoverable error was encountered.  The
-track and physical sector numbers, the device registers and the
+An unrecoverable error was encountered.
+The track and physical sector numbers, the device registers and the
 extended error status are displayed.
 .Pp
 .It rx%d: state %d (reset).
-The driver entered a bogus state.  This should not happen.
+The driver entered a bogus state.
+This should not happen.
 .El
 .Sh ERRORS
 The following errors may be returned by the driver:
@@ -247,9 +249,9 @@ driver appeared in
 .Bx 4.2 .
 .Sh BUGS
 A floppy may not be formatted if the
-header info on sector 1, track 0 has been damaged.  Hence, it is not
-possible to format completely degaussed disks or disks with other
-formats than the two known by the hardware.
+header info on sector 1, track 0 has been damaged.
+Hence, it is not possible to format completely degaussed disks or disks with
+other formats than the two known by the hardware.
 .Pp
 If the drive subsystem is powered down when the machine is booted, the
 controller won't interrupt.

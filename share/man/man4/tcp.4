@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcp.4,v 1.11 2000/12/21 21:01:20 aaron Exp $
+.\"	$OpenBSD: tcp.4,v 1.12 2001/10/05 14:45:53 mpech Exp $
 .\"	$NetBSD: tcp.4,v 1.3 1994/11/30 16:22:35 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -51,10 +51,11 @@
 The
 .Tn TCP
 protocol provides a reliable, flow-controlled, two-way
-transmission of data.  It is a byte-stream protocol used to
-support the
+transmission of data.
+It is a byte-stream protocol used to support the
 .Dv SOCK_STREAM
-abstraction.  TCP uses the standard
+abstraction.
+TCP uses the standard
 Internet address format and, in addition, provides a per-host
 collection of
 .Dq port addresses .
@@ -69,7 +70,8 @@ Sockets utilizing the TCP protocol are either
 or
 .Dq passive .
 Active sockets initiate connections to passive
-sockets.  By default
+sockets.
+By default
 .Tn TCP
 sockets are created active; to create a
 passive socket the
@@ -77,34 +79,36 @@ passive socket the
 system call must be used
 after binding the socket with the
 .Xr bind 2
-system call.  Only
-passive sockets may use the
+system call.
+Only passive sockets may use the
 .Xr accept 2
-call to accept incoming connections.  Only active sockets may
-use the
+call to accept incoming connections.
+Only active sockets may use the
 .Xr connect 2
 call to initiate connections.
 .Pp
 Passive sockets may
 .Dq underspecify
 their location to match
-incoming connection requests from multiple networks.  This
-technique, termed
+incoming connection requests from multiple networks.
+This technique, termed
 .Dq wildcard addressing ,
 allows a single
 server to provide service to clients on multiple networks.
 To create a socket which listens on all networks, the Internet
 address
 .Dv INADDR_ANY
-must be bound.  The
+must be bound.
+The
 .Tn TCP
 port may still be specified
 at this time; if the port is not specified the system will assign one.
 Once a connection has been established the socket's address is
-fixed by the peer entity's location.   The address assigned to the
-socket is the address associated with the network interface
-through which packets are being transmitted and received.  Normally
-this address corresponds to the peer entity's network.
+fixed by the peer entity's location.
+The address assigned to the socket is the address associated with
+the network interface through which packets are being transmitted
+and received.
+Normally this address corresponds to the peer entity's network.
 .Pp
 .Tn TCP
 supports several socket options which are set with
@@ -130,10 +134,11 @@ provides a boolean option,
 .Aq Pa netinet/tcp.h ,
 to defeat this algorithm.
 .It Cd TCP_MAXSEG
-Set the maximum segment size for this connection. The maximum segment
-size can only be lowered.
+Set the maximum segment size for this connection.
+The maximum segment size can only be lowered.
 .It Cd TCP_SACK_DISABLE
-Do not use selective acknowledgements for this connection. See
+Do not use selective acknowledgements for this connection.
+See
 .Xr options 4 .
 .El
 .Pp

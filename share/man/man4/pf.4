@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.6 2001/09/15 03:54:40 frantzen Exp $
+.\"	$OpenBSD: pf.4,v 1.7 2001/10/05 14:45:53 mpech Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -78,7 +78,8 @@ obtained through preceding DIOCBEGINRULES call.
 .Va nr
 is ignored.
 .It Dv DIOCCOMMITRULES Fa "u_int32_t"
-Switch inactive to active filter rule set. Requires
+Switch inactive to active filter rule set.
+Requires
 .Va ticket
 .
 .It Dv DIOCGETRULES    Fa "struct pfioc_rule"

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ncr.4,v 1.7 2001/04/11 20:48:03 miod Exp $
+.\"	$OpenBSD: ncr.4,v 1.8 2001/10/05 14:45:53 mpech Exp $
 .\"
 .\" Copyright (c) 1994 James A. Jegers
 .\" All rights reserved.
@@ -83,8 +83,9 @@ Enable this only if using a Tekram DC-390 card.
 .It Cd option NCR_VERBOSE=integer
 Specifies the verbosity of driver messages during a kernel boot.
 A value of 1 will provide extra information about the controller's
-capabilities and setup.  A value of 2 or greater will print information
-about the controller's registers.
+capabilities and setup.
+A value of 2 or greater will print information about the controller's
+registers.
 .It Cd option SCSI_NCR_DFLT_TAGS=integer
 Specifies the maximum number of tags per logical unit.
 Unless
@@ -122,11 +123,12 @@ firmware instead of configuring the chip itself.
 Some Quantum drives (specifically the Atlas series) return
 .Dq queue full
 responses when a very small number of tags is used which can confuse
-the driver.  With such drives, you can use
+the driver.
+With such drives, you can use
 .Bd -literal
 option  SCSI_NCR_DFLT_TAGS=0
-
 .Ed
+.Pp
 in your kernel configuration file to disable tagged command queuing.
 .Sh SEE ALSO
 .Xr cd 4 ,

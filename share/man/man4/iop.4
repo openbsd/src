@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iop.4,v 1.3 2001/08/20 21:43:57 mickey Exp $
+.\"	$OpenBSD: iop.4,v 1.4 2001/10/05 14:45:53 mpech Exp $
 .\"	$NetBSD: iop.4,v 1.7 2001/03/20 13:09:19 ad Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -68,9 +68,9 @@ and
 are prerequisites and must therefore be included beforehand.
 .Bl -tag -width OTTF
 .It Dv IOPIOCPT (struct ioppt)
-Submit a message to the IOP and return the reply.  Note that the return
-value of this ioctl is not affected by completion status as indicated by the
-reply.
+Submit a message to the IOP and return the reply.
+Note that the return value of this ioctl is not affected by completion status
+as indicated by the reply.
 .Bd -literal
 struct ioppt {
 	void	*pt_msg;	/* pointer to message buffer */
@@ -89,14 +89,15 @@ struct ioppt_buf {
 };
 .Ed
 .Pp
-The minimum timeout value that may be specified is 1000ms.  All other values
-must not exceed the
+The minimum timeout value that may be specified is 1000ms.
+All other values must not exceed the
 .Nm
 driver's operational limits.
 .It Dv IOPIOCGSTATUS (struct iovec)
-Request the latest available status record from the IOP.  This special-case
-ioctl is provided as the I2O_EXEC_STATUS_GET message does not post replies,
-and can therefore not be safely issued using the IOPIOCPT ioctl.
+Request the latest available status record from the IOP.
+This special-case ioctl is provided as the I2O_EXEC_STATUS_GET message
+does not post replies, and can therefore not be safely issued using
+the IOPIOCPT ioctl.
 .El
 .Pp
 The following ioctls may block while attempting to acquire the
@@ -106,22 +107,23 @@ driver's configuration lock, and may fail if the acquisition times out.
 .It Dv IOPIOCGLCT (struct iovec)
 Retrieve the
 .Nm
-driver's copy of the logical configuration table.  This copy of the LCT
-matches the current device configuration, but is not necessarily the latest
-available version of the LCT.
+driver's copy of the logical configuration table.
+This copy of the LCT matches the current device configuration, but is not
+necessarily the latest available version of the LCT.
 .It Dv IOPIOCRECONFIG
 Request that the
 .Nm
 driver scan all bus ports, retrieve the latest version of the LCT, and
-attach or detach devices as necessary.  Note that higher-level
-reconfiguration tasks (such as logically re-scanning SCSI busses) will not
-be performed by this ioctl.
+attach or detach devices as necessary.
+Note that higher-level reconfiguration tasks (such as logically re-scanning
+SCSI busses) will not be performed by this ioctl.
 .It Dv IOPIOCGTIDMAP (struct iovec)
-Retrieve the TID to device map.  This map indicates which targets are
-configured, and what the corresponding device name for each is.  Although at
-any given point it contains the same number of entries as the LCT, the number
-of entries should be determined using the iov_len field from the returned
-iovec.
+Retrieve the TID to device map.
+This map indicates which targets are configured, and what the corresponding
+device name for each is.
+Although at any given point it contains the same number of entries as the LCT,
+the number of entries should be determined using the iov_len field from
+the returned iovec.
 .Bd -literal
 struct iop_tidmap {
 	u_short	it_tid;

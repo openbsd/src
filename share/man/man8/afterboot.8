@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.63 2001/10/04 16:56:52 mpech Exp $
+.\"	$OpenBSD: afterboot.8,v 1.64 2001/10/05 14:45:54 mpech Exp $
 .Dd October 20, 1997
 .Dt AFTERBOOT 8
 \!\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -389,9 +389,9 @@ Note that the
 .Pa /etc/motd
 file is modified by
 .Pa /etc/rc
-whenever the system is booted. To keep any custom message intact, ensure
-that you leave two blank lines at the top, or your message will be
-overwritten.
+whenever the system is booted.
+To keep any custom message intact, ensure that you leave two blank lines
+at the top, or your message will be overwritten.
 .Ss Add new users
 Add users.
 There is an
@@ -510,11 +510,12 @@ To cause sendmail to accept network connections, modify the
 variable in
 .Pa /etc/rc.conf
 in accordance with the comments therein.
-Note that sendmail now also listens on port 587 by default.  This
-is to implement the RFC2476 message submission protocol.  You may
-disable this via the
+Note that sendmail now also listens on port 587 by default.
+This is to implement the RFC2476 message submission protocol.
+You may disable this via the
 .Dq no_default_msa
-option in your sendmail .mc file.  See
+option in your sendmail .mc file.
+See
 .Pa /usr/share/sendmail/README
 for more information.
 .Ss DHCP server
@@ -582,8 +583,8 @@ filling up disk space from normal running processes and database updates.
 (You probably do not need to understand them.)
 .Pp
 The /altroot filesystem can optionally be used to provide a backup of the
-root filesystem on a daily basis.  To take advantage of this, you must
-have an entry in
+root filesystem on a daily basis.
+To take advantage of this, you must have an entry in
 .Pa /etc/fstab
 with
 .Dq xx

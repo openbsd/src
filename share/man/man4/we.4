@@ -1,4 +1,4 @@
-.\"	$OpenBSD: we.4,v 1.6 2001/08/20 05:57:55 mpech Exp $
+.\"	$OpenBSD: we.4,v 1.7 2001/10/05 14:45:53 mpech Exp $
 .\"	$NetBSD: we.4,v 1.4 1998/08/09 00:39:02 thorpej Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -54,20 +54,24 @@ device driver supports Western Digital/SMC WD80x3, SMC Elite Ultra, and
 SMC EtherEZ Ethernet cards.
 .Sh MEDIA SELECTION
 The ability to select media from software is dependent on the particular
-model of WD/SMC card.  The following models support only manual configuration:
-WD8003S, WD8003E, and WD8013EBT.
+model of WD/SMC card.
+The following models support only manual configuration: WD8003S, WD8003E,
+and WD8013EBT.
 .Pp
 Other WD/SMC 80x3 interfaces support two types of media on a single card.
-All support the AUI media type.  The other media is either BNC or UTP
-being a transceiver.  Software cannot differentiate between BNC and UTP
-cards.  On some models, the AUI port is always active.
+All support the AUI media type.
+The other media is either BNC or UTP being a transceiver.
+Software cannot differentiate between BNC and UTP cards.
+On some models, the AUI port is always active.
 .Pp
 The SMC Elite Ultra and SMC EtherEZ interfaces support three media on
-a single card: AUI, BNC, and UTP.  If the transceiver is active, the BNC
-media is selected.  Otherwise, the AUI and UTP ports are both active.
+a single card: AUI, BNC, and UTP.
+If the transceiver is active, the BNC media is selected.
+Otherwise, the AUI and UTP ports are both active.
 Cards of this vintage may also be found which lack one or two of the
-connectors.  These cards also know what interrupt they are configured
-for, and will correct such problems (for further interrupt issues, see
+connectors.
+These cards also know what interrupt they are configured for, and will 
+correct such problems (for further interrupt issues, see
 .Xr isa 4
 and
 .Xr pci 4 ) .
@@ -87,7 +91,8 @@ or
 media type with
 .Xr ifconfig 8 's
 .Sq media
-directive.  To select the other media (transceiver), select the
+directive.
+To select the other media (transceiver), select the
 .Em 10base2
 or
 .Em bnc
@@ -96,15 +101,17 @@ media type.
 .Bl -diag
 .It "we0: overriding IRQ <n> to <m>"
 The IRQ specified in the kernel configuration file is different from that
-found in the card's configuration registers.  The value in the kernel
-configuration file is being overridden by the one configured into the card.
+found in the card's configuration registers.
+The value in the kernel configuration file is being overridden by the one
+configured into the card.
 .It "we0: can't wildcard IRQ on a <model>"
 The IRQ was wildcarded in the kernel configuration file, and the card is
 a WD8003S, WD8003E, or WD8013EBT, which do not support software IRQ
 configuration.
 .It "we0: failed to clear shared memory at offset <off>"
 The memory test was unable to clear shared the interface's shared memory
-region.  This often indicates that the card is configured at a conflicting
+region.
+This often indicates that the card is configured at a conflicting
 .Em iomem
 address.
 .El

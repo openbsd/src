@@ -1,4 +1,4 @@
-.\" $OpenBSD: vlan.4,v 1.13 2001/08/20 05:57:55 mpech Exp $
+.\" $OpenBSD: vlan.4,v 1.14 2001/10/05 14:45:53 mpech Exp $
 .\"
 .Dd January 9, 2000
 .Dt VLAN 4
@@ -68,15 +68,15 @@ The parent interface will participate in the tagging and untagging of frames.
 .It "vlan%d: initialized with non-standard mtu %d (parent %s)"
 The IFCAP_VLAN_MTU capability was not set on the parent interface.  
 We assume in this event that the parent interface is not capable of handling
-frames larger then its MTU.   This will generally result in a non-compliant
-802.1Q implementation.
+frames larger then its MTU.
+This will generally result in a non-compliant 802.1Q implementation.
 .Pp
 Some Ethernet chips will either discard or truncate
-Ethernet frames that are larger then 1514 bytes.  This causes a problem as
-802.1Q tagged frames can be up to 1518 bytes.
+Ethernet frames that are larger then 1514 bytes.
+This causes a problem as 802.1Q tagged frames can be up to 1518 bytes.
 Most controller chips can be told not to discard large frames
-and/or to increase the allowed frame size.  Refer to the hardware manual
-for your chip to do this.
+and/or to increase the allowed frame size.
+Refer to the hardware manual for your chip to do this.
 .El
 .Pp
 If the IFCAP_VLAN_MTU capability is set on a vlan parent,

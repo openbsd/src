@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: adb.4,v 1.4 2001/10/04 10:28:20 wilfried Exp $
+.\"	$OpenBSD: adb.4,v 1.5 2001/10/05 14:45:54 mpech Exp $
 .\"	$NetBSD: adb.4,v 1.1 1997/07/18 02:13:42 ender Exp $
 .\"
 .Dd July 17, 1997
@@ -106,8 +106,9 @@ Device Info
 The
 .Nm
 event device will return an array of information containing an entry
-for each device connected to the bus.  Each entry contains the
-current address, default address, and handler ID for the corresponding
+for each device connected to the bus.
+Each entry contains the current address, default address, and handler ID for
+the corresponding
 .Tn ADB
 device.
 .It Dv ADBIOC_GETREPEAT

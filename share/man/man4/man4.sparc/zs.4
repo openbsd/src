@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zs.4,v 1.7 2001/06/23 07:04:21 pjanzen Exp $
+.\"	$OpenBSD: zs.4,v 1.8 2001/10/05 14:45:54 mpech Exp $
 .\"
 .\" Copyright (c) 1998 The OpenBSD Project
 .\" All rights reserved.
@@ -25,9 +25,9 @@ The
 .Nm
 is a Zilog 8530 serial interface chip used in Sun workstations.
 The Zilog 8530 provides two input/output channels per instance.
-Most Sun workstations include two of these interfaces.  One of the
-interfaces is hardwired for use by the keyboard and mouse attached to
-the workstation console.
+Most Sun workstations include two of these interfaces.
+One of the interfaces is hardwired for use by the keyboard and mouse
+attached to the workstation console.
 The remaining additional
 .Nm
 interfaces provide RS-423
@@ -50,8 +50,8 @@ The
 driver now supports cua minor devices, but with this known deficiency
 in the simultaneous outgoing/incoming aspect of the driver:
 The first outgoing connection succeeds, but second and subsequent
-connections fail, apparently due to a getty hang. The hung getty apparently
-prevents the cua device from being re-opened.
+connections fail, apparently due to a getty hang.
+The hung getty apparently prevents the cua device from being re-opened.
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr kbd 4 ,

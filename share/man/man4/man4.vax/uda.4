@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uda.4,v 1.7 2001/06/23 08:02:03 pjanzen Exp $
+.\"	$OpenBSD: uda.4,v 1.8 2001/10/05 14:45:54 mpech Exp $
 .\"	$NetBSD: uda.4,v 1.3 1996/03/03 17:14:10 thorpej Exp $
 .\"
 .\" Copyright (c) 1980, 1987, 1991 Regents of the University of California.
@@ -50,7 +50,8 @@ disk controller interface
 This is a driver for the
 .Tn DEC UDA50
 disk controller and other
-compatible controllers.  The
+compatible controllers.
+The
 .Tn UDA50
 communicates with the host through
 a packet protocol known as the Mass Storage Control Protocol
@@ -102,9 +103,9 @@ encountered.
 A default partition table in the driver is used for each type
 of disk when a pack is not labelled.
 The origin and size (in sectors) of the default pseudo-disks on each
-drive are shown below.  Not all partitions begin on cylinder
-boundaries, as on other drives, because previous drivers used one
-partition table for all drive types.
+drive are shown below.
+Not all partitions begin on cylinder boundaries, as on other drives,
+because previous drivers used one partition table for all drive types.
 Variants of the partition tables are common; check the driver and the file
 .Pa /etc/disktab
 .Pq Xr disktab 5
@@ -538,7 +539,7 @@ DEC order number AA-M879A-TC, in appendices E and F.
 .It "unit %d: small disk error, cyl %d"
 Yet another kind of disk error, but for small disks.
 .Po
-``That's what it says, guv'nor.  Dunnask me what it means.''
+``That's what it says, guv'nor. Dunnask me what it means.''
 .Pc
 .Pp
 .It "unit %d: unknown error, format 0x%x"
@@ -568,7 +569,8 @@ disabled for diagnostics (`in diagnosis').
 .Pp
 .It "unit available (unknown subcode) (code 4, subcode %d)"
 The controller has decided to report a perfectly normal event as
-an error.  (Why?)
+an error.
+(Why?)
 .Pp
 .It "media format error (%s) (code 5, subcode %d)"
 The drive cannot be used without reformatting.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hy.4,v 1.4 1999/06/05 13:18:38 aaron Exp $
+.\"	$OpenBSD: hy.4,v 1.5 2001/10/05 14:45:54 mpech Exp $
 .\"	$NetBSD: hy.4,v 1.3 1996/03/03 17:13:41 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991 The Regents of the University of California.
@@ -53,8 +53,9 @@ is specified at boot time with an
 .Dv SIOCSIFADDR
 .Xr ioctl 2 .
 The host's address is discovered by reading the adapter status
-register.  The interface will not transmit or receive
-packets until the network number is known.
+register.
+The interface will not transmit or receive packets until the network number is
+known.
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "hy%d: unit number 0x%x port %d type %x microcode level 0x%x."
@@ -68,8 +69,8 @@ family; the packet was dropped.
 .It hy%d: can't initialize.
 The interface was unable to allocate
 .Tn UNIBUS
-resources. This
-is usually due to having too many network devices on an 11/750
+resources.
+This is usually due to having too many network devices on an 11/750
 where there are only 3 buffered data paths.
 .Pp
 .It hy%d: NEX - Non Existent Memory.

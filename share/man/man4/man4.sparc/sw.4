@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sw.4,v 1.4 2001/03/06 19:56:51 brad Exp $
+.\"	$OpenBSD: sw.4,v 1.5 2001/10/05 14:45:54 mpech Exp $
 .\"
 .\" Copyright (c) 1998 The OpenBSD Project
 .\" All rights reserved.
@@ -16,7 +16,8 @@
 The
 .Nm
 is the Sun 4/100 on-board SCSI controller based on the NCR 5380 chip, found
-only on Sun 4/100 workstations.  The
+only on Sun 4/100 workstations.
+The
 .Nm
 driver is actually implemented as part of the
 .Xr si 4
@@ -34,8 +35,8 @@ Allow disconnect/reconnect
 The
 .Nm
 device flags may be OR'd together to enable any combination of
-the features listed above.  If no flags are specified, the device will
-use polled DMA by default.
+the features listed above.
+If no flags are specified, the device will use polled DMA by default.
 .Sh BUGS
 The
 .Nm

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: drtest.8,v 1.8 2001/04/18 11:14:23 bjc Exp $
+.\"	$OpenBSD: drtest.8,v 1.9 2001/10/05 14:45:54 mpech Exp $
 .\"
 .\" Copyright (c) 1983, 1991 Regents of the University of California.
 .\" All rights reserved.
@@ -47,8 +47,8 @@ It was primarily intended as a test program
 for new standalone drivers, but has shown
 useful in other contexts as well, such as
 verifying disks and running speed
-tests. For example, when a disk has been formatted
-(by
+tests.
+For example, when a disk has been formatted (by
 .Xr format 8 ) ,
 you can check that
 hard errors has been taken care of by running
@@ -71,7 +71,8 @@ In this example (using a 750),
 is loaded from the root file system;
 usually it
 will be loaded from the machine's
-console storage device.  Boldface means user input.
+console storage device.
+Boldface means user input.
 As usual, ``#'' and ``@'' may be used to edit input.
 .Pp
 .Bd -unfilled -offset indent -compact
@@ -95,9 +96,9 @@ As usual, ``#'' and ``@'' may be used to edit input.
 .Em (...to abort halt machine with \&^P)
 .Ed
 .Sh DIAGNOSTICS
-The diagnostics are intended to be self explanatory. Note, however, that
-the device number
-in the diagnostic messages is identified as
+The diagnostics are intended to be self explanatory.
+Note, however, that the device number in the diagnostic messages
+is identified as
 .Em typeX
 instead of
 .Em type(a,u)

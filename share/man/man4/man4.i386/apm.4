@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apm.4,v 1.17 2001/08/20 05:57:55 mpech Exp $
+.\"	$OpenBSD: apm.4,v 1.18 2001/10/05 14:45:54 mpech Exp $
 .\"
 .\"	Copyright (c) 1998 Marco S. Hyman
 .\"
@@ -230,16 +230,19 @@ As noted above, the operation of the
 driver can be modified using the
 .Dv machdep.apmwarn
 .Xr sysctl 8
-variable.   Another driver modifier is the
+variable.
+Another driver modifier is the
 .Dv machdep.apmhalt
-variable.   When
+variable.
+When
 .Dv machdep.apmhalt
 is set to 1 the
 .Tn APM
 power down code is modified in a way necessary for correct operation on
 some systems, mainly
 .Tn IBM
-laptops.   If your system does not power down when given the command
+laptops.
+If your system does not power down when given the command
 .Li "halt -p"
 try setting
 .Dv machdep.apmhalt

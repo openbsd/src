@@ -1,4 +1,4 @@
-.\"	$OpenBSD: magma.4,v 1.5 2001/08/20 06:09:32 mpech Exp $
+.\"	$OpenBSD: magma.4,v 1.6 2001/10/05 14:45:54 mpech Exp $
 .\"
 .\"
 .\" Copyright (c) 1998 Iain Hibbert
@@ -40,9 +40,10 @@
 .Cd "mbpp? at magma?"
 .Sh DESCRIPTION
 This driver provides an interface to Magma LC2+1Sp, 2+1Sp, 4+1Sp, 8+2Sp,
-4Sp, 8Sp, 12Sp, 16Sp, 1P and 2P boards.  These boards are based around
-the Cirrus Logic CD1400 serial/parallel communications engine and the
-Cirrus Logic CD1190 parallel communications engine.
+4Sp, 8Sp, 12Sp, 16Sp, 1P and 2P boards.
+These boards are based around the Cirrus Logic CD1400 serial/parallel
+communications engine and the Cirrus Logic CD1190 parallel communications
+engine.
 .Pp
 The device minor numbers for this driver are encoded as follows:
 .Pp
@@ -67,17 +68,19 @@ and a 12 byte FIFO on the chip in each direction so errors should be minimal.
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "mtty%d%x: ring buffer overflow"
-Incoming characters have been discarded due to a buffer overflow.  This is
-caused by the process in control of the device not reading characters
-fast enough. If need be you can make the ring buffer bigger by changing the
+Incoming characters have been discarded due to a buffer overflow.
+This is caused by the process in control of the device not reading characters
+fast enough.
+If need be you can make the ring buffer bigger by changing the
 \fIMAGMA_RBUF_SIZE\fR #define to something bigger, but it should be a multiple
 of two.
 .It "mtty%d%x: fifo overflow"
-Incoming characters have been discarded due to a CD1400 channel overrun.  This
-is caused by interrupts not being serviced sufficiently quickly to prevent
-the 12 byte receive FIFO on a serial channel from overflowing.  Reducing
-the value of either the \fIMTTY_RX_FIFO_THRESHOLD\fR or \fIMTTY_RX_DTR_THRESHOLD\fR
-#define's to something smaller may help slow machines avoid this problem.
+Incoming characters have been discarded due to a CD1400 channel overrun.
+This is caused by interrupts not being serviced sufficiently quickly to prevent
+the 12 byte receive FIFO on a serial channel from overflowing.
+Reducing the value of either the \fIMTTY_RX_FIFO_THRESHOLD\fR or
+\fIMTTY_RX_DTR_THRESHOLD\fR #define's to something smaller may help slow
+machines avoid this problem.
 .El
 .Sh FILES
 .Bl -tag -width /dev/bpp[0-3][0-1] -compact
@@ -109,5 +112,5 @@ mdmbuf is unsupported
 automatic XON/XOFF handshaking could be implemented fairly easily.
 .Pp
 it would be good if the tty port waited for the FIFO to empty before allowing
-a close, so that I could turn off the channel interrupts at that time. It can
-be done.
+a close, so that I could turn off the channel interrupts at that time.
+It can be done.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rln.4,v 1.12 2001/09/06 15:04:34 mpech Exp $
+.\"	$OpenBSD: rln.4,v 1.13 2001/10/05 14:45:53 mpech Exp $
 .\"
 .Dd 2 April, 1999
 .Dt RLN 4
@@ -42,7 +42,8 @@ the newer 802.11 cards in general.
 The RangeLAN2 cards communicate using an Ethernet-like protocol
 over the 2.4\(em2.483GHz part of the spectrum.
 This frequency happens to co-incide with that of strong harmonics emitted
-by common consumer microwave ovens. You can guess the rest.
+by common consumer microwave ovens.
+You can guess the rest.
 Depending on the channel condition, the NICs operate in one of two
 modes: 1.6Mb/s or 0.8Mb/s signalling rate.
 .\" .Sh CONFIGURATION
@@ -70,14 +71,16 @@ The medium used by the device is always air.
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "rln0: hardware fault"
-The card reported a hardware fault condition. Check the antenna.
+The card reported a hardware fault condition.
+Check the antenna.
 The interface is automatically marked down.
 .It "rln0: synchronised to ? (?) channel ?/?"
 The card has successfully synchronised with a nearby unit.
 Packets are only transmitted when the unit has synchronisation with
 another.
 .It "rln0: lost sync"
-Synchronisation was lost. Check for microwave ovens being used.
+Synchronisation was lost.
+Check for microwave ovens being used.
 .It "rln0: nothing to sync to; now master"
 The card was unsuccessful in (re-)synchronising with any other unit,
 and was configured as an alternate master.
@@ -86,12 +89,13 @@ The card generate a message bigger than the maximum size allowable for Ethernet.
 .It "rln0: command error 0x?? command ??"
 The card reported an error condition in the host-card protocol.
 .It "rln0: reset timeout"
-An attempt to hard reset the card failed. This is either a serious hardware
-fault, or a bus conflict.
+An attempt to hard reset the card failed.
+This is either a serious hardware fault, or a bus conflict.
 .It "rln0: tx_request timed out, status 0x??"
-The host-to-card message transfer protocol timed out. This could mean
-a duplex transfer is in progress and the interrupt service routine has not
-run. Check the cpu load.
+The host-to-card message transfer protocol timed out.
+This could mean a duplex transfer is in progress and the interrupt service
+routine has not run.
+Check the cpu load.
 .It "rln0: lost message ?? seq ?"
 An expected response to the command did not appear within a reasonable time.
 .It "rln0: unknown RangeLAN2 wireless network card"

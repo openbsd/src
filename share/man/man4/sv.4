@@ -1,4 +1,4 @@
-.\" $OpenBSD: sv.4,v 1.9 2001/07/31 00:39:07 deraadt Exp $
+.\" $OpenBSD: sv.4,v 1.10 2001/10/05 14:45:53 mpech Exp $
 .\"
 .\" Copyright (c) 1998 Constantine Paul Sapuntzakis
 .\" All rights reserved
@@ -42,9 +42,10 @@
 The
 .Nm
 driver provides support for S3 SonicVibes (S3-617) chipset-based
-cards. Disabling the SRS 3-D spatial feature of the chip is
-recommended for higher quality audio. This can be done in software
-by issuing the
+cards.
+Disabling the SRS 3-D spatial feature of the chip is recommended for higher
+quality audio.
+This can be done in software by issuing the
 .Bd -literal -offset indent
 mixerctl -w outputs.spatial=off
 .Ed
@@ -62,9 +63,11 @@ device driver appeared in
 .Ox 2.6 .
 .Sh BUGS
 The "FM" DAC, wavetable synth, and MIDI port are not
-supported. Recording at a rate different from playback is supported by
-the chip but not the driver. The mixer does not allow control of reverb,
-digital loopback, or 3-D SRS features. The chip does not support exact
-record speeds (it seems) of 11025hz, 22050hz, and so on, used by
-Windows audio. Usually, the actual record is rate is around +/- 50hz of
-the specified.
+supported.
+Recording at a rate different from playback is supported by
+the chip but not the driver.
+The mixer does not allow control of reverb, digital loopback, or 3-D SRS
+features.
+The chip does not support exact record speeds (it seems) of 11025hz,
+22050hz, and so on, used by Windows audio.
+Usually, the actual record is rate is around +/- 50hz of the specified.

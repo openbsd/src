@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtfps.4,v 1.4 2001/06/22 12:15:46 mpech Exp $
+.\"	$OpenBSD: rtfps.4,v 1.5 2001/10/05 14:45:53 mpech Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -62,7 +62,8 @@ Each
 .Nm
 device is the master device for up to four
 .Nm com
-devices.  The kernel configuration specifies these
+devices.
+The kernel configuration specifies these
 .Nm com
 devices as slave devices of the
 .Nm
@@ -89,11 +90,11 @@ driver.
 .Sh BUGS
 The
 .Nm
-driver is unlikely to work on non-EISA and non-PCI machines.  The ISA
-bus only asserts 10 I/O address lines, and this is not enough.
+driver is unlikely to work on non-EISA and non-PCI machines.
+The ISA bus only asserts 10 I/O address lines, and this is not enough.
 .Pp
 Even on EISA and PCI machines, some address conflicts have been observed.
 On one machine, the second port always conflicted with something (though
-it's not clear what) and caused strange results.  Disabling the second
-port in the kernel config allowed the other three ports to function
-correctly.
+it's not clear what) and caused strange results.
+Disabling the second port in the kernel config allowed the other three
+ports to function correctly.

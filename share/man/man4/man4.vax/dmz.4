@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dmz.4,v 1.4 2001/06/23 07:04:23 pjanzen Exp $
+.\"	$OpenBSD: dmz.4,v 1.5 2001/10/05 14:45:54 mpech Exp $
 .\"	$NetBSD: dmz.4,v 1.3 1996/03/03 17:13:26 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991 Regents of the University of California.
@@ -61,7 +61,8 @@ bit number
 .Ar i
 is not properly
 connected, and should be treated as hard-wired with carrier
-always present.  Thus specifying
+always present.
+Thus specifying
 .Ql flags 0x000004
 for
 .Li dmz0
@@ -105,10 +106,11 @@ No response from the
 on a
 .Tn DMA
 transfer
-within a timeout period.  This is often followed by a
+within a timeout period.
+This is often followed by a
 .Tn UNIBUS
-adapter
-error.  This occurs most frequently when the
+adapter error.
+This occurs most frequently when the
 .Tn UNIBUS
 is heavily loaded
 and when devices which hog the bus (such as
@@ -118,8 +120,8 @@ It is not serious.
 .Pp
 .It dmz%d: silo overflow.
 The character input silo overflowed
-before it could be serviced.  This can happen if a hard error occurs
-when the
+before it could be serviced.
+This can happen if a hard error occurs when the
 .Tn CPU
 is running with elevated priority, as the system will
 then print a message on the console with interrupts disabled.

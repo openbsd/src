@@ -1,4 +1,4 @@
-.\"	$OpenBSD: css.4,v 1.3 1999/06/05 13:18:37 aaron Exp $
+.\"	$OpenBSD: css.4,v 1.4 2001/10/05 14:45:54 mpech Exp $
 .\"	$NetBSD: css.4,v 1.3 1996/03/03 17:13:16 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991 Regents of the University of California.
@@ -53,8 +53,9 @@ interface to an
 It is normally used when participating
 in the
 .Tn DARPA
-Internet.  The controller itself is not accessible
-to users, but instead provides the hardware support to the
+Internet.
+The controller itself is not accessible to users, but instead provides
+the hardware support to the
 .Tn IMP
 interface described in
 .Xr imp 4 .
@@ -67,7 +68,8 @@ as shown above.
 .Bl -diag
 .It css%d: not alive.
 The initialization routine was entered even though the device
-did not autoconfigure.  This is indicates a system problem.
+did not autoconfigure.
+This is indicates a system problem.
 .Pp
 .It css%d: can't initialize.
 Insufficient
@@ -81,7 +83,8 @@ to use buffered data paths on an 11/730 (which has none).
 .It css%d: imp doesn't respond, icsr=%b.
 The driver attempted to initialize the device, but the
 .Tn IMP
-failed to respond after 500 tries.  Check the cabling.
+failed to respond after 500 tries.
+Check the cabling.
 .Pp
 .It css%d: stray output interrupt csr=%b.
 An interrupt occurred when no output had previously been started.

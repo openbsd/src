@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lc.4,v 1.1 2001/07/13 17:42:52 niklas Exp $
+.\"	$OpenBSD: lc.4,v 1.2 2001/10/05 14:45:53 mpech Exp $
 .\"	$NetBSD: lc.4,v 1.4 1999/12/15 22:07:32 abs Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -48,12 +48,13 @@
 The
 .Nm
 device driver supports DEC EtherWORKS III Ethernet interfaces, which
-are based on the LEMAC Ethernet chip.  This includes the DE203, DE204,
-and DE205.
+are based on the LEMAC Ethernet chip.
+This includes the DE203, DE204, and DE205.
 .Sh MEDIA SELECTION
 The EtherWORKS III series supports various combinations of media, depending
-on model.  Some models also support media autoselect.  Media is selected
-with 
+on model.
+Some models also support media autoselect.
+Media is selected with 
 .Xr ifconfig 8 's
 .Sq media
 directive.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: raid.4,v 1.15 2001/08/03 15:21:16 mpech Exp $
+.\"	$OpenBSD: raid.4,v 1.16 2001/10/05 14:45:53 mpech Exp $
 .\"     $NetBSD: raid.4,v 1.8 1999/12/15 22:07:33 abs Exp $
 .\"
 .\"
@@ -73,11 +73,11 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides RAID 0, 1, 4, and 5 (and more!) capabilities.  This
-document assumes that the reader has at least some familiarity with RAID
-and RAID concepts.  The reader is also assumed to know how to configure
-disks and pseudo-devices into kernels, how to generate kernels, and how
-to partition disks.
+driver provides RAID 0, 1, 4, and 5 (and more!) capabilities.
+This document assumes that the reader has at least some familiarity with RAID
+and RAID concepts.
+The reader is also assumed to know how to configure disks and pseudo-devices
+into kernels, how to generate kernels, and how to partition disks.
 .Pp
 RAIDframe provides a number of different RAID levels including:
 .Bl -tag -width indent
@@ -95,19 +95,20 @@ distributed across all the components.
 .Pp
 There are a wide variety of other RAID levels supported by RAIDframe,
 including Even-Odd parity, RAID level 5 with rotated sparing, Chained
-declustering,  and Interleaved declustering.  The reader is referred
-to the RAIDframe documentation mentioned in the
+declustering, and Interleaved declustering.
+The reader is referred to the RAIDframe documentation mentioned in the
 .Sx HISTORY
 section for more detail on these various RAID configurations.
 .Pp
 Depending on the parity level configured, the device driver can
-support the failure of component drives.  The number of failures
-allowed depends on the parity level selected.  If the driver is able
-to handle drive failures, and a drive does fail, then the system is
-operating in "degraded mode".  In this mode, all missing data must be
-reconstructed from the data and parity present on the other
-components.  This results in much slower data accesses, but
-does mean that a failure need not bring the system to a complete halt.
+support the failure of component drives.
+The number of failures allowed depends on the parity level selected.
+If the driver is able to handle drive failures, and a drive does fail,
+then the system is operating in "degraded mode".
+In this mode, all missing data must be reconstructed from the data and
+parity present on the other components.
+This results in much slower data accesses, but does mean that a failure
+need not bring the system to a complete halt.
 .Pp
 The RAID driver supports and enforces the use of
 .Sq component labels .
@@ -122,8 +123,8 @@ respect to each other (e.g. two or more serial numbers do not match)
 or that the component label is not consistent with its assigned place
 in the set (e.g. the component label claims the component should be
 the 3rd one a 6-disk set, but the RAID set has it as the 3rd component
-in a 5-disk set) then the device will fail to configure.  If the
-driver determines that exactly one component label seems to be
+in a 5-disk set) then the device will fail to configure.
+If the driver determines that exactly one component label seems to be
 incorrect, and the RAID set is being configured as a set that supports
 a single failure, then the RAID set will be allowed to configure, but
 the incorrectly labeled component will be marked as
@@ -135,14 +136,15 @@ will configure normally.
 The driver supports
 .Sq hot spares ,
 disks which are on-line, but are not
-actively used in an existing filesystem.  Should a disk fail, the
-driver is capable of reconstructing the failed disk onto a hot spare
-or back onto a replacement drive.
+actively used in an existing filesystem.
+Should a disk fail, the driver is capable of reconstructing the failed disk
+onto a hot spare or back onto a replacement drive.
 If the components are hot swapable, the failed disk can then be
 removed, a new disk put in its place, and a copyback operation
-performed.  The copyback operation, as its name indicates, will copy
-the reconstructed data from the hot spare to the previously failed
-(and now replaced) disk.  Hot spares can also be hot-added using
+performed.
+The copyback operation, as its name indicates, will copy the reconstructed
+data from the hot spare to the previously failed (and now replaced) disk.
+Hot spares can also be hot-added using
 .Xr raidctl 8 .
 .Pp
 If a component cannot be detected when the RAID device is configured,
@@ -159,25 +161,27 @@ must be used with the
 .Fl i
 option to re-write the data when either a) a new RAID device is
 brought up for the first time or b) after an un-clean shutdown of a
-RAID device.  By performing this on-demand recomputation of all parity
-before doing a
+RAID device.
+By performing this on-demand recomputation of all parity before doing a
 .Xr fsck 8
 or a
 .Xr newfs 8
-filesystem integrity and parity integrity can be ensured.  It bears
-repeating again that parity recomputation is
+filesystem integrity and parity integrity can be ensured.
+It bears repeating again that parity recomputation is
 .Em required
-before any filesystems are created or used on the RAID device.  If the
-parity is not correct, then missing data cannot be correctly recovered.
+before any filesystems are created or used on the RAID device.
+If the parity is not correct, then missing data cannot be correctly recovered.
 .Pp
-RAID levels may be combined in a hierarchical fashion.  For example, a RAID 0
-device can be constructed out of a number of RAID 5 devices (which, in turn,
-may be constructed out of the physical disks, or of other RAID devices).
+RAID levels may be combined in a hierarchical fashion.
+For example, a RAID 0 device can be constructed out of a number of RAID 5
+devices (which, in turn, may be constructed out of the physical disks, or
+of other RAID devices).
 .Pp
 It is important that drives be hard-coded at their respective
 addresses (i.e. not left free-floating, where a drive with SCSI ID of
 4 can end up as /dev/sd0c) for well-behaved functioning of the RAID
-device.  For normal SCSI drives, for example, the following can be
+device.
+For normal SCSI drives, for example, the following can be
 used to fix the device addresses:
 .Bd -unfilled -offset indent
 sd0     at scsibus0 target 0 lun ?      # SCSI disk drives
@@ -191,42 +195,46 @@ sd6     at scsibus0 target 6 lun ?      # SCSI disk drives
 .Pp
 See
 .Xr sd 4
-for more information.  The rationale for fixing the device addresses
-is as follows: Consider a system with three SCSI drives at SCSI IDs
-4, 5, and 6, and which map to components /dev/sd0e, /dev/sd1e, and
-/dev/sd2e of a RAID 5 set.  If the drive with SCSI ID 5 fails, and the
-system reboots, the old /dev/sd2e will show up as /dev/sd1e.  The RAID
-driver is able to detect that component positions have changed, and
-will not allow normal configuration.  If the device addresses are hard
-coded, however, the RAID driver would detect that the middle component
-is unavailable, and bring the RAID 5 set up in degraded mode.
+for more information.
+The rationale for fixing the device addresses is as follows: Consider a
+system with three SCSI drives at SCSI IDs 4, 5, and 6, and which map to
+components /dev/sd0e, /dev/sd1e, and /dev/sd2e of a RAID 5 set.
+If the drive with SCSI ID 5 fails, and the system reboots, the old
+/dev/sd2e will show up as /dev/sd1e.
+The RAID driver is able to detect that component positions have changed,
+and will not allow normal configuration.
+If the device addresses are hard coded, however, the RAID driver would
+detect that the middle component is unavailable, and bring the RAID 5
+set up in degraded mode.
 .Pp
 The first step to using the
 .Nm
-driver is to ensure that it is suitably configured in the kernel.  This is
-done by adding a line similar to:
+driver is to ensure that it is suitably configured in the kernel.
+This is done by adding a line similar to:
 .Bd -unfilled -offset indent
 pseudo-device   raid   4       # RAIDframe disk device
 .Ed
 .Pp
-to the kernel configuration file.  The
+to the kernel configuration file.
+The
 .Sq count
 argument
 .Pf ( Sq 4 ,
 in this case), specifies the number of RAIDframe drivers to configure.
 At the time of this writing, 4 is the MAXIMUM of
 .Nm
-devices which are supported.  This will change as soon as kernel threads
-are available.
+devices which are supported.
+This will change as soon as kernel threads are available.
 .Pp
 In all cases the
 .Sq raw
 partitions of the disks
 .Pa must not
-be combined.  Rather, each component partition should be offset by at least one
-cylinder from the beginning of that component disk.  This ensures that
-the disklabels for the component disks do not conflict with the
-disklabel for the
+be combined.
+Rather, each component partition should be offset by at least one cylinder
+from the beginning of that component disk.
+This ensures that the disklabels for the component disks do not conflict
+with the disklabel for the
 .Nm
 device.
 As well, all component partitions must be of the type
@@ -239,14 +247,14 @@ device is found in
 It is highly recommended that the steps to reconstruct, copyback, and
 re-compute parity are well understood by the system administrator(s)
 .Em before
-a component failure.  Doing the wrong thing when a component fails may
-result in data loss.
+a component failure.
+Doing the wrong thing when a component fails may result in data loss.
 .Sh WARNINGS
 Certain RAID levels (1, 4, 5, 6, and others) can protect against some
-data loss due to component failure.  However the loss of two
-components of a RAID 4 or 5 system, or the loss of a single component
-of a RAID 0 system, will result in the entire filesystems on that RAID
-device being lost.
+data loss due to component failure.
+However the loss of two components of a RAID 4 or 5 system, or the loss of
+a single component of a RAID 0 system, will result in the entire
+filesystems on that RAID device being lost.
 RAID is
 .Em not
 a substitute for good backup practices.
@@ -254,12 +262,13 @@ a substitute for good backup practices.
 Recomputation of parity
 .Em must
 be performed whenever there is a chance that it may have been
-compromised.  This includes after system crashes, or before a RAID
-device has been used for the first time.  Failure to keep parity
-correct will be catastrophic should a component ever fail -- it is
-better to use RAID 0 and get the additional space and speed, than it
-is to use parity, but not keep the parity correct.  At least with RAID
-0 there is no perception of increased data security.
+compromised.
+This includes after system crashes, or before a RAID device has been used for
+the first time.
+Failure to keep parity correct will be catastrophic should a component ever
+fail -- it is better to use RAID 0 and get the additional space and speed,
+than it is to use parity, but not keep the parity correct.
+At least with RAID 0 there is no perception of increased data security.
 .Sh FILES
 .Bl -tag -width /dev/XXrXraidX -compact
 .It Pa /dev/{,r}raid*
@@ -281,16 +290,18 @@ driver in
 .Ox
 is a port of RAIDframe, a framework for rapid prototyping of RAID
 structures developed by the folks at the Parallel Data Laboratory at
-Carnegie Mellon University (CMU).  RAIDframe, as originally distributed
-by CMU, provides a RAID simulator for a number of different
-architectures, and a user-level device driver and a kernel device
-driver for Digital Unix.  The
+Carnegie Mellon University (CMU).
+RAIDframe, as originally distributed by CMU, provides a RAID simulator
+for a number of different architectures, and a user-level device driver
+and a kernel device driver for Digital Unix.
+The
 .Nm
 driver is a kernelized version of RAIDframe v1.1.
 .Pp
 A more complete description of the internals and functionality of
 RAIDframe is found in the paper "RAIDframe: A Rapid Prototyping Tool
-for RAID Systems", by William V. Courtright II, Garth Gibson, Mark
+for RAID Systems", by William V.
+Courtright II, Garth Gibson, Mark
 Holland, LeAnn Neal Reilly, and Jim Zelenka, and published by the
 Parallel Data Laboratory of Carnegie Mellon University.
 The
@@ -301,7 +312,6 @@ from where it was ported to
 .Ox 2.5 .
 .Sh COPYRIGHT
 .Bd -unfilled
-
 The RAIDframe Copyright is as follows:
 
 Copyright (c) 1994-1996 Carnegie-Mellon University.
@@ -326,5 +336,4 @@ Carnegie Mellon requests users of this software to return to
 
 any improvements or extensions that they make and grant Carnegie the
 rights to redistribute these changes.
-
 .Ed

@@ -1,4 +1,4 @@
-.\"     $OpenBSD: tx.4,v 1.8 2001/02/23 23:08:08 jason Exp $
+.\"     $OpenBSD: tx.4,v 1.9 2001/10/05 14:45:53 mpech Exp $
 .\"
 .\" Copyright (c) 1998 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -63,9 +63,9 @@ network.
 When a
 .Nm
 interface is brought up, by default, it will attempt to auto-negotiate the
-link speed and duplex.  The speeds, in order of attempt, are:
-100Mb/s Full Duplex, 100Mb/s Half Duplex, 10 Mb/s Full Duplex, and
-10 Mb/s Half Duplex.
+link speed and duplex.
+The speeds, in order of attempt, are: 100Mb/s Full Duplex, 100Mb/s Half Duplex,
+10 Mb/s Full Duplex, and 10 Mb/s Half Duplex.
 .Pp
 The
 .Nm
@@ -96,15 +96,18 @@ Put the interface into loopback mode
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "tx%d: device timeout %d packets"
-The device stopped responding. Device and driver reset follows this error.
+The device stopped responding.
+Device and driver reset follows this error.
 .It "tx%d: PCI fatal error occurred (%s)"
 One of following errors occurred: PCI Target Abort, PCI Master Abort, Data
-Parity Error or Address Parity Error. Device and driver reset follows
-this error.
+Parity Error or Address Parity Error.
+Device and driver reset follows this error.
 .It "tx%d: WARNING! no link established"
-No media connected. Displayed at startup only.
+No media connected.
+Displayed at startup only.
 .It "tx%d: cannot allocate mbuf header/cluster"
-Failed to allocate memory for a received packet. Packet was dropped.
+Failed to allocate memory for a received packet.
+Packet was dropped.
 .It "tx%d: can't stop %s DMA"
 While resetting, the driver failed to stop the device correctly.
 .El

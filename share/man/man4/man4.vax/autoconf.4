@@ -1,4 +1,4 @@
-.\"	$OpenBSD: autoconf.4,v 1.5 2001/06/23 07:04:22 pjanzen Exp $
+.\"	$OpenBSD: autoconf.4,v 1.6 2001/10/05 14:45:54 mpech Exp $
 .\"	$NetBSD: autoconf.4,v 1.3 1996/03/03 17:13:13 thorpej Exp $
 .\"
 .\" Copyright (c) 1980, 1991 Regents of the University of California.
@@ -60,8 +60,8 @@ slots are normally noted, thus memory controllers,
 .Tn UNIBUS
 and
 .Tn MASSBUS
-adaptors.  Devices which are not supported which
-are found in
+adaptors.
+Devices which are not supported which are found in
 .Tn NEXUS
 slots are noted also.
 The Q-bus, if present, is configured in the same way as the
@@ -70,15 +70,16 @@ The Q-bus, if present, is configured in the same way as the
 .Tn MASSBUS
 devices are located by a very deterministic procedure since
 .Tn MASSBUS
-space is completely probe-able.  If devices exist which
-are not configured they will be silently ignored; if devices exist of
-unsupported type they will be noted.
+space is completely probe-able.
+If devices exist which are not configured they will be silently ignored;
+if devices exist of unsupported type they will be noted.
 .Pp
 .Tn UNIBUS
 devices are located by probing to see if their control-status
-registers respond.  If not, they are silently ignored.  If the control
-status register responds but the device cannot be made to interrupt,
-a diagnostic warning will be printed on the console and the device
+registers respond.
+If not, they are silently ignored.
+If the control status register responds but the device cannot be made to
+interrupt, a diagnostic warning will be printed on the console and the device
 will not be available to the system.
 .Pp
 Normally, the system uses the disk from which it was loaded as the root
@@ -218,8 +219,9 @@ where
 is the name for the tape device and
 .Dq Li ht0
 is the name
-for the formatter.  A tape slave was found on the tape formatter at the
-indicated drive number (on the front of the tape drive).
+for the formatter.
+A tape slave was found on the tape formatter at the indicated drive number
+(on the front of the tape drive).
 .Ux
 will call the device, e.g.,
 .Dq Li tu0 .
@@ -258,7 +260,8 @@ where
 is the name of a disk drive and
 .Dq Li sc0
 is the name
-of the controller.  Analogous to
+of the controller.
+Analogous to
 .Tn MASSBUS
 case.
 .El

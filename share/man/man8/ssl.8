@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ssl.8,v 1.35 2001/09/19 19:42:00 millert Exp $
+.\"	$OpenBSD: ssl.8,v 1.36 2001/10/05 14:45:54 mpech Exp $
 .\"
 .Dd September 19, 2001
 .Dt SSL 8
@@ -174,9 +174,9 @@ transactions with your machine on port 443.
 You will most likely want to generate a self-signed certificate in the
 manner above along with your certificate signing request to test your
 server's functionality even if you are going to have the certificate
-signed by another Certifying Authority.  Once your Certifying
-Authority returns the signed certificate to you, you can switch to
-using the new certificate by replacing the self-signed
+signed by another Certifying Authority.
+Once your Certifying Authority returns the signed certificate to you,
+you can switch to using the new certificate by replacing the self-signed
 .Pa /etc/ssl/server.crt
 with the certificate signed by your Certifying Authority, and then
 restarting 

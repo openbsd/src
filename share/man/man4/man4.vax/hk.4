@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hk.4,v 1.6 2001/06/20 16:49:43 millert Exp $
+.\"	$OpenBSD: hk.4,v 1.7 2001/10/05 14:45:54 mpech Exp $
 .\"	$NetBSD: hk.4,v 1.3 1996/03/03 17:13:37 thorpej Exp $
 .\"
 .\" Copyright (c) 1980, 1991 Regents of the University of California.
@@ -67,12 +67,12 @@ Special file names begin with
 .Sq Li hk
 and
 .Sq Li rhk
-for the block and character files respectively. The second
-component of the name, a drive unit number in the range of zero to
+for the block and character files respectively.
+The second component of the name, a drive unit number in the range of zero to
 seven, is represented by a
 .Sq Li ?
-in the disk layouts below. The last component is the file system partition
-which is designated
+in the disk layouts below.
+The last component is the file system partition which is designated
 by a letter from
 .Sq Li a
 to
@@ -136,17 +136,19 @@ recover the error.
 .Pp
 .It rk%d: write locked.
 The write protect switch was set on the drive
-when a write was attempted.  The write operation is not recoverable.
+when a write was attempted.
+The write operation is not recoverable.
 .Pp
 .It rk%d: not ready.
 The drive was spun down or off line when it was
-accessed.  The i/o operation is not recoverable.
+accessed.
+The i/o operation is not recoverable.
 .Pp
 .It rk%d: not ready (came back!).
 The drive was not ready, but after
 printing the message about being not ready (which takes a fraction
-of a second) was ready.  The operation is recovered if no further
-errors occur.
+of a second) was ready.
+The operation is recovered if no further errors occur.
 .Pp
 .It rk%d%c: soft ecc reading fsbn %d[-%d].
 A recoverable
@@ -154,17 +156,17 @@ A recoverable
 error occurred on the
 specified sector(s) in the specified disk partition.
 This happens normally
-a few times a week.  If it happens more frequently than
-this the sectors where the errors are occurring should be checked to see
-if certain cylinders on the pack, spots on the carriage of the drive
-or heads are indicated.
+a few times a week.
+If it happens more frequently than this the sectors where the errors are
+occurring should be checked to see if certain cylinders on the pack,
+spots on the carriage of the drive or heads are indicated.
 .Pp
 .It hk%d: lost interrupt.
 A timer watching the controller detected
 no interrupt for an extended period while an operation was outstanding.
-This indicates a hardware or software failure.  There is currently a
-hardware/software problem with spinning down drives while they are
-being accessed which causes this error to occur.
+This indicates a hardware or software failure.
+There is currently a hardware/software problem with spinning down drives
+while they are being accessed which causes this error to occur.
 The error causes a
 .Tn UNIBUS
 reset, and retry of the pending operations.

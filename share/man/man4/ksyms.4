@@ -1,4 +1,4 @@
-.\" $OpenBSD: ksyms.4,v 1.5 2001/03/01 16:11:18 aaron Exp $
+.\" $OpenBSD: ksyms.4,v 1.6 2001/10/05 14:45:53 mpech Exp $
 .\"
 .\" Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -39,11 +39,12 @@ The
 device masquerades as an
 .Em a.out
 executable with the symbols from the running kernel as its
-symbol segment.  Use of
+symbol segment.
+Use of
 .Nm /dev/ksyms
 requires that the boot loader preserve the kernel symbols and place
-them at the end of the kernel's address space.  Any port that is capable
-of using the
+them at the end of the kernel's address space.
+Any port that is capable of using the
 .Em DDB
 debugger does this, even if
 .Em DDB
@@ -52,9 +53,11 @@ is not configured into the kernel.
 The
 .Nm /dev/ksyms
 device is used to look up the symbol table name list from the running
-kernel.  Because it represents the running kernel it is guaranteed
+kernel.
+Because it represents the running kernel it is guaranteed
 to always be up to date even if the kernel file has been changed (or
-is even non-existent).  It is most useful when used in conjunction with
+is even non-existent).
+It is most useful when used in conjunction with
 .Xr nlist 3
 or the
 .Xr kvm 3
@@ -96,7 +99,7 @@ It is not possible to
 .Xr mmap 2
 .Nm /dev/ksyms
 because the boot loader does not load the symbol table onto a page
-boundary (so it is not page aligned).  If all the boot loaders were
-fixed,
+boundary (so it is not page aligned).
+If all the boot loaders were fixed,
 .Xr mmap 2
 support would be trivial.

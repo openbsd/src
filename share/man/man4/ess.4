@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ess.4,v 1.3 2000/07/20 08:48:17 deraadt Exp $
+.\"	$OpenBSD: ess.4,v 1.4 2001/10/05 14:45:53 mpech Exp $
 .\"	$NetBSD: ess.4,v 1.6 1999/04/13 20:25:29 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -50,18 +50,21 @@ driver provides support for the ESS 1788, 1888, 1887, and 888 AudioDrive
 audio devices.
 .Pp
 The AudioDrive 1788 is a half-duplex device, while the 1888, 1887, and
-888 are full-duplex. All are capable of 8- and 16-bit audio sample
-recording and playback at rates up to 44.1kHz.
+888 are full-duplex.
+All are capable of 8- and 16-bit audio sample recording and playback
+at rates up to 44.1kHz.
 .Pp
-The AudioDrive takes 16 I/O ports. The I/O port range, IRQ, and DRQ
-channels are set by the driver to the vaues specified in the
-configuration file (or for isapnp or ofisa, the values assigned from
-the firmware). The I/O port base must be one of 0x220, 0x230, 0x240,
-0x250. The IRQ must be one of 5, 7, 9, 10 (or 15 on the 1887
-only). The first DRQ channel must be selected from 0, 1, 3. The second
-DRQ channel (used for playback by the full-duplex 1888/1887, ignored
-by the 1788) can additionally be set to 5. If both DRQ channels are
-used they must be different.
+The AudioDrive takes 16 I/O ports.
+The I/O port range, IRQ, and DRQ channels are set by the driver
+to the vaues specified in the configuration file (or for isapnp or ofisa,
+the values assigned from the firmware).
+The I/O port base must be one of 0x220, 0x230, 0x240,
+0x250.
+The IRQ must be one of 5, 7, 9, 10 (or 15 on the 1887 only).
+The first DRQ channel must be selected from 0, 1, 3.
+The second DRQ channel (used for playback by the full-duplex 1888/1887, ignored
+by the 1788) can additionally be set to 5.
+If both DRQ channels are used they must be different.
 .Pp
 The joystick interface (if enabled) is handled by the
 .Xr joy 4
@@ -70,8 +73,9 @@ driver.
 The AudioDrive devices have a SoundBlaster compatibility mode, and may
 be detected by the SoundBlaster driver (see
 .Xr sb 4 )
-rather than the AudioDrive driver. The workaround is to remove the
-SoundBlaster driver from the kernel configuration.
+rather than the AudioDrive driver.
+The workaround is to remove the SoundBlaster driver from the kernel
+configuration.
 .Sh SEE ALSO
 .Xr audio 4 ,
 .Xr isa 4 ,
@@ -82,4 +86,3 @@ The
 .Nm
 device driver appeared in
 .Ox 2.2 .
-

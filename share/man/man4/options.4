@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.83 2001/10/04 10:28:20 wilfried Exp $
+.\"	$OpenBSD: options.4,v 1.84 2001/10/05 14:45:53 mpech Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -296,7 +296,8 @@ Includes code implementing the AmigaDOS Fast File System
 .Em ( ADOSFS ) .
 Note that the Professional and Smart File Systems are 
 .Em not
-supported. See
+supported.
+See
 .Xr mount_ados 8
 for details.
 .It Cd option EXT2FS
@@ -811,21 +812,23 @@ Enables PFKEYv2 (RFC 2367) support.
 While not IP specific, this option is usually used in conjunction with option
 .Em IPSEC .
 .It Cd option ALTQ
-Enables ALTQ (Alternate Queueing).  For simple rate-limiting, use
+Enables ALTQ (Alternate Queueing).
+For simple rate-limiting, use
 .Xr tbrconfig 8
-to set up the interface transmission rate.  To use queueing disciplines,
-their options should also be defined.  Queueing disciplines are
-managed by
+to set up the interface transmission rate.
+To use queueing disciplines, their options should also be defined.
+Queueing disciplines are managed by
 .Xr altqd 8 .
 See
 .Xr altq 9
 for details on ALTQ.
 .It Cd option ALTQ_CBQ
-Enables ALTQ's CBQ (Class-based Queueing) module.  CBQ achieves both
-partitioning and sharing of link bandwidth by hierarchically
-structured classes. Each class has its own queue and is assigned its
-share of bandwidth.  A child class can borrow bandwidth from its
-parent class as long as excess bandwidth is available.
+Enables ALTQ's CBQ (Class-based Queueing) module.
+CBQ achieves both partitioning and sharing of link bandwidth by hierarchically
+structured classes.
+Each class has its own queue and is assigned its share of bandwidth.
+A child class can borrow bandwidth from its parent class as long as excess
+bandwidth is available.
 .It Cd option ALTQ_HFSC
 Enables ALTQ's HFSC (Hierarchical Fair Service Curve) module.
 HFSC supports both link-sharing and guaranteed real-time services.
@@ -833,14 +836,14 @@ H-FSC employs a service curve based QoS model, and its unique feature
 is an ability to decouple delay and bandwidth allocation.
 .It Cd option ALTQ_PRIQ
 Enables ALTQ's PRIQ (Priority Queueing) module.
-PRIQ implements a simple priority-based queueing.  A higher priority
-class is always served first.
+PRIQ implements a simple priority-based queueing.
+A higher priority class is always served first.
 .It Cd option ALTQ_WFQ
 Enables ALTQ's WFQ (Weighted Fair Queueing) module.
 WFQ implements a weighted-round robin scheduler for a set of queues.
 A weight can be assigned to each queue to give a different proportion
-of the link capacity.  A hash function is used to map a flow to one of
-a set of queues.
+of the link capacity.
+A hash function is used to map a flow to one of a set of queues.
 .It Cd option ALTQ_FIFOQ
 Enables ALTQ's FIFO queue module.
 FIFOQ is a simple drop-tail FIFO queue.
@@ -848,35 +851,38 @@ FIFOQ is a simple drop-tail FIFO queue.
 Enables ALTQ's RED (Random Early Detection) module.
 RED is an implicit congestion notification mechanism that exercises
 packet dropping or packet marking stochastically according to the
-average queue length.  RED can be viewed as an active buffer
-management mechanism and can be integrated into other queueing
-disciplines.
+average queue length.
+RED can be viewed as an active buffer management mechanism and can be
+integrated into other queueing disciplines.
 .It Cd option ALTQ_RIO
 Enables ALTQ's RIO (RED with In/Oout) module.
 The original RIO has 2 sets of RED parameters; one for in-profile
-packets and the other for out-of-profile packets. At the ingress of
-the network, profile meters tag packets as IN or OUT based on
-contracted profiles for customers.  Inside the network, IN packets
-receive preferential treatment by the RIO dropper.
+packets and the other for out-of-profile packets.
+At the ingress of the network, profile meters tag packets as IN or
+OUT based on contracted profiles for customers.
+Inside the network, IN packets receive preferential treatment by
+the RIO dropper.
 ALTQ/RIO has 3 drop precedence levels defined for the Assured Forwarding
 PHB of DiffServ (RFC2597).
 .It Cd option ALTQ_BLUE
 Enables ALTQ's Blue module.
 Blue is another active buffer management mechanism.
 .It Cd option ALTQ_FLOWVALVE
-Enables ALTQ's Flowvalve module.  Flowvalve is a simple implementation
-of a RED penalty box that identifies and punishes misbehaving flows.
+Enables ALTQ's Flowvalve module.
+Flowvalve is a simple implementation of a RED penalty box that identifies
+and punishes misbehaving flows.
 .It Cd option ALTQ_CDNR
 Enables ALTQ's CDNR (diffserfv traffic conditioner) module.
 Traffic conditioners are components to meter, mark, or drop incoming
-packets according to some rules.  As opposed to queueing disciplines,
-traffic conditioners handle incoming packets at an input interface.
+packets according to some rules.
+As opposed to queueing disciplines, traffic conditioners handle incoming
+packets at an input interface.
 .It Cd option ALTQ_NOPCC
 Disables use of processor cycle counter (e.g., Pentium TSC on i386 and
-PCC on alpha) to measure time in ALTQ.  This option should be defined
-for a non-Pentium i386 CPU which does not have TSC, SMP (per-CPU
-counters are not in sync), or power management which affects processor
-cycle counter.
+PCC on alpha) to measure time in ALTQ.
+This option should be defined for a non-Pentium i386 CPU which does not
+have TSC, SMP (per-CPU counters are not in sync), or power management
+which affects processor cycle counter.
 .El
 .Ss SCSI Subsystem Options
 .Bl -ohang
@@ -926,22 +932,24 @@ See
 for the default.
 .It Cd option SEMMNI=value
 Number of semaphore identifiers (also called semaphore handles
-and semaphore sets) available in the system. Default value is 10.
+and semaphore sets) available in the system.
+Default value is 10.
 The kernel allocates memory for the control structures at startup,
 so you should avoid arbitrarily large values. 
 .It Cd option SEMMNS=value
-Maximum number of semaphores in all sets in the system. Default
-value is 60.
+Maximum number of semaphores in all sets in the system.
+Default value is 60.
 .It Cd option SEMMNU=value
 Maximum number of semaphore undo structures in the system.
 Default value is 30. 
 .It Cd option SEMUME=value
 Maximum number of per-process undo operation entries in the 
-system. Semaphore undo operations are invoked by the kernel
-when
+system.
+Semaphore undo operations are invoked by the kernel when
 .Xr semop 2
 is called with the SEM_UNDO flag and the process holding
-the semaphores terminates unexpectedly. Default value is 10.
+the semaphores terminates unexpectedly.
+Default value is 10.
 .El
 .Ss Operation Related Options
 .Bl -ohang
@@ -974,8 +982,7 @@ These options set the number of pages available for the buffer cache.
 Their default value is a machine dependent value, often calculated as
 between 5% and 10% of total available RAM.
 .It Cd option NTP
-Modify the scheduler code to add hooks necessary for running an NTP
-daemon.
+Modify the scheduler code to add hooks necessary for running an NTP daemon.
 .Xr xntpd 8
 is available as part of the port collection.
 .It Cd option APM_NOPRINT

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tl.4,v 1.8 2000/11/10 20:02:17 todd Exp $
+.\"	$OpenBSD: tl.4,v 1.9 2001/10/05 14:45:53 mpech Exp $
 .\"
 .\" Copyright (c) 1997, 1998
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -30,7 +30,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: tl.4,v 1.8 2000/11/10 20:02:17 todd Exp $
+.\"	$Id: tl.4,v 1.9 2001/10/05 14:45:53 mpech Exp $
 .\"
 .Dd May 1, 1998
 .Dt TL 4
@@ -44,23 +44,23 @@
 The
 .Nm
 driver provides support for PCI Ethernet adapters based on the Texas
-Instruments ThunderLAN Ethernet controller chip. This includes a large
-number of Compaq PCI-bus Ethernet adapters as well as the integrated
-Ethernet controllers built in to several models of Compaq Prosignia
-servers and Compaq Deskpro desktop machines. This driver also supports
-the Olicom OC-2135/2138, OC-2325 and OC-2326 10/100 TX UTP adapters
-and the Racore 8165 10/100baseTX and 8148 10baseT/100baseTX/100baseFX
-multi-personality cards.
+Instruments ThunderLAN Ethernet controller chip.
+This includes a large number of Compaq PCI-bus Ethernet adapters as well as
+the integrated Ethernet controllers built in to several models
+of Compaq Prosignia servers and Compaq Deskpro desktop machines.
+This driver also supports the Olicom OC-2135/2138, OC-2325 and OC-2326
+10/100 TX UTP adapters and the Racore 8165 10/100baseTX and 8148
+10baseT/100baseTX/100baseFX multi-personality cards.
 .Pp
 The ThunderLAN controller has a standard MII interface that supports
-up to 32 physical interface devices (PHYs). It also has a built-in
-10baseT PHY hardwired at MII address 31, which may be used in some
-10Mbps-only hardware configurations. In 100Mbps configurations, a
-National Semiconductor DP83840A or other MII-compliant PHY may be
-attached to the ThunderLAN's MII bus. If a DP83840A or equivalent
-is available, the ThunderLAN chip can operate at either 100Mbps or
-10Mbps in either half-duplex or full-duplex modes. The ThunderLAN's
-built-in PHY and the DP83840A also support autonegotiation.
+up to 32 physical interface devices (PHYs).
+It also has a built-in 10baseT PHY hardwired at MII address 31, which may be
+used in some 10Mbps-only hardware configurations.
+In 100Mbps configurations, a National Semiconductor DP83840A or other
+MII-compliant PHY may be attached to the ThunderLAN's MII bus.
+If a DP83840A or equivalent is available, the ThunderLAN chip can operate
+at either 100Mbps or 10Mbps in either half-duplex or full-duplex modes.
+The ThunderLAN's built-in PHY and the DP83840A also support autonegotiation.
 .Pp
 The
 .Nm
@@ -68,8 +68,9 @@ driver supports the following media types:
 .Pp
 .Bl -tag -width xxxxxxxxxxxxxxxxxxxx
 .It autoselect
-Enable autoselection of the media type and options. Note that this
-option is only available on those PHYs that support autonegotiation.
+Enable autoselection of the media type and options.
+Note that this option is only available on those PHYs that support
+autonegotiation.
 Also, the PHY will not advertise those modes that have been explicitly
 disabled using the following media options.
 .It 10baseT/UTP

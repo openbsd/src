@@ -1,4 +1,4 @@
-.\"	$OpenBSD: esp.4,v 1.4 1999/07/09 13:35:42 aaron Exp $
+.\"	$OpenBSD: esp.4,v 1.5 2001/10/05 14:45:54 mpech Exp $
 .\"
 .\" Copyright (c) 1998 The OpenBSD Project
 .\" All rights reserved.
@@ -36,10 +36,11 @@ on Sun 4/300, sun4c and sun4m workstations.
 The
 .Nm
 device flags may be OR'd together to enable any combination of
-the features listed above.  Targets 4 through 7 typically have
-disconnect/reselect enabled on the premise that tape devices normally
-have one of these targets.  Tape devices should be allowed to disconnect
-for the SCSI bus to operate acceptably.
+the features listed above.
+Targets 4 through 7 typically have disconnect/reselect enabled on the premise
+that tape devices normally have one of these targets.
+Tape devices should be allowed to disconnect for the SCSI bus to operate
+acceptably.
 .Sh SEE ALSO
 .Xr si 4 ,
 .Xr sw 4

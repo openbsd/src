@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uu.4,v 1.4 2001/06/20 16:49:44 millert Exp $
+.\"	$OpenBSD: uu.4,v 1.5 2001/10/05 14:45:54 mpech Exp $
 .\"	$NetBSD: uu.4,v 1.3 1996/03/03 17:14:14 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991 Regents of the University of California.
@@ -103,11 +103,12 @@ in the configuration file.
 .It uu%d: no bp, active %d.
 A transmission complete interrupt was received with no outstanding
 .Tn I/O
-request. This indicates a hardware problem.
+request.
+This indicates a hardware problem.
 .Pp
 .It uu%d protocol error, state=%s, op=%x, cnt=%d, block=%d.
-The driver entered an illegal state.  The information printed
-indicates the illegal state, the
+The driver entered an illegal state.
+The information printed indicates the illegal state, the
 operation currently being executed,
 the
 .Tn I/O
@@ -117,13 +118,14 @@ count, and the block number on the cassette.
 The
 .Tn TU58
 was sending a continuous break signal and had
-to be reset. This may indicate a hardware problem, but
-the driver will attempt to recover from the error.
+to be reset.
+This may indicate a hardware problem, but the driver will attempt to recover
+from the error.
 .Pp
 .It uu%d receive state error, state=%s, byte=%x.
 The driver entered an illegal state in the receiver finite
-state machine.  The state is shown along with the control
-byte of the received packet.
+state machine.
+The state is shown along with the control byte of the received packet.
 .Pp
 .It uu%d: read stalled.
 A timer watching the controller detected no interrupt for
@@ -132,9 +134,9 @@ This usually indicates that one or more receiver interrupts
 were lost and the transfer is restarted.
 .Pp
 .It uu%d: hard error bn%d, pk_mod %o.
-The device returned a status code indicating a hard error. The
-actual error code is shown in octal. No retries are attempted
-by the driver.
+The device returned a status code indicating a hard error.
+The actual error code is shown in octal.
+No retries are attempted by the driver.
 .El
 .Sh ERRORS
 The following errors may be returned:

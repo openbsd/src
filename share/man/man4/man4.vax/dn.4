@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dn.4,v 1.3 1999/06/05 13:18:38 aaron Exp $
+.\"	$OpenBSD: dn.4,v 1.4 2001/10/05 14:45:54 mpech Exp $
 .\"	$NetBSD: dn.4,v 1.3 1996/03/03 17:13:28 thorpej Exp $
 .\"
 .\" Copyright (c) 1980, 1991 Regents of the University of California.
@@ -56,8 +56,8 @@ such as the Able Quadracall) to an auto-call unit
 To place an outgoing call one forks a sub-process which
 opens the appropriate call unit file,
 .Pa /dev/cua?
-and writes the phone number on it.  The parent process
-then opens the corresponding modem line
+and writes the phone number on it.
+The parent process then opens the corresponding modem line
 .Pa /dev/cul? .
 When the connection has been
 established, the open on the modem line

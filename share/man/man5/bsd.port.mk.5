@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.52 2001/10/04 10:28:20 wilfried Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.53 2001/10/05 14:45:54 mpech Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -251,7 +251,8 @@ Invoked as make show=name, show the contents of variable name.
 .It Ev ALLFILES
 List of all files that need to be retrieved by
 .Ar fetch ,
-with master site selection extension removed. Read-only.
+with master site selection extension removed.
+Read-only.
 .It Ev ALL_TARGET
 Target used to build software.
 Default is
@@ -847,7 +848,8 @@ checksum off ftp.openbsd.org, in the directory
 See BUILD_DEPENDS for specification.
 Regress dependencies are only checked if the regress stage is invoked.
 .It Ev REGRESS_TARGET
-Target to run regression tests. Defaults to
+Target to run regression tests.
+Defaults to
 .Sq regress ,
 except for 
 .Sq perl
@@ -917,7 +919,8 @@ Add other
 variables as needed.
 .It Ev SUPDISTFILES
 Supplementary files that need to be retrieved under some specific
-circumstances. For instance, a port might need architecture-specific files.
+circumstances.
+For instance, a port might need architecture-specific files.
 .Ev SUPDISTFILES
 should hold a list of all distfiles and patchfiles that are not always
 needed, so that a mirror will be able to grab all files, or that

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tp.4,v 1.12 2000/12/21 21:01:21 aaron Exp $
+.\"	$OpenBSD: tp.4,v 1.13 2001/10/05 14:45:53 mpech Exp $
 .\"	$NetBSD: tp.4,v 1.4 1994/11/30 16:22:38 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -71,7 +71,8 @@ Sockets utilizing the tp protocol are either
 or
 .Dq passive .
 Active sockets initiate connections to passive
-sockets.  By default
+sockets.
+By default
 .Tn TCP
 sockets are created active; to create a
 passive socket the
@@ -79,19 +80,19 @@ passive socket the
 system call must be used
 after binding the socket with the
 .Xr bind 2
-system call.  Only
-passive sockets may use the
+system call.
+Only passive sockets may use the
 .Xr accept 2
-call to accept incoming connections.  Only active sockets may
-use the
+call to accept incoming connections.
+Only active sockets may use the
 .Xr connect 2
 call to initiate connections.
 .Pp
 Passive sockets may
 .Dq underspecify
 their location to match
-incoming connection requests from multiple networks.  This
-technique, termed
+incoming connection requests from multiple networks.
+This technique, termed
 .Dq wildcard addressing ,
 allows a single
 server to provide service to clients on multiple networks.
@@ -102,9 +103,10 @@ of the bound address must be void (of length zero).
 The Transport Selector may still be specified
 at this time; if the port is not specified the system will assign one.
 Once a connection has been established the socket's address is
-fixed by the peer entity's location.   The address assigned the
-socket is the address associated with the network interface
-through which packets are being transmitted and received.
+fixed by the peer entity's location.
+The address assigned the socket is the address associated with
+the network interface through which packets are being transmitted
+and received.
 .Pp
 The
 .Tn ISO
@@ -283,7 +285,8 @@ The structure it returns is described in
 See
 .Xr tpperf 8 .
 .It Dv TPOPT_FLAGS
-unsigned integer. [0x0]
+unsigned integer.
+[0x0]
 .br
 This command can only be used with
 .Xr getsockopt .
@@ -378,7 +381,8 @@ to keep an inactive connection open (to prevent the peer's
 inactivity control function from closing the connection).
 This parameter applies only to class 4.
 .It Ar p_winsize
-short integer between 128 and 16384. [4096 bytes]
+short integer between 128 and 16384.
+[4096 bytes]
 .br
 The buffer space limits in bytes for incoming and outgoing data.
 There is no way to specify different limits for incoming and outgoing
@@ -501,7 +505,8 @@ indications (signals) when a
 .Tn TP
 connection is disconnected.
 .It Ar p_dont_change_params
-Boolean.  [false]
+Boolean.
+[false]
 .br
 If
 .Em true

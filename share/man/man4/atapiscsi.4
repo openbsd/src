@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atapiscsi.4,v 1.7 2001/04/05 20:10:39 deraadt Exp $
+.\"	$OpenBSD: atapiscsi.4,v 1.8 2001/10/05 14:45:53 mpech Exp $
 .\"
 .\" Copyright (c) 1999 Constantine Sapuntzakis.
 .\"
@@ -72,8 +72,9 @@ mode settings (like some
 controllers).
 The lowest order (rightmost) nibble of the
 .Cm flags
-define the PIO mode to use. The next four bits indicate the DMA mode and the
-third nibble the UltraDMA mode.
+define the PIO mode to use.
+The next four bits indicate the DMA mode and the third nibble the UltraDMA
+mode.
 .Pp
 For each set of four bits, the 3 lower bits define the mode to use
 and the last bit must be set to 1 for this setting to be used.

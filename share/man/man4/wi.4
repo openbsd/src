@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4,v 1.15 2001/08/19 20:55:02 miod Exp $
+.\"	$OpenBSD: wi.4,v 1.16 2001/10/05 14:45:53 mpech Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -71,10 +71,11 @@ The compatible cards supported are:
 .Pp
 Note that while Lucent sells PCI, ISA and PCMCIA WaveLAN/IEEE
 devices, the PCI and ISA products are actually a PCMCIA card in a
-PCMCIA bridge adapter. Consequently, the
+PCMCIA bridge adapter.
+Consequently, the
 .Nm
-driver is required for PCI, ISA and PCMCIA NICs. The original
-WaveLAN/IEEE cards (2Mbps), the WaveLAN/IEEE Turbo (6Mbps), the
+driver is required for PCI, ISA and PCMCIA NICs.
+The original WaveLAN/IEEE cards (2Mbps), the WaveLAN/IEEE Turbo (6Mbps), the
 WaveLAN/IEEE Bronze Turbo (8Mbps), and the
 WaveLAN/IEEE Silver/Gold (11Mbps) adapters are supported.
 .Pp
@@ -99,8 +100,8 @@ Also note that some of the PRISM-II adapters only work at 3.3V, hence
 support is required for those cards to set VCC correctly, even
 though they are really 16bit cards.
 .Pp
-The core of the WaveLAN/IEEE is the Lucent Hermes controller. All
-host/device interaction is via programmed I/O with the Hermes.
+The core of the WaveLAN/IEEE is the Lucent Hermes controller.
+All host/device interaction is via programmed I/O with the Hermes.
 The Hermes supports 802.11 and 802.3 frames, power management, BSS,
 WDS and ad-hoc operation modes.
 .Pp

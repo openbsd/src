@@ -1,4 +1,4 @@
-.\" $OpenBSD: ss.4,v 1.8 2001/06/22 12:15:47 mpech Exp $
+.\" $OpenBSD: ss.4,v 1.9 2001/10/05 14:45:53 mpech Exp $
 .\"
 .\" Copyright (c) 1998 Kenneth Stailey and Ian Darwin
 .\"
@@ -49,13 +49,14 @@ concerned with details of its particular command set.
 The list of supported scanners varies from time to time; at present it
 includes HP Scanner Control Language (SCL) SCSI processor type
 scanners: Scanjet IIp, IIc, IIcx, 4p and 5p (others will probably work
-if the SCSI INQUIRY strings are added to the driver).  Not recently
-tested but worked in the past true SCSI scanners: Mustek 600CX and 1200CX
-(these do not do SCSI disconnect-reconnect they will lock up the bus
-during operation.  You can use a second controller.)
+if the SCSI INQUIRY strings are added to the driver).
+Not recently tested but worked in the past true SCSI scanners: Mustek 600CX
+and 1200CX (these do not do SCSI disconnect-reconnect they will lock up
+the bus during operation.
+You can use a second controller.)
 .Sh KERNEL CONFIGURATION
-Obviously a SCSI host adapter must be present in the config file
-before this device can be configured.
+Obviously a SCSI host adapter must be present in the config file before this
+device can be configured.
 .Pp
 If a count is given, that many
 .Nm
@@ -102,13 +103,16 @@ software packages.
 .Pp
 Even when vendors produce compliant SCSI scanners there is much
 variation in what parameters actually work in a SCSI_SET_WINDOW
-command.  Back in March 1997 an attempt to deal with this via quirk
-tables was started.  There exists some code for Ultima AT3 and A6000C
+command.
+Back in March 1997 an attempt to deal with this via quirk
+tables was started.
+There exists some code for Ultima AT3 and A6000C
 Plus, Ricoh IS50, IS410, IBM 2456-001, UMAX UC630, and Fujitsu M3096Gm
 that use this approach but none of these scanners work yet.
 .Pp
 Provisional userland programs exist in the source tree in
-src/usr.sbin/ssio.  Eventually a program similar to
+src/usr.sbin/ssio.
+Eventually a program similar to
 .Nm chio
 or
 .Nm mt

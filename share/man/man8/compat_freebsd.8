@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_freebsd.8,v 1.8 2001/08/17 11:13:58 mpech Exp $
+.\"	$OpenBSD: compat_freebsd.8,v 1.9 2001/10/05 14:45:54 mpech Exp $
 .\"	$NetBSD: compat_linux.8,v 1.1 1995/03/05 23:30:36 fvdl Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -55,8 +55,8 @@ with the
 .Nm COMPAT_FREEBSD
 option enabled.
 .Pp
-A lot of programs are dynamically linked. This means, that you will
-also need the
+A lot of programs are dynamically linked.
+This means, that you will also need the
 .Fx
 shared libraries that the program depends on, and the runtime linker.
 Also, you will need to create a "shadow root" directory for
@@ -115,7 +115,8 @@ Install the port named
 .Nm freebsd_lib
 in the
 .Nm emulators
-category.  The
+category.
+The
 .Nm freebsd_lib
 port contains the shared libraries, binaries, and other related files
 necessary to run
@@ -151,8 +152,8 @@ system you have access to, and check which shared libraries it needs by running
 .El
 .Pp
 You would need go get all the files from the last column, and
-put them under /emul/freebsd. This means you eventually have
-these files on your
+put them under /emul/freebsd.
+This means you eventually have these files on your
 .Ox
 system:
 .Pp
@@ -171,7 +172,8 @@ column of the 'ldd' output, you won't need to copy the file named in the
 last column to your system, the one you already have should work.
 It is advisable to copy the shared library anyway if it is a newer version,
 though.
-You can remove the old one. So, if you have these libraries on your system:
+You can remove the old one.
+So, if you have these libraries on your system:
 .Pp
 .nf
 /emul/freebsd/usr/lib/libc.so.2.0
@@ -298,7 +300,8 @@ of shared libraries that the program depends on, in the
 form -l<majorname> => <fullname>.
 .Pp
 If it prints "not found" instead of <fullname> it means that
-you need an extra library. Which library this is, is shown
+you need an extra library.
+Which library this is, is shown
 in <majorname>, which will be of the form XXXX.<N>
 You will need to find a libXXXX.so.<N>.<mm> on a
 .Fx
@@ -320,8 +323,8 @@ distribution is available on a lot of ftp sites.
 Sometimes the files are unpacked,
 and you can get the individual files you need, but mostly they
 are stored in distribution sets, usually consisting of subdirectories
-with gzipped tar files in them. The primary ftp sites for the
-distributions are:
+with gzipped tar files in them.
+The primary ftp sites for the distributions are:
 .Pp
 .nf
 ftp.freebsd.org:/pub/FreeBSD
@@ -335,9 +338,11 @@ ftp.freebsd.org:/pub/FreeBSD/MIRROR.SITES
 .Pp
 This distribution consists of a number of tar-ed and gzipped files,
 Normally, they're controlled by an install program, but you can
-retrieve files "by hand" too. The way to look something up is to retrieve all
+retrieve files "by hand" too.
+The way to look something up is to retrieve all
 the files in the distribution, and ``tar ztvf'' through them for the file
-you need. Here is an example of a list of files that you might need.
+you need.
+Here is an example of a list of files that you might need.
 .Pp
 .Bd -unfilled -offset indent
 Needed                 Files

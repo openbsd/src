@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hd.4,v 1.2 2001/06/20 16:49:43 millert Exp $
+.\"	$OpenBSD: hd.4,v 1.3 2001/10/05 14:45:53 mpech Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -80,13 +80,12 @@ Special file names begin with
 .Sq Li hd
 and
 .Sq Li rhd
-for the block and character files respectively. The second
-component of the name, a drive unit number in the range of zero to
+for the block and character files respectively.
+The second component of the name, a drive unit number in the range of zero to
 seven, is represented by a
 .Sq Li ?
-in the disk layouts below. The last component of the name is the
-file system partition
-and is designated
+in the disk layouts below.
+The last component of the name is the file system partition and is designated
 by a letter from
 .Sq Li a
 to

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dz.4,v 1.4 2000/07/22 04:54:28 bjc Exp $
+.\"	$OpenBSD: dz.4,v 1.5 2001/10/05 14:45:54 mpech Exp $
 .\"	$NetBSD: dz.4,v 1.3 1996/03/03 17:13:29 thorpej Exp $
 .\"
 .\" Copyright (c) 1980, 1991 Regents of the University of California.
@@ -62,7 +62,8 @@ bit number
 .Ar i
 is not properly
 connected, and should be treated as hard-wired with carrier
-always present.  Thus specifying
+always present.
+Thus specifying
 .Ql flags 0x04
 for
 .Li dz0
@@ -101,8 +102,8 @@ dialups
 .Bl -diag
 .It dz%d: silo overflow .
 The 64 character input silo overflowed
-before it could be serviced.  This can happen if a hard error occurs
-when the
+before it could be serviced.
+This can happen if a hard error occurs when the
 .Tn CPU
 is running with elevated priority, as the system will
 then print a message on the console with interrupts disabled.

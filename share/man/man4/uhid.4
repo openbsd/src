@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uhid.4,v 1.7 2001/09/02 18:01:54 pvalchev Exp $
+.\"	$OpenBSD: uhid.4,v 1.8 2001/10/05 14:45:53 mpech Exp $
 .\"	$NetBSD: uhid.4,v 1.6 1999/05/11 21:05:09 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -55,10 +55,10 @@ calls:
 .Pp
 .Bl -tag -width indent -compact
 .It Dv USB_GET_REPORT_DESC (struct usb_ctl_report_desc)
-Get the HID report descriptor.  Using
-this descriptor the exact layout and meaning of data to/from
-the device can be found.  The report descriptor is delivered
-without any processing.
+Get the HID report descriptor.
+Using this descriptor the exact layout and meaning of data to/from
+the device can be found.
+The report descriptor is delivered without any processing.
 .Bd -literal
 struct usb_ctl_report_desc {
     int     size;
@@ -68,17 +68,19 @@ struct usb_ctl_report_desc {
 .It Dv USB_SET_IMMED (int)
 Sets the device in a mode where each
 .Xr read 2
-will return the current value of the input report.  Normally
-a
+will return the current value of the input report.
+Normally a
 .Xr read 2
 will only return the data that the device reports on its
-interrupt pipe.  This call may fail if the device does not support
-this feature.
+interrupt pipe.
+This call may fail if the device does not support this feature.
 .It Dv USB_GET_REPORT (struct usb_ctl_report)
 Get a report from the device without waiting for data on
-the interrupt pipe.  The
+the interrupt pipe.
+The
 .Fa report
-field indicates which report is requested.  It should be
+field indicates which report is requested.
+It should be
 .Dv UHID_INPUT_REPORT ,
 .Dv UHID_OUTPUT_REPORT ,
 or
@@ -95,13 +97,14 @@ struct usb_ctl_report {
 .Pp
 Use
 .Xr read 2
-to get data from the device.  Data should be read in chunks of the
-size prescribed by the report descriptor.
+to get data from the device.
+Data should be read in chunks of the size prescribed by the report descriptor.
 .Pp
 Use
 .Xr write 2
-send data to the device.  Data should be written in chunks of the
-size prescribed by the report descriptor.
+send data to the device.
+Data should be written in chunks of the size prescribed by the report
+descriptor.
 .Sh SEE ALSO
 .Xr usbhidctl 1 ,
 .Xr usb 3 ,

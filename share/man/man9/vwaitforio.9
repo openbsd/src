@@ -14,7 +14,8 @@ The
 .Fn vwaitforio
 call sleeps until all asynchronous writes associated with the vnode
 .Nm vp 
-finish. This is used by functions that need to make sure
+finish.
+This is used by functions that need to make sure
 that the writes they initiated have completed.
 .Pp
 The
@@ -30,14 +31,15 @@ flags indicate flags to be passed to
 This function must be called at splbio().
 .Pp
 It may be important to ensure that no other process submits asynchronous
-writes while you are waiting for I/O on this vnode. Otherwise,
-vwaitforio may never return.
+writes while you are waiting for I/O on this vnode.
+Otherwise, vwaitforio may never return.
 .Pp
 (Vnode interlock??)
 .Sh RETURN VALUES
 The
 .Fn vwaitforio
-function returns 0 on success. See
+function returns 0 on success.
+See
 .Xr tsleep 9
 for possible error returns.
 .Sh SEE ALSO

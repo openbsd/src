@@ -1,4 +1,4 @@
-.\"	$OpenBSD: format.8,v 1.9 2001/10/04 16:56:52 mpech Exp $
+.\"	$OpenBSD: format.8,v 1.10 2001/10/05 14:45:54 mpech Exp $
 .\" Copyright (c) 1980, 1983 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -39,10 +39,11 @@
 .Nm format
 .Nd how to format disk packs
 .Sh DESCRIPTION
-There are two ways to format disk packs.  The simplest is to
-use the
+There are two ways to format disk packs.
+The simplest is to use the
 .Nm
-program.  The alternative is to use the DEC standard formatting
+program.
+The alternative is to use the DEC standard formatting
 software which operates under the DEC diagnostic supervisor.
 This manual page describes the operation of
 .Nm format ,
@@ -129,8 +130,8 @@ amiss.)
 .Pp
 .Nm
 uses the standard notation of the standalone I/O library
-in identifying a drive to be formatted.  A drive is
-specified as
+in identifying a drive to be formatted.
+A drive is specified as
 .Do 
 .Ar zz Ns (x,y),
 .Dc
@@ -161,15 +162,15 @@ should be formatted.
 Before each formatting attempt,
 .Nm
 prompts the user in case debugging should be enabled
-in the appropriate device driver.  A carriage return
-disables debugging information.
+in the appropriate device driver.
+A carriage return disables debugging information.
 .Pp
 .Nm
 should be used prior to building file systems (with
 .Xr newfs 8
 to ensure that all sectors with uncorrectable media errors
-are remapped.  If a drive develops uncorrectable
-defects after formatting, either
+are remapped.
+If a drive develops uncorrectable defects after formatting, either
 .Xr bad144 8
 or
 .Xr badsect 8
@@ -242,13 +243,13 @@ The diagnostics are intended to be self explanatory.
 The steps needed for 11/750 or 11/730 CPUs are similar, but not
 covered in detail here.
 .Pp
-The formatting procedures are different for each type of disk.  Listed
-here are the formatting procedures for RK07's, RP0X, and RM0X
-disks.
+The formatting procedures are different for each type of disk.
+Listed here are the formatting procedures for RK07's, RP0X, and RM0X disks.
 .Pp
 You should shut down UNIX and halt the machine to do any disk formatting.
-Make certain you put in the pack you want formatted.  It is also a good idea
-to spin down or write protect the disks you don't want to format, just in case.
+Make certain you put in the pack you want formatted.
+It is also a good idea to spin down or write protect the disks you don't
+want to format, just in case.
 .Ss Formatting an RK07
 Load the console floppy labeled, "RX11 VAX DSK LD DEV #1" in
 the console disk drive, and type the following commands:

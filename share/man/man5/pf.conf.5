@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.19 2001/10/01 19:04:16 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.20 2001/10/05 14:45:54 mpech Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -140,13 +140,15 @@ the connection.
 .Pp
 The logged packets are sent to the
 .Em pflog0
-interface. This interfece is monitored by
+interface.
+This interfece is monitored by
 .Xr pflogd 8
 logging daemon which dumps the logged packets to the file
 .Em /var/log/pflog
 in
 .Xr tcpdump 8
-binary format. The log files can be read using tcpdump:
+binary format.
+The log files can be read using tcpdump:
 .Bd -literal
 .Cm # tcpdump -n -e -ttt -r /var/log/pflog
 .Ed
@@ -228,7 +230,8 @@ This is more restrictive than the previous example.
 .It Em flags S
 If the second set is not specified, it defaults to FSRPAU.
 Hence, only packets with SYN set and all other flags unset match this 
-rule. This is more restrictive than the previous example.
+rule.
+This is more restrictive than the previous example.
 .It Em flags /SFRA
 If the first set is not specified, it defaults to none.
 All of SYN, FIN, RST and ACK must be unset.
@@ -335,11 +338,11 @@ see
 implicitely create state for connections.
 .Sh STATE MODULATION
 Much of the security derived from TCP is attributable to how well the
-initial sequence numbers (ISN) are chosen.  Some popular stack implementations
-choose
+initial sequence numbers (ISN) are chosen.
+Some popular stack implementations choose
 .Cm very
-poor ISNs thus are normally susceptible to ISN prediction exploits.  By
-applying a "modulate state" rule to a TCP connection, 
+poor ISNs thus are normally susceptible to ISN prediction exploits.
+By applying a "modulate state" rule to a TCP connection, 
 .Em pf
 will create a high quality random sequence number for each connection
 endpoint.
@@ -364,13 +367,13 @@ connection.
 .Pp
 Caveat:  If the state table is flushed or the firewall is rebooted,
 currently established modulated connections can not be continued or picked
-up again by the firewall.  The sequence numbers will be out of sync without
-the modulator.
-
+up again by the firewall.
+The sequence numbers will be out of sync without the modulator.
 .Sh NORMALIZATION
 Packet normalization is envoked via the
 .Pa scrub
-directive.  Normalization is used to sanitize packet content in such
+directive.
+Normalization is used to sanitize packet content in such
 a way that there are no ambiguities in packet interpretation on
 the receiver side.
 .Pp

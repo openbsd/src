@@ -1,4 +1,4 @@
-.\" $OpenBSD: packages.7,v 1.12 2001/10/04 16:56:52 mpech Exp $
+.\" $OpenBSD: packages.7,v 1.13 2001/10/05 14:45:54 mpech Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -52,7 +52,8 @@ The packages are not as thoroughly audited as the main
 .Ox
 source tree (in many cases, they have not been audited at all).
 This is in part a scale issue: the source tree is under 100MB, compressed,
-whereas source to the ports tree approaches 600MB.  Also, most
+whereas source to the ports tree approaches 600MB.
+Also, most
 .Ox
 developers concentrate on making the release as safe as possible and,
 correspondingly, human resources for the ports tree are somewhat lacking.
@@ -112,7 +113,8 @@ Bear in mind that the package database is normally stored in /var/db/pkg,
 which is usually not shared across machines.
 .Pp
 Always installing packages on the same machine, and exporting /usr/local
-to other machines should mostly work.  In such a case, always run
+to other machines should mostly work.
+In such a case, always run
 .Xr pkg_add 1
 in
 .Qq "verbose, don't actually install the package"

@@ -1,4 +1,4 @@
-.\"     $OpenBSD: dhcp.8,v 1.8 2001/10/04 10:28:20 wilfried Exp $
+.\"     $OpenBSD: dhcp.8,v 1.9 2001/10/05 14:45:54 mpech Exp $
 .\"
 .Dd July 8, 1999
 .Dt DHCP 8
@@ -11,9 +11,9 @@ for DHCP
 .Sh DESCRIPTION
 The Dynamic Host Configuration Protocol (DHCP) allows hosts on a TCP/IP network
 to configure one or more network interfaces based on information collected from
-a DHCP server in response to a DHCP request. This mechanism is often used, for
-example, by cable modem and DSL network providers to simplify network
-configurations for their clients/customers.
+a DHCP server in response to a DHCP request.
+This mechanism is often used, for example, by cable modem and DSL network
+providers to simplify network configurations for their clients/customers.
 .Pp
 Information typically contained within a DHCP response includes an IP
 address for the interface, subnet mask, broadcast address, router (gateway)
@@ -29,7 +29,8 @@ For each interface that is to be configured via DHCP, create a
 file (where XXX is the interface's identifier, e.g., ep1) that starts with
 the word
 .Dq dhcp ,
-optionally followed by additional interface options. See
+optionally followed by additional interface options.
+See
 .Xr hostname.if 5
 for more information on the format of these files.
 .Pp
@@ -57,7 +58,8 @@ as a DHCP server:
 .It
 Edit
 .Pa /etc/dhcpd.conf .
-This file is shipped with the system. See
+This file is shipped with the system.
+See
 .Xr dhcpd.conf 5
 and
 .Xr dhcpd 8
@@ -68,8 +70,8 @@ Edit
 This file should contain a list of interfaces you wish to serve by
 .Xr dhcpd 8 .
 If you have only one broadcast network interface or you wish to serve all
-interfaces, this step is not required. Be sure to leave this file empty (or
-even delete it) if this is the case.
+interfaces, this step is not required.
+Be sure to leave this file empty (or even delete it) if this is the case.
 .It
 Edit
 .Pa /etc/rc.conf
@@ -79,8 +81,8 @@ This will cause
 .Ox
 to start the
 .Xr dhcpd 8
-daemon at boot-time and listen for DHCP requests on the local network. To
-start it manually, execute the following commands:
+daemon at boot-time and listen for DHCP requests on the local network.
+To start it manually, execute the following commands:
 .Pp
 .Dl # touch /var/db/dhcpd.leases
 .Dl # /usr/sbin/dhcpd -q [netif1 netif2 ...]

@@ -1,4 +1,4 @@
-.\" $OpenBSD: midi.4,v 1.6 2001/09/06 15:04:34 mpech Exp $
+.\" $OpenBSD: midi.4,v 1.7 2001/10/05 14:45:53 mpech Exp $
 .\" $NetBSD: midi.4,v 1.4 1998/08/22 14:45:35 augustss Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -55,9 +55,10 @@ The
 .Nm
 driver provides support for various MIDI peripherals.
 It provides a uniform programming interface layer above different
-underlying MIDI hardware drivers.  The MIDI hardware can be of many
-different kinds, e.g., an external synthesizer on a MIDI port (or a serial port),
-the PC speaker, an internal FM synth, or a wavetable synth.
+underlying MIDI hardware drivers.
+The MIDI hardware can be of many different kinds, e.g., an external
+synthesizer on a MIDI port (or a serial port), the PC speaker, an
+internal FM synth, or a wavetable synth.
 .Pp
 There are two device file types available for MIDI operation:
 .Pa /dev/rmidiN ,
@@ -65,25 +66,28 @@ and
 .Pa /dev/music .
 The
 .Pa /dev/rmidiN
-devices provides raw access to a MIDI device.  Data written is sent
-to the physical device as fast as possible and is uninterpreted.
+devices provides raw access to a MIDI device.
+Data written is sent to the physical device as fast as possible and
+is uninterpreted. 
 Reading from the device returns data as soon as it becomes available.
 A moderate amount of buffering is available both for reading and writing.
 The raw MIDI devices are mostly useful for non realtime operations, such as
 downloading patches to a device, since it is hard to get the accurate timing
-needed for quality music from a user program.  But the devices can act as
-a simple patchboard for MIDI devices.  For example, a MIDI keyboard could
-be connected to a synthesizer by the command
+needed for quality music from a user program.
+But the devices can act as a simple patchboard for MIDI devices.
+For example, a MIDI keyboard could be connected to a synthesizer by
+the command
 .Pp
 .Cd "cat -u /dev/rmidi1 >/dev/rmidi2"
 .Pp
 The
 .Pa /dev/music
-device is a MIDI sequencer device.  Data sent to and from this device
-not only contains the information sent to the MIDI device, but also
-timing information.  The kernel will make sure that data is sent
-to the physical device at the indicated time.  The sequencer device
-uses the
+device is a MIDI sequencer device.
+Data sent to and from this device not only contains the information sent to the
+MIDI device, but also timing information.
+The kernel will make sure that data is sent to the physical device at the
+indicated time.
+The sequencer device uses the
 .Pa /dev/midiN
 devices internally and they are unavailable when used by the sequencer.
 .Pp

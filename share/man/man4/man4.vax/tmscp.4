@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tmscp.4,v 1.6 1999/07/09 13:35:40 aaron Exp $
+.\"	$OpenBSD: tmscp.4,v 1.7 2001/10/05 14:45:54 mpech Exp $
 .\"	$NetBSD: tmscp.4,v 1.4 1996/03/03 17:14:06 thorpej Exp $
 .\"
 .\" Copyright (c) 1986, 1991 Regents of the University of California.
@@ -81,15 +81,18 @@ driver state are printed.
 An unexpected interrupt was received (e.g. when no
 .Tn I/O
 was
-pending).  The interrupt is ignored.
+pending).
+The interrupt is ignored.
 .Pp
 .It tmscp%d:  interrupt in unknown state %d ignored.
 An interrupt was received when the driver was in an unknown
-internal state.  Indicates a hardware problem or a driver bug.
+internal state.
+Indicates a hardware problem or a driver bug.
 .Pp
 .It tmscp%d:  fatal error (0%o).
 The controller detected a ``fatal error'' in the status returned
-to the host.  The contents of the status register are displayed.
+to the host.
+The contents of the status register are displayed.
 .Pp
 .It OFFLINE.
 (Additional status information given after a hard

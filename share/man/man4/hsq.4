@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hsq.4,v 1.8 2001/06/26 02:09:07 pjanzen Exp $
+.\"	$OpenBSD: hsq.4,v 1.9 2001/10/05 14:45:53 mpech Exp $
 .\"	from: OpenBSD: ast.4,v 1.5 1999/07/09 13:35:43 aaron Exp
 .\"	from: NetBSD: ast.4,v 1.7 1996/03/16 00:07:07 thorpej Exp
 .\"
@@ -64,11 +64,13 @@ Each
 .Nm
 device is the master device for up to four
 .Nm pccom
-devices.  The kernel configuration specifies these
+devices.
+The kernel configuration specifies these
 .Nm pccom
 devices as slave devices of the
 .Nm
-device, as shown in the synopsis.  The slave ID given for each
+device, as shown in the synopsis.
+The slave ID given for each
 .Nm pccom
 device determines which bit in the interrupt multiplexing register is
 tested to find interrupts for that device.
@@ -83,7 +85,8 @@ subdevices (they are equal to
 + ID * 8) and the port for the interrupt multiplexing register
 (it is equal to
 .Tn port
-+ 7). More technical details on how the driver works can be found in
++ 7).
+More technical details on how the driver works can be found in
 the big comment at the beginning of the driver's source code.
 .Pp
 Information on setup of card's configuration switches should be taken

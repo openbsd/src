@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcx.4,v 1.8 2001/06/23 07:04:21 pjanzen Exp $
+.\"	$OpenBSD: tcx.4,v 1.9 2001/10/05 14:45:54 mpech Exp $
 .\"	$NetBSD: tcx.4,v 1.3 1997/10/08 22:00:14 jtc Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -47,11 +47,12 @@
 The
 .Nm tcx
 is a memory based color frame buffer, with graphics acceleration and
-overlay capabilities. Its control registers, colour lookup table and
-pixel memory can be mapped into a user process address space by using
-the
+overlay capabilities.
+Its control registers, colour lookup table and pixel memory can be mapped
+into a user process address space by using the
 .Xr mmap 2
-system call. The
+system call.
+The
 .Nm
 driver supports the minimal
 .Xr ioctl 2 Ns s

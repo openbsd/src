@@ -1,4 +1,4 @@
-.\"	$OpenBSD: qn.4,v 1.8 2001/01/29 02:11:09 niklas Exp $
+.\"	$OpenBSD: qn.4,v 1.9 2001/10/05 14:45:53 mpech Exp $
 .\"
 .\"
 .\" Copyright (c) 1995 Mika Kortelainen. All rights reserved.
@@ -78,9 +78,11 @@ interface supports the following Zorro II expansion cards:
 Resource Management Force's ethernet card, manufacturer\ 2011, product\ 2
 .El
 .Sh NOTES
-Multicasting not done yet. If the driver happens to lock up, you may use
+Multicasting not done yet.
+If the driver happens to lock up, you may use
 .Xr ifconfig
-to force the driver down and up again. This usually helps.
+to force the driver down and up again.
+This usually helps.
 .Sh HISTORY
 The
 .Nm

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tb.4,v 1.4 2000/12/21 21:01:20 aaron Exp $
+.\"	$OpenBSD: tb.4,v 1.5 2001/10/05 14:45:53 mpech Exp $
 .\"	$NetBSD: tb.4,v 1.3.6.1 1996/05/31 00:37:45 cgd Exp $
 .\"
 .\" Copyright (c) 1986, 1991 Regents of the University of California.
@@ -64,12 +64,13 @@ Y positions (in the device coordinate space),
 up-down status of the buttons or pen stylus,
 proximity information (when available), and a count
 of the number of samples received from the input device
-since it was opened.  In addition, devices such as the
+since it was opened.
+In addition, devices such as the
 .Tn GTCO
 append tilt and pressure information to the end of
-the aforementioned structure.  For the Polhemus 3-D digitizer
-the structure read is completely different. Refer to the
-include file for a complete description.
+the aforementioned structure.
+For the Polhemus 3-D digitizer the structure read is completely different.
+Refer to the include file for a complete description.
 .Pp
 While in tablet mode, normal teletype input and output functions take place.
 Thus, if an 8 bit output data path is desired, it is necessary

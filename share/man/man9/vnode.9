@@ -15,12 +15,12 @@ are dispatched through function pointers.
 .Pp
 In addition, the VFS has functions for maintaining a pool of vnodes,
 associating vnodes with mount points, and associating vnodes with buffers.
-The individual file systems cannot override these functions. As such,
-individual file systems cannot allocate their own vnodes.
+The individual file systems cannot override these functions.
+As such, individual file systems cannot allocate their own vnodes.
 .Pp
 In general, the contents of a struct vnode should not be examined or
-modified by the users of vnode methods. There are some rather common
-exceptions detailed later in this document.
+modified by the users of vnode methods.
+There are some rather common exceptions detailed later in this document.
 .Pp
 The vast majority of the vnode functions CANNOT be called from interrupt
 context.
@@ -29,11 +29,13 @@ All the vnodes in the kernel are allocated out of a shared pool.
 The
 .Xr getnewvnode 9 
 system call returns a fresh vnode from the vnode
-pool. The vnode returned has a reference count (v_usecount) of 1.
+pool.
+The vnode returned has a reference count (v_usecount) of 1.
 .Pp
 The 
 .Xr vref 9 
-call increments the reference count on the vnode. The
+call increments the reference count on the vnode.
+The
 .Xr vrele 9
 and 
 .Xr vput 9 
@@ -51,22 +53,25 @@ method to inform the file system that the reference count has reached zero.
 When placed in the pool of free vnodes, the vnode is not otherwise altered.
 In fact, it can often be retrieved before it is reassigned to a different file.
 This is useful when the system closes a file and opens it again in rapid
-succession. The 
+succession.
+The 
 .Xr vget 9 
-call is used to revive the vnode. Note, callers should ensure the vnode
+call is used to revive the vnode.
+Note, callers should ensure the vnode
 they get back has not been reassigned to a different file.
 .Pp
 When the vnode pool decides to reclaim the vnode to satisfy a getnewvnode
 request, it calls the 
 .Xr vop_reclaim 9 
-method. File systems
-often use this method to free any file-system specific data they
+method.
+File systems often use this method to free any file-system specific data they
 attach to the vnode.
 .Pp
 A file system can force a vnode with a reference count of zero 
 to be reclaimed earlier by calling the
 .Xr vrecycle 9
-call. The
+call.
+The
 .Xr vrecycle 9
 call is a null operation if the reference count is greater than zero.
 .Pp
@@ -75,28 +80,30 @@ The
 and 
 .Xr vgonel 9 
 calls will force the pool to reclaim
-the vnode even if it has a non-zero reference count. If the vnode had
-a non-zero reference count, the vnode is then assigned an operations
-vector corresponding to the "dead" file system. In this operations
-vector, most operations return errors.
+the vnode even if it has a non-zero reference count.
+If the vnode had a non-zero reference count, the vnode is then assigned
+an operations vector corresponding to the "dead" file system.
+In this operations vector, most operations return errors.
 .Ss Vnode locks 
 Note to beginners: locks don't actually prevent memory from being read
-or overwritten. Instead, they are an object that, where used, allows
-only one piece of code to proceed through the locked section.  If you
-do not surround a stretch of code with a lock, it can and probably
+or overwritten.
+Instead, they are an object that, where used, allows only one piece of code
+to proceed through the locked section.
+If you do not surround a stretch of code with a lock, it can and probably
 will eventually be executed simultaneously with other stretches of code
-(including stretches ). Chances are the results will be unexpected and
-disappointing to both the user and you.
+(including stretches ).
+Chances are the results will be unexpected and disappointing to both the
+user and you.
 .Pp
 The vnode actually has three different types of lock: the vnode lock,
 the vnode interlock, and the vnode reclamation lock (VXLOCK).
 .Ss The vnode lock
-The most general lock is the vnode lock. This lock is acquired by
-calling 
+The most general lock is the vnode lock.
+This lock is acquired by calling 
 .Xr vn_lock 9 
 and released by calling 
-.Xr vn_unlock 9 
-. The vnode lock is used to serialize operations through the file system for
+.Xr vn_unlock 9 .
+The vnode lock is used to serialize operations through the file system for
 a given file when there are multiple concurrent requests on the same file. 
 Many file system functions require that you hold the vnode lock on entry.
 The vnode lock may be held when sleeping.
@@ -105,39 +112,42 @@ The
 .Xr revoke 2 
 and forcible unmount features in BSD UNIX allows a
 user to invalidate files and their associated vnodes at almost any
-time, even if there are active open files on it. While in a region of code
-protected by the vnode lock, the process is guaranteed that the vnode
-will not be reclaimed or invalidated.
+time, even if there are active open files on it.
+While in a region of code protected by the vnode lock, the process is
+guaranteed that the vnode will not be reclaimed or invalidated.
 .Pp
-The vnode lock is a multiple-reader or single-writer lock. An
-exclusive vnode lock may be acquired multiple times by the same
+The vnode lock is a multiple-reader or single-writer lock.
+An exclusive vnode lock may be acquired multiple times by the same
 process.
 .Pp
 The vnode lock is somewhat messy because it is used for many purposes.
 Some clients of the vnode interface use it to try to bundle a series
-of VOP_ method calls into an atomic group. Many file systems rely on
-it to prevent race conditions in updating file system specific data
-structures (as opposed to having their own locks). 
+of VOP_ method calls into an atomic group.
+Many file systems rely on it to prevent race conditions in updating file
+system specific data structures (as opposed to having their own locks). 
 .Pp
 The implementation of the vnode lock is the responsibility of the individual
-file systems.  Not all file system implement it.
+file systems.
+Not all file system implement it.
 .Pp
 To prevent deadlocks, when acquiring locks on multiple vnodes, the lock
 of parent directory must be acquired before the lock on the child directory.
 .Pp
 Interrupt handlers must not acquire vnode locks.
 .Ss Vnode interlock
-The vnode interlock (vp->v_interlock) is a spinlock. It is useful on
-multi-processor systems for acquiring a quick exclusive lock on the
-contents of the vnode. It MUST NOT be held while sleeping. (What
-fields does it cover? What about splbio/interrupt issues?)
+The vnode interlock (vp->v_interlock) is a spinlock.
+It is useful on multi-processor systems for acquiring a quick exclusive
+lock on the contents of the vnode.
+It MUST NOT be held while sleeping.
+(What fields does it cover? What about splbio/interrupt issues?)
 .Pp
 Operations on this lock are a no-op on uniprocessor systems.
 .Ss Other Vnode synchronization
 The vnode reclamation lock (VXLOCK) is used to prevent multiple
-processes from entering the vnode reclamation code. It is also used as
-a flag to indicate that reclamation is in progress. The VXWANT flag is
-set by processes that wish to woken up when reclamation is finished.
+processes from entering the vnode reclamation code.
+It is also used as a flag to indicate that reclamation is in progress.
+The VXWANT flag is set by processes that wish to woken up when reclamation
+is finished.
 .Pp
 The 
 .Xr vwaitforio 9
@@ -146,11 +156,12 @@ vnode to complete.
 .Ss Version number/capability
 The vnode capability, v_id, is a 32-bit version number on the vnode.
 Every time a vnode is reassigned to a new file, the vnode capability
-is changed. This is used by code that wish to keep pointers to vnodes
-but doesn't want to hold a reference (e.g. caches). The code keeps
-both a vnode * and a copy of the capability. The code can later compare
-the vnode's capability to its copy and see if the vnode still
-points to the same file.
+is changed.
+This is used by code that wish to keep pointers to vnodes but doesn't want
+to hold a reference (e.g., caches).
+The code keeps both a vnode * and a copy of the capability.
+The code can later compare the vnode's capability to its copy and see
+if the vnode still points to the same file.
 .Pp
 Note: for this to work, memory assigned to hold a struct vnode can
 only be used for another purpose when all pointers to it have disappeared.
@@ -158,8 +169,8 @@ Since the vnode pool has no way of knowing when all pointers have
 disappeared, it never frees memory it has allocated for vnodes.
 .Ss Vnode fields
 Most of the fields of the vnode structure should be treated as opaque
-and only manipulated through the proper APIs. This section describes
-the fields that are manipulated directly.
+and only manipulated through the proper APIs.
+This section describes the fields that are manipulated directly.
 .Pp
 The v_flag attribute contains random flags related to various functions.
 They are summarized in table ...
@@ -167,33 +178,39 @@ They are summarized in table ...
 The v_tag attribute indicates what file system the vnode belongs to.
 Very little code actually uses this attribute and its use is deprecated.
 Programmers should seriously consider using more object-oriented approaches
-(e.g. function tables). There is no safe way of defining new v_tags
-for loadable file systems. The v_tag attribute is read-only.
+(e.g. function tables).
+There is no safe way of defining new v_tags for loadable file systems.
+The v_tag attribute is read-only.
 .Pp
 The v_type attribute indicates what type of file (e.g. directory,
-regular, fifo) this vnode is. This is used by the generic code to
-ensure for various checks. For example, the 
+regular, fifo) this vnode is.
+This is used by the generic code to ensure for various checks.
+For example, the
 .Xr read 2 
 system call returns an error when a read is attempted on a directory.
 .Pp
 The v_data attribute allows a file system to attach piece of file
-system specific memory to the vnode. This contains information about
-the file that is specific to the file system.
+system specific memory to the vnode.
+This contains information about the file that is specific to
+the file system.
 .Pp
 The v_numoutput attribute indicates the number of pending synchronous
-and asynchronous writes on the vnode. It does not track the number of
-dirty buffers attached to the vnode.  The attribute is used by code
-like fsync to wait for all writes to complete before returning to the
-user. This attribute must be manipulated at splbio().
+and asynchronous writes on the vnode.
+It does not track the number of dirty buffers attached to the vnode.
+The attribute is used by code like fsync to wait for all writes
+to complete before returning to the user.
+This attribute must be manipulated at splbio().
 .Pp
 The v_writecount attribute tracks the number of write calls pending
 on the vnode.
 .Ss RULES
 The vast majority of vnode functions may not be called from interrupt
-context. The exceptions are bgetvp and brelvp. The following
-fields of the vnode are manipulated at interrupt level: v_numoutput,
-v_holdcnt, v_dirtyblkhd, v_cleanblkhd, v_bioflag, v_freelist, and
-v_synclist. Any accesses to these field should be protected by splbio,
+context.
+The exceptions are bgetvp and brelvp.
+The following fields of the vnode are manipulated at interrupt level:
+v_numoutput, v_holdcnt, v_dirtyblkhd, v_cleanblkhd, v_bioflag, v_freelist,
+and v_synclist.
+Any accesses to these field should be protected by splbio,
 unless you are certain that there is no chance an interrupt handler
 will modify them.
 .Pp
@@ -202,14 +219,9 @@ reaches zero and the vnode lock is freed.
 .Pp
 A vnode will not be reclaimed as long as the vnode lock is held.
 If the vnode reference count drops to zero while a process is holding
-the vnode lock, the vnode MAY be queued for reclamation. Increasing
-the reference count from 0 to 1 while holding the lock will most likely
-cause intermittent kernel panics.
-.Sh SEE ALSO
-
+the vnode lock, the vnode MAY be queued for reclamation.
+Increasing the reference count from 0 to 1 while holding the lock will
+most likely cause intermittent kernel panics.
 .Sh HISTORY
 This document first appeared in
-.Ox 2.9
-.
-
-
+.Ox 2.9 .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zs.4,v 1.1 2001/10/03 04:32:37 drahn Exp $
+.\"	$OpenBSD: zs.4,v 1.2 2001/10/05 14:45:54 mpech Exp $
 .\"
 .\" Copyright (c) 1998 The OpenBSD Project
 .\" All rights reserved.
@@ -44,8 +44,8 @@ The
 driver now supports cua minor devices, but with this known deficiency
 in the simultaneous outgoing/incoming aspect of the driver:
 The first outgoing connection succeeds, but second and subsequent
-connections fail, apparently due to a getty hang. The hung getty apparently
-prevents the cua device from being re-opened.
+connections fail, apparently due to a getty hang.
+The hung getty apparently prevents the cua device from being re-opened.
 .Sh FILES
 .Bl -tag -width Pa -compact
 .It Pa /dev/tty00

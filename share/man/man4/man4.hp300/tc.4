@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tc.4,v 1.5 2001/05/11 01:24:21 millert Exp $
+.\"	$OpenBSD: tc.4,v 1.6 2001/10/05 14:45:53 mpech Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -60,13 +60,14 @@ Topcat will be referred to from now on.
 .Pp
 The Topcat display cards are not user configurable.  If one is present on a
 system, it will always have a frame buffer address of 0x200000 and a control
-register address of 0x560000.  These are the
+register address of 0x560000.
+These are the
 .Tn HP
 series 300
 .Tn ITE
 (Internal
-Terminal Emulator) defaults.  The device can also be used as a graphics output
-device.
+Terminal Emulator) defaults.
+The device can also be used as a graphics output device.
 .Pp
 The
 .Xr ioctl 2
@@ -94,8 +95,9 @@ Graphics On
 .Pp
 Turn graphics on by enabling
 .Tn CRT
-output.  The screen will come on, displaying
-whatever is in the frame buffer, using whatever colormap is in place.
+output.
+The screen will come on, displaying whatever is in the frame buffer,
+using whatever colormap is in place.
 .It Dv GRFIOCOFF
 Graphics Off
 .Pp
@@ -106,9 +108,9 @@ are not affected.
 .It Dv GRFIOCMAP
 Map Device to user space
 .Pp
-Map in control registers and framebuffer space. Once the device file is
-mapped, the frame buffer structure is accessible.  The frame buffer structure
-describing Topcat/Catseye devices is defined in
+Map in control registers and framebuffer space.
+Once the device file is mapped, the frame buffer structure is accessible.
+The frame buffer structure describing Topcat/Catseye devices is defined in
 .Aq Pa hpdev/grf_tcreg.h .
 .El
 .Pp

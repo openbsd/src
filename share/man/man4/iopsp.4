@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iopsp.4,v 1.4 2001/08/20 21:43:57 mickey Exp $
+.\"	$OpenBSD: iopsp.4,v 1.5 2001/10/05 14:45:53 mpech Exp $
 .\"	$NetBSD: iopsp.4,v 1.2 2000/12/11 13:11:59 ad Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -51,19 +51,22 @@ driver provides support for I2O SCSI bus adapter ports and child
 peripherals.
 .Pp
 IOPs present each child peripheral attached to a bus adapter port as an
-individual device.  In order to present the appearance of a bus, the
+individual device.
+In order to present the appearance of a bus, the 
 .Nm
 driver groups child peripherals by controlling port.
 .Pp
 On IOPs containing a SCSI port and block or tape driver modules, some SCSI
-devices may not be directly accessible.  For each inaccessible device, a
-message will be displayed during configuration.  For example:
+devices may not be directly accessible.
+For each inaccessible device, a message will be displayed during configuration.
+For example:
 .Bd -literal
 	iopsp0: target 0,0 (tid 70): in use by tid 47
 .Ed
 .Pp
 Such devices will usually be indirectly accessible as block devices, either
-individually or as part of an array.  For accessing these, there is the
+individually or as part of an array.
+For accessing these, there is the
 .Nm ioprbs
 driver.
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: st.4,v 1.6 2001/05/11 01:24:20 millert Exp $
+.\"	$OpenBSD: st.4,v 1.7 2001/10/05 14:45:53 mpech Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -53,12 +53,12 @@ The
 driver was written especially to support the Exabyte
 .Tn EXB-8200 8MM
 Cartridge
-Tape Subsystem.  It has several extensions specific to the Exabyte,
-but should support other tape drives as long has they follow
-the
+Tape Subsystem.
+It has several extensions specific to the Exabyte, but should support other 
+tape drives as long has they follow the
 .Tn ANSI SCSI-I
-specification.  Besides extensive use with
-an Exabyte, the driver has been tested with an
+specification.
+Besides extensive use with an Exabyte, the driver has been tested with an
 Archive
 .Tn QIC-24
 tape drive.
@@ -70,8 +70,9 @@ as described in
 with the following exceptions:
 .Bl -enum
 .It
-Density is dependent on device type.  Current Exabyte hardware has
-only one density. The
+Density is dependent on device type.
+Current Exabyte hardware has only one density.
+The
 .Tn EXB-8500
 drive, when released, will have a high
 density format of
@@ -107,22 +108,24 @@ struct	mtget {
 .Ed
 .Pp
 Bit 4 in the minor device number is used
-to select long filemarks or short filemarks. A long filemark occupies
-2.12 MBytes of space on the tape, while a short filemark occupies 488 KBytes.
+to select long filemarks or short filemarks.
+A long filemark occupies 2.12 MBytes of space on the tape, while a short 
+filemark occupies 488 KBytes. 
 A long filemark includes an erase gap while the short filemark does not.
 The tape can be positioned on the
 .Tn BOT
 side of a long filemark allowing
-data to be appended with a write operation.  Since the short filemark does not
-contain an erase gap which would allow writing it is considered to be
-non-erasable.  If either type of filemark is followed by blank tape,
-data may be appended on its
+data to be appended with a write operation. 
+Since the short filemark does not contain an erase gap which would allow
+writing it is considered to be non-erasable.
+If either type of filemark is followed by blank tape, data may be appended
+on its
 .Tn EOT
 side.
 .Pp
 Bit 5 in the minor device number selects fixed block mode with a block
-size of 1K.  Variable length records are the default if bit 5 is not
-set.
+size of 1K.
+Variable length records are the default if bit 5 is not set.
 .Pp
 For unit 0 here are the effects of minor device bits 2,3,4,5. For other
 units add the
@@ -167,19 +170,20 @@ transfers.  If odd length
 is requested the driver will use the
 "Program Transfer Mode" of the Fujitsu
 .Tn MB87030
-chip. Read requests are
-normally even length for which a
+chip.
+Read requests are normally even length for which a
 .Tn DMA
 transfer is used. If, however, the
 driver detects that a odd length read has happened (when a even length
 was requested) it will issue the
 .Dv EIO
 error and the last byte of the read
-data will be 0x00. Odd length read requests must match the size of the
-requested data block on tape.
+data will be 0x00. 
+Odd length read requests must match the size of the requested data block
+on tape.
 .Pp
-The following only applies when using long filemarks. Short filemarks can
-not be overwritten.
+The following only applies when using long filemarks.
+Short filemarks can not be overwritten.
 .Bd -filled -offset 4n
 Due to the helical scan and the erase mechanism, there is a writing
 limitation on Exabyte drives.
@@ -188,10 +192,12 @@ or
 .Dq Li tar u
 will not work
 .Pf ( Dq Li tar c
-is ok).  One can only start writing at  1) beginning of tape, 2) on the
+is ok).
+One can only start writing at  1) beginning of tape, 2) on the
 end of what was last written, 3) "front" side of a regular (long) filemark.
-For example, you have a tape with 3 tar files. If you want to save the first 
-file, but overwrite the second two files with new data, on a normal
+For example, you have a tape with 3 tar files.
+If you want to save the first file, but overwrite the second two files with 
+new data, on a normal
 1/4" or 1/2" drive you would do:
 .Pp
 .Li "mt fsf 1; tar cf /dev/nrst0 ..."
@@ -201,29 +207,34 @@ but for an Exabyte you need to do:
 .Li "mt fsf 1; mt bsf 1; mt weof 1; tar cf /dev/nrst0 ..."
 .Pp
 The regular long filemark consists of an erased zone 3.8" long
-(needed to begin a write).  In this case, the first filemark is
-rewritten in place, which creates an erased zone
+(needed to begin a write).
+In this case, the first filemark is rewritten in place, which creates an
+erased zone
 .Em after
 it, clearing the
-way to write more on the tape.  The erase head is not helical.
+way to write more on the tape.
+The erase head is not helical.
 .Pp
 One can position a tape to the end of what was last written by reading
 until a
 .Tn \*qBLANK CHECK\*q
-error is returned.  Writing can be started at this
-point.  (This applies to both long and short filemarks.)  The tape does
-not become positioned somewhere down the "erased" area as does a
-conventional magtape.  One can issue multiple reads at the
+error is returned.
+Writing can be started at this point.
+(This applies to both long and short filemarks.) 
+The tape does not become positioned somewhere down the "erased" area as 
+does a conventional magtape.
+One can issue multiple reads at the
 .Tn \*qBLANK CHECK\*q
 error, but the Exabyte stays positioned at the beginning of the
-blank area, ready to accept write commands.  File skip operations do
-not stop at blank tape and will run into old data or run to the end of
-the tape, so you have to be careful not to
+blank area, ready to accept write commands.
+File skip operations do not stop at blank tape and will run into old data
+or run to the end of the tape, so you have to be careful not to
 .Dq Li mt fsf too_many .
 .Ed
 .Pp
 Archive support gets confused if asked to moved more filemarks than there are
 on the tape.
 .Pp
-This man page needs some work.  Some of these are not really bugs,
-just unavoidable consequences of the hardware.
+This man page needs some work.
+Some of these are not really bugs, just unavoidable consequences of the
+hardware.

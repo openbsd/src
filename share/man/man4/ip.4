@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ip.4,v 1.16 2001/10/04 16:56:51 mpech Exp $
+.\"	$OpenBSD: ip.4,v 1.17 2001/10/05 14:45:53 mpech Exp $
 .\"	$NetBSD: ip.4,v 1.3 1994/11/30 16:22:19 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -102,7 +102,8 @@ header for
 .Dv SOCK_STREAM
 and
 .Dv SOCK_DGRAM
-sockets. For example,
+sockets.
+For example,
 .Bd -literal
 int tos = IPTOS_LOWDELAY;       /* see <netinet/in.h> */
 setsockopt(s, IPPROTO_IP, IP_TOS, &tos, sizeof(tos));
@@ -136,7 +137,8 @@ cmsg_type = IP_RECVDSTADDR
 .Pp
 The IP_PORTRANGE
 option causes the default allocation policy for when the kernel is asked
-to choose a free port number.  Three choices are available:
+to choose a free port number.
+Three choices are available:
 .Bl -tag -width IP_PORTRANGE_DEFAULT
 .It IP_PORTRANGE_DEFAULT
 The regular range of non-reserved ports.
@@ -170,7 +172,8 @@ Datagrams with a TTL of 1 are not forwarded beyond the local network.
 Multicast datagrams with a TTL of 0 will not be transmitted on any network,
 but may be delivered locally if the sending host belongs to the destination
 group and if multicast loopback has not been disabled on the sending socket
-(see below).  Multicast datagrams with TTL greater than 1 may be forwarded
+(see below).
+Multicast datagrams with TTL greater than 1 may be forwarded
 to other networks if a multicast router is attached to the local network.
 .Pp
 For hosts with multiple interfaces, each multicast transmission is
@@ -212,18 +215,20 @@ setsockopt(s, IPPROTO_IP, IP_MULTICAST_LOOP, &loop, sizeof(loop));
 This option
 improves performance for applications that may have no more than one
 instance on a single host (such as a router daemon), by eliminating
-the overhead of receiving their own transmissions.  It should generally not
+the overhead of receiving their own transmissions.
+It should generally not
 be used by applications for which there may be more than one instance on a
 single host (such as a conferencing program) or for which the sender does
 not belong to the destination group (such as a time querying program).
 .Pp
 A multicast datagram sent with an initial TTL greater than 1 may be delivered
 to the sending host on a different interface from that on which it was sent,
-if the host belongs to the destination group on that other interface.  The
-loopback control option has no effect on such delivery.
+if the host belongs to the destination group on that other interface.
+The loopback control option has no effect on such delivery.
 .Pp
 A host must become a member of a multicast group before it can receive
-datagrams sent to the group.  To join a multicast group, use the
+datagrams sent to the group.
+To join a multicast group, use the
 .Dv IP_ADD_MEMBERSHIP
 option:
 .Bd -literal

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cy.4,v 1.6 2001/08/20 06:09:32 mpech Exp $
+.\"	$OpenBSD: cy.4,v 1.7 2001/10/05 14:45:53 mpech Exp $
 .\"
 .\" Copyright (c) 1993 Andrew Herbert.
 .\" All rights reserved.
@@ -37,8 +37,8 @@
 .Cd "cy1 at pci?"
 .Sh DESCRIPTION
 This driver provides an interface to Cyclades Cyclom-4Y, Cyclom-8Y and
-Cyclom-16Y asynchronous multiport serial boards.  These boards are based
-around Cirrus Logic CD1400 communication controllers.
+Cyclom-16Y asynchronous multiport serial boards.
+These boards are based around Cirrus Logic CD1400 communication controllers.
 .Pp
 The device minor numbers for this driver are encoded as follows:
 .Pp
@@ -62,17 +62,17 @@ The device minor numbers for this driver are encoded as follows:
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "cy%d: tty input queue overflow"
-Incoming characters have been discarded due to a buffer overflow.  This is
-caused by the process in control of the device not read(2)ing characters
+Incoming characters have been discarded due to a buffer overflow.
+This is caused by the process in control of the device not reading characters
 fast enough.
 .It "cy%d: receive fifo overrun"
-Incoming characters have been discarded due to a CD1400 channel overrun.  This
-is caused by interrupts not being serviced sufficiently quickly to prevent
-the 12 byte receive FIFO on a serial channel from overflowing.  Reducing
-the value of the \fIRxFifoThreshold\fR #define from 8 to something smaller may
-help slow machines avoid this problem.  The driver must have been compiled
-with the \fILogOverruns\fR option defined (the default) in order for this
-condition to be logged.
+Incoming characters have been discarded due to a CD1400 channel overrun.
+This is caused by interrupts not being serviced sufficiently quickly to prevent
+the 12 byte receive FIFO on a serial channel from overflowing.
+Reducing the value of the \fIRxFifoThreshold\fR #define from 8 to something 
+smaller may help slow machines avoid this problem.
+The driver must have been compiled with the \fILogOverruns\fR option defined
+(the default) in order for this condition to be logged.
 .El
 .Sh SEE ALSO
 .Xr com 4 ,
@@ -88,8 +88,9 @@ were derived from the fas 2.10 driver by Uwe Doering
 Evans <bde@kralizec.zeta.org.au>.
 .Pp
 This work was made possible through the donation of a Cyclom-8Y board by the
-manufacturer, Cyclades Corporation.  However, neither Cyclades nor the author
-make any warranties regarding this software, nor guarantees of support.
+manufacturer, Cyclades Corporation.
+However, neither Cyclades nor the author make any warranties regarding this
+software, nor guarantees of support.
 .Sh BUGS
 There is currently no BREAK handling - breaks are ignored.
 There is no support for bad-character reporting, except via PARMRK.

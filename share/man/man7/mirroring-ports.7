@@ -1,4 +1,4 @@
-.\" $OpenBSD: mirroring-ports.7,v 1.5 2001/03/01 16:11:22 aaron Exp $
+.\" $OpenBSD: mirroring-ports.7,v 1.6 2001/10/05 14:45:54 mpech Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -167,21 +167,23 @@ directory.
 Changing checksums is a recurring problem that is outside the direct
 control of the
 .Ox
-Project.  Some software distributors change distribution files without
-warning, without changing the file name proper.  Once the problem has been
-identified, the port maintainer should usually contact the software author
-to fix the problem, or, if the software author is unresponsive, the
-maintainer should use
+Project.
+Some software distributors change distribution files without
+warning, without changing the file name proper.
+Once the problem has been identified, the port maintainer should usually
+contact the software author to fix the problem, or, if the software author
+is unresponsive, the maintainer should use
 .Ev DIST_SUBDIR
 to provide some state to guard against shifting checksums.
 .Pp
 However, a more robust approach is also needed, so that ports users can
 depend on distfiles mirrors to carry what they need irregardless of those
-synchronization issues.  The
+synchronization issues.
+The
 .Pa link-checksums
 script creates another access to the distfiles, indexed through the actual
-checksums that the files should match.  Provided mirroring is run
-sufficiently often, together with
+checksums that the files should match.
+Provided mirroring is run sufficiently often, together with
 .Pa link-checksums ,
 two versions of the same distfile with respective checksums cksum1 and cksum2
 will be available under the names

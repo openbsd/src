@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ugen.4,v 1.5 2001/08/03 15:21:16 mpech Exp $
+.\"	$OpenBSD: ugen.4,v 1.6 2001/10/05 14:45:53 mpech Exp $
 .\"	$NetBSD: ugen.4,v 1.7 1999/07/30 01:32:05 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -47,16 +47,18 @@
 The
 .Nm
 driver provides support for all USB devices that do not have
-a special driver.  It supports access to all parts of the device,
-but not in a way that is as convenient as a special purpose driver.
+a special driver.
+It supports access to all parts of the device, but not in a way that is as
+convenient as a special purpose driver.
 .Pp
 There can be up to 127 USB devices connected to a USB bus.
-Each USB device can have up to 16 endpoints.  Each of these endpoints
-will communicate in one of four different modes: control, isochronous,
-bulk, or interrupt.  Each of the endpoints will have a different
-device node.  The four least significant bits in the minor device
-number determine which endpoint the device accesses and the rest
-of the bits determine which USB device.
+Each USB device can have up to 16 endpoints.
+Each of these endpoints will communicate in one of four different modes:
+control, isochronous, bulk, or interrupt.
+Each of the endpoints will have a different device node.
+The four least significant bits in the minor device number determine which
+endpoint the device accesses and the rest of the bits determine which
+USB device.
 .Pp
 If an endpoint address is used both for input and output the device
 can be opened for both read or write, but an
@@ -71,8 +73,8 @@ operations available for the control endpoint that return the USB descriptors
 of the device, configurations, interfaces, and endpoints.
 .Pp
 The control transfer mode can only happen on the control endpoint,
-which is always endpoint 0.  Control requests
-are issued by
+which is always endpoint 0.
+Control requests are issued by
 .Xr ioctl 2
 calls.
 .\" .Pp
@@ -90,7 +92,8 @@ calls.
 .\" about 1 second of data.
 .Pp
 The bulk transfer mode can be in or out depending on the
-endpoint.  To perform I/O on a bulk endpoint
+endpoint.
+To perform I/O on a bulk endpoint
 .Xr read 2
 and
 .Xr write 2
@@ -100,8 +103,8 @@ All I/O operations on a bulk endpoint are unbuffered.
 The interrupt transfer mode can only be in.
 To perform input from an interrupt endpoint
 .Xr read 2
-should be used.  A moderate amount of buffering is done
-by the driver.
+should be used.
+A moderate amount of buffering is done by the driver.
 .Pp
 The control endpoint (endpoint 0) handles the following
 .Xr ioctl 2
@@ -109,9 +112,9 @@ calls:
 .Pp
 .Bl -tag -width indent -compact
 .It Dv USB_SET_SHORT_XFER (int)
-Allow short read transfer.  Normally a transfer from the device
-which is shorter than the request specified is reported as an
-error.
+Allow short read transfer.
+Normally a transfer from the device which is shorter than the request
+specified is reported as an error.
 .Pp
 .It Dv USB_GET_CONFIG (int)
 Get the device configuration number.
@@ -205,7 +208,8 @@ The
 .Fa data
 field should point to a memory area of the size given in the
 .Fa size
-field.  The proper size can be determined by first issuing a
+field.
+The proper size can be determined by first issuing a
 .Dv USB_GET_CONFIG_DESC
 and inspecting the
 .Fa wTotalLength
@@ -239,20 +243,22 @@ struct usb_ctl_request {
 };
 .Ed
 This is a dangerous operation in that it can perform arbitrary operations
-on the device.  Some of the most dangerous (e.g., changing the device
-address) are not allowed.
+on the device.
+Some of the most dangerous (e.g., changing the device address) are not
+allowed.
 .Pp
 .It Dv USB_GET_DEVICEINFO (struct usb_device_info)
-Get an information summary for the device.  This call will not
-issue any USB transactions.
+Get an information summary for the device.
+This call will not issue any USB transactions.
 .El
 .Pp
 Note that there are two different ways of addressing configurations, interfaces,
 alternatives, and endpoints: by index or by number.
 The index is the ordinal number (starting from 0) of the descriptor
-as presented by the device.  The number is the respective number of
-the entity as found in its descriptor.  Enumeration of descriptors
-use the index, getting and setting typically uses numbers.
+as presented by the device.
+The number is the respective number of the entity as found in its descriptor.
+Enumeration of descriptors use the index, getting and setting typically uses
+numbers.
 .Pp
 Example:
 All endpoints (except the control endpoint) for the current configuration

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cons.4,v 1.6 2001/10/04 16:56:51 mpech Exp $
+.\"	$OpenBSD: cons.4,v 1.7 2001/10/05 14:45:54 mpech Exp $
 .\"
 .\" Copyright (c) 1980, 1991 Regents of the University of California.
 .\" All rights reserved.
@@ -43,8 +43,10 @@
 The console is available to the processor through the console registers.
 It acts like a normal terminal, except that when the local functions are
 not disabled, a special command character puts the console in local console
-mode.  The character itself is dependent upon the model of VAX and the
-type of console in use.  The prompt in console mode is
+mode.
+The character itself is dependent upon the model of VAX and the type
+of console in use.
+The prompt in console mode is
 .Sq Li >>> ,
 also called the
 .Sq chevron
@@ -133,9 +135,9 @@ Halt the processor if in normal mode.
 .El
 .Ss VAX 4000, MicroVAX, VAXstation, others
 If the console is a serial console, sending a break will likely cause the
-machine to halt and enter console mode. The set of commands available at
-the console varies from machine to machine, although there are several
-commands which are common to most or all models.
+machine to halt and enter console mode.
+The set of commands available at the console varies from machine to machine,
+although there are several commands which are common to most or all models.
 .Bl -tag -width continue -compact -offset 4n
 .It Ic c
 .It Ic continue
@@ -165,10 +167,10 @@ The options are:
 .Bl -tag -width 5n -compact
 .It Cm /bwl
 .It Cm /ins
-Size of data to examine.  Your choices are examining values as bytes (8 bits),
-words (16 bits), or longwords (32 bits).  On systems that support it, you
-can use
-the
+Size of data to examine.
+Your choices are examining values as bytes (8 bits), words (16 bits),
+or longwords (32 bits).
+On systems that support it, you can use the
 .Cm /ins
 option to display the mnemonic representation of the instruction located at
 .Ar addr .
@@ -180,19 +182,21 @@ With the
 .Cm /p
 option,
 .Ar addr
-will be treated as an address in physical memory.  With the
+will be treated as an address in physical memory.
+With the
 .Cm /v
 option,
 .Ar addr
-will be treated as a virtual address.  The
+will be treated as a virtual address.
+The
 .Cm /g
 option will let you examine the general registers.
 From 0 to F (base 16), general registers are R0-R12(AP), FP, SP, and PC.
 The
 .Cm /i
-option will let you view the internal processor registers.  These vary
-from processor to processor, but a relatively complete description may be
-found in
+option will let you view the internal processor registers.
+These vary from processor to processor, but a relatively complete description
+may be found in
 .Pa /usr/include/vax/mtpr.h .
 .Pp
 .It Cm /n: Ns Ar count
@@ -224,8 +228,9 @@ The options are:
 .Pp
 .Bl -tag -width 5n -compact
 .It Cm /bwl
-Size of data to insert.  Your choices are inserting values as bytes (8 bits),
-words (16 bits), or longwords (32 bits).
+Size of data to insert.
+Your choices are inserting values as bytes (8 bits), words (16 bits),
+or longwords (32 bits).
 .Pp
 .It Cm /pvgi
 These options describe the meaning of
