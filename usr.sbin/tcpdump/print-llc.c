@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-llc.c,v 1.10 2000/10/19 16:31:42 jason Exp $	*/
+/*	$OpenBSD: print-llc.c,v 1.11 2000/12/07 22:36:45 mickey Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-llc.c,v 1.10 2000/10/19 16:31:42 jason Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-llc.c,v 1.11 2000/12/07 22:36:45 mickey Exp $";
 #endif
 
 #include <sys/param.h>
@@ -68,6 +68,7 @@ llc_print(const u_char *p, u_int length, u_int caplen,
 {
 	struct llc llc;
 	register u_short et;
+	u_short control;
 	register int ret;
 
 	if (caplen < 3) {
@@ -136,6 +137,42 @@ llc_print(const u_char *p, u_int length, u_int caplen,
 		return (1);
 	}
 
+	if (llc.ssap == 0xf0 && llc.dsap == 0xf0) {
+		/*
+		 * we don't actually have a full netbeui parser yet, but the
+		 * smb parser can handle many smb-in-netbeui packets, which
+		 * is very useful, so we call that
+		 */
+
+		/*
+		 * Skip the DSAP and LSAP.
+		 */
+		p += 2;
+		length -= 2;
+		caplen -= 2;
+
+		/*
+		 * OK, what type of LLC frame is this?  The length
+		 * of the control field depends on that - S or I
+		 * frames have a two-byte control field, and U frames
+		 * have a one-byte control field.
+		 */
+		if ((llc.llcu & LLC_U_FMT) == LLC_U_FMT) {
+			control = llc.llcu;
+			p += 1;
+			length -= 1;
+			caplen -= 1;
+		} else {
+			control = llc.llcis;
+			p += 2;
+			length -= 2;
+			caplen -= 2;
+		}
+
+		netbeui_print(control, p, p + min(caplen, length));
+		return (1);
+	}
+
 	if ((llc.ssap & ~LLC_GSAP) == llc.dsap) {
 		if (eflag)
 			(void)printf("%s ", llcsap_string(llc.dsap));
@@ -187,6 +224,15 @@ llc_print(const u_char *p, u_int length, u_int caplen,
 			caplen -= 3;
 		    }
 		}
+
+		if (!strcmp(m,"ui") && f=='C') {
+			/*
+			 * we don't have a proper ipx decoder yet, but there
+			 * is a partial one in the smb code
+			 */
+			ipx_netbios_print(p,p+min(caplen,length));
+		}
+
 	} else {
 		char f;
 		llc.llcis = ntohs(llc.llcis);
