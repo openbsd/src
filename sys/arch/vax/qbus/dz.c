@@ -1,4 +1,4 @@
-/*	$OpenBSD: dz.c,v 1.8 2002/02/15 20:45:30 nordin Exp $	*/
+/*	$OpenBSD: dz.c,v 1.9 2003/04/02 23:45:29 jason Exp $	*/
 /*	$NetBSD: dz.c,v 1.23 2000/06/04 02:14:12 matt Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -113,6 +113,7 @@ static	void	dzstart(struct tty *);
 static	int	dzparam(struct tty *, struct termios *);
 static	unsigned	dzmctl(struct dz_softc *, int, int, int);
 static	void	dzscan(void *);
+static	void	dzdrain(struct dz_softc *);
 
 struct	cfdriver dz_cd = {
 	NULL, "dz", DV_TTY
@@ -140,6 +141,7 @@ dzattach(struct dz_softc *sc)
 
 	sc->sc_dr.dr_tcrw = sc->sc_dr.dr_tcr;
 	DZ_WRITE_WORD(dr_csr, DZ_CSR_MSE | DZ_CSR_RXIE | DZ_CSR_TXIE);
+	dzdrain(sc);
 	DZ_WRITE_BYTE(dr_dtr, 0);
 	DZ_WRITE_BYTE(dr_break, 0);
 
@@ -296,6 +298,9 @@ dzopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	sc = dz_cd.cd_devs[unit];
 
+	if (sc->sc_openings++ == 0)
+		dzdrain(sc);
+
 	if (line >= sc->sc_type)
 		return ENXIO;
 
@@ -359,6 +364,7 @@ dzclose(dev_t dev, int flag, int mode, struct proc *p)
 	if ((tp->t_cflag & HUPCL) || !(tp->t_state & TS_ISOPEN))
 		(void) dzmctl(sc, line, 0, DMSET);
 
+	sc->sc_openings--;
 	return (ttyclose(tp));
 }
 
@@ -720,4 +726,13 @@ dzreset(struct device *dev)
 		tp->t_state &= ~TS_BUSY;
 		dzstart(tp);    /* Kick off transmitter again */
 	}
+}
+
+/*
+ * Drain RX fifo.
+ */
+static void
+dzdrain(struct dz_softc *sc) {
+	while (DZ_READ_WORD(dr_rbuf) & DZ_RBUF_DATA_VALID)
+		/*EMPTY*/;
 }
