@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.87 2004/08/10 15:59:10 ho Exp $	 */
+/* $OpenBSD: message.c,v 1.88 2004/08/17 14:48:23 hshoexer Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -892,6 +892,7 @@ message_validate_notify(struct message *msg, struct payload *p)
 	/* Validate the SPI. XXX Just ISAKMP for now.  */
 	if (proto == ISAKMP_PROTO_ISAKMP && 
 	    GET_ISAKMP_NOTIFY_SPI_SZ(p->p) == ISAKMP_HDR_COOKIES_LEN &&
+	    msg->isakmp_sa &&
 	    memcmp(p->p + ISAKMP_NOTIFY_SPI_OFF, msg->isakmp_sa->cookies,
 		ISAKMP_HDR_COOKIES_LEN) != 0) {
 		log_print("message_validate_notify: bad cookies");
