@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596.c,v 1.22 2003/10/21 18:58:49 jmc Exp $	*/
+/*	$OpenBSD: i82596.c,v 1.23 2003/12/09 11:48:14 mickey Exp $	*/
 /*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -328,7 +328,8 @@ i82596_attach(sc, name, etheraddr, media, nmedia, defmedia)
 		padbuf = malloc(ETHER_MIN_LEN - ETHER_CRC_LEN, M_DEVBUF,
 		    M_NOWAIT);
 		if (padbuf == NULL) {
-			printf("%s: can't allocate pad buffer\n");
+			printf("%s: can't allocate pad buffer\n",
+			    sc->sc_dev.dv_xname);
 			return;
 		}
 		bzero(padbuf, ETHER_MIN_LEN - ETHER_CRC_LEN);
