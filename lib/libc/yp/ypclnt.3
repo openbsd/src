@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypclnt.3,v 1.11 2000/03/14 21:31:45 aaron Exp $
+.\"	$OpenBSD: ypclnt.3,v 1.12 2000/10/18 05:12:13 aaron Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -80,8 +80,8 @@
 .Sh DESCRIPTION
 The
 .Nm ypclnt
-suite provides an interface to the YP subsystem.  For a general description
-of the YP subsystem, see
+suite provides an interface to the YP subsystem.
+For a general description of the YP subsystem, see
 .Xr yp 8 .
 .Pp
 For all functions, input values begin with
@@ -90,11 +90,12 @@ and output values begin with
 .Pa out .
 Any output values of type
 .Em char **
-should be the addresses of uninitialized character pointers.  Memory will be
-allocated by the YP client routines using
+should be the addresses of uninitialized character pointers.
+Memory will be allocated by the YP client routines using
 .Fn malloc .
 This memory can later be freed by the user if there is no additional need for
-the data stored there.  For
+the data stored there.
+For
 .Pa outkey
 and
 .Pa outval ,
@@ -111,9 +112,11 @@ All occurrences of
 .Pa indomain
 and
 .Pa inmap
-must be non-null, NUL-terminated strings.  All input strings which also have
+must be non-null, NUL-terminated strings.
+All input strings which also have
 a corresponding length parameter cannot be null unless the corresponding
-length value is zero.  Such strings need not be NUL-terminated.
+length value is zero.
+Such strings need not be NUL-terminated.
 .Pp
 All YP lookup calls (the functions
 .Fn yp_all ,
@@ -122,8 +125,8 @@ All YP lookup calls (the functions
 .Fn yp_match ,
 .Fn yp_next ,
 .Fn yp_order )
-require a YP domain name and a YP map name.  The default domain name may be
-obtained by calling
+require a YP domain name and a YP map name.
+The default domain name may be obtained by calling
 .Fn yp_get_default_domain ,
 and should thus be used before all other YP calls in a client program.
 The value it places
@@ -133,13 +136,15 @@ is suitable for use as the
 parameter to all subsequent YP calls.
 .Pp
 In order for YP lookup calls to succeed, the client process must be bound
-to a YP server process.  The client process need not explicitly bind to
-the server, as it happens automatically whenever a lookup occurs.
+to a YP server process.
+The client process need not explicitly bind to the server, as it happens
+automatically whenever a lookup occurs.
 The function
 .Fn yp_bind
 is provided for a backup strategy, e.g., a local file, when a YP server process
-is not available.  Each binding uses one socket descriptor on the client
-process, which may be explicitly freed using
+is not available.
+Each binding uses one socket descriptor on the client process, which may
+be explicitly freed using
 .Fn yp_unbind ,
 which frees all per-process and per-node resources to bind the domain and
 marks the domain unbound.
@@ -163,8 +168,8 @@ Provides the value associated with the given key.
 .It Fn yp_first
 Provides the first key-value pair from the given map in the named domain.
 .It Fn yp_next
-Provides the next key-value pair in the given map.  To obtain the second pair,
-the
+Provides the next key-value pair in the given map.
+To obtain the second pair, the
 .Pa inkey
 value should be the
 .Pa outkey
@@ -183,7 +188,8 @@ and
 .Dq next
 are particular to the
 type of YP map being accessed, and thus there is no guarantee of lexical
-order.  The only guarantees provided with
+order.
+The only guarantees provided with
 .Fn yp_first
 and
 .Fn yp_next ,
@@ -195,26 +201,28 @@ exactly once, and if the entire procedure is repeated, the order will be
 the same.
 .Pp
 If the server is heaviliy loaded or the server fails for some reason, the
-domain being used may become unbound.  If this happens, and the client process
+domain being used may become unbound.
+If this happens, and the client process
 re-binds, the retrieval rules will break: some entries may be seen twice, and
-others not at all.  For this reason, the function
+others not at all.
+For this reason, the function
 .Fn yp_all
 provides a better solution for reading all of the entries in a particular
 map.
 .It Fn yp_all
 This function provides a way to transfer an entire map from
-the server to the client process with a single request.  This transfer
-uses TCP, unlike all other functions in the
+the server to the client process with a single request.
+This transfer uses TCP, unlike all other functions in the
 .Nm ypclnt
-suite, which use UDP.  The entire transaction occurs in a single RPC
-request-response.  The third argument to this function provides a way
-to supply the name of a function to process each key-value pair in the
-map.
+suite, which use UDP.
+The entire transaction occurs in a single RPC request-response.
+The third argument to this function provides a way to supply the name
+of a function to process each key-value pair in the map.
 .Fn yp_all
 returns after the entire transaction is complete, or the
 .Pa foreach
-function decides that it does not want any more key-value pairs.  The third
-argument to
+function decides that it does not want any more key-value pairs.
+The third argument to
 .Fn yp_all
 is:
 .Bd -literal -offset indent
@@ -226,7 +234,8 @@ struct ypall_callback *incallback {
 .Pp
 The
 .Em char *data
-argument is an opaque pointer for use by the callback function.  The
+argument is an opaque pointer for use by the callback function.
+The
 .Pa foreach
 function should return non-zero when it no longer wishes to process
 key-value pairs, at which time
@@ -257,7 +266,8 @@ layer error code as described in
 .Nm <rpcsvc/ypclnt.h> .
 .It Fa inkey, inval
 The key and value arguments are somewhat different here than described
-above.  In this case, the memory pointed to by
+above.
+In this case, the memory pointed to by
 .Fa inkey
 and
 .Fa inval
@@ -266,7 +276,8 @@ is private to
 and is overwritten with each subsequent key-value pair; therefore, the
 .Pa foreach
 function should do something useful with the contents of that memory during
-each iteration.  If the key-value pairs are not terminated with either
+each iteration.
+If the key-value pairs are not terminated with either
 .Ql \en
 or
 .Ql \e0
@@ -276,11 +287,12 @@ function, either.
 .It Fa indata
 This is the contents of the
 .Pa incallback->data
-element of the callback structure.  It is provided as a means to share
-state between the
+element of the callback structure.
+It is provided as a means to share state between the
 .Pa foreach
-function and the user code.  Its use is completely optional: cast it to
-something useful or simply ignore it.
+function and the user code.
+Its use is completely optional: cast it to something useful or simply
+ignore it.
 .El
 .It Fn yp_order
 Returns the order number for a map.
@@ -324,10 +336,11 @@ Cannot communicate with portmap.
 .It Bq Er YPERR_RESRC
 A resource allocation failure occurred.
 .It Bq Er YPERR_RPC
-An RPC failure has occurred.  The domain has been marked unbound.
+An RPC failure has occurred.
+The domain has been marked unbound.
 .It Bq Er YPERR_VERS
-Client/server version mismatch.  If the server is running version 1
-of the YP protocol,
+Client/server version mismatch.
+If the server is running version 1 of the YP protocol,
 .Fn yp_all
 functionality does not exist.
 .It Bq Er YPERR_BIND

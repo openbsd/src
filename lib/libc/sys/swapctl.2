@@ -51,7 +51,8 @@ configuration.
 .Pp
 The
 .Fa cmd
-parameter specifies the operation to be performed.  The
+parameter specifies the operation to be performed.
+The
 .Fa arg
 and
 .Fa misc
@@ -64,7 +65,8 @@ If
 .Fa cmd
 is
 .Dv SWAP_NSWAP ,
-the current number of swap devices in the system is returned.  The
+the current number of swap devices in the system is returned.
+The
 .Fa arg
 and
 .Fa misc
@@ -76,9 +78,11 @@ is
 .Dv SWAP_STATS ,
 the current statistics for swap devices are returned in the
 .Fa arg
-parameter.  No more than
+parameter.
+No more than
 .Fa misc
-swap devices are returned.  The
+swap devices are returned.
+The
 .Fa arg
 parameter should point to an array of at least
 .Fa misc
@@ -138,8 +142,8 @@ case, except that they change the priority of a currently enabled swap device.
 .El
 .Pp
 When swapping is enabled on a block device, the first portion of the disk is
-left unused to prevent any disklable present from being overwritten.  This
-space is allocated from the swap device when the
+left unused to prevent any disklable present from being overwritten.
+This space is allocated from the swap device when the
 .Dv SWAP_ON
 command is used.
 .Sh RETURN VALUES
@@ -150,10 +154,12 @@ parameter is
 or
 .Dv SWAP_STATS ,
 .Fn swapctl
-returns the number of swap devices, if successful.  The
+returns the number of swap devices, if successful.
+The
 .Dv SWAP_NSWAP
-command is always successful.  Otherwise it returns 0 on success and \-1
-on failure, setting the global variable
+command is always successful.
+Otherwise it returns 0 on success and \-1 on failure,
+setting the global variable
 .Va errno
 to indicate the error.
 .Sh ERRORS
@@ -169,7 +175,8 @@ characters, or an entire path name exceeded
 .Dv PATH_MAX
 characters.
 .It Bq Er ENOENT
-The named device does not exist.  For the
+The named device does not exist.
+For the
 .Dv SWAP_CTL
 command, the named device is not currently enabled for swapping.
 .It Bq Er EACCES

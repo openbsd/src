@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login_cap.3,v 1.2 2000/08/20 19:05:37 millert Exp $
+.\" $OpenBSD: login_cap.3,v 1.3 2000/10/18 05:12:07 aaron Exp $
 .\" BSDI $From: login_cap.3,v 1.4 1997/11/07 16:22:27 jch Exp $
 .\"
 .Dd July 16, 1996
@@ -117,7 +117,8 @@ The
 argument refers to the type of authentication being performed.
 This is used to override the standard
 .Li auth
-entry in the database.  By convention this should be of the form "auth-type".
+entry in the database.
+By convention this should be of the form "auth-type".
 Future releases may remove the requirement for the "auth-" prefix and add
 it if it is missing.
 If
@@ -138,8 +139,8 @@ and
 .Fn login_getcaptime
 functions all query the database entry for a field named
 .Ar cap .
-If the field is found, its value is returned.  If the field is not
-found, the value specified by
+If the field is found, its value is returned.
+If the field is not found, the value specified by
 .Ar def
 is returned.
 If an error is encountered while trying to find the field,
@@ -150,7 +151,8 @@ See
 for a discussion of the various textual forms the value may take.
 The
 .Fn login_getcapbool
-function is slightly different.  It returns
+function is slightly different.
+It returns
 .Ar def
 if no capabilities were found for this class (typically meaning that
 the default class was used and the
@@ -184,7 +186,8 @@ Only the
 .Nm LOGIN_SETRESOURCES ,
 and
 .Nm LOGIN_SETUMASK
-bits are used.  (See 
+bits are used.
+(See 
 .Fn setusercontext
 below).
 It returns 0 on success and -1 on failure.
@@ -270,8 +273,8 @@ is allocated via
 when the specified capability is present and thus it is the responsibility
 of the caller to
 .Fn free
-this space.  However, if the the capability was not found or an error
-occurred and
+this space.
+However, if the the capability was not found or an error occurred and
 .Fa def
 or
 .Fa err

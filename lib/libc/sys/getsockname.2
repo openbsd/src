@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockname.2,v 1.13 2000/01/22 12:00:43 aaron Exp $
+.\"	$OpenBSD: getsockname.2,v 1.14 2000/10/18 05:12:09 aaron Exp $
 .\"	$NetBSD: getsockname.2,v 1.6 1995/10/12 15:41:00 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -77,21 +77,28 @@ takes three parameters:
 Contains the file desriptor for the socket to be looked up.
 .Pp
 .Fa name
-points to a sockaddr structure which will hold the resulting
-address information.  Normal use requires one to use a structure
-specific to the protocol family in use, such as sockaddr_in (IPv4)
-or sockaddr_in6 (IPv6), cast to a (struct sockaddr *).
+points to a
+.Li sockaddr
+structure which will hold the resulting address information.
+Normal use requires one to use a structure
+specific to the protocol family in use, such as
+.Li sockaddr_in
+(IPv4) or
+.Li sockaddr_in6
+(IPv6), cast to a (struct sockaddr *).
 .Pp
 For greater portability (such as newer protocol families) the new
-structure sockaddr_storage exists. sockaddr_storage is
-large enough to hold any of the other sockaddr_* variants.
+structure sockaddr_storage exists.
+.Li sockaddr_storage
+is large enough to hold any of the other sockaddr_* variants.
 On return, it should be cast to the correct sockaddr type,
 according to the current protocol family.
 .Pp
 .Fa namelen
 Indicates the amount of space pointed to by
 .Fa name ,
-in bytes. Upon return,
+in bytes.
+Upon return,
 .Fa namelen
 is set to the actual size of the returned address information.
 .Pp

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fhopen.2,v 1.3 2000/06/29 05:37:09 aaron Exp $
+.\"	$OpenBSD: fhopen.2,v 1.4 2000/10/18 05:12:09 aaron Exp $
 .\"	$NetBSD: fhopen.2,v 1.2 1999/12/02 21:42:36 kleink Exp $
 .\"
 .\" Copyright (c) 1999 National Aeronautics & Space Administration
@@ -62,13 +62,15 @@ opens the file referenced by
 .Fa fhp
 for reading and/or writing as specified by the argument
 .Fa flags
-and returns the file descriptor to the calling process. The
+and returns the file descriptor to the calling process.
+The
 .Fa flags
 are specified by
 .Em or Ns 'ing
 together the flags used for the
 .Xr open 2
-call. All said flags are valid except for
+call.
+All said flags are valid except for
 .Dv O_CREAT .
 .Pp
 .Fn fhstat

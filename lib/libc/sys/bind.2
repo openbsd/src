@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bind.2,v 1.9 2000/01/26 08:40:14 deraadt Exp $
+.\"	$OpenBSD: bind.2,v 1.10 2000/10/18 05:12:08 aaron Exp $
 .\"	$NetBSD: bind.2,v 1.8 1995/10/12 15:40:46 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -48,11 +48,9 @@
 .Sh DESCRIPTION
 .Fn bind
 assigns a name to an unnamed socket.
-When a socket is created
-with
+When a socket is created with
 .Xr socket 2
-it exists in a name space (address family)
-but has no name assigned.
+it exists in a name space (address family) but has no name assigned.
 .Fn bind
 requests that
 .Fa name
@@ -97,8 +95,7 @@ has inadequate permission to access it.
 .It Bq Er EFAULT
 The
 .Fa name
-parameter is not in a valid part of the user
-address space.
+parameter is not in a valid part of the user address space.
 .El
 .Pp
 The following errors are specific to binding names in the UNIX domain.

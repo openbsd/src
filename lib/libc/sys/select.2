@@ -1,4 +1,4 @@
-.\"	$OpenBSD: select.2,v 1.17 2000/04/15 02:15:24 aaron Exp $
+.\"	$OpenBSD: select.2,v 1.18 2000/10/18 05:12:11 aaron Exp $
 .\"	$NetBSD: select.2,v 1.5 1995/06/27 22:32:28 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -105,9 +105,11 @@ to the maximum number of descriptors supported by the system.
 If
 .Fa timeout
 is a non-null pointer, it specifies a maximum interval to wait for the
-selection to complete.  If
+selection to complete.
+If
 .Fa timeout
-is a null pointer, the select blocks indefinitely.  To effect a poll, the
+is a null pointer, the select blocks indefinitely.
+To effect a poll, the
 .Fa timeout
 argument should be non-null, pointing to a zero-valued timeval structure.
 .Fa timeout
@@ -126,15 +128,13 @@ may be given as null pointers if no descriptors are of interest.
 .Sh RETURN VALUES
 .Fn select
 returns the number of ready descriptors that are contained in
-the descriptor sets,
-or \-1 if an error occurred.
+the descriptor sets, or \-1 is an error occurred.
 If the time limit expires,
 .Fn select
 returns 0.
 If
 .Fn select
-returns with an error,
-including one due to an interrupted call,
+returns with an error, including one due to an interrupted call,
 the descriptor sets will be unmodified.
 .Sh ERRORS
 An error return from
@@ -154,8 +154,8 @@ One of the descriptor sets specified an invalid descriptor.
 A signal was delivered before the time limit expired and
 before any of the selected events occurred.
 .It Bq Er EINVAL
-The specified time limit is invalid.  One of its components is
-negative or too large.
+The specified time limit is invalid.
+One of its components is negative or too large.
 .El
 .Sh SEE ALSO
 .Xr accept 2 ,
@@ -189,8 +189,8 @@ system are also ready for large numbers of file descriptors.
 .Pp
 Alternatively, to be really safe, it is possible to allocate
 .Ft fd_set
-bit-arrays dynamically.  The idea is to permit a program to
-work properly even if it is
+bit-arrays dynamically.
+The idea is to permit a program to work properly even if it is
 .Xr execve 2 Ns 'd
 with 4000 file descriptors pre-allocated.
 The following illustrates the technique which is used by

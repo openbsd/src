@@ -1,4 +1,4 @@
-.\"	$OpenBSD: strptime.3,v 1.6 2000/03/04 22:19:32 aaron Exp $
+.\"	$OpenBSD: strptime.3,v 1.7 2000/10/18 05:12:12 aaron Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -55,17 +55,20 @@ using the format specified by
 .Pp
 The
 .Fa format
-string consists of zero or more directives. A directive is composed
-of either one or more whitespace as defined by
+string consists of zero or more directives.
+A directive is composed of either one or more whitespace as defined by
 .Fn isspace ,
 an ordinary character (neither `%' nor a whitespace), or a conversion
-specification. A conversion specification consists of a percent sign `%'
+specification.
+A conversion specification consists of a percent sign `%'
 followed by one or two conversion characters which specify the
-replacement required.  There must be whitespace or other
+replacement required.
+There must be whitespace or other
 non-alphanumeric characters between any two conversion specifications.
 .Pp
 The LC_TIME category defines the locale values for the conversion
-specifications.  The following conversion specifications are supported:
+specifications.
+The following conversion specifications are supported:
 .Bl -tag -width "xxxx"
 .It Cm \&%a
 the day of week, using the locale's weekday names;
@@ -150,7 +153,8 @@ the date, using the locale's date format.
 .It Cm \&%X
 the time, using the locale's time format.
 .It Cm \&%y
-the year within the current century.  When a century is not otherwise
+the year within the current century.
+When a century is not otherwise
 specified, values in the range 69-99 refer to years in the twentieth
 century (1969 to 1999 inclusive); values in the range 00-68 refer
 to years in the twenty-first century (2000 to 2068 inclusive).
@@ -158,7 +162,8 @@ Leading zeros are permitted but not required.
 .It Cm \&%Y
 the year, including the century (i.e., 1998).
 .It Cm \&%%
-A `%' is written.  No argument is converted.
+A `%' is written.
+No argument is converted.
 .El
 .Ss Modified conversion specifications
 For compatibility, certain conversion specifications can be modified
@@ -168,7 +173,8 @@ and
 .Cm O
 modifier characters to indicate that an alternative format or
 specification should be used rather than the one normally used by the
-unmodified conversion specification.  As there are currently neither
+unmodified conversion specification.
+As there are currently neither
 alternative formats nor specifications supported by the system, the
 behavior will be as if the unmodified conversion specification were
 used.
@@ -180,7 +186,8 @@ such as month and weekday names.
 If successful, the
 .Nm
 function returns a pointer to the character following the last character
-parsed.  Otherwise, a null pointer is returned.
+parsed.
+Otherwise, a null pointer is returned.
 .Sh SEE ALSO
 .Xr strftime 3
 .Sh STANDARDS

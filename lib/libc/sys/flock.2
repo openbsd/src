@@ -1,4 +1,4 @@
-.\"	$OpenBSD: flock.2,v 1.11 1999/06/29 14:09:54 aaron Exp $
+.\"	$OpenBSD: flock.2,v 1.12 2000/10/18 05:12:09 aaron Exp $
 .\"	$NetBSD: flock.2,v 1.5 1995/02/27 12:32:32 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -63,8 +63,7 @@ or
 .Dv LOCK_EX
 with the optional addition of
 .Dv LOCK_NB .
-To unlock
-an existing lock
+To unlock an existing lock
 .Dv operation
 should be
 .Dv LOCK_UN .
@@ -91,26 +90,25 @@ the appropriate lock type; this results in the previous
 lock being released and the new lock applied (possibly
 after other processes have gained and released the lock).
 .Pp
-Requesting a lock on an object that is already locked
-normally causes the caller to be blocked until the lock may be
-acquired.  If
+Requesting a lock on an object that is already locked normally causes
+the caller to be blocked until the lock may be acquired.
+If
 .Dv LOCK_NB
 is included in
 .Fa operation ,
-then this will not happen; instead the call will fail and
-the error
+then this will not happen; instead the call will fail and the error
 .Er EWOULDBLOCK
 will be returned.
 .Sh NOTES
-Locks are on files, not file descriptors.  That is, file descriptors
-duplicated through
+Locks are on files, not file descriptors.
+That is, file descriptors duplicated through
 .Xr dup 2
 or
 .Xr fork 2
 do not result in multiple instances of a lock, but rather multiple
-references to a single lock.  If a process holding a lock on a file
-forks and the child explicitly unlocks the file, the parent will
-lose its lock.
+references to a single lock.
+If a process holding a lock on a file forks and the child explicitly
+unlocks the file, the parent will lose its lock.
 .Pp
 Processes blocked awaiting a lock may be awakened by signals.
 .Sh RETURN VALUES

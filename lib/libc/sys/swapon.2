@@ -1,4 +1,4 @@
-.\"	$OpenBSD: swapon.2,v 1.8 2000/04/15 11:46:04 aaron Exp $
+.\"	$OpenBSD: swapon.2,v 1.9 2000/10/18 05:12:12 aaron Exp $
 .\"	$NetBSD: swapon.2,v 1.7 1995/02/27 12:38:21 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -48,13 +48,12 @@
 .Fn swapon
 makes the block device
 .Fa special
-available to the system for
-allocation for paging and swapping.  The names of potentially
-available devices are known to the system and defined at system
-configuration time.  The size of the swap area on
+available to the system for allocation for paging and swapping.
+The names of potentially available devices are known to the system and
+defined at system configuration time.
+The size of the swap area on
 .Fa special
-is calculated at the time the device is first made available
-for swapping.
+is calculated at the time the device is first made available for swapping.
 .Sh RETURN VALUES
 If an error has occurred, a value of \-1 is returned and
 .Va errno
@@ -85,13 +84,11 @@ is not a block device.
 .It Bq Er EBUSY
 The device specified by
 .Fa special
-has already
-been made available for swapping
+has already been made available for swapping
 .It Bq Er EINVAL
 The device configured by
 .Fa special
-was not
-configured into the system as a swap device.
+was not configured into the system as a swap device.
 .It Bq Er ENXIO
 The major device number of
 .Fa special

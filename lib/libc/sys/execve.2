@@ -1,4 +1,4 @@
-.\"	$OpenBSD: execve.2,v 1.15 2000/09/25 07:06:26 fgsch Exp $
+.\"	$OpenBSD: execve.2,v 1.16 2000/10/18 05:12:09 aaron Exp $
 .\"	$NetBSD: execve.2,v 1.9 1995/02/27 12:32:25 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -56,8 +56,9 @@ This file is either an executable object file,
 or a file of data for an interpreter.
 An executable object file consists of an identifying header,
 followed by pages of data representing the initial program (text)
-and initialized data pages.  Additional pages may be specified
-by the header to be initialized with zero data;  see
+and initialized data pages.
+Additional pages may be specified by the header to be initialized
+with zero data;  see
 .Xr a.out 5 .
 .Pp
 An interpreter file begins with a line of the form:
@@ -83,8 +84,9 @@ and the name of the originally
 file becomes the second argument;
 otherwise, the name of the originally
 .Fn execve Ap d
-file becomes the first argument.  The original arguments are shifted over to
-become the subsequent arguments.  The zeroth argument, normally the name of the
+file becomes the first argument.
+The original arguments are shifted over to become the subsequent arguments.
+The zeroth argument, normally the name of the
 .Fn execve Ap d
 file, is left unchanged.
 .Pp
@@ -93,8 +95,9 @@ The argument
 is a pointer to a null-terminated array of
 character pointers to null-terminated character strings.
 These strings construct the argument list to be made available to the new
-process.  At least one argument must be present in
-the array; by custom, the first element should be
+process.
+At least one argument must be present in the array;
+by custom, the first element should be
 the name of the executed program (for example, the last component of
 .Fa path ) .
 .Pp
@@ -126,7 +129,8 @@ many libraries make assumptions about the use of these 3 file descriptors.
 .Pp
 Signals set to be ignored in the calling process are set to be ignored in
 the
-new process. Signals which are set to be caught in the calling process image
+new process.
+Signals which are set to be caught in the calling process image
 are set to default action in the new process image.
 Blocked signals remain blocked regardless of changes to the signal action.
 The signal stack is reset to be undefined (see
@@ -265,15 +269,6 @@ During startup of an
 .Em interpreter ,
 the system file table was found to be full.
 .El
-.Sh CAVEAT
-If a program is
-.Em setuid
-to a non-superuser, but is executed when
-the real
-.Em uid
-is
-.Dq root ,
-then the program has some of the powers of a superuser as well.
 .Sh SEE ALSO
 .Xr _exit 2 ,
 .Xr fork 2 ,
@@ -285,3 +280,11 @@ The
 .Fn execve
 function call appeared in
 .Bx 4.2 .
+.Sh CAVEATS
+If a program is
+.Em setuid
+to a non-superuser, but is executed when the real
+.Em uid
+is
+.Dq root ,
+then the program has some of the powers of a superuser as well.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getpriority.2,v 1.6 2000/04/15 11:46:03 aaron Exp $
+.\"	$OpenBSD: getpriority.2,v 1.7 2000/10/18 05:12:09 aaron Exp $
 .\"	$NetBSD: getpriority.2,v 1.4 1995/02/27 12:33:15 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -49,8 +49,8 @@
 .Ft int
 .Fn setpriority "int which" "int who" "int prio"
 .Sh DESCRIPTION
-The scheduling
-priority of the process, process group, or user, as indicated by
+The scheduling priority of the process, process group, or user,
+as indicated by
 .Fa which
 and
 .Fa who
@@ -71,8 +71,7 @@ is interpreted relative to
 .Fa which
 (a process identifier for
 .Dv PRIO_PROCESS ,
-process group
-identifier for
+process group identifier for
 .Dv PRIO_PGRP ,
 and a user ID for
 .Dv PRIO_USER ) .
@@ -80,16 +79,19 @@ A zero value of
 .Fa who
 denotes the current process, process group, or user.
 .Fa prio
-is a value in the range \-20 to 20.  The default priority is 0;
+is a value in the range \-20 to 20.
+The default priority is 0;
 lower priorities cause more favorable scheduling.
 .Pp
 The
 .Fn getpriority
 call returns the highest priority (lowest numerical value)
-enjoyed by any of the specified processes.  The
+enjoyed by any of the specified processes.
+The
 .Fn setpriority
 call sets the priorities of all of the specified processes
-to the specified value.  Only the superuser may lower priorities.
+to the specified value.
+Only the superuser may lower priorities.
 .Sh RETURN VALUES
 Since
 .Fn getpriority

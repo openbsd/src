@@ -1,4 +1,4 @@
-.\"	$OpenBSD: msgsnd.2,v 1.7 1999/06/29 14:10:09 aaron Exp $
+.\"	$OpenBSD: msgsnd.2,v 1.8 2000/10/18 05:12:10 aaron Exp $
 .\"	$NetBSD: msgsnd.2,v 1.2 1997/03/27 08:20:36 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -48,8 +48,8 @@ The
 function sends a message from the message queue specified in
 .Fa msqid .
 .Fa msgp
-points to a structuer containing the message. This structure should
-consist of the following members:
+points to a structuer containing the message.
+This structure should consist of the following members:
 .Bd -literal
     long mtype;    /* message type */
     char mtext[1]; /* body of message */
@@ -77,7 +77,8 @@ If
 .Fa msgflg
 has
 .Dv IPC_NOWAIT
-mask set in it, the call will return immediately. If
+mask set in it, the call will return immediately.
+If
 .Fa msgflg
 does not have
 .Dv IPC_NOWAIT
@@ -92,7 +93,8 @@ The messag queue is removed, in which case \-1 will be returned, and
 is set to
 .Er EINVAL .
 .It
-The caller catches a signal. The call returns with
+The caller catches a signal.
+The call returns with
 .Va errno
 set to
 .Er EINTR .
@@ -115,7 +117,8 @@ is set to the pid of the calling process.
 is set to the current time.
 .El
 .Sh RETURN VALUES
-Upon successful completion, 0 is returned. Otherwise, \-1 is returned and
+Upon successful completion, 0 is returned.
+Otherwise, \-1 is returned and
 .Va errno
 is set to indicate the error.
 .Sh ERRORS

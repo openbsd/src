@@ -1,4 +1,4 @@
-.\"	$OpenBSD: msgrcv.2,v 1.8 1999/06/29 14:10:09 aaron Exp $
+.\"	$OpenBSD: msgrcv.2,v 1.9 2000/10/18 05:12:10 aaron Exp $
 .\"	$NetBSD: msgrcv.2,v 1.2 1997/03/27 08:20:37 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -67,23 +67,26 @@ has one of the following meanings:
 .Bl -bullet
 .It
 .Fa msgtyp
-is greater than 0. The first message of type
+is greater than 0.
+The first message of type
 .Fa msgtyp
 will be received.
 .It
 .Fa msgtyp
-is equal to 0. The first message on the queue will be received.
+is equal to 0.
+The first message on the queue will be received.
 .It
 .Fa msgtyp
-is less than 0. The first message of the lowest message type that is
+is less than 0.
+The first message of the lowest message type that is
 less than or equal to the absolute value of
 .Fa msgtyp
 will be received.
 .El
 .Pp
 .Fa msgsz
-specifies the maximum length of the requested message. If the received
-message has a length greater than
+specifies the maximum length of the requested message.
+If the received message has a length greater than
 .Fa msgsz
 it will be silently truncated if the
 .Dv MSG_NOERROR
@@ -99,7 +102,8 @@ depends on whether the
 .Dv IPC_NOWAIT
 flag is set in
 .Fa msgflg
-or not. If
+or not.
+If
 .Dv IPC_NOWAIT
 is set,
 .Fn msgrcv
@@ -120,7 +124,8 @@ The message queue is removed, in which case \-1 will be returned, and
 set to
 .Er EINVAL .
 .It
-A signal is received and caught. \-1 is returned, and
+A signal is received and caught.
+\-1 is returned, and
 .Va errno
 set to
 .Er EINTR .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: msgctl.2,v 1.10 2000/04/15 11:46:03 aaron Exp $
+.\"	$OpenBSD: msgctl.2,v 1.11 2000/10/18 05:12:10 aaron Exp $
 .\"	$NetBSD: msgctl.2,v 1.2 1997/03/27 08:20:35 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -124,7 +124,8 @@ or
 in the data structure associated with the message queue.
 The value of
 .Va msg_qbytes
-can only be increased by the superuser. Values for
+can only be increased by the superuser.
+Values for
 .Va msg_qbytes
 that exceed the system limit
 .Pf ( Dv MSGMNB
@@ -135,8 +136,8 @@ are silently truncated to that limit.
 .It Dv IPC_RMID
 Remove the message queue specified by
 .Fa msqid
-and destroy the data associated with it. Only the superuser or a process
-with an effective UID equal to the
+and destroy the data associated with it.
+Only the superuser or a process with an effective UID equal to the
 .Va msg_perm.cuid
 or
 .Va msg_perm.uid
@@ -162,8 +163,8 @@ effective GID can match either
 or
 .Va msg_perm.gid .
 .Sh RETURN VALUES
-Upon successful completion, a value of 0 is returned. Otherwise, \-1 is
-returned and the global variable
+Upon successful completion, a value of 0 is returned.
+Otherwise, \-1 is returned and the global variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS

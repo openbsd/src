@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rfork.2,v 1.14 1999/07/02 17:04:16 aaron Exp $
+.\"	$OpenBSD: rfork.2,v 1.15 2000/10/18 05:12:11 aaron Exp $
 .\"
 .\" This manual page is taken directly from Plan9, and modified to
 .\" describe the actual OpenBSD implementation.  Permission for
@@ -39,8 +39,8 @@ If set a new process is created; otherwise changes affect the
 current process.
 The current implementation requires this flag to always be set.
 .It Dv RFNOWAIT
-If set, the child process will be dissociated from the parent. Upon
-exit the child will not leave a status for the parent to collect.
+If set, the child process will be dissociated from the parent.
+Upon exit the child will not leave a status for the parent to collect.
 See
 .Xr wait 2 .
 .It Xo Dv RFNAMEG , Dv RFCNAMEG ,
@@ -59,10 +59,12 @@ Is mutually exclusive with
 .It Dv RFMEM
 If set, the kernel will force sharing of the entire address space.
 The child
-will then inherit all the shared segments the parent process owns. Other segment
-types will be unaffected.  Subsequent forks by the parent will then
-propagate the shared data and bss between children.  The stack segment
-is always split.  May be set only with
+will then inherit all the shared segments the parent process owns.
+Other segment types will be unaffected.
+Subsequent forks by the parent will then propagate the shared
+data and bss between children.
+The stack segment is always split.
+May be set only with
 .Dv RFPROC .
 .El
 .Pp

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigsuspend.2,v 1.6 2000/01/22 12:05:49 aaron Exp $
+.\"	$OpenBSD: sigsuspend.2,v 1.7 2000/10/18 05:12:12 aaron Exp $
 .\"	$NetBSD: sigsuspend.2,v 1.4 1995/02/27 12:37:46 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -66,8 +66,7 @@ with the previous mask returned by
 .Sh RETURN VALUES
 The
 .Fn sigsuspend
-function
-always terminates by being interrupted, returning \-1 with
+function always terminates by being interrupted, returning \-1 with
 .Va errno
 set to
 .Er EINTR .

@@ -1,4 +1,4 @@
-.\"   $OpenBSD: semop.2,v 1.8 1999/07/09 13:35:21 aaron Exp $
+.\"   $OpenBSD: semop.2,v 1.9 2000/10/18 05:12:11 aaron Exp $
 .\"	$NetBSD: semop.2,v 1.1 1995/10/16 23:49:28 jtc Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -44,13 +44,14 @@
 .Fn semop "int semid" "struct sembuf *sops" "int nsops"
 .Sh DESCRIPTION
 .Fn semop
-provides a number of atomic operations on a set of semaphores. The semaphore
-set is specified by
+provides a number of atomic operations on a set of semaphores.
+The semaphore set is specified by
 .Fa semid .
 .Fa sops
 is an array of semaphore operations,
 .Fa nsops
-is the number of operations in this array. The
+is the number of operations in this array.
+The
 .Va sembuf
 structures in the array contain the following members:
 .Bd -literal
@@ -71,23 +72,27 @@ determines the action taken in the following way:
 .Bl -bullet
 .It
 .Va sem_op
-is less than 0. The current process is blocked until the value of the
+is less than 0.
+The current process is blocked until the value of the
 semaphore is greater than or equal to the absolute value of
 .Va sem_op .
 The absolute value of
 .Va sem_op
 is then subtracted from the value of the semaphore, and the calling
-process continues. Negative values of
+process continues.
+Negative values of
 .Va sem_op
 are thus used to enter critical regions.
 .It
 .Va sem_op
-is greater than 0. Its value is added to the value of the specified
-semaphore. This is used to leave critical regions.
+is greater than 0.
+Its value is added to the value of the specified semaphore.
+This is used to leave critical regions.
 .It
 .Va sem_op
-is equal to 0. The calling process is blocked until the value of the
-specified semaphore reaches 0.
+is equal to 0.
+The calling process is blocked until the value of the specified
+semaphore reaches 0.
 .El
 .Pp
 The behavior of each operation is influenced by the flags set in
@@ -105,14 +110,14 @@ to
 .Er EAGAIN .
 .It Dv SEM_UNDO
 Keep track of the changes that this call makes to the value of a semaphore,
-so that they can be undone when the calling process terminates. This is
-useful to prevent other processes waiting on a semaphore to block forever,
-should the process that has the semaphore locked terminate in a critical
-section.
+so that they can be undone when the calling process terminates.
+This is useful to prevent other processes waiting on a semaphore to
+block forever, should the process that has the semaphore locked
+terminate in a critical section.
 .El
 .Sh RETURN VALUES
-Upon successful completion, a value of 0 is returned. Otherwise, \-1 is
-returned and the global variable
+Upon successful completion, a value of 0 is returned.
+Otherwise, \-1 is returned and the global variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
@@ -131,7 +136,8 @@ The calling process has no permission to access the specified semaphore set.
 .It Bq Er E2BIG
 The value of
 .Fa nsops
-is too big. The maximum is specified in MAX_SOPS in <sys/sem.h>
+is too big.
+The maximum is specified in MAX_SOPS in <sys/sem.h>
 .It Bq Er EFBIG
 .Va sem_num
 in one of the sem_buf structures is less than 0, or greater than the actual
@@ -158,4 +164,6 @@ In case of a removed semaphore identifier,
 .Va errno
 should be set to
 .Er EIDRM ,
-but OpenBSD does not define this error.
+but
+.Ox
+does not define this error.

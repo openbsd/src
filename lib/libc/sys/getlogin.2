@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getlogin.2,v 1.8 2000/04/15 11:46:03 aaron Exp $
+.\"	$OpenBSD: getlogin.2,v 1.9 2000/10/18 05:12:09 aaron Exp $
 .\"	$NetBSD: getlogin.2,v 1.4 1995/02/27 12:33:03 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -50,9 +50,8 @@
 .Sh DESCRIPTION
 The
 .Fn getlogin
-routine
-returns the login name of the user associated with the current session,
-as previously set by
+routine returns the login name of the user associated with the current
+session, as previously set by
 .Fn setlogin .
 The name is normally associated with a login shell
 at the time a session is created,
@@ -77,7 +76,8 @@ If the name has not been set, it returns
 .Dv NULL .
 If a call to
 .Fn setlogin
-succeeds, a value of 0 is returned.  If
+succeeds, a value of 0 is returned.
+If
 .Fn setlogin
 fails, a value of \-1 is returned and an error code is
 placed in the global location

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockopt.2,v 1.15 2000/04/15 02:15:24 aaron Exp $
+.\"	$OpenBSD: getsockopt.2,v 1.16 2000/10/18 05:12:10 aaron Exp $
 .\"	$NetBSD: getsockopt.2,v 1.7 1995/02/27 12:33:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -54,8 +54,9 @@ and
 .Fn setsockopt
 manipulate the
 .Em options
-associated with a socket.  Options may exist at multiple
-protocol levels; they are always present at the uppermost
+associated with a socket.
+Options may exist at multiple protocol levels;
+they are always present at the uppermost
 .Dq socket
 level.
 .Pp
@@ -65,10 +66,9 @@ To manipulate options at the socket level,
 .Fa level
 is specified as
 .Dv SOL_SOCKET .
-To manipulate options at any
-other level the protocol number of the appropriate protocol
-controlling the option is supplied.  For example,
-to indicate that an option is to be interpreted by the
+To manipulate options at any other level the protocol number of the
+appropriate protocol controlling the option is supplied.
+For example, to indicate that an option is to be interpreted by the
 .Tn TCP
 protocol,
 .Fa level
@@ -86,15 +86,15 @@ are used to access option values for
 For
 .Fn getsockopt
 they identify a buffer in which the value for the
-requested option(s) are to be returned.  For
+requested option(s) are to be returned.
+For
 .Fn getsockopt ,
 .Fa optlen
 is a value-result parameter, initially containing the
 size of the buffer pointed to by
 .Fa optval ,
-and modified on return to indicate the actual size of
-the value returned.  If no option value is
-to be supplied or returned,
+and modified on return to indicate the actual size of the value returned.
+If no option value is to be supplied or returned,
 .Fa optval
 may be
 .Dv NULL .
@@ -104,12 +104,9 @@ and any specified options are passed uninterpreted to the appropriate
 protocol module for interpretation.
 The include file
 .Ao Pa sys/socket.h Ac
-contains definitions for
-socket level options, described below.
-Options at other protocol levels vary in format and
-name; consult the appropriate entries in
-section
-4 of the manual.
+contains definitions for socket level options, described below.
+Options at other protocol levels vary in format and name;
+consult the appropriate entries in section 4 of the manual.
 .Pp
 Most socket-level options utilize an
 .Li int
@@ -132,7 +129,7 @@ and
 use a
 .Li struct timeval
 parameter, defined in
-.Ao Pa sys/time.h Ac .
+.Aq Pa sys/time.h .
 .Pp
 The following options are recognized at the socket level.
 Except as noted, each may be examined with
@@ -161,29 +158,26 @@ and set with
 .Dv SO_DEBUG
 enables debugging in the underlying protocol modules.
 .Dv SO_REUSEADDR
-indicates that the rules used in validating addresses supplied
-in a
+indicates that the rules used in validating addresses supplied in a
 .Xr bind 2
 call should allow reuse of local addresses.
 .Dv SO_REUSEPORT
-allows completely duplicate bindings by multiple processes
-if they all set
+allows completely duplicate bindings by multiple processes if they all set
 .Dv SO_REUSEPORT
 before binding the port.
 This option permits multiple instances of a program to each
 receive UDP/IP multicast or broadcast datagrams destined for the bound port.
 .Dv SO_KEEPALIVE
-enables the
-periodic transmission of messages on a connected socket.  Should the
-connected party fail to respond to these messages, the connection is
-considered broken and processes using the socket are notified via a
+enables the periodic transmission of messages on a connected socket.
+Should the connected party fail to respond to these messages, the connection
+is considered broken and processes using the socket are notified via a
 .Dv SIGPIPE
 signal when attempting to send data.
 .Dv SO_DONTROUTE
 indicates that outgoing messages should
-bypass the standard routing facilities.  Instead, messages are directed
-to the appropriate network interface according to the network portion
-of the destination address.
+bypass the standard routing facilities.
+Instead, messages are directed to the appropriate network interface
+according to the network portion of the destination address.
 .Pp
 .Dv SO_LINGER
 controls the action taken when unsent messages
@@ -215,9 +209,8 @@ on the socket.
 Broadcast was a privileged operation in earlier versions of the system.
 With protocols that support out-of-band data, the
 .Dv SO_OOBINLINE
-option
-requests that out-of-band data be placed in the normal data input queue
-as received; it will then be accessible with
+option requests that out-of-band data be placed in the normal data input
+queue as received; it will then be accessible with
 .Xr recv 2
 or
 .Xr read 2
@@ -276,10 +269,9 @@ It accepts a
 parameter with the number of seconds and microseconds
 used to limit waits for output operations to complete.
 If a send operation has blocked for this much time,
-it returns with a partial count
-or with the error
+it returns with a partial count or with the error
 .Er EWOULDBLOCK
-if no data were sent.
+if no data was sent.
 In the current implementation, this timer is restarted each time additional
 data are delivered to the protocol,
 implying that the limit applies to output portions ranging in size
@@ -310,8 +302,7 @@ returns the type of the socket, such as
 .Dv SOCK_STREAM ;
 it is useful for servers that inherit sockets on startup.
 .Dv SO_ERROR
-returns any pending error on the socket and clears
-the error status.
+returns any pending error on the socket and clears the error status.
 It may be used to check for asynchronous errors on connected
 datagram sockets or for other asynchronous errors.
 .Sh RETURN VALUES

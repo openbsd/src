@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chown.2,v 1.8 2000/04/15 11:46:03 aaron Exp $
+.\"	$OpenBSD: chown.2,v 1.9 2000/10/18 05:12:08 aaron Exp $
 .\"	$NetBSD: chown.2,v 1.10 1995/10/12 15:40:47 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
@@ -52,8 +52,7 @@
 .Ft int
 .Fn fchown "int fd" "uid_t owner" "gid_t group"
 .Sh DESCRIPTION
-The owner ID and group ID of the file (or link)
-named by
+The owner ID and group ID of the file (or link) named by
 .Fa path
 or referenced by
 .Fa fd
@@ -63,15 +62,12 @@ and
 .Fa group .
 The owner of a file may change the
 .Fa group
-to a group of which
-he or she is a member,
-but the change
+to a group of which he or she is a member, but the change
 .Fa owner
 capability is restricted to the superuser.
 .Pp
 .Fn chown
-clears the set-user-ID and set-group-ID bits
-on the file
+clears the set-user-ID and set-group-ID bits on the file
 to prevent accidental or mischievous creation of
 set-user-ID and set-group-ID programs.
 .Pp

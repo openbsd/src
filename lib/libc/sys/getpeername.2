@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getpeername.2,v 1.13 2000/01/22 12:00:42 aaron Exp $
+.\"	$OpenBSD: getpeername.2,v 1.14 2000/10/18 05:12:09 aaron Exp $
 .\"	$NetBSD: getpeername.2,v 1.6 1995/10/12 15:40:56 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -47,11 +47,9 @@
 .Fn getpeername "int s" "struct sockaddr *name" "socklen_t *namelen"
 .Sh DESCRIPTION
 .Fn getpeername
-returns the address information of the peer connected to
-socket
+returns the address information of the peer connected to socket
 .Fa s .
-One common
-use occurs when a process inherits an open socket, such as
+One common use occurs when a process inherits an open socket, such as
 TCP servers forked from
 .Xr inetd 8 .
 In this scenario,
@@ -65,15 +63,21 @@ takes three parameters:
 Contains the file descriptor of the socket who's peer should be looked up.
 .Pp
 .Fa name
-Points to a sockaddr structure that will hold the address information
-for the connected peer.
+Points to a
+.Li sockaddr
+structure that will hold the address information for the connected peer.
 Normal use requires one to use a structure
-specific to the protocol family in use, such as sockaddr_in (IPv4)
-or sockaddr_in6 (IPv6), cast to a (struct sockaddr *).
+specific to the protocol family in use, such as
+.Li sockaddr_in
+(IPv4) or
+.Li sockaddr_in6
+(IPv6), cast to a (struct sockaddr *).
 .Pp
 For greater portability, especially with the newer protocol families, the new
-struct sockaddr_storage should be used. sockaddr_storage is
-large enough to hold any of the other sockaddr_* variants.
+.Li struct sockaddr_storage
+should be used.
+.Li sockaddr_storage
+is large enough to hold any of the other sockaddr_* variants.
 On return, it can be cast to the correct sockaddr type,
 based the protocol family contained in its ss_family field.
 .Pp

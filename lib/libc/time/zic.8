@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zic.8,v 1.12 2000/04/16 16:24:04 d Exp $
+.\"	$OpenBSD: zic.8,v 1.13 2000/10/18 05:12:13 aaron Exp $
 .Dd May 23, 1999
 .Dt ZIC 8
 .Os
@@ -120,7 +120,8 @@ may be used to repeat the value of the
 .Em FROM
 field.
 .It Cm TYPE
-Gives the type of year in which the rule applies. If
+Gives the type of year in which the rule applies.
+If
 .Em TYPE
 is
 .Dq Fl
@@ -128,7 +129,8 @@ then the rule applies in all years between
 .Em FROM
 and
 .Em TO
-inclusive. If
+inclusive.
+If
 .Em TYPE
 is something else, then
 .Nm

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsync.2,v 1.5 1999/06/29 14:09:55 aaron Exp $
+.\"	$OpenBSD: fsync.2,v 1.6 2000/10/18 05:12:09 aaron Exp $
 .\"	$NetBSD: fsync.2,v 1.4 1995/02/27 12:32:38 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -53,12 +53,11 @@ This normally results in all in-core modified copies
 of buffers for the associated file to be written to a disk.
 .Pp
 .Fn fsync
-should be used by programs that require a file to be
-in a known state, for example, in building a simple transaction
-facility.
+should be used by programs that require a file to be in a known state,
+for example, in building a simple transaction facility.
 .Sh RETURN VALUES
-A 0 value is returned on success.  A \-1 value indicates
-an error.
+A 0 value is returned on success.
+A \-1 value indicates an error.
 .Sh ERRORS
 The
 .Fn fsync

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: truncate.2,v 1.8 2000/07/21 21:52:14 naddy Exp $
+.\"	$OpenBSD: truncate.2,v 1.9 2000/10/18 05:12:12 aaron Exp $
 .\"	$NetBSD: truncate.2,v 1.7 1995/02/27 12:39:00 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -55,18 +55,16 @@ or referenced by
 .Fa fd
 to be truncated or extended to
 .Fa length
-bytes in size.  If the file
-was larger than this size, the extra data
-is lost.
-If the file was smaller than this size,
-it will be extended as if by writing bytes
-with the value zero.
+bytes in size.
+If the file was larger than this size, the extra data is lost.
+If the file was smaller than this size, it will be extended as if by
+writing bytes with the value zero.
 With
 .Fn ftruncate ,
 the file must be open for writing.
 .Sh RETURN VALUES
-A value of 0 is returned if the call succeeds.  If the call
-fails a \-1 is returned, and the global variable
+A value of 0 is returned if the call succeeds.
+If the call fails a \-1 is returned, and the global variable
 .Va errno
 specifies the error.
 .Sh ERRORS
@@ -124,8 +122,8 @@ is not open for writing.
 .Sh SEE ALSO
 .Xr open 2
 .Sh BUGS
-These calls should be generalized to allow ranges
-of bytes in a file to be discarded.
+These calls should be generalized to allow ranges of bytes in a file
+to be discarded.
 .Pp
 Use of
 .Fn truncate

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.55 2000/10/14 13:04:25 deraadt Exp $
+.\"	$OpenBSD: sysctl.3,v 1.56 2000/10/18 05:12:07 aaron Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -210,7 +210,7 @@ and
 bits to be cleared.
 As detailed in
 .Xr securelevel 7 ,
-this variable may not be changed if the securelevel is > 0. 
+this variable may not be changed if the securelevel is > 0.
 .El
 .Ss CTL_HW
 The string and integer information available for the
@@ -1168,8 +1168,9 @@ Return the system wide virtual memory statistics.
 The returned data consists of a
 .Li struct vmtotal .
 .It Dv VM_SWAPENCRYPT
-Contains statistics about swap encryption.  The string and integer
-information available for the third level is detailed below.
+Contains statistics about swap encryption.
+The string and integer information available for the third level is
+detailed below.
 .Bl -column "Third level nameXXXXXX" "struct loadavgXXX" -offset indent
 .It Sy Third level name	Type	Changeable
 .It Dv SWPENC_ENABLE No "	integer	yes"
@@ -1181,20 +1182,20 @@ information available for the third level is detailed below.
 .It Dv SWPENC_ENABLE
 Set to 1 to enable swap encryption for all processes.
 A 0 disables swap encryption.
-Pages still on swap receive a grandfather clause.  Turning this 
-option on does not affect legacy swap data already on the disk,
+Pages still on swap receive a grandfather clause.
+Turning this option on does not affect legacy swap data already on the disk,
 but all newly written data will be encrypted.
 When swap encryption is turned on, automatic
 .Xr crash 8
 dumps are disabled.
 .It Dv SWPENC_CREATED
-The number of encryption keys that have been randomly created.  The
-swap partition is divided into sections of normally 512KB. Each section
-has its own encryption key.
+The number of encryption keys that have been randomly created.
+The swap partition is divided into sections of normally 512KB.
+Each section has its own encryption key.
 .It Dv SWPENC_DELETED
 The number of encryption keys that have been deleted, thus effectivly
-erasing the data that has been encrypted with them.  Encryption
-keys are deleted when their reference counter reaches zero.
+erasing the data that has been encrypted with them.
+Encryption keys are deleted when their reference counter reaches zero.
 .El
 .El
 .Ss CTL_VFS

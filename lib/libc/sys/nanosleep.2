@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nanosleep.2,v 1.6 2000/01/05 02:02:14 pjanzen Exp $
+.\"	$OpenBSD: nanosleep.2,v 1.7 2000/10/18 05:12:10 aaron Exp $
 .\"	$NetBSD: nanosleep.2,v 1.1 1997/04/17 18:12:02 jtc Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
@@ -46,8 +46,9 @@
 .Fn nanosleep "const struct timespec *rqtp" "struct timespec *rmtp"
 .Sh DESCRIPTION
 .Fn nanosleep
-suspends execution of the calling process for the time specified. An unmasked
-signal will cause it to terminate the sleep early, regardless of the
+suspends execution of the calling process for the time specified.
+An unmasked signal will cause it to terminate the sleep early,
+regardless of the
 .Dv SA_RESTART
 value on the interrupting signal.
 .Sh RETURN VALUES
@@ -64,8 +65,7 @@ will be the \-1, and the global variable
 will be set to indicate the interruption.
 If
 .Fa rmtp
-is non-null,
-the timespec structure it references is updated to contain the
+is non-null, the timespec structure it references is updated to contain the
 unslept amount (the request time minus the time actually slept).
 .Sh ERRORS
 If any of the following conditions occur, the
@@ -79,8 +79,7 @@ Either
 .Fa rqtp
 or
 .Fa rmtp
-points to memory that is not a valid part of the process
-address space.
+points to memory that is not a valid part of the process address space.
 .It Bq Er EINTR
 .Nm
 was interrupted by the delivery of a signal.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigaction.2,v 1.23 2000/08/05 22:04:19 pjanzen Exp $
+.\"	$OpenBSD: sigaction.2,v 1.24 2000/10/18 05:12:12 aaron Exp $
 .\"	$NetBSD: sigaction.2,v 1.7 1995/10/12 15:41:16 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -62,7 +62,8 @@ struct sigaction {
 The system defines a set of signals that may be delivered to a process.
 Signal delivery resembles the occurrence of a hardware interrupt:
 the signal is normally blocked from further occurrence, the current process
-context is saved, and a new one is built.  A process may specify a
+context is saved, and a new one is built.
+A process may specify a
 .Em handler
 to which a signal is delivered, or specify that a signal is to be
 .Em ignored .
@@ -75,7 +76,8 @@ in which case its delivery is postponed until it is
 The action to be taken on delivery is determined at the time
 of delivery.
 Normally, signal handlers execute on the current stack
-of the process.  This may be changed, on a per-handler basis,
+of the process.
+This may be changed, on a per-handler basis,
 so that signals are taken on a special
 .Em "signal stack" .
 .Pp
@@ -86,9 +88,10 @@ but other signals may yet occur.
 A global
 .Em "signal mask"
 defines the set of signals currently blocked from delivery
-to a process.  The signal mask for a process is initialized
-from that of its parent (normally empty).  It
-may be changed with a
+to a process.
+The signal mask for a process is initialized from that of its
+parent (normally empty).
+It may be changed with a
 .Xr sigprocmask 2
 call, or when a signal is delivered to the process.
 .Pp
@@ -111,10 +114,10 @@ function.
 When a caught signal
 is delivered, the current state of the process is saved,
 a new signal mask is calculated (as described below),
-and the signal handler is invoked.  The call to the handler
-is arranged so that if the signal handling routine returns
-normally the process will resume execution in the context
-from before the signal's delivery.
+and the signal handler is invoked.
+The call to the handler is arranged so that if the signal handling routine
+returns normally the process will resume execution in the context from
+before the signal's delivery.
 If the process wishes to resume in a different context, then it
 must arrange to restore the previous context itself.
 .Pp
@@ -203,8 +206,8 @@ If this bit is set when calling
 for the
 .Dv SIGCHLD
 signal, the system will not create zombie processes when children of
-the calling process exit.  If the calling process subsequently issues
-a
+the calling process exit.
+If the calling process subsequently issues a
 .Xr wait 2
 (or equivalent), it blocks until all of the calling process's child
 processes terminate, and then returns a value of \-1 with
@@ -481,8 +484,7 @@ handler(sig, sip, scp)
 .Pp
 Here
 .Fa sig
-is the signal number, into which the hardware faults and traps are
-mapped.
+is the signal number, into which the hardware faults and traps are mapped.
 If the
 .Dv SA_SIGINFO
 option is set,
@@ -537,8 +539,7 @@ The
 .Dv SA_ONSTACK
 and
 .Dv SA_RESTART
-flags are Berkeley extensions,
-as are the signals
+flags are Berkeley extensions, as are the signals
 .Dv SIGTRAP ,
 .Dv SIGEMT ,
 .Dv SIGBUS ,
@@ -560,7 +561,8 @@ The
 and
 .Dv SA_RESETHAND
 flags are intended for backwards compatibility with other operating
-systems.  The
+systems.
+The
 .Dv SA_NOCLDSTOP ,
 .Dv SA_NOCLDWAIT ,
 and

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getitimer.2,v 1.11 1999/07/02 20:58:01 aaron Exp $
+.\"	$OpenBSD: getitimer.2,v 1.12 2000/10/18 05:12:09 aaron Exp $
 .\"	$NetBSD: getitimer.2,v 1.6 1995/10/12 15:40:54 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -89,7 +89,8 @@ is non-zero, it specifies a value to be used in reloading
 when the timer expires.
 Setting
 .Fa it_value
-to 0 disables a timer.  Setting
+to 0 disables a timer.
+Setting
 .Fa it_interval
 to 0 causes a timer to be disabled after its next expiration (assuming
 .Fa it_value
@@ -101,7 +102,8 @@ system clock are rounded up to this resolution
 .Pp
 The
 .Dv ITIMER_REAL
-timer decrements in real time.  A
+timer decrements in real time.
+A
 .Dv SIGALRM
 signal is
 delivered when this timer expires.
@@ -109,23 +111,23 @@ delivered when this timer expires.
 The
 .Dv ITIMER_VIRTUAL
 timer decrements in process virtual time.
-It runs only when the process is executing.  A
+It runs only when the process is executing.
+A
 .Dv SIGVTALRM
-signal
-is delivered when it expires.
+signal is delivered when it expires.
 .Pp
 The
 .Dv ITIMER_PROF
 timer decrements both in process virtual time and
-when the system is running on behalf of the process.  It is designed
-to be used by interpreters in statistically profiling the execution
-of interpreted programs.
+when the system is running on behalf of the process.
+It is designed to be used by interpreters in statistically profiling
+the execution of interpreted programs.
 Each time the
 .Dv ITIMER_PROF
 timer expires, the
 .Dv SIGPROF
-signal is
-delivered.  Because this signal may interrupt in-progress
+signal is delivered.
+Because this signal may interrupt in-progress
 system calls, programs using this timer must be prepared to
 restart interrupted system calls.
 .Sh NOTES
@@ -156,9 +158,9 @@ Adds two timers and stores the result in
 .Va res Ns .
 .El
 .Sh RETURN VALUES
-If the calls succeed, a value of 0 is returned.  If an error occurs,
-the value \-1 is returned, and a more precise error code is placed
-in the global variable
+If the calls succeed, a value of 0 is returned.
+If an error occurs, the value \-1 is returned, and a more precise
+error code is placed in the global variable
 .Va errno .
 .Sh ERRORS
 .Fn getitimer
@@ -173,8 +175,7 @@ parameter specified a bad address.
 .It Bq Er EINVAL
 A
 .Fa value
-parameter specified a time that was too large
-to be handled.
+parameter specified a time that was too large to be handled.
 .El
 .Sh SEE ALSO
 .Xr gettimeofday 2 ,

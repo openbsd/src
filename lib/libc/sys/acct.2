@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acct.2,v 1.7 2000/04/15 11:46:02 aaron Exp $
+.\"	$OpenBSD: acct.2,v 1.8 2000/10/18 05:12:08 aaron Exp $
 .\"	$NetBSD: acct.2,v 1.6 1995/02/27 12:31:47 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -47,8 +47,7 @@
 .Sh DESCRIPTION
 The
 .Fn acct
-call enables or disables the collection of system accounting
-records.
+call enables or disables the collection of system accounting records.
 If
 .Fa file
 is
@@ -56,15 +55,13 @@ is
 accounting is disabled.
 If
 .Fa file
-is an existing,
-null-terminated pathname, record collection is enabled and for
-every process initiated which terminates under normal
-conditions an accounting record is appended to
+is an existing, null-terminated pathname, record collection is enabled
+and for every process initiated which terminates under normal conditions
+an accounting record is appended to
 .Fa file .
-Abnormal conditions of termination are reboots
-or other fatal system problems.
-Records for processes which never terminate can not be
-produced by
+Abnormal conditions of termination are reboots or other
+fatal system problems.
+Records for processes which never terminate can not be produced by
 .Fn acct .
 .Pp
 For more information on the record structure used by

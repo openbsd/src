@@ -1,4 +1,4 @@
-.\"	$OpenBSD: poll.2,v 1.9 2000/08/09 12:59:28 aaron Exp $
+.\"	$OpenBSD: poll.2,v 1.10 2000/10/18 05:12:11 aaron Exp $
 .\"
 .\" Copyright (c) 1994 Jason R. Thorpe
 .\" All rights reserved.
@@ -59,7 +59,8 @@ struct pollfd {
 .Pp
 The
 .Pa fd
-member is an open file descriptor.  The
+member is an open file descriptor.
+The
 .Pa events
 and
 .Pa revents
@@ -70,10 +71,11 @@ The number of
 .Nm pollfd
 structures in the array.
 .It Pa timeout
-Maximum interval to wait for the poll to complete, in milliseconds.  If
-this value is 0, then
+Maximum interval to wait for the poll to complete, in milliseconds.
+If this value is 0, then
 .Fn poll
-will return immediately.  If this value is less than 0,
+will return immediately.
+If this value is less than 0,
 .Fn poll
 will block indefinitely until a condition is found.
 .El
@@ -84,11 +86,13 @@ bitmask and
 .Fn poll
 sets the
 .Pa revents
-bitmask.  Each call to
+bitmask.
+Each call to
 .Fn poll
 resets the
 .Pa revents
-bitmask for accuracy.  The condition flags in the bitmasks are defined as:
+bitmask for accuracy.
+The condition flags in the bitmasks are defined as:
 .Bl -tag -width POLLRDNORM
 .It Nm POLLIN
 Data is available on the file descriptor for reading.
@@ -133,14 +137,15 @@ and their synonyms are for use only in the
 .Pa revents
 member of the
 .Nm pollfd
-structure.  An attempt to set any of these flags in the
+structure.
+An attempt to set any of these flags in the
 .Pa events
 member will generate an error condition.
 .Pp
 In addition to I/O multiplexing,
 .Fn poll
-can be used to generate simple timeouts.  This functionality may be achieved
-by passing a null pointer for
+can be used to generate simple timeouts.
+This functionality may be achieved by passing a null pointer for
 .Pa fds .
 .Sh WARNINGS
 The
@@ -151,8 +156,10 @@ Upon error,
 .Fn poll
 returns a \-1 and sets the global variable
 .Va errno
-to indicate the error.  If the timeout interval was reached before any events
-occurred, a 0 is returned.  Otherwise,
+to indicate the error.
+If the timeout interval was reached before any events occurred,
+a 0 is returned.
+Otherwise,
 .Fn poll
 returns the number of file descriptors for which
 .Pa revents

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: setuid.2,v 1.9 1999/07/02 20:58:01 aaron Exp $
+.\"	$OpenBSD: setuid.2,v 1.10 2000/10/18 05:12:11 aaron Exp $
 .\"	$NetBSD: setuid.2,v 1.3 1995/02/27 12:37:06 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -57,29 +57,25 @@
 .Sh DESCRIPTION
 The
 .Fn setuid
-function
-sets the real and effective
-user IDs and the saved set-user-ID of the current process
-to the specified value.
+function sets the real and effective user IDs and the saved set-user-ID
+of the current process to the specified value.
 The
 .Fn setuid
-function is permitted if the effective user ID is that of the super user,
-or if the specified user ID is the same as the effective user ID.  If
-not, but the specified user ID is the same as the real user ID,
+function is permitted if the effective user ID is that of the superuser,
+or if the specified user ID is the same as the effective user ID.
+If not, but the specified user ID is the same as the real user ID,
 .Fn setuid
 will set the effective user ID to the real user ID.
 .Pp
 The
 .Fn setgid
-function
-sets the real and effective
-group IDs and the saved set-group-ID of the current process
-to the specified value.
+function sets the real and effective groups IDs and the saved set-group-ID
+of the current process to the specified value.
 The
 .Fn setgid
-function is permitted if the effective user ID is that of the super user,
-or if the specified group ID is the same as the effective group ID.  If
-not, but the specified group ID is the same as the real group ID,
+function is permitted if the effective user ID is that of the superuser,
+or if the specified group ID is the same as the effective group ID.
+If not, but the specified group ID is the same as the real group ID,
 .Fn setgid
 will set the effective group ID to the real group ID.
 .Pp
@@ -87,8 +83,7 @@ The
 .Fn seteuid
 function
 .Pq Fn setegid
-sets the effective user ID (group ID) of the
-current process.
+sets the effective user ID (group ID) of the current process.
 The effective user ID may be set to the value
 of the real user ID or the saved set-user-ID (see
 .Xr intro 2
@@ -103,7 +98,7 @@ of the real group ID or the saved set-group-ID.
 Upon success, these functions return 0;
 otherwise \-1 is returned.
 .Pp
-If the user is not the super user, or the uid
+If the user is not the superuser, or the UID
 specified is not the real, effective ID, or saved ID,
 these functions return \-1.
 .Sh SEE ALSO

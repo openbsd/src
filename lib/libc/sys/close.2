@@ -1,4 +1,4 @@
-.\"	$OpenBSD: close.2,v 1.8 1999/06/29 14:09:53 aaron Exp $
+.\"	$OpenBSD: close.2,v 1.9 2000/10/18 05:12:08 aaron Exp $
 .\"	$NetBSD: close.2,v 1.5 1995/02/27 12:32:14 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
@@ -59,7 +59,8 @@ on the last close of a
 .Xr socket 2
 associated naming information and queued data are discarded;
 on the last close of a file holding an advisory lock
-the lock is released. However, the semantics of System V and
+the lock is released.
+However, the semantics of System V and
 .St -p1003.1-88
 dictate that all
 .Xr fcntl 2
@@ -83,8 +84,8 @@ all descriptors for the new child process reference the same
 objects as they did in the parent before the fork.
 If a new process is then to be run using
 .Xr execve 2 ,
-the process would normally inherit these descriptors.  Most
-of the descriptors can be rearranged with
+the process would normally inherit these descriptors.
+Most of the descriptors can be rearranged with
 .Xr dup2 2
 or deleted with
 .Fn close

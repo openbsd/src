@@ -1,5 +1,5 @@
 .\" David Leonard, 1998. Placed in the public domain.
-.\" $OpenBSD: ndbm.3,v 1.10 2000/04/18 02:31:36 aaron Exp $
+.\" $OpenBSD: ndbm.3,v 1.11 2000/10/18 05:12:07 aaron Exp $
 .Dd May 13, 1998
 .Dt NDBM 3
 .Os
@@ -87,11 +87,11 @@ When storing, the
 parameter must be one of:
 .Bl -tag -width DBM_REPLACE -offset indent
 .It Dv DBM_INSERT
-Only insert new keys into the database. Existing key/content pairs
-are untouched.
+Only insert new keys into the database.
+Existing key/content pairs are untouched.
 .It Dv DBM_REPLACE
-Replace any existing entry with the same key. Any previously
-stored records with the same key are lost.
+Replace any existing entry with the same key.
+Any previously stored records with the same key are lost.
 .El
 .Pp
 The

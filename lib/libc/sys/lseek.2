@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lseek.2,v 1.8 1999/06/29 14:10:05 aaron Exp $
+.\"	$OpenBSD: lseek.2,v 1.9 2000/10/18 05:12:10 aaron Exp $
 .\"	$NetBSD: lseek.2,v 1.6 1995/02/27 12:34:09 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -49,15 +49,13 @@ The
 .Fn lseek
 function repositions the offset of the file descriptor
 .Fa fildes
-to the
-argument
+to the argument
 .Fa offset
 according to the directive
 .Fa whence .
 The argument
 .Fa fildes
-must be an open
-file descriptor.
+must be an open file descriptor.
 .Fn lseek
 repositions the file pointer
 .Fa fildes
@@ -84,8 +82,7 @@ If
 .Fa whence
 is
 .Dv SEEK_END ,
-the offset is set to the size of the
-file plus
+the offset is set to the size of the file plus
 .Fa offset
 bytes.
 .El
@@ -93,22 +90,20 @@ bytes.
 The
 .Fn lseek
 function allows the file offset to be set beyond the end
-of the existing end-of-file of the file. If data is later written
-at this point, subsequent reads of the data in the gap return
-bytes of zeros (until data is actually written into the gap).
+of the existing end-of-file of the file.
+If data is later written at this point, subsequent reads of the data in the
+gap return bytes of zeros (until data is actually written into the gap).
 .Pp
-Some devices are incapable of seeking.  The value of the pointer
-associated with such a device is undefined.
+Some devices are incapable of seeking.
+The value of the pointer associated with such a device is undefined.
 .Sh RETURN VALUES
 Upon successful completion,
 .Fn lseek
 returns the resulting offset location as measured in bytes from the
 beginning of the file.
-Otherwise,
-a value of \-1 is returned and
+Otherwise, a value of \-1 is returned and
 .Va errno
-is set to indicate
-the error.
+is set to indicate the error.
 .Sh ERRORS
 .Fn lseek
 will fail and the file pointer will remain unchanged if:

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysarch.2,v 1.4 1999/07/02 20:58:01 aaron Exp $
+.\"	$OpenBSD: sysarch.2,v 1.5 2000/10/18 05:12:12 aaron Exp $
 .\"	$NetBSD: sysarch.2,v 1.4 1995/02/27 12:38:47 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991 Regents of the University of California.
@@ -46,25 +46,21 @@
 .Fn sysarch "int number" "char *args"
 .Sh DESCRIPTION
 .Fn sysarch
-performs the architecture-dependent function
-specified by
+performs the architecture-dependent function specified by
 .Fa number
 with the arguments specified by the
 .Fa args
 pointer.
 .Fa args
-is a pointer to a structure defining the actual
-arguments of the function.
-Symbolic constants and argument structures
-for the architecture-dependent
+is a pointer to a structure defining the actual arguments of the function.
+Symbolic constants and argument structures for the architecture-dependent
 functions can be found in the header file
 .Ao Pa machine/sysarch.h Ac .
 .Pp
 The
 .Fn sysarch
-system call should never be called directly by
-user programs.  Instead, they should access
-its functions using the architecture-dependent
+system call should never be called directly by user programs.
+Instead, they should access its functions using the architecture-dependent
 library.
 .Sh RETURN VALUES
 See the manual pages for specific architecture-dependent function calls

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.2,v 1.16 2000/04/15 11:46:03 aaron Exp $
+.\"	$OpenBSD: intro.2,v 1.17 2000/10/18 05:12:10 aaron Exp $
 .\"	$NetBSD: intro.2,v 1.6 1995/02/27 12:33:41 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1983, 1986, 1991, 1993
@@ -95,7 +95,8 @@ An asynchronous signal (such as
 or
 .Dv SIGQUIT )
 was caught by the process during the execution of an interruptible
-function. If the signal handler performs a normal return, the
+function.
+If the signal handler performs a normal return, the
 interrupted function call will seem to have returned the error condition.
 .It Er 5 EIO Em "Input/output error" .
 Some physical input or output error occurred.
@@ -169,8 +170,8 @@ not a directory, when a directory was expected.
 .It Er 21 EISDIR Em "Is a directory" .
 An attempt was made to open a directory with write mode specified.
 .It Er 22 EINVAL Em "Invalid argument" .
-Some invalid argument was supplied. (For example,
-specifying an undefined signal to a
+Some invalid argument was supplied.
+(For example, specifying an undefined signal to a
 .Xr signal 3
 or
 .Xr kill 2
@@ -212,8 +213,7 @@ An
 function was issued on a socket, pipe or
 .Tn FIFO .
 .It Er 30 EROFS Em "Read-only file system" .
-An attempt was made to modify a file or directory
-was made
+An attempt was made to modify a file or directory was made
 on a file system that was read-only at the time.
 .It Er 31 EMLINK Em "Too many links" .
 Maximum allowable hard links to a single file has been exceeded (limit
@@ -233,8 +233,7 @@ available space (perhaps exceeded precision).
 This is a temporary condition and later calls to the
 same routine may complete normally.
 .It Er 36 EINPROGRESS Em "Operation now in progress" .
-An operation that takes a long time to complete (such as
-a
+An operation that takes a long time to complete (such as a
 .Xr connect 2 )
 was attempted on a non-blocking object (see
 .Xr fcntl 2 ) .
@@ -250,7 +249,8 @@ A message sent on a socket was larger than the internal message buffer
 or some other network limit.
 .It Er 41 EPROTOTYPE Em "Protocol wrong type for socket" .
 A protocol was specified that does not support the semantics of the
-socket type requested. For example, you cannot use the
+socket type requested.
+For example, you cannot use the
 .Tn ARPA
 Internet
 .Tn UDP
@@ -299,8 +299,8 @@ The host you were connected to crashed and rebooted.
 .It Er 53 ECONNABORTED Em "Software caused connection abort" .
 A connection abort was caused internal to your host machine.
 .It Er 54 ECONNRESET Em "Connection reset by peer" .
-A connection was forcibly closed by a peer.  This normally
-results from a loss of the connection on the remote socket
+A connection was forcibly closed by a peer.
+This normally results from a loss of the connection on the remote socket
 due to a timeout or a reboot.
 .It Er 55 ENOBUFS Em "\&No buffer space available" .
 An operation on a socket or pipe was not performed because
@@ -308,8 +308,7 @@ the system lacked sufficient buffer space or because a queue was full.
 .It Er 56 EISCONN Em "Socket is already connected" .
 A
 .Xr connect 2
-request was made on an already connected socket; or,
-a
+request was made on an already connected socket; or, a
 .Xr sendto 2
 or
 .Xr sendmsg 2
@@ -333,12 +332,13 @@ A
 or
 .Xr send 2
 request failed because the connected party did not
-properly respond after a period of time.  (The timeout
-period is dependent on the communication protocol.)
+properly respond after a period of time.
+(The timeout period is dependent on the communication protocol.)
 .It Er 61 ECONNREFUSED Em "Connection refused" .
 No connection could be made because the target machine actively
-refused it.  This usually results from trying to connect
-to a service that is inactive on the foreign host.
+refused it.
+This usually results from trying to connect to a service that is
+inactive on the foreign host.
 .It Er 62 ELOOP Em "Too many levels of symbolic links" .
 A path name lookup involved more than 8 symbolic links.
 .It Er 63 ENAMETOOLONG Em "File name too long" .
@@ -420,7 +420,8 @@ filesystem may be mounted.
 .Bl -tag -width Ds
 .It Process ID
 Each active process in the system is uniquely identified by a non-negative
-integer called a process ID.  The range of this ID is from 1 to 32766.
+integer called a process ID.
+The range of this ID is from 1 to 32766.
 .It Parent Process ID
 A new process is created by a currently active process; (see
 .Xr fork 2 ) .
@@ -430,9 +431,9 @@ the parent process ID of each child is set to the ID of a system process,
 .Xr init 8 .
 .It Process Group
 Each active process is a member of a process group that is identified by
-a non-negative integer called the process group ID.  This is the process
-ID of the group leader.  This grouping permits the signaling of related
-processes (see
+a non-negative integer called the process group ID.
+This is the process ID of the group leader.
+This grouping permits the signaling of related processes (see
 .Xr termios 4 )
 and the job control mechanisms of
 .Xr csh 1 .
@@ -485,8 +486,8 @@ termed the real user ID.
 .Pp
 Each user is also a member of one or more groups.
 One of these groups is distinguished from others and
-used in implementing accounting facilities.  The positive
-integer corresponding to this distinguished group is termed
+used in implementing accounting facilities.
+The positive integer corresponding to this distinguished group is termed
 the real group ID.
 .Pp
 All processes have a real user ID and real group ID.
@@ -502,8 +503,8 @@ group IDs, and it is unspecified whether the effective group ID is
 a member of the list.)
 .Pp
 The effective user ID and effective group ID are initially the
-process's real user ID and real group ID respectively.  Either
-may be modified through execution of a set-user-ID or set-group-ID
+process's real user ID and real group ID respectively.
+Either may be modified through execution of a set-user-ID or set-group-ID
 file (possibly by one its ancestors) (see
 .Xr execve 2 ) .
 By convention, the effective group ID (the first member of the group access
@@ -511,8 +512,8 @@ list) is duplicated, so that the execution of a set-group-ID program
 does not result in the loss of the original (real) group ID.
 .Pp
 The group access list is a set of group IDs
-used only in determining resource accessibility.  Access checks
-are performed as described below in ``File Access Permissions''.
+used only in determining resource accessibility.
+Access checks are performed as described below in ``File Access Permissions''.
 .It Saved Set User ID and Saved Set Group ID
 When a process executes a new file, the effective user ID is set
 to the owner of the file if the file is set-user-ID, and the effective
@@ -687,16 +688,17 @@ for more information about the types available and
 their properties.
 .Pp
 Each instance of the system supports some number of sets of
-communications protocols.  Each protocol set supports addresses
-of a certain format.  An Address Family is the set of addresses
-for a specific group of protocols.  Each socket has an address
-chosen from the address family in which the socket was created.
+communications protocols.
+Each protocol set supports addresses of a certain format.
+An Address Family is the set of addresses for a specific group of protocols.
+Each socket has an address chosen from the address family in which the
+socket was created.
 .El
 .Sh SEE ALSO
 .Xr intro 3 ,
 .Xr perror 3
 .Sh HISTORY
 An
-.Nm intro
+.Nm
 manual page appeared in
 .At v6 .

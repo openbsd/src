@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rename.2,v 1.7 1999/06/29 14:10:16 aaron Exp $
+.\"	$OpenBSD: rename.2,v 1.8 2000/10/18 05:12:11 aaron Exp $
 .\"	$NetBSD: rename.2,v 1.7 1995/02/27 12:36:15 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -71,32 +71,6 @@ If the final component of
 is a symbolic link,
 the symbolic link is renamed,
 not the file or directory to which it points.
-.Sh CAVEAT
-The system can deadlock if a loop in the file system graph is present.
-This loop takes the form of an entry in directory
-.Ql Pa a ,
-say
-.Ql Pa a/foo ,
-being a hard link to directory
-.Ql Pa b ,
-and an entry in
-directory
-.Ql Pa b ,
-say
-.Ql Pa b/bar ,
-being a hard link
-to directory
-.Ql Pa a .
-When such a loop exists and two separate processes attempt to
-perform
-.Ql rename a/foo b/bar
-and
-.Ql rename b/bar a/foo ,
-respectively,
-the system may deadlock attempting to lock
-both directories for modification.
-Hard links to directories should be
-replaced by symbolic links by the system administrator.
 .Sh RETURN VALUES
 A 0 value is returned if the operation succeeds, otherwise
 .Fn rename
@@ -165,9 +139,9 @@ The link named by
 .Fa to
 and the file named by
 .Fa from
-are on different logical devices (file systems).  Note that this error
-code will not be returned if the implementation permits cross-device
-links.
+are on different logical devices (file systems).
+Note that this error code will not be returned if the implementation
+permits cross-device links.
 .It Bq Er ENOSPC
 The directory in which the entry for the new name is being placed
 cannot be extended because there is no space left on the file
@@ -205,3 +179,29 @@ The
 .Fn rename
 function conforms to
 .St -p1003.1-88 .
+.Sh CAVEATS
+The system can deadlock if a loop in the file system graph is present.
+This loop takes the form of an entry in directory
+.Ql Pa a ,
+say
+.Ql Pa a/foo ,
+being a hard link to directory
+.Ql Pa b ,
+and an entry in
+directory
+.Ql Pa b ,
+say
+.Ql Pa b/bar ,
+being a hard link
+to directory
+.Ql Pa a .
+When such a loop exists and two separate processes attempt to
+perform
+.Ql rename a/foo b/bar
+and
+.Ql rename b/bar a/foo ,
+respectively,
+the system may deadlock attempting to lock
+both directories for modification.
+Hard links to directories should be
+replaced by symbolic links by the system administrator.

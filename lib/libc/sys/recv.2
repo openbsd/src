@@ -1,4 +1,4 @@
-.\"	$OpenBSD: recv.2,v 1.23 2000/04/15 02:15:24 aaron Exp $
+.\"	$OpenBSD: recv.2,v 1.24 2000/10/18 05:12:11 aaron Exp $
 .\"	$NetBSD: recv.2,v 1.6 1995/02/27 12:36:08 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -55,9 +55,8 @@
 .Fn recvfrom
 and
 .Fn recvmsg
-are used to receive messages from a socket,
-and may be used to receive data on a socket whether or not
-it is connection-oriented.
+are used to receive messages from a socket, and may be used to receive
+data on a socket whether or not it is connection-oriented.
 .Pp
 If
 .Fa from
@@ -84,7 +83,8 @@ parameter.
 As it is redundant, it may not be supported in future releases.
 .Pp
 On successful completion, all three routines return the number of
-message bytes read.  If a message is too long to fit in the supplied
+message bytes read.
+If a message is too long to fit in the supplied
 buffer, excess bytes may be discarded depending on the type of socket
 the message is received from (see
 .Xr socket 2 ) .
@@ -211,8 +211,8 @@ set to
 .Pp
 The
 .Fa msg_flags
-field is set on return according to the message received.  It will contain
-zero or more of the following values:
+field is set on return according to the message received.
+It will contain zero or more of the following values:
 .Bl -column MSG_CTRUNC -offset indent
 .It Dv MSG_EOR Ta
 Indicates end-of-record;
@@ -234,8 +234,7 @@ Indicates that the packet was received as broadcast.
 Indicates that the packet was received as multicast.
 .El
 .Sh RETURN VALUES
-These calls return the number of bytes received, or \-1
-if an error occurred.
+These calls return the number of bytes received, or \-1 if an error occurred.
 .Sh ERRORS
 .Fn recv ,
 .Fn recvfrom ,

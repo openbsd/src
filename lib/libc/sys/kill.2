@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kill.2,v 1.12 2000/04/15 11:46:03 aaron Exp $
+.\"	$OpenBSD: kill.2,v 1.13 2000/10/18 05:12:10 aaron Exp $
 .\"	$NetBSD: kill.2,v 1.7 1995/02/27 12:33:53 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -88,13 +88,13 @@ this is a variant of
 If the user has superuser privileges,
 the signal is sent to all processes excluding
 system processes and the process sending the signal.
-If the user is not the super user, the signal is sent to all processes
+If the user is not the superuser, the signal is sent to all processes
 with the same uid as the user excluding the process sending the signal.
 No error is returned if any process could be signaled.
 .El
 .Pp
-Setuid and setgid processes are dealt with slightly differently.  For
-the non-root user, to prevent attacks against such processes, some signal
+Setuid and setgid processes are dealt with slightly differently.
+For the non-root user, to prevent attacks against such processes, some signal
 deliveries are not permitted and return the error
 .Er EPERM .
 The following signals are allowed through to this class of processes:

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chflags.2,v 1.14 2000/04/15 11:46:02 aaron Exp $
+.\"	$OpenBSD: chflags.2,v 1.15 2000/10/18 05:12:08 aaron Exp $
 .\"	$NetBSD: chflags.2,v 1.6 1995/02/27 12:32:03 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1993
@@ -49,8 +49,7 @@
 .Ft int
 .Fn fchflags "int fd" "unsigned int flags"
 .Sh DESCRIPTION
-The file whose name
-is given by
+The file whose name is given by
 .Fa path
 or referenced by the descriptor
 .Fa fd
@@ -164,6 +163,6 @@ error occurred while reading from or writing to the file system.
 The
 .Fn chflags
 and
-.Nm fchflags
+.Fn fchflags
 functions first appeared in
 .Bx 4.4 .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getdirentries.2,v 1.8 1999/06/29 14:09:55 aaron Exp $
+.\"	$OpenBSD: getdirentries.2,v 1.9 2000/10/18 05:12:09 aaron Exp $
 .\"	$NetBSD: getdirentries.2,v 1.7 1995/10/12 15:40:50 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -76,8 +76,7 @@ char    	d_name[MAXNAMELEN + 1]; /* see below */
 .Pp
 The
 .Fa d_fileno
-entry is a number which is unique for each
-distinct file in the filesystem.
+entry is a number which is unique for each distinct file in the filesystem.
 Files that are linked by hard links (see
 .Xr link 2 )
 have the same

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: semctl.2,v 1.11 2000/04/15 11:46:04 aaron Exp $
+.\"	$OpenBSD: semctl.2,v 1.12 2000/10/18 05:12:11 aaron Exp $
 .\"	$NetBSD: semctl.2,v 1.2 1997/03/27 08:20:40 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -155,8 +155,8 @@ in the data structure associated with the message queue.
 .It Dv IPC_RMID
 Remove the semaphores associated with
 .Fa semid
-from the system and destroy the data structures associated with it. Only the
-superuser or a process with an effective UID equal to the
+from the system and destroy the data structures associated with it.
+Only the superuser or a process with an effective UID equal to the
 .Va sem_perm.cuid
 or
 .Va sem_perm.uid
@@ -188,10 +188,11 @@ and
 .Dv GETZCNT
 operations,
 .Fn semctl
-returns one of the values described above if successful. All other operations
-will make
+returns one of the values described above if successful.
+All other operations will make
 .Fn semctl
-return 0 if no errors occur. Otherwise \-1 is returned and
+return 0 if no errors occur.
+Otherwise \-1 is returned and
 .Va errno
 set to reflect the error.
 .Sh ERRORS

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wait.2,v 1.9 1999/06/29 14:10:31 aaron Exp $
+.\"	$OpenBSD: wait.2,v 1.10 2000/10/18 05:12:12 aaron Exp $
 .\"	$NetBSD: wait.2,v 1.6 1995/02/27 12:39:37 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
@@ -65,8 +65,7 @@ information is available for a terminated child process,
 or a signal is received.
 On return from a successful
 .Fn wait
-call,
-the
+call, the
 .Fa status
 area contains termination information about the process that exited
 as defined below.
@@ -102,26 +101,23 @@ equals the absolute value of
 .Pp
 The
 .Fa status
-parameter is defined below.  The
+parameter is defined below.
+The
 .Fa options
 parameter contains the bitwise
 .Tn OR
 of any of the following options.
 The
 .Dv WNOHANG
-option
-is used to indicate that the call should not block if
+option is used to indicate that the call should not block if
 there are no processes that wish to report status.
 If the
 .Dv WUNTRACED
-option is set,
-children of the current process that are stopped
-due to a
+option is set, children of the current process that are stopped due to a
 .Dv SIGTTIN , SIGTTOU , SIGTSTP ,
 or
 .Dv SIGSTOP
-signal also have
-their status reported.
+signal also have their status reported.
 .Pp
 If
 .Fa rusage
@@ -132,12 +128,9 @@ for stopped processes).
 .Pp
 When the
 .Dv WNOHANG
-option is specified and no processes
-wish to report status,
+option is specified and no processes wish to report status,
 .Fn wait4
-returns a
-process ID
-of 0.
+returns a process ID of 0.
 .Pp
 The
 .Fn waitpid
@@ -168,8 +161,7 @@ True if the process terminated due to receipt of a signal.
 True if the process has not terminated, but has stopped and can be restarted.
 This macro can be true only if the wait call specified the
 .Dv WUNTRACED
-option
-or if the child process is being traced (see
+option or if the child process is being traced (see
 .Xr ptrace 2 ) .
 .El
 .Pp
@@ -179,8 +171,7 @@ produce the remaining status information about the child process:
 .It Fn WEXITSTATUS status
 If
 .Fn WIFEXITED status
-is true, evaluates to the low-order 8 bits
-of the argument passed to
+is true, evaluates to the low-order 8 bits of the argument passed to
 .Xr _exit 2
 or
 .Xr exit 3
@@ -199,8 +190,8 @@ containing an image of the process when the signal was received.
 .It Fn WSTOPSIG status
 If
 .Fn WIFSTOPPED status
-is true, evaluates to the number of the signal
-that caused the process to stop.
+is true, evaluates to the number of the signal that caused the process
+to stop.
 .El
 .Sh NOTES
 See
@@ -215,11 +206,9 @@ process 1 ID (the init process ID).
 .Pp
 If a signal is caught while any of the
 .Fn wait
-calls is pending,
-the call may be interrupted or restarted when the signal-catching routine
-returns,
-depending on the options in effect for the signal;
-see
+calls is pending, the call may be interrupted or restarted when the
+signal-catching routine returns, depending on the options in effect
+for the signal; see
 .Xr intro 2 ,
 System call restart.
 .Sh RETURN VALUES
@@ -227,8 +216,8 @@ If
 .Fn wait
 returns due to a stopped
 or terminated child process, the process ID of the child
-is returned to the calling process.  Otherwise, a value of \-1
-is returned and
+is returned to the calling process.
+Otherwise, a value of \-1 is returned and
 .Va errno
 is set to indicate the error.
 .Pp
@@ -237,21 +226,16 @@ If
 .Fn wait3
 or
 .Fn waitpid
-returns due to a stopped
-or terminated child process, the process ID of the child
-is returned to the calling process.
-If there are no children not previously awaited,
-\-1 is returned with
+returns due to a stopped or terminated child process, the process ID
+of the child is returned to the calling process.
+If there are no children not previously awaited, \-1 is returned with
 .Va errno
 set to
 .Bq Er ECHILD .
 Otherwise, if
 .Dv WNOHANG
-is specified and there are
-no stopped or exited children,
-0 is returned.
-If an error is detected or a caught signal aborts the call,
-a value of \-1
+is specified and there are no stopped or exited children, 0 is returned.
+If an error is detected or a caught signal aborts the call, a value of \-1
 is returned and
 .Va errno
 is set to indicate the error.
@@ -260,8 +244,7 @@ is set to indicate the error.
 will fail and return immediately if:
 .Bl -tag -width Er
 .It Bq Er ECHILD
-The calling process has no existing unwaited-for
-child processes.
+The calling process has no existing unwaited-for child processes.
 .It Bq Er EFAULT
 The
 .Fa status
@@ -270,8 +253,7 @@ or
 arguments point to an illegal address.
 (May not be detected before exit of a child process.)
 .It Bq Er EINTR
-The call was interrupted by a caught signal,
-or the signal did not have the
+The call was interrupted by a caught signal, or the signal did not have the
 .Dv SA_RESTART
 flag set.
 .It Bq Er EINVAL
@@ -291,8 +273,7 @@ and
 are not specified by POSIX.
 The
 .Fn WCOREDUMP
-macro
-and the ability to restart a pending
+macro and the ability to restart a pending
 .Fn wait
 call are extensions to the POSIX interface.
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: _exit.2,v 1.9 1999/09/22 22:03:59 aaron Exp $
+.\"	$OpenBSD: _exit.2,v 1.10 2000/10/18 05:12:08 aaron Exp $
 .\"	$NetBSD: _exit.2,v 1.6 1995/02/27 12:31:34 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1993
@@ -47,8 +47,7 @@
 .Sh DESCRIPTION
 The
 .Fn _exit
-function
-terminates a process with the following consequences:
+function terminates a process with the following consequences:
 .Bl -bullet
 .It
 All open file descriptors in the calling process are closed.
@@ -57,18 +56,15 @@ A process in this state may not be killed, as it is already dying.
 .It
 If the parent process of the calling process has an outstanding
 .Xr wait 2
-call
-or catches the
+call or catches the
 .Dv SIGCHLD
-signal,
-it is notified of the calling process's termination and
+signal, it is notified of the calling process's termination and
 .Fa status
 is set as defined by
 .Xr wait 2 .
 .It
 The parent process ID of all of the calling process's existing child
-processes are set to 1; the initialization process
-(see the
+processes are set to 1; the initialization process (see the
 .Sx DEFINITIONS
 section of
 .Xr intro 2 )
@@ -80,8 +76,7 @@ of the group have now exited; see
 .Sx Orphaned Process Group
 in
 .Xr intro 2 ) ,
-and if any member of the orphaned group is stopped,
-the
+and if any member of the orphaned group is stopped, the
 .Dv SIGHUP
 and
 .Dv SIGCONT

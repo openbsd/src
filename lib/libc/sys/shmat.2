@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shmat.2,v 1.10 2000/04/15 02:15:25 aaron Exp $
+.\"	$OpenBSD: shmat.2,v 1.11 2000/10/18 05:12:11 aaron Exp $
 .\"	$NetBSD: shmat.2,v 1.2 1997/03/27 08:20:38 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -49,14 +49,16 @@
 .Fn shmat
 maps the shared memory segment associated with the shared memory identifier
 .Fa shmid
-into the address space of the calling process. The address at which the
-segment is mapped is determined by the
+into the address space of the calling process.
+The address at which the segment is mapped is determined by the
 .Fa shmaddr
-parameter. If it is equal to 0, the system will pick an address itself.
+parameter.
+If it is equal to 0, the system will pick an address itself.
 Otherwise, an attempt is made to map the shared memory segment at the
 address
 .Fa shmaddr
-specifies. If
+specifies.
+If
 .Dv SHM_RND
 is set in
 .Fa shmflg ,
@@ -79,7 +81,8 @@ from the calling process' address space.
 .Fa shmaddr
 must be a value returned by a prior
 .Fn shmat
-call. A shared memory segment will remain existent until it is removed by
+call.
+A shared memory segment will remain existent until it is removed by
 a call to
 .Xr shmctl 2
 with the
@@ -90,8 +93,8 @@ command.
 returns the address at which the shared memory segment has been mapped into
 the calling process' address space when successful,
 .Fn shmdt
-returns 0 on successful completion. Otherwise, a value of \-1 is returned,
-and the global variable
+returns 0 on successful completion.
+Otherwise, a value of \-1 is returned, and the global variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
