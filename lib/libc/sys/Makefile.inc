@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.62 2002/12/02 09:00:14 miod Exp $
+#	$OpenBSD: Makefile.inc,v 1.63 2002/12/02 15:54:14 millert Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -257,7 +257,7 @@ MLINKS+=getitimer.2 timerclear.3
 MLINKS+=getitimer.2 timercmp.3
 MLINKS+=getitimer.2 timerisset.3
 MLINKS+=getitimer.2 timersub.3
-MLINKS+=getlogin.2 setlogin.2
+MLINKS+=getlogin.2 getlogin_r.2 getlogin.2 setlogin.2
 MLINKS+=getpgrp.2 getpgid.2
 MLINKS+=getpid.2 getppid.2
 MLINKS+=getpriority.2 setpriority.2

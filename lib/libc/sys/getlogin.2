@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getlogin.2,v 1.13 2002/04/30 16:31:42 mpech Exp $
+.\"	$OpenBSD: getlogin.2,v 1.14 2002/12/02 15:54:14 millert Exp $
 .\"	$NetBSD: getlogin.2,v 1.4 1995/02/27 12:33:03 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -46,6 +46,8 @@
 .Ft char *
 .Fn getlogin void
 .Ft int
+.Fn getlogin_r "char *name" "size_t namelen"
+.Ft int
 .Fn setlogin "const char *name"
 .Sh DESCRIPTION
 The
@@ -60,6 +62,23 @@ and is inherited by all processes descended from the login shell.
 for example when
 .Xr su 1
 is used.)
+.Pp
+The
+.Fn getlogin_r
+routine is a reentrant version of
+.Fn getlogin .
+It is functionally identical to
+.Fn getlogin
+except that the caller must provide a buffer,
+.Fa name ,
+in which to store the user's login name and a corresponding
+length parameter,
+.Fa namelen ,
+that specifies the size of the buffer.
+The buffer should be large enough to store the login name and a trailing NUL
+(typically
+.Ev LOGIN_NAME_MAX
+bytes).
 .Pp
 .Fn setlogin
 sets the login name of the user associated with the current session to
@@ -122,6 +141,9 @@ succeeds, it returns a pointer to a null-terminated string in a static buffer.
 If the name has not been set, it returns
 .Dv NULL .
 If a call to
+.Fn getlogin_r
+succeeds, a value of 0 is returned, else the error number is returned.
+If a call to
 .Fn setlogin
 succeeds, a value of 0 is returned.
 If
@@ -149,6 +171,10 @@ Login names are limited to
 characters, currently 31.
 .It Bq Er EPERM
 The caller tried to set the login name and was not the superuser.
+.It Bq Er ERANGE
+The buffer passed to
+.Fn getlogin_r
+is not large enough to store the user's login name.
 .El
 .Sh SEE ALSO
 .Xr setsid 2
