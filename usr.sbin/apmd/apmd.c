@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.29 2003/09/26 17:03:22 deraadt Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.30 2004/05/21 19:00:05 deraadt Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -216,6 +216,7 @@ handle_client(int sock_fd, int ctl_fd)
 	struct apm_command cmd;
 	struct apm_reply reply;
 
+	fromlen = sizeof(from);
 	cli_fd = accept(sock_fd, (struct sockaddr *)&from, &fromlen);
 	if (cli_fd == -1) {
 		syslog(LOG_INFO, "client accept failure: %m");
