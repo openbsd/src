@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_info.1,v 1.1 2003/10/19 18:38:06 espie Exp $
+.\"	$OpenBSD: pkg_info.1,v 1.2 2003/11/14 23:18:51 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -135,7 +135,7 @@ Show the requirements script (if any) for each package.
 Turn on verbose output.
 .El
 .Sh ENVIRONMENT
-.Bl -tag -width PKG_DBDIR
+.Bl -tag -width PKG_TMPDIR
 .It Ev PKG_DBDIR
 The standard package database directory,
 .Pa /var/db/pkg ,
@@ -157,33 +157,9 @@ is automatically appended to the
 whereas searching in the current directory uses
 .Ar pkg-name
 literally.
-.It Ev PKG_TMPDIR , Ev TMPDIR
-These are tried in turn (if set) as candidate directories in which
-to create a
-.Dq staging area
-for any files extracted by
-.Nm
-from package files.
-If neither
-.Ev PKG_TMPDIR
-nor
-.Ev TMPDIR
-yields a suitable scratch directory,
-.Pa /var/tmp ,
-.Pa /tmp ,
-and
-.Pa /usr/tmp
-are tried in turn.
-Note that
-.Pa /usr/tmp
-may be created, if it doesn't already exist.
-.Pp
-Since
-.Nm
-requires very little information to be extracted from any package
-files examined, it is unlikely that these environment variables would
-ever need to be used to work around limited available space in the
-default locations.
+.It Ev PKG_TMPDIR
+Temporary area where package information files will be extracted, instead of
+.Pa /var/tmp .
 .El
 .Sh TECHNICAL DETAILS
 Package info is either extracted from package files named on the

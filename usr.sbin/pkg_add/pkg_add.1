@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.5 2003/11/14 23:03:55 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.6 2003/11/14 23:18:50 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -25,7 +25,7 @@
 .Nd install software package distributions
 .Sh SYNOPSIS
 .Nm pkg_add
-.Op Fl vInfRMS
+.Op Fl vIn
 .Ar pkg-name Op Ar ...
 .Sh DESCRIPTION
 The
@@ -253,7 +253,7 @@ period
 Where to register packages instead of
 .Pa /var/db/pkg .
 .It Ev PKG_TMPDIR
-Temporary area where packages will be extracted, instead of
+Temporary area where package information files will be extracted, instead of
 .Pa /var/tmp .
 .El
 .Sh SEE ALSO
