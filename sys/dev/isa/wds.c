@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.5 1996/04/29 19:48:26 christos Exp $	*/
+/*	$NetBSD: wds.c,v 1.6 1996/05/05 00:40:03 mycroft Exp $	*/
 
 #define	WDSDIAG
 #define	integrate
@@ -851,7 +851,7 @@ wds_init(sc)
 	 */
 	for (i = 0; i < WDS_MBX_SIZE; i++) {
 		wmbx->mbo[i].cmd = WDS_MBO_FREE;
-		wmbx->mbi[i].stat = WDS_MBO_FREE;
+		wmbx->mbi[i].stat = WDS_MBI_FREE;
 	}
 	wmbx->cmbo = wmbx->tmbo = &wmbx->mbo[0];
 	wmbx->tmbi = &wmbx->mbi[0];
