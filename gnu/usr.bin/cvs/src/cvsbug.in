@@ -85,9 +85,11 @@ fi
 
 [ -z "$TMPDIR" ] && TMPDIR=/tmp
 
-TEMP=$TMPDIR/p$$
-BAD=$TMPDIR/pbad$$
-REF=$TMPDIR/pf$$
+TEMP=`mktemp $TMPDIR/p.XXXXXXXXXX` || exit 1
+REF=`mktemp $TMPDIR/pf.XXXXXXXXXX` || {
+  rm -f $TEMP
+  exit 1
+}
 
 if [ -z "$LOGNAME" -a -n "$USER" ]; then
   LOGNAME=$USER
@@ -473,6 +475,7 @@ while [ -z "$REQUEST_ID" ]; do
     case "$input" in
       a*)
 	if [ -z "$BATCH" ]; then
+	  BAD=`mktemp $TMPDIR/pbad.XXXXXXXXXX` || exit 1
 	  echo "$COMMAND: the problem report remains in $BAD and is not sent."
 	  mv $TEMP $BAD
         else
@@ -517,6 +520,7 @@ if $MAIL_AGENT < $REF; then
 else
   echo "$COMMAND: mysterious mail failure."
   if [ -z "$BATCH" ]; then
+    BAD=`mktemp $TMPDIR/pbad.XXXXXXXXXX` || exit 1
     echo "$COMMAND: the problem report remains in $BAD and is not sent."
     mv $REF $BAD
   else
