@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: ip.c,v 1.14 1999/07/15 02:04:06 brian Exp $
+ * $Id: ip.c,v 1.15 1999/07/15 02:10:32 brian Exp $
  *
  *	TODO:
  *		o Return ICMP message for filterd packet
@@ -38,7 +38,7 @@
 
 #include <errno.h>
 #include <stdio.h>
-/* #include <stdlib.h> (auto-remove) */
+#include <stdlib.h>
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
@@ -66,7 +66,7 @@
 #include "radius.h"
 #endif
 #include "bundle.h"
-/* #include "vjcomp.h" (auto-remove) */
+#include "vjcomp.h"
 #include "tun.h"
 #include "ip.h"
 

@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: vjcomp.c,v 1.9 1999/07/15 02:04:07 brian Exp $
+ * $Id: vjcomp.c,v 1.10 1999/07/15 02:10:33 brian Exp $
  *
  *  TODO:
  */
@@ -28,7 +28,7 @@
 #include <sys/un.h>
 
 #include <stdio.h>
-/* #include <string.h> (auto-remove) */
+#include <string.h>
 #include <termios.h>
 
 #include "layer.h"

@@ -23,13 +23,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *  $Id: link.c,v 1.8 1999/07/15 02:04:06 brian Exp $
+ *  $Id: link.c,v 1.9 1999/07/15 02:10:32 brian Exp $
  *
  */
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
-/* #include <netdb.h> (auto-remove) */
+#include <netdb.h>
 #include <sys/un.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
