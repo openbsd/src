@@ -1,5 +1,5 @@
 /* $NetBSD: if_awi_pcmcia.c,v 1.13 2000/03/22 11:22:20 onoe Exp $ */
-/* $OpenBSD: if_awi_pcmcia.c,v 1.5 2000/09/04 04:36:59 mickey Exp $ */
+/* $OpenBSD: if_awi_pcmcia.c,v 1.6 2000/09/04 18:08:47 mickey Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -290,7 +290,9 @@ awi_pcmcia_attach(parent, self, aux)
 	struct awi_pcmcia_product *app;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
+#if 0
 	bus_addr_t memoff;
+#endif
 
 	app = awi_pcmcia_lookup(pa);
 	if (app == NULL)
