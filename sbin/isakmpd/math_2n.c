@@ -1,4 +1,4 @@
-/* $OpenBSD: math_2n.c,v 1.18 2005/04/04 19:31:11 deraadt Exp $	 */
+/* $OpenBSD: math_2n.c,v 1.19 2005/04/06 16:00:20 deraadt Exp $	 */
 /* $EOM: math_2n.c,v 1.15 1999/04/20 09:23:30 niklas Exp $	 */
 
 /*
@@ -283,8 +283,8 @@ b2n_snprint(char *buf, size_t sz, b2n_ptr n)
 			tmp >>= 8;
 		}
 
-		for (j = (i == 0 ? left - 1 : CHUNK_BYTES - 1); j >= 0
-		    && k < sz - 3; j--)
+		for (j = (i == 0 ? left - 1 : CHUNK_BYTES - 1); j >= 0 &&
+		    k < sz - 3; j--)
 			if (flag || (i == n->chunks - 1 && j == 0) ||
 			    buffer[2 * j] != '0' || buffer[2 * j + 1] != '0') {
 				buf[k++] = buffer[2 * j];
@@ -656,8 +656,8 @@ b2n_div(b2n_ptr q, b2n_ptr r, b2n_ptr n, b2n_ptr m)
 	/* The first iteration is done over the relevant bits */
 	bits = (CHUNK_MASK + sn) & CHUNK_MASK;
 	for (i = len; i >= 0 && b2n_sigbit(nenn) >= sm; i--)
-		for (j = (i == len ? bits : CHUNK_MASK); j >= 0
-		    && b2n_sigbit(nenn) >= sm; j--) {
+		for (j = (i == len ? bits : CHUNK_MASK); j >= 0 &&
+		    b2n_sigbit(nenn) >= sm; j--) {
 			if (nenn->limp[i] & b2n_mask[j]) {
 				if (b2n_sub(nenn, nenn, shift))
 					goto fail;

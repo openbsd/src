@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.99 2005/04/04 19:31:11 deraadt Exp $	 */
+/* $OpenBSD: message.c,v 1.100 2005/04/06 16:00:20 deraadt Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -737,10 +737,10 @@ message_validate_id(struct message *msg, struct payload *p)
 		message_drop(msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 1);
 		return -1;
 	}
-	if (exchange->doi
-	    && exchange->doi->validate_id_information(GET_ISAKMP_ID_TYPE(p->p),
-	    p->p + ISAKMP_ID_DOI_DATA_OFF, p->p + ISAKMP_ID_DATA_OFF, len -
-	    ISAKMP_ID_DATA_OFF, exchange)) {
+	if (exchange->doi &&
+	    exchange->doi->validate_id_information(GET_ISAKMP_ID_TYPE(p->p),
+	    p->p + ISAKMP_ID_DOI_DATA_OFF, p->p + ISAKMP_ID_DATA_OFF,
+	    len - ISAKMP_ID_DATA_OFF, exchange)) {
 		message_drop(msg, ISAKMP_NOTIFY_INVALID_ID_INFORMATION, 0, 1,
 		    1);
 		return -1;
@@ -880,15 +880,15 @@ message_validate_notify(struct message *msg, struct payload *p)
 		return -1;
 	}
 
-	if (type < ISAKMP_NOTIFY_INVALID_PAYLOAD_TYPE
-	    || (type >= ISAKMP_NOTIFY_RESERVED_MIN
-		&& type < ISAKMP_NOTIFY_PRIVATE_MIN)
-	    || (type >= ISAKMP_NOTIFY_STATUS_RESERVED1_MIN
-		&& type <= ISAKMP_NOTIFY_STATUS_RESERVED1_MAX)
-	    || (type >= ISAKMP_NOTIFY_STATUS_DOI_MIN
-		&& type <= ISAKMP_NOTIFY_STATUS_DOI_MAX
-		&& doi->validate_notification(type))
-	    || type >= ISAKMP_NOTIFY_STATUS_RESERVED2_MIN) {
+	if (type < ISAKMP_NOTIFY_INVALID_PAYLOAD_TYPE ||
+	    (type >= ISAKMP_NOTIFY_RESERVED_MIN &&
+	    type < ISAKMP_NOTIFY_PRIVATE_MIN) ||
+	    (type >= ISAKMP_NOTIFY_STATUS_RESERVED1_MIN &&
+	    type <= ISAKMP_NOTIFY_STATUS_RESERVED1_MAX) ||
+	    (type >= ISAKMP_NOTIFY_STATUS_DOI_MIN &&
+	    type <= ISAKMP_NOTIFY_STATUS_DOI_MAX &&
+	    doi->validate_notification(type)) ||
+	    type >= ISAKMP_NOTIFY_STATUS_RESERVED2_MIN) {
 		log_print("message_validate_notify: "
 		    "message type not supported");
 		message_free(msg);
@@ -912,8 +912,8 @@ message_validate_proposal(struct message *msg, struct payload *p)
 		message_drop(msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 1);
 		return -1;
 	}
-	if (proto != ISAKMP_PROTO_ISAKMP
-	    && msg->exchange->doi->validate_proto(proto)) {
+	if (proto != ISAKMP_PROTO_ISAKMP &&
+	    msg->exchange->doi->validate_proto(proto)) {
 		message_drop(msg, ISAKMP_NOTIFY_INVALID_PROTOCOL_ID, 0, 1, 1);
 		return -1;
 	}
@@ -1235,8 +1235,8 @@ message_recv(struct message *msg)
 		 * message.  If so, just drop it.
 		 * XXX Must we really look in both the SA and exchange pools?
 		 */
-		if (exchange_lookup_from_icookie(buf + ISAKMP_HDR_ICOOKIE_OFF)
-		    || sa_lookup_from_icookie(buf + ISAKMP_HDR_ICOOKIE_OFF)) {
+		if (exchange_lookup_from_icookie(buf + ISAKMP_HDR_ICOOKIE_OFF) ||
+		    sa_lookup_from_icookie(buf + ISAKMP_HDR_ICOOKIE_OFF)) {
 			/*
 			 * XXX Later we should differentiate between
 			 * retransmissions and potential replay attacks.
@@ -1259,8 +1259,8 @@ message_recv(struct message *msg)
 		if (!msg->isakmp_sa) {
 			msg->exchange = exchange_lookup_from_icookie(buf +
 			    ISAKMP_HDR_ICOOKIE_OFF);
-			if (msg->exchange && msg->exchange->phase == 1
-			    && zero_test(msg->exchange->cookies +
+			if (msg->exchange && msg->exchange->phase == 1 &&
+			    zero_test(msg->exchange->cookies +
 			    ISAKMP_HDR_RCOOKIE_OFF, ISAKMP_HDR_RCOOKIE_LEN))
 				exchange_upgrade_p1(msg);
 			else {
@@ -1322,10 +1322,10 @@ message_recv(struct message *msg)
 	 * unknown.
          */
 	exch_type = GET_ISAKMP_HDR_EXCH_TYPE(buf);
-	if (exch_type == ISAKMP_EXCH_NONE
-	    || (exch_type >= ISAKMP_EXCH_FUTURE_MIN &&
-		exch_type <= ISAKMP_EXCH_FUTURE_MAX)
-	    || (setup_isakmp_sa && exch_type >= ISAKMP_EXCH_DOI_MIN)) {
+	if (exch_type == ISAKMP_EXCH_NONE ||
+	    (exch_type >= ISAKMP_EXCH_FUTURE_MIN &&
+	    exch_type <= ISAKMP_EXCH_FUTURE_MAX) ||
+	    (setup_isakmp_sa && exch_type >= ISAKMP_EXCH_DOI_MIN)) {
 		log_print("message_recv: invalid exchange type %s",
 		    constant_name(isakmp_exch_cst, exch_type));
 		message_drop(msg, ISAKMP_NOTIFY_INVALID_EXCHANGE_TYPE, 0, 1,
@@ -1404,8 +1404,8 @@ message_recv(struct message *msg)
 	 * Check the overall payload structure at the same time as indexing
 	 * them by type.
          */
-	if (GET_ISAKMP_HDR_NEXT_PAYLOAD(buf) != ISAKMP_PAYLOAD_NONE
-	    && message_sort_payloads(msg, GET_ISAKMP_HDR_NEXT_PAYLOAD(buf))) {
+	if (GET_ISAKMP_HDR_NEXT_PAYLOAD(buf) != ISAKMP_PAYLOAD_NONE &&
+	    message_sort_payloads(msg, GET_ISAKMP_HDR_NEXT_PAYLOAD(buf))) {
 		if (ks)
 			free(ks);
 		return -1;
@@ -1449,11 +1449,8 @@ message_recv(struct message *msg)
 	 * Now we can validate DOI-specific exchange types.  If we have no SA
 	 * DOI-specific exchange types are definitely wrong.
          */
-	if (exch_type >= ISAKMP_EXCH_DOI_MIN
-#if 0 /* always true; silence GCC3 warning */
-	    && exch_type <= ISAKMP_EXCH_DOI_MAX
-#endif
-	    && msg->exchange->doi->validate_exchange(exch_type)) {
+	if (exch_type >= ISAKMP_EXCH_DOI_MIN &&
+	    msg->exchange->doi->validate_exchange(exch_type)) {
 		log_print("message_recv: invalid DOI exchange type %d",
 		    exch_type);
 		message_drop(msg, ISAKMP_NOTIFY_INVALID_EXCHANGE_TYPE, 0, 1,
@@ -1473,8 +1470,8 @@ message_recv(struct message *msg)
 	/* Handle the flags.  */
 	if (flags & ISAKMP_FLAGS_ENC)
 		msg->exchange->flags |= EXCHANGE_FLAG_ENCRYPT;
-	if ((msg->exchange->flags & EXCHANGE_FLAG_COMMITTED) == 0
-	    && (flags & ISAKMP_FLAGS_COMMIT))
+	if ((msg->exchange->flags & EXCHANGE_FLAG_COMMITTED) == 0 &&
+	    (flags & ISAKMP_FLAGS_COMMIT))
 		msg->exchange->flags |= EXCHANGE_FLAG_HE_COMMITTED;
 
 	/*
@@ -1525,8 +1522,8 @@ message_send(struct message *msg)
 	 * If the ISAKMP SA has set up encryption, encrypt the message.
 	 * However, in a retransmit, it is already encrypted.
          */
-	if ((msg->flags & MSG_ENCRYPTED) == 0
-	    && exchange->flags & EXCHANGE_FLAG_ENCRYPT) {
+	if ((msg->flags & MSG_ENCRYPTED) == 0 &&
+	    exchange->flags & EXCHANGE_FLAG_ENCRYPT) {
 		if (!exchange->keystate) {
 			exchange->keystate = exchange->doi->get_keystate(msg);
 			if (!exchange->keystate)
@@ -2022,8 +2019,8 @@ message_check_duplicate(struct message *msg)
 		    exchange->last_received->orig,
 		    exchange->last_received->orig_sz));
 		/* Is it a duplicate, lose the new one.  */
-		if (sz == exchange->last_received->orig_sz
-		    && memcmp(pkt, exchange->last_received->orig, sz) == 0) {
+		if (sz == exchange->last_received->orig_sz &&
+		    memcmp(pkt, exchange->last_received->orig, sz) == 0) {
 			LOG_DBG((LOG_MESSAGE, 80,
 			    "message_check_duplicate: dropping dup"));
 
@@ -2141,9 +2138,9 @@ retry_transform:
 		 * Figure out if we will be looking at a new protocol proposal
 		 * inside the current protection suite.
 		 */
-		if (next_tp && propp != next_propp && sap == next_sap
-		    && (GET_ISAKMP_PROP_NO(propp->p)
-		    == GET_ISAKMP_PROP_NO(next_propp->p))) {
+		if (next_tp && propp != next_propp && sap == next_sap &&
+		    (GET_ISAKMP_PROP_NO(propp->p) ==
+		    GET_ISAKMP_PROP_NO(next_propp->p))) {
 			if (!suite_ok_so_far) {
 				LOG_DBG((LOG_NEGOTIATION, 30,
 				    "message_negotiate_sa: proto %d proposal "
@@ -2163,10 +2160,10 @@ retry_transform:
 				 * protection suite.
 				 */
 				while ((next_tp = step_transform(tp,
-					&next_propp, &next_sap))
-				    && (GET_ISAKMP_PROP_NO(next_propp->p)
-					== GET_ISAKMP_PROP_NO(propp->p))
-				    && next_sap == sap)
+				    &next_propp, &next_sap)) &&
+				    (GET_ISAKMP_PROP_NO(next_propp->p) ==
+				    GET_ISAKMP_PROP_NO(propp->p)) &&
+				    next_sap == sap)
 					tp = next_tp;
 			}
 			suite_ok_so_far = 0;
@@ -2175,10 +2172,10 @@ retry_transform:
 		 * Figure out if we will be looking at a new protection
 		 * suite.
 		 */
-		if (!next_tp
-		    || (propp != next_propp && (GET_ISAKMP_PROP_NO(propp->p)
-			!= GET_ISAKMP_PROP_NO(next_propp->p)))
-		    || sap != next_sap) {
+		if (!next_tp ||
+		    (propp != next_propp && (GET_ISAKMP_PROP_NO(propp->p) !=
+		    GET_ISAKMP_PROP_NO(next_propp->p))) ||
+		    sap != next_sap) {
 			/*
 			 * Check if the suite we just considered was OK, if so
 			 * we check it against the accepted ones.
@@ -2196,8 +2193,8 @@ retry_transform:
 					 * SA.
 					 */
 					while ((next_tp = step_transform(tp,
-						&next_propp, &next_sap))
-					    && next_sap == sap)
+					    &next_propp, &next_sap)) &&
+					    next_sap == sap)
 						tp = next_tp;
 				} else {
 					/* Backtrack.  */

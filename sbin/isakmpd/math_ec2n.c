@@ -1,4 +1,4 @@
-/* $OpenBSD: math_ec2n.c,v 1.11 2004/05/23 18:17:56 hshoexer Exp $	 */
+/* $OpenBSD: math_ec2n.c,v 1.12 2005/04/06 16:00:20 deraadt Exp $	 */
 /* $EOM: math_ec2n.c,v 1.9 1999/04/20 09:23:31 niklas Exp $	 */
 
 /*
@@ -360,8 +360,8 @@ ec2np_mul(ec2np_ptr d, ec2np_ptr a, b2n_ptr e, ec2ng_ptr g)
 				    & b2n_mask[j])) {
 					if (ec2np_add(q, q, a, g))
 						goto fail;
-				} else if (!(h->limp[i] & b2n_mask[j])
-				    && (k->limp[i] & b2n_mask[j]))
+				} else if (!(h->limp[i] & b2n_mask[j]) &&
+				    (k->limp[i] & b2n_mask[j]))
 					if (ec2np_add(q, q, mina, g))
 						goto fail;
 			}

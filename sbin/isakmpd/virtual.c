@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtual.c,v 1.15 2005/04/05 18:06:06 cloder Exp $	*/
+/*	$OpenBSD: virtual.c,v 1.16 2005/04/06 16:00:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -169,8 +169,8 @@ virtual_reinit(void)
 
 	/* Mark all UDP transports, except the default ones. */
 	for (v = LIST_FIRST(&virtual_listen_list); v; v = LIST_NEXT(v, link))
-		if (&v->transport != default_transport
-		    && &v->transport != default_transport6)
+		if (&v->transport != default_transport &&
+		    &v->transport != default_transport6)
 			v->transport.flags |= TRANSPORT_MARK;
 
 	/* Re-probe interface list.  */
@@ -209,11 +209,10 @@ virtual_listen_lookup(struct sockaddr *addr)
 				continue;
 			}
 
-		if (u->src->sa_family == addr->sa_family
-		    && sockaddr_addrlen(u->src) == sockaddr_addrlen(addr)
-		    && memcmp(sockaddr_addrdata (u->src),
-			sockaddr_addrdata(addr),
-			sockaddr_addrlen(addr)) == 0)
+		if (u->src->sa_family == addr->sa_family &&
+		    sockaddr_addrlen(u->src) == sockaddr_addrlen(addr) &&
+		    memcmp(sockaddr_addrdata (u->src), sockaddr_addrdata(addr),
+		    sockaddr_addrlen(addr)) == 0)
 			return v;
 	}
 
@@ -360,10 +359,10 @@ virtual_bind_if(char *ifname, struct sockaddr *if_addr, void *arg)
 	/*
 	 * Drop non-Internet stuff.
 	 */
-	if ((if_addr->sa_family != AF_INET
-	    || sysdep_sa_len(if_addr) != sizeof (struct sockaddr_in))
-	    && (if_addr->sa_family != AF_INET6
-		|| sysdep_sa_len(if_addr) != sizeof (struct sockaddr_in6)))
+	if ((if_addr->sa_family != AF_INET ||
+	    sysdep_sa_len(if_addr) != sizeof (struct sockaddr_in)) &&
+	    (if_addr->sa_family != AF_INET6 ||
+	    sysdep_sa_len(if_addr) != sizeof (struct sockaddr_in6)))
 		return 0;
 
 	/*
@@ -387,10 +386,9 @@ virtual_bind_if(char *ifname, struct sockaddr *if_addr, void *arg)
 	 * These special addresses are not useable as they have special meaning
 	 * in the IP stack.
 	 */
-	if (if_addr->sa_family == AF_INET
-	    && (((struct sockaddr_in *)if_addr)->sin_addr.s_addr == INADDR_ANY
-		|| (((struct sockaddr_in *)if_addr)->sin_addr.s_addr
-		    == INADDR_NONE)))
+	if (if_addr->sa_family == AF_INET &&
+	    (((struct sockaddr_in *)if_addr)->sin_addr.s_addr == INADDR_ANY ||
+	    (((struct sockaddr_in *)if_addr)->sin_addr.s_addr == INADDR_NONE)))
 		return 0;
 
 	/*

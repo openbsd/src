@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_quick_mode.c,v 1.92 2005/04/05 20:46:20 cloder Exp $	 */
+/* $OpenBSD: ike_quick_mode.c,v 1.93 2005/04/06 16:00:20 deraadt Exp $	 */
 /* $EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	 */
 
 /*
@@ -1648,8 +1648,8 @@ responder_recv_HASH_SA_NONCE(struct message *msg)
 			 */
 			ipsec_decode_transform(msg, sa, proto,
 			    proto->chosen->p);
-			if (proto->proto == IPSEC_PROTO_IPSEC_AH
-			    && !((struct ipsec_proto *)proto->data)->auth) {
+			if (proto->proto == IPSEC_PROTO_IPSEC_AH &&
+			    !((struct ipsec_proto *)proto->data)->auth) {
 				log_print("responder_recv_HASH_SA_NONCE: "
 				    "AH proposed without an algorithm "
 				    "attribute");

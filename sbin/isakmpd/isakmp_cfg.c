@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmp_cfg.c,v 1.35 2005/04/04 19:31:11 deraadt Exp $	 */
+/* $OpenBSD: isakmp_cfg.c,v 1.36 2005/04/06 16:00:20 deraadt Exp $	 */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist.  All rights reserved.
@@ -700,8 +700,8 @@ cfg_decode_attribute(u_int16_t type, u_int8_t * value, u_int16_t len,
 	struct ipsec_exch *ie = vie;
 	struct isakmp_cfg_attr *attr;
 
-	if (type >= ISAKMP_CFG_ATTR_PRIVATE_MIN
-	    && type <= ISAKMP_CFG_ATTR_PRIVATE_MAX)
+	if (type >= ISAKMP_CFG_ATTR_PRIVATE_MIN &&
+	    type <= ISAKMP_CFG_ATTR_PRIVATE_MAX)
 		return 0;
 	if (type == 0 || type >= ISAKMP_CFG_ATTR_FUTURE_MIN) {
 		LOG_DBG((LOG_NEGOTIATION, 30,

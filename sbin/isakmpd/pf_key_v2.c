@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.157 2005/04/05 20:46:20 cloder Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.158 2005/04/06 16:00:20 deraadt Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -3422,8 +3422,8 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 			masklen = atoi(srcid + 1);
 
 			/* XXX We only support host addresses. */
-			if ((afamily == AF_INET6 && masklen != 128)
-			    || (afamily == AF_INET && masklen != 32)) {
+			if ((afamily == AF_INET6 && masklen != 128) ||
+			    (afamily == AF_INET && masklen != 32)) {
 				log_print("pf_key_v2_acquire: "
 				    "non-host address specified in source "
 				    "identity (mask length %d), ignoring "
@@ -3451,10 +3451,9 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 			if (!conf_get_str(srcid, "ID-type")) {
 				if (conf_set(af, srcid, "ID-type",
 				    afamily == AF_INET ? "IPV4_ADDR" :
-				    "IPV6_ADDR", 1, 0)
-				    || conf_set(af, srcid, "Refcount", "1", 1,
-					0)
-				    || conf_set(af, srcid, "Address",
+				    "IPV6_ADDR", 1, 0) ||
+				    conf_set(af, srcid, "Refcount", "1", 1, 0) ||
+				    conf_set(af, srcid, "Address",
 					(char *) (srcident + 1), 1, 0)) {
 					conf_end(af, 0);
 					goto fail;
@@ -3534,10 +3533,9 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 			af = conf_begin();
 			if (!conf_get_str(srcid, "ID-type")) {
 				if (conf_set(af, srcid, "ID-type", prefstring,
-				    1, 0)
-				    || conf_set(af, srcid, "Refcount", "1", 1,
-					0)
-				    || conf_set(af, srcid, "Name",
+				    1, 0) ||
+				    conf_set(af, srcid, "Refcount", "1", 1, 0) ||
+				    conf_set(af, srcid, "Name",
 					srcid + sizeof "ID:/" - 1 +
 					strlen(prefstring), 1, 0)) {
 					conf_end(af, 0);
@@ -3589,8 +3587,8 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 			masklen = atoi(dstid + 1);
 
 			/* XXX We only support host addresses. */
-			if ((afamily == AF_INET6 && masklen != 128)
-			    || (afamily == AF_INET && masklen != 32)) {
+			if ((afamily == AF_INET6 && masklen != 128) ||
+			    (afamily == AF_INET && masklen != 32)) {
 				log_print("pf_key_v2_acquire: "
 				    "non-host address specified in "
 				    "destination identity (mask length %d), "
@@ -3618,10 +3616,9 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 			if (!conf_get_str(dstid, "ID-type")) {
 				if (conf_set(af, dstid, "ID-type",
 				    afamily == AF_INET ? "IPV4_ADDR" :
-				    "IPV6_ADDR", 1, 0)
-				    || conf_set(af, dstid, "Refcount", "1", 1,
-					0)
-				    || conf_set(af, dstid, "Address",
+				    "IPV6_ADDR", 1, 0) ||
+				    conf_set(af, dstid, "Refcount", "1", 1, 0) ||
+				    conf_set(af, dstid, "Address",
 					(char *) (dstident + 1), 1, 0)) {
 					conf_end(af, 0);
 					goto fail;
@@ -3701,10 +3698,9 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 			af = conf_begin();
 			if (!conf_get_str(dstid, "ID-type")) {
 				if (conf_set(af, dstid, "ID-type", prefstring,
-				    1, 0)
-				    || conf_set(af, dstid, "Refcount", "1", 1,
-					0)
-				    || conf_set(af, dstid, "Name",
+				    1, 0) ||
+				    conf_set(af, dstid, "Refcount", "1", 1, 0) ||
+				    conf_set(af, dstid, "Name",
 					dstid + sizeof "ID:/" - 1 +
 					strlen(prefstring), 1, 0)) {
 					conf_end(af, 0);
@@ -3735,8 +3731,8 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 		    connection_seq);
 
 		/* Does it exist ? */
-		if (!conf_get_str(conn, "Phase")
-		    && !conf_get_str(configname, "Suites"))
+		if (!conf_get_str(conn, "Phase") &&
+		    !conf_get_str(configname, "Suites"))
 			break;
 	}
 
@@ -3786,10 +3782,10 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 	 * it will be linked both to the incoming and the outgoing SA.
 	 */
 	af = conf_begin();
-	if (conf_set(af, conn, "Phase", "2", 0, 0)
-	    || conf_set(af, conn, "Flags", "__ondemand", 0, 0)
-	    || conf_set(af, conn, "Refcount", "2", 0, 0)
-	    || conf_set(af, conn, "ISAKMP-peer", peer, 0, 0)) {
+	if (conf_set(af, conn, "Phase", "2", 0, 0) ||
+	    conf_set(af, conn, "Flags", "__ondemand", 0, 0) ||
+	    conf_set(af, conn, "Refcount", "2", 0, 0) ||
+	    conf_set(af, conn, "ISAKMP-peer", peer, 0, 0)) {
 		conf_end(af, 0);
 		goto fail;
 	}
@@ -3812,15 +3808,15 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 			goto fail;
 		}
 		if (shostflag) {
-			if (conf_set(af, lname, "ID-type", sidtype, 0, 0)
-			  || conf_set(af, lname, "Address", ssflow, 0, 0)) {
+			if (conf_set(af, lname, "ID-type", sidtype, 0, 0) ||
+			    conf_set(af, lname, "Address", ssflow, 0, 0)) {
 				conf_end(af, 0);
 				goto fail;
 			}
 		} else {
-			if (conf_set(af, lname, "ID-type", sidtype, 0, 0)
-			    || conf_set(af, lname, "Network", ssflow, 0, 0)
-			  || conf_set(af, lname, "Netmask", ssmask, 0, 0)) {
+			if (conf_set(af, lname, "ID-type", sidtype, 0, 0) ||
+			    conf_set(af, lname, "Network", ssflow, 0, 0) ||
+			    conf_set(af, lname, "Netmask", ssmask, 0, 0)) {
 				conf_end(af, 0);
 				goto fail;
 			}
@@ -3856,15 +3852,15 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 			goto fail;
 		}
 		if (dhostflag) {
-			if (conf_set(af, dname, "ID-type", didtype, 0, 0)
-			    || conf_set(af, dname, "Address", sdflow, 0, 0)) {
+			if (conf_set(af, dname, "ID-type", didtype, 0, 0) ||
+			    conf_set(af, dname, "Address", sdflow, 0, 0)) {
 				conf_end(af, 0);
 				goto fail;
 			}
 		} else {
-			if (conf_set(af, dname, "ID-type", didtype, 0, 0)
-			    || conf_set(af, dname, "Network", sdflow, 0, 0)
-			    || conf_set(af, dname, "Netmask", sdmask, 0, 0)) {
+			if (conf_set(af, dname, "ID-type", didtype, 0, 0) ||
+			    conf_set(af, dname, "Network", sdflow, 0, 0) ||
+			    conf_set(af, dname, "Netmask", sdmask, 0, 0)) {
 				conf_end(af, 0);
 				goto fail;
 			}
@@ -3899,8 +3895,8 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 		conf_end(af, 0);
 		goto fail;
 	}
-	if (conf_set(af, configname, "Exchange_type", "Quick_mode", 0, 0)
-	    || conf_set(af, configname, "DOI", "IPSEC", 0, 0)) {
+	if (conf_set(af, configname, "Exchange_type", "Quick_mode", 0, 0) ||
+	    conf_set(af, configname, "DOI", "IPSEC", 0, 0)) {
 		conf_end(af, 0);
 		goto fail;
 	}
@@ -3920,9 +3916,9 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 
 	/* Set the ISAKMP-peer section. */
 	if (!conf_get_str(peer, "Phase")) {
-		if (conf_set(af, peer, "Phase", "1", 0, 0)
-		    || conf_set(af, peer, "Refcount", "1", 0, 0)
-		    || conf_set(af, peer, "Address", dstbuf, 0, 0)) {
+		if (conf_set(af, peer, "Phase", "1", 0, 0) ||
+		    conf_set(af, peer, "Refcount", "1", 0, 0) ||
+		    conf_set(af, peer, "Address", dstbuf, 0, 0)) {
 			conf_end(af, 0);
 			goto fail;
 		}
@@ -3991,8 +3987,8 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 			/* Now convert to printable format. */
 			certprint = handler->cert_printable(cert);
 			handler->cert_free(cert);
-			if (!certprint
-			    || conf_set(af, peer, "Credentials", certprint, 0,
+			if (!certprint ||
+			    conf_set(af, peer, "Credentials", certprint, 0,
 				0)) {
 				if (certprint)
 					free(certprint);
@@ -4127,9 +4123,9 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 			}
 
 			if (conf_set(af, confname, "Exchange_Type", "ID_PROT",
-			    0, 0)
-			    || conf_set(af, confname, "DOI", "IPSEC", 0, 0)
-			    || conf_set(af, confname, "Refcount", "1", 0, 0)) {
+			    0, 0) ||
+			    conf_set(af, confname, "DOI", "IPSEC", 0, 0) ||
+			    conf_set(af, confname, "Refcount", "1", 0, 0)) {
 				conf_end(af, 0);
 				goto fail;
 			}

@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.112 2005/04/04 19:31:11 deraadt Exp $	 */
+/* $OpenBSD: exchange.c,v 1.113 2005/04/06 16:00:20 deraadt Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -190,11 +190,7 @@ exchange_script(struct exchange *exchange)
 		return script_transaction;
 #endif
 	default:
-		if (exchange->type >= ISAKMP_EXCH_DOI_MIN
-#if 0 /* always true; silence GCC3 warning */
-		    && exchange->type <= ISAKMP_EXCH_DOI_MAX
-#endif
-		    )
+		if (exchange->type >= ISAKMP_EXCH_DOI_MIN)
 			return exchange->doi->exchange_script(exchange->type);
 	}
 	return 0;
@@ -219,15 +215,15 @@ exchange_validate(struct message *msg)
 		    : constant_name(exchange_script_cst, *pc)));
 
 		/* Check for existence of the required payloads.  */
-		if ((*pc > 0 && !payload_first(msg, *pc))
-		    || (*pc == EXCHANGE_SCRIPT_AUTH
-		    && !payload_first(msg, ISAKMP_PAYLOAD_HASH)
-		    && !payload_first(msg, ISAKMP_PAYLOAD_SIG))
-		    || (*pc == EXCHANGE_SCRIPT_INFO
-		    && ((!payload_first(msg, ISAKMP_PAYLOAD_NOTIFY)
-		    && !payload_first(msg, ISAKMP_PAYLOAD_DELETE))
-		    || (payload_first(msg, ISAKMP_PAYLOAD_DELETE)
-		    && !payload_first(msg, ISAKMP_PAYLOAD_HASH))))) {
+		if ((*pc > 0 && !payload_first(msg, *pc)) ||
+		    (*pc == EXCHANGE_SCRIPT_AUTH &&
+		    !payload_first(msg, ISAKMP_PAYLOAD_HASH) &&
+		    !payload_first(msg, ISAKMP_PAYLOAD_SIG)) ||
+		    (*pc == EXCHANGE_SCRIPT_INFO &&
+		    ((!payload_first(msg, ISAKMP_PAYLOAD_NOTIFY) &&
+		    !payload_first(msg, ISAKMP_PAYLOAD_DELETE)) ||
+		    (payload_first(msg, ISAKMP_PAYLOAD_DELETE) &&
+		    !payload_first(msg, ISAKMP_PAYLOAD_HASH))))) {
 			/* Missing payload.  */
 			LOG_DBG((LOG_MESSAGE, 70,
 			    "exchange_validate: msg %p requires missing %s",
@@ -410,8 +406,8 @@ exchange_run(struct message *msg)
 		    "exchange_run: exchange %p finished step %d, advancing...",
 		    exchange, exchange->step));
 		exchange->step++;
-		while (*exchange->exch_pc != EXCHANGE_SCRIPT_SWITCH
-		    && *exchange->exch_pc != EXCHANGE_SCRIPT_END)
+		while (*exchange->exch_pc != EXCHANGE_SCRIPT_SWITCH &&
+		    *exchange->exch_pc != EXCHANGE_SCRIPT_END)
 			exchange->exch_pc++;
 		exchange->exch_pc++;
 	}
@@ -853,8 +849,8 @@ exchange_establish_p1(struct transport *t, u_int8_t type, u_int32_t doi,
 	msg->exchange = exchange;
 
 	/* Do not create SA for an information or transaction exchange. */
-	if (exchange->type != ISAKMP_EXCH_INFO
-	    && exchange->type != ISAKMP_EXCH_TRANSACTION) {
+	if (exchange->type != ISAKMP_EXCH_INFO &&
+	    exchange->type != ISAKMP_EXCH_TRANSACTION) {
 		/*
 		 * Don't install a transport into this SA as it will be an
 		 * INADDR_ANY address in the local end, which is not good at

@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.111 2005/04/05 20:46:20 cloder Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.112 2005/04/06 16:00:20 deraadt Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -426,9 +426,9 @@ ipsec_finalize_exchange(struct message *msg)
 				 * (a.k.a. flow) set up.
 				 */
 				if (!(sa->flags & SA_FLAG_ONDEMAND ||
-					conf_get_str("General", "Acquire-Only")
-					|| acquire_only)
-				    && sysdep_ipsec_enable_sa(sa, isakmp_sa))
+				    conf_get_str("General", "Acquire-Only") ||
+				    acquire_only) &&
+				    sysdep_ipsec_enable_sa(sa, isakmp_sa))
 					/* XXX Tear down this exchange.  */
 					return;
 
@@ -782,12 +782,11 @@ ipsec_validate_attribute(u_int16_t type, u_int8_t * value, u_int16_t len,
 {
 	struct message *msg = vmsg;
 
-	if ((msg->exchange->phase == 1
-	    && (type < IKE_ATTR_ENCRYPTION_ALGORITHM
-		|| type > IKE_ATTR_GROUP_ORDER))
-	    || (msg->exchange->phase == 2
-		&& (type < IPSEC_ATTR_SA_LIFE_TYPE
-		    || type > IPSEC_ATTR_ECN_TUNNEL)))
+	if (msg->exchange->phase == 1 &&
+	    (type < IKE_ATTR_ENCRYPTION_ALGORITHM || type > IKE_ATTR_GROUP_ORDER))
+		return -1;
+	if (msg->exchange->phase == 2 &&
+	    (type < IPSEC_ATTR_SA_LIFE_TYPE || type > IPSEC_ATTR_ECN_TUNNEL))
 		return -1;
 	return 0;
 }
@@ -840,9 +839,9 @@ ipsec_validate_id_information(u_int8_t type, u_int8_t *extra, u_int8_t *buf,
 		break;
 	}
 
-	if (exchange->phase == 1
-	    && (proto != IPPROTO_UDP || port != UDP_DEFAULT_PORT)
-	    && (proto != 0 || port != 0)) {
+	if (exchange->phase == 1 &&
+	    (proto != IPPROTO_UDP || port != UDP_DEFAULT_PORT) &&
+	    (proto != 0 || port != 0)) {
 		/*
 		 * XXX SSH's ISAKMP tester fails this test (proto 17 - port
 		 * 0).
@@ -930,13 +929,11 @@ ipsec_initiator(struct message *msg)
 	int             (**script)(struct message *) = 0;
 
 	/* Check that the SA is coherent with the IKE rules.  */
-	if (exchange->type != ISAKMP_EXCH_TRANSACTION
-	    && ((exchange->phase == 1 &&
-	    exchange->type != ISAKMP_EXCH_ID_PROT &&
+	if (exchange->type != ISAKMP_EXCH_TRANSACTION &&
+	    ((exchange->phase == 1 && exchange->type != ISAKMP_EXCH_ID_PROT &&
 	    exchange->type != ISAKMP_EXCH_AGGRESSIVE &&
-	    exchange->type != ISAKMP_EXCH_INFO)
-	    || (exchange->phase == 2 &&
-	    exchange->type != IKE_EXCH_QUICK_MODE &&
+	    exchange->type != ISAKMP_EXCH_INFO) ||
+	    (exchange->phase == 2 && exchange->type != IKE_EXCH_QUICK_MODE &&
 	    exchange->type != ISAKMP_EXCH_INFO))) {
 		log_print("ipsec_initiator: unsupported exchange type %d "
 		    "in phase %d", exchange->type, exchange->phase);
@@ -1027,14 +1024,12 @@ ipsec_responder(struct message *msg)
 	u_int16_t       type;
 
 	/* Check that a new exchange is coherent with the IKE rules.  */
-	if (exchange->step == 0 && exchange->type != ISAKMP_EXCH_TRANSACTION
-	    && ((exchange->phase == 1 &&
-		exchange->type != ISAKMP_EXCH_ID_PROT &&
-		exchange->type != ISAKMP_EXCH_AGGRESSIVE &&
-		exchange->type != ISAKMP_EXCH_INFO)
-	    || (exchange->phase == 2 &&
-		exchange->type != IKE_EXCH_QUICK_MODE &&
-		exchange->type != ISAKMP_EXCH_INFO))) {
+	if (exchange->step == 0 && exchange->type != ISAKMP_EXCH_TRANSACTION &&
+	    ((exchange->phase == 1 && exchange->type != ISAKMP_EXCH_ID_PROT &&
+	    exchange->type != ISAKMP_EXCH_AGGRESSIVE &&
+	    exchange->type != ISAKMP_EXCH_INFO) ||
+	    (exchange->phase == 2 && exchange->type != IKE_EXCH_QUICK_MODE &&
+	    exchange->type != ISAKMP_EXCH_INFO))) {
 		message_drop(msg, ISAKMP_NOTIFY_UNSUPPORTED_EXCHANGE_TYPE,
 		    0, 1, 0);
 		return -1;
@@ -1152,10 +1147,10 @@ ipsec_is_attribute_incompatible(u_int16_t type, u_int8_t *value, u_int16_t len,
 		case IKE_ATTR_AUTHENTICATION_METHOD:
 			return !ike_auth_get(dv);
 		case IKE_ATTR_GROUP_DESCRIPTION:
-			return (dv < IKE_GROUP_DESC_MODP_768
-				|| dv > IKE_GROUP_DESC_MODP_1536)
-			    && (dv < IKE_GROUP_DESC_MODP_2048
-				|| dv > IKE_GROUP_DESC_MODP_8192);
+			return (dv < IKE_GROUP_DESC_MODP_768 ||
+			    dv > IKE_GROUP_DESC_MODP_1536) &&
+			    (dv < IKE_GROUP_DESC_MODP_2048 ||
+			    dv > IKE_GROUP_DESC_MODP_8192);
 		case IKE_ATTR_GROUP_TYPE:
 			return 1;
 		case IKE_ATTR_GROUP_PRIME:
@@ -1169,8 +1164,8 @@ ipsec_is_attribute_incompatible(u_int16_t type, u_int8_t *value, u_int16_t len,
 		case IKE_ATTR_GROUP_CURVE_B:
 			return 1;
 		case IKE_ATTR_LIFE_TYPE:
-			return dv < IKE_DURATION_SECONDS
-			    || dv > IKE_DURATION_KILOBYTES;
+			return dv < IKE_DURATION_SECONDS ||
+			    dv > IKE_DURATION_KILOBYTES;
 		case IKE_ATTR_LIFE_DURATION:
 			return len != 2 && len != 4;
 		case IKE_ATTR_PRF:
@@ -1189,28 +1184,28 @@ ipsec_is_attribute_incompatible(u_int16_t type, u_int8_t *value, u_int16_t len,
 	} else {
 		switch (type) {
 		case IPSEC_ATTR_SA_LIFE_TYPE:
-			return dv < IPSEC_DURATION_SECONDS
-			    || dv > IPSEC_DURATION_KILOBYTES;
+			return dv < IPSEC_DURATION_SECONDS ||
+			    dv > IPSEC_DURATION_KILOBYTES;
 		case IPSEC_ATTR_SA_LIFE_DURATION:
 			return len != 2 && len != 4;
 		case IPSEC_ATTR_GROUP_DESCRIPTION:
-			return (dv < IKE_GROUP_DESC_MODP_768
-				|| dv > IKE_GROUP_DESC_MODP_1536)
-			    && (dv < IKE_GROUP_DESC_MODP_2048
-				|| IKE_GROUP_DESC_MODP_8192 < dv);
+			return (dv < IKE_GROUP_DESC_MODP_768 ||
+			    dv > IKE_GROUP_DESC_MODP_1536) &&
+			    (dv < IKE_GROUP_DESC_MODP_2048 ||
+			    IKE_GROUP_DESC_MODP_8192 < dv);
 		case IPSEC_ATTR_ENCAPSULATION_MODE:
 #if defined (USE_NAT_TRAVERSAL)
-			return dv != IPSEC_ENCAP_TUNNEL
-			    && dv != IPSEC_ENCAP_TRANSPORT
-			    && dv != IPSEC_ENCAP_UDP_ENCAP_TUNNEL
-			    && dv != IPSEC_ENCAP_UDP_ENCAP_TRANSPORT;
+			return dv != IPSEC_ENCAP_TUNNEL &&
+			    dv != IPSEC_ENCAP_TRANSPORT &&
+			    dv != IPSEC_ENCAP_UDP_ENCAP_TUNNEL &&
+			    dv != IPSEC_ENCAP_UDP_ENCAP_TRANSPORT;
 #else
-			return dv < IPSEC_ENCAP_TUNNEL
-			    || dv > IPSEC_ENCAP_TRANSPORT;
+			return dv < IPSEC_ENCAP_TUNNEL ||
+			    dv > IPSEC_ENCAP_TRANSPORT;
 #endif /* USE_NAT_TRAVERSAL */
 		case IPSEC_ATTR_AUTHENTICATION_ALGORITHM:
-			return dv < IPSEC_AUTH_HMAC_MD5
-			    || dv > IPSEC_AUTH_HMAC_RIPEMD;
+			return dv < IPSEC_AUTH_HMAC_MD5 ||
+			    dv > IPSEC_AUTH_HMAC_RIPEMD;
 		case IPSEC_ATTR_KEY_LENGTH:
 			/*
 			 * XXX Blowfish needs '0'. Others appear to disregard
@@ -1597,10 +1592,9 @@ ipsec_handle_leftover_payload(struct message *msg, u_int8_t type,
 			return -1;
 		}
 		/* verify proper SPI size */
-		if ((proto == ISAKMP_PROTO_ISAKMP && spisz !=
-			ISAKMP_HDR_COOKIES_LEN)
-		    || (proto != ISAKMP_PROTO_ISAKMP && spisz !=
-			sizeof(u_int32_t))) {
+		if ((proto == ISAKMP_PROTO_ISAKMP &&
+		    spisz != ISAKMP_HDR_COOKIES_LEN) ||
+		    (proto != ISAKMP_PROTO_ISAKMP && spisz != sizeof(u_int32_t))) {
 			log_print("ipsec_handle_leftover_payload: invalid SPI "
 			    "size %d for proto %d in DELETE payload",
 			    spisz, proto);

@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.c,v 1.81 2005/04/04 19:31:11 deraadt Exp $	 */
+/* $OpenBSD: policy.c,v 1.82 2005/04/06 16:00:20 deraadt Exp $	 */
 /* $EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -178,8 +178,8 @@ policy_callback(char *name)
 	static int      dirty = 1;
 
 	/* We only need to set dirty at initialization time really.  */
-	if (strcmp(name, KEYNOTE_CALLBACK_CLEANUP) == 0
-	    || strcmp(name, KEYNOTE_CALLBACK_INITIALIZE) == 0) {
+	if (strcmp(name, KEYNOTE_CALLBACK_CLEANUP) == 0 ||
+	    strcmp(name, KEYNOTE_CALLBACK_INITIALIZE) == 0) {
 		esp_present = ah_present = comp_present = pfs = "no";
 		ah_hash_alg = ah_auth_alg = phase_1 = "";
 		esp_auth_alg = esp_enc_alg = comp_alg = ah_encapsulation = "";

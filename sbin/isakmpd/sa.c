@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.c,v 1.92 2005/04/06 00:02:56 cloder Exp $	 */
+/* $OpenBSD: sa.c,v 1.93 2005/04/06 16:00:20 deraadt Exp $	 */
 /* $EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	 */
 
 /*
@@ -345,11 +345,10 @@ sa_lookup(u_int8_t *cookies, u_int8_t *message_id)
 		}
 	bucket &= bucket_mask;
 	for (sa = LIST_FIRST(&sa_tab[bucket]);
-	    sa && (memcmp(cookies, sa->cookies, ISAKMP_HDR_COOKIES_LEN) != 0
-	    || (message_id && memcmp(message_id, sa->message_id,
-		ISAKMP_HDR_MESSAGE_ID_LEN) != 0)
-	    || (!message_id && !zero_test(sa->message_id,
-		ISAKMP_HDR_MESSAGE_ID_LEN)));
+	    sa && (memcmp(cookies, sa->cookies, ISAKMP_HDR_COOKIES_LEN) != 0 ||
+	    (message_id && memcmp(message_id, sa->message_id,
+	    ISAKMP_HDR_MESSAGE_ID_LEN) != 0) ||
+	    (!message_id && !zero_test(sa->message_id, ISAKMP_HDR_MESSAGE_ID_LEN)));
 	    sa = LIST_NEXT(sa, link))
 		;
 
