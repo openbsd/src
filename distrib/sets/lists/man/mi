@@ -175,7 +175,6 @@
 ./usr/share/man/cat1/amiga
 ./usr/share/man/cat1/apply.0
 ./usr/share/man/cat1/apropos.0
-./usr/share/man/cat1/arc
 ./usr/share/man/cat1/arch.0
 ./usr/share/man/cat1/at.0
 ./usr/share/man/cat1/atq.0
@@ -671,7 +670,6 @@
 ./usr/share/man/cat3
 ./usr/share/man/cat3/alpha
 ./usr/share/man/cat3/amiga
-./usr/share/man/cat3/arc
 ./usr/share/man/cat3/auth_getpwd.0
 ./usr/share/man/cat3/extattr.0
 ./usr/share/man/cat3/extattr_namespace_to_string.0
@@ -937,7 +935,6 @@
 ./usr/share/man/cat4/amphy.0
 ./usr/share/man/cat4/an.0
 ./usr/share/man/cat4/arandom.0
-./usr/share/man/cat4/arc
 ./usr/share/man/cat4/aria.0
 ./usr/share/man/cat4/arp.0
 ./usr/share/man/cat4/ast.0
@@ -1417,7 +1414,6 @@
 ./usr/share/man/cat5/alpha
 ./usr/share/man/cat5/altq.conf.0
 ./usr/share/man/cat5/amiga
-./usr/share/man/cat5/arc
 ./usr/share/man/cat5/bootparams.0
 ./usr/share/man/cat5/bootptab.0
 ./usr/share/man/cat5/bridgename.if.0
@@ -1598,8 +1594,6 @@
 ./usr/share/man/cat8/ancontrol.0
 ./usr/share/man/cat8/apachectl.0
 ./usr/share/man/cat8/apxs.0
-./usr/share/man/cat8/arc
-./usr/share/man/cat8/arc/fdisk.0
 ./usr/share/man/cat8/arp.0
 ./usr/share/man/cat8/atactl.0
 ./usr/share/man/cat8/atrun.0
@@ -2012,7 +2006,6 @@
 ./usr/share/man/cat9/alpha
 ./usr/share/man/cat9/altq.0
 ./usr/share/man/cat9/amiga
-./usr/share/man/cat9/arc
 ./usr/share/man/cat9/extattr.0
 ./usr/share/man/cat9/hardclock.0
 ./usr/share/man/cat9/hp300
@@ -2032,7 +2025,6 @@
 ./usr/share/man/man1
 ./usr/share/man/man1/alpha
 ./usr/share/man/man1/amiga
-./usr/share/man/man1/arc
 ./usr/share/man/man1/hp300
 ./usr/share/man/man1/hppa
 ./usr/share/man/man1/i386
@@ -2051,7 +2043,6 @@
 ./usr/share/man/man4
 ./usr/share/man/man4/alpha
 ./usr/share/man/man4/amiga
-./usr/share/man/man4/arc
 ./usr/share/man/man4/hp300
 ./usr/share/man/man4/hppa
 ./usr/share/man/man4/i386
@@ -2070,7 +2061,6 @@
 ./usr/share/man/man8
 ./usr/share/man/man8/alpha
 ./usr/share/man/man8/amiga
-./usr/share/man/man8/arc
 ./usr/share/man/man8/hp300
 ./usr/share/man/man8/hppa
 ./usr/share/man/man8/i386
@@ -2087,7 +2077,6 @@
 ./usr/share/man/ps1
 ./usr/share/man/ps1/alpha
 ./usr/share/man/ps1/amiga
-./usr/share/man/ps1/arc
 ./usr/share/man/ps1/hp300
 ./usr/share/man/ps1/hppa
 ./usr/share/man/ps1/i386
@@ -2105,7 +2094,6 @@
 ./usr/share/man/ps3
 ./usr/share/man/ps3/alpha
 ./usr/share/man/ps3/amiga
-./usr/share/man/ps3/arc
 ./usr/share/man/ps3/hp300
 ./usr/share/man/ps3/hppa
 ./usr/share/man/ps3/i386
@@ -2122,7 +2110,6 @@
 ./usr/share/man/ps4
 ./usr/share/man/ps4/alpha
 ./usr/share/man/ps4/amiga
-./usr/share/man/ps4/arc
 ./usr/share/man/ps4/hp300
 ./usr/share/man/ps4/hppa
 ./usr/share/man/ps4/i386
@@ -2138,7 +2125,6 @@
 ./usr/share/man/ps5
 ./usr/share/man/ps5/alpha
 ./usr/share/man/ps5/amiga
-./usr/share/man/ps5/arc
 ./usr/share/man/ps5/hp300
 ./usr/share/man/ps5/hppa
 ./usr/share/man/ps5/i386
@@ -2156,7 +2142,6 @@
 ./usr/share/man/ps8
 ./usr/share/man/ps8/alpha
 ./usr/share/man/ps8/amiga
-./usr/share/man/ps8/arc
 ./usr/share/man/ps8/hp300
 ./usr/share/man/ps8/hppa
 ./usr/share/man/ps8/i386
@@ -2172,7 +2157,6 @@
 ./usr/share/man/ps9
 ./usr/share/man/ps9/alpha
 ./usr/share/man/ps9/amiga
-./usr/share/man/ps9/arc
 ./usr/share/man/ps9/hp300
 ./usr/share/man/ps9/hppa
 ./usr/share/man/ps9/i386
