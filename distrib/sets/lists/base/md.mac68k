@@ -1499,7 +1499,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/pte.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/ptrace.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/reg.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/scsi96reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/scsi_5380.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/setjmp.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/signal.ph

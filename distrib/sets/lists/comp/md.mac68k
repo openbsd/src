@@ -76,7 +76,6 @@
 ./usr/include/mac68k/pte.h
 ./usr/include/mac68k/ptrace.h
 ./usr/include/mac68k/reg.h
-./usr/include/mac68k/scsi96reg.h
 ./usr/include/mac68k/scsi_5380.h
 ./usr/include/mac68k/setjmp.h
 ./usr/include/mac68k/signal.h
