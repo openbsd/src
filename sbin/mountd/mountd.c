@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.11 1996/09/28 05:47:42 downsj Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.12 1996/12/05 23:14:27 millert Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -336,7 +336,7 @@ mntsrv(rqstp, transp)
 	u_long saddr;
 	u_short sport;
 	char rpcpath[RPCMNT_PATHLEN+1], dirpath[MAXPATHLEN];
-	long bad = ENOENT;
+	long bad = 0;
 	int defset, hostset;
 	sigset_t sighup_mask;
 
@@ -371,9 +371,7 @@ mntsrv(rqstp, transp)
 			chdir("/");	/* Just in case realpath doesn't */
 			if (debug)
 				fprintf(stderr, "stat failed on %s\n", dirpath);
-			if (!svc_sendreply(transp, xdr_long, (caddr_t)&bad))
-				syslog(LOG_ERR, "Can't send reply");
-			return;
+			bad = ENOENT;	/* We will send error reply later */
 		}
 
 		/* Check in the exports list */
@@ -385,6 +383,13 @@ mntsrv(rqstp, transp)
 		     chk_host(dp, saddr, &defset, &hostset)) ||
 		     (defset && scan_tree(ep->ex_defdir, saddr) == 0 &&
 		      scan_tree(ep->ex_dirl, saddr) == 0))) {
+			if (bad) {
+				if (!svc_sendreply(transp, xdr_long,
+				    (caddr_t)&bad))
+					syslog(LOG_ERR, "Can't send reply");
+				sigprocmask(SIG_UNBLOCK, &sighup_mask, NULL);
+				return;
+			}
 			if (hostset & DP_HOSTSET)
 				fhr.fhr_flag = hostset;
 			else
@@ -413,11 +418,11 @@ mntsrv(rqstp, transp)
 					dirpath);
 			if (debug)
 				fprintf(stderr,"Mount successful.\n");
-		} else {
+		} else
 			bad = EACCES;
-			if (!svc_sendreply(transp, xdr_long, (caddr_t)&bad))
-				syslog(LOG_ERR, "Can't send reply");
-		}
+
+		if (bad && !svc_sendreply(transp, xdr_long, (caddr_t)&bad))
+			syslog(LOG_ERR, "Can't send reply");
 		sigprocmask(SIG_UNBLOCK, &sighup_mask, NULL);
 		return;
 	case RPCMNT_DUMP:
