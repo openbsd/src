@@ -340,7 +340,9 @@ API_EXPORT(int) ap_set_byterange(request_rec *r)
     bbuf = ap_palloc(r->pool, ap_base64encode_len(sizeof(rbuf)));
     ap_base64encode(bbuf, (const unsigned char *)rbuf, sizeof(rbuf));
     for (b = bbuf; *b != '\0'; b++) {
-        if (!isalnum(*b))
+        if (((b - bbuf) + 1) % 7 == 0)
+            *b = '-';
+        else if (!isalnum(*b))
             *b = 'a';
     }
 
