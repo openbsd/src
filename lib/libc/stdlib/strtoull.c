@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: strtoull.c,v 1.2 2003/06/02 20:18:38 millert Exp $";
+static const char rcsid[] = "$OpenBSD: strtoull.c,v 1.3 2005/03/02 12:24:26 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -119,6 +119,6 @@ strtouq(nptr, endptr, base)
 	int base;
 {
 
-	return ((u_quad_t)strtoull(nptr, endptr, base);
+	return ((u_quad_t)strtoull(nptr, endptr, base));
 }
 #endif
