@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.4 2004/12/03 13:21:04 jsg Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.5 2004/12/03 14:23:18 jsg Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -34,7 +34,7 @@
 /*
  * DM9601(DAVICOM USB to Ethernet MAC Controller with Integrated 10/100 PHY)
  * The spec can be found at the following url.
- *   http://www.davicom.com.tw/big5/download/Data%20Sheet/DM9601-DS-F01-062202s.pdf
+ *  http://www.davicom.com.tw/big5/download/Data%20Sheet/DM9601-DS-P01-930914.pdf 
  */
 
 /*
