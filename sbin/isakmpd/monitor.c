@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.19 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $OpenBSD: monitor.c,v 1.20 2004/05/10 18:34:15 deraadt Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -525,7 +525,8 @@ monitor_loop(int debugging)
 	fds = (fd_set *) malloc(fdsn);
 	if (!fds) {
 		kill(m_state.pid, SIGTERM);
-		log_fatal("monitor_loop: malloc (%u) failed", fdsn);
+		log_fatal("monitor_loop: malloc (%lu) failed",
+		    (unsigned long)fdsn);
 		return;
 	}
 	/* If the child dies, we should shutdown also.  */
