@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bindresvport.3,v 1.9 1997/09/29 18:25:51 deraadt Exp $
+.\"	$OpenBSD: bindresvport.3,v 1.10 1999/07/07 14:22:24 aaron Exp $
 .\"
 .Dd August 9, 1997
 .Dt BINDRESVPORT 3
@@ -29,7 +29,7 @@ attempts to use the specified port.  If that fails, it
 chooses another privileged port number automatically.
 .Sh RETURN VALUES
 .Fn bindresvport
-returns 0 if it is successful, otherwise -1 is returned and
+returns 0 if it is successful, otherwise \-1 is returned and
 .Va errno                                                                      
 set to reflect the cause of the error.
 .Sh ERRORS

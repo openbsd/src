@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.3,v 1.7 1999/07/07 10:50:06 aaron Exp $
+.\" $OpenBSD: keynote.3,v 1.8 1999/07/07 14:22:25 aaron Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -100,7 +100,7 @@ struct keynote_binary
 .Sh DESCRIPTION
 .Va keynote_errno
 contains an error code if some library call failed. Failed calls
-return -1 (if their return value is integer), or
+return \-1 (if their return value is integer), or
 .Dv NULL 
 (if their return value is a pointer) and set
 .Va keynote_errno .
@@ -152,7 +152,7 @@ function returns the new session ID, which is used by all subsequent
 calls with a
 .Fa sessid
 argument. 
-On failure, it returns -1 and sets
+On failure, it returns \-1 and sets
 .Va keynote_errno
 to
 .Er ERROR_MEMORY .
@@ -183,7 +183,7 @@ as the
 On success, this function will return an assertion ID which can be
 used to remove the assertion from the session, by using
 .Xr kn_remove_assertion 3 .
-On failure, -1 is returned, and
+On failure, \-1 is returned, and
 .Va keynote_errno
 is set to
 .Er ERROR_NOTFOUND
@@ -198,7 +198,7 @@ removes the assertion identified by
 .Fa assertid
 from the session identified by
 .Fa sessid .
-On success, this function returns 0. On failure, it returns -1 and
+On success, this function returns 0. On failure, it returns \-1 and
 sets
 .Va keynote_errno
 to
@@ -264,7 +264,7 @@ large.
 .Pp
 On success,
 .Xr keynote_add_action 3
-returns 0. On failure, it returns -1 and sets
+returns 0. On failure, it returns \-1 and sets
 .Va keynote_errno to
 .Er ERROR_NOTFOUND
 if the session was not found,
@@ -285,7 +285,7 @@ from the environment of session
 Notice that if more than one instances of
 .Fa name
 exist, only the one added last will be deleted.
-On success, this function returns 0. On failure, it returns -1 and
+On success, this function returns 0. On failure, it returns \-1 and
 .Va keynote_errno
 is set to
 .Er ERROR_NOTFOUND
@@ -302,7 +302,7 @@ adds the principal pointed to by
 to the action authorizers list of session
 .Fa sessid .
 The principal is typically an ASCII-encoded key. On success, this
-function will return 0. On failure, it returns -1 and sets
+function will return 0. On failure, it returns \-1 and sets
 .Va keynote_errno
 to
 .Er ERROR_NOTFOUND
@@ -317,7 +317,7 @@ removes
 .Fa principal
 from the action authorizer list of session
 .Fa sessid .
-On success, this function returns 0. On failure, it returns -1 and sets
+On success, this function returns 0. On failure, it returns \-1 and sets
 .Va keynote_errno
 to
 .Er ERROR_NOTFOUND
@@ -348,7 +348,7 @@ after the call to
 if this feature is used, as the array is not replicated internally.
 On success, this function returns an index into the
 .Fa returnvalues
-array. On failure, it returns -1 and sets
+array. On failure, it returns \-1 and sets
 .Va keynote_errno
 to
 .Er ERROR_NOTFOUND
@@ -397,7 +397,7 @@ application could do something like:
 On success,
 .Xr kn_get_failed 3
 returns an assertion ID. On failure, or when no assertion matching the
-given criteria is found, it returns -1 and set
+given criteria is found, it returns \-1 and set
 .Va keynote_errno
 to
 .Er ERROR_NOTFOUND .
@@ -407,7 +407,7 @@ closes session
 .Fa sessid
 and frees all related resources, deleting action attributes, action
 authorizers, and assertions. On success, this function returns 0. On
-failure, it returns -1 and sets
+failure, it returns \-1 and sets
 .Va keynote_errno
 to 
 .Er ERROR_NOTFOUND
@@ -424,7 +424,7 @@ and returns an array of strings containing the assertions found in
 contains the number of assertions (and thus strings in the returned
 array) found in
 .Fa array .
-On failure, this function returns -1 and sets
+On failure, this function returns \-1 and sets
 .Va keynote_errno
 to
 .Er ERROR_MEMORY
@@ -486,7 +486,7 @@ respectively.
 .Fa env_regex
 is not used. On success, this function returns an index in
 .Fa returnvalues
-indicating the returned value to the query. On failure, it returns -1
+indicating the returned value to the query. On failure, it returns \-1
 and sets
 .Va keynote_errno
 to the same values as
@@ -510,7 +510,7 @@ string terminator. If
 is not a multiple of 4, or
 .Fa dst
 is not long enough to contain the encoded data, this function returns
--1 and sets
+\-1 and sets
 .Va keynote_errno
 to
 .Er ERROR_SYNTAX .
@@ -523,7 +523,7 @@ and stores the result in
 which is of length
 .Fa dstlen .
 The actual length of the decoded data is returned on success. On
-failure, this function returns -1 and sets
+failure, this function returns \-1 and sets
 .Va keynote_errno
 to
 .Er ERROR_SYNTAX ,
@@ -546,7 +546,7 @@ Thus, this function should be used as follows:
 .Ed
 .Pp
 The length of the allocated buffer will be (2 * srclen + 1). On
-success, this function returns 0. On failure, it returns -1 and sets
+success, this function returns 0. On failure, it returns \-1 and sets
 .Va keynote_errno
 to
 .Er ERROR_MEMORY
@@ -564,7 +564,7 @@ and stores the result in a memory chunk allocated by the function. A
 pointer to that memory is stored in
 .Fa dst .
 The length of the allocated memory will be (strlen(src) / 2). On
-success, this function returns 0. On failure, it returns -1 and sets
+success, this function returns 0. On failure, it returns \-1 and sets
 .Va keynote_errno
 to
 .Er ERROR_MEMORY
@@ -669,7 +669,7 @@ takes the values
 or
 .Dv KEYNOTE_PRIVATE_KEY
 to specify a public or private key, where applicable. On success, this
-function returns 0. On failure, it returns -1 and sets
+function returns 0. On failure, it returns \-1 and sets
 .Va keynote_errno
 to
 .Er ERROR_MEMORY
@@ -731,7 +731,7 @@ On success, this function returns
 .Dv SIGRESULT_TRUE
 if the signature could be verified, or
 .Dv SIGRESULT_FALSE
-otherwise. On failure, this function returns -1 and sets
+otherwise. On failure, this function returns \-1 and sets
 .Va keynote_errno
 to
 .Er ERROR_MEMORY

@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: killpg.3,v 1.5 1999/05/23 14:10:57 aaron Exp $
+.\"	$OpenBSD: killpg.3,v 1.6 1999/07/07 14:22:24 aaron Exp $
 .\"
 .Dd March 10, 1991
 .Dt KILLPG 3
@@ -63,7 +63,7 @@ As a single special case the continue signal SIGCONT may be sent
 to any process that is a descendant of the current process.
 .Sh RETURN VALUES
 Upon successful completion, a value of 0 is returned.  Otherwise,
-a value of -1 is returned and the global variable
+a value of \-1 is returned and the global variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS

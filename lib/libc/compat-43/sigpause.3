@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: sigpause.3,v 1.6 1999/05/23 14:10:58 aaron Exp $
+.\"	$OpenBSD: sigpause.3,v 1.7 1999/07/07 14:22:24 aaron Exp $
 .\"
 .Dd March 10, 1991
 .Dt SIGPAUSE 3
@@ -55,7 +55,7 @@ on return the set of masked signals is restored.
 is usually 0 to indicate that no
 signals are to be blocked.
 .Fn sigpause
-always terminates by being interrupted, returning -1 with
+always terminates by being interrupted, returning \-1 with
 .Va errno
 set to
 .Dv EINTR

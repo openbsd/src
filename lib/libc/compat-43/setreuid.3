@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: setreuid.3,v 1.4 1999/05/25 13:06:44 aaron Exp $
+.\"	$OpenBSD: setreuid.3,v 1.5 1999/07/07 14:22:24 aaron Exp $
 .\"
 .Dd March 10, 1991
 .Dt SETREUID 3
@@ -48,7 +48,7 @@ If
 .Fa ruid
 or 
 .Fa euid
-is -1, the current UID is filled in by the system.
+is \-1, the current UID is filled in by the system.
 Unprivileged users may change the real user
 ID to the effective user ID and vice-versa; only the super-user may
 make other changes.
@@ -67,7 +67,7 @@ When setting the real and effective user IDs to the same value, the standard
 function is preferred.
 .Sh RETURN VALUES
 Upon successful completion, a value of 0 is returned.  Otherwise,
-a value of -1 is returned and
+a value of \-1 is returned and
 .Va errno
 is set to indicate the error.
 .Sh ERRORS

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kvm_dump.3,v 1.1 1996/05/05 14:56:55 deraadt Exp $
+.\"	$OpenBSD: kvm_dump.3,v 1.2 1999/07/07 14:22:25 aaron Exp $
 .\"	$NetBSD: kvm_dump.3,v 1.1 1996/03/18 21:11:12 leo Exp $
 .\"
 .\" Copyright (c) 1996 Leo Weppelman
@@ -93,7 +93,7 @@ that
 .Fn kvm_dum_mkheader
 was called earlier in the sequence).
 .Sh RETURN VALUES
-All functions return 0 on success, -1 on failure. In the case of failure,
+All functions return 0 on success, \-1 on failure. In the case of failure,
 .Xr kvm_geterr 3
 can be used to retrieve the cause of the error.
 .Sh HISTORY

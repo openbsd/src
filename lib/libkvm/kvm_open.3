@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kvm_open.3,v 1.3 1998/08/24 05:46:27 millert Exp $
+.\"	$OpenBSD: kvm_open.3,v 1.4 1999/07/07 14:22:25 aaron Exp $
 .\"	$NetBSD: kvm_open.3,v 1.2 1996/03/18 22:33:52 thorpej Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -175,7 +175,7 @@ writes the error message into
 .Pp
 The
 .Fn kvm_close
-function returns 0 on success and -1 on failure.
+function returns 0 on success and \-1 on failure.
 .Sh BUGS
 There should not be two open calls.  The ill-defined error semantics
 of the Sun library and the desire to have a backward-compatible library

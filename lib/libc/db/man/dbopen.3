@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dbopen.3,v 1.12 1999/07/07 10:50:04 aaron Exp $
+.\"	$OpenBSD: dbopen.3,v 1.13 1999/07/07 14:22:24 aaron Exp $
 .\"	$NetBSD: dbopen.3,v 1.6 1995/02/27 13:23:25 cgd Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
@@ -185,7 +185,7 @@ or
 .Fa sync
 function may result in inconsistent or lost information.
 .Fa close
-routines return -1 on error (setting
+routines return \-1 on error (setting
 .Va errno )
 and 0 on success.
 .It del
@@ -201,7 +201,7 @@ The cursor must have previously been initialized.
 .El
 .Pp
 .Fa delete
-routines return -1 on error (setting
+routines return \-1 on error (setting
 .Va errno ) ,
 0 on success, and 1 if the specified
 .Fa key
@@ -224,7 +224,7 @@ The file descriptor is not necessarily associated with any of the
 underlying files used by the access method.
 No file descriptor is available for in memory databases.
 .Fa fd
-routines return -1 on error (setting
+routines return \-1 on error (setting
 .Va errno ) ,
 and the file descriptor on success.
 .It get
@@ -235,7 +235,7 @@ The address and length of the data associated with the specified
 are returned in the structure referenced by
 .Fa data .
 .Fa get
-routines return -1 on error (setting
+routines return \-1 on error (setting
 .Va errno ) ,
 0 on success, and 1 if the
 .Fa key
@@ -290,7 +290,7 @@ routines is to enter the new key/data pair, replacing any previously
 existing key.
 .Pp
 .Fa put
-routines return -1 on error (setting
+routines return \-1 on error (setting
 .Va errno ) ,
 0 on success, and 1 if the R_NOOVERWRITE
 .Fa flag
@@ -353,7 +353,7 @@ access methods because they each imply that the keys have an inherent
 order which does not change.
 .Pp
 .Fa seq
-routines return -1 on error (setting
+routines return \-1 on error (setting
 .Va errno ) ,
 0 on success and 1 if there are no key/data pairs less than or greater
 than the specified or current key.
@@ -382,7 +382,7 @@ manual page for more information.)
 .El
 .Pp
 .Fa sync
-routines return -1 on error (setting
+routines return \-1 on error (setting
 .Va errno )
 and 0 on success.
 .El

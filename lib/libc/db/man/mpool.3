@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mpool.3,v 1.8 1999/07/07 10:50:04 aaron Exp $
+.\"	$OpenBSD: mpool.3,v 1.9 1999/07/07 14:22:24 aaron Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -165,14 +165,14 @@ The page has been modified and needs to be written to the backing file.
 .El
 .Pp
 .Fn mpool_put
-returns 0 on success and -1 if an error occurs.
+returns 0 on success and \-1 if an error occurs.
 .Pp
 The function
 .Fn mpool_sync
 writes all modified pages associated with the MPOOL pointer to the
 backing file.
 .Fn mpool_sync
-returns 0 on success and -1 if an error occurs.
+returns 0 on success and \-1 if an error occurs.
 .Pp
 The
 .Fn mpool_close
@@ -182,7 +182,7 @@ Modified pages are
 .Em not
 written to the backing file.
 .Fn mpool_close
-returns 0 on success and -1 if an error occurs.
+returns 0 on success and \-1 if an error occurs.
 .Sh ERRORS
 The
 .Fn mpool_open
