@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_pci.c,v 1.14 1998/04/02 20:14:03 deraadt Exp $	*/
+/*	$OpenBSD: if_ep_pci.c,v 1.15 1998/09/02 03:01:05 jason Exp $	*/
 /*	$NetBSD: if_ep_pci.c,v 1.13 1996/10/21 22:56:38 thorpej Exp $	*/
 
 /*
@@ -100,11 +100,6 @@ ep_pci_match(parent, match, aux)
 	case PCI_PRODUCT_3COM_3C595MII:
 	case PCI_PRODUCT_3COM_3C595T4:
 	case PCI_PRODUCT_3COM_3C595TX:
-	case PCI_PRODUCT_3COM_3C900COMBO:
-	case PCI_PRODUCT_3COM_3C900TPO:
-	case PCI_PRODUCT_3COM_3C905T4:
-	case PCI_PRODUCT_3COM_3C905TX:
-	case PCI_PRODUCT_3COM_3C905B:
 		break;
 	default:
 		return 0;
