@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.3 1996/06/23 14:30:24 deraadt Exp $
+.\"	$OpenBSD: fdisk.8,v 1.4 1996/09/25 11:24:11 deraadt Exp $
 .\"	$NetBSD: fdisk.8,v 1.8 1995/03/18 14:55:34 cgd Exp $
 .\"
 .Dd April 4, 1993
@@ -14,12 +14,13 @@
 .Sh PROLOGUE
 In order for the BIOS to boot the kernel, certain conventions must be
 adhered to.
-Sector 0 of the disk must contain boot code, a partition table, and a
-magic number.
-BIOS partitions can be used to break the disk up into several pieces.
+Sector 0 of the disk must contain boot code, a MBR partition table,
+and a magic number.
+MBR partitions (also known as BIOS partitions) can be used to break the
+disk up into several pieces.
 The BIOS brings in sector 0, verifies the magic number, and begins
 executing the code at the first byte.
-This code is turn searches the DOS partition table for an `active'
+This code is turn searches the MBR partition table for an `active'
 partition.
 If one is found, the boot block from that partition is loaded and replaces
 the original boot block.
@@ -32,38 +33,35 @@ one active.
 This program
 .Nm
 serves a similar purpose to the DOS program.
-When called with no arguments, it prints the sector 0 partition table.
+When called with no special flags, it prints the sector 0 partition
+table of the specified device
 An example follows:
 .Bd -literal
-	******* Working on device /dev/rwd0d *******
-	parameters extracted from in-core disklabel are:
-	cylinders=769 heads=15 sectors/track=33 (495 sectors/cylinder)
-
-	parameters to be used for BIOS calculations are:
-	cylinders=769 heads=15 sectors/track=33 (495 sectors/cylinder)
-		
-	Warning: BIOS sector numbering starts with sector 1
-	Information from DOS bootblock is:
-	The data for partition 0 is:
-	sysid 165 (OpenBSD/NetBSD/FreeBSD/386BSD)
-    	    start 495, size 380160 (185 MB), flag 0
-		beg: cylinder    1, head   0, sector  1
-		end: cylinder  768, head  14, sector 33
-	The data for partition 1 is:
-	sysid 164 (unknown)
-    	    start 378180, size 2475 (1 MB), flag 0
-		beg: cylinder  764, head   0, sector  1
-		end: cylinder  768, head  14, sector 33
-	The data for partition 2 is:
-	<UNUSED>
-	The data for partition 3 is:
-	sysid 99 (ISC UNIX, other System V/386, GNU HURD or Mach)
-    	    start 380656, size 224234 (109 MB), flag 80
-		beg: cylinder  769, head   0, sector  2
-		end: cylinder  197, head  14, sector 33
+    # fdisk wd0
+    Using device /dev/rwd0c:
+    Parameters extracted from in-core disklabel are:
+        cylinders=769 heads=15 sectors/track=33
+        sectors/cylinder=495 total=380655
+    Parameters to be used for BIOS calculations are:
+        cylinders=769 heads=15 sectors/track=33
+        sectors/cylinder=495 
+    Warning: BIOS sector numbers start at 1 (not 0)
+    MBR Partition 0: sysid 165=0xa5 (OpenBSD/NetBSD/FreeBSD/386BSD)
+        start 495, size 380160 (185 MB), flag 0x00
+        beg: cylinder    1, head   0, sector  1
+        end: cylinder  768, head  14, sector 33
+    MBR Partition 1: sysid 6=0x06 (Primary 'big' DOS (> 32MB))
+        start 378180, size 2475 (1 MB), flag 0x80
+        beg: cylinder  764, head   0, sector  1
+        end: cylinder  768, head  14, sector 33
+    MBR Partition 2: <UNUSED>
+    MBR Partition 3: sysid 99=0x63 (ISC, System V/386, GNU HURD or Mach)
+        start 380656, size 224234 (109 MB), flag 0x00
+        beg: cylinder  769, head   0, sector  2
+        end: cylinder  197, head  14, sector 33
 .Ed
 .Pp
-The disk is divided into three partitions that happen to fill the disk.
+This disk is divided into three partitions that happen to fill the disk.
 The second partition overlaps the end of the first.
 (Used for debugging purposes)
 .Bl -tag -width "cyl, sector and head"
@@ -173,6 +171,9 @@ lose all the data in that partition.
 .Pp
 You should run this program interactively once or twice to see how it works.
 This is completely safe as long as you answer the last question in the negative.
+.Sh FILES
+.Pa /usr/mdec/mbr
+- the default MBR that can be written onto the disk
 .Sh SEE ALSO
 .Xr disklabel 8
 .Sh BUGS
