@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2001/09/07 17:49:16 todd Exp $
+# $OpenBSD: Makefile,v 1.6 2001/11/13 18:05:37 deraadt Exp $
 
 NOMAN=
 NOPROG=
@@ -17,7 +17,7 @@ t1: ${MAKEDEVARCHS}
 ${MAKEDEVARCHS}:
 	@echo "====> ${.TARGET}"
 	@exec ${SUDO} rm -rf test.${.TARGET}
-	@exec mkdir -p test.${.TARGET}
+	@exec mkdir -p -m 700 test.${.TARGET}
 	@exec cp ${ETCSRCDIR}/etc.${.TARGET}/MAKEDEV test.${.TARGET}
 	@exec ${SUDO} chown root.wheel test.${.TARGET}
 	@cd test.${.TARGET}; time ${SUDO} sh ./MAKEDEV all || true; \
