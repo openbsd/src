@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.13 1997/09/04 00:51:53 mickey Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.14 1998/04/25 04:45:38 millert Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: shutdown.c,v 1.13 1997/09/04 00:51:53 mickey Exp $";
+static char rcsid[] = "$OpenBSD: shutdown.c,v 1.14 1998/04/25 04:45:38 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -394,6 +394,19 @@ die_you_gravy_sucking_pig_dog()
 		    (dodump ? "-d" : NULL), NULL, NULL);
 		syslog(LOG_ERR, "shutdown: can't exec %s: %m.", _PATH_HALT);
 		warn(_PATH_HALT);
+	}
+	if (access(_PATH_RCSHUTDOWN, R_OK) != -1) {
+		pid_t pid;
+
+		switch ((pid = fork())) {
+		case -1:
+			break;
+		case 0:
+			execl(_PATH_BSHELL, "sh", _PATH_RCSHUTDOWN, NULL);
+			exit(1);
+		default:
+			waitpid(pid, NULL, 0);
+		}
 	}
 	(void)kill(1, SIGTERM);		/* to single user */
 #endif
