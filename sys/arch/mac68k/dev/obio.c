@@ -1,5 +1,5 @@
-/*	$OpenBSD: obio.c,v 1.2 1997/01/24 01:35:36 briggs Exp $	*/
-/*	$NetBSD: obio.c,v 1.5 1996/12/17 06:47:37 scottr Exp $	*/
+/*	$OpenBSD: obio.c,v 1.3 1997/03/08 16:16:57 briggs Exp $	*/
+/*	$NetBSD: obio.c,v 1.7 1997/02/13 19:01:07 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,6 +41,8 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
+#include <machine/bus.h>
+
 #include <mac68k/dev/obiovar.h>
 
 static int	obio_match __P((struct device *, struct cfdata *, void *));
@@ -81,7 +83,7 @@ obio_attach(parent, self, aux)
 	printf("\n");
 
 	/* Search for and attach children. */
-	(void) config_search(obio_search, self, aux);
+	(void)config_search(obio_search, self, aux);
 }
 
 int
@@ -89,10 +91,10 @@ obio_print(args, name)
 	void *args;
 	const char *name;
 {
-	struct obio_attach_args *oa = (struct obio_attach_args *) args;
+	struct obio_attach_args *oa = (struct obio_attach_args *)args;
 
-	if (oa->oa_addr)
-		printf(" addr %p", oa->oa_addr);
+	if (oa->oa_addr != (-1))
+		printf(" addr %x", oa->oa_addr);
 
 	return (UNCONF);
 }
@@ -105,8 +107,13 @@ obio_search(parent, cf, aux)
 {
 	struct obio_attach_args oa;
 
-	bzero(&oa, sizeof(oa));
+	oa.oa_addr = cf->cf_loc[0];
+	oa.oa_drq = cf->cf_loc[1];
+	oa.oa_hsk = cf->cf_loc[2];
+	oa.oa_tag = MAC68K_BUS_SPACE_MEM;
+
 	if ((*cf->cf_attach->ca_match)(parent, cf, &oa) > 0)
 		config_attach(parent, cf, &oa, obio_print);
+
 	return (0);
 }

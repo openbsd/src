@@ -1,5 +1,5 @@
-/*	$OpenBSD: viareg.h,v 1.5 1997/01/24 01:35:41 briggs Exp $	*/
-/*	$NetBSD: viareg.h,v 1.5 1996/10/29 05:42:16 briggs Exp $	*/
+/*	$OpenBSD: viareg.h,v 1.6 1997/03/08 16:17:01 briggs Exp $	*/
+/*	$NetBSD: viareg.h,v 1.6 1997/02/28 07:41:41 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -90,25 +90,47 @@
 #define DB2O_vCDis	0x01
 #define DB2O_CEnable	0x01
 
-	/* VIA1 interrupt bits */
-#define V1IF_IRQ	0x80
-#define V1IF_T1		0x40
-#define V1IF_T2		0x20
-#define V1IF_ADBCLK	0x10
-#define V1IF_ADBDATA	0x08
-#define V1IF_ADBRDY	0x04
-#define V1IF_VBLNK	0x02
-#define V1IF_ONESEC	0x01
+/*
+ * VIA1 interrupts
+ */
+#define	VIA1_T1		6
+#define	VIA1_T2		5
+#define	VIA1_ADBCLK	4
+#define	VIA1_ADBDATA	3
+#define	VIA1_ADBRDY	2
+#define	VIA1_VBLNK	1
+#define	VIA1_ONESEC	0
 
-	/* VIA2 interrupt bits */
-#define V2IF_IRQ	0x80
-#define V2IF_T1		0x40
-#define V2IF_T2		0x20
-#define V2IF_ASC	0x10
-#define V2IF_SCSIIRQ	0x08
-#define V2IF_EXPIRQ	0x04
-#define V2IF_SLOTINT	0x02
-#define V2IF_SCSIDRQ	0x01
+/* VIA1 interrupt bits */
+#define V1IF_IRQ	0x80
+#define V1IF_T1		(1 << VIA1_T1)
+#define V1IF_T2		(1 << VIA1_T2)
+#define V1IF_ADBCLK	(1 << VIA1_ADBCLK)
+#define V1IF_ADBDATA	(1 << VIA1_ADBDATA)
+#define V1IF_ADBRDY	(1 << VIA1_ADBRDY)
+#define V1IF_VBLNK	(1 << VIA1_VBLNK)
+#define V1IF_ONESEC	(1 << VIA1_ONESEC)
+
+/*
+ * VIA2 interrupts
+ */
+#define VIA2_T1		6
+#define VIA2_T2		5
+#define VIA2_ASC	4
+#define VIA2_SCSIIRQ	3
+#define VIA2_EXPIRQ	2
+#define VIA2_SLOTINT	1
+#define VIA2_SCSIDRQ	0
+
+/* VIA2 interrupt bits */
+#define	V2IF_IRQ	0x80
+#define	V2IF_T1		(1 << VIA2_T1)
+#define	V2IF_T2		(1 << VIA2_T2)
+#define	V2IF_ASC	(1 << VIA2_ASC)
+#define	V2IF_SCSIIRQ	(1 << VIA2_SCSIIRQ)
+#define	V2IF_EXPIRQ	(1 << VIA2_EXPIRQ)
+#define	V2IF_SLOTINT	(1 << VIA2_SLOTINT)
+#define	V2IF_SCSIDRQ	(1 << VIA2_SCSIDRQ)
 
 #define VIA1_INTS	(V1IF_T1 | V1IF_ADBRDY)
 #define VIA2_INTS	(V2IF_T1 | V2IF_ASC | V2IF_SCSIIRQ | V2IF_SLOTINT | \
@@ -175,10 +197,8 @@ void	via_shutdown __P((void));
 void	via_set_modem __P((int));
 int	add_nubus_intr   __P((int, void (*) __P((void *, int)), void *));
 void	enable_nubus_intr __P((void));
-void	mac68k_register_scsi_irq __P((void (*)(void *), void *clnt));
-void	mac68k_register_scsi_b_irq __P((void (*)(void *), void *clnt));
-void	mac68k_register_scsi_drq __P((void (*)(void *), void *clnt));
-void	mac68k_register_via1_t1_irq __P((void (*)(void *)));
+void	via1_register_irq __P((int, void (*)(void *), void *));
+void	via2_register_irq __P((int, void (*)(void *), void *));
 
 extern void	(*via1itab[7]) __P((void *));
 extern void	(*via2itab[7]) __P((void *));

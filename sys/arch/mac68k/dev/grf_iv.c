@@ -1,5 +1,5 @@
-/*	$OpenBSD: grf_iv.c,v 1.7 1997/01/24 01:35:30 briggs Exp $	*/
-/*	$NetBSD: grf_iv.c,v 1.16 1996/12/16 16:17:06 scottr Exp $	*/
+/*	$OpenBSD: grf_iv.c,v 1.8 1997/03/08 16:16:51 briggs Exp $	*/
+/*	$NetBSD: grf_iv.c,v 1.17 1997/02/20 00:23:27 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -45,6 +45,7 @@
 #include <sys/systm.h>
 
 #include <machine/autoconf.h>
+#include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/macinfo.h>
 #include <machine/grfioctl.h>

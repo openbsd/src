@@ -1,5 +1,5 @@
-/*	$OpenBSD: machdep.c,v 1.30 1997/02/26 06:17:02 gene Exp $	*/
-/*	$NetBSD: machdep.c,v 1.129 1997/01/09 07:20:46 scottr Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.31 1997/03/08 16:17:04 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.134 1997/02/14 06:15:30 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -96,8 +96,9 @@
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/user.h>
-#include <sys/sysctl.h>
 #include <sys/mount.h>
+#include <sys/extent.h>
+#include <sys/sysctl.h>
 #include <sys/syscallargs.h>
 #include <sys/extent.h>
 #ifdef SYSVMSG
@@ -173,6 +174,10 @@ u_int32_t mac68k_vidlog;	/* logical addr */
 u_int32_t mac68k_vidphys;	/* physical addr */
 u_int32_t mac68k_vidlen;	/* mem length */
 
+/* Callback and cookie to run bell */
+int	(*mac68k_bell_callback) __P((void *, int, int, int));
+caddr_t	mac68k_bell_cookie;
+
 vm_map_t buffer_map;
 
 /*
@@ -220,9 +225,25 @@ void		dumpsys __P((void));
 int		bus_mem_add_mapping __P((bus_addr_t, bus_size_t,
 		    int, bus_space_handle_t *));
 
+/*
+ * Extent maps to manage all memory space, including I/O ranges.  Allocate
+ * storage for 8 regions in each, initially.  Later, iomem_malloc_safe
+ * will indicate that it's safe to use malloc() to dynamically allocate
+ * region descriptors.
+ *
+ * The extent maps are not static!  Machine-dependent NuBus and on-board
+ * I/O routines need access to them for bus address space allocation.
+ */
+static	long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
+struct	extent *iomem_ex;
+static	iomem_malloc_safe;
+
 static void	identifycpu __P((void));
 static u_long	get_physical __P((u_int, u_long *));
 void		dumpsys __P((void));
+
+int		bus_mem_add_mapping __P((bus_addr_t, bus_size_t,
+		    int, bus_space_handle_t *));
 
 /*
  * Console initialization: called early on from main,
@@ -468,6 +489,7 @@ again:
 		printf("kernel does not support -c; continuing..\n");
 #endif
 	}
+	iomem_malloc_safe = 1;
 	configure();
 }
 
@@ -1496,13 +1518,11 @@ getenvvars(flag, buf)
 	/*
          * For now, we assume that the boot device is off the first controller.
          */
-	if (bootdev == 0) {
-		bootdev = (root_scsi_id << 16) | 4;
-	}
+	if (bootdev == 0)
+		bootdev = MAKEBOOTDEV(4, 0, 0, root_scsi_id, 0);
 
-	if (boothowto == 0) {
+	if (boothowto == 0)
 		boothowto = getenv("SINGLE_USER");
-	}
 
 	/* These next two should give us mapped video & serial */
 	/* We need these for pre-mapping graybars & echo, but probably */
@@ -2562,7 +2582,6 @@ mac68k_set_io_offsets(base)
 	vm_offset_t base;
 {
 	extern volatile u_char *sccA;
-	extern volatile u_char *ASCBase;
 
 	/*
 	 * Initialize the I/O mem extent map.
@@ -2582,7 +2601,6 @@ mac68k_set_io_offsets(base)
 	case MACH_CLASSQ:
 		Via1Base = (volatile u_char *) base;
 		sccA = (volatile u_char *) base + 0xc000;
-		ASCBase = (volatile u_char *) base + 0x14000;
 		switch (current_mac_model->machineid) {
 		case MACH_MACQ900:
 		case MACH_MACQ950:
@@ -2602,13 +2620,11 @@ mac68k_set_io_offsets(base)
 		 */
 		Via1Base = (volatile u_char *) base;
 		sccA = (volatile u_char *) base + 0xc020;
-		ASCBase = (volatile u_char *) base + 0x14000;
 		SCSIBase = base + 0x10000;
 		break;
 	case MACH_CLASSAV:
 		Via1Base = (volatile u_char *) base;
 		sccA = (volatile u_char *) base + 0x4000;
-		ASCBase = (volatile u_char *) base + 0x14000;
 		SCSIBase = base + 0x18000;
 		break;
 	case MACH_CLASSII:
@@ -2619,7 +2635,6 @@ mac68k_set_io_offsets(base)
 	case MACH_CLASSLC:
 		Via1Base = (volatile u_char *) base;
 		sccA = (volatile u_char *) base + 0x4000;
-		ASCBase = (volatile u_char *) base + 0x14000;
 		SCSIBase = base;
 		break;
 	default:
@@ -2953,6 +2968,32 @@ printstar(void)
 				movl sp@+,d0;
 				movl sp@+,a1;
 				movl sp@+,a0");
+}
+
+/*
+ * Console bell callback; modularizes the console terminal emulator
+ * and the audio system, so neither requires direct knowledge of the
+ * other.
+ */
+
+void
+mac68k_set_bell_callback(callback, cookie)
+	int (*callback) __P((void *, int, int, int));
+	void *cookie;
+{
+	mac68k_bell_callback = callback;
+	mac68k_bell_cookie = (caddr_t) cookie;
+}
+
+int
+mac68k_ring_bell(freq, length, volume)
+	int freq, length, volume;
+{
+	if (mac68k_bell_callback)
+		return ((*mac68k_bell_callback)(mac68k_bell_cookie,
+		    freq, length, volume));
+	else
+		return (ENXIO);
 }
 
 /*

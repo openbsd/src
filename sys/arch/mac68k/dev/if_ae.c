@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_ae.c,v 1.9 1997/01/24 01:35:31 briggs Exp $	*/
-/*	$NetBSD: if_ae.c,v 1.50 1996/12/18 02:54:43 scottr Exp $	*/
+/*	$OpenBSD: if_ae.c,v 1.10 1997/03/08 16:16:52 briggs Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.57 1997/03/04 15:12:04 scottr Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -20,7 +20,6 @@
 #include "bpfilter.h"
 
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
@@ -47,367 +46,113 @@
 #include <net/bpfdesc.h>
 #endif
 
+#include <machine/bus.h>
 #include <machine/viareg.h>
-#include "nubus.h"
+
 #include <dev/ic/dp8390reg.h>
 #include "if_aereg.h"
+#include "if_aevar.h"
 
 #define INTERFACE_NAME_LEN	32
 
-/*
- * ae_softc: per line info and status
- */
-struct ae_softc {
-	struct device	sc_dev;
-	nubus_slot	sc_slot;
-/*	struct	intrhand sc_ih;	*/
-
-	struct arpcom sc_arpcom;/* ethernet common */
-
-	char	type_str[INTERFACE_NAME_LEN];	/* type string */
-	u_short	type;		/* interface type code */
-	u_char	vendor;		/* interface vendor */
-	u_char	regs_rev;	/* registers are reversed */
-
-#define	REG_MAP(sc, reg)	((sc)->regs_rev ? (0x0f-(reg))<<2 : (reg)<<2)
-#define NIC_GET(sc, reg)	((sc)->nic_addr[REG_MAP(sc, reg)])
-#define NIC_PUT(sc, reg, val)	((sc)->nic_addr[REG_MAP(sc, reg)] = (val))
-	volatile caddr_t nic_addr;	/* NIC (DS8390) I/O bus address */
-	caddr_t rom_addr;	/* on board prom address */
-
-	u_char  cr_proto;	/* values always set in CR */
-
-	caddr_t mem_start;	/* shared memory start address */
-	caddr_t mem_end;	/* shared memory end address */
-	u_long  mem_size;	/* total shared memory size */
-	caddr_t mem_ring;	/* start of RX ring-buffer (in smem) */
-
-	u_char  txb_cnt;	/* Number of transmit buffers */
-	u_char  txb_inuse;	/* number of transmit buffers active */
-
-	u_char  txb_new;	/* pointer to where new buffer will be added */
-	u_char  txb_next_tx;	/* pointer to next buffer ready to xmit */
-	u_short txb_len[8];	/* buffered xmit buffer lengths */
-	u_char  tx_page_start;	/* first page of TX buffer area */
-	u_char  rec_page_start;	/* first page of RX ring-buffer */
-	u_char  rec_page_stop;	/* last page of RX ring-buffer */
-	u_char  next_packet;	/* pointer to next unread RX packet */
-};
-
-static int	ae_card_vendor __P((struct nubus_attach_args *na));
-static int	ae_size_card_memory __P((caddr_t addr));
-
-int aematch __P((struct device *, struct cfdata *, void *));
-void aeattach __P((struct device *, struct device *, void *));
-void aeintr __P((void *, int));
-int aeioctl __P((struct ifnet *, u_long, caddr_t));
-void aestart __P((struct ifnet *));
-void aewatchdog __P((struct ifnet *));
-void aereset __P((struct ae_softc *));
-void aeinit __P((struct ae_softc *));
-void aestop __P((struct ae_softc *));
-
-void aeread __P((struct ae_softc *, caddr_t, int));
-struct mbuf *aeget __P((struct ae_softc *, caddr_t, int));
-
 #define inline			/* XXX for debugging porpoises */
-
-u_short ae_put __P((struct ae_softc *, struct mbuf *, caddr_t));
-void ae_getmcaf __P((struct arpcom *, u_char *));
 
 static inline void ae_rint __P((struct ae_softc *));
 static inline void ae_xmit __P((struct ae_softc *));
-static inline caddr_t ae_ring_copy __P((
-		struct ae_softc *, caddr_t, caddr_t, int));
-
-struct cfattach ae_ca = {
-	sizeof(struct ae_softc), aematch, aeattach
-};
-
-struct cfdriver ae_cd = {
-	NULL, "ae", DV_IFNET
-};
+static inline int ae_ring_copy __P(( struct ae_softc *, int, caddr_t, int));
 
 #define	ETHER_MIN_LEN	64
 #define ETHER_MAX_LEN	1518
 #define	ETHER_ADDR_LEN	6
 
-static char zero = 0;
 
-/*
- * XXX These two should be moved to locore, and maybe changed to use shorts
- * instead of bytes.  The reason for these is that bcopy and bzero use longs,
- * which the ethernet cards can't handle.
- */
-
-void			bszero __P((u_short *addr, int len));
-static inline void	word_copy __P((caddr_t a, caddr_t b, int len));
-static inline void	byte_copy __P((caddr_t a, caddr_t b, int len));
-
-void
-bszero(u_short * addr, int len)
+#define REG_MAP(sc, reg)	((sc)->regs_rev ? (0x0f-(reg))<<2 : (reg)<<2)
+#define NIC_GET(sc, reg)	(bus_space_read_1((sc)->sc_regt,	\
+				    (sc)->sc_regh,			\
+				    (REG_MAP(sc, reg))))
+#define NIC_PUT(sc, reg, val)	(bus_space_write_1((sc)->sc_regt,	\
+				    (sc)->sc_regh,			\
+				    (REG_MAP(sc, reg)), (val)))
+  
+struct cfdriver ae_cd = {
+	NULL, "ae", DV_IFNET
+};
+  
+int
+ae_size_card_memory(bst, bsh, ofs)
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+	int ofs;
 {
-	while (len--)
-		*addr++ = 0;
-}
-
-/*
- * Memory copy, copies word at time.
- */
-static inline void
-word_copy(a, b, len)
-	caddr_t a, b;
-	int     len;
-{
-	u_short *x = (u_short *) a, *y = (u_short *) b;
-
-	len >>= 1;
-	while (len--)
-		*y++ = *x++;
-}
-
-/*
- * Memory copy, copies bytes at time.
- */
-static inline void
-byte_copy(a, b, len)
-	caddr_t a, b;
-	int     len;
-{
-	while (len--)
-		*b++ = *a++;
-}
-
-static int
-ae_card_vendor(na)
-	struct nubus_attach_args *na;
-{
-	int vendor;
-
-	switch (na->drsw) {
-	case NUBUS_DRSW_3COM:
-	case NUBUS_DRSW_APPLE:
-	case NUBUS_DRSW_TECHWORKS:
-		vendor = AE_VENDOR_APPLE;
-		break;
-	case NUBUS_DRSW_ASANTE:
-		vendor = AE_VENDOR_ASANTE;
-		break;
-	case NUBUS_DRSW_FARALLON:
-		vendor = AE_VENDOR_FARALLON;
-		break;
-	case NUBUS_DRSW_FOCUS:
-		vendor = AE_VENDOR_FOCUS;
-		break;
-	case NUBUS_DRSW_GATOR:
-		switch (na->drhw) {
-		default:
-		case NUBUS_DRHW_INTERLAN:
-			vendor = AE_VENDOR_INTERLAN;
-			break;
-		case NUBUS_DRHW_KINETICS:
-			vendor = AE_VENDOR_DAYNA;
-			break;
-		}
-		break;
-	default:
-#ifdef AE_DEBUG
-		printf("Unknown ethernet drsw: %x\n", na->drsw);
-#endif
-		vendor = AE_VENDOR_UNKNOWN;
-	}
-	return vendor;
-}
-
-static int
-ae_size_card_memory(addr)
-	caddr_t addr;
-{
-	u_short *p;
-	u_short i1, i2, i3, i4;
-
-	p = (u_short *) addr;
+	int i1, i2, i3, i4;
 
 	/*
-	 * very simple size memory, assuming it's installed in 8k
 	 * banks; also assume it will generally mirror in upper banks
 	 * if not installed.
 	 */
-	i1 = (8192 * 0) / 2;
-	i2 = (8192 * 1) / 2;
-	i3 = (8192 * 2) / 2;
-	i4 = (8192 * 3) / 2;
+	i1 = (8192 * 0);
+	i2 = (8192 * 1);
+	i3 = (8192 * 2);
+	i4 = (8192 * 3);
 
-	p[i1] = 0x1111;
-	p[i2] = 0x2222;
-	p[i3] = 0x3333;
-	p[i4] = 0x4444;
+	bus_space_write_2(bst, bsh, ofs + i1, 0x1111);
+	bus_space_write_2(bst, bsh, ofs + i2, 0x2222);
+	bus_space_write_2(bst, bsh, ofs + i3, 0x3333);
+	bus_space_write_2(bst, bsh, ofs + i4, 0x4444);
 
-	if (p[i1] == 0x1111 && p[i2] == 0x2222 &&
-	    p[i3] == 0x3333 && p[i4] == 0x4444)
+	if (bus_space_read_2(bst, bsh, ofs + i1) == 0x1111 &&
+	    bus_space_read_2(bst, bsh, ofs + i2) == 0x2222 &&
+	    bus_space_read_2(bst, bsh, ofs + i3) == 0x3333 &&
+	    bus_space_read_2(bst, bsh, ofs + i4) == 0x4444)
 		return 8192 * 4;
 
-	if ((p[i1] == 0x1111 && p[i2] == 0x2222) ||
-	    (p[i1] == 0x3333 && p[i2] == 0x4444))
+	if ((bus_space_read_2(bst, bsh, ofs + i1) == 0x1111 &&
+	    bus_space_read_2(bst, bsh, ofs + i2) == 0x2222) ||
+	    (bus_space_read_2(bst, bsh, ofs + i1) == 0x3333 &&
+	    bus_space_read_2(bst, bsh, ofs + i2) == 0x4444))
 		return 8192 * 2;
 
-	if (p[i1] == 0x1111 || p[i1] == 0x4444)
+	if (bus_space_read_2(bst, bsh, ofs + i1) == 0x1111 ||
+	    bus_space_read_2(bst, bsh, ofs + i1) == 0x4444)
 		return 8192;
 
 	return 0;
 }
 
-int
-aematch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
-{
-	struct nubus_attach_args *na = (struct nubus_attach_args *) aux;
-
-	if (na->category != NUBUS_CATEGORY_NETWORK)
-		return 0;
-
-	if (na->type != NUBUS_TYPE_ETHERNET)
-		return 0;
-
-	switch (ae_card_vendor(na)) {
-	case AE_VENDOR_APPLE:
-	case AE_VENDOR_ASANTE:
-	case AE_VENDOR_FARALLON:
-	case AE_VENDOR_INTERLAN:
-		break;
-
-	case AE_VENDOR_DAYNA:
-	case AE_VENDOR_FOCUS:
-	default:
-		return 0;
-	}
-	return 1;
-}
-
 /*
- * Install interface into kernel networking data structures
+ * Do bus-independent setup.
  */
-void
-aeattach(parent, self, aux)
-	struct device *parent, *self;
-	void   *aux;
+int
+aesetup(sc)
+	struct ae_softc *sc;
 {
-	struct ae_softc *sc = (struct ae_softc *) self;
-	struct nubus_attach_args *na = (struct nubus_attach_args *) aux;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	caddr_t addr;
-	int i, memsize;
-	int flags = 0;
-
-	sc->regs_rev = 0;
-	sc->vendor = ae_card_vendor(na);
-	strncpy(sc->type_str, nubus_get_card_name(na->fmt),
-	    INTERFACE_NAME_LEN);
-	sc->type_str[INTERFACE_NAME_LEN-1] = '\0';
-
-	addr = (caddr_t) na->fmt->virtual_base;
-	memsize = 0;
-
-	switch (sc->vendor) {
-	case AE_VENDOR_INTERLAN:
-		sc->nic_addr = addr + GC_NIC_OFFSET;
-		sc->rom_addr = addr + GC_ROM_OFFSET;
-		sc->mem_start = addr + GC_DATA_OFFSET;
-		if ((memsize = ae_size_card_memory(sc->mem_start)) == 0) {
-			printf(": failed to determine size of RAM.\n");
-			return;
-		}
-
-		/* reset the NIC chip */
-		*((caddr_t) addr + GC_RESET_OFFSET) = (char) zero;
-
-		/* Get station address from on-board ROM */
-		for (i = 0; i < ETHER_ADDR_LEN; ++i)
-			sc->sc_arpcom.ac_enaddr[i] = *(sc->rom_addr + i * 4);
-		break;
-
-		/* apple-compatible cards */
-	case AE_VENDOR_ASANTE:
-	case AE_VENDOR_APPLE:
-		sc->regs_rev = 1;
-		sc->nic_addr = addr + AE_NIC_OFFSET;
-		sc->rom_addr = addr + AE_ROM_OFFSET;
-		sc->mem_start = addr + AE_DATA_OFFSET;
-		if ((memsize = ae_size_card_memory(sc->mem_start)) == 0) {
-			printf(": failed to determine size of RAM.\n");
-			return;
-		}
-
-		/* Get station address from on-board ROM */
-		for (i = 0; i < ETHER_ADDR_LEN; ++i)
-			sc->sc_arpcom.ac_enaddr[i] = *(sc->rom_addr + i * 2);
-		break;
-
-	case AE_VENDOR_DAYNA:
-		sc->nic_addr = addr + DP_NIC_OFFSET;
-		sc->rom_addr = addr + DP_ROM_OFFSET;
-		sc->mem_start = addr + DP_DATA_OFFSET;
-		if ((memsize = ae_size_card_memory(sc->mem_start)) == 0) {
-			printf(": failed to determine size of RAM.\n");
-			return;
-		}
-
-		/* Get station address from on-board ROM */
-		for (i = 0; i < ETHER_ADDR_LEN; ++i)
-			sc->sc_arpcom.ac_enaddr[i] = *(sc->rom_addr + i * 4);
-
-		break;
-
-	case AE_VENDOR_FARALLON:
-		sc->regs_rev = 1;
-		sc->rom_addr = addr + FE_ROM_OFFSET;
-		sc->nic_addr = addr + AE_NIC_OFFSET;
-		sc->mem_start = addr + AE_DATA_OFFSET;
-		if ((memsize = ae_size_card_memory(sc->mem_start)) == 0) {
-			printf(": failed to determine size of RAM.\n");
-			return;
-		}
-
-		/* Get station address from on-board ROM */
-		for (i = 0; i < ETHER_ADDR_LEN; ++i)
-			sc->sc_arpcom.ac_enaddr[i] = *(sc->rom_addr + i);
-		break;
-	case AE_VENDOR_FOCUS:
-		printf(": unsupported Focus hardware\n");
-		return;
-	default:
-		return;
-		break;
-	}
+	int i;
 
 	sc->cr_proto = ED_CR_RD2;
 
 	/* Allocate one xmit buffer if < 16k, two buffers otherwise. */
-	if ((memsize < 16384) || (flags & AE_FLAGS_NO_DOUBLE_BUFFERING))
+	if ((sc->mem_size < 16384) ||
+	    (sc->sc_flags & AE_FLAGS_NO_DOUBLE_BUFFERING))
 		sc->txb_cnt = 1;
 	else
 		sc->txb_cnt = 2;
 
 	sc->tx_page_start = 0;
 	sc->rec_page_start = sc->tx_page_start + sc->txb_cnt * ED_TXBUF_SIZE;
-	sc->rec_page_stop = sc->tx_page_start + (memsize >> ED_PAGE_SHIFT);
-	sc->mem_ring = sc->mem_start + (sc->rec_page_start << ED_PAGE_SHIFT);
-	sc->mem_size = memsize;
-	sc->mem_end = sc->mem_start + memsize;
+	sc->rec_page_stop = sc->tx_page_start + (sc->mem_size >> ED_PAGE_SHIFT);
+	sc->mem_ring = sc->rec_page_start << ED_PAGE_SHIFT;
 
 	/* Now zero memory and verify that it is clear. */
-	bszero((u_short *) sc->mem_start, memsize / 2);
+	bus_space_set_region_2(sc->sc_buft, sc->sc_bufh,
+	    0, 0, sc->mem_size / 2);
 
-	for (i = 0; i < memsize; ++i)
-		if (sc->mem_start[i])
-printf("%s: failed to clear shared memory at %p - check configuration\n",
-			    sc->sc_dev.dv_xname,
-			    sc->mem_start + i);
-
-	bcopy(na->fmt, &sc->sc_slot, sizeof(nubus_slot));
-
+	for (i = 0; i < sc->mem_size; ++i) {
+		if (bus_space_read_1(sc->sc_buft, sc->sc_bufh, i)) {
+printf(": failed to clear shared memory - check configuration\n");
+			return 1;
+		}
+	}
 
 	/* Set interface to stopped condition (reset). */
 	aestop(sc);
@@ -417,7 +162,8 @@ printf("%s: failed to clear shared memory at %p - check configuration\n",
 	ifp->if_softc = sc;
 	ifp->if_start = aestart;
 	ifp->if_ioctl = aeioctl;
-	ifp->if_watchdog = aewatchdog;
+	if (!ifp->if_watchdog)
+		ifp->if_watchdog = aewatchdog;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 
@@ -428,22 +174,13 @@ printf("%s: failed to clear shared memory at %p - check configuration\n",
 	/* Print additional info when attached. */
 	printf(": address %s, ", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
-	printf("type %s, %ldKB memory\n", sc->type_str, sc->mem_size / 1024);
+	printf("type %s, %dKB memory\n", sc->type_str, sc->mem_size / 1024);
 
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 
-	/* make sure interrupts are vectored to us */
-	add_nubus_intr(sc->sc_slot.slot, aeintr, sc);
-
-	/*
-	 * XXX -- enable nubus interrupts here.  Should be done elsewhere,
-	 *        but that currently breaks with some nubus video cards'
-	 *	  interrupts.  So we only enable nubus interrupts if we
-	 *	  have an ethernet card...  i.e., we do it here.
-	 */
-	enable_nubus_intr();
+	return 0;
 }
 
 /*
@@ -485,32 +222,12 @@ aestop(sc)
  * Device timeout/watchdog routine.  Entered if the device neglects to generate
  * an interrupt after a transmit has been started on it.
  */
-static int aeintr_ctr = 0;
 
 void
 aewatchdog(ifp)
 	struct ifnet *ifp;
 {
 	struct ae_softc *sc = ifp->if_softc;
-
-#if 1
-/*
- * This is a kludge!  The via code seems to miss slot interrupts
- * sometimes.  This kludges around that by calling the handler
- * by hand if the watchdog is activated. -- XXX (akb)
- */
-	int     i;
-
-	i = aeintr_ctr;
-
-	(*via2itab[1]) ((void *) 1);
-
-	if (i != aeintr_ctr) {
-		log(LOG_ERR, "%s: device timeout, recovered\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
-#endif
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	++sc->sc_arpcom.ac_if.if_oerrors;
@@ -545,12 +262,16 @@ aeinit(sc)
 	/* Set interface for page 0, remote DMA complete, stopped. */
 	NIC_PUT(sc, ED_P0_CR, sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STP);
 
-	/*
-	 * Set FIFO threshold to 8, No auto-init Remote DMA, byte
-	 * order=80x86, word-wide DMA xfers,
-	 */
-	NIC_PUT(sc, ED_P0_DCR,
-	    ED_DCR_FT1 | ED_DCR_WTS | ED_DCR_LS);
+	if (sc->use16bit) {
+		/*
+		 * Set FIFO threshold to 8, No auto-init Remote DMA, byte
+		 * order=80x86, word-wide DMA xfers,
+		 */
+		NIC_PUT(sc, ED_P0_DCR, ED_DCR_FT1 | ED_DCR_WTS | ED_DCR_LS);
+	} else {
+		/* Same as above, but byte-wide DMA xfers. */
+		NIC_PUT(sc, ED_P0_DCR, ED_DCR_FT1 | ED_DCR_LS);
+	}
 
 	/* Clear remote byte count registers. */
 	NIC_PUT(sc, ED_P0_RBCR0, 0);
@@ -681,8 +402,8 @@ aestart(ifp)
 {
 	struct ae_softc *sc = ifp->if_softc;
 	struct mbuf *m0;
-	caddr_t buffer;
-	int     len;
+	int buffer;
+	int len;
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -709,7 +430,7 @@ outloop:
 #endif
 
 	/* txb_new points to next open buffer slot. */
-	buffer = sc->mem_start + ((sc->txb_new * ED_TXBUF_SIZE) << ED_PAGE_SHIFT);
+	buffer = (sc->txb_new * ED_TXBUF_SIZE) << ED_PAGE_SHIFT;
 
 	len = ae_put(sc, m0, buffer);
 #if DIAGNOSTIC
@@ -745,9 +466,10 @@ ae_rint(sc)
 {
 	u_char  boundary, current;
 	u_short len;
-	u_char  nlen, *lenp;
+	u_char  nlen;
+	u_int8_t *lenp;
 	struct ae_ring packet_hdr;
-	caddr_t packet_ptr;
+	int packet_ptr;
 
 loop:
 	/* Set NIC to page 1 registers to get 'current' pointer. */
@@ -777,8 +499,9 @@ loop:
 		 * The byte count includes a 4 byte header that was added by
 		 * the NIC.
 		 */
-		packet_hdr = *(struct ae_ring *) packet_ptr;
-		lenp = (u_char *) &((struct ae_ring *) packet_ptr)->count;
+		bus_space_read_region_1(sc->sc_buft, sc->sc_bufh,
+		    packet_ptr, &packet_hdr, sizeof(struct ae_ring));
+		lenp = (u_int8_t *)&packet_hdr.count; /* sigh. */
 		len = lenp[0] | (lenp[1] << 8);
 		packet_hdr.count = len;
 
@@ -854,14 +577,12 @@ loop:
 /* Ethernet interface interrupt processor. */
 void
 aeintr(arg, slot)
-	void	*arg;
-	int	slot;
+	void *arg;
+	int slot;
 {
-	struct ae_softc *sc = arg;
+	struct ae_softc *sc = (struct ae_softc *)arg;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	u_char  isr;
-
-	aeintr_ctr++;
+	u_char isr;
 
 	/* Set NIC to page 0 registers. */
 	NIC_PUT(sc, ED_P0_CR, sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STA);
@@ -909,6 +630,7 @@ aeintr(arg, slot)
 					 */
 					collisions = 16;
 				}
+
 				/* Update output errors counter. */
 				++ifp->if_oerrors;
 			} else {
@@ -942,6 +664,7 @@ aeintr(arg, slot)
 			if (sc->txb_inuse > 0)
 				ae_xmit(sc);
 		}
+
 		/* Handle receiver interrupts. */
 		if (isr & (ED_ISR_PRX | ED_ISR_RXE | ED_ISR_OVW)) {
 			/*
@@ -976,6 +699,7 @@ aeintr(arg, slot)
 					    NIC_GET(sc, ED_P0_RSR));
 #endif
 				}
+
 				/*
 				 * Go get the packet(s)
 				 * XXX - Doing this on an error is dubious
@@ -986,6 +710,7 @@ aeintr(arg, slot)
 				ae_rint(sc);
 			}
 		}
+
 		/*
 		 * If it looks like the transmitter can take more data, attempt
 		 * to start output on the interface.  This is done after
@@ -1007,11 +732,11 @@ aeintr(arg, slot)
 		 * otherwise - resulting in an infinite loop.
 		 */
 		if (isr & ED_ISR_CNT) {
-			static u_char	dummy;
-			dummy = NIC_GET(sc, ED_P0_CNTR0);
-			dummy = NIC_GET(sc, ED_P0_CNTR1);
-			dummy = NIC_GET(sc, ED_P0_CNTR2);
+			(void)NIC_GET(sc, ED_P0_CNTR0);
+			(void)NIC_GET(sc, ED_P0_CNTR1);
+			(void)NIC_GET(sc, ED_P0_CNTR2);
 		}
+
 		isr = NIC_GET(sc, ED_P0_ISR);
 		if (!isr)
 			return;
@@ -1024,7 +749,7 @@ aeintr(arg, slot)
 int
 aeioctl(ifp, cmd, data)
 	register struct ifnet *ifp;
-	u_long  cmd;
+	u_long cmd;
 	caddr_t data;
 {
 	struct ae_softc *sc = ifp->if_softc;
@@ -1118,7 +843,7 @@ aeioctl(ifp, cmd, data)
 void
 aeread(sc, buf, len)
 	struct ae_softc *sc;
-	caddr_t buf;
+	int buf;
 	int len;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
@@ -1172,26 +897,29 @@ aeread(sc, buf, len)
  * Given a source and destination address, copy 'amount' of a packet from the
  * ring buffer into a linear destination buffer.  Takes into account ring-wrap.
  */
-static inline caddr_t
+static inline int
 ae_ring_copy(sc, src, dst, amount)
 	struct ae_softc *sc;
-	caddr_t src, dst;
+	int src;
+	caddr_t dst;
 	int amount;
 {
-	u_short tmp_amount;
+	bus_space_tag_t bst = sc->sc_buft;
+	bus_space_handle_t bsh = sc->sc_bufh;
+	int tmp_amount;
 
 	/* Does copy wrap to lower addr in ring buffer? */
-	if (src + amount > sc->mem_end) {
-		tmp_amount = sc->mem_end - src;
+	if (src + amount > sc->mem_size) {
+		tmp_amount = sc->mem_size - src;
 
 		/* Copy amount up to end of NIC memory. */
-		byte_copy(src, dst, tmp_amount);
+		bus_space_read_region_1(bst, bsh, src, dst, tmp_amount);
 
 		amount -= tmp_amount;
 		src = sc->mem_ring;
 		dst += tmp_amount;
 	}
-	byte_copy(src, dst, amount);
+	bus_space_read_region_1(bst, bsh, src, dst, amount);
 
 	return (src + amount);
 }
@@ -1207,7 +935,7 @@ ae_ring_copy(sc, src, dst, amount)
 struct mbuf *
 aeget(sc, src, total_len)
 	struct ae_softc *sc;
-	caddr_t src;
+	int src;
 	u_short total_len;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
@@ -1238,7 +966,7 @@ aeget(sc, src, total_len)
 				len = MCLBYTES;
 		}
 		m->m_len = len = min(total_len, len);
-		src = ae_ring_copy(sc, src, mtod(m, caddr_t), (int) len);
+		src = ae_ring_copy(sc, src, mtod(m, caddr_t), len);
 		total_len -= len;
 		*mp = m;
 		mp = &m->m_next;
@@ -1246,6 +974,7 @@ aeget(sc, src, total_len)
 
 	return top;
 }
+
 /*
  * Compute the multicast address filter from the list of multicast addresses we
  * need to listen to.
@@ -1318,6 +1047,7 @@ ae_getmcaf(ac, af)
 	}
 	ifp->if_flags &= ~IFF_ALLMULTI;
 }
+
 /*
  * Copy packet from mbuf to the board memory
  *
@@ -1325,14 +1055,14 @@ ae_getmcaf(ac, af)
  * unless the whole packet fits in one mbuf.
  *
  */
-u_short
+int
 ae_put(sc, m, buf)
 	struct ae_softc *sc;
 	struct mbuf *m;
-	caddr_t buf;
+	int buf;
 {
 	u_char *data, savebyte[2];
-	int     len, wantbyte;
+	int len, wantbyte;
 	u_short totlen = 0;
 
 	wantbyte = 0;
@@ -1345,7 +1075,8 @@ ae_put(sc, m, buf)
 			/* Finish the last word. */
 			if (wantbyte) {
 				savebyte[1] = *data;
-				word_copy(savebyte, buf, 2);
+				bus_space_write_region_2(sc->sc_buft,
+				    sc->sc_bufh, buf, savebyte, 1);
 				buf += 2;
 				data++;
 				len--;
@@ -1353,7 +1084,8 @@ ae_put(sc, m, buf)
 			}
 			/* Output contiguous words. */
 			if (len > 1) {
-				word_copy(data, buf, len);
+				bus_space_write_region_2(sc->sc_buft,
+				    sc->sc_bufh, buf, data, len >> 1);
 				buf += len & ~1;
 				data += len & ~1;
 				len &= 1;
@@ -1368,7 +1100,8 @@ ae_put(sc, m, buf)
 
 	if (wantbyte) {
 		savebyte[1] = 0;
-		word_copy(savebyte, buf, 2);
+		bus_space_write_region_2(sc->sc_buft, sc->sc_bufh,
+		    buf, savebyte, 1);
 	}
 	return (totlen);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380.c,v 1.13 1997/01/26 18:57:04 briggs Exp $	*/
+/*	$OpenBSD: ncr5380.c,v 1.14 1997/03/08 16:16:55 briggs Exp $	*/
 /*	$NetBSD: ncr5380.c,v 1.38 1996/12/19 21:48:18 scottr Exp $	*/
 
 /*
@@ -198,7 +198,7 @@ extern __inline__ void finish_req(SC_REQ *reqp)
  * Auto config stuff....
  */
 void	ncr_attach __P((struct device *, struct device *, void *));
-int	ncr_match __P((struct device *, struct cfdata *, void *));
+int	ncr_match __P((struct device *, void *, void *));
 
 /*
  * Tricks to make driver-name configurable
@@ -218,10 +218,11 @@ struct cfdriver CFNAME(DRNAME) = {
 int
 ncr_match(parent, cf, aux)
 	struct device *parent;
-	struct cfdata *cf;
+	void *cf;
 	void *aux;
 {
-	return (machine_match(parent, cf, aux, &CFNAME(DRNAME)));
+	return (machine_match(parent,
+				(struct cfdata *) cf, aux, &CFNAME(DRNAME)));
 }
 
 void

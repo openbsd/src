@@ -1,5 +1,5 @@
-/*	$OpenBSD: mac68k5380.c,v 1.8 1997/01/24 01:35:33 briggs Exp $	*/
-/*	$NetBSD: mac68k5380.c,v 1.28 1996/12/19 21:48:17 scottr Exp $	*/
+/*	$OpenBSD: mac68k5380.c,v 1.9 1997/03/08 16:16:54 briggs Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.29 1997/02/28 15:50:50 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -175,8 +175,8 @@ scsi_mach_init(sc)
 		scsi_flag   = Via1Base + VIA2 * 0x2000 + rIFR;
 	}
 
-	mac68k_register_scsi_irq(ncr5380_irq_intr, sc);
-	mac68k_register_scsi_drq(ncr5380_drq_intr, sc);
+	via2_register_irq(VIA2_SCSIIRQ, ncr5380_irq_intr, sc);
+	via2_register_irq(VIA2_SCSIDRQ, ncr5380_drq_intr, sc);
 }
 
 static int

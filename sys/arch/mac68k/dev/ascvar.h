@@ -1,8 +1,8 @@
-/*	$OpenBSD: ascvar.h,v 1.1 1996/05/26 19:02:05 briggs Exp $	*/
-/*	$NetBSD: ascvar.h,v 1.1 1996/05/05 06:16:28 briggs Exp $	*/
+/*	$OpenBSD: ascvar.h,v 1.2 1997/03/08 16:16:49 briggs Exp $	*/
+/*	$NetBSD: ascvar.h,v 1.3 1997/02/24 05:47:34 scottr Exp $	*/
 
 /*
- * Copyright (c) 1995 Allen Briggs.  All rights reserved.
+ * Copyright (C) 1997 Scott Reynolds.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,9 +14,10 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Allen Briggs.
+ *      This product includes software developed by Scott Reynolds for
+ *      the NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -30,7 +31,20 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-int	asc_setbellparams __P((int freq, int length, int volume));
-int	asc_getbellparams __P((int *freq, int *length, int *volume));
-void	asc_bellstop __P((int param));
-int	asc_ringbell __P((void));
+#define ASCUNIT(d)	((d) & 0x7)
+
+struct asc_softc {
+	struct device		sc_dev;
+	bus_space_tag_t		sc_tag;
+	bus_space_handle_t	sc_handle;
+	int			sc_open;
+	int			sc_ringing;
+};
+
+int	ascopen __P((dev_t dev, int flag, int mode, struct proc *p));
+int	ascclose __P((dev_t dev, int flag, int mode, struct proc *p));
+int	ascread __P((dev_t, struct uio *, int));
+int	ascwrite __P((dev_t, struct uio *, int));
+int	ascioctl __P((dev_t, int, caddr_t, int, struct proc *p));
+int	ascselect __P((dev_t dev, int rw, struct proc *p));
+int	ascmmap __P((dev_t dev, int off, int prot));

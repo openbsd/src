@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.15 1997/03/08 16:16:46 briggs Exp $
+#	$OpenBSD: GENERICSBC,v 1.1 1997/03/08 16:16:46 briggs Exp $
 #	$NetBSD: GENERIC,v 1.52 1997/01/13 23:34:07 scottr Exp $
 #
 # GENERIC
@@ -80,8 +80,8 @@ grf*		at macvid?
 ite0		at grf?
 
 # Use only one of ncrscsi or sbc
-ncrscsi0	at obio?		# SCSI NCR 5380
-#sbc0		at obio? flags 0x1	# MI NCR 5380 SCSI Bus Controller
+#ncrscsi0	at obio?		# SCSI NCR 5380
+sbc0		at obio? flags 0x1	# MI NCR 5380 SCSI Bus Controller
 
 esp0		at obio?		# SCSI NCR 53C9x
 esp1		at obio?		# SCSI NCR 53C9x

@@ -1,5 +1,5 @@
-/*	$OpenBSD: pmap.h,v 1.4 1997/02/18 05:13:13 gene Exp $	*/
-/*	$NetBSD: pmap.h,v 1.13 1996/05/18 18:52:41 briggs Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.5 1997/03/08 16:17:01 briggs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.14 1997/02/02 18:19:55 scottr Exp $	*/
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -211,7 +211,6 @@ void	TBIA __P((void));
 void	TBIS __P((vm_offset_t));
 void	DCFP __P((vm_offset_t));
 void	ICPP __P((vm_offset_t));
-void	copypage __P((void *, void *));
 __END_DECLS
 
 #endif	/* _KERNEL */

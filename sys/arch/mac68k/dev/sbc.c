@@ -1,9 +1,8 @@
-/*	$OpenBSD: sbc.c,v 1.7 1997/01/24 01:35:37 briggs Exp $	*/
-/*	$NetBSD: sbc.c,v 1.18 1997/01/20 04:27:49 scottr Exp $	*/
+/*	$OpenBSD: sbc.c,v 1.8 1997/03/08 16:16:58 briggs Exp $	*/
+/*	$NetBSD: sbc.c,v 1.22 1997/03/01 20:18:58 scottr Exp $	*/
 
 /*
- * Copyright (c) 1996 Scott Reynolds
- * All rights reserved.
+ * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -13,16 +12,17 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the authors may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- * 4. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgements:
- *      This product includes software developed by Scott Reynolds.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Scott Reynolds for
+ *      the NetBSD Project.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -71,128 +71,15 @@
 #include <machine/viareg.h>
 
 #include "sbcreg.h"
+#include "sbcvar.h"
 
-/*
- * Transfers smaller than this are done using PIO
- * (on assumption they're not worth PDMA overhead)
- */
-#define	MIN_DMA_LEN 128
+int	sbc_debug = 0 /* | SBC_DB_INTR | SBC_DB_DMA */;
+int	sbc_link_flags = 0 /* | SDEV_DB2 */;
+int	sbc_options = SBC_PDMA;
 
-/*
- * Transfers larger than 8192 bytes need to be split up
- * due to the size of the PDMA space.
- */
-#define	MAX_DMA_LEN 0x2000
-
-/*
- * From Guide to the Macintosh Family Hardware, pp. 137-143
- * These are offsets from SCSIBase (see pmap_bootstrap.c)
- */
-#define	SBC_REG_OFS		0x10000
-#define	SBC_DMA_OFS		0x12000
-#define	SBC_HSK_OFS		0x06000
-
-#define	SBC_DMA_OFS_PB500	0x06000
-
-#define	SBC_REG_OFS_IIFX	0x08000		/* Just guessing... */
-#define	SBC_DMA_OFS_IIFX	0x0c000
-#define	SBC_HSK_OFS_IIFX	0x0e000
-
-#define	SBC_REG_OFS_DUO2	0x00000
-#define	SBC_DMA_OFS_DUO2	0x02000
-#define	SBC_HSK_OFS_DUO2	0x04000
-
-#ifdef SBC_DEBUG
-# define	SBC_DB_INTR	0x01
-# define	SBC_DB_DMA	0x02
-# define	SBC_DB_REG	0x04
-# define	SBC_DB_BREAK	0x08
-
-	int	sbc_debug = 0 /* | SBC_DB_INTR | SBC_DB_DMA */;
-	int	sbc_link_flags = 0 /* | SDEV_DB2 */;
-
-# ifndef DDB
-#  define	Debugger()	printf("Debug: sbc.c:%d\n", __LINE__)
-# endif
-# define	SBC_BREAK \
-		do { if (sbc_debug & SBC_DB_BREAK) Debugger(); } while (0)
-#else
-# define	SBC_BREAK
-#endif
-
-/*
- * This structure is used to keep track of PDMA requests.
- */
-struct sbc_pdma_handle {
-	int	dh_flags;	/* flags */
-#define	SBC_DH_BUSY	0x01	/* This handle is in use */
-#define	SBC_DH_OUT	0x02	/* PDMA data out (write) */
-#define	SBC_DH_DONE	0x04	/* PDMA transfer is complete */
-	u_char	*dh_addr;	/* data buffer */
-	int	dh_len;		/* length of data buffer */
-};
-
-/*
- * The first structure member has to be the ncr5380_softc
- * so we can just cast to go back and forth between them.
- */
-struct sbc_softc {
-	struct ncr5380_softc ncr_sc;
-	volatile struct sbc_regs *sc_regs;
-	volatile vm_offset_t	sc_drq_addr;
-	volatile vm_offset_t	sc_nodrq_addr;
-	volatile u_int8_t	*sc_ienable;
-	volatile u_int8_t	*sc_iflag;
-	int			sc_options;	/* options for this instance. */
-	struct sbc_pdma_handle sc_pdma[SCI_OPENINGS];
-};
-
-/*
- * Options.  By default, SCSI interrupts and reselect are disabled.
- * You may enable either of these features with the `flags' directive
- * in your kernel's configuration file.
- *
- * Alternatively, you can patch your kernel with DDB or some other
- * mechanism.  The sc_options member of the softc is OR'd with
- * the value in sbc_options.
- *
- * The options code is based on the sparc 'si' driver's version of
- * the same.
- */     
-#define	SBC_PDMA	0x01	/* Use PDMA for polled transfers */
-#define	SBC_INTR	0x02	/* Allow SCSI IRQ/DRQ interrupts */
-#define	SBC_RESELECT	0x04	/* Allow disconnect/reselect */
-#define	SBC_OPTIONS_MASK	(SBC_RESELECT|SBC_INTR|SBC_PDMA)
-#define	SBC_OPTIONS_BITS	"\10\3RESELECT\2INTR\1PDMA"
-int sbc_options = SBC_PDMA;
-
-static	int	sbc_match __P((struct device *, struct cfdata *, void *));
-static	void	sbc_attach __P((struct device *, struct device *, void *));
-static	int	sbc_print __P((void *, const char *));
 static	void	sbc_minphys __P((struct buf *bp));
 
-static	int	sbc_wait_busy __P((struct ncr5380_softc *));
-static	int	sbc_ready __P((struct ncr5380_softc *));
-static	int	sbc_wait_dreq __P((struct ncr5380_softc *));
-static	int	sbc_pdma_in __P((struct ncr5380_softc *, int, int, u_char *));
-static	int	sbc_pdma_out __P((struct ncr5380_softc *, int, int, u_char *));
-#ifdef SBC_DEBUG
-static	void	decode_5380_intr __P((struct ncr5380_softc *));
-#endif
-
-	void	sbc_intr_enable __P((struct ncr5380_softc *));
-	void	sbc_intr_disable __P((struct ncr5380_softc *));
-	void	sbc_irq_intr __P((void *));
-	void	sbc_drq_intr __P((void *));
-	void	sbc_dma_alloc __P((struct ncr5380_softc *));
-	void	sbc_dma_free __P((struct ncr5380_softc *));
-	void	sbc_dma_poll __P((struct ncr5380_softc *));
-	void	sbc_dma_setup __P((struct ncr5380_softc *));
-	void	sbc_dma_start __P((struct ncr5380_softc *));
-	void	sbc_dma_eop __P((struct ncr5380_softc *));
-	void	sbc_dma_stop __P((struct ncr5380_softc *));
-
-static struct scsi_adapter	sbc_ops = {
+struct scsi_adapter	sbc_ops = {
 	ncr5380_scsi_cmd,		/* scsi_cmd()		*/
 	sbc_minphys,			/* scsi_minphys()	*/
 	NULL,				/* open_target_lu()	*/
@@ -201,189 +88,20 @@ static struct scsi_adapter	sbc_ops = {
 
 /* This is copied from julian's bt driver */
 /* "so we have a default dev struct for our link struct." */
-static struct scsi_device sbc_dev = {
+struct scsi_device sbc_dev = {
 	NULL,		/* Use default error handler.	    */
 	NULL,		/* Use default start handler.		*/
 	NULL,		/* Use default async handler.	    */
 	NULL,		/* Use default "done" routine.	    */
 };
 
-struct cfattach sbc_ca = {
-	sizeof(struct sbc_softc), sbc_match, sbc_attach
-};
-
 struct cfdriver sbc_cd = {
 	NULL, "sbc", DV_DULL
 };
 
-
-static int
-sbc_match(parent, cf, args)
-	struct device *parent;
-	struct cfdata *cf;
-	void *args;
-{
-	switch (current_mac_model->machineid) {
-	case MACH_MACIIFX:	/* Note: the IIfx isn't (yet) supported. */
-		break;
-	case MACH_MACPB210:
-	case MACH_MACPB230:
-	case MACH_MACPB250:
-	case MACH_MACPB270:
-	case MACH_MACPB280:
-	case MACH_MACPB280C:
-		if (cf->cf_unit == 1)
-			return 1;
-		/*FALLTHROUGH*/
-	default:
-		if (cf->cf_unit == 0 && mac68k_machine.scsi80)
-			return 1;
-	}
-	return 0;
-}
-
-static void
-sbc_attach(parent, self, args)
-	struct device *parent, *self;
-	void *args;
-{
-	struct sbc_softc *sc = (struct sbc_softc *) self;
-	struct ncr5380_softc *ncr_sc = (struct ncr5380_softc *) sc;
-	char bits[64];
-	extern vm_offset_t SCSIBase;
-
-	/* Pull in the options flags. */ 
-	sc->sc_options = ((ncr_sc->sc_dev.dv_cfdata->cf_flags | sbc_options)
-	    & SBC_OPTIONS_MASK);
-
-	/*
-	 * Set up offsets to 5380 registers and GLUE I/O space, and turn
-	 * off options we know we can't support on certain models.
-	 */
-	switch (current_mac_model->machineid) {
-	case MACH_MACIIFX:	/* Note: the IIfx isn't (yet) supported. */
-		sc->sc_regs = (struct sbc_regs *)(SCSIBase + SBC_REG_OFS_IIFX);
-		sc->sc_drq_addr = (vm_offset_t)(SCSIBase + SBC_HSK_OFS_IIFX);
-		sc->sc_nodrq_addr = (vm_offset_t)(SCSIBase + SBC_DMA_OFS_IIFX);
-		sc->sc_options &= ~(SBC_INTR | SBC_RESELECT);
-		break;
-	case MACH_MACPB500:
-		sc->sc_regs = (struct sbc_regs *)(SCSIBase + SBC_REG_OFS);
-		sc->sc_drq_addr = (vm_offset_t)(SCSIBase + SBC_HSK_OFS); /*??*/
-		sc->sc_nodrq_addr = (vm_offset_t)(SCSIBase + SBC_DMA_OFS_PB500);
-		sc->sc_options &= ~(SBC_INTR | SBC_RESELECT);
-		break;
-	case MACH_MACPB210:
-	case MACH_MACPB230:
-	case MACH_MACPB250:
-	case MACH_MACPB270:
-	case MACH_MACPB280:
-	case MACH_MACPB280C:
-		if (ncr_sc->sc_dev.dv_unit == 1) {
-			sc->sc_regs = (struct sbc_regs *)(0xfee00000 + SBC_REG_OFS_DUO2);
-			sc->sc_drq_addr = (vm_offset_t)(0xfee00000 + SBC_HSK_OFS_DUO2);
-			sc->sc_nodrq_addr = (vm_offset_t)(0xfee00000 + SBC_DMA_OFS_DUO2);
-			break;
-		}
-		/*FALLTHROUGH*/
-	default:
-		sc->sc_regs = (struct sbc_regs *)(SCSIBase + SBC_REG_OFS);
-		sc->sc_drq_addr = (vm_offset_t)(SCSIBase + SBC_HSK_OFS);
-		sc->sc_nodrq_addr = (vm_offset_t)(SCSIBase + SBC_DMA_OFS);
-		break;
-	}
-
-	/*
-	 * Fill in the prototype scsi_link.
-	 */
-	ncr_sc->sc_link.adapter_softc = sc;
-	ncr_sc->sc_link.adapter_target = 7;
-	ncr_sc->sc_link.adapter = &sbc_ops;
-	ncr_sc->sc_link.device = &sbc_dev;
-
-	/*
-	 * Initialize fields used by the MI code
-	 */
-	ncr_sc->sci_r0 = &sc->sc_regs->sci_pr0.sci_reg;
-	ncr_sc->sci_r1 = &sc->sc_regs->sci_pr1.sci_reg;
-	ncr_sc->sci_r2 = &sc->sc_regs->sci_pr2.sci_reg;
-	ncr_sc->sci_r3 = &sc->sc_regs->sci_pr3.sci_reg;
-	ncr_sc->sci_r4 = &sc->sc_regs->sci_pr4.sci_reg;
-	ncr_sc->sci_r5 = &sc->sc_regs->sci_pr5.sci_reg;
-	ncr_sc->sci_r6 = &sc->sc_regs->sci_pr6.sci_reg;
-	ncr_sc->sci_r7 = &sc->sc_regs->sci_pr7.sci_reg;
-
-	/*
-	 * MD function pointers used by the MI code.
-	 */
-	if (sc->sc_options & SBC_PDMA) {
-		ncr_sc->sc_pio_out   = sbc_pdma_out;
-		ncr_sc->sc_pio_in    = sbc_pdma_in;
-	} else {
-		ncr_sc->sc_pio_out   = ncr5380_pio_out;
-		ncr_sc->sc_pio_in    = ncr5380_pio_in;
-	}
-	ncr_sc->sc_dma_alloc = NULL;
-	ncr_sc->sc_dma_free  = NULL;
-	ncr_sc->sc_dma_poll  = NULL;
-	ncr_sc->sc_intr_on   = NULL;
-	ncr_sc->sc_intr_off  = NULL;
-	ncr_sc->sc_dma_setup = NULL;
-	ncr_sc->sc_dma_start = NULL;
-	ncr_sc->sc_dma_eop   = NULL;
-	ncr_sc->sc_dma_stop  = NULL;
-	ncr_sc->sc_flags = 0;
-	ncr_sc->sc_min_dma_len = MIN_DMA_LEN;
-
-	if (sc->sc_options & SBC_INTR) {
-		if (sc->sc_options & SBC_RESELECT)
-			ncr_sc->sc_flags |= NCR5380_PERMIT_RESELECT;
-		ncr_sc->sc_dma_alloc = sbc_dma_alloc;
-		ncr_sc->sc_dma_free  = sbc_dma_free;
-		ncr_sc->sc_dma_poll  = sbc_dma_poll;
-		ncr_sc->sc_dma_setup = sbc_dma_setup;
-		ncr_sc->sc_dma_start = sbc_dma_start;
-		ncr_sc->sc_dma_eop   = sbc_dma_eop;
-		ncr_sc->sc_dma_stop  = sbc_dma_stop;
-		mac68k_register_scsi_drq(sbc_drq_intr, ncr_sc);
-		mac68k_register_scsi_irq(sbc_irq_intr, ncr_sc);
-	} else
-		ncr_sc->sc_flags |= NCR5380_FORCE_POLLING;
-
-	/*
-	 * Initialize fields used only here in the MD code.
-	 */
-	if (VIA2 == VIA2OFF) {
-		sc->sc_ienable = Via1Base + VIA2 * 0x2000 + vIER;
-		sc->sc_iflag   = Via1Base + VIA2 * 0x2000 + vIFR;
-	} else {
-		sc->sc_ienable = Via1Base + VIA2 * 0x2000 + rIER;
-		sc->sc_iflag   = Via1Base + VIA2 * 0x2000 + rIFR;
-	}
-
-	if (sc->sc_options)
-		printf(": options=%s", bitmask_snprintf(sc->sc_options,
-		    SBC_OPTIONS_BITS, bits, sizeof(bits)));
-	printf("\n");
-
-	/* Now enable SCSI interrupts through VIA2, if appropriate */
-	if (sc->sc_options & SBC_INTR)
-		sbc_intr_enable(ncr_sc);
-
-#ifdef SBC_DEBUG
-	if (sbc_debug)
-		printf("%s: softc=%p regs=%p\n", ncr_sc->sc_dev.dv_xname,
-		    sc, sc->sc_regs);
-	ncr_sc->sc_link.flags |= sbc_link_flags;
-#endif
-
-	/*
-	 *  Initialize the SCSI controller itself.
-	 */
-	ncr5380_init(ncr_sc);
-	ncr5380_reset_scsibus(ncr_sc);
-	config_found(self, &(ncr_sc->sc_link), scsiprint);
-}
+static		int	sbc_wait_busy __P((struct ncr5380_softc *));
+static		int	sbc_ready __P((struct ncr5380_softc *));
+static		int	sbc_wait_dreq __P((struct ncr5380_softc *));
 
 static void
 sbc_minphys(struct buf *bp)
@@ -464,35 +182,6 @@ sbc_wait_dreq(sc)
 	return (timo);
 }
 
-
-/***
- * Macintosh SCSI interrupt support routines.
- ***/
-
-void
-sbc_intr_enable(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
-{
-	register struct sbc_softc *sc = (struct sbc_softc *) ncr_sc;
-	int s;
-
-	s = splhigh();
-	*sc->sc_ienable = 0x80 | (V2IF_SCSIIRQ | V2IF_SCSIDRQ);
-	splx(s);
-}
-
-void
-sbc_intr_disable(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
-{
-	register struct sbc_softc *sc = (struct sbc_softc *) ncr_sc;
-	int s;
-
-	s = splhigh();
-	*sc->sc_ienable = (V2IF_SCSIIRQ | V2IF_SCSIDRQ);
-	splx(s);
-}
-
 void
 sbc_irq_intr(p)
 	void *p;
@@ -562,7 +251,7 @@ decode_5380_intr(ncr_sc)
  * The following code implements polled PDMA.
  ***/
 
-static	int
+int
 sbc_pdma_out(ncr_sc, phase, count, data)
 	struct ncr5380_softc *ncr_sc;
 	int phase;
@@ -639,7 +328,7 @@ timeout:
 	return count - len;
 }
 
-static	int
+int
 sbc_pdma_in(ncr_sc, phase, count, data)
 	struct ncr5380_softc *ncr_sc;
 	int phase;
@@ -1083,14 +772,16 @@ sbc_dma_start(ncr_sc)
 	if (dh->dh_flags & SBC_DH_OUT) {
 		*ncr_sc->sci_tcmd = PHASE_DATA_OUT;
 		SCI_CLR_INTR(ncr_sc);
-		*sc->sc_iflag = 0x80 | (V2IF_SCSIIRQ | V2IF_SCSIDRQ);
+		if (sc->sc_clrintr)
+			(*sc->sc_clrintr)(ncr_sc);
 		*ncr_sc->sci_mode |= SCI_MODE_DMA;
 		*ncr_sc->sci_icmd = SCI_ICMD_DATA;
 		*ncr_sc->sci_dma_send = 0;
 	} else {
 		*ncr_sc->sci_tcmd = PHASE_DATA_IN;
 		SCI_CLR_INTR(ncr_sc);
-		*sc->sc_iflag = 0x80 | (V2IF_SCSIIRQ | V2IF_SCSIDRQ);
+		if (sc->sc_clrintr)
+			(*sc->sc_clrintr)(ncr_sc);
 		*ncr_sc->sci_mode |= SCI_MODE_DMA;
 		*ncr_sc->sci_icmd = 0;
 		*ncr_sc->sci_irecv = 0;
@@ -1148,7 +839,8 @@ sbc_dma_stop(ncr_sc)
 
 		/* Clear any pending interrupts. */
 		SCI_CLR_INTR(ncr_sc);
-		*sc->sc_iflag = 0x80 | V2IF_SCSIIRQ;
+		if (sc->sc_clrintr)
+			(*sc->sc_clrintr)(ncr_sc);
 	}
 
 	/* Put SBIC back into PIO mode. */

@@ -1,5 +1,4 @@
-/*	$OpenBSD: obiovar.h,v 1.1 1997/01/24 01:35:37 briggs Exp $	*/
-/*	$NetBSD: obiovar.h,v 1.1 1996/12/17 06:47:38 scottr Exp $	*/
+/*	$NetBSD: obiovar.h,v 1.3 1997/02/13 19:01:08 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,5 +45,8 @@
  * Arguments used to attach a device to the internal i/o space.
  */
 struct obio_attach_args {
-	caddr_t oa_addr;		/* physical address */
+	int oa_addr;			/* physical address */
+	int oa_drq;			/* SCSI DRQ physical address */
+	int oa_hsk;			/* SCSI HSK physical address */
+	bus_space_tag_t oa_tag;		/* bus space tag */
 };

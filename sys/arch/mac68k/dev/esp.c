@@ -195,8 +195,8 @@ espattach(parent, self, aux)
 		unsigned long	reg_offset;
 
 		esc->sc_reg = (volatile u_char *) SCSIBase;
-		mac68k_register_scsi_irq(
-				(void (*)(void *)) ncr53c9x_intr, esc);
+		via2_register_irq(VIA2_SCSIIRQ,
+					(void (*)(void *))ncr53c9x_intr, esc);
 		esc->irq_mask = V2IF_SCSIIRQ;
 		reg_offset = SCSIBase - IOBase;
 		if (reg_offset == 0x10000) {
@@ -206,8 +206,8 @@ espattach(parent, self, aux)
 		}
 	} else {
 		esc->sc_reg = (volatile u_char *) SCSIBase + 0x402;
-		mac68k_register_scsi_b_irq(
-				(void (*)(void *)) ncr53c9x_intr, sc);
+		via2_register_irq(VIA2_SCSIDRQ,
+					(void (*)(void *))ncr53c9x_intr, esc);
 		esc->irq_mask = V2IF_SCSIDRQ; /* V2IF_T1? */
 		sc->sc_freq = 25000000;
 	}

@@ -1,5 +1,5 @@
-/*	$OpenBSD: cpu.h,v 1.13 1997/01/24 01:35:40 briggs Exp $	*/
-/*	$NetBSD: cpu.h,v 1.44 1997/01/20 05:08:00 scottr Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.14 1997/03/08 16:17:00 briggs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.45 1997/02/10 22:13:40 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -180,7 +180,9 @@ extern volatile u_int8_t ssir;
 
 __BEGIN_DECLS
 /* machdep.c */
-u_int get_mapping __P((void));
+void	mac68k_set_bell_callback __P((int (*)(void *, int, int, int), void *));
+int	mac68k_ring_bell __P((int, int, int));
+u_int	get_mapping __P((void));
 
 /* locore.s */
 void	m68881_restore __P((struct fpframe *));

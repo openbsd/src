@@ -1,5 +1,5 @@
-/*	$OpenBSD: clock.c,v 1.9 1997/02/26 06:17:00 gene Exp $	*/
-/*	$NetBSD: clock.c,v 1.32 1997/01/15 01:28:53 perry Exp $	*/
+/*	$OpenBSD: clock.c,v 1.10 1997/03/08 16:17:02 briggs Exp $	*/
+/*	$NetBSD: clock.c,v 1.33 1997/02/28 07:49:19 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -95,6 +95,8 @@
 #include "pram.h"
 #include "clockreg.h"
 #include <machine/viareg.h>
+
+void	rtclock_intr __P((void));
 
 #define	DIFF19041970	2082844800
 #define	DIFF19701990	630720000
@@ -482,7 +484,7 @@ mac68k_calibrate_delay()
 
 	/* Disable VIA1 timer 1 interrupts and set up service routine */
 	via_reg(VIA1, vIER) = V1IF_T1;
-	mac68k_register_via1_t1_irq(delay_timer1_irq);
+	via1_register_irq(VIA1_T1, delay_timer1_irq, NULL);
 
 	/* Set the timer for one-shot mode, then clear and enable interrupts */
 	via_reg(VIA1, vACR) &= ~ACR_T1LATCH;
@@ -498,7 +500,7 @@ mac68k_calibrate_delay()
 
 	/* Disable timer interrupts and reset service routine */
 	via_reg(VIA1, vIER) = V1IF_T1;
-	mac68k_register_via1_t1_irq(NULL);
+	via1_register_irq(VIA1_T1, (void (*)(void *))rtclock_intr, NULL);
 
 	/*
 	 * If this weren't integer math, the following would look

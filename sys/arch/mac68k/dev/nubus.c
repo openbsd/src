@@ -1,5 +1,5 @@
-/*	$OpenBSD: nubus.c,v 1.7 1997/01/24 01:35:35 briggs Exp $	*/
-/*	$NetBSD: nubus.c,v 1.29 1996/12/17 06:47:39 scottr Exp $	*/
+/*	$OpenBSD: nubus.c,v 1.8 1997/03/08 16:16:56 briggs Exp $	*/
+/*	$NetBSD: nubus.c,v 1.32 1997/02/28 07:54:02 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Allen Briggs.  All rights reserved.
@@ -42,22 +42,25 @@
 #include <vm/vm_map.h>
 
 #include <machine/autoconf.h>
+#include <machine/bus.h>
 #include <machine/vmparam.h>
 #include <machine/param.h>
 #include <machine/cpu.h>
 #include <machine/pte.h>
+#include <machine/viareg.h>
 
 #include "nubus.h"
 
+#define DEBUG
 #ifdef DEBUG
-static int	nubus_debug = 0x01;
+static int	nubus_debug = 0x07;
 #define NDB_PROBE	0x1
 #define NDB_FOLLOW	0x2
 #define NDB_ARITH	0x4
 #endif
 
 static int	nubus_print __P((void *, const char *));
-static int	nubus_match __P((struct device *, struct cfdata *, void *));
+static int	nubus_match __P((struct device *, void *, void *));
 static void	nubus_attach __P((struct device *, struct device *, void *));
 int		nubus_video_resource __P((int));
 
@@ -81,9 +84,9 @@ struct cfdriver nubus_cd = {
 };
 
 static int
-nubus_match(parent, cf, aux)
+nubus_match(parent, vcf, aux)
 	struct device *parent;
-	struct cfdata *cf;
+	void *vcf;
 	void *aux;
 {
 	static int nubus_matched = 0;
@@ -142,6 +145,11 @@ nubus_attach(parent, self, aux)
 
 		config_found(self, &na_args, nubus_print);
   	}
+
+	/*
+	 * enable nubus interrupts here.
+	 */
+	enable_nubus_intr();
 }
 
 static int
@@ -219,12 +227,12 @@ probe_slot(slot, fmt)
 	fmt->bytelanes = 0;
 	fmt->slot = (u_long)slot;
 
-	rom_probe = (caddr_t) (NUBUS_SLOT_TO_PADDR(fmt->slot) + NBMEMSIZE);
+	rom_probe = (caddr_t) (NUBUS_SLOT2PA(fmt->slot) + NBMEMSIZE);
 
 #ifdef DEBUG
 	if (nubus_debug & NDB_PROBE) {
 		pa = pmap_extract(pmap_kernel(), (vm_offset_t) rom_probe - 1);
-		printf("probing slot %d, first probe at 0x%x (PA %p).\n",
+		printf("probing slot %d, first probe at %p (PA %lx).\n",
 		    slot, rom_probe - 1, pa);
 	}
 #endif
@@ -233,8 +241,16 @@ probe_slot(slot, fmt)
 
 		rom_probe--;
 
+#ifdef DEBUG
+	if (nubus_debug & NDB_PROBE) {
+		printf("Peeking %p\n", rom_probe);
+	}
+#endif
 		data = nubus_peek((vm_offset_t) rom_probe, 1);
-		if (data == -1)
+
+		printf("data %u\n", data);
+
+		if (data == (u_int) -1)
 			continue;
 
 		if (data == 0)
@@ -270,12 +286,12 @@ probe_slot(slot, fmt)
 	 * to work.
 	 */
 	hdr = (vm_offset_t)
-		nubus_mapin(NUBUS_SLOT_TO_PADDR(fmt->slot), NBMEMSIZE);
+		nubus_mapin(NUBUS_SLOT2PA(fmt->slot), NBMEMSIZE);
 	if (hdr == NULL) {
 		printf("Failed to map %d bytes for NuBUS slot %d probe.  ",
 			NBMEMSIZE, fmt->slot);
 		printf("Physical slot address %x\n",
-			(unsigned int) NUBUS_SLOT_TO_PADDR(fmt->slot));
+			(unsigned int) NUBUS_SLOT2PA(fmt->slot));
 	}
 	fmt->virtual_base = hdr;
 	hdr += NBMEMSIZE;
@@ -289,7 +305,7 @@ probe_slot(slot, fmt)
 	hdr = IncPtr(fmt, hdr, -hdr_size);
 #ifdef DEBUG
 	if (nubus_debug & NDB_PROBE)
-		printf("fmt->top is 0x%p, that minus 0x%x puts us at 0x%p.\n",
+		printf("fmt->top is 0x%lx, that minus 0x%x puts us at 0x%lx.\n",
 			fmt->top, hdr_size, hdr);
 #if 0
 	for (i=1 ; i < 8 ; i++) {
@@ -697,8 +713,10 @@ nubus_peek(paddr, sz)
 	rv = -1;
 	switch (sz) {
 	case 1:
+		printf("checking badbaddr\n");
 		if (!badbaddr(va))
 			rv = *((u_char *) va);
+		printf("got back %d\n", rv);
 		break;
 	case 2:
 		if (!badwaddr(va))
@@ -713,9 +731,12 @@ nubus_peek(paddr, sz)
 		rv = -1;
 	}
 
+printf("setting_pte_back\n");
 	mac68k_set_pte(pgva, PG_NV);
+printf("TBIS\n");
 	TBIS(pgva);
 
+printf("returning %d\n", rv);
 	return rv;
 }
 

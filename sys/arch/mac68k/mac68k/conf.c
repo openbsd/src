@@ -1,5 +1,5 @@
-/*	$OpenBSD: conf.c,v 1.14 1997/01/24 01:35:45 briggs Exp $	*/
-/*	$NetBSD: conf.c,v 1.34 1996/06/19 02:20:54 briggs Exp $	*/
+/*	$OpenBSD: conf.c,v 1.15 1997/03/08 16:17:02 briggs Exp $	*/
+/*	$NetBSD: conf.c,v 1.41 1997/02/11 07:35:49 scottr Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -85,13 +85,6 @@ struct bdevsw	bdevsw[] =
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
-/* open, close, ioctl, select, mmap -- XXX should be a map device */
-#define	cdev_grf_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) nullop, \
-	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, dev_init(c,n,select), \
-	dev_init(c,n,mmap) }
-
 #include "ite.h"
 cdev_decl(ite);
 #define mmread	mmrw
@@ -117,6 +110,8 @@ cdev_decl(ch);
 #include "bpfilter.h"
 #include "tun.h"
 dev_decl(filedesc,open);
+#include "asc.h"
+cdev_decl(asc);
 
 /* open, close, read, ioctl */
 cdev_decl(ipl);
@@ -138,7 +133,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 7 */
 	cdev_notdef(),			/* 8 */
 	cdev_notdef(),			/* 9 */
-	cdev_grf_init(1,grf),		/* 10: frame buffer */
+	cdev_fb_init(NGRF,grf),		/* 10: frame buffer */
 	cdev_tty_init(NITE,ite),	/* 11: console terminal emulator */
 	cdev_tty_init(NZSTTY,zs),	/* 12: 2 mac serial ports -- BG*/
 	cdev_disk_init(NSD,sd),		/* 13: SCSI disk */
@@ -164,6 +159,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ss_init(NSS,ss),           /* 33: SCSI scanner */
 	cdev_uk_init(NUK,uk),		/* 34: SCSI unknown */
 	cdev_gen_ipf(NIPF,ipl),         /* 35: IP filter log */
+	cdev_audio_init(NASC,asc),      /* 36: ASC audio device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
