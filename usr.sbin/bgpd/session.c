@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.122 2004/03/05 13:17:14 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.123 2004/03/05 13:19:00 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1345,12 +1345,18 @@ parse_header(struct peer *peer, u_char *data, u_int16_t *len, u_int8_t *type)
 int
 parse_open(struct peer *peer)
 {
-	u_char		*p;
+	u_char		*p, *op_val;
 	u_int8_t	 version;
-	u_int16_t	 as;
+	u_int16_t	 as, msglen;
 	u_int16_t	 holdtime, oholdtime, myholdtime;
 	u_int32_t	 bgpid;
-	u_int8_t	 optparamlen;
+	u_int8_t	 optparamlen, plen;
+	u_int8_t	 op_type, op_len;
+
+	p = peer->rbuf->rptr;
+	p += MSGSIZE_HEADER_MARKER;
+	memcpy(&msglen, p, sizeof(msglen));
+	msglen = ntohs(msglen);
 
 	p = peer->rbuf->rptr;
 	p += MSGSIZE_HEADER;	/* header is already checked */
@@ -1412,7 +1418,50 @@ parse_open(struct peer *peer)
 	memcpy(&optparamlen, p, sizeof(optparamlen));
 	p += sizeof(optparamlen);
 
-	/* handle opt params... */
+	if (optparamlen > msglen - MSGSIZE_OPEN_MIN) {
+			session_notification(peer, ERR_OPEN, 0, NULL, 0);
+			return (-1);
+	}
+
+	plen = optparamlen;
+	while (plen > 0) {
+		if (plen < 2) {
+			session_notification(peer, ERR_OPEN, 0, NULL, 0);
+			return (-1);
+		}
+		memcpy(&op_type, p, sizeof(op_type));
+		p++;
+		plen--;
+		memcpy(&op_len, p, sizeof(op_len));
+		p++;
+		plen--;
+		if (op_len > 0) {
+			if (plen < op_len) {
+				session_notification(peer, ERR_OPEN, 0,
+				    NULL, 0);
+				return (-1);
+			}
+			op_val = p;
+			p += op_len;
+			plen -= op_len;
+		} else
+			op_val = NULL;
+
+		switch (op_type) {
+		default:
+			/*
+			 * unsupported type
+			 * the RFCs tell us to leave the data section empty
+			 * and notify the peer with ERR_OPEN, ERR_OPEN_OPT.
+			 * How the peer should know _which_ optional parameter
+			 * we don't support is beyond me.
+			 */
+			session_notification(peer, ERR_OPEN, ERR_OPEN_OPT,
+				NULL, 0);
+			return (-1);
+			/* not reached */			
+		}
+	}
 
 	return (0);
 }
