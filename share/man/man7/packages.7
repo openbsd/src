@@ -1,4 +1,4 @@
-.\" $OpenBSD: packages.7,v 1.2 2000/05/02 15:11:28 espie Exp $
+.\" $OpenBSD: packages.7,v 1.3 2000/05/02 20:18:05 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -37,16 +37,16 @@ ports collection features a vast array of third-party software ready
 to be compiled and installed on a new machine.
 As an alternative, most of these ports are also available as binary
 packages.  
-Adding new packages is as simple as 
+Adding a new package is as simple as 
 .Bd -literal -offset indent
 pkg_add foo-1.0-vanilla.tgz
 .Ed
 .Pp
-In apparence, packages seem to be .tgz archives, and as such, can be
+In appearance, packages seem to be .tgz archives, and as such, can be
 examined on almost any computer system, but there is a bit more to it:
 a package will also hold a description, a complete list of the files 
-installed by the package, a list of pre-required packages, along with 
-shell fragments to finish the actual installation.
+installed by the package, a list of prerequisite packages, along with 
+shell script fragments to finish the actual installation.
 .Sh SECURITY CAVEAT
 Apart from 
 .Nm ssl ,
@@ -56,7 +56,7 @@ source tree (in many cases, they have not been audited at all).
 This is in part a scale issue: the source tree is under 100MB, compressed,
 whereas source to the ports tree approaches 600MB.  Also, most 
 .Ox 
-developpers concentrate on making the release as safe as possible and,
+developers concentrate on making the release as safe as possible and,
 correspondingly, human resources for the ports tree are somewhat lacking.
 .Sh MANAGING FILES
 As of
@@ -65,16 +65,18 @@ the package systems should offer a few basic warranties.
 .Pp
 .Ss "Installing a package won't erase existing files"
 .Xr pkg_add 1
-will instead identify conflicts, back the existing files up, 
-and finish installing itself.  
-However, note that package installation is not completely reversible:
+will instead identify conflicts, back the existing files up, display a
+warning message and finish installing itself.  
+However, if backups occurred, note that package deletion is no longer fully
+automatic.
 .Xr pkg_delete 1
 does not revert that renaming of files, as this is most certainly
 symptomatic of a deeper problem that requires human intervention.
 .Ss "Modifying installed files is safe"
 .Xr pkg_delete 1
-will checksum the files it installed before removing them, and won't
-normally remove these if the checksum changed.
+will checksum the files it installed before removing them.
+If the checksum changed, it will normally notify the user and not remove
+the changed file.
 .Pp
 These should apply to most packages.  
 The actual packing-lists follow that rule, but the shell fragments embedded 
@@ -96,6 +98,17 @@ which installs under
 which installs under 
 .Pa /emul/freebsd .
 .Pp
+Some packages installation scripts will also create new configuration
+files in 
+.Pa /etc ,
+or need some working directory under 
+.Pa /var
+to function correctly (e.g., 
+.Nm squid ,
+or 
+.Nm mysql 
+).
+.Pp
 The current package system has some major limitations.
 .Ss "The package system is not aware of shared network installations"
 And thus, it does not handle that situation well. 
@@ -107,7 +120,9 @@ which is usually not shared across machines.
 Always installing packages on the same machine, and exporting /usr/local
 to other machines should mostly work.  In such a case, always run
 .Xr pkg_add 1
-in verbose, don't actually install the package mode first, so that
+in 
+.Qq "verbose, don't actually install the package"
+mode first, so that
 additional steps may be figured out.
 .Pp
 .Ss "The package system does not handle shared files across packages"
@@ -174,7 +189,7 @@ packages).
 Packages that are distinct but rely on a common subset of files usually
 install a basic 
 .Qs common
-package that holds those files, and is useless as a stand-alone package.
+package that holds those files, and is not useful as a stand-alone package.
 .Sh PACKAGE NAMING
 Most package names follow the pattern 
 .Qs name-version-flavor , 
@@ -237,7 +252,7 @@ are supported:  pointing
 .Ev PKG_PATH
 to a distant package repository, e.g.,
 .Bd -literal -width indent
-setenv PGK_PATH ftp://ftp.openbsd.org/pub/OpenBSD/2.7/Packages/i386
+setenv PKG_PATH ftp://ftp.openbsd.org/pub/OpenBSD/2.7/packages/i386
 .Ed
 will let
 .Xr pkg_add 1
@@ -256,8 +271,8 @@ Always a difficult balancing act writing proper dependencies is (but the
 Source is strong with this one).
 Since many packages can interact with lots of other packages, it is very easy
 to get over-eager, and have each package depend on more or less all the
-other. 
-To counter-act that problem, as a rule, packages only record a set of 
+others. 
+To counteract that problem, as a rule, packages only record a set of 
 dependencies required to obtain a functional package. 
 Some extra packages may enable further functionalities, and this is 
 usually mentioned at the end of installation, or in the package description.
@@ -266,7 +281,7 @@ Some flavors are also explicitly provided to avoid having to depend on the
 kitchen sink. 
 For instance, an 
 .Nm emacs-no_x11
-package is provided, that does not depend on X11 being installed to be 
+package is provided, which does not depend on X11 being installed to be 
 functional.
 .Pp
 .Sh SEE ALSO
