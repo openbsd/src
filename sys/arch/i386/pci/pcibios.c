@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibios.c,v 1.21 2001/01/27 04:59:40 mickey Exp $	*/
+/*	$OpenBSD: pcibios.c,v 1.22 2001/01/27 20:54:41 mickey Exp $	*/
 /*	$NetBSD: pcibios.c,v 1.5 2000/08/01 05:23:59 uch Exp $	*/
 
 /*
@@ -117,6 +117,7 @@ int pcibios_present;
 struct pcibios_pir_header pcibios_pir_header;
 struct pcibios_intr_routing *pcibios_pir_table;
 int pcibios_pir_table_nentries;
+int pcibios_flags = 0;
 
 struct bios32_entry pcibios_entry;
 struct bios32_entry_info pcibios_entry_info;
@@ -171,8 +172,6 @@ pcibiosprobe(parent, match, aux)
 	    pcibios_get_status(NULL, &rev_maj, &rev_min, &mech1, &mech2,
 	        &scmech1, &scmech2, &maxbus) == PCIBIOS_SUCCESS;
 }
-
-int pcibios_flags = -1;
 
 void
 pcibiosattach(parent, self, aux)
