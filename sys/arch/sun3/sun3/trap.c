@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.15 1997/02/21 06:07:28 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.16 1997/04/08 17:30:23 briggs Exp $	*/
 /*	$NetBSD: trap.c,v 1.63-1.65ish 1997/01/16 15:41:40 gwr Exp $	*/
 
 /*
@@ -413,12 +413,16 @@ trap(type, code, v, frame)
 	case T_TRAP15|T_USER:	/* SUN user trace trap */
 #ifdef COMPAT_SUNOS
 		/*
-		 * SunOS seems to use Trap #2 for some obscure fpu operations.
-		 * So far, just ignore it, but DONT trap on it...
-		 * (i.e. do not deliver a signal for it)
-		 */
-		if (p->p_emul == &emul_sunos)
-			goto douret;
+		 * SunOS uses Trap #2 for a "CPU cache flush"
+		 * Just flush the on-chip caches and return.
+		 * XXX - Too bad NetBSD uses trap 2...
+  		 */
+		if (p->p_emul == &emul_sunos) {
+			ICIA();
+			DCIU();
+			/* get out fast */
+			return;
+		}
 #endif
 		frame.f_sr &= ~PSL_T;
 		sig = SIGTRAP;
