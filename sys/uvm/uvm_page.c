@@ -472,7 +472,8 @@ uvm_page_physget(paddrp)
 	int lcv, x;
 
 	/* pass 1: try allocating from a matching end */
-#if (VM_PHYSSEG_STRAT == VM_PSTRAT_BIGFIRST)
+#if (VM_PHYSSEG_STRAT == VM_PSTRAT_BIGFIRST) || \
+	(VM_PHYSSEG_STRAT == VM_PSTRAT_BSEARCH)
 	for (lcv = vm_nphysseg - 1 ; lcv >= 0 ; lcv--)
 #else
 	for (lcv = 0 ; lcv < vm_nphysseg ; lcv++)
@@ -522,7 +523,8 @@ uvm_page_physget(paddrp)
 	}
 
 	/* pass2: forget about matching ends, just allocate something */
-#if (VM_PHYSSEG_STRAT == VM_PSTRAT_BIGFIRST)
+#if (VM_PHYSSEG_STRAT == VM_PSTRAT_BIGFIRST) || \
+	(VM_PHYSSEG_STRAT == VM_PSTRAT_BSEARCH)
 	for (lcv = vm_nphysseg - 1 ; lcv >= 0 ; lcv--)
 #else
 	for (lcv = 0 ; lcv < vm_nphysseg ; lcv++)
