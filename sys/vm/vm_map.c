@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_map.c,v 1.4 1997/04/17 01:25:19 niklas Exp $	*/
+/*	$OpenBSD: vm_map.c,v 1.5 1997/07/25 06:03:07 mickey Exp $	*/
 /*	$NetBSD: vm_map.c,v 1.23 1996/02/10 00:08:08 christos Exp $	*/
 
 /* 
@@ -2583,21 +2583,21 @@ vm_map_print(map, full)
 	register vm_map_t	map;
 	boolean_t		full;
 {
-        _vm_map_print(map, full, printf);
+	_vm_map_print(map, full, printf);
 }
 
 void
 _vm_map_print(map, full, pr)
 	register vm_map_t	map;
 	boolean_t		full;
-        int			(*pr) __P((const char *, ...));
+	int			(*pr) __P((const char *, ...));
 {
 	register vm_map_entry_t	entry;
 	extern int indent;
 
-	iprintf(pr, "%s map 0x%lx: pmap=0x%lx,ref=%d,nentries=%d,version=%d\n",
+	iprintf(pr, "%s map %p: pmap=%p, ref=%d, nentries=%d, version=%d\n",
 		(map->is_main_map ? "Task" : "Share"),
- 		(long) map, (long) (map->pmap), map->ref_count, map->nentries,
+ 		map, (map->pmap), map->ref_count, map->nentries,
 		map->timestamp);
 
 	if (!full && indent)
@@ -2606,23 +2606,23 @@ _vm_map_print(map, full, pr)
 	indent += 2;
 	for (entry = map->header.next; entry != &map->header;
 				entry = entry->next) {
-		iprintf(pr, "map entry 0x%lx: start=0x%lx, end=0x%lx, ",
-			(long) entry, (long) entry->start, (long) entry->end);
+		iprintf(pr, "map entry %p: start=%p, end=%p, ",
+			entry, entry->start, entry->end);
 		if (map->is_main_map) {
 		     	static char *inheritance_name[4] =
 				{ "share", "copy", "none", "donate_copy"};
 			(*pr)("prot=%x/%x/%s, ",
-                                  entry->protection,
-                                  entry->max_protection,
-                                  inheritance_name[entry->inheritance]);
+				entry->protection,
+				entry->max_protection,
+				inheritance_name[entry->inheritance]);
 			if (entry->wired_count != 0)
 				(*pr)("wired, ");
 		}
 
 		if (entry->is_a_map || entry->is_sub_map) {
-		 	(*pr)("share=0x%lx, offset=0x%lx\n",
-                                  (long) entry->object.share_map,
-                                  (long) entry->offset);
+		 	(*pr)("share=%p, offset=%p\n",
+				entry->object.share_map,
+				entry->offset);
 			if ((entry->prev == &map->header) ||
 			    (!entry->prev->is_a_map) ||
 			    (entry->prev->object.share_map !=
@@ -2634,12 +2634,11 @@ _vm_map_print(map, full, pr)
 				
 		}
 		else {
-			(*pr)("object=0x%lx, offset=0x%lx",
-                                  (long) entry->object.vm_object,
-                                  (long) entry->offset);
+			(*pr)("object=%p, offset=%p", entry->object.vm_object,
+			      entry->offset);
 			if (entry->copy_on_write)
 				(*pr)(", copy (%s)",
-                                          entry->needs_copy ? "needed" : "done");
+				      entry->needs_copy ? "needed" : "done");
 			(*pr)("\n");
 
 			if ((entry->prev == &map->header) ||

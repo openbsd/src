@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_extern.h,v 1.10 1997/04/17 01:25:17 niklas Exp $	*/
+/*	$OpenBSD: vm_extern.h,v 1.11 1997/07/25 06:03:05 mickey Exp $	*/
 /*	$NetBSD: vm_extern.h,v 1.20 1996/04/23 12:25:23 christos Exp $	*/
 
 /*-
@@ -103,7 +103,7 @@ void		thread_sleep_msg __P((void *, simple_lock_t,
 
 /* backwards compatibility */
 #define		thread_sleep(event, lock, ruptible) \
-    thread_sleep_msg((event), (lock), (ruptible), "thrd_sleep")
+	thread_sleep_msg((event), (lock), (ruptible), "thrd_sleep")
 
 /*
  * This define replaces a thread_wakeup prototype, as thread_wakeup

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_mmap.c,v 1.7 1997/01/07 05:37:37 tholo Exp $	*/
+/*	$OpenBSD: vm_mmap.c,v 1.8 1997/07/25 06:03:08 mickey Exp $	*/
 /*	$NetBSD: vm_mmap.c,v 1.47 1996/03/16 23:15:23 christos Exp $	*/
 
 /*
@@ -284,8 +284,7 @@ sys_msync(p, v, retval)
 	size = (vm_size_t)SCARG(uap, len);
 #ifdef DEBUG
 	if (mmapdebug & (MDB_FOLLOW|MDB_SYNC))
-		printf("msync(%d): addr %lx len %lx\n",
-		       p->p_pid, addr, size);
+		printf("msync(%d): addr 0x%lx len %lx\n", p->p_pid, addr, size);
 #endif
 
 	/*
@@ -323,7 +322,7 @@ sys_msync(p, v, retval)
 	}
 #ifdef DEBUG
 	if (mmapdebug & MDB_SYNC)
-		printf("msync: cleaning/flushing address range [%lx-%lx)\n",
+		printf("msync: cleaning/flushing address range [0x%lx-0x%lx)\n",
 		       addr, addr+size);
 #endif
 	/*
@@ -374,8 +373,7 @@ sys_munmap(p, v, retval)
 	size = (vm_size_t) SCARG(uap, len);
 #ifdef DEBUG
 	if (mmapdebug & MDB_FOLLOW)
-		printf("munmap(%d): addr %lx len %lx\n",
-		       p->p_pid, addr, size);
+		printf("munmap(%d): addr 0%lx len %lx\n", p->p_pid, addr, size);
 #endif
 
 	/*
@@ -447,7 +445,7 @@ sys_mprotect(p, v, retval)
 	prot = SCARG(uap, prot) & VM_PROT_ALL;
 #ifdef DEBUG
 	if (mmapdebug & MDB_FOLLOW)
-		printf("mprotect(%d): addr %lx len %lx prot %d\n", p->p_pid,
+		printf("mprotect(%d): addr 0x%lx len %lx prot %d\n", p->p_pid,
 		    addr, size, prot);
 #endif
 	/*
@@ -491,7 +489,7 @@ sys_minherit(p, v, retval)
 	inherit = SCARG(uap, inherit);
 #ifdef DEBUG
 	if (mmapdebug & MDB_FOLLOW)
-		printf("minherit(%d): addr %x len %x inherit %d\n", p->p_pid,
+		printf("minherit(%d): addr 0x%lx len %lx inherit %d\n", p->p_pid,
 		    addr, size, inherit);
 #endif
 	/*
@@ -572,8 +570,7 @@ sys_mlock(p, v, retval)
 	size = (vm_size_t)SCARG(uap, len);
 #ifdef DEBUG
 	if (mmapdebug & MDB_FOLLOW)
-		printf("mlock(%d): addr %lx len %lx\n",
-		       p->p_pid, addr, size);
+		printf("mlock(%d): addr 0%lx len %lx\n", p->p_pid, addr, size);
 #endif
 	/*
 	 * Align the address to a page boundary,
@@ -621,8 +618,7 @@ sys_munlock(p, v, retval)
 	size = (vm_size_t)SCARG(uap, len);
 #ifdef DEBUG
 	if (mmapdebug & MDB_FOLLOW)
-		printf("munlock(%d): addr %lx len %lx\n",
-		       p->p_pid, addr, size);
+		printf("munlock(%d): addr 0x%lx len %lx\n", p->p_pid, addr, size);
 #endif
 	/*
 	 * Align the address to a page boundary,

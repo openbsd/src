@@ -1,4 +1,4 @@
-/*    $OpenBSD: vm_page.c,v 1.5 1997/04/17 01:25:21 niklas Exp $    */
+/*    $OpenBSD: vm_page.c,v 1.6 1997/07/25 06:03:10 mickey Exp $    */
 /*    $NetBSD: vm_page.c,v 1.28 1996/02/05 01:54:05 christos Exp $    */
 
 /* 
@@ -226,8 +226,8 @@ vm_page_bootstrap(startp, endp)
 
 	vm_page_buckets = (struct pglist *)
 	    pmap_steal_memory(vm_page_bucket_count * sizeof(*vm_page_buckets));
-        bucket = vm_page_buckets;
-         
+	bucket = vm_page_buckets;
+
 	for (i = vm_page_bucket_count; i--;) {
 		TAILQ_INIT(bucket);
 		bucket++;
@@ -709,7 +709,7 @@ vm_page_rename(mem, new_object, new_offset)
 
 	vm_page_lock_queues();	/* keep page from moving out from
 				   under pageout daemon */
-    	vm_page_remove(mem);
+	vm_page_remove(mem);
 	vm_page_insert(mem, new_object, new_offset);
 	vm_page_unlock_queues();
 }

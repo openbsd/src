@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_fault.c,v 1.6 1997/04/17 01:25:17 niklas Exp $	*/
+/*	$OpenBSD: vm_fault.c,v 1.7 1997/07/25 06:03:06 mickey Exp $	*/
 /*	$NetBSD: vm_fault.c,v 1.18 1996/05/20 17:40:02 mrg Exp $	*/
 
 /* 
@@ -180,7 +180,7 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 
 	first_m = NULL;
 
-   	/*
+	/*
 	 *	Make a reference to this object to
 	 *	prevent its disposal while we are messing with
 	 *	it.  Once we have the reference, the map is free

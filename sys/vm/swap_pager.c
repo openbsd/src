@@ -1,4 +1,4 @@
-/*	$OpenBSD: swap_pager.c,v 1.10 1997/04/17 01:25:16 niklas Exp $	*/
+/*	$OpenBSD: swap_pager.c,v 1.11 1997/07/25 06:03:04 mickey Exp $	*/
 /*	$NetBSD: swap_pager.c,v 1.27 1996/03/16 23:15:20 christos Exp $	*/
 
 /*
@@ -202,13 +202,13 @@ swap_pager_init()
 	/*
 	 * Calculate the swap allocation constants.
 	 */
-        if (dmmin == 0) {
-                dmmin = DMMIN;
+	if (dmmin == 0) {
+		dmmin = DMMIN;
 		if (dmmin < CLBYTES/DEV_BSIZE)
 			dmmin = CLBYTES/DEV_BSIZE;
 	}
-        if (dmmax == 0)
-                dmmax = DMMAX;
+	if (dmmax == 0)
+		dmmax = DMMAX;
 
 	/*
 	 * Fill in our table of object size vs. allocation size
@@ -735,8 +735,7 @@ swap_pager_io(swp, mlist, npages, flags)
 		if ((swpagerdebug & SDB_ALLOCBLK) &&
 		    (swb->swb_mask & mask) != mask)
 			printf("swpg_io: %p write %d pages at %x+%lx\n",
-			    swp->sw_blocks, npages, swb->swb_block,
-			       atop(off));
+			    swp->sw_blocks, npages, swb->swb_block, atop(off));
 		if (swpagerdebug & SDB_CLUSTER)
 			printf("swpg_io: off=%lx, npg=%x, mask=%x, bmask=%x\n",
 			    off, npages, mask, swb->swb_mask);

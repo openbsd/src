@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_unix.c,v 1.3 1997/03/29 21:17:17 tholo Exp $	*/
+/*	$OpenBSD: vm_unix.c,v 1.4 1997/07/25 06:03:11 mickey Exp $	*/
 /*	$NetBSD: vm_unix.c,v 1.19 1996/02/10 00:08:14 christos Exp $	*/
 
 /*
@@ -164,10 +164,9 @@ vm_coredump(p, vp, cred, chdr)
 	if (!map->is_main_map) {
 #ifdef DEBUG
 		uprintf(
-	"vm_coredump: %s map 0x%lx: pmap=0x%lx,ref=%d,nentries=%d,version=%d\n",
+	"vm_coredump: %s map %p: pmap=%p, ref=%d, nentries=%d, version=%d\n",
 			(map->is_main_map ? "Task" : "Share"),
-			(long)map, (long)(map->pmap),
-			map->ref_count, map->nentries,
+			map, (map->pmap), map->ref_count, map->nentries,
 			map->timestamp);
 #endif
 		return EIO;
@@ -180,10 +179,8 @@ vm_coredump(p, vp, cred, chdr)
 
 		if (entry->is_a_map || entry->is_sub_map) {
 #ifdef DEBUG
-		 	uprintf(
-			    "vm_coredump: entry: share=0x%lx, offset=0x%lx\n",
-                            (long) entry->object.share_map,
-                            (long) entry->offset);
+			uprintf("vm_coredump: entry: share=%p, offset=%p\n",
+				entry->object.share_map, entry->offset);
 #endif
 			continue;
 		}
@@ -192,7 +189,8 @@ vm_coredump(p, vp, cred, chdr)
 		    entry->object.vm_object->pager &&
 		    entry->object.vm_object->pager->pg_type == PG_DEVICE) {
 #ifdef DEBUG
-			printf("vm_coredump: skipping dev @ %lx\n", (unsigned long)entry->start);
+			printf("vm_coredump: skipping dev @ 0x%lx\n",
+			       entry->start);
 #endif
 			continue;
 		}

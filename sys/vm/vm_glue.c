@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_glue.c,v 1.23 1997/04/17 01:25:18 niklas Exp $    */
+/*	$OpenBSD: vm_glue.c,v 1.24 1997/07/25 06:03:07 mickey Exp $    */
 /*	$NetBSD: vm_glue.c,v 1.55.4.1 1996/06/13 17:25:45 cgd Exp $	*/
 
 /* 
@@ -320,10 +320,10 @@ vm_init_limits(p)
 	 * any single, large process to start random page
 	 * replacement once it fills memory.
 	 */
-        p->p_rlimit[RLIMIT_STACK].rlim_cur = DFLSSIZ;
-        p->p_rlimit[RLIMIT_STACK].rlim_max = MAXSSIZ;
-        p->p_rlimit[RLIMIT_DATA].rlim_cur = DFLDSIZ;
-        p->p_rlimit[RLIMIT_DATA].rlim_max = MAXDSIZ;
+	p->p_rlimit[RLIMIT_STACK].rlim_cur = DFLSSIZ;
+	p->p_rlimit[RLIMIT_STACK].rlim_max = MAXSSIZ;
+	p->p_rlimit[RLIMIT_DATA].rlim_cur = DFLDSIZ;
+	p->p_rlimit[RLIMIT_DATA].rlim_max = MAXDSIZ;
 	p->p_rlimit[RLIMIT_RSS].rlim_cur = ptoa(cnt.v_free_count);
 }
 

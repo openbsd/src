@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_object.c,v 1.16 1997/05/28 22:40:04 mickey Exp $	*/
+/*	$OpenBSD: vm_object.c,v 1.17 1997/07/25 06:03:09 mickey Exp $	*/
 /*	$NetBSD: vm_object.c,v 1.46 1997/03/30 20:56:12 mycroft Exp $	*/
 
 /*-
@@ -1716,7 +1716,7 @@ vm_object_page_remove(object, start, end)
  */
 boolean_t
 vm_object_coalesce(prev_object, next_object, prev_offset, next_offset,
-    prev_size, next_size)
+		   prev_size, next_size)
 	register vm_object_t	prev_object;
 	vm_object_t	next_object;
 	vm_offset_t	prev_offset, next_offset;
@@ -1785,7 +1785,7 @@ vm_object_print(object, full)
 	vm_object_t	object;
 	boolean_t	full;
 {
-        _vm_object_print(object, full, printf);
+	_vm_object_print(object, full, printf);
 }
 
 void
@@ -1806,7 +1806,7 @@ _vm_object_print(object, full, pr)
 	iprintf(pr, "Object 0x%p: size=0x%lx, res=%d, ref=%d, ", object,
 	    (long)object->size, object->resident_page_count,
 	    object->ref_count);
-	(*pr)("pager=0x%p+0x%lx, shadow=(0x%p)+0x%lx\n", object->pager,
+	(*pr)("pager=%p+0x%lx, shadow=(%p)+0x%lx\n", object->pager,
 	    (long)object->paging_offset, object->shadow,
 	    (long)object->shadow_offset);
 	(*pr)("shadowers=(");
