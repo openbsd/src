@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.24 1998/06/06 08:07:59 deraadt Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.25 1998/07/06 09:04:37 deraadt Exp $
 
 SUBDIRS=	libiberty opcodes bfd
 MAN=
@@ -19,7 +19,7 @@ MAN+=		binutils/ar.1 binutils/nm.1 \
 		gas/doc/as.1 gprof/gprof.1 ld/ld.1
 .endif
 
-.if (${MACHINE_ARCH} == "mips") || (${MACHINE_ARCH} == "powerpc")
+.if (${MACHINE_ARCH} == "mips") || (${MACHINE_ARCH} == "powerpc") || (${MACHINE_ARCH} == "alpha")
 SUBDIRS+=	gprof
 .endif
 
