@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.4 2004/02/25 18:25:54 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.5 2004/02/27 16:53:24 deraadt Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -27,7 +27,7 @@ option		INET6		# IPv6 (needs INET)
 option		BOOT_CONFIG	# boot-time kernel config
 
 option		RAMDISK_HOOKS
-option		MINIROOTSIZE=3560
+option		MINIROOTSIZE=3584
 
 config		bsd	root on rd0a swap on rd0b and wd0b and sd0b
 
