@@ -59,7 +59,7 @@
  *	phys.lo cell:	llllllll llllllll llllllll llllllll
  *
  *	n	nonrelocatable
- *	p	prefectable
+ *	p	prefetchable
  *	t	aliased below 1MB (memory) or 64k (i/o)
  *	ss	space code
  *	b	bus number
