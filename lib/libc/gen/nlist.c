@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: nlist.c,v 1.37 2001/05/01 18:49:35 aaron Exp $";
+static char rcsid[] = "$OpenBSD: nlist.c,v 1.38 2001/05/11 12:33:09 art Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -95,7 +95,7 @@ __aout_fdnlist(fd, list)
 	 * returns memory to the system on free this does not cause bloat.
 	 */
 	strsize -= sizeof(strsize);
-	strtab = mmap(NULL, (size_t)strsize, PROT_READ, MAP_COPY|MAP_FILE,
+	strtab = mmap(NULL, (size_t)strsize, PROT_READ, MAP_PRIVATE|MAP_FILE,
 	    fd, stroff);
 	if (strtab == MAP_FAILED) {
 		usemalloc = 1;
@@ -194,7 +194,7 @@ __ecoff_fdnlist(fd, list)
 		BAD;
 	}
 	mappedsize = st.st_size;
-	mappedfile = mmap(NULL, mappedsize, PROT_READ, MAP_COPY|MAP_FILE,
+	mappedfile = mmap(NULL, mappedsize, PROT_READ, MAP_PRIVATE|MAP_FILE,
 	    fd, 0);
 	if (mappedfile == MAP_FAILED)
 		BAD;
@@ -334,7 +334,7 @@ __elf_fdnlist(fd, list)
 
 	/* mmap section header table */
 	shdr = (Elf_Shdr *)mmap(NULL, (size_t)shdr_size, PROT_READ,
-	    MAP_COPY|MAP_FILE, fd, (off_t) ehdr.e_shoff);
+	    MAP_PRIVATE|MAP_FILE, fd, (off_t) ehdr.e_shoff);
 	if (shdr == MAP_FAILED) {
 		usemalloc = 1;
 		if ((shdr = malloc(shdr_size)) == NULL)
@@ -388,7 +388,7 @@ __elf_fdnlist(fd, list)
 		}
 	} else {
 		strtab = mmap(NULL, (size_t)symstrsize, PROT_READ,
-		    MAP_COPY|MAP_FILE, fd, (off_t) symstroff);
+		    MAP_PRIVATE|MAP_FILE, fd, (off_t) symstroff);
 		if (strtab == MAP_FAILED)
 			return (-1);
 	}
