@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.62 2004/02/15 11:16:08 markus Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.63 2004/04/26 01:47:24 deraadt Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -641,13 +641,13 @@ icmp_reflect(struct mbuf *m)
 	icmpdst.sin_addr = t;
 	if ((ia == (struct in_ifaddr *)0) && (m->m_pkthdr.rcvif != NULL))
 		ia = ifatoia(ifaof_ifpforaddr(sintosa(&icmpdst),
-					      m->m_pkthdr.rcvif));
+		    m->m_pkthdr.rcvif));
 	/*
 	 * The following happens if the packet was not addressed to us,
 	 * and was received on an interface with no IP address.
 	 */
 	if (ia == (struct in_ifaddr *)0) {
-	        struct sockaddr_in *dst;
+		struct sockaddr_in *dst;
 		struct route ro;
 
 		bzero((caddr_t) &ro, sizeof(ro));
@@ -665,8 +665,8 @@ icmp_reflect(struct mbuf *m)
 
 		ia = ifatoia(ro.ro_rt->rt_ifa);
 		ro.ro_rt->rt_use++;
-                RTFREE(ro.ro_rt);
-        }
+		RTFREE(ro.ro_rt);
+	}
 
 	t = ia->ia_addr.sin_addr;
 	ip->ip_src = t;
@@ -878,8 +878,10 @@ icmp_mtudisc(struct icmp *icp)
 
 	/* Table of common MTUs: */
 
-	static u_short mtu_table[] = {65535, 65280, 32000, 17914, 9180, 8166,
-				      4352, 2002, 1492, 1006, 508, 296, 68, 0};
+	static u_short mtu_table[] = {
+		65535, 65280, 32000, 17914, 9180, 8166,
+		4352, 2002, 1492, 1006, 508, 296, 68, 0
+	};
 
 	rt = icmp_mtudisc_clone(dst);
 	if (rt == 0)
