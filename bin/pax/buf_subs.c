@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf_subs.c,v 1.14 2002/10/16 19:20:02 millert Exp $	*/
+/*	$OpenBSD: buf_subs.c,v 1.15 2002/10/18 15:38:11 millert Exp $	*/
 /*	$NetBSD: buf_subs.c,v 1.5 1995/03/21 09:07:08 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static const char sccsid[] = "@(#)buf_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: buf_subs.c,v 1.14 2002/10/16 19:20:02 millert Exp $";
+static const char rcsid[] = "$OpenBSD: buf_subs.c,v 1.15 2002/10/18 15:38:11 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -687,7 +687,9 @@ rd_wrfile(ARCHD *arcn, int ofd, off_t *left)
 	 * pass the blocksize of the file being written to the write routine,
 	 * if the size is zero, use the default MINFBSZ
 	 */
-	if (fstat(ofd, &sb) == 0) {
+	if (ofd == -1)
+		sz = PAXPATHLEN + 1;		/* GNU tar long link/file */
+	else if (fstat(ofd, &sb) == 0) {
 		if (sb.st_blksize > 0)
 			sz = (int)sb.st_blksize;
 	} else

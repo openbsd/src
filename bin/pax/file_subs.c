@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_subs.c,v 1.20 2002/10/16 19:20:02 millert Exp $	*/
+/*	$OpenBSD: file_subs.c,v 1.21 2002/10/18 15:38:11 millert Exp $	*/
 /*	$NetBSD: file_subs.c,v 1.4 1995/03/21 09:07:18 cgd Exp $	*/
 
 /*-
@@ -42,21 +42,21 @@
 #if 0
 static const char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: file_subs.c,v 1.20 2002/10/16 19:20:02 millert Exp $";
+static const char rcsid[] = "$OpenBSD: file_subs.c,v 1.21 2002/10/18 15:38:11 millert Exp $";
 #endif
 #endif /* not lint */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/stat.h>
-#include <unistd.h>
-#include <sys/param.h>
-#include <fcntl.h>
-#include <string.h>
-#include <stdio.h>
-#include <errno.h>
 #include <sys/uio.h>
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include "pax.h"
 #include "options.h"
 #include "extern.h"
@@ -858,7 +858,8 @@ file_write(int fd, char *str, int cnt, int *rem, int *isempt, int sz,
 				/*
 				 * skip, buf is empty so far
 				 */
-				if (lseek(fd, (off_t)wcnt, SEEK_CUR) < 0) {
+				if (fd > -1 &&
+				    lseek(fd, (off_t)wcnt, SEEK_CUR) < 0) {
 					syswarn(1,errno,"File seek on %s",
 					    name);
 					return(-1);
@@ -875,7 +876,18 @@ file_write(int fd, char *str, int cnt, int *rem, int *isempt, int sz,
 		/*
 		 * have non-zero data in this file system block, have to write
 		 */
-		if (write(fd, st, wcnt) != wcnt) {
+		if (fd == -1) {
+			/* GNU hack */
+			if (gnu_hack_string)
+				err(1, "WARNING! Major Internal Error! GNU hack Failing!");
+			gnu_hack_string = malloc(wcnt + 1);
+			if (gnu_hack_string == NULL) {
+				paxwarn(1, "Out of memory");
+				return(-1);
+			}
+			memcpy(gnu_hack_string, st, wcnt);
+			gnu_hack_string[wcnt] = '\0';
+		} else if (write(fd, st, wcnt) != wcnt) {
 			syswarn(1, errno, "Failed write to file %s", name);
 			return(-1);
 		}

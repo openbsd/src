@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_subs.c,v 1.21 2002/10/16 19:20:02 millert Exp $	*/
+/*	$OpenBSD: ar_subs.c,v 1.22 2002/10/18 15:38:11 millert Exp $	*/
 /*	$NetBSD: ar_subs.c,v 1.5 1995/03/21 09:07:06 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static const char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: ar_subs.c,v 1.21 2002/10/16 19:20:02 millert Exp $";
+static const char rcsid[] = "$OpenBSD: ar_subs.c,v 1.22 2002/10/18 15:38:11 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -108,6 +108,16 @@ list(void)
 	 * step through the archive until the format says it is done
 	 */
 	while (next_head(arcn) == 0) {
+		if (arcn->type == PAX_GLL || arcn->type == PAX_GLF) {
+			/*
+			 * we need to read, to get the real filename
+			 */
+			off_t cnt;
+			if (!(*frmt->rd_data)(arcn, -1, &cnt));
+				(void)rd_skip(cnt + arcn->pad);
+			continue;
+		}
+
 		/*
 		 * check for pattern, and user specified options match.
 		 * When all patterns are matched we are done.
@@ -191,6 +201,14 @@ extract(void)
 	 * says it is done
 	 */
 	while (next_head(arcn) == 0) {
+		if (arcn->type == PAX_GLL || arcn->type == PAX_GLF) {
+			/*
+			 * we need to read, to get the real filename
+			 */
+			if (!(*frmt->rd_data)(arcn, -1, &cnt));
+				(void)rd_skip(cnt + arcn->pad);
+			continue;
+		}
 
 		/*
 		 * check for pattern, and user specified options match. When

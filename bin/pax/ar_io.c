@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_io.c,v 1.29 2002/10/16 19:20:02 millert Exp $	*/
+/*	$OpenBSD: ar_io.c,v 1.30 2002/10/18 15:38:11 millert Exp $	*/
 /*	$NetBSD: ar_io.c,v 1.5 1996/03/26 23:54:13 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static const char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: ar_io.c,v 1.29 2002/10/16 19:20:02 millert Exp $";
+static const char rcsid[] = "$OpenBSD: ar_io.c,v 1.30 2002/10/18 15:38:11 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -89,6 +89,7 @@ static int can_unlnk = 0;		/* do we unlink null archives?  */
 const char *arcname;			/* printable name of archive */
 const char *gzip_program;		/* name of gzip program */
 static pid_t zpid = -1;			/* pid of child process */
+int force_one_volume;			/* 1 if we ignore volume changes */
 
 static int get_phys(void);
 extern sigset_t s_mask;
@@ -1122,7 +1123,7 @@ ar_next(void)
 	if (sigprocmask(SIG_SETMASK, &o_mask, NULL) < 0)
 		syswarn(0, errno, "Unable to restore signal mask");
 
-	if (done || !wr_trail || strcmp(NM_TAR, argv0) == 0)
+	if (done || !wr_trail || force_one_volume || strcmp(NM_TAR, argv0) == 0)
 		return(-1);
 
 	tty_prnt("\nATTENTION! %s archive volume change required.\n", argv0);

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pax.1,v 1.33 2002/10/16 15:56:42 millert Exp $
+.\"	$OpenBSD: pax.1,v 1.34 2002/10/18 15:38:11 millert Exp $
 .\"	$NetBSD: pax.1,v 1.3 1995/03/21 09:07:37 cgd Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
@@ -833,6 +833,13 @@ Follow only command-line symbolic links while performing a physical file
 system traversal.
 .It Fl L
 Follow all symbolic links to perform a logical file system traversal.
+.It Fl O
+Force the archive to be one volume.
+If a volume ends prematurely,
+.Nm
+will not prompt for a new volume.
+This option can be useful for
+automated tasks where error recovery cannot be performed by a human.
 .It Fl P
 Do not follow symbolic links, perform a physical file system traversal.
 This is the default mode.
@@ -1166,6 +1173,7 @@ The options
 .Fl G ,
 .Fl H ,
 .Fl L ,
+.Fl O ,
 .Fl P ,
 .Fl T ,
 .Fl U ,

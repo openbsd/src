@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.23 2002/10/16 19:20:02 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.24 2002/10/18 15:38:11 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1996/03/26 23:54:16 mrg Exp $	*/
 
 /*-
@@ -51,6 +51,7 @@
  */
 extern const char *arcname;
 extern const char *gzip_program;
+extern int force_one_volume;
 int ar_open(const char *);
 void ar_close(void);
 void ar_drain(void);
@@ -279,6 +280,7 @@ u_int st_hash(char *, int, int);
 /*
  * tar.c
  */
+extern char *gnu_hack_string;
 int tar_endwr(void);
 off_t tar_endrd(void);
 int tar_trail(char *, int, int *);

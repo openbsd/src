@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.28 2002/10/16 19:20:02 millert Exp $	*/
+/*	$OpenBSD: tar.c,v 1.29 2002/10/18 15:38:11 millert Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static const char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: tar.c,v 1.28 2002/10/16 19:20:02 millert Exp $";
+static const char rcsid[] = "$OpenBSD: tar.c,v 1.29 2002/10/18 15:38:11 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -74,6 +74,7 @@ static int uqd_oct(u_quad_t, char *, int, int);
  */
 
 static int tar_nodir;			/* do not write dirs under old tar */
+char *gnu_hack_string;			/* GNU ././@LongLink hackery */
 
 /*
  * tar_endwr()
@@ -329,6 +330,7 @@ tar_id(char *blk, int size)
 		return(-1);
 	if (asc_ul(hd->chksum,sizeof(hd->chksum),OCT) != tar_chksm(blk,BLKMULT))
 		return(-1);
+	force_one_volume = 1;
 	return(0);
 }
 
@@ -395,7 +397,14 @@ tar_rd(ARCHD *arcn, char *buf)
 	 * copy out the name and values in the stat buffer
 	 */
 	hd = (HD_TAR *)buf;
-	arcn->nlen = strlcpy(arcn->name, hd->name, sizeof(arcn->name));
+	if (gnu_hack_string) {
+		arcn->nlen = strlcpy(arcn->name, gnu_hack_string,
+		    sizeof(arcn->name));
+		free(gnu_hack_string);
+		gnu_hack_string = NULL;
+	} else {
+		arcn->nlen = strlcpy(arcn->name, hd->name, sizeof(arcn->name));
+	}
 	arcn->sb.st_mode = (mode_t)(asc_ul(hd->mode,sizeof(hd->mode),OCT) &
 	    0xfff);
 	arcn->sb.st_uid = (uid_t)asc_ul(hd->uid, sizeof(hd->uid), OCT);
@@ -441,6 +450,21 @@ tar_rd(ARCHD *arcn, char *buf)
 		 * we set something for printing only.
 		 */
 		arcn->sb.st_mode |= S_IFREG;
+		break;
+	case LONGLINKTYPE:
+		arcn->type = PAX_GLL;
+		/* FALLTHROUGH */
+	case LONGNAMETYPE:
+		/*
+		 * GNU long link/file; we tag these here and let the
+		 * pax internals deal with it -- too ugly otherwise.
+		 */
+		if (hd->linkflag != LONGLINKTYPE)
+			arcn->type = PAX_GLF;
+		arcn->pad = TAR_PAD(arcn->sb.st_size);
+		arcn->skip = arcn->sb.st_size;
+		arcn->ln_name[0] = '\0';
+		arcn->ln_nlen = 0;
 		break;
 	case DIRTYPE:
 		/*
@@ -754,7 +778,14 @@ ustar_rd(ARCHD *arcn, char *buf)
 		*dest++ = '/';
 		cnt++;
 	}
-	arcn->nlen = cnt + strlcpy(dest, hd->name, sizeof(arcn->name) - cnt);
+	if (gnu_hack_string) {
+		arcn->nlen = strlcpy(dest, gnu_hack_string,
+		    sizeof(arcn->name) - cnt);
+		free(gnu_hack_string);
+		gnu_hack_string = NULL;
+	} else {
+		arcn->nlen = strlcpy(dest, hd->name, sizeof(arcn->name) - cnt);
+	}
 
 	/*
 	 * follow the spec to the letter. we should only have mode bits, strip
@@ -847,6 +878,19 @@ ustar_rd(ARCHD *arcn, char *buf)
 		 */
 		arcn->ln_nlen = strlcpy(arcn->ln_name, hd->linkname,
 			sizeof(arcn->ln_name));
+		break;
+	case LONGLINKTYPE:
+	case LONGNAMETYPE:
+		/*
+		 * GNU long link/file; we tag these here and let the
+		 * pax internals deal with it -- too ugly otherwise.
+		 */
+		arcn->type =
+		    hd->typeflag == LONGLINKTYPE ? PAX_GLL : PAX_GLF;
+		arcn->pad = TAR_PAD(arcn->sb.st_size);
+		arcn->skip = arcn->sb.st_size;
+		arcn->ln_name[0] = '\0';
+		arcn->ln_nlen = 0;
 		break;
 	case CONTTYPE:
 	case AREGTYPE:
