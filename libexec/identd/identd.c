@@ -1,5 +1,5 @@
 /*
-**	$Id: identd.c,v 1.1.1.1 1995/10/18 08:43:18 deraadt Exp $
+**	$Id: identd.c,v 1.2 1996/07/25 09:50:02 deraadt Exp $
 **
 ** identd.c                       A TCP/IP link identification protocol server
 **
@@ -11,7 +11,8 @@
 ** Please send bug fixes/bug reports to: Peter Eriksson <pen@lysator.liu.se>
 */
 
-#if defined(IRIX) || defined(SVR4) || defined(NeXT) || defined(__NetBSD__)
+#if defined(IRIX) || defined(SVR4) || defined(NeXT) || defined(__NetBSD__) || \
+	defined(__OpenBSD__)
 #  define SIGRETURN_TYPE void
 #  define SIGRETURN_TYPE_IS_VOID
 #else

@@ -1,7 +1,7 @@
 /*
-**	$Id: openbsd.c,v 1.2 1996/07/25 09:47:46 deraadt Exp $
+**	$Id: openbsd.c,v 1.3 1996/07/25 09:50:04 deraadt Exp $
 **
-** netbsd.c		Low level kernel access functions for NetBSD
+** openbsd.c		Low level kernel access functions for OpenBSD
 **
 ** This program is in the public domain and may be used freely by anyone
 ** who wants to. 
