@@ -431,6 +431,7 @@
 ./usr/bin/ssh-agent
 ./usr/bin/ssh-keygen
 ./usr/bin/ssh-keyscan
+./usr/bin/stat
 ./usr/bin/string2key
 ./usr/bin/strings
 ./usr/bin/su

@@ -586,6 +586,7 @@
 ./usr/share/man/cat1/ssh-keygen.0
 ./usr/share/man/cat1/ssh-keyscan.0
 ./usr/share/man/cat1/ssh.0
+./usr/share/man/cat1/stat.0
 ./usr/share/man/cat1/stop.0
 ./usr/share/man/cat1/strings.0
 ./usr/share/man/cat1/stty.0
