@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.9 2001/06/08 08:09:11 art Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.10 2001/07/01 22:43:43 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -825,6 +825,11 @@ void cpu_interrupt_to_db(cpu_no)
 {
 }
 
+void
+m88k_db_prom_cmd(void)
+{
+	doboot();
+}
 
 /************************/
 /* COMMAND TABLE / INIT */
@@ -848,6 +853,7 @@ struct db_command db_machine_cmds[] =
     {"translate",	m88k_db_translate,      0, 0},
     {"cmmucfg",		m88k_db_cmmucfg,        0, 0},
     {"where",		m88k_db_where,		0, 0},
+    {"prom",		m88k_db_prom_cmd,	0, 0},
     {(char  *) 0,}
 };
 
@@ -857,9 +863,7 @@ struct db_command db_machine_cmds[] =
 void
 kdb_init()
 {
-#ifdef DB_MACHINE_COMMANDS
 	db_machine_commands_install(db_machine_cmds);
-#endif
 	ddb_init();
 
 	db_printf("ddb enabled\n");
