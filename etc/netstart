@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.87 2003/08/27 11:49:36 henning Exp $
+#	$OpenBSD: netstart,v 1.88 2003/10/20 17:53:32 david Exp $
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -250,9 +250,9 @@ for hn in /etc/hostname.*; do
 	test "$if" = "*" && continue
 
 	case $if in
-	"gif"*|"gre"*)
-		# GIF and GRE interfaces need the routes to be setup before
-		# they are configured.
+	"carp"*|"gif"*|"gre"*)
+		# CARP, GIF and GRE interfaces need the routes to be setup
+		# before they are configured.
 		continue
 		;;
 	*)
@@ -316,7 +316,7 @@ EOF
 	;;
 esac
 
-# Configure all the gif and gre interfaces which we know about.
+# Configure all the carp, gif and gre interfaces which we know about.
 # They were delayed because they require the routes to be set.
 for hn in /etc/hostname.*; do
 	# Strip off /etc/hostname. prefix
@@ -324,7 +324,7 @@ for hn in /etc/hostname.*; do
 	test "$if" = "*" && continue
 
 	case $if in
-	"gif"*|"gre"*)
+	"carp"*|"gif"*|"gre"*)
 		ifstart $if
 		;;
 	*)
