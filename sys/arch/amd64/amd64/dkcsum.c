@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkcsum.c,v 1.4 2005/01/01 03:07:08 millert Exp $	*/
+/*	$OpenBSD: dkcsum.c,v 1.5 2005/04/01 23:34:38 krw Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -95,7 +95,7 @@ dkcsumattach(void)
 		error = (*bdsw->d_open)(dev, FREAD, S_IFCHR, curproc);
 		if (error) {
 			/* XXX What to do here? */
-			if (error != EIO)
+			if (error != ENODEV)
 				printf("dkcsum: open of %s failed (%d)\n",
 				    dv->dv_xname, error);
 			continue;

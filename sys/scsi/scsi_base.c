@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.63 2005/03/24 12:52:01 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.64 2005/04/01 23:34:39 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -720,20 +720,30 @@ scsi_interpret_sense(xs)
 	case SKEY_EQUAL:
 		break;
 	case SKEY_NOT_READY:
-		if ((sc_link->flags & SDEV_REMOVABLE) != 0)
-			sc_link->flags &= ~SDEV_MEDIA_LOADED;
 		if ((xs->flags & SCSI_IGNORE_NOT_READY) != 0)
-			return 0;
-		if (xs->retries && sense->add_sense_code == 0x04 &&
-		    sense->add_sense_code_qual == 0x01) {
-			xs->error = XS_BUSY;	/* ie. sense_retry */
-			return ERESTART;
-		}
-		if (xs->retries && !(sc_link->flags & SDEV_REMOVABLE)) {
-			delay(1000000);
-			return ERESTART;
-		}
+			return (0);
 		error = EIO;
+		if (xs->retries) {
+			switch (sense->add_sense_code) {
+			case 0x04:	/* LUN not ready */
+				switch (sense->add_sense_code_qual) {
+				case 0x01: /* Becoming Ready */
+				case 0x04: /* Format In Progress */
+				case 0x05: /* Rebuild In Progress */
+				case 0x06: /* Recalculation In Progress */
+				case 0x07: /* Operation In Progress */
+				case 0x08: /* Long Write In Progress */
+				case 0x09: /* Self-Test In Progress */
+					xs->error = XS_BUSY; /* wait & retry */
+					return (ERESTART);
+				}
+				break;
+			case 0x3a:	/* Medium not present */
+				sc_link->flags &= ~SDEV_MEDIA_LOADED;
+				error = ENODEV;
+				break;
+			}
+		}
 		break;
 	case SKEY_ILLEGAL_REQUEST:
 		if ((xs->flags & SCSI_IGNORE_ILLEGAL_REQUEST) != 0)
