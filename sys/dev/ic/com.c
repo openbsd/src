@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.65 2001/09/27 21:35:46 millert Exp $	*/
+/*	$OpenBSD: com.c,v 1.66 2001/09/27 22:29:51 art Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -1451,21 +1451,24 @@ comstart(tp)
 	}
 	SET(tp->t_state, TS_BUSY);
 
+	/* Enable transmit completion interrupts. */
 	if (!ISSET(sc->sc_ier, IER_ETXRDY)) {
 		SET(sc->sc_ier, IER_ETXRDY);
 		bus_space_write_1(iot, ioh, com_ier, sc->sc_ier);
 	}
+
 	if (ISSET(sc->sc_hwflags, COM_HW_FIFO)) {
 #ifdef COM_HAYESP
 		u_char buffer[1024];	/* XXX: largest fifo */
 #else
 		u_char buffer[64];	/* XXX: largest fifo */
 #endif
-		u_char *cp = buffer;
-		int n = q_to_b(&tp->t_outq, cp, sc->sc_fifolen);
-		do {
-			bus_space_write_1(iot, ioh, com_data, *cp++);
-		} while (--n);
+		int n = q_to_b(&tp->t_outq, buffer, sc->sc_fifolen);
+		int i;
+
+		for (i = 0; i < n; i++) {
+			bus_space_write_1(iot, ioh, com_data, buffer[i]);
+		}
 	} else
 		bus_space_write_1(iot, ioh, com_data, getc(&tp->t_outq));
 out:
