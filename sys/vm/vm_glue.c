@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.47 1995/08/13 09:04:47 mycroft Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.46 1995/05/05 03:35:39 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -229,7 +229,11 @@ vm_fork(p1, p2, isvfork)
 	/*
 	 * Allocate a wired-down (for now) pcb and kernel stack for the process
 	 */
+#ifdef pica
+	addr = kmem_alloc_upage(kernel_map, USPACE);
+#else
 	addr = kmem_alloc_pageable(kernel_map, USPACE);
+#endif
 	if (addr == 0)
 		panic("vm_fork: no more kernel virtual memory");
 	vm_map_pageable(kernel_map, addr, addr + USPACE, FALSE);
@@ -335,7 +339,7 @@ swapin(p)
 	cpu_swapin(p);
 	s = splstatclock();
 	if (p->p_stat == SRUN)
-		setrunqueue(p);
+	        setrunqueue(p);
 	p->p_flag |= P_INMEM;
 	splx(s);
 	p->p_swtime = 0;
@@ -396,6 +400,8 @@ loop:
 			       p->p_pid, p->p_comm, p->p_addr,
 			       ppri, cnt.v_free_count);
 #endif
+		vm_map_pageable(kernel_map, p->p_addr,
+		    p->p-addr + size, FALSE);
 		swapin(p);
 		goto loop;
 	}
