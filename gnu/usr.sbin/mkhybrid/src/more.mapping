@@ -231,6 +231,7 @@
 .tar     Raw   'S691' 'TARF' "SunTar - Unix Tape ARchive (application/x-tar)"
 .targa   Raw   'GKON' 'TPIC' "GraphicConverter - Truevision Image"
 .taz     Raw   'SITx' 'ZIVU' "StuffIt Expander - Compressed Tape ARchive (application/x-compress)"
+.tbxi    Ascii 'chrp' 'tbxi' "bootable description file"
 .tex     Ascii 'OTEX' 'TEXT' "OzTeX - TeX Document (application/x-tex)"
 .texi    Ascii 'OTEX' 'TEXT' "OzTeX - TeX Document"
 .texinfo Ascii 'OTEX' 'TEXT' "OzTeX - TeX Document (application/x-texinfo)"
