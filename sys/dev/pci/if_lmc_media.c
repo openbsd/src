@@ -1,5 +1,5 @@
-/* $OpenBSD: if_lmc_media.c,v 1.4 2000/02/06 17:57:56 chris Exp $ */
-/* $Id: if_lmc_media.c,v 1.4 2000/02/06 17:57:56 chris Exp $ */
+/* $OpenBSD: if_lmc_media.c,v 1.5 2001/05/14 17:29:11 chris Exp $ */
+/* $Id: if_lmc_media.c,v 1.5 2001/05/14 17:29:11 chris Exp $ */
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -894,6 +894,10 @@ static void
         sc->ictl.cardtype = LMC_CTL_CARDTYPE_LMC1200;
         mii16 = lmc_mii_readreg(sc, 0, 16);
 
+	mii16 &= ~LMC_MII16_T1_XOE;
+	lmc_mii_writereg (sc, 0, 16, mii16);
+	sc->lmc_miireg16 = mii16;
+
         /* reset 8370 */
         mii16 &= ~LMC_MII16_T1_RST;
         lmc_mii_writereg(sc, 0, 16, mii16 | LMC_MII16_T1_RST);
@@ -943,9 +947,10 @@ static void
 	{                lmc_t1_write(sc, 0x0E0+i, 0x0D);
 					/* SBCn - sys bus per-channel ctl    */
 	}
-        /*  XXX
-        mii16 |= LMC_MII16_T1_XOE;        lmc_mii_writereg(sc, 0, 16, mii16);
-        sc->lmc_miireg16 = mii16;        */
+
+	mii16 |= LMC_MII16_T1_XOE;
+	lmc_mii_writereg(sc, 0, 16, mii16);
+        sc->lmc_miireg16 = mii16;
 }
 
 static void   lmc_t1_default(lmc_softc_t * const sc)
