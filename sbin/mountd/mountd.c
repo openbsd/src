@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.32 2000/07/05 23:41:10 deraadt Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.33 2000/12/30 06:18:27 angelos Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -1678,14 +1678,10 @@ get_net(cp, net, maskflg)
 	struct in_addr inetaddr, inetaddr2;
 	char *name;
 
-	if ((np = getnetbyname(cp)))
-		inetaddr = inet_makeaddr(np->n_net, 0);
-	else if (isdigit(*cp)) {
-		if ((netaddr = inet_network(cp)) == -1)
-			return (1);
+	if ((netaddr = inet_network(cp)) != INADDR_NONE) {
 		inetaddr = inet_makeaddr(netaddr, 0);
 		/*
-		 * Due to arbritrary subnet masks, you don't know how many
+		 * Due to arbitrary subnet masks, you don't know how many
 		 * bits to shift the address to make it into a network,
 		 * however you do know how to make a network address into
 		 * a host with host == 0 and then compare them.
@@ -1700,8 +1696,12 @@ get_net(cp, net, maskflg)
 			}
 			endnetent();
 		}
-	} else
-		return (1);
+	} else {
+		if ((np = getnetbyname(cp)))
+			inetaddr = inet_makeaddr(np->n_net, 0);
+		else
+			return (1);
+	}
 	if (maskflg)
 		net->nt_mask = inetaddr.s_addr;
 	else {
