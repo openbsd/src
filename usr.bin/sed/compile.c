@@ -1,4 +1,4 @@
-/*	$OpenBSD: compile.c,v 1.11 2002/02/16 21:27:52 millert Exp $	*/
+/*	$OpenBSD: compile.c,v 1.12 2002/06/11 06:16:36 jsyn Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -39,7 +39,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)compile.c	8.2 (Berkeley) 4/28/95"; */
-static char *rcsid = "$OpenBSD: compile.c,v 1.11 2002/02/16 21:27:52 millert Exp $";
+static char *rcsid = "$OpenBSD: compile.c,v 1.12 2002/06/11 06:16:36 jsyn Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -270,7 +270,7 @@ nonsel:		/* Now parse the command */
 			else if ((cmd->u.fd = open(p, 
 			    O_WRONLY|O_APPEND|O_CREAT|O_TRUNC,
 			    DEFFILEMODE)) == -1)
-				err(FATAL, "%s: %s\n", p, strerror(errno));
+				err(FATAL, "%s: %s", p, strerror(errno));
 			break;
 		case RFILE:			/* r */
 			p++;
@@ -560,7 +560,7 @@ compile_flags(p, s)
 			if (!aflag && (s->wfd = open(wfile,
 			    O_WRONLY|O_APPEND|O_CREAT|O_TRUNC,
 			    DEFFILEMODE)) == -1)
-				err(FATAL, "%s: %s\n", wfile, strerror(errno));
+				err(FATAL, "%s: %s", wfile, strerror(errno));
 			return (p);
 		default:
 			err(COMPILE,

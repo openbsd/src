@@ -252,7 +252,7 @@ sigchld_handler(signo)
 		errx(1, "receiver exited abnormally");
 
 	if (WEXITSTATUS(cstatus) != 0)
-		errx(1, "receiver exited with status %d\n",
+		errx(1, "receiver exited with status %d",
 		    WEXITSTATUS(cstatus));
 
 	/*

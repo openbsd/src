@@ -1,4 +1,4 @@
-/*	$OpenBSD: msgtest.c,v 1.2 2002/02/17 19:42:27 millert Exp $	*/
+/*	$OpenBSD: msgtest.c,v 1.3 2002/06/11 06:16:36 jsyn Exp $	*/
 /*	$NetBSD: msgtest.c,v 1.6 2001/02/19 22:44:41 cgd Exp $	*/
 
 /*-
@@ -248,7 +248,7 @@ sigchld_handler(signo)
 		errx(1, "receiver exited abnormally");
 
 	if (WEXITSTATUS(cstatus) != 0)
-		errx(1, "receiver exited with status %d\n",
+		errx(1, "receiver exited with status %d",
 		    WEXITSTATUS(cstatus));
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue-process.c,v 1.1 2002/03/02 21:48:05 art Exp $	*/
+/*	$OpenBSD: kqueue-process.c,v 1.2 2002/06/11 06:16:36 jsyn Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2002 Public Domain
  */
@@ -86,7 +86,7 @@ do_process(void)
 		case NOTE_TRACKERR:
 			errx(1, "child tracking failed due to resource shortage");
 		default:
-			errx(1, "kevent returned weird event 0x%x pid %d\n",
+			errx(1, "kevent returned weird event 0x%x pid %d",
 			    ke.fflags, (pid_t)ke.ident);
 		}
 	}
