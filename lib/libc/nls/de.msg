@@ -6,7 +6,7 @@ $ ENOENT
 $ ESRCH
 3 Prozess nicht gefunden
 $ EINTR
-4 Interrupt innerhalb eines Systemaufrufs
+4 Unterbrochener Systemaufruf
 $ EIO
 5 Ein/Ausgabefehler
 $ ENXIO
@@ -14,13 +14,13 @@ $ ENXIO
 $ E2BIG
 7 Argumentliste ist zu lang
 $ ENOEXEC
-8 Die Datei hat kein bekanntes ausführbares Format
+8 Unbekanntes ausführbares Format
 $ EBADF
 9 Ungültiger Dateideskriptor
 $ ECHILD
 10 Kein Kindprozess
 $ EDEADLK
-11 Ein Deadlock wurde vermieden
+11 Ein "Deadlock" wurde vermieden
 $ ENOMEM
 12 Kann nicht genug Speicher belegen
 $ EACCES
@@ -28,9 +28,9 @@ $ EACCES
 $ EFAULT
 14 Ungültige Adresse
 $ ENOTBLK
-15 Es wird ein Blockgerät benötigt
+15 Blockgerät wird benötigt
 $ EBUSY
-16 Das Gerät ist belegt
+16 Gerät ist belegt
 $ EEXIST
 17 Datei existiert bereits
 $ EXDEV
@@ -48,7 +48,7 @@ $ ENFILE
 $ EMFILE
 24 Zu viele offene Dateien
 $ ENOTTY
-25 Ungültiger Ioctl für dieses Gerät
+25 Ungültiger ioctl für dieses Gerät
 $ ETXTBSY
 26 Ausführbare Datei wird benutzt
 $ EFBIG
@@ -70,7 +70,7 @@ $ ERANGE
 $ EAGAIN, EWOULDBLOCK
 35 Resource vorübergehend nicht verfügbar
 $ EINPROGRESS
-36 Operation wird jetzt fortgesetzt
+36 Operation wird jetzt fortgeführt
 $ EALREADY
 37 Operation wird bereits ausgeführt
 $ ENOTSOCK
@@ -120,9 +120,9 @@ $ ETOOMANYREFS
 $ ETIMEDOUT
 60 Verbindungsabbruch durch Zeitüberschreitung
 $ ECONNREFUSED
-61 Verbindung wurde abgelehnt
+61 Verbindung wurde verweigert
 $ ELOOP
-62 Zu viele symbolische Links (zirkulär?)
+62 Zu viele Ebenen von symbolischen Links
 $ ENAMETOOLONG
 63 Dateiname zu lang
 $ EHOSTDOWN
@@ -163,7 +163,7 @@ $ SIGHUP
 $ SIGINT
 2 Unterbrechung
 $ SIGQUIT
-3 Programmende
+3 Ende
 $ SIGILL
 4 Ungültiger Maschinenbefehl
 $ SIGTRAP
@@ -191,17 +191,17 @@ $ SIGTERM
 $ SIGURG
 16 Dringende Ein/Ausgabeanforderung
 $ SIGSTOP
-17 Gestoppt (signal)
+17 Angehalten (Signal)
 $ SIGTSTP
-18 Gestoppt
+18 Angehalten
 $ SIGCONT
 19 Fortgesetzt
 $ SIGCHLD
 20 Kindprozess beendet
 $ SIGTTIN
-21 Gestoppt (Eingabe)
+21 Angehalten (tty Eingabe)
 $ SIGTTOU
-22 Gestoppt (Ausgabe)
+22 Angehalten (tty Ausgabe)
 $ SIGIO
 23 Ein/Ausgabe ist möglich
 $ SIGXCPU
@@ -209,9 +209,9 @@ $ SIGXCPU
 $ SIGXFSZ
 25 Dateigröße hat das Limit erreicht
 $ SIGVTALRM
-26 Virtueller Wecker abgelaufen
+26 Virtueller Zähler abgelaufen
 $ SIGPROF
-27 Profil-Wecker abgelaufen
+27 Profil-Zähler abgelaufen
 $ SIGWINCH
 28 Fenstergröße hat sich geändert
 $ SIGINFO
