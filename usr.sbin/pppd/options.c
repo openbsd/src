@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.6 1996/12/23 13:22:45 mickey Exp $	*/
+/*	$OpenBSD: options.c,v 1.7 1997/01/02 10:50:20 mickey Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -20,7 +20,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: options.c,v 1.6 1996/12/23 13:22:45 mickey Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.7 1997/01/02 10:50:20 mickey Exp $";
 #endif
 
 #include <ctype.h>
@@ -1564,6 +1564,7 @@ setipaddr(arg)
 {
     struct hostent *hp;
     char *colon;
+    struct in_addr ina;
     u_int32_t local, remote;
     ipcp_options *wo = &ipcp_wantoptions[0];
   
@@ -1578,14 +1579,19 @@ setipaddr(arg)
      */
     if (colon != arg) {
 	*colon = '\0';
-	if ((local = inet_addr(arg)) == -1) {
+	if (inet_aton(arg, &ina) == 0) {
 	    if ((hp = gethostbyname(arg)) == NULL) {
                 option_error("unknown host: %s", arg);
 		return -1;
 	    } else {
 		local = *(u_int32_t *)hp->h_addr;
+		if (our_name[0] == 0) {
+		    strncpy(our_name, arg, MAXNAMELEN);
+		    our_name[MAXNAMELEN-1] = 0;
 		}
 	    }
+	} else
+	    local = ina.s_addr;
 	if (bad_ip_adrs(local)) {
             option_error("bad local IP address %s", ip_ntoa(local));
 	    return -1;
@@ -1599,7 +1605,7 @@ setipaddr(arg)
      * If colon last character, then no remote addr.
      */
     if (*++colon != '\0') {
-	if ((remote = inet_addr(colon)) == -1) {
+	if (inet_aton(colon, &ina) == 0) {
 	    if ((hp = gethostbyname(colon)) == NULL) {
                 option_error("unknown host: %s", colon);
 		return -1;
@@ -1610,7 +1616,8 @@ setipaddr(arg)
 		    remote_name[MAXNAMELEN-1] = 0;
 		}
 	    }
-	}
+	} else
+	    remote = ina.s_addr;
 	if (bad_ip_adrs(remote)) {
             option_error("bad remote IP address %s", ip_ntoa(remote));
 	    return -1;
@@ -1663,14 +1670,14 @@ static int
 setnetmask(argv)
     char **argv;
 {
-    u_int32_t mask;
+    struct in_addr ina;
 
-    if ((mask = inet_addr(*argv)) == -1 || (netmask & ~mask) != 0) {
+    if (inet_aton(*argv, &ina) == 0 || (netmask & ~ina.s_addr) != 0) {
         option_error("invalid netmask value '%s'", *argv);
 	return 0;
     }
 
-    netmask = mask;
+    netmask = ina.s_addr;
     return (1);
 }
 
@@ -2124,23 +2131,22 @@ static int
 setdnsaddr(argv)
     char **argv;
 {
-    u_int32_t dns;
+    struct in_addr ina;
     struct hostent *hp;
 
-    dns = inet_addr(*argv);
-    if (dns == -1) {
+    if (inet_aton(*argv, &ina) == 0) {
 	if ((hp = gethostbyname(*argv)) == NULL) {
 	    option_error("invalid address parameter '%s' for ms-dns option",
 			 *argv);
-    return 0;
+	    return 0;
 	}
-	dns = *(u_int32_t *)hp->h_addr;
+	ina.s_addr = *(u_int32_t *)hp->h_addr;
     }
 
     if (ipcp_allowoptions[0].dnsaddr[0] == 0) {
-	ipcp_allowoptions[0].dnsaddr[0] = dns;
+	ipcp_allowoptions[0].dnsaddr[0] = ina.s_addr;
     } else {
-	ipcp_allowoptions[0].dnsaddr[1] = dns;
+	ipcp_allowoptions[0].dnsaddr[1] = ina.s_addr;
     }
 
     return (1);
