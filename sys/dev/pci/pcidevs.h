@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.786 2004/10/29 11:35:59 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.787 2004/10/30 00:35:28 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -737,7 +737,17 @@
 #define	PCI_PRODUCT_AMCIRCUITS_LANAI	0x8043		/* Myrinet LANai */
 
 /* Atheros products */
-#define	PCI_PRODUCT_ATHEROS_AR5201	0x0007		/* AR5201 Wireless */
+#define	PCI_PRODUCT_ATHEROS_AR5201	0x0007		/* AR5201 */
+#define	PCI_PRODUCT_ATHEROS_AR5311	0x0011		/* AR5211 */
+#define	PCI_PRODUCT_ATHEROS_AR5211	0x0012		/* AR5211 */
+#define	PCI_PRODUCT_ATHEROS_AR5212	0x0013		/* AR5212 */
+#define	PCI_PRODUCT_ATHEROS_AR5201_AP	0x0207		/* AR5201 (Early) */
+#define	PCI_PRODUCT_ATHEROS_AR5201_DEFAULT	0x1107		/* AR5201 (no eeprom) */
+#define	PCI_PRODUCT_ATHEROS_AR5212_DEFAULT	0x1113		/* AR5212 (no eeprom) */
+#define	PCI_PRODUCT_ATHEROS_AR5211_DEFAULT	0x1112		/* AR5211 (no eeprom) */
+#define	PCI_PRODUCT_ATHEROS_AR5212_FPGA	0xf013		/* AR5212 (emulation board) */
+#define	PCI_PRODUCT_ATHEROS_AR5211_FPGA11B	0xf11b		/* AR5211Ref */
+#define	PCI_PRODUCT_ATHEROS_AR5211_LEGACY	0xff12		/* AR5211Ref */
 
 /* Atronics products */
 #define	PCI_PRODUCT_ATRONICS_IDE_2015PL	0x2015		/* IDE-2015PL */
