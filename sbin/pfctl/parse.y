@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.446 2004/03/06 21:49:25 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.447 2004/03/08 16:10:02 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -466,28 +466,37 @@ ruleset		: /* empty */
 		;
 
 option		: SET OPTIMIZATION STRING		{
-			if (check_rulestate(PFCTL_STATE_OPTION))
-				YYERROR;
-			if (pfctl_set_optimization(pf, $3) != 0) {
-				yyerror("unknown optimization %s", $3);
+			if (check_rulestate(PFCTL_STATE_OPTION)) {
+				free($3);
 				YYERROR;
 			}
+			if (pfctl_set_optimization(pf, $3) != 0) {
+				yyerror("unknown optimization %s", $3);
+				free($3);
+				YYERROR;
+			}
+			free ($3);
 		}
 		| SET TIMEOUT timeout_spec
 		| SET TIMEOUT '{' timeout_list '}'
 		| SET LIMIT limit_spec
 		| SET LIMIT '{' limit_list '}'
 		| SET LOGINTERFACE STRING		{
-			if (check_rulestate(PFCTL_STATE_OPTION))
+			if (check_rulestate(PFCTL_STATE_OPTION)) {
+				free($3);
 				YYERROR;
+			}
 			if ((ifa_exists($3, 0) == NULL) && strcmp($3, "none")) {
 				yyerror("interface %s doesn't exist", $3);
+				free($3);
 				YYERROR;
 			}
 			if (pfctl_set_logif(pf, $3) != 0) {
 				yyerror("error setting loginterface %s", $3);
+				free($3);
 				YYERROR;
 			}
+			free($3);
 		}
 		| SET HOSTID number {
 			if ($3 == 0) {
@@ -522,12 +531,16 @@ option		: SET OPTIMIZATION STRING		{
 		| SET FINGERPRINTS STRING {
 			if (pf->opts & PF_OPT_VERBOSE)
 				printf("fingerprints %s\n", $3);
-			if (check_rulestate(PFCTL_STATE_OPTION))
-				YYERROR;
-			if (pfctl_file_fingerprints(pf->dev, pf->opts, $3)) {
-				yyerror("error loading fingerprints %s", $3);
+			if (check_rulestate(PFCTL_STATE_OPTION)) {
+				free($3);
 				YYERROR;
 			}
+			if (pfctl_file_fingerprints(pf->dev, pf->opts, $3)) {
+				yyerror("error loading fingerprints %s", $3);
+				free($3);
+				YYERROR;
+			}
+			free($3);
 		}
 		| SET STATEPOLICY statelock {
 			if (pf->opts & PF_OPT_VERBOSE)
@@ -546,12 +559,16 @@ option		: SET OPTIMIZATION STRING		{
 			default_statelock = $3;
 		}
 		| SET DEBUG STRING {
-			if (check_rulestate(PFCTL_STATE_OPTION))
-				YYERROR;
-			if (pfctl_set_debug(pf, $3) != 0) {
-				yyerror("error setting debuglevel %s", $3);
+			if (check_rulestate(PFCTL_STATE_OPTION)) {
+				free($3);
 				YYERROR;
 			}
+			if (pfctl_set_debug(pf, $3) != 0) {
+				yyerror("error setting debuglevel %s", $3);
+				free($3);
+				YYERROR;
+			}
+			free($3);
 		}
 		;
 
@@ -569,14 +586,18 @@ varset		: STRING '=' string		{
 				printf("%s = \"%s\"\n", $1, $3);
 			if (symset($1, $3, 0) == -1)
 				err(1, "cannot store variable %s", $1);
+			free($1);
+			free($3);
 		}
 		;
 
 anchorrule	: ANCHOR string	dir interface af proto fromto filter_opts {
 			struct pf_rule	r;
 
-			if (check_rulestate(PFCTL_STATE_FILTER))
+			if (check_rulestate(PFCTL_STATE_FILTER)) {
+				free($2);
 				YYERROR;
+			}
 
 			PREPARE_ANCHOR_RULE(r, $2);
 			r.direction = $3;
@@ -601,10 +622,13 @@ anchorrule	: ANCHOR string	dir interface af proto fromto filter_opts {
 		| NATANCHOR string interface af proto fromto {
 			struct pf_rule	r;
 
-			if (check_rulestate(PFCTL_STATE_NAT))
+			if (check_rulestate(PFCTL_STATE_NAT)) {
+				free($2);
 				YYERROR;
+			}
 
 			PREPARE_ANCHOR_RULE(r, $2);
+			free($2);
 			r.action = PF_NAT;
 			r.af = $4;
 
@@ -618,10 +642,13 @@ anchorrule	: ANCHOR string	dir interface af proto fromto filter_opts {
 		| RDRANCHOR string interface af proto fromto {
 			struct pf_rule	r;
 
-			if (check_rulestate(PFCTL_STATE_NAT))
+			if (check_rulestate(PFCTL_STATE_NAT)) {
+				free($2);
 				YYERROR;
+			}
 
 			PREPARE_ANCHOR_RULE(r, $2);
+			free($2);
 			r.action = PF_RDR;
 			r.af = $4;
 
@@ -656,10 +683,13 @@ anchorrule	: ANCHOR string	dir interface af proto fromto filter_opts {
 		| BINATANCHOR string interface af proto fromto {
 			struct pf_rule	r;
 
-			if (check_rulestate(PFCTL_STATE_NAT))
+			if (check_rulestate(PFCTL_STATE_NAT)) {
+				free($2);
 				YYERROR;
+			}
 
 			PREPARE_ANCHOR_RULE(r, $2);
+			free($2);
 			r.action = PF_BINAT;
 			r.af = $4;
 			if ($5 != NULL) {
@@ -691,18 +721,21 @@ loadrule	: LOAD ANCHOR string FROM string	{
 			struct loadanchors	*loadanchor;
 
 			t = strsep(&$3, ":");
-			if (*t == '\0' || *$3 == '\0') {
+			if (*t == '\0' || $3 == NULL || *$3 == '\0') {
 				yyerror("anchor '%s' invalid\n", $3);
+				free(t);
 				YYERROR;
 			}
 			if (strlen(t) >= PF_ANCHOR_NAME_SIZE) {
 				yyerror("anchorname %s too long, max %u\n",
 				    t, PF_ANCHOR_NAME_SIZE - 1);
+				free(t);
 				YYERROR;
 			}
 			if (strlen($3) >= PF_RULESET_NAME_SIZE) {
 				yyerror("rulesetname %s too long, max %u\n",
 				    $3, PF_RULESET_NAME_SIZE - 1);
+				free(t);
 				YYERROR;
 			}
 
@@ -822,8 +855,11 @@ scrub_opt	: NODF	{
 			scrub_opts.fragcache = $1;
 		}
 		| REASSEMBLE STRING {
-			if (strcasecmp($2, "tcp") != 0)
+			if (strcasecmp($2, "tcp") != 0) {
+				free($2);
 				YYERROR;
+			}
+			free($2);
 			if (scrub_opts.reassemble_tcp) {
 				yyerror("reassemble tcp cannot be respecified");
 				YYERROR;
@@ -944,11 +980,15 @@ tabledef	: TABLE '<' STRING '>' table_opts {
 			if (strlen($3) >= PF_TABLE_NAME_SIZE) {
 				yyerror("table name too long, max %d chars",
 				    PF_TABLE_NAME_SIZE - 1);
+				free($3);
 				YYERROR;
 			}
 			if (pf->loadopt & PFCTL_FLAG_TABLE)
-				if (process_tabledef($3, &$5))
+				if (process_tabledef($3, &$5)) {
+					free($3);
 					YYERROR;
+				}
+			free($3);
 			for (ti = SIMPLEQ_FIRST(&$5.init_nodes);
 			    ti != SIMPLEQ_END(&$5.init_nodes); ti = nti) {
 				if (ti->file)
@@ -986,8 +1026,11 @@ table_opt	: STRING		{
 				table_opts.flags |= PFR_TFLAG_CONST;
 			else if (!strcmp($1, "persist"))
 				table_opts.flags |= PFR_TFLAG_PERSIST;
-			else
+			else {
+				free($1);
 				YYERROR;
+			}
+			free($1);
 		}
 		| '{' '}'		{ table_opts.init_addr = 1; }
 		| '{' host_list '}'	{
@@ -1061,8 +1104,10 @@ altqif		: ALTQ interface queue_opts QUEUE qassign {
 queuespec	: QUEUE STRING interface queue_opts qassign {
 			struct pf_altq	a;
 
-			if (check_rulestate(PFCTL_STATE_QUEUE))
+			if (check_rulestate(PFCTL_STATE_QUEUE)) {
+				free($2);
 				YYERROR;
+			}
 
 			memset(&a, 0, sizeof(a));
 
@@ -1070,8 +1115,10 @@ queuespec	: QUEUE STRING interface queue_opts qassign {
 			    sizeof(a.qname)) {
 				yyerror("queue name too long (max "
 				    "%d chars)", PF_QNAME_SIZE-1);
+				free($2);
 				YYERROR;
 			}
+			free($2);
 			if ($4.tbrsize) {
 				yyerror("cannot specify tbrsize for queue");
 				YYERROR;
@@ -1188,15 +1235,18 @@ bandwidth	: STRING {
 					if (bps < 0 || bps > 100) {
 						yyerror("bandwidth spec "
 						    "out of range");
+						free($1);
 						YYERROR;
 					}
 					$$.bw_percent = bps;
 					bps = 0;
 				} else {
 					yyerror("unknown unit %s", cp);
+					free($1);
 					YYERROR;
 				}
 			}
+			free($1);
 			$$.bw_absolute = (u_int32_t)bps;
 		}
 		;
@@ -1245,8 +1295,10 @@ cbqflags_item	: STRING	{
 				$$ = CBQCLF_RIO;
 			else {
 				yyerror("unknown cbq flag \"%s\"", $1);
+				free($1);
 				YYERROR;
 			}
+			free($1);
 		}
 		;
 
@@ -1265,8 +1317,10 @@ priqflags_item	: STRING	{
 				$$ = PRCF_RIO;
 			else {
 				yyerror("unknown priq flag \"%s\"", $1);
+				free($1);
 				YYERROR;
 			}
+			free($1);
 		}
 		;
 
@@ -1348,8 +1402,10 @@ hfscopts_item	: LINKSHARE bandwidth				{
 				hfsc_opts.flags |= HFCF_RIO;
 			else {
 				yyerror("unknown hfsc flag \"%s\"", $1);
+				free($1);
 				YYERROR;
 			}
+			free($1);
 		}
 		;
 
@@ -1372,11 +1428,13 @@ qassign_item	: STRING			{
 				err(1, "qassign_item: calloc");
 			if (strlcpy($$->queue, $1, sizeof($$->queue)) >=
 			    sizeof($$->queue)) {
-				free($$);
 				yyerror("queue name '%s' too long (max "
 				    "%d chars)", $1, sizeof($$->queue)-1);
+				free($1);
+				free($$);
 				YYERROR;
 			}
+			free($1);
 			$$->next = NULL;
 			$$->tail = $$;
 		}
@@ -1771,22 +1829,32 @@ blockspec	: /* empty */		{
 		}
 		| RETURNICMP '(' STRING ')'	{
 			$$.b2 = PFRULE_RETURNICMP;
-			if (!($$.w = parseicmpspec($3, AF_INET)))
+			if (!($$.w = parseicmpspec($3, AF_INET))) {
+				free($3);
 				YYERROR;
+			}
+			free($3);
 			$$.w2 = returnicmp6default;
 		}
 		| RETURNICMP6 '(' STRING ')'	{
 			$$.b2 = PFRULE_RETURNICMP;
 			$$.w = returnicmpdefault;
-			if (!($$.w2 = parseicmpspec($3, AF_INET6)))
+			if (!($$.w2 = parseicmpspec($3, AF_INET6))) {
+				free($3);
 				YYERROR;
+			}
+			free($3);
 		}
 		| RETURNICMP '(' STRING comma STRING ')' {
 			$$.b2 = PFRULE_RETURNICMP;
-			if (!($$.w = parseicmpspec($3, AF_INET)))
+			if (!($$.w = parseicmpspec($3, AF_INET)) ||
+			    !($$.w2 = parseicmpspec($5, AF_INET6))) {
+				free($3);
+				free($5);
 				YYERROR;
-			if (!($$.w2 = parseicmpspec($5, AF_INET6)))
-				YYERROR;
+			}
+			free($3);
+			free($5);
 		}
 		| RETURN {
 			$$.b2 = PFRULE_RETURN;
@@ -1832,6 +1900,7 @@ if_item		: STRING			{
 
 			if ((n = ifa_exists($1, 1)) == NULL) {
 				yyerror("unknown interface %s", $1);
+				free($1);
 				YYERROR;
 			}
 			$$ = calloc(1, sizeof(struct node_if));
@@ -1839,10 +1908,12 @@ if_item		: STRING			{
 				err(1, "if_item: calloc");
 			if (strlcpy($$->ifname, $1, sizeof($$->ifname)) >=
 			    sizeof($$->ifname)) {
+				free($1);
 				free($$);
 				yyerror("interface name too long");
 				YYERROR;
 			}
+			free($1);
 			$$->ifa_flags = n->ifa_flags;
 			$$->not = 0;
 			$$->next = NULL;
@@ -1875,6 +1946,7 @@ proto_item	: STRING			{
 			if (atoul($1, &ulval) == 0) {
 				if (ulval > 255) {
 					yyerror("protocol outside range");
+					free($1);
 					YYERROR;
 				}
 				pr = (u_int8_t)ulval;
@@ -1884,10 +1956,12 @@ proto_item	: STRING			{
 				p = getprotobyname($1);
 				if (p == NULL) {
 					yyerror("unknown protocol %s", $1);
+					free($1);
 					YYERROR;
 				}
 				pr = p->p_proto;
 			}
+			free($1);
 			if (pr == 0) {
 				yyerror("proto 0 cannot be used");
 				YYERROR;
@@ -2008,9 +2082,11 @@ xhost		: not host			{
 host		: STRING			{
 			if (($$ = host($1)) == NULL)	{
 				/* error. "any" is handled elsewhere */
+				free($1);
 				yyerror("could not parse host specification");
 				YYERROR;
 			}
+			free($1);
 
 		}
 		| STRING '/' number		{
@@ -2018,6 +2094,7 @@ host		: STRING			{
 
 			if (asprintf(&buf, "%s/%u", $1, $3) == -1)
 				err(1, "host: asprintf");
+			free($1);
 			if (($$ = host(buf)) == NULL)	{
 				/* error. "any" is handled elsewhere */
 				free(buf);
@@ -2036,7 +2113,8 @@ host		: STRING			{
 		}
 		| '<' STRING '>'	{
 			if (strlen($2) >= PF_TABLE_NAME_SIZE) {
-				yyerror("table name '%s' too long");
+				yyerror("table name '%s' too long", $2);
+				free($2);
 				YYERROR;
 			}
 			$$ = calloc(1, sizeof(struct node_host));
@@ -2047,6 +2125,7 @@ host		: STRING			{
 			    sizeof($$->addr.v.tblname)) >=
 			    sizeof($$->addr.v.tblname))
 				errx(1, "host: strlcpy");
+			free($2);
 			$$->next = NULL;
 			$$->tail = $$;
 		}
@@ -2057,16 +2136,19 @@ number		: STRING			{
 
 			if (atoul($1, &ulval) == -1) {
 				yyerror("%s is not a number", $1);
+				free($1);
 				YYERROR;
 			} else
 				$$ = ulval;
+			free($1);
 		}
 		;
 
 dynaddr		: '(' STRING ')'		{
 			int	 flags = 0;
-			char	*p;
+			char	*p, *op;
 
+			op = $2;
 			while ((p = strrchr($2, ':')) != NULL) {
 				if (!strcmp(p+1, "network"))
 					flags |= PFI_AFLAG_NETWORK;
@@ -2079,17 +2161,20 @@ dynaddr		: '(' STRING ')'		{
 				else {
 					yyerror("interface %s has bad modifier",
 					    $2);
+					free(op);
 					YYERROR;
 				}
 				*p = '\0';
 			}
 			if (flags & (flags - 1) & PFI_AFLAG_MODEMASK) {
+				free(op);
 				yyerror("illegal combination of "
 				    "interface modifiers");
 				YYERROR;
 			}
 			if (ifa_exists($2, 1) == NULL && strcmp($2, "self")) {
 				yyerror("interface %s does not exist", $2);
+				free(op);
 				YYERROR;
 			}
 			$$ = calloc(1, sizeof(struct node_host));
@@ -2102,10 +2187,12 @@ dynaddr		: '(' STRING ')'		{
 			if (strlcpy($$->addr.v.ifname, $2,
 			    sizeof($$->addr.v.ifname)) >=
 			    sizeof($$->addr.v.ifname)) {
+				free(op);
 				free($$);
 				yyerror("interface name too long");
 				YYERROR;
 			}
+			free(op);
 			$$->next = NULL;
 			$$->tail = $$;
 		}
@@ -2176,6 +2263,7 @@ port		: STRING			{
 			if (p == NULL) {
 				if (atoul($1, &ulval) == 0) {
 					if (ulval > 65535) {
+						free($1);
 						yyerror("illegal port value %d",
 						    ulval);
 						YYERROR;
@@ -2187,6 +2275,7 @@ port		: STRING			{
 						s = getservbyname($1, "udp");
 					if (s == NULL) {
 						yyerror("unknown port %s", $1);
+						free($1);
 						YYERROR;
 					}
 					$$.a = s->s_port;
@@ -2198,12 +2287,15 @@ port		: STRING			{
 
 				*p++ = 0;
 				if ((port[0] = getservice($1)) == -1 ||
-				    (port[1] = getservice(p)) == -1)
+				    (port[1] = getservice(p)) == -1) {
+					free($1);
 					YYERROR;
+				}
 				$$.a = port[0];
 				$$.b = port[1];
 				$$.t = PF_OP_RRG;
 			}
+			free($1);
 		}
 		;
 
@@ -2272,17 +2364,20 @@ uid		: STRING			{
 
 					if ((pw = getpwnam($1)) == NULL) {
 						yyerror("unknown user %s", $1);
+						free($1);
 						YYERROR;
 					}
 					$$ = pw->pw_uid;
 				}
 			} else {
 				if (ulval >= UID_MAX) {
+					free($1);
 					yyerror("illegal uid value %lu", ulval);
 					YYERROR;
 				}
 				$$ = ulval;
 			}
+			free($1);
 		}
 		;
 
@@ -2351,6 +2446,7 @@ gid		: STRING			{
 
 					if ((grp = getgrnam($1)) == NULL) {
 						yyerror("unknown group %s", $1);
+						free($1);
 						YYERROR;
 					}
 					$$ = grp->gr_gid;
@@ -2358,10 +2454,12 @@ gid		: STRING			{
 			} else {
 				if (ulval >= GID_MAX) {
 					yyerror("illegal gid value %lu", ulval);
+					free($1);
 					YYERROR;
 				}
 				$$ = ulval;
 			}
+			free($1);
 		}
 		;
 
@@ -2370,8 +2468,10 @@ flag		: STRING			{
 
 			if ((f = parse_flags($1)) < 0) {
 				yyerror("bad flags %s", $1);
+				free($1);
 				YYERROR;
 			}
+			free($1);
 			$$.b1 = f;
 		}
 		;
@@ -2418,6 +2518,7 @@ icmp_item	: icmptype		{
 
 			if (atoul($3, &ulval) == 0) {
 				if (ulval > 255) {
+					free($3);
 					yyerror("illegal icmp-code %d", ulval);
 					YYERROR;
 				}
@@ -2425,10 +2526,12 @@ icmp_item	: icmptype		{
 				if ((p = geticmpcodebyname($1-1, $3,
 				    AF_INET)) == NULL) {
 					yyerror("unknown icmp-code %s", $3);
+					free($3);
 					YYERROR;
 				}
 				ulval = p->code;
 			}
+			free($3);
 			$$ = calloc(1, sizeof(struct node_icmp));
 			if ($$ == NULL)
 				err(1, "icmp_item: calloc");
@@ -2458,16 +2561,19 @@ icmp6_item	: icmp6type		{
 				if (ulval > 255) {
 					yyerror("illegal icmp6-code %ld",
 					    ulval);
+					free($3);
 					YYERROR;
 				}
 			} else {
 				if ((p = geticmpcodebyname($1-1, $3,
 				    AF_INET6)) == NULL) {
 					yyerror("unknown icmp6-code %s", $3);
+					free($3);
 					YYERROR;
 				}
 				ulval = p->code;
 			}
+			free($3);
 			$$ = calloc(1, sizeof(struct node_icmp));
 			if ($$ == NULL)
 				err(1, "icmp_item: calloc");
@@ -2486,6 +2592,7 @@ icmptype	: STRING			{
 			if (atoul($1, &ulval) == 0) {
 				if (ulval > 255) {
 					yyerror("illegal icmp-type %d", ulval);
+					free($1);
 					YYERROR;
 				}
 				$$ = ulval + 1;
@@ -2493,10 +2600,12 @@ icmptype	: STRING			{
 				if ((p = geticmptypebyname($1, AF_INET)) ==
 				    NULL) {
 					yyerror("unknown icmp-type %s", $1);
+					free($1);
 					YYERROR;
 				}
 				$$ = p->type + 1;
 			}
+			free($1);
 		}
 		;
 
@@ -2507,6 +2616,7 @@ icmp6type	: STRING			{
 			if (atoul($1, &ulval) == 0) {
 				if (ulval > 255) {
 					yyerror("illegal icmp6-type %d", ulval);
+					free($1);
 					YYERROR;
 				}
 				$$ = ulval + 1;
@@ -2514,10 +2624,12 @@ icmp6type	: STRING			{
 				if ((p = geticmptypebyname($1, AF_INET6)) ==
 				    NULL) {
 					yyerror("unknown icmp6-type %s", $1);
+					free($1);
 					YYERROR;
 				}
 				$$ = p->type + 1;
 			}
+			free($1);
 		}
 		;
 
@@ -2534,8 +2646,10 @@ tos		: TOS STRING			{
 				$$ = strtoul($2, NULL, 10);
 			if (!$$ || $$ > 255) {
 				yyerror("illegal tos value %s", $2);
+				free($2);
 				YYERROR;
 			}
+			free($2);
 		}
 		;
 
@@ -2642,12 +2756,15 @@ state_opt_item	: MAXIMUM number		{
 				;	/* nothing */
 			if (!pf_timeouts[i].name) {
 				yyerror("illegal timeout name %s", $1);
+				free($1);
 				YYERROR;
 			}
 			if (strchr(pf_timeouts[i].name, '.') == NULL) {
 				yyerror("illegal state timeout %s", $1);
+				free($1);
 				YYERROR;
 			}
+			free($1);
 			$$ = calloc(1, sizeof(struct node_state_opt));
 			if ($$ == NULL)
 				err(1, "state_opt_item: calloc");
@@ -2660,23 +2777,19 @@ state_opt_item	: MAXIMUM number		{
 		;
 
 label		: LABEL STRING			{
-			if (($$ = strdup($2)) == NULL)
-				err(1, "rule label strdup() failed");
+			$$ = $2;
 		}
 		;
 
 qname		: QUEUE STRING				{
-			if (($$.qname = strdup($2)) == NULL)
-				err(1, "qname strdup() failed");
+			$$.qname = $2;
 		}
 		| QUEUE '(' STRING ')'			{
-			if (($$.qname = strdup($3)) == NULL)
-				err(1, "qname strdup() failed");
+			$$.qname = $3;
 		}
 		| QUEUE '(' STRING comma STRING ')'	{
-			if (($$.qname = strdup($3)) == NULL ||
-			    ($$.pqname = strdup($5)) == NULL)
-				err(1, "qname strdup() failed");
+			$$.qname = $3;
+			$$.pqname = $5;
 		}
 		;
 
@@ -2688,24 +2801,31 @@ rport		: STRING			{
 			char	*p = strchr($1, ':');
 
 			if (p == NULL) {
-				if (($$.a = getservice($1)) == -1)
+				if (($$.a = getservice($1)) == -1) {
+					free($1);
 					YYERROR;
+				}
 				$$.b = $$.t = 0;
 			} else if (!strcmp(p+1, "*")) {
 				*p = 0;
-				if (($$.a = getservice($1)) == -1)
+				if (($$.a = getservice($1)) == -1) {
+					free($1);
 					YYERROR;
+				}
 				$$.b = 0;
 				$$.t = 1;
 			} else {
 				*p++ = 0;
 				if (($$.a = getservice($1)) == -1 ||
-				    ($$.b = getservice(p)) == -1)
+				    ($$.b = getservice(p)) == -1) {
+					free($1);
 					YYERROR;
+				}
 				if ($$.a == $$.b)
 					$$.b = 0;
 				$$.t = 0;
 			}
+			free($1);
 		}
 		;
 
@@ -2752,6 +2872,7 @@ hashkey		: /* empty */
 		{
 			if (!strncmp($1, "0x", 2)) {
 				if (strlen($1) != 34) {
+					free($1);
 					yyerror("hex key must be 128 bits "
 						"(32 hex digits) long");
 					YYERROR;
@@ -2764,6 +2885,7 @@ hashkey		: /* empty */
 				    &$$->key32[0], &$$->key32[1],
 				    &$$->key32[2], &$$->key32[3]) != 4) {
 					free($$);
+					free($1);
 					yyerror("invalid hex key");
 					YYERROR;
 				}
@@ -2782,6 +2904,7 @@ hashkey		: /* empty */
 				HTONL($$->key32[2]);
 				HTONL($$->key32[3]);
 			}
+			free($1);
 		}
 		;
 
@@ -3184,11 +3307,12 @@ route_host	: STRING			{
 			$$ = calloc(1, sizeof(struct node_host));
 			if ($$ == NULL)
 				err(1, "route_host: calloc");
-			if (($$->ifname = strdup($1)) == NULL)
-				err(1, "routeto: strdup");
+			$$->ifname = $1;
 			if (ifa_exists($$->ifname, 0) == NULL) {
 				yyerror("routeto: unknown interface %s",
 				    $$->ifname);
+				free($1);
+				free($$);
 				YYERROR;
 			}
 			set_ipmask($$, 128);
@@ -3197,8 +3321,7 @@ route_host	: STRING			{
 		}
 		| '(' STRING host ')'		{
 			$$ = $3;
-			if (($$->ifname = strdup($2)) == NULL)
-				err(1, "routeto: strdup");
+			$$->ifname = $2;
 			if (ifa_exists($$->ifname, 0) == NULL) {
 				yyerror("routeto: unknown interface %s",
 				    $$->ifname);
@@ -3261,13 +3384,16 @@ route		: /* empty */			{
 
 timeout_spec	: STRING number
 		{
-			if (check_rulestate(PFCTL_STATE_OPTION))
-				YYERROR;
-			if (pfctl_set_timeout(pf, $1, $2, 0) != 0) {
-				yyerror("unknown timeout %s", $1);
+			if (check_rulestate(PFCTL_STATE_OPTION)) {
+				free($1);
 				YYERROR;
 			}
-
+			if (pfctl_set_timeout(pf, $1, $2, 0) != 0) {
+				yyerror("unknown timeout %s", $1);
+				free($1);
+				YYERROR;
+			}
+			free($1);
 		}
 		;
 
@@ -3277,12 +3403,16 @@ timeout_list	: timeout_list comma timeout_spec
 
 limit_spec	: STRING number
 		{
-			if (check_rulestate(PFCTL_STATE_OPTION))
-				YYERROR;
-			if (pfctl_set_limit(pf, $1, $2) != 0) {
-				yyerror("unable to set limit %s %u", $1, $2);
+			if (check_rulestate(PFCTL_STATE_OPTION)) {
+				free($1);
 				YYERROR;
 			}
+			if (pfctl_set_limit(pf, $1, $2) != 0) {
+				yyerror("unable to set limit %s %u", $1, $2);
+				free($1);
+				YYERROR;
+			}
+			free($1);
 		}
 		;
 
@@ -3298,8 +3428,11 @@ yesno		: NO			{ $$ = 0; }
 		| STRING		{
 			if (!strcmp($1, "yes"))
 				$$ = 1;
-			else
+			else {
+				free($1);
 				YYERROR;
+			}
+			free($1);
 		}
 		;
 
