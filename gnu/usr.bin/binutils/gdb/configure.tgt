@@ -145,6 +145,7 @@ m88*-harris-cxux*)	gdb_target=cxux ;;
 m88*-motorola-sysv4*)	gdb_target=delta88v4 ;;
 m88*-*-mach3*)		gdb_target=mach3 ;;
 m88*-motorola-*)	gdb_target=delta88 ;;
+m88*-*-openbsd*)	gdb_target=obsd ;;
 m88*-*-*)		gdb_target=m88k ;;
 
 mips64*-big-*)		gdb_target=bigmips64 ;;

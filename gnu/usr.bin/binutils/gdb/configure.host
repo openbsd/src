@@ -104,6 +104,7 @@ m68*-sun-*)		gdb_host=sun3os4 ;;
 m88*-harris-cxux*)	gdb_host=cxux ;;
 m88*-motorola-sysv4*)	gdb_host=delta88v4 ;;
 m88*-motorola-sysv*)	gdb_host=delta88 ;;
+m88*-*-openbsd*)	gdb_host=obsd ;;
 m88*-*-mach3*)		gdb_host=mach3 ;;
 m88*-*-*)		gdb_host=m88k ;;
 

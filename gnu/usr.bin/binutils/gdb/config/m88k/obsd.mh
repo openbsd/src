@@ -1,0 +1,6 @@
+# Host: Motorola m88k running OpenBSD
+XDEPFILES= ser-tcp.o
+XM_FILE= xm-obsd.h
+NAT_FILE= nm-obsd.h
+NAT_CLIBS= -lkvm
+NATDEPFILES= infptrace.o inftarg.o fork-child.o corelow.o kcore-nbsd.o m88knbsd-nat.o
