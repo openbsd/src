@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootxx.c,v 1.5 2002/03/14 03:15:56 millert Exp $ */
+/*	$OpenBSD: bootxx.c,v 1.6 2002/04/16 15:37:04 miod Exp $ */
 /*	$NetBSD: bootxx.c,v 1.5 1995/10/13 21:44:57 gwr Exp $ */
 
 /*
@@ -52,7 +52,7 @@
 /*
  * Boot device is derived from ROM provided information.
  */
-#define LOADADDR	0x3F0000 /* where to load level 2 bootstrap */
+#define LOADADDR	0x6F0000 /* where to load level 2 bootstrap */
 				/* (l2 must relocate itself) */
 
 /* This determines the largest boot program we can load. */

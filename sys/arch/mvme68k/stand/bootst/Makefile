@@ -1,7 +1,7 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$OpenBSD: Makefile,v 1.9 1997/10/20 00:33:43 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.10 2002/04/16 15:37:04 miod Exp $
 
-RELOC=0x3F0000 
+RELOC=0x6F0000 
 SIZE?=	size
 
 S=	${.CURDIR}/../../../..
