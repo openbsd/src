@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.66 2004/01/13 15:13:14 todd Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.67 2004/02/05 22:22:15 todd Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -816,22 +816,6 @@ esac
 done
 }
 _recurse "$@"
-if [ "$os" = "SunOS" ]; then
-	eo=transform
-	transform() {
-		case $mode in
-		600) mask=077;;
-		640) mask=027;;
-		660) mask=007;;
-		644) mask=022;;
-		666) mask=0;;
-		440) mask=227;;
-		esac
-		echo `echo "$@"|sed \
-		    's/mknod -m \([0-9]*\) /umask '$mask';mknod /;s/-m [0-9]* //g;\
-		    s/operator/5/g;s/root.kmem/root.2/g;s/root\./root:/g'`
-	}
-fi
 list="$RMlist"
 for mode in $modes; do
 	list="$list;${mklist[$mode]}"
@@ -840,7 +824,7 @@ for group in $groups; do
 	list="$list;${grplist[$group]}"
 done
 list="$list;$MKlist"
-if [ "$eo" = "echo" -o "$eo" = "transform" ]; then
+if [ "$eo" = "echo" ]; then
 	$eo "$list"
 else
 	echo "$list" | sh
