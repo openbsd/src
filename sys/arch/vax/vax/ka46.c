@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka46.c,v 1.3 2001/09/11 20:05:25 miod Exp $	*/
+/*	$OpenBSD: ka46.c,v 1.4 2001/10/01 12:56:43 hugh Exp $	*/
 /*	$NetBSD: ka46.c,v 1.12 2000/03/04 07:27:49 matt Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
@@ -84,10 +84,16 @@ struct	cpu_dep ka46_calls = {
 void
 ka46_conf()
 {
-	if (vax_confdata & 0x80)
+        switch(vax_siedata & 0xFF) {
+	case VAX_VTYP_47:
 		printf("cpu: KA47\n");
-	else
+		break;
+	case VAX_VTYP_46:
 		printf("cpu: KA46\n");
+		break;
+	default:
+		printf("cpu: Unknown Mariah\n");
+	}
 
 	ka46_cpu = (void *)vax_map_physmem(VS_REGS, 1);
 	printf("cpu: turning on floating point chip\n");
