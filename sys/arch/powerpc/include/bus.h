@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.3 1998/08/25 07:43:40 pefo Exp $	*/
+/*	$OpenBSD: bus.h,v 1.4 1999/11/09 04:13:54 rahnds Exp $	*/
 
 /*
  * Copyright (c) 1997 Per Fogelstrom.  All rights reserved.
@@ -50,25 +50,25 @@
 typedef u_int32_t bus_addr_t;
 typedef u_int32_t bus_size_t;
 typedef u_int32_t bus_space_handle_t;
-typedef struct p4e_bus_space *bus_space_tag_t;
+typedef struct ppc_bus_space *bus_space_tag_t;
 
-struct p4e_bus_space {
+struct ppc_bus_space {
 	u_int32_t	bus_base;
 	u_int8_t	bus_reverse;	/* Reverse bytes */
 };
+#define POWERPC_BUS_TAG_BASE(x)  ((x)->bus_base)
 
-extern struct p4e_bus_space p4e_isa_io, p4e_isa_mem;
+extern struct ppc_bus_space ppc_isa_io, ppc_isa_mem;
 
 /*
  * Access methods for bus resources
  */
-#define bus_space_map(t, addr, size, cacheable, bshp)			      \
-    ((*(bshp) = (t)->bus_base + (addr)), 0)
-
-#define bus_space_unmap(t, bsh, size)
-
-#define bus_space_addr(bshp, offs)					      \
-    ((vm_offset_t)((bshp) + (offs)))
+int	bus_space_map __P((bus_space_tag_t t, bus_addr_t addr,
+	    bus_size_t size, int cacheable, bus_space_handle_t *bshp));
+void	bus_space_unmap __P((bus_space_tag_t t, bus_space_handle_t bsh,
+	    bus_size_t size));
+int	bus_space_subregion __P((bus_space_tag_t t, bus_space_handle_t bsh,
+	    bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp));
 
 #define bus_space_read(n,m)						      \
 static __inline CAT3(u_int,m,_t)					      \
@@ -87,20 +87,6 @@ bus_space_read(4,32)
 
 #define	bus_space_read_8	!!! bus_space_read_8 unimplemented !!!
 
-#define bus_space_read_multi_1(t, h, o, a, c) do {			      \
-		insb((u_int8_t *)((h) + (o)), (a), (c));		      \
-	} while(0)
-
-#define bus_space_read_multi_2(t, h, o, a, c) do {			      \
-		insw((u_int16_t *)((h) + (o)), (a), (c));		      \
-	} while(0)
-
-#define bus_space_read_multi_4(t, h, o, a, c) do {			      \
-		insl((u_int32_t *)((h) + (o)), (a), (c));		      \
-	} while(0)
-
-#define	bus_space_read_multi_8	!!! bus_space_read_multi_8 not implemented !!!
-
 #define bus_space_write(n,m)						      \
 static __inline void							      \
 CAT(bus_space_write_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,	      \
@@ -118,48 +104,62 @@ bus_space_write(4,32)
 
 #define	bus_space_write_8	!!! bus_space_write_8 unimplemented !!!
 
+#define bus_space_read_multi(n, m)					      \
+static __inline void						       	      \
+CAT(bus_space_read_multi_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,     \
+    bus_size_t ba, CAT3(u_int,m,_t) *buf, bus_size_t cnt)		      \
+{									      \
+	while (cnt--)							      \
+		*buf++ = CAT(bus_space_read_,n)(bst, bsh, ba);		      \
+}
 
-#define bus_space_write_multi_1(t, h, o, a, c) do {			      \
-		outsb((u_int8_t *)((h) + (o)), (a), (c));		      \
-	} while(0)
+bus_space_read_multi(1,8)
+bus_space_read_multi(2,16)
+bus_space_read_multi(4,32)
 
-#define bus_space_write_multi_2(t, h, o, a, c) do {			      \
-		outsw((u_int16_t *)((h) + (o)), (a), (c));		      \
-	} while(0)
+#define	bus_space_read_multi_8	!!! bus_space_read_multi_8 not implemented !!!
 
-#define bus_space_write_multi_4(t, h, o, a, c) do {			      \
-		outsl((u_int32_t *)((h) + (o)), (a), (c));		      \
-	} while(0)
+
+#define	bus_space_write_multi_8	!!! bus_space_write_multi_8 not implemented !!!
+
+#define bus_space_write_multi(n, m)					      \
+static __inline void								      \
+CAT(bus_space_write_multi_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,    \
+    bus_size_t ba, const CAT3(u_int,m,_t) *buf, bus_size_t cnt)		      \
+{									      \
+	while (cnt--)							      \
+		CAT(bus_space_write_,n)(bst, bsh, ba, *buf++);		      \
+}
+
+bus_space_write_multi(1,8)
+bus_space_write_multi(2,16)
+bus_space_write_multi(4,32)
 
 #define	bus_space_write_multi_8	!!! bus_space_write_multi_8 not implemented !!!
 
 /* These are OpenBSD extensions to the general NetBSD bus interface.  */
-#define	bus_space_read_raw_multi(n,m,l)					      \
-static __inline void							      \
-CAT(bus_space_read_raw_multi_,n)(bus_space_tag_t bst, bus_space_handle_t bsh, \
-    bus_addr_t ba, u_int8_t *buf, bus_size_t cnt)			      \
-{									      \
-	CAT(bus_space_read_multi_,n)(bst, bsh, ba, (CAT3(u_int,m,_t) *)buf,   \
-	    cnt >> l);							      \
-}
+void
+bus_space_read_raw_multi_1(bus_space_tag_t bst, bus_space_handle_t bsh,
+	bus_addr_t ba, u_int8_t *dst, bus_size_t size);
+void
+bus_space_read_raw_multi_2(bus_space_tag_t bst, bus_space_handle_t bsh,
+	bus_addr_t ba, u_int16_t *dst, bus_size_t size);
+void
+bus_space_read_raw_multi_4(bus_space_tag_t bst, bus_space_handle_t bsh,
+	bus_addr_t ba, u_int32_t *dst, bus_size_t size);
 
-bus_space_read_raw_multi(2,16,1)
-bus_space_read_raw_multi(4,32,2)
+void
+bus_space_write_raw_multi_1(bus_space_tag_t bst, bus_space_handle_t bsh,
+	bus_addr_t ba, const u_int8_t *src, bus_size_t size);
+void
+bus_space_write_raw_multi_2(bus_space_tag_t bst, bus_space_handle_t bsh,
+	bus_addr_t ba, const u_int16_t *src, bus_size_t size);
+void
+bus_space_write_raw_multi_4(bus_space_tag_t bst, bus_space_handle_t bsh,
+	bus_addr_t ba, const u_int32_t *src, bus_size_t size);
 
 #define	bus_space_read_raw_multi_8 \
     !!! bus_space_read_raw_multi_8 not implemented !!!
-
-#define	bus_space_write_raw_multi(n,m,l)				      \
-static __inline void							      \
-CAT(bus_space_write_raw_multi_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,\
-    bus_addr_t ba, const u_int8_t *buf, bus_size_t cnt)			      \
-{									      \
-	CAT(bus_space_write_multi_,n)(bst, bsh, ba,			      \
-	    (const CAT3(u_int,m,_t) *)buf, cnt >> l);			      \
-}
-
-bus_space_write_raw_multi(2,16,1)
-bus_space_write_raw_multi(4,32,2)
 
 #define	bus_space_write_raw_multi_8 \
     !!! bus_space_write_raw_multi_8 not implemented !!!

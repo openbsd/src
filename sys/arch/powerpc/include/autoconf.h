@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.5 1999/07/05 21:01:19 rahnds Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.6 1999/11/09 04:13:54 rahnds Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -37,6 +37,8 @@
 
 #ifndef _MACHINE_AUTOCONF_H_
 #define _MACHINE_AUTOCONF_H_
+
+#include <machine/bus.h>
 
 /*
  *   System types.
@@ -81,6 +83,16 @@ typedef struct bushook {
 struct confargs {
 	char	*ca_name;		/* Device name. */
 	bushook_t *ca_bus;		/* bus device resides on. */
+	/* macobio hooks ?? */
+	bus_space_tag_t ca_iot;
+	bus_space_tag_t ca_memt; /* XXX */
+	u_int32_t ca_node;
+	int ca_nreg;
+	u_int32_t *ca_reg;
+	int ca_nintr;
+	int32_t *ca_intr;
+	u_int ca_baseaddr;
+
 };
 
 void	set_clockintr __P((void (*)(struct clockframe *)));

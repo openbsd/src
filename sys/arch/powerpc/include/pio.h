@@ -1,4 +1,4 @@
-/*	$OpenBSD: pio.h,v 1.3 1998/08/25 07:45:28 pefo Exp $ */
+/*	$OpenBSD: pio.h,v 1.4 1999/11/09 04:13:54 rahnds Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -37,6 +37,7 @@
 /*
  * I/O macros.
  */
+void *mapiodev(paddr_t pa, psize_t len);
 
 static __inline void
 __outb(a,v)
@@ -44,7 +45,7 @@ __outb(a,v)
 	int v;
 {
 	*a = v;
-	__asm__ volatile("eieio\n  sync");
+	__asm__ volatile("eieio");
 }
 
 static __inline void
@@ -53,7 +54,7 @@ __outw(a,v)
 	u_int16_t v;
 {
 	*a = v;
-	__asm__ volatile("eieio\n  sync");
+	__asm__ volatile("eieio");
 }
 
 static __inline void
@@ -62,7 +63,7 @@ __outl(a,v)
 	int v;
 {
 	*a = v;
-	__asm__ volatile("eieio\n  sync");
+	__asm__ volatile("eieio");
 }
 
 static __inline void
@@ -72,8 +73,8 @@ __outwrb(a,v)
 {
 	u_int32_t _p_ = (u_int32_t)a;
 
-	__asm__ volatile("sthbrx %0, 0, %1\n" :: "r"(v), "r"(_p_));
-	__asm__ volatile("eieio\n  sync");
+	__asm__ volatile("sthbrx %0, 0, %1" :: "r"(v), "r"(_p_));
+	__asm__ volatile("eieio");
 }
 
 static __inline void
@@ -83,8 +84,8 @@ __outlrb(a,v)
 {
 	u_int32_t _p_ = (u_int32_t)a;
 
-	__asm__ volatile("stwbrx %0, 0, %1\n" :: "r"(v), "r"(_p_));
-	__asm__ volatile("eieio\n  sync");
+	__asm__ volatile("stwbrx %0, 0, %1" :: "r"(v), "r"(_p_));
+	__asm__ volatile("eieio");
 }
 
 static __inline u_int8_t
@@ -93,8 +94,8 @@ __inb(a)
 {
 	u_int8_t _v_;
 
+	__asm__ volatile("eieio");
 	_v_ = *a;
-	__asm__ volatile("eieio\n  sync");
 	return _v_;
 }
 
@@ -104,8 +105,8 @@ __inw(a)
 {
 	u_int16_t _v_;
 
+	__asm__ volatile("eieio");
 	_v_ = *a;
-	__asm__ volatile("eieio\n  sync");
 	return _v_;
 }
 
@@ -115,8 +116,8 @@ __inl(a)
 {
 	u_int32_t _v_;
 
+	__asm__ volatile("eieio");
 	_v_ = *a;
-	__asm__ volatile("eieio\n  sync");
 	return _v_;
 }
 
@@ -127,8 +128,8 @@ __inwrb(a)
 	u_int16_t _v_;
 	u_int32_t _p_ = (u_int32_t)a;
 
-	__asm__ volatile("lhbrx %0, 0, %1\n" : "=r"(_v_) : "r"(_p_));
-	__asm__ volatile("eieio\n  sync");
+	__asm__ volatile("eieio");
+	__asm__ volatile("lhbrx %0, 0, %1" : "=r"(_v_) : "r"(_p_));
 	return _v_;
 }
 
@@ -139,8 +140,8 @@ __inlrb(a)
 	u_int32_t _v_;
 	u_int32_t _p_ = (u_int32_t)a;
 
-	__asm__ volatile("lwbrx %0, 0, %1\n" : "=r"(_v_) : "r"(_p_));
-	__asm__ volatile("eieio\n  sync");
+	__asm__ volatile("eieio");
+	__asm__ volatile("lwbrx %0, 0, %1" : "=r"(_v_) : "r"(_p_));
 	return _v_;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.3 1998/10/09 02:06:40 rahnds Exp $ */
+/*	$OpenBSD: intr.h,v 1.4 1999/11/09 04:13:54 rahnds Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -144,6 +144,21 @@ set_sint(pending)
 #define	splhigh()	splraise(0xffffffff)
 #define	spl0()		spllower(0)
 
+/*
+ *	Interrupt control struct used to control the ICU setup.
+ */
+
+struct intrhand {
+	struct	intrhand *ih_next;
+	int	(*ih_fun) __P((void *));
+	void    *ih_arg;
+	u_long  ih_count;
+	int     ih_level;
+	int     ih_irq;
+	char    *ih_what;
+};
+
 #endif /* _LOCORE */
+
 
 #endif /* _MACHINE_INTR_H_ */
