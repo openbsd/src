@@ -1,4 +1,4 @@
-/*	$OpenBSD: yplib_host.c,v 1.11 2002/07/19 02:38:40 deraadt Exp $ */
+/*	$OpenBSD: yplib_host.c,v 1.12 2003/05/05 08:37:05 avsm Exp $ */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char *rcsid = "$OpenBSD: yplib_host.c,v 1.11 2002/07/19 02:38:40 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: yplib_host.c,v 1.12 2003/05/05 08:37:05 avsm Exp $";
 #endif
 
 #include <sys/param.h>

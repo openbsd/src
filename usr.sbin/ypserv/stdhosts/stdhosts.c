@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdhosts.c,v 1.9 2003/02/11 01:08:27 maja Exp $ */
+/*	$OpenBSD: stdhosts.c,v 1.10 2003/05/05 08:37:05 avsm Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: stdhosts.c,v 1.9 2003/02/11 01:08:27 maja Exp $";
+static const char rcsid[] = "$OpenBSD: stdhosts.c,v 1.10 2003/05/05 08:37:05 avsm Exp $";
 #endif
 
 #include <sys/types.h>
@@ -90,7 +90,7 @@ main(int argc, char *argv[])
 
 	if (argc == 2) {
 		if ((data_file = fopen(argv[argc-1], "r")) == NULL)
-			err(1, "");
+			err(1, "error opening %s", argv[argc-1]);
 	} else
 		data_file = stdin;
 

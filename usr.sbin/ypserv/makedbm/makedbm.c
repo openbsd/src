@@ -1,4 +1,4 @@
-/*	$OpenBSD: makedbm.c,v 1.19 2002/07/19 20:59:40 deraadt Exp $ */
+/*	$OpenBSD: makedbm.c,v 1.20 2003/05/05 08:37:05 avsm Exp $ */
 
 /*
  * Copyright (c) 1994-97 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: makedbm.c,v 1.19 2002/07/19 20:59:40 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: makedbm.c,v 1.20 2003/05/05 08:37:05 avsm Exp $";
 #endif
 
 #include <stdio.h>

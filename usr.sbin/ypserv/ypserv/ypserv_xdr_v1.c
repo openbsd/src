@@ -6,7 +6,7 @@
 #include <rpcsvc/yp.h>
 #include "ypv1.h"
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ypserv_xdr_v1.c,v 1.4 2003/02/13 05:54:39 maja Exp $";
+static const char rcsid[] = "$OpenBSD: ypserv_xdr_v1.c,v 1.5 2003/05/05 08:37:05 avsm Exp $";
 #endif /* not lint */
 
 bool_t
@@ -14,8 +14,6 @@ xdr_ypreqtype(xdrs, objp)
 	XDR *xdrs;
 	ypreqtype *objp;
 {
-	int32_t *buf;
-
 	if (!xdr_enum(xdrs, (enum_t *)objp)) {
 		return (FALSE);
 	}
@@ -27,8 +25,6 @@ xdr_ypresptype(xdrs, objp)
 	XDR *xdrs;
 	ypresptype *objp;
 {
-	int32_t *buf;
-
 	if (!xdr_enum(xdrs, (enum_t *)objp)) {
 		return (FALSE);
 	}
@@ -70,8 +66,6 @@ xdr_ypresponse(xdrs, objp)
 	XDR *xdrs;
 	ypresponse *objp;
 {
-	int32_t *buf;
-
 	if (!xdr_ypresptype(xdrs, &objp->yp_resptype)) {
 		return (FALSE);
 	}
