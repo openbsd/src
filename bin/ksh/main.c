@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.36 2005/02/21 16:01:58 otto Exp $	*/
+/*	$OpenBSD: main.c,v 1.37 2005/03/28 21:33:01 deraadt Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -81,9 +81,9 @@ main(int argc, char *argv[])
 
 	/* make sure argv[] is sane */
 	if (!*argv) {
-		static const char	*empty_argv[] = {
-					    "pdksh", (char *) 0
-					};
+		static const char *empty_argv[] = {
+			"ksh", (char *) 0
+		};
 
 		argv = (char **) empty_argv;
 		argc = 1;
