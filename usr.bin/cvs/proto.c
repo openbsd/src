@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.1.1.1 2004/07/13 22:02:40 jfb Exp $	*/
+/*	$OpenBSD: proto.c,v 1.2 2004/07/14 04:32:42 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -585,10 +585,7 @@ cvs_resp_newentry(int type, char *line)
 	struct cvs_ent *entp;
 	CVSENTRIES *entfile;
 
-	if (cvs_splitpath(line, entbuf, sizeof(entbuf), NULL, 0) < 0)
-		return (-1);
-
-	snprintf(path, sizeof(path), "%s/" CVS_PATH_ENTRIES, entbuf);
+	snprintf(path, sizeof(path), "%s/" CVS_PATH_ENTRIES, line);
 
 	/* get the remote path */
 	cvs_client_getln(entbuf, sizeof(entbuf));
@@ -601,7 +598,7 @@ cvs_resp_newentry(int type, char *line)
 	if (entp == NULL)
 		return (-1);
 
-	entfile = cvs_ent_open(path);
+	entfile = cvs_ent_open(path, O_WRONLY);
 	if (entfile == NULL)
 		return (-1);
 

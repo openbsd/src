@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.2 2004/07/14 03:33:09 jfb Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.3 2004/07/14 04:32:42 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -262,6 +262,7 @@ struct cvs_ent {
 
 typedef struct cvs_entries {
 	char    *cef_path;
+	FILE    *cef_file;
 
 	u_int    cef_nid;  /* next entry index to return for next() */
 
@@ -354,7 +355,7 @@ void    cvs_file_free       (char **, int);
 
 
 /* Entries API */
-CVSENTRIES*      cvs_ent_open   (const char *);
+CVSENTRIES*      cvs_ent_open   (const char *, int);
 struct cvs_ent*  cvs_ent_get    (CVSENTRIES *, const char *);
 struct cvs_ent*  cvs_ent_next   (CVSENTRIES *);
 int              cvs_ent_add    (CVSENTRIES *, struct cvs_ent *);

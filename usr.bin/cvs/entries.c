@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.1.1.1 2004/07/13 22:02:40 jfb Exp $	*/
+/*	$OpenBSD: entries.c,v 1.2 2004/07/14 04:32:42 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -50,7 +50,7 @@
  */
 
 CVSENTRIES*
-cvs_ent_open(const char *dir)
+cvs_ent_open(const char *dir, int flags)
 {
 	size_t len;
 	char entpath[MAXPATHLEN], ebuf[128];
