@@ -108,7 +108,7 @@ int	physmem;
 
 extern struct msgbuf msgbuf;
 struct	msgbuf *msgbufp = &msgbuf;
-int	msgbufmapped = 1;	/* message buffer is always mapped */
+int	msgbufmapped = 0;	/* maps late; so that printf works early */
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
