@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.10 2001/06/25 21:49:43 csapuntz Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.11 2001/06/25 22:02:08 csapuntz Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.6 1996/11/19 04:49:21 cgd Exp $	*/
 
 /*
@@ -72,7 +72,7 @@ struct alpha_pci_chipset {
                             struct device *, struct pci_attach_args *, int,
                             int (*)(void *), void *));
 	void            (*pc_pciide_compat_intr_disestablish) __P((void *,
-			    pci_chipset_tag_t pc, void *));
+			    void *));
 };
 
 /*
@@ -112,8 +112,8 @@ void	pci_display_console __P((bus_space_tag_t, bus_space_tag_t,
      (*(c)->pc_pciide_compat_intr_establish)((c)->pc_conf_v, (d), (p),  \
         (ch), (f), (a)))
 
-#define alpha_pciide_compat_intr_disestablish(c, p, cookie)             \
-    do { ((c)->pc_pciide_compat_intr_disestablish)((c)->pc_conf_v, (p), \
+#define alpha_pciide_compat_intr_disestablish(c, cookie)                \
+    do { ((c)->pc_pciide_compat_intr_disestablish)((c)->pc_conf_v,      \
             (cookie)); } while (0)
 
 #ifdef _KERNEL

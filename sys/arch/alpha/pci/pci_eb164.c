@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_eb164.c,v 1.7 2001/06/25 21:49:42 csapuntz Exp $ */
+/* $OpenBSD: pci_eb164.c,v 1.8 2001/06/25 22:02:08 csapuntz Exp $ */
 /* $NetBSD: pci_eb164.c,v 1.27 2000/06/06 00:50:15 thorpej Exp $ */
 
 /*-
@@ -105,8 +105,7 @@ void	dec_eb164_intr_disestablish __P((void *, void *));
 
 void	*dec_eb164_pciide_compat_intr_establish __P((void *, struct device *,
 	    struct pci_attach_args *, int, int (*)(void *), void *));
-void    dec_eb164_pciide_compat_intr_disestablish __P((void *,
-	    pci_chipset_tag_t, void *));
+void    dec_eb164_pciide_compat_intr_disestablish __P((void *, void *));
 
 #define	EB164_SIO_IRQ	4  
 #define	EB164_MAX_IRQ	24
@@ -337,8 +336,7 @@ dec_eb164_pciide_compat_intr_establish(v, dev, pa, chan, func, arg)
 }
 
 void
-dec_eb164_pciide_compat_intr_disestablish(void *v, pci_chipset_tag_t pc,
-    void *cookie)
+dec_eb164_pciide_compat_intr_disestablish(void *v, void *cookie)
 {
 	sio_intr_disestablish(NULL, cookie);
 }

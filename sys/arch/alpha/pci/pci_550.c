@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_550.c,v 1.3 2001/06/25 21:49:41 csapuntz Exp $ */
+/* $OpenBSD: pci_550.c,v 1.4 2001/06/25 22:02:07 csapuntz Exp $ */
 /* $NetBSD: pci_550.c,v 1.18 2000/06/29 08:58:48 mrg Exp $ */
 
 /*-
@@ -105,8 +105,7 @@ void	dec_550_intr_disestablish __P((void *, void *));
 
 void	*dec_550_pciide_compat_intr_establish __P((void *, struct device *,
 	    struct pci_attach_args *, int, int (*)(void *), void *));
-void    dec_550_pciide_compat_intr_disestablish __P((void *, pci_chipset_tag_t,
-	    void *));
+void    dec_550_pciide_compat_intr_disestablish __P((void *, void *));
 
 #define	DEC_550_PCI_IRQ_BEGIN	8
 #define	DEC_550_MAX_IRQ		(64 - DEC_550_PCI_IRQ_BEGIN)
@@ -409,9 +408,8 @@ dec_550_pciide_compat_intr_establish(v, dev, pa, chan, func, arg)
 }
 
 void
-dec_550_pciide_compat_intr_disestablish(v, pc, cookie)
+dec_550_pciide_compat_intr_disestablish(v, cookie)
 	void *v;
-	pci_chipset_tag_t pc;
 	void *cookie;
 {
 	sio_intr_disestablish(NULL, cookie);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_up1000.c,v 1.3 2001/06/25 21:49:43 csapuntz Exp $	*/
+/*	$OpenBSD: pci_up1000.c,v 1.4 2001/06/25 22:02:08 csapuntz Exp $	*/
 /* $NetBSD: pci_up1000.c,v 1.6 2000/12/28 22:59:07 sommerfeld Exp $ */
 
 /*-
@@ -75,8 +75,7 @@ void    api_up1000_intr_disestablish(void *, void *);
 
 void	*api_up1000_pciide_compat_intr_establish(void *, struct device *,
 	    struct pci_attach_args *, int, int (*)(void *), void *);
-void    api_up1000_pciide_compat_intr_disestablish(void *, pci_chipset_tag_t,
-            void *);
+void    api_up1000_pciide_compat_intr_disestablish(void *, void *);
 
 void
 pci_up1000_pickintr(struct irongate_config *icp)
@@ -221,8 +220,7 @@ api_up1000_pciide_compat_intr_establish(void *icv, struct device *dev,
 }
 
 void
-api_up1000_pciide_compat_intr_disestablish(void *v, pci_chipset_tag_t pc,
-    void *cookie)
+api_up1000_pciide_compat_intr_disestablish(void *v, void *cookie)
 {
 	sio_intr_disestablish(NULL, cookie);
 }
