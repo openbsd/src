@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_radix.c,v 1.20 2003/08/22 21:50:34 david Exp $ */
+/*	$OpenBSD: pfctl_radix.c,v 1.21 2003/09/24 09:12:35 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -512,6 +512,7 @@ pfr_buf_next(struct pfr_buffer *b, const void *prev)
 int
 pfr_buf_grow(struct pfr_buffer *b, int minsize)
 {
+	caddr_t p;
 	size_t bs;
 
 	if (b == NULL || b->pfrb_type <= 0 || b->pfrb_type >= PFRB_MAX) {
@@ -522,29 +523,26 @@ pfr_buf_grow(struct pfr_buffer *b, int minsize)
 		return (0);
 	bs = buf_esize[b->pfrb_type];
 	if (!b->pfrb_msize) {
-		b->pfrb_msize = minsize;
-		if (b->pfrb_msize < 64)
-			b->pfrb_msize = 64;
-		b->pfrb_caddr = calloc(bs, b->pfrb_msize);
+		if (minsize < 64)
+			minsize = 64;
+		b->pfrb_caddr = calloc(bs, minsize);
 		if (b->pfrb_caddr == NULL)
 			return (-1);
+		b->pfrb_msize = minsize;
 	} else {
-		int omsize = b->pfrb_msize;
-
 		if (minsize == 0)
-			b->pfrb_msize *= 2;
-		else
-			b->pfrb_msize = minsize;
-		if (b->pfrb_msize < 0 || b->pfrb_msize >= SIZE_T_MAX / bs) {
+			minsize = b->pfrb_msize * 2;
+		if (minsize < 0 || minsize >= SIZE_T_MAX / bs) {
 			/* msize overflow */
 			errno = ENOMEM;
 			return (-1);
 		}
-		b->pfrb_caddr = realloc(b->pfrb_caddr, b->pfrb_msize * bs);
-		if (b->pfrb_caddr == NULL)
+		p = realloc(b->pfrb_caddr, minsize * bs);
+		if (p == NULL)
 			return (-1);
-		bzero(((caddr_t)b->pfrb_caddr) + omsize * bs,
-		    (b->pfrb_msize-omsize) * bs);
+		bzero(p + b->pfrb_msize * bs, (minsize - b->pfrb_msize) * bs);
+		b->pfrb_caddr = p;
+		b->pfrb_msize = minsize;
 	}
 	return (0);
 }
