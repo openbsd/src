@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumprmt.c,v 1.9 1998/04/26 18:10:49 deraadt Exp $	*/
+/*	$OpenBSD: dumprmt.c,v 1.10 1998/07/14 19:04:05 deraadt Exp $	*/
 /*	$NetBSD: dumprmt.c,v 1.17 1997/06/05 16:10:47 mrg Exp $	*/
 
 /*-
@@ -114,7 +114,7 @@ static void
 rmtconnaborted()
 {
 
-	errx(1, "Lost connection to remote host.");
+	errx(X_ABORT, "Lost connection to remote host.");
 }
 
 void
@@ -133,18 +133,18 @@ rmtgetconn()
 	if (sp == NULL) {
 		sp = getservbyname("shell", "tcp");
 		if (sp == NULL)
-			errx(1, "shell/tcp: unknown service");
+			errx(X_STARTUP, "shell/tcp: unknown service");
 		pwd = getpwuid(getuid());
 		if (pwd == NULL)
-			errx(1, "who are you?");
+			errx(X_STARTUP, "who are you?");
 	}
 	if ((name = strdup(pwd->pw_name)) == NULL)
-		err(1, "malloc");
+		err(X_STARTUP, "malloc");
 	if ((cp = strchr(rmtpeer, '@')) != NULL) {
 		tuser = rmtpeer;
 		*cp = '\0';
 		if (!okname(tuser))
-			exit(1);
+			exit(X_STARTUP);
 		rmtpeer = ++cp;
 	} else
 		tuser = name;

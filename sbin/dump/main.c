@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.18 1998/02/08 19:24:08 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.19 1998/07/14 19:04:08 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
@@ -150,7 +150,7 @@ main(argc, argv)
 			if (ntrec > maxbsize/1024) {
 				msg("Please choose a blocksize <= %dKB\n",
 				    maxbsize/1024);
-				exit(X_ABORT);
+				exit(X_STARTUP);
 			}
 			bflag = 1;
 			break;
@@ -191,7 +191,7 @@ main(argc, argv)
 			if (spcl.c_ddate < 0) {
 				(void)fprintf(stderr, "bad time \"%s\"\n",
 				    optarg);
-				exit(X_ABORT);
+				exit(X_STARTUP);
 			}
 			Tflag = 1;
 			lastlevel = '?';
@@ -204,7 +204,7 @@ main(argc, argv)
 		case 'W':		/* what to do */
 		case 'w':
 			lastdump(ch);
-			exit(0);	/* do nothing else */
+			exit(X_FINOK);	/* do nothing else */
 
 		case 'a':		/* `auto-size', Write to EOM. */
 			unlimited = 1;
@@ -218,7 +218,7 @@ main(argc, argv)
 
 	if (argc < 1) {
 		(void)fprintf(stderr, "Must specify disk or filesystem\n");
-		exit(X_ABORT);
+		exit(X_STARTUP);
 	}
 
 	/*
@@ -232,25 +232,25 @@ main(argc, argv)
 
 		if (lstat(argv[i], &sb) == -1) {
 			msg("Cannot lstat %s: %s\n", argv[i], strerror(errno));
-			exit(X_ABORT);
+			exit(X_STARTUP);
 		}
 		if (!S_ISDIR(sb.st_mode) && !S_ISREG(sb.st_mode))
 			break;
 		if (statfs(argv[i], &fsbuf) == -1) {
 			msg("Cannot statfs %s: %s\n", argv[i], strerror(errno));
-			exit(X_ABORT);
+			exit(X_STARTUP);
 		}
 		if (strcmp(argv[i], fsbuf.f_mntonname) == 0) {
 			if (dirlist != 0) {
 				msg("Can't dump a mountpoint and a filelist\n");
-				exit(X_ABORT);
+				exit(X_STARTUP);
 			}
 			break;		/* exit if sole mountpoint */
 		}
 		if (!disk) {
 			if ((toplevel = strdup(fsbuf.f_mntonname)) == NULL) {
 				msg("Cannot malloc diskname\n");
-				exit(X_ABORT);
+				exit(X_STARTUP);
 			}
 			disk = toplevel;
 			if (uflag) {
@@ -265,7 +265,7 @@ main(argc, argv)
 		} else {
 			if (strcmp(disk, fsbuf.f_mntonname) != 0) {
 				msg("%s is not on %s\n", argv[i], disk);
-				exit(X_ABORT);
+				exit(X_STARTUP);
 			}
 		}
 		msg("Dumping file/directory %s\n", argv[i]);
@@ -280,13 +280,13 @@ main(argc, argv)
 				(void)fputs(*argv++, stderr);
 			}
 			(void)putc('\n', stderr);
-			exit(X_ABORT);
+			exit(X_STARTUP);
 		}
 	}
 	if (Tflag && uflag) {
 	        (void)fprintf(stderr,
 		    "You cannot use the T and u flags together.\n");
-		exit(X_ABORT);
+		exit(X_STARTUP);
 	}
 	if (strcmp(tape, "-") == 0) {
 		pipeout++;
@@ -317,10 +317,10 @@ main(argc, argv)
 		*tape++ = '\0';
 #ifdef RDUMP
 		if (rmthost(host) == 0)
-			exit(X_ABORT);
+			exit(X_STARTUP);
 #else
 		(void)fprintf(stderr, "remote dump not enabled\n");
-		exit(X_ABORT);
+		exit(X_STARTUP);
 #endif
 	}
 
@@ -389,7 +389,7 @@ main(argc, argv)
 
 	if ((diskfd = open(disk, O_RDONLY)) < 0) {
 		msg("Cannot open %s\n", disk);
-		exit(X_ABORT);
+		exit(X_STARTUP);
 	}
 	sync();
 	sblock = (struct fs *)sblock_buf;
@@ -550,7 +550,7 @@ usage()
 
 	(void)fprintf(stderr, "usage: dump [-0123456789cnu] [-B records] [-b blocksize] [-d density] [-f file]\n            [-h level] [-s feet] [-T date] filesystem\n");
 	(void)fprintf(stderr, "       dump [-W | -w]\n");
-	exit(1);
+	exit(X_STARTUP);
 }
 
 /*
@@ -567,9 +567,9 @@ numarg(meaning, vmin, vmax)
 
 	val = strtol(optarg, &p, 10);
 	if (*p)
-		errx(1, "illegal %s -- %s", meaning, optarg);
+		errx(X_STARTUP, "illegal %s -- %s", meaning, optarg);
 	if (val < vmin || (vmax && val > vmax))
-		errx(1, "%s must be between %ld and %ld", meaning, vmin, vmax);
+		errx(X_STARTUP, "%s must be between %ld and %ld", meaning, vmin, vmax);
 	return (val);
 }
 
