@@ -1,7 +1,7 @@
-/*	$OpenBSD: pmap.h,v 1.8 1999/04/20 19:29:12 mickey Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.9 1999/07/21 05:38:03 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998 Michael Shalayeff
+ * Copyright (c) 1998,1999 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -82,12 +82,6 @@
 
 #include <machine/pte.h>
 
-/*
- * This hash function is the one used by the hardware TLB walker on the 7100.
- */
-#define pmap_hash(space, va) \
-	((((u_int)(space) << 5) ^ (((u_int)va) >> 12)) & (hpt_hashsize-1))
-
 typedef
 struct pmap {
 	TAILQ_ENTRY(pmap)	pmap_list;	/* pmap free list */
@@ -122,15 +116,18 @@ extern struct hpt_entry *hpt_table;
 extern u_int hpt_hashsize;
 #endif /* _KERNEL */
 
-/* keep it at 32 bytes for the cache overall satisfaction */
+/*
+ * keep it at 32 bytes for the cache overall satisfaction
+ * also, align commonly used pairs on double-word boundary
+ */
 struct pv_entry {
 	struct pv_entry	*pv_next;	/* list of mappings of a given PA */
-	struct pv_entry *pv_hash;	/* VTOP hash bucket list */
 	pmap_t		pv_pmap;	/* back link to pmap */
-	u_int		pv_space;	/* copy of space id from pmap */
 	u_int		pv_va;		/* virtual page number */
-	u_int		pv_tlbprot;	/* TLB format protection */
+	u_int		pv_space;	/* copy of space id from pmap */
 	u_int		pv_tlbpage;	/* physical page (for TLB load) */
+	u_int		pv_tlbprot;	/* TLB format protection */
+	struct pv_entry *pv_hash;	/* VTOP hash bucket list */
 	u_int		pv_pad;		/* pad to 32 bytes */
 };
 
@@ -139,7 +136,7 @@ struct pv_page {
 	TAILQ_ENTRY(pv_page) pvp_list;	/* Chain of pages */
 	u_int		pvp_nfree;
 	struct pv_entry *pvp_freelist;
-	u_int		pvp_flag;	/* is it direct mapped */ 
+	u_int		pvp_flag;	/* is it direct mapped (unused) */ 
 	u_int		pvp_pad[3];	/* align to 32 */
 	struct pv_entry pvp_pv[NPVPPG];
 };
