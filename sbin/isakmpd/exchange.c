@@ -1,5 +1,5 @@
-/*	$OpenBSD: exchange.c,v 1.32 2000/10/07 06:57:43 niklas Exp $	*/
-/*	$EOM: exchange.c,v 1.132 2000/10/06 23:36:11 niklas Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.33 2000/10/09 23:27:11 niklas Exp $	*/
+/*	$EOM: exchange.c,v 1.133 2000/10/09 02:54:34 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -725,8 +725,7 @@ exchange_establish_p1 (struct transport *t, u_int8_t type, u_int32_t doi,
 	  tag = conf_get_str (name, "Configuration");
 	  if (!tag)
 	    {
-	      /* XXX I am not sure a default should be used.  */
-#if 0
+	      /* Use default setting */
 	      tag = conf_get_str ("Phase 1", "Default");
 	      if (!tag)
 		{
@@ -734,7 +733,7 @@ exchange_establish_p1 (struct transport *t, u_int8_t type, u_int32_t doi,
 			     "no \"Default\" tag in [Phase 1] section");
 		  return;
 		}
-#else
+#if 0
 	      log_print ("exchange_establish_p1: "
 			 "no configuration found for peer \"%s\"",
 			 name);
@@ -788,7 +787,11 @@ exchange_establish_p1 (struct transport *t, u_int8_t type, u_int32_t doi,
 	  return;
 	}
     }
+
   exchange->policy = name ? conf_get_str (name, "Configuration") : 0;
+  if ((exchange->policy == NULL) && name)
+    exchange->policy = conf_get_str ("Phase 1", "Default");
+
   exchange->finalize = finalize;
   exchange->finalize_arg = arg;
   cookie_gen (t, exchange, exchange->cookies, ISAKMP_HDR_ICOOKIE_LEN);
