@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.c,v 1.17 2002/06/23 03:07:21 deraadt Exp $	*/
+/*	$OpenBSD: lock.c,v 1.18 2002/08/04 01:08:54 deraadt Exp $	*/
 /*	$NetBSD: lock.c,v 1.8 1996/05/07 18:32:31 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lock.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: lock.c,v 1.17 2002/06/23 03:07:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: lock.c,v 1.18 2002/08/04 01:08:54 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -90,17 +90,15 @@ extern	char *__progname;
 
 /*ARGSUSED*/
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
-	struct passwd *pw;
+	char hostname[MAXHOSTNAMELEN], s[BUFSIZ], s1[BUFSIZ], date[256];
+	char *p, *style, *nstyle, *ttynam;
 	struct itimerval ntimer, otimer;
+	int ch, sectimeout, usemine;
+	struct passwd *pw;
 	struct tm *timp;
 	time_t curtime;
-	int ch, sectimeout, usemine;
-	char *p, *style, *nstyle, *ttynam;
-	char hostname[MAXHOSTNAMELEN], s[BUFSIZ], s1[BUFSIZ], date[256];
 	login_cap_t *lc;
 
 	sectimeout = TIMEOUT;
@@ -220,8 +218,7 @@ main(argc, argv)
 }
 
 void
-hi(dummy)
-	int dummy;
+hi(int dummy)
 {
 	char buf[1024], buf2[1024];
 	time_t now;
@@ -239,8 +236,7 @@ hi(dummy)
 }
 
 void
-bye(dummy)
-	int dummy;
+bye(int dummy)
 {
 
 	if (!no_timeout)
