@@ -1,0 +1,80 @@
+.\" $OpenBSD: keynote.1,v 1.1 1999/05/24 01:54:15 angelos Exp $
+.\"
+.\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
+.\"
+.\" This code was written by Angelos D. Keromytis in Philadelphia, PA, USA,
+.\" in April-May 1998
+.\"
+.\" Copyright (C) 1998, 1999 by Angelos D. Keromytis.
+.\"      
+.\" Permission to use, copy, and modify this software without fee
+.\" is hereby granted, provided that this entire notice is included in
+.\" all copies of any software which is or includes a copy or
+.\" modification of this software. 
+.\" You may use this code under the GNU public license if you so wish. Please
+.\" contribute changes back to the author.
+.\"
+.\" THIS SOFTWARE IS BEING PROVIDED "AS IS", WITHOUT ANY EXPRESS OR
+.\" IMPLIED WARRANTY. IN PARTICULAR, THE AUTHORS MAKES NO
+.\" REPRESENTATION OR WARRANTY OF ANY KIND CONCERNING THE
+.\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
+.\" PURPOSE.
+.\"
+.Dd April 29, 1999
+.Dt keynote 1
+.Os
+.\" .TH keynote 1 local
+.Sh NAME
+.Nm keynote
+.Nd command line tool for
+.Xr KeyNote 3
+operations
+.Sh SYNOPSIS
+.Nm keynote
+.Op sign|verify|sigver|keygen
+.Op ...
+.Sh DESCRIPTION
+For details on
+.Nm KeyNote ,
+see the web page 
+.Bd -literal -offset indent
+ http://www.cis.upenn.edu/~keynote
+.Ed
+.Pp
+.Nm keynote
+does the operation indicated by the first argument. For more details on the
+specific flags for each operation, see the respective manpages (
+.Xr keynote-sign 1 ,
+.Xr keynote-verify 1 ,
+.Xr keynote-sigver 1 ,
+and
+.Xr keynote-keygen 1
+respectively).
+.Sh SEE ALSO
+.Xr keynote 3 ,
+.Xr keynote 4 ,
+.Xr keynote-keygen 1 ,
+.Xr keynote-sign 1 ,
+.Xr keynote-sigver 1 ,
+.Xr keynote-verify 1
+.Bl -tag -width "AAAAAAA"
+.It ``The KeyNote Trust-Management System'' 
+M. Blaze, J. Feigenbaum, A. D. Keromytis,
+Internet Drafts, draft-ietf-trustmgt-keynote-00.txt
+.It ``Decentralized Trust Management'' 
+M. Blaze, J. Feigenbaum, J. Lacy,
+1996 IEEE Conference on Privacy and Security
+.It ``Compliance-Checking in the PolicyMaker Trust Management System''
+M. Blaze, J. Feigenbaum, M. Strauss,
+1998 Financial Crypto Conference
+.El
+.Sh AUTHOR
+Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
+.Sh WEB PAGE
+http://www.cis.upenn.edu/~keynote
+.Sh BUGS
+None that we know of.
+If you find any, please report them at
+.Bd -literal -offset indent -compact
+keynote@research.att.com
+.Ed
