@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.73 2003/06/26 21:59:10 deraadt Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.74 2003/07/01 23:43:12 millert Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -71,7 +71,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.73 2003/06/26 21:59:10 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.74 2003/07/01 23:43:12 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -160,29 +160,31 @@ char	hostname[MAXHOSTNAMELEN]; /* Hostname */
 char	*daytime;		/* timenow in human readable form */
 char	*arcdir;		/* Dir to put archives in (if it exists) */
 
-void do_entry(struct conf_entry *);
-void parse_args(int, char **);
-void usage(void);
-struct conf_entry *parse_file(int *);
-char *missing_field(char *, char *, int);
-void dotrim(struct conf_entry *);
-int log_trim(char *);
-void compress_log(struct conf_entry *);
-off_t sizefile(char *);
-int age_old_log(struct conf_entry *);
-char *sob(char *);
-char *son(char *);
-int isnumberstr(char *);
-int domonitor(struct conf_entry *);
-FILE *openmail(void);
-void child_killer(int);
-void run_command(char *);
-void send_signal(char *, int);
-char *lstat_log(char *, size_t, int);
-int stat_suffix(char *, size_t, char *, struct stat *,
-    int (*)(const char *, struct stat *));
-time_t parse8601(char *);
-time_t parseDWM(char *);
+FILE   *openmail(void);
+char   *lstat_log(char *, size_t, int);
+char   *missing_field(char *, char *, int);
+char   *sob(char *);
+char   *son(char *);
+int	age_old_log(struct conf_entry *);
+int	domonitor(struct conf_entry *);
+int	isnumberstr(char *);
+int	log_trim(char *);
+int	movefile(char *, char *, uid_t, gid_t, int);
+int	stat_suffix(char *, size_t, char *, struct stat *,
+	    int (*)(const char *, struct stat *));
+off_t	sizefile(char *);
+struct conf_entry *
+	parse_file(int *);
+time_t	parse8601(char *);
+time_t	parseDWM(char *);
+void	child_killer(int);
+void	compress_log(struct conf_entry *);
+void	do_entry(struct conf_entry *);
+void	dotrim(struct conf_entry *);
+void	parse_args(int, char **);
+void	run_command(char *);
+void	send_signal(char *, int);
+void	usage(void);
 
 int
 main(int argc, char **argv)
@@ -825,7 +827,8 @@ dotrim(struct conf_entry *ent)
 		(void)snprintf(file1, sizeof(file1), "%s.0", oldlog);
 		if (noaction)
 			printf("\tmv %s to %s\n", ent->log, file1);
-		else if (rename(ent->log, file1))
+		else if (movefile(ent->log, file1, ent->uid, ent->gid,
+		    ent->permissions))
 			warn("can't mv %s to %s", ent->log, file1);
 	}
 
@@ -1316,4 +1319,47 @@ parseDWM(char *s)
 			s = t;
 	}
 	return (mktime(&tm));
+}
+
+/*
+ * Move a file using rename(2) is possible and copying if not.
+ */
+int
+movefile(char *from, char *to, uid_t owner_uid, gid_t group_gid, int perm)
+{
+	FILE *src, *dst;
+	int i;
+
+	/* try rename(2) first */
+	i = rename(from, to);
+	if (i == 0 || errno != EXDEV)
+		return (i);
+
+	/* different filesystem, have to copy the file */
+	if ((src = fopen(from, "r")) == NULL)
+		err(1, "can't fopen %s for reading", from);
+	if ((dst = fopen(to, "w")) == NULL)
+		err(1, "can't fopen %s for writing", to);
+	if (owner_uid != (uid_t)-1 || group_gid != (gid_t)-1) {
+		if (fchown(fileno(dst), owner_uid, group_gid))
+			err(1, "can't fchown %s", to);
+	}
+	if (fchmod(fileno(dst), perm))
+		err(1, "can't fchmod %s", to);
+
+	while ((i = getc(src)) != EOF) {
+		if ((putc(i, dst)) == EOF)
+			err(1, "error writing to %s", to);
+	}
+
+	if (ferror(src))
+		err(1, "error reading from %s", from);
+	if ((fclose(src)) != 0)
+		err(1, "can't fclose %s", to);
+	if ((fclose(dst)) != 0)
+		err(1, "can't fclose %s", from);
+	if ((unlink(from)) != 0)
+		err(1, "can't unlink %s", from);
+
+	return (0);
 }
