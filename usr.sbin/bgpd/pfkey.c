@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.9 2004/01/28 19:04:55 henning Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.10 2004/01/28 20:00:29 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -242,10 +242,6 @@ pfkey_reply(int sd, u_int32_t *spip)
 		log_warn("pfkey");
 		return (-1);
 	}
-	if (spip == NULL)
-		return (0);
-	if (hdr.sadb_msg_type != SADB_GETSPI)
-		return (-1);
 	len = hdr.sadb_msg_len * PFKEY2_CHUNK;
 	if ((data = malloc(len)) == NULL) {
 		log_warn("pfkey malloc");
@@ -257,16 +253,22 @@ pfkey_reply(int sd, u_int32_t *spip)
 		free(data);
 		return (-1);
 	}
-	msg = (struct sadb_msg *)data;
-	for (ext = (struct sadb_ext *)(msg + 1);
-	    (size_t)((u_int8_t *)ext - (u_int8_t *)msg) <
-	    msg->sadb_msg_len * PFKEY2_CHUNK;
-	    ext = (struct sadb_ext *)((u_int8_t *)ext +
-	    ext->sadb_ext_len * PFKEY2_CHUNK)) {
-		if (ext->sadb_ext_type == SADB_EXT_SA) {
-			sa = (struct sadb_sa *) ext;
-			*spip = sa->sadb_sa_spi;
-			break;
+
+	if (hdr.sadb_msg_type == SADB_GETSPI) {
+		if (spip == NULL)
+			return (0);
+
+		msg = (struct sadb_msg *)data;
+		for (ext = (struct sadb_ext *)(msg + 1);
+		    (size_t)((u_int8_t *)ext - (u_int8_t *)msg) <
+		    msg->sadb_msg_len * PFKEY2_CHUNK;
+		    ext = (struct sadb_ext *)((u_int8_t *)ext +
+		    ext->sadb_ext_len * PFKEY2_CHUNK)) {
+			if (ext->sadb_ext_type == SADB_EXT_SA) {
+				sa = (struct sadb_sa *) ext;
+				*spip = sa->sadb_sa_spi;
+				break;
+			}
 		}
 	}
 	bzero(data, len);
