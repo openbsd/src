@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.52 2001/12/07 09:56:32 itojun Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.53 2002/03/05 08:29:45 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -2460,7 +2460,7 @@ icmp6_redirect_output(m0, rt)
 {
 	struct ifnet *ifp;	/* my outgoing interface */
 	struct in6_addr *ifp_ll6;
-	struct in6_addr *router_ll6;
+	struct in6_addr *nexthop;
 	struct ip6_hdr *sip6;	/* m0 as struct ip6_hdr */
 	struct mbuf *m = NULL;	/* newly allocated one */
 	struct ip6_hdr *ip6;	/* m as struct ip6_hdr */
@@ -2538,11 +2538,11 @@ icmp6_redirect_output(m0, rt)
 	if (rt->rt_gateway && (rt->rt_flags & RTF_GATEWAY)) {
 		struct sockaddr_in6 *sin6;
 		sin6 = (struct sockaddr_in6 *)rt->rt_gateway;
-		router_ll6 = &sin6->sin6_addr;
-		if (!IN6_IS_ADDR_LINKLOCAL(router_ll6))
-			router_ll6 = (struct in6_addr *)NULL;
+		nexthop = &sin6->sin6_addr;
+		if (!IN6_IS_ADDR_LINKLOCAL(nexthop))
+			nexthop = NULL;
 	} else
-		router_ll6 = (struct in6_addr *)NULL;
+		nexthop = NULL;
 
 	/* ip6 */
 	ip6 = mtod(m, struct ip6_hdr *);
@@ -2566,14 +2566,15 @@ icmp6_redirect_output(m0, rt)
 		 * nd_rd->nd_rd_target must be a link-local address in
 		 * better router cases.
 		 */
-		if (!router_ll6)
+		if (!nexthop)
 			goto fail;
-		bcopy(router_ll6, &nd_rd->nd_rd_target,
+		bcopy(nexthop, &nd_rd->nd_rd_target,
 		      sizeof(nd_rd->nd_rd_target));
 		bcopy(&sip6->ip6_dst, &nd_rd->nd_rd_dst,
 		      sizeof(nd_rd->nd_rd_dst));
 	} else {
 		/* make sure redtgt == reddst */
+		nexthop = &sip6->ip6_dst;
 		bcopy(&sip6->ip6_dst, &nd_rd->nd_rd_target,
 		      sizeof(nd_rd->nd_rd_target));
 		bcopy(&sip6->ip6_dst, &nd_rd->nd_rd_dst,
@@ -2582,39 +2583,36 @@ icmp6_redirect_output(m0, rt)
 
 	p = (u_char *)(nd_rd + 1);
 
-	if (!router_ll6)
-		goto nolladdropt;
+	{
+		/* target lladdr option */
+		struct rtentry *rt_nexthop = NULL;
+		int len;
+		struct sockaddr_dl *sdl;
+		struct nd_opt_hdr *nd_opt;
+		char *lladdr;
 
-    {
-	/* target lladdr option */
-	struct rtentry *rt_router = NULL;
-	int len;
-	struct sockaddr_dl *sdl;
-	struct nd_opt_hdr *nd_opt;
-	char *lladdr;
-
-	rt_router = nd6_lookup(router_ll6, 0, ifp);
-	if (!rt_router)
-		goto nolladdropt;
-	len = sizeof(*nd_opt) + ifp->if_addrlen;
-	len = (len + 7) & ~7;	/* round by 8 */
-	/* safety check */
-	if (len + (p - (u_char *)ip6) > maxlen)
-		goto nolladdropt;
-	if (!(rt_router->rt_flags & RTF_GATEWAY) &&
-	    (rt_router->rt_flags & RTF_LLINFO) &&
-	    (rt_router->rt_gateway->sa_family == AF_LINK) &&
-	    (sdl = (struct sockaddr_dl *)rt_router->rt_gateway) &&
-	    sdl->sdl_alen) {
-		nd_opt = (struct nd_opt_hdr *)p;
-		nd_opt->nd_opt_type = ND_OPT_TARGET_LINKADDR;
-		nd_opt->nd_opt_len = len >> 3;
-		lladdr = (char *)(nd_opt + 1);
-		bcopy(LLADDR(sdl), lladdr, ifp->if_addrlen);
-		p += len;
+		rt_nexthop = nd6_lookup(nexthop, 0, ifp);
+		if (!rt_nexthop)
+			goto nolladdropt;
+		len = sizeof(*nd_opt) + ifp->if_addrlen;
+		len = (len + 7) & ~7;	/* round by 8 */
+		/* safety check */
+		if (len + (p - (u_char *)ip6) > maxlen)
+			goto nolladdropt;
+		if (!(rt_nexthop->rt_flags & RTF_GATEWAY) &&
+		    (rt_nexthop->rt_flags & RTF_LLINFO) &&
+		    (rt_nexthop->rt_gateway->sa_family == AF_LINK) &&
+		    (sdl = (struct sockaddr_dl *)rt_nexthop->rt_gateway) &&
+		    sdl->sdl_alen) {
+			nd_opt = (struct nd_opt_hdr *)p;
+			nd_opt->nd_opt_type = ND_OPT_TARGET_LINKADDR;
+			nd_opt->nd_opt_len = len >> 3;
+			lladdr = (char *)(nd_opt + 1);
+			bcopy(LLADDR(sdl), lladdr, ifp->if_addrlen);
+			p += len;
+		}
 	}
-    }
-nolladdropt:;
+  nolladdropt:;
 
 	m->m_pkthdr.len = m->m_len = p - (u_char *)ip6;
 
