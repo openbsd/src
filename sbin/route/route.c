@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.60 2003/08/26 08:33:12 itojun Exp $	*/
+/*	$OpenBSD: route.c,v 1.61 2004/01/09 10:01:57 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static const char rcsid[] = "$OpenBSD: route.c,v 1.60 2003/08/26 08:33:12 itojun Exp $";
+static const char rcsid[] = "$OpenBSD: route.c,v 1.61 2004/01/09 10:01:57 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1379,7 +1379,8 @@ rtmsg(int cmd, int flags)
 	if (debugonly)
 		return (0);
 	if ((rlen = write(s, (char *)&m_rtmsg, l)) < 0) {
-		perror("writing to routing socket");
+		if (qflag == 0)
+			perror("writing to routing socket");
 		return (-1);
 	}
 	if (cmd == RTM_GET) {
