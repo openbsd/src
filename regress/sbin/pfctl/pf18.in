@@ -11,4 +11,6 @@ nat on lo0 proto icmp from 192.168.1.4 to any -> 10.0.0.4
 
 nat on lo0 from $TEST_LIST1 to $TEST_LIST2 -> lo0
 
+nat on lo0 inet from 192.168.0.1/24 to any -> (lo0)
+
 nat on lo0 from 192.168.1.8 to ! 172.17.0.0/16 -> 10.0.0.8
