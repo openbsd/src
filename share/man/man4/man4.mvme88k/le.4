@@ -1,4 +1,4 @@
-.\"	$OpenBSD: le.4,v 1.3 2004/03/31 08:33:56 jmc Exp $
+.\"	$OpenBSD: le.4,v 1.4 2004/04/30 18:22:12 miod Exp $
 .\"
 .\" Copyright (c) 2003 Paul Weissmann
 .\" All rights reserved.
@@ -25,19 +25,19 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 30, 2003
+.Dd April 30, 2004
 .Dt LE 4 mvme88k
 .Os
 .Sh NAME
 .Nm le
 .Nd MVME376 AMD LANCE Ethernet interface
 .Sh SYNOPSIS
-.Cd "le0 at vmes0 addr 0xffff1200 ipl 1 len 0x100"
-.Cd "le1 at vmes0 addr 0xffff1400 ipl 1 len 0x100"
-.Cd "le2 at vmes0 addr 0xffff1600 ipl 1 len 0x100"
-.Cd "le3 at vmes0 addr 0xffff5400 ipl 1 len 0x100"
-.Cd "le4 at vmes0 addr 0xffff5600 ipl 1 len 0x100"
-.Cd "le5 at vmes0 addr 0xffffa400 ipl 1 len 0x100"
+.Cd "le0 at vmes0 addr 0xffff1200 ipl 1"
+.Cd "le1 at vmes0 addr 0xffff1400 ipl 1"
+.Cd "le2 at vmes0 addr 0xffff1600 ipl 1"
+.Cd "le3 at vmes0 addr 0xffff5400 ipl 1"
+.Cd "le4 at vmes0 addr 0xffff5600 ipl 1"
+.Cd "le5 at vmes0 addr 0xffffa400 ipl 1"
 .Sh DESCRIPTION
 The
 .Nm

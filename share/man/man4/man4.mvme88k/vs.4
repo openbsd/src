@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vs.4,v 1.3 2003/12/26 21:03:34 miod Exp $
+.\"	$OpenBSD: vs.4,v 1.4 2004/04/30 18:22:12 miod Exp $
 .\"
 .\" Copyright (c) 2003 Paul Weissmann
 .\" All rights reserved.
@@ -25,19 +25,19 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 26, 2003
+.Dd April 30, 2004
 .Dt VS 4 mvme88k
 .Os
 .Sh NAME
 .Nm vs
 .Nd MVME328S High Performance SCSI Controller
 .Sh SYNOPSIS
-.Cd "vs0 at vmes0 addr 0xffff9000 ipl 2 len 0x800"
-.Cd "vs1 at vmes0 addr 0xffff9800 ipl 2 len 0x800"
-.Cd "vs2 at vmes0 addr 0xffff4800 ipl 2 len 0x800"
-.Cd "vs3 at vmes0 addr 0xffff5800 ipl 2 len 0x800"
-.Cd "vs4 at vmes0 addr 0xffff7000 ipl 2 len 0x800"
-.Cd "vs5 at vmes0 addr 0xffff7800 ipl 2 len 0x800"
+.Cd "vs0 at vmes0 addr 0xffff9000 ipl 2"
+.Cd "vs1 at vmes0 addr 0xffff9800 ipl 2"
+.Cd "vs2 at vmes0 addr 0xffff4800 ipl 2"
+.Cd "vs3 at vmes0 addr 0xffff5800 ipl 2"
+.Cd "vs4 at vmes0 addr 0xffff7000 ipl 2"
+.Cd "vs5 at vmes0 addr 0xffff7800 ipl 2"
 .Cd "scsibus* at vs?"
 .Sh DESCRIPTION
 The
