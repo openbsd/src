@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login_cap.3,v 1.5 2001/05/29 21:33:59 millert Exp $
+.\" $OpenBSD: login_cap.3,v 1.6 2001/08/15 17:55:30 aaron Exp $
 .\" BSDI $From: login_cap.3,v 1.4 1997/11/07 16:22:27 jch Exp $
 .\"
 .Dd July 16, 1996
@@ -94,7 +94,7 @@ pointer is returned.
 is returned if the user class is not found.
 When the
 .Li login_cap_t
-structure is no longer needed, is should be freed by the
+structure is no longer needed, it should be freed by the
 .Fn login_close
 function.
 .Pp
@@ -286,11 +286,11 @@ when the specified capability is present and thus it is the responsibility
 of the caller to
 .Fn free
 this space.
-However, if the the capability was not found or an error occurred and
+However, if the capability was not found or an error occurred and
 .Fa def
 or
 .Fa err
-(whichever is relevant) are non-NUL the returned value is simply what
+(whichever is relevant) are non-NULL the returned value is simply what
 was passed in to
 .Fn login_getcapstr .
 Therefore it is not possible to blindly
