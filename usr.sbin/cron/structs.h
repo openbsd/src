@@ -1,4 +1,4 @@
-/*	$OpenBSD: structs.h,v 1.3 2002/07/08 18:11:02 millert Exp $	*/
+/*	$OpenBSD: structs.h,v 1.4 2002/07/15 19:13:29 millert Exp $	*/
 
 /*
  * Copyright (c) 1997,2000 by Internet Software Consortium, Inc.
@@ -19,8 +19,7 @@
 
 typedef	struct _entry {
 	struct _entry	*next;
-	uid_t		uid;	
-	gid_t		gid;
+	struct passwd	*pwd;
 	char		**envp;
 	char		*cmd;
 	bitstr_t	bit_decl(minute, MINUTE_COUNT);
@@ -55,6 +54,19 @@ typedef	struct _cron_db {
 	user		*head, *tail;	/* links */
 	time_t		mtime;		/* last modtime on spooldir */
 } cron_db;
+
+typedef struct _atjob {
+	struct _atjob	*next, *prev;	/* links */
+	uid_t		uid;		/* uid of the job */
+	gid_t		gid;		/* gid of the job */
+	int		queue;		/* name of the at queue */
+	time_t		run_time;	/* time to run at job */
+} atjob;
+
+typedef struct _at_db {
+	atjob		*head, *tail;	/* links */
+	time_t		mtime;		/* last modtime on spooldir */
+} at_db;
 				/* in the C tradition, we only create
 				 * variables for the main program, just
 				 * extern them elsewhere.

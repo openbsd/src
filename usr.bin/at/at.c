@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.29 2002/05/14 18:05:39 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.30 2002/07/15 19:13:29 millert Exp $	*/
 /*	$NetBSD: at.c,v 1.4 1995/03/25 18:13:31 glass Exp $	*/
 
 /*
@@ -33,8 +33,11 @@
  */
 
 #include <sys/param.h>
+#include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <sys/un.h>
+
 #include <ctype.h>
 #include <dirent.h>
 #include <err.h>
@@ -49,6 +52,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <utime.h>
 #include <utmp.h>
 
 #if (MAXLOGNAME-1) > UT_NAMESIZE
@@ -69,7 +73,7 @@
 #define TIMESIZE 50		/* Size of buffer passed to strftime() */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: at.c,v 1.29 2002/05/14 18:05:39 millert Exp $";
+static const char rcsid[] = "$OpenBSD: at.c,v 1.30 2002/07/15 19:13:29 millert Exp $";
 #endif
 
 /* Variables to remove from the job's environment. */
@@ -93,6 +97,7 @@ static void sigc(int);
 static void alarmc(int);
 static void writefile(time_t, char);
 static void list_jobs(int, char **, int, int);
+static void poke_daemon(void);
 static time_t ttime(const char *);
 
 static void 
@@ -260,8 +265,8 @@ writefile(time_t runtimer, char queue)
 		if (fpin == NULL)
 			perr("Cannot open input file");
 	}
-	(void)fprintf(fp, "#!/bin/sh\n# atrun uid=%u gid=%u\n# mail %*s %d\n",
-	    real_uid, real_gid, LOGNAMESIZE, mailname, send_mail);
+	(void)fprintf(fp, "#!/bin/sh\n# atrun uid=%ld gid=%ld\n# mail %*s %d\n",
+	    (long)real_uid, (long)real_gid, LOGNAMESIZE, mailname, send_mail);
 
 	/* Write out the umask at the time of invocation */
 	(void)fprintf(fp, "umask %o\n", cmask);
@@ -368,6 +373,9 @@ writefile(time_t runtimer, char queue)
 		perr("Cannot give away file");
 
 	(void)close(fd2);
+
+	/* Poke cron so it knows to reload the at spool. */
+	poke_daemon();
 
 	runtime = *localtime(&runtimer);
 	strftime(timestr, TIMESIZE, "%a %b %e %T %Y", &runtime);
@@ -604,7 +612,7 @@ process_jobs(int argc, char **argv, int what)
 	FILE *fp;
 	DIR *spool;
 	int job_matches, jobs_len, uids_len;
-	int error, i, ch;
+	int error, i, ch, changed;
 
 	PRIV_START;
 
@@ -644,6 +652,7 @@ process_jobs(int argc, char **argv, int what)
 	}
 
 	/* Loop over every file in the directory */
+	changed = 0;
 	while ((dirent = readdir(spool)) != NULL) {
 
 		PRIV_START;
@@ -688,7 +697,9 @@ process_jobs(int argc, char **argv, int what)
 
 				if (!interactive ||
 				    (interactive && rmok(runtimer))) {
-					if (unlink(dirent->d_name) != 0)
+					if (unlink(dirent->d_name) == 0)
+						changed = 1;
+					else
 						perr(dirent->d_name);
 					if (!force && !interactive)
 						fprintf(stderr,
@@ -732,6 +743,10 @@ process_jobs(int argc, char **argv, int what)
 	}
 	free(jobs);
 	free(uids);
+
+	/* If we modied the spool, poke cron so it knows to reload. */
+	if (changed)
+		poke_daemon();
 
 	return (error);
 }
@@ -803,6 +818,41 @@ ttime(const char *arg)
     terr:
 		panic("out of range or illegal time specification: "
 		    "[[CC]YY]MMDDhhmm[.SS]");
+}
+
+#define RELOAD_AT	0x4	/* XXX - from cron's macros.h */
+
+/* XXX - share with crontab */
+static void
+poke_daemon() {
+	int sock, flags;
+	unsigned char poke;
+	struct sockaddr_un sun;
+
+	PRIV_START;
+
+	if (utime(_PATH_ATJOBS, NULL) < 0) {
+		warn("can't update mtime on %s", _PATH_ATJOBS);
+		PRIV_END;
+		return;
+	}
+
+	/* Failure to poke the daemon socket is not a fatal error. */
+	(void) signal(SIGPIPE, SIG_IGN);
+	strlcpy(sun.sun_path, CRONDIR "/" SPOOL_DIR "/" CRONSOCK,
+	    sizeof(sun.sun_path));
+	sun.sun_family = AF_UNIX;
+	sun.sun_len = strlen(sun.sun_path);
+	if ((sock = socket(AF_UNIX, SOCK_STREAM, 0)) >= 0 &&
+	    connect(sock, (struct sockaddr *)&sun, sizeof(sun)) == 0) {
+		poke = RELOAD_AT;
+		write(sock, &poke, 1);
+		close(sock);
+	} else
+		fprintf(stderr, "Warning, cron does not appear to be running.\n");
+	(void) signal(SIGPIPE, SIG_DFL);
+
+	PRIV_END;
 }
 
 int

@@ -1,4 +1,4 @@
-.\" $OpenBSD: at.1,v 1.25 2002/05/14 18:05:39 millert Exp $
+.\" $OpenBSD: at.1,v 1.26 2002/07/15 19:13:29 millert Exp $
 .\" $FreeBSD: at.man,v 1.6 1997/02/22 19:54:05 peter Exp $
 .Dd May 13, 2002
 .Dt AT 1
@@ -50,7 +50,7 @@ Executes commands at a specified time.
 Executes commands when system load levels permit.
 In other words, when
 the load average drops below 1.5, or the value specified in the invocation of
-.Nm atrun .
+.Xr cron 8 .
 .El
 .Pp
 The options are as follows:
@@ -280,8 +280,6 @@ This is the default configuration.
 .Bl -tag -width /var/at/at.allow -compact
 .It Pa /var/at/jobs
 directory containing job files
-.It Pa /var/at/spool
-directory containing output spool files
 .It Pa /var/at/at.allow
 allow permission control
 .It Pa /var/at/at.deny
@@ -294,7 +292,6 @@ job sequence file
 .Xr sh 1 ,
 .Xr touch 1 ,
 .Xr umask 2 ,
-.Xr atrun 8 ,
 .Xr cron 8 ,
 .Xr sendmail 8
 .Sh AUTHORS

@@ -1,4 +1,4 @@
-/*	$OpenBSD: entry.c,v 1.12 2002/07/11 20:15:40 millert Exp $	*/
+/*	$OpenBSD: entry.c,v 1.13 2002/07/15 19:13:29 millert Exp $	*/
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: entry.c,v 1.12 2002/07/11 20:15:40 millert Exp $";
+static char const rcsid[] = "$OpenBSD: entry.c,v 1.13 2002/07/15 19:13:29 millert Exp $";
 #endif
 
 /* vix 26jan87 [RCS'd; rest of log is in RCS file]
@@ -61,6 +61,7 @@ static int	set_element(bitstr_t *, int, int, int);
 void
 free_entry(entry *e) {
 	free(e->cmd);
+	free(e->pwd);
 	env_free(e->envp);
 	free(e);
 }
@@ -253,14 +254,16 @@ load_entry(FILE *file, void (*error_func)(), struct passwd *pw, char **envp) {
 			goto eof;
 		}
 		Debug(DPARS, ("load_entry()...uid %ld, gid %ld\n",
-			      (long)e->uid, (long)e->gid))
+			      (long)e->pwd->pw_uid, (long)e->pwd->pw_gid))
 	} else if (ch == '*') {
 		ecode = e_cmd;
 		goto eof;
 	}
 
-	e->uid = pw->pw_uid;
-	e->gid = pw->pw_gid;
+	if ((e->pwd = pw_dup(pw)) == NULL) {
+		ecode = e_memory;
+		goto eof;
+	}
 
 	/* copy and fix up environment.  some variables are just defaults and
 	 * others are overrides.
@@ -372,6 +375,8 @@ load_entry(FILE *file, void (*error_func)(), struct passwd *pw, char **envp) {
  eof:
 	if (e->envp)
 		env_free(e->envp);
+	if (e->pwd)
+		free(e->pwd);
 	if (e->cmd)
 		free(e->cmd);
 	free(e);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.16 2002/07/09 00:24:50 millert Exp $	*/
+/*	$OpenBSD: popen.c,v 1.17 2002/07/15 19:13:29 millert Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -42,7 +42,7 @@
 #if 0
 static const sccsid[] = "@(#)popen.c	8.3 (Berkeley) 4/6/94";
 #else
-static const char rcsid[] = "$OpenBSD: popen.c,v 1.16 2002/07/09 00:24:50 millert Exp $";
+static const char rcsid[] = "$OpenBSD: popen.c,v 1.17 2002/07/15 19:13:29 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,7 @@ static PID_T *pids;
 static int fds;
 
 FILE *
-cron_popen(char *program, char *type, entry *e) {
+cron_popen(char *program, char *type, struct passwd *pw) {
 	char *cp;
 	FILE *iop;
 	int argc, pdes[2];
@@ -93,28 +93,23 @@ cron_popen(char *program, char *type, entry *e) {
 		return (NULL);
 		/* NOTREACHED */
 	case 0:				/* child */
-		if (e) {
+		if (pw) {
 #if defined(LOGIN_CAP)
-			struct passwd *pwd;
-
-			pwd = getpwuid(e->uid);
-			if (pwd == NULL) {
-				fprintf(stderr, "getpwuid: couldn't get entry for %u\n", e->uid);
-				_exit(ERROR_EXIT);
-			}
-			if (setusercontext(0, pwd, e->uid, LOGIN_SETALL) < 0) {
-				fprintf(stderr, "setusercontext failed for %u\n", e->uid);
+			if (setusercontext(0, pw, pw->pw_uid, LOGIN_SETALL) < 0) {
+				fprintf(stderr,
+				    "setusercontext failed for %s\n",
+				    pw->pw_name);
 				_exit(ERROR_EXIT);
 			}
 #else
-			if (setgid(e->gid) ||
+			if (setgid(pw->pw_gid) ||
 				setgroups(0, NULL) ||
-				initgroups(env_get("LOGNAME", e->envp), e->gid))
+				initgroups(pw->pw_name, pw->pw_gid))
 				    _exit(1);
-			setlogin(env_get("LOGNAME", e->envp));
-			if (setuid(e->uid))
+			setlogin(pw->pw_name);
+			if (setuid(pw->pw_uid))
 				_exit(1);
-			chdir(env_get("HOME", e->envp));
+			chdir(pw->pw_dir);
 #endif /* LOGIN_CAP */
 		}
 		if (*type == 'r') {

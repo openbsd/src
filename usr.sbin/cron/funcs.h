@@ -1,4 +1,4 @@
-/*	$OpenBSD: funcs.h,v 1.7 2002/07/08 18:11:02 millert Exp $	*/
+/*	$OpenBSD: funcs.h,v 1.8 2002/07/15 19:13:29 millert Exp $	*/
 
 /*
  * Copyright (c) 1997,2000 by Internet Software Consortium, Inc.
@@ -38,7 +38,8 @@ void		set_cron_uid(void),
 		acquire_daemonlock(int),
 		skip_comments(FILE *),
 		log_it(const char *, int, const char *, const char *),
-		log_close(void);
+		log_close(void),
+		atrun(at_db *, double, time_t);
 
 int		job_runqueue(void),
 		set_debug_flags(const char *),
@@ -52,7 +53,9 @@ int		job_runqueue(void),
 		strcmp_until(const char *, const char *, char),
 		allowed(const char *),
 		strdtb(char *),
-		open_socket(void);
+		open_socket(void),
+		safe_p(const char *, const char *),
+		scan_atjobs(at_db *, struct timeval *);
 
 char		*env_get(char *, char **),
 		*arpadate(time_t *),
@@ -67,7 +70,7 @@ user		*load_user(int, struct passwd *, const char *),
 
 entry		*load_entry(FILE *, void (*)(), struct passwd *, char **);
 
-FILE		*cron_popen(char *, char *, entry *);
+FILE		*cron_popen(char *, char *, struct passwd *);
 
 #ifndef HAVE_TM_GMTOFF
 long		get_gmtoff(time_t *, struct tm *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.33 2002/07/11 20:17:04 millert Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.34 2002/07/15 19:13:29 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: crontab.c,v 1.33 2002/07/11 20:17:04 millert Exp $";
+static char const rcsid[] = "$OpenBSD: crontab.c,v 1.34 2002/07/15 19:13:29 millert Exp $";
 #endif
 
 /* crontab - install and manage per-user crontab files
@@ -639,6 +639,7 @@ done:
 static void
 poke_daemon() {
 	int sock, flags;
+	unsigned char poke;
 	struct sockaddr_un sun;
 
 	if (utime(SPOOL_DIR, NULL) < OK) {
@@ -654,12 +655,13 @@ poke_daemon() {
 		sun.sun_family = AF_UNIX;
 		sun.sun_len = strlen(sun.sun_path);
 		if ((sock = socket(AF_UNIX, SOCK_STREAM, 0)) >= 0 &&
-		    (flags = fcntl(sock, F_GETFL)) >= 0 &&
-		    fcntl(sock, F_SETFL, flags | O_NONBLOCK) >= 0 &&
 		    connect(sock, (struct sockaddr *)&sun, sizeof(sun)) == 0) {
-			write(sock, "!", 1);
+			poke = RELOAD_CRON;
+			write(sock, &poke, 1);
 			close(sock);
-		}
+		} else
+			fprintf(stderr, "Warning, cron does not appear to be running.\n");
+
 	}
 	(void) signal(SIGPIPE, SIG_DFL);
 }

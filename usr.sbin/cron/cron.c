@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.26 2002/07/09 18:59:12 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.27 2002/07/15 19:13:29 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static const char rcsid[] = "$OpenBSD: cron.c,v 1.26 2002/07/09 18:59:12 millert Exp $";
+static const char rcsid[] = "$OpenBSD: cron.c,v 1.27 2002/07/15 19:13:29 millert Exp $";
 #endif
 
 #define	MAIN_PROGRAM
@@ -38,7 +38,6 @@ static	void	usage(void),
 		sigchld_handler(int),
 		sighup_handler(int),
 		sigchld_reaper(void),
-		check_sigs(int),
 		quit(int),
 		parse_args(int c, char *v[]);
 
@@ -46,12 +45,14 @@ static	volatile sig_atomic_t	got_sighup, got_sigchld;
 static	int			timeRunning, virtualTime, clockTime, cronSock;
 static	long			GMToff;
 static	cron_db			database;
+static	at_db			at_database;
+static	double			batch_maxload = BATCH_MAXLOAD;
 
 static void
 usage(void) {
 	const char **dflags;
 
-	fprintf(stderr, "usage:  %s [-x [", ProgramName);
+	fprintf(stderr, "usage:  %s [-l load_avg] [-x [", ProgramName);
 	for (dflags = DebugFlagNames; *dflags; dflags++)
 		fprintf(stderr, "%s%s", *dflags, dflags[1] ? "," : "]");
 	fprintf(stderr, "]\n");
@@ -136,6 +137,10 @@ main(int argc, char *argv[]) {
 	database.tail = NULL;
 	database.mtime = (time_t) 0;
 	load_database(&database);
+	at_database.head = NULL;
+	at_database.tail = NULL;
+	at_database.mtime = (time_t) 0;
+	scan_atjobs(&at_database, NULL);
 	set_time(1);
 	run_reboot_jobs(&database);
 	timeRunning = virtualTime = clockTime;
@@ -154,7 +159,6 @@ main(int argc, char *argv[]) {
 		int timeDiff;
 		int wakeupKind;
 
-		check_sigs(TRUE);
 		/* ... wait for the time (in minutes) to change ... */
 		do {
 			cron_sleep(timeRunning + 1);
@@ -257,6 +261,22 @@ main(int argc, char *argv[]) {
 
 		/* Jobs to be run (if any) are loaded; clear the queue. */
 		job_runqueue();
+
+		/* Run any jobs in the at queue. */
+		atrun(&at_database, batch_maxload,
+		    timeRunning * SECONDS_PER_MINUTE - GMToff);
+
+		/* Check to see if we received a signal while running jobs. */
+		if (got_sighup) {
+			got_sighup = 0;
+			log_close();
+		}
+		if (got_sigchld) {
+			got_sigchld = 0;
+			sigchld_reaper();
+		}
+		load_database(&database);
+		scan_atjobs(&at_database, NULL);
 	}
 }
 
@@ -303,8 +323,8 @@ find_jobs(int vtime, cron_db *db, int doWild, int doNonWild) {
 	for (u = db->head; u != NULL; u = u->next) {
 		for (e = u->crontab; e != NULL; e = e->next) {
 			Debug(DSCH|DEXT, ("user [%s:%ld:%ld:...] cmd=\"%s\"\n",
-					  env_get("LOGNAME", e->envp),
-					  (long)e->uid, (long)e->gid, e->cmd))
+					  e->pwd->pw_name, (long)e->pwd->pw_uid,
+					  (long)e->pwd->pw_gid, e->cmd))
 			if (bit_test(e->minute, minute) &&
 			    bit_test(e->hour, hour) &&
 			    bit_test(e->month, month) &&
@@ -348,8 +368,8 @@ set_time(int initialize) {
  */
 static void
 cron_sleep(int target) {
-	char c;
 	int fd, nfds;
+	unsigned char poke;
 	struct timeval t1, t2, tv;
 	struct sockaddr_un sun;
 	socklen_t sunlen;
@@ -359,8 +379,6 @@ cron_sleep(int target) {
 	t1.tv_sec += GMToff;
 	tv.tv_sec = (target * SECONDS_PER_MINUTE - t1.tv_sec) + 1;
 	tv.tv_usec = 0;
-	Debug(DSCH, ("[%ld] Target time=%ld, sec-to-wait=%ld\n",
-	    (long)getpid(), (long)target*SECONDS_PER_MINUTE, tv.tv_sec))
 
 	if (fdsr == NULL) {
 		fdsr = (fd_set *)calloc(howmany(cronSock + 1, NFDBITS),
@@ -368,9 +386,13 @@ cron_sleep(int target) {
 	}
 
 	while (timerisset(&tv) && tv.tv_sec < 65) {
+		Debug(DSCH, ("[%ld] Target time=%ld, sec-to-wait=%ld\n",
+		    (long)getpid(), (long)target*SECONDS_PER_MINUTE, tv.tv_sec))
+
+		poke = 0;
 		if (fdsr)
 			FD_SET(cronSock, fdsr);
-		/* Sleep until we time out, get a crontab poke, or signal. */
+		/* Sleep until we time out, get a poke, or get a signal. */
 		nfds = select(cronSock + 1, fdsr, NULL, NULL, &tv);
 		if (nfds == 0)
 			break;		/* timer expired */
@@ -381,18 +403,35 @@ cron_sleep(int target) {
 			    (long)getpid()))
 			fd = accept(cronSock, (struct sockaddr *)&sun, &sunlen);
 			if (fd >= 0) {
-				while (read(fd, &c, sizeof c) > 0)
-					; /* suck up anything in the socket */
+				(void) read(fd, &poke, 1);
 				close(fd);
+				if (poke & RELOAD_CRON)
+					load_database(&database);
+				if (poke & RELOAD_AT) {
+					/*
+					 * We run any pending at jobs right
+					 * away so that "at now" really runs
+					 * jobs immediately.
+					 */
+					gettimeofday(&t2, NULL);
+					if (scan_atjobs(&at_database, &t2))
+						atrun(&at_database,
+						    batch_maxload, t2.tv_sec);
+				}
+			}
+		} else {
+			/* Interrupted by a signal. */
+			if (got_sighup) {
+				got_sighup = 0;
+				log_close();
+			}
+			if (got_sigchld) {
+				got_sigchld = 0;
+				sigchld_reaper();
 			}
 		}
 
-		/*
-		 * Check to see if we were interrupted by a signal or a poke
-		 * on the socket.  If so, service the signal/poke, adjust tv
-		 * and continue the select() where we left off.
-		 */
-		check_sigs(nfds > 0);
+		/* Adjust tv and continue where we left off.  */
 		gettimeofday(&t2, NULL);
 		t2.tv_sec += GMToff;
 		timersub(&t2, &t1, &t1);
@@ -451,31 +490,28 @@ sigchld_reaper() {
 }
 
 static void
-check_sigs(int force_dbload) {
-	if (got_sighup) {
-		got_sighup = 0;
-		log_close();
-	}
-	if (got_sigchld) {
-		got_sigchld = 0;
-		sigchld_reaper();
-	}
-	if (force_dbload)
-		load_database(&database);
-}
-
-static void
 parse_args(int argc, char *argv[]) {
 	int argch;
+	char *ep;
 
-	while (-1 != (argch = getopt(argc, argv, "x:"))) {
+	while (-1 != (argch = getopt(argc, argv, "l:x:"))) {
 		switch (argch) {
-		default:
-			usage();
+		case 'l':
+			errno = 0;
+			batch_maxload = strtod(optarg, &ep);
+			if (*ep != '\0' || ep == optarg || errno == ERANGE ||
+			    batch_maxload < 0) {
+				fprintf(stderr, "Illegal load average: %s\n",
+				    optarg);
+				usage();
+			}
+			break;
 		case 'x':
 			if (!set_debug_flags(optarg))
 				usage();
 			break;
+		default:
+			usage();
 		}
 	}
 }

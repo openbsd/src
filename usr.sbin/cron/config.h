@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.12 2002/07/08 23:42:17 millert Exp $	*/
+/*	$OpenBSD: config.h,v 1.13 2002/07/15 19:13:29 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-/* config.h - configurables for Vixie Cron
+/* config.h - configurables for ISC cron
  */
 
 /*
@@ -95,3 +95,6 @@
 
 			/* if your OS supports BSD authentication */
 #define BSD_AUTH			/*-*/
+
+			/* maximum load at which batch jobs will still run */
+#define BATCH_MAXLOAD	1.5

@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.132 2002/07/11 12:19:31 markus Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.133 2002/07/15 19:13:29 millert Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1851,11 +1851,6 @@ at		gname=daemon
 # ./var/at/jobs
 jobs		gname=crontab mode=01770
 # ./var/at/jobs
-..
-
-# ./var/at/spool
-spool		mode=0700
-# ./var/at/spool
 ..
 
 # ./var/at

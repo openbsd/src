@@ -1,4 +1,4 @@
-/*	$OpenBSD: externs.h,v 1.6 2002/07/08 23:42:17 millert Exp $	*/
+/*	$OpenBSD: externs.h,v 1.7 2002/07/15 19:13:29 millert Exp $	*/
 
 /* Copyright 1993,1994 by Paul Vixie
  * All rights reserved
@@ -57,14 +57,6 @@
 # include <syslog.h>
 #endif
 
-#if (defined(BSD)) && (BSD >= 199103) || defined(__linux) || defined(AIX)
-# include <paths.h>
-#endif /*BSD*/
-
-#if !defined(_PATH_SENDMAIL)
-# define _PATH_SENDMAIL "/usr/lib/sendmail"
-#endif /*SENDMAIL*/
-
 #if defined(LOGIN_CAP)
 #include <login_cap.h>
 #endif /*LOGIN_CAP*/
@@ -115,7 +107,7 @@ extern	int optind, opterr, optopt;
  */
 extern	int		flock(int, int);
 
-/* not all systems who provice flock() provide these definitions.
+/* not all systems who provide flock() provide these definitions.
  */
 #ifndef LOCK_SH
 # define LOCK_SH 1

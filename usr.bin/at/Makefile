@@ -1,7 +1,8 @@
-#	$OpenBSD: Makefile,v 1.6 2002/05/14 18:05:39 millert Exp $
+#	$OpenBSD: Makefile,v 1.7 2002/07/15 19:13:29 millert Exp $
 
 PROG=	at
 SRCS=	at.c panic.c parsetime.c perm.c
+CFLAGS+=-I${.CURDIR}/../../usr.sbin/cron
 MAN=	at.1 atrm.1 atq.1
 LINKS=	${BINDIR}/at ${BINDIR}/atq \
 	${BINDIR}/at ${BINDIR}/atrm \

@@ -1,101 +1,166 @@
-.\"/* Copyright 1988,1990,1993,1996 by Paul Vixie
-.\" * All rights reserved
-.\" */
 .\"
-.\" Copyright (c) 1997,2000 by Internet Software Consortium, Inc.
+.\" Copyright (c) 2002 Todd C. Miller <Todd.Miller@courtesan.com>
+.\" All rights reserved.
 .\"
-.\" Permission to use, copy, modify, and distribute this software for any
-.\" purpose with or without fee is hereby granted, provided that the above
-.\" copyright notice and this permission notice appear in all copies.
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
 .\"
-.\" THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM DISCLAIMS
-.\" ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
-.\" OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE
-.\" CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
-.\" DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
-.\" PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
-.\" ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
-.\" SOFTWARE.
+.\" THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+.\" INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+.\" AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
+.\" THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+.\" EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+.\" PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+.\" OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+.\" WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+.\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+.\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: cron.8,v 1.15 2002/07/08 18:11:02 millert Exp $
+.\" $OpenBSD: cron.8,v 1.16 2002/07/15 19:13:29 millert Exp $
 .\"
-.Dd June 6, 1999
+.Dd July 6, 2002
 .Dt CRON 8
 .Os
 .Sh NAME
 .Nm cron
-.Nd daemon to execute scheduled commands (Vixie Cron)
+.Nd clock daemon
 .Sh SYNOPSIS
 .Nm cron
+.Op Fl l Ar load_avg
+.Op Fl x Ar [ext,sch,proc,pars,load,misc,test,bit]
 .Sh DESCRIPTION
+The
 .Nm
-should be started from
+daemon schedules commands to be run at specified dates and times.
+Commands that are to be run periodically are specified within
+.Xr crontab 5
+files.
+Commands that are only to be run once are scheduled via the
+.Xr at 1
+and
+.Xr batch 1
+commands.
+Normally, the
+.Nm
+daemon is started from the
 .Pa /etc/rc
-or
-.Pa /etc/rc.local .
-It will return immediately, so you don't need to start it with
-.Ql \&& .
+command script.
 Because it can execute commands on a user's behalf,
 .Nm
 should be run late in the startup sequence,
 as close to the time when logins are accepted as possible.
 .Pp
 .Nm
-searches its spool directory
-.Pf ( Pa /var/cron/tabs Ns )
-for
+loads
 .Xr crontab 5
-files which are named after accounts in
-.Pa /etc/passwd ;
-crontabs found are loaded into memory.
-.Nm
-also searches for
-.Pa /etc/crontab
-which is in a different format (see
-.Xr crontab 5 ) .
-.Nm
-then wakes up every minute, examining all loaded crontabs, checking each
-command to see if it should be run in the current minute.
-When executing commands, any output is mailed to the user named in the
-.Ev MAILTO
-environment variable in the crontab, or to the owner of the crontab if
-.Ev MAILTO
-is not present.
-.Pp
+and
+.Xr at 1
+files when it starts up and also when changes are made via the
+.Xr crontab 1
+and
+.Xr at 1
+commands.
 Additionally,
 .Nm
-checks each minute to see if its spool directory's modtime (or the modtime on
-.Pa /etc/crontab )
-has changed, and if it has,
+checks the modification time on the system crontab file
+.Pq Pa /etc/crontab ,
+the crontab spool
+.Pq Pa /var/cron/tabs ,
+and the at spool
+.Pq Pa /var/at/jobs
+once a minute.
+If the modification time has changed, the affected files are reloaded.
+.Pp
+Any output produced by a command is sent to the used specified in the
+.Ev MAILTO
+environment variable as set in the
+.Xr crontab 5
+file or, if no
+.Ev MAILTO
+variable is set (or if this is an
+.Xr at 1
+or
+.Xr batch 1
+job), to the job's owner.
+If a command produces no output, no mail will be sent.
+The exception to this are
+.Xr at 1
+or
+.Xr batch 1
+jobs submitted with the
+.Fl m
+flag.
+In this case, mail will be sent even if the job produces no output.
+.Ss Daylight Saving Time and other time changes
+Local time changes of less than three hours, such as those caused
+by the start or end of Daylight Saving Time, are handled specially.
+This only applies to jobs that run at a specific time and jobs that
+are run with a granularity greater than one hour.  Jobs that run
+more frequently are scheduled normally.
+.Pp
+If time has moved forward, those jobs that would have run in the
+interval that has been skipped will be run immediately.
+Conversely, if time has moved backward, care is taken to avoid running
+jobs twice.
+.Pp
+Time changes of more than 3 hours are considered to be corrections to
+the clock or timezone, and the new time is used immediately.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl l Ar load_avg
+If the current load average is greater than
+.Ar load_avg ,
+.Xr batch 1
+jobs will not be run.
+The default value is 1.5.
+To allow
+.Xr batch 1
+jobs to run regardless of the load, a value of 0.0 may be used.
+.It Fl x Ar debug_flags
+If
 .Nm
-examines the modtime on all crontabs and reloads those which have
-changed.
-Thus
+was compiled with debugging support, a number of debugging flags
+are available to show what
 .Nm
-need not be restarted whenever a crontab file is modified.
-Note that the
-.Xr crontab 1
-command updates the modtime of the spool directory whenever it changes a
-crontab.
+is doing.
+The following flags may be specified:
+.Bl -tag -width Ds
+.It ext
+show extended information; used in conjunction with other debug flags
+to provide even more information
+.It sch
+print information related to scheduling jobs
+.It proc
+print information related to running processes
+.It pars
+print information related to parsing
+.Xr crontab 5
+files
+.It load
+print when loading the databases
+.It misc
+show misc other debugging information
+.It test
+test mode; don't actually execute commands
+.El
 .Pp
-Special considerations exist when the clock is changed by less than 3
-hours; for example, at the beginning and end of Daylight Saving
-Time.
-If the time has moved forward, those jobs which would have
-run in the time that was skipped will be run soon after the change.
-Conversely, if the time has moved backward by less than 3 hours,
-those jobs that fall into the repeated time will not be run.
-.Pp
-Only jobs that run at a particular time (not specified as @hourly, nor with
-.Ql *
-in the hour or minute specifier)
-are
-affected.
-Jobs which are specified with wildcards are run based on the
-new time immediately.
-.Pp
-Clock changes of more than 3 hours are considered to be corrections to
-the clock, and the new time is used immediately.
+Multiple flags may be specified, sepatated by a comma
+.Pq So , Sc
+Regardless of which flags were specified, the
+.Fl x
+flag will cause
+.Nm
+to stay in the foreground and not become a daemon.
+.El
 .Sh SIGNALS
 .Bl -tag -width Ds
 .It Dv SIGHUP
@@ -112,10 +177,16 @@ logs via
 .El
 .Sh FILES
 .Bl -tag -width "/var/cron/tabs/.sock" -compact
+.It Pa /etc/crontab
+system crontab file
+.It Pa /var/at/jobs
+directory containing
+.Xr at 1
+jobs
 .It Pa /var/cron/log
 cron's log file
 .It Pa /var/cron/tabs
-directory of individual crontabs
+directory containing individual crontab files
 .It Pa /var/cron/tabs/.sock
 used by
 .Xr crontab 1
@@ -124,6 +195,7 @@ to tell
 to check for crontab changes immediately
 .El
 .Sh SEE ALSO
+.Xr at 1 ,
 .Xr crontab 1 ,
 .Xr syslog 3 ,
 .Xr crontab 5

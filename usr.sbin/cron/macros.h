@@ -1,4 +1,4 @@
-/*	$OpenBSD: macros.h,v 1.2 2001/02/20 02:03:19 millert Exp $	*/
+/*	$OpenBSD: macros.h,v 1.3 2002/07/15 19:13:29 millert Exp $	*/
 
 /*
  * Copyright (c) 1997,2000 by Internet Software Consortium, Inc.
@@ -60,9 +60,7 @@
 #define	DLOAD		0x0010	/* database loading debug mask */
 #define	DMISC		0x0020	/* misc debug mask */
 #define	DTEST		0x0040	/* test mode: don't execute any commands */
-#define	DBIT		0x0080	/* bit twiddling shown (long) */
 
-#define	CRON_TAB(u)	"%s/%s", SPOOL_DIR, u
 #define	PPC_NULL	((const char **)NULL)
 
 #ifndef MAXHOSTNAMELEN
@@ -94,6 +92,10 @@
 #define	Set_LineNum(ln)	{Debug(DPARS|DEXT,("linenum=%d\n",ln)); \
 			 LineNumber = ln; \
 			}
+
+/* Data values used on cron socket */
+#define RELOAD_CRON	0x2
+#define RELOAD_AT	0x4
 
 #ifdef HAVE_TM_GMTOFF
 #define get_gmtoff(c, t)        (t->tm_gmtoff)

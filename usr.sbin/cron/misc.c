@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.21 2002/07/09 18:59:12 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.22 2002/07/15 19:13:29 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: misc.c,v 1.21 2002/07/09 18:59:12 millert Exp $";
+static char const rcsid[] = "$OpenBSD: misc.c,v 1.22 2002/07/15 19:13:29 millert Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the rest of the log]
@@ -725,7 +725,7 @@ long get_gmtoff(time_t *clock, struct tm *local)
 int
 open_socket()
 {
-	int		   sock, flags;
+	int		   sock;
 	mode_t		   omask;
 	struct sockaddr_un sun;
 
@@ -736,15 +736,6 @@ open_socket()
 		log_it("CRON", getpid(), "DEATH", "can't create socket");
 		exit(ERROR_EXIT);
 	}
-	if ((flags = fcntl(sock, F_GETFL)) == -1 ||
-	    fcntl(sock, F_SETFL, flags | O_NONBLOCK) == -1) {
-		fprintf(stderr, "%s: can't set non-block: %s\n",
-		    ProgramName, strerror(errno));
-		log_it("CRON", getpid(), "DEATH", "can't set non-block");
-		exit(ERROR_EXIT);
-	}
-	(void) fcntl(sock, F_SETFD, 1);
-
 	if (!glue_strings(sun.sun_path, sizeof sun.sun_path, SPOOL_DIR,
 	    CRONSOCK, '/')) {
 		fprintf(stderr, "%s/%s: path too long\n", SPOOL_DIR, CRONSOCK);
