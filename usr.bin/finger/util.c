@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.20 2004/03/15 02:50:29 tedu Exp $	*/
+/*	$OpenBSD: util.c,v 1.21 2005/03/15 12:28:48 niallo Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)util.c	5.14 (Berkeley) 1/17/91";*/
-static const char rcsid[] = "$OpenBSD: util.c,v 1.20 2004/03/15 02:50:29 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: util.c,v 1.21 2005/03/15 12:28:48 niallo Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -163,13 +163,13 @@ expandusername(char *gecos, char *login, char *buf, int buflen)
 	for (p = gecos; *p != '\0'; p++) {
 		if (bp >= &buf[buflen - 1]) {
 			/* buffer overflow - just use login name */
-			snprintf(buf, buflen, "%s", login);
+			strlcpy(buf, login, buflen);
 			buf[buflen - 1] = '\0';
 			return;
 		}
 		if (*p == '&') {
 			/* interpolate full name */
-			snprintf(bp, buflen - (bp - buf), "%s", login);
+			strlcpy(bp, login, buflen - (bp - buf));
 			*bp = toupper(*bp);
 			bp += strlen(bp);
 		}
