@@ -1,8 +1,8 @@
-/*	$OpenBSD: memprobe.c,v 1.36 2002/05/03 13:58:11 espie Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.37 2002/06/20 20:22:58 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
- * Copyright (c) 1997 Tobias Weingartner
+ * Copyright (c) 1997-1999 Tobias Weingartner
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -73,7 +73,9 @@ static __inline bios_memmap_t *
 bios_E820(mp)
 	register bios_memmap_t *mp;
 {
+	void *info;
 	int rc, off = 0, sig, gotcha = 0;
+	info = getEBDAaddr();
 
 	do {
 		BIOS_regs.biosr_es = ((u_int)(mp) >> 4);
@@ -100,29 +102,46 @@ bios_E820(mp)
 	return (mp);
 }
 
-/* XXX Disabled until it is shown it is needed, and a version that does not
- * confuse the AT&T Globalyst 580 comes up.  Ask niklas@openbsd.org if you
- * want to know details.
- */
 #if 0
 /* BIOS int 15, AX=E801
  *
  * Only used if int 15, AX=E820 does not work.
- * This should work for more than 64MB.
+ * This should work for more than 64MB on most
+ * modern machines.  However, there is always
+ * an exception, the older IBM machine do not
+ * like this call.
  */
 static __inline bios_memmap_t *
 bios_E801(mp)
 	register bios_memmap_t *mp;
 {
-	int rc, m1, m2;
+	int rc, m1, m2, m3, m4;
+	u_int8_t *info;
 
-	/* Test for 0xE801 */
-	__asm __volatile(DOINT(0x15) "; setc %b1"
-		: "=a" (m1), "=b" (m2), "=c" (rc) : "0" (0xE801));
+	/* Test for possibility of 0xE801 */
+	info =  getSYSCONFaddr();
+	if(!info) return(NULL);
+	/* XXX - Should test model/submodel/rev here */
+	printf("model(%d,%d,%d)", info[2], info[3], info[4]);
 
-	/* Make a memory map from info */
+	/* Check for 94 or later bios */
+	info = (void *)0xFFFFB;
+	if(info[0] == '9' && info[1] <= '3') return(NULL);
+
+	/* We might have this call */
+	__asm __volatile(DOINT(0x15) "; mov %%ax, %%si; setc %b0"
+		: "=a" (rc), "=S" (m1), "=b" (m2), "=c" (m3), "=d" (m4)
+		: "0" (0xE801));
+
+	/* Test for failure */
 	if(rc & 0xff)
 		return (NULL);
+
+	/* Fixup for screwed up machines */
+	if(m1 == 0){
+		m1 = m3;
+		m2 = m4;
+	}
 #ifdef DEBUG
 	printf("0x15[E801] ");
 #endif
@@ -306,11 +325,12 @@ memprobe()
 			pm = im;
 		}
 	}
-
 	pm->type = BIOS_MAP_END;
-	/* gotta peephole optimize the list */
 
-	apmcheck();
+	/* XXX - gotta peephole optimize the list */
+
+	/* Remove APM needed RAM */
+	apmfixmem();
 
 #ifdef DEBUG
 	printf(")[");
@@ -359,9 +379,14 @@ dump_biosmem(tm)
 	if (!tm)
 		tm = bios_memmap;
 
+	/* libsa printf does not handle quad args, so we use long
+	 * instead.  Note, since we're unlikely to support more than
+	 * 4G of RAM on a x86 box, this not likely to cause a problem.
+	 * If/when we do, libsa may need to be updated some...
+	 */
 	for(p = tm; p->type != BIOS_MAP_END; p++) {
 		printf("Region %ld: type %u at 0x%x for %uKB\n", 
-		    (long)(p - tm), p->type, (u_int)p->addr, 
+		    (long)(p - tm), p->type, (u_int)p->addr,
 		    (u_int)(p->size / 1024));
 
 		if(p->type == BIOS_MAP_FREE)
@@ -380,7 +405,7 @@ mem_delete(sa, ea)
 
 	for (p = bios_memmap; p->type != BIOS_MAP_END; p++) {
 		if (p->type == BIOS_MAP_FREE) {
-			register int32_t sp = p->addr, ep = p->addr + p->size;
+			register int64_t sp = p->addr, ep = p->addr + p->size;
 
 			/* can we eat it as a whole? */
 			if ((sa - sp) <= NBPG && (ep - ea) <= NBPG) {
@@ -418,7 +443,7 @@ mem_add(sa, ea)
 
 	for (p = bios_memmap; p->type != BIOS_MAP_END; p++) {
 		if (p->type == BIOS_MAP_FREE) {
-			register int32_t sp = p->addr, ep = p->addr + p->size;
+			register int64_t sp = p->addr, ep = p->addr + p->size;
 
 			/* is it already there? */
 			if (sp <= sa && ea <= ep) {

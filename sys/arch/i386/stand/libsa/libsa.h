@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.34 2002/03/14 01:26:34 millert Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.35 2002/06/20 20:22:58 weingart Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 Michael Shalayeff
@@ -45,7 +45,7 @@ void pciprobe(void);
 void memprobe(void);
 void diskprobe(void);
 void apmprobe(void);
-void apmcheck(void);
+void apmfixmem(void);
 void dump_biosmem(bios_memmap_t *);
 int mem_add(long, long);
 int mem_delete(long, long);
@@ -53,6 +53,9 @@ void mem_pass(void);
 
 void devboot(dev_t, char *);
 void machdep(void);
+
+void *getSYSCONFaddr(void);
+void *getEBDAaddr(void);
 
 extern const char bdevs[][4];
 extern const int nbdevs;
