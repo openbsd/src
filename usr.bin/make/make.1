@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.63 2004/04/21 13:17:49 jmc Exp $
+.\"	$OpenBSD: make.1,v 1.64 2005/01/15 20:42:49 mbalmer Exp $
 .\"	$OpenPackages$
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
@@ -1338,13 +1338,13 @@ in a test is very simple-minded.
 Currently, the only form that works is
 .Ql .if ${VAR} op something \.
 For instance, tests should be written as
-.Ql .if ${VAR} = "string" ,
+.Ql .if ${VAR} == "string" ,
 not the other way around, which doesn't work.
 .Pp
 For loops are expanded before tests, so a fragment such as:
 .Bd -literal -offset indent
 \&.for TMACHINE in ${SHARED_ARCHS}
-\&.if ${TMACHINE} = ${MACHINE}
+\&.if ${TMACHINE} == ${MACHINE}
      ...
 \&.endif
 \&.endfor
