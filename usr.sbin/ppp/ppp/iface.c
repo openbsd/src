@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: iface.c,v 1.19 2001/08/21 04:09:19 brian Exp $
+ *	$OpenBSD: iface.c,v 1.20 2001/08/21 11:06:04 brian Exp $
  */
 
 #include <sys/param.h>
@@ -624,11 +624,18 @@ iface_Show(struct cmdargs const *arg)
 
   prompt_Printf(arg->prompt, "%s (idx %d) <", iface->name, iface->index);
   for (f = 0; f < sizeof if_flags / sizeof if_flags[0]; f++)
-    if ((if_flags[f].flag & flags) || (!if_flags[f].flag && flags)) {
+    if ((if_flags[f].flag & flags)) {
       prompt_Printf(arg->prompt, "%s%s", flags == iface->flags ? "" : ",",
                     if_flags[f].value);
       flags &= ~if_flags[f].flag;
     }
+
+#if 0
+  if (flags)
+    prompt_Printf(arg->prompt, "%s0x%x", flags == iface->flags ? "" : ",",
+                  flags);
+#endif
+
   prompt_Printf(arg->prompt, "> mtu %d has %d address%s:\n", iface->mtu,
                 iface->addrs, iface->addrs == 1 ? "" : "es");
 
