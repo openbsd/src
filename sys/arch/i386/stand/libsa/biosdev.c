@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.61 2003/09/11 17:39:35 deraadt Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.62 2003/09/16 03:43:11 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -145,7 +145,7 @@ bios_getdiskinfo(int dev, bios_diskinfo_t *pdi)
 		 * If extended disk access functions are not supported
 		 * there is not much point on doing EDD.
 		 */
-		if (!(pdi->bios_edd & 1))
+		if (!(pdi->bios_edd & EXT_BM_EDA))
 			pdi->bios_edd = -1;
 	} else
 		pdi->bios_edd = -1;
