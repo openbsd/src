@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs_vnops.c,v 1.8 1997/03/27 04:39:39 millert Exp $	*/
+/*	$OpenBSD: kernfs_vnops.c,v 1.9 1997/04/26 12:10:00 kstailey Exp $	*/
 /*	$NetBSD: kernfs_vnops.c,v 1.43 1996/03/16 23:52:47 christos Exp $	*/
 
 /*
@@ -79,28 +79,7 @@ extern char ostype[], osrelease[];
 extern int ipsp_kern __P((int, char **, int));
 #endif
 
-struct kern_target {
-	u_char kt_type;
-	u_char kt_namlen;
-	char *kt_name;
-	void *kt_data;
-#define	KTT_NULL	 1
-#define	KTT_TIME	 5
-#define KTT_INT		17
-#define	KTT_STRING	31
-#define KTT_HOSTNAME	47
-#define KTT_AVENRUN	53
-#define KTT_DEVICE	71
-#define	KTT_MSGBUF	89
-#define KTT_USERMEM	91
-#define KTT_DOMAIN	95
-#ifdef IPSEC
-#define KTT_IPSECSPI	107
-#endif
-	u_char kt_tag;
-	u_char kt_vtype;
-	mode_t kt_mode;
-} kern_targets[] = {
+struct kern_target kern_targets[] = {
 /* NOTE: The name must be less than UIO_MX-16 chars in length */
 #define N(s) sizeof(s)-1, s
      /*        name            data          tag           type  ro/rw */
