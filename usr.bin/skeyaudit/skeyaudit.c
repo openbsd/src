@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyaudit.c,v 1.9 2000/08/20 18:42:40 millert Exp $	*/
+/*	$OpenBSD: skeyaudit.c,v 1.10 2000/09/20 21:53:49 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1997, 2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -154,13 +154,21 @@ notify(pw, seq, interactive)
 		(void)fprintf(out,
 		   "To: %s\nSubject: IMPORTANT action required\n", pw->pw_name);
 
-	(void)fprintf(out,
+	if (seq)
+		(void)fprintf(out,
 "\nYou are nearing the end of your current S/Key sequence for account\n\
 %s on system %s.\n\n\
-Your S/key sequence number is now %d.  When it reaches zero\n\
-you will no longer be able to use S/Key to login into the system.\n\n\
-Type \"skeyinit -s\" to reinitialize your sequence number.\n\n",
+Your S/Key sequence number is now %d.  When it reaches zero\n\
+you will no longer be able to use S/Key to log into the system.\n\n",
 pw->pw_name, hostname, seq);
+	else
+		(void)fprintf(out,
+"\nYou are at the end of your current S/Key sequence for account\n\
+%s on system %s.\n\n\
+At this point you can no longer use S/Key to log into the system.\n\n",
+pw->pw_name, hostname);
+	(void)fprintf(out,
+"Type \"skeyinit -s\" to reinitialize your sequence number.\n\n");
 
 	(void)fclose(out);
 	if (!interactive)
