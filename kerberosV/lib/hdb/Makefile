@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2003/05/12 00:59:35 hin Exp $
+# $OpenBSD: Makefile,v 1.9 2003/05/13 03:13:30 hin Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
@@ -30,8 +30,7 @@ regen:
 	asn1_compile ${KRB5SRC}/lib/hdb/hdb.asn1 hdb_asn1
 	for f in *.x; do mv $$f `echo $$f | sed s,.x$$,.c,g`; done
 
-CLEANFILES+=	hdb_err.[ch] \
-		hdb_asn1.[ch] ans1_files asn1.h asn1_files
+CLEANFILES+=	hdb_err.[ch] hdb_asn1.c asn1.h
 
 CFLAGS+=-I${KRB5SRC}/lib/hdb -I${KRB5SRC}/lib/asn1 -I../asn1 -I. -I../krb5
 
