@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.7 1999/05/20 03:29:04 millert Exp $
+#	$OpenBSD: Makefile,v 1.8 2001/06/20 16:27:27 mpech Exp $
 
 MAN=	com.4 cy.4 esp.4 intro.4 le.4 lpt.4 pms.4 scc.4 wd.4
-MANSUBDIR=/alpha
+MANSUBDIR=alpha
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.39 2001/06/17 03:23:46 mickey Exp $
+#	$OpenBSD: Makefile,v 1.40 2001/06/20 16:27:28 mpech Exp $
 #	from: @(#)Makefile	5.1 (Berkeley) 2/12/91
 #	Id: Makefile,v 1.4 1995/12/14 05:41:38 deraadt Exp $
 
@@ -9,6 +9,6 @@ MAN=	apm.4 autoconf.4 bios.4 bktr.4 gus.4 ie.4 intro.4 iy.4 joy.4 \
 
 MLINKS+= speaker.4 spkr.4
 MLINKS+= mem.4 kmem.4
-MANSUBDIR=/i386
+MANSUBDIR=i386
 
 .include <bsd.prog.mk>
