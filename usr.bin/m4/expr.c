@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.7 1999/09/14 08:35:16 espie Exp $	*/
+/*	$OpenBSD: expr.c,v 1.8 1999/09/16 20:19:34 espie Exp $	*/
 /*	$NetBSD: expr.c,v 1.7 1995/09/28 05:37:31 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)expr.c	8.2 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$OpenBSD: expr.c,v 1.7 1999/09/14 08:35:16 espie Exp $";
+static char rcsid[] = "$OpenBSD: expr.c,v 1.8 1999/09/16 20:19:34 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -338,10 +338,16 @@ term()
 			vl *= vr;
 			break;
 		case '/':
-			vl /= vr;
+			if (vr == 0)
+				errx(1, "division by zero in eval.");
+			else
+				vl /= vr;
 			break;
 		case '%':
-			vl %= vr;
+			if (vr == 0)
+				errx(1, "modulo zero in eval.");
+			else
+				vl %= vr;
 			break;
 		}
 	}
