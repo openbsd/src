@@ -1,4 +1,4 @@
-/*      $OpenBSD: eap.c,v 1.17 2002/11/19 18:40:17 jason Exp $ */
+/*      $OpenBSD: eap.c,v 1.18 2003/04/05 19:15:52 millert Exp $ */
 /*	$NetBSD: eap.c,v 1.46 2001/09/03 15:07:37 reinoud Exp $ */
 
 /*
@@ -300,7 +300,7 @@ eap1371_ready_codec(struct eap_softc *sc, u_int8_t a, u_int32_t wd)
 			break;
 		delay(1);
 	}
-	if (to >= EAP_WRITE_TIMEOUT)
+	if (to == EAP_WRITE_TIMEOUT)
 		printf("%s: eap1371_ready_codec timeout 1\n", 
 		       sc->sc_dev.dv_xname);
 
@@ -314,7 +314,7 @@ eap1371_ready_codec(struct eap_softc *sc, u_int8_t a, u_int32_t wd)
 			break;
 		delay(1);
 	}
-	if (to >= EAP_READ_TIMEOUT)
+	if (to == EAP_READ_TIMEOUT)
 		printf("%s: eap1371_ready_codec timeout 2\n", 
 		       sc->sc_dev.dv_xname);
 
@@ -324,7 +324,7 @@ eap1371_ready_codec(struct eap_softc *sc, u_int8_t a, u_int32_t wd)
 			break;
 		delay(1);
 	}
-	if (to >= EAP_READ_TIMEOUT)
+	if (to == EAP_READ_TIMEOUT)
 		printf("%s: eap1371_ready_codec timeout 3\n", 
 		       sc->sc_dev.dv_xname);
 
@@ -349,7 +349,7 @@ eap1371_read_codec(void *sc_, u_int8_t a, u_int16_t *d)
 		if (!(EREAD4(sc, E1371_CODEC) & E1371_CODEC_WIP))
 			break;
 	}
-	if (to > EAP_WRITE_TIMEOUT)
+	if (to == EAP_WRITE_TIMEOUT)
 		printf("%s: eap1371_read_codec timeout 1\n", 
 		       sc->sc_dev.dv_xname);
 
@@ -358,7 +358,7 @@ eap1371_read_codec(void *sc_, u_int8_t a, u_int16_t *d)
 		if (t & E1371_CODEC_VALID)
 			break;
 	}
-	if (to > EAP_WRITE_TIMEOUT)
+	if (to == EAP_WRITE_TIMEOUT)
 		printf("%s: eap1371_read_codec timeout 2\n", 
 		       sc->sc_dev.dv_xname);
 
