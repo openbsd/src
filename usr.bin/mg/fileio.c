@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.17 2001/05/24 10:19:51 art Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.18 2001/07/06 13:32:45 art Exp $	*/
 
 /*
  *	POSIX fileio.c
@@ -498,8 +498,6 @@ make_file_list(buf)
 	LIST		*last;
 	struct filelist *current;
 	char		prefixx[NFILEN + 1];
-	struct stat	statbuf;
-	char		statname[NFILEN + 2];
 
 	/*
 	 * We need three different strings: dir - the name of the directory
@@ -574,33 +572,43 @@ make_file_list(buf)
 	last = NULL;
 
 	while ((dent = readdir(dirp)) != NULL) {
+		int isdir;
+
 		if (dent->d_namlen < len || memcmp(cp, dent->d_name, len) != 0)
 			continue;
 
-		current = (struct filelist *) malloc(sizeof(struct filelist));
+		isdir = 0;
+		if (dent->d_type == DT_DIR) {
+			isdir = 1;
+		} else if (dent->d_type == DT_LNK ||
+			    dent->d_type == DT_UNKNOWN) {
+			struct stat	statbuf;
+			char		statname[NFILEN + 2];
+
+			statbuf.st_mode = 0;
+			if (snprintf(statname, sizeof(statname), "%s/%s",
+			    dir, dent->d_name) > sizeof(statname) - 1) {
+				continue;
+			}
+			if (stat(statname, &statbuf) < 0)
+				continue;
+			if (statbuf.st_mode & S_IFDIR)
+				isdir = 1;
+		}
+
+		current = malloc(sizeof(struct filelist));
 		if (current == NULL)
 			break;
+
 		if (snprintf(current->fl_name, sizeof(current->fl_name),
-		    "%s%s%s", prefixx, dent->d_name, dent->d_type == DT_DIR?
-		    "/" : "") >= sizeof(current->fl_name)) {
+		    "%s%s%s", prefixx, dent->d_name, isdir ? "/" : "")
+		    >= sizeof(current->fl_name)) {
 			free(current);
 			continue;
 		}
 		current->fl_l.l_next = last;
 		current->fl_l.l_name = current->fl_name;
 		last = (LIST *) current;
-		if (dent->d_type != DT_UNKNOWN)
-			continue;
-
-		statbuf.st_mode = 0;
-		if (snprintf(statname, sizeof(statname), "%s/%s",
-		    dir, dent->d_name) > sizeof(statname) - 1) {
-			continue;
-		}
-		if (stat(statname, &statbuf) < 0)
-			continue;
-		if (statbuf.st_mode & S_IFDIR)
-			strcat(current->fl_name, "/");
 	}
 	closedir(dirp);
 
