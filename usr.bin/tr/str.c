@@ -1,4 +1,4 @@
-/*	$OpenBSD: str.c,v 1.8 2003/06/03 02:56:20 millert Exp $	*/
+/*	$OpenBSD: str.c,v 1.9 2004/09/15 22:12:19 deraadt Exp $	*/
 /*	$NetBSD: str.c,v 1.7 1995/08/31 22:13:47 jtc Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)str.c	8.2 (Berkeley) 4/28/95";
 #endif
-static char rcsid[] = "$OpenBSD: str.c,v 1.8 2003/06/03 02:56:20 millert Exp $";
+static char rcsid[] = "$OpenBSD: str.c,v 1.9 2004/09/15 22:12:19 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -124,21 +124,21 @@ bracket(s)
 
 	switch (s->str[1]) {
 	case ':':				/* "[:class:]" */
-		if ((p = strstr(s->str + 2, ":]")) == NULL)
+		if ((p = strstr((char *)s->str + 2, ":]")) == NULL)
 			return (0);
 		*p = '\0';
 		s->str += 2;
 		genclass(s);
-		s->str = p + 2;
+		s->str = (unsigned char *)p + 2;
 		return (1);
 	case '=':				/* "[=equiv=]" */
-		if ((p = strstr(s->str + 2, "=]")) == NULL)
+		if ((p = strstr((char *)s->str + 2, "=]")) == NULL)
 			return (0);
 		s->str += 2;
 		genequiv(s);
 		return (1);
 	default:				/* "[\###*n]" or "[#*n]" */
-		if ((p = strpbrk(s->str + 2, "*]")) == NULL)
+		if ((p = strpbrk((char *)s->str + 2, "*]")) == NULL)
 			return (0);
 		if (p[0] != '*' || strchr(p, ']') == NULL)
 			return (0);
@@ -178,7 +178,7 @@ genclass(s)
 	CLASS *cp, tmp;
 	int *p;
 
-	tmp.name = s->str;
+	tmp.name = (char *)s->str;
 	if ((cp = (CLASS *)bsearch(&tmp, classes, sizeof(classes) /
 	    sizeof(CLASS), sizeof(CLASS), c_class)) == NULL)
 		errx(1, "unknown class %s", s->str);
@@ -231,7 +231,7 @@ genrange(s)
 	STR *s;
 {
 	int stopval;
-	char *savestart;
+	unsigned char *savestart;
 
 	savestart = s->str;
 	stopval = *++s->str == '\\' ? backslash(s) : *s->str++;
@@ -271,9 +271,9 @@ genseq(s)
 		break;
 	default:
 		if (isdigit(*s->str)) {
-			s->cnt = strtol(s->str, &ep, 0);
+			s->cnt = strtol((char *)s->str, &ep, 0);
 			if (*ep == ']') {
-				s->str = ep + 1;
+				s->str = (unsigned char *)ep + 1;
 				break;
 			}
 		}

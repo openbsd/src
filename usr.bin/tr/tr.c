@@ -1,4 +1,4 @@
-/*	$OpenBSD: tr.c,v 1.12 2004/05/09 03:20:20 deraadt Exp $	*/
+/*	$OpenBSD: tr.c,v 1.13 2004/09/15 22:12:19 deraadt Exp $	*/
 /*	$NetBSD: tr.c,v 1.5 1995/08/31 22:13:48 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tr.c	8.2 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: tr.c,v 1.12 2004/05/09 03:20:20 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tr.c,v 1.13 2004/09/15 22:12:19 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -192,8 +192,8 @@ main(int argc, char *argv[])
 	if (!isstring2)
 		usage();
 
-	s1.str = argv[0];
-	s2.str = argv[1];
+	s1.str = (unsigned char *)argv[0];
+	s2.str = (unsigned char *)argv[1];
 
 	if (cflag)
 		for (cnt = NCHARS, p = string1; cnt--;)
@@ -239,7 +239,7 @@ setup(int *string, char *arg, STR *str, int cflag)
 {
 	int cnt, *p;
 
-	str->str = arg;
+	str->str = (unsigned char *)arg;
 	bzero(string, NCHARS * sizeof(int));
 	while (next(str))
 		string[str->lastch] = 1;
