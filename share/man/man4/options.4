@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.157 2005/03/27 06:32:06 jmc Exp $
+.\"	$OpenBSD: options.4,v 1.158 2005/03/30 07:45:57 deraadt Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -396,6 +396,11 @@ standard file system used on many CD-ROMs.
 It also supports Joliet extensions.
 See
 .Xr mount_cd9660 8
+for details.
+.It Cd option UDF
+Includes code for the UDF file systems typically found on DVD discs.
+See
+.Xr mount_udf 8
 for details.
 .It Cd option MSDOSFS
 Includes support for the
@@ -1141,6 +1146,7 @@ is zero, the hardware realtime clock device is not in Daylight Saving Time.
 .Xr mount_null 8 ,
 .Xr mount_portal 8 ,
 .Xr mount_procfs 8 ,
+.Xr mount_udf 8 ,
 .Xr mount_umap 8 ,
 .Xr mount_union 8 ,
 .Xr mrouted 8 ,
