@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.14 2003/04/27 11:22:54 ho Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.15 2003/05/07 04:33:33 deraadt Exp $ */
 /*	$NetBSD: uaudio.c,v 1.60 2002/05/18 15:14:39 kent Exp $	*/
 
 /*
@@ -360,7 +360,7 @@ USB_ATTACH(uaudio)
 	usbd_status err;
 	int i, j, found;
 
-	usbd_devinfo(uaa->device, 0, devinfo);
+	usbd_devinfo(uaa->device, 0, devinfo, sizeof devinfo);
 	printf(": %s\n", devinfo);
 
 	sc->sc_udev = uaa->device;
@@ -611,7 +611,7 @@ char *
 uaudio_id_name(struct uaudio_softc *sc, usb_descriptor_t **dps, int id)
 {
 	static char buf[32];
-	sprintf(buf, "i%d", id);
+	snprintf(buf, sizeof buf, "i%d", id);
 	return (buf);
 }
 
@@ -762,7 +762,8 @@ uaudio_add_mixer(struct uaudio_softc *sc, usb_descriptor_t *v,
 						mix.wValue[k++] =
 							MAKE(p+c+1, o+1);
 				}
-			sprintf(mix.ctlname, "mix%d-%s", d->bUnitId,
+			snprintf(mix.ctlname, sizeof mix.ctlname,
+				"mix%d-%s", d->bUnitId,
 				uaudio_id_name(sc, dps, d->baSourceId[i]));
 			mix.nchan = chs;
 			uaudio_mixer_add_ctl(sc, &mix);
@@ -844,35 +845,40 @@ uaudio_add_feature(struct uaudio_softc *sc, usb_descriptor_t *v,
 		switch (ctl) {
 		case MUTE_CONTROL:
 			mix.type = MIX_ON_OFF;
-			sprintf(mix.ctlname, "fea%d-%s-%s", unit,
+			snprintf(mix.ctlname, sizeof mix.ctlname,
+				"fea%d-%s-%s", unit,
 				uaudio_id_name(sc, dps, srcId),
 				AudioNmute);
 			mix.ctlunit = "";
 			break;
 		case VOLUME_CONTROL:
 			mix.type = MIX_SIGNED_16;
-			sprintf(mix.ctlname, "fea%d-%s-%s", unit,
+			snprintf(mix.ctlname, sizeof mix.ctlname,
+				"fea%d-%s-%s", unit,
 				uaudio_id_name(sc, dps, srcId),
 				AudioNmaster);
 			mix.ctlunit = AudioNvolume;
 			break;
 		case BASS_CONTROL:
 			mix.type = MIX_SIGNED_8;
-			sprintf(mix.ctlname, "fea%d-%s-%s", unit,
+			snprintf(mix.ctlname, sizeof mix.ctlname,
+				"fea%d-%s-%s", unit,
 				uaudio_id_name(sc, dps, srcId),
 				AudioNbass);
 			mix.ctlunit = AudioNbass;
 			break;
 		case MID_CONTROL:
 			mix.type = MIX_SIGNED_8;
-			sprintf(mix.ctlname, "fea%d-%s-%s", unit,
+			snprintf(mix.ctlname, sizeof mix.ctlname,
+				"fea%d-%s-%s", unit,
 				uaudio_id_name(sc, dps, srcId),
 				AudioNmid);
 			mix.ctlunit = AudioNmid;
 			break;
 		case TREBLE_CONTROL:
 			mix.type = MIX_SIGNED_8;
-			sprintf(mix.ctlname, "fea%d-%s-%s", unit,
+			snprintf(mix.ctlname, sizeof mix.ctlname,
+				"fea%d-%s-%s", unit,
 				uaudio_id_name(sc, dps, srcId),
 				AudioNtreble);
 			mix.ctlunit = AudioNtreble;
@@ -882,28 +888,32 @@ uaudio_add_feature(struct uaudio_softc *sc, usb_descriptor_t *v,
 			break;
 		case AGC_CONTROL:
 			mix.type = MIX_ON_OFF;
-			sprintf(mix.ctlname, "fea%d-%s-%s", unit,
+			snprintf(mix.ctlname, sizeof mix.ctlname,
+				"fea%d-%s-%s", unit,
 				uaudio_id_name(sc, dps, srcId),
 				AudioNagc);
 			mix.ctlunit = "";
 			break;
 		case DELAY_CONTROL:
 			mix.type = MIX_UNSIGNED_16;
-			sprintf(mix.ctlname, "fea%d-%s-%s", unit,
+			snprintf(mix.ctlname, sizeof mix.ctlname,
+				"fea%d-%s-%s", unit,
 				uaudio_id_name(sc, dps, srcId),
 				AudioNdelay);
 			mix.ctlunit = "4 ms";
 			break;
 		case BASS_BOOST_CONTROL:
 			mix.type = MIX_ON_OFF;
-			sprintf(mix.ctlname, "fea%d-%s-%s", unit,
+			snprintf(mix.ctlname, sizeof mix.ctlname,
+				"fea%d-%s-%s", unit,
 				uaudio_id_name(sc, dps, srcId),
 				AudioNbassboost);
 			mix.ctlunit = "";
 			break;
 		case LOUDNESS_CONTROL:
 			mix.type = MIX_ON_OFF;
-			sprintf(mix.ctlname, "fea%d-%s-%s", unit,
+			snprintf(mix.ctlname, sizeof mix.ctlname,
+				"fea%d-%s-%s", unit,
 				uaudio_id_name(sc, dps, srcId),
 				AudioNloudness);
 			mix.ctlunit = "";
@@ -941,7 +951,8 @@ uaudio_add_processing_updown(struct uaudio_softc *sc, usb_descriptor_t *v,
 	mix.class = -1;
 	mix.type = MIX_ON_OFF;	/* XXX */
 	mix.ctlunit = "";
-	sprintf(mix.ctlname, "pro%d-mode", d->bUnitId);
+	snprintf(mix.ctlname, sizeof mix.ctlname,
+		"pro%d-mode", d->bUnitId);
 
 	for (i = 0; i < ud->bNrModes; i++) {
 		DPRINTFN(2,("uaudio_add_processing_updown: i=%d bm=0x%x\n",
@@ -972,7 +983,8 @@ uaudio_add_processing(struct uaudio_softc *sc, usb_descriptor_t *v,
 		mix.class = -1;
 		mix.type = MIX_ON_OFF;
 		mix.ctlunit = "";
-		sprintf(mix.ctlname, "pro%d.%d-enable", d->bUnitId, ptype);
+		snprintf(mix.ctlname, sizeof mix.ctlname,
+			"pro%d.%d-enable", d->bUnitId, ptype);
 		uaudio_mixer_add_ctl(sc, &mix);
 	}
 
@@ -1017,7 +1029,8 @@ uaudio_add_extension(struct uaudio_softc *sc, usb_descriptor_t *v,
 		mix.class = -1;
 		mix.type = MIX_ON_OFF;
 		mix.ctlunit = "";
-		sprintf(mix.ctlname, "ext%d-enable", d->bUnitId);
+		snprintf(mix.ctlname, sizeof mix.ctlname,
+			"ext%d-enable", d->bUnitId);
 		uaudio_mixer_add_ctl(sc, &mix);
 	}
 }

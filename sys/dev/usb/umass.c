@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.22 2003/04/27 11:22:54 ho Exp $ */
+/*	$OpenBSD: umass.c,v 1.23 2003/05/07 04:33:33 deraadt Exp $ */
 /*	$NetBSD: umass.c,v 1.49 2001/01/21 18:56:38 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -890,7 +890,7 @@ USB_ATTACH(umass)
 	 * call umass_detach without specifically initialising the struct.
 	 */
 
-	usbd_devinfo(uaa->device, 0, devinfo);
+	usbd_devinfo(uaa->device, 0, devinfo, sizeof devinfo);
 	USB_ATTACH_SETUP;
 
 	sc->iface = uaa->iface;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.10 2003/01/27 20:10:52 jason Exp $ */
+/*	$OpenBSD: if_url.c,v 1.11 2003/05/07 04:33:33 deraadt Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -211,7 +211,7 @@ USB_ATTACH(url)
 	u_char eaddr[ETHER_ADDR_LEN];
 	int i, s;
 
-	usbd_devinfo(dev, 0, devinfo);
+	usbd_devinfo(dev, 0, devinfo, sizeof devinfo);
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", devname, devinfo);
 

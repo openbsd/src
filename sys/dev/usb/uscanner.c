@@ -1,4 +1,4 @@
-/*	$OpenBSD: uscanner.c,v 1.13 2002/11/11 02:32:32 nate Exp $ */
+/*	$OpenBSD: uscanner.c,v 1.14 2003/05/07 04:33:33 deraadt Exp $ */
 /*	$NetBSD: uscanner.c,v 1.34 2002/10/23 09:14:03 jdolecek Exp $	*/
 
 /*
@@ -306,7 +306,7 @@ USB_ATTACH(uscanner)
 	int i;
 	usbd_status err;
 
-	usbd_devinfo(uaa->device, 0, devinfo);
+	usbd_devinfo(uaa->device, 0, devinfo, sizeof devinfo);
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
 

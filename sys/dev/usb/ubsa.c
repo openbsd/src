@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.1 2002/11/30 19:29:29 nate Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.2 2003/05/07 04:33:33 deraadt Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.3 2002/10/27 20:16:41 augustss Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -262,7 +262,7 @@ USB_ATTACH(ubsa)
 	struct ucom_attach_args uca;
 	int i;
 
-        usbd_devinfo(dev, 0, devinfo);
+        usbd_devinfo(dev, 0, devinfo, sizeof devinfo);
         USB_ATTACH_SETUP;
         printf("%s: %s\n", devname, devinfo);
 

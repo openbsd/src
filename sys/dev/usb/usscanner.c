@@ -1,4 +1,4 @@
-/*	$OpenBSD: usscanner.c,v 1.6 2002/07/25 02:18:11 nate Exp $	*/
+/*	$OpenBSD: usscanner.c,v 1.7 2003/05/07 04:33:33 deraadt Exp $	*/
 /*	$NetBSD: usscanner.c,v 1.6 2001/01/23 14:04:14 augustss Exp $	*/
 
 /*
@@ -198,7 +198,7 @@ USB_ATTACH(usscanner)
 
 	DPRINTFN(10,("usscanner_attach: sc=%p\n", sc));
 
-	usbd_devinfo(dev, 0, devinfo);
+	usbd_devinfo(dev, 0, devinfo, sizeof devinfo);
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.13 2003/01/07 09:00:34 kjc Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.14 2003/05/07 04:33:33 deraadt Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -258,7 +258,7 @@ USB_ATTACH(upl)
 
 	DPRINTFN(5,(" : upl_attach: sc=%p, dev=%p", sc, dev));
 
-	usbd_devinfo(dev, 0, devinfo);
+	usbd_devinfo(dev, 0, devinfo, sizeof devinfo);
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
 
