@@ -36,7 +36,7 @@
  * x d . c   x y l o g i c s   7 5 3 / 7 0 5 3   v m e / s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $Id: xd.c,v 1.2 1996/01/12 20:21:04 deraadt Exp $
+ * id: $Id: xd.c,v 1.3 1996/01/13 03:52:44 chuck Exp $
  * started: 27-Feb-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -632,6 +632,9 @@ xdattach(parent, self, aux)
 	newstate = XD_DRIVE_NOLABEL;
 
 	xd->hw_spt = spt;
+	/* Attach the disk: must be before getdisklabel to malloc label */
+	disk_attach(&xd->sc_dk);
+
 	if (xdgetdisklabel(xd, xa->dvmabuf) != XD_ERR_AOK)
 		goto done;
 
@@ -690,9 +693,6 @@ xdattach(parent, self, aux)
 	} else {
 		bcopy(xa->dvmabuf, &xd->dkb, XDFM_BPS);
 	}
-
-	/* Attach the disk. */
-	disk_attach(&xd->sc_dk);
 
 	/* XXX - Where is this and what does it do? -gwr */
 	dk_establish(&xd->sc_dk, &xd->sc_dev);
