@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.5 2004/08/09 20:52:07 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.6 2004/08/24 12:59:51 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -388,27 +388,23 @@ GLOBAL(spin_cpu)
  *
  * REGISTER USAGE:
  *  IN  r1   - return address
- *  IN  r2   - (signed int) number of microseconds
- *      r3   - (float) number of microseconds
- *      r4/5 - (double) number of cycles per microsecond
- *      r6   - (float) number of cycles to delay
- *      r7   - (signed) number of cycles to delay
+ *  IN  r2   - number of microseconds
+ *      r3   - cpu speed in MHz
+ *      r4   - number of cycles to delay
  */
 
 GLOBAL(delay)
-	flt.ss   r3, r2     /* convert microseconds from signed int to float */
-	or.u     r4, r0, hi16(_cycles_per_microsecond)
-	ld.d     r4, r4, lo16(_cycles_per_microsecond)
-	fmul.ssd r6, r3, r4 /* convert microseconds to cycles */
-	int.ss   r7, r6     /* convert cycles from float to signed int */
-	subu     r7, r7, 25 /* subtract for overhead of above instruction */
+	or.u	r3, r0, hi16(_cpuspeed)
+	ld	r3, r3, lo16(_cpuspeed)
+	mul	r4, r2, r3
+	subu	r4, r4, 4	/* overhead of these instructions */
 
 	/* now loop for the given number of cycles */
 1:
-	bcnd.n  gt0, r7, 1b
-	subu    r7, r7, 2       /* two cycles per iteration */
+	bcnd.n	gt0, r4, 1b
+	 subu	r4, r4, 2	/* two cycles per iteration */
 
-	jmp     r1 /* return */
+	jmp	r1
 
 /*****************************************************************************/
 

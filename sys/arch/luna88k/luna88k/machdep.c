@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.9 2004/08/18 13:29:46 aoyama Exp $	*/
+/* $OpenBSD: machdep.c,v 1.10 2004/08/24 12:59:51 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -228,8 +228,7 @@ int machtype = LUNA_88K;	/* may be overwritten in cpu_startup() */
 int cputyp = CPU_88100;		/* XXX: aoyama */
 int boothowto;			/* XXX: should be set in boot loader and locore.S */
 int bootdev;			/* XXX: should be set in boot loader and locore.S */
-int cpuspeed;
-double cycles_per_microsecond;	/* used in locore.S:delay() */
+int cpuspeed = 33;		/* safe guess */
 int sysconsole = 1;		/* 0 = ttya, 1 = keyboard/mouse, used in dev/sio.c */
 u_int16_t dipswitch = 0;	/* set in locore.S */
 int hwplanebits;		/* set in locore.S */
@@ -355,22 +354,14 @@ size_memory()
 int
 getcpuspeed()
 {
-	double clock_mhz;
-
 	switch(machtype) {
 	case LUNA_88K:
-		clock_mhz = 25.0;
-		break;
+		return 25;
 	case LUNA_88K2:
-		clock_mhz = 33.0;
-		break;
+		return 33;
 	default:
 		panic("getcpuspeed: can not determine CPU speed");
-		break;
 	}
-
-	cycles_per_microsecond = clock_mhz;
-	return (int)clock_mhz;
 }
 
 void
@@ -423,7 +414,7 @@ cpu_startup()
 
 	/*
 	 * Initialize error message buffer (at end of core).
-	 * avail_end was pre-decremented in mvme_bootstrap() to compensate.
+	 * avail_end was pre-decremented in luna88k_bootstrap() to compensate.
 	 */
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_kenter_pa((paddr_t)msgbufp + i * NBPG,
