@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.7 2002/06/05 21:09:02 provos Exp $	*/
+/*	$OpenBSD: policy.c,v 1.8 2002/06/09 04:18:56 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -120,6 +120,7 @@ int
 systrace_initpolicy(char *file)
 {
 	gid_t groups[NGROUPS_MAX];
+	char gidbuf[10];
 	int i;
 
 	SPLAY_INIT(&policyroot);
@@ -132,10 +133,15 @@ systrace_initpolicy(char *file)
 	for (i = 0; i < ngroups; i++) {
 		struct group *gr;
 
-		if ((gr = getgrgid(groups[i])) == NULL)
-			err(1, "getgrgid(%d)", groups[i]);
-		if ((groupnames[i] = strdup(gr->gr_name)) == NULL)
-			err(1, "strdup(%s)", gr->gr_name);
+		if ((gr = getgrgid(groups[i])) != NULL) {
+			if ((groupnames[i] = strdup(gr->gr_name)) == NULL)
+				err(1, "strdup(%s)", gr->gr_name);
+		} else {
+			snprintf(gidbuf, sizeof(gidbuf), "%lu",
+			    (u_long)groups[i]);
+			if ((groupnames[i] = strdup(gidbuf)) == NULL)
+				err(1, "strdup(%s)", gidbuf);
+		}
 	}
 
 	if (userpolicy)
