@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.3 2000/04/27 00:00:24 chris Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.4 2000/05/15 19:15:00 chris Exp $ */
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -519,6 +519,10 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			vlan_unconfig(ifp);
 			if_down(ifp);
 			ifp->if_flags &= ~(IFF_UP|IFF_RUNNING);
+			break;
+		}
+		if (vlr.vlr_tag != EVL_VLANOFTAG(vlr.vlr_tag)) {
+			error = EINVAL;		 /* check for valid tag */
 			break;
 		}
 		pr = ifunit(vlr.vlr_parent);
