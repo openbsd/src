@@ -825,10 +825,6 @@ assign_stack_local (mode, size, align)
     addr = plus_constant (virtual_stack_vars_rtx,
 			  frame_offset + bigend_correction);
 
-  if (flag_propolice_protection
-	&& addr == virtual_stack_vars_rtx && mode == BLKmode && size > 0)
-    addr = gen_rtx_PLUS (GET_MODE (addr), addr, GEN_INT (0));
-
 #ifndef FRAME_GROWS_DOWNWARD
   frame_offset += size;
 #endif
@@ -930,6 +926,7 @@ assign_outer_stack_local (mode, size, align, function)
    whose lifetime is controlled by CLEANUP_POINT_EXPRs.  KEEP is 3
    if we are to allocate something at an inner level to be treated as
    a variable in the block (e.g., a SAVE_EXPR).  
+   KEEP is 5 if we allocate a place to return a structure.
 
    TYPE is the type that will be used for the stack slot.  */
 
@@ -943,7 +940,8 @@ assign_stack_temp_for_type (mode, size, keep, type)
   int align;
   int alias_set;
   struct temp_slot *p, *best_p = 0;
-  int char_array = (keep == 1 && search_string_def (type));
+  int char_array = (flag_propolice_protection
+		    && keep == 1 && search_string_def (type));
 
   /* If SIZE is -1 it means that somebody tried to allocate a temporary
      of a variable size.  */
