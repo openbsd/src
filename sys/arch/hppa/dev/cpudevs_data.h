@@ -1,7 +1,7 @@
 /*
  * THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT.
  * generated from:
- *	OpenBSD: cpudevs,v 1.9 1999/04/20 20:19:36 mickey Exp 
+ *	OpenBSD: cpudevs,v 1.10 1999/06/18 03:16:50 mickey Exp 
  */
 
 static const struct hppa_mod_info hppa_knownmods[] = {
@@ -222,12 +222,12 @@ static const struct hppa_mod_info hppa_knownmods[] = {
 	{HPPA_TYPE_FIO,	HPPA_FIO_CENT,	"Core Centronics" },
 	{HPPA_TYPE_FIO,	HPPA_FIO_RS232,	"Core RS-232C" },
 	{HPPA_TYPE_FIO,	HPPA_FIO_SGC,	"SGC Graphics" },
-	{HPPA_TYPE_FIO,	HPPA_FIO_A1,	"Core audio" },
-	{HPPA_TYPE_FIO,	HPPA_FIO_A2NB,	"Advanced audio (no beeper)" },
+	{HPPA_TYPE_FIO,	HPPA_FIO_A1,	"Core audio (int.)" },
+	{HPPA_TYPE_FIO,	HPPA_FIO_A2NB,	"Advanced audio (ext.)" },
 	{HPPA_TYPE_FIO,	HPPA_FIO_FWSCSI,	"Core FW SCSI" },
 	{HPPA_TYPE_FIO,	HPPA_FIO_FDDI,	"Core FDDI" },
-	{HPPA_TYPE_FIO,	HPPA_FIO_A1NB,	"Core audio (no beeper)" },
-	{HPPA_TYPE_FIO,	HPPA_FIO_A2,	"Advanced audio" },
+	{HPPA_TYPE_FIO,	HPPA_FIO_A1NB,	"Core audio (ext.)" },
+	{HPPA_TYPE_FIO,	HPPA_FIO_A2,	"Advanced audio (int.)" },
 	{HPPA_TYPE_FIO,	HPPA_FIO_HPIB,	"Core HPIB" },
 	{HPPA_TYPE_FIO,	HPPA_FIO_TR9000,	"GSC IBM TokenRing" },
 	{HPPA_TYPE_FIO,	HPPA_FIO_VMENET,	"VME Networking" },
@@ -236,9 +236,9 @@ static const struct hppa_mod_info hppa_knownmods[] = {
 	{HPPA_TYPE_FIO,	HPPA_FIO_EISALAN,	"Cascade EISA 100VG lan" },
 	{HPPA_TYPE_FIO,	HPPA_FIO_WHPIB,	"Wax/Clark/Dino HPIB" },
 	{HPPA_TYPE_FIO,	HPPA_FIO_PCILAN,	"PCI Plug-In LAN" },
-	{HPPA_TYPE_FIO,	HPPA_FIO_PCIDSK,	"PCI Plug-In Disk Controller" },
+	{HPPA_TYPE_FIO,	HPPA_FIO_PCIDSK,	"PCI Plug-In Disk" },
 	{HPPA_TYPE_FIO,	HPPA_FIO_SONICET,	"Sonic Ethernet" },
-	{HPPA_TYPE_FIO,	HPPA_FIO_PCIMISC,	"Miscelaneous PCI Plug-in" },
+	{HPPA_TYPE_FIO,	HPPA_FIO_PCIMISC,	"Misc PCI Plug-in" },
 	{HPPA_TYPE_FIO,	HPPA_FIO_GSCSI,	"Core SCSI" },
 	{HPPA_TYPE_FIO,	HPPA_FIO_GPCFD,	"floppy controller" },
 	{HPPA_TYPE_FIO,	HPPA_FIO_GPCIO,	"PS/2 port" },
