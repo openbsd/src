@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.63 2000/03/03 11:31:43 art Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.64 2000/04/15 19:52:48 csapuntz Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -498,7 +498,7 @@ sys_sync(p, v, retval)
 	simple_lock(&mountlist_slock);
 	for (mp = mountlist.cqh_last; mp != (void *)&mountlist; mp = nmp) {
 		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock, p)) {
-			nmp = mp->mnt_list.cqe_next;
+			nmp = mp->mnt_list.cqe_prev;
 			continue;
 		}
 		if ((mp->mnt_flag & MNT_RDONLY) == 0) {
@@ -512,7 +512,7 @@ sys_sync(p, v, retval)
 				mp->mnt_flag |= MNT_ASYNC;
 		}
 		simple_lock(&mountlist_slock);
-		nmp = mp->mnt_list.cqe_next;
+		nmp = mp->mnt_list.cqe_prev;
 		vfs_unbusy(mp, p);
 	}
 	simple_unlock(&mountlist_slock);
