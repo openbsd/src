@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_target.h,v 1.10 2002/05/17 01:33:50 mjacob Exp $	*/
+/*	$OpenBSD: isp_target.h,v 1.11 2002/08/17 17:42:04 mjacob Exp $	*/
 
 /* @(#)isp_target.h 1.3 */
 /*
@@ -525,8 +525,8 @@ int isp_target_notify(struct ispsoftc *, void *, u_int16_t *);
  * Enable/Disable/Modify a logical unit.
  * (softc, cmd, bus, tgt, lun, cmd_cnt, inotify_cnt, opaque)
  */
-#define	DFLT_CMND_CNT	32
-#define	DFLT_INOT_CNT	4
+#define	DFLT_CMND_CNT	0xfe	/* unmonitored */
+#define	DFLT_INOT_CNT	16
 int isp_lun_cmd(struct ispsoftc *, int, int, int, int, int, int, u_int32_t);
 
 /*
