@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.171 2001/11/26 16:50:26 jasoni Exp $ */
+/*	$OpenBSD: pf.c,v 1.172 2001/11/27 17:50:36 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4727,6 +4727,14 @@ done:
 		    ("pf: dropping packet with ip options\n"));
 	}
 
+	if (r && r->rt) {
+		pf_route(m, r);
+		if (r->rt != PF_DUPTO) {
+			m_freem(*m0);
+			*m0 = NULL;
+                }
+	}
+
 	if (log) {
 		struct pf_rule r0;
 
@@ -4738,13 +4746,7 @@ done:
 		}
 		PFLOG_PACKET(ifp, h, m, AF_INET, dir, reason, r);
 	}
-	if (r && r->rt) {
-		pf_route(m, r);
-		if (r->rt != PF_DUPTO) {
-			m_freem(*m0);
-			*m0 = NULL;
-                }
-	}
+	/* XXX (pf_rule *)r may now be invalid from the above log */
 	return (action);
 }
 #endif /* INET */
@@ -4907,6 +4909,14 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 done:   
 	/* XXX handle IPv6 options, if not allowed. not implemented. */
 
+	if (r && r->rt) {
+		pf_route6(m, r);
+		if (r->rt != PF_DUPTO) {
+			m_freem(*m0);
+			*m0 = NULL;
+                }
+	}
+
 	if (log) {
 		struct pf_rule r0;
 
@@ -4918,13 +4928,7 @@ done:
 		}
 		PFLOG_PACKET(ifp, h, m, AF_INET6, dir, reason, r);
 	}
-	if (r && r->rt) {
-		pf_route6(m, r);
-		if (r->rt != PF_DUPTO) {
-			m_freem(*m0);
-			*m0 = NULL;
-                }
-	}
+	/* XXX (pf_rule *)r may now be invalid from the above log */
 	return (action);
 }
 #endif /* INET6 */
