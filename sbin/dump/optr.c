@@ -1,4 +1,4 @@
-/*	$OpenBSD: optr.c,v 1.6 1996/08/06 17:47:15 deraadt Exp $	*/
+/*	$OpenBSD: optr.c,v 1.7 1996/09/01 13:12:35 deraadt Exp $	*/
 /*	$NetBSD: optr.c,v 1.4 1996/05/18 16:16:17 jtk Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-static char rcsid[] = "$OpenBSD: optr.c,v 1.6 1996/08/06 17:47:15 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: optr.c,v 1.7 1996/09/01 13:12:35 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -248,11 +248,6 @@ broadcast(message)
 			continue;
 		for (np = gp->gr_mem; *np; np++) {
 			if (strncmp(*np, utmp.ut_name, sizeof(utmp.ut_name)) != 0)
-				continue;
-			/*
-			 *	Do not send messages to operators on dialups
-			 */
-			if (strncmp(utmp.ut_line, DIALUP, strlen(DIALUP)) == 0)
 				continue;
 #ifdef DEBUG
 			msg("Message to %s at %s\n", *np, utmp.ut_line);

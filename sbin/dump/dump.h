@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.h,v 1.2 1996/06/23 14:30:10 deraadt Exp $	*/
+/*	$OpenBSD: dump.h,v 1.3 1996/09/01 13:12:35 deraadt Exp $	*/
 /*	$NetBSD: dump.h,v 1.9 1995/03/18 14:54:57 cgd Exp $	*/
 
 /*-
@@ -149,7 +149,6 @@ void	interrupt __P((int signo));	/* in case operator bangs on console */
 #define	X_ABORT		3	/* abort dump; don't attempt checkpointing */
 
 #define	OPGRENT	"operator"		/* group entry to notify */
-#define DIALUP	"ttyd"			/* prefix for dialups */
 
 struct	fstab *fstabsearch __P((char *key));	/* search fs_file and fs_spec */
 
