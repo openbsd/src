@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.4 1996/05/02 13:12:15 deraadt Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.5 1996/11/23 23:19:51 kstailey Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -214,7 +214,7 @@ schedcpu(arg)
 			    p->p_stat == SRUN &&
 			    (p->p_flag & P_INMEM) &&
 			    (p->p_priority / PPQ) != (p->p_usrpri / PPQ)) {
-				remrq(p);
+				remrunqueue(p);
 				p->p_priority = p->p_usrpri;
 				setrunqueue(p);
 			} else

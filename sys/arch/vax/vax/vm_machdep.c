@@ -211,7 +211,7 @@ setrunqueue(p)
  * on that queue, clear the queue bit in whichqs.
  */
 void
-remrq(p)
+remrunqueue(p)
 	struct proc *p;
 {
 	struct	proc *qp;
@@ -219,7 +219,7 @@ remrq(p)
 
 	bitnr = (p->p_priority >> 2);
 	if (bitisclear(bitnr, whichqs))
-		panic("remrq: Process not in queue");
+		panic("remrunqueue: Process not in queue");
 
 	_remque(p);
 

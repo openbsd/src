@@ -66,7 +66,7 @@ pc	.req	r15
  	ldr	lr, [sp], #0x0004;	/* Pull the return address */
 
 /*
- * setrunqueue() and remrq()
+ * setrunqueue() and remrunqueue()
  *
  * Functions to add and remove a process for the run queue.
  */
@@ -165,8 +165,8 @@ Ltext2:
  *	r0 = process
  */
 
-	.global	_remrq
-_remrq:
+	.global	_remrunqueue
+_remrunqueue:
 
 /*
  * Local register usage

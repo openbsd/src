@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_glue.c,v 1.20 1996/08/02 00:05:59 niklas Exp $    */
+/*	$OpenBSD: vm_glue.c,v 1.21 1996/11/23 23:19:54 kstailey Exp $    */
 /*	$NetBSD: vm_glue.c,v 1.55.4.1 1996/06/13 17:25:45 cgd Exp $	*/
 
 /* 
@@ -543,7 +543,7 @@ swapout(p)
 	s = splstatclock();
 	p->p_flag &= ~P_INMEM;
 	if (p->p_stat == SRUN)
-		remrq(p);
+		remrunqueue(p);
 	splx(s);
 	p->p_swtime = 0;
 	++cnt.v_swpout;

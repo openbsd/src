@@ -1,4 +1,4 @@
-/*	$OpenBSD: Locore.c,v 1.2 1996/06/04 12:49:11 niklas Exp $	*/
+/*	$OpenBSD: Locore.c,v 1.3 1996/11/23 23:19:26 kstailey Exp $	*/
 /*	$NetBSD: Locore.c,v 1.11 1995/08/13 00:05:05 mycroft Exp $	*/
 
 /*
@@ -227,7 +227,7 @@ savectx(pcbp) struct pcb *pcbp; { return (0); }
 setrunqueue(p) struct proc *p; { }
 
 /*ARGSUSED*/
-remrq(p) struct proc *p; { }
+remrunqueue(p) struct proc *p; { }
 
 swtch() { if (whichqs) whichqs = 0; }
 

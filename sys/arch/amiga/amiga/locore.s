@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.11 1996/08/19 00:04:14 niklas Exp $	*/
+/*	$OpenBSD: locore.s,v 1.12 1996/11/23 23:19:27 kstailey Exp $	*/
 /*	$NetBSD: locore.s,v 1.56.2.2 1996/06/14 11:20:45 is Exp $	*/
 
 /*
@@ -1278,7 +1278,7 @@ Lset2:
  *
  * Call should be made at spl6().
  */
-ENTRY(remrq)
+ENTRY(remrunqueue)
 	movl	sp@(4),a0
 	clrl	d0
 	movb	a0@(P_PRIORITY),d0
@@ -1308,7 +1308,7 @@ Lrem2:
 	rts
 
 Lrem3:
-	.asciz	"remrq"
+	.asciz	"remrunqueue"
 Lsw0:
 	.asciz	"cpu_switch"
 	.even

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.11 1996/10/30 22:38:14 niklas Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.12 1996/11/23 23:19:23 kstailey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.49 1996/10/18 20:35:23 cgd Exp $	*/
 
 /*
@@ -1597,19 +1597,19 @@ setrunqueue(p)
 }
 
 /*
- * Remrq(p)
+ * Remrunqueue(p)
  *
  * Call should be made at splclock().
  */
 void
-remrq(p)
+remrunqueue(p)
 	struct proc *p;
 {
 	int bit;
 
 	bit = p->p_priority >> 2;
 	if ((whichqs & (1 << bit)) == 0)
-		panic("remrq");
+		panic("remrunqueue");
 
 	p->p_back->p_forw = p->p_forw;
 	p->p_forw->p_back = p->p_back;

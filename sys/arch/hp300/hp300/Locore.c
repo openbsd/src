@@ -226,7 +226,7 @@ savectx(pcbp) struct pcb *pcbp; { return (0); }
 setrunqueue(p) struct proc *p; { }
 
 /*ARGSUSED*/
-remrq(p) struct proc *p; { }
+remrunqueue(p) struct proc *p; { }
 
 swtch() { if (whichqs) whichqs = 0; }
 

@@ -1088,7 +1088,7 @@ Lset2:
  *
  * Call should be made at spl6().
  */
-ENTRY(remrq)
+ENTRY(remrunqueue)
 	movl	sp@(4),a0
 	clrl	d0
 	movb	a0@(P_PRIORITY),d0
@@ -1118,7 +1118,7 @@ Lrem2:
 	rts
 
 Lrem3:
-	.asciz	"remrq"
+	.asciz	"remrunqueue"
 Lsw0:
 	.asciz	"cpu_switch"
 	.even

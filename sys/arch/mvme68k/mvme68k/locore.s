@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.9 1996/06/16 00:53:45 deraadt Exp $ */
+/*	$OpenBSD: locore.s,v 1.10 1996/11/23 23:19:41 kstailey Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -1223,7 +1223,7 @@ Lset2:
  *
  * Call should be made at spl6().
  */
-ENTRY(remrq)
+ENTRY(remrunqueue)
 	movl	sp@(4),a0
 	movb	a0@(P_PRIORITY),d0
 #ifdef DIAGNOSTIC
@@ -1252,7 +1252,7 @@ Lrem2:
 	movl	#Lrem3,sp@-
 	jbsr	_panic
 Lrem3:
-	.asciz	"remrq"
+	.asciz	"remrunqueue"
 	.even
 #endif
 

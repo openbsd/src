@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.6 1996/09/22 11:29:52 pefo Exp $	*/
+/*	$OpenBSD: locore.S,v 1.7 1996/11/23 23:19:29 kstailey Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -50,7 +50,7 @@
  *	v 1.1 89/07/10 14:27:41 nelson Exp  SPRITE (DECWRL)
  *
  *	from: @(#)locore.s	8.5 (Berkeley) 1/4/94
- *	$Id: locore.S,v 1.6 1996/09/22 11:29:52 pefo Exp $
+ *	$Id: locore.S,v 1.7 1996/11/23 23:19:29 kstailey Exp $
  */
 
 /*
@@ -573,7 +573,7 @@ END(setrunqueue)
  *
  * Call should be made at splclock().
  */
-NON_LEAF(remrq, STAND_FRAME_SIZE, ra)
+NON_LEAF(remrunqueue, STAND_FRAME_SIZE, ra)
 	subu	sp, sp, STAND_FRAME_SIZE
 	.mask	0x80000000, (STAND_RA_OFFSET - STAND_FRAME_SIZE)
 	lbu	t0, P_PRIORITY(a0)	# get from p->p_priority / 4 queue
@@ -585,7 +585,7 @@ NON_LEAF(remrq, STAND_FRAME_SIZE, ra)
 	sw	ra, STAND_RA_OFFSET(sp)	##
 	bne	v0, zero, 1f		##
 	lw	v0, P_BACK(a0)		# v0 = p->p_back
-	PANIC("remrq")			## it wasnt recorded to be on its q
+	PANIC("remrunqueue")		## it wasnt recorded to be on its q
 1:
 	lw	v1, P_FORW(a0)		# v1 = p->p_forw
 	nop
@@ -604,7 +604,7 @@ NON_LEAF(remrq, STAND_FRAME_SIZE, ra)
 	sw	zero, P_BACK(a0)	## for firewall checking
 	j	ra
 	addu	sp, sp, STAND_FRAME_SIZE
-END(remrq)
+END(remrunqueue)
 
 /*
  * switch_exit()

@@ -550,7 +550,7 @@ END(setrunqueue)
  *
  * Call should be made at splclock().
  */
-NON_LEAF(remrq, STAND_FRAME_SIZE, ra)
+NON_LEAF(remrunqueue, STAND_FRAME_SIZE, ra)
 	subu	sp, sp, STAND_FRAME_SIZE
 	.mask	0x80000000, (STAND_RA_OFFSET - STAND_FRAME_SIZE)
 	lbu	t0, P_PRIORITY(a0)	# get from p->p_priority / 4 queue
@@ -562,7 +562,7 @@ NON_LEAF(remrq, STAND_FRAME_SIZE, ra)
 	sw	ra, STAND_RA_OFFSET(sp)	##
 	bne	v0, zero, 1f		##
 	lw	v0, P_BACK(a0)		# v0 = p->p_back
-	PANIC("remrq")			## it wasnt recorded to be on its q
+	PANIC("remrunqueue")			## it wasnt recorded to be on its q
 1:
 	lw	v1, P_FORW(a0)		# v1 = p->p_forw
 	nop
@@ -581,7 +581,7 @@ NON_LEAF(remrq, STAND_FRAME_SIZE, ra)
 	sw	zero, P_BACK(a0)	## for firewall checking
 	j	ra
 	addu	sp, sp, STAND_FRAME_SIZE
-END(remrq)
+END(remrunqueue)
 
 /*
  * switch_exit()

@@ -584,10 +584,10 @@ ENTRY(setrunqueue)
 2:	.asciz "setrunqueue problem!"
 
 /*
- * remrq(struct proc *p);
+ * remrunqueue(struct proc *p);
  * Remove a process from its queue.  Should be called at splclock().
  */
-ENTRY(remrq)
+ENTRY(remrunqueue)
 	movd	S_ARG0, r1
 	movd	r2, tos
 	movzbd	P_PRIORITY(r1), r0
@@ -611,7 +611,7 @@ ENTRY(remrq)
 
 1:	addr	2f(pc),tos		/* No queue entry! */
 	bsr	_panic	
-2:	.asciz "remrq problem!"
+2:	.asciz "remrunqueue problem!"
 
 /* Switch to another process from kernel code...  */
 
