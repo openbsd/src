@@ -1,4 +1,4 @@
-/*	$OpenBSD: snake.c,v 1.2 1999/04/20 23:01:12 pjanzen Exp $	*/
+/*	$OpenBSD: snake.c,v 1.3 2001/02/18 16:03:02 pjanzen Exp $	*/
 /*	$NetBSD: snake.c,v 1.8 1995/04/29 00:06:41 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)snake.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: snake.c,v 1.2 1999/04/20 23:01:12 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: snake.c,v 1.3 2001/02/18 16:03:02 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,19 +56,54 @@ static char rcsid[] = "$OpenBSD: snake.c,v 1.2 1999/04/20 23:01:12 pjanzen Exp $
  * arrow keys.  You can leave at the exit any time.
  *
  * compile as follows:
- *	cc -O snake.c move.c -o snake -lm -ltermlib
+ *	cc -O snake.c move.c -o snake -lm -lcurses
  */
 
 #include <sys/param.h>
+#include <sys/types.h>
+#include <sys/ioctl.h>
 
-#include <errno.h>
+#include <curses.h>
+#include <err.h>
 #include <fcntl.h>
+#include <math.h>
 #include <pwd.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <termios.h>
 #include <time.h>
 #include <unistd.h>
 
-#include "snake.h"
 #include "pathnames.h"
+
+#ifdef	DEBUG
+#define	cashvalue	(loot-penalty)/25
+#else
+#define	cashvalue	chunk*(loot-penalty)/25
+#endif
+
+struct point {
+	int col, line;
+};
+
+#define	same(s1, s2)	((s1)->line == (s2)->line && (s1)->col == (s2)->col)
+
+#define PENALTY	10	/* % penalty for invoking spacewarp     */
+
+#define ME		'I'
+#define SNAKEHEAD	'S'
+#define SNAKETAIL	's'
+#define TREASURE	'$'
+#define GOAL		'#'
+
+#define TOPN	3	/* top scores to print if you lose */
+
+#define pchar(point, c)	mvaddch((point)->line + 1, (point)->col + 1, (c))
+/* Can't use terminal timing to do delay, in light of X */
+#define delay(t)	usleep((t) * 50000)
+/* Delay units are 1/20 s */
 
 struct point you;
 struct point money;
@@ -76,21 +111,41 @@ struct point finish;
 struct point snake[6];
 
 int	loot, penalty;
-int	long tl, tm=0L;
 int	moves;
-char	stri[BSIZE];
-char	*p;
-char	ch, savec;
-char	*kl, *kr, *ku, *kd;
-int	fast=1;
-int	repeat=1;
-time_t	tv;
-char	*tn;
+int	fast = 1;
 
 int rawscores;
 #ifdef LOGGING
 FILE	*logfile;
 #endif
+
+int	lcnt, ccnt;	/* user's idea of screen size */
+int	chunk;		/* amount of money given at a time */
+
+void	snscore  __P((int, int));
+
+void	chase    __P((struct point *, struct point *));
+int	chk      __P((struct point *));
+void	drawbox  __P((void));
+void	length   __P((int));
+void	mainloop __P((void));
+int	post     __P((int, int));
+int	pushsnake __P((void));
+void	setup    __P((void));
+void	snrand   __P((struct point *));
+void	snap     __P((void));
+void	spacewarp __P((int));
+void	stop    __P((int));
+int	stretch  __P((struct point *));
+void	surround __P((struct point *));
+void	suspend  __P((void));
+void	win      __P((struct point *));
+void	winnings __P((int));
+
+#ifdef LOGGING
+void	logit   __P((char *));
+#endif
+
 
 int
 main(argc, argv)
@@ -99,6 +154,7 @@ main(argc, argv)
 {
 	int	ch, i;
 	char	*p, **av;
+	time_t	tv;
 
 	/* don't create the score file if it doesn't exist. */
 	rawscores = open(_PATH_RAWSCORES, O_RDWR, 0664);
@@ -111,7 +167,6 @@ main(argc, argv)
 	setgid(getgid());
 
 	(void)time(&tv);
-	srandom((int)tv);
 
 	/* check to see if we were called as snscore */
 	av = argv;
@@ -123,7 +178,7 @@ main(argc, argv)
 		exit(0);
 	}
 
-	while ((ch = getopt(argc, argv, "hl:sw:")) != -1)
+	while ((ch = getopt(argc, argv, "hl:stw:")) != -1)
 		switch ((char)ch) {
 #if 0
 		case 'd':
@@ -140,6 +195,9 @@ main(argc, argv)
 			snscore(rawscores, 0);
 			exit(0);
 			break;
+		case 't': /* slow terminal */
+			fast = 0;
+			break;
 		case '?':
 		case 'h':
 		default:
@@ -148,12 +206,24 @@ main(argc, argv)
 			exit(1);
 		}
 
+	srandom((int)tv);
 	penalty = loot = 0;
-	getcap();
+	initscr();
+#ifdef KEY_LEFT
+	keypad(stdscr, TRUE);
+#endif
+	nonl();
+	cbreak();
+	noecho();
+
+	if (!lcnt || lcnt > LINES - 2)
+		lcnt = LINES - 2;
+	if (!ccnt || ccnt > COLS - 3)
+		ccnt = COLS - 3;
 
 	i = MIN(lcnt, ccnt);
 	if (i < 4) {
-		cook();
+		endwin();
 		errx(1, "screen too small for a fair game.");
 	}
 	/*
@@ -181,16 +251,12 @@ main(argc, argv)
 	chunk = (675.0 / (i + 6)) + 2.5;	/* min screen edge */
 
 	signal(SIGINT, stop);
-	putpad(TI);	/*	String to begin programs that use cm */
-	putpad(KS);	/*	Put terminal in keypad transmit mode */
 
 	snrand(&finish);
 	snrand(&you);
 	snrand(&money);
 	snrand(&snake[0]);
 
-	if (ospeed < 9600 || ((!CM) && (!TA)))
-		fast = 0;
 	for (i = 1; i < 6; i++)
 		chase(&snake[i], &snake[i - 1]);
 	setup();
@@ -203,79 +269,37 @@ main(argc, argv)
 void
 mainloop()
 {
-	int	j, k;
-	int	c, match, lastc = 0;
-	struct point tmp;
+	int	k;
+	int	c, lastc = 0;
+	int repeat = 1;
 
 	for (;;) {
-		tmp.col = you.col + 1;
-		tmp.line = you.line + 1; /* Highlight you, not left & above */
-		move(&tmp);
-		fflush(stdout);
-		if (((c = getchar() & 0177) <= '9') && (c >= '0')) {
-			ungetc(c, stdin);
-			j = scanf("%d", &repeat);
-			c = getchar() & 0177;
+		/* Highlight you, not left & above */
+		move(you.line + 1, you.col + 1);
+		refresh();
+		if (((c = getch()) <= '9') && (c >= '0')) {
+			repeat = c - '0';
+			while (((c = getch()) <= '9') && (c >= '0'))
+				repeat = 10 * repeat + (c - '0');
 		} else {
 			if (c != '.')
 				repeat = 1;
 		}
 		if (c == '.')
 			c = lastc;
-		if ((Klength > 0) &&
-		    (c == *KL || c == *KR || c == *KU || c == *KD)) {
-			savec = c;
-			match = 0;
-			kl = KL;
-			kr = KR;
-			ku = KU;
-			kd = KD;
-			for (j = Klength; j > 0; j--) {
-				if (match != 1) {
-					match = 0;
-					if (*kl++ == c) {
-						ch = 'h';
-						match++;
-					}
-					if (*kr++ == c) {
-						ch = 'l';
-						match++;
-					}
-					if (*ku++ == c) {
-						ch = 'k';
-						match++;
-					}
-					if (*kd++ == c) {
-						ch = 'j';
-						match++;
-					}
-					if (match == 0) {
-						ungetc(c, stdin);
-						ch = savec;
-		/* Oops! 
-		 * This works if we figure it out on second character.
-		 */
-						break;
-					}
-				}
-				savec = c;
-				if (j != 1)
-					c = getchar() & 0177;
-			}
-			c = ch;
-		}
 		if (!fast)
-			flushi();
+			flushinp();
 		lastc = c;
+
 		switch (c) {
 		case CTRL('z'):
 			suspend();
 			continue;
-		case EOT:
+		case '\044':
 		case 'x':
 		case 0177:	/* del or end of file */
-			ll();
-			cook();
+		case ERR:
+			endwin();
 			length(moves);
 #ifdef LOGGING
 			logit("quit");
@@ -329,54 +353,71 @@ mainloop()
 			c = 'j';
 			break;
 		}
-		for(k = 1; k <= repeat; k++) {
+		for (k = 1; k <= repeat; k++) {
 			moves++;
 			switch (c) {
 			case 's':
 			case 'h':
+#ifdef KEY_LEFT
+			case KEY_LEFT:
+#endif
 			case '\b':
-				if (you.col >0) {
+				if (you.col > 0) {
 					if ((fast) || (k == 1))
-						pchar(&you,' ');
+						pchar(&you, ' ');
 					you.col--;
-					if ((fast) || (k == repeat) || (you.col == 0))
-						pchar(&you,ME);
+					if ((fast) || (k == repeat) ||
+					    (you.col == 0))
+						pchar(&you, ME);
 				}
 				break;
 			case 'f':
 			case 'l':
+#ifdef KEY_RIGHT
+			case KEY_RIGHT:
+#endif
 			case ' ':
-				if (you.col < ccnt-1) {
+				if (you.col < ccnt - 1) {
 					if ((fast) || (k == 1))
 						pchar(&you, ' ');
 					you.col++;
-					if ((fast) || (k == repeat) || (you.col == ccnt-1))
+					if ((fast) || (k == repeat) ||
+					    (you.col == ccnt - 1))
 						pchar(&you, ME);
 				}
 				break;
 			case CTRL('p'):
 			case 'e':
 			case 'k':
+#ifdef KEY_UP
+			case KEY_UP:
+#endif
 			case 'i':
 				if (you.line > 0) {
 					if ((fast) || (k == 1))
-						pchar(&you,' ');
+						pchar(&you, ' ');
 					you.line--;
-					if ((fast) || (k == repeat) || (you.line == 0))
-						pchar(&you,ME);
+					if ((fast) || (k == repeat) ||
+					    (you.line == 0))
+						pchar(&you, ME);
 				}
 				break;
 			case CTRL('n'):
 			case 'c':
 			case 'j':
-			case LF:
+#ifdef KEY_DOWN
+			case KEY_DOWN:
+#endif
+			case '\n':
+			case '\r':
 			case 'm':
-				if (you.line+1 < lcnt) {
+				if (you.line + 1 < lcnt) {
 					if ((fast) || (k == 1))
-						pchar(&you,' ');
+						pchar(&you, ' ');
 					you.line++;
-					if ((fast) || (k == repeat) || (you.line == lcnt-1))
-						pchar(&you,ME);
+					if ((fast) || (k == repeat) ||
+					    (you.line == lcnt - 1))
+						pchar(&you, ME);
 				}
 				break;
 			}
@@ -387,18 +428,21 @@ mainloop()
 					pchar(&you, ' ');
 				do {
 					snrand(&money);
-				} while ((money.col == finish.col && money.line == finish.line) ||
-					 (money.col < 5 && money.line == 0) ||
-					 (money.col == you.col && money.line == you.line));
+				} while ((money.col == finish.col &&
+				    money.line == finish.line) ||
+				    (money.col < 5 && money.line == 0) ||
+				    (money.col == you.col &&
+				    money.line == you.line));
 				pchar(&money, TREASURE);
 				winnings(cashvalue);
 /*				continue;		 Previously, snake missed a turn! */
 			}
-			if (same(&you,&finish)) {
+			if (same(&you, &finish)) {
 				win(&finish);
-				ll();
-				cook();
+				flushinp();
+				endwin();
 				printf("You have won with $%d.\n", cashvalue);
+				fflush(stdout);
 #ifdef LOGGING
 				logit("won");
 #endif
@@ -410,7 +454,6 @@ mainloop()
 			if (pushsnake())
 				break;
 		}
-		fflush(stdout);
 	}
 }
 
@@ -420,7 +463,7 @@ setup()
 {
 	int	i;
 
-	clear();
+	erase();
 	pchar(&you, ME);
 	pchar(&finish, GOAL);
 	pchar(&money, TREASURE);
@@ -429,34 +472,21 @@ setup()
 	}
 	pchar(&snake[0], SNAKEHEAD);
 	drawbox();
-	fflush(stdout);
+	refresh();
 }
 
 void
 drawbox()
 {
 	int i;
-	struct point p;
 
-	p.line = -1;
-	for (i = 0; i < ccnt; i++) {
-		p.col = i;
-		pchar(&p, '-');
+	for (i = 1; i <= ccnt; i++) {
+		mvaddch(0, i, '-');
+		mvaddch(lcnt + 1, i, '-');
 	}
-	p.col = ccnt;
-	for (i = -1; i <= lcnt; i++) {
-		p.line = i;
-		pchar(&p, '|');
-	}
-	p.col = -1;
-	for (i = -1; i <= lcnt; i++) {
-		p.line = i;
-		pchar(&p, '|');
-	}
-	p.line = lcnt;
-	for (i = 0; i < ccnt; i++) {
-		p.col = i;
-		pchar(&p, '-');
+	for (i = 0; i <= lcnt + 1; i++) {
+		mvaddch(i, 0, '|');
+		mvaddch(i, ccnt + 1, '|');
 	}
 }
 
@@ -495,10 +525,10 @@ post(iscore, flag)
 	int	iscore, flag;
 {
 	short	score = iscore;
-	short	oldbest=0;
+	short	oldbest = 0;
 	uid_t	uid;
 
-	/* I want to printf() the scores for terms that clear on cook(),
+	/* I want to printf() the scores for terms that clear on endwin(),
 	 * but this routine also gets called with flag == 0 to see if
 	 * the snake should wink.  If (flag) then we're at game end and
 	 * can printf.
@@ -513,8 +543,7 @@ post(iscore, flag)
 	}
 	if (rawscores == -1) {
 		if (flag)
-			printf("Can't open score file %s: %s.\n",
-			    _PATH_RAWSCORES, strerror(errno));
+			warnx("Can't open score file %s", _PATH_RAWSCORES);
 		return(1);
 	}
 	/* Figure out what happened in the past */
@@ -537,24 +566,13 @@ post(iscore, flag)
 	return(1);
 }
 
-/*
- * Flush typeahead to keep from buffering a bunch of chars and then
- * overshooting.  This loses horribly at 9600 baud, but works nicely
- * if the terminal gets behind.
- */
-void
-flushi()
-{
-	tcflush(0, TCIFLUSH);
-}
-
-int	mx [8] = { 0, 1, 1, 1, 0,-1,-1,-1};
-int	my [8] = {-1,-1, 0, 1, 1, 1, 0,-1};
-float	absv[8] = {1, 1.4, 1, 1.4, 1, 1.4, 1, 1.4};
+const int	mx[8] = { 0, 1, 1, 1, 0,-1,-1,-1};
+const int	my[8] = {-1,-1, 0, 1, 1, 1, 0,-1};
+const float	absv[8] = {1, 1.4, 1, 1.4, 1, 1.4, 1, 1.4};
 int	oldw = 0;
 
 void
-chase (np, sp)
+chase(np, sp)
 	struct point *sp, *np;
 {
 	/* this algorithm has bugs; otherwise the snake would get too good */
@@ -562,12 +580,12 @@ chase (np, sp)
 	int	w, i, wt[8];
 	double	v1, v2, vp, max;
 
-	point(&d, you.col-sp->col, you.line-sp->line);
+	d.col = you.col-sp->col;
+	d.line = you.line-sp->line;
 	v1 = sqrt((double)(d.col * d.col + d.line * d.line) );
-	w  = 0; 
+	w  = 0;
 	max = 0;
-	for(i = 0; i < 8; i++)
-	{
+	for (i = 0; i < 8; i++) {
 		vp = d.col * mx[i] + d.line * my[i];
 		v2 = absv[i];
 		if (v1 > 0)
@@ -580,7 +598,8 @@ chase (np, sp)
 		}
 	}
 	for (i = 0; i < 8; i++) {
-		point(&d, sp->col + mx[i], sp->line + my[i]);
+		d.col = sp->col + mx[i];
+		d.line = sp->line + my[i];
 		wt[i] = 0;
 		if (d.col < 0 || d.col >= ccnt || d.line < 0 || d.line >= lcnt)
 			continue;
@@ -594,25 +613,26 @@ chase (np, sp)
 		if (same(&d, &money) || same(&d,&finish))
 			continue;
 		wt[i] = (i == w ? loot/10 : 1);
-		if (i == oldw) 
+		if (i == oldw)
 			wt[i] += loot/20;
 	}
 	for (w = i = 0; i < 8; i++)
 		w += wt[i];
-	vp = ((rand() >> 6) & 01777) % w;
+	vp = ((random() >> 6) & 01777) % w;
 	for (i = 0; i < 8; i++)
 		if (vp < wt[i])
 			break;
 		else
 			vp -= wt[i];
 	if (i == 8) {
-		pr("failure\n"); 
+		printw("failure\n");
 		i = 0;
 		while (wt[i] == 0)
 			i++;
 	}
 	oldw = w = i;
-	point(np, sp->col + mx[w], sp->line + my[w]);
+	np->col = sp->col + mx[w];
+	np->line = sp->line + my[w];
 }
 
 void
@@ -624,7 +644,8 @@ spacewarp(w)
 	char	*str;
 
 	snrand(&you);
-	point(&p, COLUMNS / 2 - 8, LINES / 2 - 1);
+	p.col = COLS / 2 - 8;
+	p.line = LINES / 2 - 1;
 	if (p.col < 0)
 		p.col = 0;
 	if (p.line < 0)
@@ -638,11 +659,11 @@ spacewarp(w)
 		penalty += loot / PENALTY;
 	}
 	for (j = 0; j < 3; j++) {
-		clear();
-		fflush(stdout);
+		erase();
+		refresh();
 		delay(5);
-		apr(&p, str);
-		fflush(stdout);
+		mvaddstr(p.line + 1, p.col + 1, str);
+		refresh();
 		delay(10);
 	}
 	setup();
@@ -652,10 +673,11 @@ spacewarp(w)
 void
 snap()
 {
-	struct point p;
 
 	/* I don't see the graphical purpose of the next block of code.
 	 * It just makes no sense.
+	 *
+	 * struct point p;
 	 *
 	 * if (you.line < 3)
 	 *	pchar(point(&p, you.col, 0), '-');
@@ -668,10 +690,10 @@ snap()
 	 */
 	if (!stretch(&money))
 		if (!stretch(&finish)) {
-			pchar(point(&p, you.col, you.line), '?');
-			fflush(stdout);
+			pchar(&you, '?');
+			refresh();
 			delay(10);
-			pchar(point(&p, you.col, you.line), ME);
+			pchar(&you, ME);
 		}
 	/* Again, I don't see the point of the following either.
 	 *
@@ -692,7 +714,7 @@ snap()
 	 * 	chk(&p);
 	 * }
 	 */
-	fflush(stdout);
+	refresh();
 }
 
 int
@@ -701,19 +723,20 @@ stretch(ps)
 {
 	struct point p;
 
-	point(&p, you.col, you.line);
+	p.col = you.col;
+	p.line = you.line;
 	if ((abs(ps->col - you.col) < (ccnt / 12)) && (you.line != ps->line)) {
 		if (you.line < ps->line) {
 			for (p.line = you.line + 1; p.line <= ps->line; p.line++)
 				pchar(&p, 'v');
-			fflush(stdout);
+			refresh();
 			delay(10);
 			for (; p.line > you.line; p.line--)
 				chk(&p);
 		} else {
 			for (p.line = you.line - 1; p.line >= ps->line; p.line--)
 				pchar(&p, '^');
-			fflush(stdout);
+			refresh();
 			delay(10);
 			for (; p.line < you.line; p.line++)
 				chk(&p);
@@ -724,14 +747,14 @@ stretch(ps)
 		if (you.col < ps->col) {
 			for (p.col = you.col + 1; p.col <= ps->col; p.col++)
 				pchar(&p, '>');
-			fflush(stdout);
+			refresh();
 			delay(10);
 			for (; p.col > you.col; p.col--)
 				chk(&p);
 		} else {
 			for (p.col = you.col - 1; p.col >= ps->col; p.col--)
 				pchar(&p, '<');
-			fflush(stdout);
+			refresh();
 			delay(10);
 			for (; p.col < you.col; p.col++)
 				chk(&p);
@@ -745,35 +768,44 @@ void
 surround(ps)
 	struct point *ps;
 {
-	struct point x;
 	int	j;
 
 	if (ps->col == 0)
 		ps->col++;
 	if (ps->line == 0)
 		ps->line++;
-	if (ps->line == LINES -1)
+	if (ps->line == LINES - 1)
 		ps->line--;
-	if (ps->col == COLUMNS -1)
+	if (ps->col == COLS - 1)
 		ps->col--;
-	apr(point(&x, ps->col-1, ps->line-1), "/*\\\r* *\r\\*/");
+	mvaddstr(ps->line, ps->col, "/*\\");
+	mvaddstr(ps->line + 1, ps->col, "* *");
+	mvaddstr(ps->line + 2, ps->col, "\\*/");
 	for (j = 0; j < 20; j++) {
 		pchar(ps, '@');
-		fflush(stdout);
+		refresh();
 		delay(1);
-		pchar(ps,' ');
-		fflush(stdout);
+		pchar(ps, ' ');
+		refresh();
 		delay(1);
 	}
 	if (post(cashvalue, 0)) {
-		apr(point(&x, ps->col - 1, ps->line - 1), "   \ro.o\r\\_/");
-		fflush(stdout);
+		mvaddstr(ps->line, ps->col, "   ");
+		mvaddstr(ps->line + 1, ps->col, "o.o");
+		mvaddstr(ps->line + 2, ps->col, "\\_/");
+		refresh();
 		delay(6);
-		apr(point(&x,ps->col - 1, ps->line - 1), "   \ro.-\r\\_/");
-		fflush(stdout);
+		mvaddstr(ps->line, ps->col, "   ");
+		mvaddstr(ps->line + 1, ps->col, "o.-");
+		mvaddstr(ps->line + 2, ps->col, "\\_/");
+		refresh();
 		delay(6);
 	}
-	apr(point(&x, ps->col - 1, ps->line - 1), "   \ro.o\r\\_/");
+	mvaddstr(ps->line, ps->col, "   ");
+	mvaddstr(ps->line + 1, ps->col, "o.o");
+	mvaddstr(ps->line + 2, ps->col, "\\_/");
+	refresh();
+	delay(6);
 }
 
 void
@@ -781,11 +813,12 @@ win(ps)
 	struct point *ps;
 {
 	struct point x;
-	int	j,k;
+	int	j, k;
 	int	boxsize;	/* actually diameter of box, not radius */
 
 	boxsize = (fast ? 10 : 4);
-	point(&x, ps->col, ps->line);
+	x.col = ps->col;
+	x.line = ps->line;
 	for (j = 1; j < boxsize; j++) {
 		for (k = 0; k < j; k++) {
 			pchar(&x, '#');
@@ -804,7 +837,7 @@ win(ps)
 			pchar(&x, '#');
 			x.col--;
 		}
-		fflush(stdout);
+		refresh();
 		delay(1);
 	}
 }
@@ -822,13 +855,14 @@ pushsnake()
 	 * on a fast terminal with typematic keys or not.
 	 * So I have taken the call to times out.
 	 */
-	for (i = 4; i >=0; i--)
+	for (i = 4; i >= 0; i--)
 		if (same(&snake[i], &snake[5]))
 			issame++;
 	if (!issame)
 		pchar(&snake[5], ' ');
 	/* Need the following to catch you if you step on the snake's tail */
-	tmp.col = snake[5].col; tmp.line = snake[5].line;
+	tmp.col = snake[5].col;
+	tmp.line = snake[5].line;
 	for (i = 4; i >= 0; i--)
 		snake[i + 1] = snake[i];
 	chase(&snake[0], &snake[1]);
@@ -839,20 +873,20 @@ pushsnake()
 			surround(&you);
 			i = (cashvalue) % 10;
 			bonus = ((random() >> 8) & 0377) % 10;
-			ll();
-			pr("%d\n", bonus);
-			fflush(stdout);
+			mvprintw(lcnt + 1, 0, "%d\n", bonus);
+			refresh();
 			delay(30);
 			if (bonus == i) {
 				spacewarp(1);
 #ifdef LOGGING
 				logit("bonus");
 #endif
-				flushi();
+				flushinp();
 				return(1);
 			}
-			cook();
-			if ( loot >= penalty ) {
+			flushinp();
+			endwin();
+			if (loot >= penalty) {
 				printf("\nYou and your $%d have been eaten\n", cashvalue);
 			} else {
 				printf("\nThe snake ate you.  You owe $%d.\n", -cashvalue);
@@ -868,10 +902,10 @@ pushsnake()
 	}
 	return(0);
 }
-	
+
 int
 chk(sp)
-struct point *sp;
+	struct point *sp;
 {
 	int	j;
 
@@ -896,7 +930,7 @@ struct point *sp;
 	if ((sp->col < 4) && (sp->line == 0)) {
 		winnings(cashvalue);
 		if ((you.line == 0) && (you.col < 4))
-			pchar(&you,ME);
+			pchar(&you, ME);
 		return(5);
 	}
 	if (same(sp, &you)) {
@@ -911,13 +945,8 @@ void
 winnings(won)
 	int won;
 {
-	struct point p;
-
-	p.line = p.col = 1;
-	if (won > 0) {
-		move(&p);
-		pr("$%d  ", won);
-	}
+	if (won > 0)
+		mvprintw(1, 1, "$%d  ", won);
 }
 
 void
@@ -925,8 +954,7 @@ stop(dummy)
 	int	dummy;
 {
 	signal(SIGINT, SIG_IGN);
-	ll();
-	cook();
+	endwin();
 	length(moves);
 	exit(0);
 }
@@ -934,11 +962,9 @@ stop(dummy)
 void
 suspend()
 {
-	ll();
-	cook();
+	endwin();
 	kill(getpid(), SIGTSTP);
-	raw();
-	setup();
+	refresh();
 	winnings(cashvalue);
 }
 
@@ -946,7 +972,7 @@ void
 length(num)
 	int num;
 {
-	printf("You made %d moves.\n",num);
+	printf("You made %d moves.\n", num);
 }
 
 #ifdef LOGGING
@@ -960,7 +986,7 @@ logit(msg)
 		time(&t);
 		fprintf(logfile, "%s $%d %dx%d %s %s",
 		    getlogin(), cashvalue, lcnt, ccnt, msg, ctime(&t));
-		fclose(logfile);
+		fflush(logfile);
 	}
 }
 #endif
