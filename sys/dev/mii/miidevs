@@ -1,4 +1,4 @@
-$OpenBSD: miidevs,v 1.50 2005/01/24 01:55:37 brad Exp $
+$OpenBSD: miidevs,v 1.51 2005/02/04 23:59:46 jsg Exp $
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
 /*-
@@ -197,6 +197,7 @@ model xxREALTEK RTL8169S	0x0011 RTL8169S/8110S PHY
 /* Seeq PHYs */
 model xxSEEQ 80220		0x0003 Seeq 80220 10/100 PHY
 model xxSEEQ 84220		0x0004 Seeq 84220 10/100 PHY
+model xxSEEQ 80225		0x0008 Seeq 80225 10/100 PHY
 
 /* Silicon Integrated Systems PHYs */
 model xxSIS 900			0x0000 SiS 900 10/100 PHY
