@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.50 2003/06/03 02:56:10 millert Exp $	*/
+/*	$OpenBSD: login.c,v 1.51 2003/08/12 13:14:58 hin Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -73,7 +73,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static const char rcsid[] = "$OpenBSD: login.c,v 1.50 2003/06/03 02:56:10 millert Exp $";
+static const char rcsid[] = "$OpenBSD: login.c,v 1.51 2003/08/12 13:14:58 hin Exp $";
 #endif /* not lint */
 
 /*
@@ -109,10 +109,6 @@ static const char rcsid[] = "$OpenBSD: login.c,v 1.50 2003/06/03 02:56:10 miller
 #include <utmp.h>
 #include <util.h>
 #include <bsd_auth.h>
-
-#ifdef KERBEROS
-#include <kerberosIV/kafs.h>
-#endif
 
 #include "pathnames.h"
 
@@ -773,10 +769,6 @@ failed:
 	auth_setstate(as, AUTH_OKAY);
 	auth_close(as);
 
-#ifdef KERBEROS
-	kgettokens(pwd->pw_dir);
-#endif
-
 	execlp(shell, tbuf, (char *)NULL);
 	err(1, "%s", shell);
 }
@@ -971,20 +963,3 @@ sighup(int signum)
 		badlogin(username);
 	_exit(0);
 }
-
-#ifdef KERBEROS
-void
-kgettokens(char *homedir)
-{
-
-	/* buy AFS-tokens for homedir */
-	if (k_hasafs()) {
-		char cell[128];
-
-		k_setpag();
-		if (k_afs_cell_of_file(homedir, cell, sizeof(cell)) == 0)
-			krb_afslog(cell, 0);
-		krb_afslog(0, 0);
-	}
-}
-#endif
