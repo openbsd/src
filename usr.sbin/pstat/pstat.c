@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.19 1999/05/22 21:43:52 weingart Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.20 1999/06/03 15:49:31 deraadt Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.19 1999/05/22 21:43:52 weingart Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.20 1999/06/03 15:49:31 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -828,7 +828,7 @@ ttyprt(tp)
 void
 filemode()
 {
-	register struct file *fp;
+	struct file fp, *ffp;
 	struct file *addr;
 	char *buf, flagbuf[16], *fbp;
 	int len, maxfile, nfile;
@@ -848,39 +848,41 @@ filemode()
 	 * derivable from the previous entry).
 	 */
 	addr = ((struct filelist *)buf)->lh_first;
-	fp = (struct file *)(buf + sizeof(struct filelist));
+	ffp = (struct file *)(buf + sizeof(struct filelist));
 	nfile = (len - sizeof(struct filelist)) / sizeof(struct file);
 	
 	(void)printf("%d/%d open files\n", nfile, maxfile);
 	(void)printf("     LOC TYPE       FLG  CNT  MSG      DATA  OFFSET\n");
-	for (; (char *)fp < buf + len; addr = fp->f_list.le_next, fp++) {
-		if ((unsigned)fp->f_type > DTYPE_SOCKET)
+	for (; (char *)ffp < buf + len; addr = ffp->f_list.le_next, ffp++) {
+		memmove(&fp, ffp, sizeof fp);
+		if ((unsigned)fp.f_type > DTYPE_SOCKET)
 			continue;
 		(void)printf("%lx ", (long)addr);
-		(void)printf("%-8.8s", dtypes[fp->f_type]);
+		(void)printf("%-8.8s", dtypes[fp.f_type]);
 		fbp = flagbuf;
-		if (fp->f_flag & FREAD)
+		if (fp.f_flag & FREAD)
 			*fbp++ = 'R';
-		if (fp->f_flag & FWRITE)
+		if (fp.f_flag & FWRITE)
 			*fbp++ = 'W';
-		if (fp->f_flag & FAPPEND)
+		if (fp.f_flag & FAPPEND)
 			*fbp++ = 'A';
 #ifdef FSHLOCK	/* currently gone */
-		if (fp->f_flag & FSHLOCK)
+		if (fp.f_flag & FSHLOCK)
 			*fbp++ = 'S';
-		if (fp->f_flag & FEXLOCK)
+		if (fp.f_flag & FEXLOCK)
 			*fbp++ = 'X';
 #endif
-		if (fp->f_flag & FASYNC)
+		if (fp.f_flag & FASYNC)
 			*fbp++ = 'I';
 		*fbp = '\0';
-		(void)printf("%6s  %3ld", flagbuf, fp->f_count);
-		(void)printf("  %3ld", fp->f_msgcount);
-		(void)printf("  %8.1lx", (long)fp->f_data);
-		if (fp->f_offset < 0)
-			(void)printf("  %qx\n", fp->f_offset);
+		(void)printf("%6s  %3ld", flagbuf, fp.f_count);
+		(void)printf("  %3ld", fp.f_msgcount);
+		(void)printf("  %8.1lx", (long)fp.f_data);
+
+		if (fp.f_offset < 0)
+			(void)printf("  %qx\n", fp.f_offset);
 		else
-			(void)printf("  %qd\n", fp->f_offset);
+			(void)printf("  %qd\n", fp.f_offset);
 	}
 	free(buf);
 }
