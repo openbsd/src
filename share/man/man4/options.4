@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.63 2001/04/05 04:01:56 aaron Exp $
+.\"	$OpenBSD: options.4,v 1.64 2001/05/16 11:35:46 art Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -234,6 +234,9 @@ which may decrease system performance.
 Adds code to the kernel that does internal consistency checks.
 This code will cause the kernel to panic if corruption of internal data
 structures is detected.
+.It Cd option SMALL_KERNEL
+Removes some optimizations from the kernel to reduce the size of the
+resulting kernel binary. This option can decrease system performance.
 .It Cd option GPROF
 Adds code to the kernel for kernel profiling with
 .Xr kgmon 8 .
