@@ -1,4 +1,4 @@
-.\"	$OpenBSD: routed.8,v 1.5 1996/09/05 14:31:41 mickey Exp $
+.\"	$OpenBSD: routed.8,v 1.6 1996/10/02 06:51:46 mickey Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -300,6 +300,9 @@ does not care about authentication.
 .It Fl T Ar tracefile
 increases the debugging level to at least 1 and
 causes debugging information to be appended to the trace file.
+Note that because of security concerns, it is wisest to not run
+.Nm routed
+routinely with tracing directed to a file.
 .It Fl t
 increases the debugging level, which causes more information to be logged
 on the tracefile specified with

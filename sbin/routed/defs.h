@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.3 1996/09/05 14:31:18 mickey Exp $	*/
+/*	$OpenBSD: defs.h,v 1.4 1996/10/02 06:51:41 mickey Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -159,7 +159,6 @@ struct rt_entry {
 #	    define RS_MHOME	0x020	/* from -m */
 #	    define RS_STATIC	0x040	/* from the kernel */
 #	    define RS_RDISC     0x080	/* from router discovery */
-#	    define RS_PERMANENT (RS_MHOME | RS_STATIC | RS_NET_SYN | RS_RDISC)
 	struct sockaddr_in rt_dst_sock;
 	naddr   rt_mask;
 	struct rt_spare {
@@ -193,10 +192,11 @@ struct rt_entry {
  *	nor non-passive, remote interfaces that are not aliases
  *		(i.e. remote & metric=0)
  */
-#define AGE_RT(rt_state,ifp) (0 == ((rt_state) & RS_PERMANENT)		\
-			      && (!((rt_state) & RS_IF)			\
-				  || (ifp) == 0				\
-				  || (((ifp)->int_state & IS_REMOTE)	\
+#define AGE_RT(rt_state,ifp) (0 == ((rt_state) & (RS_MHOME | RS_STATIC	    \
+						  | RS_NET_SYN | RS_RDISC)) \
+			      && (!((rt_state) & RS_IF)			    \
+				  || (ifp) == 0				    \
+				  || (((ifp)->int_state & IS_REMOTE)	    \
 				      && !((ifp)->int_state & IS_PASSIVE))))
 
 /* true if A is better than B
@@ -237,7 +237,7 @@ struct interface {
 	naddr	int_std_net;		/* class A/B/C network (h) */
 	naddr	int_std_mask;		/* class A/B/C netmask (h) */
 	int	int_rip_sock;		/* for queries */
-	int	int_if_flags;		/* copied from kernel */
+	int	int_if_flags;		/* some bits copied from kernel */
 	u_int	int_state;
 	time_t	int_act_time;		/* last thought healthy */
 	u_short	int_transitions;	/* times gone up-down */
@@ -260,6 +260,7 @@ struct interface {
 	struct timeval int_rdisc_timer;
 };
 
+/* bits in int_state */
 #define IS_ALIAS	    0x0000001	/* interface alias */
 #define IS_SUBNET	    0x0000002	/* interface on subnetted network */
 #define	IS_REMOTE	    0x0000004	/* interface is not on this machine */

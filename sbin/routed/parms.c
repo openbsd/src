@@ -1,4 +1,4 @@
-/*	$OpenBSD: parms.c,v 1.2 1996/09/22 20:48:13 millert Exp $	*/
+/*	$OpenBSD: parms.c,v 1.3 1996/10/02 06:51:45 mickey Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -473,13 +473,6 @@ parse_parms(char *line)
 	if (tgt != 0)
 		return tgt;
 
-	if (parm.parm_int_state & IS_NO_ADV_IN)
-		parm.parm_int_state |= IS_NO_SOL_OUT;
-
-	if ((parm.parm_int_state & (IS_NO_RIP | IS_NO_RDISC))
-	    == (IS_NO_RIP | IS_NO_RDISC))
-		parm.parm_int_state |= IS_PASSIVE;
-
 	return check_parms(&parm);
 #undef DELIMS
 #undef PARS
@@ -494,6 +487,21 @@ check_parms(struct parm *new)
 	struct parm *parmp;
 
 
+	/* set implicit values
+	 */
+	if (!supplier && supplier_set)
+		new->parm_int_state |= (IS_NO_RIPV1_OUT
+					| IS_NO_RIPV2_OUT
+					| IS_NO_ADV_OUT);
+	if (new->parm_int_state & IS_NO_ADV_IN)
+		new->parm_int_state |= IS_NO_SOL_OUT;
+
+	if ((new->parm_int_state & (IS_NO_RIP | IS_NO_RDISC))
+	    == (IS_NO_RIP | IS_NO_RDISC))
+		new->parm_int_state |= IS_PASSIVE;
+
+	/* compare with existing sets of parameters
+	 */
 	for (parmp = parms; parmp != 0; parmp = parmp->parm_next) {
 		if (strcmp(new->parm_name, parmp->parm_name))
 			continue;

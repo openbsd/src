@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtquery.c,v 1.2 1996/09/22 20:48:10 millert Exp $	*/
+/*	$OpenBSD: rtquery.c,v 1.3 1996/10/02 06:51:49 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -170,6 +170,8 @@ main(int argc,
 					"more",
 #				    define TRACE_OFF	2
 					"off",
+#				    define TRACE_DUMP	3
+					"dump",
 					0
 				};
 				switch (getsubopt(&options,traceopts,&value)) {
@@ -178,25 +180,30 @@ main(int argc,
 					if (!value
 					    || strlen(value) > MAXPATHLEN)
 						goto usage;
-					strcpy((char*)OMSG.rip_tracefile,value);
-					omsg_len += (strlen(value)
-						     - sizeof(OMSG.ripun));
 					break;
 				case TRACE_MORE:
 					if (value)
 						goto usage;
 					OMSG.rip_cmd = RIPCMD_TRACEON;
-					OMSG.rip_tracefile[0] = '\0';
+					value = "";
 					break;
 				case TRACE_OFF:
 					if (value)
 						goto usage;
 					OMSG.rip_cmd = RIPCMD_TRACEOFF;
-					OMSG.rip_tracefile[0] = '\0';
+					value = "";
+					break;
+				case TRACE_DUMP:
+					if (value)
+						goto usage;
+					OMSG.rip_cmd = RIPCMD_TRACEON;
+					value = "dump/../table";
 					break;
 				default:
 					goto usage;
 				}
+				strcpy((char*)OMSG.rip_tracefile, value);
+				omsg_len += strlen(value) - sizeof(OMSG.ripun);
 			}
 			break;
 
