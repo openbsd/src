@@ -1,4 +1,4 @@
-.\" $OpenBSD: starttls.8,v 1.8 2003/06/06 19:28:06 jmc Exp $
+.\" $OpenBSD: starttls.8,v 1.9 2003/07/10 08:30:36 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Jose Nazario <jose@monkey.org>
 .\" All rights reserved.
@@ -75,16 +75,14 @@ For the purposes of this example the certificates will be stored in
 .Pa /etc/mail/certs ,
 though it is possible to use a different directory if needed.
 If this directory does not already exist, you must create it:
-.Bd -literal -offset indent -width Ds
-# mkdir /etc/mail/certs
-.Ed
+.Pp
+.Dl # mkdir /etc/mail/certs
 .Pp
 Next, you must generate a
 .Ar DSA
 parameter set with a command like the following:
-.Bd -literal -offset indent -width Ds
-# openssl dsaparam 1024 -out dsa1024.pem
-.Ed
+.Pp
+.Dl # openssl dsaparam 1024 -out dsa1024.pem
 .Pp
 This would generate
 .Ar DSA
@@ -98,8 +96,8 @@ Once you have the
 .Ar DSA
 parameters generated, you can generate a certificate
 and unencrypted private key using the command:
-.Bd -literal -offset indent -width Ds
-# openssl req -x509 -nodes -days 365 -newkey dsa:dsa1024.pem \\
+.Bd -literal -offset indent
+# openssl req -x509 -nodes -days 365 -newkey dsa:dsa1024.pem \e
   -out /etc/mail/certs/mycert.pem -keyout /etc/mail/certs/mykey.pem
 .Ed
 .Pp
@@ -116,17 +114,15 @@ will be unable to initiate TLS server functions.
 .Pp
 You can verify that the newly-generated certificate has correct information
 with the following command:
-.Bd -literal -offset indent -width Ds
-# openssl x509 -in /etc/mail/certs/mycert.pem -text
-.Ed
+.Pp
+.Dl # openssl x509 -in /etc/mail/certs/mycert.pem -text
 .Pp
 If don't intend to use TLS for authentication (and if you are using
 self-signed certificates you probably don't) you can simply link
 your new key to
 .Pa CAcert.pem .
-.Bd -literal -offset indent -width Ds
-# ln -s /etc/mail/certs/mycert.pem /etc/mail/certs/CAcert.pem
-.Ed
+.Pp
+.Dl # ln -s /etc/mail/certs/mycert.pem /etc/mail/certs/CAcert.pem
 .Pp
 If, on the other hand, you intend to use TLS for authentication
 you should install your certificate authority bundle as
@@ -135,9 +131,8 @@ you should install your certificate authority bundle as
 At this point, you no longer need the
 .Pa dsa1024.pem
 file and it can be removed.
-.Bd -literal -offset indent -width Ds
-# rm dsa1024.pem
-.Ed
+.Pp
+.Dl # rm dsa1024.pem
 .Pp
 Because the private key files are unencrypted,
 .Xr sendmail 8
@@ -145,15 +140,14 @@ is picky about using tight permissions on those files.
 The certificate directory and the files therein should be
 readable and writable only by the owner (root).
 A simple way to ensure this is to run the following:
-.Bd -literal -offset indent -width Ds
-# chmod -R go-rwx /etc/mail/certs
-.Ed
+.Pp
+.Dl # chmod -R go-rwx /etc/mail/certs
 .Ss Creating a certificate with an existing private key
 This example assumes you already have an existing private key,
 .Pa /etc/mail/certs/mykey.pem .
 You can generate a new certificate based on this key using the command:
-.Bd -literal -offset indent -width Ds
-# openssl req -x509 -new -days 365 -key /etc/mail/certs/mykey.pem \\
+.Bd -literal -offset indent
+# openssl req -x509 -new -days 365 -key /etc/mail/certs/mykey.pem \e
   -out /etc/mail/certs/mycert.pem
 # chmod 600 /etc/mail/certs/mycert.pem
 .Ed
@@ -173,7 +167,7 @@ is available as
 .Pp
 The pertinent options are:
 .Pp
-.Bl -bullet -literal -compact
+.Bl -bullet -compact
 .It
 CERT_DIR
 .It
@@ -207,7 +201,7 @@ You will need to make TLS-enabled versions of the following files:
 .Pa openbsd-proto.mc
 and
 .Pa openbsd-localhost.mc .
-.Bd -literal -offset indent -width Ds
+.Bd -literal -offset indent
 # cd /usr/share/sendmail/cf
 
 # cp openbsd-proto.mc openbsd-proto-tls.mc
@@ -224,7 +218,7 @@ definition (the actual placement within the file is not critical as long
 as it is after the
 .Dq divert(0)dnl
 line).
-.Bd -literal -offset indent -width Ds
+.Bd -literal -offset indent
 define(`CERT_DIR',        `MAIL_SETTINGS_DIR`'certs')
 define(`confCACERT_PATH', `CERT_DIR')
 define(`confCACERT',      `CERT_DIR/CAcert.pem')
@@ -238,7 +232,7 @@ Now that you have the TLS-enabled versions of the .mc files
 you must generate .cf files from them and install the .cf
 files in
 .Pa /etc/mail .
-.Bd -literal -offset indent -width Ds
+.Bd -literal -offset indent
 # make openbsd-proto-tls.cf openbsd-localhost-tls.cf
 
 # cp openbsd-proto-tls.cf /etc/mail/sendmail.cf
@@ -248,9 +242,8 @@ files in
 Finally, restart sendmail with the new configuration by sending
 it a
 .Dv SIGHUP .
-.Bd -literal -offset indent -width Ds
-# kill -HUP `head -1 /var/run/sendmail.pid`
-.Ed
+.Pp
+.Dl # kill -HUP `head -1 /var/run/sendmail.pid`
 .Pp
 Note that those are backticks and not single quotes in the example above.
 .Pp
@@ -260,7 +253,7 @@ transactions, STARTTLS.
 You can test this by connecting to the local host and issuing the
 .Dq EHLO
 command.
-.Bd -literal -offset indent -width Ds
+.Bd -literal -offset indent
 # telnet localhost 25
 Trying ::1...
 Connected to localhost.
@@ -272,7 +265,7 @@ EHLO localhost
 After typing
 .Em EHLO localhost
 you should receive something like the following back.
-.Bd -literal -offset indent -width Ds
+.Bd -literal -offset indent
 250-localhost Hello localhost [IPv6:::1], pleased to meet you
 250-ENHANCEDSTATUSCODES
 250-PIPELINING
@@ -327,15 +320,13 @@ the strength of the encryption (in the macro {cipher_bits})
 VERIFY can also accept the argument for {cipher_bits}.
 Here are a few example entries that illustrate these features, and
 the role based granularity as well:
-.\" XXX - clean this up
-.Bl -tag -width Ds
-.It "Force strong (112 bit) encryption for communications for this server:"
-.sp
-.Li server1.example.net             ENCR:112
-.It "For a TLS client, force string verification depths to at least 80 bits:"
-.sp
-.Li TLS_Clt:desktop.example:net     VERIFY:80
-.El
+.Pp
+Force strong (112 bit) encryption for communications for this server:
+.Pp
+.D1 server1.example.net	ENCR:112
+.Pp
+For a TLS client, force string verification depths to at least 80 bits:
+.D1 TLS_Clt:desktop.example:net VERIFY:80
 .Pp
 Much more complicated access maps are possible, and error conditions (such
 as permanent or temporary, PERM+ or TEMP+) can be set on the basis of
@@ -385,8 +376,7 @@ Lastly, interoperability problems can appear between different implementations.
 .Xr ssl 8
 .Pp
 .Tn DARPA
-Internet Request for Comments
-.Tn RFC2487
+Internet Request for Comments RFC 2487
 .Pp
 http://www.sendmail.org/~ca/email/starttls.html
 .Sh HISTORY

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_hppa.8,v 1.6 2003/06/19 18:51:08 mickey Exp $
+.\"	$OpenBSD: boot_hppa.8,v 1.7 2003/07/10 08:30:36 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Miodrag Vallat.
 .\" All rights reserved.
@@ -208,17 +208,17 @@ The following list only mentions commands impacting the boot process.
 .It Ic auto boot
 Displays or changes the autoboot setting.
 If
-.Ev Ic auto boot
+.Ic auto boot
 is set to
 .Dq on ,
 the PDC will always attempt to boot.
 The booted device chosen will depend on the
-.Ev Ic auto search
+.Ic auto search
 setting.
 .It Ic auto search
 Displays or changes the device scan setting.
 If
-.Ev Ic auto search
+.Ic auto search
 is set to
 .Dq on ,
 the PDC will attempt to boot the first bootable device found in
@@ -245,18 +245,18 @@ devices connected to secondary controllers,
 the highest ID numbers being preferred.
 .El
 If
-.Ev Ic auto search
+.Ic auto search
 is set to
 .Dq off
 and the primary boot path points to a bootable device,
 no device scan will occur.
 .Pp
 Note that setting
-.Ev Ic auto search
+.Ic auto search
 to
 .Dq on
 will force autoboot, regardless of the
-.Ev Ic auto boot
+.Ic auto boot
 value.
 .It Ic boot
 Boots off the specified device.

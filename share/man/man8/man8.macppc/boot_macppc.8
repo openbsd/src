@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_macppc.8,v 1.9 2003/06/06 19:28:06 jmc Exp $
+.\"	$OpenBSD: boot_macppc.8,v 1.10 2003/07/10 08:30:36 jmc Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -45,19 +45,19 @@ the
 .Tn Open Firmware
 will proceed to its initialization, and will boot an operating system
 if the
-.Ev Em auto-boot?
+.Em auto-boot?
 variable is set to
 .Dq true ,
 or will wait for interactive commands otherwise.
 .Ss Boot process description
 The Apple OpenFirmware will normally load the kernel from the device and
 filename as instructed by the
-.Ev Em boot-device
+.Em boot-device
 and
-.Ev Em boot-file
+.Em boot-file
 variables.
 If the
-.Ev Em boot-file
+.Em boot-file
 variable is empty, the
 .Ox
 bootloader will look for a kernel named
@@ -67,7 +67,7 @@ To reset this variable to its default, empty, value, type the following:
 .Pp
 .Em \	ok
 set-default
-.Ev Em boot-device
+.Em boot-device
 .Pp
 The
 .Ox

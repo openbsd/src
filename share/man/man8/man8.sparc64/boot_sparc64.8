@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_sparc64.8,v 1.5 2003/06/02 23:30:15 millert Exp $
+.\"	$OpenBSD: boot_sparc64.8,v 1.6 2003/07/10 08:30:36 jmc Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -64,24 +64,24 @@ tape drive
 The UltraSPARC
 .Tn Open Firmware
 will normally look for a bootloader on the device specified by the
-.Ev Em boot-device
+.Em boot-device
 variable.
 The
 .Ox
 bootloader will then look for a kernel named
 .Pa bsd
 by default, unless the
-.Ev Em boot-file
+.Em boot-file
 variable is set, or a different filename has been specified
 in the boot command.
 To reset this variable to its default, empty, value, type the following:
 .Pp
 .Em \	ok
 set-default
-.Ev Em boot-file
+.Em boot-file
 .Pp
 Autoboot is enabled by setting the
-.Ev Em auto-boot?
+.Em auto-boot?
 variable to
 .Dq true ,
 and is the factory default.
@@ -109,7 +109,7 @@ The system will be booted multi-user unless this option is specified.
 If the
 .Xr sysctl 8
 variable
-.Ev Em ddb.console
+.Em ddb.console
 is enabled, at any time you can break back to the ROM by pressing the
 .Dq L1
 and

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_alpha.8,v 1.9 2003/06/06 19:28:06 jmc Exp $
+.\"	$OpenBSD: boot_alpha.8,v 1.10 2003/07/10 08:30:36 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Miodrag Vallat.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .Ss Cold starts
 When powered on, the SRM firmware will proceed to its initialization, and
 will boot an operating system if the
-.Ev Em auto_action
+.Em auto_action
 variable is set to
 .Dq boot
 or
@@ -45,26 +45,26 @@ After a panic, or if the system is rebooted via
 or
 .Xr shutdown 8 ,
 the SRM console will only restart the system if the
-.Ev Em auto_action
+.Em auto_action
 variable is set to
 .Dq boot .
 .Ss Boot process options
 The SRM console will attempt to boot a kernel named from the
-.Ev Em boot_file
+.Em boot_file
 environment variable, on the device listed in the
-.Ev Em bootdef_dev
+.Em bootdef_dev
 variable.
 A list of the recognized SRM devices can be obtained with the command
 .Ic show dev
 at the SRM prompt.
 If the
-.Ev Em boot_file
+.Em boot_file
 variable is not set or empty,
 .Pa /bsd
 will be used by default.
 .Pp
 The kernel will be passed the options listed in the
-.Ev Em boot_osflags
+.Em boot_osflags
 variable.
 Option letters are case insensitive.
 The following option letters are recognized:

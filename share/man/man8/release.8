@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.31 2003/05/13 18:46:50 jmc Exp $
+.\"	$OpenBSD: release.8,v 1.32 2003/07/10 08:30:36 jmc Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"
@@ -42,7 +42,7 @@ The following sections describe each of the required steps in detail.
 .Pp
 Commands to be run as a user with write permissions on the source and
 ports trees
-.No ( Ns Pa /usr/src
+.Pf ( Ns Pa /usr/src
 and
 .Pa /usr/ports
 respectively)
@@ -63,7 +63,7 @@ tag the
 .Ox
 developers add to the repository prior to making a release.
 There are two tags, one which identifies the release as it exists on the
-.Tn CD\-ROM
+.Tn CD-ROM
 and another which identifies the
 .Em stable
 branch.
@@ -77,7 +77,7 @@ The tags are of the form:
 .Bl -tag -width OPENBSD_x_y_BASE
 .It Va OPENBSD_x_y_BASE
 This tag marks the source as it exists on the release
-.Tn CD\-ROM
+.Tn CD-ROM
 where
 .Ar x
 is the major release number and
@@ -196,7 +196,7 @@ At this point your system is up-to-date and running the code that you
 are going to make into a release.
 .Ss "4. Make and validate the system release"
 The system release consists of a generic kernel, one
-.Tn CD\-ROM
+.Tn CD-ROM
 and two floppy boot-able file-systems, the release
 .Sq tarballs ,
 installation instructions, and checksum files.
@@ -228,7 +228,7 @@ is used in the release generation process.
 .El
 .Pp
 The floppy and
-.Tn CD\-ROM
+.Tn CD-ROM
 .Pa RAMDISK
 images require a special tool which is created first.
 The release process is:
@@ -266,7 +266,7 @@ The only thing missing is the X Window System
 The
 .Va XF4
 tree is primarily
-.Xr imake 1 No Ns -based
+.Xr imake 1 Ns -based
 and doesn't contain the
 .Dq obj
 directory mechanism that comes with Berkeley

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_config.8,v 1.19 2003/06/06 19:28:06 jmc Exp $
+.\"	$OpenBSD: boot_config.8,v 1.20 2003/07/10 08:30:36 jmc Exp $
 .\"
 .\" Copyright (c) 1996 Mats O Jansson
 .\" All rights reserved.
@@ -47,7 +47,6 @@ The boot time configuration is invoked by the
 option when
 .Ox
 prompts for a kernel to boot:
-.Pp
 .Bd -literal
 >> OpenBSD BOOT 640/31744 k [1.29]
 use ? for file list, or carriage return for defaults
@@ -63,7 +62,7 @@ UKC>
 Changes made can be saved for the next reboot, by using
 .Xr config 8 .
 .Sh COMMANDS
-.Bl -tag -width "disable devno | dev" indent
+.Bl -tag -width "disable devno | dev"
 .It Ic add Ar dev
 Add a device through copying another.
 .It Ic base Ar 8 | 10 | 16
@@ -107,7 +106,6 @@ e.g. wrong IRQ in OpenBSD/i386.
 The ethernet card is supposed to use the
 .Xr ne 4
 driver.
-.Pp
 .Bd -literal
 .No UKC> Ic find ne
 24 ne0 at isa0 port 0x240 size 0 iomem 0xd8000 iosiz 0 irq 9 drq -1 drq2 -1 flags 0x0
@@ -123,7 +121,6 @@ So the irq on ne1 should be changed via the
 .Fa change
 command.
 The device can be specified by either name or number.
-.Pp
 .Bd -literal
 .No UKC> Ic change ne1
 25 ne1 at isa0 port 0x300 size 0 iomem -1 iosiz 0 irq 10 drq -1 drq2 -1 flags 0x0
@@ -146,7 +143,6 @@ device at the probed location.
 One known case is the Mitsumi
 CD-ROM in OpenBSD/i386.
 The simplest thing to solve that problem is to disable mcd0.
-.Pp
 .Bd -literal
 .No UKC> Ic find mcd0
  29 mcd0 at isa0 port 0x300 size 0 iomem -1 iosiz 0 irq 10 drq -1 drq2 -1 flags 0x0
@@ -178,7 +174,6 @@ UKC>
 It is possible to add new devices, but only devices that were linked into the
 kernel.
 If a new device is added, following devices will be renumbered.
-.Pp
 .Bd -literal
 .No UKC> Ic find ep
  11 ep0 at isa0 port -1 size 0 iomem -1 iosiz 0 irq -1 drq -1 drq2 -1 flags 0x0
@@ -209,7 +204,6 @@ When configuration is completed, booting can proceed by issuing the
 or
 .Ic exit
 commands.
-.Pp
 .Bd -literal
 .No UKC> Ic quit
 Continuing...

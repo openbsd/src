@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_sparc.8,v 1.7 2003/06/02 23:30:15 millert Exp $
+.\"	$OpenBSD: boot_sparc.8,v 1.8 2003/07/10 08:30:36 jmc Exp $
 .\"	$NetBSD: boot_sparc.8,v 1.4 1995/04/25 11:37:25 pk Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ incantation in new-mode to force the ROM to always start in new-mode:
 .Pp
 .Em \	ok
 setenv
-.Ev Em sunmon-compat?
+.Em sunmon-compat?
 false
 .Ss Old-style PROM operation
 By default, the old ROM will poll for boot devices, unless the eeprom settings
@@ -112,10 +112,10 @@ for more information.
 .Ss OpenBoot PROM version 1 operation
 Older OpenBOOT PROM, as well as hybrid (dual-mode) versions operating in
 compatibility mode (with the variable
-.Ev Em version2?
+.Em version2?
 set to false) will look for a bootloader and kernel filename as specified
 by the
-.Ev Em boot-from
+.Em boot-from
 variable.
 To change the default so that
 .Ox
@@ -123,7 +123,7 @@ will be loaded, type the following:
 .Pp
 .Em \	ok
 setenv
-.Ev Em boot-from
+.Em boot-from
 sd(0,0,0)bsd
 .Pp
 Replace
@@ -131,31 +131,31 @@ Replace
 with the appropriate boot device if necessary.
 .Pp
 Autoboot is enabled by setting the
-.Ev Em auto-boot?
+.Em auto-boot?
 variable to
 .Dq true ,
 and is the factory default.
 .Ss OpenBoot PROM version 2 operation
 Version 2 OpenBOOT PROM will look for a bootloader on the device specified
 by the
-.Ev Em boot-device
+.Em boot-device
 variable.
 The
 .Ox
 bootloader will then look for a kernel named
 .Pa bsd
 by default, unless the
-.Ev Em boot-file
+.Em boot-file
 variable is set, or a different filename has been specified
 in the boot command.
 To reset this variable to its default, empty, value, type the following:
 .Pp
 .Em \	ok
 set-default
-.Ev Em boot-file
+.Em boot-file
 .Pp
 Autoboot is enabled by setting the
-.Ev Em auto-boot?
+.Em auto-boot?
 variable to
 .Dq true ,
 and is the factory default.
@@ -196,7 +196,7 @@ during the next multi-user boot cycle), and after the dump is complete
 If the
 .Xr sysctl 8
 variable
-.Ev Em ddb.console
+.Em ddb.console
 is enabled, at any time you can break back to the ROM by pressing the
 .Dq L1
 .Pq also known as the Dq stop key
