@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_mouse.c,v 1.3 2000/09/22 17:39:05 aaron Exp $ */
+/*	$OpenBSD: pcvt_mouse.c,v 1.4 2000/09/28 15:44:50 aaron Exp $ */
 
 /*
  * Copyright (c) 2000 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -82,6 +82,9 @@ mouse_ioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	mouse_info_t mouse_infos = *(mouse_info_t *) data; 	
 	unsigned char c;
 	video_state  *cs;
+
+	if (Copybuffer == NULL)
+		return (-1);
 	
 	if (device == PCVTCTL_MINOR && cmd == PCVT_MOUSECTL) {
 		switch (mouse_infos.operation) {
