@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.27 2002/02/23 02:52:56 art Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.28 2002/02/25 04:53:16 dhartmei Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1217,11 +1217,17 @@ pool_sethiwat(struct pool *pp, int n)
 	simple_unlock(&pp->pr_slock);
 }
 
-void
-pool_sethardlimit(struct pool *pp, int n, const char *warnmess, int ratecap)
+int
+pool_sethardlimit(struct pool *pp, unsigned n, const char *warnmess, int ratecap)
 {
+	int error = 0;
 
 	simple_lock(&pp->pr_slock);
+
+	if (n < pp->pr_nout) {
+		error = EINVAL;
+		goto done;
+	}
 
 	pp->pr_hardlimit = n;
 	pp->pr_hardlimit_warning = warnmess;
@@ -1233,11 +1239,14 @@ pool_sethardlimit(struct pool *pp, int n, const char *warnmess, int ratecap)
 	 * In-line version of pool_sethiwat(), because we don't want to
 	 * release the lock.
 	 */
-	pp->pr_maxpages = (n == 0)
-		? 0
+	pp->pr_maxpages = (n == 0 || n == UINT_MAX)
+		? n
 		: roundup(n, pp->pr_itemsperpage) / pp->pr_itemsperpage;
 
+ done:
 	simple_unlock(&pp->pr_slock);
+
+	return (error);
 }
 
 /*

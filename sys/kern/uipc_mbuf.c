@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.55 2002/02/17 22:59:53 maja Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.56 2002/02/25 04:53:16 dhartmei Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -130,7 +130,7 @@ mbinit()
 	 * mbuf clusters the kernel is to support.  Log the limit
 	 * reached message max once a minute.
 	 */
-	pool_sethardlimit(&mclpool, nmbclust, mclpool_warnmsg, 60);
+	(void)pool_sethardlimit(&mclpool, nmbclust, mclpool_warnmsg, 60);
 
 	/*
 	 * Set a low water mark for both mbufs and clusters.  This should

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.10 2002/02/23 02:52:56 art Exp $	*/
+/*	$OpenBSD: pool.h,v 1.11 2002/02/25 04:53:16 dhartmei Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -224,7 +224,7 @@ void		_pool_reclaim(struct pool *, const char *, long);
 int		pool_prime(struct pool *, int);
 void		pool_setlowat(struct pool *, int);
 void		pool_sethiwat(struct pool *, int);
-void		pool_sethardlimit(struct pool *, int, const char *, int);
+int		pool_sethardlimit(struct pool *, unsigned, const char *, int);
 void		pool_drain(void *);
 
 /*

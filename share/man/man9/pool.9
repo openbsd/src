@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pool.9,v 1.16 2002/02/25 00:23:20 art Exp $
+.\"	$OpenBSD: pool.9,v 1.17 2002/02/25 04:53:16 dhartmei Exp $
 .\"	$NetBSD: pool.9,v 1.18 2001/06/21 11:59:01 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 .Fn pool_sethiwat "struct pool *pp" "int n"
 .Ft void
 .Fn pool_setlowat "struct pool *pp" "int n"
-.Ft void
+.Ft int
 .Fo pool_sethardlimit
 .Fa "struct pool *pp"
 .Fa "int n"
@@ -305,8 +305,8 @@ Unlike
 this function does not allocate the necessary memory up-front.
 .El
 .Ss SETTING HARD LIMITS
-The
-.Fn pool_sethardlmit
+The function
+.Fn pool_sethardlimit
 sets a hard limit on the pool to
 .Fa n
 items.
@@ -315,6 +315,9 @@ If the hard limit is reached
 will be printed to the console, but no more than every
 .Fa ratecap
 seconds.
+Upon successful completion, a value of 0 is returned.
+The value EINVAL is returned when the current size of the pool
+already exceeds the requested hard limit.
 .Ss POTENTIAL PITFALLS
 Note that undefined behaviour results when mixing the storage providing
 methods supported by the pool resource routines.
