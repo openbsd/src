@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.5 2001/07/04 08:38:47 niklas Exp $
+#	$OpenBSD: Makefile,v 1.1 2001/09/01 15:28:42 drahn Exp $
 
 NOPROG=	noprog
 NOMAN=	noman
 
-.if ${MACHINE} == "powerpc"
+.if ${MACHINE} == "macppc"
 SUBDIR= stand
 .endif
 
