@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.15 1997/02/11 15:03:39 rahnds Exp $
+#	$OpenBSD: MAKEDEV,v 1.16 1997/02/16 03:57:28 rahnds Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -33,7 +33,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: MAKEDEV,v 1.15 1997/02/11 15:03:39 rahnds Exp $
+#	$Id: MAKEDEV,v 1.16 1997/02/16 03:57:28 rahnds Exp $
 #
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices,
@@ -118,7 +118,7 @@ std)
 	;;
 
 raminst)
-	sh MAKEDEV std fd st0 ttya
+	sh MAKEDEV std fd st0 ttya rd0
 	sh MAKEDEV tty00 tty01 tty02 tty03
 	sh MAKEDEV sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9
 	sh MAKEDEV pty0 
