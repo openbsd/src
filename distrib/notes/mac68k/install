@@ -97,14 +97,7 @@ option in the "File" menu, then quit the application and restart.  Due
 to a long-standing bug, the preferences will not be saved unless you
 quit.
 
-If the system does not come up:
-	* Check the "diagnostic gray bars" check-box.
-	* Count the number of "gray bars" you see.
-	* Send mail to alice@cray-ymp.acm.stuorg.vt.edu describing
-	  your software, your hardware, and the number of bars that
-	  you saw.
-
-If the system does come up, congratulations, you have successfully
+If the system comes up, congratulations, you have successfully
 installed OpenBSD 2.1.  When you reboot into OpenBSD, you should log
 in as "root" at the login prompt.  There is no initial password, but
 if you're using the machine in a networked environment, you should
