@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootp.c,v 1.8 2004/05/04 20:28:40 deraadt Exp $	*/
+/*	$OpenBSD: bootp.c,v 1.9 2004/05/11 04:08:35 deraadt Exp $	*/
 
 /*
  * BOOTP Protocol support.
@@ -65,8 +65,8 @@ bootp(struct packet *packet)
 	note("BOOTREQUEST from %s via %s%s", print_hw_addr(packet->raw->htype,
 	    packet->raw->hlen, packet->raw->chaddr),
 	    packet->raw->giaddr.s_addr ? inet_ntoa(packet->raw->giaddr) :
-	    packet->interface->name, packet->options_valid ? "" :
-	    " (non-rfc1048)");
+	    packet->interface->name,
+	    packet->options_valid ? "" : " (non-rfc1048)");
 
 	if (!locate_network(packet))
 		return;
