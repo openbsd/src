@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nfssvc.2,v 1.12 2000/04/15 11:46:04 aaron Exp $
+.\"	$OpenBSD: nfssvc.2,v 1.13 2000/05/25 06:09:50 deraadt Exp $
 .\"	$NetBSD: nfssvc.2,v 1.6 1995/02/27 12:35:08 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -58,19 +58,20 @@ once in the kernel and the
 points to one of three structures depending on which bits are set in
 flags.
 .Pp
-On the client side,
-.Xr nfsiod 8
-calls
+On the client side, there is no longer a need to call
 .Fn nfssvc
 with the
 .Fa flags
 argument set to
 .Dv NFSSVC_BIOD
+since this functionality has been replaced by a
+.Nm nfsiod
+implementation using kernel threads.
+See
+.Xr nfsd 8
 and
-.Fa argstructp
-set to
-.Dv NULL
-to enter the kernel as a block I/O server daemon.
+.Xr sysctl 8
+for futher discussion.
 For
 .Nm NQNFS ,
 .Xr mount_nfs 8
@@ -236,7 +237,7 @@ The caller is not the superuser.
 .Sh SEE ALSO
 .Xr mount_nfs 8 ,
 .Xr nfsd 8 ,
-.Xr nfsiod 8
+.Xr sysctl 8
 .Sh HISTORY
 The
 .Nm nfssvc
