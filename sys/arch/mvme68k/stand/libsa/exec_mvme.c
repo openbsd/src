@@ -177,7 +177,8 @@ exec_mvme(file, flag)
 	close(io);
 
 	printf("Start @ 0x%x ...\n", (int)entry);
-	(*entry)(flag, 0, cp, 0, 0);
+	(*entry)(flag, bugargs.ctrl_addr, 
+			bugargs.ctrl_lun, bugargs.dev_lun, 0, cp);
 	printf("exec: kernel returned!\n");
 	return;
 
