@@ -1,4 +1,4 @@
-/*	$OpenBSD: comm.c,v 1.3 1999/02/17 03:35:49 deraadt Exp $	*/
+/*	$OpenBSD: comm.c,v 1.4 2000/11/21 18:06:45 aaron Exp $	*/
 /*	$NetBSD: comm.c,v 1.10 1995/09/05 19:57:43 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)comm.c	8.4 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: comm.c,v 1.3 1999/02/17 03:35:49 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: comm.c,v 1.4 2000/11/21 18:06:45 aaron Exp $";
 #endif /* not lint */
 
 #include <err.h>
@@ -194,7 +194,6 @@ file(name)
 void
 usage()
 {
-
-	(void)fprintf(stderr, "usage: comm [-123] file1 file2\n");
+	(void)fprintf(stderr, "usage: comm [-123f] file1 file2\n");
 	exit(1);
 }
