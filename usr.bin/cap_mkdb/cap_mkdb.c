@@ -1,4 +1,4 @@
-/*	$OpenBSD: cap_mkdb.c,v 1.5 2000/01/09 01:10:37 millert Exp $	*/
+/*	$OpenBSD: cap_mkdb.c,v 1.6 2000/09/22 22:22:22 naddy Exp $	*/
 /*	$NetBSD: cap_mkdb.c,v 1.5 1995/09/02 05:47:12 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cap_mkdb.c	8.2 (Berkeley) 4/27/95";
 #endif
-static char rcsid[] = "$OpenBSD: cap_mkdb.c,v 1.5 2000/01/09 01:10:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: cap_mkdb.c,v 1.6 2000/09/22 22:22:22 naddy Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -103,7 +103,7 @@ main(argc, argv)
 		case 'v':
 			verbose = 1;
 			break;
-		    case 'i':
+		case 'i':
 			info = 1;
 			break;
 		case '?':
@@ -155,7 +155,7 @@ dounlink()
 #define SHADOW	(char)2
 
 /*
- * db_build() builds the name and capabilty databases according to the
+ * db_build() builds the name and capability databases according to the
  * details above.
  */
 void

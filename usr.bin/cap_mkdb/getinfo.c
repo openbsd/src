@@ -1,4 +1,4 @@
-/*	$OpenBSD: getinfo.c,v 1.1 1999/03/05 04:47:45 tholo Exp $	*/
+/*	$OpenBSD: getinfo.c,v 1.2 2000/09/22 22:22:22 naddy Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: getinfo.c,v 1.1 1999/03/05 04:47:45 tholo Exp $";
+static char rcsid[] = "$OpenBSD: getinfo.c,v 1.2 2000/09/22 22:22:22 naddy Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -288,12 +288,6 @@ getent(cap, len, db_array, fd, name, depth)
 			}
 				/* loop invariant let's us do this */
 			*rp++ = '\0';
-
-			/*
-			 * If encountered eof check next file.
-			 */
-			if (eof)
-				break;
 				
 			/*
 			 * Toss blank lines and comments.
@@ -308,6 +302,12 @@ getent(cap, len, db_array, fd, name, depth)
 				foundit = 1;
 				break;	/* found it! */
 			}
+
+			/*
+			 * If encountered eof check next file.
+			 */
+			if (eof)
+				break;
 		}
 	}
 		if (foundit)
