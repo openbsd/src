@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751var.h,v 1.16 2000/04/14 13:59:51 jason Exp $	*/
+/*	$OpenBSD: hifn7751var.h,v 1.17 2000/05/08 17:21:46 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -55,7 +55,7 @@
 #define HIFN_SHA1_LENGTH		20
 #define HIFN_MAC_TRUNC_LENGTH		12
 
-#define MAX_SCATTER 10
+#define MAX_SCATTER 64
 
 /*
  *  hifn_command_t
