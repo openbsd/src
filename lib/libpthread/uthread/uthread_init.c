@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_init.c,v 1.30 2003/10/22 00:25:42 brad Exp $	*/
+/*	$OpenBSD: uthread_init.c,v 1.31 2004/01/15 22:22:12 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -80,6 +80,7 @@ static void *references[] = {
 	&accept,
 	&bind,
 	&close,
+	&closefrom,
 	&connect,
 	&dup,
 	&dup2,

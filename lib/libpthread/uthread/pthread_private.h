@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.50 2003/12/31 22:15:28 brad Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.51 2004/01/15 22:22:11 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -1243,6 +1243,7 @@ void    _thread_sys_setbuffer(FILE *, char *, int);
 #ifdef  _UNISTD_H_
 char    *_thread_sys_ttyname(int);
 int     _thread_sys_close(int);
+int     _thread_sys_closefrom(int);
 int     _thread_sys_dup(int);
 int     _thread_sys_dup2(int, int);
 int     _thread_sys_exect(const char *, char * const *, char * const *);
