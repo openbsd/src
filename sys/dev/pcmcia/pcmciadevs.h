@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.95 2002/06/21 09:18:13 fgsch Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.96 2002/08/08 20:35:26 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.93 2002/06/21 08:31:10 henning Exp 
+ *		OpenBSD: pcmciadevs,v 1.94 2002/08/08 20:34:46 fgsch Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -530,6 +530,8 @@
 #define	PCMCIA_PRODUCT_DLINK_DE660	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_DLINK_DE660PLUS	{ "D-Link", "DE-660+", NULL, NULL }
 #define	PCMCIA_PRODUCT_DLINK_DE660PLUS	PCMCIA_PRODUCT_INVALID
+#define	PCMCIA_CIS_DLINK_DFE670TXD	{ "D-Link", "DFE-670TXD", NULL, NULL }
+#define	PCMCIA_PRODUCT_DLINK_DFE670TXD	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_RPTI_EP400	{ "RPTI LTD.", "EP400", "CISV100", NULL }
 #define	PCMCIA_PRODUCT_RPTI_EP400	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_RPTI_EP401	{ "RPTI", "EP401 Ethernet NE2000 Compatible", NULL, NULL }
