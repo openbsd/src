@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gpio.4,v 1.1 2004/06/03 18:41:29 grange Exp $
+.\"	$OpenBSD: gpio.4,v 1.2 2004/06/03 23:53:57 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -36,19 +36,19 @@ controller and provides a uniform programming interface to its pins.
 .Pp
 Each
 .Tn GPIO
-controller with attached
+controller with an attached
 .Nm
-device has associated device file under the
+device has an associated device file under the
 .Pa /dev
-directory, e.g.
+directory, e.g.\&
 .Pa /dev/gpio0 .
 Access from userland is performed through
 .Xr ioctl 2
 calls on these devices.
 .Sh IOCTL INTERFACE
-The following structures and constants are defined in
-.Aq Pa sys/gpio.h 
-header file.
+The following structures and constants are defined in the
+.Aq Pa sys/gpio.h
+header file:
 .Pp
 .Bl -tag -width XXXX -compact
 .It Dv GPIOINFO (struct gpio_info)
@@ -64,7 +64,7 @@ struct gpio_info {
 .Ed
 .Pp
 .It Dv GPIOPINREAD (struct gpio_pin_op)
-Returns input pin value in the
+Returns the input pin value in the
 .Fa gpio_pin_op
 structure:
 .Bd -literal
@@ -79,22 +79,22 @@ The
 field must be set before calling.
 .Pp
 .It Dv GPIOPINWRITE (struct gpio_pin_op)
-Writes output value to the pin.
-Value set in the
+Writes the output value to the pin.
+The value set in the
 .Fa gp_value
 field must be either
 .Dv GPIO_PIN_LOW
 (logical 0) or
 .Dv GPIO_PIN_HIGH
 (logical 1).
-On return
+On return, the
 .Fa gp_value
-field contains old pin state.
+field contains the old pin state.
 .Pp
 .It Dv GPIOPINTOGGLE (struct gpio_pin_op)
-Toggles pin output value, i.e. changes it to the opposite.
+Toggles the pin output value, i.e. changes it to the opposite.
 .Fa gp_value
-field is ignored and on return contains old pin state.
+field is ignored and on return contains the old pin state.
 .Pp
 .It Dv GPIOPINCTL (struct gpio_pin_ctl)
 Changes pin configuration flags with the new ones provided in the
@@ -108,6 +108,7 @@ struct gpio_pin_ctl {
 };
 .Ed
 .Pp
+The
 .Fa gp_flags
 field is a combination of the following flags:
 .Pp
@@ -131,11 +132,11 @@ internal pull-up enabled
 Note that the
 .Tn GPIO
 controller
-may not support all these flags.
+may not support all of these flags.
 On return the
 .Fa gp_caps
 field contains flags that are supported.
-If no flags specified pin configuration stays unchanged.
+If no flags are specified, the pin configuration stays unchanged.
 .El
 .Sh FILES
 .Bl -tag -width "/dev/gpiou" -compact
@@ -143,11 +144,12 @@ If no flags specified pin configuration stays unchanged.
 GPIO device unit
 .Ar u
 file.
+.El
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr gscpcib 4 ,
-.Xr nsclpcsio 4
-.Xr gpioctl 8 ,
+.Xr nsclpcsio 4 ,
+.Xr gpioctl 8
 .Sh HISTORY
 The
 .Nm
