@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nat.conf.5,v 1.4 2001/07/06 21:19:53 chris Exp $
+.\"	$OpenBSD: nat.conf.5,v 1.5 2001/07/10 00:49:24 millert Exp $
 .\"
 .\" Copyright (c) 2001 Ian Darwin.  All rights reserved.
 .\"
@@ -31,79 +31,101 @@
 .Nm nat.conf
 .Nd network address translation configuration file for packet filtering
 .Sh DESCRIPTION
-The rules file for network address translation specify what addresses
+The rules file for network address translation specify which addresses
 are to be mapped and which are to be redirected.
-The two rule types that can be specified are 
-.Li rdr 
-and
-.Li nat .
-.Pp
-Rules are processed in the order written.
-Each rule must be on a line by itself.
-Comments beginning with the character `#', and null lines, are
-completely ignored.
-The general syntax of rules is
-.Bd -literal
-rdr|nat ifname ipspec '->' ipspec
-.Ed
-.Pp
-.Li ifname
-is a network name such as fxp4, ne0, ep1.
-An
-.Li ifname
-can be preceded with the character `!' to negate it.
-.Li ipspec
-is a host number or a network number with netmask bits after a slash,
-and optionally the word 'port' and a port number.
-On the right hand side of a rule, an ipspec must refer to a single
-IP address; it can also be specified as an
-interface name, whose IP address will then be used.
-An
-.Li ipspec
-can be preceded with the character `!' to negate it.
-.Pp
-An
-.Li rdr 
-rule specifies an incoming connection to be redirected
-to another host and optionally a different port.
 .Pp
 .A
 .Li nat
 rule specifies that IP addresses are to be changed as the 
-packet traverses the given interface. This technique of network
-address translation (NAT, also called ``IP masquerading'' on Linux)
-allows a single IP address to support a large range of machines on
+packet traverses the given interface.
+This technique of network address translation (NAT, also called
+.Dq IP masquerading
+on Linux) allows a single IP address to support a large range of machines on
 an inside network.
-Although in theory any IP address can be used on the inside,
-it is recommended that one of the network numbers assigned
-for this purpose in RFC 1918. These netblocks are:
+Although in theory any IP address can be used on the inside, it is strongly
+recommended that one of the address ranges defined by RFC 1918 be used.
+These netblocks are:
 .Bd -literal
 10.0.0.0    - 10.255.255.255 (all of net 10, i.e., 10/8)
 172.16.0.0  - 172.31.255.255 (i.e, 172.16/12)
 192.168.0.0 - 192.168.255.255 (i.e., 192.168/16)
 .Ed
+.Pp
+An
+.Li rdr 
+rule specifies an incoming connection to be redirected
+to another host and optionally a different port.
+.Sh GRAMMAR
+Syntax for filter rules in BNF:
+.Pp
+.Bd -literal
+rule      = nat_rule | rdr_rule
+
+nat_rule  = "nat" "on" [ "!" ] ifname [ protospec ] "from" ipspec
+            "to" ipspec "->" address
+
+rdr_rule  = "rdr" "on" [ "!" ] ifname [ protospec ] "from" ipspec
+            "to" ipspec portspec "->" address portspec
+
+protospec = "proto" ( number | "tcp" | "udp" | "icmp" )
+
+ipspec    = "any" | host
+
+host      = [ "!" ] address [ "/" mask-bits ]
+
+portspec  = "port" ( number | name )
+.Ed
+.Pp
+Rules are processed in the order written.
+Each rule must be on a line by itself.
+Comments begin with the character `#'; empty lines are ignored.
+.Pp
+An
+.Li ifname
+is a network name such as fxp4, ne0, or ep1.
+An
+.Li address
+is an IP address.
+If specified,
+.Li
+mask-bits
+refers to the number of bits in the netmask.
+The negation character,
+.Sq ! ,
+may be used before an
+.Li ifname
+or an
+.Li address .
+The protocol specification is optional.
+If it is omitted from a
+.Li nat
+rule, "tcp", "udp", and "icmp" connections will be translated.
+If the protocol specification omitted from an
+.Li rdr
+rule, only "tcp" connections will be redirected.
 .Sh EXAMPLES
 This example maps incoming requests on port 80 to port 8080, on
 which Apache Tomcat is running (I don't run Tomcat as root, therefore it
 doesn't have permission to bind to port 80).
 .Bd -literal
 # map tomcat on 8080 to appear to be on 80
-rdr ne3 0.0.0.0/0 port 80 -> 127.0.0.1 port 8080
+rdr on ne3 proto tcp from any to any port 80 -> 127.0.0.1 port 8080
 .Ed
 .Pp
 In the example below, lo0 is the system loopback; the machine translates
 all packets coming from 192.168.168.0/24 to 204.92.77.111 going out any
-interface except the loopback.  This has the net effect of making traffic
-traffic from the 192.168.168.0/24 network appear as though it is part of the
-Internet routeable 204.92.77.111 to nodes behind any interface on the router.
+interface except the loopback.
+This has the net effect of making traffic from the 192.168.168.0/24
+network appear as though it is part of the Internet routeable address
+204.92.77.111 to nodes behind any interface on the router.
 .Bd -literal
-nat ! lo0 192.168.168.0/24 -> 204.92.77.111
+nat on ! lo0 from 192.168.168.0/24 to any -> 204.92.77.111
 .Ed
 .Pp
 In the example below, fxp1 is the outside interface; the machine sits between a
 fake internal 144.19.74.* network, and a routable external IP of 204.92.77.100:
 .Bd -literal
-nat fxp1 144.19.74/24 -> 204.92.77.100
+nat on fxp1 from 144.19.74/24 to any -> 204.92.77.100
 .Ed
 .Pp
 This longer example uses both a NAT and a redirection. Interface
@@ -116,7 +138,7 @@ kue0 is the outside interface, and its external address is 157.161.48.183.
 # translate outgoing packets' source addresses (any protocol)
 # in my case, any address but the gateway's external address is mapped
 #
-nat kue0 ! 157.161.48.183 -> 157.161.48.183
+nat on kue0 ! 157.161.48.183 to any -> 157.161.48.183
 
 # --------------------------------------------------------------------
 # RDR
@@ -124,20 +146,25 @@ nat kue0 ! 157.161.48.183 -> 157.161.48.183
 
 # translate incoming packets' destination addresses
 # as an example, redirect a TCP and UDP port to an internal machine
+# NOTE: the lines below are split for readability
 #
-rdr kue0 157.161.48.183/32 port 8080 -> 10.1.2.151 port 22 proto tcp
-rdr kue0 157.161.48.183/32 port 8080 -> 10.1.2.151 port 53 proto udp
+rdr on kue0 proto tcp from any to 157.161.48.183/32 port 8080 \e
+	-> 10.1.2.151 port 22
+rdr on kue0 proto udp from any to 157.161.48.183/32 port 8080 \e
+	-> 10.1.2.151 port 53
 .Ed
 .Sh FILES
 .Bl -tag -width "/etc/nat.conf" -compact
 .It Pa /etc/hosts
 .It Pa /etc/nat.conf
+.It Pa /etc/protocols
 .It Pa /etc/services
 .El
 .Sh SEE ALSO
 .Xr pf 4 ,
 .Xr hosts 5 ,
 .Xr pf.conf 5 ,
+.Xr protocols 5 ,
 .Xr services 5 ,
 .Xr pfctl 8
 .Sh HISTORY
