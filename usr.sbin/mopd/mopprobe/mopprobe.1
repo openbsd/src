@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mopprobe.1,v 1.2 1996/09/21 19:12:33 maja Exp $
+.\"	$OpenBSD: mopprobe.1,v 1.3 1999/03/27 14:31:22 maja Exp $
 .\"
 .\" Copyright (c) 1996 Mats O Jansson.  All rights reserved.
 .\"
@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" @(#) $OpenBSD: mopprobe.1,v 1.2 1996/09/21 19:12:33 maja Exp $
+.\" @(#) $OpenBSD: mopprobe.1,v 1.3 1999/03/27 14:31:22 maja Exp $
 .\"
 .Dd October 2, 1995
 .Dt MOPPROBE 1
@@ -38,18 +38,26 @@
 .Nm mopprobe 
 .Fl a
 .Op Fl 3 | 4
+.Op Fl o
+.Op Fl v
 .Pp
 .Nm mopprobe 
 .Op Fl 3 | 4
+.Op Fl o
+.Op Fl v
 .Ar interface
 .Sh DESCRIPTION
 .Nm Mopprobe
-prints the ethernet address and nodename of MOP SID message on the Ethernet
-connected to
+prints the ethernet address and nodename of DECserver 100/200/250/300 on the
+Ethernet connected to
 .Ar interface
 or all known interfaces if 
 .Sq Fl a
-is given.
+is given. If
+.Sq Fl o
+inhibits all messages but the first from a node. With
+.Sq Fl v
+all MOP/RC SID messages will be shown (e.g. machines running DECnet).
 .Sh OPTIONS
 .Bl -tag -width indent
 .It Fl a
@@ -61,6 +69,10 @@ is omitted, an interface must be specified.
 Ignore MOP V3 messages (Ethernet II).
 .It Fl 4
 Ignore MOP V4 messages (Ethernet 802.3).
+.It Fl o
+Print a node just once.
+.It Fl v
+Show all nodes sending MOP/RC SID messages.
 .El
 .Sh SEE ALSO
 .Xr mopa.out 1 ,

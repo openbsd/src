@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.c,v 1.2 1996/09/21 19:11:23 maja Exp $ */
+/*	$OpenBSD: device.c,v 1.3 1999/03/27 14:31:21 maja Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: device.c,v 1.2 1996/09/21 19:11:23 maja Exp $";
+static char rcsid[] = "$OpenBSD: device.c,v 1.3 1999/03/27 14:31:21 maja Exp $";
 #endif
 
 #include "os.h"
@@ -158,6 +158,16 @@ deviceOpen(ifname, proto, trans)
 		p->eaddr[5]= tmp.eaddr[5];
 #endif	/* DEV_NEW_CONF */
 	
+#ifdef LINUX2_PF
+		{
+			int s;
+
+			s = socket(AF_INET,SOCK_DGRAM,0);
+			pfEthAddr(s,p->if_name,&p->eaddr[0]);
+			(void) close(s);
+			
+		}	
+#endif
 	}
 }
 

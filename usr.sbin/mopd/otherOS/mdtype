@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# @(#) $OpenBSD: mdtype,v 1.2 1996/09/21 19:12:45 maja Exp $
+# @(#) $OpenBSD: mdtype,v 1.3 1999/03/27 14:31:22 maja Exp $
 #
 # Determine machine type.
 #
@@ -38,6 +38,30 @@ if [ -f /usr/bin/uname ]; then
 
     if [ $machine = "sparc" ]; then
 	machine="sun4"
+    fi
+
+fi
+
+if [ -f /bin/uname ]; then
+
+    os=`/bin/uname`
+	
+    if [ $os = "Linux" ]; then
+        
+	machine="`/bin/uname -m`"
+
+	if [ $machine = "i686" ]; then
+	    machine="i386"
+	fi
+
+	if [ $machine = "i586" ]; then
+	    machine="i386"
+	fi
+
+	if [ $machine = "i486" ]; then
+	    machine="i386"
+	fi
+	
     fi
 
 fi

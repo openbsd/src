@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# @(#) $OpenBSD: ostype,v 1.2 1996/09/21 19:12:48 maja Exp $
+# @(#) $OpenBSD: ostype,v 1.3 1999/03/27 14:31:23 maja Exp $
 #
 # Determine os type.
 #
@@ -20,6 +20,16 @@ if [ -f /usr/bin/uname ]; then
 
     if [ $osname = "NetBSD" ]; then
 	os="netbsd"
+    fi
+
+fi
+
+if [ -f /bin/uname ]; then
+
+    osname=`/bin/uname`
+	
+    if [ $osname = "Linux" ]; then
+	os="linux`/bin/uname -r | /usr/bin/cut -d. -f1`"
     fi
 
 fi

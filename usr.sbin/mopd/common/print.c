@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.2 1996/09/21 19:11:57 maja Exp $ */
+/*	$OpenBSD: print.c,v 1.3 1999/03/27 14:31:21 maja Exp $ */
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: print.c,v 1.2 1996/09/21 19:11:57 maja Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.3 1999/03/27 14:31:21 maja Exp $";
 #endif
 
 #include <sys/types.h>
@@ -52,12 +52,12 @@ mopPrintHWA(fd, ap)
 {
 	(void)fprintf(fd, "%x:%x:%x:%x:%x:%x",
 		      ap[0],ap[1],ap[2],ap[3],ap[4],ap[5]);
-	if (ap[0] < 10) (void)fprintf(fd, " ");
-	if (ap[1] < 10) (void)fprintf(fd, " ");
-	if (ap[2] < 10) (void)fprintf(fd, " ");
-	if (ap[3] < 10) (void)fprintf(fd, " ");
-	if (ap[4] < 10) (void)fprintf(fd, " ");
-	if (ap[5] < 10) (void)fprintf(fd, " ");
+	if (ap[0] < 16) (void)fprintf(fd, " ");
+	if (ap[1] < 16) (void)fprintf(fd, " ");
+	if (ap[2] < 16) (void)fprintf(fd, " ");
+	if (ap[3] < 16) (void)fprintf(fd, " ");
+	if (ap[4] < 16) (void)fprintf(fd, " ");
+	if (ap[5] < 16) (void)fprintf(fd, " ");
 }
 
 void
