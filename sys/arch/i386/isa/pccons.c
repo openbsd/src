@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.40 1998/03/16 09:12:39 downsj Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.41 1998/07/09 18:22:25 deraadt Exp $	*/
 /*	$NetBSD: pccons.c,v 1.99.4.1 1996/06/04 20:03:53 cgd Exp $	*/
 
 /*-
@@ -1919,7 +1919,8 @@ pc_xmode_on()
 #ifdef COMPAT_10
 	/* This is done by i386_iopl(3) now. */
 	fp = curproc->p_md.md_regs;
-	fp->tf_eflags |= PSL_IOPL;
+	if (securelevel <= 0)
+		fp->tf_eflags |= PSL_IOPL;
 #endif
 }
 
@@ -1940,6 +1941,7 @@ pc_xmode_off()
 	screen_restore(0);
 
 	fp = curproc->p_md.md_regs;
-	fp->tf_eflags &= ~PSL_IOPL;
+	if (securelevel <= 0)
+		fp->tf_eflags &= ~PSL_IOPL;
 }
 #endif /* XSERVER */

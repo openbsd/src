@@ -340,6 +340,10 @@ out:
 }
 #endif	/* USER_LDT */
 
+#ifdef APERTURE
+extern int allowaperture;
+#endif
+
 int
 i386_iopl(p, args, retval)
 	struct proc *p;
@@ -352,6 +356,13 @@ i386_iopl(p, args, retval)
 
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return error;
+#ifdef APERTURE
+	if (!allowaperture && securelevel > 0)
+		return EPERM;
+#else
+	if (securelevel > 0)
+		return EPERM;
+#endif
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return error;
