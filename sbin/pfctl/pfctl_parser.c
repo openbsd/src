@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.5 2001/06/25 05:00:58 smart Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.6 2001/06/25 09:44:32 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -44,45 +44,47 @@
 
 #include "pfctl_parser.h"
 
-static void		 print_addr (u_int32_t);
-static void		 print_host (struct state_host *);
-static void		 print_seq (struct state_peer *);
-static void		 print_port (u_int8_t, u_int16_t, u_int16_t, char *);
-static void		 print_flags (u_int8_t);
-static char		*next_word (char **);
-static u_int16_t	 next_number (char **);
-static u_int32_t	 next_addr (char **);
-static u_int8_t		 next_flags (char **);
-static u_int16_t	 rule_port (char *, u_int8_t);
-static u_int32_t	 rule_mask (u_int8_t);
+void		 print_addr (u_int32_t);
+void		 print_host (struct state_host *);
+void		 print_seq (struct state_peer *);
+void		 print_port (u_int8_t, u_int16_t, u_int16_t, char *);
+void		 print_flags (u_int8_t);
+char		*next_word (char **);
+u_int16_t	 next_number (char **);
+u_int32_t	 next_addr (char **);
+u_int8_t	 next_flags (char **);
+u_int16_t	 rule_port (char *, u_int8_t);
+u_int32_t	 rule_mask (u_int8_t);
 
-static char *tcpflags = "FSRPAU";
+char *tcpflags = "FSRPAU";
 
-static void
+void
 print_addr(u_int32_t a)
 {
 	a = ntohl(a);
 	printf("%u.%u.%u.%u", (a>>24)&255, (a>>16)&255, (a>>8)&255, a&255);
 }
 
-static void
+void
 print_host(struct state_host *h)
 {
 	u_int32_t a = ntohl(h->addr);
 	u_int16_t p = ntohs(h->port);
+
 	printf("%u.%u.%u.%u:%u", (a>>24)&255, (a>>16)&255, (a>>8)&255, a&255, p);
 }
 
-static void
+void
 print_seq(struct state_peer *p)
 {
 	printf("[%u + %u]", p->seqlo, p->seqhi - p->seqlo);
 }
 
-static void
+void
 print_port(u_int8_t op, u_int16_t p1, u_int16_t p2, char *proto)
 {
 	struct servent *s = getservbyport(p1, proto);
+
 	p1 = ntohs(p1);
 	p2 = ntohs(p2);
 	printf("port ");
@@ -93,14 +95,12 @@ print_port(u_int8_t op, u_int16_t p1, u_int16_t p2, char *proto)
 			printf("= %s ", s->s_name);
 		else
 			printf("= %u ", p1);
-	}
-	else if (op == 3) {
+	} else if (op == 3) {
 		if (s != NULL)
 			printf("!= %s ", s->s_name);
 		else
 			printf("!= %u ", p1);
-	}
-	else if (op == 4)
+	} else if (op == 4)
 		printf("< %u ", p1);
 	else if (op == 5)
 		printf("<= %u ", p1);
@@ -110,17 +110,18 @@ print_port(u_int8_t op, u_int16_t p1, u_int16_t p2, char *proto)
 		printf(">= %u ", p1);
 }
 
-static void
+void
 print_flags(u_int8_t f)
 {
 	int i;
+
 	for (i = 0; i < 6; ++i)
 		if (f & (1 << i))
 			printf("%c", tcpflags[i]);
 }
 
 void
-print_nat(struct nat *n)
+print_nat(struct pf_nat *n)
 {
 	printf("nat %s ", n->ifname);
 	if (n->not)
@@ -147,7 +148,7 @@ print_nat(struct nat *n)
 }
 
 void
-print_rdr(struct rdr *r)
+print_rdr(struct pf_rdr *r)
 {
 	printf("rdr %s ", r->ifname);
 	if (r->not)
@@ -172,9 +173,10 @@ print_rdr(struct rdr *r)
 }
 
 void
-print_status(struct status *s)
+print_status(struct pf_status *s)
 {
 	time_t t = time(NULL);
+
 	printf("%u %u %u", t, s->since, s->running);
 	if (s->running) {
 		printf(" %u %u", s->bytes[0], s->bytes[1]);
@@ -187,7 +189,7 @@ print_status(struct status *s)
 }
 
 void
-print_state(struct state *s)
+print_state(struct pf_state *s)
 {
 	struct state_peer *src, *dst;
 	u_int8_t hrs, min, sec;
@@ -253,7 +255,7 @@ print_state(struct state *s)
 }
 
 void
-print_rule(struct rule *r)
+print_rule(struct pf_rule *r)
 {
 	if (r->action == 0)
 		printf("pass ");
@@ -336,8 +338,8 @@ print_rule(struct rule *r)
 char *
 next_line(char **s)
 {
-	char *l;
-	l = *s;
+	char *l = *s;
+
 	while (**s && (**s != '\n'))
 		(*s)++;
 	if (**s) {
@@ -347,10 +349,11 @@ next_line(char **s)
 	return (l);
 }
 
-static char *
+char *
 next_word(char **s)
 {
 	char *w;
+
 	while ((**s == ' ') || (**s == '\t') || (**s == '\n'))
 		(*s)++;
 	w = *s;
@@ -363,10 +366,11 @@ next_word(char **s)
 	return (w);
 }
 
-static u_int16_t
+u_int16_t
 next_number(char **s)
 {
 	u_int16_t n = 0;
+
 	while (**s && !isdigit(**s))
 		(*s)++;
 	while (**s && isdigit(**s)) {
@@ -377,7 +381,7 @@ next_number(char **s)
 	return (n);
 }
 
-static u_int32_t
+u_int32_t
 next_addr(char **w)
 {
 	u_int8_t a, b, c, d;
@@ -388,11 +392,12 @@ next_addr(char **w)
 	return (htonl((a << 24) | (b << 16) | (c << 8) | d));
 }
 
-static u_int8_t
+u_int8_t
 next_flags(char **s)
 {
 	u_int8_t f = 0;
 	char *p;
+
 	while (**s && !strchr(tcpflags, **s))
 		(*s)++;
 	while (**s && ((p = strchr(tcpflags, **s)) != NULL)) {
@@ -402,10 +407,11 @@ next_flags(char **s)
 	return (f ? f : 63);
 }
 
-static u_int16_t
+u_int16_t
 rule_port(char *w, u_int8_t p)
 {
 	struct servent *s;
+
 	if (isdigit(*w))
 		return (htons(atoi(w)));
 	s = getservbyname(w, p == IPPROTO_TCP ? "tcp" : "udp");
@@ -414,21 +420,22 @@ rule_port(char *w, u_int8_t p)
 	return (s->s_port);
 }
 
-static u_int32_t
+u_int32_t
 rule_mask(u_int8_t b)
 {
 	u_int32_t m = 0;
 	int i;
+
 	for (i = 31; i > 31-b; --i)
 		m |= (1 << i);
 	return (htonl(m));
 }
 
 int
-parse_rule(int n, char *l, struct rule *r)
+parse_rule(int n, char *l, struct pf_rule *r)
 {
 	char *w;
-	memset(r, 0, sizeof(struct rule));
+	memset(r, 0, sizeof(struct pf_rule));
 	w = next_word(&l);
 
 	/* pass / block */
@@ -437,7 +444,7 @@ parse_rule(int n, char *l, struct rule *r)
 	else if (!strcmp(w, "block"))
 		r->action = 1;
 	else {
-		fprintf(stderr, "error on line %i: expected pass/block, got %s\n",
+		fprintf(stderr, "error on line %d: expected pass/block, got %s\n",
 		    n, w);
 		return (0);
 	}
@@ -455,7 +462,7 @@ parse_rule(int n, char *l, struct rule *r)
 	else if (!strcmp(w, "out"))
 		r->direction = 1;
 	else {
-		fprintf(stderr, "error on line %i: expected in/out, got %s\n",
+		fprintf(stderr, "error on line %d: expected in/out, got %s\n",
 		    n, w);
 		return (0);
 	}
@@ -486,7 +493,7 @@ parse_rule(int n, char *l, struct rule *r)
 		w = next_word(&l);
 		p = getprotobyname(w);
 		if (p == NULL) {
-			fprintf(stderr, "error on line %i: unknown protocol %s\n",
+			fprintf(stderr, "error on line %d: unknown protocol %s\n",
 			    n, w);
 			return (0);
 		}
@@ -514,7 +521,7 @@ parse_rule(int n, char *l, struct rule *r)
 			else if (*w == '/')
 				r->src.mask = rule_mask(next_number(&w));
 			else {
-				fprintf(stderr, "error on line %i: expected /, got '%c'\n", n, *w);
+				fprintf(stderr, "error on line %d: expected /, got '%c'\n", n, *w);
 				return (0);
 			}
 			w = next_word(&l);
@@ -544,7 +551,7 @@ parse_rule(int n, char *l, struct rule *r)
 			w = next_word(&l);
 			if (r->src.port_op == 1) {
 				if (strcmp(w, "<>") && strcmp(w, "><")) {
-					fprintf(stderr, "error on line %i: expected <>/><, got %s\n", n, w);
+					fprintf(stderr, "error on line %d: expected <>/><, got %s\n", n, w);
 					return (0);
 				}
 				w = next_word(&l);
@@ -555,7 +562,7 @@ parse_rule(int n, char *l, struct rule *r)
 
 		/* destination address */
 		if (strcmp(w, "to")) {
-			fprintf(stderr, "error on line %i: expected to, got %s\n",
+			fprintf(stderr, "error on line %d: expected to, got %s\n",
 			    n, w);
 			return (0);
 		}
@@ -573,7 +580,7 @@ parse_rule(int n, char *l, struct rule *r)
 			else if (*w == '/')
 				r->dst.mask = rule_mask(next_number(&w));
 			else {
-				fprintf(stderr, "error on line %i: expected /, got '%c'\n", n, *w);
+				fprintf(stderr, "error on line %d: expected /, got '%c'\n", n, *w);
 				return (0);
 			}
 			w = next_word(&l);
@@ -603,7 +610,7 @@ parse_rule(int n, char *l, struct rule *r)
 			w = next_word(&l);
 			if (r->dst.port_op == 1) {
 				if (strcmp(w, "<>") && strcmp(w, "><")) {
-					fprintf(stderr, "error on line %i: expected <>/><, got %s\n", n, w);
+					fprintf(stderr, "error on line %d: expected <>/><, got %s\n", n, w);
 					return (0);
 				}
 				w = next_word(&l);
@@ -614,7 +621,7 @@ parse_rule(int n, char *l, struct rule *r)
 
 	}
 	else {
-		fprintf(stderr, "error on line %i: expected all/from, got %s\n",
+		fprintf(stderr, "error on line %d: expected all/from, got %s\n",
 		    n, w);
 		return (0);
 	}
@@ -622,7 +629,7 @@ parse_rule(int n, char *l, struct rule *r)
 	/* flags */
 	if (!strcmp(w, "flags")) {
 		if (r->proto != IPPROTO_TCP) {
-			fprintf(stderr, "error on line %i: flags only valid for proto tcp\n", n);
+			fprintf(stderr, "error on line %d: flags only valid for proto tcp\n", n);
 			return (0);
 		}
 		else {
@@ -636,7 +643,8 @@ parse_rule(int n, char *l, struct rule *r)
 	/* icmp type/code */
 	if (!strcmp(w, "icmp-type")) {
 		if (r->proto != IPPROTO_ICMP) {
-			fprintf(stderr, "error on line %i: icmp-type only valid for proto icmp\n", n);
+			fprintf(stderr,
+			    "error on line %d: icmp-type only valid for proto icmp\n", n);
 			return (0);
 		}
 		else {
@@ -659,14 +667,14 @@ parse_rule(int n, char *l, struct rule *r)
 			r->keep_state = 1;
 		}
 		else {
-			fprintf(stderr, "error on line %i: expected state, got %s\n", n, w);
+			fprintf(stderr, "error on line %d: expected state, got %s\n", n, w);
 			return (0);
 		}
 	}
 
 	/* no further options expected */
 	while (*w) {
-		fprintf(stderr, "error on line %i: unexpected %s\n", n, w);
+		fprintf(stderr, "error on line %d: unexpected %s\n", n, w);
 		w = next_word(&l);
 	}
 
@@ -674,15 +682,17 @@ parse_rule(int n, char *l, struct rule *r)
 }
 
 int
-parse_nat(int n, char *l, struct nat *nat)
+parse_nat(int n, char *l, struct pf_nat *nat)
 {
 	char *w;
-	memset(nat, 0, sizeof(struct nat));
+
+	memset(nat, 0, sizeof(struct pf_nat));
 	w = next_word(&l);
 
 	/* nat */
 	if (strcmp(w, "nat" )) {
-		fprintf(stderr, "error on line %i: expected nat, got %s\n", n, w);
+		fprintf(stderr,
+		    "error on line %d: expected nat, got %s\n", n, w);
 		return (0);
 	}
 	w = next_word(&l);
@@ -702,14 +712,16 @@ parse_nat(int n, char *l, struct nat *nat)
 	else if (*w == '/')
 		nat->smask = rule_mask(next_number(&w));
 	else {
-		fprintf(stderr, "error on line %i: expected /, got '%c'\n", n, *w);
+		fprintf(stderr,
+		    "error on line %d: expected /, got '%c'\n", n, *w);
 		return (0);
 	}
 	w = next_word(&l);
 
 	/* -> */
 	if (strcmp(w, "->")) {
-		fprintf(stderr, "error on line %i: expected ->, got %s\n", n, w);
+		fprintf(stderr,
+		    "error on line %d: expected ->, got %s\n", n, w);
 		return (0);
 	}
 	w = next_word(&l);
@@ -729,7 +741,7 @@ parse_nat(int n, char *l, struct nat *nat)
 			nat->proto = IPPROTO_ICMP;
 		else {
 			fprintf(stderr,
-			 "error on line %i: expected tcp/udp/icmp, got %s\n",
+			 "error on line %d: expected tcp/udp/icmp, got %s\n",
 			    n, w);
 			return (0);
 		}
@@ -738,7 +750,7 @@ parse_nat(int n, char *l, struct nat *nat)
 
 	/* no further options expected */
 	while (*w) {
-		fprintf(stderr, "error on line %i: unexpected %s\n", n, w);
+		fprintf(stderr, "error on line %d: unexpected %s\n", n, w);
 		w = next_word(&l);
 	}
 
@@ -746,15 +758,17 @@ parse_nat(int n, char *l, struct nat *nat)
 }
 
 int
-parse_rdr(int n, char *l, struct rdr *rdr)
+parse_rdr(int n, char *l, struct pf_rdr *rdr)
 {
 	char *w;
-	memset(rdr, 0, sizeof(struct rdr));
+
+	memset(rdr, 0, sizeof(struct pf_rdr));
 	w = next_word(&l);
 
 	/* rdr */
 	if (strcmp(w, "rdr" )) {
-		fprintf(stderr, "error on line %i: expected rdr, got %s\n", n, w);
+		fprintf(stderr,
+		    "error on line %d: expected rdr, got %s\n", n, w);
 		return (0);
 	}
 	w = next_word(&l);
@@ -774,14 +788,15 @@ parse_rdr(int n, char *l, struct rdr *rdr)
 	else if (*w == '/')
 		rdr->dmask = rule_mask(next_number(&w));
 	else {
-		fprintf(stderr, "error on line %i: expected /, got '%c'\n", n, *w);
+		fprintf(stderr,
+		    "error on line %d: expected /, got '%c'\n", n, *w);
 		return (0);
 	}
 	w = next_word(&l);
 
 	/* external port */
 	if (strcmp(w, "port")) {
-		fprintf(stderr, "error on line %i: expected port, got %s\n", n, w);
+		fprintf(stderr, "error on line %d: expected port, got %s\n", n, w);
 		return (0);
 	}
 	w = next_word(&l);
@@ -790,7 +805,8 @@ parse_rdr(int n, char *l, struct rdr *rdr)
 
 	/* -> */
 	if (strcmp(w, "->")) {
-		fprintf(stderr, "error on line %i: expected ->, got %s\n", n, w);
+		fprintf(stderr,
+		    "error on line %d: expected ->, got %s\n", n, w);
 		return (0);
 	}
 	w = next_word(&l);
@@ -801,7 +817,8 @@ parse_rdr(int n, char *l, struct rdr *rdr)
 
 	/* internal port */
 	if (strcmp(w, "port")) {
-		fprintf(stderr, "error on line %i: expected port, got %s\n", n, w);
+		fprintf(stderr,
+		    "error on line %d: expected port, got %s\n", n, w);
 		return (0);
 	}
 	w = next_word(&l);
@@ -817,7 +834,7 @@ parse_rdr(int n, char *l, struct rdr *rdr)
 			rdr->proto = IPPROTO_UDP;
 		else {
 			fprintf(stderr,
-			 "error on line %i: expected tcp/udp, got %s\n",
+			 "error on line %d: expected tcp/udp, got %s\n",
 			    n, w);
 			return (0);
 		}
@@ -826,10 +843,9 @@ parse_rdr(int n, char *l, struct rdr *rdr)
 
 	/* no further options expected */
 	while (*w) {
-		fprintf(stderr, "error on line %i: unexpected %s\n", n, w);
+		fprintf(stderr, "error on line %d: unexpected %s\n", n, w);
 		w = next_word(&l);
 	}
 
 	return (1);
 }
-

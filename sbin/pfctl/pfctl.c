@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.6 2001/06/25 00:02:55 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.7 2001/06/25 09:44:32 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -46,22 +46,23 @@
 
 #include "pfctl_parser.h"
 
-static void	 printerror(char *);
-static void	 usage(char *);
-static char	*load_file(char *, size_t *);
+void	 printerror(char *);
+void	 usage(char *);
+char	*load_file(char *, size_t *);
 int		 main(int, char *[]);
 
-static void
+void
 printerror(char *s)
 {
 	fprintf(stderr, "ERROR: %s: %s\n", s, strerror(errno));
 	return;
 }
 
-static void
+void
 usage(char *argv0)
 {
 	char *n = rindex(argv0, '/');
+
 	if (n != NULL)
 		n++;
 	else
@@ -83,11 +84,12 @@ usage(char *argv0)
 	fprintf(stderr, "\tlog\t\t<if>\tSet interface to log\n");
 }
 
-static char *
+char *
 load_file(char *name, size_t *len)
 {
 	char *buf = 0;
 	FILE *file = fopen(name, "r");
+
 	*len = 0;
 	if (file == NULL) {
 		fprintf(stderr, "ERROR: couldn't open file %s (%s)\n",
@@ -119,6 +121,7 @@ main(int argc, char *argv[])
 	int dev;
 	struct pfioc *ub;
 	u_int16_t n = 0;
+
 	ub = malloc(sizeof(struct pfioc));
 	if (ub == NULL) {
 		printf("ERROR: malloc() failed\n");
@@ -160,8 +163,9 @@ main(int argc, char *argv[])
 			return (1);
 		}
 		if (!strcmp(argv[2], "rules")) {
-			struct rule *rule = ub->buffer;
-			ub->entries = ub->size / sizeof(struct rule);
+			struct pf_rule *rule = ub->buffer;
+
+			ub->entries = ub->size / sizeof(struct pf_rule);
 			if (ioctl(dev, DIOCGETRULES, ub))
 				printerror("DIOCGETRULES");
 			for (n = 0; n < ub->entries; ++n) {
@@ -170,14 +174,15 @@ main(int argc, char *argv[])
 			}
 		}
 		else if (!strcmp(argv[2], "nat")) {
-			struct nat *nat = ub->buffer;
-			struct rdr *rdr = ub->buffer;
-			ub->entries = ub->size / sizeof(struct nat);
+			struct pf_nat *nat = ub->buffer;
+			struct pf_rdr *rdr = ub->buffer;
+
+			ub->entries = ub->size / sizeof(struct pf_nat);
 			if (ioctl(dev, DIOCGETNAT, ub))
 				printerror("DIOCGETNAT");
 			for (n = 0; n < ub->entries; ++n)
 				print_nat(nat + n);
-			ub->entries = ub->size / sizeof(struct rdr);
+			ub->entries = ub->size / sizeof(struct pf_rdr);
 			if (ioctl(dev, DIOCGETRDR, ub))
 				printerror("DIOCGETRDR");
 			for (n = 0; n < ub->entries; ++n)
@@ -185,7 +190,8 @@ main(int argc, char *argv[])
 		}
 		else if (!strcmp(argv[2], "states")) {
 			u_int8_t proto = 0;
-			struct state *state = ub->buffer;
+			struct pf_state *state = ub->buffer;
+
 			if (argc >= 4) {
 				if (!strcmp(argv[3], "tcp"))
 					proto = IPPROTO_TCP;
@@ -199,7 +205,7 @@ main(int argc, char *argv[])
 					return (1);
 				}
 			}
-			ub->entries = ub->size / sizeof(struct state);
+			ub->entries = ub->size / sizeof(struct pf_state);
 			if (ioctl(dev, DIOCGETSTATES, ub))
 				printerror("DIOCGETSTATES");
 			for (n = ub->entries; n > 0; --n)
@@ -207,7 +213,8 @@ main(int argc, char *argv[])
 					print_state(state + n - 1);
 		}
 		else if (!strcmp(argv[2], "status")) {
-			struct status *status = ub->buffer;
+			struct pf_status *status = ub->buffer;
+
 			ub->entries = 1;
 			if (ioctl(dev, DIOCGETSTATUS, ub))
 				printerror("DIOCGETSTATUS");
@@ -278,7 +285,8 @@ main(int argc, char *argv[])
 			return (1);
 
 		if (!strcmp(argv[2], "rules")) {
-			struct rule *rule = ub->buffer;
+			struct pf_rule *rule = ub->buffer;
+
 			n = 0;
 			nr = 0;
 			s = buf;
@@ -300,8 +308,9 @@ main(int argc, char *argv[])
 				for (n = 0; n < ub->entries; ++n)
 					print_rule(rule + n);
 		} else {
-			struct nat *nat = ub->buffer;
-			struct rdr *rdr = ub->buffer;
+			struct pf_nat *nat = ub->buffer;
+			struct pf_rdr *rdr = ub->buffer;
+
 			n = 0;
 			nr = 0;
 			s = buf;

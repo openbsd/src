@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.3 2001/06/24 23:16:36 deraadt Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.4 2001/06/25 09:44:33 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -34,13 +34,13 @@
 #define _PFM_PARSER_H_
 
 char	*next_line (char **);
-int	 parse_rule (int, char *, struct rule *);
-int	 parse_nat (int, char *, struct nat *);
-int	 parse_rdr (int, char *, struct rdr *);
-void	 print_rule (struct rule *);
-void	 print_nat (struct nat *);
-void	 print_rdr (struct rdr *);
-void	 print_state (struct state *);
-void	 print_status (struct status *);
+int	 parse_rule (int, char *, struct pf_rule *);
+int	 parse_nat (int, char *, struct pf_nat *);
+int	 parse_rdr (int, char *, struct pf_rdr *);
+void	 print_rule (struct pf_rule *);
+void	 print_nat (struct pf_nat *);
+void	 print_rdr (struct pf_rdr *);
+void	 print_state (struct pf_state *);
+void	 print_status (struct pf_status *);
 
 #endif /* _PFM_PARSER_H_ */
