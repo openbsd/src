@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.18 2003/06/11 03:16:12 henric Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.19 2003/06/18 17:33:35 miod Exp $	*/
 /*	$NetBSD: sbus.c,v 1.46 2001/10/07 20:30:41 eeh Exp $ */
 
 /*-
@@ -209,10 +209,15 @@ int
 sbus_print(void *args, const char *busname)
 {
 	struct sbus_attach_args *sa = args;
+	char *class;
 	int i;
 
-	if (busname)
+	if (busname != NULL) {
 		printf("%s at %s", sa->sa_name, busname);
+		class = getpropstring(sa->sa_node, "device_type");
+		if (*class != '\0')
+			printf(" class %s", class);
+	}
 	printf(" slot %ld offset 0x%lx", (long)sa->sa_slot, 
 	       (u_long)sa->sa_offset);
 	for (i = 0; i < sa->sa_nintr; i++) {
