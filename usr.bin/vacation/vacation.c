@@ -1,4 +1,4 @@
-/*	$OpenBSD: vacation.c,v 1.2 1996/06/26 05:42:27 deraadt Exp $	*/
+/*	$OpenBSD: vacation.c,v 1.3 1996/12/06 02:09:22 deraadt Exp $	*/
 /*	$NetBSD: vacation.c,v 1.7 1995/04/29 05:58:27 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-static char rcsid[] = "$OpenBSD: vacation.c,v 1.2 1996/06/26 05:42:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: vacation.c,v 1.3 1996/12/06 02:09:22 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -424,7 +424,7 @@ sendmessage(myname)
 		execl(_PATH_SENDMAIL, "sendmail", "-f", myname, from, NULL);
 		syslog(LOG_ERR, "vacation: can't exec %s: %s",
 			_PATH_SENDMAIL, strerror(errno));
-		exit(1);
+		_exit(1);
 	}
 	close(pvect[0]);
 	sfp = fdopen(pvect[1], "w");

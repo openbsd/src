@@ -1,4 +1,4 @@
-/*	$OpenBSD: system.c,v 1.2 1996/06/26 05:41:31 deraadt Exp $	*/
+/*	$OpenBSD: system.c,v 1.3 1996/12/06 02:09:04 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)system.c	4.5 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: system.c,v 1.2 1996/06/26 05:41:31 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: system.c,v 1.3 1996/12/06 02:09:04 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -744,11 +744,11 @@ char	*argv[];
 	    cmdname = getenv("SHELL");
 	    execlp(cmdname, cmdname, 0);
 	    perror("Exec'ing new shell...\n");
-	    exit(1);
+	    _exit(1);
 	} else {
 	    execvp(argv[1], &argv[1]);
 	    perror("Exec'ing command.\n");
-	    exit(1);
+	    _exit(1);
 	}
 	/*NOTREACHED*/
     }
