@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.113 2003/03/11 16:06:25 markus Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.114 2003/03/31 22:59:47 millert Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -2121,7 +2121,7 @@ bridge_ipsec(dir, af, hlen, m)
 	struct tdb *tdb;
 	u_int32_t spi;
 	u_int16_t cpi;
-	int error, off;
+	int error, off, s;
 	u_int8_t proto = 0;
 #ifdef INET
 	struct ip *ip;
@@ -2207,6 +2207,8 @@ bridge_ipsec(dir, af, hlen, m)
 		if (proto == 0)
 			goto skiplookup;
 
+		s = spltdb();
+
 		tdb = gettdb(spi, &dst, proto);
 		if (tdb != NULL && (tdb->tdb_flags & TDBF_INVALID) == 0 &&
 		    tdb->tdb_xform != NULL) {
@@ -2246,10 +2248,12 @@ bridge_ipsec(dir, af, hlen, m)
 			}
 
 			(*(tdb->tdb_xform->xf_input))(m, tdb, hlen, off);
+			splx(s);
 			return (1);
 		} else {
  skiplookup:
 			/* XXX do an input policy lookup */
+			splx(s);
 			return (0);
 		}
 	} else { /* Outgoing from the bridge. */
