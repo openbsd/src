@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_sockio.h,v 1.4 1996/04/17 05:24:04 mickey Exp $	*/
+/*	$OpenBSD: linux_sockio.h,v 1.5 1997/12/10 01:51:24 deraadt Exp $	*/
 /*	$NetBSD: linux_sockio.h,v 1.5 1996/03/08 04:56:07 mycroft Exp $	*/
 
 /*
@@ -41,6 +41,7 @@
 #define	LINUX_SIOCGIFDSTADDR	_LINUX_IO(0x89, 23)
 #define	LINUX_SIOCGIFBRDADDR	_LINUX_IO(0x89, 25)
 #define	LINUX_SIOCGIFNETMASK	_LINUX_IO(0x89, 27)
+#define	LINUX_SIOCGIFHWADDR	_LINUX_IO(0x89, 39)
 #define LINUX_SIOCADDMULTI	_LINUX_IO(0x89, 49)
 #define LINUX_SIOCDELMULTI	_LINUX_IO(0x89, 50)
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.6 1997/11/27 00:57:28 deraadt Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.7 1997/12/10 01:51:23 deraadt Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -45,6 +45,8 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <net/if.h>
+#include <net/if_types.h>
+#include <net/if_dl.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <sys/mount.h>
@@ -803,6 +805,33 @@ linux_ioctl_socket(p, uap, retval)
 	case LINUX_SIOCDELMULTI:
 		SCARG(&ia, com) = SIOCDELMULTI;
 		break;
+	case LINUX_SIOCGIFHWADDR: {
+		struct linux_ifreq *ifr = (struct linux_ifreq *)SCARG(&ia, data);
+		struct sockaddr_dl *sdl;
+		struct ifnet *ifp;
+		struct ifaddr *ifa;
+
+		/* 
+		 * Note that we don't actually respect the name in the ifreq
+		 * structure, as Linux interface names are all different.
+		 */
+		for (ifp = ifnet.tqh_first; ifp != 0;
+		    ifp = ifp->if_list.tqe_next) {
+			if (ifp->if_type != IFT_ETHER)
+				continue;
+			for (ifa = ifp->if_addrlist.tqh_first; ifa;
+			    ifa = ifa->ifa_list.tqe_next) {
+				if ((sdl = (struct sockaddr_dl *)ifa->ifa_addr) &&
+				    (sdl->sdl_family == AF_LINK) &&
+				    (sdl->sdl_type == IFT_ETHER)) {
+					return copyout(LLADDR(sdl),
+					    (caddr_t)&ifr->ifr_hwaddr.sa_data,
+					    LINUX_IFHWADDRLEN);
+				}
+			}
+		}
+		return ENOENT;
+	    }
 	default:
 		return EINVAL;
 	}
