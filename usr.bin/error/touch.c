@@ -1,4 +1,4 @@
-/*	$OpenBSD: touch.c,v 1.6 1998/07/10 14:09:56 mickey Exp $	*/
+/*	$OpenBSD: touch.c,v 1.7 1999/12/04 00:09:22 deraadt Exp $	*/
 /*	$NetBSD: touch.c,v 1.3 1995/09/02 06:15:54 jtc Exp $	*/
 
 /*
@@ -38,10 +38,10 @@
 #if 0
 static char sccsid[] = "@(#)touch.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: touch.c,v 1.6 1998/07/10 14:09:56 mickey Exp $";
+static char rcsid[] = "$OpenBSD: touch.c,v 1.7 1999/12/04 00:09:22 deraadt Exp $";
 #endif /* not lint */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/stat.h>
 #include <signal.h>
 #include <unistd.h>
@@ -520,7 +520,7 @@ execvarg(n_pissed_on, r_argc, r_argv)
 FILE	*o_touchedfile;	/* the old file */
 FILE	*n_touchedfile;	/* the new file */
 char	*o_name;
-char	n_name[64];
+char	n_name[MAXPATHLEN];
 int	o_lineno;
 int	n_lineno;
 boolean	tempfileopen = FALSE;
@@ -538,7 +538,7 @@ boolean edit(name)
 		warn("Can't open file \"%s\" to touch (read)", name);
 		return(TRUE);
 	}
-	strcpy(n_name, _PATH_TMPFILE);
+	strlcpy(n_name, _PATH_TMPFILE, sizeof(n_name));
 	if ((fd = mkstemp(n_name)) == -1 ||
 	    (n_touchedfile = fdopen(fd, "w")) == NULL) {
 		if (fd != -1)
