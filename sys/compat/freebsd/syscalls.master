@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.24 2004/05/28 18:28:14 tedu Exp $
+	$OpenBSD: syscalls.master,v 1.25 2004/07/09 23:52:02 millert Exp $
 ;	$NetBSD: syscalls.master,v 1.3 1995/10/10 18:28:40 mycroft Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -104,10 +104,10 @@
 36	NOARGS		{ int sys_sync(void); }
 37	NOARGS		{ int sys_kill(int pid, int signum); }
 38	STD		{ int compat_43_freebsd_sys_stat(char *path, \
-			    struct ostat *ub); } ostat
+			    struct stat43 *ub); } stat43
 39	NOARGS		{ pid_t sys_getppid(void); }
 40	STD		{ int compat_43_freebsd_sys_lstat(char *path, \
-			    struct ostat *ub); } olstat
+			    struct stat43 *ub); } lstat43
 41	NOARGS		{ int sys_dup(u_int fd); }
 42	NOARGS		{ int sys_opipe(void); }
 43	NOARGS		{ gid_t sys_getegid(void); }
@@ -144,8 +144,8 @@
 			    char **envp); }
 60	NOARGS		{ int sys_umask(int newmask); }
 61	STD		{ int freebsd_sys_chroot(char *path); }
-62	NOARGS		{ int compat_43_sys_fstat(int fd, struct ostat *sb); } \
-			    ofstat
+62	NOARGS		{ int compat_43_sys_fstat(int fd, struct stat43 *sb); } \
+			    fstat43
 63	NOARGS		{ int compat_43_sys_getkerninfo(int op, char *where, \
 			    int *size, int arg); } ogetkerninfo
 64	NOARGS		{ int compat_43_sys_getpagesize(void); } ogetpagesize

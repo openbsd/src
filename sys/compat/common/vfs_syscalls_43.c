@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls_43.c,v 1.22 2003/06/02 23:27:59 millert Exp $	*/
+/*	$OpenBSD: vfs_syscalls_43.c,v 1.23 2004/07/09 23:52:02 millert Exp $	*/
 /*	$NetBSD: vfs_syscalls_43.c,v 1.4 1996/03/14 19:31:52 christos Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
 
 #include <sys/pipe.h>
 
-static void cvtstat(struct stat *, struct ostat *);
+static void cvtstat(struct stat *, struct stat43 *);
 
 /*
  * Redirection info so we don't have to include the union fs routines in 
@@ -82,7 +82,7 @@ extern int (*union_check_p)(struct proc *, struct vnode **,
 static void
 cvtstat(st, ost)
 	struct stat *st;
-	struct ostat *ost;
+	struct stat43 *ost;
 {
 
 	ost->st_dev = st->st_dev;
@@ -117,10 +117,10 @@ compat_43_sys_stat(p, v, retval)
 {
 	register struct compat_43_sys_stat_args /* {
 		syscallarg(char *) path;
-		syscallarg(struct ostat *) ub;
+		syscallarg(struct stat43 *) ub;
 	} */ *uap = v;
 	struct stat sb;
-	struct ostat osb;
+	struct stat43 osb;
 	int error;
 	struct nameidata nd;
 
@@ -150,10 +150,10 @@ compat_43_sys_lstat(p, v, retval)
 {
 	register struct compat_43_sys_lstat_args /* {
 		syscallarg(char *) path;
-		syscallarg(struct ostat *) ub;
+		syscallarg(struct stat43 *) ub;
 	} */ *uap = v;
 	struct stat sb;
-	struct ostat osb;
+	struct stat43 osb;
 	int error;
 	struct nameidata nd;
 
@@ -183,13 +183,13 @@ compat_43_sys_fstat(p, v, retval)
 {
 	struct compat_43_sys_fstat_args /* {
 		syscallarg(int) fd;
-		syscallarg(struct ostat *) sb;
+		syscallarg(struct stat43 *) sb;
 	} */ *uap = v;
 	int fd = SCARG(uap, fd);
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
 	struct stat ub;
-	struct ostat oub;
+	struct stat43 oub;
 	int error;
 
 	if ((fp = fd_getfile(fdp, fd)) == NULL)

@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.15 2004/05/28 18:28:14 tedu Exp $
+	$OpenBSD: syscalls.master,v 1.16 2004/07/09 23:52:02 millert Exp $
 ;	$NetBSD: syscalls.master,v 1.33 1996/02/28 16:05:43 pk Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -86,9 +86,9 @@
 35	UNIMPL		sunos_ftime
 36	NOARGS		{ int sys_sync(void); }
 37	NOARGS		{ int sys_kill(int pid, int signum); }
-38	STD		{ int sunos_sys_stat(char *path, struct ostat *ub); }
+38	STD		{ int sunos_sys_stat(char *path, struct stat43 *ub); }
 39	UNIMPL		sunos_setpgrp
-40	STD		{ int sunos_sys_lstat(char *path, struct ostat *ub); }
+40	STD		{ int sunos_sys_lstat(char *path, struct stat43 *ub); }
 41	NOARGS		{ int sys_dup(u_int fd); }
 42	NOARGS		{ int sys_opipe(void); }
 43	STD		{ int sunos_sys_otimes(struct tms *tp); }
@@ -118,7 +118,7 @@
 			    char **envp); }
 60	NOARGS		{ int sys_umask(int newmask); }
 61	NOARGS		{ int sys_chroot(char *path); }
-62	NOARGS		{ int compat_43_sys_fstat(int fd, struct ostat *sb); }
+62	NOARGS		{ int compat_43_sys_fstat(int fd, struct stat43 *sb); }
 63	UNIMPL		
 64	NOARGS		{ int compat_43_sys_getpagesize(void); }
 65	NOARGS		{ int sys_msync(void *addr, size_t len, \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat.h,v 1.12 2003/06/02 23:28:21 millert Exp $	*/
+/*	$OpenBSD: stat.h,v 1.13 2004/07/09 23:52:01 millert Exp $	*/
 /*	$NetBSD: stat.h,v 1.20 1996/05/16 22:17:49 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@
 #include <sys/time.h>
 
 #ifdef _KERNEL
-struct ostat {
+struct stat43 {
 	u_int16_t st_dev;		/* inode's device */
 	ino_t	  st_ino;		/* inode's number */
 	mode_t	  st_mode;		/* inode protection mode */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_stat.c,v 1.16 2003/08/15 20:32:16 tedu Exp $	*/
+/*	$OpenBSD: netbsd_stat.c,v 1.17 2004/07/09 23:52:02 millert Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -209,7 +209,7 @@ compat_43_netbsd_sys_stat(p, v, retval)
 {
 	struct compat_43_netbsd_sys_stat_args /* {
 		syscallarg(char *) path;
-		syscallarg(struct ostat *) ub;
+		syscallarg(struct stat43 *) ub;
 	} */ *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 
@@ -225,7 +225,7 @@ compat_43_netbsd_sys_lstat(p, v, retval)
 {
 	struct compat_43_netbsd_sys_lstat_args /* {
 		syscallarg(char *) path;
-		syscallarg(struct ostat *) ub;
+		syscallarg(struct stat43 *) ub;
 	} */ *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 

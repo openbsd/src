@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.47 2004/05/28 18:28:14 tedu Exp $
+	$OpenBSD: syscalls.master,v 1.48 2004/07/09 23:52:02 millert Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -156,7 +156,7 @@
 82	STD		{ int linux_sys_oldselect(struct linux_select *lsp); }
 83	STD		{ int linux_sys_symlink(char *path, char *to); }
 84	NOARGS		{ int compat_43_sys_lstat(char *path, \
-			    struct ostat *up); } olstat
+			    struct stat43 *up); } olstat
 85	STD		{ int linux_sys_readlink(char *name, char *buf, \
 			    int count); }
 86	STD		{ int linux_sys_uselib(char *path); }

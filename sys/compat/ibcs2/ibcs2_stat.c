@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_stat.c,v 1.12 2003/10/01 08:03:01 itojun Exp $	*/
+/*	$OpenBSD: ibcs2_stat.c,v 1.13 2004/07/09 23:52:02 millert Exp $	*/
 /*	$NetBSD: ibcs2_stat.c,v 1.5 1996/05/03 17:05:32 christos Exp $	*/
 
 /*
@@ -54,12 +54,12 @@
 #include <compat/ibcs2/ibcs2_util.h>
 #include <compat/ibcs2/ibcs2_utsname.h>
 
-static void bsd_stat2ibcs_stat(struct ostat *, struct ibcs2_stat *);
+static void bsd_stat2ibcs_stat(struct stat43 *, struct ibcs2_stat *);
 static int cvt_statfs(struct statfs *, caddr_t, int);
 
 static void
 bsd_stat2ibcs_stat(st, st4)
-	struct ostat *st;
+	struct stat43 *st;
 	struct ibcs2_stat *st4;
 {
 	bzero(st4, sizeof(*st4));
@@ -172,7 +172,7 @@ ibcs2_sys_stat(p, v, retval)
 		syscallarg(char *) path;
 		syscallarg(struct ibcs2_stat *) st;
 	} */ *uap = v;
-	struct ostat st;
+	struct stat43 st;
 	struct ibcs2_stat ibcs2_st;
 	struct compat_43_sys_stat_args cup;
 	int error;
@@ -201,7 +201,7 @@ ibcs2_sys_lstat(p, v, retval)
 		syscallarg(char *) path;
 		syscallarg(struct ibcs2_stat *) st;
 	} */ *uap = v;
-	struct ostat st;
+	struct stat43 st;
 	struct ibcs2_stat ibcs2_st;
 	struct compat_43_sys_lstat_args cup;
 	int error;
@@ -230,7 +230,7 @@ ibcs2_sys_fstat(p, v, retval)
 		syscallarg(int) fd;
 		syscallarg(struct ibcs2_stat *) st;
 	} */ *uap = v;
-	struct ostat st;
+	struct stat43 st;
 	struct ibcs2_stat ibcs2_st;
 	struct compat_43_sys_fstat_args cup;
 	int error;
