@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.14 1997/11/17 21:12:12 millert Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.15 1997/11/17 22:46:03 millert Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -34,7 +34,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: passwd.c,v 1.14 1997/11/17 21:12:12 millert Exp $";
+static char rcsid[] = "$OpenBSD: passwd.c,v 1.15 1997/11/17 22:46:03 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -250,16 +250,13 @@ pw_lock(retries)
 
 	if (!pw_lck)
 		return (-1);
-	/* Acquire the lock file. */
+	/* Acquire the lock file.  */
 	old_mode = umask(0);
-	fd = open(pw_lck, O_WRONLY|O_CREAT|O_NONBLOCK|O_EXLOCK, 0600);
-	for (i = 0; i < retries && fd < 0 && errno == EAGAIN; i++) {
+	fd = open(pw_lck, O_WRONLY|O_CREAT|O_EXCL, 0600);
+	for (i = 0; i < retries && fd < 0 && errno == EEXIST; i++) {
 		sleep(1);
-		fd = open(pw_lck, O_WRONLY|O_CREAT|O_NONBLOCK|O_EXLOCK, 0600);
+		fd = open(pw_lck, O_WRONLY|O_CREAT|O_EXCL, 0600);
 	}
-	/* Really want to use O_TRUNC above but there is a bug in open(2) */
-	if (fd != -1)
-		ftruncate(fd, 0);
 	umask(old_mode);
 	return (fd);
 }
