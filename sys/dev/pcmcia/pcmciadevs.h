@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.78 2001/11/20 23:31:55 mickey Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.79 2001/11/23 11:21:17 jakob Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.74 2001/11/20 23:31:20 mickey Exp 
+ *		OpenBSD: pcmciadevs,v 1.75 2001/11/23 11:20:47 jakob Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -126,6 +126,8 @@
 #define	PCMCIA_PRODUCT_3COM_3C574	0x0574
 #define	PCMCIA_CIS_3COM_3C1	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_3COM_3C1	0x0cf1
+#define	PCMCIA_CIS_3COM_3CRWE62092A	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_3COM_3CRWE62092A	0x2092
 
 /* Adaptec */
 #define	PCMCIA_CIS_ADAPTEC_APA1460_1	{ NULL, NULL, NULL, NULL }
