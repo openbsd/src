@@ -1,4 +1,4 @@
-/*	$OpenBSD: machine.c,v 1.3 1997/08/22 07:16:28 downsj Exp $	*/
+/*	$OpenBSD: machine.c,v 1.4 1997/08/22 07:39:27 downsj Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -298,7 +298,7 @@ struct system_info *si;
 	register int i;
 	register double *infoloadp;
 	struct loadavg sysload;
-	int size = sizeof(sysload);
+	size_t size = sizeof(sysload);
 	static int mib[] = { CTL_VM, VM_LOADAVG };
 
 	if (sysctl(mib, 2, &sysload, &size, NULL, 0) < 0) {
@@ -317,7 +317,7 @@ struct system_info *si;
     /* sum memory statistics */
     {
 	struct vmtotal total;
-	int size = sizeof(total);
+	size_t size = sizeof(total);
 	static int mib[] = { CTL_VM, VM_METER };
 
 	/* get total -- systemwide main memory usage structure */
@@ -481,7 +481,7 @@ char *(*get_userid)();
         if (PP(pp, p_wmesg))
 	    p_wait = EP(pp, e_wmesg);
 	else {
-	    snprintf(waddr, sizeof(waddr), "%x", 
+	    snprintf(waddr, sizeof(waddr), "%lx", 
 		(unsigned int)(PP(pp, p_wchan)) & ~KERNBASE);
 	    p_wait = waddr;
         }
