@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.8,v 1.12 1999/07/04 18:59:42 aaron Exp $
+.\"	$OpenBSD: scsi.8,v 1.13 1999/07/23 06:00:05 deraadt Exp $
 .\"	$FreeBSD: scsi.8,v 1.5 1995/05/05 20:41:58 dufault Exp $
 .\"
 .\" Written By Julian ELischer
@@ -95,6 +95,11 @@ to write input data to stdout.
 .Pp
 The following options are available:
 .Bl -tag -width Ds
+.It Fl f Ar device
+Specifies the
+.Ar device
+that should be opened, ie.
+.Pa /dev/rsd0c .
 .It Fl d Ar debug_level
 Sets the SCSI kernel debug level.  The kernel must have been compiled
 with the SCSIDEBUG
