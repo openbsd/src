@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.74 2003/06/02 23:28:15 millert Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.75 2003/06/11 02:54:02 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -402,6 +402,7 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 	if (exthdrs.ip6e_rthdr) {
 		struct ip6_rthdr *rh;
 		struct ip6_rthdr0 *rh0;
+		struct in6_addr *addr;
 
 		rh = (struct ip6_rthdr *)(mtod(exthdrs.ip6e_rthdr,
 		    struct ip6_rthdr *));
@@ -409,11 +410,11 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 		switch (rh->ip6r_type) {
 		case IPV6_RTHDR_TYPE_0:
 			 rh0 = (struct ip6_rthdr0 *)rh;
-			 ip6->ip6_dst = rh0->ip6r0_addr[0];
-			 bcopy((caddr_t)&rh0->ip6r0_addr[1],
-			     (caddr_t)&rh0->ip6r0_addr[0],
+			 addr = (struct in6_addr *)(rh0 + 1);
+			 ip6->ip6_dst = addr[0];
+			 bcopy(&addr[1], &addr[0],
 			     sizeof(struct in6_addr) * (rh0->ip6r0_segleft - 1));
-			 rh0->ip6r0_addr[rh0->ip6r0_segleft - 1] = finaldst;
+			 addr[rh0->ip6r0_segleft - 1] = finaldst;
 			 break;
 		default:	/* is it possible? */
 			 error = EINVAL;

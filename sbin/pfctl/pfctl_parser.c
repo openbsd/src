@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.162 2003/06/09 11:14:46 mcbride Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.163 2003/06/11 02:54:02 itojun Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -104,11 +104,11 @@ static const struct icmptypeent icmp6_type[] = {
 	{ "echoreq",	ICMP6_ECHO_REQUEST },
 	{ "echorep",	ICMP6_ECHO_REPLY },
 	{ "groupqry",	ICMP6_MEMBERSHIP_QUERY },
-	{ "listqry",	MLD6_LISTENER_QUERY },
+	{ "listqry",	MLD_LISTENER_QUERY },
 	{ "grouprep",	ICMP6_MEMBERSHIP_REPORT },
-	{ "listenrep",	MLD6_LISTENER_REPORT },
+	{ "listenrep",	MLD_LISTENER_REPORT },
 	{ "groupterm",	ICMP6_MEMBERSHIP_REDUCTION },
-	{ "listendone", MLD6_LISTENER_DONE },
+	{ "listendone", MLD_LISTENER_DONE },
 	{ "routersol",	ND_ROUTER_SOLICIT },
 	{ "routeradv",	ND_ROUTER_ADVERT },
 	{ "neighbrsol", ND_NEIGHBOR_SOLICIT },
@@ -121,8 +121,8 @@ static const struct icmptypeent icmp6_type[] = {
 	{ "fqdnrep",	ICMP6_FQDN_REPLY },
 	{ "niqry",	ICMP6_NI_QUERY },
 	{ "nirep",	ICMP6_NI_REPLY },
-	{ "mtraceresp",	MLD6_MTRACE_RESP },
-	{ "mtrace",	MLD6_MTRACE }
+	{ "mtraceresp",	MLD_MTRACE_RESP },
+	{ "mtrace",	MLD_MTRACE }
 };
 
 static const struct icmpcodeent icmp_code[] = {
