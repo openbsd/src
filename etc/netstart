@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.30 1997/10/14 20:34:55 deraadt Exp $
+#	$OpenBSD: netstart,v 1.31 1997/11/04 09:15:31 deraadt Exp $
 
 # /etc/myname contains my symbolic name
 #
@@ -72,7 +72,7 @@ route add -net 127 127.0.0.1 -reject
         shift            # get rid of "hostname"
         (
             read af name mask bcaddr extras
-            read dt dtaddr 
+            read dt dtaddr
 
             if [ ! -n "$name" ]; then
                 echo "/etc/hostname.$1: invalid network configuration file"

@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.local,v 1.14 1997/10/18 10:37:47 deraadt Exp $
+#	$OpenBSD: rc.local,v 1.15 1997/11/04 09:15:32 deraadt Exp $
 
 # site-specific startup actions, daemons, and other things which
 # can be done AFTER your system goes into securemode.  For actions
@@ -26,6 +26,6 @@ fi
 # Alternatively, xdm may be started in /etc/ttys.
 #if [ -x /usr/X11R6/bin/xdm ]; then
 #	echo -n ' xdm';		/usr/X11R6/bin/xdm
-#fi                                                                            
+#fi
 
 echo '.'

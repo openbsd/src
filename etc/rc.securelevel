@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.securelevel,v 1.4 1997/08/06 19:32:35 kstailey Exp $
+#	$OpenBSD: rc.securelevel,v 1.5 1997/11/04 09:15:32 deraadt Exp $
 #
 # site-specific startup actions, daemons, and other things which
 # can be done BEFORE your system goes into securemode.  For actions
@@ -32,6 +32,6 @@ echo -n 'starting pre-securelevel daemons:'
 #if [ -x /usr/local/sbin/xntpd ]; then
 #       /usr/local/sbin/tickadj -Aq
 #       echo -n ' xntpd';       /usr/local/sbin/xntpd
-#fi                                                                            
+#fi
 
 echo '.'
