@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.13 2000/02/09 05:04:22 mickey Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.14 2000/02/09 05:10:10 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -211,8 +211,8 @@ pdtlbe(pa_space_t sp, vaddr_t va)
 }
 
 #ifdef USELEDS
-#define	PALED_NETOUT	0x01
-#define	PALED_NETIN	0x02
+#define	PALED_NETSND	0x01
+#define	PALED_NETRCV	0x02
 #define	PALED_DISK	0x04
 #define	PALED_HEARTBEAT	0x08
 #define	PALED_LOADMASK	0xf0
