@@ -1,5 +1,5 @@
-/*	$OpenBSD: locore.S,v 1.1 2004/02/01 05:09:48 drahn Exp $	*/
-/*^I$NetBSD: locore.S,v 1.14 2003/04/20 16:21:40 thorpej Exp $^I*/$
+/*	$OpenBSD: locore.S,v 1.2 2004/02/01 06:10:33 drahn Exp $	*/
+/*	$NetBSD: locore.S,v 1.14 2003/04/20 16:21:40 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe

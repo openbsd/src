@@ -1,5 +1,5 @@
-/*	$OpenBSD: cpuswitch.S,v 1.1 2004/02/01 05:09:48 drahn Exp $	*/
-/*	$NetBSD: cpuswitch.S,v 1.41 2003/11/15 08:44:18 scw Exp $	*/$
+/*	$OpenBSD: cpuswitch.S,v 1.2 2004/02/01 06:10:33 drahn Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.41 2003/11/15 08:44:18 scw Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.

@@ -1,5 +1,5 @@
-/*	$OpenBSD: irq_dispatch.S,v 1.1 2004/02/01 05:09:48 drahn Exp $	*/
-/*^I$NetBSD: irq_dispatch.S,v 1.5 2003/10/30 08:57:24 scw Exp $^I*/$
+/*	$OpenBSD: irq_dispatch.S,v 1.2 2004/02/01 06:10:33 drahn Exp $	*/
+/*	$NetBSD: irq_dispatch.S,v 1.5 2003/10/30 08:57:24 scw Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited

@@ -1,5 +1,5 @@
-/*	$OpenBSD: bus_dma.c,v 1.1 2004/02/01 05:09:48 drahn Exp $	*/
-/*^I$NetBSD: bus_dma.c,v 1.38 2003/10/30 08:44:13 scw Exp $^I*/$
+/*	$OpenBSD: bus_dma.c,v 1.2 2004/02/01 06:10:33 drahn Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.38 2003/10/30 08:44:13 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.

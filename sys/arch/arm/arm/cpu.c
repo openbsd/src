@@ -1,5 +1,5 @@
-/*	$OpenBSD: cpu.c,v 1.1 2004/02/01 05:09:48 drahn Exp $	*/
-/*^I$NetBSD: cpu.c,v 1.54 2003/10/26 23:11:15 chris Exp $^I*/$
+/*	$OpenBSD: cpu.c,v 1.2 2004/02/01 06:10:33 drahn Exp $	*/
+/*	$NetBSD: cpu.c,v 1.54 2003/10/26 23:11:15 chris Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.

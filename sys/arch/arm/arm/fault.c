@@ -1,5 +1,5 @@
-/*	$OpenBSD: fault.c,v 1.1 2004/02/01 05:09:48 drahn Exp $	*/
-/*^I$NetBSD: fault.c,v 1.46 2004/01/21 15:39:21 skrll Exp $^I*/$
+/*	$OpenBSD: fault.c,v 1.2 2004/02/01 06:10:33 drahn Exp $	*/
+/*	$NetBSD: fault.c,v 1.46 2004/01/21 15:39:21 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.

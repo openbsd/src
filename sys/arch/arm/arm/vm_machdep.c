@@ -1,5 +1,5 @@
-/*	$OpenBSD: vm_machdep.c,v 1.1 2004/02/01 05:09:48 drahn Exp $	*/
-/*^I$NetBSD: vm_machdep.c,v 1.31 2004/01/04 11:33:29 jdolecek Exp $^I*/$
+/*	$OpenBSD: vm_machdep.c,v 1.2 2004/02/01 06:10:33 drahn Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.31 2004/01/04 11:33:29 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
