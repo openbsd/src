@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.31 1997/10/18 21:09:57 deraadt Exp $	*/
+/*	$OpenBSD: wd.c,v 1.32 1997/12/10 23:09:37 rees Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -311,9 +311,10 @@ wdstart(vp)
 		xfer->c_bp = bp;
 		xfer->c_p_offset = p_offset;
 		xfer->databuf = bp->b_data;
-		xfer->c_bcount = bp->b_bcount;
 		xfer->c_flags |= bp->b_flags & (B_READ|B_WRITE);
-		xfer->c_blkno = bp->b_blkno;
+		xfer->c_skip = 0;
+		xfer->c_errors = 0;
+		/* count and blkno are filled in by wdcstart */
 
 		/* Instrumentation. */
 		disk_busy(&wd->sc_dk);
