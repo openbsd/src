@@ -1,5 +1,5 @@
 /* IEEE floating point support routines, for GDB, the GNU Debugger.
-   Copyright (C) 1991, 1994, 1999, 2000 Free Software Foundation, Inc.
+   Copyright (C) 1991, 1994, 1999 Free Software Foundation, Inc.
 
 This file is part of GDB.
 
@@ -36,27 +36,19 @@ extern char *memset ();
 /* floatformats for IEEE single and double, big and little endian.  */
 const struct floatformat floatformat_ieee_single_big =
 {
-  floatformat_big, 32, 0, 1, 8, 127, 255, 9, 23,
-  floatformat_intbit_no,
-  "floatformat_ieee_single_big"
+  floatformat_big, 32, 0, 1, 8, 127, 255, 9, 23, floatformat_intbit_no
 };
 const struct floatformat floatformat_ieee_single_little =
 {
-  floatformat_little, 32, 0, 1, 8, 127, 255, 9, 23,
-  floatformat_intbit_no,
-  "floatformat_ieee_single_little"
+  floatformat_little, 32, 0, 1, 8, 127, 255, 9, 23, floatformat_intbit_no
 };
 const struct floatformat floatformat_ieee_double_big =
 {
-  floatformat_big, 64, 0, 1, 11, 1023, 2047, 12, 52,
-  floatformat_intbit_no,
-  "floatformat_ieee_double_big"
+  floatformat_big, 64, 0, 1, 11, 1023, 2047, 12, 52, floatformat_intbit_no
 };
 const struct floatformat floatformat_ieee_double_little =
 {
-  floatformat_little, 64, 0, 1, 11, 1023, 2047, 12, 52,
-  floatformat_intbit_no,
-  "floatformat_ieee_double_little"
+  floatformat_little, 64, 0, 1, 11, 1023, 2047, 12, 52, floatformat_intbit_no
 };
 
 /* floatformat for IEEE double, little endian byte order, with big endian word
@@ -64,30 +56,24 @@ const struct floatformat floatformat_ieee_double_little =
 
 const struct floatformat floatformat_ieee_double_littlebyte_bigword =
 {
-  floatformat_littlebyte_bigword, 64, 0, 1, 11, 1023, 2047, 12, 52,
-  floatformat_intbit_no,
-  "floatformat_ieee_double_little"
+  floatformat_littlebyte_bigword, 64, 0, 1, 11, 1023, 2047, 12, 52, floatformat_intbit_no
 };
 
 const struct floatformat floatformat_i387_ext =
 {
   floatformat_little, 80, 0, 1, 15, 0x3fff, 0x7fff, 16, 64,
-  floatformat_intbit_yes,
-  "floatformat_i387_ext"
+  floatformat_intbit_yes
 };
 const struct floatformat floatformat_m68881_ext =
 {
   /* Note that the bits from 16 to 31 are unused.  */
-  floatformat_big, 96, 0, 1, 15, 0x3fff, 0x7fff, 32, 64,
-  floatformat_intbit_yes,
-  "floatformat_m68881_ext"
+  floatformat_big, 96, 0, 1, 15, 0x3fff, 0x7fff, 32, 64, floatformat_intbit_yes
 };
 const struct floatformat floatformat_i960_ext =
 {
   /* Note that the bits from 0 to 15 are unused.  */
   floatformat_little, 96, 16, 17, 15, 0x3fff, 0x7fff, 32, 64,
-  floatformat_intbit_yes,
-  "floatformat_i960_ext"
+  floatformat_intbit_yes
 };
 const struct floatformat floatformat_m88110_ext =
 {
@@ -95,20 +81,17 @@ const struct floatformat floatformat_m88110_ext =
   /* Harris uses raw format 128 bytes long, but the number is just an ieee
      double, and the last 64 bits are wasted. */
   floatformat_big,128, 0, 1, 11,  0x3ff,  0x7ff, 12, 52,
-  floatformat_intbit_no,
-  "floatformat_m88110_ext(harris)"
+  floatformat_intbit_no
 #else
   floatformat_big, 80, 0, 1, 15, 0x3fff, 0x7fff, 16, 64,
-  floatformat_intbit_yes,
-  "floatformat_m88110_ext"
+  floatformat_intbit_yes
 #endif /* HARRIS_FLOAT_FORMAT */
 };
 const struct floatformat floatformat_arm_ext =
 {
   /* Bits 1 to 16 are unused.  */
   floatformat_big, 96, 0, 17, 15, 0x3fff, 0x7fff, 32, 64,
-  floatformat_intbit_yes,
-  "floatformat_arm_ext"
+  floatformat_intbit_yes
 };
 
 static unsigned long get_field PARAMS ((unsigned char *,

@@ -22,8 +22,7 @@ the resulting executable to be covered by the GNU General Public License.
 This exception does not however invalidate any other reasons why
 the executable file might be covered by the GNU General Public License. */
 
-#include "ansidecl.h"
-#include "safe-ctype.h"
+#include <ctype.h>
 
 extern double atof ();
 
@@ -43,7 +42,7 @@ strtod (str, ptr)
   
   p = str;
   
-  while (ISSPACE (*p))
+  while (isspace (*p))
     ++p;
   
   if (*p == '+' || *p == '-')
@@ -89,10 +88,10 @@ strtod (str, ptr)
     }
 
   /* digits, with 0 or 1 periods in it.  */
-  if (ISDIGIT (*p) || *p == '.')
+  if (isdigit (*p) || *p == '.')
     {
       int got_dot = 0;
-      while (ISDIGIT (*p) || (!got_dot && *p == '.'))
+      while (isdigit (*p) || (!got_dot && *p == '.'))
 	{
 	  if (*p == '.')
 	    got_dot = 1;
@@ -106,9 +105,9 @@ strtod (str, ptr)
 	  i = 1;
 	  if (p[i] == '+' || p[i] == '-')
 	    ++i;
-	  if (ISDIGIT (p[i]))
+	  if (isdigit (p[i]))
 	    {
-	      while (ISDIGIT (p[i]))
+	      while (isdigit (p[i]))
 		++i;
 	      *ptr = p + i;
 	      return atof (str);
