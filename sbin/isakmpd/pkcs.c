@@ -1,4 +1,4 @@
-/*	$Id: pkcs.c,v 1.9 1999/07/07 22:10:44 niklas Exp $	*/
+/*	$Id: pkcs.c,v 1.10 1999/07/08 06:02:39 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -342,8 +342,8 @@ int
 pkcs_generate_rsa_keypair (struct rsa_public_key *pubk, 
 			   struct rsa_private_key *seck, u_int32_t bits)
 {
--  /* XXX Always fail until we interface legal (in the US) RSA code.  */
--  return 0;
+  /* XXX Always fail until we interface legal (in the US) RSA code.  */
+  return 0;
 }
 
 /* Generate a random prime with at most bits significant bits */
