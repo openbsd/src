@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.18 1996/11/25 04:49:23 millert Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.19 1996/11/28 13:20:37 niklas Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -95,6 +95,10 @@ struct cfattach scsibus_ca = {
 struct cfdriver scsibus_cd = {
 	NULL, "scsibus", DV_DULL
 };
+
+int scsidebug_targets = SCSIDEBUG_TARGETS;
+int scsidebug_luns = SCSIDEBUG_LUNS;
+int scsidebug_level = SCSIDEBUG_LEVEL;
 
 int scsibusprint __P((void *, const char *));
 
@@ -533,8 +537,9 @@ scsi_probedev(scsi, target, lun)
 	 * Ask the device what it is
 	 */
 #ifdef SCSIDEBUG
-	if (target == DEBUGTARGET && lun == DEBUGLUN)
-		sc_link->flags |= DEBUGLEVEL;
+	if (((1 << target) & scsidebug_targets) &&
+	    ((1 << lun) & scsidebug_luns))
+		sc_link->flags |= scsidebug_level;
 #endif /* SCSIDEBUG */
 
 	(void) scsi_test_unit_ready(sc_link,
