@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.24 2002/03/14 01:27:13 millert Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.25 2002/04/10 18:16:46 csapuntz Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -135,6 +135,10 @@ static int proct[NFS_NPROCS] = {
 static int nfs_backoff[8] = { 2, 4, 8, 16, 32, 64, 128, 256, };
 int nfsrtton = 0;
 struct nfsrtt nfsrtt;
+
+void nfs_realign(struct mbuf **, int);
+unsigned int nfs_realign_test = 0;
+unsigned int nfs_realign_count = 0;
 
 /*
  * Initialize sockets and congestion for a new NFS connection.
@@ -528,6 +532,7 @@ tryagain:
 			}
 			if (error)
 				goto errout;
+
 			len = ntohl(len) & ~0x80000000;
 			/*
 			 * This is SERIOUS! We are out of sync with the sender
@@ -628,7 +633,7 @@ errout:
 	 * These could cause pointer alignment problems, so copy them to
 	 * well aligned mbufs.
 	 */
-	nfs_realign(*mp, 5 * NFSX_UNSIGNED);
+	nfs_realign(mp, 5 * NFSX_UNSIGNED);
 	return (error);
 }
 
@@ -1440,96 +1445,43 @@ nfs_rcvunlock(flagp)
 }
 
 /*
- * Check for badly aligned mbuf data areas and
- * realign data in an mbuf list by copying the data areas up, as required.
+ *  NFS parsing code requires 32-bit alignment
  */
 void
-nfs_realign(m, hsiz)
-	struct mbuf *m;
-	int hsiz;
+nfs_realign(struct mbuf **pm, int hsiz)
 {
-	struct mbuf *m2;
-	int siz, mlen, olen;
-	caddr_t tcp, fcp;
-	struct mbuf *mnew;
+	struct mbuf *m;
+	struct mbuf *n = NULL;
+	int off = 0;
 
-	while (m) {
-	    /*
-	     * This never happens for UDP, rarely happens for TCP
-	     * but frequently happens for iso transport.
-	     */
-	    if ((m->m_len & 0x3) || (mtod(m, long) & 0x3)) {
-		olen = m->m_len;
-		fcp = mtod(m, caddr_t);
-		if ((long)fcp & 0x3) {
-		        if (m->m_flags & M_PKTHDR)
-				m_tag_delete_chain(m, NULL);
-			m->m_flags &= ~M_PKTHDR;
-			if (m->m_flags & M_EXT)
-				m->m_data = m->m_ext.ext_buf +
-					((m->m_ext.ext_size - olen) & ~0x3);
-			else
-				m->m_data = m->m_dat;
+	++nfs_realign_test;
+	while ((m = *pm) != NULL) {
+		if ((m->m_len & 0x3) || (mtod(m, long) & 0x3)) {
+			MGET(n, M_WAIT, MT_DATA);
+			if (m->m_len >= MINCLSIZE) {
+				MCLGET(n, M_WAIT);
+			}
+			n->m_len = 0;
+			break;
 		}
-		m->m_len = 0;
-		tcp = mtod(m, caddr_t);
-		mnew = m;
-		m2 = m->m_next;
-	
-		/*
-		 * If possible, only put the first invariant part
-		 * of the RPC header in the first mbuf.
-		 */
-		mlen = M_TRAILINGSPACE(m);
-		if (olen <= hsiz && mlen > hsiz)
-			mlen = hsiz;
-	
-		/* Loop through the mbuf list consolidating data. */
+		pm = &m->m_next;
+	}
+	/*
+	 * If n is non-NULL, loop on m copying data, then replace the
+	 * portion of the chain that had to be realigned.
+	 */
+	if (n != NULL) {
+		++nfs_realign_count;
 		while (m) {
-			while (olen > 0) {
-				if (mlen == 0) {
-				        if (m2->m_flags & M_PKTHDR)
-						m_tag_delete_chain(m2, NULL);
-					m2->m_flags &= ~M_PKTHDR;
-					if (m2->m_flags & M_EXT)
-						m2->m_data = m2->m_ext.ext_buf;
-					else
-						m2->m_data = m2->m_dat;
-					m2->m_len = 0;
-					mlen = M_TRAILINGSPACE(m2);
-					tcp = mtod(m2, caddr_t);
-					mnew = m2;
-					m2 = m2->m_next;
-				}
-				siz = min(mlen, olen);
-				if (tcp != fcp)
-					bcopy(fcp, tcp, siz);
-				mnew->m_len += siz;
-				mlen -= siz;
-				olen -= siz;
-				tcp += siz;
-				fcp += siz;
-			}
+			m_copyback(n, off, m->m_len, mtod(m, caddr_t));
+			off += m->m_len;
 			m = m->m_next;
-			if (m) {
-				olen = m->m_len;
-				fcp = mtod(m, caddr_t);
-			}
 		}
-	
-		/*
-		 * Finally, set m_len == 0 for any trailing mbufs that have
-		 * been copied out of.
-		 */
-		while (m2) {
-			m2->m_len = 0;
-			m2 = m2->m_next;
-		}
-		return;
-	    }
-	    m = m->m_next;
+		m_freem(*pm);
+		*pm = n;
 	}
 }
+
 
 /*
  * Parse an RPC request
@@ -1885,7 +1837,7 @@ nfsrv_rcv(so, arg, waitflag)
 			error = soreceive(so, &nam, &auio, &mp,
 						(struct mbuf **)0, &flags);
 			if (mp) {
-				nfs_realign(mp, 10 * NFSX_UNSIGNED);
+				nfs_realign(&mp, 10 * NFSX_UNSIGNED);
 				if (nam) {
 					m = nam;
 					m->m_next = mp;
@@ -2029,7 +1981,7 @@ nfsrv_getstream(slp, waitflag)
 		mpp = &((*mpp)->m_next);
 	    *mpp = recm;
 	    if (slp->ns_flag & SLP_LASTFRAG) {
-		nfs_realign(slp->ns_frag, 10 * NFSX_UNSIGNED);
+		nfs_realign(&slp->ns_frag, 10 * NFSX_UNSIGNED);
 		if (slp->ns_recend)
 		    slp->ns_recend->m_nextpkt = slp->ns_frag;
 		else
