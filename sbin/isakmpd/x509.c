@@ -1,5 +1,5 @@
-/*	$OpenBSD: x509.c,v 1.15 1999/10/26 22:32:28 angelos Exp $	*/
-/*	$EOM: x509.c,v 1.24 1999/09/30 13:40:38 niklas Exp $	*/
+/*	$OpenBSD: x509.c,v 1.16 2000/01/26 15:24:52 niklas Exp $	*/
+/*	$EOM: x509.c,v 1.26 1999/10/10 22:48:37 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niels Provos.  All rights reserved.
@@ -202,6 +202,14 @@ x509_generate_kn (X509 *cert)
       free (buf);
       return 0;
     }
+
+  /* 
+   * XXX
+   * Should add a remove-assertion event set to the expiration of the
+   * X509 cert (and remove such events when we reinit and close the keynote
+   * session).
+   * XXX
+   */
 
   free (buf);
   return 1;
