@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: res_init.c,v 1.4 1996/08/19 08:29:45 tholo Exp $";
+static char rcsid[] = "$OpenBSD: res_init.c,v 1.5 1996/08/25 10:11:02 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -114,7 +114,6 @@ res_init()
 	int nsort = 0;
 	int dots;
 	u_long mask;
-	int notsuid = (getuid() == geteuid());
 
 	_res.nsaddr.sin_len = sizeof(struct sockaddr_in);
 	_res.nsaddr.sin_family = AF_INET;
@@ -130,7 +129,7 @@ res_init()
 	strncpy(_res.lookups, "f", sizeof _res.lookups);
 
 	/* Allow user to override the local domain definition */
-	if (notsuid && (cp = getenv("LOCALDOMAIN")) != NULL) {
+	if (issetugid() == 0 && (cp = getenv("LOCALDOMAIN")) != NULL) {
 		(void)strncpy(_res.defdname, cp, sizeof(_res.defdname) - 1);
 		if ((cp = strpbrk(_res.defdname, " \t\n")) != NULL)
 			*cp = '\0';
@@ -334,7 +333,9 @@ res_init()
 #endif
 	}
 
-	if (notsuid && (cp = getenv("RES_OPTIONS")) != NULL)
+	if (issetugid())
+		_res.options |= RES_NOALIASES;
+	else if ((cp = getenv("RES_OPTIONS")) != NULL)
 		res_setoptions(cp, "env");
 	_res.options |= RES_INIT;
 	return (0);
