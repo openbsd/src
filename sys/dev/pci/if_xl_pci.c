@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_pci.c,v 1.16 2003/06/29 16:39:02 jason Exp $	*/
+/*	$OpenBSD: if_xl_pci.c,v 1.17 2003/12/23 16:46:21 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -143,8 +143,7 @@ xl_pci_attach(parent, self, aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
-	bus_addr_t iobase;
-	bus_size_t iosize;
+	bus_size_t iosize, funsize;
 	u_int32_t command;
 
 	sc->sc_dmat = pa->pa_dmat;
@@ -221,59 +220,31 @@ xl_pci_attach(parent, self, aux)
 	/*
 	 * Map control/status registers.
 	 */
-	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	command |= PCI_COMMAND_IO_ENABLE |
-		   PCI_COMMAND_MEM_ENABLE |
-		   PCI_COMMAND_MASTER_ENABLE;
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
-	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+	    PCI_COMMAND_MASTER_ENABLE |
+	    pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG));
 
 #ifdef XL_USEIOSPACE
-	if (!(command & PCI_COMMAND_IO_ENABLE)) {
-		printf("%s: failed to enable i/o ports\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
-	/*
-	 * Map control/status registers.
-	 */
-	if (pci_io_find(pc, pa->pa_tag, XL_PCI_LOIO, &iobase, &iosize)) {
-		printf(": can't find i/o space\n");
-		return;
-	}
-	if (bus_space_map(pa->pa_iot, iobase, iosize, 0, &sc->xl_bhandle)) {
+	if (pci_mapreg_map(pa, XL_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
+	    &sc->xl_btag, &sc->xl_bhandle, NULL, &iosize, 0)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
-	sc->xl_btag = pa->pa_iot;
 #else
-	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
-		printf(": failed to enable memory mapping\n");
+	if (pci_mapreg_map(pa, XL_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
+	    &sc->xl_btag, &sc->xl_bhandle, NULL, &iosize, 0)) {
+		printf(": can't map i/o space\n");
 		return;
 	}
-	if (pci_mem_find(pc, pa->pa_tag, XL_PCI_LOMEM, &iobase, &iosize, NULL)){
-		printf(": can't find mem space\n");
-		return;
-	}
-	if (bus_space_map(pa->pa_memt, iobase, iosize, 0, &sc->xl_bhandle)) {
-		printf(": can't map mem space\n");
-		return;
-	}
-	sc->xl_btag = pa->pa_memt;
 #endif
 
 	if (sc->xl_flags & XL_FLAG_FUNCREG) {
-		if (pci_mem_find(pc, pa->pa_tag, XL_PCI_FUNCMEM, &iobase,
-		    &iosize, NULL)) {
-			printf(": can't find func space\n");
+		if (pci_mapreg_map(pa, XL_PCI_FUNCMEM, PCI_MAPREG_TYPE_MEM, 0,
+		    &sc->xl_funct, &sc->xl_funch, NULL, &funsize, 0)) {
+			printf(": can't map i/o space\n");
+			bus_space_unmap(sc->xl_btag, sc->xl_bhandle, iosize);
 			return;
 		}
-		if (bus_space_map(pa->pa_memt, iobase, iosize, 0,
-		    &sc->xl_funch)) {
-			printf(": can't map func space\n");
-			return;
-		}
-		sc->xl_funct = pa->pa_memt;
 		sc->intr_ack = xl_pci_intr_ack;
 	}
 
@@ -282,6 +253,9 @@ xl_pci_attach(parent, self, aux)
 	 */
 	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
+		bus_space_unmap(sc->xl_btag, sc->xl_bhandle, iosize);
+		if (sc->xl_flags & XL_FLAG_FUNCREG)
+			bus_space_unmap(sc->xl_funct, sc->xl_funch, funsize);
 		return;
 	}
 
@@ -292,6 +266,9 @@ xl_pci_attach(parent, self, aux)
 		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
+		bus_space_unmap(sc->xl_btag, sc->xl_bhandle, iosize);
+		if (sc->xl_flags & XL_FLAG_FUNCREG)
+			bus_space_unmap(sc->xl_funct, sc->xl_funch, funsize);
 		return;
 	}
 	printf(": %s", intrstr);
