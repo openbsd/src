@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_kthread.c,v 1.2 1999/01/11 15:34:16 niklas Exp $	*/
+/*	$OpenBSD: kern_kthread.c,v 1.3 1999/01/26 23:07:26 niklas Exp $	*/
 /*	$NetBSD: kern_kthread.c,v 1.3 1998/12/22 21:21:36 kleink Exp $	*/
 
 /*-
@@ -46,6 +46,8 @@
 #include <sys/wait.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
+
+#include <machine/cpu.h>
 
 /*
  * note that stdarg.h and the ansi style va_start macro is used for both
