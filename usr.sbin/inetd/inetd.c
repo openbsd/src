@@ -1,5 +1,5 @@
-/*	$OpenBSD: inetd.c,v 1.111 2003/06/26 19:47:08 deraadt Exp $	*/
-/*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.112 2003/10/03 22:43:37 deraadt Exp $	*/
+
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
  * All rights reserved.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.111 2003/06/26 19:47:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.112 2003/10/03 22:43:37 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -671,7 +671,7 @@ doconfig(void)
 
 	if (!setconfig()) {
 		syslog(LOG_ERR, "%s: %m", CONFIG);
-		return;
+		exit(1);
 	}
 	for (sep = servtab; sep; sep = sep->se_next)
 		sep->se_checked = 0;
@@ -1134,7 +1134,8 @@ struct servtab	*dupconfig(struct servtab *);
 int
 setconfig(void)
 {
-	if (defhost) free(defhost);
+	if (defhost)
+		free(defhost);
 	defhost = newstr("*");
 	if (fconfig != NULL) {
 		fseek(fconfig, 0L, SEEK_SET);
