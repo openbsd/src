@@ -702,7 +702,7 @@ _initialize_i386_tdep ()
 {
   struct cmd_list_element *cmd;
 
-  tm_print_insn = print_insn_i386;
+  tm_print_insn = print_insn_i386_intel;
   tm_print_insn_info.mach = bfd_mach_i386_i386;
 
   cmd = add_set_enum_cmd ("assembly-language", class_obscure,
