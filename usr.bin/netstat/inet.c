@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.24 1998/03/18 02:43:04 angelos Exp $	*/
+/*	$OpenBSD: inet.c,v 1.25 1998/11/25 02:11:44 niklas Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.24 1998/03/18 02:43:04 angelos Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.25 1998/11/25 02:11:44 niklas Exp $";
 #endif
 #endif /* not lint */
 
@@ -627,6 +627,7 @@ ah_stats(off, name)
         p(ahs_replay, "\t%u possibly replayed packet%s received\n");
         p(ahs_badauthl, "\t%u packet%s with bad authenticator length received\n");
 	p(ahs_invalid, "\t%u packet%s attempted to use an invalid tdb\n");
+	p(ahs_toobig, "\t%u packet%s got larger than max IP packet size\n");
 	p(ahs_ibytes, "\t%qu input byte%s\n");
 	p(ahs_obytes, "\t%qu output byte%s\n");
 
@@ -664,6 +665,7 @@ esp_stats(off, name)
         p(esps_replay, "\t%u possibly replayed packet%s received\n"); 
         p(esps_badilen, "\t%u packet%s with payload not a multiple of 8 received\n");
 	p(esps_invalid, "\t%u packet%s attempted to use an invalid tdb\n");
+	p(esps_toobig, "\t%u packet%s got larger than max IP packet size\n");
 	p(esps_ibytes, "\t%qu input byte%s\n");
 	p(esps_obytes, "\t%qu output byte%s\n");
 
