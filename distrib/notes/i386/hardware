@@ -1,3 +1,4 @@
+dnl	$OpenBSD: hardware,v 1.80 2002/04/09 00:23:47 miod Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PC's and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -33,6 +34,7 @@ Supported hardware {:-include-:}:
 			Rise mP6
 			IDT WinChip
 			NexGen 586
+			NS Geode GX1
 			Transmeta TMS3200, TMS5400, TMS5600
 		Everything that is a clone of the 386 or up should work
 		fine. The only CPU that is known to work poorly (due to
@@ -70,11 +72,11 @@ Supported hardware {:-include-:}:
 		HighPoint HPT366, HPT370
 		Intel PIIX, PIIX3, and PIIX4
 		Intel 82801 (ICH/ICH0/ICH2)
-		OPTi 82C568, 82D568, and 82C621
+		OPTi 82c568, 82d568, and 82c621
 		Promise PDC20246, PDC20262, PDC20265/7/8 (but the Promise
 			RAID mode is not supported)
 		Silicon Integrated Systems 5513 (5597/5598)
-		VIA Technologies VT82C586[A], VT82C596, VT82C686
+		VIA Technologies VT82C586[AB], VT82C596A/B, VT82C686A/B
 		(Other PCI IDE-compliant controllers should work, but
 		 those not listed above may not be capable of DMA modes)
 	SCSI Host Adapters
@@ -93,7 +95,7 @@ Supported hardware {:-include-:}:
 			using the AIC7870 and AIC7880 chips.
 		Adaptec AHA-[23]94xU[2W] cards and some on-board PCI designs
 			using the AIC789[01], AIC7895, AIC789[67] chips
-		Adaptec AIC-780[29] chips and products like the
+		Adaptec AIC-789[29] chips and products like the
 			AHA-29160 based upon it which do 160MB/sec SCSI.
 		AdvanSys 'U', 'UW', 'U2W' and 'U160' PCI SCSI
 			controllers including the ABP940U[AW],
@@ -129,7 +131,7 @@ Supported hardware {:-include-:}:
 				PERC 3/QC
 			HP NetRAID-4M
 		American Megatrends Inc. MegaRAID controllers in "Mass
-		Storage" mode
+		  Storage" mode
 		Compaq Smart ARRAY PCI/EISA adapters, including:
 			Compaq Integrated Array
 			Compaq IAES
@@ -142,7 +144,8 @@ Supported hardware {:-include-:}:
 		DPT SmartCache and SmartRaid III/IV PCI/EISA adapters 
 		ICP-Vortex GDT 6XXXR[DNPS] series
 		I2O (intelligent I/O) RAID controllers, including:
-			Adaptec SCSI RAID (ASR-2100S, ASR-3200S, etc)
+			Adaptec SCSI RAID (ASR-2100S, ASR-2110S, ASR-3200S,
+			  etc)
 			American Megatrends Inc. MegaRAID controllers
 			(in I2O mode)
 			and probably other vendors' controllers supporting
@@ -157,8 +160,9 @@ Supported hardware {:-include-:}:
 		Most SCSI tape drives
 		Most SCSI tape changers
 		QIC-02 and QIC-36 format (Archive- and Wangtek-
+		   compatible) tape drives
 	MDA, CGA, VGA, SVGA, and HGC Display Adapters.  (Note that not
-		all of the display adapters OpenBSD/MACHINE can work with
+		all of the display adapters OpenBSD/MACHINE
 		are supported by X.  See the XFree86 FAQ for more
 		information.)
 	Serial Ports
@@ -169,6 +173,7 @@ Supported hardware {:-include-:}:
 		AST-style 4-port serial boards [*]
 		BOCA 8-port serial cards [*] 
 		Cyclades Cyclom-{4, 8, 16}Y serial boards [*]
+		Cyclades-Z series multiport serial boards [*]
 		IBM PC-RT 4-port serial boards [*]
 		Addonics FlexPort 8S [*]
 	Parallel Ports
@@ -197,6 +202,11 @@ Supported hardware {:-include-:}:
 			NEC PK-UG-X008 (serial)
 			NEC PK-UG-X001 K56flex PCI (modem)
 			Koutech IOFLEX-2S (dual serial)
+			Syba Tech Ltd. PCI-4S2P-550-ECP (4 port serial, 2
+				port parallel)
+			Moxa Technologies Co., Ltd. PCI I/O Card 4S (4 port
+				serial)
+			NetMos 2S1P (2 port serial and 1 port parallel)
 	Ethernet Adapters
 		3Com 3c501
 		3Com 3c503
@@ -233,15 +243,24 @@ Supported hardware {:-include-:}:
 			Linksys LNE100TX v4.x
 			Mototech ME316
 		ADMtek AN986-based USB adapters, including:
+			Abocom UFE1000
+			Abocom DSB650TX
+			Accton USB320-EC
+			Accton SpeedStream Ethernet
+			Admtek Pegasus, Pegasus II
 			Billionton Systems USB100
 			Corega FEther USB-TX
-			D-Link DSB-650TX
+			D-Link DSB-650, 650TX, 650TX-PNA
+			Elecom LD-USB
+			Elsa Microlink USB2Ethernet
 			I/O Data USB ETTX
+			Kingston KNU101TX
 			LinkSys USB100TX, USB100H1 and USB10TA
 			Melco Inc. LUA-TX
+			Siemens SpeedStream USB
+			Smartbridces smartNIC 2
 			SMC 2202USB
 			SOHOware NUB100
-			Kingston KNU101TX
 		AMD LANCE and PCnet-based ISA Ethernet adapters, including:
 			Novell NE1500T
 			Novell NE2100
@@ -269,6 +288,11 @@ Supported hardware {:-include-:}:
 			Cogent EM100FX and EM440TX
 			Digital PCI DE435, EISA DE425, DE450, DE500
 			Asante
+		Digital DC2114x-based four port cards, including:
+			Adaptec ANA-6944A
+			Cogent EM400
+			Compex 400TX
+			Znyx ZX346
 		Intel EtherExpress 16
 		Intel EtherExpross PRO/10 ISA
 		Intel i8255x-based (except the i82556) PCI adapters,
@@ -288,7 +312,7 @@ Supported hardware {:-include-:}:
 			Entegra NET-USB-E45
 			Kawasaki USB101
 			LinkSys USB10T
-			Netger EA101
+			Netgear EA101
 			Peracom USB
 			SMC 2102/2104USB
 			I/O Data USB-ET/T
@@ -301,7 +325,7 @@ Supported hardware {:-include-:}:
 		including:
 			Accton EN1217
 			Addtron AEF-320TX/AEF-330TX
-			CNet PRO120A/PRO120B
+			CNet PRO120A/B
 			Complex RL-100TX
 			NDC Communications SOHOware SFA110A
 			SVEC PN102-TX Fast Ethernet card
@@ -327,8 +351,8 @@ Supported hardware {:-include-:}:
 			NetSurf NS-KFE30D
 		SMC/WD 8003, 8013, and the SMC "Elite16" ISA boards
 		SMC/WD 8216 (the SMC "Elite16 Ultra" ISA boards)  [X SEE BELOW]
-		SMC EtherEZ PNP
-		SMC EtherPower II (EPIC 10/100)
+		SMC 8416 (EtherEZ) PNP
+		SMC 9432 (EtherPower II) EPIC 10/100
 		Sundance ST201-based PCI adapters, including:
 			D-Link DFE-550TX
 		Texas Instruments ThunderLAN PCI Ethernet adapters, including:
@@ -347,10 +371,53 @@ Supported hardware {:-include-:}:
 			Trendware TE100-PCIE
 			Compex RL100-ATX 10/100baseTX
 	Wireless Ethernet Adapters
-		Aironet 802.11DS PCMCIA and PCI
-		RayLink Aviator 2.4/Pro 802.11FH PCMCIA
-		WaveLAN IEEE 802.11DS
-		Addtron AWP-100 802.11DS PCMCIA
+		Aironet 4500/4800 802.11DS PCMCIA and PCI
+		Cisco 340/350 802.11DS PCMCIA and PCI
+		RayLink Aviator2.4/Pro 802.11FH PCMCIA
+		3Com AirConnect 3CRWE737A PCMCIA
+		Addtron AWP-100 PCMCIA
+		ACTIONTEC HWC01170 PCMCIA
+		Agere Orinoco PCMCIA
+		BUFFALO AirStation PCMCIA
+		BUFFALO AirStation PCMCIA
+		Cabletron RoamAbout PCMCIA
+		Compaq Agency NC5004 PCMCIA
+		Contec FLEXLAN/FX-DS110-PCC PCMCIA
+		Corega PCC-11 PCMCIA
+		Corega PCCA-11 PCMCIA
+		Corega PCCB-11 PCMCIA
+		Corega CGWLPCIA11 PCMCIA
+		ELSA XI300 PCMCIA
+		ELSA XI800 PCMCIA
+		EMTAC A2424i PCMCIA
+		Ericsson Wireless LAN CARD C11 PCMCIA
+		Gemtek WL-311 PCMCIA
+		Hawking Technology WE110P PCMCIA
+		I-O DATA WN-B11/PCM PCMCIA
+		Intel PRO/Wireless 2011 PCMCIA
+		Intersil Prism II PCMCIA
+		Intersil Mini-PCI
+		Linksys Instant Wireless WPC11 PCMCIA
+		Linksys Instant Wireless WPC11 2.5 PCMCIA
+		Lucent WaveLAN PCMCIA
+		NANOSPEED ROOT-RZ2000 PCMCIA
+		NDC/Sohoware NCP130 PCMCIA
+		NEC CMZ-RT-WP PCMCIA
+		Netgear MA401 Wireless LAN PCMCIA
+		NTT-ME 11Mbps Wireless LAN PCMCIA
+		Proxim RangeLAN-DS PCMCIA
+		Samsung MagicLAN SWL-2000N PCMCIA
+		Symbol Spectrum24 PCMCIA
+		SMC 2632 EZ Connect PCMCIA
+		TDK LAK-CD011WL PCMCIA
+		3Com AirConnect 3CRWE777A PCI
+		Belkin F5D6000 PCI (a rebadged WL11000P)
+		Eumitcom WL11000P PCI
+		Global Sun Technology GL24110P PCI (untested)
+		Global Sun Technology GL24110P02 PCI
+		LinkSys WDT11 PCI (a rebadged GL24110P02)
+		Netgear MA301 PCI
+		US Robotics 2415 PCI (rebadged WL11000P)
 	Gigabit Ethernet Adapters
 		Alteon Tigon I/II PCI Gigabit Ethernet boards
 			3Com 3c985 and 3c985B
@@ -361,6 +428,15 @@ Supported hardware {:-include-:}:
 			SGI Tigon
 		Intel i82452-based adapters, including:
 			Intel Pro/1000 Gigabit Server adapter
+		Intel i82542, i82543, and i82544 based adapters, including:
+		  Often known as Intel Pro/1000 Gigabit Server Adapter 
+			Intel i82542 1000BASE-X Ethernet
+			Intel i82543 1000BASE-X Ethernet
+			Intel i82543-SC 1000BASE-X Ethernet
+			Intel i82543 1000BASE-T Ethernet
+			Intel i82544 1000BASE-T Ethernet
+			Intel i82544 1000BASE-X Ethernet
+			Intel i82544GC 1000BASE-T Ethernet (32- and 64-bit)
 		National Semiconductor DP83280 and DP83281 based PCI
 		adapters, including:
 			Addtron AEG320T
@@ -382,10 +458,10 @@ Supported hardware {:-include-:}:
 			D-Link DGE-550T (10/100/1000baseTX) 
 			Antares Microsystems Gigabit Ethernet board 
 		SysKonnect SK-9841/9842/9843/9844 Gigabit Ethernet
-			adapters
+		  adapters
 	ATM Adapters
 		Efficient Networks EN-155 and Adaptec ANA-590X ATM
-		interfaces
+		interfaces [*]
 	FDDI Adapters
 		Digital DEFEA EISA and PCI FDDI adapters
 	Wan Adapters
@@ -394,6 +470,7 @@ Supported hardware {:-include-:}:
 	Cryptography Accelerators
 		Broadcom Bluesteelnet uBsec 5501, 5601, 5805, 5820
 		Hifn 7751-based boards, including:
+			Soekris Engineering vpn1201 and vpn1211
 			GTGI PowerCrypt Encryption Accelerator
 			NetSec 7751
 			Hifn reference board
@@ -416,7 +493,7 @@ Supported hardware {:-include-:}:
 				IBM EtherJet 10/100 CardBus
 				SMC EZ CardBus 10/100
 				Xircom X3201 CardBus adapters, including
-					RealPort models
+				  RealPort models
 			Intel i8255x-based, including:
 				Intel PRO/100 CardBus II
 			NE2000-based, including:
@@ -455,7 +532,7 @@ Supported hardware {:-include-:}:
 		USB Hubs
 		USB Keyboards
 		USB Mass Storage devices, i.e., USB floppy drives and
-			USB memory stick controllers
+		  USB memory stick controllers
 		USB Mice
 		USB Modems
 		USB Printers
@@ -467,14 +544,15 @@ Supported hardware {:-include-:}:
 		"Microsoft"-style bus mice [*] [+]
 		"PS/2"-style mice [*] [+]
 		Serial mice (uses serial port driver)
-			compatible) tape drives [*] [+]
+		  compatible) tape drives [*] [+]
 	Sound Devices
 		C-Media CMI8[37]38 [*] [+]
 		Cirrus Logic CrystalClear CS4280, CS4281 [*] [+]
 		Ensoniq AudioPCI [*] [+]
 		ESS Tech ES188[78], ES888 [*] [+]
 		ESS Solo-1 PCI AudioDrive [*] [+]
-		ESS Maestro 1, 2 and 2E and clones, NOT Maestro 3 [*] [+]
+		ESS Maestro 1, 2 and 2E and clones [*] [+]
+		ESS Maestro 3 and Allegro 1 [*] [+]
 		Forte Media FM801 audio [*] [+]
 		Gravis Ultrasound and Ultrasound Max [*] [+]
 		Intel i810/i820 and 440MX AC'97 [*] [+]
@@ -727,5 +805,5 @@ Special care for PCI BIOS:
 
 	Try to gather dmesg output from the failing configuration, for
 	example by using serial console (see boot(8)) and send it to
-	mickey@openbsd.org along with descriptions of your hardware setup.
+	<mickey@openbsd.org> along with descriptions of your hardware setup.
 	Alternatively, dig in the code and fix problems.
