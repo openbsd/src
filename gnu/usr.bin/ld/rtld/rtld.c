@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld.c,v 1.9 1998/03/26 19:47:29 niklas Exp $	*/
+/*	$OpenBSD: rtld.c,v 1.10 1998/08/28 20:45:41 deraadt Exp $	*/
 /*	$NetBSD: rtld.c,v 1.43 1996/01/14 00:35:17 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -1512,13 +1512,13 @@ xprintf("%s: %s\n", name, strerror(errno));
 		return NULL;
 	}
 
+	LM_PRIVATE(smp)->spd_flags |= RTLD_DL;
+
 	if (LM_PRIVATE(smp)->spd_refcount++ > 0) {
 		free((char *)sodp->sod_name);
 		free(sodp);
 		return smp;
 	}
-
-	LM_PRIVATE(smp)->spd_flags |= RTLD_DL;
 
 	if (load_subs(smp) != 0) {
 		if (--LM_PRIVATE(smp)->spd_refcount == 0) {
