@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp.c,v 1.39 2001/07/01 05:42:05 angelos Exp $	*/
+/*	$OpenBSD: udp.c,v 1.40 2001/07/01 06:00:32 angelos Exp $	*/
 /*	$EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	*/
 
 /*
@@ -70,7 +70,6 @@
 #define SO_REUSEPORT SO_REUSEADDR
 #endif
 
-/* XXX IPv4 specific.  */
 struct udp_transport {
   struct transport transport;
   struct sockaddr *src;
@@ -681,16 +680,16 @@ udp_decode_ids (struct transport *t)
   char idsrc[256], iddst[256];
 
 #ifdef HAVE_GETNAMEINFO
-  if (getnameinfo ((struct sockaddr *)&((struct udp_transport *)t)->src,
-		   sizeof ((struct udp_transport *)t)->src,
+  if (getnameinfo (((struct udp_transport *)t)->src,
+		   ((struct udp_transport *)t)->src->sa_len,
 		   idsrc, sizeof idsrc, NULL, 0, NI_NUMERICHOST) != 0)
     {
       log_print ("udp_decode_ids: getnameinfo () failed");
       strcpy (idsrc, "<error>");
     }
 
-  if (getnameinfo ((struct sockaddr *)&((struct udp_transport *)t)->dst,
-		   sizeof ((struct udp_transport *)t)->dst,
+  if (getnameinfo (((struct udp_transport *)t)->dst,
+		   ((struct udp_transport *)t)->dst->sa_len,
 		   iddst, sizeof iddst, NULL, 0, NI_NUMERICHOST) != 0)
     {
       log_print ("udp_decode_ids: getnameinfo () failed");
