@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-passwd.c,v 1.25 2002/05/06 23:00:59 mouring Exp $");
+RCSID("$OpenBSD: auth-passwd.c,v 1.26 2002/05/10 02:30:12 mouring Exp $");
 
 #include "packet.h"
 #include "log.h"
@@ -61,7 +61,7 @@ auth_password(Authctxt *authctxt, const char *password)
 		return 0;
 	if (pw->pw_uid == 0 && options.permit_root_login != PERMIT_YES)
 		return 0;
-	if (*pw->pw_passwd == '\0' && options.permit_empty_passwd == 0)
+	if (*password == '\0' && options.permit_empty_passwd == 0)
 		return 0;
 #ifdef KRB5
 	if (options.kerberos_authentication == 1) {
