@@ -1,0 +1,3 @@
+altq on lo0 scheduler cbq bandwidth 10.00Mb tbrsize 6000 queue { std }
+altq on lo1 scheduler cbq bandwidth 10.00Mb tbrsize 6000 queue { std }
+queue std bandwidth 10.00Mb cbq( default ) 
