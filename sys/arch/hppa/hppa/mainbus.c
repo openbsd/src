@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.5 1999/11/25 18:25:31 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.6 1999/11/26 17:34:59 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -315,7 +315,7 @@ mbus_w8(void *v, bus_space_handle_t h, bus_size_t o, u_int64_t vv)
 
 
 void
-mbus_rm_1(void *v, bus_space_handle_t h, bus_size_t o, u_int8_t *a, size_t c)
+mbus_rm_1(void *v, bus_space_handle_t h, bus_size_t o, u_int8_t *a, bus_size_t c)
 {
 	h += o;
 	while (c--)
@@ -323,7 +323,7 @@ mbus_rm_1(void *v, bus_space_handle_t h, bus_size_t o, u_int8_t *a, size_t c)
 }
 
 void
-mbus_rm_2(void *v, bus_space_handle_t h, bus_size_t o, u_int16_t *a, size_t c)
+mbus_rm_2(void *v, bus_space_handle_t h, bus_size_t o, u_int16_t *a, bus_size_t c)
 {
 	h += o;
 	while (c--)
@@ -331,7 +331,7 @@ mbus_rm_2(void *v, bus_space_handle_t h, bus_size_t o, u_int16_t *a, size_t c)
 }
 
 void
-mbus_rm_4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t *a, size_t c)
+mbus_rm_4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t *a, bus_size_t c)
 {
 	h += o;
 	while (c--)
@@ -339,7 +339,7 @@ mbus_rm_4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t *a, size_t c)
 }
 
 void
-mbus_rm_8(void *v, bus_space_handle_t h, bus_size_t o, u_int64_t *a, size_t c)
+mbus_rm_8(void *v, bus_space_handle_t h, bus_size_t o, u_int64_t *a, bus_size_t c)
 {
 	h += o;
 	while (c--)
@@ -347,7 +347,7 @@ mbus_rm_8(void *v, bus_space_handle_t h, bus_size_t o, u_int64_t *a, size_t c)
 }
 
 void
-mbus_wm_1(void *v, bus_space_handle_t h, bus_size_t o, const u_int8_t *a, size_t c)
+mbus_wm_1(void *v, bus_space_handle_t h, bus_size_t o, const u_int8_t *a, bus_size_t c)
 {
 	h += o;
 	while (c--)
@@ -355,7 +355,7 @@ mbus_wm_1(void *v, bus_space_handle_t h, bus_size_t o, const u_int8_t *a, size_t
 }
 
 void
-mbus_wm_2(void *v, bus_space_handle_t h, bus_size_t o, const u_int16_t *a, size_t c)
+mbus_wm_2(void *v, bus_space_handle_t h, bus_size_t o, const u_int16_t *a, bus_size_t c)
 {
 	h += o;
 	while (c--)
@@ -363,7 +363,7 @@ mbus_wm_2(void *v, bus_space_handle_t h, bus_size_t o, const u_int16_t *a, size_
 }
 
 void
-mbus_wm_4(void *v, bus_space_handle_t h, bus_size_t o, const u_int32_t *a, size_t c)
+mbus_wm_4(void *v, bus_space_handle_t h, bus_size_t o, const u_int32_t *a, bus_size_t c)
 {
 	h += o;
 	while (c--)
@@ -371,7 +371,7 @@ mbus_wm_4(void *v, bus_space_handle_t h, bus_size_t o, const u_int32_t *a, size_
 }
 
 void
-mbus_wm_8(void *v, bus_space_handle_t h, bus_size_t o, const u_int64_t *a, size_t c)
+mbus_wm_8(void *v, bus_space_handle_t h, bus_size_t o, const u_int64_t *a, bus_size_t c)
 {
 	h += o;
 	while (c--)
@@ -379,7 +379,7 @@ mbus_wm_8(void *v, bus_space_handle_t h, bus_size_t o, const u_int64_t *a, size_
 }
 
 void
-mbus_sm_1(void *v, bus_space_handle_t h, bus_size_t o, u_int8_t vv, size_t c)
+mbus_sm_1(void *v, bus_space_handle_t h, bus_size_t o, u_int8_t vv, bus_size_t c)
 {
 	h += o;
 	while (c--)
@@ -387,7 +387,7 @@ mbus_sm_1(void *v, bus_space_handle_t h, bus_size_t o, u_int8_t vv, size_t c)
 }
 
 void
-mbus_sm_2(void *v, bus_space_handle_t h, bus_size_t o, u_int16_t vv, size_t c)
+mbus_sm_2(void *v, bus_space_handle_t h, bus_size_t o, u_int16_t vv, bus_size_t c)
 {
 	h += o;
 	while (c--)
@@ -395,7 +395,7 @@ mbus_sm_2(void *v, bus_space_handle_t h, bus_size_t o, u_int16_t vv, size_t c)
 }
 
 void
-mbus_sm_4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t vv, size_t c)
+mbus_sm_4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t vv, bus_size_t c)
 {
 	h += o;
 	while (c--)
@@ -403,7 +403,7 @@ mbus_sm_4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t vv, size_t c)
 }
 
 void
-mbus_sm_8(void *v, bus_space_handle_t h, bus_size_t o, u_int64_t vv, size_t c)
+mbus_sm_8(void *v, bus_space_handle_t h, bus_size_t o, u_int64_t vv, bus_size_t c)
 {
 	h += o;
 	while (c--)
@@ -411,21 +411,21 @@ mbus_sm_8(void *v, bus_space_handle_t h, bus_size_t o, u_int64_t vv, size_t c)
 }
 
 void mbus_rrm_2 __P((void *v, bus_space_handle_t h,
-		      bus_size_t o, u_int16_t*a, size_t c));
+		      bus_size_t o, u_int16_t*a, bus_size_t c));
 void mbus_rrm_4 __P((void *v, bus_space_handle_t h,
-		      bus_size_t o, u_int32_t*a, size_t c));
+		      bus_size_t o, u_int32_t*a, bus_size_t c));
 void mbus_rrm_8 __P((void *v, bus_space_handle_t h,
-		      bus_size_t o, u_int64_t*a, size_t c));
+		      bus_size_t o, u_int64_t*a, bus_size_t c));
 
 void mbus_wrm_2 __P((void *v, bus_space_handle_t h,
-		      bus_size_t o, const u_int16_t *a, size_t c));
+		      bus_size_t o, const u_int16_t *a, bus_size_t c));
 void mbus_wrm_4 __P((void *v, bus_space_handle_t h,
-		      bus_size_t o, const u_int32_t *a, size_t c));
+		      bus_size_t o, const u_int32_t *a, bus_size_t c));
 void mbus_wrm_8 __P((void *v, bus_space_handle_t h,
-		      bus_size_t o, const u_int64_t *a, size_t c));
+		      bus_size_t o, const u_int64_t *a, bus_size_t c));
 
 void
-mbus_rr_1(void *v, bus_space_handle_t h, bus_size_t o, u_int8_t *a, size_t c)
+mbus_rr_1(void *v, bus_space_handle_t h, bus_size_t o, u_int8_t *a, bus_size_t c)
 {
 	h += o;
 	while (c--)
@@ -433,7 +433,7 @@ mbus_rr_1(void *v, bus_space_handle_t h, bus_size_t o, u_int8_t *a, size_t c)
 }
 
 void
-mbus_rr_2(void *v, bus_space_handle_t h, bus_size_t o, u_int16_t *a, size_t c)
+mbus_rr_2(void *v, bus_space_handle_t h, bus_size_t o, u_int16_t *a, bus_size_t c)
 {
 	h += o;
 	while (c--)
@@ -441,7 +441,7 @@ mbus_rr_2(void *v, bus_space_handle_t h, bus_size_t o, u_int16_t *a, size_t c)
 }
 
 void
-mbus_rr_4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t *a, size_t c)
+mbus_rr_4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t *a, bus_size_t c)
 {
 	h += o;
 	while (c--)
@@ -449,7 +449,7 @@ mbus_rr_4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t *a, size_t c)
 }
 
 void
-mbus_rr_8(void *v, bus_space_handle_t h, bus_size_t o, u_int64_t *a, size_t c)
+mbus_rr_8(void *v, bus_space_handle_t h, bus_size_t o, u_int64_t *a, bus_size_t c)
 {
 	h += o;
 	while (c--)
@@ -457,7 +457,7 @@ mbus_rr_8(void *v, bus_space_handle_t h, bus_size_t o, u_int64_t *a, size_t c)
 }
 
 void
-mbus_wr_1(void *v, bus_space_handle_t h, bus_size_t o, const u_int8_t *a, size_t c)
+mbus_wr_1(void *v, bus_space_handle_t h, bus_size_t o, const u_int8_t *a, bus_size_t c)
 {
 	h += o;
 	while (c--)
@@ -465,7 +465,7 @@ mbus_wr_1(void *v, bus_space_handle_t h, bus_size_t o, const u_int8_t *a, size_t
 }
 
 void
-mbus_wr_2(void *v, bus_space_handle_t h, bus_size_t o, const u_int16_t *a, size_t c)
+mbus_wr_2(void *v, bus_space_handle_t h, bus_size_t o, const u_int16_t *a, bus_size_t c)
 {
 	h += o;
 	while (c--)
@@ -473,7 +473,7 @@ mbus_wr_2(void *v, bus_space_handle_t h, bus_size_t o, const u_int16_t *a, size_
 }
 
 void
-mbus_wr_4(void *v, bus_space_handle_t h, bus_size_t o, const u_int32_t *a, size_t c)
+mbus_wr_4(void *v, bus_space_handle_t h, bus_size_t o, const u_int32_t *a, bus_size_t c)
 {
 	h += o;
 	while (c--)
@@ -481,7 +481,7 @@ mbus_wr_4(void *v, bus_space_handle_t h, bus_size_t o, const u_int32_t *a, size_
 }
 
 void
-mbus_wr_8(void *v, bus_space_handle_t h, bus_size_t o, const u_int64_t *a, size_t c)
+mbus_wr_8(void *v, bus_space_handle_t h, bus_size_t o, const u_int64_t *a, bus_size_t c)
 {
 	h += o;
 	while (c--)
@@ -489,21 +489,21 @@ mbus_wr_8(void *v, bus_space_handle_t h, bus_size_t o, const u_int64_t *a, size_
 }
 
 void mbus_rrr_2 __P((void *v, bus_space_handle_t h,
-		   bus_size_t o, u_int16_t *a, size_t c));
+		   bus_size_t o, u_int16_t *a, bus_size_t c));
 void mbus_rrr_4 __P((void *v, bus_space_handle_t h,
-		   bus_size_t o, u_int32_t *a, size_t c));
+		   bus_size_t o, u_int32_t *a, bus_size_t c));
 void mbus_rrr_8 __P((void *v, bus_space_handle_t h,
-		   bus_size_t o, u_int64_t *a, size_t c));
+		   bus_size_t o, u_int64_t *a, bus_size_t c));
 
 void mbus_wrr_2 __P((void *v, bus_space_handle_t h,
-		   bus_size_t o, const u_int16_t *a, size_t c));
+		   bus_size_t o, const u_int16_t *a, bus_size_t c));
 void mbus_wrr_4 __P((void *v, bus_space_handle_t h,
-		   bus_size_t o, const u_int32_t *a, size_t c));
+		   bus_size_t o, const u_int32_t *a, bus_size_t c));
 void mbus_wrr_8 __P((void *v, bus_space_handle_t h,
-		   bus_size_t o, const u_int64_t *a, size_t c));
+		   bus_size_t o, const u_int64_t *a, bus_size_t c));
 
 void
-mbus_sr_1(void *v, bus_space_handle_t h, bus_size_t o, u_int8_t vv, size_t c)
+mbus_sr_1(void *v, bus_space_handle_t h, bus_size_t o, u_int8_t vv, bus_size_t c)
 {
 	h += o;
 	while (c--)
@@ -511,7 +511,7 @@ mbus_sr_1(void *v, bus_space_handle_t h, bus_size_t o, u_int8_t vv, size_t c)
 }
 
 void
-mbus_sr_2(void *v, bus_space_handle_t h, bus_size_t o, u_int16_t vv, size_t c)
+mbus_sr_2(void *v, bus_space_handle_t h, bus_size_t o, u_int16_t vv, bus_size_t c)
 {
 	h += o;
 	while (c--)
@@ -519,7 +519,7 @@ mbus_sr_2(void *v, bus_space_handle_t h, bus_size_t o, u_int16_t vv, size_t c)
 }
 
 void
-mbus_sr_4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t vv, size_t c)
+mbus_sr_4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t vv, bus_size_t c)
 {
 	h += o;
 	while (c--)
@@ -527,7 +527,7 @@ mbus_sr_4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t vv, size_t c)
 }
 
 void
-mbus_sr_8(void *v, bus_space_handle_t h, bus_size_t o, u_int64_t vv, size_t c)
+mbus_sr_8(void *v, bus_space_handle_t h, bus_size_t o, u_int64_t vv, bus_size_t c)
 {
 	h += o;
 	while (c--)
@@ -579,6 +579,10 @@ mbus_cp_8(void *v, bus_space_handle_t h1, bus_size_t o1,
 }
 
 
+/* ugly typecast macro */
+#define	crr(n)	((void (*) __P((void *, bus_space_handle_t, bus_size_t, u_int8_t *, bus_size_t)))(n))
+#define	cwr(n)	((void (*) __P((void *, bus_space_handle_t, bus_size_t, const u_int8_t *, bus_size_t)))(n))
+
 const struct hppa_bus_space_tag hppa_bustag = {
 	NULL,
 
@@ -590,13 +594,13 @@ const struct hppa_bus_space_tag hppa_bustag = {
 	mbus_wm_1,  mbus_wm_2, mbus_wm_4, mbus_wm_8,
 	mbus_sm_1,  mbus_sm_2, mbus_sm_4, mbus_sm_8,
 	/* *_raw_* are the same as non-raw for native busses */
-	            mbus_rm_2, mbus_rm_4, mbus_rm_8,
-	            mbus_wm_2, mbus_wm_4, mbus_wm_8,
+	            crr(mbus_rm_2), crr(mbus_rm_4), crr(mbus_rm_8),
+	            cwr(mbus_wm_2), cwr(mbus_wm_4), cwr(mbus_wm_8),
 	mbus_rr_1,  mbus_rr_2, mbus_rr_4, mbus_rr_8,
 	mbus_wr_1,  mbus_wr_2, mbus_wr_4, mbus_wr_8,
 	/* *_raw_* are the same as non-raw for native busses */
-	            mbus_rr_2, mbus_rr_4, mbus_rr_8,
-	            mbus_wr_2, mbus_wr_4, mbus_wr_8,
+	            crr(mbus_rr_2), crr(mbus_rr_4), crr(mbus_rr_8),
+	            cwr(mbus_wr_2), cwr(mbus_wr_4), cwr(mbus_wr_8),
 	mbus_sr_1,  mbus_sr_2, mbus_sr_4, mbus_sr_8,
 	mbus_cp_1,  mbus_cp_2, mbus_cp_4, mbus_cp_8
 };
