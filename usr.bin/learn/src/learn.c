@@ -2,7 +2,7 @@
  * learn, from V7 UNIX: one of the earliest Computer Based Training (CBT)
  * programs still in existence.
  *
- * $OpenBSD: learn.c,v 1.8 2002/06/12 06:07:15 mpech Exp $
+ * $OpenBSD: learn.c,v 1.9 2003/04/06 21:07:08 deraadt Exp $
  */
 
 /****************************************************************
@@ -134,7 +134,7 @@ FILE *fin;
 		for (r = s; *r; r++)
 			if (*r == '%') {
 				snprintf(s1, sizeof s1, s, subdir, subdir, subdir);
-				strcpy(s, s1);
+				strlcpy(s, s1, sizeof s);
 				break;
 			}
 		r = wordb(s, t);
@@ -144,7 +144,7 @@ FILE *fin;
 				scopy(fin, NULL);
 				continue;
 			}
-			strcpy(s, r);
+			strlcpy(s, r, sizeof s);
 			r = wordb(s, t);
 			p = action(t);
 		}
@@ -160,7 +160,7 @@ FILE *fin;
 			}
 			if (incopy) {
 				fprintf(incopy, "%s\n", s);
-				strcpy(last, s);
+				strlcpy(last, s, sizeof last);
 			}
 			continue;
 		}
@@ -168,7 +168,7 @@ FILE *fin;
 		case READY:
 			if (incopy && r) {
 				fprintf(incopy, "%s\n", r);
-				strcpy(last, r);
+				strlcpy(last, r, sizeof last);
 			}
 			return;
 		case PRINT:
@@ -243,7 +243,7 @@ FILE *fin;
 		case NO:
 			if (incopy) {
 				fprintf(incopy, "%s\n", s);
-				strcpy(last, s);
+				strlcpy(last, s, sizeof last);
 			}
 			return;
 		case WHERE:
@@ -654,11 +654,11 @@ char *s;
 	case HARD:
 		return(system(s));
 	case MEDIUM:
-		strcpy(p, "exec ");
-		strcat(p, s);
+		strlcpy(p, "exec ", sizeof p);
+		strlcat(p, s, sizeof p);
 		return(system(p));
 	case EASY:
-		strcpy(p,s);
+		strlcpy(p, s, sizeof p);
 		nv = getargs(p, np);
 		t=np[0];
 		if ((strcmp(t, "mv") == 0)||
@@ -668,8 +668,8 @@ char *s;
 			if (fork() == 0) {
 				char b[100];
 				signal(SIGINT, SIG_DFL);
-				strcpy(b, "/bin/");
-				strcat(b, t);
+				strlcpy(b, "/bin/", sizeof b);
+				strlcat(b, t, sizeof b);
 				np[nv] = 0;
 				execv(b, np);
 				fprintf(stderr, "Execv failed\n");
@@ -754,7 +754,7 @@ char *argv[];
 	}
 	sname = argc > 1 ? argv[1] : 0;
 	if (argc > 2)
-		strcpy (level=ans2, argv[2]);
+		strlcpy(level=ans2, argv[2], sizeof ans2);
 	else
 		level = 0;
 	if (argc > 3 )
@@ -789,7 +789,7 @@ char *argv[];
 		fgets(ans2, sizeof ans2, stdin);
 		trim(ans2);
 		if (ans2[0]==0)
-			strcpy(ans2,"0");
+			strlcpy(ans2,"0", sizeof ans2);
 		for (cp=ans2; *cp; cp++)
 			if (*cp == '(' || *cp == ' ')
 				*cp= 0;
@@ -907,10 +907,10 @@ retry:
 		todo = 0;
 		return;
 	}
-	strcpy (dobuff, posslev[best]);
+	strlcpy(dobuff, posslev[best], sizeof dobuff);
 	if (alts>1) {
 		nsave=1;
-		strcpy (saved, level);
+		strlcpy (saved, level, sizeof saved);
 	}
 	todo = dobuff;
 	fclose(f);
