@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.24 2003/06/27 22:47:32 itojun Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.25 2003/07/08 21:43:18 itojun Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -53,11 +53,7 @@ struct	llinfo_nd6 {
 	int	ln_byhint;	/* # of times we made it reachable by UL hint */
 
 	long	ln_ntick;
-#if defined(__NetBSD__) || (defined(__FreeBSD__) && __FreeBSD__ >= 3)
-	struct callout ln_timer_ch;
-#elif defined(__OpenBSD__)
 	struct timeout ln_timer_ch;
-#endif
 };
 
 #define ND6_LLINFO_NOSTATE	-2
