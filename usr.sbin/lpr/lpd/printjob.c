@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.8 1996/09/30 21:24:34 deraadt Exp $ */
+/*	$OpenBSD: printjob.c,v 1.9 1996/10/25 19:38:23 deraadt Exp $ */
 /*	$NetBSD: printjob.c,v 1.9.4.3 1996/07/12 22:31:39 jtc Exp $	*/
 
 /*
@@ -219,7 +219,7 @@ again:
 		errcnt = 0;
 	restart:
 		(void) lseek(lfd, pidoff, 0);
-		(void) sprintf(line, "%s\n", q->q_name);
+		(void) snprintf(line, sizeof line, "%s\n", q->q_name);
 		i = strlen(line);
 		if (write(lfd, line, i) != i)
 			syslog(LOG_ERR, "%s: %s: %m", printer, LO);
@@ -377,13 +377,17 @@ printit(file)
 	while (getline(cfp))
 		switch (line[0]) {
 		case 'H':
-			strcpy(fromhost, line+1);
-			if (class[0] == '\0')
+			strncpy(fromhost, line+1, sizeof(fromhost)-1);
+			fromhost[sizeof(fromhost)-1] = '\0';
+			if (class[0] == '\0') {
 				strncpy(class, line+1, sizeof(class)-1);
+				class[sizeof(class)-1] = '\0';
+			}
 			continue;
 
 		case 'P':
 			strncpy(logname, line+1, sizeof(logname)-1);
+			logname[sizeof(logname)-1] = '\0';
 			if (RS) {			/* restricted */
 				if (getpwnam(logname) == NULL) {
 					bombed = NOACCT;
@@ -407,9 +411,10 @@ printit(file)
 			continue;
 
 		case 'J':
-			if (line[1] != '\0')
+			if (line[1] != '\0') {
 				strncpy(jobname, line+1, sizeof(jobname)-1);
-			else
+				jobname[sizeof(jobname)-1] = '\0';
+			} else
 				strcpy(jobname, " ");
 			continue;
 
@@ -418,10 +423,12 @@ printit(file)
 				strncpy(class, line+1, sizeof(class)-1);
 			else if (class[0] == '\0')
 				gethostname(class, sizeof(class));
+			class[sizeof(class)-1] = '\0';
 			continue;
 
 		case 'T':	/* header title for pr */
 			strncpy(title, line+1, sizeof(title)-1);
+			title[sizeof(title)-1] = '\0';
 			continue;
 
 		case 'L':	/* identification line */
@@ -433,16 +440,21 @@ printit(file)
 		case '2':
 		case '3':
 		case '4':
-			if (line[1] != '\0')
-				strcpy(fonts[line[0]-'1'], line+1);
+			if (line[1] != '\0') {
+				strncpy(fonts[line[0]-'1'], line+1,
+				    50-1);
+				fonts[line[0]-'1'][50-1] = '\0';
+			}
 			continue;
 
 		case 'W':	/* page width */
 			strncpy(width+2, line+1, sizeof(width)-3);
+			width[2+sizeof(width)-3] = '\0';
 			continue;
 
 		case 'I':	/* indent amount */
 			strncpy(indent+2, line+1, sizeof(indent)-3);
+			indent[2+sizeof(indent)-3] = '\0';
 			continue;
 
 		default:	/* some file to print */
@@ -844,7 +856,9 @@ sendfile(type, file)
 	if ((stb.st_mode & S_IFMT) == S_IFLNK && fstat(f, &stb) == 0 &&
 	    (stb.st_dev != fdev || stb.st_ino != fino))
 		return(ACCESS);
-	(void) sprintf(buf, "%c%qd %s\n", type, stb.st_size, file);
+	if (snprintf(buf, sizeof buf, "%c%qd %s\n", type,
+	    stb.st_size, file) > sizeof buf-1)
+		return (ACCESS);		/* XXX hack */
 	amt = strlen(buf);
 	for (i = 0;  ; i++) {
 		if (write(pfd, buf, amt) != amt ||
@@ -1049,7 +1063,7 @@ sendmail(user, bombed)
 			cp++;
 	else
 			cp = _PATH_SENDMAIL;
-		sprintf(buf, "%s@%s", user, fromhost);
+		snprintf(buf, sizeof buf, "%s@%s", user, fromhost);
 		execl(_PATH_SENDMAIL, cp, buf, 0);
 		exit(0);
 	} else if (s > 0) {				/* parent */
@@ -1382,7 +1396,7 @@ openrem()
 		resp = -1;
 		pfd = getport(RM, 0);
 		if (pfd >= 0) {
-			(void) sprintf(line, "\2%s\n", RP);
+			(void) snprintf(line, sizeof line, "\2%s\n", RP);
 			n = strlen(line);
 			if (write(pfd, line, n) == n &&
 			    (resp = response()) == '\0')

@@ -225,13 +225,14 @@ displayq(format)
 	 */
 	if (nitems)
 		putchar('\n');
-	(void) sprintf(line, "%c%s", format + '\3', RP);
+	(void) snprintf(line, sizeof line, "%c%s", format + '\3', RP);
 	cp = line;
-	for (i = 0; i < requests; i++) {
+	for (i = 0; i < requests && cp-line+10 < sizeof line; i++) {
 		cp += strlen(cp);
 		(void) sprintf(cp, " %d", requ[i]);
 	}
-	for (i = 0; i < users; i++) {
+	for (i = 0; i < users && cp-line+1+strlen(user[i]) <
+	    sizeof line; i++) {
 		cp += strlen(cp);
 		*cp++ = ' ';
 		(void) strcpy(cp, user[i]);

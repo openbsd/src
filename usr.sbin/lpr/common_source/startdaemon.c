@@ -83,7 +83,10 @@ startdaemon(printer)
 		return(0);
 	}
 	seteuid(uid);
-	(void) sprintf(buf, "\1%s\n", printer);
+	if (snprintf(buf, sizeof buf, "\1%s\n", printer) > sizeof buf-1) {
+		close(s);
+		return (0);
+	}
 	n = strlen(buf);
 	if (write(s, buf, n) != n) {
 		perr("write");

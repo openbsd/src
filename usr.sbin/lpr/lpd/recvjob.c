@@ -150,7 +150,9 @@ readjob()
 					    printer);
 				return(nfiles);
 			}
-		} while (*cp++ != '\n');
+		} while (*cp++ != '\n' && (cp - line + 1) < sizeof line);
+		if (cp - line + 1 < sizeof line)
+			frecverr("readjob overflow");
 		*--cp = '\0';
 		cp = line;
 		switch (*cp++) {
