@@ -130,13 +130,13 @@ printstat(cp, inum, dp)
 	break;
     }
     printf("I=%lu MODE=%o SIZE=%qu", inum, dp->di_mode, dp->di_size);
-    p = ctime(&dp->di_mtime);
+    p = ctime((time_t *)&dp->di_mtime);
     printf("\n\tMTIME=%15.15s %4.4s [%d nsec]", &p[4], &p[20],
 	   dp->di_mtimensec);
-    p = ctime(&dp->di_ctime);
+    p = ctime((time_t *)&dp->di_ctime);
     printf("\n\tCTIME=%15.15s %4.4s [%d nsec]", &p[4], &p[20],
 	   dp->di_ctimensec);
-    p = ctime(&dp->di_atime);
+    p = ctime((time_t *)&dp->di_atime);
     printf("\n\tATIME=%15.15s %4.4s [%d nsec]\n", &p[4], &p[20],
 	   dp->di_atimensec);
 
