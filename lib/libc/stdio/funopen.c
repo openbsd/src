@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: funopen.c,v 1.4 2002/02/19 19:39:36 millert Exp $";
+static const char rcsid[] = "$OpenBSD: funopen.c,v 1.5 2003/04/25 20:49:35 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -43,11 +43,9 @@ static char rcsid[] = "$OpenBSD: funopen.c,v 1.4 2002/02/19 19:39:36 millert Exp
 #include "local.h"
 
 FILE *
-funopen(cookie, readfn, writefn, seekfn, closefn)
-	const void *cookie;
-	int (*readfn)(), (*writefn)();
-	fpos_t (*seekfn)(void *cookie, fpos_t off, int whence);
-	int (*closefn)();
+funopen(const void *cookie, int (*readfn)(void *, char *, int),
+	int (*writefn)(void *, const char *, int),
+	fpos_t (*seekfn)(void *, fpos_t, int), int (*closefn)(void *))
 {
 	register FILE *fp;
 	int flags;
@@ -68,7 +66,7 @@ funopen(cookie, readfn, writefn, seekfn, closefn)
 		return (NULL);
 	fp->_flags = flags;
 	fp->_file = -1;
-	fp->_cookie = (void *)cookie;
+	fp->_cookie = (void *)cookie;		/* SAFE: cookie not modified */
 	fp->_read = readfn;
 	fp->_write = writefn;
 	fp->_seek = seekfn;
