@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: sshd.8,v 1.43 2000/05/01 18:50:59 markus Exp $
+.\" $Id: sshd.8,v 1.44 2000/05/02 23:41:31 deraadt Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSHD 8
@@ -303,7 +303,9 @@ Specifies whether
 .Nm
 should ignore the user's
 .Pa $HOME/.ssh/known_hosts
-during
+and
+.Pa $HOME/.ssh/known_hosts2
+files during
 .Cm RhostsRSAAuthentication .
 The default is
 .Dq no .
@@ -568,7 +570,11 @@ Runs user's shell or command.
 The
 .Pa $HOME/.ssh/authorized_keys
 file lists the RSA keys that are
-permitted for RSA authentication.
+permitted for RSA authentication in SSH protocols 1.3 and 1.5
+Similarily, the
+.Pa $HOME/.ssh/authorized_keys2
+file lists the DSA keys that are
+permitted for DSA authentication in SSH protocol 2.0.
 Each line of the file contains one
 key (empty lines and lines starting with a
 .Ql #
@@ -655,9 +661,11 @@ from="*.niksula.hut.fi,!pc.niksula.hut.fi" 1024 35 23.\|.\|.\|2334 ylo@niksula
 command="dump /home",no-pty,no-port-forwarding 1024 33 23.\|.\|.\|2323 backup.hut.fi
 .Sh SSH_KNOWN_HOSTS FILE FORMAT
 The
-.Pa /etc/ssh_known_hosts
+.Pa /etc/ssh_known_hosts ,
+.Pa /etc/ssh_known_hosts2 ,
+.Pa $HOME/.ssh/known_hosts ,
 and
-.Pa $HOME/.ssh/known_hosts
+.Pa $HOME/.ssh/known_hosts2
 files contain host public keys for all known hosts.
 The global file should
 be prepared by the administrator (optional), and the per-user file is
@@ -744,8 +752,34 @@ it being world-readable if the user's home directory resides on an NFS
 volume).
 It is recommended that it not be accessible by others.
 The format of this file is described above.
+Users will place the contents of their
+.Pa identity.pub
+files into this file, as described in
+.Xr ssh-keygen 1 .
+.It Pa $HOME/.ssh/authorized_keys2
+Lists the DSA keys that can be used to log into the user's account.
+This file must be readable by root (which may on some machines imply
+it being world-readable if the user's home directory resides on an NFS
+volume).
+It is recommended that it not be accessible by others.
+The format of this file is described above.
+Users will place the contents of their
+.Pa id_dsa.pub
+files into this file, as described in
+.Xr ssh-keygen 1 .
 .It Pa "/etc/ssh_known_hosts" and "$HOME/.ssh/known_hosts"
 These files are consulted when using rhosts with RSA host
+authentication to check the public key of the host.
+The key must be listed in one of these files to be accepted.
+The client uses the same files
+to verify that the remote host is the one we intended to connect.
+These files should be writable only by root/the owner.
+.Pa /etc/ssh_known_hosts
+should be world-readable, and
+.Pa $HOME/.ssh/known_hosts
+can but need not be world-readable.
+.It Pa "/etc/ssh_known_hosts2" and "$HOME/.ssh/known_hosts2"
+These files are consulted when using rhosts with DSA host
 authentication to check the public key of the host.
 The key must be listed in one of these files to be accepted.
 The client uses the same files
