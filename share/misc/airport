@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.10 2003/05/20 20:23:34 mickey Exp $
+#	$OpenBSD: airport,v 1.11 2003/10/08 18:02:10 deraadt Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 # 
 # Some of this information from the Airport Search Engine at
@@ -120,6 +120,7 @@ AUH:Abu Dhabi International, Abu Dhabi, United Arab Emirates
 AUS:Austin-Bergstrom International, Texas, USA
 AVL:Asheville Regional, North Carolina, USA
 AVN:Caumont, Avignon, France
+AVP:Wilkes-Barre/Scranton International Airport, Pennsylvania, USA
 AXA:Anguilla
 AXD:Alexandroupolis, Alexandroupolis, Greece
 AYQ:Connellan, Ayers Rock, Northern Territory, Australia
