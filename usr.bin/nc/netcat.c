@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.19 2001/01/16 20:20:48 ericj Exp $ */
+/* $OpenBSD: netcat.c,v 1.20 2001/05/04 01:38:31 millert Exp $ */
 
 /* Netcat 1.10 RELEASE 960320
  *
@@ -1367,9 +1367,8 @@ usage(doexit)
 	int doexit;
 {
 	fprintf(stderr, "netcat - [v1.10]\n");
-	fprintf(stderr, "nc [-lnrtuvz] [-e command] [-g intermediates]\n");
-	fprintf(stderr, "   [-G hopcount] [-i interval] [-o filename] [-p source port]\n");
-	fprintf(stderr, "   [-s ip address] [-w timeout] [hostname] [port[s...]]\n");
+	fprintf(stderr, "nc [-lnrtuvz] [-g intermediates] [-G hopcount] [-i interval] [-o filename]\n");
+	fprintf(stderr, "   [-p source port] [-s ip address] [-w timeout] [hostname] [port[s...]]\n");
 	if (doexit)
 		exit(1);
 }
