@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf.4,v 1.15 2003/06/06 10:29:41 jmc Exp $
+.\"	$OpenBSD: bpf.4,v 1.16 2003/06/20 20:55:16 jmc Exp $
 .\"     $NetBSD: bpf.4,v 1.7 1995/09/27 18:31:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -292,12 +292,15 @@ Returns the number of bytes that are immediately available for reading.
 Returns the address associated with the interface.
 .It Dv FIONBIO Pf ( Li int Ns No )
 Set or clear non-blocking I/O.
-If the argument is non-zero, then doing a read when no data is available will
-return \-1 and
-.Va errno
-will be set to
-.Er EWOULDBLOCK .
+If the argument is non-zero, then doing a read while no data is available will
+return 0.
 If the argument is zero, non-blocking I/O is disabled.
+The non-blocking read behavior is different from performing non-blocking
+reads on other file descriptors, which will return \-1 and set
+.Va errno
+to
+.Er EAGAIN
+if no data is available.
 Note: setting this overrides the timeout set by
 .Dv BIOCSRTIMEOUT .
 .It Dv FIOASYNC Pf ( Li int Ns No )
@@ -884,7 +887,8 @@ struct bpf_insn insns[] = {
 .Xr signal 3 ,
 .Xr tcpdump 8
 .Rs
-.%A McCanne, S., Jacobson V.
+.%A McCanne, S.
+.%A Jacobson V.
 .%J "An efficient, extensible, and portable network monitor"
 .Re
 .Sh HISTORY
