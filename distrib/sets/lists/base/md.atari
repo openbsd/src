@@ -36,3 +36,4 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/termcap.ph
 ./usr/libexec/ld.so
 ./usr/sbin/iteconfig
+./usr/libdata/perl5/site_perl/m68k-openbsd/sys/sched.ph

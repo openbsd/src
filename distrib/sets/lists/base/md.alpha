@@ -656,3 +656,4 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/if_sppp.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/pcap-int.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/ataio.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/sys/sched.ph

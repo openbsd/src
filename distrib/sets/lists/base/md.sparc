@@ -16,7 +16,7 @@
 ./usr/lib/libc.so.23.1
 ./usr/lib/libc_r.so.1.1
 ./usr/lib/libcrypto.so.1.0
-./usr/lib/libcurses++.so.1.0
+./usr/lib/libcurses++.so.1.1
 ./usr/lib/libcurses.so.5.1
 ./usr/lib/libdes.so.6.0
 ./usr/lib/libedit.so.0.0
@@ -686,3 +686,4 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net/if_sppp.ph
 ./usr/lib/gcc-lib/sparc-unknown-openbsd2.5/2.95
 ./usr/lib/gcc-lib/sparc-unknown-openbsd2.5/2.95/include
+./usr/libdata/perl5/site_perl/sparc-openbsd/sys/sched.ph
