@@ -2,7 +2,7 @@
 
 SUBDIR+= lib usr.bin
 .if (${MACHINE_ARCH} != "alpha")
-SUBDIR+= games libexec
+SUBDIR+= libexec
 .endif
 
 .include <bsd.subdir.mk>
