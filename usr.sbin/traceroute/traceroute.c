@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.33 2000/04/20 17:26:37 angelos Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.34 2000/08/28 22:43:17 deraadt Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -446,17 +446,17 @@ main(argc, argv)
 		datalen = atoi(*argv);
 
 	switch (proto) {
- 	  case IPPROTO_UDP:
-		headerlen = (sizeof(struct ip) + lsrrlen + 
-		sizeof(struct udphdr) + sizeof(struct packetdata));
+	case IPPROTO_UDP:
+		headerlen = (sizeof(struct ip) + lsrrlen +
+		    sizeof(struct udphdr) + sizeof(struct packetdata));
 		break;
- 	  case IPPROTO_ICMP:
-		headerlen = (sizeof(struct ip) + lsrrlen + 
-		sizeof(struct icmp) + sizeof(struct packetdata));
+	case IPPROTO_ICMP:
+		headerlen = (sizeof(struct ip) + lsrrlen +
+		    sizeof(struct icmp) + sizeof(struct packetdata));
 		break;
-	  default:
-		headerlen = (sizeof(struct ip) + lsrrlen + 
-		+ sizeof(struct packetdata));
+	default:
+		headerlen = (sizeof(struct ip) + lsrrlen +
+		    sizeof(struct packetdata));
 	}
 
 	if (datalen < 0 || datalen > IP_MAXPACKET - headerlen)
@@ -729,14 +729,13 @@ send_probe(seq, ttl, iflag, to)
 	ip->ip_ttl = ttl;
 	ip->ip_id = htons(ident+seq);
 	
-	
 	switch(proto) {
-	   case IPPROTO_ICMP: 
+	   case IPPROTO_ICMP:
 		icmpp->icmp_type = icmp_type;
 		icmpp->icmp_code = icmp_code;
 		icmpp->icmp_seq = htons(seq);
 		icmpp->icmp_id = htons(ident);
-  		op = (struct packetdata *)(icmpp + 1);
+		op = (struct packetdata *)(icmpp + 1);
 		break;
 	   case IPPROTO_UDP:
 		up->uh_sport = htons(ident);
@@ -747,10 +746,11 @@ send_probe(seq, ttl, iflag, to)
 		up->uh_ulen =
 		    htons((u_short)(datalen - sizeof(struct ip) - lsrrlen));
 		up->uh_sum = 0;
-  		op = (struct packetdata *)(up + 1);
+		op = (struct packetdata *)(up + 1);
 		break;
 	default:
-  		op = (struct packetdata *)(ip + 1);
+		op = (struct packetdata *)(ip + 1);
+		break;
 	}
 	op->seq = seq;
 	op->ttl = ttl;
@@ -855,12 +855,12 @@ packet_ok(buf, cc, from, seq, iflag)
 		switch(proto) {
 		  case IPPROTO_ICMP:
 
-			if (icmp_type == ICMP_ECHO && 
+			if (icmp_type == ICMP_ECHO &&
 			    type == ICMP_ECHOREPLY &&
 			    icp->icmp_id == htons(ident) &&
-			    icp->icmp_seq == htons(seq)) 
+			    icp->icmp_seq == htons(seq))
 			        return(-2); /* we got there */
-			 
+
 			icmpp = (struct icmp *)((u_char *)hip + hlen);
 			if (hlen + 8 <= cc && hip->ip_p == IPPROTO_ICMP &&
 			    icmpp->icmp_id == htons(ident) &&
