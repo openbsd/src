@@ -2,7 +2,7 @@
 #ifndef _CURSESP_H
 #define _CURSESP_H
 
-// $From: cursesp.h,v 1.10 1998/02/17 09:01:28 juergen Exp $
+// $From: cursesp.h,v 1.11 1999/07/31 09:46:05 juergen Exp $
 
 #include <cursesw.h>
 
@@ -86,7 +86,7 @@ public:
   // N.B.: The panel associated with ::stdscr is always on the bottom. So
   // actually bottom() makes the panel the first above ::stdscr.
   
-  inline int mvwin(int y, int x) {
+  virtual int mvwin(int y, int x) {
     OnError(::move_panel(p, y, x));
     return OK;
   }
@@ -115,11 +115,11 @@ public:
 
   // Those two are rewrites of the corresponding virtual members of
   // NCursesWindow
-  int refresh();
+  virtual int refresh();
   // Propagate all panel changes to the virtual screen and update the 
   // physical screen.
 
-  int noutrefresh();
+  virtual int noutrefresh();
   // Propagate all panel changes to the virtual screen.
 
   static void redraw();

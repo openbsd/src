@@ -6,7 +6,7 @@
  *   Demo code for NCursesMenu and NCursesForm written by
  *   Juergen Pfeifer <juergen.pfeifer@gmx.net>
  *
- * $From: demo.cc,v 1.16 1999/05/16 17:11:49 juergen Exp $
+ * $From: demo.cc,v 1.17 1999/07/31 09:47:17 juergen Exp $
  */
 
 #include "cursesapp.h"
@@ -169,7 +169,7 @@ public:
 class Label : public NCursesFormField
 {
 public:
-  Label(const char*title,
+  Label(const char* title,
 	int row, int col)
     : NCursesFormField(1,(int)::strlen(title),row,col) {
       set_value(title);
@@ -276,6 +276,48 @@ public:
 //
 // -------------------------------------------------------------------------
 //
+class PadAction : public NCursesMenuItem
+{
+public:
+  PadAction(const char* s) : NCursesMenuItem(s) {
+  }
+
+  bool action() {
+    const int GRIDSIZE = 3;
+    const int PADSIZE  = 200;
+    unsigned gridcount = 0;
+
+    NCursesPanel std;
+    NCursesPanel P(std.lines()-2,std.cols()-2,1,1);
+    NCursesFramedPad FP(P,PADSIZE,PADSIZE);
+
+    for (int i=0; i < PADSIZE; i++) {
+      for (int j=0; j < PADSIZE; j++) {
+	if (i % GRIDSIZE == 0 && j % GRIDSIZE == 0) {
+	  if (i==0 || j==0)
+	    FP.addch('+');
+	  else
+	    FP.addch((chtype)('A' + (gridcount++ % 26)));
+	}
+	else if (i % GRIDSIZE == 0)
+	  FP.addch('-');
+	else if (j % GRIDSIZE == 0)
+	  FP.addch('|');
+	else
+	  FP.addch(' ');
+      }
+    }
+
+    P.label("Pad Demo",NULL);
+    FP();
+    P.clear();
+    return FALSE;
+  }
+};
+
+//
+// -------------------------------------------------------------------------
+//
 class PassiveItem : public NCursesMenuItem {
 public:
   PassiveItem(const char* text) : NCursesMenuItem(text) {
@@ -291,24 +333,26 @@ private:
   NCursesPanel* P;
   NCursesMenuItem** I;
   UserData *u;
+  static const int n_items = 7;
 
 public:
   MyMenu ()
-    : NCursesMenu (8, 8, (lines()-10)/2, (cols()-10)/2)
+    : NCursesMenu (n_items+2, 8, (lines()-10)/2, (cols()-10)/2)
   {
     u = new UserData(1);
-    I = new NCursesMenuItem*[7];
+    I = new NCursesMenuItem*[1+n_items];
     I[0] = new PassiveItem("One");
     I[1] = new PassiveItem("Two");
     I[2] = new MyAction<UserData> ("Silly", u);
     I[3] = new FormAction("Form");
-    I[4] = new PassiveItem("Five");
-    I[5] = new QuitItem();
-    I[6] = new NCursesMenuItem(); // Terminating empty item
+    I[4] = new PadAction("Pad");
+    I[5] = new PassiveItem("Six");
+    I[6] = new QuitItem();
+    I[7] = new NCursesMenuItem(); // Terminating empty item
 
     InitMenu(I,TRUE,TRUE);
 
-    P = new NCursesPanel(1,6,LINES-1,1);
+    P = new NCursesPanel(1,n_items,LINES-1,1);
     boldframe("Demo","Silly");
     P->show();
   }

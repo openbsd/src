@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_refresh.c,v 1.1 1999/01/18 19:09:57 millert Exp $	*/
+/*	$OpenBSD: lib_refresh.c,v 1.2 1999/08/15 11:40:55 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -44,7 +44,7 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_refresh.c,v 1.23 1998/06/28 00:10:14 tom Exp $")
+MODULE_ID("$From: lib_refresh.c,v 1.24 1999/07/31 11:36:37 juergen Exp $")
 
 int wrefresh(WINDOW *win)
 {
@@ -96,14 +96,7 @@ bool	wide;
 	begx = win->_begx;
 	begy = win->_begy;
 
-	/*
-	 * If 'newscr' has a different background than the window that we're
-	 * trying to refresh, we'll have to copy the whole thing.
-	 */
-	if (win->_bkgd != newscr->_bkgd) {
-		touchwin(win);
-		newscr->_bkgd = win->_bkgd;
-	}
+	newscr->_bkgd  = win->_bkgd;
 	newscr->_attrs = win->_attrs;
 
 	/* merge in change information from all subwindows of this window */

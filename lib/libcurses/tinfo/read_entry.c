@@ -1,4 +1,4 @@
-/*	$OpenBSD: read_entry.c,v 1.4 1999/03/02 06:23:29 millert Exp $	*/
+/*	$OpenBSD: read_entry.c,v 1.5 1999/08/15 11:40:56 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1999 Free Software Foundation, Inc.                        *
@@ -49,7 +49,7 @@
 #include <tic.h>
 #include <term_entry.h>
 
-MODULE_ID("$From: read_entry.c,v 1.60 1999/03/01 23:59:28 tom Exp $")
+MODULE_ID("$From: read_entry.c,v 1.61 1999/07/24 20:07:20 tom Exp $")
 
 #ifndef O_BINARY
 #define O_BINARY 0
@@ -366,7 +366,7 @@ static int read_termtype(int fd, TERMTYPE *ptr)
 int _nc_read_file_entry(const char *const filename, TERMTYPE *ptr)
 /* return 1 if read, 0 if not found or garbled */
 {
-    int code, fd;
+    int code, fd = -1;
 
 #ifdef __OpenBSD__
     if (_nc_read_bsd_terminfo_file(filename, ptr) == 1)

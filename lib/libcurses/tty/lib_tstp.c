@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_tstp.c,v 1.3 1999/06/27 08:14:21 millert Exp $	*/
+/*	$OpenBSD: lib_tstp.c,v 1.4 1999/08/15 11:40:56 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
@@ -50,7 +50,7 @@
 #define _POSIX_SOURCE
 #endif
 
-MODULE_ID("$From: lib_tstp.c,v 1.18 1999/06/19 23:00:06 tom Exp $")
+MODULE_ID("$From: lib_tstp.c,v 1.19 1999/07/24 22:47:20 tom Exp $")
 
 #if defined(SIGTSTP) && (HAVE_SIGACTION || HAVE_SIGVEC)
 #define USE_SIGTSTP 1
@@ -122,6 +122,7 @@ static void tstp(int dummy GCC_UNUSED)
 	 * parent was stopped before us, and we would likely pick up the
 	 * settings already modified by the shell.
 	 */
+	if (SP != 0 && !SP->_endwin) /* don't do this if we're not in curses */
 #if HAVE_TCGETPGRP
 	if (tcgetpgrp(STDIN_FILENO) == getpgrp())
 #endif
@@ -222,7 +223,8 @@ static void cleanup(int sig)
 		    {
 			set_term(scan);
 			endwin();
-			SP->_endwin = FALSE; /* in case we have an atexit! */
+			if (SP)
+			    SP->_endwin = FALSE; /* in case we have an atexit! */
 			scan = scan->_next_screen;
 		    }
 		}

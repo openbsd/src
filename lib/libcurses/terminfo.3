@@ -1,7 +1,7 @@
-.\" $OpenBSD: terminfo.3,v 1.4 1998/11/17 03:51:20 millert Exp $
+.\" $OpenBSD: terminfo.3,v 1.5 1999/08/15 11:41:04 millert Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
+.\" Copyright (c) 1999 Free Software Foundation, Inc.                        *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -28,7 +28,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: curs_terminfo.3x,v 1.10 1998/09/26 12:21:13 tom Exp $
+.\" $From: curs_terminfo.3x,v 1.11 1999/07/31 21:41:29 tom Exp $
 .TH terminfo 3 ""
 .ds n 5
 .SH NAME
@@ -93,7 +93,7 @@ values for \fBlines\fR and \fBcolumns\fR specified in the
 
 The header files \fBcurses.h\fR and \fBterm.h\fR should be included (in this
 order) to get the definitions for these strings, numbers, and flags.
-Parameterized strings should be passed through \fBtparm\fR to instantiate them.  
+Parameterized strings should be passed through \fBtparm\fR to instantiate them.
 All \fBterminfo\fR strings [including the output of \fBtparm\fR] should be printed
 with \fBtputs\fR or \fBputp\fR.  Call the \fBreset_shell_mode\fR to restore the
 tty modes before exiting [see \fBcurs_kernel\fR(3)].  Programs which use
@@ -109,13 +109,30 @@ The \fBsetupterm\fR routine reads in the \fBterminfo\fR database,
 initializing the \fBterminfo\fR structures, but does not set up the
 output virtualization structures used by \fBcurses\fR.  The terminal
 type is the character string \fIterm\fR; if \fIterm\fR is null, the
-environment variable \fBTERM\fR is used.  All output is to file
-descriptor \fBfildes\fR which is initialized for output.  If
-\fIerrret\fR is not null, then \fBsetupterm\fR returns \fBOK\fR or
+environment variable \fBTERM\fR is used.
+All output is to file descriptor \fBfildes\fR which is initialized for output.
+If \fIerrret\fR is not null,
+then \fBsetupterm\fR returns \fBOK\fR or
 \fBERR\fR and stores a status value in the integer pointed to by
-\fIerrret\fR.  A status of \fB1\fR in \fIerrret\fR is normal, \fB0\fR
-means that the terminal could not be found, and \fB-1\fR means that
-the \fBterminfo\fR database could not be found.  If \fIerrret\fR is
+\fIerrret\fR.
+A return value of \fBOK\fR combined with status of \fB1\fR in \fIerrret\fR
+is normal.
+If \fBERR\fR is returned, examine \fIerrret\fR:
+.RS
+.TP 5
+.B 1
+means that the terminal is hardcopy, cannot be used for curses applications.
+.TP 5
+.B 0
+means that the terminal could not be found,
+or that it is a generic type,
+having too little information for curses applications to run.
+.TP 5
+.B -1
+means that the \fBterminfo\fR database could not be found.
+.RE
+.PP
+If \fIerrret\fR is
 null, \fBsetupterm\fR prints an error message upon finding an error
 and exits.  Thus, the simplest call is:
 
@@ -181,15 +198,15 @@ the value of the capability corresponding to the \fBterminfo\fR
 
 The \fBtigetflag\fR routine returns the value \fB-1\fR if
 \fIcapname\fR is not a boolean capability,
-or \fB0\fR if it is cancelled or absent from the terminal description.
+or \fB0\fR if it is canceled or absent from the terminal description.
 
 The \fBtigetnum\fR routine returns the value \fB-2\fR if
 \fIcapname\fR is not a numeric capability,
-or \fB-1\fR if it is cancelled or absent from the terminal description.
+or \fB-1\fR if it is canceled or absent from the terminal description.
 
 The \fBtigetstr\fR routine returns the value \fB(char *)-1\fR
 if \fIcapname\fR is not a string capability,
-or \fB0\fR if it is cancelled or absent from the terminal description.
+or \fB0\fR if it is canceled or absent from the terminal description.
 
 The \fIcapname\fR for each capability is given in the table column entitled
 \fIcapname\fR code in the capabilities section of \fBterminfo\fR(\*n).

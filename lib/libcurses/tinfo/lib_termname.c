@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_termname.c,v 1.1 1999/01/18 19:10:20 millert Exp $	*/
+/*	$OpenBSD: lib_termname.c,v 1.2 1999/08/15 11:40:55 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -31,18 +31,18 @@
 #include <curses.priv.h>
 #include <tic.h>	/* for MAX_ALIAS */
 
-MODULE_ID("$From: lib_termname.c,v 1.1 1998/12/19 23:07:43 tom Exp $")
+MODULE_ID("$From: lib_termname.c,v 1.2 1999/07/24 21:02:40 tom Exp $")
 
 char *termname(void)
 {
-char	*term = getenv("TERM");
+char	*name = getenv("TERM");
 static char	ret[MAX_ALIAS+1];
 
 	T(("termname() called"));
 
-	if (term != 0) {
-		(void) strncpy(ret, term, sizeof(ret) - 1);
-		term = ret;
+	if (name != 0) {
+		(void) strncpy(ret, name, sizeof(ret) - 1);
+		name = ret;
 	}
-	return term;
+	return name;
 }

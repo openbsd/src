@@ -1,4 +1,4 @@
-/*	$OpenBSD: captoinfo.c,v 1.2 1999/03/02 06:23:28 millert Exp $	*/
+/*	$OpenBSD: captoinfo.c,v 1.3 1999/08/15 11:40:55 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -96,7 +96,7 @@
 #include <ctype.h>
 #include <tic.h>
 
-MODULE_ID("$From: captoinfo.c,v 1.23 1999/02/28 23:42:20 tom Exp $")
+MODULE_ID("$From: captoinfo.c,v 1.24 1999/07/24 20:06:13 tom Exp $")
 
 #define MAX_PUSHED	16	/* max # args we can push onto the stack */
 #define MAX_ENTRY	2048	/* maximum chars in a translated capability */
@@ -588,7 +588,7 @@ int const parametrized)		/* do % translations if 1, pad translations if >=0 */
     for (; *str && str != trimmed; str++)
     {
 	int	c1, c2;
-	char	*cp;
+	char	*cp = 0;
 
 	if (str[0] == '\\' && (str[1] == '^' || str[1] == ','))
 	{

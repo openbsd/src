@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_ttyflags.c,v 1.1 1999/01/18 19:10:21 millert Exp $	*/
+/*	$OpenBSD: lib_ttyflags.c,v 1.2 1999/08/15 11:40:55 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -40,7 +40,7 @@
 #include <curses.priv.h>
 #include <term.h>	/* cur_term */
 
-MODULE_ID("$From: lib_ttyflags.c,v 1.1 1998/12/20 00:49:19 tom Exp $")
+MODULE_ID("$From: lib_ttyflags.c,v 1.2 1999/07/24 22:36:12 tom Exp $")
 
 #undef tabs
 
@@ -63,6 +63,7 @@ int _nc_get_tty_mode(TTY *buf)
 	if (cur_term == 0
 	 || GET_TTY(cur_term->Filedes, buf) != 0)
 		return(ERR);
+	TR(TRACE_BITS,("_nc_get_tty_mode: %s", _nc_tracebits()));
 	return (OK);
 }
 
@@ -71,6 +72,7 @@ int _nc_set_tty_mode(TTY *buf)
 	if (cur_term == 0
 	 || SET_TTY(cur_term->Filedes, buf) != 0)
 		return(ERR);
+	TR(TRACE_BITS,("_nc_set_tty_mode: %s", _nc_tracebits()));
 	return (OK);
 }
 

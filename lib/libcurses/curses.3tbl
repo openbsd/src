@@ -1,5 +1,5 @@
-'\" t 
-.\" $OpenBSD: curses.3tbl,v 1.10 1999/01/21 01:19:56 millert Exp $
+'\" t
+.\" $OpenBSD: curses.3tbl,v 1.11 1999/08/15 11:41:03 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -29,7 +29,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: ncurses.3x,v 1.33 1999/01/07 23:22:30 juergen Exp $
+.\" $From: ncurses.3x,v 1.34 1999/07/24 21:37:35 tom Exp $
 .TH ncurses 3 ""
 .ds n 5
 .ds d /usr/share/terminfo
@@ -544,6 +544,14 @@ For best results, \fBlines\fR and \fBcols\fR should not be specified in
 a terminal description for terminals which are run as emulations.
 
 Use the \fBuse_env\fR function to disable this feature.
+.TP 5
+DISPLAY
+Provides a hint to ncurses that your terminal is an X terminal
+emulator such as \fBxterm\fP.
+If the \fBkmous\fP capability is set to the beginning of the xterm
+mouse response, e.g., "kmous=\\E[M", then ncurses will send the terminal
+xterm's mouse initialization strings and allow appropriate replies.
+See the \fBcurs_mouse\fR(3) manual page for programming information.
 .TP 5
 ESCDELAY
 Specifies the total time, in milliseconds, for which curses will

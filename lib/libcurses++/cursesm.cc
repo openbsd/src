@@ -35,7 +35,7 @@
 #include "cursesapp.h"
 #include "internal.h"
 
-MODULE_ID("$From: cursesm.cc,v 1.10 1999/05/16 17:30:17 juergen Exp $")
+MODULE_ID("$From: cursesm.cc,v 1.11 1999/07/31 09:45:23 juergen Exp $")
   
 NCursesMenuItem::~NCursesMenuItem() {
   if (item)
@@ -306,7 +306,10 @@ NCursesMenu::operator()(void) {
 	  NCursesMenuItem* itm = current_item();
 	  assert(itm);
 	  if (itm->options() & O_SELECTABLE)
-	    b_action = itm->action();
+	    {
+	      b_action = itm->action();
+	      refresh();
+	    }
 	  else
 	    On_Not_Selectable(c);
 	}
@@ -316,6 +319,7 @@ NCursesMenu::operator()(void) {
 	    NCursesMenuItem* itm = my_items[i];
 	    if (itm->value()) {
 	      b_action |= itm->action();
+	      refresh();
 	    }
 	  }
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_mouse.c,v 1.3 1999/05/08 20:29:00 millert Exp $	*/
+/*	$OpenBSD: lib_mouse.c,v 1.4 1999/08/15 11:40:55 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
@@ -87,7 +87,7 @@
 #endif
 #endif
 
-MODULE_ID("$From: lib_mouse.c,v 1.43 1999/04/18 00:37:50 Klaus.Weide Exp $")
+MODULE_ID("$From: lib_mouse.c,v 1.44 1999/07/24 21:10:48 tom Exp $")
 
 #define MY_TRACE TRACE_ICALLS|TRACE_IEVENT
 
@@ -223,19 +223,6 @@ server_state(const int state)
 
 #endif
 
-/* FIXME: The list of names should be configurable */
-static int is_xterm(const char *name)
-{
-    while (*name != 0) {
-      if (!strncmp(name, "xterm", 5)
-       || !strncmp(name, "rxvt",  4)
-       || !strncmp(name, "kterm", 5))
-	    return TRUE;
-	name++;
-    }
-    return FALSE;
-}
-
 static int initialized;
 
 static void _nc_mouse_init(void)
@@ -255,7 +242,7 @@ static void _nc_mouse_init(void)
 
     /* we know how to recognize mouse events under xterm */
     if (key_mouse != 0
-     && is_xterm(cur_term->type.term_names))
+     && getenv("DISPLAY") != 0)
 	mousetype = M_XTERM;
 
 #if USE_GPM_SUPPORT

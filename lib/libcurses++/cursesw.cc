@@ -25,7 +25,7 @@
 #include "cursesw.h"
 #include "internal.h"
 
-MODULE_ID("$From: cursesw.cc,v 1.12 1999/05/16 17:11:48 juergen Exp $")
+MODULE_ID("$From: cursesw.cc,v 1.13 1999/07/31 09:46:30 juergen Exp $")
 
 #define COLORS_NEED_INITIALIZATION  -1
 #define COLORS_NOT_INITIALIZED       0
@@ -203,6 +203,26 @@ NCursesWindow::NCursesWindow(NCursesWindow& win, int l, int c,
     subwins = 0;
     alloced = TRUE;
     count++;
+}
+
+NCursesWindow::NCursesWindow(NCursesWindow& win, bool do_box = TRUE)
+{
+  w = :: derwin(win.w,win.height()-2,win.width()-2,1,1);
+  if (w == 0) {
+    err_handler("Cannot construct subwindow");
+  }
+
+  par = &win;
+  sib = win.subwins;
+  win.subwins = this;
+  subwins = 0;
+  alloced = TRUE;
+  count++;
+
+  if (do_box) {
+    win.box();
+    win.touchwin();
+  }
 }
   
 NCursesWindow NCursesWindow::Clone() {
@@ -408,13 +428,4 @@ extern "C" int _nc_has_mouse(void);
 bool NCursesWindow::has_mouse() const {
   return ((::has_key(KEY_MOUSE) || ::_nc_has_mouse()) 
 	  ? TRUE : FALSE);
-}
-
-NCursesPad::NCursesPad(int lines, int cols) : NCursesWindow() {
-  w = ::newpad(lines,cols);
-  if (w==(WINDOW*)0) {
-    count--;
-    err_handler("Cannot construct window");
-  }
-  alloced = TRUE;
 }

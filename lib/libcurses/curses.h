@@ -1,4 +1,4 @@
-/*	$OpenBSD: curses.h,v 1.35 1999/07/11 14:13:46 millert Exp $	*/
+/*	$OpenBSD: curses.h,v 1.36 1999/08/15 11:41:04 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -33,7 +33,7 @@
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
  ****************************************************************************/
 
-/* $From: curses.h.in,v 1.83 1999/06/16 00:25:26 tom Exp $ */
+/* $From: curses.h.in,v 1.84 1999/07/24 20:15:42 tom Exp $ */
 
 #ifndef __NCURSES_H
 #define __NCURSES_H
@@ -50,7 +50,7 @@
 /* These are defined only in curses.h, and are used for conditional compiles */
 #define NCURSES_VERSION_MAJOR 5
 #define NCURSES_VERSION_MINOR 0
-#define NCURSES_VERSION_PATCH 990710
+#define NCURSES_VERSION_PATCH 990814
 
 /* This is defined in more than one ncurses header, for identification */
 #undef  NCURSES_VERSION
@@ -329,8 +329,19 @@ extern char ttytype[];		/* needed for backward compatibility */
  * function calls.  Just in case '__attribute__' isn't defined, make a dummy.
  * G++ doesn't accept it anyway.
  */
-#if defined(__cplusplus) || (!defined(__GNUC__) && !defined(__attribute__))
+#if !defined(__GNUC__) && !defined(__attribute__)
 #define __attribute__(p) /* nothing */
+#endif
+
+/*
+ * For g++, turn off our macros that use __attribute__ (g++ recognizes some
+ * of them, but not at the same version levels as gcc).
+ */
+#ifdef __cplusplus
+#undef GCC_NORETURN
+#undef GCC_PRINTF
+#undef GCC_SCANF
+#undef GCC_UNUSED
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_addch.c,v 1.1 1999/01/18 19:09:34 millert Exp $	*/
+/*	$OpenBSD: lib_addch.c,v 1.2 1999/08/15 11:40:55 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -43,7 +43,7 @@
 #include <curses.priv.h>
 #include <ctype.h>
 
-MODULE_ID("$From: lib_addch.c,v 1.41 1998/06/28 00:10:21 tom Exp $")
+MODULE_ID("$From: lib_addch.c,v 1.42 1999/07/24 20:01:05 tom Exp $")
 
 /*
  * Ugly microtweaking alert.  Everything from here to end of module is
@@ -171,8 +171,8 @@ int waddch_nosync(WINDOW *win, const chtype ch)
 /* the workhorse function -- add a character to the given window */
 {
 	int	x, y;
-	int	t;
-	const char *s;
+	int	t = 0;
+	const char *s = 0;
 
 	if ((ch & A_ALTCHARSET)
 	    || ((t = TextOf(ch)) > 127)

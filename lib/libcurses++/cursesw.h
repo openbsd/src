@@ -2,7 +2,7 @@
 #ifndef _CURSESW_H
 #define _CURSESW_H
 
-// $From: cursesw.h,v 1.15 1998/04/11 23:07:44 tom Exp $
+// $From: cursesw.h,v 1.16 1999/07/31 09:46:43 juergen Exp $
 
 #include <etip.h>
 #include <stdio.h>
@@ -732,6 +732,12 @@ public:
 		char absrel = 'a');// if `a', by & bx are
   // absolute screen pos, else if `r', they are relative to par origin
 
+  NCursesWindow(NCursesWindow& par,// parent window
+		bool do_box = TRUE);
+  // this is the very common case that we want to create the subwindow that
+  // is two lines and two columns smaller and begins at (1,1).
+  // We may automatically request the box around it.
+
   virtual ~NCursesWindow();
 
   NCursesWindow Clone();
@@ -1226,19 +1232,76 @@ public:
       useColors(); }                      
 };
 
+// -------------------------------------------------------------------------
+// Pad Support. We allow an association of a pad with a "real" window
+// through which the pad may be viewed.
+// -------------------------------------------------------------------------
 class NCursesPad : public NCursesWindow {
+private:
+  NCursesWindow* viewWin;       // the "viewport" window
+  NCursesWindow* viewSub;       // the "viewport" subwindow
+
+  int h_gridsize, v_gridsize;
+
+protected:
+  int min_row, min_col;         // top left row/col of the pads display area
+
+  NCursesWindow* Win(void) const {
+    // Get the window into which the pad should be copied (if any)
+    return (viewSub?viewSub:(viewWin?viewWin:NULL));
+  }
+
+  typedef enum {
+    REQ_PAD_REFRESH = KEY_MAX + 1,
+    REQ_PAD_UP,
+    REQ_PAD_DOWN,
+    REQ_PAD_LEFT,
+    REQ_PAD_RIGHT,
+    REQ_PAD_EXIT
+  } Pad_Request;
+
+  static const Pad_Request PAD_LOW  = REQ_PAD_REFRESH;   // lowest  op-code
+  static const Pad_Request PAD_HIGH = REQ_PAD_EXIT;      // highest op-code
+
+  NCursesWindow* getWindow(void) const {
+    return viewWin;
+  }
+
+  NCursesWindow* getSubWindow(void) const {
+    return viewSub;
+  }
+
+  virtual int driver (int key);      // Virtualize keystroke key
+  // The driver translates the keystroke c into an Pad_Request
+
+  virtual void OnUnknownOperation(int pad_req) {
+    ::beep();
+  }
+  // This is called if the driver returns an unknown op-code
+
+  virtual void OnNavigationError(int pad_req) {
+    ::beep();
+  }
+  // This is called if a navigation request couldn't be satisfied
+
+  virtual void OnOperation(int pad_req) {
+  };
+  // OnOperation is called if a Pad_Operation was executed and just before
+  // the refresh() operation is done.
+
 public:
   NCursesPad(int lines, int cols);
+  // create a pad with the given size
+
+  virtual ~NCursesPad() {}
 
   int echochar(const chtype ch) { return ::pechochar(w,ch); }
   // Put the attributed character onto the pad and immediately do a
   // prefresh().
   
-  // For Pad's we reimplement refresh() and noutrefresh() to do nothing.
-  // You should call the versions with the argument list that are specific
-  // for Pad's.
-  int refresh() { return OK; };
-  int noutrefresh() { return OK; };
+  int refresh();
+  // If a viewport is defined the pad is displayed in this window, otherwise
+  // this is a noop.
 
   int refresh(int pminrow, int pmincol,
 	      int sminrow, int smincol,
@@ -1250,6 +1313,10 @@ public:
   // on the screen. <b>refresh</b> copies a rectangle of this size beginning
   // with top left corner pminrow,pmincol onto the screen and calls doupdate().
 
+  int noutrefresh();
+  // If a viewport is defined the pad is displayed in this window, otherwise
+  // this is a noop.
+
   int noutrefresh(int pminrow, int pmincol,
 		  int sminrow, int smincol,
 		  int smaxrow, int smaxcol) {
@@ -1257,6 +1324,52 @@ public:
 			  sminrow,smincol,smaxrow,smaxcol);
   }
   // Does the same like refresh() but without calling doupdate().
+
+  virtual void setWindow(NCursesWindow& view, int v_grid = 1, int h_grid = 1);
+  // Add the window "view" as viewing window to the pad.
+
+  virtual void setSubWindow(NCursesWindow& sub);
+  // Use the subwindow "sub" of the viewport window for the actual viewing.
+  // The full viewport window is usually used to provide some decorations
+  // like frames, titles etc.
+
+  virtual void operator() (void);
+  // Perform Pad's operation
+};
+
+// A FramedPad is constructed always with a viewport window. This viewport
+// will be framed (by a box() command) and the interior of the box is the
+// viewport subwindow. On the frame we display scrollbar sliders.
+class NCursesFramedPad : public NCursesPad {
+private:
+  static const char* const msg = "Operation not allowed";
+
+protected:
+  virtual void OnOperation(int pad_req);
+
+public:
+  NCursesFramedPad(NCursesWindow& win, int lines, int cols,
+		   int v_grid = 1, int h_grid = 1)
+    : NCursesPad(lines,cols) {
+    NCursesPad::setWindow(win,v_grid,h_grid);
+    NCursesPad::setSubWindow(*(new NCursesWindow(win)));
+  }
+  // Construct the FramedPad with the given Window win as viewport.
+
+  virtual ~NCursesFramedPad() {
+    delete getSubWindow();
+  }
+
+  void setWindow(NCursesWindow& view, int v_grid = 1, int h_grid = 1) {
+    err_handler(msg);
+  }
+  // Disable this call; the viewport is already defined
+
+  void setSubWindow(NCursesWindow& sub) {
+    err_handler(msg);
+  }
+  // Disable this call; the viewport subwindow is already defined
+
 };
 
 #endif // _CURSESW_H

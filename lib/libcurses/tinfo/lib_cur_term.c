@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_cur_term.c,v 1.2 1999/03/02 06:23:28 millert Exp $	*/
+/*	$OpenBSD: lib_cur_term.c,v 1.3 1999/08/15 11:40:55 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -42,29 +42,29 @@
 #include <term_entry.h>	/* TTY, cur_term */
 #include <termcap.h>	/* ospeed */
 
-MODULE_ID("$From: lib_cur_term.c,v 1.7 1999/02/22 18:41:09 tom Exp $")
+MODULE_ID("$From: lib_cur_term.c,v 1.8 1999/07/24 20:08:19 tom Exp $")
 
 TERMINAL *cur_term;
 
-TERMINAL *set_curterm(TERMINAL *term)
+TERMINAL *set_curterm(TERMINAL *termp)
 {
 	TERMINAL *oldterm = cur_term;
 
-	if ((cur_term = term) != 0) {
+	if ((cur_term = termp) != 0) {
 		ospeed = _nc_ospeed(cur_term->_baudrate);
 		PC = (pad_char != NULL) ? pad_char[0] : 0; 
 	}
 	return oldterm;
 }
 
-int del_curterm(TERMINAL *term)
+int del_curterm(TERMINAL *termp)
 {
-	T((T_CALLED("del_curterm(%p)"), term));
+	T((T_CALLED("del_curterm(%p)"), termp));
 
-	if (term != 0) {
-		_nc_free_termtype(&(term->type));
-		free(term);
-		if (term == cur_term)
+	if (termp != 0) {
+		_nc_free_termtype(&(termp->type));
+		free(termp);
+		if (termp == cur_term)
 			cur_term = 0;
 		returnCode(OK);
 	}

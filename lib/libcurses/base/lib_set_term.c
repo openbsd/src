@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_set_term.c,v 1.3 1999/03/11 21:03:55 millert Exp $	*/
+/*	$OpenBSD: lib_set_term.c,v 1.4 1999/08/15 11:40:55 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -44,16 +44,16 @@
 
 #include <term.h>	/* cur_term */
 
-MODULE_ID("$From: lib_set_term.c,v 1.45 1999/03/06 22:29:13 tom Exp $")
+MODULE_ID("$From: lib_set_term.c,v 1.46 1999/07/24 20:05:49 tom Exp $")
 
-SCREEN * set_term(SCREEN *screen)
+SCREEN * set_term(SCREEN *screenp)
 {
 SCREEN	*oldSP;
 
-	T((T_CALLED("set_term(%p)"), screen));
+	T((T_CALLED("set_term(%p)"), screenp));
 
 	oldSP = SP;
-	_nc_set_screen(screen);
+	_nc_set_screen(screenp);
 
 	set_curterm(SP->_term);
 	curscr      = SP->_curscr;

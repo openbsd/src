@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_newterm.c,v 1.4 1999/06/14 02:29:15 millert Exp $	*/
+/*	$OpenBSD: lib_newterm.c,v 1.5 1999/08/15 11:40:55 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -50,7 +50,7 @@
 
 #include <term.h>	/* clear_screen, cup & friends, cur_term */
 
-MODULE_ID("$From: lib_newterm.c,v 1.40 1999/06/12 21:30:39 tom Exp $")
+MODULE_ID("$From: lib_newterm.c,v 1.41 1999/07/24 20:07:48 tom Exp $")
 
 #ifndef ONLCR		/* Allows compilation under the QNX 4.2 OS */
 #define ONLCR 0
@@ -93,7 +93,7 @@ void filter(void)
     filter_mode = TRUE;
 }
 
-SCREEN * newterm(NCURSES_CONST char *term, FILE *ofp, FILE *ifp)
+SCREEN * newterm(NCURSES_CONST char *name, FILE *ofp, FILE *ifp)
 {
 int	errret;
 int     slk_format = _nc_slk_format;
@@ -105,10 +105,10 @@ int t = _nc_getenv_num("NCURSES_TRACE");
                trace(t);
 #endif
 
-	T((T_CALLED("newterm(\"%s\",%p,%p)"), term, ofp, ifp));
+	T((T_CALLED("newterm(\"%s\",%p,%p)"), name, ofp, ifp));
 
 	/* this loads the capability entry, then sets LINES and COLS */
-	if (setupterm(term, fileno(ofp), &errret) == ERR)
+	if (setupterm(name, fileno(ofp), &errret) == ERR)
 		return 0;
 
 	/* implement filter mode */
