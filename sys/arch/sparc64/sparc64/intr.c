@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.9 2002/05/21 16:15:53 art Exp $	*/
+/*	$OpenBSD: intr.c,v 1.10 2002/05/22 00:58:26 deraadt Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -345,6 +345,7 @@ softintr_schedule(cookie)
 	send_softint(-1, ih->ih_pil, ih);
 }
 
+#ifdef DIAGNOSTIC
 void
 splassert_check(int wantipl, const char *func)
 {
@@ -356,4 +357,4 @@ splassert_check(int wantipl, const char *func)
 		splassert_fail(wantipl, oldipl, func);
 	}
 }
-
+#endif
