@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.27 2001/05/23 12:34:39 espie Exp $
+#	$OpenBSD: Makefile,v 1.28 2001/06/05 11:59:09 espie Exp $
 
 PROG=	make
 CFLAGS+= -I${.OBJDIR} -I${.CURDIR} ${WARNINGS}
@@ -7,6 +7,7 @@ WARNINGS=-Wall -W -Wno-char-subscripts -Wstrict-prototypes -pedantic -Wmissing-p
 CFLAGS+=-DUSE_TIMESPEC
 CFLAGS+=-DHAS_BOOL_H
 CFLAGS+=-DHAS_PATHS_H
+CFLAGS+=-DHAS_EXTENDED_GETCWD
 .if (${MACHINE_ARCH} == "m88k")
 CFLAGS+=-O0
 .endif

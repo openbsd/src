@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: arch.c,v 1.47 2001/05/30 00:43:00 deraadt Exp $ */
+/*	$OpenBSD: arch.c,v 1.48 2001/06/05 11:59:10 espie Exp $ */
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -98,6 +98,14 @@
 #include "gnode.h"
 #include "timestamp.h"
 #include "lst.h"
+
+#ifndef PATH_MAX
+# ifdef MAXPATHLEN
+#  define PATH_MAX (MAXPATHLEN+1)
+# else
+#  define PATH_MAX	1024
+# endif
+#endif
 
 #ifdef TARGET_MACHINE
 #undef MACHINE
@@ -436,7 +444,7 @@ read_archive(archive, end)
 	size_t		n;
 	struct ar_hdr	arh;	/* Archive-member header for reading archive */
 	off_t		size;	/* Size of archive member */
-	char		buffer[MAXPATHLEN+1];
+	char		buffer[PATH_MAX];
 	char		*memName;
 				/* Current member name while hashing. */
 	char		*cp;	/* Useful character pointer */
@@ -499,7 +507,7 @@ read_archive(archive, end)
 
 		int elen = atoi(memName + sizeof(AR_EFMT1)-1);
 
-		if (elen <= 0 || elen > MAXPATHLEN)
+		if (elen <= 0 || elen >= PATH_MAX)
 			break;
 		memName = buffer;
 		if (fread(memName, elen, 1, arch) != 1)
@@ -822,11 +830,11 @@ ArchFindMember(archive, member, arhPtr, mode)
 	 * first <namelen> bytes of the file.  */
 	if (memcmp(memName, AR_EFMT1, sizeof(AR_EFMT1) - 1) == 0 &&
 	    isdigit(memName[sizeof(AR_EFMT1) - 1])) {
-	    char	  ename[MAXPATHLEN+1];
+	    char	  ename[PATH_MAX];
 
 	    int elen = atoi(memName + sizeof(AR_EFMT1)-1);
 
-	    if (elen <= 0 || elen > MAXPATHLEN)
+	    if (elen <= 0 || elen >= PATH_MAX)
 		break;
 	    if (fread(ename, elen, 1, arch) != 1)
 		break;

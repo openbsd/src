@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: main.c,v 1.52 2001/06/03 16:33:48 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.53 2001/06/05 11:59:11 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -70,6 +70,14 @@
 #include "memory.h"
 #include "make.h"
 
+#ifndef PATH_MAX
+# ifdef MAXPATHLEN
+#  define PATH_MAX (MAXPATHLEN+1)
+# else
+#  define PATH_MAX	1024
+# endif
+#endif
+
 #ifndef DEFMAXLOCAL
 #define DEFMAXLOCAL DEFMAXJOBS
 #endif	/* DEFMAXLOCAL */
@@ -99,7 +107,7 @@ bool 		oldVars;	/* variable substitution style */
 bool 		checkEnvFirst;	/* -e flag */
 
 static void		MainParseArgs(int, char **);
-static char *		chdir_verify_path(char *, char *);
+static char *		chdir_verify_path(char *);
 static int		ReadMakefile(void *, void *);
 static void		add_dirpath(Lst, const char *);
 static void		usage(void);
@@ -398,9 +406,8 @@ Main_ParseArgLine(line)
 }
 
 char *
-chdir_verify_path(path, obpath)
+chdir_verify_path(path)
     char *path;
-    char *obpath;
 {
     struct stat sb;
 
@@ -410,12 +417,10 @@ chdir_verify_path(path, obpath)
 		  path, strerror(errno));
 	    return NULL;
 	} else {
-	    if (path[0] != '/') {
-		(void)snprintf(obpath, MAXPATHLEN, "%s/%s", curdir, path);
-		return obpath;
-	    }
+	    if (path[0] != '/')
+	    	return Str_concat(curdir, path, '/');
 	    else
-		return path;
+		return estrdup(path);
 	}
     }
 
@@ -470,9 +475,7 @@ main(argc, argv)
 	bool outOfDate = true;	/* false if all targets up to date */
 	struct stat sb, sa;
 	char *p, *path, *pathp, *pwd;
-	char mdpath[MAXPATHLEN + 1];
-	char obpath[MAXPATHLEN + 1];
-	char cdpath[MAXPATHLEN + 1];
+	char *mdpath;
 	char *machine = getenv("MACHINE");
 	char *machine_arch = getenv("MACHINE_ARCH");
 	const char *syspath = _PATH_DEFSYSPATH;
@@ -495,8 +498,7 @@ main(argc, argv)
 	 * All this code is so that we know where we are when we start up
 	 * on a different machine with pmake.
 	 */
-	curdir = cdpath;
-	if (getcwd(curdir, MAXPATHLEN) == NULL) {
+	if ((curdir = dogetcwd()) == NULL) {
 		(void)fprintf(stderr, "make: %s.\n", strerror(errno));
 		exit(2);
 	}
@@ -509,8 +511,10 @@ main(argc, argv)
 
 	if ((pwd = getenv("PWD")) != NULL) {
 	    if (stat(pwd, &sb) == 0 && sa.st_ino == sb.st_ino &&
-		sa.st_dev == sb.st_dev && strlen(pwd) <= MAXPATHLEN)
-		(void)strcpy(curdir, pwd);
+		sa.st_dev == sb.st_dev) {
+		    free(curdir);
+		    curdir = estrdup(pwd);
+	    }
 	}
 
 	/*
@@ -556,29 +560,29 @@ main(argc, argv)
 	 * and modify the paths for the Makefiles apropriately.  The
 	 * current directory is also placed as a variable for make scripts.
 	 */
+	mdpath = NULL;
 	if (!(pathp = getenv("MAKEOBJDIRPREFIX"))) {
 		if (!(path = getenv("MAKEOBJDIR"))) {
 			path = _PATH_OBJDIR;
 			pathp = _PATH_OBJDIRPREFIX;
-			(void)snprintf(mdpath, MAXPATHLEN, "%s.%s",
-					path, machine);
-			if (!(objdir = chdir_verify_path(mdpath, obpath)))
-				if (!(objdir=chdir_verify_path(path, obpath))) {
-					(void)snprintf(mdpath, MAXPATHLEN,
-							"%s%s", pathp, curdir);
-					if (!(objdir=chdir_verify_path(mdpath,
-								       obpath)))
+			mdpath = Str_concat(path, machine, '.');
+			if (!(objdir = chdir_verify_path(mdpath)))
+				if (!(objdir=chdir_verify_path(path))) {
+					free(mdpath);
+					mdpath = Str_concat(pathp, curdir, 0);
+					if (!(objdir=chdir_verify_path(mdpath)))
 						objdir = curdir;
 				}
 		}
-		else if (!(objdir = chdir_verify_path(path, obpath)))
+		else if (!(objdir = chdir_verify_path(path)))
 			objdir = curdir;
 	}
 	else {
-		(void)snprintf(mdpath, MAXPATHLEN, "%s%s", pathp, curdir);
-		if (!(objdir = chdir_verify_path(mdpath, obpath)))
+		mdpath = Str_concat(pathp, curdir, 0);
+		if (!(objdir = chdir_verify_path(mdpath)))
 			objdir = curdir;
 	}
+	free(mdpath);
 
 	esetenv("PWD", objdir);
 	unsetenv("CDPATH");
@@ -781,6 +785,11 @@ main(argc, argv)
 	if (DEBUG(GRAPH2))
 		Targ_PrintGraph(2);
 
+#ifdef CLEANUP
+	if (objdir != curdir)
+	    free(objdir);
+	free(curdir);
+#endif
 	if (queryFlag && outOfDate)
 		return 1;
 	else
@@ -804,7 +813,7 @@ ReadMakefile(p, q)
 {
 	char *fname = p;		/* makefile to read */
 	FILE *stream;
-	char *name, path[MAXPATHLEN + 1];
+	char *name;
 
 	if (!strcmp(fname, "-")) {
 		Var_Set("MAKEFILE", "", VAR_GLOBAL);
@@ -814,11 +823,14 @@ ReadMakefile(p, q)
 			goto found;
 		/* if we've chdir'd, rebuild the path name */
 		if (curdir != objdir && *fname != '/') {
-			(void)snprintf(path, sizeof path, "%s/%s", curdir, 
-			    fname);
-			if ((stream = fopen(path, "r")) != NULL) {
-				fname = estrdup(path);
-				goto found;
+			char *path;
+
+			path = Str_concat(curdir, fname, '/');
+			if ((stream = fopen(path, "r")) == NULL)
+			    free(path);
+			else {
+			    fname = path;
+			    goto found;
 			}
 		}
 		/* look in -I and system include directories. */

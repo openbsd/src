@@ -2,7 +2,7 @@
 #define CONFIG_H
 
 /*	$OpenPackages$ */
-/*	$OpenBSD: config.h,v 1.11 2001/05/23 12:34:41 espie Exp $	*/
+/*	$OpenBSD: config.h,v 1.12 2001/06/05 11:59:11 espie Exp $	*/
 /*	$NetBSD: config.h,v 1.7 1996/11/06 17:59:03 christos Exp $	*/
 
 /*
@@ -112,6 +112,12 @@
 # ifndef RANLIBMAG
 #  define RANLIBMAG "__.SYMDEF"
 # endif
+#endif
+
+#ifdef HAS_EXTENDED_GETCWD
+#define dogetcwd()	getcwd(NULL, 0)
+#else
+#define dogetcwd()	getcwd(emalloc(PATH_MAX), PATH_MAX)
 #endif
 
 #ifdef SYSVINCLUDE
