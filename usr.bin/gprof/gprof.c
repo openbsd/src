@@ -1,4 +1,4 @@
-/*	$OpenBSD: gprof.c,v 1.13 2003/06/10 22:20:47 deraadt Exp $	*/
+/*	$OpenBSD: gprof.c,v 1.14 2004/07/20 08:46:23 art Exp $	*/
 /*	$NetBSD: gprof.c,v 1.8 1995/04/19 07:15:59 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)gprof.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: gprof.c,v 1.13 2003/06/10 22:20:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: gprof.c,v 1.14 2004/07/20 08:46:23 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -228,7 +228,7 @@ getpfile(char *filename)
     while ( fread( &arc , sizeof arc , 1 , pfile ) == 1 ) {
 #	ifdef DEBUG
 	    if ( debug & SAMPLEDEBUG ) {
-		printf( "[getpfile] frompc 0x%x selfpc 0x%x count %d\n" ,
+		printf( "[getpfile] frompc 0x%lx selfpc 0x%lx count %ld\n" ,
 			arc.raw_frompc , arc.raw_selfpc , arc.raw_count );
 	    }
 #	endif /* DEBUG */
@@ -277,15 +277,15 @@ openpfile(char *filename)
     nsamples = sampbytes / sizeof (UNIT);
 #   ifdef DEBUG
 	if ( debug & SAMPLEDEBUG ) {
-	    printf( "[openpfile] hdr.lpc 0x%x hdr.hpc 0x%x hdr.ncnt %d\n",
+	    printf( "[openpfile] hdr.lpc 0x%lx hdr.hpc 0x%lx hdr.ncnt %d\n",
 		gmonhdr.lpc , gmonhdr.hpc , gmonhdr.ncnt );
-	    printf( "[openpfile]   s_lowpc 0x%x   s_highpc 0x%x\n" ,
+	    printf( "[openpfile]   s_lowpc 0x%lx   s_highpc 0x%lx\n" ,
 		s_lowpc , s_highpc );
-	    printf( "[openpfile]     lowpc 0x%x     highpc 0x%x\n" ,
+	    printf( "[openpfile]     lowpc 0x%lx     highpc 0x%lx\n" ,
 		lowpc , highpc );
 	    printf( "[openpfile] sampbytes %d nsamples %d\n" ,
 		sampbytes , nsamples );
-	    printf( "[openpfile] sample rate %d\n" , hz );
+	    printf( "[openpfile] sample rate %ld\n" , hz );
 	}
 #   endif /* DEBUG */
     return(pfile);
@@ -309,7 +309,7 @@ tally(struct rawarc *rawp)
     childp -> ncall += rawp -> raw_count;
 #   ifdef DEBUG
 	if ( debug & TALLYDEBUG ) {
-	    printf( "[tally] arc from %s to %s traversed %d times\n" ,
+	    printf( "[tally] arc from %s to %s traversed %ld times\n" ,
 		    parentp -> name , childp -> name , rawp -> raw_count );
 	}
 #   endif /* DEBUG */
@@ -351,7 +351,7 @@ dumpsum(char *sumfile)
 	        err(1, "fwrite: %s", sumfile);
 #	    ifdef DEBUG
 		if ( debug & SAMPLEDEBUG ) {
-		    printf( "[dumpsum] frompc 0x%x selfpc 0x%x count %d\n" ,
+		    printf( "[dumpsum] frompc 0x%lx selfpc 0x%lx count %ld\n" ,
 			    arc.raw_frompc , arc.raw_selfpc , arc.raw_count );
 		}
 #	    endif /* DEBUG */
@@ -384,7 +384,7 @@ readsamples(FILE *pfile)
     if (samples == 0) {
 	samples = (UNIT *) calloc(sampbytes, sizeof (UNIT));
 	if (samples == 0)
-	    errx(1, "No room for %d sample pc's", sampbytes / sizeof (UNIT));
+	    errx(1, "No room for %ld sample pc's", sampbytes / sizeof (UNIT));
     }
     for (i = 0; i < nsamples; i++) {
 	fread(&sample, sizeof (UNIT), 1, pfile);
@@ -452,7 +452,7 @@ asgnsamples(void)
 	time = ccnt;
 #	ifdef DEBUG
 	    if ( debug & SAMPLEDEBUG ) {
-		printf( "[asgnsamples] pcl 0x%x pch 0x%x ccnt %d\n" ,
+		printf( "[asgnsamples] pcl 0x%lx pch 0x%lx ccnt %d\n" ,
 			pcl , pch , ccnt );
 	    }
 #	endif /* DEBUG */
@@ -476,7 +476,7 @@ asgnsamples(void)
 	    if (overlap > 0) {
 #		ifdef DEBUG
 		    if (debug & SAMPLEDEBUG) {
-			printf("[asgnsamples] (0x%x->0x%x-0x%x) %s gets %f ticks %d overlap\n",
+			printf("[asgnsamples] (0x%lx->0x%lx-0x%lx) %s gets %f ticks %ld overlap\n",
 				nl[j].value/sizeof(UNIT), svalue0, svalue1,
 				nl[j].name, 
 				overlap * time / scale, overlap);
@@ -530,7 +530,7 @@ alignentries(void)
 	if (bucket_of_entry < bucket_of_code) {
 #	    ifdef DEBUG
 		if (debug & SAMPLEDEBUG) {
-		    printf("[alignentries] pushing svalue 0x%x to 0x%x\n",
+		    printf("[alignentries] pushing svalue 0x%lx to 0x%lx\n",
 			    nlp->svalue, nlp->svalue + UNITS_TO_CODE);
 		}
 #	    endif /* DEBUG */

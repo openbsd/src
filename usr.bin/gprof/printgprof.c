@@ -1,4 +1,4 @@
-/*	$OpenBSD: printgprof.c,v 1.9 2003/07/10 00:06:51 david Exp $	*/
+/*	$OpenBSD: printgprof.c,v 1.10 2004/07/20 08:46:23 art Exp $	*/
 /*	$NetBSD: printgprof.c,v 1.5 1995/04/19 07:16:21 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)printgprof.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: printgprof.c,v 1.9 2003/07/10 00:06:51 david Exp $";
+static char rcsid[] = "$OpenBSD: printgprof.c,v 1.10 2004/07/20 08:46:23 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -587,14 +587,14 @@ arccmp( thisp , thatp )
 	    printname( thisparentp );
 	    printf( " calls " );
 	    printname ( thischildp );
-	    printf( " %f + %f %d/%d\n" ,
+	    printf( " %f + %f %ld/%ld\n" ,
 		    thisp -> arc_time , thisp -> arc_childtime ,
 		    thisp -> arc_count , thischildp -> ncall );
 	    printf( "[arccmp] " );
 	    printname( thatparentp );
 	    printf( " calls " );
 	    printname( thatchildp );
-	    printf( " %f + %f %d/%d\n" ,
+	    printf( " %f + %f %ld/%ld\n" ,
 		    thatp -> arc_time , thatp -> arc_childtime ,
 		    thatp -> arc_count , thatchildp -> ncall );
 	    printf( "\n" );

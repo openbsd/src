@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcs.c,v 1.7 2003/06/03 02:56:08 millert Exp $	*/
+/*	$OpenBSD: arcs.c,v 1.8 2004/07/20 08:46:23 art Exp $	*/
 /*	$NetBSD: arcs.c,v 1.6 1995/04/19 07:15:52 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)arcs.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: arcs.c,v 1.7 2003/06/03 02:56:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: arcs.c,v 1.8 2004/07/20 08:46:23 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -45,6 +45,7 @@ int visited;
 int viable;
 int newcycle;
 int oldcycle;
+void printsubcycle(cltype *);
 #endif /* DEBUG */
 
     /*
@@ -60,7 +61,7 @@ addarc( parentp , childp , count )
 
 #   ifdef DEBUG
 	if ( debug & TALLYDEBUG ) {
-	    printf( "[addarc] %d arcs from %s to %s\n" ,
+	    printf( "[addarc] %ld arcs from %s to %s\n" ,
 		    count , parentp -> name , childp -> name );
 	}
 #   endif /* DEBUG */
@@ -71,7 +72,7 @@ addarc( parentp , childp , count )
 	     */
 #	ifdef DEBUG
 	    if ( debug & TALLYDEBUG ) {
-		printf( "[tally] hit %d += %d\n" ,
+		printf( "[tally] hit %ld += %ld\n" ,
 			arcp -> arc_count , count );
 	    }
 #	endif /* DEBUG */
@@ -173,7 +174,7 @@ doarcs()
 	     */
 #	ifdef DEBUG
 	    if ( debug & BREAKCYCLE ) {
-		printf("[doarcs] pass %d, cycle(s) %d\n" , pass , ncycle );
+		printf("[doarcs] pass %ld, cycle(s) %d\n" , pass , ncycle );
 	    }
 #	endif /* DEBUG */
 	if ( pass == 1 ) {
@@ -341,7 +342,7 @@ timepropagate( parentp )
 	    if ( debug & PROPDEBUG ) {
 		printf( "[dotime] child \t" );
 		printname( childp );
-		printf( " with %f %f %d/%d\n" ,
+		printf( " with %f %f %ld/%ld\n" ,
 			childp -> time , childp -> childtime ,
 			arcp -> arc_count , childp -> npropcall );
 		printf( "[dotime] parent\t" );
@@ -379,7 +380,7 @@ cyclelink()
 	 */
     cyclenl = (nltype *) calloc( ncycle + 1 , sizeof( nltype ) );
     if ( cyclenl == 0 )
-	errx(0, "No room for %d bytes of cycle headers",
+	errx(0, "No room for %ld bytes of cycle headers",
 	    (ncycle + 1) * sizeof(nltype));
 	/*
 	 *	now link cycles to true cycleheads,
@@ -482,7 +483,7 @@ cycleanalyze()
 	done = FALSE;
         cyclestack = (arctype **) calloc( size + 1 , sizeof( arctype *) );
 	if ( cyclestack == 0 ) {
-	    warnx("No room for %d bytes of cycle stack" ,
+	    warnx("No room for %ld bytes of cycle stack" ,
 		(size + 1) * sizeof(arctype *));
 	    return (done);
 	}
@@ -602,7 +603,7 @@ addcycle( stkstart , stkend )
     clp = (cltype *)
 	calloc( 1 , sizeof ( cltype ) + ( size - 1 ) * sizeof( arctype * ) );
     if ( clp == 0 ) {
-	warnx("No room for %d bytes of subcycle storage" ,
+	warnx("No room for %ld bytes of subcycle storage" ,
 	    sizeof(cltype) + (size - 1) * sizeof(arctype *));
 	return( FALSE );
     }
@@ -750,6 +751,7 @@ compresslist()
 }
 
 #ifdef DEBUG
+void
 printsubcycle( clp )
     cltype	*clp;
 {
@@ -760,7 +762,7 @@ printsubcycle( clp )
     printf( "%s <cycle %d>\n" , (*arcpp) -> arc_parentp -> name ,
 	(*arcpp) -> arc_parentp -> cycleno ) ;
     for ( endlist = &clp -> list[ clp -> size ]; arcpp < endlist ; arcpp++ )
-	printf( "\t(%d) -> %s\n" , (*arcpp) -> arc_count ,
+	printf( "\t(%ld) -> %s\n" , (*arcpp) -> arc_count ,
 	    (*arcpp) -> arc_childp -> name ) ;
 }
 #endif /* DEBUG */
