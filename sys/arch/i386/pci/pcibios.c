@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibios.c,v 1.17 2000/10/31 18:56:42 deraadt Exp $	*/
+/*	$OpenBSD: pcibios.c,v 1.18 2001/01/24 23:16:14 mickey Exp $	*/
 /*	$NetBSD: pcibios.c,v 1.5 2000/08/01 05:23:59 uch Exp $	*/
 
 /*
@@ -111,7 +111,6 @@
 
 #include <i386/pci/pcibiosvar.h>
 #include <i386/pci/pci_intr_fixup.h>
-#include <i386/pci/pci_bus_fixup.h>
 #include <i386/pci/pci_addr_fixup.h>
 
 #include <machine/biosvar.h>
