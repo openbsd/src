@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.18 1996/06/20 07:51:37 downsj Exp $	*/
+/*	$OpenBSD: fd.c,v 1.19 1996/08/07 15:54:41 deraadt Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -528,11 +528,9 @@ fdstrategy(bp)
 
 	if (bp->b_blkno + sz > fd->sc_type->size) {
 		sz = fd->sc_type->size - bp->b_blkno;
-		if (sz == 0) {
+		if (sz == 0)
 			/* If exactly at end of disk, return EOF. */
-			bp->b_resid = bp->b_bcount;
 			goto done;
-		}
 		if (sz < 0) {
 			/* If past end of disk, return EINVAL. */
 			bp->b_error = EINVAL;
@@ -571,6 +569,7 @@ bad:
 	bp->b_flags |= B_ERROR;
 done:
 	/* Toss transfer; we're done early. */
+	bp->b_resid = bp->b_bcount;
 	biodone(bp);
 }
 
