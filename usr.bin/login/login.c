@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.34 2000/09/15 07:13:48 deraadt Exp $	*/
+/*	$OpenBSD: login.c,v 1.35 2000/10/14 20:33:13 miod Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: login.c,v 1.34 2000/09/15 07:13:48 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: login.c,v 1.35 2000/10/14 20:33:13 miod Exp $";
 #endif /* not lint */
 
 /*
@@ -224,6 +224,7 @@ main(argc, argv)
 	for (cnt = 0;; ask = 1) {
 #if defined(KERBEROS) || defined(KERBEROS5)
 	        kdestroy();
+		authok = 0;
 #endif
 		if (ask) {
 			fflag = 0;
@@ -293,6 +294,9 @@ main(argc, argv)
 			} else if (pwd->pw_passwd[0] == '\0') {
 				/* pretend password okay */
 				rval = 0;
+#if defined(KERBEROS) || defined(KERBEROS5)
+				authok = 1;
+#endif
 				goto ttycheck;
 			}
 		}
