@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.35 2001/09/18 14:55:52 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.36 2001/09/19 13:14:18 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.35 2001/09/18 14:55:52 espie Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.36 2001/09/19 13:14:18 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -493,7 +493,7 @@ expand_macro(argv, argc)
 	p--;			       /* last character of defn */
 	while (p > t) {
 		if (*(p - 1) != ARGFLAG)
-			putback(*p);
+			PUTBACK(*p);
 		else {
 			switch (*p) {
 
@@ -532,8 +532,8 @@ expand_macro(argv, argc)
 				pbstr(lquote);
                                 break;
 			default:
-				putback(*p);
-				putback('$');
+				PUTBACK(*p);
+				PUTBACK('$');
 				break;
 			}
 			p--;
@@ -541,7 +541,7 @@ expand_macro(argv, argc)
 		p--;
 	}
 	if (p == t)		       /* do last character */
-		putback(*p);
+		PUTBACK(*p);
 }
 
 /*

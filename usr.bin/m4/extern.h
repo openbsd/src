@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.25 2001/09/18 14:55:52 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.26 2001/09/19 13:14:18 espie Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/01/13 23:25:24 pk Exp $	*/
 
 /*-
@@ -94,6 +94,27 @@ extern void	dump_buffer __P((FILE *, size_t));
 extern int 	obtain_char __P((struct input_file *));
 extern void	set_input __P((struct input_file *, FILE *, const char *));
 extern void	release_input __P((struct input_file *));
+
+/* speeded-up versions of chrsave/putback */
+#define PUTBACK(c)				\
+	do {					\
+		if (bp >= endpbb)		\
+			enlarge_bufspace();	\
+		*bp++ = (c);			\
+	} while(0)
+	
+#define CHRSAVE(c)				\
+	do {					\
+		if (ep >= endest)		\
+			enlarge_strspace();	\
+		*ep++ = (c);			\
+	} while(0)
+
+/* and corresponding exposure for local symbols */
+extern void enlarge_bufspace __P((void));
+extern void enlarge_strspace __P((void));
+extern char *endpbb;
+extern char *endest;
 
 /* trace.c */
 extern void mark_traced __P((const char *));

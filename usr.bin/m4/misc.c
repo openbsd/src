@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.23 2001/09/18 15:46:39 espie Exp $	*/
+/*	$OpenBSD: misc.c,v 1.24 2001/09/19 13:14:18 espie Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/09/28 05:37:41 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.23 2001/09/18 15:46:39 espie Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.24 2001/09/19 13:14:18 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,7 @@ static char rcsid[] = "$OpenBSD: misc.c,v 1.23 2001/09/18 15:46:39 espie Exp $";
 
 char *ep;		/* first free char in strspace */
 static char *strspace;	/* string space for evaluation */
-static char *endest;	/* end of string space	       */
+char *endest;		/* end of string space	       */
 static size_t strsize = STRSPMAX;
 static size_t bufsize = BUFSIZE;
 
@@ -69,11 +69,9 @@ char *buf;			/* push-back buffer	       */
 char *bufbase;			/* the base for current ilevel */
 char *bbase[MAXINP];		/* the base for each ilevel    */
 char *bp; 			/* first available character   */
-static char *endpbb;			/* end of push-back buffer     */
+char *endpbb;			/* end of push-back buffer     */
 
 
-static void enlarge_bufspace __P((void));
-static void enlarge_strspace __P((void));
 /*
  * find the index of second str in the first str.
  */
@@ -170,7 +168,7 @@ initspaces()
 		bbase[i] = buf;
 }
 
-static void 
+void 
 enlarge_strspace()
 {
 	char *newstrspace;
@@ -191,7 +189,7 @@ enlarge_strspace()
 	endest = strspace + strsize;
 }
 
-static void
+void
 enlarge_bufspace()
 {
 	char *newbuf;

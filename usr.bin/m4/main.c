@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.47 2001/09/18 20:59:32 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.48 2001/09/19 13:14:18 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.47 2001/09/18 20:59:32 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.48 2001/09/19 13:14:18 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -394,7 +394,7 @@ macro()
 						if (sp < 0)
 							putc(l, active);
 						else
-							chrsave(l);
+							CHRSAVE(l);
 					}
 				}
 			}
@@ -474,10 +474,10 @@ macro()
 					}
 					if (t == EOF)
 					    break;
-					chrsave(t);
+					CHRSAVE(t);
 				}
 			} else
-				chrsave(t);		/* stack the char */
+				CHRSAVE(t);		/* stack the char */
 			break;
 		}
 	}
@@ -495,7 +495,7 @@ outputstr(s)
 			putc(*s++, active);
 	else
 		while (*s)
-			chrsave(*s++);
+			CHRSAVE(*s++);
 }
 
 /*
@@ -517,7 +517,7 @@ inspect(c, tp)
 
 	while ((isalnum(c = gpbc()) || c == '_') && tp < etp)
 		h = (h << 5) + h + (*tp++ = c);
-	putback(c);
+	PUTBACK(c);
 	*tp = EOS;
 	/* token is too long, it won't match anything, but it can still
 	 * be output. */
@@ -527,7 +527,7 @@ inspect(c, tp)
 			if (sp < 0)
 				putc(c, active);
 			else
-				chrsave(c);
+				CHRSAVE(c);
 		}
 		*name = EOS;
 		return nil;
