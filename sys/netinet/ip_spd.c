@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.46 2002/06/09 16:26:10 itojun Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.47 2002/11/12 13:38:41 dhartmei Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -116,6 +116,10 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 	switch (af) {
 #ifdef INET
 	case AF_INET:
+		if (hlen < sizeof (struct ip) || m->m_pkthdr.len < hlen) {
+			*error = EINVAL;
+			return NULL;
+		}
 		ddst->sen_direction = direction;
 		ddst->sen_type = SENT_IP4;
 
@@ -166,6 +170,10 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 
 #ifdef INET6
 	case AF_INET6:
+		if (hlen < sizeof (struct ip6_hdr) || m->m_pkthdr.len < hlen) {
+			*error = EINVAL;
+			return NULL;
+		}
 		ddst->sen_type = SENT_IP6;
 		ddst->sen_ip6_direction = direction;
 
