@@ -1,4 +1,4 @@
-/*	$OpenBSD: calendar.h,v 1.1 1996/12/05 06:04:38 millert Exp $	*/
+/*	$OpenBSD: calendar.h,v 1.2 1998/03/30 06:59:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -63,8 +63,8 @@ void     setnnames __P((void));
 #define	F_ISDAYVAR	0x04 /* variables day of week, like SundayLast */
 #define	F_EASTER	0x08 /* Easter or easter depending days */
 
-extern f_dayAfter; /* days after current date */
-extern f_dayBefore; /* days bevore current date */
+extern int f_dayAfter;	/* days after current date */
+extern int f_dayBefore;	/* days before current date */
 
 struct fixs {
 	char *name;

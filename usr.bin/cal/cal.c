@@ -1,4 +1,4 @@
-/*	$OpenBSD: cal.c,v 1.4 1997/01/15 23:42:15 millert Exp $	*/
+/*	$OpenBSD: cal.c,v 1.5 1998/03/30 06:59:23 deraadt Exp $	*/
 /*	$NetBSD: cal.c,v 1.6 1995/03/26 03:10:24 glass Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cal.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: cal.c,v 1.4 1997/01/15 23:42:15 millert Exp $";
+static char rcsid[] = "$OpenBSD: cal.c,v 1.5 1998/03/30 06:59:23 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,7 @@ static char rcsid[] = "$OpenBSD: cal.c,v 1.4 1997/01/15 23:42:15 millert Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <tzfile.h>
 #include <unistd.h>
 
 #define	THURSDAY		4		/* for reformation */
@@ -109,7 +110,7 @@ char *j_day_headings = " Su  Mo  Tu  We  Th  Fr  Sa";
 /* leap year -- account for gregorian reformation in 1752 */
 #define	leap_year(yr) \
 	((yr) <= 1752 ? !((yr) % 4) : \
-	!((yr) % 4) && ((yr) % 100) || !((yr) % 400))
+	(!((yr) % 4) && ((yr) % 100)) || !((yr) % 400))
 
 /* number of centuries since 1700, not inclusive */
 #define	centuries_since_1700(yr) \
@@ -174,7 +175,7 @@ main(argc, argv)
 	case 0:
 		(void)time(&now);
 		local_time = localtime(&now);
-		year = local_time->tm_year + 1900;
+		year = local_time->tm_year + TM_YEAR_BASE;
 		if (!yflag)
 			month = local_time->tm_mon + 1;
 		break;
@@ -376,7 +377,8 @@ ascii_day(p, day)
 		return;
 	}
 	if (julian) {
-		if (val = day / 100) {
+		val = day / 100;
+		if (val) {
 			day %= 100;
 			*p++ = val + '0';
 			display = 1;

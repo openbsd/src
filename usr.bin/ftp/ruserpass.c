@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruserpass.c,v 1.10 1997/09/05 00:02:30 millert Exp $	*/
+/*	$OpenBSD: ruserpass.c,v 1.11 1998/03/30 06:59:35 deraadt Exp $	*/
 /*	$NetBSD: ruserpass.c,v 1.14 1997/07/20 09:46:01 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ruserpass.c	8.4 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: ruserpass.c,v 1.10 1997/09/05 00:02:30 millert Exp $";
+static char rcsid[] = "$OpenBSD: ruserpass.c,v 1.11 1998/03/30 06:59:35 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -149,7 +149,7 @@ next:
 		while ((t = token()) && t != MACH && t != DEFAULT) switch(t) {
 
 		case LOGIN:
-			if (token())
+			if (token()) {
 				if (*aname == 0) {
 					*aname = malloc((unsigned)
 					    strlen(tokval) + 1);
@@ -158,6 +158,7 @@ next:
 					if (strcmp(*aname, tokval))
 						goto next;
 				}
+			}
 			break;
 		case PASSWD:
 			if ((*aname == NULL || strcmp(*aname, "anonymous")) &&

@@ -16,7 +16,7 @@
  */
 
 /*
- * $Id: pathnames.h,v 1.1.1.1 1995/10/18 08:47:30 deraadt Exp $
+ * $Id: pathnames.h,v 1.2 1998/03/30 06:59:46 deraadt Exp $
  */
 
 #if (defined(BSD)) && (BSD >= 199103) || defined(__linux) || defined(AIX)
@@ -49,7 +49,7 @@
 			 */
 #define	ALLOW_FILE	"allow"		/*-*/
 #define DENY_FILE	"deny"		/*-*/
-/* #define LOG_FILE	"log"		/*-*/
+/* #define LOG_FILE	"log"		-*/
 
 			/* where should the daemon stick its PID?
 			 */

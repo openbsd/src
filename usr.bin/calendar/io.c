@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.3 1998/02/14 21:07:21 millert Exp $	*/
+/*	$OpenBSD: io.c,v 1.4 1998/03/30 06:59:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: io.c,v 1.3 1998/02/14 21:07:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.4 1998/03/30 06:59:27 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,6 +62,7 @@ static char rcsid[] = "$OpenBSD: io.c,v 1.3 1998/02/14 21:07:21 millert Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <tzfile.h>
 #include <unistd.h>
 
 #include "pathnames.h"
@@ -217,11 +218,11 @@ getfield(p, endp, flags)
 	}
 
 	/* Easter */
-	else if ((val = geteaster(start, tp->tm_year + 1900)) != 0)
+	else if ((val = geteaster(start, tp->tm_year + TM_YEAR_BASE)) != 0)
 	    *flags |= F_EASTER;
 
 	/* Paskha */
-	else if ((val = getpaskha(start, tp->tm_year + 1900)) != 0)
+	else if ((val = getpaskha(start, tp->tm_year + TM_YEAR_BASE)) != 0)
 	    *flags |= F_EASTER;
 
 	/* undefined rest */

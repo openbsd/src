@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: cron.c,v 1.4 1997/12/22 08:10:41 deraadt Exp $";
+static char rcsid[] = "$Id: cron.c,v 1.5 1998/03/30 06:59:42 deraadt Exp $";
 #endif
 
 
@@ -326,11 +326,10 @@ cron_sleep(target)
 	time_min target;
 {
 	register int	seconds_to_wait;
-	register struct tm *tm;
 
 	seconds_to_wait = (int)(target*SECONDS_PER_MINUTE - time((time_t*)0)) + 1;
 	Debug(DSCH, ("[%d] TargetTime=%ld, sec-to-wait=%d\n",
-	    getpid(), target*SECONDS_PER_MINUTE, seconds_to_wait))
+	    getpid(), (long)target*SECONDS_PER_MINUTE, seconds_to_wait))
 
 	if (seconds_to_wait > 0 && seconds_to_wait< 65)
 		sleep((unsigned int) seconds_to_wait);

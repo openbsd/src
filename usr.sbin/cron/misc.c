@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: misc.c,v 1.3 1996/12/17 02:17:09 millert Exp $";
+static char rcsid[] = "$Id: misc.c,v 1.4 1998/03/30 06:59:45 deraadt Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the rest of the log]
@@ -631,26 +631,36 @@ mkprints(src, len)
 
 
 #ifdef MAIL_DATE
-/* Sat, 27 Feb 93 11:44:51 CST
- * 123456789012345678901234567
+/* Sat, 27 Feb 1993 11:44:51 -0800 (CST)
+ * 1234567890123456789012345678901234567
  */
 char *
 arpadate(clock)
 	time_t *clock;
 {
-	time_t t = clock ?*clock :time(0L);
+	static char ret[64];	/* zone name might be >3 chars */
+	time_t t = clock ? *clock : time(NULL);
 	struct tm *tm = localtime(&t);
-	static char ret[30];	/* zone name might be >3 chars */
-	
-	(void) sprintf(ret, "%s, %2d %s %2d %02d:%02d:%02d %s",
-		       DowNames[tm->tm_wday],
-		       tm->tm_mday,
-		       MonthNames[tm->tm_mon],
-		       tm->tm_year,
-		       tm->tm_hour,
-		       tm->tm_min,
-		       tm->tm_sec,
-		       TZONE(*tm));
+	char *qmark;
+	size_t len;
+	int hours = tm->tm_gmtoff / 3600;
+	int minutes = (tm->tm_gmtoff - (hours * 3600)) / 60;
+
+	if (minutes < 0)
+		minutes = -minutes;
+
+	/* Defensive coding (almost) never hurts... */
+	len = strftime(ret, sizeof(ret), "%a, %e %b %Y %T ????? (%Z)", tm);
+	if (len == 0) {
+		ret[0] = '?';
+		ret[1] = '\0';
+		return ret;
+	}
+	qmark = strchr(ret, '?');
+	if (qmark && len - (qmark - ret) >= 6) {
+		snprintf(qmark, 6, "% .2d%.2d", hours, minutes);
+		qmark[5] = ' ';
+	}
 	return ret;
 }
 #endif /*MAIL_DATE*/

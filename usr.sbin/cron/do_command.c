@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: do_command.c,v 1.3 1997/12/22 08:10:42 deraadt Exp $";
+static char rcsid[] = "$Id: do_command.c,v 1.4 1998/03/30 06:59:43 deraadt Exp $";
 #endif
 
 
@@ -74,9 +74,15 @@ child_process(e, u)
 	user	*u;
 {
 	int		stdin_pipe[2], stdout_pipe[2];
-	register char	*input_data;
+	char		*input_data;
 	char		*usernm, *mailto;
 	int		children = 0;
+
+#ifdef __GNUC__
+	(void) &input_data;	/* Avoid vfork clobbering */
+	(void) &mailto;
+	(void) &children;
+#endif
 
 	Debug(DPROC, ("[%d] child_process('%s')\n", getpid(), e->cmd))
 
@@ -127,7 +133,7 @@ child_process(e, u)
 		register int escaped = FALSE;
 		register int ch;
 
-		for (input_data = e->cmd;  ch = *input_data;  input_data++) {
+		for (input_data = e->cmd; (ch = *input_data); input_data++) {
 			if (escaped) {
 				escaped = FALSE;
 				continue;
@@ -282,7 +288,7 @@ child_process(e, u)
 		 *	%  -> \n
 		 *	\x -> \x	for all x != %
 		 */
-		while (ch = *input_data++) {
+		while ((ch = *input_data++) != '\0') {
 			if (escaped) {
 				if (ch != '%')
 					putc('\\', out);
@@ -331,10 +337,13 @@ child_process(e, u)
 		register int	ch = getc(in);
 
 		if (ch != EOF) {
-			register FILE	*mail;
+			FILE		*mail;
 			register int	bytes = 1;
 			int		status = 0;
 
+#ifdef __GNUC__
+			(void) &mail;
+#endif
 			Debug(DPROC|DEXT,
 				("[%d] got data (%x:%c) from grandchild\n",
 					getpid(), ch, ch))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.12 1997/06/17 20:49:55 kstailey Exp $	*/
+/*	$OpenBSD: edit.c,v 1.13 1998/03/30 06:59:31 deraadt Exp $	*/
 /*	$NetBSD: edit.c,v 1.6 1996/05/15 21:50:45 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: edit.c,v 1.12 1997/06/17 20:49:55 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: edit.c,v 1.13 1998/03/30 06:59:31 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,8 @@ display(tempname, fd, pw)
 	struct passwd *pw;
 {
 	FILE *fp;
-	char *bp, *p, *ttoa();
+	char *bp, *p;
+	char chngstr[256];
 
 	if (!(fp = fdopen(fd, "w")))
 		pw_error(tempname, 1, 1);
@@ -107,9 +108,9 @@ display(tempname, fd, pw)
 		(void)fprintf(fp, "Uid [#]: %d\n", pw->pw_uid);
 		(void)fprintf(fp, "Gid [# or name]: %d\n", pw->pw_gid);
 		(void)fprintf(fp, "Change [month day year]: %s\n",
-		    ttoa(pw->pw_change));
+		    ttoa(chngstr, sizeof(chngstr), pw->pw_change));
 		(void)fprintf(fp, "Expire [month day year]: %s\n",
-		    ttoa(pw->pw_expire));
+		    ttoa(chngstr, sizeof(chngstr), pw->pw_expire));
 		(void)fprintf(fp, "Class: %s\n", pw->pw_class);
 		(void)fprintf(fp, "Home directory: %s\n", pw->pw_dir);
 		(void)fprintf(fp, "Shell: %s\n",

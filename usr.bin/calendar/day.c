@@ -1,4 +1,4 @@
-/*	$OpenBSD: day.c,v 1.3 1998/02/23 05:48:42 millert Exp $	*/
+/*	$OpenBSD: day.c,v 1.4 1998/03/30 06:59:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: day.c,v 1.3 1998/02/23 05:48:42 millert Exp $";
+static char rcsid[] = "$OpenBSD: day.c,v 1.4 1998/03/30 06:59:26 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -147,7 +147,7 @@ settime(now)
     	time_t now;
 {
 	tp = localtime(&now);
-	if (isleap(tp->tm_year + 1900)) {
+	if (isleap(tp->tm_year + TM_YEAR_BASE)) {
 		yrdays = DAYSPERLYEAR;
 		cumdays = daytab[1];
 	} else {
@@ -172,7 +172,6 @@ time_t Mktime (date)
     char *date;
 {
     time_t t;
-    char save;
     int len;
     struct tm tm;
 
@@ -204,9 +203,13 @@ time_t Mktime (date)
 	*(date + len - 4) = '\0';
 	tm.tm_year = atoi(date);
 
-	/* tm_year up 1900 ... */
-	if (tm.tm_year > 1900)
-	    tm.tm_year -= 1900;
+	/* tm_year up TM_YEAR_BASE ... */
+	if (tm.tm_year < 70)
+		tm.tm_year += 2000 - TM_YEAR_BASE;
+	else if (tm.tm_year < 100)
+		tm.tm_year += 1900 - TM_YEAR_BASE;
+	else if (tm.tm_year > TM_YEAR_BASE)
+		tm.tm_year -= TM_YEAR_BASE;
     }
 
 #if DEBUG

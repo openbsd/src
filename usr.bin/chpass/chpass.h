@@ -1,4 +1,4 @@
-/*	$OpenBSD: chpass.h,v 1.3 1996/06/26 05:31:55 deraadt Exp $	*/
+/*	$OpenBSD: chpass.h,v 1.4 1998/03/30 06:59:29 deraadt Exp $	*/
 /*	$NetBSD: chpass.h,v 1.4 1996/05/15 21:50:44 jtc Exp $	*/
 
 /*
@@ -69,5 +69,5 @@ int	 p_login __P((char *, struct passwd *, ENTRY *));
 int	 p_passwd __P((char *, struct passwd *, ENTRY *));
 int	 p_shell __P((char *, struct passwd *, ENTRY *));
 int	 p_uid __P((char *, struct passwd *, ENTRY *));
-char    *ttoa __P((time_t));
+char    *ttoa __P((char *, size_t, time_t));
 int	 verify __P((char *, struct passwd *));

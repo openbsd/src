@@ -1,4 +1,4 @@
-/*	$OpenBSD: targ.c,v 1.7 1997/04/28 01:52:42 millert Exp $	*/
+/*	$OpenBSD: targ.c,v 1.8 1998/03/30 06:59:38 deraadt Exp $	*/
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-static char *rcsid = "$OpenBSD: targ.c,v 1.7 1997/04/28 01:52:42 millert Exp $";
+static char *rcsid = "$OpenBSD: targ.c,v 1.8 1998/03/30 06:59:38 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -467,17 +467,11 @@ Targ_FmtTime (time)
     time_t    time;
 {
     struct tm	  	*parts;
-    static char	  	buf[40];
-    static char	  	*months[] = {
-	"Jan", "Feb", "Mar", "Apr", "May", "Jun",
-	"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-    };
+    static char			buf[128];
 
     parts = localtime(&time);
-
-    sprintf (buf, "%d:%02d:%02d %s %d, %d",
-	     parts->tm_hour, parts->tm_min, parts->tm_sec,
-	     months[parts->tm_mon], parts->tm_mday, 1900 + parts->tm_year);
+    strftime(buf, sizeof buf, "%k:%M:%S %b %d, %Y", parts);
+    buf[sizeof(buf) - 1] = '\0';
     return(buf);
 }
 

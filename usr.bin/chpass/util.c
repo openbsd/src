@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.3 1997/06/17 20:49:56 kstailey Exp $	*/
+/*	$OpenBSD: util.c,v 1.4 1998/03/30 06:59:34 deraadt Exp $	*/
 /*	$NetBSD: util.c,v 1.4 1995/03/26 04:55:35 glass Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: util.c,v 1.3 1997/06/17 20:49:56 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.4 1998/03/30 06:59:34 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,28 +56,21 @@ static char rcsid[] = "$OpenBSD: util.c,v 1.3 1997/06/17 20:49:56 kstailey Exp $
 #include "chpass.h"
 #include "pathnames.h"
 
-static int dmsize[] =
-	{ -1, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
-static char *months[] =
-	{ "January", "February", "March", "April", "May", "June",
-	  "July", "August", "September", "October", "November",
-	  "December", NULL };
-
 char *
-ttoa(tval)
+ttoa(buf, len, tval)
+	char *buf;
+	size_t len;
 	time_t tval;
 {
-	struct tm *tp;
-	static char tbuf[50];
-
 	if (tval) {
-		tp = localtime(&tval);
-		(void)sprintf(tbuf, "%s %d, %d", months[tp->tm_mon],
-		    tp->tm_mday, tp->tm_year + TM_YEAR_BASE);
+		struct tm *tp = localtime(&tval);
+
+		(void) strftime(buf, len, "%B %d, %Y", tp);
+		buf[len - 1] = '\0';
 	}
-	else
-		*tbuf = '\0';
-	return (tbuf);
+	else if (len > 0)
+		*buf = '\0';
+	return (buf);
 } 
 
 int
@@ -86,9 +79,9 @@ atot(p, store)
 	time_t *store;
 {
 	static struct tm *lt;
-	char *t, **mp;
+	struct tm tm;
+	char *t;
 	time_t tval;
-	int day, month, year;
 
 	if (!*p) {
 		*store = 0;
@@ -99,38 +92,15 @@ atot(p, store)
 		(void)time(&tval);
 		lt = localtime(&tval);
 	}
-	if (!(t = strtok(p, " \t")))
-		goto bad;
-	for (mp = months;; ++mp) {
-		if (!*mp)
-			goto bad;
-		if (!strncasecmp(*mp, t, 3)) {
-			month = mp - months + 1;
-			break;
-		}
-	}
-	if (!(t = strtok(NULL, " \t,")) || !isdigit(*t))
-		goto bad;
-	day = atoi(t);
-	if (!(t = strtok(NULL, " \t,")) || !isdigit(*t))
-		goto bad;
-	year = atoi(t);
-	if (day < 1 || day > 31 || month < 1 || month > 12 || !year)
-		goto bad;
-	if (year < 100)
-		year += TM_YEAR_BASE;
-	if (year <= EPOCH_YEAR)
-bad:		return (1);
-	tval = isleap(year) && month > 2;
-	for (--year; year >= EPOCH_YEAR; --year)
-		tval += isleap(year) ?
-		    DAYSPERLYEAR : DAYSPERNYEAR;
-	while (--month)
-		tval += dmsize[month];
-	tval += day;
-	tval = tval * HOURSPERDAY * MINSPERHOUR * SECSPERMIN;
-	tval -= lt->tm_gmtoff;
-	*store = tval;
+	(void) memset(&tm, 0, sizeof(tm));
+	for (t = p; (t = strchr(t, ',')) != NULL; t++)
+		*t = ' ';
+	t = strptime(p, "%B %d %Y", &tm);
+	if (t == NULL || (*t != '\0' && *t != '\n'))
+		return 1;
+	*store = mktime(&tm);
+	if (*store == (time_t) -1)
+		return 1;
 	return (0);
 }
 
@@ -141,7 +111,7 @@ ok_shell(name)
 	char *p, *sh;
 
 	setusershell();
-	while (sh = getusershell()) {
+	while ((sh = getusershell()) != NULL) {
 		if (!strcmp(name, sh))
 			return (name);
 		/* allow just shell name, but use "real" path */

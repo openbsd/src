@@ -1,4 +1,4 @@
-/*     $OpenBSD: ipmon.c,v 1.11 1998/01/26 04:16:47 dgregor Exp $      */
+/*     $OpenBSD: ipmon.c,v 1.12 1998/03/30 06:59:49 deraadt Exp $      */
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
  *
@@ -8,7 +8,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipmon.c	1.21 6/5/96 (C)1993-1997 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ipmon.c,v 1.11 1998/01/26 04:16:47 dgregor Exp $";
+static const char rcsid[] = "@(#)$Id: ipmon.c,v 1.12 1998/03/30 06:59:49 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -239,13 +239,12 @@ int	blen;
 	res = (opts & OPT_RESOLVE) ? 1 : 0;
 	tm = localtime((time_t *)&ipl->ipl_sec);
 	if (!(opts & OPT_SYSLOG)) {
-		(void) sprintf(t, "%2d/%02d/%4d ",
-			tm->tm_mday, tm->tm_mon + 1, tm->tm_year + 1900);
+		(void) strftime(t, sizeof(line) - (t - line), "%d/%m/%Y ", tm);
 		t += strlen(t);
 	}
-	(void) sprintf(t, "%02d:%02d:%02d.%-.6ld @%hd ",
-		tm->tm_hour, tm->tm_min, tm->tm_sec, ipl->ipl_usec,
-		nl->nl_rule+1);
+	(void) strftime(t, sizeof(line) - (t - line), "%T", tm);
+	t += strlen(t);
+	(void) sprintf(t, ".%-.6ld @%hd ", ipl->ipl_usec, nl->nl_rule + 1);
 	t += strlen(t);
 
 	if (nl->nl_type == NL_NEWMAP)
@@ -302,12 +301,12 @@ int	blen;
 	res = (opts & OPT_RESOLVE) ? 1 : 0;
 	tm = localtime((time_t *)&ipl->ipl_sec);
 	if (!(opts & OPT_SYSLOG)) {
-		(void) sprintf(t, "%2d/%02d/%4d ",
-			tm->tm_mday, tm->tm_mon + 1, tm->tm_year + 1900);
+		(void) strftime(t, sizeof(line) - (t - line), "%d/%m/%Y ", tm);
 		t += strlen(t);
 	}
-	(void) sprintf(t, "%02d:%02d:%02d.%-.6ld ",
-		tm->tm_hour, tm->tm_min, tm->tm_sec, ipl->ipl_usec);
+	(void) strftime(t, sizeof(line) - (t - line), "%T", tm);
+	t += strlen(t);
+	(void) sprintf(t, ".%-.6ld ", ipl->ipl_usec);
 	t += strlen(t);
 
 	if (sl->isl_type == ISL_NEW)
@@ -423,12 +422,12 @@ int	blen;
 #endif
 
 	if (!(opts & OPT_SYSLOG)) {
-		(void) sprintf(t, "%2d/%02d/%4d ",
-			tm->tm_mday, tm->tm_mon + 1, tm->tm_year + 1900);
+		(void) strftime(t, sizeof(line) - (t - line), "%d/%m/%Y", tm);
 		t += strlen(t);
 	}
-	(void) sprintf(t, "%02d:%02d:%02d.%-.6ld ", tm->tm_hour, tm->tm_min,
-		tm->tm_sec, ipl->ipl_usec);
+	(void) strftime(t, sizeof(line) - (t - line), "%T", tm);
+	t += strlen(t);
+	(void) sprintf(t, ".%-.6ld ", ipl->ipl_usec);
 	t += strlen(t);
 	if (ipl->ipl_count > 1) {
 		(void) sprintf(t, "%dx ", ipl->ipl_count);

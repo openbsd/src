@@ -24,12 +24,12 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: popen.c,v 1.1.1.1 1995/10/18 08:47:31 deraadt Exp $";
+static char rcsid[] = "$Id: popen.c,v 1.2 1998/03/30 06:59:47 deraadt Exp $";
 static char sccsid[] = "@(#)popen.c	5.7 (Berkeley) 2/14/89";
 #endif /* not lint */
 
 #include "cron.h"
-#include <sys/signal.h>
+#include <signal.h>
 
 
 #define MAX_ARGS 100
@@ -59,7 +59,11 @@ cron_popen(program, type)
 	extern char **glob(), **copyblk();
 #endif
 
-	if (*type != 'r' && *type != 'w' || type[1])
+#ifdef __GNUC__
+	(void) &iop;	/* Avoid vfork clobbering */
+#endif
+
+	if ((*type != 'r' && *type != 'w') || type[1])
 		return(NULL);
 
 	if (!pids) {
