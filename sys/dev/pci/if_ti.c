@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.10 2000/02/15 02:28:15 jason Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.11 2000/02/15 03:54:29 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2292,8 +2292,8 @@ int ti_ioctl(ifp, command, data)
 	caddr_t			data;
 {
 	struct ti_softc		*sc = ifp->if_softc;
-	struct ifreq		*ifr = (struct ifreq *) data;
-	struct ifaddr		*ifa = (struct ifaddr *) data;
+	struct ifreq		*ifr = (struct ifreq *)data;
+	struct ifaddr		*ifa = (struct ifaddr *)data;
 	int			s, error = 0;
 	struct ti_cmd_desc	cmd;
 
@@ -2351,15 +2351,7 @@ int ti_ioctl(ifp, command, data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		error = (command == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->arpcom) :
-		    ether_delmulti(ifr, &sc->arpcom);
-
-		if (error == ENETRESET) {
-			/*
-			 * Multicast list has changed; set the hardware
-			 * filter accordingly.
-			 */
+		if (ifp->if_flags & IFF_RUNNING) {
 			ti_setmulti(sc);
 			error = 0;
 		}
