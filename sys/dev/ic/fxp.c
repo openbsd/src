@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.12 2001/03/22 01:38:05 angelos Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.13 2001/04/06 04:42:05 csapuntz Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -97,8 +97,6 @@
 #undef vtophys
 #define	vtophys(va)	alpha_XXX_dmamap((vm_offset_t)(va))
 #endif /* __alpha__ */
-
-#define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
 
 /*
  * NOTE!  On the Alpha, we have an alignment constraint.  The

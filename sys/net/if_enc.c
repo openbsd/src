@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.32 2000/12/30 22:56:23 angelos Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.33 2001/04/06 04:42:07 csapuntz Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -89,10 +89,6 @@ extern struct ifqueue nsintrq;
 #define DPRINTF(x)    do { if (encdebug) printf x ; } while (0)
 #else
 #define DPRINTF(x)
-#endif
-
-#ifndef offsetof
-#define offsetof(s, e) ((int)&((s *)0)->e)
 #endif
 
 struct enc_softc encif[NENC];

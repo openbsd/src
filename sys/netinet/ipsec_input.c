@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.35 2001/03/30 19:22:54 angelos Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.36 2001/04/06 04:42:08 csapuntz Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -83,10 +83,6 @@ int ipsec_common_input(struct mbuf *, int, int, int, int);
 #define DPRINTF(x)	if (encdebug) printf x
 #else
 #define DPRINTF(x)
-#endif
-
-#ifndef offsetof
-#define offsetof(s, e) ((int)&((s *)0)->e)
 #endif
 
 /* sysctl variables */

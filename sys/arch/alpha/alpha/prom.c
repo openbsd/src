@@ -1,4 +1,4 @@
-/* $OpenBSD: prom.c,v 1.9 2001/01/20 20:27:40 art Exp $ */
+/* $OpenBSD: prom.c,v 1.10 2001/04/06 04:42:05 csapuntz Exp $ */
 /* $NetBSD: prom.c,v 1.39 2000/03/06 21:36:05 thorpej Exp $ */
 
 /* 
@@ -295,9 +295,6 @@ hwrpb_checksum()
 	u_int64_t *p, sum;
 	int i;
 
-#ifndef offsetof
-#define offsetof(type, member)  ((size_t)(&((type *)0)->member)) /* XXX */
-#endif
 	for (i = 0, p = (u_int64_t *)hwrpb, sum = 0;
 	    i < (offsetof(struct rpb, rpb_checksum) / sizeof (u_int64_t));
 	    i++, p++)

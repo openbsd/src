@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.4 2001/03/04 16:48:25 itojun Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.5 2001/04/06 04:42:09 csapuntz Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -473,8 +473,6 @@ rip6_output(m, va_alist)
 	    in6p->in6p_cksum != -1) {
 		int off;
 		u_int16_t sum;
-
-#define	offsetof(type, member)	((size_t)(&((type *)0)->member)) /* XXX */
 
 		/* compute checksum */
 		if (so->so_proto->pr_protocol == IPPROTO_ICMPV6)

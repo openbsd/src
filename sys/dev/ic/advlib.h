@@ -1,4 +1,4 @@
-/*	$OpenBSD: advlib.h,v 1.4 1998/11/17 06:08:15 downsj Exp $	*/
+/*	$OpenBSD: advlib.h,v 1.5 2001/04/06 04:42:06 csapuntz Exp $	*/
 /*      $NetBSD: advlib.h,v 1.5 1998/10/28 20:39:46 dante Exp $        */
 
 /*
@@ -1336,7 +1336,5 @@ int AscResetDevice __P((ASC_SOFTC *, u_char));
 
 
 /******************************************************************************/
-
-#define offsetof(type, member) ((size_t)(&((type *)0)->member))
 
 #endif	/* _ADVANSYS_NARROW_LIBRARY_H_ */

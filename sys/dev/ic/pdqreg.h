@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdqreg.h,v 1.7 1996/10/31 01:01:38 niklas Exp $	*/
+/*	$OpenBSD: pdqreg.h,v 1.8 2001/04/06 04:42:06 csapuntz Exp $	*/
 /*	$NetBSD: pdqreg.h,v 1.6 1996/08/28 16:01:29 cgd Exp $	*/
 
 /*-
@@ -45,10 +45,6 @@
 #define	PDQ_ASSERT(x)	do { } while(0)
 #endif
 #else /* __NetBSD__ || __OpenBSD__*/
-/*
- * Including user-land headers in kernel code is not allowed in Net- or OpenBSD
- */
-#define	offsetof(type, member)	((size_t)(&((type *)0)->member))
 
 /*
  * Can't directly use "assert", because apparently cpp won't expand it

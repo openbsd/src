@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.54 2001/03/28 20:03:03 angelos Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.55 2001/04/06 04:42:08 csapuntz Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -85,10 +85,6 @@
 #define DPRINTF(x)	if (encdebug) printf x
 #else
 #define DPRINTF(x)
-#endif
-
-#ifndef offsetof
-#define offsetof(s, e) ((int)&((s *)0)->e)
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.32 2001/01/31 23:34:15 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.33 2001/04/06 04:42:05 csapuntz Exp $	*/
 /*	$NetBSD: param.h,v 1.23 1996/03/17 01:02:29 thorpej Exp $	*/
 
 /*-
@@ -193,6 +193,11 @@
 /* Macros for min/max. */
 #define	MIN(a,b) (((a)<(b))?(a):(b))
 #define	MAX(a,b) (((a)>(b))?(a):(b))
+
+/* Macros for calculating the offset of a field */
+#ifndef offsetof
+#define offsetof(s, e) ((unsigned int)&((s *)0)->e)
+#endif
 
 /*
  * Constants for setting the parameters of the kernel memory allocator.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.3 2000/12/13 16:03:11 mickey Exp $	*/
+/*	$OpenBSD: aac.c,v 1.4 2001/04/06 04:42:06 csapuntz Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -61,9 +61,6 @@
 #include <dev/ic/aacreg.h>
 #include <dev/ic/aacvar.h>
 #include <dev/ic/aac_tables.h>
-
-/* XXX from stddef.h */
-#define	offsetof(type, member)	((size_t)(&((type *)0)->member))
 
 /* Geometry constants. */
 #define AAC_MAXCYLS		1024

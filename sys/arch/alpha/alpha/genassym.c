@@ -1,4 +1,4 @@
-/* $OpenBSD: genassym.c,v 1.9 2001/01/15 11:58:54 art Exp $ */
+/* $OpenBSD: genassym.c,v 1.10 2001/04/06 04:42:05 csapuntz Exp $ */
 /* $NetBSD: genassym.c,v 1.27 2000/05/26 00:36:42 thorpej Exp $ */
 
 /*
@@ -86,8 +86,6 @@
 /* Note: Avoid /usr/include for cross compilation! */
 extern void printf __P((const char *fmt, ...));
 extern void exit __P((int));
-
-#define	offsetof(type, member) ((size_t)(&((type *)0)->member))
 
 #ifdef	__STDC__
 #define def(name, value) 	{ #name, value }

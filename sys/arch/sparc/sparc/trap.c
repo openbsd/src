@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.26 2000/11/10 18:15:42 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.27 2001/04/06 04:42:06 csapuntz Exp $	*/
 /*	$NetBSD: trap.c,v 1.58 1997/09/12 08:55:01 pk Exp $ */
 
 /*
@@ -87,8 +87,6 @@
 #include <sparc/fpu/fpu_extern.h>
 #include <sparc/sparc/memreg.h>
 #include <sparc/sparc/cpuvar.h>
-
-#define	offsetof(s, f) ((int)&((s *)0)->f)
 
 extern int cold;
 

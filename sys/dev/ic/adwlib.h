@@ -1,4 +1,4 @@
-/*	$OpenBSD: adwlib.h,v 1.7 2001/02/22 17:17:32 krw Exp $ */
+/*	$OpenBSD: adwlib.h,v 1.8 2001/04/06 04:42:06 csapuntz Exp $ */
 /*      $NetBSD: adwlib.h,v 1.14 2000/07/03 18:14:18 dante Exp $        */
 
 /*
@@ -1124,7 +1124,5 @@ void	AdwResetChip __P((bus_space_tag_t, bus_space_handle_t));
 int	AdwSendIdleCmd __P((ADW_SOFTC *, u_int16_t, u_int32_t));
 int	AdwResetSCSIBus __P((ADW_SOFTC *));
 int	AdwResetCCB __P((ADW_SOFTC *));
-
-#define offsetof(type, member) ((size_t)(&((type *)0)->member))
 
 #endif	/* _ADVANSYS_WIDE_LIBRARY_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.87 2001/03/28 20:03:04 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.88 2001/04/06 04:42:08 csapuntz Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -78,10 +78,6 @@
 #define DPRINTF(x)    do { if (encdebug) printf x ; } while (0)
 #else
 #define DPRINTF(x)
-#endif
-
-#ifndef offsetof
-#define offsetof(s, e) ((int)&((s *)0)->e)
 #endif
 
 extern u_int8_t get_sa_require  __P((struct inpcb *));

@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.14 2001/03/28 20:03:06 angelos Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.15 2001/04/06 04:42:08 csapuntz Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -59,10 +59,6 @@
 #define DPRINTF(x)	if (encdebug) printf x
 #else
 #define DPRINTF(x)
-#endif
-
-#ifndef offsetof
-#define offsetof(s, e) ((int)&((s *)0)->e)
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_gif.c,v 1.14 2001/02/16 08:48:04 itojun Exp $	*/
+/*	$OpenBSD: in_gif.c,v 1.15 2001/04/06 04:42:08 csapuntz Exp $	*/
 /*	$KAME: in_gif.c,v 1.50 2001/01/22 07:27:16 itojun Exp $	*/
 
 /*
@@ -71,10 +71,6 @@
 #include <machine/stdarg.h>
 
 #include <net/net_osdep.h>
-
-#ifndef offsetof
-#define offsetof(s, e) ((int)&((s *)0)->e)
-#endif
 
 int
 in_gif_output(ifp, family, m, rt)

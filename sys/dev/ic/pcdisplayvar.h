@@ -1,4 +1,4 @@
-/* $OpenBSD: pcdisplayvar.h,v 1.2 2001/02/02 20:25:39 aaron Exp $ */
+/* $OpenBSD: pcdisplayvar.h,v 1.3 2001/04/06 04:42:05 csapuntz Exp $ */
 /* $NetBSD: pcdisplayvar.h,v 1.8 2000/01/25 02:44:03 ad Exp $ */
 
 /*
@@ -36,8 +36,6 @@
 #if 0
 #include "opt_pcdisplay.h"
 #endif
-
-#define offsetof(type, member) ((size_t)(&((type *)0)->member))
 
 struct pcdisplayscreen {
 	struct pcdisplay_handle *hdl;
