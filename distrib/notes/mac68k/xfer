@@ -1,9 +1,8 @@
+dnl	$OpenBSD: xfer,v 1.14 2002/04/07 21:25:00 miod Exp $
 Installation is really only supported from the local Macintosh hard drive or
 from an AppleShare volume.  This means that you'll need at least enough room
 on the HFS partition or AppleShare volume for the largest file that you will
-have to install.  There has been talk of allowing an install from split
-files. If you have the time, desire, and knowledge, please feel free to add
-that functionality.
+have to install.
 
 You will also need to collect the MacOS tools:
 	Mkfs,

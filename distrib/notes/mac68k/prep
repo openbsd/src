@@ -1,3 +1,4 @@
+dnl	$OpenBSD: prep,v 1.10 2002/04/07 21:25:00 miod Exp $
 Find your favorite disk partitioning utility.  Some
 of the ones that have been tried and seem to work are:
 	APS Powertools 2.7.3
@@ -22,11 +23,11 @@ application found at <http://www.euronet.nl/users/ernstoud/hdpatch.html>.
 That done, use your favorite partitioning utility to make
 at least one A/UX "Root & Usr" partition and an A/UX "Swap"
 partition.  The "Root & Usr" partition should be _at least_
-80MB in size if you wish to install all the sets.  This partition
+250MB in size if you wish to install all the sets.  This partition
 will be the root partition of your OpenBSD system.
 
 Generally, you should allocate twice as much swap space as you have real
-memory (so, if you have 8MB of RAM, specify 16MB of swap space).
+memory (so, if you have 16MB of RAM, specify 32MB of swap space).
 Systems that will be heavily used or that are low on real
 memory should have more swap space allocated.  Systems that
 will be only lightly used can get away with less.

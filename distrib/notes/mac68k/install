@@ -1,9 +1,11 @@
+dnl	$OpenBSD: install,v 1.19 2002/04/07 21:25:00 miod Exp $
 OpenBSDInstallPrelude
 
-The installation can be broken down into three basic steps:
+The installation can be broken down into four basic steps:
 	* Running Mkfs to build a filesystem or filesystems.
 	* Running Install Utility to load the files onto your filesystems.
 	* Running the booter to boot the system.
+	* Final system configuration.
 
 
 Preparing the filesystems:
@@ -14,11 +16,10 @@ this is selected, it will present a list of the partitions on that disk.
 Select the partition on which you wish to build a filesystem and click
 on the "Format" button.  You will now be asked for a bunch of parameters
 for the hard drive and the filesystem.  Usually, you can just take the
-defaults.  If you are installing onto a Syquest, please see the FAQ.
-Note that although this dialog only has the "OK" button, you are not
-committed, yet.  Once you get the values you want, press the "OK" button.
-A dialog will be presented at this point with two options: "Format" and
-"Cancel."  If you choose "Cancel," nothing will be written to your drive.
+defaults.  Note that although this dialog only has the "OK" button, you are
+not committed, yet.  Once you get the values you want, press the "OK"
+button. A dialog will be presented at this point with two options: "Format"
+and "Cancel." If you choose "Cancel," nothing will be written to your drive.
 If you choose "Format," the program will proceed to make a filesystem.
 
 Mkfs is not a well-behaved MacOS application.  It will not allow
@@ -101,12 +102,46 @@ Booting the system:
 
 Double-click on the BSD/Mac68k Booter icon to start the application.  Check
 that the options in the Booting dialog look sane--especially the SCSI ID.
-If not, correct them to your preference.  When you are satisfied with
-your choices, try booting OpenBSD.
+If not, correct them to your preference.  You will have to change the kernel
+name to "/bsd".  When you are satisfied with your choices, try booting
+OpenBSD.
 
 If you wish to save your preferences, choose the "Save Preferences"
 option in the "File" menu, then quit the application and restart.  Due
 to a long-standing bug, the preferences will not be saved unless you
-quit.
+quit.  Note that by setting the BSD/Mac68k Booter to boot automatically
+after starting, and by placing an alias to the booter in the "Startup Items"
+folder, one can make the Mac68k autoload OpenBSD upon startup.
+
+Note that on a Mac68k, the generation of the DSA and RSA keys can take quite
+some time -- on a slower system, it may take an hour or more.
+Be patient.
+
+
+Final Configuration:
+
+Unlike other OpenBSD platforms, OpenBSD/MACHINE OSREV does not configure the
+network or set a root password as part of the installation process. The user
+will have to do this after the first OpenBSD boot.  Upon first boot, root
+will have no password, just hit RETURN when prompted. You will want to set
+the root password using the passwd(1) command.
+
+To set up basic networking, you will need to create or edit the following
+files, all of which are in the /etc directory:
+	myname		the computers name (without domain).
+	mygate		the IP address of the default gateway.
+	hostname.if	Configuration of the host adapter (actual name will
+			be something like hostname.sn0 or hostname.ae0, see
+			your dmesg for your adapter name).
+	resolv.conf	Name server configuration.
+	hosts		names and IP addresses of this machine and others on
+			the network.
+	dhclient.conf	dhcp client information.
+
+Once these files are configured, your system will be very much like any
+other OpenBSD system.  'mygate' and 'myname' are just single-line  text
+files, for info on the others, see hostname.if(5), resolv.conf(5), hosts(5)
+and dhclient.conf(5) in the OpenBSD man pages.
+
 
 OpenBSDCongratulations
