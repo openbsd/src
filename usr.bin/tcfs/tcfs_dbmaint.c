@@ -219,7 +219,6 @@ tcfs_getpwnam (char *user, tcfspwdb **dest)
 	memcpy (*dest, r.data, sizeof (tcfspwdb));
 
 	pdb->close (pdb);
-	free (r.data);
 
 	return (tcfspwdb *)*dest;
 }
@@ -255,7 +254,6 @@ tcfs_ggetpwnam (char *user, gid_t gid, tcfsgpwdb **dest)
 	memcpy (*dest, r.data, sizeof (tcfsgpwdb));
 
 	pdb->close (pdb);
-	free (key);
 
 	return (*dest);
 }
@@ -265,7 +263,7 @@ tcfs_putpwnam (char *user, tcfspwdb *src, int flags)
 {
 	DB *pdb;
 	static DBT srchkey, d;
-	int open_flag=0, owf=0;
+	int open_flag = 0, res;
 
 	open_flag = O_RDWR|O_EXCL;
 	if (access (TCFSPWDB, F_OK) < 0)
@@ -276,7 +274,7 @@ tcfs_putpwnam (char *user, tcfspwdb *src, int flags)
 		return 0;
 
 	srchkey.data = user;
-	srchkey.size=(int)strlen (user);
+	srchkey.size = (int)strlen (user);
 
 	if (flags != U_DEL) {
 		d.data = (char *)src;
@@ -287,8 +285,9 @@ tcfs_putpwnam (char *user, tcfspwdb *src, int flags)
 			pdb->close (pdb);
 			return 0;
 		}
-	} else if (pdb->del (pdb, &srchkey, 0)) {
-		fprintf(stderr, "db: del failed\n");
+	} else if ((res = pdb->del (pdb, &srchkey, 0))) {
+		fprintf(stderr, "db: del failed: %s\n", 
+			res == -1 ? "error" : "not found");
 		pdb->close (pdb);
 		return 0;
 	}
@@ -302,7 +301,7 @@ tcfs_gputpwnam (char *user, tcfsgpwdb *src, int flags)
 {
 	DB *pdb;
 	static DBT srchkey, d;
-	int open_flag = 0, owf = 0;
+	int open_flag = 0;
 	char *key, *buf;
 	char *tmp;
 
