@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.122 2003/12/23 23:47:07 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.123 2004/01/05 17:07:00 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -618,12 +618,6 @@ cpu_startup(void)
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
 	int i, base, residual;
-#ifdef DEBUG
-	extern int pmapdebug;
-	int opmapdebug = pmapdebug;
-
-	pmapdebug = 0;
-#endif
 
 	/*
 	 * i won't understand a friend of mine,
@@ -683,9 +677,6 @@ cpu_startup(void)
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    VM_PHYS_SIZE, 0, FALSE, NULL);
 
-#ifdef DEBUG
-	pmapdebug = opmapdebug;
-#endif
 	printf("avail mem = %ld\n", ptoa(uvmexp.free));
 	printf("using %d buffers containing %d bytes of memory\n",
 	    nbuf, bufpages * PAGE_SIZE);
@@ -1206,13 +1197,7 @@ setregs(p, pack, stack, retval)
 	struct trapframe *tf = p->p_md.md_regs;
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	register_t zero;
-#ifdef DEBUG
-	/*extern int pmapdebug;*/
-	/*pmapdebug = 13;
-	printf("setregs(%p, %p, 0x%x, %p), ep=0x%x, cr30=0x%x\n",
-	    p, pack, stack, retval, pack->ep_entry, tf->tf_cr30);
-	*/
-#endif
+
 	tf->tf_flags = TFF_SYS|TFF_LAST;
 	tf->tf_iioq_tail = 4 +
 	    (tf->tf_iioq_head = pack->ep_entry | HPPA_PC_PRIV_USER);
