@@ -6,17 +6,21 @@
 
 <h1 align="center">Host/Target specific installation notes for GCC</h1>
 
-<p>Please read this document carefully <i>before</i> installing the GNU Compiler Collection on your machine.</p>
+<p>Please read this document carefully <i>before</i> installing the
+GNU Compiler Collection on your machine.</p>
 
 <ul>
   <li><a href="#alpha*-dec-linux*">alpha*-dec-linux*</a></li>
   <li><a href="#alpha*-dec-osf*">alpha*-dec-osf*</a></li>
-  <li><a href="#dos">GCC with DOS</a></li>
+  <li><a href="#dos">DOS</a></li>
   <li><a href="#hppa*-hp-hpux*">hppa*-hp-hpux*</a></li>
   <li><a href="#hppa*-hp-hpux9">hppa*-hp-hpux9</a></li>
   <li><a href="#hppa*-hp-hpux10">hppa*-hp-hpux10</a></li>
+  <li><a href="#hppa*-hp-hpux11">hppa*-hp-hpux11</a></li>
+  <li><a href="#*-*-linux-gnu">*-*-linux-gnu</a></li>
   <li><a href="#ix86-*-linux*">i?86-*-linux*</a></li>
   <li><a href="#ix86-*-sco3.2v5*">i?86-*-sco3.2v5*</a></li>
+  <li><a href="#ix86-*-solaris*">i?86-*-solaris*</a></li>
   <li><a href="#ix86-*-udk">i?86-*-udk</a></li>
   <li><a href="#*-ibm-aix*">*-ibm-aix*</a></li>
   <li><a href="#m68k-*-nextstep*">m68k-*-nextstep*</a></li>
@@ -31,7 +35,8 @@
   <li><a href="#sparc-sun-sunos*">sparc-sun-sunos*</a></li>
   <li><a href="#sparc-unknown-linux-gnulibc1">sparc-unknown-linux-gnulibc1</a></li>
   <li><a href="#sparc64-*-*">sparc64-*-*</a></li>
-  <li><a href="#win+os2">GCC with Windows or OS/2</a></li>
+  <li><a href="#windows">Microsoft Windows</a></li>
+  <li><a href="#os2">OS/2</a></li>
 </ul>
 
 <ul>
@@ -45,42 +50,13 @@
 <hr>
 <h3><a name="alpha*-dec-linux*">alpha*-dec-linux*</a></h3>
 
-<p>GNU/Linux Alpha EV56 or PCA56 hosts running Red Hat 4.2 or 5.0 may
-see errors of this sort:</p>
-<pre>
-  Error: Unknown pseudo-op:  `.arch'
-</pre>
-<p>This is a signal that a new assembler is needed if you want to generate BWX insns for your machine.</p>
-
-<p>The version of GCC shipped with Red Hat 4.2 (2.7.0.2) has a fault wherein
-it will silently generate incorrect code.  The version shipped with
-Red Hat 5.0 (2.8.0.1) is not broken, but required an extra -m21164a
-argument on the command-line.  In order to visibly trap 2.7.0.2,
-I now issue DEC's .arch pseudo into the assembly.  Relieving the
-problem of mucking with command-line arguments for 2.8.0.1 is a
-pleasant side effect.</p>
-
-<p>If you've got Red Hat 5.0 installed, you may grab binutils 2.9.1
-and be happy.  If you've got Red Hat 4.2, bugs make it much harder
-to upgrade pieces on your own, and you are better off upgrading
-the entire system.</p>
-
-<p>In either case, your problem may be bypassed by not emitting BWX
-code by default.  Do this by using</p>
-<pre>
-  configure alphaev5-unknown-linux-gnulibc1
-</pre>
-<p>if you have RH 4.2, or</p>
-<pre>
-  configure alphaev5-unknown-linux-gnu
-</pre>
-<p>if you have RH 5.0.</p>
+<p>We strongly recommend to upgrade to binutils 2.10 (or newer).</p>
 
 <p>The following error:</p>
 <pre>
   Error: macro requires $at register while noat in effect
 </pre>
-<p>also indicates that you should upgrade to a newer version of
+<p>indicates that you should upgrade to a newer version of
 the assembler, 2.9 or later.  If you can not upgrade the assembler, the
 compiler option "-Wa,-m21164a" may work around this problem.</p>
 
@@ -99,7 +75,7 @@ to remove the shared libstdc++.</p>
 <p>An alternative solution is to arrange that all symbols from
 <code>libgcc</code> get copied to the shared <code>libstdc++</code>;
 see detailed solution below.  (Surprising as it may seem, this does
-indeed fix the problem!)  <b>Beware</b> that this may bring you
+indeed fix the problem!)  <em>Beware</em> that this may bring you
 binary-compatibility problems in the future, if you don't use the same
 work-around next time you build <code>libstdc++</code>: if programs
 start to depend on <code>libstdc++</code> to provide symbols that used
@@ -109,7 +85,7 @@ will have to be relinked.</p>
 
 <p>The magic spell is to add <code>-Wl,-all,-lgcc,-none</code> to the
 definition of macro <code>SHDEPS</code> in
-<code>libstdc++/config/dec-osf.ml</code> <b>before</b>
+<code>libstdc++/config/dec-osf.ml</code> <em>before</em>
 <code>alpha*-dec-osf*/libstdc++/Makefile</code> is created (a <a
 href="dec-osf-shlibstdc++.patch">patch</a> that does just that is
 available).  If the Makefile already exists, run
@@ -129,22 +105,26 @@ flag <code>-mieee</code>.</p>
 
 
 <hr>
-<h3><a name="dos">GCC with DOS</h3>
+<h3><a name="dos">DOS</a></h3>
 
-<p>A binary distribution is available at <a
-href="ftp://ftp.simtel.net/pub/simtelnet/gnu/djgpp/">Simtel.Net</A> and its
-mirrors.</p>
+<p>Please have a look at our <a href="binaries.html">binaries page</a>.</p>
 
 
 <hr>
 <h3><a name="hppa*-hp-hpux*">hppa*-hp-hpux*</a></h3>
 
-<p>We <b>highly</b> recommend using gas/binutils-2.8 or newer on all hppa
+<p>We <em>highly</em> recommend using gas/binutils-2.8 or newer on all hppa
 platforms; you may encounter a variety of problems when using the HP assembler.</p>
 
-<p>If you wish to use pa-risc 2.0 architecture support, you must use either the
-HP assembler or a recent
-<a href="ftp://sourceware.cygnus.com/pub/binutils/snapshots">snapshot of gas</a>.</p>
+<p>Specifically, <code>-g</code> does not work on HP-UX (since that system
+uses a peculiar debugging format which GCC does not know about), unless you
+use GAS and GDB and configure GCC with the <code>--with-gnu-as</code>
+option.</p>
+
+<p>If you wish to use pa-risc 2.0 architecture support, you must use either
+the HP assembler or a recent
+<a href="ftp://sources.redhat.com/pub/binutils/snapshots">snapshot of
+gas</a>.</p>
 
 <p>More specific information to hppa*-hp-hpux* targets follows.</p>
 
@@ -165,8 +145,8 @@ shell.  To avoid this problem set CONFIG_SHELL to /bin/ksh and SHELL to
 <hr>
 <h3><a name="hppa*-hp-hpux10">hppa*-hp-hpux10</a></h3>
 
-<p>For hpux10.20, we <b>highly</b> recommend you pick up the latest sed
-patch <code>PHCO_15468</code> from HP.  HP has two sites which provide patches free of charge:</p>
+<p>For hpux10.20, we <em>highly</em> recommend you pick up the latest sed
+patch <code>PHCO_19798</code> from HP.  HP has two sites which provide patches free of charge:</p>
 <ul>
   <li><a href="http://us-support.external.hp.com">US, Canada, Asia-Pacific, and
 Latin-America</a></li>
@@ -182,7 +162,24 @@ bootstrap</code>'.</p>
 
 
 <hr>
+<h3><a name="hppa*-hp-hpux11">hppa*-hp-hpux11</a></h3>
+
+<p>GCC 2.95.2 does not support HP-UX 11, and it cannot generate 64-bit
+object files. Current (as of late 2000) snapshots and GCC 3.0 do support
+HP-UX 11.</p>
+
+ 
+<hr>
+<h3><a name="*-*-linux-gnu">*-*-linux-gnu</a></h3>
+
+<p>If you use glibc 2.2 (or 2.1.9x), GCC 2.95.2 won't install
+out-of-the-box.  You'll get compile errors while building libstdc++.
+The patch <a href="glibc-2.2.patch">glibc-2.2.patch</a>, that is to be
+applied in the GCC source tree, fixes the compatibility problems.</p>
+
+<hr>
 <h3><a name="ix86-*-linux*">i?86-*-linux*</a></h3>
+
 <p>You will need binutils-2.9.1.0.15 or newer for exception handling to work.</p>
 
 <p>If you receive Signal 11 errors when building on GNU/Linux, then it is
@@ -210,15 +207,16 @@ building affected files with that flag or by using the GNU assembler.
 Users of GNU assembler should see the note below for hazards on doing so.</p>
 
 <p>If you choose to configure with <code>--enable-shared</code> you should also
-specificy <code>--with-gnu-as --disable-multilib</code> even if you are not
+specify <code>--with-gnu-as --disable-multilib</code> even if you are not
 using the GNU assembler.   In doing so you will give up the ability
 to generate COFF executables as described below.   This combination 
 of flags is necessary to suppress negative interactions with multilibing.</p>
 
 <p>The native SCO assembler that is provided with the OS at no charge
 is normally required.  If, however, you must be able to use the GNU
-assembler you may configure this package using the flags <code>--with-gnu-as</code>.  
-You must use a recent version of GNU binutils; version 2.9.1 seems to work well.
+assembler (perhaps you're compiling code with asms that require GAS syntax) 
+you may configure this package using the flags <code>--with-gnu-as</code>.  
+You must use a recent version of GNU binutils; versions past 2.9.1 seems to work well.
 If you select this option, you will be unable to reliably build COFF
 images.  In general, the <code>--with-gnu-as</code> option isn't as well tested as the native assembler.</p>
 
@@ -243,7 +241,7 @@ ftp://ftp.sco.com/Supplements/rs505a/</a> and <a href="ftp://ftp.sco.com/SLS/">
 OSS499A</a>.</p>
 
 <p>The dynamic linker in OpenServer 5.0.5 (earlier versions may show
-the same problem) aborts on certain g77-compiled programs.  It's particluarly
+the same problem) aborts on certain g77-compiled programs.  It's particularly
 likely to be triggered by building Fortran code with the <code>-fPIC</code>
 flag.
 Although it's conceivable that the error could be triggered by other
@@ -256,6 +254,16 @@ GCC.  Affected faults, when analyzed in a debugger, will show a stack
 backtrace with a fault occurring in <code>rtld()</code> and the program
 running as <code>/usr/lib/ld.so.1</code>.  This problem has been reported to SCO engineering
 and will hopefully be addressed in later releases.</p>
+
+
+<hr>
+<h3><a name="ix86-*-solaris*">i?86-*-solaris*</a></h3>
+
+<p>GCC 2.95.2, when configured to use the GNU assembler, would invoke
+it with the <code>-s</code> switch, that GNU as up to 2.9.5.0.12 does
+not support.  If you'd rather not use a newer GNU as nor the native
+assembler, you'll need the patch <a
+href="x86-sol2-gas.patch"><code>`x86-sol2-gas.patch'</code></a>.</p>
 
 
 <hr>
@@ -278,7 +286,7 @@ from the right place) while making the tools not think we're actually
 building a cross compiler.   The easiest way to do this is with a configure
 command like this:</p>
 <pre>
-  CC=/udk/usr/ccs/bin/cc <i>/your/path/to/</i>gcc/configure --host=i686-pc-udk --target=i686-pc-udk --exec-prefix=udk-
+  CC=/udk/usr/ccs/bin/cc <i>/your/path/to/</i>gcc/configure --host=i686-pc-udk --target=i686-pc-udk --program-prefix=udk-
 </pre>
 <p><i>You should substitute 'i686' in the above command with the appropriate
 processor for your host.</i></p>
@@ -330,14 +338,16 @@ using the original "small format".  A correct version of the routines is
 shipped with AIX 4.3.2.</p>
 
 <p>The initial assembler shipped with AIX 4.3.0 generates incorrect object
-files.  A fix for APAR IX74254 (64BIT DISASSEMBLED OUPUT FROM COMPILER FAILS
+files.  A fix for APAR IX74254 (64BIT DISASSEMBLED OUTPUT FROM COMPILER FAILS
 TO ASSEMBLE/BIND) is available from IBM Customer Support and from its
 <a href="http://service.boulder.ibm.com/">service.boulder.ibm.com</a>
 website as PTF U453956.  This fix is incorporated in AIX 4.3.1 and above.</p>
 
 <p>The AIX 4.3.2.1 linker (bos.rte.bind_cmds Level 4.3.2.1) will dump core
 with a segmentation fault when invoked by any version of GCC.  A fix for
-APAR IX87327 will be available from IBM Customer Support.</p>
+APAR IX87327 is available from IBM Customer Support and from its
+<a href="http://service.boulder.ibm.com/">service.boulder.ibm.com</a>
+website as PTF U461879.  This fix is incorporated in AIX 4.3.3 and above.</p>
 
 
 <hr>
@@ -365,7 +375,8 @@ replacement that does can be obtained at
 <p>If you try to build the integrated C++ & C++ runtime libraries on this system
 you will run into trouble with include files.  The way to get around this is
 to use the following sequence.  Note you must have write permission to
-the directory <i>prefix</i> you secified in the configuration preocess of GCC for this sequence to work.</p>
+the directory <i>prefix</i> you specified in the configuration process of GCC
+for this sequence to work.</p>
 <pre>
   cd bld-gcc
   make all-texinfo all-bison all-byacc all-binutils all-gas all-ld
@@ -415,21 +426,43 @@ IRIX 5.2.  We recommend you use GNU make instead of the vendor supplied
 make program; however, you may have success with "smake" on IRIX 5.2 if
 you do not have GNU make available.</p>
 
-<p>See <a href="http://reality.sgi.com/ariel/freeware/"> 
-http://reality.sgi.com/ariel/freeware</a> for more information about using GCC on IRIX platforms.</p>
+<p>See <a href="http://reality.sgi.com/ariel/freeware/">
+http://reality.sgi.com/ariel/freeware</a> for more information about
+using GCC on IRIX platforms.</p>
 
 
 <hr>
 <h3><a name="mips*-sgi-irix6">mips*-sgi-irix6</a></h3>
 
-<p>You must <i>not</i> use GAS on irix6 platforms; doing so will only cause problems.</p>
+<p>You must <i>not</i> use GAS on irix6 platforms; doing so will only
+cause problems.</p>
 
 <p>These systems don't have ranlib, which various components in GCC need; you
 should be able to avoid this problem by making a dummy script called ranlib
 which just exits with zero status and placing it in your path.</p>
 
+<p>If you are using Irix cc as your bootstrap compiler, you must
+ensure that the N32 ABI is in use.  To test this, compile a simple C
+file with <CODE>cc</CODE> and then run <CODE>file</CODE> on the
+resulting object file.  The output should look like:</p>
+
+<blockquote><code>
+test.o:         ELF N32 MSB ...
+</code></blockquote>
+
+If you see:
+<blockquote><code>
+test.o:         ELF 32-bit MSB
+</code></blockquote>
+
+<p>then your version of <CODE>cc</CODE> uses the O32 ABI default.  You
+should set the environment variable <CODE>CC</CODE> to 'cc -n32'
+before configuring GCC.</p>
+
 <p>GCC does not currently support generating O32 ABI binaries in the
-mips-sgi-irix6 configurations.  It used to be possible to create a GCC with O32 ABI only support by configuring it for the mips-sgi-irix5 target.  See the link below for details.</p>
+mips-sgi-irix6 configurations.  It used to be possible to create a GCC
+with O32 ABI only support by configuring it for the mips-sgi-irix5
+target.  See the link below for details.</p>
 
 <p>GCC does not correctly pass/return structures which are
 smaller than 16 bytes and which are not 8 bytes. The problem is very
@@ -441,13 +474,14 @@ of the register when it should be loaded into the upper 4 bytes of the
 register. </p>
 
 <p>GCC is consistent with itself, but not consistent with the SGI C compiler
-[and the SGI supplied runtime libraries], so the only failures that can
+(and the SGI supplied runtime libraries), so the only failures that can
 happen are when there are library functions that take/return such
 structures. There are very few such library functions. I can only recall
 seeing two of them: inet_ntoa, and semctl. </p>
 
-<p>See <a href="http://reality.sgi.com/ariel/freeware/"> 
-http://reality.sgi.com/ariel/freeware</a> for more information about using GCC on IRIX platforms.</p>
+<p>See <a href="http://reality.sgi.com/ariel/freeware/">
+http://reality.sgi.com/ariel/freeware</a> for more information about
+using GCC on IRIX platforms.</p>
 
 
 <hr>
@@ -463,16 +497,16 @@ if you initially built it with gcc-2.7.2.x.</p>
 
 <p>Starting with Solaris, Sun does not ship a C compiler any more. To
 bootstrap and install GCC you first have to install a pre-built
-compiler, for example from <a href="http://www.sunfreeware.com/">
-http://www.sunfreeware.com</a>.</p>
+compiler, see our <a href="binaries.html">binaries page</a> for
+details.</p>
 
 <p>Sun as 4.X is broken in that it cannot cope with long symbol names.
-A typical error message might look similiar to the following:
+A typical error message might look similar to the following:
 <BLOCKQUOTE><CODE>
 /usr/ccs/bin/as: "/var/tmp/ccMsw135.s", line 11041: error: can't compute      
 value of an expression involving an external symbol.
 </CODE></BLOCKQUOTE>
-See the <a href="../faq.html#squangle">How to work around too long C++
+<p>See the <a href="../faq.html#squangle">How to work around too long C++
 symbol names?</a> FAQ entry for further information.</p>
 
 <p>Sun make in all known Solaris 1 (SunOS 4) and Solaris 2 releases has a
@@ -482,16 +516,22 @@ broken <i>VPATH</i> mechanism, which means you must either:
   <li>Always build in the source directory, <em>or:</em></li>
   <li><em>(For GCC 2.95.1 only)</em>
       apply the patches mentioned at
-      <a href="http://www.gnu.org/software/gcc/egcstensions.html#sun-make">
-      http://www.gnu.org/software/gcc/egcstensions.html#sun-make</a>.</li>
-</ul></p>
+      <a href="http://www.gnu.org/software/gcc/extensions.html#sun-make">
+      http://www.gnu.org/software/gcc/extensions.html#sun-make</a>.</li>
+</ul>
 
 
 <hr>
 <h3><a name="sparc-sun-solaris*">sparc-sun-solaris*</a></h3>
 
-<p>binutils 2.9.1 has known bugs on this platform. We recommend to use the
-vendor tools (Sun as, Sun ld) until these have been fixed.</p>
+<p>binutils 2.9.1 has known bugs on this platform. We recommend to use
+the vendor tools (Sun as, Sun ld) until these have been fixed.
+Unfortunately, C++ shared libraries, including libstdc++, won't work
+properly if assembled with Sun as: the linker will complain about
+relocations in read-only sections, in the definition of virtual
+tables.  Some possible work-arounds: use some development release of
+binutils, wait for the next stable binutils release or refrain from
+creating C++ shared libraries.</p>
 
 
 <hr>
@@ -527,14 +567,13 @@ recommend it only for people who use Sun's compilers.</p>
   partial fix is adequate for GCC.  Revision -08 or later should fix
   the bug, but (as of 1999-10-06) it is still being tested.</li>
 </ul> 
-</p>
 
 
 <hr>
 <h3><a name="sunv5">Sun V5.0 Compiler Bugs</a></h3>
-The Sun V5.0 compilers are known to mis-compile GCC, which in turn causes
-GCC to fail its bootstrap comparison test.  We expect to have a workaround
-ready in time for GCC 2.95.2.
+The Sun V5.0 compilers are known to mis-compile GCC 2.95 and GCC 2.95.1,
+which in turn causes GCC to fail its bootstrap comparison test.
+GCC 2.95.2 has a workaround.
 
 
 <hr>
@@ -560,21 +599,32 @@ for this platform, too.</p>
 <hr>
 <h3><a name="sparc64-*-*">sparc64-*-*</a></h3>
 
-<p>GCC version 2.95 is not able to compile code correctly for <code>sparc64</code> targets.  Users of the Linux kernel, at least, can use the <code>sparc32</code> program to start up a new shell invocation with an environment that causes <code>configure</code> to recognize (via <code>uname -a</code>) the system as <code>sparc-*-*</code> instead.</p>
+<p>GCC version 2.95 is not able to compile code correctly for
+<code>sparc64</code> targets.  Users of the Linux kernel, at least,
+can use the <code>sparc32</code> program to start up a new shell
+invocation with an environment that causes <code>configure</code> to
+recognize (via <code>uname -a</code>) the system as
+<code>sparc-*-*</code> instead.</p>
 
 
 <hr>
-<h3><a name="win+os2"></a>GCC with Windows or OS/2</h3>
+<h3><a name="windows"></a>Microsoft Windows (32 bit)</h3>
 
-<p>GCC does not currently support Windows, either natively or with the
-cygwin32 dll.  However Mumit Khan has been working on supporting Windows
-with GCC.  You should check out his site if you're interested in Windows
-support.
-<a href="http://www.xraylith.wisc.edu/~khan/software/gnu-win32/">GNU Win32 related projects</a></p>
+<p>GCC currently builds under the <a href="http://www.cygwin.com/">Cygwin
+environment</a>.  However you need to delete (or rename) the texinfo
+directory included with the GCC sources.  You will also need to configure
+with the option <code>--with-included-gettext</code>.</p>
+
+<hr>
+<h3><a name="os2"></a>OS/2</h3>
 
 <p>GCC does not currently support OS/2.  However, Andrew Zabolotny has been
-working on a generic os/2 port with pgcc.  The current code code can be found
+working on a generic OS/2 port with pgcc.  The current code code can be found
 at <a href="http://www.goof.com/pcg/os2/">http://www.goof.com/pcg/os2/</a>.</p>
+
+<p>An older copy of GCC 2.8.1 is included with the EMX tools available at 
+<a href="ftp://ftp.leo.org/pub/comp/os/os2/leo/devtools/emx+gcc/">
+ftp://ftp.leo.org/pub/comp/os/os2/leo/devtools/emx+gcc/</a>.</p>
 
 
 <hr>
@@ -587,7 +637,6 @@ will be discarded automatically.</p>
 
 <hr>
 <p><a href="./index.html">Return to the GCC Installation page</a></p>
-<p><i>Last modified on October 17, 1999.</i></p>
 
 </body>
 </html>

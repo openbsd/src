@@ -74,7 +74,7 @@ native compiler.  You can then use the native GCC compiler to build the
 cross compiler.
 
 <p>Assuming you have already installed a native copy of GCC and configured
-your corss compiler, issue the command "make", which performs the
+your cross compiler, issue the command "make", which performs the
 following steps:
 <ul>
   <li>Build host tools necessary to build the compiler such as texinfo, bison,
@@ -95,15 +95,15 @@ following steps:
 
 <h2>Building in parallel</h2>
 
-<p> If you have a multiprocessor you can use `<code>make bootstrap
-MAKE="make -j 2" -j 2</code>' instead of just `<code>make bootstrap</code>'
+<p> If you have a multiprocessor system you can use `<code>make bootstrap
+MAKE="make -j 2" -j 2</code>' or just `<code>make -j 2 bootstrap</code>'
+for GNU Make 3.79 and above instead of just `<code>make bootstrap</code>'
 when building GCC.  You can use a bigger number instead of two if
 you like.  In most cases, it won't help to use a number bigger than
 the number of processors in your machine.
 
-<p>
 <hr>
-<i>Last modified on August 27, 1999.</i>
+<p><a href="./index.html">Return to the GCC Installation page</a></p>
 
 </body>
 </html>

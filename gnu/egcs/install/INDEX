@@ -1,51 +1,45 @@
 
                                Installing GCC
-                                      
+
    The latest version of this document is always available at
-   [1]http://egcs.cygnus.com/install/.
-   
+   [1]http://gcc.gnu.org/install/.
+
    This document describes the generic installation procedure for GCC as
    well as detailing some target specific installation instructions.
-   
+
    GCC includes several components that previously were separate
    distributions with their own installation instructions. This document
-   supercedes all package specific installation instructions. We provide
+   supersedes all package specific installation instructions. We provide
    the component specific installation information in the source
    distribution for historical reference purposes only.
-   
-   We recommend you read the entire generic installation instructions as
-   well as any target specific installation instructions before you
-   proceed to configure, build, test and install GCC.
-   
-   If something goes wrong in the configure, build, test or install
-   procedures, first double check that you followed the generic and
-   target specific installation instructions carefully. Then check the
-   [2]FAQ to see if your problem is covered before you file a bug report.
-   
-   _Before_ starting the build/install procedure _please_ browse the
-   [3]host/target specific installation notes.
-   
-   The installation procedure is broken into five steps.
-     * [4]downloading the source
-     * [5]configure
-     * [6]build
-     * [7]test (optional)
-     * [8]install
+
+   _Before_ starting the build/install procedure please check the
+   [2]host/target specific installation notes. We recommend you browse
+   the entire generic installation instructions before you proceed.
+
+   The installation procedure itself is broken into five steps.
+    1. [3]Downloading the source
+    2. [4]Configuration
+    3. [5]Building
+    4. [6]Testing (optional)
+    5. [7]Final install
+
+   Please note that GCC does not support `make uninstall` and probably
+   won't do so in the near future as this would open a can of worms.
+   Instead, we suggest that you install GCC into a directory of its own
+   and simply remove that directory when you do not need that specific
+   version of GCC any longer.
      _________________________________________________________________
-   
-   [9]Return to the GCC home page
-     _________________________________________________________________
-   
-   _Last modified on July 15, 1999._
+
+   [8]Return to the GCC Installation page
 
 References
 
-   1. http://egcs.cygnus.com/install/
-   2. http://gcc.gnu.org/faq.html
-   3. http://gcc.gnu.org/install/specific.html
-   4. http://gcc.gnu.org/install/download.html
-   5. http://gcc.gnu.org/install/configure.html
-   6. http://gcc.gnu.org/install/build.html
-   7. http://gcc.gnu.org/install/test.html
-   8. http://gcc.gnu.org/install/finalinstall.html
-   9. http://gcc.gnu.org/index.html
+   1. http://gcc.gnu.org/install/
+   2. http://gcc.gnu.org/install/specific.html
+   3. http://gcc.gnu.org/install/download.html
+   4. http://gcc.gnu.org/install/configure.html
+   5. http://gcc.gnu.org/install/build.html
+   6. http://gcc.gnu.org/install/test.html
+   7. http://gcc.gnu.org/install/finalinstall.html
+   8. http://gcc.gnu.org/install/index.html

@@ -42,8 +42,12 @@ Otherwise the configuration scripts may fail.
   recommend you not provide a configure target when configuring a
   native compiler.
 
-  <li> <b>target</b> must be specified when configuring a cross compiler;
+  <li> <b>target</b> must be specified as <tt>--target=</tt><i>target</i>
+  when configuring a cross compiler;
   examples of valid targets would be i960-rtems, m68k-coff, sh-elf, etc.
+
+  <li>Specifying just <i>target</i> instead of <tt>--target=</tt><i>target</i>
+  implies that the host defaults to <i>target</i>.
 </ul>
 
 
@@ -97,11 +101,13 @@ GCC.  A partial list of supported <tt>options</tt>:
   etc.  This is the default. 
 
   <li> <tt>--enable-threads</tt> -- Specify that the target supports threads.
-  This affects only the Objective-C compiler and runtime library.
+  This affects the Objective-C compiler and runtime library, and exception
+  handling for other languages like C++ and Java.
 
   <li> <tt>--enable-threads=</tt><i>lib</i> -- Specify that <i>lib</i> is the
-  thread support library.  This affects only the Objective-C compiler  and
-  runtime library.
+  thread support library.  This affects the Objective-C compiler and
+  runtime library, and exception handling for other languages like C++ and
+  Java.
 
   <li> <tt>--with-cpu=</tt><i>cpu</i> -- Specify which cpu variant the
   compiler should generate code for by default.  This is currently
@@ -110,15 +116,18 @@ GCC.  A partial list of supported <tt>options</tt>:
   603e, or ultrasparc) you provide, please check the configure script
   for a complete list of supported models.
 
-  <li> <tt>--enable-target-optspace</tt> -- Specify that target libraries should  be optimzied for code space instead of code speed.  This is the default for
-  the m32r platform.
+  <li> <tt>--enable-target-optspace</tt> -- Specify that target libraries
+  should  be optimized for code space instead of code speed.  This is the
+  default for the m32r platform.
 
   <li> <tt>--enable-cpp</tt> -- Specify that a shell script which emulates
   traditional cpp functionality should be installed.
 
-  <li> <tt>--enable-cpplib</tt> -- Specify that the functionality of CPP should
-  be integrated into the compiler itself.  This is still under development, but
-  may be useful in limited situations.  This option is never enabled by default.
+  <li> <tt>--enable-cpplib</tt> -- Specify that the functionality of
+  CPP should be integrated into the compiler itself.  This option is
+  not supported by snapshots since November 2000.  In snapshots where
+  it is supported, it is not enabled by default, except for snapshots
+  very close to November 2000.
 
   <li> <tt>--without-fast-fixincludes</tt> -- Specify that the old, slower
   method of fixing the system header files should be used. 
@@ -132,7 +141,7 @@ GCC.  A partial list of supported <tt>options</tt>:
   <tt>${libsubdir}/include/g++</tt> unless you overruled it by using
   <tt>--with-gxx-include-dir=</tt><i>dirname</i>.
   Using this option is particularly useful if you intend to use several
-  versions of egcs/gcc in parallel. This is currently supported by <tt>libf2c</tt>
+  versions of GCC in parallel. This is currently supported by <tt>libf2c</tt>
   and <tt>libstdc++</tt>.
 
   <li> <tt>--enable-languages=</tt><i>lang1</i><tt>,</tt><i>lang2</i><tt>,...</tt>
@@ -144,8 +153,8 @@ GCC.  A partial list of supported <tt>options</tt>:
   </tt><br>
   Currently, you can use any of the following: <tt>CHILL</tt>, <tt>c++</tt>,
   <tt>f77</tt>, <tt>java</tt> and <tt>objc</tt>. Please note, that this switch
-  does not work with EGCS 1.1.2 or older versions of egcs.  It will be supported
-  in GCC 2.95 and newer version.<br>
+  does not work with EGCS 1.1.2 or older versions of egcs.  It is supported
+  in GCC 2.95 and newer versions.<br>
   If you do not pass this flag, all languages available in the <tt>gcc</tt> sub-tree
   will be configured.  Re-defining LANGUAGES when calling <tt>make bootstrap</tt>
   <b>*does not*</b> work anymore, as those language sub-directories might not have been
@@ -158,9 +167,11 @@ GCC.  A partial list of supported <tt>options</tt>:
 <p>Some options which only apply to building cross compilers:
 <ul>
   <li> <tt>--with-headers=</tt><i>dir</i> -- Specifies a directory which has
-  target include files.  These include files will be copied into the gcc
-  install directory.  Fixincludes will be run on these files to make them
-  compatible with gcc.
+  target include files.
+  <em>This options is required</em> when building a cross
+  compiler, if <tt>${prefix}/${target}/sys-include</tt> doesn't pre-exist.
+  These include files will be copied into the gcc install directory.
+  Fixincludes will be run on these files to make them compatible with gcc.
   <li> <tt>--with-libs=</tt><i>"dir1 dir2 ... dirN"</i> -- Specifies a list of
   directories which contain the target runtime libraries.  These libraries will
   be copied into the gcc install directory.
@@ -172,10 +183,8 @@ GCC.  A partial list of supported <tt>options</tt>:
 <p>Note that each <tt>--enable</tt> option has a corresponding <tt>--disable</tt> option and
 that each <tt>--with</tt> option has a corresponding <tt>--without</tt> option.
 
-
-<p>
 <hr>
-<i>Last modified on July 16, 1999.</i>
+<p><a href="./index.html">Return to the GCC Installation page</a></p>
 
 </body>
 </html>

@@ -1,39 +1,41 @@
 
                        Installing GCC: Configuration
-                                      
+
    Like most GNU software, GCC must be configured before it can be built.
    This document describes the recommended configuration procedure for
    both native and cross targets.
-   
+
    We use _srcdir_ to refer to the toplevel source directory for GCC; we
    use _objdir_ to refer to the toplevel build/object directory.
-   
+
    First, we _highly_ recommend that GCC be built into a separate
    directory than the sources which does _not_ reside within the source
    tree. This is how we generally build GCC; building where _srcdir_ ==
    _objdir_ should still work, but doesn't get extensive testing;
    building where _objdir_ is a subdirectory of _srcdir_ is unsupported.
-   
+
    Second, when configuring a native system, either "cc" or "gcc" must be
    in your path or you must set CC in your environment before running
    configure. Otherwise the configuration scripts may fail.
-   
+
    To configure GCC:
-   
+
      % mkdir _objdir_
      % cd _objdir_
      % _srcdir_/configure _[target]_ _[options]_
-     
+
    _target specification_
      * GCC has code to correctly determine the correct value for _target_
        for nearly all native systems. Therefore, we highly recommend you
        not provide a configure target when configuring a native compiler.
-     * _target_ must be specified when configuring a cross compiler;
-       examples of valid targets would be i960-rtems, m68k-coff, sh-elf,
-       etc.
-       
+     * _target_ must be specified as --target=_target_ when configuring a
+       cross compiler; examples of valid targets would be i960-rtems,
+       m68k-coff, sh-elf, etc.
+     * Specifying just _target_ instead of --target=_target_ implies that
+       the host defaults to _target_.
+
    _options specification_
-   
+
    Use _options_ to override several configure time options for GCC. A
    partial list of supported options:
      * --prefix=_dirname_ -- Specify the toplevel installation directory.
@@ -70,10 +72,12 @@
        be built to support different target variants, calling
        conventions, etc. This is the default.
      * --enable-threads -- Specify that the target supports threads. This
-       affects only the Objective-C compiler and runtime library.
+       affects the Objective-C compiler and runtime library, and
+       exception handling for other languages like C++ and Java.
      * --enable-threads=_lib_ -- Specify that _lib_ is the thread support
-       library. This affects only the Objective-C compiler and runtime
-       library.
+       library. This affects the Objective-C compiler and runtime
+       library, and exception handling for other languages like C++ and
+       Java.
      * --with-cpu=_cpu_ -- Specify which cpu variant the compiler should
        generate code for by default. This is currently only supported on
        the some ports, specifically arm, powerpc, and SPARC. If configure
@@ -81,14 +85,15 @@
        ultrasparc) you provide, please check the configure script for a
        complete list of supported models.
      * --enable-target-optspace -- Specify that target libraries should
-       be optimzied for code space instead of code speed. This is the
+       be optimized for code space instead of code speed. This is the
        default for the m32r platform.
      * --enable-cpp -- Specify that a shell script which emulates
        traditional cpp functionality should be installed.
      * --enable-cpplib -- Specify that the functionality of CPP should be
-       integrated into the compiler itself. This is still under
-       development, but may be useful in limited situations. This option
-       is never enabled by default.
+       integrated into the compiler itself. This option is not supported
+       by snapshots since November 2000. In snapshots where it is
+       supported, it is not enabled by default, except for snapshots very
+       close to November 2000.
      * --without-fast-fixincludes -- Specify that the old, slower method
        of fixing the system header files should be used. EGCS 1.1.x and
        older releases default to the slow version. GCC 2.95 and newer
@@ -99,9 +104,8 @@
        addition, libstdc++'s include files will be installed in
        ${libsubdir}/include/g++ unless you overruled it by using
        --with-gxx-include-dir=_dirname_. Using this option is
-       particularly useful if you intend to use several versions of
-       egcs/gcc in parallel. This is currently supported by libf2c and
-       libstdc++.
+       particularly useful if you intend to use several versions of GCC
+       in parallel. This is currently supported by libf2c and libstdc++.
      * --enable-languages=_lang1_,_lang2_,... -- Specify that only a
        particular subset of compilers and their runtime libraries should
        be built. For a list of valid values for _lang_x you can issue the
@@ -109,29 +113,35 @@
        grep language= */config-lang.in
        Currently, you can use any of the following: CHILL, c++, f77, java
        and objc. Please note, that this switch does not work with EGCS
-       1.1.2 or older versions of egcs. It will be supported in GCC 2.95
-       and newer version.
+       1.1.2 or older versions of egcs. It is supported in GCC 2.95 and
+       newer versions.
        If you do not pass this flag, all languages available in the gcc
        sub-tree will be configured. Re-defining LANGUAGES when calling
        make bootstrap _*does not*_ work anymore, as those language
        sub-directories might not have been configured!
      * --with-dwarf2 -- Specify that the compiler should use DWARF2
        debugging information as the default.
-       
+
    Some options which only apply to building cross compilers:
      * --with-headers=_dir_ -- Specifies a directory which has target
-       include files. These include files will be copied into the gcc
-       install directory. Fixincludes will be run on these files to make
-       them compatible with gcc.
+       include files. _This options is required_ when building a cross
+       compiler, if ${prefix}/${target}/sys-include doesn't pre-exist.
+       These include files will be copied into the gcc install directory.
+       Fixincludes will be run on these files to make them compatible
+       with gcc.
      * --with-libs=_"dir1 dir2 ... dirN"_ -- Specifies a list of
        directories which contain the target runtime libraries. These
        libraries will be copied into the gcc install directory.
      * --with-newlib -- Specifies that "newlib" is being used as the
        target C library. This causes __eprintf to be omitted from
        libgcc.a on the assumption that it will be provided by newlib.
-       
+
    Note that each --enable option has a corresponding --disable option
    and that each --with option has a corresponding --without option.
      _________________________________________________________________
-   
-   _Last modified on July 16, 1999._
+
+   [1]Return to the GCC Installation page
+
+References
+
+   1. http://gcc.gnu.org/install/index.html

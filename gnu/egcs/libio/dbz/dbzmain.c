@@ -19,7 +19,7 @@
 #define	STREQ(a, b)	(*(a) == *(b) && strcmp((a), (b)) == 0)
 
 #ifndef lint
-static char RCSid[] = "$Header: /home/cvs/src/gnu/egcs/libio/dbz/Attic/dbzmain.c,v 1.1.1.3 2000/06/05 22:23:28 espie Exp $";
+static char RCSid[] = "$Header: /home/cvs/src/gnu/egcs/libio/dbz/Attic/dbzmain.c,v 1.1.1.4 2001/01/29 15:26:38 espie Exp $";
 #endif
 
 char *progname;

@@ -6,45 +6,40 @@
 <h1 align="center">Installing GCC</h1>
 
 <p>The latest version of this document is always available at <a href="
-http://egcs.cygnus.com/install/">http://egcs.cygnus.com/install/</a>.
+http://gcc.gnu.org/install/">http://gcc.gnu.org/install/</a>.
 
 <p>This document describes the generic installation procedure for GCC as
 well as detailing some target specific installation instructions.
 
 <p>GCC includes several components that previously were separate distributions
-with their own installation instructions.  This document supercedes all 
+with their own installation instructions.  This document supersedes all 
 package specific installation instructions.  We provide the component specific
 installation information in the source distribution for historical reference
 purposes only.
 
-<p>We recommend you read the entire generic installation instructions as
-well as any target specific installation instructions before you proceed
-to configure, build, test and install GCC.
-
-<p>If something goes wrong in the configure, build, test or install
-procedures, first double check that you followed the generic and target
-specific installation instructions carefully.  Then check the 
-<a href="../faq.html">FAQ</a> to see if your problem is covered before you file
-a bug report.
-
-<p><em>Before</em> starting the build/install procedure <em>please</em> browse
+<p><em>Before</em> starting the build/install procedure please check
 the <a href="specific.html">host/target specific installation notes</a>.
+We recommend you browse the entire generic installation instructions
+before you proceed.</p>
 
-<p>The installation procedure is broken into five steps.
+<p>The installation procedure itself is broken into five steps.
 
-<ul>
+<ol>
+  <li><a href="download.html">Downloading the source</a></li>
+  <li><a href="configure.html">Configuration</a></li>
+  <li><a href="build.html">Building</a></li>
+  <li><a href="test.html">Testing</a> (optional)</li>
+  <li><a href="finalinstall.html">Final install</a></li>
+</ol>
 
-  <li> <a href="download.html">downloading the source</a>
-  <li> <a href="configure.html">configure</a>
-  <li> <a href="build.html">build</a>
-  <li> <a href="test.html">test</a> (optional)
-  <li> <a href="finalinstall.html">install</a>
-
-</ul>
+<p>Please note that GCC does not support <CODE>`make uninstall`</CODE>
+and probably won't do so in the near future as this would open a can
+of worms. Instead, we suggest that you install GCC into a directory of
+its own and simply remove that directory when you do not need that
+specific version of GCC any longer.
 
 <hr>
-<a href="../index.html">Return to the GCC home page</a>
-<hr>
-<i>Last modified on July 15, 1999.</i>
+<p><a href="./index.html">Return to the GCC Installation page</a></p>
+
 </body>
 </html>
