@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iostat.8,v 1.3 1996/05/22 11:35:48 deraadt Exp $
+.\"	$OpenBSD: iostat.8,v 1.4 1996/07/04 20:16:07 deraadt Exp $
 .\"	$NetBSD: iostat.8,v 1.9 1996/05/10 23:20:28 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -104,7 +104,7 @@ instead of the default
 .Dq Pa /dev/mem .
 .It Fl N
 Extract the name list from the specified system instead of the default
-.Dq Pa /netbsd .
+.Dq Pa /bsd .
 .It Fl T
 Show tty statistics.  This is enabled by default unless the
 .Fl C, 
@@ -176,7 +176,7 @@ Seconds spent in disk activity
 .El
 .Sh FILES
 .Bl -tag -width /dev/mem -compact
-.It Pa /netbsd
+.It Pa /bsd
 Default kernel namelist.
 .It Pa /dev/mem
 Default memory file.
