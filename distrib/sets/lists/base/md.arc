@@ -1,7 +1,5 @@
 ./usr/lib/libcrypto.so.1.0
 ./usr/lib/libssl.so.1.0
-./usr/lib/libcrypto_pic.a
-./usr/lib/libssl_pic.a
 ./dev/pccons
 ./dev/scan0
 ./sbin/fdisk
@@ -32,7 +30,8 @@
 ./usr/lib/libpcap.so.0.2
 ./usr/lib/libresolv.so.2.0
 ./usr/lib/libskey.so.1.0
-./usr/lib/libtermcap.so.3.0
+./usr/lib/libotermcap.so.3.0
+./usr/lib/libtermcap.so.5.0
 ./usr/lib/libtermlib.so.5.0
 ./usr/lib/libutil.so.4.2
 ./usr/lib/libwrap.so.1.0

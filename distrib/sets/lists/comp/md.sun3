@@ -90,3 +90,6 @@
 ./usr/share/man/cat3/dlfcn.0
 ./usr/share/man/cat3/dlopen.0
 ./usr/share/man/cat3/dlsym.0
+./usr/lib/libssl_pic.a
+./usr/lib/libcrypto_pic.a
+./usr/lib/libotermcap_pic.a

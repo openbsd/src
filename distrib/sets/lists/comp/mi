@@ -1125,6 +1125,8 @@
 ./usr/lib/libstdc++_p.a
 ./usr/lib/libtelnet.a
 ./usr/lib/libtelnet_p.a
+./usr/lib/libotermcap.a
+./usr/lib/libotermcap_p.a
 ./usr/lib/libtermcap.a
 ./usr/lib/libtermcap_p.a
 ./usr/lib/libtermlib.a
@@ -2385,6 +2387,7 @@
 ./usr/share/man/cat3/telldir.0
 ./usr/share/man/cat3/tempnam.0
 ./usr/share/man/cat3/termattrs.0
+./usr/share/man/cat3/otermcap.0
 ./usr/share/man/cat3/termcap.0
 ./usr/share/man/cat3/terminfo.0
 ./usr/share/man/cat3/termname.0
