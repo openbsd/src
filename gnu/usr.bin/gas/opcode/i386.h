@@ -1,4 +1,4 @@
-/* $OpenBSD: i386.h,v 1.5 1998/07/03 18:43:34 weingart Exp $ */
+/* $OpenBSD: i386.h,v 1.6 1999/08/31 17:09:14 espie Exp $ */
 /* i386-opcode.h -- Intel 80386 opcode table
    Copyright (C) 1989, 1991, Free Software Foundation.
 
@@ -497,6 +497,7 @@ static const template i386_optab[] = {
 
 /* exchange %st<n> with %st0 */
 {"fxch", 1, 0xd9c8, _, ShortForm, FloatReg, 0, 0},
+{"fxch",   0, 0xd9c9, _, 0,			0, 0, 0},	     /* alias for fxch %st(1) */
 
 /* comparison (without pop) */
 {"fcom", 1, 0xd8d0, _, ShortForm, FloatReg, 0, 0},
