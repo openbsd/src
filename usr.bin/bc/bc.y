@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: bc.y,v 1.17 2003/11/13 19:05:32 otto Exp $	*/
+/*	$OpenBSD: bc.y,v 1.18 2003/11/13 19:42:21 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bc.y,v 1.17 2003/11/13 19:05:32 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bc.y,v 1.18 2003/11/13 19:42:21 otto Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -656,13 +656,12 @@ print_expression_list
 print_expression
 		: expression
 			{
-				$$ = node($1, cs("dds.n"), END_NODE);
+				$$ = node($1, cs("ds.n"), END_NODE);
 			}
 		| STRING
 			{
 				char *p = escape($1);
-				$$ = node(cs("["), as(p), cs("]dn"),
-				    END_NODE);
+				$$ = node(cs("["), as(p), cs("]n"), END_NODE);
 				free(p);
 			}
 %%
