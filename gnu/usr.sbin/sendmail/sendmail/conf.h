@@ -2678,7 +2678,7 @@ typedef void		(*sigfunc_t) __P((int));
 
 /* random routine -- set above using #ifdef _osname_ or in Makefile */
 #if HASARC4RANDOM
-# define get_random()	arc4random()
+# define get_random()	(arc4random() & 0x7fffffff)
 #else
 # if HASRANDOM
 #  define get_random()	random()
