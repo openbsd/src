@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.39 2003/06/02 23:30:14 millert Exp $
+.\"	$OpenBSD: hier.7,v 1.40 2003/06/10 08:47:13 jmc Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -198,7 +198,7 @@ Useful and semi-frivolous programs.
 .It include/
 Standard C include files.
 .Pp
-.Bl -tag -width "kerberosIV/" -compact
+.Bl -tag -width "kerberosV/" -compact
 .It altq/
 C include files for the altq subsystem (see
 .Xr pf.conf 5 ) .
@@ -215,8 +215,6 @@ Device-specific C include files.
 Include files for the GNU C++ compiler.
 .It isofs/
 C include files for the ISO standard file systems (currently only cd9660).
-.It kerberosIV/
-C include files for the KerberosIV authentication subsystem.
 .It kerberosV/
 C include files for the KerberosV authentication subsystem (see
 .Xr info 1
@@ -251,6 +249,9 @@ C include files for XNS standard protocols (see
 C include files for NFS (Network File System).
 .It objc/
 C include files for GNU Objective-C.
+.It openssl/
+C include files for the OpenSSL library (see
+.Xr ssl 8 ) .
 .It protocols/
 C include files for Berkeley service protocols.
 .It readline/
@@ -264,9 +265,6 @@ C include files for remote procedure calling (see
 C include files for rpcsvc.
 .It scsi/
 SCSI-specific C include files.
-.It ssl/
-C include files for the OpenSSL library (see
-.Xr ssl 8 ) .
 .It sys/
 System C include files (kernel data structures).
 .It ufs/
@@ -498,7 +496,7 @@ Timezone configuration information (see
 .It src/
 BSD and/or local source files.
 .Pp
-.Bl -tag -width "kerberosIV/" -compact
+.Bl -tag -width "kerberosV/" -compact
 .It bin/
 Source for files in
 .Pa /bin .
@@ -515,8 +513,6 @@ Source for files under GPL or other restrictive licenses.
 .It include/
 Source for files in
 .Pa /usr/include .
-.It kerberosIV/
-Source for Kerberos version IV.
 .It kerberosV/
 Source for Kerberos version V.
 .It lib/
