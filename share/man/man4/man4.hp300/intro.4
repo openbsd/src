@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.4,v 1.13 2003/03/09 22:20:35 miod Exp $
+.\"	$OpenBSD: intro.4,v 1.14 2003/03/16 20:12:51 miod Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -108,7 +108,7 @@ for example, new
 .Tn CS/80
 drives.
 .Pp
-.Bl -tag -width hpib(4) -compact -offset indent
+.Bl -tag -width topcat_4_ -compact -offset indent
 .It Xr apci 4
 Apollo utility chip serial interface.
 .It Xr \&ct 4
@@ -117,38 +117,52 @@ Apollo utility chip serial interface.
 98644 built-in serial interface.
 .It Xr dcm 4
 HP 98642A communications multiplexer.
-.\" .It Xr dio 4
-.\" DIO/DIO-II bus.
-.It Xr dv 4
-HP98730 ``DaVinci'' frame buffer.
-.It Xr gb 4
-HP98700 ``Gatorbox'' frame buffer.
+.It Xr dio 4
+DIO/DIO-II bus.
+.It Xr dvbox 4
+.Tn HP98730
+.Dq DaVinci
+frame buffer.
+.It Xr gbox 4
+.Tn HP98700
+.Dq Gatorbox
+frame buffer.
 .It Xr grf 4
-Topcat/Gatorbox/Renaissance frame buffer.
+Generic frame buffer interface for
+.Xr ite 4 .
 .It Xr hd 4
 CS/80 disk interface.
 .It Xr hil 4
 HIL interface.
-.\" .It Xr hpib 4
-.\" Built-in and 98625 HP-IB interface.
-.\" .It Xr hyper 4
-.\" Hyperion frame buffer.
+.It Xr hpibbus 4
+Built-in and 98625 HP-IB interface.
+.It Xr hyper 4
+.Tn A1096A
+.Dq Hyperion
+frame buffer.
 .It Xr ite 4
 HP Internal Terminal Emulator.
 .It Xr le 4
 98643 Lance-based ethernet interface.
-.\" .It Xr oscsi
-.\" Old HP300 SCSI driver.
+.It Xr oscsi
+Old HP300 SCSI interface.
 .It Xr ppi 4
 HP-IB printer/plotter interface.
-.It Xr rb 4
-HP98720 ``Renaissance'' device interface.
+.It Xr rbox 4
+.Tn HP98720
+.Dq Renaissance
+frame buffer.
 .It Xr sd 4
 SCSI disk drives.
 .It Xr st 4
 CCS SCSI tape drives.
-.It Xr tc 4
-HP98544-98550 ``Topcat'' and ``Catseye'' device interface.
+.It Xr topcat 4
+.Tn HP98544
+.Dq Topcat
+and
+.Tn HP98550
+.Dq Catseye
+frame buffers.
 .El
 .Sh SEE ALSO
 .Xr autoconf 4 ,

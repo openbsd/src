@@ -1,5 +1,5 @@
-.\"	$OpenBSD: cons.4,v 1.6 2003/03/16 20:12:50 miod Exp $
-.\
+.\"	$OpenBSD: rbox.4,v 1.1 2003/03/16 20:12:51 miod Exp $
+.\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -35,49 +35,52 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)cons.4	8.1 (Berkeley) 6/9/93
+.\"     from: @(#)rb.4	8.1 (Berkeley) 6/9/93
 .\"
-.Dd June 9, 1993
-.Dt CONS 4 hp300
+.Dd March 16, 2003
+.Dt RBOX 4 hp300
 .Os
 .Sh NAME
-.Nm cons
+.Nm rbox
 .Nd
-.Tn HP300
-console interface
+.Tn HP98720
+.Dq Renaissance
+frame buffer
 .Sh DESCRIPTION
-This release supports a
-.Dq virtual
-console device used for
-.Em kernel printf
-messages and accessed in user mode via
-.Pa /dev/console .
-It is virtual in the sense that it is attached to a hardware interface
-at boot time.
-Currently the choices are limited to:
-a bit-mapped display
-.Pq Xr grf 4
-acting as an
-.Em internal terminal emulator
-.Dq Tn ITE ,
-a serial interface
-.Pq Xr apci 4 \ or Xr dca 4 ,
-or a null console, in that order.
-.Sh FILES
-.Bl -tag -width /dev/console
-.It Pa /dev/console
-.El
+The
+.Tn HP98720
+and
+.Tn HP98721
+are stackable 4-bit color frame buffers,
+also known as the Renaissance.
+By adding up to 7
+.Tn HP98722A
+frame buffer extensions, it is possible to add overlay planes.
+.Pp
+The
+.Nm
+driver provides a frame buffer abstraction to the
+.Xr grf 4
+driver, and the associated
+.Xr ite 4
+console framework.
+.Pp
+The Renaissance can be configured at either the ``internal'' address
+(frame buffer address 0x200000, control register space address 0x560000)
+or at an external select code less than 32.
+At the internal address it will be the ``preferred'' console device
+(see
+.Xr cons 4 ) .
+The hardware installation manual describes the procedure for
+setting these values.
 .Sh SEE ALSO
-.Xr apci 4 ,
-.Xr dca 4 ,
+.Xr ioctl 2 ,
+.Xr dvbox 4 ,
+.Xr gbox 4 ,
 .Xr grf 4 ,
+.Xr hyper 4 ,
 .Xr intro 4 ,
-.Xr ite 4 ,
-.Xr tty 4 ,
-.Xr reboot 8
+.Xr topcat 4
 .Sh BUGS
-.\" option CONSCODE="#" does this, but does not work on apci - needs to be
-.\" fixed first.
-It should be possible to specify potential console devices at
-.Xr config 8
-time.
+This driver has not been tested with all possible
+combinations of frame buffer boards and scan boards installed in the device.

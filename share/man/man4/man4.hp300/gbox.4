@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gb.4,v 1.6 2002/10/01 07:12:30 miod Exp $
+.\"	$OpenBSD: gbox.4,v 1.1 2003/03/16 20:12:50 miod Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,39 +37,53 @@
 .\"
 .\"     from: @(#)gb.4	8.1 (Berkeley) 6/9/93
 .\"
-.Dd June 9, 1993
-.Dt GB 4 hp300
+.Dd March 16, 2003
+.Dt GBOX 4 hp300
 .Os
 .Sh NAME
-.Nm gb
+.Nm gbox
 .Nd
 .Tn HP98700
-``Gatorbox'' frame buffer
+.Dq Gatorbox
+frame buffer
 .Sh SYNOPSIS
 .Cd "gbox* at intio?"
 .Cd "gbox* at dio? scode ?"
-.Cd "grf* at gbox?"
+.Cd "grf*  at gbox?"
 .Sh DESCRIPTION
-This driver is for the
+The
 .Tn HP98700
-and 98710 graphics devices, also known as
-the Gatorbox.
-The term ``Gator'' will often be used, and it is not to be
-confused with ``Gator'' used in reference to an
+and
+.Tn HP98710
+are 4- and 8-bit color frame buffers,
+also known as the Gatorbox.
+.Pp
+The term
+.Dq Gator
+will often be used, and it is not to be
+confused with
+.Dq Gator
+used in reference to an
 .Tn HP
 9837 or 200/237 machine.
-Also, the term Gatorbox is used for the 98700 alone, with the 98701 frame
+Also, the term
+.Dq Gatorbox
+is used for the 98700 alone, with the 98701 frame
 buffer memory or with the 98710 accelerator installed.
-This driver merely checks for the existence of the device and does minimal
-set up, as it is expected the applications will initialize the device to their
-requirements.
+.Pp
+The
+.Nm
+driver provides a frame buffer abstraction to the
+.Xr grf 4
+driver, and the associated
+.Xr ite 4
+console framework.
 .Pp
 The 98700 can be used as the only graphics device on a system, in which case
 it will be used as the system console.
 It can also be installed as a secondary display device.
 For the first case, the
-.Tn HP
-.Tn 98287A M.A.D.
+.Tn HP98287A M.A.D.
 interface card
 should be set to internal control space.
 This will put the frame buffer at the DIO address 0x200000 and the control
@@ -87,93 +101,11 @@ The 98700 should only be installed as a secondary device in a machine with a
 The
 .%T 98700H Installation Guide
 contains further configuration information.
-.Pp
-The
-.Xr ioctl 2
-calls supported by the
-.Ox
-system for the Gatorbox are:
-.Bl -tag -width indent
-.It Dv GRFIOCGINFO
-Get Graphics Info
-.Pp
-Get info about device, setting the entries in the
-.Em grfinfo
-structure, as defined in
-.Aq Pa machine/grfioctl.h .
-For the standard 98700, the number of planes should be 4.
-The number of colors would therefore be 15, excluding black.
-With the 98701 option installed there will be another 4 planes for a total of 8,
-giving 255 colors.
-.It Dv GRFIOCON
-Graphics On
-.Pp
-Turn graphics on by enabling
-.Tn CRT
-output.
-The screen will come on, displaying whatever is in the frame buffer, using
-whatever colormap is in place.
-.It Dv GRFIOCOFF
-Graphics Off
-.Pp
-Turn graphics off by disabling output to the
-.Tn CRT .
-The frame buffer contents
-are not affected.
-.It Dv GRFIOCMAP
-Map Device to user space
-.Pp
-Map in control registers and frame buffer space.
-Once the device file is mapped, the frame buffer structure is accessible.
-The frame buffer structure describing the 98700
-is given in
-.Aq Pa machine/grf_gbreg.h .
-.It Dv GRFIOCUNMAP
-Unmap Device
-.Pp
-Unmap control registers and frame buffer space.
-.Pp
-For further information about the use of ioctl see the man page.
-.El
-.Sh FILES
-.Bl -tag -width /dev/XXXX -compact
-.It Pa /dev/grf?
-.Ox
-special file
-.El
-.Sh EXAMPLES
-A small example of opening, mapping and using the device is given below.
-.Bd -literal
-struct gboxfb *gbox;
-u_char *Addr, frame_buffer;
-struct grfinfo gi;
-int disp_fd;
-
-disp_fd = open("/dev/grf0", O_WRONLY);
-
-if (ioctl(disp_fd, GRFIOCGINFO, &gi) < 0) return -1;
-
-ioctl(disp_fd, GRFIOCON, 0);
-
-if (ioctl(disp_fd, GRFIOCMAP, &Addr) < 0) {
-	ioctl (disp_fd, GRFIOCOFF, 0);
-	return -1;
-}
-gbox = (gboxfb *)Addr;                         /* Control Registers   */
-frame_buffer = (u_char *)Addr + gi.gd_regsize; /* Frame buffer memory */
-.Ed
-.Sh DIAGNOSTICS
-None under
-.Ox .
-The
-.Tn HP-UX
-.Tn CE.utilities/Crtadjust
-programs must be used.
 .Sh SEE ALSO
 .Xr ioctl 2 ,
-.Xr dv 4 ,
+.Xr dvbox 4 ,
 .Xr grf 4 ,
-.\" .Xr hyper 4 ,
+.Xr hyper 4 ,
 .Xr intro 4 ,
-.Xr rb 4 ,
-.Xr tc 4
+.Xr rbox 4 ,
+.Xr topcat 4
