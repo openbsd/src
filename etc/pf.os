@@ -1,4 +1,4 @@
-# $OpenBSD: pf.os,v 1.2 2003/08/27 13:53:02 avsm Exp $
+# $OpenBSD: pf.os,v 1.3 2003/08/27 13:55:40 avsm Exp $
 # passive OS fingerprinting
 # -------------------------
 #
@@ -20,7 +20,7 @@
 #  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 #
-# This fingerprint database is adapted Michal Zalewski's p0f passive
+# This fingerprint database is adapted from Michal Zalewski's p0f passive
 # operating system package.
 #
 #
