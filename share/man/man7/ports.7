@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.27 2002/11/17 12:03:37 espie Exp $
+.\" $OpenBSD: ports.7,v 1.28 2003/01/14 18:28:21 espie Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
 .Dd January 25, 1998
@@ -405,7 +405,7 @@ in
 Used only for the
 .Ar package
 target; the base directory for the packages tree, normally
-.Pa packages/${ARCH}
+.Pa packages/${MACHINE_ARCH}
 in
 .Ev PORTSDIR .
 If this directory exists, the package tree will be (partially) constructed.
@@ -417,6 +417,12 @@ Directory to put the package in.
 .It Ev PKGFILE
 The full path to the package.
 .El
+.It Ev BULK_COOKIES_DIR
+During bulk package building, used to store cookies for already built 
+packages to avoid rebuilding them, since the actual  
+working directory will already have been cleaned out. 
+Defaults to bulk/${MACHINE_ARCH} under 
+.Ev PORTSDIR .
 .It Ev LOCALBASE
 Where to install things in general
 .Po
@@ -461,17 +467,13 @@ Select read-write partition(s) that can accommodate working directories, the
 distfiles repository, and the built packages.
 Set
 .Ev WRKOBJDIR ,
-.Ev PACKAGES
+.Ev PACKAGES ,
+.Ev BULK_COOKIES_DIR
 and
 .Ev DISTDIR
 in
 .Pa /etc/mk.conf
 accordingly.
-do a
-.Li "cd /usr/ports && make obj"
-to create working directories stubs.
-.Pa /usr/ports
-may now be remounted read-only.
 .Sh FILES
 .Bl -tag -width /usr/ports/xxxxxxxx -compact
 .It Pa /usr/ports
