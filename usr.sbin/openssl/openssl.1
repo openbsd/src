@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.17 2003/10/08 08:37:50 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.18 2003/10/22 16:05:06 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -592,45 +592,45 @@ The output of some ASN.1 types is not well handled
 .Sh CA
 .Nm openssl ca
 .Bk -words
-.Op Fl verbose
-.Op Fl config Ar filename
-.Op Fl name Ar section
-.Op Fl gencrl
-.Op Fl revoke Ar file
-.Op Fl crl_reason Ar reason
-.Op Fl crl_hold Ar instruction
-.Op Fl crl_compromise Ar time
-.Op Fl crl_CA_compromise Ar time
-.Op Fl subj Ar arg
-.Op Fl crldays Ar days
-.Op Fl crlhours Ar hours
-.Op Fl crlexts Ar section
-.Op Fl startdate Ar date
-.Op Fl enddate Ar date
-.Op Fl days Ar arg
-.Op Fl md Ar arg
-.Op Fl policy Ar arg
-.Op Fl keyfile Ar arg
-.Op Fl keyform Ar PEM | ENGINE
-.Op Fl key Ar arg
-.Op Fl passin Ar arg
-.Op Fl cert Ar file
-.Op Fl in Ar file
-.Op Fl out Ar file
-.Op Fl notext
-.Op Fl outdir Ar dir
-.Op Fl infiles
-.Op Fl spkac Ar file
-.Op Fl ss_cert Ar file
-.Op Fl preserveDN
-.Op Fl noemailDN
 .Op Fl batch
+.Op Fl gencrl
+.Op Fl infiles
 .Op Fl msie_hack
+.Op Fl noemailDN
+.Op Fl notext
+.Op Fl preserveDN
+.Op Fl updatedb
+.Op Fl verbose
+.Op Fl cert Ar file
+.Op Fl config Ar filename
+.Op Fl crl_CA_compromise Ar time
+.Op Fl crl_compromise Ar time
+.Op Fl crl_hold Ar instruction
+.Op Fl crl_reason Ar reason
+.Op Fl crldays Ar days
+.Op Fl crlexts Ar section
+.Op Fl crlhours Ar hours
+.Op Fl days Ar arg
+.Op Fl enddate Ar date
+.Op Fl engine Ar id
 .Op Fl extensions Ar section
 .Op Fl extfile Ar section
+.Op Fl in Ar file
+.Op Fl key Ar arg
+.Op Fl keyfile Ar arg
+.Op Fl keyform Ar PEM | ENGINE
+.Op Fl md Ar arg
+.Op Fl name Ar section
+.Op Fl out Ar file
+.Op Fl outdir Ar dir
+.Op Fl passin Ar arg
+.Op Fl policy Ar arg
+.Op Fl revoke Ar file
+.Op Fl spkac Ar file
+.Op Fl ss_cert Ar file
+.Op Fl startdate Ar date
 .Op Fl status Ar serial
-.Op Fl updatedb
-.Op Fl engine Ar id
+.Op Fl subj Ar arg
 .Ek
 .Pp
 The
@@ -643,128 +643,28 @@ It also maintains a text database of issued certificates and their status.
 The options descriptions will be divided into each purpose.
 .Sh CA OPTIONS
 .Bl -tag -width "XXXX"
-.It Fl config Ar filename
-Specifies the configuration file to use.
-.It Fl name Ar section
-Specifies the configuration file
-.Ar section
-to use (overrides
-.Cm default_ca
-in the
-.Cm ca
-section).
-.It Fl in Ar filename
-An input
-.Ar filename
-containing a single certificate request to be signed by the CA.
-.It Fl ss_cert Ar filename
-A single self-signed certificate to be signed by the CA.
-.It Fl spkac Ar filename
-A file containing a single Netscape signed public key and challenge,
-and additional field values to be signed by the CA.
-See the
-.Sx SPKAC FORMAT
-section for information on the required format.
-.It Fl infiles
-If present, this should be the last option; all subsequent arguments
-are assumed to be the names of files containing certificate requests.
-.It Fl out Ar filename
-The output file to output certificates to.
-The default is standard output.
-The certificate details will also be printed out to this file.
-.It Fl outdir Ar directory
-The
-.Ar directory
-to output certificates to.
-The certificate will be written to a filename consisting of the
-serial number in hex with
-.Qq .pem
-appended.
-.It Fl cert
-The CA certificate file.
-.It Fl keyfile Ar filename
-The private key to sign requests with.
-.It Fl keyform Ar PEM | ENGINE
-Private key file format.
-.It Fl key Ar password
-The password used to encrypt the private key.
-Since on some systems the command line arguments are visible
-(e.g.\&
-.Ux
-with the
-.Xr ps 1
-utility) this option should be used with caution.
-.It Fl passin Ar arg
-The key password source.
-For more information about the format of
-.Ar arg ,
-see the
-.Sx PASS PHRASE ARGUMENTS
-section above.
-.It Fl verbose
-This prints extra details about the operations being performed.
-.It Fl notext
-Don't output the text form of a certificate to the output file.
-.It Fl startdate Ar date
-This allows the start date to be explicitly set.
-The format of the date is YYMMDDHHMMSSZ
-.Pq the same as an ASN1 UTCTime structure .
-.It Fl enddate Ar date
-This allows the expiry date to be explicitly set.
-The format of the date is YYMMDDHHMMSSZ
-.Pq the same as an ASN1 UTCTime structure .
-.It Fl days Ar arg
-The number of days to certify the certificate for.
-.It Fl md Ar alg
-The message digest to use.
-Possible values include
-.Ar md5
-and
-.Ar sha1 .
-This option also applies to CRLs.
-.It Fl policy Ar arg
-This option defines the CA
-.Qq policy
-to use.
-This is a section in the configuration file which decides which fields
-should be mandatory or match the CA certificate.
-Check out the
-.Sx CA POLICY FORMAT
-section for more information.
-.It Fl msie_hack
-This is a legacy option to make
-.Nm ca
-work with very old versions of the IE certificate enrollment control
-.Qq certenr3 .
-It used UniversalStrings for almost everything.
-Since the old control has various security bugs,
-its use is strongly discouraged.
-The newer control
-.Qq Xenroll
-does not need this option.
-.It Fl preserveDN
-Normally, the DN order of a certificate is the same as the order of the
-fields in the relevant policy section.
-When this option is set, the order is the same as the request.
-This is largely for compatibility with the older IE enrollment control
-which would only accept certificates if their DNs matched the order of the
-request.
-This is not needed for Xenroll.
-.It Fl noemailDN
-The DN of a certificate can contain the EMAIL field if present in the
-request DN, however it is good policy just having the e-mail set into
-the
-.Em altName
-extension of the certificate.
-When this option is set, the EMAIL field is removed from the certificate's
-subject and set only in the, eventually present, extensions.
-The
-.Ar email_in_dn
-keyword can be used in the configuration file to enable this behaviour.
 .It Fl batch
 This sets the batch mode.
 In this mode no questions will be asked
 and all certificates will be certified automatically.
+.It Fl cert Ar file
+The CA certificate file.
+.It Fl config Ar filename
+Specifies the configuration file to use.
+.It Fl days Ar arg
+The number of days to certify the certificate for.
+.It Fl enddate Ar date
+This allows the expiry date to be explicitly set.
+The format of the date is YYMMDDHHMMSSZ
+.Pq the same as an ASN1 UTCTime structure .
+.It Fl engine Ar id
+Specifying an engine (by it's unique
+.Ar id
+string) will cause
+.Nm ca
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed.
+The engine will then be set as the default for all available algorithms.
 .It Fl extensions Ar section
 The section of the configuration file containing certificate extensions
 to be added when a certificate is issued (defaults to
@@ -783,35 +683,139 @@ to read certificate extensions from
 (using the default section unless the
 .Fl extensions
 option is also used).
+.It Fl in Ar filename
+An input
+.Ar filename
+containing a single certificate request to be signed by the CA.
+.It Fl infiles
+If present, this should be the last option; all subsequent arguments
+are assumed to be the names of files containing certificate requests.
+.It Fl key Ar password
+The password used to encrypt the private key.
+Since on some systems the command line arguments are visible
+(e.g.\&
+.Ux
+with the
+.Xr ps 1
+utility) this option should be used with caution.
+.It Fl keyfile Ar filename
+The private key to sign requests with.
+.It Fl keyform Ar PEM | ENGINE
+Private key file format.
+.It Fl md Ar alg
+The message digest to use.
+Possible values include
+.Ar md5
+and
+.Ar sha1 .
+This option also applies to CRLs.
+.It Fl msie_hack
+This is a legacy option to make
+.Nm ca
+work with very old versions of the IE certificate enrollment control
+.Qq certenr3 .
+It used UniversalStrings for almost everything.
+Since the old control has various security bugs,
+its use is strongly discouraged.
+The newer control
+.Qq Xenroll
+does not need this option.
+.It Fl name Ar section
+Specifies the configuration file
+.Ar section
+to use (overrides
+.Cm default_ca
+in the
+.Cm ca
+section).
+.It Fl noemailDN
+The DN of a certificate can contain the EMAIL field if present in the
+request DN, however it is good policy just having the e-mail set into
+the
+.Em altName
+extension of the certificate.
+When this option is set, the EMAIL field is removed from the certificate's
+subject and set only in the, eventually present, extensions.
+The
+.Ar email_in_dn
+keyword can be used in the configuration file to enable this behaviour.
+.It Fl notext
+Don't output the text form of a certificate to the output file.
+.It Fl out Ar filename
+The output file to output certificates to.
+The default is standard output.
+The certificate details will also be printed out to this file.
+.It Fl outdir Ar directory
+The
+.Ar directory
+to output certificates to.
+The certificate will be written to a filename consisting of the
+serial number in hex with
+.Qq .pem
+appended.
+.It Fl passin Ar arg
+The key password source.
+For more information about the format of
+.Ar arg ,
+see the
+.Sx PASS PHRASE ARGUMENTS
+section above.
+.It Fl policy Ar arg
+This option defines the CA
+.Qq policy
+to use.
+This is a section in the configuration file which decides which fields
+should be mandatory or match the CA certificate.
+Check out the
+.Sx CA POLICY FORMAT
+section for more information.
+.It Fl preserveDN
+Normally, the DN order of a certificate is the same as the order of the
+fields in the relevant policy section.
+When this option is set, the order is the same as the request.
+This is largely for compatibility with the older IE enrollment control
+which would only accept certificates if their DNs matched the order of the
+request.
+This is not needed for Xenroll.
+.It Fl spkac Ar filename
+A file containing a single Netscape signed public key and challenge,
+and additional field values to be signed by the CA.
+See the
+.Sx SPKAC FORMAT
+section for information on the required format.
+.It Fl ss_cert Ar filename
+A single self-signed certificate to be signed by the CA.
+.It Fl startdate Ar date
+This allows the start date to be explicitly set.
+The format of the date is YYMMDDHHMMSSZ
+.Pq the same as an ASN1 UTCTime structure .
 .It Fl status Ar serial
 Show status of certificate with serial number
 .Ar serial .
 .It Fl updatedb
 Update database for expired certificates.
-.It Fl engine Ar id
-Specifying an engine (by it's unique
-.Ar id
-string) will cause
-.Nm ca
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed.
-The engine will then be set as the default for all available algorithms.
+.It Fl verbose
+This prints extra details about the operations being performed.
 .El
 .Sh CRL OPTIONS
 .Bl -tag -width "XXXX"
-.It Fl gencrl
-This option generates a CRL based on information in the index file.
-.It Fl crldays Ar num
-The number of days before the next CRL is due.
-This is the days from now to place in the CRL
-.Em nextUpdate
-field.
-.It Fl crlhours Ar num
-The number of hours before the next CRL is due.
-.It Fl revoke Ar filename
-A
-.Ar filename
-containing a certificate to revoke.
+.It Fl crl_CA_compromise Ar time
+This is the same as
+.Fl crl_compromise ,
+except the revocation reason is set to CACompromise.
+.It Fl crl_compromise Ar time
+This sets the revocation reason to keyCompromise and the compromise time to
+.Ar time .
+.Ar time
+should be in GeneralizedTime format, i.e. YYYYMMDDHHMMSSZ.
+.It Fl crl_hold Ar instruction
+This sets the CRL revocation reason code to certificateHold and the hold
+instruction to
+.Ar instruction
+which must be an OID.
+Although any OID can be used, only holdInstructionNone
+(the use of which is discouraged by RFC 2459), holdInstructionCallIssuer or
+holdInstructionReject will normally be used.
 .It Fl crl_reason Ar reason
 Revocation reason, where
 .Ar reason
@@ -824,33 +828,11 @@ is case insensitive.
 Setting any revocation reason will make the CRL v2.
 In practice, removeFromCRL is not particularly useful because it is only used
 in delta CRLs which are not currently implemented.
-.It Fl crl_hold Ar instruction
-This sets the CRL revocation reason code to certificateHold and the hold
-instruction to
-.Ar instruction
-which must be an OID.
-Although any OID can be used, only holdInstructionNone
-(the use of which is discouraged by RFC 2459), holdInstructionCallIssuer or
-holdInstructionReject will normally be used.
-.It Fl crl_compromise Ar time
-This sets the revocation reason to keyCompromise and the compromise time to
-.Ar time .
-.Ar time
-should be in GeneralizedTime format, i.e. YYYYMMDDHHMMSSZ.
-.It Fl crl_CA_compromise Ar time
-This is the same as
-.Fl crl_compromise ,
-except the revocation reason is set to CACompromise.
-.It Fl subj Ar arg
-Supersedes the subject name given in the request.
-The
-.Ar arg
-must be formatted as
-.Ar /type0=value0/type1=value1/type2=... ;
-characters may be escaped by
-.Sq \e
-.Pq backslash ,
-no spaces are skipped.
+.It Fl crldays Ar num
+The number of days before the next CRL is due.
+This is the days from now to place in the CRL
+.Em nextUpdate
+field.
 .It Fl crlexts Ar section
 The
 .Ar section
@@ -865,6 +847,24 @@ CRL entry extensions.
 It should be noted that some software
 .Pq for example Netscape
 can't handle V2 CRLs.
+.It Fl crlhours Ar num
+The number of hours before the next CRL is due.
+.It Fl gencrl
+This option generates a CRL based on information in the index file.
+.It Fl revoke Ar filename
+A
+.Ar filename
+containing a certificate to revoke.
+.It Fl subj Ar arg
+Supersedes the subject name given in the request.
+The
+.Ar arg
+must be formatted as
+.Ar /type0=value0/type1=value1/type2=... ;
+characters may be escaped by
+.Sq \e
+.Pq backslash ,
+no spaces are skipped.
 .El
 .Sh CA CONFIGURATION FILE OPTIONS
 The section of the configuration file containing options for
@@ -903,51 +903,52 @@ the configuration file or the command line equivalent
 .Pq if any
 used.
 .Bl -tag -width "XXXX"
-.It Ar oid_file
-This specifies a file containing additional OBJECT IDENTIFIERS.
-Each line of the file should consist of the numerical form of the
-object identifier followed by whitespace, then the short name followed
-by whitespace and finally the long name.
-.It Ar oid_section
-This specifies a section in the configuration file containing extra
-object identifiers.
-Each line should consist of the short name of the object identifier
-followed by
-.Sq =
-and the numerical form.
-The short and long names are the same when this option is used.
-.It Ar new_certs_dir
-The same as the
-.Fl outdir
-command line option.
-It specifies the directory where new certificates will be placed.
-Mandatory.
 .It Ar certificate
 The same as
 .Fl cert .
 It gives the file containing the CA certificate.
 Mandatory.
-.It Ar private_key
-Same as the
-.Fl keyfile
-option.
-The file containing the CA private key.
+.It Ar copy_extensions
+Determines how extensions in certificate requests should be handled.
+If set to
+.Ar none
+or this option is not present, then extensions are
+ignored and not copied to the certificate.
+If set to
+.Ar copy ,
+then any extensions present in the request that are not already present
+are copied to the certificate.
+If set to
+.Ar copyall ,
+then all extensions in the request are copied to the certificate:
+if the extension is already present in the certificate it is deleted first.
+See the
+.Sx CA WARNINGS
+section before using this option.
+.Pp
+The main use of this option is to allow a certificate request to supply
+values for certain extensions such as
+.Em subjectAltName .
+.It Ar crl_extensions
+The same as
+.Fl crlexts .
+.It Ar database
+The text database file to use.
 Mandatory.
-.It Ar RANDFILE
-A file used to read and write random number seed information,
-or an EGD socket (see
-.Xr RAND_egd 3 ) .
+This file must be present, though initially it will be empty.
+.It Ar default_crl_hours , default_crl_days
+The same as the
+.Fl crlhours
+and
+.Fl crldays
+options.
+These will only be used if neither command line option is present.
+At least one of these must be present to generate a CRL.
 .It Ar default_days
 The same as the
 .Fl days
 option.
 The number of days to certify a certificate for.
-.It Ar default_startdate
-The same as the
-.Fl startdate
-option.
-The start date to certify a certificate for.
-If not set, the current time is used.
 .It Ar default_enddate
 The same as the
 .Fl enddate
@@ -956,37 +957,18 @@ Either this option or
 .Ar default_days
 .Pq or the command line equivalents
 must be present.
-.It Ar default_crl_hours default_crl_days
-The same as the
-.Fl crlhours
-and the
-.Fl crldays
-options.
-These will only be used if neither command line option is present.
-At least one of these must be present to generate a CRL.
 .It Ar default_md
 The same as the
 .Fl md
 option.
 The message digest to use.
 Mandatory.
-.It Ar database
-The text database file to use.
-Mandatory.
-This file must be present, though initially it will be empty.
-.It Ar serial
-A text file containing the next serial number to use in hex.
-Mandatory.
-This file must be present and contain a valid serial number.
-.It Ar x509_extensions
-The same as
-.Fl extensions .
-.It Ar crl_extensions
-the same as
-.Fl crlexts .
-.It Ar preserve
-The same as
-.Fl preserveDN .
+.It Ar default_startdate
+The same as the
+.Fl startdate
+option.
+The start date to certify a certificate for.
+If not set, the current time is used.
 .It Ar email_in_dn
 The same as
 .Fl noemailDN .
@@ -998,13 +980,6 @@ certificate's DN.
 .It Ar msie_hack
 The same as
 .Fl msie_hack .
-.It Ar policy
-The same as
-.Fl policy .
-Mandatory.
-See the
-.Sx CA POLICY FORMAT
-section for more information.
 .It Ar nameopt , certopt
 These options allow the format used to display the certificate details
 when asking the user to confirm signing.
@@ -1035,27 +1010,52 @@ discouraged because it only displays fields mentioned in the
 .Ar policy
 section,
 mishandles multicharacter string types and does not display extensions.
-.It Ar copy_extensions
-Determines how extensions in certificate requests should be handled.
-If set to
-.Ar none
-or this option is not present, then extensions are
-ignored and not copied to the certificate.
-If set to
-.Ar copy ,
-then any extensions present in the request that are not already present
-are copied to the certificate.
-If set to
-.Ar copyall ,
-then all extensions in the request are copied to the certificate:
-if the extension is already present in the certificate it is deleted first.
+.It Ar new_certs_dir
+The same as the
+.Fl outdir
+command line option.
+It specifies the directory where new certificates will be placed.
+Mandatory.
+.It Ar oid_file
+This specifies a file containing additional object identifiers.
+Each line of the file should consist of the numerical form of the
+object identifier followed by whitespace, then the short name followed
+by whitespace and finally the long name.
+.It Ar oid_section
+This specifies a section in the configuration file containing extra
+object identifiers.
+Each line should consist of the short name of the object identifier
+followed by
+.Sq =
+and the numerical form.
+The short and long names are the same when this option is used.
+.It Ar policy
+The same as
+.Fl policy .
+Mandatory.
 See the
-.Sx CA WARNINGS
-section before using this option.
-.Pp
-The main use of this option is to allow a certificate request to supply
-values for certain extensions such as
-.Em subjectAltName .
+.Sx CA POLICY FORMAT
+section for more information.
+.It Ar preserve
+The same as
+.Fl preserveDN .
+.It Ar private_key
+Same as the
+.Fl keyfile
+option.
+The file containing the CA private key.
+Mandatory.
+.It Ar RANDFILE
+A file used to read and write random number seed information,
+or an EGD socket (see
+.Xr RAND_egd 3 ) .
+.It Ar serial
+A text file containing the next serial number to use in hex.
+Mandatory.
+This file must be present and contain a valid serial number.
+.It Ar x509_extensions
+The same as
+.Fl extensions .
 .El
 .Sh CA POLICY FORMAT
 The policy section consists of a set of variables corresponding to
@@ -1189,7 +1189,7 @@ the location of all files can change either by compile time options,
 configuration file entries, environment variables, or command line options.
 The values below reflect the default values.
 .Bd -literal -offset indent
-/usr/local/ssl/lib/openssl.cnf - master configuration file
+/etc/ssl/openssl.cnf           - master configuration file
 \&./demoCA                       - main CA directory
 \&./demoCA/cacert.pem            - CA certificate
 \&./demoCA/private/cakey.pem     - CA private key
@@ -1726,7 +1726,7 @@ Print out the CRL in text form.
 Don't output the encoded version of the CRL.
 .It Fl hash
 Output a hash of the issuer name.
-This can be used to lookup CRLs in a directory by issuer name.
+This can be used to look up CRLs in a directory by issuer name.
 .It Fl fingerprint
 Print the CRL fingerprint.
 .It Fl issuer
@@ -2984,7 +2984,7 @@ input and output files and allowing multiple certificate files to be used.
 .Op Fl url Ar URL
 .Oo
 .Fl host
-.Ar hostname Ns : Ns Ar port
+.Ar hostname : Ns Ar port
 .Oc
 .Op Fl path
 .Op Fl CApath Ar dir
@@ -3118,7 +3118,7 @@ Both HTTP and HTTPS
 .Pq SSL/TLS
 URLs can be specified.
 .It Xo
-.Fl host Ar hostname Ns : Ns Ar port ,
+.Fl host Ar hostname : Ns Ar port ,
 .Fl path Ar pathname
 .Xc
 If the
@@ -4311,12 +4311,12 @@ The engine will then be set as the default for all available algorithms.
 .Op Fl rand Ar file ...
 .Oo Xo
 .Fl newkey
-.Ar rsa Ns : Ns Ar bits
+.Ar rsa : Ns Ar bits
 .Xc
 .Oc
 .Oo Xo
 .Fl newkey
-.Ar dsa Ns : Ns Ar file
+.Ar dsa : Ns Ar file
 .Xc
 .Oc
 .Op Fl nodes
@@ -4423,13 +4423,13 @@ Multiple files can be specified separated by a
 .It Fl newkey Ar arg
 This option creates a new certificate request and a new private key.
 The argument takes one of two forms:
-.Ar rsa Ns : Ns Ar nbits ,
+.Ar rsa : Ns Ar nbits ,
 where
 .Ar nbits
 is the number of bits, generates an RSA key
 .Ar nbits
 in size.
-.Ar dsa Ns : Ns Ar filename
+.Ar dsa : Ns Ar filename
 generates a DSA key using the parameters in the file
 .Ar filename .
 .It Fl key Ar filename
@@ -5412,7 +5412,7 @@ which it can be seen agrees with the recovered value above.
 .Nm openssl s_client
 .Bk -words
 .Oo
-.Fl connect Ar host Ns : Ns Ar port
+.Fl connect Ar host : Ns Ar port
 .Oc
 .Op Fl verify Ar depth
 .Op Fl cert Ar filename
@@ -5456,7 +5456,7 @@ useful diagnostic tool for SSL servers.
 The options are as follows:
 .Bl -tag -width "XXXX"
 .It Xo
-.Fl connect Ar host Ns : Ns Ar port
+.Fl connect Ar host : Ns Ar port
 .Xc
 This specifies the
 .Ar host
@@ -6617,7 +6617,7 @@ Use EVP
 Time decryption instead of encryption
 .Pq only EVP .
 .It Fl mr
-Produce machine readable ouput.
+Produce machine readable output.
 .It Fl multi Ar number
 Run
 .Ar number
@@ -7305,7 +7305,7 @@ Print OCSP hash values for the subject name and public key.
 This option prints out the value of the modulus of the public key
 contained in the certificate.
 .It Fl pubkey
-Ouput the public key.
+Output the public key.
 .It Fl serial
 Outputs the certificate serial number.
 .It Fl hash
