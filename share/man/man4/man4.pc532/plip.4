@@ -1,4 +1,4 @@
-.\"	$NetBSD: plip.4,v 1.2 1995/06/27 18:11:07 phil Exp $
+.\"	$NetBSD: plip.4,v 1.3 1995/11/28 08:03:31 jtc Exp $
 .\"
 .\" Copyright (c) 1994 Matthias Pfaller.
 .\" All rights reserved.
@@ -38,6 +38,7 @@
 .Sh SYNOPSIS
 .Cd "options PLIP"
 .Cd "options COMPAT_PLIP10"
+.Cd "options COMPAT_PLIP11"
 .Sh DESCRIPTION
 The
 .Nm
@@ -48,6 +49,10 @@ the link0 flag with
 .Xr ifconfig 8
 or in your /etc/hostname.plip? file. In order to use the 1.0 protocol
 the kernel has to be compiled with COMPAT_PLIP10.
+.br
+The COMPAT_PLIP11 option selects a default MTU of 1486 bytes. This is
+necessary to work around a bug that is present in the plip code for
+Linux 1.1.x and Linux 1.2.x.
 .Sh NOTES
 To connect two computers a "Laplink parallel cabel" is used:
 .sp
@@ -88,5 +93,5 @@ PLIPMXERRS (20) packets caused receive errors in sequence.
 .It "plip?: checksum error"
 A packet with a bad checksum was received.
 .It "plip?: packet > MTU"
-A bogus packet longer then MTU was received.
+A bogus packet longer then the MTU was received.
 .El

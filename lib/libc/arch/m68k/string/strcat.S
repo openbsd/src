@@ -1,4 +1,4 @@
-/*	$NetBSD: rindex.S,v 1.5 1995/11/28 23:40:57 thorpej Exp $	*/
+/*	$NetBSD: strcat.S,v 1.4 1995/11/28 23:40:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,26 +41,21 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-	RCSID("from: @(#)rindex.s	5.1 (Berkeley) 5/12/90")
+	RCSID("from: @(#)strcpy.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: rindex.S,v 1.5 1995/11/28 23:40:57 thorpej Exp $")
+	RCSID("$NetBSD: strcat.S,v 1.4 1995/11/28 23:40:59 thorpej Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#ifdef STRRCHR
-ENTRY(strrchr)
-#else
-ENTRY(rindex)
-#endif
-	movl	sp@(4),a0		| string
-	movb	sp@(11),d0		| char to look for
-	subl	a1,a1			| clear rindex pointer
-rixloop:
-	cmpb	a0@,d0			| found our char?
-	bne	rixnope			| no, check for null
-	movl	a0,a1			| yes, remember location
-rixnope:
-	tstb	a0@+			| null?
-	bne	rixloop			| no, keep going
-	movl	a1,d0			| return value
+ENTRY(strcat)
+	movl	sp@(8),a0		| a0 = fromaddr
+	movl	sp@(4),d0		| return value is toaddr
+	movl	d0,a1			| a1 = toaddr
+slloop:
+	tstb	a1@+			| null?
+	bne	slloop			| no, keep going
+	subql	#1,a1
+scloop:
+	movb	a0@+,a1@+		| copy a byte
+	bne	scloop			| copied non-null, keep going
 	rts

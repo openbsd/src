@@ -1,3 +1,5 @@
+/*	$NetBSD: strncpy.S,v 1.4 1995/11/28 23:41:05 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,13 +37,15 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	.text
-	/*.asciz "from: @(#)strncpy.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: strncpy.S,v 1.1.1.1 1995/10/18 08:41:31 deraadt Exp $"
-#endif /* LIBC_SCCS and not lint */
-
 #include "DEFS.h"
+
+#if defined(LIBC_SCCS) && !defined(lint)
+#if 0
+	RCSID("from: @(#)strncpy.s	5.1 (Berkeley) 5/12/90")
+#else
+	RCSID("$NetBSD: strncpy.S,v 1.4 1995/11/28 23:41:05 thorpej Exp $")
+#endif
+#endif /* LIBC_SCCS and not lint */
 
 ENTRY(strncpy)
 	movl	sp@(4),d0		| return value is toaddr

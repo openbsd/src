@@ -1,3 +1,5 @@
+/*	$NetBSD: swab.S,v 1.4 1995/11/17 20:21:28 thorpej Exp $	*/
+
 #include "DEFS.h"
 
 ENTRY(swab)
