@@ -71,6 +71,7 @@ pmap_set(program, version, protocol, port)
 
 	if (get_myaddress(&myaddress) != 0)
 		return (FALSE);
+	myaddress.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 	client = clntudp_bufcreate(&myaddress, PMAPPROG, PMAPVERS,
 	    timeout, &socket, RPCSMALLMSGSIZE, RPCSMALLMSGSIZE);
 	if (client == (CLIENT *)NULL)
@@ -106,6 +107,7 @@ pmap_unset(program, version)
 
 	if (get_myaddress(&myaddress) != 0)
 		return (FALSE);
+	myaddress.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 	client = clntudp_bufcreate(&myaddress, PMAPPROG, PMAPVERS,
 	    timeout, &socket, RPCSMALLMSGSIZE, RPCSMALLMSGSIZE);
 	if (client == (CLIENT *)NULL)
