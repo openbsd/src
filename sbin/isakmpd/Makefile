@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.17 1999/05/01 22:56:54 niklas Exp $
-#	$EOM: Makefile,v 1.51 1999/05/01 20:21:05 niklas Exp $
+#	$OpenBSD: Makefile,v 1.18 1999/07/07 22:07:33 niklas Exp $
+#	$EOM: Makefile,v 1.54 1999/06/07 00:00:49 ho Exp $
 
 #
 # Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -67,7 +67,7 @@ CLEANFILES=	exchange_num.c exchange_num.h ipsec_num.c ipsec_num.h \
 		isakmp_fld.c isakmp_fld.h
 MAN=		isakmpd.8 isakmpd.conf.5
 CFLAGS+=	-Wall -DNEED_SYSDEP_APP \
-		-I${.CURDIR} -I${.CURDIR}/sysdep/${OS} -I. \
+		-I${.CURDIR} -I${.CURDIR}/sysdep/${OS} -I.
 
 # Different debugging & profiling suggestions
 
