@@ -40,13 +40,15 @@
  *      @(#)ffs_vfsops.c        8.14 (Berkeley) 11/28/94
  */
 
-#include <unistd.h>
-#include <fcntl.h>
 #include <sys/param.h>
 #include <sys/mount.h>
-#include <fstab.h>
 #include <ufs/ext2fs/ext2fs.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+#include <fcntl.h>
+#include <fstab.h>
 
 int		e2fs_df __P((int, char *, struct statfs *));
 

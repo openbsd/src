@@ -42,12 +42,15 @@ static char copyright[] =
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
-#include <unistd.h>
-#include <fcntl.h>
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
+
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+#include <fcntl.h>
 
 int		ffs_df __P((int, char *, struct statfs *));
 

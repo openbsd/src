@@ -37,14 +37,18 @@
  *      @(#)lfs_vfsops.c        8.20 (Berkeley) 6/10/95
  */
 
-#include <unistd.h>
-#include <fcntl.h>
 #include <sys/param.h>
 #include <sys/mount.h>
-#include <fstab.h>
+
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/lfs/lfs.h>
+
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+#include <fcntl.h>
+#include <fstab.h>
 
 int		lfs_df __P((int, char *, struct statfs *));
 
