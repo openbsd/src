@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.111 2004/05/30 21:48:24 jmc Exp $
+.\" $OpenBSD: pfctl.8,v 1.112 2004/06/21 20:47:11 msf Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -36,7 +36,7 @@
 .Op Fl AdeghNnOqRrvz
 .Xo
 .Oo Fl a Ar anchor
-.Op Ns : Ns Ar ruleset Oc
+.Op Ns / Ns Ar ruleset Oc
 .Xc
 .Xo
 .Oo Fl D
@@ -111,7 +111,7 @@ Load only the queue rules present in the rule file.
 Other rules and options are ignored.
 .It Xo
 .Fl a Ar anchor
-.Op Ns : Ns Ar ruleset
+.Op Ns / Ns Ar ruleset
 .Xc
 Apply flags
 .Fl f ,
@@ -143,7 +143,7 @@ statements in the
 .Xr pf.conf 5
 file that is loaded in the anchor, or by using regular table commands as in:
 .Bd -literal -offset indent
-# pfctl -a foo:bar -t mytable -T add 1.2.3.4 5.6.7.8
+# pfctl -a foo/bar -t mytable -T add 1.2.3.4 5.6.7.8
 .Ed
 .Pp
 When a rule referring to a table is loaded in an anchor, the rule will use the
