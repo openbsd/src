@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioctl.c,v 1.6 2002/02/16 21:27:44 millert Exp $	*/
+/*	$OpenBSD: audioctl.c,v 1.7 2002/12/10 09:03:37 pvalchev Exp $	*/
 /*	$NetBSD: audioctl.c,v 1.14 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -36,6 +36,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * audioctl(1) - a program to control audio device.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -55,8 +59,6 @@ void usage(void);
 int main(int argc, char **argv);
 
 FILE *out = stdout;
-
-char *prog;
 
 audio_device_t adev;
 
@@ -174,20 +176,17 @@ static struct {
 };
 
 struct field *
-findfield(name)
-	char *name;
+findfield(char *name)
 {
 	int i;
 	for(i = 0; fields[i].name; i++)
 		if (strcmp(fields[i].name, name) == 0)
 			return &fields[i];
-	return 0;
+	return (0);
 }
 
 void
-prfield(p, sep)
-	struct field *p;
-	char *sep;
+prfield(struct field *p, char *sep)
 {
 	u_int v;
 	char *cm;
@@ -252,9 +251,7 @@ prfield(p, sep)
 }
 
 void
-rdfield(p, q)
-	struct field *p;
-	char *q;
+rdfield(struct field *p, char *q)
 {
 	int i;
 	u_int u;
@@ -291,24 +288,22 @@ rdfield(p, q)
 }
 
 void
-getinfo(fd)
-	int fd;
+getinfo(int fd)
 {
-	int pos, i;
+	int pos = 0, i = 0;
 
 	if (ioctl(fd, AUDIO_GETDEV, &adev) < 0)
 		err(1, "AUDIO_GETDEV");
-	for(pos = 0, i = 0; ; i++) {
-		audio_encoding_t enc;
-		enc.index = i;
-		if (ioctl(fd, AUDIO_GETENC, &enc) < 0)
-			break;
-		if (pos)
-			encbuf[pos++] = ',';
-		sprintf(encbuf+pos, "%s:%d%s", enc.name, 
-			enc.precision, 
-			enc.flags & AUDIO_ENCODINGFLAG_EMULATED ? "*" : "");
-		pos += strlen(encbuf+pos);
+	for(;;) {
+	       audio_encoding_t enc;
+	       enc.index = i++;
+	       if (ioctl(fd, AUDIO_GETENC, &enc) < 0)
+		       break;
+	       if (pos)
+		       encbuf[pos++] = ',';
+	       pos += snprintf(encbuf+pos, sizeof(encbuf)-pos, "%s:%d%s",
+			       enc.name, enc.precision,
+	            	       enc.flags & AUDIO_ENCODINGFLAG_EMULATED ? "*" : "");
 	}
 	if (ioctl(fd, AUDIO_GETFD, &fullduplex) < 0)
 		err(1, "AUDIO_GETFD");
@@ -321,18 +316,21 @@ getinfo(fd)
 }
 
 void
-usage()
+usage(void)
 {
-	fprintf(out, "%s [-n] [-f file] -a\n", prog);
-	fprintf(out, "%s [-n] [-f file] name [...]\n", prog);
-	fprintf(out, "%s [-n] [-f file] -w name=value [...]\n", prog);
+	extern char *__progname;		/* from crt0.o */
+
+	fprintf(stderr,
+	    "usage: %s [-f file] [-n] -a\n"
+	    "       %s [-f file] [-n] name [...]\n"
+	    "       %s [-f file] [-n] -w name=value [...]\n", __progname,
+		__progname, __progname);
+
 	exit(1);
 }
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int fd, i, ch;
 	int aflag = 0, wflag = 0;
@@ -340,11 +338,8 @@ main(argc, argv)
 	char *file;
 	char *sep = "=";
     
-	file = getenv("AUDIOCTLDEVICE");
-	if (file == 0)
+	if ((file = getenv("AUDIOCTLDEVICE")) == 0 || *file == '\0')
 		file = "/dev/audioctl";
-
-	prog = *argv;
     
 	while ((ch = getopt(argc, argv, "af:nw")) != -1) {
 		switch(ch) {
@@ -368,10 +363,7 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
     
-	fd = open(file, O_WRONLY);
-	if (fd < 0)
-		fd = open(file, O_RDONLY);
-	if (fd < 0)
+	if ((fd = open(file, wflag ? O_RDWR : O_RDONLY)) < 0)
 		err(1, "%s", file);
     
 	/* Check if stdout is the same device as the audio device. */
@@ -388,7 +380,7 @@ main(argc, argv)
 	if (!wflag)
 		getinfo(fd);
 
-	if (argc == 0 && aflag && !wflag) {
+	if (!argc && aflag && !wflag) {
 		for(i = 0; fields[i].name; i++) {
 			if (!(fields[i].flags & ALIAS)) {
 				prfield(&fields[i], sep);
@@ -402,8 +394,7 @@ main(argc, argv)
 			while(argc--) {
 				char *q;
 		
-				q = strchr(*argv, '=');
-				if (q) {
+				if (q = strchr(*argv, '=')) {
 					*q++ = 0;
 					p = findfield(*argv);
 					if (p == 0)
