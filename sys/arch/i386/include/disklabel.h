@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.24 2002/03/14 01:26:33 millert Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.25 2003/01/06 01:31:42 weingart Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.3 1996/03/09 20:52:54 ghudson Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 /* DOS partition table -- located in boot block */
 #define	DOSBBSECTOR	0		/* DOS boot block relative sector # */
 #define	DOSPARTOFF	446
+#define	DOSDISKOFF	444
 #define	NDOSPART	4
 #define	DOSACTIVE	0x80		/* active partition */
 
