@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.78 2005/01/15 08:23:50 jolan Exp $	*/
+/*	$OpenBSD: theo.c,v 1.79 2005/03/02 17:26:53 jolan Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -167,7 +167,8 @@ static const char *talk[] = {
 	"the default configuration is a mixture of piss, puke, shit, and bloody entrails.",
 	"Stop wasting your time reading people's licenses.",
 	"doing it with environment variables is OH SO SYSTEM FIVE LIKE OH MY GOD PASS ME THE SPOON",
-	"Linux is fucking POO, not just bad, bad REALLY REALLY BAD"
+	"Linux is fucking POO, not just bad, bad REALLY REALLY BAD",
+	"openbsd development is slow because lots of developers have shrunken balls"
 };
 
 static const int ntalk = sizeof(talk)/sizeof(talk[0]);
