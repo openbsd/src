@@ -36,7 +36,7 @@
  * x d . c   x y l o g i c s   7 5 3 / 7 0 5 3   v m e / s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $Id: xd.c,v 1.4 1996/01/12 23:09:08 chuck Exp $
+ * id: $Id: xd.c,v 1.5 1996/01/13 03:45:01 chuck Exp $
  * started: 27-Feb-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -388,7 +388,7 @@ xdcattach(parent, self, aux)
 	 * into our xdc_softc. */
 
 	ca->ca_ra.ra_vaddr = mapiodev(ca->ca_ra.ra_reg, 0,
-	    ca->ca_ra.ra_len, ca->ca_bustype);
+	    sizeof(struct xdc), ca->ca_bustype);
 
 	xdc->xdc = (struct xdc *) ca->ca_ra.ra_vaddr;
 	pri = ca->ca_ra.ra_intr[0].int_pri;
@@ -408,6 +408,7 @@ xdcattach(parent, self, aux)
 	xdc->dvmaiopb = (struct xd_iopb *)
 	    dvma_malloc(XDC_MAXIOPB * sizeof(struct xd_iopb), &xdc->iopbase,
 			M_NOWAIT);
+	xdc->iopbase = xdc->dvmaiopb; /* XXX TMP HACK */
 	bzero(xdc->iopbase, XDC_MAXIOPB * sizeof(struct xd_iopb));
 	/* Setup device view of DVMA address */
 	xdc->dvmaiopb = (struct xd_iopb *) ((u_long) xdc->iopbase - DVMA_BASE);
@@ -652,6 +653,9 @@ xdattach(parent, self, aux)
 	newstate = XD_DRIVE_NOLABEL;
 
 	xd->hw_spt = spt;
+	/* Attach the disk: must be before getdisklabel to malloc label */
+	disk_attach(&xd->sc_dk);
+
 	if (xdgetdisklabel(xd, xa->buf) != XD_ERR_AOK)
 		goto done;
 
@@ -717,9 +721,6 @@ xdattach(parent, self, aux)
 						xd->xd_drive == bp->val[0])
 			bootdv = &xd->sc_dev;
 	}
-
-	/* Attach the disk. */
-	disk_attach(&xd->sc_dk);
 
 	dk_establish(&xd->sc_dk, &xd->sc_dev);		/* XXX */
 

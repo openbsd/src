@@ -36,7 +36,7 @@
  * x y . c   x y l o g i c s   4 5 0 / 4 5 1   s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $Id: xy.c,v 1.4 1996/01/12 23:09:10 chuck Exp $
+ * id: $Id: xy.c,v 1.5 1996/01/13 03:45:03 chuck Exp $
  * started: 14-Sep-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -331,7 +331,7 @@ xycattach(parent, self, aux)
 	 * into our xyc_softc. */
 
 	ca->ca_ra.ra_vaddr = mapiodev(ca->ca_ra.ra_reg, 0,
-	    ca->ca_ra.ra_len, ca->ca_bustype);
+	    sizeof(struct xyc), ca->ca_bustype);
 
 	xyc->xyc = (struct xyc *) ca->ca_ra.ra_vaddr;
 	pri = ca->ca_ra.ra_intr[0].int_pri;
@@ -366,6 +366,7 @@ xycattach(parent, self, aux)
 	}
 	bzero(tmp, pbsz);
 	xyc->iopbase = tmp;
+	xyc->iopbase = dtmp; /* XXX TMP HACK */
 	xyc->dvmaiopb = (struct xy_iopb *) ((u_long)dtmp - DVMA_BASE);
 	xyc->reqs = (struct xy_iorq *)
 	    malloc(XYC_MAXIOPB * sizeof(struct xy_iorq), M_DEVBUF, M_NOWAIT);
@@ -586,6 +587,9 @@ xyattach(parent, self, aux)
 	newstate = XY_DRIVE_NOLABEL;
 
 	xy->hw_spt = spt = 0; /* XXX needed ? */
+	/* Attach the disk: must be before getdisklabel to malloc label */
+	disk_attach(&xy->sc_dk);
+
 	if (xygetdisklabel(xy, xa->buf) != XY_ERR_AOK)
 		goto done;
 
@@ -681,9 +685,6 @@ xyattach(parent, self, aux)
 						xy->xy_drive == bp->val[0])
 			bootdv = &xy->sc_dev;
 	}
-
-	/* Attach the disk. */
-	disk_attach(&xy->sc_dk);
 
 	dk_establish(&xy->sc_dk, &xy->sc_dev);		/* XXX */
 
