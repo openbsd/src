@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.17 1998/12/16 19:55:57 millert Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.18 1998/12/17 17:19:49 millert Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #endif
-static char rcsid[] = "$OpenBSD: xinstall.c,v 1.17 1998/12/16 19:55:57 millert Exp $";
+static char rcsid[] = "$OpenBSD: xinstall.c,v 1.18 1998/12/17 17:19:49 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -89,7 +89,7 @@ void	strip __P((char *));
 void	usage __P((void));
 int	create_newfile __P((char *, struct stat *));
 int	create_tempfile __P((char *, char *, size_t));
-int	file_write __P((int, char *, register int, int *, int *, int));
+int	file_write __P((int, char *, register size_t, int *, int *, int));
 
 int
 main(argc, argv)
@@ -391,7 +391,8 @@ install(from_name, to_name, fset, flags)
 	}
 
 	(void)close(to_fd);
-	(void)close(from_fd);
+	if (!devnull)
+		(void)close(from_fd);
 }
 
 /*
@@ -405,7 +406,7 @@ copy(from_fd, from_name, to_fd, to_name, size, sparse)
 	off_t size;
 	int sparse;
 {
-	register int nr, nw;
+	register ssize_t nr, nw;
 	int serrno;
 	char *p, buf[MAXBSIZE];
 
@@ -532,6 +533,10 @@ strip(to_name)
 {
 	int serrno, status;
 	char *path_strip;
+
+#ifdef __GNUC__				/* XXX: to shut up gcc warnings */
+        (void)&path_strip;
+#endif
 
 	if (issetugid() || (path_strip = getenv("STRIP")) == NULL)
 		path_strip = _PATH_STRIP;
@@ -696,14 +701,14 @@ int
 file_write(fd, str, cnt, rem, isempt, sz)
 	int fd;
 	char *str;
-	register int cnt;
+	register size_t cnt;
 	int *rem;
 	int *isempt;
 	int sz;
 {
 	register char *pt;
 	register char *end;
-	register int wcnt;
+	register size_t wcnt;
 	register char *st = str;
 
 	/*
