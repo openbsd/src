@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fgetln.3,v 1.10 2003/06/02 20:18:37 millert Exp $
+.\"	$OpenBSD: fgetln.3,v 1.11 2004/08/20 18:17:35 millert Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -133,6 +133,7 @@ temporary buffer:
 		if (buf[len - 1] == '\en')
 			buf[len - 1] = '\e0';
 		else {
+			/* EOF without EOL, copy and add the NUL */
 			if ((lbuf = (char *)malloc(len + 1)) == NULL)
 				err(1, NULL);
 			memcpy(lbuf, buf, len);
@@ -140,10 +141,6 @@ temporary buffer:
 			buf = lbuf;
 		}
 		printf("%s\en", buf);
-
-		if (lbuf != NULL) {
-			free(lbuf);
-			lbuf = NULL;
-		}
 	}
+	free(lbuf);
 .Ed
