@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.12 1996/09/22 09:02:33 downsj Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.13 1996/11/06 09:43:10 niklas Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -413,9 +413,12 @@ wdc_ata_start(wdc, xfer)
 		else if (d_link->sc_mode != WDM_DMA)
 			nblks = xfer->c_bcount / d_link->sc_lp->d_secsize;
 		else
-#endif
 			nblks =
 			    min(xfer->c_bcount / d_link->sc_lp->d_secsize, 8);
+#else
+		else
+			nblks = xfer->c_bcount / d_link->sc_lp->d_secsize;
+#endif
 
 		/* Check for bad sectors and adjust transfer, if necessary. */
 		if ((d_link->sc_lp->d_flags & D_BADSECT) != 0
