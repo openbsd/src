@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_ctl.c,v 1.4 1996/09/27 01:52:01 bitblt Exp $	*/
+/*	$OpenBSD: procfs_ctl.c,v 1.5 1996/10/14 09:27:54 deraadt Exp $	*/
 /*	$NetBSD: procfs_ctl.c,v 1.14 1996/02/09 22:40:48 christos Exp $	*/
 
 /*
@@ -102,6 +102,11 @@ static vfs_namemap_t signames[] = {
 
 static int procfs_control __P((struct proc *, struct proc *, int));
 
+/* Macros to clear/set/test flags. */
+#define	SET(t, f)	(t) |= (f)
+#define	CLR(t, f)	(t) &= ~(f)
+#define	ISSET(t, f)	((t) & (f))
+
 static int
 procfs_control(curp, p, op)
 	struct proc *curp;
@@ -115,14 +120,30 @@ procfs_control(curp, p, op)
 	 * by the calling process.
 	 */
 	if (op == PROCFS_CTL_ATTACH) {
-		/* check whether already being traced */
-		if (p->p_flag & P_TRACED)
-			return (EBUSY);
-
 		/* can't trace yourself! */
 		if (p->p_pid == curp->p_pid)
 			return (EINVAL);
 
+		/* check whether already being traced */
+		if (p->p_flag & P_TRACED)
+			return (EBUSY);
+
+		/*
+		 * it's not owned by you, or the last exec gave us
+		 * setuid/setgid privs (unless you're root),
+		 */
+		if ((p->p_cred->p_ruid != curp->p_cred->p_ruid ||
+			ISSET(p->p_flag, P_SUGID)) &&
+		    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
+			return (error);
+
+		/*
+		 * ...it's init, which controls the security level
+		 * -1 -- permanently insecure
+		 *  0 -- insecure/single-user
+		 */
+		if ((p->p_pid) == 1 && (securelevel > -1))
+			return (EPERM);
 
 		/*
 		 * Go ahead and set the trace flag.
