@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.126 2001/06/05 06:38:07 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.127 2001/06/05 09:21:38 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -899,7 +899,8 @@ tdb_init(struct tdb *tdbp, u_int16_t alg, struct ipsecinit *ii)
 	  err = (*(xsp->xf_init))(tdbp, xsp, ii);
 
 	  /* Clear possible pending acquires */
-	  ipsp_clear_acquire(tdbp);
+	  if (!err)
+	    ipsp_clear_acquire(tdbp);
 
 	  return err;
       }
