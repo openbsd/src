@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.17 2002/08/27 22:07:36 mickey Exp $
+ * $OpenBSD: calendar.history,v 1.18 2002/08/27 22:22:43 mickey Exp $
  */
 
 #ifndef _calendar_history_
@@ -31,6 +31,8 @@
 01/20	St. Agnes Eve (Ah, bitter chill it was...)
 01/24	Eskimo Pie patented by Christian Nelson, 1922
 01/24	Gold discovered in California at Sutter's Mill, 1848
+01/24	A B-52 bomber carrying two 24 megaton bombs crashes at Goldsboro,
+	North Carolina; 5 of 6 safety devices failed on one of them, 1961
 01/26	Sydney Aust. settled, 1788
 01/27	Grissom, White and Chaffe burned to death in Apollo 1, 1967
 01/27	Vietnam War cease-fire signed, 1973
@@ -149,6 +151,10 @@
 05/30	US Marines sent to Nicaragua, 1912
 06/02	Native Americans "granted" citizenship, 1924
 06/03	Last Star Trek episode first aired ("Turnabout Intruder"), 1969
+06/03	A 46-cent computer chip fails, causing the mistaken detection
+	of a Soviet missile attack by the NORAD system. About a 100 B-52
+	bombers were readied for take off along with the President's
+	airborne command post before the error is detected, 1980
 06/05	Robert Kennedy assassinated, 1968
 06/05	US leaves the Gold Standard, 1933
 06/06	First drive-in movie, 1933
