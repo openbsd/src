@@ -2119,7 +2119,6 @@
 ./usr/share/sendmail/cf/generic-nextstep3.3.mc
 ./usr/share/sendmail/cf/generic-osf1.mc
 ./usr/share/sendmail/cf/generic-solaris.mc
-./usr/share/sendmail/cf/generic-solaris2.mc
 ./usr/share/sendmail/cf/generic-sunos4.1.mc
 ./usr/share/sendmail/cf/generic-ultrix4.mc
 ./usr/share/sendmail/cf/huginn.cs.mc
