@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.39 2004/12/07 17:10:56 tedu Exp $	*/
+/*	$OpenBSD: file.c,v 1.40 2004/12/07 18:14:04 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -615,10 +615,10 @@ cvs_file_getdir(CVSFILE *cf, int flags)
 		}
 	} while (ret > 0);
 
-#if 1
-	cvs_ent_close(cdp->cd_ent);
-	cdp->cd_ent = NULL;
-#endif
+	if (cdp->cd_ent != NULL) {
+		cvs_ent_close(cdp->cd_ent);
+		cdp->cd_ent = NULL;
+	}
 
 	if (flags & CF_SORT) {
 		cvs_file_sort(&(cdp->cd_files), cdp->cd_nfiles);
