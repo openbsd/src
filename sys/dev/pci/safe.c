@@ -1,4 +1,4 @@
-/*	$OpenBSD: safe.c,v 1.9 2003/08/20 22:23:13 jason Exp $	*/
+/*	$OpenBSD: safe.c,v 1.10 2003/08/22 19:11:22 jason Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -2026,8 +2026,8 @@ safe_kpoll(void *vsc)
 	bzero(buf, sizeof(buf));
 	bzero(res->crp_p, (res->crp_nbits + 7) / 8);
 	for (i = 0; i < sc->sc_pk_reslen >> 2; i++)
-		buf[i] = READ_REG(sc, SAFE_PK_RAM_START + sc->sc_pk_resoff +
-		    (i << 2));
+		buf[i] = letoh32(READ_REG(sc, SAFE_PK_RAM_START +
+		    sc->sc_pk_resoff + (i << 2)));
 	bcopy(buf, res->crp_p, (res->crp_nbits + 7) / 8);
 	res->crp_nbits = sc->sc_pk_reslen * 8;
 	res->crp_nbits = safe_ksigbits(res);
@@ -2054,7 +2054,8 @@ safe_kload_reg(struct safe_softc *sc, u_int32_t off, u_int32_t len,
 	bcopy(n->crp_p, buf, (n->crp_nbits + 7) / 8);
 
 	for (i = 0; i < len >> 2; i++)
-		WRITE_REG(sc, SAFE_PK_RAM_START + off + (i << 2), buf[i]);
+		WRITE_REG(sc, SAFE_PK_RAM_START + off + (i << 2),
+		    htole32(buf[i]));
 }
 
 #ifdef SAFE_DEBUG
