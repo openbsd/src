@@ -1,0 +1,1 @@
+rdr on ne0 proto tcp from any to 1.2.3.4/32 port 2222 -> 10.0.0.10 port 22   
