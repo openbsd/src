@@ -1,8 +1,8 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.120 2002/03/04 19:57:01 millert Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.121 2002/03/09 19:02:28 millert Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
-. preserve
+. nochange
 
 # ./altroot
 altroot
