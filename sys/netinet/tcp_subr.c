@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.77 2004/03/02 12:51:12 markus Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.78 2004/04/26 18:12:25 frantzen Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -1018,8 +1018,10 @@ tcp_mtudisc(inp, errno)
 {
 	struct tcpcb *tp = intotcpcb(inp);
 	struct rtentry *rt = in_pcbrtentry(inp);
+	int change = 0;
 
 	if (tp != 0) {
+		int orig_maxseg = tp->t_maxseg;
 		if (rt != 0) {
 			/*
 			 * If this was not a host route, remove and realloc.
@@ -1029,18 +1031,18 @@ tcp_mtudisc(inp, errno)
 				if ((rt = in_pcbrtentry(inp)) == 0)
 					return;
 			}
-
-			if (rt->rt_rmx.rmx_mtu != 0) {
-				/* also takes care of congestion window */
-				tcp_mss(tp, -1);
-			}
+			if (orig_maxseg != tp->t_maxseg ||
+			    (rt->rt_rmx.rmx_locks & RTV_MTU))
+				change = 1;
 		}
+		tcp_mss(tp, -1);
 
 		/*
-		 * Resend unacknowledged packets.
+		 * Resend unacknowledged packets
 		 */
 		tp->snd_nxt = tp->snd_una;
-		tcp_output(tp);
+		if (change || errno > 0)
+			tcp_output(tp);
 	}
 }
 
