@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.25 2002/06/09 05:53:54 todd Exp $
+dnl	$OpenBSD: hardware,v 1.26 2002/06/30 16:36:55 miod Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -64,7 +64,7 @@ Supported hardware:
 		ISA IDE controller on the EB164.
 		ISA devices that require DMA operation.
 
-    Alphastation 500 and 600
+    AlphaServer 800, 1000 and 1000A
 	  Supported devices:
 		Built-in serial and parallel ports.
 		Built-in DEC21040 ethernet.
@@ -77,7 +77,20 @@ Supported hardware:
 		Built-in audio.
 		ISA and EISA devices that require DMA operation.
 
-    Alphastation 200, 250, 255 and 400
+    AlphaStation 500 and 600
+	  Supported devices:
+		Built-in serial and parallel ports.
+		Built-in DEC21040 ethernet.
+		Built-in ISP SCSI.
+		PCI graphics card (TGA or VGA compatible).
+		Most PCI devices (see below).
+		Some ISA and EISA devices (see below).
+	  Unsupported devices:
+		Floppy drive.
+		Built-in audio.
+		ISA and EISA devices that require DMA operation.
+
+    AlphaStation 200, 250, 255 and 400
 	  Supported devices:
 		Built-in serial and parallel ports.
 		Built-in DEC21040 ethernet.
@@ -130,10 +143,10 @@ Supported hardware:
 		Other TURBOchannel cards.
 
     At this time none of the following systems are supported:
-	  API UP2000, UP2000+ (mostly because we don't have any to test on)
-	  DECpc AXP150 (2000/300) systems (EISA-bus PC-like systems)
-	  AlphaServer systems, other than models 400 and 500, which seem to
-	    be disguised AlphaStation machines
+	API UP2000, UP2000+ (mostly because we don't have any to test on)
+	DECpc AXP150 (2000/300) systems (EISA-bus PC-like systems)
+	AlphaServer systems, other than models 400 and 500, which seem to
+	  be disguised AlphaStation machines
 	Alpha XL systems
 	DEC 4000, 7000, and 10000 systems (FutureBus+ and XMIBus based)
 	EB64+ based systems
@@ -191,6 +204,8 @@ Supported Peripherals:
 			Accton EN2242 MiniPCI
 			Linksys LNE100TX v4.x
 			Mototech ME316
+		DEC EtherWORKS III adapters, including: [-]
+			DEC DE203, DE204, DE205
 		Digital DC21x4x-based PCI adapters (de), including:
 			Older SMC PCI EtherPower 10, 10/100 (models 8432,
 			  9332, and 9334)
