@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_es.c,v 1.8 1996/05/06 09:21:45 niklas Exp $	*/
-/*	$NetBSD: if_es.c,v 1.12 1996/05/01 15:55:28 mhitch Exp $	*/
+/*	$OpenBSD: if_es.c,v 1.9 1996/05/09 22:40:01 niklas Exp $	*/
+/*	$NetBSD: if_es.c,v 1.13 1996/05/07 00:46:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -110,7 +110,7 @@ void	es_dump_smcregs __P((char *, union smcregs *));
 
 int esintr __P((void *));
 void esstart __P((struct ifnet *));
-void eswatchdog __P((int));
+void eswatchdog __P((struct ifnet *));
 int esioctl __P((struct ifnet *, u_long, caddr_t));
 void esrint __P((struct es_softc *));
 void estint __P((struct es_softc *));
@@ -178,8 +178,8 @@ esattach(parent, self, aux)
 	sc->sc_arpcom.ac_enaddr[5] = (ser      ) & 0xff;
 
 	/* Initialize ifnet structure. */
-	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = es_cd.cd_name;
+	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	ifp->if_softc = sc;
 	ifp->if_output = ether_output;
 	ifp->if_ioctl = esioctl;
 	ifp->if_start = esstart;
@@ -751,7 +751,7 @@ void
 esstart(ifp)
 	struct ifnet *ifp;
 {
-	struct es_softc *sc = es_cd.cd_devs[ifp->if_unit];
+	struct es_softc *sc = ifp->if_softc;
 	union smcregs *smc = sc->sc_base;
 	struct mbuf *m0, *m;
 #ifdef USEPKTBUF
@@ -960,7 +960,7 @@ esioctl(ifp, command, data)
 	u_long command;
 	caddr_t data;
 {
-	struct es_softc *sc = es_cd.cd_devs[ifp->if_unit];
+	struct es_softc *sc = ifp->if_softc;
 	register struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
@@ -1062,10 +1062,10 @@ esreset(sc)
 }
 
 void
-eswatchdog(unit)
-	int unit;
+eswatchdog(ifp)
+	struct ifnet *ifp;
 {
-	struct es_softc *sc = es_cd.cd_devs[unit];
+	struct es_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	++sc->sc_arpcom.ac_if.if_oerrors;

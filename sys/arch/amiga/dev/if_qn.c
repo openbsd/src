@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_qn.c,v 1.7 1996/05/06 08:10:30 mickey Exp $	*/
-/*	$NetBSD: if_qn.c,v 1.5 1996/04/21 21:11:50 veego Exp $	*/
+/*	$OpenBSD: if_qn.c,v 1.8 1996/05/09 22:40:02 niklas Exp $	*/
+/*	$NetBSD: if_qn.c,v 1.6 1996/05/07 00:46:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -156,7 +156,7 @@ void	qnattach __P((struct device *, struct device *, void *));
 int	qnintr __P((void *));
 int	qnioctl __P((struct ifnet *, u_long, caddr_t));
 void	qnstart __P((struct ifnet *));
-void	qnwatchdog __P((int));
+void	qnwatchdog __P((struct ifnet *));
 void	qnreset __P((struct qn_softc *));
 void	qninit __P((struct qn_softc *));
 void	qnstop __P((struct qn_softc *));
@@ -238,8 +238,8 @@ qnattach(parent, self, aux)
 	/* set interface to stopped condition (reset) */
 	qnstop(sc);
 
-	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = qn_cd.cd_name;
+	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	ifp->if_softc = sc;
 	ifp->if_ioctl = qnioctl;
 	ifp->if_watchdog = qnwatchdog;
 	ifp->if_output = ether_output;
@@ -318,10 +318,10 @@ qninit(sc)
  * generate an interrupt after a transmit has been started on it.
  */
 void
-qnwatchdog(unit)
-	int unit;
+qnwatchdog(ifp)
+	struct ifnet *ifp;
 {
-	struct qn_softc *sc = qn_cd.cd_devs[unit];
+	struct qn_softc *sc = ifp->if_softc;
 
 	log(LOG_INFO, "qn: device timeout (watchdog)\n");
 	++sc->sc_arpcom.ac_if.if_oerrors;
@@ -404,7 +404,7 @@ void
 qnstart(ifp)
 	struct ifnet *ifp;
 {
-	struct qn_softc *sc = qn_cd.cd_devs[ifp->if_unit];
+	struct qn_softc *sc = ifp->if_softc;
 	struct mbuf *m;
 	u_short len;
 	int timout = 60000;
@@ -863,7 +863,7 @@ qnioctl(ifp, command, data)
 	u_long command;
 	caddr_t data;
 {
-	struct qn_softc *sc = qn_cd.cd_devs[ifp->if_unit];
+	struct qn_softc *sc = ifp->if_softc;
 	register struct ifaddr *ifa = (struct ifaddr *)data;
 #if 0
 	struct ifreg *ifr = (struct ifreg *)data;

@@ -1,4 +1,9 @@
-/*	$OpenBSD: if_isaed.c,v 1.5 1996/05/05 13:36:46 mickey Exp $	*/
+/*	$OpenBSD: if_isaed.c,v 1.6 1996/05/09 22:41:38 niklas Exp $	*/
+
+/*
+ *	Derived from sys/dev/isa/if.ed.c:
+*	$NetBSD: if_ed.c,v 1.98 1996/05/07 01:55:13 thorpej Exp $
+ */
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -76,6 +81,7 @@ struct ed_softc {
 
 	bus_chipset_tag_t sc_bc;  /* bus identifier */
 	bus_io_handle_t sc_ioh;   /* io handle */
+	bus_io_handle_t sc_delayioh; /* io handle for `delay port' XXX MI? */
 	bus_mem_handle_t sc_memh; /* bus memory handle */
 
 	bus_io_size_t	asic_base;	/* offset of ASIC I/O port */
@@ -127,7 +133,7 @@ int ed_find_Novell __P((struct ed_softc *, struct cfdata *,
 int edintr __P((void *));
 int edioctl __P((struct ifnet *, u_long, caddr_t));
 void edstart __P((struct ifnet *));
-void edwatchdog __P((int));
+void edwatchdog __P((struct ifnet *));
 void edreset __P((struct ed_softc *));
 void edinit __P((struct ed_softc *));
 void edstop __P((struct ed_softc *));
@@ -318,8 +324,6 @@ edprobe(parent, match, aux)
 	void *match, *aux;
 {
 	struct ed_softc *sc = match;
-	struct cfdata *cf = sc->sc_dev.dv_cfdata;
-	struct isa_attach_args *ia = aux;
 
 	return (ed_find(match, sc->sc_dev.dv_cfdata, aux));
 }
@@ -395,6 +399,8 @@ ed_find_WD80x3(sc, cf, ia)
 {
 	bus_chipset_tag_t bc;
 	bus_io_handle_t ioh;
+	/* XXX Read for 1.25 usec delay.  Is this MI?  */
+	bus_io_handle_t delayioh = ia->ia_delayioh;
 	bus_mem_handle_t memh;
 	u_int memsize;
 	u_char iptr, isa16bit, sum;
@@ -403,6 +409,10 @@ ed_find_WD80x3(sc, cf, ia)
 
 	bc = ia->ia_bc;
 	rv = 0;
+
+	/* Set initial values for width/size. */
+	memsize = 8192;
+	isa16bit = 0;
 
 	if (bus_io_map(bc, ia->ia_iobase, ED_WD_IO_PORTS, &ioh))
 		return (0);
@@ -453,9 +463,6 @@ ed_find_WD80x3(sc, cf, ia)
 	sc->vendor = ED_VENDOR_WD_SMC;
 	sc->type = bus_io_read_1(bc, ioh, asicbase + ED_WD_CARD_ID);
 
-	/* Set initial values for width/size. */
-	memsize = 8192;
-	isa16bit = 0;
 	switch (sc->type) {
 	case ED_TYPE_WD8003S:
 		sc->type_str = "WD8003S";
@@ -480,8 +487,8 @@ ed_find_WD80x3(sc, cf, ia)
 		isa16bit = 1;
 		break;
 	case ED_TYPE_WD8013EP:		/* also WD8003EP */
-		if (bus_io_read_1(bc, ioh, asicbase + ED_WD_ICR) &
-		    ED_WD_ICR_16BIT) {
+		if (bus_io_read_1(bc, ioh, asicbase + ED_WD_ICR)
+		    & ED_WD_ICR_16BIT) {
 			isa16bit = 1;
 			memsize = 16384;
 			sc->type_str = "WD8013EP";
@@ -693,7 +700,7 @@ ed_find_WD80x3(sc, cf, ia)
 		    (sc->type == ED_TYPE_TOSHIBA1) ||
 		    (sc->type == ED_TYPE_TOSHIBA4) ||
 #endif
-		    (sc->type == ED_TYPE_WD8013EBT) && !sc->is790) {
+		    ((sc->type == ED_TYPE_WD8013EBT) && !sc->is790)) {
 			sc->wd_laar_proto =
 			    ((ia->ia_maddr >> 19) &
 			    ED_WD_LAAR_ADDRHI);
@@ -732,8 +739,9 @@ ed_find_WD80x3(sc, cf, ia)
 	bus_io_write_1(bc, ioh, asicbase + ED_WD_MSR,
 	    sc->wd_msr_proto | ED_WD_MSR_MENB);
 
-	(void) bus_io_read_1(bc, ioh, 0x84);		/* XXX */
-	(void) bus_io_read_1(bc, ioh, 0x84);		/* XXX */
+	/* XXX 2.5 usec delay.  This code works on i386, but is it MI?  */
+	(void) bus_io_read_1(bc, delayioh, 0);
+	(void) bus_io_read_1(bc, delayioh, 0);
 
 	/* Now zero memory and verify that it is clear. */
 	for (i = 0; i < memsize; ++i)
@@ -751,8 +759,12 @@ ed_find_WD80x3(sc, cf, ia)
 			if (isa16bit)
 				bus_io_write_1(bc, ioh, asicbase + ED_WD_LAAR,
 				    sc->wd_laar_proto);
-			(void) bus_io_read_1(bc, ioh, 0x84);	/* XXX */
-			(void) bus_io_read_1(bc, ioh, 0x84);	/* XXX */
+			/*
+			 * XXX 2.5 usec delay.  This code works on i386,
+			 * but is it MI?
+			 */
+			(void) bus_io_read_1(bc, delayioh, 0);
+			(void) bus_io_read_1(bc, delayioh, 0);
 			goto out;
 		}
 
@@ -768,8 +780,9 @@ ed_find_WD80x3(sc, cf, ia)
 	if (isa16bit)
 		bus_io_write_1(bc, ioh, asicbase + ED_WD_LAAR,
 		    sc->wd_laar_proto);
-	(void) bus_io_read_1(bc, ioh, 0x84);	/* XXX */
-	(void) bus_io_read_1(bc, ioh, 0x84);	/* XXX */
+	/* XXX 2.5 usec delay.  This code works on i386, but is it MI?  */
+	(void) bus_io_read_1(bc, delayioh, 0);
+	(void) bus_io_read_1(bc, delayioh, 0);
 
 	ia->ia_iosize = ED_WD_IO_PORTS;
 	rv = 1;
@@ -810,13 +823,19 @@ ed_find_3Com(sc, cf, ia)
 	bus_chipset_tag_t bc;
 	bus_io_handle_t ioh;
 	bus_mem_handle_t memh;
-	int i, rv, mapped_mem = 0;
+	int i;
 	u_int memsize;
-	u_char isa16bit, sum, x;
+	u_char isa16bit, x;
 	int ptr, asicbase, nicbase;
 
+	/*
+	 * Hmmm...a 16bit 3Com board has 16k of memory, but only an 8k window
+	 * to it.
+	 */
+	memsize = 8192;
+
+
 	bc = ia->ia_bc;
-	rv = 0;
 
 	if (bus_io_map(bc, ia->ia_iobase, ED_WD_IO_PORTS, &ioh))
 		return (0);
@@ -834,28 +853,28 @@ ed_find_3Com(sc, cf, ia)
 	 */
 	x = bus_io_read_1(bc, ioh, asicbase + ED_3COM_BCFR);
 	if (x == 0 || (x & (x - 1)) != 0)
-		goto out;
+		goto err;
 	ptr = ffs(x) - 1;
 	if (ia->ia_iobase != IOBASEUNK) {
 		if (ia->ia_iobase != ed_3com_iobase[ptr]) {
 			printf("%s: %s mismatch; kernel configured %x != board configured %x\n",
 			    "iobase", sc->sc_dev.dv_xname, ia->ia_iobase,
 			    ed_3com_iobase[ptr]);
-			goto out;
+			goto err;
 		}
 	} else
 		ia->ia_iobase = ed_3com_iobase[ptr];	/* XXX --thorpej */
 
 	x = bus_io_read_1(bc, ioh, asicbase + ED_3COM_PCFR);
 	if (x == 0 || (x & (x - 1)) != 0)
-		goto out;
+		goto err;
 	ptr = ffs(x) - 1;
 	if (ia->ia_maddr != MADDRUNK) {
 		if (ia->ia_maddr != ed_3com_maddr[ptr]) {
 			printf("%s: %s mismatch; kernel configured %x != board configured %x\n",
 			    "maddr", sc->sc_dev.dv_xname, ia->ia_maddr,
 			    ed_3com_maddr[ptr]);
-			goto out;
+			goto err;
 		}
 	} else
 		ia->ia_maddr = ed_3com_maddr[ptr];
@@ -871,7 +890,7 @@ ed_find_3Com(sc, cf, ia)
 			printf("%s: irq mismatch; kernel configured %d != board configured %d\n",
 			    sc->sc_dev.dv_xname, ia->ia_irq,
 			    ed_3com_irq[ptr]);
-			goto out;
+			goto err;
 		}
 	} else
 		ia->ia_irq = ed_3com_irq[ptr];
@@ -902,12 +921,6 @@ ed_find_3Com(sc, cf, ia)
 	sc->type_str = "3c503";
 	sc->mem_shared = 1;
 	sc->cr_proto = ED_CR_RD2;
-
-	/*
-	 * Hmmm...a 16bit 3Com board has 16k of memory, but only an 8k window
-	 * to it.
-	 */
-	memsize = 8192;
 
 	/*
 	 * Get station address from on-board ROM.
@@ -955,8 +968,7 @@ ed_find_3Com(sc, cf, ia)
 	    ED_CR_RD2 | ED_CR_PAGE_0 | ED_CR_STP);
 
 	if (bus_mem_map(bc, ia->ia_maddr, memsize, 0, &memh))
-		goto out;
-	mapped_mem = 1;
+		goto err;
 	sc->mem_start = 0;		/* offset */
 	sc->mem_size = memsize;
 	sc->mem_end = sc->mem_start + memsize;
@@ -1056,24 +1068,21 @@ ed_find_3Com(sc, cf, ia)
 
 	ia->ia_msize = memsize;
 	ia->ia_iosize = ED_3COM_IO_PORTS;
-	rv = 1;
 
- out:
 	/*
 	 * XXX Sould always unmap, but we can't yet.
 	 * XXX Need to squish "indirect" first.
 	 */
-	if (rv == 0) {
-		bus_io_unmap(bc, ioh, ED_3COM_IO_PORTS);
-		if (mapped_mem)
-			bus_mem_unmap(bc, memh, memsize);
-	} else {
-		/* XXX this is all "indirect" brokenness */
-		sc->sc_bc = bc;
-		sc->sc_ioh = ioh;
-		sc->sc_memh = memh;
-	}
-	return (rv);
+	sc->sc_bc = bc;
+	sc->sc_ioh = ioh;
+	sc->sc_memh = memh;
+	return 1;
+
+ out:
+	bus_mem_unmap(bc, memh, memsize);
+ err:
+	bus_io_unmap(bc, ioh, ED_3COM_IO_PORTS);
+	return 0;
 }
 
 /*
@@ -1087,15 +1096,13 @@ ed_find_Novell(sc, cf, ia)
 {
 	bus_chipset_tag_t bc;
 	bus_io_handle_t ioh;
-	bus_mem_handle_t memh;
 	u_int memsize, n;
-	u_char romdata[16], isa16bit = 0, tmp;
+	u_char romdata[16], tmp;
 	static u_char test_pattern[32] = "THIS is A memory TEST pattern";
 	u_char test_buffer[32];
-	int rv, asicbase, nicbase;
+	int asicbase, nicbase;
 
 	bc = ia->ia_bc;
-	rv = 0;
 
 	if (bus_io_map(bc, ia->ia_iobase, ED_NOVELL_IO_PORTS, &ioh))
 		return (0);
@@ -1251,7 +1258,7 @@ ed_find_Novell(sc, cf, ia)
 		if (mstart == 0) {
 			printf("%s: cannot find start of RAM\n",
 			    sc->sc_dev.dv_xname);
-			goto out;
+			goto err;
 		}
 
 		/* Search for the end of RAM. */
@@ -1310,22 +1317,19 @@ ed_find_Novell(sc, cf, ia)
 	NIC_PUT(bc, ioh, nicbase, ED_P0_ISR, 0xff);
 
 	ia->ia_iosize = ED_NOVELL_IO_PORTS;
-	rv = 1;
 
- out:
 	/*
 	 * XXX Sould always unmap, but we can't yet.
 	 * XXX Need to squish "indirect" first.
 	 */
-	if (rv == 0)
-		bus_io_unmap(bc, ioh, ED_NOVELL_IO_PORTS);
-	else {
-		/* XXX this is all "indirect" brokenness */
-		sc->sc_bc = bc;
-		sc->sc_ioh = ioh;
-		sc->sc_memh = memh;
-	}
-	return (rv);
+	sc->sc_bc = bc;
+	sc->sc_ioh = ioh;
+	/* sc_memh is not used by this driver */
+	return 1;
+ out:
+	bus_io_unmap(bc, ioh, ED_NOVELL_IO_PORTS);
+
+	return 0;
 }
 
 /*
@@ -1352,13 +1356,15 @@ edattach(parent, self, aux)
 	ioh = sc->sc_ioh;		/* XXX */
 
 	asicbase = sc->asic_base;
+	/* XXX Read for 1.25 usec delay.  Is this MI?  */
+	sc->sc_delayioh = ia->ia_delayioh;
 
 	/* Set interface to stopped condition (reset). */
 	edstop(sc);
 
 	/* Initialize ifnet structure. */
-	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = isaed_cd.cd_name;
+	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	ifp->if_softc = sc;
 	ifp->if_start = edstart;
 	ifp->if_ioctl = edioctl;
 	ifp->if_watchdog = edwatchdog;
@@ -1471,10 +1477,10 @@ edstop(sc)
  * an interrupt after a transmit has been started on it.
  */
 void
-edwatchdog(unit)
-	int unit;
+edwatchdog(ifp)
+	struct ifnet *ifp;
 {
-	struct ed_softc *sc = isaed_cd.cd_devs[unit];
+	struct ed_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	++sc->sc_arpcom.ac_if.if_oerrors;
@@ -1494,7 +1500,6 @@ edinit(sc)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int nicbase = sc->nic_base, asicbase = sc->asic_base;
 	int i;
-	u_char command;
 	u_long mcaf[2];
 
 	/*
@@ -1689,13 +1694,13 @@ void
 edstart(ifp)
 	struct ifnet *ifp;
 {
-	struct ed_softc *sc = isaed_cd.cd_devs[ifp->if_unit];
+	struct ed_softc *sc = ifp->if_softc;
 	bus_chipset_tag_t bc = sc->sc_bc;
 	bus_io_handle_t ioh = sc->sc_ioh;
 	struct mbuf *m0, *m;
 	int buffer;
 	int asicbase = sc->asic_base;
-	int len, i;
+	int len;
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -1750,8 +1755,12 @@ outloop:
 				    sc->wd_laar_proto | ED_WD_LAAR_M16EN);
 			bus_io_write_1(bc, ioh, asicbase + ED_WD_MSR,
 			    sc->wd_msr_proto | ED_WD_MSR_MENB);
-			(void) bus_io_read_1(bc, ioh, 0x84);	/* XXX */
-			(void) bus_io_read_1(bc, ioh, 0x84);	/* XXX */
+			/*
+			 * XXX 2.5 usec delay.  This code works on i386,
+			 * but is it MI?
+			 */
+			(void) bus_io_read_1(bc, sc->sc_delayioh, 0);
+			(void) bus_io_read_1(bc, sc->sc_delayioh, 0);
 			break;
 		}
 
@@ -1776,8 +1785,12 @@ outloop:
 			if (sc->isa16bit)
 				bus_io_write_1(bc, ioh, asicbase + ED_WD_LAAR,
 				    sc->wd_laar_proto);
-			(void) bus_io_read_1(bc, ioh, 0x84);	/* XXX */
-			(void) bus_io_read_1(bc, ioh, 0x84);	/* XXX */
+			/*
+			 * XXX 2.5 usec delay.  This code works on i386,
+			 * but is it MI?
+			 */
+			(void) bus_io_read_1(bc, sc->sc_delayioh, 0);
+			(void) bus_io_read_1(bc, sc->sc_delayioh, 0);
 			break;
 		}
 	} else
@@ -2074,9 +2087,14 @@ edintr(arg)
 					bus_io_write_1(bc, ioh,
 					    asicbase + ED_WD_MSR,
 					    sc->wd_msr_proto | ED_WD_MSR_MENB);
-					/* XXX */
-					(void) bus_io_read_1(bc, ioh, 0x84);
-					(void) bus_io_read_1(bc, ioh, 0x84);
+					/*
+					 * XXX 2.5 usec delay.  This code
+					 * works on i386, but is it MI?
+					 */
+					(void) bus_io_read_1(bc,
+					    sc->sc_delayioh, 0);
+					(void) bus_io_read_1(bc,
+					    sc->sc_delayioh, 0);
 				}
 
 				ed_rint(sc);
@@ -2090,9 +2108,14 @@ edintr(arg)
 						bus_io_write_1(bc, ioh,
 						    asicbase + ED_WD_LAAR,
 						    sc->wd_laar_proto);
-					/* XXX */
-					(void) bus_io_read_1(bc, ioh, 0x84);
-					(void) bus_io_read_1(bc, ioh, 0x84);
+					/*
+					 * XXX 2.5 usec delay.  This code
+					 * works on i386, but is it MI?
+					 */
+					(void) bus_io_read_1(bc,
+					    sc->sc_delayioh, 0);
+					(void) bus_io_read_1(bc,
+					    sc->sc_delayioh, 0);
 				}
 			}
 		}
@@ -2139,7 +2162,7 @@ edioctl(ifp, cmd, data)
 	u_long cmd;
 	caddr_t data;
 {
-	struct ed_softc *sc = isaed_cd.cd_devs[ifp->if_unit];
+	struct ed_softc *sc = ifp->if_softc;
 	register struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
@@ -2396,7 +2419,6 @@ ed_pio_write_mbufs(sc, m, dst)
 	bus_io_handle_t ioh = sc->sc_ioh;
 	int nicbase = sc->nic_base, asicbase = sc->asic_base;
 	u_short len;
-	struct mbuf *mp;
 	int maxwait = 100; /* about 120us */
 
 	len = m->m_pkthdr.len;
