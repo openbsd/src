@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.4 1996/05/02 13:12:13 deraadt Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.5 1996/09/03 05:01:45 deraadt Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1055,8 +1055,12 @@ coredump(p)
 	char name[MAXCOMLEN+6];		/* progname.core */
 	struct core core;
 
-	if (pcred->p_svuid != pcred->p_ruid || pcred->p_svgid != pcred->p_rgid)
-		return (EFAULT);
+	if (!(pcred->p_svuid == pcred->p_ruid && pcred->p_ruid == 0) &&
+	    (pcred->p_svuid != pcred->p_ruid ||
+	    cred->cr_uid != pcred->p_ruid ||
+	    pcred->p_svgid != pcred->p_rgid ||
+	    cred->cr_gid != pcred->p_rgid)
+			return (EFAULT);
 	if (USPACE + ctob(vm->vm_dsize + vm->vm_ssize) >=
 	    p->p_rlimit[RLIMIT_CORE].rlim_cur)
 		return (EFAULT);
