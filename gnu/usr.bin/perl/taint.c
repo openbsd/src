@@ -45,6 +45,9 @@ taint_env()
 	NULL
     };
 
+    if (!envgv)
+	return;
+
 #ifdef VMS
     int i = 0;
     char name[10 + TYPE_DIGITS(int)] = "DCL$PATH";
