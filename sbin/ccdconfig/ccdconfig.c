@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccdconfig.c,v 1.19 2003/06/11 06:22:12 deraadt Exp $	*/
+/*	$OpenBSD: ccdconfig.c,v 1.20 2003/12/17 01:41:45 millert Exp $	*/
 /*	$NetBSD: ccdconfig.c,v 1.6 1996/05/16 07:11:18 thorpej Exp $	*/
 
 /*-
@@ -48,14 +48,16 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <kvm.h>
 #include <limits.h>
-#include <nlist.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
+#ifndef SMALL
+#include <kvm.h>
+#include <nlist.h>
+#endif
 
 #include <dev/ccdvar.h>
 
@@ -81,6 +83,7 @@ struct	flagval {
 	{ NULL,			0 },
 };
 
+#ifndef SMALL
 static	struct nlist nl[] = {
 	{ "_ccd_softc" },
 #define SYM_CCDSOFTC		0
@@ -88,6 +91,7 @@ static	struct nlist nl[] = {
 #define SYM_NUMCCD		1
 	{ NULL },
 };
+#endif
 
 #define CCD_CONFIG		0	/* configure a device */
 #define CCD_CONFIGALL		1	/* configure all devices */
@@ -101,7 +105,9 @@ static	int do_single(int, char **, int);
 static	int do_all(int);
 static	int dump_ccd(int, char **);
 static	int flags_to_val(char *);
+#ifndef SMALL
 static	void print_ccd_info(struct ccd_softc *, kvm_t *);
+#endif
 static	char *resolve_ccdname(char *);
 static	void usage(void);
 
@@ -389,6 +395,7 @@ checkdev(char *path)
 	return (0);
 }
 
+#ifndef SMALL
 static int
 pathtounit(char *path, int *unitp)
 {
@@ -408,6 +415,7 @@ pathtounit(char *path, int *unitp)
 
 	return (0);
 }
+#endif
 
 static char *
 resolve_ccdname(char *name)
@@ -472,6 +480,14 @@ do_io(char *path, u_long cmd, struct ccd_ioctl *cciop)
 	return (0);
 }
 
+#ifdef SMALL
+static int
+dump_ccd(int argc, char *argv[])
+{
+	warnx("option not supported");
+	return (1);
+}
+#else
 #define KVM_ABORT(kd, str) {						\
 	(void)kvm_close((kd));						\
 	warnx("%s", (str));						\
@@ -628,6 +644,7 @@ print_ccd_info(struct ccd_softc *cs, kvm_t *kd)
  done:
 	free(cip);
 }
+#endif /* !SMALL */
 
 static int
 flags_to_val(char *flags)
