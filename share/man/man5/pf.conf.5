@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.267 2003/08/22 21:50:34 david Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.268 2003/08/24 12:47:07 cedric Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -120,9 +120,13 @@ translation rules such as
 or
 .Ar rdr
 (see below for details on the various rule types).
-Tables cannot be used for things like the redirect address of
-translation rules, nor can they be used in the routing options of
-filter rules.
+Tables can also be used for the redirect address of
+.Ar nat
+and
+.Ar rdr
+rules and in the routing options of filter rules, but only for
+.Ar round-robin
+pools.
 .Pp
 Tables can be defined with any of the following
 .Xr pfctl 8
