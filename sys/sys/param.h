@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.11 1996/10/25 11:14:45 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.12 1997/03/27 05:35:25 millert Exp $	*/
 /*	$NetBSD: param.h,v 1.23 1996/03/17 01:02:29 thorpej Exp $	*/
 
 /*-
@@ -71,7 +71,8 @@
 #define	MAXUPRC		CHILD_MAX	/* max simultaneous processes */
 #define	NCARGS		ARG_MAX		/* max bytes for an exec function */
 #define	NGROUPS		NGROUPS_MAX	/* max number groups */
-#define	NOFILE		OPEN_MAX	/* max open files per process */
+#define	NOFILE		OPEN_MAX	/* max open files per process (soft) */
+#define	NOFILE_MAX	1024		/* max open files per process (hard) */
 #define	NOGROUP		65535		/* marker for empty group set member */
 #define MAXHOSTNAMELEN	256		/* max hostname size */
 

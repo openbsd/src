@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.20 1996/11/06 01:29:46 deraadt Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.21 1997/03/27 05:35:28 millert Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -44,6 +44,7 @@
 
 #include <sys/param.h>
 #include <sys/filedesc.h>
+#include <sys/file.h>
 #include <sys/errno.h>
 #include <sys/exec.h>
 #include <sys/kernel.h>
@@ -92,6 +93,10 @@
 
 #if defined(NFSSERVER) || defined(NFSCLIENT)
 extern void nfs_init __P((void));
+#endif
+
+#ifndef MIN
+#define MIN(a,b)	(((a)<(b))?(a):(b))
 #endif
 
 char	copyright[] =
@@ -239,6 +244,8 @@ main(framep)
 		limit0.pl_rlimit[i].rlim_cur =
 		    limit0.pl_rlimit[i].rlim_max = RLIM_INFINITY;
 	limit0.pl_rlimit[RLIMIT_NOFILE].rlim_cur = NOFILE;
+	limit0.pl_rlimit[RLIMIT_NOFILE].rlim_max = MIN(NOFILE_MAX,
+	    (maxfiles - NOFILE > NOFILE) ?  maxfiles - NOFILE : NOFILE);
 	limit0.pl_rlimit[RLIMIT_NPROC].rlim_cur = MAXUPRC;
 	i = ptoa(cnt.v_free_count);
 	limit0.pl_rlimit[RLIMIT_RSS].rlim_max = i;
