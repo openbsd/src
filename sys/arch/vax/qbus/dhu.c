@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhu.c,v 1.6 2002/12/27 19:20:49 hugh Exp $	*/
+/*	$OpenBSD: dhu.c,v 1.7 2003/04/03 22:47:27 hugh Exp $	*/
 /*	$NetBSD: dhu.c,v 1.19 2000/06/04 06:17:01 matt Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -68,6 +68,7 @@ struct	dhu_softc {
 	struct	evcnt	sc_rintrcnt;	/* Interrupt statistics */
 	struct	evcnt	sc_tintrcnt;	/* Interrupt statistics */
 	int		sc_type;	/* controller type, DHU or DHV */
+	int		sc_lines;	/* number of lines */
 	bus_space_tag_t	sc_iot;
 	bus_space_handle_t sc_ioh;
 	bus_dma_tag_t	sc_dmat;
@@ -231,22 +232,20 @@ dhu_attach(parent, self, aux)
 
 	c = DHU_READ_WORD(DHU_UBA_STAT);
 
-	sc->sc_type = (c & DHU_STAT_DHU)? IS_DHU: IS_DHV;
+	sc->sc_type = (c & DHU_STAT_DHU) ? IS_DHU : IS_DHV;
 
 	if (sc->sc_type == IS_DHU) {
 		if (c & DHU_STAT_MDL)
-			i = 16;		/* "Modem Low" */
+			sc->sc_lines = 16;	/* "Modem Low" */
 		else
-			i = 8;		/* Has modem support */
+			sc->sc_lines = 8;	/* Has modem support */
 	} else
-		i = 8;
+		sc->sc_lines = 8;
 
 	printf("\n%s: DH%s-11 %d lines\n", self->dv_xname,
-	    (sc->sc_type == IS_DHU) ? "U" : "V", i);
+	    (sc->sc_type == IS_DHU) ? "U" : "V", sc->sc_lines);
 
-	sc->sc_type = i;
-
-	for (i = 0; i < sc->sc_type; i++) {
+	for (i = 0; i < sc->sc_lines; i++) {
 		struct tty *tp;
 		tp = sc->sc_dhu[i].dhu_tty = ttymalloc();
 		sc->sc_dhu[i].dhu_state = STATE_IDLE;
@@ -393,7 +392,7 @@ dhuopen(dev, flag, mode, p)
 
 	sc = dhu_cd.cd_devs[unit];
 
-	if (line >= sc->sc_type)
+	if (line >= sc->sc_lines)
 		return ENXIO;
 
 	s = spltty();
@@ -646,9 +645,12 @@ dhustart(tp)
 
 		sc->sc_dhu[line].dhu_state = STATE_TX_ONE_CHAR;
 		
-		DHU_WRITE_WORD(DHU_UBA_TXCHAR, 
-		    DHU_TXCHAR_DATA_VALID | *tp->t_outq.c_cf);
-
+		if (sc->sc_type == IS_DHU) {
+			/* should check for room in fifo first */
+			DHU_WRITE_BYTE(DHU_UBA_FIFO, *tp->t_outq.c_cf);
+		} else
+			DHU_WRITE_WORD(DHU_UBA_TXCHAR, 
+			    DHU_TXCHAR_DATA_VALID | *tp->t_outq.c_cf);
 	} else {
 
 		sc->sc_dhu[line].dhu_state = STATE_DMA_RUNNING;

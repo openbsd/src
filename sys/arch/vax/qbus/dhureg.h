@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhureg.h,v 1.2 2002/12/27 19:20:49 hugh Exp $	*/
+/*	$OpenBSD: dhureg.h,v 1.3 2003/04/03 22:47:27 hugh Exp $	*/
 /*	$NetBSD: dhureg.h,v 1.4 1999/05/28 20:17:29 ragge Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -68,6 +68,7 @@ typedef struct DHUregs dhuregs;
 #define	DHU_UBA_TXCHAR	2
 #define	DHU_UBA_LPR	4
 #define	DHU_UBA_STAT	6
+#define	DHU_UBA_FIFO	DHU_UBA_STAT	/* on a real dhu only */
 #define	DHU_UBA_LNCTRL	8
 #define	DHU_UBA_TBUFAD1	10
 #define	DHU_UBA_TBUFAD2	12
