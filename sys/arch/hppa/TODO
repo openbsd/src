@@ -25,11 +25,11 @@ gcc/egcs/binutils:					espie@ mickey@
 * move to binutils 2.9.1
 
 boots (sys/arch/hppa/stand/*):				mickey@ fries@
-* stucky keyboard problem on !712 models
 * w/ all the debugging code turned off hangs early (;
 
 kernel (sys/arch/hppa/*):				mickey@
 * sync mickey's sources to the repo
+* HPPA STACK GROWS UP, major kernel cleanup
 * user-land support
 * ddb (stack trace, breakpoints left, fix disasm)
 * some MI files/changes to integrate into the repo
@@ -48,14 +48,14 @@ libc (lib/libc/arch/hppa/*):				mickey@
 * MD syscalls (postponed until kernel part's ready)
 
 userland (*):						mickey@
-* libc_r done (not verifiyed)
+* libc_r done (not verified)
 * libkvm (awaits her kernel counterpart)
 * no shared libs support (not needed until on ramdisk ;) (? ldso from pefo?)
 
 X11 (X11/*):						fries@ mickey@
 * patch is available, nothing to run at tho (;
 
-$OpenBSD: TODO,v 1.1 1999/03/24 12:59:39 todd Exp $
+$OpenBSD: TODO,v 1.2 1999/04/20 21:18:48 mickey Exp $
 
 --
 	paranoic mickey
