@@ -1,4 +1,4 @@
-/*	$OpenBSD: cz.c,v 1.1 2001/06/21 13:21:50 nate Exp $ */
+/*	$OpenBSD: cz.c,v 1.2 2001/06/25 20:25:55 nate Exp $ */
 /*	$NetBSD: cz.c,v 1.15 2001/01/20 19:10:36 thorpej Exp $	*/
 
 /*-
@@ -316,14 +316,14 @@ cz_attach(parent, self, aux)
 
 	if (pci_mapreg_map(pa, PLX_PCI_RUNTIME_MEMADDR,
 	    PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT, 0,
-	    &cz->cz_plx.plx_st, &cz->cz_plx.plx_sh, NULL, NULL) != 0) {
+	    &cz->cz_plx.plx_st, &cz->cz_plx.plx_sh, NULL, NULL, 0) != 0) {
 		printf("%s: unable to map PLX registers\n",
 		    cz->cz_dev.dv_xname);
 		return;
 	}
 	if (pci_mapreg_map(pa, PLX_PCI_LOCAL_ADDR0,
 	    PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT, 0,
-	    &cz->cz_win_st, &cz->cz_win_sh, NULL, NULL) != 0) {
+	    &cz->cz_win_st, &cz->cz_win_sh, NULL, NULL, 0) != 0) {
 		printf("%s: unable to map device window\n",
 		    cz->cz_dev.dv_xname);
 		return;
