@@ -1,4 +1,4 @@
-/*	$OpenBSD: hil.c,v 1.8 1997/01/12 15:12:41 downsj Exp $	*/
+/*	$OpenBSD: hil.c,v 1.9 1997/03/26 08:32:39 downsj Exp $	*/
 /*	$NetBSD: hil.c,v 1.29 1996/10/14 07:09:41 thorpej Exp $	*/
 
 /*
@@ -112,8 +112,8 @@ hilsoftinit(unit, hilbase)
 	register int i;
 
 	/* XXX ITE interface */
-	extern char *us_keymap, *us_shiftmap, *us_ctrlmap,
-		    *us_ctrlshiftmap, **us_stringmap;
+	extern char us_keymap[], us_shiftmap[], us_ctrlmap[],
+		    us_ctrlshiftmap[], *us_stringmap[];
 
 #ifdef DEBUG
 	if (hildebug & HDB_FOLLOW)
@@ -1183,7 +1183,7 @@ kbdcninit()
 	u_char lang;
 
 	/* XXX from hil_keymaps.c */
-	extern char *us_keymap, *us_shiftmap, *us_ctrlmap;
+	extern char us_keymap[], us_shiftmap[], us_ctrlmap[];
 
 	hilkbd_cn_device = h;
 

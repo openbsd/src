@@ -1,5 +1,5 @@
-/*	$OpenBSD: proc.h,v 1.3 1997/02/24 01:16:11 downsj Exp $	*/
-/*	$NetBSD: proc.h,v 1.6 1994/10/26 07:26:35 cgd Exp $	*/
+/*	$OpenBSD: proc.h,v 1.4 1997/03/26 08:32:47 downsj Exp $	*/
+/*	$NetBSD: proc.h,v 1.7 1997/03/16 09:41:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -47,7 +47,6 @@ struct mdproc {
 /* md_flags */
 #define MDP_STACKADJ	0x0002	/* frame SP adjusted; undo when syscall does ERE
 START */
-#define	MDP_HPUXTRACE	0x0004	/* being traced by HP-UX process */
 #define	MDP_HPUXMMAP	0x0008	/* VA space is multiply mapped */
 #define MDP_CCBDATA	0x0010	/* copyback caching of data (68040) */
 #define MDP_CCBSTACK	0x0020	/* copyback caching of stack (68040) */

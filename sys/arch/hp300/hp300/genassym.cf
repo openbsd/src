@@ -1,0 +1,219 @@
+#	$NetBSD: genassym.cf,v 1.5 1997/03/16 09:40:01 thorpej Exp $
+
+#
+# Copyright (c) 1982, 1990, 1993
+#	The Regents of the University of California.  All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. All advertising materials mentioning features or use of this software
+#    must display the following acknowledgement:
+#	This product includes software developed by the University of
+#	California, Berkeley and its contributors.
+# 4. Neither the name of the University nor the names of its contributors
+#    may be used to endorse or promote products derived from this software
+#    without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#
+#	@(#)genassym.c	8.3 (Berkeley) 1/4/94
+#
+
+include <sys/param.h>
+include <sys/buf.h>
+include <sys/map.h>
+include <sys/proc.h>
+include <sys/mbuf.h>
+include <sys/msgbuf.h>
+include <sys/syscall.h>
+include <sys/user.h>
+
+include <vm/vm.h>
+
+include <machine/cpu.h>
+include <machine/psl.h>
+include <machine/reg.h>
+include <machine/pte.h>
+
+include <hp300/hp300/clockreg.h>
+include <hp300/hp300/led.h>
+
+define	__XXX_BUG_FODDER	0
+
+# CPU options
+ifdef M68020
+define	M68020			1
+endif
+ifdef M68030
+define	M68030			1
+endif
+ifdef M68040
+define	M68040			1
+endif
+
+# MMU options
+ifdef M68K_MMU_MOTOROLA
+define	M68K_MMU_MOTOROLA	1
+endif
+ifdef M68K_MMU_HP
+define	M68K_MMU_HP		1
+endif
+
+# values for mmutype
+define	MMU_68040		MMU_68040
+define	MMU_68030		MMU_68030
+define	MMU_HP			MMU_HP
+define	MMU_68851		MMU_68851
+
+# values for cputype
+define	CPU_68020		CPU_68020
+define	CPU_68030		CPU_68030
+define	CPU_68040		CPU_68040
+
+# values for fputype
+define	FPU_68881		FPU_68881
+define	FPU_68040		FPU_68040
+
+# values for machineid
+define	HP_320			HP_320
+define	HP_330			HP_330
+define	HP_350			HP_350
+define	HP_360			HP_360
+define	HP_370			HP_370
+define	HP_340			HP_340
+define	HP_375			HP_375
+define	HP_380			HP_380
+define	HP_433			HP_433
+
+# values for ectype
+define	EC_PHYS			EC_PHYS
+define	EC_NONE			EC_NONE
+define	EC_VIRT			EC_VIRT
+
+# general constants
+define	UPAGES			UPAGES
+define	USPACE			USPACE
+define	NBPG			NBPG
+define	PGSHIFT			PGSHIFT
+define	USRSTACK		USRSTACK
+define	MAXADDR			MAXADDR
+
+# proc fields and values
+define	P_FORW			offsetof(struct proc, p_forw)
+define	P_BACK			offsetof(struct proc, p_back)
+define	P_VMSPACE		offsetof(struct proc, p_vmspace)
+define	P_ADDR			offsetof(struct proc, p_addr)
+define	P_PRIORITY		offsetof(struct proc, p_priority)
+define	P_STAT			offsetof(struct proc, p_stat)
+define	P_WCHAN			offsetof(struct proc, p_wchan)
+define	P_MD_FLAGS		offsetof(struct proc, p_md.md_flags)
+define	P_MD_REGS		offsetof(struct proc, p_md.md_regs)
+define	SSLEEP			SSLEEP
+define	SRUN			SRUN
+
+# VM structure fields
+define	VM_PMAP			offsetof(struct vmspace, vm_pmap)
+define	PM_STCHG		offsetof(struct pmap, pm_stchanged)
+
+# interrupt/fault metering
+define	V_INTR			offsetof(struct vmmeter, v_intr)
+
+# PSL values (should just include psl.h?)
+define	PSL_S			PSL_S
+define	PSL_IPL7		PSL_IPL7
+define	PSL_LOWIPL		PSL_LOWIPL
+define	PSL_HIGHIPL		PSL_HIGHIPL
+define	PSL_USER		PSL_USER
+define	SPL1			PSL_S | PSL_IPL1
+define	SPL2			PSL_S | PSL_IPL2
+define	SPL3			PSL_S | PSL_IPL3
+define	SPL4			PSL_S | PSL_IPL4
+define	SPL5			PSL_S | PSL_IPL5
+define	SPL6			PSL_S | PSL_IPL6
+
+# magic
+define	FC_USERD		FC_USERD
+define	FC_PURGE		FC_PURGE
+define	INTIOBASE		INTIOBASE
+define	MMUBASE			MMUBASE
+define	MMUSTAT			MMUSTAT
+define	MMUCMD			MMUCMD
+define	MMUSSTP			MMUSSTP
+define	MMUUSTP			MMUUSTP
+define	MMUTBINVAL		MMUTBINVAL
+define	MMU_BERR		MMU_BERR
+define	MMU_ENAB		MMU_ENAB
+define	MMU_FAULT		MMU_FAULT
+define	MMU_CEN			MMU_CEN
+define	MMU_IEN			MMU_IEN
+define	MMU_FPE			MMU_FPE
+define	CACHE_ON		CACHE_ON
+define	CACHE_OFF		CACHE_OFF
+define	CACHE_CLR		CACHE_CLR
+define	IC_CLEAR		IC_CLEAR
+define	DC_CLEAR		DC_CLEAR
+
+# pte/ste bits
+define	PG_V			PG_V
+define	PG_NV			PG_NV
+define	PG_RO			PG_RO
+define	PG_RW			PG_RW
+define	PG_CI			PG_CI
+define	PG_PROT			PG_PROT
+define	PG_FRAME		PG_FRAME
+define	SG_V			SG_V
+define	SG_NV			SG_NV
+define	SG_RW			SG_RW
+define	SG_FRAME		SG_FRAME
+define	SG_ISHIFT		SG_ISHIFT
+
+# pcb fields
+define	PCB_PS			offsetof(struct pcb, pcb_ps)
+define	PCB_USTP		offsetof(struct pcb, pcb_ustp)
+define	PCB_USP			offsetof(struct pcb, pcb_usp)
+define	PCB_REGS		offsetof(struct pcb, pcb_regs)
+define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
+define	PCB_FPCTX		offsetof(struct pcb, pcb_fpregs)
+define	SIZEOF_PCB		sizeof(struct pcb)
+
+# exception frame offset/sizes
+define	FR_SP			offsetof(struct frame, f_regs[15])
+define	FR_HW			offsetof(struct frame, f_sr)
+define	FR_ADJ			offsetof(struct frame, f_stackadj)
+define	FR_SIZE			sizeof(struct trapframe)
+
+# system calls
+define	SYS_exit		SYS_exit
+define	SYS_execve		SYS_execve
+define	SYS_sigreturn		SYS_sigreturn
+
+# errno
+define	EFAULT			EFAULT
+define	ENAMETOOLONG		ENAMETOOLONG
+
+# clock registers
+define	CLKSR			CLKSR
+define	CLKMSB1			CLKMSB1
+define	CLKMSB3			CLKMSB3
+
+# LED stuff
+define	LED_PULSE		LED_PULSE
+define	LED_DISK		LED_DISK
+define	LED_LANRCV		LED_LANRCV
+define	LED_LANXMT		LED_LANXMT

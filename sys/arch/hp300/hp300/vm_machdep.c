@@ -1,5 +1,5 @@
-/*	$OpenBSD: vm_machdep.c,v 1.7 1997/02/10 11:13:34 downsj Exp $	*/
-/*	$NetBSD: vm_machdep.c,v 1.31 1997/02/02 08:03:06 thorpej Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.8 1997/03/26 08:32:45 downsj Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.34 1997/03/16 09:59:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -79,7 +79,7 @@ cpu_fork(p1, p2)
 	extern struct pcb *curpcb;
 	extern void proc_trampoline(), child_return();
 
-	p2->p_md.md_flags = p1->p_md.md_flags & ~MDP_HPUXTRACE;
+	p2->p_md.md_flags = p1->p_md.md_flags;
 
 	/* Sync curpcb (which is presumably p1's PCB) and copy it to p2. */
 	savectx(curpcb);
@@ -149,18 +149,6 @@ cpu_coredump(p, vp, cred, chdr)
 	struct coreseg cseg;
 	int error;
 
-#ifdef COMPAT_HPUX
-	extern struct emul emul_hpux;
-
-	/*
-	 * If we loaded from an HP-UX format binary file we dump enough
-	 * of an HP-UX style user struct so that the HP-UX debuggers can
-	 * grok it.
-	 */
-	if (p->p_emul == &emul_hpux)
-		return (hpux_dumpu(vp, cred));
-#endif
-
 	CORE_SETMAGIC(*chdr, COREMAGIC, MID_M68K, 0);
 	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
 	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
@@ -171,10 +159,15 @@ cpu_coredump(p, vp, cred, chdr)
 	if (error)
 		return error;
 
-	/* Save floating point registers. */
-	error = process_read_fpregs(p, &md_core.freg);
-	if (error)
-		return error;
+	if (fputype) {
+		/* Save floating point registers. */
+		error = process_read_fpregs(p, &md_core.freg);
+		if (error)
+			return error;
+	} else {
+		/* Make sure these are clear. */
+		bzero((caddr_t)&md_core.freg, sizeof(md_core.freg));
+	}
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_M68K, CORE_CPU);
 	cseg.c_addr = 0;

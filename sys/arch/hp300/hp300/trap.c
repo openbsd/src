@@ -1,5 +1,5 @@
-/*	$OpenBSD: trap.c,v 1.8 1997/02/21 06:07:25 deraadt Exp $	*/
-/*	$NetBSD: trap.c,v 1.47 1996/10/14 20:06:31 thorpej Exp $	*/
+/*	$OpenBSD: trap.c,v 1.9 1997/03/26 08:32:45 downsj Exp $	*/
+/*	$NetBSD: trap.c,v 1.48 1997/03/15 23:34:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Theo de Raadt
@@ -373,9 +373,7 @@ trap(type, code, v, frame)
 		i = SIGBUS;
 		break;
 
-#ifdef FPCOPROC
 	case T_COPERR:		/* kernel coprocessor violation */
-#endif
 	case T_FMTERR|T_USER:	/* do all RTE errors come in as T_USER? */
 	case T_FMTERR:		/* ...just in case... */
 	/*
@@ -396,7 +394,6 @@ trap(type, code, v, frame)
 		v = frame.f_pc;
 		break;
 
-#ifdef FPCOPROC
 	case T_COPERR|T_USER:	/* user coprocessor violation */
 	/* What is a proper response here? */
 		typ = FPE_FLTINV;
@@ -419,7 +416,6 @@ trap(type, code, v, frame)
 		i = SIGFPE;
 		v = frame.f_pc;
 		break;
-#endif
 
 #ifdef M68040
 	case T_FPEMULI|T_USER:	/* unimplemented FP instuction */

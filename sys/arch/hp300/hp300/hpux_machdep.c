@@ -1,8 +1,8 @@
-/*	$OpenBSD: hpux_machdep.c,v 1.3 1997/01/12 15:13:16 downsj Exp $	*/
-/*	$NetBSD: hpux_machdep.c,v 1.5 1996/10/14 06:51:50 thorpej Exp $	*/
+/*	$OpenBSD: hpux_machdep.c,v 1.4 1997/03/26 08:32:41 downsj Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.9 1997/03/16 10:00:45 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1995, 1996 Jason R. Thorpe.  All rights reserved.
+ * Copyright (c) 1995, 1996, 1997 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -88,6 +88,8 @@
 
 #include <machine/hpux_machdep.h>
 
+extern	short exframesize[];
+
 #define NHIL	1	/* XXX */
 #include "grf.h"
 
@@ -99,10 +101,12 @@ extern	int grfopen __P((dev_t dev, int oflags, int devtype, struct proc *p));
 extern	int hilopen __P((dev_t dev, int oflags, int devtype, struct proc *p));
 #endif
 
-static	struct {
-	int	machine_id;
-	char	*machine_str;
-} machine_table[] = {
+struct valtostr {
+	int	val;
+	const char *str;
+};
+
+static struct valtostr machine_table[] = {
 	{ HP_320,	"320" },
 	{ HP_330,	"330" },	/* includes 318 and 319 */
 	{ HP_340,	"340" },
@@ -115,18 +119,23 @@ static	struct {
 	{     -1,	"3?0" },	/* unknown system (???) */
 };
 
-/* 6.0 and later style context */
-#ifdef M68040
-static char hpux_040context[] =
-    "standalone HP-MC68040 HP-MC68881 HP-MC68020 HP-MC68010 localroot default";
-#endif
-#ifdef FPCOPROC
-static char hpux_context[] =
-    "standalone HP-MC68881 HP-MC68020 HP-MC68010 localroot default";
-#else
-static char hpux_context[] =
-    "standalone HP-MC68020 HP-MC68010 localroot default";
-#endif
+/*
+ * 6.0 and later context.
+ * XXX what are the HP-UX "localroot" semantics?  Should we handle
+ * XXX diskless systems here?
+ */
+static struct valtostr context_table[] = {
+	{ FPU_68040,
+    "standalone HP-MC68040 HP-MC68881 HP-MC68020 HP-MC68010 localroot default"
+	},
+	{ FPU_68881,
+    "standalone HP-MC68881 HP-MC68020 HP-MC68010 localroot default"
+	},
+	{ FPU_NONE,
+    "standalone HP-MC68020 HP-MC68010 localroot default"
+	},
+	{ 0, NULL },
+};
 
 #define UOFF(f)		((int)&((struct user *)0)->f)
 #define HPUOFF(f)	((int)&((struct hpux_user *)0)->f)
@@ -223,11 +232,11 @@ hpux_cpu_uname(ut)
 	 * Find the current machine-ID in the table and
 	 * copy the string into the uname.
 	 */
-	for (i = 0; machine_table[i].machine_id != -1; ++i)
-		if (machine_table[i].machine_id == machineid)
+	for (i = 0; machine_table[i].val != -1; ++i)
+		if (machine_table[i].val == machineid)
 			break;
 
-	sprintf(ut->machine, "9000/%s", machine_table[i].machine_str);
+	sprintf(ut->machine, "9000/%s", machine_table[i].str);
 }
 
 /*
@@ -303,25 +312,28 @@ hpux_sys_getcontext(p, v, retval)
 	register_t *retval; 
 {
 	struct hpux_sys_getcontext_args *uap = v;
-	int error = 0;
+	int l, i, error = 0;
 	register int len; 
 
-#ifdef M68040
-	if ((machineid == HP_380) || (machineid == HP_433)) {
-		len = min(SCARG(uap, len), sizeof(hpux_040context));
-		if (len)
-			error = copyout(hpux_040context, SCARG(uap, buf), len);
-		if (error == 0)
-			*retval = sizeof(hpux_040context);
-		return (error);
+	for (i = 0; context_table[i].str != NULL; i++)
+		if (context_table[i].val == fputype)
+			break;
+	if (context_table[i].str == NULL) {
+		/*
+		 * XXX What else?  It's not like this can happen...
+		 */
+		return (EINVAL);
 	}
-#endif
-	len = min(SCARG(uap, len), sizeof(hpux_context));
+
+	/* + 1 ... count the terminating \0. */
+	l = strlen(context_table[i].str) + 1;
+	len = min(SCARG(uap, len), l);
+
 	if (len)
-		error = copyout(hpux_context, SCARG(uap, buf), (u_int)len);
+		error = copyout(context_table[i].str, SCARG(uap, buf), len);
 	if (error == 0)
-		*retval = sizeof(hpux_context);
-	return (error);
+		*retval = l;
+	return (0);
 }
 
 /*
@@ -344,18 +356,17 @@ hpux_to_bsd_uoff(off, isps, p)
 	if ((int)off == HPUOFF(hpuxu_ar0))
 		return(UOFF(U_ar0)); 
 
+	if (fputype) {
+		/* FP registers from PCB */
+		hp = (struct hpux_fp *)HPUOFF(hpuxu_fp);
+		bp = (struct bsdfp *)UOFF(u_pcb.pcb_fpregs);
 
-#ifdef FPCOPROC
-	/* FP registers from PCB */
-	hp = (struct hpux_fp *)HPUOFF(hpuxu_fp);
-	bp = (struct bsdfp *)UOFF(u_pcb.pcb_fpregs);
+		if (off >= hp->hpfp_ctrl && off < &hp->hpfp_ctrl[3])
+			return((int)&bp->ctrl[off - hp->hpfp_ctrl]);
 
-	if (off >= hp->hpfp_ctrl && off < &hp->hpfp_ctrl[3])
-		return((int)&bp->ctrl[off - hp->hpfp_ctrl]);
-
-	if (off >= hp->hpfp_reg && off < &hp->hpfp_reg[24])
-		return((int)&bp->reg[off - hp->hpfp_reg]);
-#endif
+		if (off >= hp->hpfp_reg && off < &hp->hpfp_reg[24])
+			return((int)&bp->reg[off - hp->hpfp_reg]);
+	}
 
 	/*
 	 * Everything else we recognize comes from the kernel stack,
@@ -407,89 +418,372 @@ hpux_to_bsd_uoff(off, isps, p)
 	return (-1);
 }
 
+#define	HSS_RTEFRAME	0x01
+#define	HSS_FPSTATE	0x02
+#define	HSS_USERREGS	0x04
+
+struct hpuxsigstate {
+	int	hss_flags;		/* which of the following are valid */
+	struct	frame hss_frame;	/* original exception frame */
+	struct	fpframe hss_fpstate;	/* 68881/68882 state info */
+};
+
 /*
- * Kludge up a uarea dump so that HP-UX debuggers can find out
- * what they need.  IMPORTANT NOTE: we do not EVEN attempt to
- * convert the entire user struct.
+ * WARNING: code in locore.s assumes the layout shown here for hsf_signum
+ * thru hsf_handler so... don't screw with them!
  */
-int
-hpux_dumpu(vp, cred)
-	struct vnode *vp;
-	struct ucred *cred;
+struct hpuxsigframe {
+	int	hsf_signum;		   /* signo for handler */
+	int	hsf_code;		   /* additional info for handler */
+	struct	hpuxsigcontext *hsf_scp;   /* context ptr for handler */
+	sig_t	hsf_handler;		   /* handler addr for u_sigc */
+	struct	hpuxsigstate hsf_sigstate; /* state of the hardware */
+	struct	hpuxsigcontext hsf_sc;	   /* actual context */
+};
+
+#ifdef DEBUG
+int hpuxsigdebug = 0;
+int hpuxsigpid = 0;
+#define SDB_FOLLOW	0x01
+#define SDB_KSTACK	0x02
+#define SDB_FPSTATE	0x04
+#endif
+
+/*
+ * Send an interrupt to process.
+ */
+/* ARGSUSED */
+void
+hpux_sendsig(catcher, sig, mask, code, type, val)
+	sig_t catcher;
+	int sig, mask;
+	u_long code;
+	int type;
+	union sigval val;
 {
-	int error = 0;
-	struct proc *p = curproc;
-	struct hpux_user *faku;
-	struct bsdfp *bp;
-	short *foop;
+	register struct proc *p = curproc;
+	register struct hpuxsigframe *kfp, *fp;
+	register struct frame *frame;
+	register struct sigacts *psp = p->p_sigacts;
+	register short ft;
+	int oonstack, fsize;
+	extern char sigcode[], esigcode[];
+
+	frame = (struct frame *)p->p_md.md_regs;
+	ft = frame->f_format;
+	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 
 	/*
-	 * Make sure there is no mistake about this being a real
-	 * user structure.
+	 * Allocate and validate space for the signal handler
+	 * context. Note that if the stack is in P0 space, the
+	 * call to grow() is a nop, and the useracc() check
+	 * will fail if the process has not already allocated
+	 * the space with a `brk'.
 	 */
-	faku = (struct hpux_user *)malloc((u_long)ctob(1), M_TEMP, M_WAITOK);
-	bzero((caddr_t)faku, ctob(1));
+	fsize = sizeof(struct hpuxsigframe);
+	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
+	    (psp->ps_sigonstack & sigmask(sig))) {
+		fp = (struct hpuxsigframe *)(psp->ps_sigstk.ss_sp +
+		    psp->ps_sigstk.ss_size - fsize);
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+	} else
+		fp = (struct hpuxsigframe *)(frame->f_regs[SP] - fsize);
+	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
+		(void)grow(p, (unsigned)fp);
 
-	/* Fill in the process sizes. */
-	faku->hpuxu_tsize = p->p_vmspace->vm_tsize;
-	faku->hpuxu_dsize = p->p_vmspace->vm_dsize;
-	faku->hpuxu_ssize = p->p_vmspace->vm_ssize;
+#ifdef DEBUG
+	if ((hpuxsigdebug & SDB_KSTACK) && p->p_pid == hpuxsigpid)
+		printf("hpux_sendsig(%d): sig %d ssp %x usp %x scp %x ft %d\n",
+		       p->p_pid, sig, &oonstack, fp, &fp->sf_sc, ft);
+#endif
+
+	if (useracc((caddr_t)fp, fsize, B_WRITE) == 0) {
+#ifdef DEBUG
+		if ((hpuxsigdebug & SDB_KSTACK) && p->p_pid == hpuxsigpid)
+			printf("hpux_sendsig(%d): useracc failed on sig %d\n",
+			       p->p_pid, sig);
+#endif
+		/*
+		 * Process has trashed its stack; give it an illegal
+		 * instruction to halt it in its tracks.
+		 */
+		SIGACTION(p, SIGILL) = SIG_DFL;
+		sig = sigmask(SIGILL);
+		p->p_sigignore &= ~sig;
+		p->p_sigcatch &= ~sig;
+		p->p_sigmask &= ~sig;
+		psignal(p, SIGILL);
+		return;
+	}
+	kfp = (struct hpuxsigframe *)malloc((u_long)fsize, M_TEMP, M_WAITOK);
+
+	/* 
+	 * Build the argument list for the signal handler.
+	 */
+	kfp->hsf_signum = bsdtohpuxsig(sig);
+	kfp->hsf_code = code;
+	kfp->hsf_scp = &fp->hsf_sc;
+	kfp->hsf_handler = catcher;
 
 	/*
-	 * Fill in the exec header for CDB.
-	 * This was saved back in exec().  As far as I can tell CDB
-	 * only uses this information to verify that a particular
-	 * core file goes with a particular binary.
+	 * Save necessary hardware state.  Currently this includes:
+	 *	- general registers
+	 *	- original exception frame (if not a "normal" frame)
+	 *	- FP coprocessor state
 	 */
-	bcopy((caddr_t)p->p_addr->u_md.md_exec,
-	    (caddr_t)&faku->hpuxu_exdata, sizeof (struct hpux_exec));
+	kfp->hsf_sigstate.hss_flags = HSS_USERREGS;
+	bcopy((caddr_t)frame->f_regs,
+	    (caddr_t)kfp->hsf_sigstate.hss_frame.f_regs, sizeof frame->f_regs);
+	if (ft >= FMT7) {
+#ifdef DEBUG
+		if (ft > 15 || exframesize[ft] < 0)
+			panic("hpux_sendsig: bogus frame type");
+#endif
+		kfp->hsf_sigstate.hss_flags |= HSS_RTEFRAME;
+		kfp->hsf_sigstate.hss_frame.f_format = frame->f_format;
+		kfp->hsf_sigstate.hss_frame.f_vector = frame->f_vector;
+		bcopy((caddr_t)&frame->F_u,
+		    (caddr_t)&kfp->hsf_sigstate.hss_frame.F_u, exframesize[ft]);
 
-	/*
-	 * Adjust user's saved registers (on kernel stack) to reflect
-	 * HP-UX order.  Note that HP-UX saves the SR as 2 bytes not 4
-	 * so we have to move it up.
-	 */
-	faku->hpuxu_ar0 = p->p_md.md_regs;
-	foop = (short *) p->p_md.md_regs;
-	foop[32] = foop[33];
-	foop[33] = foop[34];
-	foop[34] = foop[35];
+		/*
+		 * Leave an indicator that we need to clean up the kernel
+		 * stack.  We do this by setting the "pad word" above the
+		 * hardware stack frame to the amount the stack must be
+		 * adjusted by.
+		 *
+		 * N.B. we increment rather than just set f_stackadj in
+		 * case we are called from syscall when processing a
+		 * sigreturn.  In that case, f_stackadj may be non-zero.
+		 */
+		frame->f_stackadj += exframesize[ft];
+		frame->f_format = frame->f_vector = 0;
+#ifdef DEBUG
+		if (hpuxsigdebug & SDB_FOLLOW)
+			printf("hpux_sendsig(%d): copy out %d of frame %d\n",
+			       p->p_pid, exframesize[ft], ft);
+#endif
+	}
+	if (fputype) {
+		kfp->hsf_sigstate.hss_flags |= HSS_FPSTATE;
+		m68881_save(&kfp->hsf_sigstate.hss_fpstate);
+	}
 
-#ifdef FPCOPROC
-	/*
-	 * Copy 68881 registers from our PCB format to HP-UX format
-	 */
-	bp = (struct bsdfp *) &p->p_addr->u_pcb.pcb_fpregs;
-	bcopy((caddr_t)bp->save, (caddr_t)faku->hpuxu_fp.hpfp_save,
-	    sizeof(bp->save));
-	bcopy((caddr_t)bp->ctrl, (caddr_t)faku->hpuxu_fp.hpfp_ctrl,
-	    sizeof(bp->ctrl));
-	bcopy((caddr_t)bp->reg, (caddr_t)faku->hpuxu_fp.hpfp_reg,
-	    sizeof(bp->reg));
+#ifdef DEBUG
+	if ((hpuxsigdebug & SDB_FPSTATE) && *(char *)&kfp->sf_state.ss_fpstate)
+		printf("hpux_sendsig(%d): copy out FP state (%x) to %x\n",
+		       p->p_pid, *(u_int *)&kfp->sf_state.ss_fpstate,
+		       &kfp->sf_state.ss_fpstate);
 #endif
 
 	/*
-	 * Slay the dragon
+	 * Build the signal context to be used by hpux_sigreturn.
 	 */
-	faku->hpuxu_dragon = -1;
+	kfp->hsf_sc.hsc_syscall	= 0;		/* XXX */
+	kfp->hsf_sc.hsc_action	= 0;		/* XXX */
+	kfp->hsf_sc.hsc_pad1	= kfp->hsf_sc.hsc_pad2 = 0;
+	kfp->hsf_sc.hsc_onstack	= oonstack;
+	kfp->hsf_sc.hsc_mask	= mask;
+	kfp->hsf_sc.hsc_sp	= frame->f_regs[SP];
+	kfp->hsf_sc.hsc_ps	= frame->f_sr;
+	kfp->hsf_sc.hsc_pc	= frame->f_pc;
+
+	/* How amazingly convenient! */
+	kfp->hsf_sc._hsc_pad	= 0;
+	kfp->hsf_sc._hsc_ap	= (int)&fp->hsf_sigstate;
+
+	(void) copyout((caddr_t)kfp, (caddr_t)fp, fsize);
+	frame->f_regs[SP] = (int)fp;
+
+#ifdef DEBUG
+	if (hpuxsigdebug & SDB_FOLLOW) {
+		printf(
+		  "hpux_sendsig(%d): sig %d scp %x fp %x sc_sp %x sc_ap %x\n",
+		   p->p_pid, sig, kfp->sf_scp, fp,
+		   kfp->sf_sc.sc_sp, kfp->sf_sc.sc_ap);
+	}
+#endif
 
 	/*
-	 * Dump this artfully constructed page in place of the
-	 * user struct page.
+	 * Signal trampoline code is at base of user stack.
 	 */
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)faku, ctob(1), (off_t)0,
-	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, (int *)NULL, p);
+	frame->f_pc = (int)PS_STRINGS - (esigcode - sigcode);
+#ifdef DEBUG
+	if ((hpuxsigdebug & SDB_KSTACK) && p->p_pid == hpuxsigpid)
+		printf("hpux_sendsig(%d): sig %d returns\n",
+		       p->p_pid, sig);
+#endif
+	free((caddr_t)kfp, M_TEMP);
+}
+
+/*
+ * System call to cleanup state after a signal
+ * has been taken.  Reset signal mask and
+ * stack state from context left by sendsig (above).
+ * Return to previous pc and psl as specified by
+ * context left by sendsig. Check carefully to
+ * make sure that the user has not modified the
+ * psl to gain improper priviledges or to cause
+ * a machine fault.
+ */
+/* ARGSUSED */
+int
+hpux_sys_sigreturn(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct hpux_sys_sigreturn_args /* {
+		syscallarg(struct hpuxsigcontext *) sigcntxp;
+	} */ *uap = v;
+	register struct hpuxsigcontext *scp;
+	register struct frame *frame;
+	register int rf;
+	struct hpuxsigcontext tsigc;
+	struct hpuxsigstate tstate;
+	int flags;
+
+	scp = SCARG(uap, sigcntxp);
+#ifdef DEBUG
+	if (hpuxsigdebug & SDB_FOLLOW)
+		printf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
+#endif
+	if ((int)scp & 1)
+		return (EINVAL);
 
 	/*
-	 * Dump the remaining UPAGES-1 pages normally
-	 * XXX Spot the wild guess.
+	 * Fetch and test the HP-UX context structure.
+	 * We grab it all at once for speed.
 	 */
-	if (error == 0)
-		error = vn_rdwr(UIO_WRITE, vp, (caddr_t)p->p_addr + ctob(1),
-		    ctob(UPAGES-1), (off_t)ctob(1), UIO_SYSSPACE,
-		    IO_NODELOCKED|IO_UNIT, cred, (int *)NULL, p);
+	if (useracc((caddr_t)scp, sizeof (*scp), B_WRITE) == 0 ||
+	    copyin((caddr_t)scp, (caddr_t)&tsigc, sizeof tsigc))
+		return (EINVAL);
+	scp = &tsigc;
+	if ((scp->hsc_ps & (PSL_MBZ|PSL_IPL|PSL_S)) != 0)
+		return (EINVAL);
 
-	free((caddr_t)faku, M_TEMP);
+	/*
+	 * Restore the user supplied information
+	 */
+	if (scp->hsc_onstack & 01)
+		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+	else
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+	p->p_sigmask = scp->hsc_mask &~ sigcantmask;
+	frame = (struct frame *) p->p_md.md_regs;
+	frame->f_regs[SP] = scp->hsc_sp;
+	frame->f_pc = scp->hsc_pc;
+	frame->f_sr = scp->hsc_ps;
 
-	return (error);
+	/*
+	 * Grab a pointer to the hpuxsigstate.
+	 * If zero, the user is probably doing a longjmp.
+	 * (This will never happen, really, since HP-UX doesn't
+	 * know/care about the state pointer.)
+	 */
+	if ((rf = scp->_hsc_ap) == 0)
+		return (EJUSTRETURN);
+
+	/*
+	 * See if there is anything to do before we go to the
+	 * expense of copying in close to 1/2K of data
+	 */
+	flags = fuword((caddr_t)rf);
+#ifdef DEBUG
+	if (hpuxsigdebug & SDB_FOLLOW)
+		printf("sigreturn(%d): sc_ap %x flags %x\n",
+		       p->p_pid, rf, flags);
+#endif
+	/*
+	 * fuword failed (bogus _hsc_ap value).
+	 */
+	if (flags == -1)
+		return (EINVAL);
+	if (flags == 0 || copyin((caddr_t)rf, (caddr_t)&tstate, sizeof tstate))
+		return (EJUSTRETURN);
+#ifdef DEBUG
+	if ((hpuxsigdebug & SDB_KSTACK) && p->p_pid == hpuxsigpid)
+		printf("sigreturn(%d): ssp %x usp %x scp %x ft %d\n",
+		       p->p_pid, &flags, scp->sc_sp, SCARG(uap, sigcntxp),
+		       (flags & HSS_RTEFRAME) ? tstate.ss_frame.f_format : -1);
+#endif
+	/*
+	 * Restore most of the users registers except for A6 and SP
+	 * which were handled above.
+	 */
+	if (flags & HSS_USERREGS)
+		bcopy((caddr_t)tstate.hss_frame.f_regs,
+		    (caddr_t)frame->f_regs, sizeof(frame->f_regs)-2*NBPW);
+
+	/*
+	 * Restore long stack frames.  Note that we do not copy
+	 * back the saved SR or PC, they were picked up above from
+	 * the sigcontext structure.
+	 */
+	if (flags & HSS_RTEFRAME) {
+		register int sz;
+		
+		/* grab frame type and validate */
+		sz = tstate.hss_frame.f_format;
+		if (sz > 15 || (sz = exframesize[sz]) < 0)
+			return (EINVAL);
+		frame->f_stackadj -= sz;
+		frame->f_format = tstate.hss_frame.f_format;
+		frame->f_vector = tstate.hss_frame.f_vector;
+		bcopy((caddr_t)&tstate.hss_frame.F_u,
+		    (caddr_t)&frame->F_u, sz);
+#ifdef DEBUG
+		if (hpuxsigdebug & SDB_FOLLOW)
+			printf("sigreturn(%d): copy in %d of frame type %d\n",
+			       p->p_pid, sz, tstate.ss_frame.f_format);
+#endif
+	}
+
+	/*
+	 * Finally we restore the original FP context
+	 */
+	if (flags & HSS_FPSTATE)
+		m68881_restore(&tstate.hss_fpstate);
+
+#ifdef DEBUG
+	if ((hpuxsigdebug & SDB_FPSTATE) && *(char *)&tstate.ss_fpstate)
+		printf("sigreturn(%d): copied in FP state (%x) at %x\n",
+		       p->p_pid, *(u_int *)&tstate.ss_fpstate,
+		       &tstate.ss_fpstate);
+
+	if ((hpuxsigdebug & SDB_FOLLOW) ||
+	    ((hpuxsigdebug & SDB_KSTACK) && p->p_pid == hpuxsigpid))
+		printf("sigreturn(%d): returns\n", p->p_pid);
+#endif
+	return (EJUSTRETURN);
+}
+
+/*
+ * Set registers on exec.
+ * XXX Should clear registers except sp, pc.
+ */
+void
+hpux_setregs(p, pack, stack, retval)
+	register struct proc *p;
+	struct exec_package *pack;
+	u_long stack;
+	register_t *retval;
+{
+	struct frame *frame = (struct frame *)p->p_md.md_regs;
+
+	frame->f_pc = pack->ep_entry & ~1;
+	frame->f_regs[SP] = stack;
+	frame->f_regs[A2] = (int)PS_STRINGS;
+
+	/* restore a null state frame */
+	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
+	if (fputype)
+		m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
+
+	p->p_md.md_flags &= ~MDP_HPUXMMAP;
+	frame->f_regs[A0] = 0;	/* not 68010 (bit 31), no FPA (30) */
+	retval[0] = 0;		/* no float card */
+	if (fputype)
+		retval[1] = 1;	/* yes 68881 */
+	else
+		retval[1] = 0;	/* no 68881 */
 }
