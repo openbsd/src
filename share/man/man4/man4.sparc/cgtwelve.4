@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cgtwelve.4,v 1.2 2002/08/31 10:47:16 miod Exp $
+.\"	$OpenBSD: cgtwelve.4,v 1.3 2002/09/20 12:48:53 fgsch Exp $
 .\" Copyright (c) 2002 Miodrag Vallat.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 .Nm cgtwelve
 .Nd accelerated 24-bit color frame buffer
 .Sh SYNOPSIS
-.Cd "cgtwelve* at sbus? slot ? offset ?"
+.Cd "cgtwelve* at sbus? slot ? offset ? flags 0x0000"
 .Cd "wsdisplay* at cgtwelve?"
 .Sh DESCRIPTION
 The
@@ -42,6 +42,18 @@ It does not provide direct device driver entry points
 but makes its functions available via the internal
 .Xr wsdisplay 4
 interface.
+.Pp
+By default, the frame buffer will be initialized in 24 bit mode.
+By setting
+.Ar flags
+to
+.Ar 0x0001
+(via
+.Xr config 8
+or
+.Xr boot_config 8 )
+it can be forced to use the monochrome overlay plane only, resulting in a
+faster console.
 .Sh SEE ALSO
 .Xr bwtwo 4 ,
 .Xr cgeight 4 ,
@@ -56,5 +68,7 @@ interface.
 .Xr vigra 4 ,
 .Xr wscons 4 ,
 .Xr wsdisplay 4
+.Xr boot_config 8 ,
+.Xr config 8
 .Sh CAVEATS
 Vertical scrolling in console mode is abysmally slow.

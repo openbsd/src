@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcx.4,v 1.14 2002/08/31 10:47:16 miod Exp $
+.\"	$OpenBSD: tcx.4,v 1.15 2002/09/20 12:48:53 fgsch Exp $
 .\"	$NetBSD: tcx.4,v 1.3 1997/10/08 22:00:14 jtc Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 .Nm tcx
 .Nd accelerated 8/24-bit color frame buffer
 .Sh SYNOPSIS
-.Cd "tcx* at sbus? slot ? offset ?"
+.Cd "tcx* at sbus? slot ? offset ? flags 0x0000"
 .Cd "wsdisplay* at tcx?"
 .Sh DESCRIPTION
 The
@@ -55,6 +55,18 @@ It does not provide direct device driver entry points
 but makes its functions available via the internal
 .Xr wsdisplay 4
 interface.
+.Pp
+By default, the frame buffer will be initialized in 24 bit mode if it
+can support it.
+In this case, by setting
+.Ar flags
+to
+.Ar 0x0001
+(via
+.Xr config 8
+or
+.Xr boot_config 8 )
+it can be force to 8 bit mode, resulting in a faster console.
 .Sh SEE ALSO
 .Xr bwtwo 4 ,
 .Xr cgeight 4 ,
@@ -69,3 +81,5 @@ interface.
 .Xr vigra 4 ,
 .Xr wscons 4 ,
 .Xr wsdisplay 4
+.Xr boot_config 8 ,
+.Xr config 8
