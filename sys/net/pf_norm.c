@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.52 2003/01/25 19:47:05 dhartmei Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.53 2003/02/08 20:13:20 dhartmei Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -948,6 +948,9 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 	/* Enforce a minimum ttl, may cause endless packet loops */
 	if (r->min_ttl && h->ip_ttl < r->min_ttl)
 		h->ip_ttl = r->min_ttl;
+
+	if (r->rule_flag & PFRULE_RANDOMID)
+		h->ip_id = ip_randomid();
 
 	return (PF_PASS);
 

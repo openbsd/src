@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.308 2003/02/05 16:05:54 cedric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.309 2003/02/08 20:13:20 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -194,6 +194,7 @@ struct scrub_opts {
 	int			minttl;
 	int			maxmss;
 	int			fragcache;
+	int			randomid;
 } scrub_opts;
 
 struct queue_opts {
@@ -354,7 +355,7 @@ typedef struct {
 %token	MINTTL ERROR ALLOWOPTS FASTROUTE FILENAME ROUTETO DUPTO REPLYTO NO LABEL
 %token	NOROUTE FRAGMENT USER GROUP MAXMSS MAXIMUM TTL TOS DROP TABLE
 %token	FRAGNORM FRAGDROP FRAGCROP ANCHOR NATANCHOR RDRANCHOR BINATANCHOR
-%token	SET OPTIMIZATION TIMEOUT LIMIT LOGINTERFACE BLOCKPOLICY
+%token	SET OPTIMIZATION TIMEOUT LIMIT LOGINTERFACE BLOCKPOLICY RANDOMID
 %token	REQUIREORDER YES
 %token	ANTISPOOF FOR
 %token	BITMASK RANDOM SOURCEHASH ROUNDROBIN STATICPORT
@@ -616,6 +617,8 @@ scrubrule	: SCRUB dir logquick interface af fromto scrub_opts
 			r.af = $5;
 			if ($7.nodf)
 				r.rule_flag |= PFRULE_NODF;
+			if ($7.randomid)
+				r.rule_flag |= PFRULE_RANDOMID;
 			if ($7.minttl)
 				r.min_ttl = $7.minttl;
 			if ($7.maxmss)
@@ -678,6 +681,13 @@ scrub_opt	: NODF	{
 			}
 			scrub_opts.marker |= SOM_FRAGCACHE;
 			scrub_opts.fragcache = $1;
+		}
+		| RANDOMID {
+			if (scrub_opts.randomid) {
+				yyerror("random-id cannot be respecified");
+				YYERROR;
+			}
+			scrub_opts.randomid = 1;
 		}
 		;
 
@@ -3623,6 +3633,7 @@ lookup(char *s)
 		{ "queue",		QUEUE},
 		{ "quick",		QUICK},
 		{ "random",		RANDOM},
+		{ "random-id",		RANDOMID},
 		{ "rdr",		RDR},
 		{ "rdr-anchor",		RDRANCHOR},
 		{ "reassemble",		FRAGNORM},

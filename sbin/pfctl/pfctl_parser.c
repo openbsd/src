@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.139 2003/02/02 19:25:06 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.140 2003/02/08 20:13:20 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -917,6 +917,8 @@ print_filter(struct pf_rule *r, int verbose)
 		printf("fragment ");
 	if (r->rule_flag & PFRULE_NODF)
 		printf("no-df ");
+	if (r->rule_flag & PFRULE_RANDOMID)
+		printf("random-id ");
 	if (r->min_ttl)
 		printf("min-ttl %d ", r->min_ttl);
 	if (r->max_mss)
