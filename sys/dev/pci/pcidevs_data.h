@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.428 2001/08/09 11:33:12 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.429 2001/08/20 21:58:59 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -989,6 +989,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_AUREAL, PCI_PRODUCT_AUREAL_AU8830,
 	    "AU8830 Vortex2",
+	},
+	{
+	    PCI_VENDOR_AUREAL, PCI_PRODUCT_AUREAL_AU8810,
+	    "AU8810 Advantage",
 	},
 	{
 	    PCI_VENDOR_AVANCE, PCI_PRODUCT_AVANCE_AVL2301,
