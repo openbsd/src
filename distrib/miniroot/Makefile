@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.23 2001/09/04 22:25:02 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.24 2002/04/30 07:24:22 deraadt Exp $
 
 REV=		${OSrev}
 
@@ -48,6 +48,7 @@ all: ${CBIN} bsd
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	REV=${REV} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} ARCHDIR=${ARCHDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${.CURDIR}/runlist.sh ${LISTS}
+	rm ${MOUNT_POINT}/${CBIN}
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	@echo ""

@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.20 2002/04/30 04:05:49 deraadt Exp $
+#	$OpenBSD: list,v 1.21 2002/04/30 07:24:22 deraadt Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # Sparc extra's
@@ -8,7 +8,6 @@ LINK	instbin				usr/bin/cksum usr/bin/sum
 LINK	instbin				usr/bin/grep usr/bin/egrep usr/bin/fgrep
 LINK	instbin				usr/bin/less usr/bin/more
 LINK	instbin				usr/sbin/installboot
-SPECIAL /bin/rm instbin
 
 SRCDIRS	sys/arch/sparc/stand
 
