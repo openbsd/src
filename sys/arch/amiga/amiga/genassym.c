@@ -1,4 +1,5 @@
-/*	$NetBSD: genassym.c,v 1.23 1996/02/02 19:42:08 mycroft Exp $	*/
+/*	$OpenBSD: genassym.c,v 1.4 1996/03/30 22:18:07 niklas Exp $	*/
+/*	$NetBSD: genassym.c,v 1.24 1996/03/15 19:47:45 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -159,6 +160,7 @@ main()
 	printf("#define\tAMIGA_68020 %d\n", AMIGA_68020);
 	printf("#define\tAMIGA_68030 %d\n", AMIGA_68030);
 	printf("#define\tAMIGA_68040 %d\n", AMIGA_68040);
+	printf("#define\tAMIGA_68060 %d\n", AMIGA_68060);
 	printf("#define\tISR_FORW %d\n", &isr->isr_forw);
 	printf("#define\tISR_INTR %d\n", &isr->isr_intr);
 	printf("#define\tISR_ARG %d\n", &isr->isr_arg);

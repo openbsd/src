@@ -1,4 +1,5 @@
-/*	$NetBSD: siop.c,v 1.27 1996/01/07 22:01:58 thorpej Exp $	*/
+/*	$OpenBSD: siop.c,v 1.6 1996/03/30 22:18:23 niklas Exp $	*/
+/*	$NetBSD: siop.c,v 1.29 1996/03/15 22:11:15 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -94,7 +95,7 @@ int siop_cmd_wait = SCSI_CMD_WAIT;
 int siop_data_wait = SCSI_DATA_WAIT;
 int siop_init_wait = SCSI_INIT_WAIT;
 
-#ifdef DEBUG
+#ifdef DEBUG_SYNC
 /*
  * sync period transfer lookup - only valid for 66Mhz clock
  */
@@ -357,15 +358,21 @@ siop_scsidone(acb, stat)
 	struct siop_acb *acb;
 	int stat;
 {
-	struct scsi_xfer *xs = acb->xs;
-	struct scsi_link *slp = xs->sc_link;
-	struct siop_softc *sc = slp->adapter_softc;
+	struct scsi_xfer *xs;
+	struct scsi_link *slp;
+	struct siop_softc *sc;
 	int s, dosched = 0;
 
 #ifdef DIAGNOSTIC
-	if (acb == NULL || xs == NULL)
-		panic("siop_scsidone");
+	if (acb == NULL || (xs = acb->xs) == NULL) {
+/*		panic("siop_scsidone"); */
+		printf("siop_scsidone: sc_nexus NULL\n");
+		Debugger();
+		return;
+	}
 #endif
+	slp = xs->sc_link;
+	sc = slp->adapter_softc;
 	/*
 	 * XXX Support old-style instrumentation for now.
 	 * IS THIS REALLY THE RIGHT PLACE FOR THIS?  --thorpej
@@ -553,16 +560,16 @@ siopinitialize(sc)
 	if (sc->sc_minsync < 25)
 		sc->sc_minsync = 25;
 	if (sc->sc_clock_freq <= 25) {
-		sc->sc_dcntl = 0x80;		/* SCLK/1 */
+		sc->sc_dcntl |= 0x80;		/* SCLK/1 */
 		sc->sc_tcp[0] = sc->sc_tcp[1];
 	} else if (sc->sc_clock_freq <= 37) {
-		sc->sc_dcntl = 0x40;		/* SCLK/1.5 */
+		sc->sc_dcntl |= 0x40;		/* SCLK/1.5 */
 		sc->sc_tcp[0] = sc->sc_tcp[2];
 	} else if (sc->sc_clock_freq <= 50) {
-		sc->sc_dcntl = 0x00;		/* SCLK/2 */
+		sc->sc_dcntl |= 0x00;		/* SCLK/2 */
 		sc->sc_tcp[0] = sc->sc_tcp[3];
 	} else {
-		sc->sc_dcntl = 0xc0;		/* SCLK/3 */
+		sc->sc_dcntl |= 0xc0;		/* SCLK/3 */
 		sc->sc_tcp[0] = 3000 / sc->sc_clock_freq;
 	}
 
@@ -1083,7 +1090,7 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 		*status = STS_BUSY;
 		if (sc->nexus_list.tqh_first)
 			rp->siop_dsp = sc->sc_scriptspa + Ent_wait_reselect;
-		return 1;
+		return (acb != NULL);
 	}
 	if (dstat & SIOP_DSTAT_SIR && (rp->siop_dsps == 0xff01 ||
 	    rp->siop_dsps == 0xff02)) {
@@ -1159,8 +1166,14 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 				    acb->ds.chain[i].datalen))
 					break;
 			}
-			if (i >= DMAMAXIO || acb->ds.chain[i].datalen == 0)
-				printf("couldn't find saved data pointer\n");
+			if (i >= DMAMAXIO || acb->ds.chain[i].datalen == 0) {
+				printf("couldn't find saved data pointer: ");
+				printf("curbuf %x curlen %x i %d\n",
+				    acb->iob_curbuf, acb->iob_curlen, i);
+#ifdef DDB
+				Debugger();
+#endif
+			}
 #ifdef DEBUG
 			if (siop_debug & 0x100)
 				printf("  chain[0]: %x/%x -> %x/%x\n",
@@ -1429,8 +1442,9 @@ siopintr (sc)
 		printf ("%s: intr istat %x dstat %x sstat0 %x\n",
 		    sc->sc_dev.dv_xname, istat, dstat, sstat0);
 	if (!sc->sc_active) {
-		printf ("%s: spurious interrupt? istat %x dstat %x sstat0 %x status %x\n",
-		    sc->sc_dev.dv_xname, istat, dstat, sstat0, sc->sc_nexus->stat[0]);
+		printf ("%s: spurious interrupt? istat %x dstat %x sstat0 %x nexus %x status %x\n",
+		    sc->sc_dev.dv_xname, istat, dstat, sstat0,
+		    sc->sc_nexus, sc->sc_nexus ? sc->sc_nexus->stat[0] : 0);
 	}
 #endif
 
@@ -1464,7 +1478,8 @@ siopintr (sc)
 				    rp->siop_dsp - sc->sc_scriptspa);
 			}
 #endif
-			siop_scsidone(sc->sc_nexus, sc->sc_nexus->stat[0]);
+			siop_scsidone(sc->sc_nexus, sc->sc_nexus ?
+			    sc->sc_nexus->stat[0] : -1);
 		}
 	}
 	splx(s);
@@ -1482,7 +1497,7 @@ scsi_period_to_siop (sc, target)
 
 	period = sc->sc_nexus->msg[4];
 	offset = sc->sc_nexus->msg[5];
-#ifdef DEBUG
+#ifdef DEBUG_SYNC
 	sxfer = 0;
 	if (offset <= SIOP_MAX_OFFSET)
 		sxfer = offset;
@@ -1510,14 +1525,16 @@ scsi_period_to_siop (sc, target)
 	} else {
 		sxfer = (sxfer << 4) | ((offset <= SIOP_MAX_OFFSET) ?
 		    offset : SIOP_MAX_OFFSET);
+#ifdef DEBUG_SYNC
 		printf("siop sync: params for period %dns: sxfer %x sbcl %x",
 		    period * 4, sxfer, sbcl);
 		printf(" actual period %dns\n",
 		    sc->sc_tcp[sbcl] * ((sxfer >> 4) + 4));
+#endif
 	}
 	sc->sc_sync[target].sxfer = sxfer;
 	sc->sc_sync[target].sbcl = sbcl;
-#ifdef DEBUG
+#ifdef DEBUG_SYNC
 	printf ("siop sync: siop_sxfr %02x, siop_sbcl %02x\n", sxfer, sbcl);
 #endif
 }

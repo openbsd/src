@@ -1,4 +1,5 @@
-/*      $NetBSD: grf_cl.c,v 1.5 1995/10/09 03:47:44 chopps Exp $        */
+/*	$OpenBSD: grf_cl.c,v 1.2 1996/03/30 22:18:13 niklas Exp $	*/
+/*	$NetBSD: grf_cl.c,v 1.6 1996/03/05 18:08:33 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Ezra Story
@@ -39,7 +40,7 @@
  * Graphics routines for Cirrus CL GD 5426 boards,
  *
  * This code offers low-level routines to access Cirrus Cl GD 5426
- * graphics-boards from within NetBSD for the Amiga.
+ * graphics-boards from within OpenBSD for the Amiga.
  * No warranties for any kind of function at all - this
  * code may crash your hardware and scratch your harddisk.  Use at your
  * own risk.  Freely distributable.
@@ -48,6 +49,7 @@
  * Lutz Vieweg's retina driver by Kari Mettinen 08/94
  * Contributions by Ill, ScottE, MiL
  * Extensively hacked and rewritten by Ezra Story (Ezy) 01/95
+ * Picasso/040 patches (wee!) by crest 01/96
  *
  * Thanks to Village Tronic Marketing Gmbh for providing me with
  * a Picasso-II board.
@@ -924,7 +926,7 @@ cl_getcmap(gfp, cmap)
 
 	ba = gfp->g_regkva;
 	/* first read colors out of the chip, then copyout to userspace */
-	vgaw(ba, VDAC_ADDRESS_W, cmap->index);
+	vgaw(ba, VDAC_ADDRESS_R, cmap->index);
 	x = cmap->count - 1;
 
 /* Some sort 'o Magic. Spectrum has some changes on the board to speed
@@ -1310,7 +1312,14 @@ cl_load_mon(gp, md)
 	    (clkdiv << 1));
 
 	delay(200000);
-	vgaw(ba, VDAC_MASK, 0xff);
+
+	/* write 0x00 to VDAC_MASK before accessing HDR this helps
+	   sometimes, out of "secret" application note (crest) */
+	vgaw(ba, VDAC_MASK, 0);
+	delay(200000);
+	/* reset HDR "magic" access counter (crest) */
+	vgar(ba, VDAC_ADDRESS);
+
 	delay(200000);
 	vgar(ba, VDAC_MASK);
 	delay(200000);
@@ -1343,7 +1352,14 @@ cl_load_mon(gp, md)
 		HDE = (gv->disp_width / 8) * 3;
 		break;
 	}
+	delay(20000);
+
+	/* reset HDR "magic" access counter (crest) */
+	vgar(ba, VDAC_ADDRESS);
 	delay(200000);
+	/* then enable all bit in VDAC_MASK afterwards (crest) */
+	vgaw(ba, VDAC_MASK, 0xff);
+	delay(20000);
 
 	WCrt(ba, CRT_ID_OFFSET, HDE);
 	WCrt(ba, CRT_ID_EXT_DISP_CNTL,

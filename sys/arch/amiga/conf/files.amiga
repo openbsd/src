@@ -1,5 +1,5 @@
-#     $OpenBSD: files.amiga,v 1.7 1996/03/24 16:50:15 niklas Exp $
-#     $NetBSD: files.amiga,v 1.34 1996/02/24 08:59:21 chopps Exp $
+#	$OpenBSD: files.amiga,v 1.8 1996/03/30 22:18:10 niklas Exp $
+#	$NetBSD: files.amiga,v 1.36 1996/03/02 14:00:32 veego Exp $
 
 # maxpartitions must be first item in files.${ARCH}
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -74,11 +74,12 @@ file	arch/amiga/dev/ite_rt.c		grfrt ite
 # cirrus grf
 device	grfcl at zbus: grfbus
 file	arch/amiga/dev/grf_cl.c		grfcl needs-flag
-file    arch/amiga/dev/ite_cl.c         grfcl ite
+file	arch/amiga/dev/ite_cl.c		grfcl ite
 
 # CyberVison 64 grf
 device	grfcv at zbus: grfbus
 file	arch/amiga/dev/grf_cv.c		grfcv needs-flag
+file	arch/amiga/dev/ite_cv.c		grfcv ite
 
 # A2410 grf
 device	grful at zbus: grfbus

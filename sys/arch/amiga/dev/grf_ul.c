@@ -1,4 +1,6 @@
-/*	$NetBSD: grf_ul.c,v 1.11 1996/01/28 20:06:15 chopps Exp $	*/
+/*	$OpenBSD: grf_ul.c,v 1.5 1996/03/30 22:18:19 niklas Exp $	*/
+/*	$NetBSD: grf_ul.c,v 1.12 1996/03/04 19:49:11 is Exp $	*/
+
 #define UL_DEBUG
 
 /*
@@ -299,7 +301,7 @@ ul_load_code(gp)
 	/* 
 	 * Unflush cache, unhalt cpu -> nmi starts to run. This MUST NOT BE 
 	 * DONE before the image color map initialization above, to guarantee
-	 * the index register in the bt478 is not used by more than one CPU
+	 * the index register in the BT458 is not used by more than one CPU
 	 * at once.
 	 *
 	 * XXX For the same reason, we'll have to rething ul_putcmap(). For
@@ -847,7 +849,7 @@ ul_putcmap (gp, cmap, dev)
 	/*
 	 * XXX This is a bad thing to do.
 	 * We should always use the gsp call, or have a means to arbitrate 
-	 * the usage of the BT478 index register. Else there might be a 
+	 * the usage of the BT458 index register. Else there might be a 
 	 * race condition (when writing both colormaps at nearly the same
 	 * time), where one CPU changes the index register when the other
 	 * one has not finished using it.

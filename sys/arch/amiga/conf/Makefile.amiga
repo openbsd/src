@@ -1,4 +1,5 @@
-#	$NetBSD: Makefile.amiga,v 1.37 1996/02/09 02:21:17 mycroft Exp $
+#	$OpenBSD: Makefile.amiga,v 1.10 1996/03/30 22:18:10 niklas Exp $
+#	$NetBSD: Makefile.amiga,v 1.40 1996/03/15 20:09:52 is Exp $
 
 # Makefile for OpenBSD
 #
@@ -21,13 +22,12 @@
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
 
-AS=	as
-AWK=	awk
-CC=	cc
-CPP=	cpp
-LD=	ld
-STRIP=	strip -d
-TOUCH=	touch -f -c
+AS?=	as
+CC?=	cc
+CPP?=	cpp
+LD?=	ld
+STRIP?=	strip -d
+TOUCH?=	touch -f -c
 
 # source tree is located via $S relative to the compilation directory
 S=	../../../..
@@ -35,7 +35,12 @@ AMIGA=	../..
 
 INCLUDES=	-I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dmc68020 -Damiga
-CFLAGS=		${DEBUG} -O2 -Werror -mc68020 -msoft-float
+.if empty(IDENT:M-DM68060)
+CFLAGS=		${DEBUG} -O2 -Werror -m68020 -msoft-float ${COPTS}
+.else
+CFLAGS=		${DEBUG} -O2 -Werror -m68060 -msoft-float ${COPTS}
+.endif
+
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 0 -e start
 
@@ -134,7 +139,7 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 
 
 clean::
-	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
+	rm -f eddep *bsd bsd.gdb tags *.[io] [a-z]*.s \
 	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
 
 lint:

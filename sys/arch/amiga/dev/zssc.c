@@ -1,4 +1,5 @@
-/*	$NetBSD: zssc.c,v 1.13 1995/10/09 15:20:38 chopps Exp $	*/
+/*	$OpenBSD: zssc.c,v 1.4 1996/03/30 22:18:25 niklas Exp $	*/
+/*	$NetBSD: zssc.c,v 1.14 1996/03/15 22:11:22 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -115,6 +116,7 @@ zsscattach(pdp, dp, auxp)
 	 */
 	sc->sc_clock_freq = 66;		/* Clock = 66Mhz */
 	sc->sc_ctest7 = 0x00;
+	sc->sc_dcntl = 0x00;
 
 	alloc_sicallback();
 

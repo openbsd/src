@@ -1,4 +1,5 @@
-/*	$NetBSD: param.h,v 1.26 1996/01/28 19:12:46 chopps Exp $	*/
+/*	$OpenBSD: param.h,v 1.5 1996/03/30 22:18:27 niklas Exp $	*/
+/*	$NetBSD: param.h,v 1.28 1996/03/04 05:04:14 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,9 +48,11 @@
 /*
  * Machine dependent constants for amiga
  */
+#define	_MACHINE	amiga
 #define	MACHINE		"amiga"
-#define MACHINE_ARCH	"m68k"
-#define MID_MACHINE	MID_M68K
+#define	_MACHINE_ARCH	m68k
+#define	MACHINE_ARCH	"m68k"
+#define	MID_MACHINE	MID_M68K
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value

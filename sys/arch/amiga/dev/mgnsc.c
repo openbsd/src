@@ -1,4 +1,5 @@
-/*	$NetBSD: mgnsc.c,v 1.15 1995/10/09 15:20:36 chopps Exp $	*/
+/*	$OpenBSD: mgnsc.c,v 1.4 1996/03/30 22:18:22 niklas Exp $	*/
+/*	$NetBSD: mgnsc.c,v 1.16 1996/03/15 22:11:12 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -115,7 +116,8 @@ mgnscattach(pdp, dp, auxp)
 	 * CTEST7 = TT1
 	 */
 	sc->sc_clock_freq = 33;		/* Clock = 33Mhz */
-	sc->sc_ctest7 = 0x02;		/* TT1 */
+	sc->sc_ctest7 = SIOP_CTEST7_TT1;
+	sc->sc_dcntl = 0x00;
 
 	alloc_sicallback();
 

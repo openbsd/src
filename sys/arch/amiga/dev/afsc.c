@@ -1,4 +1,5 @@
-/*	$NetBSD: afsc.c,v 1.10 1996/01/28 19:23:24 chopps Exp $	*/
+/*	$OpenBSD: afsc.c,v 1.3 1996/03/30 22:18:12 niklas Exp $	*/
+/*	$NetBSD: afsc.c,v 1.11 1996/03/15 22:11:09 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -78,7 +79,7 @@ struct cfdriver afsccd = {
 	NULL, "afsc", (cfmatch_t)afscmatch, afscattach, 
 	DV_DULL, sizeof(struct siop_softc), NULL, 0 };
 struct cfdriver aftsccd = {
-	NULL, "afsc", (cfmatch_t)afscmatch, afscattach, 
+	NULL, "aftsc", (cfmatch_t)afscmatch, afscattach, 
 	DV_DULL, sizeof(struct siop_softc), NULL, 0 };
 
 /*
@@ -99,24 +100,14 @@ afscmatch(pdp, cdp, auxp)
 		return(1);		/* It's an A4091 SCSI card */
 	if (!is_a4000() || !matchname(auxp, "afsc"))
 		return(0);		/* Not on an A4000 or not A4000T SCSI */
-#ifdef DEBUG
-	printf("afscmatch: probing for A4000T\n");
-#endif
 	rp = ztwomap(0xdd0040);
 	if (badaddr(&rp->siop_scratch) || badaddr(&rp->siop_temp)) {
-#ifdef DEBUG
-		printf("afscmatch: A4000T probed bad address\n");
-#endif
 		return(0);
 	}
 	scratch = rp->siop_scratch;
 	temp = rp->siop_temp;
 	rp->siop_scratch = 0xdeadbeef;
 	rp->siop_temp = 0xaaaa5555;
-#ifdef DEBUG
-	printf("afscmatch: probe %x %x %x %x\n", scratch, temp,
-	    rp->siop_scratch, rp->siop_temp);
-#endif
 	if (rp->siop_scratch != 0xdeadbeef || rp->siop_temp != 0xaaaa5555)
 		return(0);
 	rp->siop_scratch = scratch;
@@ -149,7 +140,8 @@ afscattach(pdp, dp, auxp)
 	 * CTEST7 = 80 [disable burst]
 	 */
 	sc->sc_clock_freq = 50;		/* Clock = 50Mhz */
-	sc->sc_ctest7 = 0x80;		/* CDIS */
+	sc->sc_ctest7 = SIOP_CTEST7_CDIS;
+	sc->sc_dcntl = SIOP_DCNTL_EA;
 
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = 7;

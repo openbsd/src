@@ -1,5 +1,5 @@
-/*    $OpenBSD: ite.c,v 1.3 1996/02/26 21:18:49 niklas Exp $  */
-/*    $NetBSD: ite.c,v 1.35 1996/02/24 07:44:06 chopps Exp $  */
+/*	$OpenBSD: ite.c,v 1.4 1996/03/30 22:18:20 niklas Exp $  */
+/*	$NetBSD: ite.c,v 1.36 1996/03/16 08:19:43 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -907,7 +907,6 @@ ite_filter(c, caller)
 		return;
 #ifdef DDB
 	} else if (key_mod == (KBD_MOD_LALT | KBD_MOD_LMETA) && c == 0x59) {
-		extern int Debugger();
 		Debugger();
 		splx(s);
 		return;

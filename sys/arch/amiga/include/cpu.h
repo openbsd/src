@@ -1,4 +1,5 @@
-/*	$NetBSD: cpu.h,v 1.25 1995/12/21 05:01:48 mycroft Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.4 1996/03/30 22:18:27 niklas Exp $	*/
+/*	$NetBSD: cpu.h,v 1.26 1996/03/15 19:47:48 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -119,6 +120,7 @@ int	want_resched;		/* resched() was called */
 #define AMIGA_68881	(1L<<4)
 #define AMIGA_68882	(1L<<5)
 #define	AMIGA_FPU40	(1L<<6)
+#define AMIGA_68060	(1L<<7)
 
 /* values for fputype */
 #define FPU_NONE	0

@@ -1,3 +1,4 @@
+/*	$OpenBSD: grf_clreg.h,v 1.2 1996/03/30 22:18:14 niklas Exp $	*/
 
 /*
  * Copyright (c) 1995 Ezra Story
@@ -257,13 +258,13 @@ struct grfcltext_mode {
 #define PASS_ADDRESS_WP		0x9000
 
 /* Video DAC */
-#define VDAC_ADDRESS		0x03c8
-#define VDAC_ADDRESS_W		0x03c8
-#define VDAC_ADDRESS_R		0x03c7
-#define VDAC_STATE		0x03c7
-#define VDAC_DATA		0x03c9
-#define VDAC_MASK		0x03c6
-#define HDR			0x03c6	/* Hidden DAC register, 4 reads to access */
+#define VDAC_ADDRESS	0x03c8
+#define VDAC_ADDRESS_W	0x03c8
+#define VDAC_ADDRESS_R	((cltype==PICASSO)?0x03c7+0xfff:0x3c7)
+#define VDAC_STATE	0x03c7
+#define VDAC_DATA	((cltype==PICASSO)?0x03c9+0xfff:0x3c9)
+#define VDAC_MASK       0x03c6
+#define HDR	        0x03c6	/* Hidden DAC register, 4 reads to access */
 
 
 #define WGfx(ba, idx, val) \
@@ -277,10 +278,7 @@ struct grfcltext_mode {
 
 #define WAttr(ba, idx, val) \
 	do {	\
-		unsigned char tmp;\
-		vgaw(ba, CRT_ADDRESS, CRT_ID_ACT_TOGGLE_RBACK);\
-		tmp = vgar(ba, CRT_ADDRESS_R);\
-		if(tmp & 0x80)vgaw(ba,ACT_ADDRESS_W,vgar(ba,ACT_ADDRESS_R));\
+		vgar(ba, ACT_ADDRESS_RESET);\
 		vgaw(ba, ACT_ADDRESS_W, idx);\
 		vgaw(ba, ACT_ADDRESS_W, val);\
 	} while (0)
@@ -354,11 +352,7 @@ static inline void RegOffpass(volatile void *ba) {
 }
 
 static inline unsigned char RAttr(volatile void * ba, short idx) {
-
-	unsigned char tmp;
-	vgaw(ba, CRT_ADDRESS, CRT_ID_ACT_TOGGLE_RBACK);
-	tmp = vgar(ba, CRT_ADDRESS_R);
-	if(tmp & 0x80)vgar(ba,ACT_ADDRESS_R);
+	vgar(ba, ACT_ADDRESS_RESET);
 	vgaw(ba, ACT_ADDRESS_W, idx);
 	return vgar (ba, ACT_ADDRESS_R);
 }
