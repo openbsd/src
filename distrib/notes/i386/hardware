@@ -80,6 +80,7 @@ Supported devices include:
 			[Note: The Mitsumi driver device probe is known 
 			to cause trouble with several devices!]
 		Most SCSI CD-ROM drives
+		Most ATAPI CD-ROM drives
 	Mice:
 		"Logitech"-style bus mice [*] [+]
 		"Microsoft"-style bus mice [*] [+]
@@ -93,10 +94,12 @@ Supported devices include:
 		Windows Sound System [*] [+]
 		ProAudio Spectrum [*] [+]
 	Miscellaneous:
+		OPTi(82C929) chipset for multi-interface CD-ROM, and
+		sound ISA cards.
 
 Drivers for hardware marked with "[*]" are NOT included on the
 distribution floppies.  Except as noted above, all other drivers are
-present on both kernel-copy disks.  Also, at the present time, the
+present on install floppy.  Also, at the present time, the
 distributed kernels support only one SCSI host adapter per machine.
 OpenBSD normally allows more, though, so if you have more than one, you
 can use all of them by compiling a custom kernel once OpenBSD is
