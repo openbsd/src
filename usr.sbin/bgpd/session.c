@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.146 2004/04/25 08:06:00 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.147 2004/04/25 18:21:18 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1912,7 +1912,7 @@ getpeerbyip(struct sockaddr *ip)
 		if ((newpeer = malloc(sizeof(struct peer))) == NULL)
 			fatal(NULL);
 		memcpy(newpeer, loose, sizeof(struct peer));
-		for (id = 1; id < UINT_MAX; id++) {
+		for (id = UINT_MAX; id > UINT_MAX / 2; id--) {
 			for (p = peers; p != NULL && p->conf.id != id;
 			    p = p->next)
 				;	/* nothing */

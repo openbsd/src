@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.81 2004/04/25 17:51:46 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.82 2004/04/25 18:21:18 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1361,7 +1361,7 @@ get_id(struct peer *newpeer)
 			}
 
 	/* new one */
-	for (; id < UINT_MAX; id++) {
+	for (; id < UINT_MAX / 2; id++) {
 		for (p = peer_l_old; p != NULL && p->conf.id != id; p = p->next)
 			;	/* nothing */
 		if (p == NULL) {	/* we found a free id */
