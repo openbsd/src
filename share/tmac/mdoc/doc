@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc,v 1.8 2003/07/01 19:11:46 jmc Exp $
+.\"	$OpenBSD: doc,v 1.9 2003/07/16 07:38:38 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1147,7 +1147,7 @@
 .ds qL
 .eO \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
 ..
-.\" NS Xe macro - Extend close (end)
+.\" NS Xc macro - Extend close (end)
 .de Xc
 .\" .nr mN 0
 .if \\n(aC==0 .ds mN Xc
@@ -2424,9 +2424,7 @@
 .               ds A9 \\$9
 .		nr fV \\n(.$
 .		fV
-.		nr aP \\n(aP+1
-.		ie \\n(C\\n(aP==1 .\\*(A\\n(aP
-.		el .No
+.		No
 .	\}
 .\}
 .el \{\
