@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)stdio.h	5.17 (Berkeley) 6/3/91
- *	$Id: stdio.h,v 1.1.1.1 1995/10/18 08:43:04 deraadt Exp $ $provenid: stdio.h,v 1.18 1994/02/07 03:32:06 proven Exp $
+ *	$Id: stdio.h,v 1.2 1997/04/13 17:08:35 briggs Exp $ $provenid: stdio.h,v 1.18 1994/02/07 03:32:06 proven Exp $
  */
 
 #ifndef _STDIO_H_
@@ -297,6 +297,8 @@ __BEGIN_DECLS
 int	__srget __P((FILE *));
 int	__svfscanf __P((FILE *, const char *, va_list));
 int	__swbuf __P((int, FILE *));
+void	flockfile __P((FILE *fp));
+void	funlockfile __P((FILE *fp));
 __END_DECLS
 
 /*
