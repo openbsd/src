@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.405 2003/08/09 14:56:48 cedric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.406 2003/08/18 11:08:10 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -725,6 +725,10 @@ scrub_opt	: NODF	{
 		| MAXMSS number {
 			if (scrub_opts.marker & SOM_MAXMSS) {
 				yyerror("max-mss cannot be respecified");
+				YYERROR;
+			}
+			if ($2 > 65535) {
+				yyerror("illegal max-mss value %d", $2);
 				YYERROR;
 			}
 			scrub_opts.marker |= SOM_MAXMSS;
