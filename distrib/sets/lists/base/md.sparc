@@ -75,14 +75,9 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/a.out.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/altq
 ./usr/libdata/perl5/site_perl/sparc-openbsd/altq/altq.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/altq/altq_afmap.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/altq/altq_blue.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/altq/altq_cbq.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/altq/altq_cdnr.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/altq/altq_classq.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/altq/altq_conf.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/altq/altq_fifoq.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/altq/altq_flowvalve.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/altq/altq_hfsc.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/altq/altq_priq.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/altq/altq_red.ph
@@ -90,8 +85,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/altq/altq_rmclass.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/altq/altq_rmclass_debug.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/altq/altq_var.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/altq/altq_wfq.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/altq/altqconf.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/altq/if_altq.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/ar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/arpa

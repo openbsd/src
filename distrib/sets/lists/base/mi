@@ -2091,6 +2091,7 @@
 ./usr/share/pf
 ./usr/share/pf/queue1
 ./usr/share/pf/queue2
+./usr/share/pf/queue3
 ./usr/share/sendmail
 ./usr/share/sendmail/README
 ./usr/share/sendmail/cf
