@@ -7,7 +7,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: ssh-add.c,v 1.13 1999/11/24 00:26:03 deraadt Exp $");
+RCSID("$Id: ssh-add.c,v 1.14 1999/11/24 16:13:45 markus Exp $");
 
 #include "rsa.h"
 #include "ssh.h"
@@ -44,13 +44,53 @@ delete_all(AuthenticationConnection *ac)
 		fprintf(stderr, "Failed to remove all identitities.\n");
 }
 
+char *
+ssh_askpass(char *askpass, char *msg)
+{
+	pid_t pid;
+	size_t len;
+	char *nl, *pass;
+	int p[2], status;
+	char buf[1024];
+
+	if (askpass == NULL)
+		fatal("internal error: askpass undefined");
+	if (pipe(p) < 0)
+		fatal("ssh_askpass: pipe: %s", strerror(errno));
+	if ((pid = fork()) < 0)
+		fatal("ssh_askpass: fork: %s", strerror(errno));
+	if (pid == 0) {
+		close(p[0]);
+		if (dup2(p[1], STDOUT_FILENO) < 0)
+			fatal("ssh_askpass: dup2: %s", strerror(errno));
+		execlp(askpass, askpass, msg, (char *) 0);
+		fatal("ssh_askpass: exec(%s): %s", askpass, strerror(errno));
+	}
+	close(p[1]);
+	len = read(p[0], buf, sizeof buf);
+	close(p[0]);
+	while (waitpid(pid, &status, 0) < 0)
+		if (errno != EINTR)
+			break;
+	if (len <= 1)
+		return xstrdup("");
+	nl = strchr(buf, '\n');
+	if (nl)
+		*nl = '\0';
+	pass = xstrdup(buf);
+	memset(buf, 0, sizeof(buf));
+	return pass;
+}
+
 void
 add_file(AuthenticationConnection *ac, const char *filename)
 {
 	RSA *key;
 	RSA *public_key;
-	char *saved_comment, *comment;
+	char *saved_comment, *comment, *askpass = NULL;
+	char buf[1024], msg[1024];
 	int success;
+	int interactive = isatty(STDIN_FILENO);
 
 	key = RSA_new();
 	public_key = RSA_new();
@@ -60,16 +100,26 @@ add_file(AuthenticationConnection *ac, const char *filename)
 	}
 	RSA_free(public_key);
 
+	if (!interactive && getenv("DISPLAY"))
+		askpass = getenv("SSH_ASKPASS");
+
 	/* At first, try empty passphrase */
 	success = load_private_key(filename, "", key, &comment);
 	if (!success) {
-		printf("Need passphrase for %s (%s).\n", filename, saved_comment);
-		if (!isatty(STDIN_FILENO)) {
+		printf("Need passphrase for %.200s\n", filename);
+		if (!interactive && askpass == NULL) {
 			xfree(saved_comment);
 			return;
 		}
+		snprintf(msg, sizeof msg, "Enter passphrase for %.200s", saved_comment);
 		for (;;) {
-			char *pass = read_passphrase("Enter passphrase: ", 1);
+			char *pass;
+			if (interactive) {
+				snprintf(buf, sizeof buf, "%s: ", msg);
+				pass = read_passphrase(buf, 1);
+			} else {
+				pass = ssh_askpass(askpass, msg);
+			}
 			if (strcmp(pass, "") == 0) {
 				xfree(pass);
 				xfree(saved_comment);
@@ -80,7 +130,7 @@ add_file(AuthenticationConnection *ac, const char *filename)
 			xfree(pass);
 			if (success)
 				break;
-			printf("Bad passphrase.\n");
+			strlcpy(msg, "Bad passphrase, try again", sizeof msg);
 		}
 	}
 	xfree(saved_comment);
