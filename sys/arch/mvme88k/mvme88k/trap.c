@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.56 2003/10/23 19:06:54 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.57 2003/10/27 10:46:44 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -230,9 +230,11 @@ m88100_trap(unsigned type, struct m88100_saved_state *frame)
 		sticks = p->p_sticks;
 		type += T_USER;
 		p->p_md.md_tf = frame;	/* for ptrace/signals */
-		fault_type = 0;
-		fault_code = 0;
 	}
+	fault_type = 0;
+	fault_code = 0;
+	fault_addr = frame->sxip & XIP_ADDR;
+
 	switch (type) {
 	default:
 		panictrap(frame->vector, frame);
@@ -401,8 +403,7 @@ m88100_trap(unsigned type, struct m88100_saved_state *frame)
 		/* FALLTHROUGH */
 	case T_DATAFLT+T_USER:
 user_fault:
-		if (type == T_INSTFLT+T_USER) {
-			fault_addr = frame->sxip & XIP_ADDR;
+		if (type == T_INSTFLT + T_USER) {
 			pbus_type = (frame->ipfsr >> 16) & 0x07;
 		} else {
 			fault_addr = frame->dma0;
@@ -680,9 +681,11 @@ m88110_trap(unsigned type, struct m88100_saved_state *frame)
 		sticks = p->p_sticks;
 		type += T_USER;
 		p->p_md.md_tf = frame;	/* for ptrace/signals */
-		fault_type = 0;
-		fault_code = 0;
 	}
+	fault_type = 0;
+	fault_code = 0;
+	fault_addr = frame->exip & XIP_ADDR;
+
 	switch (type) {
 	default:
 		panictrap(frame->vector, frame);
@@ -815,6 +818,7 @@ m88110_trap(unsigned type, struct m88100_saved_state *frame)
 			}
 		}
 		if (frame->dsr & (CMMU_DSR_SI | CMMU_DSR_PI)) {
+			frame->dsr &= ~CMMU_DSR_WE;	/* undefined */
 			/*
 			 * On a segment or a page fault, call uvm_fault() to
 			 * resolve the fault.
@@ -869,7 +873,6 @@ m88110_trap(unsigned type, struct m88100_saved_state *frame)
 	case T_DATAFLT+T_USER:
 m88110_user_fault:
 		if (type == T_INSTFLT+T_USER) {
-			fault_addr = frame->exip & XIP_ADDR;
 			ftype = VM_PROT_READ;
 			fault_code = VM_PROT_READ;
 		} else {
