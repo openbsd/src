@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.38 2003/06/24 13:52:50 henning Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.39 2003/07/31 22:25:55 cedric Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -158,7 +158,6 @@ RB_GENERATE(pfr_ktablehead, pfr_ktable, pfrkt_tree, pfr_ktable_compare);
 struct pfr_ktablehead	 pfr_ktables;
 struct pfr_table	 pfr_nulltable;
 int			 pfr_ktable_cnt;
-int			 pfr_ticket;
 
 void
 pfr_initialize(void)
@@ -172,8 +171,6 @@ pfr_initialize(void)
 	pfr_sin.sin_family = AF_INET;
 	pfr_sin6.sin6_len = sizeof(pfr_sin6);
 	pfr_sin6.sin6_family = AF_INET6;
-
-	pfr_ticket = 100;
 }
 
 int
@@ -1310,48 +1307,58 @@ _skip:
 }
 
 int
-pfr_ina_begin(int *ticket, int *ndel, int flags)
+pfr_ina_begin(struct pfr_table *trs, u_int32_t *ticket, int *ndel, int flags)
 {
 	struct pfr_ktableworkq	 workq;
 	struct pfr_ktable	*p;
+	struct pf_ruleset	*rs;
 	int			 xdel = 0;
 
 	ACCEPT_FLAGS(PFR_FLAG_DUMMY);
+	rs = pf_find_or_create_ruleset(trs->pfrt_anchor, trs->pfrt_ruleset);
+	if (rs == NULL)
+		return (ENOMEM);
 	SLIST_INIT(&workq);
 	RB_FOREACH(p, pfr_ktablehead, &pfr_ktables) {
-		if (!(p->pfrkt_flags & PFR_TFLAG_INACTIVE))
+		if (!(p->pfrkt_flags & PFR_TFLAG_INACTIVE) ||
+		    pfr_skip_table(trs, p, 0))
 			continue;
 		p->pfrkt_nflags = p->pfrkt_flags & ~PFR_TFLAG_INACTIVE;
 		SLIST_INSERT_HEAD(&workq, p, pfrkt_workq);
 		xdel++;
 	}
-	if (!(flags & PFR_FLAG_DUMMY))
+	if (!(flags & PFR_FLAG_DUMMY)) {
 		pfr_setflags_ktables(&workq);
+		if (ticket != NULL)
+			*ticket = ++rs->tticket;
+		rs->topen = 1;
+	} else
+		pf_remove_if_empty_ruleset(rs);
 	if (ndel != NULL)
 		*ndel = xdel;
-	if (ticket != NULL && !(flags & PFR_FLAG_DUMMY))
-		*ticket = ++pfr_ticket;
 	return (0);
 }
 
 int
 pfr_ina_define(struct pfr_table *tbl, struct pfr_addr *addr, int size,
-    int *nadd, int *naddr, int ticket, int flags)
+    int *nadd, int *naddr, u_int32_t ticket, int flags)
 {
 	struct pfr_ktableworkq	 tableq;
 	struct pfr_kentryworkq	 addrq;
 	struct pfr_ktable	*kt, *rt, *shadow, key;
 	struct pfr_kentry	*p;
 	struct pfr_addr		 ad;
+	struct pf_ruleset	*rs;
 	int			 i, rv, xadd = 0, xaddr = 0;
 
 	ACCEPT_FLAGS(PFR_FLAG_DUMMY|PFR_FLAG_ADDRSTOO);
-	if (ticket != pfr_ticket)
-		return (EBUSY);
 	if (size && !(flags & PFR_FLAG_ADDRSTOO))
 		return (EINVAL);
 	if (pfr_validate_table(tbl, PFR_TFLAG_USRMASK))
 		return (EINVAL);
+	rs = pf_find_ruleset(tbl->pfrt_anchor, tbl->pfrt_ruleset);
+	if (rs == NULL || !rs->topen || ticket != rs->tticket)
+		return (EBUSY);
 	tbl->pfrt_flags |= PFR_TFLAG_INACTIVE;
 	SLIST_INIT(&tableq);
 	kt = RB_FIND(pfr_ktablehead, &pfr_ktables, (struct pfr_ktable *)tbl);
@@ -1432,21 +1439,24 @@ _bad:
 }
 
 int
-pfr_ina_commit(int ticket, int *nadd, int *nchange, int flags)
+pfr_ina_commit(struct pfr_table *trs, u_int32_t ticket, int *nadd,
+    int *nchange, int flags)
 {
 	struct pfr_ktable	*p;
 	struct pfr_ktableworkq	 workq;
+	struct pf_ruleset	*rs;
 	int			 s, xadd = 0, xchange = 0;
 	long			 tzero = time.tv_sec;
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_DUMMY);
-	if (ticket != pfr_ticket)
+	rs = pf_find_ruleset(trs->pfrt_anchor, trs->pfrt_ruleset);
+	if (rs == NULL || !rs->topen || ticket != rs->tticket)
 		return (EBUSY);
-	pfr_ticket++;
 
 	SLIST_INIT(&workq);
 	RB_FOREACH(p, pfr_ktablehead, &pfr_ktables) {
-		if (!(p->pfrkt_flags & PFR_TFLAG_INACTIVE))
+		if (!(p->pfrkt_flags & PFR_TFLAG_INACTIVE) ||
+		    pfr_skip_table(trs, p, 0))
 			continue;
 		SLIST_INSERT_HEAD(&workq, p, pfrkt_workq);
 		if (p->pfrkt_flags & PFR_TFLAG_ACTIVE)
@@ -1462,6 +1472,8 @@ pfr_ina_commit(int ticket, int *nadd, int *nchange, int flags)
 			pfr_commit_ktable(p, tzero);
 		if (flags & PFR_FLAG_ATOMIC)
 			splx(s);
+		rs->topen = 0;
+		pf_remove_if_empty_ruleset(rs);
 	}
 	if (nadd != NULL)
 		*nadd = xadd;

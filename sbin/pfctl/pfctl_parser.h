@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.65 2003/07/18 06:30:07 cedric Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.66 2003/07/31 22:25:54 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -60,7 +60,7 @@ struct pfctl {
 	int dev;
 	int opts;
 	int loadopt;
-	int tticket;			/* table ticket */
+	u_int32_t tticket;		/* table ticket */
 	int tdirty;			/* kernel dirty */
 	u_int32_t rule_nr;
 	struct pfioc_pooladdr paddr;
@@ -166,7 +166,7 @@ void	 print_queue(const struct pf_altq *, unsigned, struct node_queue_bw *,
 	     int, struct node_queue_opt *);
 
 int	pfctl_define_table(char *, int, int, const char *, const char *,
-	    struct pfr_buffer *, int);
+	    struct pfr_buffer *, u_int32_t);
 
 struct icmptypeent {
 	const char *name;

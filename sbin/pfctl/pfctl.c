@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.182 2003/07/18 06:30:07 cedric Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.183 2003/07/31 22:25:54 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -921,15 +921,22 @@ pfctl_rules(int dev, char *filename, int opts, char *anchorname,
 	struct pfioc_rule	pr[PF_RULESET_MAX];
 	struct pfioc_altq	pa;
 	struct pfctl		pf;
+	struct pfr_table	trs;
 	int			i;
 
 	memset(&pa, 0, sizeof(pa));
 	memset(&pf, 0, sizeof(pf));
+	memset(&trs, 0, sizeof(trs));
 	for (i = 0; i < PF_RULESET_MAX; i++) {
 		memset(&pr[i], 0, sizeof(pr[i]));
 		memcpy(pr[i].anchor, anchorname, sizeof(pr[i].anchor));
 		memcpy(pr[i].ruleset, rulesetname, sizeof(pr[i].ruleset));
 	}
+	if (strlcpy(trs.pfrt_anchor, anchorname,
+	    sizeof(trs.pfrt_anchor)) >= sizeof(trs.pfrt_anchor) ||
+	    strlcpy(trs.pfrt_ruleset, rulesetname,
+	    sizeof(trs.pfrt_ruleset)) >= sizeof(trs.pfrt_ruleset))
+		ERRX("pfctl_rules: strlcpy");
 	if (strcmp(filename, "-") == 0) {
 		fin = stdin;
 		infile = "stdin";
@@ -965,7 +972,7 @@ pfctl_rules(int dev, char *filename, int opts, char *anchorname,
 				ERR("DIOCBEGINRULES");
 		}
 		if (loadopt & PFCTL_FLAG_TABLE) {
-			if (pfr_ina_begin(&pf.tticket, NULL, 0) != 0)
+			if (pfr_ina_begin(&trs, &pf.tticket, NULL, 0) != 0)
 				ERR("begin table");
 		}
 	}
@@ -1014,7 +1021,7 @@ pfctl_rules(int dev, char *filename, int opts, char *anchorname,
 				ERR("DIOCCOMMITRULES FILTER");
 		}
 		if (loadopt & PFCTL_FLAG_TABLE) {
-			if (pfr_ina_commit(pf.tticket, NULL, NULL, 0))
+			if (pfr_ina_commit(&trs, pf.tticket, NULL, NULL, 0))
 				ERR("commit table");
 			pf.tdirty = 0;
 		}
@@ -1031,7 +1038,7 @@ pfctl_rules(int dev, char *filename, int opts, char *anchorname,
 
 _error:
 	if (pf.tdirty) /* cleanup kernel leftover */
-		pfr_ina_begin(NULL, NULL, 0);
+		pfr_ina_begin(&trs, NULL, NULL, 0);
 	exit(1);
 
 #undef ERR

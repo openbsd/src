@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.163 2003/07/19 13:08:58 cedric Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.164 2003/07/31 22:25:55 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -495,7 +495,9 @@ struct pf_ruleset {
 		}			 active, inactive;
 	}			 rules[PF_RULESET_MAX];
 	struct pf_anchor	*anchor;
+	u_int32_t		 tticket;
 	int			 tables;
+	int			 topen;
 };
 
 TAILQ_HEAD(pf_rulesetqueue, pf_ruleset);
@@ -915,7 +917,7 @@ struct pfioc_table {
 	int			 pfrio_ndel;
 	int			 pfrio_nchange;
 	int			 pfrio_flags;
-	int			 pfrio_ticket;
+	u_int32_t		 pfrio_ticket;
 };
 #define	pfrio_exists	pfrio_nadd
 #define	pfrio_nzero	pfrio_nadd
@@ -1107,10 +1109,10 @@ int	pfr_clr_astats(struct pfr_table *, struct pfr_addr *, int, int *,
 	    int);
 int	pfr_tst_addrs(struct pfr_table *, struct pfr_addr *, int, int *,
 	    int);
-int	pfr_ina_begin(int *, int *, int);
-int	pfr_ina_commit(int, int *, int *, int);
+int	pfr_ina_begin(struct pfr_table *, u_int32_t *, int *, int);
+int	pfr_ina_commit(struct pfr_table *, u_int32_t, int *, int *, int);
 int	pfr_ina_define(struct pfr_table *, struct pfr_addr *, int, int *,
-	    int *, int, int);
+	    int *, u_int32_t, int);
 
 u_int16_t	pf_tagname2tag(char *);
 void		pf_tag2tagname(u_int16_t, char *);

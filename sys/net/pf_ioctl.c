@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.76 2003/07/19 13:08:58 cedric Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.77 2003/07/31 22:25:54 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -348,7 +348,7 @@ pf_remove_if_empty_ruleset(struct pf_ruleset *ruleset)
 	struct pf_anchor	*anchor;
 	int			 i;
 
-	if (ruleset == NULL || ruleset->anchor == NULL || ruleset->tables > 0)
+	if (ruleset == NULL || ruleset->anchor == NULL || ruleset->tables > 0 ||	    ruleset->topen)
 		return;
 	for (i = 0; i < PF_RULESET_MAX; ++i)
 		if (!TAILQ_EMPTY(ruleset->rules[i].active.ptr) ||
@@ -2077,8 +2077,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = ENODEV;
 			break;
 		}
-		error = pfr_ina_begin(&io->pfrio_ticket, &io->pfrio_ndel,
-		    io->pfrio_flags);
+		error = pfr_ina_begin(&io->pfrio_table, &io->pfrio_ticket,
+		    &io->pfrio_ndel, io->pfrio_flags);
 		break;
 	}
 
@@ -2089,8 +2089,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = ENODEV;
 			break;
 		}
-		error = pfr_ina_commit(io->pfrio_ticket, &io->pfrio_nadd,
-		    &io->pfrio_nchange, io->pfrio_flags);
+		error = pfr_ina_commit(&io->pfrio_table, io->pfrio_ticket,
+		    &io->pfrio_nadd, &io->pfrio_nchange, io->pfrio_flags);
 		break;
 	}
 
