@@ -1,0 +1,176 @@
+.\" David Leonard, 1998. Placed in the public domain.
+.\" $OpenBSD: ndbm.3,v 1.1 1998/05/13 12:41:02 d Exp $
+.Dd May 13, 1998
+.Os OpenBSD
+.Dt NDBM 3
+.Sh NAME
+.Nm ndbm
+.Nd database access methods
+.Sh SYNOPSIS
+.Fd #include <ndbm.h>
+.Fn "int dbm_clearerr" "DBM *db"
+.Fn "void dbm_close" "DBM *db"
+.Fn "int dbm_delete" "DBM *db" "datum key"
+.Fn "int dbm_dirfno" "DBM *db"
+.Fn "int dbm_error" "DBM *db"
+.Fn "datum dbm_fetch" "DBM *db" "datum key"
+.Fn "datum dbm_firstkey" "DBM *db"
+.Fn "datum dbm_nextkey" "DBM *db"
+.Fn "DBM *dbm_open" "const char *file" "int flags" "int mode"
+.Fn "int dbm_pagfno" "DBM *db"
+.Fn "int dbm_store" "DBM *db" "datum key" "datum content" "int store_mode"
+.Sh DESCRIPTION
+These functions provide a dbm- and ndbm-compatible interface to the
+database access methods described in
+.Xr db 3 .
+Each unique record in the database is a key/content pair,
+the components of which may be any arbitrary binary data.
+Both the key and the content are passed about in the following
+.Ft datum
+data structure:
+.Bd -literal -offset indent
+typedef struct {
+	char *dptr;
+	int dsize;
+} datum
+.Ed
+.Pp
+The
+.Fn dbm_open
+function is used to open a database in the file named by
+.Fa file ,
+suffixed with
+.Dv DBM_SUFFIX
+.Pq Sq Pa .db .
+If necessary, the file is created with mode
+.Ar mode .
+Access to this file depends on the
+.Fa flags
+parameter (see
+.Xr open 2 ) .
+Read-only access may be indicated by specifying
+.Dv DBM_READONLY .
+.Pp
+Once the database is open,
+.Fn dbm_fetch
+is used to retrieve the data content associated with the key
+.Fa key .
+Similarly,
+.Fn dbm_store
+is used to store the
+.Fa content
+data with the key
+.Fa key .
+When storing, the
+.Fa store_mode
+parameter must be one of:
+.Bl -tag -width DBM_REPLACE -offset indent 
+.It Dv DBM_INSERT
+Only insert new keys into the database. Existing key/content pairs
+are untouched.
+.It Dv DBM_REPLACE
+Replace any existing entry with the same key. Any previously
+stored records with the same key are lost.
+.El
+.Pp
+The
+.Fn dbm_delete
+function removes the key
+.Fa key
+and its associated content from the database.
+.Pp
+The functions
+.Fn dbm_firstkey
+and
+.Fn dbm_nextkey
+are used to iterate over all of the records in the database.
+Each record will be reached exactly once, but in no particular order.
+The
+.Fn dbm_firstkey
+function returns the first record of the database, and thereafter
+.Fn dbm_nextkey
+returns the following records.
+The following code traverses the entire database:
+.Bd -literal
+  for (key = dbm_firstkey(db); key.dptr != NULL; key = dbm_nextkey(db))
+.Ed
+.Pp
+The behaviour of
+.Fn dbm_nextkey
+is undefined if the database is modified after a call to
+.Fn dbm_firstkey .
+.Pp
+The
+.Fn dbm_error
+function returns the last error condition of the database,
+or 0 if no error had occurred or had been cleared.
+The
+.Fn dbm_clearerr
+function clears the error condition of the database.
+.Pp
+The
+.Fn dbm_dirfno
+function is used to find the file descriptor associated with the
+directory file of an open database. Since a directory bitmap file is
+not used in this implementation,
+this function returns the file descriptor of the datbase file opened with
+.Fn dbm_open .
+.Pp
+The
+.Fn dbm_pagfno
+function is used to find the file descriptor associated with the
+page file of an open database. Since a page file is not used in
+this implementation,
+this function
+is implemented as a macro that always returns the (undefined) value
+.Dv DBM_PAGFNO_NOT_AVAILABLE .
+.Pp
+The database is closed with the
+.Fn dbm_close
+function. Thereafter, the
+.Fa db
+handle is invalid.
+.Ss Implementation notes
+The underlying database is a
+.Xr hash 3
+database with a
+bucket size of 4096,
+a filling factor of 40,
+default hashing function and cache size,
+and uses the host's native byte order.
+.Sh RETURN VALUES
+Upon successful completion, all functions that return
+.Ft int
+return a value of 0, otherwise a negative value is returned.
+.Pp
+Routines that return a
+.Ft datum
+indicate errors with the
+.Va dptr
+field set to
+.Dv NULL .
+.Pp
+The
+.Fn dbm_open
+function returns
+.Dv NULL
+on error, and sets
+.Va errno
+appropriately.
+.Pp
+The
+.Fn dbm_store
+function returns 1 when it is called with a
+.Fa flags
+value of
+.Dv DBM_INSERT
+and a record with the specified key already exists.
+.Sh ERRORS
+If an error occurs, the error can be retrieved with
+.Fn dbm_error
+and corresponds to those errors described in
+.Xr db 3 .
+.Sh SEE ALSO
+.Xr db 3 ,
+.Xr hash 3 ,
+.Xr open 2 .
