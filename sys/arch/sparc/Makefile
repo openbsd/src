@@ -8,7 +8,6 @@ SUBDIR= stand
 
 NOPROG=	noprog
 NOMAN=	noman
-NOOBJ=	noobj
 
 DIRS=	conf dev fpu include rcons sbus sparc
 
