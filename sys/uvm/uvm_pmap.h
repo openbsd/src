@@ -1,6 +1,6 @@
-/*	$NetBSD: uvm_pmap.h,v 1.9 2001/09/10 21:19:43 chris Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.1 2000/06/27 09:00:14 mrg Exp $	*/
 
-/*
+/* 
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -42,17 +42,17 @@
  * All rights reserved.
  *
  * Author: Avadis Tevanian, Jr.
- *
+ * 
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- *
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
+ * 
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- *
+ * 
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -86,9 +86,7 @@ struct pmap_statistics {
 };
 typedef struct pmap_statistics	*pmap_statistics_t;
 
-#ifdef _KERNEL
 #include <machine/pmap.h>
-#endif
 
 /*
  * Flags passed to pmap_enter().  Note the bottom 3 bits are VM_PROT_*
@@ -101,10 +99,7 @@ typedef struct pmap_statistics	*pmap_statistics_t;
 #ifndef PMAP_EXCLUDE_DECLS	/* Used in Sparc port to virtualize pmap mod */
 #ifdef _KERNEL
 __BEGIN_DECLS
-#if !defined(pmap_kernel)
-struct pmap	*pmap_kernel __P((void));
-#endif
-
+void		*pmap_bootstrap_alloc __P((int));
 void		 pmap_activate __P((struct proc *));
 void		 pmap_deactivate __P((struct proc *));
 void		 pmap_unwire __P((pmap_t, vaddr_t));
@@ -143,19 +138,13 @@ boolean_t	 pmap_is_referenced __P((struct vm_page *));
 void		 pmap_page_protect __P((struct vm_page *, vm_prot_t));
 
 #if !defined(pmap_phys_address)
-paddr_t		pmap_phys_address __P((int));
+paddr_t	 pmap_phys_address __P((int));
 #endif
 void		 pmap_protect __P((pmap_t,
 		    vaddr_t, vaddr_t, vm_prot_t));
 void		 pmap_reference __P((pmap_t));
 void		 pmap_remove __P((pmap_t, vaddr_t, vaddr_t));
-void		 pmap_update __P((pmap_t));
-#if !defined(pmap_resident_count)
-long		 pmap_resident_count __P((pmap_t));
-#endif
-#if !defined(pmap_wired_count)
-long		 pmap_wired_count __P((pmap_t));
-#endif
+void		 pmap_update __P((void));
 void		 pmap_zero_page __P((paddr_t));
 
 void		 pmap_virtual_space __P((vaddr_t *, vaddr_t *));

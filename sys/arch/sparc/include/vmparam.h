@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.21 2001/12/05 16:25:44 art Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.22 2001/12/19 08:58:05 art Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.13 1997/07/12 16:20:03 perry Exp $	*/
 
 /*
@@ -109,6 +109,7 @@
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
+#define VM_KMEM_SIZE		(NKMEMCLUSTERS*PAGE_SIZE)
 
 #define VM_PHYSSEG_MAX		32	/* we only have one "hole" */
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
@@ -117,7 +118,6 @@
 /*
  * pmap specific data stored in the vm_physmem[] array
  */
-#define __HAVE_PMAP_PHYSSEG
 struct pmap_physseg {
 	struct pvlist *pv_head;
 };

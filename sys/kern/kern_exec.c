@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.61 2001/11/27 05:27:11 art Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.62 2001/12/19 08:58:06 art Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -150,7 +150,6 @@ check_exec(p, epp)
 		goto bad1;
 
 	/* now we have the file, get the exec header */
-	uvn_attach(vp, VM_PROT_READ);
 	error = vn_rdwr(UIO_READ, vp, epp->ep_hdr, epp->ep_hdrlen, 0,
 	    UIO_SYSSPACE, IO_NODELOCKED, p->p_ucred, &resid, p);
 	if (error)

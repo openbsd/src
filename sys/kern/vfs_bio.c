@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.54 2001/11/30 05:45:33 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.55 2001/12/19 08:58:06 art Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -327,6 +327,23 @@ breadn(vp, blkno, size, rablks, rasizes, nrablks, cred, bpp)
 }
 
 /*
+ * Read with single-block read-ahead.  Defined in Bach (p.55), but
+ * implemented as a call to breadn().
+ * XXX for compatibility with old file systems.
+ */
+int
+breada(vp, blkno, size, rablkno, rabsize, cred, bpp)
+	struct vnode *vp;
+	daddr_t blkno; int size;
+	daddr_t rablkno; int rabsize;
+	struct ucred *cred;
+	struct buf **bpp;
+{
+
+	return (breadn(vp, blkno, size, &rablkno, &rabsize, 1, cred, bpp));	
+}
+
+/*
  * Block write.  Described in Bach (p.56)
  */
 int
@@ -389,6 +406,7 @@ bwrite(bp)
 	/* Initiate disk write.  Make sure the appropriate party is charged. */
 	bp->b_vp->v_numoutput++;
 	splx(s);
+	SET(bp->b_flags, B_WRITEINPROG);
 	VOP_STRATEGY(bp);
 
 	if (async)
@@ -448,6 +466,7 @@ bdwrite(bp)
 	}
 
 	/* Otherwise, the "write" is done, so mark and release the buffer. */
+	CLR(bp->b_flags, B_NEEDCOMMIT);
 	SET(bp->b_flags, B_DONE);
 	brelse(bp);
 }
@@ -569,7 +588,6 @@ brelse(bp)
 
 	/* Unlock the buffer. */
 	CLR(bp->b_flags, (B_AGE | B_ASYNC | B_BUSY | B_NOCACHE | B_DEFERRED));
-	SET(bp->b_flags, B_CACHE);
 
 	/* Allow disk interrupts. */
 	splx(s);
@@ -633,30 +651,44 @@ getblk(vp, blkno, size, slpflag, slptimeo)
 	daddr_t blkno;
 	int size, slpflag, slptimeo;
 {
+	struct bufhashhdr *bh;
 	struct buf *bp, *nbp = NULL;
 	int s, err;
 
+	/*
+	 * XXX
+	 * The following is an inlined version of 'incore()', but with
+	 * the 'invalid' test moved to after the 'busy' test.  It's
+	 * necessary because there are some cases in which the NFS
+	 * code sets B_INVAL prior to writing data to the server, but
+	 * in which the buffers actually contain valid data.  In this
+	 * case, we can't allow the system to allocate a new buffer for
+	 * the block until the write is finished.
+	 */
+	bh = BUFHASH(vp, blkno);
 start:
-	bp = incore(vp, blkno);
-	if (bp != NULL) {
+	bp = bh->lh_first;
+	for (; bp != NULL; bp = bp->b_hash.le_next) {
+		if (bp->b_lblkno != blkno || bp->b_vp != vp)
+			continue;
+
 		s = splbio();
 		if (ISSET(bp->b_flags, B_BUSY)) {
 			SET(bp->b_flags, B_WANTED);
 			err = tsleep(bp, slpflag | (PRIBIO + 1), "getblk",
 			    slptimeo);
 			splx(s);
-			if (err) {
-				if (nbp != NULL) {
-					SET(nbp->b_flags, B_AGE);
-					brelse(nbp);
-				}
+			if (err)
 				return (NULL);
-			}
 			goto start;
 		}
 
-		SET(bp->b_flags, (B_BUSY | B_CACHE));
-		bremfree(bp);
+		if (!ISSET(bp->b_flags, B_INVAL)) {
+			SET(bp->b_flags, (B_BUSY | B_CACHE));
+			bremfree(bp);
+			splx(s);
+			break;
+		}
 		splx(s);
 	}
 
@@ -665,7 +697,7 @@ start:
 			goto start;
 		}
 		bp = nbp;
-		binshash(bp, BUFHASH(vp, blkno));
+		binshash(bp, bh);
 		bp->b_blkno = bp->b_lblkno = blkno;
 		s = splbio();
 		bgetvp(vp, bp);
@@ -868,6 +900,8 @@ start:
 	bp->b_error = 0;
 	bp->b_resid = 0;
 	bp->b_bcount = 0;
+	bp->b_dirtyoff = bp->b_dirtyend = 0;
+	bp->b_validoff = bp->b_validend = 0;
 
 	bremhash(bp);
 	*bpp = bp;
@@ -988,6 +1022,7 @@ biodone(bp)
 		buf_complete(bp);
 
 	if (!ISSET(bp->b_flags, B_READ)) {
+		CLR(bp->b_flags, B_WRITEINPROG);
 		vwakeup(bp->b_vp);
 	}
 
@@ -1063,16 +1098,3 @@ vfs_bufstats()
 	splx(s);
 }
 #endif /* DEBUG */
-
-int
-buf_cleanout(struct buf *bp) {
-	if (bp->b_vp != NULL)
-		brelvp(bp);
-
-	if (bp->b_flags & B_WANTED) {
-		bp->b_flags &= ~B_WANTED;
-		wakeup(bp);
-	}
-
-	return (0);
-}

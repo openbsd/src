@@ -1,4 +1,4 @@
-#	$OpenBSD: vnode_if.src,v 1.17 2001/12/10 04:45:31 art Exp $
+#	$OpenBSD: vnode_if.src,v 1.18 2001/12/19 08:58:06 art Exp $
 #	$NetBSD: vnode_if.src,v 1.10 1996/05/11 18:26:27 mycroft Exp $
 #
 # Copyright (c) 1992, 1993
@@ -467,38 +467,3 @@ vop_whiteout {
 #vop_bwrite {
 #	IN struct buf *bp;
 #};
-
-#
-#% getpages    vp L L L
-#
-vop_getpages {
-	IN struct vnode *vp;
-	IN voff_t offset;
-	IN struct vm_page **m;
-	IN int *count;
-	IN int centeridx;
-	IN vm_prot_t access_type;
-	IN int advice;
-	IN int flags;
-};
-
-#
-#% putpages    vp L L L
-#
-vop_putpages {
-	IN struct vnode *vp;
-	IN struct vm_page **m;
-	IN int count;
-	IN int flags;
-	IN int *rtvals;
-};
-
-#
-#% mmap		vp = = =
-#
-vop_mmap {
-	IN struct vnode *vp;
-	IN int fflags;
-	IN struct ucred *cred;
-	IN struct proc *p;
-};

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.18 2001/12/01 01:44:35 art Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.19 2001/12/19 08:58:06 art Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -145,7 +145,6 @@ loop:
 	vp = nvp;
 	np = pool_get(&nfs_node_pool, PR_WAITOK);
 	bzero((caddr_t)np, sizeof *np);
-	lockinit(&np->n_commitlock, PINOD, "nfsclock", 0, 0);
 	vp->v_data = np;
 	np->n_vnode = vp;
 
@@ -170,19 +169,6 @@ loop:
 		np->n_fhp = &np->n_fh;
 	bcopy((caddr_t)fhp, (caddr_t)np->n_fhp, fhsize);
 	np->n_fhsize = fhsize;
-
-	/*
-	 * XXXUBC doing this while holding the nfs_hashlock is bad,
-	 * but there's no alternative at the moment.
-	 */
-	error = VOP_GETATTR(vp, &np->n_vattr, curproc->p_ucred, curproc);
-	if (error) {
-		lockmgr(&nfs_hashlock, LK_RELEASE, 0, p);
-		vrele(vp);
-		return error;
-	}
-	uvm_vnp_setsize(vp, np->n_vattr.va_size);
-
 	lockmgr(&nfs_hashlock, LK_RELEASE, 0, p);
 	*npp = np;
 	return (0);
@@ -199,12 +185,11 @@ nfs_inactive(v)
 	struct nfsnode *np;
 	struct sillyrename *sp;
 	struct proc *p = curproc;	/* XXX */
-	struct vnode *vp = ap->a_vp;
 
-	np = VTONFS(vp);
-	if (prtactive && vp->v_usecount != 0)
-		vprint("nfs_inactive: pushing active", vp);
-	if (vp->v_type != VDIR) {
+	np = VTONFS(ap->a_vp);
+	if (prtactive && ap->a_vp->v_usecount != 0)
+		vprint("nfs_inactive: pushing active", ap->a_vp);
+	if (ap->a_vp->v_type != VDIR) {
 		sp = np->n_sillyrename;
 		np->n_sillyrename = (struct sillyrename *)0;
 	} else
@@ -213,7 +198,7 @@ nfs_inactive(v)
 		/*
 		 * Remove the silly file that was rename'd earlier
 		 */
-		(void) nfs_vinvalbuf(vp, 0, sp->s_cred, p, 1);
+		(void) nfs_vinvalbuf(ap->a_vp, 0, sp->s_cred, p, 1);
 		nfs_removeit(sp);
 		crfree(sp->s_cred);
 		vrele(sp->s_dvp);
@@ -221,7 +206,7 @@ nfs_inactive(v)
 	}
 	np->n_flag &= (NMODIFIED | NFLUSHINPROG | NFLUSHWANT);
 
-	VOP_UNLOCK(vp, 0, ap->a_p);
+	VOP_UNLOCK(ap->a_vp, 0, ap->a_p);
 	return (0);
 }
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_stat.c,v 1.10 2001/11/28 19:28:15 art Exp $	 */
-/*	$NetBSD: uvm_stat.c,v 1.19 2001/05/25 04:06:17 chs Exp $	 */
+/*	$OpenBSD: uvm_stat.c,v 1.11 2001/12/19 08:58:07 art Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.18 2001/03/09 01:02:13 chs Exp $	 */
 
 /*
  *
@@ -135,7 +135,7 @@ restart:
 					cur[lcv] = -1;
 				goto restart;
 			}
-
+				
 			/*
 			 * if the time hasn't been set yet, or this entry is
 			 * earlier than the current tv, set the time and history
@@ -158,7 +158,7 @@ restart:
 		if (cur[hi] == hists[hi]->f)
 			cur[hi] = -1;
 	}
-
+	
 	/* done! */
 	splx(s);
 }

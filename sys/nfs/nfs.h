@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.h,v 1.14 2001/11/27 05:27:12 art Exp $	*/
+/*	$OpenBSD: nfs.h,v 1.15 2001/12/19 08:58:06 art Exp $	*/
 /*	$NetBSD: nfs.h,v 1.10.4.1 1996/05/27 11:23:56 fvdl Exp $	*/
 
 /*
@@ -78,18 +78,8 @@
  * Ideally, NFS_DIRBLKSIZ should be bigger, but I've seen servers with
  * broken NFS/ethernet drivers that won't work with anything bigger (Linux..)
  */
-#if 1
-/*
- * XXXUBC temp hack because of the removal of b_validend.
- * eventually we'll store NFS VDIR data in the page cache as well,
- * we'll fix this at that point.
- */
-#define	NFS_DIRBLKSIZ		PAGE_SIZE
-#define	NFS_READDIRBLKSIZ	PAGE_SIZE
-#else
-#define	NFS_DIRBLKSIZ		1024	/* Must be a multiple of DIRBLKSIZ */
+#define	NFS_DIRBLKSIZ	1024		/* Must be a multiple of DIRBLKSIZ */
 #define NFS_READDIRBLKSIZ	512	/* Size of read dir blocks. XXX */
-#endif
 
 /*
  * Oddballs
@@ -121,10 +111,10 @@
 #endif
 
 /*
- * Use the vm_page flag reserved for pager use to indicate pages
- * which have been written to the server but not yet committed.
+ * The B_INVAFTERWRITE flag should be set to whatever is required by the
+ * buffer cache code to say "Invalidate the block after it is written back".
  */
-#define	PG_NEEDCOMMIT	PG_PAGER1
+#define	B_INVAFTERWRITE	B_INVAL
 
 /*
  * The IO_METASYNC flag should be implemented for local file systems.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: advnops.c,v 1.21 2001/12/10 04:45:31 art Exp $	*/
+/*	$OpenBSD: advnops.c,v 1.22 2001/12/19 08:58:05 art Exp $	*/
 /*	$NetBSD: advnops.c,v 1.32 1996/10/13 02:52:09 christos Exp $	*/
 
 /*
@@ -131,9 +131,7 @@ struct vnodeopv_entry_desc adosfs_vnodeop_entries[] = {
 	{ &vop_pathconf_desc, adosfs_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, adosfs_advlock },		/* advlock */
 	{ &vop_bwrite_desc, adosfs_bwrite },		/* bwrite */
-	{ &vop_getpages_desc, genfs_getpages },
-	{ &vop_mmap_desc, vop_generic_mmap },
-	{ NULL, NULL }
+	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
 
 struct vnodeopv_desc adosfs_vnodeop_opv_desc =
@@ -274,28 +272,6 @@ adosfs_read(v)
 	/*
 	 * taken from ufs_read()
 	 */
-
-	if (sp->a_vp->v_type == VREG) {
-		error = 0;
-		while (uio->uio_resid > 0) {
-			void *win;
-			vsize_t bytelen = min(ap->fsize - uio->uio_offset,
-					uio->uio_resid);
-
-			if (bytelen == 0) {
-				break;
-			}
-			win = ubc_alloc(&sp->a_vp->v_uobj, uio->uio_offset,
-					&bytelen, UBC_READ);
-			error = uiomove(win, bytelen, uio);
-			ubc_release(win, 0);
-			if (error) {
-				break;
-			}
-		}
-		goto reterr;
-	}
-
 	do {
 		/*
 		 * we are only supporting ADosFFS currently

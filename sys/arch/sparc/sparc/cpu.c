@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.35 2001/12/07 10:44:52 art Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.36 2001/12/19 08:58:05 art Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 1997/09/15 20:52:36 pk Exp $ */
 
 /*
@@ -252,6 +252,7 @@ cpu_attach(parent, self, aux)
 		 */
 		s = splhigh();
 		sc->cache_enable();
+		pmap_cache_enable();
 		splx(s);
 		return;
 	}
@@ -428,7 +429,7 @@ struct module_info module_sun4 = {
 	sun4_vcache_flush_segment,
 	sun4_vcache_flush_region,
 	sun4_vcache_flush_context,
-	noop_pcache_flush_page,
+	noop_pcache_flush_line,
 	noop_pure_vcache_flush,
 	noop_cache_flush_all,
 	0
@@ -554,7 +555,7 @@ struct module_info module_sun4c = {
 	sun4_vcache_flush_segment,
 	sun4_vcache_flush_region,
 	sun4_vcache_flush_context,
-	noop_pcache_flush_page,
+	noop_pcache_flush_line,
 	noop_pure_vcache_flush,
 	noop_cache_flush_all,
 	0
@@ -752,7 +753,7 @@ struct module_info module_ms1 = {
 	noop_vcache_flush_segment,
 	noop_vcache_flush_region,
 	noop_vcache_flush_context,
-	noop_pcache_flush_page,
+	noop_pcache_flush_line,
 	noop_pure_vcache_flush,
 	ms1_cache_flush_all,
 	memerr4m
@@ -780,7 +781,7 @@ struct module_info module_ms2 = {
 	srmmu_vcache_flush_segment,
 	srmmu_vcache_flush_region,
 	srmmu_vcache_flush_context,
-	noop_pcache_flush_page,
+	noop_pcache_flush_line,
 	noop_pure_vcache_flush,
 	srmmu_cache_flush_all,
 	memerr4m
@@ -803,7 +804,7 @@ struct module_info module_swift = {
 	srmmu_vcache_flush_segment,
 	srmmu_vcache_flush_region,
 	srmmu_vcache_flush_context,
-	noop_pcache_flush_page,
+	srmmu_pcache_flush_line,
 	noop_pure_vcache_flush,
 	srmmu_cache_flush_all,
 	memerr4m
@@ -851,7 +852,7 @@ struct module_info module_viking = {
 	noop_vcache_flush_segment,
 	noop_vcache_flush_region,
 	noop_vcache_flush_context,
-	viking_pcache_flush_page,
+	viking_pcache_flush_line,
 	noop_pure_vcache_flush,
 	noop_cache_flush_all,
 	viking_memerr
@@ -889,7 +890,7 @@ viking_hotfix(sc)
 			sc->flags |= CPUFLG_CACHEPAGETABLES;
 	} else {
 		sc->cache_flush = viking_cache_flush;
-		sc->pcache_flush_page = viking_pcache_flush_page;
+		sc->pcache_flush_line = viking_pcache_flush_line;
 	}
 
 	/* XXX! */
@@ -934,7 +935,7 @@ struct module_info module_hypersparc = {
 	srmmu_vcache_flush_segment,
 	srmmu_vcache_flush_region,
 	srmmu_vcache_flush_context,
-	noop_pcache_flush_page,
+	srmmu_pcache_flush_line,
 	hypersparc_pure_vcache_flush,
 	hypersparc_cache_flush_all,
 	hypersparc_memerr
@@ -985,7 +986,7 @@ struct module_info module_cypress = {
 	srmmu_vcache_flush_segment,
 	srmmu_vcache_flush_region,
 	srmmu_vcache_flush_context,
-	noop_pcache_flush_page,
+	srmmu_pcache_flush_line,
 	noop_pure_vcache_flush,
 	cypress_cache_flush_all,
 	memerr4m
@@ -1008,7 +1009,7 @@ struct module_info module_turbosparc = {	/* UNTESTED */
 	srmmu_vcache_flush_segment,
 	srmmu_vcache_flush_region,
 	srmmu_vcache_flush_context,
-	noop_pcache_flush_page,
+	srmmu_pcache_flush_line,
 	noop_pure_vcache_flush,
 	srmmu_cache_flush_all,
 	memerr4m
@@ -1046,7 +1047,7 @@ cpumatch_turbosparc(sc, mp, node)
 	sc->vcache_flush_segment = 0;
 	sc->vcache_flush_region = 0;
 	sc->vcache_flush_context = 0;
-	sc->pcache_flush_page = 0;
+	sc->pcache_flush_line = 0;
 
 	replacemul();
 }
@@ -1233,7 +1234,7 @@ getcpuinfo(sc, node)
 		MPCOPY(vcache_flush_segment);
 		MPCOPY(vcache_flush_region);
 		MPCOPY(vcache_flush_context);
-		MPCOPY(pcache_flush_page);
+		MPCOPY(pcache_flush_line);
 		MPCOPY(pure_vcache_flush);
 		MPCOPY(cache_flush_all);
 		MPCOPY(memerr);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adosfs.h,v 1.9 2001/12/10 04:45:31 art Exp $	*/
+/*	$OpenBSD: adosfs.h,v 1.10 2001/12/19 08:58:05 art Exp $	*/
 /*	$NetBSD: adosfs.h,v 1.12 1996/10/08 22:18:02 thorpej Exp $	*/
 
 /*
@@ -32,8 +32,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <miscfs/genfs/genfs.h>
-
 /*
  * Amigados datestamp. (from 1/1/1978 00:00:00 local)
  */
@@ -53,7 +51,6 @@ enum anode_type { AROOT, ADIR, AFILE, ALDIR, ALFILE, ASLINK };
  * table for f/e. it is always ANODETABSZ(ap) bytes in size.
  */
 struct anode {
-	struct genfs_node gnode;
 	LIST_ENTRY(anode) link;
 	enum anode_type type;
 	char name[31];			/* (r/d/f) name for object */

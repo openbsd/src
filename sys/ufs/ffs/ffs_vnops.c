@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.24 2001/12/10 04:45:32 art Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.25 2001/12/19 08:58:07 art Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -107,12 +107,8 @@ struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
 	{ &vop_advlock_desc, ufs_advlock },		/* advlock */
 	{ &vop_reallocblks_desc, ffs_reallocblks },	/* reallocblks */
 	{ &vop_bwrite_desc, vop_generic_bwrite },
-	{ &vop_getpages_desc, genfs_getpages },
-	{ &vop_putpages_desc, genfs_putpages },
-	{ &vop_mmap_desc, ufs_mmap },
-	{ NULL, NULL }
+	{ (struct vnodeop_desc*)NULL, (int(*) __P((void*)))NULL }
 };
-
 struct vnodeopv_desc ffs_vnodeop_opv_desc =
 	{ &ffs_vnodeop_p, ffs_vnodeop_entries };
 
@@ -233,7 +229,6 @@ ffs_fsync(v)
 	struct vnode *vp = ap->a_vp;
 	struct buf *bp, *nbp;
 	int s, error, passes, skipmeta;
-	struct uvm_object *uobj;
 
 	if (vp->v_type == VBLK &&
 	    vp->v_specmountpoint != NULL &&
@@ -241,22 +236,13 @@ ffs_fsync(v)
 		softdep_fsync_mountdev(vp);
 
 	/*
-	 * Flush all dirty data associated with a vnode.
+	 * Flush all dirty buffers associated with a vnode.
 	 */
 	passes = NIADDR + 1;
 	skipmeta = 0;
 	if (ap->a_waitfor == MNT_WAIT)
 		skipmeta = 1;
 	s = splbio();
-
-	if (vp->v_type == VREG) {
-		uobj = &vp->v_uobj;
-		simple_lock(&uobj->vmobjlock);
-		(uobj->pgops->pgo_flush)(uobj, 0, 0, PGO_ALLPAGES|PGO_CLEANIT|
-		    ((ap->a_waitfor == MNT_WAIT) ? PGO_SYNCIO : 0));
-		simple_unlock(&uobj->vmobjlock);
-	}
-
 loop:
 	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp;
 	     bp = LIST_NEXT(bp, b_vnbufs))
@@ -295,10 +281,8 @@ loop:
 		 */
 		if (passes > 0 || ap->a_waitfor != MNT_WAIT)
 			(void) bawrite(bp);
-		else if ((error = bwrite(bp)) != 0) {
-			printf("ffs_fsync: bwrite failed %d\n", error);
+		else if ((error = bwrite(bp)) != 0)
 			return (error);
-		}
 		s = splbio();
 		/*
 		 * Since we may have slept during the I/O, we need
@@ -341,11 +325,7 @@ loop:
 		}
 	}
 	splx(s);
-	
-	error = (UFS_UPDATE(VTOI(vp), ap->a_waitfor == MNT_WAIT));
-	if (error)
-		printf("ffs_fsync: UFS_UPDATE failed. %d\n", error);
-	return (error);
+	return (UFS_UPDATE(VTOI(vp), ap->a_waitfor == MNT_WAIT));
 }
 
 /*
@@ -368,24 +348,4 @@ ffs_reclaim(v)
 	pool_put(&ffs_ino_pool, vp->v_data);
 	vp->v_data = NULL;
 	return (0);
-}
-
-/*
- * Return the last logical file offset that should be written for this file
- * if we're doing a write that ends at "size".
- */
-void
-ffs_gop_size(struct vnode *vp, off_t size, off_t *eobp)
-{
-	struct inode *ip = VTOI(vp);
-	struct fs *fs = ip->i_fs;
-	ufs_lbn_t olbn, nlbn;
-
-	olbn = lblkno(fs, ip->i_ffs_size);
-	nlbn = lblkno(fs, size);
-	if (nlbn < NDADDR && olbn <= nlbn) {
-		*eobp = fragroundup(fs, size);
-	} else {
-		*eobp = blkroundup(fs, size);
-	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.7 2001/12/07 10:38:11 art Exp $	*/
+/*	$OpenBSD: psl.h,v 1.8 2001/12/19 08:58:05 art Exp $	*/
 /*	$NetBSD: psl.h,v 1.12 1997/03/10 21:49:11 pk Exp $ */
 
 /*
@@ -202,6 +202,11 @@ SPLHOLD(spltty, PIL_TTY)
  */
 SPLHOLD(splimp, 7)
 SPLHOLD(splvm, 7)
+
+/*
+ * remove.
+ */
+SPLHOLD(splpmap, 7)
 
 SPLHOLD(splclock, PIL_CLOCK)
 

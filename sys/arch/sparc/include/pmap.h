@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.29 2001/12/07 10:52:25 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.30 2001/12/19 08:58:05 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.30 1997/08/04 20:00:47 pk Exp $ */
 
 /*
@@ -295,16 +295,21 @@ void		pmap_pinit __P((pmap_t));
 void		pmap_reference __P((pmap_t));
 void		pmap_release __P((pmap_t));
 void		pmap_remove __P((pmap_t, vaddr_t, vaddr_t));
-#define		pmap_update(pm)	/* nothing */
 void		pmap_init __P((void));
 int		pmap_page_index __P((paddr_t));
 void		pmap_virtual_space __P((vaddr_t *, vaddr_t *));
 void		pmap_redzone __P((void));
-void		kvm_uncache __P((caddr_t, int));
+void		kvm_setcache __P((caddr_t, int, int));
+#define		kvm_uncache(addr, npages) kvm_setcache(addr, npages, 0)
+#define		kvm_recache(addr, npages) kvm_setcache(addr, npages, 1)
+void		pmap_cache_enable __P((void));
 struct user;
 void		switchexit __P((struct proc *));
 int		mmu_pagein __P((struct pmap *pm, vaddr_t, int));
 void		pmap_writetext __P((unsigned char *, int));
+
+#define		pmap_update(pm)		/* nothing */
+#define		pmap_copy(DP,SP,D,L,S)	/* nothing */
 
 /* SUN4/SUN4C SPECIFIC DECLARATIONS */
 

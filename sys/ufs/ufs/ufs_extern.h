@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_extern.h,v 1.15 2001/12/10 04:45:32 art Exp $	*/
+/*	$OpenBSD: ufs_extern.h,v 1.16 2001/12/19 08:58:07 art Exp $	*/
 /*	$NetBSD: ufs_extern.h,v 1.5 1996/02/09 22:36:03 christos Exp $	*/
 
 /*-
@@ -78,6 +78,7 @@ int	 ufs_lock	__P((void *));
 int	 ufs_lookup	__P((void *));
 int	 ufs_mkdir	__P((void *));
 int	 ufs_mknod	__P((void *));
+int	 ufs_mmap	__P((void *));
 int	 ufs_open	__P((void *));
 int	 ufs_pathconf	__P((void *));
 int	 ufs_print	__P((void *));
@@ -98,7 +99,6 @@ int	 ufs_whiteout	__P((void *));
 int	 ufsspec_close	__P((void *));
 int	 ufsspec_read	__P((void *));
 int	 ufsspec_write	__P((void *));
-#define	 ufs_mmap vop_generic_mmap
 
 #ifdef FIFO
 int	ufsfifo_read	__P((void *));
@@ -121,7 +121,6 @@ void ufs_ihashrem __P((struct inode *));
 /* ufs_inode.c */
 int ufs_init __P((struct vfsconf *));
 int ufs_reclaim __P((struct vnode *, struct proc *));
-int ufs_balloc_range __P((struct vnode *, off_t, off_t, struct ucred *, int));
 
 /* ufs_lookup.c */
 void ufs_dirbad __P((struct inode *, doff_t, char *));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.46 2001/12/10 04:45:31 art Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.47 2001/12/19 08:58:07 art Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -45,6 +45,7 @@
 #include <uvm/uvm_pglist.h>	/* XXX */
 #include <sys/lock.h>		/* XXX */
 #include <uvm/uvm.h>		/* XXX */
+#include <uvm/uvm_vnode.h>	/* XXX */
 
 /*
  * The vnode is the focus of all file activity in UNIX.  There is a
@@ -86,14 +87,11 @@ LIST_HEAD(buflists, buf);
  */
 
 struct vnode {
-	struct uvm_object v_uobj;		/* the VM object */
-#define v_usecount v_uobj.uo_refs
-#define v_interlock v_uobj.vmobjlock
-	voff_t	v_size;
-	int	v_flag;
-	int	v_numoutput;
+	struct uvm_vnode v_uvm;			/* uvm data */
 	int	(**v_op) __P((void *));		/* vnode operations vector */
 	enum	vtype v_type;			/* vnode type */
+	u_int	v_flag;				/* vnode flags (see below) */
+	u_int   v_usecount;			/* reference count of users */
 	/* reference count of writers */
 	u_int   v_writecount;			
 	/* Flags that can be read/written in interrupts */
@@ -105,6 +103,7 @@ struct vnode {
 	LIST_ENTRY(vnode) v_mntvnodes;		/* vnodes for mount point */
 	struct	buflists v_cleanblkhd;		/* clean blocklist head */
 	struct	buflists v_dirtyblkhd;		/* dirty blocklist head */
+	u_int   v_numoutput;			/* num of writes in progress */
 	LIST_ENTRY(vnode) v_synclist;		/* vnode with dirty buffers */
 	union {
 		struct mount	*vu_mountedhere;/* ptr to mounted vfs (VDIR) */
@@ -113,6 +112,7 @@ struct vnode {
 		struct fifoinfo	*vu_fifoinfo;	/* fifo (VFIFO) */
 	} v_un;
 
+	struct  simplelock v_interlock;		/* lock on usecount and flag */
 	struct  lock *v_vnlock;			/* used for non-locking fs's */
 	enum	vtagtype v_tag;			/* type of underlying data */
 	void 	*v_data;			/* private data for fs */
@@ -137,9 +137,6 @@ struct vnode {
 #define	VXWANT		0x0200	/* process is waiting for vnode */
 #define	VALIASED	0x0800	/* vnode has an alias */
 #define VLOCKSWORK	0x4000	/* FS supports locking discipline */
-#define	VDIRTY		0x8000	/* vnode possibly has dirty pages */
-
-#define VSIZENOTSET	((voff_t)-1)
 
 /*
  * (v_bioflag) Flags that may be manipulated by interrupt handlers
@@ -251,9 +248,6 @@ vref(vp)
 	simple_unlock(&vp->v_interlock);
 }
 #endif /* DIAGNOSTIC */
-
-void vhold __P((struct vnode *));
-void vholdrele __P((struct vnode *));
 
 #define	NULLVP	((struct vnode *)NULL)
 
@@ -451,7 +445,6 @@ int	vop_generic_lock __P((void *));
 int	vop_generic_unlock __P((void *));
 int	vop_generic_revoke __P((void *));
 int	vop_generic_kqfilter __P((void *));
-int	vop_generic_mmap __P((void *));
 
 int	vn_stat __P((struct vnode *vp, struct stat *sb, struct proc *p));
 int	vn_statfile __P((struct file *fp, struct stat *sb, struct proc *p));

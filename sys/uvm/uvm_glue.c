@@ -1,9 +1,9 @@
-/*	$OpenBSD: uvm_glue.c,v 1.30 2001/12/04 23:22:42 art Exp $	*/
-/*	$NetBSD: uvm_glue.c,v 1.51 2001/09/10 21:19:42 chris Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.31 2001/12/19 08:58:07 art Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
-/*
+/* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
- * Copyright (c) 1991, 1993, The Regents of the University of California.
+ * Copyright (c) 1991, 1993, The Regents of the University of California.  
  *
  * All rights reserved.
  *
@@ -21,7 +21,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This product includes software developed by Charles D. Cranor,
- *      Washington University, the University of California, Berkeley and
+ *      Washington University, the University of California, Berkeley and 
  *      its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
@@ -45,17 +45,17 @@
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
  * All rights reserved.
- *
+ * 
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- *
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
+ * 
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- *
+ * 
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -148,7 +148,7 @@ uvm_useracc(addr, len, rw)
 	size_t len;
 	int rw;
 {
-	struct vm_map *map;
+	vm_map_t map;
 	boolean_t rv;
 	vm_prot_t prot = rw == B_READ ? VM_PROT_READ : VM_PROT_WRITE;
 
@@ -191,12 +191,14 @@ uvm_chgkprot(addr, len, rw)
 	for (sva = trunc_page((vaddr_t)addr); sva < eva; sva += PAGE_SIZE) {
 		/*
 		 * Extract physical address for the page.
+		 * We use a cheezy hack to differentiate physical
+		 * page 0 from an invalid mapping, not that it
+		 * really matters...
 		 */
 		if (pmap_extract(pmap_kernel(), sva, &pa) == FALSE)
 			panic("chgkprot: invalid page");
 		pmap_enter(pmap_kernel(), sva, pa, prot, PMAP_WIRED);
 	}
-	pmap_update(pmap_kernel());
 }
 #endif
 
@@ -214,15 +216,17 @@ uvm_vslock(p, addr, len, access_type)
 	size_t	len;
 	vm_prot_t access_type;
 {
-	struct vm_map *map;
+	vm_map_t map;
 	vaddr_t start, end;
-	int error;
+	int rv;
 
 	map = &p->p_vmspace->vm_map;
 	start = trunc_page((vaddr_t)addr);
 	end = round_page((vaddr_t)addr + len);
-	error = uvm_fault_wire(map, start, end, access_type);
-	return error;
+
+	rv = uvm_fault_wire(map, start, end, access_type);
+
+	return (rv);
 }
 
 /*
@@ -267,7 +271,7 @@ uvm_fork(p1, p2, shared, stack, stacksize, func, arg)
 	void *arg;
 {
 	struct user *up = p2->p_addr;
-	int error;
+	int rv;
 
 	if (shared == TRUE) {
 		p2->p_vmspace = NULL;
@@ -284,10 +288,10 @@ uvm_fork(p1, p2, shared, stack, stacksize, func, arg)
 	 * Note the kernel stack gets read/write accesses right off
 	 * the bat.
 	 */
-	error = uvm_fault_wire(kernel_map, (vaddr_t)up,
+	rv = uvm_fault_wire(kernel_map, (vaddr_t)up,
 	    (vaddr_t)up + USPACE, VM_PROT_READ | VM_PROT_WRITE);
-	if (error)
-		panic("uvm_fork: uvm_fault_wire failed: %d", error);
+	if (rv != KERN_SUCCESS)
+		panic("uvm_fork: uvm_fault_wire failed: %d", rv);
 
 	/*
 	 * p_stats currently points at a field in the user struct.  Copy
@@ -300,7 +304,7 @@ uvm_fork(p1, p2, shared, stack, stacksize, func, arg)
 	memcpy(&up->u_stats.pstat_startcopy, &p1->p_stats->pstat_startcopy,
 	       ((caddr_t)&up->u_stats.pstat_endcopy -
 		(caddr_t)&up->u_stats.pstat_startcopy));
-
+	
 	/*
 	 * cpu_fork() copy and update the pcb, and make the child ready
 	 * to run.  If this is a normal user fork, the child will exit
@@ -500,7 +504,7 @@ uvm_swapout_threads()
 	struct proc *outp, *outp2;
 	int outpri, outpri2;
 	int didswap = 0;
-	extern int maxslp;
+	extern int maxslp; 
 	/* XXXCDC: should move off to uvmexp. or uvm., also in uvm_meter */
 
 #ifdef DEBUG
@@ -524,7 +528,7 @@ uvm_swapout_threads()
 				outpri2 = p->p_swtime;
 			}
 			continue;
-
+			
 		case SSLEEP:
 		case SSTOP:
 			if (p->p_slptime >= maxslp) {
@@ -559,7 +563,7 @@ uvm_swapout_threads()
 /*
  * uvm_swapout: swap out process "p"
  *
- * - currently "swapout" means "unwire U-area" and "pmap_collect()"
+ * - currently "swapout" means "unwire U-area" and "pmap_collect()" 
  *   the pmap.
  * - XXXCDC: should deactivate all process' private anonymous memory
  */

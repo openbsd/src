@@ -1,5 +1,5 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.19 2001/12/10 04:45:31 art Exp $	*/
-/*	$NetBSD: ext2fs_vfsops.c,v 1.40 2000/11/27 08:39:53 chs Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.20 2001/12/19 08:58:07 art Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -98,11 +98,6 @@ struct vfsops ext2fs_vfsops = {
 	ext2fs_init,
 	ext2fs_sysctl,
 	ufs_check_export
-};
-
-struct genfs_ops ext2fs_genfsops = {
-	genfs_size,
-	ext2fs_gop_alloc,
 };
 
 struct pool ext2fs_inode_pool;
@@ -407,11 +402,9 @@ ext2fs_reload(mountp, cred, p)
 	 * Step 1: invalidate all cached meta-data.
 	 */
 	devvp = VFSTOUFS(mountp)->um_devvp;
-	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
-	error = vinvalbuf(devvp, 0, cred, p, 0, 0);
-	VOP_UNLOCK(devvp, 0, p);
-	if (error)
+	if (vinvalbuf(devvp, 0, cred, p, 0, 0))
 		panic("ext2fs_reload: dirty1");
+
 	/*
 	 * Step 2: re-read superblock from disk.
 	 */
@@ -590,18 +583,14 @@ ext2fs_mountfs(devvp, mp, p)
 	mp->mnt_stat.f_fsid.val[1] = mp->mnt_vfc->vfc_typenum;
 	mp->mnt_maxsymlinklen = EXT2_MAXSYMLINKLEN;
 	mp->mnt_flag |= MNT_LOCAL;
-	mp->mnt_dev_bshift = DEV_BSHIFT;	/* XXX */
-	mp->mnt_fs_bshift = m_fs->e2fs_bshift;
 	ump->um_mountp = mp;
 	ump->um_dev = dev;
 	ump->um_devvp = devvp;
 	ump->um_nindir = NINDIR(m_fs);
-	ump->um_lognindir = ffs(NINDIR(m_fs)) - 1;
 	ump->um_bptrtodb = m_fs->e2fs_fsbtodb;
 	ump->um_seqinc = 1; /* no frags */
 	devvp->v_specmountpoint = mp;
 	return (0);
-
 out:
 	if (bp)
 		brelse(bp);
@@ -921,7 +910,6 @@ ext2fs_vget(mp, ino, vpp)
 	/*
 	 * Finish inode initialization now that aliasing has been resolved.
 	 */
-	genfs_node_init(vp, &ext2fs_genfsops);
 	ip->i_devvp = ump->um_devvp;
 	VREF(ip->i_devvp);
 	/*
@@ -936,7 +924,6 @@ ext2fs_vget(mp, ino, vpp)
 			ip->i_flag |= IN_MODIFIED;
 	}
 
-	vp->v_size = ip->i_e2fs_size;
 	*vpp = vp;
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.16 2001/11/28 13:47:39 art Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.17 2001/12/19 08:58:06 art Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -138,8 +138,14 @@ vmcmd_map_pagedvn(p, cmd)
 	struct proc *p;
 	struct exec_vmcmd *cmd;
 {
+	/*
+	 * note that if you're going to map part of an process as being
+	 * paged from a vnode, that vnode had damn well better be marked as
+	 * VTEXT.  that's handled in the routine which sets up the vmcmd to
+	 * call this routine.
+	 */
 	struct uvm_object *uobj;
-	int error;
+	int retval;
 
 	/*
 	 * map the vnode in using uvm_map.
@@ -161,22 +167,29 @@ vmcmd_map_pagedvn(p, cmd)
 	uobj = uvn_attach((void *) cmd->ev_vp, VM_PROT_READ|VM_PROT_EXECUTE);
 	if (uobj == NULL)
 		return(ENOMEM);
-	VREF(cmd->ev_vp);
 
 	/*
 	 * do the map
 	 */
 
-	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr, cmd->ev_len,
+	retval = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr, cmd->ev_len,
 	    uobj, cmd->ev_offset, 0,
 	    UVM_MAPFLAG(cmd->ev_prot, VM_PROT_ALL, UVM_INH_COPY,
 	    UVM_ADV_NORMAL, UVM_FLAG_COPYONW|UVM_FLAG_FIXED));
 
-	if (error) {
-		uobj->pgops->pgo_detach(uobj);
-	}
+	/*
+	 * check for error
+	 */
 
-	return(error);
+	if (retval == KERN_SUCCESS)
+		return(0);
+
+	/*
+	 * error: detach from object
+	 */
+
+	uobj->pgops->pgo_detach(uobj);
+	return(EINVAL);
 }
 
 /*

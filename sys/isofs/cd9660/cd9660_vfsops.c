@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.26 2001/12/10 04:45:31 art Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.27 2001/12/19 08:58:06 art Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -78,10 +78,6 @@ struct vfsops cd9660_vfsops = {
 	cd9660_init,
 	cd9660_sysctl,
 	cd9660_check_export
-};
-
-struct genfs_ops cd9660_genfsops = {
-	genfs_size,
 };
 
 /*
@@ -363,8 +359,6 @@ iso_mountfs(devvp, mp, p, argp)
 	mp->mnt_stat.f_fsid.val[1] = mp->mnt_vfc->vfc_typenum;
 	mp->mnt_maxsymlinklen = 0;
 	mp->mnt_flag |= MNT_LOCAL;
-	mp->mnt_dev_bshift = iso_bsize;
-	mp->mnt_fs_bshift = isomp->im_bshift;
 	isomp->im_mountp = mp;
 	isomp->im_dev = dev;
 	isomp->im_devvp = devvp;
@@ -943,8 +937,7 @@ retry:
 	/*
 	 * XXX need generation number?
 	 */
-
-	genfs_node_init(vp, &cd9660_genfsops);
+	
 	*vpp = vp;
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.27 2001/12/10 02:19:34 art Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.28 2001/12/19 08:58:06 art Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -584,9 +584,15 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	mp->mnt_data = (qaddr_t)pmp;
         mp->mnt_stat.f_fsid.val[0] = (long)dev;
         mp->mnt_stat.f_fsid.val[1] = mp->mnt_vfc->vfc_typenum;
-	mp->mnt_dev_bshift = pmp->pm_bnshift;
-	mp->mnt_fs_bshift = pmp->pm_cnshift;
-
+#ifdef QUOTA
+	/*
+	 * If we ever do quotas for DOS filesystems this would be a place
+	 * to fill in the info in the msdosfsmount structure. You dolt,
+	 * quotas on dos filesystems make no sense because files have no
+	 * owners on dos filesystems. of course there is some empty space
+	 * in the directory entry where we could put uid's and gid's.
+	 */
+#endif
 	devvp->v_specmountpoint = mp;
 
 	return (0);
@@ -714,11 +720,10 @@ msdosfs_sync_vnode(struct vnode *vp, void *arg)
 	struct denode *dep;
 
 	dep = VTODE(vp);
-	if (msa->waitfor == MNT_LAZY || vp->v_type == VNON ||
-	    (((dep->de_flag &
-	    (DE_ACCESS | DE_CREATE | DE_UPDATE | DE_MODIFIED)) == 0) &&
-	    (LIST_EMPTY(&vp->v_dirtyblkhd) &&
-	     vp->v_uobj.uo_npages == 0))) {
+	if (vp->v_type == VNON || 
+	    ((dep->de_flag & (DE_ACCESS | DE_CREATE | DE_UPDATE | DE_MODIFIED)) == 0
+		&& vp->v_dirtyblkhd.lh_first == NULL) ||
+	    msa->waitfor == MNT_LAZY) {
 		simple_unlock(&vp->v_interlock);
 		return (0);
 	}

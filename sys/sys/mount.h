@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.41 2001/11/27 05:27:12 art Exp $	*/
+/*	$OpenBSD: mount.h,v 1.42 2001/12/19 08:58:06 art Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -336,8 +336,6 @@ struct mount {
 	struct lock     mnt_lock;               /* mount structure lock */
 	int		mnt_flag;		/* flags */
 	int		mnt_maxsymlinklen;	/* max size of short symlink */
-	int		mnt_fs_bshift;		/* offset shift for lblkno */
-	int		mnt_dev_bshift;		/* shift for device sectors */
 	struct statfs	mnt_stat;		/* cache of filesystem stats */
 	qaddr_t		mnt_data;		/* private data */
 };

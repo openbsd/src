@@ -1,20 +1,20 @@
-/*	$OpenBSD: uvm_pglist.c,v 1.11 2001/11/28 19:28:15 art Exp $	*/
-/*	$NetBSD: uvm_pglist.c,v 1.17 2001/06/27 21:18:34 thorpej Exp $	*/
+/*	$OpenBSD: uvm_pglist.c,v 1.12 2001/12/19 08:58:07 art Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.13 2001/02/18 21:19:08 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
+ *  
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * NASA Ames Research Center.  
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
+ * 2. Redistributions in binary form must reproduce the above copyright 
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
@@ -24,7 +24,7 @@
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
- *
+ *      
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -78,7 +78,7 @@ u_long	uvm_pglistalloc_npages;
  *	low		the low address of the allowed allocation range.
  *	high		the high address of the allowed allocation range.
  *	alignment	memory must be aligned to this power-of-two boundary.
- *	boundary	no segment in the allocation may cross this
+ *	boundary	no segment in the allocation may cross this 
  *			power-of-two boundary (relative to zero).
  */
 
@@ -92,16 +92,16 @@ uvm_pglistalloc(size, low, high, alignment, boundary, rlist, nsegs, waitok)
 	paddr_t try, idxpa, lastidxpa;
 	int psi;
 	struct vm_page *pgs;
-	int s, tryidx, idx, pgflidx, end, error, free_list, color;
-	struct vm_page *m;
+	int s, tryidx, idx, pgflidx, end, error, free_list;
+	vm_page_t m;
 	u_long pagemask;
 #ifdef DEBUG
-	struct vm_page *tp;
+	vm_page_t tp;
 #endif
 
 	KASSERT((alignment & (alignment - 1)) == 0);
 	KASSERT((boundary & (boundary - 1)) == 0);
-
+	
 	/*
 	 * Our allocations are always page granularity, so our alignment
 	 * must be, too.
@@ -198,11 +198,10 @@ uvm_pglistalloc(size, low, high, alignment, boundary, rlist, nsegs, waitok)
 	while (idx < end) {
 		m = &pgs[idx];
 		free_list = uvm_page_lookup_freelist(m);
-		color = VM_PGCOLOR_BUCKET(m);
 		pgflidx = (m->flags & PG_ZERO) ? PGFL_ZEROS : PGFL_UNKNOWN;
 #ifdef DEBUG
 		for (tp = TAILQ_FIRST(&uvm.page_free[
-			free_list].pgfl_buckets[color].pgfl_queues[pgflidx]);
+			free_list].pgfl_queues[pgflidx]);
 		     tp != NULL;
 		     tp = TAILQ_NEXT(tp, pageq)) {
 			if (tp == m)
@@ -211,8 +210,8 @@ uvm_pglistalloc(size, low, high, alignment, boundary, rlist, nsegs, waitok)
 		if (tp == NULL)
 			panic("uvm_pglistalloc: page not on freelist");
 #endif
-		TAILQ_REMOVE(&uvm.page_free[free_list].pgfl_buckets[
-		    color].pgfl_queues[pgflidx], m, pageq);
+		TAILQ_REMOVE(&uvm.page_free[free_list].pgfl_queues[pgflidx],
+		    m, pageq);
 		uvmexp.free--;
 		if (m->flags & PG_ZERO)
 			uvmexp.zeropages--;
@@ -232,8 +231,12 @@ out:
 	 * check to see if we need to generate some free pages waking
 	 * the pagedaemon.
 	 */
-
-	UVM_KICK_PDAEMON();
+	 
+	if (uvmexp.free + uvmexp.paging < uvmexp.freemin ||
+	    (uvmexp.free + uvmexp.paging < uvmexp.freetarg &&
+	     uvmexp.inactive < uvmexp.inactarg)) {
+		wakeup(&uvm.pagedaemon);
+	}
 
 	uvm_unlock_fpageq(s);
 
@@ -250,7 +253,7 @@ void
 uvm_pglistfree(list)
 	struct pglist *list;
 {
-	struct vm_page *m;
+	vm_page_t m;
 	int s;
 
 	/*
@@ -263,8 +266,8 @@ uvm_pglistfree(list)
 		TAILQ_REMOVE(list, m, pageq);
 		m->pqflags = PQ_FREE;
 		TAILQ_INSERT_TAIL(&uvm.page_free[
-		    uvm_page_lookup_freelist(m)].pgfl_buckets[
-		    VM_PGCOLOR_BUCKET(m)].pgfl_queues[PGFL_UNKNOWN], m, pageq);
+		    uvm_page_lookup_freelist(m)].pgfl_queues[PGFL_UNKNOWN],
+		    m, pageq);
 		uvmexp.free++;
 		if (uvmexp.zeropages < UVM_PAGEZERO_TARGET)
 			uvm.page_idle_zero = vm_page_zero_enable;

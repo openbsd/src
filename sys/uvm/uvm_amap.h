@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_amap.h,v 1.9 2001/11/28 19:28:14 art Exp $	*/
-/*	$NetBSD: uvm_amap.h,v 1.17 2001/06/02 18:09:25 chs Exp $	*/
+/*	$OpenBSD: uvm_amap.h,v 1.10 2001/12/19 08:58:07 art Exp $	*/
+/*	$NetBSD: uvm_amap.h,v 1.14 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
 /*
  * forward definition of vm_amap structure.  only amap
  * implementation-specific code should directly access the fields of
- * this structure.
+ * this structure.  
  */
 
 struct vm_amap;
@@ -72,13 +72,13 @@ struct vm_amap;
 
 #ifdef UVM_AMAP_INLINE			/* defined/undef'd in uvm_amap.c */
 #define AMAP_INLINE static __inline	/* inline enabled */
-#else
+#else 
 #define AMAP_INLINE			/* inline disabled */
 #endif /* UVM_AMAP_INLINE */
 
 
 /*
- * prototypes for the amap interface
+ * prototypes for the amap interface 
  */
 
 AMAP_INLINE
@@ -88,16 +88,16 @@ void		amap_add 	/* add an anon to an amap */
 struct vm_amap	*amap_alloc	/* allocate a new amap */
 			__P((vaddr_t, vaddr_t, int));
 void		amap_copy	/* clear amap needs-copy flag */
-			__P((struct vm_map *, struct vm_map_entry *, int,
+			__P((vm_map_t, vm_map_entry_t, int, 
 			     boolean_t,	vaddr_t, vaddr_t));
 void		amap_cow_now	/* resolve all COW faults now */
-			__P((struct vm_map *, struct vm_map_entry *));
+			__P((vm_map_t, vm_map_entry_t));
 void		amap_extend	/* make amap larger */
-			__P((struct vm_map_entry *, vsize_t));
+			__P((vm_map_entry_t, vsize_t));
 int		amap_flags	/* get amap's flags */
 			__P((struct vm_amap *));
 void		amap_free	/* free amap */
-			__P((struct vm_amap *));
+			__P((struct vm_amap *)); 
 void		amap_init	/* init amap module (at boot time) */
 			__P((void));
 void		amap_lock	/* lock amap */
@@ -107,7 +107,7 @@ struct vm_anon	*amap_lookup	/* lookup an anon @ offset in amap */
 			__P((struct vm_aref *, vaddr_t));
 AMAP_INLINE
 void		amap_lookups	/* lookup multiple anons */
-			__P((struct vm_aref *, vaddr_t,
+			__P((struct vm_aref *, vaddr_t, 
 			     struct vm_anon **, int));
 AMAP_INLINE
 void		amap_ref	/* add a reference to an amap */
@@ -115,9 +115,9 @@ void		amap_ref	/* add a reference to an amap */
 int		amap_refs	/* get number of references of amap */
 			__P((struct vm_amap *));
 void		amap_share_protect /* protect pages in a shared amap */
-			__P((struct vm_map_entry *, vm_prot_t));
+			__P((vm_map_entry_t, vm_prot_t));
 void		amap_splitref	/* split reference to amap into two */
-			__P((struct vm_aref *, struct vm_aref *,
+			__P((struct vm_aref *, struct vm_aref *, 
 			     vaddr_t));
 AMAP_INLINE
 void		amap_unadd	/* remove an anon from an amap */
@@ -159,7 +159,7 @@ void		amap_wipeout	/* remove all anons from amap */
  */
 
 struct vm_amap {
-	struct simplelock am_l; /* simple lock [locks all vm_amap fields] */
+	simple_lock_data_t am_l; /* simple lock [locks all vm_amap fields] */
 	int am_ref;		/* reference count */
 	int am_flags;		/* flags */
 	int am_maxslot;		/* max # of slots allocated */
@@ -177,7 +177,7 @@ struct vm_amap {
  * note that am_slots, am_bckptr, and am_anon are arrays.   this allows
  * fast lookup of pages based on their virual address at the expense of
  * some extra memory.   in the future we should be smarter about memory
- * usage and fall back to a non-array based implementation on systems
+ * usage and fall back to a non-array based implementation on systems 
  * that are short of memory (XXXCDC).
  *
  * the entries in the array are called slots... for example an amap that
@@ -185,13 +185,13 @@ struct vm_amap {
  * is an example of the array usage for a four slot amap.   note that only
  * slots one and three have anons assigned to them.  "D/C" means that we
  * "don't care" about the value.
- *
+ * 
  *            0     1      2     3
  * am_anon:   NULL, anon0, NULL, anon1		(actual pointers to anons)
  * am_bckptr: D/C,  1,     D/C,  0		(points to am_slots entry)
  *
  * am_slots:  3, 1, D/C, D/C    		(says slots 3 and 1 are in use)
- *
+ * 
  * note that am_bckptr is D/C if the slot in am_anon is set to NULL.
  * to find the entry in am_slots for an anon, look at am_bckptr[slot],
  * thus the entry for slot 3 in am_slots[] is at am_slots[am_bckptr[3]].
@@ -203,7 +203,7 @@ struct vm_amap {
 
 /*
  * defines for handling of large sparce amaps:
- *
+ * 
  * one of the problems of array-based amaps is that if you allocate a
  * large sparcely-used area of virtual memory you end up allocating
  * large arrays that, for the most part, don't get used.  this is a
@@ -216,15 +216,15 @@ struct vm_amap {
  * it makes sense for it to live in an amap, but if we allocated an
  * amap for the entire stack range we could end up wasting a large
  * amount of malloc'd KVM.
- *
- * for example, on the i386 at boot time we allocate two amaps for the stack
- * of /sbin/init:
+ * 
+ * for example, on the i386 at boot time we allocate two amaps for the stack 
+ * of /sbin/init: 
  *  1. a 7680 slot amap at protection 0 (reserve space for stack)
  *  2. a 512 slot amap at protection 7 (top of stack)
  *
- * most of the array allocated for the amaps for this is never used.
+ * most of the array allocated for the amaps for this is never used.  
  * the amap interface provides a way for us to avoid this problem by
- * allowing amap_copy() to break larger amaps up into smaller sized
+ * allowing amap_copy() to break larger amaps up into smaller sized 
  * chunks (controlled by the "canchunk" option).   we use this feature
  * to reduce our memory usage with the BSD stack management.  if we
  * are asked to create an amap with more than UVM_AMAP_LARGE slots in it,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdesc_vnops.c,v 1.26 2001/12/04 22:44:31 art Exp $	*/
+/*	$OpenBSD: fdesc_vnops.c,v 1.27 2001/12/19 08:58:06 art Exp $	*/
 /*	$NetBSD: fdesc_vnops.c,v 1.32 1996/04/11 11:24:29 mrg Exp $	*/
 
 /*
@@ -123,7 +123,6 @@ int	fdesc_pathconf	__P((void *));
 #define	fdesc_islocked	vop_generic_islocked
 #define	fdesc_advlock	eopnotsupp
 #define	fdesc_bwrite	eopnotsupp
-#define	fdesc_mmap	eopnotsupp
 
 int (**fdesc_vnodeop_p) __P((void *));
 struct vnodeopv_entry_desc fdesc_vnodeop_entries[] = {
@@ -162,8 +161,7 @@ struct vnodeopv_entry_desc fdesc_vnodeop_entries[] = {
 	{ &vop_pathconf_desc, fdesc_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, fdesc_advlock },	/* advlock */
 	{ &vop_bwrite_desc, fdesc_bwrite },	/* bwrite */
-	{ &vop_mmap_desc, fdesc_mmap },
-	{ NULL, NULL }
+	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
 
 struct vnodeopv_desc fdesc_vnodeop_opv_desc =

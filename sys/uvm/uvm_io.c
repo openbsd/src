@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_io.c,v 1.12 2001/11/28 19:28:14 art Exp $	*/
-/*	$NetBSD: uvm_io.c,v 1.15 2001/06/02 18:09:26 chs Exp $	*/
+/*	$OpenBSD: uvm_io.c,v 1.13 2001/12/19 08:58:07 art Exp $	*/
+/*	$NetBSD: uvm_io.c,v 1.12 2000/06/27 17:29:23 mrg Exp $	*/
 
 /*
  *
@@ -61,12 +61,12 @@
 
 int
 uvm_io(map, uio)
-	struct vm_map *map;
+	vm_map_t map;
 	struct uio *uio;
 {
 	vaddr_t baseva, endva, pageoffset, kva;
 	vsize_t chunksz, togo, sz;
-	struct vm_map_entry *dead_entries;
+	vm_map_entry_t dead_entries;
 	int error;
 
 	/*
@@ -106,7 +106,7 @@ uvm_io(map, uio)
 		 */
 
 		error = uvm_map_extract(map, baseva, chunksz, kernel_map, &kva,
-			    UVM_EXTRACT_QREF | UVM_EXTRACT_CONTIG |
+			    UVM_EXTRACT_QREF | UVM_EXTRACT_CONTIG | 
 			    UVM_EXTRACT_FIXPROT);
 		if (error) {
 
@@ -138,7 +138,8 @@ uvm_io(map, uio)
 		 */
 
 		vm_map_lock(kernel_map);
-		uvm_unmap_remove(kernel_map, kva, kva + chunksz, &dead_entries);
+		(void)uvm_unmap_remove(kernel_map, kva, kva+chunksz,
+		    &dead_entries);
 		vm_map_unlock(kernel_map);
 
 		if (dead_entries != NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.c,v 1.14 2001/12/05 14:40:48 art Exp $	*/
+/*	$OpenBSD: cache.c,v 1.15 2001/12/19 08:58:05 art Exp $	*/
 /*	$NetBSD: cache.c,v 1.34 1997/09/26 22:17:23 pk Exp $	*/
 
 /*
@@ -768,102 +768,72 @@ viking_cache_flush(base, len)
 }
 
 void
-viking_pcache_flush_page(pa, invalidate_only)
-	paddr_t pa;
-	int invalidate_only;
+viking_pcache_flush_line(va, pa)
+	int va;
+	int pa;
 {
-	int set, i;
+	/*
+	 * Flush cache line corresponding to virtual address `va'
+	 * which is mapped at physical address `pa'.
+	 */
+	extern char etext[];
+	static char *base;
+	int i;
+	char *v;
 
 	/*
-	 * The viking's on-chip data cache is 4-way set associative,
-	 * consisting of 128 sets, each holding 4 lines of 32 bytes.
-	 * Note that one 4096 byte page exactly covers all 128 sets
-	 * in the cache.
+	 * Construct a virtual address that hits the same cache line
+	 * as PA, then read from 2*ASSOCIATIVITY-1 different physical
+	 * locations (all different from PA).
 	 */
-	if (invalidate_only) {
-		u_int pa_tag = (pa >> 12);
-		u_int tagaddr;
-		u_int64_t tag;
 
-		/*
-		 * Loop over all sets and invalidate all entries tagged
-		 * with the given physical address by resetting the cache
-		 * tag in ASI_DCACHETAG control space.
-		 *
-		 * The address format for accessing a tag is:
-		 *
-		 * 31   30      27   26                  11      5 4  3 2    0
-		 * +------+-----+------+-------//--------+--------+----+-----+
-		 * | type | xxx | line |       xxx       |  set   | xx | 0   |
-		 * +------+-----+------+-------//--------+--------+----+-----+
-		 *
-		 * set:  the cache set tag to be read (0-127)
-		 * line: the line within the set (0-3)
-		 * type: 1: read set tag; 2: read physical tag
-		 *
-		 * The (type 2) tag read from this address is a 64-bit word
-		 * formatted as follows:
-		 *
-		 *          5         4         4
-		 * 63       6         8         0            23               0
-		 * +-------+-+-------+-+-------+-+-----------+----------------+
-		 * |  xxx  |V|  xxx  |D|  xxx  |S|    xxx    |    PA[35-12]   |
-		 * +-------+-+-------+-+-------+-+-----------+----------------+
-		 *
-		 * PA: bits 12-35 of the physical address
-		 * S:  line shared bit
-		 * D:  line dirty bit
-		 * V:  line valid bit
-		 */
-
-#define VIKING_DCACHETAG_S	0x0000010000000000UL	/* line valid bit */
-#define VIKING_DCACHETAG_D	0x0001000000000000UL	/* line dirty bit */
-#define VIKING_DCACHETAG_V	0x0100000000000000UL	/* line shared bit */
-#define VIKING_DCACHETAG_PAMASK	0x0000000000ffffffUL	/* PA tag field */
-
-		for (set = 0; set < 128; set++) {
-			/* Set set number and access type */
-			tagaddr = (set << 5) | (2 << 30);
-
-			/* Examine the tag for each line in the set */
-			for (i = 0 ; i < 4; i++) {
-				tag = ldda(tagaddr | (i << 26), ASI_DCACHETAG);
-				/*
-				 * If this is a valid tag and the PA field
-				 * matches clear the tag.
-				 */
-				if ((tag & VIKING_DCACHETAG_PAMASK) == pa_tag &&
-				    (tag & VIKING_DCACHETAG_V) != 0)
-					stda(tagaddr | (i << 26),
-					     ASI_DCACHETAG, 0);
-			}
-		}
-
-	} else {
-		extern char kernel_text[];
-
-		/*
-		 * Force the cache to validate its backing memory
-		 * by displacing all cache lines with known read-only
-		 * content from the start of kernel text.
-		 *
-		 * Note that this thrashes the entire cache. However,
-		 * we currently only need to call upon this code
-		 * once at boot time.
-		 */
-		for (set = 0; set < 128; set++) {
-			int *v = (int *)(kernel_text + (set << 5));
-
-			/*
-			 * We need to read (2*associativity-1) different
-			 * locations to be sure to displace the entire set.
-			 */
-			i = 2 * 4 - 1;
-			while (i--) {
-				(*(volatile int *)v);
-				v += 4096;
-			}
-		}
+#if 0
+	if (base == 0) {
+		cshift = CACHEINFO.ic_l2linesize;
+		csize = CACHEINFO.ic_nlines << cshift;
+		cmask = csize - 1;
+		base = (char *)roundup((int)etext, csize);
 	}
+
+	v = base + (((va & cmask) >> cshift) << cshift);
+	i = CACHEINFO.dc_associativity * 2 - 1;
+
+	while (i--) {
+		(*(volatile int *)v);
+		v += csize;
+	}
+#else
+#define cshift	5			/* CACHEINFO.ic_l2linesize */
+#define csize	(128 << cshift)		/* CACHEINFO.ic_nlines << cshift */
+#define cmask	(csize - 1)
+#define cass	4			/* CACHEINFO.dc_associativity */
+
+	if (base == 0)
+		base = (char *)roundup((unsigned int)etext, csize);
+
+	v = base + (((pa & cmask) >> cshift) << cshift);
+	i = 2 * cass - 1;
+
+	while (i--) {
+		(*(volatile int *)v);
+		v += csize;
+	}
+#undef cass
+#undef cmask
+#undef csize
+#undef cshift
+#endif
+}
+
+void
+srmmu_pcache_flush_line(va, pa)
+	int va;
+	int pa;
+{
+	/*
+	 * Flush cache line corresponding to virtual address `va'
+	 * which is mapped at physical address `pa'.
+	 */
+	sta(va, ASI_IDCACHELFP, 0);
 }
 #endif /* SUN4M */

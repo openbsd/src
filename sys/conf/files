@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.233 2001/12/10 04:45:31 art Exp $
+#	$OpenBSD: files,v 1.234 2001/12/19 08:58:05 art Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -533,7 +533,6 @@ file kern/vfs_syscalls.c
 file kern/vfs_vnops.c
 file kern/vnode_if.c
 file miscfs/deadfs/dead_vnops.c
-file miscfs/genfs/genfs_vnops.c
 file miscfs/fdesc/fdesc_vfsops.c	fdesc
 file miscfs/fdesc/fdesc_vnops.c		fdesc
 file miscfs/fifofs/fifo_vnops.c		fifo
@@ -802,7 +801,6 @@ file xfs/xfs_syscalls-dummy.c		!xfs
 file uvm/uvm_amap.c
 file uvm/uvm_anon.c
 file uvm/uvm_aobj.c
-file uvm/uvm_bio.c
 file uvm/uvm_device.c
 file uvm/uvm_fault.c
 file uvm/uvm_glue.c

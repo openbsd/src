@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.24 2001/12/11 17:24:34 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.25 2001/12/19 08:58:05 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -204,12 +204,8 @@
 #define vtopte(VA)	(PTE_BASE + i386_btop(VA))
 #define kvtopte(VA)	vtopte(VA)
 #define ptetov(PT)	(i386_ptob(PT - PTE_BASE))
-#ifdef LARGEPAGES
-paddr_t vtophys(vaddr_t);
-#else
 #define	vtophys(VA)	((*vtopte(VA) & PG_FRAME) | \
 			 ((unsigned)(VA) & ~PG_FRAME))
-#endif
 #define	avtopte(VA)	(APTE_BASE + i386_btop(VA))
 #define	ptetoav(PT)	(i386_ptob(PT - APTE_BASE))
 #define	avtophys(VA)	((*avtopte(VA) & PG_FRAME) | \

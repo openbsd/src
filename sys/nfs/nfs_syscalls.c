@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.21 2001/11/27 05:27:12 art Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.22 2001/12/19 08:58:06 art Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -913,9 +913,10 @@ int
 nfssvc_iod(p)
 	struct proc *p;
 {
-	struct buf *bp;
-	int i, myiod;
-	int error = 0;
+	register struct buf *bp, *nbp;
+	register int i, myiod;
+	struct vnode *vp;
+	int error = 0, s;
 
 	/*
 	 * Assign my position or return error if too many already running
@@ -943,7 +944,39 @@ nfssvc_iod(p)
 	    while ((bp = nfs_bufq.tqh_first) != NULL) {
 		/* Take one off the front of the list */
 		TAILQ_REMOVE(&nfs_bufq, bp, b_freelist);
-		(void) nfs_doio(bp, NULL);
+		if (bp->b_flags & B_READ)
+		    (void) nfs_doio(bp, NULL);
+		else do {
+		    /*
+		     * Look for a delayed write for the same vnode, so I can do 
+		     * it now. We must grab it before calling nfs_doio() to
+		     * avoid any risk of the vnode getting vclean()'d while
+		     * we are doing the write rpc.
+		     */
+		    vp = bp->b_vp;
+		    s = splbio();
+		    for (nbp = vp->v_dirtyblkhd.lh_first; nbp;
+			nbp = nbp->b_vnbufs.le_next) {
+			if ((nbp->b_flags &
+			    (B_BUSY|B_DELWRI|B_NEEDCOMMIT|B_NOCACHE))!=B_DELWRI)
+			    continue;
+			bremfree(nbp);
+			nbp->b_flags |= (B_BUSY|B_ASYNC);
+			break;
+		    }
+		    /*
+		     * For the delayed write, do the first part of nfs_bwrite()
+		     * up to, but not including nfs_strategy().
+		     */
+		    if (nbp) {
+			nbp->b_flags &= ~(B_READ|B_DONE|B_ERROR);
+			buf_undirty(bp);
+			nbp->b_vp->v_numoutput++;
+		    }
+		    splx(s);
+
+		    (void) nfs_doio(bp, NULL);
+		} while ((bp = nbp) != NULL);
 	    }
 	    if (error) {
 		PRELE(p);

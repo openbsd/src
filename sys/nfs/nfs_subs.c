@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.37 2001/12/10 02:19:34 art Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.38 2001/12/19 08:58:06 art Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -39,40 +39,6 @@
  *	@(#)nfs_subs.c	8.8 (Berkeley) 5/22/95
  */
 
-/*
- * Copyright 2000 Wasabi Systems, Inc.
- * All rights reserved.
- *
- * Written by Frank van der Linden for Wasabi Systems, Inc.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed for the NetBSD Project by
- *      Wasabi Systems, Inc.
- * 4. The name of Wasabi Systems, Inc. may not be used to endorse
- *    or promote products derived from this software without specific prior
- *    written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY WASABI SYSTEMS, INC. ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL WASABI SYSTEMS, INC
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
 
 /*
  * These functions support the macros and help fiddle mbuf chains for
@@ -1275,14 +1241,17 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 		vap->va_filerev = 0;
 	}
 	if (vap->va_size != np->n_size) {
-		if ((np->n_flag & NMODIFIED) && vap->va_size < np->n_size) {
-			vap->va_size = np->n_size;
-		} else {
+		if (vap->va_type == VREG) {
+			if (np->n_flag & NMODIFIED) {
+				if (vap->va_size < np->n_size)
+					vap->va_size = np->n_size;
+				else
+					np->n_size = vap->va_size;
+			} else
+				np->n_size = vap->va_size;
+			uvm_vnp_setsize(vp, np->n_size);
+		} else
 			np->n_size = vap->va_size;
-			if (vap->va_type == VREG) {
-				uvm_vnp_setsize(vp, np->n_size);
-			}
-		}
 	}
 	np->n_attrstamp = time.tv_sec;
 	if (vaper != NULL) {
@@ -1772,214 +1741,24 @@ void
 nfs_clearcommit(mp)
 	struct mount *mp;
 {
-	struct vnode *vp;
-	struct vm_page *pg;
-	struct nfsnode *np;
+	register struct vnode *vp, *nvp;
+	register struct buf *bp, *nbp;
 	int s;
 
 	s = splbio();
-	LIST_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
-		if (vp->v_type == VNON)
-			continue;
-		np = VTONFS(vp);
-		np->n_pushlo = np->n_pushhi = np->n_pushedlo =
-		    np->n_pushedhi = 0;
-		np->n_commitflags &=
-		    ~(NFS_COMMIT_PUSH_VALID | NFS_COMMIT_PUSHED_VALID);
-		simple_lock(&vp->v_uobj.vmobjlock);
-		TAILQ_FOREACH(pg, &vp->v_uobj.memq, listq) {
-			pg->flags &= ~PG_NEEDCOMMIT;
+loop:
+	for (vp = mp->mnt_vnodelist.lh_first; vp; vp = nvp) {
+		if (vp->v_mount != mp)	/* Paranoia */
+			goto loop;
+		nvp = vp->v_mntvnodes.le_next;
+		for (bp = vp->v_dirtyblkhd.lh_first; bp; bp = nbp) {
+			nbp = bp->b_vnbufs.le_next;
+			if ((bp->b_flags & (B_BUSY | B_DELWRI | B_NEEDCOMMIT))
+				== (B_DELWRI | B_NEEDCOMMIT))
+				bp->b_flags &= ~B_NEEDCOMMIT;
 		}
-		simple_unlock(&vp->v_uobj.vmobjlock);
 	}
 	splx(s);
-}
-
-void
-nfs_merge_commit_ranges(vp)
-	struct vnode *vp;
-{
-	struct nfsnode *np = VTONFS(vp);
-
-	if (!(np->n_commitflags & NFS_COMMIT_PUSHED_VALID)) {
-		np->n_pushedlo = np->n_pushlo;
-		np->n_pushedhi = np->n_pushhi;
-		np->n_commitflags |= NFS_COMMIT_PUSHED_VALID;
-	} else {
-		if (np->n_pushlo < np->n_pushedlo)
-			np->n_pushedlo = np->n_pushlo;
-		if (np->n_pushhi > np->n_pushedhi)
-			np->n_pushedhi = np->n_pushhi;
-	}
-
-	np->n_pushlo = np->n_pushhi = 0;
-	np->n_commitflags &= ~NFS_COMMIT_PUSH_VALID;
-
-#ifdef fvdl_debug
-	printf("merge: committed: %u - %u\n", (unsigned)np->n_pushedlo,
-	    (unsigned)np->n_pushedhi);
-#endif
-}
-
-int
-nfs_in_committed_range(vp, off, len)
-	struct vnode *vp;
-	off_t off, len;
-{
-	struct nfsnode *np = VTONFS(vp);
-	off_t lo, hi;
-
-	if (!(np->n_commitflags & NFS_COMMIT_PUSHED_VALID))
-		return 0;
-	lo = off;
-	hi = lo + len;
-
-	return (lo >= np->n_pushedlo && hi <= np->n_pushedhi);
-}
-
-int
-nfs_in_tobecommitted_range(vp, off, len)
-	struct vnode *vp;
-	off_t off, len;
-{
-	struct nfsnode *np = VTONFS(vp);
-	off_t lo, hi;
-
-	if (!(np->n_commitflags & NFS_COMMIT_PUSH_VALID))
-		return 0;
-	lo = off;
-	hi = lo + len;
-
-	return (lo >= np->n_pushlo && hi <= np->n_pushhi);
-}
-
-void
-nfs_add_committed_range(vp, off, len)
-	struct vnode *vp;
-	off_t off, len;
-{
-	struct nfsnode *np = VTONFS(vp);
-	off_t lo, hi;
-
-	lo = off;
-	hi = lo + len;
-
-	if (!(np->n_commitflags & NFS_COMMIT_PUSHED_VALID)) {
-		np->n_pushedlo = lo;
-		np->n_pushedhi = hi;
-		np->n_commitflags |= NFS_COMMIT_PUSHED_VALID;
-	} else {
-		if (hi > np->n_pushedhi)
-			np->n_pushedhi = hi;
-		if (lo < np->n_pushedlo)
-			np->n_pushedlo = lo;
-	}
-#ifdef fvdl_debug
-	printf("add: committed: %u - %u\n", (unsigned)np->n_pushedlo,
-	    (unsigned)np->n_pushedhi);
-#endif
-}
-
-void
-nfs_del_committed_range(vp, off, len)
-	struct vnode *vp;
-	off_t off, len;
-{
-	struct nfsnode *np = VTONFS(vp);
-	off_t lo, hi;
-
-	if (!(np->n_commitflags & NFS_COMMIT_PUSHED_VALID))
-		return;
-
-	lo = off;
-	hi = lo + len;
-
-	if (lo > np->n_pushedhi || hi < np->n_pushedlo)
-		return;
-	if (lo <= np->n_pushedlo)
-		np->n_pushedlo = hi;
-	else if (hi >= np->n_pushedhi)
-		np->n_pushedhi = lo;
-	else {
-		/*
-		 * XXX There's only one range. If the deleted range
-		 * is in the middle, pick the largest of the
-		 * contiguous ranges that it leaves.
-		 */
-		if ((np->n_pushedlo - lo) > (hi - np->n_pushedhi))
-			np->n_pushedhi = lo;
-		else
-			np->n_pushedlo = hi;
-	}
-#ifdef fvdl_debug
-	printf("del: committed: %u - %u\n", (unsigned)np->n_pushedlo,
-	    (unsigned)np->n_pushedhi);
-#endif
-}
-
-void
-nfs_add_tobecommitted_range(vp, off, len)
-	struct vnode *vp;
-	off_t off, len;
-{
-	struct nfsnode *np = VTONFS(vp);
-	off_t lo, hi;
-
-	lo = off;
-	hi = lo + len;
-
-	if (!(np->n_commitflags & NFS_COMMIT_PUSH_VALID)) {
-		np->n_pushlo = lo;
-		np->n_pushhi = hi;
-		np->n_commitflags |= NFS_COMMIT_PUSH_VALID;
-	} else {
-		if (lo < np->n_pushlo)
-			np->n_pushlo = lo;
-		if (hi > np->n_pushhi)
-			np->n_pushhi = hi;
-	}
-#ifdef fvdl_debug
-	printf("add: tobecommitted: %u - %u\n", (unsigned)np->n_pushlo,
-	    (unsigned)np->n_pushhi);
-#endif
-}
-
-void
-nfs_del_tobecommitted_range(vp, off, len)
-	struct vnode *vp;
-	off_t off, len;
-{
-	struct nfsnode *np = VTONFS(vp);
-	off_t lo, hi;
-
-	if (!(np->n_commitflags & NFS_COMMIT_PUSH_VALID))
-		return;
-
-	lo = off;
-	hi = lo + len;
-
-	if (lo > np->n_pushhi || hi < np->n_pushlo)
-		return;
-
-	if (lo <= np->n_pushlo)
-		np->n_pushlo = hi;
-	else if (hi >= np->n_pushhi)
-		np->n_pushhi = lo;
-	else {
-		/*
-		 * XXX There's only one range. If the deleted range
-		 * is in the middle, pick the largest of the
-		 * contiguous ranges that it leaves.
-		 */
-		if ((np->n_pushlo - lo) > (hi - np->n_pushhi))
-			np->n_pushhi = lo;
-		else
-			np->n_pushlo = hi;
-	}
-#ifdef fvdl_debug
-	printf("del: tobecommitted: %u - %u\n", (unsigned)np->n_pushlo,
-	    (unsigned)np->n_pushhi);
-#endif
 }
 
 /*

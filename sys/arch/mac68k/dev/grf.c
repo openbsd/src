@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf.c,v 1.19 2001/11/28 13:47:38 art Exp $	*/
+/*	$OpenBSD: grf.c,v 1.20 2001/12/19 08:58:05 art Exp $	*/
 /*	$NetBSD: grf.c,v 1.41 1997/02/24 06:20:04 scottr Exp $	*/
 
 /*
@@ -391,6 +391,7 @@ grfunmap(dev, addr, p)
 {
 	struct grf_softc *gp;
 	vm_size_t size;
+	int     rv;
 
 	gp = grf_cd.cd_devs[GRFUNIT(dev)];
 
@@ -404,8 +405,8 @@ grfunmap(dev, addr, p)
 
 	size = round_page(gp->sc_grfmode->fbsize);
 
-	uvm_unmap(&p->p_vmspace->vm_map, (vm_offset_t)addr,
+	rv = uvm_unmap(&p->p_vmspace->vm_map, (vm_offset_t)addr,
 	    (vm_offset_t)addr + size);
 
-	return (0);
+	return (rv == 0 ? 0 : EINVAL);
 }

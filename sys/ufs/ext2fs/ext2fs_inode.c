@@ -1,4 +1,5 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.23 2001/02/18 20:17:04 chs Exp $	*/
+/*	$OpenBSD: ext2fs_inode.c,v 1.19 2001/12/19 08:58:07 art Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.24 2001/06/19 12:59:18 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -58,10 +59,8 @@
 #include <ufs/ext2fs/ext2fs.h>
 #include <ufs/ext2fs/ext2fs_extern.h>
 
-extern int prtactive;
-
 static int ext2fs_indirtrunc __P((struct inode *, ufs_daddr_t, ufs_daddr_t,
-				  ufs_daddr_t, int, long *));
+				ufs_daddr_t, int, long *));
 
 /*
  * Last reference to an inode.  If necessary, write or delete it.
@@ -79,6 +78,7 @@ ext2fs_inactive(v)
 	struct proc *p = ap->a_p;
 	struct timespec ts;
 	int error = 0;
+	extern int prtactive;
 	
 	if (prtactive && vp->v_usecount != 0)
 		vprint("ext2fs_inactive: pushing active", vp);
@@ -171,13 +171,14 @@ ext2fs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 {
 	struct vnode *ovp = ITOV(oip);
 	ufs_daddr_t lastblock;
-	ufs_daddr_t bn, lastiblock[NIADDR], indir_lbn[NIADDR];
+	ufs_daddr_t bn, lbn, lastiblock[NIADDR], indir_lbn[NIADDR];
 	ufs_daddr_t oldblks[NDADDR + NIADDR], newblks[NDADDR + NIADDR];
 	struct m_ext2fs *fs;
+	struct buf *bp;
 	int offset, size, level;
 	long count, nblocks, vflags, blocksreleased = 0;
 	int i;
-	int error, allerror;
+	int aflags, error, allerror;
 	off_t osize;
 
 	if (length < 0)
@@ -218,8 +219,22 @@ ext2fs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 		if (length > fs->fs_maxfilesize)
 			return (EFBIG);
 #endif
-		ext2fs_balloc_range(ovp, length - 1, 1, cred,
-		    flags & IO_SYNC ? B_SYNC : 0);
+		offset = blkoff(fs, length - 1);
+		lbn = lblkno(fs, length - 1);
+		aflags = B_CLRBUF;
+		if (flags & IO_SYNC)
+			aflags |= B_SYNC;
+		error = ext2fs_buf_alloc(oip, lbn, offset + 1, cred, &bp,
+		    aflags);
+		if (error)
+			return (error);
+		oip->i_e2fs_size = length;
+		uvm_vnp_setsize(ovp, length);
+		uvm_vnp_uncache(ovp);
+		if (aflags & B_SYNC)
+			bwrite(bp);
+		else
+			bawrite(bp);
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (ext2fs_update(oip, NULL, NULL, 1));
 	}
@@ -231,15 +246,28 @@ ext2fs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 	 * of subsequent file growth.
 	 */
 	offset = blkoff(fs, length);
-	if (offset != 0) {
+	if (offset == 0) {
+		oip->i_e2fs_size = length;
+	} else {
+		lbn = lblkno(fs, length);
+		aflags = B_CLRBUF;
+		if (flags & IO_SYNC)
+			aflags |= B_SYNC;
+		error = ext2fs_buf_alloc(oip, lbn, offset, cred, &bp, 
+		    aflags);
+		if (error)
+			return (error);
+		oip->i_e2fs_size = length;
 		size = fs->e2fs_bsize;
-
-		/* XXXUBC we should handle more than just VREG */
-		uvm_vnp_zerorange(ovp, length, size - offset);
+		uvm_vnp_setsize(ovp, length);
+		uvm_vnp_uncache(ovp);
+		bzero((char *)bp->b_data + offset, (u_int)(size - offset));
+		allocbuf(bp, size);
+		if (aflags & B_SYNC)
+			bwrite(bp);
+		else
+			bawrite(bp);
 	}
-	oip->i_e2fs_size = length;
-	uvm_vnp_setsize(ovp, length);
-
 	/*
 	 * Calculate index into inode's block list of
 	 * last direct and indirect blocks (if any)

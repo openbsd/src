@@ -3,7 +3,7 @@
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	OpenBSD: vnode_if.src,v 1.17 2001/12/10 04:45:31 art Exp 
+ *	OpenBSD: vnode_if.src,v 1.11 2001/06/23 02:21:05 csapuntz Exp 
  * by the script:
  *	OpenBSD: vnode_if.sh,v 1.8 2001/02/26 17:34:18 art Exp 
  */
@@ -396,42 +396,6 @@ struct vop_whiteout_args {
 };
 extern struct vnodeop_desc vop_whiteout_desc;
 int VOP_WHITEOUT __P((struct vnode *, struct componentname *, int));
-
-struct vop_getpages_args {
-	struct vnodeop_desc *a_desc;
-	struct vnode *a_vp;
-	voff_t a_offset;
-	struct vm_page **a_m;
-	int *a_count;
-	int a_centeridx;
-	vm_prot_t a_access_type;
-	int a_advice;
-	int a_flags;
-};
-extern struct vnodeop_desc vop_getpages_desc;
-int VOP_GETPAGES __P((struct vnode *, voff_t, struct vm_page **, int *, int, 
-    vm_prot_t, int, int));
-
-struct vop_putpages_args {
-	struct vnodeop_desc *a_desc;
-	struct vnode *a_vp;
-	struct vm_page **a_m;
-	int a_count;
-	int a_flags;
-	int *a_rtvals;
-};
-extern struct vnodeop_desc vop_putpages_desc;
-int VOP_PUTPAGES __P((struct vnode *, struct vm_page **, int, int, int *));
-
-struct vop_mmap_args {
-	struct vnodeop_desc *a_desc;
-	struct vnode *a_vp;
-	int a_fflags;
-	struct ucred *a_cred;
-	struct proc *a_p;
-};
-extern struct vnodeop_desc vop_mmap_desc;
-int VOP_MMAP __P((struct vnode *, int, struct ucred *, struct proc *));
 
 /* Special cases: */
 #include <sys/buf.h>

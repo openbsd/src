@@ -1,4 +1,4 @@
-/*	$OpenBSD: union_vnops.c,v 1.16 2001/12/04 22:44:32 art Exp $	*/
+/*	$OpenBSD: union_vnops.c,v 1.17 2001/12/19 08:58:06 art Exp $	*/
 /*	$NetBSD: union_vnops.c,v 1.30.4.1 1996/05/25 22:10:14 jtc Exp $	*/
 
 /*
@@ -94,7 +94,6 @@ int union_islocked	__P((void *));
 int union_pathconf	__P((void *));
 int union_advlock	__P((void *));
 int union_strategy	__P((void *));
-int union_mmap		__P((void *));
 
 int (**union_vnodeop_p) __P((void *));
 struct vnodeopv_entry_desc union_vnodeop_entries[] = {
@@ -134,8 +133,7 @@ struct vnodeopv_entry_desc union_vnodeop_entries[] = {
 	{ &vop_islocked_desc, union_islocked },		/* islocked */
 	{ &vop_pathconf_desc, union_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, union_advlock },		/* advlock */
-	{ &vop_mmap_desc, union_mmap },
-	{ NULL, NULL }
+	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
 struct vnodeopv_desc union_vnodeop_opv_desc =
 	{ &union_vnodeop_p, union_vnodeop_entries };
@@ -1844,13 +1842,3 @@ union_strategy(v)
 	return (error);
 }
 
-int
-union_mmap(v)
-	void *v;
-{
-	struct vop_mmap_args *ap = v;
-	struct vnode *vp = OTHERVP(ap->a_vp);
-
-	ap->a_vp = vp;
-	return (VCALL(vp, VOFFSET(vop_mmap), ap));
-}

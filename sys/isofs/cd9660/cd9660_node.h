@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_node.h,v 1.12 2001/12/10 18:49:51 art Exp $	*/
+/*	$OpenBSD: cd9660_node.h,v 1.13 2001/12/19 08:58:06 art Exp $	*/
 /*	$NetBSD: cd9660_node.h,v 1.15 1997/04/11 21:52:01 kleink Exp $	*/
 
 /*-
@@ -42,7 +42,6 @@
  */
 
 #include <sys/buf.h>
-#include <miscfs/genfs/genfs.h>
 
 /*
  * Theoretically, directories can be more than 2Gb in length,
@@ -77,7 +76,6 @@ struct iso_dnode {
 #endif
 
 struct iso_node {
-	struct	genfs_node i_gnode;
 	struct	iso_node *i_next, **i_prev;	/* hash chain */
 	struct	vnode *i_vnode;	/* vnode associated with this inode */
 	struct	vnode *i_devvp;	/* vnode for block I/O */
@@ -98,6 +96,7 @@ struct iso_node {
 	long iso_start;		/* actual start of data of file (may be different */
 				/* from iso_extent, if file has extended attributes) */
 	ISO_RRIP_INODE  inode;
+	struct cluster_info i_ci; 
 };
 
 #define	i_forw		i_chain[0]

@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_fault.h,v 1.10 2001/11/28 19:28:14 art Exp $	*/
-/*	$NetBSD: uvm_fault.h,v 1.15 2001/06/02 18:09:26 chs Exp $	*/
+/*	$OpenBSD: uvm_fault.h,v 1.11 2001/12/19 08:58:07 art Exp $	*/
+/*	$NetBSD: uvm_fault.h,v 1.14 2000/06/26 14:21:17 mrg Exp $	*/
 
 /*
  *
@@ -57,12 +57,12 @@
 
 
 struct uvm_faultinfo {
-	struct vm_map *orig_map;		/* IN: original map */
+	vm_map_t orig_map;		/* IN: original map */
 	vaddr_t orig_rvaddr;		/* IN: original rounded VA */
 	vsize_t orig_size;		/* IN: original size of interest */
-	struct vm_map *map;			/* map (could be a submap) */
+	vm_map_t map;			/* map (could be a submap) */
 	unsigned int mapv;		/* map's version number */
-	struct vm_map_entry *entry;		/* map entry (from 'map') */
+	vm_map_entry_t entry;		/* map entry (from 'map') */
 	vsize_t size;			/* size of interest */
 };
 
@@ -76,9 +76,9 @@ struct uvm_faultinfo {
 int uvmfault_anonget __P((struct uvm_faultinfo *, struct vm_amap *,
 			  struct vm_anon *));
 
-int uvm_fault_wire __P((struct vm_map *, vaddr_t, vaddr_t, vm_prot_t));
-void uvm_fault_unwire __P((struct vm_map *, vaddr_t, vaddr_t));
-void uvm_fault_unwire_locked __P((struct vm_map *, vaddr_t, vaddr_t));
+int uvm_fault_wire __P((vm_map_t, vaddr_t, vaddr_t, vm_prot_t));
+void uvm_fault_unwire __P((vm_map_t, vaddr_t, vaddr_t));
+void uvm_fault_unwire_locked __P((vm_map_t, vaddr_t, vaddr_t));
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_balloc.c,v 1.21 2001/12/10 04:45:32 art Exp $	*/
+/*	$OpenBSD: ffs_balloc.c,v 1.22 2001/12/19 08:58:07 art Exp $	*/
 /*	$NetBSD: ffs_balloc.c,v 1.3 1996/02/09 22:22:21 christos Exp $	*/
 
 /*
@@ -402,47 +402,3 @@ fail:
 
 	return (error);
 }
-
-int
-ffs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
-    struct ucred *cred)
-{
-	struct inode *ip = VTOI(vp);
-	struct fs *fs = ip->i_fs;
-	int error, delta, bshift, bsize;
-
-	error = 0;
-	bshift = fs->fs_bshift;
-	bsize = 1 << bshift;
-
-	delta = off & (bsize - 1);
-	off -= delta;
-	len += delta;
-
-	while (len > 0) {
-		bsize = MIN(bsize, len);
-
-		error = ffs_balloc(ip, off, bsize, cred, flags, NULL);
-		if (error) {
-			goto out;
-		}
-
-		/*
-		 * increase file size now, VOP_BALLOC() requires that
-		 * EOF be up-to-date before each call.
-		 */
-
-		if (ip->i_ffs_size < off + bsize) {
-			ip->i_ffs_size = off + bsize;
-			if (vp->v_size < ip->i_ffs_size) {
-				uvm_vnp_setsize(vp, ip->i_ffs_size);
-			}
-		}
-
-		off += bsize;
-		len -= bsize;
-	}
-
-out:
-	return error;
- }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuvar.h,v 1.6 2001/12/07 10:39:47 art Exp $	*/
+/*	$OpenBSD: cpuvar.h,v 1.7 2001/12/19 08:58:05 art Exp $	*/
 /*	$NetBSD: cpuvar.h,v 1.4 1997/07/06 21:14:25 pk Exp $ */
 
 /*
@@ -70,7 +70,7 @@ struct module_info {
 	void (*vcache_flush_segment) __P((int, int));
 	void (*vcache_flush_region) __P((int));
 	void (*vcache_flush_context) __P((void));
-	void (*pcache_flush_page) __P((paddr_t, int));
+	void (*pcache_flush_line) __P((int, int));
 	void (*pure_vcache_flush) __P((void));
 	void (*cache_flush_all)__P((void));
 	void (*memerr) __P((unsigned, u_int, u_int, struct trapframe *));
@@ -183,7 +183,7 @@ struct cpu_softc {
 	void	(*vcache_flush_segment)__P((int, int));
 	void	(*vcache_flush_region)__P((int));
 	void	(*vcache_flush_context)__P((void));
-	void	(*pcache_flush_page)__P((paddr_t, int));
+	void	(*pcache_flush_line)__P((int, int));
 	void	(*pure_vcache_flush) __P((void));
 	void	(*cache_flush_all)__P((void));
 
@@ -283,6 +283,7 @@ struct cpu_softc {
  */
 void getcpuinfo __P((struct cpu_softc *sc, int node));
 void mmu_install_tables __P((struct cpu_softc *));
+void pmap_alloc_cpu __P((struct cpu_softc *));
 
 #define cpuinfo	(*(struct cpu_softc *)CPUINFO_VA)
 #endif	/* _SPARC_CPUVAR_H */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.47 2001/12/10 04:45:32 art Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.48 2001/12/19 08:58:07 art Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -94,11 +94,6 @@ struct inode_vtbl ffs_vtbl = {
 	ffs_inode_free,
 	ffs_balloc,
 	ffs_bufatoff
-};
-
-struct genfs_ops ffs_genfsops = {
-	ffs_gop_size,
-	ffs_gop_alloc,
 };
 
 extern u_long nextgennumber;
@@ -742,14 +737,11 @@ ffs_mountfs(devvp, mp, p)
 	else
 		mp->mnt_stat.f_fsid.val[1] = mp->mnt_vfc->vfc_typenum;
 	mp->mnt_maxsymlinklen = fs->fs_maxsymlinklen;
-	mp->mnt_fs_bshift = fs->fs_bshift;
-	mp->mnt_dev_bshift = DEV_BSHIFT;
 	mp->mnt_flag |= MNT_LOCAL;
 	ump->um_mountp = mp;
 	ump->um_dev = dev;
 	ump->um_devvp = devvp;
 	ump->um_nindir = fs->fs_nindir;
-	ump->um_lognindir = ffs(fs->fs_nindir) - 1;
 	ump->um_bptrtodb = fs->fs_fsbtodb;
 	ump->um_seqinc = fs->fs_frag;
 	for (i = 0; i < MAXQUOTAS; i++)
@@ -1127,7 +1119,6 @@ retry:
 	ip->i_fs = fs = ump->um_fs;
 	ip->i_dev = dev;
 	ip->i_number = ino;
-	LIST_INIT(&ip->i_pcbufhd);
 	ip->i_vtbl = &ffs_vtbl;
 
 	/*
@@ -1187,8 +1178,6 @@ retry:
 	/*
 	 * Finish inode initialization now that aliasing has been resolved.
 	 */
-
-	genfs_node_init(vp, &ffs_genfsops);
 	ip->i_devvp = ump->um_devvp;
 	VREF(ip->i_devvp);
 	/*
@@ -1210,7 +1199,6 @@ retry:
 		ip->i_ffs_uid = ip->i_din.ffs_din.di_ouid;	/* XXX */
 		ip->i_ffs_gid = ip->i_din.ffs_din.di_ogid;	/* XXX */
 	}							/* XXX */
-	uvm_vnp_setsize(vp, ip->i_ffs_size);
 
 	*vpp = vp;
 	return (0);

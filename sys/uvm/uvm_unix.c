@@ -1,9 +1,9 @@
-/*	$OpenBSD: uvm_unix.c,v 1.19 2001/11/28 19:28:15 art Exp $	*/
-/*	$NetBSD: uvm_unix.c,v 1.24 2001/06/06 21:28:51 mrg Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.20 2001/12/19 08:58:07 art Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.18 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
- * Copyright (c) 1991, 1993 The Regents of the University of California.
+ * Copyright (c) 1991, 1993 The Regents of the University of California.  
  * Copyright (c) 1988 University of Utah.
  *
  * All rights reserved.
@@ -23,7 +23,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *      This product includes software developed by Charles D. Cranor,
- *	Washington University, the University of California, Berkeley and
+ *	Washington University, the University of California, Berkeley and 
  *	its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
@@ -77,39 +77,44 @@ sys_obreak(p, v, retval)
 	} */ *uap = v;
 	struct vmspace *vm = p->p_vmspace;
 	vaddr_t new, old;
-	int error;
+	ssize_t diff;
+	int rv;
 
 	old = (vaddr_t)vm->vm_daddr;
 	new = round_page((vaddr_t)SCARG(uap, nsize));
-	if ((new - old) > p->p_rlimit[RLIMIT_DATA].rlim_cur && new > old)
+	if ((new - old) > p->p_rlimit[RLIMIT_DATA].rlim_cur)
 		return (ENOMEM);
 
 	old = round_page(old + ptoa(vm->vm_dsize));
+	diff = new - old;
 
-	if (new == old)
+	if (diff == 0)
 		return (0);
 
 	/*
 	 * grow or shrink?
 	 */
-	if (new > old) {
-		error = uvm_map(&vm->vm_map, &old, new - old, NULL,
-		    UVM_UNKNOWN_OFFSET, 0,
-		    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
+	if (diff > 0) {
+		rv = uvm_map(&vm->vm_map, &old, diff, NULL, UVM_UNKNOWN_OFFSET,
+		    0, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
 		    UVM_ADV_NORMAL, UVM_FLAG_AMAPPAD|UVM_FLAG_FIXED|
 		    UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW));
-		if (error) {
-			uprintf("sbrk: grow %ld failed, error = %d\n",
-				new - old, error);
-			return error;
+		if (rv == KERN_SUCCESS) {
+			vm->vm_dsize += atop(diff);
+			return (0);
 		}
-		vm->vm_dsize += atop(new - old);
 	} else {
-		uvm_deallocate(&vm->vm_map, new, old - new);
-		vm->vm_dsize -= atop(old - new);
+		rv = uvm_deallocate(&vm->vm_map, new, -diff);
+		if (rv == KERN_SUCCESS) {
+			vm->vm_dsize -= atop(-diff);
+			return (0);
+		}
 	}
 
-	return (0);
+	uprintf("sbrk: %s %ld failed, return = %d\n",
+	    diff > 0 ? "grow" : "shrink",
+	    (long)(diff > 0 ? diff : -diff), rv);
+	return (ENOMEM);
 }
 
 /*
@@ -190,8 +195,8 @@ uvm_coredump(p, vp, cred, chdr)
 	struct core *chdr;
 {
 	struct vmspace *vm = p->p_vmspace;
-	struct vm_map *map = &vm->vm_map;
-	struct vm_map_entry *entry;
+	vm_map_t map = &vm->vm_map;
+	vm_map_entry_t entry;
 	vaddr_t start, end, maxstack;
 	struct coreseg cseg;
 	off_t offset;

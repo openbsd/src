@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.21 2001/11/27 05:27:12 art Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.22 2001/12/19 08:58:06 art Exp $  */
 
 /*
  *  Portions of this code are:
@@ -176,12 +176,15 @@ sched_sync(p)
 			VOP_UNLOCK(vp, 0, p);
 			s = splbio();
 			if (LIST_FIRST(slp) == vp) {
-#ifdef DIAGNOSTIC
-				if (!(vp->v_bioflag & VBIOONSYNCLIST)) {
-					vprint("vnode", vp);
-					panic("sched_fsync: on synclist, but no flag");
-				}
-#endif
+				/*
+				 * Note: disk vps can remain on the
+				 * worklist too with no dirty blocks, but
+				 * since sync_fsync() moves it to a different
+				 * slot we are safe.
+				 */
+				if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL &&
+				    vp->v_type != VBLK)
+					panic("sched_sync: fsync failed");
 				/*
 				 * Put us back on the worklist.  The worklist
 				 * routine will remove us from our current
