@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.14 1999/08/09 21:41:51 deraadt Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.15 1999/08/17 12:31:22 millert Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -741,6 +741,7 @@ m_split(m0, len0, wait)
 			return (0);
 		n->m_pkthdr.rcvif = m0->m_pkthdr.rcvif;
 		n->m_pkthdr.len = m0->m_pkthdr.len - len0;
+		olen = m0->m_pkthdr.len;
 		m0->m_pkthdr.len = len0;
 		if (m->m_flags & M_EXT)
 			goto extpacket;
