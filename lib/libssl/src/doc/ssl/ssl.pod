@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-SSL - OpenSSL SSL/TLS library
+ssl - OpenSSL SSL/TLS library
 
 =head1 SYNOPSIS
 
