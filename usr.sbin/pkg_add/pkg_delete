@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.58 2004/10/18 10:51:03 espie Exp $
+# $OpenBSD: pkg_delete,v 1.59 2004/10/18 12:03:19 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -27,6 +27,7 @@ use OpenBSD::Logger;
 use OpenBSD::Vstat;
 use OpenBSD::PackageInfo;
 use OpenBSD::Error;
+use OpenBSD::ProgressMeter;
 
 our %forced = ();
 
@@ -471,7 +472,7 @@ sub delete
 
 package main;
 
-our ($opt_v, $opt_D, $opt_d, $opt_n, $opt_f, $opt_q, $opt_p, $opt_c, $opt_L, $opt_B, $opt_I);
+our ($opt_v, $opt_D, $opt_d, $opt_n, $opt_f, $opt_q, $opt_p, $opt_c, $opt_L, $opt_B, $opt_I, $opt_x);
 
 $opt_v = 0;
 sub remove_packing_info
@@ -506,9 +507,11 @@ sub validate_plist($$)
 	my ($plist, $destdir) = @_;
 
 	my $problems = 0;
+	my $totsize = 0;
 	for my $item (@{$plist->{items}}) {
 		next unless $item->IsFile();
 		my $fname = $destdir.$item->fullname();
+		$totsize += $item->{size} if defined $item->{size};
 		my $s = OpenBSD::Vstat::remove($fname, $item->{size});
 		next unless defined $s;
 		if ($s->{ro}) {
@@ -517,6 +520,7 @@ sub validate_plist($$)
 		}
 	}
 	Fatal "fatal issues" if $problems;
+	return $totsize;
 }
 
 sub delete_package
@@ -534,7 +538,7 @@ sub delete_package
 		Fatal "Package $pkgname real name does not match";
 	}
 
-	validate_plist($plist, $state->{destdir});
+	my $totsize = validate_plist($plist, $state->{destdir});
 
 	$ENV{'PKG_PREFIX'} = $plist->pkgbase();
 	if ($plist->has(REQUIRE)) {
@@ -545,10 +549,16 @@ sub delete_package
 	} 
 	$plist->visit('register_manpage', $state);
 	manpages_unindex($state);
+	my $donesize = 0;
 	for my $item (@{$plist->{groups}}, @{$plist->{users}}, @{$plist->{items}}) {
 		$item->delete($state);
+		if (defined $item->{size}) {
+                        $donesize += $item->{size};
+                        OpenBSD::ProgressMeter::show($donesize, $totsize);
+                }
 	}
 
+	OpenBSD::ProgressMeter::next();
 	if ($plist->has(UNDISPLAY)) {
 		$plist->get(UNDISPLAY)->prepare($state);
 	}
@@ -569,7 +579,7 @@ sub delete_package
 	remove_packing_info($dir) unless $opt_n;
 }
 
-getopts('vcDdnf:qpS:L:B:I',
+getopts('vcxDdnf:qpS:L:B:I',
 	{'v' => sub {++$opt_v;} });
 if ($opt_D) {
 	$opt_I = 1;
@@ -590,6 +600,9 @@ if (defined $opt_d) {
 	Fatal "Option d is obsolete";
 }
 
+if ($opt_x) {
+	OpenBSD::ProgressMeter::enable();
+}
 if ($opt_f) {
 	%forced = map {($_, 1)} split(/,/, $opt_f);
 }
@@ -702,8 +715,10 @@ eval {
 		}
 		my $deps = OpenBSD::RequiredBy->new($pkgname)->list();
 		next if @$deps > 0;
-		print $opt_n ? "Pretending to delete " : "Deleting ", 
-		    "$pkgname\n";
+		if (!OpenBSD::ProgressMeter::set_header($pkgname)) {
+			print $opt_n ? "Pretending to delete " : "Deleting ", 
+			    "$pkgname\n";
+		}
 		$state->{pkgname_tolog} = $pkgname;
 		delete_package($pkgname, $state);
 		delete_installed($pkgname);
@@ -732,5 +747,5 @@ if (defined $logname) {
 	print "Problems logged as $logname\n";
 }
 if ($dielater) {
-	die $@;
+	die $dielater;
 }

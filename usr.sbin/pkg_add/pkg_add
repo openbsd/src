@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.81 2004/10/18 11:12:21 espie Exp $
+# $OpenBSD: pkg_add,v 1.82 2004/10/18 12:03:19 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -29,6 +29,7 @@ use OpenBSD::PkgSpec;
 use OpenBSD::Vstat;
 use OpenBSD::Getopt;
 use OpenBSD::Error;
+use OpenBSD::ProgressMeter;
 use File::Copy;
 
 our %forced = ();
@@ -395,9 +396,9 @@ sub fill_conflict_lists
 
 my $errors = 0;
 
-our ($opt_a, $opt_v, $opt_n, $opt_I, $opt_f, $opt_L, $opt_B, $opt_A, $opt_P, $opt_Q);
+our ($opt_a, $opt_v, $opt_n, $opt_I, $opt_f, $opt_L, $opt_B, $opt_A, $opt_P, $opt_Q, $opt_x);
 $opt_v = 0;
-getopts('avnIL:f:B:A:P:Q:',
+getopts('avnxIL:f:B:A:P:Q:',
 	{'v' => sub {++$opt_v;} });
 if ($opt_f) {
 	%forced = map {($_, 1)} split(/,/, $opt_f);
@@ -412,6 +413,9 @@ if ($opt_P) {
 	else {
 	    Fatal "bad option: -P $opt_P";
 	}
+}
+if ($opt_x) {
+	OpenBSD::ProgressMeter::enable();
 }
 
 $opt_L = '/usr/local' unless defined $opt_L;
@@ -715,6 +719,7 @@ sub validate_plist($$)
 
 	my $problems = 0;
 	my $pkgname = $plist->pkgname();
+	my $totsize = 0;
 
 	my $extra = $plist->{extrainfo};
 	if ($cdrom_only && ((!defined $extra) || $extra->{cdrom} ne 'yes')) {
@@ -735,6 +740,7 @@ sub validate_plist($$)
 			push(@$colliding, $fname);
 			$problems++;
 		}
+		$totsize += $item->{size} if defined $item->{size};
 		my $s = OpenBSD::Vstat::add($fname, $item->{size});
 		next unless defined $s;
 		if ($s->{ro}) {
@@ -750,6 +756,7 @@ sub validate_plist($$)
 		collision_report($colliding);
 	}
 	Fatal "fatal issues" if $problems;
+	return $totsize;
 }
 
 sub do_script
@@ -788,16 +795,20 @@ sub really_add($$)
 	$state->{dir} = $dir;
 	$state->{pkgname} = $pkgname;
 
+	my $header = $pkgname;
+
 	if (defined $state->{deptree}->{$pkgname}) {
-	    print $state->{deptree}->{$pkgname},":";
+	    $header = $state->{deptree}->{$pkgname}.":".$header;
 	}
-	print $state->{not} ? "Pretending to add " : "Adding ";
-	print $pkgname;
-	if ($state->{do_faked}) {
-		print " under ", $state->{destdir};
+	if (!OpenBSD::ProgressMeter::set_header($header)) {
+	    print $state->{not} ? "Pretending to add " : "Adding ";
+	    print $header;
+	    if ($state->{do_faked}) {
+		    print " under ", $state->{destdir};
+	    }
+	    print "\n";
 	}
-	print "\n";
-	validate_plist($plist, $destdir) unless $state->{do_faked};
+	my $totsize = validate_plist($plist, $destdir);
 
 	if (!defined $handle) {
 		Fatal "Archive in $pkgname broken";
@@ -815,6 +826,7 @@ sub really_add($$)
 	do_script($plist, INSTALL, $state, "PRE-INSTALL");
 
 	$plist->{done} = [];
+	my $donesize = 0;
 	$state->{end_faked} = 0;
 	for my $item (@{$plist->{groups}}, @{$plist->{users}}, @{$plist->{items}}) {
 		eval { $item->install($state); };
@@ -824,6 +836,11 @@ sub really_add($$)
 			last;
 		}
 		push(@{$plist->{done}}, $item);
+		if (defined $item->{size}) {
+                        $donesize += $item->{size};
+                        OpenBSD::ProgressMeter::show($donesize, $totsize);
+                }
+
 		last if $interrupted;
 		# stop faked installation there...
 		if ($state->{do_faked} && $state->{end_faked}) {
@@ -832,6 +849,7 @@ sub really_add($$)
 	}
 
 	$handle->close();
+	OpenBSD::ProgressMeter::next();
 
 	if (!$interrupted) {
 		eval { do_script($plist, INSTALL, $state, "POST-INSTALL") };
