@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.188 1999/10/26 04:15:39 downsj Exp 
+ *	OpenBSD: pcidevs,v 1.189 1999/10/26 23:34:37 chris Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -2011,6 +2011,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "LAN Media Corp",
 	    "SSI",
+	},
+	{
+	    PCI_VENDOR_LMC, PCI_PRODUCT_LMC_DS1,
+	    0,
+	    "LAN Media Corp",
+	    "DS1",
 	},
 	{
 	    PCI_VENDOR_LEADTEK, PCI_PRODUCT_LEADTEK_S3_805,

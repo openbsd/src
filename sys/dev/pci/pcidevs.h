@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.188 1999/10/26 04:15:39 downsj Exp 
+ *	OpenBSD: pcidevs,v 1.189 1999/10/26 23:34:37 chris Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1011,6 +1011,7 @@
 #define	PCI_PRODUCT_LMC_HSSI	0x0003		/* HSSI */
 #define	PCI_PRODUCT_LMC_DS3	0x0004		/* DS3 */
 #define	PCI_PRODUCT_LMC_SSI	0x0005		/* SSI */
+#define	PCI_PRODUCT_LMC_DS1	0x0006		/* DS1 */
 
 /* LeadTek Research */
 #define	PCI_PRODUCT_LEADTEK_S3_805	0x0000		/* S3 805 */
