@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.29 1998/09/17 00:49:15 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.30 1998/09/23 06:51:20 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -348,9 +348,16 @@ case "$resp" in
 
 		configurenetwork
 
-		resp="none"
-		if [ -f /tmp/mygate ]; then
-			resp=`cat /tmp/mygate`
+		resp=`route -n show |
+		    grep '^default' |
+		    sed -e 's/^default          //' -e 's/ .*//'`
+		if [ "X${resp}" = "X" ]; then
+			if [ -f /tmp/mygate ]; then
+				resp=`cat /etc/mygate`
+				if [ "X${resp}" = "X" ]; then
+					resp="none";
+				fi
+			fi
 		fi
 		echo -n "Enter IP address of default route: [$resp] "
 		getresp "$resp"
