@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.h,v 1.48 2003/07/24 09:59:02 itojun Exp $ */
+/* $OpenBSD: pfkeyv2.h,v 1.49 2003/12/02 23:16:29 markus Exp $ */
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) January 1998
  * 
@@ -205,6 +205,13 @@ struct sadb_x_cred {
 	uint16_t sadb_x_cred_reserved;
 };
 
+struct sadb_x_udpencap {
+	uint16_t sadb_x_udpencap_len;
+	uint16_t sadb_x_udpencap_exttype;
+	uint16_t sadb_x_udpencap_port;
+	uint16_t sadb_x_udpencap_reserved;
+};
+
 #ifdef _KERNEL
 #define SADB_X_GETSPROTO(x) \
 	( (x) == SADB_SATYPE_AH ? IPPROTO_AH :\
@@ -243,7 +250,8 @@ struct sadb_x_cred {
 #define SADB_X_EXT_LOCAL_AUTH         28
 #define SADB_X_EXT_REMOTE_AUTH        29
 #define SADB_X_EXT_SUPPORTED_COMP     30
-#define SADB_EXT_MAX                  30
+#define SADB_X_EXT_UDPENCAP           31
+#define SADB_EXT_MAX                  31
 
 /* Fix pfkeyv2.c struct pfkeyv2_socket if SATYPE_MAX > 31 */
 #define SADB_SATYPE_UNSPEC		 0
@@ -304,6 +312,7 @@ struct sadb_x_cred {
 #define SADB_X_SAFLAGS_CHAINDEL  	0x008    /* Delete whole SA chain */
 #define SADB_X_SAFLAGS_RANDOMPADDING    0x080    /* Random ESP padding */
 #define SADB_X_SAFLAGS_NOREPLAY         0x100    /* No replay counter */
+#define SADB_X_SAFLAGS_UDPENCAP         0x200    /* ESP in UDP  */
 
 #define SADB_X_POLICYFLAGS_POLICY       0x0001	/* This is a static policy */
 
@@ -421,6 +430,7 @@ void export_credentials(void **, struct tdb *, int);
 void export_sa(void **, struct tdb *);
 void export_key(void **, struct tdb *, int);
 void export_auth(void **, struct tdb *, int);
+void export_udpencap(void **, struct tdb *);
 
 void import_auth(struct tdb *, struct sadb_x_cred *, int);
 void import_address(struct sockaddr *, struct sadb_address *);
@@ -432,5 +442,6 @@ void import_sa(struct tdb *, struct sadb_sa *, struct ipsecinit *);
 void import_flow(struct sockaddr_encap *, struct sockaddr_encap *,
     struct sadb_address *, struct sadb_address *, struct sadb_address *,
     struct sadb_address *, struct sadb_protocol *, struct sadb_protocol *);
+void import_udpencap(struct tdb *, struct sadb_x_udpencap *);
 #endif /* _KERNEL */
 #endif /* _NET_PFKEY_V2_H_ */

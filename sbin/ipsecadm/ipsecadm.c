@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.70 2003/09/23 18:09:20 itojun Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.71 2003/12/02 23:16:29 markus Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -286,6 +286,7 @@ usage(void)
 	    "\t  -src <ip>\t\t\tsource address to be used\n"
 	    "\t  -halfiv\t\t\tuse 4-byte IV in old ESP\n"
 	    "\t  -forcetunnel\t\t\tforce IP-in-IP encapsulation\n"
+	    "\t  -udpencap <port>\t\tenable ESP-in-UDP encapsulation\n"
 	    "\t  -dst <ip>\t\t\tdestination address to be used\n"
 	    "\t  -proto <val>\t\t\tsecurity protocol\n"
 	    "\t  -proxy <ip>\t\t\tproxy address to be used\n"
@@ -309,7 +310,7 @@ usage(void)
 	    "\t  -dontacq\t\t\trequire, without using key mgmt.\n"
 	    "\t  -in\t\t\t\tspecify incoming-packet policy\n"
 	    "\t  -out\t\t\t\tspecify outgoing-packet policy\n"
-	    "\t  -[ah|esp|ip4|ipcomp]\t\t\tflush a particular protocol\n"
+	    "\t  -[ah|esp|ip4|ipcomp]\t\tflush a particular protocol\n"
 	    "\t  -srcid\t\t\tsource identity for flows\n"
 	    "\t  -dstid\t\t\tdestination identity for flows\n"
 	    "\t  -srcid_type\t\t\tsource identity type\n"
@@ -345,6 +346,7 @@ main(int argc, char *argv[])
 	struct sadb_ident sid1, sid2;
 	struct sadb_key skey1, skey2;
 	struct sadb_protocol sprotocol, sprotocol2;
+	struct sadb_x_udpencap udpencap;	/* Peer UDP Port */
 	u_char realkey[8192], realakey[8192];
 	struct iovec iov[30];
 	struct addrinfo hints, *res;
@@ -375,6 +377,7 @@ main(int argc, char *argv[])
 	memset(realakey, 0, sizeof(realakey));
 	memset(&sid1, 0, sizeof(sid1));
 	memset(&sid2, 0, sizeof(sid2));
+	memset(&udpencap, 0, sizeof(udpencap));
 
 	src = (union sockaddr_union *) srcbuf;
 	dst = (union sockaddr_union *) dstbuf;
@@ -919,6 +922,24 @@ main(int argc, char *argv[])
 		}
 		if (!strcmp(argv[i] + 1, "forcetunnel") && isencauth(mode)) {
 			sa.sadb_sa_flags |= SADB_X_SAFLAGS_TUNNEL;
+			continue;
+		}
+		if (!strcmp(argv[i] + 1, "udpencap") &&
+		    udpencap.sadb_x_udpencap_port == 0 && (i + 1 < argc)) {
+			if (!(mode & ESP_NEW)) {
+				fprintf(stderr, "%s: option udpencap can "
+				    "be used only with new ESP\n", argv[0]);
+				exit(1);
+			}
+			sa.sadb_sa_flags |= SADB_X_SAFLAGS_UDPENCAP;
+			udpencap.sadb_x_udpencap_exttype = SADB_X_EXT_UDPENCAP;
+			udpencap.sadb_x_udpencap_len = sizeof(udpencap) / 8;
+			udpencap.sadb_x_udpencap_port =
+			    strtoul(argv[i + 1], NULL, 10);
+			udpencap.sadb_x_udpencap_port =
+			    htons(udpencap.sadb_x_udpencap_port);
+			udpencap.sadb_x_udpencap_reserved = 0;
+			i++;
 			continue;
 		}
 		if (!strcmp(argv[i] + 1, "halfiv")) {
@@ -1519,6 +1540,11 @@ argfail:
 			skey2.sadb_key_len = (sizeof(skey2) + ((alen + 7) / 8) * 8) / 8;
 			skey2.sadb_key_bits = 8 * alen;
 			smsg.sadb_msg_len += skey2.sadb_key_len;
+		}
+		if (sa.sadb_sa_flags & SADB_X_SAFLAGS_UDPENCAP) {
+			iov[cnt].iov_base = &udpencap;
+			iov[cnt++].iov_len = sizeof(udpencap);
+			smsg.sadb_msg_len += udpencap.sadb_x_udpencap_len;
 		}
 	} else {
 		switch (mode & CMD_MASK) {

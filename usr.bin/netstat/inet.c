@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.73 2003/11/07 23:38:48 mcbride Exp $	*/
+/*	$OpenBSD: inet.c,v 1.74 2003/12/02 23:16:29 markus Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.73 2003/11/07 23:38:48 mcbride Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.74 2003/12/02 23:16:29 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -817,6 +817,9 @@ esp_stats(u_long off, char *name)
 	p(esps_invalid, "\t%u packet%s attempted to use an invalid TDB\n");
 	p(esps_toobig, "\t%u packet%s got larger than max IP packet size\n");
 	p(esps_crypto, "\t%u packet%s that failed crypto processing\n");
+	p(esps_udpencin, "\t%u input UDP encapsulated ESP packet%s\n");
+	p(esps_udpencout, "\t%u output UDP encapsulated ESP packet%s\n");
+	p(esps_udpinval, "\t%u UDP packet%s for non-encapsulating TDB received\n");
 	p(esps_ibytes, "\t%qu input byte%s\n");
 	p(esps_obytes, "\t%qu output byte%s\n");
 

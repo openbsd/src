@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.27 2003/07/09 22:03:16 itojun Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.28 2003/12/02 23:16:29 markus Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -44,6 +44,7 @@
 #include <netinet6/in6_var.h>
 #endif /* INET6 */
 
+#include <netinet/udp.h>
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_ah.h>
 #include <netinet/ip_esp.h>
@@ -55,6 +56,9 @@
 #else
 #define DPRINTF(x)
 #endif
+
+int	udpencap_enable = 0;	/* disabled by default */
+int	udpencap_port = 4500;	/* triggers decapsulation */
 
 /*
  * Loop over a tdb chain, taking into consideration protocol tunneling. The
@@ -336,12 +340,35 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 
 	tdb->tdb_last_used = time.tv_sec;
 
+	if (udpencap_enable && udpencap_port &&
+	    (tdb->tdb_flags & TDBF_UDPENCAP) != 0) {
+		struct mbuf *mi;
+		struct udphdr *uh;
+
+		mi = m_inject(m, sizeof(struct ip), sizeof(struct udphdr),
+		    M_DONTWAIT);
+		if (mi == NULL) {
+			m_freem(m);
+			return ENOMEM;
+		}
+		uh = mtod(mi, struct udphdr *);
+		uh->uh_sport = uh->uh_dport = htons(udpencap_port);
+		if (tdb->tdb_udpencap_port)
+			uh->uh_dport = tdb->tdb_udpencap_port;
+
+		uh->uh_ulen = htons(m->m_pkthdr.len - sizeof(struct ip));
+		uh->uh_sum = 0;
+		espstat.esps_udpencout++;
+	}
+
 	switch (tdb->tdb_dst.sa.sa_family) {
 #ifdef INET
 	case AF_INET:
 		/* Fix the header length, for AH processing. */
 		ip = mtod(m, struct ip *);
 		ip->ip_len = htons(m->m_pkthdr.len);
+		if ((tdb->tdb_flags & TDBF_UDPENCAP) != 0)
+			ip->ip_p = IPPROTO_UDP;
 		break;
 #endif /* INET */
 
@@ -359,6 +386,8 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 		}
 		ip6 = mtod(m, struct ip6_hdr *);
 		ip6->ip6_plen = htons(m->m_pkthdr.len - sizeof(*ip6));
+		if ((tdb->tdb_flags & TDBF_UDPENCAP) != 0)
+			ip6->ip6_nxt = IPPROTO_UDP;
 		break;
 #endif /* INET6 */
 

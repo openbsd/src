@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.123 2003/07/24 08:03:20 itojun Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.124 2003/12/02 23:16:29 markus Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -300,6 +300,7 @@ struct tdb {				/* tunnel descriptor block */
 #define	TDBF_RANDOMPADDING	0x04000	/* Random data in the ESP padding */
 #define	TDBF_SKIPCRYPTO		0x08000	/* Skip actual crypto processing */
 #define	TDBF_USEDTUNNEL		0x10000	/* Appended a tunnel header in past */
+#define	TDBF_UDPENCAP		0x20000	/* UDP encapsulation */
 
 	u_int32_t	tdb_flags;	/* Flags related to this TDB */
 
@@ -362,6 +363,8 @@ struct tdb {				/* tunnel descriptor block */
 
 	u_int32_t	tdb_mtu;	/* MTU at this point in the chain */
 	u_int64_t	tdb_mtutimeout;	/* When to ignore this entry */
+
+	u_int16_t	tdb_udpencap_port;	/* Peer UDP port */
 
 	struct sockaddr_encap   tdb_filter; /* What traffic is acceptable */
 	struct sockaddr_encap   tdb_filtermask; /* And the mask */
@@ -646,6 +649,7 @@ extern struct tdb *ipsp_spd_lookup(struct mbuf *, int, int, int *, int,
     struct tdb *, struct inpcb *);
 extern struct tdb *ipsp_spd_inp(struct mbuf *, int, int, int *, int,
     struct tdb *, struct inpcb *, struct ipsec_policy *);
+extern int ipsec_common_input(struct mbuf *, int, int, int, int, int);
 extern int ipsec_common_input_cb(struct mbuf *, struct tdb *, int, int,
     struct m_tag *);
 extern int ipsp_acquire_sa(struct ipsec_policy *, union sockaddr_union *,

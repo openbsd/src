@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.17 2003/07/24 09:59:02 itojun Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.18 2003/12/02 23:16:29 markus Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -135,6 +135,9 @@ import_sa(struct tdb *tdb, struct sadb_sa *sadb_sa, struct ipsecinit *ii)
 
 		if (sadb_sa->sadb_sa_flags & SADB_X_SAFLAGS_NOREPLAY)
 			tdb->tdb_flags |= TDBF_NOREPLAY;
+
+		if (sadb_sa->sadb_sa_flags & SADB_X_SAFLAGS_UDPENCAP)
+			tdb->tdb_flags |= TDBF_UDPENCAP;
 	}
 
 	if (sadb_sa->sadb_sa_state != SADB_SASTATE_MATURE)
@@ -793,4 +796,24 @@ export_key(void **p, struct tdb *tdb, int type)
 		bcopy(tdb->tdb_amxkey, *p, tdb->tdb_amxkeylen);
 		*p += PADUP(tdb->tdb_amxkeylen);
 	}
+}
+
+/* Import/Export remote port for UDP Encapsulation */
+void
+import_udpencap(struct tdb *tdb, struct sadb_x_udpencap *sadb_udpencap)
+{
+	if (sadb_udpencap)
+		tdb->tdb_udpencap_port = sadb_udpencap->sadb_x_udpencap_port;
+}
+
+void
+export_udpencap(void **p, struct tdb *tdb)
+{
+	struct sadb_x_udpencap *sadb_udpencap = (struct sadb_x_udpencap *) *p;
+
+	sadb_udpencap->sadb_x_udpencap_port = tdb->tdb_udpencap_port;
+	sadb_udpencap->sadb_x_udpencap_reserved = 0;
+	sadb_udpencap->sadb_x_udpencap_len =
+	    sizeof(struct sadb_x_udpencap) / sizeof(uint64_t);
+	*p += sizeof(struct sadb_x_udpencap);
 }

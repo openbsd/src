@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.109 2003/10/17 21:04:57 mcbride Exp $
+.\"	$OpenBSD: sysctl.8,v 1.110 2003/12/02 23:16:29 markus Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -240,6 +240,8 @@ privilege can change the value.
 .It net.inet.gre.allow	integer	yes
 .It net.inet.gre.wccp	integer	yes
 .It net.inet.esp.enable	integer	yes
+.It net.inet.esp.udpencap	integer	yes
+.It net.inet.esp.udpencap_port	integer	yes
 .It net.inet.ah.enable	integer	yes
 .It net.inet.mobileip.allow	integer	yes
 .It net.inet.etherip.allow	integer	yes

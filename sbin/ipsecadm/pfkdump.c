@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.8 2003/07/29 18:38:36 deraadt Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.9 2003/12/02 23:16:29 markus Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -52,6 +52,7 @@ void	print_ident(struct sadb_ext *, struct sadb_msg *);
 void	print_policy(struct sadb_ext *, struct sadb_msg *);
 void	print_cred(struct sadb_ext *, struct sadb_msg *);
 void	print_auth(struct sadb_ext *, struct sadb_msg *);
+void	print_udpenc(struct sadb_ext *, struct sadb_msg *);
 
 struct idname *lookup(struct idname [], u_int8_t);
 char	*lookup_name(struct idname [], u_int8_t);
@@ -104,6 +105,7 @@ struct idname ext_types[] = {
 	{ SADB_X_EXT_LOCAL_AUTH,	"x_local_auth",		print_auth },
 	{ SADB_X_EXT_REMOTE_AUTH,	"x_remote_auth",	print_auth },
 	{ SADB_X_EXT_SUPPORTED_COMP,	"x_supported_comp",	print_supp },
+	{ SADB_X_EXT_UDPENCAP,		"x_udpencap",		print_udpenc },
 	{ 0,				NULL,			NULL }
 };
 
@@ -530,6 +532,14 @@ print_auth(struct sadb_ext *ext, struct sadb_msg *msg)
 
 	printf("type %s\n",
 	    lookup_name(xauth_types, x_cred->sadb_x_cred_type));
+}
+
+void
+print_udpenc(struct sadb_ext *ext, struct sadb_msg *msg)
+{
+	struct sadb_x_udpencap *x_udpencap = (struct sadb_x_udpencap *) ext;
+
+	printf("udpencap port %u\n", ntohs(x_udpencap->sadb_x_udpencap_port));
 }
 
 void

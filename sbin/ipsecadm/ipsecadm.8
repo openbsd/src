@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.62 2003/07/24 08:03:19 itojun Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.63 2003/12/02 23:16:29 markus Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -90,6 +90,7 @@ modifiers are:
 .Fl authkey ,
 .Fl authkeyfile ,
 .Fl forcetunnel ,
+.Fl udpencap ,
 .Fl key ,
 and
 .Fl keyfile .
@@ -382,6 +383,10 @@ and
 options.
 Notice that the IPsec stack will perform IP-inside-IP encapsulation
 when deemed necessary, even if this flag has not been set.
+.It Fl udpencap
+Enable ESP-inside-UDP encapsulation.
+The UDP destination port must be specified on the command line.
+This port will be used for sending encapsulated UDP packets.
 .It Fl enc
 The encryption algorithm to be used with the SA.
 Possible values are:

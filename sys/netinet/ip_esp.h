@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.h,v 1.38 2003/02/12 14:41:07 jason Exp $	*/
+/*	$OpenBSD: ip_esp.h,v 1.39 2003/12/02 23:16:28 markus Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -61,21 +61,30 @@ struct espstat
     u_int32_t	esps_toobig;	/* Packet got larger than IP_MAXPACKET */
     u_int32_t	esps_pdrops;	/* Packet blocked due to policy */
     u_int32_t	esps_crypto;	/* Crypto processing failure */
+    u_int32_t	esps_udpencin;  /* Input ESP-in-UDP packets */
+    u_int32_t	esps_udpencout; /* Output ESP-in-UDP packets */
+    u_int32_t	esps_udpinval;  /* Invalid input ESP-in-UDP packets */
 };
 
 /*
  * Names for ESP sysctl objects
  */
-#define	ESPCTL_ENABLE	1		/* Enable ESP processing */
-#define ESPCTL_MAXID	2
+#define	ESPCTL_ENABLE		1	/* Enable ESP processing */
+#define	ESPCTL_UDPENCAP_ENABLE	2	/* Enable ESP over UDP */
+#define	ESPCTL_UDPENCAP_PORT	3	/* UDP port for encapsulation */
+#define ESPCTL_MAXID		4
 
 #define ESPCTL_NAMES { \
 	{ 0, 0 }, \
 	{ "enable", CTLTYPE_INT }, \
+	{ "udpencap", CTLTYPE_INT }, \
+	{ "udpencap_port", CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL
 extern int esp_enable;
+extern int udpencap_enable;
+extern int udpencap_port;
 extern struct espstat espstat;
 #endif /* _KERNEL */
 #endif /* _NETINET_IP_ESP_H_ */

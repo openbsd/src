@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.92 2003/11/04 21:43:16 markus Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.93 2003/12/02 23:16:29 markus Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -88,6 +88,11 @@
 #include <netinet/ip_icmp.h>
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
+
+#ifdef IPSEC
+#include <netinet/ip_ipsp.h>
+#include <netinet/ip_esp.h>
+#endif
 
 #ifdef INET6
 #ifndef INET
@@ -298,6 +303,42 @@ udp_input(struct mbuf *m, ...)
 		}
 	} else
 		udpstat.udps_nosum++;
+
+#ifdef IPSEC
+	if (udpencap_enable && udpencap_port &&
+	    uh->uh_dport == htons(udpencap_port)) {
+		u_int32_t spi;
+		int skip = iphlen + sizeof(struct udphdr);
+
+		if (m->m_pkthdr.len - skip < sizeof(u_int32_t)) {
+			/* packet too short */
+			m_freem(m);
+			return;
+		}
+		m_copydata(m, skip, sizeof(u_int32_t), (caddr_t) &spi);
+		/*
+		 * decapsulate if the SPI is not zero, otherwise pass
+		 * to userland
+		 */
+		if (spi != 0) {
+			if ((m = m_pullup2(m, skip)) == NULL) {
+				udpstat.udps_hdrops++;
+				return;
+			}
+
+			/* remove the UDP header */
+			bcopy(mtod(m, u_char *),
+			    mtod(m, u_char *) + sizeof(struct udphdr), iphlen);
+			m_adj(m, sizeof(struct udphdr));
+			skip -= sizeof(struct udphdr);
+
+			espstat.esps_udpencin++;
+			ipsec_common_input(m, skip, offsetof(struct ip, ip_p),
+			    srcsa.sa.sa_family, IPPROTO_ESP, 1);
+			return;
+		}
+	}
+#endif
 
 	switch (srcsa.sa.sa_family) {
 	case AF_INET:

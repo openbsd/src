@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.152 2003/05/09 14:59:19 deraadt Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.153 2003/12/02 23:16:28 markus Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -860,6 +860,7 @@ ipsp_print_tdb(struct tdb *tdb, char *buffer, size_t buflen)
 		{ "random padding", TDBF_RANDOMPADDING },
 		{ "skipcrypto", TDBF_SKIPCRYPTO },
 		{ "usedtunnel", TDBF_USEDTUNNEL },
+		{ "udpencap", TDBF_UDPENCAP },
 	};
 	int l, i, k;
 
@@ -945,6 +946,12 @@ ipsp_print_tdb(struct tdb *tdb, char *buffer, size_t buflen)
 	snprintf(buffer + l, buflen - l,
 	    "\tCrypto ID: %llu\n", tdb->tdb_cryptoid);
 	l += strlen(buffer + l);
+
+	if (tdb->tdb_udpencap_port) {
+		snprintf(buffer + l, buflen - l,
+		    "\tudpencap_port = <%u>\n", ntohs(tdb->tdb_udpencap_port));
+		l += strlen(buffer + l);
+	}
 
 	if (tdb->tdb_xform) {
 		snprintf(buffer + l, buflen - l,

@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.89 2003/07/24 09:59:02 itojun Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.90 2003/12/02 23:16:29 markus Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -542,6 +542,9 @@ pfkeyv2_get(struct tdb *sa, void **headers, void **buffer)
 	if (sa->tdb_emxkey)
 		i+= PADUP(sa->tdb_emxkeylen) + sizeof(struct sadb_key);
 
+	if (sa->tdb_udpencap_port)
+		i+= sizeof(struct sadb_x_udpencap);
+
 	if (!(p = malloc(i, M_PFKEY, M_DONTWAIT))) {
 		rval = ENOMEM;
 		goto ret;
@@ -628,6 +631,12 @@ pfkeyv2_get(struct tdb *sa, void **headers, void **buffer)
 	if (sa->tdb_emxkey) {
 		headers[SADB_EXT_KEY_ENCRYPT] = p;
 		export_key(&p, sa, PFKEYV2_ENCRYPTION_KEY);
+	}
+
+	/* Export UDP encapsulation port, if present */
+	if (sa->tdb_udpencap_port) {
+		headers[SADB_X_EXT_UDPENCAP] = p;
+		export_udpencap(&p, sa);
 	}
 
 	rval = 0;
@@ -895,6 +904,12 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			rval = EINVAL;
 			goto ret;
 		}
+		/* UDP encapsulation is only supported for ESP */
+		if (smsg->sadb_msg_satype != SADB_SATYPE_ESP &&
+		    headers[SADB_X_EXT_UDPENCAP]) {
+			rval = EINVAL;
+			goto ret;
+		}
 
 		s = spltdb();
 
@@ -965,6 +980,8 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			    headers[SADB_X_EXT_DST_MASK],
 			    headers[SADB_X_EXT_PROTOCOL],
 			    headers[SADB_X_EXT_FLOW_TYPE]);
+			import_udpencap(newsa,
+			    headers[SADB_X_EXT_UDPENCAP]);
 
 			headers[SADB_EXT_KEY_AUTH] = NULL;
 			headers[SADB_EXT_KEY_ENCRYPT] = NULL;
@@ -1010,6 +1027,8 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			    PFKEYV2_LIFETIME_SOFT);
 			import_lifetime(sa2, headers[SADB_EXT_LIFETIME_HARD],
 			    PFKEYV2_LIFETIME_HARD);
+			import_udpencap(sa2,
+			    headers[SADB_X_EXT_UDPENCAP]);
 		}
 
 		splx(s);
@@ -1032,6 +1051,12 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		    headers[SADB_X_EXT_DST_FLOW] &&
 		    headers[SADB_X_EXT_SRC_MASK] &&
 		    headers[SADB_X_EXT_DST_MASK])) {
+			rval = EINVAL;
+			goto ret;
+		}
+		/* UDP encapsulation is only supported for ESP */
+		if (smsg->sadb_msg_satype != SADB_SATYPE_ESP &&
+		    headers[SADB_X_EXT_UDPENCAP]) {
 			rval = EINVAL;
 			goto ret;
 		}
@@ -1111,6 +1136,8 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			    headers[SADB_X_EXT_DST_MASK],
 			    headers[SADB_X_EXT_PROTOCOL],
 			    headers[SADB_X_EXT_FLOW_TYPE]);
+			import_udpencap(newsa,
+			    headers[SADB_X_EXT_UDPENCAP]);
 
 			headers[SADB_EXT_KEY_AUTH] = NULL;
 			headers[SADB_EXT_KEY_ENCRYPT] = NULL;
