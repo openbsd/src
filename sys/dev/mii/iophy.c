@@ -1,4 +1,4 @@
-/*	$OpenBSD: iophy.c,v 1.1 1999/10/12 16:59:29 jason Exp $	*/
+/*	$OpenBSD: iophy.c,v 1.2 1999/10/12 17:08:56 deraadt Exp $	*/
 /*	$NetBSD: iophy.c,v 1.1 1999/09/05 00:40:27 soren Exp $	*/
 
 /*
@@ -159,13 +159,9 @@ iophyattach(parent, self, aux)
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
-	printf("%s: ", sc->mii_dev.dv_xname);
-	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
-		printf("no media present");
-	else
+	if (sc->mii_capabilities & BMSR_MEDIAMASK)
 		mii_add_media(mii, sc->mii_capabilities,
 		    sc->mii_inst);
-	printf("\n");
 #undef ADD
 }
 
