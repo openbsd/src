@@ -1,4 +1,4 @@
-/*	$OpenBSD: macrom.c,v 1.17 1997/11/30 06:36:42 gene Exp $	*/
+/*	$OpenBSD: macrom.c,v 1.18 1997/11/30 18:25:38 gene Exp $	*/
 /*	$NetBSD: macrom.c,v 1.31 1997/03/01 17:20:34 scottr Exp $	*/
 
 /*-
@@ -51,6 +51,7 @@
 #include <sys/queue.h>
 #include <sys/lock.h>
 
+#include <vm/vm.h>
 #include <vm/vm_prot.h>
 #include <vm/vm_param.h>
 #include <vm/pmap.h>
@@ -63,7 +64,7 @@
 
 #include <machine/frame.h>
 
-	/* trap modifiers (put it macrom.h) */
+/* trap modifiers (put it macrom.h) */
 #define TRAP_TOOLBOX(a)	((a) & 0x800)
 #define TRAP_PASSA0(a)	((a) & 0x100)
 #define TRAP_NUM(a)	(TRAP_TOOLBOX(a) ? (a) & 0x3ff : (a) & 0xff)
@@ -71,7 +72,7 @@
 #define TRAP_CLEAR(a)	((a) & 0x200)
 
 
-	/* Mac Rom Glue global variables */
+/* Mac Rom Glue global variables */
 /*
  * ADB Storage.  Is 512 bytes enough?  Too much?
  */
