@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.139 2003/09/28 21:01:43 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.140 2003/09/29 13:39:16 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -590,6 +590,10 @@ const struct pciide_product_desc pciide_serverworks_products[] =  {
 	  0,
 	  serverworks_chip_map,
 	},
+	{ PCI_PRODUCT_RCC_CSB6_IDE2,
+	  0,
+	  serverworks_chip_map,
+	}
 };
 
 const struct pciide_product_desc pciide_nvidia_products[] = {
@@ -5371,11 +5375,15 @@ serverworks_chip_map(sc, pa)
 	case PCI_PRODUCT_RCC_CSB6_IDE:
 		sc->sc_wdcdev.UDMA_cap = 5;
 		break;
+	case PCI_PRODUCT_RCC_CSB6_IDE2:
+		sc->sc_wdcdev.UDMA_cap = 4;
+		break;
 	}
 
 	sc->sc_wdcdev.set_modes = serverworks_setup_channel;
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
-	sc->sc_wdcdev.nchannels = 2;
+	sc->sc_wdcdev.nchannels =
+	    (sc->sc_pp->ide_product == PCI_PRODUCT_RCC_CSB6_IDE2 ? 1 : 2);
 
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
 		cp = &sc->pciide_channels[channel];
