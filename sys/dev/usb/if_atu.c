@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.24 2004/11/22 22:28:16 deraadt Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.25 2004/11/22 22:52:44 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1014,7 +1014,7 @@ atu_upload_internal_firmware(struct atu_softc *sc)
 	ptr = firm;
 	state = atu_get_dfu_state(sc);
 
-	while (bytes_left >= 0 && state > 0) {
+	while (block >= 0 && state > 0) {
 		switch (state) {
 		case DFUState_DnLoadSync:
 			/* get DFU status */
@@ -1052,7 +1052,7 @@ atu_upload_internal_firmware(struct atu_softc *sc)
 			ptr += block_size;
 			bytes_left -= block_size;
 			if (block_size == 0)
-				bytes_left = -1;
+				block = -1;
 			break;
 
 		default:
