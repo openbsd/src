@@ -1,5 +1,5 @@
 /*	$NetBSD: compare.c,v 1.11 1996/09/05 09:56:48 mycroft Exp $	*/
-/*	$OpenBSD: compare.c,v 1.17 2003/06/02 23:36:54 millert Exp $	*/
+/*	$OpenBSD: compare.c,v 1.18 2004/05/02 17:35:08 millert Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: compare.c,v 1.17 2003/06/02 23:36:54 millert Exp $";
+static const char rcsid[] = "$OpenBSD: compare.c,v 1.18 2004/05/02 17:35:08 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -251,7 +251,7 @@ typeerr:		LABEL;
 		}
 	}
 	if (s->flags & F_MD5) {
-		char *new_digest, buf[33];
+		char *new_digest, buf[MD5_DIGEST_STRING_LENGTH];
 
 		new_digest = MD5File(p->fts_accpath, buf);
 		if (!new_digest) {

@@ -1,5 +1,5 @@
 /*	$NetBSD: create.c,v 1.11 1996/09/05 09:24:19 mycroft Exp $	*/
-/*	$OpenBSD: create.c,v 1.20 2003/06/02 23:36:54 millert Exp $	*/
+/*	$OpenBSD: create.c,v 1.21 2004/05/02 17:35:08 millert Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: create.c,v 1.20 2003/06/02 23:36:54 millert Exp $";
+static const char rcsid[] = "$OpenBSD: create.c,v 1.21 2004/05/02 17:35:08 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -206,7 +206,7 @@ statf(indent, p)
 		output(indent, &offset, "cksum=%lu", val);
 	}
 	if (keys & F_MD5 && S_ISREG(p->fts_statp->st_mode)) {
-		char *md5digest, buf[33];
+		char *md5digest, buf[MD5_DIGEST_STRING_LENGTH];
 
 		md5digest = MD5File(p->fts_accpath,buf);
 		if (!md5digest)
