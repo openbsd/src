@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.28 2004/02/17 14:22:40 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.29 2004/02/26 14:00:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -147,8 +147,8 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 		return (asp2->flags.origin - asp1->flags.origin);
 
 	/* 5. MED decision, only comparable between the same neighboring AS */
-	if (aspath_neighbour(asp1->flags.aspath) ==
-	    aspath_neighbour(asp2->flags.aspath))
+	if (aspath_neighbor(asp1->flags.aspath) ==
+	    aspath_neighbor(asp2->flags.aspath))
 		/* the bigger, the better */
 		if ((asp1->flags.med - asp2->flags.med) != 0)
 			return (asp1->flags.med - asp2->flags.med);

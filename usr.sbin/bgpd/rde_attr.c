@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.14 2004/02/24 15:44:33 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.15 2004/02/26 14:00:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -18,6 +18,8 @@
 
 #include <sys/types.h>
 #include <sys/queue.h>
+
+#include <netinet/in.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -59,7 +61,8 @@ attr_init(struct attr_flags *a)
 }
 
 int
-attr_parse(u_char *p, u_int16_t len, struct attr_flags *a, int ebgp)
+attr_parse(u_char *p, u_int16_t len, struct attr_flags *a, int ebgp,
+    enum enforce_as enforce_as, u_int16_t remote_as)
 {
 	u_int32_t	 tmp32;
 	u_int16_t	 attr_len;
@@ -108,7 +111,10 @@ attr_parse(u_char *p, u_int16_t len, struct attr_flags *a, int ebgp)
 			return (-1);
 		WFLAG(a->wflags, F_ATTR_ASPATH);
 		a->aspath = aspath_create(p, attr_len);
-		/* XXX enforce remote-as == left most AS if not disabled */
+		if (enforce_as == ENFORCE_AS_ON &&
+		    remote_as != aspath_neighbor(a->aspath))
+			return (-1);
+
 		plen += attr_len;
 		break;
 	case ATTR_NEXTHOP:
@@ -118,7 +124,14 @@ attr_parse(u_char *p, u_int16_t len, struct attr_flags *a, int ebgp)
 			return (-1);
 		WFLAG(a->wflags, F_ATTR_NEXTHOP);
 		UPD_READ(&a->nexthop, p, plen, 4);	/* network byte order */
-		/* XXX check if the nexthop is a valid IP address */
+		/*
+		 * Check if the nexthop is a valid IP address. We consider
+		 * multicast, experimental and loopback addresses as invalid.
+		 */
+		tmp32 = ntohl(a->nexthop);
+		if (IN_MULTICAST(tmp32) || IN_BADCLASS(tmp32) ||
+		    (tmp32 & 0x7f000000) == 0x7f000000) 
+			return (-1);
 		break;
 	case ATTR_MED:
 		if (attr_len != 4)
@@ -480,10 +493,6 @@ attr_optfree(struct attr_flags *attr)
 
 /* aspath specific functions */
 
-/* TODO
- * aspath regexp search,
- * aspath to string converter
- */
 static u_int16_t	aspath_extract(void *, int);
 
 /*
@@ -642,6 +651,7 @@ void
 aspath_destroy(struct aspath *aspath)
 {
 	/* only the aspath needs to be freed */
+	if (aspath == NULL) return;
 	free(aspath);
 }
 
@@ -681,11 +691,11 @@ aspath_count(struct aspath *aspath)
 }
 
 u_int16_t
-aspath_neighbour(struct aspath *aspath)
+aspath_neighbor(struct aspath *aspath)
 {
 	/*
 	 * Empty aspath is OK -- internal as route.
-	 * But what is the neighbour? For now let's return 0 that
+	 * But what is the neighbor? For now let's return 0 that
 	 * should not break anything.
 	 */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.62 2004/02/26 13:54:50 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.63 2004/02/26 14:00:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -100,6 +100,7 @@ typedef struct {
 %token	AS ROUTERID HOLDTIME YMIN LISTEN ON FIBUPDATE
 %token	GROUP NEIGHBOR NETWORK
 %token	REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX ANNOUNCE
+%token	ENFORCE NEIGHBORAS
 %token	DUMP TABLE IN OUT
 %token	LOG
 %token	TCP MD5SIG PASSWORD KEY
@@ -393,6 +394,12 @@ peeropts	: REMOTEAS number	{
 				YYERROR;
 			}
 		}
+		| ENFORCE NEIGHBORAS yesno {
+			if ($3)
+				curpeer->conf.enforce_as = ENFORCE_AS_ON;
+			else
+				curpeer->conf.enforce_as = ENFORCE_AS_OFF;
+		}
 		| MAXPREFIX number {
 			curpeer->conf.max_prefix = $2;
 		}
@@ -681,6 +688,7 @@ lookup(char *s)
 		{ "deny",		DENY},
 		{ "descr",		DESCR},
 		{ "dump",		DUMP},
+		{ "enforce",		ENFORCE},
 		{ "fib-update",		FIBUPDATE},
 		{ "from",		FROM},
 		{ "group",		GROUP},
@@ -697,6 +705,7 @@ lookup(char *s)
 		{ "med",		MED},
 		{ "min",		YMIN},
 		{ "multihop",		MULTIHOP},
+		{ "neighbor-as",	NEIGHBORAS},
 		{ "neighbor",		NEIGHBOR},
 		{ "network",		NETWORK},
 		{ "nexthop",		NEXTHOP},

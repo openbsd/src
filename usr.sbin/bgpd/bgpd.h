@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.99 2004/02/26 09:53:58 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.100 2004/02/26 14:00:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -125,6 +125,12 @@ enum announce_type {
 	ANNOUNCE_ALL
 };
 
+enum enforce_as {
+	ENFORCE_AS_UNDEF,
+	ENFORCE_AS_OFF,
+	ENFORCE_AS_ON
+};
+
 struct filter_set {
 	u_int8_t	flags;
 	u_int32_t	localpref;
@@ -150,6 +156,7 @@ struct peer_config {
 	u_int16_t		 min_holdtime;
 	struct filter_set	 attrset;
 	enum announce_type	 announce_type;
+	enum enforce_as		 enforce_as;
 	char			 tcp_md5_key[TCP_MD5_KEY_LEN];
 	enum reconf_action	 reconf_action;
 };
