@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_43.c,v 1.1 1996/02/26 23:26:55 niklas Exp $	*/
+/*	$OpenBSD: vm_43.c,v 1.2 2001/05/11 13:10:29 art Exp $	*/
 /*	$NetBSD: vm_43.c,v 1.1 1996/02/05 01:58:29 christos Exp $	*/
 
 /*
@@ -124,7 +124,7 @@ compat_43_sys_mmap(p, v, retval)
 	if (SCARG(uap, flags) & OMAP_ANON)
 		SCARG(&nargs, flags) |= MAP_ANON;
 	if (SCARG(uap, flags) & OMAP_COPY)
-		SCARG(&nargs, flags) |= MAP_COPY;
+		SCARG(&nargs, flags) |= MAP_PRIVATE;
 	if (SCARG(uap, flags) & OMAP_SHARED)
 		SCARG(&nargs, flags) |= MAP_SHARED;
 	else
