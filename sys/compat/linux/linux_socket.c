@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.24 2002/08/09 01:03:25 fgsch Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.25 2002/08/09 03:11:30 aaron Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -525,7 +525,7 @@ linux_sendto_hdrincl(p, bsa, retval)
 
 	/* Convert fields from Linux to BSD raw IP socket format */
 	rpacket.ip_len = SCARG(bsa, len);
-	error = copyout(&rpacket, packet, sizeof(packet));
+	error = copyout(&rpacket, packet, linux_ip_copysize);
 	if (error)
 		return (error);
 
