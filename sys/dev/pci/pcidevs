@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.785 2004/10/28 23:15:01 pvalchev Exp $
+$OpenBSD: pcidevs,v 1.786 2004/10/29 11:35:59 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -941,6 +941,7 @@ product CONTAQ 82C693		0xc693	CY82C693U ISA
 /* Corega products */
 product COREGA CB_TXD		0xa117	FEther CB-TXD 10/100
 product COREGA 2CB_TXD		0xa11e	FEther II CB-TXD 10/100
+product COREGA CGLAPCIGT	0xc107	CG-LAPCIGT
 
 /* Corollary Products */
 product COROLLARY CBUSII_PCIB	0x0014	C-Bus II-PCI
