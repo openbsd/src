@@ -1,4 +1,4 @@
-/*	$OpenBSD: machine.c,v 1.8 1997/11/08 23:36:44 millert Exp $	*/
+/*	$OpenBSD: machine.c,v 1.9 1998/06/25 16:54:35 deraadt Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -693,6 +693,11 @@ int *total;
 	KGET(VM_DMMAX, dmmax);
 	KGET(VM_NSWAPMAP, nswapmap);
 	KGET(VM_SWAPMAP, kswapmap);	/* kernel `swapmap' is a pointer */
+	if (nswap == 0) {
+		*used = 0;
+		*total = 0;
+		return (1);
+	}
 	if ((sw = malloc(nswdev * sizeof(*sw))) == NULL ||
 	    (perdev = malloc(nswdev * sizeof(*perdev))) == NULL ||
 	    (freemp = mp = malloc(nswapmap * sizeof(*mp))) == NULL)
