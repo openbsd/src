@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nat.conf.5,v 1.17 2001/10/09 13:49:18 dhartmei Exp $
+.\"	$OpenBSD: nat.conf.5,v 1.18 2001/10/10 22:08:25 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001 Ian Darwin.  All rights reserved.
 .\"
@@ -141,7 +141,7 @@ nat on ! vlan12 from 192.168.168.0/24 to any -> 204.92.77.111
 In the example below, fxp1 is the outside interface; the machine sits between a
 fake internal 144.19.74.* network, and a routable external IP of 204.92.77.100:
 .Bd -literal
-nat on fxp1 from 144.19.74/24 to any -> 204.92.77.100
+nat on fxp1 from 144.19.74.0/24 to any -> 204.92.77.100
 .Ed
 .Pp
 In the example below, fxp0 is the outside interface; a 1:1
