@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.22 2001/04/06 18:59:16 gluk Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.23 2001/06/23 02:07:54 csapuntz Exp $	*/
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -2832,7 +2832,7 @@ handle_workitem_remove(dirrem)
 		panic("handle_workitem_remove: bad dir delta");
 	inodedep->id_nlinkdelta = ip->i_ffs_nlink - ip->i_effnlink;
 	FREE_LOCK(&lk);
-	if ((error = VOP_TRUNCATE(vp, (off_t)0, 0, p->p_ucred, p)) != 0)
+	if ((error = UFS_TRUNCATE(ip, (off_t)0, 0, p->p_ucred)) != 0)
 		softdep_error("handle_workitem_remove: truncate", error);
 	/*
 	 * Rename a directory to a new parent. Since, we are both deleting
@@ -2904,15 +2904,10 @@ handle_workitem_freefile(freefile)
 	tip.i_fs = fs;
 	tip.i_vnode = &vp;
 	vp.v_data = &tip;
-	{
-		struct vop_vfree_args  vargs;
 
-		vargs.a_pvp = &vp;
-		vargs.a_ino = freefile->fx_oldinum;
-		vargs.a_mode = freefile->fx_mode;
-
-		if ((error = ffs_freefile(&vargs)) != 0)
-			softdep_error("handle_workitem_freefile", error);
+	if ((error = ffs_freefile(&tip, freefile->fx_oldinum, 
+		 freefile->fx_mode)) != 0) {
+		softdep_error("handle_workitem_freefile", error);
 	}
 	WORKITEM_FREE(freefile, D_FREEFILE);
 }
@@ -3895,7 +3890,6 @@ softdep_fsync(vp)
 	int error, flushparent;
 	ino_t parentino;
 	ufs_lbn_t lbn;
-	struct timespec ts;
 
 	ip = VTOI(vp);
 	fs = ip->i_fs;
@@ -3960,8 +3954,7 @@ softdep_fsync(vp)
 		if (error != 0)
 			return (error);
 		if (flushparent) {
-			TIMEVAL_TO_TIMESPEC(&time, &ts);
-			if ((error = VOP_UPDATE(pvp, &ts, &ts, MNT_WAIT))) {
+			if ((error = UFS_UPDATE(VTOI(pvp), MNT_WAIT))) {
 				vput(pvp);
 				return (error);
 			}
@@ -4398,7 +4391,6 @@ flush_pagedep_deps(pvp, mp, diraddhdp)
 	struct inodedep *inodedep;
 	struct ufsmount *ump;
 	struct diradd *dap;
-	struct timespec ts;
 	struct vnode *vp;
 	int gotit, error = 0;
 	struct buf *bp;
@@ -4411,9 +4403,8 @@ flush_pagedep_deps(pvp, mp, diraddhdp)
 		 * has a MKDIR_PARENT dependency.
 		 */
 		if (dap->da_state & MKDIR_PARENT) {
-			TIMEVAL_TO_TIMESPEC(&time, &ts);
 			FREE_LOCK(&lk);
-			if ((error = VOP_UPDATE(pvp, &ts, &ts, MNT_WAIT)))
+			if ((error = UFS_UPDATE(VTOI(pvp), MNT_WAIT)))
 				break;
 			ACQUIRE_LOCK(&lk);
 			/*

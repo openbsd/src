@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_extern.h,v 1.12 2001/03/22 00:11:36 art Exp $	*/
+/*	$OpenBSD: ffs_extern.h,v 1.13 2001/06/23 02:07:53 csapuntz Exp $	*/
 /*	$NetBSD: ffs_extern.h,v 1.4 1996/02/09 22:22:22 christos Exp $	*/
 
 /*-
@@ -77,27 +77,28 @@ int ffs_alloc __P((struct inode *, daddr_t, daddr_t , int, struct ucred *,
 int ffs_realloccg __P((struct inode *, daddr_t, daddr_t, int, int ,
 		       struct ucred *, struct buf **));
 int ffs_reallocblks __P((void *));
-int ffs_valloc __P((void *));
+int ffs_inode_alloc(struct inode *, int, struct ucred *, struct vnode **);
+int ffs_inode_free(struct inode *, ino_t, int);
+int ffs_freefile(struct inode *, ino_t, int);
+
 daddr_t ffs_blkpref __P((struct inode *, daddr_t, int, daddr_t *));
 void ffs_blkfree __P((struct inode *, daddr_t, long));
-int ffs_vfree __P((void *));
 void ffs_clusteracct __P((struct fs *, struct cg *, daddr_t, int));
 
 /* ffs_balloc.c */
-int ffs_balloc __P((void *));
+int ffs_balloc(struct inode *, off_t, int, struct ucred *, int, struct buf **);
 
 /* ffs_inode.c */
 int ffs_init __P((struct vfsconf *));
-int ffs_update __P((void *));
-int ffs_truncate __P((void *));
+int ffs_update(struct inode *, struct timespec *, struct timespec *, int);
+int ffs_truncate(struct inode *, off_t, int, struct ucred *);
 
 /* ffs_subr.c */
-int ffs_blkatoff __P((void *));
+int ffs_bufatoff(struct inode *, off_t, char **, struct buf **);
 void ffs_fragacct __P((struct fs *, int, int32_t[], int));
 #ifdef DIAGNOSTIC
 void	ffs_checkoverlap __P((struct buf *, struct inode *));
 #endif
-int   ffs_freefile __P((struct vop_vfree_args *));
 int   ffs_isfreeblock __P((struct fs *, unsigned char *, daddr_t));
 int ffs_isblock __P((struct fs *, unsigned char *, daddr_t));
 void ffs_clrblock __P((struct fs *, u_char *, daddr_t));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_readwrite.c,v 1.17 2001/02/23 14:42:39 csapuntz Exp $	*/
+/*	$OpenBSD: ufs_readwrite.c,v 1.18 2001/06/23 02:07:57 csapuntz Exp $	*/
 /*	$NetBSD: ufs_readwrite.c,v 1.9 1996/05/11 18:27:57 mycroft Exp $	*/
 
 /*-
@@ -192,7 +192,6 @@ WRITE(v)
 	daddr_t lbn;
 	off_t osize;
 	int blkoffset, error, extended, flags, ioflag, resid, size, xfersize;
-	struct timespec ts;
 
 	extended = 0;
 	ioflag = ap->a_ioflag;
@@ -253,8 +252,8 @@ WRITE(v)
 		else
 			flags &= ~B_CLRBUF;
 
-		if ((error = VOP_BALLOC(vp, uio->uio_offset, xfersize,
-					ap->a_cred, flags, &bp)) != 0)
+		if ((error = UFS_BUF_ALLOC(ip, uio->uio_offset, xfersize,
+			 ap->a_cred, flags, &bp)) != 0)
 			break;
 		if (uio->uio_offset + xfersize > ip->i_ffs_size) {
 			ip->i_ffs_size = uio->uio_offset + xfersize;
@@ -309,14 +308,13 @@ WRITE(v)
 		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
 	if (error) {
 		if (ioflag & IO_UNIT) {
-			(void)VOP_TRUNCATE(vp, osize,
-			    ioflag & IO_SYNC, ap->a_cred, uio->uio_procp);
+			(void)UFS_TRUNCATE(ip, osize,
+			    ioflag & IO_SYNC, ap->a_cred);
 			uio->uio_offset -= resid - uio->uio_resid;
 			uio->uio_resid = resid;
 		}
 	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC)) {
-		TIMEVAL_TO_TIMESPEC(&time, &ts);
-		error = VOP_UPDATE(vp, &ts, &ts, 1);
+		error = UFS_UPDATE(ip, MNT_WAIT);
 	}
 	return (error);
 }

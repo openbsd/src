@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_inode.c,v 1.19 2001/03/20 19:50:30 art Exp $	*/
+/*	$OpenBSD: ffs_inode.c,v 1.20 2001/06/23 02:07:54 csapuntz Exp $	*/
 /*	$NetBSD: ffs_inode.c,v 1.10 1996/05/11 18:27:19 mycroft Exp $	*/
 
 /*
@@ -74,40 +74,36 @@ static int ffs_indirtrunc __P((struct inode *, daddr_t, daddr_t, daddr_t, int,
  * of the inode to complete.
  */
 int
-ffs_update(v)
-	void *v;
+ffs_update(struct inode *ip, struct timespec *atime, 
+    struct timespec *mtime, int waitfor)
 {
-	struct vop_update_args /* {
-		struct vnode *a_vp;
-		struct timespec *a_access;
-		struct timespec *a_modify;
-		int a_waitfor;
-	} */ *ap = v;
-	register struct fs *fs;
+	struct vnode *vp;
+	struct fs *fs;
 	struct buf *bp;
-	struct inode *ip;
 	int error;
+	struct timespec ts;
 
-	ip = VTOI(ap->a_vp);
-	if (ap->a_vp->v_mount->mnt_flag & MNT_RDONLY) {
+	TIMEVAL_TO_TIMESPEC(&time, &ts);
+	vp = ITOV(ip);
+	if (vp->v_mount->mnt_flag & MNT_RDONLY) {
 		ip->i_flag &=
 		    ~(IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE);
 		return (0);
-	} else if ((ap->a_vp->v_mount->mnt_flag & MNT_NOATIME) &&
+	} else if ((vp->v_mount->mnt_flag & MNT_NOATIME) &&
 	    !(ip->i_flag & (IN_CHANGE | IN_UPDATE))) {
 		ip->i_flag &= ~IN_ACCESS;
 	}
 	if ((ip->i_flag &
 	    (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE)) == 0 &&
-	    ap->a_waitfor != MNT_WAIT)
+	    waitfor != MNT_WAIT)
 		return (0);
 	if (ip->i_flag & IN_ACCESS) {
-		ip->i_ffs_atime = ap->a_access->tv_sec;
-		ip->i_ffs_atimensec = ap->a_access->tv_nsec;
+		ip->i_ffs_atime = atime ? atime->tv_sec : ts.tv_sec;
+		ip->i_ffs_atimensec = atime ? atime->tv_nsec : ts.tv_nsec;
 	}
 	if (ip->i_flag & IN_UPDATE) {
-		ip->i_ffs_mtime = ap->a_modify->tv_sec;
-		ip->i_ffs_mtimensec = ap->a_modify->tv_nsec;
+		ip->i_ffs_mtime = mtime ? mtime->tv_sec : ts.tv_sec;
+		ip->i_ffs_mtimensec = mtime ? mtime->tv_nsec : ts.tv_nsec;
 		ip->i_modrev++;
 	}
 	if (ip->i_flag & IN_CHANGE) {
@@ -131,14 +127,14 @@ ffs_update(v)
 		return (error);
 	}
 
-	if (DOINGSOFTDEP(ap->a_vp))
-		softdep_update_inodeblock(ip, bp, ap->a_waitfor);
+	if (DOINGSOFTDEP(vp))
+		softdep_update_inodeblock(ip, bp, waitfor);
 	else if (ip->i_effnlink != ip->i_ffs_nlink) 
 		panic("ffs_update: bad link cnt");
 
 	*((struct dinode *)bp->b_data +
 	    ino_to_fsbo(fs, ip->i_number)) = ip->i_din.ffs_din;
-	if (ap->a_waitfor && !DOINGASYNC(ap->a_vp)) {
+	if (waitfor && !DOINGASYNC(vp)) {
 		return (bwrite(bp));
 	} else {
 		bdwrite(bp);
@@ -154,37 +150,25 @@ ffs_update(v)
  * disk blocks.
  */
 int
-ffs_truncate(v)
-	void *v;
+ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 {
-	struct vop_truncate_args /* {
-		struct vnode *a_vp;
-		off_t a_length;
-		int a_flags;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
-	register struct vnode *ovp = ap->a_vp;
-	register daddr_t lastblock;
-	register struct inode *oip;
+	struct vnode *ovp;
+	daddr_t lastblock;
 	daddr_t bn, lbn, lastiblock[NIADDR], indir_lbn[NIADDR];
 	daddr_t oldblks[NDADDR + NIADDR], newblks[NDADDR + NIADDR];
-	off_t length = ap->a_length;
-	register struct fs *fs;
+	struct fs *fs;
 	struct buf *bp;
 	int offset, size, level;
 	long count, nblocks, vflags, blocksreleased = 0;
-	struct timespec ts;
 	register int i;
 	int aflags, error, allerror;
 	off_t osize;
 
 	if (length < 0)
 		return (EINVAL);
-	oip = VTOI(ovp);
+	ovp = ITOV(oip);
 	if (oip->i_ffs_size == length)
 		return (0);
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
 	if (ovp->v_type == VLNK &&
 	    (oip->i_ffs_size < ovp->v_mount->mnt_maxsymlinklen ||
 	     (ovp->v_mount->mnt_maxsymlinklen == 0 &&
@@ -196,7 +180,7 @@ ffs_truncate(v)
 		bzero((char *)&oip->i_ffs_shortlink, (u_int)oip->i_ffs_size);
 		oip->i_ffs_size = 0;
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (VOP_UPDATE(ovp, &ts, &ts, 1));
+		return (UFS_UPDATE(oip, MNT_WAIT));
 	}
 #ifdef QUOTA
 	if ((error = getinoquota(oip)) != 0)
@@ -221,17 +205,17 @@ ffs_truncate(v)
 			 * rarely, we solve the problem by syncing the file
 			 * so that it will have no data structures left.
 			 */
-			if ((error = VOP_FSYNC(ovp, ap->a_cred, MNT_WAIT,
-					       ap->a_p)) != 0)
+			if ((error = VOP_FSYNC(ovp, cred, MNT_WAIT,
+					       curproc)) != 0)
 				return (error);
 		} else {
 #ifdef QUOTA
 			(void) chkdq(oip, -oip->i_ffs_blocks, NOCRED, 0);
 #endif
 			softdep_setup_freeblocks(oip, length);
-			(void) vinvalbuf(ovp, 0, ap->a_cred, ap->a_p, 0, 0);
+			(void) vinvalbuf(ovp, 0, cred, curproc, 0, 0);
 			oip->i_flag |= IN_CHANGE | IN_UPDATE;
-			return (VOP_UPDATE(ovp, &ts, &ts, 0));
+			return (UFS_UPDATE(oip, 0));
 		}
 	}
 
@@ -246,10 +230,10 @@ ffs_truncate(v)
 		if (length > fs->fs_maxfilesize)
 			return (EFBIG);
 		aflags = B_CLRBUF;
-		if (ap->a_flags & IO_SYNC)
+		if (flags & IO_SYNC)
 			aflags |= B_SYNC;
-		error = VOP_BALLOC(ovp, length - 1, 1, 
-				   ap->a_cred, aflags, &bp);
+		error = UFS_BUF_ALLOC(oip, length - 1, 1, 
+				   cred, aflags, &bp);
 		if (error)
 			return (error);
 		oip->i_ffs_size = length;
@@ -265,7 +249,7 @@ ffs_truncate(v)
 		else
 			bawrite(bp);
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (VOP_UPDATE(ovp, &ts, &ts, 1));
+		return (UFS_UPDATE(oip, MNT_WAIT));
 	}
 #if defined(UVM)
 	uvm_vnp_setsize(ovp, length);
@@ -287,10 +271,10 @@ ffs_truncate(v)
 	} else {
 		lbn = lblkno(fs, length);
 		aflags = B_CLRBUF;
-		if (ap->a_flags & IO_SYNC)
+		if (flags & IO_SYNC)
 			aflags |= B_SYNC;
-		error = VOP_BALLOC(ovp, length - 1, 1,
-				   ap->a_cred, aflags, &bp);
+		error = UFS_BUF_ALLOC(oip, length - 1, 1,
+				   cred, aflags, &bp);
 		if (error)
 			return (error);
 		oip->i_ffs_size = length;
@@ -335,7 +319,7 @@ ffs_truncate(v)
 	for (i = NDADDR - 1; i > lastblock; i--)
 		oip->i_ffs_db[i] = 0;
 	oip->i_flag |= IN_CHANGE | IN_UPDATE;
-	if ((error = VOP_UPDATE(ovp, &ts, &ts, 1)) != 0)
+	if ((error = UFS_UPDATE(oip, MNT_WAIT)) != 0)
 		allerror = error;
 	/*
 	 * Having written the new inode to disk, save its new configuration
@@ -347,7 +331,7 @@ ffs_truncate(v)
 	bcopy((caddr_t)oldblks, (caddr_t)&oip->i_ffs_db[0], sizeof oldblks);
 	oip->i_ffs_size = osize;
 	vflags = ((length > 0) ? V_SAVE : 0) | V_SAVEMETA;
-	allerror = vinvalbuf(ovp, vflags, ap->a_cred, ap->a_p, 0, 0);
+	allerror = vinvalbuf(ovp, vflags, cred, curproc, 0, 0);
 
 	/*
 	 * Indirect blocks first.

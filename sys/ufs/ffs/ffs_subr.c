@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_subr.c,v 1.7 2001/03/20 19:54:08 art Exp $	*/
+/*	$OpenBSD: ffs_subr.c,v 1.8 2001/06/23 02:07:55 csapuntz Exp $	*/
 /*	$NetBSD: ffs_subr.c,v 1.6 1996/03/17 02:16:23 christos Exp $	*/
 
 /*
@@ -53,34 +53,27 @@
  * remaining space in the directory.
  */
 int
-ffs_blkatoff(v)
-	void *v;
+ffs_bufatoff(struct inode *ip, off_t offset, char **res, struct buf **bpp)
 {
-	struct vop_blkatoff_args /* {
-		struct vnode *a_vp;
-		off_t a_offset;
-		char **a_res;
-		struct buf **a_bpp;
-	} */ *ap = v;
-	struct inode *ip;
-	register struct fs *fs;
+	struct fs *fs;
+	struct vnode *vp;
 	struct buf *bp;
 	daddr_t lbn;
 	int bsize, error;
 
-	ip = VTOI(ap->a_vp);
+	vp = ITOV(ip);
 	fs = ip->i_fs;
-	lbn = lblkno(fs, ap->a_offset);
+	lbn = lblkno(fs, offset);
 	bsize = blksize(fs, ip, lbn);
 
-	*ap->a_bpp = NULL;
-	if ((error = bread(ap->a_vp, lbn, bsize, NOCRED, &bp)) != 0) {
+	*bpp = NULL;
+	if ((error = bread(vp, lbn, bsize, NOCRED, &bp)) != 0) {
 		brelse(bp);
 		return (error);
 	}
-	if (ap->a_res)
-		*ap->a_res = (char *)bp->b_data + blkoff(fs, ap->a_offset);
-	*ap->a_bpp = bp;
+	if (res)
+		*res = (char *)bp->b_data + blkoff(fs, offset);
+	*bpp = bp;
 	return (0);
 }
 #endif

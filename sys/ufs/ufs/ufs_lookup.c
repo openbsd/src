@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_lookup.c,v 1.15 2001/02/27 09:52:56 art Exp $	*/
+/*	$OpenBSD: ufs_lookup.c,v 1.16 2001/06/23 02:07:57 csapuntz Exp $	*/
 /*	$NetBSD: ufs_lookup.c,v 1.7 1996/02/09 22:36:06 christos Exp $	*/
 
 /*
@@ -245,7 +245,7 @@ ufs_lookup(v)
 	} else {
 		dp->i_offset = dp->i_diroff;
 		if ((entryoffsetinblock = dp->i_offset & bmask) &&
-		    (error = VOP_BLKATOFF(vdp, (off_t)dp->i_offset, NULL, &bp)))
+		    (error = UFS_BUFATOFF(dp, (off_t)dp->i_offset, NULL, &bp)))
 			return (error);
 		numdirpasses = 2;
 		nchstats.ncs_2passes++;
@@ -262,7 +262,7 @@ searchloop:
 		if ((dp->i_offset & bmask) == 0) {
 			if (bp != NULL)
 				brelse(bp);
-			error = VOP_BLKATOFF(vdp, (off_t)dp->i_offset, NULL,
+			error = UFS_BUFATOFF(dp, (off_t)dp->i_offset, NULL,
 					     &bp);
 			if (error)
 				return (error);
@@ -737,7 +737,6 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
   	struct direct *ep, *nep;
 	int error, ret, blkoff, loc, spacefree, flags;
   	char *dirbuf;
-	struct timespec ts;
 
  	error = 0;
  	cr = cnp->cn_cred;
@@ -757,7 +756,7 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
 		flags = B_CLRBUF;
 		if (!DOINGSOFTDEP(dvp))
 			flags |= B_SYNC;
-		if ((error = VOP_BALLOC(dvp, (off_t)dp->i_offset, DIRBLKSIZ,
+		if ((error = UFS_BUF_ALLOC(dp, (off_t)dp->i_offset, DIRBLKSIZ,
 		    cr, flags, &bp)) != 0) {
 			if (DOINGSOFTDEP(dvp) && newdirbp != NULL)
 				bdwrite(newdirbp);
@@ -793,8 +792,7 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
 		} else {
 			error = VOP_BWRITE(bp);
   		}
-		TIMEVAL_TO_TIMESPEC(&time, &ts);
- 		ret = VOP_UPDATE(dvp, &ts, &ts, !DOINGSOFTDEP(dvp));
+ 		ret = UFS_UPDATE(dp, !DOINGSOFTDEP(dvp));
  		if (error == 0)
  			return (ret);
   		return (error);
@@ -821,7 +819,7 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
 	/*
 	 * Get the block containing the space for the new directory entry.
 	 */
- 	if ((error = VOP_BLKATOFF(dvp, (off_t)dp->i_offset, &dirbuf, &bp)) 
+ 	if ((error = UFS_BUFATOFF(dp, (off_t)dp->i_offset, &dirbuf, &bp)) 
 	    != 0) {
  		if (DOINGSOFTDEP(dvp) && newdirbp != NULL)
  			bdwrite(newdirbp);
@@ -895,7 +893,7 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
 	        if (tvp != NULL)
 			VOP_UNLOCK(tvp, 0, p);
 
-		error = VOP_TRUNCATE(dvp, (off_t)dp->i_endoff, IO_SYNC, cr, p);
+		error = UFS_TRUNCATE(dp, (off_t)dp->i_endoff, IO_SYNC, cr);
 
 		if (tvp != NULL)
 			vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY, p);
@@ -933,7 +931,7 @@ ufs_dirremove(dvp, ip, flags, isrmdir)
 		/*
 		 * Whiteout entry: set d_ino to WINO.
 		 */
-		error = VOP_BLKATOFF(dvp, (off_t)dp->i_offset, (char **)&ep,
+		error = UFS_BUFATOFF(dp, (off_t)dp->i_offset, (char **)&ep,
 				     &bp);
 		if (error)
 			return (error);
@@ -942,7 +940,7 @@ ufs_dirremove(dvp, ip, flags, isrmdir)
 		goto out;
 	}
 
- 	if ((error = VOP_BLKATOFF(dvp,
+ 	if ((error = UFS_BUFATOFF(dp,
  	    (off_t)(dp->i_offset - dp->i_count), (char **)&ep, &bp)) != 0)
  		return (error);
 
@@ -1005,7 +1003,7 @@ ufs_dirrewrite(dp, oip, newinum, newtype, isrmdir)
 	struct vnode *vdp = ITOV(dp);
 	int error;
 
-	error = VOP_BLKATOFF(vdp, (off_t)dp->i_offset, (char **)&ep, &bp);
+	error = UFS_BUFATOFF(dp, (off_t)dp->i_offset, (char **)&ep, &bp);
 	if (error)
 		return (error);
 	ep->d_ino = newinum;

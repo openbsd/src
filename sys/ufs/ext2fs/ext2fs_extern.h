@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_extern.h,v 1.8 2001/02/20 01:50:12 assar Exp $	*/
+/*	$OpenBSD: ext2fs_extern.h,v 1.9 2001/06/23 02:07:51 csapuntz Exp $	*/
 /*	$NetBSD: ext2fs_extern.h,v 1.1 1997/06/11 09:33:55 bouyer Exp $	*/
 
 /*-
@@ -65,22 +65,24 @@ int ext2fs_alloc __P((struct inode *, daddr_t, daddr_t , struct ucred *,
 int ext2fs_realloccg __P((struct inode *, daddr_t, daddr_t, int, int ,
 			  struct ucred *, struct buf **));
 int ext2fs_reallocblks __P((void *));
-int ext2fs_valloc __P((void *));
+int ext2fs_inode_alloc(struct inode *pip, int mode, struct ucred *, 
+    struct vnode **);
 daddr_t ext2fs_blkpref __P((struct inode *, daddr_t, int, daddr_t *));
 void ext2fs_blkfree __P((struct inode *, daddr_t));
-int ext2fs_vfree __P((void *));
+int ext2fs_inode_free(struct inode *pip, ino_t ino, int mode);
 
 /* ext2fs_balloc.c */
-int ext2fs_balloc __P((struct inode *, daddr_t, int, struct ucred *,
-			struct buf **, int));
+int ext2fs_buf_alloc(struct inode *, daddr_t, int, struct ucred *,
+			struct buf **, int);
 
 /* ext2fs_bmap.c */
 int ext2fs_bmap __P((void *));
 
 /* ext2fs_inode.c */
 int ext2fs_init __P((struct vfsconf *));
-int ext2fs_update __P((void *));
-int ext2fs_truncate __P((void *));
+int ext2fs_update(struct inode *ip, struct timespec *atime,
+    struct timespec *mtime, int waitfor);
+int ext2fs_truncate(struct inode *, off_t, int, struct ucred *);
 int ext2fs_inactive __P((void *));
 
 /* ext2fs_lookup.c */
@@ -95,6 +97,7 @@ int ext2fs_dirempty __P((struct inode *, ino_t, struct ucred *));
 int ext2fs_checkpath __P((struct inode *, struct inode *, struct ucred *));
 
 /* ext2fs_subr.c */
+int ext2fs_bufatoff(struct inode *, off_t, char **, struct buf **);
 int ext2fs_blkatoff __P((void *));
 void ext2fs_fragacct __P((struct m_ext2fs *, int, int32_t[], int));
 #ifdef DIAGNOSTIC

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.32 2001/06/04 15:11:47 provos Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.33 2001/06/23 02:07:57 csapuntz Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -421,10 +421,9 @@ ufs_setattr(v)
 		default:
 			break;
 		}
- 		if ((error = VOP_TRUNCATE(vp, vap->va_size, 0, cred, p)) != 0)
+ 		if ((error = UFS_TRUNCATE(ip, vap->va_size, 0, cred)) != 0)
  			return (error);
 	}
-	ip = VTOI(vp);
 	if (vap->va_atime.tv_sec != VNOVAL || vap->va_mtime.tv_sec != VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
@@ -437,7 +436,7 @@ ufs_setattr(v)
 			ip->i_flag |= IN_ACCESS;
 		if (vap->va_mtime.tv_sec != VNOVAL)
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
-		error = VOP_UPDATE(vp, &vap->va_atime, &vap->va_mtime, 0);
+		error = UFS_UPDATE2(ip, &vap->va_atime, &vap->va_mtime, 0);
 		if (error)
 			return (error);
 	}
@@ -726,7 +725,6 @@ ufs_link(v)
 	struct proc *p = cnp->cn_proc;
 	struct inode *ip;
 	struct direct newdir;
-	struct timespec ts;
 	int error;
 
 #ifdef DIAGNOSTIC
@@ -763,8 +761,7 @@ ufs_link(v)
 	ip->i_flag |= IN_CHANGE;
 	if (DOINGSOFTDEP(vp))
 		softdep_change_linkcnt(ip);
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	if ((error = VOP_UPDATE(vp, &ts, &ts, !DOINGSOFTDEP(vp))) == 0) {
+	if ((error = UFS_UPDATE(ip, !DOINGSOFTDEP(vp))) == 0) {
 		ufs_makedirentry(ip, cnp, &newdir);
 		error = ufs_direnter(dvp, vp, &newdir, cnp, NULL);
 	}
@@ -893,7 +890,6 @@ ufs_rename(v)
 	struct proc *p = fcnp->cn_proc;
 	struct inode *ip, *xp, *dp;
 	struct direct newdir;
-	struct timespec ts;
 	int doingdirectory = 0, oldparent = 0, newparent = 0;
 	int error = 0;
 
@@ -1037,8 +1033,7 @@ abortit:
 	ip->i_flag |= IN_CHANGE;
 	if (DOINGSOFTDEP(fvp))
 		softdep_change_linkcnt(ip);
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	if ((error = VOP_UPDATE(fvp, &ts, &ts, !DOINGSOFTDEP(fvp))) != 0) {
+	if ((error = UFS_UPDATE(ip, !DOINGSOFTDEP(fvp))) != 0) {
 		VOP_UNLOCK(fvp, 0, p);
 		goto bad;
 	}
@@ -1102,8 +1097,8 @@ abortit:
 			dp->i_flag |= IN_CHANGE;
 			if (DOINGSOFTDEP(tdvp))
                                softdep_change_linkcnt(dp);
-			if ((error = VOP_UPDATE(tdvp, &ts, &ts,
-						!DOINGSOFTDEP(tdvp))) != 0) {
+			if ((error = UFS_UPDATE(dp, !DOINGSOFTDEP(tdvp))) 
+			    != 0) {
 				dp->i_effnlink--;
 				dp->i_ffs_nlink--;
 				dp->i_flag |= IN_CHANGE;
@@ -1120,7 +1115,7 @@ abortit:
 				dp->i_flag |= IN_CHANGE;
 				if (DOINGSOFTDEP(tdvp))
 					softdep_change_linkcnt(dp);
-				(void)VOP_UPDATE(tdvp, &ts, &ts, 1);
+				(void)UFS_UPDATE(dp, 1);
 			}
 			goto bad;
 		}
@@ -1200,8 +1195,8 @@ abortit:
 
 			xp->i_ffs_nlink--;
 			xp->i_flag |= IN_CHANGE;
-			if ((error = VOP_TRUNCATE(tvp, (off_t)0, IO_SYNC,
-			        tcnp->cn_cred, tcnp->cn_proc)) != 0)
+			if ((error = UFS_TRUNCATE(VTOI(tvp), (off_t)0, IO_SYNC,
+			        tcnp->cn_cred)) != 0)
 				goto bad;
                 }
 		VN_KNOTE(tdvp, NOTE_WRITE);
@@ -1307,7 +1302,6 @@ ufs_mkdir(v)
 	struct buf *bp;
 	struct direct newdir;
 	struct dirtemplate dirtemplate, *dtp;
-	struct timespec ts;
 	int error, dmode, blkoff;
 
 #ifdef DIAGNOSTIC
@@ -1326,7 +1320,7 @@ ufs_mkdir(v)
 	 * but not have it entered in the parent directory. The entry is
 	 * made later after writing "." and ".." entries.
 	 */
-	if ((error = VOP_VALLOC(dvp, dmode, cnp->cn_cred, &tvp)) != 0)
+	if ((error = UFS_INODE_ALLOC(dp, dmode, cnp->cn_cred, &tvp)) != 0)
 		goto out;
 	ip = VTOI(tvp);
 	ip->i_ffs_uid = cnp->cn_cred->cr_uid;
@@ -1335,7 +1329,7 @@ ufs_mkdir(v)
 	if ((error = getinoquota(ip)) ||
 	    (error = chkiq(ip, 1, cnp->cn_cred, 0))) {
 		free(cnp->cn_pnbuf, M_NAMEI);
-		VOP_VFREE(tvp, ip->i_number, dmode);
+		UFS_INODE_FREE(ip, ip->i_number, dmode);
 		vput(tvp);
 		vput(dvp);
 		return (error);
@@ -1362,8 +1356,7 @@ ufs_mkdir(v)
 	dp->i_flag |= IN_CHANGE;
 	if (DOINGSOFTDEP(dvp))
 		softdep_change_linkcnt(dp);
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	if ((error = VOP_UPDATE(dvp, &ts, &ts, !DOINGSOFTDEP(dvp))) != 0)
+	if ((error = UFS_UPDATE(dp, !DOINGSOFTDEP(dvp))) != 0)
 		goto bad;
 
 	/* 
@@ -1377,7 +1370,7 @@ ufs_mkdir(v)
 	dirtemplate.dot_ino = ip->i_number;
 	dirtemplate.dotdot_ino = dp->i_number;
 
-	if ((error = VOP_BALLOC(tvp, (off_t)0, DIRBLKSIZ, cnp->cn_cred,
+	if ((error = UFS_BUF_ALLOC(ip, (off_t)0, DIRBLKSIZ, cnp->cn_cred,
             B_CLRBUF, &bp)) != 0)
 		goto bad;
 	ip->i_ffs_size = DIRBLKSIZ;
@@ -1402,7 +1395,7 @@ ufs_mkdir(v)
 			blkoff += DIRBLKSIZ;
 		}
 	}
-	if ((error = VOP_UPDATE(tvp, &ts, &ts, !DOINGSOFTDEP(tvp))) != 0) {
+	if ((error = UFS_UPDATE(ip, !DOINGSOFTDEP(tvp))) != 0) {
 		(void)VOP_BWRITE(bp);
 		goto bad;
 	}
@@ -1541,8 +1534,7 @@ ufs_rmdir(v)
 		ip->i_ffs_nlink--;
 		ip->i_flag |= IN_CHANGE;
 		ioflag = DOINGASYNC(vp) ? 0 : IO_SYNC;
-		error = VOP_TRUNCATE(vp, (off_t)0, ioflag, cnp->cn_cred,
-		    cnp->cn_proc);
+		error = UFS_TRUNCATE(ip, (off_t)0, ioflag, cnp->cn_cred);
 	}
 	cache_purge(vp);
 out:
@@ -2129,7 +2121,6 @@ ufs_makeinode(mode, dvp, vpp, cnp)
 {
 	struct inode *ip, *pdir;
 	struct direct newdir;
-	struct timespec ts;
 	struct vnode *tvp;
 	int error;
 
@@ -2142,7 +2133,7 @@ ufs_makeinode(mode, dvp, vpp, cnp)
 	if ((mode & IFMT) == 0)
 		mode |= IFREG;
 
-	if ((error = VOP_VALLOC(dvp, mode, cnp->cn_cred, &tvp)) != 0) {
+	if ((error = UFS_INODE_ALLOC(pdir, mode, cnp->cn_cred, &tvp)) != 0) {
 		free(cnp->cn_pnbuf, M_NAMEI);
 		vput(dvp);
 		return (error);
@@ -2154,7 +2145,7 @@ ufs_makeinode(mode, dvp, vpp, cnp)
 	if ((error = getinoquota(ip)) ||
 	    (error = chkiq(ip, 1, cnp->cn_cred, 0))) {
 		free(cnp->cn_pnbuf, M_NAMEI);
-		VOP_VFREE(tvp, ip->i_number, mode);
+		UFS_INODE_FREE(ip, ip->i_number, mode);
 		vput(tvp);
 		vput(dvp);
 		return (error);
@@ -2178,8 +2169,7 @@ ufs_makeinode(mode, dvp, vpp, cnp)
 	/*
 	 * Make sure inode goes to disk before directory entry.
 	 */
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	if ((error = VOP_UPDATE(tvp, &ts, &ts, !DOINGSOFTDEP(tvp))) != 0)
+	if ((error = UFS_UPDATE(ip, !DOINGSOFTDEP(tvp))) != 0)
 		goto bad;
 
 	ufs_makedirentry(ip, cnp, &newdir);

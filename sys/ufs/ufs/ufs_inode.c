@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_inode.c,v 1.7 1997/11/06 05:59:26 csapuntz Exp $	*/
+/*	$OpenBSD: ufs_inode.c,v 1.8 2001/06/23 02:07:57 csapuntz Exp $	*/
 /*	$NetBSD: ufs_inode.c,v 1.7 1996/05/11 18:27:52 mycroft Exp $	*/
 
 /*
@@ -87,7 +87,6 @@ ufs_inactive(v)
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 	struct proc *p = ap->a_p;
-	struct timespec ts;
 	int mode, error = 0;
 	extern int prtactive;
 
@@ -104,16 +103,15 @@ ufs_inactive(v)
 		if (!getinoquota(ip))
 			(void)chkiq(ip, -1, NOCRED, 0);
 #endif
-		error = VOP_TRUNCATE(vp, (off_t)0, 0, NOCRED, p);
+		error = UFS_TRUNCATE(ip, (off_t)0, 0, NOCRED);
 		ip->i_ffs_rdev = 0;
 		mode = ip->i_ffs_mode;
 		ip->i_ffs_mode = 0;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
-		VOP_VFREE(vp, ip->i_number, mode);
+		UFS_INODE_FREE(ip, ip->i_number, mode);
 	}
 	if (ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE)) {
-		TIMEVAL_TO_TIMESPEC(&time, &ts);
-		VOP_UPDATE(vp, &ts, &ts, 0);
+		UFS_UPDATE(ip, 0);
 	}
 out:
 	VOP_UNLOCK(vp, 0, p);

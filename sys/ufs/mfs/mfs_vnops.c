@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vnops.c,v 1.15 2001/04/12 17:16:52 csapuntz Exp $	*/
+/*	$OpenBSD: mfs_vnops.c,v 1.16 2001/06/23 02:07:56 csapuntz Exp $	*/
 /*	$NetBSD: mfs_vnops.c,v 1.8 1996/03/17 02:16:32 christos Exp $	*/
 
 /*
@@ -72,9 +72,7 @@ struct vnodeopv_entry_desc mfs_vnodeop_entries[] = {
 	{ &vop_ioctl_desc, mfs_ioctl },			/* ioctl */
 	{ &vop_select_desc, mfs_select },		/* select */
 	{ &vop_revoke_desc, mfs_revoke },               /* revoke */
-	{ &vop_mmap_desc, mfs_mmap },			/* mmap */
 	{ &vop_fsync_desc, spec_fsync },		/* fsync */
-	{ &vop_seek_desc, mfs_seek },			/* seek */
 	{ &vop_remove_desc, mfs_remove },		/* remove */
 	{ &vop_link_desc, mfs_link },			/* link */
 	{ &vop_rename_desc, mfs_rename },		/* rename */
@@ -94,11 +92,6 @@ struct vnodeopv_entry_desc mfs_vnodeop_entries[] = {
 	{ &vop_islocked_desc, mfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, mfs_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, mfs_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, mfs_blkatoff },		/* blkatoff */
-	{ &vop_valloc_desc, mfs_valloc },		/* valloc */
-	{ &vop_vfree_desc, mfs_vfree },			/* vfree */
-	{ &vop_truncate_desc, mfs_truncate },		/* truncate */
-	{ &vop_update_desc, mfs_update },		/* update */
 	{ &vop_bwrite_desc, mfs_bwrite },		/* bwrite */
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };

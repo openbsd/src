@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.h,v 1.14 2001/02/24 10:37:09 deraadt Exp $	*/
+/*	$OpenBSD: inode.h,v 1.15 2001/06/23 02:07:56 csapuntz Exp $	*/
 /*	$NetBSD: inode.h,v 1.8 1995/06/15 23:22:50 cgd Exp $	*/
 
 /*
@@ -55,6 +55,20 @@ struct ext2fs_inode_ext {
        ufs_daddr_t ext2fs_last_lblk; /* last logical block allocated */
        ufs_daddr_t ext2fs_last_blk; /* last block allocated on disk */
 };
+
+struct inode_vtbl {
+	int (* iv_truncate)(struct inode *, off_t, int, 
+	    struct ucred *);
+	int (* iv_update)(struct inode *, struct timespec *, struct timespec *,
+	    int waitfor);
+	int (* iv_inode_alloc)(struct inode *, int mode, 
+	    struct ucred *, struct vnode **);
+	int (* iv_inode_free)(struct inode *, ino_t ino, int mode);
+	int (* iv_buf_alloc)(struct inode *, off_t, int, struct ucred *,
+	    int, struct buf **);
+	int (* iv_bufatoff)(struct inode *, off_t offset, char **res,
+	    struct buf **bpp);
+} *vtbl;
 
 /*
  * The inode is used to describe each active (or recently active) file in the
@@ -115,7 +129,32 @@ struct inode {
 		struct	dinode ffs_din;	/* 128 bytes of the on-disk dinode. */
 		struct ext2fs_dinode e2fs_din; /* 128 bytes of the on-disk dinode. */
 	} i_din;
+
+	struct inode_vtbl *i_vtbl;
 };
+
+#define UFS_TRUNCATE(ip, off, flags, cred) \
+    ((ip)->i_vtbl->iv_truncate)((ip), (off), (flags), (cred))
+
+#define UFS_UPDATE(ip, sync) \
+    ((ip)->i_vtbl->iv_update)((ip), NULL, NULL, (sync))
+
+#define UFS_UPDATE2(ip, atime, mtime, sync) \
+    ((ip)->i_vtbl->iv_update)((ip), (atime), (mtime), (sync))
+
+#define UFS_INODE_ALLOC(pip, mode, cred, vpp) \
+    ((pip)->i_vtbl->iv_inode_alloc)((pip), (mode), (cred), (vpp))
+
+#define UFS_INODE_FREE(pip, ino, mode) \
+    ((pip)->i_vtbl->iv_inode_free)((pip), (ino), (mode))
+
+#define UFS_BUF_ALLOC(ip, startoffset, size, cred, flags, bpp) \
+    ((ip)->i_vtbl->iv_buf_alloc)((ip), (startoffset), (size), (cred), \
+        (flags), (bpp))
+ 
+#define UFS_BUFATOFF(ip, offset, res, bpp) \
+    ((ip)->i_vtbl->iv_bufatoff)((ip), (offset), (res), (bpp))
+
 
 #define	i_ffs_atime		i_din.ffs_din.di_atime
 #define	i_ffs_atimensec		i_din.ffs_din.di_atimensec

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_alloc.c,v 1.5 2000/04/26 23:24:40 jasoni Exp $	*/
+/*	$OpenBSD: ext2fs_alloc.c,v 1.6 2001/06/23 02:07:50 csapuntz Exp $	*/
 /*	$NetBSD: ext2fs_alloc.c,v 1.1 1997/06/11 09:33:41 bouyer Exp $	*/
 
 /*
@@ -141,25 +141,17 @@ nospace:
  *	  available inode is located.
  */
 int
-ext2fs_valloc(v)
-	void *v;
+ext2fs_inode_alloc(struct inode *pip, int mode, struct ucred *cred,
+    struct vnode **vpp)
 {
-	struct vop_valloc_args /* {
-		struct vnode *a_pvp;
-		int a_mode;
-		struct ucred *a_cred;
-		struct vnode **a_vpp;
-	} */ *ap = v;
-	register struct vnode *pvp = ap->a_pvp;
-	register struct inode *pip;
-	register struct m_ext2fs *fs;
-	register struct inode *ip;
-	mode_t mode = ap->a_mode;
+	struct vnode *pvp;
+	struct m_ext2fs *fs;
+	struct inode *ip;
 	ino_t ino, ipref;
 	int cg, error;
 	
-	*ap->a_vpp = NULL;
-	pip = VTOI(pvp);
+	*vpp = NULL;
+	pvp = ITOV(pip);
 	fs = pip->i_e2fs;
 	if (fs->e2fs.e2fs_ficount == 0)
 		goto noinodes;
@@ -172,12 +164,12 @@ ext2fs_valloc(v)
 	ino = (ino_t)ext2fs_hashalloc(pip, cg, (long)ipref, mode, ext2fs_nodealloccg);
 	if (ino == 0)
 		goto noinodes;
-	error = VFS_VGET(pvp->v_mount, ino, ap->a_vpp);
+	error = VFS_VGET(pvp->v_mount, ino, vpp);
 	if (error) {
-		VOP_VFREE(pvp, ino, mode);
+		ext2fs_inode_free(pip, ino, mode);
 		return (error);
 	}
-	ip = VTOI(*ap->a_vpp);
+	ip = VTOI(*vpp);
 	if (ip->i_e2fs_mode && ip->i_e2fs_nlink != 0) {
 		printf("mode = 0%o, nlinks %d, inum = %d, fs = %s\n",
 			ip->i_e2fs_mode, ip->i_e2fs_nlink, ip->i_number, fs->e2fs_fsmnt);
@@ -194,7 +186,7 @@ ext2fs_valloc(v)
 	ip->i_e2fs_gen = ext2gennumber;
 	return (0);
 noinodes:
-	ext2fs_fserr(fs, ap->a_cred->cr_uid, "out of inodes");
+	ext2fs_fserr(fs, cred->cr_uid, "out of inodes");
 	uprintf("\n%s: create/symlink failed, no inodes free\n", fs->e2fs_fsmnt);
 	return (ENOSPC);
 }
@@ -542,22 +534,13 @@ ext2fs_blkfree(ip, bno)
  * The specified inode is placed back in the free map.
  */
 int
-ext2fs_vfree(v)
-	void *v;
+ext2fs_inode_free(struct inode *pip, ino_t ino, int mode)
 {
-	struct vop_vfree_args /* {
-		struct vnode *a_pvp;
-		ino_t a_ino;
-		int a_mode;
-	} */ *ap = v;
 	register struct m_ext2fs *fs;
 	register char *ibp;
-	register struct inode *pip;
-	ino_t ino = ap->a_ino;
 	struct buf *bp;
 	int error, cg;
 
-	pip = VTOI(ap->a_pvp);
 	fs = pip->i_e2fs;
 	if ((u_int)ino >= fs->e2fs.e2fs_icount || (u_int)ino < EXT2_FIRSTINO)
 		panic("ifree: range: dev = 0x%x, ino = %d, fs = %s",
@@ -581,7 +564,7 @@ ext2fs_vfree(v)
 	clrbit(ibp, ino);
 	fs->e2fs.e2fs_ficount++;
 	fs->e2fs_gd[cg].ext2bgd_nifree++;
-	if ((ap->a_mode & IFMT) == IFDIR) {
+	if ((mode & IFMT) == IFDIR) {
 		fs->e2fs_gd[cg].ext2bgd_ndirs--;
 	}
 	fs->e2fs_fmod = 1;
