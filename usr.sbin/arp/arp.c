@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.17 2001/03/07 19:31:58 deraadt Exp $ */
+/*	$OpenBSD: arp.c,v 1.18 2001/06/10 17:46:20 dugsong Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -45,7 +45,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)arp.c	8.2 (Berkeley) 1/2/94";*/
-static char *rcsid = "$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $";
+static char *rcsid = "$OpenBSD: arp.c,v 1.18 2001/06/10 17:46:20 dugsong Exp $";
 #endif /* not lint */
 
 /*
@@ -76,10 +76,15 @@ static char *rcsid = "$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $";
 #include <unistd.h>
 
 int delete __P((const char *, const char *));
-void dump __P((in_addr_t));
+void search(in_addr_t addr, void (*action)(struct sockaddr_dl *sdl,
+	struct sockaddr_inarp *sin, struct rt_msghdr *rtm));
+void print_entry(struct sockaddr_dl *sdl,
+	struct sockaddr_inarp *sin, struct rt_msghdr *rtm);
+void nuke_entry(struct sockaddr_dl *sdl,
+	struct sockaddr_inarp *sin, struct rt_msghdr *rtm);
 void ether_print __P((const u_char *));
 int file __P((char *));
-void get __P((const char *));
+int get __P((const char *));
 int getinetaddr __P((const char *, struct in_addr *));
 void getsocket __P((void));
 int rtmsg __P((int));
@@ -87,55 +92,91 @@ int set __P((int, char **));
 void usage __P((void));
 
 static int pid;
-static int nflag;
+static int nflag;	/* no reverse dns lookups */
+static int aflag;	/* do it for all entries */
 static int s = -1;
+
+/* which function we're supposed to do */
+#define F_GET		1
+#define F_SET		2
+#define F_FILESET	3
+#define F_DELETE	4
 
 int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	int ch, argstart;
+	int ch, func, rtn;
 
 	pid = getpid();
 	opterr = 0;
-	while ((ch = getopt(argc, argv, "andsf")) != -1)
-		if (ch == 'n')
-			nflag = 1;
-
-	argstart = optind;
-	optind = 1;
-	optreset = 1;
-	opterr = 1;
-	while ((ch = getopt(argc, argv, "andsf")) != -1)
-		switch((char)ch) {
+	func = 0;
+	
+	while ((ch = getopt(argc, argv, "andsf")) != -1) {
+		switch ((char)ch) {
 		case 'a':
-			dump(0);
-			return (0);
-		case 'd':
-			if (argc < (argstart + 1) || argc > (argstart +2))
-				usage();
-			(void)delete(argv[argstart], argv[argstart + 1]);
-			return (0);
+			aflag = 1;
+			break;
 		case 'n':
+			nflag = 1;
+			break;
+		case 'd':
+			if (func)
+				usage();
+			func = F_DELETE;
 			break;
 		case 's':
-			if (argc < 4 || argc > 7)
+			if (func)
 				usage();
-			return (set(argc-2, &argv[2]) ? 1 : 0);
+			func = F_SET;
+			break;
 		case 'f':
-			if (argc != 3)
+			if (func)
 				usage();
-			return (file(argv[2]));
-		case '?':
+			func = F_FILESET;
+			break;
 		default:
 			usage();
+			break;
 		}
-	if (argc == 2 || (argc == 3 && nflag))
-		get(argv[argc - 1]);
-	else
-		usage();
-	return (0);
+	}
+	argc -= optind;
+	argv += optind;
+
+	if (!func)
+		func = F_GET;
+	rtn = 0;
+	
+	switch (func) {
+	case F_GET:
+		if (aflag && argc == 0)
+			search(0, print_entry);
+		else if (!aflag && argc == 1)
+			rtn = get(argv[0]);
+		else
+			usage();
+		break;
+	case F_SET:
+		if (argc < 2 || argc > 5)
+			usage();
+		rtn = set(argc, argv) ? 1 : 0;
+		break;
+	case F_DELETE:
+		if (aflag && argc == 0)
+			search(0, nuke_entry);
+		else if (!aflag && argc == 1)
+			rtn = delete(argv[0], argv[1]);
+		else
+			usage();
+		break;
+	case F_FILESET:
+		if (argc != 1)
+			usage();
+		rtn = file(argv[0]);
+		break;
+	}
+	return (rtn);
 }
 
 /*
@@ -220,7 +261,7 @@ set(argc, argv)
 	ea = ether_aton(eaddr);
 	if (ea == NULL) 
 	  errx(1, "invalid ethernet address: %s\n", eaddr);
-	memcpy(LLADDR(&sdl_m), ea, sizeof (*ea));
+	memcpy(LLADDR(&sdl_m), ea, sizeof(*ea));
 	sdl_m.sdl_alen = 6;
 	doing_proxy = flags = export_only = expire_time = 0;
 	while (argc-- > 0) {
@@ -294,7 +335,7 @@ overwrite:
 /*
  * Display an individual arp entry
  */
-void
+int
 get(host)
 	const char *host;
 {
@@ -304,12 +345,13 @@ get(host)
 	sin_m = blank_sin;		/* struct copy */
 	if (getinetaddr(host, &sin->sin_addr) == -1)
 		exit(1);
-	dump(sin->sin_addr.s_addr);
+	search(sin->sin_addr.s_addr, print_entry);
 	if (found_entry == 0) {
 		(void)printf("%s (%s) -- no entry\n", host,
 		    inet_ntoa(sin->sin_addr));
-		exit(1);
+		return (1);
 	}
+	return (0);
 }
 
 /*
@@ -368,20 +410,22 @@ delete:
 }
 
 /*
- * Dump the entire arp table
+ * Search the entire arp table, and do some action on matching entries.
  */
 void
-dump(addr)
+search(addr, action)
 	in_addr_t addr;
+	void (*action)(struct sockaddr_dl *sdl,
+		       struct sockaddr_inarp *sin,
+		       struct rt_msghdr *rtm);
 {
 	int mib[6];
 	size_t needed;
-	char *host, *lim, *buf, *next;
+	char *lim, *buf, *next;
 	struct rt_msghdr *rtm;
 	struct sockaddr_inarp *sin;
 	struct sockaddr_dl *sdl;
 	extern int h_errno;
-	struct hostent *hp;
 
 	mib[0] = CTL_NET;
 	mib[1] = PF_ROUTE;
@@ -407,39 +451,70 @@ dump(addr)
 				continue;
 			found_entry = 1;
 		}
-		if (nflag == 0)
-			hp = gethostbyaddr((caddr_t)&(sin->sin_addr),
-			    sizeof sin->sin_addr, AF_INET);
-		else
-			hp = 0;
-		if (hp)
-			host = hp->h_name;
-		else {
-			host = "?";
-			if (h_errno == TRY_AGAIN)
-				nflag = 1;
-		}
-		(void)printf("%s (%s) at ", host, inet_ntoa(sin->sin_addr));
-		if (sdl->sdl_alen)
-			ether_print(LLADDR(sdl));
-		else
-			(void)printf("(incomplete)");
-		if (rtm->rtm_flags & RTF_PERMANENT_ARP)
-		        (void)printf(" permanent");
-		if (rtm->rtm_rmx.rmx_expire == 0)
-			(void)printf(" static");
-		if (sin->sin_other & SIN_PROXY)
-			(void)printf(" published (proxy only)");
-		if (rtm->rtm_addrs & RTA_NETMASK) {
-			sin = (struct sockaddr_inarp *)
-				(sdl->sdl_len + (char *)sdl);
-			if (sin->sin_addr.s_addr == 0xffffffff)
-				(void)printf(" published");
-			if (sin->sin_len != 8)
-				(void)printf("(weird)");
-		}
-		(void)printf("\n");
+		(*action)(sdl, sin, rtm);
 	}
+}
+
+/*
+ * Display an arp entry
+ */
+void
+print_entry(sdl, sin, rtm)
+	struct sockaddr_dl *sdl;
+	struct sockaddr_inarp *sin;
+	struct rt_msghdr *rtm;
+{
+	char *host;
+	extern int h_errno;
+	struct hostent *hp;
+	
+	if (nflag == 0)
+		hp = gethostbyaddr((caddr_t)&(sin->sin_addr),
+		    sizeof(sin->sin_addr), AF_INET);
+	else
+		hp = 0;
+	if (hp)
+		host = hp->h_name;
+	else {
+		host = "?";
+		if (h_errno == TRY_AGAIN)
+			nflag = 1;
+	}
+	(void)printf("%s (%s) at ", host, inet_ntoa(sin->sin_addr));
+	if (sdl->sdl_alen)
+		ether_print(LLADDR(sdl));
+	else
+		(void)printf("(incomplete)");
+	if (rtm->rtm_flags & RTF_PERMANENT_ARP)
+		(void)printf(" permanent");
+	if (rtm->rtm_rmx.rmx_expire == 0)
+		(void)printf(" static");
+	if (sin->sin_other & SIN_PROXY)
+		(void)printf(" published (proxy only)");
+	if (rtm->rtm_addrs & RTA_NETMASK) {
+		sin = (struct sockaddr_inarp *)
+			(sdl->sdl_len + (char *)sdl);
+		if (sin->sin_addr.s_addr == 0xffffffff)
+			(void)printf(" published");
+		if (sin->sin_len != 8)
+			(void)printf("(weird)");
+ 	}
+	printf("\n");
+}
+
+/*
+ * Nuke an arp entry
+ */
+void
+nuke_entry(sdl, sin, rtm)
+	struct sockaddr_dl *sdl;
+	struct sockaddr_inarp *sin;
+	struct rt_msghdr *rtm;
+{
+	char ip[20];
+	
+	strlcpy(ip, inet_ntoa(sin->sin_addr), sizeof(ip));
+	delete(ip, NULL);
 }
 
 void
@@ -456,6 +531,7 @@ usage()
 	(void)fprintf(stderr, "usage: arp [-n] hostname\n");
 	(void)fprintf(stderr, "usage: arp [-n] -a\n");
 	(void)fprintf(stderr, "usage: arp -d hostname\n");
+	(void)fprintf(stderr, "usage: arp -d -a\n");
 	(void)fprintf(stderr,
 	    "usage: arp -s hostname ether_addr [temp | permanent] [pub]\n");
 	(void)fprintf(stderr, "usage: arp -f filename\n");

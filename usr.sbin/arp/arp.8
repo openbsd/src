@@ -1,4 +1,4 @@
-.\"	$OpenBSD: arp.8,v 1.10 2000/04/15 11:45:59 aaron Exp $
+.\"	$OpenBSD: arp.8,v 1.11 2001/06/10 17:46:20 dugsong Exp $
 .\"	$NetBSD: arp.8,v 1.7 1995/03/01 11:50:59 chopps Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -50,6 +50,8 @@
 .Nm arp
 .Fl d Ar hostname
 .Nm arp
+.Fl d a
+.Nm arp
 .Fl s Ar hostname ether_addr
 .Op Ar temp | permanent
 .Op Ar pub
@@ -71,7 +73,7 @@ using Internet dot notation.
 Available options:
 .Bl -tag -width Ds
 .It Fl a
-The program displays all of the current
+The program displays or deletes all of the current
 .Tn ARP
 entries.
 .It Fl d
@@ -80,6 +82,13 @@ A superuser may delete an entry for the host called
 with the
 .Fl d
 flag.
+.Pp
+Alternatively, the
+.Fl d
+flag may be combined with the
+.Fl a
+flag to delete all entries, with hostname lookups automatically
+disabled.
 .It Fl n
 Show network addresses as numbers (normally
 .Nm
