@@ -859,7 +859,7 @@
 #define PACKAGE "krb4"
 
 /* Version number of package */
-#define VERSION "1.0"
+#define VERSION "1.0.2"
 
 /* Define to what version of SunOS you are running. */
 /* #undef SunOS */
@@ -1167,7 +1167,7 @@ static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
 /* telnet stuff ----------------------------------------------- */
 
 /* define this for OTP support */
-#define OTP 1
+/* #undef OTP 1 */
 
 /* define this if you have kerberos 4 */
 #define KRB4 1
