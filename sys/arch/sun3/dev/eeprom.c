@@ -70,7 +70,7 @@ struct cfdriver eeprom_cd = {
 void eeprom_init()
 {
 	eeprom_va = obio_find_mapping(OBIO_EEPROM, OBIO_EEPROM_SIZE);
-	ee_console = ((struct eeprom *)eeprom_va)->eeConsole;
+	ee_console = ((struct eeprom *)eeprom_va)->ee_diag.eed_console;
 }
 
 static int
