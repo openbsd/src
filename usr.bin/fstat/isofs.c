@@ -1,4 +1,4 @@
-/*	$OpenBSD: isofs.c,v 1.7 2003/07/02 21:04:10 deraadt Exp $	*/
+/*	$OpenBSD: isofs.c,v 1.8 2005/03/30 07:23:47 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -61,7 +61,6 @@
 #include <errno.h>
 #include <kvm.h>
 #include <limits.h>
-#include <nlist.h>
 #include <paths.h>
 #include <pwd.h>
 #include <stdio.h>
