@@ -1,4 +1,4 @@
-/*	$OpenBSD: makedbm.c,v 1.12 1998/09/17 22:58:38 niklas Exp $ */
+/*	$OpenBSD: makedbm.c,v 1.13 1999/04/22 17:43:10 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994-97 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: makedbm.c,v 1.12 1998/09/17 22:58:38 niklas Exp $";
+static char rcsid[] = "$OpenBSD: makedbm.c,v 1.13 1999/04/22 17:43:10 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -93,7 +93,7 @@ add_record(db, str1, str2, check)
 	char	*str1, *str2;
 	int     check;
 {
-        datum   key,val;
+        datum   key, val;
         int     status;
 
 	key.dptr = str1;
@@ -135,7 +135,6 @@ file_date(filename)
 		}	
 		sprintf(datestr, "%010d", finfo.st_mtime);
 	}
-  	
 	return datestr;
 }
 
@@ -145,18 +144,13 @@ list_database(database,Uflag)
 	int	Uflag;
 {
 	DBM	*db;
-	datum	key,val;
+	datum	key, val;
   	
 	db = ypdb_open(database, O_RDONLY, 0444);
 	
 	if (db == NULL) {
-
-		if (Uflag != 0) {
-			
+		if (Uflag != 0)
 			if (db_hash_list_database(database)) return;
-			
-		}
-
 
 		fprintf(stderr, "%s: can't open database %s\n", __progname, database);
 		exit(1);
@@ -171,17 +165,14 @@ list_database(database,Uflag)
 		       val.dsize, val.dsize, val.dptr);
 		key = ypdb_nextkey(db);
 	}
-	  
+  
 	ypdb_close(db);
-	
 }
 
 void
 
-create_database(infile,database,
-		yp_input_file,yp_output_file,
-		yp_master_name,yp_domain_name,
-		bflag, lflag, sflag)
+create_database(infile, database, yp_input_file, yp_output_file,
+    yp_master_name, yp_domain_name, bflag, lflag, sflag)
 	char	*infile, *database;
 	char	*yp_input_file, *yp_output_file;
 	char	*yp_master_name, *yp_domain_name;
@@ -192,13 +183,14 @@ create_database(infile,database,
 	char	myname[MAXHOSTNAMELEN];
 	int	line_no = 0;
 	int	len, fd;
-	char	*p,*k,*v;
+	char	*p, *k, *v;
 	char	*slash;
 	DBM	*new_db;
 	static	char mapname[] = "ypdbXXXXXXXXXX";
-	char	db_mapname[MAXPATHLEN],db_outfile[MAXPATHLEN],
+	char	db_mapname[MAXPATHLEN], db_outfile[MAXPATHLEN],
 		db_tempname[MAXPATHLEN];
 	char	empty_str[] = "";
+	int	count = 0;
 	
 	if (strcmp(infile,"-") == 0) {
 		data_file = stdin;
@@ -226,27 +218,21 @@ create_database(infile,database,
 
 	/* note: database is now directory where map goes ! */
 
-	if (strlen(database) + strlen(mapname) 
-			+ strlen(YPDB_SUFFIX) > MAXPATHLEN) {
+	if (strlen(database) + strlen(mapname) +
+	    strlen(YPDB_SUFFIX) > MAXPATHLEN) {
 		fprintf(stderr,"%s: %s: directory name too long\n",
 		    __progname, database);
 		exit(1);
 	}
 
-	snprintf(db_tempname, sizeof(db_tempname), "%s%s", database,
-		mapname);
-	fd = mkstemp(db_tempname);
-	if (fd == -1)
-		goto fail;
-	close(fd);
+	snprintf(db_mapname, sizeof(db_mapname), "%s%s%s",
+	    database, mapname, YPDB_SUFFIX);
+	mkstemps(db_mapname, sizeof(YPDB_SUFFIX));
+	strlcpy(db_tempname, db_mapname, sizeof db_tempname);
+	db_tempname[strlen(db_tempname) - sizeof(YPDB_SUFFIX) + 1] = '\0';
 
-	snprintf(db_mapname, sizeof(db_mapname), "%s%s", db_tempname,
-	    YPDB_SUFFIX);
 	new_db = ypdb_open(db_tempname, O_RDWR|O_CREAT, 0444);
 	if (new_db == NULL) {
-fail:
-		if (fd != -1)
-			unlink(db_tempname);
 		fprintf(stderr, "%s: Unable to open output database %s\n",
 		    __progname, db_outfile);
 		exit(1);
@@ -273,54 +259,47 @@ fail:
 			if (lflag && isupper(*p))   /* if force lower case */
 				*p = tolower(*p);   /* fix it */
 			p++;
-		};
+		}
 		while (isspace(*p)) {		/* replace space with <NUL> */
 			*p = '\0';
 			p++;
-		};
+		}
 		
 		v = p;				/* save start of value */
-		while(*p != '\0') { p++; };	/* find end of string */
+		while (*p != '\0')		/* find end of string */
+			p++;	
 		
 		add_record(new_db, k, v, TRUE);	/* save record */
 		
 	}
 	
-	if (strcmp(infile,"-") != 0) {
+	if (strcmp(infile,"-") != 0)
 		(void) fclose(data_file);
-	}
 	
 	add_record(new_db, YP_LAST_KEY, file_date(infile), FALSE);
-	
-	if (yp_input_file) {
+
+	if (yp_input_file)
 		add_record(new_db, YP_INPUT_KEY, yp_input_file, FALSE);
-	}
 	
-	if (yp_output_file) {
+	if (yp_output_file)
 		add_record(new_db, YP_OUTPUT_KEY, yp_output_file, FALSE);
-	}
 	
-	if (yp_master_name) {
+	if (yp_master_name)
 		add_record(new_db, YP_MASTER_KEY, yp_master_name, FALSE);
-	} else {
+	else {
 		gethostname(myname, sizeof(myname));
 		add_record(new_db, YP_MASTER_KEY, myname, FALSE);
 	}
 	
-	if (yp_domain_name) {
+	if (yp_domain_name)
 		add_record(new_db, YP_DOMAIN_KEY, yp_domain_name, FALSE);
-	}
-	
-	if (bflag) {
+	if (bflag)
 		add_record(new_db, YP_INTERDOMAIN_KEY, empty_str, FALSE);
-	}
-
-	if (sflag) {
+	if (sflag)
 		add_record(new_db, YP_SECURE_KEY, empty_str, FALSE);
-	}
 
 	ypdb_close(new_db);
-	if (rename(db_mapname,db_outfile) < 0) {
+	if (rename(db_mapname, db_outfile) < 0) {
 		perror("rename");
 		fprintf(stderr,"rename %s -> %s failed!\n", db_mapname,
 			db_outfile);
@@ -351,44 +330,44 @@ main (argc,argv)
 	
 	while ((ch = getopt(argc, argv, "Ublsui:o:m:d:")) != -1)
 		switch (ch) {
-			case 'U': 
-				uflag++;
-				Uflag++;
-				break;
-			case 'b':
-		  		bflag++;
-				aflag++;
-				break;
-			case 'l':
-				lflag++;
-				aflag++;
-				break;
-			case 's':
-				sflag++;
-				aflag++;
-				break;
-			case 'i':
-				yp_input_file = optarg;
-				aflag++;
-				break;
-			case 'o':
-				yp_output_file = optarg;
-				aflag++;
-				break;
-			case 'm':
-				yp_master_name = optarg;
-				aflag++;
-				break;
-			case 'd':
-				yp_domain_name = optarg;
-				aflag++;
-				break;
-			case 'u':
-				uflag++;
-				break;
-			default:
-				usage++;
-				break;
+		case 'U': 
+			uflag++;
+			Uflag++;
+			break;
+		case 'b':
+	  		bflag++;
+			aflag++;
+			break;
+		case 'l':
+			lflag++;
+			aflag++;
+			break;
+		case 's':
+			sflag++;
+			aflag++;
+			break;
+		case 'i':
+			yp_input_file = optarg;
+			aflag++;
+			break;
+		case 'o':
+			yp_output_file = optarg;
+			aflag++;
+			break;
+		case 'm':
+			yp_master_name = optarg;
+			aflag++;
+			break;
+		case 'd':
+			yp_domain_name = optarg;
+			aflag++;
+			break;
+		case 'u':
+			uflag++;
+			break;
+		default:
+			usage++;
+			break;
 		}
 	
 	if ((uflag != 0) && (aflag != 0)) {
@@ -413,19 +392,18 @@ main (argc,argv)
 	
 	if (usage) {
 		fprintf(stderr,"%s%s%s",
-			"usage:\tmakedbm [-u|-U] file\n\tmakedbm [-bls]",
-			" [-i YP_INPUT_FILE] [-o YP_OUTPUT_FILE]\n\t\t",
-			"[-d YP_DOMAIN_NAME] [-m YP_MASTER_NAME] infile outfile\n");
+		    "usage:\tmakedbm [-u|-U] file\n\tmakedbm [-bls]",
+		    " [-i YP_INPUT_FILE] [-o YP_OUTPUT_FILE]\n\t\t",
+		    "[-d YP_DOMAIN_NAME] [-m YP_MASTER_NAME] infile outfile\n");
 		exit(1);
 	}
 	
 	if (uflag != 0) {
 		list_database(infile,Uflag);
 	} else {
-		create_database(infile,outfile,
-				yp_input_file,yp_output_file,
-				yp_master_name,yp_domain_name,
-				bflag, lflag, sflag);
+		create_database(infile, outfile, yp_input_file,
+		    yp_output_file, yp_master_name, yp_domain_name,
+		    bflag, lflag, sflag);
 	}
 	
 	return(0);
