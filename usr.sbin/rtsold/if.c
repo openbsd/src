@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.14 2002/10/26 20:20:22 itojun Exp $	*/
+/*	$OpenBSD: if.c,v 1.15 2003/04/02 23:39:20 jason Exp $	*/
 /*	$KAME: if.c,v 1.18 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
@@ -322,7 +322,7 @@ get_llflag(const char *name)
 		exit(1);
 	}
 	if (getifaddrs(&ifap) != 0) {
-		warnmsg(LOG_ERR, __func__, "etifaddrs: %s",
+		warnmsg(LOG_ERR, __func__, "getifaddrs: %s",
 		    strerror(errno));
 		exit(1);
 	}
