@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamdb.c,v 1.13 2005/03/11 23:27:12 beck Exp $	*/
+/*	$OpenBSD: spamdb.c,v 1.14 2005/03/11 23:45:45 beck Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -60,7 +60,6 @@ dbupdate(char *dbname, char *ip, int add, int type)
 	if (type == TRAPHIT || type == WHITE) {
 		if (getaddrinfo(ip, NULL, &hints, &res) != 0) {
 			warnx("invalid ip address %s", ip);
-			freeaddrinfo(res);
 			goto bad;
 		}
 		freeaddrinfo(res);
