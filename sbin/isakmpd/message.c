@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.79 2004/06/14 10:04:22 hshoexer Exp $	 */
+/* $OpenBSD: message.c,v 1.80 2004/06/20 15:11:29 ho Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -1368,14 +1368,20 @@ message_recv(struct message *msg)
 	    && (flags & ISAKMP_FLAGS_COMMIT))
 		msg->exchange->flags |= EXCHANGE_FLAG_HE_COMMITTED;
 
-	/* Require encryption as soon as we have the keystate for it.  */
+	/*
+	 * Except for the 3rd Aggressive Mode message, require encryption
+	 * as soon as we have the keystate for it.
+	 */
 	if ((flags & ISAKMP_FLAGS_ENC) == 0 &&
-	    (msg->exchange->phase == 2 || msg->exchange->keystate)) {
+	    (msg->exchange->phase == 2 ||
+		(msg->exchange->keystate &&
+		    msg->exchange->type != ISAKMP_EXCH_AGGRESSIVE))) {
 		log_print("message_recv: cleartext phase %d message",
 		    msg->exchange->phase);
 		message_drop(msg, ISAKMP_NOTIFY_INVALID_FLAGS, 0, 1, 1);
 		return -1;
 	}
+
 	/* OK let the exchange logic do the rest.  */
 	exchange_run(msg);
 
