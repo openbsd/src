@@ -1,4 +1,4 @@
-/*	$Id: if_ipw.c,v 1.13 2004/10/27 21:22:14 damien Exp $  */
+/*	$Id: if_ipw.c,v 1.14 2004/10/27 21:23:01 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -740,6 +740,11 @@ ipw_intr(void *arg)
 	if (r & IPW_INTR_FW_INIT_DONE) {
 		if (!(r & (IPW_INTR_FATAL_ERROR | IPW_INTR_PARITY_ERROR)))
 			wakeup(sc);
+	}
+
+	if (r & (IPW_INTR_FATAL_ERROR | IPW_INTR_PARITY_ERROR)) {
+		printf("%s: fatal error\n", sc->sc_dev.dv_xname);
+		ipw_stop(&sc->sc_ic.ic_if, 1);
 	}
 
 	/* Acknowledge interrupts */
