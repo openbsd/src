@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fddisubr.c,v 1.18 1999/01/08 00:56:45 deraadt Exp $	*/
+/*	$OpenBSD: if_fddisubr.c,v 1.19 1999/07/28 20:02:41 fgsch Exp $	*/
 /*	$NetBSD: if_fddisubr.c,v 1.5 1996/05/07 23:20:21 christos Exp $	*/
 
 /*
@@ -474,7 +474,7 @@ fddi_input(ifp, fh, m)
 		if (l->llc_snap.org_code[0] != 0 || l->llc_snap.org_code[1] != 0|| l->llc_snap.org_code[2] != 0)
 			goto dropanyway;
 		etype = ntohs(l->llc_snap.ether_type);
-		m_adj(m, 8);
+		m_adj(m, LLC_SNAPFRAMELEN);
 		switch (etype) {
 #ifdef INET
 		case ETHERTYPE_IP:
