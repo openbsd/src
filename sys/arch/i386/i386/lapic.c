@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.2 2004/06/13 21:49:15 niklas Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.3 2004/06/14 00:06:32 deraadt Exp $	*/
 /* $NetBSD: lapic.c,v 1.1.2.8 2000/02/23 06:10:50 sommerfeld Exp $ */
 
 /*-
@@ -127,7 +127,7 @@ lapic_set_lvt()
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci = curcpu();
 
-	if (mp_verbose) {
+	if (0) {
 		apic_format_redir(ci->ci_dev.dv_xname, "prelint", 0, 0,
 		    i82489_readreg(LAPIC_LVINT0));
 		apic_format_redir(ci->ci_dev.dv_xname, "prelint", 1, 0,
@@ -140,7 +140,7 @@ lapic_set_lvt()
 		i82489_writereg(LAPIC_LVINT1, lapic_ints[1]->redir);
 
 #ifdef MULTIPROCESSOR
-	if (mp_verbose) {
+	if (0) {
 		apic_format_redir(ci->ci_dev.dv_xname, "timer", 0, 0,
 		    i82489_readreg(LAPIC_LVTT));
 		apic_format_redir(ci->ci_dev.dv_xname, "pcint", 0, 0,
