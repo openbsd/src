@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.112 2004/03/21 01:46:42 tedu Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.113 2004/04/15 00:23:17 tedu Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.112 2004/03/21 01:46:42 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.113 2004/04/15 00:23:17 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -2002,7 +2002,10 @@ sysctl_sensors(char *string, char **bufpp, int mib[], int flags, int *typep)
 	return (3);
 }
 
-char	**emul_names;
+struct emulname {
+	char *name;
+	int index;
+} *emul_names;
 int	emul_num, nemuls;
 int	emul_init(void);
 
@@ -2033,9 +2036,12 @@ sysctl_emul(char *string, char *newval, int flags)
 		else
 			printf("%snemuls%s%d\n", head, equ, nemuls);
 		for (i = 0; i < emul_num; i++) {
-			if (emul_names[i] == NULL)
+			if (emul_names[i].name == NULL)
+				break;
+			if (i > 0 && strcmp(emul_names[i].name,
+			    emul_names[i-1].name) == 0)
 				continue;
-			mib[2] = i + 1;
+			mib[2] = emul_names[i].index;
 			len = sizeof(int);
 			if (sysctl(mib, 4, &enabled, &len, NULL, 0) == -1) {
 				warn("%s", string);
@@ -2044,8 +2050,8 @@ sysctl_emul(char *string, char *newval, int flags)
 			if (nflag)
 				printf("%d\n", enabled);
 			else
-				printf("%s%s%s%d\n", head, emul_names[i], equ,
-				    enabled);
+				printf("%s%s%s%d\n", head, emul_names[i].name,
+				    equ, enabled);
 		}
 		return (0);
 	}
@@ -2063,21 +2069,18 @@ sysctl_emul(char *string, char *newval, int flags)
 			printf("%snemuls = %d\n", head, nemuls);
 		return (0);
 	}
+	print = 1;
 	for (i = 0; i < emul_num; i++) {
-		print = 1;
-		if (!emul_names[i]) {
-			print = 0;
-			if (strcmp(target, emul_names[i-1]))
-				continue;
-		} else if (strcmp(target, emul_names[i]))
+		if (!emul_names[i].name || (strcmp(target, emul_names[i].name)))
 			continue;
 		found = 1;
-		mib[2] = i + 1;
+		mib[2] = emul_names[i].index;
 		len = sizeof(int);
 		if (newval) {
 			enabled = atoi(newval);
 			if (sysctl(mib, 4, &old, &len, &enabled, len) == -1) {
 				warn("%s", string);
+				print = 0;
 				continue;
 			}
 			if (print) {
@@ -2100,6 +2103,7 @@ sysctl_emul(char *string, char *newval, int flags)
 					    enabled);
 			}
 		}
+		print = 0;
 	}
 	if (!found)
 		warnx("third level name %s in kern.emul is invalid",
@@ -2107,6 +2111,18 @@ sysctl_emul(char *string, char *newval, int flags)
 	return (0);
 
 
+}
+
+int
+emulcmp(const void *m, const void *n)
+{
+	const struct emulname *a = m, *b = n;
+
+	if (!a || !a->name)
+		return 1;
+	if (!b || !b->name)
+		return -1;
+	return (strcmp(a->name, b->name));
 }
 
 int
@@ -2128,26 +2144,31 @@ emul_init(void)
 	if (sysctl(mib, 3, &emul_num, &len, NULL, 0) == -1)
 		return (-1);
 
-	emul_names = calloc(emul_num, sizeof(char *));
+	emul_names = calloc(emul_num, sizeof(*emul_names));
 	if (emul_names == NULL)
 		return (-1);
 
 	nemuls = emul_num;
 	for (i = 0; i < emul_num; i++) {
-		mib[2] = i + 1;
+		emul_names[i].index = mib[2] = i + 1;
 		mib[3] = KERN_EMUL_NAME;
 		len = sizeof(string);
 		if (sysctl(mib, 4, string, &len, NULL, 0) == -1)
-			break;
-		if (i > 0 && emul_names[i - 1] &&
-		    strcmp(string, emul_names[i - 1]) == 0) {
-			nemuls--;
 			continue;
-		}
-		emul_names[i] = strdup(string);
-		if (emul_names[i] == NULL) {
+		if (strcmp(string, "native") == 0)
+			continue;
+		emul_names[i].name = strdup(string);
+		if (emul_names[i].name == NULL) {
 			free(emul_names);
 			return (-1);
+		}
+	}
+	qsort(emul_names, nemuls, sizeof(*emul_names), emulcmp);
+	for (i = 0; i < emul_num; i++) {
+		if (!emul_names[i].name || (i > 0 &&
+		    strcmp(emul_names[i].name, emul_names[i - 1].name) == 0)) {
+
+			nemuls--;
 		}
 	}
 	return (0);
