@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.36 2004/09/14 22:27:04 mickey Exp $	*/
+/*	$OpenBSD: sti.c,v 1.37 2004/11/03 19:18:47 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -130,6 +130,8 @@ sti_attach_common(sc)
 	struct sti_dd *dd;
 	struct sti_cfg *cc;
 	int error, size, i;
+
+	sc->sc_devtype = bus_space_read_1(sc->memt, sc->romh, 3);
 
 	/* { extern int pmapdebug; pmapdebug = 0xfffff; } */
 	dd = &sc->sc_dd;
