@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.289 2003/02/15 20:36:18 krw Exp $
+#	$OpenBSD: install.sub,v 1.290 2003/02/16 23:25:40 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2003 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1643,7 +1643,7 @@ get_fqdn() {
 }
 
 donetconfig() {
-	local _dn _ns
+	local _dn _ns _dr
 
 	[[ -n $DIDNET ]] && return
 
@@ -1672,31 +1672,30 @@ donetconfig() {
 	ask "DNS domain name? (e.g. 'bar.com')" "${_dn:=$(get_fqdn)}"
 	hostname "$(hostname -s).$resp"
 
-	# Get/Confirm the default route.
-	resp=$(route -n show | sed -ne '/^default */{s///; s/ .*//; p;}')
-	route delete default > /dev/null 2>&1
-	while : ; do
-		ask "IP address of default route? (or 'none')" "${resp:=none}"
-		[[ $resp == none ]] && break
-		route add default $resp || { resp= ; continue; }
-		# Save default route if DHCP wasn't used.
- 		[ -f /tmp/dhclient.conf ] || echo $resp > /tmp/mygate
-		break
-	done
-
 	# Get/Confirm nameservers, and construct appropriate resolv.conf.
-	ask "IP address of DNS nameserver? (or 'none')" "${_ns:=none}"
+	ask "DNS nameserver? (IP address or 'none')" "${_ns:=none}"
 	if [[ $resp != none ]]; then
 		echo "lookup file bind" > /tmp/resolv.conf
 		for _ns in $resp; do
 			echo "nameserver $_ns" >> /tmp/resolv.conf
 		done
-		ask "Would you like to use the nameserver now?" y
+		ask "Use the nameserver now?" y
 		case $resp in
 		y*|Y*)	cp /tmp/resolv.conf /tmp/resolv.conf.shadow
 			;;
 		esac
 	fi
+
+	# Get/Confirm the default route.
+	_dr=$(route -n show | sed -ne '/^default */{s///; s/ .*//; p;}')
+	route delete default > /dev/null 2>&1
+	while : ; do
+		ask_until "Default route? (IP address, 'dhcp' or 'none')" "$_dr"
+		case $resp in
+		none|dhcp) break ;;
+		esac
+		route -n add -host default "$resp" && { echo "$resp" > /tmp/mygate ; break ; }
+	done
 
 	edit_tmp_file hosts
 	manual_net_cfg

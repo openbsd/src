@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.85 2002/05/16 20:48:25 todd Exp $
+#	$OpenBSD: netstart,v 1.86 2003/02/16 23:25:40 krw Exp $
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -275,6 +275,7 @@ fi
 # /etc/mygate, if it exists, contains the name of my gateway host
 # that name must be in /etc/hosts.
 if [ -f /etc/mygate ]; then
+	route delete default > /dev/null 2>&1
 	route -n add -host default `cat /etc/mygate`
 fi
 
