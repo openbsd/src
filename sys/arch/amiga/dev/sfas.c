@@ -1,4 +1,4 @@
-/*    $OpenBSD: sfas.c,v 1.6 1997/01/16 09:25:25 niklas Exp $  */
+/*    $OpenBSD: sfas.c,v 1.7 2000/05/28 02:34:13 art Exp $  */
 /*	$NetBSD: sfas.c,v 1.12 1996/10/13 03:07:33 christos Exp $	*/
 
 /*
@@ -232,8 +232,13 @@ sfasinitialize(dev)
 			dev->sc_bump_pa = (vm_offset_t)
 					  PREP_DMA_MEM(dev->sc_bump_va);
 	} else {
+#if defined(UVM)
+		dev->sc_bump_va = (u_char *)uvm_km_zalloc(kernel_map,
+							  dev->sc_bump_sz);
+#else
 		dev->sc_bump_va = (u_char *)kmem_alloc(kernel_map,
 						       dev->sc_bump_sz);
+#endif
 		dev->sc_bump_pa = kvtop(dev->sc_bump_va);
 	}
 
@@ -257,6 +262,9 @@ sfasinitialize(dev)
  * of virtual memory to which we can later map physical memory to.
  */
 #ifdef SFAS_NEED_VM_PATCH
+#if defined(UVM)
+	dev->sc_vm_link = (u_char *)uvm_km_valloc(kernel_map, MAXPHYS + NBPG);
+#else
 	vm_map_lock(kernel_map);
 
 /* Locate available space. */
@@ -279,6 +287,7 @@ sfasinitialize(dev)
 			      (vm_offset_t)dev->sc_vm_link+(MAXPHYS+NBPG));
 		vm_map_unlock(kernel_map);
 	}
+#endif /* UVM */
 
 	dev->sc_vm_link_pages = 0;
 #endif
