@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 1997/01/03 03:04:00 etheisen Exp $
+#	$OpenBSD: Makefile,v 1.7 1997/02/28 10:18:41 downsj Exp $
 #	$NetBSD: Makefile,v 1.4 1995/03/24 03:58:22 cgd Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
@@ -32,9 +32,5 @@ beforeinstall:
 map: map.c
 	${HOSTCC} -O ${.CURDIR}/map.c -lplot -o ${.TARGET}
 	./map | plot > /dev/tty
-
-# XXX this rule shouldn't be here.
-phantasia.cat6: phantasia.6
-	tbl ${.CURDIR}/phantasia.6 | nroff -man > ${.TARGET}
 
 .include <bsd.prog.mk>
