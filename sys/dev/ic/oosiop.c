@@ -1,4 +1,4 @@
-/*	$OpenBSD: oosiop.c,v 1.1 2004/03/12 00:04:57 miod Exp $	*/
+/*	$OpenBSD: oosiop.c,v 1.2 2004/03/12 00:25:57 miod Exp $	*/
 /*	$NetBSD: oosiop.c,v 1.4 2003/10/29 17:45:55 tsutsui Exp $	*/
 
 /*
@@ -948,6 +948,8 @@ oosiop_timeout(void *arg)
 	printf("command 0x%02x timeout on xs %p\n", xs->cmd->opcode, xs);
 
 	s = splbio();
+
+	oosiop_reset_bus(sc);
 
 	cb->flags |= CBF_TIMEOUT;
 	oosiop_done(sc, cb);
