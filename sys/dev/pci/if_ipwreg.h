@@ -1,7 +1,7 @@
-/*	$OpenBSD: if_ipwreg.h,v 1.10 2005/01/05 09:07:16 jsg Exp $	*/
+/*	$OpenBSD: if_ipwreg.h,v 1.11 2005/01/13 20:52:13 damien Exp $	*/
 
 /*-
- * Copyright (c) 2004
+ * Copyright (c) 2004, 2005
  *      Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

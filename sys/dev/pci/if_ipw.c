@@ -1,7 +1,7 @@
-/*	$OpenBSD: if_ipw.c,v 1.38 2005/01/05 09:07:16 jsg Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.39 2005/01/13 20:52:13 damien Exp $	*/
 
 /*-
- * Copyright (c) 2004
+ * Copyright (c) 2004, 2005
  *      Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1087,10 +1087,8 @@ ipw_tx_intr(struct ipw_softc *sc)
 	sc->txold = (r == 0) ? IPW_NTBD - 1 : r - 1;
 
 	/* Call start() since some buffer descriptors have been released */
-	if (sc->txfree >= 1 + IPW_MAX_NSEG) {
-		ifp->if_flags &= ~IFF_OACTIVE;
-		(*ifp->if_start)(ifp);
-	}
+	ifp->if_flags &= ~IFF_OACTIVE;
+	(*ifp->if_start)(ifp);
 }
 
 int
@@ -1347,9 +1345,6 @@ ipw_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 	/* Inform firmware about this new packet */
 	CSR_WRITE_4(sc, IPW_CSR_TX_WRITE_INDEX, sc->txcur);
 
-	if (sc->txfree < 1 + IPW_MAX_NSEG)
-		ifp->if_flags |= IFF_OACTIVE;
-
 	return 0;
 }
 
@@ -1368,6 +1363,12 @@ ipw_start(struct ifnet *ifp)
 		IF_DEQUEUE(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
+
+		if (sc->txfree < 1 + IPW_MAX_NSEG) {
+			IF_PREPEND(&ifp->if_snd, m);
+			ifp->if_flags |= IFF_OACTIVE;
+			break;
+		}
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf != NULL)

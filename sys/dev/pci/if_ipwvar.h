@@ -1,7 +1,7 @@
-/*	$OpenBSD: if_ipwvar.h,v 1.7 2005/01/05 09:07:16 jsg Exp $	*/
+/*	$OpenBSD: if_ipwvar.h,v 1.8 2005/01/13 20:52:13 damien Exp $	*/
 
 /*-
- * Copyright (c) 2004
+ * Copyright (c) 2004, 2005
  *      Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -138,8 +138,8 @@ struct ipw_softc {
 
 	u_int32_t			txcur;
 	u_int32_t			txold;
-	u_int32_t			txfree;
 	u_int32_t			rxcur;
+	int				txfree;
 
 	void				*powerhook;
 
