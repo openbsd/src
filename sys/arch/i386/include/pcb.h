@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.6 2001/03/22 23:36:52 niklas Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.7 2001/03/24 18:11:48 millert Exp $	*/
 /*	$NetBSD: pcb.h,v 1.21 1996/01/08 13:51:42 mycroft Exp $	*/
 
 /*-
@@ -79,9 +79,7 @@ struct pcb {
 	int	vm86_eflags;		/* virtual eflags for vm86 mode */
 	int	vm86_flagmask;		/* flag mask for vm86 mode */
 	void	*vm86_userp;		/* XXX performance hack */
-#ifdef PMAP_NEW
 	struct pmap *pcb_pmap;		/* back pointer to our pmap */
-#endif
 	u_long	pcb_iomap[NIOPORTS/32];	/* I/O bitmap */
 	u_char	pcb_iomap_pad;	/* required; must be 0xff, says intel */
 };
