@@ -1,5 +1,5 @@
-/*	$OpenBSD: transport.h,v 1.4 1999/02/26 03:52:00 niklas Exp $	*/
-/*	$EOM: transport.h,v 1.11 1999/02/14 00:15:16 niklas Exp $	*/
+/*	$OpenBSD: transport.h,v 1.5 1999/03/24 14:45:36 niklas Exp $	*/
+/*	$EOM: transport.h,v 1.12 1999/03/24 11:05:29 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -78,13 +78,13 @@ struct transport_vtbl {
 
   /*
    * Fill out a sockaddr structure with the transport's destination end's
-   * address info.  XXX Why not size_t * as last arg?
+   * address info.  XXX Why not size_t * instead of int *?
    */
   void (*get_dst) (struct transport *, struct sockaddr **, int *);
 
   /*
    * Fill out a sockaddr structure with the transport's source end's
-   * address info.  XXX Why not size_t * as last arg?
+   * address info.  XXX Why not size_t * instead of int *?
    */
   void (*get_src) (struct transport *, struct sockaddr **, int *);
 };
