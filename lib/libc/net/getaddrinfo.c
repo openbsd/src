@@ -1,4 +1,5 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.20 2000/04/26 14:41:14 itojun Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.21 2000/04/26 16:05:20 itojun Exp $	*/
+/*	$KAME: getaddrinfo.c,v 1.14 2000/04/26 15:41:49 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
