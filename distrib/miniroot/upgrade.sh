@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.7 1997/05/14 21:22:07 millert Exp $
+#	$OpenBSD: upgrade.sh,v 1.8 1997/07/09 15:15:35 millert Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 ROOTDISK=""				# filled in below
 
-trap "unmount_fs -fast /tmp/fstab.shadow > /dev/null 2>&1; rm -f /tmp/fstab.shadow" 0
+trap "unmount_fs -check /tmp/fstab.shadow > /dev/null 2>&1; rm -f /tmp/fstab.shadow" 0
 
 MODE="upgrade"
 

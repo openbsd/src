@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.36 1997/05/29 09:15:47 niklas Exp $
+#	$OpenBSD: install.sub,v 1.37 1997/07/09 15:15:37 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -1627,30 +1627,22 @@ __mount_filesystems_1
 unmount_fs()
 {
 	# Unmount all filesystems and check their integrity.
-	# Usage: [-fast] <fstab file>
-	local _fast
+	# Usage: [-check] <fstab file>
+	local _check
 	local _fstab
 	local _pid
 
-	if [ "$1" = "-fast" ]; then
-		_fast=1
+	if [ "$1" = "-check" ]; then
+		_check=1
 		_fstab=$2
 	else
-		_fast=0
+		_check=0
 		_fstab=$1
 	fi
 
 	if [ ! \( -f $_fstab -a -s $_fstab \) ]; then
 		echo "fstab empty" > /dev/tty
 		return
-	fi
-
-	if [ $_fast = 0 ]; then
-		echo -n	"Syncing disks..."
-		#_pid=`twiddle`
-		sync; sleep 4; sync; sleep 2; sync; sleep 2
-		#kill $_pid
-		echo	"done."
 	fi
 
 	(
@@ -1669,14 +1661,13 @@ unmount_fs()
 		done
 		echo "Done."
 
-		if [ $_fast = 0 ]; then
-			exit
+		if [ $_check = 1]; then
+			echo "Checking filesystem integrity..."
+			for _dev in ${_devs}; do
+				echo  "${_dev}"
+				fsck -f ${_dev}
+			done
 		fi
-		echo "Checking filesystem integrity..."
-		for _dev in ${_devs}; do
-			echo  "${_dev}"
-			fsck -f ${_dev}
-		done
 		echo "Done."
 	) < $_fstab
 }
