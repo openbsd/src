@@ -144,38 +144,19 @@ main(argc, argv)
 int
 umountall()
 {
-	struct fstab *fs;
-	int rval;
-	char *cp;
+	struct statfs *mtab;
+	int rval = 0;
+	int nfsys;	/* number of mounted filesystems */
+	int i;
 
-	while ((fs = getfsent()) != NULL) {
-		/* Ignore the root. */
-		if (strcmp(fs->fs_file, "/") == 0)
-			continue;
-		/*
-		 * !!!
-		 * Historic practice: ignore unknown FSTAB_* fields.
-		 */
-		if (strcmp(fs->fs_type, FSTAB_RW) &&
-		    strcmp(fs->fs_type, FSTAB_RO) &&
-		    strcmp(fs->fs_type, FSTAB_RQ))
-			continue;
-
-		if (!selected(fs->fs_vfstype))
-			continue;
-
-		/* 
-		 * We want to unmount the file systems in the reverse order
-		 * that they were mounted.  So, we save off the file name
-		 * in some allocated memory, and then call recursively.
-		 */
-		if ((cp = malloc((size_t)strlen(fs->fs_file) + 1)) == NULL)
-			err(1, NULL);
-		(void)strcpy(cp, fs->fs_file);
-		rval = umountall();
-		return (umountfs(cp) || rval);
+	if (nfsys = getmntinfo(&mtab, MNT_NOWAIT)) {
+	    for (i=nfsys - 1; i; i--) {
+		if (strcmp(mtab[i].f_mntonname, "/")) {
+		    if (umountfs(mtab[i].f_mntonname)) rval = 1;
+    	    	}
+	    }
 	}
-	return (0);
+	return(rval);
 }
 
 int
