@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.31 2000/04/21 21:37:49 deraadt Exp $
+.\" $OpenBSD: vpn.8,v 1.32 2000/04/22 02:04:23 angelos Exp $
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -139,13 +139,23 @@ must be defined on each end of the VPN, e.g.:
 ipsecadm new esp -spi SPI_OUT -src A_EXTERNAL_IP
          -dst B_EXTERNAL_IP -forcetunnel
          -enc 3des -auth sha1
-         -key ENCRYPTION_KEY -authkey AUTHENTICATION_KEY
+         -keyfile ENCRYPTION_KEY_FILE -authkeyfile AUTHENTICATION_KEY_FILE
 
 ipsecadm new esp -spi SPI_IN -src B_EXTERNAL_IP
          -dst A_EXTERNAL_IP -forcetunnel
          -enc 3des -auth sha1
-         -key ENCRYPTION_KEY -authkey AUTHENTICATION_KEY
+         -keyfile ENCRYPTION_KEY_FILE -authkeyfile AUTHENTICATION_KEY_FILE
 .Ed
+.Pp
+Note that the
+.Fl key
+and
+.Fl authkey
+may be used to specify the keys directly in the
+.Xr ipsecadm 8
+command line.  However, another user could view the files by using the
+.Xr ps 1
+command at the appropriate time (or use a program for doing so).
 .Pp
 .Ss Creating IPSec Flows
 Both IPsec gateways need to configure
@@ -289,15 +299,15 @@ c9fff55b501206a6607fb45c392c5e1568db2aaf
 Create the Security Associations (on both endpoints):
 .Pp
 .Bd -literal
+# echo 596a96cc7bf9108cd896f33c44aedc8aa8acf0b8c74acd62 > enc_key
+# echo c9fff55b501206a6607fb45c392c5e1568db2aaf > auth_key 
 # /sbin/ipsecadm new esp -src 192.168.2.1 -dst 192.168.1.254 \e\ 
    -forcetunnel -spi 1000 -enc 3des -auth sha1 \e\ 
-   -key 596a96cc7bf9108cd896f33c44aedc8aa8acf0b8c74acd62 \e\ 
-   -authkey c9fff55b501206a6607fb45c392c5e1568db2aaf
+   -keyfile enc_key -authkeyfile auth_key
 
 # /sbin/ipsecadm new esp -src 192.168.1.254 -dst 192.168.2.1  \e\ 
    -forcetunnel -spi 1001 -enc 3des -auth sha1 \e\ 
-   -key 596a96cc7bf9108cd896f33c44aedc8aa8acf0b8c74acd62 \e\ 
-   -authkey c9fff55b501206a6607fb45c392c5e1568db2aaf
+   -keyfile enc_key -authkeyfile auth_key
 .Ed
 .Pp
 .It
