@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.20 1997/08/31 20:42:32 deraadt Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.21 1997/12/31 01:22:55 deraadt Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -492,9 +492,11 @@ tunread(dev, uio, ioflag)
 	s = splimp();
 	do {
 		while ((tp->tun_flags & TUN_READY) != TUN_READY)
-			if (tsleep((caddr_t)tp, (PZERO+1)|PCATCH, "tunread", 0) != 0)
+			if (tsleep((caddr_t)tp, (PZERO+1)|PCATCH,
+			    "tunread", 0) != 0) {
+				splx(s);
 				return(EINTR);
-
+			}
 		IF_DEQUEUE(&ifp->if_snd, m0);
 		if (m0 == 0) {
 			if (tp->tun_flags & TUN_NBIO && ioflag & IO_NDELAY) {
@@ -502,8 +504,11 @@ tunread(dev, uio, ioflag)
 				return EWOULDBLOCK;
 			}
 			tp->tun_flags |= TUN_RWAIT;
-			if (tsleep((caddr_t)tp, (PZERO + 1)|PCATCH, "tunread", 0) != 0)
+			if (tsleep((caddr_t)tp, (PZERO + 1)|PCATCH,
+			    "tunread", 0) != 0) {
+				splx(s);
 				return EINTR;
+			}
 		}
 	} while (m0 == 0);
 	splx(s);
