@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.64 2002/06/04 00:09:08 deraadt Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.65 2003/01/05 22:41:35 deraadt Exp $	*/
 /*	$NetBSD: ncr.c,v 1.63 1997/09/23 02:39:15 perry Exp $	*/
 
 /**************************************************************************
@@ -1466,7 +1466,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$OpenBSD: ncr.c,v 1.64 2002/06/04 00:09:08 deraadt Exp $\n";
+	"\n$OpenBSD: ncr.c,v 1.65 2003/01/05 22:41:35 deraadt Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -6657,7 +6657,7 @@ void ncr_int_sir (ncb_p np)
 **	Was Sie schon immer ueber transfermode negotiation wissen wollten ...
 **
 **	We try to negotiate sync and wide transfer only after
-**	a successfull inquire command. We look at byte 7 of the
+**	a successful inquire command. We look at byte 7 of the
 **	inquire data to determine the capabilities if the target.
 **
 **	When we try to negotiate, we append the negotiation message

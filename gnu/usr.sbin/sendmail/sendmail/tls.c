@@ -1205,7 +1205,7 @@ endtls(ssl, side)
 		**  For your server the problem is different, because it
 		**  receives the shutdown first (setting SSL_RECEIVED_SHUTDOWN),
 		**  then sends its response (SSL_SENT_SHUTDOWN), so for the
-		**  server the shutdown was successfull.
+		**  server the shutdown was successful.
 		**
 		**  As is by know, you would have to call SSL_shutdown() once
 		**  and ignore an SSL_ERROR_SYSCALL returned. Then call

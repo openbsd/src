@@ -1,4 +1,4 @@
-/*	$OpenBSD: frm_driver.c,v 1.7 2001/01/22 18:02:15 millert Exp $	*/
+/*	$OpenBSD: frm_driver.c,v 1.8 2003/01/05 22:41:37 deraadt Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -2051,7 +2051,7 @@ static int Insert_String(FORM *form, int row, char *txt, int len)
 |                    the wrapping.
 |
 |   Return Values :  E_OK              - no wrapping required or wrapping
-|                                        was successfull
+|                                        was successful
 |                    E_REQUEST_DENIED  -
 |                    E_SYSTEM_ERROR    - some system error
 +--------------------------------------------------------------------------*/

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.52 2002/07/18 08:46:18 deraadt Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.53 2003/01/05 22:41:36 deraadt Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -1131,7 +1131,7 @@ hang_dirp(struct dirlist *dp, struct grouplist *grp, struct exportlist *ep,
 	} else {
 
 		/*
-		 * Loop throught the directories adding them to the tree.
+		 * Loop through the directories adding them to the tree.
 		 */
 		while (dp) {
 			dp2 = dp->dp_left;

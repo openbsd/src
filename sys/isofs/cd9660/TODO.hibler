@@ -1,4 +1,4 @@
-#	$OpenBSD: TODO.hibler,v 1.3 2002/02/10 23:15:05 deraadt Exp $
+#	$OpenBSD: TODO.hibler,v 1.4 2003/01/05 22:41:36 deraadt Exp $
 #	$NetBSD: TODO.hibler,v 1.6 1994/12/13 22:33:10 mycroft Exp $
 
 1. Investiate making ISOFS another UFS shared filesystem (ala FFS/MFS/LFS).
@@ -8,7 +8,7 @@
 
 2. It would be nice to be able to use the vfs_cluster code.
    Unfortunately, if the logical block size is smaller than the page size,
-   it won't work.  Also, if throughtput is relatively constant for any
+   it won't work.  Also, if throughput is relatively constant for any
    block size (as it is for the HP drive--150kbs) then clustering may not
    buy much (or may even hurt when vfs_cluster comes up with a large sync
    cluster).

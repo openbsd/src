@@ -29,10 +29,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: aic7xxx_openbsd.c,v 1.9 2002/09/06 05:04:41 smurph Exp $
+ * $Id: aic7xxx_openbsd.c,v 1.10 2003/01/05 22:41:35 deraadt Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx_freebsd.c,v 1.26 2001/07/18 21:39:47 gibbs Exp $
- * $OpenBSD: aic7xxx_openbsd.c,v 1.9 2002/09/06 05:04:41 smurph Exp $
+ * $OpenBSD: aic7xxx_openbsd.c,v 1.10 2003/01/05 22:41:35 deraadt Exp $
  */
 
 #include <dev/ic/aic7xxx_openbsd.h>
@@ -437,7 +437,7 @@ ahc_init_scbdata(ahc)
 	ahc_outb(ahc, NEXT_QUEUED_SCB, ahc->next_queued_scb->hscb->tag);
 
 	/*
-	 * Note that we were successfull
+	 * Note that we were successful
 	 */
 	return (0); 
 

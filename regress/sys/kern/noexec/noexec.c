@@ -1,4 +1,4 @@
-/*	$OpenBSD: noexec.c,v 1.2 2002/09/03 15:29:33 mickey Exp $	*/
+/*	$OpenBSD: noexec.c,v 1.3 2003/01/05 22:41:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -80,7 +80,7 @@ noexec_mprotect(void *p, size_t size)
 	printf("%s: execute\n", label);
 	((void (*)(void))p)();
 
-	/* here we are successfull on segv and fail if it still executes */
+	/* here we are successful on segv and fail if it still executes */
 	fail = 0;
 	mprotect(p, size, PROT_READ|PROT_WRITE);
 	printf("%s: catch a signal\n", label);
