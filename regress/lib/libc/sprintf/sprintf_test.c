@@ -1,4 +1,4 @@
-/*	$OpenBSD: sprintf_test.c,v 1.3 2004/09/16 20:22:26 otto Exp $ */
+/*	$OpenBSD: sprintf_test.c,v 1.4 2004/09/18 19:31:32 otto Exp $ */
 
 /*
  * Copyright (c) 2003 Theo de Raadt
@@ -29,6 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -48,10 +49,16 @@ char correct[] =
 	"|xx 41 42 43 44\n"
 	"|xx 45 -1 1 -1 1\n";
 
+char correct2[] =
+	"1 0 -1 1 1 2 1 3 -1 4 1  \n"
+	"1 -1 1 1 -1 1  \n";
+
 int
 main(int argc, char *argv[])
 {
 	char buf[1024];
+	size_t sz1, sz2, sz3, sz4;
+	ptrdiff_t p1, p2, p3, p4;
 
 	/* Test positional arguments */
 	snprintf(buf, sizeof buf,
@@ -77,8 +84,19 @@ main(int argc, char *argv[])
 	    "43", "44", 45, -1L, 1LL, -1, 1LL
 	    );
 
-	printf(buf);
-	if (strcmp(buf, correct) == 0)
-		exit(0);
-	exit(1);
+	if (strcmp(buf, correct) != 0)
+		exit(1);
+
+	sz1 = (size_t)1;
+	sz2 = (size_t)-1;
+	p1 = (ptrdiff_t)1;
+	p2 = (ptrdiff_t)-1;
+	snprintf(buf, sizeof buf,
+		"%zx %d %zd %d %zu %d %tx %d %td %d %tu %zn %tn\n"
+		"%1$zx %3$zd %5$zu %7$tx %9$td %11$tu %14$zn %15$tn\n",
+		sz1, 0, sz2, 1, sz1, 2, p1, 3, p2, 4, p1, &sz3, &p3, &sz4, &p4);
+	if (strcmp(buf, correct2) != 0 || sz3 != 24 || p3 != 25 ||
+	    sz4 != 40 || p4 != 41)
+		exit(1);
+	exit(0);
 }
