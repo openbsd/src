@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.33 1998/08/24 05:27:27 millert Exp $
+#	$OpenBSD: GENERIC,v 1.34 1998/09/01 23:52:38 art Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -35,7 +35,7 @@ option		QUOTA		# UFS quotas
 #option		LFS		# log-structured file system
 option		EXT2FS		# Second Extended Filesystem
 option		MFS		# memory file system
-
+#option		XFS		# xfs filesystem
 
 option		NFSCLIENT	# Network File System client
 option		NFSSERVER	# Network File System server
