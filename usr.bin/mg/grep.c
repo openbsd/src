@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.4 2002/03/16 19:30:29 vincent Exp $	*/
+/*	$OpenBSD: grep.c,v 1.5 2002/03/18 01:22:31 vincent Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.  All rights reserved.
  *
@@ -150,7 +150,6 @@ compile_mode(char *name, char *command)
 	bp = bfind(name, TRUE);
 	if (bclear(bp) != TRUE)
 		return NULL;
-	bp->b_flag |= BFREADONLY;
 
 	addlinef(bp, "Running (%s).", command);
 	addline(bp, "");
