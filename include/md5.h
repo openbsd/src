@@ -1,5 +1,5 @@
 /* MD5.H - header file for MD5C.C
- * $OpenBSD: md5.h,v 1.3 1996/09/30 03:55:48 millert Exp $
+ * $OpenBSD: md5.h,v 1.4 1996/11/24 02:25:57 niklas Exp $
  */
 
 /* Copyright (C) 1991-2, RSA Data Security, Inc. Created 1991. All
@@ -30,15 +30,15 @@ documentation and/or software.
 /* MD5 context. */
 typedef struct MD5Context {
     u_int32_t state[4];		/* state (ABCD) */
-    u_int32_t count[2];		/* number of bits, modulo 2^64 (lsb first) */
+    u_int64_t count;		/* number of bits, modulo 2^64 */
     unsigned char buffer[64];	/* input buffer */
 } MD5_CTX;
 
 void   MD5Init __P((MD5_CTX *));
-void   MD5Update __P((MD5_CTX *, const unsigned char *, unsigned int));
+void   MD5Update __P((MD5_CTX *, const unsigned char *, size_t));
 void   MD5Final __P((unsigned char [16], MD5_CTX *));
 char * MD5End __P((MD5_CTX *, char *));
 char * MD5File __P((char *, char *));
-char * MD5Data __P((const unsigned char *, unsigned int, char *));
+char * MD5Data __P((const unsigned char *, size_t, char *));
 
 #endif /* _MD5_H_ */

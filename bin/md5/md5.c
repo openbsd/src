@@ -1,5 +1,5 @@
 /*
- * $OpenBSD: md5.c,v 1.2 1996/11/12 23:33:02 niklas Exp $
+ * $OpenBSD: md5.c,v 1.3 1996/11/24 02:26:00 niklas Exp $
  *
  * Derived from:
  */
@@ -37,6 +37,8 @@ static void MDString PROTO_LIST((char *));
 static void MDTimeTrial PROTO_LIST((void));
 static void MDTestSuite PROTO_LIST((void));
 static void MDFilter PROTO_LIST((int));
+
+int main PROTO_LIST((int, char *[]));
 
 /* Main driver.
 
@@ -85,7 +87,7 @@ static void
 MDString(string)
 	char   *string;
 {
-	unsigned int len = strlen(string);
+	size_t len = strlen(string);
 	char buf[33];
 
 	printf("MD5 (\"%s\") = %s\n", string, MD5Data(string, len, buf));
@@ -116,7 +118,7 @@ MDTimeTrial()
 	/* Digest blocks */
 	MD5Init(&context);
 	for (i = 0; i < TEST_BLOCK_COUNT; i++)
-		MD5Update(&context, block, TEST_BLOCK_LEN);
+		MD5Update(&context, block, (size_t)TEST_BLOCK_LEN);
 	p = MD5End(&context,buf);
 
 	/* Stop timer */
@@ -158,13 +160,13 @@ static void
 MDFilter(int pipe)
 {
 	MD5_CTX context;
-	int     len;
+	size_t	len;
 	unsigned char buffer[BUFSIZ];
 	char buf[33];
 
 	MD5Init(&context);
-	while ((len = fread(buffer, 1, BUFSIZ, stdin)) > 0) {
-		if(pipe && (len != fwrite(buffer, 1, len, stdout))) {
+	while ((len = fread(buffer, (size_t)1, (size_t)BUFSIZ, stdin)) > 0) {
+		if(pipe && (len != fwrite(buffer, (size_t)1, len, stdout))) {
 			perror("stdout");
 			exit(1);
 		}
