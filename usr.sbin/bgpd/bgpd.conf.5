@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.44 2005/03/14 17:32:04 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.45 2005/03/15 09:24:05 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -812,26 +812,26 @@ or
 Set the
 .Em LOCAL_PREF
 AS path attribute.
-If 
+If
 .Ar number
-starts with a sign 
+starts with a plus or minus sign,
 .Em LOCAL_PREF
-will be adjusted by adding or substracting
-.Ar number
-else it will be set to
+will be adjusted by adding or subtracting
+.Ar number ;
+otherwise it will be set to
 .Ar number .
 .Pp
 .It Ic med Ar number
 Set the
 .Em MULTI_EXIT_DISC
 AS path attribute.
-If 
+If
 .Ar number
-starts with a sign 
+starts with a plus or minus sign,
 .Em MULTI_EXIT_DISC
-will be adjusted by adding or substracting
-.Ar number
-else it will be set to
+will be adjusted by adding or subtracting
+.Ar number ;
+otherwise it will be set to
 .Ar number .
 .Pp
 .It Xo
