@@ -1,4 +1,4 @@
-/*	$OpenBSD: encrypt.c,v 1.12 2000/11/10 15:33:12 provos Exp $	*/
+/*	$OpenBSD: encrypt.c,v 1.13 2000/11/11 15:34:25 provos Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -143,17 +143,17 @@ int main(argc, argv)
     while ((opt = getopt(argc, argv, "kmps:b:")) != -1) {
     	switch (opt) {
 	case 'k':                       /* Stdin/Stdout Unix crypt */
-	    if (operation != -1)
+	    if (operation != -1 || prompt)
 		 usage();
 	    operation = DO_MAKEKEY;
 	    break;
 	case 'm':                       /* MD5 password hash */
-	    if (operation != -1 || prompt)
+	    if (operation != -1)
 		 usage();
 	    operation = DO_MD5;
 	    break;
 	case 'p':
-	    if (operation != -1)
+	    if (operation == DO_MAKEKEY)
 		 usage();
 	    prompt = 1;
 	    break;
