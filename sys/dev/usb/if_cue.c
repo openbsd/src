@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_cue.c,v 1.11 2001/10/31 04:24:44 nate Exp $ */
-/*	$NetBSD: if_cue.c,v 1.35 2001/04/13 23:30:09 thorpej Exp $	*/
+/*	$OpenBSD: if_cue.c,v 1.12 2002/05/06 05:19:20 nate Exp $ */
+/*	$NetBSD: if_cue.c,v 1.38 2001/12/12 15:36:08 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -135,13 +135,13 @@ int	cuedebug = 0;
 /*
  * Various supported device vendors/products.
  */
-Static struct cue_type cue_devs[] = {
+Static struct usb_devno cue_devs[] = {
 	{ USB_VENDOR_CATC, USB_PRODUCT_CATC_NETMATE },
 	{ USB_VENDOR_CATC, USB_PRODUCT_CATC_NETMATE2 },
 	{ USB_VENDOR_SMARTBRIDGES, USB_PRODUCT_SMARTBRIDGES_SMARTLINK },
 	/* Belkin F5U111 adapter covered by NETMATE entry */
-	{ 0, 0 }
 };
+#define cue_lookup(v, p) (usb_lookup(cue_devs, v, p))
 
 USB_DECLARE_DRIVER(cue);
 
@@ -468,16 +468,12 @@ cue_reset(struct cue_softc *sc)
 USB_MATCH(cue)
 {
 	USB_MATCH_START(cue, uaa);
-	struct cue_type			*t;
 
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
 
-	for (t = cue_devs; t->cue_vid != 0; t++)
-		if (uaa->vendor == t->cue_vid && uaa->product == t->cue_did)
-			return (UMATCH_VENDOR_PRODUCT);
-
-	return (UMATCH_NONE);
+	return (cue_lookup(uaa->vendor, uaa->product) != NULL ?
+		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
 /*
@@ -629,9 +625,6 @@ USB_DETACH(cue)
 #if defined(__NetBSD__)
 #if NRND > 0
 	rnd_detach_source(&sc->rnd_source);
-#endif
-#if NBPFILTER > 0
-	bpfdetach(ifp);
 #endif
 #endif /* __NetBSD__ */
 	ether_ifdetach(ifp);
@@ -1070,7 +1063,7 @@ cue_init(void *xsc)
 	eaddr = sc->arpcom.ac_enaddr;
 #elif defined(__NetBSD__)
 	eaddr = LLADDR(ifp->if_sadl);
-#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
+#endif
 	/* Set MAC address */
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		cue_csr_write_1(sc, CUE_PAR0 - i, eaddr[i]);
