@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.3 2001/11/06 19:53:15 miod Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.4 2001/12/14 14:48:55 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -574,6 +574,7 @@ find_node_intr(node, addr, intr)
 	u_int32_t map[64], *mp;
 	u_int32_t imask[8], maskedaddr[8];
 	u_int32_t icells;
+	char name[32];
 
 	len = OF_getprop(node, "AAPL,interrupts", intr, 4);
 	if (len == 4)
@@ -595,7 +596,7 @@ find_node_intr(node, addr, intr)
 		len -= mlen;
 		iparent = *mp++;
 		if (OF_getprop(iparent, "#interrupt-cells", &icells, 4) != 4)
-			return -1;
+			goto nomap;
 
 		if (match == 0) {
 			/* multiple irqs? */
@@ -607,6 +608,34 @@ find_node_intr(node, addr, intr)
 	}
 	return -1;
 nomap:
+
+        /*
+         * If the node has no interrupt property and the parent is a
+         * pci-bridge, use parent's interrupt.  This occurs on a PCI
+         * slot.  (e.g. AHA-3940)
+         */
+        memset(name, 0, sizeof(name));
+        OF_getprop(parent, "name", name, sizeof(name));
+        if (strcmp(name, "pci-bridge") == 0) {
+                len = OF_getprop(parent, "AAPL,interrupts", intr, 4) ;
+                if (len == 4)
+                        return len;
+                /*
+                 * XXX I don't know what is the correct local address.
+                 * XXX Use the first entry for now.
+                 */
+                len = OF_getprop(parent, "interrupt-map", map, sizeof(map));
+                if (len >= 36) {
+                        addr = &map[5];
+                        return find_node_intr(parent, addr, intr);
+                }
+        }
+
+        /* XXX This may be wrong... */
+        len = OF_getprop(node, "interrupts", intr, 4) ;
+        if (len == 4)
+                return len;
+
 	return -1;
 }
 
