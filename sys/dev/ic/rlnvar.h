@@ -1,9 +1,11 @@
-/*	$OpenBSD: rlnvar.h,v 1.3 2000/02/05 13:55:46 d Exp $	*/
+/*	$OpenBSD: rlnvar.h,v 1.4 2000/12/13 15:58:39 mickey Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public domain.
  *
  * Proxim RangeLAN2 soft state copy.
  */
+
+#include <sys/timeout.h>
 
 /*
  * Mailboxes are used to communicate card-initiated messages
@@ -29,6 +31,7 @@ struct rln_softc {
 	struct		arpcom sc_arpcom;	/* Ethernet common part */
 	bus_space_tag_t	sc_iot;			/* Bus cookie */
 	bus_space_handle_t sc_ioh;		/* Bus i/o handle */
+	struct timeout	sc_timeout;
 
 	u_int8_t	sc_width;		/* Bus transfer width */
 	u_int8_t	sc_irq;			/* IRQ for card */
