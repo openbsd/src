@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ec.c,v 1.2 1998/10/04 22:28:14 niklas Exp $	*/
+/*	$OpenBSD: if_ec.c,v 1.3 2001/03/12 05:36:59 aaron Exp $	*/
 /*	$NetBSD: if_ec.c,v 1.9 1998/07/05 06:49:12 jonathan Exp $	*/
 
 /*-
@@ -126,6 +126,8 @@ struct cfattach ec_ca = {
 
 int	ec_set_media __P((struct ec_softc *, int));
 
+void	ec_media_init __P((struct dp8390_softc *));
+
 int	ec_mediachange __P((struct dp8390_softc *));
 void	ec_mediastatus __P((struct dp8390_softc *, struct ifmediareq *));
 
@@ -148,13 +150,6 @@ static const int ec_membase[] = {
 	0xd8000, 0xdc000,
 };
 #define	NEC_MEMBASE	(sizeof(ec_membase) / sizeof(ec_membase[0]))
-
-int ec_media[] = {
-	IFM_ETHER|IFM_10_2,
-	IFM_ETHER|IFM_10_5,
-};
-#define	NEC_MEDIA	(sizeof(ec_media) / sizeof(ec_media[0]))
-#define	EC_DEFMEDIA	(IFM_ETHER|IFM_10_2)
 
 struct cfdriver ec_cd = {
 	NULL, "ec", DV_IFNET
@@ -420,6 +415,8 @@ ec_attach(parent, self, aux)
 	sc->write_mbuf = ec_write_mbuf;
 	sc->read_hdr = ec_read_hdr;
 
+	sc->sc_media_init = ec_media_init;
+
 	sc->sc_mediachange = ec_mediachange;
 	sc->sc_mediastatus = ec_mediastatus;
 
@@ -427,7 +424,7 @@ ec_attach(parent, self, aux)
 	sc->mem_size = memsize;
 
 	/* Do generic parts of attach. */
-	if (dp8390_config(sc, ec_media, NEC_MEDIA, EC_DEFMEDIA)) {
+	if (dp8390_config(sc)) {
 		printf("%s: configuration failed\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -756,6 +753,15 @@ ec_read_hdr(sc, packet_ptr, packet_hdrp)
 #if BYTE_ORDER == BIG_ENDIAN
 	packet_hdrp->count = swap16(packet_hdrp->count);
 #endif
+}
+
+void
+ec_media_init(struct dp8390_softc *sc)
+{
+	ifmedia_init(&sc->sc_media, 0, dp8390_mediachange, dp8390_mediastatus);
+	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_10_2, 0, NULL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_10_5, 0, NULL);
+	ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_10_2);
 }
 
 int

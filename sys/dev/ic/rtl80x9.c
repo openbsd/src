@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl80x9.c,v 1.5 2000/06/20 09:27:25 fgsch Exp $	*/
+/*	$OpenBSD: rtl80x9.c,v 1.6 2001/03/12 05:36:58 aaron Exp $	*/
 /*	$NetBSD: rtl80x9.c,v 1.1 1998/10/31 00:44:33 thorpej Exp $	*/
 
 /*-
@@ -167,9 +167,8 @@ rtl80x9_init_card(sc)
 }
 
 void
-rtl80x9_init_media(sc, mediap, nmediap, defmediap)
+rtl80x9_media_init(sc)
 	struct dp8390_softc *sc;
-	int **mediap, *nmediap, *defmediap;
 {
 	static int rtl80x9_media[] = {
 		IFM_ETHER|IFM_AUTO,
@@ -177,11 +176,11 @@ rtl80x9_init_media(sc, mediap, nmediap, defmediap)
 		IFM_ETHER|IFM_10_T|IFM_FDX,
 		IFM_ETHER|IFM_10_2,
 	};
+	static const int rtl80x9_nmedia =
+	    sizeof(rtl80x9_media) / sizeof(rtl80x9_media[0]);
 
+	int i, defmedia;
 	u_int8_t conf2, conf3;
-
-	*mediap = rtl80x9_media;
-	*nmediap = sizeof(rtl80x9_media) / sizeof(rtl80x9_media[0]);
 
 	/* Set NIC to page 3 registers. */
 	bus_space_write_1(sc->sc_regt, sc->sc_regh, ED_P0_CR, ED_CR_PAGE_3);
@@ -193,22 +192,27 @@ rtl80x9_init_media(sc, mediap, nmediap, defmediap)
 
 	switch (conf2) {
 	case 0:
-		*defmediap = IFM_ETHER|IFM_AUTO;
+		defmedia = IFM_ETHER|IFM_AUTO;
 		break;
 
 	case RTL3_CONFIG2_PL1|RTL3_CONFIG2_PL0:
 	case RTL3_CONFIG2_PL1:	/* XXX rtl docs sys 10base5, but chip cant do */
-		*defmediap = IFM_ETHER|IFM_10_2;
+		defmedia = IFM_ETHER|IFM_10_2;
 		break;
 
 	case RTL3_CONFIG2_PL0:
 		if (conf3 & RTL3_CONFIG3_FUDUP)
-			*defmediap = IFM_ETHER|IFM_10_T|IFM_FDX;
+			defmedia = IFM_ETHER|IFM_10_T|IFM_FDX;
 		else
-			*defmediap = IFM_ETHER|IFM_10_T;
+			defmedia = IFM_ETHER|IFM_10_T;
 		break;
 	}
 
 	/* Set NIC to page 0 registers. */
 	bus_space_write_1(sc->sc_regt, sc->sc_regh, ED_P0_CR, ED_CR_PAGE_0);
+
+	ifmedia_init(&sc->sc_media, 0, dp8390_mediachange, dp8390_mediastatus);
+	for (i = 0; i < rtl80x9_nmedia; i++)
+		ifmedia_add(&sc->sc_media, rtl80x9_media[i], 0, NULL);
+	ifmedia_set(&sc->sc_media, defmedia);
 }

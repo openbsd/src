@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.9 2001/02/20 19:39:37 mickey Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.10 2001/03/12 05:36:57 aaron Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -71,9 +71,6 @@ static int		dp8390_test_mem __P((struct dp8390_softc *));
 int	dp8390_enable __P((struct dp8390_softc *));
 void	dp8390_disable __P((struct dp8390_softc *));
 
-int	dp8390_mediachange __P((struct ifnet *));
-void	dp8390_mediastatus __P((struct ifnet *, struct ifmediareq *));
-
 #define	ETHER_MIN_LEN	64
 #define ETHER_MAX_LEN	1518
 #define	ETHER_ADDR_LEN	6
@@ -81,15 +78,25 @@ void	dp8390_mediastatus __P((struct ifnet *, struct ifmediareq *));
 int	dp8390_debug = 0;
 
 /*
+ * Standard media init routine for the dp8390.
+ */
+void
+dp8390_media_init(struct dp8390_softc *sc)
+{
+	ifmedia_init(&sc->sc_media, 0, dp8390_mediachange, dp8390_mediastatus);
+	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
+	ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
+}
+
+/*
  * Do bus-independent setup.
  */
 int
-dp8390_config(sc, media, nmedia, defmedia)
+dp8390_config(sc)
 	struct dp8390_softc *sc;
-	int *media, nmedia, defmedia;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	int i, rv;
+	int rv;
 
 	rv = 1;
 
@@ -129,24 +136,16 @@ dp8390_config(sc, media, nmedia, defmedia)
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 	ifp->if_snd.ifq_maxlen = IFQ_MAXLEN;
 
+	/* Print additional info when attached. */
+	printf("%s: address %s\n", sc->sc_dev.dv_xname,
+	    ether_sprintf(sc->sc_arpcom.ac_enaddr));
+
 	/* Initialize media goo. */
-	ifmedia_init(&sc->sc_media, 0, dp8390_mediachange, dp8390_mediastatus);
-	if (media != NULL) {
-		for (i = 0; i < nmedia; i++)
-			ifmedia_add(&sc->sc_media, media[i], 0, NULL);
-		ifmedia_set(&sc->sc_media, defmedia);
-	} else {
-		ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
-		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
-	}
+	(*sc->sc_media_init)(sc);
 
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp);
-
-	/* Print additional info when attached. */
-	printf("%s: address %s\n", sc->sc_dev.dv_xname,
-	    ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	rv = 0;
 out:
@@ -164,6 +163,7 @@ dp8390_mediachange(ifp)
 
 	if (sc->sc_mediachange)
 		return ((*sc->sc_mediachange)(sc));
+
 	return (EINVAL);
 }
 

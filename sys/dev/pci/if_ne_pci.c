@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pci.c,v 1.7 2000/04/03 21:13:48 deraadt Exp $	*/
+/*	$OpenBSD: if_ne_pci.c,v 1.8 2001/03/12 05:37:00 aaron Exp $	*/
 /*	$NetBSD: if_ne_pci.c,v 1.8 1998/07/05 00:51:24 jonathan Exp $	*/
 
 /*-
@@ -69,6 +69,8 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
+#include <dev/mii/miivar.h>
+
 #include <dev/ic/dp8390reg.h>
 #include <dev/ic/dp8390var.h>
 
@@ -99,12 +101,11 @@ const struct ne_pci_product {
 	void (*npp_mediastatus) __P((struct dp8390_softc *,
 	    struct ifmediareq *));
 	void (*npp_init_card) __P((struct dp8390_softc *));
-	void (*npp_init_media) __P((struct dp8390_softc *, int **,
-	    int *, int *));
+	void (*npp_media_init) __P((struct dp8390_softc *));
 } ne_pci_prod[] = {
 	{ PCI_VENDOR_REALTEK,		PCI_PRODUCT_REALTEK_RT8029,
 	  rtl80x9_mediachange,		rtl80x9_mediastatus,
-	  rtl80x9_init_card,		rtl80x9_init_media,
+	  rtl80x9_init_card,		rtl80x9_media_init,
 	  /* RealTek 8029 */ },
 
 	{ PCI_VENDOR_WINBOND,		PCI_PRODUCT_WINBOND_W89C940F,
@@ -203,7 +204,6 @@ ne_pci_attach(parent, self, aux)
 	const struct ne_pci_product *npp;
 	pci_intr_handle_t ih;
 	pcireg_t csr;
-	int *media, nmedia, defmedia;
 
 	npp = ne_pci_lookup(pa);
 	if (npp == NULL) {
@@ -253,17 +253,9 @@ ne_pci_attach(parent, self, aux)
 	/* This interface is always enabled. */
 	dsc->sc_enabled = 1;
 
-	if (npp->npp_init_media != NULL) {
-		(*npp->npp_init_media)(dsc, &media, &nmedia, &defmedia);
-		dsc->sc_mediachange = npp->npp_mediachange;
-		dsc->sc_mediastatus = npp->npp_mediastatus;
-	} else {
-		media = NULL;
-		nmedia = 0;
-		defmedia = 0;
-	}
-
-	/* Always fill in init_card; it might be used for non-media stuff. */
+	dsc->sc_mediachange = npp->npp_mediachange;
+	dsc->sc_mediastatus = npp->npp_mediastatus;
+	dsc->sc_media_init = npp->npp_media_init;
 	dsc->init_card = npp->npp_init_card;
 
 	/* Map and establish the interrupt. */
@@ -288,5 +280,5 @@ ne_pci_attach(parent, self, aux)
 	 * Do generic NE2000 attach.  This will read the station address
 	 * from the EEPROM.
 	 */
-	ne2000_attach(nsc, NULL, media, nmedia, defmedia);
+	ne2000_attach(nsc, NULL);
 }

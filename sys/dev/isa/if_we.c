@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_we.c,v 1.8 2000/04/03 07:43:53 deraadt Exp $	*/
+/*	$OpenBSD: if_we.c,v 1.9 2001/03/12 05:37:00 aaron Exp $	*/
 /*	$NetBSD: if_we.c,v 1.11 1998/07/05 06:49:14 jonathan Exp $	*/
 
 /*-
@@ -155,6 +155,8 @@ const char *we_params __P((bus_space_tag_t, bus_space_handle_t, u_int8_t *,
 	    bus_size_t *, int *, int *));
 void	we_set_media __P((struct we_softc *, int));
 
+void	we_media_init __P((struct dp8390_softc *));
+
 int	we_mediachange __P((struct dp8390_softc *));
 void	we_mediastatus __P((struct dp8390_softc *, struct ifmediareq *));
 
@@ -176,12 +178,6 @@ static const int we_790_irq[] = {
 	IRQUNK, 9, 3, 5, 7, 10, 11, 15,
 };
 #define	NWE_790_IRQ	(sizeof(we_790_irq) / sizeof(we_790_irq[0]))
-
-int we_media[] = {
-	IFM_ETHER|IFM_10_2,
-	IFM_ETHER|IFM_10_5,
-};
-#define	NWE_MEDIA	(sizeof(we_media) / sizeof(we_media[0]))
 
 /*
  * Delay needed when switching 16-bit access to shared memory.
@@ -528,31 +524,11 @@ we_attach(parent, self, aux)
 	sc->sc_flags = self->dv_cfdata->cf_flags;
 
 	/* Do generic parts of attach. */
-	if (wsc->sc_type & WE_SOFTCONFIG) {
-		int defmedia = IFM_ETHER;
-
-		if (sc->is790) {
-			x = bus_space_read_1(asict, asich, WE790_HWR);
-			bus_space_write_1(asict, asich, WE790_HWR,
-			    x | WE790_HWR_SWH);
-			if (bus_space_read_1(asict, asich, WE790_GCR) &
-			    WE790_GCR_GPOUT)
-				defmedia |= IFM_10_2;
-			else
-				defmedia |= IFM_10_5;
-			bus_space_write_1(asict, asich, WE790_HWR,
-			    x & ~WE790_HWR_SWH);
-		} else {
-			x = bus_space_read_1(asict, asich, WE_IRR);
-			if (x & WE_IRR_OUT2)
-				defmedia |= IFM_10_2;
-			else
-				defmedia |= IFM_10_5;
-		}
-		i = dp8390_config(sc, we_media, NWE_MEDIA, defmedia);
-	} else
-		i = dp8390_config(sc, NULL, 0, 0);
-	if (i) {
+	if (wsc->sc_type & WE_SOFTCONFIG)
+		sc->sc_media_init = we_media_init;
+	else
+		sc->sc_media_init = dp8390_media_init;
+	if (dp8390_config(sc)) {
 		printf("%s: configuration failed\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -810,6 +786,38 @@ we_recv_int(sc)
 	WE_MEM_ENABLE(wsc);
 	dp8390_rint(sc);
 	WE_MEM_DISABLE(wsc);
+}
+
+void
+we_media_init(struct dp8390_softc *sc)
+{
+	struct we_softc *wsc = (void *)sc;
+	int defmedia = IFM_ETHER;
+	u_int8_t x;
+
+	if (sc->is790) {
+		x = bus_space_read_1(wsc->sc_asict, wsc->sc_asich, WE790_HWR);
+		bus_space_write_1(wsc->sc_asict, wsc->sc_asich, WE790_HWR,
+		    x | WE790_HWR_SWH);
+		if (bus_space_read_1(wsc->sc_asict, wsc->sc_asich, WE790_GCR) &
+		    WE790_GCR_GPOUT)
+			defmedia |= IFM_10_2;
+		else
+			defmedia |= IFM_10_5;
+		bus_space_write_1(wsc->sc_asict, wsc->sc_asich, WE790_HWR,
+		    x &~ WE790_HWR_SWH);
+	} else {
+		x = bus_space_read_1(wsc->sc_asict, wsc->sc_asich, WE_IRR);
+		if (x & WE_IRR_OUT2)
+			defmedia |= IFM_10_2;
+		else
+			defmedia |= IFM_10_5;
+	}
+
+	ifmedia_init(&sc->sc_media, 0, dp8390_mediachange, dp8390_mediastatus);
+	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_10_2, 0, NULL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_10_5, 0, NULL);
+	ifmedia_set(&sc->sc_media, defmedia);
 }
 
 int

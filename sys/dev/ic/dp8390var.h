@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390var.h,v 1.3 2000/05/29 17:08:51 fgsch Exp $	*/
+/*	$OpenBSD: dp8390var.h,v 1.4 2001/03/12 05:36:58 aaron Exp $	*/
 /*	$NetBSD: dp8390var.h,v 1.8 1998/08/12 07:19:09 scottr Exp $	*/
 
 /*
@@ -70,6 +70,9 @@ struct dp8390_softc {
 	int	(*sc_enable) __P((struct dp8390_softc *));
 	void	(*sc_disable) __P((struct dp8390_softc *));
 
+	void	(*sc_media_init) __P((struct dp8390_softc *));
+	void	(*sc_media_fini) __P((struct dp8390_softc *));
+
 	int	(*sc_mediachange) __P((struct dp8390_softc *));
 	void	(*sc_mediastatus) __P((struct dp8390_softc *,
 		    struct ifmediareq *));
@@ -131,7 +134,7 @@ struct dp8390_softc {
 #define NIC_PUT(t, h, reg, val)	bus_space_write_1(t, h,			\
 				    ((sc)->sc_reg_map[reg]), (val))
 
-int	dp8390_config __P((struct dp8390_softc *, int *, int, int));
+int	dp8390_config __P((struct dp8390_softc *));
 int	dp8390_intr __P((void *));
 int	dp8390_ioctl __P((struct ifnet *, u_long, caddr_t));
 void	dp8390_start __P((struct ifnet *));
@@ -139,6 +142,11 @@ void	dp8390_watchdog __P((struct ifnet *));
 void	dp8390_reset __P((struct dp8390_softc *));
 void	dp8390_init __P((struct dp8390_softc *));
 void	dp8390_stop __P((struct dp8390_softc *));
+
+int	dp8390_mediachange __P((struct ifnet *));
+void	dp8390_mediastatus __P((struct ifnet *, struct ifmediareq *));
+
+void	dp8390_media_init __P((struct dp8390_softc *));
 
 void	dp8390_rint __P((struct dp8390_softc *));
 

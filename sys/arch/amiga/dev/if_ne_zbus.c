@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_zbus.c,v 1.1 2000/02/29 19:05:22 niklas Exp $	*/
+/*	$OpenBSD: if_ne_zbus.c,v 1.2 2001/03/12 05:36:57 aaron Exp $	*/
 /*	$NetBSD: if_ne_zbus.c,v 1.5 2000/01/23 21:06:13 aymeric Exp $	*/
 
 /*-
@@ -150,14 +150,11 @@ ne_zbus_attach(parent, self, aux)
 	bus_space_handle_t nich;
 	bus_space_tag_t asict = nict;
 	bus_space_handle_t asich;
-	int *media, nmedia, defmedia;
-
-	media = NULL;
-	nmedia = defmedia = 0;
 
 	dsc->sc_mediachange = rtl80x9_mediachange;
 	dsc->sc_mediastatus = rtl80x9_mediastatus;
 	dsc->init_card = rtl80x9_init_card;
+	dsc->sc_media_init = rtl80x9_media_init;
 
 #ifdef __NetBSD__
 	zsc->sc_bst.base = (u_long)zap->va + 0;
@@ -194,9 +191,6 @@ ne_zbus_attach(parent, self, aux)
 	nsc->sc_asict = asict;
 	nsc->sc_asich = asich;
 
-	/* Initialize media. */
-	rtl80x9_init_media(dsc, &media, &nmedia, &defmedia);
-
 	/* This interface is always enabled. */
 	dsc->sc_enabled = 1;
 
@@ -204,7 +198,7 @@ ne_zbus_attach(parent, self, aux)
 	 * Do generic NE2000 attach.  This will read the station address
 	 * from the EEPROM.
 	 */
-	ne2000_attach(nsc, NULL, media, nmedia, defmedia);
+	ne2000_attach(nsc, NULL);
 
 	zsc->sc_isr.isr_intr = dp8390_intr;
 	zsc->sc_isr.isr_arg = dsc;
