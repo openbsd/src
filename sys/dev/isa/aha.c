@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.28 1997/01/16 19:47:47 kstailey Exp $	*/
+/*	$OpenBSD: aha.c,v 1.29 1997/07/30 22:12:11 niklas Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -268,7 +268,8 @@ aha_cmd(iobase, sc, icnt, ibuf, ocnt, obuf)
 		}
 		if (!i) {
 			if (opcode != AHA_INQUIRE_REVISION)
-				printf("%s: aha_cmd, cmd/data port full\n", name);
+				printf("%s: aha_cmd, cmd/data port full\n",
+				    name);
 			outb(iobase + AHA_CTRL_PORT, AHA_CTRL_SRST);
 			return ENXIO;
 		}
@@ -521,8 +522,8 @@ ahaintr(arg)
 
 		toggle.cmd.opcode = AHA_MBO_INTR_EN;
 		toggle.cmd.enable = 0;
-		aha_cmd(iobase, sc, sizeof(toggle.cmd), (u_char *)&toggle.cmd, 0,
-		    (u_char *)0);
+		aha_cmd(iobase, sc, sizeof(toggle.cmd), (u_char *)&toggle.cmd,
+		    0, (u_char *)0);
 		aha_start_ccbs(sc);
 	}
 
@@ -799,13 +800,15 @@ aha_done(sc, ccb)
 	 */
 #ifdef AHADIAG
 	if (ccb->flags & CCB_SENDING) {
-		printf("%s: exiting ccb still in transit!\n", sc->sc_dev.dv_xname);
+		printf("%s: exiting ccb still in transit!\n",
+		    sc->sc_dev.dv_xname);
 		Debugger();
 		return;
 	}
 #endif
 	if ((ccb->flags & CCB_ALLOC) == 0) {
-		printf("%s: exiting ccb not allocated!\n", sc->sc_dev.dv_xname);
+		printf("%s: exiting ccb not allocated!\n",
+		    sc->sc_dev.dv_xname);
 		Debugger();
 		return;
 	}
@@ -824,7 +827,8 @@ aha_done(sc, ccb)
 		} else if (ccb->target_stat != SCSI_OK) {
 			switch (ccb->target_stat) {
 			case SCSI_CHECK:
-				s1 = (struct scsi_sense_data *) (((char *) (&ccb->scsi_cmd)) +
+				s1 = (struct scsi_sense_data *)
+				    (((char *)(&ccb->scsi_cmd)) +
 				    ccb->scsi_cmd_length);
 				s2 = &xs->sense;
 				*s2 = *s1;
@@ -921,7 +925,8 @@ aha_find(ia, sc)
 		drq = 7;
 		break;
 	default:
-		printf("aha_find: illegal drq setting %x\n", config.reply.chan);
+		printf("aha_find: illegal drq setting %x\n",
+		    config.reply.chan);
 		return 1;
 	}
 
@@ -945,7 +950,8 @@ aha_find(ia, sc)
 		irq = 15;
 		break;
 	default:
-		printf("aha_find: illegal irq setting %x\n", config.reply.intr);
+		printf("aha_find: illegal irq setting %x\n",
+		    config.reply.intr);
 		return EIO;
 	}
 
@@ -995,10 +1001,12 @@ aha_init(sc)
 		struct aha_extbios extbios;
 		struct aha_unlock unlock;
 
-		printf("%s: unlocking mailbox interface\n", sc->sc_dev.dv_xname);
+		printf("%s: unlocking mailbox interface\n",
+		    sc->sc_dev.dv_xname);
 		extbios.cmd.opcode = AHA_EXT_BIOS;
-		aha_cmd(iobase, sc, sizeof(extbios.cmd), (u_char *)&extbios.cmd,
-		    sizeof(extbios.reply), (u_char *)&extbios.reply);
+		aha_cmd(iobase, sc, sizeof(extbios.cmd),
+		    (u_char *)&extbios.cmd, sizeof(extbios.reply),
+		    (u_char *)&extbios.reply);
 
 #ifdef AHADEBUG
 		printf("%s: flags=%02x, mailboxlock=%02x\n",
@@ -1039,11 +1047,12 @@ aha_init(sc)
 
 	for (i = 0; i < 8; i++) {
 		if (!setup.reply.sync[i].valid ||
-		    (!setup.reply.sync[i].offset && !setup.reply.sync[i].period))
+		    (!setup.reply.sync[i].offset &&
+		    !setup.reply.sync[i].period))
 			continue;
 		printf("%s targ %d: sync, offset %d, period %dnsec\n",
-		    sc->sc_dev.dv_xname, i,
-		    setup.reply.sync[i].offset, setup.reply.sync[i].period * 50 + 200);
+		    sc->sc_dev.dv_xname, i, setup.reply.sync[i].offset,
+		    setup.reply.sync[i].period * 50 + 200);
 	}
 
 	/*
@@ -1205,8 +1214,8 @@ aha_scsi_cmd(xs)
 		ccb->scsi_cmd_length = 0;
 	} else {
 		/* can't use S/G if zero length */
-		ccb->opcode = (xs->datalen ? AHA_INIT_SCAT_GATH_CCB
-					   : AHA_INITIATOR_CCB);
+		ccb->opcode =
+		    (xs->datalen ? AHA_INIT_SCAT_GATH_CCB : AHA_INITIATOR_CCB);
 		bcopy(xs->cmd, &ccb->scsi_cmd,
 		    ccb->scsi_cmd_length = xs->cmdlen);
 	}
@@ -1237,26 +1246,27 @@ aha_scsi_cmd(xs)
 			 * Set up the scatter-gather block.
 			 */
 			ccb->data_nseg = isadma_map(xs->data, xs->datalen,
-						    ccb->data_phys, mflags);
+			    ccb->data_phys, mflags);
 			for (seg = 0; seg < ccb->data_nseg; seg++) {
 				ltophys(ccb->data_phys[seg].addr,
-				       sg[seg].seg_addr);
+				    sg[seg].seg_addr);
 				ltophys(ccb->data_phys[seg].length,
-				       sg[seg].seg_len);
+				    sg[seg].seg_len);
 			}
 		}
 		/* end of iov/kv decision */
 		if (ccb->data_nseg == 0) {
 			printf("%s: aha_scsi_cmd, cannot map\n",
-			       sc->sc_dev.dv_xname);
+			    sc->sc_dev.dv_xname);
 			goto bad;
 		} else if (flags & SCSI_DATA_OUT)
 			isadma_copytobuf(xs->data, xs->datalen,
-					 ccb->data_nseg, ccb->data_phys);
-		ltophys((unsigned)((struct aha_ccb *)(ccb->ccb_phys[0].addr))->scat_gath,
-			ccb->data_addr);
+			    ccb->data_nseg, ccb->data_phys);
+		ltophys((unsigned)
+		    ((struct aha_ccb *)(ccb->ccb_phys[0].addr))->scat_gath,
+		    ccb->data_addr);
 		ltophys(ccb->data_nseg * sizeof(struct aha_scat_gath),
-			ccb->data_length);
+		    ccb->data_length);
 	} else {		/* No data xfer, use non S/G values */
 		ltophys(0, ccb->data_addr);
 		ltophys(0, ccb->data_length);
