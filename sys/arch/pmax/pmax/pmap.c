@@ -1092,7 +1092,7 @@ pmap_unwire(pmap, va)
 		pmap->pm_stats.wired_count -= i;
 	do {
 		if (pte->pt_entry & PG_V)
-			pte->pt_entry ~= PG_WIRED;
+			pte->pt_entry &= ~PG_WIRED;
 		pte++;
 	} while (--i != 0);
 }
