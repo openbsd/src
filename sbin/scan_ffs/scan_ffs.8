@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scan_ffs.8,v 1.12 2003/06/03 00:33:34 weingart Exp $
+.\"	$OpenBSD: scan_ffs.8,v 1.13 2004/12/14 00:04:21 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Niklas Hallqvist, Tobias Weingartner
 .\" All rights reserved.
@@ -103,7 +103,10 @@ Then relax, and see if the steps below won't help you out.
 .It
 Try to find your old disklabel by any other means possible.
 This includes
-printouts, backups, screendumps, and whatever other method you can think of.
+printouts, backups
+(look in
+.Pa /var/backups/ ) ,
+screendumps, and whatever other method you can think of.
 The more information you have, the better your chances are in recovering the
 disklabel of the disk.
 .Pp
