@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.22 2004/01/22 17:47:29 miod Exp $ */
+/* $OpenBSD: cpu.h,v 1.23 2004/06/08 18:11:28 marc Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -175,8 +175,6 @@ struct mchkinfo {
 	__volatile int mc_expected;	/* machine check is expected */
 	__volatile int mc_received;	/* machine check was received */
 };
-
-typedef long cpuid_t;
 
 struct cpu_info {
 	/*
