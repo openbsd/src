@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.34 2003/10/13 21:22:19 jason Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.35 2003/12/17 16:53:46 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -212,6 +212,9 @@ void sk_dump_bytes(const char *, int);
 /* supported device vendors */
 const struct pci_matchid skc_devices[] = {
 	{ PCI_VENDOR_3COM,		PCI_PRODUCT_3COM_3C940},
+	{ PCI_VENDOR_DLINK,		PCI_PRODUCT_DLINK_DGE530T},
+	{ PCI_VENDOR_LINKSYS,		PCI_PRODUCT_LINKSYS_EG1032},
+	{ PCI_VENDOR_LINKSYS,		PCI_PRODUCT_LINKSYS_EG1064},
 	{ PCI_VENDOR_SCHNEIDERKOCH,	PCI_PRODUCT_SCHNEIDERKOCH_GE},
 	{ PCI_VENDOR_SCHNEIDERKOCH,	PCI_PRODUCT_SCHNEIDERKOCH_SK9821v2},
 };
@@ -1275,6 +1278,9 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	case PCI_PRODUCT_SCHNEIDERKOCH_SK9821v2:
 	case PCI_PRODUCT_3COM_3C940:
+	case PCI_PRODUCT_DLINK_DGE530T:
+	case PCI_PRODUCT_LINKSYS_EG1032:
+	case PCI_PRODUCT_LINKSYS_EG1064:
 		sc->sk_type = SK_YUKON;
 		break;
 	default:
