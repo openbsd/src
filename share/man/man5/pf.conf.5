@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.36 2002/03/27 18:16:17 mickey Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.37 2002/03/28 02:43:47 mickey Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -68,7 +68,7 @@ af	       = "inet" | "inet6" .
 proto-list     = ( proto-name | proto-number ) [ "," proto-list ] .
 
 hosts          = "all" |
-                 "from" ( "any" ! "no-route" | host | "{" host-list "}" ) [ port ]
+                 "from" ( "any" | "no-route" | host | "{" host-list "}" ) [ port ]
                  "to"   ( "any" | "no-route" | host | "{" host-list "}" ) [ port ] .
 
 host           = [ "!" ] address [ "/" mask-bits ] .
