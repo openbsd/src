@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.87 2002/10/22 19:35:45 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.88 2002/11/01 00:14:43 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -941,11 +941,13 @@ boot(howto)
 	if (howto & RB_HALT) {
 		if (howto & RB_POWERDOWN && cold_hook) {
 			printf("Powering off...");
-			(*cold_hook)(HPPA_COLD_COLD);
+			DELAY(1000000);
+			(*cold_hook)(HPPA_COLD_OFF);
 			DELAY(1000000);
 		}
 
 		printf("System halted!\n");
+		DELAY(1000000);
 		__asm __volatile("stwas %0, 0(%1)"
 		    :: "r" (CMD_STOP), "r" (LBCAST_ADDR + iomod_command));
 	} else {
