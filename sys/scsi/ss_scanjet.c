@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_scanjet.c,v 1.25 2003/05/06 23:16:51 krw Exp $	*/
+/*	$OpenBSD: ss_scanjet.c,v 1.26 2004/12/28 04:16:14 deraadt Exp $	*/
 /*	$NetBSD: ss_scanjet.c,v 1.6 1996/05/18 22:58:01 christos Exp $	*/
 
 /*
@@ -383,8 +383,9 @@ scanjet_set_window(ss, flags)
 	struct ss_softc *ss;
 	int flags;
 {
-	size_t len;
 	char escape_codes[128];
+	size_t len;
+	int n;
 
 	snprintf(escape_codes, sizeof escape_codes,
 	    "\033*f%ldP\033*f%ldQ\033*f%ldX\033*f%ldY\033*a%dR\033*a%dS",
@@ -438,14 +439,15 @@ scanjet_set_window(ss, flags)
 	 * attention.
 	 */ 
 	len = strlen(escape_codes);
-	len += snprintf(escape_codes + len, sizeof escape_codes - len,
+	n = snprintf(escape_codes + len, sizeof escape_codes - len,
 	    "\033*a%dG\033*a%dL\033*a%dK",
 	    ss->sio.scan_bits_per_pixel,
 	    (int)(ss->sio.scan_brightness) - 128,
 	    (int)(ss->sio.scan_contrast) - 128);
 
-	if (len >= sizeof escape_codes)
+	if (n >= sizeof escape_codes || n == -1)
 		return (ENOMEM);
+	len += n;
 
 	return (scanjet_ctl_write(ss, escape_codes, len, flags));
 }
