@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1998/03/06 05:40:01 millert Exp $
+#	$OpenBSD: Makefile,v 1.6 2002/02/17 07:52:38 hugh Exp $
 #
 # C Shell with process control; VM/UNIX VAX Makefile
 # Bill Joy UC Berkeley; Jim Kulp IIASA, Austria
@@ -20,6 +20,11 @@ MLINKS=	csh.1 limit.1 csh.1 alias.1 csh.1 bg.1 csh.1 dirs.1 csh.1 fg.1 \
 	csh.1 pushd.1 csh.1 rehash.1 csh.1 repeat.1 csh.1 suspend.1 \
 	csh.1 stop.1 csh.1 source.1 csh.1 unlimit.1
 CLEANFILES+=error.h const.h
+
+.if (${MACHINE_ARCH} == "vax")
+alloc.o:
+	${CC} ${CFLAGS} ${CPPFLAGS} -O0 -c $<
+.endif
 
 const.h: error.h
 
