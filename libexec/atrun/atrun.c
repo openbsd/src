@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.3 1997/03/01 23:39:43 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.4 1997/04/12 18:57:30 millert Exp $	*/
 
 /*
  *  atrun.c - run jobs queued by at; run with root privileges.
@@ -31,6 +31,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <sys/param.h>
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
@@ -44,6 +45,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <syslog.h>
+#include <utmp.h>
 
 #include <paths.h>
 
@@ -54,10 +56,18 @@
 #include "pathnames.h"
 #include "atrun.h"
 
+/* File scope defines */
+
+#if (MAXLOGNAME-1) > UT_NAMESIZE
+#define LOGNAMESIZE UT_NAMESIZE
+#else
+#define LOGNAMESIZE (MAXLOGNAME-1)
+#endif
+
 /* File scope variables */
 
 static char *namep;
-static char rcsid[] = "$OpenBSD: atrun.c,v 1.3 1997/03/01 23:39:43 millert Exp $";
+static char rcsid[] = "$OpenBSD: atrun.c,v 1.4 1997/04/12 18:57:30 millert Exp $";
 static int debug = 0;
 
 /* Local functions */
@@ -109,7 +119,7 @@ run_file(filename, uid, gid)
 	pid_t pid;
 	int fd_out, fd_in;
 	int queue;
-	char mailbuf[9];
+	char mailbuf[LOGNAMESIZE + 1], fmt[49];
 	char *mailname = NULL;
 	FILE *stream;
 	int send_mail = 0;
@@ -194,8 +204,10 @@ run_file(filename, uid, gid)
 
 	(void)fcntl(fd_in, F_SETFD, fflags & ~FD_CLOEXEC);
 
-	if (fscanf(stream, "#!/bin/sh\n# atrun uid=%u gid=%u\n# mail %8s %d",
-	    &nuid, &ngid, mailbuf, &send_mail) != 4) {
+	(void)snprintf(fmt, sizeof(fmt),
+	    "#!/bin/sh\n# atrun uid=%%ld gid=%%ld\n# mail %%%ds %%d",
+	    LOGNAMESIZE);
+	if (fscanf(stream, fmt, &nuid, &ngid, mailbuf, &send_mail) != 4) {
 		syslog(LOG_ERR, "File %s is in wrong format - aborting",
 		    filename);
 		exit(EXIT_FAILURE);
