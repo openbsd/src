@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.c,v 1.2 1996/12/04 01:31:11 deraadt Exp $	*/
+/*	$OpenBSD: fsck.c,v 1.3 1996/12/04 09:40:41 deraadt Exp $	*/
 /*	$NetBSD: fsck.c,v 1.7 1996/10/03 20:06:30 christos Exp $	*/
 
 /*
@@ -219,13 +219,8 @@ checkfs(vfstype, spec, mntpt, auxarg, pidp)
 	const char **argv, **edir;
 	pid_t pid;
 	int argc, i, status, maxargc;
-	char *optbuf = NULL, execname[MAXPATHLEN + 1];
+	char *optbuf = NULL, fsname[MAXPATHLEN], execname[MAXPATHLEN];
 	const char *extra = getoptions(vfstype);
-
-#ifdef __GNUC__
-	/* Avoid vfork clobbering */
-	(void) &optbuf;
-#endif
 
 	if (strcmp(vfstype, "ufs") == 0)
 		vfstype = MOUNT_UFS;
@@ -234,7 +229,8 @@ checkfs(vfstype, spec, mntpt, auxarg, pidp)
 	argv = emalloc(sizeof(char *) * maxargc);
 
 	argc = 0;
-	argv[argc++] = vfstype;
+	(void)snprintf(fsname, sizeof(fsname), "fsck_%s", vfstype);
+	argv[argc++] = fsname;
 
 	if (options) {
 		if (extra != NULL)
@@ -252,14 +248,14 @@ checkfs(vfstype, spec, mntpt, auxarg, pidp)
 	argv[argc] = NULL;
 
 	if (flags & (CHECK_DEBUG|CHECK_VERBOSE)) {
-		(void)printf("start %s %swait fsck_%s", mntpt, 
-			pidp ? "no" : "", vfstype);
+		(void)printf("start %s %swait %s", mntpt, 
+			pidp ? "no" : "", fsname);
 		for (i = 1; i < argc; i++)
 			(void)printf(" %s", argv[i]);
 		(void)printf("\n");
 	}
 
-	switch (pid = vfork()) {
+	switch (pid = fork()) {
 	case -1:				/* Error. */
 		warn("vfork");
 		if (optbuf)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.7 1996/12/03 01:04:44 downsj Exp $	*/
+/*	$OpenBSD: mount.c,v 1.8 1996/12/04 09:45:39 deraadt Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: mount.c,v 1.7 1996/12/03 01:04:44 downsj Exp $";
+static char rcsid[] = "$OpenBSD: mount.c,v 1.8 1996/12/04 09:45:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -302,7 +302,7 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 	struct statfs sf;
 	pid_t pid;
 	int argc, i, status;
-	char *optbuf, execname[MAXPATHLEN + 1], mntpath[MAXPATHLEN];
+	char *optbuf, execname[MAXPATHLEN], mntpath[MAXPATHLEN];
 	char mountname[MAXPATHLEN];
 
 	if (realpath(name, mntpath) == NULL) {
@@ -355,8 +355,11 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 	if (flags & MNT_UPDATE)
 		optbuf = catopt(optbuf, "update");
 
+	(void)snprintf(mountname,
+	    sizeof(mountname), "mount_%s", vfstype);
+
 	argc = 0;
-	argv[argc++] = vfstype;
+	argv[argc++] = mountname;
 	mangle(optbuf, &argc, argv);
 	argv[argc++] = spec;
 	argv[argc++] = name;
@@ -370,9 +373,9 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 		return (0);
 	}
 
-	switch (pid = vfork()) {
+	switch (pid = fork()) {
 	case -1:				/* Error. */
-		warn("vfork");
+		warn("fork");
 		free(optbuf);
 		return (1);
 	case 0:					/* Child. */
@@ -381,9 +384,6 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 		do {
 			(void)snprintf(execname,
 			    sizeof(execname), "%s/mount_%s", *edir, vfstype);
-			(void)snprintf(mountname,
-			    sizeof(mountname), "mount_%s", vfstype);
-			argv[0] = mountname;
 			execv(execname, (char * const *)argv);
 			if (errno != ENOENT)
 				warn("exec %s for %s", execname, name);
