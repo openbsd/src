@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.81 2002/12/31 16:22:26 miod Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.82 2003/01/14 18:19:07 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -1133,8 +1133,7 @@ Subdirectory of ${WRKDIR} where port normally installs (see
 target).
 .It Ev WRKOBJDIR
 If defined, used as a base for the actual port working directory.
-The real working directory is created there, and the port ${WRKDIR} is
-just a link.
+The real working directory ${WRKDIR} is created there.
 .It Ev X11BASE
 Where X11 has been installed (default: /usr/X11R6).
 .It Ev USE_GMAKE
@@ -1233,6 +1232,15 @@ instead.
 See
 .Xr mirroring-ports 7
 for more efficient and flexible ways to build mirrors.
+.It Ar obj
+Starting with
+.Ox 3.3 ,
+using
+.Ev WRKOBJDIR
+no longer creates a symlink between the current directory and
+a subdirectory of ${WRKOBJDIR}, so
+.Ar obj
+has become a no-operation.
 .El
 .Sh OBSOLETE VARIABLES
 .Bl -tag -width MASTER_SITES
@@ -1357,6 +1365,16 @@ Use CLEANDEPENDS instead.
 .Fx
 ships with compressed man pages, and uses this variable to control
 that behavior.
+.It Ev OBJMACHINE
+Starting with
+.Ox 3.3 ,
+setting
+.Ev WRKOBJDIR
+creates the whole
+.Ev WRKDIR
+hierarchy under ${WRKOBJDIR}, so
+.Ev OBJMACHINE
+is no longer useful.
 .It Ev PATCH_SITES
 .Ev PATCHFILES
 used to be retrieved from a separate site list.
@@ -1697,8 +1715,6 @@ FLAVORS, MULTI_PACKAGES and FAKE are
 improvements.
 .\" Voluntarily undocumented:
 .\" AUTOCONF_ENV: probably not needed anyway, should be internal.
-.\"
-.\" Todo: OBJMACHINE
 .Sh SEE ALSO
 .Xr library-specs 7 ,
 .Xr packages-specs 7
