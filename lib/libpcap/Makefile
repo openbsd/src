@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2001/11/22 12:44:29 espie Exp $
+#	$OpenBSD: Makefile,v 1.15 2003/02/20 03:20:09 deraadt Exp $
 #	$NetBSD: Makefile,v 1.3 1996/05/10 21:54:24 cgd Exp $
 
 LIB=	pcap
@@ -12,7 +12,8 @@ MLINKS=	pcap.3 pcap_open_live.3 pcap.3 pcap_open_offline.3 \
         pcap_major_version.3 pcap.3 pcap_minor_version.3 pcap.3 \
         pcap_stats.3 pcap.3 pcap_file.3 pcap.3 pcap_fileno.3 pcap.3 \
         pcap_perror.3 pcap.3 pcap_geterr.3 pcap.3 pcap_strerror.3 \
-        pcap.3 pcap_close.3 pcap.3 pcap_dump_close.3
+        pcap.3 pcap_close.3 pcap.3 pcap_dump_close.3 \
+	pcap.3 pcap_freecode.3 
 
 DEFS=	-DHAVE_SYS_IOCCOM_H -DHAVE_SYS_SOCKIO_H -DHAVE_ETHER_HOSTTON \
 	-DHAVE_STRERROR -DHAVE_SOCKADDR_SA_LEN -DLBL_ALIGN -DHAVE_IFADDRS_H \
