@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380sbc.c,v 1.12 2001/09/20 23:30:29 miod Exp $	*/
+/*	$OpenBSD: ncr5380sbc.c,v 1.13 2001/09/24 22:05:14 miod Exp $	*/
 /*	$NetBSD: ncr5380sbc.c,v 1.13 1996/10/13 01:37:25 christos Exp $	*/
 
 /*
@@ -106,7 +106,7 @@ static void	ncr5380_machine __P((struct ncr5380_softc *));
 void	ncr5380_abort __P((struct ncr5380_softc *));
 void	ncr5380_cmd_timeout __P((void *));
 /*
- * Action flags returned by the info_tranfer functions:
+ * Action flags returned by the info_transfer functions:
  * (These determine what happens next.)
  */
 #define ACT_CONTINUE	0x00	/* No flags: expect another phase */
@@ -603,15 +603,7 @@ ncr5380_scsi_cmd(xs)
 	int s, rv, i, flags;
 
 	sc = xs->sc_link->adapter_softc;
-
 	flags = xs->flags;
-	/*
-	 * XXX: Hack: During autoconfig, force polling mode.
-	 * Needed as long as sdsize() can be called while cold,
-	 * otherwise timeouts will never call back (grumble).
-	 */
-	if (cold)
-		flags |= SCSI_POLL;
 
 	if (sc->sc_flags & NCR5380_FORCE_POLLING)
 		flags |= SCSI_POLL;
@@ -1681,6 +1673,8 @@ have_msg:
 		NCR_TRACE("msg_in: PARITY_ERROR\n", 0);
 		/* Resend the last message. */
 		ncr_sched_msgout(sc, sc->sc_msgout);
+		/* Reset icmd after scheduling the REJECT cmd - jwg */
+		icmd = *sc->sci_icmd & SCI_ICMD_RMASK;
 		break;
 
 	case MSG_MESSAGE_REJECT:
@@ -1742,6 +1736,8 @@ have_msg:
 		/* fallthrough */
 	reject:
 		ncr_sched_msgout(sc, SEND_REJECT);
+		/* Reset icmd after scheduling the REJECT cmd - jwg */
+		icmd = *sc->sci_icmd & SCI_ICMD_RMASK;
 		break;
 
 	abort:
@@ -2401,7 +2397,7 @@ do_actions:
 		ncr5380_reset_scsibus(sc);
 	busfree:
 		NCR_TRACE("machine: discon, waited %d\n",
-			ncr5380_wait_nrq_timo - timo);
+			ncr5380_wait_req_timo - timo);
 
 		*sc->sci_icmd = 0;
 		*sc->sci_mode = 0;
