@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.64 2004/01/11 19:14:43 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.65 2004/01/11 21:32:56 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -365,9 +365,8 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrtc,
 int
 dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_head *mrtc)
 {
-	struct imsg	 imsg;
-	int		 n;
-	in_addr_t	 ina;
+	struct imsg		 imsg;
+	int			 n;
 
 	if ((n = imsg_read(ibuf)) == -1)
 		return (-1);
@@ -405,19 +404,24 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_head *mrtc)
 		case IMSG_NEXTHOP_ADD:
 			if (idx != PFD_PIPE_ROUTE)
 				logit(LOG_CRIT, "nexthop request not from RDE");
-			else {
-				memcpy(&ina, imsg.data, sizeof(ina));
-				if (kr_nexthop_add(ina) == -1)
+			else
+				if (imsg.hdr.len != IMSG_HEADER_SIZE +
+				    sizeof(struct bgpd_addr))
+					logit(LOG_CRIT, "wrong imsg len");
+				else if (kr_nexthop_add(
+				    ((struct bgpd_addr *)imsg.data)->v4.s_addr)
+				    == -1)
 					return (-1);
-			}
 			break;
 		case IMSG_NEXTHOP_REMOVE:
 			if (idx != PFD_PIPE_ROUTE)
 				logit(LOG_CRIT, "nexthop request not from RDE");
-			else {
-				memcpy(&ina, imsg.data, sizeof(ina));
-				kr_nexthop_delete(ina);
-			}
+			else
+				if (imsg.hdr.len != IMSG_HEADER_SIZE +
+				    sizeof(struct bgpd_addr))
+					logit(LOG_CRIT, "wrong imsg len");
+				else kr_nexthop_delete(
+				    ((struct bgpd_addr *)imsg.data)->v4.s_addr);
 			break;
 		case IMSG_CTL_RELOAD:
 			if (idx != PFD_PIPE_SESSION)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.54 2004/01/11 20:13:00 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.55 2004/01/11 21:32:56 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -402,8 +402,8 @@ rde_update_get_prefix(u_char *p, u_int16_t len, struct in_addr *prefix,
 	u_int8_t	pfxlen;
 	u_int16_t	plen;
 	union {
-		struct in_addr	addr32;
-		u_int8_t	addr8[4];
+		struct in_addr	a32;
+		u_int8_t	a8[4];
 	}		addr;
 
 	if (len < 1)
@@ -413,16 +413,16 @@ rde_update_get_prefix(u_char *p, u_int16_t len, struct in_addr *prefix,
 	p += 1;
 	plen = 1;
 
-	addr.addr32.s_addr = 0;
+	addr.a32.s_addr = 0;
 	for (i = 0; i <= 3; i++) {
 		if (pfxlen > i * 8) {
 			if (len - plen < 1)
 				return (-1);
-			memcpy(&addr.addr8[i], p++, 1);
+			memcpy(&addr.a8[i], p++, 1);
 			plen++;
 		}
 	}
-	prefix->s_addr = addr.addr32.s_addr;
+	prefix->s_addr = addr.a32.s_addr;
 	*prefixlen = pfxlen;
 
 	return (plen);
@@ -607,14 +607,18 @@ rde_send_kroute(struct prefix *new, struct prefix *old)
 void
 rde_send_nexthop(in_addr_t next, int valid)
 {
-	int	type;
+	int			type;
+	struct bgpd_addr	addr;
 
 	if (valid)
 		type = IMSG_NEXTHOP_ADD;
 	else
 		type = IMSG_NEXTHOP_REMOVE;
 
-	if (imsg_compose(&ibuf_main, type, 0, &next, sizeof(next)) == -1)
+	addr.af = AF_INET;
+	addr.v4.s_addr = next;
+
+	if (imsg_compose(&ibuf_main, type, 0, &addr, sizeof(addr)) == -1)
 		fatal("imsg_compose error");
 }
 
