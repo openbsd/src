@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.4 1996/06/26 05:40:12 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.5 1996/12/20 00:17:29 downsj Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.4 1996/06/26 05:40:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.5 1996/12/20 00:17:29 downsj Exp $";
 #endif /* not lint */
 
 /*
@@ -374,7 +374,7 @@ labelkre()
 	for (i = 0; i < dk_ndrive && j < MAXDRIVES; i++)
 		if (dk_select[i]) {
 			mvprintw(DISKROW, DISKCOL + 5 + 5 * j,
-				"  %3.3s", dr_name[j]);
+				" %4.4s", dr_name[j]);
 			j++;
 		}
 	for (i = 0; i < nintr; i++) {
@@ -530,7 +530,7 @@ showkre()
 	for (i = 0, c = 0; i < dk_ndrive && c < MAXDRIVES; i++)
 		if (dk_select[i]) {
 			mvprintw(DISKROW, DISKCOL + 5 + 5 * c,
-				"  %3.3s", dr_name[i]);
+				" %4.4s", dr_name[i]);
 			dinfo(i, ++c);
 		}
 	putint(s.nchcount, NAMEIROW + 2, NAMEICOL, 9);
