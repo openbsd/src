@@ -80,7 +80,7 @@ tgetent(bp, name)
 	char **fname;
 	char  *home;
 	int    i;
-	char   pathbuf[PBUFSIZ];	/* holds raw path of filenames */
+	char   pathbuf[PBUFSIZ+1];	/* holds raw path of filenames */
 	char  *pathvec[PVECSIZ];	/* to point to names in pathbuf */
 	char **pvec;			/* holds usable tail of path vector */
 	char  *termpath;
@@ -102,21 +102,25 @@ tgetent(bp, name)
 	 */
 	if (!cp || *cp != '/') {	/* no TERMCAP or it holds an entry */
 		if ((termpath = getenv("TERMPATH")) != NULL)
-			strncpy(pathbuf, termpath, PBUFSIZ);
+			strncpy(pathbuf, termpath, sizeof(pathbuf) - 1);
 		else {
 			if ((home = getenv("HOME")) != NULL) {
 				/* set up default */
-				strncpy(pathbuf, home, PBUFSIZ - strlen(_PATH_DEF) - 1);	/* $HOME first */
-				pathbuf[PBUFSIZ - strlen(_PATH_DEF) - 1] = '\0';
+				/* $HOME first */
+				strncpy(pathbuf, home, sizeof(pathbuf) - 1 -
+				    strlen(_PATH_DEF) - 1);
+				pathbuf[sizeof(pathbuf) - 1 -
+				    strlen(_PATH_DEF) - 1] = '\0';
 				p += strlen(pathbuf);	/* path, looking in */
 				*p++ = '/';
 			}	/* if no $HOME look in current directory */
-			strncpy(p, _PATH_DEF, PBUFSIZ - (p - pathbuf));
+			strncpy(p, _PATH_DEF, sizeof(pathbuf) -1 -
+			    (p - pathbuf));
 		}
 	}
 	else				/* user-defined name in TERMCAP */
-		strncpy(pathbuf, cp, PBUFSIZ);	/* still can be tokenized */
-	pathbuf[PBUFSIZ] = '\0';
+		strncpy(pathbuf, cp, sizeof(pathbuf) - 1); /* still can be tokenized */
+	pathbuf[sizeof(pathbuf) - 1] = '\0';
 
 	*fname++ = pathbuf;	/* tokenize path into vector of names */
 	while (*++p)

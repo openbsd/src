@@ -1,4 +1,4 @@
-/*	$OpenBSD: getterm.c,v 1.10 1996/09/03 05:11:11 tholo Exp $	*/
+/*	$OpenBSD: getterm.c,v 1.11 1996/09/03 16:04:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: getterm.c,v 1.10 1996/09/03 05:11:11 tholo Exp $";
+static char rcsid[] = "$OpenBSD: getterm.c,v 1.11 1996/09/03 16:04:57 deraadt Exp $";
 #endif
 
 #include <stdlib.h>
@@ -98,21 +98,23 @@ _ti_gettermcap(name)
      */
     if (!cp || *cp != '/') {	/* no TERMCAP or it holds an entry */
 	if ((termpath = getenv("TERMPATH")) != NULL)
-	    strncpy(pathbuf, termpath, MAXPATHLEN);
+	    strncpy(pathbuf, termpath, sizeof(pathbuf)-1);
 	else {
 	    if ((home = getenv("HOME")) != NULL) {
 		/* set up default */
-		strncpy(pathbuf, home, MAXPATHLEN - strlen(_PATH_CAPDEF) - 1);	/* $HOME first */
-		pathbuf[MAXPATHLEN - strlen(_PATH_CAPDEF) - 1] = '\0';
+		/* $HOME first */
+		strncpy(pathbuf, home, sizeof(pathbuf) - 1 -
+		    strlen(_PATH_CAPDEF) - 1);
+		pathbuf[sizeof(pathbuf) - 1 - strlen(_PATH_CAPDEF) - 1] = '\0';
 		p += strlen(pathbuf);	/* path, looking in */
 		*p++ = '/';
 	    }	/* if no $HOME look in current directory */
-	    strncpy(p, _PATH_CAPDEF, MAXPATHLEN - (p - pathbuf));
+	    strncpy(p, _PATH_CAPDEF, sizeof(pathbuf) - 1 - (p - pathbuf));
 	}
     }
     else					/* user-defined name in TERMCAP */
-	strncpy(pathbuf, cp, MAXPATHLEN);	/* still can be tokenized */
-    pathbuf[MAXPATHLEN] = '\0';
+	strncpy(pathbuf, cp, sizeof(pathbuf)-1);	/* still can be tokenized */
+    pathbuf[sizeof(pathbuf)-1] = '\0';
 
     *fname++ = pathbuf;	/* tokenize path into vector of names */
     while (*++p)
@@ -244,18 +246,20 @@ _ti_getterminfo(name)
      * TERMINFO exists.
      */
     if ((termpath = getenv("TERMINFO")) != NULL)
-	strncpy(pathbuf, termpath, MAXPATHLEN);
+	strncpy(pathbuf, termpath, sizeof(pathbuf) - 1);
     else {
 	if ((home = getenv("HOME")) != NULL) {
 	    /* set up default */
+	    /* $HOME first */
+	    strncpy(pathbuf, home, sizeof(pathbuf) - 1 -
+		strlen(_PATH_INFODEF) - 1);
+	    pathbuf[sizeof(pathbuf) - 1 - strlen(_PATH_INFODEF) - 1] = '\0';
 	    p += strlen(home);	/* path, looking in */
-		strncpy(pathbuf, home, MAXPATHLEN - strlen(_PATH_INFODEF) - 1);	/* $HOME first */
-		pathbuf[MAXPATHLEN - strlen(_PATH_INFODEF) - 1] = '\0';
 	    *p++ = '/';
 	}	/* if no $HOME look in current directory */
-	strncpy(p, _PATH_INFODEF, MAXPATHLEN - (p - pathbuf));
+	strncpy(p, _PATH_INFODEF, sizeof(pathbuf) - 1 - (p - pathbuf));
     }
-    pathbuf[MAXPATHLEN] = '\0';
+    pathbuf[sizeof(pathbuf) - 1] = '\0';
 
     *fname++ = pathbuf;	/* tokenize path into vector of names */
     while (*++p)
