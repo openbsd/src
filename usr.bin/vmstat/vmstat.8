@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmstat.8,v 1.25 2002/11/29 20:10:04 deraadt Exp $
+.\"	$OpenBSD: vmstat.8,v 1.26 2003/02/17 07:24:32 jmc Exp $
 .\"	$NetBSD: vmstat.8,v 1.12 1996/05/10 23:19:30 thorpej Exp $
 .\"
 .\" Copyright (c) 1986, 1993
@@ -48,7 +48,7 @@
 .Op Fl M Ar core
 .Op Fl N Ar system
 .Op Fl w Ar wait
-.Op disks
+.Op Ar disks
 .Sh DESCRIPTION
 .Nm
 reports certain kernel statistics kept about process, virtual memory,
@@ -66,10 +66,11 @@ If no
 .Ar wait
 interval is specified, the default is 1 second.
 .It Fl f
-Report on the number
+Report on the number of
 .Xr fork 2 ,
-.Xr vfork 2 ,
 .Xr rfork 2
+and
+.Xr vfork 2
 system calls as well as kernel thread creations since system startup,
 and the number of pages of virtual memory involved in each.
 .It Fl i
@@ -106,7 +107,7 @@ By default,
 .Nm
 displays the following information just once:
 .Bl -tag -width "whatever"
-.It procs
+.It Ar procs
 Information about the numbers of processes in various states.
 .Pp
 .Bl -inset -width xxxxxx -compact

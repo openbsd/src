@@ -1,4 +1,4 @@
-.\"	$OpenBSD: yp.8,v 1.16 2002/11/11 20:19:16 mickey Exp $
+.\"	$OpenBSD: yp.8,v 1.17 2003/02/17 07:24:33 jmc Exp $
 .\"	$NetBSD: yp.8,v 1.9 1995/08/11 01:16:52 thorpej Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
@@ -105,11 +105,13 @@
 .Ar mapname
 .Pp
 .Nm rpc.yppasswdd
+.Bk -words
 .Op Fl d Ar directory
 .Op Fl noshell
 .Op Fl nogecos
 .Op Fl nopw
 .Op Fl m Ar arg1 Ar arg2 Ar ...
+.Ek
 .Sh DESCRIPTION
 The
 .Nm YP
@@ -139,7 +141,7 @@ This creates various files in
 .Pa /var/yp .
 By default the
 .Nm YP
-server will be setup in backwards compatible mode.
+server will be set up in backwards compatible mode.
 To enable
 .Dq secure
 mode, the file
@@ -153,7 +155,7 @@ and
 .Fx
 clients.
 .Pp
-If setup as a slave, the required databases are automatically copied
+If set up as a slave, the required databases are automatically copied
 from the specified server.
 .Pp
 The

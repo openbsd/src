@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wsmoused.8,v 1.6 2002/03/27 18:54:09 jbm Exp $
+.\"	$OpenBSD: wsmoused.8,v 1.7 2003/02/17 07:24:33 jmc Exp $
 .\"
 .Dd April 8, 2001
 .Dt WSMOUSED 8 i386
@@ -79,20 +79,20 @@ Use device
 to communicate with the mouse. If this option is not present, the device opened
 is
 .Pa /dev/wsmouse
-(the multiplexer device that receive all mouse events from all wsmouse
+(the multiplexer device that receives all mouse events from all wsmouse
 compatible mice on the system). For a serial mouse, you have to explicitly
 specify the serial port, i.e.
-.device port
+.Ar device
 must be one of
-.Pa /dev/cua0[0-3]
+.Pa /dev/cua0[0-3] .
 .It Fl t Ar type
-This options only applies to serial mice. It specifies the protocol used by the
+This option only applies to serial mice. It specifies the protocol used by the
 serial mice.
 You may explicitly specify a type listed below or use
 .Em auto
 to let
 .Nm
-to automatically select an appropriate protocol for the given mouse, if the
+automatically select an appropriate protocol for the given mouse, if the
 serial mouse respects the PnP COM specification.
 .Pp
 If this option is not specified,
@@ -103,37 +103,37 @@ the mouse is not PnP compatible.
 .Pp
 Valid protocol types for this option are the following:
 .Bl -tag -width thinkingmouse
-.It microsoft
+.It Ar microsoft
 Microsoft serial mouse protocol.
 Most 2-button serial mice use this protocol.
-.It intellimouse
+.It Ar intellimouse
 Microsoft IntelliMouse protocol.
-Genius NetMouse, ASCII Mie Mouse, Logitech MouseMan+, and FirstMouse+ use
+Genius NetMouse, ASCII Mie Mouse, Logitech MouseMan+, and FirstMouse+
 use this protocol as well.
 Other mice with a roller/wheel may be compatible with this protocol.
-.It mousesystems
+.It Ar mousesystems
 MouseSystems 5-byte protocol.
 3-button mice may use this protocol.
-.It mmseries
+.It Ar mmseries
 MM Series mouse protocol.
-.It logitech
+.It Ar logitech
 Logitech mouse protocol.
-Note that this is for old Logitech models
-.Em mouseman
+Note that this is for old Logitech models.
+.Ar mouseman
 or
-.Em intellimouse
+.Ar intellimouse
 should be specified for newer models.
-.It mouseman
+.It Ar mouseman
 Logitech MouseMan and TrackMan protocol.
-Some 3-button mice may be compatible with this protoco.
+Some 3-button mice may be compatible with this protocol.
 Note that MouseMan+ and FirstMouse+ use
-.Em intellimouse
+.Ar intellimouse
 protocol rather than this one.
-.It glidepoint
+.It Ar glidepoint
 ALPS GlidePoint protocol.
-.It thinkingmouse
+.It Ar thinkingmouse
 Kensington ThinkingMouse protocol.
-.It mmhitab
+.It Ar mmhitab
 Hitachi tablet protocol.
 .El
 .El

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wicontrol.8,v 1.45 2003/01/11 00:12:59 naddy Exp $
+.\"	$OpenBSD: wicontrol.8,v 1.46 2003/02/17 07:24:33 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu> All rights reserved.
@@ -40,6 +40,7 @@
 .Nd configure WaveLAN/IEEE devices
 .Sh SYNOPSIS
 .Nm wicontrol
+.Bk -words
 .Op Ar interface
 .Op Fl olL
 .Op Fl e Ar 0|1
@@ -64,6 +65,7 @@
 .Op Fl R Ar 1|3
 .Op Fl S Ar max sleep duration
 .Op Fl T Ar 1|2|3|4
+.Ek
 .Sh DESCRIPTION
 The
 .Nm
@@ -435,8 +437,8 @@ Note that there are bugs in Host AP mode in Prism firmware revisions
 prior to 0.8.3.
 .El
 .Sh SEE ALSO
-.Xr awi 4 ,
 .Xr an 4 ,
+.Xr awi 4 ,
 .Xr wi 4 ,
 .Xr hostname.if 5 ,
 .Xr ancontrol 8 ,
