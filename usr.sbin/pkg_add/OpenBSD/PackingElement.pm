@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.42 2004/10/05 19:44:15 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.43 2004/10/05 20:04:56 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -912,14 +912,17 @@ our @ISA=qw(OpenBSD::PackingElement::ExeclikeAction);
 __PACKAGE__->setKeyword('extraunexec');
 sub keyword() { "extraunexec" }
 
-package OpenBSD::PackingElement::DirRm;
+package OpenBSD::PackingElement::DirlikeObject;
 our @ISA=qw(OpenBSD::PackingElement::FileObject);
+
+package OpenBSD::PackingElement::DirRm;
+our @ISA=qw(OpenBSD::PackingElement::DirlikeObject);
 
 __PACKAGE__->setKeyword('dirrm');
 sub keyword() { "dirrm" }
 
 package OpenBSD::PackingElement::DirBase;
-our @ISA=qw(OpenBSD::PackingElement::FileObject);
+our @ISA=qw(OpenBSD::PackingElement::DirlikeObject);
 
 sub stringize($)
 {
