@@ -34,7 +34,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: rcmd.c,v 1.17 1996/09/03 10:53:37 deraadt Exp $";
+static char *rcsid = "$OpenBSD: rcmd.c,v 1.18 1996/09/05 02:37:27 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -76,7 +76,7 @@ rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 	char c, *p;
 
 	/* call rcmdsh() with specified remote shell if appropriate. */
-	if ((p = getenv("RSH"))) {
+	if (!issetugid() && (p = getenv("RSH"))) {
 		struct servent *sp = getservbyname("shell", "tcp");
 
 		if (sp && sp->s_port == rport)
