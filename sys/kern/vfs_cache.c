@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cache.c,v 1.9 2003/01/31 17:37:50 art Exp $	*/
+/*	$OpenBSD: vfs_cache.c,v 1.10 2003/02/25 09:48:33 tedu Exp $	*/
 /*	$NetBSD: vfs_cache.c,v 1.13 1996/02/04 02:18:09 christos Exp $	*/
 
 /*
@@ -109,15 +109,15 @@ cache_lookup(dvp, vpp, cnp)
 	u_long vpid;
 	int error;
 
+	*vpp = NULL;
+
 	if (!doingcache) {
 		cnp->cn_flags &= ~MAKEENTRY;
-		*vpp = NULL;
 		return (-1);
 	}
 	if (cnp->cn_namelen > NCHNAMLEN) {
 		nchstats.ncs_long++;
 		cnp->cn_flags &= ~MAKEENTRY;
-		*vpp = NULL;
 		return (-1);
 	}
 
@@ -132,7 +132,6 @@ cache_lookup(dvp, vpp, cnp)
 	}
 	if (ncp == 0) {
 		nchstats.ncs_miss++;
-		*vpp = NULL;
 		return (-1);
 	}
 	if ((cnp->cn_flags & MAKEENTRY) == 0) {
@@ -217,7 +216,6 @@ cache_lookup(dvp, vpp, cnp)
 				return (error);
 			cnp->cn_flags &= ~PDIRUNLOCK;
 		}
-		*vpp = NULL;
 		return (-1);
 	}
 
@@ -248,7 +246,6 @@ remove:
 	}
 #endif
 	TAILQ_INSERT_HEAD(&nclruhead, ncp, nc_lru);
-	*vpp = NULL;
 	return (-1);
 }
 
