@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.23 2001/05/15 22:02:07 deraadt Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.24 2001/05/16 08:59:04 art Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -194,7 +194,7 @@ struct mbuf {
  * allocates an mbuf and initializes it to contain a packet header
  * and internal data.
  */
-#define	MGET(m, how, type) { \
+#define	_MGET(m, how, type) { \
 	MALLOC((m), struct mbuf *, MSIZE, mbtypes[type], (how)); \
 	if (m) { \
 		(m)->m_type = (type); \
@@ -207,7 +207,14 @@ struct mbuf {
 		(m) = m_retry((how), (type)); \
 }
 
-#define	MGETHDR(m, how, type) { \
+#ifdef SMALL_KERNEL
+struct mbuf *_sk_mget(int, int);
+#define MGET(m, how, type) { m = _sk_mget(how, type); }
+#else
+#define MGET(m, how, type) _MGET(m, how, type)
+#endif
+
+#define	_MGETHDR(m, how, type) { \
 	MALLOC((m), struct mbuf *, MSIZE, mbtypes[type], (how)); \
 	if (m) { \
 		(m)->m_type = (type); \
@@ -220,6 +227,13 @@ struct mbuf {
 	} else \
 		(m) = m_retryhdr((how), (type)); \
 }
+
+#ifdef SMALL_KERNEL
+struct mbuf *_sk_mgethdr(int, int);
+#define MGETHDR(m, how, type) { m = _sk_mgethdr(how, type); }
+#else
+#define MGETHDR(m, how, type) _MGETHDR(m, how, type)
+#endif
 
 /*
  * Mbuf cluster macros.
@@ -249,7 +263,7 @@ union mcluster {
 	  } \
 	)
 
-#define	MCLGET(m, how) \
+#define	_MCLGET(m, how) \
 	{ MCLALLOC((m)->m_ext.ext_buf, (how)); \
 	  if ((m)->m_ext.ext_buf != NULL) { \
 		(m)->m_data = (m)->m_ext.ext_buf; \
@@ -260,6 +274,13 @@ union mcluster {
 		(m)->m_ext.ext_handle = NULL; \
 	  } \
 	}
+
+#ifdef SMALL_KERNEL
+void _sk_mclget(struct mbuf *, int);
+#define MCLGET(m, how) _sk_mclget(m, how)
+#else
+#define MCLGET(m, how) _MCLGET(m, how)
+#endif
 
 #define	MCLFREE(p) \
 	MBUFLOCK ( \

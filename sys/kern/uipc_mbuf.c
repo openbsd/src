@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.27 2001/05/05 20:57:00 art Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.28 2001/05/16 08:59:04 art Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -1029,3 +1029,31 @@ m_apply(m, off, len, f, fstate)
 
 	return (0);
 }
+
+#ifdef SMALL_KERNEL
+/*
+ * The idea of adding code in a small kernel might look absurd, but this is
+ * instead of macros.
+ */
+struct mbuf *
+_sk_mget(int how, int type)
+{
+	struct mbuf *m;
+	_MGET(m, how, type);
+	return m;
+}
+
+struct mbuf *
+_sk_mgethdr(int how, int type)
+{
+	struct mbuf *m;
+	_MGETHDR(m, how, type);
+	return m;
+}
+
+void
+_sk_mclget(struct mbuf *m, int how)
+{
+	_MCLGET(m, how);
+}
+#endif /* SMALL_KERNEL */
