@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.184 1999/09/25 23:22:43 deraadt Exp $
+$OpenBSD: pcidevs,v 1.185 1999/09/29 12:17:23 mickey Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -507,6 +507,7 @@ vendor STB2		0x12d2	NVidia/SGS-Thomson
 vendor DIAMOND2		0x12eb	Diamond Multimedia (2nd ID)
 vendor LMC		0x1376	LAN Media Corp
 vendor NETGEAR		0x1385	Netgear
+vendor CMI		0x13f6	C-Media Electronics Inc.
 vendor INVERTEX		0x14e1	Invertex
 vendor DELTA		0x1500	Delta
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd ID)
@@ -790,6 +791,7 @@ product COMPAQ QVISION_V2	0x3034	QVision
 product COMPAQ TRIFLEX4		0x4000	Triflex Host-PCI
 product COMPAQ USB		0x7020	USB
 product COMPAQ FXP		0xa0f0	Netelligent FXP
+product COMPAQ PCI_ISA_BRIDGE1	0xa0f3	PCI-ISA
 product COMPAQ N100TX		0xae32	Netelligent 10/100 TX
 product COMPAQ Nunknown		0xae33	Netelligent unknown
 product COMPAQ N10T		0xae34	Netelligent 10 T
@@ -1062,6 +1064,9 @@ product NEOMAGIC NM2160		0x0004	Magicgraph NM2160
 /* Netgear products */
 product NETGEAR GA620		0x620a	GA620
 
+/* C-Media Electronics Inc */
+product CMI CMI8738		0x0111	CMI8738/C3DX Audio
+
 /* NetVin */
 product NETVIN NV5000		0x5000	NetVin 5000
 
@@ -1205,6 +1210,7 @@ product SIS 86C202		0x0002	86C202 VGA
 product SIS 86C205		0x0005	86C205
 product SIS 85C503		0x0008	85C503 ISA
 product SIS 5595		0x0009	5595 PCI System I/O Chipset
+product SIS 5597VGA		0x0200	5597/5598 VGA
 product SIS 85C501		0x0406	85C501
 product SIS 85C496		0x0496	85C496
 product SIS 85C596		0x0496	85C596
