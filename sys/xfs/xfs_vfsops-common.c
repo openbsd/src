@@ -178,7 +178,7 @@ xfs_mount_common_sys(struct mount *mp,
 	    sizeof(mp->mnt_stat.f_mntonname));
 
     strncpy(mp->mnt_stat.f_mntfromname,
-	    "arla",
+	    data,
 	    sizeof(mp->mnt_stat.f_mntfromname));
 
     strncpy(mp->mnt_stat.f_fstypename,
