@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.34 2000/07/10 05:06:12 deraadt Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.35 2000/11/09 17:02:25 art Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -339,7 +339,7 @@ again:
 	 * This begins the section where we must prevent the parent
 	 * from being swapped.
 	 */
-	p1->p_holdcnt++;
+	PHOLD(p1);
 
 #if defined(UVM)
 	if (flags & FORK_VMNOSTACK) {
@@ -414,7 +414,7 @@ again:
 	/*
 	 * Now can be swapped.
 	 */
-	p1->p_holdcnt--;
+	PRELE(p1);
 
 #if defined(UVM)
 	uvmexp.forks++;
