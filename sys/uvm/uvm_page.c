@@ -971,18 +971,21 @@ uvm_pagealloc_contig(size, low, high, alignment)
 	TAILQ_INIT(&pglist);
 	if (uvm_pglistalloc(size, low, high, alignment, 0,
 			    &pglist, 1, FALSE))
-	        return 0;
+		return 0;
 	addr = vm_map_min(kernel_map);
-	if (uvm_map(kernel_map, &addr, size, NULL, 
-		    UVM_UNKNOWN_OFFSET, TRUE) != KERN_SUCCESS)
-	        addr = 0;
+	if (uvm_map(kernel_map, &addr, size, NULL, UVM_UNKNOWN_OFFSET,
+		    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
+				UVM_ADV_RANDOM, 0)) != KERN_SUCCESS) {
+		uvm_pglistfree(&pglist);
+		return 0;
+	}
 	temp_addr = addr;
 	for (pg = TAILQ_FIRST(&pglist); pg != NULL; 
 	     pg = TAILQ_NEXT(pg, pageq)) {
 	        pg->uobject = uvm.kernel_object;
 		pg->offset = temp_addr - vm_map_min(kernel_map);
 		uvm_pageinsert(pg);
-	        uvm_pagewire(pg);
+		uvm_pagewire(pg);
 #if defined(PMAP_NEW)
 		pmap_kenter_pa(temp_addr, VM_PAGE_TO_PHYS(pg), 
 			       VM_PROT_READ|VM_PROT_WRITE);
