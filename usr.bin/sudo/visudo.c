@@ -672,14 +672,14 @@ static RETSIGTYPE
 Exit(sig)
     int sig;
 {
-    char *emsg = " exiting due to signal.\n";
+#define	emsg	 " exiting due to signal.\n"
 
     (void) unlink(stmp);
 
     if (sig > 0) {
 	write(STDERR_FILENO, getprogname(), strlen(getprogname()));
 	write(STDERR_FILENO, emsg, sizeof(emsg) - 1);
-	_exit(-sig);
+	_exit(sig);
     }
     exit(-sig);
 }
