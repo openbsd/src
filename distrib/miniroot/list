@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.8 1997/05/01 11:05:15 niklas Exp $
+#	$OpenBSD: list,v 1.9 1997/05/04 11:08:41 niklas Exp $
 #	$NetBSD: list,v 1.4.4.1 1996/06/20 20:30:26 pk Exp $
 
 SRCDIRS usr.bin bin sbin usr.sbin gnu/usr.bin
@@ -56,7 +56,7 @@ SYMLINK	../../instbin		usr/bin/vim usr/bin/vi
 ARGVLINK mount_ffs	ffs
 ARGVLINK mount_nfs	nfs
 ARGVLINK mount_cd9660	cd9660
-ARGVLINK sh		-sh
+ARGVLINK pdksh		-sh
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/group		etc/group
