@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.32 1998/03/04 03:55:34 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.33 1998/03/06 21:38:01 niklas Exp $
 
 MAN=		cccp.1 gcc.1 cp/g++.1 f/g77.1
 MLINKS+=	gcc.1 cc.1
@@ -71,8 +71,9 @@ install:	maninstall
 		INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
 		infodir=${DESTDIR}/usr/share/info \
 		build_infodir=. \
-		tooldir=/tmp assertdir=/tmp INSTALL_MAN= NO_TARGET_GCC=true \
-		bindir=${DESTDIR}/usr/bin install
+		tooldir=/tmp assertdir=/tmp INSTALL_DRIVER=install-driver \
+		INSTALL_MAN= NO_TARGET_GCC=true bindir=${DESTDIR}/usr/bin \
+		install
 	ln -f ${DESTDIR}/usr/bin/gcc ${DESTDIR}/usr/bin/cc
 	chown -R ${BINOWN}.${BINGRP} ${DESTDIR}/usr/lib/gcc-lib
 	chmod -R a+rX ${DESTDIR}/usr/lib/gcc-lib

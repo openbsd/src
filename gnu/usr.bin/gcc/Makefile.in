@@ -300,6 +300,9 @@ ENQUIRE = enquire
 # libgcc1-test target (must also be overridable for a target)
 LIBGCC1_TEST = libgcc1-test
 
+# Specify the target for installing the compiler driver
+INSTALL_DRIVER = install-driver-with-alias
+
 # List of extra executables that should be compiled for this target machine
 # that are used for compiling from source code to object code.
 # The rules for compiling them should be in the t-* file for the machine.
@@ -2160,7 +2163,7 @@ install: $(INSTALL_TARGET) ; @true
 # Install the driver last so that the window when things are
 # broken is small.
 install-normal: install-common $(INSTALL_HEADERS) $(INSTALL_LIBGCC) \
-    $(INSTALL_MAN) install-info lang.install-normal install-driver
+    $(INSTALL_MAN) install-info lang.install-normal $(INSTALL_DRIVER)
 
 # Do nothing while making gcc with a cross-compiler. The person who
 # makes gcc for the target machine has to know how to put a complete
@@ -2270,6 +2273,10 @@ install-driver: xgcc
 	else \
 	  rm -f $(bindir)/$(GCC_INSTALL_NAME)$(exeext); \
 	  $(INSTALL_PROGRAM) xgcc$(exeext) $(bindir)/$(GCC_INSTALL_NAME)$(exeext); \
+	fi
+
+install-driver-with-alias: install-driver
+	-if [ ! -f gcc-cross$(exeext) ] ; then \
 	  rm -f $(bindir)/$(target_alias)-gcc-1$(exeext); \
 	  ln $(bindir)/$(GCC_INSTALL_NAME)$(exeext) $(bindir)/$(target_alias)-gcc-1$(exeext) \
 	    > /dev/null 2>&1 \
