@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vfsops.c,v 1.22 2003/08/14 07:46:40 mickey Exp $	*/
+/*	$OpenBSD: procfs_vfsops.c,v 1.23 2004/03/03 05:41:37 tedu Exp $	*/
 /*	$NetBSD: procfs_vfsops.c,v 1.25 1996/02/09 22:40:53 christos Exp $	*/
 
 /*
@@ -105,7 +105,7 @@ procfs_mount(mp, path, data, ndp, p)
 	mp->mnt_data = (qaddr_t)pmnt;
 	vfs_getnewfsid(mp);
 
-	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN, &size);
+	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
 	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
 	bzero(mp->mnt_stat.f_mntfromname, MNAMELEN);
 	bcopy("procfs", mp->mnt_stat.f_mntfromname, sizeof("procfs"));
