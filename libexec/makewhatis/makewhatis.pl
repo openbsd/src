@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # ex:ts=8 sw=4:
 
-# $OpenBSD: makewhatis.pl,v 1.27 2004/02/11 18:48:43 espie Exp $
+# $OpenBSD: makewhatis.pl,v 1.28 2004/02/11 18:50:43 espie Exp $
 #
 # Copyright (c) 2000 Marc Espie.
 # 
@@ -186,11 +186,11 @@ sub add_unformated_subject
     	# fine space adjustments
     while (s/\\[vh]\'.*?\'//g)
     	{}
-    unless (s/\s+\\-\s+/ ($section) - / || s/\\\-/($section) -/ ||
+    unless (s/\s+\\-\s+/ ($section) - / || s/\s*\\\-/ ($section) -/ ||
     	s/\s-\s/ ($section) - /) {
 	print STDERR "Weird subject line in $filename:\n$_\n" if $picky;
 	    # Try guessing where the separation falls...
-	s/\S+\s+/$& ($section) - / || s/\s*$/ ($section) - (empty subject)/;
+	s/\s+\:\s+/ ($section) - / || s/\S+\s+/$& ($section) - / || s/\s*$/ ($section) - (empty subject)/;
     }
 	# other dashes
     s/\\-/-/g;
