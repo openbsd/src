@@ -51,10 +51,6 @@ void choke(), child();
 pl_main()
 {
 
-	if (!SCREENTEST()) {
-		printf("Can't sail on this terminal.\n");
-		exit(1);
-	}
 	initialize();
 	Signal("Aye aye, Sir", (struct ship *)0);
 	play();
@@ -244,6 +240,11 @@ reprint:
 		}
 	}
 
+	/* SCREENTEST calls initscr */
+	if (!SCREENTEST()) {
+		printf("Can't sail on this terminal.\n");
+		exit(1);
+	}
 	initscreen();
 	draw_board();
 	(void) sprintf(message, "Captain %s assuming command", captain);

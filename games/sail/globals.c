@@ -470,7 +470,7 @@ char MT[9][3] = {
 	{ 4, 4, 2 }
 };
 
-char rangeofshot[] = {
+char rangeofshot[5] = {
 	0,
 	1,		/* grape */
 	3,		/* chain */
@@ -478,12 +478,12 @@ char rangeofshot[] = {
 	1		/* double */
 };
 
-char *countryname[] = {
+char *countryname[8] = {
 	"American", "British", "Spanish", "French", "Japanese",
 	"Federation", "Klingon", "Orion"
 };
 
-char *classname[] = {
+char *classname[7] = {
 	"Drift wood",
 	"Ship of the Line",
 	"Ship of the Line",
@@ -493,7 +493,7 @@ char *classname[] = {
 	"Brig"
 };
 
-char *directionname[] = {
+char *directionname[9] = {
 	"dead ahead",
 	"off the starboard bow",
 	"off the starboard beam",
@@ -505,9 +505,11 @@ char *directionname[] = {
 	"dead ahead"
 };
 
-char *qualname[] = { "dead", "mutinous", "green", "mundane", "crack", "elite" };
+char *qualname[6] = {
+	"dead", "mutinous", "green", "mundane", "crack", "elite"
+};
 
-char loadname[] = { '-', 'G', 'C', 'R', 'D', 'E' };
+char loadname[6] = { '-', 'G', 'C', 'R', 'D', 'E' };
 
-char dr[] = { 0, 1, 1, 0, -1, -1, -1, 0, 1 };
-char dc[] = { 0, 0, -1, -1, -1, 0, 1, 1, 1 };
+int dr[] = { 0, 1, 1, 0, -1, -1, -1, 0, 1 };
+int dc[] = { 0, 0, -1, -1, -1, 0, 1, 1, 1 };

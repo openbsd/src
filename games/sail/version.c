@@ -41,4 +41,4 @@ static char rcsid[] = "$NetBSD: version.c,v 1.3 1995/04/22 10:37:27 cgd Exp $";
 #endif
 #endif /* not lint */
 
-char version[] = "Wooden Ships and Iron Men, Version 8.1 (93/05/31)";
+char *version = "Wooden Ships and Iron Men, Version 8.1 (93/05/31)";
