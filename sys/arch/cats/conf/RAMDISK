@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.6 2004/10/01 04:15:14 drahn Exp $
+#	$OpenBSD: RAMDISK,v 1.7 2004/10/08 07:14:43 mcbride Exp $
 # $NetBSD: GENERIC,v 1.27.4.1 2002/08/01 04:18:06 lukem Exp $
 #
 # GENERIC machine description file
@@ -364,7 +364,7 @@ midi*	at pcppi?		# MIDI interface to the PC speaker
 
 # mouse & keyboard multiplexor pseudo-devices
 pseudo-device	wsmux		2
-pseudo-device	crypto		1
+#pseudo-device	crypto		1
 pseudo-device	loop		1	# network loopback
 pseudo-device	bpfilter	1	# packet filter
 pseudo-device	rd		1	# ram disk
