@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.s,v 1.2 2004/06/13 21:49:15 niklas Exp $	*/
+/*	$OpenBSD: vector.s,v 1.3 2004/06/20 16:30:51 aaron Exp $	*/
 /*	$NetBSD: vector.s,v 1.32 1996/01/07 21:29:47 mycroft Exp $	*/
 
 /*
@@ -79,7 +79,7 @@
  *   0 - This interrupt wasn't for me.
  *   1 - This interrupt was for me.
  *  -1 - This interrupt might have been for me, but I don't know.
- * If there are no handlers, or they all return 0, we flags it as a `stray'
+ * If there are no handlers, or they all return 0, we flag it as a `stray'
  * interrupt.  On a system with level-triggered interrupts, we could terminate
  * immediately when one of them returns 1; but this is a PC.
  *
@@ -111,7 +111,7 @@ Xresume_/**/name/**/num/**/:						;\
 	sti				/* safe to take intrs now */	;\
 	movl	_C_LABEL(intrhand) + (num) * 4,%ebx	/* head of chain */ ;\
 	testl	%ebx,%ebx						;\
-	jz	_C_LABEL(Xstray_/**/name/**/num)	/* no handlears; we're stray */	;\
+	jz	_C_LABEL(Xstray_/**/name/**/num)	/* no handlers; we're stray */	;\
 	STRAY_INITIALIZE		/* nobody claimed it yet */	;\
 	LOCK_KERNEL							;\
 7:	movl	IH_ARG(%ebx),%eax	/* get handler arg */		;\
