@@ -412,8 +412,7 @@ trap(frame)
 			    map, va, ftype, rv);
 			goto we_re_toast;
 		}
-		trapsignal(p, (rv == KERN_PROTECTION_FAILURE)
-		    ? SIGBUS : SIGSEGV, T_PAGEFLT);
+		trapsignal(p, SIGSEGV, T_PAGEFLT);
 		break;
 	}
 

@@ -1887,7 +1887,7 @@ IDTVEC(align)
  * If an error is detected during trap, syscall, or interrupt exit, trap() will
  * change %eip to point to one of these labels.  We clean up the stack, if
  * necessary, and resume as if we were handling a general protection fault.
- * This will cause the process to get a SIGBUS.
+ * This will cause the process to get a SIGSEGV.
  */
 ENTRY(resume_iret)
 	ZTRAP(T_PROTFLT)

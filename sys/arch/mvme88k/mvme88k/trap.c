@@ -348,7 +348,7 @@ trap(unsigned type, struct m88100_saved_state *frame)
 		    frame->snip = frame->sxip & ~NIP_E;
 		}
 	} else {
-		sig = result == KERN_PROTECTION_FAILURE ? SIGBUS : SIGSEGV;
+		sig = result == SIGSEGV;
 	}
 
 	break;

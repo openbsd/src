@@ -295,7 +295,7 @@ sigfpe:		i = SIGFPE;
 			goto dopanic;
 		}
 		ucode = v;
-		i = (rv == KERN_PROTECTION_FAILURE) ? SIGBUS : SIGSEGV;
+		i = SIGSEGV;
 		break;
 	    }
 
