@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.18 2001/06/26 23:24:06 kjell Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.19 2001/06/27 10:31:49 kjell Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -51,6 +51,7 @@ void	 usage(void);
 char	*load_file(char *, size_t *);
 int	 pfctl_enable(int);
 int	 pfctl_disable(int);
+int	 pfctl_clear_stats(int);
 int	 pfctl_clear_rules(int);
 int	 pfctl_clear_nat(int);
 int	 pfctl_clear_states(int);
@@ -66,6 +67,7 @@ int	 dflag = 0;
 int	 eflag = 0;
 int	 vflag = 0;
 int	 Nflag = 0;
+int	 zflag = 0;
 char	*clearopt;
 char	*logopt;
 char	*natopt;
@@ -78,7 +80,7 @@ usage()
 	extern char *__progname;
  
 	fprintf(stderr, "usage: %s [-de] [-c set] [-l interface]", __progname);
-	fprintf(stderr, " [-n file] [-r file] [-s set]\n");
+	fprintf(stderr, " [-N] [-n file] [-r file] [-s set] [-v] [-z]\n");
 	exit(1);
 }
 
@@ -132,6 +134,17 @@ pfctl_disable(int dev)
 		return (1);
 	}
 	printf("pf disabled\n");
+	return (0);
+}
+
+int
+pfctl_clear_stats(int dev)
+{
+	if (ioctl(dev, DIOCCLRSTATUS)) {
+		errx(1, "DIOCCLRSTATUS");
+		return (1);
+	}
+	printf("pf: statistics cleared\n");
 	return (0);
 }
 
@@ -428,7 +441,7 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "c:del:Nn:r:s:v")) != -1) {
+	while ((ch = getopt(argc, argv, "c:del:Nn:r:s:vz")) != -1) {
 		switch (ch) {
 		case 'c':
 			clearopt = optarg;
@@ -457,6 +470,9 @@ main(int argc, char *argv[])
 		case 'v':
 			vflag++;
 			break;
+		case 'z':
+			zflag++;
+			break;
 		default:
 			usage();
 			/* NOTREACHED */
@@ -471,6 +487,10 @@ main(int argc, char *argv[])
 
 	if (dflag)
 		if (pfctl_disable(dev))
+			error = 1;
+
+	if (zflag)
+		if (pfctl_clear_stats(dev))
 			error = 1;
 
 	if (clearopt != NULL) {

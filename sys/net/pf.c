@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.76 2001/06/27 10:27:43 kjell Exp $ */
+/*	$OpenBSD: pf.c,v 1.77 2001/06/27 10:31:51 kjell Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -962,18 +962,16 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 	case DIOCGETSTATUS: {
 		struct pf_status *s = (struct pf_status *)addr;
+		bcopy(&pf_status, s, sizeof(struct pf_status));
+		break;
+	}
+
+	case DIOCCLRSTATUS: {
 		u_int8_t running = pf_status.running;
 		u_int32_t states = pf_status.states;
-
-		bcopy(&pf_status, s, sizeof(struct pf_status));
-		if (s->since)
-			s->since = pftv.tv_sec - s->since;
-		else
-			s->since = 0;
 		bzero(&pf_status, sizeof(struct pf_status));
 		pf_status.running = running;
 		pf_status.states = states;
-		pf_status.since = pftv.tv_sec;
 		break;
 	}
 

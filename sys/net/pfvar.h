@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.22 2001/06/27 04:29:21 deraadt Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.23 2001/06/27 10:31:51 kjell Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -217,6 +217,7 @@ struct pfioc_if {
 #define DIOCGETSTATE	_IOWR('D', 19, struct pfioc_state)
 #define DIOCSETSTATUSIF _IOWR('D', 20, struct pfioc_if)
 #define DIOCGETSTATUS	_IOWR('D', 21, struct pf_status)
+#define DIOCCLRSTATUS	_IO  ('D', 22)
 
 #ifdef _KERNEL
 
