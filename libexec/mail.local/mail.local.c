@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mail.local.c	5.6 (Berkeley) 6/19/91";*/
-static char rcsid[] = "$Id: mail.local.c,v 1.7 1996/08/30 12:04:13 deraadt Exp $";
+static char rcsid[] = "$Id: mail.local.c,v 1.8 1996/10/16 06:30:56 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -184,7 +184,8 @@ store(from)
 	int fd, eline;
 	char *tn, line[2048];
 
-	tn = strdup(_PATH_LOCTMP);
+	if ((tn = strdup(_PATH_LOCTMP)) == NULL)
+		err(FATAL, "unable to allocate memory");
 	if ((fd = mkstemp(tn)) == -1 || !(fp = fdopen(fd, "w+")))
 		err(FATAL, "unable to open temporary file");
 	(void)unlink(tn);
