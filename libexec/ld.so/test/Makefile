@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2000/10/13 04:04:04 drahn Exp $
+#	$OpenBSD: Makefile,v 1.3 2000/10/13 05:15:17 drahn Exp $
 
 DIR=/usr/src/libexec/ld.so/obj/ld.so
 .if (${MACHINE_ARCH} == "powerpc")
@@ -14,7 +14,7 @@ SRCS=	ldt.c
 PROG=	ldt
 MAN=
 CLEANFILES= dltest dltest.o libfoo.so libfoo.o libbar.so libbar.o libdep.so
-CLEANFILES+= libdep.o CCtest dltest A.o tst.o libA.so
+CLEANFILES+= libdep.o CCtest dltest A.o B.o tst.o libA.so libB.so
 
 all:	dltest CCtest
 
@@ -36,8 +36,14 @@ A.o:	A.C
 libA.so:	A.o
 	$(CC) -shared -o $@ A.o 
 
-CCtest:	libA.so tst.o
-	g++ ${LDFLAGS} -o $@ tst.o -L . -lA
+B.o:	B.C
+	g++ -c ${CFLAGS} ${.IMPSRC}
+
+libB.so:	B.o
+	$(CC) -shared -o $@ B.o 
+
+CCtest:	libA.so libB.so tst.o
+	g++ ${LDFLAGS} -o $@ tst.o -L . -lB -lA
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
