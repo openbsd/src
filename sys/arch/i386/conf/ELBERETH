@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: ELBERETH,v 1.8 1997/06/20 13:56:02 kstailey Exp $
+#	$OpenBSD: ELBERETH,v 1.9 1997/06/23 18:20:09 kstailey Exp $
 #
 #
 #	ELBERETH -- 166MHz Pentium PCI
@@ -70,6 +70,7 @@ option		PROCFS		# /proc
 option		INET		# IP + ICMP + TCP + UDP
 #option		GATEWAY		# packet forwarding
 option		IPFILTER	# IP packet filter for security
+option		IPFILTER_LOG	# use /dev/ipl
 #option		NS		# XNS
 #option		ISO,TPIP	# OSI
 #option		EON		# OSI tunneling over IP
