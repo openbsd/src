@@ -73,7 +73,7 @@ main(int argc, char **argv)
 static struct {			/* the test cases */
 	quad_t input;
 	char *expect;
-	int errno;
+	int err;
 } ddata[] = {
 	{ 0, "0B", 0 },
 	{ 1, "1B", 0 },
@@ -129,9 +129,9 @@ fmt_test(void)
 			printf("\n");
 		}
 		if (ret == -1)
-			errs += assert_int(i, 1, ret, ddata[i].errno == 0 ? 0 : -1);
-		if (ddata[i].errno)
-			errs += assert_errno(i, 2, ddata[i].errno, errno);
+			errs += assert_int(i, 1, ret, ddata[i].err == 0 ? 0 : -1);
+		if (ddata[i].err)
+			errs += assert_errno(i, 2, ddata[i].err, errno);
 		else
 			errs += assert_str(i, 3, ddata[i].expect, buf);
 	}
@@ -149,7 +149,7 @@ extern int errno;
 struct {					/* the test cases */
 	char *input;
 	quad_t result;
-	int errno;
+	int err;
 } sdata[] = {
 	{ "0",		0, 0 },
 	{ "123",	123, 0 },
@@ -227,10 +227,10 @@ scan_test(void)
 			print(sdata[i].input, result, ret);
 		errno = e;
 		if (ret == -1)
-			errs += assert_int(i, 1, ret, sdata[i].errno == 0 ? 0 : -1);
+			errs += assert_int(i, 1, ret, sdata[i].err == 0 ? 0 : -1);
 		errno = e;
-		if (sdata[i].errno)
-			errs += assert_errno(i, 2, sdata[i].errno, errno);
+		if (sdata[i].err)
+			errs += assert_errno(i, 2, sdata[i].err, errno);
 		else 
 			errs += assert_quad_t(i, 3, sdata[i].result, result);
 	}
