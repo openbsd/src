@@ -1,4 +1,4 @@
-/*	$OpenBSD: microtime.S,v 1.2 2004/03/09 23:05:13 deraadt Exp $	*/
+/*	$OpenBSD: microtime.S,v 1.3 2004/03/22 19:43:29 nordin Exp $	*/
 /*	$NetBSD: microtime.S,v 1.1 2003/04/26 18:39:30 fvdl Exp $	*/
 
 /*-
@@ -95,6 +95,7 @@ ENTRY(microtime)
 	# time.tv_usec
 2: 	leaq	_C_LABEL(isa_timer_msb_table)(%rip),%rsi
 	movw	(%rsi,%rax,2),%ax
+	leaq	_C_LABEL(isa_timer_lsb_table)(%rip),%rsi
 	subw	(%rsi,%rdx,2),%ax
 	addq	%rax,%r9		# add msb increment
 
