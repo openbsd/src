@@ -1,4 +1,4 @@
-#	$OpenBSD: disktab,v 1.11 1997/06/03 22:59:21 deraadt Exp $
+#	$OpenBSD: disktab,v 1.12 1998/12/19 18:35:37 deraadt Exp $
 #	$NetBSD: disktab,v 1.2 1995/10/13 03:09:39 cgd Exp $
 
 # A DEC RZ25, configured so that all of the free partition IDs are at
@@ -17,9 +17,9 @@ floppy|floppy3|3in|3.5in High Density Floppy:\
 	:pc#2880:oc#0:
 
 rdroot:\
-	:ty=ramdisk:se#512:nt#2:rm#300:ns#8:nc#1024:\
-	:pa#8192:oa#0:ta=4.2BSD:ba#8192:fa#1024: \
-	:pc#8192:oc#0:
+	:ty=ramdisk:se#512:nt#2:rm#300:ns#8:nc#384:\
+	:pa#6144:oa#0:ta=4.2BSD:ba#8192:fa#1024: \
+	:pc#6144:oc#0:
 
 # test if not having an 'a' works?
 OpenBSD2.1|Fake image for Bootable CDROM:\
