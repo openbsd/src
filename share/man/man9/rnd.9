@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rnd.9,v 1.1 1996/03/29 13:42:59 mickey Exp $
+.\"	$OpenBSD: rnd.9,v 1.2 1996/04/24 17:54:23 mickey Exp $
 .\"
 .\" Copyright (c) 1996	Michael Shalayeff
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .Nd device kernel interface
 .Sh SYNOPSIS
 .Fd #include <dev/rndvar.h>
-.Va void add_keyboard_randomness(u_char scancode);
+.Va void add_tty_randomness(dev_t dev);
 .br
 .Va void add_net_randomness(int isr);
 .br
@@ -45,7 +45,7 @@
 .Va void get_random_bytes(void *buf, size_t nbytes);
 .br
 .Sh DESCRIPTION
-add_{keyboard,net,blkdev}_randomness routines used to supply data
+add_{tty,net,blkdev}_randomness routines used to supply data
 for the random data source device for future processing.
 .Pp
 get_random_bytes maybe used to retrive strong random data, just
