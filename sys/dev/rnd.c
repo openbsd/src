@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.61 2002/11/11 19:53:24 mickey Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.62 2002/11/25 10:09:24 mickey Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -496,8 +496,10 @@ void arc4maybeinit(void);
 static __inline u_int8_t
 arc4_getbyte(void)
 {
-	register u_int8_t si, sj;
+	register u_int8_t si, sj, ret;
+	int s;
 
+	s = splhigh();
 	rndstats.arc4_reads++;
 	arc4random_state.cnt++;
 	arc4random_state.i++;
@@ -506,7 +508,9 @@ arc4_getbyte(void)
 	sj = arc4random_state.s[arc4random_state.j];
 	arc4random_state.s[arc4random_state.i] = sj;
 	arc4random_state.s[arc4random_state.j] = si;
-	return arc4random_state.s[(si + sj) & 0xff];
+	ret = arc4random_state.s[(si + sj) & 0xff];
+	splx(s);
+	return (ret);
 }
 
 static __inline void
