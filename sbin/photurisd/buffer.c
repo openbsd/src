@@ -1,5 +1,5 @@
 /*
- * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
+ * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: buffer.c,v 1.1 1998/11/14 23:37:22 deraadt Exp $";
+static char rcsid[] = "$Id: buffer.c,v 1.2 2000/12/15 02:50:37 provos Exp $";
 #endif
 
 #include <sys/types.h>

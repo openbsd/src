@@ -1,5 +1,5 @@
 /*
- * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
+ * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: photuris_cookie_request.c,v 1.2 2000/12/15 02:42:08 provos Exp $";
+static char rcsid[] = "$Id: photuris_cookie_request.c,v 1.3 2000/12/15 02:50:39 provos Exp $";
 #endif
 
 #include <stdio.h>

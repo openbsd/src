@@ -1,5 +1,5 @@
 /*
- * Copyright 1997,1998 Niels Provos <provos@physnet.uni-hamburg.de>
+ * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: spi.c,v 1.6 2000/12/15 01:06:51 provos Exp $";
+static char rcsid[] = "$Id: spi.c,v 1.7 2000/12/15 02:50:39 provos Exp $";
 #endif
 
 #define _SPI_C_

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
+ * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_message_reject.c,v 1.2 2000/12/11 21:21:17 provos Exp $";
+static char rcsid[] = "$Id: handle_message_reject.c,v 1.3 2000/12/15 02:50:38 provos Exp $";
 #endif
 
 #include <stdio.h>

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997,1998 Niels Provos <provos@physnet.uni-hamburg.de>
+ * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
  * 
  * Parts derived from code by Angelos D. Keromytis, kermit@forthnet.gr 
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: schedule.c,v 1.4 2000/12/15 02:42:09 provos Exp $";
+static char rcsid[] = "$Id: schedule.c,v 1.5 2000/12/15 02:50:39 provos Exp $";
 #endif
 
 #define _SCHEDULE_C_
