@@ -1,11 +1,9 @@
-#	$OpenBSD: install.md,v 1.4 2003/10/12 13:18:37 krw Exp $
+#	$OpenBSD: install.md,v 1.5 2004/08/19 02:03:09 mickey Exp $
 #
 # machine dependent section of installation/upgrade script.
 #
 
 MDTERM=vt100
-MDDISKDEVS='/^sd[0-9] /s/ .*//p'
-MDCDDEVS='/^cd[0-9] /s/ .*//p'
 ARCH=ARCH
 
 md_set_term() {
