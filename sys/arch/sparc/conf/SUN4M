@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4M,v 1.42 2002/08/21 22:18:29 miod Exp $
+#	$OpenBSD: SUN4M,v 1.43 2002/08/31 10:47:18 miod Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -151,6 +151,10 @@ wsdisplay* at cgfourteen?
 # Sun "cgtwelve" (GS) accelerated 24-bit framebuffer.
 cgtwelve*	at sbus? slot ? offset ?
 wsdisplay* at cgtwelve?
+
+# Vigra VS10 or VS12 framebuffer.
+vigra*	at sbus? slot ? offset ?
+wsdisplay* at vigra?
 
 # Weitek p9100 found on Tadpole 3GS/3GX
 pnozz0	at sbus? slot ? offset ?

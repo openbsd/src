@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.43 2002/08/12 10:44:03 miod Exp $
+#	$OpenBSD: files.sparc,v 1.44 2002/08/31 10:47:18 miod Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -198,6 +198,10 @@ file	arch/sparc/dev/p9100.c		pnozz
 device	tcx: wsemuldisplaydev, rasops8, rasops32, wsemul_sun, bt_dac
 attach	tcx at sbus
 file	arch/sparc/dev/tcx.c		tcx
+
+device	vigra: wsemuldisplaydev, rasops8, wsemul_sun
+attach	vigra at sbus
+file	arch/sparc/dev/vigra.c		vigra
 
 # device definition in sys/conf/files
 attach le at sbus, ledma, lebuffer, obio

@@ -1,4 +1,4 @@
-# 	$OpenBSD: SUN4C,v 1.32 2002/08/12 10:44:03 miod Exp $
+# 	$OpenBSD: SUN4C,v 1.33 2002/08/31 10:47:18 miod Exp $
 # 	$NetBSD: GENERIC,v 1.19 1995/10/08 11:45:39 pk Exp $
 
 machine		sparc
@@ -163,11 +163,13 @@ bwtwo*	at sbus? slot ? offset ?
 cgthree* at sbus? slot ? offset ?
 cgsix* at sbus? slot ? offset ?
 cgtwelve* at sbus? slot ? offset ?
+vigra*	at sbus? slot ? offset ?
 
 wsdisplay* at bwtwo?
 wsdisplay* at cgthree?
 wsdisplay* at cgsix?
 wsdisplay* at cgtwelve?
+wsdisplay* at vigra?
 
 scsibus* at esp?
 #scsibus* at si?
