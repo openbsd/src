@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmciareg.h,v 1.4 1999/01/28 04:58:32 fgsch Exp $	*/
+/*	$OpenBSD: pcmciareg.h,v 1.5 2000/06/06 00:56:25 fgsch Exp $	*/
 /*	$NetBSD: pcmciareg.h,v 1.6 1998/08/13 15:00:02 nathanw Exp $	*/
 
 /*
@@ -59,16 +59,8 @@
 #define	PCMCIA_DSPEED_150NS					0x03
 #define	PCMCIA_DSPEED_100NS					0x04
 #define	PCMCIA_DSPEED_EXT					0x07
-
-/*
- * the 2.1 docs have 0x02-0x07 as reserved, but the linux drivers list the
- * follwing tuple code values.  I have at least one card (3com 3c562
- * lan+modem) which has a code 0x06 tuple, so I'm going to assume that these
- * are for real
- */
-
 #define	PCMCIA_CISTPL_LONGLINK_CB		0x02
-#define	PCMCIA_CISTPL_INDIRECT		0x03
+#define	PCMCIA_CISTPL_INDIRECT			0x03
 #define	PCMCIA_CISTPL_CONFIG_CB			0x04
 #define	PCMCIA_CISTPL_CFTABLE_ENTRY_CB		0x05
 #define	PCMCIA_CISTPL_LONGLINK_MFC		0x06
@@ -76,7 +68,8 @@
 #define	PCMCIA_MFC_MEM_COMMON				0x01
 #define	PCMCIA_CISTPL_BAR			0x07
 #define	PCMCIA_CISTPL_PWR_MGMNT			0x08
-
+#define	PCMCIA_CISTPL_EXTDEVICE			0x09
+/* #define	PCMCIA_CISTPL_RESERVED		0x0A-0x0F */
 #define	PCMCIA_CISTPL_CHECKSUM			0x10
 #define	PCMCIA_CISTPL_LONGLINK_A		0x11
 #define	PCMCIA_CISTPL_LONGLINK_C		0x12
@@ -172,6 +165,7 @@
 #define	PCMCIA_FUNCTION_SCSI		8
 #define	PCMCIA_FUNCTION_SECURITY	9
 #define	PCMCIA_FUNCTION_INSTRUMENT	10
+#define	PCMCIA_FUNCTION_IOBUS		11
 #define	PCMCIA_CISTPL_FUNCE			0x22
 #define	PCMCIA_TPLFE_TYPE_LAN_TECH			0x01
 #define	PCMCIA_TPLFE_TYPE_LAN_SPEED			0x02
@@ -192,7 +186,7 @@
 #define	PCMCIA_CISTPL_BYTEORDER			0x43
 #define	PCMCIA_CISTPL_DATE			0x44
 #define	PCMCIA_CISTPL_BATTERY			0x45
-#define	PCMCIA_CISTPL_FORAMT_A			0x47
+#define	PCMCIA_CISTPL_FORMAT_A			0x47
 
 /* Layer 3 Data Organization Tuples */
 
