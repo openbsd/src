@@ -22,7 +22,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: md4c.c,v 1.9 1997/04/30 05:56:05 tholo Exp $";
+static char rcsid[] = "$OpenBSD: md4c.c,v 1.10 1997/07/03 23:30:20 provos Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
@@ -205,12 +205,15 @@ MD4_CTX *context;                                        /* context */
 
   /* Append length (before padding) */
   MD4Update (context, bits, 8);
-  /* Store state in digest */
-  Encode (digest, context->state, 16);
 
-  /* Zeroize sensitive information.
-   */
-  memset ((POINTER)context, 0, sizeof (*context));
+  if (digest != NULL) {
+    /* Store state in digest */
+    Encode (digest, context->state, 16);
+
+    /* Zeroize sensitive information.
+     */
+    memset ((POINTER)context, 0, sizeof (*context));
+  }
 }
 
 /* MD4 basic transformation. Transforms state based on block.

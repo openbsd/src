@@ -23,7 +23,7 @@ documentation and/or software.
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: md5c.c,v 1.9 1997/04/30 05:56:06 tholo Exp $";
+static char rcsid[] = "$OpenBSD: md5c.c,v 1.10 1997/07/03 23:30:21 provos Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
@@ -216,11 +216,14 @@ MD5_CTX *context;                                       /* context */
 
   /* Append length (before padding) */
   MD5Update (context, bits, 8);
-  /* Store state in digest */
-  Encode (digest, context->state, 16);
 
-  /* Zeroize sensitive information.  */
-  memset ((POINTER)context, 0, sizeof (*context));
+  if (digest != NULL) {
+    /* Store state in digest */
+    Encode (digest, context->state, 16);
+
+    /* Zeroize sensitive information.  */
+    memset ((POINTER)context, 0, sizeof (*context));
+  }
 }
 
 /* MD5 basic transformation. Transforms state based on block.
