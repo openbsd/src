@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.91 2001/05/14 12:34:27 espie Exp $
+#	$OpenBSD: Makefile,v 1.92 2001/05/31 14:03:04 art Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -34,6 +34,9 @@ LFILES=	errno.h fcntl.h syslog.h termios.h
 
 .if (${MACHINE_ARCH} == "mips" || ${MACHINE_ARCH} == "powerpc")
 MFILES+= link.h dlfcn.h
+.endif
+.if (${MACHINE_ARCH} == "alpha")
+FILES+=link.h dlfcn.h
 .endif
 
 DIRS=	arpa protocols rpc rpcsvc
