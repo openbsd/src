@@ -63,7 +63,7 @@
 
 extern int nfs_root_node[];	/* XXX - get from nfs_mount() */
 
-u_int32_t myip, rootip, gateip, mask;
+struct in_addr myip, rootip, gateip, mask;
 char rootpath[FNAME_SIZE];
 
 int netdev_sock = -1;
@@ -138,9 +138,9 @@ net_mountroot(f, devname)
 	/* Get boot info using RARP and Sun bootparams. */
 
 	/* Get our IP address.  (rarp.c) */
-	if ((myip = rarp_getipaddress(netdev_sock)) == 0)
+	if ((myip.s_addr = rarp_getipaddress(netdev_sock)) == 0)
 		return (EIO);
-	printf("boot: client IP address: %s\n", intoa(myip));
+	printf("boot: client IP address: %s\n", intoa(myip.s_addr));
 
 	/* Get our hostname, server IP address. */
 	if (bp_whoami(netdev_sock))
@@ -156,7 +156,7 @@ net_mountroot(f, devname)
 	/* Get boot info using BOOTP way. (RFC951, RFC1048) */
 	bootp(netdev_sock);
 
-	printf("Using IP address: %s\n", intoa(myip));
+	printf("Using IP address: %s\n", intoa(myip.s_addr));
 
 	printf("myip: %s (%s)", hostname, intoa(myip));
 	if (gateip)
@@ -167,7 +167,7 @@ net_mountroot(f, devname)
 
 #endif
 
-	printf("root addr=%s path=%s\n", intoa(rootip), rootpath);
+	printf("root addr=%s path=%s\n", intoa(rootip.s_addr), rootpath);
 
 	/* Get the NFS file handle (mount). */
 	error = nfs_mount(netdev_sock, rootip, rootpath);

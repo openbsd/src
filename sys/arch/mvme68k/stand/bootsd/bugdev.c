@@ -38,7 +38,7 @@
 int bugscopen __P((struct open_file *, ...));
 int bugscclose __P((struct open_file *));
 int bugscioctl __P((struct open_file *, u_long, void *));
-int bugscstrategy __P((void *, int, daddr_t, u_int, char *, u_int *));
+int bugscstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
 
 void cputobsdlabel __P((struct disklabel *lp, struct cpu_disklabel *clp));
 
@@ -119,9 +119,9 @@ bugscstrategy(devdata, func, dblk, size, buf, rsize)
 	void *devdata;
 	int func;
 	daddr_t dblk;
-	u_int size;
-	char *buf;
-	u_int *rsize;
+	size_t size;
+	void *buf;
+	size_t *rsize;
 {
 	struct mvmeprom_dskio dio;
 	register struct bugsc_softc *pp = (struct bugsc_softc *)devdata;

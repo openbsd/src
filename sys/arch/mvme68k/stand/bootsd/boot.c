@@ -277,11 +277,14 @@ twiddle()
 }
 #endif
 
+#if 0
 void
 _rtt()
 {
 	mvmeprom_return();
 }
+#endif
+
 void
 parse_args(pargs)
 	struct mvmeprom_args *pargs;

@@ -47,12 +47,12 @@ int     le_debug = 0;
 
 void le_end __P((struct netif *));
 void le_error __P((struct netif *, char *, volatile struct lereg1 *));
-int le_get __P((struct iodesc *, void *, int, time_t));
+int le_get __P((struct iodesc *, void *, size_t, time_t));
 void le_init __P((struct iodesc *, void *));
 int le_match __P((struct netif *, void *));
 int le_poll __P((struct iodesc *, void *, int));
 int le_probe __P((struct netif *, void *));
-int le_put __P((struct iodesc *, void *, int));
+int le_put __P((struct iodesc *, void *, size_t));
 void le_reset __P((struct netif *, u_char *));
 
 struct netif_stats le_stats;
@@ -289,7 +289,7 @@ le_poll(desc, pkt, len)
 		if (length > len)
 			length = len;
 
-		bcopy(&ler2->ler2_rbuf[le_softc.next_rmd], pkt, length);
+		bcopy((void *)&ler2->ler2_rbuf[le_softc.next_rmd], pkt, length);
 	}
 cleanup:
 	a = (u_int) & ler2->ler2_rbuf[le_softc.next_rmd];
@@ -304,9 +304,9 @@ cleanup:
 
 int
 le_put(desc, pkt, len)
-	struct iodesc *desc;
-	void   *pkt;
-	int     len;
+	struct	iodesc *desc;
+	void	*pkt;
+	size_t	len;
 {
 	volatile struct lereg1 *ler1 = le_softc.sc_r1;
 	volatile struct lereg2 *ler2 = le_softc.sc_r2;
@@ -380,10 +380,10 @@ le_put(desc, pkt, len)
 
 int
 le_get(desc, pkt, len, timeout)
-	struct iodesc *desc;
-	void   *pkt;
-	int     len;
-	time_t  timeout;
+	struct	iodesc *desc;
+	void	*pkt;
+	size_t	len;
+	time_t	timeout;
 {
 	time_t  t;
 	int     cc;
