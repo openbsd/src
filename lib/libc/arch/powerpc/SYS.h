@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)SYS.h	8.1 (Berkeley) 6/4/93
- *      $Id: SYS.h,v 1.1.1.1 1996/12/21 20:42:21 rahnds Exp $ 
+ *      $Id: SYS.h,v 1.2 1998/07/04 23:57:40 rahnds Exp $ 
  */
 
 #include <sys/syscall.h>
@@ -45,21 +45,19 @@
 #include "machine/asm.h"
 
 #ifdef __STDC__
-#define PSEUDO_PREFIX(x,y)	.globl _C_LABEL(x) ; \
-				.align 2; \
-				.extern cerror ; \
-			_C_LABEL(x):	li 0, SYS_##y ; \
+#define PSEUDO_PREFIX(x,y)	.extern cerror ; \
+			ENTRY(x) \
+				li 0, SYS_##y ; \
 				/* sc */
 #else /* !__STDC__ */
-#define PSEUDO_PREFIX(x,y)	.globl _C_LABEL(x) ; \
-				.align 2; \
-				.extern cerror ; \
-			_C_LABEL(x):	li 0, SYS_/**/y ; \
+#define PSEUDO_PREFIX(x,y)	.extern cerror ; \
+			ENTRY(x) \
+				li 0, SYS_/**/y ; \
 				/* sc */
 #endif /* !__STDC__ */
 #define PSEUDO_SUFFIX		cmpwi 0, 0 ; \
 				beqlr+ ; \
-				b cerror
+				b cerror 
 
 #define PREFIX(x)		PSEUDO_PREFIX(x,x)
 
