@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.78 2004/04/06 22:23:04 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.79 2004/04/09 19:21:15 millert Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -72,7 +72,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.78 2004/04/06 22:23:04 millert Exp $";
+static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.79 2004/04/09 19:21:15 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -173,7 +173,7 @@ int	log_trim(char *);
 int	movefile(char *, char *, uid_t, gid_t, mode_t);
 int	stat_suffix(char *, size_t, char *, struct stat *,
 	    int (*)(const char *, struct stat *));
-off_t	sizefile(char *);
+off_t	sizefile(struct stat *);
 struct conf_entry *
 	parse_file(int *);
 time_t	parse8601(char *);
@@ -306,52 +306,55 @@ do_entry(struct conf_entry *ent)
 		DPRINTF(("--> not a regular file, skipping\n"));
 		return;
 	}
+	if (S_ISLNK(sb.st_mode) && stat(ent->log, &sb) != 0) {
+		DPRINTF(("--> link target does not exist, skipping\n"));
+		return;
+	}
+	if (ent->uid == (uid_t)-1)
+		ent->uid = sb.st_uid;
+	if (ent->gid == (gid_t)-1)
+		ent->gid = sb.st_gid;
 
 	DPRINTF(("%s <%d%s%s%s%s>: ", ent->log, ent->numlogs,
 	    (ent->flags & CE_COMPACT) ? "Z" : "",
 	    (ent->flags & CE_BINARY) ? "B" : "",
 	    (ent->flags & CE_FOLLOW) ? "F" : "",
 	    (ent->flags & CE_MONITOR) && monitormode ? "M" : ""));
-
-	size = sizefile(ent->log);
+	size = sizefile(&sb);
 	modtime = age_old_log(ent);
-	if (size < 0) {
-		DPRINTF(("does not exist.\n"));
-	} else {
-		if (ent->flags & CE_TRIMAT && !force) {
-			if (timenow < ent->trim_at ||
-			    difftime(timenow, ent->trim_at) >= 60 * 60) {
-				DPRINTF(("--> will trim at %s",
-				    ctime(&ent->trim_at)));
-				return;
-			} else if (ent->hours <= 0) {
-				DPRINTF(("--> time is up\n"));
-			}
+	if (ent->flags & CE_TRIMAT && !force) {
+		if (timenow < ent->trim_at ||
+		    difftime(timenow, ent->trim_at) >= 60 * 60) {
+			DPRINTF(("--> will trim at %s",
+			    ctime(&ent->trim_at)));
+			return;
+		} else if (ent->hours <= 0) {
+			DPRINTF(("--> time is up\n"));
 		}
-		if (ent->size > 0)
-			DPRINTF(("size (KB): %.2f [%d] ", size / 1024.0,
-			    (int)(ent->size / 1024)));
-		if (ent->hours > 0)
-			DPRINTF(("age (hr): %d [%d] ", modtime, ent->hours));
-		if (monitormode && (ent->flags & CE_MONITOR) && domonitor(ent))
-			DPRINTF(("--> monitored\n"));
-		else if (!monitormode &&
-		    (force || (ent->size > 0 && size >= ent->size) ||
-		    (ent->hours <= 0 && (ent->flags & CE_TRIMAT)) ||
-		    (ent->hours > 0 && (modtime >= ent->hours || modtime < 0)
-		    && ((ent->flags & CE_BINARY) || size >= MIN_SIZE)))) {
-			DPRINTF(("--> trimming log....\n"));
-			if (noaction && !verbose)
-				printf("%s <%d%s%s%s>\n", ent->log,
-				    ent->numlogs,
-				    (ent->flags & CE_COMPACT) ? "Z" : "",
-				    (ent->flags & CE_BINARY) ? "B" : "",
-				    (ent->flags & CE_FOLLOW) ? "F" : "");
-			dotrim(ent);
-			ent->flags |= CE_ROTATED;
-		} else
-			DPRINTF(("--> skipping\n"));
 	}
+	if (ent->size > 0)
+		DPRINTF(("size (KB): %.2f [%d] ", size / 1024.0,
+		    (int)(ent->size / 1024)));
+	if (ent->hours > 0)
+		DPRINTF(("age (hr): %d [%d] ", modtime, ent->hours));
+	if (monitormode && (ent->flags & CE_MONITOR) && domonitor(ent))
+		DPRINTF(("--> monitored\n"));
+	else if (!monitormode &&
+	    (force || (ent->size > 0 && size >= ent->size) ||
+	    (ent->hours <= 0 && (ent->flags & CE_TRIMAT)) ||
+	    (ent->hours > 0 && (modtime >= ent->hours || modtime < 0)
+	    && ((ent->flags & CE_BINARY) || size >= MIN_SIZE)))) {
+		DPRINTF(("--> trimming log....\n"));
+		if (noaction && !verbose)
+			printf("%s <%d%s%s%s>\n", ent->log,
+			    ent->numlogs,
+			    (ent->flags & CE_COMPACT) ? "Z" : "",
+			    (ent->flags & CE_BINARY) ? "B" : "",
+			    (ent->flags & CE_FOLLOW) ? "F" : "");
+		dotrim(ent);
+		ent->flags |= CE_ROTATED;
+	} else
+		DPRINTF(("--> skipping\n"));
 }
 
 /* Run the specified command */
@@ -790,17 +793,14 @@ dotrim(struct conf_entry *ent)
 		if (noaction) {
 			printf("\tmv %s %s\n", file1, file2);
 			printf("\tchmod %o %s\n", ent->permissions, file2);
-			if (ent->uid != (uid_t)-1 || ent->gid != (gid_t)-1)
-				printf("\tchown %u:%u %s\n",
-				    ent->uid, ent->gid, file2);
+			printf("\tchown %u:%u %s\n", ent->uid, ent->gid, file2);
 		} else {
 			if (rename(file1, file2))
 				warn("can't mv %s to %s", file1, file2);
 			if (chmod(file2, ent->permissions))
 				warn("can't chmod %s", file2);
-			if (ent->uid != (uid_t)-1 || ent->gid != (gid_t)-1)
-				if (chown(file2, ent->uid, ent->gid))
-					warn("can't chown %s", file2);
+			if (chown(file2, ent->uid, ent->gid))
+				warn("can't chown %s", file2);
 		}
 	}
 	if (!noaction && !(ent->flags & CE_BINARY))
@@ -812,11 +812,10 @@ dotrim(struct conf_entry *ent)
 	} else {
 		if ((fd = mkstemp(file2)) < 0)
 			err(1, "can't start '%s' log", file2);
-		if (ent->uid != (uid_t)-1 || ent->gid != (gid_t)-1)
-			if (fchown(fd, ent->uid, ent->gid))
-				err(1, "can't chown '%s' log file", file2);
 		if (fchmod(fd, ent->permissions))
 			err(1, "can't chmod '%s' log file", file2);
+		if (fchown(fd, ent->uid, ent->gid))
+			err(1, "can't chown '%s' log file", file2);
 		(void)close(fd);
 		/* Add status message */
 		if (!(ent->flags & CE_BINARY) && log_trim(file2))
@@ -833,9 +832,7 @@ dotrim(struct conf_entry *ent)
 		if (noaction) {
 			printf("\tmv %s to %s\n", ent->log, file1);
 			printf("\tchmod %o %s\n", ent->permissions, file1);
-			if (ent->uid != (uid_t)-1 || ent->gid != (gid_t)-1)
-				printf("\tchown %u:%u %s\n",
-				    ent->uid, ent->gid, file1);
+			printf("\tchown %u:%u %s\n", ent->uid, ent->gid, file1);
 		} else if (movefile(ent->log, file1, ent->uid, ent->gid,
 		    ent->permissions))
 			warn("can't mv %s to %s", ent->log, file1);
@@ -896,18 +893,13 @@ compress_log(struct conf_entry *ent)
 
 /* Return size in kilobytes of a file */
 off_t
-sizefile(char *file)
+sizefile(struct stat *sb)
 {
-	struct stat sb;
-
-	if (stat(file, &sb) < 0)
-		return (-1);
-
 	/* For sparse files, return the size based on number of blocks used. */
-	if (sb.st_size / DEV_BSIZE > sb.st_blocks)
-		return (sb.st_blocks * DEV_BSIZE);
+	if (sb->st_size / DEV_BSIZE > sb->st_blocks)
+		return (sb->st_blocks * DEV_BSIZE);
 	else
-		return (sb.st_size);
+		return (sb->st_size);
 }
 
 /* Return the age (in hours) of old log file (file.0), or -1 if none */
@@ -1343,9 +1335,8 @@ movefile(char *from, char *to, uid_t owner_uid, gid_t group_gid, mode_t perm)
 	if (rename(from, to) == 0) {
 		if (chmod(to, perm))
 			warn("can't chmod %s", to);
-		if (owner_uid != (uid_t)-1 || group_gid != (gid_t)-1)
-			if (chown(to, owner_uid, group_gid))
-				warn("can't chown %s", to);
+		if (chown(to, owner_uid, group_gid))
+			warn("can't chown %s", to);
 		return (0);
 	} else if (errno != EXDEV)
 		return (-1);
@@ -1355,12 +1346,10 @@ movefile(char *from, char *to, uid_t owner_uid, gid_t group_gid, mode_t perm)
 		err(1, "can't fopen %s for reading", from);
 	if ((dst = fopen(to, "w")) == NULL)
 		err(1, "can't fopen %s for writing", to);
-	if (owner_uid != (uid_t)-1 || group_gid != (gid_t)-1) {
-		if (fchown(fileno(dst), owner_uid, group_gid))
-			err(1, "can't fchown %s", to);
-	}
 	if (fchmod(fileno(dst), perm))
 		err(1, "can't fchmod %s", to);
+	if (fchown(fileno(dst), owner_uid, group_gid))
+		err(1, "can't fchown %s", to);
 
 	while ((i = getc(src)) != EOF) {
 		if ((putc(i, dst)) == EOF)
