@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.745 2004/07/04 01:21:58 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.746 2004/07/14 18:16:23 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1077,8 +1077,10 @@
 #define	PCI_PRODUCT_HAUPPAUGE_WINTV	0x13eb		/* WinTV */
 
 /* Hewlett-Packard products */
-#define	PCI_PRODUCT_HP_A4977A	0x1005		/* A4977A Visualize EG */
+#define	PCI_PRODUCT_HP_VISUALIZE_EG	0x1005		/* Visualize EG */
+#define	PCI_PRODUCT_HP_VISUALIZE_FX6	0x1006		/* Visualize FX6 */
 #define	PCI_PRODUCT_HP_VISUALIZE_FX4	0x1008		/* Visualize FX4 */
+#define	PCI_PRODUCT_HP_VISUALIZE_FX2	0x100a		/* Visualize FX2 */
 #define	PCI_PRODUCT_HP_TACH_TL	0x1028		/* Tach TL FibreChannel */
 #define	PCI_PRODUCT_HP_TACH_XL2	0x1029		/* Tach XL2 FibreChannel */
 #define	PCI_PRODUCT_HP_J2585A	0x1030		/* J2585A */
