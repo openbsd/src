@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnameinfo.c,v 1.18 2000/09/25 22:52:57 itojun Exp $	*/
+/*	$OpenBSD: getnameinfo.c,v 1.19 2001/08/20 02:23:33 itojun Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -315,17 +315,18 @@ ip6_parsenumeric(sa, addr, host, hostlen, flags)
 			char scopebuf[MAXHOSTNAMELEN];
 			int scopelen;
 
-			/* ip6_sa2str never fails */
-			scopelen = ip6_sa2str((const struct sockaddr_in6 *)sa,
-					      scopebuf, sizeof(scopebuf),
-					      flags);
+			scopelen = ip6_sa2str(
+			    (const struct sockaddr_in6 *)(const void *)sa,
+			    scopebuf, sizeof(scopebuf), 0);
+			if (scopelen < 0)
+				return ENI_MEMORY;
 			if (scopelen + 1 + numaddrlen + 1 > hostlen)
 				return ENI_MEMORY;
 			/*
 			 * construct <numeric-addr><delim><scopeid>
 			 */
 			memcpy(host + numaddrlen + 1, scopebuf,
-			       scopelen);
+			    (size_t)scopelen);
 			host[numaddrlen] = SCOPE_DELIMITER;
 			host[numaddrlen + 1 + scopelen] = '\0';
 		}
@@ -343,12 +344,20 @@ ip6_sa2str(sa6, buf, bufsiz, flags)
 	size_t bufsiz;
 	int flags;
 {
-	unsigned int ifindex = (unsigned int)sa6->sin6_scope_id;
-	const struct in6_addr *a6 = &sa6->sin6_addr;
+	unsigned int ifindex;
+	const struct in6_addr *a6;
+	int n;
 
-#ifdef notyet
-	if (flags & NI_NUMERICSCOPE) {
-		return(snprintf(buf, bufsiz, "%d", sa6->sin6_scope_id));
+	ifindex = (unsigned int)sa6->sin6_scope_id;
+	a6 = &sa6->sin6_addr;
+
+#ifdef notdef
+	if ((flags & NI_NUMERICSCOPE) != 0) {
+		n = snprintf(buf, bufsiz, "%u", sa6->sin6_scope_id);
+		if (n < 0 || n >= bufsiz)
+			return -1;
+		else
+			return n;
 	}
 #endif
 
@@ -362,6 +371,10 @@ ip6_sa2str(sa6, buf, bufsiz, flags)
 	}
 
 	/* last resort */
-	return(snprintf(buf, bufsiz, "%u", sa6->sin6_scope_id));
+	n = snprintf(buf, bufsiz, "%u", sa6->sin6_scope_id);
+	if (n < 0 || n >= bufsiz)
+		return -1;
+	else
+		return n;
 }
 #endif /* INET6 */
