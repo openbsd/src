@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdef.h,v 1.18 2001/06/15 14:01:39 espie Exp $	*/
+/*	$OpenBSD: mdef.h,v 1.19 2001/09/17 08:11:13 espie Exp $	*/
 /*	$NetBSD: mdef.h,v 1.7 1996/01/13 23:25:27 pk Exp $	*/
 
 /*
@@ -82,7 +82,6 @@
 #define ESYSCMDTYPE	41
  
 #define TYPEMASK	63	/* Keep bits really corresponding to a type. */
-#define STATIC          128	/* Name is statically allocated, don't free. */
 #define RECDEF		256	/* Pure recursive def, don't expand it */
 #define NOARGS		512	/* builtin needs no args */
 #define NEEDARGS	1024	/* mark builtin that need args with this */

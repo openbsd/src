@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.41 2001/09/16 21:12:08 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.42 2001/09/17 08:11:13 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.41 2001/09/16 21:12:08 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.42 2001/09/17 08:11:13 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -554,10 +554,10 @@ initkwds()
 		p = (ndptr) xalloc(sizeof(struct ndblock));
 		p->nxtptr = hashtab[h % HASHSIZE];
 		hashtab[h % HASHSIZE] = p;
-		p->name = keywrds[i].knam;
+		p->name = xstrdup(keywrds[i].knam);
 		p->defn = null;
 		p->hv = h;
-		p->type = (keywrds[i].ktyp & TYPEMASK) | STATIC;
+		p->type = keywrds[i].ktyp & TYPEMASK;
 		if ((keywrds[i].ktyp & NOARGS) == 0)
 			p->type |= NEEDARGS;
 	}
