@@ -22,14 +22,557 @@ and this permission notice may be included in translations approved by
 the Free Software Foundation instead of in the original English.
 
 
+File: cvs.info,  Node: Wrappers,  Next: commit files,  Prev: modules,  Up: Administrative files
+
+The cvswrappers file
+====================
+
+   Wrappers allow you to set a hook which transforms files on their way
+in and out of cvs
+
+   The file `cvswrappers' defines the script that will be run on a file
+when its name matches a regular expresion. There are two scripts that
+can be run on a file or directory. One script is executed on the
+file/directory before being checked into the repository (this is denoted
+with the `-t' flag) and the other when the file is checked out of the
+repository (this is denoted with the `-f' flag)
+
+   The `cvswrappers' also specifies the merge methodology that should
+be used when the file is updated, that is should a MERGE or a straight
+COPY of the diferences be used when checking into the repository.
+
+   The basic format of the file `cvswrappers' is given as such:
+
+     wildcard     [option value][option value]...
+     
+     where option is one of
+     -f           from cvs filter         value: path tofilter
+     -t           to cvs filter           value: path to filter
+     -m           update methodology      value: MERGE or COPY
+     
+     and value is a single-quote delimited value.
+
+     *.nib    -f 'unwrap %s' -t 'wrap %s %s' -m 'COPY'
+     *.c      -t 'indent %s %s'
+
+The above example of a `cvswrappers' file states that all
+files/directories that end with a `.nib' should be filtered with the
+`wrap' program before checking the file into the repository. The file
+should be filtered though the `unwrap' program when the file is checked
+out of the repository. The `cvswrappers' file also states that a `COPY'
+methodology should be used when updating the files in the repository
+(that is no merging should be performed).
+
+   The last example line says that all files that end with a `*.c'
+should be filtered with `indent' before being checked into the
+repository. Unlike the previous example no filtering of the `*.c' file
+is done when it is checked out of the repository.
+
+The `-t' filter is called with two arguments, the first is the name of
+the file/directory to filter and the second is the pathname to where
+the resulting filtered file should be placed.
+
+The `-f' filter is called with one argument, which is the name of the
+file to filter from. The end result of this filter will be a file in
+the users directory that they can work on as they normally would.
+
+
+File: cvs.info,  Node: commit files,  Next: commitinfo,  Prev: Wrappers,  Up: Administrative files
+
+The commit support files
+========================
+
+   The `-i' flag in the `modules' file can be used to run a certain
+program whenever files are committed (*note modules::.).  The files
+described in this section provide other, more flexible, ways to run
+programs whenever something is committed.
+
+   There are three kind of programs that can be run on commit.  They
+are specified in files in the repository, as described below.  The
+following table summarizes the file names and the purpose of the
+corresponding programs.
+
+`commitinfo'
+     The program is responsible for checking that the commit is
+     allowed.  If it exits with a non-zero exit status the commit will
+     be aborted.
+
+`editinfo'
+     The specified program is used to edit the log message, and
+     possibly verify that it contains all required fields.  This is
+     most useful in combination with the `rcsinfo' file, which can hold
+     a log message template (*note rcsinfo::.).
+
+`loginfo'
+     The specified program is called when the commit is complete.  It
+     receives the log message and some additional information and can
+     store the log message in a file, or mail it to appropriate
+     persons, or maybe post it to a local newsgroup, or...  Your
+     imagination is the limit!
+
+* Menu:
+
+* syntax::                      The common syntax
+
+
+File: cvs.info,  Node: syntax,  Up: commit files
+
+The common syntax
+-----------------
+
+   The four files `commitinfo', `loginfo', `rcsinfo' and `editinfo' all
+have a common format.  The purpose of the files are described later on.
+The common syntax is described here.
+
+   Each line contains the following:
+   * A regular expression
+
+   * A whitespace separator--one or more spaces and/or tabs.
+
+   * A file name or command-line template.
+
+Blank lines are ignored.  Lines that start with the character `#' are
+treated as comments.  Long lines unfortunately can *not* be broken in
+two parts in any way.
+
+   The first regular expression that matches the current directory name
+in the repository is used.  The rest of the line is used as a file name
+or command-line as appropriate.
+
+
+File: cvs.info,  Node: commitinfo,  Next: editinfo,  Prev: commit files,  Up: Administrative files
+
+Commitinfo
+==========
+
+   The `commitinfo' file defines programs to execute whenever `cvs
+commit' is about to execute.  These programs are used for pre-commit
+checking to verify that the modified, added and removed files are really
+ready to be committed.  This could be used, for instance, to verify
+that the changed files conform to to your site's standards for coding
+practice.
+
+   As mentioned earlier, each line in the `commitinfo' file consists of
+a regular expression and a command-line template.  The template can
+include a program name and any number of arguments you wish to supply
+to it.  The full path to the current source repository is appended to
+the template, followed by the file names of any files involved in the
+commit (added, removed, and modified files).
+
+   The first line with a regular expression matching the relative path
+to the module will be used.  If the command returns a non-zero exit
+status the commit will be aborted.
+
+   If the repository name does not match any of the regular expressions
+in this file, the `DEFAULT' line is used, if it is specified.
+
+   All occurances of the name `ALL' appearing as a regular expression
+are used in addition to the first matching regular expression or the
+name `DEFAULT'.
+
+   Note: when CVS is accessing a remote repository, `commitinfo' will
+be run on the *remote* (i.e., server) side, not the client side (*note
+Remote repositories::.).
+
+
+File: cvs.info,  Node: editinfo,  Next: loginfo,  Prev: commitinfo,  Up: Administrative files
+
+Editinfo
+========
+
+   If you want to make sure that all log messages look the same way,
+you can use the `editinfo' file to specify a program that is used to
+edit the log message.  This program could be a custom-made editor that
+always enforces a certain style of the log message, or maybe a simple
+shell script that calls an editor, and checks that the entered message
+contains the required fields.
+
+   If no matching line is found in the `editinfo' file, the editor
+specified in the environment variable `$CVSEDITOR' is used instead.  If
+that variable is not set, then the environment variable `$EDITOR' is
+used instead.  If that variable is not set a precompiled default,
+normally `vi', will be used.
+
+   The `editinfo' file is often most useful together with the `rcsinfo'
+file, which can be used to specify a log message template.
+
+   Each line in the `editinfo' file consists of a regular expression
+and a command-line template.  The template must include a program name,
+and can include any number of arguments.  The full path to the current
+log message template file is appended to the template.
+
+   One thing that should be noted is that the `ALL' keyword is not
+supported.  If more than one matching line is found, the first one is
+used.  This can be useful for specifying a default edit script in a
+module, and then overriding it in a subdirectory.
+
+   If the repository name does not match any of the regular expressions
+in this file, the `DEFAULT' line is used, if it is specified.
+
+   If the edit script exits with a non-zero exit status, the commit is
+aborted.
+
+   Note: when CVS is accessing a remote repository, `editinfo' will be
+run on the *remote* (i.e., server) side, not the client side (*note
+Remote repositories::.).
+
+* Menu:
+
+* editinfo example::            Editinfo example
+
+
+File: cvs.info,  Node: editinfo example,  Up: editinfo
+
+Editinfo example
+----------------
+
+   The following is a little silly example of a `editinfo' file,
+together with the corresponding `rcsinfo' file, the log message
+template and an editor script.  We begin with the log message template.
+We want to always record a bug-id number on the first line of the log
+message.  The rest of log message is free text.  The following template
+is found in the file `/usr/cvssupport/tc.template'.
+
+     BugId:
+
+   The script `/usr/cvssupport/bugid.edit' is used to edit the log
+message.
+
+     #!/bin/sh
+     #
+     #       bugid.edit filename
+     #
+     #  Call $EDITOR on FILENAME, and verify that the
+     #  resulting file contains a valid bugid on the first
+     #  line.
+     if [ "x$EDITOR" = "x" ]; then EDITOR=vi; fi
+     if [ "x$CVSEDITOR" = "x" ]; then CVSEDITOR=$EDITOR; fi
+     $CVSEDITOR $1
+     until head -1|grep '^BugId:[ ]*[0-9][0-9]*$' < $1
+     do  echo -n  "No BugId found.  Edit again? ([y]/n)"
+         read ans
+         case ${ans} in
+             n*) exit 1;;
+         esac
+         $CVSEDITOR $1
+     done
+
+   The `editinfo' file contains this line:
+
+     ^tc     /usr/cvssupport/bugid.edit
+
+   The `rcsinfo' file contains this line:
+
+     ^tc     /usr/cvssupport/tc.template
+
+
+File: cvs.info,  Node: loginfo,  Next: rcsinfo,  Prev: editinfo,  Up: Administrative files
+
+Loginfo
+=======
+
+   The `loginfo' file is used to control where `cvs commit' log
+information is sent.  The first entry on a line is a regular expression
+which is tested against the directory that the change is being made to,
+relative to the `$CVSROOT'.  If a match is found, then the remainder of
+the line is a filter program that should expect log information on its
+standard input.
+
+   The filter program may use one and only one % modifier (a la
+printf).  If `%s' is specified in the filter program, a brief title is
+included (enclosed in single quotes) showing the modified file names.
+
+   If the repository name does not match any of the regular expressions
+in this file, the `DEFAULT' line is used, if it is specified.
+
+   All occurances of the name `ALL' appearing as a regular expression
+are used in addition to the first matching regular expression or
+`DEFAULT'.
+
+   The first matching regular expression is used.
+
+   *Note commit files::, for a description of the syntax of the
+`loginfo' file.
+
+   Note: when CVS is accessing a remote repository, `loginfo' will be
+run on the *remote* (i.e., server) side, not the client side (*note
+Remote repositories::.).
+
+* Menu:
+
+* loginfo example::             Loginfo example
+
+
+File: cvs.info,  Node: loginfo example,  Up: loginfo
+
+Loginfo example
+---------------
+
+   The following `loginfo' file, together with the tiny shell-script
+below, appends all log messages to the file
+`$CVSROOT/CVSROOT/commitlog', and any commits to the administrative
+files (inside the `CVSROOT' directory) are also logged in
+`/usr/adm/cvsroot-log' and mailed to ceder.
+
+     ALL             /usr/local/bin/cvs-log $CVSROOT/CVSROOT/commitlog
+     ^CVSROOT        Mail -s %s ceder
+     ^CVSROOT        /usr/local/bin/cvs-log /usr/adm/cvsroot-log
+
+   The shell-script `/usr/local/bin/cvs-log' looks like this:
+
+     #!/bin/sh
+     (echo "-----------------------------------------------------------------";
+      echo -n $USER"  ";
+      date;
+      echo;
+      sed '1s+'${CVSROOT}'++') >> $1
+
+
+File: cvs.info,  Node: rcsinfo,  Next: cvsignore,  Prev: loginfo,  Up: Administrative files
+
+Rcsinfo
+=======
+
+   The `rcsinfo' file can be used to specify a form to edit when
+filling out the commit log.  The `rcsinfo' file has a syntax similar to
+the `editinfo', `commitinfo' and `loginfo' files.  *Note syntax::.
+Unlike the other files the second part is *not* a command-line
+template.  Instead, the part after the regular expression should be a
+full pathname to a file containing the log message template.
+
+   If the repository name does not match any of the regular expressions
+in this file, the `DEFAULT' line is used, if it is specified.
+
+   All occurances of the name `ALL' appearing as a regular expression
+are used in addition to the first matching regular expression or
+`DEFAULT'.
+
+   The log message template will be used as a default log message.  If
+you specify a log message with `cvs commit -m MESSAGE' or `cvs commit -f
+FILE' that log message will override the template.
+
+   *Note editinfo example::, for an example `rcsinfo' file.
+
+   Note: when CVS is accessing a remote repository, `rcsinfo' will be
+run on the *remote* (i.e., server) side, not the client side (*note
+Remote repositories::.).
+
+
+File: cvs.info,  Node: cvsignore,  Next: history file,  Prev: rcsinfo,  Up: Administrative files
+
+Ignoring files via cvsignore
+============================
+
+   There are certain file names that frequently occur inside your
+working copy, but that you don't want to put under CVS control.
+Examples are all the object files that you get while you compile your
+sources.  Normally, when you run `cvs update', it prints a line for
+each file it encounters that it doesn't know about (*note update
+output::.).
+
+   CVS has a list of files (or sh(1) file name patterns) that it should
+ignore while running `update', `import' and `release'.  This list is
+constructed in the following way.
+
+   * The list is initialized to include certain file name patterns:
+     names associated with CVS administration, or with other common
+     source control systems; common names for patch files, object files,
+     archive files, and editor backup files; and other names that are
+     usually artifacts of assorted utilities.  Currently, the default
+     list of ignored file name patterns is:
+
+              RCS     SCCS    CVS     CVS.adm
+              RCSLOG  cvslog.*
+              tags    TAGS
+              .make.state     .nse_depinfo
+              *~      #*      .#*     ,*
+              *.old   *.bak   *.BAK   *.orig  *.rej   .del-*
+              *.a     *.o     *.obj   *.so    *.Z     *.elc   *.ln
+              core
+
+   * The per-repository list in `$CVSROOT/CVSROOT/cvsignore' is
+     appended to the list, if that file exists.
+
+   * The per-user list in `.cvsignore' in your home directory is
+     appended to the list, if it exists.
+
+   * Any entries in the environment variable `$CVSIGNORE' is appended
+     to the list.
+
+   * Any `-I' options given to CVS is appended.
+
+   * As CVS traverses through your directories, the contents of any
+     `.cvsignore' will be appended to the list.  The patterns found in
+     `.cvsignore' are only valid for the directory that contains them,
+     not for any sub-directories.
+
+   In any of the 5 places listed above, a single exclamation mark (`!')
+clears the ignore list.  This can be used if you want to store any file
+which normally is ignored by CVS.
+
+
+File: cvs.info,  Node: history file,  Next: Setting up,  Prev: cvsignore,  Up: Administrative files
+
+The history file
+================
+
+   The file `$CVSROOT/CVSROOT/history' is used to log information for
+the `history' command (*note history::.).  This file must be created to
+turn on logging.  This is done automatically if the `cvsinit' script is
+used to set up the repository.
+
+   The file format of the `history' file is unfortunately not yet
+documented anywhere, but it is fairly easy to understand most of it.
+
+
+File: cvs.info,  Node: Setting up,  Prev: history file,  Up: Administrative files
+
+Setting up the repository
+=========================
+
+   When you install CVS for the first time, you should follow the
+instructions in the `INSTALL' file to set up the repository.
+
+   If you want to set up another repository, the easiest way to get a
+reasonable set of working administrative files is to run the `cvsinit'
+shell script.  It will set up an empty repository in the directory
+defined by the environment variable `$CVSROOT'.  (`cvsinit' is careful
+to never overwrite any existing files in the repository, so no harm is
+done if you run `cvsinit' on an already set-up repository.  In fact,
+running it on an already set-up repository is the best way to update
+the various scripts from the `contrib' directory.)
+
+
+File: cvs.info,  Node: Environment variables,  Next: Troubleshooting,  Prev: Administrative files,  Up: Top
+
+All environment variables which affect CVS
+******************************************
+
+   This is a complete list of all environment variables that affect CVS.
+
+`$CVSIGNORE'
+     A whitespace-separated list of file name patterns that CVS should
+     ignore. *Note cvsignore::.
+
+`$CVSWRAPPERS'
+     A whitespace-separated list of file name patterns that CVS should
+     treat as wrappers. *Note Wrappers::.
+
+`$CVSREAD'
+     If this is set, `checkout' and `update' will try hard to make the
+     files in your working directory read-only.  When this is not set,
+     the default behavior is to permit modification of your working
+     files.
+
+`$CVSROOT'
+     Should contain the full pathname to the root of the CVS source
+     repository (where the RCS history files are kept).  This
+     information must be available to CVS for most commands to execute;
+     if `$CVSROOT' is not set, or if you wish to override it for one
+     invocation, you can supply it on the command line: `cvs -d cvsroot
+     cvs_command...' Once you have checked out a working directory, CVS
+     stores the appropriate root (in the file `CVS/Root'), so normally
+     you only need to worry about this when initially checking out a
+     working directory.
+
+`$EDITOR'
+`$CVSEDITOR'
+     Specifies the program to use for recording log messages during
+     commit.  If not set, the default is `/usr/ucb/vi'.  `$CVSEDITOR'
+     overrides `$EDITOR'.  `$CVSEDITOR' does not exist in CVS 1.3, but
+     the next release will probably include it.
+
+`$PATH'
+     If `$RCSBIN' is not set, and no path is compiled into CVS, it will
+     use `$PATH' to try to find all programs it uses.
+
+`$RCSBIN'
+     Specifies the full pathname of the location of RCS programs, such
+     as co(1) and ci(1).  If not set, a compiled-in value is used, or
+     your `$PATH' is searched.
+
+   CVS is a front-end to RCS.  The following environment variables
+affect RCS:
+
+`$LOGNAME'
+`$USER'
+     If set, they affect who RCS thinks you are.  If you have trouble
+     checking in files it might be because your login name differs from
+     the setting of e.g.  `$LOGNAME'.
+
+`$RCSINIT'
+     Options prepended to the argument list, separated by spaces.  A
+     backslash escapes spaces within an option.  The `$RCSINIT' options
+     are prepended to the argument lists of most RCS commands.
+
+`$TMPDIR'
+`$TMP'
+`$TEMP'
+     Name of the temporary directory.  The environment variables are
+     inspected in the order they appear above and the first value found
+     is taken; if none of them are set, a host-dependent default is
+     used, typically `/tmp'.
+
+
+File: cvs.info,  Node: Troubleshooting,  Next: Copying,  Prev: Environment variables,  Up: Top
+
+Troubleshooting
+***************
+
+* Menu:
+
+* Magic branch numbers::        Magic branch numbers
+
+
+File: cvs.info,  Node: Magic branch numbers,  Up: Troubleshooting
+
+Magic branch numbers
+====================
+
+   Externally, branch numbers consist of an odd number of dot-separated
+decimal integers.  *Note Revision numbers::.  That is not the whole
+truth, however.  For efficiency reasons CVS sometimes inserts an extra 0
+in the second rightmost position (1.2.3 becomes 1.2.0.3, 8.9.10.11.12
+becomes 8.9.10.11.0.12 and so on).
+
+   CVS does a pretty good job at hiding these so called magic branches,
+but in at least four places the hiding is incomplete.
+
+   * The magic branch can appear in the output from `cvs status' in
+     vanilla CVS 1.3.  This is fixed in CVS 1.3-s2.
+
+   * The magic branch number appears in the output from `cvs log'.
+     This is much harder to fix, since `cvs log' runs `rlog' (which is
+     part of the RCS distribution), and modifying `rlog' to know about
+     magic branches would probably break someone's habits (if they use
+     branch 0 for their own purposes).
+
+   * You cannot specify a symbolic branch name to `cvs log'.
+
+   * You cannot specify a symbolic branch name to `cvs admin'.
+
+   You can use the `admin' command to reassign a symbolic name to a
+branch the way RCS expects it to be.  If `R4patches' is assigned to the
+branch 1.4.2 (magic branch number 1.4.0.2) in file `numbers.c' you can
+do this:
+
+     $ cvs admin -NR4patches:1.4.2 numbers.c
+
+   It only works if at least one revision is already committed on the
+branch.  Be very careful so that you do not assign the tag to the wrong
+number.  (There is no way to see how the tag was assigned yesterday).
+
+
+File: cvs.info,  Node: Copying,  Next: Index,  Prev: Troubleshooting,  Up: Top
+
+GNU GENERAL PUBLIC LICENSE
+**************************
+
+
 File: cvs.info,  Node: Index,  Prev: Copying,  Up: Top
 
 Index
 *****
-
-   If you cannot find what you are looking for here write to
-<ceder@signum.se> so that an entry can be added to the next release of
-this manual.
 
 * Menu:
 
@@ -55,10 +598,13 @@ this manual.
 * Administrative files (reference):     Administrative files.
 * Administrative files, editing them:   Intro administrative files.
 * ALL in commitinfo:                    commitinfo.
+* Atomic transactions, lack of:         Concurrency.
+* authenticated client, using:          Password authentication client.
+* authenticating server, setting up:    Password authentication server.
 * Author keyword:                       Keyword list.
 * Automatically ignored files:          cvsignore.
 * Avoiding editor invocation:           Common options.
-* Binary files (inhibit keyword expansion): admin examples.
+* Binary files:                         Binary files.
 * Branch merge example:                 Merging a branch.
 * Branch number:                        Revision numbers.
 * Branch numbers:                       Creating a branch.
@@ -104,9 +650,11 @@ this manual.
 * Creating a repository:                Setting up.
 * Credits (CVS program):                What is CVS?.
 * Credits (manual):                     Credits.
+* CVS 1.6, and watches:                 Watches Compatibility.
 * CVS command structure:                Structure.
 * CVS FAQ:                              What is CVS?.
 * CVS FTP site:                         What is CVS?.
+* CVS passwd file:                      Password authentication server.
 * CVS, history of:                      What is CVS?.
 * CVS, introduction to:                 What is CVS?.
 * CVSEDITOR:                            Environment variables.
@@ -115,8 +663,8 @@ this manual.
 * Cvsignore, global:                    cvsignore.
 * CVSREAD:                              Environment variables.
 * CVSREAD, overriding:                  Global options.
-* CVSROOT:                              Environment variables.
 * cvsroot:                              Repository.
+* CVSROOT:                              Environment variables.
 * CVSROOT (file):                       Administrative files.
 * CVSROOT, environment variable:        Repository.
 * CVSROOT, module name:                 Intro administrative files.
@@ -124,6 +672,10 @@ this manual.
 * CVSROOT, overriding:                  Global options.
 * cvswrappers (admin file):             Wrappers.
 * CVSWRAPPERS, environment variable:    Wrappers.
+* CVS_CLIENT_PORT:                      Kerberos authenticated.
+* CVS_PASSFILE, environment variable:   Password authentication client.
+* CVS_PASSWORD, environment variable:   Password authentication client.
+* CVS_SERVER:                           Connecting via rsh.
 * Date keyword:                         Keyword list.
 * Dates:                                Common options.
 * Decimal revision number:              Revision numbers.
@@ -144,6 +696,7 @@ this manual.
 * Disjoint repositories:                Multiple repositories.
 * Distributing log messages:            loginfo.
 * driver.c (merge example):             Conflicts example.
+* edit (subcommand):                    Editing files.
 * Editinfo:                             editinfo.
 * Editing administrative files:         Intro administrative files.
 * Editing the modules file:             Defining the module.
@@ -152,6 +705,7 @@ this manual.
 * EDITOR, environment variable:         Committing your changes.
 * EDITOR, overriding:                   Global options.
 * Editor, specifying per module:        editinfo.
+* editors (subcommand):                 Watch information.
 * emerge:                               Conflicts example.
 * Environment variables:                Environment variables.
 * Errors, reporting (manual):           BUGS.
@@ -159,6 +713,7 @@ this manual.
 * Example of merge:                     Conflicts example.
 * Example, branch merge:                Merging a branch.
 * Export (subcommand):                  export.
+* Export program:                       modules.
 * FAQ:                                  What is CVS?.
 * Fetching source:                      Getting the source.
 * File locking:                         Multiple developers.
@@ -194,14 +749,14 @@ this manual.
 * Index:                                Index.
 * Info files (syntax):                  syntax.
 * Informing others:                     Informing others.
-* Inhibiting keyword expansion:         admin examples.
 * Introduction to CVS:                  What is CVS?.
 * Invoking CVS:                         Invoking CVS.
 * Join:                                 Merging a branch.
+* kerberos:                             Kerberos authenticated.
 * Keyword expansion:                    Keyword substitution.
-* Keyword expansion, inhibiting:        admin examples.
 * Keyword substitution:                 Keyword substitution.
 * Kflag:                                Substitution modes.
+* kinit:                                Kerberos authenticated.
 * Known bugs in this manual:            BUGS.
 * Layout of repository:                 Repository.
 * Left-hand options:                    Global options.
@@ -210,6 +765,7 @@ this manual.
 * Locally modified:                     File status.
 * Locker keyword:                       Keyword list.
 * Locking files:                        Multiple developers.
+* locks, cvs:                           Concurrency.
 * Log (subcommand):                     log.
 * Log information, saving:              history file.
 * Log keyword:                          Keyword list.
@@ -219,6 +775,7 @@ this manual.
 * Log message, correcting:              admin options.
 * Log messages:                         loginfo.
 * Log messages, editing:                editinfo.
+* Login (subcommand):                   Password authentication client.
 * Loginfo:                              loginfo.
 * LOGNAME:                              Environment variables.
 * Mail, automatic mail on commit:       Informing others.
@@ -262,12 +819,16 @@ this manual.
 * Overriding EDITOR:                    Global options.
 * Overriding RCSBIN:                    Global options.
 * Parallel repositories:                Multiple repositories.
+* passwd file:                          Password authentication server.
+* password client, using:               Password authentication client.
+* password server, setting up:          Password authentication server.
 * Patches to CVS:                       What is CVS?.
 * PATH:                                 Environment variables.
 * Per-module editor:                    editinfo.
 * Policy:                               When to commit.
 * Precommit checking:                   commitinfo.
 * Preface:                              Preface.
+* Pserver (subcommand):                 Password authentication server.
 * RCS history files:                    User modules.
 * RCS keywords:                         Keyword list.
 * RCS revision numbers:                 Tags.
@@ -313,6 +874,7 @@ this manual.
 * Revisions, merging differences between: Merging two revisions.
 * Revisions, versions and releases:     Versions revisions releases.
 * Right-hand options:                   Common options.
+* rsh:                                  Connecting via rsh.
 * Rtag (subcommand):                    rtag.
 * rtag, creating a branch using:        Creating a branch.
 * Saving space:                         admin options.
@@ -357,9 +919,11 @@ this manual.
 * TMPDIR:                               Environment variables.
 * Trace:                                Global options.
 * Tracking sources:                     Tracking sources.
+* Transactions, atomic, lack of:        Concurrency.
 * Trivial Compiler (example):           A sample session.
 * Typical repository:                   Repository.
 * Undoing a change:                     Merging two revisions.
+* unedit (subcommand):                  Editing files.
 * Up-to-date:                           File status.
 * Update (subcommand):                  update.
 * Update program:                       modules.
@@ -367,10 +931,17 @@ this manual.
 * Updating a file:                      Updating a file.
 * USER:                                 Environment variables.
 * User modules:                         User modules.
+* users (admin file):                   Getting Notified.
 * Vendor:                               Tracking sources.
 * Vendor branch:                        Tracking sources.
 * Versions, revisions and releases:     Versions revisions releases.
 * Viewing differences:                  Viewing differences.
+* watch add (subcommand):               Getting Notified.
+* watch off (subcommand):               Setting a watch.
+* watch on (subcommand):                Setting a watch.
+* watch remove (subcommand):            Getting Notified.
+* watchers (subcommand):                Watch information.
+* Watches:                              Watches.
 * Wdiff (import example):               First import.
 * What (shell command):                 Using keywords.
 * What branches are good for:           Branches motivation.

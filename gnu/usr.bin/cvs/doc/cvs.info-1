@@ -26,8 +26,8 @@ File: cvs.info,  Node: Top,  Next: Preface,  Prev: (DIR),  Up: (DIR)
 
 
 
-   This info manual describes CVS and is updated to release 1.4 or
-something similar.
+   This info manual describes how to use and administer CVS and is
+updated to release 1.4 or something similar.
 
 * Menu:
 
@@ -47,6 +47,7 @@ something similar.
 * Moving files::                Moving and renaming files
 * Moving directories::          Moving and renaming directories
 * Keyword substitution::        CVS can include the revision inside the file
+* Binary files::                CVS can handle binary files
 * Revision management::         Policy questions for revision management
 * Invoking CVS::                Reference manual for CVS commands
 * Administrative files::        Reference manual for the Administrative files
@@ -90,8 +91,7 @@ is yet another in the growing list of companies that support free
 software.  You are free to copy both this manual and the CVS program.
 *Note Copying::, for the details.  Signum Support offers support
 contracts and binary distribution for many programs, such as CVS, GNU
-Emacs, the GNU C compiler and others.  You can also buy hardcopies of
-this manual from us.  Write to us for more information.
+Emacs, the GNU C compiler and others.  Write to us for more information.
 
      Signum Support AB
      Box 2044
@@ -101,6 +101,9 @@ this manual from us.  Write to us for more information.
      Email: info@signum.se
      Phone: +46 (0)13 - 21 46 00
      Fax:   +46 (0)13 - 21 47 00
+
+   Another company selling support for CVS is Cyclic Software, web:
+`http://www.cyclic.com/', email: `info@cyclic.com'.
 
 * Menu:
 
@@ -169,8 +172,8 @@ File: cvs.info,  Node: BUGS,  Prev: Credits,  Up: Preface
 BUGS
 ====
 
-   This manual is still very new.  Here is a list of known deficiencies
-in it:
+   This manual is known to have room for improvement.  Here is a list
+of known deficiencies:
 
    * In the examples, the output from CVS is sometimes displayed,
      sometimes not.
@@ -185,7 +188,8 @@ in it:
      comments in the `cvs.texinfo' file.
 
    * This list is not complete.  If you notice any error, omission, or
-     something that is unclear, please send mail to ceder@signum.se.
+     something that is unclear, please send mail to
+     bug-cvs@prep.ai.mit.edu.
 
    I hope that you will find this manual useful, despite the
 above-mentioned shortcomings.
@@ -802,21 +806,16 @@ Multiple repositories
    In some situations it is a good idea to have more than one
 repository, for instance if you have two development groups that work
 on separate projects without sharing any code.  All you have to do to
-have several repositories is to set `$CVSROOT' to the repository you
-want to use at the moment.
-
-   There are disadvantages to having more than one repository.  In CVS
-1.3 you *must* make sure that `$CVSROOT' always points to the correct
-repository.  If the same filename is used in two repositories, and you
-mix up the setting of `$CVSROOT', you might lose data.  CVS 1.4 solves
-this problem by saving the repository information in the local `CVS'
-administration files.  If you try to use the wrong repository, CVS will
-warn you of the attempt and then exit.
+have several repositories is to specify the appropriate repository,
+using the `CVSROOT' environment variable, the `-d' option to CVS, or
+(once you have checked out a working directories) by simply allowing
+CVS to use the repository that was used to check out the working
+directory (*note Repository::.).
 
    Notwithstanding, it can be confusing to have two or more
 repositories.
 
-   All examples in this manual assume that you have a single repository.
+   None of the examples in this manual show multiple repositories.
 
 
 File: cvs.info,  Node: Creating a repository,  Next: Remote repositories,  Prev: Multiple repositories,  Up: Repository
@@ -832,36 +831,251 @@ File: cvs.info,  Node: Remote repositories,  Prev: Creating a repository,  Up: R
 Remote repositories
 ===================
 
-   The repository and your working copy of the sources can be on
-different machines.  To access a remote repository, use the following
-format for its name:
+   Your working copy of the sources can be on a different machine than
+the repository.  Generally, using a remote repository is just like
+using a local one, except that the format of the repository name is:
 
              user@hostname:/path/to/repository
 
-   (The `user@' can be omitted if it's the same on both the local and
-remote hosts.)
+   The details of exactly what needs to be set up depend on how you are
+connecting to the server.
+
+* Menu:
+
+* Connecting via rsh::          Using the `rsh' program to connect
+* Password authenticated::      Direct connections using passwords
+* Kerberos authenticated::      Direct connections with kerberos
+
+
+File: cvs.info,  Node: Connecting via rsh,  Next: Password authenticated,  Up: Remote repositories
+
+Connecting with rsh
+-------------------
 
    CVS uses the `rsh' protocol to perform these operations, so the
 remote user host needs to have a `.rhosts' file which grants access to
 the local user.
 
    For example, suppose you are the user `mozart' on the local machine
-`anklet.grunge.com'.  You want to access the module `foo' in the
-repository `/usr/local/sources/', on machine `chainsaw.brickyard.com'.
-
-   If your username is also `bach' on `chainsaw.brickyard.com', then
-you need only type
-
-     cvs -d bach@chainsaw.brickyard.com:/user/local/sources checkout foo
-
-   Remember, for this to work, `bach''s `.rhosts' file must contain the
-line:
+`anklet.grunge.com', and the server machine is
+`chainsaw.brickyard.com'.  On chainsaw, put the following line into the
+file `.rhosts' in `bach''s home directory:
 
      anklet.grunge.com  mozart
 
-   Once the working copy is checked out, it is not necessary to specify
-the repository explicitly for every subsequent operation -- the working
-copy records it in the `CVS/Root' file.
+   Then test that `rsh' is working with
+
+     rsh -l bach chainsaw.brickyard.com echo $PATH
+
+   Next you have to make sure that `rsh' will be able to find the
+server.  Make sure that the path which `rsh' printed in the above
+example includes the directory containing a program named `cvs' which
+is the server.  You need to set the path in `.bashrc', `.cshrc', etc.,
+not `.login' or `.profile'.  Alternately, you can set the environment
+variable `CVS_SERVER' on the client machine to the filename of the
+server you want to use, for example `/usr/local/bin/cvs-1.6'.
+
+   There is no need to edit `inetd.conf' or start a CVS server daemon.
+
+   Continuing our example, supposing you want to access the module
+`foo' in the repository `/usr/local/cvsroot/', on machine
+`chainsaw.brickyard.com', you are ready to go:
+
+     cvs -d bach@chainsaw.brickyard.com:/user/local/cvsroot checkout foo
+
+   (The `bach@' can be omitted if the username is the same on both the
+local and remote hosts.)
+
+
+File: cvs.info,  Node: Password authenticated,  Next: Kerberos authenticated,  Prev: Connecting via rsh,  Up: Remote repositories
+
+Direct connection with password authentication
+----------------------------------------------
+
+   The CVS client can also connect to the server using a password
+protocol.  This is particularly useful if using `rsh' is not feasible
+(for example, the server is behind a firewall), and Kerberos also is
+not available.
+
+   To use this method, it is necessary to make some adjustments on both
+the server and client sides.
+
+* Menu:
+
+* Password authentication server::     Setting up the server
+* Password authentication client::     Using the client
+* Password authentication security::   What this method does and does not do
+
+
+File: cvs.info,  Node: Password authentication server,  Next: Password authentication client,  Up: Password authenticated
+
+Setting up the server for password authentication
+.................................................
+
+   On the server side, the file `/etc/inetd.conf' needs to be edited so
+`inetd' knows to run the command `cvs pserver' when it receives a
+connection on the right port.  By default, the port number is 2401; it
+would be different if your client were compiled with `CVS_AUTH_PORT'
+defined to something else, though.
+
+   If your `inetd' allows raw port numbers in `/etc/inetd.conf', then
+the following (all on a single line in `inetd.conf') should be
+sufficient:
+
+     2401  stream  tcp  nowait  root  /usr/local/bin/cvs
+     cvs -b /usr/local/bin pserver
+
+   The `-b' option specifies the directory which contains the RCS
+binaries on the server.
+
+   If your `inetd' wants a symbolic service name instead of a raw port
+number, then put this in `/etc/services':
+
+     cvspserver      2401/tcp
+
+   and put `cvspserver' instead of `2401' in `inetd.conf'.
+
+   Once the above is taken care of, restart your `inetd', or do
+whatever is necessary to force it to reread its initialization files.
+
+   Because the client stores and transmits passwords in cleartext
+(almost--see *Note Password authentication security:: for details), a
+separate CVS password file may be used, so people don't compromise their
+regular passwords when they access the repository.  This file is
+`$CVSROOT/CVSROOT/passwd' (*note Intro administrative files::.).  Its
+format is similar to `/etc/passwd', except that it only has two fields,
+username and password.  For example:
+
+     bach:ULtgRLXo7NRxs
+     cwang:1sOp854gDF3DY
+
+   The password is encrypted according to the standard Unix `crypt()'
+function, so it is possible to paste in passwords directly from regular
+Unix `passwd' files.
+
+   When authenticating a password, the server first checks for the user
+in the CVS `passwd' file.  If it finds the user, it compares against
+that password.  If it does not find the user, or if the CVS `passwd'
+file does not exist, then the server tries the system's `/etc/passwd'
+file.  In either case, assuming the password is correct, the server
+switches to run as that user immediately after authentication, so that
+it will have no privileges which that user would not have.  Therefore
+it is necessary that usernames in the CVS `passwd' file be valid
+usernames on the system.
+
+   Right now, the only way to put a password in the CVS `passwd' file
+is to paste it there from somewhere else.  Someday, there may be a `cvs
+passwd' command.
+
+
+File: cvs.info,  Node: Password authentication client,  Next: Password authentication security,  Prev: Password authentication server,  Up: Password authenticated
+
+Using the client with password authentication
+.............................................
+
+   Before connecting to the server, the client must "log in" with the
+command `cvs login'.  Logging in verifies a password with the server,
+and also records the password for later transactions with the server.
+The `cvs login' command needs to know the username, server hostname,
+and full repository path, and it gets this information from the
+repository argument or the `CVSROOT' environment variable.
+
+   `cvs login' is interactive -- it prompts for a password:
+
+     cvs -d bach@chainsaw.brickyard.com:/usr/local/cvsroot login
+     CVS password:
+
+   The password is checked with the server; if it is correct, the
+`login' succeeds, else it fails, complaining that the password was
+incorrect.
+
+   Once you have logged in, you can force CVS to connect directly to
+the server and authenticate with the stored password by prefixing the
+repository with `:pserver:':
+
+     cvs -d :pserver:bach@chainsaw.brickyard.com:/usr/local/cvsroot checkout foo
+
+   The `:pserver:' is necessary because without it, CVS will assume it
+should use `rsh' to connect with the server (*note Connecting via
+rsh::.).  (Once you have a working copy checked out and are running CVS
+commands from within it, there is no longer any need to specify the
+repository explicitly, because CVS records it in the working copy's
+`CVS' subdirectory.)
+
+   Passwords are stored by default in the file `$HOME/.cvspass'.  Its
+format is human-readable, but don't edit it unless you know what you
+are doing.  The passwords are not stored in cleartext, but are
+trivially encoded to protect them from "innocent" compromise (i.e.,
+inadvertently being seen by a system administrator who happens to look
+at that file).
+
+   The `CVS_PASSFILE' environment variable overrides this default.  If
+you use this variable, make sure you set it *before* `cvs login' is
+run.  If you were to set it after running `cvs login', then later CVS
+commands would be unable to look up the password for transmission to
+the server.
+
+   The `CVS_PASSWORD' environment variable overrides *all* stored
+passwords.  If it is set, CVS will use it for all password-authenticated
+connections.
+
+
+File: cvs.info,  Node: Password authentication security,  Prev: Password authentication client,  Up: Password authenticated
+
+Security considerations with password authentication
+....................................................
+
+   The passwords are stored on the client side in a trivial encoding of
+the cleartext, and transmitted in the same encoding.  The encoding is
+done only to prevent inadvertent password compromises (i.e., a system
+administrator accidentally looking at the file), and will not prevent
+even a naive attacker from gaining the password.
+
+   The separate CVS password file (*note Password authentication
+server::.) allows people to use a different password for repository
+access than for login access.  On the other hand, once a user has
+access to the repository, she can execute programs on the server system
+through a variety of means.  Thus, repository access implies fairly
+broad system access as well.  It might be possible to modify CVS to
+prevent that, but no one has done so as of this writing.  Furthermore,
+there may be other security problems with CVS; it is not a simple
+program and determining how people might use it to gain access to a
+system is difficult.
+
+   In summary, anyone who gets the password gets repository access, and
+some measure of general system access as well.  The password is
+available to anyone who can sniff network packets or read a protected
+(i.e., user read-only) file.  If you want real security, get Kerberos.
+
+
+File: cvs.info,  Node: Kerberos authenticated,  Prev: Password authenticated,  Up: Remote repositories
+
+Direct connection with kerberos
+-------------------------------
+
+   The main disadvantage of using rsh is that all the data needs to
+pass through additional programs, so it may be slower.  So if you have
+kerberos installed you can connect via a direct TCP connection,
+authenticating with kerberos (note that the data transmitted is *not*
+encrypted).
+
+   To do this, CVS needs to be compiled with kerberos support; when
+configuring CVS it tries to detect whether kerberos is present or you
+can use the `--with-krb4' flag to configure.
+
+   You need to edit `inetd.conf' on the server machine to run `cvs
+kserver'.  The client uses port 1999 by default; if you want to use
+another port specify it in the `CVS_CLIENT_PORT' environment variable
+on the client.  Set `CVS_CLIENT_PORT' to `-1' to force an rsh
+connection.
+
+   When you want to use CVS, get a ticket in the usual way (generally
+`kinit'); it must be a ticket which allows you to log into the server
+machine.  Then you are ready to go:
+
+     cvs -d chainsaw.brickyard.com:/user/local/cvsroot checkout foo
+
+   If CVS fails to connect, it will fall back to trying rsh.
 
 
 File: cvs.info,  Node: Starting a new project,  Next: Multiple developers,  Prev: Repository,  Up: Top
@@ -872,7 +1086,7 @@ Starting a project with CVS
    Since CVS 1.x is bad at renaming files and moving them between
 directories, the first thing you do when you start a new project should
 be to think through your file organization.  It is not impossible--just
-awkward--to rename or move files in CVS 1.x.  *Note Moving files::.
+awkward--to rename or move files.  *Note Moving files::.
 
    What to do next depends on the situation at hand.
 
@@ -971,10 +1185,9 @@ File: cvs.info,  Node: Defining the module,  Prev: Setting up the files,  Up: St
 Defining the module
 ===================
 
-   The next step is to define the module in the `modules' file.  Some
-CVS commands work without this step, but others (most notably
-`release') require that all modules are properly defined in the
-`modules' file.
+   The next step is to define the module in the `modules' file.  This
+is not strictly necessary, but modules can be convenient in grouping
+together related files and directories.
 
    In simple cases these steps are sufficient to define a module.
 
@@ -1035,6 +1248,8 @@ to use CVS.
 * Updating a file::             Bringing a file up-to-date
 * Conflicts example::           An informative example
 * Informing others::            To cooperate you must inform
+* Concurrency::                 Simultaneous repository access
+* Watches::                     Mechanisms to track who is editing files
 
 
 File: cvs.info,  Node: File status,  Next: Updating a file,  Up: Multiple developers
@@ -1060,310 +1275,4 @@ Needing merge
 
    You can use the `status' command to find out the status of a given
 file.  *Note status::.
-
-
-File: cvs.info,  Node: Updating a file,  Next: Conflicts example,  Prev: File status,  Up: Multiple developers
-
-Bringing a file up to date
-==========================
-
-   When you want to update or merge a file, use the `update' command.
-For files that are not up to date this is roughly equivalent to a
-`checkout' command: the newest revision of the file is extracted from
-the repository and put in your working copy of the module.
-
-   Your modifications to a file are never lost when you use `update'.
-If no newer revision exists, running `update' has no effect.  If you
-have edited the file, and a newer revision is available, CVS will merge
-all changes into your working copy.
-
-   For instance, imagine that you checked out revision 1.4 and started
-editing it.  In the meantime someone else committed revision 1.5, and
-shortly after that revision 1.6.  If you run `update' on the file now,
-CVS will incorporate all changes between revision 1.4 and 1.6 into your
-file.
-
-   If any of the changes between 1.4 and 1.6 were made too close to any
-of the changes you have made, an "overlap" occurs.  In such cases a
-warning is printed, and the resulting file includes both versions of
-the lines that overlap, delimited by special markers.  *Note update::,
-for a complete description of the `update' command.
-
-
-File: cvs.info,  Node: Conflicts example,  Next: Informing others,  Prev: Updating a file,  Up: Multiple developers
-
-Conflicts example
-=================
-
-   Suppose revision 1.4 of `driver.c' contains this:
-
-     #include <stdio.h>
-     
-     void main()
-     {
-         parse();
-         if (nerr == 0)
-             gencode();
-         else
-             fprintf(stderr, "No code generated.\n");
-         exit(nerr == 0 ? 0 : 1);
-     }
-
-Revision 1.6 of `driver.c' contains this:
-
-     #include <stdio.h>
-     
-     int main(int argc,
-              char **argv)
-     {
-         parse();
-         if (argc != 1)
-         {
-             fprintf(stderr, "tc: No args expected.\n");
-             exit(1);
-         }
-         if (nerr == 0)
-             gencode();
-         else
-             fprintf(stderr, "No code generated.\n");
-         exit(!!nerr);
-     }
-
-Your working copy of `driver.c', based on revision 1.4, contains this
-before you run `cvs update':
-
-     #include <stdlib.h>
-     #include <stdio.h>
-     
-     void main()
-     {
-         init_scanner();
-         parse();
-         if (nerr == 0)
-             gencode();
-         else
-             fprintf(stderr, "No code generated.\n");
-         exit(nerr == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
-     }
-
-You run `cvs update':
-
-     $ cvs update driver.c
-     RCS file: /usr/local/cvsroot/yoyodyne/tc/driver.c,v
-     retrieving revision 1.4
-     retrieving revision 1.6
-     Merging differences between 1.4 and 1.6 into driver.c
-     rcsmerge warning: overlaps during merge
-     cvs update: conflicts found in driver.c
-     C driver.c
-
-CVS tells you that there were some conflicts.  Your original working
-file is saved unmodified in `.#driver.c.1.4'.  The new version of
-`driver.c' contains this:
-
-     #include <stdlib.h>
-     #include <stdio.h>
-     
-     int main(int argc,
-              char **argv)
-     {
-         init_scanner();
-         parse();
-         if (argc != 1)
-         {
-             fprintf(stderr, "tc: No args expected.\n");
-             exit(1);
-         }
-         if (nerr == 0)
-             gencode();
-         else
-             fprintf(stderr, "No code generated.\n");
-     <<<<<<< driver.c
-         exit(nerr == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
-     =======
-         exit(!!nerr);
-     >>>>>>> 1.6
-     }
-
-Note how all non-overlapping modifications are incorporated in your
-working copy, and that the overlapping section is clearly marked with
-`<<<<<<<', `=======' and `>>>>>>>'.
-
-   You resolve the conflict by editing the file, removing the markers
-and the erroneous line.  Suppose you end up with this file:
-     #include <stdlib.h>
-     #include <stdio.h>
-     
-     int main(int argc,
-              char **argv)
-     {
-         init_scanner();
-         parse();
-         if (argc != 1)
-         {
-             fprintf(stderr, "tc: No args expected.\n");
-             exit(1);
-         }
-         if (nerr == 0)
-             gencode();
-         else
-             fprintf(stderr, "No code generated.\n");
-         exit(nerr == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
-     }
-
-You can now go ahead and commit this as revision 1.7.
-
-     $ cvs commit -m "Initialize scanner. Use symbolic exit values." driver.c
-     Checking in driver.c;
-     /usr/local/cvsroot/yoyodyne/tc/driver.c,v  <--  driver.c
-     new revision: 1.7; previous revision: 1.6
-     done
-
-   If you use release 1.04 or later of pcl-cvs (a GNU Emacs front-end
-for CVS) you can use an Emacs package called emerge to help you resolve
-conflicts.  See the documentation for pcl-cvs.
-
-
-File: cvs.info,  Node: Informing others,  Prev: Conflicts example,  Up: Multiple developers
-
-Informing others about commits
-==============================
-
-   It is often useful to inform others when you commit a new revision
-of a file.  The `-i' option of the `modules' file, or the `loginfo'
-file, can be used to automate this process.  *Note modules::.  *Note
-loginfo::.  You can use these features of CVS to, for instance,
-instruct CVS to mail a message to all developers, or post a message to
-a local newsgroup.
-
-
-File: cvs.info,  Node: Branches,  Next: Merging,  Prev: Multiple developers,  Up: Top
-
-Branches
-********
-
-   So far, all revisions shown in this manual have been on the "main
-trunk" of the revision tree, i.e., all revision numbers have been of
-the form X.Y.  One useful feature, especially when maintaining several
-releases of a software product at once, is the ability to make branches
-on the revision tree.  "Tags", symbolic names for revisions, will also
-be introduced in this chapter.
-
-* Menu:
-
-* Tags::                        Tags-Symbolic revisions
-* Branches motivation::         What branches are good for
-* Creating a branch::           Creating a branch
-* Sticky tags::                 Sticky tags
-
-
-File: cvs.info,  Node: Tags,  Next: Branches motivation,  Up: Branches
-
-Tags-Symbolic revisions
-=======================
-
-   The revision numbers live a life of their own.  They need not have
-anything at all to do with the release numbers of your software
-product.  Depending on how you use CVS the revision numbers might
-change several times between two releases.  As an example, some of the
-source files that make up RCS 5.6 have the following revision numbers:
-
-     ci.c            5.21
-     co.c            5.9
-     ident.c         5.3
-     rcs.c           5.12
-     rcsbase.h       5.11
-     rcsdiff.c       5.10
-     rcsedit.c       5.11
-     rcsfcmp.c       5.9
-     rcsgen.c        5.10
-     rcslex.c        5.11
-     rcsmap.c        5.2
-     rcsutil.c       5.10
-
-   You can use the `tag' command to give a symbolic name to a certain
-revision of a file.  You can use the `-v' flag to the `status' command
-to see all tags that a file has, and which revision numbers they
-represent.  (The output of `status' unfortunately uses the word
-"version" instead of "revision".)
-
-   The following example shows how you can add a tag to a file.  The
-commands must be issued inside your working copy of the module.  That
-is, you should issue the command in the directory where `backend.c'
-resides.
-
-     $ cvs tag release-0-4 backend.c
-     T backend.c
-     $ cvs status -v backend.c
-     ===================================================================
-     File: backend.c         Status: Up-to-date
-     
-         Version:            1.4     Tue Dec  1 14:39:01 1992
-         RCS Version:        1.4     /usr/local/cvsroot/yoyodyne/tc/backend.c,v
-         Sticky Tag:         (none)
-         Sticky Date:        (none)
-         Sticky Options:     (none)
-     
-         Existing Tags:
-             release-0-4                     (revision: 1.4)
-
-   There is seldom reason to tag a file in isolation.  A more common
-use is to tag all the files that constitute a module with the same tag
-at strategic points in the development life-cycle, such as when a
-release is made.
-
-     $ cvs tag release-1-0 .
-     cvs tag: Tagging .
-     T Makefile
-     T backend.c
-     T driver.c
-     T frontend.c
-     T parser.c
-
-   (When you give CVS a directory as argument, it generally applies the
-operation to all the files in that directory, and (recursively), to any
-subdirectories that it may contain.  *Note Recursive behavior::.)
-
-   The `checkout' command has a flag, `-r', that lets you check out a
-certain revision of a module.  This flag makes it easy to retrieve the
-sources that make up release 1.0 of the module `tc' at any time in the
-future:
-
-     $ cvs checkout -r release-1-0 tc
-
-This is useful, for instance, if someone claims that there is a bug in
-that release, but you cannot find the bug in the current working copy.
-
-   You can also check out a module as it was at any given date.  *Note
-checkout options::.
-
-   When you tag more than one file with the same tag you can think
-about the tag as "a curve drawn through a matrix of filename vs.
-revision number."  Say we have 5 files with the following revisions:
-
-             file1   file2   file3   file4   file5
-     
-             1.1     1.1     1.1     1.1  /--1.1*      <-*-  TAG
-             1.2*-   1.2     1.2    -1.2*-
-             1.3  \- 1.3*-   1.3   / 1.3
-             1.4          \  1.4  /  1.4
-                           \-1.5*-   1.5
-                             1.6
-
-   At some time in the past, the `*' versions were tagged.  You can
-think of the tag as a handle attached to the curve drawn through the
-tagged revisions.  When you pull on the handle, you get all the tagged
-revisions.  Another way to look at it is that you "sight" through a set
-of revisions that is "flat" along the tagged revisions, like this:
-
-             file1   file2   file3   file4   file5
-     
-                             1.1
-                             1.2
-                     1.1     1.3                       _
-             1.1     1.2     1.4     1.1              /
-             1.2*----1.3*----1.5*----1.2*----1.1     (--- <--- Look here
-             1.3             1.6     1.3              \_
-             1.4                     1.4
-                                     1.5
 

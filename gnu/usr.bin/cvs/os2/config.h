@@ -1,10 +1,15 @@
-/* config.h --- configuration file for Windows NT
-   Jim Blandy <jimb@cyclic.com> --- July 1995  */
+/* config.h --- configuration file for OS/2
+   Karl Fogel <kfogel@cyclic.com> --- Oct 1995  */
 
-/* This file lives in the windows-NT subdirectory, which is only included
-   in your header search path if you're working under Microsoft Visual C++,
-   and use ../cvsnt.mak for your project.  Thus, this is the right place to
-   put configuration information for Windows NT.  */
+/* This file lives in the os2/ subdirectory, which is only included
+ * in your header search path if you're working under IBM C++,
+ * and use os2/makefile (with GNU make for OS/2).  Thus, this is the
+ * right place to put configuration information for OS/2.
+ */
+
+
+/* You bet! */
+#define __STDC__ 1
 
 /* Define if on AIX 3.
    System headers sometimes define this.
@@ -30,37 +35,42 @@
 #undef CRAY_STACKSEG_END
 
 /* Define to `int' if <sys/types.h> doesn't define.  */
-/* Windows NT doesn't have gid_t.  It doesn't even really have group
+/* OS/2 doesn't have gid_t.  It doesn't even really have group
    numbers, I think.  This will take more thought to get right, but
    let's get it running first.  */
 #define gid_t int
 
 /* Define if you have alloca, as a function or macro.  */
-/* Windows NT has alloca...  */
 #define HAVE_ALLOCA 1
+/* OS/2 has alloca() in <stdlib.h>! */
+#define ALLOCA_IN_STDLIB 1
 
 /* Define if you have <alloca.h> and it should be used (not on Ultrix).  */
 /* but calls it _alloca and says it returns void *.  We provide our
    own header file.  */
-#define HAVE_ALLOCA_H 1
+/* OS/2 declares alloca in `stdlib.h'. */
+/* #define HAVE_ALLOCA_H 1 */
+#undef HAVE_ALLOCA_H
 
 /* Define if you support file names longer than 14 characters.  */
-/* Yes.  Woo.  */
+/* We support long file names, but not long corporate acronyms. */
 #define HAVE_LONG_FILE_NAMES 1
 
 /* Define if you have <sys/wait.h> that is POSIX.1 compatible.  */
 /* If POSIX.1 requires this, why doesn't WNT have it?  */
+/* Maybe POSIX only says that if it is present, it must behave a
+   certain way, but that it can simply be not present too.  I
+   dunno. */
+/* Anyway, OS/2 ain't got it. */
 #undef HAVE_SYS_WAIT_H
 
 /* Define if utime(file, NULL) sets file's timestamp to the present.  */
-/* Experimentation says yes.  Wish I had the full documentation, but
-   I have neither the CD-ROM nor a CD-ROM drive to put it in.  */
+/* Documentation says yup; haven't verified experimentally. */
 #define HAVE_UTIME_NULL 1
 
-/* Define as __inline if that's what the C compiler calls it.  */
-/* We apparently do have inline functions.  The 'inline' keyword is only
-   available from C++, though.  You have to use '__inline' in C code.  */
-#define inline __inline
+/* We don't appear to have inline functions, so just expand "inline"
+   to "". */
+#define inline 
 
 /* Define if on MINIX.  */
 /* Hah.  */
@@ -70,10 +80,6 @@
 #define mode_t int
 
 /* Define to `int' if <sys/types.h> doesn't define.  */
-/* Under Windows NT, we use the process handle as the pid.
-   We could #define pid_t to be HANDLE, but that would require
-   us to #include <windows.h>, which I don't trust, and HANDLE
-   is a pointer type anyway.  */
 #define pid_t int
 
 /* Define if the system does not provide POSIX.1 features except
@@ -87,7 +93,7 @@
 #undef _POSIX_SOURCE
 
 /* Define as the return type of signal handlers (int or void).  */
-/* The manual says they return void.  */
+/* IBMCPP manual indicates they are void.  */
 #define RETSIGTYPE void
 
 /* Define to `unsigned' if <sys/types.h> doesn't define.  */
@@ -105,12 +111,13 @@
 /* This shouldn't matter, but pro forma:  */
 #undef STACK_DIRECTION
 
-/* Define if the `S_IS*' macros in <sys/stat.h> do not work properly.  */
-/* We don't seem to have them at all; let ../lib/system.h define them.  */
+/* Define if the `S_IS*' macros in <sys/stat.h> do not work properly. */
+/* sys/stat.h apparently doesn't even have them; setting this will let
+   ../lib/system.h define them. */
 #define STAT_MACROS_BROKEN 1
  
 /* Define if you have the ANSI C header files.  */
-/* We'd damn well better.  */
+/* We have at least a reasonable facsimile thereof. */
 #define STDC_HEADERS 1
 
 /* Define if you can safely include both <sys/time.h> and <time.h>.  */
@@ -122,13 +129,11 @@
 #define uid_t int
 
 /* Define if you have MIT Kerberos version 4 available.  */
-/* We don't.  Cygnus says they've ported it to Windows 3.1, but
-   I don't know if that means that it works under Windows NT as
-   well.  */
+/* We don't. */
 #undef HAVE_KERBEROS
 
 /* Define if you want CVS to be able to be a remote repository client.  */
-/* We just want the client stuff.  */
+/* That's all we want.  */
 #define CLIENT_SUPPORT
 
 /* Define if you want CVS to be able to serve repositories to remote
@@ -154,6 +159,7 @@
 
 /* Define if you have the connect function.  */
 /* Not used?  */
+/* It appears to be used in client.c now... don't know yet it OS/2 has it. */
 #define HAVE_CONNECT
 
 /* Define if you have the fchdir function.  */
@@ -215,12 +221,11 @@
 #define HAVE_VPRINTF 1
 
 /* Define if you have the <direct.h> header file.  */
-/* Windows NT wants this for mkdir and friends.  */
 #define HAVE_DIRECT_H 1
 
 /* Define if you have the <dirent.h> header file.  */
-/* No, but we have the <direct.h> header file...  */
-#undef HAVE_DIRENT_H
+/* We have our own dirent.h and dirent.c. */
+#define HAVE_DIRENT_H 1
 
 /* Define if you have the <errno.h> header file.  */
 #define HAVE_ERRNO_H 1
@@ -229,8 +234,7 @@
 #define HAVE_FCNTL_H 1
 
 /* Define if you have the <io.h> header file.  */
-/* Apparently this is where Windows NT declares all the low-level
-   Unix I/O routines like open and creat and stuff.  */
+/* Low-level Unix I/O routines like open, creat, etc.  */
 #define HAVE_IO_H 1
 
 /* Define if you have the <memory.h> header file.  */
@@ -240,7 +244,7 @@
 #undef HAVE_NDBM_H
 
 /* Define if you have the <ndir.h> header file.  */
-#define HAVE_NDIR_H 1
+#undef HAVE_NDIR_H
 
 /* Define if you have the <string.h> header file.  */
 #define HAVE_STRING_H 1
@@ -272,6 +276,9 @@
 /* Define if you have the <utime.h> header file.  */
 #undef HAVE_UTIME_H
 
+/* Define if you have the <sys/utime.h> header file.  */
+#define HAVE_SYS_UTIME_H 1
+
 /* Define if you have the inet library (-linet).  */
 #undef HAVE_LIBINET
 
@@ -286,12 +293,11 @@
 /* This isn't ever used either.  */
 #undef HAVE_LIBSOCKET
 
-/* Under Windows NT, mkdir only takes one argument.  */
-#define CVS_MKDIR wnt_mkdir
-extern int wnt_mkdir (const char *PATH, int MODE);
+/* Under OS/2, mkdir only takes one argument.  */
+#define CVS_MKDIR os2_mkdir
+extern int os2_mkdir (const char *PATH, int MODE);
 
-/* This function doesn't exist under Windows NT; we
-   provide a stub.  */
+/* This function doesn't exist under OS/2; we provide a stub. */
 extern int readlink (char *path, char *buf, int buf_size);
 
 /* This is just a call to GetCurrentProcessID.  */
@@ -300,28 +306,17 @@ extern pid_t getpid (void);
 /* We definitely have prototypes.  */
 #define USE_PROTOTYPES 1
 
-/* This is just a call to the Win32 Sleep function.  */
-unsigned sleep (unsigned);
-
-/* This is in the winsock library.  */
-int __stdcall gethostname(char *name, int namelen);
-
-/* Don't worry, Microsoft, it's okay for these functions to
-   be in our namespace.  */
-#define popen _popen
-#define pclose _pclose
-
-/* Under Windows NT, filenames are case-insensitive, and both / and \
+/* Under OS/2, filenames are case-insensitive, and both / and \
    are path component separators.  */
-#define FOLD_FN_CHAR(c) (WNT_filename_classes[(unsigned char) (c)])
-extern unsigned char WNT_filename_classes[];
+#define FOLD_FN_CHAR(c) (OS2_filename_classes[(unsigned char) (c)])
+extern unsigned char OS2_filename_classes[];
 
-/* Is the character C a path name separator?  Under
-   Windows NT, you can use either / or \.  */
+/* Is the character C a path name separator?  Under OS/2, you can use
+   either / or \.  */
 #define ISDIRSEP(c) (FOLD_FN_CHAR(c) == '/')
 
 /* Like strcmp, but with the appropriate tweaks for file names.
-   Under Windows NT, filenames are case-insensitive but case-preserving,
+   Under OS/2, filenames are case-insensitive but case-preserving,
    and both \ and / are path element separators.  */
 extern int fncmp (const char *n1, const char *n2);
 
@@ -342,10 +337,11 @@ extern void fnfold (char *FILENAME);
 extern void convert_file (char *INFILE,  int INFLAGS,
 			  char *OUTFILE, int OUTFLAGS);
 
-/* This is where old bits go to die under Windows NT.  */
+/* This is where old bits go to die under OS/2 as well as WinNT.  */
 #define DEVNULL "nul"
 
-/* Comment markers for some Windows NT-specific file types.  */
+/* Comment markers for some OS/2-specific file types.  */
+/* Actually, these come from WinNT, but what the heck. */
 #define SYSTEM_COMMENT_TABLE \
     "mak", "# ",    			/* makefile */                    \
     "rc",  " * ",   			/* MS Windows resource file */    \
@@ -359,17 +355,68 @@ extern void convert_file (char *INFILE,  int INFLAGS,
    to deal with.  */
 #define CLIENT_ONLY
 
-/* Don't use an rsh subprocess to connect to the server, because
-   the rsh does inappropriate translations on the data (CR-LF/LF).  */
-#define RSH_NOT_TRANSPARENT 1
-extern void wnt_start_server (int *tofd, int *fromfd,
-			      char *client_user,
-			      char *server_user,
-			      char *server_host,
-			      char *server_cvsroot);
-extern void wnt_shutdown_server (int fd);
-#define START_SERVER wnt_start_server
-#define SHUTDOWN_SERVER wnt_shutdown_server
+/* We actually do have a transparent rsh, whew. */
+#undef RSH_NOT_TRANSPARENT
+/* But it won't be transparent unless we ask it nicely! */
+#define RSH_NEEDS_BINARY_FLAG 1
 
-#define INITIALIZE_SOCKET_SUBSYSTEM init_winsock
-extern void init_winsock();
+/* OS/2 doesn't really have user/group permissions, at least not
+   according to the C library manual pages.  So we'll make decoys. */
+#define NEED_DECOY_PERMISSIONS 1     /* see system.h */
+
+/* See client.c.  Setting execute bits with chmod seems to lose under
+   OS/2, although in some places the documentation grudgingly admits
+   to the existence of execute bits. */
+#define EXECUTE_PERMISSION_LOSES 1
+
+
+
+/* For the access() function, for which OS/2 has no pre-defined
+   mnemonic masks. */
+#define R_OK 04
+#define W_OK 02
+#define F_OK 00
+#define X_OK R_OK  /* I think this is right for OS/2. */
+
+/* For getpid() */
+#include <process.h>
+
+/* So "tcpip.h" gets included in lib/system.h: */
+#define USE_OWN_TCPIP_H 1
+/* The IBM TCP/IP library gets initialized in main(): */
+#define INITIALIZE_SOCKET_SUBSYSTEM init_sockets
+extern void init_sockets();
+
+/* Under OS/2, we have our own popen() and pclose()... */
+#define USE_OWN_POPEN 1
+/* ... and we use popenRW to start the rsh server. */
+#define START_RSH_WITH_POPEN_RW 1
+
+/*
+ * This tells the client that it must use send()/recv() to talk to the
+ * server if it is connected to the server via a socket.  Sigh.
+ * Windows 95 also cannot convert sockets to file descriptors,
+ * apparently.
+ */
+#define NO_SOCKET_TO_FD 1
+
+/* chmod() doesn't seem to work -- IBM's own example program does not
+ * behave as its documentation claims, in fact!  I suspect that
+ * DosSetPathInfo is the way to go, but can't seem to make that work
+ * either.  For now, we can deal with some cases by invoking the DOS
+ * "attrib" command via system().  */
+#define CHMOD_BROKEN 1
+
+/* Rule Number 1 of OS/2 Programming: If the function you're looking
+   for doesn't exist, try putting "Dos" in front of it. */
+#ifndef sleep
+#define sleep(x) DosSleep(((long)(x))*1000L)
+#endif /* sleep */
+
+/* Set to 1 for some debugging messages. */
+#if 0
+#define KFF_DEBUG(call) printf("*** %s:%d: ", __FILE__, __LINE__); \
+                        call; fflush(stdout);
+#else
+#define KFF_DEBUG(call)
+#endif
