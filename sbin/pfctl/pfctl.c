@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.110 2002/12/22 15:52:13 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.111 2002/12/25 16:05:23 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -749,18 +749,26 @@ pfctl_add_rule(struct pfctl *pf, struct pf_rule *r)
 	case PF_SCRUB:
 	case PF_DROP:
 	case PF_PASS:
+		if ((loadopt & (PFCTL_FLAG_FILTER | PFCTL_FLAG_ALL)) == 0)
+			return (0);
 		rs_num = PF_RULESET_RULE;
 		break;
 	case PF_NAT:
 	case PF_NONAT:
+		if ((loadopt & (PFCTL_FLAG_NAT | PFCTL_FLAG_ALL)) == 0)
+			return (0);
 		rs_num = PF_RULESET_NAT;
 		break;
 	case PF_RDR:
 	case PF_NORDR:
+		if ((loadopt & (PFCTL_FLAG_NAT | PFCTL_FLAG_ALL)) == 0)
+			return (0);
 		rs_num = PF_RULESET_RDR;
 		break;
 	case PF_BINAT:
 	case PF_NOBINAT:
+		if ((loadopt & (PFCTL_FLAG_NAT | PFCTL_FLAG_ALL)) == 0)
+			return (0);
 		rs_num = PF_RULESET_BINAT;
 		break;
 	default:
@@ -817,10 +825,10 @@ pfctl_rules(int dev, char *filename, int opts)
 	struct pfctl		pf;
 	int			i;
 
-	memset(&pr, 0, sizeof(pr));
 	memset(&pa, 0, sizeof(pa));
 	memset(&pf, 0, sizeof(pf));
 	for (i = 0; i < PF_RULESET_MAX; i++) {
+		memset(&pr[i], 0, sizeof(pr[i]));
 		memcpy(pr[i].anchor, anchorname, sizeof(pr[i].anchor));
 		memcpy(pr[i].ruleset, rulesetname, sizeof(pr[i].ruleset));
 	}
