@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.4 1996/05/27 07:59:03 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.5 1996/07/11 00:53:35 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -441,26 +441,26 @@ sys_execve(p, v, retval)
 	 * deal with set[ug]id.
 	 * MNT_NOEXEC and P_TRACED have already been used to disable s[ug]id.
 	 */
-	p->p_flag &= ~P_SUGID;
-	if (((attr.va_mode & VSUID) != 0 && p->p_ucred->cr_uid != attr.va_uid)
-	 || ((attr.va_mode & VSGID) != 0 && p->p_ucred->cr_gid != attr.va_gid)){
-		p->p_ucred = crcopy(cred);
+	if ((attr.va_mode & (VSUID | VSGID))) {
 #ifdef KTRACE
 		/*
 		 * If process is being ktraced, turn off - unless
 		 * root set it.
 		 */
 		if (p->p_tracep && !(p->p_traceflag & KTRFAC_ROOT)) {
+			p->p_traceflag = 0;
 			vrele(p->p_tracep);
 			p->p_tracep = NULL;
-			p->p_traceflag = 0;
 		}
 #endif
+		p->p_ucred = crcopy(cred);
 		if (attr.va_mode & VSUID)
 			p->p_ucred->cr_uid = attr.va_uid;
 		if (attr.va_mode & VSGID)
 			p->p_ucred->cr_gid = attr.va_gid;
 		p->p_flag |= P_SUGID;
+	} else {
+		p->p_flag &= ~P_SUGID;
 	}
 	p->p_cred->p_svuid = p->p_ucred->cr_uid;
 	p->p_cred->p_svgid = p->p_ucred->cr_gid;
