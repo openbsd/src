@@ -1,7 +1,7 @@
-/*	$OpenBSD: main.c,v 1.4 1997/11/17 14:01:28 gene Exp $	*/
+/*	$OpenBSD: main.c,v 1.5 1997/12/14 09:18:08 gene Exp $	*/
 
 #ifndef lint
-static char *rcsid = "$OpenBSD: main.c,v 1.4 1997/11/17 14:01:28 gene Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.5 1997/12/14 09:18:08 gene Exp $";
 #endif
 
 /*
@@ -132,17 +132,16 @@ main(int argc, char **argv)
     argc -= optind;
     argv += optind;
 
-    /* Set some reasonable defaults */
-    if (!Flags)
-	Flags = SHOW_COMMENT | SHOW_DESC | SHOW_REQBY;
-
     /* Get all the remaining package names, if any */
     while (*argv)
 	*pkgs++ = *argv++;
 
-    /* If no packages, yelp */
-    if (pkgs == start && !AllInstalled && !CheckPkg)
-	usage(prog_name, "Missing package name(s)");
+    /* Set some reasonable defaults */
+    if (!Flags) {
+	Flags |= SHOW_INDEX;
+	if (pkgs == start)
+	    AllInstalled = TRUE;
+    }
     *pkgs = NULL;
     return pkg_perform(start);
 }
