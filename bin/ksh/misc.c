@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.11 2000/06/28 20:36:37 mickey Exp $	*/
+/*	$OpenBSD: misc.c,v 1.12 2001/02/19 09:49:53 camield Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -244,7 +244,7 @@ printoptions(verbose)
 					oi.opt_width = len;
 			}
 		print_columns(shl_stdout, n, options_fmt_entry, &oi,
-			      oi.opt_width + 5);
+			      oi.opt_width + 5, 1);
 	} else {
 		/* short version ala ksh93 */
 		shprintf("set");
@@ -1090,12 +1090,13 @@ print_value_quoted(s)
  * element
  */
 void
-print_columns(shf, n, func, arg, max_width)
+print_columns(shf, n, func, arg, max_width, prefcol)
 	struct shf *shf;
 	int n;
 	char *(*func) ARGS((void *, int, char *, int));
 	void *arg;
 	int max_width;
+	int prefcol;
 {
 	char *str = (char *) alloc(max_width + 1, ATEMP);
 	int i;
@@ -1111,7 +1112,7 @@ print_columns(shf, n, func, arg, max_width)
 	if (!cols)
 		cols = 1;
 	rows = (n + cols - 1) / cols;
-	if (n && cols > rows) {
+	if (prefcol && n && cols > rows) {
 		int tmp = rows;
 
 		rows = cols;

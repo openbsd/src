@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.21 1999/07/15 20:35:33 millert Exp $	*/
+/*	$OpenBSD: exec.c,v 1.22 2001/02/19 09:49:52 camield Exp $	*/
 
 /*
  * execute command tree
@@ -1595,7 +1595,39 @@ pr_menu(ap)
 	smi.arg_width = nwidth;
 	smi.num_width = dwidth;
 	print_columns(shl_out, n, select_fmt_entry, (void *) &smi,
-		dwidth + nwidth + 2);
+		dwidth + nwidth + 2, 1);
+
+	return n;
+}
+
+/* XXX: horrible kludge to fit within the framework */
+
+static char *plain_fmt_entry ARGS((void *arg, int i, char *buf, int buflen));
+
+static char *
+plain_fmt_entry(arg, i, buf, buflen)
+	void *arg;
+	int i;
+	char *buf;
+	int buflen;
+{
+	shf_snprintf(buf, buflen, "%s", ((char *const *)arg)[i]);
+	return buf;
+}
+
+int
+pr_list(ap)
+	char *const *ap;
+{
+	char *const *pp;
+	int nwidth;
+	int i, n;
+
+	for (n = 0, nwidth = 0, pp = ap; *pp; n++, pp++) {
+		i = strlen(*pp);
+		nwidth = (i > nwidth) ? i : nwidth;
+	}
+	print_columns(shl_out, n, plain_fmt_entry, (void *) ap, nwidth + 1, 0);
 
 	return n;
 }

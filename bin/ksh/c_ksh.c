@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.13 2000/11/21 22:41:03 millert Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.14 2001/02/19 09:49:50 camield Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -1264,7 +1264,7 @@ c_kill(wp)
 
 			print_columns(shl_stdout, SIGNALS - 1,
 				kill_fmt_entry, (void *) &ki,
-				ki.num_width + ki.name_width + mess_width + 3);
+				ki.num_width + ki.name_width + mess_width + 3, 1);
 		}
 		return 0;
 	}
