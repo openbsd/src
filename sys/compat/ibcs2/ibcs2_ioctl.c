@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_ioctl.c,v 1.6 1997/01/23 16:12:17 niklas Exp $	*/
+/*	$OpenBSD: ibcs2_ioctl.c,v 1.7 1997/11/17 09:21:47 deraadt Exp $	*/
 /*	$NetBSD: ibcs2_ioctl.c,v 1.12 1996/08/10 09:08:26 mycroft Exp $	*/
 
 /*
@@ -524,8 +524,18 @@ ibcs2_sys_ioctl(p, v, retval)
 	case IBCS2_SIOCSOCKSYS:
 		return ibcs2_socksys(p, uap, retval);
 
+	case IBCS2_FIONBIO:
+		{
+			int arg;
+
+			if ((error = copyin(SCARG(uap, data), &arg,
+			    sizeof(arg))) != 0)
+				return error;
+
+			return (*ctl)(fp, FIONBIO, (caddr_t)&arg, p);
+		}
 	case IBCS2_I_NREAD:     /* STREAMS */
-	        SCARG(uap, cmd) = FIONREAD;
+		SCARG(uap, cmd) = FIONREAD;
 		return sys_ioctl(p, uap, retval);
 
 	default:
