@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.7 2004/07/07 07:32:05 alexander Exp $ */
+/*	$OpenBSD: server.c,v 1.8 2004/07/11 03:05:50 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -81,8 +81,8 @@ setup_listeners(struct servent *se, struct ntpd_conf *conf, u_int *cnt)
 		if ((la->fd = socket(la->sa.ss_family, SOCK_DGRAM, 0)) == -1)
 			fatal("socket");
 
-		if (bind(la->fd, (struct sockaddr *)&la->sa, la->sa.ss_len) ==
-		    -1)
+		if (bind(la->fd, (struct sockaddr *)&la->sa,
+		    SA_LEN((struct sockaddr *)&la->sa)) == -1)
 			fatal("bind");
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp_msg.c,v 1.3 2004/07/09 15:02:15 henning Exp $ */
+/*	$OpenBSD: ntp_msg.c,v 1.4 2004/07/11 03:05:50 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -135,7 +135,7 @@ ntp_sendmsg(int fd, struct sockaddr *sa, struct ntp_msg *msg, ssize_t len,
 		/* XXX */
 	}
 
-	if (sendto(fd, &buf, len, 0, sa, sa->sa_len) != len) {
+	if (sendto(fd, &buf, len, 0, sa, SA_LEN(sa)) != len) {
 		log_warn("sendto");
 		return (-1);
 	}

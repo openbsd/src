@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.4 2004/07/08 01:19:27 henning Exp $ */
+/*	$OpenBSD: log.c,v 1.5 2004/07/11 03:05:50 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -163,7 +163,7 @@ log_sockaddr(struct sockaddr *sa)
 {
 	static char	buf[NI_MAXHOST];
 
-	if (getnameinfo(sa, sa->sa_len, buf, sizeof(buf), NULL, 0,
+	if (getnameinfo(sa, SA_LEN(sa), buf, sizeof(buf), NULL, 0,
 	    NI_NUMERICHOST))
 		return ("(unknown)");
 	else
