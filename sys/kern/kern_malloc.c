@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.21 2001/01/04 06:04:14 angelos Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.22 2001/01/04 07:49:24 angelos Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -494,9 +494,10 @@ sysctl_malloc(name, namelen, oldp, oldlenp, newp, newlen)
 	void *newp;
 	size_t newlen;
 {
+        struct kmembuckets kb;
         int i, siz;
 
-	if (namelen != 3 && name[0] != KERN_MALLOC_BUCKETS)
+	if (namelen != 2 && name[0] != KERN_MALLOC_BUCKETS)
 		return (ENOTDIR);		/* overloaded */
 
 	switch (name[0]) {
@@ -514,29 +515,10 @@ sysctl_malloc(name, namelen, oldp, oldlenp, newp, newlen)
 	        return (sysctl_rdstring(oldp, oldlenp, newp, buckstring));
 
 	case KERN_MALLOC_BUCKET:
-	    switch (name[2]) {
-	    case KERN_MALLOC_CALLS:
-		    return (sysctl_rdquad(oldp, oldlenp, newp,
-				bucket[BUCKETINDX(name[1])].kb_calls));
-	    case KERN_MALLOC_ALLOC:
-		    return (sysctl_rdquad(oldp, oldlenp, newp,
-				bucket[BUCKETINDX(name[1])].kb_total));
-	    case KERN_MALLOC_FREE:
-		    return (sysctl_rdquad(oldp, oldlenp, newp,
-				bucket[BUCKETINDX(name[1])].kb_totalfree));
-	    case KERN_MALLOC_ELEMENTS:
-		    return (sysctl_rdquad(oldp, oldlenp, newp,
-				bucket[BUCKETINDX(name[1])].kb_elmpercl));
-	    case KERN_MALLOC_HIWAT:
-		    return (sysctl_rdquad(oldp, oldlenp, newp,
-				bucket[BUCKETINDX(name[1])].kb_highwat));
-	    case KERN_MALLOC_COULDFREE:
-		    return (sysctl_rdquad(oldp, oldlenp, newp,
-				bucket[BUCKETINDX(name[1])].kb_couldfree));
-	    default:
-		    return (EOPNOTSUPP);
-	    }
-
+	        bcopy(&bucket[BUCKETINDX(name[1])], &kb, sizeof(kb));
+		kb.kb_next = kb.kb_last = 0;
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &kb,
+					sizeof(kb)));
 	default:
 	        return (EOPNOTSUPP);
 	}
