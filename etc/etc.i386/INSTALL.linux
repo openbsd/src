@@ -1,7 +1,10 @@
-$OpenBSD: INSTALL.linux,v 1.1 1998/09/20 15:12:06 espie Exp $
+$OpenBSD: INSTALL.linux,v 1.2 1998/09/22 17:21:22 espie Exp $
 
-Warning: this document is currently being written. It's not yet complete,
-and probably contains loads of errors.
+Warning: this document is currently being reviewed. It's not yet complete,
+and probably contains loads of errors. As an example, I can't figure out
+why linux doesn't need mkswap as it shares the exact same blocks with
+OpenBSD.
+
 
 	Linux + OpenBSD: it's possible
 
@@ -75,10 +78,10 @@ Here is my disk:
 Disk /dev/hda: 128 heads, 63 sectors, 993 cylinders
 Units = cylinders of 8064 * 512 bytes
 
-   Device Boot   Begin    Start      End   Blocks   Id  System
+   Device Boot      Begin    Start      End   Blocks   Id  System
 	/dev/hda1            1        1      260  1048288+   6  DOS 16-bit >=32M
 	/dev/hda2          261      261      273    52416   83  Linux native
-	/dev/hda4          287      287      993  2850624    5  Extended
+  	/dev/hda4          287      287      600  1270080    5  Extended
 	/dev/hda5          287      287      303    68512   82  Linux swap
 	/dev/hda6          304      304      456   616864+  83  Linux native
 	/dev/hda7          457      457      520   258016+  83  Linux native
@@ -89,6 +92,8 @@ Units = cylinders of 8064 * 512 bytes
 large, the OpenBSD area will be huge. As a developper, I usually have loads
 of source & binaries lying around... a simple OpenBSD installation can fit
 within 300 Mb with room to spare).
+In my setup hda2 is /, hda6 is /usr, hda7 is /usr/local hda8 is /var, and
+hda9 is /home.
 
 Get the display to sectors with u, and jot down the corresponding
 information as well:
@@ -96,10 +101,10 @@ information as well:
 Disk /dev/hda: 128 heads, 63 sectors, 993 cylinders
 Units = sectors of 1 * 512 bytes
 
-   Device Boot   Begin    Start      End   Blocks   Id  System
+   Device Boot      Begin    Start      End   Blocks   Id  System
 	/dev/hda1           63       63  2096639  1048288+   6  DOS 16-bit >=32M
 	/dev/hda2      2096640  2096640  2201471    52416   83  Linux native
-	/dev/hda4      2306304  2306304  8007551  2850624    5  Extended
+	/dev/hda4      2306304  2306304  4846464  1270080    5  Extended
 	/dev/hda5      2306368  2306368  2443391    68512   82  Linux swap
 	/dev/hda6      2443455  2443455  3677183   616864+  83  Linux native
 	/dev/hda7      3677247  3677247  4193279   258016+  83  Linux native
@@ -113,7 +118,7 @@ Nr AF  Hd Sec  Cyl  Hd Sec  Cyl   Start    Size ID
  1 00   1   1    0 127  63  259      63 2096577 06
  2 00   0   1  260 127  63  272 2096640  104832 83
  3 00   0   0    0   0   0    0       0       0 00
- 4 00   0   1  286 127  63  992 2306304 5701248 05
+ 4 00   0   1  286 127  63  600 2306304 2540160 05
  5 00   1   2  286 127  63  302      64  137024 82
  6 00   1   1  303 127  63  455      63 1233729 83
  7 00   1   1  456 127  63  519      63  516033 83
@@ -121,7 +126,10 @@ Nr AF  Hd Sec  Cyl  Hd Sec  Cyl   Start    Size ID
  9 00   1   1  537 127  63  600      63  516033 83
 
 Note that this is STILL the same data. The good point about this last
-display is that it is what you're going to see in OpenBSD fdisk !
+display is that it is almost what you're going to see in OpenBSD fdisk !
+The only difference is that:
+- OpenBSD fdisk displays cyl/hd/sec, which is a more sensible order.
+- OpenBSD fdisk displays `real' offsets from the beginning of the disk.
 
 You will notice that the 3rd primary partition is empty... this is where 
 I intend to stick my OpenBSD root partition (both DOS and BSD partitions),
@@ -138,12 +146,12 @@ lists. This will also show up in OpenBSD' fdisk.
 
 Your clock and OpenBSD
 ----------------------
-One last thing you can do before starting OpenBSD: OpenBSD expects your
-hardware clock to be in universal time, and uses timezones to give you
-local time. With linux, this depends... most distributions use a small
-program called hwclock to set up the system time from the hardware clock
-when booting... there is a --utc option if your hardware clock is in
-universal time, but this is not always the case.
+OpenBSD expects your hardware clock to be in universal time, and uses 
+timezones to give you local time. With linux, this depends... 
+most distributions use a small program called hwclock to set up the 
+system time from the hardware clock when booting... there is a --utc 
+option if your hardware clock is in universal time, but this is not 
+always what happens by default.
 
 Check your distribution, on redhat 5.1, this occurs in /etc/rc.d/rc.sysinit
 which loads /etc/sysconfig/clock which defines a variable called UTC before
@@ -162,7 +170,6 @@ that is probably to make sure you have a linux kernel around that doesn't
 know about disklabels.   Otherwise, you may wish to check your inittab
 and your rc to make deadly sure that single-user boot will work.
 
-
 The OpenBSD installation
 ------------------------
 If you've got the space, you can install from your ext2fs partitions. This
@@ -173,9 +180,165 @@ REMEMBER TO BACKUP ALL IMPORTANT DATA ON YOUR DISK BEFORE DOING THE
 INSTALLATION !!!
 
 So you cp floppy*.fs /dev/fd0, then reboot...
+After a while, you will see your disk configuration scroll up.
+I got:
+wd0 at wdc0 drive 0: <TOSHIBA MK4006MAV>
+wd0: 3909MB, 7944 cyl, 16 head, 63 sec, 512 bytes/sec, 8007552 sec total
+wd0: using 16-sector 16-bit pio transfers, lba addressing
+at which point I got somewhat confused, especially as this is a config with
+more than 1024 cylinders.  In fact, this is the real disk geometry, when
+you inquire about it, but the geometry that the BIOS sees IS the fdisk
+geometry, with 993 cylinders.  As the 1024 cylinders is purely a BIOS
+limitation, there is no actual trouble.
+If you want to be sure, right after the machine loads the kernel, there is
+a boot prompt:
+boot>
+at which point you can enter: machine diskconfig
+before the automatic boot sequence continues.
 
-<<<* TO BE COMPLETED *>>>
+Then I got into fdisk, and I proceeded to enter my new OpenBSD partition.
+This is what the fdisk dump looked after I added the OpenBSD partition:
 
+Disk: wd0       geometry: 992/128/63 [7999488 sectors]
+Offset: 0       Signatures: 0xAA55,0x0
+         Starting        Ending
+ #: id  cyl  hd sec -  cyl  hd sec [     start -       size]
+-------------------------------------------------------------------------
+ 0: 06    0   1   1 -  259 127  63 [        63 -    2096577] DOS > 32MB  
+ 1: 83  260   0   1 -  272 127  63 [   2096640 -     104832] Linux files*
+ 2: A6  273   0   1 -  285 127  63 [   2201472 -     104832] OpenBSD     
+ 3: 05  286   0   1 -  600 127  63 [   2306304 -    2540160] Extended DOS
+
+Selected extended partition 3
+New MBR at offset 2306304.
+Offset: 2306304 Signatures: 0xAA55,0x0
+         Starting        Ending
+ #: id  cyl  hd sec -  cyl  hd sec [     start -       size]
+-------------------------------------------------------------------------
+ 0: 82  286   1   2 -  302 127  63 [   2306368 -     137024] Linux swap  
+ 1: 05  303   0   1 -  455 127  63 [   2443392 -    1233792] Extended DOS
+ 2: 00    0   0   0 -    0   0   0 [   2306304 -          0] unused      
+ 3: 00    0   0   0 -    0   0   0 [   2306304 -          0] unused      
+
+Selected extended partition 1
+New MBR at offset 2443392.
+Offset: 2443392 Signatures: 0xAA55,0x0
+         Starting        Ending
+ #: id  cyl  hd sec -  cyl  hd sec [     start -       size]
+-------------------------------------------------------------------------
+ 0: 83  303   1   1 -  455 127  63 [   2443455 -    1233729] Linux files*
+ 1: 05  456   0   1 -  519 127  63 [   3677184 -     516096] Extended DOS
+ 2: 00    0   0   0 -    0   0   0 [   2443392 -          0] unused      
+ 3: 00    0   0   0 -    0   0   0 [   2443392 -          0] unused      
+
+Selected extended partition 1
+New MBR at offset 3677184.
+Offset: 3677184 Signatures: 0xAA55,0x0
+         Starting        Ending
+ #: id  cyl  hd sec -  cyl  hd sec [     start -       size]
+-------------------------------------------------------------------------
+ 0: 83  456   1   1 -  519 127  63 [   3677247 -     516033] Linux files*
+ 1: 05  520   0   1 -  536 127  63 [   4193280 -     137088] Extended DOS
+ 2: 00    0   0   0 -    0   0   0 [   3677184 -          0] unused      
+ 3: 00    0   0   0 -    0   0   0 [   3677184 -          0] unused      
+
+Selected extended partition 1
+New MBR at offset 4193280.
+Offset: 4193280 Signatures: 0xAA55,0x0
+         Starting        Ending
+ #: id  cyl  hd sec -  cyl  hd sec [     start -       size]
+-------------------------------------------------------------------------
+ 0: 83  520   1   1 -  536 127  63 [   4193343 -     137025] Linux files*
+ 1: 05  537   0   1 -  600 127  63 [   4330368 -     516096] Extended DOS
+ 2: 00    0   0   0 -    0   0   0 [   4193280 -          0] unused      
+ 3: 00    0   0   0 -    0   0   0 [   4193280 -          0] unused      
+
+Selected extended partition 1
+New MBR at offset 4330368.
+Offset: 4330368 Signatures: 0xAA55,0x0
+         Starting        Ending
+ #: id  cyl  hd sec -  cyl  hd sec [     start -       size]
+-------------------------------------------------------------------------
+ 0: 83  537   1   1 -  600 127  63 [   4330431 -     516033] Linux files*
+ 1: 00    0   0   0 -    0   0   0 [         0 -          0] unused      
+ 2: 00    0   0   0 -    0   0   0 [   4330368 -          0] unused      
+ 3: 00    0   0   0 -    0   0   0 [   4330368 -          0] unused      
+
+Nothing to it... you just follow the extended partition links using select,
+jot down whatever you need, add the OpenBSD partition to look like you want
+it to, and save everything.
+
+After you leave fdisk, you get to the interesting part: the disklabel
+itself. If all goes well, OpenBSD synthetizes a nice disklabel out of what
+it can deduce from the disk, including the ext2fs partitions.
+
+There are only a few subtleties to take care of:
+- initially, you can ONLY edit the disklabel part that matches the OpenBSD
+DOS partition (a `slice' in FreeBSD linguo). You can use b 0 * to be able
+to edit the whole disk,
+- the real disk geometry becomes relevant. OpenBSD file system can't use 
+partial cylinder groups, hence bsd partitions should start on cylinder
+boundaries, any remaining sectors  will be lost anyway.
+- units for size and offset can be given as sectors (default) or cylinders
+(suffix c).
+
+After edition, this is what my disklabel looks like:
+
+# using MBR partition 2: type A6 off 2201472 (0x219780) size 104832 (0x19980)
+# /dev/rwd0c:
+type: ESDI
+disk: 
+label: TOSHIBA MK4006M
+flags:
+bytes/sector: 512
+sectors/track: 63
+tracks/cylinder: 16
+sectors/cylinder: 1008
+cylinders: 7944
+total sectors: 8007552
+rpm: 3600
+interleave: 1
+trackskew: 0
+cylinderskew: 0
+headswitch: 0           # milliseconds
+track-to-track seek: 0  # milliseconds
+drivedata: 0 
+
+16 partitions:
+#        size   offset    fstype   [fsize bsize   cpg]
+  a:   104832  2201472    4.2BSD     1024  8192    16   # (Cyl. 2184 - 2287)
+  b:   137024  2306368      swap                        # (Cyl. 2288 - 2423*)
+  c:  8007552        0    unused        0     0         # (Cyl.    0 - 7943)
+  d:   409248  4846464    4.2BSD     1024  8192    16   # (Cyl. 4808 - 5213)
+  e:   511056  5255712    4.2BSD     1024  8192    16   # (Cyl. 5214 - 5720)
+  f:   204624  5766768    4.2BSD     1024  8192    16   # (Cyl. 5721 - 5923)
+  g:  1073520  5971392    4.2BSD     1024  8192    16   # (Cyl. 5924 - 6988)
+  h:   962640  7044912    4.2BSD     1024  8192    16   # (Cyl. 6989 - 7943)
+  i:  2096577       63     MSDOS                        # (Cyl.    0*- 2079*)
+  j:   104832  2096640    ext2fs                        # (Cyl. 2080 - 2183)
+  l:  1233729  2443455    ext2fs                        # (Cyl. 2424*- 3647*)
+  m:   516033  3677247    ext2fs                        # (Cyl. 3648*- 4159*)
+  n:   137025  4193343    ext2fs                        # (Cyl. 4160*- 4295*)
+  o:   516033  4330431    ext2fs                        # (Cyl. 4296*- 4807*)
+
+Things to check:
+- this disklabel is saved in MBR2 (basic dos partition 2), as expected.
+- all the bsd partitions proper are aligned on a cylinder boundary.
+the root partition begins at the precise same offset the corresponding DOS
+partition begins, and it extends for the same length.
+Other bsd partitions don't show up in the dos partition setup, hence they
+begin precisely on cylinder 601/4808.
+- the ext2fs partitions have the exact same layout under the OpenBSD
+disklabel.
+
+One point that is somewhat laborious is that the disklabel -E mode
+(which you are currently using) tends to move partitions around to ensure
+that ALL partitions fit are contiguous. Hence, you may need some fiddling
+and printing around to ensure that Linux partitions do show up where they
+should.  In my case, disklabel moved the swap and all the ext2fs partitions
+slightly, and I add to adjust them manually...
+
+Once the disklabel is written to disk, the installation proceeds as usual.
 
 Booting
 -------
@@ -218,5 +381,18 @@ partition list. Unfortunately, that check is hardcoded for type A5
 (NetBSD/FreeBSD) disklabel, and it recognizes only 8 partitions disklabels
 anyway.
 
-JUST HACKING THAT CODE TO RECOGNIZE A6 IS NOT ENOUGH !!!   
-MORE IS INVOLVED AS THE OPENBSD PARTITION TABLE FORMAT IS *DIFFERENT*.
+Just hacking the linux code to recognize A6 is not quite enough.  You also
+need to trim down the resulting list of partitions, as your ext2fs
+partitions will now show up twice !
+I'm currently trying to implement some smart recognition scheme, where
+the bsd disklabel would appear AFTER linux partitions, and where native
+linux partitions wouldn't show up as duplicates in the disklabel.
+
+You also need a working ufs, such as
+<ftp://sunsite.unc.edu/pub/Linux/ALPHA/ufs/u2fs-0.4.3.tar.gz>
+Usually, the patch must be done manually so that the new module will
+compile.
+
+Binary compatibility
+--------------------
+not yet written...
