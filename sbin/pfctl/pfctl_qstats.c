@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_qstats.c,v 1.17 2003/04/15 11:29:24 henning Exp $ */
+/*	$OpenBSD: pfctl_qstats.c,v 1.18 2003/04/15 11:51:42 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer
@@ -82,6 +82,8 @@ void			 pfctl_print_altq_node(int, const struct pf_altq_node *,
 			     unsigned, int);
 void			 print_cbqstats(struct queue_stats, struct queue_stats);
 void			 print_priqstats(struct queue_stats,
+			     struct queue_stats);
+void			 print_hfscstats(struct queue_stats,
 			     struct queue_stats);
 void			 pfctl_free_altq_node(struct pf_altq_node *);
 void			 pfctl_print_altq_nodestat(int,
@@ -268,6 +270,9 @@ pfctl_print_altq_nodestat(int dev, const struct pf_altq_node *a)
 	case ALTQT_PRIQ:
 		print_priqstats(a->qstats, a->qstats_last);
 		break;
+	case ALTQT_HFSC:
+		print_hfscstats(a->qstats, a->qstats_last);
+		break;
 	}
 }
 
@@ -320,6 +325,31 @@ print_priqstats(struct queue_stats cur, struct queue_stats last)
 		last.data.priq_stats.xmitcnt.packets, interval),
 	    rate2str(calc_rate(cur.data.priq_stats.xmitcnt.bytes,
 		last.data.priq_stats.xmitcnt.bytes, interval)));
+}
+
+void
+print_hfscstats(struct queue_stats cur, struct queue_stats last)
+{
+	double	interval;
+
+	printf("[ pkts: %10llu  bytes: %10llu  "
+	    "dropped pkts: %6llu bytes: %6llu ]\n",
+	    cur.data.hfsc_stats.xmit_cnt.packets,
+	    cur.data.hfsc_stats.xmit_cnt.bytes,
+	    cur.data.hfsc_stats.drop_cnt.packets,
+	    cur.data.hfsc_stats.drop_cnt.bytes);
+	printf("[ qlength: %3d/%3d ]\n",
+	    cur.data.hfsc_stats.qlength, cur.data.hfsc_stats.qlimit);
+
+	if (!last.valid)
+		return;
+
+	interval = calc_interval(&cur.timestamp, &last.timestamp);
+	printf("[ measured: %7.1f packets/s, %s/s ]\n",
+	    calc_pps(cur.data.hfsc_stats.xmit_cnt.packets,
+		last.data.hfsc_stats.xmit_cnt.packets, interval),
+	    rate2str(calc_rate(cur.data.hfsc_stats.xmit_cnt.bytes,
+		last.data.hfsc_stats.xmit_cnt.bytes, interval)));
 }
 
 void
