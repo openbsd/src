@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.1 1997/03/29 07:12:07 tholo Exp $
+#	$OpenBSD: genassym.cf,v 1.2 1997/09/21 04:27:54 mickey Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -52,6 +52,11 @@ include <machine/vmparam.h>
 include "apm.h"
 if NAPM > 0
 include <machine/apmvar.h>
+endif
+
+include "bios.h"
+if NBIOS > 0
+include <machine/biosvar.h>
 endif
 
 if COMPAT_SVR4 > 0
@@ -164,15 +169,7 @@ endif
 
 # Advanced Power Management information
 if NAPM > 0
-define	APM_CODE32	offsetof(struct apm_connect_info, apm_code32_seg_base)
-define	APM_CODE16	offsetof(struct apm_connect_info, apm_code16_seg_base)
-define	APM_DATA	offsetof(struct apm_connect_info, apm_data_seg_base)
-define	APM_CODE32_LEN	offsetof(struct apm_connect_info, apm_code32_seg_len)
-define	APM_DATA_LEN	offsetof(struct apm_connect_info, apm_data_seg_len)
-define	APM_ENTRY	offsetof(struct apm_connect_info, apm_entrypt)
-define	APM_DETAIL	offsetof(struct apm_connect_info, apm_detail)
 define	APM_CALL	offsetof(struct apm_connect_info, apm_entrypt)
-define	APM_SIZE	sizeof(struct apm_connect_info)
 define	APMREG_AX	offsetof(struct apmregs, ax)
 define	APMREG_BX	offsetof(struct apmregs, bx)
 define	APMREG_CX	offsetof(struct apmregs, cx)

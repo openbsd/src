@@ -1,4 +1,5 @@
 /*	$NetBSD$	*/
+
 /*
  *  Copyright (c) 1995 John T. Kohl
  *  All rights reserved.
@@ -157,7 +158,7 @@
 
 #define APM_OEM			0x80
 
-#ifdef _LOCORE
+#ifndef _LOCORE
 /*
  * LP (Laptop Package)
  *
@@ -172,32 +173,6 @@
  *
  * Sep., 1994	Implemented on FreeBSD 1.1.5.1R (Toshiba AVS001WD)
  */
-
-/* Error code of APM initializer */
-#define APMINI_CANTFIND		0xffffffff
-#define APMINI_NOT32BIT		0xfffffffe
-#define APMINI_CONNECTERR	0xfffffffd
-
-#define	SIZEOF_GDTE		8
-#define BOOTSTRAP_GDT_NUM	9	/* see i386/boot/table.c */
-
-#define APM_INIT_CS_INDEX	(BOOTSTRAP_GDT_NUM - 3)
-#define APM_INIT_DS_INDEX	(BOOTSTRAP_GDT_NUM - 2)
-#define APM_INIT_CS16_INDEX	(BOOTSTRAP_GDT_NUM - 1)
-#define APM_INIT_CS_SEL		(APM_INIT_CS_INDEX << 3)
-#define APM_INIT_DS_SEL		(APM_INIT_DS_INDEX << 3)
-#define APM_INIT_CS16_SEL	(APM_INIT_CS16_INDEX << 3)
-
-#define CS32_ATTRIB		0xCF9e
-#define CS16_ATTRIB		0x0F9e
-#define DS32_ATTRIB		0xCF92
-
-#define BOOTSTRAP_DS_SEL	0x10
-/* APM initializer physical address */
-#define APM_OURADDR		0x00080000
-#define APM_RELOC(x)	((x) - _apm_init_image)
-
-#else /* !_LOCORE */
 
 /* filled in by apmcall */ 
 struct apmregs {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.6 1997/08/19 20:09:04 angelos Exp $	*/
+/*	$OpenBSD: apm.c,v 1.7 1997/09/21 04:27:52 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1995 John T. Kohl.  All rights reserved.
@@ -610,34 +610,13 @@ apmattach(parent, self, aux)
 	 */
 	if (apminfo.apm_detail & APM_32BIT_SUPPORTED) {
 		apminfo.apm_segsel = GSEL(GAPM32CODE_SEL,SEL_KPL);
-		apminfo.apm_code32_seg_base <<= 4;
-		apminfo.apm_code16_seg_base <<= 4;
-		apminfo.apm_data_seg_base <<= 4;
-		/* something is still amiss in the limit-fetch in the boot
-		   loader; it returns incorrect (too small) limits.
-		   for now, force them to max size. */
-		apminfo.apm_code32_seg_len = 65536;
-		apminfo.apm_data_seg_len = 65536;
-#if 0
-		switch ((APM_MAJOR_VERS(apminfo.apm_detail) << 8) +
-			APM_MINOR_VERS(apminfo.apm_detail)) {
-		case 0x0100:
-			apminfo.apm_code32_seg_len = 65536;
-			apminfo.apm_data_seg_len = 65536;
-			break;
-		default:
-			if (apminfo.apm_data_seg_len == 0)
-				apminfo.apm_data_seg_len = 65536;
-			break;
-		}
-#endif
 		setsegment(&dynamic_gdt[GAPM32CODE_SEL].sd,
 			   (void *)ISA_HOLE_VADDR(apminfo.apm_code32_seg_base),
 			   apminfo.apm_code32_seg_len-1,
 			   SDT_MEMERA, SEL_KPL, 1, 0);
 		setsegment(&dynamic_gdt[GAPM16CODE_SEL].sd,
 			   (void *)ISA_HOLE_VADDR(apminfo.apm_code16_seg_base),
-			   65536-1,	/* just in case */
+			   apminfo.apm_code32_seg_len-1,
 			   SDT_MEMERA, SEL_KPL, 0, 0);
 		setsegment(&dynamic_gdt[GAPMDATA_SEL].sd,
 			   (void *)ISA_HOLE_VADDR(apminfo.apm_data_seg_base),

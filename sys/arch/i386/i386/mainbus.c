@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.8 1996/11/28 23:37:37 niklas Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.9 1997/09/21 04:27:56 mickey Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.8 1996/04/11 22:13:37 cgd Exp $	*/
 
 /*
@@ -46,9 +46,13 @@
 
 #include "pci.h"
 #include "apm.h"
+#include "bios.h"
 
 #if NAPM > 0
 #include <machine/apmvar.h>
+#endif
+#if NBIOS > 0
+#include <machine/biosvar.h>
 #endif
 
 int	mainbus_match __P((struct device *, void *, void *));
@@ -71,6 +75,9 @@ union mainbus_attach_args {
 	struct isabus_attach_args mba_iba;
 #if NAPM > 0
 	struct apm_attach_args mba_aaa;
+#endif
+#if NBIOS > 0
+	struct bios_attach_args mba_bios;
 #endif
 };
 
@@ -98,6 +105,20 @@ mainbus_attach(parent, self, aux)
 
 	printf("\n");
 
+#if NBIOS > 0
+	{
+		mba.mba_bios.bios_busname = "bios";
+		mba.mba_bios.bios_iot = I386_BUS_SPACE_IO;
+		mba.mba_bios.bios_memt = I386_BUS_SPACE_MEM;
+		config_found(self, &mba.mba_bios, mainbus_print);
+	}
+#endif
+#if NAPM > 0
+	{
+		mba.mba_aaa.aaa_busname = "apm";
+		config_found(self, &mba.mba_aaa, mainbus_print);
+	}
+#endif
 	if (1 /* XXX ISA NOT YET SEEN */) {
 		mba.mba_iba.iba_busname = "isa";
 		mba.mba_iba.iba_iot = I386_BUS_SPACE_IO;
@@ -125,12 +146,6 @@ mainbus_attach(parent, self, aux)
 		mba.mba_pba.pba_memt = I386_BUS_SPACE_MEM;
 		mba.mba_pba.pba_bus = 0;
 		config_found(self, &mba.mba_pba, mainbus_print);
-	}
-#endif
-#if NAPM > 0
-	{
-	    mba.mba_aaa.aaa_busname = "apm";
-	    config_found(self, &mba.mba_aaa, mainbus_print);
 	}
 #endif
 }

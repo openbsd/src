@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.32 1997/09/02 08:48:12 downsj Exp $
+#	$OpenBSD: files.i386,v 1.33 1997/09/21 04:27:34 mickey Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -218,3 +218,8 @@ file	arch/i386/i386/freebsd_machdep.c	compat_freebsd
 device apm
 attach apm at mainbus
 file	arch/i386/i386/apm.c		apm needs-count
+
+device bios
+attach bios at mainbus
+file	arch/i386/i386/bios.c		bios needs-count
+

@@ -206,11 +206,19 @@ void	setconf __P((void));
  * CTL_MACHDEP definitions.
  */
 #define	CPU_CONSDEV		1	/* dev_t: console terminal device */
-#define	CPU_MAXID		2	/* number of valid machdep ids */
+#define	CPU_BIOSDEV		2	/* int: BIOS boot device */
+#define	CPU_BIOSGEOMETRY	3	/* int: BIOS boot device geometry */
+#define	CPU_CNVMEM		4	/* int: amount of conventional memory */
+#define	CPU_EXTMEM		5	/* int: amount of extended memory */
+#define	CPU_MAXID		6	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
 	{ "console_device", CTLTYPE_STRUCT }, \
+	{ "biosdev", CTLTYPE_INT }, \
+	{ "biosgeo", CTLTYPE_INT }, \
+	{ "cnvmem", CTLTYPE_INT }, \
+	{ "extmem", CTLTYPE_INT }, \
 }
 
 #endif /* !_I386_CPU_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.47 1997/09/02 08:50:30 downsj Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.48 1997/09/21 04:27:55 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -180,8 +180,8 @@ void	consinit __P((void));
 int	bus_mem_add_mapping __P((bus_addr_t, bus_size_t,
 	    int, bus_space_handle_t *));
 
-extern long cnvmem;	/* BIOS's conventional memory size */
-extern long extmem;	/* BIOS's extended memory size */
+extern u_int cnvmem;	/* BIOS's conventional memory size */
+extern u_int extmem;	/* BIOS's extended memory size */
 
 /*
  * Machine-dependent startup code
@@ -531,39 +531,6 @@ identifycpu()
 	if (cpu_class >= CPUCLASS_486)
 		lcr0(rcr0() | CR0_WP);
 #endif
-}
-
-/*  
- * machine dependent system variables.
- */ 
-int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
-{
-	dev_t consdev;
-
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
-
-	switch (name[0]) {
-	case CPU_CONSDEV:
-		if (cn_tab != NULL)
-			consdev = cn_tab->cn_dev;
-		else
-			consdev = NODEV;
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
-		    sizeof consdev));
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
 }
 
 #ifdef COMPAT_IBCS2

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.33 1997/07/04 17:01:07 downsj Exp $	*/
+/*	$OpenBSD: conf.c,v 1.34 1997/09/21 04:27:54 mickey Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -35,8 +35,8 @@
 #include <sys/buf.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
-#include <sys/conf.h>
 #include <sys/vnode.h>
+#include <machine/conf.h>
 
 #include "wdc.h"
 #include "wd.h"
@@ -159,11 +159,11 @@ cdev_decl(mcd);
 cdev_decl(audio);
 cdev_decl(svr4_net);
 #include "joy.h"
-cdev_decl(joy);
 #include "apm.h"
 cdev_decl(apm);
 #include "pctr.h"
 cdev_decl(pctr);
+#include "bios.h"
 
 cdev_decl(ipl);
 #ifdef IPFILTER
@@ -239,6 +239,7 @@ struct cdevsw	cdevsw[] =
 	cdev_random_init(1,random),	/* 45: random data source */
 	cdev_uk_init(NPCTR,pctr),	/* 46: pentium performance counters */
 	cdev_disk_init(NRD,rd),		/* 47: ram disk driver */
+	cdev_bios_init(NBIOS,bios),	/* 48: onboard BIOS PROM */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
