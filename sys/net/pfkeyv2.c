@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.99 2004/12/11 16:02:21 markus Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.100 2005/01/13 10:08:14 hshoexer Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -1366,7 +1366,11 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		dump_state.sadb_msg = (struct sadb_msg *) headers[0];
 		dump_state.socket = socket;
 
-		if (!(rval = tdb_walk(pfkeyv2_dump_walker, &dump_state)))
+		s = spltdb();
+		rval = tdb_walk(pfkeyv2_dump_walker, &dump_state);
+		splx(s);
+
+		if (!rval)
 			goto realret;
 
 		if ((rval == ENOMEM) || (rval == ENOBUFS))
