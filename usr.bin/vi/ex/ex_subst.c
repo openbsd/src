@@ -415,12 +415,12 @@ s(sp, cmdp, s, re, flags)
 			if (lno != OOBLNO)
 				goto usage;
 			errno = 0;
-			if ((ul = strtoul(s, &s, 10)) > UINT_MAX)
+			if ((ul = strtoul(s, &s, 10)) >= UINT_MAX)
 				errno = ERANGE;
 			if (*s == '\0')		/* Loop increment correction. */
 				--s;
 			if (errno == ERANGE) {
-				if (ul > UINT_MAX)
+				if (ul >= UINT_MAX)
 					msgq(sp, M_ERR, "153|Count overflow");
 				else
 					msgq(sp, M_SYSERR, NULL);
