@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.200 2004/11/18 14:10:36 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.201 2004/11/18 14:59:50 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -531,7 +531,8 @@ init_peer(struct peer *p)
 {
 	p->fd = p->wbuf.fd = -1;
 	p->capa.announce = p->conf.capabilities;
-	p->capa.ann_mp = 1;
+	p->capa.ann_mp_v4 = 1;
+	p->capa.ann_mp_v6 = 0;
 	p->capa.ann_refresh = 1;
 	if (p->conf.if_depend[0])
 		imsg_compose(ibuf_main, IMSG_IFINFO, 0, 0, -1,
@@ -1134,20 +1135,28 @@ session_open(struct peer *p)
 	int			 errs = 0;
 	u_int8_t		 op_type, op_len = 0, optparamlen = 0;
 	u_int8_t		 capa_code, capa_len;
-	struct capa_mp		 capa_mp_v4;
+	struct capa_mp		 capa_mp_v4, capa_mp_v6;
 
 	if (p->capa.announce) {
-		if (p->capa.ann_mp) {
-			/* multiprotocol extensions, RFC 2858 */
+		/* multiprotocol extensions, RFC 2858 */
+		if (p->capa.ann_mp_v4) {
+			op_len += 2;	/* 1 code + 1 len */
 			bzero(&capa_mp_v4, sizeof(capa_mp_v4));
 			capa_mp_v4.afi = htons(AFI_IPv4);
 			capa_mp_v4.safi = SAFI_UNICAST;
-			op_len += 6;	/* 1 code + 1 len + 4 data */
+			op_len += 4;	/* 2 AFI + 1 pad + 1 safi */
 		}
-		if (p->capa.ann_refresh) {
-			/* route refresh, RFC 2918 */
+		if (p->capa.ann_mp_v6) {
+			op_len += 2;	/* 1 code + 1 len */
+			bzero(&capa_mp_v6, sizeof(capa_mp_v6));
+			capa_mp_v6.afi = htons(AFI_IPv6);
+			capa_mp_v6.safi = SAFI_UNICAST;
+			op_len += 4;	/* 2 AFI + 1 pad + 1 safi */
+		}
+
+		/* route refresh, RFC 2918 */
+		if (p->capa.ann_refresh)
 			op_len += 2;	/* 1 code + 1 len, no data */
-		}
 
 		if (op_len > 0)
 			optparamlen = sizeof(op_type) + sizeof(op_len) + op_len;
@@ -1185,8 +1194,8 @@ session_open(struct peer *p)
 		errs += buf_add(buf, &op_type, sizeof(op_type));
 		errs += buf_add(buf, &op_len, sizeof(op_len));
 
-		if (p->capa.ann_mp) {
-			/* multiprotocol extensions, RFC 2858 */
+		/* multiprotocol extensions, RFC 2858 */
+		if (p->capa.ann_mp_v4) {
 			capa_code = CAPA_MP;
 			capa_len = 4;
 			errs += buf_add(buf, &capa_code, sizeof(capa_code));
@@ -1198,9 +1207,21 @@ session_open(struct peer *p)
 			errs += buf_add(buf, &capa_mp_v4.safi,
 			    sizeof(capa_mp_v4.safi));
 		}
+		if (p->capa.ann_mp_v6) {
+			capa_code = CAPA_MP;
+			capa_len = 4;
+			errs += buf_add(buf, &capa_code, sizeof(capa_code));
+			errs += buf_add(buf, &capa_len, sizeof(capa_len));
+			errs += buf_add(buf, &capa_mp_v6.afi,
+			    sizeof(capa_mp_v6.afi));
+			errs += buf_add(buf, &capa_mp_v6.pad,
+			    sizeof(capa_mp_v6.pad));
+			errs += buf_add(buf, &capa_mp_v6.safi,
+			    sizeof(capa_mp_v6.safi));
+		}
 
+		/* route refresh, RFC 2918 */
 		if (p->capa.ann_refresh) {
-			/* route refresh, RFC 2918 */
 			capa_code = CAPA_REFRESH;
 			capa_len = 0;
 			errs += buf_add(buf, &capa_code, sizeof(capa_code));
@@ -1907,7 +1928,8 @@ parse_notification(struct peer *peer)
 			datalen -= capa_len;
 			switch (capa_code) {
 			case CAPA_MP:
-				peer->capa.ann_mp = 0;
+				peer->capa.ann_mp_v4 = 0;
+				peer->capa.ann_mp_v6 = 0;
 				log_peer_warnx(&peer->conf,
 				    "disabling multiprotocol capability");
 				break;
