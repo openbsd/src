@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.47 1999/11/03 20:11:58 angelos Exp $	*/
+/*	$OpenBSD: cd.c,v 1.48 1999/11/03 21:20:22 angelos Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1584,7 +1584,7 @@ dvd_auth(cd, a)
 	u_int8_t buf[20];
 	int error;
 
-	bzero(cmd.bytes, 15);
+	bzero(cmd.bytes, sizeof(cmd.bytes));
 	bzero(buf, sizeof(buf));
 
 	switch (a->type) {
@@ -1702,7 +1702,7 @@ dvd_read_physical(cd, s)
 	struct dvd_layer *layer;
 	int i;
 
-	bzero(cmd.bytes, 15);
+	bzero(cmd.bytes, sizeof(cmd.bytes));
 	bzero(buf, sizeof(buf));
 	cmd.opcode = GPCMD_READ_DVD_STRUCTURE;
 	cmd.bytes[6] = s->type;
@@ -1742,7 +1742,7 @@ dvd_read_copyright(cd, s)
 	u_int8_t buf[8];
 	int error;
 
-	bzero(cmd.bytes, 15);
+	bzero(cmd.bytes, sizeof(cmd.bytes));
 	bzero(buf, sizeof(buf));
 	cmd.opcode = GPCMD_READ_DVD_STRUCTURE;
 	cmd.bytes[6] = s->type;
@@ -1767,7 +1767,7 @@ dvd_read_disckey(cd, s)
 	u_int8_t buf[4 + 2048];
 	int error;
 
-	bzero(cmd.bytes, 15);
+	bzero(cmd.bytes, sizeof(cmd.bytes));
 	bzero(buf, sizeof(buf));
 	cmd.opcode = GPCMD_READ_DVD_STRUCTURE;
 	cmd.bytes[6] = s->type;
@@ -1791,7 +1791,7 @@ dvd_read_bca(cd, s)
 	u_int8_t buf[4 + 188];
 	int error;
 
-	bzero(cmd.bytes, 15);
+	bzero(cmd.bytes, sizeof(cmd.bytes));
 	bzero(buf, sizeof(buf));
 	cmd.opcode = GPCMD_READ_DVD_STRUCTURE;
 	cmd.bytes[6] = s->type;
@@ -1817,7 +1817,7 @@ dvd_read_manufact(cd, s)
 	u_int8_t buf[4 + 2048];
 	int error;
 
-	bzero(cmd.bytes, 15);
+	bzero(cmd.bytes, sizeof(cmd.bytes));
 	bzero(buf, sizeof(buf));
 	cmd.opcode = GPCMD_READ_DVD_STRUCTURE;
 	cmd.bytes[6] = s->type;
