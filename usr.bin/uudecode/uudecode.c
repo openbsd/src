@@ -1,4 +1,4 @@
-/*	$OpenBSD: uudecode.c,v 1.5 1998/05/29 21:07:22 deraadt Exp $	*/
+/*	$OpenBSD: uudecode.c,v 1.6 1998/08/31 02:13:41 dgregor Exp $	*/
 /*	$NetBSD: uudecode.c,v 1.6 1994/11/17 07:40:43 jtc Exp $	*/
 
 /*-
@@ -42,14 +42,17 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)uudecode.c	8.2 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: uudecode.c,v 1.5 1998/05/29 21:07:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: uudecode.c,v 1.6 1998/08/31 02:13:41 dgregor Exp $";
 #endif /* not lint */
 
 /*
- * uudecode [file ...]
+ * uudecode [-p] [file ...]
  *
  * create the specified file, decoding as you go.
  * used with uuencode.
+ *
+ * Write to stdout if '-p' is specified.  Use this option if you care about
+ * security at all.
  */
 #include <stdio.h>
 #include <string.h>
@@ -61,7 +64,7 @@ static char rcsid[] = "$OpenBSD: uudecode.c,v 1.5 1998/05/29 21:07:22 deraadt Ex
 #include <pwd.h>
 #include <unistd.h>
 
-static int decode();
+static int decode(int);
 static void usage();
 char *filename;
 
@@ -71,11 +74,20 @@ main(argc, argv)
 	char *argv[];
 {
 	int rval;
+	char ch;
+	int tostdout = 0;
 
 	setlocale(LC_ALL, "");
 
-	while (getopt(argc, argv, "") != -1)
-		usage();
+	while ((ch = getopt(argc, argv, "p")) != -1)
+		switch((char)ch) {
+		case 'p':
+			tostdout++;
+			break;
+		case '?':
+		default:
+			usage();
+		}
 	argc -= optind;
 	argv += optind;
 
@@ -88,17 +100,17 @@ main(argc, argv)
 				rval = 1;
 				continue;
 			}
-			rval |= decode();
+			rval |= decode(tostdout);
 		} while (*++argv);
 	} else {
 		filename = "stdin";
-		rval = decode();
+		rval = decode(tostdout);
 	}
 	exit(rval);
 }
 
 static int
-decode()
+decode(int tostdout)
 {
 	extern int errno;
 	struct passwd *pw;
@@ -142,12 +154,14 @@ decode()
 		buf[n] = '/';
 	}
 
-	/* create output file, set mode */
-	if (!freopen(buf, "w", stdout) ||
-	    fchmod(fileno(stdout), mode&0666)) {
-		(void)fprintf(stderr, "uudecode: %s: %s: %s\n", buf,
-		    filename, strerror(errno));
-		return(1);
+	if (!tostdout) {
+		/* create output file, set mode */
+		if (!freopen(buf, "w", stdout) ||
+		    fchmod(fileno(stdout), mode&0666)) {
+			(void)fprintf(stderr, "uudecode: %s: %s: %s\n", buf,
+			    filename, strerror(errno));
+			return(1);
+		}
 	}
 
 	/* for each input line */
@@ -199,6 +213,6 @@ decode()
 static void
 usage()
 {
-	(void)fprintf(stderr, "usage: uudecode [file ...]\n");
+	(void)fprintf(stderr, "usage: uudecode [-p] [file ...]\n");
 	exit(1);
 }

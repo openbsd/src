@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uuencode.1,v 1.3 1996/06/26 05:42:23 deraadt Exp $
+.\"	$OpenBSD: uuencode.1,v 1.4 1998/08/31 02:13:43 dgregor Exp $
 .\"	$NetBSD: uuencode.1,v 1.4 1994/11/17 07:39:42 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -46,6 +46,7 @@
 .Op Ar file
 .Ar name
 .Nm uudecode
+.Op Fl p
 .Op Ar file ...
 .Sh DESCRIPTION
 .Nm Uuencode
@@ -76,7 +77,9 @@ files (or by default, the standard input) into the original form.
 The resulting file is named
 .Ar name
 and will have the mode of the original file except that setuid
-and execute bits are not retained.
+and execute bits are not retained.  If the
+.Fl p
+option is specified, the output will instead be written to stdout.
 .Nm Uudecode
 ignores any leading and trailing lines.
 .Sh EXAMPLES
