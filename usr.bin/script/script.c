@@ -1,4 +1,4 @@
-/*	$OpenBSD: script.c,v 1.13 2000/06/30 16:00:20 millert Exp $	*/
+/*	$OpenBSD: script.c,v 1.14 2001/01/11 19:26:01 deraadt Exp $	*/
 /*	$NetBSD: script.c,v 1.3 1994/12/21 08:55:43 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: script.c,v 1.13 2000/06/30 16:00:20 millert Exp $";
+static char rcsid[] = "$OpenBSD: script.c,v 1.14 2001/01/11 19:26:01 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -220,6 +220,7 @@ dooutput()
 	done(0);
 }
 
+/* XXX totally illegal race */
 void
 scriptflush(signo)
 	int signo;
