@@ -1,4 +1,4 @@
-.\" $OpenBSD: intro.4tbl,v 1.13 2003/06/06 10:29:42 jmc Exp $
+.\" $OpenBSD: intro.4tbl,v 1.14 2003/08/20 21:17:08 mickey Exp $
 .\"
 .\" Copyright (c) 2002,2003 Paul Weissmann
 .\" All rights reserved.
@@ -233,6 +233,9 @@ I/O processor.
 .It Xr pdc 4
 The PROM interface, allows to call the routines in the machine's
 PROM for things like initial console output and such.
+.It Xr power 4
+The power button interface allowing graceful shutdown of the
+system should being depressed on the running system.
 .It Xr sti 4
 The system graphics driver.
 .It Xr wax 4
