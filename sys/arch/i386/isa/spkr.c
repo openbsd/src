@@ -1,4 +1,4 @@
-/*	$OpenBSD: spkr.c,v 1.6 1996/04/21 22:17:04 deraadt Exp $ */
+/*	$OpenBSD: spkr.c,v 1.7 1996/05/01 00:16:19 mickey Exp $ */
 /*	$NetBSD: spkr.c,v 1.22 1996/03/18 01:26:12 jtk Exp $	*/
 
 /*
@@ -426,19 +426,32 @@ int spkrprobe (parent, match, aux)
 {
     	register struct isa_attach_args *ia = aux;
 	struct cfdata *cf = match;
+	extern struct cfattach pc_ca, vt_ca;
 	/*
 	 * We only attach to the keyboard controller via
 	 * the console drivers. (We really wish we could be the
 	 * child of a real keyboard controller driver.)
 	 */
-	if ((parent == NULL) ||
-	   ((strcmp(parent->dv_cfdata->cf_driver->cd_name, "pc") != 0) &&
-	    (strcmp(parent->dv_cfdata->cf_driver->cd_name, "vt") != 0)))
+	if ((parent == NULL) || (parent->dv_cfdata == NULL) ||
+	   (
+#include "vt.h"
+#include "pc.h"
+#if NPC
+	    (parent->dv_cfdata->cf_attach != &pc_ca)
+#endif
+#if NPC && NVT	/* XXX could we have both of them ??? */
+	    &&
+#endif
+#if NVT
+	    (parent->dv_cfdata->cf_attach != &vt_ca)
+#endif
+#if !NCP && !NVT
+	    1
+#endif
+	   ))
 		return (0);
 	if (cf->cf_loc[1] != PITAUX_PORT)
 		return (0);
-
-	ia->ia_iosize = 1;
 	return (1);
 }
 
