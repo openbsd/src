@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ve.c,v 1.6 2001/03/09 05:44:39 smurph Exp $ */
+/*	$OpenBSD: if_ve.c,v 1.7 2001/07/09 22:28:27 fgsch Exp $ */
 /*-
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1982, 1992, 1993
@@ -664,7 +664,9 @@ ve_read(sc, boff, len)
 	int boff, len;
 {
 	struct mbuf *m;
+#ifdef LANCE_REVC_BUG
 	struct ether_header *eh;
+#endif
 
 	if (len <= sizeof(struct ether_header) ||
 	    len > ETHERMTU + sizeof(struct ether_header)) {
@@ -684,9 +686,6 @@ ve_read(sc, boff, len)
 	}
 
 	ifp->if_ipackets++;
-
-	/* We assume that the header fit entirely in one mbuf. */
-	eh = mtod(m, struct ether_header *);
 
 #if NBPFILTER > 0
 	/*
@@ -712,9 +711,8 @@ ve_read(sc, boff, len)
 	}
 #endif
 
-	/* Pass the packet up, with the ether header sort-of removed. */
-	m_adj(m, sizeof(struct ether_header));
-	ether_input(ifp, eh, m);
+	/* Pass the packet up. */
+	ether_input_mbuf(ifp, m);
 }
 
 integrate void
