@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.231 2002/06/11 01:58:31 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.232 2002/06/11 02:02:21 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -551,16 +551,30 @@ pf_insert_state(struct pf_state *state)
 	keya->port[1] = state->ext.port;
 
 	/* Thou MUST NOT insert multiple duplicate keys */
-	if (RB_INSERT(pf_state_tree, &tree_lan_ext, keya) != NULL)
-		panic("Multiple identical states in PF state table");
-
+	if (RB_INSERT(pf_state_tree, &tree_lan_ext, keya) != NULL) {
+		if (pf_status.debug >= PF_DEBUG_MISC) {
+			printf("pf: state insert failed: tree_lan_ext");
+			printf(" lan: ");
+			pf_print_host(&state->lan.addr, state->lan.port,
+			    state->af);
+			printf(" gwy: ");
+			pf_print_host(&state->gwy.addr, state->gwy.port,
+			    state->af);
+			printf(" ext: ");
+			pf_print_host(&state->ext.addr, state->ext.port,
+			    state->af);
+			printf("\n");
+		}
+		pool_put(&pf_tree_pl, keya);
+		return (-1);
+	}
 
 	keyb = pool_get(&pf_tree_pl, PR_NOWAIT);
 	if (keyb == NULL) {
 		/* Need to pull out the other state */
 		RB_REMOVE(pf_state_tree, &tree_lan_ext, keya);
 		pool_put(&pf_tree_pl, keya);
-		return -1;
+		return (-1);
 	}
 	keyb->state = state;
 	keyb->proto = state->proto;
@@ -570,12 +584,29 @@ pf_insert_state(struct pf_state *state)
 	PF_ACPY(&keyb->addr[1], &state->gwy.addr, state->af);
 	keyb->port[1] = state->gwy.port;
 
-	if (RB_INSERT(pf_state_tree, &tree_ext_gwy, keyb) != NULL)
-		panic("Multiple identical states in PF state table");
+	if (RB_INSERT(pf_state_tree, &tree_ext_gwy, keyb) != NULL) {
+		if (pf_status.debug >= PF_DEBUG_MISC) {
+			printf("pf: state insert failed: tree_ext_gwy");
+			printf(" lan: ");
+			pf_print_host(&state->lan.addr, state->lan.port,
+			    state->af);
+			printf(" gwy: ");
+			pf_print_host(&state->gwy.addr, state->gwy.port,
+			    state->af);
+			printf(" ext: ");
+			pf_print_host(&state->ext.addr, state->ext.port,
+			    state->af);
+			printf("\n");
+		}
+		RB_REMOVE(pf_state_tree, &tree_lan_ext, keya);
+		pool_put(&pf_tree_pl, keya);
+		pool_put(&pf_tree_pl, keyb);
+		return (-1);
+	}
 
 	pf_status.fcounters[FCNT_STATE_INSERT]++;
 	pf_status.states++;
-	return 0;
+	return (0);
 }
 
 void
