@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.99 2004/12/04 00:17:05 itojun Exp $
+#	$OpenBSD: netstart,v 1.100 2004/12/19 15:37:58 millert Exp $
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -184,14 +184,14 @@ fi
 
 # /etc/myname contains my symbolic name
 if [ -f /etc/myname ]; then
-	hostname=`cat /etc/myname`
+	hostname=`stripcom /etc/myname`
 	hostname $hostname
 else
 	hostname=`hostname`
 fi
 
 if [ -f /etc/defaultdomain ]; then
-	domainname `cat /etc/defaultdomain`
+	domainname `stripcom /etc/defaultdomain`
 fi
 
 # Set the address for the loopback interface.  Bringing the
@@ -284,7 +284,7 @@ fi
 # that name must be in /etc/hosts.
 if [ -f /etc/mygate ]; then
 	route -qn delete default > /dev/null 2>&1
-	route -qn add -host default `cat /etc/mygate`
+	route -qn add -host default `stripcom /etc/mygate`
 fi
 
 # Multicast routing.
