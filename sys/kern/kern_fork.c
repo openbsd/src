@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.6 1996/09/02 01:22:05 tholo Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.7 1997/02/18 00:11:47 deraadt Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -228,6 +228,7 @@ again:
 	p2->p_emul = p1->p_emul;
 	if (p1->p_flag & P_PROFIL)
 		startprofclock(p2);
+	p2->p_flag |= (p1->p_flag & (P_SUGID | P_SUGIDEXEC));
 	MALLOC(p2->p_cred, struct pcred *, sizeof(struct pcred),
 	    M_SUBPROC, M_WAITOK);
 	bcopy(p1->p_cred, p2->p_cred, sizeof(*p2->p_cred));
