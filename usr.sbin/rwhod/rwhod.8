@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)rwhod.8	8.2 (Berkeley) 12/11/93
-.\"     $OpenBSD: rwhod.8,v 1.4 1997/03/26 00:45:56 deraadt Exp $
+.\"     $OpenBSD: rwhod.8,v 1.5 1997/07/15 16:31:03 deraadt Exp $
 .\"
 .Dd December 11, 1993
 .Dt RWHOD 8
@@ -94,9 +94,9 @@ transmission.  The load averages are as calculated by the
 program, and represent load averages over the 5, 10, and 15 minute 
 intervals prior to a server's transmission; they are multiplied by 100
 for representation in an integer.  The host name
-included is that returned by the
-.Xr gethostname 2
-system call, with any trailing domain name omitted.
+included is that returned by
+.Xr gethostname 3
+with any trailing domain name omitted.
 The array at the end of the message contains information about
 the users logged in to the sending machine.  This information 
 includes the contents of the 

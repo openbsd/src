@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolv.conf.5,v 1.3 1997/06/11 01:10:24 deraadt Exp $
+.\"	$OpenBSD: resolv.conf.5,v 1.4 1997/07/15 16:31:02 deraadt Exp $
 .\"	$NetBSD: resolv.conf.5,v 1.7 1996/03/06 18:22:16 scottr Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -84,7 +84,7 @@ If no
 .Sy domain
 entry is present, the domain is determined
 from the local host name returned by
-.Xr gethostname 2 ;
+.Xr gethostname 3 ;
 the domain part is taken to be everything after the first `.'.
 Finally, if the host name does not contain a domain part, the root
 domain is assumed.

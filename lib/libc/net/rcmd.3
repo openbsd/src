@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcmd.3,v 1.8 1997/06/13 13:31:56 deraadt Exp $
+.\"	$OpenBSD: rcmd.3,v 1.9 1997/07/15 16:31:00 deraadt Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -186,7 +186,7 @@ and
 .Fn ruserok
 return \-1.
 If the local domain (as obtained from
-.Xr gethostname 2 )
+.Xr gethostname 3 )
 is the same as the remote domain, only the machine name need be specified.
 .Pp
 If the IP address of the remote host is known,
