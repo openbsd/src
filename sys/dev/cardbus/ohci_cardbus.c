@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_cardbus.c,v 1.1 2004/12/07 05:42:41 dlg Exp $ */
+/*	$OpenBSD: ohci_cardbus.c,v 1.2 2005/03/30 14:02:02 dlg Exp $ */
 /*	$NetBSD: ohci_cardbus.c,v 1.19 2004/08/02 19:14:28 mycroft Exp $	*/
 
 /*
@@ -208,6 +208,8 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 		return;
 	}
 
+	sc->sc.sc_powerhook = powerhook_establish(ohci_power, &sc->sc);
+
 #if NEHCI_CARDBUS > 0
 	usb_cardbus_add(&sc->sc_cardbus, ca, &sc->sc.sc_bus);
 #endif
@@ -231,6 +233,8 @@ ohci_cardbus_detach(struct device *self, int flags)
 	rv = ohci_detach(&sc->sc, flags);
 	if (rv)
 		return (rv);
+	powerhook_disestablish(sc->sc.sc_powerhook);
+
 	if (sc->sc_ih != NULL) {
 		cardbus_intr_disestablish(sc->sc_cc, sc->sc_cf, sc->sc_ih);
 		sc->sc_ih = NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_pci.c,v 1.22 2004/12/31 04:22:32 dlg Exp $	*/
+/*	$OpenBSD: ohci_pci.c,v 1.23 2005/03/30 14:02:03 dlg Exp $	*/
 /*	$NetBSD: ohci_pci.c,v 1.23 2002/10/02 16:51:47 thorpej Exp $	*/
 
 /*
@@ -178,6 +178,9 @@ ohci_pci_attach(struct device *parent, struct device *self, void *aux)
 		splx(s);
 		return;
 	}
+
+	sc->sc.sc_powerhook = powerhook_establish(ohci_power, &sc->sc);
+
 	splx(s);
 
 	usb_pci_add(&sc->sc_pci, pa, &sc->sc.sc_bus);
@@ -196,6 +199,9 @@ ohci_pci_detach(device_ptr_t self, int flags)
 	rv = ohci_detach(&sc->sc, flags);
 	if (rv)
 		return (rv);
+
+	powerhook_disestablish(sc->sc.sc_powerhook);
+
 	if (sc->sc_ih != NULL) {
 		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
 		sc->sc_ih = NULL;
