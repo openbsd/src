@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.3 2001/08/12 21:00:14 mickey Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.4 2001/08/12 21:34:53 miod Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.13 1996/04/29 20:50:08 leo Exp $	*/
 
 /* 
@@ -33,9 +33,7 @@
 #ifndef	_PPC_DB_MACHDEP_H_
 #define	_PPC_DB_MACHDEP_H_
 
-#include <sys/types.h>
 #include <vm/vm_param.h>
-#include <uvm/uvm_extern.h>
 #include <machine/trap.h>
 
 /* ELF symbols in ddb */

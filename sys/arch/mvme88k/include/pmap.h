@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.14 2001/08/12 20:13:07 miod Exp $ */
+/*	$OpenBSD: pmap.h,v 1.15 2001/08/12 21:34:48 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1991 Carnegie Mellon University
@@ -16,11 +16,9 @@
 #define _MACHINE_PMAP_H_
 #define OMRON_PMAP
 
-#include <machine/psl.h>		/* get standard goodies		*/
-#include <vm/vm_param.h>
-#include <uvm/uvm_extern>h>
 #include <machine/mmu.h>		/* batc_template_t, BATC_MAX, etc.*/
 #include <machine/pcb.h>		/* pcb_t, etc.*/
+#include <machine/psl.h>		/* get standard goodies		*/
 
 typedef struct sdt_entry *sdt_ptr_t;
 

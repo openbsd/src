@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.10 2001/08/12 21:00:14 mickey Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.11 2001/08/12 21:34:48 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -36,12 +36,11 @@
 #ifndef  _M88K_DB_MACHDEP_H_
 #define  _M88K_DB_MACHDEP_H_
 
-#include <sys/types.h>
-#include <vm/vm_param.h>
-#include <uvm/uvm_extern.h>
 #include <machine/pcb.h>	/* m88100_saved_state */
 #include <machine/psl.h>
 #include <machine/trap.h>
+
+#include <vm/vm_param.h>
 
 #define BKPT_SIZE        (4)                /* number of bytes in bkpt inst. */
 #define BKPT_INST       (0xF000D082U)             /* tb0, 0,r0, vector 132 */
