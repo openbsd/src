@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.5 2005/02/09 20:40:23 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.6 2005/02/10 14:05:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -334,6 +334,20 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 			lhp = lsa_hdr_new();
 			memcpy(lhp, imsg.data, sizeof(*lhp));
 			ls_req_list_add(nbr, lhp);
+			break;
+		case IMSG_DD_END:
+			nbr = nbr_find_peerid(imsg.hdr.peerid);
+			if (nbr == NULL)
+				fatalx("ospfe_dispatch_rde: "
+				    "neighbor not found");
+			
+			nbr->dd_pending--;
+			if (nbr->dd_pending == 0 && nbr->state & NBR_STA_LOAD) {
+				if (ls_req_list_empty(nbr))
+					nbr_fsm(nbr, NBR_EVT_LOAD_DONE);
+				else
+					start_ls_req_tx_timer(nbr);
+			}
 			break;
 		case IMSG_DB_SNAPSHOT:
 			nbr = nbr_find_peerid(imsg.hdr.peerid);

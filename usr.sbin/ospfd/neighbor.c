@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.10 2005/02/10 10:16:02 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.11 2005/02/10 14:05:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -497,6 +497,7 @@ nbr_act_eval(struct nbr *nbr)
 	nbr->state = NBR_STA_XSTRT;
 	nbr->master = true;
 	nbr->dd_seq_num++;	/* as per RFC */
+	nbr->dd_pending = 0;
 	/* initial db negotiation */
 	start_db_tx_timer(nbr);
 
@@ -524,13 +525,16 @@ nbr_act_exchange_done(struct nbr *nbr)
 	if (nbr->master)
 		stop_db_tx_timer(nbr);
 
-	if (ls_req_list_empty(nbr) && nbr->state == NBR_STA_XCHNG) {
+	if (ls_req_list_empty(nbr) && nbr->state == NBR_STA_XCHNG &&
+	    nbr->dd_pending == 0) {
 		nbr->state = NBR_STA_FULL;
 		return (0);
 	}
 
 	nbr->state = NBR_STA_LOAD;
-	start_ls_req_tx_timer(nbr);
+
+	if (!ls_req_list_empty(nbr))
+		start_ls_req_tx_timer(nbr);
 
 	return (0);
 }
@@ -566,6 +570,7 @@ nbr_act_restart_dd(struct nbr *nbr)
 	nbr->state = NBR_STA_XSTRT;
 	nbr->master = true;
 	nbr->dd_seq_num += arc4random() & 0xffff;
+	nbr->dd_pending = 0;
 
 	/* initial db negotiation */
 	start_db_tx_timer(nbr);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.4 2005/02/09 15:39:22 claudio Exp $ */
+/*	$OpenBSD: database.c,v 1.5 2005/02/10 14:05:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -263,9 +263,11 @@ recv_db_description(struct nbr *nbr, char *buf, u_int16_t len)
 			nbr->dd_seq_num++;
 
 			/* this packet may already have data so pass it on */
-			if (len > 0)
+			if (len > 0) {
+				nbr->dd_pending++;
 				ospfe_imsg_compose_rde(IMSG_DD, nbr->peerid,
 				    0, buf, len);
+			}
 
 			/* event negotiation done */
 			nbr_fsm(nbr, NBR_EVT_NEG_DONE);
@@ -337,9 +339,11 @@ recv_db_description(struct nbr *nbr, char *buf, u_int16_t len)
 		}
 
 		/* forward to RDE and let it decide which LSA's to request */
-		if (len > 0)
+		if (len > 0) {
+			nbr->dd_pending++;
 			ospfe_imsg_compose_rde(IMSG_DD, nbr->peerid, 0,
 			    buf, len);
+		}
 
 		/* next packet */
 		db_sum_list_next(nbr);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.5 2005/02/09 22:58:08 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.6 2005/02/10 14:05:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -294,6 +294,9 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 				log_warnx("rde_dispatch_imsg: peerid %lu, "
 				    "trailing garbage in Database Description "
 				    "packet", imsg.hdr.peerid);
+
+			imsg_compose(ibuf_ospfe, IMSG_DD_END, imsg.hdr.peerid,
+			    0, -1, NULL, 0);
 			break;
 		case IMSG_LS_REQ:
 			nbr = rde_nbr_find(imsg.hdr.peerid);

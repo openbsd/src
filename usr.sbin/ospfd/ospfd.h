@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.7 2005/02/09 17:41:16 claudio Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.8 2005/02/10 14:05:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -106,6 +106,7 @@ enum imsg_type {
 	IMSG_NEIGHBOR_DOWN,
 	IMSG_NEIGHBOR_CHANGE,
 	IMSG_DD,
+	IMSG_DD_END,
 	IMSG_DB_SNAPSHOT,
 	IMSG_DB_END,
 	IMSG_LS_REQ,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.h,v 1.5 2005/02/09 20:47:04 claudio Exp $ */
+/*	$OpenBSD: ospfe.h,v 1.6 2005/02/10 14:05:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -129,8 +129,8 @@ struct nbr {
 	struct lsa_entry	*dd_end;
 
 	u_int32_t		 dd_seq_num;
+	u_int32_t		 dd_pending;
 	u_int32_t		 peerid;	/* unique ID in DB */
-
 	u_int32_t		 ls_req_cnt;
 
 	int			 state;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsreq.c,v 1.3 2005/02/02 19:15:07 henning Exp $ */
+/*	$OpenBSD: lsreq.c,v 1.4 2005/02/10 14:05:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -169,7 +169,7 @@ ls_req_list_free(struct nbr *nbr, struct lsa_entry *le)
 		start_ls_req_tx_timer(nbr);
 	}
 
-	if (ls_req_list_empty(nbr))
+	if (ls_req_list_empty(nbr) && nbr->dd_pending == 0)
 		nbr_fsm(nbr, NBR_EVT_LOAD_DONE);
 }
 
