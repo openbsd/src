@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ip6.4,v 1.9 2001/06/23 05:57:05 deraadt Exp $
+.\"	$OpenBSD: ip6.4,v 1.10 2001/10/04 10:28:20 wilfried Exp $
 .\"	$KAME: ip6.4,v 1.12 2000/06/08 21:19:39 itojun Exp $
 .\"
 .\" Copyright (C) 1999 WIDE Project.
@@ -342,7 +342,7 @@ and the first byte of
 .Li cmsg_data[]
 will be the first byte of the socket address structure.
 .Pp
-If the socket address structure contains an IPv6 address (e.g., the
+If the socket address structure contains an IPv6 address (i.e., the
 sin6_family member is
 .Dv AF_INET6
 ), then the node identified by that

@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipcomp.4,v 1.7 2001/08/20 05:57:55 mpech Exp $
+.\" $OpenBSD: ipcomp.4,v 1.8 2001/10/04 10:28:20 wilfried Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jj@wabbitt.org>
 .\" All rights reserved.
@@ -58,8 +58,8 @@ protocol (see
 .Xr ipsec 4  
 for more information about IPsec).
 Encrypting information is increasing its entropy to a point where
-compression to a lower layer becomes completely useless (i.e PPP
-Compression Control Protocol).
+compression to a lower layer becomes completely useless (e.g., the
+PPP Compression Control Protocol).
 IPcomp is applied at the network layer before other encryption
 operations are applied (except encryption protocols applied at a
 higher layer such as

@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: style.9,v 1.20 2001/06/28 22:14:23 millert Exp $
+.\"	$OpenBSD: style.9,v 1.21 2001/10/04 10:28:20 wilfried Exp $
 .\"
 .Dd June 18, 2001
 .Dt STYLE 9
@@ -154,7 +154,7 @@ Use
 .Li __dead
 from
 .Pa Aq sys/cdefs.h
-for functions that don't return, e.g.,
+for functions that don't return, i.e.,
 .Bd -literal -offset 0i
 __dead void	abort(void);
 .Ed
@@ -455,7 +455,7 @@ if the function prototype might not be in scope.)
 Test pointers
 against
 .Dv NULL ,
-e.g., use:
+i.e., use:
 .Bd -literal -offset 0i
 (p = f()) == NULL
 .Ed
@@ -467,7 +467,7 @@ not:
 .Pp
 Don't use
 .Ql \&!
-for tests unless it's a boolean, e.g., use
+for tests unless it's a boolean, i.e., use
 .Bd -literal -offset 0i
 if (*p == '\e0')
 .Ed

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.25 2001/03/01 16:11:21 aaron Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.26 2001/10/04 10:28:20 wilfried Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -205,7 +205,7 @@ Add the following lines into
 .Li net.inet6.ip6.accept_rtadv=1
 .Ed
 .It Va options
-Optional miscellaneous options to set on the interface, i.e.,
+Optional miscellaneous options to set on the interface, e.g.,
 .Dq media 100baseTX mediaopt full-duplex .
 .El
 .Pp
@@ -226,7 +226,7 @@ The literal string
 .Dq up
 if the interface is to be simply brought up.
 .It Va options
-Optional miscellaneous options to set on the interface, i.e.,
+Optional miscellaneous options to set on the interface, e.g.,
 .Dq media 100baseTX mediaopt full-duplex .
 .El
 .Pp
