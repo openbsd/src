@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_script.c,v 1.11 2000/09/26 14:01:38 art Exp $	*/
+/*	$OpenBSD: exec_script.c,v 1.12 2001/05/14 13:31:52 art Exp $	*/
 /*	$NetBSD: exec_script.c,v 1.13 1996/02/04 02:15:06 christos Exp $	*/
 
 /*
@@ -167,7 +167,7 @@ check_shell:
 	    ) {
 		struct file *fp;
 
-#if defined(DIAGNOSTIC) && defined(FDSCRIPTS)
+#ifdef DIAGNOSTIC
 		if (epp->ep_flags & EXEC_HASFD)
 			panic("exec_script_makecmds: epp already has a fd");
 #endif
