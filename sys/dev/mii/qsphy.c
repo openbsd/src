@@ -1,4 +1,4 @@
-/*	$OpenBSD: qsphy.c,v 1.11 2004/09/27 18:25:48 brad Exp $	*/
+/*	$OpenBSD: qsphy.c,v 1.12 2005/01/28 18:27:55 brad Exp $	*/
 /*	$NetBSD: qsphy.c,v 1.19 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -133,7 +133,7 @@ qsphyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &qsphy_funcs;
 	sc->mii_pdata = mii;
-	sc->mii_flags = mii->mii_flags;
+	sc->mii_flags = ma->mii_flags;
 
 	PHY_RESET(sc);
 

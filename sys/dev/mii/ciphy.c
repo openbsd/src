@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciphy.c,v 1.1 2004/12/01 00:24:38 pvalchev Exp $	*/
+/*	$OpenBSD: ciphy.c,v 1.2 2005/01/28 18:27:55 brad Exp $	*/
 /*	$FreeBSD: ciphy.c,v 1.1 2004/09/10 20:57:45 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -140,9 +140,11 @@ ciphyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_model = MII_MODEL(ma->mii_id2);
 	sc->mii_rev = MII_REV(ma->mii_id2);
 	sc->mii_pdata = mii;
-	sc->mii_flags = mii->mii_flags | MIIF_NOISOLATE;
+	sc->mii_flags = ma->mii_flags;
 	sc->mii_ticks = 0; /* XXX */
 	sc->mii_anegticks = 5;
+
+	sc->mii_flags |= MIIF_NOISOLATE;
 
 	PHY_RESET(sc);
 

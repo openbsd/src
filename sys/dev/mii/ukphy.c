@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukphy.c,v 1.14 2004/09/28 01:13:32 brad Exp $	*/
+/*	$OpenBSD: ukphy.c,v 1.15 2005/01/28 18:27:55 brad Exp $	*/
 /*	$NetBSD: ukphy.c,v 1.9 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -128,7 +128,7 @@ ukphyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &ukphy_funcs;
 	sc->mii_pdata = mii;
-	sc->mii_flags = mii->mii_flags;
+	sc->mii_flags = ma->mii_flags;
 
 	/*
 	 * Don't do loopback on unknown PHYs.  It might confuse some of them.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: urlphy.c,v 1.7 2004/10/17 23:01:12 deraadt Exp $ */
+/*	$OpenBSD: urlphy.c,v 1.8 2005/01/28 18:27:55 brad Exp $ */
 /*	$NetBSD: urlphy.c,v 1.1 2002/03/28 21:07:53 ichiro Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -117,7 +117,7 @@ urlphy_attach(struct device *parent, struct device *self, void *aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &urlphy_funcs;
 	sc->mii_pdata = mii;
-	sc->mii_flags = mii->mii_flags;
+	sc->mii_flags = ma->mii_flags;
 	sc->mii_anegticks = 10;
 
 	/* Don't do loopback on this PHY. */

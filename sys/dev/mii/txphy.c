@@ -1,4 +1,4 @@
-/*	$OpenBSD: txphy.c,v 1.8 2004/09/27 18:25:48 brad Exp $	*/
+/*	$OpenBSD: txphy.c,v 1.9 2005/01/28 18:27:55 brad Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -87,7 +87,7 @@ txphyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &txphy_funcs;
 	sc->mii_pdata = mii;
-	sc->mii_flags = mii->mii_flags;
+	sc->mii_flags = ma->mii_flags;
 
 	PHY_RESET(sc);
 

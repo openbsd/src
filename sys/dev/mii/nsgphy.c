@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsgphy.c,v 1.12 2004/09/27 18:25:48 brad Exp $	*/
+/*	$OpenBSD: nsgphy.c,v 1.13 2005/01/28 18:27:55 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 2001
@@ -120,7 +120,7 @@ nsgphyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &nsgphy_funcs;
 	sc->mii_pdata = mii;
-	sc->mii_flags = mii->mii_flags;
+	sc->mii_flags = ma->mii_flags;
 	sc->mii_anegticks = 10;
 
 	PHY_RESET(sc);

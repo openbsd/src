@@ -1,4 +1,4 @@
-/*	$OpenBSD: icsphy.c,v 1.14 2004/09/27 18:25:48 brad Exp $	*/
+/*	$OpenBSD: icsphy.c,v 1.15 2005/01/28 18:27:55 brad Exp $	*/
 /*	$NetBSD: icsphy.c,v 1.17 2000/02/02 23:34:56 thorpej Exp $	*/
 
 /*-
@@ -155,7 +155,7 @@ icsphyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &icsphy_funcs;
 	sc->mii_pdata = mii;
-	sc->mii_flags = mii->mii_flags;
+	sc->mii_flags = ma->mii_flags;
 
 	PHY_RESET(sc);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: amphy.c,v 1.9 2004/10/04 13:02:33 deraadt Exp $	*/
+/*	$OpenBSD: amphy.c,v 1.10 2005/01/28 18:27:55 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -118,7 +118,7 @@ amphyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &amphy_funcs;
 	sc->mii_pdata = mii;
-	sc->mii_flags = mii->mii_flags;
+	sc->mii_flags = ma->mii_flags;
 
 	sc->mii_flags |= MIIF_NOISOLATE;
 

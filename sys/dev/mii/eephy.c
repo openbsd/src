@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephy.c,v 1.13 2004/12/29 01:30:45 brad Exp $	*/
+/*	$OpenBSD: eephy.c,v 1.14 2005/01/28 18:27:55 brad Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -117,7 +117,7 @@ eephyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &eephy_funcs;
 	sc->mii_pdata = mii;
-	sc->mii_flags = mii->mii_flags;
+	sc->mii_flags = ma->mii_flags;
 	sc->mii_anegticks = 10;
 
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_MARVELL &&

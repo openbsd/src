@@ -1,4 +1,4 @@
-/*	$OpenBSD: rgephy.c,v 1.6 2004/10/29 01:52:35 pvalchev Exp $	*/
+/*	$OpenBSD: rgephy.c,v 1.7 2005/01/28 18:27:55 brad Exp $	*/
 /*
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -120,9 +120,11 @@ rgephyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_model = MII_MODEL(ma->mii_id2);
 	sc->mii_rev = MII_REV(ma->mii_id2);
 	sc->mii_pdata = mii;
-	sc->mii_flags = mii->mii_flags | MIIF_NOISOLATE;
+	sc->mii_flags = ma->mii_flags;
 	sc->mii_ticks = 0; /* XXX */
 	sc->mii_anegticks = 5;
+
+	sc->mii_flags |= MIIF_NOISOLATE;
 
 	PHY_RESET(sc);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xmphy.c,v 1.9 2004/09/27 18:25:48 brad Exp $	*/
+/*	$OpenBSD: xmphy.c,v 1.10 2005/01/28 18:27:55 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -102,8 +102,10 @@ xmphy_attach(struct device *parent, struct device *self, void *aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &xmphy_funcs;
 	sc->mii_pdata = mii;
-	sc->mii_flags |= MIIF_NOISOLATE | mii->mii_flags;
+	sc->mii_flags = ma->mii_flags;
 	sc->mii_anegticks = 5;
+
+	sc->mii_flags |= MIIF_NOISOLATE;
 
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlphy.c,v 1.16 2005/01/10 22:52:56 deraadt Exp $	*/
+/*	$OpenBSD: rlphy.c,v 1.17 2005/01/28 18:27:55 brad Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Jason L. Wright (jason@thought.net)
@@ -111,7 +111,7 @@ rlphyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &rlphy_funcs;
 	sc->mii_pdata = mii;
-	sc->mii_flags = mii->mii_flags;
+	sc->mii_flags = ma->mii_flags;
 
 	sc->mii_flags |= MIIF_NOISOLATE;
 

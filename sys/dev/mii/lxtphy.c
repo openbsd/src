@@ -1,4 +1,4 @@
-/*	$OpenBSD: lxtphy.c,v 1.11 2004/09/26 00:59:58 brad Exp $	*/
+/*	$OpenBSD: lxtphy.c,v 1.12 2005/01/28 18:27:55 brad Exp $	*/
 /*	$NetBSD: lxtphy.c,v 1.19 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -156,7 +156,7 @@ lxtphyattach(parent, self, aux)
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_pdata = mii;
-	sc->mii_flags = mii->mii_flags;
+	sc->mii_flags = ma->mii_flags;
 
 	PHY_RESET(sc);
 

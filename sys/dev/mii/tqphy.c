@@ -1,4 +1,4 @@
-/*	$OpenBSD: tqphy.c,v 1.8 2004/09/27 18:25:48 brad Exp $	*/
+/*	$OpenBSD: tqphy.c,v 1.9 2005/01/28 18:27:55 brad Exp $	*/
 /*	$NetBSD: tqphy.c,v 1.9 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*
@@ -137,7 +137,7 @@ tqphyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &tqphy_funcs;
 	sc->mii_pdata = mii;
-	sc->mii_flags = mii->mii_flags;
+	sc->mii_flags = ma->mii_flags;
 
 	/*
 	 * Apparently, we can't do loopback on this PHY.

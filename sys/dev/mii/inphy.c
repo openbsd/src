@@ -1,4 +1,4 @@
-/*	$OpenBSD: inphy.c,v 1.10 2004/09/26 00:59:58 brad Exp $	*/
+/*	$OpenBSD: inphy.c,v 1.11 2005/01/28 18:27:55 brad Exp $	*/
 /*	$NetBSD: inphy.c,v 1.18 2000/02/02 23:34:56 thorpej Exp $	*/
 
 /*-
@@ -157,7 +157,7 @@ inphyattach(parent, self, aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &inphy_funcs;
 	sc->mii_pdata = mii;
-	sc->mii_flags = mii->mii_flags;
+	sc->mii_flags = ma->mii_flags;
 
 	PHY_RESET(sc);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exphy.c,v 1.16 2004/09/28 01:13:32 brad Exp $	*/
+/*	$OpenBSD: exphy.c,v 1.17 2005/01/28 18:27:55 brad Exp $	*/
 /*	$NetBSD: exphy.c,v 1.23 2000/02/02 23:34:56 thorpej Exp $	*/
 
 /*-
@@ -154,7 +154,9 @@ exphyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &exphy_funcs;
 	sc->mii_pdata = mii;
-	sc->mii_flags = mii->mii_flags;
+	sc->mii_flags = ma->mii_flags;
+
+	sc->mii_flags |= MIIF_NOISOLATE;
 
 	/*
 	 * The 3Com PHY can never be isolated, so never allow non-zero
@@ -165,7 +167,6 @@ exphyattach(struct device *parent, struct device *self, void *aux)
 		    sc->mii_dev.dv_xname);
 		return;
 	}
-	sc->mii_flags |= MIIF_NOISOLATE;
 
 	PHY_RESET(sc);
 

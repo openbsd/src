@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlphy.c,v 1.14 2004/10/09 04:10:52 brad Exp $	*/
+/*	$OpenBSD: tlphy.c,v 1.15 2005/01/28 18:27:55 brad Exp $	*/
 /*	$NetBSD: tlphy.c,v 1.26 2000/07/04 03:29:00 thorpej Exp $	*/
 
 /*-
@@ -150,7 +150,7 @@ tlphyattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_mii.mii_phy = ma->mii_phyno;
 	sc->sc_mii.mii_funcs = &tlphy_funcs;
 	sc->sc_mii.mii_pdata = mii;
-	sc->sc_mii.mii_flags = mii->mii_flags;
+	sc->sc_mii.mii_flags = ma->mii_flags;
 
 	sc->sc_mii.mii_flags &= ~MIIF_NOISOLATE;
 	PHY_RESET(&sc->sc_mii);

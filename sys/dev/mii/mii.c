@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii.c,v 1.14 2004/09/27 18:25:48 brad Exp $	*/
+/*	$OpenBSD: mii.c,v 1.15 2005/01/28 18:27:55 brad Exp $	*/
 /*	$NetBSD: mii.c,v 1.19 2000/02/02 17:09:44 thorpej Exp $	*/
 
 /*-
@@ -139,7 +139,7 @@ mii_attach(struct device *parent, struct mii_data *mii, int capmask,
 
 		ma.mii_data = mii;
 		ma.mii_capmask = capmask;
-		ma.mii_flags = flags;
+		ma.mii_flags = flags | (mii->mii_flags & MIIF_INHERIT_MASK);
 
 		if ((child = (struct mii_softc *)config_found_sm(parent, &ma,
 		    mii_print, mii_submatch)) != NULL) {

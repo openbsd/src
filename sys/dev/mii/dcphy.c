@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcphy.c,v 1.12 2004/12/25 03:51:24 brad Exp $	*/
+/*	$OpenBSD: dcphy.c,v 1.13 2005/01/28 18:27:55 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -135,9 +135,10 @@ dcphy_attach(struct device *parent, struct device *self, void *aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &dcphy_funcs;
 	sc->mii_pdata = mii;
-	sc->mii_flags = mii->mii_flags;
+	sc->mii_flags = ma->mii_flags;
 
 	sc->mii_flags |= MIIF_NOISOLATE;
+
 	mii->mii_instance++;
 
 	dc_sc = mii->mii_ifp->if_softc;
