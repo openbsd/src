@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.27 1995/10/10 01:17:35 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.7 1996/04/18 10:57:19 mickey Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.8 1996/04/18 12:00:05 mickey Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -146,7 +146,7 @@ struct nlist namelist[] = {
 #define	X_INTRHAND	(X_END)
 	{ "_intrhand" },
 #define	X_INTRSTRAY	(X_END+1)
-	{ "_isa_strayintr" },
+	{ "_intrstray" },
 #endif
 	{ "" },
 };
@@ -731,8 +731,8 @@ void
 dointr()
 {
 	struct intrhand *intrhand[16], *ihp, ih;
-	long inttotal, uptime;
-	int intrstray[16];
+	u_long inttotal, uptime;
+	u_long intrstray[16];
 	char iname[17];
 	int i;
 
@@ -750,7 +750,7 @@ dointr()
 				errx(1, "vmstat: ih: %s", kvm_geterr(kd));
 			if (kvm_read(kd, (u_long)ih.ih_what, iname, 16) != 16)
 				errx(1, "vmstat: ih_what: %s", kvm_geterr(kd));
-			printf("%-16.16s %8ld %8ld\n", iname, ih.ih_count, ih.ih_count / uptime);
+			printf("%-16.16s %8lu %8lu\n", iname, ih.ih_count, ih.ih_count / uptime);
 			inttotal += ih.ih_count;
 			ihp = ih.ih_next;
 		}
@@ -761,7 +761,7 @@ dointr()
 			       i, intrstray[i], intrstray[i] / uptime);
 			inttotal += intrstray[i];
 		}
-	printf("Total            %8ld %8ld\n", inttotal, inttotal / uptime);
+	printf("Total            %8lu %8lu\n", inttotal, inttotal / uptime);
 }
 #else
 void
