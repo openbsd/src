@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.32 2002/04/18 19:11:18 jason Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.33 2002/06/09 05:49:35 art Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -491,8 +491,8 @@ void dc_pci_attach(parent, self, aux)
 		extern void myetheraddr(u_char *);
 
 		if (OF_getprop(PCITAG_NODE(pa->pa_tag), "local-mac-address",
-		    sc->arpcom.ac_enaddr, ETHER_ADDR_LEN) <= 0)
-			myetheraddr(sc->arpcom.ac_enaddr);
+		    sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN) <= 0)
+			myetheraddr(sc->sc_arpcom.ac_enaddr);
 		sc->sc_hasmac = 1;
 	}
 #endif
