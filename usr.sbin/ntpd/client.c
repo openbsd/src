@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.26 2004/07/18 12:59:41 henning Exp $ */
+/*	$OpenBSD: client.c,v 1.27 2004/07/18 13:26:53 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -133,8 +133,15 @@ client_dispatch(struct ntp_peer *p)
 
 	fsa_len = sizeof(fsa);
 	if ((size = recvfrom(p->query->fd, &buf, sizeof(buf), 0,
-	    (struct sockaddr *)&fsa, &fsa_len)) == -1)
-		fatal("recvfrom");
+	    (struct sockaddr *)&fsa, &fsa_len)) == -1) {
+		if (errno == EHOSTUNREACH || errno == EHOSTDOWN ||
+		    errno == ENETDOWN) {
+			log_warn("recvfrom %s",
+			    log_sockaddr((struct sockaddr *)&fsa));
+			return (0);
+		} else
+			fatal("recvfrom");
+	}
 
 	T4 = gettime();
 
