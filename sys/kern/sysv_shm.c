@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.41 2004/02/05 21:13:58 millert Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.42 2004/04/16 17:55:13 tedu Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -615,12 +615,14 @@ sysctl_sysvshm(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		    shminfo.shmmni * sizeof(struct shmid_ds *));
 		bzero(newsegs + shminfo.shmmni,
 		    (val - shminfo.shmmni) * sizeof(struct shmid_ds *));
+		free(shmsegs, M_SHM);
+		shmsegs = newsegs;
 		newseqs = malloc(val * sizeof(unsigned short), M_SHM, M_WAITOK);
 		bcopy(shmseqs, newseqs,
 		    shminfo.shmmni * sizeof(unsigned short));
 		bzero(newseqs + shminfo.shmmni,
 		    (val - shminfo.shmmni) * sizeof(unsigned short));
-		free(shmsegs, M_SHM);
+		free(shmseqs, M_SHM);
 		shmseqs = newseqs;
 		shminfo.shmmni = val;
 		return (0);
