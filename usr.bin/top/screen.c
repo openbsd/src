@@ -1,4 +1,4 @@
-/*	$OpenBSD: screen.c,v 1.5 1997/12/02 17:56:30 bitblt Exp $	*/
+/*	$OpenBSD: screen.c,v 1.6 1999/04/26 01:34:04 downsj Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -258,7 +258,7 @@ void get_screensize()
 {
     struct winsize ws;
 
-    if (ioctl (STDIN_FILENO, TIOCGWINSZ, &ws) != -1)
+    if (ioctl (STDOUT_FILENO, TIOCGWINSZ, &ws) != -1)
     {
 	if (ws.ws_row != 0)
 	{
