@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat_util.h,v 1.2 1996/08/02 20:34:41 niklas Exp $	*/
+/*	$OpenBSD: compat_util.h,v 1.3 1999/09/17 09:39:21 deraadt Exp $	*/
 /*	$NetBSD: compat_util.h,v 1.1 1995/06/24 20:16:05 christos Exp $	*/
 
 /*
@@ -33,7 +33,9 @@
 #ifndef	_COMPAT_UTIL_H_
 #define	_COMPAT_UTIL_H_
 
-#include <machine/vmparam.h>
+#include <sys/param.h>
+#include <vm/vm.h>
+#include <vm/vm_param.h>
 #include <sys/exec.h>
 #include <sys/cdefs.h>
 #include <sys/proc.h>
