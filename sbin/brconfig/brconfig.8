@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.7 2000/03/18 22:55:54 aaron Exp $
+.\"	$OpenBSD: brconfig.8,v 1.8 2000/03/19 00:35:10 aaron Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -40,32 +40,11 @@
 .Fl a
 .Nm brconfig
 .Ar bridge-name
-.Op Ar up
-.Op Ar down
-.Op Ar addr
-.Op Ar add interface-name
-.Op Ar delete interface-name
-.Op Ar maxaddr size
-.Op Ar timeout time
-.Op Ar static interface-name address
-.Op Ar deladdr address
-.Op Ar flush
-.Op Ar flushall
-.Op Ar blocknonip interface-name
-.Op Ar -blocknonip interface-name
-.Op Ar discover interface-name
-.Op Ar -discover interface-name
-.Op Ar learn interface-name
-.Op Ar -learn interface-name
-.Op Ar rulefile file-name
-.Op Ar flushrule interface-name
-.Op Ar link0
-.Op Ar link1
-.Op Ar -link0
-.Op Ar -link1
-.Op Ar ...
+.Op Ar parameters
 .Nm brconfig
-.Ar bridge-name rule {block|pass} {in|out|in/out} on
+.Ar bridge-name Cm rule No {
+.Ar block | pass No } {
+.Ar in | out | in/out No } on
 .Ar interface-name
 .Op Ar src address
 .Op Ar dst address
@@ -74,6 +53,7 @@ The
 .Nm brconfig
 utility retrieves kernel state of bridge interfaces and allows
 user control of these bridges.
+.Pp
 In the first synopsis, the command
 will list the status of all bridges in the system.
 In the second, its command line consists
@@ -86,59 +66,61 @@ will display status information about the bridge.
 With the third synopsis, rules for filtering Ethernet MAC addresses can
 be added to a bridge.
 .Pp
-The available commands are:
+The following paramters may be set with
+.Nm brconfig :
 .Bl -tag -width Ds
-.It Ar up
+.It Cm up
 Start the bridge forwarding packets.
-.It Ar down
+.It Cm down
 Stop the bridge from forwarding packets.
-.It Ar addr
+.It Cm addr
 Display the addresses that have been learned by the bridge.
-.It Ar add interface-name
+.It Cm add Ar interface-name
 Add the interface named by
 .Ar interface-name
 as a member of the bridge.
 The interface is put into promiscuous mode so
 that it can receive every packet sent on the
 network.
-.It Ar delete interface-name
+.It Cm delete Ar interface-name
 Remove the interface named by
 .Ar interface-name
 from the bridge.
 Promiscuous mode is turned off for the interface when it is
 removed from the bridge.
-.It Ar del
-Alias for `delete'.
-.It Ar maxaddr size
+.It Cm del
+Alias for
+.Cm delete .
+.It Cm maxaddr Ar size
 Set the address cache size to
-.Cm size .
+.Ar size .
 The default is 100 entries.
-.It Ar timeout time
+.It Cm timeout Ar time
 Set the timeout, in seconds, for addresses in the cache to
-.Cm time .
+.Ar time .
 The default is 240 seconds.
 If
-.Cm time
+.Ar time
 is set to zero, then entries will not be expired.
-.It Ar static interface-name address
+.It Cm static Ar interface-name address
 Add a static entry into the address cache pointing to
-.Cm interface-name .
+.Ar interface-name .
 Static entries are never aged out of the cache or replaced if the address
 is seen on a different interface.
-.It Ar deladdr address
+.It Cm deladdr Ar address
 Delete an address from the cache.
-.It Ar flush
+.It Cm flush
 Remove all dynamically learned addresses from the cache.
-.It Ar flushall
+.It Cm flushall
 Remove all addresses from the cache including static addresses.
-.It Ar blocknonip interface
+.It Cm blocknonip Ar interface
 Mark an interface so that no packets that are not IPv4, IPv6, ARP, or Reverse
 ARP are accepted from it or are forwarded to it from other bridge member
 interfaces.
-.It Ar -blocknonip interface
+.It Cm -blocknonip Ar interface
 Allow non-IPv4, IPv6, ARP, or Reverse ARP packets through the
-.Cm interface .
-.It Ar discover interface
+.Ar interface .
+.It Cm discover Ar interface
 Mark an interface so that packets are sent out of the interface
 if the destination port of the packet is unknown.
 If the bridge has no address cache entry for the destination of
@@ -146,7 +128,7 @@ a packet, meaning that there is no static entry and no dynamically learned
 entry for the destination, the bridge will forward the packet to all member
 interfaces that have this flag set.
 This is the default for interfaces added to the bridge.
-.It Ar -discover interface
+.It Cm -discover Ar interface
 Mark an interface so that packets are not sent out of the interface
 if the destination port of the packet is unknown.
 Turning this flag
@@ -156,33 +138,33 @@ packet with a destination address found on the interface's segment.
 This, in combination with static address cache entries,
 prevents potentially sensitive packets from being sent on
 segments that have no need to see the packet.
-.It Ar learn interface
+.It Cm learn Ar interface
 Mark an interface so that the source address of packets received from
-.Cm interface
+.Ar interface
 are entered into the address cache.
 This is the default for interfaces added to the bridge.
-.It Ar -learn interface
+.It Cm -learn Ar interface
 Mark an interface so that the source address of packets received from
-.Cm interface
+.Ar interface
 are not entered into the address cache.
-.It Ar flushrule interface
+.It Cm flushrule Ar interface
 Remove all Ethernet MAC filtering rules from
-.Cm interface
-.It Ar link0
+.Ar interface .
+.It Cm link0
 Setting this flag stops all non-IP multicast packets from
 being forwarded by the bridge.
-.It Ar -link0
+.It Cm -link0
 Clear the
-.Ar link0
+.Cm link0
 flag on the bridge interface.
-.It Ar link1
+.It Cm link1
 Setting this flags stops all IP multicast packets from
 being forwarded by the bridge.
-.It Ar -link0
+.It Cm -link0
 Clear the
-.Ar link1
+.Cm link1
 flag on the bridge interface.
-.It Ar rule [rulespec]
+.It Cm rule Op Ar rulespec
 Add a filtering rule to an interface.
 Rules have a similiar syntax to
 .Xr ipf 4 .
@@ -193,9 +175,9 @@ to the interface, and the first rule matched takes the action (block or pass)
 of the rule.
 If no source or destination address is specified, the
 rule will match all frames (good for creating a catchall policy).
-.It Ar rulefile filename
+.It Cm rulefile Ar filename
 Load a set of rules from the file
-.Cm filename .
+.Ar filename .
 .El
 .Sh EXAMPLES
 .Bl -tag -width brconfig
