@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.16 2001/06/26 21:58:48 fgsch Exp $	*/
+/*	$OpenBSD: qe.c,v 1.17 2001/07/30 21:50:06 jason Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 Jason L. Wright.
@@ -170,6 +170,9 @@ qeattach(parent, self, aux)
 	    IFM_MAKEWORD(IFM_ETHER, IFM_10_T, 0, 0), 0, NULL);
 	ifmedia_set(&sc->sc_ifmedia, IFM_ETHER | IFM_10_T);
 
+	IFQ_SET_MAXLEN(&ifp->if_snd, QE_TX_RING_SIZE);
+	IFQ_SET_READY(&ifp->if_snd);
+
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp);
@@ -206,8 +209,8 @@ qestart(ifp)
 	bix = sc->sc_last_td;
 
 	for (;;) {
-		IF_DEQUEUE(&ifp->if_snd, m);
-		if (m == 0)
+		IFQ_DEQUEUE(&ifp->if_snd, m);
+		if (m == NULL)
 			break;
 
 #if NBPFILTER > 0

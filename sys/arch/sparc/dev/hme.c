@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.32 2001/06/26 21:58:48 fgsch Exp $	*/
+/*	$OpenBSD: hme.c,v 1.33 2001/07/30 21:50:06 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -246,6 +246,8 @@ hmeattach(parent, self, aux)
 	ifp->if_watchdog = hmewatchdog;
 	ifp->if_flags =
 		IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	IFQ_SET_MAXLEN(&ifp->if_snd, HME_TX_RING_SIZE);
+	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Attach the interface. */
 	if_attach(ifp);
@@ -275,7 +277,7 @@ hmestart(ifp)
 	bix = sc->sc_last_td;
 
 	for (;;) {
-		IF_DEQUEUE(&ifp->if_snd, m);
+		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
 #if NBPFILTER > 0
