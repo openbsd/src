@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.42 2001/09/17 08:11:13 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.43 2001/09/18 13:44:51 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.42 2001/09/17 08:11:13 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.43 2001/09/18 13:44:51 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -277,11 +277,11 @@ do_look_ahead(t, token)
 {
 	int i;
 
-	assert(t == token[0]);
+	assert((unsigned char)t == (unsigned char)token[0]);
 
 	for (i = 1; *++token; i++) {
 		t = gpbc();
-		if (t == EOF || t != *token) {
+		if (t == EOF || (unsigned char)t != (unsigned char)*token) {
 			putback(t);
 			while (--i)
 				putback(*--token);
@@ -291,7 +291,9 @@ do_look_ahead(t, token)
 	return 1;
 }
 
-#define LOOK_AHEAD(t, token) ((t)==(token)[0] && do_look_ahead(t,token))
+#define LOOK_AHEAD(t, token) (t != EOF && 		\
+    (unsigned char)(t)==(unsigned char)(token)[0] && 	\
+    do_look_ahead(t,token))
 
 /*
  * macro - the work horse..
