@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.8 2003/04/15 01:17:33 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.9 2003/05/12 20:48:41 jsyn Exp $	*/
 /*	$NetBSD: extern.h,v 1.8 1996/10/31 23:50:54 christos Exp $	*/
 
 /*-
@@ -223,9 +223,6 @@ char	 *strspl(char *, char *);
 void	  udvar(Char *);
 
 #ifndef	SHORT_STRINGS
-# ifdef NOTUSED
-char	 *strstr(const char *, const char *);
-# endif /* NOTUSED */
 char	 *strend(char *);
 #endif
 
@@ -236,7 +233,6 @@ void	alias(struct wordent *);
 void	freesyn(struct command *);
 struct command *
 	syntax(struct wordent *, struct wordent *, int);
-
 
 /*
  * proc.c
