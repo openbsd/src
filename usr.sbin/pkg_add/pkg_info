@@ -1,0 +1,173 @@
+#! /usr/bin/perl
+# ex:ts=8 sw=4:
+# $OpenBSD: pkg_info,v 1.1.1.1 2003/10/16 17:43:34 espie Exp $
+#
+# Copyright (c) 2003 Marc Espie.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE OPENBSD PROJECT AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OPENBSD
+# PROJECT OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+use strict;
+use warnings;
+use OpenBSD::PackageInfo;
+use Getopt::Std;
+use File::Copy;
+# XXX we don't want to load these packages all the time
+package OpenBSD::PackageLocator;
+our $AUTOLOAD;
+sub AUTOLOAD {
+	eval { require OpenBSD::PackageLocator;
+	};
+	goto &$AUTOLOAD;
+}
+
+package OpenBSD::PackingList;
+our $AUTOLOAD;
+sub AUTOLOAD {
+	eval { require OpenBSD::PackingList;
+	};
+	goto &$AUTOLOAD;
+}
+
+package main;
+
+sub get_line
+{
+	open my $fh, '<', shift or return "";
+	my $c = <$fh>;
+	chomp($c);
+	close $fh;
+	return $c;
+}
+
+our ($opt_c, $opt_D, $opt_d, $opt_f, $opt_I, $opt_i, $opt_k, $opt_L, $opt_m,
+    $opt_p, $opt_q, $opt_R, $opt_r, $opt_v, $opt_h, $opt_e, $opt_l, $opt_a);
+
+getopts('cDdfIikLmpqRrvhe:l:a');
+
+if (defined $opt_e) {
+	die "Error: -e is not yet supported";
+}
+
+unless ($opt_c || $opt_D || $opt_d || $opt_f || $opt_I || $opt_i ||
+	$opt_k || $opt_L || $opt_m || $opt_p || $opt_R || $opt_r) {
+	if (@ARGV == 0) {
+		$opt_I = $opt_a = 1;
+	} else {
+		$opt_c = $opt_d = $opt_R = 1;
+	}
+}
+
+if ($opt_v) {
+	$opt_c = $opt_d = $opt_f = $opt_i = $opt_k = $opt_r = $opt_D =
+	    $opt_m = $opt_R = 1;
+}
+
+if (!defined $opt_p) {
+	$opt_p = "";
+}
+
+if (@ARGV == 0 && !$opt_a) {
+	die "Missing package name(s)";
+}
+
+if (@ARGV > 0 && $opt_a) {
+	die "Can't specify package name(s) with -a";
+}
+
+if (@ARGV == 0) {
+	@ARGV = sort(installed_packages());
+}
+
+for my $pkg (@ARGV) {
+	my $dir = installed_info($pkg);
+	unless (-d $dir) {
+		my $true_package = OpenBSD::PackageLocator->find($pkg);
+		next unless $true_package;
+		$dir = $true_package->info();
+		$true_package->close();
+	}
+	if ($opt_I) {
+		my $l = 20 - length($pkg);
+		$l = 1 if $l <= 0;
+		print $pkg, " "x$l, get_line($dir.COMMENT), "\n";
+	} else {
+		print $opt_p, "Information for ", $pkg, "\n\n" unless $opt_q;
+		if ($opt_c) {
+			print $opt_p, "Comment:\n" unless $opt_q;
+			copy($dir.COMMENT, \*STDOUT);
+			print "\n";
+		}
+		if ($opt_R && -f $dir.REQUIRED_BY) {
+			print $opt_p, "Required by:\n" unless $opt_q;
+			copy($dir.REQUIRED_BY, \*STDOUT);
+			print "\n";
+		}
+		if ($opt_d) {
+			print $opt_p, "Description:\n" unless $opt_q;
+			copy($dir.DESC, \*STDOUT);
+			print "\n";
+		}
+		if ($opt_D && -f $dir.DISPLAY) {
+			print $opt_p, "Install notice:\n" unless $opt_q;
+			copy($dir.DISPLAY, \*STDOUT);
+			print "\n";
+		}
+		if ($opt_i && -f $dir.INSTALL) {
+			print $opt_p, "Install script:\n" unless $opt_q;
+			copy($dir.INSTALL, \*STDOUT);
+			print "\n";
+		}
+		if ($opt_k && -f $dir.DEINSTALL) {
+			print $opt_p, "De-Install script:\n" unless $opt_q;
+			copy($dir.DEINSTALL, \*STDOUT);
+			print "\n";
+		}
+		if ($opt_r && -f $dir.REQUIRE) {
+			print $opt_p, "Require script:\n" unless $opt_q;
+			copy($dir.REQUIRE, \*STDOUT);
+			print "\n";
+		}
+		my $plist;
+		if ($opt_f || $opt_L) {
+			if ($opt_f) {
+				$plist = OpenBSD::PackingList->fromfile($dir.CONTENTS);
+			} else {
+				$plist = OpenBSD::PackingList->fromfile($dir.CONTENTS, \&OpenBSD::PackingList::FilesOnly);
+			}
+			die "Bad packing list" unless defined $plist;
+		}
+		if ($opt_L) {
+			print $opt_p, "Files:\n" unless $opt_q;
+			for my $item (@{$plist->{items}}) {
+				next unless $item->IsFile();
+				print $item->fullname(), "\n";
+			}
+			print "\n";
+		}
+		if ($opt_f) {
+			print $opt_p, "Packing list:\n" unless $opt_q;
+			$plist->write(\*STDOUT);
+			print "\n";
+		}
+		print $opt_p, "\n" unless $opt_q;
+	}
+}

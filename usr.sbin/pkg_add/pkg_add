@@ -1,0 +1,282 @@
+#! /usr/bin/perl
+
+# ex:ts=8 sw=4:
+# $OpenBSD: pkg_add,v 1.1.1.1 2003/10/16 17:43:34 espie Exp $
+#
+# Copyright (c) 2003 Marc Espie.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE OPENBSD PROJECT AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OPENBSD
+# PROJECT OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# this is it ! The hard one
+use strict;
+use warnings;
+use OpenBSD::PackingList;
+use OpenBSD::PackageInfo;
+use OpenBSD::PackageLocator;
+use OpenBSD::PackageName;
+use OpenBSD::PkgCfl;
+use Getopt::Std;
+use File::Copy;
+
+# XXX we don't want to load this package all the time
+package OpenBSD::RequiredBy;
+our $AUTOLOAD;
+sub AUTOLOAD {
+	eval { require OpenBSD::RequiredBy;
+	};
+	goto &$AUTOLOAD;
+}
+
+package OpenBSD::PackingElement;
+
+sub install
+{
+}
+
+package OpenBSD::PackingElement::File;
+use File::Basename;
+use File::Path;
+
+sub install
+{
+	my ($self, $archive, $verbose, $not) = @_;
+
+	my $file=$archive->next();
+	if ($file->{name} ne $self->{name}) {
+		die "Error: archive does not match", $file->{name}, "!=",
+		$self->{name}, "\n";
+	}
+	print "extracting ", $self->fullname(), "\n" if $verbose;
+	$file->{name} = $self->fullname();
+	$file->{cwd} = $self->{cwd};
+	return if $not;
+	$file->create();
+	if (defined $self->{owner} && defined $self->{group}) {
+		system('chown', $self->{owner}.':'.$self->{group}, $self->fullname());
+	} elsif (defined $self->{owner}) {
+		system('chown', $self->{owner}, $self->fullname());
+	} elsif (defined $self->{group}) {
+		system('chown', ':'.$self->{group}, $self->fullname());
+	}
+	if (defined $self->{mode}) {
+		system('chmod', $self->{mode}, $self->fullname());
+	}
+}
+
+package OpenBSD::PackingElement::Exec;
+
+sub install
+{
+	my ($self, $archive, $verbose, $not) = @_;
+
+	print "exec ", $self->{expanded}, "\n" if $verbose or $not;
+	system('/bin/sh', '-c', $self->{expanded}) unless $not;
+}
+
+package main;
+
+our ($opt_v, $opt_n, $opt_I);
+getopts('vnI');
+
+my $conflict_list = {};
+
+# first, find all possible potential conflicts
+for my $pkg (installed_packages()) {
+	my $dir = installed_info($pkg);
+	my $plist = OpenBSD::PackingList->fromfile($dir.CONTENTS, \&OpenBSD::PackingList::ConflictOnly);
+	next unless defined $plist;
+	$conflict_list->{$plist->pkgname()} = OpenBSD::PkgCfl->make_conflict_list($plist);
+}
+
+
+
+# This does preadd a package: finding it and reading its package information
+sub preadd
+{
+	my $pkg = shift;
+	my $pkgname1 = OpenBSD::PackageName->new($pkg);
+	if (is_installed $pkgname1->{pkgname}) {
+		print "package $pkg is already installed\n";
+		return undef;
+	}
+	while (my ($name, $l) = each %$conflict_list) {
+		if ($l->conflicts_with($pkgname1->{pkgname})) {
+			print "package $pkg conflicts with installed package $name\n";
+			return undef;
+		}
+	}
+	my $handle = OpenBSD::PackageLocator->find($pkg);
+	if (!$handle) {
+		print "Can't find $pkg\n";
+		return undef;
+	}
+	my $dir = $handle->info();
+    	my $plist = $handle->{plist} = 
+	    OpenBSD::PackingList->fromfile($dir.CONTENTS);
+	unless (defined $plist) {
+		print "Can't find CONTENTS from $pkg\n";
+		return undef;
+	}
+	my $pkgname = OpenBSD::PackageName->new($plist->pkgname());
+	if ($pkgname->{pkgname} ne $pkgname1->{pkgname}) {
+		print "Package name is not consistent ???\n";
+		return undef;
+	}
+	# second handling of conflicts
+	my $l = OpenBSD::PkgCfl->make_conflict_list($plist);
+	$handle->{conflicts} = $l;
+	if ($l->conflicts_with(installed_packages())) {
+		print "package $pkg has conflicts\n";
+	}
+	return $handle;
+}
+
+sub reallyadd
+{
+	my $handle = shift;
+	my $plist = $handle->{plist};
+	my $dir = $handle->info();
+	my $pkgname = $plist->pkgname();
+	# check for collisions with existing stuff
+	my $collisions = 0;
+	for my $item (@{$plist->{items}}) {
+		next unless $item->IsFile();
+		if (-e $item->fullname()) {
+			print "Collision: ",$item->fullname()," already exists\n";
+			$collisions++;
+		}
+	}
+	die if $collisions;
+	if ($plist->{OpenBSD::PackageInfo::REQUIRE}) {
+		print "Require script: $dir",REQUIRE," $pkgname INSTALL\n" if $opt_v or $opt_n;
+		unless ($opt_n) {
+			chmod 0755, $dir.REQUIRE;
+			system($dir.REQUIRE, $pkgname, "INSTALL") == 0 or die "require script borked";
+		}
+	}
+	if ($plist->{OpenBSD::PackageInfo::INSTALL}) {
+		print "Install script: $dir",INSTALL," $pkgname PRE-INSTALL\n" if $opt_v or $opt_n;
+		unless ($opt_n) {
+			chmod 0755, $dir.INSTALL;
+			system($dir.INSTALL, $pkgname, "PRE-INSTALL") == 0 or die "install script borked";
+		}
+	}
+	my $archive=$handle->{archive};
+
+	for my $item (@{$plist->{items}}) {
+		$item->install($archive, $opt_v, $opt_n);
+	}
+
+	$handle->close();
+	if ($plist->{OpenBSD::PackageInfo::INSTALL}) {
+		print "Install script: $dir",INSTALL ,"$pkgname POST-INSTALL\n" if $opt_v or $opt_n;
+		unless ($opt_n) {
+			system($dir.INSTALL, $pkgname, "POST-INSTALL") == 0 or die "install script borked";
+		}
+	}
+	my $dest = installed_info($pkgname);
+	unlink($dir.CONTENTS);
+	mkdir($dest);
+	for my $i (info_names()) {
+		copy("$dir$i", "$dest");
+	}
+	$plist->tofile($dest.CONTENTS);
+	if (defined $handle->{solved_dependencies}) {
+		for my $dep (@{$handle->{solved_dependencies}}) {
+			OpenBSD::RequiredBy->new($dep)->add($pkgname);
+		}
+    	}
+	add_installed($pkgname);
+}
+
+my @todo = (@ARGV);
+my $cache={};
+
+MAINLOOP:
+while (my $pkg = shift @todo) {
+	print "Trying to add $pkg\n";
+	if (!defined $cache->{$pkg}) {
+		$cache->{$pkg} = preadd($pkg);
+	}
+	my $handle = $cache->{$pkg};
+	next unless defined $handle;
+
+	my $plist = $handle->{plist};
+
+	if (is_installed($plist->pkgname())) {
+		$handle->close();
+		next;
+	}
+	if (defined $handle->{solved_dependencies}) {
+		for my $dep (@{$handle->{solved_dependencies}}) {
+			next if is_installed($dep);
+			print "Can't install $pkg: can't resolve $dep\n";
+			next MAINLOOP;
+		}
+		for my $dep (@{$handle->{solved_dependencies}}) {
+			OpenBSD::PackingElement::PkgDep->add($plist, $dep);
+		}
+	} elsif ((defined $plist->{pkgdep}) or (defined $plist->{libdepend}) or (defined $plist->{newdepend})) {
+		# do simple old style pkgdep first
+		my @deps = ();
+		my @done_deps = ();
+		if (defined $plist->{pkgdep}) {
+			for my $dep (@{$plist->{pkgdep}}) {
+				if (is_installed($dep->{name})) {
+					push(@done_deps, $dep->{name});
+				} else {
+					push(@deps, $dep->{name});
+				}
+			}
+		} 
+		if (defined $plist->{newdepend}) {
+			for my $dep (@{$plist->{newdepend}}) {
+			    next if $dep->{name} ne $plist->pkgname();
+			    my @candidates = OpenBSD::PackageName::pkgspec_match($dep->{pattern}, installed_packages());
+			    if (@candidates >= 1) {
+				    push(@done_deps, $candidates[0]);
+			    } else {
+				    push(@deps, $dep->{def});
+			    }
+		    	}
+		}
+		if (defined $plist->{libdepend}) {
+			for my $dep (@{$plist->{libdepend}}) {
+			    next if $dep->{name} ne $plist->pkgname();
+			    my @candidates = OpenBSD::PackageName::pkgspec_match($dep->{pattern}, installed_packages());
+			    if (@candidates >= 1) {
+				    push(@done_deps, $candidates[0]);
+			    } else {
+				    push(@deps, $dep->{def});
+			    }
+			}
+		}
+		print "Dependencies. Done: ", join(',', @done_deps),
+			" Todo: ", join(',', @deps), "\n";
+		unshift(@todo, @deps, $pkg);
+		$handle->{solved_dependencies} = [];
+		push(@{$handle->{solved_dependencies}}, @done_deps, @deps);
+		next;
+	}
+	reallyadd($handle);
+	$conflict_list->{$plist->pkgname()} = $handle->{conflicts};
+}

@@ -1,0 +1,21 @@
+.BEGIN:
+	@if [ ${.CURDIR} != ${.OBJDIR} ]; then ${LNDIR} -s -e obj -e obj.${MACHINE_ARCH} -e Makefile.bsd-wrapper ${.CURDIR}; fi
+
+depend:
+	perl ${.CURDIR}/Makefile.PL
+
+all:
+	cd ${.OBJDIR} && exec ${MAKE}
+
+install:
+	cd ${.OBJDIR} && exec ${MAKE} pure_install
+	
+# Our lndir is hacked; specify a full path to avoid potential conflicts
+# with the one installed with X11.
+LNDIR=          /usr/bin/lndir
+
+.include <bsd.obj.mk>
+.include <bsd.subdir.mk>
+.ifndef NOMAN
+.  include <bsd.man.mk>
+.endif

@@ -1,0 +1,62 @@
+#! /usr/bin/perl
+# ex:ts=8 sw=4:
+# $OpenBSD: pkg_enquire,v 1.1.1.1 2003/10/16 17:43:34 espie Exp $
+#
+# Copyright (c) 2003 Marc Espie.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE OPENBSD PROJECT AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OPENBSD
+# PROJECT OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+use strict;
+use warnings;
+use OpenBSD::PackingList;
+use OpenBSD::PackageInfo;
+use File::Spec;
+
+my %search;
+my %found;
+my $searched = 0;
+for my $i (@ARGV) {
+	my $fname = File::Spec->rel2abs($i);
+	$search{$fname} = 1;
+	$searched++;
+}
+
+for my $pkg (installed_packages()) {
+	my $plist = OpenBSD::PackingList->fromfile(installed_info($pkg).CONTENTS, \&OpenBSD::PackingList::FilesOnly);
+	print "$pkg...\n";
+	for my $item (@{$plist->{items}}) {
+		next unless $item->IsFile();
+		my $fname = $item->fullname();
+		if (defined $search{$fname}) {
+			$found{$fname} = $pkg;
+			$searched--;
+		}
+	}
+}
+for my $i (@ARGV) {
+	if (defined $found{$i}) {
+		print "$i: ", $found{$i}, "\n";
+	} else {
+		print "$i: ???\n";
+	}
+}

@@ -1,0 +1,317 @@
+#!/usr/bin/perl
+# ex:ts=8 sw=4:
+# $OpenBSD: pkg_delete,v 1.1.1.1 2003/10/16 17:43:34 espie Exp $
+#
+# Copyright (c) 2003 Marc Espie.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE OPENBSD PROJECT AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OPENBSD
+# PROJECT OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+use strict;
+use warnings;
+use Getopt::Std;
+use OpenBSD::PackingList;
+use OpenBSD::PackageInfo;
+use OpenBSD::RequiredBy;
+
+package OpenBSD::PackingElement;
+sub delete
+{
+}
+
+sub record_dirrm
+{
+}
+
+package OpenBSD::PackingElement::DirRm;
+use OpenBSD::PackageInfo;
+
+sub record_dirrm
+{
+	my ($self, $pkgname, $db) = @_;
+	my $k = $self->fullname();
+	$db->{$k} = [] unless defined $db->{$k};
+	push(@{$db->{$k}}, $pkgname);
+}
+
+sub find_alldirrms
+{
+	my $db = {};
+	my @list = installed_packages();
+	for my $e (@list) {
+		my $plist = OpenBSD::PackingList->fromfile(installed_info($e).CONTENTS, \&OpenBSD::PackingList::DirrmOnly) or next;
+		for my $item (@{$plist->{items}}) {
+			$item->record_dirrm($e, $db);
+		}
+	}
+	return $db;
+}
+
+sub delete
+{
+	my ($self, $state) = @_;
+	my $name = $self->fullname();
+
+	if ($state->{verbose} or $state->{not}) {
+		print "dirrm: $name\n";
+	}
+	unless (defined $state->{dirrms}) {
+		$state->{dirrms} = find_alldirrms();
+	}
+	return if $state->{not};
+	my $entry = $state->{dirrms}->{$name};
+	unless (defined $entry) {
+		print "Error: dirrm $name was not recorded\n";
+		return;
+	}
+	if (@$entry == 0) {
+		print "Error: no dirrm $name left\n";
+	}
+	elsif (@$entry == 1) {
+		if ($entry->[0] eq $state->{pkgname}) {
+			rmdir($name) 
+			    or print "Error deleting directory $name\n";
+			$state->{dirrms}->{$name} = undef;
+		} else {
+			print "Error: dirrm $name recorded as ", 
+			    $entry->[0], "\n";
+		}
+	}
+	elsif (@$entry > 1) {
+		print "Dirrm $name defined in multiple packages: ",
+			join(",", @$entry), "\n";
+	    	@$entry = grep { $_ ne $state->{pkgname} }  @$entry;
+	}
+}
+
+package OpenBSD::PackingElement::Unexec;
+sub delete
+{
+	my ($self, $state) = @_;
+	my $cmd = $self->{expanded};
+	if ($state->{verbose} or $state->{not}) {
+		print "unexec: $cmd\n";
+	}
+	return if $state->{not};
+	system('/bin/sh', '-c', $cmd);
+}
+
+package OpenBSD::PackingElement::File;
+use OpenBSD::md5;
+sub delete
+{
+	my ($self, $state) = @_;
+	my $name = $self->fullname();
+	if (-l $name) {
+		if ($state->{verbose} or $state->{not}) {
+			print "deleting symlink: $name\n";
+		}
+	} else {
+		unless ($self->{nochecksum} or $state->{quick}) {
+			if (!defined $self->{md5}) {
+				print "Problem: $name does not have an md5 checksum\n";
+				print "NOT deleting: $name\n";
+				return;
+			}
+			if (! -f $name) {
+				print "File $name does not exist\n";
+				return;
+			}
+			my $md5 = OpenBSD::md5::fromfile($name);
+			if ($md5 ne $self->{md5}) {
+				print "Problem: md5 doesn't match for $name\n";
+				print "NOT deleting: $name\n";
+				return;
+			}
+		}
+		if ($state->{verbose} or $state->{not}) {
+			print "deleting: $name\n";
+		}
+	}
+	return if $state->{not};
+	unlink($name) or print "problem deleting $name\n";
+}
+
+package OpenBSD::PackingElement::Extra;
+sub delete
+{
+	my ($self, $state) = @_;
+	return unless $state->{extra};
+	my $name = $self->fullname();
+	if ($name =~ s|/$||) {
+		if ($state->{verbose} or $state->{not}) {
+			print "deleting extra directory: $name\n";
+		}
+		rmdir($name) unless $state->{not};
+	} else {
+		if ($state->{verbose} or $state->{not}) {
+			print "deleting extra file: $name\n";
+		}
+		return if $state->{not};
+		unlink($name) or print "problem deleting $name\n";
+	}
+}
+
+package OpenBSD::PackingElement::ExtraUnexec;
+sub delete
+{
+	my ($self, $state) = @_;
+	return unless $state->{extra};
+
+	my $cmd = $self->{expanded};
+	if ($state->{verbose} or $state->{not}) {
+		print "unexec: $cmd\n";
+	}
+	return if $state->{not};
+	system($cmd);
+}
+
+package OpenBSD::PackingElement::FREQUIRE;
+use OpenBSD::PackageInfo;
+sub delete
+{
+	my ($self, $state) = @_;
+
+	my $dir = $state->{dir};
+	my $opt_v = $state->{verbose};
+	my $opt_n = $state->{not};
+	my $pkgname = $state->{pkgname};
+
+	print "Require script: $dir",REQUIRE," $pkgname DEINSTALL\n" if $opt_v or $opt_n;
+	unless ($opt_n) {
+		chmod 0755, $dir.REQUIRE;
+		system($dir.REQUIRE, $pkgname, "DEINSTALL") == 0 or 
+		    die "Require script borked";
+	}
+}
+
+package OpenBSD::PackingElement::FDEINSTALL;
+use OpenBSD::PackageInfo;
+sub delete
+{
+	my ($self, $state) = @_;
+
+	my $dir = $state->{dir};
+	my $opt_v = $state->{verbose};
+	my $opt_n = $state->{not};
+	my $pkgname = $state->{pkgname};
+	print "Deinstall script: $dir",DEINSTALL ,"$pkgname DEINSTALL\n" if $opt_v or $opt_n;
+	unless ($opt_n) {
+		chmod 0755, $dir.DEINSTALL;
+		system($dir.DEINSTALL, $pkgname, "DEINSTALL") == 0 or 
+		    die "deinstall script borked";
+	}
+}
+
+package main;
+
+our ($opt_v, $opt_D, $opt_d, $opt_n, $opt_f, $opt_q, $opt_p, $opt_c);
+
+sub remove_packing_info
+{
+	my $dir = shift;
+
+	for my $fname (info_names()) {
+		unlink($dir.$fname);
+	}
+	rmdir($dir) or die "Can't finish removing directory $dir";
+}
+
+sub delete_package
+{
+	my ($pkgname, $state) = @_;
+	$state->{pkgname} = $pkgname;
+	my $dir = installed_info($pkgname);
+	$state->{dir} = $dir;
+	my $plist = OpenBSD::PackingList->fromfile($dir.CONTENTS) or 
+	    die "Bad package";
+	if (!defined $plist->pkgname()) {
+		die "Package $pkgname has no name";
+	}
+	if ($plist->pkgname() ne $pkgname) {
+		die "Package $pkgname real name does not match";
+	}
+
+	if ($plist->{OpenBSD::PackageInfo::REQUIRE}) {
+		$plist->{OpenBSD::PackageInfo::REQUIRE}->delete($state);
+	}
+	if ($plist->{OpenBSD::PackageInfo::DEINSTALL}) {
+		$plist->{OpenBSD::PackageInfo::DEINSTALL}->delete($state);
+	}
+	for my $item (@{$plist->{items}}) {
+		$item->delete($state);
+	}
+	# guard against duplicate pkgdep
+	my $removed = {};
+	for my $item (@{$plist->{pkgdep}}) {
+		my $name = $item->{name};
+		next if defined $removed->{$name};
+		print "remove dependency in $name\n" if $opt_v or $opt_n;
+		OpenBSD::RequiredBy->new($name)->delete($pkgname) unless $opt_n;
+		$removed->{name} = 1;
+	}
+	remove_packing_info($dir) unless $opt_n;
+}
+
+
+getopts('vcDdnfqpS:');
+
+if (defined $opt_p) {
+	die "Option p is obsolete";
+}
+if (defined $opt_d) {
+	die "Option d is obsolete";
+}
+
+my %done;
+my $removed;
+
+my $state = {};
+$state->{not} = $opt_n;
+$state->{quick} = $opt_q;
+$state->{verbose} = $opt_v;
+$state->{extra} = $opt_c;
+$ENV{'PKG_DELETE_EXTRA'} = $state->{extra} ? "Yes" : "No";
+do {
+	$removed = 0;
+	for my $pkgname (@ARGV) {
+		next if $done{$pkgname};
+		unless (is_installed($pkgname)) {
+			print "$pkgname was not installed\n";
+			$done{$pkgname} = 1;
+			$removed++;
+			next;
+		}
+		my $deps = OpenBSD::RequiredBy->new($pkgname)->list();
+		if (@$deps > 0) {
+			print "Can't remove $pkgname yet, ";
+			print "needed by ", join(',', @$deps), "\n";
+			next;
+		}
+		print "Deleting $pkgname\n";
+		delete_package($pkgname, $state);
+		$done{$pkgname} = 1;
+		$removed++;
+	}
+	# we're not actually doing anything, so we can't expect this loop 
+	# to ever finish
+	last if $opt_n;
+} while ($removed);
