@@ -231,6 +231,9 @@ EOF
     mvmeppc:OpenBSD:*:*)
 	echo powerpc-unknown-openbsd${UNAME_RELEASE}
 	exit 0 ;;
+    pegasos:OpenBSD:*:*)
+	echo powerpc-unknown-openbsd${UNAME_RELEASE}
+	exit 0 ;;
     powerpc:machten:*:*)
 	echo powerpc-apple-machten${UNAME_RELEASE}
 	exit 0 ;;
