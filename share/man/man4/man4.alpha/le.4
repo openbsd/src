@@ -1,4 +1,4 @@
-.\"     $OpenBSD: le.4,v 1.7 2003/06/06 10:29:41 jmc Exp $
+.\"     $OpenBSD: le.4,v 1.8 2004/03/31 08:33:56 jmc Exp $
 .\"
 .\" Copyright (c) 1998 The OpenBSD Project
 .\" All rights reserved.
@@ -8,7 +8,7 @@
 .Os
 .Sh NAME
 .Nm le
-.Nd Alpha on-board or PCI LANCE ethernet interface
+.Nd Alpha on-board or PCI AMD LANCE Ethernet interface
 .Sh SYNOPSIS
 .Cd "le* at ioasic? offset ?" Pq "TURBOchannel Alphas"
 .Cd "le* at tc? slot ? offset ?" Pq "TURBOchannel Alphas"
@@ -40,4 +40,4 @@ network.
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
 .Sh BUGS
-The PCI form of the Lance driver is untested.
+The PCI form of the LANCE driver is untested.

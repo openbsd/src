@@ -1,4 +1,4 @@
-.\"	$OpenBSD: le.4,v 1.9 2003/07/09 13:26:20 jmc Exp $
+.\"	$OpenBSD: le.4,v 1.10 2004/03/31 08:33:56 jmc Exp $
 .\"
 .\" Copyright (c) 1994 James A. Jegers
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .Os
 .Sh NAME
 .Nm le
-.Nd Lance Ethernet driver
+.Nd AMD LANCE Ethernet interface
 .Sh SYNOPSIS
 .Cd "le0 at isa? port 0x360 irq 15 drq 6"
 .Cd "le* at pci? dev ? function ?"
@@ -36,7 +36,7 @@
 The
 .Nm
 interface provides access to a 10 Mb/s Ethernet network via the
-AMD Lance Ethernet chips.
+AMD LANCE Ethernet chips.
 This includes the following models:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
