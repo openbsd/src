@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.25 1997/04/17 12:02:34 downsj Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.26 1997/04/20 07:01:13 downsj Exp $	*/
 /*	$NetBSD: machdep.c,v 1.89 1997/04/09 20:05:20 thorpej Exp $	*/
 
 /*
@@ -227,7 +227,7 @@ cpu_startup()
 	extern char *etext;
 	unsigned i;
 	caddr_t v;
-	int base, residual, sz;
+	int base, residual;
 	vm_offset_t minaddr, maxaddr;
 	vm_size_t size;
 #ifdef DEBUG

@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.8 1997/04/16 11:56:17 downsj Exp $	*/
+/*	$OpenBSD: st.c,v 1.9 1997/04/20 07:01:12 downsj Exp $	*/
 /*	$NetBSD: st.c,v 1.22 1997/04/02 22:37:38 scottr Exp $	*/
 
 /*
@@ -92,8 +92,8 @@
 #include <hp300/dev/scsivar.h>
 #include <hp300/dev/stvar.h>
 
-static struct scsi_fmt_cdb st_read_cmd = { 6, CMD_READ };
-static struct scsi_fmt_cdb st_write_cmd = { 6, CMD_WRITE };
+static struct scsi_fmt_cdb st_read_cmd = { 6, { CMD_READ } };
+static struct scsi_fmt_cdb st_write_cmd = { 6, { CMD_WRITE } };
 
 #define UNIT(x)		(minor(x) & 3)
 #define stpunit(x)	((x) & 7)
