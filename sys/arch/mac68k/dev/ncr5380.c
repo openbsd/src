@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.10.2.1 1995/10/16 14:19:39 briggs Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.10.2.2 1995/10/31 21:47:49 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -392,7 +392,7 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 #ifdef AUTO_SENSE
 		if (link) {
 			link->link = reqp;
-			link->xcmd.bytes[link->xs->cmdlen-1] |= 1;
+			link->xcmd.bytes[link->xs->cmdlen-2] |= 1;
 		}
 #endif
 	}
@@ -406,8 +406,8 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 
 	run_main(xs->sc_link->adapter_softc);
 
-	if (xs->flags & SCSI_POLL)
-		return (COMPLETE);	/* We're booting */
+	if (xs->flags & (SCSI_POLL|ITSDONE))
+		return (COMPLETE); /* We're booting or run_main has completed */
 	return (SUCCESSFULLY_QUEUED);
 }
 
@@ -1067,6 +1067,7 @@ SC_REQ	*reqp;
 u_int	msg;
 {
 	int	sps;
+	SC_REQ	*prev, *req;
 
 	PID("hmessage1");
 	switch (msg) {
@@ -1086,10 +1087,13 @@ u_int	msg;
 				return (-1);
 			}
 			ack_message();
-			reqp->xs->error = 0;
+			if (!(reqp->dr_flag & DRIVER_AUTOSEN)) {
+				reqp->xs->resid = reqp->xdata_len;
+				reqp->xs->error = 0;
+			}
 
 #ifdef AUTO_SENSE
-			if (check_autosense(reqp, 0) == -1)
+			if (check_autosense(reqp, 1) == -1)
 				return (-1);
 #endif /* AUTO_SENSE */
 
@@ -1098,6 +1102,25 @@ u_int	msg;
 				show_request(reqp->link, "LINK");
 #endif
 			connected = reqp->link;
+
+			/*
+			 * Unlink the 'linked' request from the issue_q
+			 */
+			sps  = splbio();
+			prev = NULL;
+			req  = issue_q;
+			for (; req != NULL; prev = req, req = req->next) {
+				if (req == connected)
+					break;
+			}
+			if (req == NULL)
+				panic("Inconsistent issue_q");
+			if (prev == NULL)
+				issue_q = req->next;
+			else prev->next = req->next;
+			req->next = NULL;
+			splx(sps);
+
 			finish_req(reqp);
 			PID("hmessage3");
 			return (-1);
@@ -1187,7 +1210,7 @@ struct ncr_softc *sc;
 	 * choose something long enough to suit all targets.
 	 */
 	SET_5380_REG(NCR5380_ICOM, SC_A_BSY);
-	len = 1000;
+	len = 250000;
 	while ((GET_5380_REG(NCR5380_IDSTAT) & SC_S_SEL) && (len > 0)) {
 		delay(1);
 		len--;
@@ -1200,6 +1223,18 @@ struct ncr_softc *sc;
 
 	SET_5380_REG(NCR5380_ICOM, 0);
 	
+	/*
+	 * Check if the reselection is still valid. Check twice because
+	 * of possible line glitches - cheaper than delay(1) and we need
+	 * only a few nanoseconds.
+	 */
+	if (!(GET_5380_REG(NCR5380_IDSTAT) & SC_S_BSY)) {
+	    if (!(GET_5380_REG(NCR5380_IDSTAT) & SC_S_BSY)) {
+		ncr_aprint(sc, "Stepped into the reselection timeout\n");
+		return;
+	    }
+	}
+
 	/*
 	 * Get the expected identify message.
 	 */
@@ -1503,8 +1538,9 @@ int	linked;
 	 */
 	PID("cautos1");
 	if (!(reqp->dr_flag & DRIVER_AUTOSEN)) {
-		if (reqp->status == SCSCHKC) {
-			memcpy(&reqp->xcmd, sense_cmd, sizeof(sense_cmd));
+		switch (reqp->status & SCSMASK) {
+		    case SCSCHKC:
+			bcopy(sense_cmd, &reqp->xcmd, sizeof(sense_cmd));
 			reqp->xdata_ptr = (u_char *)&reqp->xs->sense;
 			reqp->xdata_len = sizeof(reqp->xs->sense);
 			reqp->dr_flag  |= DRIVER_AUTOSEN;
@@ -1524,6 +1560,9 @@ int	linked;
 #endif
 			PID("cautos2");
 			return (-1);
+		    case SCSBUSY:
+			reqp->xs->error = XS_BUSY;
+			return (0);
 		}
 	}
 	else {

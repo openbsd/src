@@ -1,4 +1,4 @@
-#	$Id: list,v 1.1.1.1 1995/10/18 08:37:42 deraadt Exp $
+#	$Id: list,v 1.2 1995/11/06 21:53:54 deraadt Exp $
 
 # copy the MAKEDEV script and make some devices
 COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV
@@ -36,7 +36,6 @@ LINK	instbin			bin/ls
 LINK	instbin			bin/mkdir
 LINK	instbin			bin/mt
 LINK	instbin			bin/mv
-LINK	instbin			bin/pax
 LINK	instbin			bin/ps
 LINK	instbin			bin/pwd
 LINK	instbin			bin/rcp
@@ -68,14 +67,12 @@ LINK	instbin			sbin/reboot
 LINK	instbin			sbin/restore
 LINK	instbin			sbin/route
 LINK	instbin			sbin/rrestore
-LINK	instbin			sbin/shutdown
 LINK	instbin			sbin/slattach
 LINK	instbin			sbin/swapon
 LINK	instbin			sbin/umount
 SYMLINK	/instbin		usr/bin/awk
 SYMLINK	/instbin		usr/bin/basename
 SYMLINK	/instbin		usr/bin/chgrp
-SYMLINK	/instbin		usr/bin/cpio
 SYMLINK	/instbin		usr/bin/dirname
 SYMLINK /instbin		usr/bin/hexdump
 SYMLINK /instbin		usr/bin/ex
@@ -99,8 +96,10 @@ SYMLINK	/instbin		usr/sbin/chroot
 SYMLINK	/instbin		usr/sbin/kvm_mkdb
 SYMLINK	/instbin		usr/sbin/pppd
 SYMLINK	/instbin		usr/sbin/pppstats
+SYMLINK	/instbin		usr/sbin/sysctl
 SYMLINK	/instbin		usr/sbin/traceroute
 SYMLINK	/instbin		usr/sbin/update
+SYMLINK /instbin		usr/local/bin/download
 
 #SPECIAL	/bin/rm instbin
 

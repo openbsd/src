@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.4 1995/09/03 20:59:53 briggs Exp $	*/
+/*	$NetBSD: adb.c,v 1.4.2.1 1995/11/02 04:35:05 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -284,9 +284,10 @@ adb_processevent(event)
     adb_event_t *event;
 {
 	adb_event_t new_event;
-	int i, button_bit, max_byte, mask;
+	int i, button_bit, max_byte, mask, buttons;
 
 	new_event = *event;
+	buttons = 0;
 
 	switch (event->def_addr) {
 	case ADBADDR_KBD:
@@ -311,20 +312,20 @@ adb_processevent(event)
 		for (i = 0; i < 2; i++, button_bit <<= 1)
 			/* 0 when button down */
 			if (!(event->bytes[i] & 0x80))
-				adb_ms_buttons |= button_bit;
+				buttons |= button_bit;
 			else
-				adb_ms_buttons &= ~button_bit;
+				buttons &= ~button_bit;
 		/* Extended Protocol (up to 6 more buttons) */
 		for (mask = 0x80; i < max_byte;
 		     i += (mask == 0x80), button_bit <<= 1) {
 			/* 0 when button down */
 			if (!(event->bytes[i] & mask))
-				adb_ms_buttons |= button_bit;
+				buttons |= button_bit;
 			else
-				adb_ms_buttons &= ~button_bit;
+				buttons &= ~button_bit;
 			mask = ((mask >> 4) & 0xf) | ((mask & 0xf) << 4);
 		}
-		new_event.u.m.buttons = adb_ms_buttons;
+		new_event.u.m.buttons = adb_ms_buttons | buttons;
 		new_event.u.m.dx = ((signed int) (event->bytes[1] & 0x3f)) -
 					((event->bytes[1] & 0x40) ? 64 : 0);
 		new_event.u.m.dy = ((signed int) (event->bytes[0] & 0x3f)) -

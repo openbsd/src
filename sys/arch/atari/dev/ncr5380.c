@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.11.2.2 1995/10/27 15:41:01 leo Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.11.2.3 1995/11/01 15:16:54 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -549,7 +549,6 @@ struct ncr_softc *sc;
 	    else splx(sps);
 connected:
 	    if (connected) {
-#ifdef REAL_DMA
 		/*
 		 * If the host is currently connected but a 'real-dma' transfer
 		 * is in progress, the 'end-of-dma' interrupt restarts main.
@@ -561,7 +560,6 @@ connected:
 			goto main_exit;
 		}
 		splx(sps);
-#endif /* REAL_DMA */
 
 		/*
 		 * Let the target guide us through the bus-phases
