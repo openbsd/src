@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.43 2000/09/17 00:06:01 aaron Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.44 2000/09/17 19:10:56 provos Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -1524,6 +1524,15 @@ epioctl(ifp, cmd, data)
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
 		break;
+
+	case SIOCSIFMTU:
+		if (ifr->ifr_mtu > ETHERMTU || ifr->ifr_mtu < ETHERMIN) {
+			error = EINVAL;
+		} else if (ifp->if_mtu != ifr->ifr_mtu) {
+			ifp->if_mtu = ifr->ifr_mtu;
+		}
+		break;
+	
 
 	case SIOCSIFFLAGS:
 		if ((ifp->if_flags & IFF_UP) == 0 &&

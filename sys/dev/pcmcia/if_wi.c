@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.15 2000/06/30 01:04:28 art Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.16 2000/09/17 19:10:55 provos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -133,7 +133,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.15 2000/06/30 01:04:28 art Exp $";
+	"$OpenBSD: if_wi.c,v 1.16 2000/09/17 19:10:55 provos Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -1079,6 +1079,14 @@ wi_ioctl(ifp, command, data)
 		default:
 			wi_init(sc);
 			break;
+		}
+		break;
+
+	case SIOCSIFMTU:
+		if (ifr->ifr_mtu > ETHERMTU || ifr->ifr_mtu < ETHERMIN) {
+			error = EINVAL;
+		} else if (ifp->if_mtu != ifr->ifr_mtu) {
+			ifp->if_mtu = ifr->ifr_mtu;
 		}
 		break;
 
