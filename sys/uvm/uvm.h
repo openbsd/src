@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm.h,v 1.6 2001/01/29 02:07:41 niklas Exp $	*/
-/*	$NetBSD: uvm.h,v 1.15 1999/03/26 17:34:15 chs Exp $	*/
+/*	$OpenBSD: uvm.h,v 1.7 2001/03/09 05:34:38 smart Exp $	*/
+/*	$NetBSD: uvm.h,v 1.16 1999/06/21 17:25:11 thorpej Exp $	*/
 
 /*
  *
@@ -119,8 +119,10 @@ extern struct uvm uvm;
  * historys
  */
 
+#ifdef _KERNEL
 UVMHIST_DECL(maphist);
 UVMHIST_DECL(pdhist);
+#endif /* _KERNEL */
 
 /*
  * vm_map_entry etype bits:
@@ -139,6 +141,8 @@ UVMHIST_DECL(pdhist);
 /*
  * macros
  */
+
+#ifdef _KERNEL
 
 /*
  * UVM_UNLOCK_AND_WAIT: atomic unlock+wait... front end for the 
@@ -180,5 +184,7 @@ UVMHIST_DECL(pdhist);
 #include <uvm/uvm_map_i.h>
 #include <uvm/uvm_page_i.h>
 #include <uvm/uvm_pager_i.h>
+
+#endif /* _KERNEL */
 
 #endif /* _UVM_UVM_H_ */

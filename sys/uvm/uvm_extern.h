@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.8 2001/01/29 02:07:43 niklas Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.9 2001/03/09 05:34:38 smart Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.27 1999/05/26 19:16:36 thorpej Exp $	*/
 
 /*
@@ -243,6 +243,7 @@ struct uvmexp {
 	struct uvm_object *mb_object;
 };
 
+#ifdef _KERNEL
 
 extern struct uvmexp uvmexp;
 
@@ -254,12 +255,16 @@ extern struct uvmexp uvmexp;
 #define uvm_km_zalloc(MAP,SIZE) uvm_km_alloc1(MAP,SIZE,TRUE)
 #define uvm_km_alloc(MAP,SIZE)  uvm_km_alloc1(MAP,SIZE,FALSE)
 
+#endif /* _KERNEL */
+
 /*
  * typedefs 
  */
 
 typedef unsigned int  uvm_flag_t;
 typedef int vm_fault_t;
+
+#ifdef _KERNEL
 
 /* uvm_aobj.c */
 struct uvm_object	*uao_create __P((vsize_t, int));
@@ -389,5 +394,6 @@ void 			uvm_vnp_terminate __P((struct vnode *));
 boolean_t		uvm_vnp_uncache __P((struct vnode *));
 struct uvm_object	*uvn_attach __P((void *, vm_prot_t));
 
-#endif /* _UVM_UVM_EXTERN_H_ */
+#endif /* _KERNEL */
 
+#endif /* _UVM_UVM_EXTERN_H_ */

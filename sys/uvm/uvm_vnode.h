@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_vnode.h,v 1.5 2001/01/29 02:07:52 niklas Exp $	*/
-/*	$NetBSD: uvm_vnode.h,v 1.7 1999/03/25 18:48:56 mrg Exp $	*/
+/*	$OpenBSD: uvm_vnode.h,v 1.6 2001/03/09 05:34:38 smart Exp $	*/
+/*	$NetBSD: uvm_vnode.h,v 1.8 1999/06/21 17:25:12 thorpej Exp $	*/
 
 /*
  *
@@ -90,6 +90,7 @@ struct uvm_vnode {
  */
 #define UVM_VNODE_BLOCKED (UVM_VNODE_ALOCK|UVM_VNODE_DYING|UVM_VNODE_RELKILL)
 
+#ifdef _KERNEL
 
 /*
  * prototypes
@@ -103,5 +104,7 @@ struct uvm_vnode {
  */
 struct uvm_object  *uvn_attach __P((void *, vm_prot_t));
 #endif
+
+#endif /* _KERNEL */
 
 #endif /* _UVM_UVM_VNODE_H_ */
