@@ -1,7 +1,7 @@
 /*
  * THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT.
  * generated from:
- *	OpenBSD: cpudevs,v 1.33 2004/04/21 08:30:26 mickey Exp 
+ *	OpenBSD: cpudevs,v 1.34 2004/04/21 08:56:08 mickey Exp 
  */
 
 #define	HPPA_TYPE_NPROC	0x00
@@ -106,7 +106,7 @@
 #define	HPPA_BOARD_HP839	0x581
 #define	HPPA_BOARD_HP829	0x582
 #define	HPPA_BOARD_HP849	0x583
-#define	HPPA_BOARD_HP770_210XC	0x584
+#define	HPPA_BOARD_HP770_J210XC	0x584
 #define	HPPA_BOARD_HP770_J200	0x585
 #define	HPPA_BOARD_HP770_J210	0x586
 #define	HPPA_BOARD_HP841	0x587
