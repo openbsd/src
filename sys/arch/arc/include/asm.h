@@ -1,4 +1,4 @@
-/*      $OpenBSD: asm.h,v 1.4 1996/08/26 10:54:54 pefo Exp $	*/
+/*      $OpenBSD: asm.h,v 1.5 1997/05/02 08:38:45 pefo Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -92,13 +92,19 @@
  */
 #if defined(GPROF) || defined(PROF)
 #define	MCOUNT			\
-	.set noreorder;		\
-	.set noat;		\
-	move $1,$31;		\
-	jal _mcount;		\
-	subu sp,sp,8;		\
+	subu 	sp, sp, 32;	\
+	.cprestore 16;		\
+	sw	ra, 28(sp);	\
+	sw	gp, 24(sp);	\
+	.set	noat;		\
+	.set	noreorder;	\
+	move	AT, ra;		\
+	jal	_mcount;	\
+	subu	sp, sp, 8;	\
+	lw	ra, 28(sp);	\
+	addu	sp, sp, 32;	\
 	.set reorder;		\
-	.set at;
+	.set	at;
 #else
 #define	MCOUNT
 #endif
