@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.subdir.mk,v 1.5 1996/03/05 11:13:01 mickey Exp $
+#	$OpenBSD: bsd.subdir.mk,v 1.6 1996/03/16 05:32:40 etheisen Exp $
 #	$NetBSD: bsd.subdir.mk,v 1.10 1995/07/24 04:22:29 cgd Exp $
 #	@(#)bsd.subdir.mk	5.9 (Berkeley) 2/1/91
 
@@ -20,7 +20,7 @@ _SUBDIRUSE: .USE
 			_nextdir_="$${_THISDIR_}/$${_newdir_}"; \
 		fi; \
 		_makefile_spec_=""; \
-		if [ -e $${_newdir_}/Makefile.bsd-wrapper ]; then \
+		if [ -e ${.CURDIR}/$${_newdir_}/Makefile.bsd-wrapper ]; then \
 			_makefile_spec_="-f Makefile.bsd-wrapper"; \
 		fi; \
 		echo "===> $${_nextdir_}"; \
@@ -36,7 +36,7 @@ ${SUBDIR}::
 		_newdir_=${.TARGET}; \
 	fi; \
 	_makefile_spec_=""; \
-	if [ -f $${_newdir_}/Makefile.bsd-wrapper ]; then \
+	if [ -f ${.CURDIR}/$${_newdir_}/Makefile.bsd-wrapper ]; then \
 		_makefile_spec_="-f Makefile.bsd-wrapper"; \
 	fi; \
 	echo "===> $${_newdir_}"; \
