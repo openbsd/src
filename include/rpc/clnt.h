@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt.h,v 1.8 2003/03/14 04:58:10 margarida Exp $	*/
+/*	$OpenBSD: clnt.h,v 1.9 2003/03/16 00:34:01 margarida Exp $	*/
 /*	$NetBSD: clnt.h,v 1.6 1995/04/29 05:27:58 cgd Exp $	*/
 
 /*
@@ -93,7 +93,7 @@ enum clnt_stat {
 struct rpc_err {
 	enum clnt_stat re_status;
 	union {
-		int RE_errno;		/* realated system error */
+		int RE_errno;		/* related system error */
 		enum auth_stat RE_why;	/* why the auth error occurred */
 		struct {
 			u_int32_t low;	/* lowest verion supported */
