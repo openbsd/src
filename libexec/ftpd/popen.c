@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.8 1996/12/07 10:52:06 bitblt Exp $	*/
+/*	$OpenBSD: popen.c,v 1.9 1997/06/29 07:35:48 deraadt Exp $	*/
 /*	$NetBSD: popen.c,v 1.5 1995/04/11 02:45:00 cgd Exp $	*/
 
 /*
@@ -80,7 +80,7 @@ ftpd_popen(program, type)
 	int argc, gargc, pdes[2], pid;
 	char **pop, *argv[MAX_ARGV], *gargv[MAX_GARGV];
 
-	if (*type != 'r' && *type != 'w' || type[1])
+	if ((*type != 'r' && *type != 'w') || type[1])
 		return (NULL);
 
 	if (!pids) {
@@ -170,7 +170,7 @@ int
 ftpd_pclose(iop)
 	FILE *iop;
 {
-	int fdes, omask, status;
+	int fdes, status;
 	pid_t pid;
 	sigset_t sigset, osigset;
 

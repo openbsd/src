@@ -61,7 +61,7 @@ static int fd = -1;
  * after login, but before logout).
  */
 void
-logwtmp(line, name, host)
+ftpdlogwtmp(line, name, host)
 	char *line, *name, *host;
 {
 	struct utmp ut;

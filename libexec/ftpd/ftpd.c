@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.38 1997/06/21 12:44:41 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.39 1997/06/29 07:35:44 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -86,11 +86,16 @@ static char rcsid[] = "$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $"
 #include <time.h>
 #include <vis.h>
 #include <unistd.h>
+#include <util.h>
 #include <utmp.h>
 
 #if defined(TCPWRAPPERS)
 #include <tcpd.h>
 #endif	/* TCPWRAPPERS */
+
+#if defined(SKEY)
+#include <skey.h>
+#endif
 
 #include "pathnames.h"
 #include "extern.h"
@@ -619,7 +624,7 @@ user(name)
 		return;
 	}
 
-	if (pw = sgetpwnam(name)) {
+	if ((pw = sgetpwnam(name))) {
 		if ((shell = pw->pw_shell) == NULL || *shell == 0)
 			shell = _PATH_BSHELL;
 		while ((cp = getusershell()) != NULL)
@@ -701,7 +706,7 @@ end_login()
 	sigprocmask (SIG_BLOCK, &allsigs, NULL);
 	(void) seteuid((uid_t)0);
 	if (logged_in) {
-		logwtmp(ttyline, "", "");
+		ftpdlogwtmp(ttyline, "", "");
 		if (doutmp)
 			logout(utmp.ut_line);
 	}
@@ -786,7 +791,7 @@ skip:
 	(void) initgroups(pw->pw_name, pw->pw_gid);
 
 	/* open wtmp before chroot */
-	logwtmp(ttyline, pw->pw_name, remotehost);
+	ftpdlogwtmp(ttyline, pw->pw_name, remotehost);
 
 	/* open utmp before chroot */
 	if (doutmp) {
@@ -885,8 +890,8 @@ skip:
 #ifdef HASSETPROCTITLE
 		snprintf(proctitle, sizeof(proctitle),
 		    "%s: anonymous/%.*s", remotehost,
-		    sizeof(proctitle) - sizeof(remotehost) -
-		    sizeof(": anonymous/"), passwd);
+		    (int)(sizeof(proctitle) - sizeof(remotehost) -
+		    sizeof(": anonymous/")), passwd);
 		setproctitle(proctitle);
 #endif /* HASSETPROCTITLE */
 		if (logging)
@@ -1605,7 +1610,7 @@ yyerror(s)
 {
 	char *cp;
 
-	if (cp = strchr(cbuf,'\n'))
+	if ((cp = strchr(cbuf,'\n')))
 		*cp = '\0';
 	reply(500, "'%s': command not understood.", cbuf);
 }
@@ -1759,7 +1764,7 @@ dologout(status)
 		sigfillset(&allsigs);
 		sigprocmask(SIG_BLOCK, &allsigs, NULL);
 		(void) seteuid((uid_t)0);
-		logwtmp(ttyline, "", "");
+		ftpdlogwtmp(ttyline, "", "");
 		if (doutmp)
 			logout(utmp.ut_line);
 #if defined(KERBEROS)
@@ -1811,7 +1816,6 @@ void
 passive()
 {
 	int len, on;
-	u_short port;
 	char *p, *a;
 
 	if (pw == NULL) {
@@ -1958,7 +1962,7 @@ send_file_list(whichf)
 		transflag = 0;
 		goto out;
 	}
-	while (dirname = *dirlist++) {
+	while ((dirname = *dirlist++)) {
 		if (stat(dirname, &st) < 0) {
 			/*
 			 * If user typed "ls -l", etc, and the client
@@ -2091,7 +2095,7 @@ logxfer(name, size, start)
 		snprintf(buf, sizeof(buf),
 		    "%.24s %d %s %qd %s %c %s %c %c %s ftp %d %s %s\n",
 		    ctime(&now), now - start + (now == start),
-		    vremotehost, size, vpath,
+		    vremotehost, (long long) size, vpath,
 		    ((type == TYPE_A) ? 'a' : 'b'), "*" /* none yet */,
 		    'o', ((guest) ? 'a' : 'r'),
 		    vpw, 0 /* none yet */,
