@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.58 1999/03/02 08:11:26 deraadt Exp $
+#	$OpenBSD: pnpdevs,v 1.59 1999/03/04 08:56:51 deraadt Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -419,8 +419,8 @@ sb		@X@0001	# CMI8330. Audio Adapter
 sb		ADS7150	# AD1815
 sb		ADS7180	# AD1816
 sb		AZT1008	# AZT1008 PnP SOUND DEVICE (AUDIO)
-sb		CSC0000	# AW35/Pro sound emulation (both SB *and* WSS, somewhat weird)
-sb		CSC0100	# On Board Audio Chip
+wss		CSC0000	# AW35/Pro sound emulation (both SB *and* WSS, somewhat weird)
+wss		CSC0100	# On Board Audio Chip
 sb		CTL0001	# Creative ViBRA16C PnP Audio
 sb		CTL0031	# SB AWE32
 sb		CTL0041	# SB16 PnP (CT4131)
