@@ -1,4 +1,4 @@
-/*	$OpenBSD: xfs_deb.h,v 1.1 1998/08/30 16:47:20 art Exp $	*/
+/*	$OpenBSD: xfs_deb.h,v 1.2 1998/08/31 05:13:22 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -37,8 +37,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _xfs_deb_h
-#define _xfs_deb_h
+#ifndef _XFS_XFS_DEB_H_
+#define _XFS_XFS_DEB_H_
 
 /* masks */
 #define XDEBANY		0xffffffff
@@ -60,4 +60,4 @@ extern int xfsdeb;
 #define XFSDEB(mask, args) do { ; } while (0)
 #endif
 
-#endif				       /* _xfs_deb_h */
+#endif

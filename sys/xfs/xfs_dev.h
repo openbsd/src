@@ -1,4 +1,4 @@
-/*	$OpenBSD: xfs_dev.h,v 1.1 1998/08/30 16:47:21 art Exp $	*/
+/*	$OpenBSD: xfs_dev.h,v 1.2 1998/08/31 05:13:23 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -39,44 +39,32 @@
 
 /* $KTH: xfs_dev.h,v 1.4 1998/04/05 18:19:50 art Exp $ */
 
-#ifndef _xfs_dev_h
-#define _xfs_dev_h
+#ifndef _XFS_XFS_DEV_H_
+#define _XFS_XFS_DEV_H_
 
-int xfs_devopen(dev_t dev, int flags, int devtype, struct proc * p);
+int xfs_devopen __P((dev_t dev, int flags, int devtype, struct proc * p));
 
-int xfs_install_device(void);
-int xfs_uninstall_device(void);
+int xfs_install_device __P((void));
+int xfs_uninstall_device __P((void));
 
-int xfs_install_filesys(void);
-int xfs_uninstall_filesys(void);
+int xfs_install_filesys __P((void));
+int xfs_uninstall_filesys __P((void));
 
-int xfs_stat_filesys(void);
-int xfs_stat_device(void);
+int xfs_stat_filesys __P((void));
+int xfs_stat_device __P((void));
 
-int
-xfs_message_send(int fd, struct xfs_message_header * message, u_int size);
-
-int
-xfs_message_rpc(int fd, struct xfs_message_header * message, u_int size);
-
-int
-xfs_message_receive(int fd,
-		    struct xfs_message_header *message,
-		    u_int size,
-		    struct proc *p);
-
-int
-xfs_message_wakeup(int fd,
-		   struct xfs_message_wakeup *message,
-		   u_int size,
-		   struct proc *p);
-
-int
-xfs_message_wakeup_data(int fd,
-			struct xfs_message_wakeup_data * message,
-			u_int size,
-			struct proc *p);
-
+int xfs_message_send __P((int fd, struct xfs_message_header *message,
+			  u_int size));
+int xfs_message_rpc __P((int fd, struct xfs_message_header *message,
+			 u_int size));
+int xfs_message_receive __P((int fd,struct xfs_message_header *message,
+			     u_int size,struct proc *p));
+int xfs_message_wakeup __P((int fd, struct xfs_message_wakeup *message,
+			    u_int size, struct proc *p));
+int xfs_message_wakeup_data __P((int fd,
+				 struct xfs_message_wakeup_data *message,
+				 u_int size, struct proc *p));
 #define USE_SELECT
 
-#endif				       /* _xfs_dev_h */
+#endif
+

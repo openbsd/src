@@ -1,4 +1,4 @@
-/*	$OpenBSD: xfs_syscalls.h,v 1.1 1998/08/30 16:47:22 art Exp $	*/
+/*	$OpenBSD: xfs_syscalls.h,v 1.2 1998/08/31 05:13:29 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -39,12 +39,12 @@
 
 /* $KTH: xfs_syscalls.h,v 1.2 1998/01/21 01:03:57 mho Exp $ */
 
-#ifndef  __xfs_syscalls
-#define  __xfs_syscalls
+#ifndef  _XFS_XFS_SYSCALLS_H_
+#define  _XFS_XFS_SYSCALLS_H_
 
-int xfs_install_syscalls(void);
-int xfs_uninstall_syscalls(void);
-int xfs_stat_syscalls(void);
-pag_t xfs_get_pag(struct ucred *);
+int xfs_install_syscalls __P((void));
+int xfs_uninstall_syscalls __P((void));
+int xfs_stat_syscalls __P((void));
+pag_t xfs_get_pag __P((struct ucred *));
 
-#endif				       /* __xfs_syscalls */
+#endif

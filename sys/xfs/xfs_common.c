@@ -1,4 +1,4 @@
-/*	$OpenBSD: xfs_common.c,v 1.1 1998/08/30 16:47:20 art Exp $	*/
+/*	$OpenBSD: xfs_common.c,v 1.2 1998/08/31 05:13:13 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -44,22 +44,22 @@
 
 RCSID("$KTH: xfs_common.c,v 1.6 1998/07/19 21:14:19 art Exp $");
 
-static u_int xfs_allocs;
-static u_int xfs_frees;
+static u_int	xfs_allocs;
+static u_int	xfs_frees;
 
 void *
 xfs_alloc(u_int size)
 {
-    xfs_allocs++;
-    XFSDEB(XDEBMEM, ("xfs_alloc: xfs_allocs-xfs_frees %d\n", 
-		     xfs_allocs - xfs_frees));
-    return malloc(size, M_TEMP, M_WAITOK);	/* XXX - What kind? */
+	xfs_allocs++;
+	XFSDEB(XDEBMEM, ("xfs_alloc: xfs_allocs-xfs_frees %d\n", 
+			xfs_allocs - xfs_frees));
+	return malloc(size, M_TEMP, M_WAITOK);	/* XXX - What kind? */
 }
 
 void
 xfs_free(void *ptr, u_int size)
 {
-    xfs_frees++;
-    free(ptr, M_TEMP);
+	xfs_frees++;
+	free(ptr, M_TEMP);
 }
 #endif

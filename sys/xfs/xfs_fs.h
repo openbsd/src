@@ -1,4 +1,4 @@
-/*	$OpenBSD: xfs_fs.h,v 1.1 1998/08/30 16:47:21 art Exp $	*/
+/*	$OpenBSD: xfs_fs.h,v 1.2 1998/08/31 05:13:26 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -39,27 +39,25 @@
 
 /* $KTH: xfs_fs.h,v 1.8 1998/04/04 01:17:26 art Exp $ */
 
-#ifndef _xfs_h
-#define _xfs_h
+#ifndef _XFS_XFS_H_
+#define _XFS_XFS_H_
 
 #include <sys/types.h>
 
 #include <xfs/xfs_node.h>
-#include <sys/xfs_attr.h>
-
-#define NXFS 2 /* maximal number of filesystems on a single device */
+#include <xfs/xfs_attr.h>
+#include <xfs/nxfs.h>
 
 /*
  * Filesystem struct.
  */
 struct xfs {
-    u_int status;		       /* Inited, opened or mounted */
+	u_int		status;		/* Inited, opened or mounted */
 #define XFS_MOUNTED	0x1
-    struct mount *mp;
-    struct xfs_node *root;
-    u_int nnodes;
-
-    int fd;
+	struct mount	*mp;
+	struct xfs_node	*root;
+	u_int		nnodes;
+	int		fd;
 };
 
 #define VFS_TO_XFS(v)      ((struct xfs *) ((v)->mnt_data))
@@ -72,19 +70,20 @@ extern struct xfs xfs[];
 
 extern struct vnodeops xfs_vnodeops;
 
-struct xfs_node *xfs_node_find(struct xfs *, struct xfs_handle *);
-int new_xfs_node(struct xfs *, struct xfs_msg_node *, struct xfs_node **,
-		 struct proc *);
-void free_xfs_node(struct xfs_node *);
-int free_all_xfs_nodes(struct xfs *, int);
+struct xfs_node *xfs_node_find __P((struct xfs *, struct xfs_handle *));
+int new_xfs_node __P((struct xfs *, struct xfs_msg_node *, struct xfs_node **,
+		      struct proc *));
+void free_xfs_node __P((struct xfs_node *));
+int free_all_xfs_nodes __P((struct xfs *, int));
 
-int xfs_dnlc_enter(struct vnode *, char *, struct vnode *);
-void xfs_dnlc_purge(struct mount *);
-int xfs_dnlc_lookup(struct vnode *, struct componentname *, struct vnode **);
+int xfs_dnlc_enter __P((struct vnode *, char *, struct vnode *));
+void xfs_dnlc_purge __P((struct mount *));
+int xfs_dnlc_lookup __P((struct vnode *, struct componentname *,
+			 struct vnode **));
 
-void vattr2xfs_attr(const struct vattr * va, struct xfs_attr *xa);
-void xfs_attr2vattr(const struct xfs_attr *xa, struct vattr * va);
+void vattr2xfs_attr __P((const struct vattr * va, struct xfs_attr *xa));
+void xfs_attr2vattr __P((const struct xfs_attr *xa, struct vattr * va));
 
-int xfs_has_pag(const struct xfs_node *xn, pag_t pag);
+int xfs_has_pag __P((const struct xfs_node *xn, pag_t pag));
 
-#endif				       /* _xfs_h */
+#endif

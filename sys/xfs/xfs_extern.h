@@ -1,4 +1,4 @@
-/*	$OpenBSD: xfs_extern.h,v 1.2 1998/08/30 17:35:42 art Exp $	*/
+/*	$OpenBSD: xfs_extern.h,v 1.3 1998/08/31 05:13:25 art Exp $	*/
 /*
  * Copyright (c) 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -37,8 +37,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _XFS_XFS_EXTERN_H
-#define _XFS_XFS_EXTERN_H
+#ifndef _XFS_XFS_EXTERN_H_
+#define _XFS_XFS_EXTERN_H_
 
 #ifdef _KERNEL
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xfs_message.h,v 1.2 1998/08/30 17:35:43 art Exp $	*/
+/*	$OpenBSD: xfs_message.h,v 1.1 1998/08/31 05:13:27 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -37,22 +37,16 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: xfs_message.h,v 1.2 1998/08/30 17:35:43 art Exp $ */
+/* $KTH: xfs_message.h,v 1.21 1998/06/27 11:05:24 assar Exp $ */
 
-#ifndef _xmsg_h
-#define _xmsg_h
+#ifndef _SYS_XFS_MESSAGE_H_
+#define _SYS_XFS_MESSAGE_H_
 
-#if !defined(__LINUX__) && !defined(HAVE_GLIBC)
 #include <sys/types.h>
 #include <sys/param.h>
-#else
-#include <linux/types.h>
-#include <linux/param.h>
-#endif
 
-#include <sys/xfs_attr.h>
+#include <xfs/xfs_attr.h>
 
-/* Temporary hack? */
 #define MAX_XMSG_SIZE (1024*64)
 
 typedef u_int32_t pag_t;
@@ -61,28 +55,28 @@ typedef u_int32_t pag_t;
  * The xfs_cred, if pag == 0, use uid 
  */
 struct xfs_cred {
-    __kernel_uid_t uid;
-    pag_t pag;
+	__kernel_uid_t	uid;
+	pag_t		pag;
 };
+
 typedef struct xfs_cred xfs_cred;
 
-#define MAXHANDLE (4*4)
-#define MAXRIGHTS 8
+#define MAXHANDLE	(4*4)
+#define MAXRIGHTS	8
 
-#define XFS_ANONYMOUSID 32766
-
+#define XFS_ANONYMOUSID	32766
 typedef struct xfs_handle {
-    u_int a, b, c, d;
+	u_int a, b, c, d;
 } xfs_handle;
-
 #define xfs_handle_eq(p, q) \
 ((p)->a == (q)->a && (p)->b == (q)->b && (p)->c == (q)->c && (p)->d == (q)->d)
 
-#define CACHEHANDLESIZE 4
 
-typedef struct xfs_cache_handle {
-    u_char data[CACHEHANDLESIZE];
-} xfs_cache_handle;
+#define CACHEHANDLESIZE	4
+struct xfs_cache_handle {
+	u_char	data[CACHEHANDLESIZE];
+};
+typedef struct xfs_cache_handle xfs_cache_handle;
 
 /*
  * Tokens that apply to nodes, open modes and attributes. Shared
@@ -108,8 +102,8 @@ typedef struct xfs_cache_handle {
 #define XFS_LOCK_R	0x0100	       /* Data Shared locks? */
 #define XFS_LOCK_W	0x0200	       /* Data Exclusive locks? */
 
-#define XFS_ATTR_VALID		XFS_ATTR_R
-#define XFS_DATA_VALID		XFS_DATA_W
+#define XFS_ATTR_VALID	XFS_ATTR_R
+#define XFS_DATA_VALID	XFS_DATA_W
 
 /* xfs_node.flags */
 #define XFS_DATA_DIRTY	0x0001
@@ -126,33 +120,31 @@ typedef struct xfs_cache_handle {
 #define XFS_RIGHT_X	0x04		/* may execute? */
 
 struct xfs_msg_node {
-    xfs_handle handle;
-    u_int tokens;
-    struct xfs_attr attr;
-    pag_t id[MAXRIGHTS];
-    u_char rights[MAXRIGHTS];
-    u_char anonrights;
+	xfs_handle	handle;
+	u_int		tokens;
+	struct xfs_attr	attr;
+	pag_t		id[MAXRIGHTS];
+	u_char		rights[MAXRIGHTS];
+	u_char		anonrights;
 };
 
 /*
  * Messages passed through the  xfs_dev.
  */
 struct xfs_message_header {
-  u_int size;
-  u_int opcode;
-  u_int sequence_num;		/* Private */
+	u_int	size;
+	u_int	opcode;
+	u_int	sequence_num;		/* Private */
 };
 
 /*
  * Used by putdata flag
  */
-
 enum { XFS_READ = 1, XFS_WRITE = 2, XFS_NONBLOCK = 4, XFS_APPEND = 8};
 
 /*
  * Flags for inactivenode
  */
-
 enum { XFS_NOREFS = 1, XFS_DELETE = 2 };
 
 /*
@@ -200,191 +192,191 @@ enum { XFS_NOREFS = 1, XFS_DELETE = 2 };
 
 /* XFS_MESSAGE_WAKEUP */
 struct xfs_message_wakeup {
-  struct xfs_message_header header;
-  int sleepers_sequence_num;	/* Where to send wakeup */
-  int error;			/* Return value */
+	struct xfs_message_header	header;
+	int		sleepers_sequence_num;	/* Where to send wakeup */
+	int				error;		/* Return value */
 };
 
 /* XFS_MESSAGE_GETROOT */
 struct xfs_message_getroot {
-  struct xfs_message_header header;
-  struct xfs_cred cred;
+	struct xfs_message_header	header;
+	struct xfs_cred			cred;
 };
 
 /* XFS_MESSAGE_INSTALLROOT */
 struct xfs_message_installroot {
-  struct xfs_message_header header;
-  struct xfs_msg_node node;
+	struct xfs_message_header	header;
+	struct xfs_msg_node		node;
 };
 
 /* XFS_MESSAGE_GETNODE */
 struct xfs_message_getnode {
-  struct xfs_message_header header;
-  struct xfs_cred cred;
-  xfs_handle parent_handle;
-  char name[256];		/* XXX */
+	struct xfs_message_header	header;
+	struct xfs_cred			cred;
+	xfs_handle			parent_handle;
+	char				name[256];	/* XXX */
 };
 
 /* XFS_MESSAGE_INSTALLNODE */
 struct xfs_message_installnode {
-  struct xfs_message_header header;
-  xfs_handle parent_handle;
-  char name[256];		/* XXX */
-  struct xfs_msg_node node;
+	struct xfs_message_header	header;
+	xfs_handle			parent_handle;
+	char				name[256];	/* XXX */
+	struct xfs_msg_node		node;
 };
 
 /* XFS_MESSAGE_GETATTR */
 struct xfs_message_getattr {
-  struct xfs_message_header header;
-  struct xfs_cred cred;
-  xfs_handle handle;
+	struct xfs_message_header	header;
+	struct xfs_cred			cred;
+	xfs_handle			handle;
 };
 
 /* XFS_MESSAGE_INSTALLATTR */
 struct xfs_message_installattr {
-  struct xfs_message_header header;
-  struct xfs_msg_node node;
+	struct xfs_message_header	header;
+	struct xfs_msg_node		node;
 };
 
 /* XFS_MESSAGE_GETDATA */
 struct xfs_message_getdata {
-  struct xfs_message_header header;
-  struct xfs_cred cred;
-  xfs_handle handle;
-  u_int tokens;
+	struct xfs_message_header	header;
+	struct xfs_cred			cred;
+	xfs_handle			handle;
+	u_int				tokens;
 };
 
 /* XFS_MESSAGE_INSTALLDATA */
 struct xfs_message_installdata {
-  struct xfs_message_header header;
-  struct xfs_msg_node node;
-  struct xfs_cache_handle cache_handle;
+	struct xfs_message_header	header;
+	struct xfs_msg_node		node;
+	struct xfs_cache_handle		cache_handle;
 };
 
 /* XFS_MSG_INACTIVENODE */
 struct xfs_message_inactivenode {
-  struct xfs_message_header header;
-  xfs_handle handle;
-  u_int flag;
+	struct xfs_message_header	header;
+	xfs_handle			handle;
+	u_int				flag;
 };
 
 /* XFS_MSG_INVALIDNODE */
 struct xfs_message_invalidnode {
-  struct xfs_message_header header;
-  xfs_handle handle;
+	struct xfs_message_header	header;
+	xfs_handle			handle;
 };
 
 /* XFS_MSG_OPEN */
 struct xfs_message_open {
-  struct xfs_message_header header;
-  struct xfs_cred cred;
-  xfs_handle handle;
-  u_int tokens;
+	struct xfs_message_header	header;
+	struct xfs_cred			cred;
+	xfs_handle			handle;
+	u_int				tokens;
 };
 
 /* XFS_MSG_PUTDATA */
 struct xfs_message_putdata {
-  struct xfs_message_header header;
-  xfs_handle handle;
-  struct xfs_attr attr;		/* XXX ??? */
-  struct xfs_cred cred;
-  u_int flag;
+	struct xfs_message_header	header;
+	xfs_handle			handle;
+	struct xfs_attr			attr;
+	struct xfs_cred			cred;
+	u_int				flag;
 };
 
 /* XFS_MSG_PUTATTR */
 struct xfs_message_putattr {
-  struct xfs_message_header header;
-  xfs_handle handle;
-  struct xfs_attr attr;
-  struct xfs_cred cred;
+	struct xfs_message_header	header;
+	xfs_handle			handle;
+	struct xfs_attr			attr;
+	struct xfs_cred			cred;
 };
 
 /* XFS_MSG_CREATE */
 struct xfs_message_create {
-  struct xfs_message_header header;
-  xfs_handle parent_handle;
-  char name[256];		/* XXX */
-  struct xfs_attr attr;
+	struct xfs_message_header	header;
+	xfs_handle			parent_handle;
+	char				name[256];	/* XXX */
+	struct xfs_attr			attr;
 #if 0 /* XXX ??? */
-  enum vcexcl exclusive;
+	enum vcexcl			exclusive;
 #endif
-  int mode;
-  struct xfs_cred cred;
+	int				mode;
+	struct xfs_cred			cred;
 };
 
 /* XFS_MSG_MKDIR */
 struct xfs_message_mkdir {
-  struct xfs_message_header header;
-  xfs_handle parent_handle;
-  char name[256];		/* XXX */
-  struct xfs_attr attr;
-  struct xfs_cred cred;
+	struct xfs_message_header	header;
+	xfs_handle			parent_handle;
+	char				name[256];	/* XXX */
+	struct xfs_attr			attr;
+	struct xfs_cred			cred;
 };
 
 /* XFS_MSG_LINK */
 struct xfs_message_link {
-  struct xfs_message_header header;
-  xfs_handle parent_handle;
-  char name[256];		/* XXX */
-  xfs_handle from_handle;
-  struct xfs_cred cred;
+	struct xfs_message_header	header;
+	xfs_handle			parent_handle;
+	char				name[256];	/* XXX */
+	xfs_handle			from_handle;
+	struct xfs_cred			cred;
 };
 
 /* XFS_MSG_SYMLINK */
 struct xfs_message_symlink {
-  struct xfs_message_header header;
-  xfs_handle parent_handle;
-  char name[256];		/* XXX */
-  char contents[2048];		/* XXX */
-  struct xfs_attr attr;
-  struct xfs_cred cred;
+	struct xfs_message_header	header;
+	xfs_handle			parent_handle;
+	char				name[256];	/* XXX */
+	char				contents[2048];	/* XXX */
+	struct xfs_attr			attr;
+	struct xfs_cred			cred;
 };
 
 /* XFS_MSG_REMOVE */
 struct xfs_message_remove {
-  struct xfs_message_header header;
-  xfs_handle parent_handle;
-  char name[256];		/* XXX */
-  struct xfs_cred cred;
+	struct xfs_message_header	header;
+	xfs_handle			parent_handle;
+	char				name[256];	/* XXX */
+	struct xfs_cred			cred;
 };
 
 /* XFS_MSG_RMDIR */
 struct xfs_message_rmdir {
-  struct xfs_message_header header;
-  xfs_handle parent_handle;
-  char name[256];		/* XXX */
-  struct xfs_cred cred;
+	struct xfs_message_header	header;
+	xfs_handle			parent_handle;
+	char				name[256];	/* XXX */
+	struct xfs_cred			cred;
 };
 
 /* XFS_MSG_RENAME */
 struct xfs_message_rename {
-  struct xfs_message_header header;
-  xfs_handle old_parent_handle;
-  char old_name[256];		/* XXX */
-  xfs_handle new_parent_handle;
-  char new_name[256];		/* XXX */
-  struct xfs_cred cred;
+	struct xfs_message_header	header;
+	xfs_handle			old_parent_handle;
+	char				old_name[256];	/* XXX */
+	xfs_handle			new_parent_handle;
+	char				new_name[256];	/* XXX */
+	struct xfs_cred			cred;
 };
 
 /* XFS_MSG_PIOCTL */
 struct xfs_message_pioctl {
-  struct xfs_message_header header;
-  int opcode ;
-  xfs_cred cred;         /* XXX we should also use PAG */
-  int insize;
-  int outsize;
-  char msg[2048] ;    /* XXX */
-  xfs_handle handle;
+	struct xfs_message_header	header;
+	int				opcode ;
+	xfs_cred			cred;
+	int				insize;
+	int				outsize;
+	char				msg[2048];    /* XXX */
+	xfs_handle			handle;
 };
 
 
 /* XFS_MESSAGE_WAKEUP_DATA */
 struct xfs_message_wakeup_data {
-  struct xfs_message_header header;
-  int sleepers_sequence_num;	/* Where to send wakeup */
-  int error;			/* Return value */
-  int len;
-  char msg[2048] ;    /* XXX */
+	struct xfs_message_header	header;
+	int		sleepers_sequence_num;	/* Where to send wakeup */
+	int				error;		/* Return value */
+	int				len;
+	char				msg[2048];    /* XXX */
 };
 
 #endif /* _xmsg_h */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xfs_node.h,v 1.1 1998/08/30 16:47:21 art Exp $	*/
+/*	$OpenBSD: xfs_node.h,v 1.2 1998/08/31 05:13:28 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -39,33 +39,32 @@
 
 /* 	$KTH: xfs_node.h,v 1.3 1998/07/13 20:36:37 art Exp $	 */
 
-#ifndef _xfs_xnode_h
-#define _xfs_xnode_h
+#ifndef _XFS_XFS_NODE_H_
+#define _XFS_XFS_NODE_H_
 
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/vnode.h>
 
-#include <sys/xfs_attr.h>
-#include <sys/xfs_message.h>
+#include <xfs/xfs_attr.h>
+#include <xfs/xfs_message.h>
 
 struct xfs_node {
-    struct vnode *vn;
-    struct vnode *data;
-    struct vattr attr;
-    u_int flags;
-    u_int tokens;
-    xfs_handle handle;
-    pag_t id[MAXRIGHTS];
-    u_char rights[MAXRIGHTS];
-    u_char anonrights;
+	struct vnode	*vn;
+	struct vnode	*data;
+	struct vattr	attr;
+	u_int		flags;
+	u_int		tokens;
+	xfs_handle	handle;
+	pag_t		id[MAXRIGHTS];
+	u_char		rights[MAXRIGHTS];
+	u_char		anonrights;
 };
 
 #define DATA_FROM_VNODE(vp) DATA_FROM_XNODE(VNODE_TO_XNODE(vp))
-
 #define DATA_FROM_XNODE(xp) ((xp)->data)
 
 #define XNODE_TO_VNODE(xp) ((xp)->vn)
 #define VNODE_TO_XNODE(vp) ((struct xfs_node *) (vp)->v_data)
 
-#endif				       /* _xfs_xnode_h */
+#endif

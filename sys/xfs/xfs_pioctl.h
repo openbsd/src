@@ -1,4 +1,4 @@
-/*	$OpenBSD: xfs_pioctl.h,v 1.1 1998/08/30 18:06:26 art Exp $	*/
+/*	$OpenBSD: xfs_pioctl.h,v 1.1 1998/08/31 05:13:29 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska HÅˆgskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -42,6 +42,7 @@
 
 /*
  */
+
 #define AFSCALL_PIOCTL 20
 #define AFSCALL_SETPAG 21
 
@@ -83,17 +84,17 @@
 #define VIOCGETCACHEPARAMS      _VICEIOCTL(40)
 
 struct ViceIoctl {
-  caddr_t in, out;
-  short in_size;
-  short out_size;
+	caddr_t	in, out;
+	short	in_size;
+	short	out_size;
 };
 
 struct ClearToken {
-  int32_t AuthHandle;
-  char HandShakeKey[8];
-  int32_t ViceId;
-  int32_t BeginTimestamp;
-  int32_t EndTimestamp;
+	int32_t	AuthHandle;
+	char	HandShakeKey[8];
+	int32_t	ViceId;
+	int32_t	BeginTimestamp;
+	int32_t	EndTimestamp;
 };
 
 #endif
