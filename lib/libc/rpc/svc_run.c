@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: svc_run.c,v 1.5 1996/08/19 08:31:55 tholo Exp $";
+static char *rcsid = "$OpenBSD: svc_run.c,v 1.6 1996/08/20 20:01:56 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -48,19 +48,26 @@ svc_run()
 	fd_set *fds;
 
 	for (;;) {
-		fds = (fd_set *)malloc(howmany(__svc_fdsetsize, NBBY));
-		memcpy(fds, __svc_fdset, howmany(__svc_fdsetsize, NBBY));
+		if (__svc_fdset) {
+			fds = (fd_set *)malloc(howmany(__svc_fdsetsize, NBBY));
+			memcpy(fds, __svc_fdset, howmany(__svc_fdsetsize,
+			    NBBY));
+		} else
+			fds = NULL;
 		switch (select(svc_maxfd+1, fds, 0, 0, (struct timeval *)0)) {
 		case -1:
 			if (errno == EINTR) {
-				free(fds);
+				if (fds)
+					free(fds);
 				continue;
 			}
 			perror("svc_run: - select failed");
-			free(fds);
+			if (fds)
+				free(fds);
 			return;
 		case 0:
-			free(fds);
+			if (fds)
+				free(fds);
 			continue;
 		default:
 			svc_getreqset2(fds, svc_maxfd+1);
