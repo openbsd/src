@@ -31,7 +31,7 @@
 #include "log.h"
 #include "monitor.h"
 
-void
+int
 mm_send_fd (int socket, int fd)
 {
   struct msghdr msg;
@@ -56,9 +56,16 @@ mm_send_fd (int socket, int fd)
   msg.msg_iovlen = 1;
 
   if ((n = sendmsg (socket, &msg, 0)) == -1)
-    log_error ("%s: sendmsg(%d)", __func__, fd);
+    {
+      log_error ("%s: sendmsg(%d)", __func__, fd);
+      return -1;
+    }
   if (n != 1)
-    log_error ("%s: sendmsg: expected sent 1 got %ld", __func__, (long)n);
+    {
+      log_error ("%s: sendmsg: expected sent 1 got %ld", __func__, (long)n);
+      return -1;
+    }
+  return 0;
 }
 
 int
@@ -81,14 +88,24 @@ mm_receive_fd (int socket)
   msg.msg_controllen = sizeof tmp;
 
   if ((n = recvmsg(socket, &msg, 0)) == -1)
-    log_error ("%s: recvmsg", __func__);
+    {
+      log_error ("%s: recvmsg", __func__);
+      return -1;
+    }
   if (n != 1)
-    log_error ("%s: recvmsg: expected received 1 got %ld", __func__, (long)n);
+    {
+      log_error ("%s: recvmsg: expected received 1 got %ld", __func__,
+		 (long)n);
+      return -1;
+    }
 
   cmsg = CMSG_FIRSTHDR (&msg);
   if (cmsg->cmsg_type != SCM_RIGHTS)
-    log_error ("%s: expected type %d got %d", __func__, SCM_RIGHTS,
-	       cmsg->cmsg_type);
+    {
+      log_error ("%s: expected type %d got %d", __func__, SCM_RIGHTS,
+		 cmsg->cmsg_type);
+      return -1;
+    }
   fd = (*(int *)CMSG_DATA (cmsg));
   return fd;
 }
