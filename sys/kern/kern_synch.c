@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.14 1999/02/26 05:10:40 art Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.15 1999/04/21 01:21:48 alex Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -734,15 +734,15 @@ db_show_all_procs(addr, haddr, count, modif)
 	switch (*mode) {
 
 	case 'a':
-		db_printf("PID        %10s %18s %18s %18s\n",
+		db_printf("  PID  %-10s  %18s  %18s  %18s\n",
 		    "COMMAND", "STRUCT PROC *", "UAREA *", "VMSPACE/VM_MAP");
 		break;
 	case 'n':
-		db_printf("PID        %10s %10s %10s S %7s %16s %7s\n",
-		    "PPID", "PGRP", "UID", "FLAGS", "COMMAND", "WAIT");
+		db_printf("  PID  %5s  %5s  %5s  S  %10s  %-9s  %-16s\n",
+		    "PPID", "PGRP", "UID", "FLAGS", "WAIT", "COMMAND");
 		break;
 	case 'w':
-		db_printf("PID        %16s %8s %18s %s\n",
+		db_printf("  PID  %-16s  %-8s  %18s  %s\n",
 		    "COMMAND", "EMUL", "WAIT-CHANNEL", "WAIT-MSG");
 		break;
 	}
@@ -751,25 +751,26 @@ db_show_all_procs(addr, haddr, count, modif)
 		pp = p->p_pptr;
 		if (p->p_stat) {
 
-			db_printf("%-10d ", p->p_pid);
+			db_printf("%5d  ", p->p_pid);
 
 			switch (*mode) {
 
 			case 'a':
-				db_printf("%10.10s %18p %18p %18p\n",
+				db_printf("%-10.10s  %18p  %18p  %18p\n",
 				    p->p_comm, p, p->p_addr, p->p_vmspace);
 				break;
 
 			case 'n':
-				db_printf("%10d %10d %10d %d %#7x %16s %7.7s\n",
+				db_printf("%5d  %5d  %5d  %d  %#10x  "
+				    "%-9.9s  %-16s\n",
 				    pp ? pp->p_pid : -1, p->p_pgrp->pg_id,
 				    p->p_cred->p_ruid, p->p_stat, p->p_flag,
-				    p->p_comm, (p->p_wchan && p->p_wmesg) ?
-					p->p_wmesg : "");
+				    (p->p_wchan && p->p_wmesg) ?
+					p->p_wmesg : "", p->p_comm);
 				break;
 
 			case 'w':
-				db_printf("%16s %8s %18p %s\n", p->p_comm,
+				db_printf("%-16s  %-8s  %18p  %s\n", p->p_comm,
 				    p->p_emul->e_name, p->p_wchan,
 				    (p->p_wchan && p->p_wmesg) ? 
 					p->p_wmesg : "");
