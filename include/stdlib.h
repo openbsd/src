@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.21 2002/10/25 21:55:28 millert Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.22 2002/12/02 02:07:28 millert Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -108,6 +108,7 @@ int	 atexit(void (*)(void));
 double	 atof(const char *);
 int	 atoi(const char *);
 long	 atol(const char *);
+long long atoll(const char *);
 void	*bsearch(const void *, const void *, size_t, size_t,
 	    int (*)(const void *, const void *));
 void	*calloc(size_t, size_t);
