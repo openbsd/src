@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.8 1999/02/26 05:10:40 art Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.9 1999/07/15 14:07:41 art Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -275,8 +275,8 @@ dosetrlimit(p, which, limp)
 		 * up make more accessible, if going down make inaccessible.
 		 */
 		if (limp->rlim_cur != alimp->rlim_cur) {
-			vm_offset_t addr;
-			vm_size_t size;
+			vaddr_t addr;
+			vsize_t size;
 			vm_prot_t prot;
 
 			if (limp->rlim_cur > alimp->rlim_cur) {

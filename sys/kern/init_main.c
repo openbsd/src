@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.38 1999/04/22 19:28:07 art Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.39 1999/07/15 14:07:41 art Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -484,7 +484,7 @@ start_init(arg)
 	void *arg;
 {
 	struct proc *p = arg;
-	vm_offset_t addr;
+	vaddr_t addr;
 	struct sys_execve_args /* {
 		syscallarg(char *) path;
 		syscallarg(char **) argp;
@@ -526,7 +526,7 @@ start_init(arg)
 		!= KERN_SUCCESS)
 		panic("init: couldn't allocate argument space");
 #else
-	if (vm_allocate(&p->p_vmspace->vm_map, &addr, (vm_size_t)PAGE_SIZE,
+	if (vm_allocate(&p->p_vmspace->vm_map, &addr, (vsize_t)PAGE_SIZE,
 	    FALSE) != 0)
 		panic("init: couldn't allocate argument space");
 #endif

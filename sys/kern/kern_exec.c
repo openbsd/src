@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.30 1999/07/13 15:17:50 provos Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.31 1999/07/15 14:07:41 art Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -285,7 +285,7 @@ sys_execve(p, v, retval)
 	argp = (char *)kmem_alloc_wait(exec_map, NCARGS);
 #endif
 #ifdef DIAGNOSTIC
-	if (argp == (vm_offset_t) 0)
+	if (argp == (vaddr_t) 0)
 		panic("execve: argp == NULL");
 #endif
 	dp = argp;
@@ -550,7 +550,7 @@ sys_execve(p, v, retval)
 #if defined(UVM)
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 #else
-	kmem_free_wakeup(exec_map, (vm_offset_t)argp, NCARGS);
+	kmem_free_wakeup(exec_map, (vaddr_t)argp, NCARGS);
 #endif
 
 	FREE(nid.ni_cnd.cn_pnbuf, M_NAMEI);
@@ -591,7 +591,7 @@ bad:
 #if defined(UVM)
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 #else
-	kmem_free_wakeup(exec_map, (vm_offset_t) argp, NCARGS);
+	kmem_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 #endif
 
 freehdr:
@@ -619,7 +619,7 @@ exec_abort:
 #if defined(UVM)
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 #else
-	kmem_free_wakeup(exec_map, (vm_offset_t) argp, NCARGS);
+	kmem_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 #endif
 
 free_pack_abort:

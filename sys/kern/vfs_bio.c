@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.22 1999/04/28 09:28:15 art Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.23 1999/07/15 14:07:41 art Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -632,9 +632,9 @@ allocbuf(bp, size)
 	struct buf *bp;
 	int size;
 {
-	struct buf      *nbp;
-	vm_size_t       desired_size;
-	int	     s;
+	struct buf	*nbp;
+	vsize_t		desired_size;
+	int		s;
 
 	desired_size = roundup(size, CLBYTES);
 	if (desired_size > MAXBSIZE)

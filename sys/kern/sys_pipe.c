@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.16 1999/07/13 15:17:50 provos Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.17 1999/07/15 14:07:41 art Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -243,12 +243,12 @@ pipespace(cpipe)
 	 */
 #if defined(__FreeBSD__)
 	error = vm_map_find(kernel_map, cpipe->pipe_buffer.object, 0,
-		(vm_offset_t *) &cpipe->pipe_buffer.buffer, 
+		(vaddr_t *) &cpipe->pipe_buffer.buffer, 
 		cpipe->pipe_buffer.size, 1,
 		VM_PROT_ALL, VM_PROT_ALL, 0);
 #else /* (__NetBSD__) || (__OpenBSD__) */
 	error = vm_map_find(kernel_map, cpipe->pipe_buffer.object, 0,
-		(vm_offset_t *) &cpipe->pipe_buffer.buffer,
+		(vaddr_t *) &cpipe->pipe_buffer.buffer,
 		cpipe->pipe_buffer.size, 1);
 #endif
 
@@ -509,7 +509,7 @@ pipe_build_write_buffer(wpipe, uio)
 {
 	int size;
 	int i;
-	vm_offset_t addr, endaddr, paddr;
+	vaddr_t addr, endaddr, paddr;
 
 	size = uio->uio_iov->iov_len;
 	if (size > wpipe->pipe_buffer.size)
@@ -540,7 +540,7 @@ pipe_build_write_buffer(wpipe, uio)
  * set up the control block
  */
 	wpipe->pipe_map.npages = i;
-	wpipe->pipe_map.pos = ((vm_offset_t) uio->uio_iov->iov_base) & PAGE_MASK;
+	wpipe->pipe_map.pos = ((vaddr_t) uio->uio_iov->iov_base) & PAGE_MASK;
 	wpipe->pipe_map.cnt = size;
 
 /*
@@ -583,7 +583,7 @@ struct pipe *wpipe;
 		pmap_qremove(wpipe->pipe_map.kva, wpipe->pipe_map.npages);
 
 		if (amountpipekva > MAXPIPEKVA) {
-			vm_offset_t kva = wpipe->pipe_map.kva;
+			vaddr_t kva = wpipe->pipe_map.kva;
 			wpipe->pipe_map.kva = 0;
 			kmem_free(kernel_map, kva,
 				wpipe->pipe_buffer.size + PAGE_SIZE);
@@ -748,11 +748,11 @@ pipe_write(fp, uio, cred)
 			amountpipekva -= wpipe->pipe_buffer.size;
 #if defined(UVM)
 			uvm_km_free(kernel_map,
-				(vm_offset_t)wpipe->pipe_buffer.buffer,
+				(vaddr_t)wpipe->pipe_buffer.buffer,
 				wpipe->pipe_buffer.size);
 #else
 			kmem_free(kernel_map,
-				(vm_offset_t)wpipe->pipe_buffer.buffer,
+				(vaddr_t)wpipe->pipe_buffer.buffer,
 				wpipe->pipe_buffer.size);
 #endif
 		}
@@ -1128,11 +1128,11 @@ pipeclose(cpipe)
 			amountpipekva -= cpipe->pipe_buffer.size;
 #if defined(UVM)
 			uvm_km_free(kernel_map,
-				(vm_offset_t)cpipe->pipe_buffer.buffer,
+				(vaddr_t)cpipe->pipe_buffer.buffer,
 				cpipe->pipe_buffer.size);
 #else
 			kmem_free(kernel_map,
-				(vm_offset_t)cpipe->pipe_buffer.buffer,
+				(vaddr_t)cpipe->pipe_buffer.buffer,
 				cpipe->pipe_buffer.size);
 #endif
 		}
