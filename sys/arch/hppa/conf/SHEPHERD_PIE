@@ -1,4 +1,4 @@
-#	$OpenBSD: SHEPHERD_PIE,v 1.2 1999/04/20 21:33:35 mickey Exp $
+#	$OpenBSD: SHEPHERD_PIE,v 1.3 1999/05/05 02:14:49 mickey Exp $
 #
 # Diskless kernel config
 #
@@ -126,8 +126,8 @@ lpt0	at gsc? irq 7	# both com and lpt are on WD16C552
 #vga*	at eisa? slot ?
 #sh*	at eisa? slot ?	# Interphase Seahawk 4811 EISA/FDDI board
 ep*	at eisa? slot ?
-bha*	at eisa? slot ?
-scsibus* at bha?
+#bha*	at eisa? slot ?
+#scsibus* at bha?
 
 # ISA devices
 #vga*	at isa?
@@ -152,7 +152,7 @@ option	WSEMUL_DUMB
 #wd*	at wdc? drive ?
 #acd*	at atapibus? drive ?
 
-sd*	at scsibus? target ? lun ?
+#sd*	at scsibus? target ? lun ?
 #st*	at scsibus? target ? lun ?
 #cd*	at scsibus? target ? lun ?
 #ch*	at scsibus? target ? lun ?
