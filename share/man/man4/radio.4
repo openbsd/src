@@ -1,5 +1,5 @@
 .\"	$RuOBSD: radio.4,v 1.4 2001/10/26 05:38:43 form Exp $
-.\"	$OpenBSD: radio.4,v 1.18 2003/06/06 10:29:41 jmc Exp $
+.\"	$OpenBSD: radio.4,v 1.19 2003/12/14 20:01:22 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Vladimir Popov
 .\" All rights reserved.
@@ -61,9 +61,9 @@ commands are supported:
 .Bl -tag -width indent -compact
 .It Dv RIOCSSRCH (int)
 This command assumes that a signal search is required and gives direction
-of search to the driver - 0 to search down and any non-zero value to search up.
-.It Dv RIOCSINFO (struct radio_info)
+of search to the driver \- 0 to search down and any non-zero value to search up.
 .It Dv RIOCGINFO (struct radio_info)
+.It Dv RIOCSINFO (struct radio_info)
 Get or set the current hardware device information into the struct radio_info
 structure.
 .Bd -literal
@@ -136,7 +136,7 @@ The device allows changing the reference frequency of a received signal.
 .It Dv RADIO_CAPS_LOCK_SENSITIVITY
 The device allows changing the station lock sensitivity used during search
 operation.
-.It Dv RADIO_CAPS_CARD_TYPE
+.It Dv RADIO_CARD_TYPE
 Some cards have several different incarnations.
 This allows the variant of the card to be determined.
 Currently not used.
@@ -144,14 +144,14 @@ Currently not used.
 .Pp
 The
 .Va info
-field is read-only and describes the current state of the card -
+field is read-only and describes the current state of the card \-
 tuned/not tuned, stereo signal/mono signal.
 .Pp
 .Bl -tag -width indent -compact
-.It Dv RADIO_INFO_SIGNAL
-Informs whether the device receives a valid signal or noise.
 .It Dv RADIO_INFO_STEREO
 Informs whether the device receives a stereo or mono signal.
+.It Dv RADIO_INFO_SIGNAL
+Informs whether the device receives a valid signal or noise.
 .El
 .El
 .Sh CHIPSETS
