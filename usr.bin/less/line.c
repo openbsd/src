@@ -169,7 +169,7 @@ plinenum(pos)
 		n = strlen(buf);
 		if (n < MIN_LINENUM_WIDTH)
 			n = MIN_LINENUM_WIDTH;
-		snprintf(linebuf+curr, sizeof(linebuf)-curr, "%*s ", n, buf);
+		snprintf(linebuf+curr, size_linebuf-curr, "%*s ", n, buf);
 		n++;  /* One space after the line number. */
 		for (i = 0; i < n; i++)
 			attr[curr+i] = AT_NORMAL;
