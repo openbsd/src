@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.23 2002/12/22 02:04:00 mcbride Exp $
+.\"	$OpenBSD: pf.4,v 1.24 2002/12/22 20:02:54 mcbride Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -66,11 +66,15 @@ commands:
 Starts the packet filter.
 .It Dv DIOCSTOP
 Stops the packet filter.
+.It Dv DIOCSTARTALTQ
+Starts the ALTQ bandwidth control system.
+.It Dv DIOCSTOPALTQ
+Stops the ALTQ bandwidth control system.
 .It Dv DIOCBEGINADDRS  Fa "u_int32_t"
 Clears the buffer address pool
 and returns ticket for subsequent DIOCADDADDR, DIOCADDRULE and
 DIOCCHANGERULE calls.
-.It Dv DIOCADDADDR  Fa "struct pfioc_pooladdr"
+.It Dv DIOCADDADDR     Fa "struct pfioc_pooladdr"
 .Bd -literal
 struct pfioc_pooladdr {
 	u_int32_t		action;
@@ -89,8 +93,8 @@ struct pfioc_pooladdr {
 Adds pool address
 .Va addr
 to the buffer address pool to be used in the following
-DIOCADDRULE or DIOCCHANGERULE call. All other members of the structure
-are ignored.
+DIOCADDRULE or DIOCCHANGERULE call.
+All other members of the structure are ignored.
 .It Dv DIOCBEGINRULES  Fa "u_int32_t"
 Clears the inactive ruleset for the type of rule indicated by
 .Va rule.action
@@ -111,13 +115,13 @@ struct pfioc_rule {
 .Pp
 Adds
 .Va rule
-at the end of the inactive filter ruleset.
+at the end of the inactive ruleset.
 Requires
 .Va ticket
 obtained through preceding DIOCBEGINRULES call, and
 .Va pool_ticket
-obtained through DIOCBEGINADDRS call. DIOCADDADDR must also be called if
-any pool addresses are required.
+obtained through DIOCBEGINADDRS call.
+DIOCADDADDR must also be called if any pool addresses are required.
 The optional
 .Va anchor
 and
@@ -131,14 +135,30 @@ are ignored.
 Switch inactive to active filter ruleset.
 Requires
 .Va ticket .
+.It Dv DIOCBEGINALTQS  Fa "u_int32_t"
+Clears the inactive list of queues and returns ticket for subsequent
+DIOCADDALTQ and DIOCCOMMITALTQS calls.
+.It Dv DIOCADDALTQ     Fa "struct pfioc_altq"
+Adds
+.Bd -literal
+struct pfioc_altq {
+	u_int32_t	ticket;
+	u_int32_t	nr;
+	struct pf_altq   altq;
+};
+.Ed
+.It Dv DIOCCOMMITALTQS Fa "u_int32_t"
+Switch inactive to active list of queues.
+Requires
+.Va ticket .
 .It Dv DIOCGETRULES    Fa "struct pfioc_rule"
 Returns
 .Va ticket
 for subsequent DIOCGETRULE calls and
 .Va nr
-of rules in the active filter ruleset.
+of rules in the active ruleset.
 .It Dv DIOCGETRULE     Fa "struct pfioc_rule"
-Returns filter
+Returns
 .Va rule
 number
 .Va nr
@@ -170,6 +190,38 @@ and
 using
 .Va ticket
 obtained through a preceding DIOCGETADDRS call.
+.It Dv DIOCGETALTQS    Fa "struct pfioc_altq"
+Returns
+.Va ticket
+for subsequent DIOCGETALTQ calls and
+.Va nr
+of queues in the active list.
+.It Dv DIOCGETALTQ     Fa "struct pfioc_altq"
+Returns
+.Va altq
+number
+.Va nr
+using
+.Va ticket
+obtained through a preceding DIOCGETALTQS call.
+.It Dv DIOCGETQSTATS   Fa "struct pfioc_qstats"
+Returns statistics on a queue.
+.Bd -literal
+struct pfioc_qstats {
+	u_int32_t	 ticket;
+	u_int32_t	 nr;
+	void		*buf;
+	int		 nbytes;
+	u_int8_t	 scheduler;
+};
+.Ed
+.Pp
+A pointer to a buffer of statistics
+.Va buf
+of length
+.Va nbytes
+for the queue specified by
+.Va nr .
 .It Dv DIOCCLRSTATES
 Clears the state table.
 .It Dv DIOCADDSTATE    Fa "struct pfioc_state"
@@ -281,7 +333,6 @@ indicate which anchor and ruleset the operation applies to.
 .Va nr
 indicates the rule number against which PF_CHANGE_ADD_BEFORE,
 PF_CHANGE_ADD_AFTER or PF_CHANGE_REMOVE actions are applied.
-.Pp
 .It Dv DIOCCHANGEADDR  Fa "struct pfioc_addr"
 Adds or removes a pool address
 .Va addr
