@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getservbyname.c,v 1.2 1996/08/19 08:28:55 tholo Exp $";
+static char rcsid[] = "$OpenBSD: getservbyname.c,v 1.3 1997/07/09 01:08:34 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <netdb.h>
@@ -48,7 +48,7 @@ getservbyname(name, proto)
 	register char **cp;
 
 	setservent(_serv_stayopen);
-	while (p = getservent()) {
+	while ((p = getservent())) {
 		if (strcmp(name, p->s_name) == 0)
 			goto gotname;
 		for (cp = p->s_aliases; *cp; cp++)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsap_addr.c,v 1.3 1997/03/13 19:07:34 downsj Exp $	*/
+/*	$OpenBSD: nsap_addr.c,v 1.4 1997/07/09 01:08:45 millert Exp $	*/
 
 /*
  * Copyright (c) 1996 by Internet Software Consortium.
@@ -21,7 +21,7 @@
 #if 0
 static char rcsid[] = "$From: nsap_addr.c,v 8.3 1996/08/05 08:31:35 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: nsap_addr.c,v 1.3 1997/03/13 19:07:34 downsj Exp $";
+static char rcsid[] = "$OpenBSD: nsap_addr.c,v 1.4 1997/07/09 01:08:45 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,7 +58,7 @@ inet_nsap_addr(ascii, binary, maxlen)
 			c = toupper(c);
 		if (isxdigit(c)) {
 			nib = xtob(c);
-			if (c = *ascii++) {
+			if ((c = *ascii++)) {
 				c = toupper(c);
 				if (isxdigit(c)) {
 					*binary++ = (nib << 4) | xtob(c);

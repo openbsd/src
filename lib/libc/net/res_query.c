@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_query.c,v 1.9 1997/04/06 07:55:04 deraadt Exp $	*/
+/*	$OpenBSD: res_query.c,v 1.10 1997/07/09 01:08:53 millert Exp $	*/
 
 /*
  * ++Copyright++ 1988, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_query.c,v 8.9 1996/09/22 00:13:28 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_query.c,v 1.9 1997/04/06 07:55:04 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: res_query.c,v 1.10 1997/07/09 01:08:53 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -77,6 +77,7 @@ static char rcsid[] = "$OpenBSD: res_query.c,v 1.9 1997/04/06 07:55:04 deraadt E
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #if PACKETSZ > 1024
 #define MAXPACKET	PACKETSZ

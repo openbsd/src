@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getservbyport.c,v 1.2 1996/08/19 08:28:57 tholo Exp $";
+static char rcsid[] = "$OpenBSD: getservbyport.c,v 1.3 1997/07/09 01:08:35 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <netdb.h>
@@ -48,7 +48,7 @@ getservbyport(port, proto)
 	register struct servent *p;
 
 	setservent(_serv_stayopen);
-	while (p = getservent()) {
+	while ((p = getservent())) {
 		if (p->s_port != port)
 			continue;
 		if (proto == 0 || strcmp(p->s_proto, proto) == 0)

@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getprotoname.c,v 1.2 1996/08/19 08:28:53 tholo Exp $";
+static char rcsid[] = "$OpenBSD: getprotoname.c,v 1.3 1997/07/09 01:08:32 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <netdb.h>
@@ -48,7 +48,7 @@ getprotobyname(name)
 	register char **cp;
 
 	setprotoent(_proto_stayopen);
-	while (p = getprotoent()) {
+	while ((p = getprotoent())) {
 		if (strcmp(p->p_name, name) == 0)
 			break;
 		for (cp = p->p_aliases; *cp != 0; cp++)

@@ -1,4 +1,5 @@
-/* $OpenBSD: bcrypt.c,v 1.6 1997/07/01 20:12:43 provos Exp $ */
+/*	$OpenBSD: bcrypt.c,v 1.7 1997/07/09 01:08:18 millert Exp $	*/
+
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
  * All rights reserved.
@@ -48,6 +49,7 @@
 #include <stdio.h>
 #endif
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <string.h>

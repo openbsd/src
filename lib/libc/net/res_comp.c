@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_comp.c,v 1.7 1997/04/30 05:54:44 tholo Exp $	*/
+/*	$OpenBSD: res_comp.c,v 1.8 1997/07/09 01:08:49 millert Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)res_comp.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_comp.c,v 8.11 1996/12/02 09:17:22 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_comp.c,v 1.7 1997/04/30 05:54:44 tholo Exp $";
+static char rcsid[] = "$OpenBSD: res_comp.c,v 1.8 1997/07/09 01:08:49 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -106,7 +106,7 @@ dn_expand(msg, eomorig, comp_dn, exp_dn, length)
 	/*
 	 * fetch next label in domain name
 	 */
-	while (n = *cp++) {
+	while ((n = *cp++)) {
 		/*
 		 * Check for indirection
 		 */
@@ -306,7 +306,7 @@ dn_find(exp_dn, msg, dnptrs, lastdnptr)
 	for (cpp = dnptrs; cpp < lastdnptr; cpp++) {
 		dn = exp_dn;
 		sp = cp = *cpp;
-		while (n = *cp++) {
+		while ((n = *cp++)) {
 			/*
 			 * check for indirection
 			 */

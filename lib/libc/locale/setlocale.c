@@ -1,3 +1,4 @@
+/*	$OpenBSD: setlocale.c,v 1.6 1997/07/09 01:08:21 millert Exp $	*/
 /*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,16 +36,17 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: setlocale.c,v 1.5 1996/10/29 03:22:27 millert Exp $";
+static char rcsid[] = "$OpenBSD: setlocale.c,v 1.6 1997/07/09 01:08:21 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>
 #include <locale.h>
 #include <limits.h>
+#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <paths.h>
+#include <unistd.h>
 
 /*
  * Category names for getenv()

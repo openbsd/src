@@ -1,4 +1,4 @@
-/*	$OpenBSD: base64.c,v 1.1 1997/03/13 19:07:22 downsj Exp $	*/
+/*	$OpenBSD: base64.c,v 1.2 1997/07/09 01:08:24 millert Exp $	*/
 
 /*
  * Copyright (c) 1996 by Internet Software Consortium.
@@ -278,7 +278,7 @@ b64_pton(src, target, targsize)
 
 		case 2:		/* Valid, means one byte of info */
 			/* Skip any number of spaces. */
-			for (NULL; ch != '\0'; ch = *src++)
+			for (; ch != '\0'; ch = *src++)
 				if (!isspace(ch))
 					break;
 			/* Make sure there is another trailing = sign. */
@@ -293,7 +293,7 @@ b64_pton(src, target, targsize)
 			 * We know this char is an =.  Is there anything but
 			 * whitespace after it?
 			 */
-			for (NULL; ch != '\0'; ch = *src++)
+			for (; ch != '\0'; ch = *src++)
 				if (!isspace(ch))
 					return (-1);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_debug.c,v 1.7 1997/04/30 05:54:43 tholo Exp $	*/
+/*	$OpenBSD: res_debug.c,v 1.8 1997/07/09 01:08:51 millert Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1990, 1993
@@ -82,7 +82,7 @@
 static char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_debug.c,v 8.19 1996/11/26 10:11:23 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_debug.c,v 1.7 1997/04/30 05:54:43 tholo Exp $";
+static char rcsid[] = "$OpenBSD: res_debug.c,v 1.8 1997/07/09 01:08:51 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -201,7 +201,7 @@ do_rrset(msg, len, cp, cnt, pflag, file, hs)
 	 * Print answer records.
 	 */
 	sflag = (_res.pfcode & pflag);
-	if (n = ntohs(cnt)) {
+	if ((n = ntohs(cnt))) {
 		if ((!_res.pfcode) ||
 		    ((sflag) && (_res.pfcode & RES_PRF_HEAD1)))
 			fprintf(file, hs);
@@ -322,7 +322,7 @@ __fp_nquery(msg, len, file)
 	/*
 	 * Print question records.
 	 */
-	if (n = ntohs(hp->qdcount)) {
+	if ((n = ntohs(hp->qdcount))) {
 		if ((!_res.pfcode) || (_res.pfcode & RES_PRF_QUES))
 			fprintf(file, ";; QUESTIONS:\n");
 		while (--n >= 0) {
@@ -632,7 +632,7 @@ __p_rr(cp, msg, file)
 		cp2 = cp1 + dlen;
 		while (cp < cp2) {
 			putc('"', file);
-			if (n = (unsigned char) *cp++) {
+			if ((n = (unsigned char) *cp++)) {
 				for (c = n; c > 0 && cp < cp2; c--) {
 					if (strchr("\n\"\\", *cp))
 						(void) putc('\\', file);
@@ -847,8 +847,8 @@ __p_rr(cp, msg, file)
 	putc('\n', file);
 #endif
 	if (cp - cp1 != dlen) {
-		fprintf(file, ";; packet size error (found %d, dlen was %d)\n",
-			cp - cp1, dlen);
+		fprintf(file, ";; packet size error (found %ld, dlen was %d)\n",
+			(long)(cp - cp1), dlen);
 		cp = NULL;
 	}
 	return (cp);
@@ -929,7 +929,7 @@ __sym_ston(syms, name, success)
 	char *name;
 	int *success;
 {
-	for (NULL; syms->name != 0; syms++) {
+	for (; syms->name != 0; syms++) {
 		if (strcasecmp (name, syms->name) == 0) {
 			if (success)
 				*success = 1;
@@ -949,7 +949,7 @@ __sym_ntos(syms, number, success)
 {
 	static char unname[20];
 
-	for (NULL; syms->name != 0; syms++) {
+	for (; syms->name != 0; syms++) {
 		if (number == syms->number) {
 			if (success)
 				*success = 1;
@@ -972,7 +972,7 @@ __sym_ntop(syms, number, success)
 {
 	static char unname[20];
 
-	for (NULL; syms->name != 0; syms++) {
+	for (; syms->name != 0; syms++) {
 		if (number == syms->number) {
 			if (success)
 				*success = 1;

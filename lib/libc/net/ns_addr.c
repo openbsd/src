@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ns_addr.c,v 1.2 1996/08/19 08:29:30 tholo Exp $";
+static char rcsid[] = "$OpenBSD: ns_addr.c,v 1.3 1997/07/09 01:08:41 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -64,7 +64,7 @@ ns_addr(name)
 	 * form  2-272.AA001234H.01777, i.e. XDE standard.
 	 * Great efforts are made to insure backward compatability.
 	 */
-	if (hostname = strchr(buf, '#'))
+	if ((hostname = strchr(buf, '#')))
 		separator = '#';
 	else {
 		hostname = strchr(buf, '.');
