@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.15 1998/08/01 05:36:18 angelos Exp $	*/
+/*	$OpenBSD: main.c,v 1.16 1999/02/24 22:57:34 angelos Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-static char *rcsid = "$OpenBSD: main.c,v 1.15 1998/08/01 05:36:18 angelos Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.16 1999/02/24 22:57:34 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -273,7 +273,7 @@ main(argc, argv)
 			else if (strcmp(optarg, "iso") == 0)
 				af = AF_ISO;
 			else if (strcmp(optarg, "encap") == 0)
-				af = AF_ENCAP;
+				af = PF_KEY;
 			else if (strcmp(optarg, "atalk") == 0)
 				af = AF_APPLETALK;
 			else {
