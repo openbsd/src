@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.38 1996/08/29 07:40:25 deraadt Exp $
+#	$OpenBSD: files,v 1.39 1996/08/30 08:39:19 deraadt Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -103,7 +103,7 @@ file dev/ic/pdq.c			pdq
 file dev/ic/pdq_ifsubr.c		pdq
 file dev/mulaw.c			mulaw
 file dev/vnd.c				vnd			needs-flag
-file dev/random.c			random			needs-flag
+file dev/rnd.c				random			needs-flag
 file isofs/cd9660/cd9660_bmap.c		cd9660
 file isofs/cd9660/cd9660_lookup.c	cd9660
 file isofs/cd9660/cd9660_node.c		cd9660
