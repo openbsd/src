@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.6 2003/02/28 18:05:51 deraadt Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.7 2003/05/30 20:46:10 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -35,16 +35,15 @@ int	global __asm ("$global$") = 0;
 int	sh_func_adrs __asm ("$$sh_func_adrs") = 0;
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: crt0.c,v 1.6 2003/02/28 18:05:51 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: crt0.c,v 1.7 2003/05/30 20:46:10 mickey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#include <sys/param.h>
 #include <sys/syscall.h>
 #include <sys/fcntl.h>
 #include <sys/exec.h>
 #include <stdlib.h>
 #include <paths.h>
-
-#include "common.h"
 
 typedef char Obj_Entry;
 
@@ -67,6 +66,9 @@ extern unsigned char etext, eprol;
 void __start(char **, void (*)(void), const Obj_Entry *);
 static char *__strrchr(const char *p, char ch);
 
+char *__progname = "";
+char __progname_storage[NAME_MAX+1];
+
 void
 __start(sp, cleanup, obj)
 	char **sp;
@@ -84,7 +86,7 @@ __start(sp, cleanup, obj)
 	argv = arginfo->ps_argvstr;
 	environ = arginfo->ps_envstr;
 	if ((namep = argv[0]) != NULL) {	/* NULL ptr if argc = 0 */
-		if ((__progname = _strrchr(namep, '/')) == NULL)
+		if ((__progname = __strrchr(namep, '/')) == NULL)
 			__progname = namep;
 		else
 			__progname++;
