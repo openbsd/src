@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs_vnops.c,v 1.33 2003/06/02 23:28:10 millert Exp $	*/
+/*	$OpenBSD: kernfs_vnops.c,v 1.34 2003/08/11 10:19:24 mickey Exp $	*/
 /*	$NetBSD: kernfs_vnops.c,v 1.43 1996/03/16 23:52:47 christos Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ extern char machine[], cpu_model[];
 extern int ipsp_kern(int, char **, int);
 #endif
 
-struct kern_target kern_targets[] = {
+const struct kern_target kern_targets[] = {
 /* NOTE: The name must be less than UIO_MX-16 chars in length */
 #define N(s) sizeof(s)-1, s
      /*        name            data          tag           type  ro/rw */
@@ -111,7 +111,7 @@ struct kern_target kern_targets[] = {
 #endif
 #undef N
 };
-static int nkern_targets = sizeof(kern_targets) / sizeof(kern_targets[0]);
+static const int nkern_targets = sizeof(kern_targets) / sizeof(kern_targets[0]);
 
 int	kernfs_badop(void *);
 
@@ -156,8 +156,8 @@ int	kernfs_vfree(void *);
 #define	kernfs_update	eopnotsupp
 #define	kernfs_bwrite	eopnotsupp
 
-int	kernfs_xread(struct kern_target *, int, char **, int);
-int	kernfs_xwrite(struct kern_target *, char *, int);
+int	kernfs_xread(const struct kern_target *, int, char **, int);
+int	kernfs_xwrite(const struct kern_target *, char *, int);
 int	kernfs_freevp(struct vnode *, struct proc *);
 
 int (**kernfs_vnodeop_p)(void *);
@@ -216,7 +216,7 @@ kernfs_init(vfsp)
 
 int
 kernfs_allocvp(kt, mp, vpp)
-	struct kern_target *kt;
+	const struct kern_target *kt;
 	struct mount *mp;
 	struct vnode **vpp;
 {
@@ -288,12 +288,12 @@ kernfs_freevp(vp, p)
 	return(0);
 }
 
-struct kern_target *
+const struct kern_target *
 kernfs_findtarget(name, namlen)
 	char	*name;
 	int	namlen;
 {
-	struct kern_target *kt = NULL;
+	const struct kern_target *kt = NULL;
 	int i;
 	
 	for (i = 0; i < nkern_targets; i++) {
@@ -314,7 +314,7 @@ kernfs_findtarget(name, namlen)
 	
 int
 kernfs_xread(kt, off, bufp, len)
-	struct kern_target *kt;
+	const struct kern_target *kt;
 	int off;
 	char **bufp;
 	int len;
@@ -440,7 +440,7 @@ kernfs_xread(kt, off, bufp, len)
 
 int
 kernfs_xwrite(kt, buf, len)
-	struct kern_target *kt;
+	const struct kern_target *kt;
 	char *buf;
 	int len;
 {
@@ -486,7 +486,7 @@ kernfs_lookup(v)
 	struct vnode *dvp = ap->a_dvp;
 	char *pname = cnp->cn_nameptr;
 	struct proc *p = cnp->cn_proc;
-	struct kern_target *kt;
+	const struct kern_target *kt;
 	struct vnode *vp;
 	int error, wantpunlock;
 
@@ -617,7 +617,7 @@ kernfs_getattr(v)
 		vap->va_fileid = 2;
 		vap->va_size = DEV_BSIZE;
 	} else {
-		struct kern_target *kt = VTOKERN(vp)->kf_kt;
+		const struct kern_target *kt = VTOKERN(vp)->kf_kt;
 		int nbytes, total;
 #ifdef KERNFS_DIAGNOSTIC
 		printf("kernfs_getattr: stat target %s\n", kt->kt_name);
@@ -675,7 +675,7 @@ kernfs_read(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct uio *uio = ap->a_uio;
-	struct kern_target *kt;
+	const struct kern_target *kt;
 	char strbuf[KSTRING], *buf;
 	int off, len;
 	int error;
@@ -715,7 +715,7 @@ kernfs_write(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct uio *uio = ap->a_uio;
-	struct kern_target *kt;
+	const struct kern_target *kt;
 	int error, xlen;
 	char strbuf[KSTRING];
 
@@ -758,7 +758,7 @@ kernfs_readdir(v)
 	int error, i;
 	struct uio *uio = ap->a_uio;
 	struct dirent d;
-	struct kern_target *kt;
+	const struct kern_target *kt;
 
 	if (ap->a_vp->v_type != VDIR)
 		return (ENOTDIR);
