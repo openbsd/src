@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.28 2000/10/07 06:57:16 niklas Exp $
-#	$EOM: Makefile,v 1.77 2000/10/06 22:37:58 niklas Exp $
+#	$OpenBSD: Makefile,v 1.29 2000/10/16 23:28:32 niklas Exp $
+#	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
 # Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -145,7 +145,7 @@ SUBDIR+=	regress
 .endif
 .endfor
 
-.ifdef USE_GMP
+.if ${FEATURES:Mgmp} == "gmp"
 CFLAGS+=	-DMP_FLAVOUR=MP_FLAVOUR_GMP
 LDADD+=		-lgmp
 DPADD+=		${LIBGMP}
