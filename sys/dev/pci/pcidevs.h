@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.828 2005/01/25 04:40:15 brad Exp 
+ *	OpenBSD: pcidevs,v 1.829 2005/01/31 04:25:44 martin Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2330,7 +2330,7 @@
 #define	PCI_PRODUCT_SIS_964	0x0964		/* 964 PCI */
 #define	PCI_PRODUCT_SIS_5511	0x5511		/* 5511 */
 #define	PCI_PRODUCT_SIS_5512	0x5512		/* 5512 */
-#define	PCI_PRODUCT_SIS_5597_IDE	0x5513		/* 5597/5598 IDE */
+#define	PCI_PRODUCT_SIS_5513	0x5513		/* 5513 EIDE */
 #define	PCI_PRODUCT_SIS_5571	0x5571		/* 5571 PCI */
 #define	PCI_PRODUCT_SIS_5581	0x5581		/* 5581 */
 #define	PCI_PRODUCT_SIS_5582	0x5582		/* 5582 */

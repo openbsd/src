@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.828 2005/01/25 04:40:15 brad Exp 
+ *	OpenBSD: pcidevs,v 1.829 2005/01/31 04:25:44 martin Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -6759,8 +6759,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "5512",
 	},
 	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5597_IDE,
-	    "5597/5598 IDE",
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5513,
+	    "5513 EIDE",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5571,
