@@ -1,4 +1,4 @@
-/*	$OpenBSD: sleep.c,v 1.14 2002/07/04 04:26:40 deraadt Exp $	*/
+/*	$OpenBSD: sleep.c,v 1.15 2002/09/06 18:16:59 deraadt Exp $	*/
 /*	$NetBSD: sleep.c,v 1.8 1995/03/21 09:11:11 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sleep.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: sleep.c,v 1.14 2002/07/04 04:26:40 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: sleep.c,v 1.15 2002/09/06 18:16:59 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ main(int argc, char *argv[])
 {
 	int ch;
 	time_t secs = 0, t;
-	unsigned char *cp;
+	char *cp;
 	long nsecs = 0;
 	struct timespec rqtp;
 	int i;
@@ -89,7 +89,8 @@ main(int argc, char *argv[])
 
 	cp = *argv;
 	while ((*cp != '\0') && (*cp != '.')) {
-		if (!isdigit(*cp)) usage();
+		if (!isdigit(*cp))
+			usage();
 		t = (secs * 10) + (*cp++ - '0');
 		if (t / 10 != secs)	/* oflow */
 			return (EINVAL);
@@ -100,8 +101,10 @@ main(int argc, char *argv[])
 	if (*cp == '.') {
 		*cp++ = '\0';
 		for (i = 100000000; i > 0; i /= 10) {
-			if (*cp == '\0') break;
-			if (!isdigit(*cp)) usage();
+			if (*cp == '\0')
+				break;
+			if (!isdigit(*cp))
+				usage();
 			nsecs += (*cp++ - '0') * i;
 		}
 
@@ -111,7 +114,8 @@ main(int argc, char *argv[])
 		 * checking the rest of the argument.
 		 */
 		while (*cp != '\0') {
-			if (!isdigit(*cp++)) usage();
+			if (!isdigit(*cp++))
+				usage();
 		}
 	}
 
