@@ -1,0 +1,173 @@
+/*	$OpenBSD: aic_isa.c,v 1.1 1998/09/11 07:42:58 fgsch Exp $ */
+/*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
+
+/*
+ * Copyright (c) 1994, 1995, 1996 Charles Hannum.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Charles M. Hannum.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * Copyright (c) 1994 Jarle Greipsland
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Acknowledgements: Many of the algorithms used in this driver are
+ * inspired by the work of Julian Elischer (julian@tfs.com) and
+ * Charles Hannum (mycroft@duality.gnu.ai.mit.edu).  Thanks a million!
+ */
+
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/errno.h>
+#include <sys/ioctl.h>
+#include <sys/device.h>
+#include <sys/buf.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/queue.h>
+
+#include <machine/bus.h>
+#include <machine/intr.h>
+
+#include <scsi/scsi_all.h>
+#include <scsi/scsi_message.h>
+#include <scsi/scsiconf.h>
+
+#include <dev/isa/isavar.h>
+
+#include <dev/ic/aic6360reg.h>
+#include <dev/ic/aic6360var.h>
+
+int	aic_isa_probe __P((struct device *, void *, void *));
+void	aic_isa_attach __P((struct device *, struct device *, void *));
+
+struct cfattach aic_isa_ca = {
+	sizeof(struct aic_softc), aic_isa_probe, aic_isa_attach
+};
+
+/*
+ * INITIALIZATION ROUTINES (probe, attach ++)
+ */
+
+/*
+ * aicprobe: probe for AIC6360 SCSI-controller
+ * returns non-zero value if a controller is found.
+ */
+int
+aic_isa_probe(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
+{
+	struct isa_attach_args *ia = aux;
+	bus_space_tag_t iot = ia->ia_iot;
+	bus_space_handle_t ioh;
+
+#ifdef NEWCONFIG
+	if (ia->ia_iobase == IOBASEUNK)
+		return (0);
+#endif
+
+	if (bus_space_map(iot, ia->ia_iobase, AIC_NPORTS, 0, &ioh))
+		return (0);
+
+	AIC_TRACE(("aic: probing for aic-chip at port 0x%x\n", ia->ia_iobase));
+	if (aic_find(iot, ioh) != 0)
+		return (0);
+
+	bus_space_unmap(iot, ioh, AIC_NPORTS);
+
+#ifdef NEWCONFIG
+	if (ia->ia_irq != IRQUNK) {
+		if (ia->ia_irq != sc->sc_irq) {
+			printf("%s: irq mismatch; ", sc->sc_dev.dv_xname);
+			printf("kernel configured %d != board configured %d\n",
+			    ia->ia_irq, sc->sc_irq);
+			return (0);
+		}
+	} else
+		ia->ia_irq = sc->sc_irq;
+
+	if (ia->ia_drq != DRQUNK) {
+		if (ia->ia_drq != sc->sc_drq) {
+			printf("%s: drq mismatch; ", sc->sc_dev.dv_xname);
+			printf("kernel configured %d != board configured %d\n",
+			    ia->ia_drq, sc->sc_drq);
+			return (0);
+		}
+	} else
+		ia->ia_drq = sc->sc_drq;
+#endif
+
+	ia->ia_msize = 0;
+	ia->ia_iosize = AIC_NPORTS;
+	return (1);
+}
+
+/*
+ * Attach the AIC6360, fill out some high and low level data structures
+ */
+void
+aic_isa_attach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct isa_attach_args *ia = aux;
+	bus_space_tag_t iot = ia->ia_iot;
+	bus_space_handle_t ioh;
+	struct aic_softc *sc = (void *)self;
+
+	if (bus_space_map(iot, ia->ia_iobase, AIC_NPORTS, 0, &ioh))
+		panic("%s: could not map I/O-ports", sc->sc_dev.dv_xname);
+
+	sc->sc_iot = iot;
+	sc->sc_ioh = ioh;
+
+	printf("\n");
+
+#ifdef NEWCONFIG
+	isa_establish(&sc->sc_id, &sc->sc_dev);
+#endif
+
+	aicattach(sc);
+
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+	    IPL_BIO, aicintr, sc, sc->sc_dev.dv_xname);
+}
+
