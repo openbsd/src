@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_setup.c,v 1.5 1999/07/04 12:43:16 millert Exp $	*/
+/*	$OpenBSD: lib_setup.c,v 1.6 1999/08/22 17:42:37 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -51,7 +51,7 @@
 
 #include <term.h>	/* lines, columns, cur_term */
 
-MODULE_ID("$From: lib_setup.c,v 1.54 1999/07/04 01:37:32 tom Exp $")
+MODULE_ID("$From: lib_setup.c,v 1.55 1999/08/21 23:06:08 tom Exp $")
 
 /****************************************************************************
  *
@@ -242,6 +242,12 @@ static int grab_entry(const char *const tn, TERMTYPE *const tp)
 {
 	char	filename[PATH_MAX];
 	int	status;
+
+	/*
+	 * $TERM shouldn't contain pathname delimiters.
+	 */
+	if (strchr(tn, '/'))
+		return 0;
 
 	if ((status = _nc_read_entry(tn, filename, tp)) != 1) {
 

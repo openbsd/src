@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_tracebits.c,v 1.2 1999/03/15 19:12:23 millert Exp $	*/
+/*	$OpenBSD: lib_tracebits.c,v 1.3 1999/08/22 17:42:37 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -36,7 +36,7 @@
 #include <curses.priv.h>
 #include <term.h>	/* cur_term */
 
-MODULE_ID("$From: lib_tracebits.c,v 1.2 1999/03/14 12:27:03 tom Exp $")
+MODULE_ID("$From: lib_tracebits.c,v 1.3 1999/08/21 21:43:48 tom Exp $")
 
 #if defined(SVR4_TERMIO) && !defined(_POSIX_SOURCE)
 #define _POSIX_SOURCE
@@ -158,10 +158,18 @@ lflags[] =
 
 #if defined(CS5) && defined(CS8)
     switch (cur_term->Nttyb.c_cflag & CSIZE) {
+#if defined(CS5) && (CS5 != 0)
     case CS5:	strcat(buf, "CS5 ");	break;
+#endif
+#if defined(CS6) && (CS6 != 0)
     case CS6:	strcat(buf, "CS6 ");	break;
+#endif
+#if defined(CS7) && (CS7 != 0)
     case CS7:	strcat(buf, "CS7 ");	break;
+#endif
+#if defined(CS8) && (CS8 != 0)
     case CS8:	strcat(buf, "CS8 ");	break;
+#endif
     default:	strcat(buf, "CSIZE? ");	break;
     }
 #endif
