@@ -411,6 +411,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 	u_quad_t sticks;
 	vm_prot_t ftype;
 	extern unsigned onfault_table[];
+	int typ;
 
 #ifdef DEBUG
 	trp->status = statusReg;
@@ -597,14 +598,19 @@ trap(statusReg, causeReg, vadr, pc, args)
 		}
 		ucode = vadr;
 		i = SIGSEGV;
+		typ = SEGV_MAPERR;
 		break;
 	    }
 
 	case T_ADDR_ERR_LD+T_USER:	/* misaligned or kseg access */
 	case T_ADDR_ERR_ST+T_USER:	/* misaligned or kseg access */
+		i = SIGBUS;
+		typ = BUS_ADRALN;
+		break;
 	case T_BUS_ERR_IFETCH+T_USER:	/* BERR asserted to cpu */
 	case T_BUS_ERR_LD_ST+T_USER:	/* BERR asserted to cpu */
 		i = SIGBUS;
+		typ = BUS_OBJERR;
 		break;
 
 	case T_SYSCALL+T_USER:
@@ -824,6 +830,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 #endif
 		if (p->p_md.md_ss_addr != va || instr != MACH_BREAK_SSTEP) {
 			i = SIGTRAP;
+			typ = TRAP_TRACE;
 			break;
 		}
 
@@ -849,16 +856,19 @@ trap(statusReg, causeReg, vadr, pc, args)
 				p->p_md.md_ss_addr, p->p_md.md_ss_instr);
 		p->p_md.md_ss_addr = 0;
 		i = SIGTRAP;
+		typ = TRAP_BRKPT;
 		break;
 	    }
 
 	case T_RES_INST+T_USER:
 		i = SIGILL;
+		typ = ILL_ILLOPC;
 		break;
 
 	case T_COP_UNUSABLE+T_USER:
 		if ((causeReg & MACH_CR_COP_ERR) != 0x10000000) {
 			i = SIGILL;	/* only FPU instructions allowed */
+			typ = ILL_ILLOPC;
 			break;
 		}
 		MachSwitchFPState(machFPCurProcPtr,
@@ -883,6 +893,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 
 	case T_OVFLOW+T_USER:
 		i = SIGFPE;
+		typ = FPE_FLTOVF;
 		break;
 
 	case T_ADDR_ERR_LD:	/* misaligned access */
@@ -942,7 +953,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 	p->p_md.md_regs [PC] = pc;
 	p->p_md.md_regs [CAUSE] = causeReg;
 	p->p_md.md_regs [BADVADDR] = vadr;
-	trapsignal(p, i, ucode);
+	trapsignal(p, i, ucode, typ, (caddr_t)vadr);
 out:
 	/*
 	 * Note: we should only get here if returning to user mode.
