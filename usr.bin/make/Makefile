@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.32 2001/11/11 06:02:05 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.33 2001/11/11 12:35:02 espie Exp $
 
 PROG=	make
 CFLAGS+= -I${.OBJDIR} -I${.CURDIR}
@@ -19,7 +19,7 @@ SRCS=	arch.c buf.c cmd_exec.c compat.c cond.c dir.c error.c for.c \
 	var.c varmodifiers.c varname.c
 SRCS+=	lstAddNew.c lstAppend.c lstConcat.c lstConcatDestroy.c \
 	lstDeQueue.c lstDestroy.c lstDupl.c lstFindFrom.c lstForEachFrom.c \
-	lstInit.c lstInsert.c lstMember.c lstRemove.c lstReplace.c lstSucc.c
+	lstInsert.c lstMember.c lstRemove.c lstReplace.c lstSucc.c
 .PATH:	${.CURDIR}/lst.lib
 
 

@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: main.c,v 1.55 2001/11/11 06:02:06 deraadt Exp $ */
+/*	$OpenBSD: main.c,v 1.56 2001/11/11 12:35:02 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -471,7 +471,7 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	LIST targs;			/* target nodes to create */
+	static LIST targs;	/* target nodes to create */
 	bool outOfDate = true;	/* false if all targets up to date */
 	struct stat sb, sa;
 	char *p, *path, *pathp, *pwd;
@@ -587,10 +587,10 @@ main(argc, argv)
 	esetenv("PWD", objdir);
 	unsetenv("CDPATH");
 
-	Lst_Init(create);
-	Lst_Init(&makefiles);
-	Lst_Init(&varstoprint);
-	Lst_Init(&targs);
+	Static_Lst_Init(create);
+	Static_Lst_Init(&makefiles);
+	Static_Lst_Init(&varstoprint);
+	Static_Lst_Init(&targs);
 
 	beSilent = false;		/* Print commands as executed */
 	ignoreErrors = false;		/* Pay attention to non-zero returns */

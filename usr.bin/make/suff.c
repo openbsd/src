@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: suff.c,v 1.45 2001/11/11 06:02:06 deraadt Exp $ */
+/*	$OpenBSD: suff.c,v 1.46 2001/11/11 12:35:03 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -1984,12 +1984,12 @@ Suff_SetNull(name)
 void
 Suff_Init()
 {
-    Lst_Init(&sufflist);
+    Static_Lst_Init(&sufflist);
 #ifdef CLEANUP
-    Lst_Init(&suffClean);
+    Static_Lst_Init(&suffClean);
 #endif
-    Lst_Init(&srclist);
-    Lst_Init(&transforms);
+    Static_Lst_Init(&srclist);
+    Static_Lst_Init(&transforms);
 
     sNum = 0;
     /*
