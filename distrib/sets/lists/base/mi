@@ -3813,6 +3813,7 @@
 ./var/www/icons
 ./var/www/icons/small
 ./var/www/logs
+./var/www/users
 ./var/yp
 ./var/yp/Makefile.main
 ./var/yp/Makefile.main.dist
