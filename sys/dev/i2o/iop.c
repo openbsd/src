@@ -1,4 +1,4 @@
-/*	$OpenBSD: iop.c,v 1.24 2003/09/04 03:45:53 avsm Exp $	*/
+/*	$OpenBSD: iop.c,v 1.25 2004/07/09 21:38:20 pedro Exp $	*/
 /*	$NetBSD: iop.c,v 1.12 2001/03/21 14:27:05 ad Exp $	*/
 
 /*-
@@ -1958,11 +1958,6 @@ iop_post(struct iop_softc *sc, u_int32_t *mb)
 	printf("mfa = %u\n", mfa);
 #endif
 
-	/* Perform reply buffer DMA synchronisation.  XXX This is rubbish. */
-	if (sc->sc_curib++ == 0)
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_rep_dmamap, 0,
-		    sc->sc_rep_size, BUS_DMASYNC_PREREAD);
-
 	/* Copy out the message frame. */
 	bus_space_write_region_4(sc->sc_iot, sc->sc_ioh, mfa, mb,
 	    size / sizeof *mb);
@@ -1989,6 +1984,11 @@ iop_msg_post(struct iop_softc *sc, struct iop_msg *im, void *xmb, int timo)
 	/* Terminate the scatter/gather list chain. */
 	if ((im->im_flags & IM_SGLOFFADJ) != 0)
 		mb[size - 2] |= I2O_SGL_END;
+
+	/* Perform reply buffer DMA synchronisation. */
+	if (sc->sc_curib++ == 0)
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_rep_dmamap, 0,
+		    sc->sc_rep_size, BUS_DMASYNC_PREREAD);
 
 	if ((rv = iop_post(sc, mb)) != 0)
 		return (rv);
