@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getpeername.2,v 1.10 1999/06/29 14:10:00 aaron Exp $
+.\"	$OpenBSD: getpeername.2,v 1.11 1999/07/21 05:39:55 kjell Exp $
 .\"	$NetBSD: getpeername.2,v 1.6 1995/10/12 15:40:56 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"     @(#)getpeername.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd February 15, 1999
+.Dd July 17, 1999
 .Dt GETPEERNAME 2
 .Os
 .Sh NAME
@@ -45,23 +45,51 @@
 .Fd #include <sys/socket.h>
 .Ft int
 .Fn getpeername "int s" "struct sockaddr *name" "socklen_t *namelen"
+.Sh PARAMETERS
+.Bl -tag -width namelen
+.It s
+Contains the file descriptor of the socket who's peer should be looked up.
+.It name
+Points to a sockaddr structure that will hold the address information
+for the connected peer. The format of this socket depends on the protocol family in use. See
+.Xr socket 2
+for details.
+.It namelen
+Indicates the amount of space pointed to by
+.Fa name ,
+in bytes.
 .Sh DESCRIPTION
 .Fn getpeername
-returns the name of the peer connected to
+returns the address information of the peer connected to
 socket
 .Fa s .
-The
+.Pp
+.Fn getpeername
+is useful in a variety of circumstances. The most common
+use occurs when a process inherits an open socket, such as when
+.Xr inetd 8
+forks and execs a TCP server. In this scenario,
+.Fn getpeername
+is used to determine the connecting client's IP address.
+.Pp
+If the local socket address is required, the
+.Xr getsockname 2
+function should be used instead.
+.Pp
+If
+.Fa name
+does not point to enough space to hold the entire socket address, the
+result will be truncated to
 .Fa namelen
-parameter should be initialized to indicate
-the amount of space pointed to by
-.Fa name .
-On return it contains the actual size of the name
-returned (in bytes).
-The name is truncated if the buffer provided is too small.
+bytes.
 .Sh RETURN VALUES
-A 0 is returned if the call succeeds, \-1 if it fails.
+If the call succeeds, a 0 is returned and
+.Fa namelen
+is set to the actual size of the socket address returned in
+.Fa name .
+Otherwise, errno is set and a value of \-1 is returned.
 .Sh ERRORS
-The call succeeds unless:
+On failure, errno is set to one of the following:
 .Bl -tag -width Er
 .It Bq Er EBADF
 The argument
