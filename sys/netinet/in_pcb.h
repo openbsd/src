@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.16 1999/03/24 02:33:02 cmetz Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.17 1999/03/27 21:04:19 provos Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -40,6 +40,7 @@
 #include <netinet6/ipv6.h>
 #include <netinet6/ipv6_var.h>
 #include <netinet6/icmpv6.h>
+#include <netinet/ip_ipsp.h>
 
 union inpaddru {
 	struct in6_addr iau_addr6;
@@ -99,6 +100,8 @@ struct inpcb {
 #define SR_FAILED         1             /* Negotiation failed permanently */
 #define SR_SUCCESS        2             /* SA successfully established */
 #define SR_WAIT           3             /* Waiting for SA */
+	TAILQ_ENTRY(inpcb) inp_tdb_next;
+	struct tdb     *inp_tdb;	/* If tdb_dst matches our dst, use */
 	int	inp_fflowinfo;          /* Foreign flowlabel & priority */
 	int	inp_csumoffset;
 	struct	icmpv6_filter inp_filter;

@@ -29,7 +29,8 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #define SADB_X_ADDFLOW     12
 #define SADB_X_DELFLOW     13
 #define SADB_X_GRPSPIS     14
-#define SADB_MAX           14
+#define SADB_X_BINDSA      15
+#define SADB_MAX           15
 
 struct sadb_msg {
   uint8_t sadb_msg_version;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.43 1999/03/24 17:00:47 niklas Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.44 1999/03/27 21:04:20 provos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -167,8 +167,7 @@ ip_output(m0, va_alist)
 	/*
 	 * Check if the packet needs encapsulation
 	 */
-	if ((ipsec_in_use != 0) &&
-	    !(flags & IP_ENCAPSULATED) && 
+	if (!(flags & IP_ENCAPSULATED) && 
 	    (inp == NULL || 
 	     (inp->inp_seclevel[SL_AUTH] != IPSEC_LEVEL_BYPASS ||
 	      inp->inp_seclevel[SL_ESP_TRANS] != IPSEC_LEVEL_BYPASS ||
@@ -184,6 +183,20 @@ ip_output(m0, va_alist)
 			sa_require = inp->inp_secrequire;
 
 		bzero((caddr_t) re, sizeof(*re));
+
+		/* Check if there was a bound outgoing SA */
+		if (inp && inp->inp_tdb &&
+		    (inp->inp_tdb->tdb_dst.sin.sin_addr.s_addr ==
+		     INADDR_ANY ||
+		     !bcmp(&inp->inp_tdb->tdb_dst.sin.sin_addr,
+			   &ip->ip_dst, sizeof(ip->ip_dst)))) {
+			tdb = inp->inp_tdb;
+			goto have_tdb;
+		}
+
+		if (!ipsec_in_use)
+			goto no_encap;
+
 		ddst = (struct sockaddr_encap *) &re->re_dst;
 		ddst->sen_family = PF_KEY;
 		ddst->sen_len = SENT_IP4_LEN;
@@ -266,10 +279,6 @@ ip_output(m0, va_alist)
 			goto no_encap;
 		}
 
-		ip->ip_len = htons((u_short)ip->ip_len);
-		ip->ip_off = htons((u_short)ip->ip_off);
-		ip->ip_sum = 0;
-
 		/*
 		 * At this point we have an IPSP "gateway" (tunnel) spec.
 		 * Use the destination of the tunnel and the SPI to
@@ -283,6 +292,12 @@ ip_output(m0, va_alist)
 		sunion.sin.sin_addr = gw->sen_ipsp_dst;
 		tdb = (struct tdb *) gettdb(gw->sen_ipsp_spi, &sunion,
 					    gw->sen_ipsp_sproto);
+
+	      have_tdb:
+
+		ip->ip_len = htons((u_short)ip->ip_len);
+		ip->ip_off = htons((u_short)ip->ip_off);
+		ip->ip_sum = 0;
 
 		/*
 		 * Now we check if this tdb has all the transforms which
@@ -354,7 +369,8 @@ ip_output(m0, va_alist)
 			if (tdb->tdb_flags & TDBF_INVALID) {
 			        DPRINTF(("ip_output(): attempt to use invalid SA %s/%08x/%u\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi), tdb->tdb_sproto));
 				m_freem(m);
-				RTFREE(re->re_rt);
+				if (re->re_rt)
+					RTFREE(re->re_rt);
 				return ENXIO;
 			}
 
@@ -389,6 +405,8 @@ ip_output(m0, va_alist)
 
 			/* Check for tunneling */
 			if (((tdb->tdb_dst.sin.sin_addr.s_addr !=
+			      INADDR_ANY &&
+			      tdb->tdb_dst.sin.sin_addr.s_addr !=
 			      ip->ip_dst.s_addr) ||
 			     (tdb->tdb_flags & TDBF_TUNNELING)) &&
 			     (tdb->tdb_xform->xf_type != XF_IP4))
@@ -404,7 +422,8 @@ ip_output(m0, va_alist)
 				if (mp == NULL)
 					error = EFAULT;
 				if (error) {
-					RTFREE(re->re_rt);
+					if (re->re_rt)
+						RTFREE(re->re_rt);
 					return error;
 				}
 				m = mp;
@@ -427,7 +446,8 @@ ip_output(m0, va_alist)
 			if (error) {
 				if (mp != NULL)
 					m_freem(mp);
-				RTFREE(re->re_rt);
+				if (re->re_rt)
+					RTFREE(re->re_rt);
 				return error;
 			}
 
@@ -444,7 +464,8 @@ ip_output(m0, va_alist)
 		 * processed packet. Call ourselves recursively, but
 		 * bypass the encap code.
 		 */
-		RTFREE(re->re_rt);
+		if (re->re_rt)
+			RTFREE(re->re_rt);
 		ip = mtod(m, struct ip *);
 		NTOHS(ip->ip_len);
 		NTOHS(ip->ip_off);
@@ -953,6 +974,28 @@ ip_ctloutput(op, so, level, optname, mp)
 				}
 			}
 			break;
+		case IPSEC_OUTSA:
+#ifndef IPSEC
+			error = EINVAL;
+#else
+			if (m == 0 || m->m_len != sizeof(struct tdb_ident)) {
+				error = EINVAL;
+				break;
+			} else {
+				struct tdb *tdb;
+				struct tdb_ident *tdbi;
+
+				tdbi = mtod(m, struct tdb_ident *);
+				tdb = gettdb(tdbi->spi, &tdbi->dst,
+					     tdbi->proto);
+				if (tdb == NULL) {
+					error = ESRCH;
+					break;
+				}
+				tdb_add_inp(tdb, inp);
+			}
+#endif /* IPSEC */
+			break;
 
 		case IP_AUTH_LEVEL:
 		case IP_ESP_TRANS_LEVEL:
@@ -1080,6 +1123,26 @@ ip_ctloutput(op, so, level, optname, mp)
 				optval = 0;
 
 			*mtod(m, int *) = optval;
+			break;
+
+		case IPSEC_OUTSA:
+#ifndef IPSEC
+			error = EINVAL;
+#else
+			if (inp->inp_tdb == NULL) {
+				error = ENOENT;
+				break;
+			} else {
+				struct tdb_ident tdbi;
+				tdbi.spi = inp->inp_tdb->tdb_spi;
+				tdbi.dst = inp->inp_tdb->tdb_dst;
+				tdbi.proto = inp->inp_tdb->tdb_sproto;
+				*mp = m = m_get(M_WAIT, MT_SOOPTS);
+				m->m_len = sizeof(tdbi);
+				bcopy((caddr_t)&tdbi, mtod(m, caddr_t),
+				      (unsigned)m->m_len);
+			}
+#endif /* IPSEC */
 			break;
 
 		case IP_AUTH_LEVEL:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.38 1999/03/24 17:00:47 niklas Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.39 1999/03/27 21:04:19 provos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -184,6 +184,7 @@ check_ipsec_policy(struct inpcb *inp, u_int32_t daddr)
     struct sockaddr_encap *dst; 
     u_int8_t sa_require, sa_have;
     int error, i;
+    struct tdb *tdb = NULL;
 
     if (inp == NULL || ((so = inp->inp_socket) == 0))
       return (EINVAL);
@@ -191,59 +192,60 @@ check_ipsec_policy(struct inpcb *inp, u_int32_t daddr)
     /* If IPSEC is not required just use what we got */
     if (!(sa_require = inp->inp_secrequire))
       return 0;
-
-    bzero((caddr_t) re, sizeof(*re));
-    dst = (struct sockaddr_encap *) &re->re_dst;
-    dst->sen_family = PF_KEY;
-    dst->sen_len = SENT_IP4_LEN;
-    dst->sen_type = SENT_IP4;
-    dst->sen_ip_src = inp->inp_laddr;
-    dst->sen_ip_dst.s_addr = inp->inp_faddr.s_addr ? 
-			     inp->inp_faddr.s_addr : daddr;
-    dst->sen_proto = so->so_proto->pr_protocol;
-    switch (dst->sen_proto)
+	
+    if (!inp->inp_tdb)
     {
-	case IPPROTO_UDP:
-	case IPPROTO_TCP:
+	bzero((caddr_t) re, sizeof(*re));
+	dst = (struct sockaddr_encap *) &re->re_dst;
+	dst->sen_family = PF_KEY;
+	dst->sen_len = SENT_IP4_LEN;
+	dst->sen_type = SENT_IP4;
+	dst->sen_ip_src = inp->inp_laddr;
+	dst->sen_ip_dst.s_addr = inp->inp_faddr.s_addr ? 
+	  inp->inp_faddr.s_addr : daddr;
+	dst->sen_proto = so->so_proto->pr_protocol;
+	switch (dst->sen_proto)
+	{
+	  case IPPROTO_UDP:
+	  case IPPROTO_TCP:
 	    dst->sen_sport = inp->inp_lport;
 	    dst->sen_dport = inp->inp_fport;
 	    break;
-	default:
+	  default:
 	    dst->sen_sport = 0;
 	    dst->sen_dport = 0;
-    }
-    
-    /* Try to find a flow */
-    rtalloc((struct route *) re);
-    
-    if (re->re_rt != NULL)
-    {
-	struct tdb *tdb;
-	struct sockaddr_encap *gw;
-		
-	gw = (struct sockaddr_encap *) (re->re_rt->rt_gateway);
-
-	if (gw->sen_type == SENT_IPSP) {
-	    sunion.sin.sin_family = AF_INET;
-	    sunion.sin.sin_len = sizeof(struct sockaddr_in);
-	    sunion.sin.sin_addr = gw->sen_ipsp_dst;
-	    
-	    tdb = (struct tdb *) gettdb(gw->sen_ipsp_spi, &sunion,
-					gw->sen_ipsp_sproto);
-
-	    SPI_CHAIN_ATTRIB(sa_have, tdb_onext, tdb);
 	}
-	else 
-	  sa_have = 0;
-	
-	RTFREE(re->re_rt);
-	
-	/* Check if our requirements are met */
-	if (!(sa_require & ~sa_have))
-	  return 0;
-    }
-    else
-      sa_have = 0;
+    
+	/* Try to find a flow */
+	rtalloc((struct route *) re);
+    
+	if (re->re_rt != NULL)
+	{
+	    struct sockaddr_encap *gw;
+	    
+	    gw = (struct sockaddr_encap *) (re->re_rt->rt_gateway);
+	    
+	    if (gw->sen_type == SENT_IPSP) {
+	      sunion.sin.sin_family = AF_INET;
+	      sunion.sin.sin_len = sizeof(struct sockaddr_in);
+	      sunion.sin.sin_addr = gw->sen_ipsp_dst;
+	      
+	      tdb = (struct tdb *) gettdb(gw->sen_ipsp_spi, &sunion,
+					  gw->sen_ipsp_sproto);
+	    }
+	    RTFREE(re->re_rt);
+	}
+    } else
+      tdb = inp->inp_tdb;
+
+    if (tdb) {
+	SPI_CHAIN_ATTRIB(sa_have, tdb_onext, tdb);
+    } else
+	sa_have = 0;
+
+    /* Check if our requirements are met */
+    if (!(sa_require & ~sa_have))
+      return 0;
 
     error = i = 0;
 
@@ -287,6 +289,24 @@ check_ipsec_policy(struct inpcb *inp, u_int32_t daddr)
     }
 
     return (error ? error : EWOULDBLOCK);
+}
+
+/*
+ * Add an inpcb to the list of inpcb which reference this tdb directly.
+ */
+
+void
+tdb_add_inp(struct tdb *tdb, struct inpcb *inp)
+{
+	if (inp->inp_tdb) {
+		if (inp->inp_tdb == tdb)
+			return;
+		TAILQ_REMOVE(&inp->inp_tdb->tdb_inp, inp, inp_tdb_next);
+	}
+	inp->inp_tdb = tdb;
+	TAILQ_INSERT_TAIL(&tdb->tdb_inp, inp, inp_tdb_next);
+
+	DPRINTF(("tdb_add_inp: tdb: %p, inp: %p\n", tdb, inp));
 }
 
 /*
@@ -659,6 +679,7 @@ tdb_delete(struct tdb *tdbp, int delchain)
 {
     u_int8_t *ptr = (u_int8_t *) &tdbp->tdb_dst;
     struct tdb *tdbpp;
+    struct inpcb *inp;
     u_int32_t hashval = tdbp->tdb_sproto + tdbp->tdb_spi, i;
 
     for (i = 0; i < SA_LEN(&tdbp->tdb_dst.sa); i++)
@@ -706,6 +727,24 @@ tdb_delete(struct tdb *tdbp, int delchain)
 	ipsec_in_use--;
     }
 
+    /* Cleanup SA-Bindings */
+    for (tdbpp = TAILQ_FIRST(&tdbp->tdb_bind_in); tdbpp;
+	 tdbpp = TAILQ_FIRST(&tdbp->tdb_bind_in))
+    {
+        TAILQ_REMOVE(&tdbpp->tdb_bind_in, tdbpp, tdb_bind_in_next);
+	tdbpp->tdb_bind_out = NULL;
+    }
+    /* Cleanup inp references */
+    for (inp = TAILQ_FIRST(&tdbp->tdb_inp); inp;
+	 inp = TAILQ_FIRST(&tdbp->tdb_inp))
+    {
+        TAILQ_REMOVE(&tdbp->tdb_inp, inp, inp_tdb_next);
+	inp->inp_tdb = NULL;
+    }
+
+    if (tdbp->tdb_bind_out)
+      TAILQ_REMOVE(&tdbp->tdb_bind_out->tdb_bind_in, tdbp, tdb_bind_in_next);
+
     /* removal of a larval SA should not remove the mature SA's expirations */
     if ((tdbp->tdb_flags & TDBF_INVALID) == 0)
       cleanup_expirations(&tdbp->tdb_dst, tdbp->tdb_spi, tdbp->tdb_sproto);
@@ -733,6 +772,10 @@ tdb_init(struct tdb *tdbp, u_int16_t alg, struct ipsecinit *ii)
     tdbp->tdb_established = time.tv_sec;
     tdbp->tdb_epoch = kernfs_epoch - 1;
 
+    /* Init Incoming SA-Binding Queues */
+    TAILQ_INIT(&tdbp->tdb_bind_in);
+    TAILQ_INIT(&tdbp->tdb_inp);
+
     for (xsp = xformsw; xsp < xformswNXFORMSW; xsp++)
       if (xsp->xf_type == alg)
 	return (*(xsp->xf_init))(tdbp, xsp, ii);
@@ -752,7 +795,7 @@ ipsp_kern(int off, char **bufp, int len)
 {
     static char buffer[IPSEC_KERNFS_BUFSIZE];
     struct flow *flow;
-    struct tdb *tdb;
+    struct tdb *tdb, *tdbp;
     int l, i;
 
     if (off == 0)
@@ -865,6 +908,22 @@ ipsp_kern(int off, char **bufp, int len)
 	    if (tdb->tdb_authalgxform)
 	      l += sprintf(buffer + l, "\t\tAuthentication = <%s>\n",
 			   tdb->tdb_authalgxform->name);
+
+	    if (tdb->tdb_bind_out)
+	      l += sprintf(buffer + l,
+			   "\tBound SA: SPI = %08x, "
+			   "Destination = %s, Sproto = %u\n",
+			   ntohl(tdb->tdb_bind_out->tdb_spi),
+			   ipsp_address(tdb->tdb_bind_out->tdb_dst),
+			   tdb->tdb_bind_out->tdb_sproto);
+	    for (i = 0, tdbp = TAILQ_FIRST(&tdb->tdb_bind_in); tdbp;
+		 tdbp = TAILQ_NEXT(tdbp, tdb_bind_in_next))
+	      i++;
+
+	    if (i > 0)
+	      l += sprintf(buffer + l,
+			   "\tReferenced by %d incoming SA%s\n",
+			   i, i == 1 ? "" : "s");
 
 	    if (tdb->tdb_onext)
 	      l += sprintf(buffer + l,

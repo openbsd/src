@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.32 1999/02/15 02:39:02 provos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.33 1999/03/27 21:04:20 provos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -76,6 +76,10 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <dev/rndvar.h>
 #include <machine/stdarg.h>
 #include <sys/md5k.h>
+
+#ifdef IPSEC
+#include <netinet/ip_ipsp.h>
+#endif /* IPSEC */
 
 #ifdef INET6
 #include <sys/domain.h>
@@ -437,6 +441,9 @@ tcp_input(m, va_alist)
 	int iphlen;
 	va_list ap;
 	register struct tcphdr *th;
+#ifdef IPSEC
+	struct tdb *tdb = NULL;
+#endif /* IPSEC */
 #ifdef INET6
 	struct in6_addr laddr6;
 	unsigned short is_ipv6;     /* Type of incoming datagram. */
@@ -449,6 +456,15 @@ tcp_input(m, va_alist)
 
 	tcpstat.tcps_rcvtotal++;
 
+#ifdef IPSEC
+	/* Save the last SA which was used to process the mbuf */
+	if ((m->m_flags & (M_CONF|M_AUTH)) && m->m_pkthdr.tdbi) {
+		struct tdb_ident *tdbi = m->m_pkthdr.tdbi;
+		tdb = gettdb(tdbi->spi, &tdbi->dst, tdbi->proto);
+		free(m->m_pkthdr.tdbi, M_TEMP);
+		m->m_pkthdr.tdbi = NULL;
+	}
+#endif /* IPSEC */
 #ifdef INET6
 	/*
 	 * Before we do ANYTHING, we have to figure out if it's TCP/IPv6 or
@@ -683,6 +699,18 @@ findpcb:
 			 * we're committed to it below in TCPS_LISTEN.
 			 */
 			dropsocket++;
+#ifdef IPSEC
+			/* 
+			 * We need to copy the required security levels
+			 * from the old pcb.
+			 */
+			{
+			  struct inpcb *newinp = (struct inpcb *)so->so_pcb;
+			  bcopy(inp->inp_seclevel, newinp->inp_seclevel,
+				sizeof(inp->inp_seclevel));
+			  newinp->inp_secrequire = inp->inp_secrequire;
+			}
+#endif /* IPSEC */
 #ifdef INET6
 			/*
 			 * inp still has the OLD in_pcb stuff, set the
@@ -747,6 +775,28 @@ findpcb:
 				tp->request_r_scale++;
 		}
 	}
+
+#ifdef IPSEC
+	/* Check if this socket requires security for incoming packets */
+	if ((inp->inp_seclevel[SL_AUTH] >= IPSEC_LEVEL_REQUIRE &&
+	     !(m->m_flags & M_AUTH)) ||
+	    (inp->inp_seclevel[SL_ESP_TRANS] >= IPSEC_LEVEL_REQUIRE &&
+	     !(m->m_flags & M_CONF))) {
+#ifdef notyet
+#ifdef INET6
+		if (is_ipv6)
+			ipv6_icmp_error(m, ICMPV6_BLAH, ICMPV6_BLAH, 0);
+		else
+#endif /* INET6 */
+		icmp_error(m, ICMP_BLAH, ICMP_BLAH, 0, 0);
+#endif /* notyet */
+		tcpstat.tcps_rcvnosec++;
+		goto drop;
+	}
+	/* Use tdb_bind_out for this inp's outbound communication */
+	if (tdb)
+		tdb_add_inp(tdb, inp);
+#endif /*IPSEC */
 
 	/*
 	 * Segment received on connection.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.30 1999/02/24 22:57:34 angelos Exp $	*/
+/*	$OpenBSD: inet.c,v 1.31 1999/03/27 21:04:21 provos Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.30 1999/02/24 22:57:34 angelos Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.31 1999/03/27 21:04:21 provos Exp $";
 #endif
 #endif /* not lint */
 
@@ -226,6 +226,7 @@ tcp_stats(off, name)
 	p(tcps_rcvbadsum, "\t\t%ld discarded for bad checksum%s\n");
 	p(tcps_rcvbadoff, "\t\t%ld discarded for bad header offset field%s\n");
 	p(tcps_rcvshort, "\t\t%ld discarded because packet too short\n");
+	p(tcps_rcvnosec, "\t\t%ld discarded for missing IPSec protection\n");
 	p(tcps_connattempt, "\t%ld connection request%s\n");
 	p(tcps_accepts, "\t%ld connection accept%s\n");
 	p(tcps_connects, "\t%ld connection%s established (including accepts)\n");
@@ -273,6 +274,7 @@ udp_stats(off, name)
 	p(udps_nosum, "\t%lu with no checksum\n");
 	p(udps_noport, "\t%lu dropped due to no socket\n");
 	p(udps_noportbcast, "\t%lu broadcast/multicast datagram%s dropped due to no socket\n");
+	p(udps_nosec, "\t%lu dropped due to missing IPSec protection\n");
 	p(udps_fullsock, "\t%lu dropped due to full socket buffers\n");
 	delivered = udpstat.udps_ipackets -
 		    udpstat.udps_hdrops -

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.31 1999/03/24 02:28:21 cmetz Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.32 1999/03/27 21:04:18 provos Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -529,6 +529,8 @@ in_pcbdetach(v)
 		ip_freemoptions(inp->inp_moptions);
 #ifdef IPSEC
 	/* XXX IPsec cleanup here */
+	if (inp->inp_tdb)
+		TAILQ_REMOVE(&inp->inp_tdb->tdb_inp, inp, inp_tdb_next);
 #endif
 	s = splnet();
 	LIST_REMOVE(inp, inp_hash);

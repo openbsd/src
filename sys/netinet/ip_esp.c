@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.18 1999/02/24 23:45:49 angelos Exp $	*/
+/*	$OpenBSD: ip_esp.c,v 1.19 1999/03/27 21:04:19 provos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -237,6 +237,32 @@ esp_input(register struct mbuf *m, int iphlen)
 	return;
     }
 
+    if (ipo->ip_p == IPPROTO_TCP || ipo->ip_p == IPPROTO_UDP)
+    {
+	struct tdb_ident *tdbi = NULL;
+	if (tdbp->tdb_bind_out)
+	{
+	    tdbi = m->m_pkthdr.tdbi;
+	    if (!(m->m_flags & M_PKTHDR))
+	    {
+		DPRINTF(("esp_input(): mbuf is not a packet header!\n"));
+	    }
+	    if (!tdbi || !(m->m_flags & (M_CONF|M_AUTH)))
+	      MALLOC(tdbi, struct tdb_ident *, sizeof(struct tdb_ident),
+		     M_TEMP, M_NOWAIT);
+
+	    if (!tdbi)
+	      goto no_mem;
+
+	    tdbi->spi = tdbp->tdb_bind_out->tdb_spi;
+	    tdbi->dst = tdbp->tdb_bind_out->tdb_dst;
+	    tdbi->proto = tdbp->tdb_bind_out->tdb_sproto;
+	}
+
+	m->m_pkthdr.tdbi = tdbi;
+    no_mem:
+    }
+
     /* Packet is confidental */
     m->m_flags |= M_CONF;
 
@@ -276,6 +302,8 @@ esp_input(register struct mbuf *m, int iphlen)
     if (IF_QFULL(ifq))
     {
 	IF_DROP(ifq);
+	if (m->m_pkthdr.tdbi)
+		free(m->m_pkthdr.tdbi, M_TEMP);
 	m_freem(m);
 	espstat.esps_qfull++;
 	splx(s);

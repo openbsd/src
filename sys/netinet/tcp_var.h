@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.18 1999/02/04 16:12:13 deraadt Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.19 1999/03/27 21:04:21 provos Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -244,6 +244,7 @@ struct	tcpstat {
 	u_int32_t tcps_rcvbadsum;	/* packets received with ccksum errs */
 	u_int32_t tcps_rcvbadoff;	/* packets received with bad offset */
 	u_int32_t tcps_rcvmemdrop;	/* packets dropped for lack of memory */
+	u_int32_t tcps_rcvnosec;	/* packets dropped for lack of ipsec */
 	u_int32_t tcps_rcvshort;	/* packets received too short */
 	u_int32_t tcps_rcvduppack;	/* duplicate-only packets received */
 	u_int64_t tcps_rcvdupbyte;	/* duplicate-only bytes received */

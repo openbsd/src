@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.27 1999/02/25 01:30:49 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.28 1999/03/27 21:04:19 provos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -43,6 +43,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/queue.h>
 #include <netinet/in.h>
 #include <sys/md5k.h>
 #include <netinet/ip_sha1.h>
@@ -283,9 +284,20 @@ struct tdb				/* tunnel descriptor block */
     u_int16_t         tdb_dstid_type;
 
     struct flow	     *tdb_flow; 	/* Which flows use this SA */
+
+    struct tdb       *tdb_bind_out;	/* Outgoing SA to use */
+    TAILQ_HEAD(tdb_bind_head, tdb) tdb_bind_in;
+    TAILQ_ENTRY(tdb)  tdb_bind_in_next;	/* Refering Incoming SAs */
+    TAILQ_HEAD(tdb_inp_head, inpcb) tdb_inp;
 };
 
 #define TDB_HASHMOD	257
+
+struct tdb_ident {
+    u_int32_t spi;
+    union sockaddr_union dst;
+    u_int8_t proto;
+};
 
 struct auth_hash {
     int type;
@@ -418,6 +430,7 @@ extern char *inet_ntoa4(struct in_addr);
 extern char *ipsp_address(union sockaddr_union);
 
 /* TDB management routines */
+extern void tdb_add_inp(struct tdb *tdb, struct inpcb *inp);
 extern u_int32_t reserve_spi(u_int32_t, u_int32_t, union sockaddr_union *,
 			     union sockaddr_union *, u_int8_t, int *);
 extern struct tdb *gettdb(u_int32_t, union sockaddr_union *, u_int8_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.24 1999/03/24 02:59:06 cmetz Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.25 1999/03/27 21:04:20 provos Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -76,6 +76,8 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet/udp_var.h>
 
 #ifdef IPSEC
+#include <netinet/ip_ipsp.h>
+
 extern int     	check_ipsec_policy  __P((struct inpcb *, u_int32_t));
 #endif
 
@@ -147,12 +149,25 @@ udp_input(m, va_alist)
 	struct ipv6 *ipv6;
 	struct sockaddr_in6 src_v4mapped;
 #endif /* INET6 */
+#ifdef IPSEC
+	struct tdb  *tdb = NULL;
+#endif /* IPSEC */
 
 	va_start(ap, m);
 	iphlen = va_arg(ap, int);
 	va_end(ap);
 
 	udpstat.udps_ipackets++;
+
+#ifdef IPSEC
+	/* Save the last SA which was used to process the mbuf */
+	if ((m->m_flags & (M_CONF|M_AUTH)) && m->m_pkthdr.tdbi) {
+		struct tdb_ident *tdbi = m->m_pkthdr.tdbi;
+		tdb = gettdb(tdbi->spi, &tdbi->dst, tdbi->proto);
+		free(m->m_pkthdr.tdbi, M_TEMP);
+		m->m_pkthdr.tdbi = NULL;
+	}
+#endif /* IPSEC */
 
 	switch (mtod(m, struct ip *)->ip_v) {
 	case 4:
@@ -484,6 +499,28 @@ udp_input(m, va_alist)
 			return;
 		}
 	}
+
+#ifdef IPSEC
+	/* Check if this socket requires security for incoming packets */
+	if ((inp->inp_seclevel[SL_AUTH] >= IPSEC_LEVEL_REQUIRE &&
+	     !(m->m_flags & M_AUTH)) ||
+	    (inp->inp_seclevel[SL_ESP_TRANS] >= IPSEC_LEVEL_REQUIRE &&
+	     !(m->m_flags & M_CONF))) {
+#ifdef notyet
+#ifdef INET6
+		if (ipv6)
+			ipv6_icmp_error(m, ICMPV6_BLAH, ICMPV6_BLAH, 0);
+		else
+#endif /* INET6 */
+		icmp_error(m, ICMP_BLAH, ICMP_BLAH, 0, 0);
+#endif /* notyet */
+		udpstat.udps_nosec++;
+		goto bad;
+	}
+	/* Use tdb_bind_out for this inp's outbound communication */
+	if (tdb)
+		tdb_add_inp(tdb, inp);
+#endif /*IPSEC */
 
 	if (inp->inp_flags & INP_CONTROLOPTS) {
 		struct mbuf **mp = &opts;

@@ -1339,6 +1339,53 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
        
 	break;
 	
+    case SADB_X_BINDSA:
+    {
+	struct tdb *tdb1, *tdb2;
+	
+	tdb1 = gettdb(((struct sadb_sa *)headers[SADB_EXT_SA])->sadb_sa_spi,
+		     (union sockaddr_union *)(headers[SADB_EXT_ADDRESS_DST] +
+					      sizeof(struct sadb_address)),
+		     SADB_GETSPROTO(((struct sadb_msg *)headers[0])->sadb_msg_satype));
+	if (tdb1 == NULL) {
+	    rval = ESRCH;
+	    goto ret;
+	}
+
+	if (TAILQ_FIRST(&tdb1->tdb_bind_in)) {
+	    /* Incoming SA has not list of referencing incoming SAs */
+	    rval = EINVAL;
+	    goto ret;
+	}
+
+	tdb2 = gettdb(((struct sadb_sa *)headers[SADB_EXT_X_SA2])->sadb_sa_spi,
+		     (union sockaddr_union *)(headers[SADB_EXT_X_DST2] +
+					      sizeof(struct sadb_address)),
+		     SADB_GETSPROTO(((struct sadb_protocol *)headers[SADB_EXT_X_PROTOCOL])->sadb_protocol_proto));
+
+	if (tdb2 == NULL) {
+	    rval = ESRCH;
+	    goto ret;
+	}
+
+	if (tdb2->tdb_bind_out) {
+	    /* Outgoing SA has no pointer to an outgoing SA */
+	    rval = EINVAL;
+	    goto ret;
+	}
+
+	/* Maintenance */
+	if (tdb1->tdb_bind_out)
+	    TAILQ_REMOVE(&tdb1->tdb_bind_out->tdb_bind_in, tdb1,
+			 tdb_bind_in_next);
+
+	/* Link them */
+	tdb1->tdb_bind_out = tdb2;
+	TAILQ_INSERT_TAIL(&tdb2->tdb_bind_in, tdb1, tdb_bind_in_next);
+    }
+       
+	break;
+	
     case SADB_X_PROMISC:
       if (len >= 2 * sizeof(struct sadb_msg)) {
 	struct mbuf *packet;

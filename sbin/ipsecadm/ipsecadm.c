@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.14 1999/03/15 15:37:02 deraadt Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.15 1999/03/27 21:04:18 provos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -72,6 +72,7 @@
 #define DEL_SPI		0x30
 #define GRP_SPI		0x40
 #define FLOW		0x50
+#define BINDSA		0x60
 #define ENC_IP		0x80
 
 #define CMD_MASK	0xf0
@@ -176,7 +177,8 @@ void
 usage()
 {
     fprintf(stderr, "usage: ipsecadm [command] <modifier...>\n"
-	    "\tCommands: new esp, old esp, new ah, old ah, group, delspi, ip4, flow\n"
+	    "\tCommands: new esp, old esp, new ah, old ah, group, delspi, ip4\n"
+	    "\t\t  flow, bind\n"
 	    "\tPossible modifiers:\n"
 	    "\t  -enc <alg>\t\t\t encryption algorithm\n"
 	    "\t  -auth <alg>\t\t\t authentication algorithm\n"
@@ -206,6 +208,7 @@ main(int argc, char **argv)
     int dport = -1, sport = -1, tproto = -1;
     u_int32_t spi = 0, spi2 = 0;
     union sockaddr_union src, dst, dst2, osrc, odst, osmask, odmask, proxy;
+    int srcset = 0, dstset = 0, dst2set = 0;
     u_char *keyp = NULL, *authp = NULL;
     struct protoent *tp;
     struct servent *svp;
@@ -346,28 +349,36 @@ main(int argc, char **argv)
 	      i++;
 	  }
 	  else
-	    if (!strcmp(argv[1], "flow"))
+	    if (!strcmp(argv[1], "bind"))
 	    {
-		/* It may not be ADDFLOW, but never mind that for now */
-		smsg.sadb_msg_type = SADB_X_ADDFLOW;
-	    	smsg.sadb_msg_satype = SADB_SATYPE_ESP;
-		mode = FLOW;
+		smsg.sadb_msg_type = SADB_X_BINDSA;
+		smsg.sadb_msg_satype = SADB_SATYPE_ESP;
+		mode = BINDSA;
 		i++;
 	    }
 	    else
-	      if (!strcmp(argv[1], "ip4"))
+	      if (!strcmp(argv[1], "flow"))
 	      {
-		  mode = ENC_IP;
-		  smsg.sadb_msg_type = SADB_ADD;
-		  smsg.sadb_msg_satype = SADB_SATYPE_X_IPIP;
+		  /* It may not be ADDFLOW, but never mind that for now */
+		  smsg.sadb_msg_type = SADB_X_ADDFLOW;
+		  smsg.sadb_msg_satype = SADB_SATYPE_ESP;
+		  mode = FLOW;
 		  i++;
 	      }
 	      else
-	      {
-		  fprintf(stderr, "%s: unknown command: %s", argv[0], argv[1]);
-		  exit(1);
-	      }
-
+		if (!strcmp(argv[1], "ip4"))
+		{
+		    mode = ENC_IP;
+		    smsg.sadb_msg_type = SADB_ADD;
+		    smsg.sadb_msg_satype = SADB_SATYPE_X_IPIP;
+		    i++;
+		}
+		else
+		{
+		    fprintf(stderr, "%s: unknown command: %s", argv[0], argv[1]);
+		    exit(1);
+		}
+    
     for (i++; i < argc; i++)
     {
 	if (argv[i][0] != '-')
@@ -472,7 +483,7 @@ main(int argc, char **argv)
 	}
 
 	if (!strcmp(argv[i] + 1, "spi2") && spi2 == 0 && 
-	    iscmd(mode, GRP_SPI) && (i + 1 < argc))
+	    (iscmd(mode, GRP_SPI) || iscmd(mode, BINDSA) && (i + 1 < argc))
 	{
 	    if ((spi2 = htonl(strtoul(argv[i + 1], NULL, 16))) == 0)
 	    {
@@ -489,7 +500,7 @@ main(int argc, char **argv)
 	{
 	    src.sin.sin_family = AF_INET;
 	    src.sin.sin_len = sizeof(struct sockaddr_in);
-	    src.sin.sin_addr.s_addr = inet_addr(argv[i + 1]);
+	    srcset = inet_aton(argv[i + 1], &src.sin.sin_addr) != -1 ? 1 : 0;
 	    sad1.sadb_address_exttype = SADB_EXT_ADDRESS_SRC;
 	    sad1.sadb_address_len = 1 + sizeof(struct sockaddr_in) / 8;
 	    i++;
@@ -674,27 +685,27 @@ main(int argc, char **argv)
 				     sizeof(struct sockaddr_in)) / 8;
 	    dst.sin.sin_family = AF_INET;
 	    dst.sin.sin_len = sizeof(struct sockaddr_in);
-	    dst.sin.sin_addr.s_addr = inet_addr(argv[i + 1]);
+	    dstset = inet_aton(argv[i + 1], &dst.sin.sin_addr) != -1 ? 1 : 0;
 	    i++;
 	    continue;
 	}
 
 	if (!strcmp(argv[i] + 1, "dst2") && 
-	    iscmd(mode, GRP_SPI) && (i + 1 < argc))
+	    (iscmd(mode, GRP_SPI) || iscmd(mode, BINDSA) && (i + 1 < argc))
 	{
 	    sad8.sadb_address_len = (sizeof(sad8) +
 				     sizeof(struct sockaddr_in)) / 8;
 	    sad8.sadb_address_exttype = SADB_EXT_X_DST2;
 	    dst2.sin.sin_family = AF_INET;
 	    dst2.sin.sin_len = sizeof(struct sockaddr_in);
-	    dst2.sin.sin_addr.s_addr = inet_addr(argv[i + 1]);
+	    dst2set = inet_aton(argv[i + 1], &dst2.sin.sin_addr) != -1 ? 1 : 0;
 	    i++;
 	    continue;
 	}
 
 	if (!strcmp(argv[i] + 1, "proto") && (i + 1 < argc) &&
 	    (iscmd(mode, FLOW) || iscmd(mode, GRP_SPI) ||
-	     iscmd(mode, DEL_SPI)))
+	     iscmd(mode, DEL_SPI) || iscmd(mode, BINDSA)))
 	{
 	    if (isalpha(argv[i + 1][0]))
 	    {
@@ -855,36 +866,37 @@ main(int argc, char **argv)
 	exit(1);
     }
 
-    if (iscmd(mode, GRP_SPI) && spi2 == 0)
+    if ((iscmd(mode, GRP_SPI) || iscmd(mode, BINDSA)) && spi2 == 0)
     {
 	fprintf(stderr, "%s: no SPI2 specified\n", argv[0]);
 	exit(1);
     }
 
-    if ((isencauth(mode) || iscmd(mode, ENC_IP)) && 
-	src.sin.sin_addr.s_addr == 0)
+    if ((isencauth(mode) || iscmd(mode, ENC_IP)) && !srcset)
     {
 	fprintf(stderr, "%s: no source address specified\n", argv[0]);
 	exit(1);
     } 
 
-    if ((iscmd(mode, DEL_SPI) || iscmd(mode, GRP_SPI) || iscmd(mode, FLOW)) && 
-	proto != IPPROTO_ESP && proto != IPPROTO_AH && proto != IPPROTO_IPIP)
+    if ((iscmd(mode, DEL_SPI) || iscmd(mode, GRP_SPI) || iscmd(mode, FLOW) ||
+	 iscmd(mode, BINDSA)) && proto != IPPROTO_ESP &&
+	proto != IPPROTO_AH && proto != IPPROTO_IPIP)
     {
 	fprintf(stderr, "%s: security protocol is none of AH, ESP or IPIP\n",
 		argv[0]);
 	exit(1);
     }
 
-    if (iscmd(mode, GRP_SPI) && proto2 != IPPROTO_ESP &&
-	proto2 != IPPROTO_AH && proto2 != IPPROTO_IPIP)
+    if ((iscmd(mode, GRP_SPI) || iscmd(mode, BINDSA)) &&
+	proto2 != IPPROTO_ESP && proto2 != IPPROTO_AH &&
+	proto2 != IPPROTO_IPIP)
     {
 	fprintf(stderr, "%s: security protocol2 is none of AH, ESP or IPIP\n",
 		argv[0]);
 	exit(1);
     }
 
-    if (dst.sin.sin_addr.s_addr == 0)
+    if (!dstset)
     {
 	fprintf(stderr, "%s: no destination address for the SA specified\n", 
 		argv[0]);
@@ -907,7 +919,7 @@ main(int argc, char **argv)
 	exit(1);
     }
     
-    if (iscmd(mode, GRP_SPI) && dst2.sin.sin_addr.s_addr == 0)
+    if ((iscmd(mode, GRP_SPI) || iscmd(mode, BINDSA)) && !dst2set)
     {
 	fprintf(stderr, "%s: no destination address2 specified\n", argv[0]);
 	exit(1);
@@ -1005,6 +1017,7 @@ main(int argc, char **argv)
 	switch(mode & CMD_MASK)
 	{
 	    case GRP_SPI:
+	    case BINDSA:
 		/* SA header */
 		iov[cnt].iov_base = &sa;
 		iov[cnt++].iov_len = sizeof(sa);

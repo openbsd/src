@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.9 1999/01/07 22:33:31 deraadt Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.10 1999/03/27 21:04:21 provos Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -80,6 +80,8 @@ struct m_hdr {
 struct	pkthdr {
 	struct	ifnet *rcvif;		/* rcv interface */
 	int	len;			/* total packet length */
+	void	*tdbi;			/* pointer to struct tdb_ident */
+					/* XXX - pull in ip_ipsp.h */ 
 };
 
 /* description of external storage mapped into mbuf, valid if M_EXT set */

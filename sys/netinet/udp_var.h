@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_var.h,v 1.7 1999/02/04 16:05:02 deraadt Exp $	*/
+/*	$OpenBSD: udp_var.h,v 1.8 1999/03/27 21:04:21 provos Exp $	*/
 /*	$NetBSD: udp_var.h,v 1.12 1996/02/13 23:44:41 christos Exp $	*/
 
 /*
@@ -62,6 +62,7 @@ struct	udpstat {
 	u_long	udps_badlen;		/* data length larger than packet */
 	u_long	udps_noport;		/* no socket on port */
 	u_long	udps_noportbcast;	/* of above, arrived as broadcast */
+	u_long	udps_nosec;		/* dropped for lack of ipsec */
 	u_long	udps_fullsock;		/* not delivered, input socket full */
 	u_long	udps_pcbhashmiss;	/* input packets missing pcb hash */
 				/* output statistics: */
