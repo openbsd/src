@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.38 1998/05/22 04:25:50 deraadt Exp $
+#	$OpenBSD: netstart,v 1.39 1998/07/04 13:55:51 deraadt Exp $
 
 # /etc/myname contains my symbolic name
 #
@@ -100,4 +100,4 @@ if [ -f /etc/mygate ]; then
 fi
 
 # default multicast route
-route -n add -net 224.0.0.0 -interface $hostname
+route -n add -net 224.0.0.0 -interface default
