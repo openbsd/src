@@ -1,10 +1,12 @@
-/*	$OpenBSD: draw.c,v 1.3 1999/01/29 07:30:35 d Exp $	*/
+/*	$OpenBSD: draw.c,v 1.4 2001/02/13 11:55:10 pjanzen Exp $	*/
 /*	$NetBSD: draw.c,v 1.2 1997/10/10 16:33:04 lukem Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
  *  San Francisco, California
  */
+
+#include <string.h>
 
 #include "hunt.h"
 #include "server.h"

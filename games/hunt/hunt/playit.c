@@ -1,4 +1,4 @@
-/*	$OpenBSD: playit.c,v 1.5 1999/12/12 15:03:48 d Exp $	*/
+/*	$OpenBSD: playit.c,v 1.6 2001/02/13 11:55:01 pjanzen Exp $	*/
 /*	$NetBSD: playit.c,v 1.4 1997/10/20 00:37:15 lukem Exp $	*/
 /*
  *  Hunt
@@ -12,6 +12,7 @@
 #include <ctype.h>
 #include <termios.h>
 #include <signal.h>
+#include <string.h>
 #include <unistd.h>
 #include <stdio.h>
 #include "hunt.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: otto.c,v 1.4 1999/02/01 06:53:55 d Exp $	*/
+/*	$OpenBSD: otto.c,v 1.5 2001/02/13 11:55:00 pjanzen Exp $	*/
 /*	$NetBSD: otto.c,v 1.2 1997/10/10 16:32:39 lukem Exp $	*/
 /*
  *	otto	- a hunt otto-matic player
@@ -545,6 +545,7 @@ wander()
 /* Otto always re-enters the game, cloaked. */
 int
 otto_quit(old_status)
+	int old_status;
 {
 	return Q_CLOAK;
 }
