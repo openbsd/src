@@ -1,4 +1,4 @@
-/*      $OpenBSD: isp_openbsd.h,v 1.22 2003/03/03 18:34:14 mjacob Exp $ */
+/*      $OpenBSD: isp_openbsd.h,v 1.23 2003/03/06 07:45:59 mjacob Exp $ */
 /*
  * OpenBSD Specific definitions for the Qlogic ISP Host Adapter
  */
@@ -45,7 +45,6 @@
 #include <machine/bus.h>
 #endif
 
-#include <scsi/scsi_all.h>
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
