@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.90 2001/07/05 16:45:54 jjbg Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.91 2001/07/16 22:11:04 fgsch Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -361,12 +361,6 @@ ipv4_input(m)
 		ipstat.ips_inhwcsum++;
 	}
 
-#ifdef ALTQ
-	if (altq_input != NULL && (*altq_input)(m, AF_INET) == 0)
-		/* packet is dropped by traffic conditioner */
-		return;
-#endif
-
 	/*
 	 * Convert fields to host representation.
 	 */
@@ -395,18 +389,23 @@ ipv4_input(m)
 			m_adj(m, ip->ip_len - m->m_pkthdr.len);
 	}
 
+#if NPF > 0
 	/*
 	 * Packet filter
 	 */
-#if NPF > 0
-	{
-		if (pf_test(PF_IN, m->m_pkthdr.rcvif, &m) != PF_PASS)
-			goto bad;
+	if (pf_test(PF_IN, m->m_pkthdr.rcvif, &m) != PF_PASS)
+		goto bad;
 
-		ip = mtod(m, struct ip *);
-		hlen = ip->ip_hl << 2;
-	}
+	ip = mtod(m, struct ip *);
+	hlen = ip->ip_hl << 2;
 #endif
+
+#ifdef ALTQ
+	if (altq_input != NULL && (*altq_input)(m, AF_INET) == 0)
+		/* packet is dropped by traffic conditioner */
+		return;
+#endif
+
 	/*
 	 * Process options and, if not destined for us,
 	 * ship it on.  ip_dooptions returns 1 when an
