@@ -1,4 +1,4 @@
-/* $OpenBSD: if_gx.c,v 1.3 2002/04/17 18:30:45 fgsch Exp $ */
+/* $OpenBSD: if_gx.c,v 1.4 2002/04/26 04:36:38 nate Exp $ */
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon
  * All rights reserved.
@@ -498,10 +498,14 @@ gx_release(struct gx_softc *gx)
 #endif
 
 	for (i = 0; i < GX_RX_RING_CNT; i++)
-		bus_dmamap_destroy(gx->gx_dmatag, gx->gx_cdata.gx_rx_map[i]);
+		if (gx->gx_cdata.gx_rx_map[i])
+			bus_dmamap_destroy(gx->gx_dmatag,
+			    gx->gx_cdata.gx_rx_map[i]);
 
 	for (i = 0; i < GX_TX_RING_CNT; i++)
-		bus_dmamap_destroy(gx->gx_dmatag, gx->gx_cdata.gx_tx_map[i]);
+		if (gx->gx_cdata.gx_tx_map[i])
+			bus_dmamap_destroy(gx->gx_dmatag,
+			    gx->gx_cdata.gx_tx_map[i]);
 }
 
 void
