@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.2 2004/01/29 12:02:13 henning Exp $ */
+/*	$OpenBSD: parser.c,v 1.3 2004/02/26 16:19:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <errno.h>
+#include <limits.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "parser.h"
@@ -26,7 +29,9 @@ enum token_type {
 	ENDTOKEN,
 	KEYWORD,
 	ADDRESS,
-	FLAG
+	FLAG,
+	ASNUM,
+	ASTYPE
 };
 
 struct token {
@@ -39,11 +44,14 @@ struct token {
 static const struct token t_main[];
 static const struct token t_show[];
 static const struct token t_show_fib[];
+static const struct token t_show_rib[];
 static const struct token t_show_neighbor[];
 static const struct token t_show_neighbor_modifiers[];
 static const struct token t_fib[];
 static const struct token t_neighbor[];
 static const struct token t_neighbor_modifiers[];
+static const struct token t_show_as[];
+static const struct token t_show_ip[];
 
 static const struct token t_main[] = {
 	{ KEYWORD,	"reload",	RELOAD,		NULL},
@@ -59,6 +67,8 @@ static const struct token t_show[] = {
 	{ KEYWORD,	"interfaces",	SHOW_INTERFACE,	NULL},
 	{ KEYWORD,	"neighbor",	SHOW_NEIGHBOR,	t_show_neighbor},
 	{ KEYWORD,	"nexthop",	SHOW_NEXTHOP,	NULL},
+	{ KEYWORD,	"rib",		SHOW_RIB,	t_show_rib},
+	{ KEYWORD,	"ip",		NONE,		t_show_ip},
 	{ KEYWORD,	"summary",	SHOW_SUMMARY,	NULL},
 	{ ENDTOKEN,	"",		NONE,		NULL}
 };
@@ -73,8 +83,17 @@ static const struct token t_show_fib[] = {
 	{ ENDTOKEN,	"",		NONE,			NULL}
 };
 
+static const struct token t_show_rib[] = {
+	{ NOTOKEN,	"",		NONE,		NULL},
+	{ ASTYPE,	"as",		AS_ALL,		t_show_as},
+	{ ASTYPE,	"source-as",	AS_SOURCE,	t_show_as},
+	{ ASTYPE,	"transit-as",	AS_TRANSIT,	t_show_as},
+	{ ASTYPE,	"empty-as",	AS_EMPTY,	NULL},
+	{ ENDTOKEN,	"",		NONE,		NULL}
+};
+
 static const struct token t_show_neighbor[] = {
-	{ NOTOKEN,	"",		NONE,			NULL},
+	{ NOTOKEN,	"",		NONE,	NULL},
 	{ ADDRESS,	"",		NONE,	t_show_neighbor_modifiers},
 	{ ENDTOKEN,	"",		NONE,	NULL}
 };
@@ -103,11 +122,22 @@ static const struct token t_neighbor_modifiers[] = {
 	{ ENDTOKEN,	"",		NONE,		NULL}
 };
 
+static const struct token t_show_as[] = {
+	{ ASNUM,	"",		NONE,		NULL},
+	{ ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_show_ip[] = {
+	{ KEYWORD,	"bgp",		SHOW_RIB,	t_show_rib},
+	{ ENDTOKEN,	"",		NONE,		NULL}
+};
+
 static struct parse_result	res;
 
 const struct token	*match_token(const char *, const struct token []);
 void			 show_valid_args(const struct token []);
 int			 parse_addr(const char *, struct bgpd_addr *);
+int			 parse_asnum(const char *, u_int16_t *);
 
 struct parse_result *
 parse(int argc, char *argv[])
@@ -137,7 +167,7 @@ parse(int argc, char *argv[])
 
 		if (match->type == NOTOKEN)
 			break;
-	
+
 		if (match->next == NULL)
 			break;
 
@@ -193,6 +223,20 @@ match_token(const char *word, const struct token table[])
 					res.action = t->value;
 			}
 			break;
+		case ASTYPE:
+			if (word != NULL && strncmp(word, table[i].keyword,
+			    strlen(word)) == 0) {
+				match++;
+				t = &table[i];
+				res.as.type = t->value;
+			}
+			break;
+		case ASNUM:
+			if (parse_asnum(word, &res.as.as)) {
+				match++;
+				t = &table[i];
+			}
+			break;
 		case ENDTOKEN:
 			break;
 		}
@@ -216,15 +260,19 @@ show_valid_args(const struct token table[])
 
 	for (i = 0; table[i].type != ENDTOKEN; i++) {
 		switch (table[i].type) {
-		case NONE:
+		case NOTOKEN:
 			fprintf(stderr, "  (nothing)\n");
 			break;
 		case KEYWORD:
 		case FLAG:
+		case ASTYPE:
 			fprintf(stderr, "  %s\n", table[i].keyword);
 			break;
 		case ADDRESS:
 			fprintf(stderr, "  <address>\n");
+			break;
+		case ASNUM:
+			fprintf(stderr, "  <asnum>\n");
 			break;
 		case ENDTOKEN:
 			break;
@@ -251,3 +299,25 @@ parse_addr(const char *word, struct bgpd_addr *addr)
 
 	return (0);
 }
+
+int
+parse_asnum(const char *word, u_int16_t *asnum)
+{
+	u_long	 ulval;
+	char	*ep;
+
+	if (word == NULL)
+		return (0);
+
+	errno = 0;
+	ulval = strtoul(word, &ep, 0);
+	if (word[0] == '\0' || *ep != '\0')
+		return (0);
+	if (errno == ERANGE && ulval == ULONG_MAX)
+		return (0);
+	if (ulval > USHRT_MAX)
+		return (0);
+	*asnum = (u_int16_t)ulval;
+	return (1);
+}
+

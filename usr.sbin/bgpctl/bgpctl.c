@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.41 2004/02/24 13:12:24 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.42 2004/02/26 16:19:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -30,6 +30,7 @@
 
 #include "bgpd.h"
 #include "session.h"
+#include "rde.h"
 #include "log.h"
 #include "parser.h"
 
@@ -58,6 +59,10 @@ const char *	 get_media_descr(int);
 const char *	 get_linkstate(int, int);
 void		 print_baudrate(u_long);
 int		 show_interface_msg(struct imsg *);
+void		 show_rib_summary_head(void);
+void		 print_prefix(struct bgpd_addr *, u_int8_t, u_int8_t);
+const char *	 print_origin(u_int8_t, int);
+int		 show_rib_summary_msg(struct imsg *);
 
 struct imsgbuf	ibuf;
 
@@ -126,6 +131,14 @@ main(int argc, char *argv[])
 			    &res->addr, sizeof(res->addr));
 		else
 			imsg_compose(&ibuf, IMSG_CTL_SHOW_NEIGHBOR, 0, NULL, 0);
+		break;
+	case SHOW_RIB:
+		if (res->as.type == AS_NONE)
+			imsg_compose(&ibuf, IMSG_CTL_SHOW_RIB, 0, NULL, 0);
+		else
+			imsg_compose(&ibuf, IMSG_CTL_SHOW_RIB_AS, 0,
+			    &res->as, sizeof(res->as));
+		show_rib_summary_head();
 		break;
 	case RELOAD:
 		imsg_compose(&ibuf, IMSG_CTL_RELOAD, 0, NULL, 0);
@@ -196,6 +209,9 @@ main(int argc, char *argv[])
 				break;
 			case SHOW_NEIGHBOR_TIMERS:
 				done = show_neighbor_msg(&imsg, NV_TIMERS);
+				break;
+			case SHOW_RIB:
+				done = show_rib_summary_msg(&imsg);
 				break;
 			case NONE:
 			case RELOAD:
@@ -605,3 +621,118 @@ show_interface_msg(struct imsg *imsg)
 
 	return (0);
 }
+
+void
+show_rib_summary_head(void)
+{
+	printf(
+	    "flags: * = Valid, > = Selected, I = via IBGP, A = Announced\n");
+	printf("origin: i = IGP, e = EGP, ? = Incomplete\n\n");
+	printf("%-4s %-20s%-15s  %5s %5s %s\n", "flags", "destination",
+	    "gateway", "lpref", "med", "aspath origin");
+}
+
+void
+print_prefix(struct bgpd_addr *prefix, u_int8_t prefixlen, u_int8_t flags)
+{
+	char			 flagstr[5];
+	char			*p;
+
+	p = flagstr;
+	if (flags & F_RIB_ANNOUNCE)
+		*p++ = 'A';
+	if (flags & F_RIB_INTERNAL)
+		*p++ = 'I';
+	if (flags & F_RIB_ELIGIBLE)
+		*p++ = '*';
+	if (flags & F_RIB_ACTIVE)
+		*p++ = '>';
+	*p = '\0';
+
+	if (asprintf(&p, "%s/%u", inet_ntoa(prefix->v4), prefixlen) == -1)
+		err(1, NULL);
+	printf("%-4s %-20s", flagstr, p);
+	free(p);
+}
+
+const char *
+print_origin(u_int8_t origin, int sum)
+{
+	switch (origin) {
+	case ORIGIN_IGP:
+		return (sum ? "i" : "IGP");
+	case ORIGIN_EGP:
+		return (sum ? "e" : "EGP");
+	case ORIGIN_INCOMPLETE:
+		return (sum ? "?" : "incomplete");
+	default:
+		return (sum ? "X" : "bad origin");
+	}
+}
+
+char			*aspath = NULL;
+struct ctl_show_rib	*rib = NULL;
+
+int
+show_rib_summary_msg(struct imsg *imsg)
+{
+	struct ctl_show_rib_prefix	*p;
+	u_char				*asdata;
+
+	switch (imsg->hdr.type) {
+	case IMSG_CTL_SHOW_RIB:
+		if (rib != NULL) {
+			free(rib);
+			rib = NULL;
+		}
+		if (aspath != NULL) {
+			free(aspath);
+			aspath = NULL;
+		}
+
+		rib = malloc(imsg->hdr.len - IMSG_HEADER_SIZE);
+		memcpy(rib, imsg->data, imsg->hdr.len - IMSG_HEADER_SIZE);
+
+		print_prefix(&rib->prefix, rib->prefixlen, rib->flags);
+		printf("%-15s ", inet_ntoa(rib->nexthop.v4));
+
+		printf(" %5u %5u ", rib->local_pref, rib->med);
+
+		asdata = imsg->data;
+		asdata += sizeof(struct ctl_show_rib);
+		aspath = malloc(aspath_strlen(asdata, rib->aspath_len) + 1);
+		if (aspath == NULL)
+			err(1, NULL);
+		aspath_snprint(aspath, aspath_strlen(asdata,
+		    rib->aspath_len) + 1, asdata, rib->aspath_len);
+		if (strlen(aspath) > 0)
+			printf("%s ", aspath);
+
+		printf("%s\n", print_origin(rib->origin, 1));
+		break;
+	case IMSG_CTL_SHOW_RIB_PREFIX:
+		p = imsg->data;
+		if (rib == NULL)
+			/* unexpected packet */
+			return (0);
+
+		print_prefix(&p->prefix, p->prefixlen, p->flags);
+		printf("%-15s ", inet_ntoa(rib->nexthop.v4));
+
+		printf(" %5u %5u ", rib->local_pref, rib->med);
+
+		if (strlen(aspath) > 0)
+			printf("%s ", aspath);
+
+		printf("%s\n", print_origin(rib->origin, 1));
+		break;
+	case IMSG_CTL_END:
+		return (1);
+		break;
+	default:
+		break;
+	}
+
+	return (0);
+}
+
