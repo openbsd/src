@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.61 2003/06/29 23:37:12 itojun Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.62 2003/07/01 00:28:52 itojun Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -994,6 +994,7 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 	return (PF_DROP);
 }
 
+#ifdef INET6
 int
 pf_normalize_ip6(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 {
@@ -1160,6 +1161,7 @@ pf_normalize_ip6(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 		PFLOG_PACKET(ifp, h, m, AF_INET6, dir, *reason, r, NULL, NULL);
 	return (PF_DROP);
 }
+#endif
 
 int
 pf_normalize_tcp(int dir, struct ifnet *ifp, struct mbuf *m, int ipoff,
