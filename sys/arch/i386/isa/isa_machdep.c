@@ -1,8 +1,46 @@
-/*	$OpenBSD: isa_machdep.c,v 1.23 1997/12/09 03:36:42 deraadt Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.24 1997/12/21 14:44:32 downsj Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.14 1996/05/12 23:06:18 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1993, 1994 Charles Hannum.
+ * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*-
+ * Copyright (c) 1993, 1994, 1996, 1997
+ *	Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
  *
@@ -229,6 +267,80 @@ fakeintr(arg)
 
 #define	LEGAL_IRQ(x)	((x) >= 0 && (x) < ICU_LEN && (x) != 2)
 
+int
+isa_intr_alloc(ic, mask, type, irq)
+	isa_chipset_tag_t ic;
+	int mask;
+	int type;
+	int *irq;
+{
+	int i, bestirq, count;
+	int tmp;
+	struct intrhand **p, *q;
+
+	if (type == IST_NONE)
+		panic("intr_alloc: bogus type");
+
+	bestirq = -1;
+	count = -1;
+
+	/* some interrupts should never be dynamically allocated */
+	mask &= 0xdef8;
+
+	/*
+	 * XXX some interrupts will be used later (6 for fdc, 12 for pms).
+	 * the right answer is to do "breadth-first" searching of devices.
+	 */
+	mask &= 0xefbf;
+
+	for (i = 0; i < ICU_LEN; i++) {
+		if (LEGAL_IRQ(i) == 0 || (mask & (1<<i)) == 0)
+			continue;
+
+		switch(intrtype[i]) {
+		case IST_NONE:
+			/*
+			 * if nothing's using the irq, just return it
+			 */
+			*irq = i;
+			return (0);
+
+		case IST_EDGE:
+		case IST_LEVEL:
+			if (type != intrtype[i])
+				continue;
+			/*
+			 * if the irq is shareable, count the number of other
+			 * handlers, and if it's smaller than the last irq like
+			 * this, remember it
+			 *
+			 * XXX We should probably also consider the
+			 * interrupt level and stick IPL_TTY with other
+			 * IPL_TTY, etc.
+			 */
+			for (p = &intrhand[i], tmp = 0; (q = *p) != NULL;
+			     p = &q->ih_next, tmp++)
+				;
+			if ((bestirq == -1) || (count > tmp)) {
+				bestirq = i;
+				count = tmp;
+			}
+			break;
+
+		case IST_PULSE:
+			/* this just isn't shareable */
+			continue;
+		}
+	}
+
+	if (bestirq == -1)
+		return (1);
+
+	*irq = bestirq;
+
+	return (0);
+}
+
 /*
  * Set up an interrupt handler to start being called.
  * XXX PRONE TO RACE CONDITIONS, UGLY, 'INTERESTING' INSERTION ALGORITHM.
@@ -256,6 +368,9 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg, ih_what)
 		panic("intr_establish: bogus irq or type");
 
 	switch (intrtype[irq]) {
+	case IST_NONE:
+		intrtype[irq] = type;
+		break;
 	case IST_EDGE:
 	case IST_LEVEL:
 		if (type == intrtype[irq])

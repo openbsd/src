@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.13 1997/10/07 06:49:49 mickey Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.14 1997/12/21 14:44:34 downsj Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*-
@@ -59,7 +59,10 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
+#include <dev/cons.h>
 #include <dev/isa/isavar.h>
+#include <dev/isa/isapnpreg.h>
+#include <dev/isa/isapnpvar.h>
 #include <dev/ic/comreg.h>
 #include <dev/ic/ns16550reg.h>
 #ifdef COM_HAYESP
@@ -87,6 +90,12 @@ void	comstart_pending __P((void *));
 
 #if NPCCOM_ISA
 struct cfattach pccom_isa_ca = {
+	sizeof(struct com_softc), comprobe, comattach
+};
+#endif
+
+#if NPCCOM_ISAPNP
+struct cfattach pccom_isapnp_ca = {
 	sizeof(struct com_softc), comprobe, comattach
 };
 #endif
@@ -137,6 +146,23 @@ extern int kgdb_debug_init;
 #define	SET(t, f)	(t) |= (f)
 #define	CLR(t, f)	(t) &= ~(f)
 #define	ISSET(t, f)	((t) & (f))
+
+/* Macros for determining bus type. */
+#if NPCCOM_ISA || NPCCOM_PCMCIA
+#define IS_ISA(parent) \
+	(!strcmp((parent)->dv_cfdata->cf_driver->cd_name, "isa") || \
+	 !strcmp((parent)->dv_cfdata->cf_driver->cd_name, "pcmcia"))
+#elif NPCCOM_ISA
+#define IS_ISA(parent) \
+	!strcmp((parent)->dv_cfdata->cf_driver->cd_name, "isa")
+#endif
+
+#if NPCCOM_ISAPNP
+#define IS_ISAPNP(parent) \
+	 !strcmp((parent)->dv_cfdata->cf_driver->cd_name, "isapnp")
+#else
+#define IS_ISAPNP(parent)	0
+#endif
 
 #if NPCCOM_PCMCIA
 #include <dev/pcmcia/pcmciavar.h>
@@ -454,14 +480,6 @@ comprobe(parent, match, aux)
 	int iobase, needioh;
 	int rv = 1;
 
-#if NPCCOM_ISA || NPCCOM_PCMCIA
-#define IS_ISA(parent) \
-	(!strcmp((parent)->dv_cfdata->cf_driver->cd_name, "isa") || \
-	 !strcmp((parent)->dv_cfdata->cf_driver->cd_name, "pcmcia"))
-#elif NPCCOM_ISA
-#define IS_ISA(parent) \
-	!strcmp((parent)->dv_cfdata->cf_driver->cd_name, "isa")
-#endif
 	/*
 	 * XXX should be broken out into functions for isa probe and
 	 * XXX for commulti probe, with a helper function that contains
@@ -474,6 +492,17 @@ comprobe(parent, match, aux)
 		iot = ia->ia_iot;
 		iobase = ia->ia_iobase;
 		needioh = 1;
+	} else
+#endif
+#if NPCCOM_ISAPNP
+	if (IS_ISAPNP(parent)) {
+		struct isapnp_attach_args *ipa = aux;
+
+		/* XXX: is the modem always on region 0? */
+		iot = ipa->ipa_iot;
+		iobase = ipa->ipa_io[0].base;
+		ioh = ipa->ipa_io[0].h;
+		needioh = 0;
 	} else
 #endif
 #if NPCCOM_COMMULTI
@@ -552,12 +581,25 @@ comattach(parent, self, aux)
 		 */
 		iobase = ia->ia_iobase;
 		iot = ia->ia_iot;
-	        if (iobase != comconsaddr) {
-	                if (bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh))
+	       	if (iobase != comconsaddr) {
+			if (bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh))
 				panic("comattach: io mapping failed");
 		} else
-	                ioh = comconsioh;
+			ioh = comconsioh;
 		irq = ia->ia_irq;
+	} else
+#endif
+#if NPCCOM_ISAPNP
+	if (IS_ISAPNP(parent)) {
+		struct isapnp_attach_args *ipa = aux;
+
+		/*
+		 * We're living on ISA PnP.  No console support.
+		 */
+		iobase = ipa->ipa_io[0].base;
+		iot = ipa->ipa_iot;
+		ioh = ipa->ipa_io[0].h;
+		irq = ipa->ipa_irq[0].num;
 	} else
 #endif
 #if NPCCOM_COMMULTI
@@ -646,6 +688,15 @@ comattach(parent, self, aux)
 			struct isa_attach_args *ia = aux;
 
 			sc->sc_ih = isa_intr_establish(ia->ia_ic, irq,
+			    IST_EDGE, IPL_HIGH, comintr, sc,
+			    sc->sc_dev.dv_xname);
+		} else
+#endif
+#if NPCCOM_ISAPNP
+		if (IS_ISAPNP(parent)) {
+			struct isapnp_attach_args *ipa = aux;
+
+			sc->sc_ih = isa_intr_establish(ipa->ipa_ic, irq,
 			    IST_EDGE, IPL_HIGH, comintr, sc,
 			    sc->sc_dev.dv_xname);
 		} else
@@ -1598,7 +1649,6 @@ comintr(arg)
 /*
  * Following are all routines needed for PCCOM to act as console
  */
-#include <dev/cons.h>
 
 void
 comcnprobe(cp)
