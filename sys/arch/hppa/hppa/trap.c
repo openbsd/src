@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.47 2002/09/10 22:43:49 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.48 2002/09/11 18:37:29 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -561,7 +561,7 @@ syscall(frame)
 #endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, code, argsize, args);
+		ktrsyscall(p, code, callp->sy_argsize, args);
 #endif
 	if (error)
 		goto bad;
