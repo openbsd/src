@@ -1652,6 +1652,9 @@ patch_file (finfo, vers_ts, docheckout, file_info, checksum)
 				vers_ts->options, RUN_TTY,
 				patch_file_write, (void *) &data);
 
+	fseek(e, 0L, SEEK_END);
+	file_size = ftell(e);
+
 	if (fclose (e) < 0)
 	    error (1, errno, "cannot close %s", file2);
 
