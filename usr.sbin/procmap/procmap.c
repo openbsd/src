@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.11 2004/02/23 04:34:31 tedu Exp $ */
+/*	$OpenBSD: procmap.c,v 1.12 2004/02/23 19:48:40 tedu Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -105,7 +105,7 @@ void *kernel_floor;
 u_long nchash_addr, nchashtbl_addr, kernel_map_addr;
 int debug, verbose;
 int print_all, print_map, print_maps, print_solaris, print_ddb;
-int rwx = VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE, heapfound;
+int rwx = VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE;
 rlim_t maxssiz;
 
 struct kbit {
@@ -368,13 +368,11 @@ process_map(kvm_t *kd, pid_t pid, struct kinfo_proc *proc)
 	A(vm_map_entry) = 0;
 
 	if (pid > 0) {
-		heapfound = 0;
 		A(vmspace) = (u_long)proc->kp_proc.p_vmspace;
 		S(vmspace) = sizeof(struct vmspace);
 		KDEREF(kd, vmspace);
 		thing = "proc->p_vmspace.vm_map";
 	} else {
-		heapfound = 1; /* but really, do kernels have a heap? */
 		A(vmspace) = 0;
 		S(vmspace) = 0;
 		thing = "kernel_map";
@@ -779,7 +777,7 @@ findname(kvm_t *kd, struct kbit *vmspace,
 
 	if (UVM_ET_ISOBJ(vme)) {
 		if (A(vfs)) {
-			l = (unsigned)strlen(D(vfs, mount)->mnt_stat.f_mntonname);
+			l = strlen(D(vfs, mount)->mnt_stat.f_mntonname);
 			switch (search_cache(kd, vp, &name, buf, sizeof(buf))) {
 			case 0: /* found something */
 				name--;
@@ -835,9 +833,10 @@ findname(kvm_t *kd, struct kbit *vmspace,
 	    (D(vmspace, vmspace)->vm_maxsaddr + (size_t)maxssiz) >=
 	    (caddr_t)vme->end) {
 		name = "  [ stack ]";
-	} else if ((vme->protection & rwx) == rwx && !heapfound) {
-		/* XXX this could probably be done better */
-		heapfound = 1;
+	} else if (D(vmspace, vmspace)->vm_daddr <= (caddr_t)vme->start &&
+	    D(vmspace, vmspace)->vm_daddr + MAXDSIZ >= (caddr_t)vme->end &&
+	    D(vmspace, vmspace)->vm_dsize * getpagesize() / 2 <
+	    (vme->end - vme->start)) {
 		name = "  [ heap ]";
 	} else
 		name = "  [ anon ]";
