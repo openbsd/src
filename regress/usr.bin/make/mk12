@@ -1,0 +1,21 @@
+# Check out that brace expansion works
+T1=mk{1,4a,11}
+
+# Now for funnier stuff
+T2=m?{1,4*,11}
+
+# Recursive fun
+T3=mk{1,4{,a},1{0,1}}
+
+all: a b c
+
+a: ${T1}
+	@echo ${>:T}
+
+b: ${T2}
+	@echo ${>:T}
+
+c: ${T3}
+	@echo ${>:T}
+
+.PHONY: a b c all

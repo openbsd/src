@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile,v 1.9 2001/05/15 13:40:02 espie Exp $
+# $OpenBSD: Makefile,v 1.10 2001/05/26 21:12:27 espie Exp $
 
 NOMAN=
 NOPROG=
 
-regress: t1 t2 t3 t4 t5 t6 t8 t9 t10 t11 t7
+regress: t1 t2 t3 t4 t5 t6 t8 t9 t10 t11 t12 t7
 
 MALLOC_OPTIONS?=AZJ
 t1: t1.out
@@ -58,6 +58,10 @@ t10:	z.a
 t11:
 	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk11 |diff - t11.out
 	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk11 A=t|diff - t11.out2
+
+# Check for filename expansions.
+t12:
+	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk12 |diff - t12.out
 
 z.a:
 	touch $@
