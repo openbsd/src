@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pool.9,v 1.17 2002/02/25 04:53:16 dhartmei Exp $
+.\"	$OpenBSD: pool.9,v 1.18 2002/04/03 00:33:54 art Exp $
 .\"	$NetBSD: pool.9,v 1.18 2001/06/21 11:59:01 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -58,6 +58,10 @@
 .Fa "int nitems"
 .Fa "char *wmesg"
 .Fa "struct pool_allocator *palloc"
+.Fc
+.Ft void
+.Fo pool_destroy
+.Fa "struct pool *pp"
 .Fc
 .Ft void
 .Fo pool_set_drain_hook
@@ -155,6 +159,12 @@ It is recommended to set this to
 if the pool will never be accessed in interrupt context, since that
 allocator is much more efficient.
 .El
+.Ss DESTROYING A POOL
+The
+.Fn pool_destroy
+function destroys a resource pool. It takes a single argument
+.Fa pp
+identifying the pool resource instance.
 .Ss SETTING DRAIN CALLBACK
 The
 .Fn pool_set_drain_hook
