@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.35 2004/06/03 14:16:33 jfb Exp $
+.\"	$OpenBSD: queue.3,v 1.36 2004/08/16 21:31:31 jmc Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -725,7 +725,7 @@ n2 = malloc(sizeof(struct entry));	/* Insert after. */
 SIMPLEQ_INSERT_AFTER(&head, n1, n2, entries);
 
 n2 = malloc(sizeof(struct entry));	/* Insert at the tail. */
-SIMPLEQ_INSERT_TAIL(&head, n1, entries);
+SIMPLEQ_INSERT_TAIL(&head, n2, entries);
 					/* Forward traversal. */
 for (np = SIMPLEQ_FIRST(&head); np != NULL; np = SIMPLEQ_NEXT(np, entries))
 	np-> ...
