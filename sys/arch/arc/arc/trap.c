@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.13 1998/01/28 13:46:00 pefo Exp $	*/
+/*	$OpenBSD: trap.c,v 1.14 1998/03/01 16:55:00 niklas Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  * from: Utah Hdr: trap.c 1.32 91/04/06
  *
  *	from: @(#)trap.c	8.5 (Berkeley) 1/11/94
- *      $Id: trap.c,v 1.13 1998/01/28 13:46:00 pefo Exp $
+ *      $Id: trap.c,v 1.14 1998/03/01 16:55:00 niklas Exp $
  */
 
 #include "ppp.h"
@@ -259,13 +259,14 @@ trap(statusReg, causeReg, vadr, pc, args)
 	u_int pc;		/* program counter where to continue */
 	u_int args;
 {
-	register int type, i;
+	int type, i;
 	unsigned ucode = 0;
-	register struct proc *p = curproc;
+	struct proc *p = curproc;
 	u_quad_t sticks;
 	vm_prot_t ftype;
 	extern unsigned onfault_table[];
 	int typ = 0;
+	union sigval sv;
 
 #ifdef DEBUG
 	trp->status = statusReg;
@@ -796,7 +797,8 @@ trap(statusReg, causeReg, vadr, pc, args)
 	p->p_md.md_regs[PC] = pc;
 	p->p_md.md_regs[CAUSE] = causeReg;
 	p->p_md.md_regs[BADVADDR] = vadr;
-	trapsignal(p, i, ucode, typ, (caddr_t)vadr);
+	sv.sival_int = vadr;
+	trapsignal(p, i, ucode, typ, sv);
 out:
 	/*
 	 * Note: we should only get here if returning to user mode.
@@ -1343,7 +1345,7 @@ stacktrace_subr(a0, a1, a2, a3, printfn)
 	int more, stksize;
 	int regs[3];
 	extern char edata[];
-	extern cpu_getregs __P((int *));
+	extern void cpu_getregs __P((int *));
 	unsigned int frames =  0;
 
 	cpu_getregs(regs);
