@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.30 2002/07/09 18:19:58 nate Exp $ */
+/*	$OpenBSD: ohci.c,v 1.31 2002/08/07 18:57:00 mickey Exp $ */
 /*	$NetBSD: ohci.c,v 1.104 2001/09/28 23:57:21 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -1920,10 +1920,8 @@ ohci_open(usbd_pipe_handle pipe)
 		opipe->sed = sed;
 		if (xfertype == UE_ISOCHRONOUS) {
 			sitd = ohci_alloc_sitd(sc);
-			if (sitd == NULL) {
-				ohci_free_sitd(sc, sitd);
+			if (sitd == NULL)
 				goto bad1;
-			}
 			opipe->tail.itd = sitd;
 			tdphys = sitd->physaddr;
 			fmt = OHCI_ED_FORMAT_ISO;
