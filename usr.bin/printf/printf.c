@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.3 1997/01/17 07:13:06 millert Exp $	*/
+/*	$OpenBSD: printf.c,v 1.4 2000/12/22 22:53:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -43,7 +43,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)printf.c	5.9 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$OpenBSD: printf.c,v 1.3 1997/01/17 07:13:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: printf.c,v 1.4 2000/12/22 22:53:10 deraadt Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -221,8 +221,13 @@ main(argc, argv)
 				}
 				case 'd':
 				case 'i': {
+					long p;
 					char *f = mklong(start, convch);
-					long p = getlong();
+					if (!f) {
+						warnx("out of memory");
+						return (1);
+					}
+					p = getlong();
 					PF(f, p);
 					break;
 				}
@@ -230,8 +235,13 @@ main(argc, argv)
 				case 'u':
 				case 'x':
 				case 'X': {
+					unsigned long p;
 					char *f = mklong(start, convch);
-					unsigned long p = getulong();
+					if (!f) {
+						warnx("out of memory");
+						return (1);
+					}
+					p = getulong();
 					PF(f, p);
 					break;
 				}
@@ -412,10 +422,24 @@ mklong(str, ch)
 	const char *str;
 	char ch;
 {
-	static char copy[64];
+	static char *copy;
+	static int copysize;
 	int len;	
 
 	len = strlen(str) + 2;
+	if (copysize < len) {
+		char *newcopy;
+		copysize = len + 256;
+
+		newcopy = realloc(copy, copysize);
+		if (newcopy == NULL) {
+			copysize = 0;
+			free(copy);
+			copy = NULL;
+			return (NULL);
+		}
+		copy = newcopy;
+	}
 	(void) memmove(copy, str, len - 3);
 	copy[len - 3] = 'l';
 	copy[len - 2] = ch;

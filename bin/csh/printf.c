@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.9 2000/01/22 20:24:47 deraadt Exp $	*/
+/*	$OpenBSD: printf.c,v 1.10 2000/12/22 22:53:10 deraadt Exp $	*/
 /*	$NetBSD: printf.c,v 1.6 1995/03/21 09:03:15 cgd Exp $	*/
 
 /*
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)printf.c	8.1 (Berkeley) 7/20/93";
 #else
-static char rcsid[] = "$OpenBSD: printf.c,v 1.9 2000/01/22 20:24:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: printf.c,v 1.10 2000/12/22 22:53:10 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -227,10 +227,24 @@ mklong(str, ch)
 	char *str;
 	int ch;
 {
-	static char copy[64];
+	static char *copy;
+	static int copysize;
 	int len;
 
 	len = strlen(str) + 2;
+	if (copysize < len) {
+		char *newcopy;
+		copysize = len + 256;
+
+		newcopy = realloc(copy, copysize);
+		if (newcopy == NULL) {
+			copysize = 0;
+			free(copy);
+			copy = NULL;
+			return (NULL);
+		}
+		copy = newcopy;
+	}
 	memmove(copy, str, len - 3);
 	copy[len - 3] = 'l';
 	copy[len - 2] = ch;
