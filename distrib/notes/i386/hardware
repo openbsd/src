@@ -349,7 +349,7 @@ the kernel, the user is presented with a
 
 UKC>
 
-prompt.  At this prompt, as variety of commands may be issued, but the
+prompt.  At this prompt, a variety of commands may be issued, but the
 relevant one to getting the SMC Elite Ultra running is 'disable'.  The
 wt0, el0, and ie1 devices all need to be disabled.  This is done by typing
 'disable' followed by the name of the device, i.e., 'disable wt0', and
