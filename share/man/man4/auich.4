@@ -1,4 +1,4 @@
-.\" $OpenBSD: auich.4,v 1.15 2004/09/30 19:59:24 mickey Exp $
+.\" $OpenBSD: auich.4,v 1.16 2005/04/05 01:44:41 mickey Exp $
 .\"
 .\" Copyright (c) 2000-2001 Michael Shalayeff
 .\" All rights reserved
@@ -29,7 +29,7 @@
 .Os
 .Sh NAME
 .Nm auich
-.Nd Intel 82801AA/AB/BA/CA/DB/EB, 82440MX, and compatibles PCI audio driver
+.Nd Intel 82801AA/AB/BA/CA/DB/EB/FB, 82440MX, and compatibles PCI audio driver
 .Sh SYNOPSIS
 .Cd "auich* at pci? flags 0x0000"
 .Cd "audio* at auich?"
@@ -37,7 +37,8 @@
 The
 .Nm
 driver provides support for the AC97-based audio present on the Intel
-82801AA/AB/BA/CA/DB/EB I/O controller hub (ICH/ICH0/ICH2/ICH3/ICH4/ICH5),
+82801AA/AB/BA/CA/DB/EB/FB I/O controller hub
+(ICH, ICH0, ICH2, ICH3, ICH4, ICH5, ICH6),
 82440MX chipset, SiS 7012, AMD 768, AMD 8111, NVIDIA nForce and nForce2 chips.
 The
 .Nm
