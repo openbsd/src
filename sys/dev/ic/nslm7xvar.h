@@ -1,4 +1,4 @@
-/*	$OpenBSD: nslm7xvar.h,v 1.1 2003/04/25 21:24:15 grange Exp $	*/
+/*	$OpenBSD: nslm7xvar.h,v 1.2 2003/06/29 21:21:25 grange Exp $	*/
 /*	$NetBSD: nslm7xvar.h,v 1.10 2002/11/15 14:55:42 ad Exp $ */
 
 /*-
@@ -114,7 +114,7 @@
 #define WB_BANK5_VBAT	0x51
 
 #define WB83781_NUM_SENSORS	13
-#define WB83697_NUM_SENSORS	14
+#define WB83697_NUM_SENSORS	13
 #define WB_NUM_SENSORS	15
 
 struct lm_softc {

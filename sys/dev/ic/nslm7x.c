@@ -1,4 +1,4 @@
-/*	$OpenBSD: nslm7x.c,v 1.1 2003/04/25 21:24:15 grange Exp $	*/
+/*	$OpenBSD: nslm7x.c,v 1.2 2003/06/29 21:21:25 grange Exp $	*/
 /*	$NetBSD: nslm7x.c,v 1.17 2002/11/15 14:55:41 ad Exp $ */
 
 /*-
@@ -77,7 +77,7 @@ void lm_refresh_sensor_data(struct lm_softc *);
 void wb_svolt(struct lm_softc *);
 void wb_stemp(struct lm_softc *, struct sensor *, int);
 void wb781_fanrpm(struct lm_softc *, struct sensor *);
-void wb_fanrpm(struct lm_softc *, struct sensor *);
+void wb_fanrpm(struct lm_softc *, struct sensor *, int);
 
 void wb781_refresh_sensor_data(struct lm_softc *);
 void wb782_refresh_sensor_data(struct lm_softc *);
@@ -288,7 +288,7 @@ wb_match(struct lm_softc *sc)
 		printf(": W83697HF\n");
 		wb_setup_volt(sc);
 		setup_temp(sc, 9, 2);
-		setup_fan(sc, 11, 3);
+		setup_fan(sc, 11, 2);
 		sc->numsensors = WB83697_NUM_SENSORS;
 		sc->refresh_sensor_data = wb697_refresh_sensor_data;
 		return 1;
@@ -703,7 +703,7 @@ wb_svolt(struct lm_softc *sc)
 			 * -12Vdc, assume Winbond recommended values for
 			 * resistors
 			 */
-			sdata = ((sdata * 1000) - (3600 * 805)) / 195;
+			sdata = ((sdata * 1000) - (3600 * 806)) / 194;
 		} else if (i == 6) {
 			/*
 			 * -5Vdc, assume Winbond recommended values for
@@ -712,7 +712,7 @@ wb_svolt(struct lm_softc *sc)
 			sdata = ((sdata * 1000) - (3600 * 682)) / 318;
 		}
 		/* rfact is (factor * 10^4) */
-		sc->sensors[i].value = sdata * sc->sensors[i].rfact;
+		sc->sensors[i].value = sdata * (int64_t)sc->sensors[i].rfact;
 		/* division by 10 gets us back to uVDC */
 		sc->sensors[i].value /= 10;
 	}
@@ -781,12 +781,12 @@ wb781_fanrpm(struct lm_softc *sc, struct sensor *sensors)
 }
 
 void
-wb_fanrpm(struct lm_softc *sc, struct sensor *sensors)
+wb_fanrpm(struct lm_softc *sc, struct sensor *sensors, int n)
 {
 	int i, divisor, sdata;
 
 	(*sc->lm_banksel)(sc, 0);
-	for (i = 0; i < 3; i++) {
+	for (i = 0; i < n; i++) {
 		sdata = (*sc->lm_readreg)(sc, LMD_SENSORBASE + i + 8);
 		DPRINTF(("sdata[fan%d] 0x%x\n", i, sdata));
 		if (i == 0)
@@ -828,7 +828,7 @@ wb782_refresh_sensor_data(struct lm_softc *sc)
 	/* Refresh our stored data for every sensor */
 	wb_svolt(sc);
 	wb_stemp(sc, &sc->sensors[9], 3);
-	wb_fanrpm(sc, &sc->sensors[12]);
+	wb_fanrpm(sc, &sc->sensors[12], 3);
 }
 
 void
@@ -837,7 +837,7 @@ wb697_refresh_sensor_data(struct lm_softc *sc)
 	/* Refresh our stored data for every sensor */
 	wb_svolt(sc);
 	wb_stemp(sc, &sc->sensors[9], 2);
-	wb_fanrpm(sc, &sc->sensors[11]);
+	wb_fanrpm(sc, &sc->sensors[11], 2);
 }
 
 void
