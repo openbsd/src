@@ -921,6 +921,9 @@ int flag_propolice_protection = 0;
 int flag_stack_protection = 0;
 #endif
 
+int flag_trampolines = 0;
+int warn_trampolines = 0;
+
 /* Table of supported debugging formats.  */
 static const struct
 {
@@ -1209,6 +1212,8 @@ static const lang_independent_options f_options[] =
    N_("Enables stack protection") },
   {"stack-protector-all", &flag_stack_protection, 1,
    N_("Enables stack protection of every function") } ,
+  {"trampolines", &flag_trampolines, 1,
+   N_("Allows trampolines") },
 };
 
 /* Table of language-specific options.  */
@@ -1573,7 +1578,9 @@ static const lang_independent_options W_options[] =
   {"strict-aliasing", &warn_strict_aliasing, 1,
    N_ ("Warn about code which might break the strict aliasing rules") },
   {"stack-protector", &warn_stack_protector, 1,
-   N_("Warn when disabling stack protector for some reason")}
+   N_("Warn when disabling stack protector for some reason")},
+  {"trampolines", &warn_trampolines, 1,
+   N_("Warn when trampolines are emitted")},
 };
 
 void

@@ -1,4 +1,4 @@
-.\" $OpenBSD: gcc-local.1,v 1.9 2005/01/18 03:37:46 david Exp $
+.\" $OpenBSD: gcc-local.1,v 1.10 2005/02/06 10:39:31 espie Exp $
 .\"
 .\" Copyright (c) 2002 Marc Espie
 .\" Copyright (c) 2003 Anil Madhavapeddy
@@ -63,6 +63,17 @@ trampoline code marks the smallest possible area around the trampoline stub
 executable using
 .Xr mprotect 2 ,
 since the stack area is by default non-executable.
+.It
+On
+.Ox ,
+by default, trampoline code generation is disabled in
+.Nm gcc 3.3.5 .
+Code requiring trampolines will not compile without
+.Fl ftrampolines .
+The warning flag
+.Fl Wtrampolines
+can be used to locate trampoline instances if trampoline generation
+is re-enabled.
 .It
 The
 .Fl O2
