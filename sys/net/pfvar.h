@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.172 2003/10/25 20:27:07 mcbride Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.173 2003/10/31 10:34:47 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1154,7 +1154,7 @@ extern void			 pf_calc_skip_steps(struct pf_rulequeue *);
 extern void			 pf_rule_set_qid(struct pf_rulequeue *);
 extern u_int32_t		 pf_qname_to_qid(char *);
 extern void			 pf_update_anchor_rules(void);
-extern struct pool		 pf_tree_pl, pf_rule_pl, pf_addr_pl;
+extern struct pool		 pf_rule_pl, pf_addr_pl;
 extern struct pool		 pf_state_pl, pf_altq_pl, pf_pooladdr_pl;
 extern struct pool		 pf_state_scrub_pl;
 extern void			 pf_purge_timeout(void *);

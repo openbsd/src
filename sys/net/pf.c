@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.396 2003/10/29 15:35:08 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.397 2003/10/31 10:34:47 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -108,7 +108,7 @@ u_int32_t		 ticket_pabuf;
 
 struct timeout		 pf_expire_to;			/* expire timeout */
 
-struct pool		 pf_tree_pl, pf_rule_pl, pf_addr_pl;
+struct pool		 pf_rule_pl, pf_addr_pl;
 struct pool		 pf_state_pl, pf_altq_pl, pf_pooladdr_pl;
 
 void			 pf_dynaddr_update(void *);
