@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.23 2003/10/13 00:44:25 tedu Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.24 2004/03/04 20:39:27 miod Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-static char *rcsid = "$OpenBSD: kdump.c,v 1.23 2003/10/13 00:44:25 tedu Exp $";
+static char *rcsid = "$OpenBSD: kdump.c,v 1.24 2004/03/04 20:39:27 miod Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -373,11 +373,40 @@ ktrsyscall(struct ktr_syscall *ktr)
 				ap++;
 				argsize -= sizeof(register_t);
 			} else if (ktr->ktr_code == SYS_ptrace) {
-				if (*ap >= 0 && *ap <=
+				if (*ap >= 0 && *ap <
 				    sizeof(ptrace_ops) / sizeof(ptrace_ops[0]))
 					(void)printf("(%s", ptrace_ops[*ap]);
-				else
+				else switch(*ap) {
+#ifdef PT_GETFPREGS
+				case PT_GETFPREGS:
+					(void)printf("(PT_GETFPREGS");
+					break;
+#endif
+				case PT_GETREGS:
+					(void)printf("(PT_GETREGS");
+					break;
+#ifdef PT_SETFPREGS
+				case PT_SETFPREGS:
+					(void)printf("(PT_SETFPREGS");
+					break;
+#endif
+				case PT_SETREGS:
+					(void)printf("(PT_SETREGS");
+					break;
+#ifdef PT_STEP
+				case PT_STEP:
+					(void)printf("(PT_STEP");
+					break;
+#endif
+#ifdef PT_WCOOKIE
+				case PT_WCOOKIE:
+					(void)printf("(PT_WCOOKIE");
+					break;
+#endif
+				default:
 					(void)printf("(%ld", (long)*ap);
+					break;
+				}
 				c = ',';
 				ap++;
 				argsize -= sizeof(register_t);
