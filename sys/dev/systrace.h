@@ -95,6 +95,7 @@ struct systrace_policy {
 #define STRIOCPOLICY	_IOWR('s', 105, struct systrace_policy)
 #define STRIOCGETCWD	_IOW('s', 106, pid_t)
 #define STRIOCRESCWD	_IO('s', 107)
+#define STRIOCREPORT	_IOW('s', 108, pid_t)
 
 #define SYSTR_POLICY_ASK	0
 #define SYSTR_POLICY_PERMIT	1

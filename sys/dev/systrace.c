@@ -82,6 +82,7 @@ struct str_policy {
 #define STR_PROC_ONQUEUE	0x01
 #define STR_PROC_WAITANSWER	0x02
 #define STR_PROC_SYSCALLRES	0x04
+#define STR_PROC_REPORT		0x08	/* Report emulation */
 
 struct str_process {
 	TAILQ_ENTRY(str_process) next;
@@ -239,6 +240,7 @@ systracef_ioctl(fp, cmd, data, p)
 		DPRINTF(("%s: attach to %d: %d\n", __FUNCTION__, pid, ret));
 		goto unlock;
 	case STRIOCDETACH:
+	case STRIOCREPORT:
 		pid = *(pid_t *)data;
 		if (!pid)
 			ret = EINVAL;
@@ -299,6 +301,9 @@ systracef_ioctl(fp, cmd, data, p)
 	switch (cmd) {
 	case STRIOCDETACH:
 		ret = systrace_detach(strp);
+		break;
+	case STRIOCREPORT:
+		SET(strp->flags, STR_PROC_REPORT);
 		break;
 	case STRIOCANSWER:
 		ret = systrace_answer(strp, (struct systrace_answer *)data);
@@ -691,7 +696,15 @@ systrace_redirect(int code, struct proc *p, void *v, register_t *retval)
 
 		/* Report change in emulation */
 		systrace_lock();
-		if (p->p_emul != oldemul && (strp = p->p_systrace) != NULL) {
+		strp = p->p_systrace;
+
+		/* See if we should force a report */
+		if (strp != NULL && ISSET(strp->flags, STR_PROC_REPORT)) {
+			CLR(strp->flags, STR_PROC_REPORT);
+			oldemul = NULL;
+		}
+
+		if (p->p_emul != oldemul && strp != NULL) {
 			fst = strp->parent;
 			lockmgr(&fst->lock, LK_EXCLUSIVE, NULL, p);
 			systrace_unlock();
@@ -983,6 +996,7 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 	}
 
 	error = systrace_insert_process(fst, proc);
+
  out:
 	return (error);
 }
