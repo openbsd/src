@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.8 1995/07/19 19:58:42 brezak Exp $
+#	$NetBSD: files.isa,v 1.9 1995/11/10 19:39:21 christos Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -127,8 +127,8 @@ file	dev/isa/if_eg.c			eg
 device	el at isa: ether, ifnet
 file	dev/isa/if_el.c			el
 
-# 3Com 3C5x9 (EtherLink III) family
-device	ep at isa: ether, ifnet, elink
+# 3Com 3C5x9, 3c59x (EtherLink III) family
+device	ep at isa, pci: ether, ifnet, elink
 file	dev/isa/if_ep.c			ep
 
 # Fujitsu MB8696[05]-based boards

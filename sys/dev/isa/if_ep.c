@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep.c,v 1.82 1995/10/10 03:11:28 mycroft Exp $	*/
+/*	$NetBSD: if_ep.c,v 1.85 1995/12/05 03:30:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -65,6 +65,8 @@
 #include <net/bpfdesc.h>
 #endif
 
+#include "pci.h"
+
 #include <machine/cpu.h>
 #include <machine/pio.h>
 
@@ -72,7 +74,18 @@
 #include <dev/isa/if_epreg.h>
 #include <dev/isa/elink.h>
 
-#define ETHER_MIN_LEN 64
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcidevs.h>
+
+/* PCI constants */
+#define PCI_VENDORID(x)		((x) & 0xFFFF)
+#define PCI_CHIPID(x)		(((x) >> 16) & 0xFFFF)
+#define PCI_CONN		0x48    /* Connector type */
+#define PCI_CBMA		0x10    /* Configuration Base Memory Address */
+
+
+#define ETHER_MIN_LEN	64
 #define ETHER_MAX_LEN   1518
 #define ETHER_ADDR_LEN  6
 /*
@@ -92,7 +105,13 @@ struct ep_softc {
 	int	tx_start_thresh;	/* Current TX_start_thresh.	*/
 	int	tx_succ_ok;		/* # packets sent in sequence   */
 					/* w/o underrun			*/
-	char	bus32bit;		/* 32bit access possible	*/
+	u_char	bustype;
+#define EP_BUS_ISA	  	0x0
+#define	EP_BUS_PCMCIA	  	0x1
+#define	EP_BUS_EISA	  	0x2
+#define EP_BUS_PCI	  	0x3
+
+#define EP_IS_BUS_32(a)	((a) & 0x2)
 };
 
 static int epprobe __P((struct device *, void *, void *));
@@ -115,8 +134,9 @@ struct mbuf *epget __P((struct ep_softc *, int));
 void epmbuffill __P((struct ep_softc *));
 void epmbufempty __P((struct ep_softc *));
 void epstop __P((struct ep_softc *));
-void epsetfilter __P((struct ep_softc *sc));
-void epsetlink __P((struct ep_softc *sc));
+void epsetfilter __P((struct ep_softc *));
+void epsetlink __P((struct ep_softc *));
+static void epconfig __P((struct ep_softc *, u_int));
 
 static u_short epreadeeprom __P((int id_port, int offset));
 static int epbusyeeprom __P((struct ep_softc *));
@@ -127,15 +147,15 @@ static struct epcard {
 	int	iobase;
 	int	irq;
 	char	available;
-	char	bus32bit;
+	char	bustype;
 } epcards[MAXEPCARDS];
 static int nepcards;
 
 static void
-epaddcard(iobase, irq, bus32bit)
+epaddcard(iobase, irq, bustype)
 	int iobase;
 	int irq;
-	char bus32bit;
+	char bustype;
 {
 
 	if (nepcards >= MAXEPCARDS)
@@ -143,10 +163,10 @@ epaddcard(iobase, irq, bus32bit)
 	epcards[nepcards].iobase = iobase;
 	epcards[nepcards].irq = (irq == 2) ? 9 : irq;
 	epcards[nepcards].available = 1;
-	epcards[nepcards].bus32bit = bus32bit;
+	epcards[nepcards].bustype = bustype;
 	nepcards++;
 }
-	
+
 /*
  * 3c579 cards on the EISA bus are probed by their slot number. 3c509
  * cards on the ISA bus are probed in ethernet address order. The probe
@@ -166,6 +186,24 @@ epprobe(parent, match, aux)
 	int slot, iobase, i;
 	u_short vendor, model;
 	int k, k2;
+
+#if NPCI > 0
+	extern struct cfdriver pcicd;
+
+	if (parent->dv_cfdata->cf_driver == &pcicd) {
+		struct pci_attach_args *pa = (struct pci_attach_args *) aux;
+
+		if (PCI_VENDORID(pa->pa_id) != PCI_VENDOR_3COM ||
+		    PCI_CHIPID(pa->pa_id) != PCI_PRODUCT_3COM_3C590)
+			return 0;
+
+		if (nepcards >= MAXEPCARDS)
+			return 0;
+
+		epcards[nepcards++].available = 0;
+		return 1;
+	}
+#endif
 
 	if (!probed) {
 		probed = 1;
@@ -197,7 +235,7 @@ epprobe(parent, match, aux)
 
 			k2 = inw(iobase + EP_W0_RESOURCE_CFG);
 			k2 >>= 12;
-			epaddcard(iobase, k2, 1);
+			epaddcard(iobase, k2, EP_BUS_EISA);
 		}
 
 		for (slot = 0; slot < 10; slot++) {
@@ -227,7 +265,7 @@ epprobe(parent, match, aux)
 
 			k2 = epreadeeprom(ELINK_ID_PORT, EEPROM_RESOURCE_CFG);
 			k2 >>= 12;
-			epaddcard(k, k2, 0);
+			epaddcard(k, k2, EP_BUS_ISA);
 
 			/* so card will not respond to contention again */
 			outb(ELINK_ID_PORT, TAG_ADAPTER + 1);
@@ -258,7 +296,7 @@ epprobe(parent, match, aux)
 
 good:
 	epcards[i].available = 0;
-	sc->bus32bit = epcards[i].bus32bit;
+	sc->bustype = epcards[i].bustype;
 	ia->ia_iobase = epcards[i].iobase;
 	ia->ia_irq = epcards[i].irq;
 	ia->ia_iosize = 0x10;
@@ -267,34 +305,27 @@ good:
 }
 
 static void
-epattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+epconfig(sc, conn)
+	struct ep_softc *sc;
+	u_int conn;
 {
-	struct ep_softc *sc = (void *)self;
-	struct isa_attach_args *ia = aux;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	u_short i;
 
-	printf(": ");
-
-	sc->ep_iobase = ia->ia_iobase;
-
-	GO_WINDOW(0);
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
 	sc->ep_connectors = 0;
-	i = inw(ia->ia_iobase + EP_W0_CONFIG_CTRL);
-	if (i & IS_AUI) {
+	printf(": ");
+	if (conn & IS_AUI) {
 		printf("aui");
 		sc->ep_connectors |= AUI;
 	}
-	if (i & IS_BNC) {
+	if (conn & IS_BNC) {
 		if (sc->ep_connectors)
 			printf("/");
 		printf("bnc");
 		sc->ep_connectors |= BNC;
 	}
-	if (i & IS_UTP) {
+	if (conn & IS_UTP) {
 		if (sc->ep_connectors)
 			printf("/");
 		printf("utp");
@@ -337,9 +368,81 @@ epattach(parent, self, aux)
 #endif
 
 	sc->tx_start_thresh = 20;	/* probably a good starting point. */
+}
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_NET,
-	    epintr, sc);
+static void
+epattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct ep_softc *sc = (void *)self;
+	u_short conn = 0;
+#if NPCI > 0
+	extern struct cfdriver pcicd;
+
+	if (parent->dv_cfdata->cf_driver == &pcicd) {
+		struct pci_attach_args *pa = aux;
+		int iobase;
+		u_short i;
+
+		if (pci_map_io(pa->pa_tag, PCI_CBMA, &iobase)) {
+			printf("%s: couldn't map io\n", sc->sc_dev.dv_xname);
+			return;
+		}
+		sc->bustype = EP_BUS_PCI;
+		sc->ep_iobase = iobase; /* & 0xfffffff0 */
+		i = pci_conf_read(pa->pa_tag, PCI_CONN);
+
+		/*
+		 * Bits 13,12,9 of the isa adapter are the same as bits 
+		 * 5,4,3 of the pci adapter
+		 */
+		if (i & IS_PCI_AUI)
+			conn |= IS_AUI;
+		if (i & IS_PCI_BNC)
+			conn |= IS_BNC;
+		if (i & IS_PCI_UTP)
+			conn |= IS_UTP;
+
+		GO_WINDOW(0);
+	}
+	else
+#endif
+	{
+		struct isa_attach_args *ia = aux;
+
+		sc->ep_iobase = ia->ia_iobase;
+		GO_WINDOW(0);
+		conn = inw(ia->ia_iobase + EP_W0_CONFIG_CTRL);
+	}
+
+	epconfig(sc, conn);
+
+
+#if NPCI > 0
+	if (parent->dv_cfdata->cf_driver == &pcicd) {
+		struct pci_attach_args *pa = aux;
+
+		pci_conf_write(pa->pa_tag, PCI_COMMAND_STATUS_REG,
+			       pci_conf_read(pa->pa_tag,
+					     PCI_COMMAND_STATUS_REG) |
+			       PCI_COMMAND_MASTER_ENABLE);
+
+		sc->sc_ih = pci_map_int(pa->pa_tag, PCI_IPL_NET, epintr, sc);
+		if (sc->sc_ih == NULL) {
+			printf("%s: couldn't map interrupt\n",
+			       sc->sc_dev.dv_xname);
+			return;
+		}
+		epstop(sc);
+	}
+	else
+#endif
+	{
+		struct isa_attach_args *ia = aux;
+		sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE,
+					       ISA_IPL_NET, epintr, sc);
+	}
 }
 
 /*
@@ -356,9 +459,20 @@ epinit(sc)
 	while (inw(BASE + EP_STATUS) & S_COMMAND_IN_PROGRESS)
 		;
 
-	GO_WINDOW(0);
-	outw(BASE + EP_W0_CONFIG_CTRL, 0);		/* Disable the card */
-	outw(BASE + EP_W0_CONFIG_CTRL, ENABLE_DRQ_IRQ);	/* Enable the card */
+	if (sc->bustype != EP_BUS_PCI) {
+		GO_WINDOW(0);
+		outw(BASE + EP_W0_CONFIG_CTRL, 0);
+		outw(BASE + EP_W0_CONFIG_CTRL, ENABLE_DRQ_IRQ);
+	}
+
+	if (sc->bustype == EP_BUS_PCMCIA) {
+#ifdef EP_COAX_DEFAULT
+		outw(BASE + EP_W0_ADDRESS_CFG,3<<14);
+#else
+		outw(BASE + EP_W0_ADDRESS_CFG,0<<14);
+#endif
+		outw(BASE + EP_W0_RESOURCE_CFG, 0x3f00);
+	}
 
 	GO_WINDOW(2);
 	for (i = 0; i < 6; i++)	/* Reload the ether_addr. */
@@ -430,14 +544,25 @@ epsetlink(sc)
 	GO_WINDOW(4);
 	outw(BASE + EP_W4_MEDIA_TYPE, DISABLE_UTP);
 	if (!(ifp->if_flags & IFF_LINK0) && (sc->ep_connectors & BNC)) {
+		if (sc->bustype == EP_BUS_PCMCIA) {
+			GO_WINDOW(0);
+			outw(BASE + EP_W0_ADDRESS_CFG,3<<14);
+			GO_WINDOW(1);
+		}
 		outw(BASE + EP_COMMAND, START_TRANSCEIVER);
 		delay(1000);
 	}
 	if (ifp->if_flags & IFF_LINK0) {
 		outw(BASE + EP_COMMAND, STOP_TRANSCEIVER);
 		delay(1000);
-		if ((ifp->if_flags & IFF_LINK1) && (sc->ep_connectors & UTP))
+		if ((ifp->if_flags & IFF_LINK1) && (sc->ep_connectors & UTP)) {
+			if (sc->bustype == EP_BUS_PCMCIA) {
+				GO_WINDOW(0);
+				outw(BASE + EP_W0_ADDRESS_CFG,0<<14);
+				GO_WINDOW(4);
+			}
 			outw(BASE + EP_W4_MEDIA_TYPE, ENABLE_UTP);
+		}
 	}
 	GO_WINDOW(1);
 }
@@ -513,7 +638,7 @@ startagain:
 
 	outw(BASE + EP_W1_TX_PIO_WR_1, len);
 	outw(BASE + EP_W1_TX_PIO_WR_1, 0xffff);	/* Second dword meaningless */
-	if (sc->bus32bit) {
+	if (EP_IS_BUS_32(sc->bustype)) {
 		for (m = m0; m; ) {
 			if (m->m_len > 3)
 				outsl(BASE + EP_W1_TX_PIO_WR_1,
@@ -896,7 +1021,7 @@ epget(sc, totlen)
 				len = MCLBYTES;
 		}
 		len = min(totlen, len);
-		if (sc->bus32bit) {
+		if (EP_IS_BUS_32(sc->bustype)) {
 			if (len > 3) {
 				len &= ~3;
 				insl(BASE + EP_W1_RX_PIO_RD_1,
@@ -1106,6 +1231,11 @@ epbusyeeprom(sc)
 	struct ep_softc *sc;
 {
 	int i = 100, j;
+
+	if (sc->bustype == EP_BUS_PCMCIA) {
+		delay(1000);
+		return 0;
+	}
 
 	while (i--) {
 		j = inw(BASE + EP_W0_EEPROM_COMMAND);

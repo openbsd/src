@@ -1,4 +1,4 @@
-/*	$NetBSD: if_epreg.h,v 1.13 1995/04/27 14:50:58 hpeyerl Exp $	*/
+/*	$NetBSD: if_epreg.h,v 1.14 1995/11/10 19:39:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Herb Peyerl <hpeyerl@novatel.ca>
@@ -332,6 +332,10 @@
 #define ENABLE_UTP			0xc0
 #define DISABLE_UTP			0x0
 #define RX_BYTES_MASK			(u_short) (0x07ff)
+
+#define IS_PCI_AUI 			(1<<5)
+#define IS_PCI_BNC 			(1<<4)
+#define IS_PCI_UTP 			(1<<3)
 
 /*
  * EISA registers (offset from slot base)
