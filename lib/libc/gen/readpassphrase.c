@@ -26,7 +26,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: readpassphrase.c,v 1.6 2001/08/07 19:29:20 millert Exp $";
+static const char rcsid[] = "$OpenBSD: readpassphrase.c,v 1.7 2001/08/07 19:34:11 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <ctype.h>
@@ -82,8 +82,6 @@ readpassphrase(prompt, buf, bufsiz, flags)
 	(void)sigprocmask(SIG_BLOCK, &nset, &oset);
 
 	/* Turn off echo if possible. */
-	memset(&term, 0, sizeof(term));
-	memset(&oterm, 0, sizeof(oterm));
 	if (tcgetattr(input, &oterm) == 0) {
 		memcpy(&term, &oterm, sizeof(term));
 		if (!(flags & RPP_ECHO_ON) && (term.c_lflag & ECHO))
@@ -91,6 +89,9 @@ readpassphrase(prompt, buf, bufsiz, flags)
 		if (term.c_cc[VSTATUS] != _POSIX_VDISABLE)
 			term.c_cc[VSTATUS] = _POSIX_VDISABLE;
 		(void)tcsetattr(input, TCSAFLUSH|TCSASOFT, &term);
+	} else {
+		memset(&term, 0, sizeof(term));
+		memset(&oterm, 0, sizeof(oterm));
 	}
 
 	(void)write(output, prompt, strlen(prompt));
