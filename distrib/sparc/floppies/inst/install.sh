@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.9 1997/05/01 18:46:56 grr Exp $
+#	$OpenBSD: install.sh,v 1.10 1997/05/11 22:47:30 grr Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -150,15 +150,10 @@ echo	""
 # 1st arg is 1 more than arg needed
 args () 
 {
-	eval echo \$$1
+	eval echo \$\{$1\}
 }
 
-bytes_pser_sect=`cat $MSGBUF | sed -n -e /^${drivename}:/p -e /^${drivename}:/q`
-bytes_pser_sect=`args 10 $bytes_pser_sect `
-
-echo here
 bytes_per_sect=`cat $MSGBUF | sed -n -e /^${drivename}:/p -e /^${drivename}:/q`
-echo no here
 bytes_per_sect=`args 10 $bytes_per_sect`
 
 echo -n "Number of bytes per disk sector? [$bytes_per_sect] "
@@ -286,8 +281,6 @@ echo	""
 
 fragsize=1024
 blocksize=8192
-$DONTDOIT fsck -t ffs /dev/rfd0a
-$DONTDOIT mount -u /dev/fd0a /
 cat /etc/disktab.preinstall > $DT
 echo	"" >> $DT
 echo	"$labelname|OpenBSD installation generated:\\" >> $DT
@@ -456,7 +449,7 @@ done
 
 echo	""
 echo -n	"Labeling disk $drivename..."
-$DONTDOIT disklabel -w -B $drivename $labelname
+$DONTDOIT disklabel -w $drivename $labelname
 echo	" done."
 
 if [ "$sect_fwd" = "sf:" ]; then
@@ -468,7 +461,6 @@ fi
 echo	"Initializing root filesystem, and mounting..."
 $DONTDOIT newfs /dev/r${drivename}a $name
 $DONTDOIT mount -v /dev/${drivename}a /mnt
-$DONTDOIT /usr/mdec/binstall -v ffs /mnt
 if [ "$ename" != "" ]; then
 	echo	""
 	echo	"Initializing $ename filesystem, and mounting..."
@@ -476,6 +468,10 @@ if [ "$ename" != "" ]; then
 	$DONTDOIT mkdir -p /mnt/$ename
 	$DONTDOIT mount -v /dev/${drivename}e /mnt/$ename
 fi
+
+echo	"Installing boot block in root filesystem..."
+$DONTDOIT /usr/mdec/binstall -v ffs /mnt
+
 if [ "$fname" != "" ]; then
 	echo	""
 	echo	"Initializing $fname filesystem, and mounting..."

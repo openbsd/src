@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.12 1997/05/06 14:54:20 grr Exp $
+#	$OpenBSD: list,v 1.13 1997/05/11 22:47:33 grr Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -44,13 +44,16 @@ LINK	instbin			sbin/umount
 SYMLINK	/bin/cat		usr/bin/chgrp
 SYMLINK	/bin/cat		usr/bin/ftp
 SYMLINK	/bin/cat		usr/bin/less
+SYMLINK	/bin/cat		usr/bin/getopt
 SYMLINK	/bin/cat		usr/bin/gzip
 SYMLINK	/bin/cat		usr/bin/more
 SYMLINK	/bin/cat		usr/bin/sed
+SYMLINK	/bin/cat		usr/bin/tset
 #SYMLINK /bin/cat		usr/bin/tip
 #SYMLINK /bin/cat		usr/sbin/bad144
 SYMLINK	/bin/cat		usr/sbin/chown
 SYMLINK	/bin/cat		usr/sbin/chroot
+SYMLINK	/bin/cat		usr/sbin/installboot
 # it's less confusing to leave instbin there and takes essentially no room.
 # SPECIAL	/bin/rm instbin
 SPECIAL sync

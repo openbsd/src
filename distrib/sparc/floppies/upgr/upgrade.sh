@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.3 1996/06/29 05:54:25 tholo Exp $
+#	$OpenBSD: upgrade.sh,v 1.4 1997/05/11 22:47:34 grr Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -209,21 +209,30 @@ if [ $upgradefs = YES ]; then
 fi
 
 echo	""
-echo	"Updating boot blocks on ${drivename}..."
-disklabel -r $drivename > /mnt/tmp/${drivename}.label
+echo	"Updating disk labels on ${drivename}..."
+$DONTDOIT disklabel $drivename > /mnt/tmp/${drivename}.label
 if [ $? != 0 ]; then
 	echo	"FATAL ERROR: READ OF DISK LABEL FAILED."
 	echo	"It in unclear why this error would occur.  It looks"
 	echo	"like you may end up having to upgrade by hand."
 	exit 1
 fi
-disklabel -R -B $drivename /mnt/tmp/${drivename}.label
+$DONTDOIT disklabel -R $drivename /mnt/tmp/${drivename}.label
+
+echo	"Updating boot blodk on ${drivename}..."
+$DONTDOIT /usr/mdec/binstall -v ffs /mnt
 if [ $? != 0 ]; then
-	echo	"FATAL ERROR: UPDATE OF DISK LABEL FAILED."
+	echo	"FATAL ERROR: UPDATE OF BOOT BLOCKS FAILED."
 	echo	"It in unclear why this error would occur.  It looks"
 	echo	"like you may end up having to upgrade by hand."
 	exit 1
 fi
+
+if [ -f /mnt/boot ]; then
+$DONTDOIT	rm -f /mnt/boot.bak
+$DONTDOIT	mv /mnt/boot /mnt/boot.bak
+fi
+
 echo	"Done."
 
 echo	""
