@@ -1,4 +1,4 @@
-/*	$OpenBSD: xstr.c,v 1.3 1996/09/16 02:26:20 deraadt Exp $	*/
+/*	$OpenBSD: xstr.c,v 1.4 1996/12/07 08:18:38 bitblt Exp $	*/
 /*	$NetBSD: xstr.c,v 1.5 1994/12/24 16:57:59 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xstr.c	8.1 (Berkeley) 6/9/93";
 #endif
-static char rcsid[] = "$OpenBSD: xstr.c,v 1.3 1996/09/16 02:26:20 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: xstr.c,v 1.4 1996/12/07 08:18:38 bitblt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -86,6 +86,7 @@ main(argc, argv)
 	char *argv[];
 {
 	int c;
+	int fdesc;
 
 	while ((c = getopt(argc, argv, "-cvl:")) != -1)
 		switch (c) {
@@ -115,8 +116,21 @@ main(argc, argv)
 		signal(SIGINT, onintr);
 	if (cflg || argc == 0 && !readstd)
 		inithash();
-	else
-		strings = mktemp(strdup(_PATH_TMPFILE));
+	else {
+		strings = strdup (_PATH_TMPFILE);
+		if (strings == NULL) {
+			fprintf(stderr, "Unable to allocate memory: %s",
+			    strerror (errno));
+			exit(1);
+		}
+		fdesc = mkstemp (strings);
+		if (fdesc < 0) {
+			fprintf(stderr, "Unable to create temporary file.\n");
+			exit(1);
+		}
+		close (fdesc);
+	}
+
 	while (readstd || argc > 0) {
 		if (freopen("x.c", "w", stdout) == NULL)
 			perror("x.c"), exit(1);
