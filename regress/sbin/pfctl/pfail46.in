@@ -1,0 +1,5 @@
+# self as child
+# how one can be stupid enough to specify this in the first place is beyond me
+
+altq on lo0 bandwidth 512Kb tbrsize 33224 cbq queue { i_am_braindead }
+queue i_am_braindead cbq(default) { i_am_braindead }
