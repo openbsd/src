@@ -220,7 +220,7 @@ get_cred5(const char *princ, const char *inst, const char *krealm,
  out:
     if (id)
 	krb5_cc_close(context, id);
-    if (context);
+    if (context)
 	krb5_free_context(context);
 
     return ret;
