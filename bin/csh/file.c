@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.12 2002/07/24 19:53:50 millert Exp $	*/
+/*	$OpenBSD: file.c,v 1.13 2003/01/08 06:54:16 deraadt Exp $	*/
 /*	$NetBSD: file.c,v 1.11 1996/11/08 19:34:37 christos Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)file.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: file.c,v 1.12 2002/07/24 19:53:50 millert Exp $";
+static char rcsid[] = "$OpenBSD: file.c,v 1.13 2003/01/08 06:54:16 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -222,7 +222,8 @@ filetype(dir, file)
     Char    path[MAXPATHLEN];
     struct stat statb;
 
-    catn(Strcpy(path, dir), file, sizeof(path) / sizeof(Char));
+    Strlcpy(path, dir, sizeof path/sizeof(Char));
+    catn(path, file, sizeof(path) / sizeof(Char));
     if (lstat(short2str(path), &statb) == 0) {
 	switch (statb.st_mode & S_IFMT) {
 	case S_IFDIR:
@@ -301,21 +302,23 @@ tilde(new, old)
     register struct passwd *pw;
     static Char person[40];
 
-    if (old[0] != '~')
-	return (Strcpy(new, old));
+    if (old[0] != '~') {
+	Strlcpy(new, old, MAXPATHLEN);
+	return new;
+    }
 
     for (p = person, o = &old[1]; *o && *o != '/'; *p++ = *o++)
 	continue;
     *p = '\0';
     if (person[0] == '\0')
-	(void) Strcpy(new, value(STRhome));
+	(void) Strlcpy(new, value(STRhome), MAXPATHLEN);
     else {
 	pw = getpwnam(short2str(person));
 	if (pw == NULL)
 	    return (NULL);
-	(void) Strcpy(new, str2short(pw->pw_dir));
+	(void) Strlcpy(new, str2short(pw->pw_dir), MAXPATHLEN);
     }
-    (void) Strcat(new, o);
+    (void) Strlcat(new, o, MAXPATHLEN);
     return (new);
 }
 

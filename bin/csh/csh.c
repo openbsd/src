@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.c,v 1.18 2002/06/09 05:47:27 todd Exp $	*/
+/*	$OpenBSD: csh.c,v 1.19 2003/01/08 06:54:16 deraadt Exp $	*/
 /*	$NetBSD: csh.c,v 1.14 1995/04/29 23:21:28 mycroft Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-static char rcsid[] = "$OpenBSD: csh.c,v 1.18 2002/06/09 05:47:27 todd Exp $";
+static char rcsid[] = "$OpenBSD: csh.c,v 1.19 2003/01/08 06:54:16 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -802,9 +802,9 @@ rechist()
 	 */
 	if ((shist = adrof(STRsavehist)) != NULL) {
 	    if (shist->vec[0][0] != '\0')
-		(void) Strcpy(hbuf, shist->vec[0]);
+		(void) Strlcpy(hbuf, shist->vec[0], sizeof hbuf/sizeof(Char));
 	    else if ((shist = adrof(STRhistory)) && shist->vec[0][0] != '\0')
-		(void) Strcpy(hbuf, shist->vec[0]);
+		(void) Strlcpy(hbuf, shist->vec[0], sizeof hbuf/sizeof(Char));
 	    else
 		return;
 	}
@@ -812,8 +812,9 @@ rechist()
   	    return;
 
   	if ((hfile = value(STRhistfile)) == STRNULL) {
-  	    hfile = Strcpy(buf, value(STRhome));
-  	    (void) Strcat(buf, STRsldthist);
+  	    Strlcpy(buf, value(STRhome), sizeof buf/sizeof(Char));
+	    hfile = buf;
+	    (void) Strlcat(buf, STRsldthist, sizeof buf/sizeof(Char));
   	}
 
   	if ((fp = open(short2str(hfile), O_WRONLY | O_CREAT | O_TRUNC,
@@ -1139,6 +1140,7 @@ dosource(v, t)
     register Char *f;
     bool    hflg = 0;
     Char    buf[BUFSIZ];
+    char    sbuf[BUFSIZ];
 
     v++;
     if (*v && eq(*v, STRmh)) {
@@ -1146,12 +1148,12 @@ dosource(v, t)
 	    stderror(ERR_NAME | ERR_HFLAG);
 	hflg++;
     }
-    (void) Strcpy(buf, *v);
+    (void) Strlcpy(buf, *v, sizeof buf/sizeof(Char));
     f = globone(buf, G_ERROR);
-    (void) strcpy((char *) buf, short2str(f));
+    (void) strlcpy(sbuf, short2str(f), sizeof sbuf);
     xfree((ptr_t) f);
-    if (!srcfile((char *) buf, 0, hflg) && !hflg)
-	stderror(ERR_SYSTEM, (char *) buf, strerror(errno));
+    if (!srcfile(sbuf, 0, hflg) && !hflg)
+	stderror(ERR_SYSTEM, sbuf, strerror(errno));
 }
 
 /*
@@ -1208,8 +1210,9 @@ mailchk()
  * We write the home directory of the user back there.
  */
 int
-gethdir(home)
+gethdir(home, len)
     Char   *home;
+    int    len;
 {
     Char   *h;
     struct passwd *pw;
@@ -1219,7 +1222,8 @@ gethdir(home)
      */
     if (*home == '\0') {
 	if ((h = value(STRhome)) != NULL) {
-	    (void) Strcpy(home, h);
+	    if (Strlcpy(home, h, len) >= len)
+		return 1;
 	    return 0;
 	}
 	else
@@ -1227,7 +1231,8 @@ gethdir(home)
     }
 
     if ((pw = getpwnam(short2str(home))) != NULL) {
-	(void) Strcpy(home, str2short(pw->pw_dir));
+	if (Strlcpy(home, str2short(pw->pw_dir), len) >= len)
+	    return 1;
 	return 0;
     }
     else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: glob.c,v 1.8 2002/06/09 05:47:27 todd Exp $	*/
+/*	$OpenBSD: glob.c,v 1.9 2003/01/08 06:54:16 deraadt Exp $	*/
 /*	$NetBSD: glob.c,v 1.10 1995/03/21 09:03:01 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: glob.c,v 1.8 2002/06/09 05:47:27 todd Exp $";
+static char rcsid[] = "$OpenBSD: glob.c,v 1.9 2003/01/08 06:54:16 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -110,7 +110,7 @@ globtilde(nv, s)
 	 *b++ = *s++)
 	 continue;
     *b = EOS;
-    if (gethdir(gstart)) {
+    if (gethdir(gstart, &gbuf[sizeof(gbuf)/sizeof(Char)] - gstart)) {
 	blkfree(nv);
 	if (*gstart)
 	    stderror(ERR_UNKUSER, vis_str(gstart));
@@ -195,8 +195,8 @@ globbrace(s, p, bl)
 		Char    savec = *pm;
 
 		*pm = EOS;
-		(void) Strcpy(lm, pl);
-		(void) Strcat(gbuf, pe + 1);
+		(void) Strlcpy(lm, pl, &gbuf[sizeof(gbuf)/sizeof(Char)] - lm);
+		(void) Strlcat(gbuf, pe + 1, MAXPATHLEN);
 		*pm = savec;
 		*vl++ = Strsave(gbuf);
 		len++;
@@ -371,7 +371,8 @@ handleone(str, vl, action)
 	    str = Strspl(cp, *vlp);
 	    xfree((ptr_t) cp);
 	}
-	while (*++vlp);
+	while (*++vlp)
+	    ;
 	blkfree(vl);
 	break;
     case G_IGNORE:
@@ -422,7 +423,8 @@ libglob(vl)
 	}
 	gflgs |= GLOB_APPEND;
     }
-    while (*++vl);
+    while (*++vl)
+	;
     vl = (globv.gl_pathc == 0 || (magic && !match && !nonomatch)) ?
 	NULL : blk2short(globv.gl_pathv);
     globfree(&globv);
@@ -933,7 +935,7 @@ sortscmp(a, b)
 	return (-1);
 
 #if defined(NLS) && !defined(NOSTRCOLL)
-    (void) strcpy(buf, short2str(*(Char **)a));
+    (void) strlcpy(buf, short2str(*(Char **)a), sizeof buf);
     return ((int) strcoll(buf, short2str(*(Char **)b)));
 #else
     return ((int) Strcmp(*(Char **)a, *(Char **)b));

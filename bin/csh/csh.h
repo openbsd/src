@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.h,v 1.8 2002/02/16 21:27:06 millert Exp $	*/
+/*	$OpenBSD: csh.h,v 1.9 2003/01/08 06:54:16 deraadt Exp $	*/
 /*	$NetBSD: csh.h,v 1.9 1995/03/21 09:02:40 cgd Exp $	*/
 
 /*-
@@ -490,8 +490,10 @@ Char    HISTSUB;		/* auto-substitute character */
 #define Strchr(a, b)		strchr(a, b)
 #define Strrchr(a, b)		strrchr(a, b)
 #define Strcat(a, b)		strcat(a, b)
+#define Strlcat(a, b, l)	strlcat(a, b, l)
 #define Strncat(a, b, c) 	strncat(a, b, c)
 #define Strcpy(a, b)		strcpy(a, b)
+#define Strlcpy(a, b, l)	strlcpy(a, b, l)
 #define Strncpy(a, b, c) 	strncpy(a, b, c)
 #define Strlen(a)		strlen(a)
 #define Strcmp(a, b)		strcmp(a, b)
@@ -510,8 +512,10 @@ Char    HISTSUB;		/* auto-substitute character */
 #define Strchr(a, b)		s_strchr(a, b)
 #define Strrchr(a, b) 		s_strrchr(a, b)
 #define Strcat(a, b)		s_strcat(a, b)
+#define Strlcat(a, b, l)	s_strlcat(a, b, l)
 #define Strncat(a, b, c) 	s_strncat(a, b, c)
 #define Strcpy(a, b)		s_strcpy(a, b)
+#define Strlcpy(a, b, l)	s_strlcpy(a, b, l)
 #define Strncpy(a, b, c)	s_strncpy(a, b, c)
 #define Strlen(a)		s_strlen(a)
 #define Strcmp(a, b)		s_strcmp(a, b)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.10 2002/06/09 05:47:27 todd Exp $	*/
+/*	$OpenBSD: exec.c,v 1.11 2003/01/08 06:54:16 deraadt Exp $	*/
 /*	$NetBSD: exec.c,v 1.9 1996/09/30 20:03:54 christos Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.3 (Berkeley) 5/23/95";
 #else
-static char rcsid[] = "$OpenBSD: exec.c,v 1.10 2002/06/09 05:47:27 todd Exp $";
+static char rcsid[] = "$OpenBSD: exec.c,v 1.11 2003/01/08 06:54:16 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -103,7 +103,7 @@ static Char *justabs[] = {STRNULL, 0};
 static void	pexerr(void);
 static void	texec(Char *, Char **);
 static int	hashname(Char *);
-static int 	tellmewhat(struct wordent *, Char *);
+static int 	tellmewhat(struct wordent *, Char *, int len);
 static int	executable(Char *, Char *, bool);
 static int	iscommand(Char *);
 
@@ -647,15 +647,16 @@ dowhich(v, c)
 	}
 	else {
 	    lex[1].word = *v;
-	    set(STRstatus, Strsave(tellmewhat(lex, NULL) ? STR0 : STR1));
+	    set(STRstatus, Strsave(tellmewhat(lex, NULL, 0) ? STR0 : STR1));
 	}
     }
 }
 
 static int
-tellmewhat(lexp, str)
+tellmewhat(lexp, str, len)
     struct wordent *lexp;
     Char *str;
+    int len;
 {
     register int i;
     register struct biltins *bptr;
@@ -700,13 +701,13 @@ tellmewhat(lexp, str)
     for (bptr = bfunc; bptr < &bfunc[nbfunc]; bptr++) {
 	if (eq(sp->word, str2short(bptr->bname))) {
 	    if (str == NULL) {
-	    if (aliased)
-		    prlex(cshout, lexp);
-	    (void) fprintf(cshout, "%s: shell built-in command.\n",
+	        if (aliased)
+		        prlex(cshout, lexp);
+	        (void) fprintf(cshout, "%s: shell built-in command.\n",
 			   vis_str(sp->word));
 	    }
 	    else
-		(void) Strcpy(str, sp->word);
+		(void) Strlcpy(str, sp->word, len/sizeof(Char));
 	    sp->word = s0;	/* we save and then restore this */
 	    return 1;
 	}
@@ -737,26 +738,26 @@ tellmewhat(lexp, str)
 		prlex(cshout, lexp);
 	}
 	else {
-	s1 = Strspl(*pv, STRslash);
-	sp->word = Strspl(s1, sp->word);
-	xfree((ptr_t) s1);
+	    s1 = Strspl(*pv, STRslash);
+	    sp->word = Strspl(s1, sp->word);
+	    xfree((ptr_t) s1);
 	    if (str == NULL)
 		prlex(cshout, lexp);
 	    else
-		(void) Strcpy(str, sp->word);
-	xfree((ptr_t) sp->word);
-    }
+		(void) Strlcpy(str, sp->word, len/sizeof(Char));
+	    xfree((ptr_t) sp->word);
+        }
 	found = 1;
     }
     else {
  	if (str == NULL) {
-	if (aliased)
+	    if (aliased)
 		prlex(cshout, lexp);
 	    (void) fprintf(csherr,
 			   "%s: Command not found.\n", vis_str(sp->word));
 	}
 	else
-	    (void) Strcpy(str, sp->word);
+	    (void) Strlcpy(str, sp->word, len/sizeof(Char));
 	found = 0;
     }
     sp->word = s0;		/* we save and then restore this */

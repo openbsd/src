@@ -1,4 +1,4 @@
-/*	$OpenBSD: str.c,v 1.6 2002/06/09 05:47:27 todd Exp $	*/
+/*	$OpenBSD: str.c,v 1.7 2003/01/08 06:54:16 deraadt Exp $	*/
 /*	$NetBSD: str.c,v 1.6 1995/03/21 09:03:24 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)str.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: str.c,v 1.6 2002/06/09 05:47:27 todd Exp $";
+static char rcsid[] = "$OpenBSD: str.c,v 1.7 2003/01/08 06:54:16 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -173,6 +173,66 @@ s_strcpy(dst, src)
     return (sdst);
 }
 
+size_t
+s_strlcpy(dst, src, siz)
+        Char *dst;
+        const Char *src;
+        size_t siz;
+{
+        register Char *d = dst;
+        register const Char *s = src;
+        register size_t n = siz;
+
+        /* Copy as many bytes as will fit */
+        if (n != 0 && --n != 0) {
+                do {
+                        if ((*d++ = *s++) == 0)
+                                break;
+                } while (--n != 0);
+        }
+
+        /* Not enough room in dst, add NUL and traverse rest of src */
+        if (n == 0) {
+                if (siz != 0)
+                        *d = '\0';              /* NUL-terminate dst */
+                while (*s++)
+                        ;
+        }
+
+        return(s - src - 1);    /* count does not include NUL */
+}
+
+size_t
+s_strlcat(dst, src, siz)
+        Char *dst;
+        const Char *src;
+        size_t siz;
+{
+        register Char *d = dst;
+        register const Char *s = src;
+        register size_t n = siz;
+        size_t dlen;
+
+        /* Find the end of dst and adjust bytes left but don't go past end */
+        while (n-- != 0 && *d != '\0')
+                d++;
+        dlen = d - dst;
+        n = siz - dlen;
+
+        if (n == 0)
+                return(dlen + s_strlen((Char *)s));
+        while (*s != '\0') {
+                if (n != 1) {
+                        *d++ = *s;
+                        n--;
+                }
+                s++;
+        }
+        *d = '\0';
+
+        return(dlen + (s - src));       /* count does not include NUL */
+}
+
 Char   *
 s_strncpy(dst, src, n)
     register Char *dst, *src;
@@ -190,7 +250,8 @@ s_strncpy(dst, src, n)
 		*dst++ = '\0';
 	    return(sdst);
 	}
-    while (--n != 0);
+    while (--n != 0)
+	;
     return (sdst);
 }
 
@@ -246,7 +307,8 @@ s_strchr(str, ch)
     do
 	if (*str == ch)
 	    return (str);
-    while (*str++);
+    while (*str++)
+	;
     return (NULL);
 }
 
@@ -261,7 +323,8 @@ s_strrchr(str, ch)
     do
 	if (*str == ch)
 	    rstr = str;
-    while (*str++);
+    while (*str++)
+	;
     return (rstr);
 }
 

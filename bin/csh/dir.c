@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.8 2002/08/12 00:42:56 aaron Exp $	*/
+/*	$OpenBSD: dir.c,v 1.9 2003/01/08 06:54:16 deraadt Exp $	*/
 /*	$NetBSD: dir.c,v 1.9 1995/03/21 09:02:42 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: dir.c,v 1.8 2002/08/12 00:42:56 aaron Exp $";
+static char rcsid[] = "$OpenBSD: dir.c,v 1.9 2003/01/08 06:54:16 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -284,10 +284,11 @@ dnormalize(cp)
     if (adrof(STRignore_symlinks)) {
 	int     dotdot = 0;
 	Char   *dp, *cwd;
+	size_t	len;
 
-	cwd = (Char *) xmalloc((size_t) ((Strlen(dcwd->di_name) + 3) *
-					 sizeof(Char)));
-	(void) Strcpy(cwd, dcwd->di_name);
+	len = (size_t) (Strlen(dcwd->di_name) + 3);
+	cwd = (Char *) xmalloc(len * sizeof(Char));
+	(void) Strlcpy(cwd, dcwd->di_name, len);
 
 	/*
 	 * Ignore . and count ..'s
@@ -474,7 +475,7 @@ dfollow(cp)
 	printd = 1;
 	return dgoto(cp);
     }
-    (void) strcpy(ebuf, short2str(cp));
+    (void) strlcpy(ebuf, short2str(cp), sizeof ebuf);
     xfree((ptr_t) cp);
     stderror(ERR_SYSTEM, ebuf, strerror(serrno));
     return (NULL);
@@ -527,7 +528,7 @@ dopushd(v, t)
 	register Char *ccp;
 
 	ccp = dfollow(*v);
-	dp = (struct directory *) xcalloc(sizeof(struct directory), 1);
+	dp = (struct directory *) xcalloc(1, sizeof(struct directory));
 	dp->di_name = ccp;
 	dp->di_count = 0;
 	dp->di_prev = dcwd;
@@ -657,9 +658,9 @@ dcanon(cp, p)
 	    abort();
 	if (Strlen(p1) + Strlen(cp) + 1 >= MAXPATHLEN)
 	    abort();
-	(void) Strcpy(tmpdir, p1);
-	(void) Strcat(tmpdir, STRslash);
-	(void) Strcat(tmpdir, cp);
+	(void) Strlcpy(tmpdir, p1, sizeof tmpdir/sizeof(Char));
+	(void) Strlcat(tmpdir, STRslash, sizeof tmpdir/sizeof(Char));
+	(void) Strlcat(tmpdir, cp, sizeof tmpdir/sizeof(Char));
 	xfree((ptr_t) cp);
 	cp = p = Strsave(tmpdir);
     }
@@ -705,7 +706,7 @@ dcanon(cp, p)
 	    if (sp != cp && !adrof(STRignore_symlinks) &&
 		(cc = readlink(short2str(cp), tlink,
 			       sizeof tlink-1)) >= 0) {
-		(void) Strcpy(link, str2short(tlink));
+		(void) Strlcpy(link, str2short(tlink), sizeof link/sizeof(Char));
 		link[cc] = '\0';
 
 		if (slash)
@@ -790,7 +791,7 @@ dcanon(cp, p)
 		!adrof(STRignore_symlinks) &&
 		(cc = readlink(short2str(cp), tlink,
 			       sizeof tlink-1)) >= 0) {
-		(void) Strcpy(link, str2short(tlink));
+		(void) Strlcpy(link, str2short(tlink), sizeof link/sizeof(Char));
 		link[cc] = '\0';
 
 		/*
@@ -893,7 +894,8 @@ dcanon(cp, p)
 	/*
 	 * Start comparing dev & ino backwards
 	 */
-	p2 = Strcpy(link, cp);
+	Strlcpy(link, cp, sizeof link/sizeof(Char));
+	p2 = link;
 	for (sp = NULL; *p2 && stat(short2str(p2), &statbuf) != -1;) {
 	    if (statbuf.st_dev == home_dev &&
 		statbuf.st_ino == home_ino) {

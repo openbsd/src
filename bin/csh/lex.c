@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.7 2002/06/09 05:47:27 todd Exp $	*/
+/*	$OpenBSD: lex.c,v 1.8 2003/01/08 06:54:16 deraadt Exp $	*/
 /*	$NetBSD: lex.c,v 1.9 1995/09/27 00:38:46 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: lex.c,v 1.7 2002/06/09 05:47:27 todd Exp $";
+static char rcsid[] = "$OpenBSD: lex.c,v 1.8 2003/01/08 06:54:16 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -635,10 +635,10 @@ addla(cp)
 	return;
     }
     if (lap)
-	(void) Strcpy(buf, lap);
-    (void) Strcpy(labuf, cp);
+	(void) Strlcpy(buf, lap, sizeof buf/sizeof(Char));
+    (void) Strlcpy(labuf, cp, sizeof labuf/sizeof(Char));
     if (lap)
-	(void) Strcat(labuf, buf);
+	(void) Strlcat(labuf, buf, sizeof labuf/sizeof(Char));
     lap = labuf;
 }
 
@@ -770,7 +770,7 @@ getsub(en)
 		seterror(ERR_NOSUBST);
 		return (en);
 	    }
-	    (void) Strcpy(lhsb, slhs);
+	    (void) Strlcpy(lhsb, slhs, sizeof(lhsb)/sizeof(Char));
 	    break;
 
 #ifdef notdef
@@ -816,7 +816,7 @@ getsub(en)
 		return (en);
 	    }
 	    cp = rhsb;
-	    (void) Strcpy(orhsb, cp);
+	    (void) Strlcpy(orhsb, cp, sizeof(orhsb)/sizeof(Char));
 	    for (;;) {
 		c = getC(0);
 		if (c == '\n') {
@@ -855,7 +855,7 @@ getsub(en)
 	    seterror(ERR_BADBANGMOD, c);
 	    return (en);
 	}
-	(void) Strcpy(slhs, lhsb);
+	(void) Strlcpy(slhs, lhsb, sizeof(slhs)/sizeof(Char));
 	if (exclc)
 	    en = dosub(sc, en, global);
     }

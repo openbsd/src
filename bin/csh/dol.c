@@ -1,4 +1,4 @@
-/*	$OpenBSD: dol.c,v 1.10 2002/06/09 05:47:27 todd Exp $	*/
+/*	$OpenBSD: dol.c,v 1.11 2003/01/08 06:54:16 deraadt Exp $	*/
 /*	$NetBSD: dol.c,v 1.8 1995/09/27 00:38:38 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dol.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: dol.c,v 1.10 2002/06/09 05:47:27 todd Exp $";
+static char rcsid[] = "$OpenBSD: dol.c,v 1.11 2003/01/08 06:54:16 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -470,7 +470,7 @@ Dgetdol()
 	break;
 
     case '*':
-	(void) Strcpy(name, STRargv);
+	(void) Strlcpy(name, STRargv, sizeof name/sizeof(Char));
 	vp = adrof(STRargv);
 	subscr = -1;		/* Prevent eating [...] */
 	break;
@@ -729,12 +729,12 @@ setDolp(cp)
 	    do {
 		dp = Strstr(cp, lhsub);
 		if (dp) {
-		    np = (Char *) xmalloc((size_t)
-					  ((Strlen(cp) + 1 - lhlen + rhlen) *
-					  sizeof(Char)));
-		    (void) Strncpy(np, cp, dp - cp);
-		    (void) Strcpy(np + (dp - cp), rhsub);
-		    (void) Strcpy(np + (dp - cp) + rhlen, dp + lhlen);
+		    size_t len = Strlen(cp) + 1 - lhlen + rhlen;
+
+		    np = (Char *) xmalloc(len * sizeof(Char));
+		    (void) Strlcpy(np, cp, len);
+		    (void) Strlcat(np, rhsub, len);
+		    (void) Strlcat(np, dp + lhlen, len);
 
 		    xfree((ptr_t) cp);
 		    dp = cp = np;

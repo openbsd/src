@@ -1,4 +1,4 @@
-/*	$OpenBSD: set.c,v 1.7 2002/02/19 19:39:35 millert Exp $	*/
+/*	$OpenBSD: set.c,v 1.8 2003/01/08 06:54:16 deraadt Exp $	*/
 /*	$NetBSD: set.c,v 1.8 1995/03/21 18:35:52 mycroft Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)set.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: set.c,v 1.7 2002/02/19 19:39:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: set.c,v 1.8 2003/01/08 06:54:16 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -665,10 +665,10 @@ exportpath(val)
 			       "Warning: ridiculously long PATH truncated\n");
 		break;
 	    }
-	    (void) Strcat(exppath, *val++);
+	    (void) Strlcat(exppath, *val++, sizeof exppath/sizeof(Char));
 	    if (*val == 0 || eq(*val, STRRparen))
 		break;
-	    (void) Strcat(exppath, STRcolon);
+	    (void) Strlcat(exppath, STRcolon, sizeof exppath/sizeof(Char));
 	}
     Setenv(STRPATH, exppath);
 }
