@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.8 1999/02/04 23:18:57 millert Exp $	*/
+/*	$OpenBSD: common.c,v 1.9 1999/05/14 20:19:11 aaron Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: common.c,v 6.82 1998/03/23 23:27:33 michaelc Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: common.c,v 1.8 1999/02/04 23:18:57 millert Exp $";
+"$OpenBSD: common.c,v 1.9 1999/05/14 20:19:11 aaron Exp $";
 #endif
 
 static char sccsid[] = "@(#)common.c";
@@ -944,7 +944,7 @@ char *xstrdup(str)
 	char *nstr;
 
 	if ((nstr = strdup(str)) == NULL)
-		fatalerr("Cannot malloc %d bytes of memory.", strlen(str));
+		fatalerr("Cannot malloc %d bytes of memory.", strlen(str) + 1);
 
 	return(nstr);
 }
