@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunkbd.c,v 1.9 2002/09/08 23:22:00 miod Exp $	*/
+/*	$OpenBSD: sunkbd.c,v 1.10 2002/11/23 19:15:22 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -50,6 +50,8 @@
 #include <dev/sun/sunkbdvar.h>
 
 #define	KC(n)	KS_KEYCODE(n)
+
+/* 000/021/022 US English type 4/5 keyboard */
 const keysym_t sunkbd_keydesc_us[] = {
     KC(0x01), KS_Cmd,
     KC(0x02), KS_Cmd_BrightnessDown,
@@ -171,6 +173,185 @@ const keysym_t sunkbd_keydesc_us[] = {
     KC(0x7d),				KS_KP_Add,
 };
 
+/* 002 French/Belgian type 4 keyboard */
+const keysym_t sunkbd_keydesc_befr[] = {
+    KC(0x0d),		KS_Caps_Lock,
+    KC(0x0f),		KS_bracketright,KS_braceright,	KS_guillemotright,
+    KC(0x1e),		KS_ampersand,	KS_1,
+    KC(0x1f),		KS_eacute,	KS_2,		KS_twosuperior,
+    KC(0x20),		KS_quotedbl,	KS_3,		KS_threesuperior,
+    KC(0x21),		KS_apostrophe,	KS_4,
+    KC(0x22),		KS_parenleft,	KS_5,
+    KC(0x23),		KS_paragraph,	KS_6,
+    KC(0x24),		KS_egrave,	KS_7,
+    KC(0x25),		KS_exclam,	KS_8,		KS_sterling,
+    KC(0x26),		KS_ccedilla,	KS_9,		KS_backslash,
+    KC(0x27),		KS_agrave,	KS_0,
+    KC(0x28),		KS_parenright,	KS_asciicircum,	KS_asciitilde,
+    KC(0x29),		KS_minus,	KS_underscore,	KS_numbersign,
+    KC(0x2a),		KS_asterisk,	KS_bar,		KS_currency,
+    KC(0x36),		KS_a,
+    KC(0x37),		KS_z,
+    KC(0x40),		KS_dead_circumflex,KS_dead_diaeresis,
+    KC(0x41),		KS_grave,	KS_dollar,	KS_at,
+    KC(0x4d), KS_Cmd_Debugger,	KS_q,
+    KC(0x56),		KS_m,		KS_M,		KS_mu,
+    KC(0x57),		KS_ugrave,	KS_percent,
+    KC(0x58),		KS_bracketleft,	KS_braceleft,	KS_guillemotleft,
+    KC(0x64),		KS_w,
+    KC(0x6a),		KS_comma,	KS_question,
+    KC(0x6b),		KS_semicolon,	KS_period,
+    KC(0x6c),		KS_colon,	KS_slash,
+    KC(0x6d),		KS_equal,	KS_plus,
+    KC(0x77),		KS_Mode_switch,
+    KC(0x7c),		KS_less,	KS_greater,
+};
+
+/* 023 French type 5 keyboard */
+const keysym_t sunkbd5_keydesc_fr[] = {
+    KC(0x0d),		KS_Mode_switch,
+    KC(0x1e),		KS_ampersand,	KS_1,
+    KC(0x1f),		KS_eacute,	KS_2,		KS_asciitilde,
+    KC(0x20),		KS_quotedbl,	KS_3,		KS_numbersign,
+    KC(0x21),		KS_apostrophe,	KS_4,		KS_braceleft,
+    KC(0x22),		KS_parenleft,	KS_5,		KS_bracketleft,
+    KC(0x23),		KS_minus,	KS_6,		KS_bar,
+    KC(0x24),		KS_egrave,	KS_7,		KS_grave,
+    KC(0x25),		KS_exclam,	KS_8,		KS_backslash,
+    KC(0x26),		KS_ccedilla,	KS_9,		KS_dead_circumflex,
+    KC(0x27),		KS_agrave,	KS_0,		KS_at,
+    KC(0x28),		KS_parenright,	KS_asciicircum,	KS_bracketright,
+    KC(0x29),		KS_equal,	KS_plus,	KS_braceright,
+    KC(0x2a),		KS_twosuperior,
+    KC(0x36),		KS_a,
+    KC(0x37),		KS_z,
+    KC(0x40),		KS_dead_circumflex,KS_dead_diaeresis,
+    KC(0x41),		KS_dollar,	KS_sterling,	KS_currency,
+    KC(0x4d), KS_Cmd_Debugger,	KS_q,
+    KC(0x56),		KS_m,
+    KC(0x57),		KS_ugrave,	KS_percent,
+    KC(0x58),		KS_asterisk,	KS_mu,
+    KC(0x64),		KS_w,
+    KC(0x6a),		KS_comma,	KS_question,
+    KC(0x6b),		KS_semicolon,	KS_period,
+    KC(0x6c),		KS_colon,	KS_slash,
+    KC(0x6d),		KS_exclam,	KS_paragraph,
+    KC(0x7c),		KS_less,	KS_greater,
+};
+
+/* 004 Danish type 4 keyboard */
+const keysym_t sunkbd_keydesc_dk[] = {
+    KC(0x0d),		KS_Multi_key,
+    KC(0x0f),		KS_asciitilde,	KS_dead_circumflex, 
+    KC(0x1f),		KS_2,		KS_quotedbl,	KS_at,
+    KC(0x20),		KS_3,		KS_numbersign,	KS_sterling,
+    KC(0x21),		KS_4,		KS_currency,	KS_dollar,
+    KC(0x23),		KS_6,		KS_ampersand,
+    KC(0x24),		KS_7,		KS_slash,	KS_braceleft,
+    KC(0x25),		KS_8,		KS_parenleft,	KS_bracketleft,
+    KC(0x26),		KS_9,		KS_parenright,	KS_bracketright,
+    KC(0x27),		KS_0,		KS_equal,	KS_braceright,
+    KC(0x28),		KS_plus,	KS_question,
+    KC(0x29),		KS_dead_acute,	KS_dead_grave,	KS_bar,
+    KC(0x2a),		KS_apostrophe,	KS_asterisk,	KS_grave,
+    KC(0x40),		KS_aring,
+    KC(0x41),		KS_dead_diaeresis,KS_dead_circumflex,KS_dead_tilde,
+    KC(0x43),		KS_Mode_switch,
+    KC(0x4c),		KS_Caps_Lock,
+    KC(0x56),		KS_ae,
+    KC(0x57),		KS_oslash,
+    KC(0x58),		KS_onehalf,	KS_paragraph,
+    KC(0x6b),		KS_comma,	KS_semicolon,
+    KC(0x6c),		KS_period,	KS_colon,
+    KC(0x6d),		KS_minus,	KS_underscore,
+    KC(0x77),		KS_Control_L,
+    KC(0x7c),		KS_less,	KS_greater,	KS_backslash,
+};
+
+/* 024 Danish type 5 keyboard */
+const keysym_t sunkbd5_keydesc_dk[] = {
+    KC(0x1f),		KS_2,		KS_quotedbl,	KS_at,
+    KC(0x20),		KS_3,		KS_numbersign,	KS_sterling,
+    KC(0x21),		KS_4,		KS_currency,	KS_dollar,
+    KC(0x22),		KS_5,		KS_percent,	KS_asciitilde,
+    KC(0x23),		KS_6,		KS_ampersand,	KS_dead_circumflex,
+    KC(0x24),		KS_7,		KS_slash,	KS_braceleft,
+    KC(0x25),		KS_8,		KS_parenleft,	KS_bracketleft,
+    KC(0x26),		KS_9,		KS_parenright,	KS_bracketright,
+    KC(0x27),		KS_0,		KS_equal,	KS_braceright,
+    KC(0x28),		KS_plus,	KS_question,
+    KC(0x29),		KS_dead_acute,	KS_dead_grave,	KS_bar,
+    KC(0x2a),		KS_onehalf,	KS_asterisk,	KS_grave,
+    KC(0x40),		KS_aring,
+    KC(0x41),		KS_dead_diaeresis,KS_dead_circumflex,KS_dead_tilde,
+    KC(0x56),		KS_ae,
+    KC(0x57),		KS_oslash,
+    KC(0x58),		KS_backslash,	KS_asterisk,	KS_grave,
+    KC(0x6b),		KS_comma,	KS_semicolon,
+    KC(0x6c),		KS_period,	KS_colon,
+    KC(0x6d),		KS_minus,	KS_underscore,
+    KC(0x7c),		KS_less,	KS_greater,	KS_backslash,
+};
+
+/* 005 German type 4 keyboard */
+const keysym_t sunkbd_keydesc_de[] = {
+    KC(0x0d),		KS_Alt_L,
+    KC(0x0f),		KS_bracketright,KS_braceright,	KS_guillemotright,
+    KC(0x13),		KS_Mode_switch,
+    KC(0x1f),		KS_2,		KS_quotedbl,	KS_twosuperior,
+    KC(0x20),		KS_3,		KS_paragraph,	KS_threesuperior,
+    KC(0x23),		KS_6,		KS_ampersand,
+    KC(0x24),		KS_7,		KS_slash,	KS_asciicircum,
+    KC(0x25),		KS_8,		KS_parenleft,	KS_grave,
+    KC(0x26),		KS_9,		KS_parenright,	KS_apostrophe,
+    KC(0x27),		KS_0,		KS_equal,	KS_bar,
+    KC(0x28),		KS_ssharp,	KS_question,	KS_backslash,
+    KC(0x29),		KS_dead_acute,	KS_dead_grave,
+    KC(0x2a),		KS_numbersign,	KS_dead_circumflex,KS_at,
+    KC(0x3b),		KS_z,
+    KC(0x40),		KS_udiaeresis,
+    KC(0x41),		KS_plus,	KS_multiply,	KS_asciitilde,
+    KC(0x4c),		KS_Caps_Lock,
+    KC(0x56),		KS_odiaeresis,
+    KC(0x57),		KS_adiaeresis,
+    KC(0x58),		KS_bracketleft,	KS_braceleft,	KS_guillemotleft,
+    KC(0x64),		KS_y,
+    KC(0x6a),		KS_m,		KS_M,		KS_mu,
+    KC(0x6b),		KS_comma,	KS_semicolon,
+    KC(0x6c),		KS_period,	KS_colon,
+    KC(0x6d),		KS_minus,	KS_underscore,
+    KC(0x77),		KS_Control_L,
+    KC(0x7c),		KS_less,	KS_greater,
+};
+
+/* 025 German type 4 keyboard */
+const keysym_t sunkbd5_keydesc_de[] = {
+    KC(0x1f),		KS_2,		KS_quotedbl,	KS_twosuperior,
+    KC(0x20),		KS_3,		KS_paragraph,	KS_threesuperior,
+    KC(0x23),		KS_6,		KS_ampersand,
+    KC(0x24),		KS_7,		KS_slash,	KS_braceleft,
+    KC(0x25),		KS_8,		KS_parenleft,	KS_bracketleft,
+    KC(0x26),		KS_9,		KS_parenright,	KS_bracketright,
+    KC(0x27),		KS_0,		KS_equal,	KS_braceright,
+    KC(0x28),		KS_ssharp,	KS_question,	KS_backslash,
+    KC(0x29),		KS_dead_acute,	KS_dead_grave,
+    KC(0x2a),		KS_dead_circumflex,KS_asciicircum,
+    KC(0x36),		KS_q,		KS_Q,		KS_at,
+    KC(0x3b),		KS_z,
+    KC(0x40),		KS_udiaeresis,
+    KC(0x41),		KS_plus,	KS_multiply,	KS_asciitilde,
+    KC(0x56),		KS_odiaeresis,
+    KC(0x57),		KS_adiaeresis,
+    KC(0x58),		KS_numbersign,	KS_apostrophe,	KS_grave,
+    KC(0x64),		KS_y,
+    KC(0x6a),		KS_m,		KS_M,		KS_mu,
+    KC(0x6b),		KS_comma,	KS_semicolon,
+    KC(0x6c),		KS_period,	KS_colon,
+    KC(0x6d),		KS_minus,	KS_underscore,
+    KC(0x7c),		KS_less,	KS_greater,	KS_bar,
+};
+
+/* 00c Swedish/Finnish type 4 keyboard */
 const keysym_t sunkbd_keydesc_sv[] = {
     KC(0x0d),		KS_Multi_key,
     KC(0x0f),		KS_asciitilde,	KS_asciicircum, 
@@ -204,8 +385,8 @@ const keysym_t sunkbd_keydesc_sv_nodead[] = {
     KC(0x41),		KS_diaeresis,	KS_asciicircum,	KS_asciitilde,
 };
 
+/* 02b Swedish type 5 keyboard */
 const keysym_t sunkbd5_keydesc_sv[] = {
-
     KC(0x0d),		KS_Mode_switch,
     KC(0x0f),		KS_asciitilde,	KS_asciicircum, 
     KC(0x1f),		KS_2,		KS_quotedbl,	KS_at,
@@ -236,15 +417,24 @@ const keysym_t sunkbd5_keydesc_sv[] = {
 #define KBD_MAP(name, base, map) \
     { name, base, sizeof(map)/sizeof(keysym_t), map }
 
+/* Supported type 4 keyboard layouts */
 const struct wscons_keydesc sunkbd_keydesctab[] = {
 	KBD_MAP(KB_US,			0,	sunkbd_keydesc_us),
+	KBD_MAP(KB_BE,			KB_US,	sunkbd_keydesc_befr),
+	KBD_MAP(KB_DE,			KB_US,	sunkbd_keydesc_de),
+	KBD_MAP(KB_DK,			KB_US,	sunkbd_keydesc_dk),
+	KBD_MAP(KB_FR,			KB_US,	sunkbd_keydesc_befr),
 	KBD_MAP(KB_SV,			KB_US,	sunkbd_keydesc_sv),
 	KBD_MAP(KB_SV | KB_NODEAD,	KB_SV,	sunkbd_keydesc_sv_nodead),
 	{0, 0, 0, 0},
 };
 
+/* Supported type 5 keyboard layouts */
 const struct wscons_keydesc sunkbd5_keydesctab[] = {
 	KBD_MAP(KB_US,			0,	sunkbd_keydesc_us),
+	KBD_MAP(KB_DE,			KB_US,	sunkbd5_keydesc_de),
+	KBD_MAP(KB_DK,			KB_US,	sunkbd5_keydesc_dk),
+	KBD_MAP(KB_FR,			KB_US,	sunkbd5_keydesc_fr),
 	KBD_MAP(KB_SV,			KB_US,	sunkbd5_keydesc_sv),
 	KBD_MAP(KB_SV | KB_NODEAD,	KB_SV,	sunkbd_keydesc_sv_nodead),
 	{0, 0, 0, 0},
