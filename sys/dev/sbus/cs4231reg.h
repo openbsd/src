@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231reg.h,v 1.2 2001/09/30 20:58:16 jason Exp $	*/
+/*	$OpenBSD: cs4231reg.h,v 1.3 2001/10/01 02:35:04 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -70,43 +70,6 @@
 #define	CS_IAR_TRD		0x20		/* transfer request disable */
 #define	CS_IAR_MCE		0x40		/* mode change enable */
 #define	CS_IAR_INIT		0x80		/* initialization */
-
-/* indirect register numbers (mode1/mode2) */
-#define	CS_IAR_LADCIN		0x00		/* left adc input control */
-#define	CS_IAR_RADCIN		0x01		/* right adc input control */
-#define	CS_IAR_LACIN1		0x02		/* left aux #1 input control */
-#define	CS_IAR_RACIN1		0x03		/* right aux #1 input control */
-#define	CS_IAR_LACIN2		0x04		/* left aux #2 input control */
-#define	CS_IAR_RACIN2		0x05		/* right aux #2 input control */
-#define	CS_IAR_LDACOUT		0x06		/* left dac output control */
-#define	CS_IAR_RDACOUT		0x07		/* right dac output control */
-#define	CS_IAR_FSPB		0x08		/* fs and playback format */
-#define	CS_IAR_IC		0x09		/* interface configuration */
-#define	CS_IAR_PC		0x0a		/* pin control */
-#define	CS_IAR_ERRINIT		0x0b		/* error status & init */
-#define	CS_IAR_MODEID		0x0c		/* mode and id */
-#define	CS_IAR_LOOP		0x0d		/* loopback control */
-#define	CS_IAR_PBUB		0x0e		/* playback upper base */
-#define	CS_IAR_PBLB		0x0f		/* playback lower base */
-
-/* indirect register numbers (mode2 only) */
-
-#define	CS_IAR_AFE1		0x10		/* alt feature enable I */
-#define	CS_IAR_AFE2		0x11		/* alt feature enable II */
-#define	CS_IAR_LLI		0x12		/* left line input control */
-#define	CS_IAR_RLI		0x13		/* right line input control */
-#define	CS_IAR_TLB		0x14		/* timer lower base */
-#define	CS_IAR_TUB		0x15		/* timer upper base */
-#define	CS_IAR_reserved1	0x16		/* reserved */
-#define	CS_IAR_AFE3		0x17		/* alt feature enable III */
-#define	CS_IAR_AFS		0x18		/* alt feature status */
-#define	CS_IAR_VID		0x19		/* version id */
-#define	CS_IAR_MONO		0x1a		/* mono input/output control */
-#define	CS_IAR_reserved2	0x1b		/* reserved */
-#define	CS_IAR_CDF		0x1c		/* capture data format */
-#define	CS_IAR_reserved3	0x1d		/* reserved */
-#define	CS_IAR_CUB		0x1e		/* capture upper base */
-#define	CS_IAR_CLB		0x1f		/* capture lower base */
 
 /* cs4231_reg.idr: index data register */
 /* Contains the data of the indirect register indexed by the iar */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.4 2001/09/30 21:20:07 jason Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.5 2001/10/01 02:35:04 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -55,6 +55,8 @@
 #include <dev/audio_if.h>
 #include <dev/auconv.h>
 
+#include <dev/ic/ad1848reg.h>
+#include <dev/ic/cs4231reg.h>
 #include <dev/sbus/sbusvar.h>
 #include <dev/sbus/cs4231reg.h>
 #include <dev/sbus/cs4231var.h>
@@ -294,8 +296,8 @@ cs4231_mute_monitor(sc, mute)
 {
 	u_int8_t lv, rv;
 
-	lv = cs4231_read(sc, CS_IAR_LDACOUT);
-	rv = cs4231_read(sc, CS_IAR_RDACOUT);
+	lv = cs4231_read(sc, SP_LEFT_OUTPUT_CONTROL);
+	rv = cs4231_read(sc, SP_RIGHT_OUTPUT_CONTROL);
 	if (mute) {
 		lv |= CS_LDACOUT_LDM;
 		rv |= CS_RDACOUT_RDM;
@@ -303,8 +305,8 @@ cs4231_mute_monitor(sc, mute)
 		lv &= ~CS_LDACOUT_LDM;
 		rv &= ~CS_RDACOUT_RDM;
 	}
-	cs4231_write(sc, CS_IAR_LDACOUT, lv);
-	cs4231_write(sc, CS_IAR_RDACOUT, rv);
+	cs4231_write(sc, SP_LEFT_OUTPUT_CONTROL, lv);
+	cs4231_write(sc, SP_RIGHT_OUTPUT_CONTROL, rv);
 }
 
 int
@@ -415,10 +417,10 @@ cs4231_open(addr, flags)
 		printf("%s: timeout waiting for reset\n", sc->sc_dev.dv_xname);
 
 	/* Turn on cs4231 mode */
-	cs4231_write(sc, CS_IAR_MODEID,
-	    cs4231_read(sc, CS_IAR_MODEID) | CS_MODEID_MODE2);
+	cs4231_write(sc, SP_MISC_INFO,
+	    cs4231_read(sc, SP_MISC_INFO) | CS_MODEID_MODE2);
 
-	reg = cs4231_read(sc, CS_IAR_VID);
+	reg = cs4231_read(sc, CS_VERSION_ID);
 	if ((reg & CS_VID_CHIP_MASK) == CS_VID_CHIP_CS4231) {
 		switch (reg & CS_VID_VER_MASK) {
 		case CS_VID_VER_CS4231A:
@@ -446,49 +448,49 @@ cs4231_setup_output(sc)
 {
 	u_int8_t r;
 
-	r = cs4231_read(sc, CS_IAR_PC);
+	r = cs4231_read(sc, SP_PIN_CONTROL);
 	r |= CS_PC_HDPHMUTE | CS_PC_LINEMUTE;
-	cs4231_write(sc, CS_IAR_PC, r);
+	cs4231_write(sc, SP_PIN_CONTROL, r);
 
-	r = cs4231_read(sc, CS_IAR_MONO);
+	r = cs4231_read(sc, CS_MONO_IO_CONTROL);
 	r |= CS_MONO_MOM;
-	cs4231_write(sc, CS_IAR_MONO, r);
+	cs4231_write(sc, CS_MONO_IO_CONTROL, r);
 
 	switch (sc->sc_out_port) {
 	case CSPORT_HEADPHONE:
 		if (sc->sc_mute[CSPORT_SPEAKER]) {
-			r = cs4231_read(sc, CS_IAR_PC);
+			r = cs4231_read(sc, SP_PIN_CONTROL);
 			r &= ~CS_PC_HDPHMUTE;
-			cs4231_write(sc, CS_IAR_PC, r);
+			cs4231_write(sc, SP_PIN_CONTROL, r);
 		}
 		break;
 	case CSPORT_SPEAKER:
 		if (sc->sc_mute[CSPORT_SPEAKER]) {
-			r = cs4231_read(sc, CS_IAR_MONO);
+			r = cs4231_read(sc, CS_MONO_IO_CONTROL);
 			r &= ~CS_MONO_MOM;
-			cs4231_write(sc, CS_IAR_MONO, r);
+			cs4231_write(sc, CS_MONO_IO_CONTROL, r);
 		}
 		break;
 	case CSPORT_LINEOUT:
 		if (sc->sc_mute[CSPORT_SPEAKER]) {
-			r = cs4231_read(sc, CS_IAR_PC);
+			r = cs4231_read(sc, SP_PIN_CONTROL);
 			r &= ~CS_PC_LINEMUTE;
-			cs4231_write(sc, CS_IAR_PC, r);
+			cs4231_write(sc, SP_PIN_CONTROL, r);
 		}
 		break;
 	}
 
-	r = cs4231_read(sc, CS_IAR_LDACOUT);
+	r = cs4231_read(sc, SP_LEFT_OUTPUT_CONTROL);
 	r &= ~CS_LDACOUT_LDA_MASK;
 	r |= (~(sc->sc_volume[CSPORT_SPEAKER].left >> 2)) &
 	    CS_LDACOUT_LDA_MASK;
-	cs4231_write(sc, CS_IAR_LDACOUT, r);
+	cs4231_write(sc, SP_LEFT_OUTPUT_CONTROL, r);
 
-	r = cs4231_read(sc, CS_IAR_RDACOUT);
+	r = cs4231_read(sc, SP_RIGHT_OUTPUT_CONTROL);
 	r &= ~CS_RDACOUT_RDA_MASK;
 	r |= (~(sc->sc_volume[CSPORT_SPEAKER].right >> 2)) &
 	    CS_RDACOUT_RDA_MASK;
-	cs4231_write(sc, CS_IAR_RDACOUT, r);
+	cs4231_write(sc, SP_RIGHT_OUTPUT_CONTROL, r);
 }
 
 void
@@ -676,16 +678,16 @@ cs4231_commit_settings(addr)
 
 	cs4231_mute_monitor(sc, 1);
 
-	r = cs4231_read(sc, CS_IAR_IC) | CS_IC_ACAL;
+	r = cs4231_read(sc, SP_INTERFACE_CONFIG) | CS_IC_ACAL;
 	CS_WRITE(sc, CS4231_IAR, CS_IAR_MCE);
-	CS_WRITE(sc, CS4231_IAR, CS_IAR_MCE | CS_IAR_IC);
+	CS_WRITE(sc, CS4231_IAR, CS_IAR_MCE | SP_INTERFACE_CONFIG);
 	CS_WRITE(sc, CS4231_IDR, r);
 
 	r = sc->sc_speed_bits | (sc->sc_format_bits << 5);
 	if (sc->sc_channels == 2)
 		r |= CS_FSPB_SM_STEREO;
 
-	CS_WRITE(sc, CS4231_IAR, CS_IAR_MCE | CS_IAR_FSPB);
+	CS_WRITE(sc, CS4231_IAR, CS_IAR_MCE | SP_CLOCK_DATA_FORMAT);
 	CS_WRITE(sc, CS4231_IDR, r);
 	CS_READ(sc, CS4231_IDR);
 	CS_READ(sc, CS4231_IDR);
@@ -696,7 +698,7 @@ cs4231_commit_settings(addr)
 	if (tries == 0)
 		printf("%s: timeout committing fspb\n", sc->sc_dev.dv_xname);
 
-	CS_WRITE(sc, CS4231_IAR, CS_IAR_MCE | CS_IAR_CDF);
+	CS_WRITE(sc, CS4231_IAR, CS_IAR_MCE | CS_REC_FORMAT);
 	CS_WRITE(sc, CS4231_IDR, r);
 	CS_READ(sc, CS4231_IDR);
 	CS_READ(sc, CS4231_IDR);
@@ -713,7 +715,7 @@ cs4231_commit_settings(addr)
 	if (tries == 0)
 		printf("%s: timeout waiting for !mce\n", sc->sc_dev.dv_xname);
 
-	CS_WRITE(sc, CS4231_IAR, CS_IAR_ERRINIT);
+	CS_WRITE(sc, CS4231_IAR, SP_TEST_AND_INIT);
 	for (tries = CS_TIMEOUT;
 	     tries && CS_READ(sc, CS4231_IDR) & CS_ERRINIT_ACI; tries--)
 		DELAY(10);
@@ -738,8 +740,8 @@ cs4231_halt_output(addr)
 	APC_WRITE(sc, APC_CSR, APC_READ(sc, APC_CSR) &
 	    ~(APC_CSR_EI | APC_CSR_GIE | APC_CSR_PIE |
 	      APC_CSR_EIE | APC_CSR_PDMA_GO | APC_CSR_PMIE));
-	cs4231_write(sc, CS_IAR_IC,
-	    cs4231_read(sc, CS_IAR_IC) & (~CS_IC_PEN));
+	cs4231_write(sc, SP_INTERFACE_CONFIG,
+	    cs4231_read(sc, SP_INTERFACE_CONFIG) & (~CS_IC_PEN));
 	sc->sc_locked = 0;
 	return (0);
 }
@@ -751,8 +753,8 @@ cs4231_halt_input(addr)
 	struct cs4231_softc *sc = (struct cs4231_softc *)addr;
 
 	APC_WRITE(sc, APC_CSR, APC_CSR_CAPTURE_PAUSE);
-	cs4231_write(sc, CS_IAR_IC,
-	    cs4231_read(sc, CS_IAR_IC) & (~CS_IC_CEN));
+	cs4231_write(sc, SP_INTERFACE_CONFIG,
+	    cs4231_read(sc, SP_INTERFACE_CONFIG) & (~CS_IC_CEN));
 	sc->sc_locked = 0;
 	return (0);
 }
@@ -781,14 +783,14 @@ cs4231_set_port(addr, cp)
 		if (cp->type != AUDIO_MIXER_VALUE)
 			break;
 		if (cp->un.value.num_channels == 1)
-			cs4231_write(sc, CS_IAR_LACIN1,
+			cs4231_write(sc, SP_LEFT_AUX1_CONTROL,
 			    cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] &
 			    CS_LACIN1_GAIN_MASK);
 		else if (cp->un.value.num_channels == 2) {
-			cs4231_write(sc, CS_IAR_LACIN1,
+			cs4231_write(sc, SP_LEFT_AUX1_CONTROL,
 			    cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT] &
 			    CS_LACIN1_GAIN_MASK);
-			cs4231_write(sc, CS_IAR_RACIN1,
+			cs4231_write(sc, SP_RIGHT_AUX1_CONTROL,
 			    cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] &
 			    CS_RACIN1_GAIN_MASK);
 		} else
@@ -799,14 +801,14 @@ cs4231_set_port(addr, cp)
 		if (cp->type != AUDIO_MIXER_VALUE)
 			break;
 		if (cp->un.value.num_channels == 1)
-			cs4231_write(sc, CS_IAR_LLI,
+			cs4231_write(sc, CS_LEFT_LINE_CONTROL,
 			    cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] &
 			    CS_LLI_GAIN_MASK);
 		else if (cp->un.value.num_channels == 2) {
-			cs4231_write(sc, CS_IAR_LLI,
+			cs4231_write(sc, CS_LEFT_LINE_CONTROL,
 			    cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT] &
 			    CS_LLI_GAIN_MASK);
-			cs4231_write(sc, CS_IAR_RLI,
+			cs4231_write(sc, CS_RIGHT_LINE_CONTROL,
 			    cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] &
 			    CS_RLI_GAIN_MASK);
 		} else
@@ -818,7 +820,7 @@ cs4231_set_port(addr, cp)
 			break;
 		if (cp->un.value.num_channels == 1) {
 #if 0
-			cs4231_write(sc, CS_IAR_MONO,
+			cs4231_write(sc, CS_MONO_IO_CONTROL,
 			    cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] &
 			    CS_MONO_MIA_MASK);
 #endif
@@ -830,14 +832,14 @@ cs4231_set_port(addr, cp)
 		if (cp->type != AUDIO_MIXER_VALUE)
 			break;
 		if (cp->un.value.num_channels == 1) {
-			cs4231_write(sc, CS_IAR_LACIN2,
+			cs4231_write(sc, SP_LEFT_AUX2_CONTROL,
 			    cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] &
 			    CS_LACIN2_GAIN_MASK);
 		} else if (cp->un.value.num_channels == 2) {
-			cs4231_write(sc, CS_IAR_LACIN2,
+			cs4231_write(sc, SP_LEFT_AUX2_CONTROL,
 			    cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT] &
 			    CS_LACIN2_GAIN_MASK);
-			cs4231_write(sc, CS_IAR_RACIN2,
+			cs4231_write(sc, SP_RIGHT_AUX2_CONTROL,
 			    cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] &
 			    CS_RACIN2_GAIN_MASK);
 		} else
@@ -848,7 +850,7 @@ cs4231_set_port(addr, cp)
 		if (cp->type != AUDIO_MIXER_VALUE)
 			break;
 		if (cp->un.value.num_channels == 1)
-			cs4231_write(sc, CS_IAR_LOOP,
+			cs4231_write(sc, SP_DIGITAL_MIX,
 			    cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] << 2);
 		else
 			break;
@@ -950,14 +952,14 @@ cs4231_get_port(addr, cp)
 			break;
 		if (cp->un.value.num_channels == 1)
 			cp->un.value.level[AUDIO_MIXER_LEVEL_MONO]=
-			    cs4231_read(sc, CS_IAR_LACIN1) &
+			    cs4231_read(sc, SP_LEFT_AUX1_CONTROL) &
 			    CS_LACIN1_GAIN_MASK;
 		else if (cp->un.value.num_channels == 2) {
 			cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT] =
-			    cs4231_read(sc, CS_IAR_LACIN1) &
+			    cs4231_read(sc, SP_LEFT_AUX1_CONTROL) &
 			    CS_LACIN1_GAIN_MASK;
 			cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] =
-			    cs4231_read(sc, CS_IAR_RACIN1) &
+			    cs4231_read(sc, SP_RIGHT_AUX1_CONTROL) &
 			    CS_RACIN1_GAIN_MASK;
 		} else
 			break;
@@ -968,12 +970,12 @@ cs4231_get_port(addr, cp)
 			break;
 		if (cp->un.value.num_channels == 1)
 			cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] =
-			    cs4231_read(sc, CS_IAR_LLI) & CS_LLI_GAIN_MASK;
+			    cs4231_read(sc, CS_LEFT_LINE_CONTROL) & CS_LLI_GAIN_MASK;
 		else if (cp->un.value.num_channels == 2) {
 			cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT] =
-			    cs4231_read(sc, CS_IAR_LLI) & CS_LLI_GAIN_MASK;
+			    cs4231_read(sc, CS_LEFT_LINE_CONTROL) & CS_LLI_GAIN_MASK;
 			cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] =
-			    cs4231_read(sc, CS_IAR_RLI) & CS_RLI_GAIN_MASK;
+			    cs4231_read(sc, CS_RIGHT_LINE_CONTROL) & CS_RLI_GAIN_MASK;
 		} else
 			break;
 		error = 0;
@@ -983,9 +985,8 @@ cs4231_get_port(addr, cp)
 			break;
 		if (cp->un.value.num_channels == 1) {
 #if 0
-			sc->sc_regs->iar = CS_IAR_MONO;
 			cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] =
-			    cs4231_read(sc, CS_IAR_MONO) &
+			    cs4231_read(sc, CS_MONO_IO_CONTROL) &
 			    CS_MONO_MIA_MASK;
 #endif
 		} else
@@ -997,14 +998,14 @@ cs4231_get_port(addr, cp)
 			break;
 		if (cp->un.value.num_channels == 1)
 			cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] =
-			    cs4231_read(sc, CS_IAR_LACIN2) &
+			    cs4231_read(sc, SP_LEFT_AUX2_CONTROL) &
 			    CS_LACIN2_GAIN_MASK;
 		else if (cp->un.value.num_channels == 2) {
 			cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT] =
-			    cs4231_read(sc, CS_IAR_LACIN2) &
+			    cs4231_read(sc, SP_LEFT_AUX2_CONTROL) &
 			    CS_LACIN2_GAIN_MASK;
 			cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] =
-			    cs4231_read(sc, CS_IAR_RACIN2) &
+			    cs4231_read(sc, SP_RIGHT_AUX2_CONTROL) &
 			    CS_RACIN2_GAIN_MASK;
 		}
 		else
@@ -1017,7 +1018,7 @@ cs4231_get_port(addr, cp)
 		if (cp->un.value.num_channels != 1)
 			break;
 		cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] =
-		    cs4231_read(sc, CS_IAR_LOOP) >> 2;
+		    cs4231_read(sc, SP_DIGITAL_MIX) >> 2;
 		error = 0;
 		break;
 	case CSAUDIO_OUTPUT_LVL:
@@ -1314,10 +1315,10 @@ cs4231_intr(v)
 	csr = APC_READ(sc, APC_CSR);
 	status = CS_READ(sc, CS4231_STS);
 	if (status & (CS_STATUS_INT | CS_STATUS_SER)) {
-		reg = cs4231_read(sc, CS_IAR_AFS);
+		reg = cs4231_read(sc, CS_IRQ_STATUS);
 		if (reg & CS_AFS_PI) {
-			cs4231_write(sc, CS_IAR_PBLB, 0xff);
-			cs4231_write(sc, CS_IAR_PBUB, 0xff);
+			cs4231_write(sc, SP_LOWER_BASE_COUNT, 0xff);
+			cs4231_write(sc, SP_UPPER_BASE_COUNT, 0xff);
 		}
 		CS_WRITE(sc, CS4231_STS, 0);
 	}
@@ -1489,10 +1490,10 @@ cs4231_trigger_output(addr, start, end, blksize, intr, arg, param)
 		APC_WRITE(sc, APC_CSR, APC_READ(sc, APC_CSR) |
 		    APC_CSR_EI | APC_CSR_GIE | APC_CSR_PIE | APC_CSR_EIE |
 		    APC_CSR_PMIE | APC_CSR_PDMA_GO);
-		cs4231_write(sc, CS_IAR_PBLB, 0xff);
-		cs4231_write(sc, CS_IAR_PBUB, 0xff);
-		cs4231_write(sc, CS_IAR_IC,
-		    cs4231_read(sc, CS_IAR_IC) | CS_IC_PEN);
+		cs4231_write(sc, SP_LOWER_BASE_COUNT, 0xff);
+		cs4231_write(sc, SP_UPPER_BASE_COUNT, 0xff);
+		cs4231_write(sc, SP_INTERFACE_CONFIG,
+		    cs4231_read(sc, SP_INTERFACE_CONFIG) | CS_IC_PEN);
 	}
 	return (0);
 }
