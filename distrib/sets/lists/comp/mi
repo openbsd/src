@@ -260,6 +260,7 @@
 ./usr/include/dev/ic/mk48txxreg.h
 ./usr/include/dev/ic/monitors.h
 ./usr/include/dev/ic/mpt.h
+./usr/include/dev/ic/mpt_ioctl.h
 ./usr/include/dev/ic/mpt_mpilib.h
 ./usr/include/dev/ic/mpt_openbsd.h
 ./usr/include/dev/ic/mpuvar.h

@@ -914,6 +914,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/mk48txxreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/monitors.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/mpt.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/mpt_ioctl.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/mpt_mpilib.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/mpt_openbsd.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/mpuvar.ph

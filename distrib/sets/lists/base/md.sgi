@@ -2206,6 +2206,7 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/xfs/xfs_vopdefs.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/zconf.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/zlib.ph
+./usr/libdata/perl5/site_perl/sgi-openbsd/dev/ic/mpt_ioctl.ph
 ./usr/libexec/ld.so
 ./usr/libexec/sudo_noexec.so
 ./usr/local/libdata/perl5/site_perl/mips64-openbsd
