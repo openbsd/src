@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.47 2001/07/03 01:42:20 niklas Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.48 2001/07/10 01:08:02 csapuntz Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -73,11 +73,13 @@
 enum atapi_drive_states {
 	ATAPI_RESET_BASE_STATE = 0,
 	ATAPI_DEVICE_RESET_WAIT_STATE = 1,
-	ATAPI_PIOMODE_STATE = 2,
-	ATAPI_PIOMODE_WAIT_STATE = 3,
-	ATAPI_DMAMODE_STATE = 4,
-	ATAPI_DMAMODE_WAIT_STATE = 5,
-	ATAPI_READY_STATE = 6
+	ATAPI_IDENTIFY_STATE = 2,
+	ATAPI_IDENTIFY_WAIT_STATE = 3,
+	ATAPI_PIOMODE_STATE = 4,
+	ATAPI_PIOMODE_WAIT_STATE = 5,
+	ATAPI_DMAMODE_STATE = 6,
+	ATAPI_DMAMODE_WAIT_STATE = 7,
+	ATAPI_READY_STATE = 8
 };
 
 #define DEBUG_INTR   0x01
@@ -100,6 +102,7 @@ int wdcdebug_atapi_mask = 0x0;
 
 /* 10 ms, this is used only before sending a cmd.  */
 #define ATAPI_DELAY 10
+#define ATAPI_RESET_DELAY 1000
 #define ATAPI_RESET_WAIT 2000
 #define ATAPI_CTRL_WAIT 4000
 
@@ -1254,10 +1257,20 @@ wdc_atapi_ctrl(chp, xfer, timeout, ret)
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
 	char *errstring = NULL;
 
-	wdc_atapi_update_status(chp);
+ 	wdc_atapi_update_status(chp);
 
-	if ((chp->ch_flags & (WDCS_BSY | WDCS_DRQ)) && !timeout)
-		return;
+	if (!timeout) {
+		switch (drvp->state) {
+		case ATAPI_IDENTIFY_WAIT_STATE:
+			if (chp->ch_status & WDCS_BSY)
+				return;
+			break;
+		default:
+			if (chp->ch_status & (WDCS_BSY | WDCS_DRQ))
+				return;
+			break;
+		}
+	}
 
 	if (!wdc_atapi_drive_selected(chp, xfer->drive))
 	{
@@ -1274,16 +1287,24 @@ wdc_atapi_ctrl(chp, xfer, timeout, ret)
 			drvp->drive_flags &= ~DRIVE_DEVICE_RESET;
 			break;
 
+		case ATAPI_IDENTIFY_WAIT_STATE:
+			errstring = "Identify";
+			if (!(chp->ch_status & WDCS_BSY) &&
+			    (chp->ch_status & (WDCS_DRQ | WDCS_ERR)))
+				trigger_timeout = 0;
+
+			break;
+
 		case ATAPI_PIOMODE_WAIT_STATE:
 			errstring = "PIOMODE";
-			if (chp->ch_flags & (WDCS_BSY | WDCS_DRQ))
+			if (chp->ch_status & (WDCS_BSY | WDCS_DRQ))
 				drvp->drive_flags &= ~DRIVE_MODE;
 			else
 				trigger_timeout = 0;
 			break;
 		case ATAPI_DMAMODE_WAIT_STATE:
 			errstring = "dmamode";
-			if (chp->ch_flags & (WDCS_BSY | WDCS_DRQ))
+			if (chp->ch_status & (WDCS_BSY | WDCS_DRQ))
 				drvp->drive_flags &= ~(DRIVE_DMA | DRIVE_UDMA);
 			else 
 				trigger_timeout = 0;
@@ -1320,21 +1341,40 @@ wdc_atapi_ctrl(chp, xfer, timeout, ret)
 		*/
 	case ATAPI_RESET_BASE_STATE:
 		if ((drvp->drive_flags & DRIVE_DEVICE_RESET) == 0) {
-			drvp->state = ATAPI_PIOMODE_STATE;
+			drvp->state = ATAPI_IDENTIFY_STATE;
 			break;
 		}
 
 		wdccommandshort(chp, drvp->drive, ATAPI_DEVICE_RESET);
 		drvp->state = ATAPI_DEVICE_RESET_WAIT_STATE;
-		ret->delay = 500;
+		ret->delay = ATAPI_RESET_DELAY;
 		ret->timeout = ATAPI_RESET_WAIT;
 		break;
 
 	case ATAPI_DEVICE_RESET_WAIT_STATE:
-		drvp->state = ATAPI_PIOMODE_STATE;
-		ret->delay = 500;
+		/* fall through */
+
+	case ATAPI_IDENTIFY_STATE:
+		wdccommandshort(chp, drvp->drive, ATAPI_IDENTIFY_DEVICE);
+		drvp->state = ATAPI_IDENTIFY_WAIT_STATE;
+		ret->delay = 10;
 		ret->timeout = ATAPI_RESET_WAIT;
 		break;
+
+	case ATAPI_IDENTIFY_WAIT_STATE: {
+		int idx = 0;
+
+		while ((chp->ch_status & WDCS_DRQ) &&
+		    idx++ < 20) {
+			wdcbit_bucket(chp, 512);
+
+			DELAY(1);
+			wdc_atapi_update_status(chp);
+		}
+
+		drvp->state = ATAPI_PIOMODE_STATE;
+	}
+		/* fall through */
 
 	case ATAPI_PIOMODE_STATE:
 piomode:
@@ -1481,14 +1521,14 @@ wdc_atapi_reset(chp, xfer, timeout, ret)
 
 	WDCDEBUG_PRINT(("wdc_atapi_reset\n"), DEBUG_XFERS);
 	wdccommandshort(chp, xfer->drive, ATAPI_SOFT_RESET);
-	drvp->state = ATAPI_PIOMODE_STATE;
+	drvp->state = ATAPI_IDENTIFY_STATE;
 
 	drvp->n_resets++;
 	/* Some ATAPI devices need extra time to find their
 	   brains after a reset
 	 */
 	xfer->next = wdc_atapi_reset_2;
-	ret->delay = 150;
+	ret->delay = ATAPI_RESET_DELAY;
 	ret->timeout = ATAPI_RESET_WAIT;
 	return;
 }
