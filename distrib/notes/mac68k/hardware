@@ -1,12 +1,12 @@
-dnl	$OpenBSD: hardware,v 1.20 2004/03/25 08:38:52 tom Exp $
+dnl	$OpenBSD: hardware,v 1.21 2004/12/03 20:42:05 miod Exp $
 OpenBSD/MACHINE OSREV runs on several of the older Macintosh computers.
-6MB of RAM should be sufficient to boot and a minimal system can probably
-be squeezed onto a 100MB partition by installing just the minimum sets.
+8MB of RAM should be sufficient to boot and a minimal system can probably
+be squeezed onto a 120MB partition by installing just the minimum sets.
 To actually do much compiling or anything more interesting than
 booting, more RAM and disk space is highly recommended. About 250MB will be
 necessary to install all of the OpenBSD OSREV binary distribution (note that
-this does not count swap space!).  Much more disk space is required to
-install the source and objects as well (about another 600MB).
+this does not count swap space!).
+
 A Mac OS partition is also required to install OpenBSD/MACHINE OSREV and boot it,
 see below.
 
@@ -32,37 +32,37 @@ machine.
 
 Supported devices on all of the above systems {:-include-:}:
 	Internal SCSI bus and most SCSI tapes, hard drives, and CD-ROM
-		drives
-	Internal sound--enough to beep on some machines, anyway
+	  drives
+	Internal sound -- enough to beep on some machines, anyway
 	Most NuBus video cards (there have been some
-		problems with some 24-bit color cards)
+	  problems with some 24-bit color cards)
 	Both internal serial ports
 	ADB keyboards and mice
 	Ethernet cards based on the Natl. Semiconductor 8390
-		(Asante, Apple, and a few others)
+	  (Asante, Apple, and a few others)
 	Some Ethernet cards based on the SONIC chip including internal
-		Ethernet on many of Apple's non-AV Quadras/Centrises and
-		PowerBook 500 series.
+	  Ethernet on many of Apple's non-AV Quadras/Centrises and
+	  PowerBook 500 series.
 	
 Some systems will boot and are usable from an external terminal
 (serial tty or SL/IP):
 	LC475, Performa 475, Quadra 605, Quadra 950
-	possibly others
+	Possibly others
 
 Some systems are reportedly almost supported:
 	LC/Performa575 (if 68LC040 replaced with a 68040)
 	LC/Performa630 (if 68LC040 replaced with a 68040, and booted from an
-		external SCSI drive)
+	  external SCSI drive)
 	PowerBook 550c (but the internal SCSI drive is not supported yet)
 
 What isn't supported, but often asked about:
 	PowerPC-based Macs.  Newer Mac PPC systems are supported by the
-		OpenBSD/macppc port.
+	  OpenBSD/macppc port.
+dnl XXX I think IIfx work now...
 	Machines based on Apple's IOP technology including the Mac IIfx.
 	Machines based on the 68LC040 processor.  Unfortunately, the chip
-		itself contains a major bug which is presently being worked
-		on.  However, machines such as the Centris 605 don't work
-		right now.
+	  itself contains a major bug for which no workaround is available
+	  in OpenBSD.
 	LCPDS Ethernet cards.
 	Apple Communication Slot (CS) Ethernet cards.
 	Quadra/Centris AV series' onboard MACE Ethernet.

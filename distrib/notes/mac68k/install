@@ -1,110 +1,50 @@
-dnl	$OpenBSD: install,v 1.28 2004/04/20 17:12:57 xsa Exp $
-OpenBSDInstallPrelude
+dnl	$OpenBSD: install,v 1.29 2004/12/03 20:42:05 miod Exp $
+OpenBSDInstallShortPrelude
 
-The installation can be broken down into four basic steps:
-	* Running Mkfs to build a filesystem or filesystems.
-	* Running Install Utility to load the files onto your filesystems.
-	* Running the booter to boot the system.
-	* Final system configuration.
+OpenBSDInstallPart2
 
+	Double-click on the BSD/Mac68k Booter icon on the desktop to
+	start the application.  Go to the "Booting..." entry in the
+	"Options" menu, and make it point to the bsd.rd kernel on your
+	Mac OS filesystem. Then boot the kernel.
 
-Preparing the filesystems:
+OpenBSDBootMsgs
 
-Double-click on the Mkfs application icon to start it up.  It will ask
-you for the SCSI ID of the drive that you are installing upon.  Once
-this is selected, it will present a list of the partitions on that disk.
-Select the partition on which you wish to build a filesystem and click
-on the "Format" button.  You will now be asked for a bunch of parameters
-for the hard drive and the filesystem.  Usually, you can just accept the
-defaults.  Note that although this dialog only has the "OK" button, you are
-not committed, yet.  Once you get the values you want, press the "OK"
-button. A dialog will be presented at this point with two options: "Format"
-and "Cancel." If you choose "Cancel," nothing will be written to your drive.
-If you choose "Format," the program will proceed to make a filesystem.
+	You will next be asked for your terminal type.  You should choose
+	the terminal type from amongst those listed.
+	(If your terminal type is xterm, just use vt100).
 
-Mkfs is not a well-behaved Mac OS application.  It will not allow
-any other tasks to run while it does (cooperative multitasking at its
-best).  When it's finished, the program will put up a dialog to ask if
-you have scanned the output for any error messages.  Usually there won't
-have been any errors, but do scan the output to make sure.  Simply click
-on the "I Read It" button and the program will quit.
+OpenBSDInstallPart3
 
-Repeat as necessary for any extra partitions that you wish to make
-filesystems on.  Note that you do _not_ need a filesystem on your swap
-partition.
+dnl XXX describe pdisk too
+OpenBSDInstallPart4
 
+dnl XXX same here.
+OpenBSDInstallPart5(sd0)
 
-Installing the distribution sets:
+OpenBSDInstallNet({:­CD-ROM, NFS, -:})
 
-Double-click on the Install Utility icon to start it up.  The installer
-will present the same SCSI ID menu that mkfs did.  Select the same SCSI
-ID that you did for mkfs--i.e., the one you are installing onto.
+OpenBSDFTPInstall
 
-If you are installing onto a single root partition, proceed to the
-"Installing the base files" section, below.
+OpenBSDHTTPInstall
 
-	If you have not created filesystems for the root, usr, and
-	any other partitions, go back to "Preparing the filesystem(s),"
-	above.
+OpenBSDTAPEInstall
 
-	When you started the installer, it mounted your root partition.
-	Just before it printed, "Mounting partition 'A' as /," it printed
-	lines like:
-		sd1 at scsi ID 5.
-	This means that the device for SCSI ID 5 is sd1.  The partitions
-	are signified by a trailing letter.  For instance, sd1a would be
-	the root partition of the second SCSI disk in the chain, and sd0g
-	would be the first usr partition on the first SCSI disk.  It is
-	important to emphasize that device numbers after the 'sd' do not
-	correspond to SCSI IDs of disks but rather to logical disks.  The
-	lowest SCSI ID will always be sd0 proceeded by increasing ID
-	numbers.
+OpenBSDCDROMInstall
 
-	You will need to know the proper device to mount the remaining
-	partition(s) by hand:
+OpenBSDNFSInstall
+dnl Not supported
+dnl OpenBSDDISKInstall(,{:-only -:})
 
-		* Select "Build Devices" from the "File" menu.  This builds
-		  a minimal tree of device files on your filesystem in
-		  /dev.
+OpenBSDCommonFS(NFS)
 
-		* Select "Mini Shell" from the "File" menu.
+OpenBSDCommonURL
 
-		* Mount the filesystems you wish with the command:
-			mount device path
-		  For example, if you wish to mount the second partition from
-		  the first SCSI disk, sd0, on /usr, you would type:
-			mount /dev/sd0b /usr
-
-		* Type "quit" to exit the minishell after you have mounted
-		  all the filesystems.
-
-
-Installation of base files:
-
-	Select the "Install" menu item from the "File" menu and install
-	base{:--:}OSrev.tgz, bsd.tgz, comp{:--:}OSrev.tgz, and any other
-	packages you wish to install at this time (see the contents section
-	for information about what's in each package).  The installer will
-	print out the filename of each file as it is installed and will
-	take quite some time to install everything.
-
-	As is the case with Mkfs, this is not a particularly well-behaved
-	Mac OS application and the machine will be completely tied up
-	while the installation takes place.
-
-	At some point after installing the base package, select the "Build
-	Devices" option from the "File" menu.  This will create a minimal
-	set of device nodes for you in /dev and your initial /etc/fstab.
-	The installer program also has an option to give you a mini-shell.
-
-
-Booting the system:
-
-Double-click on the BSD/Mac68k Booter icon to start the application.  Check
-that the options in the Booting dialog look sane--especially the SCSI ID.
-If not, correct them to your preference.  You will have to change the kernel
-name to "bsd".  When you are satisfied with your choices, try booting
-OpenBSD.
+Once the installation is complete, reboot into Mac OS, and start the
+BSD/Mac68k Booter again. This time, point to the OpenBSD kernel location
+on its own partition. You will have to change the kernel name to "bsd"
+or "bsdsbc", depending which one you have installed. Be sure to check that
+the SCSI ID is correct as well.
 
 If you wish to save your preferences, choose the "Save Preferences"
 option in the "File" menu, then quit the application and restart.  Due
@@ -117,40 +57,5 @@ Before attempting to boot a kernel on machines based on the Apple's IOP
 technology (i.e. Quadra 900, 950), make sure that the serial switch option
 in the Control Panel is set to "off". This allows OpenBSD to use the
 serial lines on these machines.
-
-Note that on a Mac68k, the generation of the DSA and RSA keys can take quite
-some time -- on a slower system, it may take an hour or more.
-Be patient.
-
-
-Final Configuration:
-
-Unlike other OpenBSD platforms, OpenBSD/MACHINE OSREV does not configure the
-network or set a root password as part of the installation process. The user
-will have to do this after the first OpenBSD boot.  Upon first boot, root
-will have no password, just hit RETURN when prompted. You will want to set
-the root password using the passwd(1) command.
-
-To generate all the available device nodes, cd to the /dev directory and run
-"./MAKEDEV all".
-
-To set up basic networking, you will need to create or edit the following
-files, all of which are in the /etc directory:
-	myname		the computer's name (with a fully-qualified
-			domain name).
-	mygate		the IP address of the default gateway.
-	hostname.if	configuration of the host adapter (the actual name
-			will be something like hostname.sn0 or hostname.ae0;
-			see your dmesg for your adapter name).
-	resolv.conf	name server configuration.
-	hosts		names and IP addresses of this machine and others on
-			the network.
-	dhclient.conf	dhcp client information.
-
-Once these files are configured, your system will be very much like any
-other OpenBSD system.  'mygate' and 'myname' are just single-line text
-files; for info on the others, see hostname.if(5), resolv.conf(5), hosts(5),
-and dhclient.conf(5) in the OpenBSD man pages.
-
 
 OpenBSDCongratulations

@@ -1,6 +1,10 @@
-dnl	$OpenBSD: prep,v 1.14 2004/03/23 13:47:41 nick Exp $
-Find your favorite disk partitioning utility.  Some
-of the ones that have been tried and seem to work are:
+dnl	$OpenBSD: prep,v 1.15 2004/12/03 20:42:05 miod Exp $
+If your machine only has one SCSI disk, you will need to share the disk
+with Mac OS.  You might have to repartition and/or reinstall Mac OS in
+order to make room available for OpenBSD.
+
+Find your favorite disk partitioning utility.  Some of the ones that have
+been tried and seem to work are:
 	APS Powertools 2.7.3
 	SCSI Directory Lite
 	Disk Manager Mac from OnTrack
@@ -10,47 +14,42 @@ of the ones that have been tried and seem to work are:
 
 "HD SC Setup" is included with the supported versions of Mac OS.
 This utility ignores non-Apple hard disks unless you patch it with the
-application found at <http://www.euronet.nl/users/ernstoud/hdpatch.html>.
+application found at the following URL:
+  http://www.euronet.nl/users/ernstoud/hdpatch.html
+Alternatively, one might prefer to use the A/UX version which does not
+have such a restriction, and can be found at the following URL:
+  http://www.euronet.nl/users/ernstoud/hdsetup.html
 
-** First, be sure you have a reliable backup of any data
-** which you may want to keep.  All information on the hard
-** drive you will be repartitioning will be lost.
+Prior to attempting to repartition your disk, everything of value on the
+drive should be backed up.  All information on the drive you will be
+repartitioning will be lost.
 
-That done, use your favorite partitioning utility to make
-at least one A/UX "Root & Usr" partition and an A/UX "Swap"
-partition.  The "Root & Usr" partition should be _at least_
-250MB in size if you wish to install all the sets.  This partition
-will be the root partition of your OpenBSD system.
+That done, use your favorite partitioning utility and make any necessary
+Mac OS partitions, then restore your data.
 
-Generally, you should allocate twice as much swap space as you have real
-memory (so, if you have 16MB of RAM, specify 32MB of swap space).
-Systems that will be heavily used or that are low on real
-memory should have more swap space allocated.  Systems that
-will be only lightly used can get away with less.
+You might want to create your OpenBSD partitions at this time, rather than
+with the "pdisk" utility during the installation itself. In this case,
+create one "A/UX Root" partition (for the / filesystem), one "Swap"
+partition (for swap, obviously), and as many "Usr file system" or
+"Unreserved" partitions as you want (for the other filesystems, such as
+/tmp, /usr, /var, etc).
 
-If you like, you can also create a smaller root partition
-and a larger /usr.  If you plan to use this machine as a
-server, you may also want a separate /var.  Create these
-partitions as the BSD "usr" or "User slice X" type.
+You will also need to install the BSD/Mac68k Booter on your Mac OS
+system. It is available in the utils/ subdirectory of the distribution,
+in self-extracting and binhex form as booter.sea.hqx.
+Extract it as you would for any other Macintosh application.
 
-It is also possible to use the Mkfs utility to "convert" partitions from
-Mac OS partitions to BSD partitions.  Mkfs will be discussed in more detail
-later, but it is also very possible to simply prepare your hard drive by
-partitioning it with Mac OS partitions of the correct size.  If you do this,
-simply select the "Convert" button when choosing partitions to build a
-filesystem on in Mkfs (see below).
+Before moving on, you should make sure that your machine is running the
+correct software on the Mac OS side.  In the Memory control panel, you
+should turn Virtual Memory off whenever you are planning to use the
+BSD/Mac68k Booter.
 
-Before moving on, you should make sure that your machine is running the correct
-software on the Mac OS side.  In the Memory control panel, you should turn
-Virtual Memory off whenever you are planning to use the BSD/Mac68k Booter.
-You should also make sure that your machine is using 32-bit addressing.  If
-there is no "Addressing:" option in your Memory control panel and your
+You should also make sure that your machine is using 32-bit addressing.
+If there is no "Addressing:" option in your Memory control panel and your
 machine is supported, you will probably need Mode32.  Mode32 is a control
-panel and extension combination which enables 32-bit addressing on older Macs
-which do not use it by default.  This program is available from any Info-Mac
-mirror.  Finally, we recommend strongly that, at least for the purposes of
-setting the system up, you run with the machine's monitor in 1-bit ("Black
-and White" in the monitor's control panel) mode.
+panel and extension combination which enables 32-bit addressing on older
+Macs which do not use it by default.  This program is available from any
+Info-Mac mirror.
 
 All of that done and accounted for, you are now set to install OpenBSD on
 your hard drive.

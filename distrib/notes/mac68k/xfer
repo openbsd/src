@@ -1,17 +1,14 @@
-dnl	$OpenBSD: xfer,v 1.16 2004/03/17 09:25:09 jmc Exp $
-Installation is really only supported from the local Macintosh hard drive or
-from an AppleShare volume.  This means that you'll need at least enough room
-on the HFS partition or AppleShare volume for the largest file that you will
-have to install.
+dnl	$OpenBSD: xfer,v 1.17 2004/12/03 20:42:05 miod Exp $
+Installation is supported from several media types, including:
 
-You will also need to collect the following Mac OS tools:
-	Mkfs,
-	BSD Install Utility, and
-	BSD/Mac68k Booter.
+	CD-ROM
+	Tape
+	Remote NFS partition
+	FTP
+	HTTP
 
-These three are compacted and in binhex form as mkfs.hqx,
-installer.hqx, and booter.sea.hqx, respectively.
+OpenBSDXferShortPrelude
 
-Extract them as you would any other Macintosh applications.  The
-source code for these utilities should be in the same directory with the
-word "src" somewhere in the filename.
+OpenBSDXferBareTape
+
+OpenBSDXferNFS
