@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.74 2002/05/20 01:24:26 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.75 2002/05/20 03:33:11 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -296,7 +296,8 @@ pmap_pte_set(pt_entry_t *pde, vaddr_t va, pt_entry_t pte)
 	    hppa_trunc_page(pte) != (paddr_t)&gateway_page)
 		panic("pmap_pte_set: invalid pte");
 
-	if (pte && !(pte & PTE_PROT(TLB_UNCACHABLE))) {
+	if (pte && !(pte & PTE_PROT(TLB_UNCACHABLE)) &&
+	    hppa_trunc_page(pte) != (paddr_t)&gateway_page) {
 		printf("pmap_pte_set: cached pte\n");
 		Debugger();
 	}
@@ -578,7 +579,7 @@ pmap_init()
 			panic("pmap_init: cannot allocate pde");
 
 		pmap_pte_set(pde, SYSCALLGATE, (paddr_t)&gateway_page |
-		    PTE_PROT(TLB_UNCACHABLE|TLB_GATE_PROT));
+		    PTE_PROT(TLB_GATE_PROT));
 	}
 }
 
@@ -857,6 +858,8 @@ pmap_write_protect(pmap, sva, eva, prot)
 {
 	pt_entry_t *pde, pte;
 	u_int tlbprot, pdemask;
+	struct pv_head *pvh;
+	int bank, off;
 
 	DPRINTF(PDB_FOLLOW|PDB_PMAP,
 	    ("pmap_write_protect(%p, %x, %x, %x)\n", pmap, sva, eva, prot));
@@ -886,11 +889,23 @@ pmap_write_protect(pmap, sva, eva, prot)
 			if ((pte & PTE_PROT(TLB_AR_MASK)) == tlbprot)
 				continue;
 
+			bank = vm_physseg_find(atop(pte), &off);
+			if (bank == -1) {
+				printf("pmap_page_remove: unmanaged page?\n");
+				return;
+			}
+			pvh = &vm_physmem[bank].pmseg.pvhead[off];
+			simple_lock(&pvh->pvh_lock);
+			pvh->pvh_attrs |= pmap_pvh_attrs(pte);
+			simple_unlock(&pvh->pvh_lock);
+
 			ficache(pmap->pm_space, sva, PAGE_SIZE);
 			pitlb(pmap->pm_space, sva);
 			fdcache(pmap->pm_space, sva, PAGE_SIZE);
 			pdtlb(pmap->pm_space, sva);
 
+			if (!(tlbprot & TLB_WRITE))
+				pte &= ~PTE_PROT(TLB_DIRTY);
 			pte &= ~PTE_PROT(TLB_AR_MASK);
 			pte |= tlbprot;
 			pmap_pte_set(pde, sva, pte);
