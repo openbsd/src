@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.47 2001/12/27 22:49:35 fgsch Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.48 2002/02/08 13:53:28 art Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -88,7 +88,7 @@ sys_socket(p, v, retval)
 			 SCARG(uap, protocol));
 	if (error) {
 		fdremove(fdp, fd);
-		ffree(fp);
+		closef(fp, p);
 	} else {
 		fp->f_data = (caddr_t)so;
 		FILE_SET_MATURE(fp);
@@ -248,7 +248,7 @@ sys_accept(p, v, retval)
 	/* if an error occurred, free the file descriptor */
 	if (error) {
 		fdremove(p->p_fd, tmpfd);
-		ffree(fp);
+		closef(fp, p);
 	}
 	m_freem(nam);
 	splx(s);
@@ -359,20 +359,25 @@ sys_socketpair(p, v, retval)
 	}
 	error = copyout((caddr_t)sv, (caddr_t)SCARG(uap, rsv),
 	    2 * sizeof (int));
-	FILE_SET_MATURE(fp1);
-	FILE_SET_MATURE(fp2);
-	if (error == 0)
+	if (error == 0) {
+		FILE_SET_MATURE(fp1);
+		FILE_SET_MATURE(fp2);
 		return (error);
+	}
 free4:
-	ffree(fp2);
 	fdremove(fdp, sv[1]);
+	closef(fp2, p);
+	so2 = NULL;
 free3:
-	ffree(fp1);
 	fdremove(fdp, sv[0]);
+	closef(fp1, p);
+	so1 = NULL;
 free2:
-	(void)soclose(so2);
+	if (so2 != NULL)
+		(void)soclose(so2);
 free1:
-	(void)soclose(so1);
+	if (so1 != NULL)
+		(void)soclose(so1);
 	return (error);
 }
 

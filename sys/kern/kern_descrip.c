@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.47 2002/02/05 16:02:27 art Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.48 2002/02/08 13:53:28 art Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -497,7 +497,7 @@ finishdup(p, old, new, retval)
 	 */
 	oldfp = fdp->fd_ofiles[new];
 	if (oldfp != NULL)
-		FILE_USE(oldfp);
+		FREF(oldfp);
 
 	fp = fdp->fd_ofiles[old];
 	if (fp->f_count == LONG_MAX-2)
@@ -543,7 +543,7 @@ fdrelease(p, fd)
 	fp = *fpp;
 	if (fp == NULL)
 		return (EBADF);
-	FILE_USE(fp);
+	FREF(fp);
 	*fpp = NULL;
 	fdp->fd_ofileflags[fd] = 0;
 	fd_unused(fdp, fd);
@@ -820,6 +820,7 @@ restart:
 		*resultfp = fp;
 	if (resultfd)
 		*resultfd = i;
+	FREF(fp);
 	return (0);
 }
 
@@ -994,7 +995,7 @@ fdfree(p)
 	for (i = fdp->fd_lastfile; i >= 0; i--, fpp++) {
 		fp = *fpp;
 		if (fp != NULL) {
-			FILE_USE(fp);
+			FREF(fp);
 			*fpp = NULL;
 			(void) closef(fp, p);
 		}
@@ -1059,12 +1060,12 @@ closef(struct file *fp, struct proc *p)
 	 * race to FIF_WANTCLOSE.
 	 */
 	if ((fp->f_iflags & FIF_WANTCLOSE) != 0) {
-		FILE_UNUSE(fp);
+		FRELE(fp);
 		return (0);
 	}
 
 	if (--fp->f_count > 0) {
-		FILE_UNUSE(fp);
+		FRELE(fp);
 		return (0);
 	}
 

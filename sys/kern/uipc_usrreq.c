@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.17 2002/02/05 16:02:27 art Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.18 2002/02/08 13:53:28 art Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -887,7 +887,7 @@ unp_gc()
 		if (fp->f_count == fp->f_msgcount && !(fp->f_flag & FMARK)) {
 			*fpp++ = fp;
 			nunref++;
-			FILE_USE(fp);
+			FREF(fp);
 			fp->f_count++;
 		}
 	}
@@ -957,7 +957,7 @@ unp_discard(fp)
 	struct file *fp;
 {
 
-	FILE_USE(fp);
+	FREF(fp);
 	fp->f_msgcount--;
 	unp_rights--;
 	(void) closef(fp, NULL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.15 2002/02/05 16:02:27 art Exp $	*/
+/*	$OpenBSD: file.h,v 1.16 2002/02/08 13:53:28 art Exp $	*/
 /*	$NetBSD: file.h,v 1.11 1995/03/26 20:24:13 jtc Exp $	*/
 
 /*
@@ -92,15 +92,16 @@ struct file {
 #define FILE_IS_USABLE(fp) \
 	(((fp)->f_iflags & (FIF_WANTCLOSE|FIF_LARVAL)) == 0)
 
-#define FILE_SET_MATURE(fp) do {	\
-	(fp)->f_iflags &= ~FIF_LARVAL;	\
+#define FREF(fp) do { (fp)->f_usecount++; } while (0)
+#define FRELE(fp) do {					\
+	--(fp)->f_usecount;					\
+	if (((fp)->f_iflags & FIF_WANTCLOSE) != 0)		\
+		wakeup(&(fp)->f_usecount);			\
 } while (0)
 
-#define FILE_USE(fp) do { (fp)->f_usecount++; } while (0)
-#define FILE_UNUSE(fp) do {				\
-	--(fp)->f_usecount;				\
-	if (((fp)->f_iflags & FIF_WANTCLOSE) != 0)	\
-		wakeup(&(fp)->f_usecount);		\
+#define FILE_SET_MATURE(fp) do {				\
+	(fp)->f_iflags &= ~FIF_LARVAL;				\
+	FRELE(fp);						\
 } while (0)
 
 LIST_HEAD(filelist, file);

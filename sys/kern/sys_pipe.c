@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.41 2002/01/23 00:39:47 art Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.42 2002/02/08 13:53:28 art Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -146,11 +146,13 @@ sys_opipe(p, v, retval)
 	FILE_SET_MATURE(wf);
 	return (0);
 free3:
-	ffree(rf);
 	fdremove(fdp, retval[0]);
+	closef(rf, p);
+	rpipe = NULL;
 free2:
 	(void)pipeclose(wpipe);
-	(void)pipeclose(rpipe);
+	if (rpipe != NULL)
+		(void)pipeclose(rpipe);
 	return (error);
 }
 

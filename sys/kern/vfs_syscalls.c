@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.88 2002/02/05 16:02:27 art Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.89 2002/02/08 13:53:28 art Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -874,8 +874,6 @@ sys_open(p, v, retval)
 	if ((error = falloc(p, &fp, &indx)) != 0)
 		return (error);
 
-	FILE_USE(fp);
-
 	flags = FFLAGS(SCARG(uap, flags));
 	cmode = ((SCARG(uap, mode) &~ fdp->fd_cmask) & ALLPERMS) &~ S_ISTXT;
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
@@ -895,8 +893,8 @@ sys_open(p, v, retval)
 		}
 		if (error == ERESTART)
 			error = EINTR;
-		closef(fp, p);
 		fdremove(fdp, indx);
+		closef(fp, p);
 		return (error);
 	}
 	p->p_dupfd = 0;
@@ -919,10 +917,9 @@ sys_open(p, v, retval)
 		VOP_UNLOCK(vp, 0, p);
 		error = VOP_ADVLOCK(vp, (caddr_t)fp, F_SETLK, &lf, type);
 		if (error) {
-			(void) vn_close(vp, fp->f_flag, fp->f_cred, p);
-			FILE_UNUSE(fp);
-			ffree(fp);
+			/* closef will vn_close the file for us. */
 			fdremove(fdp, indx);
+			closef(fp, p);
 			return (error);
 		}
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
@@ -943,17 +940,15 @@ sys_open(p, v, retval)
 		}
 		if (error) {
 			VOP_UNLOCK(vp, 0, p);
-			(void) vn_close(vp, fp->f_flag, fp->f_cred, p);
-			FILE_UNUSE(fp);
-			ffree(fp);
+			/* closef will close the file for us. */
 			fdremove(fdp, indx);
+			closef(fp, p);
 			return (error);
 		}
 	}
 	VOP_UNLOCK(vp, 0, p);
 	*retval = indx;
 	FILE_SET_MATURE(fp);
-	FILE_UNUSE(fp);
 	return (0);
 }
 
@@ -1105,9 +1100,9 @@ sys_fhopen(p, v, retval)
 		VOP_UNLOCK(vp, 0, p);
 		error = VOP_ADVLOCK(vp, (caddr_t)fp, F_SETLK, &lf, type);
 		if (error) {
-			(void) vn_close(vp, fp->f_flag, fp->f_cred, p);
-			ffree(fp);
+			/* closef will vn_close the file for us. */
 			fdremove(fdp, indx);
+			closef(fp, p);
 			return (error);
 		}
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
@@ -1119,8 +1114,8 @@ sys_fhopen(p, v, retval)
 	return (0);
 
 bad:
-	ffree(fp);
 	fdremove(fdp, indx);
+	closef(fp, p);
 	if (vp != NULL)
 		vput(vp);
 	return (error);
@@ -2651,11 +2646,11 @@ sys_pread(p, v, retval)
 	if ((fp->f_flag & FREAD) == 0)
 		return (EBADF);
 
-	FILE_USE(fp);
+	FREF(fp);
 
 	vp = (struct vnode *)fp->f_data;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
-		FILE_UNUSE(fp);
+		FRELE(fp);
 		return (ESPIPE);
 	}
 
@@ -2706,9 +2701,6 @@ sys_preadv(p, v, retval)
 	    &offset, retval));
 
  out:
-#if notyet
-	FILE_UNUSE(fp, p);
-#endif
 	return (error);
 }
 
@@ -2752,9 +2744,6 @@ sys_pwrite(p, v, retval)
 	    &offset, retval));
 
  out:
-#if notyet
-	FILE_UNUSE(fp, p);
-#endif
 	return (error);
 }
 
@@ -2799,8 +2788,5 @@ sys_pwritev(p, v, retval)
 	    &offset, retval));
 
  out:
-#if notyet
-	FILE_UNUSE(fp, p);
-#endif
 	return (error);
 }

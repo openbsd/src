@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.63 2002/01/20 11:27:52 art Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.64 2002/02/08 13:53:28 art Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -550,13 +550,13 @@ sys_execve(p, v, retval)
 					panic("sys_execve: falloc indx != i");
 #endif
 				if ((error = cdevvp(getnulldev(), &vp)) != 0) {
-					ffree(fp);
 					fdremove(p->p_fd, indx);
+					closef(fp, p);
 					break;
 				}
 				if ((error = VOP_OPEN(vp, flags, p->p_ucred, p)) != 0) {
-					ffree(fp);
 					fdremove(p->p_fd, indx);
+					closef(fp, p);
 					vrele(vp);
 					break;
 				}

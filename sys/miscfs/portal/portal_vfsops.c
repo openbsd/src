@@ -1,4 +1,4 @@
-/*	$OpenBSD: portal_vfsops.c,v 1.10 2002/02/05 16:02:27 art Exp $	*/
+/*	$OpenBSD: portal_vfsops.c,v 1.11 2002/02/08 13:53:28 art Exp $	*/
 /*	$NetBSD: portal_vfsops.c,v 1.14 1996/02/09 22:40:41 christos Exp $	*/
 
 /*
@@ -187,7 +187,7 @@ portal_unmount(mp, mntflags, p)
 	 * daemon to wake up, and then the accept will get ECONNABORTED
 	 * which it interprets as a request to go and bury itself.
 	 */
-	FILE_USE(VFSTOPORTAL(mp)->pm_server);
+	FREF(VFSTOPORTAL(mp)->pm_server);
 	soshutdown((struct socket *) VFSTOPORTAL(mp)->pm_server->f_data, 2);
 	/*
 	 * Discard reference to underlying file.  Must call closef because
