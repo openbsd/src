@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.43 2000/06/26 06:15:11 aaron Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.44 2000/07/22 02:58:50 mickey Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.37 2000/06/20 04:54:40 niklas Exp 
+ *		OpenBSD: pcmciadevs,v 1.39 2000/07/22 02:58:18 mickey Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -73,6 +73,7 @@
 #define	PCMCIA_VENDOR_RAYTHEON	0x01a6	/* Raytheon */
 #define	PCMCIA_VENDOR_BAY	0x01eb	/* Bay Networks */
 #define	PCMCIA_VENDOR_IODATA	0x01bf	/* I-O DATA */
+#define	PCMCIA_VENDOR_FARALLON	0x0200	/* Farallon Communications */
 #define	PCMCIA_VENDOR_NOKIA	0x023d	/* Nokia Communications */
 #define	PCMCIA_VENDOR_BREEZECOM	0x0a02	/* BreezeCOM */
 #define	PCMCIA_VENDOR_NEWMEDIA2	0x10cd	/* NewMedia */
@@ -159,6 +160,10 @@
 /* Dual */
 #define	PCMCIA_CIS_DUAL_NE2000	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_DUAL_NE2000	0x0100
+
+/* Farallon Communications */
+#define	PCMCIA_CIS_FARALLON_SKYLINE	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_FARALLON_SKYLINE	0x0a01
 
 /* Fujitsu */
 #define	PCMCIA_CIS_FUJITSU_SCSI600	{ NULL, NULL, NULL, NULL }
