@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.629 2003/05/28 16:36:34 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.630 2003/05/30 08:45:35 grange Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1545,6 +1545,7 @@
 #define	PCI_PRODUCT_INTEL_82801DBM_IDE	0x24ca		/* 82801DBM IDE */
 #define	PCI_PRODUCT_INTEL_82801DB_IDE	0x24cb		/* 82801DB IDE */
 #define	PCI_PRODUCT_INTEL_82801DB_USB_4	0x24cd		/* 82801DB USB */
+#define	PCI_PRODUCT_INTEL_82801EB_IDE	0x24db		/* 82801EB IDE */
 #define	PCI_PRODUCT_INTEL_82820_MCH	0x2501		/* 82820 MCH */
 #define	PCI_PRODUCT_INTEL_82820_AGP	0x250f		/* 82820 AGP */
 #define	PCI_PRODUCT_INTEL_82850_HB	0x2530		/* 82850 Host */
