@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.49 2002/07/23 15:53:45 art Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.50 2002/08/20 23:21:17 mickey Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -3603,7 +3603,7 @@ uvm_map_printit(map, full, pr)
 	vm_map_entry_t entry;
 
 	(*pr)("MAP %p: [0x%lx->0x%lx]\n", map, map->min_offset,map->max_offset);
-	(*pr)("\t#ent=%d, sz=%d, ref=%d, version=%d, flags=0x%x\n",
+	(*pr)("\t#ent=%d, sz=%u, ref=%d, version=%u, flags=0x%x\n",
 	    map->nentries, map->size, map->ref_count, map->timestamp,
 	    map->flags);
 #ifdef pmap_resident_count
