@@ -1,4 +1,4 @@
-/*	$OpenBSD: m68k.h,v 1.2 1998/02/15 18:50:04 niklas Exp $	*/
+/*	$OpenBSD: m68k.h,v 1.3 2002/06/24 21:12:03 espie Exp $	*/
 
 /* Opcode table for m680[01234]0/m6888[12]/m68851.
    Copyright (C) 1989, 1991 Free Software Foundation.
@@ -322,22 +322,22 @@ struct m68k_opcode m68k_opcodes[] =
 
 /* Fixed-size branches with 16-bit offsets */
 
-{"bhi",		one(0061000),		one(0177777), "BW", m68000up },
-{"bls",		one(0061400),		one(0177777), "BW", m68000up },
-{"bcc",		one(0062000),		one(0177777), "BW", m68000up },
-{"bcs",		one(0062400),		one(0177777), "BW", m68000up },
-{"bne",		one(0063000),		one(0177777), "BW", m68000up },
-{"beq",		one(0063400),		one(0177777), "BW", m68000up },
-{"bvc",		one(0064000),		one(0177777), "BW", m68000up },
-{"bvs",		one(0064400),		one(0177777), "BW", m68000up },
-{"bpl",		one(0065000),		one(0177777), "BW", m68000up },
-{"bmi",		one(0065400),		one(0177777), "BW", m68000up },
-{"bge",		one(0066000),		one(0177777), "BW", m68000up },
-{"blt",		one(0066400),		one(0177777), "BW", m68000up },
-{"bgt",		one(0067000),		one(0177777), "BW", m68000up },
-{"ble",		one(0067400),		one(0177777), "BW", m68000up },
-{"bra",		one(0060000),		one(0177777), "BW", m68000up },
-{"bsr",		one(0060400),		one(0177777), "BW", m68000up },
+{"bhiw",	one(0061000),		one(0177777), "BW", m68000up },
+{"blsw",	one(0061400),		one(0177777), "BW", m68000up },
+{"bccw",	one(0062000),		one(0177777), "BW", m68000up },
+{"bcsw",	one(0062400),		one(0177777), "BW", m68000up },
+{"bnew",	one(0063000),		one(0177777), "BW", m68000up },
+{"beqw",	one(0063400),		one(0177777), "BW", m68000up },
+{"bvcw",	one(0064000),		one(0177777), "BW", m68000up },
+{"bvsw",	one(0064400),		one(0177777), "BW", m68000up },
+{"bplw",	one(0065000),		one(0177777), "BW", m68000up },
+{"bmiw",	one(0065400),		one(0177777), "BW", m68000up },
+{"bgew",	one(0066000),		one(0177777), "BW", m68000up },
+{"bltw",	one(0066400),		one(0177777), "BW", m68000up },
+{"bgtw",	one(0067000),		one(0177777), "BW", m68000up },
+{"blew",	one(0067400),		one(0177777), "BW", m68000up },
+{"braw",	one(0060000),		one(0177777), "BW", m68000up },
+{"bsrw",	one(0060400),		one(0177777), "BW", m68000up },
 
 /* Fixed-size branches with short (byte) offsets */
 
@@ -467,7 +467,6 @@ struct m68k_opcode m68k_opcodes[] =
 {"dbmi",	one(0055710),		one(0177770),		"DsBw", m68000up },
 {"dbne",	one(0053310),		one(0177770),		"DsBw", m68000up },
 {"dbpl",	one(0055310),		one(0177770),		"DsBw", m68000up },
-{"dbra",	one(0050710),		one(0177770),		"DsBw", m68000up },
 {"dbt",		one(0050310),		one(0177770),		"DsBw", m68000up },
 {"dbvc",	one(0054310),		one(0177770),		"DsBw", m68000up },
 {"dbvs",	one(0054710),		one(0177770),		"DsBw", m68000up },
@@ -476,12 +475,10 @@ struct m68k_opcode m68k_opcodes[] =
 {"divsl",	two(0046100, 0004000),	two(0177700, 0107770),	";lDD", m68020up },
 {"divsll",	two(0046100, 0004000),	two(0177700, 0107770),	";lD3D1", m68020up },
 {"divsw",	one(0100700),		one(0170700),		";wDd", m68000up },
-{"divs",	one(0100700),		one(0170700),		";wDd", m68000up },
 {"divul",	two(0046100, 0002000),	two(0177700, 0107770),	";lD3D1", m68020up },
 {"divul",	two(0046100, 0000000),	two(0177700, 0107770),	";lDD", m68020up },
 {"divull",	two(0046100, 0000000),	two(0177700, 0107770),	";lD3D1", m68020up },
 {"divuw",	one(0100300),		one(0170700),		";wDd", m68000up },
-{"divu",	one(0100300),		one(0170700),		";wDd", m68000up },
 {"eorb",	one(0005000),		one(0177700),		"#b$s", m68000up },	/* eori written as or */
 {"eorb",	one(0005074),		one(0177777),		"#bCs", m68000up },	/* eori to ccr */
 {"eorb",	one(0130400),		one(0170700),		"Dd$s", m68000up },	/* register to memory */
@@ -923,6 +920,7 @@ struct m68k_opcode m68k_opcodes[] =
 {"fsmovex",	two(0xF000, 0x0040),	two(0xF1C0, 0xE07F),	"IiF8F7", m68040 }, /* fmove from <ea> to fp<n> */
 {"fsmovex",	two(0xF000, 0x4840),	two(0xF1C0, 0xFC7F),	"Ii;xF7", m68040 }, /* fmove from <ea> to fp<n> */
 /* JF removed {"fsmovex",	two(0xF000, 0x0040),	two(0xF1C0, 0xE07F),	"IiFt", m68040 }, / * fmove from <ea> to fp<n> */
+{"fsmovep",	two(0xF000, 0x4C40), 	two(0xF1C0, 0xFC7F), 	"Ii;pF7", m68040 },
 
 {"fdmoveb",	two(0xF000, 0x5844),	two(0xF1C0, 0xFC7F),	"Ii;bF7", m68040 }, /* fmove from <ea> to fp<n> */
 {"fdmoved",	two(0xF000, 0x5444),	two(0xF1C0, 0xFC7F),	"Ii;FF7", m68040 }, /* fmove from <ea> to fp<n> */
@@ -932,9 +930,9 @@ struct m68k_opcode m68k_opcodes[] =
 {"fdmovex",	two(0xF000, 0x0044),	two(0xF1C0, 0xE07F),	"IiF8F7", m68040 }, /* fmove from <ea> to fp<n> */
 {"fdmovex",	two(0xF000, 0x4844),	two(0xF1C0, 0xFC7F),	"Ii;xF7", m68040 }, /* fmove from <ea> to fp<n> */
 /* JF removed {"fdmovex",	two(0xF000, 0x0044),	two(0xF1C0, 0xE07F),	"IiFt", m68040 }, / * fmove from <ea> to fp<n> */
+{"fdmovep",	two(0xF000, 0x4C44), 	two(0xF1C0, 0xFC7F), 	"Ii;pF7", m68040 },
 
 {"fmovecrx",	two(0xF000, 0x5C00),	two(0xF1FF, 0xFC00),	"Ii#CF7", mfloat },		/* fmovecr.x #ccc, FPn */
-{"fmovecr",	two(0xF000, 0x5C00),	two(0xF1FF, 0xFC00),	"Ii#CF7", mfloat },
 
 /* Other fmovemx.  */
 {"fmovemx", two(0xF000, 0xF800), two(0xF1C0, 0xFF8F), "IiDk&s", mfloat }, /* reg to control,	static and dynamic: */
@@ -1494,11 +1492,9 @@ struct m68k_opcode m68k_opcodes[] =
 {"mulsl",	two(0046000, 004000),	two(0177700, 0107770),	";lD1", m68020up },
 {"mulsl",	two(0046000, 006000),	two(0177700, 0107770),	";lD3D1", m68020up },
 {"mulsw",	one(0140700),		one(0170700),		";wDd", m68000up },
-{"muls",	one(0140700),		one(0170700),		";wDd", m68000up },
 {"mulul",	two(0046000, 000000),	two(0177700, 0107770),	";lD1", m68020up },
 {"mulul",	two(0046000, 002000),	two(0177700, 0107770),	";lD3D1", m68020up },
 {"muluw",	one(0140300),		one(0170700),		";wDd", m68000up },
-{"mulu",	one(0140300),		one(0170700),		";wDd", m68000up },
 {"nbcd",	one(0044000),		one(0177700),		"$s", m68000up },
 {"negb",	one(0042000),		one(0177700),		"$s", m68000up },
 {"negl",	one(0042200),		one(0177700),		"$s", m68000up },
@@ -1788,18 +1784,13 @@ struct m68k_opcode m68k_opcodes[] =
 {"seq",		one(0053700),		one(0177700),		"$s", m68000up },
 {"sf",		one(0050700),		one(0177700),		"$s", m68000up },
 {"sge",		one(0056300),		one(0177700),		"$s", m68000up },
-{"sfge",	one(0056300),		one(0177700),		"$s", m68000up },
 {"sgt",		one(0057300),		one(0177700),		"$s", m68000up },
-{"sfgt",	one(0057300),		one(0177700),		"$s", m68000up },
 {"shi",		one(0051300),		one(0177700),		"$s", m68000up },
 {"sle",		one(0057700),		one(0177700),		"$s", m68000up },
-{"sfle",	one(0057700),		one(0177700),		"$s", m68000up },
 {"sls",		one(0051700),		one(0177700),		"$s", m68000up },
 {"slt",		one(0056700),		one(0177700),		"$s", m68000up },
-{"sflt",	one(0056700),		one(0177700),		"$s", m68000up },
 {"smi",		one(0055700),		one(0177700),		"$s", m68000up },
 {"sne",		one(0053300),		one(0177700),		"$s", m68000up },
-{"sfneq",	one(0053300),		one(0177700),		"$s", m68000up },
 {"spl",		one(0055300),		one(0177700),		"$s", m68000up },
 {"st",		one(0050300),		one(0177700),		"$s", m68000up },
 {"svc",		one(0054300),		one(0177700),		"$s", m68000up },
@@ -1919,11 +1910,9 @@ struct m68k_opcode m68k_opcodes[] =
 {"jhi",		one(0061000),		one(0177400),		"Bg", m68000up },
 {"jls",		one(0061400),		one(0177400),		"Bg", m68000up },
 {"jcc",		one(0062000),		one(0177400),		"Bg", m68000up },
-{"jfnlt",	one(0062000),		one(0177400),		"Bg", m68000up }, /* apparently a sun alias */
 {"jcs",		one(0062400),		one(0177400),		"Bg", m68000up },
 {"jne",		one(0063000),		one(0177400),		"Bg", m68000up },
 {"jeq",		one(0063400),		one(0177400),		"Bg", m68000up },
-{"jfeq",	one(0063400),		one(0177400),		"Bg", m68000up }, /* apparently a sun alias */
 {"jvc",		one(0064000),		one(0177400),		"Bg", m68000up },
 {"jvs",		one(0064400),		one(0177400),		"Bg", m68000up },
 {"jpl",		one(0065000),		one(0177400),		"Bg", m68000up },
@@ -1932,59 +1921,6 @@ struct m68k_opcode m68k_opcodes[] =
 {"jlt",		one(0066400),		one(0177400),		"Bg", m68000up },
 {"jgt",		one(0067000),		one(0177400),		"Bg", m68000up },
 {"jle",		one(0067400),		one(0177400),		"Bg", m68000up },
-{"jfngt",	one(0067400),		one(0177400),		"Bg", m68000up }, /* apparently a sun alias */
-
-/* aliases */
-
-{"movql",	one(0070000),		one(0170400),		"MsDd", m68000up },
-{"moveql",	one(0070000),		one(0170400),		"MsDd", m68000up },
-{"moval",	one(0020100),		one(0170700),		"*lAd", m68000up },
-{"movaw",	one(0030100),		one(0170700),		"*wAd", m68000up },
-{"movb",	one(0010000),		one(0170000),		";b$d", m68000up },	/* mov */
-{"movl",	one(0070000),		one(0170400),		"MsDd", m68000up },	/* movq written as mov */
-{"movl",	one(0020000),		one(0170000),		"*l$d", m68000up },
-{"movl",	one(0020100),		one(0170700),		"*lAd", m68000up },
-{"movl",	one(0047140),		one(0177770),		"AsUd", m68000up },	/* mov to USP */
-{"movl",	one(0047150),		one(0177770),		"UdAs", m68000up },	/* mov from USP */
-{"movc",	one(0047173),		one(0177777),		"R1Jj", m68010up },
-{"movc",	one(0047173),		one(0177777),		"R1#j", m68010up },
-{"movc",	one(0047172),		one(0177777),		"JjR1", m68010up },
-{"movc",	one(0047172),		one(0177777),		"#jR1", m68010up },
-{"movml",	one(0044300),		one(0177700),		"#w&s", m68000up },	/* movm reg to mem. */
-{"movml",	one(0044340),		one(0177770),		"#w-s", m68000up },	/* movm reg to autodecrement. */
-{"movml",	one(0046300),		one(0177700),		"!s#w", m68000up },	/* movm mem to reg. */
-{"movml",	one(0046330),		one(0177770),		"+s#w", m68000up },	/* movm autoinc to reg. */
-{"movml",	one(0044300),		one(0177700),		"Lw&s", m68000up },	/* movm reg to mem. */
-{"movml",	one(0044340),		one(0177770),		"lw-s", m68000up },	/* movm reg to autodecrement. */
-{"movml",	one(0046300),		one(0177700),		"!sLw", m68000up },	/* movm mem to reg. */
-{"movml",	one(0046330),		one(0177770),		"+sLw", m68000up },	/* movm autoinc to reg. */
-{"movmw",	one(0044200),		one(0177700),		"#w&s", m68000up },	/* movm reg to mem. */
-{"movmw",	one(0044240),		one(0177770),		"#w-s", m68000up },	/* movm reg to autodecrement. */
-{"movmw",	one(0046200),		one(0177700),		"!s#w", m68000up },	/* movm mem to reg. */
-{"movmw",	one(0046230),		one(0177770),		"+s#w", m68000up },	/* movm autoinc to reg. */
-{"movmw",	one(0044200),		one(0177700),		"Lw&s", m68000up },	/* movm reg to mem. */
-{"movmw",	one(0044240),		one(0177770),		"lw-s", m68000up },	/* movm reg to autodecrement. */
-{"movmw",	one(0046200),		one(0177700),		"!sLw", m68000up },	/* movm mem to reg. */
-{"movmw",	one(0046230),		one(0177770),		"+sLw", m68000up },	/* movm autoinc to reg. */
-{"movpl",	one(0000510),		one(0170770),		"dsDd", m68000up },	/* memory to register */
-{"movpl",	one(0000710),		one(0170770),		"Ddds", m68000up },	/* register to memory */
-{"movpw",	one(0000410),		one(0170770),		"dsDd", m68000up },	/* memory to register */
-{"movpw",	one(0000610),		one(0170770),		"Ddds", m68000up },	/* register to memory */
-{"movq",	one(0070000),		one(0170400),		"MsDd", m68000up },
-{"movw",	one(0030000),		one(0170000),		"*w$d", m68000up },
-{"movw",	one(0030100),		one(0170700),		"*wAd", m68000up },	/* mova,	written as mov */
-{"movw",	one(0040300),		one(0177700),		"Ss$s", m68000up },	/* Move from sr */
-{"movw",	one(0041300),		one(0177700),		"Cs$s", m68010up },	/* Move from ccr */
-{"movw",	one(0042300),		one(0177700),		";wCd", m68000up },	/* mov to ccr */
-{"movw",	one(0043300),		one(0177700),		";wSd", m68000up },	/* mov to sr */
-
-{"movsb",	two(0007000, 0),	two(0177700, 07777),	"~sR1", m68010up },
-{"movsb",	two(0007000, 04000),	two(0177700, 07777),	"R1~s", m68010up },
-{"movsl",	two(0007200, 0),	two(0177700, 07777),	"~sR1", m68010up },
-{"movsl",	two(0007200, 04000),	two(0177700, 07777),	"R1~s", m68010up },
-{"movsw",	two(0007100, 0),	two(0177700, 07777),	"~sR1", m68010up },
-{"movsw",	two(0007100, 04000),	two(0177700, 07777),	"R1~s", m68010up },
-
 };
 
 int numopcodes=sizeof(m68k_opcodes)/sizeof(m68k_opcodes[0]);
