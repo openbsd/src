@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.282 2002/12/04 03:39:07 krw Exp $
+#	$OpenBSD: install.sub,v 1.283 2002/12/08 19:30:40 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -366,6 +366,19 @@ bsort() {
 	fi
 }
 
+# Add interesting/useful comments from mnt/etc/$1 to /tmp/$1.
+#
+# $1 == file in /tmp and /mnt/etc directories
+save_comments () {
+	local _file=$1
+
+	if [[ -f /mnt/etc/$_file ]]; then
+		grep "^#" /mnt/etc/$_file > /tmp/$_file.new
+		[[ -f /tmp/$_file ]] && cat /tmp/$_file >> /tmp/$_file.new
+		mv /tmp/$_file.new /tmp/$_file
+	fi
+}
+
 # Offer to edit a file in /tmp and execute ${EDITOR} to do so if the user
 # accepts the offer.
 #
@@ -581,7 +594,7 @@ configure_ifs() {
 	[[ -n $2 && $2 != "0.0.0.0" ]] && { _addr=$2; _mask=$3; }
 
 	# Get symbolic name - will be used in DHCP requests.
-	ask "Symbolic (host) name for $_ifs?" "$HOSTNAME"
+	ask "Symbolic (host) name for $_ifs?" "$(hostname -s)"
 	_name=$resp
 
 	# Get and apply media options.
@@ -1434,8 +1447,9 @@ set_timezone() {
 
 		if [ -f "$_zonepath" ]; then
 			TZ=${_zonepath#$_zoneroot}
-			echo "You have selected timezone '$TZ'".
+			echo -n "Setting local timezone to '$TZ'..."
 			ln -sf /usr/share/zoneinfo/$TZ /mnt/etc/localtime
+			echo "done."
 			return
 		fi
 
@@ -1647,62 +1661,24 @@ check_fs() {
 	[ "$_fail" ] && exit
 }
 
-# Find LAST instance of DOMAIN or SEARCH and extract first domain name
-# on that line as FQDN.
-# $1 = resolv.conf file name
-get_resolv_fqdn () {
-	[[ -f $1 ]] || return
-
-	FQDN=`sed -n \
-		-e '/^domain[[:space:]][[:space:]]*/{s///;s/\([^[:space:]]*\).*$/\1/;h;}' \
-		-e '/^search[[:space:]][[:space:]]*/{s///;s/\([^[:space:]]*\).*$/\1/;h;}' \
-		-e '${g;p;}' $1`
-}
-
-# Get Fully Qualified Domain Name and update hosts file appropriately.
-#
-# $1 = resolv.conf file to search for FQDN
-# $2 = hosts file to add FQDN information to
+# Extract fully qualified domain name from current hostname. If none is
+# currently set, use 'my.domain'.
 get_fqdn() {
-	get_resolv_fqdn $1
+ 	local _dn
 
-	ask "DNS domain name? (e.g. 'bar.com')" "$FQDN"
-	FQDN=$resp
+	_dn=$(hostname)
+	_dn=${_dn#$(hostname -s)}
+	_dn=${_dn#.}
 
-	if [ -f "$2" -a -n "$FQDN" ]; then
-		# Add FQDN to hosts file entries created by addhostent, changing
-		# lines like
-		#    1.2.3.4 hostname
-		# to
-		#    1.2.3.4 hostname.$FQDN hostname
-		sed "s/\\(.*\\)[[:space:]]\\(.*\\)\$/\\1 \\2.$FQDN \\2/" $2 > $2.new
-		mv $2.new $2
-	fi
+	echo "${_dn:=my.domain}"
 }
 
 donetconfig() {
-	local _nam
+	local _ns
 
-	[ "$DIDNET" ] && return
+	[[ -n $DIDNET ]] && return
 
 	DIDNET=y
-
-	# Always create new hosts file. If install.sh has been
-	# restarted, an existing one may contain information which
-	# will conflict with the information about to be entered.
-	# Also ensures logic to put FQDN in hosts file will create
-	# hosts file lines in correct format.
-	echo "::1 localhost\n127.0.0.1 localhost" > /tmp/hosts
-
-	# Remove any existing hostname.* files. If install.sh has
-	# been restarted, this ensures a correct list of configured
-	# interfaces is displayed, and gives the user a chance to
-	# change which interfaces are to be configured.
-	rm -f /tmp/hostname.*
-
-	# Revoke any previous decision on whether or not to use
-	# a nameserver during installation.
-	rm -f /tmp/resolv.conf.shadow
 
 	configure_all_interfaces
 
@@ -1711,55 +1687,46 @@ donetconfig() {
 	# so it will eventually be copied to /mnt/etc/resolv.conf and will
 	# not in the meantime remove the user's ability to choose to use it
 	# or not, during the rest of the install.
+	resp=
 	if [ -f /tmp/resolv.conf.shadow ]; then
 		mv /tmp/resolv.conf.shadow /tmp/resolv.conf
+		# Get default fully qualified domain name from *first* domain
+		# given on *last* search or domain statement
+		resp=$(sed -n \
+			-e '/^domain[[:space:]][[:space:]]*/{s///;s/\([^[:space:]]*\).*$/\1/;h;}' \
+			-e '/^search[[:space:]][[:space:]]*/{s///;s/\([^[:space:]]*\).*$/\1/;h;}' \
+			-e '${g;p;}' /tmp/resolv.conf)
 	fi
 
-	# Get/Confirm FQDN, and apply it to the hosts file.
-	get_fqdn /tmp/resolv.conf /tmp/hosts
+	# Get & apply fully qualified domain name to hostname.
+	ask "DNS domain name? (e.g. 'bar.com')" "${resp:=$(get_fqdn)}"
+	hostname "$(hostname -s).$resp"
 
-	hostname $HOSTNAME.$FQDN
+	# Get/Confirm the default route.
+	resp=$(route -n show | sed -ne '/^default */{s///; s/ .*//; p;}')
+	[[ -z $resp && -f /tmp/mygate ]] && resp=$(< /tmp/mygate)
+	route delete default > /dev/null 2>&1
+	rm -f /tmp/mygate
+	while : ; do
+		ask "IP address of default route? (or 'none')" "${resp:=none}"
+		[[ $resp == none ]] && break
+		route add default $resp || { resp= ; continue; }
+		# Save default route if DHCP wasn't used. 
+ 		[[ -f /tmp/dhclient.conf ]] || echo $resp > /tmp/mygate
+		break
+	done
 
-	resp=`route -n show | sed -ne '/^default */{
-		s///
-		s/ .*//
-		p
-	}'`
-	if [ -z "$resp" ] ; then
-		resp=none
-		if [ -f /tmp/mygate ]; then
-			resp=`cat /etc/mygate`
-			: ${_resp:=none}
-		fi
-	fi
-	ask "IP address of default route?" "$resp"
-	if [ "$resp" != "none" ]; then
-		route delete default > /dev/null 2>&1
-		if route add default $resp > /dev/null ; then
-			echo $resp > /tmp/mygate
-		fi
-	fi
-
-	resp=none
+	# Get/Confirm nameservers, and construct appropriate resolv.conf.
+	resp=
 	if [ -f /tmp/resolv.conf ]; then
-		resp=
-		for n in `sed -ne '/^nameserver /s///p' /tmp/resolv.conf`
-			do
-			if [ -z "$resp" ] ; then
-				resp=$n
-			else
-				resp="$resp $n"
-			fi
-		done
+		resp=$(sed -ne '/^nameserver /s///p' /tmp/resolv.conf)
 	fi
-	ask "IP address of primary nameserver?" "$resp"
-	if [ "$resp" != "none" ]; then
-		echo "search $FQDN" > /tmp/resolv.conf
-		for n in `echo ${resp}`; do
-			echo "nameserver $n" >> /tmp/resolv.conf
+	ask "IP address of DNS nameserver? (or 'none')" "${resp:=none}"
+	if [[ $resp != none ]]; then
+		echo "lookup file bind" > /tmp/resolv.conf
+		for _ns in $resp; do
+			echo "nameserver $_ns" >> /tmp/resolv.conf
 		done
-		echo "lookup file bind" >> /tmp/resolv.conf
-
 		ask "Would you like to use the nameserver now?" y
 		case $resp in
 		y*|Y*)	cp /tmp/resolv.conf /tmp/resolv.conf.shadow
@@ -1767,17 +1734,7 @@ donetconfig() {
 		esac
 	fi
 
-	if [ ! -f /tmp/resolv.conf.shadow ]; then
-		cat << __EOT
-
-The host table contains:
-
-$(< /tmp/hosts)
-
-__EOT
-		edit_tmp_file hosts
-	fi
-
+	edit_tmp_file hosts
 	manual_net_cfg
 }
 
@@ -1875,12 +1832,6 @@ done
 # Global variable using during sets installation
 SETSDONE=
 GET_FILES=
-
-# The Fully Qualified Domain Name.
-FQDN=
-
-# The system hostname (short form).
-HOSTNAME=
 
 # decide upon an editor
 if [ -z "$EDITOR" ] ; then

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.47 2002/12/01 23:19:33 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.48 2002/12/08 19:30:40 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -84,15 +84,7 @@ for _file in fstab hosts myname; do
 	fi
 	cp /mnt/etc/$_file /tmp/$_file
 done
-
-# Set the FQDN and system hostname (short form).
-HOSTNAME=`cat /tmp/myname`
-FQDN=$HOSTNAME
-HOSTNAME=${HOSTNAME%%.*}
-FQDN=${FQDN#${HOSTNAME}}
-FQDN=${FQDN#.}
-[[ -n $FQDN ]] || get_resolv_fqdn /mnt/etc/resolv.conf
-hostname $HOSTNAME.$FQDN
+hostname $(< /tmp/myname)
 
 # Start up the network in same/similar configuration as the installed system
 # uses.
@@ -111,7 +103,7 @@ cat << __EOT
 
 The fstab is configured as follows:
 
-$(</tmp/fstab)
+$(< /tmp/fstab)
 
 For the ${MODE}, filesystems in the fstab will be automatically mounted if the
 'noauto' option is absent, and /sbin/mount_<fstype> is found, and the fstype is

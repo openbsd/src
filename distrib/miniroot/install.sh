@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.126 2002/12/04 03:39:07 krw Exp $
+#	$OpenBSD: install.sh,v 1.127 2002/12/08 19:30:40 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -315,26 +315,36 @@ fi
 
 mount_fs "-o async"
 
-# Use existing hostname, if any, as the default. Discard any
-# domain information supplied.
+# Set hostname.
+#
+# Use existing hostname (short form) as the default value because we could
+# be restarting an install.
+#
+# Don't ask for, but don't discard, domain information provided by the user.
+#
+# Only apply the new value if the new short form name differs from the existing
+# one. This preserves any existing domain information in the hostname.
 ask_until "\nSystem hostname? (short form, e.g. 'foo')" "$(hostname -s)"
-HOSTNAME=${resp%%.*}
-FQDN=my.domain
-hostname $HOSTNAME.$FQDN
+[[ ${resp%%.*} != $(hostname -s) ]] && hostname $resp
 
-# Get network configuration information, and store it for placement in the
-# root filesystem later.
+# Remove existing network configuration files in /tmp to ensure they don't leak
+# onto the installed system in the case of a restarted install. Any information
+# contained within them should be accessible via ifconfig, hostname, route,
+# etc.
+( cd /tmp; rm -f host* my* resolv.* dhclient.* )
+
+# Always create new hosts file.
+cat > /tmp/hosts << __EOT
+::1 localhost
+127.0.0.1 localhost
+::1 $(hostname -s)
+127.0.0.1 $(hostname -s)
+__EOT
+
 ask "Configure the network?" y
 case $resp in
-y*|Y*)	donetconfig
-	;;
-*)	cat > /tmp/hosts << __EOT
-::1 localhost.$FQDN localhost
-127.0.0.1 localhost.$FQDN localhost
-::1 $HOSTNAME.$FQDN $HOSTNAME
-127.0.0.1 $HOSTNAME.$FQDN $HOSTNAME
-__EOT
-	;;
+y*|Y*)	donetconfig ;;
+*)	;;
 esac
 
 _oifs=$IFS
@@ -354,44 +364,50 @@ IFS=$_oifs
 
 install_sets
 
-# Remount all filesystems in /etc/fstab with the options from
-# /etc/fstab, i.e. without any options such as async which
-# may have been used in the first mount.
+# Remount all filesystems in /etc/fstab with the options from /etc/fstab, i.e.
+# without any options such as async which may have been used in the first
+# mount.
 while read _dev _mp _fstype _opt _rest; do
 	mount -u -o $_opt $_dev $_mp ||	exit
 done < /etc/fstab
 
-# Set machdep.apertureallowed if required. install_sets must be
-# done first so that /etc/sysctl.conf is available.
+# Create /tmp/sysctl.conf from installed sysctl.conf if appropriate.
 set_machdep_apertureallowed
 
-# Move configuration files to /mnt/etc.
-cfgfiles="fstab hostname.* dhclient.conf resolv.conf resolv.conf.tail kbdtype sysctl.conf"
-
 echo -n "Saving configuration files..."
-cd /tmp
 
-if [ -f dhclient.conf ]; then
-	# Save any leases obtained during install.
-	mv /var/db/dhclient.leases /mnt/var/db/.
-else
-	# Install mygate for non-dhcp installations.
-	mv mygate /mnt/etc/.
-fi
+# Save any leases obtained during install.
+( cd /var/db
+[ -f dhclient.leases ] && mv dhclient.leases /mnt/var/db/. )
 
-hostname > /mnt/etc/myname
+# Prepend interesting comments from installed hosts and dhclient.conf files
+# to /tmp/hosts and /tmp/dhclient.conf.
+save_comments hosts
+save_comments dhclient.conf
 
-# Try to retain useful leading comments in /etc/hosts file.
-grep "^#" /mnt/etc/hosts > hosts.comment
-cat hosts.comment hosts > /mnt/etc/hosts
+# Move configuration files from /tmp to /mnt/etc.
+( cd /tmp
+hostname > myname
 
-for file in $cfgfiles; do
-	if [ -f $file ]; then
-		cp $file /mnt/etc/.
-		rm -f $file
+# Add FQDN to /tmp/hosts entries, changing lines of the form '1.2.3.4 hostname'
+# to '1.2.3.4 hostname.$FQDN hostname'. Leave untouched any lines containing
+# domain information or aliases. The user added those manually.
+_dn=$(get_fqdn) 
+while read _addr _hn _aliases; do 
+	if [[ -n $_aliases || $_hn != ${_hn%%.*} || -z $_dn ]]; then
+		echo "$_addr $_hn $_aliases"
+	else
+		echo "$_addr $_hn.$_dn $_hn"
 	fi
-done
-echo "...done."
+done < hosts > hosts.new
+mv hosts.new hosts
+
+# Possible files: fstab, kbdtype, myname, mygate, sysctl.conf
+#                 dhclient.conf resolv.conf resolv.conf.tail
+#		  hostname.* hosts
+for _f in fstab kbdtype my* *.conf *.tail host*; do
+	[[ -f $_f ]] && mv $_f /mnt/etc/.
+done )
 
 _encr=`/mnt/usr/bin/encrypt -b 8 -- "$_password"`
 echo "1,s@^root::@root:${_encr}:@
@@ -399,10 +415,11 @@ w
 q" | ed /mnt/etc/master.passwd 2> /dev/null
 /mnt/usr/sbin/pwd_mkdb -p -d /mnt/etc /etc/master.passwd
 
-echo -n "Generating initial host.random file ..."
-dd if=/mnt/dev/urandom of=/mnt/var/db/host.random bs=1024 count=64 >/dev/null 2>&1
-chmod 600 /mnt/var/db/host.random >/dev/null 2>&1
-echo "...done."
+echo -n "done.\nGenerating initial host.random file..."
+( cd /mnt/var/db
+dd if=/mnt/dev/urandom of=host.random bs=1024 count=64 >/dev/null 2>&1
+chmod 600 host.random >/dev/null 2>&1 )
+echo "done."
 
 # Perform final steps common to both an install and an upgrade.
 finish_up
