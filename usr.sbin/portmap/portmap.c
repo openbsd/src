@@ -40,7 +40,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)portmap.c	5.4 (Berkeley) 4/19/91";*/
-static char rcsid[] = "$Id: portmap.c,v 1.5 1996/07/07 20:15:10 deraadt Exp $";
+static char rcsid[] = "$Id: portmap.c,v 1.6 1996/07/18 11:40:59 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -306,51 +306,49 @@ reg_service(rqstp, xprt)
 			svcerr_noproc(xprt);
 			return;
 		}
-		if (!svc_getargs(xprt, xdr_pmap, (caddr_t)&reg))
+		if (!svc_getargs(xprt, xdr_pmap, (caddr_t)&reg)) {
 			svcerr_decode(xprt);
-		else {
-			/*
-			 * check to see if already used
-			 * find_service returns a hit even if
-			 * the versions don't match, so check for it
-			 */
-			fnd = find_service(reg.pm_prog, reg.pm_vers, reg.pm_prot);
-			if (fnd && fnd->pml_map.pm_vers == reg.pm_vers) {
-				if (fnd->pml_map.pm_port == reg.pm_port)
-					ans = 1;
-				goto done;
-			}
+			break;
+		}
+		/*
+		 * check to see if already used
+		 * find_service returns a hit even if
+		 * the versions don't match, so check for it
+		 */
+		fnd = find_service(reg.pm_prog, reg.pm_vers, reg.pm_prot);
+		if (fnd && fnd->pml_map.pm_vers == reg.pm_vers) {
+			if (fnd->pml_map.pm_port == reg.pm_port)
+				ans = 1;
+			goto done;
+		}
 
-			/* check if secure */
-			if ((pml->pml_map.pm_port < IPPORT_RESERVED ||
-			    pml->pml_map.pm_port == NFS_PORT) &&
-			    htons(fromsin->sin_port) >= IPPORT_RESERVED) {
-				syslog(LOG_WARNING,
-				    "resvport set attempt by non-root");
-				goto done;
-			}
+		/* check if secure */
+		if ((pml->pml_map.pm_port < IPPORT_RESERVED ||
+		    pml->pml_map.pm_port == NFS_PORT) &&
+		    htons(fromsin->sin_port) >= IPPORT_RESERVED) {
+			syslog(LOG_WARNING, "resvport set attempt by non-root");
+			goto done;
+		}
 
-			/* 
-			 * add to END of list
-			 */
-			pml = (struct pmaplist *)
-			    malloc((u_int)sizeof(struct pmaplist));
-			pml->pml_map = reg;
-			pml->pml_next = 0;
-			if (pmaplist == 0) {
-				pmaplist = pml;
-			} else {
-				for (fnd = pmaplist; fnd->pml_next != 0;
-				    fnd = fnd->pml_next);
-				fnd->pml_next = pml;
-			}
-			ans = 1;
-		done:
-			if ((!svc_sendreply(xprt, xdr_long, (caddr_t)&ans)) &&
-			    debugging) {
-				(void) fprintf(stderr, "svc_sendreply\n");
-				abort();
-			}
+		/* 
+		 * add to END of list
+		 */
+		pml = (struct pmaplist *)malloc(sizeof(struct pmaplist));
+		pml->pml_map = reg;
+		pml->pml_next = 0;
+		if (pmaplist == 0) {
+			pmaplist = pml;
+		} else {
+			for (fnd = pmaplist; fnd->pml_next != 0;
+			    fnd = fnd->pml_next);
+			fnd->pml_next = pml;
+		}
+		ans = 1;
+	done:
+		if ((!svc_sendreply(xprt, xdr_long, (caddr_t)&ans)) &&
+		    debugging) {
+			(void) fprintf(stderr, "svc_sendreply\n");
+			abort();
 		}
 		break;
 
@@ -397,7 +395,7 @@ reg_service(rqstp, xprt)
 		}
 		if ((!svc_sendreply(xprt, xdr_long, (caddr_t)&ans)) &&
 		    debugging) {
-			(void) fprintf(stderr, "svc_sendreply\n");
+			fprintf(stderr, "svc_sendreply\n");
 			abort();
 		}
 		break;
@@ -406,19 +404,19 @@ reg_service(rqstp, xprt)
 		/*
 		 * Lookup the mapping for a program,version and return its port
 		 */
-		if (!svc_getargs(xprt, xdr_pmap, (caddr_t)&reg))
+		if (!svc_getargs(xprt, xdr_pmap, (caddr_t)&reg)) {
 			svcerr_decode(xprt);
-		else {
-			fnd = find_service(reg.pm_prog, reg.pm_vers, reg.pm_prot);
-			if (fnd)
-				port = fnd->pml_map.pm_port;
-			else
-				port = 0;
-			if ((!svc_sendreply(xprt, xdr_long, (caddr_t)&port)) &&
-			    debugging) {
-				(void) fprintf(stderr, "svc_sendreply\n");
-				abort();
-			}
+			break;
+		}
+		fnd = find_service(reg.pm_prog, reg.pm_vers, reg.pm_prot);
+		if (fnd)
+			port = fnd->pml_map.pm_port;
+		else
+			port = 0;
+		if ((!svc_sendreply(xprt, xdr_long, (caddr_t)&port)) &&
+		    debugging) {
+			fprintf(stderr, "svc_sendreply\n");
+			abort();
 		}
 		break;
 
@@ -426,11 +424,13 @@ reg_service(rqstp, xprt)
 		/*
 		 * Return the current set of mapped program,version
 		 */
-		if (!svc_getargs(xprt, xdr_void, NULL))
+		if (!svc_getargs(xprt, xdr_void, NULL)) {
 			svcerr_decode(xprt);
-		else if ((!svc_sendreply(xprt, xdr_pmaplist,
-		    (caddr_t)&pmaplist)) && debugging) {
-			(void) fprintf(stderr, "svc_sendreply\n");
+			break;
+		}
+		if (!svc_sendreply(xprt, xdr_pmaplist, (caddr_t)&pmaplist) &&
+		    debugging) {
+			fprintf(stderr, "svc_sendreply\n");
 			abort();
 		}
 		break;
