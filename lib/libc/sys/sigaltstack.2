@@ -45,9 +45,9 @@
 .Bd -literal
 
 struct sigaltstack {
-	char   *ss_sp;
+	void	*ss_sp;
 	int	ss_size;
-	int     ss_flags;
+	int	ss_flags;
 };
 .Ed
 .Ft int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.8 1997/09/20 01:55:58 deraadt Exp $	*/
+/*	$OpenBSD: signal.h,v 1.9 1998/02/03 20:08:21 deraadt Exp $	*/
 /*	$NetBSD: signal.h,v 1.21 1996/02/09 18:25:32 christos Exp $	*/
 
 /*
@@ -157,7 +157,7 @@ typedef	void (*sig_t) __P((int));	/* type of signal function */
  * Structure used in sigaltstack call.
  */
 struct	sigaltstack {
-	char	*ss_sp;			/* signal stack base */
+	void	*ss_sp;			/* signal stack base */
 	int	ss_size;		/* signal stack length */
 	int	ss_flags;		/* SS_DISABLE and/or SS_ONSTACK */
 };
@@ -184,7 +184,7 @@ struct	sigvec {
  * Structure used in sigstack call.
  */
 struct	sigstack {
-	char	*ss_sp;			/* signal stack pointer */
+	void	*ss_sp;			/* signal stack pointer */
 	int	ss_onstack;		/* current status */
 };
 
