@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.18 2004/10/11 13:10:25 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.19 2004/10/18 14:37:20 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -28,6 +28,7 @@
 .Op Fl aInv
 .Op Fl A Ar arch
 .Op Fl B Ar pkg-destdir
+.Op Fl Q Ar quick-destdir
 .Op Fl f Ar keys
 .Op Fl L Ar localbase
 .Op Fl P Ar type
@@ -133,6 +134,15 @@ as current machine architecture for any package tests.
 Set
 .Ar pkg-destdir
 as the prefix to prepend to any object extracted from the package.
+.It Fl Q Ar quick-destdir
+Quick and dirty installation under
+.Ar quick-destdir .
+Contrarily to
+.Fl B 
+.Ar pkg-destdir ,
+symbolic links are resolved, and package installation stops at
+.Cm @endfake
+marker.
 .It Fl f Ar keys
 Force installation of the package.
 .Ar keys

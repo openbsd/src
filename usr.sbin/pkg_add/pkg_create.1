@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.17 2004/10/13 18:44:09 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.18 2004/10/18 14:37:20 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -261,6 +261,11 @@ List of architectures for which this package is intended.
 Set the package current directory.
 All subsequent filenames will be assumed relative to 
 .Ar pathname .
+.It Cm @endfake
+Mark end of packing-list for
+.Xr pkg_add 1
+.Fl Q
+option.
 .It Cm @exec Ar command
 Execute
 .Ar command
