@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.19 2001/03/09 05:44:43 smurph Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.20 2001/03/12 23:03:25 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -237,19 +237,23 @@ extern vm_map_t phys_map;
  * be reflected in the higher-level VM structures to avoid problems.
  */
 void
-vmapbuf(struct buf *bp, vm_size_t len)
+vmapbuf(bp, len)
+	struct buf *bp;
+	vm_size_t len;
 {
 	register caddr_t addr;
 	register vm_offset_t pa, kva, off;
-	struct proc *p;
+	struct pmap *pmap;
 
+#ifdef DIAGNOSTIC
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
+#endif
 
 	addr = (caddr_t)trunc_page(bp->b_saveaddr = bp->b_data);
 	off = (vm_offset_t)bp->b_saveaddr & PGOFSET;
 	len = round_page(off + len);
-	p = bp->b_proc;
+	pmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
 
 	/*
 	 * You may ask: Why phys_map? kernel_map should be OK - after all,
@@ -274,8 +278,7 @@ vmapbuf(struct buf *bp, vm_size_t len)
 
 	bp->b_data = (caddr_t)(kva + off);
 	while (len > 0) {
-		pa = pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map),
-		    (vm_offset_t)addr);
+		pa = pmap_extract(pmap, (vm_offset_t)addr);
 		if (pa == 0)
 			panic("vmapbuf: null page frame");
 		pmap_enter(vm_map_pmap(phys_map), kva, pa,
@@ -291,12 +294,16 @@ vmapbuf(struct buf *bp, vm_size_t len)
  * We also restore the original b_addr.
  */
 void
-vunmapbuf(struct buf *bp, vm_size_t len)
+vunmapbuf(bp, len)
+	struct buf *bp;
+	vm_size_t len;
 {
 	register vm_offset_t addr, off;
 
+#ifdef DIAGNOSTIC
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
+#endif
 
 	addr = trunc_page(bp->b_data);
 	off = (vm_offset_t)bp->b_data & PGOFSET;
