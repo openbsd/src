@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.14 1996/12/14 18:23:59 millert Exp $
+#	$OpenBSD: MAKEDEV,v 1.15 1997/02/11 15:03:39 rahnds Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -33,7 +33,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: MAKEDEV,v 1.14 1996/12/14 18:23:59 millert Exp $
+#	$Id: MAKEDEV,v 1.15 1997/02/11 15:03:39 rahnds Exp $
 #
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices,
@@ -115,6 +115,20 @@ std)
 	mknod stdin		c 21 0	; chmod 666 stdin
 	mknod stdout		c 21 1	; chmod 666 stdout
 	mknod stderr		c 21 2	; chmod 666 stderr
+	;;
+
+raminst)
+	sh MAKEDEV std fd st0 ttya
+	sh MAKEDEV tty00 tty01 tty02 tty03
+	sh MAKEDEV sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9
+	sh MAKEDEV pty0 
+	#sh MAKEDEV ccd0 ccd1 ccd2 ccd3
+	sh MAKEDEV tun0 tun1 lkm local
+	sh MAKEDEV sram0 nvram0 flash0 vmel0 vmes0
+	#sh MAKEDEV lp0 lptwo0
+	sh MAKEDEV random
+	sh MAKEDEV uk0 uk1
+	sh MAKEDEV ss0
 	;;
 
 fd)
@@ -342,11 +356,13 @@ tun*)
 
 rd*)
 	umask 2 ; unit=`expr $i : '.*d\(.*\)'`
-	mknod  rd$unit b 9 $unit
-#	mknod rrd$unit b ??? `expr $unit + 16`
-	mknod rd${unit}c b 9 `expr $unit + 16`
-	chown root.operator rd$unit rd${unit}c 
-	chmod 640 rd$unit rd${unit}c 
+	mknod rd${unit}a b 9 `expr $unit '*' 16 + 0`
+	mknod rd${unit}c b 9 `expr $unit '*' 16 + 2`
+	mknod rrd${unit}a c 18 `expr $unit '*' 16 + 0`
+	mknod rrd${unit}c c 18 `expr $unit '*' 16 + 2`
+	chown root.operator rd${unit}[ac] rrd${unit}[ac]
+	chmod 640 rd${unit}[ac] rrd${unit}[ac]
+	umask 77
 	;;
 
 lkm)
