@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.16 2003/12/20 18:32:22 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.17 2003/12/20 20:09:34 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1206,7 +1206,7 @@ void
 session_dispatch_imsg(int fd, int idx)
 {
 	struct imsg		 imsg;
-	struct peer_config	*pconf;
+	struct peer_config	 pconf;
 	struct peer		*p, *next;
 	enum reconf_action	 reconf;
 
@@ -1226,8 +1226,8 @@ session_dispatch_imsg(int fd, int idx)
 		case IMSG_RECONF_PEER:
 			if (idx != PFD_PIPE_MAIN)
 				fatal("reconf request not from parent", 0);
-			pconf = (struct peer_config *)imsg.data;
-			p = getpeerbyip(pconf->remote_addr.sin_addr.s_addr);
+			memcpy(&pconf, imsg.data, sizeof(pconf));
+			p = getpeerbyip(pconf.remote_addr.sin_addr.s_addr);
 			if (p == NULL) {
 				if ((p = calloc(1, sizeof(struct peer))) ==
 				    NULL)
@@ -1240,21 +1240,21 @@ session_dispatch_imsg(int fd, int idx)
 			} else
 				reconf = RECONF_KEEP;
 
-			if (bcmp(&p->conf.remote_addr, &pconf->remote_addr,
+			if (bcmp(&p->conf.remote_addr, &pconf.remote_addr,
 			    sizeof(struct sockaddr_in)))
 				reconf = RECONF_REINIT;
-			if (bcmp(&p->conf.local_addr, &pconf->local_addr,
+			if (bcmp(&p->conf.local_addr, &pconf.local_addr,
 			    sizeof(struct sockaddr_in)))
 				reconf = RECONF_REINIT;
-			if (p->conf.remote_as != pconf->remote_as)
+			if (p->conf.remote_as != pconf.remote_as)
 				reconf = RECONF_REINIT;
-			if (p->conf.distance != pconf->distance)
+			if (p->conf.distance != pconf.distance)
 				reconf = RECONF_REINIT;
 
-			memcpy(&p->conf, pconf, sizeof(struct peer_config));
+			memcpy(&p->conf, &pconf, sizeof(pconf));
 			p->conf.reconf_action = reconf;
-			if (pconf->reconf_action > reconf)
-				p->conf.reconf_action = pconf->reconf_action;
+			if (pconf.reconf_action > reconf)
+				p->conf.reconf_action = pconf.reconf_action;
 
 			if (p->state >= STATE_OPENSENT) {
 				if (p->holdtime == conf->holdtime &&
