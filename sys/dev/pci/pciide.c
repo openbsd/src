@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.150 2003/12/12 13:00:37 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.151 2003/12/12 13:03:51 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -580,6 +580,14 @@ const struct pciide_product_desc pciide_acard_products[] =  {
 	  acard_chip_map,
 	},
 	{ PCI_PRODUCT_ACARD_ATP860A,	/* Acard ATP860-A Ultra66 Controller */
+	  IDE_PCI_CLASS_OVERRIDE,
+	  acard_chip_map,
+	},
+	{ PCI_PRODUCT_ACARD_ATP865A,	/* Acard ATP865-A Ultra133 Controller */
+	  IDE_PCI_CLASS_OVERRIDE,
+	  acard_chip_map,
+	},
+	{ PCI_PRODUCT_ACARD_ATP865R,	/* Acard ATP865-R Ultra133 Controller */
 	  IDE_PCI_CLASS_OVERRIDE,
 	  acard_chip_map,
 	}
@@ -5604,7 +5612,7 @@ serverworks_pci_intr(arg)
 }
 
 
-#define	ACARD_IS_850(sc)							\
+#define	ACARD_IS_850(sc) \
 	((sc)->sc_pp->ide_product == PCI_PRODUCT_ACARD_ATP850U)
 
 void
@@ -5644,7 +5652,19 @@ acard_chip_map(sc, pa)
 	}
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
-	sc->sc_wdcdev.UDMA_cap = ACARD_IS_850(sc) ? 2 : 4;
+	switch (sc->sc_pp->ide_product) {
+	case PCI_PRODUCT_ACARD_ATP850U:
+		sc->sc_wdcdev.UDMA_cap = 2;
+		break;
+	case PCI_PRODUCT_ACARD_ATP860:
+	case PCI_PRODUCT_ACARD_ATP860A:
+		sc->sc_wdcdev.UDMA_cap = 4;
+		break;
+	case PCI_PRODUCT_ACARD_ATP865A:
+	case PCI_PRODUCT_ACARD_ATP865R:
+		sc->sc_wdcdev.UDMA_cap = 6;
+		break;
+	}
 
 	sc->sc_wdcdev.set_modes = acard_setup_channel;
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
