@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.52 2001/08/17 21:52:16 deraadt Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.53 2001/08/18 16:19:01 aaron Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -64,6 +64,9 @@
 #include <dev/ic/rtl80x9reg.h>
 #include <dev/ic/rtl80x9var.h>
 
+#include <dev/ic/ax88190reg.h>
+#include <dev/ic/ax88190var.h>
+
 int	ne_pcmcia_match __P((struct device *, void *, void *));
 void	ne_pcmcia_attach __P((struct device *, struct device *, void *));
 int	ne_pcmcia_detach __P((struct device *, int));
@@ -103,6 +106,8 @@ const struct ne2000dev {
     int function;
     int enet_maddr;
     unsigned char enet_vendor[3];
+    int flags;
+#define NE2000DVF_AX88190	0x0002	/* chip is ASIX AX88190 */
 } ne2000devs[] = {
     { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_AMBICOM_AMB8002T,
@@ -213,7 +218,7 @@ const struct ne2000dev {
 
     { PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD,
       PCMCIA_CIS_LINKSYS_COMBO_ECARD,
-      0, -1, { 0x00, 0x04, 0x5a } },
+      0, -1, { 0x00, 0x04, 0x5a }, NE2000DVF_AX88190 },
 
     { PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD,
       PCMCIA_CIS_LINKSYS_COMBO_ECARD,
@@ -234,7 +239,7 @@ const struct ne2000dev {
      */
     { PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD,
       PCMCIA_CIS_PLANEX_FNW3700T,
-      0, -1, { 0x00, 0x90, 0xcc }, /* NE2000DVF_AX88190 */ },
+      0, -1, { 0x00, 0x90, 0xcc }, NE2000DVF_AX88190 },
 
     { PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ETHERFAST,
       PCMCIA_CIS_LINKSYS_ETHERFAST,
@@ -352,7 +357,7 @@ const struct ne2000dev {
 
     { PCMCIA_VENDOR_MELCO, PCMCIA_PRODUCT_MELCO_LPC3_TX,
       PCMCIA_CIS_MELCO_LPC3_TX,
-      0, -1, { 0x00, 0x40, 0x26 }, /* NE2000DVF_AX88190 */ },
+      0, -1, { 0x00, 0x40, 0x26 }, NE2000DVF_AX88190 },
 
     { PCMCIA_VENDOR_DUAL, PCMCIA_PRODUCT_DUAL_NE2000,
       PCMCIA_CIS_DUAL_NE2000,
@@ -368,7 +373,7 @@ const struct ne2000dev {
 
     { PCMCIA_VENDOR_TELECOMDEVICE, PCMCIA_PRODUCT_TELECOMDEVICE_TCD_HPC100,
       PCMCIA_CIS_TELECOMDEVICE_TCD_HPC100,
-      0, -1, { 0x00, 0x40, 0x26 }, /* NE2000DVF_AX88190 */ },
+      0, -1, { 0x00, 0x40, 0x26 }, NE2000DVF_AX88190 },
 
     { PCMCIA_VENDOR_MACNICA, PCMCIA_PRODUCT_MACNICA_ME1_JEIDA,
       PCMCIA_CIS_MACNICA_ME1_JEIDA,
@@ -636,14 +641,18 @@ again:
 		}
 	}
 
-#ifdef notyet
 	if ((ne_dev->flags & NE2000DVF_AX88190) != 0) {
 		if (ne_pcmcia_ax88190_set_iobase(psc))
 			goto fail_5;
 
+		dsc->sc_mediachange = ax88190_mediachange;
+		dsc->sc_mediastatus = ax88190_mediastatus;
+		dsc->init_card = ax88190_init_card;
+		dsc->sc_media_init = ax88190_media_init;
+		dsc->sc_media_fini = ax88190_media_fini;
+
 		nsc->sc_type = NE2000_TYPE_AX88190;
 	}
-#endif
 
 	/*
 	 * Check for a RealTek 8019.
@@ -869,21 +878,21 @@ ne_pcmcia_ax88190_set_iobase(psc)
 	bus_addr_t offset;
 	int rv = 1, mwindow;
 
-	if (pcmcia_mem_alloc(psc->sc_pf, NE2000_AX88190_LAN_IOSIZE, &pcmh)) {
+	if (pcmcia_mem_alloc(psc->sc_pf, AX88190_LAN_IOSIZE, &pcmh)) {
 		printf("%s: can't alloc mem for LAN iobase\n",
 		    dsc->sc_dev.dv_xname);
 		goto fail_1;
 	}
 	if (pcmcia_mem_map(psc->sc_pf, PCMCIA_MEM_ATTR,
-	    NE2000_AX88190_LAN_IOBASE, NE2000_AX88190_LAN_IOSIZE,
-	    &pcmh, &offset, &mwindow)) {
+	    AX88190_LAN_IOBASE, AX88190_LAN_IOSIZE, &pcmh, &offset,
+	    &mwindow)) {
 		printf("%s: can't map mem for LAN iobase\n",
 		    dsc->sc_dev.dv_xname);
 		goto fail_2;
 	}
 
 #ifdef DIAGNOSTIC
-	printf("%s: LAN iobase 0x%x (0x%x) ->", dsc->sc_dev.dv_xname,
+	printf(": LAN iobase 0x%x (0x%x) ->",
 	    bus_space_read_1(pcmh.memt, pcmh.memh, offset + 0) |
 	    bus_space_read_1(pcmh.memt, pcmh.memh, offset + 2) << 8,
 	    (u_int)psc->sc_pcioh.addr);
@@ -893,7 +902,7 @@ ne_pcmcia_ax88190_set_iobase(psc)
 	bus_space_write_1(pcmh.memt, pcmh.memh, offset + 2,
 	    psc->sc_pcioh.addr >> 8);
 #ifdef DIAGNOSTIC
-	printf(" 0x%x\n", bus_space_read_1(pcmh.memt, pcmh.memh, offset + 0) |
+	printf(" 0x%x", bus_space_read_1(pcmh.memt, pcmh.memh, offset + 0) |
 	    bus_space_read_1(pcmh.memt, pcmh.memh, offset + 2) << 8);
 #endif
 	rv = 0;

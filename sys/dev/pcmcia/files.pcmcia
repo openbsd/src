@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pcmcia,v 1.35 2001/05/15 02:40:35 millert Exp $
+#	$OpenBSD: files.pcmcia,v 1.36 2001/08/18 16:19:01 aaron Exp $
 #	$NetBSD: files.pcmcia,v 1.9 1998/06/21 18:45:41 christos Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
@@ -19,7 +19,7 @@ file	dev/pcmcia/if_ep_pcmcia.c		ep_pcmcia
 
 # National Semiconductor DS8390/WD83C690-based boards
 # (NE[12]000, and clones)
-attach	ne at pcmcia with ne_pcmcia: rtl80x9, dl10019, mii_bitbang
+attach	ne at pcmcia with ne_pcmcia: rtl80x9, dl10019, ax88190, mii_bitbang
 file	dev/pcmcia/if_ne_pcmcia.c		ne_pcmcia
 
 # Adaptec APA-14[56]0 / NewMedia BusToaster SCSI Host Adapter
