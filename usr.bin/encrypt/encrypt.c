@@ -1,4 +1,4 @@
-/*	$OpenBSD: encrypt.c,v 1.10 1999/08/16 19:46:38 art Exp $	*/
+/*	$OpenBSD: encrypt.c,v 1.11 1999/09/03 18:13:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -78,7 +78,6 @@ void print_passwd(char *string, int operation, void *extra)
 {
      char msalt[3], *salt;
      struct passwd pwd;
-     extern char *bcrypt_gensalt __P((int));
      extern int pwd_gensalt __P((char *, int, struct passwd *, char));
      extern void to64 __P((char *, int32_t, int n));
 
