@@ -1294,7 +1294,6 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		      0, (struct rtentry **) 0);
 
 	    delete_flow(flow, flow->flow_sa);
-	    ipsec_in_use--;
 	}
 	else if (!replace)
 	{
@@ -1312,7 +1311,6 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		goto splxret;
 	    }
 
-	    ipsec_in_use++;
 	    sa2->tdb_cur_allocations++;
 	}
 	else
@@ -1334,7 +1332,6 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		      delete_flow(flow2, sa2);
 		    goto splxret;
 		}
-		ipsec_in_use++;
 	    }
 	    else if (rt_setgate(rt, rt_key(rt), (struct sockaddr *) &encapgw))
 	    {
@@ -1362,7 +1359,6 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			  (struct rtentry **) 0);
 
 		delete_flow(flow2, flow2->flow_sa);
-		ipsec_in_use--;
 	    }
 	    else if (!replace)
 	    {
@@ -1385,11 +1381,9 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		
 		    delete_flow(flow, sa2);
 		    delete_flow(flow2, sa2);
-		    ipsec_in_use--;
 		    goto splxret;
 		}
 
-		ipsec_in_use++;
 		sa2->tdb_cur_allocations++;
 	    }
 	    else
@@ -1418,7 +1412,6 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			delete_flow(flow2, sa2);
 			goto splxret;
 		    }
-	            ipsec_in_use++;
 		}
 		else if (rt_setgate(rt, rt_key(rt),
 				    (struct sockaddr *) &encapgw))

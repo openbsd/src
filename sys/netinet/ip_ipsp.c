@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.47 1999/07/06 20:17:52 cmetz Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.48 1999/07/06 20:54:03 ho Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -449,6 +449,7 @@ get_flow(void)
     MALLOC(flow, struct flow *, sizeof(struct flow), M_TDB, M_WAITOK);
     bzero(flow, sizeof(struct flow));
 
+    ipsec_in_use++;
     return flow;
 }
 
@@ -834,6 +835,7 @@ delete_flow(struct flow *flow, struct tdb *tdb)
 	}
     }
 
+    ipsec_in_use--;
     FREE(flow, M_TDB);
 }
 
@@ -890,10 +892,7 @@ tdb_delete(struct tdb *tdbp, int delchain, int expflags)
       (*(tdbp->tdb_xform->xf_zeroize))(tdbp);
 
     while (tdbp->tdb_flow)
-    {
 	delete_flow(tdbp->tdb_flow, tdbp);
-	ipsec_in_use--;
-    }
 
     /* Cleanup SA-Bindings */
     for (tdbpp = TAILQ_FIRST(&tdbp->tdb_bind_in); tdbpp;
