@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arm,v 1.3 2004/10/08 13:04:35 grange Exp $
+#	$OpenBSD: files.arm,v 1.4 2005/01/13 16:15:11 drahn Exp $
 #	$NetBSD: files.arm,v 1.76 2003/11/05 12:53:15 scw Exp $
 
 # CPU types.  Make sure to update <arm/cpuconf.h> if you change this list.
@@ -62,7 +62,7 @@ file	arch/arm/arm/disassem.c
 
 # bus_space(9)
 define	bus_space_generic
-file	arch/arm/arm/bus_space_asm_generic.S	bus_space_generic
+file	arch/arm/arm/bus_space_asm_generic.S
 file	arch/arm/arm/bus_space_notimpl.S
 
 file	arch/arm/arm/arm_machdep.c
