@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.16 1995/06/18 14:48:22 cgd Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.16.2.1 1995/11/01 00:06:34 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -63,8 +63,8 @@
 
 int ffs_sbupdate __P((struct ufsmount *, int));
 
-struct vfsops ufs_vfsops = {
-	MOUNT_UFS,
+struct vfsops ffs_vfsops = {
+	MOUNT_FFS,
 	ffs_mount,
 	ufs_start,
 	ffs_unmount,
@@ -105,7 +105,7 @@ ffs_mountroot()
 
 	mp = malloc((u_long)sizeof(struct mount), M_MOUNT, M_WAITOK);
 	bzero((char *)mp, (u_long)sizeof(struct mount));
-	mp->mnt_op = &ufs_vfsops;
+	mp->mnt_op = &ffs_vfsops;
 	mp->mnt_flag = MNT_RDONLY;
 	if (error = ffs_mountfs(rootvp, mp, p)) {
 		free(mp, M_MOUNT);
@@ -487,7 +487,7 @@ ffs_mountfs(devvp, mp, p)
 	}
 	mp->mnt_data = (qaddr_t)ump;
 	mp->mnt_stat.f_fsid.val[0] = (long)dev;
-	mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_UFS);
+	mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_FFS);
 	mp->mnt_maxsymlinklen = fs->fs_maxsymlinklen;
 	mp->mnt_flag |= MNT_LOCAL;
 	ump->um_mountp = mp;

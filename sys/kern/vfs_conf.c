@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_conf.c,v 1.21 1994/06/29 06:33:52 cgd Exp $	*/
+/*	$NetBSD: vfs_conf.c,v 1.21.4.1 1995/11/01 00:06:26 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -50,7 +50,7 @@ struct vnode *rootvnode;
  * The types are defined in mount.h.
  */
 #ifdef FFS
-extern	struct vfsops ufs_vfsops;
+extern	struct vfsops ffs_vfsops;
 #endif
 
 #ifdef LFS
@@ -116,7 +116,7 @@ extern 	struct vfsops adosfs_vfsops;
 struct vfsops *vfssw[] = {
 	NULL,		/* 0 = MOUNT_NONE */
 #ifdef FFS
-	&ufs_vfsops,		/* 1 = MOUNT_UFS */
+	&ffs_vfsops,		/* 1 = MOUNT_FFS */
 #else
 	NULL,
 #endif
