@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.7 2001/07/09 22:37:33 itojun Exp $	*/
+/*	$OpenBSD: if.c,v 1.8 2001/11/14 01:59:36 itojun Exp $	*/
 /*	$KAME: if.c,v 1.15 2001/05/22 06:04:17 jinmei Exp $	*/
 
 /*
@@ -353,7 +353,7 @@ get_llflag(const char *name)
 			continue;
 
 		memset(&ifr6, 0, sizeof(ifr6));
-		strcpy(ifr6.ifr_name, name);
+		strncpy(ifr6.ifr_name, name, sizeof(ifr6.ifr_name));
 		memcpy(&ifr6.ifr_ifru.ifru_addr, sin6, sin6->sin6_len);
 		if (ioctl(s, SIOCGIFAFLAG_IN6, &ifr6) < 0) {
 			warnmsg(LOG_ERR, __FUNCTION__,
@@ -415,7 +415,7 @@ get_llflag(const char *name)
 			continue;
 
 		memset(&ifr6, 0, sizeof(ifr6));
-		strcpy(ifr6.ifr_name, name);
+		strncpy(ifr6.ifr_name, name, sizeof(ifr6.ifr_name));
 		memcpy(&ifr6.ifr_ifru.ifru_addr, sin6, sin6->sin6_len);
 		if (ioctl(s, SIOCGIFAFLAG_IN6, &ifr6) < 0) {
 			warnmsg(LOG_ERR, __FUNCTION__,
