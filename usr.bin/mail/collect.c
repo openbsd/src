@@ -1,4 +1,4 @@
-/*	$OpenBSD: collect.c,v 1.20 2001/01/16 05:36:08 millert Exp $	*/
+/*	$OpenBSD: collect.c,v 1.21 2001/06/23 23:04:21 millert Exp $	*/
 /*	$NetBSD: collect.c,v 1.9 1997/07/09 05:25:45 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: collect.c,v 1.20 2001/01/16 05:36:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: collect.c,v 1.21 2001/06/23 23:04:21 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,18 +81,11 @@ collect(hp, printheaders)
 	int printheaders;
 {
 	FILE *fbuf;
-	int lc, cc, escape, eofcount, fd, c, t;
-	char linebuf[LINESIZE], tempname[PATHSIZE], *cp, getsub;
+	int lc, cc, fd, c, t, lastlong, rc;
+	volatile int escape, eofcount, longline;
+	volatile char getsub;
+	char linebuf[LINESIZE], tempname[PATHSIZE], *cp;
 	sigset_t oset, nset;
-	int longline, lastlong, rc;	/* Can deal with lines > LINESIZE */
-
-#if __GNUC__
-	/* Avoid siglongjmp clobbering */
-	(void)&escape;
-	(void)&eofcount;
-	(void)&getsub;
-	(void)&longline;
-#endif
 
 	collf = NULL;
 	/*

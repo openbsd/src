@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.11 1997/11/14 00:24:00 millert Exp $	*/
+/*	$OpenBSD: tty.c,v 1.12 2001/06/23 23:04:23 millert Exp $	*/
 /*	$NetBSD: tty.c,v 1.7 1997/07/09 05:25:46 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: tty.c,v 1.11 1997/11/14 00:24:00 millert Exp $";
+static char rcsid[] = "$OpenBSD: tty.c,v 1.12 2001/06/23 23:04:23 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,26 +70,19 @@ grabh(hp, gflags)
 	int gflags;
 {
 	struct termios ttybuf;
-	sig_t saveint;
+	volatile sig_t saveint;
 #ifndef TIOCSTI
 	sig_t savequit;
 #else
 # ifdef	TIOCEXT
-	int extproc, flag;
-#endif /* TIOCEXT */
+	volatile int extproc;
+	int flag;
+# endif /* TIOCEXT */
 #endif
 	sig_t savetstp;
 	sig_t savettou;
 	sig_t savettin;
-	int errs = 0;
-#ifdef __GNUC__
-	/* Avoid siglongjmp clobbering */
-	(void)&saveint;
-	(void)&errs;
-# ifdef	TIOCEXT
-	(void)&extproc;
-#endif /* TIOCEXT */
-#endif
+	volatile int errs = 0;
 
 	savetstp = signal(SIGTSTP, SIG_DFL);
 	savettou = signal(SIGTTOU, SIG_DFL);
@@ -192,13 +185,8 @@ readtty(pr, src)
 	char pr[], src[];
 {
 	char ch, canonb[BUFSIZ];
-	int c;
-	char *cp, *cp2;
-#if __GNUC__
-	/* Avoid siglongjmp clobbering */
-	(void)&c;
-	(void)&cp2;
-#endif
+	volatile int c;
+	char *cp, * volatile cp2;
 
 	fputs(pr, stdout);
 	fflush(stdout);

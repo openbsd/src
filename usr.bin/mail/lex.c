@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.22 2001/01/16 05:36:08 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.23 2001/06/23 23:04:23 millert Exp $	*/
 /*	$NetBSD: lex.c,v 1.10 1997/05/17 19:55:13 pk Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: lex.c,v 1.22 2001/01/16 05:36:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: lex.c,v 1.23 2001/06/23 23:04:23 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -214,12 +214,9 @@ int	reset_on_stop;			/* do a reset() if stopped */
 void
 commands()
 {
-	int n, eofloop = 0;
+	int n;
+	volatile int eofloop = 0;
 	char linebuf[LINESIZE];
-#if __GNUC__
-	/* Avoid siglongjmp clobbering */
-	(void)&eofloop;
-#endif
 
 	if (!sourcing) {
 		if (signal(SIGINT, SIG_IGN) != SIG_IGN)

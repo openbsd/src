@@ -1,4 +1,4 @@
-/*	$OpenBSD: docmd.c,v 1.8 1999/02/04 23:18:57 millert Exp $	*/
+/*	$OpenBSD: docmd.c,v 1.9 2001/06/23 23:08:16 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: docmd.c,v 6.86 1996/01/30 02:29:43 mcooper Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: docmd.c,v 1.8 1999/02/04 23:18:57 millert Exp $";
+"$OpenBSD: docmd.c,v 1.9 2001/06/23 23:08:16 millert Exp $";
 #endif
 
 static char sccsid[] = "@(#)docmd.c	5.1 (Berkeley) 6/6/85";
@@ -434,16 +434,12 @@ static void doarrow(cmd, filev)
 	register struct namelist *f;
 	register struct subcmd *sc;
 	register char **cpp;
-	int n, ddir, destdir, opts = options;
+	int n, ddir, destdir;
 	struct namelist *files;
 	struct subcmd *sbcmds;
 	char *rhost;
-	int didupdate = 0;
-
-#ifdef __GNUC__
-	(void)&didupdate;
-	(void)&opts;
-#endif
+	volatile int opts = options;
+	volatile int didupdate = 0;
 
         if (setjmp_ok) {
 		error("reentrant call to doarrow");

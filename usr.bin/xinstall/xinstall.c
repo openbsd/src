@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.25 2000/12/22 11:53:17 jj Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.26 2001/06/23 23:09:31 millert Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #endif
-static char rcsid[] = "$OpenBSD: xinstall.c,v 1.25 2000/12/22 11:53:17 jj Exp $";
+static char rcsid[] = "$OpenBSD: xinstall.c,v 1.26 2001/06/23 23:09:31 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -550,11 +550,7 @@ strip(to_name)
 	char *to_name;
 {
 	int serrno, status;
-	char *path_strip;
-
-#ifdef __GNUC__				/* XXX: to shut up gcc warnings */
-        (void)&path_strip;
-#endif
+	char * volatile path_strip;
 
 	if (issetugid() || (path_strip = getenv("STRIP")) == NULL)
 		path_strip = _PATH_STRIP;
