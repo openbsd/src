@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.48 2004/07/21 17:30:55 marius Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.49 2004/08/03 06:58:40 miod Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -1139,8 +1139,8 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 	if (v3) {
 		vtyp = nfsv3tov_type(fp->fa_type);
 		vmode = fxdr_unsigned(mode_t, fp->fa_mode);
-		rdev = makedev(fxdr_unsigned(u_char, fp->fa3_rdev.specdata1),
-			fxdr_unsigned(u_char, fp->fa3_rdev.specdata2));
+		rdev = makedev(fxdr_unsigned(u_int32_t, fp->fa3_rdev.specdata1),
+			fxdr_unsigned(u_int32_t, fp->fa3_rdev.specdata2));
 		fxdr_nfsv3time(&fp->fa3_mtime, &mtime);
 	} else {
 		vtyp = nfsv2tov_type(fp->fa_type);
