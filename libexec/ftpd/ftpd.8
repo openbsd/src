@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.46 2001/10/10 03:25:03 millert Exp $
+.\"	$OpenBSD: ftpd.8,v 1.47 2001/11/13 14:06:10 mpech Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -333,10 +333,11 @@ the user should be used as the password).
 .Pp
 Once a user is authenticated the user must be approved by any approval
 script defined (see
-.Xr login.conf ) .
+.Xr login.conf 5 ) .
 If a valid approval script (by either :approve=...: or :approve-ftp=...:
 for the user's class) is defined then it is run and must exit with a 0
-(success) status.  When
+(success) status.
+When
 .Nm
 is running under the
 .Fl D
@@ -394,10 +395,10 @@ The files pwd.db (see
 and
 .Xr group 5
 must be present for the
-.Xr ls
+.Xr ls 1
 command to be able to produce owner names rather than numbers.
 The password field in
-.Xr pwd.db
+.Pa pwd.db
 is not used, and should not contain real passwords.
 The file
 .Pa motd ,

@@ -127,9 +127,9 @@ and is thus the same as specifying
 Only allow Kerberos authenticated connections (as with
 .Fl a
 .Cm user )
-and also logins with one-time passwords (OTPs).  This option will call
-login with an option so that only OTPs are accepted.  The user can of
-course still type secret information at the prompt.
+and also logins with one-time passwords (OTPs).
+This option will call login with an option so that only OTPs are accepted.
+The user can of course still type secret information at the prompt.
 .It none
 This is the default state.
 Kerberos authentication information is not required.
@@ -176,7 +176,8 @@ Ignored.
 .It Fl n
 Disable
 .Dv TCP
-keep-alives.  Normally
+keep-alives.
+Normally
 .Nm telnetd
 enables the
 .Tn TCP
@@ -209,7 +210,8 @@ otherwise, the default range is 0 to 128.  Either
 or
 .Ar highpty
 may be omitted to allow changing
-either end of the search range.  If
+either end of the search range.
+If
 .Ar lowpty
 is omitted, the - character is still required so that
 .Nm telnetd

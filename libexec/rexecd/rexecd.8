@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rexecd.8,v 1.8 2001/01/28 19:34:30 niklas Exp $
+.\"	$OpenBSD: rexecd.8,v 1.9 2001/11/13 14:06:10 mpech Exp $
 .\" Copyright (c) 1983, 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -118,11 +118,11 @@ No password file entry for the user name existed or
 the wrong password was supplied.
 .It Sy \&No remote directory.
 The
-.Xr chdir
+.Xr chdir 2
 command to the home directory failed.
 .It Sy Try again.
 A
-.Xr fork
+.Xr fork 2
 by the server failed.
 .It Sy <shellname>: ...
 The user's login shell could not be started.

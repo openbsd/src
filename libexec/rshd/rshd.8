@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rshd.8,v 1.12 2001/06/23 23:15:37 hin Exp $
+.\"	$OpenBSD: rshd.8,v 1.13 2001/11/13 14:06:10 mpech Exp $
 .\" Copyright (c) 1983, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -192,7 +192,7 @@ The command line passed exceeds the size of the argument
 list (as configured into the system).
 .It Sy Remote directory.
 The
-.Xr chdir
+.Xr chdir 2
 command to the home directory failed.
 .It Sy Permission denied.
 The authentication procedure described above failed or
@@ -203,7 +203,7 @@ The pipe needed for the
 wasn't created.
 .It Sy Can't fork; try again.
 A
-.Xr fork
+.Xr fork 2
 by the server failed.
 .It Sy <shellname>: ...
 The user's login shell could not be started.
