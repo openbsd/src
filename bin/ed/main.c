@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.14 1998/05/18 20:36:14 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.15 1999/12/04 23:45:36 provos Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -39,7 +39,7 @@ char *copyright =
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.14 1998/05/18 20:36:14 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.15 1999/12/04 23:45:36 provos Exp $";
 #endif
 #endif /* not lint */
 
@@ -1376,8 +1376,10 @@ strip_escapes(s)
 
 	REALLOC(file, filesz, MAXPATHLEN + 1, NULL);
 	/* assert: no trailing escape */
-	while ((file[i++] = (*s == '\\') ? *++s : *s) != '\0')
+	while ((file[i++] = (*s == '\\') ? *++s : *s) != '\0' && 
+	       i < MAXPATHLEN)
 		s++;
+	file[MAXPATHLEN] = '\0';
 	return file;
 }
 
