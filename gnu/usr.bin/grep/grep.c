@@ -18,7 +18,7 @@
    Written July 1992 by Mike Haertel.  */
 
 #ifndef lint
-static char rcsid[] = "$Id: grep.c,v 1.1.1.1 1995/10/18 08:40:17 deraadt Exp $";
+static char rcsid[] = "$Id: grep.c,v 1.2 1997/08/06 23:44:11 grr Exp $";
 #endif /* not lint */
 
 #include <errno.h>
@@ -171,13 +171,20 @@ xrealloc(ptr, size)
 }
 
 #if !defined(HAVE_VALLOC)
-#define valloc malloc
+#define valloc(x) malloc(x)
+#define vfree(x) free(x)
 #else
 #ifdef __STDC__
 extern void *valloc(size_t);
+#define vfree(x) ;
 #else
 extern char *valloc();
+#define vfree(x) ;
 #endif
+#endif
+
+#ifndef MULT
+#define MULT 5
 #endif
 
 /* Hairy buffering mechanism for grep.  The intent is to keep
@@ -217,7 +224,7 @@ reset(fd)
 #else
       bufsalloc = BUFSALLOC;
 #endif
-      bufalloc = 5 * bufsalloc;
+      bufalloc = MULT * bufsalloc;
       /* The 1 byte of overflow is a kludge for dfaexec(), which
 	 inserts a sentinel newline at the end of the buffer
 	 being searched.  There's gotta be a better way... */
@@ -257,17 +264,25 @@ fillbuf(save)
   if (pagesize == 0 && (pagesize = getpagesize()) == 0)
     abort();
 
+  /* If the current line won't easily fit in the existing buffer
+     allocate a MULT larger one.  This can result in running out
+     of memory on sparse files or those containing longs runs of
+     <nul>'s or other non-<nl> characters */
+
   if (save > bufsalloc)
     {
       while (save > bufsalloc)
 	bufsalloc *= 2;
-      bufalloc = 5 * bufsalloc;
+      bufalloc = MULT * bufsalloc;
       nbuffer = valloc(bufalloc + 1);
       if (!nbuffer)
 	fatal("memory exhausted", 0);
     }
   else
-    nbuffer = buffer;
+    {
+      nbuffer = buffer;
+      buffer = NULL;
+    }
 
   sp = buflim - save;
   dp = nbuffer + bufsalloc - save;
@@ -276,8 +291,10 @@ fillbuf(save)
     *dp++ = *sp++;
 
   /* We may have allocated a new, larger buffer.  Since
-     there is no portable vfree(), we just have to forget
+     there is no portable vfree(), we may just have to forget
      about the old one.  Sorry. */
+  if (buffer != NULL)
+    vfree(buffer);
   buffer = nbuffer;
 
 #if defined(HAVE_WORKING_MMAP)
