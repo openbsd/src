@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.97 2001/06/21 13:24:02 nate Exp $
+#	$OpenBSD: MAKEDEV,v 1.98 2001/06/23 03:34:34 matthieu Exp $
 #	$NetBSD: MAKEDEV,v 1.40 1996/03/31 00:50:47 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -740,6 +740,13 @@ wdt*)
 	mknod wdt$unit c 55 $unit
 	chown root.operator wdt$unit
 	chmod 0440 wdt$unit
+	;;
+
+pci*)
+	rm -f pci
+	mknod pci c 72 0
+	chown root.kmem pci
+	chmod 660 pci
 	;;
 
 local)

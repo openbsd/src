@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.46 2001/06/23 02:29:30 drahn Exp $
+#	$OpenBSD: MAKEDEV,v 1.47 2001/06/23 03:34:34 matthieu Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -161,6 +161,7 @@ all)
 	sh $this audio0
 	sh $this random uk0 uk1 ss0 ss1
 	sh $this wscons
+	sh $this pci
 	sh $this lkm xfs0
 	sh $this usbs
 	sh $this local
@@ -551,6 +552,13 @@ lkm)
 	mknod lkm c 24 0
 	chown root.kmem lkm
 	chmod 640 lkm
+	;;
+
+pci*)
+	rm -f pci
+	mknod pci c 71 0
+	chown root.kmem pci
+	chmod 660 pci
 	;;
 
 random|srandom|urandom|prandom|arandom)
