@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.19 2002/07/29 06:21:45 jason Exp $	*/
+/*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -145,11 +145,14 @@ creator_attach(struct creator_softc *sc)
 	rasops_init(&sc->sc_rasops,
 	    a2int(getpropstring(optionsnode, "screen-#rows"), 34),
 	    a2int(getpropstring(optionsnode, "screen-#columns"), 80));
-	sc->sc_rasops.ri_hw = sc;
-	sc->sc_rasops.ri_ops.eraserows = creator_ras_eraserows;
-	sc->sc_rasops.ri_ops.erasecols = creator_ras_erasecols;
-	sc->sc_rasops.ri_ops.copyrows = creator_ras_copyrows;
-	creator_ras_init(sc);
+
+	if ((sc->sc_dv.dv_cfdata->cf_flags & CREATOR_CFFLAG_NOACCEL) == 0) {
+		sc->sc_rasops.ri_hw = sc;
+		sc->sc_rasops.ri_ops.eraserows = creator_ras_eraserows;
+		sc->sc_rasops.ri_ops.erasecols = creator_ras_erasecols;
+		sc->sc_rasops.ri_ops.copyrows = creator_ras_copyrows;
+		creator_ras_init(sc);
+	}
 
 	creator_stdscreen.nrows = sc->sc_rasops.ri_rows;
 	creator_stdscreen.ncols = sc->sc_rasops.ri_cols;
