@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bm.c,v 1.1 1999/11/08 23:46:01 rahnds Exp $	*/
+/*	$OpenBSD: if_bm.c,v 1.2 2000/02/03 05:49:46 rahnds Exp $	*/
 /*	$NetBSD: if_bm.c,v 1.1 1999/01/01 01:27:52 tsubai Exp $	*/
 
 /*-
@@ -198,11 +198,6 @@ bmac_attach(parent, self, aux)
 	ca->ca_reg[0] += ca->ca_baseaddr;
 	ca->ca_reg[2] += ca->ca_baseaddr;
 	ca->ca_reg[4] += ca->ca_baseaddr;
-	printf("D: reg0 %x, reg2 %x reg4 %x\n",
-		ca->ca_reg[0],
-		ca->ca_reg[2],
-		ca->ca_reg[4]);
-		
 
 	sc->sc_regs = (vaddr_t)mapiodev(ca->ca_reg[0], NBPG);
 
