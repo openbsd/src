@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.46 2000/01/21 02:53:06 angelos Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.47 2000/02/06 16:58:01 itojun Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.46 2000/01/21 02:53:06 angelos Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.47 2000/02/06 16:58:01 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,8 +77,8 @@ static char *rcsid = "$OpenBSD: sysctl.c,v 1.46 2000/01/21 02:53:06 angelos Exp 
 #include <netinet/ip_gre.h>
 
 #ifdef INET6
-#include <netinet6/ip6.h>
-#include <netinet6/icmp6.h>
+#include <netinet/ip6.h>
+#include <netinet/icmp6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/pim6_var.h>
 #endif
