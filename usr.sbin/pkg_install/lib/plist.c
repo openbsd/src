@@ -1,6 +1,6 @@
-/*	$OpenBSD: plist.c,v 1.8 2000/04/26 15:28:14 espie Exp $	*/
+/*	$OpenBSD: plist.c,v 1.9 2000/04/28 22:13:55 espie Exp $	*/
 #ifndef lint
-static const char *rcsid = "$OpenBSD: plist.c,v 1.8 2000/04/26 15:28:14 espie Exp $";
+static const char *rcsid = "$OpenBSD: plist.c,v 1.9 2000/04/28 22:13:55 espie Exp $";
 #endif
 
 /*
@@ -294,10 +294,8 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
     plist_t *p;
     char *Where = ".", *last_file = "";
     int fail = SUCCESS;
-    Boolean preserve;
     char tmp[FILENAME_MAX], *name = NULL;
 
-    preserve = find_plist_option(pkg, "preserve") ? TRUE : FALSE;
     for (p = pkg->head; p; p = p->next) {
 	switch (p->type)  {
 	case PLIST_NAME:
@@ -356,17 +354,6 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
 		if (!Fake) {
 		    if (delete_hierarchy(tmp, ign_err, nukedirs))
 		    fail = FAIL;
-		    if (preserve && name) {
-			char tmp2[FILENAME_MAX];
-			    
-			if (make_preserve_name(tmp2, FILENAME_MAX, name, tmp)) {
-			    if (fexists(tmp2)) {
-				if (rename(tmp2, tmp))
-				   warn("preserve: unable to restore %s as %s",
-					tmp2, tmp);
-			    }
-			}
-		    }
 		}
 	    }
 	    break;

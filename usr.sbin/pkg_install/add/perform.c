@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.13 2000/04/16 22:02:26 espie Exp $	*/
+/*	$OpenBSD: perform.c,v 1.14 2000/04/28 22:13:54 espie Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.13 2000/04/16 22:02:26 espie Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.14 2000/04/28 22:13:54 espie Exp $";
 #endif
 
 /*
@@ -166,32 +166,6 @@ pkg_do(char *pkg)
 	    }
 	    read_plist(&Plist, cfile);
 	    fclose(cfile);
-
-	    /* Extract directly rather than moving?  Oh goodie! */
-	    if (find_plist_option(&Plist, "extract-in-place")) {
-		if (Verbose)
-		    printf("Doing in-place extraction for `%s'\n", pkg_fullname);
-		p = find_plist(&Plist, PLIST_CWD);
-		if (p) {
-		    if (!(isdir(p->name) || islinktodir(p->name)) && !Fake) {
-			if (Verbose)
-			    printf("Desired prefix of `%s' does not exist, creating\n", p->name);
-			vsystem("mkdir -p %s", p->name);
-		    }
-		    if (chdir(p->name) == -1) {
-			warn("unable to change directory to `%s'", p->name);
-			goto bomb;
-		    }
-		    where_to = p->name;
-		    inPlace = 1;
-		}
-		else {
-		    warnx(
-		"no prefix specified in `%s' - this is a bad package!",
-			pkg_fullname);
-		    goto bomb;
-		}
-	    }
 
 	    /*
 	     * Apply a crude heuristic to see how much space the package will
