@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.11 1999/06/18 05:19:52 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.12 1999/06/22 17:46:38 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -94,7 +94,7 @@ proc0stack
 /*
  * This is the starting location for the kernel
  */
-ENTRY(__start)
+ENTRY($start)
 /*
  *	start(pdc, boothowto, bootdev, esym, bootapiver, argv, argc)
  *
