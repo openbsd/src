@@ -4,7 +4,7 @@
 # grep() and map() tests
 #
 
-print "1..37\n";
+print "1..38\n";
 
 $test = 1;
 
@@ -162,3 +162,8 @@ sub ok {
     undef $gimme; map { gimme } @list;  ok($gimme, 'list');   $test++;
 }
 
+{
+    # This shouldn't loop indefinitively.
+    my @empty = map { while (1) {} } ();
+    ok("@empty", '');
+}

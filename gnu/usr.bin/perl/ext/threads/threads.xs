@@ -93,6 +93,7 @@ ithread* Perl_ithread_get (pTHX) {
 void
 Perl_ithread_destruct (pTHX_ ithread* thread, const char *why)
 {
+        PerlInterpreter *freeperl = NULL;
 	MUTEX_LOCK(&thread->mutex);
 	if (!thread->next) {
 	    Perl_croak(aTHX_ "panic: destruct destroyed thread %p (%s)",thread, why);
@@ -144,12 +145,19 @@ Perl_ithread_destruct (pTHX_ ithread* thread, const char *why)
 
 	    thread->params = Nullsv;
 	    perl_destruct(thread->interp);
-            perl_free(thread->interp);
+            freeperl = thread->interp;
 	    thread->interp = NULL;
 	}
 	MUTEX_UNLOCK(&thread->mutex);
 	MUTEX_DESTROY(&thread->mutex);
+#ifdef WIN32
+	if (thread->handle)
+	    CloseHandle(thread->handle);
+	thread->handle = 0;
+#endif
         PerlMemShared_free(thread);
+        if (freeperl)
+            perl_free(freeperl);
 
 	PERL_SET_CONTEXT(aTHX);
 }
@@ -373,6 +381,10 @@ Perl_ithread_create(pTHX_ SV *obj, char* classname, SV* init_function, SV* param
 
 	SV**            tmps_tmp = PL_tmps_stack;
 	I32             tmps_ix  = PL_tmps_ix;
+#ifndef WIN32
+	int		failure;
+	const char*	panic = NULL;
+#endif
 
 
 	MUTEX_LOCK(&create_destruct_mutex);
@@ -472,10 +484,8 @@ Perl_ithread_create(pTHX_ SV *obj, char* classname, SV* init_function, SV* param
 	/* Start the thread */
 
 #ifdef WIN32
-
 	thread->handle = CreateThread(NULL, 0, Perl_ithread_run,
 			(LPVOID)thread, 0, &thread->thr);
-
 #else
 	{
 	  static pthread_attr_t attr;
@@ -490,20 +500,40 @@ Perl_ithread_create(pTHX_ SV *obj, char* classname, SV* init_function, SV* param
 #  endif
 #  ifdef THREAD_CREATE_NEEDS_STACK
 	    if(pthread_attr_setstacksize(&attr, THREAD_CREATE_NEEDS_STACK))
-	      Perl_croak(aTHX_ "panic: pthread_attr_setstacksize failed");
+	      panic = "panic: pthread_attr_setstacksize failed";
 #  endif
 
 #ifdef OLD_PTHREADS_API
-	  pthread_create( &thread->thr, attr, Perl_ithread_run, (void *)thread);
+	    failure
+	      = panic ? 1 : pthread_create( &thread->thr, attr,
+					    Perl_ithread_run, (void *)thread);
 #else
 #  if defined(HAS_PTHREAD_ATTR_SETSCOPE) && defined(PTHREAD_SCOPE_SYSTEM)
 	  pthread_attr_setscope( &attr, PTHREAD_SCOPE_SYSTEM );
 #  endif
-	  pthread_create( &thread->thr, &attr, Perl_ithread_run, (void *)thread);
+	  failure
+	    = panic ? 1 : pthread_create( &thread->thr, &attr,
+					  Perl_ithread_run, (void *)thread);
 #endif
 	}
 #endif
 	known_threads++;
+	if (
+#ifdef WIN32
+	    thread->handle == NULL
+#else
+	    failure
+#endif
+	    ) {
+	  MUTEX_UNLOCK(&create_destruct_mutex);
+	  sv_2mortal(params);
+	  Perl_ithread_destruct(aTHX_ thread, "create failed");
+#ifndef WIN32
+	  if (panic)
+	    Perl_croak(aTHX_ panic);
+#endif
+	  return &PL_sv_undef;
+	}
 	active_threads++;
 	MUTEX_UNLOCK(&create_destruct_mutex);
 	sv_2mortal(params);
@@ -563,6 +593,8 @@ Perl_ithread_join(pTHX_ SV *obj)
 	MUTEX_UNLOCK(&thread->mutex);
 #ifdef WIN32
 	waitcode = WaitForSingleObject(thread->handle, INFINITE);
+	CloseHandle(thread->handle);
+	thread->handle = 0;
 #else
 	pthread_join(thread->thr,&retval);
 #endif
@@ -572,12 +604,17 @@ Perl_ithread_join(pTHX_ SV *obj)
 	{
 	  ithread*        current_thread;
 	  AV* params = (AV*) SvRV(thread->params);	
+	  PerlInterpreter *other_perl = thread->interp;
 	  CLONE_PARAMS clone_params;
 	  clone_params.stashes = newAV();
 	  clone_params.flags |= CLONEf_JOIN_IN;
 	  PL_ptr_table = ptr_table_new();
 	  current_thread = Perl_ithread_get(aTHX);
 	  Perl_ithread_set(aTHX_ thread);
+	  /* ensure 'meaningful' addresses retain their meaning */
+	  ptr_table_store(PL_ptr_table, &other_perl->Isv_undef, &PL_sv_undef);
+	  ptr_table_store(PL_ptr_table, &other_perl->Isv_no, &PL_sv_no);
+	  ptr_table_store(PL_ptr_table, &other_perl->Isv_yes, &PL_sv_yes);
 
 #if 0
 	  {

@@ -15,8 +15,8 @@ BEGIN {
     $SIG{'__WARN__'} = sub { $warn_msg = $_[0]; warn "# $_[0]"; }
 }
 
-if ( $symlink_exists ) { print "1..189\n"; }
-else                   { print "1..79\n";  }
+if ( $symlink_exists ) { print "1..199\n"; }
+else                   { print "1..85\n";  }
 
 # Uncomment this to see where File::Find is chdir'ing to.  Helpful for
 # debugging its little jaunts around the filesystem.
@@ -122,8 +122,7 @@ sub MkDir($$) {
 }
 
 sub wanted_File_Dir {
-    print "# \$File::Find::dir => '$File::Find::dir'\n";
-    print "# \$_ => '$_'\n";
+    printf "# \$File::Find::dir => '$File::Find::dir'\t\$_ => '$_'\n";
     s#\.$## if ($^O eq 'VMS' && $_ ne '.');
     Check( $Expect_File{$_} );
     if ( $FastFileTests_OK ) {
@@ -497,6 +496,41 @@ Check( scalar(keys %Expect_Dir) == 0 );
     Check( scalar( keys %pre ) == 0 );
 }
 
+# see thread starting
+# http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/2004-02/msg00351.html
+{
+    print "# checking that &_ and %_ are still accessible and that\n",
+	"# tie magic on \$_ is not triggered\n";
+    
+    my $true_count;
+    my $sub = 0;
+    sub _ {
+	++$sub;
+    }
+    my $tie_called = 0;
+
+    package Foo;
+    sub STORE {
+	++$tie_called;
+    }
+    sub FETCH {return 'N'};
+    sub TIESCALAR {bless []};
+    package main;
+
+    Check( scalar( keys %_ ) == 0 );
+    my @foo = 'n';
+    tie $foo[0], "Foo";
+
+    File::Find::find( sub { $true_count++; $_{$_}++; &_; } , 'fa' ) for @foo;
+    untie $_;
+
+    Check( $tie_called == 0);
+    Check( scalar( keys %_ ) == $true_count );
+    Check( $sub == $true_count );
+    Check( scalar( @foo ) == 1);
+    Check( $foo[0] eq 'N' );
+}
+
 if ( $symlink_exists ) {
     print "# --- symbolic link tests --- \n";
     $FastFileTests_OK= 1;
@@ -690,7 +724,9 @@ if ( $symlink_exists ) {
     # the expected paths for %Expect_File
 
     %Expect_File = (file_path_name('fa') => 1,
-		    file_path_name('fa', 'fa_ord') => 1,
+		    file_path_name('fa', 'fa_ord') => 2,
+		    # We may encounter the symlink first
+		    file_path_name('fa', 'fa_ord_sl') => 2,
 		    file_path_name('fa', 'fsl') => 1,
                     file_path_name('fa', 'fsl', 'fb_ord') => 1,
                     file_path_name('fa', 'fsl', 'fba') => 1,
@@ -715,7 +751,9 @@ if ( $symlink_exists ) {
                            follow_skip => 1, no_chdir => 1},
                            topdir('fa') );
 
-    Check( scalar(keys %Expect_File) == 0 );
+    Check( scalar(keys %Expect_File) == 1 );
+    # Only the file and its symlink have value 2;<
+    Check( (values %Expect_File)[0] == 2);
     unlink file_path('fa', 'fa_ord_sl');
 
 
@@ -756,7 +794,10 @@ if ( $symlink_exists ) {
                     file_path_name('fa', 'fab', 'faba') => 1,
                     file_path_name('fa', 'fab', 'faba', 'faba_ord') => 1,
                     file_path_name('fa', 'faa') => 1,
-                    file_path_name('fa', 'faa', 'faa_ord') => 1);
+                    file_path_name('fa', 'faa', 'faa_ord') => 1,
+		    # We may actually encounter the symlink first.
+                    file_path_name('fa', 'faa_sl') => 1,
+                    file_path_name('fa', 'faa_sl', 'faa_ord') => 1);
 
     %Expect_Name = ();
 
@@ -770,7 +811,16 @@ if ( $symlink_exists ) {
     File::Find::find( {wanted => \&wanted_File_Dir, follow => 1,
 		       follow_skip => 2, no_chdir => 1}, topdir('fa') );
 
-    Check( scalar(keys %Expect_File) == 0 );
+    # If we encountered the symlink first, then the entries corresponding to
+    # the real name remain, if the real name first then the symlink
+    my @names = sort keys %Expect_File;
+    Check( @names == 2 );
+    # In sorted order the directory name comes first
+    Check ($names[1] =~ /^$names[0]/);
+    # Normalise both to the original name
+    s/_sl// foreach @names;
+    Check ($names[0] eq file_path_name('fa', 'faa'));
+    Check ($names[1] eq file_path_name('fa', 'faa', 'faa_ord'));
     unlink file_path('fa', 'faa_sl');
 
 }

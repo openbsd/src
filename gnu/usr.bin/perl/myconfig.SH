@@ -27,7 +27,7 @@ $startsh
 
 # Note that the text lines /^Summary of/ .. /^\s*$/ are copied into Config.pm.
 cat <<'!NO!SUBS!'
-Summary of my $package (revision $baserev $version_patchlevel_string) configuration:
+Summary of my $package (revision $revision $version_patchlevel_string) configuration:
   Platform:
     osname=$osname, osvers=$osvers, archname=$archname
     uname='$myuname'

@@ -1,5 +1,5 @@
 #
-# $Id: gsm0338.ucm,v 1.1 2003/12/29 02:47:16 dankogai Exp dankogai $
+# $Id: gsm0338.ucm,v 2.0 2004/05/16 20:55:24 dankogai Exp $
 #
 # ./compile -n gsm0338 -o Encode/gsm0338.ucm Encode/gsm0338.enc
 <code_set_name> "gsm0338"

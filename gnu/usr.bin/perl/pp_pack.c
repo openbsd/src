@@ -1,7 +1,7 @@
 /*    pp_pack.c
  *
  *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, 2003, by Larry Wall and others
+ *    2000, 2001, 2002, 2003, 2004, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -19,17 +19,6 @@
 #include "EXTERN.h"
 #define PERL_IN_PP_PACK_C
 #include "perl.h"
-
-/*
- * The compiler on Concurrent CX/UX systems has a subtle bug which only
- * seems to show up when compiling pp.c - it generates the wrong double
- * precision constant value for (double)UV_MAX when used inline in the body
- * of the code below, so this makes a static variable up front (which the
- * compiler seems to get correct) and uses it in place of UV_MAX below.
- */
-#ifdef CXUX_BROKEN_CONSTANT_CONVERT
-static double UV_MAX_cxux = ((double)UV_MAX);
-#endif
 
 /*
  * Offset for integer pack/unpack.
@@ -2429,11 +2418,17 @@ S_pack_rec(pTHX_ SV *cat, register tempsym_t* symptr, register SV **beglist, SV 
 		       given 10**(NV_MAX_10_EXP+1) == 128 ** x solve for x:
 		       x = (NV_MAX_10_EXP+1) * log (10) / log (128)
 		       And with that many bytes only Inf can overflow.
+		       Some C compilers are strict about integral constant
+		       expressions so we conservatively divide by a slightly
+		       smaller integer instead of multiplying by the exact
+		       floating-point value.
 		    */
 #ifdef NV_MAX_10_EXP
-		    char   buf[1 + (int)((NV_MAX_10_EXP + 1) * 0.47456)];
+/*		    char   buf[1 + (int)((NV_MAX_10_EXP + 1) * 0.47456)]; -- invalid C */
+		    char   buf[1 + (int)((NV_MAX_10_EXP + 1) / 2)]; /* valid C */
 #else
-		    char   buf[1 + (int)((308 + 1) * 0.47456)];
+/*		    char   buf[1 + (int)((308 + 1) * 0.47456)]; -- invalid C */
+		    char   buf[1 + (int)((308 + 1) / 2)]; /* valid C */
 #endif
 		    char  *in = buf + sizeof(buf);
 

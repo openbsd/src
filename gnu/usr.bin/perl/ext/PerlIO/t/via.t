@@ -1,8 +1,5 @@
 #!./perl
 
-use strict;
-use warnings;
-
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
@@ -10,7 +7,15 @@ BEGIN {
 	print "1..0 # Skip: not perlio\n";
 	exit 0;
     }
+    require Config;
+    if (($Config::Config{'extensions'} !~ m!\bPerlIO/via\b!) ){
+        print "1..0 # Skip -- Perl configured without PerlIO::via module\n";
+        exit 0;
+    }
 }
+
+use strict;
+use warnings;
 
 my $tmp = "via$$";
 

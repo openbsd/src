@@ -1,7 +1,7 @@
 /*
  *    perlapi.h
  *
- *    Copyright (C) 1999, 2000, 2001, 2002, 2003, by Larry Wall and others
+ *    Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -258,6 +258,8 @@ END_EXTERN_C
 #define PL_fdpid		(*Perl_Ifdpid_ptr(aTHX))
 #undef  PL_fdpid_mutex
 #define PL_fdpid_mutex		(*Perl_Ifdpid_mutex_ptr(aTHX))
+#undef  PL_fdscript
+#define PL_fdscript		(*Perl_Ifdscript_ptr(aTHX))
 #undef  PL_filemode
 #define PL_filemode		(*Perl_Ifilemode_ptr(aTHX))
 #undef  PL_forkprocess
@@ -562,6 +564,8 @@ END_EXTERN_C
 #define PL_subline		(*Perl_Isubline_ptr(aTHX))
 #undef  PL_subname
 #define PL_subname		(*Perl_Isubname_ptr(aTHX))
+#undef  PL_suidscript
+#define PL_suidscript		(*Perl_Isuidscript_ptr(aTHX))
 #undef  PL_sv_arenaroot
 #define PL_sv_arenaroot		(*Perl_Isv_arenaroot_ptr(aTHX))
 #undef  PL_sv_count

@@ -381,9 +381,9 @@ Consider the module C<MyMod::Abc> below.
     sub open {
         my $path = shift ;
         if ($path !~ m#^/#) {
-            warnings::warn("changing relative path to /tmp/")
+            warnings::warn("changing relative path to /var/abc")
                 if warnings::enabled();
-            $path = "/tmp/$path" ; 
+            $path = "/var/abc/$path";
         }
     }
 

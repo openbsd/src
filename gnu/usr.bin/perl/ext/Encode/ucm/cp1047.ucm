@@ -1,5 +1,5 @@
 #
-# $Id: cp1047.ucm,v 1.0 2002/03/28 23:26:25 dankogai Exp $
+# $Id: cp1047.ucm,v 2.0 2004/05/16 20:55:20 dankogai Exp $
 #
 # compile -n cp1047 -o Encode/cp1047.ucm Encode/cp1047.enc
 <code_set_name> "cp1047"

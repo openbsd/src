@@ -1,5 +1,9 @@
 Revision history for Perl extension Unicode::Normalize.
 
+0.30  Sun May  2 14:35:00 2004
+    - XSUB: (perl 5.8.1 or later) improved utf8 upgrade of non-POK (private POK)
+      values like tied scalars, overloaded objects, etc.
+
 0.28  Sat Nov 22 23:46:24 2003
     - XSUB: even if string contains a malformed, "short" Unicode character,
       decompose() and reorder() will be safe. Garbage will be no longer added.

@@ -1,6 +1,6 @@
 # Net::SMTP.pm
 #
-# Copyright (c) 1995-1997 Graham Barr <gbarr@pobox.com>. All rights reserved.
+# Copyright (c) 1995-2004 Graham Barr <gbarr@pobox.com>. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 
@@ -16,7 +16,7 @@ use IO::Socket;
 use Net::Cmd;
 use Net::Config;
 
-$VERSION = "2.26"; # $Id: //depot/libnet/Net/SMTP.pm#31 $
+$VERSION = "2.29";
 
 @ISA = qw(Net::Cmd IO::Socket::INET);
 
@@ -24,8 +24,14 @@ sub new
 {
  my $self = shift;
  my $type = ref($self) || $self;
- my $host = shift if @_ % 2;
- my %arg  = @_; 
+ my ($host,%arg);
+ if (@_ % 2) {
+   $host = shift ;
+   %arg  = @_;
+ } else {
+   %arg = @_;
+   $host=delete $arg{Host};
+ }
  my $hosts = defined $host ? $host : $NetConfig{smtp_hosts};
  my $obj;
 
@@ -71,6 +77,11 @@ sub new
  $obj;
 }
 
+sub host {
+ my $me = shift;
+ ${*$me}{'net_smtp_host'};
+}
+
 ##
 ## User interface methods
 ##
@@ -98,8 +109,10 @@ sub etrn {
 sub auth {
     my ($self, $username, $password) = @_;
 
-    require MIME::Base64;
-    require Authen::SASL;
+    eval {
+	require MIME::Base64;
+	require Authen::SASL;
+    } or $self->set_status(500,["Need MIME::Base64 and Authen::SASL todo auth"]), return 0;
 
     my $mechanisms = $self->supports('AUTH',500,["Command unknown: 'AUTH'"]);
     return unless defined $mechanisms;
@@ -296,6 +309,18 @@ sub mail
        else
         {
 	 carp 'Net::SMTP::mail: DSN option not supported by host';
+        }
+      }
+
+     if(defined($v = delete $opt{XVERP}))
+      {
+       if(exists $esmtp->{'XVERP'})
+        {
+	 $opts .= " XVERP"
+        }
+       else
+        {
+	 carp 'Net::SMTP::mail: XVERP option not supported by host';
         }
       }
 
@@ -565,23 +590,26 @@ known as mailhost:
 
 =over 4
 
-=item new Net::SMTP [ HOST, ] [ OPTIONS ]
+=item new ( [ HOST ] [, OPTIONS ] )
 
 This is the constructor for a new Net::SMTP object. C<HOST> is the
 name of the remote host to which an SMTP connection is required.
 
-If C<HOST> is an array reference then each value will be attempted
-in turn until a connection is made.
-
-If C<HOST> is not given, then the C<SMTP_Host> specified in C<Net::Config>
-will be used.
+C<HOST> is optional. If C<HOST> is not given then it may instead be
+passed as the C<Host> option described below. If neither is given then
+the C<SMTP_Hosts> specified in C<Net::Config> will be used.
 
 C<OPTIONS> are passed in a hash like fashion, using key and value pairs.
 Possible options are:
 
 B<Hello> - SMTP requires that you identify yourself. This option
-specifies a string to pass as your mail domain. If not
-given a guess will be taken.
+specifies a string to pass as your mail domain. If not given localhost.localdomain
+will be used.
+
+B<Host> - SMTP host to connect to. It may be a single scalar, as defined for
+the C<PeerAddr> option in L<IO::Socket::INET>, or a reference to
+an array with hosts to try in turn. The L</host> method will return the value
+which was used to connect to the host.
 
 B<LocalAddr> and B<LocalPort> - These parameters are passed directly
 to IO::Socket to allow binding the socket to a local port.
@@ -603,6 +631,20 @@ Example:
 			   Hello => 'my.mail.domain'
 			   Timeout => 30,
                            Debug   => 1,
+			  );
+
+    # the same
+    $smtp = Net::SMTP->new(
+			   Host => 'mailhost',
+			   Hello => 'my.mail.domain'
+			   Timeout => 30,
+                           Debug   => 1,
+			  );
+
+    # Connect to the default server from Net::config
+    $smtp = Net::SMTP->new(
+			   Hello => 'my.mail.domain'
+			   Timeout => 30,
 			  );
 
 =back
@@ -633,6 +675,11 @@ command (or HELO if EHLO fails).  Since this method is invoked
 automatically when the Net::SMTP object is constructed the user should
 normally not have to call it manually.
 
+=item host ()
+
+Returns the value used by the constructor, and passed to IO::Socket::INET,
+to connect to the host.
+
 =item etrn ( DOMAIN )
 
 Request a queue run for the DOMAIN given.
@@ -662,6 +709,7 @@ in hash like fashion, using key and value pairs.  Possible options are:
  Bits        => "7" | "8" | "binary"
  Transaction => <ADDRESS>
  Envelope    => <ENVID>
+ XVERP       => 1
 
 The C<Return> and C<Envelope> parameters are used for DSN (Delivery
 Status Notification).
@@ -672,27 +720,63 @@ Reset the status of the server. This may be called after a message has been
 initiated, but before any data has been sent, to cancel the sending of the
 message.
 
-=item recipient ( ADDRESS [, ADDRESS [ ...]] [, OPTIONS ] )
+=item recipient ( ADDRESS [, ADDRESS, [...]] [, OPTIONS ] )
 
 Notify the server that the current message should be sent to all of the
 addresses given. Each address is sent as a separate command to the server.
-Should the sending of any address result in a failure then the
-process is aborted and a I<false> value is returned. It is up to the
-user to call C<reset> if they so desire.
+Should the sending of any address result in a failure then the process is
+aborted and a I<false> value is returned. It is up to the user to call
+C<reset> if they so desire.
 
-The C<recipient> method can some additional OPTIONS which is passed
-in hash like fashion, using key and value pairs.  Possible options are:
+The C<recipient> method can also pass additional case-sensitive OPTIONS as an
+anonymous hash using key and value pairs.  Possible options are:
 
- Notify    =>
- SkipBad   => ignore bad addresses
+  Notify  => ['NEVER'] or ['SUCCESS','FAILURE','DELAY']  (see below)
+  SkipBad => 1        (to ignore bad addresses)
 
-If C<SkipBad> is true the C<recipient> will not return an error when a
-bad address is encountered and it will return an array of addresses
-that did succeed.
+If C<SkipBad> is true the C<recipient> will not return an error when a bad
+address is encountered and it will return an array of addresses that did
+succeed.
 
   $smtp->recipient($recipient1,$recipient2);  # Good
   $smtp->recipient($recipient1,$recipient2, { SkipBad => 1 });  # Good
-  $smtp->recipient("$recipient,$recipient2"); # BAD   
+  $smtp->recipient($recipient1,$recipient2, { Notify => ['FAILURE','DELAY'], SkipBad => 1 });  # Good
+  @goodrecips=$smtp->recipient(@recipients, { Notify => ['FAILURE'], SkipBad => 1 });  # Good
+  $smtp->recipient("$recipient,$recipient2"); # BAD
+
+Notify is used to request Delivery Status Notifications (DSNs), but your
+SMTP/ESMTP service may not respect this request depending upon its version and
+your site's SMTP configuration.
+
+Leaving out the Notify option usually defaults an SMTP service to its default
+behavior equivalent to ['FAILURE'] notifications only, but again this may be
+dependent upon your site's SMTP configuration.
+
+The NEVER keyword must appear by itself if used within the Notify option and "requests
+that a DSN not be returned to the sender under any conditions."
+
+  {Notify => ['NEVER']}
+
+  $smtp->recipient(@recipients, { Notify => ['NEVER'], SkipBad => 1 });  # Good
+
+You may use any combination of these three values 'SUCCESS','FAILURE','DELAY' in
+the anonymous array reference as defined by RFC3461 (see http://rfc.net/rfc3461.html
+for more information.  Note: quotations in this topic from same.).
+
+A Notify parameter of 'SUCCESS' or 'FAILURE' "requests that a DSN be issued on
+successful delivery or delivery failure, respectively."
+
+A Notify parameter of 'DELAY' "indicates the sender's willingness to receive
+delayed DSNs.  Delayed DSNs may be issued if delivery of a message has been
+delayed for an unusual amount of time (as determined by the Message Transfer
+Agent (MTA) at which the message is delayed), but the final delivery status
+(whether successful or failure) cannot be determined.  The absence of the DELAY
+keyword in a NOTIFY parameter requests that a "delayed" DSN NOT be issued under
+any conditions."
+
+  {Notify => ['SUCCESS','FAILURE','DELAY']}
+
+  $smtp->recipient(@recipients, { Notify => ['FAILURE','DELAY'], SkipBad => 1 });  # Good
 
 =item to ( ADDRESS [, ADDRESS [...]] )
 
@@ -722,6 +806,9 @@ which contains the text read from the server.
 =item verify ( ADDRESS )
 
 Verify that C<ADDRESS> is a legitimate mailing address.
+
+Most sites usually disable this feature in their SMTP service configuration.
+Use "Debug => 1" option under new() to see if disabled.
 
 =item help ( [ $subject ] )
 
@@ -759,12 +846,8 @@ Graham Barr <gbarr@pobox.com>
 
 =head1 COPYRIGHT
 
-Copyright (c) 1995-1997 Graham Barr. All rights reserved.
+Copyright (c) 1995-2004 Graham Barr. All rights reserved.
 This program is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
-
-=for html <hr>
-
-I<$Id: //depot/libnet/Net/SMTP.pm#31 $>
 
 =cut

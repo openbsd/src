@@ -283,14 +283,6 @@ Creates a new AV.  The reference count is set to 1.
 =for hackers
 Found in file av.c
 
-=item Nullav
-
-Null AV pointer.
-
-
-=for hackers
-Found in file av.h
-
 =item sortsv
 
 Sort an array. Here is an example:
@@ -575,14 +567,6 @@ NOTE: the perl_ form of this function is deprecated.
 
 =for hackers
 Found in file perl.c
-
-=item Nullcv
-
-Null CV pointer.
-
-
-=for hackers
-Found in file cv.h
 
 
 =back
@@ -924,15 +908,12 @@ Found in file gv.c
 
 =over 8
 
-=item HEf_SVKEY
+=item Nullav
 
-This flag, used in the length slot of hash entries and magic structures,
-specifies the structure contains an C<SV*> pointer where a C<char*> pointer
-is to be expected. (For information only--not to be used).
-
+Null AV pointer.
 
 =for hackers
-Found in file hv.h
+Found in file av.h
 
 =item Nullch
 
@@ -940,6 +921,20 @@ Null character pointer.
 
 =for hackers
 Found in file handy.h
+
+=item Nullcv
+
+Null CV pointer.
+
+=for hackers
+Found in file cv.h
+
+=item Nullhv
+
+Null HV pointer.
+
+=for hackers
+Found in file hv.h
 
 =item Nullsv
 
@@ -967,6 +962,15 @@ NOTE: the perl_ form of this function is deprecated.
 
 =for hackers
 Found in file perl.c
+
+=item HEf_SVKEY
+
+This flag, used in the length slot of hash entries and magic structures,
+specifies the structure contains an C<SV*> pointer where a C<char*> pointer
+is to be expected. (For information only--not to be used).
+
+=for hackers
+Found in file hv.h
 
 =item HeHASH
 
@@ -1355,14 +1359,6 @@ Creates a new HV.  The reference count is set to 1.
 =for hackers
 Found in file hv.c
 
-=item Nullhv
-
-Null HV pointer.
-
-
-=for hackers
-Found in file hv.h
-
 
 =back
 
@@ -1520,6 +1516,16 @@ has been loaded.
 =for hackers
 Found in file sv.h
 
+=item SvUNLOCK
+
+Releases a mutual exclusion lock on sv if a suitable module
+has been loaded.
+
+	void	SvUNLOCK(SV* sv)
+
+=for hackers
+Found in file sv.h
+
 
 =back
 
@@ -1564,20 +1570,6 @@ The XSUB-writer's interface to the C C<malloc> function, with
 cast.
 
 	void	Newc(int id, void* ptr, int nitems, type, cast)
-
-=for hackers
-Found in file handy.h
-
-=item NEWSV
-
-Creates a new SV.  A non-zero C<len> parameter indicates the number of
-bytes of preallocated string space the SV should have.  An extra byte for a
-tailing NUL is also reserved.  (SvPOK is not set for the SV even if string
-space is allocated.)  The reference count for the new SV is set to 1.
-C<id> is an integer id between 0 and 1299 (used to identify leaks).
-
-
-	SV*	NEWSV(int id, STRLEN len)
 
 =for hackers
 Found in file handy.h
@@ -2091,6 +2083,94 @@ Stack marker variable for the XSUB.  See C<dMARK>.
 =for hackers
 Found in file pp.h
 
+=item mPUSHi
+
+Push an integer onto the stack.  The stack must have room for this element.
+Handles 'set' magic.  Does not use C<TARG>.  See also C<PUSHi>, C<mXPUSHi>
+and C<XPUSHi>.
+
+	void	mPUSHi(IV iv)
+
+=for hackers
+Found in file pp.h
+
+=item mPUSHn
+
+Push a double onto the stack.  The stack must have room for this element.
+Handles 'set' magic.  Does not use C<TARG>.  See also C<PUSHn>, C<mXPUSHn>
+and C<XPUSHn>.
+
+	void	mPUSHn(NV nv)
+
+=for hackers
+Found in file pp.h
+
+=item mPUSHp
+
+Push a string onto the stack.  The stack must have room for this element.
+The C<len> indicates the length of the string.  Handles 'set' magic.  Does
+not use C<TARG>.  See also C<PUSHp>, C<mXPUSHp> and C<XPUSHp>.
+
+	void	mPUSHp(char* str, STRLEN len)
+
+=for hackers
+Found in file pp.h
+
+=item mPUSHu
+
+Push an unsigned integer onto the stack.  The stack must have room for this
+element.  Handles 'set' magic.  Does not use C<TARG>.  See also C<PUSHu>,
+C<mXPUSHu> and C<XPUSHu>.
+
+	void	mPUSHu(UV uv)
+
+=for hackers
+Found in file pp.h
+
+=item mXPUSHi
+
+Push an integer onto the stack, extending the stack if necessary.  Handles
+'set' magic.  Does not use C<TARG>.  See also C<XPUSHi>, C<mPUSHi> and
+C<PUSHi>.
+
+	void	mXPUSHi(IV iv)
+
+=for hackers
+Found in file pp.h
+
+=item mXPUSHn
+
+Push a double onto the stack, extending the stack if necessary.  Handles
+'set' magic.  Does not use C<TARG>.  See also C<XPUSHn>, C<mPUSHn> and
+C<PUSHn>.
+
+	void	mXPUSHn(NV nv)
+
+=for hackers
+Found in file pp.h
+
+=item mXPUSHp
+
+Push a string onto the stack, extending the stack if necessary.  The C<len>
+indicates the length of the string.  Handles 'set' magic.  Does not use
+C<TARG>.  See also C<XPUSHp>, C<mPUSHp> and C<PUSHp>.
+
+	void	mXPUSHp(char* str, STRLEN len)
+
+=for hackers
+Found in file pp.h
+
+=item mXPUSHu
+
+Push an unsigned integer onto the stack, extending the stack if necessary.
+Handles 'set' magic.  Does not use C<TARG>.  See also C<XPUSHu>, C<mPUSHu>
+and C<PUSHu>.
+
+	void	mXPUSHu(UV uv)
+
+=for hackers
+Found in file pp.h
+
 =item ORIGMARK
 
 The original stack mark for the XSUB.  See C<dORIGMARK>.
@@ -2167,7 +2247,10 @@ Found in file pp.h
 =item PUSHi
 
 Push an integer onto the stack.  The stack must have room for this element.
-Handles 'set' magic.  See C<XPUSHi>.
+Handles 'set' magic.  Uses C<TARG>, so C<dTARGET> or C<dXSTARG> should be
+called to declare it.  Do not call multiple C<TARG>-oriented macros to 
+return lists from XSUB's - see C<mPUSHi> instead.  See also C<XPUSHi> and
+C<mXPUSHi>.
 
 	void	PUSHi(IV iv)
 
@@ -2179,7 +2262,18 @@ Found in file pp.h
 Opening bracket for arguments on a callback.  See C<PUTBACK> and
 L<perlcall>.
 
-		PUSHMARK;
+	void	PUSHMARK(SP)
+
+=for hackers
+Found in file pp.h
+
+=item PUSHmortal
+
+Push a new mortal SV onto the stack.  The stack must have room for this
+element.  Does not handle 'set' magic.  Does not use C<TARG>.  See also
+C<PUSHs>, C<XPUSHmortal> and C<XPUSHs>.
+
+	void	PUSHmortal()
 
 =for hackers
 Found in file pp.h
@@ -2187,7 +2281,10 @@ Found in file pp.h
 =item PUSHn
 
 Push a double onto the stack.  The stack must have room for this element.
-Handles 'set' magic.  See C<XPUSHn>.
+Handles 'set' magic.  Uses C<TARG>, so C<dTARGET> or C<dXSTARG> should be
+called to declare it.  Do not call multiple C<TARG>-oriented macros to
+return lists from XSUB's - see C<mPUSHn> instead.  See also C<XPUSHn> and
+C<mXPUSHn>.
 
 	void	PUSHn(NV nv)
 
@@ -2197,8 +2294,10 @@ Found in file pp.h
 =item PUSHp
 
 Push a string onto the stack.  The stack must have room for this element.
-The C<len> indicates the length of the string.  Handles 'set' magic.  See
-C<XPUSHp>.
+The C<len> indicates the length of the string.  Handles 'set' magic.  Uses
+C<TARG>, so C<dTARGET> or C<dXSTARG> should be called to declare it.  Do not
+call multiple C<TARG>-oriented macros to return lists from XSUB's - see
+C<mPUSHp> instead.  See also C<XPUSHp> and C<mXPUSHp>.
 
 	void	PUSHp(char* str, STRLEN len)
 
@@ -2208,7 +2307,8 @@ Found in file pp.h
 =item PUSHs
 
 Push an SV onto the stack.  The stack must have room for this element.
-Does not handle 'set' magic.  See C<XPUSHs>.
+Does not handle 'set' magic.  Does not use C<TARG>.  See also C<PUSHmortal>,
+C<XPUSHs> and C<XPUSHmortal>.
 
 	void	PUSHs(SV* sv)
 
@@ -2218,7 +2318,10 @@ Found in file pp.h
 =item PUSHu
 
 Push an unsigned integer onto the stack.  The stack must have room for this
-element.  See C<XPUSHu>.
+element.  Handles 'set' magic.  Uses C<TARG>, so C<dTARGET> or C<dXSTARG>
+should be called to declare it.  Do not call multiple C<TARG>-oriented
+macros to return lists from XSUB's - see C<mPUSHu> instead.  See also
+C<XPUSHu> and C<mXPUSHu>.
 
 	void	PUSHu(UV uv)
 
@@ -2255,9 +2358,22 @@ Found in file pp.h
 =item XPUSHi
 
 Push an integer onto the stack, extending the stack if necessary.  Handles
-'set' magic. See C<PUSHi>.
+'set' magic.  Uses C<TARG>, so C<dTARGET> or C<dXSTARG> should be called to
+declare it.  Do not call multiple C<TARG>-oriented macros to return lists
+from XSUB's - see C<mXPUSHi> instead.  See also C<PUSHi> and C<mPUSHi>.
 
 	void	XPUSHi(IV iv)
+
+=for hackers
+Found in file pp.h
+
+=item XPUSHmortal
+
+Push a new mortal SV onto the stack, extending the stack if necessary.  Does
+not handle 'set' magic.  Does not use C<TARG>.  See also C<XPUSHs>,
+C<PUSHmortal> and C<PUSHs>.
+
+	void	XPUSHmortal()
 
 =for hackers
 Found in file pp.h
@@ -2265,7 +2381,9 @@ Found in file pp.h
 =item XPUSHn
 
 Push a double onto the stack, extending the stack if necessary.  Handles
-'set' magic.  See C<PUSHn>.
+'set' magic.  Uses C<TARG>, so C<dTARGET> or C<dXSTARG> should be called to
+declare it.  Do not call multiple C<TARG>-oriented macros to return lists
+from XSUB's - see C<mXPUSHn> instead.  See also C<PUSHn> and C<mPUSHn>.
 
 	void	XPUSHn(NV nv)
 
@@ -2275,8 +2393,10 @@ Found in file pp.h
 =item XPUSHp
 
 Push a string onto the stack, extending the stack if necessary.  The C<len>
-indicates the length of the string.  Handles 'set' magic.  See
-C<PUSHp>.
+indicates the length of the string.  Handles 'set' magic.  Uses C<TARG>, so
+C<dTARGET> or C<dXSTARG> should be called to declare it.  Do not call
+multiple C<TARG>-oriented macros to return lists from XSUB's - see
+C<mXPUSHp> instead.  See also C<PUSHp> and C<mPUSHp>.
 
 	void	XPUSHp(char* str, STRLEN len)
 
@@ -2286,7 +2406,8 @@ Found in file pp.h
 =item XPUSHs
 
 Push an SV onto the stack, extending the stack if necessary.  Does not
-handle 'set' magic.  See C<PUSHs>.
+handle 'set' magic.  Does not use C<TARG>.  See also C<XPUSHmortal>,
+C<PUSHs> and C<PUSHmortal>.
 
 	void	XPUSHs(SV* sv)
 
@@ -2296,7 +2417,10 @@ Found in file pp.h
 =item XPUSHu
 
 Push an unsigned integer onto the stack, extending the stack if necessary.
-See C<PUSHu>.
+Handles 'set' magic.  Uses C<TARG>, so C<dTARGET> or C<dXSTARG> should be
+called to declare it.  Do not call multiple C<TARG>-oriented macros to
+return lists from XSUB's - see C<mXPUSHu> instead.  See also C<PUSHu> and
+C<mPUSHu>.
 
 	void	XPUSHu(UV uv)
 
@@ -2309,6 +2433,15 @@ Return from XSUB, indicating number of items on the stack.  This is usually
 handled by C<xsubpp>.
 
 	void	XSRETURN(int nitems)
+
+=for hackers
+Found in file XSUB.h
+
+=item XSRETURN_EMPTY
+
+Return an empty list from an XSUB immediately.
+
+		XSRETURN_EMPTY;
 
 =for hackers
 Found in file XSUB.h
@@ -2551,6 +2684,19 @@ SV is B<not> incremented.
 =for hackers
 Found in file sv.c
 
+=item NEWSV
+
+Creates a new SV.  A non-zero C<len> parameter indicates the number of
+bytes of preallocated string space the SV should have.  An extra byte for a
+tailing NUL is also reserved.  (SvPOK is not set for the SV even if string
+space is allocated.)  The reference count for the new SV is set to 1.
+C<id> is an integer id between 0 and 1299 (used to identify leaks).
+
+	SV*	NEWSV(int id, STRLEN len)
+
+=for hackers
+Found in file handy.h
+
 =item newSV
 
 Create a new null SV, or if len > 0, create a new empty SVt_PV type SV
@@ -2608,7 +2754,7 @@ Found in file sv.c
 Creates a new SV and copies a string into it.  The reference count for the
 SV is set to 1.  Note that if C<len> is zero, Perl will create a zero length
 string.  You are responsible for ensuring that the source string is at least
-C<len> bytes long.
+C<len> bytes long.  If the C<s> argument is NULL the new SV will be undefined.
 
 	SV*	newSVpvn(const char* s, STRLEN len)
 
@@ -2725,7 +2871,7 @@ Found in file sv.h
 
 Returns a boolean indicating whether the SV contains a signed integer.
 
-	void	SvIOK_notUV(SV* sv)
+	bool	SvIOK_notUV(SV* sv)
 
 =for hackers
 Found in file sv.h
@@ -2770,7 +2916,7 @@ Found in file sv.h
 
 Returns a boolean indicating whether the SV contains an unsigned integer.
 
-	void	SvIOK_UV(SV* sv)
+	bool	SvIOK_UV(SV* sv)
 
 =for hackers
 Found in file sv.h
@@ -2921,16 +3067,6 @@ which guarantees to evaluate sv only once.
 =for hackers
 Found in file sv.h
 
-=item SvNVX
-
-Returns the raw value in the SV's NV slot, without checks or conversions.
-Only use when you are sure SvNOK is true. See also C<SvNV()>.
-
-	NV	SvNVX(SV* sv)
-
-=for hackers
-Found in file sv.h
-
 =item SvNVx
 
 Coerces the given SV to a double and returns it. Guarantees to evaluate
@@ -2941,9 +3077,20 @@ sv only once. Use the more efficient C<SvNV> otherwise.
 =for hackers
 Found in file sv.h
 
+=item SvNVX
+
+Returns the raw value in the SV's NV slot, without checks or conversions.
+Only use when you are sure SvNOK is true. See also C<SvNV()>.
+
+	NV	SvNVX(SV* sv)
+
+=for hackers
+Found in file sv.h
+
 =item SvOK
 
-Returns a boolean indicating whether the value is an SV.
+Returns a boolean indicating whether the value is an SV. It also tells
+whether the value is defined or not.
 
 	bool	SvOK(SV* sv)
 
@@ -3130,21 +3277,21 @@ Like C<SvPV_nolen>, but converts sv to utf8 first if necessary.
 =for hackers
 Found in file sv.h
 
-=item SvPVx
-
-A version of C<SvPV> which guarantees to evaluate sv only once.
-
-	char*	SvPVx(SV* sv, STRLEN len)
-
-=for hackers
-Found in file sv.h
-
 =item SvPVX
 
 Returns a pointer to the physical string in the SV.  The SV must contain a
 string.
 
 	char*	SvPVX(SV* sv)
+
+=for hackers
+Found in file sv.h
+
+=item SvPVx
+
+A version of C<SvPV> which guarantees to evaluate sv only once.
+
+	char*	SvPVx(SV* sv, STRLEN len)
 
 =for hackers
 Found in file sv.h
@@ -3315,17 +3462,6 @@ Returns the type of the SV.  See C<svtype>.
 =for hackers
 Found in file sv.h
 
-=item SvUNLOCK
-
-Releases a mutual exclusion lock on sv if a suitable module
-has been loaded.
-
-
-	void	SvUNLOCK(SV* sv)
-
-=for hackers
-Found in file sv.h
-
 =item SvUOK
 
 Returns a boolean indicating whether the SV contains an unsigned integer.
@@ -3349,7 +3485,7 @@ Found in file sv.h
 
 Returns a boolean indicating whether the SV contains UTF-8 encoded data.
 
-	void	SvUTF8(SV* sv)
+	bool	SvUTF8(SV* sv)
 
 =for hackers
 Found in file sv.h
@@ -3383,22 +3519,22 @@ for a version which guarantees to evaluate sv only once.
 =for hackers
 Found in file sv.h
 
-=item SvUVX
-
-Returns the raw value in the SV's UV slot, without checks or conversions.
-Only use when you are sure SvIOK is true. See also C<SvUV()>.
-
-	UV	SvUVX(SV* sv)
-
-=for hackers
-Found in file sv.h
-
 =item SvUVx
 
 Coerces the given SV to an unsigned integer and returns it. Guarantees to
 evaluate sv only once. Use the more efficient C<SvUV> otherwise.
 
 	UV	SvUVx(SV* sv)
+
+=for hackers
+Found in file sv.h
+
+=item SvUVX
+
+Returns the raw value in the SV's UV slot, without checks or conversions.
+Only use when you are sure SvIOK is true. See also C<SvUV()>.
+
+	UV	SvUVX(SV* sv)
 
 =for hackers
 Found in file sv.h
@@ -4269,7 +4405,8 @@ Found in file sv.c
 =item sv_setpvn
 
 Copies a string into an SV.  The C<len> parameter indicates the number of
-bytes to be copied.  Does not handle 'set' magic.  See C<sv_setpvn_mg>.
+bytes to be copied.  If the C<ptr> argument is NULL the SV will become
+undefined.  Does not handle 'set' magic.  See C<sv_setpvn_mg>.
 
 	void	sv_setpvn(SV* sv, const char* ptr, STRLEN len)
 
@@ -4544,9 +4681,11 @@ Found in file sv.c
 
 =item sv_utf8_decode
 
-Convert the octets in the PV from UTF-8 to chars. Scan for validity and then
-turn off SvUTF8 if needed so that we see characters. Used as a building block
-for decode_utf8 in Encode.xs
+If the PV of the SV is an octet sequence in UTF-8
+and contains a multiple-byte character, the C<SvUTF8> flag is turned on
+so that it looks like a character. If the PV contains only single-byte
+characters, the C<SvUTF8> flag stays being off.
+Scans PV for validity and returns false if the PV is invalid UTF-8.
 
 NOTE: this function is experimental and may change or be
 removed without notice.
@@ -4558,9 +4697,9 @@ Found in file sv.c
 
 =item sv_utf8_downgrade
 
-Attempt to convert the PV of an SV from UTF-8-encoded to byte encoding.
-This may not be possible if the PV contains non-byte encoding characters;
-if this is the case, either returns false or, if C<fail_ok> is not
+Attempts to convert the PV of an SV from characters to bytes.
+If the PV contains a character beyond byte, this conversion will fail;
+in this case, either returns false or, if C<fail_ok> is not
 true, croaks.
 
 This is not as a general purpose Unicode to byte encoding interface:
@@ -4576,9 +4715,8 @@ Found in file sv.c
 
 =item sv_utf8_encode
 
-Convert the PV of an SV to UTF-8-encoded, but then turn off the C<SvUTF8>
-flag so that it looks like octets again. Used as a building block
-for encode_utf8 in Encode.xs
+Converts the PV of an SV to UTF-8, but then turns the C<SvUTF8>
+flag off so that it looks like octets again.
 
 	void	sv_utf8_encode(SV *sv)
 
@@ -4587,7 +4725,7 @@ Found in file sv.c
 
 =item sv_utf8_upgrade
 
-Convert the PV of an SV to its UTF-8-encoded form.
+Converts the PV of an SV to its UTF-8-encoded form.
 Forces the SV to string form if it is not already.
 Always sets the SvUTF8 flag to avoid future validity checks even
 if all the bytes have hibit clear.
@@ -4602,7 +4740,7 @@ Found in file sv.c
 
 =item sv_utf8_upgrade_flags
 
-Convert the PV of an SV to its UTF-8-encoded form.
+Converts the PV of an SV to its UTF-8-encoded form.
 Forces the SV to string form if it is not already.
 Always sets the SvUTF8 flag to avoid future validity checks even
 if all the bytes have hibit clear. If C<flags> has C<SV_GMAGIC> bit set,
@@ -5220,16 +5358,6 @@ C<xsubpp>.
 =for hackers
 Found in file XSUB.h
 
-=item XSRETURN_EMPTY
-
-Return an empty list from an XSUB immediately.
-
-
-		XSRETURN_EMPTY;
-
-=for hackers
-Found in file XSUB.h
-
 =item XS_VERSION
 
 The version identifier for an XS module.  This is usually
@@ -5259,8 +5387,9 @@ Found in file XSUB.h
 =item croak
 
 This is the XSUB-writer's interface to Perl's C<die> function.
-Normally use this function the same way you use the C C<printf>
-function.  See C<warn>.
+Normally call this function the same way you call the C C<printf>
+function.  Calling C<croak> returns control directly to Perl,
+sidestepping the normal C order of execution. See C<warn>.
 
 If you want to throw an exception object, assign the object to
 C<$@> and then pass C<Nullch> to croak():
@@ -5276,9 +5405,8 @@ Found in file util.c
 
 =item warn
 
-This is the XSUB-writer's interface to Perl's C<warn> function.  Use this
-function the same way you use the C C<printf> function.  See
-C<croak>.
+This is the XSUB-writer's interface to Perl's C<warn> function.  Call this
+function the same way you call the C C<printf> function.  See C<croak>.
 
 	void	warn(const char* pat, ...)
 

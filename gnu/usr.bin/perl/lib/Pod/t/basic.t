@@ -16,6 +16,11 @@ BEGIN {
         unshift (@INC, '../blib/lib');
     }
     unshift (@INC, '../blib/lib');
+    require Config;
+    if (($Config::Config{'extensions'} !~ /\bPOSIX\b/) ){
+        print "1..0 # Skip -- Perl configured without POSIX module\n";
+        exit 0;
+    }
     $| = 1;
     print "1..11\n";
 }

@@ -31,7 +31,7 @@
 #
 #  -- .robin. <robin@kitsite.com>  2001-03-13
 
-print "1..41\n";
+print "1..43\n";
 
 my $ok;
 
@@ -944,3 +944,26 @@ TEST41: {
     $ok = 0;
 }
 print ($ok ? "ok 41\n" : "not ok 41\n");
+
+
+# [perl #27206] Memory leak in continue loop
+# Ensure that the temporary object is freed each time round the loop,
+# rather then all 10 of them all being freed right at the end
+
+{
+    my $n=10; my $late_free = 0;
+    sub X::DESTROY { $late_free++ if $n < 0 };
+    {
+	($n-- && bless {}, 'X') && redo;
+    }
+    print $late_free ? "not " : "", "ok 42 - redo memory leak\n";
+
+    $n = 10; $late_free = 0;
+    {
+	($n-- && bless {}, 'X') && redo;
+    }
+    continue { }
+    print $late_free ? "not " : "", "ok 43 - redo with continue memory leak\n";
+}
+
+

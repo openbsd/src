@@ -6,47 +6,40 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
+    require './test.pl';
 }
 
 use Config;
-print "1..10\n";
+plan(tests => 10);
 
-print "not " unless -d 'op';
-print "ok 1\n";
-
-print "not " unless -f 'TEST';
-print "ok 2\n";
-
-print "not " if -f 'op';
-print "ok 3\n";
-
-print "not " if -d 'TEST';
-print "ok 4\n";
-
-print "not " unless -r 'TEST';
-print "ok 5\n";
+ok( -d 'op' );
+ok( -f 'TEST' );
+ok( !-f 'op' );
+ok( !-d 'TEST' );
+ok( -r 'TEST' );
 
 # make sure TEST is r-x
-eval { chmod 0555, 'TEST' };
-$bad_chmod = $@;
+eval { chmod 0555, 'TEST' or die "chmod 0555, 'TEST' failed: $!" };
+chomp ($bad_chmod = $@);
 
 $oldeuid = $>;		# root can read and write anything
 eval '$> = 1';		# so switch uid (may not be implemented)
 
 print "# oldeuid = $oldeuid, euid = $>\n";
 
-if (!$Config{d_seteuid}) {
-    print "ok 6 #skipped, no seteuid\n";
-} 
-elsif ($Config{config_args} =~/Dmksymlinks/) {
-    print "ok 6 #skipped, we cannot chmod symlinks\n";
-}
-elsif ($bad_chmod) {
-    print "#[$@]\nok 6 #skipped\n";
-}
-else {
-    print "not " if -w 'TEST';
-    print "ok 6\n";
+SKIP: {
+    if (!$Config{d_seteuid}) {
+	skip('no seteuid');
+    } 
+    elsif ($Config{config_args} =~/Dmksymlinks/) {
+	skip('we cannot chmod symlinks');
+    }
+    elsif ($bad_chmod) {
+	skip( $bad_chmod );
+    }
+    else {
+	ok( !-w 'TEST' );
+    }
 }
 
 # Scripts are not -x everywhere so cannot test that.
@@ -55,20 +48,18 @@ eval '$> = $oldeuid';	# switch uid back (may not be implemented)
 
 # this would fail for the euid 1
 # (unless we have unpacked the source code as uid 1...)
-print "not " unless -r 'op';
-print "ok 7\n";
+ok( -r 'op' );
 
 # this would fail for the euid 1
 # (unless we have unpacked the source code as uid 1...)
-if ($Config{d_seteuid}) {
-    print "not " unless -w 'op';
-    print "ok 8\n";
-} else {
-    print "ok 8 #skipped, no seteuid\n";
+SKIP: {
+    if ($Config{d_seteuid}) {
+	ok( -w 'op' );
+    } else {
+	skip('no seteuid');
+    }
 }
 
-print "not " unless -x 'op'; # Hohum.  Are directories -x everywhere?
-print "ok 9\n";
+ok( -x 'op' ); # Hohum.  Are directories -x everywhere?
 
-print "not " unless "@{[grep -r, qw(foo io noo op zoo)]}" eq "io op";
-print "ok 10\n";
+is( "@{[grep -r, qw(foo io noo op zoo)]}", "io op" );

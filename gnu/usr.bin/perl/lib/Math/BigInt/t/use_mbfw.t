@@ -29,7 +29,7 @@ BEGIN
     }
   print "# INC = @INC\n";
 
-  plan tests => 3;
+  plan tests => 2;
   } 
 
 
@@ -41,12 +41,12 @@ BEGIN
 
 use Math::BigFloat with => 'Math::BigInt::Subclass', lib => 'BareCalc';
 
-ok (Math::BigFloat->config()->{with}, 'Math::BigInt::Subclass' );
+ok (Math::BigFloat->config()->{with}, 'Math::BigInt::BareCalc' );
 
-ok ($Math::BigInt::Subclass::lib, 'BareCalc' );
+# ok ($Math::BigInt::Subclass::lib, 'BareCalc' );
 
 # it never arrives here, but that is a design decision in SubClass
-ok (Math::BigInt->config->{lib}, 'Math::BigInt::Calc' );
+ok (Math::BigInt->config->{lib}, 'Math::BigInt::BareCalc' );
 
 # all tests done
 

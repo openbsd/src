@@ -42,7 +42,7 @@ if ($have_fork) {
 	if ($pid == 0) { # We are the kid, set up the timer.
 	    print "# Timer process $$\n";
 	    sleep($waitfor);
-	    warn "$0: Time's up!\n";
+	    warn "\n$0: overall time allowed for tests (${waitfor}s) exceeded\n";
 	    print "# Terminating the testing process\n";
 	    kill('TERM', getppid());
 	    print "# Timer process exiting\n";

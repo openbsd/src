@@ -1,5 +1,5 @@
 #
-# $Id: euc-kr.ucm,v 1.1 2003/04/24 17:43:16 dankogai Exp $
+# $Id: euc-kr.ucm,v 2.0 2004/05/16 20:55:24 dankogai Exp $
 #
 # ./compile -n euc-kr -o Encode/euc-kr.ucm Encode/euc-kr.enc
 <code_set_name> "euc-kr"

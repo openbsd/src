@@ -14,6 +14,14 @@ BEGIN {
     }
 }
 
+BEGIN {
+    unless (5.006001 <= $]) {
+	print "1..0 # skipped: Perl 5.6.1 or later".
+		" needed for this test\n";
+	exit;
+    }
+}
+
 #########################
 
 use Test;

@@ -1,17 +1,16 @@
-# PropList-4.0.0.txt
-# Date: 2003-03-20, 20:07:40 GMT [MD]
+# PropList-4.0.1.txt
+# Date: 2004-03-02, 02:42:40 GMT [MD]
 #
-# Unicode Character Database: Extended Properties
+# Unicode Character Database
+# Copyright (c) 1991-2004 Unicode, Inc.
+# For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see UCD.html
-# Note: Unassigned and Noncharacter codepoints may be omitted
-#       if they have default property values.
-# ================================================
 
 # ================================================
 
-0009..000D    ; White_Space # Cc   [5] <control>..<control>
+0009..000D    ; White_Space # Cc   [5] <control-0009>..<control-000D>
 0020          ; White_Space # Zs       SPACE
-0085          ; White_Space # Cc       <control>
+0085          ; White_Space # Cc       <control-0085>
 00A0          ; White_Space # Zs       NO-BREAK SPACE
 1680          ; White_Space # Zs       OGHAM SPACE MARK
 180E          ; White_Space # Zs       MONGOLIAN VOWEL SEPARATOR
@@ -112,6 +111,7 @@ FF63          ; Quotation_Mark # Pe       HALFWIDTH RIGHT CORNER BRACKET
 037E          ; Terminal_Punctuation # Po       GREEK QUESTION MARK
 0387          ; Terminal_Punctuation # Po       GREEK ANO TELEIA
 0589          ; Terminal_Punctuation # Po       ARMENIAN FULL STOP
+05C3          ; Terminal_Punctuation # Po       HEBREW PUNCTUATION SOF PASUQ
 060C          ; Terminal_Punctuation # Po       ARABIC COMMA
 061B          ; Terminal_Punctuation # Po       ARABIC SEMICOLON
 061F          ; Terminal_Punctuation # Po       ARABIC QUESTION MARK
@@ -120,6 +120,8 @@ FF63          ; Quotation_Mark # Pe       HALFWIDTH RIGHT CORNER BRACKET
 070C          ; Terminal_Punctuation # Po       SYRIAC HARKLEAN METOBELUS
 0964..0965    ; Terminal_Punctuation # Po   [2] DEVANAGARI DANDA..DEVANAGARI DOUBLE DANDA
 0E5A..0E5B    ; Terminal_Punctuation # Po   [2] THAI CHARACTER ANGKHANKHU..THAI CHARACTER KHOMUT
+0F08          ; Terminal_Punctuation # Po       TIBETAN MARK SBRUL SHAD
+0F0D..0F12    ; Terminal_Punctuation # Po   [6] TIBETAN MARK SHAD..TIBETAN MARK RGYA GRAM SHAD
 104A..104B    ; Terminal_Punctuation # Po   [2] MYANMAR SIGN LITTLE SECTION..MYANMAR SIGN SECTION
 1361..1368    ; Terminal_Punctuation # Po   [8] ETHIOPIC WORDSPACE..ETHIOPIC PARAGRAPH SEPARATOR
 166D..166E    ; Terminal_Punctuation # Po   [2] CANADIAN SYLLABICS CHI SIGN..CANADIAN SYLLABICS FULL STOP
@@ -142,63 +144,80 @@ FF1F          ; Terminal_Punctuation # Po       FULLWIDTH QUESTION MARK
 FF61          ; Terminal_Punctuation # Po       HALFWIDTH IDEOGRAPHIC FULL STOP
 FF64          ; Terminal_Punctuation # Po       HALFWIDTH IDEOGRAPHIC COMMA
 
-# Total code points: 78
+# Total code points: 86
 
 # ================================================
 
-0028          ; Other_Math # Ps       LEFT PARENTHESIS
-0029          ; Other_Math # Pe       RIGHT PARENTHESIS
-002A          ; Other_Math # Po       ASTERISK
-002D          ; Other_Math # Pd       HYPHEN-MINUS
-002F          ; Other_Math # Po       SOLIDUS
-005B          ; Other_Math # Ps       LEFT SQUARE BRACKET
-005C          ; Other_Math # Po       REVERSE SOLIDUS
-005D          ; Other_Math # Pe       RIGHT SQUARE BRACKET
 005E          ; Other_Math # Sk       CIRCUMFLEX ACCENT
-007B          ; Other_Math # Ps       LEFT CURLY BRACKET
-007D          ; Other_Math # Pe       RIGHT CURLY BRACKET
+03D0..03D2    ; Other_Math # L&   [3] GREEK BETA SYMBOL..GREEK UPSILON WITH HOOK SYMBOL
+03D5          ; Other_Math # L&       GREEK PHI SYMBOL
+03F0..03F1    ; Other_Math # L&   [2] GREEK KAPPA SYMBOL..GREEK RHO SYMBOL
+03F4..03F5    ; Other_Math # L&   [2] GREEK CAPITAL THETA SYMBOL..GREEK LUNATE EPSILON SYMBOL
 2016          ; Other_Math # Po       DOUBLE VERTICAL LINE
 2032..2034    ; Other_Math # Po   [3] PRIME..TRIPLE PRIME
+2040          ; Other_Math # Pc       CHARACTER TIE
+2061..2063    ; Other_Math # Cf   [3] FUNCTION APPLICATION..INVISIBLE SEPARATOR
 207D          ; Other_Math # Ps       SUPERSCRIPT LEFT PARENTHESIS
 207E          ; Other_Math # Pe       SUPERSCRIPT RIGHT PARENTHESIS
 208D          ; Other_Math # Ps       SUBSCRIPT LEFT PARENTHESIS
 208E          ; Other_Math # Pe       SUBSCRIPT RIGHT PARENTHESIS
 20D0..20DC    ; Other_Math # Mn  [13] COMBINING LEFT HARPOON ABOVE..COMBINING FOUR DOTS ABOVE
 20E1          ; Other_Math # Mn       COMBINING LEFT RIGHT ARROW ABOVE
+20E5..20E6    ; Other_Math # Mn   [2] COMBINING REVERSE SOLIDUS OVERLAY..COMBINING DOUBLE VERTICAL STROKE OVERLAY
 2102          ; Other_Math # L&       DOUBLE-STRUCK CAPITAL C
 210A..2113    ; Other_Math # L&  [10] SCRIPT SMALL G..SCRIPT SMALL L
 2115          ; Other_Math # L&       DOUBLE-STRUCK CAPITAL N
 2119..211D    ; Other_Math # L&   [5] DOUBLE-STRUCK CAPITAL P..DOUBLE-STRUCK CAPITAL R
 2124          ; Other_Math # L&       DOUBLE-STRUCK CAPITAL Z
 2128          ; Other_Math # L&       BLACK-LETTER CAPITAL Z
+2129          ; Other_Math # So       TURNED GREEK SMALL LETTER IOTA
 212C..212D    ; Other_Math # L&   [2] SCRIPT CAPITAL B..BLACK-LETTER CAPITAL C
 212F..2131    ; Other_Math # L&   [3] SCRIPT SMALL E..SCRIPT CAPITAL F
 2133..2134    ; Other_Math # L&   [2] SCRIPT CAPITAL M..SCRIPT SMALL O
 2135..2138    ; Other_Math # Lo   [4] ALEF SYMBOL..DALET SYMBOL
-FE35          ; Other_Math # Ps       PRESENTATION FORM FOR VERTICAL LEFT PARENTHESIS
-FE36          ; Other_Math # Pe       PRESENTATION FORM FOR VERTICAL RIGHT PARENTHESIS
-FE37          ; Other_Math # Ps       PRESENTATION FORM FOR VERTICAL LEFT CURLY BRACKET
-FE38          ; Other_Math # Pe       PRESENTATION FORM FOR VERTICAL RIGHT CURLY BRACKET
-FE47          ; Other_Math # Ps       PRESENTATION FORM FOR VERTICAL LEFT SQUARE BRACKET
-FE48          ; Other_Math # Pe       PRESENTATION FORM FOR VERTICAL RIGHT SQUARE BRACKET
-FE59          ; Other_Math # Ps       SMALL LEFT PARENTHESIS
-FE5A          ; Other_Math # Pe       SMALL RIGHT PARENTHESIS
-FE5B          ; Other_Math # Ps       SMALL LEFT CURLY BRACKET
-FE5C          ; Other_Math # Pe       SMALL RIGHT CURLY BRACKET
+213D..213F    ; Other_Math # L&   [3] DOUBLE-STRUCK SMALL GAMMA..DOUBLE-STRUCK CAPITAL PI
+2145..2149    ; Other_Math # L&   [5] DOUBLE-STRUCK ITALIC CAPITAL D..DOUBLE-STRUCK ITALIC SMALL J
+23B7          ; Other_Math # So       RADICAL SYMBOL BOTTOM
+23D0          ; Other_Math # So       VERTICAL LINE EXTENSION
+27E6          ; Other_Math # Ps       MATHEMATICAL LEFT WHITE SQUARE BRACKET
+27E7          ; Other_Math # Pe       MATHEMATICAL RIGHT WHITE SQUARE BRACKET
+27E8          ; Other_Math # Ps       MATHEMATICAL LEFT ANGLE BRACKET
+27E9          ; Other_Math # Pe       MATHEMATICAL RIGHT ANGLE BRACKET
+27EA          ; Other_Math # Ps       MATHEMATICAL LEFT DOUBLE ANGLE BRACKET
+27EB          ; Other_Math # Pe       MATHEMATICAL RIGHT DOUBLE ANGLE BRACKET
+2983          ; Other_Math # Ps       LEFT WHITE CURLY BRACKET
+2984          ; Other_Math # Pe       RIGHT WHITE CURLY BRACKET
+2985          ; Other_Math # Ps       LEFT WHITE PARENTHESIS
+2986          ; Other_Math # Pe       RIGHT WHITE PARENTHESIS
+2987          ; Other_Math # Ps       Z NOTATION LEFT IMAGE BRACKET
+2988          ; Other_Math # Pe       Z NOTATION RIGHT IMAGE BRACKET
+2989          ; Other_Math # Ps       Z NOTATION LEFT BINDING BRACKET
+298A          ; Other_Math # Pe       Z NOTATION RIGHT BINDING BRACKET
+298B          ; Other_Math # Ps       LEFT SQUARE BRACKET WITH UNDERBAR
+298C          ; Other_Math # Pe       RIGHT SQUARE BRACKET WITH UNDERBAR
+298D          ; Other_Math # Ps       LEFT SQUARE BRACKET WITH TICK IN TOP CORNER
+298E          ; Other_Math # Pe       RIGHT SQUARE BRACKET WITH TICK IN BOTTOM CORNER
+298F          ; Other_Math # Ps       LEFT SQUARE BRACKET WITH TICK IN BOTTOM CORNER
+2990          ; Other_Math # Pe       RIGHT SQUARE BRACKET WITH TICK IN TOP CORNER
+2991          ; Other_Math # Ps       LEFT ANGLE BRACKET WITH DOT
+2992          ; Other_Math # Pe       RIGHT ANGLE BRACKET WITH DOT
+2993          ; Other_Math # Ps       LEFT ARC LESS-THAN BRACKET
+2994          ; Other_Math # Pe       RIGHT ARC GREATER-THAN BRACKET
+2995          ; Other_Math # Ps       DOUBLE LEFT ARC GREATER-THAN BRACKET
+2996          ; Other_Math # Pe       DOUBLE RIGHT ARC LESS-THAN BRACKET
+2997          ; Other_Math # Ps       LEFT BLACK TORTOISE SHELL BRACKET
+2998          ; Other_Math # Pe       RIGHT BLACK TORTOISE SHELL BRACKET
+29D8          ; Other_Math # Ps       LEFT WIGGLY FENCE
+29D9          ; Other_Math # Pe       RIGHT WIGGLY FENCE
+29DA          ; Other_Math # Ps       LEFT DOUBLE WIGGLY FENCE
+29DB          ; Other_Math # Pe       RIGHT DOUBLE WIGGLY FENCE
+29FC          ; Other_Math # Ps       LEFT-POINTING CURVED ANGLE BRACKET
+29FD          ; Other_Math # Pe       RIGHT-POINTING CURVED ANGLE BRACKET
 FE61          ; Other_Math # Po       SMALL ASTERISK
 FE63          ; Other_Math # Pd       SMALL HYPHEN-MINUS
 FE68          ; Other_Math # Po       SMALL REVERSE SOLIDUS
-FF08          ; Other_Math # Ps       FULLWIDTH LEFT PARENTHESIS
-FF09          ; Other_Math # Pe       FULLWIDTH RIGHT PARENTHESIS
-FF0A          ; Other_Math # Po       FULLWIDTH ASTERISK
-FF0D          ; Other_Math # Pd       FULLWIDTH HYPHEN-MINUS
-FF0F          ; Other_Math # Po       FULLWIDTH SOLIDUS
-FF3B          ; Other_Math # Ps       FULLWIDTH LEFT SQUARE BRACKET
 FF3C          ; Other_Math # Po       FULLWIDTH REVERSE SOLIDUS
-FF3D          ; Other_Math # Pe       FULLWIDTH RIGHT SQUARE BRACKET
 FF3E          ; Other_Math # Sk       FULLWIDTH CIRCUMFLEX ACCENT
-FF5B          ; Other_Math # Ps       FULLWIDTH LEFT CURLY BRACKET
-FF5D          ; Other_Math # Pe       FULLWIDTH RIGHT CURLY BRACKET
 1D400..1D454  ; Other_Math # L&  [85] MATHEMATICAL BOLD CAPITAL A..MATHEMATICAL ITALIC SMALL G
 1D456..1D49C  ; Other_Math # L&  [71] MATHEMATICAL ITALIC SMALL I..MATHEMATICAL SCRIPT CAPITAL A
 1D49E..1D49F  ; Other_Math # L&   [2] MATHEMATICAL SCRIPT CAPITAL C..MATHEMATICAL SCRIPT CAPITAL D
@@ -231,7 +250,7 @@ FF5D          ; Other_Math # Pe       FULLWIDTH RIGHT CURLY BRACKET
 1D7C4..1D7C9  ; Other_Math # L&   [6] MATHEMATICAL SANS-SERIF BOLD ITALIC EPSILON SYMBOL..MATHEMATICAL SANS-SERIF BOLD ITALIC PI SYMBOL
 1D7CE..1D7FF  ; Other_Math # Nd  [50] MATHEMATICAL BOLD DIGIT ZERO..MATHEMATICAL MONOSPACE DIGIT NINE
 
-# Total code points: 1069
+# Total code points: 1099
 
 # ================================================
 
@@ -537,24 +556,24 @@ FF70          ; Extender # Lm       HALFWIDTH KATAKANA-HIRAGANA PROLONGED SOUND 
 
 # ================================================
 
-FDD0..FDEF    ; Noncharacter_Code_Point # Cn  [32] 
-FFFE..FFFF    ; Noncharacter_Code_Point # Cn   [2] 
-1FFFE..1FFFF  ; Noncharacter_Code_Point # Cn   [2] 
-2FFFE..2FFFF  ; Noncharacter_Code_Point # Cn   [2] 
-3FFFE..3FFFF  ; Noncharacter_Code_Point # Cn   [2] 
-4FFFE..4FFFF  ; Noncharacter_Code_Point # Cn   [2] 
-5FFFE..5FFFF  ; Noncharacter_Code_Point # Cn   [2] 
-6FFFE..6FFFF  ; Noncharacter_Code_Point # Cn   [2] 
-7FFFE..7FFFF  ; Noncharacter_Code_Point # Cn   [2] 
-8FFFE..8FFFF  ; Noncharacter_Code_Point # Cn   [2] 
-9FFFE..9FFFF  ; Noncharacter_Code_Point # Cn   [2] 
-AFFFE..AFFFF  ; Noncharacter_Code_Point # Cn   [2] 
-BFFFE..BFFFF  ; Noncharacter_Code_Point # Cn   [2] 
-CFFFE..CFFFF  ; Noncharacter_Code_Point # Cn   [2] 
-DFFFE..DFFFF  ; Noncharacter_Code_Point # Cn   [2] 
-EFFFE..EFFFF  ; Noncharacter_Code_Point # Cn   [2] 
-FFFFE..FFFFF  ; Noncharacter_Code_Point # Cn   [2] 
-10FFFE..10FFFF; Noncharacter_Code_Point # Cn   [2] 
+FDD0..FDEF    ; Noncharacter_Code_Point # Cn  [32] <noncharacter-FDD0>..<noncharacter-FDEF>
+FFFE..FFFF    ; Noncharacter_Code_Point # Cn   [2] <noncharacter-FFFE>..<noncharacter-FFFF>
+1FFFE..1FFFF  ; Noncharacter_Code_Point # Cn   [2] <noncharacter-1FFFE>..<noncharacter-1FFFF>
+2FFFE..2FFFF  ; Noncharacter_Code_Point # Cn   [2] <noncharacter-2FFFE>..<noncharacter-2FFFF>
+3FFFE..3FFFF  ; Noncharacter_Code_Point # Cn   [2] <noncharacter-3FFFE>..<noncharacter-3FFFF>
+4FFFE..4FFFF  ; Noncharacter_Code_Point # Cn   [2] <noncharacter-4FFFE>..<noncharacter-4FFFF>
+5FFFE..5FFFF  ; Noncharacter_Code_Point # Cn   [2] <noncharacter-5FFFE>..<noncharacter-5FFFF>
+6FFFE..6FFFF  ; Noncharacter_Code_Point # Cn   [2] <noncharacter-6FFFE>..<noncharacter-6FFFF>
+7FFFE..7FFFF  ; Noncharacter_Code_Point # Cn   [2] <noncharacter-7FFFE>..<noncharacter-7FFFF>
+8FFFE..8FFFF  ; Noncharacter_Code_Point # Cn   [2] <noncharacter-8FFFE>..<noncharacter-8FFFF>
+9FFFE..9FFFF  ; Noncharacter_Code_Point # Cn   [2] <noncharacter-9FFFE>..<noncharacter-9FFFF>
+AFFFE..AFFFF  ; Noncharacter_Code_Point # Cn   [2] <noncharacter-AFFFE>..<noncharacter-AFFFF>
+BFFFE..BFFFF  ; Noncharacter_Code_Point # Cn   [2] <noncharacter-BFFFE>..<noncharacter-BFFFF>
+CFFFE..CFFFF  ; Noncharacter_Code_Point # Cn   [2] <noncharacter-CFFFE>..<noncharacter-CFFFF>
+DFFFE..DFFFF  ; Noncharacter_Code_Point # Cn   [2] <noncharacter-DFFFE>..<noncharacter-DFFFF>
+EFFFE..EFFFF  ; Noncharacter_Code_Point # Cn   [2] <noncharacter-EFFFE>..<noncharacter-EFFFF>
+FFFFE..FFFFF  ; Noncharacter_Code_Point # Cn   [2] <noncharacter-FFFFE>..<noncharacter-FFFFF>
+10FFFE..10FFFF; Noncharacter_Code_Point # Cn   [2] <noncharacter-10FFFE>..<noncharacter-10FFFF>
 
 # Total code points: 66
 
@@ -572,10 +591,11 @@ FFFFE..FFFFF  ; Noncharacter_Code_Point # Cn   [2]
 0D57          ; Other_Grapheme_Extend # Mc       MALAYALAM AU LENGTH MARK
 0DCF          ; Other_Grapheme_Extend # Mc       SINHALA VOWEL SIGN AELA-PILLA
 0DDF          ; Other_Grapheme_Extend # Mc       SINHALA VOWEL SIGN GAYANUKITTA
+200C..200D    ; Other_Grapheme_Extend # Cf   [2] ZERO WIDTH NON-JOINER..ZERO WIDTH JOINER
 1D165         ; Other_Grapheme_Extend # Mc       MUSICAL SYMBOL COMBINING STEM
 1D16E..1D16F  ; Other_Grapheme_Extend # Mc   [2] MUSICAL SYMBOL COMBINING FLAG-1..MUSICAL SYMBOL COMBINING FLAG-2
 
-# Total code points: 16
+# Total code points: 18
 
 # ================================================
 
@@ -636,20 +656,17 @@ FA27..FA29    ; Unified_Ideograph # Lo   [3] CJK COMPATIBILITY IDEOGRAPH-FA27..C
 
 034F          ; Other_Default_Ignorable_Code_Point # Mn       COMBINING GRAPHEME JOINER
 115F..1160    ; Other_Default_Ignorable_Code_Point # Lo   [2] HANGUL CHOSEONG FILLER..HANGUL JUNGSEONG FILLER
-180B..180D    ; Other_Default_Ignorable_Code_Point # Mn   [3] MONGOLIAN FREE VARIATION SELECTOR ONE..MONGOLIAN FREE VARIATION SELECTOR THREE
-200B          ; Other_Default_Ignorable_Code_Point # Zs       ZERO WIDTH SPACE
-2064..2069    ; Other_Default_Ignorable_Code_Point # Cn   [6] 
+200B          ; Other_Default_Ignorable_Code_Point # Cf       ZERO WIDTH SPACE
+2064..2069    ; Other_Default_Ignorable_Code_Point # Cn   [6] <reserved-2064>..<reserved-2069>
 3164          ; Other_Default_Ignorable_Code_Point # Lo       HANGUL FILLER
-FE00..FE0F    ; Other_Default_Ignorable_Code_Point # Mn  [16] VARIATION SELECTOR-1..VARIATION SELECTOR-16
 FFA0          ; Other_Default_Ignorable_Code_Point # Lo       HALFWIDTH HANGUL FILLER
-FFF0..FFF8    ; Other_Default_Ignorable_Code_Point # Cn   [9] 
-E0000         ; Other_Default_Ignorable_Code_Point # Cn       
-E0002..E001F  ; Other_Default_Ignorable_Code_Point # Cn  [30] 
-E0080..E00FF  ; Other_Default_Ignorable_Code_Point # Cn [128] 
-E0100..E01EF  ; Other_Default_Ignorable_Code_Point # Mn [240] VARIATION SELECTOR-17..VARIATION SELECTOR-256
-E01F0..E0FFF  ; Other_Default_Ignorable_Code_Point # Cn [3600] 
+FFF0..FFF8    ; Other_Default_Ignorable_Code_Point # Cn   [9] <reserved-FFF0>..<reserved-FFF8>
+E0000         ; Other_Default_Ignorable_Code_Point # Cn       <reserved-E0000>
+E0002..E001F  ; Other_Default_Ignorable_Code_Point # Cn  [30] <reserved-E0002>..<reserved-E001F>
+E0080..E00FF  ; Other_Default_Ignorable_Code_Point # Cn [128] <reserved-E0080>..<reserved-E00FF>
+E01F0..E0FFF  ; Other_Default_Ignorable_Code_Point # Cn [3600] <reserved-E01F0>..<reserved-E0FFF>
 
-# Total code points: 4039
+# Total code points: 3780
 
 # ================================================
 
@@ -665,14 +682,31 @@ E01F0..E0FFF  ; Other_Default_Ignorable_Code_Point # Cn [3600]
 0069..006A    ; Soft_Dotted # L&   [2] LATIN SMALL LETTER I..LATIN SMALL LETTER J
 012F          ; Soft_Dotted # L&       LATIN SMALL LETTER I WITH OGONEK
 0268          ; Soft_Dotted # L&       LATIN SMALL LETTER I WITH STROKE
+029D          ; Soft_Dotted # L&       LATIN SMALL LETTER J WITH CROSSED-TAIL
+02B2          ; Soft_Dotted # Lm       MODIFIER LETTER SMALL J
+03F3          ; Soft_Dotted # L&       GREEK LETTER YOT
 0456          ; Soft_Dotted # L&       CYRILLIC SMALL LETTER BYELORUSSIAN-UKRAINIAN I
 0458          ; Soft_Dotted # L&       CYRILLIC SMALL LETTER JE
 1D62          ; Soft_Dotted # L&       LATIN SUBSCRIPT SMALL LETTER I
 1E2D          ; Soft_Dotted # L&       LATIN SMALL LETTER I WITH TILDE BELOW
 1ECB          ; Soft_Dotted # L&       LATIN SMALL LETTER I WITH DOT BELOW
 2071          ; Soft_Dotted # L&       SUPERSCRIPT LATIN SMALL LETTER I
+2148..2149    ; Soft_Dotted # L&   [2] DOUBLE-STRUCK ITALIC SMALL I..DOUBLE-STRUCK ITALIC SMALL J
+1D422..1D423  ; Soft_Dotted # L&   [2] MATHEMATICAL BOLD SMALL I..MATHEMATICAL BOLD SMALL J
+1D456..1D457  ; Soft_Dotted # L&   [2] MATHEMATICAL ITALIC SMALL I..MATHEMATICAL ITALIC SMALL J
+1D48A..1D48B  ; Soft_Dotted # L&   [2] MATHEMATICAL BOLD ITALIC SMALL I..MATHEMATICAL BOLD ITALIC SMALL J
+1D4BE..1D4BF  ; Soft_Dotted # L&   [2] MATHEMATICAL SCRIPT SMALL I..MATHEMATICAL SCRIPT SMALL J
+1D4F2..1D4F3  ; Soft_Dotted # L&   [2] MATHEMATICAL BOLD SCRIPT SMALL I..MATHEMATICAL BOLD SCRIPT SMALL J
+1D526..1D527  ; Soft_Dotted # L&   [2] MATHEMATICAL FRAKTUR SMALL I..MATHEMATICAL FRAKTUR SMALL J
+1D55A..1D55B  ; Soft_Dotted # L&   [2] MATHEMATICAL DOUBLE-STRUCK SMALL I..MATHEMATICAL DOUBLE-STRUCK SMALL J
+1D58E..1D58F  ; Soft_Dotted # L&   [2] MATHEMATICAL BOLD FRAKTUR SMALL I..MATHEMATICAL BOLD FRAKTUR SMALL J
+1D5C2..1D5C3  ; Soft_Dotted # L&   [2] MATHEMATICAL SANS-SERIF SMALL I..MATHEMATICAL SANS-SERIF SMALL J
+1D5F6..1D5F7  ; Soft_Dotted # L&   [2] MATHEMATICAL SANS-SERIF BOLD SMALL I..MATHEMATICAL SANS-SERIF BOLD SMALL J
+1D62A..1D62B  ; Soft_Dotted # L&   [2] MATHEMATICAL SANS-SERIF ITALIC SMALL I..MATHEMATICAL SANS-SERIF ITALIC SMALL J
+1D65E..1D65F  ; Soft_Dotted # L&   [2] MATHEMATICAL SANS-SERIF BOLD ITALIC SMALL I..MATHEMATICAL SANS-SERIF BOLD ITALIC SMALL J
+1D692..1D693  ; Soft_Dotted # L&   [2] MATHEMATICAL MONOSPACE SMALL I..MATHEMATICAL MONOSPACE SMALL J
 
-# Total code points: 10
+# Total code points: 41
 
 # ================================================
 
@@ -689,3 +723,41 @@ E01F0..E0FFF  ; Other_Default_Ignorable_Code_Point # Cn [3600]
 
 # Total code points: 4
 
+# ================================================
+
+0021          ; STerm # Po       EXCLAMATION MARK
+002E          ; STerm # Po       FULL STOP
+003F          ; STerm # Po       QUESTION MARK
+055C          ; STerm # Po       ARMENIAN EXCLAMATION MARK
+055E          ; STerm # Po       ARMENIAN QUESTION MARK
+0589          ; STerm # Po       ARMENIAN FULL STOP
+061F          ; STerm # Po       ARABIC QUESTION MARK
+06D4          ; STerm # Po       ARABIC FULL STOP
+0700..0702    ; STerm # Po   [3] SYRIAC END OF PARAGRAPH..SYRIAC SUBLINEAR FULL STOP
+0964..0965    ; STerm # Po   [2] DEVANAGARI DANDA..DEVANAGARI DOUBLE DANDA
+104A..104B    ; STerm # Po   [2] MYANMAR SIGN LITTLE SECTION..MYANMAR SIGN SECTION
+1362          ; STerm # Po       ETHIOPIC FULL STOP
+1367..1368    ; STerm # Po   [2] ETHIOPIC QUESTION MARK..ETHIOPIC PARAGRAPH SEPARATOR
+166E          ; STerm # Po       CANADIAN SYLLABICS FULL STOP
+1803          ; STerm # Po       MONGOLIAN FULL STOP
+1809          ; STerm # Po       MONGOLIAN MANCHU FULL STOP
+1944..1945    ; STerm # Po   [2] LIMBU EXCLAMATION MARK..LIMBU QUESTION MARK
+203C..203D    ; STerm # Po   [2] DOUBLE EXCLAMATION MARK..INTERROBANG
+2047..2049    ; STerm # Po   [3] DOUBLE QUESTION MARK..EXCLAMATION QUESTION MARK
+3002          ; STerm # Po       IDEOGRAPHIC FULL STOP
+FE52          ; STerm # Po       SMALL FULL STOP
+FE56..FE57    ; STerm # Po   [2] SMALL QUESTION MARK..SMALL EXCLAMATION MARK
+FF01          ; STerm # Po       FULLWIDTH EXCLAMATION MARK
+FF0E          ; STerm # Po       FULLWIDTH FULL STOP
+FF1F          ; STerm # Po       FULLWIDTH QUESTION MARK
+FF61          ; STerm # Po       HALFWIDTH IDEOGRAPHIC FULL STOP
+
+# Total code points: 36
+
+# ================================================
+
+180B..180D    ; Variation_Selector # Mn   [3] MONGOLIAN FREE VARIATION SELECTOR ONE..MONGOLIAN FREE VARIATION SELECTOR THREE
+FE00..FE0F    ; Variation_Selector # Mn  [16] VARIATION SELECTOR-1..VARIATION SELECTOR-16
+E0100..E01EF  ; Variation_Selector # Mn [240] VARIATION SELECTOR-17..VARIATION SELECTOR-256
+
+# Total code points: 259

@@ -31,12 +31,12 @@ BEGIN
     }
   print "# INC = @INC\n";
 
-  plan tests => 679 
+  plan tests => 684 
     + 23;		# own tests
   }
 
-use Math::BigInt 1.63;
-use Math::BigFloat 1.38;
+use Math::BigInt 1.70;
+use Math::BigFloat 1.43;
 
 use vars qw/$mbi $mbf/;
 
@@ -95,7 +95,6 @@ foreach my $class (qw/Math::BigInt Math::BigFloat/)
   $class->accuracy(undef);	# reset for further tests
   $class->precision(undef);
   }
-
 # bug with flog(Math::BigFloat,Math::BigInt)
 $x = Math::BigFloat->new(100);
 $x = $x->blog(Math::BigInt->new(10));

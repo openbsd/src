@@ -5,6 +5,11 @@
 BEGIN {
     chdir 't';
     @INC = '../lib';
+    require Config;
+    if (($Config::Config{'extensions'} !~ m!\bthreads/shared\b!) ){
+        print "1..0 # Skip -- Perl configured without threads::shared module\n";
+        exit 0;
+    }
 }
 
 # Can't use Test::More, it turns threads on.

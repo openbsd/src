@@ -28,7 +28,7 @@ BEGIN
     }
   print "# INC = @INC\n";
 
-  plan tests => 1772
+  plan tests => 1815
 	+ 1;
   }
 
@@ -38,6 +38,7 @@ use vars qw ($class $try $x $y $f @args $ans $ans1 $ans1_str $setup $CL);
 $class = "Math::BigFloat";
 $CL = "Math::BigInt::Calc";
 
-ok (Math::BigFloat->config()->{with}, 'Math::BigInt::Subclass');
+# the with argument is ignored
+ok (Math::BigFloat->config()->{with}, 'Math::BigInt::Calc');
 
 require 'bigfltpm.inc';	# all tests here for sharing

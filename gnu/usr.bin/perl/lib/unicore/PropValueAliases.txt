@@ -1,6 +1,10 @@
-# PropertyValueAliases-4.0.0.txt
-# Date: 2003-03-12, 23:46:08 GMT [MD]
+# PropertyValueAliases-4.0.1.txt
+# Date: 2004-03-02, 19:46:47 GMT [MD]
 #
+# Unicode Character Database
+# Copyright (c) 1991-2004 Unicode, Inc.
+# For terms of use, see http://www.unicode.org/terms_of_use.html
+# For documentation, see UCD.html
 # This file contains aliases for property values used in the UCD.
 # These names can be used for XML formats of UCD data, for regular-expression
 # property tests, and other programmatic textual descriptions of Unicode data.
@@ -12,11 +16,10 @@
 # FORMAT
 #
 # Each line describes a property value name.
-# This consists of three fields, separated by semicolons.
+# This consists of three or more fields, separated by semicolons.
 #
 # First Field: The first field describes the property for which that
 # property value name is used.
-# There is one special pseudo-property: "qc" stands for any quick-check property
 #
 # Second Field: The second field is an abbreviated name.
 # If there is no abbreviated name available, the field is marked with "n/a".
@@ -26,31 +29,43 @@
 # In the case of ccc, there are 4 fields. The second field is numeric, third
 # is abbreviated, and fourth is long.
 #
-# With loose matching of property names, the case distinctions, whitespace,
-# and '_' are ignored.
+# The above are the preferred aliases. Other aliases may be listed in additional fields.
 #
-# NOTE: Currently there is at most one abbreviated name and one long name for
-# property value. However, in the future additional aliases may be added.
-# In such a case, the first line for the property value would have
-# the preferred alias for output.
+# Loose matching should be applied to all property names and property values, with
+# the exception of String Property values. With loose matching of property names and
+# values, the case distinctions, whitespace, and '_' are ignored. For Numeric Property
+# values, numeric equivalencies are applied: thus "01.00" is equivalent to "1".
 #
-# NOTE: The property value names are NOT unique across properties, especially
-# with loose matches. For example:
+# NOTE: Property value names are NOT unique across properties. For example:
 #
-# AL means Arabic Letter for the Bidi_Class property, and
-# AL means Alpha_Left for the Combining_Class property, and
-# AL means Alphabetic for the Line_Break property.
+#   AL means Arabic Letter for the Bidi_Class property, and
+#   AL means Alpha_Left for the Combining_Class property, and
+#   AL means Alphabetic for the Line_Break property.
 #
 # In addition, some property names may be the same as some property value names.
 # For example:
 #
-#   cc means Combining_Class property, and
-#   cc means the General_Category property value Control (cc)
+#   sc means the Script property, and
+#   Sc means the General_Category property value Currency_Symbol (Sc)
 #
 # The combination of property value and property name is, however, unique.
-# For more information, see UTR #18: Regular Expression Guidelines
+#
+# For more information, see UTS #18: Regular Expression Guidelines
 # ================================================
 
+
+# Age (age)
+
+age; n/a       ; 1.1
+age; n/a       ; 2.0
+age; n/a       ; 2.1
+age; n/a       ; 3.0
+age; n/a       ; 3.1
+age; n/a       ; 3.2
+age; n/a       ; 4.0
+age; n/a       ; unassigned
+
+# Bidi_Class (bc)
 
 bc ; AL        ; Arabic_Letter
 bc ; AN        ; Arabic_Number
@@ -71,6 +86,8 @@ bc ; RLE       ; Right_To_Left_Embedding
 bc ; RLO       ; Right_To_Left_Override
 bc ; S         ; Segment_Separator
 bc ; WS        ; White_Space
+
+# Block (blk)
 
 blk; n/a       ; Aegean_Numbers
 blk; n/a       ; Alphabetic_Presentation_Forms
@@ -105,7 +122,7 @@ blk; n/a       ; Control_Pictures
 blk; n/a       ; Currency_Symbols
 blk; n/a       ; Cypriot_Syllabary
 blk; n/a       ; Cyrillic
-blk; n/a       ; Cyrillic_Supplementary
+blk; n/a       ; Cyrillic_Supplement              ; Cyrillic_Supplementary
 blk; n/a       ; Deseret
 blk; n/a       ; Devanagari
 blk; n/a       ; Dingbats
@@ -139,10 +156,10 @@ blk; n/a       ; Katakana_Phonetic_Extensions
 blk; n/a       ; Khmer
 blk; n/a       ; Khmer_Symbols
 blk; n/a       ; Lao
-blk; n/a       ; Latin_Extended_Additional
+blk; n/a       ; Latin-1_Supplement
 blk; n/a       ; Latin_Extended-A
 blk; n/a       ; Latin_Extended-B
-blk; n/a       ; Latin-1_Supplement
+blk; n/a       ; Latin_Extended_Additional
 blk; n/a       ; Letterlike_Symbols
 blk; n/a       ; Limbu
 blk; n/a       ; Linear_B_Ideograms
@@ -199,8 +216,14 @@ blk; n/a       ; Yi_Radicals
 blk; n/a       ; Yi_Syllables
 blk; n/a       ; Yijing_Hexagram_Symbols
 
+# Canonical_Combining_Class (ccc)
+
 ccc;   0; NR   ; Not_Reordered
 ccc;   1; OV   ; Overlay
+ccc;   7; NK   ; Nukta
+ccc;   8; KV   ; Kana_Voicing
+ccc;   9; VR   ; Virama
+ccc; 200; ATBL ; Attached_Below_Left
 ccc; 202; ATB  ; Attached_Below
 ccc; 216; ATAR ; Attached_Above_Right
 ccc; 218; BL   ; Below_Left
@@ -214,28 +237,29 @@ ccc; 232; AR   ; Above_Right
 ccc; 233; DB   ; Double_Below
 ccc; 234; DA   ; Double_Above
 ccc; 240; IS   ; Iota_Subscript
-ccc;   7; NK   ; Nukta
-ccc;   8; KV   ; Kana_Voicing
-ccc;   9; VR   ; Virama
 
-dt ; can       ; canonical
-dt ; com       ; compat
-dt ; enc       ; circle
-dt ; fin       ; final
-dt ; font      ; font
-dt ; fra       ; fraction
-dt ; init      ; initial
-dt ; iso       ; isolated
-dt ; med       ; medial
-dt ; n/a       ; none
-dt ; nar       ; narrow
-dt ; nb        ; noBreak
-dt ; sml       ; small
-dt ; sqr       ; square
-dt ; sub       ; sub
-dt ; sup       ; super
-dt ; vert      ; vertical
-dt ; wide      ; wide
+# Decomposition_Type (dt)
+
+dt ; can       ; Canonical
+dt ; com       ; Compat
+dt ; enc       ; Circle
+dt ; fin       ; Final
+dt ; font      ; Font
+dt ; fra       ; Fraction
+dt ; init      ; Initial
+dt ; iso       ; Isolated
+dt ; med       ; Medial
+dt ; nar       ; Narrow
+dt ; nb        ; Nobreak
+dt ; none      ; None
+dt ; sml       ; Small
+dt ; sqr       ; Square
+dt ; sub       ; Sub
+dt ; sup       ; Super
+dt ; vert      ; Vertical
+dt ; wide      ; Wide
+
+# East_Asian_Width (ea)
 
 ea ; A         ; Ambiguous
 ea ; F         ; Fullwidth
@@ -243,6 +267,8 @@ ea ; H         ; Halfwidth
 ea ; N         ; Neutral
 ea ; Na        ; Narrow
 ea ; W         ; Wide
+
+# General_Category (gc)
 
 gc ; C         ; Other                            # Cc | Cf | Cn | Co | Cs
 gc ; Cc        ; Control
@@ -283,6 +309,8 @@ gc ; Zl        ; Line_Separator
 gc ; Zp        ; Paragraph_Separator
 gc ; Zs        ; Space_Separator
 
+# Hangul_Syllable_Type (hst)
+
 hst; L         ; Leading_Jamo
 hst; LV        ; LV_Syllable
 hst; LVT       ; LVT_Syllable
@@ -290,60 +318,64 @@ hst; NA        ; Not_Applicable
 hst; T         ; Trailing_Jamo
 hst; V         ; Vowel_Jamo
 
-jg ; n/a       ; AIN
-jg ; n/a       ; ALAPH
-jg ; n/a       ; ALEF
-jg ; n/a       ; BEH
-jg ; n/a       ; BETH
-jg ; n/a       ; DAL
-jg ; n/a       ; DALATH_RISH
+# Joining_Group (jg)
+
+jg ; n/a       ; Ain
+jg ; n/a       ; Alaph
+jg ; n/a       ; Alef
+jg ; n/a       ; Beh
+jg ; n/a       ; Beth
+jg ; n/a       ; Dal
+jg ; n/a       ; Dalath_Rish
 jg ; n/a       ; E
-jg ; n/a       ; FE
-jg ; n/a       ; FEH
-jg ; n/a       ; FINAL_SEMKATH
-jg ; n/a       ; GAF
-jg ; n/a       ; GAMAL
-jg ; n/a       ; HAH
-jg ; n/a       ; HAMZA_ON_HEH_GOAL
-jg ; n/a       ; HE
-jg ; n/a       ; HEH
-jg ; n/a       ; HEH_GOAL
-jg ; n/a       ; HETH
-jg ; n/a       ; KAF
-jg ; n/a       ; KAPH
-jg ; n/a       ; KHAPH
-jg ; n/a       ; KNOTTED_HEH
-jg ; n/a       ; LAM
-jg ; n/a       ; LAMADH
-jg ; n/a       ; MEEM
-jg ; n/a       ; MIM
-jg ; n/a       ; NO_JOINING_GROUP
-jg ; n/a       ; NOON
-jg ; n/a       ; NUN
-jg ; n/a       ; PE
-jg ; n/a       ; QAF
-jg ; n/a       ; QAPH
-jg ; n/a       ; REH
-jg ; n/a       ; REVERSED_PE
-jg ; n/a       ; SAD
-jg ; n/a       ; SADHE
-jg ; n/a       ; SEEN
-jg ; n/a       ; SEMKATH
-jg ; n/a       ; SHIN
-jg ; n/a       ; SWASH_KAF
-jg ; n/a       ; SYRIAC_WAW
-jg ; n/a       ; TAH
-jg ; n/a       ; TAW
-jg ; n/a       ; TEH_MARBUTA
-jg ; n/a       ; TETH
-jg ; n/a       ; WAW
-jg ; n/a       ; YEH
-jg ; n/a       ; YEH_BARREE
-jg ; n/a       ; YEH_WITH_TAIL
-jg ; n/a       ; YUDH
-jg ; n/a       ; YUDH_HE
-jg ; n/a       ; ZAIN
-jg ; n/a       ; ZHAIN
+jg ; n/a       ; Fe
+jg ; n/a       ; Feh
+jg ; n/a       ; Final_Semkath
+jg ; n/a       ; Gaf
+jg ; n/a       ; Gamal
+jg ; n/a       ; Hah
+jg ; n/a       ; Hamza_On_Heh_Goal
+jg ; n/a       ; He
+jg ; n/a       ; Heh
+jg ; n/a       ; Heh_Goal
+jg ; n/a       ; Heth
+jg ; n/a       ; Kaf
+jg ; n/a       ; Kaph
+jg ; n/a       ; Khaph
+jg ; n/a       ; Knotted_Heh
+jg ; n/a       ; Lam
+jg ; n/a       ; Lamadh
+jg ; n/a       ; Meem
+jg ; n/a       ; Mim
+jg ; n/a       ; No_Joining_Group
+jg ; n/a       ; Noon
+jg ; n/a       ; Nun
+jg ; n/a       ; Pe
+jg ; n/a       ; Qaf
+jg ; n/a       ; Qaph
+jg ; n/a       ; Reh
+jg ; n/a       ; Reversed_Pe
+jg ; n/a       ; Sad
+jg ; n/a       ; Sadhe
+jg ; n/a       ; Seen
+jg ; n/a       ; Semkath
+jg ; n/a       ; Shin
+jg ; n/a       ; Swash_Kaf
+jg ; n/a       ; Syriac_Waw
+jg ; n/a       ; Tah
+jg ; n/a       ; Taw
+jg ; n/a       ; Teh_Marbuta
+jg ; n/a       ; Teth
+jg ; n/a       ; Waw
+jg ; n/a       ; Yeh
+jg ; n/a       ; Yeh_Barree
+jg ; n/a       ; Yeh_With_Tail
+jg ; n/a       ; Yudh
+jg ; n/a       ; Yudh_He
+jg ; n/a       ; Zain
+jg ; n/a       ; Zhain
+
+# Joining_Type (jt)
 
 jt ; C         ; Join_Causing
 jt ; D         ; Dual_Joining
@@ -351,6 +383,8 @@ jt ; L         ; Left_Joining
 jt ; R         ; Right_Joining
 jt ; T         ; Transparent
 jt ; U         ; Non_Joining
+
+# Line_Break (lb)
 
 lb ; AI        ; Ambiguous
 lb ; AL        ; Alphabetic
@@ -366,7 +400,7 @@ lb ; EX        ; Exclamation
 lb ; GL        ; Glue
 lb ; HY        ; Hyphen
 lb ; ID        ; Ideographic
-lb ; IN        ; Inseperable
+lb ; IN        ; Inseparable                      ; Inseperable
 lb ; IS        ; Infix_Numeric
 lb ; LF        ; Line_Feed
 lb ; NL        ; Next_Line
@@ -384,14 +418,36 @@ lb ; WJ        ; Word_Joiner
 lb ; XX        ; Unknown
 lb ; ZW        ; ZWSpace
 
-nt ; de        ; Decimal
-nt ; di        ; Digit
-nt ; n/a       ; None
-nt ; nu        ; Numeric
+# NFC_Quick_Check (NFC_QC)
 
-qc ; M         ; Maybe
-qc ; N         ; No
-qc ; Y         ; Yes
+NFC_QC; M      ; Maybe
+NFC_QC; N      ; No
+NFC_QC; Y      ; Yes
+
+# NFD_Quick_Check (NFD_QC)
+
+NFD_QC; N      ; No
+NFD_QC; Y      ; Yes
+
+# NFKC_Quick_Check (NFKC_QC)
+
+NFKC_QC; M     ; Maybe
+NFKC_QC; N     ; No
+NFKC_QC; Y     ; Yes
+
+# NFKD_Quick_Check (NFKD_QC)
+
+NFKD_QC; N     ; No
+NFKD_QC; Y     ; Yes
+
+# Numeric_Type (nt)
+
+nt ; De        ; Decimal
+nt ; Di        ; Digit
+nt ; None      ; None
+nt ; Nu        ; Numeric
+
+# Script (sc)
 
 sc ; Arab      ; Arabic
 sc ; Armn      ; Armenian
@@ -416,6 +472,7 @@ sc ; Hani      ; Han
 sc ; Hano      ; Hanunoo
 sc ; Hebr      ; Hebrew
 sc ; Hira      ; Hiragana
+sc ; Hrkt      ; Katakana_Or_Hiragana
 sc ; Ital      ; Old_Italic
 sc ; Kana      ; Katakana
 sc ; Khmr      ; Khmer

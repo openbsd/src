@@ -299,7 +299,7 @@ Split prior to checking whether obsolete files get deleted
 use AutoLoader 'AUTOLOAD';
 1;
 __END__
-sub obsolete {my $a if 0; return $a++;}
+sub obsolete {our $hidden_a; return $hidden_a++;}
 sub gonner {warn "This gonner function should never get called"}
 ## Get
 AutoSplitting *INC**PATHSEP**MOD*.pm (*DIR**PATHSEP**MOD**ENDPATHSEP*)

@@ -13,7 +13,7 @@ use Carp;
 
 no warnings 'utf8';
 
-our $VERSION = '0.28';
+our $VERSION = '0.30';
 our $PACKAGE = __PACKAGE__;
 
 require Exporter;
@@ -117,6 +117,8 @@ Unicode::Normalize - Unicode Normalization Forms
 
 =head1 SYNOPSIS
 
+(1) using function names exported by default:
+
   use Unicode::Normalize;
 
   $NFD_string  = NFD($string);  # Normalization Form D
@@ -124,7 +126,7 @@ Unicode::Normalize - Unicode Normalization Forms
   $NFKD_string = NFKD($string); # Normalization Form KD
   $NFKC_string = NFKC($string); # Normalization Form KC
 
-   or
+(2) using function names exported on request:
 
   use Unicode::Normalize 'normalize';
 
@@ -382,11 +384,11 @@ C<normalize> and other some functions: on request.
 
 =head1 AUTHOR
 
-SADAHIRO Tomoyuki, <SADAHIRO@cpan.org>
+SADAHIRO Tomoyuki <SADAHIRO@cpan.org>
 
   http://homepage1.nifty.com/nomenclator/perl/
 
-  Copyright(C) 2001-2003, SADAHIRO Tomoyuki. Japan. All rights reserved.
+  Copyright(C) 2001-2004, SADAHIRO Tomoyuki. Japan. All rights reserved.
 
   This module is free software; you can redistribute it
   and/or modify it under the same terms as Perl itself.

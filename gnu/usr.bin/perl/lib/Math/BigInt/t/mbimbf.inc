@@ -264,9 +264,9 @@ foreach my $c ($mbi,$mbf)
   ok ($c->bpow(2,16),65536);
   ok ($c->bpow(2,$c->new(16)),65536);
 
-#  ok ($c->new(2**15)->brsft(1),2**14);
-#  ok ($c->brsft(2**15,1),2**14);
-#  ok ($c->brsft(2**15,$c->new(1)),2**14);
+  ok ($c->new(2**15)->brsft(1),2**14);
+  ok ($c->brsft(2**15,1),2**14);
+  ok ($c->brsft(2**15,$c->new(1)),2**14);
 
   ok ($c->new(2**13)->blsft(1),2**14);
   ok ($c->blsft(2**13,1),2**14);
@@ -544,6 +544,17 @@ $x = $mbf->new('12340'); $x->bfround(2); ok ($x,'12340');
 $x = $mbi->new('1234'); $x->accuracy(3); $x->bfround(-2);
 ok_undef ($x->{_a});
 
+# test that bfround() and bround() work with large numbers
+
+$x = $mbf->new(1)->bdiv(5678,undef,-63);
+ok ($x, '0.000176118351532229658330398027474462839027826699542092286016203');
+
+$x = $mbf->new(1)->bdiv(5678,undef,-90);
+ok ($x, '0.000176118351532229658330398027474462839027826699542092286016202888340965128566396618527651');
+
+$x = $mbf->new(1)->bdiv(5678,80);
+ok ($x, '0.00017611835153222965833039802747446283902782669954209228601620288834096512856639662');
+
 ###############################################################################
 # rounding with already set precision/accuracy
 
@@ -565,8 +576,9 @@ ok ($x->{_a},2);
 # mantissa/exponent format and A/P
 $x = $mbf->new('12345.678'); $x->accuracy(4);
 ok ($x,'12350'); ok ($x->{_a},4); ok_undef ($x->{_p});
-ok_undef ($x->{_m}->{_a}); ok_undef ($x->{_e}->{_a});
-ok_undef ($x->{_m}->{_p}); ok_undef ($x->{_e}->{_p});
+
+#ok_undef ($x->{_m}->{_a}); ok_undef ($x->{_e}->{_a});
+#ok_undef ($x->{_m}->{_p}); ok_undef ($x->{_e}->{_p});
 
 # check for no A/P in case of fallback
 # result
@@ -792,7 +804,7 @@ while (<DATA>)
   
   $try .= "\$x->$f(\$y);";
   
-  #  print "trying $try\n";
+  # print "trying $try\n";
   $rc = eval $try;
   # convert hex/binary targets to decimal
   if ($ans =~ /^(0x0x|0b0b)/)

@@ -336,18 +336,6 @@ sub encodeTest
             print "not ";
 	}
 
-	if (ord('A') != 193) { # perl versions broken on EBCDIC
-	    # Try the old Perl versions too
-	    if ($encoded ne MIME::Base64::old_encode_base64($plain, '')) {
-		print "old_encode_base64 give different result.\n";
-		print "not ";
-	    }
-	    if ($plain ne MIME::Base64::old_decode_base64($encoded)) {
-		print "old_decode_base64 give different result.\n";
-		print "not ";
-	    }
-	}
-		
 	print "ok $testno\n";
 	$testno++;
     }

@@ -382,6 +382,10 @@ delete @ENV{qw(IFS CDPATH ENV BASH_ENV)};
 
 if (-x "/usr/bin/locale" && open(LOCALES, "/usr/bin/locale -a 2>/dev/null|")) {
     while (<LOCALES>) {
+	# It seems that /usr/bin/locale steadfastly outputs 8 bit data, which
+	# ain't great when we're running this testPERL_UNICODE= so that utf8
+	# locales will cause all IO hadles to default to (assume) utf8
+	next unless utf8::valid($_);
         chomp;
 	trylocale($_);
     }

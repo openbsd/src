@@ -69,7 +69,7 @@ sub heavy_export {
 	    $cache_is_current = 1;
 	}
 
-	if ($imports[0] =~ m#^[/!:]#){
+	if (grep m{^[/!:]}, @imports) {
 	    my $tagsref = \%{"${pkg}::EXPORT_TAGS"};
 	    my $tagdata;
 	    my %imports;

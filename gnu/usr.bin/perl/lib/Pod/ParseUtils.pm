@@ -10,7 +10,7 @@
 package Pod::ParseUtils;
 
 use vars qw($VERSION);
-$VERSION = 0.30;   ## Current version of this package
+$VERSION = 1.20;   ## Current version of this package
 require  5.005;    ## requires this Perl version or later
 
 =head1 NAME
@@ -396,7 +396,7 @@ sub parse {
     if($page =~ /[(]\w*[)]$/) {
         $self->warning("(section) in '$page' deprecated");
     }
-    if(!$quoted && $node =~ m:[|/]:) {
+    if(!$quoted && $node =~ m:[|/]: && $type ne 'hyperlink') {
         $self->warning("node '$node' contains non-escaped | or /");
     }
     if($alttext =~ m:[|/]:) {

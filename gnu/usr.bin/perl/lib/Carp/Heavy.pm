@@ -3,7 +3,7 @@ package Carp;
 
 =head1 NAME
 
-Carp heavy machinery - no user serviceable parts inside
+Carp::Heavy - heavy machinery, no user serviceable parts inside
 
 =cut
 
@@ -34,7 +34,7 @@ sub caller_info {
       push @args, '...';
     }
     # Push the args onto the subroutine
-    $sub_name .= '(' . join (',', @args) . ')';
+    $sub_name .= '(' . join (', ', @args) . ')';
   }
   $call_info{sub_name} = $sub_name;
   return wantarray() ? %call_info : \%call_info;
@@ -138,13 +138,8 @@ sub ret_backtrace {
     $tid_msg = " thread $tid" if $tid;
   }
 
-  { if ($err =~ /\n$/) {	# extra block to localise $1 etc
-    $mess = $err;
-  }
-  else {
-    my %i = caller_info($i);
-    $mess = "$err at $i{file} line $i{line}$tid_msg\n";
-  }}
+  my %i = caller_info($i);
+  $mess = "$err at $i{file} line $i{line}$tid_msg\n";
 
   while (my %i = caller_info(++$i)) {
       $mess .= "\t$i{sub_name} called at $i{file} line $i{line}$tid_msg\n";
@@ -155,7 +150,6 @@ sub ret_backtrace {
 
 sub ret_summary {
   my ($i, @error) = @_;
-  my $mess;
   my $err = join '', @error;
   $i++;
 

@@ -14,6 +14,14 @@ BEGIN {
     }
 }
 
+BEGIN {
+    unless (5.006001 <= $]) {
+	print "1..0 # skipped: Perl 5.6.1 or later".
+		" needed for this test\n";
+	exit;
+    }
+}
+
 #########################
 
 use strict;
@@ -26,11 +34,8 @@ print "ok 1\n";
 
 no warnings qw(utf8);
 
-our $a = "\x{3042}"; # 3-byte length (in UTF-8/UTF-EBCDIC)
-{
-    use bytes;
-    substr($a,1,length($a), ''); # remove trailing octets
-}
+# U+3042 is 3-byte length (in UTF-8/UTF-EBCDIC)
+our $a = pack 'U0C', unpack 'C', "\x{3042}";
 
 print NFD($a) eq "\0"
    ? "ok" : "not ok", " 2\n";

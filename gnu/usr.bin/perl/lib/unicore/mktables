@@ -1,23 +1,33 @@
 #!/usr/bin/perl -w
+require 5.008;	# Needs pack "U". Probably safest to run on 5.8.x
 use strict;
 use Carp;
-
-die "$0: Please run me as ./mktables to avoid unnecessary differences\n"
-    unless $0 eq "./mktables";
+use File::Spec;
 
 ##
 ## mktables -- create the runtime Perl Unicode files (lib/unicore/**/*.pl)
 ## from the Unicode database files (lib/unicore/*.txt).
 ##
 
-mkdir("lib", 0755);
-mkdir("To",  0755);
+## "Fuzzy" means this section in Unicode TR18:
+##
+##    The recommended names for UCD properties and property values are in
+##    PropertyAliases.txt [Prop] and PropertyValueAliases.txt
+##    [PropValue]. There are both abbreviated names and longer, more
+##    descriptive names. It is strongly recommended that both names be
+##    recognized, and that loose matching of property names be used,
+##    whereby the case distinctions, whitespace, hyphens, and underbar
+##    are ignored.
+
+## Base names already used in lib/gc_sc (for avoiding 8.3 conflicts)
+my %BaseNames;
 
 ##
 ## Process any args.
 ##
 my $Verbose        = 0;
 my $MakeTestScript = 0;
+my $AlwaysWrite    = 0;
 
 while (@ARGV)
 {
@@ -26,11 +36,22 @@ while (@ARGV)
         $Verbose = 1;
     } elsif ($arg eq '-q') {
         $Verbose = 0;
+    } elsif ($arg eq '-w') {
+        $AlwaysWrite = 1;	# update the files even if they havent changed
     } elsif ($arg eq '-maketest') {
         $MakeTestScript = 1;
+    } elsif ($arg eq '-C' && defined (my $dir = shift)) {
+	chdir $dir or die "chdir $_: $!";
     } else {
-        die "usage: $0 [-v|-q] [-maketest]";
+        die "usage: $0 [-v|-q|-C dir] [-maketest]";
     }
+}
+
+foreach my $lib ('To', 'lib',
+		 map {File::Spec->catdir("lib",$_)}
+		 qw(gc_sc dt bc hst ea jt lb nt ccc)) {
+  next if -d $lib;
+  mkdir $lib, 0755 or die "mkdir '$lib': $!";
 }
 
 my $LastUnicodeCodepoint = 0x10FFFF; # As of Unicode 3.1.1.
@@ -42,15 +63,26 @@ my $HEADER=<<"EOF";
 
 EOF
 
+sub force_unlink {
+    my $filename = shift;
+    return unless -e $filename;
+    return if CORE::unlink($filename);
+    # We might need write permission
+    chmod 0777, $filename;
+    CORE::unlink($filename) or die "Couldn't unlink $filename: $!\n";
+}
 
 ##
 ## Given a filename and a reference to an array of lines,
 ## write the lines to the file only if the contents have not changed.
+## Filename can be given as an arrayref of directory names
 ##
 sub WriteIfChanged($\@)
 {
     my $file  = shift;
     my $lines = shift;
+
+    $file = File::Spec->catfile(@$file) if ref $file;
 
     my $TextToWrite = join '', @$lines;
     if (open IN, $file) {
@@ -59,9 +91,10 @@ sub WriteIfChanged($\@)
         close IN;
         if ($PreviousText eq $TextToWrite) {
             print "$file unchanged.\n" if $Verbose;
-            return;
+            return unless $AlwaysWrite;
         }
     }
+    force_unlink ($file);
     if (not open OUT, ">$file") {
         die "$0: can't open $file for output: $!\n";
     }
@@ -108,6 +141,88 @@ sub CanonicalName($)
     $CanonicalToOrig{$name} = $orig if not $CanonicalToOrig{$name};
     return $name;
 }
+
+
+##
+## Store the alias definitions for later use.
+##
+my %PropertyAlias;
+my %PropValueAlias;
+
+my %PA_reverse;
+my %PVA_reverse;
+
+sub Build_Aliases()
+{
+    ##
+    ## Most of the work with aliases doesn't occur here,
+    ## but rather in utf8_heavy.pl, which uses PVA.pl,
+
+    # Placate the warnings about used only once. (They are used again, but
+    # via a typeglob lookup)
+    %utf8::PropertyAlias = ();
+    %utf8::PA_reverse = ();
+    %utf8::PropValueAlias = ();
+    %utf8::PVA_reverse = ();
+    %utf8::PVA_abbr_map = ();
+
+    open PA, "< PropertyAliases.txt"
+	or confess "Can't open PropertyAliases.txt: $!";
+    while (<PA>) {
+	s/#.*//;
+	s/\s+$//;
+	next if /^$/;
+
+	my ($abbrev, $name) = split /\s*;\s*/;
+        next if $abbrev eq "n/a";
+	$PropertyAlias{$abbrev} = $name;
+        $PA_reverse{$name} = $abbrev;
+
+	# The %utf8::... versions use japhy's code originally from utf8_pva.pl
+	# However, it's moved here so that we build the tables at runtime.
+	tr/ _-//d for $abbrev, $name;
+	$utf8::PropertyAlias{lc $abbrev} = $name;
+	$utf8::PA_reverse{lc $name} = $abbrev;
+    }
+    close PA;
+
+    open PVA, "< PropValueAliases.txt"
+	or confess "Can't open PropValueAliases.txt: $!";
+    while (<PVA>) {
+	s/#.*//;
+	s/\s+$//;
+	next if /^$/;
+
+	my ($prop, @data) = split /\s*;\s*/;
+
+	if ($prop eq 'ccc') {
+	    $PropValueAlias{$prop}{$data[1]} = [ @data[0,2] ];
+	    $PVA_reverse{$prop}{$data[2]} = [ @data[0,1] ];
+	}
+	else {
+            next if $data[0] eq "n/a";
+	    $PropValueAlias{$prop}{$data[0]} = $data[1];
+            $PVA_reverse{$prop}{$data[1]} = $data[0];
+	}
+
+	shift @data if $prop eq 'ccc';
+	next if $data[0] eq "n/a";
+
+	$data[1] =~ tr/ _-//d;
+	$utf8::PropValueAlias{$prop}{lc $data[0]} = $data[1];
+	$utf8::PVA_reverse{$prop}{lc $data[1]} = $data[0];
+
+	my $abbr_class = ($prop eq 'gc' or $prop eq 'sc') ? 'gc_sc' : $prop;
+	$utf8::PVA_abbr_map{$abbr_class}{lc $data[0]} = $data[0];
+    }
+    close PVA;
+
+    # backwards compatibility for L& -> LC
+    $utf8::PropValueAlias{gc}{'l&'} = $utf8::PropValueAlias{gc}{lc};
+    $utf8::PVA_abbr_map{gc_sc}{'l&'} = $utf8::PVA_abbr_map{gc_sc}{lc};
+
+}
+
 
 ##
 ## Associates a property ("Greek", "Lu", "Assigned",...) with a Table.
@@ -390,6 +505,7 @@ sub Table::Merge
 ##
 ## Given a filename, write a representation of the Table to a file.
 ## May have an optional comment as a 2nd arg.
+## Filename may actually be an arrayref of directories
 ##
 sub Table::Write
 {
@@ -511,7 +627,7 @@ sub New_Alias($$$@)
         if ($TableInfo{$Type}->{$CName}) {
             confess "$0: Use canonical form '$CName' instead of '$Name' for alias.";
         } else {
-            confess "$0: don't have orignial $Type => $Name to make alias";
+            confess "$0: don't have original $Type => $Name to make alias\n";
         }
     }
     if ($TableInfo{$Alias}) {
@@ -535,6 +651,33 @@ my $General  = Table->New(); ## all characters, grouped by category
 my %General;
 my %Cat;
 
+## Simple Data::Dumper alike. Good enough for our needs. We can't use the real
+## thing as we have to run under miniperl
+sub simple_dumper {
+    my @lines;
+    my $item;
+    foreach $item (@_) {
+	if (ref $item) {
+	    if (ref $item eq 'ARRAY') {
+		push @lines, "[\n", simple_dumper (@$item), "],\n";
+	    } elsif (ref $item eq 'HASH') {
+		push @lines, "{\n", simple_dumper (%$item), "},\n";
+	    } else {
+		die "Can't cope with $item";
+	    }
+	} else {
+	    if (defined $item) {
+		my $copy = $item;
+		$copy =~ s/([\'\\])/\\$1/gs;
+		push @lines, "'$copy',\n";
+	    } else {
+		push @lines, "undef,\n";
+	    }
+	}
+    }
+    @lines;
+}
+
 ##
 ## Process UnicodeData.txt (Categories, etc.)
 ##
@@ -544,19 +687,15 @@ sub UnicodeData_Txt()
     my $Deco     = Table->New();
     my $Comb     = Table->New();
     my $Number   = Table->New();
-    my $Mirrored = Table->New(Is    => 'Mirrored',
-                              Desc  => "Mirrored in bidirectional text",
-                              Fuzzy => 0);
+    my $Mirrored = Table->New();#Is    => 'Mirrored',
+                              #Desc  => "Mirrored in bidirectional text",
+                              #Fuzzy => 0);
 
     my %DC;
     my %Bidi;
-    my %Deco;
-    $Deco{Canon}   = Table->New(Is    => 'Canon',
-                                Desc  => 'Decomposes to multiple characters',
-                                Fuzzy => 0);
-    $Deco{Compat}  = Table->New(Is    => 'Compat',
-                                Desc  => 'Compatible with a more-basic character',
-                                Fuzzy => 0);
+    my %Number;
+    $DC{can} = Table->New();
+    $DC{com} = Table->New();
 
     ## Initialize Perl-generated categories
     ## (Categories from UnicodeData.txt are auto-initialized in gencat)
@@ -757,11 +896,17 @@ sub UnicodeData_Txt()
             $Comb->Append($code, $comb) if $comb;
             $Number->Append($code, $number) if length $number;
 
+	    length($decimal) and ($Number{De} ||= Table->New())->Append($code)
+	      or
+	    length($digit)   and ($Number{Di} ||= Table->New())->Append($code)
+	      or
+	    length($number)  and ($Number{Nu} ||= Table->New())->Append($code);
+
             $Mirrored->Append($code) if $mirrored eq "Y";
 
-            $Bidi{$bidi} ||= Table->New(Is    => "Bidi$bidi",
-                                        Desc  => "Bi-directional category '$bidi'",
-                                        Fuzzy => 0);
+            $Bidi{$bidi} ||= Table->New();#Is    => "bt/$bidi",
+                                        #Desc  => "Bi-directional category '$bidi'",
+                                        #Fuzzy => 0);
             $Bidi{$bidi}->Append($code);
 
             if ($deco)
@@ -769,16 +914,15 @@ sub UnicodeData_Txt()
                 $Deco->Append($code, $deco);
                 if ($deco =~/^<(\w+)>/)
                 {
-                    $Deco{Compat}->Append($code);
+		    my $dshort = $PVA_reverse{dt}{ucfirst lc $1};
+                    $DC{com}->Append($code);
 
-                    $DC{$1} ||= Table->New(Is => "DC$1",
-                                           Desc  => "Compatible with '$1'",
-                                           Fuzzy => 0);
-                    $DC{$1}->Append($code);
+                    $DC{$dshort} ||= Table->New();
+                    $DC{$dshort}->Append($code);
                 }
                 else
                 {
-                    $Deco{Canon}->Append($code);
+                    $DC{can}->Append($code);
                 }
             }
         }
@@ -801,8 +945,9 @@ sub UnicodeData_Txt()
     $Cat{C}->Replace($Cat{C}->Merge($Cat{Cn}));  ## Now merge in Cn into C
 
 
-    # L& is Ll, Lu, and Lt.
-    New_Prop(Is => 'L&',
+    # LC is Ll, Lu, and Lt.
+    # (used to be L& or L_, but PropValueAliases.txt defines it as LC)
+    New_Prop(Is => 'LC',
              Table->Merge(@Cat{qw[Ll Lu Lt]}),
              Desc  => '[\p{Ll}\p{Lu}\p{Lt}]',
              Fuzzy => 0);
@@ -868,14 +1013,61 @@ sub UnicodeData_Txt()
     ## Now dump the files.
     ##
     $Name->Write("Name.pl");
-    $Bidi->Write("Bidirectional.pl");
+
+    {
+	my @PVA = $HEADER;
+	foreach my $name (qw (PropertyAlias PA_reverse PropValueAlias
+			      PVA_reverse PVA_abbr_map)) {
+	    # Should I really jump through typeglob hoops just to avoid a
+	    # symbolic reference? (%{"utf8::$name})
+	    push @PVA, "\n", "\%utf8::$name = (\n",
+		simple_dumper (%{$utf8::{$name}}), ");\n";
+	}
+	WriteIfChanged("PVA.pl", @PVA);
+    }
+
+    # $Bidi->Write("Bidirectional.pl");
+    for (keys %Bidi) {
+	$Bidi{$_}->Write(
+	    ["lib","bc","$_.pl"],
+	    "BidiClass category '$PropValueAlias{bc}{$_}'"
+	);
+    }
+
     $Comb->Write("CombiningClass.pl");
+    for (keys %{ $PropValueAlias{ccc} }) {
+	my ($code, $name) = @{ $PropValueAlias{ccc}{$_} };
+	(my $c = Table->New())->Append($code);
+	$c->Write(
+	    ["lib","ccc","$_.pl"],
+	    "CombiningClass category '$name'"
+	);
+    }
+
     $Deco->Write("Decomposition.pl");
-    $Number->Write("Number.pl");
-    $General->Write("Category.pl");
+    for (keys %DC) {
+	$DC{$_}->Write(
+	    ["lib","dt","$_.pl"],
+	    "DecompositionType category '$PropValueAlias{dt}{$_}'"
+	);
+    }
+
+    # $Number->Write("Number.pl");
+    for (keys %Number) {
+	$Number{$_}->Write(
+	    ["lib","nt","$_.pl"],
+	    "NumericType category '$PropValueAlias{nt}{$_}'"
+	);
+    }
+
+    # $General->Write("Category.pl");
 
     for my $to (sort keys %To) {
-        $To{$to}->Write("To/$to.pl");
+        $To{$to}->Write(["To","$to.pl"]);
+    }
+
+    for (keys %{ $PropValueAlias{gc} }) {
+	New_Alias(Is => $PropValueAlias{gc}{$_}, SameAs => $_, Fuzzy => 1);
     }
 }
 
@@ -899,9 +1091,7 @@ sub LineBreak_Txt()
 
 	$Lbrk->Append($first, $lbrk);
 
-        $Lbrk{$lbrk} ||= Table->New(Is    => "Lbrk$lbrk",
-                                    Desc  => "Linebreak category '$lbrk'",
-                                    Fuzzy => 0);
+        $Lbrk{$lbrk} ||= Table->New();
         $Lbrk{$lbrk}->Append($first);
 
 	if ($last) {
@@ -911,7 +1101,15 @@ sub LineBreak_Txt()
     }
     close IN;
 
-    $Lbrk->Write("Lbrk.pl");
+    # $Lbrk->Write("Lbrk.pl");
+
+
+    for (keys %Lbrk) {
+	$Lbrk{$_}->Write(
+	    ["lib","lb","$_.pl"],
+	    "Linebreak category '$PropValueAlias{lb}{$_}'"
+	);
+    }
 }
 
 ##
@@ -926,6 +1124,8 @@ sub ArabicShaping_txt()
     my $ArabLink      = Table->New();
     my $ArabLinkGroup = Table->New();
 
+    my %JoinType;
+
     while (<IN>)
     {
 	next unless /^[0-9A-Fa-f]+;/;
@@ -935,11 +1135,86 @@ sub ArabicShaping_txt()
         my $code = hex($hexcode);
 	$ArabLink->Append($code, $link);
 	$ArabLinkGroup->Append($code, $linkgroup);
+
+        $JoinType{$link} ||= Table->New(Is => "JoinType$link");
+        $JoinType{$link}->Append($code);
     }
     close IN;
 
-    $ArabLink->Write("ArabLink.pl");
-    $ArabLinkGroup->Write("ArabLnkGrp.pl");
+    # $ArabLink->Write("ArabLink.pl");
+    # $ArabLinkGroup->Write("ArabLnkGrp.pl");
+
+
+    for (keys %JoinType) {
+	$JoinType{$_}->Write(
+	    ["lib","jt","$_.pl"],
+	    "JoiningType category '$PropValueAlias{jt}{$_}'"
+	);
+    }
+}
+
+##
+## Process EastAsianWidth.txt.
+##
+sub EastAsianWidth_txt()
+{
+    if (not open IN, "EastAsianWidth.txt") {
+        die "$0: EastAsianWidth.txt: $!\n";
+    }
+
+    my %EAW;
+
+    while (<IN>)
+    {
+	next unless /^[0-9A-Fa-f]+;/;
+	s/#.*//;
+	s/\s+$//;
+
+	my ($hexcode, $pv) = split(/\s*;\s*/);
+        my $code = hex($hexcode);
+        $EAW{$pv} ||= Table->New(Is => "EastAsianWidth$pv");
+        $EAW{$pv}->Append($code);
+    }
+    close IN;
+
+
+    for (keys %EAW) {
+	$EAW{$_}->Write(
+	    ["lib","ea","$_.pl"],
+	    "EastAsianWidth category '$PropValueAlias{ea}{$_}'"
+	);
+    }
+}
+
+##
+## Process HangulSyllableType.txt.
+##
+sub HangulSyllableType_txt()
+{
+    if (not open IN, "HangulSyllableType.txt") {
+        die "$0: HangulSyllableType.txt: $!\n";
+    }
+
+    my %HST;
+
+    while (<IN>)
+    {
+        next unless /^([0-9A-Fa-f]+)(?:\.\.([0-9A-Fa-f]+))?\s*;\s*(\w+)/;
+	my ($first, $last, $pv) = (hex($1), hex($2||""), $3);
+
+        $HST{$pv} ||= Table->New(Is => "HangulSyllableType$pv");
+        $HST{$pv}->Append($first);
+
+	if ($last) { $HST{$pv}->Extend($last) }
+    }
+    close IN;
+
+    for (keys %HST) {
+	$HST{$_}->Write(
+	    ["lib","hst","$_.pl"],
+	    "HangulSyllableType category '$PropValueAlias{hst}{$_}'"
+	);
+    }
 }
 
 ##
@@ -960,7 +1235,7 @@ sub Jamo_txt()
 	$Short->Append($code, $short);
     }
     close IN;
-    $Short->Write("JamoShort.pl");
+    # $Short->Write("JamoShort.pl");
 }
 
 ##
@@ -1003,7 +1278,7 @@ sub Scripts_txt()
         }
     }
 
-    $Scripts->Write("Scripts.pl");
+    # $Scripts->Write("Scripts.pl");
 
     ## Common is everything not explicitly assigned to a Script
     ##
@@ -1064,7 +1339,7 @@ sub Blocks_txt()
     }
     close IN;
 
-    $Blocks->Write("Blocks.pl");
+    # $Blocks->Write("Blocks.pl");
 }
 
 ##
@@ -1112,6 +1387,16 @@ sub PropList_txt()
         }
     }
 
+    for (keys %Prop) {
+	(my $file = $PA_reverse{$_}) =~ tr/_//d;
+	# XXX I'm assuming that the names from %Prop don't suffer 8.3 clashes.
+	$BaseNames{lc $file}++;
+	$Prop{$_}->Write(
+	    ["lib","gc_sc","$file.pl"],
+	    "Binary property '$_'"
+	);
+    }
+
     # Alphabetic is L and Other_Alphabetic.
     New_Prop(Is    => 'Alphabetic',
              Table->Merge($Cat{L}, $Prop{Other_Alphabetic}),
@@ -1147,65 +1432,6 @@ sub PropList_txt()
              Table->Merge(@Cat{qw[Ll Lu Lt Lm Lo Nl Mn Mc Nd Pc ]}),
              Desc  => '[\p{ID_Start}\p{Mn}\p{Mc}\p{Nd}\p{Pc}]',
              Fuzzy => 1);
-}
-
-sub Make_GC_Aliases()
-{
-    ##
-    ## The mapping from General Category long forms to short forms is
-    ## currently hardwired here since no simple data file in the UCD
-    ## seems to do that.  Unicode 3.2 will assumedly correct this.
-    ##
-    my %Is = (
-	'Letter'			=>	'L',
-	'Uppercase_Letter'		=>	'Lu',
-	'Lowercase_Letter'		=>	'Ll',
-	'Titlecase_Letter'		=>	'Lt',
-	'Modifier_Letter'		=>	'Lm',
-	'Other_Letter'			=>	'Lo',
-
-	'Mark'				=>	'M',
-	'Non_Spacing_Mark'		=>	'Mn',
-	'Spacing_Mark'			=>	'Mc',
-	'Enclosing_Mark'		=>	'Me',
-
-	'Separator'			=>	'Z',
-	'Space_Separator'		=>	'Zs',
-	'Line_Separator'		=>	'Zl',
-	'Paragraph_Separator'		=>	'Zp',
-
-	'Number'			=>	'N',
-	'Decimal_Number'		=>	'Nd',
-	'Letter_Number'			=>	'Nl',
-	'Other_Number'			=>	'No',
-
-	'Punctuation'			=>	'P',
-	'Connector_Punctuation'		=>	'Pc',
-	'Dash_Punctuation'		=>	'Pd',
-	'Open_Punctuation'		=>	'Ps',
-	'Close_Punctuation'		=>	'Pe',
-	'Initial_Punctuation'		=>	'Pi',
-	'Final_Punctuation'		=>	'Pf',
-	'Other_Punctuation'		=>	'Po',
-
-	'Symbol'			=>	'S',
-	'Math_Symbol'			=>	'Sm',
-	'Currency_Symbol'		=>	'Sc',
-	'Modifier_Symbol'		=>	'Sk',
-	'Other_Symbol'			=>	'So',
-
-	'Other'				=>	'C',
-	'Control'			=>	'Cc',
-	'Format'			=>	'Cf',
-	'Surrogate'			=>	'Cs',
-	'Private Use'			=>	'Co',
-	'Unassigned'			=>	'Cn',
-    );
-
-    ## make the aliases....
-    while (my ($Alias, $Name) = each %Is) {
-        New_Alias(Is => $Alias, SameAs => $Name, Fuzzy => 1);
-    }
 }
 
 
@@ -1311,6 +1537,7 @@ sub RandomlyFuzzifyName($;$)
 sub MakePropTestScript()
 {
     ## this written directly -- it's huge.
+    force_unlink ("TestProp.pl");
     if (not open OUT, ">TestProp.pl") {
         die "$0: TestProp.pl: $!\n";
     }
@@ -1413,8 +1640,6 @@ sub WriteAllMappings()
 {
     my @MAP;
 
-    my %BaseNames;  ## Base names already used (for avoiding 8.3 conflicts)
-
     ## 'Is' *MUST* come first, so its names have precidence over 'In's
     for my $Type ('Is', 'In')
     {
@@ -1430,7 +1655,9 @@ sub WriteAllMappings()
             my $filename;
             {
                 ## 'Is' items lose 'Is' from the basename.
-                $filename = $Type eq 'Is' ? $Name : "$Type$Name";
+                $filename = $Type eq 'Is' ?
+		    ($PVA_reverse{sc}{$Name} || $Name) :
+		    "$Type$Name";
 
                 $filename =~ s/[^\w_]+/_/g; # "L&" -> "L_"
                 substr($filename, 8) = '' if length($filename) > 8;
@@ -1503,7 +1730,7 @@ sub WriteAllMappings()
             ##
             ## Okay, write the file...
             ##
-            $Table->Write("lib/$filename.pl", $Comment);
+            $Table->Write(["lib","gc_sc","$filename.pl"], $Comment);
 
             ## and register it
             $RawNameToFile{$Name} = $filename;
@@ -1567,10 +1794,11 @@ sub WriteAllMappings()
                    "##\n",
                    "## Data in this file used by ../utf8_heavy.pl\n",
                    "##\n\n",
-                   "## Mapping from name to filename in ./lib\n",
+                   "## Mapping from name to filename in ./lib/gc_sc\n",
                    "%utf8::Exact = (\n",
                   );
 
+	$Exact{InGreek} = 'InGreekA';  # this is evil kludge
         for my $Name (sort keys %Exact)
         {
             my $File = $Exact{$Name};
@@ -1658,16 +1886,18 @@ sub SpecialCasing_txt()
     {
         my $NormalCase = do "To/$case.pl" || die "$0: $@\n";
 
-        my @OUT = (
-                   $HEADER, "\n",
-                   "%utf8::ToSpec$case =\n(\n",
-                   );
+        my @OUT =
+	    (
+	     $HEADER, "\n",
+	     "# The key UTF-8 _bytes_, the value UTF-8 (speed hack)\n",
+	     "%utf8::ToSpec$case =\n(\n",
+	    );
 
         for my $prop (sort { $a->[0] <=> $b->[0] } @{$CaseInfo{$case}}) {
             my ($ix, $code, $to) = @$prop;
             my $tostr =
               join "", map { sprintf "\\x{%s}", $_ } split ' ', $to;
-            push @OUT, sprintf qq['%04X' => "$tostr",\n], $ix;
+            push @OUT, sprintf qq["%s" => "$tostr",\n], join("", map { sprintf "\\x%02X", $_ } unpack("U0C*", pack("U", $ix)));
 	    # Remove any single-character mappings for
 	    # the same character since we are going for
 	    # the special casing rules.
@@ -1679,7 +1909,7 @@ sub SpecialCasing_txt()
                     $NormalCase,
                     "END\n"
                     );
-        WriteIfChanged("To/$case.pl", @OUT);
+        WriteIfChanged(["To","$case.pl"], @OUT);
     }
 }
 
@@ -1719,14 +1949,16 @@ sub CaseFolding_txt()
     #
     my $CommonFold = do "To/Fold.pl" || die "$0: To/Fold.pl: $!\n";
 
-    my @OUT = (
-               $HEADER, "\n",
-               "%utf8::ToSpecFold =\n(\n",
-              );
+    my @OUT =
+	(
+	 $HEADER, "\n",
+	 "#  The ke UTF-8 _bytes_, the value UTF-8 (speed hack)\n",
+	 "%utf8::ToSpecFold =\n(\n",
+	);
     for my $code (sort { $a <=> $b } keys %Fold) {
         my $foldstr =
           join "", map { sprintf "\\x{%s}", $_ } split ' ', $Fold{$code};
-        push @OUT, sprintf qq['%04X' => "$foldstr",\n], $code;
+        push @OUT, sprintf qq["%s" => "$foldstr",\n], join("", map { sprintf "\\x%02X", $_ } unpack("U0C*", pack("U", $code)));
     }
     push @OUT, (
                 ");\n\n",
@@ -1735,13 +1967,13 @@ sub CaseFolding_txt()
                 "END\n",
                );
 
-    WriteIfChanged("To/Fold.pl", @OUT);
+    WriteIfChanged(["To","Fold.pl"], @OUT);
 }
 
 ## Do it....
 
+Build_Aliases();
 UnicodeData_Txt();
-Make_GC_Aliases();
 PropList_txt();
 
 Scripts_txt();
@@ -1751,6 +1983,8 @@ WriteAllMappings();
 
 LineBreak_Txt();
 ArabicShaping_txt();
+EastAsianWidth_txt();
+HangulSyllableType_txt();
 Jamo_txt();
 SpecialCasing_txt();
 CaseFolding_txt();

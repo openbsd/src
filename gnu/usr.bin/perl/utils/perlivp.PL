@@ -123,7 +123,7 @@ my \$ivp_VERSION = $];
 
 !GROK!THIS!
 print OUT <<'!NO!SUBS!';
-if ($ivp_VERSION == $]) {
+if ($ivp_VERSION eq $]) {
     print "## Perl version `$]' appears installed as expected.\n" if $opt{'v'};
     print "ok 2\n";
     $pass__total++;

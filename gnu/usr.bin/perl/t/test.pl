@@ -235,21 +235,18 @@ sub within ($$$@) {
 }
 
 # Note: this isn't quite as fancy as Test::More::like().
-sub like ($$@) {
-    my ($got, $expected, $name, @mess) = @_;
+
+sub like   ($$@) { like_yn (0,@_) }; # 0 for -
+sub unlike ($$@) { like_yn (1,@_) }; # 1 for un-
+
+sub like_yn ($$$@) {
+    my ($flip, $got, $expected, $name, @mess) = @_;
     my $pass;
-    if (ref $expected eq 'Regexp') {
-	$pass = $got =~ $expected;
-	unless ($pass) {
-	    unshift(@mess, "#      got '$got'\n",
-		           "# expected /$expected/\n");
-	}
-    } else {
-	$pass = $got =~ /$expected/;
-	unless ($pass) {
-	    unshift(@mess, "#      got '$got'\n",
-		           "# expected /$expected/\n");
-	}
+    $pass = $got =~ /$expected/ if !$flip;
+    $pass = $got !~ /$expected/ if $flip;
+    unless ($pass) {
+	unshift(@mess, "#      got '$got'\n",
+		"# expected /$expected/\n");
     }
     _ok($pass, _where(), $name, @mess);
 }

@@ -23,7 +23,9 @@ use Config;
 use File::Basename;
 
 use vars qw(@ISA $VERSION);
-$VERSION = '2.06';
+# Has same version as blead, but differs. Must resync when next CPAN release
+# of MM is merged from blead to maint
+$VERSION = '2.07_02';
 
 require ExtUtils::MM_Win32;
 @ISA = qw(ExtUtils::MM_Win32);
@@ -32,9 +34,9 @@ use ExtUtils::MakeMaker qw( &neatvalue );
 
 $ENV{EMXSHELL} = 'sh'; # to run `commands`
 
-my $BORLAND  = 1 if $Config{'cc'} =~ /^bcc/i;
-my $GCC      = 1 if $Config{'cc'} =~ /^gcc/i;
-my $DMAKE    = 1 if $Config{'make'} =~ /^dmake/i;
+my $BORLAND  = $Config{'cc'} =~ /^bcc/i;
+my $GCC      = $Config{'cc'} =~ /^gcc/i;
+my $DMAKE    = $Config{'make'} =~ /^dmake/i;
 
 
 =item os_flavor

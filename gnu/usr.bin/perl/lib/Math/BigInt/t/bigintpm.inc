@@ -810,6 +810,10 @@ acmpNaN:acmpNaN:
 -inf:123:1
 +inf:-123:1
 -inf:-123:1
+123:-inf:-1
+-123:inf:-1
+-123:-inf:-1
+123:inf:-1
 # return undef
 +inf:NaN:
 NaN:inf:
@@ -1679,6 +1683,13 @@ abc:1:abc:NaN
 111111111111111111111111111111:111111111111111111111111111111:0
 12345678901234567890:12345678901234567890:0
 &bgcd
+inf:12:NaN
+-inf:12:NaN
+12:inf:NaN
+12:-inf:NaN
+inf:inf:NaN
+inf:-inf:NaN
+-inf:-inf:NaN
 abc:abc:NaN
 abc:+0:NaN
 +0:abc:NaN
@@ -1689,6 +1700,10 @@ abc:+0:NaN
 +2:+3:1
 +3:+2:1
 -3:+2:1
+-3:-2:1
+-144:-60:12
+144:-60:12
+144:60:12
 100:625:25
 4096:81:1
 1034:804:2
@@ -1713,12 +1728,16 @@ abc:0:NaN
 +281474976710656:0:0
 +281474976710656:1:0
 +281474976710656:+281474976710656:281474976710656
+281474976710656:-1:281474976710656
 -2:-3:-4
 -1:-1:-1
 -6:-6:-6
 -7:-4:-8
 -7:4:0
 -4:7:4
+# negative argument is bitwise shorter than positive [perl #26559]
+30:-3:28
+123:-1:123
 # equal arguments are treated special, so also do some test with unequal ones
 0xFFFF:0xFFFF:0x0xFFFF
 0xFFFFFF:0xFFFFFF:0x0xFFFFFF
@@ -1750,6 +1769,11 @@ abc:0:NaN
 -6:-6:-6
 -7:4:-3
 -4:7:-1
++281474976710656:-1:-1
+30:-3:-1
+30:-4:-2
+300:-76:-68
+-76:300:-68
 # equal arguments are treated special, so also do some test with unequal ones
 0xFFFF:0xFFFF:0x0xFFFF
 0xFFFFFF:0xFFFFFF:0x0xFFFFFF
@@ -1798,6 +1822,10 @@ abc:0:NaN
 -4:7:-5
 4:-7:-3
 -4:-7:5
+30:-3:-29
+30:-4:-30
+300:-76:-360
+-76:300:-360
 # equal arguments are treated special, so also do some test with unequal ones
 0xFFFF:0xFFFF:0
 0xFFFFFF:0xFFFFFF:0
@@ -1912,8 +1940,8 @@ abc:12:NaN
 0:0:1
 0:1:0
 0:2:0
-0:-1:NaN
-0:-2:NaN
+0:-1:inf
+0:-2:inf
 1:0:1
 1:1:1
 1:2:1
@@ -1956,6 +1984,14 @@ abc:12:NaN
 10:9:1000000000
 10:20:100000000000000000000
 123456:2:15241383936
+-2:2:4
+-2:3:-8
+-2:4:16
+-2:5:-32
+-3:2:9
+-3:3:-27
+-3:4:81
+-3:5:-243
 &length
 100:3
 10:2

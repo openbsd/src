@@ -1,7 +1,7 @@
 /*    pp_sort.c
  *
  *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, 2003, by Larry Wall and others
+ *    2000, 2001, 2002, 2003, 2004, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -1413,9 +1413,9 @@ Perl_sortsv(pTHX_ SV **array, size_t nmemb, SVCOMPARE_t cmp)
 PP(pp_sort)
 {
     dSP; dMARK; dORIGMARK;
-    register SV **up;
-    SV **myorigmark = ORIGMARK;
-    register I32 max;
+    register SV **p1 = ORIGMARK+1, **p2;
+    register I32 max, i;
+    AV* av = Nullav;
     HV *stash;
     GV *gv;
     CV *cv = 0;
@@ -1424,6 +1424,7 @@ PP(pp_sort)
     I32 overloading = 0;
     bool hasargs = FALSE;
     I32 is_xsub = 0;
+    I32 sorting_av = 0;
 
     if (gimme != G_ARRAY) {
 	SP = MARK;
@@ -1480,24 +1481,54 @@ PP(pp_sort)
 	stash = CopSTASH(PL_curcop);
     }
 
-    up = myorigmark + 1;
-    while (MARK < SP) {	/* This may or may not shift down one here. */
-	/*SUPPRESS 560*/
-	if ((*up = *++MARK)) {			/* Weed out nulls. */
-	    SvTEMP_off(*up);
-	    if (!PL_sortcop && !SvPOK(*up)) {
-		STRLEN n_a;
-	        if (SvAMAGIC(*up))
-	            overloading = 1;
-	        else
-		    (void)sv_2pv(*up, &n_a);
+    /* optimiser converts "@a = sort @a" to "sort \@a";
+     * in case of tied @a, pessimise: push (@a) onto stack, then assign
+     * result back to @a at the end of this function */
+    if (PL_op->op_private & OPpSORT_INPLACE) {
+	assert( MARK+1 == SP && *SP && SvTYPE(*SP) == SVt_PVAV);
+	(void)POPMARK; /* remove mark associated with ex-OP_AASSIGN */
+	av = (AV*)(*SP);
+	max = AvFILL(av) + 1;
+	if (SvMAGICAL(av)) {
+	    MEXTEND(SP, max);
+	    p2 = SP;
+	    for (i=0; i < (U32)max; i++) {
+		SV **svp = av_fetch(av, i, FALSE);
+		*SP++ = (svp) ? *svp : Nullsv;
 	    }
-	    up++;
+	}
+	else {
+	    p1 = p2 = AvARRAY(av);
+	    sorting_av = 1;
 	}
     }
-    max = --up - myorigmark;
-    if (PL_sortcop) {
-	if (max > 1) {
+    else {
+	p2 = MARK+1;
+	max = SP - MARK;
+   }
+
+    /* shuffle stack down, removing optional initial cv (p1!=p2), plus any
+     * nulls; also stringify any args */
+    for (i=max; i > 0 ; i--) {
+	if ((*p1 = *p2++)) {			/* Weed out nulls. */
+	    SvTEMP_off(*p1);
+	    if (!PL_sortcop && !SvPOK(*p1)) {
+		STRLEN n_a;
+	        if (SvAMAGIC(*p1))
+	            overloading = 1;
+	        else
+		    (void)sv_2pv(*p1, &n_a);
+	    }
+	    p1++;
+	}
+	else
+	    max--;
+    }
+    if (sorting_av)
+	AvFILLp(av) = max-1;
+
+    if (max > 1) {
+	if (PL_sortcop) {
 	    PERL_CONTEXT *cx;
 	    SV** newsp;
 	    bool oldcatch = CATCH_GET;
@@ -1528,8 +1559,6 @@ PP(pp_sort)
 		cx->cx_type = CXt_SUB;
 		cx->blk_gimme = G_SCALAR;
 		PUSHSUB(cx);
-		if (!CvDEPTH(cv))
-		    (void)SvREFCNT_inc(cv); /* in preparation for POPSUB */
 	    }
 	    PL_sortcxix = cxstack_ix;
 
@@ -1544,7 +1573,7 @@ PP(pp_sort)
 		CX_CURPAD_SAVE(cx->blk_sub);
 		cx->blk_sub.argarray = av;
 	    }
-           sortsv((myorigmark+1), max,
+           sortsv(p1-max, max,
                   is_xsub ? sortcv_xsub : hasargs ? sortcv_stacked : sortcv);
 
 	    POPBLOCK(cx,PL_curpm);
@@ -1552,11 +1581,9 @@ PP(pp_sort)
 	    POPSTACK;
 	    CATCH_SET(oldcatch);
 	}
-    }
-    else {
-	if (max > 1) {
+	else {
 	    MEXTEND(SP, 20);	/* Can't afford stack realloc on signal. */
-	    sortsv(ORIGMARK+1, max,
+	    sortsv(sorting_av ? AvARRAY(av) : ORIGMARK+1, max,
                   (PL_op->op_private & OPpSORT_NUMERIC)
 			? ( (PL_op->op_private & OPpSORT_INTEGER)
 			    ? ( overloading ? amagic_i_ncmp : sv_i_ncmp)
@@ -1567,8 +1594,8 @@ PP(pp_sort)
 				: sv_cmp_locale_static)
 			    : ( overloading ? amagic_cmp : sv_cmp_static)));
 	    if (PL_op->op_private & OPpSORT_REVERSE) {
-		SV **p = ORIGMARK+1;
-		SV **q = ORIGMARK+max;
+		SV **p = sorting_av ? AvARRAY(av) : ORIGMARK+1;
+		SV **q = p+max-1;
 		while (p < q) {
 		    SV *tmp = *p;
 		    *p++ = *q;
@@ -1577,8 +1604,28 @@ PP(pp_sort)
 	    }
 	}
     }
+    if (av && !sorting_av) {
+	/* simulate pp_aassign of tied AV */
+	SV *sv;
+	SV** base, **didstore;
+	for (base = ORIGMARK+1, i=0; i < max; i++) {
+	    sv = NEWSV(28,0);
+	    sv_setsv(sv, base[i]);
+	    base[i] = sv;
+	}
+	av_clear(av);
+	av_extend(av, max);
+	for (i=0; i < max; i++) {
+	    sv = base[i];
+	    didstore = av_store(av, i, sv);
+	    if (SvSMAGICAL(sv))
+		mg_set(sv);
+	    if (!didstore)
+		sv_2mortal(sv);
+	}
+    }
     LEAVE;
-    PL_stack_sp = ORIGMARK + max;
+    PL_stack_sp = ORIGMARK + (sorting_av ? 0 : max);
     return nextop;
 }
 

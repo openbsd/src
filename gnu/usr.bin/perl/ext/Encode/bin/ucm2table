@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $Id: ucm2table,v 1.2 2002/04/30 16:13:37 dankogai Exp $
+# $Id: ucm2table,v 2.0 2004/05/16 20:55:16 dankogai Exp $
 #
 
 use 5.006;

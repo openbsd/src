@@ -1,7 +1,7 @@
 #
 # Locale::Country - ISO codes for country identification (ISO 3166)
 #
-# $Id: Country.pm,v 2.6 2002/07/10 16:33:27 neilb Exp $
+# $Id: Country.pm,v 2.7 2004/06/10 21:19:34 neilb Exp $
 #
 
 package Locale::Country;
@@ -17,7 +17,7 @@ use Locale::Constants;
 #	Public Global Variables
 #-----------------------------------------------------------------------
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
-$VERSION   = sprintf("%d.%02d", q$Revision: 2.61 $ =~ /(\d+)\.(\d+)/);
+$VERSION   = sprintf("%d.%02d", q$Revision: 2.7 $ =~ /(\d+)\.(\d+)/);
 @ISA       = qw(Exporter);
 @EXPORT    = qw(code2country country2code
                 all_country_codes all_country_names
@@ -264,10 +264,10 @@ sub _code2codeset
 #
 #=======================================================================
 {
-    my ($alpha2, $alpha3, $numeric);
-    my ($country, @countries);
-
+    my   ($alpha2, $alpha3, $numeric);
+    my   ($country, @countries);
     local $_;
+
 
     while (<DATA>)
     {
@@ -322,6 +322,7 @@ as:asm:016:American Samoa
 at:aut:040:Austria
 au:aus:036:Australia
 aw:abw:533:Aruba
+ax:ala:248:Aland Islands
 az:aze:031:Azerbaijan
 ba:bih:070:Bosnia and Herzegovina
 bb:brb:052:Barbados
@@ -344,6 +345,7 @@ by:blr:112:Belarus
 bz:blz:084:Belize
 ca:can:124:Canada
 cc:cck:166:Cocos (Keeling) Islands
+cd:cod:180:Congo, The Democratic Republic of the:Zaire:Congo, Democratic Republic of the
 cf:caf:140:Central African Republic
 cg:cog:178:Congo:Congo, Republic of the
 ch:che:756:Switzerland
@@ -354,6 +356,7 @@ cm:cmr:120:Cameroon
 cn:chn:156:China
 co:col:170:Colombia
 cr:cri:188:Costa Rica
+cs:scg:891:Serbia and Montenegro:Yugoslavia
 cu:cub:192:Cuba
 cv:cpv:132:Cape Verde
 cx:cxr:162:Christmas Island
@@ -444,7 +447,7 @@ mg:mdg:450:Madagascar
 mh:mhl:584:Marshall Islands
 mk:mkd:807:Macedonia, the Former Yugoslav Republic of:Macedonia, Former Yugoslav Republic of:Macedonia
 ml:mli:466:Mali
-mm:mmr:104:Myanmar
+mm:mmr:104:Myanmar:Burma
 mn:mng:496:Mongolia
 mo:mac:446:Macao:Macau
 mp:mnp:580:Northern Mariana Islands
@@ -487,7 +490,7 @@ pw:plw:585:Palau
 py:pry:600:Paraguay
 qa:qat:634:Qatar
 re:reu:638:Reunion
-ro:rom:642:Romania
+ro:rou:642:Romania
 ru:rus:643:Russian Federation:Russia
 rw:rwa:646:Rwanda
 sa:sau:682:Saudi Arabia
@@ -511,7 +514,7 @@ sy:syr:760:Syrian Arab Republic:Syria
 sz:swz:748:Swaziland
 tc:tca:796:Turks and Caicos Islands
 td:tcd:148:Chad
-tf:atf:260:French Southern Territories
+tf:atf:260:French Southern Territories:French Southern and Antarctic Lands
 tg:tgo:768:Togo
 th:tha:764:Thailand
 tj:tjk:762:Tajikistan
@@ -519,7 +522,7 @@ tk:tkl:772:Tokelau
 tm:tkm:795:Turkmenistan
 tn:tun:788:Tunisia
 to:ton:776:Tonga
-tl:tls:626:East Timor
+tl:tls:626:Timor-Leste:East Timor
 tr:tur:792:Turkey
 tt:tto:780:Trinidad and Tobago
 tv:tuv:798:Tuvalu
@@ -542,8 +545,6 @@ wf:wlf:876:Wallis and Futuna
 ws:wsm:882:Samoa
 ye:yem:887:Yemen
 yt:myt:175:Mayotte
-yu:yug:891:Yugoslavia
 za:zaf:710:South Africa
 zm:zmb:894:Zambia
-zr:zar:180:Zaire:Congo, The Democratic Republic of the:Congo, Democratic Republic of the
 zw:zwe:716:Zimbabwe

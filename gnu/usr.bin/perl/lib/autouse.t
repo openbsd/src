@@ -3,6 +3,11 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
+    require Config;
+    if (($Config::Config{'extensions'} !~ m!\bList/Util\b!) ){
+	print "1..0 # Skip -- Perl configured without List::Util module\n";
+	exit 0;
+    }
 }
 
 use Test;
@@ -39,7 +44,7 @@ use autouse 'Carp' => qw(carp croak);
     local $SIG{__WARN__} = sub { push @warning, @_ };
     carp "this carp was predeclared and autoused\n";
     ok( scalar @warning, 1 );
-    ok( $warning[0], "this carp was predeclared and autoused\n" );
+    ok( $warning[0], qr/^this carp was predeclared and autoused\n/ );
 
     eval { croak "It is but a scratch!" };
     ok( $@, qr/^It is but a scratch!/);

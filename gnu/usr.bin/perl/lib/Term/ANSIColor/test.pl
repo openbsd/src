@@ -1,12 +1,16 @@
-# Test suite for the Term::ANSIColor Perl module.  Before `make install' is
-# performed this script should be runnable with `make test'.  After `make
-# install' it should work as `perl test.pl'.
+#!/usr/bin/perl
+# $Id: test.pl,v 1.3 2004/02/20 06:21:26 eagle Exp $
+#
+# test.pl -- Test suite for the Term::ANSIColor Perl module.
+#
+# Before "make install" is performed this script should be runnable with "make
+# test".  After "make install" it should work as "perl test.pl".
 
 ############################################################################
 # Ensure module can be loaded
 ############################################################################
 
-BEGIN { $| = 1; print "1..12\n" }
+BEGIN { $| = 1; print "1..13\n" }
 END   { print "not ok 1\n" unless $loaded }
 delete $ENV{ANSI_COLORS_DISABLED};
 use Term::ANSIColor qw(:constants color colored uncolor);
@@ -101,4 +105,12 @@ if (GREEN 'testing' eq 'testing') {
     print "ok 12\n";
 } else {
     print "not ok 12\n";
+}
+delete $ENV{ANSI_COLORS_DISABLED};
+
+# Make sure DARK is exported.  This was omitted in versions prior to 1.07.
+if (DARK "testing" eq "\e[2mtesting\e[0m") {
+    print "ok 13\n";
+} else {
+    print "not ok 13\n";
 }

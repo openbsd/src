@@ -1,4 +1,4 @@
-microperl is supposed to be able a really minimal perl, even more
+microperl is supposed to be a really minimal perl, even more
 minimal than miniperl.  No Configure is needed to build microperl,
 on the other hand this means that interfaces between Perl and your
 operating system are left very -- minimal.
@@ -20,6 +20,8 @@ If you are still reading this and you are itching to try out microperl:
 
 	make -f Makefile.micro
 
+If you make changes to uconfig.sh, run
 
+	make -f Makefile.micro regen_uconfig
 
-
+to regenerate uconfig.h.

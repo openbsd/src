@@ -227,7 +227,7 @@ Should yield no problems.
 =head2 Threaded Perl
 
 Threads seem to work OK, though at the moment not all tests pass when
-threads are used in combination with 64bit configurations.
+threads are used in combination with 64-bit configurations.
 
 You may get a warning when doing a threaded build:
 
@@ -245,7 +245,7 @@ is not really significant here.
 
 =head2 64-bit Perl
 
-If your AIX is installed with 64-bit support, you can expect 64bit
+If your AIX is installed with 64-bit support, you can expect 64-bit
 configurations to work. In combination with threads some tests might
 still fail.
 

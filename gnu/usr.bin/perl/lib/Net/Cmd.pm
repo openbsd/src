@@ -1,4 +1,4 @@
-# Net::Cmd.pm $Id: //depot/libnet/Net/Cmd.pm#33 $
+# Net::Cmd.pm $Id: //depot/libnet/Net/Cmd.pm#34 $
 #
 # Copyright (c) 1995-1997 Graham Barr <gbarr@pobox.com>. All rights reserved.
 # This program is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@ BEGIN {
   }
 }
 
-$VERSION = "2.24";
+$VERSION = "2.26";
 @ISA     = qw(Exporter);
 @EXPORT  = qw(CMD_INFO CMD_OK CMD_MORE CMD_REJECT CMD_ERROR CMD_PENDING);
 
@@ -198,7 +198,7 @@ sub command
 
 
  $cmd->dataend()
-    if(exists ${*$cmd}{'net_cmd_need_crlf'});
+    if(exists ${*$cmd}{'net_cmd_last_ch'});
 
  if (scalar(@_))
   {
@@ -392,13 +392,10 @@ sub datasend
 
  return 0 unless defined(fileno($cmd));
 
- unless (length $line) {
-   # Even though we are not sending anything, the fact we were
-   # called means that dataend needs to be called before the next
-   # command, which happens of net_cmd_need_crlf exists
-   ${*$cmd}{'net_cmd_need_crlf'} ||= 0;
-   return 1;
- }
+ my $last_ch = ${*$cmd}{'net_cmd_last_ch'};
+ $last_ch = ${*$cmd}{'net_cmd_last_ch'} = "\012" unless defined $last_ch;
+
+ return 1 unless length $line;
 
  if($cmd->debug) {
    foreach my $b (split(/\n/,$line)) {
@@ -406,13 +403,22 @@ sub datasend
    }
   }
 
- $line =~ s/\r?\n/\r\n/sg;
  $line =~ tr/\r\n/\015\012/ unless "\r" eq "\015";
 
- $line =~ s/(\012\.)/$1./sog;
- $line =~ s/^\./../ unless ${*$cmd}{'net_cmd_need_crlf'};
+  my $first_ch = '';
 
- ${*$cmd}{'net_cmd_need_crlf'} = substr($line,-1,1) ne "\012";
+  if ($last_ch eq "\015") {
+    $first_ch = "\012" if $line =~ s/^\012//;
+  }
+  elsif ($last_ch eq "\012") {
+    $first_ch = "." if $line =~ /^\./;
+  }
+
+ $line =~ s/\015?\012(\.?)/\015\012$1$1/sg;
+
+ substr($line,0,0) = $first_ch;
+
+ ${*$cmd}{'net_cmd_last_ch'} = substr($line,-1,1);
 
  my $len = length($line);
  my $offset = 0;
@@ -425,7 +431,7 @@ sub datasend
  while($len)
   {
    my $wout;
-   if (select(undef,$wout=$win, undef, $timeout) > 0)
+   if (select(undef,$wout=$win, undef, $timeout) > 0 or -f $cmd) # -f for testing on win32
     {
      my $w = syswrite($cmd, $line, $len, $offset);
      unless (defined($w))
@@ -500,19 +506,26 @@ sub dataend
 
  return 0 unless defined(fileno($cmd));
 
- return 1
-    unless(exists ${*$cmd}{'net_cmd_need_crlf'});
+ my $ch = ${*$cmd}{'net_cmd_last_ch'};
+ my $tosend;
+
+ if (!defined $ch) {
+   return 1;
+ }
+ elsif ($ch ne "\012") {
+   $tosend = "\015\012";
+ }
+
+ $tosend .= ".\015\012";
 
  local $SIG{PIPE} = 'IGNORE' unless $^O eq 'MacOS';
- syswrite($cmd,"\015\012",2)
-    if ${*$cmd}{'net_cmd_need_crlf'};
 
  $cmd->debug_print(1, ".\n")
     if($cmd->debug);
 
- syswrite($cmd,".\015\012",3);
+ syswrite($cmd,$tosend, length $tosend);
 
- delete ${*$cmd}{'net_cmd_need_crlf'};
+ delete ${*$cmd}{'net_cmd_last_ch'};
 
  $cmd->response() == CMD_OK;
 }
@@ -759,6 +772,6 @@ it under the same terms as Perl itself.
 
 =for html <hr>
 
-I<$Id: //depot/libnet/Net/Cmd.pm#33 $>
+I<$Id: //depot/libnet/Net/Cmd.pm#34 $>
 
 =cut

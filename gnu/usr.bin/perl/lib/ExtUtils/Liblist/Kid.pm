@@ -10,7 +10,7 @@ use 5.00503;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = 1.30;
+$VERSION = 1.30_01;
 
 use Config;
 use Cwd 'cwd';
@@ -226,9 +226,9 @@ sub _win32_ext {
     return ("", "", "", "", ($give_libs ? [] : ())) unless $potential_libs;
 
     my $cc		= $Config{cc};
-    my $VC		= 1 if $cc =~ /^cl/i;
-    my $BC		= 1 if $cc =~ /^bcc/i;
-    my $GC		= 1 if $cc =~ /^gcc/i;
+    my $VC		= $cc =~ /^cl/i;
+    my $BC		= $cc =~ /^bcc/i;
+    my $GC		= $cc =~ /^gcc/i;
     my $so		= $Config{'so'};
     my $libs		= $Config{'perllibs'};
     my $libpth		= $Config{'libpth'};

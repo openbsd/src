@@ -53,9 +53,8 @@ libc='/System/Library/Frameworks/System.framework/System';
 # Optimize.
 optimize='-O3';
 
-# -pipe: makes compilation go faster.
 # -fno-common because common symbols are not allowed in MH_DYLIB
-ccflags="${ccflags} -pipe -fno-common"
+ccflags="${ccflags} -fno-common"
 
 # Unverified whether this is necessary on Rhapsody, but the test shouldn't hurt.
 # At least on Darwin 1.3.x:

@@ -112,19 +112,17 @@ is($?,0,"outer lex scope of vmsish [POSIX status]");
     eval "END { \$ENV{'SYS\$TIMEZONE_DIFFERENTIAL'} = $oldtz; }";
     gmtime(0); # Force reset of tz offset
   }
-  # This test script might have been invoked in at least one of four different ways:
-  #     perl lib/vmsish.t
-  #     perl [.lib]vmsish.t
-  #     set def [.t] && perl ../lib/vmsish.t
-  #     set def [.t] && perl [-.lib]vmsish.t
-  # In the following we attempt to find ourselves without resorting to VMS::Filespec.
-  # Note that the chdir in the BEGIN block above complicates matters.
-  my $self = $0;
-  if ( ! -e $self && -e "../$0" ) { $self = "../$0"; }
-  if ( ! -e $self ) {
-      $self =~ s/\[//;
-      $self = "[-$self";
-  }
+
+  # Unless we are prepared to parse the timezone rules here and figure out
+  # what the correct offset was when the file was last revised, we need to 
+  # use a file for which the current offset is known to be valid.  That's why
+  # we create a file rather than using an existing one for the stat() test.
+
+  my $file = 'sys$scratch:vmsish_t_flirble.tmp';
+  open TMP, ">$file" or die "Couldn't open file $file";
+  close TMP;
+  END { 1 while unlink $file; }
+
   {
      use_ok('vmsish qw(time)');
 
@@ -134,12 +132,12 @@ is($?,0,"outer lex scope of vmsish [POSIX status]");
      $vmstime   = time;
      @vmslocal  = localtime($vmstime);
      @vmsgmtime = gmtime($vmstime);
-     $vmsmtime  = (stat $self)[9];
+     $vmsmtime  = (stat $file)[9];
   }
   $utctime   = time;
   @utclocal  = localtime($vmstime);
   @utcgmtime = gmtime($vmstime);
-  $utcmtime  = (stat $self)[9];
+  $utcmtime  = (stat $file)[9];
   
   $offset = $ENV{'SYS$TIMEZONE_DIFFERENTIAL'};
 

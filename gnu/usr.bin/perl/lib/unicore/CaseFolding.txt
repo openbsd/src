@@ -1,6 +1,10 @@
-# CaseFolding-4.0.0.txt
-# Date: 2003-03-14, 20:22:08 GMT [MD]
+# CaseFolding-4.0.1.txt
+# Date: 2004-03-02, 02:41:24 GMT [MD]
 #
+# Unicode Character Database
+# Copyright (c) 1991-2004 Unicode, Inc.
+# For terms of use, see http://www.unicode.org/terms_of_use.html
+# For documentation, see UCD.html
 # Case Folding Properties
 #
 # This file is a supplement to the UnicodeData file.

@@ -20,7 +20,7 @@ BEGIN {
 }
 
 use strict;
-use Test::More tests => 25;
+use Test::More tests => 26;
 
 BEGIN { use_ok('base'); }
 
@@ -194,3 +194,27 @@ eval {
 ::like( $@, qr/Can't multiply inherit %FIELDS/i, 'Again, no multi inherit' );
 
 
+# Test that a package with no fields can inherit from a package with
+# fields, and that pseudohash messages don't show up
+
+package B9;
+use fields qw(b1);
+
+sub _mk_obj { fields::new($_[0])->{'b1'} };
+
+package D9;
+use base qw(B9);
+
+package main;
+
+{
+    my $w = 0;
+    local $SIG{__WARN__} = sub { $w++ };
+    
+    B9->_mk_obj();
+    # used tp emit a warning that pseudohashes are deprecated, because
+    # %FIELDS wasn't blessed.
+    D9->_mk_obj();
+    
+    is ($w, 0, "pseudohash warnings in derived class with no fields of it's own");	
+}

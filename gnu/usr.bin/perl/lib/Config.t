@@ -6,7 +6,7 @@ BEGIN {
     require "./test.pl";
 }
 
-plan tests => 36;
+plan tests => 47;
 
 use_ok('Config');
 
@@ -77,10 +77,41 @@ Config::config_vars('d_bork');
 my $out2 = $$out;
 $out->clear;
 
-untie *STDOUT;
+Config::config_vars('PERL_API_.*');
+my $out3 = $$out;
+$out->clear;
 
+Config::config_vars(':PERL_API_.*:');
+my $out4 = $$out;
+$out->clear;
+
+Config::config_vars(':PERL_API_REVISION:');
+my $out5 = $$out;
+$out->clear;
+
+Config::config_vars('?flags');
+my $out6 = $$out;
+$out->clear;
+
+untie *STDOUT;
 like($out1, qr/^cc='\Q$Config{cc}\E';/, "config_vars cc");
 like($out2, qr/^d_bork='UNKNOWN';/, "config_vars d_bork is UNKNOWN");
+
+is(3, scalar split(/\n/, $out3), "3 PERL_API vars found");
+my @api = $out3 =~ /^PERL_API_(\w+)=(.*);/mg;
+is("'5'", $api[1], "1st is 5");
+is("'8'", $api[5], "2nd is 9");
+is("'0'", $api[3], "3rd is 1");
+@api = split(/ /, $out4);
+is(3, @api, "trailing colon puts 3 terms on same line");
+unlike($out4, qr/=/, "leading colon suppresses param names");
+is("'5'", $api[0], "revision is 5");
+is("'8'", $api[2], "version is 9");
+is("'0'", $api[1], "subversion is 1");
+
+is("'5' ", $out5, "leading and trailing colons return just the value");
+
+like($out6, qr/\bnot\s+found\b/, "config_vars with invalid regexp");
 
 # Read-only.
 

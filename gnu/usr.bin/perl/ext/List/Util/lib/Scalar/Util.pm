@@ -1,6 +1,6 @@
 # Scalar::Util.pm
 #
-# Copyright (c) 1997-2003 Graham Barr <gbarr@pobox.com>. All rights reserved.
+# Copyright (c) 1997-2004 Graham Barr <gbarr@pobox.com>. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 
@@ -11,7 +11,7 @@ require List::Util; # List::Util loads the XS
 
 @ISA       = qw(Exporter);
 @EXPORT_OK = qw(blessed dualvar reftype weaken isweak tainted readonly openhandle refaddr isvstring looks_like_number set_prototype);
-$VERSION   = "1.13";
+$VERSION    = "1.14";
 $VERSION   = eval $VERSION;
 
 sub export_fail {
@@ -122,7 +122,7 @@ sub looks_like_number {
   local $_ = shift;
 
   # checks from perlfaq4
-  return 1 unless defined;
+  return $] < 5.009002 unless defined;
   return 1 if (/^[+-]?\d+$/); # is a +/- integer
   return 1 if (/^([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?$/); # a C float
   return 1 if ($] >= 5.008 and /^(Inf(inity)?|NaN)$/i) or ($] >= 5.006001 and /^Inf$/i);
@@ -283,7 +283,7 @@ show up as tests 8 and 9 of dualvar.t failing
 
 =head1 COPYRIGHT
 
-Copyright (c) 1997-2003 Graham Barr <gbarr@pobox.com>. All rights reserved.
+Copyright (c) 1997-2004 Graham Barr <gbarr@pobox.com>. All rights reserved.
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
 

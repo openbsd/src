@@ -112,6 +112,26 @@ Use of uninitialized value in bitwise or (|) at - line 4.
 ########
 # sv.c
 use warnings 'uninitialized' ;
+my $Y = 1 ; 
+my $x = 1 & $a[$Y] ;
+no warnings 'uninitialized' ;
+my $Y = 1 ; 
+$x = 1 & $b[$Y] ;
+EXPECT
+Use of uninitialized value in bitwise and (&) at - line 4.
+########
+# sv.c
+use warnings 'uninitialized' ;
+my $Y = 1 ; 
+my $x = ~$a[$Y] ;
+no warnings 'uninitialized' ;
+my $Y = 1 ; 
+$x = ~$b[$Y] ;
+EXPECT
+Use of uninitialized value in 1's complement (~) at - line 4.
+########
+# sv.c
+use warnings 'uninitialized' ;
 my $x *= 1 ; # d
 no warnings 'uninitialized' ;
 my $y *= 1 ; # d

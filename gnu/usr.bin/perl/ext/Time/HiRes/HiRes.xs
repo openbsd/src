@@ -1,6 +1,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#define PERL_NO_GET_CONTEXT
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
@@ -18,10 +19,34 @@ extern "C" {
 }
 #endif
 
+#ifndef NOOP
+#    define NOOP (void)0
+#endif
+#ifndef dNOOP
+#    define dNOOP extern int Perl___notused
+#endif
+
 #ifndef aTHX_
 #    define aTHX_
 #    define pTHX_
-#endif         
+#    define dTHX dNOOP
+#endif
+
+#ifdef START_MY_CXT
+#  ifndef MY_CXT_CLONE
+#    define MY_CXT_CLONE                                                \
+	dMY_CXT_SV;							\
+	my_cxt_t *my_cxtp = (my_cxt_t*)SvPVX(newSV(sizeof(my_cxt_t)-1));\
+	Copy(INT2PTR(my_cxt_t*, SvUV(my_cxt_sv)), my_cxtp, 1, my_cxt_t); \
+	sv_setuv(my_cxt_sv, PTR2UV(my_cxtp))
+#  endif
+#else
+#    define START_MY_CXT static my_cxt_t my_cxt;
+#    define dMY_CXT	 dNOOP
+#    define MY_CXT_INIT	 NOOP
+#    define MY_CXT_CLONE NOOP
+#    define MY_CXT	 my_cxt
+#endif
 
 #ifndef NVTYPE
 #   if defined(USE_LONG_DOUBLE) && defined(HAS_LONG_DOUBLE)
@@ -110,8 +135,11 @@ sv_2pv_nolen(pTHX_ register SV *sv)
 
 #include "const-c.inc"
 
-#if !defined(HAS_GETTIMEOFDAY) && defined(WIN32)
-#define HAS_GETTIMEOFDAY
+#ifdef WIN32
+
+#ifndef HAS_GETTIMEOFDAY
+#   define HAS_GETTIMEOFDAY
+#endif
 
 /* shows up in winsock.h?
 struct timeval {
@@ -125,6 +153,17 @@ typedef union {
     FILETIME		ft_val;
 } FT_t;
 
+#define MY_CXT_KEY "Time::HiRes_" XS_VERSION
+
+typedef struct {
+    unsigned long run_count;
+    unsigned __int64 base_ticks;
+    unsigned __int64 tick_frequency;
+    FT_t base_systime_as_filetime;
+} my_cxt_t;
+
+START_MY_CXT
+
 /* Number of 100 nanosecond units from 1/1/1601 to 1/1/1970 */
 #ifdef __GNUC__
 #define Const64(x) x##LL
@@ -135,13 +174,48 @@ typedef union {
 
 /* NOTE: This does not compute the timezone info (doing so can be expensive,
  * and appears to be unsupported even by glibc) */
-int
-gettimeofday (struct timeval *tp, void *not_used)
+
+/* dMY_CXT needs a Perl context and we don't want to call PERL_GET_CONTEXT
+   for performance reasons */
+
+#undef gettimeofday
+#define gettimeofday(tp, not_used) _gettimeofday(aTHX_ tp, not_used)
+
+/* If the performance counter delta drifts more than 0.5 seconds from the
+ * system time then we recalibrate to the system time.  This means we may
+ * move *backwards* in time! */
+
+#define MAX_DIFF Const64(5000000)
+
+static int
+_gettimeofday(pTHX_ struct timeval *tp, void *not_used)
 {
+    dMY_CXT;
+
+    unsigned __int64 ticks;
     FT_t ft;
 
-    /* this returns time in 100-nanosecond units  (i.e. tens of usecs) */
-    GetSystemTimeAsFileTime(&ft.ft_val);
+    if (MY_CXT.run_count++) {
+	__int64 diff;
+	FT_t filtim;
+	GetSystemTimeAsFileTime(&filtim.ft_val);
+        QueryPerformanceCounter((LARGE_INTEGER*)&ticks);
+        ticks -= MY_CXT.base_ticks;
+        ft.ft_i64 = MY_CXT.base_systime_as_filetime.ft_i64
+                    + Const64(10000000) * (ticks / MY_CXT.tick_frequency)
+                    +(Const64(10000000) * (ticks % MY_CXT.tick_frequency)) / MY_CXT.tick_frequency;
+	diff = ft.ft_i64 - MY_CXT.base_systime_as_filetime.ft_i64;
+	if (diff < -MAX_DIFF || diff > MAX_DIFF) {
+	     MY_CXT.base_ticks = ticks;
+	     ft.ft_i64 = filtim.ft_i64;
+	}
+    }
+    else {
+        QueryPerformanceFrequency((LARGE_INTEGER*)&MY_CXT.tick_frequency);
+        QueryPerformanceCounter((LARGE_INTEGER*)&MY_CXT.base_ticks);
+        GetSystemTimeAsFileTime(&MY_CXT.base_systime_as_filetime.ft_val);
+        ft.ft_i64 = MY_CXT.base_systime_as_filetime.ft_i64;
+    }
 
     /* seconds since epoch */
     tp->tv_sec = (long)((ft.ft_i64 - EPOCH_BIAS) / Const64(10000000));
@@ -149,6 +223,15 @@ gettimeofday (struct timeval *tp, void *not_used)
     /* microseconds remaining */
     tp->tv_usec = (long)((ft.ft_i64 / Const64(10)) % Const64(1000000));
 
+    return 0;
+}
+#endif
+
+#if defined(WIN32) && !defined(ATLEASTFIVEOHOHFIVE)
+static unsigned int
+sleep(unsigned int t)
+{
+    Sleep(t*1000);
     return 0;
 }
 #endif
@@ -605,7 +688,7 @@ ualarm_AST(Alarm *a)
 #ifdef HAS_GETTIMEOFDAY
 
 static int
-myU2time(UV *ret)
+myU2time(pTHX_ UV *ret)
 {
   struct timeval Tp;
   int status;
@@ -618,6 +701,9 @@ myU2time(UV *ret)
 static NV
 myNVtime()
 {
+#ifdef WIN32
+    dTHX;
+#endif
   struct timeval Tp;
   int status;
   status = gettimeofday (&Tp, NULL);
@@ -631,15 +717,29 @@ MODULE = Time::HiRes            PACKAGE = Time::HiRes
 PROTOTYPES: ENABLE
 
 BOOT:
+{
+#ifdef MY_CXT_KEY
+  MY_CXT_INIT;
+#endif
 #ifdef ATLEASTFIVEOHOHFIVE
 #ifdef HAS_GETTIMEOFDAY
-{
-  UV auv[2];
-  hv_store(PL_modglobal, "Time::NVtime", 12, newSViv(PTR2IV(myNVtime)), 0);
-  if (myU2time(auv) == 0)
-    hv_store(PL_modglobal, "Time::U2time", 12, newSViv((IV) auv[0]), 0);
-}
+  {
+    UV auv[2];
+    hv_store(PL_modglobal, "Time::NVtime", 12, newSViv(PTR2IV(myNVtime)), 0);
+    if (myU2time(aTHX_ auv) == 0)
+      hv_store(PL_modglobal, "Time::U2time", 12, newSViv((IV) auv[0]), 0);
+  }
 #endif
+#endif
+}
+
+#if defined(USE_ITHREADS) && defined(MY_CXT_KEY)
+
+void
+CLONE(...)
+    CODE:
+    MY_CXT_CLONE;
+
 #endif
 
 INCLUDE: const-xs.inc

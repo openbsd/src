@@ -528,6 +528,9 @@ Useless use of a variable in void context at - line 6.
 use warnings 'void' ;
 "abc"; # OP_CONST
 7 ; # OP_CONST
+5 || print "bad\n";	# test OPpCONST_SHORTCIRCUIT
+use constant U => undef;
+print "boo\n" if U;	# test OPpCONST_SHORTCIRCUIT
 no warnings 'void' ;
 "abc"; # OP_CONST
 7 ; # OP_CONST
@@ -587,6 +590,7 @@ BEGIN not safe after errors--compilation aborted at - line 18.
 use warnings 'parenthesis' ;
 my $a, $b = (1,2);
 my @foo,%bar,	$quux; # there's a TAB here
+my $x, $y or print;
 no warnings 'parenthesis' ;
 my $c, $d = (1,2);
 EXPECT

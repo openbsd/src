@@ -114,8 +114,10 @@ L<Pod::Parser> and L<Pod::Checker>
 
 =head1 AUTHORS
 
+Please report bugs using L<http://rt.cpan.org>.
+
 Brad Appleton E<lt>bradapp@enteract.comE<gt>,
-Marek Rouchal E<lt>marek@saftsack.fs.uni-bayreuth.deE<gt>
+Marek Rouchal E<lt>marekr@cpan.orgE<gt>
 
 Based on code for B<Pod::Text::pod2text(1)> written by
 Tom Christiansen E<lt>tchrist@mox.perl.comE<gt>

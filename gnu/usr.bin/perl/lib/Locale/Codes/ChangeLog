@@ -1,6 +1,34 @@
 
 		ChangeLog for Locale-Codes Distribution
 
+2.07  2004-06-10 neilb
+	* made $_ local in the initialisation code for each module
+		change back-propagated from Perl distribution
+	* removed two non ISO-8859-1 characters from language names
+		change back-propagated from Perl distribution
+	* added the following aliases, with a test case for each
+		- Burma added to Myanmar
+		- French Southern and Antarctic Lands to
+		  French Southern Territories
+	  patch from TJ Mather
+	* "Canadian Dollar" was mis-spelled as "Candian Dollar"
+		- noted by Nick Cabatoff, patch from Michael Hennecke
+	* Changes to Locale::Country reflecting changes in ISO 3166
+		- added Aland Islands (ax, ala, 248)
+		- YUGOSLAVIA is now SERBIA AND MONTENEGRO
+			YU => CS
+			YUG => SCG
+			891 => 891 (unchanged)
+			(YUGOSLAVIA retained as an alias)
+		- EAST TIMOR changed to TIMOR-LESTE
+			(old name retained as an alias)
+		- three letter code for Romania changed from ROM to ROU
+	* ZAIRE is now CONGO, THE DEMOCRATIC REPUBLIC OF THE
+			ZR  => CD
+			ZAR => COD
+			180 => 180 (unchanged)
+			(ZAIRE retained as alias)
+
 2.06  2002-07-15 neilb
 
 	* The four modules which have data after __DATA__ weren't

@@ -479,6 +479,93 @@ for reference.
 
 =back
 
+=head2 Working with the source
+
+Because you cannot use the Perforce client, you cannot easily generate
+diffs against the repository, nor will merges occur when you update
+via rsync.  If you edit a file locally and then rsync against the
+latest source, changes made in the remote copy will I<overwrite> your
+local versions!
+
+The best way to deal with this is to maintain a tree of symlinks to
+the rsync'd source.  Then, when you want to edit a file, you remove
+the symlink, copy the real file into the other tree, and edit it.  You
+can then diff your edited file against the original to generate a
+patch, and you can safely update the original tree.
+
+Perl's F<Configure> script can generate this tree of symlinks for you.
+The following example assumes that you have used rsync to pull a copy
+of the Perl source into the F<perl-rsync> directory.  In the directory
+above that one, you can execute the following commands:
+
+  mkdir perl-dev
+  cd perl-dev
+  ../perl-rsync/Configure -Dmksymlinks -Dusedevel -D"optimize=-g"
+
+This will start the Perl configuration process.  After a few prompts,
+you should see something like this:
+
+  Symbolic links are supported.
+
+  Checking how to test for symbolic links...
+  Your builtin 'test -h' may be broken.
+  Trying external '/usr/bin/test -h'.
+  You can test for symbolic links with '/usr/bin/test -h'.
+
+  Creating the symbolic links...
+  (First creating the subdirectories...)
+  (Then creating the symlinks...)
+
+The specifics may vary based on your operating system, of course.
+After you see this, you can abort the F<Configure> script, and you
+will see that the directory you are in has a tree of symlinks to the
+F<perl-rsync> directories and files.
+
+If you plan to do a lot of work with the Perl source, here are some
+Bourne shell script functions that can make your life easier:
+
+    function edit {
+	if [ -L $1 ]; then
+	    mv $1 $1.orig
+		cp $1.orig $1
+		vi $1
+	else
+	    /bin/vi $1
+		fi
+    }
+
+    function unedit {
+	if [ -L $1.orig ]; then
+	    rm $1
+		mv $1.orig $1
+		fi
+    }
+
+Replace "vi" with your favorite flavor of editor.
+
+Here is another function which will quickly generate a patch for the
+files which have been edited in your symlink tree:
+
+    mkpatchorig() {
+	local diffopts
+	    for f in `find . -name '*.orig' | sed s,^\./,,`
+		do
+		    case `echo $f | sed 's,.orig$,,;s,.*\.,,'` in
+			c)   diffopts=-p ;;
+		pod) diffopts='-F^=' ;;
+		*)   diffopts= ;;
+		esac
+		    diff -du $diffopts $f `echo $f | sed 's,.orig$,,'`
+		    done
+    }
+
+This function produces patches which include enough context to make
+your changes obvious.  This makes it easier for the Perl pumpking(s)
+to review them when you send them to the perl5-porters list, and that
+means they're more likely to get applied.
+
+This function assumed a GNU diff, and may require some tweaking for
+other diff variants.
 
 =head2 Perlbug administration
 

@@ -9,7 +9,7 @@ use strict;
 use warnings;
 use Getopt::Std;
 my @orig_ARGV = @ARGV;
-our $VERSION  = do { my @r = (q$Revision: 1.32 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+our $VERSION  = do { my @r = (q$Revision: 2.0 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 # These may get re-ordered.
 # RAW is a do_now as inserted by &enter

@@ -6,7 +6,7 @@ use strict;
 
 use vars qw/$VERSION/;
 
-$VERSION = '0.38';
+$VERSION = '0.40';
 
 # Package to store unsigned big integers in decimal and do math with them
 
@@ -31,6 +31,9 @@ $VERSION = '0.38';
 
 ##############################################################################
 # global constants, flags and accessory
+
+# announce that we are compatible with MBI v1.70 and up
+sub api_version () { 1; }
  
 # constants for easier life
 my $nan = 'NaN';
@@ -70,9 +73,6 @@ sub _base_len
     $RBASE = abs('1e-'.$BASE_LEN_SMALL);		# see USE_MUL
     $MAX_VAL = $MBASE-1;
     
-    #print "BASE_LEN: $BASE_LEN MAX_VAL: $MAX_VAL BASE: $BASE RBASE: $RBASE ";
-    #print "BASE_LEN_SMALL: $BASE_LEN_SMALL MBASE: $MBASE\n";
-
     undef &_mul;
     undef &_div;
 
@@ -82,14 +82,12 @@ sub _base_len
     # & here.
     if ($caught == 2)				# 2
       {
-      # print "# use mul\n";
       # must USE_MUL since we cannot use DIV
       *{_mul} = \&_mul_use_mul;
       *{_div} = \&_div_use_mul;
       }
     else					# 0 or 1
       {
-      # print "# use div\n";
       # can USE_DIV instead
       *{_mul} = \&_mul_use_div;
       *{_div} = \&_div_use_div;
@@ -190,22 +188,21 @@ sub _new
   # (ref to string) return ref to num_array
   # Convert a number from string format (without sign) to internal base
   # 1ex format. Assumes normalized value as input.
-  my $d = $_[1];
-  my $il = length($$d)-1;
+  my $il = length($_[1])-1;
 
   # < BASE_LEN due len-1 above
-  return [ int($$d) ] if $il < $BASE_LEN;	# shortcut for short numbers
+  return [ int($_[1]) ] if $il < $BASE_LEN;	# shortcut for short numbers
 
   # this leaves '00000' instead of int 0 and will be corrected after any op
   [ reverse(unpack("a" . ($il % $BASE_LEN+1) 
-    . ("a$BASE_LEN" x ($il / $BASE_LEN)), $$d)) ];
+    . ("a$BASE_LEN" x ($il / $BASE_LEN)), $_[1])) ];
   }                                                                             
   
 BEGIN
   {
-  $AND_MASK = __PACKAGE__->_new( \( 2 ** $AND_BITS ));
-  $XOR_MASK = __PACKAGE__->_new( \( 2 ** $XOR_BITS ));
-  $OR_MASK = __PACKAGE__->_new( \( 2 ** $OR_BITS ));
+  $AND_MASK = __PACKAGE__->_new( ( 2 ** $AND_BITS ));
+  $XOR_MASK = __PACKAGE__->_new( ( 2 ** $XOR_BITS ));
+  $OR_MASK = __PACKAGE__->_new( ( 2 ** $OR_BITS ));
   }
 
 sub _zero
@@ -224,6 +221,12 @@ sub _two
   {
   # create a two (used internally for shifting)
   [ 2 ];
+  }
+
+sub _ten
+  {
+  # create a 10 (used internally for shifting)
+  [ 10 ];
   }
 
 sub _copy
@@ -260,14 +263,15 @@ sub _str
     $ret .= substr($z.$ar->[$l],-$BASE_LEN); # fastest way I could think of
     $l--;
     }
-  \$ret;
+  $ret;
   }                                                                             
 
 sub _num
   {
-  # Make a number (scalar int/float) from a BigInt object
+  # Make a number (scalar int/float) from a BigInt object 
   my $x = $_[1];
-  return $x->[0] if scalar @$x == 1;  # below $BASE
+
+  return 0+$x->[0] if scalar @$x == 1;  # below $BASE
   my $fac = 1;
   my $num = 0;
   foreach (@$x)
@@ -354,7 +358,6 @@ sub _sub
   my $car = 0; my $i; my $j = 0;
   if (!$s)
     {
-    #print "case 2\n";
     for $i (@$sx)
       {
       last unless defined $sy->[$j] || $car;
@@ -363,7 +366,6 @@ sub _sub
     # might leave leading zeros, so fix that
     return __strip_zeros($sx);
     }
-  #print "case 1 (swap)\n";
   for $i (@$sx)
     {
     # we can't do an early out if $x is < than $y, since we
@@ -976,6 +978,9 @@ sub _zeros
   # check each array elem in _m for having 0 at end as long as elem == 0
   # Upon finding a elem != 0, stop
   my $x = $_[1];
+
+  return 0 if scalar @$x == 1 && $x->[0] == 0;
+
   my $zeros = 0; my $elem;
   foreach my $e (@$x)
     {
@@ -997,33 +1002,38 @@ sub _zeros
 
 sub _is_zero
   {
-  # return true if arg (BINT or num_str) is zero (array '+', '0')
-  my $x = $_[1];
-
-  (((scalar @$x == 1) && ($x->[0] == 0))) <=> 0;
+  # return true if arg is zero 
+  (((scalar @{$_[1]} == 1) && ($_[1]->[0] == 0))) <=> 0;
   }
 
 sub _is_even
   {
-  # return true if arg (BINT or num_str) is even
-  my $x = $_[1];
-  (!($x->[0] & 1)) <=> 0; 
+  # return true if arg is even
+  (!($_[1]->[0] & 1)) <=> 0; 
   }
 
 sub _is_odd
   {
-  # return true if arg (BINT or num_str) is even
-  my $x = $_[1];
-
-  (($x->[0] & 1)) <=> 0; 
+  # return true if arg is even
+  (($_[1]->[0] & 1)) <=> 0; 
   }
 
 sub _is_one
   {
-  # return true if arg (BINT or num_str) is one (array '+', '1')
-  my $x = $_[1];
+  # return true if arg is one
+  (scalar @{$_[1]} == 1) && ($_[1]->[0] == 1) <=> 0; 
+  }
 
-  (scalar @$x == 1) && ($x->[0] == 1) <=> 0; 
+sub _is_two
+  {
+  # return true if arg is two 
+  (scalar @{$_[1]} == 1) && ($_[1]->[0] == 2) <=> 0; 
+  }
+
+sub _is_ten
+  {
+  # return true if arg is ten 
+  (scalar @{$_[1]} == 1) && ($_[1]->[0] == 10) <=> 0; 
   }
 
 sub __strip_zeros
@@ -1086,8 +1096,6 @@ sub _check
 
 
 ###############################################################################
-###############################################################################
-# some optional routines to make BigInt faster
 
 sub _mod
   {
@@ -1160,7 +1168,7 @@ sub _rsft
 
   if ($n != 10)
     {
-    $n = _new($c,\$n); return _div($c,$x, _pow($c,$n,$y));
+    $n = _new($c,$n); return _div($c,$x, _pow($c,$n,$y));
     }
 
   # shortcut (faster) for shifting by 10)
@@ -1208,7 +1216,7 @@ sub _lsft
 
   if ($n != 10)
     {
-    $n = _new($c,\$n); return _mul($c,$x, _pow($c,$n,$y));
+    $n = _new($c,$n); return _mul($c,$x, _pow($c,$n,$y));
     }
 
   # shortcut (faster) for shifting by 10) since we are in base 10eX
@@ -1260,7 +1268,7 @@ sub _pow
 
   my $pow2 = _one();
 
-  my $y_bin = ${_as_bin($c,$cy)}; $y_bin =~ s/^0b//;
+  my $y_bin = _as_bin($c,$cy); $y_bin =~ s/^0b//;
   my $len = length($y_bin);
   while (--$len > 0)
     {
@@ -1354,6 +1362,8 @@ sub _fac
   $cx;			# return result
   }
 
+#############################################################################
+
 sub _log_int
   {
   # calculate integer log of $x to base $base
@@ -1422,7 +1432,7 @@ sub _log_int
   my $a;
   my $base_mul = _mul($c, _copy($c,$base), $base);
 
-  while (($a = _acmp($x,$trial,$x_org)) < 0)
+  while (($a = _acmp($c,$trial,$x_org)) < 0)
     {
     _mul($c,$trial,$base_mul); _add($c, $x, [2]);
     }
@@ -1433,7 +1443,7 @@ sub _log_int
     # overstepped the result
     _dec($c, $x);
     _div($c,$trial,$base);
-    $a = _acmp($x,$trial,$x_org);
+    $a = _acmp($c,$trial,$x_org);
     if ($a > 0)
       {
       _dec($c, $x);
@@ -1507,7 +1517,7 @@ sub _sqrt
   # an even better guess. Not implemented yet. Does it improve performance?
   $x->[$l--] = 0 while ($l >= 0);	# all other digits of guess are zero
 
-  print "start x= ",${_str($c,$x)},"\n" if DEBUG;
+  print "start x= ",_str($c,$x),"\n" if DEBUG;
   my $two = _two();
   my $last = _zero();
   my $lastlast = _zero();
@@ -1519,7 +1529,7 @@ sub _sqrt
     $last = _copy($c,$x);
     _add($c,$x, _div($c,_copy($c,$y),$x));
     _div($c,$x, $two );
-    print " x= ",${_str($c,$x)},"\n" if DEBUG;
+    print " x= ",_str($c,$x),"\n" if DEBUG;
     }
   print "\nsteps in sqrt: $steps, " if DEBUG;
   _dec($c,$x) if _acmp($c,$y,_mul($c,_copy($c,$x),$x)) < 0;	# overshot? 
@@ -1556,7 +1566,7 @@ sub _root
   # if $n is a power of two, we can repeatedly take sqrt($X) and find the
   # proper result, because sqrt(sqrt($x)) == root($x,4)
   my $b = _as_bin($c,$n);
-  if ($$b =~ /0b1(0+)$/)
+  if ($b =~ /0b1(0+)$/)
     {
     my $count = CORE::length($1);	# 0b100 => len('00') => 2
     my $cnt = $count;			# counter for loop
@@ -1658,13 +1668,13 @@ sub _and
     ($y1, $yr) = _div($c,$y1,$mask);
 
     # make ints() from $xr, $yr
-    # this is when the AND_BITS are greater tahn $BASE and is slower for
+    # this is when the AND_BITS are greater than $BASE and is slower for
     # small (<256 bits) numbers, but faster for large numbers. Disabled
     # due to KISS principle
 
 #    $b = 1; $xrr = 0; foreach (@$xr) { $xrr += $_ * $b; $b *= $BASE; }
 #    $b = 1; $yrr = 0; foreach (@$yr) { $yrr += $_ * $b; $b *= $BASE; }
-#    _add($c,$x, _mul($c, _new( $c, \($xrr & $yrr) ), $m) );
+#    _add($c,$x, _mul($c, _new( $c, ($xrr & $yrr) ), $m) );
     
     # 0+ due to '&' doesn't work in strings
     _add($c,$x, _mul($c, [ 0+$xr->[0] & 0+$yr->[0] ], $m) );
@@ -1694,7 +1704,7 @@ sub _xor
     # make ints() from $xr, $yr (see _and())
     #$b = 1; $xrr = 0; foreach (@$xr) { $xrr += $_ * $b; $b *= $BASE; }
     #$b = 1; $yrr = 0; foreach (@$yr) { $yrr += $_ * $b; $b *= $BASE; }
-    #_add($c,$x, _mul($c, _new( $c, \($xrr ^ $yrr) ), $m) );
+    #_add($c,$x, _mul($c, _new( $c, ($xrr ^ $yrr) ), $m) );
 
     # 0+ due to '^' doesn't work in strings
     _add($c,$x, _mul($c, [ 0+$xr->[0] ^ 0+$yr->[0] ], $m) );
@@ -1730,7 +1740,7 @@ sub _or
     # make ints() from $xr, $yr (see _and())
 #    $b = 1; $xrr = 0; foreach (@$xr) { $xrr += $_ * $b; $b *= $BASE; }
 #    $b = 1; $yrr = 0; foreach (@$yr) { $yrr += $_ * $b; $b *= $BASE; }
-#    _add($c,$x, _mul($c, _new( $c, \($xrr | $yrr) ), $m) );
+#    _add($c,$x, _mul($c, _new( $c, ($xrr | $yrr) ), $m) );
     
     # 0+ due to '|' doesn't work in strings
     _add($c,$x, _mul($c, [ 0+$xr->[0] | 0+$yr->[0] ], $m) );
@@ -1754,7 +1764,7 @@ sub _as_hex
   if (@$x == 1)
     {
     my $t = sprintf("0x%x",$x->[0]);
-    return \$t;
+    return $t;
     }
 
   my $x1 = _copy($c,$x);
@@ -1778,7 +1788,7 @@ sub _as_hex
   $es = reverse $es;
   $es =~ s/^[0]+//;   # strip leading zeros
   $es = '0x' . $es;
-  \$es;
+  $es;
   }
 
 sub _as_bin
@@ -1790,12 +1800,12 @@ sub _as_bin
   # handle zero case for older Perls
   if ($] <= 5.005 && @$x == 1 && $x->[0] == 0)
     {
-    my $t = '0b0'; return \$t;
+    my $t = '0b0'; return $t;
     }
   if (@$x == 1 && $] >= 5.006)
     {
     my $t = sprintf("0b%b",$x->[0]);
-    return \$t;
+    return $t;
     }
   my $x1 = _copy($c,$x);
 
@@ -1819,7 +1829,7 @@ sub _as_bin
   $es = reverse $es;
   $es =~ s/^[0]+//;   # strip leading zeros
   $es = '0b' . $es;
-  \$es;
+  $es;
   }
 
 sub _from_hex
@@ -1831,12 +1841,12 @@ sub _from_hex
   my $m = [ 0x10000 ];				# 16 bit at a time
   my $x = _zero();
 
-  my $len = length($$hs)-2;
+  my $len = length($hs)-2;
   $len = int($len/4);				# 4-digit parts, w/o '0x'
   my $val; my $i = -4;
   while ($len >= 0)
     {
-    $val = substr($$hs,$i,4);
+    $val = substr($hs,$i,4);
     $val =~ s/^[+-]?0x// if $len == 0;		# for last part only because
     $val = hex($val);				# hex does not like wrong chars
     $i -= 4; $len --;
@@ -1854,13 +1864,13 @@ sub _from_bin
   # instead of converting X (8) bit at a time, it is faster to "convert" the
   # number to hex, and then call _from_hex.
 
-  my $hs = $$bs;
+  my $hs = $bs;
   $hs =~ s/^[+-]?0b//;					# remove sign and 0b
   my $l = length($hs);					# bits
   $hs = '0' x (8-($l % 8)) . $hs if ($l % 8) != 0;	# padd left side w/ 0
   my $h = unpack('H*', pack ('B*', $hs));		# repack as hex
   
-  $c->_from_hex(\('0x'.$h));
+  $c->_from_hex('0x'.$h);
   }
 
 ##############################################################################
@@ -1918,7 +1928,7 @@ sub _modpow
 
   my $acc = _copy($c,$num); my $t = _one();
 
-  my $expbin = ${_as_bin($c,$exp)}; $expbin =~ s/^0b//;
+  my $expbin = _as_bin($c,$exp); $expbin =~ s/^0b//;
   my $len = length($expbin);
   while (--$len >= 0)
     {
@@ -1932,6 +1942,20 @@ sub _modpow
     }
   @$num = @$t;
   $num;
+  }
+
+sub _gcd
+  {
+  # greatest common divisor
+  my ($c,$x,$y) = @_;
+
+  while (! _is_zero($c,$y))
+    {
+    my $t = _copy($c,$y);
+    $y = _mod($c, $x, $y);
+    $x = $t;
+    }
+  $x;
   }
 
 ##############################################################################
@@ -1966,11 +1990,14 @@ version like 'Pari'.
 =head1 METHODS
 
 The following functions MUST be defined in order to support the use by
-Math::BigInt:
+Math::BigInt v1.70 or later:
 
+	api_version()	return API version, minimum 1 for v1.70
 	_new(string)	return ref to new object from ref to decimal string
 	_zero()		return a new object with value 0
 	_one()		return a new object with value 1
+	_two()		return a new object with value 2
+	_ten()		return a new object with value 10
 
 	_str(obj)	return ref to a string representing the object
 	_num(obj)	returns a Perl integer/floating point number
@@ -2000,7 +2027,9 @@ Math::BigInt:
 	_len(obj)	returns count of the decimal digits of the object
 	_digit(obj,n)	returns the n'th decimal digit of object
 
-	_is_one(obj)	return true if argument is +1
+	_is_one(obj)	return true if argument is 1
+	_is_two(obj)	return true if argument is 2
+	_is_ten(obj)	return true if argument is 10
 	_is_zero(obj)	return true if argument is 0
 	_is_even(obj)	return true if argument is even (0,2,4,6..)
 	_is_odd(obj)	return true if argument is odd (1,3,5,7..)
@@ -2010,14 +2039,10 @@ Math::BigInt:
 	_check(obj)	check whether internal representation is still intact
 			return 0 for ok, otherwise error message as string
 
-The following functions are optional, and can be defined if the underlying lib
-has a fast way to do them. If undefined, Math::BigInt will use pure Perl (hence
-slow) fallback routines to emulate these:
-
 	_from_hex(str)	return ref to new object from ref to hexadecimal string
 	_from_bin(str)	return ref to new object from ref to binary string
 	
-	_as_hex(str)	return ref to scalar string containing the value as
+	_as_hex(str)	return string containing the value as
 			unsigned hex string, with the '0x' prepended.
 			Leading zeros must be stripped.
 	_as_bin(str)	Like as_hex, only as binary string containing only
@@ -2025,18 +2050,12 @@ slow) fallback routines to emulate these:
 			'0b' must be prepended.
 	
 	_rsft(obj,N,B)	shift object in base B by N 'digits' right
-			For unsupported bases B, return undef to signal failure
 	_lsft(obj,N,B)	shift object in base B by N 'digits' left
-			For unsupported bases B, return undef to signal failure
 	
 	_xor(obj1,obj2)	XOR (bit-wise) object 1 with object 2
 			Note: XOR, AND and OR pad with zeros if size mismatches
 	_and(obj1,obj2)	AND (bit-wise) object 1 with object 2
 	_or(obj1,obj2)	OR (bit-wise) object 1 with object 2
-
-	_signed_or
-	_signed_and
-	_signed_xor
 
 	_mod(obj,obj)	Return remainder of div of the 1st by the 2nd object
 	_sqrt(obj)	return the square root of object (truncated to int)
@@ -2044,8 +2063,6 @@ slow) fallback routines to emulate these:
 	_fac(obj)	return factorial of object 1 (1*2*3*4..)
 	_pow(obj,obj)	return object 1 to the power of object 2
 			return undef for NaN
-	_gcd(obj,obj)	return Greatest Common Divisor of two objects
-	
 	_zeros(obj)	return number of trailing decimal zeros
 	_modinv		return inverse modulus
 	_modpow		return modulus of power ($x ** $y) % $z
@@ -2055,6 +2072,16 @@ slow) fallback routines to emulate these:
 			 1     : result is exactly RESULT
 			 0     : result was truncated to RESULT
 			 undef : unknown whether result is exactly RESULT
+        _gcd(obj,obj)	return Greatest Common Divisor of two objects
+
+The following functions are optional, and can be defined if the underlying lib
+has a fast way to do them. If undefined, Math::BigInt will use pure Perl (hence
+slow) fallback routines to emulate these:
+	
+	_signed_or
+	_signed_and
+	_signed_xor
+
 
 Input strings come in as unsigned but with prefix (i.e. as '123', '0xabc'
 or '0b1101').
@@ -2071,11 +2098,6 @@ returning a different reference.
 
 Return values are always references to objects, strings, or true/false for
 comparisation routines.
-
-Exceptions are C<_lsft()> and C<_rsft()>, which return undef if they can not
-shift the argument. This is used to delegate shifting of bases different than
-the one you can support back to Math::BigInt, which will use some generic code
-to calculate the result.
 
 =head1 WRAP YOUR OWN
 
@@ -2103,6 +2125,7 @@ Original math code by Mark Biggar, rewritten by Tels L<http://bloodgate.com/>
 in late 2000.
 Seperated from BigInt and shaped API with the help of John Peacock.
 Fixed, sped-up and enhanced by Tels http://bloodgate.com 2001-2003.
+Further streamlining (api_version 1) by Tels 2004.
 
 =head1 SEE ALSO
 

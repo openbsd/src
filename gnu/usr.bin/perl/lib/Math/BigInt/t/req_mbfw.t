@@ -34,12 +34,13 @@ BEGIN
 # normal require that calls import automatically (we thus have MBI afterwards)
 require Math::BigFloat; my $x = Math::BigFloat->new(1);  ++$x; ok ($x,2);
 
-ok (Math::BigFloat->config()->{with}, 'Math::BigInt' );
+ok (Math::BigFloat->config()->{with}, 'Math::BigInt::Calc' );
 
 # now override
 Math::BigFloat->import ( with => 'Math::BigInt::Subclass' );
 
-ok (Math::BigFloat->config()->{with}, 'Math::BigInt::Subclass' );
+# thw with argument is ignored
+ok (Math::BigFloat->config()->{with}, 'Math::BigInt::Calc' );
 
 # all tests done
 

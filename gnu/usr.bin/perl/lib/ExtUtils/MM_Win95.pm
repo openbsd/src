@@ -1,14 +1,14 @@
 package ExtUtils::MM_Win95;
 
 use vars qw($VERSION @ISA);
-$VERSION = 0.03;
+$VERSION = 0.03_01;
 
 require ExtUtils::MM_Win32;
 @ISA = qw(ExtUtils::MM_Win32);
 
 use Config;
-my $DMAKE = 1 if $Config{'make'} =~ /^dmake/i;
-my $NMAKE = 1 if $Config{'make'} =~ /^nmake/i;
+my $DMAKE = $Config{'make'} =~ /^dmake/i;
+my $NMAKE = $Config{'make'} =~ /^nmake/i;
 
 
 =head1 NAME

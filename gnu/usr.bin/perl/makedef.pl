@@ -627,6 +627,12 @@ else {
 		    )];
 }
 
+if ($define{'PERL_MALLOC_WRAP'}) {
+    emit_symbols [qw(
+		    PL_memory_wrap
+		    )];
+}
+
 unless ($define{'USE_5005THREADS'} || $define{'USE_ITHREADS'}) {
     skip_symbols [qw(
 		    PL_thr_key
@@ -1032,6 +1038,7 @@ if ($PLATFORM =~ /^win(?:32|ce)$/) {
 			    win32_pclose
 			    win32_rename
 			    win32_setmode
+			    win32_chsize
 			    win32_lseek
 			    win32_tell
 			    win32_dup

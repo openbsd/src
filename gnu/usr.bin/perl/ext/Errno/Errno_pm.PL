@@ -109,7 +109,9 @@ sub get_files {
 	     ) {
 	# Some Linuxes have weird errno.hs which generate
 	# no #file or #line directives
-	$file{'/usr/include/errno.h'} = 1;
+	my $linux_errno_h = -e '/usr/include/errno.h' ?
+	    '/usr/include/errno.h' : '/usr/local/include/errno.h';
+	$file{$linux_errno_h} = 1;
     } elsif ($^O eq 'MacOS') {
 	# note that we are only getting the GUSI errno's here ...
 	# we might miss out on compiler-specific ones

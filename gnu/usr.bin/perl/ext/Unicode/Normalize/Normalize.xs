@@ -182,34 +182,44 @@ static void sv_cat_uvuni (SV* sv, UV uv)
     sv_catpvn(sv, (char *)tmp, t - tmp);
 }
 
+static char * sv_2pvunicode(SV *sv, STRLEN *lp)
+{
+    char *s;
+    STRLEN len;
+    s = (char*)SvPV(sv,len);
+    if (!SvUTF8(sv)) {
+	SV* tmpsv = sv_mortalcopy(sv);
+	if (!SvPOK(tmpsv))
+	    (void)sv_pvn_force(tmpsv,&len);
+	sv_utf8_upgrade(tmpsv);
+	s = (char*)SvPV(tmpsv,len);
+    }
+    *lp = len;
+    return s;
+}
+
 MODULE = Unicode::Normalize	PACKAGE = Unicode::Normalize
 
 SV*
-decompose(arg, compat = &PL_sv_no)
-    SV * arg
+decompose(src, compat = &PL_sv_no)
+    SV * src
     SV * compat
   PROTOTYPE: $;$
   PREINIT:
-    UV uv;
-    SV *src, *dst;
+    SV *dst;
     STRLEN srclen, retlen;
     U8 *s, *e, *p, *r;
+    UV uv;
     bool iscompat;
   CODE:
-    if (SvUTF8(arg)) {
-	src = arg;
-    } else {
-	src = sv_mortalcopy(arg);
-	sv_utf8_upgrade(src);
-    }
     iscompat = SvTRUE(compat);
+    s = (U8*)sv_2pvunicode(src,&srclen);
+    e = s + srclen;
 
     dst = newSV(1);
     (void)SvPOK_only(dst);
     SvUTF8_on(dst);
 
-    s = (U8*)SvPV(src,srclen);
-    e = s + srclen;
     for (p = s; p < e; p += retlen) {
 	uv = utf8n_to_uvuni(p, e - p, &retlen, AllowAnyUTF);
 	if (!retlen)
@@ -232,11 +242,11 @@ decompose(arg, compat = &PL_sv_no)
 
 
 SV*
-reorder(arg)
-    SV * arg
+reorder(src)
+    SV * src
   PROTOTYPE: $
   PREINIT:
-    SV *src, *dst;
+    SV *dst;
     STRLEN srclen, dstlen, retlen, stk_cc_max;
     U8 *s, *e, *p, *d, curCC;
     UV uv, uvlast;
@@ -244,15 +254,9 @@ reorder(arg)
     STRLEN i, cc_pos;
     bool valid_uvlast;
   CODE:
-    if (SvUTF8(arg)) {
-	src = arg;
-    } else {
-	src = sv_mortalcopy(arg);
-	sv_utf8_upgrade(src);
-    }
-
-    s = (U8*)SvPV(src, srclen);
+    s = (U8*)sv_2pvunicode(src,&srclen);
     e = s + srclen;
+
     dstlen = srclen + 1;
     dst = newSV(dstlen);
     (void)SvPOK_only(dst);
@@ -326,27 +330,21 @@ reorder(arg)
 
 
 SV*
-compose(arg)
-    SV * arg
+compose(src)
+    SV * src
   PROTOTYPE: $
   ALIAS:
     composeContiguous = 1
   PREINIT:
-    SV  *src, *dst, *tmp;
+    SV  *dst, *tmp;
     U8  *s, *p, *e, *d, *t, *tmp_start, curCC, preCC;
     UV uv, uvS, uvComp;
     STRLEN srclen, dstlen, tmplen, retlen;
     bool beginning = TRUE;
   CODE:
-    if (SvUTF8(arg)) {
-	src = arg;
-    } else {
-	src = sv_mortalcopy(arg);
-	sv_utf8_upgrade(src);
-    }
-
-    s = (U8*)SvPV(src, srclen);
+    s = (U8*)sv_2pvunicode(src,&srclen);
     e = s + srclen;
+
     dstlen = srclen + 1;
     dst = newSV(dstlen);
     (void)SvPOK_only(dst);
@@ -429,25 +427,17 @@ compose(arg)
 
 
 void
-checkNFD(arg)
-    SV * arg
+checkNFD(src)
+    SV * src
   PROTOTYPE: $
   ALIAS:
     checkNFKD = 1
   PREINIT:
-    UV uv;
-    SV *src;
     STRLEN srclen, retlen;
     U8 *s, *e, *p, curCC, preCC;
+    UV uv;
   CODE:
-    if (SvUTF8(arg)) {
-	src = arg;
-    } else {
-	src = sv_mortalcopy(arg);
-	sv_utf8_upgrade(src);
-    }
-    
-    s = (U8*)SvPV(src,srclen);
+    s = (U8*)sv_2pvunicode(src,&srclen);
     e = s + srclen;
 
     preCC = 0;
@@ -468,26 +458,18 @@ checkNFD(arg)
 
 
 void
-checkNFC(arg)
-    SV * arg
+checkNFC(src)
+    SV * src
   PROTOTYPE: $
   ALIAS:
     checkNFKC = 1
   PREINIT:
-    UV uv;
-    SV *src;
     STRLEN srclen, retlen;
     U8 *s, *e, *p, curCC, preCC;
+    UV uv;
     bool isMAYBE;
   CODE:
-    if (SvUTF8(arg)) {
-	src = arg;
-    } else {
-	src = sv_mortalcopy(arg);
-	sv_utf8_upgrade(src);
-    }
-    
-    s = (U8*)SvPV(src,srclen);
+    s = (U8*)sv_2pvunicode(src,&srclen);
     e = s + srclen;
 
     preCC = 0;
@@ -528,27 +510,19 @@ checkNFC(arg)
 
 
 void
-checkFCD(arg)
-    SV * arg
+checkFCD(src)
+    SV * src
   PROTOTYPE: $
   ALIAS:
     checkFCC = 1
   PREINIT:
-    UV uv, uvLead, uvTrail;
-    SV *src;
     STRLEN srclen, retlen, canlen, canret;
     U8 *s, *e, *p, curCC, preCC;
+    UV uv, uvLead, uvTrail;
     U8 *sCan, *pCan, *eCan;
     bool isMAYBE;
   CODE:
-    if (SvUTF8(arg)) {
-	src = arg;
-    } else {
-	src = sv_mortalcopy(arg);
-	sv_utf8_upgrade(src);
-    }
-    
-    s = (U8*)SvPV(src,srclen);
+    s = (U8*)sv_2pvunicode(src,&srclen);
     e = s + srclen;
 
     preCC = 0;
@@ -709,22 +683,15 @@ getCanon(uv)
 
 
 void
-splitOnLastStarter(arg)
-    SV * arg
+splitOnLastStarter(src)
+    SV * src
   PREINIT:
-    UV uv;
-    SV *src, *svp;
+    SV *svp;
     STRLEN srclen, retlen;
     U8 *s, *e, *p;
+    UV uv;
   PPCODE:
-    if (SvUTF8(arg)) {
-	src = arg;
-    } else {
-	src = sv_mortalcopy(arg);
-	sv_utf8_upgrade(src);
-    }
-
-    s = (U8*)SvPV(src,srclen);
+    s = (U8*)sv_2pvunicode(src,&srclen);
     e = s + srclen;
 
     for (p = e; s < p; ) {

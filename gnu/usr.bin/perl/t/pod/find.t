@@ -49,7 +49,7 @@ my $compare = $ENV{PERL_CORE} ?
   join(',', sort qw(
     Pod::Stuff
 ))
-  : join(',', qw(
+  : join(',', sort qw(
     Pod::Checker
     Pod::Find
     Pod::InputObjects

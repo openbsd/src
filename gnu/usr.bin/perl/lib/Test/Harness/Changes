@@ -1,6 +1,15 @@
 Revision history for Perl extension Test::Harness
 
-2.40	    Tue Dec 30 20:38:59 CST 2003
+2.42        Wed Apr 28 22:13:11 CDT 2004
+    [ENHANCEMENTS]
+    * prove -v now sets TEST_VERBOSE in case your tests rely on them.
+    * prove globs the command line, since Win32's shell doesn't.
+
+    [FIXES]
+    * Cross-platform test fixes on t/prove-globbing.t
+
+
+2.40        Tue Dec 30 20:38:59 CST 2003
     [FIXES]
     * Test::Harness::Straps should now properly quote on VMS.
 
@@ -14,16 +23,16 @@ Revision history for Perl extension Test::Harness
       underscores, to indicate such.
 
     * Gratuitous text-only changes in Test::Harness::Iterator.
-    
+
     * All tests now do their use_ok() in a BEGIN block.  Some of the
       use_ok() calls were too much of a hassle to put into a BEGIN block,
       so I changed them to regular use calls.
 
 
-2.38	    Mon Nov 24 22:36:18 CST 2003
+2.38        Mon Nov 24 22:36:18 CST 2003
     Released.  See changes below.
 
-2.37_03	    Tue Nov 18 23:51:38 CST 2003
+2.37_03     Tue Nov 18 23:51:38 CST 2003
     [ENHANCEMENTS]
     * prove -V now shows the Perl version being used.
     * Now there's a HARNESS_DEBUG flag that shows diagnostics as the

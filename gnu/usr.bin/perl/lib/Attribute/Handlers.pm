@@ -2,7 +2,7 @@ package Attribute::Handlers;
 use 5.006;
 use Carp;
 use warnings;
-$VERSION = '0.78';
+$VERSION = '0.78_01';
 # $DB::single=1;
 
 my %symcache;
@@ -165,9 +165,10 @@ sub _gen_handler_AH_() {
 	}
 }
 
-*{"MODIFY_${_}_ATTRIBUTES"} = _gen_handler_AH_ foreach @{$validtype{ANY}};
-push @UNIVERSAL::ISA, 'Attribute::Handlers'
-	unless grep /^Attribute::Handlers$/, @UNIVERSAL::ISA;
+*{"Attribute::Handlers::UNIVERSAL::MODIFY_${_}_ATTRIBUTES"} =
+       _gen_handler_AH_ foreach @{$validtype{ANY}};
+push @UNIVERSAL::ISA, 'Attribute::Handlers::UNIVERSAL'
+       unless grep /^Attribute::Handlers::UNIVERSAL$/, @UNIVERSAL::ISA;
 
 sub _apply_handler_AH_ {
 	my ($declaration, $phase) = @_;

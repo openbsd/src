@@ -1,5 +1,5 @@
 #
-# $Id: gb12345.ucm,v 1.0 2002/03/28 23:26:26 dankogai Exp $
+# $Id: gb12345.ucm,v 2.0 2004/05/16 20:55:24 dankogai Exp $
 #
 # ./compile -n gb12345 -o Encode/gb12345.ucm Encode/gb12345.enc
 #

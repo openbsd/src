@@ -42,6 +42,14 @@ is needed.>  See L<utf8>.
 You can also use the C<encoding> pragma to change the default encoding
 of the data in your script; see L<encoding>.
 
+=item BOM-marked scripts and UTF-16 scripts autodetected
+
+If a Perl script begins marked with the Unicode BOM (UTF-16LE, UTF16-BE,
+or UTF-8), or if the script looks like non-BOM-marked UTF-16 of either
+endianness, Perl will correctly read in the script as Unicode.
+(BOMless UTF-8 cannot be effectively recognized or differentiated from
+ISO 8859-1 or other eight-bit encodings.)
+
 =item C<use encoding> needed to upgrade non-Latin-1 byte strings
 
 By default, there is a fundamental asymmetry in Perl's unicode model:
@@ -207,6 +215,7 @@ for instance, are identical.
     Short       Long
 
     L           Letter
+    LC          CasedLetter
     Lu          UppercaseLetter
     Ll          LowercaseLetter
     Lt          TitlecaseLetter
@@ -254,7 +263,8 @@ for instance, are identical.
 
 Single-letter properties match all characters in any of the
 two-letter sub-properties starting with the same letter.
-C<L&> is a special case, which is an alias for C<Ll>, C<Lu>, and C<Lt>.
+C<LC> and C<L&> are special cases, which are aliases for the set of
+C<Ll>, C<Lu>, and C<Lt>.
 
 Because Perl hides the need for the user to understand the internal
 representation of Unicode characters, there is no need to implement
@@ -262,31 +272,32 @@ the somewhat messy concept of surrogates. C<Cs> is therefore not
 supported.
 
 Because scripts differ in their directionality--Hebrew is
-written right to left, for example--Unicode supplies these properties:
+written right to left, for example--Unicode supplies these properties in
+the BidiClass class:
 
     Property    Meaning
 
-    BidiL       Left-to-Right
-    BidiLRE     Left-to-Right Embedding
-    BidiLRO     Left-to-Right Override
-    BidiR       Right-to-Left
-    BidiAL      Right-to-Left Arabic
-    BidiRLE     Right-to-Left Embedding
-    BidiRLO     Right-to-Left Override
-    BidiPDF     Pop Directional Format
-    BidiEN      European Number
-    BidiES      European Number Separator
-    BidiET      European Number Terminator
-    BidiAN      Arabic Number
-    BidiCS      Common Number Separator
-    BidiNSM     Non-Spacing Mark
-    BidiBN      Boundary Neutral
-    BidiB       Paragraph Separator
-    BidiS       Segment Separator
-    BidiWS      Whitespace
-    BidiON      Other Neutrals
+    L           Left-to-Right
+    LRE         Left-to-Right Embedding
+    LRO         Left-to-Right Override
+    R           Right-to-Left
+    AL          Right-to-Left Arabic
+    RLE         Right-to-Left Embedding
+    RLO         Right-to-Left Override
+    PDF         Pop Directional Format
+    EN          European Number
+    ES          European Number Separator
+    ET          European Number Terminator
+    AN          Arabic Number
+    CS          Common Number Separator
+    NSM         Non-Spacing Mark
+    BN          Boundary Neutral
+    B           Paragraph Separator
+    S           Segment Separator
+    WS          Whitespace
+    ON          Other Neutrals
 
-For example, C<\p{BidiR}> matches characters that are normally
+For example, C<\p{BidiClass:R}> matches characters that are normally
 written right to left.
 
 =back
@@ -559,10 +570,10 @@ that make the distinction.
 
 Most operators that deal with positions or lengths in a string will
 automatically switch to using character positions, including
-C<chop()>, C<substr()>, C<pos()>, C<index()>, C<rindex()>,
+C<chop()>, C<chomp()>, C<substr()>, C<pos()>, C<index()>, C<rindex()>,
 C<sprintf()>, C<write()>, and C<length()>.  Operators that
 specifically do not switch include C<vec()>, C<pack()>, and
-C<unpack()>.  Operators that really don't care include C<chomp()>,
+C<unpack()>.  Operators that really don't care include
 operators that treats strings as a bucket of bits such as C<sort()>,
 and operators dealing with filenames.
 
@@ -632,10 +643,21 @@ And finally, C<scalar reverse()> reverses by character rather than by byte.
 =head2 User-Defined Character Properties
 
 You can define your own character properties by defining subroutines
-whose names begin with "In" or "Is".  The subroutines must be defined
-in the C<main> package.  The user-defined properties can be used in the
-regular expression C<\p> and C<\P> constructs.  Note that the effect
-is compile-time and immutable once defined.
+whose names begin with "In" or "Is".  The subroutines can be defined in
+any package.  The user-defined properties can be used in the regular
+expression C<\p> and C<\P> constructs; if you are using a user-defined
+property from a package other than the one you are in, you must specify
+its package in the C<\p> or C<\P> construct.
+
+    # assuming property IsForeign defined in Lang::
+    package main;  # property package name required
+    if ($txt =~ /\p{Lang::IsForeign}+/) { ... }
+
+    package Lang;  # property package name not required
+    if ($txt =~ /\p{IsForeign}+/) { ... }
+
+
+Note that the effect is compile-time and immutable once defined.
 
 The subroutines must return a specially-formatted string, with one
 or more newline-separated lines.  Each line must be one of the following:
@@ -650,23 +672,30 @@ tabular characters) denoting a range of Unicode code points to include.
 =item *
 
 Something to include, prefixed by "+": a built-in character
-property (prefixed by "utf8::"), to represent all the characters in that
-property; two hexadecimal code points for a range; or a single
-hexadecimal code point.
+property (prefixed by "utf8::") or a user-defined character property,
+to represent all the characters in that property; two hexadecimal code
+points for a range; or a single hexadecimal code point.
 
 =item *
 
 Something to exclude, prefixed by "-": an existing character
-property (prefixed by "utf8::"), for all the characters in that
-property; two hexadecimal code points for a range; or a single
-hexadecimal code point.
+property (prefixed by "utf8::") or a user-defined character property,
+to represent all the characters in that property; two hexadecimal code
+points for a range; or a single hexadecimal code point.
 
 =item *
 
 Something to negate, prefixed "!": an existing character
-property (prefixed by "utf8::") for all the characters except the
-characters in the property; two hexadecimal code points for a range;
-or a single hexadecimal code point.
+property (prefixed by "utf8::") or a user-defined character property,
+to represent all the characters in that property; two hexadecimal code
+points for a range; or a single hexadecimal code point.
+
+=item *
+
+Something to intersect with, prefixed by "&": an existing character
+property (prefixed by "utf8::") or a user-defined character property,
+for all the characters except the characters in the property; two
+hexadecimal code points for a range; or a single hexadecimal code point.
 
 =back
 
@@ -713,6 +742,19 @@ The negation is useful for defining (surprise!) negated classes.
     +utf8::IsCn
     END
     }
+
+Intersection is useful for getting the common characters matched by
+two (or more) classes.
+
+    sub InFooAndBar {
+        return <<'END';
+    +main::Foo
+    &main::Bar
+    END
+    }
+
+It's important to remember not to use "&" for the first set -- that
+would be intersecting with nothing (resulting in an empty set).
 
 You can also define your own mappings to be used in the lc(),
 lcfirst(), uc(), and ucfirst() (or their string-inlined versions).
@@ -793,7 +835,9 @@ Level 1 - Basic Unicode Support
         [ 1] \x{...}
         [ 2] \N{...}
         [ 3] . \p{...} \P{...}
-        [ 4] now scripts (see UTR#24 Script Names) in addition to blocks
+        [ 4] support for scripts (see UTR#24 Script Names), blocks,
+             binary properties, enumerated non-binary properties, and
+             numeric properties (as listed in UTR#18 Other Properties)
         [ 5] have negation
         [ 6] can use regular expression look-ahead [a]
              or user-defined character properties [b] to emulate subtraction

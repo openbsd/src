@@ -134,26 +134,53 @@ contain PA-RISC 2.0 chips:
     D280, D370, D380, D390, D650, J220, J2240, J280, J282, J400, J410,
     J5000, J5500XM, J5600, J7000, J7600, K250, K260, K260-EG, K270, K360,
     K370, K380, K450, K460, K460-EG, K460-XP, K470, K570, K580, L1000,
-    L2000, L3000, N4000, R380, R390, RP2400, RP2405, RP2430, RP2450,
-    RP2470, RP5400, RP5405, RP5430, RP5450, RP5470, RP7400, RP7405,
-    RP7410, RP8400, SD16000, SD32000, SD64000, T540, T600, V2000, V2200,
-    V2250, V2500, V2600
+    L2000, L3000, N4000, R380, R390, SD16000, SD32000, SD64000, T540,
+    T600, V2000, V2200, V2250, V2500, V2600
 
-Just before HP took over Compaq, some systems were renamed. Visit
-http://www.hp.com/products1/servers/server_names.html to see what
-the changes are, or will be.
+Just before HP took over Compaq, some systems were renamed. the link
+that contained the explanation is dead, so here's a short summary:
 
     HP 9000 A-Class servers, now renamed HP Server rp2400 series.
     HP 9000 L-Class servers, now renamed HP Server rp5400 series.
     HP 9000 N-Class servers, now renamed HP Server rp7400.
 
-=head2 Itanium
+    rp2400, rp2405, rp2430, rp2450, rp2470, rp3410, rp3440, rp5400,
+    rp5405, rp5430, rp5450, rp5470, rp7400, rp7405, rp7410, rp7420,
+    rp8400, rp8420, Superdome
+
+The current naming convention is:
+
+    aadddd
+    ||||`+- 00 - 99 relative capacity & newness (upgrades, etc.)
+    |||`--- unique number for each architecture to ensure different
+    |||     systems do not have the same numbering across
+    |||     architectures
+    ||`---- 1 - 9 identifies family and/or relative positioning
+    ||
+    |`----- c = ia32 (cisc)
+    |       p = pa-risc
+    |       x = ia-64 (Itanium & Itanium 2)
+    |       h = housing
+    `------ t = tower
+            r = rack optimized
+            s = super scalable
+            b = blade
+            sa = appliance
+
+=head2 Itanium & Itanium 2
 
 HP also ships servers with the 128-bit Itanium processor(s). As of the
 date of this document's last update, the following systems contain
-Itanium chips (this is very likely to be out of date):
+Itanium or Itanium 2 chips (this is very likely to be out of date):
 
-    RX2600, RX4610, RX5670, RX9610
+    rx1600, rx2600, rx2600hptc, rx4610, rx4640, rx5670, rx7620, rx8620,
+    rx9610
+
+To see all about your machine, type
+
+    # model
+    ia64 hp server rx2600
+    # /usr/contrib/bin/machinfo
 
 =head2 Portability Between PA-RISC Versions
 
@@ -171,9 +198,9 @@ but the resulting executable will not run when transferred to a PA-RISC
 =head2 Itanium Processor Family and HP-UX
 
 HP-UX also runs on the new Itanium processor.  This requires the use
-of a different version of HP-UX (currently 11.20), and with the exception
-of a few differences detailed below and in later sections, Perl should
-compile with no problems.
+of a different version of HP-UX (currently 11.23 or 11i v1.6), and with
+the exception of a few differences detailed below and in later sections,
+Perl should compile with no problems.
 
 Although PA-RISC binaries can run on Itanium systems, you should not
 attempt to use a PA-RISC version of Perl on an Itanium system.  This is
@@ -301,15 +328,22 @@ find the GNU binutils package. (Browse through the list, because there
 are often multiple versions of the same package available).
 
 Above mentioned distributions are depots. H.Merijn Brand has made prebuilt
-gcc binaries available on https://www.beepz.com/personal/merijn/ and/or
-http://www.cmve.net/~merijn/ for HP-UX 10.20 and HP-UX 11.00 in both 32-
-and 64-bit versions. Most likely 11i will be available soon. These are
-bzipped tar archives that also include recent GNU binutils and GNU gdb.
-Read the instructions on that page to rebuild gcc using itself.
+gcc binaries available on http://mirrors.develooper.com/hpux/ and/or
+http://www.cmve.net/~merijn/ for HP-UX 10.20, HP-UX 11.00, and HP-UX 11.11
+(HP-UX 11i) in both 32- and 64-bit versions. These are bzipped tar archives
+that also include recent GNU binutils and GNU gdb.  Read the instructions
+on that page to rebuild gcc using itself.
 
-Building a 64bit capable gcc from source is possible only when you have
-the HP C-ANSI C compiler available, which you should use anyway when
-building perl.
+On PA-RISC you need a different compiler for 32-bit applications and for
+64-bit applications. On PA-RISC, 32-bit objects and 64-bit objects do
+not mix. period. There is no different behaviour for HP C-ANSI-C or GNU
+gcc. So if you require your perl binary to use 64-bit libraries, like
+Oracle-64bit, you MUST build a 64-bit perl.
+
+Building a 64-bit capable gcc on PA-RISC from source is possible only when
+you have the HP C-ANSI C compiler or an already working 64-bit binary of
+gcc available. Best performance for perl is achieved with HP's native
+compiler.
 
 =head2 Using Large Files with Perl on HP-UX
 
@@ -403,13 +437,15 @@ versions of Unix.  Once this is complete, scalar variables will be able
 to hold numbers larger than 2^32 with complete precision.
 
 As of the date of this document, Perl is fully 64-bit compliant on
-HP-UX 11.00 and up for both ccc- and gcc builds.
+HP-UX 11.00 and up for both cc- and gcc builds. If you are about to
+build a 64-bit perl with GNU gcc, please read the gcc section carefully.
 
 Should a user wish to experiment with compiling Perl in the LP64
 environment, use the -Duse64bitall flag to Configure.  This will force
-Perl to be compiled in a pure LP64 environment (via the +DD64 flag).
-(Note that these flags will only work with HP's ANSI C compiler.  If
-you want to compile Perl using gcc, you will have to get a version of
+Perl to be compiled in a pure LP64 environment (with the +DD64 flag for
+HP C-ANSI-C, with no additional options for GNU gcc 64-bit on PA-RISC,
+and with -mlp64 for GNU gcc on Itanium).
+If you want to compile Perl using gcc, you will have to get a version of
 the compiler that supports 64-bit operations.)
 
 You can also use the -Duse64bitint flag to Configure.  Although there
@@ -438,7 +474,7 @@ achieved using
 Do not forget the space before the trailing quote.
 
 Also note that this does not (yet) work with all configurations,
-it is known to fail with 64bit versions of GCC.
+it is known to fail with 64-bit versions of GCC.
 
 =head2 GDBM and Threads on HP-UX
 
@@ -455,7 +491,7 @@ fix is currently available.
 
 =head2 perl -P and // and HP-UX
 
-In HP-UX Perl is compiled with flags that will cause problems if the
+If HP-UX Perl is compiled with flags that will cause problems if the
 -P flag of Perl (preprocess Perl code with the C preprocessor before
 perl sees it) is used.  The problem is that C<//>, being a C++-style
 until-end-of-line comment, will disappear along with the remainder
@@ -525,6 +561,6 @@ With much assistance regarding shared libraries from Marc Sabatella.
 
 =head1 DATE
 
-Version 0.6.7: 2002-09-05
+Version 0.7.0: 2004-06-09
 
 =cut

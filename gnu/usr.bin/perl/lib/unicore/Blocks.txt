@@ -1,11 +1,25 @@
-# Blocks-4.0.0.txt
-# Correlated with Unicode 4.0
-# Note: The casing of block names is not normative.
-#       For example, "Basic Latin" and "BASIC LATIN" are equivalent.
+# Blocks-4.0.1.txt
+# Date: 2004-03-01, 15:52 [KW]
+#
+# Unicode Character Database
+# Copyright (c) 1991-2004 Unicode, Inc.
+# For terms of use, see http://www.unicode.org/terms_of_use.html
+# For documentation, see UCD.html
+#
+# Note:   When comparing block names, casing, whitespace, hyphens,
+#         and underbars are ignored.
+#         For example, "Latin Extended-A" and "latin extended a" are equivalent.
+#         For more information on the comparison of property values, 
+#            see UCD.html.
 #
 # Code points not explicitly listed in this file are given the value No_Block.
-#
+# Format:
 # Start Code..End Code; Block Name
+
+# ================================================
+
+# Property:	Block
+
 0000..007F; Basic Latin
 0080..00FF; Latin-1 Supplement
 0100..017F; Latin Extended-A
@@ -15,7 +29,7 @@
 0300..036F; Combining Diacritical Marks
 0370..03FF; Greek and Coptic
 0400..04FF; Cyrillic
-0500..052F; Cyrillic Supplementary
+0500..052F; Cyrillic Supplement
 0530..058F; Armenian
 0590..05FF; Hebrew
 0600..06FF; Arabic

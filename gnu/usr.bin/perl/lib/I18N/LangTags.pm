@@ -1,5 +1,5 @@
 
-# Time-stamp: "2003-10-10 17:43:04 ADT"
+# Time-stamp: "2004-07-01 14:34:40 ADT"
 # Sean M. Burke <sburke@cpan.org>
 
 require 5.000;
@@ -14,10 +14,15 @@ require Exporter;
                 similarity_language_tag is_dialect_of
                 locale2language_tag alternate_language_tags
                 encode_language_tag panic_languages
+                implicate_supers
+                implicate_supers_strictly
                );
 %EXPORT_TAGS = ('ALL' => \@EXPORT_OK);
 
-$VERSION = "0.29";
+$VERSION = "0.33";
+
+sub uniq { my %seen; return grep(!($seen{$_}++), @_); } # a util function
+
 
 =head1 NAME
 
@@ -25,16 +30,15 @@ I18N::LangTags - functions for dealing with RFC3066-style language tags
 
 =head1 SYNOPSIS
 
-    use I18N::LangTags qw(is_language_tag same_language_tag
-                          extract_language_tags super_languages
-                          similarity_language_tag is_dialect_of
-                          locale2language_tag alternate_language_tags
-                          encode_language_tag panic_languages
-                         );
+  use I18N::LangTags();
 
-...or whatever of those functions you want to import.  Those are
-all the exportable functions -- you're free to import only some,
-or none at all.  By default, none are imported.  If you say:
+...or specify whichever of those functions you want to import, like so:
+
+  use I18N::LangTags qw(implicate_supers similarity_language_tag);
+
+All the exportable functions are listed below -- you're free to import
+only some, or none at all.  By default, none are imported.  If you
+say:
 
     use I18N::LangTags qw(:ALL)
 
@@ -333,7 +337,7 @@ More importantly, you assume I<at your peril> that superordinates of
 $lang1 are mutually intelligible with $lang1.  Consider this
 carefully.
 
-=cut
+=cut 
 
 sub super_languages {
   my $lang1 = $_[0];
@@ -388,7 +392,7 @@ tags.  Think REAL hard about how you use this.  YOU HAVE BEEN WARNED.
 The output is untainted.  If you don't know what tainting is,
 don't worry about it.
 
-=cut
+=cut 
 
 sub locale2language_tag {
   my $lang =
@@ -737,6 +741,84 @@ sub panic_languages {
   return grep !$seen{$_}++,  @out, 'en';
 }
 
+#---------------------------------------------------------------------------
+#---------------------------------------------------------------------------
+
+=item * the function implicate_supers( ...languages... )
+
+This takes a list of strings (which are presumed to be language-tags;
+strings that aren't, are ignored); and after each one, this function
+inserts super-ordinate forms that don't already appear in the list.
+The original list, plus these insertions, is returned.
+
+In other words, it takes this:
+
+  pt-br de-DE en-US fr pt-br-janeiro
+
+and returns this:
+
+  pt-br pt de-DE de en-US en fr pt-br-janeiro
+
+This function is most useful in the idiom
+
+  implicate_supers( I18N::LangTags::Detect::detect() );
+
+(See L<I18N::LangTags::Detect>.)
+
+
+=item * the function implicate_supers_strictly( ...languages... )
+
+This works like C<implicate_supers> except that the implicated
+forms are added to the end of the return list.
+
+In other words, implicate_supers_strictly takes a list of strings
+(which are presumed to be language-tags; strings that aren't, are
+ignored) and after the whole given list, it inserts the super-ordinate forms 
+of all given tags, minus any tags that already appear in the input list.
+
+In other words, it takes this:
+
+  pt-br de-DE en-US fr pt-br-janeiro
+
+and returns this:
+
+  pt-br de-DE en-US fr pt-br-janeiro pt de en
+
+The reason this function has "_strictly" in its name is that when
+you're processing an Accept-Language list according to the RFCs, if
+you interpret the RFCs quite strictly, then you would use
+implicate_supers_strictly, but for normal use (i.e., common-sense use,
+as far as I'm concerned) you'd use implicate_supers.
+
+=cut
+
+sub implicate_supers {
+  my @languages = grep is_language_tag($_), @_;
+  my %seen_encoded;
+  foreach my $lang (@languages) {
+    $seen_encoded{ I18N::LangTags::encode_language_tag($lang) } = 1
+  }
+
+  my(@output_languages);
+  foreach my $lang (@languages) {
+    push @output_languages, $lang;
+    foreach my $s ( I18N::LangTags::super_languages($lang) ) {
+      # Note that super_languages returns the longest first.
+      last if $seen_encoded{ I18N::LangTags::encode_language_tag($s) };
+      push @output_languages, $s;
+    }
+  }
+  return uniq( @output_languages );
+
+}
+
+sub implicate_supers_strictly {
+  my @tags = grep is_language_tag($_), @_;
+  return uniq( @_,   map super_languages($_), @_ );
+}
+
+
+
 ###########################################################################
 1;
 __END__
@@ -771,7 +853,7 @@ Character Sets and Languages".
 Value and Encoded Word Extensions: Character Sets, Languages, and
 Continuations".
 
-* RFC 2482, C<ftp://ftp.isi.edu/in-notes/rfc2482.txt>,
+* RFC 2482, C<ftp://ftp.isi.edu/in-notes/rfc2482.txt>, 
 "Language Tagging in Unicode Plain Text".
 
 * Locale::Codes, in
@@ -786,7 +868,7 @@ C<http://www.iana.org/assignments/language-tags>
 
 =head1 COPYRIGHT
 
-Copyright (c) 1998-2003 Sean M. Burke. All rights reserved.
+Copyright (c) 1998-2004 Sean M. Burke. All rights reserved.
 
 This library is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

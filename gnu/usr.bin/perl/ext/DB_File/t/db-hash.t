@@ -23,7 +23,7 @@ BEGIN {
 use DB_File; 
 use Fcntl;
 
-print "1..151\n";
+print "1..161\n";
 
 unlink glob "__db.*";
 
@@ -34,6 +34,8 @@ sub ok
  
     print "not " unless $result ;
     print "ok $no\n" ;
+
+    return $result ;
 }
 
 {
@@ -932,8 +934,10 @@ EOM
     tie %hash1, 'DB_File',$Dfile, undef;
     ok(133, $warn_count == 0);
     $warn_count = 0;
+    unlink $Dfile;
     tie %hash1, 'DB_File',$Dfile, O_RDWR|O_CREAT, undef;
     ok(134, $warn_count == 0);
+    unlink $Dfile;
     tie %hash1, 'DB_File',$Dfile, undef, undef;
     ok(135, $warn_count == 0);
     $warn_count = 0;
@@ -1031,6 +1035,125 @@ EOM
    undef $db ;
    untie %h;
    unlink $Dfile;
+}
+
+
+{
+    # Regression Test for bug 30237
+    # Check that substr can be used in the key to db_put
+    # and that db_put does not trigger the warning
+    # 
+    #     Use of uninitialized value in subroutine entry
+
+
+    use warnings ;
+    use strict ;
+    my (%h, $db) ;
+    my $Dfile = "xxy.db";
+    unlink $Dfile;
+
+    ok(152, $db = tie(%h, 'DB_File', $Dfile, O_RDWR|O_CREAT, 0640, $DB_HASH ) );
+
+    my $warned = '';
+    local $SIG{__WARN__} = sub {$warned = $_[0]} ;
+
+    # db-put with substr of key
+    my %remember = () ;
+    for my $ix ( 1 .. 2 )
+    {
+        my $key = $ix . "data" ;
+        my $value = "value$ix" ;
+        $remember{$key} = $value ;
+        $db->put(substr($key,0), $value) ;
+    }
+
+    ok 153, $warned eq '' 
+      or print "# Caught warning [$warned]\n" ;
+
+    # db-put with substr of value
+    $warned = '';
+    for my $ix ( 10 .. 12 )
+    {
+        my $key = $ix . "data" ;
+        my $value = "value$ix" ;
+        $remember{$key} = $value ;
+        $db->put($key, substr($value,0)) ;
+    }
+
+    ok 154, $warned eq '' 
+      or print "# Caught warning [$warned]\n" ;
+
+    # via the tied hash is not a problem, but check anyway
+    # substr of key
+    $warned = '';
+    for my $ix ( 30 .. 32 )
+    {
+        my $key = $ix . "data" ;
+        my $value = "value$ix" ;
+        $remember{$key} = $value ;
+        $h{substr($key,0)} = $value ;
+    }
+
+    ok 155, $warned eq '' 
+      or print "# Caught warning [$warned]\n" ;
+
+    # via the tied hash is not a problem, but check anyway
+    # substr of value
+    $warned = '';
+    for my $ix ( 40 .. 42 )
+    {
+        my $key = $ix . "data" ;
+        my $value = "value$ix" ;
+        $remember{$key} = $value ;
+        $h{$key} = substr($value,0) ;
+    }
+
+    ok 156, $warned eq '' 
+      or print "# Caught warning [$warned]\n" ;
+
+    my %bad = () ;
+    $key = '';
+    for ($status = $db->seq($key, $value, R_FIRST ) ;
+         $status == 0 ;
+         $status = $db->seq($key, $value, R_NEXT ) ) {
+
+        #print "# key [$key] value [$value]\n" ;
+        if (defined $remember{$key} && defined $value && 
+             $remember{$key} eq $value) {
+            delete $remember{$key} ;
+        }
+        else {
+            $bad{$key} = $value ;
+        }
+    }
+    
+    ok 157, keys %bad == 0 ;
+    ok 158, keys %remember == 0 ;
+
+    print "# missing -- $key $value\n" while ($key, $value) = each %remember;
+    print "# bad     -- $key $value\n" while ($key, $value) = each %bad;
+
+    # Make sure this fix does not break code to handle an undef key
+    # Berkeley DB undef key is bron between versions 2.3.16 and 
+    my $value = 'fred';
+    $warned = '';
+    $db->put(undef, $value) ;
+    ok 159, $warned eq '' 
+      or print "# Caught warning [$warned]\n" ;
+    $warned = '';
+
+    my $no_NULL = ($DB_File::db_ver >= 2.003016 && $DB_File::db_ver < 3.001) ;
+    print "# db_ver $DB_File::db_ver\n";
+    $value = '' ;
+    $db->get(undef, $value) ;
+    ok 160, $no_NULL || $value eq 'fred' or print "# got [$value]\n" ;
+    ok 161, $warned eq '' 
+      or print "# Caught warning [$warned]\n" ;
+    $warned = '';
+
+    undef $db ;
+    untie %h;
+    unlink $Dfile;
 }
 
 exit ;

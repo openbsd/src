@@ -21,7 +21,7 @@ START_MY_CXT
 #else
 int
 errfunc(const char *foo, int bar) {
-  return !(bar == ENOENT || bar == ENOTDIR);
+  return !(bar == EACCES || bar == ENOENT || bar == ENOTDIR);
 }
 #endif
 

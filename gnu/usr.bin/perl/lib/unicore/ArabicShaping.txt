@@ -1,4 +1,4 @@
-# ArabicShaping-4.0.0.txt
+# ArabicShaping-4.0.1.txt
 #
 # This file is a normative contributory data file in the
 # Unicode Character Database.
@@ -192,10 +192,10 @@
 06DD; ARABIC END OF AYAH; U; <no shaping>
 06EE; DAL WITH INVERTED V; R; DAL
 06EF; REH WITH INVERTED V; R; REH
-06FF; HEH WITH INVERTED V; D; KNOTTED HEH
 06FA; SEEN WITH DOT BELOW AND 3 DOTS ABOVE; D; SEEN
 06FB; DAD WITH DOT BELOW; D; SAD
 06FC; GHAIN WITH DOT BELOW; D; AIN
+06FF; HEH WITH INVERTED V; D; KNOTTED HEH
 
 # Syriac characters
 

@@ -14,7 +14,7 @@ RAND=/$HPACCOUNT/$HPGROUP/libcrand
 
 echo "Creating $RAND.sl...\n"
 
-TEMP=/tmp/perlmpe.$$
+TEMP=perlmpe.$$
 
 rm -f $TEMP $RAND.a $RAND.sl
 

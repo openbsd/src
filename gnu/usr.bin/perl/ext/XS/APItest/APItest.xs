@@ -175,3 +175,71 @@ void
 print_flush()
     	CODE:
 	fflush(stdout);
+
+void
+mpushp()
+	PPCODE:
+	EXTEND(SP, 3);
+	mPUSHp("one", 3);
+	mPUSHp("two", 3);
+	mPUSHp("three", 5);
+	XSRETURN(3);
+
+void
+mpushn()
+	PPCODE:
+	EXTEND(SP, 3);
+	mPUSHn(0.5);
+	mPUSHn(-0.25);
+	mPUSHn(0.125);
+	XSRETURN(3);
+
+void
+mpushi()
+	PPCODE:
+	EXTEND(SP, 3);
+	mPUSHn(-1);
+	mPUSHn(2);
+	mPUSHn(-3);
+	XSRETURN(3);
+
+void
+mpushu()
+	PPCODE:
+	EXTEND(SP, 3);
+	mPUSHn(1);
+	mPUSHn(2);
+	mPUSHn(3);
+	XSRETURN(3);
+
+void
+mxpushp()
+	PPCODE:
+	mXPUSHp("one", 3);
+	mXPUSHp("two", 3);
+	mXPUSHp("three", 5);
+	XSRETURN(3);
+
+void
+mxpushn()
+	PPCODE:
+	mXPUSHn(0.5);
+	mXPUSHn(-0.25);
+	mXPUSHn(0.125);
+	XSRETURN(3);
+
+void
+mxpushi()
+	PPCODE:
+	mXPUSHn(-1);
+	mXPUSHn(2);
+	mXPUSHn(-3);
+	XSRETURN(3);
+
+void
+mxpushu()
+	PPCODE:
+	mXPUSHn(1);
+	mXPUSHn(2);
+	mXPUSHn(3);
+	XSRETURN(3);

@@ -36,7 +36,7 @@ my $Collator = Unicode::Collate->new(
 
 # a collator for hangul sorting,
 # cf. http://std.dkuug.dk/JTC1/SC22/WG20/docs/documents.html
-#     http://std.dkuug.dk/JTC1/SC22/WG20/docs/n1051-hangulsort.pdf 
+#     http://std.dkuug.dk/JTC1/SC22/WG20/docs/n1051-hangulsort.pdf
 my $hangul = Unicode::Collate->new(
   level => 3,
   table => undef,

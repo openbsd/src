@@ -1,6 +1,6 @@
 # List::Util.pm
 #
-# Copyright (c) 1997-2003 Graham Barr <gbarr@pobox.com>. All rights reserved.
+# Copyright (c) 1997-2004 Graham Barr <gbarr@pobox.com>. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 
@@ -10,7 +10,7 @@ require Exporter;
 
 @ISA        = qw(Exporter);
 @EXPORT_OK  = qw(first min max minstr maxstr reduce sum shuffle);
-$VERSION    = "1.13";
+$VERSION    = "1.14";
 $XS_VERSION = $VERSION;
 $VERSION    = eval $VERSION;
 
@@ -250,7 +250,7 @@ to add due to them being very simple to implement in perl
 
 =head1 COPYRIGHT
 
-Copyright (c) 1997-2003 Graham Barr <gbarr@pobox.com>. All rights reserved.
+Copyright (c) 1997-2004 Graham Barr <gbarr@pobox.com>. All rights reserved.
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
 

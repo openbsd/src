@@ -361,3 +361,30 @@ print 1..1, bad;
 EXPECT
 Bareword "bad" not allowed while "strict subs" in use at - line 3.
 Execution of - aborted due to compilation errors.
+########
+# [perl #25147] 
+use strict;
+print "" if BAREWORD;
+EXPECT
+Bareword "BAREWORD" not allowed while "strict subs" in use at - line 3.
+Execution of - aborted due to compilation errors.
+########
+# [perl #26910] hints not propagated into (?{...})
+use strict 'subs';
+qr/(?{my $x=foo})/;
+EXPECT
+Bareword "foo" not allowed while "strict subs" in use at (re_eval 1) line 1.
+Compilation failed in regexp at - line 3.
+########
+#  [perl #27628] strict 'subs' didn't warn on bareword array index
+use strict 'subs';
+my $x=$a[FOO];
+EXPECT
+Bareword "FOO" not allowed while "strict subs" in use at - line 3.
+Execution of - aborted due to compilation errors.
+########
+use strict 'subs';
+my @a;my $x=$a[FOO];
+EXPECT
+Bareword "FOO" not allowed while "strict subs" in use at - line 2.
+Execution of - aborted due to compilation errors.

@@ -7,8 +7,9 @@ BEGIN {
 }
 
 use Config;
-use Errno;
-
+BEGIN {
+    eval {require Errno; Errno->import;};
+}
 plan(tests => 9);
 
 ok( binmode(STDERR),            'STDERR made binary' );
@@ -31,6 +32,7 @@ ok( binmode(STDOUT, ":raw"),    '  raw' );
 ok( binmode(STDOUT, ":crlf"),   '  and crlf' );
 
 SKIP: {
+    skip "minitest", 1 if $ENV{PERL_CORE_MINITEST};
     skip "no EBADF", 1 if (!exists &Errno::EBADF);
 
     no warnings 'io';

@@ -26,13 +26,10 @@ BEGIN
     }
   print "# INC = @INC\n";
 
-#  plan tests => 1585;
   plan tests => 1;
   }
 
-#use Math::BigInt;
-#use Math::BigRat;
-use Math::BigRat::Test;		# test via this 
+use Math::BigRat::Test;		# test via this Subclass 
 
 use vars qw ($class $try $x $y $f @args $ans $ans1 $ans1_str $setup $CL);
 $class = "Math::BigRat::Test";
@@ -40,5 +37,5 @@ $CL = "Math::BigInt::Calc";
  
 ok (1,1);
 
-# does not fully work yet  
-#require 'bigfltpm.inc';	# all tests here for sharing
+# fails stil 185 tests
+#require 'bigfltpm.inc';		# all tests here for sharing

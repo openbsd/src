@@ -115,6 +115,7 @@ print OUT <<'EOT';
     my $xs = dl_install_xsub("${module}::bootstrap", $boot_symbol_ref, $file);
 
     # See comment block above
+    push(@DynaLoader::dl_shared_objects, $file); # record files loaded
     return &$xs(@_);
 
   retry:

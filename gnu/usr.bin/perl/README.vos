@@ -24,7 +24,7 @@ ftp://ftp.stratus.com/pub/vos/utility/utility.html
 
 If you are running VOS Release 14.4.1 or later, you can obtain a
 pre-compiled, supported copy of perl by purchasing Release 2.0.1
-of the VOS GNU C++ and GNU Tools product from Stratus
+(or later) of the VOS GNU C++ and GNU Tools product from Stratus
 Technologies.
 
 =head2 Multiple methods to build perl for VOS
@@ -32,7 +32,7 @@ Technologies.
 If you elect to build perl from its source code, you have several
 different ways that you can build perl.  The method that you use
 depends on the version of VOS that you are using and on the
-architecture of you Stratus hardware platform.
+architecture of your Stratus hardware platform.
 
 =over 5
 
@@ -65,7 +65,7 @@ in the vos subdirectory.
 
 =item 3
 
-If you have a Stratus Continuum (PARISC-based) platform that is
+If you have a Stratus Continuum (PA-RISC-based) platform that is
 running a version of VOS earlier than VOS 14.3.0, you must build
 perl using the alpha version of VOS POSIX support and using the
 VOS Standard C compiler or cross-compiler.  You must build perl
@@ -80,7 +80,7 @@ in the vos subdirectory.
 
 =item 4
 
-If you have a Stratus Continuum (PARISC-based) platform that is
+If you have a Stratus Continuum (PA-RISC-based) platform that is
 running VOS Release 14.3.0 through VOS Release 14.4.1, you must
 build perl using the generally-available version of VOS POSIX
 support, and using either the VOS Standard C compiler or the VOS
@@ -102,8 +102,9 @@ perl", which contains the complete functionality of perl.  I
 strongly recommend that you build full perl.  To build full
 perl, you must use the generally-available version of VOS POSIX
 support.  You must use the VOS GNU C compiler and the VOS GNU
-C/C++ and GNU Tools Release 2.0.1 product.  You must build full
-perl on VOS Release 14.5.0 (or later) on a Continuum platform.
+C/C++ and GNU Tools Release 2.0.1 (or later) product.  You must
+build full perl on VOS Release 14.5.0 (or later) on a Continuum
+platform.
 
 You must build full perl with the compile_full_perl.cm command
 macro found in the vos subdirectory.
@@ -170,7 +171,7 @@ Locator (URL)
 ftp://ftp.stratus.com/pub/vos/posix/alpha/posix.save.evf.gz from
 your web browser.  Instructions for unbundling this file
 are at ftp://ftp.stratus.com/pub/vos/utility/utility.html
-This is not a standard Stratus product.
+This is NOT a standard Stratus product.
 
 In VOS Release 14.3.0, the generally-available version of
 POSIX.1 support is bundled with the VOS Standard C compiler
@@ -226,8 +227,7 @@ the PA8000, PA8500 and PA8600 processors.
 To build full perl using the supplied Configure script and
 makefiles, change to the "vos" subdirectory and type the command
 "compile_full_perl" or "start_process compile_full_perl".  This
-will configure, build, and test perl.  All of the test cases
-that are executed should pass.
+will configure, build, and test perl.
 
 =head2 Installing Perl 5 on VOS
 
@@ -337,13 +337,14 @@ yet fixed.
 
 =head1 TEST STATUS
 
-When Perl 5.8.1 is built using the native build process on VOS
-Release 14.5.0 and GNU C++/GNU Tools 2.0.1, all but five
+When Perl 5.8.3 is built using the native build process on VOS
+Release 14.7.0 and GNU C++/GNU Tools 2.0.2a, all but three
 attempted tests either pass or result in TODO (ignored)
 failures.  The tests that fail are:
 
-ext/Time/HiRes/HiRes, tests 8, 11, 20, and 21.
-lib/Net/Ping/t/450_service, test 8.
+t/io/tell.t, test 28
+t/op/pack.t, test 39
+lib/Net/ing/t/450_service.t, test 8
 
 =head1 SUPPORT STATUS
 
@@ -352,10 +353,10 @@ can't guarantee I'll be able to answer them.  There are some
 excellent books available on the Perl language; consult a book
 seller.
 
-If you want a supported version of perl for VOS, purchase the VOS
-GNU C++ and GNU Tools Release 2.0.1 product from Stratus
-Technologies, along with a support contract (or from anyone else
-who will sell you support).
+If you want a supported version of perl for VOS, purchase the
+VOS GNU C++ and GNU Tools Release 2.0.1 (or later) product from
+Stratus Technologies, along with a support contract (or from
+anyone else who will sell you support).
 
 =head1 AUTHOR
 
@@ -363,6 +364,6 @@ Paul Green (Paul.Green@stratus.com)
 
 =head1 LAST UPDATE
 
-March 26, 2003
+January 15, 2004
 
 =cut

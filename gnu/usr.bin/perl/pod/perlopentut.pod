@@ -192,11 +192,11 @@ whether it only works on existing files or always clobbers existing ones.
     open(WTMP, "+< /usr/adm/wtmp") 
         || die "can't open /usr/adm/wtmp: $!";
 
-    open(SCREEN, "+> /tmp/lkscreen")
-        || die "can't open /tmp/lkscreen: $!";
+    open(SCREEN, "+> lkscreen")
+        || die "can't open lkscreen: $!";
 
-    open(LOGFILE, "+>> /tmp/applog"
-        || die "can't open /tmp/applog: $!";
+    open(LOGFILE, "+>> /var/log/applog"
+        || die "can't open /var/log/applog: $!";
 
 The first one won't create a new file, and the second one will always
 clobber an old one.  The third one will create a new file if necessary
@@ -723,7 +723,9 @@ With descriptors that you haven't opened using C<sysopen>, such as
 sockets, you can set them to be non-blocking using C<fcntl>:
 
     use Fcntl;
-    fcntl(Connection, F_SETFL, O_NONBLOCK) 
+    my $old_flags = fcntl($handle, F_GETFL, 0) 
+        or die "can't get flags: $!";
+    fcntl($handle, F_SETFL, $old_flags | O_NONBLOCK) 
         or die "can't set non blocking: $!";
 
 Rather than losing yourself in a morass of twisting, turning C<ioctl>s,

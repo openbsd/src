@@ -50,7 +50,7 @@ our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 our @EXPORT = qw(
 async	
 );
-our $VERSION = '1.01';
+our $VERSION = '1.05';
 
 
 # || 0 to ensure compatibility with previous versions
@@ -139,7 +139,8 @@ it the other way around.
 
 This will create a new thread with the entry point function and give
 it LIST as parameters.  It will return the corresponding threads
-object. The new() method is an alias for create().
+object, or C<undef> if thread creation failed. The new() method is an
+alias for create().
 
 =item $thread->join
 
@@ -264,11 +265,6 @@ implemented in very much the same way as threads.)
 If your Perl has been built with PERL_OLD_SIGNALS (one has
 to explicitly add that symbol to ccflags, see C<perl -V>),
 signal handling is not threadsafe.
-
-=item Detached threads on Windows
-
-These aren't yet supported (as of perl 5.8.3), as they may lead to
-memory access violation problems.
 
 =back
 

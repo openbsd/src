@@ -89,12 +89,11 @@ fi
 ;;
 esac
 
-# -pipe: makes compilation go faster.
 # -fno-common because common symbols are not allowed in MH_DYLIB
 # -DPERL_DARWIN: apparently the __APPLE__ is not sanctioned by Apple
 # as the way to differentiate Mac OS X.  (The official line is that
 # *no* cpp symbol does differentiate Mac OS X.)
-ccflags="${ccflags} -pipe -fno-common -DPERL_DARWIN"
+ccflags="${ccflags} -fno-common -DPERL_DARWIN"
 
 # At least on Darwin 1.3.x:
 #
@@ -182,6 +181,11 @@ EOCBU
 
 # vfork works
 usevfork='true';
+
+# malloc wrap works
+case "$usemallocwrap" in
+'') usemallocwrap='define' ;;
+esac
 
 # our malloc works (but allow users to override)
 case "$usemymalloc" in

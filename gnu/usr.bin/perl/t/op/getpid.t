@@ -20,11 +20,11 @@ BEGIN {
 	print "1..0 # Skip: no getppid\n";
 	exit;
     }
-    eval 'use threads; use threads::shared';
-    if ($@ =~ /dynamic loading not available/) {
-	print "1..0 # Skip: no dynamic loading, no threads\n";
-	exit;
+    if ($ENV{PERL_CORE_MINITEST}) {
+        print "1..0 # Skip: no dynamic loading on miniperl, no threads\n";
+        exit 0;
     }
+    eval 'use threads; use threads::shared';
     plan tests => 3;
     if ($@) {
 	fail("unable to load thread modules");

@@ -2,7 +2,7 @@ package utf8;
 
 $utf8::hint_bits = 0x00800000;
 
-our $VERSION = '1.02';
+our $VERSION = '1.04';
 
 sub import {
     $^H |= $utf8::hint_bits;
@@ -31,9 +31,11 @@ utf8 - Perl pragma to enable/disable UTF-8 (or UTF-EBCDIC) in source code
     use utf8;
     no utf8;
 
+    # Convert a Perl scalar to/from UTF-8.
     $num_octets = utf8::upgrade($string);
     $success    = utf8::downgrade($string[, FAIL_OK]);
 
+    # Change the native bytes of a Perl scalar to/from UTF-8 bytes.
     utf8::encode($string);
     utf8::decode($string);
 
@@ -111,40 +113,59 @@ you should not say that  unless you really want to have UTF-8 source code.
 
 =item * $num_octets = utf8::upgrade($string)
 
-Converts (in-place) internal representation of string to Perl's
-internal I<UTF-X> form.  Returns the number of octets necessary to
-represent the string as I<UTF-X>.  Can be used to make sure that the
-UTF-8 flag is on, so that C<\w> or C<lc()> work as expected on strings
-containing characters in the range 0x80-0xFF (oon ASCII and
-derivatives).  Note that this should not be used to convert a legacy
-byte encoding to Unicode: use Encode for that.  Affected by the
-encoding pragma.
+Converts in-place the octet sequence in the native encoding
+(Latin-1 or EBCDIC) to the equivalent character sequence in I<UTF-X>.
+I<$string> already encoded as characters does no harm.
+Returns the number of octets necessary to represent the string as I<UTF-X>.
+Can be used to make sure that the UTF-8 flag is on,
+so that C<\w> or C<lc()> work as Unicode on strings
+containing characters in the range 0x80-0xFF (on ASCII and
+derivatives).
+
+B<Note that this function does not handle arbitrary encodings.>
+Therefore I<Encode.pm> is recommended for the general purposes.
+
+Affected by the encoding pragma.
 
 =item * $success = utf8::downgrade($string[, FAIL_OK])
 
-Converts (in-place) internal representation of string to be un-encoded
-bytes.  Returns true on success. On failure dies or, if the value of
-FAIL_OK is true, returns false.  Can be used to make sure that the
-UTF-8 flag is off, e.g. when you want to make sure that the substr()
-or length() function works with the usually faster byte algorithm.
-Note that this should not be used to convert Unicode back to a legacy
-byte encoding: use Encode for that.  B<Not> affected by the encoding
-pragma.
+Converts in-place the character sequence in I<UTF-X>
+to the equivalent octet sequence in the native encoding (Latin-1 or EBCDIC).
+I<$string> already encoded as octets does no harm.
+Returns true on success. On failure dies or, if the value of
+C<FAIL_OK> is true, returns false.
+Can be used to make sure that the UTF-8 flag is off,
+e.g. when you want to make sure that the substr() or length() function
+works with the usually faster byte algorithm.
+
+B<Note that this function does not handle arbitrary encodings.>
+Therefore I<Encode.pm> is recommended for the general purposes.
+
+B<Not> affected by the encoding pragma.
+
+B<NOTE:> this function is experimental and may change
+or be removed without notice.
 
 =item * utf8::encode($string)
 
-Converts (in-place) I<$string> from logical characters to octet
-sequence representing it in Perl's I<UTF-X> encoding.  Returns
-nothing.  Same as Encode::encode_utf8(). Note that this should not be
-used to convert a legacy byte encoding to Unicode: use Encode for
-that.
+Converts in-place the character sequence to the corresponding octet sequence
+in I<UTF-X>.  The UTF-8 flag is turned off.  Returns nothing.
+
+B<Note that this function does not handle arbitrary encodings.>
+Therefore I<Encode.pm> is recommended for the general purposes.
 
 =item * utf8::decode($string)
 
-Attempts to convert I<$string> in-place from Perl's I<UTF-X> encoding
-into logical characters. Returns nothing.  Same as Encode::decode_utf8().
-Note that this should not be used to convert Unicode back to a legacy
-byte encoding: use Encode for that.
+Attempts to convert in-place the octet sequence in I<UTF-X>
+to the corresponding character sequence.  The UTF-8 flag is turned on
+only if the source string contains multiple-byte I<UTF-X> characters.
+If I<$string> is invalid as I<UTF-X>, returns false; otherwise returns true.
+
+B<Note that this function does not handle arbitrary encodings.>
+Therefore I<Encode.pm> is recommended for the general purposes.
+
+B<NOTE:> this function is experimental and may change
+or be removed without notice.
 
 =item * $flag = utf8::is_utf8(STRING)
 

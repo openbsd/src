@@ -3,7 +3,7 @@
 chdir 't' if -d 't';
 @INC = qw(. ../lib);
 require "test.pl";
-plan( tests => 63 );
+plan( tests => 64 );
 
 $aa = 1;
 { local $aa;     $aa = 2; is($aa,2); }
@@ -83,3 +83,17 @@ eval { local %$y; };      test_err_localref;
 eval { local %{$y}; };    test_err_localref;
 eval { local %{\%aa}; };  test_err_localref;
 eval { local %{{a=>1}}; };test_err_localref;
+
+
+{
+    # [perl #27638] when restoring a localized variable, the thing being
+    # freed shouldn't be visible
+    my $ok;
+    $x = 0;
+    sub X::DESTROY { $ok = !ref($x); }
+    {
+	local $x = \ bless {}, 'X';
+	1;
+    }
+ok($ok,'old value not visible during restore');
+}

@@ -179,7 +179,7 @@ Neil Bowers E<lt>neil@bowers.comE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2002, Neil Bowers.
+Copyright (C) 2002-2004, Neil Bowers.
 
 Copyright (c) 2001 Michael Hennecke and
 Canon Research Centre Europe (CRE).

@@ -18,7 +18,7 @@ sub ok {
     return $ok;
 }
 
-print "1..20\n";
+print "1..28\n";
 
 ($a, $b, $c) = qw(foo bar);
 
@@ -116,4 +116,33 @@ sub beq { use bytes; $_[0] eq $_[1]; }
     my ($x, $y);
     $y = ($x = '' . strfoo()) . "y";
     ok( "$x,$y" eq "x,xy", 'figures out correct target' );
+}
+
+{
+    # [perl #26905] "use bytes" doesn't apply byte semantics to concatenation
+
+    my $p = "\xB6"; # PILCROW SIGN (ASCII/EBCDIC), 2bytes in UTF-X
+    my $u = "\x{100}";
+    my $b = pack 'a*', "\x{100}";
+    my $pu = "\xB6\x{100}";
+    my $up = "\x{100}\xB6";
+    my $x1 = $p;
+    my $y1 = $u;
+
+    use bytes;
+    ok(beq($p.$u, $p.$b), "perl #26905, left eq bytes");
+    ok(beq($u.$p, $b.$p), "perl #26905, right eq bytes");
+    ok(!beq($p.$u, $pu),  "perl #26905, left ne unicode");
+    ok(!beq($u.$p, $up),  "perl #26905, right ne unicode");
+
+    $x1 .= $u;
+    $x2 = $p . $u;
+    $y1 .= $p;
+    $y2 = $u . $p;
+
+    no bytes;
+    ok(beq($x1, $x2), "perl #26905, left,  .= vs = . in bytes");
+    ok(beq($y1, $y2), "perl #26905, right, .= vs = . in bytes");
+    ok(($x1 eq $x2),  "perl #26905, left,  .= vs = . in chars");
+    ok(($y1 eq $y2),  "perl #26905, right, .= vs = . in chars");
 }

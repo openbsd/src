@@ -13,7 +13,7 @@
 package Pod::Find;
 
 use vars qw($VERSION);
-$VERSION = 0.24;   ## Current version of this package
+$VERSION = 0.24_01;   ## Current version of this package
 require  5.005;   ## requires this Perl version or later
 use Carp;
 
@@ -201,7 +201,11 @@ sub pod_find
         File::Find::find( sub {
             my $item = $File::Find::name;
             if(-d) {
-                if($dirs_visited{$item}) {
+                if($item =~ m{/(?:RCS|CVS|SCCS|\.svn)$}) {
+                    $File::Find::prune = 1;
+                    return;
+                }
+                elsif($dirs_visited{$item}) {
                     warn "Directory '$item' already seen, skipping.\n"
                         if($opts{-verbose});
                     $File::Find::prune = 1;

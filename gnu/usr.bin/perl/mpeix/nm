@@ -22,12 +22,12 @@ esac
 # I wanted to pipe this into awk, but it fell victim to a known pipe/streams
 # bug on my multiprocessor machine.
 
-callci xeq linkedit.pub.sys \"$LIST\" >/tmp/nm.$$
+callci xeq linkedit.pub.sys \"$LIST\" >nm.$$
 
 /bin/awk '\
     / data  univ / { printf "%-20s|%10s|%-6s|%-7s|%s\n",$1,$5,"extern","data","?"} \
-    / entry univ / { printf "%-20s|%10s|%-6s|%-7s|%s\n",$1,$7,"extern","entry","?"}' /tmp/nm.$$
+    / entry univ / { printf "%-20s|%10s|%-6s|%-7s|%s\n",$1,$7,"extern","entry","?"}' nm.$$
 
-rm -f /tmp/nm.$$
+rm -f nm.$$
 
 exit 0

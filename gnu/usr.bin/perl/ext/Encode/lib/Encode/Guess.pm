@@ -2,7 +2,7 @@ package Encode::Guess;
 use strict;
 
 use Encode qw(:fallbacks find_encoding);
-our $VERSION = do { my @r = (q$Revision: 1.9 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+our $VERSION = do { my @r = (q$Revision: 2.0 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 my $Canon = 'Guess';
 sub DEBUG () { 0 }
@@ -19,6 +19,7 @@ sub perlio_ok { 0 }
 
 our @EXPORT = qw(guess_encoding);
 our $NoUTFAutoGuess = 0;
+our $UTF8_BOM = pack("C3", 0xef, 0xbb, 0xbf);
 
 sub import { # Exporter not used so we do it on our own
     my $callpkg = caller;
@@ -78,12 +79,15 @@ sub guess {
     # cheat 1: BOM
     use Encode::Unicode;
     unless ($NoUTFAutoGuess) {
-	my $BOM = unpack('n', $octet);
-	return find_encoding('UTF-16')
-	    if (defined $BOM and ($BOM == 0xFeFF or $BOM == 0xFFFe));
+	my $BOM = pack('C3', unpack("C3", $octet));
+	return find_encoding('utf8')
+	    if (defined $BOM and $BOM eq $UTF8_BOM);
 	$BOM = unpack('N', $octet);
 	return find_encoding('UTF-32')
 	    if (defined $BOM and ($BOM == 0xFeFF or $BOM == 0xFFFe0000));
+	$BOM = unpack('n', $octet);
+	return find_encoding('UTF-16')
+	    if (defined $BOM and ($BOM == 0xFeFF or $BOM == 0xFFFe));
 	if ($octet =~ /\x00/o){ # if \x00 found, we assume UTF-(16|32)(BE|LE)
 	    my $utf;
 	    my ($be, $le) = (0, 0);
@@ -191,6 +195,8 @@ By default, it checks only ascii, utf8 and UTF-16/32 with BOM.
 To use it more practically, you have to give the names of encodings to
 check (I<suspects> as follows).  The name of suspects can either be
 canonical names or aliases.
+
+CAVEAT: Unlike UTF-(16|32), BOM in utf8 is NOT AUTOMATICALLY STRIPPED.
 
  # tries all major Japanese Encodings as well
   use Encode::Guess qw/euc-jp shiftjis 7bit-jis/;

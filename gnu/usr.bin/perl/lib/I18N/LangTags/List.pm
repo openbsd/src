@@ -136,7 +136,7 @@ prints:
 
 =head1 DESCRIPTION
 
-This module provides a function
+This module provides a function 
 C<I18N::LangTags::List::name( I<langtag> ) > that takes
 a language tag (see L<I18N::LangTags|I18N::LangTags>)
 and returns the best attempt at an English name for it, or
@@ -162,7 +162,7 @@ Internet language tags, as defined in RFC 3066, are a formalism
 for denoting human languages.  The two-letter ISO 639-1 language
 codes are well known (as "en" for English), as are their forms
 when qualified by a country code ("en-US").  Less well-known are the
-arbitrary-length non-ISO codes (like "i-mingo"), and the
+arbitrary-length non-ISO codes (like "i-mingo"), and the 
 recently (in 2001) introduced three-letter ISO-639-2 codes.
 
 Remember these important facts:

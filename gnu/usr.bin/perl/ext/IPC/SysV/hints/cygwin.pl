@@ -1,2 +1,6 @@
 # SysV IPC is an optional Cygwin package
-$self->{LIBS} = ['-lcygipc']
+#
+# Starting with cygwin 1.5.7, cygipc is deprecated in favor of
+# cygserver (which requires no extra libs).
+# Uncomment if for some reason you need to get this to work with cygipc.
+#$self->{LIBS} = ['-lcygipc']

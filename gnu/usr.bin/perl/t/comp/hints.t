@@ -2,7 +2,13 @@
 
 # Tests the scoping of $^H and %^H
 
-BEGIN { print "1..14\n"; }
+BEGIN {
+    chdir 't' if -d 't';
+    @INC = qw(. ../lib);
+}
+
+
+BEGIN { print "1..15\n"; }
 BEGIN {
     print "not " if exists $^H{foo};
     print "ok 1 - \$^H{foo} doesn't exist initially\n";
@@ -55,3 +61,15 @@ BEGIN {
     print "not " if $^H & 0x00020000;
     print "ok 8 - \$^H doesn't contain HINT_LOCALIZE_HH while finishing compilation\n";
 }
+
+require 'test.pl';
+
+# bug #27040: hints hash was being double-freed
+my $result = runperl(
+    prog => '$^H |= 0x20000; eval q{BEGIN { $^H |= 0x20000 }}',
+    stderr => 1
+);
+print "not " if length $result;
+print "ok 15 - double-freeing hints hash\n";
+print "# got: $result\n" if length $result;
+

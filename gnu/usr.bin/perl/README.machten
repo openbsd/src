@@ -11,9 +11,36 @@ README.machten - Perl version 5 on Power MachTen systems
 This document describes how to build Perl 5 on Power MachTen systems,
 and discusses a few wrinkles in the implementation.
 
-=head2 Compiling Perl 5 on MachTen
+=head2 Perl version 5.8.x and greater not supported
 
-To compile perl under MachTen 4.1.4 (and probably earlier versions):
+B<Power MachTen is not supported by versions of Perl later than
+5.6.x.>
+If you wish to build a version from the 5.6 track, please
+obtain a source distribution from the archive at
+L<http://cpan.org/src/5.0/> and follow the instructions in its
+README.machten file.
+
+MachTen is no longer supported by its developers, Tenon Intersystems.
+A UNIX environment hosted on Mac OS Classic, MachTen has been
+superseded by Mac OS X and by BSD and Linux implementations for Macintosh
+hardware.
+The final version of Power MachTen, 4.1.4, lacks many features found in
+modern implementations of UNIX, and has a number of bugs.
+These shortcomings prevent recent versions of Perl from being able to use
+extensions on MachTen, and cause numerous test suite failures in the
+perl core.
+
+In September 2003, a discussion on the MachTen mailing list determined
+that there was no interest in making a later version of Perl build
+successfully on MachTen.
+Consequently, support for building Perl under MachTen has been suppressed
+in Perl distributions published after February 2004.
+The hints file, F<hints/machten.sh>, remains a part of the
+distributions for reference purposes.
+
+=head2 Compiling Perl 5.6.x on MachTen
+
+To compile perl 5.6.x under MachTen 4.1.4 (and probably earlier versions):
 
   ./Configure -de
   make
@@ -86,4 +113,4 @@ Dominic Dunlop <domo@computer.org>
 
 =head1 DATE
 
-Version 1.0.1 2000-03-27
+Version 1.1.0 2004-02-13

@@ -51,7 +51,7 @@ $cfg = $mbf->config();
 ok (ref($cfg),'HASH');
 
 ok ($cfg->{lib},'Math::BigInt::Calc');
-ok ($cfg->{with},$mbi);
+ok ($cfg->{with},'Math::BigInt::Calc');
 ok ($cfg->{lib_version}, $Math::BigInt::Calc::VERSION);
 ok ($cfg->{class},$mbf);
 ok ($cfg->{upgrade}||'','');

@@ -1,5 +1,39 @@
 Revision history for Perl extension Time::HiRes.
 
+1.59
+	- Change the Win32 recalibration limit to 0.5 seconds and tweak
+	  the documentation to blather less about the gory details of the
+	  Win32 implementation and more about the complications in general
+	  of meddling with the system clock.
+
+1.58
+	- Document the 1.57 change better.
+
+1.57
+	- Win32/Cygwin/MinGW: if the performance counter drifts by more
+	  than two seconds from the system clock (due to ntp adjustments,
+	  for example), recalibrate our internal counter: from Jan Dubois,
+	  based on [cpan #5933] by Jerry D. Hedden.
+
+1.56
+	- Give a clearer message if the tests timeout (perl change #22253)
+	- Don't use /tmp or its moral equivalents (perl bug #15036,
+	  perl change #22258)
+
+1.55
+	- Windows: ming32 patch from Mike Pomraning (use Perl's Const64()
+	  instead of VC-specific i64 suffix)
+
+1.54
+	- Solaris: like Tru64 (dec_osf) also Solaris need -lrt for nanosleep
+
+1.53
+	- Windows: higher resolution time() by using the Windows
+	  performance counter API, from Jan Dubois and Anton Shcherbinin.
+	  The exact new higher resolution depends on the hardware,
+	  but it should be quite a bit better than using the basic
+	  Windows timers.
+
 1.52
 	- In AIX (v?) with perl 5.6.1 the HiRes.t can hang after
 	  the subtest 18.  No known analysis nor fix, but added

@@ -1,5 +1,3 @@
-#!/usr/bin/perl -w
-
 package Math::BigRat::Test;
 
 require 5.005_02;
@@ -8,11 +6,11 @@ use strict;
 use Exporter;
 use Math::BigRat;
 use Math::BigFloat;
-use vars qw($VERSION @ISA $PACKAGE
+use vars qw($VERSION @ISA 
             $accuracy $precision $round_mode $div_scale);
 
-@ISA = qw(Exporter Math::BigRat);
-$VERSION = 0.03;
+@ISA = qw(Math::BigRat Exporter);
+$VERSION = 0.04;
 
 use overload; 		# inherit overload from BigRat
 
@@ -38,6 +36,42 @@ my $class = 'Math::BigRat::Test';
 #        return $self;
 #}
 
+BEGIN 
+  {
+  *fstr = \&bstr;
+  *fsstr = \&bsstr;
+  *objectify = \&Math::BigInt::objectify;
+  *AUTOLOAD = \&Math::BigRat::AUTOLOAD;
+  no strict 'refs';
+  foreach my $method ( qw/ div acmp floor ceil root sqrt log fac modpow modinv/)
+    {
+    *{'b' . $method} = \&{'Math::BigRat::b' . $method};
+    }
+  }
+
+sub fround
+  {
+  my ($x,$a) = @_;
+
+  #print "$a $accuracy $precision $round_mode\n";
+  Math::BigFloat->round_mode($round_mode);
+  Math::BigFloat->accuracy($a || $accuracy);
+  Math::BigFloat->precision(undef);
+  my $y = Math::BigFloat->new($x->bsstr(),undef,undef);
+  $class->new($y->fround($a));
+  }
+
+sub ffround
+  {
+  my ($x,$p) = @_;
+
+  Math::BigFloat->round_mode($round_mode);
+  Math::BigFloat->accuracy(undef);
+  Math::BigFloat->precision($p || $precision);
+  my $y = Math::BigFloat->new($x->bsstr(),undef,undef);
+  $class->new($y->ffround($p));
+  }
+
 sub bstr
   {
   # calculate a BigFloat compatible string output
@@ -53,9 +87,17 @@ sub bstr
 
   my $s = ''; $s = $x->{sign} if $x->{sign} ne '+';     # +3 vs 3
 
+#  print " bstr \$x ", $accuracy || $x->{_a} || 'notset', " ", $precision || $x->{_p} || 'notset', "\n";
   return $s.$x->{_n} if $x->{_d}->is_one(); 
   my $output = Math::BigFloat->new($x->{_n})->bdiv($x->{_d});
-  return $s.$output->bstr();
+  local $Math::BigFloat::accuracy = $accuracy || $x->{_a};
+  local $Math::BigFloat::precision = $precision || $x->{_p};
+  $s.$output->bstr();
+  }
+
+sub numify
+  {
+  $_[0]->bsstr();
   }
 
 sub bsstr
@@ -73,7 +115,6 @@ sub bsstr
 
   my $s = ''; $s = $x->{sign} if $x->{sign} ne '+';     # +3 vs 3
 
-  return $s.$x->{_n}->bsstr() if $x->{_d}->is_one(); 
   my $output = Math::BigFloat->new($x->{_n})->bdiv($x->{_d});
   return $s.$output->bsstr();
   }

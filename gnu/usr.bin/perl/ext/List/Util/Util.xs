@@ -242,8 +242,6 @@ CODE:
     CATCH_SET(TRUE);
     PUSHBLOCK(cx, CXt_SUB, SP);
     PUSHSUB(cx);
-    if (!CvDEPTH(cv))
-        (void)SvREFCNT_inc(cv);
     for(index = 2 ; index < items ; index++) {
 	GvSV(bgv) = ST(index);
 	PL_op = reducecop;
@@ -411,6 +409,8 @@ refaddr(sv)
 PROTOTYPE: $
 CODE:
 {
+    if (SvMAGICAL(sv))
+	mg_get(sv);
     if(!SvROK(sv)) {
 	XSRETURN_UNDEF;
     }

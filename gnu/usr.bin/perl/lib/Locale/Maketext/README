@@ -1,5 +1,5 @@
 README for Locale::Maketext
-                                        Time-stamp: "2003-04-02 11:06:17 AHST"
+                                        Time-stamp: "2004-03-30 16:02:27 AST"
 
 			   Locale::Maketext
 
@@ -7,10 +7,6 @@ Locale::Maketext is a base class providing a framework for
 localization and inheritance-based lexicons, as described in my
 article in The Perl Journal #13 (a corrected version of which appears
 in this dist).
-
-This is a complete rewrite from the basically undocumented 0.x
-versions.
-
 
 
 PREREQUISITES
@@ -61,7 +57,7 @@ Comprehensive Perl Archive Network (CPAN).  Visit
 
 COPYRIGHT
 
-Copyright 1999-2003, Sean M. Burke <sburke@cpan.org>, all rights
+Copyright 1999-2004, Sean M. Burke <sburke@cpan.org>, all rights
 reserved.  This program is free software; you can redistribute it
 and/or modify it under the same terms as Perl itself.
 

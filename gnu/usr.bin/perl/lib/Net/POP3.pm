@@ -1,6 +1,6 @@
 # Net::POP3.pm
 #
-# Copyright (c) 1995-1997 Graham Barr <gbarr@pobox.com>. All rights reserved.
+# Copyright (c) 1995-2004 Graham Barr <gbarr@pobox.com>. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 
@@ -13,7 +13,7 @@ use Net::Cmd;
 use Carp;
 use Net::Config;
 
-$VERSION = "2.24"; # $Id: //depot/libnet/Net/POP3.pm#24 $
+$VERSION = "2.28";
 
 @ISA = qw(Net::Cmd IO::Socket::INET);
 
@@ -21,8 +21,14 @@ sub new
 {
  my $self = shift;
  my $type = ref($self) || $self;
- my $host = shift if @_ % 2;
- my %arg  = @_; 
+ my ($host,%arg);
+ if (@_ % 2) {
+   $host = shift ;
+   %arg  = @_;
+ } else {
+   %arg = @_;
+   $host=delete $arg{Host};
+ }
  my $hosts = defined $host ? [ $host ] : $NetConfig{pop3_hosts};
  my $obj;
  my @localport = exists $arg{ResvPort} ? ( LocalPort => $arg{ResvPort} ): ();
@@ -57,6 +63,11 @@ sub new
  ${*$obj}{'net_pop3_banner'} = $obj->message;
 
  $obj;
+}
+
+sub host {
+ my $me = shift;
+ ${*$me}{'net_pop3_host'};
 }
 
 ##
@@ -226,7 +237,9 @@ sub getfh
 sub delete
 {
  @_ == 2 or croak 'usage: $pop3->delete( MSGNUM )';
- $_[0]->_DELE($_[1]);
+ my $me = shift;
+ return  0 unless $me->_DELE(@_);
+ ${*$me}{'net_pop3_deleted'} = 1;
 }
 
 sub uidl
@@ -310,6 +323,8 @@ sub _PING { shift->command('PING',$_[0])->response() == CMD_OK }
 sub _RPOP { shift->command('RPOP',$_[0])->response() == CMD_OK }
 sub _LAST { shift->command('LAST')->response() == CMD_OK }
 
+sub _CAPA { shift->command('CAPA')->response() == CMD_OK }
+
 sub quit
 {
  my $me = shift;
@@ -322,7 +337,7 @@ sub DESTROY
 {
  my $me = shift;
 
- if(defined fileno($me))
+ if(defined fileno($me) and ${*$me}{'net_pop3_deleted'})
   {
    $me->reset;
    $me->quit;
@@ -333,28 +348,111 @@ sub DESTROY
 ## POP3 has weird responses, so we emulate them to look the same :-)
 ##
 
-sub response
-{
- my $cmd = shift;
- my $str = $cmd->getline() || return undef;
- my $code = "500";
+sub response {
+  my $cmd  = shift;
+  my $str  = $cmd->getline() or return undef;
+  my $code = "500";
 
- $cmd->debug_print(0,$str)
-   if ($cmd->debug);
+  $cmd->debug_print(0, $str)
+    if ($cmd->debug);
 
- if($str =~ s/^\+OK\s*//io)
-  {
-   $code = "200"
+  if ($str =~ s/^\+OK\s*//io) {
+    $code = "200";
   }
- else
-  {
-   $str =~ s/^-ERR\s*//io;
+  elsif ($str =~ s/^\+\s*//io) {
+    $code = "300";
+  }
+  else {
+    $str =~ s/^-ERR\s*//io;
   }
 
- ${*$cmd}{'net_cmd_resp'} = [ $str ];
- ${*$cmd}{'net_cmd_code'} = $code;
+  ${*$cmd}{'net_cmd_resp'} = [$str];
+  ${*$cmd}{'net_cmd_code'} = $code;
 
- substr($code,0,1);
+  substr($code, 0, 1);
+}
+
+
+sub capa {
+    my $this = shift;
+    my ($capa, %capabilities);
+
+    # Fake a capability here
+    $capabilities{APOP} = '' if ($this->banner() =~ /<.*>/);
+
+    return \%capabilities unless $this->_CAPA();
+
+    $capa = $this->read_until_dot();
+    %capabilities = map { /^\s*(\S+)\s*(.*)/ } @$capa;
+    $capabilities{APOP} = '' if ($this->banner() =~ /<.*>/);
+
+    return ${*$this}{'net_pop3e_capabilities'} = \%capabilities;
+}
+
+sub capabilities {
+    my $this = shift;
+
+    ${*$this}{'net_pop3e_capabilities'} || $this->capa;
+}
+    
+sub auth {
+    my ($self, $username, $password) = @_;
+
+    eval {
+	require MIME::Base64;
+	require Authen::SASL;
+    } or $self->set_status(500,["Need MIME::Base64 and Authen::SASL todo auth"]), return 0;
+
+    my $capa = $self->capa;
+    my $mechanisms = $capa->{SASL} || 'CRAM-MD5';
+
+    my $sasl;
+
+    if (ref($username) and UNIVERSAL::isa($username,'Authen::SASL')) {
+      $sasl = $username;
+      $sasl->mechanism($mechanisms);
+    }
+    else {
+      die "auth(username, password)" if not length $username;
+      $sasl = Authen::SASL->new(mechanism=> $mechanisms,
+				callback => { user => $username,
+                                              pass => $password,
+					      authname => $username,
+                                            });
+    }
+
+    # We should probably allow the user to pass the host, but I don't
+    # currently know and SASL mechanisms that are used by smtp that need it
+    my $client = $sasl->client_new('pop3',${*$self}{'net_pop3_host'},0);
+    my $str    = $client->client_start;
+
+    # We dont support sasl mechanisms that encrypt the socket traffic.
+    # todo that we would really need to change the ISA hierarchy
+    # so we dont inherit from IO::Socket, but instead hold it in an attribute
+
+    my @cmd = ("AUTH", $client->mechanism);
+    my $code;
+
+    push @cmd, MIME::Base64::encode_base64($str,'')
+      if defined $str and length $str;
+
+    while (($code = $self->command(@cmd)->response()) == CMD_MORE) {
+      @cmd = (MIME::Base64::encode_base64(
+	$client->client_step(
+	  MIME::Base64::decode_base64(
+	    ($self->message)[0]
+	  )
+	), ''
+      ));
+    }
+
+    $code == CMD_OK;
+}
+
+sub banner {
+    my $this = shift;
+
+    return ${*$this}{'net_pop3_banner'};
 }
 
 1;
@@ -398,16 +496,22 @@ on the object.
 
 =over 4
 
-=item new ( [ HOST, ] [ OPTIONS ] )
+=item new ( [ HOST ] [, OPTIONS ] 0
 
 This is the constructor for a new Net::POP3 object. C<HOST> is the
-name of the remote host to which a POP3 connection is required.
+name of the remote host to which an POP3 connection is required.
 
-If C<HOST> is not given, then the C<POP3_Host> specified in C<Net::Config>
-will be used.
+C<HOST> is optional. If C<HOST> is not given then it may instead be
+passed as the C<Host> option described below. If neither is given then
+the C<POP3_Hosts> specified in C<Net::Config> will be used.
 
 C<OPTIONS> are passed in a hash like fashion, using key and value pairs.
 Possible options are:
+
+B<Host> - POP3 host to connect to. It may be a single scalar, as defined for
+the C<PeerAddr> option in L<IO::Socket::INET>, or a reference to
+an array with hosts to try in turn. The L</host> method will return the value
+which was used to connect to the host.
 
 B<ResvPort> - If given then the socket for the C<Net::POP3> object
 will be bound to the local port given using C<bind> when the socket is
@@ -428,6 +532,10 @@ states that it returns a value, failure will be returned as I<undef> or an
 empty list.
 
 =over 4
+
+=item auth ( USERNAME, PASSWORD )
+
+Attempt SASL authentication.
 
 =item user ( USER )
 
@@ -457,6 +565,23 @@ Similar to L</login>, but the password is not sent in clear text.
 
 To use this method you must have the Digest::MD5 or the MD5 module installed,
 otherwise this method will return I<undef>.
+
+=item banner ()
+
+Return the sever's connection banner
+
+=item capa ()
+
+Return a reference to a hash of the capabilties of the server.  APOP
+is added as a pseudo capability.  Note that I've been unable to
+find a list of the standard capability values, and some appear to
+be multi-word and some are not.  We make an attempt at intelligently
+parsing them, but it may not be correct.
+
+=item  capabilities ()
+
+Just like capa, but only uses a cache from the last time we asked
+the server, so as to avoid asking more than once.
 
 =item top ( MSGNUM [, NUMLINES ] )
 
@@ -541,12 +666,8 @@ Graham Barr <gbarr@pobox.com>
 
 =head1 COPYRIGHT
 
-Copyright (c) 1995-1997 Graham Barr. All rights reserved.
+Copyright (c) 1995-2003 Graham Barr. All rights reserved.
 This program is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
-
-=for html <hr>
-
-I<$Id: //depot/libnet/Net/POP3.pm#24 $>
 
 =cut

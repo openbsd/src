@@ -26,7 +26,7 @@ BEGIN
     }
   print "# INC = @INC\n";
 
-  plan tests => 1772
+  plan tests => 1815
 	+ 2;		# own tests
   }
 
@@ -38,6 +38,6 @@ $class = "Math::BigFloat";
 $CL = "Math::BigInt::Calc";
 
 ok ($class->config()->{class},$class);
-ok ($class->config()->{with},'Math::BigInt');
+ok ($class->config()->{with}, $CL);
  
 require 'bigfltpm.inc';	# all tests here for sharing

@@ -799,4 +799,21 @@ use warnings 'ambiguous';
 $s = "(@-)(@+)";
 EXPECT
 
+########
+# toke.c
+# mandatory warning
+eval q/if ($a) { } elseif ($b) { }/;
+no warnings "syntax";
+eval q/if ($a) { } elseif ($b) { }/;
+EXPECT
+elseif should be elsif at (eval 1) line 1.
+########
+# toke.c
+# mandatory warning
+eval q/5 6/;
+no warnings "syntax";
+eval q/5 6/;
+EXPECT
+Number found where operator expected at (eval 1) line 1, near "5 6"
+	(Missing operator before  6?)
 

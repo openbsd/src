@@ -44,8 +44,10 @@ print <<__EOH__;
 __EOH__
 
 SKIP: {
+    # FIXME - more of these could be tested without Encode or full perl
     skip("This perl does not have Encode", $NTEST)
 	unless " $Config{extensions} " =~ / Encode /;
+    skip("miniperl does not have Encode", $NTEST) if $ENV{PERL_CORE_MINITEST};
 
     sub check {
 	my ($result, $expected, $id) = @_;

@@ -880,7 +880,7 @@ $   config_symbols0 ="|archlib|archlibexp|bin|binexp|builddir|cf_email|config_sh
 $   config_symbols1 ="|installprivlib|installscript|installsitearch|installsitelib|most|oldarchlib|oldarchlibexp|osname|pager|perl_symbol|perl_verb|"
 $   config_symbols2 ="|prefix|privlib|privlibexp|scriptdir|sitearch|sitearchexp|sitebin|sitelib|sitelib_stem|sitelibexp|try_cxx|use64bitall|use64bitint|"
 $   config_symbols3 ="|usecasesensitive|usedefaulttypes|usedevel|useieee|useithreads|usemultiplicity|usemymalloc|usedebugging_perl|useperlio|usesecurelog|"
-$   config_symbols4 ="|usethreads|usevmsdebug|usefaststdio|"
+$   config_symbols4 ="|usethreads|usevmsdebug|usefaststdio|usemallocwrap|"
 $!  
 $   open/read CONFIG 'config_sh'
 $   rd_conf_loop:
@@ -2506,6 +2506,20 @@ $ GOSUB myread
 $ d_alwdeftype = ans
 $ usedefaulttypes = "undef"
 $ if (d_alwdeftype) then usedefaulttypes = "define"
+$!
+$! determine whether to use malloc wrapping
+$ echo ""
+$ bool_dflt = "y"
+$ IF F$TYPE(usemallocwrap) .nes. ""
+$ then
+$   if .NOT. usemallocwrap .or. usemallocwrap .eqs. "undef" then bool_dflt = "n"
+$ endif
+$ rp = "Do you wish to wrap malloc calls to protect against potential overflows? [''bool_dflt'] "
+$ GOSUB myread
+$ IF ans
+$ THEN usemallocwrap = "define"
+$ ELSE usemallocwrap = "undef"
+$ ENDIF
 $!
 $! Ask if they want to use perl's memory allocator
 $ echo ""
@@ -4533,6 +4547,23 @@ $ ELSE
 $   d_getsent="undef"
 $ ENDIF
 $!
+$! Check for nanosleep
+$!
+$ OS
+$ WS "#if defined(__DECC) || defined(__DECCXX)"
+$ WS "#include <stdlib.h>"
+$ WS "#endif"
+$ WS "#include <time.h>"
+$ WS "int main()"
+$ WS "{"
+$ WS "int asleep = nanosleep(NULL,NULL);"
+$ WS "exit(0);"
+$ WS "}"
+$ CS
+$ tmp = "nanosleep"
+$ GOSUB inlibc
+$ d_nanosleep = tmp
+$!
 $! Check for socklen_t
 $!
 $ IF Has_Dec_C_Sockets .OR. Has_Socketshr
@@ -5109,13 +5140,8 @@ $   WS "    iss =  ((iss&1)==1 && code == 0x1234);"
 $   WS "    printf(""%d\n"",iss);"
 $   WS "}"
 $   CS
-$   IF (F$EXTRACT(0,7,archname) .EQS. "VMS_AXP")
-$   THEN
-$     GOSUB compile
-$   ELSE
-$     ! Causes SS$_BADSTACK on OpenVMS I64 v8.1 (but hey, it was undocumented)
-$     tmp = "0"	
-$   ENDIF
+$   ON ERROR THEN CONTINUE
+$   GOSUB compile
 $   IF tmp .EQS. "1"
 $   THEN
 $       echo4 "Yep, we can."
@@ -5199,6 +5225,7 @@ $ WC "Mcc='" + Mcc + "'"
 $ WC "PERL_REVISION='" + revision + "'"
 $ WC "PERL_VERSION='" + patchlevel + "'" 
 $ WC "PERL_SUBVERSION='" + subversion + "'" 
+$ WC "PERL_API_REVISION='" + api_revision + "'"
 $ WC "PERL_API_VERSION='" + api_version + "'" 
 $ WC "PERL_API_SUBVERSION='" + api_subversion + "'"
 $ WC "_a='" + lib_ext + "'"
@@ -5417,7 +5444,7 @@ $ WC "d_msghdr_s='undef'"
 $ WC "d_msync='" + d_msync + "'"
 $ WC "d_munmap='" + d_munmap + "'"
 $ WC "d_mymalloc='" + d_mymalloc + "'"
-$ WC "d_nanosleep='undef'"
+$ WC "d_nanosleep='" + d_nanosleep + "'"
 $ WC "d_nice='define'"
 $ WC "d_nl_langinfo='" + d_nl_langinfo + "'"
 $ WC "d_nv_preserves_uv='" + d_nv_preserves_uv + "'"
@@ -5754,6 +5781,7 @@ $ WC "lseektype='int'"
 $ WC "mab='" + "'"
 $ WC "make='" + make + "'"
 $ WC "malloctype='void *'"
+$ WC "usemallocwrap='" + usemallocwrap + "'"
 $ WC "man1ext='rno'"
 $ WC "man3ext='rno'"
 $ WC "mmaptype='void *'"
@@ -5793,7 +5821,6 @@ $ WC "perl_symbol='" + perl_symbol + "'"  ! VMS specific
 $ WC "perl_verb='" + perl_verb + "'"      ! VMS specific
 $ WC "pgflquota='" + pgflquota + "'"
 $ WC "pidtype='" + pidtype + "'"
-$ WC "pm_apiversion='" + version + "'"
 $ WC "prefix='" + vms_prefix + "'"
 $ WC "prefixexp='" + vms_prefix + ":'"
 $ WC "privlib='" + privlib + "'"
@@ -5924,7 +5951,6 @@ $ WC "vms_cc_type='" + vms_cc_type + "'" ! VMS specific
 $ WC "vms_prefix='" + vms_prefix + "'" ! VMS specific
 $ WC "vms_ver='" + vms_ver + "'" ! VMS specific
 $ WC "voidflags='15'"
-$ WC "xs_apiversion='" + version + "'"
 $ WC "PERL_CONFIG_SH='true'"
 $!
 $! ## The UNIXy POSIXy reentrantey thingys ##
@@ -6448,7 +6474,8 @@ $ WRITE CONFIG "$ define/translation=concealed ''vms_prefix' ''prefix'"
 $ WRITE CONFIG "$ ext = "".exe"""
 $ IF sharedperl
 $ THEN
-$ WRITE CONFIG "$ if f$getsyi(""HW_MODEL"") .ge. 1024 then ext = "".AXE"""
+$ WRITE CONFIG "$ if f$getsyi(""ARCH_TYPE"") .eq. 2 then ext = "".AXE"""
+$ WRITE CONFIG "$ if f$getsyi(""ARCH_TYPE"") .eq. 3 then ext = "".IXE"""
 $ ENDIF
 $ IF (perl_symbol)
 $ THEN
@@ -6495,20 +6522,21 @@ $ THEN
 $ WRITE CONFIG "$ dprofpp    == """ + perl_setup_perl + " ''vms_prefix':[utils]dprofpp.com"""
 $ ENDIF 
 $ WRITE CONFIG "$ enc2xs     == """ + perl_setup_perl + " ''vms_prefix':[utils]enc2xs.com"""
-$ WRITE CONFIG "$!find2perl  == """ + perl_setup_perl + " ''vms_prefix':[utils]find2perl.com"""
+$ WRITE CONFIG "$ find2perl  == """ + perl_setup_perl + " ''vms_prefix':[utils]find2perl.com"""
 $ WRITE CONFIG "$ h2ph       == """ + perl_setup_perl + " ''vms_prefix':[utils]h2ph.com"""
 $ WRITE CONFIG "$ h2xs       == """ + perl_setup_perl + " ''vms_prefix':[utils]h2xs.com"""
+$ WRITE CONFIG "$ instmodsh  == """ + perl_setup_perl + " ''vms_prefix':[utils]instmodsh.com"""
 $ WRITE CONFIG "$ libnetcfg  == """ + perl_setup_perl + " ''vms_prefix':[utils]libnetcfg.com"""
-$ WRITE CONFIG "$!perlbug    == """ + perl_setup_perl + " ''vms_prefix':[lib]perlbug.com"""
+$ WRITE CONFIG "$ perlbug    == """ + perl_setup_perl + " ''vms_prefix':[lib]perlbug.com"""
 $ WRITE CONFIG "$!perlcc     == """ + perl_setup_perl + " ''vms_prefix':[utils]perlcc.com"""
 $ WRITE CONFIG "$ perldoc    == """ + perl_setup_perl + " ''vms_prefix':[lib.pod]perldoc.com -t"""
 $ WRITE CONFIG "$ perlivp    == """ + perl_setup_perl + " ''vms_prefix':[utils]perlivp.com"""
 $ WRITE CONFIG "$ piconv     == """ + perl_setup_perl + " ''vms_prefix':[utils]piconv.com"""
 $ WRITE CONFIG "$ pl2pm      == """ + perl_setup_perl + " ''vms_prefix':[utils]pl2pm.com"""
-$ WRITE CONFIG "$ pod2html   == """ + perl_setup_perl + " pod2html"""
+$ WRITE CONFIG "$ pod2html   == """ + perl_setup_perl + " ''vms_prefix':[utils]pod2html"""
 $ WRITE CONFIG "$ pod2latex  == """ + perl_setup_perl + " ''vms_prefix':[lib.pod]pod2latex.com"""
-$ WRITE CONFIG "$ pod2text   == """ + perl_setup_perl + " pod2text"""
-$ WRITE CONFIG "$!pod2man    == """ + perl_setup_perl + " pod2man"""
+$ WRITE CONFIG "$ pod2text   == """ + perl_setup_perl + " ''vms_prefix':[utils]pod2text"""
+$ WRITE CONFIG "$!pod2man    == """ + perl_setup_perl + " ''vms_prefix':[utils]pod2man"""
 $ WRITE CONFIG "$ pod2usage  == """ + perl_setup_perl + " ''vms_prefix':[utils]pod2usage.com"""
 $ WRITE CONFIG "$ podchecker == """ + perl_setup_perl + " ''vms_prefix':[utils]podchecker.com"""
 $ WRITE CONFIG "$ podselect  == """ + perl_setup_perl + " ''vms_prefix':[utils]podselect.com"""

@@ -25,7 +25,15 @@ sub ok;
 
 use Storable qw(freeze thaw);
 
-print "1..12\n";
+%::immortals
+  = (u => \undef,
+     'y' => \(1 == 1),
+     n => \(1 == 0)
+);
+
+my $test = 12;
+my $tests = $test + 6 + 2 * 6 * keys %::immortals;
+print "1..$tests\n";
 
 package SHORT_NAME;
 
@@ -106,3 +114,87 @@ ok 10, $good;
 	ok 11, ref $y eq 'Foobar';
 	ok 12, $$$y->[0] == 1;
 }
+
+package RETURNS_IMMORTALS;
+
+sub make { my $self = shift; bless [@_], $self }
+
+sub STORABLE_freeze {
+  # Some reference some number of times.
+  my $self = shift;
+  my ($what, $times) = @$self;
+  return ("$what$times", ($::immortals{$what}) x $times);
+}
+
+sub STORABLE_thaw {
+	my $self = shift;
+	my $cloning = shift;
+	my ($x, @refs) = @_;
+	my ($what, $times) = $x =~ /(.)(\d+)/;
+	die "'$x' didn't match" unless defined $times;
+	main::ok ++$test, @refs == $times;
+	my $expect = $::immortals{$what};
+	die "'$x' did not give a reference" unless ref $expect;
+	my $fail;
+	foreach (@refs) {
+	  $fail++ if $_ != $expect;
+	}
+	main::ok ++$test, !$fail;
+}
+
+package main;
+
+# $Storable::DEBUGME = 1;
+my $count;
+foreach $count (1..3) {
+  my $immortal;
+  foreach $immortal (keys %::immortals) {
+    print "# $immortal x $count\n";
+    my $i =  RETURNS_IMMORTALS->make ($immortal, $count);
+
+    my $f = freeze ($i);
+    ok ++$test, $f;
+    my $t = thaw $f;
+    ok ++$test, 1;
+  }
+}
+
+# Test automatic require of packages to find thaw hook.
+
+package HAS_HOOK;
+
+$loaded_count = 0;
+$thawed_count = 0;
+
+sub make {
+  bless [];
+}
+
+sub STORABLE_freeze {
+  my $self = shift;
+  return '';
+}
+
+package main;
+
+my $f = freeze (HAS_HOOK->make);
+
+ok ++$test, $HAS_HOOK::loaded_count == 0;
+ok ++$test, $HAS_HOOK::thawed_count == 0;
+
+my $t = thaw $f;
+ok ++$test, $HAS_HOOK::loaded_count == 1;
+ok ++$test, $HAS_HOOK::thawed_count == 1;
+ok ++$test, $t;
+ok ++$test, ref $t eq 'HAS_HOOK';
+
+# Can't do this because the method is still cached by UNIVERSAL::can
+# delete $INC{"HAS_HOOK.pm"};
+# undef &HAS_HOOK::STORABLE_thaw;
+# 
+# warn HAS_HOOK->can('STORABLE_thaw');
+# $t = thaw $f;
+# ok ++$test, $HAS_HOOK::loaded_count == 2;
+# ok ++$test, $HAS_HOOK::thawed_count == 2;
+# ok ++$test, $t;
+# ok ++$test, ref $t eq 'HAS_HOOK';

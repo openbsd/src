@@ -1,7 +1,7 @@
 package bignum;
 require 5.005;
 
-$VERSION = '0.14';
+$VERSION = '0.15';
 use Exporter;
 @EXPORT_OK 	= qw( ); 
 @EXPORT 	= qw( inf NaN ); 
@@ -476,6 +476,6 @@ as L<Math::BigInt::BitVect>, L<Math::BigInt::Pari> and  L<Math::BigInt::GMP>.
 
 =head1 AUTHORS
 
-(C) by Tels L<http://bloodgate.com/> in early 2002.
+(C) by Tels L<http://bloodgate.com/> in early 2002, 2003.
 
 =cut

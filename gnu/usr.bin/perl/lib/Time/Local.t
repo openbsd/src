@@ -7,12 +7,16 @@ BEGIN {
   }
 }
 
+use strict;
+
+use Config;
+use Test;
 use Time::Local;
 
 # Set up time values to test
-@time =
+my @time =
   (
-   #year,mon,day,hour,min,sec 
+   #year,mon,day,hour,min,sec
    [1970,  1,  2, 00, 00, 00],
    [1980,  2, 28, 12, 00, 00],
    [1980,  2, 29, 12, 00, 00],
@@ -30,73 +34,57 @@ use Time::Local;
 # use vmsish 'time' makes for oddness around the Unix epoch
 if ($^O eq 'VMS') { $time[0][2]++ }
 
-my $tests = @time * 2 + 4;
+my $tests = (@time * 12) + 6;
 $tests += 2 if $ENV{PERL_CORE};
+$tests += 5 if $ENV{MAINTAINER};
 
-print "1..$tests\n";
+plan tests => $tests;
 
-$count = 1;
 for (@time) {
     my($year, $mon, $mday, $hour, $min, $sec) = @$_;
     $year -= 1900;
-    $mon --;
-    if ($^O eq 'vos' && $count == 1) {
-     print "ok $count -- skipping 1970 test on VOS.\n";
+    $mon--;
+
+    if ($^O eq 'vos' && $year == 70) {
+        skip(1, "skipping 1970 test on VOS.\n") for 1..6;
     } else {
-     my $time = timelocal($sec,$min,$hour,$mday,$mon,$year);
-     # print scalar(localtime($time)), "\n";
-     my($s,$m,$h,$D,$M,$Y) = localtime($time);
+        my $time = timelocal($sec,$min,$hour,$mday,$mon,$year);
 
-     if ($s == $sec &&
-	 $m == $min &&
-	 $h == $hour &&
-	 $D == $mday &&
-	 $M == $mon &&
-	 $Y == $year
-        ) {
-	 print "ok $count\n";
-     } else {
-      print "not ok $count\n";
-     }
+        my($s,$m,$h,$D,$M,$Y) = localtime($time);
+
+        ok($s, $sec, 'second');
+        ok($m, $min, 'minute');
+        ok($h, $hour, 'hour');
+        ok($D, $mday, 'day');
+        ok($M, $mon, 'month');
+        ok($Y, $year, 'year');
     }
-    $count++;
 
-    # Test gmtime function
-    if ($^O eq 'vos' && $count == 2) {
-        print "ok $count -- skipping 1970 test on VOS.\n";
+    if ($^O eq 'vos' && $year == 70) {
+        skip(1, "skipping 1970 test on VOS.\n") for 1..6;
     } else {
-     $time = timegm($sec,$min,$hour,$mday,$mon,$year);
-     ($s,$m,$h,$D,$M,$Y) = gmtime($time);
+        my $time = timegm($sec,$min,$hour,$mday,$mon,$year);
 
-     if ($s == $sec &&
-	 $m == $min &&
-	 $h == $hour &&
-	 $D == $mday &&
-	 $M == $mon &&
-	 $Y == $year
-        ) {
-	 print "ok $count\n";
-     } else {
-      print "not ok $count\n";
-     }
+        my($s,$m,$h,$D,$M,$Y) = gmtime($time);
+
+        ok($s, $sec, 'second');
+        ok($m, $min, 'minute');
+        ok($h, $hour, 'hour');
+        ok($D, $mday, 'day');
+        ok($M, $mon, 'month');
+        ok($Y, $year, 'year');
     }
-    $count++;
 }
 
-#print "Testing that the differences between a few dates makes sense...\n";
+ok(timelocal(0,0,1,1,0,90) - timelocal(0,0,0,1,0,90), 3600,
+   'one hour difference between two calls to timelocal');
 
-timelocal(0,0,1,1,0,90) - timelocal(0,0,0,1,0,90) == 3600
-  or print "not ";
-print "ok ", $count++, "\n";
-
-timelocal(1,2,3,1,0,100) - timelocal(1,2,3,31,11,99) == 24 * 3600 
-  or print "not ";
-print "ok ", $count++, "\n";
+ok(timelocal(1,2,3,1,0,100) - timelocal(1,2,3,31,11,99), 24 * 3600,
+   'one day difference between two calls to timelocal');
 
 # Diff beween Jan 1, 1980 and Mar 1, 1980 = (31 + 29 = 60 days)
-timegm(0,0,0, 1, 2, 80) - timegm(0,0,0, 1, 0, 80) == 60 * 24 * 3600
-  or print "not ";
-print "ok ", $count++, "\n";
+ok(timegm(0,0,0, 1, 2, 80) - timegm(0,0,0, 1, 0, 80), 60 * 24 * 3600,
+   '60 day difference between two calls to timegm');
 
 # bugid #19393
 # At a DST transition, the clock skips forward, eg from 01:59:59 to
@@ -107,17 +95,72 @@ print "ok ", $count++, "\n";
     my $hour = (localtime(timelocal(0, 0, 2, 7, 3, 102)))[2];
     # testers in US/Pacific should get 3,
     # other testers should get 2
-    print "not " unless $hour == 2 || $hour == 3;
-    print "ok ", $main::count++, "\n";
+    ok($hour == 2 || $hour == 3, 1, 'hour should be 2 or 3');
+}
+
+# round trip was broken for edge cases
+if ($^O eq "aix" && $Config{osvers} =~ m/^4\.3\./) {
+    skip( 1, "No fix expected for edge case test for $_ on AIX 4.3") for qw( timegm timelocal );
+} else {
+    ok(sprintf('%x', timegm(gmtime(0x7fffffff))), sprintf('%x', 0x7fffffff),
+       '0x7fffffff round trip through gmtime then timegm');
+
+    ok(sprintf('%x', timelocal(localtime(0x7fffffff))), sprintf('%x', 0x7fffffff),
+       '0x7fffffff round trip through localtime then timelocal');
+}
+
+if ($ENV{MAINTAINER}) {
+    eval { require POSIX; POSIX::tzset() };
+    if ($@) {
+        skip( 1, "Cannot call POSIX::tzset() on this platform\n" ) for 1..3;
+    }
+    else {
+        local $ENV{TZ} = 'Europe/Vienna';
+        POSIX::tzset();
+
+        # 2001-10-28 02:30:00 - could be either summer or standard time,
+        # prefer earlier of the two, in this case summer
+        my $time = timelocal(0, 30, 2, 28, 9, 101);
+        ok($time, 1004229000,
+           'timelocal prefers earlier epoch in the presence of a DST change');
+
+        local $ENV{TZ} = 'America/Chicago';
+        POSIX::tzset();
+
+        # Same local time in America/Chicago.  There is a transition
+        # here as well.
+        $time = timelocal(0, 30, 1, 28, 9, 101);
+        ok($time, 1004250600,
+           'timelocal prefers earlier epoch in the presence of a DST change');
+
+        $time = timelocal(0, 30, 2, 1, 3, 101);
+        ok($time, 986113800,
+           'timelocal for non-existent time gives you the time one hour later');
+
+        local $ENV{TZ} = 'Australia/Sydney';
+        POSIX::tzset();
+
+        # 2001-03-25 02:30:00 in Australia/Sydney.  This is the transition
+        # _to_ summer time.  The southern hemisphere transitions are
+        # opposite those of the northern.
+        $time = timelocal(0, 30, 2, 25, 2, 101);
+        ok($time, 985447800,
+           'timelocal prefers earlier epoch in the presence of a DST change');
+
+        $time = timelocal(0, 30, 2, 28, 9, 101);
+        ok($time, 1004200200,
+           'timelocal for non-existent time gives you the time one hour later');
+    }
 }
 
 if ($ENV{PERL_CORE}) {
-  #print "Testing timelocal.pl module too...\n";
   package test;
   require 'timelocal.pl';
-  timegm(0,0,0,1,0,80) == main::timegm(0,0,0,1,0,80) or print "not ";
-  print "ok ", $main::count++, "\n";
 
-  timelocal(1,2,3,4,5,88) == main::timelocal(1,2,3,4,5,88) or print "not ";
-  print "ok ", $main::count++, "\n";
+  # need to get ok() from main package
+  ::ok(timegm(0,0,0,1,0,80), main::timegm(0,0,0,1,0,80),
+     'timegm in timelocal.pl');
+
+  ::ok(timelocal(1,2,3,4,5,88), main::timelocal(1,2,3,4,5,88),
+     'timelocal in timelocal.pl');
 }

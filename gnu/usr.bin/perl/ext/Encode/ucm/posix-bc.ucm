@@ -1,5 +1,5 @@
 #
-# $Id: posix-bc.ucm,v 1.0 2002/03/28 23:26:27 dankogai Exp $
+# $Id: posix-bc.ucm,v 2.0 2004/05/16 20:55:28 dankogai Exp $
 #
 # compile -n posix-bc -o Encode/posix-bc.ucm Encode/posix-bc.enc
 <code_set_name> "posix-bc"

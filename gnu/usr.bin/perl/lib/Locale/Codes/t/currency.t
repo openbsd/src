@@ -2,12 +2,6 @@
 #
 # currency.t - tests for Locale::Currency
 #
-
-BEGIN {
-        chdir 't' if -d 't';
-        @INC = '../lib';
-}
-
 use Locale::Currency;
 
 #-----------------------------------------------------------------------
@@ -70,6 +64,7 @@ use Locale::Currency;
  'currency2code("PULA")            eq "bwp"',
  'currency2code("Andorran Peseta") eq "adp"',       # first in DATA segment
  'currency2code("Zimbabwe Dollar") eq "zwd"',       # last in DATA segment
+ 'currency2code("Canadian Dollar") eq "cad"',       # last in DATA segment
 );
 
 print "1..", int(@TESTS), "\n";

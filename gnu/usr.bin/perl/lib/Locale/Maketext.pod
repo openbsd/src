@@ -1,5 +1,5 @@
 
-# Time-stamp: "2003-04-02 11:10:32 AHST"
+# Time-stamp: "2004-01-11 18:35:34 AST"
 
 =head1 NAME
 
@@ -1304,7 +1304,7 @@ shorter than its documentation!
 
 =head1 COPYRIGHT AND DISCLAIMER
 
-Copyright (c) 1999-2003 Sean M. Burke.  All rights reserved.
+Copyright (c) 1999-2004 Sean M. Burke.  All rights reserved.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

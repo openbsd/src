@@ -48,7 +48,7 @@ sub filter
 	local $Switch::file = (caller)[1];
 
 	my $status = 1;
-	$status = filter_read(10_000);
+	$status = filter_read(1_000_000);
 	return $status if $status<0;
     	$_ = filter_blocks($_,$offset);
 	$_ = "# line $offset\n" . $_ if $offset; undef $offset;
@@ -87,7 +87,7 @@ sub filter_blocks
 {
 	my ($source, $line) = @_;
 	return $source unless $Perl5 && $source =~ /case|switch/
-			   || $Perl6 && $source =~ /when|given/;
+			   || $Perl6 && $source =~ /when|given|default/;
 	pos $source = 0;
 	my $text = "";
 	component: while (pos $source < length $source)
@@ -100,8 +100,8 @@ sub filter_blocks
 		my @pos = Text::Balanced::_match_quotelike(\$source,qr/\s*/,1,0);
 		if (defined $pos[0])
 		{
-			$text .= " " if $pos[0] < $pos[2];
-			$text .= substr($source,$pos[2],$pos[18]-$pos[2]);
+			my $pre = substr($source,$pos[0],$pos[1]); # matched prefix
+			$text .= $pre . substr($source,$pos[2],$pos[18]-$pos[2]);
 			next component;
 		}
 		if ($source =~ m/\G\s*($pod_or_DATA)/gc) {
@@ -121,7 +121,6 @@ sub filter_blocks
 		{
 			my $keyword = $3;
 			my $arg = $4;
-			# print  STDERR "[$arg]\n";
 			$text .= $1.$2.'S_W_I_T_C_H: while (1) ';
 			unless ($arg) {
 				@pos = Text::Balanced::_match_codeblock(\$source,qr/\s*/,qr/\(/,qr/\)/,qr/[[{(<]/,qr/[]})>]/,undef) 
@@ -144,11 +143,18 @@ sub filter_blocks
 			next component;
 		}
 		elsif ($Perl5 && $source =~ m/\G(\s*)(case\b)(?!\s*=>)/gc
-		    || $Perl6 && $source =~ m/\G(\s*)(when\b)(?!\s*=>)/gc)
+		    || $Perl6 && $source =~ m/\G(\s*)(when\b)(?!\s*=>)/gc
+		    || $Perl6 && $source =~ m/\G(\s*)(default\b)(?=\s*\{)/gc)
 		{
 			my $keyword = $2;
-			$text .= $1."if (Switch::case";
-			if (@pos = Text::Balanced::_match_codeblock(\$source,qr/\s*/,qr/\{/,qr/\}/,qr/\{/,qr/\}/,undef)) {
+			$text .= $1 . ($keyword eq "default"
+					? "if (1)"
+					: "if (Switch::case");
+
+			if ($keyword eq "default") {
+				# Nothing to do
+			}
+			elsif (@pos = Text::Balanced::_match_codeblock(\$source,qr/\s*/,qr/\{/,qr/\}/,qr/\{/,qr/\}/,undef)) {
 				my $code = substr($source,$pos[0],$pos[4]-$pos[0]);
 				$text .= " " if $pos[0] < $pos[2];
 				$text .= "sub " if is_block $code;
@@ -496,8 +502,8 @@ Switch - A switch statement for Perl
 
 =head1 VERSION
 
-This document describes version 2.09 of Switch,
-released June 12, 2002.
+This document describes version 2.10 of Switch,
+released Dec 29, 2003.
 
 =head1 SYNOPSIS
 
@@ -761,6 +767,7 @@ importing it with the argument C<"Perl6">.  For example:
                 when [0..9]  { handle_num_any(); last }
                 when /\d/    { handle_dig_any(); }
                 when /.*/    { handle_str_any(); }
+                default      { handle anything else; }
         }
 
 Note that scalars still need to be parenthesized, since they would be
@@ -843,21 +850,30 @@ and requires both these modules to be installed.
 
 =head1 AUTHOR
 
-Damian Conway (damian@conway.org)
+Damian Conway (damian@conway.org). The maintainer of this module is now Rafael
+Garcia-Suarez (rgarciasuarez@free.fr).
 
 =head1 BUGS
 
 There are undoubtedly serious bugs lurking somewhere in code this funky :-)
 Bug reports and other feedback are most welcome.
 
-=head1 LIMITATION
+=head1 LIMITATIONS
 
 Due to the heuristic nature of Switch.pm's source parsing, the presence
 of regexes specified with raw C<?...?> delimiters may cause mysterious
 errors. The workaround is to use C<m?...?> instead.
 
+Due to the way source filters work in Perl, you can't use Switch inside
+an string C<eval>.
+
+If your source file is longer then 1 million characters and you have a
+switch statement that crosses the 1 million (or 2 million, etc.)
+character boundary you will get mysterious errors. The workaround is to
+use smaller source files.
+
 =head1 COPYRIGHT
 
-    Copyright (c) 1997-2001, Damian Conway. All Rights Reserved.
+    Copyright (c) 1997-2003, Damian Conway. All Rights Reserved.
     This module is free software. It may be used, redistributed
         and/or modified under the same terms as Perl itself.

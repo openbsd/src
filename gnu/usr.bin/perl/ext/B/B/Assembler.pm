@@ -16,7 +16,7 @@ no warnings;			# XXX
 
 @ISA = qw(Exporter);
 @EXPORT_OK = qw(assemble_fh newasm endasm assemble asm);
-$VERSION = 0.06;
+$VERSION = 0.07;
 
 use strict;
 my %opnumber;
@@ -291,7 +291,8 @@ sub assemble {
 sub asm {
     return if $_[0] =~ /\s*\W/;
     if (defined $_[1]) {
-	return if $_[1] eq "0" and $_[0] !~ /^(?:newsvx?|av_pushx?|xav_flags)$/;
+	return if $_[1] eq "0" and
+	    $_[0] !~ /^(?:newsvx?|av_pushx?|av_extend|xav_flags)$/;
 	return if $_[1] eq "1" and $_[0] =~ /^(?:sv_refcnt)$/;
     }
     assemble "@_";

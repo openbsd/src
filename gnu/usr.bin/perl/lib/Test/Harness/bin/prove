@@ -30,20 +30,22 @@ Getopt::Long::Configure( "no_ignore_case" );
 Getopt::Long::Configure( "bundling" );
 GetOptions(
     'b|blib'        => \$blib,
-    'd|debug'	    => \$Test::Harness::debug,
+    'd|debug'       => \$Test::Harness::debug,
     'D|dry'         => \$dry,
     'h|help|?'      => sub {pod2usage({-verbose => 1, -input => \*DATA}); exit},
     'H|man'         => sub {pod2usage({-verbose => 2, -input => \*DATA}); exit},
     'I=s@'          => \@includes,
-    'l|lib'	    => \$lib,
+    'l|lib'         => \$lib,
     'r|recurse'     => \$recurse,
     's|shuffle'     => \$shuffle,
-    't'		    => sub { unshift @switches, "-t" }, # Always want -t up front
-    'T'		    => sub { unshift @switches, "-T" }, # Always want -T up front
+    't'             => sub { unshift @switches, "-t" }, # Always want -t up front
+    'T'             => sub { unshift @switches, "-T" }, # Always want -T up front
     'v|verbose'     => \$Test::Harness::verbose,
     'V|version'     => sub { print_version(); exit; },
     'ext=s@'        => \@ext,
 ) or exit 1;
+
+$ENV{TEST_VERBOSE} = 1 if $Test::Harness::verbose;
 
 # Build up extensions regex
 @ext = map { split /,/ } @ext;
@@ -56,9 +58,9 @@ $ext_regex = qr/\.($ext_regex)$/;
 if ( $blib ) {
     my @blibdirs = blibdirs();
     if ( @blibdirs ) {
-	unshift @includes, @blibdirs;
+        unshift @includes, @blibdirs;
     } else {
-	warn "No blib directories found.\n";
+        warn "No blib directories found.\n";
     }
 }
 
@@ -74,14 +76,14 @@ print "# \$Test::Harness::Switches: $Test::Harness::Switches\n" if $Test::Harnes
 
 my @tests;
 @ARGV = File::Spec->curdir unless @ARGV;
-push( @tests, -d $_ ? all_in( $_ ) : $_ ) for @ARGV;
+push( @tests, -d $_ ? all_in( $_ ) : $_ ) for map { glob } @ARGV;
 
 if ( @tests ) {
     shuffle(@tests) if $shuffle;
     if ( $dry ) {
         print join( "\n", @tests, "" );
     } else {
-	print "# ", scalar @tests, " tests to run\n" if $Test::Harness::debug;
+        print "# ", scalar @tests, " tests to run\n" if $Test::Harness::debug;
         runtests(@tests);
     }
 }
@@ -123,19 +125,19 @@ sub shuffle {
 
 sub print_version {
     printf( "prove v%s, using Test::Harness v%s and Perl v%vd\n",
-	$VERSION, $Test::Harness::VERSION, $^V );
+        $VERSION, $Test::Harness::VERSION, $^V );
 }
 
 # Stolen directly from blib.pm
 sub blibdirs {
     my $dir = File::Spec->curdir;
     if ($^O eq 'VMS') {
-	($dir = VMS::Filespec::unixify($dir)) =~ s-/\z--;
+        ($dir = VMS::Filespec::unixify($dir)) =~ s-/\z--;
     }
     my $archdir = "arch";
     if ( $^O eq "MacOS" ) {
-	# Double up the MP::A so that it's not used only once.
-	$archdir = $MacPerl::Architecture = $MacPerl::Architecture;
+        # Double up the MP::A so that it's not used only once.
+        $archdir = $MacPerl::Architecture = $MacPerl::Architecture;
     }
 
     my $i = 5;
@@ -144,10 +146,10 @@ sub blibdirs {
         my $blib_lib  = File::Spec->catdir( $blib, "lib" );
         my $blib_arch = File::Spec->catdir( $blib, $archdir );
 
-	if ( -d $blib && -d $blib_arch && -d $blib_lib ) {
-	    return ($blib_arch,$blib_lib);
-	}
-	$dir = File::Spec->catdir($dir, File::Spec->updir);
+        if ( -d $blib && -d $blib_arch && -d $blib_lib ) {
+            return ($blib_arch,$blib_lib);
+        }
+        $dir = File::Spec->catdir($dir, File::Spec->updir);
     }
     warn "$0: Cannot find blib\n";
     return;
@@ -166,17 +168,17 @@ prove [options] [files/directories]
 Options:
 
     -b, --blib      Adds blib/lib to the path for your tests, a la "use blib".
-    -d, --debug	    Includes extra debugging information.
+    -d, --debug     Includes extra debugging information.
     -D, --dry       Dry run: Show the tests to run, but don't run them.
         --ext=x     Extensions (defaults to .t)
     -h, --help      Display this help
     -H, --man       Longer manpage for prove
     -I              Add libraries to @INC, as Perl's -I
-    -l, --lib	    Add lib to the path for your tests.
+    -l, --lib       Add lib to the path for your tests.
     -r, --recurse   Recursively descend into directories.
     -s, --shuffle   Run the tests in a random order.
-    -T	 	    Enable tainting checks
-    -t		    Enable tainting warnings
+    -T              Enable tainting checks
+    -t              Enable tainting warnings
     -v, --verbose   Display standard output of test scripts while running them.
     -V, --version   Display version info
 
@@ -292,7 +294,8 @@ Runs test programs under perl's -T taint mode.
 
 =head2 -v, --verbose
 
-Display standard output of test scripts while running them.
+Display standard output of test scripts while running them.  Also sets
+TEST_VERBOSE in case your tests rely on them.
 
 =head2 -V, --version
 

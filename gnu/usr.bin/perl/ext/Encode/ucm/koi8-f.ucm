@@ -1,7 +1,7 @@
 #
-# $Id: koi8-f.ucm,v 1.0 2002/03/28 23:26:27 dankogai Exp $
+# $Id: koi8-f.ucm,v 2.0 2004/05/16 20:55:26 dankogai Exp $
 #
-# Written $Id: koi8-f.ucm,v 1.0 2002/03/28 23:26:27 dankogai Exp $
+# Written $Id: koi8-f.ucm,v 2.0 2004/05/16 20:55:26 dankogai Exp $
 # ./compile -n koi8-f -o Encode/koi8-f.ucm Encode/koi8-f.enc
 <code_set_name> "koi8-f"
 <mb_cur_min> 1

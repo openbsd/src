@@ -1,7 +1,7 @@
 #
 # Locale::Constants - defined constants for identifying codesets
 #
-# $Id: Constants.pm,v 2.1 2002/02/06 04:07:09 neilb Exp $
+# $Id: Constants.pm,v 2.7 2004/06/10 21:19:34 neilb Exp $
 #
 
 package Locale::Constants;
@@ -13,7 +13,7 @@ require Exporter;
 #	Public Global Variables
 #-----------------------------------------------------------------------
 use vars qw($VERSION @ISA @EXPORT);
-$VERSION   = sprintf("%d.%02d", q$Revision: 2.1 $ =~ /(\d+)\.(\d+)/);
+$VERSION   = sprintf("%d.%02d", q$Revision: 2.7 $ =~ /(\d+)\.(\d+)/);
 @ISA	= qw(Exporter);
 @EXPORT = qw(LOCALE_CODE_ALPHA_2 LOCALE_CODE_ALPHA_3 LOCALE_CODE_NUMERIC
 		LOCALE_CODE_DEFAULT);

@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use Carp;
 use File::Spec;
-our $VERSION = '1.02';
+our $VERSION = '1.04';
 
 use bytes ();		# for $bytes::hint_bits
 $charnames::hint_bits = 0x20000; # HINT_LOCALIZE_HH
@@ -190,8 +190,8 @@ sub import
   ## fill %h keys with our @_ args.
   ##
   my ($promote, %h, @args) = (0);
-  while (@_ and $_ = shift) {
-    if ($_ eq ":alias") {
+  while (my $arg = shift) {
+    if ($arg eq ":alias") {
       @_ or
 	croak ":alias needs an argument in charnames";
       my $alias = shift;
@@ -210,11 +210,11 @@ sub import
       alias_file ($alias);
       next;
     }
-    if (m/^:/ and ! ($_ eq ":full" || $_ eq ":short")) {
-      warn "unsupported special '$_' in charnames";
+    if (substr($arg, 0, 1) eq ':' and ! ($arg eq ":full" || $arg eq ":short")) {
+      warn "unsupported special '$arg' in charnames";
       next;
     }
-    push @args, $_;
+    push @args, $arg;
   }
   @args == 0 && $promote and @args = (":full");
   @h{@args} = (1) x @args;
@@ -238,7 +238,19 @@ sub import
   }
 } # import
 
-require Unicode::UCD; # for Unicode::UCD::_getcode()
+# this comes actually from Unicode::UCD, but it avoids the
+# overhead of loading it
+sub _getcode {
+    my $arg = shift;
+
+    if ($arg =~ /^[1-9]\d*$/) {
+	return $arg;
+    } elsif ($arg =~ /^(?:[Uu]\+|0[xX])?([[:xdigit:]]+)$/) {
+	return hex($1);
+    }
+
+    return;
+}
 
 my %viacode;
 
@@ -250,7 +262,7 @@ sub viacode
   }
 
   my $arg = shift;
-  my $code = Unicode::UCD::_getcode($arg);
+  my $code = _getcode($arg);
 
   my $hex;
 

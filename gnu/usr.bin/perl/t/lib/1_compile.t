@@ -25,6 +25,9 @@ if (eval { require Socket }) {
       push @Core_Modules, qw(Net::Cmd Net::POP3);
   }
 }
+if(eval { require B }) {
+  push @Core_Modules, qw(B::C B::CC B::Stackobj);
+}
 
 @Core_Modules = sort @Core_Modules;
 
@@ -66,9 +69,6 @@ sub compile_module {
 # http://www.pobox.com/~schwern/cgi-bin/perl-qa-wiki.cgi?UntestedModules
 # and vice-versa.  The list should only shrink.
 __DATA__
-B::C
-B::CC
-B::Stackobj
 ByteLoader
 CPAN::FirstTime
 DynaLoader

@@ -3,7 +3,7 @@ use warnings;
 use Carp;
 $open::hint_bits = 0x20000; # HINT_LOCALIZE_HH
 
-our $VERSION = '1.02';
+our $VERSION = '1.03';
 
 my $locale_encoding;
 
@@ -41,7 +41,7 @@ sub _get_locale_encoding {
 	    # would be excellent!) --jhi
 	}
 	if (defined $locale_encoding &&
-	    $locale_encoding eq 'euc' &&
+	    lc($locale_encoding) eq 'euc' &&
 	    defined $country_language) {
 	    if ($country_language =~ /^ja_JP|japan(?:ese)?$/i) {
 		$locale_encoding = 'euc-jp';
@@ -51,9 +51,9 @@ sub _get_locale_encoding {
 		$locale_encoding = 'euc-cn';
 	    } elsif ($country_language =~ /^zh_TW|taiwan(?:ese)?$/i) {
 		$locale_encoding = 'euc-tw';
+	    } else {
+		croak "Locale encoding 'euc' too ambiguous";
 	    }
-	    croak "Locale encoding 'euc' too ambiguous"
-		if $locale_encoding eq 'euc';
 	}
     }
 }

@@ -15,7 +15,7 @@ require File::Spec;
 
 $| = 1;
 
-print "1..73\n";
+print "1..74\n";
 
 use charnames ':full';
 
@@ -327,6 +327,12 @@ for (@prgs) {
     $fil or next;
     1 while unlink $alifile;
     }
+
+# [perl #30409] charnames.pm clobbers default variable
+$_ = 'foobar';
+eval "use charnames ':full';";
+print "not " unless $_ eq 'foobar';
+print "ok 74\n";
 
 __END__
 # unsupported pragma

@@ -151,7 +151,7 @@ BEGIN
 }
 
 my $splice_tests = 10 + 12 + 1; # ten regressions, plus the randoms
-my $total_tests = 168 ;
+my $total_tests = 181 ;
 $total_tests += $splice_tests if $FA ;
 print "1..$total_tests\n";   
 
@@ -1060,6 +1060,129 @@ EOM
    unlink $Dfile;
 }
 
+
+{
+    # Regression Test for bug 30237
+    # Check that substr can be used in the key to db_put
+    # and that db_put does not trigger the warning
+    # 
+    #     Use of uninitialized value in subroutine entry
+
+
+    use warnings ;
+    use strict ;
+    my (@h, $db) ;
+    my $status ;
+    my $Dfile = "xxy.db";
+    unlink $Dfile;
+
+    ok(169, $db = tie(@h, 'DB_File', $Dfile, O_RDWR|O_CREAT, 0640, $DB_RECNO) );
+
+    my $warned = '';
+    local $SIG{__WARN__} = sub {$warned = $_[0]} ;
+
+    # db-put with substr of key
+    my %remember = () ;
+    for my $ix ( 0 .. 2 )
+    {
+        my $key = $ix . "data" ;
+        my $value = "value$ix" ;
+        $remember{substr($key,0, 1)} = $value ;
+        $db->put(substr($key,0, 1), $value) ;
+    }
+
+    ok 170, $warned eq '' 
+      or print "# Caught warning [$warned]\n" ;
+
+    # db-put with substr of value
+    $warned = '';
+    for my $ix ( 3 .. 5 )
+    {
+        my $key = $ix . "data" ;
+        my $value = "value$ix" ;
+        $remember{$ix} = $value ;
+        $db->put($ix, substr($value,0)) ;
+    }
+
+    ok 171, $warned eq '' 
+      or print "# Caught warning [$warned]\n" ;
+
+    # via the tied array is not a problem, but check anyway
+    # substr of key
+    $warned = '';
+    for my $ix ( 6 .. 8 )
+    {
+        my $key = $ix . "data" ;
+        my $value = "value$ix" ;
+        $remember{substr($key,0,1)} = $value ;
+        $h[substr($key,0,1)] = $value ;
+    }
+
+    ok 172, $warned eq '' 
+      or print "# Caught warning [$warned]\n" ;
+
+    # via the tied array is not a problem, but check anyway
+    # substr of value
+    $warned = '';
+    for my $ix ( 9 .. 10 )
+    {
+        my $key = $ix . "data" ;
+        my $value = "value$ix" ;
+        $remember{$ix} = $value ;
+        $h[$ix] = substr($value,0) ;
+    }
+
+    ok 173, $warned eq '' 
+      or print "# Caught warning [$warned]\n" ;
+
+    my %bad = () ;
+    my $key = '';
+    for (my $status = $db->seq($key, $value, R_FIRST ) ;
+         $status == 0 ;
+         $status = $db->seq($key, $value, R_NEXT ) ) {
+
+        #print "# key [$key] value [$value]\n" ;
+        if (defined $remember{$key} && defined $value && 
+             $remember{$key} eq $value) {
+            delete $remember{$key} ;
+        }
+        else {
+            $bad{$key} = $value ;
+        }
+    }
+    
+    ok 174, keys %bad == 0 ;
+    ok 175, keys %remember == 0 ;
+
+    print "# missing -- $key $value\n" while ($key, $value) = each %remember;
+    print "# bad     -- $key $value\n" while ($key, $value) = each %bad;
+
+    # Make sure this fix does not break code to handle an undef key
+    my $value = 'fred';
+    $warned = '';
+    $status = $db->put(undef, $value) ;
+    ok 176, $status == 0
+      or print "# put failed - status $status\n";
+    ok 177, $warned eq '' 
+      or print "# Caught warning [$warned]\n" ;
+    $warned = '';
+
+    print "# db_ver $DB_File::db_ver\n";
+    $value = '' ;
+    $status = $db->get(undef, $value) ;
+    ok 178, $status == 0
+	or print "# get failed - status $status\n" ;
+    ok(179, $db->get(undef, $value) == 0) or print "# get failed\n" ;
+    ok 180, $value eq 'fred' or print "# got [$value]\n" ;
+    ok 181, $warned eq '' 
+      or print "# Caught warning [$warned]\n" ;
+    $warned = '';
+
+    undef $db ;
+    untie @h;
+    unlink $Dfile;
+}
+
 # Only test splice if this is a newish version of Perl
 exit unless $FA ;
 
@@ -1087,36 +1210,36 @@ exit unless $FA ;
     my $offset ;
     $a = '';
     splice(@a, $offset);
-    ok(169, $a =~ /^Use of uninitialized value /);
+    ok(182, $a =~ /^Use of uninitialized value /);
     $a = '';
     splice(@tied, $offset);
-    ok(170, $a =~ /^Use of uninitialized value in splice/);
+    ok(183, $a =~ /^Use of uninitialized value in splice/);
 
     no warnings 'uninitialized';
     $a = '';
     splice(@a, $offset);
-    ok(171, $a eq '');
+    ok(184, $a eq '');
     $a = '';
     splice(@tied, $offset);
-    ok(172, $a eq '');
+    ok(185, $a eq '');
 
     # uninitialized length
     use warnings;
     my $length ;
     $a = '';
     splice(@a, 0, $length);
-    ok(173, $a =~ /^Use of uninitialized value /);
+    ok(186, $a =~ /^Use of uninitialized value /);
     $a = '';
     splice(@tied, 0, $length);
-    ok(174, $a =~ /^Use of uninitialized value in splice/);
+    ok(187, $a =~ /^Use of uninitialized value in splice/);
 
     no warnings 'uninitialized';
     $a = '';
     splice(@a, 0, $length);
-    ok(175, $a eq '');
+    ok(188, $a eq '');
     $a = '';
     splice(@tied, 0, $length);
-    ok(176, $a eq '');
+    ok(189, $a eq '');
 
     # offset past end of array
     use warnings;
@@ -1125,17 +1248,17 @@ exit unless $FA ;
     my $splice_end_array = ($a =~ /^splice\(\) offset past end of array/);
     $a = '';
     splice(@tied, 3);
-    ok(177, !$splice_end_array || $a =~ /^splice\(\) offset past end of array/);
+    ok(190, !$splice_end_array || $a =~ /^splice\(\) offset past end of array/);
 
     no warnings 'misc';
     $a = '';
     splice(@a, 3);
-    ok(178, $a eq '');
+    ok(191, $a eq '');
     $a = '';
     splice(@tied, 3);
-    ok(179, $a eq '');
+    ok(192, $a eq '');
 
-    ok(180, safeUntie \@tied);
+    ok(193, safeUntie \@tied);
     unlink $Dfile;
 }
 
@@ -1196,9 +1319,9 @@ my @tests = ([ [ 'falsely', 'dinosaur', 'remedy', 'commotion',
 	       'void' ],
 	    );
 
-my $testnum = 181;
+my $testnum = 194;
 my $failed = 0;
-require POSIX; my $tmp = POSIX::tmpnam();
+my $tmp = "dbr$$";
 foreach my $test (@tests) {
     my $err = test_splice(@$test);
     if (defined $err) {
@@ -1313,6 +1436,8 @@ sub test_splice {
     foreach ($s_error, @s_warnings) {
 	chomp;
 	s/ at \S+ line \d+\.$//;
+	# only built-in splice identifies name of uninit value
+	s/(uninitialized value) \$\w+/$1/;
     }
 
     # Now do the same for DB_File's version of splice

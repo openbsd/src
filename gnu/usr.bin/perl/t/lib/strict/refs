@@ -295,3 +295,9 @@ eval '
 my $a = ${"Fred"} ;
 EXPECT
 Can't use string ("Fred") as a SCALAR ref while "strict refs" in use at - line 8.
+########
+# [perl #26910] hints not propagated into (?{...})
+use strict 'refs';
+/(?{${"foo"}++})/;
+EXPECT
+Can't use string ("foo") as a SCALAR ref while "strict refs" in use at (re_eval 1) line 1.

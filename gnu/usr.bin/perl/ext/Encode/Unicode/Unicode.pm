@@ -4,7 +4,7 @@ use strict;
 use warnings;
 no warnings 'redefine';
 
-our $VERSION = do { my @r = (q$Revision: 1.40 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+our $VERSION = do { my @r = (q$Revision: 2.0 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 use XSLoader;
 XSLoader::load(__PACKAGE__,$VERSION);
@@ -145,6 +145,9 @@ Anything marked as BE is Big Endian (or network byte order) and LE is
 Little Endian (aka VAX byte order).  For anything not marked either
 BE or LE, a character called Byte Order Mark (BOM) indicating the
 endianness is prepended to the string.
+
+CAVEAT: Though BOM in utf8 (\xEF\xBB\xBF) is valid, it is meaningless
+and as of this writing Encode suite just leave it as is (\x{FeFF}).
 
 =over 4
 

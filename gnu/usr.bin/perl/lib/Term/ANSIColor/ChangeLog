@@ -1,3 +1,11 @@
+2004-02-19  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Version 1.08 released.
+
+	* ANSIColor.pm: Add DARK to %EXPORT_TAGS and add CYAN and WHITE to
+	the list of documented constants.
+	* test.pl: Add a test for DARK.  Redo the leading comment.
+
 2003-03-25  Russ Allbery  <rra@stanford.edu>
 
 	* ANSIColor.pm: Version 1.07 released.

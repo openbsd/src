@@ -1,5 +1,5 @@
 #
-# $Id: ksc5601.ucm,v 1.0 2002/03/28 23:26:27 dankogai Exp $
+# $Id: ksc5601.ucm,v 2.0 2004/05/16 20:55:26 dankogai Exp $
 #
 # ./compile -n ksc5601 -o Encode/ksc5601.ucm Encode/ksc5601.enc
 <code_set_name> "ksc5601-raw"

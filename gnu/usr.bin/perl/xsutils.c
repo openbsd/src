@@ -1,6 +1,7 @@
 /*    xsutils.c
  *
- *    Copyright (C) 1999, 2000, 2001, 2002, 2003, by Larry Wall and others
+ *    Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004,
+ *    by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -96,15 +97,6 @@ modify_SV_attributes(pTHX_ SV *sv, SV **retlist, SV **attrlist, int numattrs)
 			    CvFLAGS((CV*)sv) &= ~CVf_METHOD;
 			else
 			    CvFLAGS((CV*)sv) |= CVf_METHOD;
-			continue;
-		    }
-		    break;
-		case 'u':
-		    if (strEQ(name, "unique")) {
-			if (negated)
-			    GvUNIQUE_off(CvGV((CV*)sv));
-			else
-			    GvUNIQUE_on(CvGV((CV*)sv));
 			continue;
 		    }
 		    break;

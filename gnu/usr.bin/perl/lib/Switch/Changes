@@ -73,3 +73,9 @@ Revision history for Perl extension Switch.
 2.09	Wed Jun 12 22:13:30 2002
 
 	- Removed spurious debugging statement
+
+
+2.10	Mon Dec 29
+
+	- Introduce the "default" keyword for the Perl 6 syntax
+	- Raise the limitation on source file length to 1 million characters

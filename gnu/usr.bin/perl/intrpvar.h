@@ -491,10 +491,10 @@ PERLVAR(Inumeric_radix_sv,	SV *)	/* The radix separator if not '.' */
 PERLVAR(Iregex_pad,     SV**)		/* All regex objects */
 PERLVAR(Iregex_padav,   AV*)		/* All regex objects */
 
-#ifdef USE_REENTRANT_API
-PERLVAR(Ireentrant_buffer, REENTR*)	/* here we store the _r buffers */
 #endif
 
+#ifdef USE_REENTRANT_API
+PERLVAR(Ireentrant_buffer, REENTR*)	/* here we store the _r buffers */
 #endif
 
 PERLVARI(Isavebegin,     bool,	FALSE)	/* save BEGINs for compiler	*/
@@ -564,6 +564,11 @@ PERLVARI(Irehash_seed, UV, 0)		/* 582 hash initializer */
 
 PERLVARI(Irehash_seed_set, bool, FALSE)	/* 582 hash initialized? */
 
+/* These two variables are needed to preserve 5.8.x bincompat because we can't
+   change function prototypes of two exported functions.  Probably should be
+   taken out of blead soon, and relevant prototypes changed.  */
+PERLVARI(Ifdscript, int, -1)	/* fd for script */
+PERLVARI(Isuidscript, int, -1)	/* fd for suid script */
 /* New variables must be added to the very end, before this comment,
  * for binary compatibility (the offsets of the old members must not change).
  * (Don't forget to add your variable also to perl_clone()!)

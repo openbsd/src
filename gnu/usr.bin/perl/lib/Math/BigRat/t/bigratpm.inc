@@ -82,9 +82,9 @@ while (<DATA>)
     else
       {
       $try .= "\$y = new $class \"$args[1]\";";
-      if ($f eq "fcmp") {
+      if ($f eq "bcmp") {
         $try .= '$x <=> $y;';
-      } elsif ($f eq "facmp") {
+      } elsif ($f eq "bacmp") {
         $try .= '$x->bacmp($y);';
       } elsif ($f eq "bpow") {
         $try .= '$x ** $y;';
@@ -106,7 +106,18 @@ while (<DATA>)
         $try .= '$x << $y;';
       } elsif ($f eq "bmod") {
         $try .= '$x % $y;';
-      } else { warn "Unknown op '$f'"; }
+      } elsif( $f eq "bmodinv") {
+       $try .= "\$x->bmodinv(\$y);";
+      } elsif( $f eq "blog") {
+       $try .= "\$x->blog(\$y);";
+      } else {
+        $try .= "\$z = $class->new(\"$args[2]\");";
+
+        # Functions with three arguments
+        if( $f eq "bmodpow") {
+          $try .= "\$x->bmodpow(\$y,\$z);";
+        } else { warn "Unknown op '$f'"; }
+      }
     }
     # print "# Trying: '$try'\n";
     $ans1 = eval $try;
@@ -171,11 +182,53 @@ sub ok_undef
   }
 
 __DATA__
+&bmodinv
+# format: number:modulus:result
+# bmodinv Data errors
+abc:abc:NaN
+abc:5:NaN
+5:abc:NaN
+# bmodinv Expected Results from normal use
+1:5:1
+3:5:2
+-2:5:2
+8:5033:4404
+1234567891:13:6
+-1234567891:13:7
+324958749843759385732954874325984357439658735983745:2348249874968739:1741662881064902
+## bmodinv Error cases / useless use of function
+3:-5:NaN
+inf:5:NaN
+5:inf:NaN
+-inf:5:NaN
+5:-inf:NaN
 &as_number
 144/7:20
 NaN:NaN
 +inf:inf
 -inf:-inf
+&bmodpow
+# format: number:exponent:modulus:result
+# bmodpow Data errors
+abc:abc:abc:NaN
+5:abc:abc:NaN
+abc:5:abc:NaN
+abc:abc:5:NaN
+5:5:abc:NaN
+5:abc:5:NaN
+abc:5:5:NaN
+# bmodpow Expected results
+0:0:2:1
+1:0:2:1
+0:0:1:0
+8:7:5032:3840
+8:-1:5033:4404
+98436739867439843769485798542749827593285729587325:43698764986460981048259837659386739857456983759328457:6943857329857295827698367:3104744730915914415259518
+# bmodpow Error cases
+8:8:-5:NaN
+8:-1:16:NaN
+inf:5:13:NaN
+5:inf:13:NaN
 &bmod
 NaN:1:NaN
 1:NaN:NaN
@@ -209,6 +262,16 @@ NaN:NaN
 &flog
 NaN:NaN
 0:NaN
+-2:NaN
+&blog
+NaN:NaN:NaN
+0:NaN:NaN
+NaN:0:NaN
+NaN:1:NaN
+1:NaN:NaN
+0:2:NaN
+0:-2:NaN
+3:-2:NaN
 &finf
 1:+:inf
 2:-:-inf
@@ -251,6 +314,13 @@ abcfsstr:NaN
 bnormNaN:NaN
 +inf:inf
 -inf:-inf
+inf/inf:NaN
+5/inf:0
+5/-inf:0
+inf/5:inf
+-inf/5:-inf
+inf/-5:-inf
+-inf/-5:inf
 123:123
 -123.4567:-1234567/10000
 # invalid inputs
@@ -429,6 +499,8 @@ baddNaN:+inf:NaN
 7/27:3/54:11/54
 -2/3:+2/3:-4/3
 -2/3:-2/3:0
+0:-123:123
+0:123:-123
 &bmul
 abc:abc:NaN
 abc:+0:NaN
@@ -657,6 +729,8 @@ NaNzero:0
 1:0
 0/3:1
 1/3:0
+-0/3:1
+5/inf:1
 &is_one
 NaNone:0
 +inf:0
@@ -669,6 +743,7 @@ NaNone:0
 1/3:0
 100/100:1
 0.1/0.1:1
+5/inf:0
 &ffloor
 0:0
 abc:NaN
@@ -721,6 +796,59 @@ NaN:NaN
 # bpow test for overload of **
 2:2:4
 3:3:27
+&bacmp
++0:-0:0
++0:+1:-1
+-1:+1:0
++1:-1:0
+-1:+2:-1
++2:-1:1
+-123456789:+987654321:-1
++123456789:-987654321:-1
++987654321:+123456789:1
+-987654321:+123456789:1
+-123:+4567889:-1
+# NaNs
+acmpNaN:123:
+123:acmpNaN:
+acmpNaN:acmpNaN:
+# infinity
++inf:+inf:0
+-inf:-inf:0
++inf:-inf:0
+-inf:+inf:0
++inf:123:1
+-inf:123:1
++inf:-123:1
+-inf:-123:1
++inf:1/23:1
+-inf:1/23:1
++inf:-1/23:1
+-inf:-1/23:1
++inf:12/3:1
+-inf:12/3:1
++inf:-12/3:1
+-inf:-12/3:1
+123:inf:-1
+-123:inf:-1
+123:-inf:-1
+-123:-inf:-1
+1/23:inf:-1
+-1/23:inf:-1
+1/23:-inf:-1
+-1/23:-inf:-1
+12/3:inf:-1
+-12/3:inf:-1
+12/3:-inf:-1
+-12/3:-inf:-1
+# return undef
++inf:NaN:
+NaN:inf:
+-inf:NaN:
+NaN:-inf:
+1/3:2/3:-1
+2/3:1/3:1
+2/3:2/3:0
 &fpow
 2/1:3/1:8
 3/1:3/1:27

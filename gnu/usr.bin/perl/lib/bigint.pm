@@ -1,7 +1,7 @@
 package bigint;
 require 5.005;
 
-$VERSION = '0.04';
+$VERSION = '0.05';
 use Exporter;
 @ISA		= qw( Exporter );
 @EXPORT_OK	= qw( ); 
@@ -73,7 +73,7 @@ sub _constant
     $float =~ s/\..*//;
     return $float;
     }
-  my ($mis,$miv,$mfv,$es,$ev) = Math::BigInt::_split(\$float);
+  my ($mis,$miv,$mfv,$es,$ev) = Math::BigInt::_split($float);
   return $float if !defined $mis; 	# doesn't look like a number to me
   my $ec = int($$ev);
   my $sign = $$mis; $sign = '' if $sign eq '+';
@@ -379,6 +379,6 @@ as L<Math::BigInt::BitVect>, L<Math::BigInt::Pari> and  L<Math::BigInt::GMP>.
 
 =head1 AUTHORS
 
-(C) by Tels L<http://bloodgate.com/> in early 2002.
+(C) by Tels L<http://bloodgate.com/> in early 2002, 2003.
 
 =cut

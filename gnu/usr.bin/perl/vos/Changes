@@ -1,6 +1,10 @@
 This file documents the changes made to port Perl to the Stratus
 VOS operating system.
 
+For 5.8.4:
+     Updated "config.alpha.def", "config.ga.def", "build.cm" and
+     "perl.bind" to build this version of perl.
+
 For 5.8.0:
      Updated "config.alpha.def", "config.ga.def", "build.cm", and
      "install_perl.cm" to use directory naming conventions that

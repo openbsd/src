@@ -208,7 +208,6 @@ write to a forked child:
     else {
 	# child
 	while (<STDIN>) { print; }
-	close STDIN;
 	exit(0);
     }
 
@@ -238,7 +237,6 @@ And this one reads from the child:
     else {
 	# child
 	print "pipe_from_fork\n";
-	close STDOUT;
 	exit(0);
     }
 

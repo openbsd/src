@@ -7,6 +7,11 @@ BEGIN {
 	    print "1..0 # skip: EBCDIC\n";
 	    exit 0;
 	}
+	require Config;
+	if (($Config::Config{'extensions'} !~ m!\bList/Util\b!) ){
+	    print "1..0 # Skip -- Perl configured without List::Util module\n";
+	    exit 0;
+	}
 }
 
 use vars qw( $foo @bar %baz );

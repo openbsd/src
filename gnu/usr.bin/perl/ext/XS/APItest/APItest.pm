@@ -14,9 +14,11 @@ use base qw/ DynaLoader Exporter /;
 # Export everything since these functions are only used by a test script
 our @EXPORT = qw( print_double print_int print_long
 		  print_float print_long_double have_long_double print_flush
+		  mpushp mpushn mpushi mpushu
+		  mxpushp mxpushn mxpushi mxpushu
 );
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 bootstrap XS::APItest $VERSION;
 

@@ -3,7 +3,7 @@ package Encode::CN::HZ;
 use strict;
 
 use vars qw($VERSION);
-$VERSION = do { my @r = (q$Revision: 1.5 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 2.1 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 use Encode qw(:fallbacks);
 
@@ -17,11 +17,8 @@ __PACKAGE__->Define('hz');
 
 sub needs_lines  { 1 }
 
-sub perlio_ok    { 1 }
-
 sub decode ($$;$)
 {
-    use bytes;
     my ($obj,$str,$chk) = @_;
 
     my $GB = Encode::find_encoding('gb2312-raw');
@@ -59,13 +56,11 @@ sub decode ($$;$)
 	    }
 	}
     }
-    $_[1] = $str if $chk;
+    $_[1] = '' if $chk; # needs_lines guarantees no partial character
     return $ret;
 }
 
 sub cat_decode {
-    use bytes;
-
     my ($obj, undef, $src, $pos, $trm, $chk) = @_;
     my ($rdst, $rsrc, $rpos) = \@_[1..3];
 
@@ -156,7 +151,8 @@ sub encode($$;$)
 	    $ret .= pack 'a*', $tmp; # remove UTF8 flag.
 	}
 	elsif ($str =~ s/(.)//) {
-	    my $tmp = $GB->encode($1, $chk);
+	    my $s = $1;
+	    my $tmp = $GB->encode($s, $chk);
 	    last if !defined $tmp;
 	    if (length $tmp == 2) { # maybe a valid GB char (XXX)
 		if ($in_ascii) {

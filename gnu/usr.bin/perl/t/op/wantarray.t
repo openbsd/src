@@ -1,6 +1,6 @@
 #!./perl
 
-print "1..9\n";
+print "1..12\n";
 sub context {
   my ( $cona, $testnum ) = @_;
   my $conb = (defined wantarray) ? ( wantarray ? 'A' : 'S' ) : 'V';
@@ -30,5 +30,15 @@ $a = scalar context('S',5);
   print +(@b == 1 && "@b" eq "2") ? "ok 8\n" : "not ok 8\t# <@b>\n";
   print +($c == 2) ? "ok 9\n" : "not ok 9\t# <$c>\n";
 }
+
+my $qcontext = q{
+  $q = (defined wantarray) ? ( wantarray ? 'A' : 'S' ) : 'V';
+};
+eval $qcontext;
+print $q eq 'V' ? "ok 10\n" : "not ok 10\n";
+$a = eval $qcontext;
+print $q eq 'S' ? "ok 11\n" : "not ok 11\n";
+@a = eval $qcontext;
+print $q eq 'A' ? "ok 12\n" : "not ok 12\n";
 
 1;

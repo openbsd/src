@@ -486,7 +486,7 @@ L</Notes on Implementing Pod Processors>.
 
 This formatting code is syntactically simple, but semantically
 complex.  What it means is that each space in the printable
-content of this code signifies a nonbreaking space.
+content of this code signifies a non-breaking space.
 
 Consider:
 
@@ -497,7 +497,7 @@ Consider:
 Both signify the monospace (c[ode] style) text consisting of
 "$x", one space, "?", one space, ":", one space, "$z".  The
 difference is that in the latter, with the S code, those spaces
-are not "normal" spaces, but instead are nonbreaking spaces.
+are not "normal" spaces, but instead are non-breaking spaces.
 
 =back
 
@@ -732,10 +732,10 @@ paragraphs.
 =item *
 
 When rendering Pod to a format that has two kinds of hyphens (-), one
-that's a nonbreaking hyphen, and another that's a breakable hyphen
+that's a non-breaking hyphen, and another that's a breakable hyphen
 (as in "object-oriented", which can be split across lines as
 "object-", newline, "oriented"), formatters are encouraged to
-generally translate "-" to nonbreaking hyphen, but may apply
+generally translate "-" to non-breaking hyphen, but may apply
 heuristics to convert some of these to breaking hyphens.
 
 =item *
@@ -992,15 +992,15 @@ EE<lt>euro>1,000,000 Solution|Million::Euros>".
 
 =item *
 
-Some Pod formatters output to formats that implement nonbreaking
+Some Pod formatters output to formats that implement non-breaking
 spaces as an individual character (which I'll call "NBSP"), and
-others output to formats that implement nonbreaking spaces just as
+others output to formats that implement non-breaking spaces just as
 spaces wrapped in a "don't break this across lines" code.  Note that
 at the level of Pod, both sorts of codes can occur: Pod can contain a
 NBSP character (whether as a literal, or as a "EE<lt>160>" or
 "EE<lt>nbsp>" code); and Pod can contain "SE<lt>foo
 IE<lt>barE<gt> baz>" codes, where "mere spaces" (character 32) in
-such codes are taken to represent nonbreaking spaces.  Pod
+such codes are taken to represent non-breaking spaces.  Pod
 parsers should consider supporting the optional parsing of "SE<lt>foo
 IE<lt>barE<gt> baz>" as if it were
 "fooI<NBSP>IE<lt>barE<gt>I<NBSP>baz", and, going the other way, the

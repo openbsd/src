@@ -1,5 +1,68 @@
 Revision history for Perl extension Cwd.
 
+2.19  Thu Jul 15 08:32:18 CDT 2004
+
+ - The abs_path($arg) fix from 2.18 didn't work for VMS, now it's
+   fixed there. [Craig Berry]
+
+2.18  Thu Jun 24 08:22:57 CDT 2004
+
+ - Fixed a problem in which abs_path($arg) on some platforms could
+   only be called on directories, and died when called on files.  This
+   was a problem in the pure-perl implementation _perl_abs_path().
+
+ - Fixed fast_abs_path($arg) in the same way as abs_path($arg) above.
+
+ - On Win32, a function getdcwd($vol) has been added, which gets the
+   current working directory of the specified drive/volume.
+   [Steve Hay]
+
+ - Fixed a problem on perl 5.6.2 when built with the MULTIPLICITY
+   compile-time flags. [Yitzchak Scott-Thoennes]
+
+ - When looking for a `pwd` system command, we no longer assume the
+   path separator is ':'.
+
+ - On platforms where cwd() is implemented internally (like Win32),
+   don't look for a `pwd` command externally.  This can greatly speed
+   up load time.  [Stefan Scherer]
+
+ - The pure-perl version of abs_path() now has the same prototype as
+   the XS version (;$).
+
+2.17  Wed Mar 10 07:55:36 CST 2004
+
+ - The change in 2.16 created a testing failure when tested from
+   within a path that contains symlinks (for instance, /tmp ->
+   /private/tmp).
+
+2.16  Sat Mar  6 17:56:31 CST 2004
+
+ - For VMS compatibility (and to conform to Cwd's documented
+   interface), in the regression tests we now compare output results
+   to an absolute path. [Craig A. Berry]
+
+2.15  Fri Jan 16 08:09:44 CST 2004
+
+ - Fixed a problem on static perl builds - while creating
+   Makefile.aperl, it was loading a mismatched version of Cwd from
+   blib/ . [Reported by Blair Zajac]
+
+2.14  Thu Jan  8 18:51:08 CST 2004
+
+ - We now use File::Spec->canonpath() and properly-escaped regular
+   expressions when comparing paths in the regression tests.  This
+   fixes some testing failures in 2.13 on non-Unix platforms.  No
+   changes were made in the actual Cwd module code. [Steve Hay]
+
+2.13  Fri Jan  2 22:29:42 CST 2004
+
+ - Changed a '//' comment to a '/* */' comment in the XS code, so that
+   it'll compile properly under ANSI C rules. [Jarkko Hietaniemi]
+
+ - Fixed a 1-character buffer overrun problem in the C code. [The BSD
+   people]
+
 2.12  Fri Dec 19 17:04:52 CST 2003
 
  - Fixed a bug on Cygwin - the output of realpath() should have been

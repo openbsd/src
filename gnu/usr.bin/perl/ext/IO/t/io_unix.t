@@ -24,7 +24,7 @@ BEGIN {
 	elsif ($^O eq 'os2') {
 	    require IO::Socket;
 
-	    eval {IO::Socket::pack_sockaddr_un('/tmp/foo') || 1}
+	    eval {IO::Socket::pack_sockaddr_un('/foo/bar') || 1}
 	      or $@ !~ /not implemented/ or
 		$reason = 'compiled without TCP/IP stack v4';
 	} elsif ($^O =~ m/^(?:qnx|nto|vos)$/ ) {
@@ -37,7 +37,7 @@ BEGIN {
     }
 }
 
-$PATH = "/tmp/sock-$$";
+$PATH = "sock-$$";
 
 # Test if we can create the file within the tmp directory
 if (-e $PATH or not open(TEST, ">$PATH") and $^O ne 'os2') {

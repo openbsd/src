@@ -1325,9 +1325,9 @@ If you change C<$pattern> after the first substitution happens, perl
 will ignore it.  If you don't want any substitutions at all, use the
 special delimiter C<m''>:
 
-    $pattern = 'Seuss';
+    @pattern = ('Seuss');
     while (<>) {
-        print if m'$pattern';  # matches '$pattern', not 'Seuss'
+        print if m'@pattern';  # matches literal '@pattern', not 'Seuss'
     }
 
 C<m''> acts like single quotes on a regexp; all other C<m> delimiters

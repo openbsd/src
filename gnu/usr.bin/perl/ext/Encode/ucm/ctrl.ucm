@@ -1,5 +1,5 @@
 #
-# $Id: ctrl.ucm,v 1.1 2002/05/28 18:33:15 dankogai Exp $
+# $Id: ctrl.ucm,v 2.0 2004/05/16 20:55:23 dankogai Exp $
 #
 <code_set_name>  "ascii-ctrl"
 <mb_cur_min> 1

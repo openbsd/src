@@ -33,11 +33,10 @@ clean:
 	-rm -f $(O) microperl
 
 distclean:	clean
-	-rm -f uconfig.h
 
 # The microconfiguration.
 
-uconfig.h:	uconfig.sh config_h.SH
+regen_uconfig:
 	$(ENV) CONFIG_SH=uconfig.sh CONFIG_H=uconfig.h sh ./config_h.SH
 
 # Do not regenerate perly.c and perly.h.

@@ -32,11 +32,11 @@ else {
  print "not ok 1\n";
 }
 
-# This check thats hostanme does not overwrite $_
+# This checks thats hostanme does not overwrite $_
 my @domain = qw(foo.example.com bar.example.jp);
 my @copy = @domain;
 
-my @dummy = grep { hostname eq $_ } @domain;
+my @dummy = grep { defined hostname() and hostname() eq $_ } @domain;
 
 ($domain[0] && $domain[0] eq $copy[0])
   ? print "ok 2\n"

@@ -65,7 +65,7 @@ Neil Bowers E<lt>neil@bowers.comE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2002, Neil Bowers.
+Copyright (C) 2002-2004, Neil Bowers.
 
 Copyright (C) 2001, Canon Research Centre Europe (CRE).
 

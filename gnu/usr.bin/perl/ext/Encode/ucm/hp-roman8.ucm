@@ -1,7 +1,7 @@
 #
-# $Id: hp-roman8.ucm,v 1.0 2002/03/28 23:26:26 dankogai Exp $
+# $Id: hp-roman8.ucm,v 2.0 2004/05/16 20:55:24 dankogai Exp $
 #
-# Written $Id: hp-roman8.ucm,v 1.0 2002/03/28 23:26:26 dankogai Exp $
+# Written $Id: hp-roman8.ucm,v 2.0 2004/05/16 20:55:24 dankogai Exp $
 # ./compile -n roman8 -o Encode/roman8.ucm Encode/roman8.enc
 <code_set_name> "hp-roman8"
 <mb_cur_min> 1

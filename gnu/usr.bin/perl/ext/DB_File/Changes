@@ -1,4 +1,16 @@
 
+
+1.809 20th June 2004
+
+   * Merged core patch 22258
+
+   * Merged core patch 22741
+
+   * Fixed core bug 30237. 
+     Using substr to pass parameters to the low-level Berkeley DB interface
+     causes problems with Perl 5.8.1 or better.
+     typemap fix supplied by Marcus Holland-Moritz.
+
 1.808 22nd December 2003
 
    * Added extra DBM Filter tests.

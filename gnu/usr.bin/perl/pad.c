@@ -1,6 +1,6 @@
 /*    pad.c
  *
- *    Copyright (C) 2002, by Larry Wall and others
+ *    Copyright (C) 2002, 2003, 2004, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -82,6 +82,12 @@ If the 'name' is '&' the corresponding entry in frame AV
 is a CV representing a possible closure.
 (SvFAKE and name of '&' is not a meaningful combination currently but could
 become so if C<my sub foo {}> is implemented.)
+
+The flag SVf_PADSTALE is cleared on lexicals each time the my() is executed,
+and set on scope exit. This allows the 'Variable $x is not available' warning
+to be generated in evals, such as 
+
+    { my $x = 1; sub f { eval '$x'} } f();
 
 =cut
 */
@@ -247,8 +253,11 @@ Perl_pad_undef(pTHX_ CV* cv)
 		CV *innercv = (CV*)curpad[ix];
 		namepad[ix] = Nullsv;
 		SvREFCNT_dec(namesv);
-		curpad[ix] = Nullsv;
-		SvREFCNT_dec(innercv);
+
+		if (SvREFCNT(comppad) < 2) { /* allow for /(?{ sub{} })/  */
+		    curpad[ix] = Nullsv;
+		    SvREFCNT_dec(innercv);
+		}
 		if (SvREFCNT(innercv) /* in use, not just a prototype */
 		    && CvOUTSIDE(innercv) == cv)
 		{
@@ -1478,6 +1487,9 @@ If has_args is true, give the new pad an @_ in slot zero.
 
 =cut
 */
+
+/* XXX pad_push is now always called with has_args == 1. Get rid of
+ * this arg at some point */
 
 void
 Perl_pad_push(pTHX_ PADLIST *padlist, int depth, int has_args)

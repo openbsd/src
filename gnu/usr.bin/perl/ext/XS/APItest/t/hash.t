@@ -145,9 +145,17 @@ sub test_delete_present {
     tie %$copy, ref $class;
   }
   $copy = {%$hash};
+  ok (brute_force_exists ($copy, $key),
+      "hv_delete_ent present$message $printable");
   is (delete $copy->{$key}, $key, "hv_delete_ent present$message $printable");
+  ok (!brute_force_exists ($copy, $key),
+      "hv_delete_ent present$message $printable");
   $copy = {%$hash};
+  ok (brute_force_exists ($copy, $key),
+      "hv_delete present$message $printable");
   is (XS::APItest::Hash::delete ($copy, $key), $key,
+      "hv_delete present$message $printable");
+  ok (!brute_force_exists ($copy, $key),
       "hv_delete present$message $printable");
 }
 

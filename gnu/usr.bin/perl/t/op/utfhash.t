@@ -32,8 +32,9 @@ is($hashu{"\xff"},0xFF);
 is($hashu{"\x7f"},0x7F);
 
 # Now try same thing with variables forced into various forms.
-foreach my $a ("\x7f","\xff")
+foreach ("\x7f","\xff")
  {
+  my $a = $_; # Force a copy
   utf8::upgrade($a);
   is($hash8{$a},ord($a));
   is($hashu{$a},ord($a));
@@ -56,8 +57,9 @@ $hash8{chr(0x1ff)} = 0x1ff;
 # Check we have not got an spurious extra keys
 is(join('',sort { ord $a <=> ord $b } keys %hash8),"\x7f\xff\x{1ff}");
 
-foreach my $a ("\x7f","\xff","\x{1ff}")
+foreach ("\x7f","\xff","\x{1ff}")
  {
+  my $a = $_;
   utf8::upgrade($a);
   is($hash8{$a},ord($a));
   my $b = $a.chr(100);
@@ -69,8 +71,9 @@ foreach my $a ("\x7f","\xff","\x{1ff}")
 is(delete $hashu{chr(0x1ff)},0x1ff);
 is(join('',sort keys %hashu),"\x7f\xff");
 
-foreach my $a ("\x7f","\xff")
+foreach ("\x7f","\xff")
  {
+  my $a = $_;
   utf8::upgrade($a);
   is($hashu{$a},ord($a));
   utf8::downgrade($a);

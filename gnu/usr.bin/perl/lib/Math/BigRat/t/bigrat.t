@@ -8,7 +8,7 @@ BEGIN
   $| = 1;
   chdir 't' if -d 't';
   unshift @INC, '../lib'; # for running manually
-  plan tests => 164;
+  plan tests => 174;
   }
 
 # testing of Math::BigRat
@@ -67,7 +67,7 @@ foreach my $func (qw/new bnorm/)
   $x = $cr->$func($mbf->new(1232));	ok ($x,'1232');
   $x = $cr->$func($mbf->new(1232.3));	ok ($x,'12323/10');
   }
- 
+
 $x =  $cr->new('-0'); ok ($x,'0'); ok ($x->{_n}, '0'); ok ($x->{_d},'1');
 $x =  $cr->new('NaN'); ok ($x,'NaN'); ok ($x->{_n}, '0'); ok ($x->{_d},'0');
 $x =  $cr->new('-NaN'); ok ($x,'NaN'); ok ($x->{_n}, '0'); ok ($x->{_d},'0');
@@ -115,6 +115,7 @@ ok ($cr->new('3/10')->bdiv($mbf->new('1.1')),'3/11');
 
 ##############################################################################
 $x = $cr->new('1/4'); $y = $cr->new('1/3');
+
 ok ($x + $y, '7/12');
 ok ($x * $y, '1/12');
 ok ($x / $y, '3/4');
@@ -235,6 +236,38 @@ $x = $cr->new('-inf'); ok ($x->numify(), '-inf');
 $x = $cr->new('NaN'); ok ($x->numify(), 'NaN');
 
 $x = $cr->new('4/3'); ok ($x->numify(), 4/3);
+
+##############################################################################
+# broot(), bmodpow() and bmodinv()
+
+$x = $cr->new(2) ** 32;
+$y = $cr->new(4);
+$z = $cr->new(3);
+
+ok ($x->copy()->broot($y), 2 ** 8);
+ok (ref($x->copy()->broot($y)), $cr);
+
+
+ok ($x->copy()->bmodpow($y,$z), 1);
+ok (ref($x->copy()->bmodpow($y,$z)), $cr);
+
+$x = $cr->new(8);
+$y = $cr->new(5033);
+$z = $cr->new(4404);
+
+ok ($x->copy()->bmodinv($y), $z);
+ok (ref($x->copy()->bmodinv($y)), $cr);
+
+# square root with exact result
+$x = $cr->new('1.44');
+ok ($x->copy()->broot(2), '12/10');
+ok (ref($x->copy()->broot(2)), $cr);
+
+# log with exact result
+$x = $cr->new('256.1');
+ok ($x->copy()->blog(2), '8000563442710106079310294693803606983661/1000000000000000000000000000000000000000');
+ok (ref($x->copy()->blog(2)), $cr);
+
 
 ##############################################################################
 # done

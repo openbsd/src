@@ -1,3 +1,47 @@
+2004-03-29   Gisle Aas <gisle@ActiveState.com>
+
+   Release 3.01
+
+   By compiling the extension with PERL_NO_GET_CONTEXT we can
+   make it slightly faster on a threaded perl.  No change on a
+   regular perl.  Patch provided by Beau E. Cox <beau@beaucox.com>.
+
+   Fixed missing ";" with assert.   Patch provided by
+   Brendan O'Dea <bod@debian.org>.
+
+
+
+2004-01-14   Gisle Aas <gisle@ActiveState.com>
+
+   Release 3.00
+
+   Drop the pure Perl implementations of the encoders and
+   decoders.  They are bloat that hides real problems in
+   the XS implementations.  I will re-release them separately
+   in the new MIME-Base64-Perl distribution.
+
+   The 'gcc -Wall' fix in 2.22 broke support for perl5.005,
+   as the isXDIGIT() macro is not available in that perl.
+   This problem has now been fixed.
+
+
+
+2004-01-08   Gisle Aas <gisle@ActiveState.com>
+
+   Release 2.23
+
+   Documentation fixes by Paul Croome <Paul.Croome@softwareag.com>.
+
+
+
+2004-01-08   Gisle Aas <gisle@ActiveState.com>
+
+   Release 2.22
+
+   Fix 'gcc -Wall' complaints.
+
+
+
 2003-10-09   Gisle Aas <gisle@ActiveState.com>
 
    Release 2.21

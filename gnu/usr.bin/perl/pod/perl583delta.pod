@@ -1,6 +1,6 @@
 =head1 NAME
 
-perldelta - what is new for perl v5.8.3
+perl583delta - what is new for perl v5.8.3
 
 =head1 DESCRIPTION
 
@@ -179,7 +179,7 @@ the end of June, with release by mid July.
 
 =head1 Obituary
 
-Iain 'Spoon' Truskett, Perl hacker, author of <perlreref> and
+Iain 'Spoon' Truskett, Perl hacker, author of L<perlreref> and
 contributor to CPAN, died suddenly on 29th December 2003, aged 24.
 He will be missed.
 

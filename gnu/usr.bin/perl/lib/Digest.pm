@@ -3,7 +3,7 @@ package Digest;
 use strict;
 use vars qw($VERSION %MMAP $AUTOLOAD);
 
-$VERSION = "1.05";
+$VERSION = "1.08";
 
 %MMAP = (
   "SHA-1"      => ["Digest::SHA1", ["Digest::SHA", 1], ["Digest::SHA2", 1]],
@@ -12,6 +12,9 @@ $VERSION = "1.05";
   "SHA-512"    => [["Digest::SHA", 512], ["Digest::SHA2", 512]],
   "HMAC-MD5"   => "Digest::HMAC_MD5",
   "HMAC-SHA-1" => "Digest::HMAC_SHA1",
+  "CRC-16"     => [["Digest::CRC", type => "crc16"]],
+  "CRC-32"     => [["Digest::CRC", type => "crc32"]],
+  "CRC-CCITT"  => [["Digest::CRC", type => "crcccitt"]],
 );
 
 sub new
@@ -139,7 +142,8 @@ name of the digest algorithm you want to use.
 The two first forms are simply syntactic sugar which automatically
 load the right module on first use.  The second form allow you to use
 algorithm names which contains letters which are not legal perl
-identifiers, e.g. "SHA-1".
+identifiers, e.g. "SHA-1".  If no implementation for the given algorithm
+can be found, then an exception is raised.
 
 If new() is called as an instance method (i.e. $ctx->new) it will just
 reset the state the object to the state of a newly created object.  No
@@ -219,33 +223,38 @@ This table should give some indication on the relative speed of
 different algorithms.  It is sorted by throughput based on a benchmark
 done with of some implementations of this API:
 
- Algorithm	Size	Implementation			MB/s
+ Algorithm      Size    Implementation                  MB/s
 
- MD4		128	Digest::MD4 v1.1		24.9
- MD5		128	Digest::MD5 v2.30		18.7
- Haval-256	256	Digest::Haval256 v1.0.4		17.0
- SHA-1		160	Digest::SHA1 v2.06		15.3
- SHA-1		160	Digest::SHA v4.0.0		10.1
- SHA-256	256	Digest::SHA2 v1.0.0	 	 7.6
- SHA-256	256	Digest::SHA v4.0.0	 	 6.5
- SHA-384	384	Digest::SHA2 v1.0.0	 	 2.7
- SHA-384	384	Digest::SHA v4.0.0	 	 2.7
- SHA-512	512	Digest::SHA2 v1.0.0		 2.7
- SHA-512	512	Digest::SHA v4.0.0		 2.7
- Whirlpool	512	Digest::Whirlpool v1.0.2	 1.4
- MD2		128	Digest::MD2 v2.03		 1.1
+ MD4            128     Digest::MD4 v1.3               165.0
+ MD5            128     Digest::MD5 v2.33               98.8
+ SHA-256        256     Digest::SHA2 v1.1.0             66.7
+ SHA-1          160     Digest::SHA v4.3.1              58.9
+ SHA-1          160     Digest::SHA1 v2.10              48.8
+ SHA-256        256     Digest::SHA v4.3.1              41.3
+ Haval-256      256     Digest::Haval256 v1.0.4         39.8
+ SHA-384        384     Digest::SHA2 v1.1.0             19.6
+ SHA-512        512     Digest::SHA2 v1.1.0             19.3
+ SHA-384        384     Digest::SHA v4.3.1              19.2
+ SHA-512        512     Digest::SHA v4.3.1              19.2
+ Whirlpool      512     Digest::Whirlpool v1.0.2        13.0
+ MD2            128     Digest::MD2 v2.03                9.5
 
- Adler-32	 32	Digest::Adler32 v0.03	 	 0.2
- MD5		128	Digest::Perl::MD5 v1.5		 0.1
+ Adler-32        32     Digest::Adler32 v0.03            1.3
+ CRC-16          16     Digest::CRC v0.05                1.1
+ CRC-32          32     Digest::CRC v0.05                1.1
+ MD5            128     Digest::Perl::MD5 v1.5           1.0
+ CRC-CCITT       16     Digest::CRC v0.05                0.8
 
-These numbers was achieved Nov 2003 with ActivePerl-5.8.1 running
-under Linux on a P-II 350 MHz CPU.  The last 2 entries differ by being
+These numbers was achieved Apr 2004 with ActivePerl-5.8.3 running
+under Linux on a P4 2.8 GHz CPU.  The last 5 entries differ by being
 pure perl implementations of the algorithms, which explains why they
 are so slow.
 
 =head1 SEE ALSO
 
-L<Digest::Adler32>, L<Digest::Haval256>, L<Digest::HMAC>, L<Digest::MD2>, L<Digest::MD4>, L<Digest::MD5>, L<Digest::SHA>, L<Digest::SHA1>, L<Digest::SHA2>, L<Digest::Whirlpool>
+L<Digest::Adler32>, L<Digest::CRC>, L<Digest::Haval256>,
+L<Digest::HMAC>, L<Digest::MD2>, L<Digest::MD4>, L<Digest::MD5>,
+L<Digest::SHA>, L<Digest::SHA1>, L<Digest::SHA2>, L<Digest::Whirlpool>
 
 New digest implementations should consider subclassing from L<Digest::base>.
 
@@ -261,7 +270,7 @@ developed by Neil Winton for his C<MD5> module.
 This library is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
 
-    Copyright 1998-2001,2003 Gisle Aas.
+    Copyright 1998-2001,2003-2004 Gisle Aas.
     Copyright 1995-1996 Neil Winton.
 
 =cut

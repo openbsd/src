@@ -8,7 +8,7 @@ BEGIN {
 use warnings;
 use Text::ParseWords;
 
-print "1..18\n";
+print "1..20\n";
 
 @words = shellwords(qq(foo "bar quiz" zoo));
 print "not " if $words[0] ne 'foo';
@@ -108,3 +108,14 @@ print "ok 17\n";
 @words = quotewords(' ', 1, '4 3 2 1 0');
 print "not " unless join(";", @words) eq qq(4;3;2;1;0);
 print "ok 18\n";
+
+# [perl #30442] Text::ParseWords does not handle backslashed newline inside quoted text
+$string = qq{"field1"	"field2\\\nstill field2"	"field3"};
+
+$result = join('|', parse_line("\t", 1, $string));
+print "not " unless $result eq qq{"field1"|"field2\\\nstill field2"|"field3"};
+print "ok 19\n";
+
+$result = join('|', parse_line("\t", 0, $string));
+print "not " unless $result eq "field1|field2\nstill field2|field3";
+print "ok 20\n";

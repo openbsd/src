@@ -1,5 +1,5 @@
 #
-# $Id: Encoder.t,v 1.3 2002/04/16 23:35:00 dankogai Exp $
+# $Id: Encoder.t,v 2.0 2004/05/16 20:55:17 dankogai Exp $
 #
 
 BEGIN {

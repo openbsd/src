@@ -20,15 +20,15 @@ sub casetest {
     my %seen;
 
     for my $i (sort keys %simple) {
-	$seen{hex $i}++;
+	$seen{$i}++;
     }
     print "# ", scalar keys %simple, " simple mappings\n";
 
     my $both;
 
     for my $i (sort keys %$spec) {
-	if (++$seen{hex $i} == 2) {
-	    warn "$base: $i seen twice\n";
+	if (++$seen{$i} == 2) {
+	    warn sprintf "$base: $i seen twice\n";
 	    $both++;
 	}
     }
@@ -52,7 +52,7 @@ sub casetest {
 
     my $test = 1;
 
-    for my $i (sort { hex $a <=> hex $b } keys %simple) {
+    for my $i (sort keys %simple) {
 	my $w = $simple{$i};
 	my $c = pack "U0U", hex $i;
 	my $d = $func->($c);
@@ -62,9 +62,11 @@ sub casetest {
 	$test++;
     }
 
-    for my $i (sort { hex $a <=> hex $b } keys %$spec) {
+    for my $i (sort keys %$spec) {
 	my $w = unidump($spec->{$i});
-	my $c = pack "U0U", hex $i;
+	my $u = unpack "U0U", $i;
+	my $h = sprintf "%04X", $u;
+	my $c = chr($u); $c .= chr(0x100); chop $c;
 	my $d = $func->($c);
 	my $e = unidump($d);
 	if (ord "A" == 193) { # EBCDIC
@@ -116,7 +118,7 @@ sub casetest {
 	    # just undo our remapping.
 	}
 	print $w eq $e ?
-	    "ok $test # $i -> $w\n" : "not ok $test # $i -> $e ($w)\n";
+	    "ok $test # $i -> $w\n" : "not ok $test # $h -> $e ($w)\n";
 	$test++;
     }
 

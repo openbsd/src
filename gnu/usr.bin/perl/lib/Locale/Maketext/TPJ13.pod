@@ -2,6 +2,8 @@
 # This document contains text in Perl "POD" format.
 # Use a POD viewer like perldoc or perlman to render it.
 
+# This corrects some typoes in the previous release.
+
 =head1 NAME
 
 Locale::Maketext::TPJ13 -- article about software localization

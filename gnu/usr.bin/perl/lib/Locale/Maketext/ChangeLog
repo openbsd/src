@@ -1,6 +1,47 @@
 Revision history for Perl suite Locale::Maketext
-                                        Time-stamp: "2003-06-21 23:38:38 AHDT"
+                                        Time-stamp: "2004-03-30 21:38:07 AST"
 
+2004-03-30  Sean M. Burke  sburke@cpan.org
+	* Release 1.09:
+
+	* Moved the language-preference-detecting code into new module
+	I18N::LangTags::Detect.
+	
+	Thanks to Autrijus Tang for catching some errors in the dist!
+
+
+	
+2004-01-19  Sean M. Burke  sburke@cpan.org
+	
+	* Release 1.08:
+	
+	* Corrected a one-line code bug in v1.07 that accidentally demoted
+	all en-* tags in cases of lexicon-groups that had an en.pm but no
+	en_*.pm.  Thanks to Robert Spier for spotting this.  Test added.
+	So don't use v1.07!
+
+	* Autrijus found some typoes in the TPJ article.  Fixed.1
+	
+2004-01-11  Sean M. Burke  sburke@cpan.org
+	
+	* Release 1.07:  Now uses a new and different rule for implicating
+	superordinate language tags in accept-language lists.  Previously,
+	superordinates were just tacked onto the, so "en-US, ja", turned
+	into "en-US, ja, en".  However, this turned out to be suboptimal
+	for many users of RT, a popular system using Maketext.  The new
+	rule is that a tag implicates superordinate forms right after it,
+	unless those tags are explicitly stated elsewhere in the
+	accept-languages list.  So "en-US ja" becomes "en-US en ja".  If
+	you want "en" to be really lower, you have to actually state it
+	there: "en-US ja en" is left as-is.
+
+	The 04super.t and 05super.t tests in t/ have many many examples of
+	this, including some strange corner cases.
+
+	(In implementing this change, I also refactored some code in
+	Maketext.pm, for hopefully improved readability.  However,
+	the above is the only actual change in behavior.)
+	
 2003-06-21  Sean M. Burke  sburke@cpan.org
 	* Release 1.06:  Now has "use utf8" to make the things work
 	happily.  Some fancy footwork is required to make this work under

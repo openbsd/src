@@ -6,7 +6,7 @@ BEGIN {
     require './test.pl';
 }   
 
-plan tests => 2;
+plan tests => 3;
 
 is(
     sprintf("%.40g ",0.01),
@@ -18,3 +18,11 @@ is(
     sprintf("%.40f", 0.01)." ",
     q(the sprintf "%.<number>f" optimization)
 );
+{
+	chop(my $utf8_format = "%-3s\x{100}");
+	is(
+		sprintf($utf8_format, "\xe4"),
+		"\xe4  ",
+		q(width calculation under utf8 upgrade)
+	);
+}

@@ -1,6 +1,6 @@
 # Net::Time.pm
 #
-# Copyright (c) 1995-1998 Graham Barr <gbarr@pobox.com>. All rights reserved.
+# Copyright (c) 1995-2004 Graham Barr <gbarr@pobox.com>. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 
@@ -17,7 +17,7 @@ use IO::Select;
 @ISA = qw(Exporter);
 @EXPORT_OK = qw(inet_time inet_daytime);
 
-$VERSION = "2.09"; # $Id: //depot/libnet/Net/Time.pm#9 $
+$VERSION = "2.10";
 
 $TIMEOUT = 120;
 
@@ -61,7 +61,7 @@ sub inet_time
  my $offset = 0 | 0;
 
  return undef
-	unless $s->recv($buf, length(pack("N",0)));
+	unless defined $s->recv($buf, length(pack("N",0)));
 
  # unpack, we | 0 to ensure we have an unsigned
  my $time = (unpack("N",$buf))[0] | 0;
@@ -87,7 +87,7 @@ sub inet_daytime
  my $s = _socket('daytime',13,@_) || return undef;
  my $buf = '';
 
- $s->recv($buf, 1024) ? $buf
+ defined($s->recv($buf, 1024)) ? $buf
     	              : undef;
 }
 
@@ -140,12 +140,8 @@ Graham Barr <gbarr@pobox.com>
 
 =head1 COPYRIGHT
 
-Copyright (c) 1995-1998 Graham Barr. All rights reserved.
+Copyright (c) 1995-2004 Graham Barr. All rights reserved.
 This program is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
-
-=for html <hr>
-
-I<$Id: //depot/libnet/Net/Time.pm#9 $>
 
 =cut

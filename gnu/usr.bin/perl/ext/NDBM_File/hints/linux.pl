@@ -3,4 +3,6 @@
 # (no null key support)
 # Jonathan Stowe <gellyfish@gellyfish.com>
 use Config;
-$self->{LIBS} = ['-lgdbm'] if $Config{libs} =~ /(?:^|\s)-lgdbm(?:\s|$)/;
+use ExtUtils::Liblist;
+($self->{LIBS}) = ExtUtils::Liblist->ext('-lgdbm -lgdbm_compat')
+	if $Config{libs} =~ /(?:^|\s)-lgdbm(?:\s|$)/;

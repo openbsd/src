@@ -1,3 +1,45 @@
+Thu Jun 17 12:26:43 BST 2004   Nicholas Clark <nick@ccl4.org>
+
+    Version 2.13
+
+        1. Don't change the type of top level overloaded references to RV -
+	   they are perfectly correct as PVMG
+	2. Storable needs to cope with incoming frozen data that happens to be
+	   utf8 encoded.
+
+Wed Mar 17 15:40:29 GMT 2004   Nicholas Clark <nick@ccl4.org>
+
+    Version 2.12
+
+        1. Add regression tests for the auto-require of STORABLE_thaw
+        2. Add auto-require of modules to restore overloading (and tests)
+        3. Change to no context (should give speedup with ithreads)
+
+Sat Mar 13 20:11:03 GMT 2004   Nicholas Clark <nick@ccl4.org>
+	
+    Version 2.11
+
+        1. Storing restricted hashes in canonical order would SEGV. Fixed.
+        2. It was impossible to retrieve references to PL_sv_no and and
+           PL_sv_undef from STORABLE_thaw hooks.
+        3. restrict.t was failing on 5.8.0, due to 5.8.0's unique
+           implementation of restricted hashes using PL_sv_undef
+        4. These changes allow a space optimisation for restricted hashes.
+
+Sat Jan 24 16:22:32 IST 2004   Abhijit Menon-Sen <ams@wiw.org>
+
+    Version 2.10
+
+        1. Thread safety: Storable::CLONE/init_perlinterp() now create
+           a new Perl context for each new ithread.
+           (From Stas Bekman and Jan Dubois.)
+        2. Fix a tag count mismatch with $Storable::Deparse that caused
+           all back-references after a stored sub to be off-by-N (where
+           N was the number of code references in between).
+           (From Sam Vilain.)
+        3. Prevent CODE references from turning into SCALAR references.
+           (From Slaven Rezic.)
+
 Sat Jan  3 18:49:18 GMT 2004   Nicholas Clark <nick@ccl4.org>
 
     Version 2.09

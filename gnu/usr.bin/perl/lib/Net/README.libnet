@@ -16,17 +16,21 @@ Net::Time	RFC867		Daytime Protocol
 Net::Time	RFC868		Time Protocol
 Net::NNTP	RFC977		Network News Transfer Protocol
 Net::POP3	RFC1939		Post Office Protocol 3
-Net::SNPP	RFC1861		Simple Network Pager Protocol
-
-FUTURE WORK
 
 AVAILABILITY
 
 The latest version of libnet is available from the Comprehensive Perl
 Archive Network (CPAN). To find a CPAN site near you see:
 
-    http://www.perl.com/CPAN
-                            ^ no slash here !!
+    http://search.cpan.org/~gbarr/libnet/
+
+The subversion source repository can be browsed at
+
+    http://svn.mutatus.co.uk/browse/libnet/
+
+If you have a subversion client, then you can checkout the latest code with
+
+  svn co http://svn.mutatus.co.uk/repos/libnet/trunk libnet
 
 INSTALLATION
 
@@ -97,7 +101,7 @@ include a transcript of a run.
 
 COPYRIGHT
 
-  © 1996-2000 Graham Barr. All rights reserved.
+  © 1996-2004 Graham Barr. All rights reserved.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

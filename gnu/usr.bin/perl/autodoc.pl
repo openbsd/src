@@ -6,7 +6,7 @@ require 5.003;	# keep this compatible, an old perl is all we may have before
 BEGIN {
   push @INC, 'lib';
   require 'regen_lib.pl';
-}	# glob() below requires File::Glob
+}
 
 
 #
@@ -82,10 +82,6 @@ FUNC:
 	    my $docs = "";
 DOC:
 	    while (defined($doc = <$fh>)) {
-                if ($doc =~ /^=head1 (.*)/) {
-                    $curheader = $1;
-                    next DOC;
-                }
 		$line++;
 		last DOC if $doc =~ /^=\w+/;
 		if ($doc =~ m:^\*/$:) {
@@ -107,7 +103,7 @@ DOC:
 		$docfuncs{$name} = [$flags, $docs, $ret, $file, $curheader, @args];
 	    }
 	    if (defined $doc) {
-		if ($doc =~ /^=for/) {
+		if ($doc =~ /^=(?:for|head)/) {
 		    $in = $doc;
 		    redo FUNC;
 		}
@@ -144,7 +140,15 @@ removed without notice.\n\n" if $flags =~ /x/;
 }
 
 my $file;
-for $file (glob('*.c'), glob('*.h')) {
+# glob() picks up docs from extra .c or .h files that may be in unclean
+# development trees.
+my $MANIFEST = do {
+  local ($/, *FH);
+  open FH, "MANIFEST" or die "Can't open MANIFEST: $!";
+  <FH>;
+};
+
+for $file (($MANIFEST =~ /^(\S+\.c)\t/gm), ($MANIFEST =~ /^(\S+\.h)\t/gm)) {
     open F, "< $file" or die "Cannot open $file for docs: $!\n";
     $curheader = "Functions in file $file\n";
     autodoc(\*F,$file);

@@ -5,6 +5,9 @@ Storable.pm		    The perl side of Storable
 Storable.xs		    The C side of Storable
 ChangeLog		    Changes since baseline
 hints/linux.pl		    Hint file to drop gcc to -O2
+# ppport.h		    Compatibility header
+t/HAS_HOOK.pm		    For auto-requiring of modules for STORABLE_thaw
+t/HAS_OVERLOAD.pm	    For auto-requiring of mdoules for overload
 t/blessed.t		    See if Storable works
 t/canonical.t		    See if Storable works
 t/code.t		    Test (de)serialization of code references
@@ -16,6 +19,7 @@ t/forgive.t		    See if Storable works
 t/freeze.t		    See if Storable works
 t/integer.t		    For "use integer" testing
 t/interwork56.t		    Test combatibility kludge for 64bit data under 5.6.x
+t/just_plain_nasty.t	    Corner case corner.
 t/lock.t		    See if Storable works
 t/make_56_interwork.pl	    Make test data for interwork56.t
 t/make_downgrade.pl	    Make test data for downgrade.t
@@ -29,6 +33,7 @@ t/store.t		    See if Storable works
 t/tied.t		    See if Storable works
 t/tied_hook.t		    See if Storable works
 t/tied_items.t		    See if Storable works
+t/threads.t                 See if Storable works under ithreads
 t/utf8.t		    See if Storable works
 t/utf8hash.t		    See if Storable works
 # t/Test/Builder.pm	    For testing the CPAN release on pre 5.6.2

@@ -1,5 +1,5 @@
 #
-# $Id: jis0201.ucm,v 1.2 2002/04/05 14:49:56 dankogai Exp $
+# $Id: jis0201.ucm,v 2.0 2004/05/16 20:55:25 dankogai Exp $
 #
 <code_set_name>  "jis0201-raw"
 <code_set_alias> "jis0201"

@@ -1,5 +1,5 @@
 name: perl
-version: 5.008003
+version: 5.008005
 abstract: Practical Extraction and Reporting Language
 author: perl5-porters@perl.org
 license: perl
@@ -20,6 +20,7 @@ private:
     - ext/Time/HiRes
     - ext/Unicode/Normalize
     - lib/Attribute/Handlers
+    - lib/base
     - lib/bignum
     - lib/CGI
     - lib/Class/ISA
@@ -59,6 +60,7 @@ private:
   file:
     - ext/Filter/t/call.t
     - lib/Attribute/Handlers.pm
+    - lib/base.pm
     - lib/bigint.pm
     - lib/bignum.pm
     - lib/bigrat.pm
@@ -94,6 +96,7 @@ private:
     - lib/ExtUtils/MY.pm
     - lib/ExtUtils/Packlist.pm
     - lib/ExtUtils/testlib.pm
+    - lib/fields.pm
     - lib/File/Spec.pm
     - lib/File/Temp.pm
     - lib/Filter/Simple.pm

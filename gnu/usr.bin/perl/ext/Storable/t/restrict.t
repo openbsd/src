@@ -35,10 +35,10 @@ sub BEGIN {
 }
 
 
-use Storable qw(dclone);
+use Storable qw(dclone freeze thaw);
 use Hash::Util qw(lock_hash unlock_value);
 
-print "1..16\n";
+print "1..100\n";
 
 my %hash = (question => '?', answer => 42, extra => 'junk', undef => undef);
 lock_hash %hash;
@@ -56,9 +56,15 @@ sub me_second {
 
 package main;
 
+sub freeze_thaw {
+  my $temp = freeze $_[0];
+  return thaw $temp;
+}
+
 sub testit {
   my $hash = shift;
-  my $copy = dclone $hash;
+  my $cloner = shift;
+  my $copy = &$cloner($hash);
 
   my @in_keys = sort keys %$hash;
   my @out_keys = sort keys %$copy;
@@ -96,8 +102,29 @@ sub testit {
 }
 
 for $Storable::canonical (0, 1) {
-  print "# \$Storable::canonical = $Storable::canonical\n";
-  testit (\%hash);
-  my $object = \%hash;
-  # bless {}, "Restrict_Test";
+  for my $cloner (\&dclone, \&freeze_thaw) {
+    print "# \$Storable::canonical = $Storable::canonical\n";
+    testit (\%hash, $cloner);
+    my $object = \%hash;
+    # bless {}, "Restrict_Test";
+
+    my %hash2;
+    $hash2{"k$_"} = "v$_" for 0..16;
+    lock_hash %hash2;
+    for (0..16) {
+      unlock_value %hash2, "k$_";
+      delete $hash2{"k$_"};
+    }
+    my $copy = &$cloner(\%hash2);
+
+    for (0..16) {
+      my $k = "k$_";
+      eval { $copy->{$k} = undef } ;
+      unless (ok ++$test, !$@, "Can assign to reserved key '$k'?") {
+	my $diag = $@;
+	$diag =~ s/\n.*\z//s;
+	print "# \$\@: $diag\n";
+      }
+    }
+  }
 }

@@ -1,6 +1,58 @@
 Revision history for Perl module I18N::LangTags.
-                                        Time-stamp: "2003-10-10 17:07:55 ADT"
+                                        Time-stamp: "2004-07-01 14:28:23 ADT"
 
+2004-07-01  Sean M. Burke  sburke@cpan.org
+
+	* Release 0.33
+
+	Minor bugfix version:
+	The test 80_all_env.t was erroneously failing for people with
+	LC_ALL or LC_MESSAGES set.  Fixed.  Thanks to everyone, especially
+	Nicholas Clark, who patiently helped out with this.
+
+	
+2004-06-20  Sean M. Burke  sburke@cpan.org
+
+	* Release 0.32
+
+	Minor bugfix version:
+	The test 80_all_env.t was erroneously failing under MSWins that
+	had Win32::Locale installed.  A workaround added.
+	
+	
+2004-06-17  Sean M. Burke  sburke@cpan.org
+
+	* Release 0.31
+	
+        Corrected some unevennesses in when/whether the return values from
+	I18N::LangTags::Detect's various internal functions would be
+	downcased.  Now they're /always/ downcased, and are /always/ fed
+	thru alternate_language_tags()!
+
+	Also, spiffed up and generally improved the earlier test
+	80_all_env.t, which not even I could make sense of, and I wrote
+	the damned thing.  Now it's sane, and checks both scalar and
+	list return values.  Thanks to Rafael Garcia-Suarez and the
+	various CPAN-Testers for prodding me to fix this.  (Hopefully the
+	earlier problems /are/ now fixed!  Otherwise there'll be another
+	version of this module out real soon!)
+
+	
+2004-03-30  Sean M. Burke  sburke@cpan.org
+
+	* Release 0.30
+
+	New in I18N::LangTags : implicate_supers and
+	implicate_supers_strictly.
+
+	New module: I18N::LangTags::Detect.
+
+	Some new tests.
+
+	Thanks to Autrijus Tang for catching some errors in my makefile!
+
+
+	
 2003-10-10  Sean M. Burke  sburke@cpan.org
 	
 	* Release 0.29

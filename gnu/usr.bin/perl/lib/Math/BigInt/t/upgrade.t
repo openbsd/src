@@ -26,7 +26,7 @@ BEGIN
     }
   print "# INC = @INC\n";
 
-  plan tests => 2082
+  plan tests => 2098
    + 2;			# our own tests
   }
 

@@ -246,16 +246,14 @@ Note that both C<\x{...}> and C<\N{...}> are compile-time string
 constants: you cannot use variables in them.  if you want similar
 run-time functionality, use C<chr()> and C<charnames::vianame()>.
 
-Also note that if all the code points for pack "U" are below 0x100,
-bytes will be generated, just like if you were using C<chr()>.
-
-   my $bytes = pack("U*", 0x80, 0xFF);
-
 If you want to force the result to Unicode characters, use the special
 C<"U0"> prefix.  It consumes no arguments but forces the result to be
 in Unicode characters, instead of bytes.
 
-   my $chars = pack("U0U*", 0x80, 0xFF);
+   my $chars = pack("U0C*", 0x80, 0x42);
+
+Likewise, you can force the result to be bytes by using the special
+C<"C0"> prefix.
 
 =head2 Handling Unicode
 
@@ -265,7 +263,7 @@ C<substr()> will work on the Unicode characters; regular expressions
 will work on the Unicode characters (see L<perlunicode> and L<perlretut>).
 
 Note that Perl considers combining character sequences to be
-characters, so for example
+separate characters, so for example
 
     use charnames ':full';
     print length("\N{LATIN CAPITAL LETTER A}\N{COMBINING ACUTE ACCENT}"), "\n";
@@ -299,8 +297,8 @@ If that variable isn't set, the encoding pragma will fail.
 The C<Encode> module knows about many encodings and has interfaces
 for doing conversions between those encodings:
 
-    use Encode 'from_to';
-    from_to($data, "iso-8859-3", "utf-8"); # from legacy to utf-8
+    use Encode 'decode';
+    $data = decode("iso-8859-3", $data); # convert from legacy to utf-8
 
 =head2 Unicode I/O
 
@@ -670,8 +668,8 @@ How Do I Detect Data That's Not Valid In a Particular Encoding?
 Use the C<Encode> package to try converting it.
 For example,
 
-    use Encode 'encode_utf8';
-    if (encode_utf8($string_of_bytes_that_I_think_is_utf8)) {
+    use Encode 'decode_utf8';
+    if (decode_utf8($string_of_bytes_that_I_think_is_utf8)) {
         # valid
     } else {
         # invalid

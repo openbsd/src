@@ -14,19 +14,11 @@ use File::Spec;
 
 no warnings 'utf8';
 
-require Exporter;
-
-our $VERSION = '0.33';
+our $VERSION = '0.40';
 our $PACKAGE = __PACKAGE__;
 
-our @ISA = qw(Exporter);
-
-our %EXPORT_TAGS = ();
-our @EXPORT_OK = ();
-our @EXPORT = ();
-
-(our $Path = $INC{'Unicode/Collate.pm'}) =~ s/\.pm$//;
-our $KeyFile = "allkeys.txt";
+my @Path = qw(Unicode Collate);
+my $KeyFile = "allkeys.txt";
 
 # Perl's boolean
 use constant TRUE  => 1;
@@ -36,7 +28,7 @@ use constant NOMATCHPOS => -1;
 # A coderef to get combining class imported from Unicode::Normalize
 # (i.e. \&Unicode::Normalize::getCombinClass).
 # This is also used as a HAS_UNICODE_NORMALIZE flag.
-our $CVgetCombinClass;
+my $CVgetCombinClass;
 
 # Supported Levels
 use constant MinLevel => 1;
@@ -104,7 +96,7 @@ use constant BMP_Max       => 0xFFFF;
 
 # Logical_Order_Exception in PropList.txt
 # TODO: synchronization with change of PropList.txt.
-our $DefaultRearrange = [ 0x0E40..0x0E44, 0x0EC0..0x0EC4 ];
+my $DefaultRearrange = [ 0x0E40..0x0E44, 0x0EC0..0x0EC4 ];
 
 sub UCA_Version { "11" }
 
@@ -138,13 +130,14 @@ our @ChangeNG = qw/
     entry mapping table maxlength
     ignoreChar ignoreName undefChar undefName variableTable
     versionTable alternateTable backwardsTable forwardsTable rearrangeTable
-    derivCode normCode rearrangeHash L3_ignorable
+    derivCode normCode rearrangeHash
     backwardsFlag
   /;
 # The hash key 'ignored' is deleted at v 0.21.
 # The hash key 'isShift' is deleted at v 0.23.
 # The hash key 'combining' is deleted at v 0.24.
 # The hash key 'entries' is deleted at v 0.30.
+# The hash key 'L3_ignorable' is deleted at v 0.40.
 
 sub version {
     my $self = shift;
@@ -272,7 +265,9 @@ sub new
     $self->read_table if defined $self->{table};
 
     if ($self->{entry}) {
-	$self->parseEntry($_) foreach split /\n/, $self->{entry};
+	while ($self->{entry} =~ /([^\n]+)/g) {
+	    $self->parseEntry($1);
+	}
     }
 
     $self->{level} ||= MaxLevel;
@@ -297,11 +292,16 @@ sub new
 sub read_table {
     my $self = shift;
 
-    my $filepath = File::Spec->catfile($Path, $self->{table});
-    open my $fk, "<$filepath"
-	or croak "File does not exist at $filepath";
+    my($f, $fh);
+    foreach my $d (@INC) {
+	$f = File::Spec->catfile($d, @Path, $self->{table});
+	last if open($fh, $f);
+	$f = undef;
+    }
+    defined $f
+	or croak "$PACKAGE: $self->{table} is not found in @INC";
 
-    while (<$fk>) {
+    while (<$fh>) {
 	next if /^\s*#/;
 	unless (s/^\s*\@//) {
 	    $self->parseEntry($_);
@@ -327,7 +327,7 @@ sub read_table {
 	    push @{ $self->{rearrangeTable} }, _getHexArray($1);
 	}
     }
-    close $fk;
+    close $fh;
 }
 
 
@@ -387,17 +387,11 @@ sub parseEntry
 	# if and only if "all" CEs are [.0000.0000.0000].
     }
 
-    $self->{mapping}{$entry} = \@key;
+    $self->{mapping}{$entry} = $is_L3_ignorable ? [] : \@key;
 
     if (@uv > 1) {
 	(!$self->{maxlength}{$uv[0]} || $self->{maxlength}{$uv[0]} < @uv)
 	    and $self->{maxlength}{$uv[0]} = @uv;
-    }
-    else {
-	$is_L3_ignorable
-	    ? ($self->{L3_ignorable}{$uv[0]} = TRUE)
-	    : ($self->{L3_ignorable}{$uv[0]} and
-	       $self->{L3_ignorable}{$uv[0]} = FALSE); # &&= stores key.
     }
 }
 
@@ -461,7 +455,6 @@ sub splitEnt
     my $map  = $self->{mapping};
     my $max  = $self->{maxlength};
     my $reH  = $self->{rearrangeHash};
-    my $ign  = $self->{L3_ignorable};
     my $ver9 = $self->{UCA_Version} >= 9;
 
     my ($str, @buf);
@@ -497,7 +490,8 @@ sub splitEnt
     # To remove a character marked as a completely ignorable.
     for (my $i = 0; $i < @src; $i++) {
 	$src[$i] = undef
-	    if _isIllegal($src[$i]) || ($ver9 && $ign->{ $src[$i] });
+	    if _isIllegal($src[$i]) || ($ver9 &&
+		$map->{ $src[$i] } && @{ $map->{ $src[$i] } } == 0);
     }
 
     for (my $i = 0; $i < @src; $i++) {
@@ -1157,8 +1151,10 @@ If it does not exist, the mapping is defined additionally.
 006C 006C ; [.0F4C.0020.0002.006C] # ll
 004C 006C ; [.0F4C.0020.0007.004C] # Ll
 004C 004C ; [.0F4C.0020.0008.004C] # LL
-006E 0303 ; [.0F7B.0020.0002.006E] # n-tilde
-004E 0303 ; [.0F7B.0020.0008.004E] # N-tilde
+00F1      ; [.0F7B.0020.0002.00F1] # n-tilde
+006E 0303 ; [.0F7B.0020.0002.00F1] # n-tilde
+00D1      ; [.0F7B.0020.0008.00D1] # N-tilde
+004E 0303 ; [.0F7B.0020.0008.00D1] # N-tilde
 ENTRY
 
     entry => <<'ENTRY', # for DUCET v4.0.0 (allkeys-4.0.0.txt)
@@ -1376,11 +1372,12 @@ but it is not warned at present.>
 -- see 3.2 Default Unicode Collation Element Table, UTS #10.
 
 You can use another collation element table if desired.
-The table file must be put into a directory
-where F<Unicode/Collate.pm> is installed; e.g. into
-F<perl/lib/Unicode/Collate/> if you have F<perl/lib/Unicode/Collate.pm>.
 
-By default, the filename F<allkeys.txt> is used.
+The table file should locate in the F<Unicode/Collate> directory
+on C<@INC>. Say, if the filename is F<Foo.txt>
+the table file is searched as F<Unicode/Collate/Foo.txt> in <@INC>.
+
+By default, F<allkeys.txt> (as the filename of DUCET) is used.
 
 If C<undef> is passed explicitly as the value for this key,
 no file is read (but you can define collation elements via C<entry>).
@@ -1415,6 +1412,10 @@ as it is greater than any other assigned collation elements
 (in the codepoint order among the unassigned characters).
 But, it'd be better to ignore characters
 unfamiliar to you and maybe never used.
+
+ex. Collation weights for beyond-BMP characters are not stored in object:
+
+    undefChar => qr/[^\0-\x{fffd}]/,
 
 =item katakana_before_hiragana
 
@@ -1728,7 +1729,7 @@ SADAHIRO Tomoyuki <SADAHIRO@cpan.org>
 
   http://homepage1.nifty.com/nomenclator/perl/
 
-  Copyright(C) 2001-2003, SADAHIRO Tomoyuki. Japan. All rights reserved.
+  Copyright(C) 2001-2004, SADAHIRO Tomoyuki. Japan. All rights reserved.
 
   This library is free software; you can redistribute it
   and/or modify it under the same terms as Perl itself.

@@ -1,6 +1,6 @@
 /*    utf8.c
  *
- *    Copyright (C) 2000, 2001, 2002, 2003, by Larry Wall and others
+ *    Copyright (C) 2000, 2001, 2002, 2003, 2004, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -232,7 +232,7 @@ Perl_is_utf8_string(pTHX_ U8 *s, STRLEN len)
     U8* send;
     STRLEN c;
 
-    if (!len)
+    if (!len && s)
 	len = strlen((char *)s);
     send = s + len;
 
@@ -272,7 +272,7 @@ Perl_is_utf8_string_loc(pTHX_ U8 *s, STRLEN len, U8 **p)
     U8* send;
     STRLEN c;
 
-    if (!len)
+    if (!len && s)
 	len = strlen((char *)s);
     send = s + len;
 
@@ -1401,21 +1401,19 @@ Perl_to_utf8_case(pTHX_ U8 *p, U8* ustrp, STRLEN *lenp, SV **swashp, char *norma
     if (!*swashp) /* load on-demand */
          *swashp = swash_init("utf8", normal, &PL_sv_undef, 4, 0);
 
-    if (special) {
+    /* The 0xDF is the only special casing Unicode code point below 0x100. */
+    if (special && (uv1 == 0xDF || uv1 > 0xFF)) {
          /* It might be "special" (sometimes, but not always,
 	  * a multicharacter mapping) */
 	 HV *hv;
-	 SV *keysv;
-	 HE *he;
-	 SV *val;
-	
-	 if ((hv    = get_hv(special, FALSE)) &&
-	     (keysv = sv_2mortal(Perl_newSVpvf(aTHX_ "%04"UVXf, uv1))) &&
-	     (he    = hv_fetch_ent(hv, keysv, FALSE, 0)) &&
-	     (val   = HeVAL(he))) {
-	     char *s;
+	 SV **svp;
 
-	      s = SvPV(val, len);
+	 if ((hv  = get_hv(special, FALSE)) &&
+	     (svp = hv_fetch(hv, (const char*)tmpbuf, UNISKIP(uv1), FALSE)) &&
+	     (*svp)) {
+	      char *s;
+
+	      s = SvPV(*svp, len);
 	      if (len == 1)
 		   len = uvuni_to_utf8(ustrp, NATIVE_TO_UNI(*(U8*)s)) - ustrp;
 	      else {
@@ -1426,7 +1424,7 @@ Perl_to_utf8_case(pTHX_ U8 *p, U8* ustrp, STRLEN *lenp, SV **swashp, char *norma
 		   U8 *t = (U8*)s, *tend = t + len, *d;
 		
 		   d = tmpbuf;
-		   if (SvUTF8(val)) {
+		   if (SvUTF8(*svp)) {
 			STRLEN tlen = 0;
 			
 			while (t < tend) {
@@ -1566,13 +1564,16 @@ Perl_swash_init(pTHX_ char* pkg, char* name, SV *listsv, I32 minbits, I32 none)
     SV* retval;
     SV* tokenbufsv = sv_2mortal(NEWSV(0,0));
     dSP;
-    HV *stash = gv_stashpvn(pkg, strlen(pkg), FALSE);
+    size_t pkg_len = strlen(pkg);
+    size_t name_len = strlen(name);
+    HV *stash = gv_stashpvn(pkg, pkg_len, FALSE);
     SV* errsv_save;
 
     if (!gv_fetchmeth(stash, "SWASHNEW", 8, -1)) {	/* demand load utf8 */
 	ENTER;
 	errsv_save = newSVsv(ERRSV);
-	Perl_load_module(aTHX_ PERL_LOADMOD_NOIMPORT, newSVpv(pkg,0), Nullsv);
+	Perl_load_module(aTHX_ PERL_LOADMOD_NOIMPORT, newSVpvn(pkg,pkg_len),
+			 Nullsv);
 	if (!SvTRUE(ERRSV))
 	    sv_setsv(ERRSV, errsv_save);
 	SvREFCNT_dec(errsv_save);
@@ -1582,8 +1583,8 @@ Perl_swash_init(pTHX_ char* pkg, char* name, SV *listsv, I32 minbits, I32 none)
     PUSHSTACKi(PERLSI_MAGIC);
     PUSHMARK(SP);
     EXTEND(SP,5);
-    PUSHs(sv_2mortal(newSVpvn(pkg, strlen(pkg))));
-    PUSHs(sv_2mortal(newSVpvn(name, strlen(name))));
+    PUSHs(sv_2mortal(newSVpvn(pkg, pkg_len)));
+    PUSHs(sv_2mortal(newSVpvn(name, name_len)));
     PUSHs(listsv);
     PUSHs(sv_2mortal(newSViv(minbits)));
     PUSHs(sv_2mortal(newSViv(none)));

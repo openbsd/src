@@ -10,7 +10,7 @@ BEGIN
   my $location = $0; $location =~ s/bigintpm.t//;
   unshift @INC, $location; # to locate the testing files
   chdir 't' if -d 't';
-  plan tests => 2766;
+  plan tests => 2832;
   }
 
 use Math::BigInt;

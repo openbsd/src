@@ -18,7 +18,7 @@ use threads::shared;
 # call is() from within the DESTROY() function at global destruction time,
 # and parts of Test::* may have already been freed by then
 
-print "1..8\n";
+print "1..10\n";
 
 my $test : shared = 1;
 
@@ -92,5 +92,32 @@ threads->new(
 	$test++;
     }
 )->join;
+
+# bugid #24940 :unique should fail on my and sub declarations
+
+for my $decl ('my $x : unique', 'sub foo : unique') {
+    eval $decl;
+    print $@ =~
+	/^The 'unique' attribute may only be applied to 'our' variables/
+	    ? '' : 'not ', "ok $test - $decl\n";
+    $test++;
+}
+
+
+# Returing a closure from a thread caused problems. If the last index in
+# the anon sub's pad wasn't for a lexical, then a core dump could occur.
+# Otherwise, there might be leaked scalars.
+
+# XXX DAPM 9-Jan-04 - backed this out for now - returning a closure from a
+# thread seems to crash win32
+
+# sub f {
+#     my $x = "foo";
+#     sub { $x."bar" };
+# }
+# 
+# my $string = threads->new(\&f)->join->();
+# print $string eq 'foobar' ?  '' : 'not ', "ok $test - returning closure\n";
+# $test++;
 
 1;

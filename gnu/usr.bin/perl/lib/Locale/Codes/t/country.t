@@ -3,11 +3,6 @@
 # country.t - tests for Locale::Country
 #
 
-BEGIN {
-        chdir 't' if -d 't';
-        @INC = '../lib';
-}
-
 use Locale::Country;
 
 #-----------------------------------------------------------------------
@@ -57,9 +52,9 @@ use Locale::Country;
  ['country2code("macao")                    eq "mo"', 0],
  ['country2code("macau")                    eq "mo"', 0],
 
- ['code2country("tl", LOCALE_CODE_ALPHA_2) eq "East Timor"', 0],
- ['code2country("tls", LOCALE_CODE_ALPHA_3) eq "East Timor"', 0],
- ['code2country("626", LOCALE_CODE_NUMERIC) eq "East Timor"', 0],
+ ['code2country("tl", LOCALE_CODE_ALPHA_2) eq "Timor-Leste"', 0],
+ ['code2country("tls", LOCALE_CODE_ALPHA_3) eq "Timor-Leste"', 0],
+ ['code2country("626", LOCALE_CODE_NUMERIC) eq "Timor-Leste"', 0],
 
 	#================================================
 	# TESTS FOR country2code
@@ -89,7 +84,7 @@ use Locale::Country;
  ['country2code("Jan Mayen")                eq "sj"', 0],    # alias
  ['country2code("USA")                      eq "us"', 0],    # alias
  ['country2code("United States of America") eq "us"', 0],    # alias
- ['country2code("Great Britain")            eq "gb"', 0],    # alias
+ ['country2code("Great Britain")			eq "gb"', 0],    # alias
 
 	#================================================
 	# TESTS FOR country_code2code
@@ -111,6 +106,27 @@ use Locale::Country;
  ['country_code2code("858", LOCALE_CODE_NUMERIC, LOCALE_CODE_ALPHA_3) eq "ury"', 0],
  ['country_code2code(858, LOCALE_CODE_NUMERIC, LOCALE_CODE_ALPHA_3) eq "ury"', 0],
  ['country_code2code("tr", LOCALE_CODE_ALPHA_2, LOCALE_CODE_NUMERIC) eq "792"', 0],
+
+ #-- tests added for 2.07 release
+ ['country2code("Burma")				eq "mm"', 0],    # alias
+ ['country2code("French Southern and Antarctic Lands")  eq "tf"', 0],    # alias
+ ['code2country("ax") eq "Aland Islands"', 0],
+ ['country2code("Aland Islands")			eq "ax"', 0],
+ ['code2country("ala", LOCALE_CODE_ALPHA_3) eq "Aland Islands"', 0],
+ ['code2country("248", LOCALE_CODE_NUMERIC) eq "Aland Islands"', 0],
+
+ ['country2code("Yugoslavia")				eq "cs"', 0],	# alias (old name)
+ ['country2code("Serbia and Montenegro")		eq "cs"', 0],	# new name
+ ['code2country("scg", LOCALE_CODE_ALPHA_3) eq "Serbia and Montenegro"', 0],
+ ['code2country("891", LOCALE_CODE_NUMERIC) eq "Serbia and Montenegro"', 0],
+
+ ['country2code("East Timor")				eq "tl"', 0],	# alias (provisional name)
+ ['code2country("rou", LOCALE_CODE_ALPHA_3) eq "Romania"', 0],
+
+ ['country2code("Zaire")				eq "cd"', 0],	# alias (old name)
+ ['country2code("Congo, The Democratic Republic of the")	eq "cd"', 0],	# new name
+ ['country2code("Congo, The Democratic Republic of the", LOCALE_CODE_ALPHA_3)	eq "cod"', 0],	# new name
+ ['country2code("Congo, The Democratic Republic of the", LOCALE_CODE_NUMERIC)	eq "180"', 0],	# new name
 
 );
 

@@ -46,14 +46,22 @@ sub parse_from_file {
       grep !m/^_/s,
         keys %$self
   ;
-  
-  my $command =
+
+  my $pod2man =
     catfile(
       ($self->{'__bindir'}  || die "no bindir set?!"  ),
       ($self->{'__pod2man'} || die "no pod2man set?!" ),
     )
-    . " $switches --lax $file | $render -man"
-  ;               # no temp file, just a pipe!
+  ;
+  unless(-e $pod2man) {
+    # This is rarely needed, I think.
+    $pod2man = $self->{'__pod2man'} || die "no pod2man set?!";
+    die "Can't find a pod2man?! (". $self->{'__pod2man'} .")\nAborting"
+      unless -e $pod2man;
+  }
+
+  my $command = "$pod2man $switches --lax $file | $render -man";
+         # no temp file, just a pipe!
 
   # Thanks to Brendan O'Dea for contributing the following block
   if(Pod::Perldoc::IS_Linux and -t STDOUT
@@ -158,7 +166,7 @@ L<Pod::Man>, L<Pod::Perldoc>, L<Pod::Perldoc::ToNroff>
 
 =head1 COPYRIGHT AND DISCLAIMERS
 
-Copyright (c) 2002 Sean M. Burke.  All rights reserved.
+Copyright (c) 2002,3,4 Sean M. Burke.  All rights reserved.
 
 This library is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

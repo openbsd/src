@@ -1,13 +1,13 @@
 
 require 5.004;
 package Test;
-# Time-stamp: "2003-04-18 21:48:01 AHDT"
+# Time-stamp: "2004-04-28 21:46:51 ADT"
 
 use strict;
 
 use Carp;
 use vars (qw($VERSION @ISA @EXPORT @EXPORT_OK $ntest $TestLevel), #public-ish
-          qw($TESTOUT $TESTERR %Program_Lines
+          qw($TESTOUT $TESTERR %Program_Lines $told_about_diff
              $ONFAIL %todo %history $planned @FAILDETAIL) #private-ish
          );
 
@@ -21,7 +21,7 @@ sub _reset_globals {
     $planned    = 0;
 }
 
-$VERSION = '1.24';
+$VERSION = '1.25';
 require Exporter;
 @ISA=('Exporter');
 
@@ -74,11 +74,11 @@ Test - provides a simple framework for writing test scripts
   ok 'segmentation fault', '/(?i)success/';    #regex match
 
   skip(
-    $^O eq 'MSWin' ? "Skip unless MSWin" : 0,  # whether to skip
+    $^O =~ m/MSWin/ ? "Skip if MSWin" : 0,  # whether to skip
     $foo, $bar  # arguments just like for ok(...)
   );
   skip(
-    $^O eq 'MSWin' ? 0 : "Skip if MSWin",  # whether to skip
+    $^O =~ m/MSWin/ ? 0 : "Skip unless MSWin",  # whether to skip
     $foo, $bar  # arguments just like for ok(...)
   );
 
@@ -159,14 +159,14 @@ sub plan {
     _read_program( (caller)[1] );
 
     my $max=0;
-    for (my $x=0; $x < @_; $x+=2) {
-	my ($k,$v) = @_[$x,$x+1];
+    while (@_) {
+	my ($k,$v) = splice(@_, 0, 2);
 	if ($k =~ /^test(s)?$/) { $max = $v; }
-	elsif ($k eq 'todo' or 
+	elsif ($k eq 'todo' or
 	       $k eq 'failok') { for (@$v) { $todo{$_}=1; }; }
-	elsif ($k eq 'onfail') { 
+	elsif ($k eq 'onfail') {
 	    ref $v eq 'CODE' or croak "Test::plan(onfail => $v): must be CODE";
-	    $ONFAIL = $v; 
+	    $ONFAIL = $v;
 	}
 	else { carp "Test::plan(): skipping unrecognized directive '$k'" }
     }
@@ -189,7 +189,7 @@ sub plan {
     printf $TESTOUT
       "# Current time local: %s\n# Current time GMT:   %s\n",
       scalar(localtime($^T)), scalar(gmtime($^T));
-      
+
     print $TESTOUT "# Using Test.pm version $VERSION\n";
 
     # Retval never used:
@@ -203,10 +203,10 @@ sub _read_program {
   open(SOURCEFILE, "<$file") || return;
   $Program_Lines{$file} = [<SOURCEFILE>];
   close(SOURCEFILE);
-  
+
   foreach my $x (@{$Program_Lines{$file}})
    { $x =~ tr/\cm\cj\n\r//d }
-  
+
   unshift @{$Program_Lines{$file}}, '';
   return 1;
 }
@@ -218,15 +218,38 @@ sub _read_program {
   my $value = _to_value($input);
 
 Converts an C<ok> parameter to its value.  Typically this just means
-running it, if it's a code reference.  You should run all inputted 
+running it, if it's a code reference.  You should run all inputted
 values through this.
 
 =cut
 
 sub _to_value {
     my ($v) = @_;
-    return (ref $v or '') eq 'CODE' ? $v->() : $v;
+    return ref $v eq 'CODE' ? $v->() : $v;
 }
+
+sub _quote {
+    my $str = $_[0];
+    return "<UNDEF>" unless defined $str;
+    $str =~ s/\\/\\\\/g;
+    $str =~ s/"/\\"/g;
+    $str =~ s/\a/\\a/g;
+    $str =~ s/[\b]/\\b/g;
+    $str =~ s/\e/\\e/g;
+    $str =~ s/\f/\\f/g;
+    $str =~ s/\n/\\n/g;
+    $str =~ s/\r/\\r/g;
+    $str =~ s/\t/\\t/g;
+    $str =~ s/([\0-\037])(?!\d)/sprintf('\\%o',ord($1))/eg;
+    $str =~ s/([\0-\037\177-\377])/sprintf('\\x%02X',ord($1))/eg;
+    $str =~ s/([^\0-\176])/sprintf('\\x{%X}',ord($1))/eg;
+    #if( $_[1] ) {
+    #  substr( $str , 218-3 ) = "..."
+    #   if length($str) >= 218 and !$ENV{PERL_TEST_NO_TRUNC};
+    #}
+    return qq("$str");
+}
+
 
 =end _private
 
@@ -271,17 +294,35 @@ the test passes or fails.  For example,
       time() - $start_time  >= 4
     });
 
-In its two-argument form, C<ok(I<arg1>,I<arg2>)> compares the two scalar
-values to see if they equal.  (The equality is checked with C<eq>).
+In its two-argument form, C<ok(I<arg1>, I<arg2>)> compares the two
+scalar values to see if they match.  They match if both are undefined,
+or if I<arg2> is a regex that matches I<arg1>, or if they compare equal
+with C<eq>.
 
     # Example of ok(scalar, scalar)
 
     ok( "this", "that" );               # not ok, 'this' ne 'that'
+    ok( "", undef );                    # not ok, "" is defined
+
+The second argument is considered a regex if it is either a regex
+object or a string that looks like a regex.  Regex objects are
+constructed with the qr// operator in recent versions of perl.  A
+string is considered to look like a regex if its first and last
+characters are "/", or if the first character is "m"
+and its second and last characters are both the
+same non-alphanumeric non-whitespace character.  These regexp
+
+Regex examples:
+
+    ok( 'JaffO', '/Jaff/' );    # ok, 'JaffO' =~ /Jaff/
+    ok( 'JaffO', 'm|Jaff|' );   # ok, 'JaffO' =~ m|Jaff|
+    ok( 'JaffO', qr/Jaff/ );    # ok, 'JaffO' =~ qr/Jaff/;
+    ok( 'JaffO', '/(?i)jaff/ ); # ok, 'JaffO' =~ /jaff/i;
 
 If either (or both!) is a subroutine reference, it is run and used
 as the value for comparing.  For example:
 
-    ok 4, sub {
+    ok sub {
         open(OUT, ">x.dat") || die $!;
         print OUT "\x{e000}";
         close OUT;
@@ -289,24 +330,16 @@ as the value for comparing.  For example:
         unlink 'x.dat' or warn "Can't unlink : $!";
         return $bytecount;
       },
+      4
     ;
 
-The above test passes two values to C<ok(arg1, arg2)> -- the first is
-the number 4, and the second is a coderef. Before C<ok> compares them,
+The above test passes two values to C<ok(arg1, arg2)> -- the first 
+a coderef, and the second is the number 4.  Before C<ok> compares them,
 it calls the coderef, and uses its return value as the real value of
 this parameter. Assuming that C<$bytecount> returns 4, C<ok> ends up
-testing C<4 eq 4>. Since that's true, this test passes.
+testing C<4 eq 4>.  Since that's true, this test passes.
 
-If C<arg2> is either a regex object (i.e., C<qr/.../>) or a string
-that I<looks like> a regex (e.g., C<'/foo/'>), then
-C<ok(I<arg1>,I<arg2>)> will perform a pattern
-match against it, instead of using C<eq>.
-
-    ok( 'JaffO', '/Jaff/' );    # ok, 'JaffO' =~ /Jaff/
-    ok( 'JaffO', qr/Jaff/ );    # ok, 'JaffO' =~ qr/Jaff/;
-    ok( 'JaffO', '/(?i)jaff/ ); # ok, 'JaffO' =~ /jaff/i;
-
-Finally, you can append an optional third argument, in 
+Finally, you can append an optional third argument, in
 C<ok(I<arg1>,I<arg2>, I<note>)>, where I<note> is a string value that
 will be printed if the test fails.  This should be some useful
 information about the test, pertaining to why it failed, and/or
@@ -348,7 +381,7 @@ sub ok ($;$$) {
 
     my $ok=0;
     my $result = _to_value(shift);
-    my ($expected,$diag,$isregex,$regex);
+    my ($expected, $isregex, $regex);
     if (@_ == 0) {
 	$ok = $result;
     } else {
@@ -358,7 +391,7 @@ sub ok ($;$$) {
 	    $ok = !defined $result;
 	} elsif (!defined $result) {
 	    $ok = 0;
-	} elsif ((ref($expected)||'') eq 'Regexp') {
+	} elsif (ref($expected) eq 'Regexp') {
 	    $ok = $result =~ /$expected/;
             $regex = $expected;
 	} elsif (($regex) = ($expected =~ m,^ / (.+) / $,sx) or
@@ -380,63 +413,205 @@ sub ok ($;$$) {
 	else {
             print $TESTOUT "ok $ntest\n";
         }
-	
-	if (!$ok) {
-	    my $detail = { 'repetition' => $repetition, 'package' => $pkg,
-			   'result' => $result, 'todo' => $todo };
-	    $$detail{expected} = $expected if defined $expected;
 
-            # Get the user's diagnostic, protecting against multi-line
-            # diagnostics.
-	    $diag = $$detail{diagnostic} = _to_value(shift) if @_;
-            $diag =~ s/\n/\n#/g if defined $diag;
+        $ok or _complain($result, $expected,
+        {
+          'repetition' => $repetition, 'package' => $pkg,
+          'result' => $result, 'todo' => $todo,
+          'file' => $file, 'line' => $line,
+          'context' => $context, 'compare' => $compare,
+          @_ ? ('diagnostic' =>  _to_value(shift)) : (),
+        });
 
-	    $context .= ' *TODO*' if $todo;
-	    if (!$compare) {
-		if (!$diag) {
-		    print $TESTERR "# Failed test $ntest in $context\n";
-		} else {
-		    print $TESTERR "# Failed test $ntest in $context: $diag\n";
-		}
-	    } else {
-		my $prefix = "Test $ntest";
-		print $TESTERR "# $prefix got: ".
-		    (defined $result? "'$result'":'<UNDEF>')." ($context)\n";
-		$prefix = ' ' x (length($prefix) - 5);
-		if (defined $regex) {
-		    $expected = 'qr{'.$regex.'}';
-		}
-                elsif (defined $expected) {
-		    $expected = "'$expected'";
-		}
-                else {
-                    $expected = '<UNDEF>';
-                }
-		if (!$diag) {
-		    print $TESTERR "# $prefix Expected: $expected\n";
-		} else {
-		    print $TESTERR "# $prefix Expected: $expected ($diag)\n";
-		}
-	    }
-
-            if(defined $Program_Lines{$file}[$line]) {
-                print $TESTERR
-                  "#  $file line $line is: $Program_Lines{$file}[$line]\n"
-                 if
-                  $Program_Lines{$file}[$line] =~ m/[^\s\#\(\)\{\}\[\]\;]/
-                   # Otherwise it's a pretty uninteresting line!
-                ;
-                
-                undef $Program_Lines{$file}[$line];
-                 # So we won't repeat it.
-            }
-
-	    push @FAILDETAIL, $detail;
-	}
     }
     ++ $ntest;
     $ok;
 }
+
+
+sub _complain {
+    my($result, $expected, $detail) = @_;
+    $$detail{expected} = $expected if defined $expected;
+
+    # Get the user's diagnostic, protecting against multi-line
+    # diagnostics.
+    my $diag = $$detail{diagnostic};
+    $diag =~ s/\n/\n#/g if defined $diag;
+
+    $$detail{context} .= ' *TODO*' if $$detail{todo};
+    if (!$$detail{compare}) {
+        if (!$diag) {
+            print $TESTERR "# Failed test $ntest in $$detail{context}\n";
+        } else {
+            print $TESTERR "# Failed test $ntest in $$detail{context}: $diag\n";
+        }
+    } else {
+        my $prefix = "Test $ntest";
+
+        print $TESTERR "# $prefix got: " . _quote($result) .
+                       " ($$detail{context})\n";
+        $prefix = ' ' x (length($prefix) - 5);
+        my $expected_quoted = (defined $$detail{regex})
+         ?  'qr{'.($$detail{regex}).'}'  :  _quote($expected);
+
+        print $TESTERR "# $prefix Expected: $expected_quoted",
+           $diag ? " ($diag)" : (), "\n";
+
+        _diff_complain( $result, $expected, $detail, $prefix )
+          if defined($expected) and 2 < ($expected =~ tr/\n//);
+    }
+
+    if(defined $Program_Lines{ $$detail{file} }[ $$detail{line} ]) {
+        print $TESTERR
+          "#  $$detail{file} line $$detail{line} is: $Program_Lines{ $$detail{file} }[ $$detail{line} ]\n"
+         if $Program_Lines{ $$detail{file} }[ $$detail{line} ]
+          =~ m/[^\s\#\(\)\{\}\[\]\;]/;  # Otherwise it's uninformative
+
+        undef $Program_Lines{ $$detail{file} }[ $$detail{line} ];
+         # So we won't repeat it.
+    }
+
+    push @FAILDETAIL, $detail;
+    return;
+}
+
+
+
+sub _diff_complain {
+    my($result, $expected, $detail, $prefix) = @_;
+    return _diff_complain_external(@_) if $ENV{PERL_TEST_DIFF};
+    return _diff_complain_algdiff(@_)
+     if eval { require Algorithm::Diff; Algorithm::Diff->VERSION(1.15); 1; };
+
+    $told_about_diff++ or print $TESTERR <<"EOT";
+# $prefix   (Install the Algorithm::Diff module to have differences in multiline
+# $prefix    output explained.  You might also set the PERL_TEST_DIFF environment
+# $prefix    variable to run a diff program on the output.)
+EOT
+    ;
+    return;
+}
+
+
+
+sub _diff_complain_external {
+    my($result, $expected, $detail, $prefix) = @_;
+    my $diff = $ENV{PERL_TEST_DIFF} || die "WHAAAA?";
+
+    require File::Temp;
+    my($got_fh, $got_filename) = File::Temp::tempfile("test-got-XXXXX");
+    my($exp_fh, $exp_filename) = File::Temp::tempfile("test-exp-XXXXX");
+    unless ($got_fh && $exp_fh) {
+      warn "Can't get tempfiles";
+      return;
+    }
+
+    print $got_fh $result;
+    print $exp_fh $expected;
+    if (close($got_fh) && close($exp_fh)) {
+        my $diff_cmd = "$diff $exp_filename $got_filename";
+        print $TESTERR "#\n# $prefix $diff_cmd\n";
+        if (open(DIFF, "$diff_cmd |")) {
+            local $_;
+            while (<DIFF>) {
+                print $TESTERR "# $prefix $_";
+            }
+            close(DIFF);
+        }
+        else {
+            warn "Can't run diff: $!";
+        }
+    } else {
+        warn "Can't write to tempfiles: $!";
+    }
+    unlink($got_filename);
+    unlink($exp_filename);
+    return;
+}
+
+
+
+sub _diff_complain_algdiff {
+    my($result, $expected, $detail, $prefix) = @_;
+
+    my @got = split(/^/, $result);
+    my @exp = split(/^/, $expected);
+
+    my $diff_kind;
+    my @diff_lines;
+
+    my $diff_flush = sub {
+        return unless $diff_kind;
+
+        my $count_lines = @diff_lines;
+        my $s = $count_lines == 1 ? "" : "s";
+        my $first_line = $diff_lines[0][0] + 1;
+
+        print $TESTERR "# $prefix ";
+        if ($diff_kind eq "GOT") {
+            print $TESTERR "Got $count_lines extra line$s at line $first_line:\n";
+            for my $i (@diff_lines) {
+                print $TESTERR "# $prefix  + " . _quote($got[$i->[0]]) . "\n";
+            }
+        } elsif ($diff_kind eq "EXP") {
+            if ($count_lines > 1) {
+                my $last_line = $diff_lines[-1][0] + 1;
+                print $TESTERR "Lines $first_line-$last_line are";
+            }
+            else {
+                print $TESTERR "Line $first_line is";
+            }
+            print $TESTERR " missing:\n";
+            for my $i (@diff_lines) {
+                print $TESTERR "# $prefix  - " . _quote($exp[$i->[1]]) . "\n";
+            }
+        } elsif ($diff_kind eq "CH") {
+            if ($count_lines > 1) {
+                my $last_line = $diff_lines[-1][0] + 1;
+                print $TESTERR "Lines $first_line-$last_line are";
+            }
+            else {
+                print $TESTERR "Line $first_line is";
+            }
+            print $TESTERR " changed:\n";
+            for my $i (@diff_lines) {
+                print $TESTERR "# $prefix  - " . _quote($exp[$i->[1]]) . "\n";
+                print $TESTERR "# $prefix  + " . _quote($got[$i->[0]]) . "\n";
+            }
+        }
+
+        # reset
+        $diff_kind = undef;
+        @diff_lines = ();
+    };
+
+    my $diff_collect = sub {
+        my $kind = shift;
+        &$diff_flush() if $diff_kind && $diff_kind ne $kind;
+        $diff_kind = $kind;
+        push(@diff_lines, [@_]);
+    };
+
+
+    Algorithm::Diff::traverse_balanced(
+        \@got, \@exp,
+        {
+            DISCARD_A => sub { &$diff_collect("GOT", @_) },
+            DISCARD_B => sub { &$diff_collect("EXP", @_) },
+            CHANGE    => sub { &$diff_collect("CH",  @_) },
+            MATCH     => sub { &$diff_flush() },
+        },
+    );
+    &$diff_flush();
+
+    return;
+}
+
+
+
+
+#~`~`~`~`~`~`~`~`~`~`~`~`~`~`~`~`~`~`~`~`~`~`~`~`~`~`~`~`~`~`~`~`~`~`~`~`~`~
+
 
 =item C<skip(I<skip_if_true>, I<args...>)>
 
@@ -458,17 +633,17 @@ this test isn't skipped.
 Example usage:
 
   my $if_MSWin =
-    $^O eq 'MSWin' ? 'Skip if under MSWin' : '';
+    $^O =~ m/MSWin/ ? 'Skip if under MSWin' : '';
 
-  # A test to be run EXCEPT under MSWin:
+  # A test to be skipped if under MSWin (i.e., run except under MSWin)
   skip($if_MSWin, thing($foo), thing($bar) );
 
-Or, going the other way:  
+Or, going the other way:
 
   my $unless_MSWin =
-    $^O eq 'MSWin' ? 'Skip unless under MSWin' : '';
+    $^O =~ m/MSWin/ ? '' : 'Skip unless under MSWin';
 
-  # A test to be run EXCEPT under MSWin:
+  # A test to be skipped unless under MSWin (i.e., run only under MSWin)
   skip($unless_MSWin, thing($foo), thing($bar) );
 
 The tricky thing to remember is that the first parameter is true if
@@ -565,7 +740,7 @@ __END__
 
 These tests are expected to succeed.  Usually, most or all of your tests
 are in this category.  If a normal test doesn't succeed, then that
-means that something is I<wrong>.  
+means that something is I<wrong>.
 
 =item * SKIPPED TESTS
 
@@ -598,8 +773,7 @@ Although test failures should be enough, extra diagnostics can be
 triggered at the end of a test run.  C<onfail> is passed an array ref
 of hash refs that describe each test failure.  Each hash will contain
 at least the following fields: C<package>, C<repetition>, and
-C<result>.  (The file, line, and test number are not included because
-their correspondence to a particular test is tenuous.)  If the test
+C<result>.  (You shouldn't rely on any other fields being present.)  If the test
 had an expected value or a diagnostic (or "note") string, these will also be
 included.
 
@@ -714,6 +888,26 @@ first block as C<skip> is called in the second block.
 
 =back
 
+
+=head1 ENVIRONMENT
+
+If C<PERL_TEST_DIFF> environment variable is set, it will be used as a
+command for comparing unexpected multiline results.  If you have GNU
+diff installed, you might want to set C<PERL_TEST_DIFF> to C<diff -u>.
+If you don't have a suitable program, you might install the
+C<Text::Diff> module and then set C<PERL_TEST_DIFF> to be C<perl
+-MText::Diff -e 'print diff(@ARGV)'>.  If C<PERL_TEST_DIFF> isn't set
+but the C<Algorithm::Diff> module is available, then it will be used
+to show the differences in multiline results.
+
+=for comment
+If C<PERL_TEST_NO_TRUNC> is set, then the initial "Got 'something' but
+expected 'something_else'" readings for long multiline output values aren't
+truncated at about the 230th column, as they normally could be in some
+cases.  Normally you won't need to use this, unless you were carefully
+parsing the output of your test programs.
+
+
 =head1 NOTE
 
 A past developer of this module once said that it was no longer being
@@ -723,6 +917,9 @@ exaggerated.  Feedback and suggestions are quite welcome.
 Be aware that the main value of this module is its simplicity.  Note
 that there are already more ambitious modules out there, such as
 L<Test::More> and L<Test::Unit>.
+
+Some earlier versions of this module had docs with some confusing
+typoes in the description of C<skip(...)>.
 
 
 =head1 SEE ALSO
@@ -744,7 +941,7 @@ Copyright (c) 1998-2000 Joshua Nathaniel Pritikin.  All rights reserved.
 
 Copyright (c) 2001-2002 Michael G. Schwern.
 
-Copyright (c) 2002-2003 Sean M. Burke.
+Copyright (c) 2002-2004 and counting Sean M. Burke.
 
 Current maintainer: Sean M. Burke. E<lt>sburke@cpan.orgE<gt>
 

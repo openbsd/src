@@ -91,7 +91,7 @@ fix very easily.
     use Fcntl ;
 
     my %hash ;
-    my $filename = "/tmp/filt" ;
+    my $filename = "filt" ;
     unlink $filename ;
 
     my $db = tie(%hash, 'SDBM_File', $filename, O_RDWR|O_CREAT, 0640)
@@ -137,7 +137,7 @@ Here is a DBM Filter that does it:
     use warnings ;
     use DB_File ;
     my %hash ;
-    my $filename = "/tmp/filt" ;
+    my $filename = "filt" ;
     unlink $filename ;
 
 

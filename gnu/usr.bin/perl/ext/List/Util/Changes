@@ -1,0 +1,10 @@
+1.14 -- Sat May 22 08:01:19 BST 2004
+
+Bug Fixes
+  * Fixed memory leak in reduce()
+  * Added tests to check passing a reference to a constant to weaken() in perl >= 5.008003
+  * Fixed looks_like_number(undef) to return false for perl >= 5.009002
+  * Fixed bug in refaddr() when passed a tied variable
+
+ChangeLogs for releases prior to 1.14 may be found at
+http://svn.mutatus.co.uk/browse/Scalar-List-Utils/tags/Scalar-List-Utils-1.13/ChangeLog

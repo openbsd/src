@@ -1,4 +1,4 @@
-                       Term::ANSIColor version 1.07
+                       Term::ANSIColor version 1.08
               (A simple ANSI text attribute control module)
 
   Copyright 1996, 1997, 1998, 2000, 2001, 2002
@@ -86,5 +86,8 @@ THANKS
 
   To ATricket for the information about what PuTTY, Windows telnet, and
   OpenSSH under Cygwin support.
+
+  To Richard Maus for pointing out DARK was missing from the exported
+  constants list and CYAN and WHITE were missing from the documentation.
 
   To Larry Wall, as always, for Perl.

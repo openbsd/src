@@ -14,7 +14,7 @@ BEGIN {
 	
 use Socket;
 
-print "1..16\n";
+print "1..17\n";
 
 $has_echo = $^O ne 'MSWin32';
 $alarmed = 0;
@@ -149,3 +149,21 @@ if (sockaddr_family(pack_sockaddr_in(100,inet_aton("10.250.230.10"))) == AF_INET
 
 eval { sockaddr_family("") };
 print (($@ =~ /^Bad arg length for Socket::sockaddr_family, length is 0, should be at least \d+/) ? "ok 16\n" : "not ok 16\n");
+
+if ($^O eq 'linux') {
+    # see if we can handle abstract sockets
+    my $test_abstract_socket = chr(0) . '/tmp/test-perl-socket';
+    my $addr = sockaddr_un ($test_abstract_socket);
+    my ($path) = sockaddr_un ($addr);
+    if ($test_abstract_socket eq $path) {
+        print "ok 17\n";
+    }
+    else {
+	$path =~ s/\0/\\0/g;
+	print "# got <$path>\n";
+        print "not ok 17\n";
+    }
+} else {
+    # doesn't have abstract socket support
+    print "ok 17 - skipped on this platform\n";
+}

@@ -1,13 +1,14 @@
-# Jamo-3.2.0.txt
+# Jamo-4.0.1.txt
+# Date: 2004-03-02, 18:15 PST [KW]
 #
-# This file is a normative contributory data file in the
-# Unicode Character Database.
+# Unicode Character Database
+# Copyright (c) 1991-2004 Unicode, Inc.
+# For terms of use, see http://www.unicode.org/terms_of_use.html
+# For documentation, see UCD.html
 #
-# This file defines the Jamo Short Name property, repeating
-# in machine readable form the information printed in Table 4-4
-# of The Unicode Standard, Version 3.0.
+# This file defines the Jamo Short Name property.
 #
-# See sections 3.11 and 4.4 of The Unicode Standard, Version 3.0
+# See Section 3.12 of The Unicode Standard, Version 4.0
 # for more information.
 #
 # Each line contains two fields, separated by a semicolon.

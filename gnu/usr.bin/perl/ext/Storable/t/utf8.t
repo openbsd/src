@@ -1,3 +1,4 @@
+
 #!./perl -w
 #
 #  Copyright (c) 1995-2000, Raphael Manfredi
@@ -30,7 +31,7 @@ sub ok;
 
 use Storable qw(thaw freeze);
 
-print "1..3\n";
+print "1..6\n";
 
 my $x = chr(1234);
 ok 1, $x eq ${thaw freeze \$x};
@@ -43,3 +44,20 @@ ok 2, $x eq ${thaw freeze \$x};
 $x = chr (175) . chr (256);
 chop $x;
 ok 3, $x eq ${thaw freeze \$x};
+
+# Storable needs to cope if a frozen string happens to be internall utf8
+# encoded
+
+$x = chr 256;
+my $data = freeze \$x;
+ok 4, $x eq ${thaw $data};
+
+$data .= chr 256;
+chop $data;
+ok 5, $x eq ${thaw $data};
+
+
+$data .= chr 256;
+# This definately isn't valid
+eval {thaw $data};
+ok 6, $@ =~ /corrupt.*characters outside/;

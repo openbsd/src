@@ -11,7 +11,7 @@ print "ok 1\n";
 
 $SIG{__WARN__} = sub {
     print "ok $1\n"
-	if $_[0] =~ m!ok (\d+)$! };
+	if $_[0] =~ m!ok (\d+)\n at .+\b(?i:carp\.t) line \d+$! };
 
 carp  "ok 2\n";
 	
