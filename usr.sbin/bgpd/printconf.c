@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.10 2004/03/11 17:34:01 henning Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.11 2004/03/12 20:57:22 henning Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -147,6 +147,8 @@ print_peer(struct peer_config *p)
 		printf("%s\tholdtime %u\n", c, p->holdtime);
 	if (p->min_holdtime)
 		printf("%s\tholdtime min %u\n", c, p->min_holdtime);
+	if (p->capabilities == 0)
+		printf("%s\tannounce capabilities no\n", c);
 	if (p->announce_type == ANNOUNCE_SELF)
 		printf("%s\tannounce self\n", c);
 	else if (p->announce_type == ANNOUNCE_NONE)
