@@ -113,18 +113,18 @@ pchbattach(parent, self, aux)
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_INTEL_PCI450_PB:
 			bcreg = pci_conf_read(pa->pa_pc, pa->pa_tag,
-					      PCISET_BUSCONFIG_REG);
+			    PCISET_BUSCONFIG_REG);
 			bdnum = PCISET_BRIDGE_NUMBER(bcreg);
 			pbnum = PCISET_PCI_BUS_NUMBER(bcreg);
 			switch (bdnum & PCISET_BRIDGETYPE_MASK) {
 			default:
-				printf(": bdnum=%x (reserved)\n", bdnum);
+				printf(": bdnum=%x (reserved)", bdnum);
 				break;
 			case PCISET_TYPE_COMPAT:
-				printf(": Compatibility PB (bus %d)\n", pbnum);
+				printf(": Compatibility PB (bus %d)", pbnum);
 				break;
 			case PCISET_TYPE_AUX:
-				printf(": Auxiliary PB (bus %d)\n", pbnum);
+				printf(": Auxiliary PB (bus %d)", pbnum);
 				/*
 				 * This host bridge has a second PCI bus.
 				 * Configure it.
@@ -146,14 +146,14 @@ pchbattach(parent, self, aux)
 				bcreg &= ~I82424_BCTL_CPUPCI_POSTEN;
 				pci_conf_write(pa->pa_pc, pa->pa_tag,
 				    I82424_CPU_BCTL_REG, bcreg);
-				printf(": disabled CPU-PCI write posting\n");
+				printf(": disabled CPU-PCI write posting");
 			}
 			break;
 		default:
-			printf("\n");
 			break;
 		}
 	}
+	printf("\n");
 }
 
 int
