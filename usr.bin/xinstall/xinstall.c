@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.5 1996/08/08 20:49:26 millert Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.6 1996/08/14 16:23:55 millert Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #endif
-static char rcsid[] = "$OpenBSD: xinstall.c,v 1.5 1996/08/08 20:49:26 millert Exp $";
+static char rcsid[] = "$OpenBSD: xinstall.c,v 1.6 1996/08/14 16:23:55 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -414,11 +414,18 @@ copy(from_fd, from_name, to_fd, to_name, size)
 	 */
 	if (size <= 8 * 1048576) {
 		if ((p = mmap(NULL, (size_t)size, PROT_READ,
-		    0, from_fd, (off_t)0)) == (char *)-1)
-			err(EX_OSERR, "%s", from_name);
+		    0, from_fd, (off_t)0)) == (char *)-1) {
+			serrno = errno;
+			(void)unlink(to_name);
+			errx(EX_OSERR, "%s: %s", from_name, strerror(serrno));
+		}
 		siz = (size_t)size;
-		if (write(to_fd, p, siz) != siz)
-			err(EX_OSERR, "%s", to_name);
+		if ((nw = write(to_fd, p, siz)) != siz) {
+			serrno = errno;
+			(void)unlink(to_name);
+			errx(EX_OSERR, "%s: %s",
+			    to_name, strerror(nw > 0 ? EIO : serrno));
+		}
 		(void) munmap(p, (size_t)size);
 	} else {
 		while ((nr = read(from_fd, buf, sizeof(buf))) > 0)
