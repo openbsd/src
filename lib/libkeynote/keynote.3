@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.3,v 1.33 2002/05/01 08:03:30 mpech Exp $
+.\" $OpenBSD: keynote.3,v 1.34 2002/05/03 16:21:57 angelos Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -787,8 +787,8 @@ using the ASCII-encoded cryptographic key contained in
 The type of signature to be produced is described by the string
 .Fa algorithm .
 Possible values for this string are
-.Dv SIG_RSA_SHA1_HEX ,
-.Dv SIG_RSA_SHA1_BASE64 ,
+.Dv SIG_RSA_SHA1_PKCS1_HEX ,
+.Dv SIG_RSA_SHA1_PKCS1_BASE64 ,
 .Dv SIG_RSA_MD5_HEX
 and
 .Dv SIG_RSA_MD5_HEX
