@@ -1,4 +1,4 @@
-/*	$NetBSD: fat.h,v 1.8 1995/09/09 19:38:01 ws Exp $	*/
+/*	$NetBSD: fat.h,v 1.9 1996/01/19 14:28:05 leo Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -63,25 +63,20 @@
 #define	FAT12_MASK	0x0fff	/* mask for 12 bit cluster numbers */
 #define	FAT16_MASK	0xffff	/* mask for 16 bit cluster numbers */
 
-#ifdef	atari
 /*
- * Return true if filesystem uses 12 bit fats. If the filesystem
- * is on floppy we've got a 12 bit fat filesystem, otherwise 16 bit.
- * We check the d_type field in the disklabel struct while mounting
- * and store the result in the pm_fatentrysize field in the
- * msdosfsmount struct.
+ * MSDOSFS:
+ * Return true if filesystem uses 12 bit fats. Microsoft Programmer's
+ * Reference says if the maximum cluster number in a filesystem is greater
+ * than 4086 then we've got a 16 bit fat filesystem. While mounting, the
+ * result of this test is stored in pm_fatentrysize.
+ * GEMDOS-flavour (atari):
+ * If the filesystem is on floppy we've got a 12 bit fat filesystem, otherwise
+ * 16 bit. We check the d_type field in the disklabel struct while mounting
+ * and store the result in the pm_fatentrysize. Note that this kind of
+ * detection gets flakey when mounting a vnd-device.
  */
 #define	FAT12(pmp)	(pmp->pm_fatentrysize == 12)
 #define	FAT16(pmp)	(pmp->pm_fatentrysize == 16)
-#else	/* !atari */
-/*
- * Return true if filesystem uses 12 bit fats. Microsoft Programmer's
- * Reference says if the maximum cluster number in a filesystem is greater
- * than 4086 then we've got a 16 bit fat filesystem.
- */
-#define	FAT12(pmp)	(pmp->pm_maxcluster <= 4086)
-#define	FAT16(pmp)	(pmp->pm_maxcluster >  4086)
-#endif	/* !atari */
 
 #define	MSDOSFSEOF(cn)	(((cn) & 0xfff8) == 0xfff8)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfsmount.h,v 1.12 1995/10/15 15:34:34 ws Exp $	*/
+/*	$NetBSD: msdosfsmount.h,v 1.13 1996/01/19 14:28:31 leo Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -76,9 +76,7 @@ struct msdosfsmount {
 	u_int *pm_inusemap;	/* ptr to bitmap of in-use clusters */
 	u_int pm_flags;		/* see below */
 	struct netexport pm_export;	/* export information */
-#ifdef	atari
 	u_int  pm_fatentrysize;	/* size of fat entry (12/16) */
-#endif	/* atari */
 };
 
 /*
@@ -87,9 +85,11 @@ struct msdosfsmount {
 /*#define	MSDOSFSMNT_SHORTNAME	1	/* Defined in <sys/mount.h> */
 /*#define	MSDOSFSMNT_LONGNAME	2				*/
 /*#define	MSDOSFSMNT_NOWIN95	4				*/
+/*#define	MSDOSFSMNT_GEMDOSFS	8				*/
 /* All flags above: */
 #define	MSDOSFSMNT_MNTOPT \
-	(MSDOSFSMNT_SHORTNAME|MSDOSFSMNT_LONGNAME|MSDOSFSMNT_NOWIN95)
+	(MSDOSFSMNT_SHORTNAME|MSDOSFSMNT_LONGNAME|MSDOSFSMNT_NOWIN95 \
+	 |MSDOSFSMNT_GEMDOSFS)
 #define	MSDOSFSMNT_RONLY	0x80000000	/* mounted read-only	*/
 #define	MSDOSFSMNT_WAITONFAT	0x40000000	/* mounted synchronous	*/
 

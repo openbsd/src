@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.44 1995/11/11 22:00:21 mycroft Exp $	*/
+/*	$NetBSD: mount.h,v 1.45 1996/01/19 14:29:25 leo Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -381,6 +381,7 @@ struct msdosfs_args {
 #define	MSDOSFSMNT_SHORTNAME	1	/* Force old DOS short names only */
 #define	MSDOSFSMNT_LONGNAME	2	/* Force Win'95 long names */
 #define	MSDOSFSMNT_NOWIN95	4	/* Completely ignore Win95 entries */
+#define	MSDOSFSMNT_GEMDOSFS	8	/* This is a gemdos-flavour */
 
 /*
  * Arguments to mount amigados filesystems.

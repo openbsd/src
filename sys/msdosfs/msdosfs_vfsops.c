@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.36 1995/11/29 15:08:40 ws Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.38 1996/01/21 16:35:29 fvdl Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -177,7 +177,7 @@ msdosfs_mount(mp, path, data, ndp, p)
 		VOP_UNLOCK(devvp);
 	}
 	if ((mp->mnt_flag & MNT_UPDATE) == 0)
-		error = msdosfs_mountfs(devvp, mp, p);
+		error = msdosfs_mountfs(devvp, mp, p, &args);
 	else {
 		if (devvp != pmp->pm_devvp)
 			error = EINVAL;	/* needs translation */
@@ -193,6 +193,13 @@ msdosfs_mount(mp, path, data, ndp, p)
 	pmp->pm_uid = args.uid;
 	pmp->pm_mask = args.mask;
 	pmp->pm_flags |= args.flags & MSDOSFSMNT_MNTOPT;
+
+	/*
+	 * GEMDOS knows nothing (yet) about win95
+	 */
+	if (pmp->pm_flags & MSDOSFSMNT_GEMDOSFS)
+		pmp->pm_flags |= MSDOSFSMNT_NOWIN95;
+	
 	if (pmp->pm_flags & MSDOSFSMNT_NOWIN95)
 		pmp->pm_flags |= MSDOSFSMNT_SHORTNAME;
 	else if (!(pmp->pm_flags & (MSDOSFSMNT_SHORTNAME | MSDOSFSMNT_LONGNAME))) {
@@ -222,10 +229,11 @@ msdosfs_mount(mp, path, data, ndp, p)
 }
 
 int
-msdosfs_mountfs(devvp, mp, p)
+msdosfs_mountfs(devvp, mp, p, argp)
 	struct vnode *devvp;
 	struct mount *mp;
 	struct proc *p;
+	struct msdosfs_args *argp;
 {
 	struct msdosfsmount *pmp;
 	struct buf *bp;
@@ -237,9 +245,7 @@ msdosfs_mountfs(devvp, mp, p)
 	extern struct vnode *rootvp;
 	u_int8_t SecPerClust;
 	int	ronly, error;
-#ifdef	atari
 	int	bsize, dtype, tmp;
-#endif	/* !atari */
 
 	/*
 	 * Disallow multiple mounts of the same device.
@@ -257,35 +263,37 @@ msdosfs_mountfs(devvp, mp, p)
 	ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
 	if (error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, p))
 		return (error);
-#ifdef	atari
+
 	bp  = NULL; /* both used in error_exit */
 	pmp = NULL;
-	/*
-	 * We need the disklabel to calculate the size of a FAT entry later on.
-	 * Also make sure the partition contains a filesystem of type FS_MSDOS.
-	 * This doesn't work for floppies, so we have to check for them too.
-	 *
-	 * At least some parts of the msdos fs driver seem to assume that the
-	 * size of a disk block will always be 512 bytes. Let's check it...
-	 */
-	if (error = VOP_IOCTL(devvp, DIOCGPART, (caddr_t)&dpart, FREAD, NOCRED, p))
-		goto error_exit;
-	tmp   = dpart.part->p_fstype;
-	dtype = dpart.disklab->d_type;
-	bsize = dpart.disklab->d_secsize;
-	if (bsize != 512 || (dtype != DTYPE_FLOPPY && tmp != FS_MSDOS)) {
-		error = EINVAL;
-		goto error_exit;
+
+	if (argp->flags & MSDOSFSMNT_GEMDOSFS) {
+		/*
+	 	 * We need the disklabel to calculate the size of a FAT entry
+		 * later on. Also make sure the partition contains a filesystem
+		 * of type FS_MSDOS. This doesn't work for floppies, so we have
+		 * to check for them too.
+	 	 *
+	 	 * At least some parts of the msdos fs driver seem to assume
+		 * that the size of a disk block will always be 512 bytes.
+		 * Let's check it...
+		 */
+		if (error = VOP_IOCTL(devvp, DIOCGPART, (caddr_t)&dpart,
+							FREAD, NOCRED, p))
+			goto error_exit;
+		tmp   = dpart.part->p_fstype;
+		dtype = dpart.disklab->d_type;
+		bsize = dpart.disklab->d_secsize;
+		if (bsize != 512 || (dtype!=DTYPE_FLOPPY && tmp!=FS_MSDOS)) {
+			error = EINVAL;
+			goto error_exit;
+		}
 	}
-#else	/* !atari */
 
 	/*
-	 * Read the boot sector of the filesystem, and then check the boot
-	 * signature.  If not a dos boot sector then error out.
+	 * Read the boot sector of the filesystem, and then check the
+	 * boot signature.  If not a dos boot sector then error out.
 	 */
-	bp = NULL;
-	pmp = NULL;
-#endif	/* !atari */
 	if (error = bread(devvp, 0, 512, NOCRED, &bp))
 		goto error_exit;
 	bp->b_flags |= B_AGE;
@@ -293,7 +301,8 @@ msdosfs_mountfs(devvp, mp, p)
 	b33 = (struct byte_bpb33 *)bsp->bs33.bsBPB;
 	b50 = (struct byte_bpb50 *)bsp->bs50.bsBPB;
 #ifdef MSDOSFS_CHECKSIG
-	if (bsp->bs50.bsBootSectSig != BOOTSIG) {
+	if (!(argp->flags & MSDOSFSMNT_GEMDOSFS)
+		&& (bsp->bs50.bsBootSectSig != BOOTSIG)) {
 		error = EINVAL;
 		goto error_exit;
 	}
@@ -315,26 +324,18 @@ msdosfs_mountfs(devvp, mp, p)
 	pmp->pm_RootDirEnts = getushort(b50->bpbRootDirEnts);
 	pmp->pm_Sectors = getushort(b50->bpbSectors);
 	pmp->pm_FATsecs = getushort(b50->bpbFATsecs);
-#ifdef	atari
-	/*
-	 * Meaningless on  a gemdos fs. This kind of information
-	 * should be extracted from the disklabel structure.
-	 */
-	pmp->pm_SecPerTrack = 1;	/* anything between 1 and  63 */
-	pmp->pm_Heads = 1;		/* anything between 1 and 255 */
-	pmp->pm_Media = 0;		/* unused, any value will do  */
-#else	/* !atari */
 	pmp->pm_SecPerTrack = getushort(b50->bpbSecPerTrack);
 	pmp->pm_Heads = getushort(b50->bpbHeads);
 	pmp->pm_Media = b50->bpbMedia;
 
-	/* XXX - We should probably check more values here */
-    	if (!pmp->pm_BytesPerSec || !SecPerClust ||
-	    pmp->pm_Heads > 255 || pmp->pm_SecPerTrack > 63) {
-		error = EINVAL;
-		goto error_exit;
+	if (!(argp->flags & MSDOSFSMNT_GEMDOSFS)) {
+		/* XXX - We should probably check more values here */
+    		if (!pmp->pm_BytesPerSec || !SecPerClust
+	    		|| pmp->pm_Heads > 255 || pmp->pm_SecPerTrack > 63) {
+			error = EINVAL;
+			goto error_exit;
+		}
 	}
-#endif	/* !atari */
 
 	if (pmp->pm_Sectors == 0) {
 		pmp->pm_HiddenSects = getulong(b50->bpbHiddenSecs);
@@ -343,37 +344,40 @@ msdosfs_mountfs(devvp, mp, p)
 		pmp->pm_HiddenSects = getushort(b33->bpbHiddenSecs);
 		pmp->pm_HugeSectors = pmp->pm_Sectors;
 	}
-#ifdef	atari
-	/*
-	 * Check a few values (could do some more):
-	 * - logical sector size: power of 2, >= block size
-	 * - sectors per cluster: power of 2, >= 1
-	 * - number of sectors:   >= 1, <= size of partition
-	 */
-	if ( pmp->pm_BytesPerSec < bsize
-	  || pmp->pm_BytesPerSec & (pmp->pm_BytesPerSec - 1)
-	  || !SecPerClust
-	  || SecPerClust & (SecPerClust - 1)
-	  || !pmp->pm_HugeSectors
-	  || pmp->pm_HugeSectors * pmp->pm_BytesPerSec
-				> dpart.part->p_size * bsize) {
-		error = EINVAL;
-		goto error_exit;
+
+	if (argp->flags & MSDOSFSMNT_GEMDOSFS) {
+		/*
+		 * Check a few values (could do some more):
+		 * - logical sector size: power of 2, >= block size
+		 * - sectors per cluster: power of 2, >= 1
+		 * - number of sectors:   >= 1, <= size of partition
+		 */
+		if ( (SecPerClust == 0)
+		  || (SecPerClust & (SecPerClust - 1))
+		  || (pmp->pm_BytesPerSec < bsize)
+		  || (pmp->pm_BytesPerSec & (pmp->pm_BytesPerSec - 1))
+		  || (pmp->pm_HugeSectors == 0)
+		  || (pmp->pm_HugeSectors * (pmp->pm_BytesPerSec / bsize)
+							> dpart.part->p_size)
+		   ) {
+			error = EINVAL;
+			goto error_exit;
+		}
+		/*
+		 * XXX - Many parts of the msdos fs driver seem to assume that
+		 * the number of bytes per logical sector (BytesPerSec) will
+		 * always be the same as the number of bytes per disk block
+		 * Let's pretend it is.
+		 */
+		tmp = pmp->pm_BytesPerSec / bsize;
+		pmp->pm_BytesPerSec  = bsize;
+		pmp->pm_HugeSectors *= tmp;
+		pmp->pm_HiddenSects *= tmp;
+		pmp->pm_ResSectors  *= tmp;
+		pmp->pm_Sectors     *= tmp;
+		pmp->pm_FATsecs     *= tmp;
+		SecPerClust         *= tmp;
 	}
-	/*
-	 * XXX - Many parts of the msdos fs driver seem to assume that
-	 * the number of bytes per logical sector (BytesPerSec) will
-	 * always be the same as the number of bytes per disk block
-	 * Let's pretend it is.
-	 */
-	tmp = pmp->pm_BytesPerSec / bsize;
-	pmp->pm_BytesPerSec = bsize;
-	pmp->pm_HugeSectors *= tmp;
-	pmp->pm_HiddenSects *= tmp;
-	pmp->pm_ResSectors *= tmp;
-	pmp->pm_Sectors *= tmp;
-	pmp->pm_FATsecs *= tmp;
-#endif	/* atari */
 	pmp->pm_fatblk = pmp->pm_ResSectors;
 	pmp->pm_rootdirblk = pmp->pm_fatblk +
 	    (pmp->pm_FATs * pmp->pm_FATsecs);
@@ -385,29 +389,29 @@ msdosfs_mountfs(devvp, mp, p)
 	    SecPerClust;
 	pmp->pm_maxcluster = pmp->pm_nmbrofclusters + 1;
 	pmp->pm_fatsize = pmp->pm_FATsecs * pmp->pm_BytesPerSec;
-#ifdef	atari
-	if (dtype == DTYPE_FLOPPY) {
-		pmp->pm_fatentrysize = 12;
-		pmp->pm_fatblocksize = 3 * pmp->pm_BytesPerSec;
-	} else {
-		pmp->pm_fatentrysize = 16;
-		pmp->pm_fatblocksize = MAXBSIZE;
+
+	if (argp->flags & MSDOSFSMNT_GEMDOSFS) {
+		if ((pmp->pm_nmbrofclusters <= (0xff0 - 2))
+		      && ((dtype == DTYPE_FLOPPY) || ((dtype == DTYPE_VNODE)
+		      && ((pmp->pm_Heads == 1) || (pmp->pm_Heads == 2))))
+		   )
+			pmp->pm_fatentrysize = 12;
+		else pmp->pm_fatentrysize = 16;
 	}
-#else	/* !atari */
-	if (FAT12(pmp))
-		/*
-		 * This will usually be a floppy disk. This size makes sure
-		 * that one fat entry will not be split across multiple
-		 * blocks.
-		 */
+	else {
+		if (pmp->pm_maxcluster <= 4086)
+			/*
+			 * This will usually be a floppy disk. This size makes
+			 * sure that one fat entry will not be split across
+			 * multiple blocks.
+			 */
+			pmp->pm_fatentrysize = 12;
+		else pmp->pm_fatentrysize = 16;
+	}
+	if(FAT12(pmp))
 		pmp->pm_fatblocksize = 3 * pmp->pm_BytesPerSec;
-	else
-		/*
-		 * This will usually be a hard disk. Reading or writing one
-		 * block should be quite fast.
-		 */
-		pmp->pm_fatblocksize = MAXBSIZE;
-#endif	/* !atari */
+	else pmp->pm_fatblocksize = MAXBSIZE;
+
 	pmp->pm_fatblocksec = pmp->pm_fatblocksize / pmp->pm_BytesPerSec;
 	pmp->pm_bnshift = ffs(pmp->pm_BytesPerSec) - 1;
 
@@ -419,12 +423,6 @@ msdosfs_mountfs(devvp, mp, p)
 	pmp->pm_crbomask = pmp->pm_bpcluster - 1;
 	pmp->pm_cnshift = ffs(pmp->pm_bpcluster) - 1;
 
-#ifdef	atari
-	/*
-	 * We already know that the number of sectors per cluster is
-	 * > 0 and a power of 2.
-	 */
-#else	/* !atari */
 	/*
 	 * Check for valid cluster size
 	 * must be a power of 2
@@ -433,7 +431,6 @@ msdosfs_mountfs(devvp, mp, p)
 		error = EINVAL;
 		goto error_exit;
 	}
-#endif	/* !atari */
 
 	/*
 	 * Release the bootsector buffer.
