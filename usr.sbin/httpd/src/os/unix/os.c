@@ -159,16 +159,15 @@ void *ap_os_dso_sym(void *handle, const char *symname)
 
 #elif defined(HAVE_DYLD)
     NSSymbol symbol;
-    char *symname2 = (char*)malloc(sizeof(char)*(strlen(symname)+2));
-    sprintf(symname2, "_%s", symname);
+    asprintf(&symname2, "_%s", symname);
     symbol = NSLookupAndBindSymbol(symname2);
     free(symname2);
     return NSAddressOfSymbol(symbol);
 
 #elif defined(DLSYM_NEEDS_UNDERSCORE)
-    char *symbol = (char*)malloc(sizeof(char)*(strlen(symname)+2));
+    char *symbol;
     void *retval;
-    sprintf(symbol, "_%s", symname);
+    asprintf(&symbol, "_%s", symname);
     retval = dlsym(handle, symbol);
     free(symbol);
     return retval;
