@@ -1,4 +1,4 @@
-/*	$OpenBSD: dartreg.h,v 1.3 2001/07/04 08:09:22 niklas Exp $	*/
+/*	$OpenBSD: dartreg.h,v 1.4 2003/10/05 20:24:10 miod Exp $	*/
 
 /*
  * Something to put append a 'U' to a long constant if it's C so that
@@ -39,7 +39,7 @@
 
 /* the access to the same command register must be delayed,
    because the chip has some hardware problems in this case */
-#define DELAY_CR   { volatile register int i; for ( i=0; i<250; ++i ); }
+#define DELAY_CR   do { volatile int i; for (i = 0; i < 250; ++i); } while (0)
 
 /*********************** MC68681 DEFINITIONS ************************/
 #define PORTOFFSET	0x10	/* offset for port b address space */
@@ -109,7 +109,7 @@
 #define FFULL        0x02  /* receiver FIFO full */
 #define RXRDY        0x01  /* receiver ready */
 
-/* output port configuration  register: OPCR operations */
+/* output port configuration register: OPCR operations */
 #define OPSET        0x00  /* set all op lines to op function */
 #define OPSETTO      0x04  /* use OP3 for timer output */
 
@@ -160,7 +160,7 @@
 #define CSRA         1  /* clock-select register a*/
 #define CRA          2  /* command register a */
 #define TBA          3  /* transmitter buffer a */
-#define ACR          4  /* auxialiary control register*/
+#define ACR          4  /* auxiliary control register*/
 #define IMR          5  /* interrupt mask register */
 #define CTUR         6  /* counter/timer upper reg */
 #define CTLR         7  /* counter/timer lower reg */
@@ -188,7 +188,7 @@ struct dart_rd_reg
 	volatile unsigned int	rd_ipcr;    /* input port change register */
 	volatile unsigned int	rd_isr;     /* interrupt status register */
 	volatile unsigned int	rd_cur;     /* current MSB of counter */
-	volatile unsigned int	rd_clr;		/* current LSB of counter */
+	volatile unsigned int	rd_clr;	    /* current LSB of counter */
 	volatile unsigned int	rd_mrb;     /* mode register b */
 	volatile unsigned int	rd_srb;     /* status register b*/
 	volatile unsigned int	dummyxb;    /* do not access */
@@ -208,7 +208,7 @@ struct dart_wr_reg
 	volatile unsigned int	wr_csra;    /* clock-select register a*/
 	volatile unsigned int	wr_cra;     /* command register a */
 	volatile unsigned int	wr_tba;     /* transmitter buffer a */
-	volatile unsigned int	wr_acr;     /* auxialiary control register*/
+	volatile unsigned int	wr_acr;     /* auxiliary control register*/
 	volatile unsigned int	wr_imr;     /* interrupt mask register */
 	volatile unsigned int	wr_ctur;    /* counter/timer upper reg */
 	volatile unsigned int	wr_ctlr;    /* counter/timer lower reg */
@@ -271,7 +271,7 @@ struct dart_sv_reg
 	volatile unsigned char	sv_mr2[MAXPORTS];	/* mode register 2 a */
 	volatile unsigned char	sv_csr[MAXPORTS];	/* clock-select register a*/
 	volatile unsigned char	sv_cr[MAXPORTS];	/* command register a */
-	volatile unsigned char	sv_acr;		/* auxialiary control register*/
+	volatile unsigned char	sv_acr;		/* auxiliary control register*/
 	volatile unsigned char	sv_imr;		/* interrupt mask register */
 	volatile unsigned char	sv_ivr;		/* interrupt vector register */
 };
