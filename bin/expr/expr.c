@@ -1,4 +1,4 @@
-/*	$NetBSD: expr.c,v 1.3 1995/04/28 23:27:15 jtc Exp $	*/
+/*	$NetBSD: expr.c,v 1.3.6.1 1996/06/04 20:41:47 cgd Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
@@ -484,10 +484,7 @@ main(argc, argv)
 {
 	struct val     *vp;
 
-	if (!setlocale(LC_ALL, "")) {
-		fprintf(stderr,
-			"setlocale failed, continuing with \"C\" locale.");
-	}
+	(void) setlocale(LC_ALL, "");
 	av = argv + 1;
 
 	nexttoken();
