@@ -1,4 +1,4 @@
-/* $OpenBSD: isp_target.c,v 1.10 2003/03/03 18:34:59 mjacob Exp $ */
+/* $OpenBSD: isp_target.c,v 1.11 2003/03/03 20:58:46 mjacob Exp $ */
 /*
  * Machine and OS Independent Target Mode Code for the Qlogic SCSI/FC adapters.
  *
@@ -363,7 +363,7 @@ isp_target_put_entry(struct ispsoftc *isp, void *ap)
 		return (-1);
 	}
 
-	ISP_TDQE(isp, "isp_target_put_entry", (int) optr, ap);;
+	ISP_TDQE(isp, "isp_target_put_entry", (int) optr, ap);
 	ISP_ADD_REQUEST(isp, nxti);
 	return (0);
 }
