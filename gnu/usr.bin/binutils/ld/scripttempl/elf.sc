@@ -264,7 +264,7 @@ cat <<EOF
     ${RELOCATING+${INIT_END}}
   } =${NOP-0}
 
-  ${DATA_PLT-${BSS_PLT-${PLT}}}
+  ${DATA_PLT-${DATA_NONEXEC_PLT-${BSS_PLT-${PLT}}}}
   .text         ${RELOCATING-0} :
   {
     ${RELOCATING+${TEXT_START_SYMBOLS}}
@@ -333,6 +333,7 @@ cat <<EOF
   ${DATA_PLT+${PLT}}
   ${DATA_PLT+${PAD_PLT+${PAD_PLT1}}}
   ${PAD_GOT+${PAD_GOT0}}
+  ${DATA_NONEXEC_PLT+${PLT}}
   ${RELOCATING+${OTHER_GOT_SYMBOLS}}
   .got          ${RELOCATING-0} : { *(.got.plt) *(.got) }
   /* CTOR and DTOR relocated here to receive mprotect protection after,
