@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bus_dma.9,v 1.14 2003/01/11 06:14:35 wcobb Exp $ 
+.\"	$OpenBSD: bus_dma.9,v 1.15 2003/04/01 19:34:31 jmc Exp $ 
 .\" $NetBSD: bus_dma.9,v 1.14 2000/06/14 06:49:19 cgd Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,11 +65,11 @@ bus_dma_tag_t's are an opaque type, received from higher software
 layers and are never created, changed, deleted or even examined in
 this interface.
 .Pp
-The basic cycle to transfer data to/from a dma device is:
+The basic cycle to transfer data to/from a DMA device is:
 .Bd -literal
 bus_dmamap_create();         /* get a dmamap to load/unload          */
 
-for each dma xfer {
+for each DMA xfer {
         bus_dmamem_alloc();  /* allocate some DMA'able memory        */
         bus_dmamem_map();    /* map it into the kernel address space */
 
@@ -80,7 +80,7 @@ for each dma xfer {
          */
 
         bus_dmamap_load();   /* initialize the segments of dmamap    */
-        bus_dmamap_sync();   /* synchronize/flush any dma cache      */
+        bus_dmamap_sync();   /* synchronize/flush any DMA cache      */
 
         for (i=0; i<dm_nsegs; i++) {
                 /*
@@ -92,7 +92,7 @@ for each dma xfer {
                  */
         }
 
-        bus_dmamap_sync();   /* synchronize/flush any dma cache      */
+        bus_dmamap_sync();   /* synchronize/flush any DMA cache      */
         bus_dmamap_unload(); /* prepare dmamap for reuse             */
 
         /*
