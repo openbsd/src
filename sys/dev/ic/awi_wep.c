@@ -1,4 +1,4 @@
-/*	$OpenBSD: awi_wep.c,v 1.3 2001/07/04 09:02:58 niklas Exp $	*/
+/*	$OpenBSD: awi_wep.c,v 1.4 2001/09/10 14:49:45 mickey Exp $	*/
 /*	$NetBSD: awi_wep.c,v 1.2 2000/07/04 14:47:58 onoe Exp $	*/
 
 /*
@@ -353,7 +353,7 @@ awi_wep_encrypt(sc, m0, txflag)
 		kid = sc->sc_wep_defkid;
 		wh = mtod(n, struct ieee80211_frame *);
 		wh->i_fc[1] |= IEEE80211_FC1_WEP;
-		iv = random();
+		iv = arc4random();
 		/*
 		 * store IV, byte order is not the matter since it's random.
 		 * assuming IEEE80211_WEP_IVLEN is 3
