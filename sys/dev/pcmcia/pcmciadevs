@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.18 1999/07/21 04:36:39 fgsch Exp $
+	$OpenBSD: pcmciadevs,v 1.19 1999/08/13 21:10:48 deraadt Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -159,11 +159,11 @@ product TDK LAK_CD021BX		0x0200 TDK LAK-CD021BX
 product TDK DFL9610		0x0d0a TDK DFL9610
 
 /* TDK Vendor ID also used by Xircom! */
-product XIRCOM XIR_CE_10	0x0108 Xircom CreditCard
-product XIRCOM XIR_PS_CE2_10	0x010b Xircom CreditCard CE2
-product XIRCOM XIR_CNW		0x0802 Xircom CreditCard Netwave
-product XIRCOM XIR_CEM_10	0x110a Xircom CreditCard CEM-10
-product XIRCOM XIR_CEM_28	0x110b Xircom CreditCard CEM-28
+product XIRCOM XIR_CE_10	0x0108 Xircom CE10
+product XIRCOM XIR_PS_CE2_10	0x010b Xircom CE2
+product XIRCOM XIR_CNW		0x0802 Xircom Netwave
+product XIRCOM XIR_CEM_10	0x110a Xircom CEM-10
+product XIRCOM XIR_CEM_28	0x110b Xircom CEM-28
 
 /* NewMedia Products */
 product NEWMEDIA BASICS		0x0019 NewMedia BASICS
@@ -197,5 +197,6 @@ product DIGITAL DEPCMXX		{ "DIGITAL", "DEPCM-XX", NULL, NULL } DEC DEPCM-BA
 product TEAC IDECARDII		{ NULL, "NinjaATA-", NULL, NULL } TEAC IDE Card/II
 product LINKSYS ECARD_2		{ "LINKSYS", "E-CARD", NULL, NULL } Linksys E-Card
 product COREGA PCC_2		{ "corega&spK.K.", "corega&spEther&spPCC-T", NULL, NULL } Corega
-product SVEC COMBOCARD		{ "Ethernet", "Adapter", NULL, NULL } SVEC/Hawking Tech. Combo Card
-product SVEC LANCARD		{ "SVEC", "FD605&spPCMCIA&spEtherNet&spCard", "V1-1", NULL } SVEC PCMCIA Lan Card
+product SVEC COMBOCARD		{ "Ethernet", "Adapter", NULL, NULL } SVEC Combo Card
+product SVEC LANCARD		{ "SVEC", "FD605&spPCMCIA&spEtherNet&spCard", "V1-1", NULL } SVEC Lan Card
+product AMBICOM AMB8002T	{ "AmbiCom&spInc", "AMB8002T", NULL, NULL } AmbiCom AMB8002T
