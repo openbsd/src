@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.29 1998/04/28 19:19:29 marc Exp $
+#	$OpenBSD: bsd.port.mk,v 1.30 1998/06/11 16:03:48 marc Exp $
 #	$NetBSD: $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
@@ -24,7 +24,7 @@
 # mailing list, and any correspondece should be directed there.
 #
 FreeBSD_MAINTAINER=	asami@FreeBSD.ORG
-OpenBSD_MAINTAINER=	joey@OpenBSD.ORG
+OpenBSD_MAINTAINER=	marc@OpenBSD.ORG
 
 # Supported Variables and their behaviors:
 #
