@@ -10,8 +10,8 @@
 ./usr/lib/gcc-lib/m88k-unknown-openbsd3.0/2.95.1/include/objc
 ./usr/lib/lib45.so.0.0
 ./usr/lib/libasn1.so.1.0
-./usr/lib/libc.so.27.3
-./usr/lib/libc_r.so.5.3
+./usr/lib/libc.so.28.0
+./usr/lib/libc_r.so.6.0
 ./usr/lib/libgssapi.so.0.1
 ./usr/lib/libkrb5.so.2.0
 ./usr/lib/perl5/m88k-openbsd
