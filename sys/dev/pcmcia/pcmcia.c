@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia.c,v 1.15 1999/05/27 13:36:55 niklas Exp $	*/
+/*	$OpenBSD: pcmcia.c,v 1.16 1999/07/01 06:27:00 fgsch Exp $	*/
 /*	$NetBSD: pcmcia.c,v 1.9 1998/08/13 02:10:55 eeh Exp $	*/
 
 /*
@@ -41,10 +41,8 @@
 
 #ifdef PCMCIADEBUG
 #define	DPRINTF(arg) printf arg
-#define PCMCIA_CARD_INTR (pcmcia_card_intrdebug)
 #else
 #define	DPRINTF(arg)
-#define PCMCIA_CARD_INTR (pcmcia_card_intr)
 #endif
 
 #ifdef PCMCIAVERBOSE
@@ -63,11 +61,7 @@ static inline void pcmcia_socket_enable __P((pcmcia_chipset_tag_t,
 static inline void pcmcia_socket_disable __P((pcmcia_chipset_tag_t,
 					      pcmcia_chipset_handle_t *));
 
-#ifdef PCMCIADEBUG
-int pcmcia_card_intrdebug __P((void *));
-#else
 int pcmcia_card_intr __P((void *));
-#endif
 
 struct cfdriver pcmcia_cd = {
 	NULL, "pcmcia", DV_DULL
@@ -627,7 +621,7 @@ pcmcia_intr_establish(pf, ipl, ih_fct, ih_arg)
 			pf->ih_ipl = ipl;
 
 			pf->sc->ih = pcmcia_chip_intr_establish(pf->sc->pct,
-			    pf->sc->pch, pf, ipl, PCMCIA_CARD_INTR, pf->sc);
+			    pf->sc->pch, pf, ipl, pcmcia_card_intr, pf->sc);
 			splx(s);
 		} else if (ipl > hiipl) {
 #ifdef DIAGNOSTIC
@@ -647,7 +641,7 @@ pcmcia_intr_establish(pf, ipl, ih_fct, ih_arg)
 			pf->ih_ipl = ipl;
 
 			pf->sc->ih = pcmcia_chip_intr_establish(pf->sc->pct,
-			    pf->sc->pch, pf, ipl, PCMCIA_CARD_INTR, pf->sc);
+			    pf->sc->pch, pf, ipl, pcmcia_card_intr, pf->sc);
 
 			splx(s);
 		} else {
@@ -757,7 +751,7 @@ pcmcia_intr_disestablish(pf, ih)
 			pcmcia_chip_intr_disestablish(pf->sc->pct, pf->sc->pch,
 			    pf->sc->ih);
 			pf->sc->ih = pcmcia_chip_intr_establish(pf->sc->pct,
-			    pf->sc->pch, pf, hiipl, PCMCIA_CARD_INTR, pf->sc);
+			    pf->sc->pch, pf, hiipl, pcmcia_card_intr, pf->sc);
 
 			/* null out the handler for this function */
 
@@ -790,41 +784,13 @@ pcmcia_card_intr(arg)
 
 	for (pf = sc->card.pf_head.sqh_first; pf != NULL;
 	    pf = pf->pf_list.sqe_next) {
-		if (pf->ih_fct != NULL &&
-		    (pf->ccr_mask & (1 << (PCMCIA_CCR_STATUS / 2)))) {
-			reg = pcmcia_ccr_read(pf, PCMCIA_CCR_STATUS);
-			if (reg & PCMCIA_CCR_STATUS_INTR) {
-				ret2 = (*pf->ih_fct)(pf->ih_arg);
-				if (ret2 != 0 && ret == 0)
-					ret = ret2;
-				reg = pcmcia_ccr_read(pf, PCMCIA_CCR_STATUS);
-				pcmcia_ccr_write(pf, PCMCIA_CCR_STATUS,
-				    reg & ~PCMCIA_CCR_STATUS_INTR);
-			}
-		}
-	}
-
-	return (ret);
-}
-
 #ifdef PCMCIADEBUG
-int 
-pcmcia_card_intrdebug(arg)
-	void *arg;
-{
-	struct pcmcia_softc *sc = arg;
-	struct pcmcia_function *pf;
-	int reg, ret, ret2;
-
-	ret = 0;
-
-	for (pf = sc->card.pf_head.sqh_first; pf != NULL;
-	    pf = pf->pf_list.sqe_next) {
 		printf("%s: intr flags=%x fct=%d cor=%02x csr=%02x pin=%02x",
 		       sc->dev.dv_xname, pf->pf_flags, pf->number,
 		       pcmcia_ccr_read(pf, PCMCIA_CCR_OPTION),
 		       pcmcia_ccr_read(pf, PCMCIA_CCR_STATUS),
 		       pcmcia_ccr_read(pf, PCMCIA_CCR_PIN));
+#endif
 		if (pf->ih_fct != NULL &&
 		    (pf->ccr_mask & (1 << (PCMCIA_CCR_STATUS / 2)))) {
 			reg = pcmcia_ccr_read(pf, PCMCIA_CCR_STATUS);
@@ -833,15 +799,18 @@ pcmcia_card_intrdebug(arg)
 				if (ret2 != 0 && ret == 0)
 					ret = ret2;
 				reg = pcmcia_ccr_read(pf, PCMCIA_CCR_STATUS);
+#ifdef PCMCIADEBUG
 				printf("; csr %02x->%02x",
 				    reg, reg & ~PCMCIA_CCR_STATUS_INTR);
+#endif
 				pcmcia_ccr_write(pf, PCMCIA_CCR_STATUS,
 				    reg & ~PCMCIA_CCR_STATUS_INTR);
 			}
 		}
+#ifdef PCMCIADEBUG
 		printf("\n");
+#endif
 	}
 
 	return (ret);
 }
-#endif
