@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.59 2001/08/22 17:30:46 ho Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.60 2001/08/23 19:32:46 niklas Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -1207,9 +1207,6 @@ get_raw_key_from_file (int type, u_int8_t *id, size_t id_len, RSA **rsa)
 
   if (snprintf (filename, sizeof filename, "%s/", fstr) > sizeof filename - 1)
     return -1;
-
-   /* XXX This can't be the right place for this... */
-  id_len += ISAKMP_GEN_SZ;
 
   fstr = ipsec_id_string (id, id_len);
   if (!fstr)

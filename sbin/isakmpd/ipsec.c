@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.55 2001/08/22 08:49:00 niklas Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.56 2001/08/23 19:32:46 niklas Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -2277,13 +2277,26 @@ ipsec_id_size (char *section, u_int8_t *id)
 char *
 ipsec_id_string (u_int8_t *id, size_t id_len)
 {
-  /* XXX Guess at a maximum length.  */
-  char buf[256];
+  char *buf = 0;
   char *addrstr = 0;
   size_t len;
 
-  /* XXX real ugly way of making the offsets correct.  */
+  /*
+   * XXX Real ugly way of making the offsets correct.  Be aware that id now
+   * will point before the actual buffer and cannot be dereferenced without
+   * an offset larger than or equal to ISAKM_GEN_SZ.
+   */
   id -= ISAKMP_GEN_SZ;
+
+  /* This is the actual length of the ID data field.  */
+  id_len += ISAKMP_GEN_SZ - ISAKMP_ID_DATA_OFF;
+
+  /* Conservative allocation.  */
+  buf = malloc (MAX (sizeof "ipv6/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
+		     sizeof "ufqdn/" + id_len - ISAKMP_ID_DATA_OFF));
+  if (!buf)
+    /* XXX Log?  */
+    goto fail;
 
   switch (GET_ISAKMP_ID_TYPE (id))
     {
@@ -2293,8 +2306,7 @@ ipsec_id_string (u_int8_t *id, size_t id_len)
       util_ntoa (&addrstr, AF_INET, id + ISAKMP_ID_DATA_OFF);
       if (!addrstr)
 	goto fail;
-      if (snprintf (buf, sizeof buf, "ipv4/%s", addrstr) > sizeof buf - 1)
-	goto fail;
+      sprintf (buf, "ipv4/%s", addrstr);
       break;
 
     case IPSEC_ID_IPV6_ADDR:
@@ -2303,23 +2315,14 @@ ipsec_id_string (u_int8_t *id, size_t id_len)
       util_ntoa (&addrstr, AF_INET6, id + ISAKMP_ID_DATA_OFF);
       if (!addrstr)
 	goto fail;
-      if (snprintf (buf, sizeof buf, "ipv6/%s", addrstr) > sizeof buf - 1)
-	goto fail;
+      sprintf (buf, "ipv6/%s", addrstr);
       break;
 
     case IPSEC_ID_FQDN:
     case IPSEC_ID_USER_FQDN:
-      /* Statically resolvable, should be optimized away by the compiler.  */
-      if (sizeof buf < sizeof "ufqdn/")
-	goto fail;
       strcpy (buf,
 	      GET_ISAKMP_ID_TYPE (id) == IPSEC_ID_FQDN ? "fqdn/" : "ufqdn/");
       len = strlen(buf);
-
-      /* Id is not NULL-terminated.  */
-      id_len -= ISAKMP_ID_DATA_OFF;
-      if (id_len > sizeof buf - len - 1)
-	goto fail;
 
       memcpy (buf + len, id + ISAKMP_ID_DATA_OFF, id_len);
       *(buf + len + id_len) = '\0';
@@ -2334,9 +2337,11 @@ ipsec_id_string (u_int8_t *id, size_t id_len)
 
   if (addrstr)
     free (addrstr);
-  return strdup (buf);
+  return buf;
 
  fail:
+  if (buf)
+    free (buf);
   if (addrstr)
     free (addrstr);
   return 0;
