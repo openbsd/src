@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.37 2001/11/06 19:53:15 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.38 2001/11/07 22:40:59 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -87,13 +87,17 @@ int badpaddr __P((caddr_t, int));
  */
 
 void
-cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
-	void (*func)(void *), void *arg)
+cpu_fork(p1, p2, stack, stacksize, func, arg)
+	struct proc *p1, *p2;
+	void *stack;
+	size_t stacksize;
+	void (*func) __P((void *));
+	void *arg;
 {
 	struct switchframe *p2sf;
 	int cpu;
 	struct ksigframe {
-		void (*func)(struct proc *);
+		void (*func) __P((void *));
 		void *proc;
 	} *ksfp;
 	extern struct pcb *curpcb;
@@ -136,8 +140,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 	ksfp = (struct ksigframe *)p2->p_addr->u_pcb.kernel_state.pcb_sp - 1;
 
 	ksfp->func = func;
-	ksfp->arg = arg;
-	ksfp->proc = p2;
+	ksfp->proc = arg;
 
 	/*
 	 * When this process resumes, r31 will be ksfp and
