@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs.8,v 1.3 1996/06/23 14:31:46 deraadt Exp $
+.\"	$OpenBSD: newfs.8,v 1.4 1996/12/04 08:38:58 deraadt Exp $
 .\"	$NetBSD: newfs.8,v 1.12 1995/03/18 14:58:41 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
@@ -60,9 +60,10 @@
 .Op Fl p Ar sectors
 .Op Fl r Ar revolutions
 .Op Fl s Ar size
-.Op Fl t Ar tracks
+.Op Fl t Ar fstype
 .Op Fl u Ar sectors
 .Op Fl x Ar sectors
+.Op Fl z Ar tracks
 .Ar special
 .Nm mount_mfs
 .Op Fl N
@@ -226,9 +227,13 @@ They are not counted as part of the sectors/track
 since they are not available to the file system for data allocation.
 .It Fl r Ar revolutions/minute
 The speed of the disk in revolutions per minute.
-.It Fl t Ar #tracks/cylinder
+.It Fl z Ar #tracks/cylinder
 The number of tracks/cylinder available for data allocation by the file
 system.
+.It Fl t Ar fstype
+Set the filesystem type of which filesystem you wish to create.
+.Nm newfs
+will be smart enough to run the alternate newfs_XXX program instead.
 .It Fl u Ar sectors/track
 The number of sectors per track available for data allocation by the file
 system.

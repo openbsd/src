@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.5 1996/11/24 23:46:44 millert Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.6 1996/12/04 08:38:59 deraadt Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.5 1996/11/24 23:46:44 millert Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.6 1996/12/04 08:38:59 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -79,6 +79,7 @@ static char rcsid[] = "$OpenBSD: newfs.c,v 1.5 1996/11/24 23:46:44 millert Exp $
 #endif
 
 #include "mntopts.h"
+#include "pathnames.h"
 
 struct mntopt mopts[] = {
 	MOPT_STDOPTS,
@@ -205,6 +206,9 @@ main(argc, argv)
 	struct statfs *mp;
 	int fsi, fso, len, n, maxpartitions;
 	char *cp, *s1, *s2, *special, *opstring, buf[BUFSIZ];
+	char *fstype = NULL;
+	char **saveargv = argv;
+	int ffs = 1;
 
 	if (progname = strrchr(*argv, '/'))
 		++progname;
@@ -222,8 +226,8 @@ main(argc, argv)
 
 	opstring = mfs ?
 	    "NT:a:b:c:d:e:f:i:m:o:s:" :
-	    "NOS:T:a:b:c:d:e:f:i:k:l:m:n:o:p:r:s:t:u:x:";
-	while ((ch = getopt(argc, argv, opstring)) != EOF)
+	    "NOS:T:a:b:c:d:e:f:i:k:l:m:n:o:p:r:s:t:u:x:z:";
+	while ((ch = getopt(argc, argv, opstring)) != EOF) {
 		switch (ch) {
 		case 'N':
 			Nflag = 1;
@@ -313,9 +317,14 @@ main(argc, argv)
 			if ((fssize = atoi(optarg)) <= 0)
 				fatal("%s: bad file system size", optarg);
 			break;
-		case 't':
+		case 'z':
+				
 			if ((ntracks = atoi(optarg)) <= 0)
 				fatal("%s: bad total tracks", optarg);
+		case 't':
+			fstype = optarg;
+			if (strcmp(fstype, "ffs"))
+				ffs = 0;
 			break;
 		case 'u':
 			if ((nsectors = atoi(optarg)) <= 0)
@@ -330,13 +339,33 @@ main(argc, argv)
 		default:
 			usage();
 		}
+		if (!ffs)
+			break;
+	}
 	argc -= optind;
 	argv += optind;
 
-	if (argc != 2 && (mfs || argc != 1))
+	if (ffs && argc != 2 && (mfs || argc != 1))
 		usage();
 
 	special = argv[0];
+	if (!mfs) {
+		char name[MAXPATHLEN];
+
+		if (fstype == NULL)
+			fstype = readlabelfs(special);
+		if (fstype == NULL || strcmp(fstype, "ffs")) {
+			snprintf(name, sizeof name, "%s/newfs_%s", _PATH_SBIN,
+			    fstype);
+			saveargv[0] = name;
+			(void)execv(name, saveargv);
+			snprintf(name, sizeof name, "%s/newfs_%s", _PATH_USRSBIN,
+			    fstype);
+			(void)execv(name, saveargv);
+			err(1, "%s not found", name);
+		}
+	}
+
 	if (mfs && !strcmp(special, "swap")) {
 		/*
 		 * it's an MFS, mounted on "swap."  fake up a label.
@@ -725,8 +754,8 @@ usage()
 	fprintf(stderr, "\t-p spare sectors per track\n");
 	fprintf(stderr, "\t-s file system size (sectors)\n");
 	fprintf(stderr, "\t-r revolutions/minute\n");
-	fprintf(stderr, "\t-t tracks/cylinder\n");
 	fprintf(stderr, "\t-u sectors/track\n");
 	fprintf(stderr, "\t-x spare sectors per cylinder\n");
+	fprintf(stderr, "\t-z tracks/cylinder\n");
 	exit(1);
 }
