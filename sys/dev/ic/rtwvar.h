@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwvar.h,v 1.2 2005/01/19 09:36:18 jsg Exp $	*/
+/*	$OpenBSD: rtwvar.h,v 1.3 2005/01/19 11:07:33 jsg Exp $	*/
 /* $NetBSD: rtwvar.h,v 1.10 2004/12/26 22:37:57 mycroft Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -297,37 +297,6 @@ struct rtw_rf {
 	struct rtw_bbpset	rf_bbpset;
 };
 
-static __inline void
-rtw_rf_destroy(struct rtw_rf *rf)
-{
-	(*rf->rf_destroy)(rf);
-}
-
-static __inline int
-rtw_rf_init(struct rtw_rf *rf, u_int freq, u_int8_t opaque_txpower,
-    enum rtw_pwrstate power)
-{
-	return (*rf->rf_init)(rf, freq, opaque_txpower, power);
-}
-
-static __inline int
-rtw_rf_pwrstate(struct rtw_rf *rf, enum rtw_pwrstate power)
-{
-	return (*rf->rf_pwrstate)(rf, power);
-}
-
-static __inline int
-rtw_rf_tune(struct rtw_rf *rf, u_int freq)
-{
-	return (*rf->rf_tune)(rf, freq);
-}
-
-static __inline int
-rtw_rf_txpower(struct rtw_rf *rf, u_int8_t opaque_txpower)
-{
-	return (*rf->rf_txpower)(rf, opaque_txpower);
-}
-
 typedef int (*rtw_rf_write_t)(struct rtw_regs *, enum rtw_rfchipid, u_int,
     u_int32_t);
 
@@ -336,12 +305,13 @@ struct rtw_rfbus {
 	rtw_rf_write_t		b_write;
 };
 
-static __inline int
-rtw_rfbus_write(struct rtw_rfbus *bus, enum rtw_rfchipid rfchipid, u_int addr,
-    u_int32_t val)
-{
-	return (*bus->b_write)(bus->b_regs, rfchipid, addr, val);
-}
+void rtw_rf_destroy(struct rtw_rf *);
+int rtw_rf_init(struct rtw_rf *, u_int, u_int8_t, enum rtw_pwrstate);
+int rtw_rf_pwrstate(struct rtw_rf *, enum rtw_pwrstate);
+int rtw_rf_tune(struct rtw_rf *, u_int);
+int rtw_rf_txpower(struct rtw_rf *, u_int8_t);
+int rtw_rfbus_write(struct rtw_rfbus *, enum rtw_rfchipid, u_int, u_int32_t);
+
 
 struct rtw_max2820 {
 	struct rtw_rf		mx_rf;

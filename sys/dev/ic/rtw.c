@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.7 2005/01/19 09:36:18 jsg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.8 2005/01/19 11:07:32 jsg Exp $	*/
 /* $NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -180,6 +180,42 @@ int rtw_media_change(struct ifnet *);
 int rtw_txctl_blk_setup_all(struct rtw_softc *);
 struct rtw_rf * rtw_rf_attach(struct rtw_softc *, enum rtw_rfchipid, int);
 u_int8_t rtw_check_phydelay(struct rtw_regs *, u_int32_t);
+int rtw_chip_reset1(struct rtw_regs *, const char *);
+int rtw_chip_reset(struct rtw_regs *, const char *);
+int rtw_recall_eeprom(struct rtw_regs *, const char *);
+int rtw_reset(struct rtw_softc *);
+int rtw_txdesc_dmamaps_create(bus_dma_tag_t, struct rtw_txctl *, u_int);
+int rtw_rxdesc_dmamaps_create(bus_dma_tag_t, struct rtw_rxctl *, u_int);
+void rtw_rxctls_setup(struct rtw_rxctl *);
+void rtw_rxdesc_dmamaps_destroy(bus_dma_tag_t, struct rtw_rxctl *, u_int);
+void rtw_txdesc_dmamaps_destroy(bus_dma_tag_t, struct rtw_txctl *, u_int);
+void rtw_srom_free(struct rtw_srom *);
+void rtw_init_channels(enum rtw_locale, struct ieee80211_channel (*)[],
+    const char*);
+void rtw_identify_country(struct rtw_regs *, enum rtw_locale *, const char *);
+int rtw_identify_sta(struct rtw_regs *, u_int8_t (*)[], const char *);
+void rtw_rxdescs_sync(bus_dma_tag_t, bus_dmamap_t, u_int, u_int, int);
+int rtw_rxbuf_alloc(bus_dma_tag_t, struct rtw_rxctl *);
+void rtw_rxdesc_init(bus_dma_tag_t, bus_dmamap_t, struct rtw_rxdesc *,
+    struct rtw_rxctl *, int, int);
+void rtw_collect_txpkt(struct rtw_softc *, struct rtw_txdesc_blk *,
+    struct rtw_txctl *, int);
+void rtw_collect_txring(struct rtw_softc *, struct rtw_txctl_blk *,
+    struct rtw_txdesc_blk *);
+void rtw_suspend_ticks(struct rtw_softc *);
+void rtw_resume_ticks(struct rtw_softc *);
+void rtw_enable_interrupts(struct rtw_softc *);
+int rtw_dequeue(struct ifnet *, struct rtw_txctl_blk **,
+    struct rtw_txdesc_blk **, struct mbuf **,
+    struct ieee80211_node **);
+void rtw_setifprops(struct ifnet *, const char *, void *);
+void rtw_set80211props(struct ieee80211com *);
+void rtw_set80211methods(struct rtw_mtbl *, struct ieee80211com *);
+void rtw_establish_hooks(struct rtw_hooks *, const char *, void *);
+void rtw_disestablish_hooks(struct rtw_hooks *, const char *, void *);
+void rtw_init_radiotap(struct rtw_softc *);
+int rtw_txctl_blk_setup(struct rtw_txctl_blk *, u_int);
+
 
 #ifdef RTW_DEBUG
 void rtw_print_txdesc(struct rtw_softc *, const char *,
@@ -453,7 +489,7 @@ rtw_txdac_enable(struct rtw_softc *sc, int enable)
 	RTW_SYNC(regs, RTW_ANAPARM, RTW_ANAPARM);
 }
 
-static __inline int
+__inline int
 rtw_chip_reset1(struct rtw_regs *regs, const char *dvname)
 {
 	u_int8_t cr;
@@ -477,7 +513,7 @@ rtw_chip_reset1(struct rtw_regs *regs, const char *dvname)
 	return ETIMEDOUT;
 }
 
-static __inline int
+__inline int
 rtw_chip_reset(struct rtw_regs *regs, const char *dvname)
 {
 	uint32_t tcr;
@@ -493,7 +529,7 @@ rtw_chip_reset(struct rtw_regs *regs, const char *dvname)
 	return rtw_chip_reset1(regs, dvname);
 }
 
-static __inline int
+__inline int
 rtw_recall_eeprom(struct rtw_regs *regs, const char *dvname)
 {
 	int i;
@@ -520,7 +556,7 @@ rtw_recall_eeprom(struct rtw_regs *regs, const char *dvname)
 	return ETIMEDOUT;
 }
 
-static __inline int
+__inline int
 rtw_reset(struct rtw_softc *sc)
 {
 	int rc;
@@ -539,7 +575,7 @@ rtw_reset(struct rtw_softc *sc)
 	return 0;
 }
 
-static __inline int
+__inline int
 rtw_txdesc_dmamaps_create(bus_dma_tag_t dmat, struct rtw_txctl *descs,
     u_int ndescs)
 {
@@ -553,7 +589,7 @@ rtw_txdesc_dmamaps_create(bus_dma_tag_t dmat, struct rtw_txctl *descs,
 	return rc;
 }
 
-static __inline int
+__inline int
 rtw_rxdesc_dmamaps_create(bus_dma_tag_t dmat, struct rtw_rxctl *descs,
     u_int ndescs)
 {
@@ -567,7 +603,7 @@ rtw_rxdesc_dmamaps_create(bus_dma_tag_t dmat, struct rtw_rxctl *descs,
 	return rc;
 }
 
-static __inline void
+__inline void
 rtw_rxctls_setup(struct rtw_rxctl *descs)
 {
 	int i;
@@ -575,7 +611,7 @@ rtw_rxctls_setup(struct rtw_rxctl *descs)
 		descs[i].srx_mbuf = NULL;
 }
 
-static __inline void
+__inline void
 rtw_rxdesc_dmamaps_destroy(bus_dma_tag_t dmat, struct rtw_rxctl *descs,
     u_int ndescs)
 {
@@ -586,7 +622,7 @@ rtw_rxdesc_dmamaps_destroy(bus_dma_tag_t dmat, struct rtw_rxctl *descs,
 	}
 }
 
-static __inline void
+__inline void
 rtw_txdesc_dmamaps_destroy(bus_dma_tag_t dmat, struct rtw_txctl *descs,
     u_int ndescs)
 {
@@ -597,7 +633,7 @@ rtw_txdesc_dmamaps_destroy(bus_dma_tag_t dmat, struct rtw_txctl *descs,
 	}
 }
 
-static __inline void
+__inline void
 rtw_srom_free(struct rtw_srom *sr)
 {
 	sr->sr_size = 0;
@@ -845,7 +881,7 @@ rtw_set_rfprog(struct rtw_regs *regs, enum rtw_rfchipid rfchipid,
 }
 
 #if 0
-static __inline int
+__inline int
 rtw_identify_rf(struct rtw_regs *regs, enum rtw_rftype *rftype,
     const char *dvname)
 {
@@ -877,7 +913,7 @@ rtw_identify_rf(struct rtw_regs *regs, enum rtw_rftype *rftype,
 }
 #endif
 
-static __inline void
+__inline void
 rtw_init_channels(enum rtw_locale locale,
     struct ieee80211_channel (*chans)[IEEE80211_CHAN_MAX+1],
     const char *dvname)
@@ -918,7 +954,7 @@ rtw_init_channels(enum rtw_locale locale,
 #undef ADD_CHANNEL
 }
 
-static __inline void
+__inline void
 rtw_identify_country(struct rtw_regs *regs, enum rtw_locale *locale,
     const char *dvname)
 {
@@ -940,7 +976,7 @@ rtw_identify_country(struct rtw_regs *regs, enum rtw_locale *locale,
 	}
 }
 
-static __inline int
+__inline int
 rtw_identify_sta(struct rtw_regs *regs, u_int8_t (*addr)[IEEE80211_ADDR_LEN],
     const char *dvname)
 {
@@ -1017,7 +1053,7 @@ rtw_txctl_blk_init_all(struct rtw_txctl_blk *stcs)
 		rtw_txctl_blk_init(&stcs[pri]);
 }
 
-static __inline void
+__inline void
 rtw_rxdescs_sync(bus_dma_tag_t dmat, bus_dmamap_t dmap, u_int desc0, u_int
     nsync, int ops)
 {
@@ -1089,7 +1125,7 @@ rtw_rxbufs_release(bus_dma_tag_t dmat, struct rtw_rxctl *desc)
 	}
 }
 
-static __inline int
+__inline int
 rtw_rxbuf_alloc(bus_dma_tag_t dmat, struct rtw_rxctl *srx)
 {
 	int rc;
@@ -1143,7 +1179,7 @@ rtw_rxctl_init_all(bus_dma_tag_t dmat, struct rtw_rxctl *desc,
 	return 0;
 }
 
-static __inline void
+__inline void
 rtw_rxdesc_init(bus_dma_tag_t dmat, bus_dmamap_t dmam,
     struct rtw_rxdesc *hrx, struct rtw_rxctl *srx, int idx, int kick)
 {
@@ -1439,7 +1475,7 @@ rtw_txbufs_release(bus_dma_tag_t dmat, bus_dmamap_t desc_dmamap,
 	}
 }
 
-static __inline void
+__inline void
 rtw_collect_txpkt(struct rtw_softc *sc, struct rtw_txdesc_blk *htc,
     struct rtw_txctl *stx, int ndesc)
 {
@@ -1474,7 +1510,7 @@ rtw_collect_txpkt(struct rtw_softc *sc, struct rtw_txdesc_blk *htc,
 }
 
 /* Collect transmitted packets. */
-static __inline void
+__inline void
 rtw_collect_txring(struct rtw_softc *sc, struct rtw_txctl_blk *stc,
     struct rtw_txdesc_blk *htc)
 {
@@ -1705,7 +1741,7 @@ rtw_intr_ioerror(struct rtw_softc *sc, u_int16_t isr)
 	rtw_io_enable(regs, RTW_CR_RE | RTW_CR_TE, 1);
 }
 
-static __inline void
+__inline void
 rtw_suspend_ticks(struct rtw_softc *sc)
 {
 	RTW_DPRINTF(RTW_DEBUG_TIMEOUT,
@@ -1713,7 +1749,7 @@ rtw_suspend_ticks(struct rtw_softc *sc)
 	sc->sc_do_tick = 0;
 }
 
-static __inline void
+__inline void
 rtw_resume_ticks(struct rtw_softc *sc)
 {
 	u_int32_t tsftrl0, tsftrl1, next_tick;
@@ -2165,7 +2201,7 @@ rtw_transmit_config(struct rtw_regs *regs)
 	RTW_SYNC(regs, RTW_TCR, RTW_TCR);
 }
 
-static __inline void
+__inline void
 rtw_enable_interrupts(struct rtw_softc *sc)
 {
 	struct rtw_regs *regs = &sc->sc_regs;
@@ -2462,7 +2498,7 @@ rtw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 /* Point *mp at the next 802.11 frame to transmit.  Point *stcp
  * at the driver's selection of transmit control block for the packet.
  */
-static __inline int
+__inline int
 rtw_dequeue(struct ifnet *ifp, struct rtw_txctl_blk **stcp,
     struct rtw_txdesc_blk **htcp, struct mbuf **mp,
     struct ieee80211_node **nip)
@@ -3105,7 +3141,7 @@ rtw_shutdown(void *arg)
 	rtw_stop(&sc->sc_ic.ic_if, 1);
 }
 
-static __inline void
+__inline void
 rtw_setifprops(struct ifnet *ifp, const char *dvname, void *softc)
 {
 	(void)memcpy(ifp->if_xname, dvname, IFNAMSIZ);
@@ -3117,7 +3153,7 @@ rtw_setifprops(struct ifnet *ifp, const char *dvname, void *softc)
 	ifp->if_watchdog = rtw_watchdog;
 }
 
-static __inline void
+__inline void
 rtw_set80211props(struct ieee80211com *ic)
 {
 	int nrate;
@@ -3136,7 +3172,7 @@ rtw_set80211props(struct ieee80211com *ic)
 	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_nrates = nrate;
 }
 
-static __inline void
+__inline void
 rtw_set80211methods(struct rtw_mtbl *mtbl, struct ieee80211com *ic)
 {
 	mtbl->mt_newstate = ic->ic_newstate;
@@ -3152,7 +3188,7 @@ rtw_set80211methods(struct rtw_mtbl *mtbl, struct ieee80211com *ic)
 	ic->ic_node_alloc = rtw_node_alloc;
 }
 
-static __inline void
+__inline void
 rtw_establish_hooks(struct rtw_hooks *hooks, const char *dvname,
     void *arg)
 {
@@ -3174,7 +3210,7 @@ rtw_establish_hooks(struct rtw_hooks *hooks, const char *dvname,
 		    dvname);
 }
 
-static __inline void
+__inline void
 rtw_disestablish_hooks(struct rtw_hooks *hooks, const char *dvname,
     void *arg)
 {
@@ -3185,7 +3221,7 @@ rtw_disestablish_hooks(struct rtw_hooks *hooks, const char *dvname,
 		powerhook_disestablish(hooks->rh_power);
 }
 
-static __inline void
+__inline void
 rtw_init_radiotap(struct rtw_softc *sc)
 {
 	memset(&sc->sc_rxtapu, 0, sizeof(sc->sc_rxtapu));
@@ -3197,7 +3233,7 @@ rtw_init_radiotap(struct rtw_softc *sc)
 	sc->sc_txtap.rt_ihdr.it_present = RTW_TX_RADIOTAP_PRESENT;
 }
 
-static int
+int
 rtw_txctl_blk_setup(struct rtw_txctl_blk *stc, u_int qlen)
 {
 	SIMPLEQ_INIT(&stc->stc_dirtyq);
@@ -3618,4 +3654,42 @@ rtw_detach(struct rtw_softc *sc)
 		break;
 	}
 	return 0;
+}
+
+void
+rtw_rf_destroy(struct rtw_rf *rf)
+{
+	(*rf->rf_destroy)(rf);
+}
+
+int
+rtw_rf_init(struct rtw_rf *rf, u_int freq, u_int8_t opaque_txpower,
+    enum rtw_pwrstate power)
+{
+	return (*rf->rf_init)(rf, freq, opaque_txpower, power);
+}
+
+int
+rtw_rf_pwrstate(struct rtw_rf *rf, enum rtw_pwrstate power)
+{
+	return (*rf->rf_pwrstate)(rf, power);
+}
+
+int
+rtw_rf_tune(struct rtw_rf *rf, u_int freq)
+{
+	return (*rf->rf_tune)(rf, freq);
+}
+
+int
+rtw_rf_txpower(struct rtw_rf *rf, u_int8_t opaque_txpower)
+{
+	return (*rf->rf_txpower)(rf, opaque_txpower);
+}
+
+int
+rtw_rfbus_write(struct rtw_rfbus *bus, enum rtw_rfchipid rfchipid, u_int addr,
+    u_int32_t val)
+{
+	return (*bus->b_write)(bus->b_regs, rfchipid, addr, val);
 }
