@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.32 2004/01/14 07:32:58 miod Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.33 2004/01/16 12:10:55 espie Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -551,64 +551,64 @@ play(char *arg)
 		unsigned char tm, ts, tf;
 
 		tr2 = m2 = s2 = f2 = f1 = 0;
-		if (8 == sscanf(arg, "%d %d:%d.%d %d %d:%d.%d",
+		if (8 == sscanf(arg, "%d %u:%u.%u %d %u:%u.%u",
 		    &tr1, &m1, &s1, &f1, &tr2, &m2, &s2, &f2))
 			goto Play_Relative_Addresses;
 
 		tr2 = m2 = s2 = f2 = f1 = 0;
-		if (7 == sscanf(arg, "%d %d:%d %d %d:%d.%d",
+		if (7 == sscanf(arg, "%d %u:%u %d %u:%u.%u",
 		    &tr1, &m1, &s1, &tr2, &m2, &s2, &f2))
 			goto Play_Relative_Addresses;
 
 		tr2 = m2 = s2 = f2 = f1 = 0;
-		if (7 == sscanf(arg, "%d %d:%d.%d %d %d:%d",
+		if (7 == sscanf(arg, "%d %u:%u.%u %d %u:%u",
 		    &tr1, &m1, &s1, &f1, &tr2, &m2, &s2))
 			goto Play_Relative_Addresses;
 
 		tr2 = m2 = s2 = f2 = f1 = 0;
-		if (7 == sscanf(arg, "%d %d:%d.%d %d:%d.%d",
+		if (7 == sscanf(arg, "%d %u:%u.%u %u:%u.%u",
 		    &tr1, &m1, &s1, &f1, &m2, &s2, &f2))
 			goto Play_Relative_Addresses;
 
 		tr2 = m2 = s2 = f2 = f1 = 0;
-		if (6 == sscanf(arg, "%d %d:%d.%d %d:%d",
+		if (6 == sscanf(arg, "%d %u:%u.%u %u:%u",
 		    &tr1, &m1, &s1, &f1, &m2, &s2))
 			goto Play_Relative_Addresses;
 
 		tr2 = m2 = s2 = f2 = f1 = 0;
-		if (6 == sscanf(arg, "%d %d:%d %d:%d.%d",
+		if (6 == sscanf(arg, "%d %u:%u %u:%u.%u",
 		    &tr1, &m1, &s1, &m2, &s2, &f2))
 			goto Play_Relative_Addresses;
 
 		tr2 = m2 = s2 = f2 = f1 = 0;
-		if (6 == sscanf(arg, "%d %d:%d.%d %d %d",
+		if (6 == sscanf(arg, "%d %u:%u.%u %d %u",
 		    &tr1, &m1, &s1, &f1, &tr2, &m2))
 			goto Play_Relative_Addresses;
 
 		tr2 = m2 = s2 = f2 = f1 = 0;
-		if (5 == sscanf(arg, "%d %d:%d %d:%d", &tr1, &m1, &s1, &m2, &s2))
+		if (5 == sscanf(arg, "%d %u:%u %u:%u", &tr1, &m1, &s1, &m2, &s2))
 			goto Play_Relative_Addresses;
 
 		tr2 = m2 = s2 = f2 = f1 = 0;
-		if (5 == sscanf(arg, "%d %d:%d %d %d",
+		if (5 == sscanf(arg, "%d %u:%u %d %u",
 		    &tr1, &m1, &s1, &tr2, &m2))
 			goto Play_Relative_Addresses;
 
 		tr2 = m2 = s2 = f2 = f1 = 0;
-		if (5 == sscanf(arg, "%d %d:%d.%d %d",
+		if (5 == sscanf(arg, "%d %u:%u.%u %d",
 		    &tr1, &m1, &s1, &f1, &tr2))
 			goto Play_Relative_Addresses;
 
 		tr2 = m2 = s2 = f2 = f1 = 0;
-		if (4 == sscanf(arg, "%d %d:%d %d", &tr1, &m1, &s1, &tr2))
+		if (4 == sscanf(arg, "%d %u:%u %u", &tr1, &m1, &s1, &tr2))
 			goto Play_Relative_Addresses;
 
 		tr2 = m2 = s2 = f2 = f1 = 0;
-		if (4 == sscanf(arg, "%d %d:%d.%d", &tr1, &m1, &s1, &f1))
+		if (4 == sscanf(arg, "%d %u:%u.%u", &tr1, &m1, &s1, &f1))
 			goto Play_Relative_Addresses;
 
 		tr2 = m2 = s2 = f2 = f1 = 0;
-		if (3 == sscanf(arg, "%d %d:%d", &tr1, &m1, &s1))
+		if (3 == sscanf(arg, "%d %u:%u", &tr1, &m1, &s1))
 			goto Play_Relative_Addresses;
 
 		tr2 = m2 = s2 = f2 = f1 = 0;
@@ -729,13 +729,13 @@ Play_Relative_Addresses:
 		return (play_msf(m1, s1, f1, m2, s2, f2));
 
 Try_Absolute_Timed_Addresses:
-		if (6 != sscanf(arg, "%d:%d.%d%d:%d.%d",
+		if (6 != sscanf(arg, "%u:%u.%u%u:%u.%u",
 		    &m1, &s1, &f1, &m2, &s2, &f2) &&
-		    5 != sscanf(arg, "%d:%d.%d%d:%d", &m1, &s1, &f1, &m2, &s2) &&
-		    5 != sscanf(arg, "%d:%d%d:%d.%d", &m1, &s1, &m2, &s2, &f2) &&
-		    3 != sscanf(arg, "%d:%d.%d", &m1, &s1, &f1) &&
-		    4 != sscanf(arg, "%d:%d%d:%d", &m1, &s1, &m2, &s2) &&
-		    2 != sscanf(arg, "%d:%d", &m1, &s1))
+		    5 != sscanf(arg, "%u:%u.%u%u:%u", &m1, &s1, &f1, &m2, &s2) &&
+		    5 != sscanf(arg, "%u:%u%u:%u.%u", &m1, &s1, &m2, &s2, &f2) &&
+		    3 != sscanf(arg, "%u:%u.%u", &m1, &s1, &f1) &&
+		    4 != sscanf(arg, "%u:%u%u:%u", &m1, &s1, &m2, &s2) &&
+		    2 != sscanf(arg, "%u:%u", &m1, &s1))
 			goto Clean_up;
 
 		if (m2 == 0) {
