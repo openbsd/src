@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipf.8,v 1.14 1999/07/08 03:20:45 aaron Exp $
+.\"	$OpenBSD: ipf.8,v 1.15 1999/07/08 14:06:31 aaron Exp $
 .Dd July 7, 1999
 .Dt IPF 8
 .Os
@@ -224,7 +224,7 @@ To flush all in-kernel filtering lists, install the ruleset contained in
 .Pa /etc/ipf.rules
 into the active list, and enable IP filtering:
 .Pp
-.Dl ipf -A -Fa -f /etc/ipf.rules
+.Dl ipf -A -Fa -f /etc/ipf.rules -E
 .Pp
 It is advisable to work with an inactive filtering list before commiting new
 rules to the active in-kernel filtering list. To load a ruleset into the
