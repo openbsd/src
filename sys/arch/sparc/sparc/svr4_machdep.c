@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_machdep.c,v 1.12 2003/01/09 22:27:10 miod Exp $	*/
+/*	$OpenBSD: svr4_machdep.c,v 1.13 2005/03/21 22:34:33 miod Exp $	*/
 /*	$NetBSD: svr4_machdep.c,v 1.24 1997/07/29 10:04:45 fair Exp $	 */
 
 /*
@@ -162,13 +162,13 @@ svr4_getcontext(p, uc, mask, oonstack)
 		size_t sz = f->fp_nqel * f->fp_nqsize;
 		if (sz > sizeof(fps->fs_queue)) {
 #ifdef DIAGNOSTIC
-			printf("getcontext: fp_queue too large\n");
+			printf("svr4_getcontext: fp_queue too large\n");
 #endif
 			return;
 		}
 		if (copyout(fps->fs_queue, f->fp_q, sz) != 0) {
 #ifdef DIAGNOSTIC
-			printf("getcontext: copy of fp_queue failed %d\n",
+			printf("svr4_getcontext: copy of fp_queue failed %d\n",
 			    error);
 #endif
 			return;
@@ -254,7 +254,9 @@ svr4_setcontext(p, uc)
 		 * that is required; if it holds, just do it.
 		 */
 		if (((r[SVR4_SPARC_PC] | r[SVR4_SPARC_nPC]) & 3) != 0) {
-			printf("pc or npc are not multiples of 4!\n");
+#ifdef DEBUG_SVR4
+			printf("svr4_setcontext: pc or npc are not multiples of 4!\n");
+#endif
 			return EINVAL;
 		}
 
@@ -294,7 +296,7 @@ svr4_setcontext(p, uc)
 		size_t sz = f->fp_nqel * f->fp_nqsize;
 		if (sz > sizeof(fps->fs_queue)) {
 #ifdef DIAGNOSTIC
-			printf("setcontext: fp_queue too large\n");
+			printf("svr4_setcontext: fp_queue too large\n");
 #endif
 			return EINVAL;
 		}
@@ -302,10 +304,16 @@ svr4_setcontext(p, uc)
 		fps->fs_qsize = f->fp_nqel;
 		fps->fs_fsr = f->fp_fsr;
 		if (f->fp_q != NULL) {
-			if ((error = copyin(f->fp_q, fps->fs_queue,
-					    f->fp_nqel * f->fp_nqsize)) != 0) {
+			size_t sz = f->fp_nqel * f->fp_nqsize;
+			if (sz > sizeof(fps->fs_queue)) {
 #ifdef DIAGNOSTIC
-				printf("setcontext: copy of fp_queue failed\n");
+				printf("svr4_setcontext: fp_queue too large\n");
+#endif
+				return (EINVAL);
+			}
+			if ((error = copyin(f->fp_q, fps->fs_queue, sz)) != 0) {
+#ifdef DIAGNOSTIC
+				printf("svr4_setcontext: copy of fp_queue failed\n");
 #endif
 				return error;
 			}
