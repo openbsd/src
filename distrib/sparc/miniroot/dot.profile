@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.6 1997/05/05 16:31:40 grr Exp $
+#	$OpenBSD: dot.profile,v 1.7 1997/05/13 14:49:56 grr Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
@@ -50,6 +50,7 @@ EDITORS="vi ed"
 EDITOR=vi
 DUMB=ed
 EDITBIN=/bin
+EDITUBIN=/usr/bin
 
 if [ "X${DONEPROFILE}" = "X" ]; then
 	DONEPROFILE=YES
@@ -97,8 +98,9 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 					fi
 				done
 			fi
-			if [ "X$_forceloop" != "X" -a ! -x $EDITBIN/$_choice ]
-			then
+			if [ "X$_forceloop" != "X" -a \
+					! \( -x $EDITBIN/$_choice -o \
+						-x $EDITUBIN/$_choice \) ]; then
 				_forceloop=""
 			fi
 			if [ "X$_forceloop" = "X" ]; then
