@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.53 2002/08/12 10:44:04 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.54 2002/09/03 23:20:42 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -1221,9 +1221,19 @@ mainbus_attach(parent, dev, aux)
 
 	node = ca->ca_ra.ra_node;	/* re-init root node */
 
-	if (promvec->pv_romvec_vers <= 2)
-		/* remember which frame buffer, if any, is to be /dev/fb */
-		fbnode = getpropint(node, "fb", 0);
+	if (promvec->pv_romvec_vers <= 2) {
+		/*
+		 * Revision 1 prom will always return a framebuffer device
+		 * node if a framebuffer is installed, even if console is
+		 * set to serial.
+		 */
+		if (*promvec->pv_stdout != PROMDEV_SCREEN)
+			fbnode = 0;
+		else {
+			/* remember which frame buffer is the console */
+			fbnode = getpropint(node, "fb", 0);
+		}
+	}
 
 	/* Find the "options" node */
 	node0 = firstchild(node);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.36 2002/08/12 10:44:04 miod Exp $	*/
+/*	$OpenBSD: zs.c,v 1.37 2002/09/03 23:20:40 miod Exp $	*/
 /*	$NetBSD: zs.c,v 1.50 1997/10/18 00:00:40 gwr Exp $	*/
 
 /*-
@@ -1059,7 +1059,7 @@ setup_console:
 		inSource = PROMDEV_KBD;
 		/* FALLTHROUGH */
 
-	case 0:	/* keyboard/display */
+	case PROMDEV_KBD: /* keyboard/display */
 #if NZSKBD > 0
 		zs_unit = 1;
 		channel = 0;
