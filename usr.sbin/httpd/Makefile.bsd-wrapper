@@ -1,5 +1,5 @@
 # Build wrapper for Apache 
-# $OpenBSD: Makefile.bsd-wrapper,v 1.1 1999/09/29 06:42:44 beck Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.2 1999/09/30 21:26:45 beck Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -88,40 +88,58 @@ MAN8SRCS= \
 	src/support/ab.8 src/support/apachectl.8 src/support/logresolve.8 \
 	src/support/httpd.8 src/support/rotatelogs.8
 
-INCFILES= 	src/include/alloc.h \
-	src/include/util_script.h \
-	src/include/util_md5.h \
-	src/include/util_date.h \
-	src/include/scoreboard.h \
-	src/include/rfc1413.h \
-	src/include/multithread.h \
-	src/include/httpd.h \
-	src/include/http_vhost.h \
-	src/include/http_request.h \
-	src/include/http_protocol.h \
-	src/include/http_main.h \
-	src/include/http_log.h \
-	src/include/http_core.h \
-	src/include/http_config.h \
-	src/include/http_conf_globals.h \
-	src/include/hsregex.h \
-	src/include/fnmatch.h \
-	src/include/explain.h \
-	src/include/conf.h \
-	src/include/compat.h \
-	src/include/buff.h \
-	src/include/ap_mm.h \
-	src/include/ap_sha1.h \
-	src/include/ap_mmn.h \
-	src/include/ap_md5.h \
-	src/include/ap_hook.h \
-	src/include/ap_ctype.h \
-	src/include/ap_ctx.h \
-	src/include/ap_config_auto.h \
-	src/include/ap_config.h \
-	src/include/ap_compat.h \
+
+INCFILES= \
+	src/include/alloc.h  \
 	src/include/ap.h \
-	src/include/util_uri.h 
+	src/include/ap_compat.h \
+	src/include/ap_config.h \
+	src/include/ap_config_auto.h \
+	src/include/ap_ctype.h \
+	src/include/ap_md5.h \
+	src/include/ap_mmn.h \
+	src/include/ap_sha1.h \
+	src/include/buff.h \
+	src/include/compat.h \
+	src/include/conf.h \
+	src/include/explain.h \
+	src/include/fnmatch.h \
+	src/include/hsregex.h \
+	src/include/http_conf_globals.h \
+	src/include/http_config.h \
+	src/include/http_core.h \
+	src/include/http_log.h \
+	src/include/http_main.h \
+	src/include/http_protocol.h \
+	src/include/http_request.h \
+	src/include/http_vhost.h \
+	src/include/httpd.h \
+	src/include/multithread.h \
+	src/include/rfc1413.h \
+	src/include/scoreboard.h \
+	src/include/util_date.h \
+	src/include/util_md5.h \
+	src/include/util_script.h \
+	src/os/unix/os-inline.c \
+	src/os/unix/os.h \
+	src/include/util_uri.h
+
+XMLFILES= \
+	src/lib/expat-lite/asciitab.h \
+	src/lib/expat-lite/hashtable.h \
+	src/lib/expat-lite/iasciitab.h \
+	src/lib/expat-lite/latin1tab.h \
+	src/lib/expat-lite/nametab.h \
+	src/lib/expat-lite/utf8tab.h \
+	src/lib/expat-lite/xmldef.h \
+	src/lib/expat-lite/xmlparse.h \
+	src/lib/expat-lite/xmlrole.h \
+	src/lib/expat-lite/xmltok.h \
+	src/lib/expat-lite/xmltok_impl.h
+
+# This is needed because apache generates these *as* it builds
+# so we can't pick them up on make includes. 
+KLUDGEINCFILES = \
 
 CONFFILES= \
 	conf/srm.conf-dist conf/access.conf-dist conf/httpd.conf-dist \
@@ -389,6 +407,12 @@ includes: prereq
 		echo "Installing ${DESTDIR}${HTTPD_INCLUDEDIR}/$$j"; \
 		${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 444 \
 		    ${.OBJDIR}/$$i ${DESTDIR}${HTTPD_INCLUDEDIR}; \
+	done
+	@-for i in ${XMLFILES}; do \
+		j=`basename $$i`; \
+		echo "Installing ${DESTDIR}${HTTPD_INCLUDEDIR}/xml/$$j"; \
+		${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 444 \
+		    ${.OBJDIR}/$$i ${DESTDIR}${HTTPD_INCLUDEDIR}/xml; \
 	done
 
 install:
