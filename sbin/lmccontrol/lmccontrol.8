@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lmccontrol.8,v 1.3 2000/10/13 19:27:10 chris Exp $
+.\"	$OpenBSD: lmccontrol.8,v 1.4 2000/10/16 23:02:21 chris Exp $
 .\"
 .\" Copyright (c) 1997-1999 LAN Media Corporation (LMC)
 .\" All rights reserved.  www.lanmedia.com
@@ -38,10 +38,10 @@
 .Dt LMCCTL 8
 .Os
 .Sh NAME
-.Nm lmcctl
+.Nm lmccontrol
 .Nd configure Lan Media Corporation SSI/HSSI/T1/T3 devices
 .Sh SYNOPSIS
-.Nm lmcctl
+.Nm lmccontrol
 .Op Ar interface
 .Op Fl l Ar speed
 .Op Fl cCeEsSkKoO
@@ -122,13 +122,14 @@ power).
 To set a SSI card for a speed of 2048000 bits/sec with HDLC keepalive off,
 one could use:
 .Bd -unfilled -offset indent
-lmcctl lmc0 -l 2048000 -K
+lmccontrol lmc0 -l 2048000 -K
 .Ed
 .Pp
 .Sh SEE ALSO
 .Xr lmc 4 ,
 .Xr sppp 4 ,
 .Xr hostname.if 8 ,
+.Xr spppcontrol 8 ,
 .Xr ifconfig 8
 .Sh HISTORY
 The
