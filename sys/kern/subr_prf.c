@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.35 2001/09/05 22:32:39 deraadt Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.36 2001/11/15 07:57:29 niklas Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -97,9 +97,8 @@ extern int uvm_doswapencrypt;
  * local prototypes
  */
 
-static int	 kprintf __P((const char *, int, void *,
-		    char *, va_list));
-static void	 putchar __P((int, int, struct tty *));
+int	 kprintf __P((const char *, int, void *, char *, va_list));
+void	 putchar __P((int, int, struct tty *));
 
 
 /*
@@ -318,7 +317,7 @@ addlog(fmt, va_alist)
  * => if console, then the last MSGBUFS chars are saved in msgbuf
  *	for inspection later (e.g. dmesg/syslog)
  */
-static void
+void
 putchar(c, flags, tp)
 	register int c;
 	int flags;
@@ -746,7 +745,7 @@ vsnprintf(buf, size, fmt, ap)
 	}								\
 }
 
-static int
+int
 kprintf(fmt0, oflags, vp, sbuf, ap)
 	const char *fmt0;
 	int oflags;
