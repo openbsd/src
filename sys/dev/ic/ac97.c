@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.29 2002/03/14 01:26:53 millert Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.30 2002/04/08 01:43:13 frantzen Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -829,8 +829,13 @@ ac97_mixer_set_port(codec_if, cp)
 		if (cp->un.value.num_channels == 1) {
 			l = r = cp->un.value.level[AUDIO_MIXER_LEVEL_MONO];
 		} else {
-			l = cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
-			r = cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT];
+			if (!(as->host_flags & AC97_HOST_SWAPPED_CHANNELS)) {
+				l = cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
+				r = cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT];
+			} else {
+				r = cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
+				l = cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT];
+			}
 		}
 
 		if (!si->polarity) {
@@ -915,9 +920,17 @@ ac97_mixer_get_port(codec_if, cp)
 		    (cp->un.value.num_channels > value->num_channels))
 			return (EINVAL);
 
-		l = r = (val >> si->ofs) & mask;
-		if (value->num_channels > 1) 
-			r = (val >> (si->ofs + 8)) & mask;
+		if (value->num_channels == 1) 
+			l = r = (val >> si->ofs) & mask;
+		else {
+			if (!(as->host_flags & AC97_HOST_SWAPPED_CHANNELS)) {
+				l = (val >> si->ofs) & mask;
+				r = (val >> (si->ofs + 8)) & mask;
+			} else {
+				r = (val >> si->ofs) & mask;
+				l = (val >> (si->ofs + 8)) & mask;
+			}
+		}
 
 		l <<= 8 - si->bits;
 		r <<= 8 - si->bits;
