@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.8 1999/11/09 00:20:41 rahnds Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.9 2000/01/23 17:32:02 rahnds Exp $	*/
 /*
  * Copyright (c) 1996, 1997 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -41,7 +41,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.8 1999/11/09 00:20:41 rahnds Exp $
+ *      $Id: autoconf.c,v 1.9 2000/01/23 17:32:02 rahnds Exp $
  */
 
 /*
@@ -521,9 +521,12 @@ struct devmap {
 	char *dev;
 	int   type;
 };
-#define	T_BUS	0
-#define	T_SCSI	1
-#define	T_DISK	2
+#define	T_IFACE	0x10
+
+#define	T_BUS	0x00
+#define	T_SCSI	0x11
+#define	T_IDE	0x12
+#define	T_DISK	0x21
 
 static struct devmap *
 findtype(s)
@@ -531,8 +534,12 @@ findtype(s)
 {
 	static struct devmap devmap[] = {
 		{ "/pci", NULL, T_BUS },
+		{ "/mac-io", NULL, T_BUS },
 		{ "/scsi@", "sd", T_SCSI },
+		{ "/ide@", "wd", T_IDE },
+		{ "/ide", "wd", T_IDE },
 		{ "/disk@", "sd", T_DISK },
+		{ "/disk", "wd", T_DISK },
 		{ NULL, NULL }
 	};
 	struct devmap *dp = &devmap[0];
@@ -544,12 +551,17 @@ findtype(s)
 		}
 		dp++;
 	}
+	if (dp->att == NULL) {
+		printf("string [%s]not found\n", *s);
+	}
 	return(dp);
 }
 
 /*
  * Look at the string 'bp' and decode the boot device.
  * Boot names look like: '/pci/scsi@c/disk@0,0/bsd'
+ *                       '/pci/mac-io/ide@20000/disk@0,0/bsd
+ *                       '/pci/mac-io/ide/disk/bsd
  */
 void
 makebootdev(bp)
@@ -566,7 +578,7 @@ makebootdev(bp)
 			printf("Warning: boot device unrecognized: %s\n", bp);
 			return;
 		}
-	} while(dp->type != T_SCSI);
+	} while((dp->type & T_IFACE) == 0);
 
 	dev = dp->dev;
 	while(*cp && *cp != '/')
