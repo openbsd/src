@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.100 2002/03/24 22:18:51 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.101 2002/04/01 18:50:11 nate Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 
 machine	alpha
@@ -149,7 +149,7 @@ scsibus*	at twe?
 
 # PCI Network devices
 de*	at pci? dev ? function ?	# 21x4[012]-based Ethernet
-#dc*	at pci? dev ? function ?	# 21143, "tulip" clone ethernet
+dc*	at pci? dev ? function ?	# 21143, "tulip" clone ethernet
 ne*	at pci? dev ? function ?	# NE2000-compat ethernet cards
 fxp*	at pci? dev ? function ?	# EtherExpress 10/100B ethernet
 ep*	at pci? dev ? function ?	# 3COM 3c59x
