@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.16 2003/03/02 23:04:35 kjell Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.17 2003/03/02 23:55:11 cloder Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -44,26 +44,6 @@
 
 #include "sdl.h"
 
-char hostname[MAXHOSTNAMELEN];
-struct syslog_data sdata = SYSLOG_DATA_INIT;
-char *reply = NULL;
-char *nreply = "450";
-char *spamd = "spamd IP-based SPAM blocker";
-
-extern struct sdlist *blacklists;
-
-int conffd = -1;
-char *cb;
-size_t cbs, cbu;
-
-time_t t;
-
-#define MAXCON 200
-int maxcon = MAXCON;
-int clients;
-int debug;
-#define MAXTIME 400
-
 struct con {
 	int fd;
 	int state;
@@ -92,6 +72,43 @@ struct con {
 	char *op;
 	int ol;
 } *con;
+
+void     usage(void);
+char    *grow_obuf(struct con *, int);
+int      parse_configline(char *);
+void     parse_configs(void);
+void     do_config(void);
+int      append_error_string (struct con *, size_t, char *, int, void *);
+void     build_reply(struct  con *);
+void     doreply(struct con *);
+void     setlog(char *, int, char *);
+void     initcon(struct con *, int, struct sockaddr_in *);
+void     closecon(struct con *);
+int      match(char *, char *);
+void     nextstate(struct con *);
+void     handler(struct con *);
+void     handlew(struct con *, int one);
+
+char hostname[MAXHOSTNAMELEN];
+struct syslog_data sdata = SYSLOG_DATA_INIT;
+char *reply = NULL;
+char *nreply = "450";
+char *spamd = "spamd IP-based SPAM blocker";
+
+extern struct sdlist *blacklists;
+
+int conffd = -1;
+char *cb;
+size_t cbs, cbu; 
+
+time_t t;
+
+#define MAXCON 200
+int maxcon = MAXCON;
+int clients;
+int debug;
+#define MAXTIME 400
+
 
 void
 usage(void)
