@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tail.1,v 1.9 2000/03/11 21:40:04 aaron Exp $
+.\"	$OpenBSD: tail.1,v 1.10 2000/10/07 14:32:15 aaron Exp $
 .\"	$NetBSD: tail.1,v 1.4 1994/11/23 07:42:13 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993
@@ -49,7 +49,8 @@
 .Oo
 .Fl b Ar number |
 .Fl c Ar number |
-.Fl n Ar number
+.Fl n Ar number |
+.Fl Ns Ar number
 .Oc
 .Op Ar file ...
 .Sh DESCRIPTION
@@ -59,7 +60,7 @@ utility displays the contents of
 .Ar file
 or, by default, its standard input, to the standard output.
 .Pp
-The display begins at a byte, line or 512-byte block location in the
+The display begins at a byte, line, or 512-byte block location in the
 input.
 Numbers having a leading plus
 .Pq Ql +
@@ -87,43 +88,41 @@ The location is
 The location is
 .Ar number
 bytes.
+.It Xo Fl n Ar number No |\ 
+.Fl Ns Ar number
+.Xc
+The location is
+.Ar number
+lines.
 .It Fl f
-The
-.Fl f
-option causes
-.Nm
-to not stop when end-of-file is reached, but rather to wait for additional
+Do not stop when end-of-file is reached, but rather to wait for additional
 data to be appended to the input.
 If the file is replaced (i.e., the inode number changes),
 .Nm
 will reopen the file and continue.
 If the file is truncated,
 .Nm
-will reset its position back to the beginning.
+will reset its position to the beginning.
 This makes
 .Nm
 more useful for watching log files that may get rotated.
 The
 .Fl f
 option is ignored if the standard input is a pipe, but not if it is a FIFO.
-.It Fl n Ar number
-The location is
-.Ar number
-lines.
 .It Fl r
 The
 .Fl r
 option causes the input to be displayed in reverse order, by line.
 Additionally, this option changes the meaning of the
 .Fl b ,
-.Fl c
+.Fl c ,
 and
 .Fl n
 options.
 When the
 .Fl r
 option is specified, these options specify the number of bytes, lines
-or 512-byte blocks to display, instead of the bytes, lines or blocks
+or 512-byte blocks to display, instead of the bytes, lines, or blocks
 from the beginning or end of the input from which to begin the display.
 The default for the
 .Fl r
@@ -140,6 +139,17 @@ is the name of the file.
 The
 .Nm
 utility exits 0 on success or >0 if an error occurred.
+.Sh EXAMPLES
+To display the last 500 lines of the file
+.Ar foo :
+.Pp
+.Dl $ tail -500 foo
+.Pp
+Keep
+.Pa /var/log/messages
+open, displaying to the standard output anything appended to the file:
+.Pp
+.Dl $ tail -f /var/log/messages
 .Sh SEE ALSO
 .Xr cat 1 ,
 .Xr head 1 ,
