@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.4 1999/07/22 04:37:30 deraadt Exp $     */
+/*      $OpenBSD: pciide.c,v 1.5 1999/07/25 04:42:31 csapuntz Exp $     */
 /*	$NetBSD: pciide.c,v 1.40 1999/07/12 13:49:38 bouyer Exp $	*/
 
 /*
@@ -320,6 +320,7 @@ const struct pciide_product_desc pciide_sis_products[] =  {
 	}
 };
 
+#ifdef notyet
 const struct pciide_product_desc pciide_acer_products[] =  {
 	{ PCI_PRODUCT_ALI_M5229,	/* Acer Labs M5229 UDMA IDE */
 	  0,
@@ -329,6 +330,7 @@ const struct pciide_product_desc pciide_acer_products[] =  {
 	  acer_channel_map
 	}
 };
+#endif
 
 struct pciide_vendor_desc {
 	u_int32_t ide_vendor;
@@ -347,8 +349,10 @@ const struct pciide_vendor_desc pciide_vendors[] = {
 	  sizeof(pciide_cypress_products)/sizeof(pciide_cypress_products[0]) },
 	{ PCI_VENDOR_SIS, pciide_sis_products,
 	  sizeof(pciide_sis_products)/sizeof(pciide_sis_products[0]) },
+#ifdef notyet
 	{ PCI_VENDOR_ALI, pciide_acer_products,
 	  sizeof(pciide_acer_products)/sizeof(pciide_acer_products[0]) }
+#endif
 };
 
 #define	PCIIDE_CHANNEL_NAME(chan)	((chan) == 0 ? "channel 0" : "channel 1")
