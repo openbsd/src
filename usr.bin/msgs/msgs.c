@@ -1,4 +1,4 @@
-/*	$OpenBSD: msgs.c,v 1.12 1998/06/23 23:30:19 deraadt Exp $	*/
+/*	$OpenBSD: msgs.c,v 1.13 1999/05/13 12:59:29 aaron Exp $	*/
 /*	$NetBSD: msgs.c,v 1.7 1995/09/28 06:57:40 tls Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)msgs.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: msgs.c,v 1.12 1998/06/23 23:30:19 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: msgs.c,v 1.13 1999/05/13 12:59:29 aaron Exp $";
 #endif
 #endif /* not lint */
 
@@ -256,8 +256,18 @@ main(argc, argv)
 	bounds = fopen(fname, "r");
 
 	if (bounds == NULL) {
-		perror(fname);
-		exit(1);
+		if (errno == ENOENT) {
+			if ((bounds = fopen(fname, "w+")) == NULL) {
+				perror(fname);
+				exit(1);
+			}
+			fprintf(bounds, "1 0\n");
+			rewind(bounds);
+		}
+		else {
+			perror(fname);
+			exit(1);
+		}
 	}
 
 	fscanf(bounds, "%d %d\n", &firstmsg, &lastmsg);
