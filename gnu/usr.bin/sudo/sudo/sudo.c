@@ -1,5 +1,5 @@
 /*
- * CU sudo version 1.5.2 (based on Root Group sudo version 1.1)
+ * CU sudo version 1.5.3 (based on Root Group sudo version 1.1)
  *
  * This software comes with no waranty whatsoever, use at your own risk.
  *
@@ -51,7 +51,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: sudo.c,v 1.1 1996/10/14 05:14:54 millert Exp $";
+static char rcsid[] = "$Id: sudo.c,v 1.2 1996/11/17 16:34:04 millert Exp $";
 #endif /* lint */
 
 #define MAIN
@@ -939,13 +939,14 @@ void set_perms(perm, sudo_mode)
 				}
 
 				/*
-				 * If SUDOERS_UID == 0 we need to use
-				 * a different uid in order to avoid
-				 * NFS lossage.  Using uid 1 is a bit
-				 * bogus but should be safe.
+				 * If SUDOERS_UID == 0 and SUDOERS_MODE
+				 * is group readable we use a non-zero
+				 * uid in order to avoid NFS lossage.
+				 * Using uid 1 is a bit bogus but should
+				 * work on all OS's.
 				 */
 				if (SUDOERS_UID == 0) {
-				    if (seteuid(1)) {
+				    if ((SUDOERS_MODE & 040) && seteuid(1)) {
 					perror("seteuid(1)");
 					exit(1);
 				    }

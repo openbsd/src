@@ -1,5 +1,5 @@
 /*
- * CU sudo version 1.5.2 (based on Root Group sudo version 1.1)
+ * CU sudo version 1.5.3 (based on Root Group sudo version 1.1)
  *
  * This software comes with no waranty whatsoever, use at your own risk.
  *
@@ -25,7 +25,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *  $Id: sudo.h,v 1.1 1996/10/14 05:14:54 millert Exp $
+ *  $Id: sudo.h,v 1.2 1996/11/17 16:34:05 millert Exp $
  */
 
 #ifndef _SUDO_SUDO_H
@@ -92,7 +92,7 @@ struct command_match {
 /*
  * Structure containing Cmnd_Alias's if "sudo -l" is used.
  */
-struct command_alias {
+struct generic_alias {
     char *alias;
     char *entries;
     size_t entries_size;

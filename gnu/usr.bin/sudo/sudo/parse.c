@@ -1,5 +1,5 @@
 /*
- *  CU sudo version 1.5.2
+ *  CU sudo version 1.5.3
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: parse.c,v 1.1 1996/10/14 05:14:51 millert Exp $";
+static char rcsid[] = "$Id: parse.c,v 1.2 1996/11/17 16:34:01 millert Exp $";
 #endif /* lint */
 
 #include "config.h"

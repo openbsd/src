@@ -1,5 +1,5 @@
 /*
- *  CU sudo version 1.5.2
+ *  CU sudo version 1.5.3
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: visudo.c,v 1.2 1996/10/30 23:10:25 millert Exp $";
+static char rcsid[] = "$Id: visudo.c,v 1.3 1996/11/17 16:34:08 millert Exp $";
 #endif /* lint */
 
 #include "config.h"
@@ -128,7 +128,7 @@ int main(argc, argv)
     int argc;
     char **argv;
 {
-    char buf[BUFSIZ];			/* buffer used for copying files */
+    char buf[MAXPATHLEN*2];		/* buffer used for copying files */
     char * Editor = EDITOR;		/* editor to use (default is EDITOR */
     int sudoers_fd;			/* sudoers file descriptor */
     int stmp_fd;			/* stmp file descriptor */
@@ -180,7 +180,7 @@ int main(argc, argv)
 	}
 	(void) fprintf(stderr, "%s: ", Argv[0]);
 	perror(stmp);
-	Exit(1);
+	Exit(-1);
     }
 
     /* install signal handler to clean up stmp */
@@ -190,7 +190,7 @@ int main(argc, argv)
     if (sudoers_fd < 0 && errno != ENOENT) {
 	(void) fprintf(stderr, "%s: ", Argv[0]);
 	perror(sudoers);
-	Exit(1);
+	Exit(-1);
     }
 
     /*
@@ -201,7 +201,7 @@ int main(argc, argv)
 	    if (write(stmp_fd, buf, n) != n) {
 		(void) fprintf(stderr, "%s: Write failed: ", Argv[0]);
 		perror("");
-		Exit(1);
+		Exit(-1);
 	    }
 
 	(void) close(sudoers_fd);
@@ -215,6 +215,11 @@ int main(argc, argv)
 	/*
 	 * Build up a buffer to execute
 	 */
+	if (strlen(Editor) + strlen(stmp) + 30 > sizeof(buf)) {
+	    (void) fprintf(stderr, "%s: Buffer too short (line %d).\n",
+			   __LINE__, Argv[0]);
+	    Exit(-1);
+	}
 	if (parse_error == TRUE)
 	    (void) sprintf(buf, "%s +%d %s", Editor, errorlineno, stmp);
 	else
@@ -230,7 +235,7 @@ int main(argc, argv)
 		(void) fprintf(stderr,
 		    "%s: Can't stat temporary file (%s), %s unchanged.\n",
 		    Argv[0], stmp, sudoers);
-		Exit(1);
+		Exit(-1);
 	    }
 
 	    /* check for zero length file */
@@ -238,7 +243,7 @@ int main(argc, argv)
 		(void) fprintf(stderr,
 		    "%s: Zero length temporary file (%s), %s unchanged.\n",
 		    Argv[0], stmp, sudoers);
-		Exit(1);
+		Exit(-1);
 	    }
 
 	    /*
@@ -254,23 +259,23 @@ int main(argc, argv)
 		(void) fprintf(stderr,
 		    "%s: Can't re-open temporary file (%s), %s unchanged.\n",
 		    Argv[0], stmp, sudoers);
-		Exit(1);
+		Exit(-1);
 	    }
 
 	    /* clean slate for each parse */
 	    init_parser();
 
 	    /* parse the sudoers file */
-	    if (yyparse()) {
+	    if (yyparse() && parse_error != TRUE) {
 		(void) fprintf(stderr,
-		    "%s: Failed to parse temporary file (%s), %s unchanged.\n",
+		    "%s: Failed to parse temporary file (%s), unknown error.\n",
 		    Argv[0], stmp, sudoers);
-		Exit(1);
+		parse_error = TRUE;
 	    }
 	} else {
 	    (void) fprintf(stderr, "%s: Editor (%s) failed, %s unchanged.\n",
 		Argv[0], Editor, sudoers);
-	    Exit(1);
+	    Exit(-1);
 	}
 
 	/*
@@ -295,14 +300,14 @@ int main(argc, argv)
 	    "%s: Unable to set (uid, gid) of %s to (%d, %d): ",
 	    Argv[0], stmp, SUDOERS_UID, SUDOERS_GID);
 	perror("");
-	Exit(1);
+	Exit(-1);
     }
     if (chmod(stmp, SUDOERS_MODE)) {
 	(void) fprintf(stderr,
 	    "%s: Unable to change mode of %s to %o: ",
 	    Argv[0], stmp, SUDOERS_MODE);
 	perror("");
-	Exit(1);
+	Exit(-1);
     }
 
     /*
@@ -326,7 +331,7 @@ int main(argc, argv)
 			      "%s: Cannot alocate memory, %s unchanged: ",
 			      Argv[0], sudoers);
 		perror("");
-		Exit(1);
+		Exit(-1);
 	    }
 
 	    /* Build up command and execute it */
@@ -335,14 +340,14 @@ int main(argc, argv)
 		(void) fprintf(stderr,
 			       "%s: Command failed: '%s', %s unchanged.\n",
 			       Argv[0], tmpbuf, sudoers);
-		Exit(1);
+		Exit(-1);
 	    }
 	    (void) free(tmpbuf);
 	} else {
 	    (void) fprintf(stderr, "%s: Error renaming %s, %s unchanged: ",
 				   Argv[0], stmp, sudoers);
 	    perror("");
-	    Exit(1);
+	    Exit(-1);
 	}
 
     return(0);
@@ -396,7 +401,7 @@ int netgr_matches(n, h, u)
 static void usage()
 {
     (void) fprintf(stderr, "usage: %s [-V]\n", Argv[0]);
-    Exit(1);
+    Exit(-1);
 }
 
 
@@ -406,13 +411,18 @@ static void usage()
  *
  *  Unlinks the sudoers temp file (if it exists) and exits.
  *  Used in place of a normal exit() and as a signal handler.
+ *  A positive parameter is considered to be a signal and is reported.
  */
 
 static RETSIGTYPE Exit(sig)
     int sig;
 {
     (void) unlink(stmp);
-    exit(sig);
+
+    if (sig > 0)
+	(void) fprintf(stderr, "%s exiting, caught signal %d.\n", Argv[0], sig);
+
+    exit(-sig);
 }
 
 
@@ -431,16 +441,12 @@ static char whatnow()
 
     do {
 	ok = FALSE;
-	(void) printf("What now? ");
-	if ((choice = fgetc(stdin)) != '\n')
-	    while (fgetc(stdin) != '\n')
+	(void) fputs("What now? ", stdout);
+	if ((choice = getchar()) != '\n')
+	    while (getchar() != '\n')
 		;
 
-	/* safely force to lower case */
-	if (isupper(choice))
-	    choice = tolower(choice);
-
-	if (choice == 'e' || choice == 'x' || choice == 'q')
+	if (choice == 'e' || choice == 'x' || choice == 'Q')
 	    ok = TRUE;
 
 	/* help message if they gavce us garbage */
@@ -465,7 +471,7 @@ static void whatnow_help()
     (void) printf("Options are:\n");
     (void) printf("  (e)dit sudoers file again\n");
     (void) printf("  e(x)it without saving changes to sudoers file\n");
-    (void) printf("  (q)uit and save changes to sudoers file (DANGER!)\n\n");
+    (void) printf("  (Q)uit and save changes to sudoers file (DANGER!)\n\n");
 }
 
 

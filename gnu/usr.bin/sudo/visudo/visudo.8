@@ -1,9 +1,9 @@
 .rn '' }`
-''' $RCSfile: visudo.8,v $$Revision: 1.1 $$Date: 1996/10/14 05:14:58 $
+''' $RCSfile: visudo.8,v $$Revision: 1.2 $$Date: 1996/11/17 16:34:08 $
 '''
 ''' $Log: visudo.8,v $
-''' Revision 1.1  1996/10/14 05:14:58  millert
-''' sudo 1.5.2
+''' Revision 1.2  1996/11/17 16:34:08  millert
+''' Updated to sudo 1.5.3
 '''
 '''
 .de Sh
@@ -76,7 +76,7 @@
 .nr % 0
 .rr F
 .\}
-.TH visudo 8 "1.5.2" "7/Sep/96" "MAINTENANCE COMMANDS"
+.TH visudo 8 "1.5.3" "13/Nov/96" "MAINTENANCE COMMANDS"
 .IX Title "visudo 8"
 .UC
 .IX Name "visudo - edit the sudoers file"
@@ -195,8 +195,8 @@ an error, a message will be printed stating the line \fInumber\fR\|(s)
 that the error occurred on and the user will receive the
 \*(L"What now?\*(R" prompt.  At this point the user may enter \*(L"e\*(R"
 to re-edit the \fIsudoers\fR file, enter \*(L"x\*(R" to exit without
-saving the changes, or \*(L"q\*(R" to quit and save changes.  The
-\*(L"q\*(R" option should be used with extreme care because if \fBvisudo\fR
+saving the changes, or \*(L"Q\*(R" to quit and save changes.  The
+\*(L"Q\*(R" option should be used with extreme care because if \fBvisudo\fR
 believes there to be a parse error, so will \fBsudo\fR and no one
 will be able to execute \fBsudo\fR again until the error is fixed.
 Any other command at this prompt will print a short help message.

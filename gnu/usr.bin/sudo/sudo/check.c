@@ -1,5 +1,5 @@
 /*
- * CU sudo version 1.5.2 (based on Root Group sudo version 1.1)
+ * CU sudo version 1.5.3 (based on Root Group sudo version 1.1)
  *
  * This software comes with no waranty whatsoever, use at your own risk.
  *
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: check.c,v 1.1 1996/10/14 05:14:43 millert Exp $";
+static char rcsid[] = "$Id: check.c,v 1.2 1996/11/17 16:33:55 millert Exp $";
 #endif /* lint */
 
 #include "config.h"
@@ -227,8 +227,20 @@ static int check_timestamp()
     else
 	p = tty;
 
+    if (sizeof(_PATH_SUDO_TIMEDIR) + strlen(user_name) + strlen(p) + 2 >
+	sizeof(timestampfile)) {
+	(void) fprintf(stderr, "%s:  path too long:  %s/%s.%s\n", Argv[0],
+		       _PATH_SUDO_TIMEDIR, user_name, p);
+	exit(1);                                              
+    }
     (void) sprintf(timestampfile, "%s/%s.%s", _PATH_SUDO_TIMEDIR, user_name, p);
 #else
+    if (sizeof(_PATH_SUDO_TIMEDIR) + strlen(user_name) + 1 >
+	sizeof(timestampfile)) {
+	(void) fprintf(stderr, "%s:  path too long:  %s/%s\n", Argv[0],
+		       _PATH_SUDO_TIMEDIR, user_name);
+	exit(1);                                              
+    }
     (void) sprintf(timestampfile, "%s/%s", _PATH_SUDO_TIMEDIR, user_name);
 #endif /* USE_TTY_TICKETS */
 
@@ -385,8 +397,20 @@ void remove_timestamp()
     else
 	p = tty;
 
+    if (sizeof(_PATH_SUDO_TIMEDIR) + strlen(user_name) + strlen(p) + 2 >
+	sizeof(timestampfile)) {
+	(void) fprintf(stderr, "%s:  path too long:  %s/%s.%s\n", Argv[0],
+		       _PATH_SUDO_TIMEDIR, user_name, p);
+	exit(1);                                              
+    }
     (void) sprintf(timestampfile, "%s/%s.%s", _PATH_SUDO_TIMEDIR, user_name, p);
 #else
+    if (sizeof(_PATH_SUDO_TIMEDIR) + strlen(user_name) + 1 >
+	sizeof(timestampfile)) {
+	(void) fprintf(stderr, "%s:  path too long:  %s/%s\n", Argv[0],
+		       _PATH_SUDO_TIMEDIR, user_name);
+	exit(1);                                              
+    }
     (void) sprintf(timestampfile, "%s/%s", _PATH_SUDO_TIMEDIR, user_name);
 #endif /* USE_TTY_TICKETS */
 
@@ -844,7 +868,7 @@ static void reminder()
     (void) fprintf(stderr, "\n%s\n%s\n\n%s\n%s\n\n",
 #else
     (void) fprintf(stderr, "\n%s\n%s\n%s\n%s\n\n%s\n%s\n\n%s\n%s\n\n",
-	"    CU sudo version 1.5.2, based on Root Group sudo version 1.1",
+	"    CU sudo version 1.5.3, based on Root Group sudo version 1.1",
 	"    sudo version 1.1, Copyright (C) 1991 The Root Group, Inc.",
 	"    sudo comes with ABSOLUTELY NO WARRANTY.  This is free software,",
 	"    and you are welcome to redistribute it under certain conditions.",

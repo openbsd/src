@@ -1,6 +1,6 @@
 %{
 /*
- *  CU sudo version 1.5.2
+ *  CU sudo version 1.5.3
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: parse.lex,v 1.1 1996/10/14 05:14:51 millert Exp $";
+static char rcsid[] = "$Id: parse.lex,v 1.2 1996/11/17 16:34:02 millert Exp $";
 #endif /* lint */
 
 #include "config.h"
@@ -92,7 +92,7 @@ WORD			[[:alnum:]_-]+
 			    sawspace = TRUE;	/* but remember for fill_args */
 			}
 
-\\\n			{ 
+\\[ \t]*\n		{ 
 			    sawspace = TRUE;	/* remember for fill_args */
 			    ++sudolineno;
 			    LEXTRACE("\n\t");
@@ -188,7 +188,7 @@ NOPASSWD[[:blank:]]*:	{
 			}
 
 <GOTRUNAS>[[:upper:]][[:upper:][:digit:]_]* {
-			    /* User_Alias that user can run command as or ALL */
+			    /* Runas_Alias that user can run command as or ALL */
 			    fill(yytext, yyleng);
 			    if (strcmp(yytext, "ALL") == 0) {
 				LEXTRACE("ALL ");
@@ -233,8 +233,6 @@ NOPASSWD[[:blank:]]*:	{
 			}
 
 [[:alnum:]][[:alnum:]_-]*	{
-			    int l;
-
 			    fill(yytext, yyleng);
 			    if (strcmp(yytext, "Host_Alias") == 0) {
 				LEXTRACE("HOSTALIAS ");
@@ -248,14 +246,14 @@ NOPASSWD[[:blank:]]*:	{
 				LEXTRACE("USERALIAS ");
 				return(USERALIAS);
 			    }
-			    l = yyleng - 1;
-			    if (isalpha(yytext[l]) || isdigit(yytext[l])) {
-				/* NAME is what RFC1034 calls a label */
-				LEXTRACE("NAME ");
-				return(NAME);
+			    if (strcmp(yytext, "Runas_Alias") == 0) {
+				LEXTRACE("RUNASALIAS ");
+				return(RUNASALIAS);
 			    }
 
-			    return(ERROR);
+			    /* NAME is what RFC1034 calls a label */
+			    LEXTRACE("NAME ");
+			    return(NAME);
 			}
 
 .			{
