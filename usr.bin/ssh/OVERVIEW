@@ -23,14 +23,13 @@ these programs.
 
   Compression Library
   
-    - Ssh uses the GNU GZIP compression library (ZLIB).  It resides in
-      the zlib095 subdirectory.
+    - Ssh uses the GNU GZIP compression library (ZLIB).
 
   Encryption/Decryption
 
     - Ssh contains several encryption algorithms.  These are all
       accessed through the cipher.h interface.  The interface code is
-      in cipher.c, and the implementations in des.c, ssh_md5.c, rc4.c.
+      in cipher.c, and the implementations are in libc.
 
   Multiple Precision Integer Library
 
