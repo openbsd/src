@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.265 2003/08/22 04:54:13 david Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.266 2003/08/22 18:28:14 frantzen Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1753,17 +1753,18 @@ and would be OpenBSD for the
 firewall itself.
 The version of the oldest available OpenBSD release on the main ftp site
 would be 2.6 and the fingerprint would be written
-.Bd -literal indent
-	"OpenBSD 2.6"
+.Bd -literal -offset indent
+"OpenBSD 2.6"
 .Ed
 .Pp
 The subtype of an operating system is typically used to describe the
 patchlevel if that patch led to changes in the TCP stack behavior.
-In the case of OpenBSD, the only subtype is for a fingerprint on the
-loopback interface lo0 since it utilizes a different TCP maximum segment
-size and would be specified like
-.Bd -literal indent
-	"OpenBSD 3.3 lo0"
+In the case of OpenBSD, the only subtype is for a fingerprint that was
+normalized by the
+.Ar no-df
+scrub option and would be specified like
+.Bd -literal -offset indent
+"OpenBSD 3.3 no-df"
 .Ed
 .Pp
 Fingerprints for most popular operating systems are provided by
