@@ -1,3 +1,0 @@
-# route/reply/dup-to can't have a loopback interface as argument
-
-pass in on lo0 route-to lo0 inet all
