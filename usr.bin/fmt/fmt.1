@@ -1,5 +1,4 @@
-.\"	$OpenBSD: fmt.1,v 1.3 1997/02/09 23:58:42 millert Exp $
-.\"	$NetBSD: fmt.1,v 1.3 1995/09/01 01:29:40 jtc Exp $
+.\" $OpenBSD: fmt.1,v 1.4 1998/04/25 23:02:26 millert Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -34,6 +33,8 @@
 .\"
 .\"     @(#)fmt.1	8.1 (Berkeley) 6/6/93
 .\"
+.\" Modified by Gareth McCaughan to describe the new version of `fmt'
+.\" rather than the old one.
 .Dd June 6, 1993
 .Dt FMT 1
 .Os
@@ -41,8 +42,11 @@
 .Nm fmt
 .Nd simple text formatter
 .Sh SYNOPSIS
-.Nm fmt
-.Fl c
+.Nm
+.Op Fl cmps
+.Op Fl d Ar chars
+.Op Fl l Ar num
+.Op Fl t Ar num
 .Oo
 .Ar goal
 .Op Ar maximum
@@ -55,17 +59,50 @@ files (or standard input if none are given) and produces on standard
 output a version of its input with lines as close to the
 .Ar goal
 length
-as possible without exceeding the maximum.  The
+as possible without exceeding the
+.Ar maximum.
+The
 .Ar goal
 length defaults
-to 65 and the maximum to 75.  The spacing at the beginning of the
+to 65 and the
+.Ar maximum
+to 10 more than the goal length.  The spacing at the beginning of the
 input lines is preserved in the output, as are blank lines and
 interword spacing.
 .Pp
-.Fl c
-instructs
-.Nm fmt
-to center the text.
+The following options are available:
+.Bl -tag -width indent
+.It Fl c
+Center the text, line by line. In this case, most of the other
+options are ignored; no splitting or joining of lines is done.
+.It Fl m
+Try to format mail header lines contained in the input sensibly.
+.It Fl p
+Allow indented paragraphs. Without the
+.Fl p
+flag, any change in the amount of whitespace at the start of a line
+results in a new paragraph being begun.
+.It Fl s
+Collapse whitespace inside lines, so that multiple whitespace
+characters are turned into a single space. (Or, at the end of a
+sentence, a double space.)
+.It Fl d Ar chars
+Treat the
+.Ar chars
+(and no others) as sentence-ending characters. By default the
+sentence-ending characters are full stop, question mark and
+exclamation mark. Remember that some characters may need to be
+escaped to protect them from your shell.
+.It Fl l Ar number
+Replace multiple spaces with tabs at the start of each output
+line, if possible.
+.Ar number
+spaces will be replaced with one tab.
+.It Fl t Ar number
+Assume that the input files' tabs assume
+.Ar number
+spaces per tab stop. The default is 8.
+.El
 .Pp
 .Nm Fmt
 is meant to format mail messages prior to sending, but may also be useful
@@ -82,17 +119,32 @@ the command
 will reformat a paragraph,
 evening the lines.
 .Sh SEE ALSO
-.Xr nroff 1 ,
-.Xr mail 1
+.Xr mail 1 ,
+.Xr nroff 1
 .Sh HISTORY
-The
-.Nm fmt
+An
+.Nm
 command appeared in
 .Bx 3 .
+.Pp
+The version described herein is a complete rewrite and appeared in
+.\" .Ox 2.4 .
+.Bx Open
+2.4.
 .\" .Sh AUTHOR
 .\" Kurt Shoens
 .\" .br
 .\" Liz Allen (added goal length concept)
+.\" The above are the authors of the old `fmt' program;
+.\" the present one was written by Gareth McCaughan.
 .Sh BUGS
 The program was designed to be simple and fast \- for more complex
 operations, the standard text processors are likely to be more appropriate.
+.Pp
+When the first line of an indented paragraph is very long (more than
+about twice the goal length), the indentation in the output can be
+wrong.
+.Pp
+.Nm
+is not infallible in guessing what lines are mail headers and what
+lines are not.
