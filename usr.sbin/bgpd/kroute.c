@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.13 2003/12/25 02:04:46 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.14 2003/12/25 02:09:19 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -128,7 +128,7 @@ retry:
 }
 
 int
-kroute_add(int fd, struct kroute *kroute)
+kroute_change(int fd, struct kroute *kroute)
 {
 	struct kroute_node	*kr, s;
 	int			 n;
