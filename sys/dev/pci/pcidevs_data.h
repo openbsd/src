@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.225 2000/03/20 07:40:44 rahnds Exp 
+ *		OpenBSD: pcidevs,v 1.227 2000/03/21 22:01:06 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -139,6 +139,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "3Com",
 	    "3c980C 100Base-TX",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CR990,
+	    0,
+	    "3Com",
+	    "3cr990 TX-97",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C985,
@@ -485,25 +491,25 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_2940U2,
 	    0,
-	    "Adaptec (2nd ID)",
+	    "Adaptec(2)",
 	    "AHA-2940U2",
 	},
 	{
 	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_7890,
 	    0,
-	    "Adaptec (2nd ID)",
+	    "Adaptec(2)",
 	    "AIC-7890/1",
 	},
 	{
 	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_3940U2,
 	    0,
-	    "Adaptec (2nd ID)",
+	    "Adaptec(2)",
 	    "AHA-3940U2",
 	},
 	{
 	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_7896,
 	    0,
-	    "Adaptec (2nd ID)",
+	    "Adaptec(2)",
 	    "AIC-7896/7",
 	},
 	{
@@ -887,13 +893,13 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_AVANCE2, PCI_PRODUCT_AVANCE2_ALG2301,
 	    0,
-	    "Avance Logic (2nd ID)",
+	    "Avance Logic(2)",
 	    "ALG2301",
 	},
 	{
 	    PCI_VENDOR_AVANCE2, PCI_PRODUCT_AVANCE2_ALG2302,
 	    0,
-	    "Avance Logic (2nd ID)",
+	    "Avance Logic(2)",
 	    "ALG2302",
 	},
 	{
@@ -1547,7 +1553,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_DIAMOND2, PCI_PRODUCT_DIAMOND2_MX300,
 	    0,
-	    "Diamond Multimedia (2nd ID)",
+	    "Diamond Multimedia(2)",
 	    "Monster Sound MX300",
 	},
 	{
@@ -3443,7 +3449,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_SYMPHONY2, PCI_PRODUCT_SYMPHONY2_82C101,
 	    0,
-	    "Symphony Labs (2nd ID)",
+	    "Symphony Labs(2)",
 	    "82C101",
 	},
 	{
@@ -3461,7 +3467,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_TEKRAM2, PCI_PRODUCT_TEKRAM2_DC690C,
 	    0,
-	    "Tekram Technology (2nd ID)",
+	    "Tekram Technology(2)",
 	    "DC-690C",
 	},
 	{
@@ -3581,43 +3587,43 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_THB,
 	    0,
-	    "Toshiba (2nd ID)",
+	    "Toshiba(2)",
 	    "Host-PCI",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ISA,
 	    0,
-	    "Toshiba (2nd ID)",
+	    "Toshiba(2)",
 	    "PCI-ISA",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ToPIC95,
 	    0,
-	    "Toshiba (2nd ID)",
+	    "Toshiba(2)",
 	    "ToPIC95 CardBus-PCI",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ToPIC95B,
 	    0,
-	    "Toshiba (2nd ID)",
+	    "Toshiba(2)",
 	    "ToPIC95B PCI-CardBus",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ToPIC97,
 	    0,
-	    "Toshiba (2nd ID)",
+	    "Toshiba(2)",
 	    "ToPIC97 PCI-CardBus",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ToPIC100,
 	    0,
-	    "Toshiba (2nd ID)",
+	    "Toshiba(2)",
 	    "ToPIC100 PCI-CardBus",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_TFIRO,
 	    0,
-	    "Toshiba (2nd ID)",
+	    "Toshiba(2)",
 	    "Fast Infrared Type O",
 	},
 	{
@@ -4397,7 +4403,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_WINBOND2, PCI_PRODUCT_WINBOND2_W89C940,
 	    0,
-	    "Winbond (2nd ID)",
+	    "Winbond(2)",
 	    "Linksys EtherPCI",
 	},
 	{
@@ -4715,7 +4721,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_COMPAQ2, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Compaq (2nd ID)",
+	    "Compaq(2)",
 	    NULL,
 	},
 	{
@@ -5645,7 +5651,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_FUJITSU2, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Fujitsu (2nd ID)",
+	    "Fujitsu(2)",
 	    NULL,
 	},
 	{
@@ -6611,7 +6617,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_TOSHIBA2, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Toshiba (2nd ID)",
+	    "Toshiba(2)",
 	    NULL,
 	},
 	{
@@ -6683,7 +6689,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_MATSUSHITA2, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Matsushita Electronics (2nd ID)",
+	    "Matsushita Electronics(2)",
 	    NULL,
 	},
 	{
@@ -6791,7 +6797,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_FUJITSU3, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Fujitsu (3th ID)",
+	    "Fujitsu(3)",
 	    NULL,
 	},
 	{
@@ -6815,7 +6821,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_SIERRA2, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Sierra Research & Technology (2nd ID)",
+	    "Sierra Research & Technology(2)",
 	    NULL,
 	},
 	{
@@ -6929,7 +6935,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_MOT2, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Motorola (2nd ID)",
+	    "Motorola(2)",
 	    NULL,
 	},
 	{
@@ -6983,7 +6989,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_NEC2, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "NEC (2nd ID)",
+	    "NEC(2)",
 	    NULL,
 	},
 	{
@@ -7205,7 +7211,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_DIAMOND2, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Diamond Multimedia (2nd ID)",
+	    "Diamond Multimedia(2)",
 	    NULL,
 	},
 	{
@@ -7265,13 +7271,13 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_SYMPHONY2, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Symphony Labs (2nd ID)",
+	    "Symphony Labs(2)",
 	    NULL,
 	},
 	{
 	    PCI_VENDOR_TEKRAM2, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Tekram Technology (2nd ID)",
+	    "Tekram Technology(2)",
 	    NULL,
 	},
 	{
@@ -7283,7 +7289,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_AVANCE2, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Avance Logic (2nd ID)",
+	    "Avance Logic(2)",
 	    NULL,
 	},
 	{
@@ -7307,7 +7313,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_BUSLOGIC2, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Buslogic (2nd ID)",
+	    "Buslogic(2)",
 	    NULL,
 	},
 	{
@@ -7319,7 +7325,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_NETPOWER2, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "NetPower (2nd ID)",
+	    "NetPower(2)",
 	    NULL,
 	},
 	{
@@ -7343,13 +7349,13 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_TRIGEM2, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Trigem Computer (2nd ID)",
+	    "Trigem Computer(2)",
 	    NULL,
 	},
 	{
 	    PCI_VENDOR_WINBOND2, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Winbond (2nd ID)",
+	    "Winbond(2)",
 	    NULL,
 	},
 	{
@@ -7373,7 +7379,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_ADP2, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Adaptec (2nd ID)",
+	    "Adaptec(2)",
 	    NULL,
 	},
 	{
