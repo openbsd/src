@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.32 2001/06/22 14:14:09 deraadt Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.33 2001/06/27 04:49:46 art Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -73,7 +73,7 @@
 #include <ddb/db_output.h>	/* db_printf, db_putchar prototypes */
 extern	int db_radix;		/* XXX: for non-standard '%r' format */
 #endif
-#if defined(UVM) && defined(UVM_SWAP_ENCRYPT)
+#if defined(UVM_SWAP_ENCRYPT)
 extern int uvm_doswapencrypt;
 #endif
 
@@ -192,7 +192,7 @@ panic(fmt, va_alist)
 	va_list ap;
 
 	bootopt = RB_AUTOBOOT | RB_DUMP;
-#if defined(UVM) && defined(UVM_SWAP_ENCRYPT)
+#if defined(UVM_SWAP_ENCRYPT)
 	if (uvm_doswapencrypt)
 		bootopt &= ~RB_DUMP;
 #endif

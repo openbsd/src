@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.62 2001/06/22 14:14:10 deraadt Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.63 2001/06/27 04:49:48 art Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -69,10 +69,7 @@
 
 #include <miscfs/specfs/specdev.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
-
 
 enum vtype iftovt_tab[16] = {
 	VNON, VFIFO, VCHR, VNON, VDIR, VNON, VBLK, VNON,
@@ -463,9 +460,7 @@ getnewvnode(tag, mp, vops, vpp)
 	*vpp = vp;
 	vp->v_usecount = 1;
 	vp->v_data = 0;
-#ifdef UVM
 	simple_lock_init(&vp->v_uvm.u_obj.vmobjlock);
-#endif
 	return (0);
 }
 
@@ -986,12 +981,10 @@ vclean(vp, flags, p)
 	 */
 	VOP_LOCK(vp, LK_DRAIN | LK_INTERLOCK, p);
 
-#ifdef UVM
 	/*
 	 * clean out any VM data associated with the vnode.
 	 */
 	uvm_vnp_terminate(vp);
-#endif
 	/*
 	 * Clean out any buffers associated with the vnode.
 	 */
@@ -1753,14 +1746,6 @@ vfs_shutdown()
 	printf("syncing disks... ");
 
 	if (panicstr == 0) {
-		/* Release inodes held by texts before update. */
-#if !defined(UVM)
-		vnode_pager_umount(NULL);
-#endif
-#ifdef notdef
-		vnshutdown();
-#endif
-
 		/* Sync before unmount, in case we hang on something. */
 		sys_sync(&proc0, (void *)0, (register_t *)0);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.77 2001/06/22 14:14:11 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.78 2001/06/27 04:49:48 art Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -60,9 +60,7 @@
 #include <vm/vm.h>
 #include <sys/sysctl.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 extern int suid_clear;
 int	usermount = 0;		/* sysctl: by default, users may not mount */
@@ -435,9 +433,6 @@ dounmount(mp, flags, p)
 	vfs_unbusy(mp, p);
 	lockmgr(&mp->mnt_lock, LK_DRAIN | LK_INTERLOCK, &mountlist_slock, p);
  	mp->mnt_flag &=~ MNT_ASYNC;
-#if !defined(UVM)
- 	vnode_pager_umount(mp);	/* release cached vnodes */
-#endif
  	cache_purgevfs(mp);	/* remove cache entries for this file sys */
  	if (mp->mnt_syncer != NULL)
  		vgone(mp->mnt_syncer);
@@ -500,9 +495,7 @@ sys_sync(p, v, retval)
 		if ((mp->mnt_flag & MNT_RDONLY) == 0) {
 			asyncflag = mp->mnt_flag & MNT_ASYNC;
 			mp->mnt_flag &= ~MNT_ASYNC;
-#if defined(UVM)
 			uvm_vnp_sync(mp);
-#endif
 			VFS_SYNC(mp, MNT_NOWAIT, p->p_ucred, p);
 			if (asyncflag)
 				mp->mnt_flag |= MNT_ASYNC;
@@ -1482,11 +1475,7 @@ sys_unlink(p, v, retval)
 		goto out;
 	}
 
-#if defined(UVM)
 	(void)uvm_vnp_uncache(vp);
-#else
-	(void)vnode_pager_uncache(vp);
-#endif
 
 	VOP_LEASE(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
@@ -2350,11 +2339,7 @@ out:
 		if (fromnd.ni_dvp != tdvp)
 			VOP_LEASE(fromnd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
 		if (tvp) {
-#if defined(UVM)
 			(void)uvm_vnp_uncache(tvp);
-#else
-			(void)vnode_pager_uncache(tvp); /* XXX - I think we need this */
-#endif
 			VOP_LEASE(tvp, p, p->p_ucred, LEASE_WRITE);
 		}
 		error = VOP_RENAME(fromnd.ni_dvp, fromnd.ni_vp, &fromnd.ni_cnd,

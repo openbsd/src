@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_subr.c,v 1.18 2001/06/26 06:27:40 aaron Exp $	*/
+/*	$OpenBSD: kern_subr.c,v 1.19 2001/06/27 04:49:45 art Exp $	*/
 /*	$NetBSD: kern_subr.c,v 1.15 1996/04/09 17:21:56 ragge Exp $	*/
 
 /*
@@ -92,20 +92,12 @@ uiomove(cp, n, uio)
 			break;
 
 		case UIO_SYSSPACE:
-#if defined(UVM)
 			if (uio->uio_rw == UIO_READ)
 				error = kcopy(cp, iov->iov_base, cnt);
 			else
 				error = kcopy(iov->iov_base, cp, cnt);
 			if (error)
 				return(error);
-#else
-			if (uio->uio_rw == UIO_READ)
-				bcopy((caddr_t)cp, iov->iov_base, cnt);
-			else
-				bcopy(iov->iov_base, (caddr_t)cp, cnt);
-			break;
-#endif
 		}
 		iov->iov_base = (caddr_t)iov->iov_base + cnt;
 		iov->iov_len -= cnt;

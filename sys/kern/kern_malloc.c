@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.34 2001/06/22 14:14:08 deraadt Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.35 2001/06/27 04:49:43 art Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -47,12 +47,10 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
 
 static struct vm_map_intrsafe kmem_map_store;
 vm_map_t kmem_map = NULL;
-#endif
 
 struct kmembuckets bucket[MINBUCKET + 16];
 struct kmemstats kmemstats[M_LAST];
@@ -166,14 +164,9 @@ malloc(size, type, flags)
 		else
 			allocsize = 1 << indx;
 		npg = btoc(allocsize);
-#if defined(UVM)
 		va = (caddr_t) uvm_km_kmemalloc(kmem_map, uvmexp.kmem_object,
 				(vsize_t)ctob(npg), 
 				(flags & M_NOWAIT) ? UVM_KMF_NOWAIT : 0);
-#else
-		va = (caddr_t) kmem_malloc(kmem_map, (vsize_t)ctob(npg),
-					   !(flags & M_NOWAIT));
-#endif
 		if (va == NULL) {
 			/*
 			 * Kmem_malloc() can return NULL, even if it can
@@ -240,7 +233,6 @@ malloc(size, type, flags)
 	freep = (struct freelist *)va;
 	savedtype = (unsigned)freep->type < M_LAST ?
 		memname[freep->type] : "???";
-#if defined(UVM)
 	if (kbp->kb_next) {
 		int rv;
 		vaddr_t addr = (vaddr_t)kbp->kb_next;
@@ -250,20 +242,13 @@ malloc(size, type, flags)
 		    addr + sizeof(struct freelist), VM_PROT_WRITE);
 		vm_map_unlock(kmem_map);
 
-		if (!rv)
-#else
-	if (kbp->kb_next &&
-	    !kernacc(kbp->kb_next, sizeof(struct freelist), 0))
-#endif
-	  {
+		if (!rv)  {
 		printf("%s %d of object %p size %ld %s %s (invalid addr %p)\n",
 			"Data modified on freelist: word", 
 			(int32_t *)&kbp->kb_next - (int32_t *)kbp, va, size,
 			"previous type", savedtype, kbp->kb_next);
 		kbp->kb_next = NULL;
-#if defined(UVM)
 		}
-#endif
 	}
 
 	/* Fill the fields that we've used with WEIRD_ADDR */
@@ -364,11 +349,7 @@ free(addr, type)
 			addr, size, memname[type], alloc);
 #endif /* DIAGNOSTIC */
 	if (size > MAXALLOCSAVE) {
-#if defined(UVM)
 		uvm_km_free(kmem_map, (vaddr_t)addr, ctob(kup->ku_pagecnt));
-#else
-		kmem_free(kmem_map, (vaddr_t)addr, ctob(kup->ku_pagecnt));
-#endif
 #ifdef KMEMSTATS
 		size = kup->ku_pagecnt << PGSHIFT;
 		ksp->ks_memuse -= size;
@@ -451,18 +432,11 @@ kmeminit()
 #endif
 
 	npg = VM_KMEM_SIZE / PAGE_SIZE;
-#if defined(UVM)
 	kmemusage = (struct kmemusage *) uvm_km_zalloc(kernel_map,
 		(vsize_t)(npg * sizeof(struct kmemusage)));
 	kmem_map = uvm_km_suballoc(kernel_map, (vaddr_t *)&kmembase,
 		(vaddr_t *)&kmemlimit, (vsize_t)(npg * PAGE_SIZE), 
 			VM_MAP_INTRSAFE, FALSE, &kmem_map_store.vmi_map);
-#else
-	kmemusage = (struct kmemusage *) kmem_alloc(kernel_map,
-		(vsize_t)(npg * sizeof(struct kmemusage)));
-	kmem_map = kmem_suballoc(kernel_map, (vaddr_t *)&kmembase,
-		(vaddr_t *)&kmemlimit, (vsize_t)(npg * PAGE_SIZE), FALSE);
-#endif
 #ifdef KMEMSTATS
 	for (indx = 0; indx < MINBUCKET + 16; indx++) {
 		if (1 << indx >= PAGE_SIZE)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_kthread.c,v 1.11 2001/04/02 21:43:12 niklas Exp $	*/
+/*	$OpenBSD: kern_kthread.c,v 1.12 2001/06/27 04:49:42 art Exp $	*/
 /*	$NetBSD: kern_kthread.c,v 1.3 1998/12/22 21:21:36 kleink Exp $	*/
 
 /*-
@@ -83,13 +83,8 @@ kthread_create(func, arg, newpp, fmt, va_alist)
 	 * descriptors and don't leave the exit status around for the
 	 * parent to wait for.
 	 */
-#ifdef UVM
 	error = fork1(&proc0, 0,
 	    FORK_SHAREVM|FORK_NOZOMBIE|FORK_SIGHAND, NULL, 0, rv);
-#else
-	error = fork1(&proc0, 0,
-	    FORK_VMNOSTACK|FORK_NOZOMBIE|FORK_SIGHAND, NULL, 0, rv);
-#endif
 	if (error)
 		return (error);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.35 2001/06/24 20:55:16 mickey Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.36 2001/06/27 04:49:45 art Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -52,9 +52,7 @@
 #include <sys/sched.h>
 #include <sys/timeout.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #ifdef KTRACE
 #include <sys/ktrace.h>
@@ -277,11 +275,7 @@ schedcpu(arg)
 		}
 		splx(s);
 	}
-#if defined(UVM)
 	uvm_meter();
-#else
-	vmmeter();
-#endif
 	wakeup((caddr_t)&lbolt);
 	timeout_add(to, hz);
 }
@@ -730,11 +724,7 @@ mi_switch()
 	/*
 	 * Pick a new current process and record its start time.
 	 */
-#if defined(UVM)
 	uvmexp.swtch++;
-#else
-	cnt.v_swtch++;
-#endif
 	cpu_switch(p);
 	microtime(&runtime);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.9 2001/06/24 17:06:14 miod Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.10 2001/06/27 04:49:46 art Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.59 2001/06/05 18:51:04 thorpej Exp $	*/
 
 /*-
@@ -52,9 +52,7 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#if defined(UVM)
 #include <uvm/uvm.h>
-#endif
 
 /*
  * XXX - for now.
@@ -1235,35 +1233,15 @@ pool_sethardlimit(struct pool *pp, int n, const char *warnmess, int ratecap)
 static void *
 pool_page_alloc(unsigned long sz, int flags, int mtype)
 {
-#if defined(UVM)
 	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
 
 	return ((void *)uvm_km_alloc_poolpage(waitok));
-#else
-	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
-	int s;
-	vaddr_t va;
-
-	s = splimp();
-	va = kmem_malloc(kmem_map, PAGE_SIZE, waitok);
-	splx(s);
-
-	return ((void *)va);
-#endif
 }
 
 static void
 pool_page_free(void *v, unsigned long sz, int mtype)
 {
-#if defined(UVM)
 	uvm_km_free_poolpage((vaddr_t)v);
-#else
-	int s;
-
-	s = splimp();
-	kmem_free(kmem_map, (vaddr_t)v, PAGE_SIZE);
-	splx(s);
-#endif
 }
 
 /*
@@ -1273,25 +1251,17 @@ pool_page_free(void *v, unsigned long sz, int mtype)
 void *
 pool_page_alloc_nointr(unsigned long sz, int flags, int mtype)
 {
-#if defined(UVM)
 	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
 
 	return ((void *)uvm_km_alloc_poolpage1(kernel_map, uvm.kernel_object,
 	    waitok));
-#else
-	return pool_page_alloc(sz, flags, mtype);
-#endif
 }
 
 void
 pool_page_free_nointr(void *v, unsigned long sz, int mtype)
 {
 
-#if defined(UVM)
 	uvm_km_free_poolpage1(kernel_map, (vaddr_t)v);
-#else
-	pool_page_free(v, sz, mtype);
-#endif
 }
 
 

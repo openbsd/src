@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.13 2001/05/26 04:10:26 art Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.14 2001/06/27 04:49:44 art Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -54,9 +54,7 @@
 
 #include <vm/vm.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 /*
  * Resource controls and accounting.
@@ -306,13 +304,8 @@ dosetrlimit(p, which, limp)
 			}
 			addr = trunc_page(addr);
 			size = round_page(size);
-#if defined(UVM)
 			(void) uvm_map_protect(&p->p_vmspace->vm_map,
 					      addr, addr+size, prot, FALSE);
-#else
-			(void) vm_map_protect(&p->p_vmspace->vm_map,
-					      addr, addr+size, prot, FALSE);
-#endif
 		}
 	}
 

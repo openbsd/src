@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fthread.c,v 1.2 2001/05/06 01:23:37 art Exp $	*/
+/*	$OpenBSD: kern_fthread.c,v 1.3 2001/06/27 04:49:42 art Exp $	*/
 /*	$NetBSD: kern_fthread.c,v 1.3 1998/02/07 16:23:35 chs Exp $	*/
 
 /* 
@@ -78,32 +78,6 @@
  * these routines fake thread handling
  */
 
-#if !defined(UVM)
-
-void
-assert_wait(event, ruptible)
-	void *event;
-	boolean_t ruptible;
-{
-#ifdef lint
-	ruptible++;
-#endif
-	curproc->p_thread = event;
-}
-
-void
-thread_block(msg)
-char *msg;
-{
-	int s = splhigh();
-
-	if (curproc->p_thread)
-		tsleep(curproc->p_thread, PVM, msg, 0);
-	splx(s);
-}
-
-#endif
-
 void
 thread_sleep_msg(event, lock, ruptible, msg, timo)
 	void *event;
@@ -124,46 +98,3 @@ thread_sleep_msg(event, lock, ruptible, msg, timo)
 	splx(s);
 }
 
-#if !defined(UVM)
-/*
- * DEBUG stuff
- */
-
-int indent = 0;
-
-/*
- * Note that stdarg.h and the ANSI style va_start macro is used for both
- * ANSI and traditional C compilers.  (Same as subr_prf.c does.)
- * XXX: This requires that stdarg.h defines: va_alist, va_dcl
- */
-#include <machine/stdarg.h>
-
-/*ARGSUSED2*/
-void
-#ifdef	__STDC__
-iprintf(int (*pr)(const char *, ...), const char *fmt, ...)
-#else
-iprintf(pr, fmt, va_alist)
-	void (*pr)();
-	const char *fmt;
-	va_dcl
-#endif
-{
-	register int i;
-	va_list ap;
-
-	va_start(ap, fmt);
-	for (i = indent; i >= 8; i -= 8)
-		(*pr)("\t");
-	while (--i >= 0)
-		(*pr)(" ");
-#ifdef __powerpc__				/* XXX */
-	if (pr != printf)			/* XXX */
-		panic("iprintf");		/* XXX */
-	vprintf(fmt, ap);			/* XXX */
-#else						/* XXX */
-	(*pr)("%:", fmt, ap);			/* XXX */
-#endif /* __powerpc__ */			/* XXX */
-	va_end(ap);
-}
-#endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.45 2001/06/22 14:14:09 deraadt Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.46 2001/06/27 04:49:44 art Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1351,11 +1351,7 @@ coredump(p)
 		 * vm_coredump() spits out all appropriate segments.
 		 * All that's left to do is to write the core header.
 		 */
-#if defined(UVM)
 		error = uvm_coredump(p, vp, cred, &core);
-#else
-		error = vm_coredump(p, vp, cred, &core);
-#endif
 		if (error)
 			goto out;
 		error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&core,

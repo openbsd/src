@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.32 2001/06/03 08:55:11 angelos Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.33 2001/06/27 04:49:41 art Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -80,9 +80,7 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 void proc_zap __P((struct proc *));
 
@@ -163,15 +161,9 @@ exit1(p, rv)
 	 * Can't free the entire vmspace as the kernel stack
 	 * may be mapped within that space also.
 	 */
-#if defined(UVM)
 	if (vm->vm_refcnt == 1)
 		(void) uvm_deallocate(&vm->vm_map, VM_MIN_ADDRESS,
 		    VM_MAXUSER_ADDRESS - VM_MIN_ADDRESS);
-#else
-	if (vm->vm_refcnt == 1)
-		(void) vm_map_remove(&vm->vm_map, VM_MIN_ADDRESS,
-		    VM_MAXUSER_ADDRESS);
-#endif
 
 	if (SESS_LEADER(p)) {
 		register struct session *sp = p->p_session;
@@ -383,17 +375,12 @@ reaper()
 		 */
 		cpu_wait(p);
 
-#ifdef UVM
 		/*
 		 * Free the VM resources we're still holding on to.
 		 * We must do this from a valid thread because doing
 		 * so may block.
 		 */
 		uvm_exit(p);
-#else
-		vmspace_free(p->p_vmspace);
-		kmem_free(kernel_map, (vaddr_t)p->p_addr, USPACE);
-#endif
 
 		/* Process is now a true zombie. */
 		if ((p->p_flag & P_NOZOMBIE) == 0) {

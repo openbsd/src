@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.51 2001/06/24 16:00:47 art Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.52 2001/06/27 04:49:46 art Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -64,9 +64,7 @@
 #include <sys/vmmeter.h>
 #include <sys/namei.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -147,11 +145,7 @@ sys___sysctl(p, v, retval)
 		fn = hw_sysctl;
 		break;
 	case CTL_VM:
-#if defined(UVM)
 		fn = uvm_sysctl;
-#else
-		fn = vm_sysctl;
-#endif
 		break;
 	case CTL_NET:
 		fn = net_sysctl;
@@ -183,36 +177,24 @@ sys___sysctl(p, v, retval)
 	    (error = copyin(SCARG(uap, oldlenp), &oldlen, sizeof(oldlen))))
 		return (error);
 	if (SCARG(uap, old) != NULL) {
-#if defined(UVM)
 		/* XXX - obsolete now that vslock returns an error? */
 		if (!uvm_useracc(SCARG(uap, old), oldlen, B_WRITE))
-#else
-		if (!useracc(SCARG(uap, old), oldlen, B_WRITE))
-#endif
 			return (EFAULT);
 		if ((error = lockmgr(&sysctl_lock, LK_EXCLUSIVE, NULL, p)) != 0)
 			return (error);
 		if (dolock)
-#if defined(UVM)
 			if (uvm_vslock(p, SCARG(uap, old), oldlen,
 			    VM_PROT_READ|VM_PROT_WRITE) != KERN_SUCCESS) {
 				lockmgr(&sysctl_lock, LK_RELEASE, NULL, p);
 				return EFAULT;
 			}
-#else
-			vslock(SCARG(uap, old), oldlen);
-#endif
 		savelen = oldlen;
 	}
 	error = (*fn)(name + 1, SCARG(uap, namelen) - 1, SCARG(uap, old),
 	    &oldlen, SCARG(uap, new), SCARG(uap, newlen), p);
 	if (SCARG(uap, old) != NULL) {
 		if (dolock)
-#if defined(UVM)
 			uvm_vsunlock(p, SCARG(uap, old), savelen);
-#else
-			vsunlock(SCARG(uap, old), savelen);
-#endif
 		lockmgr(&sysctl_lock, LK_RELEASE, NULL, p);
 	}
 	if (error)
@@ -453,13 +435,8 @@ hw_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case HW_PHYSMEM:
 		return (sysctl_rdint(oldp, oldlenp, newp, ctob(physmem)));
 	case HW_USERMEM:
-#if defined(UVM)
 		return (sysctl_rdint(oldp, oldlenp, newp,
 		    ctob(physmem - uvmexp.wired)));
-#else
-		return (sysctl_rdint(oldp, oldlenp, newp,
-		    ctob(physmem - cnt.v_wire_count)));
-#endif
 	case HW_PAGESIZE:
 		return (sysctl_rdint(oldp, oldlenp, newp, PAGE_SIZE));
 	case HW_DISKNAMES:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.39 2001/04/02 21:43:11 niklas Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.40 2001/06/27 04:49:42 art Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -64,10 +64,8 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_map.h>
-#endif
 
 int	nprocs = 1;		/* process 0 */
 int	randompid;		/* when set to 1, pid's go random */
@@ -168,11 +166,6 @@ fork1(p1, exitsig, flags, stack, stacksize, retval)
 		return (EAGAIN);
 	}
 
-#if !defined(UVM)
-	if (flags & FORK_SHAREVM)
-		return (EINVAL);
-#endif
-
 	/*
 	 * Increment the count of procs running with this uid. Don't allow
 	 * a nonprivileged user to exceed their current limit.
@@ -189,11 +182,7 @@ fork1(p1, exitsig, flags, stack, stacksize, retval)
 #if defined(arc) || defined(mips_cachealias)
 	uaddr = kmem_alloc_upage(kernel_map, USPACE);
 #else
-#if defined(UVM)
 	uaddr = uvm_km_valloc(kernel_map, USPACE);
-#else
-	uaddr = kmem_alloc_pageable(kernel_map, USPACE);
-#endif
 #endif
 	if (uaddr == 0)
 		return ENOMEM;
@@ -355,21 +344,12 @@ again:
 	 */
 	PHOLD(p1);
 
-#if defined(UVM)
 	if (flags & FORK_VMNOSTACK) {
 		/* share as much address space as possible */
 		(void) uvm_map_inherit(&p1->p_vmspace->vm_map,
 		    VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS - MAXSSIZ,
 		    VM_INHERIT_SHARE);
 	}
-#else
-	if (flags & FORK_VMNOSTACK) {
-		/* share as much address space as possible */
-		(void) vm_map_inherit(&p1->p_vmspace->vm_map,
-		    VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS - MAXSSIZ,
-		    VM_INHERIT_SHARE);
-	}
-#endif
 
 	p2->p_addr = (struct user *)uaddr;
 
@@ -392,12 +372,8 @@ again:
 	 * Finish creating the child process.  It will return through a
 	 * different path later.
 	 */
-#if defined(UVM)
 	uvm_fork(p1, p2, ((flags & FORK_SHAREVM) ? TRUE : FALSE), stack,
 	    stacksize);
-#else /* UVM */
-	vm_fork(p1, p2, stack, stacksize);
-#endif /* UVM */
 #endif
 	vm = p2->p_vmspace;
 
@@ -430,13 +406,11 @@ again:
 	 */
 	PRELE(p1);
 
-#if defined(UVM)
 	uvmexp.forks++;
 	if (flags & FORK_PPWAIT)
 		uvmexp.forks_ppwait++;
 	if (flags & FORK_SHAREVM)
 		uvmexp.forks_sharevm++;
-#endif
 
 	/*
 	 * tell any interested parties about the new process

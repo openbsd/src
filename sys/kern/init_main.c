@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.68 2001/06/23 18:30:37 deraadt Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.69 2001/06/27 04:49:40 art Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -90,9 +90,7 @@
 #include <vm/vm.h>
 #include <vm/vm_pageout.h>
 
-#if defined(UVM)
 #include <uvm/uvm.h>
-#endif
 
 #include <net/if.h>
 #include <net/raw_cb.h>
@@ -211,15 +209,7 @@ main(framep)
 	printf(copyright);
 	printf("\n");
 
-#if defined(UVM)
 	uvm_init();
-#else
-	vm_mem_init();
-	kmeminit();
-#if defined(MACHINE_NEW_NONCONTIG)
-	vm_page_physrehash();
-#endif
-#endif /* UVM */
 	disk_init();		/* must come before autoconfiguration */
 	tty_init();		/* initialise tty's */
 	cpu_startup();
@@ -298,28 +288,16 @@ main(framep)
 	limit0.pl_rlimit[RLIMIT_NOFILE].rlim_max = MIN(NOFILE_MAX,
 	    (maxfiles - NOFILE > NOFILE) ?  maxfiles - NOFILE : NOFILE);
 	limit0.pl_rlimit[RLIMIT_NPROC].rlim_cur = MAXUPRC;
-#if defined(UVM)
 	i = ptoa(uvmexp.free);
-#else
-	i = ptoa(cnt.v_free_count);
-#endif /* UVM */
 	limit0.pl_rlimit[RLIMIT_RSS].rlim_max = i;
 	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_max = i;
 	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_cur = i / 3;
 	limit0.p_refcnt = 1;
 
 	/* Allocate a prototype map so we have something to fork. */
-#if defined(UVM)
 	uvmspace_init(&vmspace0, pmap_kernel(), round_page(VM_MIN_ADDRESS),
 	    trunc_page(VM_MAX_ADDRESS), TRUE);
 	p->p_vmspace = &vmspace0;
-#else
-	p->p_vmspace = &vmspace0;
-	vmspace0.vm_refcnt = 1;
-	vmspace0.vm_map.pmap = pmap_create(0);
-	vm_map_init(&p->p_vmspace->vm_map, round_page(VM_MIN_ADDRESS),
-	    trunc_page(VM_MAX_ADDRESS), TRUE);
-#endif /* UVM */
 
 	p->p_addr = proc0paddr;				/* XXX */
 
@@ -337,11 +315,7 @@ main(framep)
 	rqinit();
 
 	/* Configure virtual memory system, set vm rlimits. */
-#if defined(UVM)
 	uvm_init_limits(p);
-#else
-	vm_init_limits(p);
-#endif
 
 	/* Initialize the file systems. */
 #if defined(NFSSERVER) || defined(NFSCLIENT)
@@ -416,11 +390,7 @@ main(framep)
 	VOP_UNLOCK(rootvnode, 0, p);
 	filedesc0.fd_fd.fd_rdir = NULL;
 
-#if defined(UVM)
 	uvm_swap_init();
-#else
-	swapinit();
-#endif
 
 	/*
 	 * Now can look at time, having had a chance to verify the time
@@ -480,11 +450,7 @@ main(framep)
 
 	randompid = 1;
 	/* The scheduler is an infinite loop. */
-#if defined(UVM)
 	uvm_scheduler();
-#else
-	scheduler();
-#endif
 	/* NOTREACHED */
 }
 
@@ -562,18 +528,12 @@ start_init(arg)
 #else
 	addr = USRSTACK - PAGE_SIZE;
 #endif
-#if defined(UVM)
 	if (uvm_map(&p->p_vmspace->vm_map, &addr, PAGE_SIZE, 
 	    NULL, UVM_UNKNOWN_OFFSET, 
 	    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
 	    UVM_ADV_NORMAL, UVM_FLAG_FIXED|UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW))
 	    != KERN_SUCCESS)
 		panic("init: couldn't allocate argument space");
-#else
-	if (vm_allocate(&p->p_vmspace->vm_map, &addr, (vsize_t)PAGE_SIZE,
-	    FALSE) != 0)
-		panic("init: couldn't allocate argument space");
-#endif
 #ifdef MACHINE_STACK_GROWS_UP
 	p->p_vmspace->vm_maxsaddr = (caddr_t)addr + PAGE_SIZE;
 #else
@@ -674,11 +634,7 @@ void
 start_pagedaemon(arg)
 	void *arg;
 {
-#if defined(UVM)
 	uvm_pageout();
-#else
-	vm_pageout();
-#endif
 	/* NOTREACHED */
 }
 

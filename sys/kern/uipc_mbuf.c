@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.39 2001/06/27 03:53:50 angelos Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.40 2001/06/27 04:49:47 art Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -65,9 +65,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 
 #include <vm/vm.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 struct	pool mbpool;		/* mbuf pool */
 struct	pool mclpool;		/* mbuf cluster pool */
@@ -117,14 +115,10 @@ mclpool_alloc(sz, flags, mtype)
 	int flags;
 	int mtype;
 {
-#if defined(UVM)
 	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
 
 	return ((void *)uvm_km_alloc_poolpage1(mb_map, uvmexp.mb_object,
 	    waitok));
-#else
-	return pool_page_alloc_nointr(sz, flags, mtype);
-#endif
 }
 
 void
@@ -133,11 +127,7 @@ mclpool_release(v, sz, mtype)
 	unsigned long sz;
 	int mtype;
 {
-#if defined(UVM)
 	uvm_km_free_poolpage1(mb_map, (vaddr_t)v);
-#else
-	pool_page_free_nointr(v, sz, mtype);
-#endif
 }
 
 /*

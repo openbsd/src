@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.35 2001/06/23 06:34:37 art Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.36 2001/06/27 04:49:46 art Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -57,9 +57,7 @@
 #include <vm/vm_map.h>
 #include <vm/vm_page.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <sys/pipe.h>
 
@@ -171,32 +169,11 @@ void
 pipespace(cpipe)
 	struct pipe *cpipe;
 {
-#if defined(UVM)
 	cpipe->pipe_buffer.buffer = (caddr_t) uvm_km_valloc(kernel_map,
 						cpipe->pipe_buffer.size);
 	if (cpipe->pipe_buffer.buffer == NULL)
 		panic("pipespace: out of kvm");
-#else
-	int npages, error;
 
-	npages = round_page(cpipe->pipe_buffer.size)/PAGE_SIZE;
-	/*
-	 * Create an object, I don't like the idea of paging to/from
-	 * kernel_object.
-	 */
-	cpipe->pipe_buffer.object = vm_object_allocate(npages);
-	cpipe->pipe_buffer.buffer = (caddr_t) vm_map_min(kernel_map);
-
-	/*
-	 * Insert the object into the kernel map, and allocate kva for it.
-	 * The map entry is, by default, pageable.
-	 */
-	error = vm_map_find(kernel_map, cpipe->pipe_buffer.object, 0,
-		(vaddr_t *) &cpipe->pipe_buffer.buffer,
-		cpipe->pipe_buffer.size, 1);
-	if (error != KERN_SUCCESS)
-		panic("pipespace: out of kvm");
-#endif
 	amountpipekva += cpipe->pipe_buffer.size;
 }
 
@@ -429,15 +406,9 @@ pipe_write(fp, poff, uio, cred)
 
 		if (wpipe->pipe_buffer.buffer) {
 			amountpipekva -= wpipe->pipe_buffer.size;
-#if defined(UVM)
 			uvm_km_free(kernel_map,
 				(vaddr_t)wpipe->pipe_buffer.buffer,
 				wpipe->pipe_buffer.size);
-#else
-			kmem_free(kernel_map,
-				(vaddr_t)wpipe->pipe_buffer.buffer,
-				wpipe->pipe_buffer.size);
-#endif
 		}
 
 		wpipe->pipe_buffer.in = 0;
@@ -795,15 +766,9 @@ pipeclose(cpipe)
 			if (cpipe->pipe_buffer.size > PIPE_SIZE)
 				--nbigpipe;
 			amountpipekva -= cpipe->pipe_buffer.size;
-#if defined(UVM)
 			uvm_km_free(kernel_map,
 				(vaddr_t)cpipe->pipe_buffer.buffer,
 				cpipe->pipe_buffer.size);
-#else
-			kmem_free(kernel_map,
-				(vaddr_t)cpipe->pipe_buffer.buffer,
-				cpipe->pipe_buffer.size);
-#endif
 		}
 		pool_put(&pipe_pool, cpipe);
 	}
