@@ -1,4 +1,4 @@
-/*	$OpenBSD: klm_prot.x,v 1.3 2002/01/21 17:30:38 deraadt Exp $	*/
+/*	$OpenBSD: klm_prot.x,v 1.4 2004/01/17 12:32:11 deraadt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -7,23 +7,23 @@
  * may copy or modify Sun RPC without charge, but are not authorized
  * to license or distribute it to anyone else except as part of a product or
  * program developed by the user.
- * 
+ *
  * SUN RPC IS PROVIDED AS IS WITH NO WARRANTIES OF ANY KIND INCLUDING THE
  * WARRANTIES OF DESIGN, MERCHANTIBILITY AND FITNESS FOR A PARTICULAR
  * PURPOSE, OR ARISING FROM A COURSE OF DEALING, USAGE OR TRADE PRACTICE.
- * 
+ *
  * Sun RPC is provided with no support and without any obligation on the
  * part of Sun Microsystems, Inc. to assist in its use, correction,
  * modification or enhancement.
- * 
+ *
  * SUN MICROSYSTEMS, INC. SHALL HAVE NO LIABILITY WITH RESPECT TO THE
  * INFRINGEMENT OF COPYRIGHTS, TRADE SECRETS OR ANY PATENTS BY SUN RPC
  * OR ANY PART THEREOF.
- * 
+ *
  * In no event will Sun Microsystems, Inc. be liable for any lost revenue
  * or profits or other special, indirect and consequential damages, even if
  * Sun has been advised of the possibility of such damages.
- * 
+ *
  * Sun Microsystems, Inc.
  * 2550 Garcia Avenue
  * Mountain View, California  94043
@@ -42,7 +42,7 @@
 %#ifndef lint
 %/*static char sccsid[] = "from: @(#)klm_prot.x 1.7 87/07/08 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)klm_prot.x	2.1 88/08/01 4.0 RPCSRC";*/
-%static char rcsid[] = "$OpenBSD: klm_prot.x,v 1.3 2002/01/21 17:30:38 deraadt Exp $";
+%static char rcsid[] = "$OpenBSD: klm_prot.x,v 1.4 2004/01/17 12:32:11 deraadt Exp $";
 %#endif /* not lint */
 #endif
 
@@ -55,7 +55,7 @@ enum klm_stats {
 	klm_granted = 0,	/* lock is granted */
 	klm_denied = 1,		/* lock is denied */
 	klm_denied_nolocks = 2, /* no lock entry available */
-	klm_working = 3 	/* lock is being processed */
+	klm_working = 3	/* lock is being processed */
 };
 
 /*

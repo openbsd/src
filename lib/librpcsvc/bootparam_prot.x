@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootparam_prot.x,v 1.5 2003/12/25 19:05:09 deraadt Exp $	*/
+/*	$OpenBSD: bootparam_prot.x,v 1.6 2004/01/17 12:32:11 deraadt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -7,23 +7,23 @@
  * may copy or modify Sun RPC without charge, but are not authorized
  * to license or distribute it to anyone else except as part of a product or
  * program developed by the user.
- * 
+ *
  * SUN RPC IS PROVIDED AS IS WITH NO WARRANTIES OF ANY KIND INCLUDING THE
  * WARRANTIES OF DESIGN, MERCHANTIBILITY AND FITNESS FOR A PARTICULAR
  * PURPOSE, OR ARISING FROM A COURSE OF DEALING, USAGE OR TRADE PRACTICE.
- * 
+ *
  * Sun RPC is provided with no support and without any obligation on the
  * part of Sun Microsystems, Inc. to assist in its use, correction,
  * modification or enhancement.
- * 
+ *
  * SUN MICROSYSTEMS, INC. SHALL HAVE NO LIABILITY WITH RESPECT TO THE
  * INFRINGEMENT OF COPYRIGHTS, TRADE SECRETS OR ANY PATENTS BY SUN RPC
  * OR ANY PART THEREOF.
- * 
+ *
  * In no event will Sun Microsystems, Inc. be liable for any lost revenue
  * or profits or other special, indirect and consequential damages, even if
  * Sun has been advised of the possibility of such damages.
- * 
+ *
  * Sun Microsystems, Inc.
  * 2550 Garcia Avenue
  * Mountain View, California  94043
@@ -49,7 +49,7 @@
 %#ifndef lint
 %/*static char sccsid[] = "from: @(#)bootparam_prot.x 1.2 87/06/24 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)bootparam_prot.x	2.1 88/08/01 4.0 RPCSRC";*/
-%static char rcsid[] = "$OpenBSD: bootparam_prot.x,v 1.5 2003/12/25 19:05:09 deraadt Exp $";
+%static char rcsid[] = "$OpenBSD: bootparam_prot.x,v 1.6 2004/01/17 12:32:11 deraadt Exp $";
 %#endif /* not lint */
 #endif
 
@@ -88,7 +88,7 @@ struct bp_getfile_arg {
 	bp_machine_name_t	client_name;
 	bp_fileid_t		file_id;
 };
-	
+
 struct bp_getfile_res {
 	bp_machine_name_t	server_name;
 	bp_address		server_address;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp.x,v 1.4 2003/07/10 07:51:13 deraadt Exp $	*/
+/*	$OpenBSD: yp.x,v 1.5 2004/01/17 12:32:11 deraadt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -36,7 +36,7 @@
 #ifndef RPC_HDR
 %#ifndef lint
 %/*static char sccsid[] = "from: @(#)yp.x	2.1 88/08/01 4.0 RPCSRC";*/
-%static char rcsid[] = "$OpenBSD: yp.x,v 1.4 2003/07/10 07:51:13 deraadt Exp $";
+%static char rcsid[] = "$OpenBSD: yp.x,v 1.5 2004/01/17 12:32:11 deraadt Exp $";
 %#endif /* not lint */
 #endif
 
@@ -165,12 +165,12 @@ struct ypresp_maplist {
 
 enum yppush_status {
 	YPPUSH_SUCC	=  1,	/* Success */
-	YPPUSH_AGE 	=  2,	/* Master's version not newer */
+	YPPUSH_AGE	=  2,	/* Master's version not newer */
 	YPPUSH_NOMAP	= -1,	/* Can't find server for map */
 	YPPUSH_NODOM	= -2,	/* Domain not supported */
 	YPPUSH_RSRC	= -3,	/* Local resource alloc failure */
 	YPPUSH_RPC	= -4,	/* RPC failure talking to server */
-	YPPUSH_MADDR 	= -5,	/* Can't get master address */
+	YPPUSH_MADDR	= -5,	/* Can't get master address */
 	YPPUSH_YPERR	= -6,	/* YP server/map db error */
 	YPPUSH_BADARGS	= -7,	/* Request arguments bad */
 	YPPUSH_DBM	= -8,	/* Local dbm operation failed */
@@ -178,8 +178,8 @@ enum yppush_status {
 	YPPUSH_SKEW	= -10,	/* Map version skew during transfer */
 	YPPUSH_CLEAR	= -11,	/* Can't send "Clear" req to local ypserv */
 	YPPUSH_FORCE	= -12,	/* No local order number in map  use -f flag. */
-	YPPUSH_XFRERR 	= -13,	/* ypxfr error */
-	YPPUSH_REFUSED	= -14 	/* Transfer request refused by ypserv */
+	YPPUSH_XFRERR	= -13,	/* ypxfr error */
+	YPPUSH_REFUSED	= -14	/* Transfer request refused by ypserv */
 };
 
 struct yppushresp_xfr {

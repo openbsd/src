@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.x,v 1.2 1997/08/19 07:54:47 niklas Exp $	*/
+/*	$OpenBSD: mount.x,v 1.3 2004/01/17 12:32:11 deraadt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -7,23 +7,23 @@
  * may copy or modify Sun RPC without charge, but are not authorized
  * to license or distribute it to anyone else except as part of a product or
  * program developed by the user.
- * 
+ *
  * SUN RPC IS PROVIDED AS IS WITH NO WARRANTIES OF ANY KIND INCLUDING THE
  * WARRANTIES OF DESIGN, MERCHANTIBILITY AND FITNESS FOR A PARTICULAR
  * PURPOSE, OR ARISING FROM A COURSE OF DEALING, USAGE OR TRADE PRACTICE.
- * 
+ *
  * Sun RPC is provided with no support and without any obligation on the
  * part of Sun Microsystems, Inc. to assist in its use, correction,
  * modification or enhancement.
- * 
+ *
  * SUN MICROSYSTEMS, INC. SHALL HAVE NO LIABILITY WITH RESPECT TO THE
  * INFRINGEMENT OF COPYRIGHTS, TRADE SECRETS OR ANY PATENTS BY SUN RPC
  * OR ANY PART THEREOF.
- * 
+ *
  * In no event will Sun Microsystems, Inc. be liable for any lost revenue
  * or profits or other special, indirect and consequential damages, even if
  * Sun has been advised of the possibility of such damages.
- * 
+ *
  * Sun Microsystems, Inc.
  * 2550 Garcia Avenue
  * Mountain View, California  94043
@@ -37,7 +37,7 @@
 %#ifndef lint
 %/*static char sccsid[] = "from: @(#)mount.x 1.2 87/09/18 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)mount.x	2.1 88/08/01 4.0 RPCSRC";*/
-%static char rcsid[] = "$OpenBSD: mount.x,v 1.2 1997/08/19 07:54:47 niklas Exp $";
+%static char rcsid[] = "$OpenBSD: mount.x,v 1.3 2004/01/17 12:32:11 deraadt Exp $";
 %#endif /* not lint */
 #endif
 
@@ -51,10 +51,10 @@ const FHSIZE = 32;		/* size in bytes of a file handle */
  * or a directory. The file handle can contain whatever information the
  * server needs to distinguish an individual file.
  */
-typedef opaque fhandle[FHSIZE];	
+typedef opaque fhandle[FHSIZE];
 
 /*
- * If a status of zero is returned, the call completed successfully, and 
+ * If a status of zero is returned, the call completed successfully, and
  * a file handle for the directory follows. A non-zero status indicates
  * some sort of error. The status corresponds with UNIX error numbers.
  */
@@ -107,7 +107,7 @@ struct exportnode {
 program MOUNTPROG {
 	/*
 	 * Version one of the mount protocol communicates with version two
-	 * of the NFS protocol. The only connecting point is the fhandle 
+	 * of the NFS protocol. The only connecting point is the fhandle
 	 * structure, which is the same for both protocols.
 	 */
 	version MOUNTVERS {
@@ -118,20 +118,20 @@ program MOUNTPROG {
 		void
 		MOUNTPROC_NULL(void) = 0;
 
-		/*	
+		/*
 		 * If fhs_status is 0, then fhs_fhandle contains the
-	 	 * file handle for the directory. This file handle may
+		 * file handle for the directory. This file handle may
 		 * be used in the NFS protocol. This procedure also adds
 		 * a new entry to the mount list for this client mounting
 		 * the directory.
 		 * Unix authentication required.
 		 */
-		fhstatus 
+		fhstatus
 		MOUNTPROC_MNT(dirpath) = 1;
 
 		/*
-		 * Returns the list of remotely mounted filesystems. The 
-		 * mountlist contains one entry for each hostname and 
+		 * Returns the list of remotely mounted filesystems. The
+		 * mountlist contains one entry for each hostname and
 		 * directory pair.
 		 */
 		mountlist
