@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: command.c,v 1.60 2001/06/19 10:24:51 brian Exp $
+ * $OpenBSD: command.c,v 1.61 2001/07/03 22:23:52 brian Exp $
  */
 
 #include <sys/param.h>
@@ -1702,6 +1702,8 @@ SetVariable(struct cmdargs const *arg)
     break;
 
   case VAR_MRU:
+    long_val = 0;	/* silence gcc */
+    change = NULL;	/* silence gcc */
     switch(arg->argc - arg->argn) {
     case 1:
       if (argp[strspn(argp, "0123456789")] != '\0')
@@ -1745,6 +1747,8 @@ SetVariable(struct cmdargs const *arg)
     break;
 
   case VAR_MTU:
+    long_val = 0;	/* silence gcc */
+    change = NULL;	/* silence gcc */
     switch(arg->argc - arg->argn) {
     case 1:
       if (argp[strspn(argp, "0123456789")] != '\0')
