@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.39 2002/06/20 19:37:36 fgsch Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.40 2002/07/25 22:27:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -69,7 +69,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $OpenBSD: wicontrol.c,v 1.39 2002/06/20 19:37:36 fgsch Exp $";
+	"@(#) $OpenBSD: wicontrol.c,v 1.40 2002/07/25 22:27:50 deraadt Exp $";
 #endif
 
 void wi_getval(char *, struct wi_req *);
@@ -533,7 +533,7 @@ wi_printaplist(iface)
 
 	len = prism2 ? WI_PRISM2_RES_SIZE : WI_WAVELAN_RES_SIZE;
 
-	printf("\nAP Information\n");
+	printf("AP Information\n");
 
 	for (nap = 0; i < (wreq.wi_len * 2) - len; i += len) {
 		res = (struct wi_scan_res *)((char *)wreq.wi_val + i);
@@ -545,7 +545,7 @@ wi_printaplist(iface)
 		res->wi_interval = letoh16(res->wi_interval);
 		res->wi_capinfo = letoh16(res->wi_capinfo);
 
-		printf("ap[%d]:\n", nap++);
+		printf("ap[%d]:", nap++);
 		printf("\tnetname (SSID):\t\t\t[ %s ]\n", res->wi_ssid);
 		printf("\tBSSID:\t\t\t\t[ %02x:%02x:%02x:%02x:%02x:%02x ]\n",
 		    res->wi_bssid[0], res->wi_bssid[1],
@@ -588,7 +588,6 @@ wi_printaplist(iface)
 			}
 			printf("]\n");
 		}
-		putchar('\n');
 	}
 	set_if_flags(s, iface, flags);
 	close(s);
