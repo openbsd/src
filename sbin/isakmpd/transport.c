@@ -1,8 +1,9 @@
-/*	$OpenBSD: transport.c,v 1.15 2001/10/05 05:54:50 ho Exp $	*/
+/*	$OpenBSD: transport.c,v 1.16 2001/10/26 11:37:16 ho Exp $	*/
 /*	$EOM: transport.c,v 1.43 2000/10/10 12:36:39 provos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -78,6 +79,7 @@ transport_add (struct transport *t)
 {
   LOG_DBG ((LOG_TRANSPORT, 70, "transport_add: adding %p", t));
   TAILQ_INIT (&t->sendq);
+  TAILQ_INIT (&t->prio_sendq);
   LIST_INSERT_HEAD (&transport_list, t, link);
   t->flags = 0;
   t->refcnt = 0;
@@ -125,9 +127,24 @@ transport_report (void)
       t->vtbl->report (t);
       
       /* This is the reason message_dump_raw lives outside message.c.  */
+      for (msg = TAILQ_FIRST (&t->prio_sendq); msg;
+	   msg = TAILQ_NEXT (msg, link))
+        message_dump_raw ("udp_report", msg, LOG_REPORT);
+
       for (msg = TAILQ_FIRST (&t->sendq); msg; msg = TAILQ_NEXT (msg, link))
         message_dump_raw ("udp_report", msg, LOG_REPORT);
     }
+}
+
+int
+transport_prio_sendqs_empty (void)
+{
+  struct transport *t;
+
+  for (t = LIST_FIRST (&transport_list); t; t = LIST_NEXT (t, link))
+    if (TAILQ_FIRST (&t->prio_sendq))
+      return 0;
+  return 1;
 }
 
 /* Register another transport method T.  */
@@ -184,7 +201,7 @@ transport_pending_wfd_set (fd_set *fds)
 
   for (t = LIST_FIRST (&transport_list); t; t = LIST_NEXT (t, link))
     {
-      if (TAILQ_FIRST (&t->sendq))
+      if (TAILQ_FIRST (&t->sendq) || TAILQ_FIRST (&t->prio_sendq))
 	{
 	  n = t->vtbl->fd_set (t, fds, 1);
 	  if (n > max)
@@ -232,14 +249,26 @@ transport_send_messages (fd_set *fds)
 
   for (t = LIST_FIRST (&transport_list); t; t = LIST_NEXT (t, link))
     {
-      if (TAILQ_FIRST (&t->sendq) && t->vtbl->fd_isset (t, fds))
+      if ((TAILQ_FIRST (&t->sendq) || TAILQ_FIRST (&t->prio_sendq))
+	  && t->vtbl->fd_isset (t, fds))
 	{
 	  t->vtbl->fd_set (t, fds, 0);
-	  msg = TAILQ_FIRST (&t->sendq);
+
+	  /* Prefer a message from the prioritized sendq.  */
+	  if (TAILQ_FIRST (&t->prio_sendq))
+ 	    {
+	      msg = TAILQ_FIRST (&t->prio_sendq);
+	      TAILQ_REMOVE (&t->prio_sendq, msg, link);
+	    }
+	  else
+	    {
+	      msg = TAILQ_FIRST (&t->sendq);
+	      TAILQ_REMOVE (&t->sendq, msg, link);
+	    }
+
 	  msg->flags &= ~MSG_IN_TRANSIT;
 	  exchange = msg->exchange;
 	  exchange->in_transit = 0;
-	  TAILQ_REMOVE (&t->sendq, msg, link);
 
 	  /*
 	   * We disregard the potential error message here, hoping that the

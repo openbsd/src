@@ -1,9 +1,10 @@
-/*	$OpenBSD: message.h,v 1.14 2000/10/10 13:35:12 niklas Exp $	*/
+/*	$OpenBSD: message.h,v 1.15 2001/10/26 11:37:16 ho Exp $	*/
 /*	$EOM: message.h,v 1.51 2000/10/10 12:36:39 provos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
  * Copyright (c) 1999 Angelos D. Keromytis.  All rights reserved.
+ * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -160,6 +161,11 @@ struct message {
 
 /* The message is on the send queue.  */
 #define MSG_IN_TRANSIT	4
+
+/* This message should be kept on the prioritized sendq.  */
+#define MSG_PRIORITIZED	8
+
+TAILQ_HEAD(msg_head, message);
 
 extern int message_add_payload (struct message *, u_int8_t, u_int8_t *,
 				size_t, int);

@@ -1,10 +1,10 @@
-/*	$OpenBSD: isakmpd.c,v 1.36 2001/08/24 13:53:02 ho Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.37 2001/10/26 11:37:16 ho Exp $	*/
 /*	$EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.  All rights reserved.
  * Copyright (c) 1999, 2000 Angelos D. Keromytis.  All rights reserved.
- * Copyright (c) 1999, 2000 Håkan Olsson.  All rights reserved.
+ * Copyright (c) 1999, 2000, 2001 Håkan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -337,7 +337,6 @@ daemon_shutdown (void)
 {
   /* Perform a (protocol-wise) clean shutdown of the daemon.  */
   struct sa *sa;
-  static int msg_counter = 0;
 
   if (sigtermed == 1)
     {
@@ -347,31 +346,23 @@ daemon_shutdown (void)
       while ((sa = sa_find (phase2_sa_check, NULL)))
 	{
 	  /* Each DELETE is another (outgoing) message.  */
-	  msg_counter++;
 	  sa_delete (sa, 1);
 	}
-
-      /*
-       * As there may have been other messages queued before these, we
-       * add a 'grace factor' to make sure all the DELETEs actually get
-       * sent before we shut down. The select() loop will just spin
-       * a number of more times before we actually do the exit.
-       */
-      msg_counter = ++msg_counter * 2;
-
-      /* XXX Phase 1, transports, timers, exchanges, connections, ...?  */
+      sigtermed++;
     }
-  else if (sigtermed >= msg_counter)
+  else if (transport_prio_sendqs_empty ())
     {
-      /* Goodbye.  */
+      /*
+       * When the prioritized transport sendq:s are empty, i.e all 
+       * the DELETE notifications have been sent, we can shutdown.
+       */
+	 
 #ifdef USE_DEBUG
       log_packet_stop ();
 #endif
       log_print ("isakmpd: exit");
       exit (0);
     }
-
-  sigtermed++;
 }
 
 /* called on SIGTERM */

@@ -1,10 +1,10 @@
-/*	$OpenBSD: message.c,v 1.45 2001/07/01 20:43:39 niklas Exp $	*/
+/*	$OpenBSD: message.c,v 1.46 2001/10/26 11:37:16 ho Exp $	*/
 /*	$EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.  All rights reserved.
  * Copyright (c) 1999 Angelos D. Keromytis.  All rights reserved.
- * Copyright (c) 1999, 2000 Håkan Olsson.  All rights reserved.
+ * Copyright (c) 1999, 2000, 2001 Håkan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -213,7 +213,12 @@ message_free (struct message *msg)
 
   /* If we are on the send queue, remove us from there.  */
   if (msg->flags & MSG_IN_TRANSIT)
-    TAILQ_REMOVE (&msg->transport->sendq, msg, link);
+    {
+      if (msg->flags & MSG_PRIORITIZED)
+	TAILQ_REMOVE (&msg->transport->prio_sendq, msg, link);
+      else
+	TAILQ_REMOVE (&msg->transport->sendq, msg, link);
+    }
   transport_release (msg->transport);
 
   if (msg->isakmp_sa)
@@ -1178,6 +1183,7 @@ message_send (struct message *msg)
 {
   struct exchange *exchange = msg->exchange;
   struct message *m;
+  struct msg_head *q;
 
   /* Remove retransmissions on this message  */
   if (msg->retrans)
@@ -1225,15 +1231,18 @@ message_send (struct message *msg)
    * has left the queue, don't queue it again, as it will result
    * in a circular list.
    */
-  for (m = TAILQ_FIRST (&msg->transport->sendq); m; m = TAILQ_NEXT (m, link))
+  q = msg->flags & MSG_PRIORITIZED ? &msg->transport->prio_sendq : 
+    &msg->transport->sendq;
+
+  for (m = TAILQ_FIRST (q); m; m = TAILQ_NEXT (m, link))
     if (m == msg)
       {
-	LOG_DBG ((LOG_MESSAGE, 60, "message_send: msg %p already on sendq", 
-		  m));
+	LOG_DBG ((LOG_MESSAGE, 60,
+		  "message_send: msg %p already on sendq %p", m, q));
 	return;
       }
 
-  TAILQ_INSERT_TAIL (&msg->transport->sendq, msg, link);
+  TAILQ_INSERT_TAIL (q, msg, link);
 }
 
 /*
@@ -1442,6 +1451,7 @@ message_send_info (struct message *msg)
       SET_ISAKMP_DELETE_NSPIS (buf, args->u.d.nspis);
       memcpy (buf + ISAKMP_DELETE_SPI_OFF, args->u.d.spis,
 	      args->u.d.nspis * args->spi_sz);
+      msg->flags |= MSG_PRIORITIZED;
       break;
     }
 
@@ -1674,8 +1684,12 @@ message_check_duplicate (struct message *msg)
     {
       if (exchange->last_sent == exchange->in_transit)
 	{
-	  TAILQ_REMOVE (&exchange->in_transit->transport->sendq,
-			exchange->in_transit, link);
+	  if (exchange->in_transit->flags & MSG_PRIORITIZED)
+	    TAILQ_REMOVE (&exchange->in_transit->transport->prio_sendq,
+			  exchange->in_transit, link);
+	  else
+	    TAILQ_REMOVE (&exchange->in_transit->transport->sendq,
+			  exchange->in_transit, link);
 	  exchange->in_transit = 0;
 	}
       message_free (exchange->last_sent);

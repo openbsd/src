@@ -1,8 +1,9 @@
-/*	$OpenBSD: transport.h,v 1.10 2001/08/23 23:11:02 angelos Exp $	*/
+/*	$OpenBSD: transport.h,v 1.11 2001/10/26 11:37:16 ho Exp $	*/
 /*	$EOM: transport.h,v 1.16 2000/07/17 18:57:59 provos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -47,7 +48,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-struct message;
+#include "message.h"
+
 struct transport;
 
 /* This describes a tranport "method" like UDP or similar.  */
@@ -111,7 +113,14 @@ struct transport {
   struct transport_vtbl *vtbl;
 
   /* The queue holding messages to send on this transport.  */
-  TAILQ_HEAD (msg_head, message) sendq;
+  struct msg_head sendq;
+
+  /*
+   * Prioritized send queue.  Messages in this queue will be transmitted 
+   * before the normal sendq, they will also all be transmitted prior
+   * to a daemon shutdown.  Currently only used for DELETE notifications.
+   */
+  struct msg_head prio_sendq;
 
   /* Flags describing the transport.  */
   int flags;
@@ -138,4 +147,5 @@ extern void transport_release (struct transport *);
 extern void transport_report (void);
 extern void transport_send_messages (fd_set *);
 extern void transport_reinit (void);
+extern int transport_prio_sendqs_empty (void);
 #endif /* _TRANSPORT_H_ */
