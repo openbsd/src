@@ -39,8 +39,9 @@ The following HP hardware is supported:
 		98643 built-in and add-on LAN cards.
 
 	Displays:
-		98543, 98544, 98545, and 98547 color and monochrome Topcat.
-		98548, 98549, 98550, and A1416A color and monochrome Catseye.
+		98543, 98544, 98545 and 98547 color and monochrome Topcat.
+		98548, 98549 and 98550 color and monochrome Catseye.
+		A1416A color Kathmandu.
 		98700 and 98710 Gatorbox.
 		98720 and 98721 Renaissance.
 		98730 and 98731 DaVinci.
