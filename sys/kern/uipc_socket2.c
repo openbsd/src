@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.16 2001/05/02 08:33:49 provos Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.17 2001/05/26 04:38:32 angelos Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -586,8 +586,8 @@ sbappendaddr(sb, asa, m0, control)
 	register struct mbuf *m, *n;
 	int space = asa->sa_len;
 
-if (m0 && (m0->m_flags & M_PKTHDR) == 0)
-panic("sbappendaddr");
+	if (m0 && (m0->m_flags & M_PKTHDR) == 0)
+		panic("sbappendaddr");
 	if (m0)
 		space += m0->m_pkthdr.len;
 	for (n = control; n; n = n->m_next) {
