@@ -1,4 +1,4 @@
-.\"	$OpenBSD: identd.8,v 1.4 1998/02/08 18:52:23 deraadt Exp $
+.\"	$OpenBSD: identd.8,v 1.5 1998/06/10 03:49:39 beck Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -11,7 +11,7 @@
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
 .\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
+.\"    must display the following acknowledgment:
 .\"      This product includes software developed by Jason Downs for the
 .\"      OpenBSD system.
 .\" 4. Neither the name(s) of the author(s) nor the name OpenBSD
@@ -50,7 +50,6 @@
 .Op Fl a Ar address
 .Op Fl c Ar charset
 .Op Fl noelVvmNd
-.Op Ar kernelfile Op Ar kmemfile
 .Sh DESCRIPTION
 .Nm
 is a server which implements the
@@ -66,219 +65,133 @@ operates by looking up specific
 .Tn TCP/IP
 connections and returning the user name of the
 process owning the connection.
-.Sh ARGUMENTS
-The
-.Fl i
-flag, which is the default mode, should be used when starting the
-daemon from
+.Sh OPTIONS
+.Bl -tag -width Ds
+.It Fl i 
+Tells 
+.Nm identd
+to run as a process started from 
 .Xr inetd 8
-with the "nowait" option in the
+with the "nowait" option in the  
 .Pa /etc/inetd.conf
 file. Use of this mode will make
 .Xr inetd 8
 start one
 .Nm
-daemon for each connection request.
-.Pp
-The
-.Fl w
-flag should be used when starting the daemon from
+daemon for each connection request. This is the default mode of operation.
+.It Fl w
+Tells 
+.Nm identd
+to run as a process started from 
 .Xr inetd 8
-with the "wait" option in the
+with the "wait" option in the  
 .Pa /etc/inetd.conf
-file.  This is the prefered mode of
-operation since that will start a copy of
+file.  This mode of operation will start a copy of
 .Nm
 at the first connection request and then
 .Nm
-will handle subsequent requests
-without having to do the nlist lookup in the kernel file for
-every request as in the
-.Fl i
-mode above.  The
-.Nm
-daemon will run either forever, until a bug
-makes it crash or a timeout, as specified by the
-.Fl t
-flag, occurs.
-.Pp
-The
-.Fl b
-flag can be used to make the daemon run in standalone mode without
-the assistance from
-.Xr inetd 8 .
-This mode is the least prefered mode since
-a bug or any other fatal condition in the server will make it terminate
-and it will then have to be restarted manually.  Other than that is has the
-same advantage as the
-.Fl w
-mode in that it parses the nlist only once.
-.Pp
-The
-.Fl t Ar seconds
-option is used to specify the timeout limit. This is the number
-of seconds a server started with the
-.Fl w
-flag will wait for new connections before terminating. The server is
-automatically restarted by
-.Xr inetd 8
-whenever a new connection is requested
-if it has terminated. A suitable value for this is 120 (2 minutes), if
-used.  It defaults to no timeout (ie, will wait forever, or until a
-fatal condition occurs in the server).
-.Pp
-The
-.Fl u Ar uid
-option is used to specify a user id number which the
+will handle subsequent requests. 
+Previous versions listed this as the preferred mode of
+operation due to the initial overhead of parsing the kernel nlist.
+This version does not use kmem or nlist parsing, so this reasoning
+is no longer valid.
+.It Fl b
+Specify operation as a stand alone daemon.
+.It Fl t Ar seconds
+Specifies an idle timeout in seconds where a daemon running in
+"wait" mode will timeout and exit. The default is no timeout.
+.It Fl u Ar uid
+Specify a user id number or user name which the
+.Nm identd
+server should
+switch to after binding itself to the
+.Tn TCP/IP
+port if running as a stand alone daemon.
+.It Fl g Ar gid
+Specify a group id number or group name which the
 .Nm
 server should
 switch to after binding itself to the
 .Tn TCP/IP
-port if using the
-.Fl b
-mode of operation.
-.Pp
-The
-.Fl g Ar gid
-option is used to specify a group id number which the
-.Nm
-server should
-switch to after binding itself to the
-.Tn TCP/IP
-port if using the
-.Fl b
-mode of operation.
-.Pp
-The
-.Fl p Ar port
-option is used to specify an alternative port number to bind to if using
-the
-.Fl b
-mode of operation. It can be specified by name or by number. Defaults to the
-.Tn IDENT
-port (113).
-.Pp
-The
-.Fl a Ar address
-option is used to specify the local address to bind the socket to if using
-the
-.Fl b
-mode of operation. Can only be specified by IP address and not by domain
-name. Defaults to the 
-.Li INADDR_ANY
-address which normally means all local addresses.
-.Pp
-The 
-.Fl V
-flag makes
-.Nm
-display the version number and the exit.
-.Pp
-The
-.Fl l
-flag tells
-.Nm
-to use the system logging daemon
+port if running as a stand alone daemon
+.It Fl p Ar port
+Specify an alternative port number or service name 
+on which to listen when running as a stand alone daemon 
+Default is "auth" (113).
+.It Fl a Ar address
+Specify a local IP address in dotted quad format 
+to bind the listen socket to if 
+running as a standalone daemon. by default the daemon
+listens on all local IP addresses.
+.It Fl V
+Print the version number and the exit.
+.It Fl l
+Use 
 .Xr syslogd 8
 for logging purposes.
-.Pp
-The 
-.Fl v
-flag causes
-.Nm
-to log every request made, if the use of
-.Xr syslogd 8
-is enabled.
-.Pp
-The
-.Fl o
-flag tells
-.Nm
-not to reveal the operating system type it is run on and to instead
+.It Fl v
+Log every request to syslog if 
+Fl l
+above is specified. 
+.It Fl o
+Do the operating system type, instead 
 always return
 .Dq OTHER .
-.Pp
-The
-.Fl e
-flag tells
-.Nm
-to always return
+.It Fl e
+always return
 .Dq UNKNOWN-ERROR
 instead of the
 .Dq NO-USER
 or
 .Dq INVALID-PORT
 errors.
-.Pp
-The
-.Fl c Ar charset
-flags tells
-.Nm
-to add the optional (according to the
-.Tn IDENT
-protocol) character set designator to the reply generated.
+.It Fl c Ar charset
+Specify an optional character set designator to be included in replies.
 .Ar charset
 should be a valid character set as described in the
 .Tn MIME RFC
 in upper case characters.
-.Pp
-The
-.Fl n
-flags tells
-.Nm
-to always return user numbers instead of user names if you wish to
-keep the user names a secret.
-.Pp
-The
-.Fl N
-flag makes
-.Nm
+.It Fl n
+always return uid numbers instead of user names 
+.It Fl N
+When replying with a user name or id, first 
 check for a file
 .Pa .noident
-in each homedirectory for a user which the daemon is about to return the user
-name for.  It that file exists then the daemon will give the error
-.Dq HIDDEN-USER
-instead of the normal USERID response. 
-.Pp
-.Fl m
-flag makes
-.Nm
-use a mode of operation that will allow multiple requests to be
+in the user's home directory. If this file is accessible, return 
+.Dq HIDDEN-USER 
+instead of the normal USERID response.
+.It Fl m
+allow multiple requests to be
 processed per session.  Each request is specified one per line and
 the responses will be returned one per line.  The connection will not
-be closed until the connecting part closes it's end of the line.
+be closed until the client closes it's end of the connection.
 PLEASE NOTE THAT THIS MODE VIOLATES THE PROTOCOL SPECIFICATION AS
 IT CURRENTLY STANDS.
-.Pp
-The
-.Fl d
+.ItFl d
 flag enables some debugging code that normally should NOT
 be enabled since that breaks the protocol and may reveal information
 that should not be available to outsiders.
 .Pp
-.Ar kernelfile
-defaults to the normally running kernel file.
-.Pp
-.Ar kmemfile
-defaults to the memory space of the normally running kernel.
 .Sh SEE ALSO
 .Xr inetd.conf 5 .
 .Sh NOTES
 .Nm
 uses the 
 .Li LOG_DAEMON
-syslogd(8) facility to log messages. This is the correct thing to do
-since
-.Li LOG_AUTH
-is supposed to be used by authorization related programs, not authentication
-related ones such as
-.Nm .
-.Sh BUGS
-The handling of fatal errors could be better.
+syslogd(8) facility to log messages.
 .Pp
-If the
-.Fl N
-flag is specified and a user's
+Unlike previous versions of 
+.Nm identd,
+this version uses 
+.Xr sysctl 3
+to obtain information from the kernel instead of parsing kmem. This
+version does not require privilege beyond what is needed to bind
+the listen port if running as a standalone daemon.
+.Sh BUGS
+Since
+.Nm identd
+should typically not be run as a privileged user or group, 
 .Pa .noident
-file is not accessible, then ident information regarding that user will be
-returned if requested.
+files for use when running with the
+.Fl N
+flag will need to be world accessible.

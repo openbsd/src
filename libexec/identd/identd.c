@@ -37,9 +37,6 @@ extern int errno;
 
 extern char *version;
 
-char   *path_unix = NULL;
-char   *path_kmem = NULL;
-
 int     verbose_flag = 0;
 int     debug_flag = 0;
 int     syslog_flag = 0;
@@ -105,7 +102,7 @@ main(argc, argv)
 	struct group *grp;
 	int     background_flag = 0;
 	int     timeout = 0;
-	char   *portno = "113";
+	char   *portno = "auth";
 	char   *bind_address = NULL;
 	int     set_uid = 0;
 	int     set_gid = 0;
@@ -145,7 +142,8 @@ main(argc, argv)
 				ERROR1("no such user (%s) for -u option", argv[i] + 2);
 			else {
 				set_uid = pwd->pw_uid;
-				set_gid = pwd->pw_gid;
+				if (setgid == 0)
+				  set_gid = pwd->pw_gid;
 			}
 			break;
 		case 'g':
@@ -195,24 +193,6 @@ main(argc, argv)
 			break;
 		}
 	}
-
-	/*
-	 * Path to kernel namelist file specified on command line
-	 */
-	if (i < argc)
-		path_unix = argv[i++];
-
-	/*
-	 * Path to kernel memory device specified on command line
-	 */
-	if (i < argc)
-		path_kmem = argv[i++];
-
-	/*
-	 * Open the kernel memory device and read the nlist table
-	 */
-	if (k_open() < 0)
-		ERROR("main: k_open");
 
 	/*
 	 * Do the special handling needed for the "-b" flag
