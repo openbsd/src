@@ -1,5 +1,5 @@
-/*	$OpenBSD: math_2n.c,v 1.6 1999/04/19 20:54:01 niklas Exp $	*/
-/*	$EOM: math_2n.c,v 1.14 1999/04/17 23:20:31 niklas Exp $	*/
+/*	$OpenBSD: math_2n.c,v 1.7 1999/04/20 11:32:57 niklas Exp $	*/
+/*	$EOM: math_2n.c,v 1.15 1999/04/20 09:23:30 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -570,7 +570,10 @@ b2n_square (b2n_ptr d, b2n_ptr n)
 
   b2n_init (t);
   if (b2n_resize (t, 2 * maj + ((CHUNK_MASK + 2 * min) >> CHUNK_SHIFTS)))
-    return -1;
+    {
+      b2n_clear (t);
+      return -1;
+    }
 
   chunk = 0;
   bits = 0;

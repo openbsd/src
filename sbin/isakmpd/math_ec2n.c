@@ -1,5 +1,5 @@
-/*	$OpenBSD: math_ec2n.c,v 1.6 1999/04/19 21:22:49 niklas Exp $	*/
-/*	$EOM: math_ec2n.c,v 1.8 1999/04/17 23:20:36 niklas Exp $	*/
+/*	$OpenBSD: math_ec2n.c,v 1.7 1999/04/20 11:32:57 niklas Exp $	*/
+/*	$EOM: math_ec2n.c,v 1.9 1999/04/20 09:23:31 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -152,29 +152,34 @@ ec2np_ison (ec2np_ptr p, ec2ng_ptr g)
 
   /* First calc x**3 + ax**2 + b */
   if (ec2np_right (x, p, g))
-    return -1;
+    goto fail;
 
   /* Now calc y**2 + xy */
   if (b2n_square (y, p->y))
-    return -1;
+    goto fail;
   if (b2n_mod (y, y, g->p))
-    return -1;
+    goto fail;
 
   if (b2n_mul (temp, p->y, p->x))
-    return -1;
+    goto fail;
   if (b2n_mod (temp, temp, g->p))
-    return -1;
+    goto fail;
 
   if (b2n_add (y, y, temp))
-    return -1;
+    goto fail;
 
   res = !b2n_cmp (x, y);
 
   b2n_clear (x);
   b2n_clear (y);
   b2n_clear (temp);
-
   return res;
+
+ fail:
+  b2n_clear (x);
+  b2n_clear (y);
+  b2n_clear (temp);
+  return -1;
 }
 
 int
@@ -185,30 +190,33 @@ ec2np_find_y (ec2np_ptr p, ec2ng_ptr g)
   b2n_init (right);
 
   if (ec2np_right (right, p, g))		/* Right sight of equation */
-    return -1;
+    goto fail;
   if (b2n_mul_inv (p->y, p->x, g->p))
-    return -1;
+    goto fail;
 
   if (b2n_square (p->y, p->y))
-    return -1;
+    goto fail;
   if (b2n_mod (p->y, p->y, g->p))
-    return -1;
+    goto fail;
 
   if (b2n_mul (right, right, p->y))		/* x^-2 * right */
-    return -1;
+    goto fail;
   if (b2n_mod (right, right, g->p))
-    return -1;
+    goto fail;
 
   if (b2n_sqrt (p->y, right, g->p))		/* Find root */
-    return -1;
+    goto fail;
   if (b2n_mul (p->y, p->y, p->x))
-    return -1;
+    goto fail;
   if (b2n_mod (p->y, p->y, g->p))
-    return -1;
+    goto fail;
 
   b2n_clear (right);
-
   return 0;
+
+ fail:
+  b2n_clear (right);
+  return -1;
 }
 
 int
