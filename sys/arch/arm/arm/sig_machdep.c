@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.1 2004/02/01 05:09:48 drahn Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.2 2004/02/16 15:40:00 miod Exp $	*/
 /*	$NetBSD: sig_machdep.c,v 1.22 2003/10/08 00:28:41 thorpej Exp $	*/
 
 /*
@@ -166,7 +166,7 @@ sendsig(sig_t catcher, int sig, int returnmask, u_long code, int type,
 	 * we do a new trampoline version it might change then
 	 */
 	tf->tf_r0 = sig;
-	tf->tf_r1 = code;
+	tf->tf_r1 = (int)frame.sf_sip;
 	tf->tf_r2 = (int)frame.sf_scp;
 	tf->tf_pc = (int)frame.sf_handler;
 	tf->tf_usr_sp = (int)fp;
