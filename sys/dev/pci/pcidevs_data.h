@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.318 2000/09/14 18:50:05 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.319 2000/09/15 17:46:49 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -252,7 +252,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_TRIWARE, PCI_PRODUCT_TRIWARE_ESCALADE,
 	    0,
 	    "3ware",
-	    "Escalade Storage Controller",
+	    "Escalade IDE RAID",
 	},
 	{
 	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_PC4500,

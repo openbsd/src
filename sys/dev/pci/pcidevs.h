@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.318 2000/09/14 18:50:05 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.319 2000/09/15 17:46:49 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -604,7 +604,7 @@
 #define	PCI_PRODUCT_3DLABS_PERMEDIA2	0x0007		/* GLINT Permedia 2 */
 
 /* 3Ware products */
-#define	PCI_PRODUCT_TRIWARE_ESCALADE	0x1000		/* Escalade Storage Controller */
+#define	PCI_PRODUCT_TRIWARE_ESCALADE	0x1000		/* Escalade IDE RAID */
 
 /* Aironet Products */
 #define	PCI_PRODUCT_AIRONET_PC4500	0x4500		/* PC4500 Wireless */
