@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.81 2004/02/10 22:26:56 dhartmei Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.82 2004/02/19 07:44:00 kjc Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -81,8 +81,6 @@ int		 eval_queue_opts(struct pf_altq *, struct node_queue_opt *,
 u_int32_t	 eval_bwspec(struct node_queue_bw *, u_int32_t);
 void		 print_hfsc_sc(const char *, u_int, u_int, u_int,
 		     const struct node_hfsc_sc *);
-
-static u_int32_t	 max_qid = 0;
 
 void
 pfaltq_store(struct pf_altq *a)
@@ -412,8 +410,6 @@ eval_pfqueue_cbq(struct pfctl *pf, struct pf_altq *pa)
 
 	if (pa->parent[0] == 0)
 		opts->flags |= (CBQCLF_ROOTCLASS | CBQCLF_WRR);
-	if (pa->qid == 0)
-		pa->qid = ++max_qid;
 
 	cbq_compute_idletime(pf, pa);
 	return (0);
@@ -598,9 +594,6 @@ eval_pfqueue_priq(struct pfctl *pf, struct pf_altq *pa)
 		}
 	}
 
-	if (pa->qid == 0)
-		pa->qid = ++max_qid;
-
 	return (0);
 }
 
@@ -668,8 +661,6 @@ eval_pfqueue_hfsc(struct pfctl *pf, struct pf_altq *pa)
 
 	opts = &pa->pq_u.hfsc_opts;
 
-	if (pa->qid == 0)
-		pa->qid = ++max_qid;
 	if (pa->parent[0] == 0) {
 		/* root queue */
 		opts->lssc_m1 = pa->ifbandwidth;
