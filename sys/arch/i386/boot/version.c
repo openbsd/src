@@ -1,8 +1,12 @@
-/*	$OpenBSD: version.c,v 1.4 1996/09/28 08:13:50 deraadt Exp $	*/
+/*	$OpenBSD: version.c,v 1.5 1996/09/28 08:44:34 downsj Exp $	*/
 /*	$NetBSD: version.c,v 1.28 1995/12/23 17:21:23 perry Exp $	*/
 
 /*
  *	NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.
+ *
+ *	1.30 -> 1.31
+ *		Allow booting from 2.88mb floppies (in 1.44mb mode) and
+ *		move the filesystem insert stuff to the kernel.
  *
  *      1.29 -> 1.30
  *		Prefer a type 166 partition if found. 166 is the OpenBSD
@@ -63,4 +67,4 @@
  *		look in boot.c revision logs
  */
 
-char version[] = "1.30";
+char version[] = "1.31";
