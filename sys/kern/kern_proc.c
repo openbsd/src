@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.17 2003/06/02 23:28:05 millert Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.18 2004/01/29 17:19:42 millert Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -386,16 +386,16 @@ orphanpg(pg)
 void 
 proc_printit(struct proc *p, const char *modif, int (*pr)(const char *, ...))
 {
-	const static char *pstat[] = {
+	static const char *const pstat[] = {
 		"idle", "run", "sleep", "stop", "zombie", "dead"
 	};
 	char pstbuf[5];
 	const char *pst = pstbuf;
 
-	if (p->p_stat > sizeof(pstat)/sizeof(*pstat))
+	if (p->p_stat < 1 || p->p_stat > sizeof(pstat) / sizeof(pstat[0]))
 		snprintf(pstbuf, sizeof(pstbuf), "%d", p->p_stat);
 	else
-		pst = pstat[(int)p->p_stat];
+		pst = pstat[(int)p->p_stat - 1];
 
 	(*pr)("PROC (%s) pid=%d stat=%s flags=%b\n",
 	    p->p_comm, p->p_pid, pst, p->p_flag, P_BITS);
@@ -405,7 +405,7 @@ proc_printit(struct proc *p, const char *modif, int (*pr)(const char *, ...))
 	    p->p_forw, p->p_back, p->p_list.le_next, p->p_list.le_prev);
 	(*pr)("    user=%p, vmspace=%p\n",
 	    p->p_addr, p->p_vmspace);
-	(*pr)("    estcpu=%u, cpticks=%d, pctcpu=%d.%d%, swtime=%u\n",
+	(*pr)("    estcpu=%u, cpticks=%d, pctcpu=%u.%u%, swtime=%u\n",
 	    p->p_estcpu, p->p_cpticks, p->p_pctcpu / 100, p->p_pctcpu % 100,
 	    p->p_swtime);
 	(*pr)("    user=%llu, sys=%llu, intr=%llu\n",
