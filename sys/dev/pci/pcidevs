@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.543 2002/09/09 17:35:00 gluk Exp $
+	$OpenBSD: pcidevs,v 1.544 2002/09/14 09:07:12 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1476,6 +1476,8 @@ product INTEL 82451NX		0x84ca	82451NX Mem & IO
 product INTEL 82454NX		0x84cb	82454NX PXB
 product INTEL 82802AB		0x89ad	82802AB Firmware Hub 4Mbit
 product INTEL 82802AC		0x89ac	82802AC Firmware Hub 8Mbit
+product INTEL 21152		0xb152	S21152BB PCI-PCI
+product INTEL 21154		0xb154	S21154AE/BE PCI-PCI
 
 /* Intergraph products */
 product INTERGRAPH 4D50T	0x00e4	Powerstorm 4D50T
