@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.1,v 1.21 2002/07/09 15:22:27 provos Exp $
+.\"	$OpenBSD: systrace.1,v 1.22 2002/07/16 01:22:48 provos Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" All rights reserved.
@@ -63,7 +63,15 @@ Automatically generate a policy that allows every operation the
 application executes.
 The created policy functions as a base that can be refined.
 .It Fl u
-Do not perform aliasing on system call names.
+Do not perform aliasing on system call names.  Aliasing is enabled
+by default to group similar system calls into a single compound
+name.  For example, system calls that read from the file system
+like
+.Fn lstat
+and
+.Fn access
+are translated to
+.Fn fsread .
 .It Fl i
 Inherits the policy of the first executed binary to all children.
 .It Fl t
@@ -110,16 +118,33 @@ is used to return an
 .Xr errno 2
 value to the system call when using a
 .Va deny
-action.  The value
+action.  The values
 .Do
 inherit
 .Dc
-has a special meaning when used with a
+and
+.Do
+detach
+.Dc
+have special meanings when used with a
 .Va permit
 rule for the
 .Va execve
 system call.
-In that case, the current policy is inherited for the new binary.
+When using
+.Do
+inherit,
+.Dc
+the current policy is inherited for the new binary.
+With
+.Do
+detach,
+.Dc
+systrace detaches from a process after successfully
+completing
+the
+.Va execve
+system call.
 .Pp
 The filter operations have the following meaning:
 .Bl -hang -width Dinpath -offset AAA

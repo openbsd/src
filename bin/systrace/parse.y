@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.4 2002/06/05 17:22:38 mickey Exp $	*/
+/*	$OpenBSD: parse.y,v 1.5 2002/07/16 01:22:48 provos Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -103,6 +103,10 @@ fullexpression	: expression THEN action errorcode
 				break;
 			if (!strcasecmp($4, "inherit"))
 				flags = PROCESS_INHERIT_POLICY;
+			else if (!strcasecmp($4, "detach"))
+				flags = PROCESS_DETACH;
+			else
+				yyerror("Unknown flag: %s", $4);
 			break;
 		}
 

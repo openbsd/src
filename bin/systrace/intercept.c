@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.15 2002/07/12 12:26:29 provos Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.16 2002/07/16 01:22:48 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -223,6 +223,7 @@ sigusr1_handler(int signum)
 pid_t
 intercept_run(int bg, int fd, char *path, char *const argv[])
 {
+	struct intercept_pid *icpid;
 	sigset_t none, set, oset;
 	sig_t ohandler;
 	pid_t pid, cpid;
@@ -283,6 +284,14 @@ intercept_run(int bg, int fd, char *path, char *const argv[])
 	/* Choose the pid of the systraced process */
 	pid = bg ? pid : cpid;
 
+	if ((icpid = intercept_getpid(pid)) == NULL)
+		err(1, "intercept_getpid");
+	
+	/* Set uid and gid information */
+	icpid->uid = getuid();
+	icpid->gid = getgid();
+	icpid->flags |= ICFLAGS_UIDKNOWN | ICFLAGS_GIDKNOWN;
+	
 	/* Setup done, restore signal handling state */
 	if (signal(SIGUSR1, ohandler) == SIG_ERR) {
 		kill(pid, SIGKILL);
@@ -568,6 +577,8 @@ intercept_syscall(int fd, pid_t pid, int policynr, char *name, int code,
 
 		/* We need to know the result from this system call */
 		flags = ICFLAGS_RESULT;
+	} else if (!strcmp(name, "setuid") || !strcmp(name, "setgid")) {
+		flags = ICFLAGS_RESULT;
 	}
 
 	sc = intercept_sccb_find(emulation, name);
@@ -602,12 +613,13 @@ intercept_syscall_result(int fd, pid_t pid, int policynr,
 {
 	struct intercept_pid *icpid;
 
+	if (result)
+		goto out;
+
+	icpid = intercept_getpid(pid);
 	if (!strcmp("execve", name)) {
-		if (result)
-			goto out;
 
 		/* Commit the name of the new image */
-		icpid = intercept_getpid(pid);
 		if (icpid->name)
 			free(icpid->name);
 		icpid->name = icpid->newname;
@@ -617,6 +629,12 @@ intercept_syscall_result(int fd, pid_t pid, int policynr,
 			(*intercept_newimagecb)(fd, pid, policynr, emulation,
 			    icpid->name, intercept_newimagecbarg);
 
+	} else if (!strcmp("setuid", name)) {
+		intercept.getarg(0, args, argsize, (void **)&icpid->uid);
+		icpid->flags |= ICFLAGS_UIDKNOWN;
+	} else if (!strcmp("setgid", name)) {
+		intercept.getarg(0, args, argsize, (void **)&icpid->gid);
+		icpid->flags |= ICFLAGS_GIDKNOWN;
 	}
  out:
 	/* Resume execution of the process */
@@ -676,6 +694,11 @@ intercept_child_info(pid_t opid, pid_t npid)
 		if (inpid->name == NULL)
 			err(1, "%s:%d: strdup", __func__, __LINE__);
 	}
+
+	/* Copy some information */
+	inpid->flags = ipid->flags;
+	inpid->uid = ipid->uid;
+	inpid->gid = ipid->gid;
 
 	/* XXX - keeps track of emulation */
 	intercept.clonepid(ipid, inpid);

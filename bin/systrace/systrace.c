@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.26 2002/07/12 12:26:29 provos Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.27 2002/07/16 01:22:48 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -254,10 +254,15 @@ execres_cb(int fd, pid_t pid, int policynr, char *emulation, char *name, void *a
 	if (policynr != -1) {
 		struct intercept_pid *ipid;
 
+		ipid = intercept_getpid(pid);
+		if (ipid->uflags & PROCESS_DETACH) {
+			if (intercept_detach(fd, pid) == -1)
+				err(1, "%s: intercept_detach", __func__);
+			return;
+		}
 		if (inherit)
 			return;
 
-		ipid = intercept_getpid(pid);
 		if (ipid->uflags & PROCESS_INHERIT_POLICY)
 			return;
 	}
