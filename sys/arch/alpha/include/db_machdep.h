@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.7 1997/07/23 23:32:43 niklas Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.8 2000/04/06 13:30:47 art Exp $	*/
 
 /*
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserverd.
@@ -31,6 +31,9 @@
 
 #ifndef	_ALPHA_DB_MACHDEP_H_
 #define	_ALPHA_DB_MACHDEP_H_
+
+/* XXX - Need to include vm.h for boolean_t */
+#include <vm/vm.h>
 
 struct opcode {
 	enum opc_fmt { OPC_PAL, OPC_RES, OPC_MEM, OPC_OP, OPC_BR } opc_fmt;
