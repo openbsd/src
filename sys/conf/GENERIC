@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.78 2001/06/25 20:48:13 provos Exp $
+#	$OpenBSD: GENERIC,v 1.79 2001/06/25 23:02:53 provos Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -80,7 +80,7 @@ option		PPP_DEFLATE
 #option		MROUTING	# Multicast router
 
 pseudo-device	pf	1	# packet filter
-pseudo-device	pflog	2	# pf log if
+pseudo-device	pflog	1	# pf log if
 pseudo-device	loop	2	# network loopback
 pseudo-device	bpfilter 8	# packet filter
 pseudo-device	sl	2	# CSLIP
