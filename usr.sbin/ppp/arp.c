@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: arp.c,v 1.1.1.1 1997/11/23 20:27:32 brian Exp $
+ * $Id: arp.c,v 1.2 1997/12/23 22:38:00 brian Exp $
  *
  */
 
@@ -244,7 +244,7 @@ get_ether_addr(int s, u_long ipaddr, struct sockaddr_dl *hwaddr)
   for (ifr = ifc.ifc_req; ifr < ifend;) {
     if (ifr->ifr_addr.sa_family == AF_INET) {
       ina = ((struct sockaddr_in *) & ifr->ifr_addr)->sin_addr.s_addr;
-      strncpy(ifreq.ifr_name, ifr->ifr_name, sizeof(ifreq.ifr_name));
+      strncpy(ifreq.ifr_name, ifr->ifr_name, sizeof(ifreq.ifr_name) - 1);
       ifreq.ifr_name[sizeof(ifreq.ifr_name) - 1] = '\0';
 
       /*

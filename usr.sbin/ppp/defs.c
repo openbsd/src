@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: defs.c,v 1.2 1997/12/21 14:27:03 brian Exp $
+ *	$Id: defs.c,v 1.3 1997/12/23 22:38:02 brian Exp $
  */
 
 #include <sys/param.h>
@@ -56,7 +56,7 @@ void
 SetLabel(const char *label)
 {
   if (label)
-    strncpy(dstsystem, label, sizeof dstsystem);
+    strncpy(dstsystem, label, sizeof(dstsystem) - 1);
   else
     *dstsystem = '\0';
 }
