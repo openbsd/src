@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.12 2002/05/23 09:51:12 deraadt Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.13 2002/09/03 18:28:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -60,7 +60,8 @@ pcap_dumper_t *dpcap;
 
 int Debug = 0;
 int snaplen = DEF_SNAPLEN;
-int gotsig_close, gotsig_alrm, gotsig_hup;
+
+volatile sig_atomic_t gotsig_close, gotsig_alrm, gotsig_hup;
 
 char *filename = PFLOGD_LOG_FILE;
 char *interface = PFLOGD_DEFAULT_IF;
