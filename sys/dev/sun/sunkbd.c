@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunkbd.c,v 1.15 2003/01/28 21:17:07 miod Exp $	*/
+/*	$OpenBSD: sunkbd.c,v 1.16 2003/03/17 23:26:29 matthieu Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Miodrag Vallat.
@@ -836,8 +836,8 @@ const keysym_t sunkbd_keydesc_uk[] = {
 /* 02e UK English type 5 keyboard */
 const keysym_t sunkbd5_keydesc_uk[] = {
     KC(0x0d),		KS_Mode_switch,
-    KC(0x20),		KS_2,		KS_quotedbl,
-    KC(0x21),		KS_3,		KS_sterling,
+    KC(0x1f),		KS_2,		KS_quotedbl,
+    KC(0x20),		KS_3,		KS_sterling,
     KC(0x2a),		KS_grave,	KS_notsign,	KS_brokenbar,
     KC(0x57),		KS_apostrophe,	KS_at,
     KC(0x58),		KS_numbersign,	KS_asciitilde,
