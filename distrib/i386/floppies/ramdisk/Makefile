@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 1997/05/10 02:13:13 tholo Exp $
+#	$OpenBSD: Makefile,v 1.18 1997/05/11 20:01:57 millert Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -17,7 +17,7 @@ VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 VND_CRDEV=	/dev/r${VND}c
 PID!=		echo $$$$
-REALIMAGE!=	echo /tmp/image.${PID}
+REALIMAGE!=	echo /var/tmp/image.${PID}
 LISTFLOPPY=	${.CURDIR}/list_floppy
 
 all:	${FS}

@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.1 1996/10/10 10:06:14 deraadt Exp $
+#	$Id: Makefile,v 1.2 1997/05/11 20:02:01 millert Exp $
 
 .include "../Makefile.inc"
 
@@ -8,7 +8,7 @@ VND_DEV=	/dev/${VND}c
 VND_RDEV=	/dev/r${VND}c
 IMAGE=		kc${REV}.fs
 PID!=		echo $$$$
-REALIMAGE!=	echo /tmp/image.${PID}
+REALIMAGE!=	echo /var/tmp/image.${PID}
 MDEC=		${DESTDIR}/usr/mdec
 
 LISTS=		${.CURDIR}/list

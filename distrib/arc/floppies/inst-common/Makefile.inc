@@ -1,4 +1,4 @@
-#	$Id: Makefile.inc,v 1.1 1996/10/10 10:06:04 deraadt Exp $
+#	$Id: Makefile.inc,v 1.2 1997/05/11 20:02:00 millert Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -10,7 +10,7 @@ VND?=		vnd0
 VND_DEV=	/dev/${VND}c
 VND_RDEV=	/dev/r${VND}c
 PID!=		echo $$$$
-REALIMAGE!=	echo /tmp/image.${PID}
+REALIMAGE!=	echo /var/tmp/image.${PID}
 IMAGE?=		inst${REV}.fs
 MDEC=		${DESTDIR}/usr/mdec
 

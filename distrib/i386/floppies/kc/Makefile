@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 1997/04/17 02:10:40 niklas Exp $
+#	$OpenBSD: Makefile,v 1.14 1997/05/11 20:01:55 millert Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -11,7 +11,7 @@ VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 IMAGE?=		xxx-${REV}.fs
 PID!=		echo $$$$
-REALIMAGE!=	echo /tmp/image.${PID}
+REALIMAGE!=	echo /var/tmp/image.${PID}
 MDEC=		${DESTDIR}/usr/mdec
 
 LIST=		${.CURDIR}/list

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 1997/05/06 17:10:32 niklas Exp $
+#	$OpenBSD: Makefile,v 1.13 1997/05/11 20:01:58 millert Exp $
 #	$NetBSD: Makefile,v 1.2.4.3 1996/07/04 07:05:32 leo Exp $
 
 # Revision is 2.1
@@ -17,7 +17,7 @@ VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 DISKTYPE=	miniroot
 PID!=		echo $$$$
-REALIMAGE!=	echo /tmp/image.${PID}
+REALIMAGE!=	echo /var/tmp/image.${PID}
 IMAGE?=		miniroot${REV}.fs
 IMAGESIZE?=	10240 # 5Mb in 512 byte blocks
 NEWFSOPTS?=

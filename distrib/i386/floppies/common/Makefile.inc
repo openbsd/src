@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.3 1997/04/19 21:26:11 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.4 1997/05/11 20:01:56 millert Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -11,7 +11,7 @@ VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 IMAGE?=		xxx${REV}.fs
 PID!=		echo $$$$
-REALIMAGE=	/tmp/image.${PID}
+REALIMAGE=	/var/tmp/image.${PID}
 MDEC=		${DESTDIR}/usr/mdec
 
 LISTS=		${COMMONDIR}/list ${.CURDIR}/list
