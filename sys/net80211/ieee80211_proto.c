@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.3 2005/02/17 18:28:05 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.4 2005/03/13 13:48:45 reyk Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -538,20 +538,17 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int mgt
 		case IEEE80211_S_ASSOC:		/* infra mode */
 			IASSERT(ni->ni_txrate < ni->ni_rates.rs_nrates,
 				("%s: bogus xmit rate %u setup\n", __func__,
-					ni->ni_txrate));
+				ni->ni_txrate));
 			if (ifp->if_flags & IFF_DEBUG) {
-				if_printf(ifp, " ");
-				if (ic->ic_opmode == IEEE80211_M_STA)
-					printf("associated ");
-				else
-					printf("synchronized ");
-				printf("with %s ssid ",
+				if_printf(ifp, "%s with %s ssid ",
+				    ic->ic_opmode == IEEE80211_M_STA ?
+				    "associated" : "synchronized",
 				    ether_sprintf(ni->ni_bssid));
 				ieee80211_print_essid(ic->ic_bss->ni_essid,
 				    ni->ni_esslen);
 				printf(" channel %d start %uMb\n",
-					ieee80211_chan2ieee(ic, ni->ni_chan),
-					IEEE80211_RATE2MBS(ni->ni_rates.rs_rates[ni->ni_txrate]));
+				    ieee80211_chan2ieee(ic, ni->ni_chan),
+				    IEEE80211_RATE2MBS(ni->ni_rates.rs_rates[ni->ni_txrate]));
 			}
 			ic->ic_mgt_timer = 0;
 			(*ifp->if_start)(ifp);
