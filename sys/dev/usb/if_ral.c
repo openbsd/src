@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.3 2005/03/17 09:01:43 damien Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.4 2005/03/17 11:04:30 dlg Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -1723,6 +1723,7 @@ ural_read_eeprom(struct ural_softc *sc)
 	uint16_t val;
 
 	ural_eeprom_read(sc, RAL_EEPROM_CONFIG0, &val, 2);
+	val = letoh16(val);
 	sc->rf_rev =   (val >> 11) & 0x7;
 	sc->hw_radio = (val >> 10) & 0x1;
 	sc->led_mode = (val >> 6)  & 0x7;
