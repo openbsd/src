@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat.c,v 1.2 2005/04/02 13:48:35 otto Exp $ */
+/*	$OpenBSD: stat.c,v 1.3 2005/04/02 17:52:27 otto Exp $ */
 /*	$NetBSD: stat.c,v 1.19 2004/06/20 22:20:16 jmc Exp $ */
 
 /*
@@ -39,10 +39,8 @@
 
 #ifndef lint
 static const char rccs_id[] =
-    "$OpenBSD: stat.c,v 1.2 2005/04/02 13:48:35 otto Exp $";
+    "$OpenBSD: stat.c,v 1.3 2005/04/02 17:52:27 otto Exp $";
 #endif
-
-#define HAVE_STRUCT_STAT_ST_BIRTHTIME 0
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -63,15 +61,9 @@ static const char rccs_id[] =
 #define RAW_F "%f "
 #define SHELL_F " st_flags=%f"
 
-#if HAVE_STRUCT_STAT_ST_BIRTHTIME
 #define DEF_B "\"%SB\" "
 #define RAW_B "%B "
 #define SHELL_B "st_birthtime=%B "
-#else /* HAVE_STRUCT_STAT_ST_BIRTHTIME */
-#define DEF_B
-#define RAW_B
-#define SHELL_B
-#endif /* HAVE_STRUCT_STAT_ST_BIRTHTIME */
 
 #define DEF_FORMAT \
 	"%d %i %Sp %l %Su %Sg %r %z \"%Sa\" \"%Sm\" \"%Sc\" " DEF_B \
@@ -671,14 +663,12 @@ format1(const struct stat *st,
 			nsecs = st->st_ctimensec;
 		}
 		/* FALLTHROUGH */
-#if HAVE_STRUCT_STAT_ST_BIRTHTIME
 	case SHOW_st_btime:
 		if (!gottime) {
 			gottime = 1;
-			secs = st->st_birthtime;
-			nsecs = st->st_birthtimensec;
+			secs = st->__st_birthtimespec.tv_sec;
+			nsecs = st->__st_birthtimespec.tv_nsec;
 		}
-#endif /* HAVE_STRUCT_STAT_ST_BIRTHTIME */
 		small = (sizeof(secs) == 4);
 		data = secs;
 		small = 1;
