@@ -825,6 +825,10 @@ assign_stack_local (mode, size, align)
     addr = plus_constant (virtual_stack_vars_rtx,
 			  frame_offset + bigend_correction);
 
+  if (flag_propolice_protection
+	&& addr == virtual_stack_vars_rtx && mode == BLKmode && size > 0)
+    addr = gen_rtx_PLUS (GET_MODE (addr), addr, GEN_INT (0));
+
 #ifndef FRAME_GROWS_DOWNWARD
   frame_offset += size;
 #endif
@@ -939,10 +943,7 @@ assign_stack_temp_for_type (mode, size, keep, type)
   int align;
   int alias_set;
   struct temp_slot *p, *best_p = 0;
-  int char_array = type && (TREE_TYPE (type)==char_type_node
-			    || (TREE_TYPE (type)
-				&& TREE_CODE (TREE_TYPE (type)) == INTEGER_TYPE
-				&& TYPE_PRECISION (TREE_TYPE (type)) == 8));
+  int char_array = (keep == 1 && search_string_def (type));
 
   /* If SIZE is -1 it means that somebody tried to allocate a temporary
      of a variable size.  */
