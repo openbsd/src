@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.36 2004/05/09 04:01:59 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.37 2004/05/17 12:37:13 aoyama Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -240,6 +240,14 @@ const struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 		{0, 0, 0},				/* minor 8-11 */
 		{0, 0, 0}				/* minor 12-15 */
 	}}},
+	{{T_SEQUENTIAL, T_REMOV,
+	 "TEAC    ", "MT-2ST/N50      ", ""},     {ST_Q_IGNORE_LOADS, 0, {
+		{0, 0, 0},				/* minor 0-3 */
+		{0, 0, 0},				/* minor 4-7 */
+		{0, 0, 0},				/* minor 8-11 */
+		{0, 0, 0}				/* minor 12-15 */
+	}}},
+
 };
 
 #define NOEJECT 0
