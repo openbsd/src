@@ -18,21 +18,48 @@ License along with libiberty; see the file COPYING.LIB.  If
 not, write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-#ifdef __STDC__
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+#include <ansidecl.h>
+#ifdef ANSI_PROTOTYPES
 #include <stdarg.h>
 #else
 #include <varargs.h>
 #endif
 #include <stdio.h>
+#ifdef HAVE_STRING_H
 #include <string.h>
-#include <ansidecl.h>
+#endif
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#else
+extern unsigned long strtoul ();
+extern PTR malloc ();
+#endif
+#include "libiberty.h"
 
 #ifdef TEST
 int global_total_width;
 #endif
 
-unsigned long strtoul ();
-char *malloc ();
+/*
+
+@deftypefn Extension int vasprintf (char **@var{resptr}, const char *@var{format}, va_list @var{args})
+
+Like @code{vsprintf}, but instead of passing a pointer to a buffer,
+you pass a pointer to a pointer.  This function will compute the size
+of the buffer needed, allocate memory with @code{malloc}, and store a
+pointer to the allocated memory in @code{*@var{resptr}}.  The value
+returned is the same as @code{vsprintf} would return.  If memory could
+not be allocated, zero is returned and @code{NULL} is stored in
+@code{*@var{resptr}}.
+
+@end deftypefn
+
+*/
+
+static int int_vasprintf PARAMS ((char **, const char *, va_list *));
 
 static int
 int_vasprintf (result, format, args)
@@ -60,7 +87,7 @@ int_vasprintf (result, format, args)
 	      total_width += abs (va_arg (ap, int));
 	    }
 	  else
-	    total_width += strtoul (p, &p, 10);
+	    total_width += strtoul (p, (char **) &p, 10);
 	  if (*p == '.')
 	    {
 	      ++p;
@@ -70,7 +97,7 @@ int_vasprintf (result, format, args)
 		  total_width += abs (va_arg (ap, int));
 		}
 	      else
-	      total_width += strtoul (p, &p, 10);
+	      total_width += strtoul (p, (char **) &p, 10);
 	    }
 	  while (strchr ("hlL", *p))
 	    ++p;
@@ -111,7 +138,7 @@ int_vasprintf (result, format, args)
 #ifdef TEST
   global_total_width = total_width;
 #endif
-  *result = malloc (total_width);
+  *result = (char *) malloc (total_width);
   if (*result != NULL)
     return vsprintf (*result, format, *args);
   else
@@ -132,32 +159,25 @@ vasprintf (result, format, args)
 }
 
 #ifdef TEST
-void
-checkit
-#ifdef __STDC__
-     (const char* format, ...)
-#else
-     (va_alist)
-     va_dcl
-#endif
+static void ATTRIBUTE_PRINTF_1
+checkit VPARAMS ((const char *format, ...))
 {
-  va_list args;
   char *result;
-
-#ifdef __STDC__
-  va_start (args, format);
-#else
-  char *format;
-  va_start (args);
-  format = va_arg (args, char *);
-#endif
+  VA_OPEN (args, format);
+  VA_FIXEDARG (args, const char *, format);
   vasprintf (&result, format, args);
-  if (strlen (result) < global_total_width)
+  VA_CLOSE (args);
+
+  if (strlen (result) < (size_t) global_total_width)
     printf ("PASS: ");
   else
     printf ("FAIL: ");
   printf ("%d %s\n", global_total_width, result);
+
+  free (result);
 }
+
+extern int main PARAMS ((void));
 
 int
 main ()
@@ -169,5 +189,7 @@ main ()
   checkit ("%s", "jjjjjjjjjiiiiiiiiiiiiiiioooooooooooooooooppppppppppppaa\n\
 777777777777777777333333333333366666666666622222222222777777777777733333");
   checkit ("%f%s%d%s", 1.0, "foo", 77, "asdjffffffffffffffiiiiiiiiiiixxxxx");
+
+  return 0;
 }
 #endif /* TEST */

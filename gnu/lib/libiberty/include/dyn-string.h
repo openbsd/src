@@ -1,21 +1,21 @@
 /* An abstract string datatype.
-   Copyright (C) 1998, 1999, 2000 Free Software Foundation, Inc.
+   Copyright (C) 1998, 1999, 2000, 2002 Free Software Foundation, Inc.
    Contributed by Mark Mitchell (mark@markmitchell.com).
 
-This file is part of GNU CC.
+This file is part of GCC.
    
-GNU CC is free software; you can redistribute it and/or modify
+GCC is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2, or (at your option)
 any later version.
 
-GNU CC is distributed in the hope that it will be useful,
+GCC is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU CC; see the file COPYING.  If not, write to
+along with GCC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
@@ -45,7 +45,7 @@ typedef struct dyn_string
    names in user programs, the functions that are used in the
    demangler are given implementation-reserved names.  */
 
-#ifdef IN_LIBGCC2
+#if defined(IN_LIBGCC2) || defined(IN_GLIBCPP_V3)
 
 #define dyn_string_init                 __cxa_dyn_string_init
 #define dyn_string_new                  __cxa_dyn_string_new
@@ -66,7 +66,7 @@ typedef struct dyn_string
 #define dyn_string_substring            __cxa_dyn_string_substring
 #define dyn_string_eq                   __cxa_dyn_string_eq
 
-#endif /* IN_LIBGCC2 */
+#endif /* IN_LIBGCC2 || IN_GLIBCPP_V3 */
 
 
 extern int dyn_string_init              PARAMS ((struct dyn_string *, int));
