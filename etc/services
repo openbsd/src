@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.24 2000/11/22 15:33:16 jakob Exp $
+#	$OpenBSD: services,v 1.25 2001/01/18 22:38:33 angelos Exp $
 #
 # Network services, Internet style
 #
@@ -221,8 +221,10 @@ supfilesrv	871/tcp			# SUP server
 rsync		873/tcp			# rsync server
 cddb		888/tcp			# Audio CD Database
 supfiledbg	1127/tcp		# SUP debugging
-radius		1645/udp		# radius authentication
-radacct		1646/udp		# radius accounting
+datametrics	1645/udp
+sa-msg-port	1646/udp
+radius		1812/udp		# radius authentication
+radacct		1813/udp		# radius accounting
 webster		2627/tcp		# Network dictionary
 webster		2627/udp
 canna		5680/tcp		# Kana->Kanji server
