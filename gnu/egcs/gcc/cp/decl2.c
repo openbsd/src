@@ -990,7 +990,7 @@ maybe_retrofit_in_chrg (fn)
 	{
 	  DECL_CONSTRUCTOR_FOR_VBASE (fn) = CONSTRUCTOR_FOR_PVBASE;
 	  if (flag_vtable_thunks_compat && varargs_function_p (fn))
-	    sorry ("-fvtable-thunks=2 for vararg constructor", fn);
+	    sorry ("-fvtable-thunks=2 for vararg constructor");
 	}
       else
 	DECL_CONSTRUCTOR_FOR_VBASE (fn) = CONSTRUCTOR_FOR_VBASE;
