@@ -1,4 +1,4 @@
-/*	$OpenBSD: null_vfsops.c,v 1.17 2003/08/14 07:46:39 mickey Exp $	*/
+/*	$OpenBSD: null_vfsops.c,v 1.18 2004/03/03 06:01:49 tedu Exp $	*/
 /*	$NetBSD: null_vfsops.c,v 1.38 2002/09/21 18:09:29 christos Exp $	*/
 
 /*
@@ -248,7 +248,7 @@ nullfs_unmount(mp, mntflags, p)
 	if (mntinvalbuf(mp, 1))
 		return (EBUSY);
 #endif
-	if (null_rootvp->v_usecount > 1)
+	if (null_rootvp->v_usecount > 1 && !(flags & FORCECLOSE))
 		return (EBUSY);
 	if ((error = vflush(mp, null_rootvp, flags)) != 0)
 		return (error);
