@@ -1,4 +1,4 @@
-/*	$OpenBSD: str.c,v 1.12 2000/06/23 16:41:53 espie Exp $	*/
+/*	$OpenBSD: str.c,v 1.13 2000/07/17 22:57:37 espie Exp $	*/
 /*	$NetBSD: str.c,v 1.13 1996/11/06 17:59:23 christos Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@
 #if 0
 static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
 #else
-static char rcsid[] = "$OpenBSD: str.c,v 1.12 2000/06/23 16:41:53 espie Exp $";
+static char rcsid[] = "$OpenBSD: str.c,v 1.13 2000/07/17 22:57:37 espie Exp $";
 #endif
 #endif				/* not lint */
 
@@ -97,15 +97,18 @@ str_concat(s1, s2, sep)
  */
 char **
 brk_string(str, store_argc, expand, buffer)
-	register char *str;
+	const char *str;
 	int *store_argc;
 	Boolean expand;
 	char **buffer;
 {
 	register int argc, ch;
-	register char inquote, *p, *start, *t;
-	int len;
-	int argmax = 50, curlen = 0;
+	char inquote;
+	const char *p;
+	char *start, *t;
+	size_t len;
+	int argmax = 50;
+	size_t curlen = 0;
     	char **argv = (char **)emalloc((argmax + 1) * sizeof(char *));
 
 	/* skip leading space chars. */
@@ -228,8 +231,8 @@ done:	argv[argc] = (char *)NULL;
  */
 int
 Str_Match(string, pattern)
-	register char *string;		/* String */
-	register char *pattern;		/* Pattern */
+	const char *string;		/* String */
+	const char *pattern;		/* Pattern */
 {
 	char c2;
 
@@ -325,21 +328,17 @@ thisCharOK:	++pattern;
  * Results:
  *	Returns the beginning position of a match or null. The number
  *	of characters matched is returned in len.
- *
- * Side Effects:
- *	None
- *
  *-----------------------------------------------------------------------
  */
-char *
+const char *
 Str_SYSVMatch(word, pattern, len)
-    char	*word;		/* Word to examine */
-    char	*pattern;	/* Pattern to examine against */
-    int		*len;		/* Number of characters to substitute */
+    const char	*word;		/* Word to examine */
+    const char	*pattern;	/* Pattern to examine against */
+    size_t	*len;		/* Number of characters to substitute */
 {
-    char *p = pattern;
-    char *w = word;
-    char *m;
+    const char *p = pattern;
+    const char *w = word;
+    const char *m;
 
     if (*p == '\0') {
 	/* Null pattern is the whole string */
@@ -383,22 +382,18 @@ Str_SYSVMatch(word, pattern, len)
  *	If the pattern does not contain a '%' prepend len characters
  *	from src.
  *
- * Results:
- *	None
- *
  * Side Effects:
  *	Places result on buf
- *
  *-----------------------------------------------------------------------
  */
 void
 Str_SYSVSubst(buf, pat, src, len)
     Buffer buf;
-    char *pat;
-    char *src;
-    int   len;
+    const char *pat;
+    const char *src;
+    size_t   len;
 {
-    char *m;
+    const char *m;
 
     if ((m = strchr(pat, '%')) != NULL) {
 	/* Copy the prefix */
