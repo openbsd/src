@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.51 2002/07/01 20:12:40 vincent Exp $ */
+/* $OpenBSD: netcat.c,v 1.52 2002/07/04 04:42:25 vincent Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -533,12 +533,10 @@ local_listen(char *host, char *port, struct addrinfo hints)
 void
 readwrite(int nfd)
 {
-	struct pollfd *pfd;
+	struct pollfd pfd[2];
 	char buf[BUFSIZ];
 	int wfd = fileno(stdin), n, ret;
 	int lfd = fileno(stdout);
-
-	pfd = malloc(2 * sizeof(struct pollfd));
 
 	/* Setup Network FD */
 	pfd[0].fd = nfd;
@@ -548,23 +546,25 @@ readwrite(int nfd)
 	pfd[1].fd = wfd;
 	pfd[1].events = POLLIN;
 
-	for (;;) {
+	while (pfd[0].fd != -1 || pfd[1].fd != -1) {
 		if (iflag)
 			sleep(iflag);
 
 		if ((n = poll(pfd, 2, timeout)) < 0) {
 			close(nfd);
-			close(wfd);
-			free(pfd);
-			errx(1, "Polling Error");
+			err(1, "Polling Error");
 		}
 
 		if (n == 0)
 			return;
 
 		if (pfd[0].revents & POLLIN) {
-			if ((n = read(nfd, buf, sizeof(buf))) <= 0) {
+			if ((n = read(nfd, buf, sizeof(buf))) < 0)
 				return;
+			else if (n == 0) {
+				shutdown(nfd, SHUT_RD);
+				pfd[0].fd = -1;
+				pfd[0].events = 0;
 			} else {
 				if (tflag)
 					atelnet(nfd, buf, n);
@@ -576,7 +576,11 @@ readwrite(int nfd)
 		if (pfd[1].revents & POLLIN) {
 			if ((n = read(wfd, buf, sizeof(buf))) < 0)
 				return;
-			else {
+			else if (n == 0) {
+				shutdown(nfd, SHUT_WR);
+				pfd[1].fd = -1;
+				pfd[1].events = 0;
+			} else {
 				if((ret = atomicio(write, nfd, buf, n)) != n)
 					return;
 			}
@@ -688,7 +692,7 @@ udptest(int s)
 {
 	int i, rv, ret;
 
-	for (i=0; i <= 3; i++) {
+	for (i = 0; i <= 3; i++) {
 		if ((rv = write(s, "X", 1)) == 1)
 			ret = 1;
 		else
