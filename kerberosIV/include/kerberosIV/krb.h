@@ -1,4 +1,4 @@
-/*	$Id: krb.h,v 1.5 1997/11/28 12:48:41 art Exp $	*/
+/*	$Id: krb.h,v 1.6 1997/11/29 20:08:45 millert Exp $	*/
 /*      $KTH: krb.h,v 1.85 1997/10/24 10:18:16 assar Exp $      */
 
 /*
@@ -524,18 +524,10 @@ int krb_get_string __P((void *from, char *to));
 int krb_get_nir __P((void *from, char *name, char *instance, char *realm));
 int krb_put_nir __P((char *name, char *instance, char *realm, void *to));
 
-/* XXX - this should really be somewhere else (from libroken)*/
+/* XXX - this should really be somewhere else (from libroken) */
 char *strtok_r __P((char *s1, const char *s2, char **lasts));
 int base64_encode __P((const void *data, int size, char **str));
 int base64_decode __P((const char *str, void *data));
-
-#if !defined(__GNUC__) && !defined(__attribute__)
-#define __attribute__(x)
-#endif
-
-int asprintf (char **ret, const char *format, ...)
-     __attribute__ ((format (printf, 2, 3)));
-
 
 __END_DECLS
 

@@ -72,10 +72,9 @@ SRCS=	cr_err_reply.c \
           logging.c \
           k_concat.c \
 	  strtok_r.c \
-	  asprintf.c \
 	  base64.c 
 
-# XXX base64.c, strtok_r.c and asprintf.c should really be somewhere else. 
+# XXX base64.c and strtok_r.c should really be somewhere else. 
 # (or replaced) (they are from libroken)
 
 MAN=	kerberos.3 krb_realmofhost.3 krb_sendauth.3 krb_set_tkt_string.3 \
