@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.15 2003/12/25 17:58:50 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.16 2003/12/25 18:04:10 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Henning Brauer <henning@openbsd.org>
@@ -290,6 +290,7 @@ yyerror(const char *fmt, ...)
 		fatal("yyerror asprintf", 0);
 	vlog(LOG_CRIT, nfmt, ap);
 	va_end(ap);
+	free(nfmt);
 	return (0);
 }
 
