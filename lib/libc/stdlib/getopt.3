@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: getopt.3,v 1.4 1997/06/02 11:13:33 deraadt Exp $
+.\"	$OpenBSD: getopt.3,v 1.5 1998/04/25 00:34:44 deraadt Exp $
 .\"
 .Dd April 19, 1994
 .Dt GETOPT 3
@@ -174,7 +174,7 @@ extern int optind;
 int bflag, ch, fd;
 
 bflag = 0;
-while ((ch = getopt(argc, argv, "bf:")) != -1)
+while ((ch = getopt(argc, argv, "bf:")) != -1) {
 	switch(ch) {
 	case 'b':
 		bflag = 1;
@@ -189,6 +189,7 @@ while ((ch = getopt(argc, argv, "bf:")) != -1)
 	case '?':
 	default:
 		usage();
+	}
 }
 argc -= optind;
 argv += optind;
