@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.56 2001/11/11 13:57:31 heko Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.57 2001/11/17 10:44:28 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -585,7 +585,9 @@ which is a comma-separated list of
 .Sq lib_spec
 of the form:
 .Sq libname.[version.[subversion]] .
-See BUGS AND LIMITATIONS as well.
+See 
+.Xr library-specs 7
+for more details.
 .Pp
 On architectures that use dynamic libraries,
 .Ev LIB_DEPENDS
@@ -1512,12 +1514,6 @@ and
 are not heeded consistently.
 Most of the ports tree will probably fall
 apart if one tries to build/use stuff elsewhere.
-.Pp
-.Ev LIB_DEPENDS
-should only be a BUILD_DEPENDS on architectures without shared libraries.
-If a
-.Ev RUN_DEPENDS
-is needed as well, it should be mentionned explicitly.
 .Sh HISTORY
 The ports mechanism originally came from
 .Fx .
