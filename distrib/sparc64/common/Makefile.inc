@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.2 2002/03/30 02:33:23 krw Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 2002/04/21 07:30:58 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -6,7 +6,7 @@ TOP=		${.CURDIR}/..
 IMAGE=		mr.fs
 CBIN?=		instbin
 CRUNCHCONF?=    ${.CURDIR}/../common/${CBIN}.conf
-LISTS?=		${.CURDIR}/../common/list ${.CURDIR}/list
+LISTS?=		${.CURDIR}/list
 
 MOUNT_POINT=	/mnt
 MTREE=		${.CURDIR}/../common/mtree.conf

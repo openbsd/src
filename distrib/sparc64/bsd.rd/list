@@ -1,19 +1,80 @@
-#	$OpenBSD: list,v 1.5 2002/04/19 23:19:33 deraadt Exp $
+#	$OpenBSD: list,v 1.6 2002/04/21 07:30:58 deraadt Exp $
+#	$NetBSD: list,v 1.4.4.1 1996/06/20 20:30:26 pk Exp $
 
-# we strip comments from files since we need the space...
+SRCDIRS distrib/special
+SRCDIRS gnu/usr.bin usr.bin bin sbin usr.sbin
 
+# copy the crunched binary, link to it, and kill it
+COPY	${OBJDIR}/instbin	instbin
+LINK	instbin			bin/cat
+LINK	instbin			bin/chmod bin/chgrp sbin/chown
+LINK	instbin			bin/cp
+LINK	instbin			bin/dd
+LINK	instbin			bin/df
+LINK	instbin			bin/ed
+LINK	instbin			bin/expr
+LINK	instbin			bin/hostname
+LINK	instbin			bin/ksh bin/sh
+LINK	instbin			bin/ln
+LINK	instbin			bin/ls
+LINK	instbin			bin/mkdir
+LINK	instbin			bin/mt bin/eject
+LINK	instbin			bin/mv
+LINK	instbin			bin/pax bin/tar bin/cpio
+LINK	instbin			bin/rm
+LINK	instbin			bin/sleep
+LINK	instbin			bin/stty
+LINK	instbin			bin/sync
+LINK	instbin			bin/test bin/[
+LINK	instbin			sbin/dhclient
+LINK	instbin			sbin/disklabel
+LINK	instbin			sbin/dmesg
+LINK	instbin			sbin/fsck_ffs sbin/fsck
+LINK	instbin			sbin/ifconfig
+LINK	instbin			sbin/init
+LINK	instbin			sbin/mknod
+LINK	instbin			sbin/mount
+LINK	instbin			sbin/mount_cd9660
+LINK	instbin			sbin/mount_ffs
+LINK	instbin			sbin/mount_nfs
+LINK	instbin			sbin/newfs sbin/mount_mfs
+LINK	instbin			sbin/ping
+LINK	instbin			sbin/reboot sbin/halt
+LINK	instbin			sbin/route
+LINK	instbin			sbin/umount
+LINK	instbin			usr/bin/egrep usr/bin/fgrep usr/bin/grep
+LINK	instbin			usr/bin/ftp
+LINK	instbin			usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
+LINK	instbin			usr/bin/less usr/bin/more
+LINK	instbin			usr/bin/sed
 SPECIAL /bin/rm instbin
 
-# the disktab explanation file
-#SPECIAL sed -e '/^#[ 	].*$/d' < ${CURDIR}/../common/disktab.preinstall > etc/disktab.preinstall
+ARGVLINK ksh			-sh
 
-#COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV
 SPECIAL	sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' < ${DESTDIR}/dev/MAKEDEV > dev/MAKEDEV
 SPECIAL	cd dev; sh MAKEDEV ramdisk
-#SPECIAL rm dev/MAKEDEV
 
-# and the installation tools
-#SPECIAL	sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' < ${CURDIR}/../../miniroot/install.sh > install
-#SPECIAL sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' -e "s/^ARCH=ARCH$/ARCH=`arch -s`/" < ${CURDIR}/../common/install.md > install.md
-#SPECIAL	chmod 755 install
-#SPECIAL chmod 755 upgrade
+# various files that we need in /etc for the install
+COPY	${DESTDIR}/etc/group			etc/group
+COPY	${DESTDIR}/etc/spwd.db			etc/spwd.db
+#COPY	${DESTDIR}/etc/disktab			etc/disktab
+COPY	${CURDIR}/../../miniroot/protocols	etc/protocols
+COPY	${CURDIR}/../../miniroot/services	etc/services
+SYMLINK	/tmp/disktab.shadow			etc/disktab      
+SYMLINK	/tmp/fstab.shadow			etc/fstab
+SYMLINK	/tmp/resolv.conf.shadow			etc/resolv.conf
+SYMLINK	/tmp/hosts				etc/hosts
+
+# and the common installation tools
+COPY    ${TOPDIR}/common/termcap.vt        usr/share/misc/termcap
+
+# and the installation scripts
+SPECIAL	sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' < ${CURDIR}/../common/dot.profile > .profile
+SPECIAL sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' -e "s/^ARCH=ARCH$/ARCH=`arch -ks`/" < ${CURDIR}/../common/install.md > install.md
+SPECIAL sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' < ${CURDIR}/../../miniroot/install.sh > install
+SPECIAL sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' < ${CURDIR}/../../miniroot/install.sh > upgrade
+SPECIAL sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' -e "/^VERSION=/s/=.*/=${REV}/" < ${CURDIR}/../../miniroot/install.sub > install.sub
+SPECIAL	chmod 755 install upgrade
+
+# dhcp things
+COPY	${DESTDIR}/sbin/dhclient-script sbin/dhclient-script
