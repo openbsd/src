@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.8 2004/11/02 18:50:36 espie Exp $
+# $OpenBSD: Update.pm,v 1.9 2004/11/02 23:53:21 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -33,6 +33,11 @@ sub can_update
 sub validate_depend
 {
 }
+
+sub register_libs
+{
+}
+
 sub updatable() { 1 }
 
 sub extract
@@ -101,31 +106,10 @@ sub validate_depend
 		$state->{okay} = 0;
 		return;
 	}
-	for my $spec (split(/,/, $self->{libspec})) {
-		my $dir;
-		if ($spec =~ m|.*/|) {
-			$dir = "$&";
-			$spec = $';
-		} else {
-			$dir = "lib";
-		}
-		if ($spec =~ m/^(.*)\.(\d+)\.(\d+)$/) {
-			my ($libname, $major, $minor) = ($1, $2, $3);
-			my $v = $state->{libs}->{"$dir/lib$libname"};
-			if (!defined $v) {
-				print "No such lib $libname\n";
-				$state->{okay} = 0;
-			}
-			unless ($v->[0] == $major && $v->[1] >= $minor) {
-				print "Bad library version for $libname\n";
-				$state->{okay} = 0;
-			}
-		}
-	}
+	push(@{$state->{libs_to_check}}, split(/,/, $self->{libspec}));
 }
-
 package OpenBSD::PackingElement::Lib;
-sub can_update
+sub register_libs
 {
 	my ($self, $state) = @_;
 
@@ -162,7 +146,7 @@ sub can_do
 	my $wantlist = [];
 	my $r = OpenBSD::RequiredBy->new($toreplace);
 	$state->{okay} = 1;
-	$state->{libs} = {};
+	$state->{libs_to_check} = [];
 	my $plist = OpenBSD::PackingList->fromfile(installed_info($toreplace).CONTENTS);
 	$plist->visit('can_update', $state);
 	if (-f $$r) {
@@ -186,9 +170,40 @@ sub can_do
 	}
 
 	$plist->{wantlist} = $wantlist;
+	$plist->{libs_to_check} = $state->{libs_to_check};
 	
 	return $state->{okay} ? $plist : 0;
 }
+
+sub verify_libs
+{
+	my ($plist, $state) = @_;
+	$state->{libs} = {};
+	$plist->visit('register_libs', $state);
+	for my $spec (@{$state->{libs_to_check}}) {
+		my $dir;
+		if ($spec =~ m|.*/|) {
+			$dir = "$&";
+			$spec = $';
+		} else {
+			$dir = "lib";
+		}
+		if ($spec =~ m/^(.*)\.(\d+)\.(\d+)$/) {
+			my ($libname, $major, $minor) = ($1, $2, $3);
+			my $v = $state->{libs}->{"$dir/lib$libname"};
+			if (!defined $v) {
+				print "No such lib $libname\n";
+				return 0;
+			}
+			unless ($v->[0] == $major && $v->[1] >= $minor) {
+				print "Bad library version for $libname\n";
+				return 0;
+			}
+		}
+	}
+	return 1;
+}
+
 
 sub adjust_dependency
 {
