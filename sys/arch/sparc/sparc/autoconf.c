@@ -1492,6 +1492,19 @@ setroot()
 					bootdv->dv_class == DV_DISK?'a':' ');
 			printf(": ");
 			len = getstr(buf, sizeof(buf));
+#if NFD > 0
+			/*
+			 * I will go punish myself now.
+			 */
+			if (len > 0 && strcmp(buf, "fdeject")==0) {
+				struct mtop mtop;
+
+				bzero(&mtop, sizeof mtop);
+				mtop.mt_op = MTOFFL;
+				(void) fdioctl(0, MTIOCTOP, &mtop, 0);
+				continue;
+			}
+#endif /* NFD */
 			if (len == 0 && bootdv != NULL) {
 				strcpy(buf, bootdv->dv_xname);
 				len = strlen(buf);
@@ -1528,19 +1541,6 @@ setroot()
 					bootdv->dv_class == DV_DISK?'b':' ');
 			printf(": ");
 			len = getstr(buf, sizeof(buf));
-#if NFD > 0
-			/*
-			 * I will go punish myself now.
-			 */
-			if (len > 0 && strcmp(buf, "fdeject")==0) {
-				struct mtop mtop;
-
-				bzero(&mtop, sizeof mtop);
-				mtop.mt_op = MTOFFL;
-				(void) fdioctl(0, MTIOCTOP, &mtop, 0);
-				continue;
-			}
-#endif /* NFD */
 			if (len == 0 && bootdv != NULL) {
 				switch (bootdv->dv_class) {
 				case DV_IFNET:
