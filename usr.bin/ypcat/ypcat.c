@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypcat.c,v 1.3 1996/05/05 16:19:31 deraadt Exp $ */
+/*	$OpenBSD: ypcat.c,v 1.4 1996/05/21 21:32:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
@@ -33,7 +33,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypcat.c,v 1.3 1996/05/05 16:19:31 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypcat.c,v 1.4 1996/05/21 21:32:40 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -90,7 +90,7 @@ int
 main(argc, argv)
 char **argv;
 {
-	char *domain;
+	char *domain = NULL;
 	struct ypall_callback ypcb;
 	char *inmap;
 	extern char *optarg;
@@ -99,8 +99,6 @@ char **argv;
 	int c, r, i;
 
 	notrans = key = 0;
-	yp_get_default_domain(&domain);
-
 	while( (c=getopt(argc, argv, "xd:kt")) != -1)
 		switch(c) {
 		case 'x':
@@ -124,6 +122,10 @@ char **argv;
 
 	if(optind + 1 != argc )
 		usage();
+
+	if (!domainname) {
+		yp_get_default_domain(&domainname);
+	}
 
 	inmap = argv[optind];
 	if (!notrans) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypmatch.c,v 1.4 1996/05/10 13:03:14 deraadt Exp $ */
+/*	$OpenBSD: ypmatch.c,v 1.5 1996/05/21 21:32:42 deraadt Exp $ */
 /*	$NetBSD: ypmatch.c,v 1.8 1996/05/07 01:24:52 jtc Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypmatch.c,v 1.4 1996/05/10 13:03:14 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypmatch.c,v 1.5 1996/05/21 21:32:42 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -62,6 +62,7 @@ struct ypalias {
 	{ "ethers", "ethers.byname" },
 };
 
+void
 usage()
 {
 	fprintf(stderr, "Usage:\n");
@@ -87,9 +88,8 @@ char **argv;
 	int c, r, i;
 	int rval;
 
+	domainname = NULL;
 	notrans = key = 0;
-	yp_get_default_domain(&domainname);
-
 	while( (c=getopt(argc, argv, "xd:kt")) != -1)
 		switch(c) {
 		case 'x':
@@ -113,6 +113,10 @@ char **argv;
 
 	if( (argc-optind) < 2 )
 		usage();
+
+	if (!domainname) {
+		yp_get_default_domain(&domainname);
+	}
 
 	inmap = argv[argc-1];
 	if (!notrans) {
