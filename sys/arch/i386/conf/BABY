@@ -1,4 +1,4 @@
-#	$OpenBSD: BABY,v 1.20 1997/06/23 19:05:38 kstailey Exp $
+#	$OpenBSD: BABY,v 1.21 1997/07/22 21:15:48 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -71,6 +71,7 @@ option		PROCFS		# /proc
 option		"NMBCLUSTERS=1024"
 option		GATEWAY		# packet forwarding
 option		INET		# IP + ICMP + TCP + UDP
+option		IPSEC		# IPsec
 option		NS		# XNS
 #option		ISO,TPIP	# OSI
 #option		EON		# OSI tunneling over IP
@@ -200,3 +201,4 @@ pseudo-device	tb	1		# tablet line discipline
 pseudo-device	vnd	4		# paging to files
 pseudo-device	ccd	4		# concatenated disk devices
 pseudo-device	rd	2		# ramdisk (don't remove ;)
+pseudo-device	enc		4	# encryption device

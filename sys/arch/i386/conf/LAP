@@ -1,4 +1,4 @@
-#	$OpenBSD: LAP,v 1.18 1997/04/29 05:15:17 deraadt Exp $
+#	$OpenBSD: LAP,v 1.19 1997/07/22 21:15:49 deraadt Exp $
 #	$NetBSD: TDR,v 1.64 1996/03/25 05:45:49 perry Exp $
 #
 #	TDR -- Theo Deraadt's 486
@@ -67,6 +67,7 @@ option		KERNFS		# /kern
 
 option		GATEWAY		# packet forwarding
 option		INET		# IP + ICMP + TCP + UDP
+option		IPSEC		# IPsec
 #option		NS		# XNS
 #option		ISO,TPIP	# OSI
 #option		EON		# OSI tunneling over IP
@@ -205,3 +206,4 @@ pseudo-device	tun	2		# network tunneling over tty
 pseudo-device	pty	32		# pseudo-terminals
 #pseudo-device	tb	1		# tablet line discipline
 pseudo-device	vnd	4		# paging to files
+pseudo-device	enc		4	# encryption device
