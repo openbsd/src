@@ -16,7 +16,7 @@ the login based on rhosts authentication.  This file also processes
 */
 
 #include "includes.h"
-RCSID("$Id: auth-rhosts.c,v 1.2 1999/09/28 04:45:35 provos Exp $");
+RCSID("$Id: auth-rhosts.c,v 1.3 1999/09/29 21:14:15 deraadt Exp $");
 
 #include "packet.h"
 #include "ssh.h"
@@ -86,8 +86,7 @@ int check_rhosts_file(const char *filename, const char *hostname,
 	  continue; /* Empty line? */
 	case 1:
 	  /* Host name only. */
-	  strncpy(userbuf, server_user, sizeof(userbuf));
-	  userbuf[sizeof(userbuf) - 1] = 0;
+	  strlcpy(userbuf, server_user, sizeof(userbuf));
 	  break;
 	case 2:
 	  /* Got both host and user name. */
@@ -207,7 +206,7 @@ int auth_rhosts(struct passwd *pw, const char *client_user,
        rhosts_file_index++)
     {
       /* Check users .rhosts or .shosts. */
-      sprintf(buf, "%.500s/%.100s", 
+      snprintf(buf, sizeof buf, "%.500s/%.100s", 
 	      pw->pw_dir, rhosts_files[rhosts_file_index]);
       if (stat(buf, &st) >= 0)
 	break;
@@ -286,7 +285,7 @@ int auth_rhosts(struct passwd *pw, const char *client_user,
        rhosts_file_index++)
     {
       /* Check users .rhosts or .shosts. */
-      sprintf(buf, "%.500s/%.100s", 
+      snprintf(buf, sizeof buf, "%.500s/%.100s", 
 	      pw->pw_dir, rhosts_files[rhosts_file_index]);
       if (stat(buf, &st) < 0)
 	continue; /* No such file. */

@@ -16,11 +16,8 @@ arbitrary tcp/ip connections, and the authentication agent connection.
 */
 
 #include "includes.h"
-RCSID("$Id: channels.c,v 1.5 1999/09/29 18:16:19 dugsong Exp $");
+RCSID("$Id: channels.c,v 1.6 1999/09/29 21:14:16 deraadt Exp $");
 
-#ifndef HAVE_GETHOSTNAME
-#include <sys/utsname.h>
-#endif
 #include "ssh.h"
 #include "packet.h"
 #include "xmalloc.h"
@@ -1061,11 +1058,7 @@ char *x11_create_display_inet(int screen_number)
   int display_number, port, sock;
   struct sockaddr_in sin;
   char buf[512];
-#ifdef HAVE_GETHOSTNAME
-  char hostname[257];
-#else
-  struct utsname uts;
-#endif
+  char hostname[MAXHOSTNAMELEN];
 
   for (display_number = options.x11_display_offset; display_number < MAX_DISPLAYS; display_number++)
     {
@@ -1107,41 +1100,10 @@ char *x11_create_display_inet(int screen_number)
     }
 
   /* Set up a suitable value for the DISPLAY variable. */
-#ifdef HPSUX_NONSTANDARD_X11_KLUDGE
-  /* HPSUX has some special shared memory stuff in their X server, which
-     appears to be enable if the host name matches that of the local machine.
-     However, it can be circumvented by using the IP address of the local
-     machine instead.  */
   if (gethostname(hostname, sizeof(hostname)) < 0)
     fatal("gethostname: %.100s", strerror(errno));
-  {
-    struct hostent *hp;
-    struct in_addr addr;
-    hp = gethostbyname(hostname);
-    if (!hp->h_addr_list[0])
-      {
-	error("Could not server IP address for %.200d.", hostname);
-	packet_send_debug("Could not get server IP address for %.200d.", 
-			  hostname);
-	shutdown(sock, 2);
-	close(sock);
-	return NULL;
-      }
-    memcpy(&addr, hp->h_addr_list[0], sizeof(addr));
-    sprintf(buf, "%.100s:%d.%d", inet_ntoa(addr), display_number, 
-	    screen_number);
-  }
-#else /* HPSUX_NONSTANDARD_X11_KLUDGE */
-#ifdef HAVE_GETHOSTNAME
-  if (gethostname(hostname, sizeof(hostname)) < 0)
-    fatal("gethostname: %.100s", strerror(errno));
-  sprintf(buf, "%.400s:%d.%d", hostname, display_number, screen_number);
-#else /* HAVE_GETHOSTNAME */
-  if (uname(&uts) < 0)
-    fatal("uname: %s", strerror(errno));
-  sprintf(buf, "%.400s:%d.%d", uts.nodename, display_number, screen_number);
-#endif /* HAVE_GETHOSTNAME */
-#endif /* HPSUX_NONSTANDARD_X11_KLUDGE */
+  snprintf(buf, sizeof buf, "%.400s:%d.%d", hostname,
+    display_number, screen_number);
 	    
   /* Allocate a channel for the socket. */
   (void)channel_allocate(SSH_CHANNEL_X11_LISTENER, sock,

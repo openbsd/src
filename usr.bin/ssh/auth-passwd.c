@@ -15,7 +15,7 @@ the password is valid for the user.
 */
 
 #include "includes.h"
-RCSID("$Id: auth-passwd.c,v 1.2 1999/09/29 18:16:19 dugsong Exp $");
+RCSID("$Id: auth-passwd.c,v 1.3 1999/09/29 21:14:15 deraadt Exp $");
 
 #ifdef HAVE_SCO_ETC_SHADOW
 # include <sys/security.h>
@@ -110,8 +110,7 @@ int auth_password(const char *server_user, const char *password)
 	chown(ticket, pw->pw_uid, pw->pw_gid);
 	
 	(void) gethostname(localhost, sizeof(localhost));
-	(void) strncpy(phost, (char *)krb_get_phost(localhost), INST_SZ);
-	phost[INST_SZ-1] = 0;
+	(void) strlcpy(phost, (char *)krb_get_phost(localhost), INST_SZ);
 	
 	/* Now that we have a TGT, try to get a local "rcmd" ticket to
 	   ensure that we are not talking to a bogus Kerberos server. */
@@ -228,7 +227,7 @@ int auth_password(const char *server_user, const char *password)
 #endif /* HAVE_SECURID */
 
   /* Save the encrypted password. */
-  strncpy(correct_passwd, pw->pw_passwd, sizeof(correct_passwd));
+  strlcpy(correct_passwd, pw->pw_passwd, sizeof(correct_passwd));
 
 #ifdef HAVE_OSF1_C2_SECURITY
     osf1c2_getprpwent(correct_passwd, pw->pw_name, sizeof(correct_passwd));
@@ -241,7 +240,7 @@ int auth_password(const char *server_user, const char *password)
     struct pr_passwd *pr = getprpwnam(pw->pw_name);
     pr = getprpwnam(pw->pw_name);
     if (pr)
-      strncpy(correct_passwd, pr->ufld.fd_encrypt, sizeof(correct_passwd));
+      strlcpy(correct_passwd, pr->ufld.fd_encrypt, sizeof(correct_passwd));
     endprpwent();
   }
 #else /* HAVE_SCO_ETC_SHADOW */
@@ -249,7 +248,7 @@ int auth_password(const char *server_user, const char *password)
   {
     struct spwd *sp = getspnam(pw->pw_name);
     if (sp)
-      strncpy(correct_passwd, sp->sp_pwdp, sizeof(correct_passwd));
+      strlcpy(correct_passwd, sp->sp_pwdp, sizeof(correct_passwd));
     endspent();
   }
 #else /* HAVE_ETC_SHADOW */
@@ -257,7 +256,7 @@ int auth_password(const char *server_user, const char *password)
   {
     struct passwd_adjunct *sp = getpwanam(pw->pw_name);
     if (sp)
-      strncpy(correct_passwd, sp->pwa_passwd, sizeof(correct_passwd));
+      strnlpy(correct_passwd, sp->pwa_passwd, sizeof(correct_passwd));
     endpwaent();
   }
 #else /* HAVE_ETC_SECURITY_PASSWD_ADJUNCT */
@@ -269,7 +268,8 @@ int auth_password(const char *server_user, const char *password)
     f = fopen("/etc/security/passwd", "r");
     if (f)
       {
-	sprintf(looking_for_user, "%.190s:", server_user);
+	snprintf(looking_for_user, sizeof looking_for_user, "%.190s:",
+	  server_user);
 	while (fgets(line, sizeof(line), f))
 	  {
 	    if (strchr(line, '\n'))
@@ -286,9 +286,8 @@ int auth_password(const char *server_user, const char *password)
 		      ;
 		    if (strncmp(cp, "password = ", strlen("password = ")) == 0)
 		      {
-			strncpy(correct_passwd, cp + strlen("password = "), 
+			strlcpy(correct_passwd, cp + strlen("password = "), 
 				sizeof(correct_passwd));
-			correct_passwd[sizeof(correct_passwd) - 1] = 0;
 			break;
 		      }
 		  }

@@ -14,7 +14,7 @@ Functions for returning the canonical host name of the remote site.
 */
 
 #include "includes.h"
-RCSID("$Id: canohost.c,v 1.1 1999/09/26 20:53:34 deraadt Exp $");
+RCSID("$Id: canohost.c,v 1.2 1999/09/29 21:14:16 deraadt Exp $");
 
 #include "packet.h"
 #include "xmalloc.h"
@@ -28,7 +28,7 @@ char *get_remote_hostname(int socket)
   struct sockaddr_in from;
   int fromlen, i;
   struct hostent *hp;
-  char name[512];
+  char name[MAXHOSTNAMELEN];
 
   /* Get IP address of client. */
   fromlen = sizeof(from);
@@ -36,7 +36,7 @@ char *get_remote_hostname(int socket)
   if (getpeername(socket, (struct sockaddr *)&from, &fromlen) < 0)
     {
       error("getpeername failed: %.100s", strerror(errno));
-      strcpy(name, "UNKNOWN");
+      strlcpy(name, "UNKNOWN", sizeof name);
       goto check_ip_options;
     }
   
@@ -47,14 +47,13 @@ char *get_remote_hostname(int socket)
     {
       /* Got host name, find canonic host name. */
       if (strchr(hp->h_name, '.') != 0)
-	strncpy(name, hp->h_name, sizeof(name));
+	strlcpy(name, hp->h_name, sizeof(name));
       else if (hp->h_aliases != 0
 	       && hp->h_aliases[0] != 0
 	       && strchr(hp->h_aliases[0], '.') != 0)
-	strncpy(name, hp->h_aliases[0], sizeof(name));
+	strlcpy(name, hp->h_aliases[0], sizeof(name));
       else
-	strncpy(name, hp->h_name, sizeof(name));
-      name[sizeof(name) - 1] = '\0';
+	strlcpy(name, hp->h_name, sizeof(name));
       
       /* Convert it to all lowercase (which is expected by the rest of this
 	 software). */
@@ -72,7 +71,7 @@ char *get_remote_hostname(int socket)
       if (!hp)
 	{
 	  log("reverse mapping checking gethostbyname for %.700s failed - POSSIBLE BREAKIN ATTEMPT!", name);
-	  strcpy(name, inet_ntoa(from.sin_addr));
+	  strlcpy(name, inet_ntoa(from.sin_addr), sizeof name);
 	  goto check_ip_options;
 	}
       /* Look for the address from the list of addresses. */
@@ -86,7 +85,7 @@ char *get_remote_hostname(int socket)
 	  /* Address not found for the host name. */
 	  log("Address %.100s maps to %.600s, but this does not map back to the address - POSSIBLE BREAKIN ATTEMPT!",
 	      inet_ntoa(from.sin_addr), name);
-	  strcpy(name, inet_ntoa(from.sin_addr));
+	  strlcpy(name, inet_ntoa(from.sin_addr), sizeof name);
 	  goto check_ip_options;
 	}
       /* Address was found for the host name.  We accept the host name. */
@@ -94,7 +93,7 @@ char *get_remote_hostname(int socket)
   else
     {
       /* Host name not found.  Use ascii representation of the address. */
-      strcpy(name, inet_ntoa(from.sin_addr));
+      strlcpy(name, inet_ntoa(from.sin_addr), sizeof name);
       log("Could not reverse map address %.100s.", name);
     }
 

@@ -18,7 +18,7 @@ Modified to work with SSL by Niels Provos <provos@citi.umich.edu> in Canada.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh.c,v 1.10 1999/09/29 18:27:23 dugsong Exp $");
+RCSID("$Id: ssh.c,v 1.11 1999/09/29 21:14:16 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -170,6 +170,8 @@ rsh_connect(char *host, char *user, Buffer *command)
 }
 
 /* Main program for the ssh client. */
+
+uid_t original_real_uid;
 
 int
 main(int ac, char **av)
@@ -396,12 +398,6 @@ main(int ac, char **av)
 	      usage();
 	      /*NOTREACHED*/
 	    }
-	  if (fwd_port < 1024 && original_real_uid != 0)
-	    {
-	      fprintf(stderr, 
-		      "Privileged ports can only be forwarded by root.\n");
-	      exit(1);
-	    }
 	  add_local_forward(&options, fwd_port, buf, fwd_host_port);
 	  break;
 
@@ -497,7 +493,7 @@ main(int ac, char **av)
   log_init(av[0], 1, debug_flag, quiet_flag, SYSLOG_FACILITY_USER);
 
   /* Read per-user configuration file. */
-  sprintf(buf, "%.100s/%.100s", pw->pw_dir, SSH_USER_CONFFILE);
+  snprintf(buf, sizeof buf, "%.100s/%.100s", pw->pw_dir, SSH_USER_CONFFILE);
   read_config_file(buf, host, &options);
 
   /* Read systemwide configuration file. */
@@ -578,7 +574,7 @@ main(int ac, char **av)
 
   /* Now that we are back to our own permissions, create ~/.ssh directory
      if it doesn\'t already exist. */
-  sprintf(buf, "%.100s/%.100s", pw->pw_dir, SSH_USER_DIR);
+  snprintf(buf, sizeof buf, "%.100s/%.100s", pw->pw_dir, SSH_USER_DIR);
   if (stat(buf, &st) < 0)
     if (mkdir(buf, 0755) < 0)
       error("Could not create directory '%.200s'.", buf);
@@ -710,7 +706,7 @@ main(int ac, char **av)
 
 #ifdef XAUTH_PATH
       /* Try to get Xauthority information for the display. */
-      sprintf(line, "%.100s list %.200s 2>/dev/null", 
+      snprintf(line, sizeof line, "%.100s list %.200s 2>/dev/null", 
 	      XAUTH_PATH, getenv("DISPLAY"));
       f = popen(line, "r");
       if (f && fgets(line, sizeof(line), f) && 
@@ -728,11 +724,11 @@ main(int ac, char **av)
 	{
           u_int32_t rand = 0;
 
-	  strcpy(proto, "MIT-MAGIC-COOKIE-1");
+	  strlcpy(proto, "MIT-MAGIC-COOKIE-1", sizeof proto);
           for (i = 0; i < 16; i++) {
             if (i % 4 == 0)
               rand = arc4random();
-            sprintf(data + 2 * i, "%02x", rand & 0xff);
+            snprintf(data + 2 * i, sizeof data - 2 * i, "%02x", rand & 0xff);
             rand >>= 8;
           }
 	}

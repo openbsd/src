@@ -250,9 +250,6 @@ static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
 /* Define if you have the getdtablesize function.  */
 #define HAVE_GETDTABLESIZE 1
 
-/* Define if you have the gethostname function.  */
-#define HAVE_GETHOSTNAME 1
-
 /* Define if you have the getrusage function.  */
 #define HAVE_GETRUSAGE 1
 

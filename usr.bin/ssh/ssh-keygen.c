@@ -14,11 +14,8 @@ Identity and host key generation and maintenance.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh-keygen.c,v 1.4 1999/09/29 06:15:00 deraadt Exp $");
+RCSID("$Id: ssh-keygen.c,v 1.5 1999/09/29 21:14:16 deraadt Exp $");
 
-#ifndef HAVE_GETHOSTNAME
-#include <sys/utsname.h>
-#endif
 #include "rsa.h"
 #include "ssh.h"
 #include "xmalloc.h"
@@ -78,7 +75,7 @@ do_change_passphrase(struct passwd *pw)
     if (strchr(buf, '\n'))
       *strchr(buf, '\n') = 0;
     if (strcmp(buf, "") == 0)
-      sprintf(buf, "%s/%s", pw->pw_dir, SSH_CLIENT_IDENTITY);
+      snprintf(buf, sizeof buf, "%s/%s", pw->pw_dir, SSH_CLIENT_IDENTITY);
   }
 
   /* Check if the file exists. */
@@ -197,7 +194,7 @@ do_change_comment(struct passwd *pw)
       if (strchr(buf, '\n'))
 	*strchr(buf, '\n') = 0;
       if (strcmp(buf, "") == 0)
-	sprintf(buf, "%s/%s", pw->pw_dir, SSH_CLIENT_IDENTITY);
+	snprintf(buf, sizeof buf, "%s/%s", pw->pw_dir, SSH_CLIENT_IDENTITY);
     }
 
   /* Check if the file exists. */
@@ -314,11 +311,7 @@ main(int ac, char **av)
   int opt;
   struct stat st;
   FILE *f;
-#ifdef HAVE_GETHOSTNAME
-  char hostname[257];
-#else
-  struct utsname uts;
-#endif
+  char hostname[MAXHOSTNAMELEN];
   extern int optind;
   extern char *optarg;
 
@@ -341,7 +334,7 @@ main(int ac, char **av)
     }
 
   /* Create ~/.ssh directory if it doesn\'t already exist. */
-  sprintf(buf, "%s/%s", pw->pw_dir, SSH_USER_DIR);
+  snprintf(buf, sizeof buf, "%s/%s", pw->pw_dir, SSH_USER_DIR);
   if (stat(buf, &st) < 0)
     if (mkdir(buf, 0755) < 0)
       error("Could not create directory '%s'.", buf);
@@ -448,7 +441,7 @@ main(int ac, char **av)
       if (strchr(buf, '\n'))
 	*strchr(buf, '\n') = 0;
       if (strcmp(buf, "") == 0)
-	sprintf(buf, "%s/%s", pw->pw_dir, SSH_CLIENT_IDENTITY);
+	snprintf(buf, sizeof buf, "%s/%s", pw->pw_dir, SSH_CLIENT_IDENTITY);
     }
 
   /* If the file aready exists, ask the user to confirm. */
@@ -494,26 +487,16 @@ main(int ac, char **av)
      edit this field. */
   if (identity_comment)
     {
-      strncpy(buf2, identity_comment, sizeof(buf2));
-      buf2[sizeof(buf2) - 1] = '\0';
+      strlcpy(buf2, identity_comment, sizeof(buf2));
     }
   else
     {
-#ifdef HAVE_GETHOSTNAME
       if (gethostname(hostname, sizeof(hostname)) < 0)
 	{
 	  perror("gethostname");
 	  exit(1);
 	}
-      sprintf(buf2, "%s@%s", pw->pw_name, hostname);
-#else
-      if (uname(&uts) < 0)
-	{
-	  perror("uname");
-	  exit(1);
-	}
-      sprintf(buf2, "%s@%s", pw->pw_name, uts.nodename);
-#endif
+      snprintf(buf2, sizeof buf2, "%s@%s", pw->pw_name, hostname);
     }
 
   /* Save the key with the given passphrase and comment. */

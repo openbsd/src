@@ -15,7 +15,7 @@ login (authentication) dialog.
 */
 
 #include "includes.h"
-RCSID("$Id: sshconnect.c,v 1.5 1999/09/29 18:16:21 dugsong Exp $");
+RCSID("$Id: sshconnect.c,v 1.6 1999/09/29 21:14:16 deraadt Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -45,7 +45,7 @@ ssh_proxy_connect(const char *host, int port, uid_t original_real_uid,
   char portstring[100];
 
   /* Convert the port number into a string. */
-  sprintf(portstring, "%d", port);
+  snprintf(portstring, sizeof portstring, "%d", port);
 
   /* Build the final command string in the buffer by making the appropriate
      substitutions to the given proxy command. */
@@ -545,7 +545,8 @@ try_rsa_authentication(struct passwd *pw, const char *authfile,
          this work even if stdin has been redirected.  If running in
 	 batch mode, we just use the empty passphrase, which will fail and
 	 return. */
-      sprintf(buf, "Enter passphrase for RSA key '%.100s': ", comment);
+      snprintf(buf, sizeof buf,
+	"Enter passphrase for RSA key '%.100s': ", comment);
       if (may_ask_passphrase)
 	passphrase = read_passphrase(buf, 0);
       else
@@ -857,9 +858,9 @@ void send_afs_tokens(void)
     server_cell = p;
 
     /* Flesh out our credentials. */
-    strcpy(creds.service, "afs");
+    strlcpy(creds.service, "afs", sizeof creds.service);
     creds.instance[0] = '\0';
-    strncpy(creds.realm, server_cell, REALM_SZ);
+    strlcpy(creds.realm, server_cell, REALM_SZ);
     memcpy(creds.session, ct.HandShakeKey, DES_KEY_SZ);
     creds.issue_date = ct.BeginTimestamp;
     creds.lifetime = krb_time_to_life(creds.issue_date, ct.EndTimestamp);
@@ -934,7 +935,7 @@ void ssh_exchange_identification()
     fatal("Remote machine has too old SSH software version.");
 
   /* Send our own protocol version identification. */
-  sprintf(buf, "SSH-%d.%d-%.100s\n", 
+  snprintf(buf, sizeof buf, "SSH-%d.%d-%.100s\n", 
 	  PROTOCOL_MAJOR, PROTOCOL_MINOR, SSH_VERSION);
   if (write(connection_out, buf, strlen(buf)) != strlen(buf))
     fatal("write: %.100s", strerror(errno));
@@ -965,7 +966,7 @@ int read_yes_or_no(const char *prompt, int defval)
 	{
 	  /* Print a newline (the prompt probably didn\'t have one). */
 	  fprintf(stderr, "\n");
-	  strcpy(buf, "no");
+	  strlcpy(buf, "no", sizeof buf);
 	}
       /* Remove newline from response. */
       if (strchr(buf, '\n'))

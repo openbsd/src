@@ -14,7 +14,7 @@ Adds an identity to the authentication server, or removes an identity.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh-add.c,v 1.3 1999/09/29 06:15:00 deraadt Exp $");
+RCSID("$Id: ssh-add.c,v 1.4 1999/09/29 21:14:16 deraadt Exp $");
 
 #include "rsa.h"
 #include "ssh.h"
@@ -110,7 +110,8 @@ add_file(const char *filename)
       /* Ask for a passphrase. */
       if (getenv("DISPLAY") && !isatty(fileno(stdin)))
 	{
-	  sprintf(buf, "ssh-askpass '%sEnter passphrase for %.100s'", 
+	  snprintf(buf, sizeof buf,
+	    "ssh-askpass '%sEnter passphrase for %.100s'", 
 		  first ? "" : "You entered wrong passphrase.  ", 
 		  saved_comment);
 	  f = popen(buf, "r");
@@ -259,7 +260,7 @@ main(int ac, char **av)
 	  fprintf(stderr, "No user found with uid %d\n", (int)getuid());
 	  exit(1);
 	}
-      sprintf(buf, "%s/%s", pw->pw_dir, SSH_CLIENT_IDENTITY);
+      snprintf(buf, sizeof buf, "%s/%s", pw->pw_dir, SSH_CLIENT_IDENTITY);
       if (deleting)
 	delete_file(buf);
       else

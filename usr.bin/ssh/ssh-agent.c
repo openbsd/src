@@ -14,7 +14,7 @@ The authentication agent program.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh-agent.c,v 1.3 1999/09/29 06:15:00 deraadt Exp $");
+RCSID("$Id: ssh-agent.c,v 1.4 1999/09/29 21:14:16 deraadt Exp $");
 
 #include "ssh.h"
 #include "rsa.h"
@@ -563,13 +563,13 @@ main(int ac, char **av)
       
       parent_pid = getpid();
       
-      sprintf(socket_name, SSH_AGENT_SOCKET, parent_pid);
+      snprintf(socket_name, sizeof socket_name, SSH_AGENT_SOCKET, parent_pid);
       
       /* Fork, and have the parent execute the command.  The child continues as
 	 the authentication agent. */
       if (fork() != 0)
 	{ /* Parent - execute the given command. */
-	  sprintf(buf, "SSH_AUTHENTICATION_SOCKET=%s", socket_name);
+	  snprintf(buf, sizeof buf, "SSH_AUTHENTICATION_SOCKET=%s", socket_name);
 	  putenv(buf);
 	  execvp(av[1], av + 1);
 	  perror(av[1]);
@@ -584,7 +584,7 @@ main(int ac, char **av)
 	}
       memset(&sunaddr, 0, sizeof(sunaddr));
       sunaddr.sun_family = AF_UNIX;
-      strncpy(sunaddr.sun_path, socket_name, sizeof(sunaddr.sun_path));
+      strlcpy(sunaddr.sun_path, socket_name, sizeof(sunaddr.sun_path));
       if (bind(sock, (struct sockaddr *)&sunaddr, AF_UNIX_SIZE(sunaddr)) < 0)
 	{
 	  perror("bind");
@@ -643,7 +643,7 @@ main(int ac, char **av)
       if (fork() != 0)
 	{ /* Parent - execute the given command. */
 	  close(sockets[0]);
-	  sprintf(buf, "SSH_AUTHENTICATION_FD=%d", sockets[1]);
+	  snprintf(buf, sizeof buf, "SSH_AUTHENTICATION_FD=%d", sockets[1]);
 	  putenv(buf);
 	  execvp(av[1], av + 1);
 	  perror(av[1]);

@@ -16,7 +16,7 @@ validity of the host key.
 */
 
 #include "includes.h"
-RCSID("$Id: auth-rsa.c,v 1.1 1999/09/28 04:45:35 provos Exp $");
+RCSID("$Id: auth-rsa.c,v 1.2 1999/09/29 21:14:15 deraadt Exp $");
 
 #include "rsa.h"
 #include "packet.h"
@@ -138,7 +138,8 @@ auth_rsa(struct passwd *pw, BIGNUM *client_n)
   BIGNUM *e, *n;
 
   /* Open the file containing the authorized keys. */
-  sprintf(line, "%.500s/%.100s", pw->pw_dir, SSH_USER_PERMITTED_KEYS);
+  snprintf(line, sizeof line, "%.500s/%.100s", pw->pw_dir,
+    SSH_USER_PERMITTED_KEYS);
   
   /* Temporarily use the user's uid. */
   temporarily_use_uid(pw->pw_uid);

@@ -6,7 +6,7 @@
 
    Kerberos v4 authentication and ticket-passing routines.
 
-   $Id: auth-krb4.c,v 1.2 1999/09/29 18:16:18 dugsong Exp $
+   $Id: auth-krb4.c,v 1.3 1999/09/29 21:14:15 deraadt Exp $
 */
 
 #include "includes.h"
@@ -130,7 +130,7 @@ int auth_kerberos_tgt(struct passwd *pw, const char *string)
     goto auth_kerberos_tgt_failure;
   }
   if (strncmp(creds.service, "", 1) == 0) /* backward compatibility */
-    strcpy(creds.service, "krbtgt");
+    strlcpy(creds.service, "krbtgt", sizeof creds.service);
   
   if (strcmp(creds.service, "krbtgt")) {
     log("Kerberos V4 tgt (%s%s%s@%s) rejected for uid %d",
@@ -184,7 +184,7 @@ int auth_afs_token(char *server_user, uid_t uid, const char *string)
     return 0;
   }
   if (strncmp(creds.service, "", 1) == 0) /* backward compatibility */
-    strcpy(creds.service, "afs");
+    strlcpy(creds.service, "afs", sizeof creds.service);
   
   if (strncmp(creds.pname, "AFS ID ", 7) == 0)
     uid = atoi(creds.pname + 7);

@@ -18,7 +18,7 @@ on a tty.
 */
 
 #include "includes.h"
-RCSID("$Id: login.c,v 1.2 1999/09/29 18:16:19 dugsong Exp $");
+RCSID("$Id: login.c,v 1.3 1999/09/29 21:14:16 deraadt Exp $");
 
 #ifdef HAVE_LIBUTIL_LOGIN
 #include <util.h>
@@ -51,16 +51,19 @@ unsigned long get_last_login_time(uid_t uid, const char *name,
   int fd;
 
 #ifdef _PATH_LASTLOG
-  sprintf(lastlogfile, "%.200s/%.200s", _PATH_LASTLOG, name);
+  snprintf(lastlogfile, sizeof lastlogfile, "%.200s/%.200s",
+    _PATH_LASTLOG, name);
 #else
 #ifdef LASTLOG_FILE
-  sprintf(lastlogfile, "%.200s/%.200s", LASTLOG_FILE, name);
+  snprintf(lastlogfile, sizeof lastlogfile, "%.200s/%.200s",
+    LASTLOG_FILE, name);
 #else
-  sprintf(lastlogfile, "%.200s/%.200s", SSH_LASTLOG, name);
+  snprintf(lastlogfile, sizeof lastlogfile, "%.200s/%.200s",
+    SSH_LASTLOG, name);
 #endif
 #endif
 
-  strcpy(buf, "");
+  buf[0] = '\0';
 
   fd = open(lastlogfile, O_RDONLY);
   if (fd < 0)
@@ -108,7 +111,7 @@ unsigned long get_last_login_time(uid_t uid, const char *logname,
 #endif
 #endif
 
-  strcpy(buf, "");
+  buf[0] = '\0';
 
   fd = open(lastlog, O_RDONLY);
   if (fd < 0)
@@ -337,7 +340,8 @@ void record_login(int pid, const char *ttyname, const char *user, uid_t uid,
       strncpy(ll.ll_line, ttyname + 5, sizeof(ll.ll_line));
       strncpy(ll.ll_host, host, sizeof(ll.ll_host));
 #ifdef LASTLOG_IS_DIR
-      sprintf(lastlogfile, "%.100s/%.100s", lastlog, user);
+      snprintf(lastlogfile, sizeof lastlogfile, "%.100s/%.100s",
+        lastlog, user);
       fd = open(lastlogfile, O_WRONLY | O_CREAT, 0644);
       if (fd >= 0)
 	{

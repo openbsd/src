@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.5 1999/09/29 18:16:21 dugsong Exp $");
+RCSID("$Id: sshd.c,v 1.6 1999/09/29 21:14:16 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -685,7 +685,7 @@ main(int ac, char **av)
     alarm(options.login_grace_time);
 
   /* Send our protocol version identification. */
-  sprintf(buf, "SSH-%d.%d-%.100s\n", 
+  snprintf(buf, sizeof buf, "SSH-%d.%d-%.100s\n", 
 	  PROTOCOL_MAJOR, PROTOCOL_MINOR, SSH_VERSION);
   if (write(sock_out, buf, strlen(buf)) != strlen(buf))
     fatal("Could not write ident string.");
@@ -1477,7 +1477,8 @@ void do_authenticated(struct passwd *pw)
 
 	  /* Setup to always have a local .Xauthority. */
 	  xauthfile = xmalloc(MAXPATHLEN);
-	  sprintf(xauthfile, "/tmp/Xauth%d_%d", pw->pw_uid, getpid());
+	  snprintf(xauthfile, MAXPATHLEN, "/tmp/Xauth%d_%d",
+	    pw->pw_uid, getpid());
 
 	  break;
 #else /* XAUTH_PATH */
@@ -1782,7 +1783,7 @@ void do_exec_pty(const char *command, int ptyfd, int ttyfd,
 		   &from);
 
       /* Check if .hushlogin exists. */
-      sprintf(line, "%.200s/.hushlogin", pw->pw_dir);
+      snprintf(line, sizeof line, "%.200s/.hushlogin", pw->pw_dir);
       quiet_login = stat(line, &st) >= 0;
       
       /* If the user has logged in before, display the time of last login. 
@@ -1898,7 +1899,7 @@ void child_set_env(char ***envp, unsigned int *envsizep, const char *name,
 
   /* Allocate space and format the variable in the appropriate slot. */
   env[i] = xmalloc(strlen(name) + 1 + strlen(value) + 1);
-  sprintf(env[i], "%s=%s", name, value);
+  snprintf(env[i], strlen(name) + 1 + strlen(value) + 1, "%s=%s", name, value);
 }
 
 /* Reads environment variables from the given file and adds/overrides them
@@ -2155,11 +2156,12 @@ void do_child(const char *command, struct passwd *pw, const char *term,
     child_set_env(&env, &envsize, "TZ", getenv("TZ"));
 
 #ifdef MAIL_SPOOL_DIRECTORY
-  sprintf(buf, "%.200s/%.50s", MAIL_SPOOL_DIRECTORY, pw->pw_name);
+  snprintf(buf, sizeof buf, "%.200s/%.50s",
+    MAIL_SPOOL_DIRECTORY, pw->pw_name);
   child_set_env(&env, &envsize, "MAIL", buf);
 #else /* MAIL_SPOOL_DIRECTORY */
 #ifdef HAVE_TILDE_NEWMAIL
-  sprintf(buf, "%.200s/newmail", pw->pw_dir);
+  snprintf(buf, sizeof buf, "%.200s/newmail", pw->pw_dir);
   child_set_env(&env, &envsize, "MAIL", buf);
 #endif /* HAVE_TILDE_NEWMAIL */
 #endif /* MAIL_SPOOL_DIRECTORY */
@@ -2191,7 +2193,7 @@ void do_child(const char *command, struct passwd *pw, const char *term,
     }
 
   /* Set SSH_CLIENT. */
-  sprintf(buf, "%.50s %d %d", 
+  snprintf(buf, sizeof buf, "%.50s %d %d", 
 	  get_remote_ipaddr(), get_remote_port(), options.port);
   child_set_env(&env, &envsize, "SSH_CLIENT", buf);
 
@@ -2226,7 +2228,7 @@ void do_child(const char *command, struct passwd *pw, const char *term,
   else
     if (auth_get_fd() >= 0)
       {
-	sprintf(buf, "%d", auth_get_fd());
+	snprintf(buf, sizeof buf, "%d", auth_get_fd());
 	child_set_env(&env, &envsize, SSH_AUTHFD_ENV_NAME, buf);
       }
 
@@ -2235,7 +2237,7 @@ void do_child(const char *command, struct passwd *pw, const char *term,
   read_environment_file(&env, &envsize, "/etc/environment");
 
   /* Read $HOME/.ssh/environment. */
-  sprintf(buf, "%.200s/.ssh/environment", pw->pw_dir);
+  snprintf(buf, sizeof buf, "%.200s/.ssh/environment", pw->pw_dir);
   read_environment_file(&env, &envsize, buf);
 
   /* If debugging, dump the environment to stderr. */
