@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.28 2001/08/19 18:30:58 dhartmei Exp $
+.\" $OpenBSD: pfctl.8,v 1.29 2001/08/19 19:25:26 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -118,7 +118,7 @@ Show the currently loaded NAT rules.
 .It Fl s Ar rules
 Show the currently loaded packet filter rules.
 When used together with -v, the per-rule statistics (number of evaluations,
-number of packets) are also shown. Note that the 'skip step' optimization
+packets and bytes) are also shown. Note that the 'skip step' optimization
 done automatically by the kernel will skip evaluation of rules where
 redundant. Packets passed statefully are counted in the rule that created
 the state (even though the rule isn't evaluated more than once for the
