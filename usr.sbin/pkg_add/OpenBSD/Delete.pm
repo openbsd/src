@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.20 2004/12/29 14:10:27 espie Exp $
+# $OpenBSD: Delete.pm,v 1.21 2005/02/09 11:07:13 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -22,6 +22,38 @@ use OpenBSD::Error;
 use OpenBSD::Vstat;
 use OpenBSD::PackageInfo;
 use OpenBSD::RequiredBy;
+
+sub keep_old_files
+{
+	my ($plist, $dir) = @_;
+	my $p = new OpenBSD::PackingList;
+	for my $i (qw(cvstags name no-default-conflict pkgcfl conflict) ) {
+		if (defined $plist->{$i}) {
+			$p->{$i} = $plist->{$i};
+		}
+	}
+	for my $i (@{$plist->{items}}) {
+		if ($i->isa("OpenBSD::PackingElement::Cwd")) {
+			push(@{$p->{items}}, $i);
+			next;
+		}
+		next unless $i->IsFile();
+		if (defined $i->{stillaround}) {
+			delete $i->{stillaround};
+			push(@{$p->{items}}, $i);
+		}
+	}
+	my $borked = borked_package($plist->pkgname());
+	$p->{name}->{name} = $borked;
+	my $dest = installed_info($borked);
+	mkdir($dest);
+	require File::Copy;
+
+	File::Copy::copy($dir.COMMENT, $dest);
+	File::Copy::copy($dir.DESC, $dest);
+	$p->to_installation();
+	return $borked;
+}
 
 sub manpages_unindex
 {
@@ -153,7 +185,15 @@ sub delete_plist
 		&$zap_dependency($name);
 	}
 		
-	remove_packing_info($dir) unless $state->{not};
+	return if $state->{not};
+	if ($state->{baddelete}) {
+	    my $borked = keep_old_files($plist, $dir);
+	    $state->print("Files kept as $borked package\n");
+	    delete $state->{baddelete};
+	}
+			
+
+	remove_packing_info($dir);
 }
 
 package OpenBSD::PackingElement;
@@ -273,6 +313,9 @@ sub delete
 				print "Problem: md5 doesn't match for $name\n";
 				print "NOT deleting: $realname\n";
 				$state->print("Couldn't delete $realname (bad md5)\n");
+				$self->{stillaround} = 1;
+				$self->{md5} = $md5;
+				$state->{baddelete} = 1;
 				return;
 			}
 		}
