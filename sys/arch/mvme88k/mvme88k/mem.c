@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.20 2004/05/07 15:30:04 miod Exp $ */
+/*	$OpenBSD: mem.c,v 1.21 2004/05/08 21:37:30 miod Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,22 +41,18 @@
  */
 
 #include <sys/param.h>
-#include <sys/conf.h>
 #include <sys/buf.h>
 #include <sys/systm.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
 
 #include <machine/board.h>
+#include <machine/conf.h>
 
 #include <uvm/uvm_extern.h>
 
 caddr_t zeropage;
 extern vaddr_t last_addr;
-
-#define	mmread	mmrw
-#define	mmwrite	mmrw
-cdev_decl(mm);
 
 /*ARGSUSED*/
 int
