@@ -1,5 +1,5 @@
-/*	$OpenBSD: tcp_output.c,v 1.5 1996/09/12 06:36:57 tholo Exp $	*/
-/*	$NetBSD: tcp_output.c,v 1.14 1996/02/13 23:43:53 christos Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.6 1997/06/19 10:49:05 deraadt Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -467,7 +467,10 @@ send:
 		win = 0;
 	ti->ti_win = htons((u_int16_t) (win>>tp->rcv_scale));
 	if (SEQ_GT(tp->snd_up, tp->snd_nxt)) {
-		ti->ti_urp = htons((u_int16_t)(tp->snd_up - tp->snd_nxt));
+		u_int32_t urp = tp->snd_up - tp->snd_nxt;
+		if (urp > IP_MAXPACKET)
+			urp = IP_MAXPACKET;
+		ti->ti_urp = htons((u_int16_t)urp);
 		ti->ti_flags |= TH_URG;
 	} else
 		/*
