@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_ip.c,v 1.8 2001/03/23 07:33:47 angelos Exp $	*/
+/*	$OpenBSD: ipx_ip.c,v 1.9 2001/05/20 08:36:02 angelos Exp $	*/
 
 /*-
  *
@@ -278,9 +278,9 @@ ipxipoutput(ifp, m, dst, rt)
 		m0->m_next = m;
 		m0->m_len = sizeof(struct ip);
 		m0->m_pkthdr.len = m0->m_len + m->m_len;
-		m0->m_pkthdr.tdbi = m->m_pkthdr.tdbi;
+		m0->m_pkthdr.tags = m->m_pkthdr.tags;
 		m->m_flags &= ~M_PKTHDR;
-		m->m_pkthdr.tdbi = NULL;
+		TAILQ_INIT(&m->m_pkthdr.tags);
 	} else {
 		M_PREPEND(m, sizeof(struct ip), M_DONTWAIT);
 		if (m == NULL)

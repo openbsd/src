@@ -1,4 +1,4 @@
-/*	$OpenBSD: tuba_subr.c,v 1.5 2001/03/23 07:34:31 angelos Exp $	*/
+/*	$OpenBSD: tuba_subr.c,v 1.6 2001/05/20 08:36:02 angelos Exp $	*/
 /*	$NetBSD: tuba_subr.c,v 1.7 1996/02/13 22:12:32 christos Exp $	*/
 
 /*
@@ -333,7 +333,7 @@ tuba_tcpinput(m, va_alist)
 		m->m_next = m0;
 		m->m_data += max_linkhdr;
 		m0->m_flags &= ~M_PKTHDR;
-		m0->m_pkthdr.tdbi = NULL;
+		TAILQ_INIT(&m0->m_pkthdr.tags);
 		if (len < sizeof(struct tcphdr)) {
 			m->m_len = 0;
 			if ((m = m_pullup(m, sizeof(struct tcpiphdr))) == 0) {
