@@ -1,14 +1,20 @@
-.\" $OpenBSD: pthread_cancel.3,v 1.5 2000/01/22 13:59:29 aaron Exp $
+.\" $OpenBSD: pthread_cancel.3,v 1.6 2000/02/10 11:45:35 d Exp $
 .Dd January 17, 1999
 .Dt PTHREAD_CANCEL 3
 .Os
 .Sh NAME
-.Nm pthread_cancel
+.Nm pthread_cancel ,
+.Nm pthread_setcancelstate ,
+.Nm pthread_setcanceltype
 .Nd cancel execution of a thread
 .Sh SYNOPSIS
 .Fd #include <pthread.h>
 .Ft int
 .Fn pthread_cancel "pthread_t thread"
+.Ft int
+.Fn pthread_setcancelstate "int state" "int *oldstate"
+.Ft int
+.Fn pthread_setcanceltype "int type" "int *oldtype"
 .Sh DESCRIPTION
 The
 .Fn pthread_cancel
@@ -35,7 +41,7 @@ is made available to any threads joining with the target. The symbolic
 constant
 .Dv PTHREAD_CANCELED
 expands to a constant expression of type
-.Ft "(void *)" ,
+.Ft "(void *)"
 whose value matches no pointer to an object in memory nor the value
 .Dv NULL .
 .Sh RETURN VALUES
@@ -60,7 +66,10 @@ thread ID.
 .Xr pthread_setcanceltype 3 ,
 .Xr pthread_testcancel 3
 .Sh STANDARDS
-.Fn pthread_cancel
-conforms to ISO/IEC 9945-1 ANSI/IEEE
+.Fn pthread_cancel ,
+.Fn pthread_setcancelstate ,
+and
+.Fn pthread_setcanceltype
+conform to ISO/IEC 9945-1 ANSI/IEEE
 .Pq Dq Tn POSIX
 Std 1003.1 Second Edition 1996-07-12.
