@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tree.3,v 1.2 2002/03/19 00:07:45 vincent Exp $
+.\"	$OpenBSD: tree.3,v 1.3 2002/03/25 21:53:39 frantzen Exp $
 .\"/*
 .\" * Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" * All rights reserved.
@@ -36,7 +36,9 @@
 .Nm SPLAY_GENERATE,
 .Nm SPLAY_ENTRY ,
 .Nm SPLAY_HEAD ,
+.Nm SPLAY_INITIALIZER ,
 .Nm SPLAY_ROOT ,
+.Nm SPLAY_EMPTY ,
 .Nm SPLAY_NEXT ,
 .Nm SPLAY_MIN ,
 .Nm SPLAY_MAX ,
@@ -51,7 +53,9 @@
 .Nm RB_GENERATE,
 .Nm RB_ENTRY ,
 .Nm RB_HEAD ,
+.Nm RB_INITIALIZER ,
 .Nm RB_ROOT ,
+.Nm RB_EMPTY ,
 .Nm RB_NEXT ,
 .Nm RB_MIN ,
 .Nm RB_MAX ,
@@ -72,7 +76,10 @@
 .Fn SPLAY_ENTRY "TYPE"
 .Fn SPLAY_HEAD "HEADNAME" "TYPE"
 .Ft "struct TYPE *"
+.Fn SPLAY_INITIALIZER "SPLAY_HEAD *head"
 .Fn SPLAY_ROOT "SPLAY_HEAD *head"
+.Ft "bool"
+.Fn SPLAY_EMPTY "SPLAY_HEAD *head"
 .Ft "struct TYPE *"
 .Fn SPLAY_NEXT "NAME" "SPLAY_HEAD *head" "struct TYPE *elm"
 .Ft "struct TYPE *"
@@ -97,8 +104,11 @@
 .Fn RB_GENERATE "NAME" "TYPE" "FIELD" "CMP"
 .Fn RB_ENTRY "TYPE"
 .Fn RB_HEAD "HEADNAME" "TYPE"
+.Fn RB_INITIALIZER "RB_HEAD *head"
 .Ft "struct TYPE *"
 .Fn RB_ROOT "RB_HEAD *head"
+.Ft "bool"
+.Fn RB_EMPTY "RB_HEAD *head"
 .Ft "struct TYPE *"
 .Fn RB_NEXT "NAME" "RB_HEAD *head" "struct TYPE *elm"
 .Ft "struct TYPE *"
@@ -223,6 +233,13 @@ The
 macro initializes the tree referenced by
 .Fa head .
 .Pp
+The splay tree can also be initialized statically by using the
+.Fn SPLAY_INITIALIZER
+macro like this:
+.Bd -literal -offset indent
+SPLAY_HEAD(HEADNAME, TYPE) head = SPLAY_INITIALIZER(&head);
+.Ed
+.Pp
 The
 .Fn SPLAY_INSERT
 macro inserts the new element
@@ -262,6 +279,10 @@ macro:
 .Bd -literal -offset indent
 SPLAY_FOREACH(np, NAME, head)
 .Ed
+.Pp
+The
+.Fn SPLAY_EMPTY
+macro should be used to check whether a splay tree is empty.
 .Pp
 .Sh RED-BLACK TREES
 A red-black tree is a binary search tree with the node color as an
@@ -337,6 +358,13 @@ The
 macro initializes the tree referenced by
 .Fa head .
 .Pp
+The redblack tree can also be initialized statically by using the
+.Fn RB_INITIALIZER
+macro like this:
+.Bd -literal -offset indent
+RB_HEAD(HEADNAME, TYPE) head = RB_INITIALIZER(&head);
+.Ed
+.Pp
 The
 .Fn RB_INSERT
 macro inserts the new element
@@ -376,6 +404,10 @@ macro:
 .Bd -literal -offset indent
 RB_FOREACH(np, NAME, head)
 .Ed
+.Pp
+The
+.Fn RB_EMPTY
+macro should be used to check whether a splay tree is empty.
 .Pp
 .Sh NOTES
 Trying to free a tree in the following way is a common error:
