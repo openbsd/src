@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfsrmgroup.c,v 1.8 2000/06/20 06:45:16 fgsch Exp $	*/
+/*	$OpenBSD: tcfsrmgroup.c,v 1.9 2000/06/20 08:59:53 fgsch Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -31,7 +31,7 @@ int
 rmgroup_main(int argn, char *argv[])
 {
 	int val;
-	gid_t gid;
+	gid_t gid = 0;
 	int have_gid = FALSE, be_verbose = FALSE;
 
 	/*
@@ -71,7 +71,7 @@ rmgroup_main(int argn, char *argv[])
 		char *buff = NULL;
 		int len;
 
-		buff = (char *)calloc(2048, sizeof(char));
+		buff = (char *)malloc(2048);
 		if (!buff)
 			tcfs_error(ER_MEM, NULL);
 
@@ -98,4 +98,6 @@ rmgroup_main(int argn, char *argv[])
 
 	if (!tcfs_rmgroup(gid))
 		tcfs_error(ER_CUSTOM, "Wrong ID or an error as occurred.\n");
+
+	exit(0);
 }

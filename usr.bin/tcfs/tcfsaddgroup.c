@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfsaddgroup.c,v 1.10 2000/06/20 06:45:16 fgsch Exp $	*/
+/*	$OpenBSD: tcfsaddgroup.c,v 1.11 2000/06/20 08:59:52 fgsch Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -169,10 +169,10 @@ int
 addgroup_main(int argn, char *argv[])
 {
 	int val;
-	gid_t gid;
+	gid_t gid = 0;
 	int have_gid = FALSE, have_members = FALSE, have_threshold = FALSE;
 	int be_verbose = FALSE;
-	int temp_members, members;
+	int temp_members, members = 0;
 	tcfsgpwdb **group_info;
 
 	/*
@@ -222,7 +222,7 @@ addgroup_main(int argn, char *argv[])
 		char *buff = NULL;
 		int len;
 
-		buff = (char *)calloc(2048, sizeof(char));
+		buff = (char *)malloc(2048);
 		if (!buff)
 			tcfs_error(ER_MEM, NULL);
 

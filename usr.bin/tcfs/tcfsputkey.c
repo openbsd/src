@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfsputkey.c,v 1.9 2000/06/20 01:29:14 provos Exp $	*/
+/*	$OpenBSD: tcfsputkey.c,v 1.10 2000/06/20 08:59:53 fgsch Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -37,8 +37,8 @@ putkey_main(int argc, char *argv[])
 {
 	char *user, *password, *tcfskey;
 	uid_t uid;
-	gid_t gid;
-	int es, treshold;
+	gid_t gid = 0;
+	int es = 0, treshold;
 	char x;
 	tcfspwdb *info;
 	tcfsgpwdb *ginfo;
