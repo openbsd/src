@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.19 2001/08/08 07:02:42 deraadt Exp $	*/
+/*	$OpenBSD: identd.c,v 1.20 2001/08/12 17:53:16 fgsch Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -374,7 +374,7 @@ main(argc, argv)
 				if (timeout)
 					nfds = poll(pfd, 1, timeout * 1000);
 				else
-					nfds = poll(pfd, 1, -1);
+					nfds = poll(pfd, 1, INFTIM);
 			} while (nfds < 0 && errno == EINTR);
 
 			/*

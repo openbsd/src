@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmoused.c,v 1.1 2001/04/14 04:47:41 aaron Exp $ */
+/* $OpenBSD: wsmoused.c,v 1.2 2001/08/12 17:53:16 fgsch Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -443,7 +443,7 @@ wsmoused(void)
     /* process mouse data */
     for (;;) {
 
-	if (poll(pfd, 1, -1) <= 0)
+	if (poll(pfd, 1, INFTIM) <= 0)
 		logwarn("failed to read from mouse");
 	if (IS_WSMOUSE_DEV(mouse.portname))  {
 		/* wsmouse supported mouse */

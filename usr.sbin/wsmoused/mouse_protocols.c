@@ -1,4 +1,4 @@
-/* $OpenBSD: mouse_protocols.c,v 1.1 2001/04/14 04:47:40 aaron Exp $ */
+/* $OpenBSD: mouse_protocols.c,v 1.2 2001/08/12 17:53:16 fgsch Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -769,7 +769,7 @@ mouse_init(void)
 	for (s = "E5E5"; *s; ++s) {
 	    write(mouse.mfd, s, 1);
 
-	    if (poll(pfd, 1, -1) <= 0)
+	    if (poll(pfd, 1, INFTIM) <= 0)
 		break;
 	    read(mouse.mfd, &c, 1);
 	    debug("%c", c);
