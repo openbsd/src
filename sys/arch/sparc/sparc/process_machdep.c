@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.3 1997/08/08 08:27:39 downsj Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.4 2002/02/20 22:28:23 deraadt Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.6 1996/03/14 21:09:26 christos Exp $ */
 
 /*
@@ -74,6 +74,8 @@
 #include <machine/frame.h>
 #include <sys/ptrace.h>
 
+u_int32_t process_get_wcookie(struct proc *p);
+
 int
 process_read_regs(p, regs)
 	struct proc *p;
@@ -140,4 +142,11 @@ struct fpreg	*regs;
 
 	bcopy(regs, p->p_md.md_fpstate, sizeof(struct fpreg));
 	return 0;
+}
+
+u_int32_t
+process_get_wcookie(p)
+	struct proc *p;
+{
+	return p->p_addr->u_pcb.pcb_wcookie;
 }

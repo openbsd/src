@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.79 2002/02/17 22:59:53 maja Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.80 2002/02/20 22:28:23 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -77,6 +77,8 @@
 #include <sys/extent.h>
 
 #include <uvm/uvm_extern.h>
+
+#include <dev/rndvar.h>
 
 #include <machine/autoconf.h>
 #include <machine/frame.h>
@@ -367,6 +369,27 @@ setregs(p, pack, stack, retval)
 	struct trapframe *tf = p->p_md.md_tf;
 	struct fpstate *fs;
 	int psr;
+
+	/* Setup the process StackGhost cookie which will be XORed into
+	 * the return pointer as register windows are over/underflowed
+	 */
+	p->p_addr->u_pcb.pcb_wcookie = 0;	/* XXX later arc4random(); */
+
+	/* The cookie needs to guarantee invalid alignment after the XOR */
+	switch (p->p_addr->u_pcb.pcb_wcookie % 3) {
+	case 0: /* Two lsb's already both set except if the cookie is 0 */
+		p->p_addr->u_pcb.pcb_wcookie |= 0x3;
+		break;
+	case 1: /* Set the lsb */
+		p->p_addr->u_pcb.pcb_wcookie = 1 |
+			(p->p_addr->u_pcb.pcb_wcookie & ~0x3);
+		break;
+	case 2: /* Set the second most lsb */
+		p->p_addr->u_pcb.pcb_wcookie = 2 |
+			(p->p_addr->u_pcb.pcb_wcookie & ~0x3);
+		break;
+	}
+
 
 	/* Don't allow misaligned code by default */
 	p->p_md.md_flags &= ~MDP_FIXALIGN;

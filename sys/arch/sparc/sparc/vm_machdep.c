@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.42 2002/01/16 20:50:17 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.43 2002/02/20 22:28:23 deraadt Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/03/10 23:55:40 pk Exp $ */
 
 /*
@@ -524,6 +524,7 @@ cpu_coredump(p, vp, cred, chdr)
 	chdr->c_cpusize = sizeof(md_core);
 
 	md_core.md_tf = *p->p_md.md_tf;
+	md_core.md_wcookie = p->p_addr->u_pcb.pcb_wcookie;
 	if (p->p_md.md_fpstate) {
 		if (p == cpuinfo.fpproc)
 			savefpstate(p->p_md.md_fpstate);
