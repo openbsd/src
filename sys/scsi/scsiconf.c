@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.28 1997/04/14 04:09:14 downsj Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.29 1997/07/25 01:55:47 mickey Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -317,9 +317,13 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
 	 "DENON   ", "DRD-25X         ", "V"},    SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
+	 "HP      ", "C4324/C4325     ", ""},     SDEV_NOLUNS},
+	{{T_CDROM, T_REMOV,
 	 "IMS     ", "CDD521/10       ", "2.06"}, SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "MATSHITA", "CD-ROM CR-5XX   ", "1.0b"}, SDEV_NOLUNS},
+	{{T_CDROM, T_REMOV,
+	 "MEDAVIS ", "RENO CD-ROMX2A  ", ""},	  SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "MEDIAVIS", "CDR-H93MV       ", "1.3"}, SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
@@ -353,6 +357,13 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,  
 	 "ShinaKen", "CD-ROM DM-3x1S", "1.04"}, SDEV_NOLUNS},  
 
+ 	{{T_OPTICAL, T_REMOV,
+ 	 "EPSON   ", "OMD-5010        ", "3.08"}, SDEV_NOLUNS},
+	{{T_OPTICAL, T_REMOV,
+	 "FUJITSU", "M2513A",            "0800"}, SDEV_NOMODESENSE},
+	{{T_OPTICAL, T_REMOV,
+	 "DELTIS  ", "MOS321          ", "3.30"}, SDEV_NOMODESENSE},
+ 
 	{{T_OPTICAL, T_REMOV,
 	 "EPSON   ", "OMD-5010        ", "3.08"}, SDEV_NOLUNS},
 	{{T_OPTICAL, T_REMOV,
@@ -361,6 +372,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "DELTIS  ", "MOS321          ", "3.30"}, SDEV_NOMODESENSE},
 
 	{{T_DIRECT, T_FIXED,
+	 "MICROP  ", "1588-15MBSUN0669", ""},     SDEV_AUTOSAVE},
+	{{T_DIRECT, T_FIXED,
 	 "DEC     ", "RZ55     (C) DEC", ""},     SDEV_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
 	 "EMULEX  ", "MD21/S2     ESDI", "A00"},  SDEV_FORCELUNS|SDEV_AUTOSAVE},
@@ -368,6 +381,13 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "IBMRAID ", "0662S",            ""},     SDEV_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
 	 "IBM     ", "0663H",            ""},     SDEV_AUTOSAVE},
+	{{T_DIRECT, T_FIXED,
+	 "IBM",	  "0664",		 ""},	  SDEV_AUTOSAVE},
+	{{T_DIRECT, T_FIXED,
+	 "IBM     ", "KZ-C",		 ""},	  SDEV_AUTOSAVE},
+	/* Broken IBM disk */
+	{{T_DIRECT, T_FIXED,
+	 ""	   , "DFRSS2F",		 ""},	  SDEV_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
 	 "MAXTOR  ", "XT-3280         ", ""},     SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
@@ -440,6 +460,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	/* Following entry reported as a Tandberg 3600; ref. PR1933 */
 	{{T_SEQUENTIAL, T_REMOV,
 	 "ARCHIVE ", "VIPER 150  21247", ""},     SDEV_NOLUNS},
+	{{T_SEQUENTIAL, T_REMOV,
+	 "ARCHIVE ", "Python 28454-XXX", ""},     SDEV_NOLUNS},
 	{{T_SEQUENTIAL, T_REMOV,
 	 "WANGTEK ", "5099ES SCSI",      ""},     SDEV_NOLUNS},
 	{{T_SEQUENTIAL, T_REMOV,
