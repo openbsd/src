@@ -1,5 +1,5 @@
-/*	$OpenBSD: audioctl.c,v 1.2 1998/04/26 22:27:25 provos Exp $	*/
-/*	$NetBSD: audioctl.c,v 1.12 1997/10/19 07:44:12 augustss Exp $	*/
+/*	$OpenBSD: audioctl.c,v 1.3 1998/04/30 13:46:18 provos Exp $	*/
+/*	$NetBSD: audioctl.c,v 1.14 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <fcntl.h>
 #include <err.h>
 #include <unistd.h>
@@ -335,9 +336,13 @@ main(argc, argv)
 	int fd, i, ch;
 	int aflag = 0, wflag = 0;
 	struct stat dstat, ostat;
-	char *file = "/dev/audioctl";
+	char *file;
 	char *sep = "=";
     
+	file = getenv("AUDIOCTLDEVICE");
+	if (file == 0)
+		file = "/dev/audioctl";
+
 	prog = *argv;
     
 	while ((ch = getopt(argc, argv, "af:nw")) != -1) {
