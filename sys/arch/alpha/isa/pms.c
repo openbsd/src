@@ -1,5 +1,5 @@
-/*	$OpenBSD: pms.c,v 1.3 1996/10/30 22:39:42 niklas Exp $	*/
-/*	$NetBSD: pms.c,v 1.3 1996/10/13 02:59:58 christos Exp $	*/
+/*	$OpenBSD: pms.c,v 1.4 1996/12/08 00:20:29 niklas Exp $	*/
+/*	$NetBSD: pms.c,v 1.4 1996/10/23 04:12:21 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -99,11 +99,11 @@ struct pms_softc {		/* driver status information */
 	int sc_x, sc_y;		/* accumulated motion in the X,Y axis */
 };
 
-bus_chipset_tag_t pms_bc;
+bus_space_tag_t pms_iot;
 isa_chipset_tag_t pms_ic;
-bus_io_handle_t pms_cntrl_ioh;
+bus_space_handle_t pms_cntrl_ioh;
 #define	pms_status_ioh	pms_cntrl_ioh
-bus_io_handle_t pms_data_ioh;
+bus_space_handle_t pms_data_ioh;
 
 int pmsprobe __P((struct device *, void *, void *));
 void pmsattach __P((struct device *, struct device *, void *));
@@ -137,12 +137,12 @@ pms_flush()
 {
 	u_char c;
 
-	while ((c = bus_io_read_1(pms_bc, pms_status_ioh, 0)) & 0x03)
+	while ((c = bus_space_read_1(pms_iot, pms_status_ioh, 0) & 0x03) != 0)
 		if ((c & PMS_OBUF_FULL) == PMS_OBUF_FULL) {
 			/* XXX - delay is needed to prevent some keyboards from
 			   wedging when the system boots */
 			delay(6);
-			(void) bus_io_read_1(pms_bc, pms_data_ioh, 0);
+			(void) bus_space_read_1(pms_iot, pms_data_ioh, 0);
 		}
 }
 
@@ -152,9 +152,9 @@ pms_dev_cmd(value)
 {
 
 	pms_flush();
-	bus_io_write_1(pms_bc, pms_cntrl_ioh, 0, 0xd4);
+	bus_space_write_1(pms_iot, pms_cntrl_ioh, 0, 0xd4);
 	pms_flush();
-	bus_io_write_1(pms_bc, pms_data_ioh, 0, value);
+	bus_space_write_1(pms_iot, pms_data_ioh, 0, value);
 }
 
 static __inline void
@@ -163,7 +163,7 @@ pms_aux_cmd(value)
 {
 
 	pms_flush();
-	bus_io_write_1(pms_bc, pms_cntrl_ioh, 0, value);
+	bus_space_write_1(pms_iot, pms_cntrl_ioh, 0, value);
 }
 
 static __inline void
@@ -172,9 +172,9 @@ pms_pit_cmd(value)
 {
 
 	pms_flush();
-	bus_io_write_1(pms_bc, pms_cntrl_ioh, 0, 0x60);
+	bus_space_write_1(pms_iot, pms_cntrl_ioh, 0, 0x60);
 	pms_flush();
-	bus_io_write_1(pms_bc, pms_data_ioh, 0, value);
+	bus_space_write_1(pms_iot, pms_data_ioh, 0, value);
 }
 
 int
@@ -185,19 +185,19 @@ pmsprobe(parent, match, aux)
 	struct isa_attach_args *ia = aux;
 	u_char x;
 
-	pms_bc = ia->ia_bc;
+	pms_iot = ia->ia_iot;
 
 	if (ia->ia_iobase != 0x60)
 		return 0;
 
-	if (bus_io_map(pms_bc, PMS_DATA, 1, &pms_data_ioh) ||
-	    bus_io_map(pms_bc, PMS_CNTRL, 1, &pms_cntrl_ioh))
+	if (bus_space_map(pms_iot, PMS_DATA, 1, 0, &pms_data_ioh) ||
+	    bus_space_map(pms_iot, PMS_CNTRL, 1, 0, &pms_cntrl_ioh))
 		return 0;
 
 	pms_dev_cmd(PMS_RESET);
 	pms_aux_cmd(PMS_AUX_TEST);
 	delay(1000);
-	x = bus_io_read_1(pms_bc, pms_data_ioh, 0);
+	x = bus_space_read_1(pms_iot, pms_data_ioh, 0);
 	pms_pit_cmd(PMS_INT_DISABLE);
 	if (x & 0x04)
 		return 0;
@@ -215,11 +215,11 @@ pmsattach(parent, self, aux)
 	struct pms_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
 
-	pms_bc = ia->ia_bc;
+	pms_iot = ia->ia_iot;
 	pms_ic = ia->ia_ic;
 
-	if (bus_io_map(pms_bc, PMS_DATA, 1, &pms_data_ioh) ||
-	    bus_io_map(pms_bc, PMS_CNTRL, 1, &pms_cntrl_ioh)) {
+	if (bus_space_map(pms_iot, PMS_DATA, 1, 0, &pms_data_ioh) ||
+	    bus_space_map(pms_iot, PMS_CNTRL, 1, 0, &pms_cntrl_ioh)) {
 		printf(": can't map I/O ports!\n");
 		return;
 	}
@@ -304,20 +304,20 @@ pmsintr(arg)
 	switch (state) {
 
 	case 0:
-		buttons = bus_io_read_1(pms_bc, pms_data_ioh, 0);
+		buttons = bus_space_read_1(pms_iot, pms_data_ioh, 0);
 		if ((buttons & 0xc0) == 0)
 			++state;
 		break;
 
 	case 1:
-		dx = bus_io_read_1(pms_bc, pms_data_ioh, 0);
+		dx = bus_space_read_1(pms_iot, pms_data_ioh, 0);
 		/* Bounding at -127 avoids a bug in XFree86. */
 		dx = (dx == -128) ? -127 : dx;
 		++state;
 		break;
 
 	case 2:
-		dy = bus_io_read_1(pms_bc, pms_data_ioh, 0);
+		dy = bus_space_read_1(pms_iot, pms_data_ioh, 0);
 		dy = (dy == -128) ? -127 : dy;
 		state = 0;
 

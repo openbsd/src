@@ -1,5 +1,5 @@
-/*	$OpenBSD: pcivgavar.h,v 1.5 1996/10/30 22:40:11 niklas Exp $	*/
-/*	$NetBSD: pcivgavar.h,v 1.5 1996/04/12 06:08:58 cgd Exp $	*/
+/*	$OpenBSD: pcivgavar.h,v 1.6 1996/12/08 00:20:44 niklas Exp $	*/
+/*	$NetBSD: pcivgavar.h,v 1.6 1996/10/23 04:12:30 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,13 +29,13 @@
  */
 
 struct pcivga_devconfig {
-	bus_chipset_tag_t dc_bc;
+	bus_space_tag_t	dc_iot;
+	bus_space_tag_t	dc_memt;
 	pci_chipset_tag_t dc_pc;
 
 	pcitag_t	dc_pcitag;	/* PCI tag */
 
-	bus_io_handle_t	dc_ioh;
-	bus_mem_handle_t dc_memh;
+	bus_space_handle_t dc_ioh, dc_memh;
 
 	int		dc_ncol, dc_nrow; /* screen width & height */
 	int		dc_ccol, dc_crow; /* current cursor position */
@@ -58,5 +58,5 @@ struct pcivga_softc {
 	     (PCI_CLASS(class) == PCI_CLASS_PREHISTORIC &&		\
 	      PCI_SUBCLASS(class) == PCI_SUBCLASS_PREHISTORIC_VGA)) ? 1 : 0)
 
-void    pcivga_console __P((bus_chipset_tag_t, pci_chipset_tag_t, int, int,
-	    int));
+void    pcivga_console __P((bus_space_tag_t, bus_space_tag_t,
+	    pci_chipset_tag_t, int, int, int));

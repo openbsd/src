@@ -1,5 +1,5 @@
-/*	$OpenBSD: pci_kn20aa.c,v 1.7 1996/10/30 22:40:06 niklas Exp $	*/
-/*	$NetBSD: pci_kn20aa.c,v 1.18 1996/10/13 03:00:12 christos Exp $	*/
+/*	$OpenBSD: pci_kn20aa.c,v 1.8 1996/12/08 00:20:41 niklas Exp $	*/
+/*	$NetBSD: pci_kn20aa.c,v 1.19 1996/10/23 04:12:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -96,7 +96,7 @@ pci_kn20aa_pickintr(ccp)
 	struct cia_config *ccp;
 {
 	int i;
-	bus_chipset_tag_t bc = &ccp->cc_bc;
+	bus_space_tag_t iot = ccp->cc_iot;
 	pci_chipset_tag_t pc = &ccp->cc_pc;
 
 	for (i = 0; i < KN20AA_MAX_IRQ; i++)
@@ -109,7 +109,7 @@ pci_kn20aa_pickintr(ccp)
         pc->pc_intr_disestablish = dec_kn20aa_intr_disestablish;
 
 #if NSIO
-	sio_intr_setup(bc);
+	sio_intr_setup(iot);
 #endif
 
 	set_iointr(kn20aa_iointr);

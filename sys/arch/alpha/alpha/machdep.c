@@ -1,5 +1,5 @@
-/*	$OpenBSD: machdep.c,v 1.12 1996/11/23 23:19:23 kstailey Exp $	*/
-/*	$NetBSD: machdep.c,v 1.49 1996/10/18 20:35:23 cgd Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.13 1996/12/08 00:20:18 niklas Exp $	*/
+/*	$NetBSD: machdep.c,v 1.52 1996/11/06 20:19:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -1566,10 +1566,10 @@ spl0()
 /*
  * The following primitives manipulate the run queues.  _whichqs tells which
  * of the 32 queues _qs have processes in them.  Setrunqueue puts processes
- * into queues, Remrq removes them from queues.  The running process is on
- * no queue, other processes are on a queue related to p->p_priority, divided
- * by 4 actually to shrink the 0-127 range of priorities into the 32 available
- * queues.
+ * into queues, Remrunqueue removes them from queues.  The running process is
+ * on no queue, other processes are on a queue related to p->p_priority,
+ * divided by 4 actually to shrink the 0-127 range of priorities into the 32
+ * available queues.
  */
 /*
  * setrunqueue(p)
@@ -1597,7 +1597,7 @@ setrunqueue(p)
 }
 
 /*
- * Remrunqueue(p)
+ * remrunqueue(p)
  *
  * Call should be made at splclock().
  */
@@ -1712,3 +1712,15 @@ cpu_exec_ecoff_hook(p, epp)
 	return 0;
 }
 #endif
+
+/* XXX XXX BEGIN XXX XXX */
+vm_offset_t alpha_XXX_dmamap_or;				/* XXX */
+								/* XXX */
+vm_offset_t							/* XXX */
+alpha_XXX_dmamap(v)						/* XXX */
+	vm_offset_t v;						/* XXX */
+{								/* XXX */
+								/* XXX */
+	return (vtophys(v) | alpha_XXX_dmamap_or);		/* XXX */
+}								/* XXX */
+/* XXX XXX END XXX XXX */

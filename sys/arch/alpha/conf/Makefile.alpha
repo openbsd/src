@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.alpha,v 1.8 1996/10/30 22:38:41 niklas Exp $
+#	$OpenBSD: Makefile.alpha,v 1.9 1996/12/08 00:20:21 niklas Exp $
 #	$NetBSD: Makefile.alpha,v 1.25 1996/09/27 17:33:04 cgd Exp $
 
 # Makefile for OpenBSD
@@ -37,7 +37,7 @@ INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dalpha
 
 CDIAGFLAGS?=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
-		-Wno-uninitialized -Wno-format
+		-Wcast-qual -Wno-uninitialized -Wno-format
 
 CMACHFLAGS=	-mno-fp-regs
 CFLAGS=		${DEBUG} -O2 ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS}

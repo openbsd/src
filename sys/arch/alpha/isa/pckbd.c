@@ -1,5 +1,5 @@
-/*	$OpenBSD: pckbd.c,v 1.7 1996/11/12 20:29:32 niklas Exp $	*/
-/*	$NetBSD: pckbd.c,v 1.9 1996/10/13 02:59:56 christos Exp $	*/
+/*	$OpenBSD: pckbd.c,v 1.8 1996/12/08 00:20:28 niklas Exp $	*/
+/*	$NetBSD: pckbd.c,v 1.10 1996/10/23 04:12:20 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -54,7 +54,7 @@
 #include <sys/device.h>
 
 #include <machine/intr.h>
-#include <machine/bus.old.h>
+#include <machine/bus.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -74,16 +74,16 @@ static u_char lock_state = 0x00,	/* all off */
 	      typematic_rate = 0xff,	/* don't update until set by user */
 	      old_typematic_rate = 0xff;
 
-bus_chipset_tag_t pckbd_bc;
+bus_space_tag_t pckbd_iot;
 isa_chipset_tag_t pckbd_ic;
 
-bus_io_handle_t pckbd_data_ioh;
+bus_space_handle_t pckbd_data_ioh;
 #define	pckbd_out_ioh	pckbd_data_ioh
-bus_io_handle_t pckbd_status_ioh;
+bus_space_handle_t pckbd_status_ioh;
 #define	pckbd_cmd_ioh	pckbd_status_ioh
-bus_io_handle_t pckbd_timer_ioh;
-bus_io_handle_t pckbd_pitaux_ioh;
-bus_io_handle_t pckbd_delay_ioh;
+bus_space_handle_t pckbd_timer_ioh;
+bus_space_handle_t pckbd_pitaux_ioh;
+bus_space_handle_t pckbd_delay_ioh;
 
 struct pckbd_softc {
         struct  device sc_dev;
@@ -153,10 +153,10 @@ void async_update __P((void));
 
 #define	KBD_DELAY \
 	do { \
-		bus_io_read_1(pckbd_bc, pckbd_delay_ioh, 0); \
-		bus_io_read_1(pckbd_bc, pckbd_delay_ioh, 0); \
-		bus_io_read_1(pckbd_bc, pckbd_delay_ioh, 0); \
-		bus_io_read_1(pckbd_bc, pckbd_delay_ioh, 0); \
+		bus_space_read_1(pckbd_iot, pckbd_delay_ioh, 0); \
+		bus_space_read_1(pckbd_iot, pckbd_delay_ioh, 0); \
+		bus_space_read_1(pckbd_iot, pckbd_delay_ioh, 0); \
+		bus_space_read_1(pckbd_iot, pckbd_delay_ioh, 0); \
 	} while(0)
 
 static __inline int
@@ -165,7 +165,7 @@ kbd_wait_output()
 	u_int i;
 
 	for (i = 100000; i; i--)
-		if ((bus_io_read_1(pckbd_bc, pckbd_status_ioh, 0) & KBS_IBF)
+		if ((bus_space_read_1(pckbd_iot, pckbd_status_ioh, 0) & KBS_IBF)
 		    == 0) {
 			KBD_DELAY;
 			return 1;
@@ -179,7 +179,7 @@ kbd_wait_input()
 	u_int i;
 
 	for (i = 100000; i; i--)
-		if ((bus_io_read_1(pckbd_bc, pckbd_status_ioh, 0) & KBS_DIB)
+		if ((bus_space_read_1(pckbd_iot, pckbd_status_ioh, 0) & KBS_DIB)
 		    != 0) {
 			KBD_DELAY;
 			return 1;
@@ -193,11 +193,11 @@ kbd_flush_input()
 	u_int i;
 
 	for (i = 10; i; i--) {
-		if ((bus_io_read_1(pckbd_bc, pckbd_status_ioh, 0) & KBS_DIB)
+		if ((bus_space_read_1(pckbd_iot, pckbd_status_ioh, 0) & KBS_DIB)
 		    == 0)
 			return;
 		KBD_DELAY;
-		(void) bus_io_read_1(pckbd_bc, pckbd_data_ioh, 0);
+		(void) bus_space_read_1(pckbd_iot, pckbd_data_ioh, 0);
 	}
 }
 
@@ -211,10 +211,10 @@ kbc_get8042cmd()
 
 	if (!kbd_wait_output())
 		return -1;
-	bus_io_write_1(pckbd_bc, pckbd_cmd_ioh, 0, K_RDCMDBYTE);
+	bus_space_write_1(pckbd_iot, pckbd_cmd_ioh, 0, K_RDCMDBYTE);
 	if (!kbd_wait_input())
 		return -1;
-	return bus_io_read_1(pckbd_bc, pckbd_data_ioh, 0);
+	return bus_space_read_1(pckbd_iot, pckbd_data_ioh, 0);
 }
 #endif
 
@@ -228,10 +228,10 @@ kbc_put8042cmd(val)
 
 	if (!kbd_wait_output())
 		return 0;
-	bus_io_write_1(pckbd_bc, pckbd_cmd_ioh, 0, K_LDCMDBYTE);
+	bus_space_write_1(pckbd_iot, pckbd_cmd_ioh, 0, K_LDCMDBYTE);
 	if (!kbd_wait_output())
 		return 0;
-	bus_io_write_1(pckbd_bc, pckbd_out_ioh, 0, val);
+	bus_space_write_1(pckbd_iot, pckbd_out_ioh, 0, val);
 	return 1;
 }
 
@@ -250,15 +250,15 @@ kbd_cmd(val, polling)
 		if (!kbd_wait_output())
 			return 0;
 		ack = nak = 0;
-		bus_io_write_1(pckbd_bc, pckbd_out_ioh, 0, val);
+		bus_space_write_1(pckbd_iot, pckbd_out_ioh, 0, val);
 		if (polling)
 			for (i = 100000; i; i--) {
-				if (bus_io_read_1(pckbd_bc,
+				if (bus_space_read_1(pckbd_iot,
 				    pckbd_status_ioh, 0) & KBS_DIB) {
 					register u_char c;
 
 					KBD_DELAY;
-					c = bus_io_read_1(pckbd_bc,
+					c = bus_space_read_1(pckbd_iot,
 					    pckbd_data_ioh, 0);
 					if (c == KBR_ACK || c == KBR_ECHO) {
 						ack = 1;
@@ -276,7 +276,7 @@ kbd_cmd(val, polling)
 			}
 		else
 			for (i = 100000; i; i--) {
-				(void) bus_io_read_1(pckbd_bc,
+				(void) bus_space_read_1(pckbd_iot,
 				    pckbd_status_ioh, 0);
 				if (ack)
 					return 1;
@@ -300,16 +300,16 @@ pckbdprobe(parent, match, aux)
 	struct isa_attach_args *ia = aux;
 	u_int i;
 
-	pckbd_bc = ia->ia_bc;
+	pckbd_iot = ia->ia_iot;
 	pckbd_ic = ia->ia_ic;
 
-	if (bus_io_map(pckbd_bc, KBDATAP, 1, &pckbd_data_ioh) ||
-	    bus_io_map(pckbd_bc, KBSTATP, 1, &pckbd_status_ioh) ||
-	    bus_io_map(pckbd_bc, IO_TIMER1, 4, &pckbd_timer_ioh) ||
-	    bus_io_map(pckbd_bc, PITAUX_PORT, 1, &pckbd_pitaux_ioh))
+	if (bus_space_map(pckbd_iot, KBDATAP, 1, 0, &pckbd_data_ioh) ||
+	    bus_space_map(pckbd_iot, KBSTATP, 1, 0, &pckbd_status_ioh) ||
+	    bus_space_map(pckbd_iot, IO_TIMER1, 4, 0, &pckbd_timer_ioh) ||
+	    bus_space_map(pckbd_iot, PITAUX_PORT, 1, 0, &pckbd_pitaux_ioh))
 		return 0;
 
-	pckbd_delay_ioh = ia->ia_delayioh;
+	pckbd_delay_ioh = ia->ia_delaybah;
 
 	/* Enable interrupts and keyboard, etc. */
 	if (!kbc_put8042cmd(CMDBYTE)) {
@@ -326,12 +326,12 @@ pckbdprobe(parent, match, aux)
 		goto lose;
 	}
 	for (i = 600000; i; i--)
-		if ((bus_io_read_1(pckbd_bc, pckbd_status_ioh, 0) & KBS_DIB)
+		if ((bus_space_read_1(pckbd_iot, pckbd_status_ioh, 0) & KBS_DIB)
 		    != 0) {
 			KBD_DELAY;
 			break;
 		}
-	if (i == 0 || bus_io_read_1(pckbd_bc, pckbd_data_ioh, 0)
+	if (i == 0 || bus_space_read_1(pckbd_iot, pckbd_data_ioh, 0)
 	    != KBR_RSTDONE) {
 		printf("pcprobe: reset error %d\n", 2);
 		goto lose;
@@ -395,16 +395,16 @@ pckbdattach(parent, self, aux)
 	struct pckbd_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
 
-	pckbd_bc = ia->ia_bc;
+	pckbd_iot = ia->ia_iot;
 	pckbd_ic = ia->ia_ic;
 
-	if (bus_io_map(pckbd_bc, KBDATAP, 1, &pckbd_data_ioh) ||
-	    bus_io_map(pckbd_bc, KBSTATP, 1, &pckbd_status_ioh) ||
-	    bus_io_map(pckbd_bc, IO_TIMER1, 4, &pckbd_timer_ioh) ||
-	    bus_io_map(pckbd_bc, PITAUX_PORT, 1, &pckbd_pitaux_ioh))
+	if (bus_space_map(pckbd_iot, KBDATAP, 1, 0, &pckbd_data_ioh) ||
+	    bus_space_map(pckbd_iot, KBSTATP, 1, 0, &pckbd_status_ioh) ||
+	    bus_space_map(pckbd_iot, IO_TIMER1, 4, 0, &pckbd_timer_ioh) ||
+	    bus_space_map(pckbd_iot, PITAUX_PORT, 1, 0, &pckbd_pitaux_ioh))
                 panic("pckbdattach couldn't map");
 
-	pckbd_delay_ioh = ia->ia_delayioh;
+	pckbd_delay_ioh = ia->ia_delaybah;
 
 	sc->sc_ih = isa_intr_establish(pckbd_ic, ia->ia_irq, IST_EDGE,
 	    IPL_TTY, pckbdintr, sc, sc->sc_dev.dv_xname);
@@ -431,13 +431,13 @@ pckbdintr(arg)
 	u_char data;
 	static u_char last;
 
-	if ((bus_io_read_1(pckbd_bc, pckbd_status_ioh, 0) & KBS_DIB) == 0)
+	if ((bus_space_read_1(pckbd_iot, pckbd_status_ioh, 0) & KBS_DIB) == 0)
 		return 0;
 	if (polling)
 		return 1;
 	do {
 		KBD_DELAY;
-		data = bus_io_read_1(pckbd_bc, pckbd_data_ioh, 0);
+		data = bus_space_read_1(pckbd_iot, pckbd_data_ioh, 0);
 
 		switch (data) {
 		case KBR_ACK:
@@ -456,7 +456,7 @@ pckbdintr(arg)
 #endif
 			break;
 		}
-	} while (bus_io_read_1(pckbd_bc, pckbd_status_ioh, 0) & KBS_DIB);
+	} while (bus_space_read_1(pckbd_iot, pckbd_status_ioh, 0) & KBS_DIB);
 	return 1;
 }
 
@@ -869,12 +869,12 @@ pckbd_cngetc(dev)
 
         do {
 		/* wait for byte */
-                while ((bus_io_read_1(pckbd_bc, pckbd_status_ioh, 0) & KBS_DIB)
+                while ((bus_space_read_1(pckbd_iot, pckbd_status_ioh, 0) & KBS_DIB)
 		    == 0)
 			KBD_DELAY;
 		KBD_DELAY;
 
-                data = bus_io_read_1(pckbd_bc, pckbd_data_ioh, 0);
+                data = bus_space_read_1(pckbd_iot, pckbd_data_ioh, 0);
 
                 if (data == KBR_ACK) {
                         ack = 1;
@@ -946,15 +946,15 @@ pckbd_bell(dev, wbd)
 	}
 	if (!sc->sc_bellactive || sc->sc_bellpitch != pitch) {
 		s = splhigh();
-		bus_io_write_1(pckbd_bc, pckbd_timer_ioh, TIMER_MODE,
+		bus_space_write_1(pckbd_iot, pckbd_timer_ioh, TIMER_MODE,
 		    TIMER_SEL2 | TIMER_16BIT | TIMER_SQWAVE);
-		bus_io_write_1(pckbd_bc, pckbd_timer_ioh, TIMER_CNTR2,
+		bus_space_write_1(pckbd_iot, pckbd_timer_ioh, TIMER_CNTR2,
 		    TIMER_DIV(pitch) % 256);
-		bus_io_write_1(pckbd_bc, pckbd_timer_ioh, TIMER_CNTR2,
+		bus_space_write_1(pckbd_iot, pckbd_timer_ioh, TIMER_CNTR2,
 		    TIMER_DIV(pitch) / 256);
 		/* enable speaker */
-		bus_io_write_1(pckbd_bc, pckbd_pitaux_ioh, 0,
-	    	    bus_io_read_1(pckbd_bc, pckbd_pitaux_ioh, 0) |
+		bus_space_write_1(pckbd_iot, pckbd_pitaux_ioh, 0,
+	    	    bus_space_read_1(pckbd_iot, pckbd_pitaux_ioh, 0) |
 		      PIT_SPKR);
 		splx(s);
 	}
@@ -972,8 +972,8 @@ pckbd_bell_stop(arg)
 
 	/* disable bell */
 	s = splhigh();
-	bus_io_write_1(pckbd_bc, pckbd_pitaux_ioh, 0,
-	    bus_io_read_1(pckbd_bc, pckbd_pitaux_ioh, 0) & ~PIT_SPKR);
+	bus_space_write_1(pckbd_iot, pckbd_pitaux_ioh, 0,
+	    bus_space_read_1(pckbd_iot, pckbd_pitaux_ioh, 0) & ~PIT_SPKR);
 	sc->sc_bellactive = 0;
 	splx(s);
 }

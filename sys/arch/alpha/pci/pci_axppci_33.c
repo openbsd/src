@@ -1,5 +1,5 @@
-/*	$OpenBSD: pci_axppci_33.c,v 1.7 1996/11/12 20:29:38 niklas Exp $	*/
-/*	$NetBSD: pci_axppci_33.c,v 1.8 1996/10/13 03:00:11 christos Exp $	*/
+/*	$OpenBSD: pci_axppci_33.c,v 1.8 1996/12/08 00:20:40 niklas Exp $	*/
+/*	$NetBSD: pci_axppci_33.c,v 1.9 1996/10/23 04:12:27 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -37,7 +37,7 @@
 #include <vm/vm.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.old.h>
+#include <machine/bus.h>
 #include <machine/intr.h>
 
 #include <dev/isa/isavar.h>
@@ -65,7 +65,7 @@ void
 pci_axppci_33_pickintr(lcp)
 	struct lca_config *lcp;
 {
-	bus_chipset_tag_t bc = &lcp->lc_bc;
+	bus_space_tag_t iot = lcp->lc_iot;
 	pci_chipset_tag_t pc = &lcp->lc_pc;
 	pcireg_t sioclass;
 	int sioII;
@@ -85,7 +85,7 @@ pci_axppci_33_pickintr(lcp)
 	pc->pc_intr_disestablish = dec_axppci_33_intr_disestablish;
 
 #if NSIO
-	sio_intr_setup(bc);
+	sio_intr_setup(iot);
 	set_iointr(&sio_iointr);
 #else
 	panic("pci_axppci_33_pickintr: no I/O interrupt handler (no sio)");

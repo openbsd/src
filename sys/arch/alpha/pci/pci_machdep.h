@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.5 1996/10/30 22:40:09 niklas Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.6 1996/12/08 00:20:43 niklas Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.4 1996/04/12 06:08:52 cgd Exp $	*/
 
 /*
@@ -89,5 +89,5 @@ struct alpha_pci_chipset {
 
 #ifdef _KERNEL
 void pci_display_console
-    __P((bus_chipset_tag_t, pci_chipset_tag_t, int, int, int));
+    __P((bus_space_tag_t, bus_space_tag_t, pci_chipset_tag_t, int, int, int));
 #endif /* _KERNEL */

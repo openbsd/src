@@ -1,5 +1,5 @@
-/*	$OpenBSD: cia.c,v 1.5 1996/11/23 21:44:54 kstailey Exp $	*/
-/*	$NetBSD: cia.c,v 1.11 1996/10/13 03:00:03 christos Exp $	*/
+/*	$OpenBSD: cia.c,v 1.6 1996/12/08 00:20:34 niklas Exp $	*/
+/*	$NetBSD: cia.c,v 1.12 1996/10/23 04:12:24 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -95,12 +95,19 @@ cia_init(ccp)
 	 * Can't set up SGMAP data here; can be called before malloc().
 	 */
 
-        cia_bus_io_init(&ccp->cc_bc, ccp);
-        cia_bus_mem_init(&ccp->cc_bc, ccp);
+        ccp->cc_iot = cia_bus_io_init(ccp);
+        ccp->cc_memt = cia_bus_mem_init(ccp);
         cia_pci_init(&ccp->cc_pc, ccp);
 
 	ccp->cc_hae_mem = REGVAL(CIA_CSR_HAE_MEM);
 	ccp->cc_hae_io = REGVAL(CIA_CSR_HAE_IO);
+
+	/* XXX XXX BEGIN XXX XXX */
+	{							/* XXX */
+		extern vm_offset_t alpha_XXX_dmamap_or;		/* XXX */
+		alpha_XXX_dmamap_or = 0x40000000;		/* XXX */
+	}							/* XXX */
+	/* XXX XXX END XXX XXX */
 }
 
 void
@@ -139,7 +146,8 @@ ciaattach(parent, self, aux)
 	}
 
 	pba.pba_busname = "pci";
-	pba.pba_bc = &ccp->cc_bc;
+	pba.pba_iot = ccp->cc_iot;
+	pba.pba_memt = ccp->cc_memt;
 	pba.pba_pc = &ccp->cc_pc;
 	pba.pba_bus = 0;
 	config_found(self, &pba, ciaprint);

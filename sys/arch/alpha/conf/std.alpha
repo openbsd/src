@@ -1,4 +1,4 @@
-#	$OpenBSD: std.alpha,v 1.3 1996/10/30 22:38:46 niklas Exp $
+#	$OpenBSD: std.alpha,v 1.4 1996/12/08 00:20:23 niklas Exp $
 #	$NetBSD: std.alpha,v 1.8 1996/09/27 17:18:02 cgd Exp $
 #
 # Standard/required configuration info for OpenBSD/alpha.
@@ -6,7 +6,8 @@
 machine		alpha
 
 makeoptions	DEBUG="-g"
-#makeoptions	CWARNFLAGS="-Werror"
+# NetBSD has these, OpenBSD has them in CDIAGFLAGS in Makefile.alpha instead.
+#makeoptions	CWARNFLAGS="-Werror -Wcast-qual"
 
 options		EXEC_ECOFF
 options		EXEC_ELF64

@@ -1,5 +1,5 @@
-/*	$OpenBSD: pcivga.c,v 1.8 1996/11/23 21:44:55 kstailey Exp $	*/
-/*	$NetBSD: pcivga.c,v 1.11 1996/10/13 03:00:13 christos Exp $	*/
+/*	$OpenBSD: pcivga.c,v 1.9 1996/12/08 00:20:44 niklas Exp $	*/
+/*	$NetBSD: pcivga.c,v 1.12 1996/10/23 04:12:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -59,8 +59,8 @@ struct cfdriver pcivga_cd = {
 	NULL, "pcivga", DV_DULL,
 };
 
-void	pcivga_getdevconfig __P((bus_chipset_tag_t, pci_chipset_tag_t,
-	    pcitag_t, struct pcivga_devconfig *dc));
+void	pcivga_getdevconfig __P((bus_space_tag_t, bus_space_tag_t,
+	    pci_chipset_tag_t, pcitag_t, struct pcivga_devconfig *dc));
 
 struct pcivga_devconfig pcivga_console_dc;
 
@@ -105,24 +105,25 @@ pcivgamatch(parent, match, aux)
 }
 
 void
-pcivga_getdevconfig(bc, pc, tag, dc)
-	bus_chipset_tag_t bc;
+pcivga_getdevconfig(iot, memt, pc, tag, dc)
+	bus_space_tag_t iot, memt;
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
 	struct pcivga_devconfig *dc;
 {
-	bus_io_handle_t ioh;
+	bus_space_handle_t ioh;
 	int cpos;
 
-	dc->dc_bc = bc;
+	dc->dc_iot = iot;
+	dc->dc_memt = memt;
 	dc->dc_pc = pc;
 	dc->dc_pcitag = tag;
 
 	/* XXX deal with mapping foo */
 
-	if (bus_mem_map(bc, 0xb8000, 0x8000, 0, &dc->dc_memh))
+	if (bus_space_map(memt, 0xb8000, 0x8000, 0, &dc->dc_memh))
 		panic("pcivga_getdevconfig: couldn't map memory");
-	if (bus_io_map(bc, 0x3b0, 0x30, &ioh))
+	if (bus_space_map(iot, 0x3b0, 0x30, 0, &ioh))
 		panic("pcivga_getdevconfig: couldn't map io");
 	dc->dc_ioh = ioh;
 
@@ -131,10 +132,10 @@ pcivga_getdevconfig(bc, pc, tag, dc)
 
 	dc->dc_ccol = dc->dc_crow = 0;
 
-	bus_io_write_1(bc, ioh, PCIVGA_6845_ADDR, 14);
-	cpos = bus_io_read_1(bc, ioh, PCIVGA_6845_DATA) << 8;
-	bus_io_write_1(bc, ioh, PCIVGA_6845_ADDR, 15);
-	cpos |= bus_io_read_1(bc, ioh, PCIVGA_6845_DATA);
+	bus_space_write_1(iot, ioh, PCIVGA_6845_ADDR, 14);
+	cpos = bus_space_read_1(iot, ioh, PCIVGA_6845_DATA) << 8;
+	bus_space_write_1(iot, ioh, PCIVGA_6845_ADDR, 15);
+	cpos |= bus_space_read_1(iot, ioh, PCIVGA_6845_DATA);
 
 	dc->dc_crow = cpos / dc->dc_ncol;
 	dc->dc_ccol = cpos % dc->dc_ncol;
@@ -174,8 +175,8 @@ pcivgaattach(parent, self, aux)
 	else {
 		sc->sc_dc = (struct pcivga_devconfig *)
 		    malloc(sizeof(struct pcivga_devconfig), M_DEVBUF, M_WAITOK);
-		pcivga_getdevconfig(pa->pa_bc, pa->pa_pc, pa->pa_tag,
-		    sc->sc_dc);
+		pcivga_getdevconfig(pa->pa_iot, pa->pa_memt, pa->pa_pc,
+		    pa->pa_tag, sc->sc_dc);
 	}
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
@@ -270,15 +271,15 @@ pcivgammap(dev, offset, prot)
 }
 
 void
-pcivga_console(bc, pc, bus, device, function)
-	bus_chipset_tag_t bc;
+pcivga_console(iot, memt, pc, bus, device, function)
+	bus_space_tag_t iot, memt;
 	pci_chipset_tag_t pc;
 	int bus, device, function;
 {
 	struct pcivga_devconfig *dcp = &pcivga_console_dc;
 	struct wscons_odev_spec wo;
 
-	pcivga_getdevconfig(bc, pc,
+	pcivga_getdevconfig(iot, memt, pc,
 	    pci_make_tag(pc, bus, device, function), dcp);
 
         wo.wo_ef = &pcivga_emulfuncs;
@@ -302,8 +303,8 @@ pcivga_cursor(id, on, row, col)
 	int on, row, col;
 {
 	struct pcivga_devconfig *dc = id;
-	bus_chipset_tag_t bc = dc->dc_bc;
-	bus_io_handle_t ioh = dc->dc_ioh;
+	bus_space_tag_t iot = dc->dc_iot;
+	bus_space_handle_t ioh = dc->dc_ioh;
 	int pos;
 
 #if 0
@@ -320,10 +321,10 @@ pcivga_cursor(id, on, row, col)
 
 	pos = row * dc->dc_ncol + col;
 
-        bus_io_write_1(bc, ioh, PCIVGA_6845_ADDR, 14);
-        bus_io_write_1(bc, ioh, PCIVGA_6845_DATA, pos >> 8);
-        bus_io_write_1(bc, ioh, PCIVGA_6845_ADDR, 15);
-        bus_io_write_1(bc, ioh, PCIVGA_6845_DATA, pos);
+        bus_space_write_1(iot, ioh, PCIVGA_6845_ADDR, 14);
+        bus_space_write_1(iot, ioh, PCIVGA_6845_DATA, pos >> 8);
+        bus_space_write_1(iot, ioh, PCIVGA_6845_ADDR, 15);
+        bus_space_write_1(iot, ioh, PCIVGA_6845_DATA, pos);
 }
 
 void
@@ -334,14 +335,14 @@ pcivga_putstr(id, row, col, cp, len)
 	int len;
 {
 	struct pcivga_devconfig *dc = id;
-	bus_chipset_tag_t bc = dc->dc_bc;
-	bus_mem_handle_t memh = dc->dc_memh;
+	bus_space_tag_t memt = dc->dc_memt;
+	bus_space_handle_t memh = dc->dc_memh;
 	int i, off;
 
 	off = (row * dc->dc_ncol + col) * 2;
 	for (i = 0; i < len; i++, cp++, off += 2) {
-		bus_mem_write_1(bc, memh, off, *cp);
-		bus_mem_write_1(bc, memh, off + 1,
+		bus_space_write_1(memt, memh, off, *cp);
+		bus_space_write_1(memt, memh, off + 1,
 		    dc->dc_so ? dc->dc_so_at : dc->dc_at);
 	}
 }
@@ -352,9 +353,9 @@ pcivga_copycols(id, row, srccol, dstcol, ncols)
 	int row, srccol, dstcol, ncols;
 {
 	struct pcivga_devconfig *dc = id;
-	bus_chipset_tag_t bc = dc->dc_bc;
-	bus_mem_handle_t memh = dc->dc_memh;
-	bus_mem_size_t srcoff, srcend, dstoff;
+	bus_space_tag_t memt = dc->dc_memt;
+	bus_space_handle_t memh = dc->dc_memh;
+	bus_size_t srcoff, srcend, dstoff;
 
 	/*
 	 * YUCK.  Need bus copy functions.
@@ -364,8 +365,8 @@ pcivga_copycols(id, row, srccol, dstcol, ncols)
 	dstoff = (row * dc->dc_ncol + dstcol) * 2;
 
 	for (; srcoff < srcend; srcoff += 2, dstoff += 2)
-		bus_mem_write_2(bc, memh, dstoff,
-		    bus_mem_read_2(bc, memh, srcoff));
+		bus_space_write_2(memt, memh, dstoff,
+		    bus_space_read_2(memt, memh, srcoff));
 }
 
 void
@@ -374,9 +375,9 @@ pcivga_erasecols(id, row, startcol, ncols)
 	int row, startcol, ncols;
 {
 	struct pcivga_devconfig *dc = id;
-	bus_chipset_tag_t bc = dc->dc_bc;
-	bus_mem_handle_t memh = dc->dc_memh;
-	bus_mem_size_t off, endoff;
+	bus_space_tag_t memt = dc->dc_memt;
+	bus_space_handle_t memh = dc->dc_memh;
+	bus_size_t off, endoff;
 	u_int16_t val;
 
 	/*
@@ -387,7 +388,7 @@ pcivga_erasecols(id, row, startcol, ncols)
 	val = (dc->dc_at << 8) | ' ';
 
 	for (; off < endoff; off += 2)
-		bus_mem_write_2(bc, memh, off, val);
+		bus_space_write_2(memt, memh, off, val);
 }
 
 void
@@ -396,9 +397,9 @@ pcivga_copyrows(id, srcrow, dstrow, nrows)
 	int srcrow, dstrow, nrows;
 {
 	struct pcivga_devconfig *dc = id;
-	bus_chipset_tag_t bc = dc->dc_bc;
-	bus_mem_handle_t memh = dc->dc_memh;
-	bus_mem_size_t srcoff, srcend, dstoff;
+	bus_space_tag_t memt = dc->dc_memt;
+	bus_space_handle_t memh = dc->dc_memh;
+	bus_size_t srcoff, srcend, dstoff;
 
 	/*
 	 * YUCK.  Need bus copy functions.
@@ -408,8 +409,8 @@ pcivga_copyrows(id, srcrow, dstrow, nrows)
 	dstoff = (dstrow * dc->dc_ncol + 0) * 2;
 
 	for (; srcoff < srcend; srcoff += 2, dstoff += 2)
-		bus_mem_write_2(bc, memh, dstoff,
-		    bus_mem_read_2(bc, memh, srcoff));
+		bus_space_write_2(memt, memh, dstoff,
+		    bus_space_read_2(memt, memh, srcoff));
 }
 
 void
@@ -418,9 +419,9 @@ pcivga_eraserows(id, startrow, nrows)
 	int startrow, nrows;
 {
 	struct pcivga_devconfig *dc = id;
-	bus_chipset_tag_t bc = dc->dc_bc;
-	bus_mem_handle_t memh = dc->dc_memh;
-	bus_mem_size_t off, endoff;
+	bus_space_tag_t memt = dc->dc_memt;
+	bus_space_handle_t memh = dc->dc_memh;
+	bus_size_t off, endoff;
 	u_int16_t val;
 
 	/*
@@ -431,5 +432,5 @@ pcivga_eraserows(id, startrow, nrows)
 	val = (dc->dc_at << 8) | ' ';
 
 	for (; off < endoff; off += 2)
-		bus_mem_write_2(bc, memh, off, val);
+		bus_space_write_2(memt, memh, off, val);
 }

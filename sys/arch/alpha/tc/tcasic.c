@@ -1,5 +1,5 @@
-/*	$OpenBSD: tcasic.c,v 1.5 1996/11/23 21:45:01 kstailey Exp $	*/
-/*	$NetBSD: tcasic.c,v 1.10 1996/10/13 03:00:39 christos Exp $	*/
+/*	$OpenBSD: tcasic.c,v 1.6 1996/12/08 00:21:00 niklas Exp $	*/
+/*	$NetBSD: tcasic.c,v 1.12 1996/10/23 04:12:38 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -88,7 +88,6 @@ tcasicattach(parent, self, aux)
 	struct tcbus_attach_args tba;
 	void (*intr_setup) __P((void));
 	void (*iointr) __P((void *, unsigned long));
-	struct alpha_bus_chipset bc;
 
 	printf("\n");
 	tcasicfound = 1;
@@ -132,9 +131,14 @@ tcasicattach(parent, self, aux)
 		panic("tcasicattach: bad cputype");
 	}
 
-	tc_bus_io_init(&bc, NULL);
-	tc_bus_mem_init(&bc, NULL);
-	tba.tba_bc = &bc;
+	tba.tba_memt = tc_bus_mem_init(NULL);
+
+	/* XXX XXX BEGIN XXX XXX */
+	{							/* XXX */
+		extern vm_offset_t alpha_XXX_dmamap_or;		/* XXX */
+		alpha_XXX_dmamap_or = 0;			/* XXX */
+	}							/* XXX */
+	/* XXX XXX END XXX XXX */
 
 	(*intr_setup)();
 	set_iointr(iointr);

@@ -1,5 +1,5 @@
-/*	$OpenBSD: tc_machdep.h,v 1.3 1996/10/30 22:41:23 niklas Exp $	*/
-/*	$NetBSD: tc_machdep.h,v 1.2 1996/07/09 00:55:35 cgd Exp $	*/
+/*	$OpenBSD: tc_machdep.h,v 1.4 1996/12/08 00:20:59 niklas Exp $	*/
+/*	$NetBSD: tc_machdep.h,v 1.3 1996/10/22 21:34:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -92,5 +92,4 @@ typedef int32_t		tc_offset_t;
 #define	TC_PHYS_TO_UNCACHED(addr)					\
     (addr)
 
-void tc_bus_io_init __P((bus_chipset_tag_t bc, void *iov));;
-void tc_bus_mem_init __P((bus_chipset_tag_t bc, void *memv));;
+bus_space_tag_t tc_bus_mem_init __P((void *memv));;

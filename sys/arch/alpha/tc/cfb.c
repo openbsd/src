@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfb.c,v 1.5 1996/11/23 21:44:57 kstailey Exp $	*/
+/*	$OpenBSD: cfb.c,v 1.6 1996/12/08 00:20:55 niklas Exp $	*/
 /*	$NetBSD: cfb.c,v 1.5 1996/10/13 03:00:27 christos Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #include <sys/conf.h>
 #include <sys/ioctl.h>
 
-#include <machine/bus.old.h>
+#include <machine/bus.h>
 #include <machine/intr.h>
 
 #include <dev/tc/tcvar.h>

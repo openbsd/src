@@ -1,4 +1,4 @@
-/*	$OpenBSD: apecs_lca_bus_mem.c,v 1.4 1996/11/12 20:29:34 niklas Exp $	*/
+/*	$OpenBSD: apecs_lca_bus_mem.c,v 1.5 1996/12/08 00:20:33 niklas Exp $	*/
 /*	$NetBSD: apecs_lca_bus_mem.c,v 1.5 1996/08/27 16:29:24 cgd Exp $	*/
 
 /*
@@ -35,11 +35,11 @@
 #include <sys/device.h>
 #include <vm/vm.h>
 
-#include <machine/bus.old.h>
+#include <machine/bus.h>
 
 #include <alpha/pci/apecsreg.h>
 #include <alpha/pci/lcareg.h>
-#include <alpha/pci/apecs_lca.h>
+#include <alpha/pci/lcavar.h>
 
 #if (APECS_PCI_SPARSE != LCA_PCI_SPARSE) || (APECS_PCI_DENSE != LCA_PCI_DENSE)
 #error Memory addresses do not match up?

@@ -1,5 +1,5 @@
-/*	$OpenBSD: sio_pic.c,v 1.7 1996/11/12 20:29:39 niklas Exp $	*/
-/*	$NetBSD: sio_pic.c,v 1.13 1996/10/13 03:00:20 christos Exp $	*/
+/*	$OpenBSD: sio_pic.c,v 1.8 1996/12/08 00:20:49 niklas Exp $	*/
+/*	$NetBSD: sio_pic.c,v 1.14 1996/10/23 04:12:33 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -35,7 +35,7 @@
 #include <sys/syslog.h>
 
 #include <machine/intr.h>
-#include <machine/bus.old.h>
+#include <machine/bus.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -62,8 +62,8 @@
  */
 static void	sio_strayintr __P((int));
 
-bus_chipset_tag_t sio_bc;
-bus_io_handle_t sio_ioh_icu1, sio_ioh_icu2, sio_ioh_elcr;
+bus_space_tag_t sio_iot;
+bus_space_handle_t sio_ioh_icu1, sio_ioh_icu2, sio_ioh_elcr;
 
 /*
  * Interrupt handler chains.  sio_intr_establish() inserts a handler into
@@ -135,10 +135,10 @@ sio_setirqstat(irq, enabled, type)
 	icu = irq / 8;
 	bit = irq % 8;
 
-	ocw1[0] = bus_io_read_1(sio_bc, sio_ioh_icu1, 1);
-	ocw1[1] = bus_io_read_1(sio_bc, sio_ioh_icu2, 1);
-	elcr[0] = bus_io_read_1(sio_bc, sio_ioh_elcr, 0);	/* XXX */
-	elcr[1] = bus_io_read_1(sio_bc, sio_ioh_elcr, 1);	/* XXX */
+	ocw1[0] = bus_space_read_1(sio_iot, sio_ioh_icu1, 1);
+	ocw1[1] = bus_space_read_1(sio_iot, sio_ioh_icu2, 1);
+	elcr[0] = bus_space_read_1(sio_iot, sio_ioh_elcr, 0);	/* XXX */
+	elcr[1] = bus_space_read_1(sio_iot, sio_ioh_elcr, 1);	/* XXX */
 
 	/*
 	 * interrupt enable: set bit to mask (disable) interrupt.
@@ -182,33 +182,33 @@ sio_setirqstat(irq, enabled, type)
 	}
 #endif
 
-	bus_io_write_1(sio_bc, sio_ioh_icu1, 1, ocw1[0]);
-	bus_io_write_1(sio_bc, sio_ioh_icu2, 1, ocw1[1]);
-	bus_io_write_1(sio_bc, sio_ioh_elcr, 0, elcr[0]);	/* XXX */
-	bus_io_write_1(sio_bc, sio_ioh_elcr, 1, elcr[1]);	/* XXX */
+	bus_space_write_1(sio_iot, sio_ioh_icu1, 1, ocw1[0]);
+	bus_space_write_1(sio_iot, sio_ioh_icu2, 1, ocw1[1]);
+	bus_space_write_1(sio_iot, sio_ioh_elcr, 0, elcr[0]);	/* XXX */
+	bus_space_write_1(sio_iot, sio_ioh_elcr, 1, elcr[1]);	/* XXX */
 }
 
 void
-sio_intr_setup(bc)
-	bus_chipset_tag_t bc;
+sio_intr_setup(iot)
+	bus_space_tag_t iot;
 {
 	int i;
 
-	sio_bc = bc;
+	sio_iot = iot;
 
-	if (bus_io_map(sio_bc, IO_ICU1, IO_ICUSIZE, &sio_ioh_icu1) ||
-	    bus_io_map(sio_bc, IO_ICU2, IO_ICUSIZE, &sio_ioh_icu2) ||
-	    bus_io_map(sio_bc, 0x4d0, 2, &sio_ioh_elcr))
+	if (bus_space_map(sio_iot, IO_ICU1, IO_ICUSIZE, 0, &sio_ioh_icu1) ||
+	    bus_space_map(sio_iot, IO_ICU2, IO_ICUSIZE, 0, &sio_ioh_icu2) ||
+	    bus_space_map(sio_iot, 0x4d0, 2, 0, &sio_ioh_elcr))
 		panic("sio_intr_setup: can't map I/O ports");
 
 #ifdef BROKEN_PROM_CONSOLE
 	/*
 	 * Remember the initial values, because the prom is stupid.
 	 */
-	initial_ocw1[0] = bus_io_read_1(sio_bc, sio_ioh_icu1, 1);
-	initial_ocw1[1] = bus_io_read_1(sio_bc, sio_ioh_icu2, 1);
-	initial_elcr[0] = bus_io_read_1(sio_bc, sio_ioh_elcr, 0); /* XXX */
-	initial_elcr[1] = bus_io_read_1(sio_bc, sio_ioh_elcr, 1); /* XXX */
+	initial_ocw1[0] = bus_space_read_1(sio_iot, sio_ioh_icu1, 1);
+	initial_ocw1[1] = bus_space_read_1(sio_iot, sio_ioh_icu2, 1);
+	initial_elcr[0] = bus_space_read_1(sio_iot, sio_ioh_elcr, 0); /* XXX */
+	initial_elcr[1] = bus_space_read_1(sio_iot, sio_ioh_elcr, 1); /* XXX */
 #if 0
 	printf("initial_ocw1[0] = 0x%x\n", initial_ocw1[0]);
 	printf("initial_ocw1[1] = 0x%x\n", initial_ocw1[1]);
@@ -432,8 +432,8 @@ sio_iointr(framep, vec)
 	 * by the interrupt handler.
 	 */
 	if (irq > 7)
-		bus_io_write_1(sio_bc,
+		bus_space_write_1(sio_iot,
 		    sio_ioh_icu2, 0, 0x20 | (irq & 0x07));	/* XXX */
-	bus_io_write_1(sio_bc,
+	bus_space_write_1(sio_iot,
 	    sio_ioh_icu1, 0, 0x20 | (irq > 7 ? 2 : irq));	/* XXX */
 }

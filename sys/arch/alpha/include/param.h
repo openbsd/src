@@ -1,5 +1,5 @@
-/*	$OpenBSD: param.h,v 1.6 1996/10/30 22:39:13 niklas Exp $	*/
-/*	$NetBSD: param.h,v 1.13 1996/07/09 00:33:23 cgd Exp $	*/
+/*	$OpenBSD: param.h,v 1.7 1996/12/08 00:20:25 niklas Exp $	*/
+/*	$NetBSD: param.h,v 1.14 1996/10/25 20:48:59 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -151,9 +151,13 @@
 void	delay __P((unsigned long));
 #define	DELAY(n)	delay(n)
 
-/* XXX ALL OF THE FOLLOWING BELONG IN INTR.H */
+/* XXX THE FOLLOWING PROTOTYPE BELONGS IN INTR.H */
 int spl0 __P((void));					/* drop ipl to zero */
 /* XXX END INTR.H */
+
+/* XXX THE FOLLOWING PROTOTYPE SHOULD BE A BUS.H INTERFACE */
+vm_offset_t alpha_XXX_dmamap __P((vm_offset_t));
+/* XXX END BUS.H */
 
 #endif
 #endif /* !_KERNEL */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: pci_machdep.c,v 1.5 1996/10/30 22:40:08 niklas Exp $	*/
-/*	$NetBSD: pci_machdep.c,v 1.5 1996/04/12 06:08:49 cgd Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.6 1996/12/08 00:20:42 niklas Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.6 1996/10/23 04:12:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -56,15 +56,16 @@
 #endif
 
 void
-pci_display_console(bc, pc, bus, device, function)
-	bus_chipset_tag_t bc;
+pci_display_console(iot, memt, pc, bus, device, function)
+	bus_space_tag_t iot, memt;
 	pci_chipset_tag_t pc;
 	int bus, device, function;
 {
 	pcitag_t tag;
 	pcireg_t id, class;
 	int match, nmatch;
-	void (*fn) __P((bus_chipset_tag_t, pci_chipset_tag_t, int, int, int));
+	void (*fn) __P((bus_space_tag_t, bus_space_tag_t, pci_chipset_tag_t,
+	    int, int, int));
 
 	tag = pci_make_tag(pc, bus, device, function);
 	id = pci_conf_read(pc, tag, PCI_ID_REG);
@@ -92,7 +93,7 @@ pci_display_console(bc, pc, bus, device, function)
 #endif
 
 	if (fn != NULL)
-		(*fn)(bc, pc, bus, device, function);
+		(*fn)(iot, memt, pc, bus, device, function);
 	else
 		panic("pci_display_console: unconfigured device at %d/%d/%d",
 		    bus, device, function);

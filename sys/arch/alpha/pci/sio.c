@@ -1,5 +1,5 @@
-/*	$OpenBSD: sio.c,v 1.7 1996/11/23 21:44:56 kstailey Exp $	*/
-/*	$NetBSD: sio.c,v 1.11 1996/10/13 03:00:18 christos Exp $	*/
+/*	$OpenBSD: sio.c,v 1.8 1996/12/08 00:20:48 niklas Exp $	*/
+/*	$NetBSD: sio.c,v 1.12 1996/10/23 04:12:33 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 #include <sys/device.h>
 
 #include <machine/intr.h>
-#include <machine/bus.old.h>
+#include <machine/bus.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/eisa/eisavar.h>
@@ -151,7 +151,8 @@ sioattach(parent, self, aux)
 		ec.ec_intr_disestablish = sio_intr_disestablish;
 
 		sa.sa_eba.eba_busname = "eisa";
-		sa.sa_eba.eba_bc = pa->pa_bc;
+		sa.sa_eba.eba_iot = pa->pa_iot;
+		sa.sa_eba.eba_memt = pa->pa_memt;
 		sa.sa_eba.eba_ec = &ec;
 		config_found(self, &sa.sa_eba, sioprint);
 	}
@@ -162,7 +163,8 @@ sioattach(parent, self, aux)
 	ic.ic_intr_disestablish = sio_intr_disestablish;
 
 	sa.sa_iba.iba_busname = "isa";
-	sa.sa_iba.iba_bc = pa->pa_bc;
+	sa.sa_iba.iba_iot = pa->pa_iot;
+	sa.sa_iba.iba_memt = pa->pa_memt;
 	sa.sa_iba.iba_ic = &ic;
 	config_found(self, &sa.sa_iba, sioprint);
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: tga.c,v 1.7 1996/11/23 21:44:56 kstailey Exp $	*/
-/*	$NetBSD: tga.c,v 1.10 1996/10/13 03:00:22 christos Exp $	*/
+/*	$OpenBSD: tga.c,v 1.8 1996/12/08 00:20:51 niklas Exp $	*/
+/*	$NetBSD: tga.c,v 1.11 1996/10/23 04:12:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -37,7 +37,7 @@
 #include <sys/conf.h>
 #include <sys/ioctl.h>
 
-#include <machine/bus.old.h>
+#include <machine/bus.h>
 #include <machine/intr.h>
 
 #include <dev/pci/pcireg.h>
@@ -69,7 +69,7 @@ struct cfdriver tga_cd = {
 
 int	tga_identify __P((tga_reg_t *));
 const struct tga_conf *tga_getconf __P((int));
-void	tga_getdevconfig __P((bus_chipset_tag_t bc, pci_chipset_tag_t pc,
+void	tga_getdevconfig __P((bus_space_tag_t memt, pci_chipset_tag_t pc,
 	    pcitag_t tag, struct tga_devconfig *dc));
 
 struct tga_devconfig tga_console_dc;
@@ -104,8 +104,8 @@ tgamatch(parent, match, aux)
 }
 
 void
-tga_getdevconfig(bc, pc, tag, dc)
-	bus_chipset_tag_t bc;
+tga_getdevconfig(memt, pc, tag, dc)
+	bus_space_tag_t memt;
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
 	struct tga_devconfig *dc;
@@ -114,10 +114,10 @@ tga_getdevconfig(bc, pc, tag, dc)
 	const struct tga_ramdac_conf *tgar;
 	struct raster *rap;
 	struct rcons *rcp;
-	bus_mem_size_t pcisize;
+	bus_size_t pcisize;
 	int i, cacheable;
 
-	dc->dc_bc = bc;
+	dc->dc_memt = memt;
 	dc->dc_pc = pc;
 
 	dc->dc_pcitag = tag;
@@ -129,7 +129,7 @@ tga_getdevconfig(bc, pc, tag, dc)
 		panic("tga_getdevconfig: memory not cacheable?");
 
 	/* XXX XXX XXX */
-	if (bus_mem_map(bc, dc->dc_pcipaddr, pcisize, 1, &dc->dc_vaddr))
+	if (bus_space_map(memt, dc->dc_pcipaddr, pcisize, 1, &dc->dc_vaddr))
 		return;
 	dc->dc_paddr = ALPHA_K0SEG_TO_PHYS(dc->dc_vaddr);	/* XXX */
 
@@ -233,7 +233,7 @@ tgaattach(parent, self, aux)
 	else {
 		sc->sc_dc = (struct tga_devconfig *)
 		    malloc(sizeof(struct tga_devconfig), M_DEVBUF, M_WAITOK);
-		tga_getdevconfig(pa->pa_bc, pa->pa_pc, pa->pa_tag, sc->sc_dc);
+		tga_getdevconfig(pa->pa_memt, pa->pa_pc, pa->pa_tag, sc->sc_dc);
 	}
 	if (sc->sc_dc->dc_vaddr == NULL) {
 		printf(": couldn't map memory space; punt!\n");
@@ -396,15 +396,15 @@ tgammap(dev, offset, prot)
 }
 
 void
-tga_console(bc, pc, bus, device, function)
-	bus_chipset_tag_t bc;
+tga_console(iot, memt, pc, bus, device, function)
+	bus_space_tag_t iot, memt;
 	pci_chipset_tag_t pc;
 	int bus, device, function;
 {
 	struct tga_devconfig *dcp = &tga_console_dc;
 	struct wscons_odev_spec wo;
 
-	tga_getdevconfig(bc, pc, pci_make_tag(pc, bus, device, function), dcp);
+	tga_getdevconfig(memt, pc, pci_make_tag(pc, bus, device, function), dcp);
 
 	/* sanity checks */
 	if (dcp->dc_vaddr == NULL)

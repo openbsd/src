@@ -1,5 +1,5 @@
-/*	$OpenBSD: tgavar.h,v 1.5 1996/10/30 22:40:22 niklas Exp $	*/
-/*	$NetBSD: tgavar.h,v 1.5 1996/04/12 06:09:21 cgd Exp $	*/
+/*	$OpenBSD: tgavar.h,v 1.6 1996/12/08 00:20:52 niklas Exp $	*/
+/*	$NetBSD: tgavar.h,v 1.6 1996/10/23 04:12:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -77,11 +77,11 @@ struct tga_conf {
 };
 
 struct tga_devconfig {
-	bus_chipset_tag_t dc_bc;
+	bus_space_tag_t dc_memt;
 	pci_chipset_tag_t dc_pc;
 
 	pcitag_t   	 dc_pcitag;	/* PCI tag */
-	bus_mem_addr_t	 dc_pcipaddr;	/* PCI phys addr. */
+	bus_addr_t	 dc_pcipaddr;	/* PCI phys addr. */
 
 	tga_reg_t   *dc_regs;		/* registers; XXX: need aliases */
 
@@ -125,7 +125,8 @@ struct tga_softc {
 	    ((PCI_VENDOR(id) == PCI_VENDOR_DEC &&			\
 	     PCI_PRODUCT(id) == PCI_PRODUCT_DEC_21030) ? 10 : 0)
 
-void    tga_console __P((bus_chipset_tag_t, pci_chipset_tag_t, int, int, int));
+void    tga_console __P((bus_space_tag_t, bus_space_tag_t, pci_chipset_tag_t,
+	    int, int, int));
 
 int	tga_identify __P((tga_reg_t *));
 const struct tga_conf *tga_getconf __P((int));

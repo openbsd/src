@@ -1,5 +1,5 @@
-/*	$OpenBSD: ciavar.h,v 1.4 1996/10/30 22:39:58 niklas Exp $	*/
-/*	$NetBSD: ciavar.h,v 1.4 1996/06/10 00:03:59 cgd Exp $	*/
+/*	$OpenBSD: ciavar.h,v 1.5 1996/12/08 00:20:37 niklas Exp $	*/
+/*	$NetBSD: ciavar.h,v 1.5 1996/10/23 04:12:24 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -38,7 +38,7 @@
  * do their dirty work (and more!).
  */
 struct cia_config {
-	struct alpha_bus_chipset cc_bc;
+	bus_space_tag_t cc_iot, cc_memt;
 	struct alpha_pci_chipset cc_pc;
 
 	u_int32_t cc_hae_mem;
@@ -55,5 +55,5 @@ struct cia_softc {
 void	cia_init __P((struct cia_config *));
 void	cia_pci_init __P((pci_chipset_tag_t, void *));
 
-void	cia_bus_mem_init __P((bus_chipset_tag_t bc, void *memv));
-void	cia_bus_io_init __P((bus_chipset_tag_t bc, void *iov));
+bus_space_tag_t	cia_bus_io_init __P((void *iov));
+bus_space_tag_t	cia_bus_mem_init __P((void *memv));

@@ -1,5 +1,5 @@
-/*	$OpenBSD: dec_2100_a50.c,v 1.5 1996/10/30 22:38:01 niklas Exp $	*/
-/*	$NetBSD: dec_2100_a50.c,v 1.14 1996/10/13 02:59:28 christos Exp $	*/
+/*	$OpenBSD: dec_2100_a50.c,v 1.6 1996/12/08 00:20:14 niklas Exp $	*/
+/*	$NetBSD: dec_2100_a50.c,v 1.15 1996/10/23 04:12:13 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -38,8 +38,8 @@
 #include <machine/autoconf.h>
 
 #include <dev/isa/isavar.h>
-#include <dev/isa/comreg.h>
-#include <dev/isa/comvar.h>
+#include <dev/ic/comreg.h>
+#include <dev/ic/comvar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
@@ -100,11 +100,6 @@ dec_2100_a50_consinit()
 		/* serial console ... */
 		/* XXX */
 		{
-			extern int comconsinit;	/* set */
-			extern int comdefaultrate;
-			extern int comcngetc __P((dev_t));
-			extern void comcnputc __P((dev_t, int));
-			extern void comcnpollc __P((dev_t, int));
 			static struct consdev comcons = { NULL, NULL,
 			    comcngetc, comcnputc, comcnpollc, NODEV, 1 };
 
@@ -113,12 +108,12 @@ dec_2100_a50_consinit()
 
 			comconsaddr = 0x3f8;
 			comconsinit = 0;
-			comconsbc = &acp->ac_bc;
-			if (bus_io_map(comconsbc, comconsaddr, COM_NPORTS,
-			    &comconsioh))
+			comconsiot = acp->ac_iot;
+			if (bus_space_map(comconsiot, comconsaddr, COM_NPORTS,
+			    0, &comconsioh))
 				panic("can't map serial console I/O ports");
 			comconscflag = (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8;
-			cominit(comconsbc, comconsioh, comdefaultrate);
+			cominit(comconsiot, comconsioh, comdefaultrate);
 
 			cn_tab = &comcons;
 			comcons.cn_dev = makedev(26, 0);	/* XXX */
@@ -128,7 +123,7 @@ dec_2100_a50_consinit()
 	case 3:
 		/* display console ... */
 		/* XXX */
-		pci_display_console(&acp->ac_bc, &acp->ac_pc,
+		pci_display_console(acp->ac_iot, acp->ac_memt, &acp->ac_pc,
 		    (ctb->ctb_turboslot >> 8) & 0xff,
 		    ctb->ctb_turboslot & 0xff, 0);
 		break;
