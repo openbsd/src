@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wicontrol.8,v 1.23 2001/12/21 11:41:50 mpech Exp $
+.\"	$OpenBSD: wicontrol.8,v 1.24 2002/03/28 20:48:37 mickey Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu> All rights reserved.
@@ -41,7 +41,7 @@
 .Sh SYNOPSIS
 .Nm wicontrol
 .Op Ar interface
-.Op Fl o
+.Op Fl ol
 .Op Fl e Ar 0|1
 .Op Fl k Ar key "[ -v 1|2|3|4 ]"
 .Op Fl t Ar tx rate
@@ -99,6 +99,8 @@ The options are as follows:
 Display the statistics counters for the specified WaveLAN/IEEE
 interface.
 Note however, that the statictics are updated about once a minute.
+.It Fl l
+For the card in Host AP mode list detected stations.
 .It Fl e Ar 0|1
 Enable or disable WEP encryption.
 Permitted values are

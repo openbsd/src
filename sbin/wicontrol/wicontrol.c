@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.23 2002/03/28 19:32:44 mickey Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.24 2002/03/28 20:48:38 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -50,9 +50,11 @@
 #else
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
+#include <net/if_ieee80211.h>
 
 #include <dev/ic/if_wi_ieee.h>
 #include <dev/ic/if_wireg.h>
+#include <dev/ic/if_wi_hostap.h>
 #endif
 
 #include <stdio.h>
@@ -67,27 +69,29 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $OpenBSD: wicontrol.c,v 1.23 2002/03/28 19:32:44 mickey Exp $";
+	"@(#) $OpenBSD: wicontrol.c,v 1.24 2002/03/28 20:48:38 mickey Exp $";
 #endif
 
-static void wi_getval(char *, struct wi_req *);
-static void wi_setval(char *, struct wi_req *);
-static void wi_printstr(struct wi_req *);
-static void wi_setstr(char *, int, char *);
-static void wi_setbytes(char *, int, char *, int);
-static void wi_setword(char *, int, char *);
-static void wi_sethex(char *, int, char *);
-static void wi_printwords(struct wi_req *);
-static void wi_printbool(struct wi_req *);
-static void wi_printhex(struct wi_req *);
-static void wi_dumpinfo(char *);
-static void wi_setkeys(char *, int, char *);
-static void wi_printkeys(struct wi_req *);
-static void wi_printcardid(struct wi_req *, int);
-static void wi_dumpstats(char *);
-static void usage(void);
+void wi_getval(char *, struct wi_req *);
+void wi_setval(char *, struct wi_req *);
+void wi_printstr(struct wi_req *);
+void wi_setstr(char *, int, char *);
+void wi_setbytes(char *, int, char *, int);
+void wi_setword(char *, int, char *);
+void wi_sethex(char *, int, char *);
+void wi_printwords(struct wi_req *);
+void wi_printbool(struct wi_req *);
+void wi_printhex(struct wi_req *);
+void wi_dumpinfo(char *);
+void wi_setkeys(char *, int, char *);
+void wi_printkeys(struct wi_req *);
+void wi_printcardid(struct wi_req *, int);
+void wi_dumpstats(char *);
+void wi_dumpstations(char *);
+void usage(void);
+void printb(char *s, unsigned short v, char *bits);
 
-static void
+void
 wi_getval(iface, wreq)
 	char			*iface;
 	struct wi_req		*wreq;
@@ -111,7 +115,7 @@ wi_getval(iface, wreq)
 	close(s);
 }
 
-static void
+void
 wi_setval(iface, wreq)
 	char			*iface;
 	struct wi_req		*wreq;
@@ -243,7 +247,7 @@ wi_sethex(iface, code, str)
 	wi_setbytes(iface, code, (char *)addr, ETHER_ADDR_LEN);
 }
 
-static int
+int
 wi_hex2int(c)
         char                    c;
 {
@@ -257,7 +261,7 @@ wi_hex2int(c)
 	return (0); 
 }
 
-static void
+void
 wi_str2key(s, k)
         char                    *s;
         struct wi_key           *k;
@@ -282,7 +286,7 @@ wi_str2key(s, k)
         }
 }
 
-static void
+void
 wi_setkeys(iface, idx, key)
         char                    *iface;
         int                     idx;
@@ -328,7 +332,7 @@ wi_setkeys(iface, idx, key)
         wi_setval(iface, &wreq);
 }
 
-static void
+void
 wi_printkeys(wreq)
         struct wi_req           *wreq;
 {
@@ -472,7 +476,7 @@ struct wi_table {
 	char			*wi_str;
 };
 
-static struct wi_table wi_table[] = {
+struct wi_table wi_table[] = {
 	{ WI_RID_SERIALNO, WI_STRING, "NIC serial number:\t\t\t" },
 	{ WI_RID_NODENAME, WI_STRING, "Station name:\t\t\t\t" },
 	{ WI_RID_OWN_SSID, WI_STRING, "SSID for IBSS creation:\t\t\t" },
@@ -484,7 +488,7 @@ static struct wi_table wi_table[] = {
 	{ WI_RID_CURRENT_CHAN, WI_WORDS, "Current channel:\t\t\t" },
 	{ WI_RID_COMMS_QUALITY, WI_WORDS, "Comms quality/signal/noise:\t\t" },
 	{ WI_RID_PROMISC, WI_BOOL, "Promiscuous mode:\t\t\t" },
-	{ WI_RID_PORTTYPE, WI_WORDS, "Port type (1=BSS, 3=ad-hoc):\t\t"},
+	{ WI_RID_PORTTYPE, WI_WORDS, "Port type (1=BSS, 3=ad-hoc, 6=Host AP):\t"},
 	{ WI_RID_MAC_NODE, WI_HEXBYTES, "MAC address:\t\t\t\t"},
 	{ WI_RID_TX_RATE, WI_WORDS, "TX rate (selection):\t\t\t"},
 	{ WI_RID_CUR_TX_RATE, WI_WORDS, "TX rate (actual speed):\t\t\t"},
@@ -500,7 +504,7 @@ static struct wi_table wi_table[] = {
 	{ 0, NULL }
 };
 
-static struct wi_table wi_crypt_table[] = {
+struct wi_table wi_crypt_table[] = {
         { WI_RID_ENCRYPTION, WI_BOOL, "WEP encryption:\t\t\t\t" },
         { WI_RID_CNFAUTHMODE, WI_WORDS,
 	  "Authentication type \n(1=OpenSys, 2=Shared Key):\t\t" },
@@ -509,7 +513,7 @@ static struct wi_table wi_crypt_table[] = {
         { 0, NULL }
 };
 
-static void
+void
 wi_dumpinfo(iface)
 	char			*iface;
 {
@@ -600,7 +604,7 @@ wi_dumpinfo(iface)
 	}
 }
 
-static void
+void
 wi_dumpstats(iface)
 	char			*iface;
 {
@@ -658,14 +662,57 @@ wi_dumpstats(iface)
 	    c->wi_rx_msg_in_bad_msg_frags);
 }
 
-static void
+void
+wi_dumpstations(iface)
+	char			*iface;
+{
+	struct hostap_getall    reqall;
+	struct hostap_sta       stas[WIHAP_MAX_STATIONS];
+	struct ifreq		ifr;
+	int i, s;
+
+	bzero(&ifr, sizeof(ifr));
+	strlcpy(ifr.ifr_name, iface, sizeof(ifr.ifr_name));
+	ifr.ifr_data = (caddr_t) & reqall;
+	bzero(&reqall, sizeof(reqall));
+	reqall.size = sizeof(stas);
+	reqall.addr = stas;
+	bzero(&stas, sizeof(stas));
+
+	s = socket(AF_INET, SOCK_DGRAM, 0);
+	if (s == -1)
+		err(1, "socket");
+
+	if (ioctl(s, SIOCHOSTAP_GETALL, &ifr) < 0)
+		err(1, "SIOCHOSTAP_GETALL");
+
+	printf("%d station%s:\n", reqall.nstations, reqall.nstations>1?"s":"");
+	for (i = 0; i < reqall.nstations; i++) {
+		struct hostap_sta *info = &stas[i];
+
+	        printf("%02x:%02x:%02x:%02x:%02x:%02x  asid=%04x",
+			info->addr[0], info->addr[1], info->addr[2],
+			info->addr[3], info->addr[4], info->addr[5],
+			info->asid - 0xc001);
+
+		printb(", flags", info->flags, HOSTAP_FLAGS_BITS);
+		printb(", caps", info->capinfo, IEEE80211_CAPINFO_BITS);
+		printb(", rates", info->rates, WI_RATES_BITS);
+		if (info->sig_info)
+			printf(", sig=%d/%d\n",
+			    info->sig_info >> 8, info->sig_info & 0xff);
+		putchar('\n');
+	}
+}
+
+void
 usage()
 {
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s interface "
-	    "[-o] [-t tx rate] [-n network name] [-s station name]\n"
+	    "usage: %s interface [-ol]"
+	    "       [-t tx rate] [-n network name] [-s station name]\n"
 	    "       [-e 0|1] [-k key [-v 1|2|3|4]] [-T 1|2|3|4]\n"
 	    "       [-c 0|1] [-q SSID] [-p port type] [-a access point density]\n"
 	    "       [-m MAC address] [-d max data length] [-r RTS threshold]\n"
@@ -681,7 +728,7 @@ struct wi_func {
         char  *optarg;
 };
 
-static struct wi_func wi_opt[] = {
+struct wi_func wi_opt[] = {
 	{ 'k', wi_setkeys, 0, NULL },  /* MUST be first entry in table */
 	{ 'a', wi_setword, WI_RID_SYSTEM_SCALE, NULL },
 	{ 'c', wi_setword, WI_RID_CREATE_IBSS, NULL },
@@ -716,9 +763,10 @@ main(argc, argv)
 	int			argc;
 	char			*argv[];
 {
-	char			*iface = "wi0";
-	int                     ch, p, dumpstats = 0, dumpinfo = 1, ifspecified = 0;
+	char	*iface = "wi0";
+	int	ch, p, dumpstats, dumpinfo = 1, ifspecified, dumpstations;
 
+	dumpstats = ifspecified = dumpstations = 0;
 	if (argc > 1 && argv[1][0] != '-') {
 		iface = argv[1];
 		memcpy(&argv[1], &argv[2], argc * sizeof(char *));
@@ -727,7 +775,7 @@ main(argc, argv)
 	}
 
 	while((ch = getopt(argc, argv,
-	    "a:c:d:e:f:hi:k:m:n:op:q:r:s:t:v:A:M:S:P:R:T:")) != -1) {
+	    "a:c:d:e:f:hi:k:lm:n:op:q:r:s:t:v:A:M:S:P:R:T:")) != -1) {
 	        for (p = 0; ch && wi_opt[p].key; p++)
 		        if (ch == wi_opt[p].key) {
 			        wi_opt[p].optarg = optarg;
@@ -744,6 +792,9 @@ main(argc, argv)
 		case 'i':
 		        if (!ifspecified)
 			        iface = optarg;
+			break;
+		case 'l':
+			dumpstations++;
 			break;
 		case 'v':
  		        for (p = 0; wi_opt[p].key; p++)
@@ -771,11 +822,49 @@ main(argc, argv)
 		        wi_opt[p].function(iface, wi_opt[p].wi_code, 
 					   wi_opt[p].optarg);
 
-	if (dumpstats)
+	if (dumpstations)
+		wi_dumpstations(iface);
+
+	if (dumpstats && !dumpstations)
 	        wi_dumpstats(iface);
 
-	if (dumpinfo && !dumpstats)
+	if (dumpinfo && !dumpstats && !dumpstations)
 	        wi_dumpinfo(iface);
 
 	exit(0);
+}
+
+/*
+ * Print a value a la the %b format of the kernel's printf
+ * (ripped screaming from ifconfig/ifconfig.c)
+ */
+void
+printb(s, v, bits)
+	char *s;
+	char *bits;
+	unsigned short v;
+{
+	int i, any = 0;
+	char c;
+
+	if (bits && *bits == 8)
+		printf("%s=%o", s, v);
+	else
+		printf("%s=%x", s, v);
+	bits++;
+	if (bits) {
+		putchar('<');
+		while ((i = *bits++)) {
+			if (v & (1 << (i-1))) {
+				if (any)
+					putchar(',');
+				any = 1;
+				for (; (c = *bits) > 32; bits++)
+					putchar(c);
+			} else
+				for (; *bits > 32; bits++)
+					;
+		}
+		putchar('>');
+	}
 }
