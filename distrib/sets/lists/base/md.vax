@@ -921,6 +921,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/objc/thr.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/objc/typedstream.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/ocurses.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/ohash.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/olf_abi.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl
 ./usr/libdata/perl5/site_perl/vax-openbsd/panel.ph

@@ -29,7 +29,7 @@
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.8/2.95.3/include
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.8/2.95.3/specs
 ./usr/lib/libacl.so.5.0
-./usr/lib/libc.so.26.0
+./usr/lib/libc.so.26.1
 ./usr/lib/libc_r.so.4.0
 ./usr/lib/libcrypto.so.3.0
 ./usr/lib/libcurses++.so.1.1
@@ -1376,6 +1376,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/objc/thr.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/objc/typedstream.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/ocurses.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/ohash.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/olf_abi.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/openssl
 ./usr/libdata/perl5/site_perl/m68k-openbsd/panel.ph
