@@ -1,5 +1,5 @@
-/*	$OpenBSD: zbus.c,v 1.8 1997/01/16 09:25:35 niklas Exp $	*/
-/*	$NetBSD: zbus.c,v 1.31 1997/01/06 18:05:15 is Exp $	*/
+/*	$OpenBSD: zbus.c,v 1.9 1997/09/11 07:39:55 niklas Exp $	*/
+/*	$NetBSD: zbus.c,v 1.33 1997/03/27 23:50:39 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -106,15 +106,19 @@ static struct aconfdata aconftab[] = {
 	/* ASDG */
 	{ "ed",		1023,	254 },
 	/* Village Tronic Ariadne */
-	{ "ae",		2167,	201},
+	{ "le",		2167,	201},
 	/* bsc/Alf Data */
 	{ "Tandem",	2092,    6 },	/* Tandem AT disk controler */
 	{ "mfc",	2092,	16 },
 	{ "mfc",	2092,	17 },
 	{ "mfc",	2092,	18 },
 	/* Cirrus CL GD 5426 -> Picasso, Piccolo, EGS Spectrum */
-	{ "grfcl",	2167,	11},	/* Picasso-II mem*/
-	{ "grfcl",	2167,	12},	/* regs */
+	{ "grfcl",	2167,	11},	/* PicassoII mem */
+	{ "grfcl",	2167,	12},	/* PicassoII regs */
+	{ "grfcl",	2167,	21},	/* PicassoIV Z2 mem1 */
+	{ "grfcl",	2167,	22},	/* PicassoIV Z2 mem2 */
+	{ "grfcl",	2167,	23},	/* PicassoIV Z2 regs */
+	{ "grfcl",	2167,	24},	/* PicassoIV Z3 */
 	{ "grfcl",	2193,	2},	/* Spectrum mem */
 	{ "grfcl",	2193,	1},	/* Spectrum regs */
 	{ "grfcl",	2195,	5},	/* Piccolo mem */
@@ -139,11 +143,12 @@ static struct aconfdata aconftab[] = {
 	{ "empsc",	2171,	21 },	/* Emplant SCSI */
 	{ "empsc",	2171,	32 },	/* Emplant SCSI */
 	/* Tseng ET4000 boards */
-	{ "grfet",	2181,	0 },	/* oMniBus */
-	{ "grfet",	2167,	1 },	/* Domnio mem */
-	{ "grfet",	2167,	2 },	/* Domino regs */
 	{ "grfet",	2117,	3 },	/* Merlin mem */
 	{ "grfet",	2117,	4 },	/* Merlin regs */
+	{ "grfet",	2167,	1 },	/* Domnio mem */
+	{ "grfet",	2167,	2 },	/* Domino regs */
+	{ "grfet",	2167,	3 },	/* Domino regs (proto 16M) */
+	{ "grfet",	2181,	0 },	/* oMniBus */
 	/* Advanced Systems */
 	{ "nxsc",	2102,	1 },	/* Nexus SCSI board */
 	/* Masoboshi */
@@ -159,28 +164,31 @@ static int naconfent = sizeof(aconftab) / sizeof(struct aconfdata);
  * the Zorro III device.
  */
 static struct preconfdata preconftab[] = {
-	{18260, 6, 0 },	/* Retina Z2 */
-	{18260, 16, 0}, /* Retina BLT Z3 */
+	{18260, 6, 0 },	/* Retina Z2 */			/* grf1 */
+	{18260, 16, 0}, /* Retina BLT Z3 */		/* grf2 */
 	{18260, 19, 0}, /* Altais */
-	{2167,	11, 0},	/* Picasso-II mem*/
-	{2167,	12, 0},	/* Picasso-II regs */
+	{2167,	11, 0},	/* PicassoII mem */		/* grf3 */
+	{2167,	12, 0},	/* PicassoII regs */
+	{2167,	21, 0},	/* PicassoIV Z2 mem1 */
+	{2167,	22, 0},	/* PicassoIV Z2 mem2 */
+	{2167,	23, 0},	/* PicassoIV Z2 regs */
+	{2167,	24, 0},	/* PicassoIV Z3 */
 	{2193,	2, 0},	/* Spectrum mem */
 	{2193,	1, 0},	/* Spectrum regs */
 	{2195,	5, 0},	/* Piccolo mem */
 	{2195,	6, 0},	/* Piccolo regs */
 	{2195,	10, 0},	/* Piccolo SD64 mem */
 	{2195,	11, 0},	/* Piccolo SD64 regs */
-	{1030,	0, 0},	/* Ulwl board */
-	{8512,	34, 0},	/* Cybervison 64 */
-	{8512,  34, 0}, /* Cybervison 64 */
-	{2181,	0, 0},	/* oMniBus mem or regs */
+	{1030,	0, 0},	/* Ulwl board */		/* grf4 */
+	{8512,	34, 0},	/* Cybervison 64 */		/* grf5 */
+	{2117,	3, 0},	/* Merlin mem */		/* grf6 */
+	{2117,	4, 0},	/* Merlin regs */
 	{2167,	1, 0},	/* Domino mem */
 	{2167,	2, 0},	/* Domino regs */
-	{2117,	3, 0},	/* Merlin mem */
-	{2117,	4, 0}	/* Merlin regs */
+	{2167,	3, 0},	/* Domino regs (proto 16M) */
+	{2181,	0, 0}	/* oMniBus mem or regs */
 };
 static int npreconfent = sizeof(preconftab) / sizeof(struct preconfdata);
-
 
 void zbusattach __P((struct device *, struct device *, void *));
 int zbusprint __P((void *, const char *));
