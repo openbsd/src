@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_priority_queue.c,v 1.3 2000/01/06 07:20:23 d Exp $	*/
+/*	$OpenBSD: uthread_priority_queue.c,v 1.4 2001/09/04 23:28:31 fgsch Exp $	*/
 /*
  * Copyright (c) 1998 Daniel Eischen <eischen@vigrid.com>.
  * All rights reserved.
@@ -67,7 +67,7 @@ static int _pq_active = 0;
 		PANIC(msg);				\
 } while (0)
 #define _PQ_ASSERT_NOT_QUEUED(thrd, msg) do {		\
-	if ((thrd)->flags & _PQ_IN_SCHEDQ)		\
+	if (((thrd)->flags & _PQ_IN_SCHEDQ) != 0)	\
 		PANIC(msg);				\
 } while (0)
 
@@ -80,10 +80,8 @@ static int _pq_active = 0;
 #define _PQ_ASSERT_IN_WAITQ(thrd, msg)
 #define _PQ_ASSERT_IN_PRIOQ(thrd, msg)
 #define _PQ_ASSERT_NOT_QUEUED(thrd, msg)
-#define _PQ_CHECK_PRIO()
 
 #endif
-
 
 int
 _pq_alloc(pq_queue_t *pq, int minprio, int maxprio)
@@ -102,9 +100,7 @@ _pq_alloc(pq_queue_t *pq, int minprio, int maxprio)
 	else {
 		/* Remember the queue size: */
 		pq->pq_size = prioslots;
-
 		ret = _pq_init(pq);
-
 	}
 	return (ret);
 }
@@ -271,7 +267,6 @@ pq_insert_prio_list(pq_queue_t *pq, int prio)
 	pq->pq_lists[prio].pl_queued = 1;
 }
 
-#if defined(_PTHREADS_INVARIANTS)
 void
 _waitq_insert(pthread_t pthread)
 {
@@ -332,5 +327,4 @@ _waitq_clearactive(void)
 	_PQ_ASSERT_ACTIVE("_waitq_clearactive: ! pq_active");
 	_PQ_CLEAR_ACTIVE();
 }
-#endif
 #endif

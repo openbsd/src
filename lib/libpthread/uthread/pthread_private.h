@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.28 2001/09/04 22:17:45 fgsch Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.29 2001/09/04 23:28:31 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -82,29 +82,13 @@
 /*
  * Waiting queue manipulation macros (using pqe link):
  */
-#if defined(_PTHREADS_INVARIANTS)
 #define PTHREAD_WAITQ_REMOVE(thrd)	_waitq_remove(thrd)
 #define PTHREAD_WAITQ_INSERT(thrd)	_waitq_insert(thrd)
+
+#if defined(_PTHREADS_INVARIANTS)
 #define PTHREAD_WAITQ_CLEARACTIVE()	_waitq_clearactive()
 #define PTHREAD_WAITQ_SETACTIVE()	_waitq_setactive()
 #else
-#define PTHREAD_WAITQ_REMOVE(thrd)	TAILQ_REMOVE(&_waitingq,thrd,pqe)
-#define PTHREAD_WAITQ_INSERT(thrd) do {					\
-	if ((thrd)->wakeup_time.tv_sec == -1)				\
-		TAILQ_INSERT_TAIL(&_waitingq,thrd,pqe);			\
-	else {								\
-		pthread_t tid = TAILQ_FIRST(&_waitingq);		\
-		while ((tid != NULL) && (tid->wakeup_time.tv_sec != -1) && \
-		    ((tid->wakeup_time.tv_sec < (thrd)->wakeup_time.tv_sec) ||	\
-		    ((tid->wakeup_time.tv_sec == (thrd)->wakeup_time.tv_sec) &&	\
-		    (tid->wakeup_time.tv_nsec <= (thrd)->wakeup_time.tv_nsec)))) \
-			tid = TAILQ_NEXT(tid, pqe);			\
-		if (tid == NULL)					\
-			TAILQ_INSERT_TAIL(&_waitingq,thrd,pqe);		\
-		else							\
-			TAILQ_INSERT_BEFORE(tid,thrd,pqe);		\
-	}								\
-} while (0)
 #define PTHREAD_WAITQ_CLEARACTIVE()
 #define PTHREAD_WAITQ_SETACTIVE()
 #endif
