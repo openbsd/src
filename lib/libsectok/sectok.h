@@ -1,4 +1,4 @@
-/* $Id: sectok.h,v 1.13 2001/07/26 22:15:04 rees Exp $ */
+/* $Id: sectok.h,v 1.14 2001/07/27 21:55:36 jakob Exp $ */
 
 /*
 copyright 2001
@@ -70,6 +70,7 @@ extern unsigned char root_fid[];
 
 /* Common card functions */
 int sectok_open(int rn, int flags, int *swp);
+int sectok_friendly_open(const char *rn, int flags, int *swp);
 int sectok_xopen(int rn, int flags, char *config_path, char *driver_path, int *swp);
 int sectok_reset(int fd, int flags, unsigned char *atr, int *swp);
 int sectok_apdu(int fd, int cla, int ins, int p1, int p2,

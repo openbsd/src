@@ -1,4 +1,4 @@
-/* $Id: sectok.c,v 1.7 2001/07/26 22:15:04 rees Exp $ */
+/* $Id: sectok.c,v 1.8 2001/07/27 21:55:36 jakob Exp $ */
 
 /*
 copyright 2000
@@ -178,6 +178,16 @@ sectok_xopen(int rn, int flags, char *config_path, char *driver_path, int *swp)
 int sectok_open(int rn, int flags, int *swp)
 {
     return sectok_xopen(rn, flags, NULL, NULL, swp);
+}
+
+int sectok_friendly_open(const char *rn, int flags, int *swp)
+{
+    /* just convert the reader to a integer for now */
+    if (rn != NULL) {
+        return sectok_xopen(atoi(rn), flags, NULL, NULL, swp);
+    } else {
+        return -1;
+    }
 }
 
 static int
