@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.11 2001/02/28 05:27:37 angelos Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.12 2001/02/28 08:24:53 angelos Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -451,9 +451,10 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 	}
 	else
 	{
+	    ipo->ipo_last_searched = time.tv_sec; /* "touch" the entry */
+
 	    /* Find an appropriate SA from among the existing SAs */
 	    ipo->ipo_tdb = gettdbbyaddr(&sdst, ipo->ipo_sproto, m, af);
-	    ipo->ipo_last_searched = time.tv_sec;
 	    if (ipo->ipo_tdb)
 	    {
 		TAILQ_INSERT_TAIL(&ipo->ipo_tdb->tdb_policy_head, ipo,
@@ -1006,6 +1007,7 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 	    m_freem(ipa->ipa_packet);
 	    ipa->ipa_packet = m_copym2(m, 0, M_COPYALL, M_DONTWAIT);
 	}
+
 	return 0;
     }
 
@@ -1014,10 +1016,13 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 	   M_TDB, M_DONTWAIT);
     if (ipa == NULL)
       return ENOMEM;
+
+    bzero(ipa, sizeof(struct ipsec_acquire));
     bcopy(gw, &ipa->ipa_addr, sizeof(union sockaddr_union));
 
     ipa->ipa_info.sen_len = ipa->ipa_mask.sen_len = SENT_LEN;
     ipa->ipa_info.sen_family = ipa->ipa_mask.sen_family = PF_KEY;
+
     /* Just copy the right information */
     switch (ipo->ipo_addr.sen_type)
     {
