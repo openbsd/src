@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.115 2001/07/17 21:54:25 provos Exp $ */
+/*	$OpenBSD: pf.c,v 1.116 2001/07/18 22:24:07 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -1362,8 +1362,9 @@ pf_get_rdr(struct ifnet *ifp, u_int8_t proto, u_int32_t saddr, u_int32_t daddr,
 		    (!r->proto || r->proto == proto) &&
 		    pf_match_addr(r->snot, r->saddr, r->smask, saddr) &&
 		    pf_match_addr(r->dnot, r->daddr, r->dmask, daddr) &&
-		    (ntohs(dport) >= ntohs(r->dport)) &&
-		    (ntohs(dport) <= ntohs(r->dport2)))
+		    ((!r->dport2 && dport == r->dport) ||
+		    (r->dport2 && (ntohs(dport) >= ntohs(r->dport)) &&
+		    ntohs(dport) <= ntohs(r->dport2))))
 			rm = r;
 		else
 			r = TAILQ_NEXT(r, entries);
