@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.8 2002/01/28 03:23:52 art Exp $	*/
+/*	$OpenBSD: pool.h,v 1.9 2002/02/23 01:12:26 art Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -51,23 +51,16 @@
 #define KERN_POOL_NAME		2
 #define KERN_POOL_POOL		3
 
-#ifdef _KERNEL
-#define	__POOL_EXPOSE
-#endif
-
 #if defined(_KERNEL_OPT)
 #include "opt_pool.h"
 #endif
 
-#ifdef __POOL_EXPOSE
 #include <sys/lock.h>
 #include <sys/queue.h>
 #include <sys/time.h>
-#endif
 
 #define PR_HASHTABSIZE		8
 
-#ifdef __POOL_EXPOSE
 struct pool_cache {
 	TAILQ_ENTRY(pool_cache)
 			pc_poollist;	/* entry on pool's group list */
@@ -192,7 +185,6 @@ struct pool {
 	void		(*pr_drain_hook)(void *, int);
 	void		*pr_drain_hook_arg;
 };
-#endif /* __POOL_EXPOSE */
 
 #ifdef _KERNEL
 /*
