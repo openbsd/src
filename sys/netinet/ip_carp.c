@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.103 2005/03/13 18:26:29 pat Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.104 2005/03/15 15:51:27 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -116,6 +116,7 @@ struct carp_softc {
 
 	int sc_flags_backup;
 	int sc_suppress;
+	int sc_bow_out;
 
 	int sc_sendad_errors;
 #define CARP_SENDAD_MAX_ERRORS	3
@@ -369,10 +370,6 @@ carp_setroute(struct carp_softc *sc, int cmd)
 				}
 				break;
 			case RTM_DELETE:
-				if (nr_ourif)
-					rtrequest(RTM_DELETE, &sa,
-					    ifa->ifa_addr, ifa->ifa_netmask, 0,
-					    NULL);
 				break;
 			default:
 				break;
@@ -857,9 +854,9 @@ carp_send_ad(void *v)
 		goto retry_later;
 	}
 
-	/* bow out if we've lost our UPness or RUNNINGuiness */
-	if ((sc->sc_if.if_flags & (IFF_UP|IFF_RUNNING)) !=
-	    (IFF_UP|IFF_RUNNING)) {
+	/* bow out if we've gone to backup (the carp interface is going down) */
+	if (sc->sc_bow_out) {
+		sc->sc_bow_out = 0;
 		advbase = 255;
 		advskew = 255;
 	} else {
@@ -1324,13 +1321,13 @@ carp_setrun(struct carp_softc *sc, sa_family_t af)
 	switch (sc->sc_state) {
 	case INIT:
 		if (carp_opts[CARPCTL_PREEMPT] && !carp_suppress_preempt) {
+			carp_set_state(sc, MASTER);
+			carp_setroute(sc, RTM_ADD);
 			carp_send_ad(sc);
 			carp_send_arp(sc);
 #ifdef INET6
 			carp_send_na(sc);
 #endif /* INET6 */
-			carp_set_state(sc, MASTER);
-			carp_setroute(sc, RTM_ADD);
 		} else {
 			carp_set_state(sc, BACKUP);
 			carp_setroute(sc, RTM_DELETE);
@@ -1826,12 +1823,16 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 
 	case SIOCSIFFLAGS:
 		if (sc->sc_state != INIT && !(ifr->ifr_flags & IFF_UP)) {
-			sc->sc_if.if_flags &= ~IFF_UP;
 			timeout_del(&sc->sc_ad_tmo);
 			timeout_del(&sc->sc_md_tmo);
 			timeout_del(&sc->sc_md6_tmo);
-			if (sc->sc_state == MASTER)
+			if (sc->sc_state == MASTER) {
+				/* we need the interface up to bow out */
+				sc->sc_if.if_flags |= IFF_UP;
+				sc->sc_bow_out = 1;
 				carp_send_ad(sc);
+			}
+			sc->sc_if.if_flags &= ~IFF_UP;
 			carp_set_state(sc, INIT);
 			carp_setrun(sc, 0);
 		} else if (sc->sc_state == INIT && (ifr->ifr_flags & IFF_UP)) {
@@ -1953,13 +1954,13 @@ int
 carp_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
     struct rtentry *rt)
 {
-	struct ifnet *ifp0 = ((struct carp_softc *)ifp->if_softc)->sc_carpdev;
+	struct carp_softc *sc = ((struct carp_softc *)ifp->if_softc);
 
-	if (ifp0 != NULL)
-		return (ifp0->if_output(ifp, m, sa, rt));
+	if (sc->sc_carpdev != NULL && sc->sc_state == MASTER)
+		return (sc->sc_carpdev->if_output(ifp, m, sa, rt));
 	else {
 		m_freem(m);
-		return (EINVAL);
+		return (ENETUNREACH);
 	}
 }
 
