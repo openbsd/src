@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.17 1996/09/12 18:52:17 pefo Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.18 1996/11/24 18:31:25 etheisen Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -41,6 +41,7 @@
 #include <sys/vnode.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
+#include <sys/exec_olf.h>
 #include <sys/file.h>
 #include <sys/syscall.h>
 #include <sys/signalvar.h>
@@ -83,9 +84,10 @@ int (*elf_probe_funcs[]) __P((struct proc *, struct exec_package *,
 int elf_load_file __P((struct proc *, char *, struct exec_package *,
 		       struct elf_args *, u_long *));
 
-static int elf_check_header __P((Elf32_Ehdr *, int));
-static int elf_read_from __P((struct proc *, struct vnode *, u_long, caddr_t, int));
-static void elf_load_psection __P((struct exec_vmcmd_set *,
+int elf_check_header __P((Elf32_Ehdr *, int));
+int olf_check_header __P((Elf32_Ehdr *, int));
+int elf_read_from __P((struct proc *, struct vnode *, u_long, caddr_t, int));
+void elf_load_psection __P((struct exec_vmcmd_set *,
 	struct vnode *, Elf32_Phdr *, u_long *, u_long *, int *));
 
 int exec_elf_fixup __P((struct proc *, struct exec_package *));
@@ -153,7 +155,7 @@ elf_copyargs(pack, arginfo, stack, argp)
  *
  * Check header for validity; return 0 for ok, ENOEXEC if error
  */
-static int
+int
 elf_check_header(ehdr, type)
 	Elf32_Ehdr *ehdr;
 	int type;
@@ -182,11 +184,45 @@ elf_check_header(ehdr, type)
 }
 
 /*
+ * olf_check_header():
+ *
+ * Check header for validity; return 0 for ok, ENOEXEC if error
+ */
+int
+olf_check_header(ehdr, type)
+	Elf32_Ehdr *ehdr;
+	int type;
+{
+        /*
+	 * We need to check magic, class size, endianess, version, and OS
+	 * before we look at the rest of the Elf32_Ehdr structure. These few
+	 * elements are represented in a machine independant fashion.
+	 */
+	if (!IS_OLF(*ehdr) ||
+	    ehdr->e_ident[OI_CLASS] != ELF_TARG_CLASS ||
+	    ehdr->e_ident[OI_DATA] != ELF_TARG_DATA ||
+	    ehdr->e_ident[OI_VERSION] != ELF_TARG_VER ||
+	    ehdr->e_ident[OI_OS] != OOS_OPENBSD)
+                return ENOEXEC;
+        
+        /* Now check the machine dependant header */
+	if (ehdr->e_machine != ELF_TARG_MACH ||
+	    ehdr->e_version != ELF_TARG_VER)
+                return ENOEXEC;
+
+        /* Check the type */
+	if (ehdr->e_type != type)
+		return ENOEXEC;
+
+	return 0;
+}
+
+/*
  * elf_load_psection():
  * 
  * Load a psection at the appropriate address
  */
-static void
+void
 elf_load_psection(vcset, vp, ph, addr, size, prot)
 	struct exec_vmcmd_set *vcset;
 	struct vnode *vp;
@@ -257,7 +293,7 @@ elf_load_psection(vcset, vp, ph, addr, size, prot)
  *
  *	Read from vnode into buffer at offset.
  */
-static int
+int
 elf_read_from(p, vp, off, buf, size)
 	struct proc *p;
 	struct vnode *vp;
@@ -326,8 +362,10 @@ elf_load_file(p, path, epp, ap, last)
 				    (caddr_t) &eh, sizeof(eh))) != 0)
 		goto bad1;
 
-	if ((error = elf_check_header(&eh, ET_DYN)) != 0)
+	if (elf_check_header(&eh, ET_DYN) && olf_check_header(&eh, ET_DYN)) {
+		error = ENOEXEC;
 		goto bad1;
+	}
 
 	phsize = eh.e_phnum * sizeof(Elf32_Phdr);
 	ph = (Elf32_Phdr *) malloc(phsize, M_TEMP, M_WAITOK);
@@ -407,7 +445,7 @@ exec_elf_makecmds(p, epp)
 	if (epp->ep_hdrvalid < sizeof(Elf32_Ehdr))
 		return ENOEXEC;
 
-	if (elf_check_header(eh, ET_EXEC))
+	if (elf_check_header(eh, ET_EXEC) && olf_check_header(eh, ET_EXEC))
 		return ENOEXEC;
 
 	/*
