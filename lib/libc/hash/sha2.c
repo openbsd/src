@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha2.c,v 1.9 2004/05/07 14:34:40 millert Exp $	*/
+/*	$OpenBSD: sha2.c,v 1.10 2004/05/28 15:10:27 millert Exp $	*/
 
 /*
  * FILE:	sha2.c
@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: sha2.c,v 1.9 2004/05/07 14:34:40 millert Exp $";
+static const char rcsid[] = "$OpenBSD: sha2.c,v 1.10 2004/05/28 15:10:27 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -549,10 +549,8 @@ SHA256_Final(u_int8_t digest[SHA256_DIGEST_LENGTH], SHA256_CTX *context)
 #else
 		memcpy(digest, context->state, SHA256_DIGEST_LENGTH);
 #endif
+		memset(context, 0, sizeof(*context));
 	}
-
-	/* Zero out state data */
-	memset(context, 0, sizeof(*context));
 }
 
 
@@ -832,10 +830,8 @@ SHA512_Final(u_int8_t digest[SHA512_DIGEST_LENGTH], SHA512_CTX *context)
 #else
 		memcpy(digest, context->state, SHA512_DIGEST_LENGTH);
 #endif
+		memset(context, 0, sizeof(*context));
 	}
-
-	/* Zero out state data */
-	memset(context, 0, sizeof(*context));
 }
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.6 2004/05/03 18:07:07 millert Exp $	*/
+/*	$OpenBSD: md5.c,v 1.7 2004/05/28 15:10:27 millert Exp $	*/
 
 /*
  * This code implements the MD5 message-digest algorithm.
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: md5.c,v 1.6 2004/05/03 18:07:07 millert Exp $";
+static const char rcsid[] = "$OpenBSD: md5.c,v 1.7 2004/05/28 15:10:27 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -133,8 +133,8 @@ MD5Final(unsigned char digest[MD5_DIGEST_LENGTH], MD5_CTX *ctx)
 	if (digest != NULL) {
 		for (i = 0; i < 4; i++)
 			PUT_32BIT_LE(digest + i * 4, ctx->state[i]);
+		memset(ctx, 0, sizeof(*ctx));
 	}
-	memset(ctx, 0, sizeof(*ctx));	/* in case it's sensitive */
 }
 
 

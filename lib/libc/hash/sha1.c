@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha1.c,v 1.18 2004/05/05 17:09:46 millert Exp $	*/
+/*	$OpenBSD: sha1.c,v 1.19 2004/05/28 15:10:27 millert Exp $	*/
 
 /*
  * SHA-1 in C
@@ -15,7 +15,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: sha1.c,v 1.18 2004/05/05 17:09:46 millert Exp $";
+static const char rcsid[] = "$OpenBSD: sha1.c,v 1.19 2004/05/28 15:10:27 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -173,6 +173,6 @@ SHA1Final(u_int8_t digest[SHA1_DIGEST_LENGTH], SHA1_CTX *context)
 			digest[i] = (u_int8_t)
 			   ((context->state[i>>2] >> ((3-(i & 3)) * 8) ) & 255);
 		}
+		memset(context, 0, sizeof(*context));
 	}
-	memset(context, 0, sizeof(*context));
 }
