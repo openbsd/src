@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.81 2002/09/12 12:17:05 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.82 2002/09/12 13:47:20 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -708,6 +708,26 @@ Normalization occurs before filtering, scrub rules and pass/block
 rules are evaluated independently.
 Hence, their relative position in the rule set is not relevant,
 and packets can't be blocked before normalization.
+.Sh BLOCKING SPOOFED TRAFFIC
+"Spoofing" is the faking of IP addresses, typically for malicious
+purposes.
+The 
+.Pa antispoof
+directive expands to a set of filter rules which will block all 
+traffic with a source IP from the network(s) directly connected 
+to the specified interface(s) from entering the system through 
+any other interface.
+.Pp
+For example, the line
+.Bd -literal
+    antispoof for lo0
+.Ed
+.Pp
+expands to
+.Bd -literal
+    block in on ! lo0 inet from 127.0.0.1/8 to any 
+    block in on ! lo0 inet6 from ::1 to any 
+.Ed
 .Sh FRAGMENT HANDLING
 IP datagrams (packets) can have a size of up to 65535 bytes.
 Most network links, however, have a maximum transmission unit (MTU)
