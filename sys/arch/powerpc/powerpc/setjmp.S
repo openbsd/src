@@ -1,7 +1,8 @@
-/*	$OpenBSD: setjmp.S,v 1.2 1996/12/28 06:22:18 rahnds Exp $	*/
+/*	$OpenBSD: setjmp.S,v 1.3 1999/03/22 02:40:12 rahnds Exp $	*/
 /* kernel version of this file, does not have signal goop */
 /* int setjmp(jmp_buf env) */
 
+#include <machine/asm.h>
 #define JMP_r1	0x04
 #define JMP_r14	0x08
 #define JMP_r15	0x0c
@@ -28,8 +29,7 @@
 #define JMP_sig	0x60
 
 
-.globl setjmp
-setjmp:
+ENTRY(_C_LABEL(setjmp))
 	stw 31, JMP_r31(3)
 	/* r1, r14-r30 */
 	stw 1,  JMP_r1 (3)
@@ -64,9 +64,7 @@ setjmp:
 	blr
 
 
-.extern sigsetmask
-.globl longjmp
-longjmp:
+ENTRY(_C_LABEL(longjmp))
 	lwz 31, JMP_r31(3)
 	/* r1, r14-r30 */
 	lwz 1,  JMP_r1 (3)
