@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.23 2001/06/26 19:31:10 ericj Exp $ */
+/* $OpenBSD: netcat.c,v 1.24 2001/06/26 20:53:14 ericj Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -26,9 +26,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* 
- * Re-written nc(1) for OpenBSD. Only code shared with previous version
- * was the code for telnet emulation. Original implementation by
+/*
+ * Re-written nc(1) for OpenBSD. Original implementation by
  * *Hobbit* <hobbit@avian.org>.
  */
 
@@ -430,46 +429,40 @@ readwrite(nfd)
 		}
 	}
 }
-
-/*
- * Answer anything that looks like telnet negotiation with don't/won't.
- * This doesn't modify any data buffers, update the global output count,
- * or show up in a hexdump -- it just shits into the outgoing stream.
- * Idea and codebase from Mudge@l0pht.com.
- */
+/* Deal with RFC854 WILL/WONT DO/DONT negotiation */
 void
 atelnet(nfd, buf, size)
 	int nfd;
 	unsigned char *buf;
 	unsigned int size;
 {
-	static unsigned char obuf[4];
-	int x, ret;
-	unsigned char y;
-	unsigned char *p;
+	int ret, pos = 0;
+	unsigned char *p, *end;
+	unsigned char obuf[4];
 
-	y = 0;
-	p = buf;
-	x = size;
-	while (x > 0) {
+	end = buf + size;
+	obuf[0] = '\0';
+
+	for (p = buf; p < end; p++) {
 		if (*p != IAC)
-			goto notiac;
-		obuf[0] = IAC;
-		p++; x--;
-		if ((*p == WILL) || (*p == WONT))
-			y = DONT;
-		if ((*p == DO) || (*p == DONT))
-			y = WONT;
-		if (y) {
-			obuf[1] = y;
-			p++; x--;
+			break;
+
+		obuf[0]=IAC;
+		p++;
+		if ((*p == WILL) || (*p == WONT)) {
+			obuf[1] = DONT;
+		}
+		if ((*p == DO) || (*p == DONT)) {
+			obuf[1] = WONT;
+		}
+		if (obuf) {
+			p++;
 			obuf[2] = *p;
+			obuf[3] = '\0';
 			if ((ret = atomicio(write , nfd, obuf, 3)) != 3)
 				warnx("Write Error!");
-			y = 0;
+			obuf[0] = '\0';
 		}
-notiac:
-		p++; x--;
 	}
 }
 
