@@ -1,4 +1,4 @@
-/*	$OpenBSD: safereg.h,v 1.2 2003/08/14 15:26:03 jason Exp $	*/
+/*	$OpenBSD: safereg.h,v 1.3 2003/08/14 18:53:36 jason Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -305,7 +305,7 @@ struct safe_pdesc {
 	volatile u_int32_t	pd_ctrl;	/* length/flags */
 };
 
-#define	SAFE_PD_LEN_M	0x0000ffff		/* length mask */
+#define	SAFE_PD_LEN_M	0xffff0000		/* length mask */
 #define	SAFE_PD_LEN_S	16
 #define	SAFE_PD_READY	0x00000001		/* ready for processing */
 #define	SAFE_PD_DONE	0x00000002		/* h/w completed processing */
