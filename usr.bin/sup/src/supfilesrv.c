@@ -1,4 +1,4 @@
-/*	$OpenBSD: supfilesrv.c,v 1.12 1997/10/11 23:34:21 beck Exp $	*/
+/*	$OpenBSD: supfilesrv.c,v 1.13 1997/11/17 08:54:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -1816,14 +1816,14 @@ struct stat *sinfo;
 
 		if (fstatvfs(handle, &sf) == -1)
 			return(-1);
-		return strcmp(sf.f_basetype, "nfs") != 0;
+		return strncmp(sf.f_basetype, "nfs", 3) != 0;
 	}
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 	{
 		struct statfs sf;
 		if (fstatfs(handle, &sf) == -1)
 			return(-1);
-		return strcmp(sf.f_fstypename, "nfs") != 0;
+		return strncmp(sf.f_fstypename, "nfs", 3) != 0;
 	}
 #elif defined(__linux__)
 	{
