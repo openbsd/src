@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.20 1995/12/02 18:18:50 thorpej Exp $	*/
+/*	$NetBSD: dcm.c,v 1.22 1995/12/31 00:27:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.  All rights reserved.
@@ -68,6 +68,8 @@
 
 #include <machine/cpu.h>
 
+#include <dev/cons.h>
+
 #include <hp300/dev/device.h>
 #include <hp300/dev/dcmreg.h>
 #include <hp300/hp300/isr.h>
@@ -122,14 +124,18 @@ struct	dcmischeme {
 };
 
 /*
- * Console support
+ * Stuff for DCM console support.  This could probably be done a little
+ * better.
  */
+static	struct dcmdevice *dcm_cn = NULL;	/* pointer to hardware */
+static	int dcm_lastcnpri = CN_DEAD;		/* XXX last priority */
+static	int dcmconsinit;			/* has been initialized */
 #ifdef DCMCONSOLE
-int	dcmconsole = DCMCONSOLE;
+static	int dcmconsole = DCMCONSOLE;
 #else
-int	dcmconsole = -1;
+static	int dcmconsole = -1;
 #endif
-int	dcmconsinit;
+
 int	dcmdefaultrate = DEFAULT_BAUD_RATE;
 int	dcmconbrdbusy = 0;
 int	dcmmajor;
@@ -214,7 +220,11 @@ static char iconv[16] = {
 	MI_RI|MI_CD|MI_CTS|MI_DM
 };
 
-#define	NDCMPORT	4	/* XXX what about 8-port cards? */
+/*
+ * Note that 8-port boards appear as 2 4-port boards at consecutive
+ * select codes.
+ */
+#define	NDCMPORT	4
 
 struct	dcm_softc {
 	struct	hp_device *sc_hd;	/* device info */
@@ -228,7 +238,6 @@ struct	dcm_softc {
 
 	/*
 	 * Mask of soft-carrier bits in config flags.
-	 * XXX What about 8-port cards?
 	 */
 #define	DCM_SOFTCAR	0x0000000f
 
@@ -245,6 +254,8 @@ struct	dcm_softc {
 	struct	dcmstats sc_stats;	/* metrics gathering */
 #endif
 } dcm_softc[NDCM];
+
+void	dcminit __P((struct dcmdevice *, int, int));
 
 int
 dcmmatch(hd)
@@ -374,7 +385,8 @@ dcmattach(hd)
 		 * by the corresponding code in dcmcnprobe.
 		 */
 		else {
-			(void) dcminit(kgdb_dev, kgdb_rate);
+			dcminit(dcm, DCMPORT(DCMUNIT(kgdb_dev)),
+			    kgdb_rate);
 			if (kgdb_debug_init) {
 				printf("%s port %d: ", sc->sc_hd->hp_xname,
 				    DCMPORT(DCMUNIT(kgdb_dev)));
@@ -428,7 +440,7 @@ dcmopen(dev, flag, mode, p)
 		 * The card might be left in an inconsistent state
 		 * if the card memory is read inadvertently.
 		 */
-		dcminit(dev, dcmdefaultrate);
+		dcminit(sc->sc_dcm, port, dcmdefaultrate);
 
 		tp->t_state |= TS_WOPEN;
 		ttychars(tp);
@@ -1325,109 +1337,12 @@ dcmsetischeme(brd, flags)
 	SEM_UNLOCK(dcm);
 }
 
-/*
- * Following are all routines needed for DCM to act as console
- */
-#include <dev/cons.h>
-
 void
-dcmcnprobe(cp)
-	struct consdev *cp;
-{
-	struct dcm_softc *sc;
+dcminit(dcm, port, rate)
 	struct dcmdevice *dcm;
-	struct hp_hw *hw;
-	int unit;
-
-	/* locate the major number */
-	for (dcmmajor = 0; dcmmajor < nchrdev; dcmmajor++)
-		if (cdevsw[dcmmajor].d_open == dcmopen)
-			break;
-
-	/*
-	 * Implicitly assigns the lowest select code DCM card found to be
-	 * logical unit 0 (actually CONUNIT).  If your config file does
-	 * anything different, you're screwed.
-	 */
-	for (hw = sc_table; hw->hw_type; hw++)
-		if (HW_ISDEV(hw, D_COMMDCM) && !badaddr((short *)hw->hw_kva))
-			break;
-	if (!HW_ISDEV(hw, D_COMMDCM)) {
-		cp->cn_pri = CN_DEAD;
-		return;
-	}
-
-	unit = CONUNIT;
-	sc = &dcm_softc[DCMBOARD(CONUNIT)];
-	dcm = sc->sc_dcm = (struct dcmdevice *)hw->hw_kva;
-
-	/* initialize required fields */
-	cp->cn_dev = makedev(dcmmajor, unit);
-	switch (dcm->dcm_rsid) {
-	case DCMID:
-		cp->cn_pri = CN_NORMAL;
-		break;
-
-	case DCMID|DCMCON:
-		cp->cn_pri = CN_REMOTE;
-		break;
-
-	default:
-		cp->cn_pri = CN_DEAD;
-		return;
-	}
-
-	/*
-	 * If dcmconsole is initialized, raise our priority.
-	 */
-	if (dcmconsole == unit)
-		cp->cn_pri = CN_REMOTE;
-#ifdef KGDB_CHEAT
-	/*
-	 * This doesn't currently work, at least not with ite consoles;
-	 * the console hasn't been initialized yet.
-	 */
-	if (major(kgdb_dev) == dcmmajor &&
-	    DCMBOARD(DCMUNIT(kgdb_dev)) == DCMBOARD(unit)) {
-		(void) dcminit(kgdb_dev, kgdb_rate);
-		if (kgdb_debug_init) {
-			/*
-			 * We assume that console is ready for us...
-			 * this assumes that a dca or ite console
-			 * has been selected already and will init
-			 * on the first putc.
-			 */
-			printf("dcm%d: ", DCMUNIT(kgdb_dev));
-			kgdb_connect(1);
-		}
-	}
-#endif
-}
-
-void
-dcmcninit(cp)
-	struct consdev *cp;
+	int port, rate;
 {
-
-	dcminit(cp->cn_dev, dcmdefaultrate);
-	dcmconsinit = 1;
-	dcmconsole = DCMUNIT(cp->cn_dev);
-}
-
-dcminit(dev, rate)
-	dev_t dev;
-	int rate;
-{
-	struct dcm_softc *sc;
-	struct dcmdevice *dcm;
-	int s, mode, unit, board, port;
-
-	unit = DCMUNIT(dev);
-	board = DCMBOARD(unit);
-	port = DCMPORT(unit);
-
-	sc = &dcm_softc[board];
-	dcm = sc->sc_dcm;
+	int s, mode;
 
 	mode = LC_8BITS | LC_1STOP;
 
@@ -1457,28 +1372,130 @@ dcminit(dev, rate)
 	splx(s);
 }
 
+/*
+ * Following are all routines needed for DCM to act as console
+ */
+
+void
+dcmcnprobe(cp)
+	struct consdev *cp;
+{
+	struct dcm_softc *sc;	/* XXX thorpej */
+	struct dcmdevice *dcm;
+	struct hp_hw *hw;
+	int unit;
+
+	/* locate the major number */
+	for (dcmmajor = 0; dcmmajor < nchrdev; dcmmajor++)
+		if (cdevsw[dcmmajor].d_open == dcmopen)
+			break;
+
+	/*
+	 * XXX FIX ME!
+	 * Implicitly assigns the lowest select code DCM card found to be
+	 * logical unit 0 (actually CONUNIT).  If your config file does
+	 * anything different, you're screwed.
+	 */
+	for (hw = sc_table; hw->hw_type; hw++)
+		if (HW_ISDEV(hw, D_COMMDCM) && !badaddr((short *)hw->hw_kva))
+			break;
+	if (!HW_ISDEV(hw, D_COMMDCM)) {
+		cp->cn_pri = CN_DEAD;
+		return;
+	}
+
+	unit = CONUNIT;
+	dcm = (struct dcmdevice *)hw->hw_kva;
+
+	/* initialize required fields */
+	cp->cn_dev = makedev(dcmmajor, unit);
+	switch (dcm->dcm_rsid) {
+	case DCMID:
+		cp->cn_pri = CN_NORMAL;
+		break;
+
+	case DCMID|DCMCON:
+		cp->cn_pri = CN_REMOTE;
+		break;
+
+	default:
+		cp->cn_pri = CN_DEAD;
+		return;
+	}
+
+	/*
+	 * If dcmconsole is initialized, raise our priority.
+	 */
+	if (dcmconsole == unit)
+		cp->cn_pri = CN_REMOTE;
+
+	/*
+	 * If our priority is higher than the currently-remembered
+	 * DCM, stash our priority and address, for the benefit of
+	 * dcmcninit().
+	 */
+	if (cp->cn_pri > dcm_lastcnpri) {
+		dcm_lastcnpri = cp->cn_pri;
+		dcm_cn = dcm;
+	}
+
+#ifdef KGDB_CHEAT
+	/*
+	 * This doesn't currently work, at least not with ite consoles;
+	 * the console hasn't been initialized yet.
+	 */
+	if (major(kgdb_dev) == dcmmajor &&
+	    DCMBOARD(DCMUNIT(kgdb_dev)) == DCMBOARD(unit)) {
+		dcminit(dcm_cn, DCMPORT(DCMUNIT(kgdb_dev)), kgdb_rate);
+		if (kgdb_debug_init) {
+			/*
+			 * We assume that console is ready for us...
+			 * this assumes that a dca or ite console
+			 * has been selected already and will init
+			 * on the first putc.
+			 */
+			printf("dcm%d: ", DCMUNIT(kgdb_dev));
+			kgdb_connect(1);
+		}
+	}
+#endif
+}
+
+void
+dcmcninit(cp)
+	struct consdev *cp;
+{
+	int unit = DCMUNIT(cp->cn_dev);
+	int port = DCMPORT(unit);
+
+	dcminit(dcm_cn, port, dcmdefaultrate);
+	dcmconsinit = 1;
+	dcmconsole = DCMUNIT(cp->cn_dev);
+}
+
 int
 dcmcngetc(dev)
 	dev_t dev;
 {
-	struct dcm_softc *sc;
-	struct dcmdevice *dcm;
 	struct dcmrfifo *fifo;
 	struct dcmpreg *pp;
 	u_int head;
-	int s, c, stat, unit, board, port;
+	int s, c, stat, unit, port;
 
 	unit = DCMUNIT(dev);
-	board = DCMBOARD(unit);
 	port = DCMPORT(unit);
 
-	sc = &dcm_softc[board];
-	dcm = sc->sc_dcm;
-	pp = dcm_preg(dcm, port);
+	/*
+	 * NOTE: This assumes that unit == dcmconsole.  If it doesn't,
+	 * well, you lose.  (It's also extremely unlikely that will ever
+	 * not be the case.)
+	 */
+
+	pp = dcm_preg(dcm_cn, port);
 
 	s = splhigh();
 	head = pp->r_head & RX_MASK;
-	fifo = &dcm->dcm_rfifos[3-port][head>>1];
+	fifo = &dcm_cn->dcm_rfifos[3-port][head>>1];
 	while (head == (pp->r_tail & RX_MASK))
 		;
 	/*
@@ -1486,10 +1503,10 @@ dcmcngetc(dev)
 	 * interrupt through in case some other port on the board was
 	 * busy.  Otherwise we must clear the interrupt.
 	 */
-	SEM_LOCK(dcm);
-	if ((dcm->dcm_ic & IC_IE) == 0)
-		stat = dcm->dcm_iir;
-	SEM_UNLOCK(dcm);
+	SEM_LOCK(dcm_cn);
+	if ((dcm_cn->dcm_ic & IC_IE) == 0)
+		stat = dcm_cn->dcm_iir;
+	SEM_UNLOCK(dcm_cn);
 	c = fifo->data_char;
 	stat = fifo->data_stat;
 	pp->r_head = (head + 2) & RX_MASK;
@@ -1505,37 +1522,38 @@ dcmcnputc(dev, c)
 	dev_t dev;
 	int c;
 {
-	struct dcm_softc *sc;
-	struct dcmdevice *dcm;
 	struct dcmpreg *pp;
 	unsigned tail;
-	int s, unit, board, port, stat;
+	int s, unit, port, stat;
 
 	unit = DCMUNIT(dev);
-	board = DCMBOARD(unit);
 	port = DCMPORT(unit);
 
-	sc = &dcm_softc[board];
-	dcm = sc->sc_dcm;
-	pp = dcm_preg(dcm, port);
+	/*
+	 * NOTE: This assumes that unit == dcmconsole.  If it doesn't,
+	 * well, you lose.  (It's also extremely unlikely that will ever
+	 * not be the case.)
+	 */
+
+	pp = dcm_preg(dcm_cn, port);
 
 	s = splhigh();
 #ifdef KGDB
 	if (dev != kgdb_dev)
 #endif
 	if (dcmconsinit == 0) {
-		(void) dcminit(dev, dcmdefaultrate);
+		dcminit(dcm_cn, port, dcmdefaultrate);
 		dcmconsinit = 1;
 	}
 	tail = pp->t_tail & TX_MASK;
 	while (tail != (pp->t_head & TX_MASK))
 		;
-	dcm->dcm_tfifos[3-port][tail].data_char = c;
+	dcm_cn->dcm_tfifos[3-port][tail].data_char = c;
 	pp->t_tail = tail = (tail + 1) & TX_MASK;
-	SEM_LOCK(dcm);
-	dcm->dcm_cmdtab[port].dcm_data |= CT_TX;
-	dcm->dcm_cr |= (1 << port);
-	SEM_UNLOCK(dcm);
+	SEM_LOCK(dcm_cn);
+	dcm_cn->dcm_cmdtab[port].dcm_data |= CT_TX;
+	dcm_cn->dcm_cr |= (1 << port);
+	SEM_UNLOCK(dcm_cn);
 	while (tail != (pp->t_head & TX_MASK))
 		;
 	/*
@@ -1543,11 +1561,11 @@ dcmcnputc(dev, c)
 	 * interrupt through in case some other port on the board
 	 * was busy.  Otherwise we must clear the interrupt.
 	 */
-	if ((dcm->dcm_ic & IC_IE) == 0) {
-		SEM_LOCK(dcm);
-		stat = dcm->dcm_iir;
-		SEM_UNLOCK(dcm);
+	if ((dcm_cn->dcm_ic & IC_IE) == 0) {
+		SEM_LOCK(dcm_cn);
+		stat = dcm_cn->dcm_iir;
+		SEM_UNLOCK(dcm_cn);
 	}
 	splx(s);
 }
-#endif
+#endif /* NDCM > 0 */
