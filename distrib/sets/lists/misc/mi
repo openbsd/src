@@ -81,6 +81,8 @@
 ./usr/share/doc/psd/14.sccs
 ./usr/share/doc/psd/15.yacc
 ./usr/share/doc/psd/16.lex
+./usr/share/doc/psd/16.lex/Makefile
+./usr/share/doc/psd/16.lex/lex.ms
 ./usr/share/doc/psd/17.m4
 ./usr/share/doc/psd/18.gprof
 ./usr/share/doc/psd/18.gprof/Makefile
