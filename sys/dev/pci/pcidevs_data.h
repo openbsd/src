@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.276 2000/07/06 17:58:52 aaron Exp 
+ *		OpenBSD: pcidevs,v 1.278 2000/07/06 21:02:35 fgsch Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -13,6 +13,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "2 Micro Inc",
 	    "OZ6832 CardBus",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C339,
+	    0,
+	    "3Com",
+	    "3c339",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C450,
