@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.45 2003/01/07 09:00:34 kjc Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.46 2003/04/18 05:26:13 jason Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -299,6 +299,23 @@ tuninit(tp)
 				tp->tun_flags &= ~TUN_BRDADDR;
 		}
 #endif
+#ifdef INET6
+		if (ifa->ifa_addr->sa_family == AF_INET6) {
+			struct sockaddr_in6 *sin;
+
+			sin = (struct sockaddr_in6 *)ifa->ifa_addr;
+			if (!IN6_IS_ADDR_UNSPECIFIED(&sin->sin6_addr))
+				tp->tun_flags |= TUN_IASET;
+
+			if (ifp->if_flags & IFF_POINTOPOINT) {
+				sin = (struct sockaddr_in6 *)ifa->ifa_dstaddr;
+				if (sin &&
+				    !IN6_IS_ADDR_UNSPECIFIED(&sin->sin6_addr))
+					tp->tun_flags |= TUN_DSTADDR;
+			} else
+				tp->tun_flags &= ~TUN_DSTADDR;
+		}
+#endif /* INET6 */
 	}
 
 	return 0;
