@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.10 1998/06/29 22:43:58 deraadt Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.11 1998/07/05 19:22:35 deraadt Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -206,13 +206,14 @@ main(argc, argv)
 	exit(0);
 }
 
+char	*dump_sys;
+
 void
 kmem_setup()
 {
 	kvm_t	*kd_kern;
 	char	errbuf[_POSIX2_LINE_MAX];
 	int	i, hdrsz;
-	char	*dump_sys;
 	
 	/*
 	 * Some names we need for the currently running system, others for
@@ -298,7 +299,7 @@ check_kmem()
 	char core_vers[1024];
 
 	if (kvm_read(kd_dump, dump_nl[X_VERSION].n_value, core_vers,
-	    sizeof(core_vers) != sizeof(core_vers))
+	    sizeof(core_vers)) != sizeof(core_vers)) {
 		syslog(LOG_ERR, "%s: kvm_read: version misread", dump_sys);
 		exit(1);
 	}
