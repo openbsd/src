@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.36 2001/05/27 04:15:51 angelos Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.37 2001/05/31 23:35:56 angelos Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -577,9 +577,10 @@ struct m_tag *m_tag_next __P((struct mbuf *, struct m_tag *));
 #define	PACKET_TAG_IPSEC_OUT_DONE		2
 #define PACKET_TAG_IPSEC_IN_CRYPTO_DONE		3
 #define PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED	4
-#define PACKET_TAG_BRIDGE			5
-#define PACKET_TAG_GIF				6
-#define PACKET_TAG_GRE				7
+#define PACKET_TAG_IPSEC_IN_COULD_DO_CRYPTO	5
+#define PACKET_TAG_BRIDGE			6
+#define PACKET_TAG_GIF				7
+#define PACKET_TAG_GRE				8
 
 #ifdef MBTYPES
 int mbtypes[] = {				/* XXX */
