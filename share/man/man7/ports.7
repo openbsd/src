@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.7 2000/01/27 19:45:33 espie Exp $
+.\" $OpenBSD: ports.7,v 1.8 2000/01/29 20:22:30 espie Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
 .Dd January 25, 1998
@@ -47,9 +47,9 @@ in the port directory!  The
 .Pa Makefile
 automatically fetches the
 application source code, either from a local disk or via ftp, unpacks it
-on your system, applies the patches, and compiles it.  If all goes well,
+on the local system, applies the patches, and compiles it.  If all goes well,
 simply type
-.Ic make install
+.Ic sudo make install
 to install the application.
 .Pp
 For more information about using ports, see
@@ -83,8 +83,8 @@ invoked with a key, e.g.,
 retrieve information relevant to a given port.
 .Sh TARGETS
 Individual ports are controlled through a few documented targets.
-Some of these targets work recursively through subdirectories.
-This lets you, for example, install all of the net
+Some of these targets work recursively through subdirectories, so that
+someone can, for examples, install all of the net
 ports.  The targets that do this are
 .Ar build , checksum , clean , configure , extract , fetch , fetch-list , 
 .Ar install , distclean , deinstall, reinstall, mirror-distfiles, obj ,
@@ -92,8 +92,11 @@ ports.  The targets that do this are
 and
 .Ar package .
 .Pp
-The following targets will be run automatically by each proceeding
-target in order.  That is,
+Target names starting with _  are private to the ports infrastructure,
+should not be invoked directly, and are liable to change without notice.
+.Pp
+In the following list, each target will run the preceeding targets
+in order automatically.  That is,
 .Ar build
 will be run
 .Pq if necessary
@@ -101,8 +104,13 @@ by
 .Ar install ,
 and so on all the way to
 .Ar fetch .
-You will usually only target
-.Ar install .
+Typical use only runs 
+.Ar install
+explicitly (if root), or 
+.Ar build
+(as user), then
+.Ar install 
+(as root).
 .Bl -tag -width configure
 .It Ar fetch
 Fetch all of the files needed to build this port from the site(s)
@@ -140,7 +148,7 @@ Expand the distfile into a work directory.
 .It Ar patch
 Apply any patches that are necessary for the port.
 .It Ar configure
-Configure the port.  Some ports will ask you questions during
+Configure the port.  Some ports will ask questions during
 this stage.  See
 .Ev INTERACTIVE
 and
@@ -150,8 +158,7 @@ Build the port.  This is the same as calling the
 .Ar all
 target.
 .It Ar install
-Install the port and register it with the package system.  This
-is all you really need to do.
+Install the port and register it with the package system.  
 .El
 .Pp
 The following targets are not run during the normal install process.
@@ -175,7 +182,7 @@ Use this to restore a port after using
 .Xr pkg_delete 1 .
 .It Ar package
 Make a binary package for the port.  The port will be installed if it
-hasn't already been.  The package is a .tgz file that you can use to
+hasn't already been.  The package is a .tgz file that can be used to
 install the port on other machines with
 .Xr pkg_add 1 .
 If the directory specified by
@@ -189,12 +196,15 @@ and
 .Sh PORT VARIABLES
 These can be changed in the environment, or in 
 .Pa /etc/mk.conf
-for persistence.  You can also set them on make's command line, e.g.,
+for persistence.  They can also be set on make's command line, e.g.,
 .Ic make VAR_FOO=foo
 .Pp
 Boolean variables should be set to 
 .Dv Yes
 instead of simply being defined, for uniformity and future compatibility.
+.Pp
+Variable names starting with _ are private to the ports infrastructure,
+should not be changed by the user, and are liable to change without notice.
 .Pp
 .Ss NETWORK CONFIGURATION
 The variables pertaining to network access have been marshalled into
@@ -231,8 +241,8 @@ target; the base directory for the packages tree, normally
 in
 .Ev PORTSDIR .
 If this directory exists, the package tree will be (partially) constructed.
-This directory does not have to exist; if it doesn't packages will be
-placed into the current directory, or you can define one of
+This directory does not have to exist; if it doesn't, packages will be
+placed into the current directory, or define one of
 .Bl -tag -width PKGREPOSITORY
 .It Ev PKGREPOSITORY
 Directory to put the package in.
@@ -299,11 +309,11 @@ Ports master Makefile.
 .It Pa /usr/ports/INDEX
 Ports index.
 .It Pa /usr/ports/infrastructure/mk/bsd.port.mk
-The ports main engine.
+The ports main engine (OpenBSD).
 .It Pa /usr/ports/infrastructure/templates/network.conf.template
-Network configuration defaults.
+Network configuration defaults (OpenBSD).
 .It Pa /usr/ports/infrastructure/db/network.conf
-Local network configuration.
+Local network configuration (OpenBSD).
 .Sh SEE ALSO
 .Xr make 1 ,
 .Xr pkg_add 1 ,
