@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.26 2002/03/14 03:15:56 millert Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.27 2003/09/16 20:49:03 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -461,7 +461,8 @@ ddb_nmi_trap(level, eframe)
 	int level;
 	db_regs_t *eframe;
 {
-	NOISY(db_printf("kernel: nmi interrupt\n");)
+	if (db_noisy)
+		db_printf("kernel: nmi interrupt\n");
 	m88k_db_trap(T_KDB_ENTRY, eframe);
 
 	return 0;
@@ -605,7 +606,7 @@ m88k_db_where(addr, have_addr, count, modif)
 
 	s = DDB_REGS;
 
-	l = m88k_pc(s); /* clear low bits */
+	l = PC_REGS(s); /* clear low bits */
 
 	db_find_xtrn_sym_and_offset((db_addr_t) l,&name, (db_expr_t*)&offset);
 	if (name && (unsigned)offset <= db_maxoff)

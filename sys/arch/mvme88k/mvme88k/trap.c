@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.49 2003/09/06 15:07:43 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.50 2003/09/16 20:49:05 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -73,20 +73,9 @@
 #include <machine/psl.h>		/* FIP_E, etc. */
 #include <machine/trap.h>
 
-#ifdef DDB
 #include <machine/db_machdep.h>
+#ifdef DDB
 #include <ddb/db_output.h>		/* db_printf()		*/
-#else 
-   #define PC_REGS(regs) cputyp == CPU_88110 ? (regs->exip & ~3) :\
-           ((regs->sxip & 2) ?  regs->sxip & ~3 : \
-	(regs->snip & 2 ? regs->snip & ~3 : regs->sfip & ~3))
-
-#define inst_return(I) (((I)&0xfffffbffU) == 0xf400c001U ? TRUE : FALSE)
-#define inst_call(I) ({ unsigned i = (I); \
-	   ((((i) & 0xf8000000U) == 0xc8000000U || /*bsr*/ \
-      ((i) & 0xfffffbe0U) == 0xf400c800U)   /*jsr*/ \
-	   ? TRUE : FALSE) \
-      ;})
 #endif /* DDB */
 #define SSBREAKPOINT (0xF000D1F8U) /* Single Step Breakpoint */
 
@@ -552,13 +541,10 @@ user_fault:
 		 * T_STEPBPT trap.
 		 */
 		{
-			register unsigned va;
+			unsigned va;
 			unsigned instr;
 			struct uio uio;
 			struct iovec iov;
-
-			/* compute address of break instruction */
-			va = pc;
 
 			/* read break instruction */
 			copyin((caddr_t)pc, &instr, sizeof(unsigned));
@@ -1057,13 +1043,9 @@ m88110_user_fault:
 		 * T_STEPBPT trap.
 		 */
 		{
-			register unsigned va;
 			unsigned instr;
 			struct uio uio;
 			struct iovec iov;
-
-			/* compute address of break instruction */
-			va = pc;
 
 			/* read break instruction */
 			copyin((caddr_t)pc, &instr, sizeof(unsigned));

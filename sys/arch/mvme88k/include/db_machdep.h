@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.21 2002/03/14 03:15:57 millert Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.22 2003/09/16 20:49:05 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -25,9 +25,6 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
-/*
- * HISTORY
- */
 
 /*
  * Machine-dependent defined for the new kernel debugger
@@ -49,6 +46,30 @@
 
 #include <uvm/uvm_param.h>
 
+/*
+ * The low two bits of sxip, snip, sfip have valid bits
+ * in them that need to masked to get the correct addresses
+ */
+#define PC_REGS(regs) cputyp == CPU_88110 ? (regs->exip & ~3) :\
+	((regs->sxip & 2) ?  regs->sxip & ~3 : \
+	(regs->snip & 2 ? regs->snip & ~3 : regs->sfip & ~3))
+
+/* inst_return(ins) - is the instruction a function call return.
+ * Not mutually exclusive with inst_branch. Should be a jmp r1. */
+#define inst_return(I) (((I)&0xfffffbffU) == 0xf400c001U ? TRUE : FALSE)
+
+/*
+ * inst_call - function call predicate: is the instruction a function call.
+ * Could be either bsr or jsr
+ */
+#define inst_call(I) ({ unsigned i = (I); \
+	((((i) & 0xf8000000U) == 0xc8000000U || /*bsr*/ \
+          ((i) & 0xfffffbe0U) == 0xf400c800U)   /*jsr*/ \
+	? TRUE : FALSE) \
+;})
+
+#ifdef DDB
+
 /* 
  * This is a hack so that mc88100 can use software single step
  * and mc88110 can use the wonderful hardware single step 
@@ -69,52 +90,8 @@ typedef	struct m88100_saved_state db_regs_t;
 extern db_regs_t	ddb_regs;	/* register state */
 #define	DDB_REGS	(&ddb_regs)
 
-/*
- * the low two bits of sxip, snip, sfip have valid bits
- * in them that need to masked to get the correct addresses
- */
-
-#define m88k_pc(regs) \
-({ \
-    int ret; \
- \
-    if (cputyp == CPU_88110) \
-	ret = regs->exip & ~3; \
-    else if (regs->sxip & 2) /* is valid */ \
-	ret = regs->sxip & ~3; \
-    else if (regs->snip & 2) \
-	ret = regs->snip & ~3; \
-    else if (regs->sfip & 2) \
-	ret = regs->sfip & ~3; \
-    /* we are in trouble - none of the program counters is valid */ \
-    ret;  \
-})
-
-/*
- * This is an actual function due to the fact that the sxip
- * or snip could be nooped out due to a jmp or rte
- */
-#define PC_REGS(regs) cputyp == CPU_88110 ? (regs->exip & ~3) :\
-	((regs->sxip & 2) ?  regs->sxip & ~3 : \
-	(regs->snip & 2 ? regs->snip & ~3 : regs->sfip & ~3))
-#define l_PC_REGS(regs) cputyp == CPU_88110 ? (regs->exip & ~3) :\
-	((regs->sxip & 2) ?  regs->sxip : \
-	(regs->snip & 2 ? regs->snip : regs->sfip ))
-
-#define pC_REGS(regs) cputyp == CPU_88110 ? (regs->exip & ~3) :\
-	(regs->sxip & 2) ? regs->sxip : (regs->snip & 2 ? \
-				regs->snip : regs->sfip)
 extern int db_noisy;
-#define NOISY(x) if (db_noisy) x
-#define NOISY2(x) if (db_noisy >= 2) x
-#define NOISY3(x) if (db_noisy >= 3) x
-
 extern int quiet_db_read_bytes;
-
-/* These versions are not constantly doing SPL */
-/*#define	cnmaygetc	db_getc*/
-/*#define	cngetc		db_getc*/
-/*#define	cnputc		db_putc*/
 
 unsigned inst_load(unsigned);
 unsigned inst_store(unsigned);
@@ -164,20 +141,6 @@ void db_clear_single_step(register db_regs_t *);
 
 /* machine specific commands have been added to ddb */
 #define DB_MACHINE_COMMANDS 1
-/* inst_return(ins) - is the instruction a function call return.
- * Not mutually exclusive with inst_branch. Should be a jmp r1. */
-#define inst_return(I) (((I)&0xfffffbffU) == 0xf400c001U ? TRUE : FALSE)
-
-#ifdef __GNUC__
-/*
- * inst_call - function call predicate: is the instruction a function call.
- * Could be either bsr or jsr
- */
-#define inst_call(I) ({ unsigned i = (I); \
-	((((i) & 0xf8000000U) == 0xc8000000U || /*bsr*/ \
-          ((i) & 0xfffffbe0U) == 0xf400c800U)   /*jsr*/ \
-	? TRUE : FALSE) \
-;})
 
 /*
  * This routine should return true for instructions that result in unconditonal
@@ -195,12 +158,11 @@ void db_clear_single_step(register db_regs_t *);
 /* Return true if the instruction has a delay slot.  */
 #define db_branch_is_delayed(I)	inst_delayed(I)
 
-#endif	/* __GNUC__ */
-
 #define	db_printf_enter	db_printing
 
 int m88k_print_instruction(unsigned iadr, long inst);
 
+#endif	/* DDB */
 #endif	/* _LOCORE */
 
 #endif	/* _M88K_DB_MACHDEP_H_ */
