@@ -1,4 +1,4 @@
-.\"	$OpenBSD: traceroute.8,v 1.24 2001/08/02 18:37:35 mpech Exp $
+.\"	$OpenBSD: traceroute.8,v 1.25 2002/03/31 19:12:32 stevesk Exp $
 .\"	$NetBSD: traceroute.8,v 1.6 1995/10/12 03:05:50 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -108,7 +108,7 @@ This is useful for checking for asymmetric routing.
 .It Fl m Ar max_ttl
 Set the max time-to-live (max number of hops) used in outgoing probe
 packets.
-The default is 30 hops (the same default used for
+The default is 64 hops (the same default used for
 .Tn TCP
 connections).
 .It Fl n
@@ -221,7 +221,7 @@ We start out probes with a ttl of one and increase by one until we get an
 .Tn ICMP
 "port unreachable"
 (which means we got to "host") or hit a max (which
-defaults to 30 hops & can be changed with the
+defaults to 64 hops and can be changed with the
 .Fl m
 flag).
 Three probes (changed with
@@ -250,7 +250,7 @@ flag).
 A sample use and output might be:
 .Bd -literal
 [yak 71]% traceroute nis.nsf.net.
-traceroute to nis.nsf.net (35.1.1.48), 30 hops max, 56 byte packet
+traceroute to nis.nsf.net (35.1.1.48), 64 hops max, 56 byte packet
 1  helios.ee.lbl.gov (128.3.112.1)  19 ms  19 ms  0 ms
 2  lilac-dmc.Berkeley.EDU (128.32.216.1)  39 ms  39 ms  19 ms
 3  lilac-dmc.Berkeley.EDU (128.32.216.1)  39 ms  39 ms  19 ms
@@ -280,7 +280,7 @@ doesn't supply address-to-name translations for its
 A more interesting example is:
 .Bd -literal
 [yak 72]% traceroute allspice.lcs.mit.edu.
-traceroute to allspice.lcs.mit.edu (18.26.0.115), 30 hops max
+traceroute to allspice.lcs.mit.edu (18.26.0.115), 64 hops max
 1  helios.ee.lbl.gov (128.3.112.1)  0 ms  0 ms  0 ms
 2  lilac-dmc.Berkeley.EDU (128.32.216.1)  19 ms  19 ms  19 ms
 3  lilac-dmc.Berkeley.EDU (128.32.216.1)  39 ms  19 ms  19 ms
