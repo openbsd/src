@@ -1,5 +1,5 @@
-/*	$OpenBSD: cert.h,v 1.4 1999/07/17 21:54:39 niklas Exp $	*/
-/*	$EOM: cert.h,v 1.6 1999/07/17 20:44:09 niklas Exp $	*/
+/*	$OpenBSD: cert.h,v 1.5 2000/06/08 20:49:44 niklas Exp $	*/
+/*	$EOM: cert.h,v 1.7 2000/05/19 05:47:52 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niels Provos.  All rights reserved.
@@ -56,7 +56,7 @@ struct cert_handler {
   int (*cert_init) (void);		
   void *(*cert_get) (u_int8_t *, u_int32_t); 
   int (*cert_validate) (void *);
-  int (*cert_insert) (void *);
+  int (*cert_insert) (int, void *);
   void (*cert_free) (void *);
   int (*certreq_validate) (u_int8_t *, u_int32_t);
   void *(*certreq_decode) (u_int8_t *, u_int32_t);

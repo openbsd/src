@@ -1,5 +1,5 @@
-/*	$OpenBSD: exchange.h,v 1.13 1999/07/17 21:54:39 niklas Exp $	*/
-/*	$EOM: exchange.h,v 1.26 1999/07/17 20:44:10 niklas Exp $	*/
+/*	$OpenBSD: exchange.h,v 1.14 2000/06/08 20:49:44 niklas Exp $	*/
+/*	$EOM: exchange.h,v 1.27 2000/05/19 05:47:52 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -145,6 +145,9 @@ struct exchange {
   u_int8_t *id_r;
   size_t id_r_len;
 
+  /* Policy session identifier, where applicable */
+  int policy_id;
+
   /* Crypto info needed to encrypt/decrypt packets in this exchange.  */
   struct crypto_xf *crypto;
   int key_length;
@@ -157,6 +160,7 @@ struct exchange {
    */
   int recv_certtype, recv_certlen;
   void *recv_cert;
+  void *recv_key;
 
   /* XXX This is no longer necessary, it is covered by policy. */
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: x509.h,v 1.6 2000/02/01 02:46:19 niklas Exp $	*/
-/*	$EOM: x509.h,v 1.9 2000/01/31 22:33:49 niklas Exp $	*/
+/*	$OpenBSD: x509.h,v 1.7 2000/06/08 20:49:44 niklas Exp $	*/
+/*	$EOM: x509.h,v 1.10 2000/05/19 05:47:53 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niels Provos.  All rights reserved.
@@ -78,7 +78,7 @@ int x509_cert_get_subject (void *, u_int8_t **, u_int32_t *);
 
 /* Misc. X509 certificate functions.  */
 
-int x509_cert_insert (void *);
+int x509_cert_insert (int, void *);
 int x509_read_from_dir (X509_STORE *, char *, int);
 
 int x509_cert_subjectaltname (X509 *cert, u_char **, u_int *);
