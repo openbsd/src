@@ -85,7 +85,8 @@ Supported devices {:-include-:}:
 			Compaq NetFlex 3/P
 			Compaq Deskpro integrated adapter
 			Compaq Prosignia integrated adapter
-			Olicom OC2183, OC2325, OC2326
+			Olicom OC2135, OC2183, OC2325, OC2326
+			Racore 8165 and 8148
 			TI ThunderLAN adapters
 		RealTek 8129, RealTek 8139 Ethernet adapters, including:
 			Accton MPX 5030/5038
@@ -97,12 +98,13 @@ Supported devices {:-include-:}:
 			NDC NE100TX-E
 			Netronix EA-1210 Net Ether 10/100
 			OvisLink LEF-8129TX, LEF-8139TX
-			SMC EtherEZ PCI 1211-TX
+			SMC EZ Card 10/100 PCI 1211-TX
 		Macronix 98713/98715/98725 Ethernet adapters, including:
 			NDC Communications SOHOware SFA110
 			SVEC PN102-TX fast ethernet card
-		Lite-On PNIC Ethernet adapters, including:
+		Lite-On PNIC/PNIC-II Ethernet adapters, including:
 			Bay Networks Netgear FA310TX rev D1
+			LinkSys LNE100TX
 			Matrox Networks FastNIC 10/100
 	Tape drives:
 		Most SCSI tape drives
