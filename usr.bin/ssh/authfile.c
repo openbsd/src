@@ -15,11 +15,10 @@ for reading the passphrase from the user.
 */
 
 #include "includes.h"
-RCSID("$Id: authfile.c,v 1.1 1999/09/26 20:53:33 deraadt Exp $");
+RCSID("$Id: authfile.c,v 1.2 1999/09/26 21:02:15 deraadt Exp $");
 
 #include <gmp.h>
 #include "xmalloc.h"
-#include "idea.h"
 #include "buffer.h"
 #include "bufaux.h"
 #include "cipher.h"

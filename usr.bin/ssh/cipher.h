@@ -11,14 +11,11 @@ Created: Wed Apr 19 16:50:42 1995 ylo
 
 */
 
-/* RCSID("$Id: cipher.h,v 1.1 1999/09/26 20:53:34 deraadt Exp $"); */
+/* RCSID("$Id: cipher.h,v 1.2 1999/09/26 21:02:15 deraadt Exp $"); */
 
 #ifndef CIPHER_H
 #define CIPHER_H
 
-#ifdef WITH_IDEA
-#include "idea.h"
-#endif /* WITH_IDEA */
 #include "des.h"
 #ifdef WITH_RC4
 #include "rc4.h"
@@ -31,7 +28,7 @@ Created: Wed Apr 19 16:50:42 1995 ylo
    for compatibility.  The maximum allowed value is 31. */
 #define SSH_CIPHER_NOT_SET	-1 /* None selected (invalid number). */
 #define SSH_CIPHER_NONE		0 /* no encryption */
-#define SSH_CIPHER_IDEA		1 /* IDEA CFB */
+#define SSH_CIPHER_IDEA		1 /* IDEA CFB -- not implemented */
 #define SSH_CIPHER_DES		2 /* DES CBC */
 #define SSH_CIPHER_3DES		3 /* 3DES CBC */
 #define SSH_CIPHER_TSS		4 /* TRI's Simple Stream encryption CBC */
@@ -41,12 +38,6 @@ Created: Wed Apr 19 16:50:42 1995 ylo
 typedef struct {
   unsigned int type;
   union {
-#ifdef WITH_IDEA
-    struct {
-      IDEAContext key;
-      unsigned char iv[8];
-    } idea;
-#endif /* WITH_IDEA */
 #ifdef WITH_DES
     struct {
       des_key_schedule key;

@@ -12,7 +12,7 @@ Created: Wed Apr 19 17:41:39 1995 ylo
 */
 
 #include "includes.h"
-RCSID("$Id: cipher.c,v 1.1 1999/09/26 20:53:34 deraadt Exp $");
+RCSID("$Id: cipher.c,v 1.2 1999/09/26 21:02:15 deraadt Exp $");
 
 #include "ssh.h"
 #include "cipher.h"
@@ -119,29 +119,11 @@ detect_cbc_attack(const unsigned char *src,
   cipher_attack_detected("CRC-32 CBC insertion attack detected");
 }
 
-#ifdef WITH_IDEA
-static inline
-void
-detect_cfb_attack(const unsigned char *src,
-		  unsigned int len,
-		  const unsigned char iv[8])
-{
-  return;
-
-  log("CRC-32 CFB insertion attack detected");
-  cipher_attack_detected("CRC-32 CFB insertion attack detected");
-}
-#endif /* WITH_IDEA */
-
 /* Names of all encryption algorithms.  These must match the numbers defined
    int cipher.h. */
 static char *cipher_names[] =
 { "none",
-#ifdef WITH_IDEA
-  "idea",
-#else
   "no idea",
-#endif
 #ifdef WITH_DES
   "des",
 #else
@@ -169,9 +151,6 @@ unsigned int cipher_mask()
 {
   unsigned int mask = 0;
   mask |= 1 << SSH_CIPHER_NONE;
-#ifdef WITH_IDEA
-  mask |= 1 << SSH_CIPHER_IDEA;
-#endif /* WITH_IDEA */
 #ifdef WITH_DES
   mask |= 1 << SSH_CIPHER_DES;
 #endif
@@ -246,15 +225,6 @@ void cipher_set_key(CipherContext *context, int cipher,
     case SSH_CIPHER_NONE:
       break;
 
-#ifdef WITH_IDEA
-    case SSH_CIPHER_IDEA:
-      if (keylen < 16)
-	error("Key length %d is insufficient for IDEA.", keylen);
-      idea_set_key(&context->u.idea.key, padded);
-      memset(context->u.idea.iv, 0, sizeof(context->u.idea.iv));
-      break;
-#endif /* WITH_IDEA */
-
 #ifdef WITH_DES
     case SSH_CIPHER_DES:
       /* Note: the least significant bit of each byte of key is parity, 
@@ -315,13 +285,6 @@ void cipher_encrypt(CipherContext *context, unsigned char *dest,
       memcpy(dest, src, len);
       break;
 
-#ifdef WITH_IDEA
-    case SSH_CIPHER_IDEA:
-      idea_cfb_encrypt(&context->u.idea.key, context->u.idea.iv, 
-		       dest, src, len);
-      break;
-#endif /* WITH_IDEA */
-
 #ifdef WITH_DES
     case SSH_CIPHER_DES:
       des_cbc_encrypt((void*)src, (void*)dest, len,
@@ -369,14 +332,6 @@ void cipher_decrypt(CipherContext *context, unsigned char *dest,
     case SSH_CIPHER_NONE:
       memcpy(dest, src, len);
       break;
-
-#ifdef WITH_IDEA
-    case SSH_CIPHER_IDEA:
-      detect_cfb_attack(src, len, context->u.idea.iv);
-      idea_cfb_decrypt(&context->u.idea.key, context->u.idea.iv, 
-		       dest, src, len);
-      break;
-#endif /* WITH_IDEA */
 
 #ifdef WITH_DES
     case SSH_CIPHER_DES:
