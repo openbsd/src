@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.1 2004/07/27 12:16:06 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.2 2004/07/28 12:28:07 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -214,10 +214,47 @@
 #include <machine/trap.h>
 
 /*
- * The exception frame as defined in "machine/pcb.h" (among other places) is
- * a bit outdated and needs to be changed. Until then, we'll define some
- * pseudo-fields there for our needs.
+ * SR1 - CPU FLAGS REGISTER
+ * XXX clean this when the trap handler is reworked. Among the things
+ * I like to see is having the trap frame on the kernel stack instead
+ * of putting in the PCB. If done properly, we don't need SR1 for doing
+ * anything special. nivas
  *
+ * SR1 contains flags about the current CPU status.
+ *
+ * The bit FLAG_IGNORE_DATA_EXCEPTION indicates that any data exceptions
+ * 	should be ignored (well, at least treated in a special way).
+ * The bit FLAG_ENABLING_FPU indicates that the exception handler is
+ * 	in the process of enabling the FPU (so that an exception can
+ * 	be serviced).  This is needed because enabling the FPU can
+ *	cause other exceptions to happen, and the whole system is
+ *	in a rather precarious state and so special cautions must
+ * 	be taken.
+ */
+#define FLAG_IGNORE_DATA_EXCEPTION	5
+#define FLAG_ENABLING_FPU		7
+#define FLAG_FROM_KERNEL		8
+
+/* REGister OFFset into the E.F. (exception frame) */
+#define REG_OFF(reg_num)  ((reg_num) * 4) /* (num * sizeof(register_t))  */
+#define GENREG_OFF(num)	(REG_OFF(EF_R0 + (num))) /* GENeral REGister OFFset */
+
+/*
+ * Some registers used during the setting up of the new exception frame.
+ * Don't choose r1, r30, or r31 for any of them.
+ *
+ * Also, if any are 'r2' or 'r3', be careful using with CALL above!
+ */
+#define	FLAGS	r2
+#define	TMP	r3
+#define	TMP2	r10
+#define	TMP3	r11
+#define	SAVE_TMP2	st	r10, r31, GENREG_OFF(10)
+#define	SAVE_TMP3	st	r11, r31, GENREG_OFF(11)
+#define	RESTORE_TMP2	ld	r10, r31, GENREG_OFF(10)
+#define	RESTORE_TMP3	ld	r11, r31, GENREG_OFF(11)
+
+/*
  * EF_SR3
  *   A place to save the exception-time SR3 from just after the
  *   time when an exception is raised until just after the FPU
