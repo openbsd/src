@@ -1,14 +1,5 @@
 This is a list of currently known ftp servers:
 
-Australia:
-
-ftp://melanoma.bf.rmit.edu.au/pub/OpenBSD == 
-	ftp://ftp.au.openbsd.org/pub/OpenBSD
-
-France:
-
-ftp://ftp.ibp.fr/pub/OpenBSD == ftp://ftp2.fr.openbsd.org/pub/OpenBSD
-
 Germany:
 
 ftp://ftp.fu-berlin.de/pub/unix/openbsd/mirrors/OpenBSD ==
@@ -25,10 +16,6 @@ Switzerland:
 ftp://ftp.openbsd.org/pub/OpenBSD == 
 	ftp://ftp.eu.openbsd.org/pub/OpenBSD
 
-UK:
-
-ftp://ftp.southern.com/pub/OpenBSD
-
 USA:
 
 ftp://hydra.heuris.com/pub/OpenBSD ==
@@ -36,6 +23,13 @@ ftp://hydra.heuris.com/pub/OpenBSD ==
 
 ftp://freestuff.cs.colorado.edu/pub/OpenBSD == 
 	ftp://ftp2.usa.openbsd.org/pub/OpenBSD
+
+ftp://ftp.ctaz.com/pub/OpenBSD ==
+	ftp://ftp5.usa.openbsd.org/pub/OpenBSD
+
+ftp://pub.seastrom.com/pub/OpenBSD ==
+	ftp://ftp1.usa.openbsd.org/pub/OpenBSD</a><br>
+
 
 As well, the file ftp://ftp.openbsd.org/pub/OpenBSD/2.1/ftplist
 contains a list which is continually updated.  If you wish to become a
