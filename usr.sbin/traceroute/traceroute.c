@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.36 2001/06/01 01:57:00 pvalchev Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.37 2001/06/09 21:06:23 pvalchev Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
 #else
-static char rcsid[] = "$OpenBSD: traceroute.c,v 1.36 2001/06/01 01:57:00 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: traceroute.c,v 1.37 2001/06/09 21:06:23 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
@@ -312,6 +312,7 @@ main(argc, argv)
 	int ch, i, lsrr, on, probe, seq, tos, ttl, ttl_flag, incflag = 1;
 	struct ip *ip;
 	u_int32_t tmprnd;
+	int sump = 0;
 
 	if ((pe = getprotobyname("icmp")) == NULL) {
 		Fprintf(stderr, "icmp: unknown protocol\n");
@@ -330,8 +331,11 @@ main(argc, argv)
 	lsrr = 0;
 	on = 1;
 	seq = tos = 0;
-	while ((ch = getopt(argc, argv, "dDIg:f:m:np:q:rs:t:w:vlP:c")) != -1)
+	while ((ch = getopt(argc, argv, "SDIdg:f:m:np:q:rs:t:w:vlP:c")) != -1)
 		switch (ch) {
+		case 'S':
+			sump = 1;
+			break;
 		case 'f':
 			first_ttl = atoi(optarg);
 			if (first_ttl < 1 || first_ttl > max_ttl)
@@ -551,9 +555,10 @@ main(argc, argv)
 		int unreachable = 0;
 		int timeout = 0;
 		quad_t dt;
+		int loss;
 
 		Printf("%2d ", ttl);
-		for (probe = 0; probe < nprobes; ++probe) {
+		for (probe = 0, loss = 0; probe < nprobes; ++probe) {
 			int cc;
 			struct timeval t1, t2;
 			struct timezone tz;
@@ -659,9 +664,12 @@ main(argc, argv)
 			if (cc == 0) {
 				Printf(" *");
 				timeout++;
+				loss++;
 			}
 			(void) fflush(stdout);
 		}
+		if (sump)
+			Printf(" (%d%% loss)", (loss * 100) / nprobes);
 		putchar('\n');
 		if (got_there || (unreachable && (unreachable + timeout) >= nprobes))
 			exit(0);
@@ -985,8 +993,7 @@ inetname(in)
 		first = 0;
 		if (gethostname(domain, sizeof domain) == 0 &&
 		    (cp = strchr(domain, '.')) != NULL) {
-			(void)strncpy(domain, cp + 1, sizeof(domain) - 1);
-			domain[sizeof(domain) - 1] = '\0';
+			strlcpy(domain, cp + 1, sizeof(domain));
 		}
 	}
 	if (!nflag && in.s_addr != INADDR_ANY) {
@@ -995,8 +1002,7 @@ inetname(in)
 			if ((cp = strchr(hp->h_name, '.')) != NULL &&
 			    strcmp(cp + 1, domain) == 0)
 				*cp = '\0';
-			(void)strncpy(line, hp->h_name, sizeof(line) - 1);
-			line[sizeof(line) - 1] = '\0';
+			strlcpy(line, hp->h_name, sizeof(line));
 			return (line);
 		}
 	}
@@ -1006,9 +1012,10 @@ inetname(in)
 void
 usage()
 {
-	(void)fprintf(stderr,
-"usage: traceroute [-dDInrvc] [-g gateway_addr] ... [-m max_ttl] [-p port#]\n\t\
+	extern char *__progname;
+	fprintf(stderr,
+"usage: %s [-SDIdnrvc] [-g gateway_addr] ... [-m max_ttl] [-p port#]\n\t\
 [-P proto] [-q nqueries] [-s src_addr] [-t tos]\n\t\
-[-w wait] [-f first_ttl] host [data size]\n");
+[-w wait] [-f first_ttl] host [data size]\n", __progname);
 	exit(1);
 }
