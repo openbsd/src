@@ -56,7 +56,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhclient.c,v 1.15 2001/01/06 20:01:40 angelos Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.16 2001/02/23 16:51:16 beck Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -181,7 +181,7 @@ int main (argc, argv, envp)
 	read_client_conf ();
 
 	/* Lock the leases file */
-	fd = open (path_dhclient_db, O_RDONLY | O_EXLOCK, 0);
+	fd = open (path_dhclient_db, O_RDONLY | O_EXLOCK | O_CREAT, 0);
 	if (fd < 0)
 		error ("can't open and lock %s: %m", path_dhclient_db);
 
@@ -509,7 +509,7 @@ void bind_lease (ip)
 	ip -> client -> new -> medium = ip -> client -> medium;
 
 	/* Lock the leases file */
-	fd = open (path_dhclient_db, O_RDONLY | O_EXLOCK, 0);
+	fd = open (path_dhclient_db, O_RDONLY | O_EXLOCK | O_CREAT, 0);
 	if (fd < 0)
 		error ("can't open and lock %s: %m", path_dhclient_db);
 
