@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.14 2003/02/16 21:30:13 deraadt Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.15 2003/02/23 18:45:32 markus Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -698,11 +698,11 @@ export_auth(void **p, struct tdb *tdb, int dstauth)
 	    PADUP((*ipr)->ref_len)) / sizeof(uint64_t);
 
 	switch ((*ipr)->ref_type) {
-	case IPSP_CRED_KEYNOTE:
-		sadb_auth->sadb_x_cred_type = SADB_X_CREDTYPE_KEYNOTE;
+	case IPSP_AUTH_PASSPHRASE:
+		sadb_auth->sadb_x_cred_type = SADB_X_AUTHTYPE_PASSPHRASE;
 		break;
-	case IPSP_CRED_X509:
-		sadb_auth->sadb_x_cred_type = SADB_X_CREDTYPE_X509;
+	case IPSP_AUTH_RSA:
+		sadb_auth->sadb_x_cred_type = SADB_X_AUTHTYPE_RSA;
 		break;
 	}
 	*p += sizeof(struct sadb_x_cred);
