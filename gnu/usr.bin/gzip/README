@@ -39,8 +39,8 @@ For all machines, use "make check" to check that gzip was compiled
 correctly.  Try compiling gzip without any optimization if you have a
 problem.
 
-Please send all comments and bug reports by electronic mail to:
-   Jean-loup Gailly <jloup@chorus.fr>
+Please send all comments and bug reports by electronic mail to
+<bug-gzip@gnu.org>.
 
 or, if this fails, to bug-gnu-utils@prep.ai.mit.edu.
 Bug reports should ideally include:

@@ -1,4 +1,4 @@
-gzip was written by Jean-loup Gailly <jloup@chorus.fr>, with portions
+gzip was written by Jean-loup Gailly <gzip@gnu.org>, with portions
 written by Mark Adler (inflate.c), Peter Jannesen (unlzw.c) and
 Haruhiko Okumura (unlzh.c). The zip deflate format was defined by Phil Katz.
 Thanks to those who reported problems and suggested various

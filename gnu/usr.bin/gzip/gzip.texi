@@ -239,8 +239,8 @@ Decompress.
 Force compression or decompression even if the file has multiple links
 or the corresponding file already exists, or if the compressed data
 is read from or written to a terminal. If the input data is not in
-a format recognized by @code{gzip}, and if the option --stdout is also
-given, copy the input data without change to the standard ouput: let
+a format recognized by @code{gzip}, and if the option @samp{--stdout} is also
+given, copy the input data without change to the standard output: let
 @code{zcat} behave as @code{cat}. If @samp{-f} is not given, and
 when not running in the background, @code{gzip} prompts to verify
 whether an existing file should be overwritten.
@@ -268,7 +268,7 @@ such a file, you can use:
 zcat file.Z | wc -c
 @end example
 
-In combination with the --verbose option, the following fields are also
+In combination with the @samp{--verbose} option, the following fields are also
 displayed:
 
 @example
@@ -279,8 +279,8 @@ date & time: time stamp for the uncompressed file
 
 The crc is given as ffffffff for a file not in gzip format.
 
-With --verbose, the size totals and compression ratio for all files
-is also displayed, unless some sizes are unknown. With --quiet,
+With @samp{--verbose}, the size totals and compression ratio for all files
+is also displayed, unless some sizes are unknown. With @samp{--quiet},
 the title and totals lines are not displayed.
 
 @item --license
@@ -462,8 +462,7 @@ tapes.  (This example assumes you are using the GNU version of
 @cindex bugs
 
 If you find a bug in @code{gzip}, please send electronic mail to
-@w{@samp{jloup@@chorus.fr}} or, if this fails, to
-@w{@samp{bug-gnu-utils@@prep.ai.mit.edu}}.  Include the version number,
+@w{@samp{bug-gzip@@gnu.org}}.  Include the version number,
 which you can find by running @w{@samp{gzip -V}}.  Also include in your
 message the hardware and operating system, the compiler used to compile
 @code{gzip},

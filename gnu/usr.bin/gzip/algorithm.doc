@@ -48,7 +48,7 @@ match, thus speeding up the whole process. If compression ratio is more
 important than speed, zip attempts a complete second search even if
 the first match is already long enough.
 
-The lazy match evaluation is no performed for the fastest compression
+The lazy match evaluation is not performed for the fastest compression
 modes (speed options -1 to -3). For these fast modes, new strings
 are inserted in the hash table only when no match was found, or
 when the match is not too long. This degrades the compression ratio
@@ -114,7 +114,7 @@ each with the following format:
   subfield data
 
 The subfield id can consist of two letters with some mnemonic value.
-Please send any such id to jloup@chorus.fr. Ids with a zero second
+Please send any such id to <gzip@gnu.org>. Ids with a zero second
 byte are reserved for future use. The following ids are defined:
 
   Ap (0x41, 0x70) : Apollo file type information
@@ -151,7 +151,7 @@ stamp of an encrypted file might be set to zero to avoid giving a clue
 about the construction of the random header.
 
 Jean-loup Gailly
-jloup@chorus.fr
+gzip@gnu.org
 
 References:
 
