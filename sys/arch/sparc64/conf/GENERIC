@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.101 2004/09/21 19:19:57 drahn Exp $
+#	$OpenBSD: GENERIC,v 1.102 2004/09/23 17:34:15 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -21,6 +21,11 @@ mainbus0 at root
 cpu0	at mainbus0
 
 upa0	at mainbus0
+
+# e4500/e5500
+central0 at mainbus0
+fhc0	at central0
+fhc*	at mainbus0
 
 # Bus types found on SPARC systems.
 
@@ -183,6 +188,7 @@ pcons0	at mainbus0			# PROM console
 clock*	at sbus?
 clock*	at ebus?
 rtc*	at ebus?
+clock0	at fhc0
 
 ## Timer chip found on (some) sun4u systems.
 timer*	at mainbus0

@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISK,v 1.31 2004/09/21 19:19:57 drahn Exp $
+# 	$OpenBSD: RAMDISK,v 1.32 2004/09/23 17:34:15 jason Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -33,6 +33,10 @@ config		bsd	root on rd0a
 mainbus0 at root
 cpu0	at mainbus0
 
+central0 at mainbus0
+fhc0	at central0
+fhc*	at mainbus0
+
 # Bus types found on SPARC systems.
 sbus*	at mainbus0		# Ultra 1/E4500
 psycho*	at mainbus0
@@ -55,6 +59,7 @@ auxio*	at sbus?
 #com*	at ebus?
 clock*	at sbus?			# Mostek clock
 clock*	at ebus?
+clock0	at fhc?
 rtc*	at ebus?			# DS1287/M5819 clock
 timer*	at mainbus0			# Timer chip
 
