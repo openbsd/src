@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.10 2001/06/25 17:59:19 smart Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.11 2001/06/25 22:14:07 smart Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -82,8 +82,8 @@ usage()
 {
 	extern char *__progname;
  
-	fprintf(stderr, "usage: %s [-d] [-c set] [-r file]", __progname);
-	fprintf(stderr, " [-n file] [-s set] [-l if] [-e]\n");
+	fprintf(stderr, "usage: %s [-de] [-c set] [-l interface]", __progname);
+	fprintf(stderr, " [-n file] [-r file] [-s set]\n");
 	exit(1);
 }
 
@@ -123,10 +123,10 @@ pfctl_enable(int dev)
 {
 	if (ioctl(dev, DIOCSTART)) {
 		print_error("DIOCSTART");
-		return 1;
+		return (1);
 	}
 	printf("pf enabled\n");
-	return 0;
+	return (0);
 }
 
 int
@@ -134,10 +134,10 @@ pfctl_disable(int dev)
 {
 	if (ioctl(dev, DIOCSTOP)) {
 		print_error("DIOCSTOP");
-		return 1;
+		return (1);
 	}
 	printf("pf disabled\n");
-	return 0;
+	return (0);
 }
 
 int
@@ -411,31 +411,32 @@ main(int argc, char *argv[])
 	int dev;
 	int ch;
 
-	while (!error && (ch = getopt(argc, argv, "dc:r:n:s:l:e")) != -1) {
+	while ((ch = getopt(argc, argv, "c:del:n:r:s:")) != -1) {
 		switch (ch) {
-		case 'd':
-			dflag++;
-			break;
 		case 'c':
 			clearopt = optarg;
 			break;
-		case 'r':
-			rulesopt = optarg;
-			break;
-		case 'n':
-			natopt = optarg;
-			break;
-		case 's':
-			showopt = optarg;
-			break;
-		case 'l':
-			logopt = optarg;
+		case 'd':
+			dflag++;
 			break;
 		case 'e':
 			eflag++;
 			break;
+		case 'l':
+			logopt = optarg;
+			break;
+		case 'n':
+			natopt = optarg;
+			break;
+		case 'r':
+			rulesopt = optarg;
+			break;
+		case 's':
+			showopt = optarg;
+			break;
 		default:
 			usage();
+			/* NOTREACHED */
 		}
 	}
 
