@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.103 2005/04/03 19:39:31 deraadt Exp $
+#	$OpenBSD: netstart,v 1.104 2005/04/04 04:26:27 djm Exp $
 
 # Strip comments (and leading/trailing whitespace if IFS is set)
 # from a file and spew to stdout
@@ -321,7 +321,7 @@ done
 
 # /etc/mygate, if it exists, contains the name of my gateway host
 # that name must be in /etc/hosts.
-if [ "X${setgateway} != X"N" -a -f /etc/mygate ]; then
+if [ "X${setgateway}" != X"N" -a -f /etc/mygate ]; then
 	route -qn delete default > /dev/null 2>&1
 	route -qn add -host default `stripcom /etc/mygate`
 fi
