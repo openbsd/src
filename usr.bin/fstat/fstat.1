@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fstat.1,v 1.4 1996/08/17 09:12:27 deraadt Exp $
+.\"	$OpenBSD: fstat.1,v 1.5 1998/01/03 12:22:10 deraadt Exp $
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -207,7 +207,9 @@ also attempts to print the internet address and port for the
 local end of a connection.
 If the socket is connected, it also prints the remote internet address
 and port.
-A ``*'' is used to indicate an INADDR_ANY binding.
+A ``*'' is used to indicate an INADDR_ANY binding.  In this case, the
+use of the arrow (``<--'' or ``-->'') indicates the direction the socket
+connection was created.
 .Sh BUGS
 Since
 .Nm fstat
