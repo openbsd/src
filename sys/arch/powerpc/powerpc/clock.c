@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.13 2001/06/10 20:01:42 drahn Exp $	*/
+/*	$OpenBSD: clock.c,v 1.14 2001/06/24 04:59:26 drahn Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -34,15 +34,23 @@
 
 #include <sys/param.h>
 #include <sys/kernel.h>
+#include <sys/systm.h>
 
+#include <machine/autoconf.h>
 #include <machine/pio.h>
 #include <machine/intr.h>
+#include <dev/ofw/openfirm.h>
 
 #if 0
 #include <powerpc/pci/mpc106reg.h>
 #endif
 
-void resettodr();
+void resettodr(void);
+static inline u_quad_t mftb(void);
+
+/* XXX, called from asm code */
+void decr_intr(struct clockframe *frame);
+
 /*
  * Initially we assume a processor with a bus frequency of 12.5 MHz.
  */
@@ -194,6 +202,7 @@ resettodr()
 	}
 }
 
+
 void
 decr_intr(frame)
 	struct clockframe *frame;
@@ -288,10 +297,10 @@ calc_delayconst()
 			asm volatile ("mtmsr %0" :: "r"(msr));
 			break;
 		}
-		if (phandle = OF_child(qhandle))
+		if ((phandle = OF_child(qhandle)))
 			continue;
 		while (qhandle) {
-			if (phandle = OF_peer(qhandle))
+			if ((phandle = OF_peer(qhandle)))
 				break;
 			qhandle = OF_parent(qhandle);
 		}
