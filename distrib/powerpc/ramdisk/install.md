@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.19 2001/03/24 01:17:50 drahn Exp $
+#	$OpenBSD: install.md,v 1.20 2001/03/25 06:30:41 drahn Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -159,7 +159,7 @@ md_checkfordisklabel() {
 	echo "any HFS partitions on the disk, including the partition table."
 	echo "Choose the MBR option carefully, knowing this fact."
 
-	echo "Do you want to choose (H)FS labeling or (M)BR labeling [H]"
+	echo -n "Do you want to choose (H)FS labeling or (M)BR labeling [H]"
 	getresp "h"
 	case "$resp" in
 	m*|M*)
@@ -169,7 +169,7 @@ md_checkfordisklabel() {
 		;;
 	*)
 		disklabeltype=HFS
-		md_init_hfs $1;;
+		md_init_hfs $1
 		rval=$?
 		;;
 	esac
