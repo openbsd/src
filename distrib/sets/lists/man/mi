@@ -71,7 +71,6 @@
 ./usr/share/info/libg++.info-3
 ./usr/share/info/libg++.info-4
 ./usr/share/info/libg++.info-5
-./usr/share/info/makeinfo.info
 ./usr/share/info/standards.info
 ./usr/share/info/standards.info-1
 ./usr/share/info/standards.info-2
@@ -203,7 +202,6 @@
 ./usr/share/man/cat1/id.0
 ./usr/share/man/cat1/ident.0
 ./usr/share/man/cat1/indent.0
-./usr/share/man/cat1/info.0
 ./usr/share/man/cat1/info_mkdb.0
 ./usr/share/man/cat1/install.0
 ./usr/share/man/cat1/intro.0

@@ -854,6 +854,12 @@
 ./usr/share/calendar/ru_SU.KOI8-R/calendar.msk
 ./usr/share/calendar/ru_SU.KOI8-R/calendar.orthodox
 ./usr/share/calendar/ru_SU.KOI8-R/calendar.pagan
+./usr/share/locale/de
+./usr/share/locale/de/LC_MESSAGES
+./usr/share/locale/de/LC_MESSAGES/texinfo.mo
+./usr/share/locale/fr
+./usr/share/locale/fr/LC_MESSAGES
+./usr/share/locale/fr/LC_MESSAGES/texinfo.mo
 ./usr/share/dict
 ./usr/share/dict/papers
 ./usr/share/dict/special
@@ -1728,3 +1734,5 @@
 ./usr/sbin/mkalias
 ./usr/libexec/vi.recover
 ./var/tmp/vi.recover
+./usr/bin/hoststat
+./usr/bin/purgestat
