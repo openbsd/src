@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.16 1997/04/07 22:18:05 rees Exp $
+#	$OpenBSD: netstart,v 1.17 1997/04/09 03:00:05 kstailey Exp $
 
 # set these to "NO" to turn them off.  otherwise, they're used as flags
 routed_flags=-q
@@ -20,6 +20,7 @@ gated=NO
 kerberos_server=NO
 amd=NO
 ipfilter=NO
+nat=NO
 portmap=YES			# almost always needed
 inetd=YES			# almost always needed
 lpd=NO				# printing daemons
@@ -30,6 +31,7 @@ gated_flags=
 amd_dir=/amd			# AMD's mount directory
 amd_master=/etc/amd/master	# AMD 'master' map
 ipfilter_rules=/etc/ipf.rules	# Rules for IP packet filtering
+nat_rules=/etc/nat.rules	# Rules for Network Address Translation
 ipmon_flags=-s			# To disable logging, use ipmon_flags=NO
 rfc1323=YES			# TCP RFC1323 extensions (disable if tcp is slow)
 
@@ -51,6 +53,16 @@ if [ X"${ipfilter}" = X"YES" -a -f "${ipfilter_rules}" ]; then
 else
 	ipfilter=NO
 fi
+
+# Configure NAT before configuring network interfaces
+#
+if [ X"${nat}" = X"YES" -a -f "${nat_rules}" ]; then
+	echo 'configuring NAT'
+	ipnat -CF -f ${nat_rules}
+else
+	nat=NO
+fi
+
 
 # configure all of the interfaces which we know about.
 # do this by reading /etc/hostname.* files, where * is the name
