@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.2 1996/08/19 08:32:16 tholo Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 1997/09/26 18:03:40 millert Exp $
 
 # stdio sources
 .PATH: ${.CURDIR}/stdio
@@ -30,6 +30,7 @@ MLINKS+=fseek.3 fgetpos.3 fseek.3 fsetpos.3 fseek.3 ftell.3 fseek.3 rewind.3
 MLINKS+=funopen.3 fropen.3 funopen.3 fwopen.3
 MLINKS+=getc.3 fgetc.3 getc.3 getchar.3 getc.3 getw.3
 MLINKS+=mktemp.3 mkstemp.3
+MLINKS+=mktemp.3 mkdtemp.3
 MLINKS+=printf.3 fprintf.3 printf.3 snprintf.3 printf.3 sprintf.3 \
 	printf.3 vfprintf.3 printf.3 vprintf.3 printf.3 vsnprintf.3 \
 	printf.3 vsprintf.3 
