@@ -1,7 +1,7 @@
 #
 #	THREADWAY: threadway.teeny.org
 #
-#	$OpenBSD: THREADWAY,v 1.5 1996/07/05 03:14:20 downsj Exp $
+#	$OpenBSD: THREADWAY,v 1.6 1996/07/13 21:23:13 downsj Exp $
 #
 
 machine		i386
@@ -19,9 +19,9 @@ option		SWAPPAGER
 option		VNODEPAGER
 option		DEVPAGER
 
-#option		DDB
+option		DDB
 #makeoptions	DEBUG="-g"
-#option		DIAGNOSTIC
+option		DIAGNOSTIC
 option		KTRACE
 
 option		SYSVMSG
@@ -67,7 +67,7 @@ option		PROCFS
 option		UMAPFS
 option		UNION
 
-option		GATEWAY
+#option		GATEWAY
 option		INET
 
 config		bsd root on wd0 swap on wd0 and wd1 and wd2
