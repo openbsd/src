@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: sigblock.3,v 1.8 1999/07/09 13:35:15 aaron Exp $
+.\"	$OpenBSD: sigblock.3,v 1.9 2001/01/18 18:51:44 millert Exp $
 .\"
 .Dd March 10, 1991
 .Dt SIGBLOCK 3
@@ -68,6 +68,42 @@ or
 .Dv SIGSTOP ;
 this restriction is silently
 imposed by the system.
+.Sh EXAMPLES
+The following example utilizing
+.Fn sigblock :
+.Bd -literal -offset indent
+int omask;
+
+omask = sigblock(sigmask(SIGINT) | sigmask(SIGHUP));
+.Ed
+.Pp
+Becomes:
+.Bd -literal -offset indent
+sigset_t set, oset;
+
+sigemptyset(&set);
+sigaddset(&set, SIGINT);
+sigaddset(&set, SIGHUP);
+sigprocmask(SIG_BLOCK, &set, &oset);
+omask = sigblock(sigmask(SIGINT) | sigmask(SIGHUP));
+.Ed
+.Pp
+Another use of
+.Fn sigblock
+is to get the current set of masked signals without changing what
+is actually blocked.  Instead of:
+.Bd -literal -offset indent
+int set;
+
+set = sigblock(0);
+.Ed
+.Pp
+Use the following:
+.Bd -literal -offset indent
+sigset_t set;
+
+sigprocmask(SIG_BLOCK, NULL, &set);
+.Ed
 .Sh RETURN VALUES
 The previous set of masked signals is returned.
 .Sh SEE ALSO
