@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.66 2002/03/19 23:16:52 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.67 2002/03/20 01:02:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -489,7 +489,7 @@ pmap_bootstrap(vstart)
 	kpm->pm_stats.wired_count = kpm->pm_stats.resident_count =
 	    physmem = atop(vstart);
 
-	if (etext < etext1) {
+	if (&etext < &etext1) {
 		physical_steal = (vaddr_t)&etext;
 		physical_end = (vaddr_t)&etext1;
 	}
@@ -706,7 +706,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		if (flags & PMAP_CANFAIL)
 			return (KERN_RESOURCE_SHORTAGE);
 
-		panic("pmap_kenter: cannot allocate pde");
+		panic("pmap_enter: cannot allocate pde");
 	}
 
 	if (!ptp)
@@ -1172,7 +1172,7 @@ pmap_kenter_pa(va, pa, prot)
 
 	pte = pa | PTE_PROT(TLB_WIRED|TLB_DIRTY|pmap_prot(pmap_kernel(), prot));
 	/* if (pa >= HPPA_IOSPACE) */
-		pte |= TLB_UNCACHABLE;
+		pte |= PTE_PROT(TLB_UNCACHABLE);
 	pmap_pte_set(pde, va, pte);
 
 	simple_unlock(&pmap->pm_obj.vmobjlock);
