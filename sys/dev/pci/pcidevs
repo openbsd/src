@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.654 2003/07/20 21:40:48 matthieu Exp $
+	$OpenBSD: pcidevs,v 1.655 2003/07/22 18:53:31 jason Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -568,6 +568,7 @@ vendor EUMITCOM		0x1638	Eumitcom
 vendor NETSEC		0x1660	NetSec
 vendor ATHEROS		0x168c	Atheros
 vendor GLOBALSUN	0x16ab	Global Sun
+vendor SAFENET		0x16ae	SafeNet
 vendor USR2		0x16ec	US Robotics
 vendor NETOCTAVE	0x170b	Netoctave
 vendor ALTIMA		0x173b	Altima
@@ -2222,6 +2223,9 @@ product S3 TWISTER		0x8d01	Twister
 product S3 TWISTER_K		0x8d02	Twister-K
 product S3 PROSAVAGE_DDR	0x8d04  ProSavage DDR
 product S3 SONICVIBES		0xca00	SonicVibes
+
+/* SafeNet, Inc. products */
+product SAFENET SAFEXCEL	0x1141	SafeXcel
 
 /* Schneider & Koch (SysKonnect) */
 product SCHNEIDERKOCH GE	0x4300	984x GE
