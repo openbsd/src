@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cluster.c,v 1.14 1998/10/11 06:33:11 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_cluster.c,v 1.15 1998/10/13 00:28:32 csapuntz Exp $	*/
 /*	$NetBSD: vfs_cluster.c,v 1.12 1996/04/22 01:39:05 christos Exp $	*/
 
 /*-
@@ -156,9 +156,10 @@ cluster_read(vp, filesize, lblkno, size, cred, bpp)
 	if (!ISSEQREAD(vp, lblkno)) {
 		vp->v_ralen = 0;
 		vp->v_maxra = lblkno;
-	} else if ((ioblkno + 1) * size <= filesize && !alreadyincore &&
-	    !(error = VOP_BMAP(vp, ioblkno, NULL, &blkno, &num_ra)) &&
-	    blkno != -1) {
+	} else if ((u_quad_t)(ioblkno + 1) * (u_quad_t)size <= filesize && 
+		   !alreadyincore &&
+		   !(error = VOP_BMAP(vp, ioblkno, NULL, &blkno, &num_ra)) &&
+		   blkno != -1) {
 		/*
 		 * Reading sequentially, and the next block is not in the
 		 * cache.  We are going to try reading ahead.
@@ -193,7 +194,8 @@ cluster_read(vp, filesize, lblkno, size, cred, bpp)
 			bp->b_blkno = blkno;
 			/* Case 5: check how many blocks to read ahead */
 			++ioblkno;
-			if ((ioblkno + 1) * size > filesize ||
+			if ((u_quad_t)(ioblkno + 1) * (u_quad_t)size 
+			      > filesize ||
 			    incore(vp, ioblkno) || (error = VOP_BMAP(vp,
 			     ioblkno, NULL, &blkno, &num_ra)) || blkno == -1)
 				goto skip_readahead;
@@ -293,7 +295,7 @@ cluster_rbuild(vp, filesize, bp, lbn, blkno, size, run, flags)
 		panic("cluster_rbuild: size %ld != filesize %ld\n",
 			size, vp->v_mount->mnt_stat.f_iosize);
 #endif
-	if (size * (lbn + run + 1) > filesize)
+	if ((u_quad_t)size * (u_quad_t)(lbn + run + 1) > filesize)
 		--run;
 	if (run == 0) {
 		if (!bp) {
@@ -551,7 +553,7 @@ cluster_write(bp, filesize)
 		 * If at end of file, make cluster as large as possible,
 		 * otherwise find size of existing cluster.
 		 */
-		if ((lbn + 1) * bp->b_bcount != filesize &&
+		if ((u_quad_t)(lbn + 1) * (u_quad_t)bp->b_bcount != filesize &&
 		    (VOP_BMAP(vp, lbn, NULL, &bp->b_blkno, &maxclen) ||
 		     bp->b_blkno == -1)) {
 			bawrite(bp);
