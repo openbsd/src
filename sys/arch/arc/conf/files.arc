@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arc,v 1.10 1996/11/30 13:39:41 niklas Exp $
+#	$OpenBSD: files.arc,v 1.11 1996/12/11 12:59:29 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -56,8 +56,6 @@ file	arch/arc/pica/picabus.c		pica
 device	isabr {} : isabus
 attach	isabr at mainbus
 file	arch/arc/isa/isabus.c		isabr
-#file    arch/arc/isa/isadma.c		isadma needs-flag
-file    dev/isa/isadma.c		isadma needs-flag
 
 #	Ethernet chip
 device	sn

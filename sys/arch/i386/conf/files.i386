@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.28 1996/10/26 06:15:04 downsj Exp $
+#	$OpenBSD: files.i386,v 1.29 1996/12/11 12:59:28 niklas Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -94,7 +94,6 @@ major	{wt = 3}
 
 include "../../../dev/isa/files.isa"
 file	arch/i386/isa/isa_machdep.c	isabus
-file	dev/isa/isadma.c		isadma needs-flag
 
 # PC clock
 file	arch/i386/isa/clock.c		isabus

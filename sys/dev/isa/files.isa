@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.30 1996/11/30 13:39:38 niklas Exp $
+#	$OpenBSD: files.isa,v 1.31 1996/12/11 12:59:27 niklas Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
@@ -22,6 +22,7 @@ file	dev/isa/isa.c			isa needs-flag
 define	isa_dma
 device  isadma
 attach  isadma at isa: isa_dma
+file	dev/isa/isadma.c		isadma needs-flag
 
 #
 # ISA PnP capability
