@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.12 1998/05/08 05:02:09 millert Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.13 1998/07/01 21:02:23 angelos Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -467,7 +467,8 @@ pppioctl(sc, cmd, data, flag, p)
 	    if (npi->mode != sc->sc_npmode[npx]) {
 		s = splsoftnet();
 		sc->sc_npmode[npx] = npi->mode;
-		if (npi->mode != NPMODE_QUEUE) {
+		if ((npi->mode != NPMODE_QUEUE) &&
+		    (npi->mode != NPMODE_KEEPLAST)) {
 		    ppp_requeue(sc);
 		    (*sc->sc_start)(sc);
 		}
@@ -757,7 +758,8 @@ pppoutput(ifp, m0, dst, rtp)
      * Put the packet on the appropriate queue.
      */
     s = splsoftnet();
-    if (mode == NPMODE_QUEUE) {
+    if ((mode == NPMODE_QUEUE) ||
+	(mode == NPMODE_KEEPLAST)) /* XXX Fix eventually */ {
 	/* XXX we should limit the number of packets on this queue */
 	*sc->sc_npqtail = m0;
 	m0->m_nextpkt = NULL;
@@ -831,6 +833,7 @@ ppp_requeue(sc)
 	    m_freem(m);
 	    break;
 
+	case NPMODE_KEEPLAST:	/* XXX Fix eventually */
 	case NPMODE_QUEUE:
 	    mpp = &m->m_nextpkt;
 	    break;
