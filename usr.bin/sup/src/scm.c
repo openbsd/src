@@ -1,4 +1,4 @@
-/*	$OpenBSD: scm.c,v 1.2 1996/06/26 05:39:47 deraadt Exp $	*/
+/*	$OpenBSD: scm.c,v 1.3 1996/08/04 12:58:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -71,6 +71,9 @@
  *	since Tahoe version of <netinet/in.h> does not define them.
  *
  * $Log: scm.c,v $
+ * Revision 1.3  1996/08/04 12:58:26  deraadt
+ * ftp bounce protection
+ *
  * Revision 1.2  1996/06/26 05:39:47  deraadt
  * rcsid
  *
@@ -280,6 +283,7 @@ service ()
 	struct sockaddr_in from;
 	int x,len;
 
+again:
 	remotename = NULL;
 	len = sizeof (from);
 	do {
@@ -287,6 +291,12 @@ service ()
 	} while (netfile < 0 && errno == EINTR);
 	if (netfile < 0)
 		return (scmerr (errno,"Can't accept connections"));
+
+	/* protection against ftp bounce attack */
+	if (from.sin_port == htons(20)) {
+		close(netfile);
+		goto again;
+	}
 	remoteaddr = from.sin_addr;
 	if (read(netfile,(char *)&x,sizeof(int)) != sizeof(int))
 		return (scmerr (errno,"Can't transmit data on connection"));
