@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxpvar.h,v 1.17 2004/06/27 02:38:38 brad Exp $	*/
+/*	$OpenBSD: fxpvar.h,v 1.18 2004/08/04 19:42:30 mickey Exp $	*/
 /*	$NetBSD: if_fxpvar.h,v 1.1 1997/06/05 02:01:58 thorpej Exp $	*/
 
 /*                  
@@ -52,9 +52,28 @@
 #define FXP_NRFABUFS_MAX	64	/* These are large so choose wisely. */
 
 /*
+ * Default maximum time, in microseconds, that an interrupt may be delayed
+ * in an attempt to coalesce interrupts.  This is only effective if the Intel
+ * microcode is loaded.
+ */
+#ifndef FXP_INT_DELAY
+#define FXP_INT_DELAY 64 
+#endif
+
+/*
+ * Default number of packets that will be bundled, before an interrupt is
+ * generated.  This is only effective if the Intel microcode is loaded.
+ * This is not present in all microcode revisions.
+ */
+#ifndef FXP_BUNDLE_MAX
+#define FXP_BUNDLE_MAX 16
+#endif
+
+/*
  * NOTE: Elements are ordered for optimal cacheline behavior, and NOT
  *	 for functional grouping.
  */
+
 struct fxp_txsw {
 	struct fxp_txsw *tx_next;
 	struct mbuf *tx_mbuf;
@@ -70,6 +89,7 @@ struct fxp_ctrl {
 		struct fxp_cb_mcs mcs;
 		struct fxp_cb_ias ias;
 		struct fxp_cb_config cfg;
+		struct fxp_cb_ucode code;
 	} u;
 };
 
@@ -85,9 +105,10 @@ struct fxp_softc {
 	struct mbuf *rfa_tailm;		/* last mbuf in receive frame area */
 	int sc_flags;			/* misc. flags */
 #define	FXPF_HAS_RESUME_BUG	0x08	/* has the resume bug */
-#define	FXPF_FIX_RESUME_BUG	0x10	/* currently need to work-around
+#define	FXPF_FIX_RESUME_BUG	0x10	/* currently need to work-around 
 					   the resume bug */
 #define	FXPF_DISABLE_STANDBY	0x20	/* currently need to work-around */
+#define	FXPF_UCODE		0x40	/* ucode is loaded */
 	struct timeout stats_update_to; /* Pointer to timeout structure */
 	int rx_idle_secs;		/* # of seconds RX has been idle */
 	struct fxp_cb_tx *cbl_base;	/* base of TxCB list */
@@ -108,6 +129,9 @@ struct fxp_softc {
 	struct fxp_ctrl *sc_ctrl;
 	bus_dmamap_t sc_rxmaps[FXP_NRFABUFS_MAX];
 	int sc_rxfree;
+	u_int32_t sc_revision;		/* chip revision */ 
+	u_int16_t sc_int_delay;		/* interrupt delay value for ucode */
+	u_int16_t sc_bundle_max;	/* max # frames per interrupt (ucode) */
 };
 
 /* Macros to ease CSR access. */
@@ -146,6 +170,10 @@ extern int fxp_detach(struct fxp_softc *);
 #define	FXP_CFG_SYNC(sc, p)						\
     bus_dmamap_sync((sc)->sc_dmat, (sc)->tx_cb_map,			\
 	offsetof(struct fxp_ctrl, u.cfg), sizeof(struct fxp_cb_config), (p))
+
+#define FXP_UCODE_SYNC(sc, p)						\
+    bus_dmamap_sync((sc)->sc_dmat, (sc)->tx_cb_map,			\
+	offsetof(struct fxp_ctrl, u.code), sizeof(struct fxp_cb_ucode), (p))
 
 #define	FXP_STATS_SYNC(sc, p)						\
     bus_dmamap_sync((sc)->sc_dmat, (sc)->tx_cb_map,			\

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxpreg.h,v 1.5 2003/10/21 18:58:49 jmc Exp $	*/
+/*	$OpenBSD: fxpreg.h,v 1.6 2004/08/04 19:42:30 mickey Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -198,7 +198,7 @@ struct fxp_cb_tx {
 #define FXP_CB_COMMAND_CONFIG	0x2
 #define FXP_CB_COMMAND_MCAS	0x3
 #define FXP_CB_COMMAND_XMIT	0x4
-#define FXP_CB_COMMAND_RESRV	0x5
+#define FXP_CB_COMMAND_UCODE	0x5
 #define FXP_CB_COMMAND_DUMP	0x6
 #define FXP_CB_COMMAND_DIAG	0x7
 /* command flags */
@@ -225,7 +225,7 @@ struct fxp_rfa {
 #define FXP_RFA_STATUS_TL	0x0020	/* type/length */
 #define FXP_RFA_STATUS_FTS	0x0080	/* frame too short */
 #define FXP_RFA_STATUS_OVERRUN	0x0100	/* DMA overrun */
-#define FXP_RFA_STATUS_RNR	0x0200	/* no resources */
+#define FXP_RFA_STATUS_RNR	0x0200	/* RU not ready */
 #define FXP_RFA_STATUS_ALIGN	0x0400	/* alignment error */
 #define FXP_RFA_STATUS_CRC	0x0800	/* CRC error */
 #define FXP_RFA_STATUS_OK	0x2000	/* packet received okay */
@@ -315,3 +315,22 @@ struct fxp_stats {
 #define FXP_DP83840_PCR_F_CONNECT	0x0020	/* 1 = force link disconnect function bypass */
 #define FXP_DP83840_PCR_BIT8		0x0100
 #define FXP_DP83840_PCR_BIT10		0x0400
+
+#define	MAXUCODESIZE 192
+struct fxp_cb_ucode {
+	volatile u_int16_t cb_status;
+	volatile u_int16_t cb_command;
+	volatile u_int32_t link_addr;
+	volatile u_int32_t ucode[MAXUCODESIZE];
+};
+
+/* 
+ * Chip revision values.
+ */
+#define FXP_REV_82557		1
+#define FXP_REV_82558_A4	4
+#define FXP_REV_82558_B0	5
+#define FXP_REV_82559_A0	8
+#define FXP_REV_82559S_A	9
+#define FXP_REV_82550		12
+#define FXP_REV_82550_C		13

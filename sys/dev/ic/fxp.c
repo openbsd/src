@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.55 2004/07/12 20:57:32 deraadt Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.56 2004/08/04 19:42:30 mickey Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -159,6 +159,7 @@ void fxp_scb_wait(struct fxp_softc *);
 void fxp_start(struct ifnet *);
 int fxp_ioctl(struct ifnet *, u_long, caddr_t);
 void fxp_init(void *);
+void fxp_load_ucode(struct fxp_softc *);
 void fxp_stop(struct fxp_softc *, int);
 void fxp_watchdog(struct ifnet *);
 int fxp_add_rfabuf(struct fxp_softc *, struct mbuf *);
@@ -178,6 +179,12 @@ void fxp_scb_cmd(struct fxp_softc *, u_int8_t);
  * (1536 bytes), if an underrun occurs.
  */
 static int tx_threshold = 64;
+
+/*
+ * Interrupts coalescing code params
+ */
+int fxp_int_delay = FXP_INT_DELAY;
+int fxp_bundle_max = FXP_BUNDLE_MAX;
 
 /*
  * TxCB list index mask. This is used to do list wrap-around.
@@ -209,7 +216,7 @@ fxp_scb_wait(sc)
 }
 
 
-void 
+void
 fxp_eeprom_shiftin(struct fxp_softc *sc, int data, int length)
 {
 	u_int16_t reg;
@@ -432,6 +439,13 @@ fxp_attach_common(sc, intrstr)
 	sc->phy_10Mbps_only = data >> 15;
 
 	/*
+	 * Only 82558 and newer cards can do this.
+	 */
+	if (sc->sc_revision >= FXP_REV_82558_A4) {
+		sc->sc_int_delay = fxp_int_delay;
+		sc->sc_bundle_max = fxp_bundle_max;
+	}
+	/*
 	 * Read MAC address.
 	 */
 	fxp_read_eeprom(sc, (u_int16_t *)enaddr, 0, 3);
@@ -606,7 +620,7 @@ fxp_detach(sc)
  * contents with a varying number of address bits, but no such
  * register seem to be available. The high bits of register 10 are 01
  * on the 558 and 559, but apparently not on the 557.
- * 
+ *
  * The Linux driver computes a checksum on the EEPROM data, but the
  * value of this checksum is not very well documented.
  */
@@ -853,7 +867,7 @@ fxp_intr(arg)
 	bus_dmamap_t rxmap;
 	int claimed = 0;
 	int rnr = 0;
-	
+
 	/*
 	 * If the interface isn't running, don't try to
 	 * service the interrupt.. just ack it and bail.
@@ -914,9 +928,9 @@ fxp_intr(arg)
 			}
 		}
 		/*
-		 * Process receiver interrupts. If a no-resource (RNR)
-		 * condition exists, get whatever packets we can and
-		 * re-start the receiver.
+		 * Process receiver interrupts. If a Receive Unit
+		 * not ready (RNR) condition exists, get whatever
+		 * packets we can and re-start the receiver.
 		 */
 		if (statack & (FXP_SCB_STATACK_FR | FXP_SCB_STATACK_RNR)) {
 			struct mbuf *m;
@@ -988,7 +1002,7 @@ rcvloop:
 				    rxmap->dm_segs[0].ds_addr +
 				    RFA_ALIGNMENT_FUDGE);
 			fxp_scb_cmd(sc, FXP_SCB_COMMAND_RU_START);
-			
+
 		}
 	}
 	return (claimed);
@@ -1116,7 +1130,7 @@ fxp_stop(sc, drain)
 	mii_down(&sc->sc_mii);
 
 	/*
-	 * Issue software reset
+	 * Issue software reset.
 	 */
 	CSR_WRITE_4(sc, FXP_CSR_PORT, FXP_PORT_SELECTIVE_RESET);
 	DELAY(10);
@@ -1230,6 +1244,9 @@ fxp_init(xsc)
 	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, 0);
 	fxp_scb_cmd(sc, FXP_SCB_COMMAND_RU_BASE);
 
+#ifndef SMALL_KERNEL
+	fxp_load_ucode(sc);
+#endif
 	/* Once through to set flags */
 	fxp_mc_setup(sc, 0);
 
@@ -1291,7 +1308,7 @@ fxp_init(xsc)
 	cbp->mc_all =		allm;
 #else
 	cbp->cb_command = htole16(FXP_CB_COMMAND_CONFIG | FXP_CB_COMMAND_EL);
-	if (allm) 
+	if (allm)
 		cbp->mc_all |= 0x08;		/* accept all multicasts */
 	else
 		cbp->mc_all &= ~0x08;		/* reject all multicasts */
@@ -1320,7 +1337,7 @@ fxp_init(xsc)
 		cbp->stripping &= ~0x08;
 
 	cbp->tx_dma_bytecount = 0; /* (no) tx DMA max, dma_dce = 0 ??? */
- 	cbp->ctrl1 |= 0x08;	/* ci_int = 1 */
+	cbp->ctrl1 |= 0x08;	/* ci_int = 1 */
 	cbp->ctrl3 |= 0x08;	/* nsai */
 	cbp->fifo_limit = 0x08; /* tx and rx fifo limit */
 	cbp->fdx_pin |= 0x80;	/* Enable full duplex setting by pin */
@@ -1825,3 +1842,114 @@ fxp_mc_setup(sc, doit)
 		FXP_MCS_SYNC(sc, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 	} while (!(mcsp->cb_status & htole16(FXP_CB_STATUS_C)));
 }
+
+#ifndef SMALL_KERNEL
+#include <dev/microcode/fxp/rcvbundl.h>
+
+const u_int32_t fxp_ucode_d101a[] = D101_A_RCVBUNDLE_UCODE;
+const u_int32_t fxp_ucode_d101b0[] = D101_B0_RCVBUNDLE_UCODE;
+const u_int32_t fxp_ucode_d101ma[] = D101M_B_RCVBUNDLE_UCODE;
+const u_int32_t fxp_ucode_d101s[] = D101S_RCVBUNDLE_UCODE;
+const u_int32_t fxp_ucode_d102[] = D102_B_RCVBUNDLE_UCODE;
+const u_int32_t fxp_ucode_d102c[] = D102_C_RCVBUNDLE_UCODE;
+
+#define UCODE(x)	sizeof(x), x
+
+struct ucode {
+	u_int16_t	revision;
+	u_int16_t	int_delay_offset;
+	u_int16_t	bundle_max_offset;
+	u_int16_t	length;
+	const u_int32_t	*ucode;
+} const ucode_table[] = {
+	{ FXP_REV_82558_A4,
+	  D101_CPUSAVER_DWORD, 0,
+	  UCODE(fxp_ucode_d101a) },
+
+	{ FXP_REV_82558_B0,
+	  D101_CPUSAVER_DWORD, 0,
+	  UCODE(fxp_ucode_d101b0), },
+
+	{ FXP_REV_82559_A0,
+	  D101M_CPUSAVER_DWORD, D101M_CPUSAVER_BUNDLE_MAX_DWORD,
+	  UCODE(fxp_ucode_d101ma) },
+
+	{ FXP_REV_82559S_A,
+	  D101S_CPUSAVER_DWORD, D101S_CPUSAVER_BUNDLE_MAX_DWORD,
+	  UCODE(fxp_ucode_d101s) },
+
+	{ FXP_REV_82550,
+	  D102_B_CPUSAVER_DWORD, D102_B_CPUSAVER_BUNDLE_MAX_DWORD,
+	  UCODE(fxp_ucode_d102) },
+
+	{ FXP_REV_82550_C,
+	  D102_C_CPUSAVER_DWORD, D102_C_CPUSAVER_BUNDLE_MAX_DWORD,
+	  UCODE(fxp_ucode_d102c) },
+
+	{ 0, 0, 0, 0, NULL }
+};
+
+void
+fxp_load_ucode(struct fxp_softc *sc)
+{
+	const struct ucode *uc;
+	struct fxp_cb_ucode *cbp = &sc->sc_ctrl->u.code;
+	int i;
+
+	if (sc->sc_flags & FXPF_UCODE)
+		return;
+
+	for (uc = ucode_table; uc->ucode != NULL; uc++)
+		if (sc->sc_revision == uc->revision)
+			break;
+	if (uc->ucode == NULL)
+		return;	/* no ucode for this chip is found */
+
+	cbp->cb_status = 0;
+	cbp->cb_command = htole16(FXP_CB_COMMAND_UCODE|FXP_CB_COMMAND_EL);
+	cbp->link_addr = 0xffffffff;	/* (no) next command */
+	for (i = 0; i < uc->length; i++)
+		cbp->ucode[i] = htole32(uc->ucode[i]);
+
+	if (uc->int_delay_offset)
+		*((u_int16_t *)&cbp->ucode[uc->int_delay_offset]) =
+			htole16(sc->sc_int_delay + sc->sc_int_delay / 2);
+
+	if (uc->bundle_max_offset)
+		*((u_int16_t *)&cbp->ucode[uc->bundle_max_offset]) =
+			htole16(sc->sc_bundle_max);
+
+	FXP_UCODE_SYNC(sc, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+
+	/*
+	 * Download the ucode to the chip.
+	 */
+	fxp_scb_wait(sc);
+	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, sc->tx_cb_map->dm_segs->ds_addr
+	      + offsetof(struct fxp_ctrl, u.code));
+	fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_START);
+
+	/* ...and wait for it to complete. */
+	i = 10000;
+	do {
+		DELAY(2);
+		FXP_UCODE_SYNC(sc, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+	} while (((cbp->cb_status & htole16(FXP_CB_STATUS_C)) == 0) && --i);
+	if (i == 0) {
+		printf("%s: timeout loading microcode\n", sc->sc_dev.dv_xname);
+		return;
+	}
+
+#ifdef DEBUG
+	printf("%s: microcode loaded, int_delay: %d usec",
+	    sc->sc_dev.dv_xname, sc->sc_int_delay);
+
+	if (uc->bundle_max_offset)
+		printf(", bundle_max %d\n", sc->sc_bundle_max);
+	else
+		printf("\n");
+#endif
+
+	sc->sc_flags |= FXPF_UCODE;
+}
+#endif /* SMALL_KERNEL */

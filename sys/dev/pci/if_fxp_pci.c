@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_pci.c,v 1.27 2004/06/27 02:38:38 brad Exp $	*/
+/*	$OpenBSD: if_fxp_pci.c,v 1.28 2004/08/04 19:42:30 mickey Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -143,6 +143,8 @@ fxp_pci_attach(parent, self, aux)
 		return;
 	}
 	sc->sc_dmat = pa->pa_dmat;
+	
+	sc->sc_revision = rev; 
 
 	/*
 	 * Allocate our interrupt.
