@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.73 2001/11/27 05:27:12 art Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.74 2001/11/29 01:58:57 art Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -2000,17 +2000,17 @@ vinvalbuf(vp, flags, cred, p, slpflag, slptimeo)
 	struct uvm_object *uobj = &vp->v_uvm.u_obj;
 	struct buf *bp;
 	struct buf *nbp, *blist;
-	int s, error, rv;
+	int s, error;
 	int flushflags = PGO_ALLPAGES|PGO_FREE|PGO_SYNCIO|
 	    (flags & V_SAVE ? PGO_CLEANIT : 0);
 
 	/* XXXUBC this doesn't look at flags or slp* */
 	if (vp->v_type == VREG) {
 		simple_lock(&uobj->vmobjlock);
-		rv = (uobj->pgops->pgo_flush)(uobj, 0, 0, flushflags);
+		error = (uobj->pgops->pgo_flush)(uobj, 0, 0, flushflags);
 		simple_unlock(&uobj->vmobjlock);
-		if (!rv) {
-			return EIO;
+		if (error) {
+			return error;
 		}
 	}
 

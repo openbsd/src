@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_default.c,v 1.8 2001/11/27 05:27:12 art Exp $  */
+/*       $OpenBSD: vfs_default.c,v 1.9 2001/11/29 01:58:57 art Exp $  */
 
 /*
  *    Portions of this code are:
@@ -529,7 +529,8 @@ genfs_getpages(v)
 	mbp->b_resid = mbp->b_bcount = bytes;
 	mbp->b_flags = B_BUSY|B_READ| (async ? B_CALL : 0);
 	mbp->b_iodone = uvm_aio_biodone;
-	mbp->b_vp = vp;
+	mbp->b_vp = NULL;
+	bgetvp(vp, mbp);
 	LIST_INIT(&mbp->b_dep);
 
 	/*
@@ -637,7 +638,7 @@ genfs_getpages(v)
 		 * allocate a sub-buf for this piece of the i/o
 		 * (or just use mbp if there's only 1 piece),
 		 * and start it going.
-		 */
+ 		 */
 
 		if (offset == startoffset && iobytes == bytes) {
 			bp = mbp;
@@ -688,6 +689,9 @@ loopdone:
 		error = biowait(mbp);
 	}
 	s = splbio();
+	if (mbp->b_vp != NULL) {
+		brelvp(mbp);
+	}
 	pool_put(&bufpool, mbp);
 	splx(s);
 	uvm_pagermapout(kva, npages);
@@ -887,7 +891,8 @@ genfs_putpages(v)
 		(async ? B_CALL : 0) |
 		(curproc == uvm.pagedaemon_proc ? B_PDAEMON : 0);
 	mbp->b_iodone = uvm_aio_biodone;
-	mbp->b_vp = vp;
+	mbp->b_vp = NULL;
+	bgetvp(vp, mbp);
 	LIST_INIT(&mbp->b_dep);
 
 	bp = NULL;
@@ -963,8 +968,10 @@ genfs_putpages(v)
 		(*bioops.io_pageiodone)(mbp);
 	}
 	s = splbio();
-	if (mbp->b_vp)
+	if (mbp->b_vp) {
 		vwakeup(mbp->b_vp);
+		brelvp(mbp);
+	}
 	pool_put(&bufpool, mbp);
 	splx(s);
 	uvm_pagermapout(kva, npages);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.25 2001/11/28 19:28:15 art Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.26 2001/11/29 01:59:19 art Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.48 2001/06/23 20:47:44 chs Exp $	*/
 
 /*
@@ -873,8 +873,11 @@ uvm_aio_aiodone(bp)
 freed:
 #endif
 	s = splbio();
-	if (write && (bp->b_flags & B_AGE) != 0 && bp->b_vp != NULL) {
-		vwakeup(bp->b_vp);
+	if (bp->b_vp != NULL) {
+		if (write && (bp->b_flags & B_AGE) != 0) {
+			vwakeup(bp->b_vp);
+		}
+		brelvp(bp);
 	}
 	pool_put(&bufpool, bp);
 	splx(s);

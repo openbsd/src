@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.25 2001/11/27 05:27:12 art Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.26 2001/11/29 01:59:19 art Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -757,7 +757,8 @@ nfs_getpages(v)
 	mbp->b_resid = mbp->b_bcount = bytes;
 	mbp->b_flags = B_BUSY|B_READ| (async ? B_CALL|B_ASYNC : 0);
 	mbp->b_iodone = uvm_aio_biodone;
-	mbp->b_vp = vp;
+	mbp->b_vp = NULL;
+	bgetvp(vp, mbp);
 	mbp->b_proc = NULL;		/* XXXUBC */
 	LIST_INIT(&mbp->b_dep);
 
@@ -864,6 +865,9 @@ loopdone:
 		error = biowait(mbp);
 	}
 	s = splbio();
+	if (mbp->b_vp != NULL) {
+		brelvp(mbp);
+	}
 	pool_put(&bufpool, mbp);
 	splx(s);
 	uvm_pagermapout(kva, npages);
@@ -1047,7 +1051,8 @@ nfs_putpages(v)
 		(async ? B_CALL|B_ASYNC : 0) |
 		(curproc == uvm.pagedaemon_proc ? B_PDAEMON : 0);
 	mbp->b_iodone = uvm_aio_biodone;
-	mbp->b_vp = vp;
+	mbp->b_vp = NULL;
+	bgetvp(vp, mbp);
 	mbp->b_proc = NULL;		/* XXXUBC */
 	LIST_INIT(&mbp->b_dep);
 
@@ -1109,8 +1114,10 @@ nfs_putpages(v)
 	}
 
 	s = splbio();
-	if (mbp->b_vp)
+	if (mbp->b_vp) {
 		vwakeup(mbp->b_vp);
+		brelvp(mbp);
+	}
 	pool_put(&bufpool, mbp);
 	splx(s);
 
