@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.6 2004/11/16 20:15:48 jfb Exp $
+.\"	$OpenBSD: cvs.1,v 1.7 2004/11/26 16:14:12 jfb Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -46,6 +46,32 @@ Although it is more commonly used to track changes in source code, there
 are no real limitations to the type of files that you can store in a
 repository.
 .Pp
+Unless the
+.Fl f
+option is specified,
+.Nm
+reads its startup configuration file
+.Pa .cvsrc
+from the home directory of the user who invoked it.
+This file is used to specify implicit options passed to
+.Nm
+or one of its commands whenever it is invoked.
+Each command should be specified on a separate line along with the arguments.
+For example, the following two lines:
+.Pp
+.Bl -item -compact -offset indent
+.It
+cvs -q
+.It
+diff -u
+.El
+.Pp
+specify that
+.Nm
+should always run in quiet mode and the
+.Sy diff
+command should always produce unified output.
+.Pp
 The following options are supported:
 .Bl -tag -width Ds
 .It Fl d Ar root
@@ -59,7 +85,7 @@ Use the program
 whenever editing log information.
 This option overrides the environment variables CVSEDITOR, VISUAL and EDITOR.
 .It Fl f
-Do not read the contents of the user's .cvsrc file on startup.
+Do not read the user's configuration file on startup.
 .It Fl l
 Suppress logging of history information.
 .It Fl Q
@@ -73,19 +99,36 @@ Display version information and exit.
 .Sh COMMANDS
 The following commands are supported by
 .Nm .
-.Bl -tag -width "xxxxxxxxxxxxxxxxx"
+.Bl -tag -width "xxxxxxxxxxxx"
 .It Xo Sy add Op Fl m Ar msg
 .Ar file Op ...
 .Xc
+.Pp
 Before a file is known to CVS, it must be added to the repository using
 this command.
 Adding a file does not actually publish the contents of the
-file, so you must commit the first revision in order to let other users
-see the file with the
+file, so you must
+.Sy commit
+the first revision in order to let other users see the file with the
 .Sy update
 or
 .Sy checkout
 commands.
+.Pp
+Although adding a file does not involve a log message, it is possible to
+specify one to include with the action, using the
+.Fl m
+option.
+.Pp
+.It Xo Sy checkout
+.Op Fl c
+.Op Ar module ...
+.Xc
+.Pp
+The
+.Sy checkout
+command is used to create a local copy of one or more modules present on the
+target CVS repository.
 .Pp
 .It Xo Sy commit
 .Op Fl flnR
@@ -94,6 +137,7 @@ commands.
 .Op Fl r Ar rev
 .Op Ar file ...
 .Xc
+.Pp
 The
 .Sy commit
 command is used to send local changes back to the server and update the
@@ -104,6 +148,7 @@ repository's information to reflect the changes.
 .Op Fl r Ar rev
 .Op Ar file ...
 .Xc
+.Pp
 The
 .Sy diff
 command is very similar to the
@@ -114,6 +159,7 @@ between local or remote revisions of files stored in the CVS repository.
 .Op Fl ACdP
 .Op Ar file ...
 .Xc
+.Pp
 The
 .Sy update
 command is used to merge any of the changes that have occured on the remote
