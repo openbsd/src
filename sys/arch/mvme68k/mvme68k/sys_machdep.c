@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.16 2004/08/31 21:51:37 miod Exp $ */
+/*	$OpenBSD: sys_machdep.c,v 1.17 2004/12/01 21:13:03 miod Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -89,11 +89,6 @@ cachectl(p, req, addr, len)
 		if ((p->p_emul == &emul_hpux) &&
 		    len != 16 && len != NBPG)
 			doall = 1;
-#endif
-#ifdef M68060
-		if (mmutype == MMU_68040) {
-			doall = 1;
-		}
 #endif
 		if (addr == 0 ||
 		    ((req & ~CC_EXTPURGE) != CC_PURGE && len > 2*NBPG))
