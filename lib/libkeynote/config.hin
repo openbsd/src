@@ -1,4 +1,4 @@
-/* $OpenBSD: config.hin,v 1.2 1999/10/26 22:31:37 angelos Exp $ */
+/* $OpenBSD: config.hin,v 1.3 2000/09/26 23:28:45 angelos Exp $ */
 
 /* config.hin.  Generated automatically from configure.in by autoheader.  */
 
@@ -91,6 +91,3 @@
 
 /* Define if you have the crypto library (-lcrypto).  */
 #undef HAVE_LIBCRYPTO
-
-/* Define if you have /dev/urandom file.  */
-#undef HAVE__DEV_URANDOM

@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-keygen.c,v 1.9 1999/11/03 03:17:58 angelos Exp $ */
+/* $OpenBSD: keynote-keygen.c,v 1.10 2000/09/26 23:28:46 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -112,7 +112,6 @@ keynote_keygen(int argc, char *argv[])
     DSA *dsa;
     RSA *rsa;
     FILE *fp;
-    int fd, cnt = RND_BYTES;
 #endif /* CRYPTO || PGPLIB */
     char *algname;
 
@@ -177,49 +176,18 @@ keynote_keygen(int argc, char *argv[])
 	exit(-1);
     }
 
-    fd = open(KEYNOTERNDFILENAME, O_RDONLY, 0);
-    if (fd < 0)
-    {
-	perror(KEYNOTERNDFILENAME);
-	exit(-1);
-    }
-
-    for (h = 0; h < 5; h++)
-    {
-	if (read(fd, seed, SEED_LEN) <= 0)
-	{
-	    perror("read()");
-	    exit(-1);
-	}
-
-	RAND_seed(seed, SEED_LEN);
-    }
-
-    if (read(fd, seed, SEED_LEN) < SEED_LEN)
-    {
-	perror("read()");
-	exit(-1);
-    }
-
-    close(fd);
-
-    /* Make sure we read RND_BYTES bytes */
-    do
-    {
-        if ((fd = RAND_load_file(KEYNOTERNDFILENAME, cnt)) <= 0)
-        {
-	    perror(KEYNOTERNDFILENAME);
-	    exit(-1);
-        }
-
-	cnt -= fd;
-    } while (cnt > 0);
-
+    RAND_set_rand_method(RAND_SSLeay());
 
     if ((alg == KEYNOTE_ALGORITHM_DSA) &&
 	(ienc == INTERNAL_ENC_ASN1) &&
 	((enc == ENCODING_HEX) || (enc == ENCODING_BASE64)))
     {
+        if (RAND_bytes(seed, SEED_LEN) == 0)
+        {
+            fprintf(stderr, "Failed to acquire %d random bytes\n", SEED_LEN);
+            exit(-1);
+        }
+
 	dsa = DSA_generate_parameters(len, seed, SEED_LEN, &counter, &h, NULL
 #if SSLEAY_VERSION_NUMBER >= 0x0900
 				      , NULL

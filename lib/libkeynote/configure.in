@@ -1,4 +1,4 @@
-dnl $OpenBSD: configure.in,v 1.2 1999/10/26 22:31:38 angelos Exp $
+dnl $OpenBSD: configure.in,v 1.3 2000/09/26 23:28:45 angelos Exp $
 dnl Process this file with autoconf to produce a configure script.
 AC_INIT(assertion.h)
 
@@ -42,7 +42,6 @@ AC_CHECK_HEADERS(fcntl.h limits.h unistd.h regex.h sys/time.h io.h)
 AC_CHECK_HEADERS(ssl/crypto.h openssl/crypto.h crypto.h memory.h)
 
 dnl Checks for other files
-AC_CHECK_FILES(/dev/urandom)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST

@@ -1,4 +1,4 @@
-/* $OpenBSD: header.h,v 1.5 1999/10/26 22:31:38 angelos Exp $ */
+/* $OpenBSD: header.h,v 1.6 2000/09/26 23:28:46 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -37,7 +37,6 @@ int sessid;
 
 /* Defines */
 #define SEED_LEN        40
-#define RND_BYTES       1024
 #define DEFAULT_PUBLIC  0x10001
 
 #define KEY_PRINT_OFFSET      12
@@ -65,14 +64,6 @@ int sessid;
 #if !defined(HAVE_CLOSE) && defined(HAVE__CLOSE)
 #define close _close
 #endif /* !HAVE_CLOSE && HAVE__CLOSE */
-
-#if defined(CRYPTO)
-#if HAVE__DEV_URANDOM
-#define KEYNOTERNDFILENAME "/dev/urandom"
-#else /* HAVE__DEV_URANDOM */
-#error "You need a random device!"
-#endif /* HAVE__DEV_URANDOM */
-#endif /* CRYPTO */
 
 /* Includes */
 #if HAVE_REGEX_H
