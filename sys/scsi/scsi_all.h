@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.7 2000/02/21 08:18:31 mjacob Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.8 2001/01/09 17:36:34 krw Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  */
 
 /*
- * Define dome bits that are in ALL (or a lot of) scsi commands
+ * Define some bits that are in ALL (or a lot of) scsi commands
  */
 #define SCSI_CTL_LINK		0x01
 #define SCSI_CTL_FLAG		0x02
