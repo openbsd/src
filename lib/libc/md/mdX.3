@@ -6,7 +6,7 @@
 .\" this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
 .\" ----------------------------------------------------------------------------
 .\"
-.\" 	$OpenBSD: mdX.3,v 1.17 2001/08/06 10:42:26 mpech Exp $
+.\" 	$OpenBSD: mdX.3,v 1.18 2003/05/30 21:01:02 jmc Exp $
 .\"
 .Dd October 9, 1996
 .Dt MDX 3
@@ -168,6 +168,9 @@ argument is non-null it must point to at least 33 characters of buffer space.
 .%A Hans Dobbertin
 .%T Cryptanalysis of MD5 Compress
 .Re
+.Sh HISTORY
+These functions appeared in
+.Ox 2.0 .
 .Sh AUTHORS
 The original MDX routines were developed by
 .Tn RSA
@@ -176,9 +179,6 @@ This code is derived directly from these implementations by Poul-Henning Kamp
 .Aq Li phk@login.dkuug.dk
 .Pp
 Phk ristede runen.
-.Sh HISTORY
-These functions appeared in
-.Ox 2.0 .
 .Sh BUGS
 Hans Dobbertin has shown collisions for the full version of MD4 and
 found a collision in the compress function of MD5.
