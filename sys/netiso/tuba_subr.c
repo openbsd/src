@@ -1,4 +1,4 @@
-/*	$OpenBSD: tuba_subr.c,v 1.3 1996/03/04 10:36:49 mickey Exp $	*/
+/*	$OpenBSD: tuba_subr.c,v 1.4 1997/02/08 09:58:27 deraadt Exp $	*/
 /*	$NetBSD: tuba_subr.c,v 1.7 1996/02/13 22:12:32 christos Exp $	*/
 
 /*
@@ -69,6 +69,7 @@
 #include <netiso/iso_pcb.h>
 #include <netiso/iso_var.h>
 #include <netiso/tuba_table.h>
+#include <dev/rndvar.h>
 
 #include <machine/stdarg.h>
 
