@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.304 2003/06/02 15:46:09 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.305 2003/06/21 23:02:32 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2003 Todd Miller, Theo de Raadt, Ken Westerback
@@ -486,6 +486,7 @@ select_sets() {
 	local _avail=$1 _selected=$2 _next _f _action
 
 	while : ; do
+		_action=
 		cat << __EOT
 
 The following sets are available. Enter a filename, 'all' to select
@@ -505,29 +506,27 @@ __EOT
 		: ${_next:=done}
 
 		ask "\nFile name? (or 'done')" "$_next"
-
 		case $resp in
-		""|+|-) continue
-			;;
-		done)	break
-			;;
-		-*)	_action=rmel
-			;;
-		*)	_action=addel
-			;;
+		done)	break ;;
+		-*)	_action=rmel ;;
 		esac
 
+		: ${_action:=addel}
 		resp=${resp#+|-}
-		[[ $resp == all ]] && resp=*
 
+		case $resp in
+		"")	continue ;;
+		all)	resp=* ;;
+		esac
+
+		# Use @($resp) rather than just $resp to protect
+		# against silly user input that might cause syntax
+		# errors.
 		for _f in $_avail; do
 			eval "case $_f in
-			$resp)
-				_selected=\`$_action $_f \$_selected\`
-				;;
+			@($resp)) _selected=\`$_action $_f \$_selected\` ;;
 			esac"
 		done
-
 	done
 
 	resp=$_selected
