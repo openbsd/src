@@ -1,5 +1,5 @@
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
-/*	$OpenBSD: rcp.c,v 1.9 1997/01/15 23:40:25 millert Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.10 1997/03/26 01:19:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -134,7 +134,8 @@ main(argc, argv)
 #ifdef	KERBEROS
 		case 'k':
 			dest_realm = dst_realm_buf;
-			(void)strncpy(dst_realm_buf, optarg, REALM_SZ);
+			(void)strncpy(dst_realm_buf, optarg, REALM_SZ-1);
+			dst_realm_buf[REALM_SZ-1] = '\0';
 			break;
 		case 'x':
 			doencrypt = 1;
