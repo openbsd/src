@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.9 2005/03/23 20:18:19 claudio Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.10 2005/03/26 13:37:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -159,7 +159,11 @@ main(int argc, char *argv[])
 		show_fib_head();
 		break;
 	case SHOW_FIB_IFACE:
-		imsg_compose(ibuf, IMSG_CTL_IFINFO, 0, 0, -1, NULL, 0);
+		if (*res->ifname)
+			imsg_compose(ibuf, IMSG_CTL_IFINFO, 0, 0, -1,
+			    res->ifname, sizeof(res->ifname));
+		else
+			imsg_compose(ibuf, IMSG_CTL_IFINFO, 0, 0, -1, NULL, 0);
 		show_interface_head();
 		break;
 	case RELOAD:
@@ -837,7 +841,7 @@ show_fib_msg(struct imsg *imsg)
 void
 show_interface_head(void)
 {
-	printf("%-15s%-15s%-15s%s\n", "Interface", "Nexthop state", "Flags",
+	printf("%-15s%-15s%s\n", "Interface", "Flags",
 	    "Link state");
 }
 
@@ -900,10 +904,9 @@ show_fib_interface_msg(struct imsg *imsg)
 	int		 ifms_type;
 
 	switch (imsg->hdr.type) {
-	case IMSG_CTL_SHOW_INTERFACE:
+	case IMSG_CTL_IFINFO:
 		k = imsg->data;
 		printf("%-15s", k->ifname);
-		printf("%-15s", k->nh_reachable ? "ok" : "invalid");
 		printf("%-15s", k->flags & IFF_UP ? "UP" : "");
 		switch (k->media_type) {
 		case IFT_ETHER:
