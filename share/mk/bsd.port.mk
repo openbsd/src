@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.74 1999/03/03 04:16:03 marc Exp $
+#	$OpenBSD: bsd.port.mk,v 1.75 1999/03/03 18:18:46 espie Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -28,7 +28,7 @@ OpenBSD_MAINTAINER=	marc@OpenBSD.ORG
 # NEED_VERSION: we need at least this version of bsd.port.mk for this 
 # port  to build
 
-FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.74 1999/03/03 04:16:03 marc Exp $$
+FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.75 1999/03/03 18:18:46 espie Exp $$
 .if defined(NEED_VERSION)
 _VERSION_REVISION=${FULL_REVISION:M[0-9]*.*}
 
@@ -96,7 +96,10 @@ _REVISION_NEEDED=${NEED_VERSION:C/.*\.//}
 #				  ${WRKDIR} (see below).  This is useful for building ports on
 #				  several architectures, then ${PORTSDIR} can be NFS-mounted
 #				  while ${WRKOBJDIR} is local to every arch
-#
+# PREFERRED_CIPHERS
+#				- a list of the form cipher.sig of programs to use to check
+#				  recorded checksums, in order of decreasing trust.
+#				  (default to using sha1, then rmd160, then md5).
 #
 # Variables that typically apply to an individual port.  Non-Boolean
 # variables without defaults are *mandatory*.
@@ -348,9 +351,10 @@ _REVISION_NEEDED=${NEED_VERSION:C/.*\.//}
 # checkpatch	- Do a "patch -C" instead of a "patch".  Note that it may
 #				  give incorrect results if multiple patches deal with
 #				  the same file.
-# checksum		- Use files/md5 to ensure that your distfiles are valid.
-# makesum		- Generate files/md5 (only do this for your own ports!).
-# addsum		- update files/md5 in a non-destructive way (own ports only!)
+# checksum		- Use ${CHECKSUM_FILE} to ensure that your distfiles are valid.
+# makesum		- Generate ${CHECKSUM_FILE} (only do this for your own ports!).
+# addsum		- update ${CHECKSUM_FILE} in a non-destructive way 
+#				  (your own ports only!)
 # readme		- Create a README.html file describing the category or package
 # mirror-distfiles	- Mirror the distfile(s) if they are freely redistributable
 #				  Setting MIRROR_DISTFILE to "no" in the package Makefile
@@ -512,7 +516,7 @@ EGCC?=			egcc
 EGXX?=			eg++
 XMKMF?=			xmkmf -a
 
-# be paranoid about which md5 we trust
+# be paranoid about which ciphers we trust
 .if exists(/sbin/md5)
 MD5?=			/sbin/md5
 .elif exists(/bin/md5)
@@ -522,7 +526,36 @@ MD5?=			/usr/bin/md5
 .else
 MD5?=			md5
 .endif
+
+.if exists(/sbin/sha1)
+SHA1?=			/sbin/sha1
+.elif exists(/bin/sha1)
+SHA1?=			/bin/sha1
+.elif exists(/usr/bin/sha1)
+SHA1?=			/usr/bin/sha1
+.else
+SHA1?=			sha1
+.endif
+
+.if exists(/sbin/rmd160)
+RMD160?=		/sbin/rmd160
+.elif exists(/bin/rmd160)
+RMD160?=		/bin/rmd160
+.elif exists(/usr/bin/rmd160)
+RMD160?=		/usr/bin/rmd160
+.else
+RMD160?=		rmd160
+.endif
+
+# Compatibility game
 MD5_FILE?=		${FILESDIR}/md5
+CHECKSUM_FILE?=	${MD5_FILE}
+
+# Don't touch !!! Used for generating checksums.
+CIPHERS=		${SHA1}.SHA1 ${RMD160}.RMD160 ${MD5}.MD5 
+
+# This is the one you can override
+PREFERRED_CIPHERS?= ${CIPHERS}
 
 PORTPATH?= /usr/bin:/bin:/usr/sbin:/sbin:${LOCALBASE}/bin:${X11BASE}/bin
 
@@ -1716,45 +1749,57 @@ fetch-list-one-pkg:
 .if !target(makesum)
 makesum: fetch
 	@${MKDIR} ${FILESDIR}
-	@if [ -f ${MD5_FILE} ]; then ${RM} -f ${MD5_FILE}; fi
+	@if [ -f ${CHECKSUM_FILE} ]; then ${RM} -f ${CHECKSUM_FILE}; fi
 	@(cd ${DISTDIR}; \
 	 for file in ${_CKSUMFILES}; do \
-		${MD5} $$file >> ${MD5_FILE}; \
+	 	for cipher in ${CIPHERS:R}; do \
+			$$cipher $$file >> ${CHECKSUM_FILE}; \
+		done; \
 	 done)
 	@for file in ${_IGNOREFILES}; do \
-		${ECHO} "MD5 ($$file) = IGNORE" >> ${MD5_FILE}; \
+		${ECHO} "MD5 ($$file) = IGNORE" >> ${CHECKSUM_FILE}; \
 	done
 .endif
 
 .if !target(addsum)
 addsum: fetch
 	@${MKDIR} ${FILESDIR}
-	@touch ${MD5_FILE}
+	@touch ${CHECKSUM_FILE}
 	@(cd ${DISTDIR}; \
 	 for file in ${_CKSUMFILES}; do \
-		${MD5} $$file >> ${MD5_FILE}; \
+	 	for cipher in ${CIPHERS:R}; do \
+			$$cipher $$file >> ${CHECKSUM_FILE}; \
+		done; \
 	 done)
 	@for file in ${_IGNOREFILES}; do \
-		${ECHO} "MD5 ($$file) = IGNORE" >> ${MD5_FILE}; \
+		${ECHO} "MD5 ($$file) = IGNORE" >> ${CHECKSUM_FILE}; \
 	done
-	@sort -u ${MD5_FILE} >${MD5_FILE}.new
-	@${MV} -f ${MD5_FILE}.new ${MD5_FILE}
-	@if [ `${SED} -e 's/\=.*$$//' ${MD5_FILE} | uniq -d | wc -l` -ne 0 ]; then \
-		${ECHO} "Inconsistent checksum in ${MD5_FILE}"; \
+	@sort -u ${CHECKSUM_FILE} >${CHECKSUM_FILE}.new
+	@${MV} -f ${CHECKSUM_FILE}.new ${CHECKSUM_FILE}
+	@if [ `${SED} -e 's/\=.*$$//' ${CHECKSUM_FILE} | uniq -d | wc -l` -ne 0 ]; then \
+		${ECHO} "Inconsistent checksum in ${CHECKSUM_FILE}"; \
 	else \
-		${ECHO} "${MD5_FILE} updated okay, don't forget to remove cruft"; \
+		${ECHO} "${CHECKSUM_FILE} updated okay, don't forget to remove cruft"; \
 	fi
 .endif
 
 .if !target(checksum)
 checksum: fetch
-	@if [ ! -f ${MD5_FILE} ]; then \
-		${ECHO_MSG} ">> No MD5 checksum file."; \
+	@if [ ! -f ${CHECKSUM_FILE} ]; then \
+		${ECHO_MSG} ">> No checksum file."; \
 	else \
 		(cd ${DISTDIR}; OK="true"; \
 		  for file in ${_CKSUMFILES}; do \
-			CKSUM=`${MD5} < $$file`; \
-			CKSUM2=`${GREP} "^MD5 ($$file)" ${MD5_FILE} | ${AWK} '{print $$4}'`; \
+			for cipher_sig in ${PREFERRED_CIPHERS}; do \
+				sig=`${EXPR} $$cipher_sig : '.*\.\(.*\)'`; \
+				CKSUM2=`${GREP} "^$$sig ($$file)" ${CHECKSUM_FILE} | ${AWK} '{print $$4}'`; \
+				if [ "$$CKSUM2" = "" ]; then \
+					${ECHO_MSG} ">> No $$sig checksum recorded for $$file."; \
+				else \
+					cipher=`${EXPR} $$cipher_sig : '\(.*\)\.'`; \
+					break; \
+				fi; \
+			done; \
 			if [ "$$CKSUM2" = "" ]; then \
 				${ECHO_MSG} ">> No checksum recorded for $$file."; \
 				OK="false"; \
@@ -1762,15 +1807,18 @@ checksum: fetch
 				${ECHO_MSG} ">> Checksum for $$file is set to IGNORE in md5 file even though"; \
 				${ECHO_MSG} "   the file is not in the "'$$'"{IGNOREFILES} list."; \
 				OK="false"; \
-			elif [ "$$CKSUM" = "$$CKSUM2" ]; then \
-				${ECHO_MSG} ">> Checksum OK for $$file."; \
 			else \
-				${ECHO_MSG} ">> Checksum mismatch for $$file."; \
-				OK="false"; \
+				CKSUM=`$$cipher < $$file`; \
+				if [ "$$CKSUM" = "$$CKSUM2" ]; then \
+					${ECHO_MSG} ">> Checksum OK for $$file. ($$sig)"; \
+				else \
+					${ECHO_MSG} ">> Checksum mismatch for $$file. ($$sig)"; \
+					OK="false"; \
+				fi; \
 			fi; \
 		  done; \
 		  for file in ${_IGNOREFILES}; do \
-			CKSUM2=`${GREP} "($$file)" ${MD5_FILE} | ${AWK} '{print $$4}'`; \
+			CKSUM2=`${GREP} "($$file)" ${CHECKSUM_FILE} | ${AWK} '{print $$4}'`; \
 			if [ "$$CKSUM2" = "" ]; then \
 				${ECHO_MSG} ">> No checksum recorded for $$file, file is in "'$$'"{IGNOREFILES} list."; \
 				OK="false"; \
@@ -1781,7 +1829,7 @@ checksum: fetch
 			fi; \
 		  done; \
 		  if [ "$$OK" != "true" ]; then \
-			${ECHO_MSG} "Make sure the Makefile and md5 file (${MD5_FILE})"; \
+			${ECHO_MSG} "Make sure the Makefile and checksum file (${CHECKSUM_FILE})"; \
 			${ECHO_MSG} "are up to date.  If you want to override this check, type"; \
 			${ECHO_MSG} "\"make NO_CHECKSUM=yes [other args]\"."; \
 			exit 1; \
