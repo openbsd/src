@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.5 1997/11/13 06:53:51 deraadt Exp $
+	$OpenBSD: syscalls.master,v 1.6 1997/11/13 07:27:03 deraadt Exp $
 ;	$NetBSD: syscalls.master,v 1.3 1995/10/10 18:28:40 mycroft Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -401,12 +401,20 @@
 218	UNIMPL
 219	UNIMPL
 ; Now, what else did they add recently...
+#ifdef SYSVSEM
 220	NOARGS		{ int sys___semctl(int semid, int semnum, int cmd, \
 			    union semun *arg); }
 221	NOARGS		{ int sys_semget(key_t key, int nsems, int semflg); }
 222	NOARGS		{ int sys_semop(int semid, struct sembuf *sops, \
 			    u_int nsops); }
 223	NOARGS		{ int sys_semconfig(int flag); }
+#else
+220	UNIMPL		sys___semctl
+221	UNIMPL		sys_semget
+222	UNIMPL		sys_semop
+223	UNIMPL		sys_semconfig
+#endif
+#ifdef SYSVMSG
 224	NOARGS		{ int sys_msgctl(int msqid, int cmd, \
 			    struct msqid_ds *buf); }
 225	NOARGS		{ int sys_msgget(key_t key, int msgflg); }
@@ -414,11 +422,24 @@
 			    int msgflg); }
 227	NOARGS		{ int sys_msgrcv(int msqid, void *msgp, size_t msgsz, \
 			    long msgtyp, int msgflg); }
+#else
+224	UNIMPL		sys_msgctl
+225	UNIMPL		sys_msgget
+226	UNIMPL		sys_msgsnd
+227	UNIMPL		sys_msgrcv
+#endif
+#ifdef SYSVSHM
 228	NOARGS		{ int sys_shmat(int shmid, void *shmaddr, int shmflg); }
 229	NOARGS		{ int sys_shmctl(int shmid, int cmd, \
 			    struct shmid_ds *buf); }
 230	NOARGS		{ int sys_shmdt(void *shmaddr); }
 231	NOARGS		{ int sys_shmget(key_t key, int size, int shmflg); }
+#else
+228	UNIMPL		sys_shmat
+229	UNIMPL		sys_shmctl
+230	UNIMPL		sys_shmdt
+231	UNIMPL		sys_shmget
+#endif
 232	UNIMPL
 233	UNIMPL
 234	UNIMPL
