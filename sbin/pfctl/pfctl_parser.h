@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.64 2003/07/11 08:29:34 cedric Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.65 2003/07/18 06:30:07 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -189,7 +189,6 @@ struct pf_timeout {
 	int		 timeout;
 };
 
-#define PFCTL_FLAG_ALL		0x01
 #define PFCTL_FLAG_FILTER	0x02
 #define PFCTL_FLAG_NAT		0x04
 #define PFCTL_FLAG_OPTION	0x08

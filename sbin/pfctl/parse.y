@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.401 2003/07/15 17:12:38 cedric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.402 2003/07/18 06:30:06 cedric Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -860,7 +860,7 @@ tabledef	: TABLE '<' STRING '>' table_opts {
 				    PF_TABLE_NAME_SIZE - 1);
 				YYERROR;
 			}
-			if (pf->loadopt & (PFCTL_FLAG_TABLE | PFCTL_FLAG_ALL))
+			if (pf->loadopt & PFCTL_FLAG_TABLE)
 				if (process_tabledef($3, &$5))
 					YYERROR;
 			for (ti = SIMPLEQ_FIRST(&$5.init_nodes);
@@ -3415,7 +3415,7 @@ expand_altq(struct pf_altq *a, struct node_if *interfaces,
 	struct node_queue_bw	 bw;
 	int			 errs = 0;
 
-	if ((pf->loadopt & (PFCTL_FLAG_ALTQ | PFCTL_FLAG_ALL)) == 0) {
+	if ((pf->loadopt & PFCTL_FLAG_ALTQ) == 0) {
 		FREE_LIST(struct node_if, interfaces);
 		FREE_LIST(struct node_queue, nqueues);
 		return (0);
@@ -3523,7 +3523,7 @@ expand_queue(struct pf_altq *a, struct node_if *interfaces,
 	u_int8_t		 found = 0;
 	u_int8_t		 errs = 0;
 
-	if ((pf->loadopt & (PFCTL_FLAG_ALTQ | PFCTL_FLAG_ALL)) == 0) {
+	if ((pf->loadopt & PFCTL_FLAG_ALTQ) == 0) {
 		FREE_LIST(struct node_queue, nqueues);
 		return (0);
 	}
