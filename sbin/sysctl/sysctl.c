@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.106 2004/01/19 01:09:06 tedu Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.107 2004/02/10 01:20:12 millert Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.106 2004/01/19 01:09:06 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.107 2004/02/10 01:20:12 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -1489,7 +1489,7 @@ sysctl_tty(char *string, char **bufpp, int mib[], int flags, int *typep)
 	if ((indx = findname(string, "third", bufpp, &ttylist)) == -1)
 		return (-1);
 	mib[2] = indx;
-	*typep = CTLTYPE_QUAD;
+	*typep = ttylist.list[indx].ctl_type;
 	return (3);
 }
 
