@@ -96,3 +96,6 @@ Boston, MA 02111-1307, USA.  */
 
 /* Since gas and gld are standard on OpenBSD, we don't need this */
 #undef ASM_FINAL_SPEC
+
+/* We're not ELF yet */
+#undef HAS_INIT_SECTION
