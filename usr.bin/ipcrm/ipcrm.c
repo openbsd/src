@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipcrm.c,v 1.5 2003/06/10 22:20:47 deraadt Exp $*/
+/*	$OpenBSD: ipcrm.c,v 1.6 2003/10/06 07:31:24 fgsch Exp $*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -129,7 +129,7 @@ main(int argc, char *argv[])
 			if (result < 0) {
 				errflg++;
 				if (!signaled)
-					warn("%sid(%d): ",
+					warn("%sid(%d)",
 					    IPC_TO_STR(toupper(c)), target_id);
 				else
 					warnx("%ss are not configured in the running kernel",
@@ -153,7 +153,7 @@ main(int argc, char *argv[])
 			if (result < 0) {
 				errflg++;
 				if (!signaled)
-					warn("%skey(%ld): ", IPC_TO_STR(c),
+					warn("%skey(%ld)", IPC_TO_STR(c),
 					    target_key);
 				else
 					warnx("%ss are not configured in the running kernel",
