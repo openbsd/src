@@ -1,4 +1,4 @@
-.\"	$OpenBSD: domainname.1,v 1.8 1999/08/17 14:04:00 aaron Exp $
+.\"	$OpenBSD: domainname.1,v 1.9 1999/10/05 19:59:12 ericj Exp $
 .\"	$NetBSD: domainname.1,v 1.7 1995/07/25 19:36:57 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1988, 1990, 1993
@@ -47,11 +47,11 @@
 The
 .Nm
 utility prints the YP domain name of the current host.  The super-user can
-set the domain name by supplying an argument; this is usually done in the
-network initialization script
-.Pa /etc/netstart ,
-normally run at boot
-time.
+set the domain name by supplying a 
+.Pa /etc/defaultdomain 
+file. This is used at system boot time by
+.Xr /etc/rc 8 
+to initialize the domainname.
 .Sh SEE ALSO
 .Xr hostname 1 ,
 .Xr getdomainname 3 ,
