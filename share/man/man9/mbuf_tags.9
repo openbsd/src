@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mbuf_tags.9,v 1.14 2003/02/26 15:05:07 david Exp $
+.\"	$OpenBSD: mbuf_tags.9,v 1.15 2003/05/10 22:38:27 henning Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -184,6 +184,11 @@ and will short circuit it if processed again.
 If they were to re-enter the fragcache, they would be indistinguishable
 from a duplicate of a previous packet and would be dropped.
 Contains no data.
+.It PACKET_TAG_PF_QID
+Used by
+.Xr pf 4
+for queueing.
+The tag contains the ID of the queue this packet should go to.
 .El
 .Pp
 .Fn m_tag_free
