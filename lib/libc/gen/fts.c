@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.c,v 1.23 1999/10/03 20:39:53 millert Exp $	*/
+/*	$OpenBSD: fts.c,v 1.24 2000/08/24 17:04:12 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-static char rcsid[] = "$OpenBSD: fts.c,v 1.23 1999/10/03 20:39:53 millert Exp $";
+static char rcsid[] = "$OpenBSD: fts.c,v 1.24 2000/08/24 17:04:12 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -216,7 +216,7 @@ fts_close(sp)
 	FTS *sp;
 {
 	register FTSENT *freep, *p;
-	int saved_errno;
+	int saved_errno = 0;
 
 	/*
 	 * This still works if we haven't read anything -- the dummy structure

@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.1 2000/08/20 18:37:20 millert Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.2 2000/08/24 17:03:47 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -64,7 +64,7 @@ login_getclass(class)
 {
 	char *classfiles[2];
 	login_cap_t *lc;
-	int res, i;
+	int res;
 
 	if (secure_path(_PATH_LOGIN_CONF) == 0) {
 		classfiles[0] = _PATH_LOGIN_CONF;
@@ -646,13 +646,13 @@ setuserpath(lc, home)
 
 	hlen = strlen(home);
 
-	if (p = path = login_getcapstr(lc, "path", NULL, NULL)) {
+	if ((p = path = login_getcapstr(lc, "path", NULL, NULL))) {
 		while (*p)
 			if (*p++ == '~')
 				++cnt;
 		plen = (p - path) + cnt * (hlen + 1) + 1;
 		p = path;
-		if (q = path = malloc(plen)) {
+		if ((q = path = malloc(plen))) {
 			while (*p) {
 				p += strspn(p, " \t");
 				if (*p == '\0')
