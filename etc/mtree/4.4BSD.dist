@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.170 2004/11/17 02:09:12 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.171 2004/12/31 00:12:54 miod Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1120,6 +1120,8 @@ sparc64
 ..
 vax
 ..
+zaurus
+..
 
 # ./usr/share/man/cat1
 ..
@@ -1179,6 +1181,8 @@ sparc64
 ..
 vax
 ..
+zaurus
+..
 
 # ./usr/share/man/cat3
 ..
@@ -1223,6 +1227,8 @@ sparc64
 ..
 vax
 ..
+zaurus
+..
 
 # ./usr/share/man/cat4
 ..
@@ -1261,6 +1267,8 @@ sparc
 sparc64
 ..
 vax
+..
+zaurus
 ..
 
 # ./usr/share/man/cat5
@@ -1311,6 +1319,8 @@ sparc64
 ..
 vax
 ..
+zaurus
+..
 
 # ./usr/share/man/cat8
 ..
@@ -1350,6 +1360,8 @@ sparc64
 ..
 vax
 ..
+zaurus
+..
 
 # ./usr/share/man/cat9
 ..
@@ -1388,6 +1400,8 @@ sparc
 sparc64
 ..
 vax
+..
+zaurus
 ..
 
 # ./usr/share/man/ps1
@@ -1441,6 +1455,8 @@ sparc64
 ..
 vax
 ..
+zaurus
+..
 
 # ./usr/share/man/ps3
 ..
@@ -1485,6 +1501,8 @@ sparc64
 ..
 vax
 ..
+zaurus
+..
 
 # ./usr/share/man/ps4
 ..
@@ -1523,6 +1541,8 @@ sparc
 sparc64
 ..
 vax
+..
+zaurus
 ..
 
 # ./usr/share/man/ps5
@@ -1573,6 +1593,8 @@ sparc64
 ..
 vax
 ..
+zaurus
+..
 
 # ./usr/share/man/ps8
 ..
@@ -1612,6 +1634,8 @@ sparc64
 ..
 vax
 ..
+zaurus
+..
 
 # ./usr/share/man/ps9
 ..
@@ -1650,6 +1674,8 @@ sparc
 sparc64
 ..
 vax
+..
+zaurus
 ..
 
 # ./usr/share/man/man1
@@ -1705,6 +1731,8 @@ sparc64
 ..
 vax
 ..
+zaurus
+..
 
 # ./usr/share/man/man4
 ..
@@ -1758,6 +1786,8 @@ sparc
 sparc64
 ..
 vax
+..
+zaurus
 ..
 
 # ./usr/share/man/man8
