@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.8 2000/04/21 22:48:52 mickey Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.9 2000/04/26 18:38:47 deraadt Exp $	*/
 /*	$NetBSD: pchb.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
 
 /*
@@ -83,13 +83,16 @@
 
 #include <dev/ic/i82802reg.h>
 
-#define PCISET_BRIDGETYPE_MASK	0x3
-#define PCISET_TYPE_COMPAT	0x1
-#define PCISET_TYPE_AUX		0x2
+#define PCISET_INTEL_BRIDGETYPE_MASK	0x3
+#define PCISET_INTEL_TYPE_COMPAT	0x1
+#define PCISET_INTEL_TYPE_AUX		0x2
 
-#define PCISET_BUSCONFIG_REG	0x48
-#define PCISET_BRIDGE_NUMBER(reg)	(((reg) >> 8) & 0xff)
-#define PCISET_PCI_BUS_NUMBER(reg)	(((reg) >> 16) & 0xff)
+#define PCISET_INTEL_BUSCONFIG_REG	0x48
+#define PCISET_INTEL_BRIDGE_NUMBER(reg)	(((reg) >> 8) & 0xff)
+#define PCISET_INTEL_PCI_BUS_NUMBER(reg)	(((reg) >> 16) & 0xff)
+
+#define PCISET_INTEL_SDRAMC_REG	0x76
+#define PCISET_INTEL_SDRAMC_IPDLT	(1 << 8)  
 
 /* XXX should be in dev/ic/i82424{reg.var}.h */
 #define I82424_CPU_BCTL_REG		0x53
@@ -161,19 +164,33 @@ pchbattach(parent, self, aux)
 	switch (PCI_VENDOR(pa->pa_id)) {
 	case PCI_VENDOR_INTEL:
 		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_INTEL_82443BX_AGP:     /* 82443BX AGP (PAC) */
+		case PCI_PRODUCT_INTEL_82443BX_NOAGP:   /* 82443BX Host-PCI (no AGP) */
+			/*
+			 * An incorrect address may be driven on the
+			 * DRAM bus, resulting in memory data being
+			 * fetched from the wrong location.  This is
+			 * the workaround.
+			 */
+			bcreg = pci_conf_read(pa->pa_pc, pa->pa_tag,
+			    PCISET_INTEL_SDRAMC_REG);
+			bcreg |= PCISET_INTEL_SDRAMC_IPDLT;
+			pci_conf_write(pa->pa_pc, pa->pa_tag,
+			    PCISET_INTEL_SDRAMC_REG, bcreg);
+			break;
 		case PCI_PRODUCT_INTEL_PCI450_PB:
 			bcreg = pci_conf_read(pa->pa_pc, pa->pa_tag,
-			    PCISET_BUSCONFIG_REG);
-			bdnum = PCISET_BRIDGE_NUMBER(bcreg);
-			pbnum = PCISET_PCI_BUS_NUMBER(bcreg);
-			switch (bdnum & PCISET_BRIDGETYPE_MASK) {
+			    PCISET_INTEL_BUSCONFIG_REG);
+			bdnum = PCISET_INTEL_BRIDGE_NUMBER(bcreg);
+			pbnum = PCISET_INTEL_PCI_BUS_NUMBER(bcreg);
+			switch (bdnum & PCISET_INTEL_BRIDGETYPE_MASK) {
 			default:
 				printf(": bdnum=%x (reserved)", bdnum);
 				break;
-			case PCISET_TYPE_COMPAT:
+			case PCISET_INTEL_TYPE_COMPAT:
 				printf(": Compatibility PB (bus %d)", pbnum);
 				break;
-			case PCISET_TYPE_AUX:
+			case PCISET_INTEL_TYPE_AUX:
 				printf(": Auxiliary PB (bus %d)", pbnum);
 				/*
 				 * This host bridge has a second PCI bus.
