@@ -1,4 +1,4 @@
-./usr/lib/libc_r.so.0.0
+./usr/lib/libc_r.so.1.0
 ./dev/scan0
 ./sbin/ldconfig
 ./usr/bin/ldd
