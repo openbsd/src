@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.193 2002/11/19 11:25:45 wilfried Exp $	*/
+/*	$OpenBSD: parse.y,v 1.194 2002/11/19 12:11:36 camield Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -608,15 +608,15 @@ bandwidth	: /* empty */		{
 
 			bps = strtod($2, &cp);
 			if (cp != NULL) {
-				if (!strcmp(cp, "b")) {
-					/* nothing */
-				} else if (!strcmp(cp, "Kb"))
+				if (!strcmp(cp, "b"))
+					;
+				else if (!strcmp(cp, "Kb"))
 					bps *= 1024;
 				else if (!strcmp(cp, "Mb"))
 					bps *= 1024 * 1024;
-				else if (!strcasecmp(cp, "Gb"))
+				else if (!strcmp(cp, "Gb"))
 					bps *= 1024 * 1024 * 1024;
-				else if (*cp == '%') {
+				else if (!strcmp(cp, "%")) {
 					if (bps < 0 || bps > 100) {
 						yyerror("bandwidth spec "
 						    "out of range");
