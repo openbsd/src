@@ -548,8 +548,10 @@ pfkeyv2_sendmessage(void **headers, int mode, struct socket *socket,
   }
 
 ret:
-  bzero(buffer, j + sizeof(struct sadb_msg));
-  free(buffer, M_TEMP);
+  if (buffer != NULL) {
+    bzero(buffer, j + sizeof(struct sadb_msg));
+    free(buffer, M_TEMP);
+  }
   return rval;
 }
 
