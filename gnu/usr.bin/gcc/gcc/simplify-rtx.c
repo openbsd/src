@@ -1670,7 +1670,8 @@ simplify_plus_minus (code, mode, op0, op1, force)
   int n_ops = 2, input_ops = 2, input_consts = 0, n_consts;
   int first, negate, changed;
   int i, j;
-
+  HOST_WIDE_INT fp_offset = 0;
+  
   memset ((char *) ops, 0, sizeof ops);
 
   /* Set up the two operands and then expand them until nothing has been
@@ -1695,6 +1696,10 @@ simplify_plus_minus (code, mode, op0, op1, force)
 	  switch (this_code)
 	    {
 	    case PLUS:
+	    if (flag_propolice_protection
+		&& XEXP (this_op, 0) == virtual_stack_vars_rtx
+		&& GET_CODE (XEXP (this_op, 1)) == CONST_INT)
+	      fp_offset = INTVAL (XEXP (this_op, 1));
 	    case MINUS:
 	      if (n_ops == 7)
 		return NULL_RTX;
@@ -1849,10 +1854,10 @@ simplify_plus_minus (code, mode, op0, op1, force)
       && GET_CODE (ops[n_ops - 1].op) == CONST_INT
       && CONSTANT_P (ops[n_ops - 2].op))
     {
-      rtx value = ops[n_ops - 1].op;
+      int value = INTVAL (ops[n_ops - 1].op);
       if (ops[n_ops - 1].neg ^ ops[n_ops - 2].neg)
-	value = neg_const_int (mode, value);
-      ops[n_ops - 2].op = plus_constant (ops[n_ops - 2].op, INTVAL (value));
+	value = -value;
+      ops[n_ops - 2].op = plus_constant (ops[n_ops - 2].op, value);
       n_ops--;
     }
 
@@ -1870,6 +1875,54 @@ simplify_plus_minus (code, mode, op0, op1, force)
       && (n_ops + n_consts > input_ops
 	  || (n_ops + n_consts == input_ops && n_consts <= input_consts)))
     return NULL_RTX;
+
+  if (flag_propolice_protection)
+    {
+      /* keep the addressing style of local variables
+	 as (plus (virtual_stack_vars_rtx) (CONST_int x))
+	 (1) inline function is expanded, (+ (+VFP c1) -c2)=>(+ VFP c1-c2)
+	 (2) the case ary[r-1], (+ (+VFP c1) (+r -1))=>(+ R (+r -1))
+      */
+      for (i = 0; i < n_ops; i++)
+#ifdef FRAME_GROWS_DOWNWARD
+	if (ops[i].op == virtual_stack_vars_rtx)
+#else
+	if (ops[i].op == virtual_stack_vars_rtx
+	    || ops[i].op == frame_pointer_rtx)
+#endif
+	  {
+	    if (GET_CODE (ops[n_ops - 1].op) == CONST_INT)
+	      {
+		HOST_WIDE_INT value = INTVAL (ops[n_ops - 1].op);
+		if (n_ops < 3 || value >= fp_offset)
+		  {
+		    ops[i].op = plus_constant (ops[i].op, value);
+		    n_ops--;
+		  }
+		else
+		  {
+		    if (!force
+			&& (n_ops+1 + n_consts > input_ops
+			    || (n_ops+1 + n_consts == input_ops && n_consts <= input_consts)))
+		      return NULL_RTX;
+		    ops[n_ops - 1].op = GEN_INT (value-fp_offset);
+		    ops[i].op = plus_constant (ops[i].op, fp_offset);
+		  }
+	      }
+	    /* buf[BUFSIZE]: buf is the first local variable (+ (+ fp -S) S) 
+	       or (+ (fp 0) r) ==> ((+ (+fp 1) r) -1) */
+	    else if (fp_offset != 0)
+	      return NULL_RTX;
+#ifndef FRAME_GROWS_DOWNWARD
+	    /*
+	     * For the case of buf[i], i: REG, buf: (plus fp 0),
+	     */
+	    else if (fp_offset == 0)
+	      return NULL_RTX;
+#endif
+	    break;
+	  }
+    }
 
   /* Put a non-negated operand first.  If there aren't any, make all
      operands positive and negate the whole thing later.  */

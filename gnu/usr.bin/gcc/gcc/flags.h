@@ -690,4 +690,13 @@ extern const char *flag_random_seed;
 #define HONOR_SIGN_DEPENDENT_ROUNDING(MODE) \
   (MODE_HAS_SIGN_DEPENDENT_ROUNDING (MODE) && !flag_unsafe_math_optimizations)
 
+/* Nonzero means use propolice as a stack protection method */
+
+extern int flag_propolice_protection;
+extern int flag_stack_protection;
+
+/* Warn when not issuing stack smashing protection for some reason */
+
+extern int warn_stack_protector;
+
 #endif /* ! GCC_FLAGS_H */

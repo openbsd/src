@@ -401,6 +401,10 @@ copy_decl_for_inlining (decl, from_fn, to_fn)
   /* These args would always appear unused, if not for this.  */
   TREE_USED (copy) = 1;
 
+  /* The inlined variable is marked as INLINE not to sweep by propolice */
+  if (flag_propolice_protection && TREE_CODE (copy) == VAR_DECL)
+    DECL_INLINE (copy) = 1;
+
   /* Set the context for the new declaration.  */
   if (!DECL_CONTEXT (decl))
     /* Globals stay global.  */
@@ -1965,6 +1969,10 @@ copy_rtx_and_substitute (orig, map, for_lhs)
 
 	      seq = get_insns ();
 	      end_sequence ();
+#ifdef FRAME_GROWS_DOWNWARD
+	      if (flag_propolice_protection && GET_CODE (seq) == SET)
+		RTX_INTEGRATED_P (SET_SRC (seq)) = 1;
+#endif
 	      emit_insn_after (seq, map->insns_at_start);
 	      return temp;
 	    }

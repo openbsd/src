@@ -4288,7 +4288,14 @@ fold_rtx (x, insn)
 
 	      if (new_const == 0)
 		break;
-
+#ifndef FRAME_GROWS_DOWNWARD
+	      if (flag_propolice_protection
+		  && GET_CODE (y) == PLUS
+		  && XEXP (y, 0) == frame_pointer_rtx
+		  && INTVAL (inner_const) > 0
+		  && INTVAL (new_const) <= 0)
+		break;
+#endif
 	      /* If we are associating shift operations, don't let this
 		 produce a shift of the size of the object or larger.
 		 This could occur when we follow a sign-extend by a right
@@ -4823,6 +4830,14 @@ cse_insn (insn, libcall_insn)
       if (SET_DEST (x) == pc_rtx
 	  && GET_CODE (SET_SRC (x)) == LABEL_REF)
 	;
+      /* cut the reg propagation of stack-protected argument */
+      else if (x->volatil) {
+	rtx x1 = SET_DEST (x);
+	if (GET_CODE (x1) == SUBREG && GET_CODE (SUBREG_REG (x1)) == REG)
+	  x1 = SUBREG_REG (x1);
+	if (! REGNO_QTY_VALID_P(REGNO (x1)))
+	  make_new_qty (REGNO (x1), GET_MODE (x1));
+      }
 
       /* Don't count call-insns, (set (reg 0) (call ...)), as a set.
 	 The hard function value register is used only once, to copy to
