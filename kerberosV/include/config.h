@@ -459,7 +459,7 @@
 #define HAVE_PATHS_H 1
 
 /* Define if you have the `pidfile' function. */
-/* #undef HAVE_PIDFILE */
+#define HAVE_PIDFILE 1
 
 /* Define if you have the <pthread.h> header file. */
 #define HAVE_PTHREAD_H 1
