@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.37 2002/03/05 00:49:51 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.38 2002/05/04 03:00:40 deraadt Exp $
 
 .PATH:		${.CURDIR}/..
 
 PROG=	ssh
 BINOWN=	root
 
-BINMODE?=4555
+#BINMODE?=4555
 
 BINDIR=	/usr/bin
 MAN=	ssh.1
