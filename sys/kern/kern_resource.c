@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.31 1995/10/07 06:28:23 mycroft Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.32 1995/12/09 04:09:34 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -435,13 +435,23 @@ struct plimit *
 limcopy(lim)
 	struct plimit *lim;
 {
-	register struct plimit *copy;
+	register struct plimit *newlim;
 
-	MALLOC(copy, struct plimit *, sizeof(struct plimit),
+	MALLOC(newlim, struct plimit *, sizeof(struct plimit),
 	    M_SUBPROC, M_WAITOK);
-	bcopy(lim->pl_rlimit, copy->pl_rlimit,
+	bcopy(lim->pl_rlimit, newlim->pl_rlimit,
 	    sizeof(struct rlimit) * RLIM_NLIMITS);
-	copy->p_lflags = 0;
-	copy->p_refcnt = 1;
-	return (copy);
+	newlim->p_lflags = 0;
+	newlim->p_refcnt = 1;
+	return (newlim);
+}
+
+void
+limfree(lim)
+	struct plimit *lim;
+{
+
+	if (--lim->p_refcnt > 0)
+		return;
+	FREE(lim, M_SUBPROC);
 }

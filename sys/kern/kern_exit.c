@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.33 1995/10/07 06:28:13 mycroft Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.34 1995/12/09 04:09:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -253,8 +253,7 @@ exit1(p, rv)
 	 * Other substructures are freed from wait().
 	 */
 	curproc = NULL;
-	if (--p->p_limit->p_refcnt == 0)
-		FREE(p->p_limit, M_SUBPROC);
+	limfree(p->p_limit);
 
 	/*
 	 * Finally, call machine-dependent code to release the remaining
