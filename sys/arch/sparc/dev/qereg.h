@@ -1,4 +1,4 @@
-/*	$OpenBSD: qereg.h,v 1.6 2001/01/30 07:17:07 jason Exp $	*/
+/*	$OpenBSD: qereg.h,v 1.7 2003/06/02 18:40:59 jason Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 Jason L. Wright.
@@ -12,8 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the authors may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
