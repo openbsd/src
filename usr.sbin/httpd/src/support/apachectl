@@ -45,6 +45,12 @@ if [ "x$ARGV" = "x" ] ; then
     ARGS="help"
 fi
 
+RCFLAGS=""
+. /etc/rc.conf
+if [ "X${httpd_flags}" != X"NO"  ]; then
+	RCFLAGS="${httpd_flags}"
+fi
+
 for ARG in $@ $ARGS
 do
     # check for pidfile
@@ -68,7 +74,7 @@ do
 	    echo "$0 $ARG: httpd (pid $PID) already running"
 	    continue
 	fi
-	if $HTTPD ; then
+	if $HTTPD $RCFLAGS ; then
 	    echo "$0 $ARG: httpd started"
 	else
 	    echo "$0 $ARG: httpd could not be started"
@@ -80,7 +86,7 @@ do
 	    echo "$0 $ARG: httpd (pid $PID) already running"
 	    continue
 	fi
-	if $HTTPD -DSSL; then
+	if $HTTPD $RCFLAGS -DSSL; then
 	    echo "$0 $ARG: httpd started"
 	else
 	    echo "$0 $ARG: httpd could not be started"
