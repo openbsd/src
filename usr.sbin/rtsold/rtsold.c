@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.c,v 1.30 2003/06/25 21:10:33 deraadt Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.31 2003/07/07 00:18:30 deraadt Exp $	*/
 /*	$KAME: rtsold.c,v 1.57 2002/09/20 21:59:55 itojun Exp $	*/
 
 /*
@@ -95,6 +95,8 @@ static char *dumpfilename = "/var/run/rtsold.dump"; /* XXX: should be configurab
 #if 0
 static int ifreconfig(char *);
 #endif
+int ifconfig(char *ifname);
+void iflist_init(void);
 static int make_packet(struct ifinfo *);
 static struct timeval *rtsol_check_timer(void);
 static void TIMEVAL_ADD(struct timeval *, struct timeval *, struct timeval *);
