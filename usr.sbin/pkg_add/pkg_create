@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.8 2004/01/31 17:56:13 espie Exp $
+# $OpenBSD: pkg_create,v 1.9 2004/07/05 09:27:05 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -190,9 +190,9 @@ if (defined $opt_p) {
 	die "Prefix required";
 }
 
-if ($ARGV[0] =~ m|([^/]+)\.tgz$|) {
+if ($ARGV[0] =~ m|([^/]+)(?:\.tgz)?$|) {
 	OpenBSD::PackingElement::Name->add($plist, $1);
-}
+} 
 
 if (defined $opt_P) {
 	for my $e (split(/\s+/, $opt_P)) {
@@ -204,6 +204,7 @@ if (defined $opt_C) {
 	for my $e (split(/\s+/, $opt_C)) {
 		OpenBSD::PackingElement::PkgConflict->add($plist, $e);
     	}
+
 }
 
 if (defined $opt_A) {
