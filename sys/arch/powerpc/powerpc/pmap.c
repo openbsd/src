@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.18 2000/07/12 13:49:54 rahnds Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.19 2000/07/28 13:02:12 rahnds Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 #include <machine/powerpc.h>
 
 pte_t *ptable;
-int ptab_cnt = HTABENTS;
+int ptab_cnt;
 u_int ptab_mask;
 #define	HTABSIZE	(ptab_cnt * 64)
 
@@ -421,9 +421,11 @@ avail_end = npgs * NBPG;
 	ptab_cnt = HTABENTS;
 #else /* HTABENTS */
 	ptab_cnt = 1024;
+	#if 0
 	while ((HTABSIZE << 7) < ctob(physmem)) {
 		ptab_cnt <<= 1;
 	}
+	#endif
 #endif /* HTABENTS */
 
 	/*
@@ -1038,7 +1040,7 @@ pmap_remove_pv(pm, pteidx, va, pind, pte)
 #if 1
 #ifdef	DIAGNOSTIC
 		else {
-			printf("pmap_remove_pv: not on list");
+			printf("pmap_remove_pv: not on list\n");
 			/*
 			panic("pmap_remove_pv: not on list");
 			*/
@@ -1068,7 +1070,7 @@ pmap_enter(pm, va, pa, prot, wired, access_type)
 	/*
 	 * Have to remove any existing mapping first.
 	 */
-	pmap_remove(pm, va, va + NBPG - 1);
+	pmap_remove(pm, va, va + NBPG);
 
 	pm->pm_stats.resident_count++;
 	
