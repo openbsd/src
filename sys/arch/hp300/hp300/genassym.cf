@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.15 2001/11/17 21:35:12 mickey Exp $
+#	$OpenBSD: genassym.cf,v 1.16 2001/12/06 23:24:37 miod Exp $
 #	$NetBSD: genassym.cf,v 1.11 1998/02/16 20:58:29 thorpej Exp $
 
 #
@@ -178,7 +178,6 @@ define	SIZEOF_PCB		sizeof(struct pcb)
 define	FR_SIZE			sizeof(struct trapframe)
 
 # system calls
-export	SYS_exit
 export	SYS_execve
 
 # clock registers

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.5 2001/12/06 21:13:28 millert Exp $
+#	$OpenBSD: genassym.cf,v 1.6 2001/12/06 23:24:38 miod Exp $
 
 #
 # Copyright (c) 1995 Theo de Raadt
@@ -113,6 +113,9 @@ member	fpf_regs	fpf_regs[0]
 member	fpf_fpcr
 member	fpf_fpsr
 member	fpf_fpi		fpf_fpiar
+
+# system calls
+export	SYS_exit
 
 # interrupt/fault metering
 struct	uvmexp	UVMEXP_
