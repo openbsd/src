@@ -903,9 +903,6 @@
 ./usr/libdata/perl5/abbrev.pl
 ./usr/libdata/perl5/assert.pl
 ./usr/libdata/perl5/attributes.pm
-./usr/libdata/perl5/auto
-./usr/libdata/perl5/auto/OpenBSD
-./usr/libdata/perl5/auto/OpenBSD/.packlist
 ./usr/libdata/perl5/autouse.pm
 ./usr/libdata/perl5/base.pm
 ./usr/libdata/perl5/bigfloat.pl
