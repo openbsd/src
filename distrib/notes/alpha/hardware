@@ -1,0 +1,83 @@
+OpenBSD/alpha 2.1 is expected to run on the following hardware.
+If you have hardware that is listed here and are unable to run
+OpenBSD, or if you are able to run OpenBSD on hardware not listed
+here, please send mail to <tech@openbsd.org> with as much information
+as possible.
+
+Supported hardware:
+
+	DEC 3000/[3456789]00 series with the following peripherals:
+
+		Supported hardware:
+			Built-in serial ports.
+			Built-in LANCE ethernet.
+			Built-in SCSI chips (53c[f]94), though both
+			    may not work at the same time.
+
+		Things that may work but haven't been tested:
+			TurboChannel option slot LANCE (PMAD-A).
+
+		Things are *not* supported at this time:
+			Frame buffers of any type.
+			Other TurboChannel option boards.
+			The ISDN/Audio chip.
+
+	AlphaStation {200,250,255,400,500,500} and AXPpci systems
+	    (including the Multia) using the following peripherals:
+
+		Supported hardware:
+			NCR 53c810 SCSI (built-in or PCI board).
+			Built-in ns16550 serial ports.
+			DC21040-based ethernet (built-in or PCI board).
+			DC21140-based PCI ethernet boards.
+			DC21050-based PCI-PCI bridges (though other
+			    types of PCI-PCI bridges should work).
+			PCI VGA video boards.
+			DEC ZLXp-E1 (DC21030-based, "TGA") video boards.
+			PCI and ISA NE2000-compatible ethernet cards.
+			SMC/WD 8003, 8013, and the SMC "Elite16" ISA boards.
+			Keyboard.
+			PS/2-style mice.
+
+		Things that may work but haven't been tested:
+			Built-in parallel ports.
+			ISA ns16x50-family serial port boards.
+			ISA ns16x50 multi-port serial boards.
+			Other NCR 53c8xx SCSI boards.
+
+		Things that are *not* supported at this time:
+			ISA VGA boards.
+			Sound hardware (including Windows Sound System
+			    built-in on some machines).
+			DEC ZLXp-E2 and ZLXp-E3 PCI video boards.
+			The built-in scsi controller on the AlphaStation 600.
+			PCI boards not listed above.
+			The floppy drive.
+			IDE controllers (including the built-in IDE
+			    controller on some machines).
+
+At this time none of the following systems are supported:
+	DECpc AXP 150 systems (EISA-bus PC-like systems)
+	Alpha "server" systems (other than perhaps the AlphaServer
+	    400, which might be an AlphaStation 400 in disguise).
+	Multiprocessor Alpha systems
+
+Console frame buffers and keyboards are only supported on systems
+explicately mentioned above.  On other systems, including all
+TurboChannel-based machines, OpenBSD/Alpha *must* be used with a
+serial console.  Setting an Alpha system to use a serial console
+is system-specific.  The procedure for most common hardware is:
+
+	DEC 3000/[4-9]00's:
+		Flip the appropriate switch on the back of the machine.
+
+	DEC 3000/300 family machines:
+		Boot the machine with the keyboard/mouse connector
+		unplugged.
+
+	AlphaStations, AXPpci systems and most others:
+		Get to the SRM console prompt.  Enter "set console serial",
+		then enter "init" or cycle power.
+
+See your owner's manual for more details on how to set your machine
+to use a serial console.
