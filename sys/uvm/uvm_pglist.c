@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_pglist.c,v 1.5 2001/01/29 02:07:48 niklas Exp $	*/
-/*	$NetBSD: uvm_pglist.c,v 1.7 1999/05/24 19:10:58 thorpej Exp $	*/
+/*	$OpenBSD: uvm_pglist.c,v 1.6 2001/03/08 15:21:37 smart Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.8 1999/07/22 22:58:39 thorpej Exp $	*/
 
 #define VM_PAGE_ALLOC_MEMORY_STATS
  
@@ -249,7 +249,7 @@ out:
 	if (uvmexp.free < uvmexp.freemin ||
 	    (uvmexp.free < uvmexp.freetarg &&
 	    uvmexp.inactive < uvmexp.inactarg)) 
-		thread_wakeup(&uvm.pagedaemon);
+		wakeup(&uvm.pagedaemon);
 
 	return (error);
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_swap.c,v 1.23 2001/02/24 19:07:12 csapuntz Exp $	*/
-/*	$NetBSD: uvm_swap.c,v 1.27 1999/03/30 16:07:47 chs Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.24 2001/03/08 15:21:37 smart Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.28 1999/07/22 22:58:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -2201,7 +2201,7 @@ uvm_swap_bufdone(bp)
 	TAILQ_INSERT_TAIL(&uvm.aio_done, &sbp->sw_aio, aioq);
 	simple_unlock(&uvm.pagedaemon_lock);
 
-	thread_wakeup(&uvm.pagedaemon);
+	wakeup(&uvm.pagedaemon);
 	splx(s);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.10 2001/01/29 02:07:50 niklas Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.11 2001/03/08 15:21:38 smart Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.23 1999/04/11 04:04:11 chs Exp $	*/
 
 /*
@@ -1161,7 +1161,7 @@ ReTry:
 			if (result != VM_PAGER_PEND) {
 				if (ptmp->flags & PG_WANTED)
 					/* still holding object lock */
-					thread_wakeup(ptmp);
+					wakeup(ptmp);
 
 				ptmp->flags &= ~(PG_WANTED|PG_BUSY);
 				UVM_PAGE_OWN(ptmp, NULL);
@@ -1521,7 +1521,7 @@ uvn_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 		if (result != VM_PAGER_OK) {
 			if (ptmp->flags & PG_WANTED)
 				/* object lock still held */
-				thread_wakeup(ptmp);
+				wakeup(ptmp);
 
 			ptmp->flags &= ~(PG_WANTED|PG_BUSY);
 			UVM_PAGE_OWN(ptmp, NULL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.7 2001/01/29 02:07:45 niklas Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.8 2001/03/08 15:21:36 smart Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.27 1999/06/04 23:38:41 thorpej Exp $	*/
 
 /* 
@@ -881,7 +881,7 @@ uvm_km_free_wakeup(map, addr, size)
 	vm_map_lock(map);
 	(void)uvm_unmap_remove(map, trunc_page(addr), round_page(addr+size), 
 			 &dead_entries);
-	thread_wakeup(map);
+	wakeup(map);
 	vm_map_unlock(map);
 
 	if (dead_entries != NULL)

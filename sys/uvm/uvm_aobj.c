@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.7 2001/01/29 02:07:43 niklas Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.8 2001/03/08 15:21:36 smart Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.20 1999/05/25 00:09:00 thorpej Exp $	*/
 
 /*
@@ -983,7 +983,7 @@ uao_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 				    rv,0,0,0);
 				if (ptmp->flags & PG_WANTED)
 					/* object lock still held */
-					thread_wakeup(ptmp);
+					wakeup(ptmp);
 				ptmp->flags &= ~(PG_WANTED|PG_BUSY);
 				UVM_PAGE_OWN(ptmp, NULL);
 				uvm_lock_pageq();

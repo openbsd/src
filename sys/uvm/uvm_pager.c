@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.6 2001/01/29 02:07:47 niklas Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.7 2001/03/08 15:21:37 smart Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.20 1999/05/26 19:16:36 thorpej Exp $	*/
 
 /*
@@ -646,7 +646,7 @@ int swblk;			/* valid if (uobj == NULL && PGO_REALLOCSWAP) */
 		/* did someone want the page while we had it busy-locked? */
 		if (ppsp[lcv]->flags & PG_WANTED)
 			/* still holding obj lock */
-			thread_wakeup(ppsp[lcv]);
+			wakeup(ppsp[lcv]);
 
 		/* if page was released, release it.  otherwise un-busy it */
 		if (ppsp[lcv]->flags & PG_RELEASED) {

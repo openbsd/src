@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.6 2001/01/29 02:07:44 niklas Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.7 2001/03/08 15:21:36 smart Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.33 1999/06/04 23:38:41 thorpej Exp $	*/
 
 /*
@@ -436,7 +436,7 @@ int uvmfault_anonget(ufi, amap, anon)
 
 			if (pg->flags & PG_WANTED) {
 				/* still holding object lock */
-				thread_wakeup(pg);	
+				wakeup(pg);	
 			}
 			/* un-busy! */
 			pg->flags &= ~(PG_WANTED|PG_BUSY|PG_FAKE);
@@ -1383,7 +1383,7 @@ Case2:
 			    0,0,0,0);
 			if (uobjpage->flags & PG_WANTED)
 				/* still holding object lock */
-				thread_wakeup(uobjpage);
+				wakeup(uobjpage);
 
 			if (uobjpage->flags & PG_RELEASED) {
 				uvmexp.fltpgrele++;
@@ -1473,7 +1473,7 @@ Case2:
 					 * be released
 					 * */
 					if (uobjpage->flags & PG_WANTED)
-						thread_wakeup(uobjpage);
+						wakeup(uobjpage);
 					uobjpage->flags &= ~(PG_BUSY|PG_WANTED);
 					UVM_PAGE_OWN(uobjpage, NULL);
 
@@ -1505,7 +1505,7 @@ Case2:
 				pmap_page_protect(PMAP_PGARG(uobjpage),
 				    VM_PROT_NONE); 
 				if (uobjpage->flags & PG_WANTED)
-					thread_wakeup(uobjpage);
+					wakeup(uobjpage);
 				/* uobj still locked */
 				uobjpage->flags &= ~(PG_WANTED|PG_BUSY);
 				UVM_PAGE_OWN(uobjpage, NULL);
@@ -1563,7 +1563,7 @@ Case2:
 			if (uobjpage != PGO_DONTCARE) {
 				if (uobjpage->flags & PG_WANTED)
 					/* still holding object lock */
-					thread_wakeup(uobjpage);
+					wakeup(uobjpage);
 
 				uvm_lock_pageq();
 				/* make sure it is in queues */
@@ -1622,7 +1622,7 @@ Case2:
 
 			if (uobjpage->flags & PG_WANTED)
 				/* still have the obj lock */
-				thread_wakeup(uobjpage);
+				wakeup(uobjpage);
 			uobjpage->flags &= ~(PG_BUSY|PG_WANTED);
 			UVM_PAGE_OWN(uobjpage, NULL);
 			uvm_lock_pageq();
@@ -1688,7 +1688,7 @@ Case2:
 	uvm_unlock_pageq();
 
 	if (pg->flags & PG_WANTED)
-		thread_wakeup(pg);		/* lock still held */
+		wakeup(pg);		/* lock still held */
 
 	/* 
 	 * note that pg can't be PG_RELEASED since we did not drop the object 

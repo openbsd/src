@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.7 2001/01/29 02:07:48 niklas Exp $	*/
-/*	$NetBSD: uvm_pdaemon.c,v 1.16 1999/05/24 19:10:57 thorpej Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.8 2001/03/08 15:21:37 smart Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.17 1999/07/22 22:58:39 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -146,7 +146,7 @@ void uvm_wait(wmsg)
 	}
 
 	simple_lock(&uvm.pagedaemon_lock);
-	thread_wakeup(&uvm.pagedaemon);		/* wake the daemon! */
+	wakeup(&uvm.pagedaemon);		/* wake the daemon! */
 	UVM_UNLOCK_AND_WAIT(&uvmexp.free, &uvm.pagedaemon_lock, FALSE, wmsg,
 	    timo);
 
@@ -302,7 +302,7 @@ uvm_pageout()
 		 */
 		if (uvmexp.free > uvmexp.reserve_kernel ||
 		    uvmexp.paging == 0)
-			thread_wakeup(&uvmexp.free);
+			wakeup(&uvmexp.free);
 	}
 	/*NOTREACHED*/
 }
@@ -819,7 +819,7 @@ uvmpd_scan_inactive(pglst)
 			/* handle PG_WANTED now */
 			if (p->flags & PG_WANTED)
 				/* still holding object lock */
-				thread_wakeup(p);
+				wakeup(p);
 
 			p->flags &= ~(PG_BUSY|PG_WANTED);
 			UVM_PAGE_OWN(p, NULL);
