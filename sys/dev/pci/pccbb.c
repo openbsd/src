@@ -1,5 +1,5 @@
-/*	$OpenBSD: pccbb.c,v 1.4 2000/07/06 06:03:01 aaron Exp $ */
-/*	$NetBSD: pccbb.c,v 1.37 2000/03/23 07:01:40 thorpej Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.5 2000/07/06 19:49:10 aaron Exp $ */
+/*	$NetBSD: pccbb.c,v 1.42 2000/06/16 23:41:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -345,7 +345,7 @@ cb_chipset(pci_id, flagp)
 	/* Loop over except the last default entry. */
 	for (yc = yc_chipsets; yc < yc_chipsets +
 	    sizeof(yc_chipsets) / sizeof(yc_chipsets[0]) - 1; yc++)
-		if (pci_id != yc->yc_id)
+		if (pci_id == yc->yc_id)
 			break;
 
 	if (flagp != NULL)
@@ -562,6 +562,10 @@ pccbb_pci_callback(self)
 	base_memt = sc->sc_base_memt;  /* socket regs memory tag */
 	base_memh = sc->sc_base_memh;  /* socket regs memory handle */
 
+	/* clear data structure for child device interrupt handlers */
+	sc->sc_pil = NULL;
+	sc->sc_pil_intr_enable = 1;
+
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pc, sc->sc_intrtag, sc->sc_intrpin,
 	    sc->sc_intrline, &ih)) {
@@ -569,6 +573,11 @@ pccbb_pci_callback(self)
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
+
+	/*
+	 * XXX pccbbintr should be called under the priority lower
+	 * than any other hard interrputs.
+	 */
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, pccbbintr, sc,
 	    sc->sc_dev.dv_xname);
 
@@ -893,7 +902,11 @@ pccbbintr(arg)
 
 	if (sockevent == 0) {
 		/* This intr is not for me: it may be for my child devices. */
-		return (pccbbintr_function(sc));
+		if (sc->sc_pil_intr_enable) {
+			return pccbbintr_function(sc);
+		} else {
+			return 0;
+		}
 	}
 
 	if (sockevent & CB_SOCKET_EVENT_CD) {
@@ -955,9 +968,49 @@ pccbbintr_function(sc)
 {
 	int retval = 0, val;
 	struct pccbb_intrhand_list *pil;
-
+	int s, splchanged;
+ 
 	for (pil = sc->sc_pil; pil != NULL; pil = pil->pil_next) {
-		val = (*pil->pil_func) (pil->pil_arg);
+		/*
+		 * XXX priority change.  gross.  I use if-else
+		 * sentense instead of switch-case sentense because of
+		 * avoiding duplicate case value error.  More than one
+		 * IPL_XXX use same value.  It depends on
+		 * implimentation.
+		 */
+		splchanged = 1;
+#if 0
+		if (pil->pil_level == IPL_SERIAL) {
+			s = splserial();
+		} else if (pil->pil_level == IPL_HIGH) {
+#endif
+		if (pil->pil_level == IPL_HIGH) {
+			s = splhigh();
+		} else if (pil->pil_level == IPL_CLOCK) {
+			s = splclock();
+		} else if (pil->pil_level == IPL_AUDIO) {
+			s = splaudio();
+		} else if (pil->pil_level == IPL_IMP) {
+			s = splimp();
+		} else if (pil->pil_level == IPL_TTY) {
+			s = spltty();
+#if 0
+		} else if (pil->pil_level == IPL_SOFTSERIAL) {
+			s = splsoftserial();
+#endif
+		} else if (pil->pil_level == IPL_NET) {
+			s = splnet();
+		} else {
+			splchanged = 0;
+			/* XXX: ih lower than IPL_BIO runs w/ IPL_BIO. */
+		}
+
+		val = (*pil->pil_func)(pil->pil_arg);
+
+		if (splchanged != 0) {
+			splx(s);
+		}
+
 		retval = retval == 1 ? 1 :
 		    retval == 0 ? val : val != 0 ? val : retval;
 	}
@@ -1310,12 +1363,14 @@ cb_reset(sc)
 	    (sc->sc_chipset == CB_RX5C47X ? 400 * 1000 : 40 * 1000);
 	u_int32_t bcr = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_BCR_INTR);
 
-	bcr |= (0x40 << 16);	       /* Reset bit Assert (bit 6 at 0x3E) */
+	/* Reset bit Assert (bit 6 at 0x3E) */
+	bcr |= CB_BCR_RESET_ENABLE;
 	pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BCR_INTR, bcr);
 	delay(reset_duration);
 
 	if (CBB_CARDEXIST & sc->sc_flags) {	/* A card exists.  Reset it! */
-		bcr &= ~(0x40 << 16);  /* Reset bit Deassert (bit 6 at 0x3E) */
+		/* Reset bit Deassert (bit 6 at 0x3E) */
+		bcr &= ~CB_BCR_RESET_ENABLE;
 		pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BCR_INTR, bcr);
 		delay(reset_duration);
 	}
@@ -1530,7 +1585,7 @@ pccbb_mem_close(ct, win)
  *   order not to call the interrupt handlers of child devices when
  *   a card-deletion interrupt occurs.
  *
- *   The arguments irq and level are not used.
+ *   The arguments irq is not used because pccbb selects intr vector.
  */
 void *
 pccbb_cb_intr_establish(ct, irq, level, func, arg)
@@ -1617,6 +1672,7 @@ pccbb_intr_establish(sc, irq, level, func, arg)
 
 	newpil->pil_func = func;
 	newpil->pil_arg = arg;
+	newpil->pil_level = level;
 	newpil->pil_next = NULL;
 
 	if (sc->sc_pil == NULL) {
@@ -3073,6 +3129,18 @@ pccbb_powerhook(why, arg)
 
 	DPRINTF(("%s: power: why %d\n", sc->sc_dev.dv_xname, why));
 
+	if (why == PWR_SUSPEND || why == PWR_STANDBY) {
+		DPRINTF(("%s: power: why %d stopping intr\n",
+		    sc->sc_dev.dv_xname, why));
+		if (sc->sc_pil_intr_enable) {
+			(void)pccbbintr_function(sc);
+		}
+		sc->sc_pil_intr_enable = 0;
+
+		/* ToDo: deactivate or suspend child devices */
+
+	}
+
 	if (why == PWR_RESUME) {
 		/* CSC Interrupt: Card detect interrupt on */
 		reg = bus_space_read_4(base_memt, base_memh, CB_SOCKET_MASK);
@@ -3089,5 +3157,11 @@ pccbb_powerhook(why, arg)
 		 * insert).  how can we detect such situation?
 		 */
 		(void)pccbbintr(sc);
+
+		sc->sc_pil_intr_enable = 1;
+		DPRINTF(("%s: power: RESUME enabling intr\n",
+		    sc->sc_dev.dv_xname));
+
+		/* ToDo: activate or wakeup child devices */
 	}
 }
