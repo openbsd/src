@@ -31,6 +31,13 @@
 .Sh SYNOPSIS
 .Fd #include <sys/vnode.h>
 .Ft int
+.Fo VOP_CREATE
+.Fa "struct vnode *dvp"
+.Fa "struct vnode **vpp"
+.Fa "struct componentname *cnp"
+.Fa "struct vattr *vap"
+.Fc
+.Ft int
 .Fo VOP_FSYNC
 .Fa "struct vnode *vp"
 .Fa "struct ucred *cred"
@@ -52,6 +59,12 @@
 .Fa "struct vnode *"
 .Fc
 .Ft int
+.Fo VOP_LINK
+.Fa "struct vnode *dvp"
+.Fa "struct vnode *vp"
+.Fa "struct componentname *cnp"
+.Fc
+.Ft int
 .Fo VOP_LOCK
 .Fa "struct vnode *vp"
 .Fa "int flags"
@@ -69,6 +82,12 @@
 .Fa "struct vnode **vpp"
 .Fa "struct componentname *cnp"
 .Fa "struct vattr *vap"
+.Fc
+.Ft int
+.Fo VOP_READLINK
+.Fa "struct vnode *vp"
+.Fa "struct uio *uio"
+.Fa "struct ucred *cred"
 .Fc
 .Ft int
 .Fo VOP_RECLAIM
@@ -102,6 +121,14 @@
 .Fa "struct proc *p"
 .Fc
 .Ft int
+.Fo VOP_SYMLINK
+.Fa "struct vnode *dvp"
+.Fa "struct vnode *vpp"
+.Fa "struct componentname *cnp"
+.Fa "struct vattr *vap"
+.Fa "char *target"
+.Fc
+.Ft int
 .Fo VOP_UNLOCK
 .Fa "struct vnode *vp"
 .Fa "int flags"
@@ -116,7 +143,7 @@ The VOP function called passes the arguments to the correct file system
 specific function.
 Not all file systems implement all operations, in which case a generic
 method will be used.
-These functions exist to provide an abstract method to invoke vnode 
+These functions exist to provide an abstract method to invoke vnode
 operations without needing to know anything about the underlying file system.
 Many syscalls map directly to a specific VOP function.
 .Pp
@@ -131,6 +158,20 @@ functions is described in the file
 Most VOP calls take a struct proc *p argument.
 This should be the current process.
 VOP calls are not safe to call in an interrupt context.
+.Pp
+The following sections comment on the VOP functions from the consumer's
+perspective.
+Some notes for file system implementors follow.
+.Sh VOP_CREATE
+.Nm VOP_CREATE
+creates a new directory entry for a regular file in the directory
+.Ar dvp
+and returns a locked, referenced vnode in
+.Ar vpp .
+The file name is in
+.Ar cnp
+and its permissions will be
+.Ar vap .
 .Sh VOP_FSYNC
 .Nm VOP_FSYNC
 flushes any dirty buffers associated with
@@ -164,6 +205,16 @@ in
 if it is non-NULL.
 .Ar cred
 should be a pointer to the credentials used to access the file.
+.Sh VOP_LINK
+.Nm VOP_LINK
+increases the link count for the vnode
+.Ar vp .
+A new entry with name
+.Ar cnp
+should be added to the directory
+.Ar dvp .
+.Ar dvp
+is locked on entry and unlocked on exit.
 .Sh VOP_LOOKUP
 .Nm VOP_LOOKUP
 finds the file corresponding to the name
@@ -194,6 +245,14 @@ On success, the new vnode is returned locked in
 .Ar vpp .
 .Ar dvp
 must be locked on entry and is unlocked on exit.
+.Sh VOP_READLINK
+.Nm VOP_READLINK
+reads a symbolic link and returns the target's name in
+.Ar uio .
+VOP_READLINK should only be called on symlinks,
+and
+.Ar vp
+is locked on entry and exit.
 .Sh VOP_RECLAIM
 .Nm VOP_RECLAIM
 is used by
@@ -235,6 +294,22 @@ will be removed from the directory
 Both are locked on entry and unlocked on exit.
 The name of the directory for removal is additionally contained in
 .Ar cnp .
+.Sh VOP_SYMLINK
+.Nm VOP_SYMLINK
+creates a symbolic link with name
+.Ar cnp
+in the directory
+.Ar dvp
+with mode
+.Ar vap .
+The link will point to
+.Ar target
+and a vnode for it is returned in
+.Ar vpp .
+The directory vnode is locked on entry and unlocked on exit.
+Note that unlike most VOP calls returning a vnode, VOP_SYMLINK
+does not lock or reference
+.Ar vpp .
 .Sh VOP_UNLOCK
 .Nm VOP_LOCK
 is used internally by
@@ -252,6 +327,31 @@ is locked and 0 if not.
 It should be used cautiously, as not all file systems implement locks
 effectively.
 Note the asymmetry between vn_lock and VOP_UNLOCK.
+.Sh IMPLEMENTATION NOTES
+The
+.Nm VOP
+functions are mostly stubs which redirect their arguments to the
+appropriate function for each file system.
+In order to allow for layered file systems and generic bypass methods,
+all vnode operation implementing functions take only a single void *
+pointer as an argument.
+This points to a structure containing the real arguments.
+Additionally, this structure contains a struct vnodeop_desc *,
+or vnodeop description.
+The description is typically used by the abstract VOP code, but can
+be useful to the lower implementation as well.
+Every file system defines an array of struct vnodeopv_entry_desc
+that contains one entry for each implemented vnode op.
+Unimplemented vnode operations match the default description,
+.Em vop_default_desc .
+Most non-layer file systems should assign the default error handler,
+.Em vn_default_error ,
+to the generic description.
+.Pp
+All lower level implementations should conform to the interfaces described
+above.
+The rules for locking and referencing vnodes are enforced by each
+file system implementation, not the VOP stubs.
 .Sh RETURN VALUES
 The
 .Nm
