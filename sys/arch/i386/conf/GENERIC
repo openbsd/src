@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.135 1999/10/28 21:53:55 aaron Exp $
+#	$OpenBSD: GENERIC,v 1.136 1999/11/03 02:45:08 aaron Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -238,6 +238,7 @@ wb*	at pci? dev ? function ?		# Winbond W89C840F ethernet
 ti*	at pci? dev ? function ?		# Alteon Tigon 1Gb ethernet
 ax*	at pci? dev ? function ?		# ASIX AX88140A ethernet
 al*	at pci?	dev ? function ?		# ADMtek AL981/AN985 ethernet
+sf*	at pci? dev ? function ?		# Adaptec AIC-6915 ethernet
 skc*	at pci? dev ? function ?		# SysKonnect GEnesis 984x
 sk*	at skc?					#  each port of above
 
@@ -249,7 +250,7 @@ icsphy*	at mii? phy ?				# ICS 1890 PHYs
 #lxtphy*	at mii? phy ?			# Level1 LXT970 PHYs
 nsphy*	at mii? phy ?				# NS and compatible PHYs
 #qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
-#sqphy*	at mii? phy ?				# Seeq 8x220 PHYs
+sqphy*	at mii? phy ?				# Seeq 8x220 PHYs
 rlphy* at mii? phy ?				# RealTek 8139 internal PHYs
 #mtdphy*	at mii? phy ?			# Myson MTD972 PHYs
 ukphy*	at mii? phy ?				# "unknown" PHYs
