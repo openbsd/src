@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.9 2002/03/15 21:44:18 mickey Exp $	*/
+/*	$OpenBSD: pte.h,v 1.10 2002/04/01 16:23:01 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1990,1993,1994 The University of Utah and
@@ -55,7 +55,7 @@ typedef	u_int32_t	pt_entry_t;
 #define TLB_UNCACHABLE	0x00080000
 #define TLB_PID_MASK	0x0000fffe
 
-#define	TLB_BITS	"\020\024U\031W\032X\033N\034B\035D\036T\037A\040R"
+#define	TLB_BITS	"\020\024U\031W\032X\033N\034B\035D\036R\037H"
 
 /* protection for a gateway page */
 #define TLB_GATE_PROT	0x04c00000
