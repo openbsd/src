@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.88 2003/10/20 17:53:32 david Exp $
+#	$OpenBSD: netstart,v 1.89 2003/12/03 13:28:36 markus Exp $
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -27,7 +27,11 @@ ifstart() {
 
 	ifconfig $if > /dev/null 2>&1
 	if [ "$?" != "0" ]; then
-		return
+		# Try to create interface if it does not exist
+		ifconfig $if create > /dev/null 2>&1
+		if [ "$?" != "0" ]; then
+			return
+		fi
 	fi
 
 	# Now parse the hostname.* file

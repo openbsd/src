@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.83 2003/11/09 06:04:17 mcbride Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.84 2003/12/03 13:28:36 markus Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.83 2003/11/09 06:04:17 mcbride Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.84 2003/12/03 13:28:36 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -192,6 +192,8 @@ void	setia6eui64(const char *, int);
 void	checkatrange(struct sockaddr_at *);
 void	setmedia(const char *, int);
 void	setmediaopt(const char *, int);
+void	clone_create(const char *, int);
+void	clone_destroy(const char *, int);
 void	unsetmediaopt(const char *, int);
 void	setmediainst(const char *, int);
 void	setvlantag(const char *, int);
@@ -295,6 +297,11 @@ const struct	cmd {
 	{ "giftunnel",  NEXTARG2,	0,		NULL, settunnel } ,
 	{ "tunnel",	NEXTARG2,	0,		NULL, settunnel } ,
 	{ "deletetunnel",  0,   	0,		deletetunnel } ,
+#if 0
+	/* XXX `create' special-cased below */
+	{ "create",	0,		0,		clone_create } ,
+#endif
+	{ "destroy",	0,		0,		clone_destroy } ,
 	{ "link0",	IFF_LINK0,	0,		setifflags } ,
 	{ "-link0",	-IFF_LINK0,	0,		setifflags } ,
 	{ "link1",	IFF_LINK1,	0,		setifflags } ,
@@ -448,6 +455,16 @@ main(int argc, char *argv[])
 	in6_addreq.ifra_lifetime.ia6t_pltime = ND6_INFINITE_LIFETIME;
 	in6_addreq.ifra_lifetime.ia6t_vltime = ND6_INFINITE_LIFETIME;
 #endif
+	/*
+	 * NOTE:  We must special-case the `create' command right
+	 * here as we would otherwise fail in getinfo().
+	 */
+	if (argc > 0 && strcmp(argv[0], "create") == 0) {
+		clone_create(argv[0], 0);
+		argc--, argv++;
+		if (argc == 0)
+			exit(0);
+	}
 
 	if (getinfo(&ifr) < 0)
 		exit(1);
@@ -754,6 +771,33 @@ printif(struct ifreq *ifrm, int ifaliases)
 		exit(1);
 	}
 #endif
+}
+
+/*ARGSUSED*/
+void
+clone_create(addr, param)
+	const char *addr;
+	int param;
+{
+
+	/* We're called early... */
+	getsock(AF_INET);
+
+	(void) strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	if (ioctl(s, SIOCIFCREATE, &ifr) == -1)
+		err(1, "SIOCIFCREATE");
+}
+
+/*ARGSUSED*/
+void
+clone_destroy(addr, param)
+	const char *addr;
+	int param;
+{
+
+	(void) strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	if (ioctl(s, SIOCIFDESTROY, &ifr) == -1)
+		err(1, "SIOCIFDESTROY");
 }
 
 #define RIDADDR 0
@@ -2501,7 +2545,9 @@ usage(void)
 		"\t[ -802.2 | -802.3 | -802.2tr | -snap | -EtherII ]\n"
 		"\t[ link0 | -link0 ] [ link1 | -link1 ] [ link2 | -link2 ]\n"
 		"       ifconfig [-a | -A | -am | -Am] [ af ]\n"
-		"       ifconfig -m interface [af]\n");
+		"       ifconfig -m interface [af]\n"
+		"       ifconfig interface create\n"
+		"       ifconfig interface destroy\n");
 	exit(1);
 }
 
