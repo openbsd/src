@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.2 2005/03/30 08:06:03 dlg Exp $       */
+/* $OpenBSD: bioctl.c,v 1.3 2005/04/04 17:37:17 marco Exp $       */
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
  * All rights reserved.
@@ -26,51 +26,21 @@
  *
  */
 
-#include <sys/ioctl.h>
-#include <sys/param.h>
-#include <sys/queue.h>
-#include <scsi/scsi_disk.h>
-
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
+#include <sys/ioctl.h>
+#include <sys/param.h>
+#include <sys/queue.h>
+#include <scsi/scsi_disk.h>
 #include <dev/biovar.h>
 
-#define READCAP 0x01
-#define ENUM    0x02
-#define TUR     0x04
-#define INQUIRY 0x08
+#include "bioctl.h"
 
-struct read_cap {
-	u_int32_t		maxlba;
-	u_int32_t		bsize;
-};
-
-struct dev {
-	SLIST_ENTRY(dev)	next;
-	u_int16_t		id;
-	u_int8_t		channel;
-	u_int8_t		target;
-	u_int64_t		capacity;
-};
-
-void		usage(void);
-void		cleanup(void);
-u_int64_t	parse_passthru(char *);
-void		parse_devlist(char *);
-void		print_sense(u_int8_t *, u_int8_t);
-
-int		bio_get_capabilities(bioc_capabilities *);
-void		bio_alarm(char *);
-void		bio_ping(void);
-void		bio_startstop(char *, u_int8_t, u_int8_t);
-void		bio_status(void);
-u_int64_t	bio_pt_readcap(u_int8_t, u_int8_t);
-u_int32_t	bio_pt_inquire(u_int8_t, u_int8_t, u_int8_t *);
-u_int32_t	bio_pt_tur(u_int8_t, u_int8_t);
-void		bio_pt_enum(void);
+/* globals */
+const char *bio_device = "/dev/bio";
 
 SLIST_HEAD(dev_list, dev);
 
@@ -79,14 +49,11 @@ struct dev_list devices = SLIST_HEAD_INITIALIZER(dev);
 /* User provided device list*/
 struct dev_list ul = SLIST_HEAD_INITIALIZER(dev);
 
-char *bio_device = "/dev/bio";
-
 int devh = -1;
 int debug = 0;
 
 struct bio_locate bl;
 
-#define PARSELIST (0x8000000000000000llu)
 int
 main(int argc, char *argv[])
 {
