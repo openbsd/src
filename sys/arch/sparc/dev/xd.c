@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.16 2000/11/10 15:33:07 provos Exp $	*/
+/*	$OpenBSD: xd.c,v 1.17 2001/02/22 22:11:46 art Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -1231,7 +1231,7 @@ xdc_rqtopb(iorq, iopb, cmd, subfun)
 			ctrl->param_c = XDPC_OVS | XDPC_COP | XDPC_ASR |
 					XDPC_RBC | XDPC_ECC2;
 			ctrl->throttle = XDC_THROTTLE;
-#ifdef sparc
+#ifdef __sparc__
 			if (CPU_ISSUN4 && cpuinfo.cpu_type == CPUTYP_4_300)
 				ctrl->delay = XDC_DELAY_4_300;
 			else
