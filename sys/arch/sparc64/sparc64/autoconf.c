@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.10 2001/09/19 21:44:35 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.11 2001/09/20 00:01:34 jason Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -151,17 +151,9 @@ struct intrmap intrmap[] = {
 	{ NULL,		0 }
 };
 
-/*
- * The mountroot_hook is provided as a mechanism for devices to perform
- * a special function if they're the root device, such as the floppy
- * drive ejecting the current disk and prompting for a filesystem floppy.
- */
-struct mountroot_hook {
-	LIST_ENTRY(mountroot_hook) mr_link;
-	struct	device *mr_device;
-	void	(*mr_func) __P((struct device *));
-};
-LIST_HEAD(, mountroot_hook) mrh_list;
+#ifdef RAMDISK_HOOKS
+static struct device fakerdrootdev = { DV_DISK, {}, NULL, 0, "rd0", NULL };
+#endif
 
 #ifdef DEBUG
 #define ACDB_BOOTDEV	0x1
@@ -505,9 +497,6 @@ cpu_configure()
 	extern struct user *proc0paddr;	/* XXX see below */
 #endif
 
-	/* Initialize the mountroot_hook list. */
-	LIST_INIT(&mrh_list);
-
 	/* build the bootpath */
 	bootpath_build();
 
@@ -584,7 +573,6 @@ setroot()
 	dev_t nrootdev, nswapdev = NODEV;
 	char buf[128];
 	dev_t temp;
-	struct mountroot_hook *mrhp;
 	struct device *bootdv;
 	struct bootpath *bp;
 #if defined(NFSCLIENT)
@@ -592,7 +580,11 @@ setroot()
 #endif
 
 	bp = nbootpath == 0 ? NULL : &bootpath[nbootpath-1];
+#ifdef RAMDISK_HOOKS
+	bootdv = &fakerdrootdev;
+#else
 	bootdv = (bp == NULL) ? NULL : bp->dev;
+#endif
 
 	/*
 	 * If `swap generic' and we couldn't determine boot device,
@@ -711,7 +703,7 @@ gotswap:
 		majdev = major(rootdev);
 		unit = DISKUNIT(rootdev);
 		part = DISKPART(rootdev);
-		goto gotroot;
+		return;
 	}
 
 	switch (bootdv->dv_class) {
@@ -755,20 +747,6 @@ gotswap:
 		if (temp == dumpdev)
 			dumpdev = swdevt[0].sw_dev;
 	}
-
-gotroot:
-	/*
-	 * Find mountroot hook and execute.
-	 */
-	for (mrhp = mrh_list.lh_first; mrhp != NULL;
-	     mrhp = mrhp->mr_link.le_next)
-		if (mrhp->mr_device == bootdv) {
-			if (findblkmajor(mrhp->mr_device) == major(rootdev)) 
-				(*mrhp->mr_func)(bootdv);
-			else
-				(*mrhp->mr_func)(NULL);
-			break;
-		}
 }
 
 struct nam2blk {
@@ -804,6 +782,9 @@ getdisk(str, len, defpart, devp)
 
 	if ((dv = parsedisk(str, len, defpart, devp)) == NULL) {
 		printf("use one of:");
+#ifdef RAMDISK_HOOKS
+		printf(" %s[a-p]", fakerdrootdev.dv_xname);
+#endif
 		for (dv = alldevs.tqh_first; dv != NULL;
 		    dv = dv->dv_list.tqe_next) {        
 			if (dv->dv_class == DV_DISK)
@@ -838,9 +819,19 @@ parsedisk(str, len, defpart, devp)
 	} else
 		part = defpart;
 
+#ifdef RAMDISK_HOOKS
+	if (strcmp(str, fakerdrootdev.dv_xname) == 0) {
+		dv = &fakerdrootdev;
+		goto gotdisk;
+	}
+#endif
+
 	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
 		if (dv->dv_class == DV_DISK &&
 		    strcmp(str, dv->dv_xname) == 0) {
+#ifdef RAMDISK_HOOKS
+gotdisk:
+#endif
 			majdev = findblkmajor(dv);
 			unit = dv->dv_unit;
 			if (majdev < 0)
