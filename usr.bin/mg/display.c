@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.5 2001/05/23 22:20:35 art Exp $	*/
+/*	$OpenBSD: display.c,v 1.6 2001/05/24 03:05:22 mickey Exp $	*/
 
 /*
  * The functions in this file handle redisplay. The
@@ -40,11 +40,11 @@
  * used if "ncol" isn't the same as "NCOL".
  */
 typedef struct {
-	short           v_hash;		/* Hash code, for compares.	 */
-	short           v_flag;		/* Flag word.			 */
-	short           v_color;	/* Color of the line.		 */
-	XSHORT          v_cost;		/* Cost of display.		 */
-	char            v_text[NCOL];	/* The actual characters.	 */
+	short	v_hash;		/* Hash code, for compares.	 */
+	short	v_flag;		/* Flag word.			 */
+	short	v_color;	/* Color of the line.		 */
+	XSHORT	v_cost;		/* Cost of display.		 */
+	char	v_text[NCOL];	/* The actual characters.	 */
 } VIDEO;
 
 #define VFCHG	0x0001			/* Changed.			 */
@@ -60,41 +60,41 @@ typedef struct {
  * this makes the code worse on the VAX.
  */
 typedef struct {
-	XCHAR           s_itrace;	/* "i" index for track back.	 */
-	XCHAR           s_jtrace;	/* "j" index for trace back.	 */
-	XSHORT          s_cost;		/* Display cost.		 */
+	XCHAR	s_itrace;	/* "i" index for track back.	 */
+	XCHAR	s_jtrace;	/* "j" index for trace back.	 */
+	XSHORT	s_cost;		/* Display cost.		 */
 } SCORE;
 
 
-void     vtmove         __P((int, int));
-void     vtputc         __P((int));
-void     vtpute         __P((int));
-int      vtputs         __P((char *));
-void     vteeol         __P((void));
-void     updext         __P((int, int));
-void     modeline       __P((MGWIN *));
-void     setscores      __P((int, int));
-void     traceback      __P((int, int, int, int));
-void     ucopy          __P((VIDEO *, VIDEO *));
-void     uline          __P((int, VIDEO *, VIDEO *));
-void     hash           __P((VIDEO *));
+void	vtmove __P((int, int));
+void	vtputc __P((int));
+void	vtpute __P((int));
+int	vtputs __P((char *));
+void	vteeol __P((void));
+void	updext __P((int, int));
+void	modeline __P((MGWIN *));
+void	setscores __P((int, int));
+void	traceback __P((int, int, int, int));
+void	ucopy __P((VIDEO *, VIDEO *));
+void	uline __P((int, VIDEO *, VIDEO *));
+void	hash __P((VIDEO *));
 
 
-int             sgarbf = TRUE;		/* TRUE if screen is garbage.	 */
-int             vtrow = 0;		/* Virtual cursor row.		 */
-int             vtcol = 0;		/* Virtual cursor column.	 */
-int             tthue = CNONE;		/* Current color.		 */
-int             ttrow = HUGE;		/* Physical cursor row.		 */
-int             ttcol = HUGE;		/* Physical cursor column.	 */
-int             tttop = HUGE;		/* Top of scroll region.	 */
-int             ttbot = HUGE;		/* Bottom of scroll region.	 */
-int             lbound = 0;		/* leftmost bound of the current line */
+int	sgarbf = TRUE;		/* TRUE if screen is garbage.	 */
+int	vtrow = 0;		/* Virtual cursor row.		 */
+int	vtcol = 0;		/* Virtual cursor column.	 */
+int	tthue = CNONE;		/* Current color.		 */
+int	ttrow = HUGE;		/* Physical cursor row.		 */
+int	ttcol = HUGE;		/* Physical cursor column.	 */
+int	tttop = HUGE;		/* Top of scroll region.	 */
+int	ttbot = HUGE;		/* Bottom of scroll region.	 */
+int	lbound = 0;		/* leftmost bound of the current line */
 					/* being displayed		 */
 
-VIDEO          *vscreen[NROW - 1];	/* Edge vector, virtual.	 */
-VIDEO          *pscreen[NROW - 1];	/* Edge vector, physical.	 */
-VIDEO           video[2 * (NROW - 1)];	/* Actual screen data.		 */
-VIDEO           blanks;			/* Blank line image.		 */
+VIDEO	*vscreen[NROW - 1];	/* Edge vector, virtual.	 */
+VIDEO	*pscreen[NROW - 1];	/* Edge vector, physical.	 */
+VIDEO	video[2 * (NROW - 1)];	/* Actual screen data.		 */
+VIDEO	blanks;			/* Blank line image.		 */
 
 #ifdef	GOSLING
 /*
@@ -121,8 +121,8 @@ SCORE score[NROW * NROW];
 void
 vtinit()
 {
-	VIDEO *vp;
-	int    i;
+	VIDEO	*vp;
+	int	i;
 
 	ttopen();
 	ttinit();
@@ -188,9 +188,9 @@ vtmove(row, col)
  */
 void
 vtputc(c)
-	int    c;
+	int	c;
 {
-	VIDEO *vp;
+	VIDEO	*vp;
 
 	vp = vscreen[vtrow];
 	if (vtcol >= ncol)
@@ -217,7 +217,7 @@ vtputc(c)
  */
 void
 vtpute(c)
-	int    c;
+	int	c;
 {
 	VIDEO *vp;
 
@@ -271,18 +271,17 @@ vteeol()
 void
 update()
 {
-	LINE  *lp;
-	MGWIN *wp;
-	VIDEO *vp1;
-	VIDEO *vp2;
-	int    i;
-	int    j;
-	int    c;
-	int    hflag;
-	int    currow;
-	int    curcol;
-	int    offs;
-	int    size;
+	LINE	*lp;
+	MGWIN	*wp;
+	VIDEO	*vp1;
+	VIDEO	*vp2;
+	int	i, j;
+	int	c;
+	int	hflag;
+	int	currow;
+	int	curcol;
+	int	offs;
+	int	size;
 
 	if (typeahead())
 		return;
@@ -521,10 +520,10 @@ ucopy(vvp, pvp)
  */
 void
 updext(currow, curcol)
-	int    currow, curcol;
+	int	currow, curcol;
 {
-	LINE  *lp;			/* pointer to current line */
-	int    j;			/* index into line */
+	LINE	*lp;			/* pointer to current line */
+	int	j;			/* index into line */
 
 	/*
 	 * calculate what column the left bound should be
@@ -554,9 +553,9 @@ updext(currow, curcol)
  */
 void
 uline(row, vvp, pvp)
-	int		row;
-	VIDEO          *vvp;
-	VIDEO          *pvp;
+	int	row;
+	VIDEO	*vvp;
+	VIDEO	*pvp;
 {
 #ifdef	MEMMAP
 	putline(row + 1, 1, &vvp->v_text[0]);
@@ -566,7 +565,7 @@ uline(row, vvp, pvp)
 	char  *cp3;
 	char  *cp4;
 	char  *cp5;
-	int    nbflag;
+	int	nbflag;
 
 	if (vvp->v_color != pvp->v_color) {	/* Wrong color, do a	 */
 		ttmove(row, 0);			/* full redraw.		 */
@@ -653,9 +652,9 @@ void
 modeline(wp)
 	MGWIN  *wp;
 {
-	int     n;
+	int	n;
 	BUFFER *bp;
-	int     mode;
+	int	mode;
 
 	n = wp->w_toprow + wp->w_ntrows;	/* Location.		 */
 	vscreen[n]->v_color = CMODE;		/* Mode line color.	 */
@@ -703,7 +702,7 @@ int
 vtputs(s)
 	char  *s;
 {
-	int    n = 0;
+	int	n = 0;
 
 	while (*s != '\0') {
 		vtputc(*s++);
@@ -725,8 +724,8 @@ void
 hash(vp)
 	VIDEO *vp;
 {
-	int    i;
-	int    n;
+	int	i;
+	int	n;
 	char  *s;
 
 	if ((vp->v_flag & VFHBAD) != 0) {	/* Hash bad.		 */
@@ -776,14 +775,13 @@ setscores(offs, size)
 	int offs;
 	int size;
 {
-	SCORE *sp;
-	SCORE *sp1;
-	int    tempcost;
-	int    bestcost;
-	int    j;
-	int    i;
-	VIDEO **vp, **pp;
-	VIDEO **vbase, **pbase;
+	SCORE	*sp;
+	SCORE	*sp1;
+	int	tempcost;
+	int	bestcost;
+	int	j, i;
+	VIDEO	**vp, **pp;
+	VIDEO	**vbase, **pbase;
 
 	vbase = &vscreen[offs - 1];	/* By hand CSE's.	 */
 	pbase = &pscreen[offs - 1];
@@ -863,17 +861,17 @@ setscores(offs, size)
  */
 void
 traceback(offs, size, i, j)
-	int    offs;
-	int    size;
-	int    i;
-	int    j;
+	int	offs;
+	int	size;
+	int	i;
+	int	j;
 {
-	int    itrace;
-	int    jtrace;
-	int    k;
-	int    ninsl;
-	int    ndraw;
-	int    ndell;
+	int	itrace;
+	int	jtrace;
+	int	k;
+	int	ninsl;
+	int	ndraw;
+	int	ndell;
 
 	if (i == 0 && j == 0)	/* End of update.	 */
 		return;

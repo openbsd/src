@@ -1,4 +1,4 @@
-/*	$OpenBSD: re_search.c,v 1.8 2001/05/23 22:20:36 art Exp $	*/
+/*	$OpenBSD: re_search.c,v 1.9 2001/05/24 03:05:25 mickey Exp $	*/
 
 /*
  *	regular expression search commands for Mg
@@ -6,7 +6,7 @@
  * This file contains functions to implement several of gnuemacs's regular
  * expression functions for Mg.  Several of the routines below are just minor
  * re-arrangements of Mg's non-regular expression search functions.  Some of
- * them are similar in structure to the original MicroEMACS, others are 
+ * them are similar in structure to the original MicroEMACS, others are
  * modifications of Rich Ellison's code.  Peter Newton re-wrote about half of
  * them from scratch.
  */
@@ -41,8 +41,8 @@ static int	 countmatches	__P((int));
 
 /*
  * Search forward.
- * Get a search string from the user and search for it starting at ".".  If 
- * found, move "." to just after the matched characters.  display does all 
+ * Get a search string from the user and search for it starting at ".".  If
+ * found, move "." to just after the matched characters.  display does all
  * the hard stuff.  If not found, it just prints a message.
  */
 /* ARGSUSED */
@@ -87,8 +87,8 @@ re_backsearch(f, n)
 }
 
 /*
- * Search again, using the same search string and direction as the last search 
- * command.  The direction has been saved in "srch_lastdir", so you know which 
+ * Search again, using the same search string and direction as the last search
+ * command.  The direction has been saved in "srch_lastdir", so you know which
  * way to go.
  *
  * XXX: This code has problems -- some incompatibility(?) with extend.c causes
@@ -110,7 +110,7 @@ re_searchagain(f, n)
 		}
 		return (TRUE);
 	}
-	if (re_srch_lastdir == SRCH_BACK) 
+	if (re_srch_lastdir == SRCH_BACK)
 		if (re_backsrch() == FALSE) {
 			ewprintf("Search failed: \"%s\"", re_pat);
 			return (FALSE);
@@ -143,7 +143,7 @@ re_queryrepl(f, n)
 
 	if ((s = re_readpattern("RE Query replace")) != TRUE)
 		return (s);
-	if ((s = 
+	if ((s =
 	    ereply("Query replace %s with: ", news, NPAT, re_pat)) == ABORT)
 		return (s);
 	if (s == FALSE)
@@ -216,9 +216,9 @@ stopsearch:
  */
 static int
 re_doreplace(plen, st, f)
-	RSIZE  plen;	/* length to remove	*/
-	char  *st;	/* replacement string	*/
-	int    f;	/* case hack disable	*/
+	RSIZE	plen;	/* length to remove	*/
+	char	*st;	/* replacement string	*/
+	int	f;	/* case hack disable	*/
 {
 	int	 j, k, s, more, num, state;
 	LINE	*clp;
@@ -273,7 +273,7 @@ re_doreplace(plen, st, f)
 				k = re_match[num].rm_eo - re_match[num].rm_so;
 				if (j + k >= REPLEN)
 					return (FALSE);
-				bcopy(&(clp->l_text[re_match[num].rm_so]), 
+				bcopy(&(clp->l_text[re_match[num].rm_so]),
 				    &repstr[j], k);
 				j += k;
 				if (*st == '\0')
@@ -302,8 +302,8 @@ re_doreplace(plen, st, f)
 
 
 /*
- * This routine does the real work of a forward search.  The pattern is 
- * sitting in the external variable "pat".  If found, dot is updated, the 
+ * This routine does the real work of a forward search.  The pattern is
+ * sitting in the external variable "pat".  If found, dot is updated, the
  * window system is notified of the change, and TRUE is returned.  If the
  * string isn't found, FALSE is returned.
  */
@@ -332,7 +332,7 @@ re_forwsrch()
 	while (clp != (curbp->b_linep)) {
 		re_match[0].rm_so = tbo;
 		re_match[0].rm_eo = llength(clp);
-		error = regexec(&re_buff, ltext(clp), RE_NMATCH, re_match, 
+		error = regexec(&re_buff, ltext(clp), RE_NMATCH, re_match,
 		    REG_STARTEND);
 		if (error != 0) {
 			clp = lforw(clp);
@@ -350,8 +350,8 @@ re_forwsrch()
 
 /*
  * This routine does the real work of a backward search.  The pattern is sitting
- * in the external variable "re_pat".  If found, dot is updated, the window 
- * system is notified of the change, and TRUE is returned.  If the string isn't 
+ * in the external variable "re_pat".  If found, dot is updated, the window
+ * system is notified of the change, and TRUE is returned.  If the string isn't
  * found, FALSE is returned.
  */
 static int
@@ -486,7 +486,7 @@ delmatchlines(f, n)
 {
 	int	s;
 
-	if ((s = re_readpattern("Flush lines (containing match for regexp)")) 
+	if ((s = re_readpattern("Flush lines (containing match for regexp)"))
 	    != TRUE)
 		return (s);
 
@@ -503,7 +503,7 @@ delnonmatchlines(f, n)
 {
 	int	s;
 
-	if ((s = re_readpattern("Keep lines (containing match for regexp)")) 
+	if ((s = re_readpattern("Keep lines (containing match for regexp)"))
 	    != TRUE)
 		return (s);
 
@@ -511,8 +511,8 @@ delnonmatchlines(f, n)
 	return (s);
 }
 
-/* 
- * This function does the work of deleting matching lines 
+/*
+ * This function does the work of deleting matching lines
  */
 static int
 killmatches(cond)
@@ -531,7 +531,7 @@ killmatches(cond)
 		/* see if line matches */
 		re_match[0].rm_so = 0;
 		re_match[0].rm_eo = llength(clp);
-		error = regexec(&re_buff, ltext(clp), RE_NMATCH, re_match, 
+		error = regexec(&re_buff, ltext(clp), RE_NMATCH, re_match,
 		    REG_STARTEND);
 
 		/* Delete line when appropriate */
@@ -607,7 +607,7 @@ countmatches(cond)
 		/* see if line matches */
 		re_match[0].rm_so = 0;
 		re_match[0].rm_eo = llength(clp);
-		error = regexec(&re_buff, ltext(clp), RE_NMATCH, re_match, 
+		error = regexec(&re_buff, ltext(clp), RE_NMATCH, re_match,
 		    REG_STARTEND);
 
 		/* Count line when appropriate */

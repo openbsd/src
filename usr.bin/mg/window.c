@@ -1,4 +1,4 @@
-/*	$OpenBSD: window.c,v 1.6 2001/05/23 22:36:15 art Exp $	*/
+/*	$OpenBSD: window.c,v 1.7 2001/05/24 03:05:27 mickey Exp $	*/
 
 /*
  *		Window handling.
@@ -7,11 +7,11 @@
 #include "def.h"
 
 /*
- * Reposition dot in the current window to line "n".  If the argument is 
- * positive, it is that line.  If it is negative it is that line from the 
- * bottom.  If it is 0 the window is centered (this is what the standard 
- * redisplay code does).  If GOSREC is undefined, default is 0, so it acts 
- * like GNU.  If GOSREC is defined, with no argument it defaults to 1 and 
+ * Reposition dot in the current window to line "n".  If the argument is
+ * positive, it is that line.  If it is negative it is that line from the
+ * bottom.  If it is 0 the window is centered (this is what the standard
+ * redisplay code does).  If GOSREC is undefined, default is 0, so it acts
+ * like GNU.  If GOSREC is defined, with no argument it defaults to 1 and
  * works like in Gosling.
  */
 /* ARGSUSED */
@@ -30,14 +30,14 @@ reposition(f, n)
 }
 
 /*
- * Refresh the display.  A call is made to the "ttresize" entry in the 
- * terminal handler, which tries to reset "nrow" and "ncol".  They will, 
+ * Refresh the display.  A call is made to the "ttresize" entry in the
+ * terminal handler, which tries to reset "nrow" and "ncol".  They will,
  * however, never be set outside of the NROW or NCOL range.  If the display
- * changed size, arrange that everything is redone, then call "update" to 
- * fix the display.  We do this so the new size can be displayed.  In the 
- * normal case the call to "update" in "main.c" refreshes the screen, and 
- * all of the windows need not be recomputed.  Note that when you get to the 
- * "display unusable" message, the screen will be messed up. If you make the 
+ * changed size, arrange that everything is redone, then call "update" to
+ * fix the display.  We do this so the new size can be displayed.  In the
+ * normal case the call to "update" in "main.c" refreshes the screen, and
+ * all of the windows need not be recomputed.  Note that when you get to the
+ * "display unusable" message, the screen will be messed up. If you make the
  * window bigger again, and send another command, everything will get fixed!
  */
 /* ARGSUSED */
@@ -74,8 +74,8 @@ refresh(f, n)
 }
 
 /*
- * The command to make the next window (next => down the screen) the current 
- * window. There are no real errors, although the command does nothing if 
+ * The command to make the next window (next => down the screen) the current
+ * window. There are no real errors, although the command does nothing if
  * there is only 1 window on the screen.
  */
 /* ARGSUSED */
@@ -97,7 +97,7 @@ nextwind(f, n)
 /* not in Gnu Emacs */
 /*
  * This command makes the previous window (previous => up the screen) the
- * current window. There are no errors, although the command does not do 
+ * current window. There are no errors, although the command does not do
  * a lot if there is only 1 window.
  */
 /* ARGSUSED */
@@ -120,10 +120,10 @@ prevwind(f, n)
 #endif /* GOSEMACS */
 
 /*
- * This command makes the current window the only window on the screen.  Try 
- * to set the framing so that "." does not have to move on the display.  Some 
- * care has to be taken to keep the values of dot and mark in the buffer 
- * structures right if the distruction of a window makes a buffer become 
+ * This command makes the current window the only window on the screen.  Try
+ * to set the framing so that "." does not have to move on the display.  Some
+ * care has to be taken to keep the values of dot and mark in the buffer
+ * structures right if the distruction of a window makes a buffer become
  * undisplayed.
  */
 /* ARGSUSED */
@@ -174,7 +174,7 @@ onlywind(f, n)
 
 /*
  * Split the current window.  A window smaller than 3 lines cannot be split.
- * The only other error that is possible is a "malloc" failure allocating the 
+ * The only other error that is possible is a "malloc" failure allocating the
  * structure for the new window.
  */
 /* ARGSUSED */
@@ -258,9 +258,9 @@ splitwind(f, n)
 }
 
 /*
- * Enlarge the current window.  Find the window that loses space.  Make sure 
- * it is big enough.  If so, hack the window descriptions, and ask redisplay 
- * to do all the hard work.  You don't just set "force reframe" because dot 
+ * Enlarge the current window.  Find the window that loses space.  Make sure
+ * it is big enough.  If so, hack the window descriptions, and ask redisplay
+ * to do all the hard work.  You don't just set "force reframe" because dot
  * would move.
  */
 /* ARGSUSED */
@@ -311,7 +311,7 @@ enlargewind(f, n)
 }
 
 /*
- * Shrink the current window.  Find the window that gains space.  Hack at the 
+ * Shrink the current window.  Find the window that gains space.  Hack at the
  * window descriptions. Ask the redisplay to do all the hard work.
  */
 int
@@ -365,7 +365,7 @@ shrinkwind(f, n)
 }
 
 /*
- * Delete current window. Call shrink-window to do the screen updating, then 
+ * Delete current window. Call shrink-window to do the screen updating, then
  * throw away the window.
  */
 /* ARGSUSED */
@@ -403,7 +403,7 @@ delwind(f, n)
 }
 
 /*
- * Pick a window for a pop-up.  Split the screen if there is only one window. 
+ * Pick a window for a pop-up.  Split the screen if there is only one window.
  * Pick the uppermost window that isn't the current window. An LRU algorithm
  * might be better. Return a pointer, or NULL on error.
  */

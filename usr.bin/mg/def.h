@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.17 2001/05/23 23:29:47 mickey Exp $	*/
+/*	$OpenBSD: def.h,v 1.18 2001/05/24 03:05:20 mickey Exp $	*/
 
 /*
  * This file is the general header file for all parts
@@ -19,7 +19,7 @@
 #endif
 #endif
 
-typedef int     (*PF)();	/* generally useful type */
+typedef int	(*PF)();	/* generally useful type */
 
 /*
  * Table sizes, etc.
@@ -116,14 +116,14 @@ typedef int     (*PF)();	/* generally useful type */
  * list of marks into the line.
  */
 typedef struct LINE {
-	struct LINE    *l_fp;	/* Link to the next line	 */
-	struct LINE    *l_bp;	/* Link to the previous line	 */
-	int             l_size;	/* Allocated size		 */
-	int             l_used;	/* Used size			 */
+	struct LINE	*l_fp;	/* Link to the next line	 */
+	struct LINE	*l_bp;	/* Link to the previous line	 */
+	int		l_size;	/* Allocated size		 */
+	int		l_used;	/* Used size			 */
 #ifndef ZEROARRAY
-	char            l_text[1];	/* A bunch of chars.	 */
+	char		l_text[1];	/* A bunch of chars.	 */
 #else
-	char            l_text[];	/* A bunch of chars.	 */
+	char		l_text[];	/* A bunch of chars.	 */
 #endif
 } LINE;
 
@@ -153,9 +153,9 @@ typedef struct LINE {
  */
 typedef struct LIST {
 	union {
-		struct MGWIN   *l_wp;
-		struct BUFFER  *x_bp;	/* l_bp is used by LINE */
-		struct LIST    *l_nxt;
+		struct MGWIN	*l_wp;
+		struct BUFFER	*x_bp;	/* l_bp is used by LINE */
+		struct LIST	*l_nxt;
 	} l_p;
 	char *l_name;
 } LIST;
@@ -177,17 +177,17 @@ typedef struct LIST {
  * expensive to run for every input character.
  */
 typedef struct MGWIN {
-	LIST            w_list;		/* List header			*/
-	struct BUFFER  *w_bufp;		/* Buffer displayed in window	*/
-	struct LINE    *w_linep;	/* Top line in the window	*/
-	struct LINE    *w_dotp;		/* Line containing "."		*/
-	struct LINE    *w_markp;	/* Line containing "mark"	*/
-	int             w_doto;		/* Byte offset for "."		*/
-	int             w_marko;	/* Byte offset for "mark"	*/
-	char            w_toprow;	/* Origin 0 top row of window	*/
-	char            w_ntrows;	/* # of rows of text in window	*/
-	char            w_force;	/* If NZ, forcing row.		*/
-	char            w_flag;		/* Flags.			*/
+	LIST		w_list;		/* List header			*/
+	struct BUFFER	*w_bufp;	/* Buffer displayed in window	*/
+	struct LINE	*w_linep;	/* Top line in the window	*/
+	struct LINE	*w_dotp;	/* Line containing "."		*/
+	struct LINE	*w_markp;	/* Line containing "mark"	*/
+	int		w_doto;		/* Byte offset for "."		*/
+	int		w_marko;	/* Byte offset for "mark"	*/
+	char		w_toprow;	/* Origin 0 top row of window	*/
+	char		w_ntrows;	/* # of rows of text in window	*/
+	char		w_force;	/* If NZ, forcing row.		*/
+	char		w_flag;		/* Flags.			*/
 } MGWIN;
 #define w_wndp	w_list.l_p.l_wp
 #define w_name	w_list.l_name
@@ -218,19 +218,19 @@ typedef struct MGWIN {
  * a pointer to the header line in "b_linep".
  */
 typedef struct BUFFER {
-	LIST            b_list;		/* buffer list pointer		 */
-	struct BUFFER  *b_altb;		/* Link to alternate buffer	 */
-	struct LINE    *b_dotp;		/* Link to "." LINE structure	 */
-	struct LINE    *b_markp;	/* ditto for mark		 */
-	struct LINE    *b_linep;	/* Link to the header LINE	 */
-	struct MAPS_S  *b_modes[PBMODES]; /* buffer modes		 */
-	int             b_doto;		/* Offset of "." in above LINE	 */
-	int             b_marko;	/* ditto for the "mark"		 */
-	short           b_nmodes;	/* number of non-fundamental modes */
-	char            b_nwnd;		/* Count of windows on buffer	 */
-	char            b_flag;		/* Flags			 */
-	char            b_fname[NFILEN];/* File name			 */
-	struct fileinfo b_fi;		/* File attributes		 */
+	LIST		b_list;		/* buffer list pointer		 */
+	struct BUFFER	*b_altb;	/* Link to alternate buffer	 */
+	struct LINE	*b_dotp;	/* Link to "." LINE structure	 */
+	struct LINE	*b_markp;	/* ditto for mark		 */
+	struct LINE	*b_linep;	/* Link to the header LINE	 */
+	struct MAPS_S	*b_modes[PBMODES]; /* buffer modes		 */
+	int		b_doto;		/* Offset of "." in above LINE	 */
+	int		b_marko;	/* ditto for the "mark"		 */
+	short		b_nmodes;	/* number of non-fundamental modes */
+	char		b_nwnd;		/* Count of windows on buffer	 */
+	char		b_flag;		/* Flags			 */
+	char		b_fname[NFILEN];/* File name			 */
+	struct fileinfo	b_fi;		/* File attributes		 */
 } BUFFER;
 #define b_bufp	b_list.l_p.x_bp
 #define b_bname b_list.l_name
@@ -249,9 +249,9 @@ typedef struct BUFFER {
  * of a region around a little bit easier.
  */
 typedef struct {
-	struct LINE    *r_linep;	/* Origin LINE address.		 */
-	int             r_offset;	/* Origin LINE offset.		 */
-	RSIZE           r_size;		/* Length in characters.	 */
+	struct LINE	*r_linep;	/* Origin LINE address.		 */
+	int		r_offset;	/* Origin LINE offset.		 */
+	RSIZE		r_size;		/* Length in characters.	 */
 } REGION;
 
 /*
@@ -314,19 +314,19 @@ int	 filesave		__P((int, int));
 int	 buffsave		__P((BUFFER *));
 int	 makebkfile		__P((int, int));
 int	 writeout		__P((BUFFER *, char *));
-void     upmodes		__P((BUFFER *));
+void	 upmodes		__P((BUFFER *));
 
 /* line.c X */
-LINE    *lalloc			__P((int));
-LINE    *lallocx		__P((int));
+LINE	*lalloc			__P((int));
+LINE	*lallocx		__P((int));
 void	 lfree			__P((LINE *));
-void     lchange		__P((int));
+void	 lchange		__P((int));
 int	 linsert		__P((int, int));
 int	 lnewline		__P((void));
 int	 ldelete		__P((RSIZE, int));
-int      ldelnewline		__P((void));
+int	 ldelnewline		__P((void));
 int	 lreplace		__P((RSIZE, char *, int));
-void     kdelete		__P((void));
+void	 kdelete		__P((void));
 int	 kinsert		__P((int, int));
 int	 kremove		__P((int));
 
@@ -360,15 +360,15 @@ int	 notmodified		__P((int, int));
 int	 popbuftop		__P((BUFFER *));
 
 /* display.c */
-void     vtinit			__P((void));
-void     vttidy			__P((void));
-void     update			__P((void));
+void	vtinit			__P((void));
+void	vttidy			__P((void));
+void	update			__P((void));
 
 /* echo.c X */
 void	 eerase			__P((void));
 int	 eyorn			__P((char *));
 int	 eyesno			__P((char *));
-void     ewprintf		__P((const char *fmt, ...));
+void	 ewprintf		__P((const char *fmt, ...));
 int	 ereply			__P((const char *, char *, int, ...));
 int	 eread			__P((const char *, char *, int, int, ...));
 int	 getxtra		__P((LIST *, LIST *, int, int));
@@ -380,13 +380,13 @@ int	 ffwopen		__P((char *, BUFFER *));
 int	 ffclose		__P((BUFFER *));
 int	 ffputbuf		__P((BUFFER *));
 int	 ffgetline		__P((char *, int, int *));
-int      fbackupfile		__P((char *));
-char    *adjustname		__P((char *));
-char    *startupfile		__P((char *));
-int      copy			__P((char *, char *));
+int	 fbackupfile		__P((char *));
+char	*adjustname		__P((char *));
+char	*startupfile		__P((char *));
+int	 copy			__P((char *, char *));
 BUFFER  *dired_			__P((char *));
 int	 d_makename		__P((LINE  *, char *));
-LIST    *make_file_list		__P((char *));
+LIST	*make_file_list		__P((char *));
 
 /* keymap.c X */
 LIST	*complete_function_list	__P((char *, int));
@@ -409,10 +409,10 @@ int	 ctrlg			__P((int, int));
 int	 quit			__P((int, int));
 
 /* ttyio.c */
-void     panic			__P((char *));
+void	panic			__P((char *));
 
 /* cinfo.c */
-char    *keyname		__P((char  *, size_t, int));
+char	*keyname		__P((char  *, size_t, int));
 
 /* basic.c */
 int	 gotobol		__P((int, int));

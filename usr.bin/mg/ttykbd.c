@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttykbd.c,v 1.8 2001/05/23 22:12:10 art Exp $	*/
+/*	$OpenBSD: ttykbd.c,v 1.9 2001/05/24 03:05:27 mickey Exp $	*/
 
 /*
  * Name:	MG 2a
@@ -20,7 +20,7 @@
  * extend.c.
  */
 
-char           *keystrings[] = {NULL};
+char	*keystrings[] = {NULL};
 #endif /* FKEYS */
 
 /*

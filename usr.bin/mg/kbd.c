@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.c,v 1.9 2001/05/23 23:29:48 mickey Exp $	*/
+/*	$OpenBSD: kbd.c,v 1.10 2001/05/24 03:05:23 mickey Exp $	*/
 
 /*
  *	Terminal independent keyboard handling.
@@ -66,7 +66,7 @@ bsmap(f, n)
 
 void
 ungetkey(c)
-	int     c;
+	int	c;
 {
 #ifdef DO_METAKEY
 	if (use_metakey && pushed && c == CCHR('['))
@@ -133,9 +133,9 @@ getkey(flag)
  */
 PF
 doscan(map, c, newmap)
-	KEYMAP *map;
-	int     c;
-	KEYMAP **newmap;
+	KEYMAP	*map;
+	int	c;
+	KEYMAP	**newmap;
 {
 	MAP_ELEMENT	*elec = &map->map_element[0];
 	MAP_ELEMENT	*last = &map->map_element[map->map_num];
@@ -192,7 +192,7 @@ rescan(f, n)
 			c = TOLOWER(key.k_chars[key.k_count - 1]);
 			curmap = curbp->b_modes[mode]->p_map;
 			for (i = 0; i < key.k_count - 1; i++) {
-				if ((fp = doscan(curmap, (key.k_chars[i]), &curmap)) 
+				if ((fp = doscan(curmap, (key.k_chars[i]), &curmap))
 				    != NULL)
 					break;
 			}
@@ -205,7 +205,7 @@ rescan(f, n)
 				if (fp != rescan) {
 #ifndef NO_MACRO
 					if (macrodef && macrocount <= MAXMACRO)
-						macro[macrocount - 1].m_funct 
+						macro[macrocount - 1].m_funct
 						    = fp;
 #endif /* !NO_MACRO */
 					return (*fp)(f, n);
@@ -221,7 +221,7 @@ rescan(f, n)
 				break;
 		}
 		if (fp == NULL) {
-			while ((fp = doscan(curmap, key.k_chars[i++] = 
+			while ((fp = doscan(curmap, key.k_chars[i++] =
 			    getkey(TRUE), &curmap)) == NULL)
 				/*nothing*/;
 			key.k_count = i;
@@ -242,7 +242,7 @@ universal_argument(f, n)
 {
 	KEYMAP	*curmap;
 	PF	 funct;
-	int	 c; 
+	int	 c;
 	int	 nn = 4;
 
 	if (f & FFUNIV)
@@ -381,9 +381,9 @@ selfinsert(f, n)
 				lp->l_fp = maclcur->l_fp;
 				lp->l_bp = maclcur->l_bp;
 				lp->l_fp->l_bp = lp->l_bp->l_fp = lp;
-				bcopy(maclcur->l_text, lp->l_text, 
+				bcopy(maclcur->l_text, lp->l_text,
 				    maclcur->l_used);
-				for (count = maclcur->l_used; 
+				for (count = maclcur->l_used;
 				    count < lp->l_used; count++)
 					lp->l_text[count] = c;
 				free((char *)maclcur);

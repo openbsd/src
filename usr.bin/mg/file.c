@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.8 2001/05/23 22:36:14 art Exp $	*/
+/*	$OpenBSD: file.c,v 1.9 2001/05/24 03:05:22 mickey Exp $	*/
 
 /*
  *	File commands.
@@ -27,9 +27,9 @@ fileinsert(f, n)
 }
 
 /*
- * Select a file for editing.  Look around to see if you can find the file 
+ * Select a file for editing.  Look around to see if you can find the file
  * in another buffer; if you can find it, just switch to the buffer.  If
- * you cannot find the file, create a new buffer, read in the text, and 
+ * you cannot find the file, create a new buffer, read in the text, and
  * switch to the new buffer.
  */
 /* ARGSUSED */
@@ -111,9 +111,9 @@ findbuffer(fname)
 }
 
 /*
- * Read the file "fname" into the current buffer.  Make all of the text 
- * in the buffer go away, after checking for unsaved changes.  This is 
- * called by the "read" command, the "visit" command, and the mainline 
+ * Read the file "fname" into the current buffer.  Make all of the text
+ * in the buffer go away, after checking for unsaved changes.  This is
+ * called by the "read" command, the "visit" command, and the mainline
  * (for "uemacs file").
  */
 int
@@ -149,16 +149,16 @@ readin(fname)
  */
 
 /*
- * Insert a file in the current buffer, after dot.  Set mark at the end of 
- * the text inserted; point at the beginning.  Return a standard status. 
- * Print a summary (lines read, error message) out as well.  If the BACKUP 
- * conditional is set, then this routine also does the read end of backup 
- * processing.  The BFBAK flag, if set in a buffer, says that a backup 
- * should be taken.  It is set when a file is read in, but not on a new 
+ * Insert a file in the current buffer, after dot.  Set mark at the end of
+ * the text inserted; point at the beginning.  Return a standard status.
+ * Print a summary (lines read, error message) out as well.  If the BACKUP
+ * conditional is set, then this routine also does the read end of backup
+ * processing.  The BFBAK flag, if set in a buffer, says that a backup
+ * should be taken.  It is set when a file is read in, but not on a new
  * file.  (You don't need to make a backup copy of nothing.)
  */
-static char    *line = NULL;
-static int      linesize = 0;
+static char	*line = NULL;
+static int	linesize = 0;
 
 int
 insertfile(fname, newname, needinfo)
@@ -232,8 +232,8 @@ doneread:
 			break;
 		case FIOLONG:{
 				/* a line too long to fit in our buffer */
-				char           *cp;
-				int             newsize;
+				char	*cp;
+				int	newsize;
 
 				newsize = linesize * 2;
 				if (newsize < 0 ||
@@ -246,7 +246,7 @@ doneread:
 				bcopy(line, cp, linesize);
 				free(line);
 				line = cp;
-				s = ffgetline(line + linesize, linesize, 
+				s = ffgetline(line + linesize, linesize,
 				    &nbytes);
 				nbytes += linesize;
 				linesize = newsize;
@@ -319,8 +319,8 @@ out:		lp2 = NULL;
 }
 
 /*
- * Ask for a file name and write the contents of the current buffer to that 
- * file.  Update the remembered file name and clear the buffer changed flag. 
+ * Ask for a file name and write the contents of the current buffer to that
+ * file.  Update the remembered file name and clear the buffer changed flag.
  * This handling of file names is different from the earlier versions and
  * is more compatable with Gosling EMACS than with ITS EMACS.
  */
@@ -358,7 +358,7 @@ filewrite(f, n)
 #ifndef	MAKEBACKUP
 #define	MAKEBACKUP TRUE
 #endif /* !MAKEBACKUP */
-static int      makebackup = MAKEBACKUP;
+static int	makebackup = MAKEBACKUP;
 #endif /* !NO_BACKUP */
 
 /* ARGSUSED */
@@ -370,11 +370,11 @@ filesave(f, n)
 }
 
 /*
- * Save the contents of the buffer argument into its associated file.  Do 
- * nothing if there have been no changes (is this a bug, or a feature?). 
- * Error if there is no remembered file name. If this is the first write 
+ * Save the contents of the buffer argument into its associated file.  Do
+ * nothing if there have been no changes (is this a bug, or a feature?).
+ * Error if there is no remembered file name. If this is the first write
  * since the read or visit, then a backup copy of the file is made.
- * Allow user to select whether or not to make backup files by looking at 
+ * Allow user to select whether or not to make backup files by looking at
  * the value of makebackup.
  */
 int
@@ -402,7 +402,7 @@ buffsave(bp)
 		if (s == ABORT)
 			return FALSE;
 		/* softer error */
-		if (s == FALSE && 
+		if (s == FALSE &&
 		    (s = eyesno("Backup error, save anyway")) != TRUE)
 			return s;
 	}
@@ -450,8 +450,8 @@ makebkfile(f, n)
  */
 
 /*
- * This function performs the details of file writing; writing the file 
- * in buffer bp to file fn. Uses the file management routines in the 
+ * This function performs the details of file writing; writing the file
+ * in buffer bp to file fn. Uses the file management routines in the
  * "fileio.c" package. Most of the grief is checking of some sort.
  */
 int

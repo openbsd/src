@@ -1,4 +1,4 @@
-/*	$OpenBSD: paragraph.c,v 1.5 2001/05/23 22:20:36 art Exp $	*/
+/*	$OpenBSD: paragraph.c,v 1.6 2001/05/24 03:05:25 mickey Exp $	*/
 
 /*
  * Code for dealing with paragraphs and filling. Adapted from MicroEMACS 3.6
@@ -12,8 +12,8 @@ static int	fillcol = 70;
 #define MAXWORD 256
 
 /*
- * Move to start of paragraph.  Go back to the begining of the current 
- * paragraph here we look for a <NL><NL> or <NL><TAB> or <NL><SPACE> 
+ * Move to start of paragraph.  Go back to the begining of the current
+ * paragraph here we look for a <NL><NL> or <NL><TAB> or <NL><SPACE>
  * combination to delimit the begining of a paragraph.
  */
 /* ARGSUSED */
@@ -51,9 +51,9 @@ gotobop(f, n)
 						 * beond end of buffer,
 						 * cleanup time
 						 */
-						curwp->w_dotp = 
+						curwp->w_dotp =
 						    lback(curwp->w_dotp);
-						curwp->w_doto = 
+						curwp->w_doto =
 						    llength(curwp->w_dotp);
 					}
 				}
@@ -66,8 +66,8 @@ gotobop(f, n)
 }
 
 /*
- * Move to end of paragraph.  Go forword to the end of the current paragraph 
- * here we look for a <NL><NL> or <NL><TAB> or <NL><SPACE> combination to 
+ * Move to end of paragraph.  Go forword to the end of the current paragraph
+ * here we look for a <NL><NL> or <NL><TAB> or <NL><SPACE> combination to
  * delimit the begining of a paragraph.
  */
 /* ARGSUSED */
@@ -111,7 +111,7 @@ gotoeop(f, n)
 }
 
 /*
- * Justify a paragraph.  Fill the current paragraph according to the current 
+ * Justify a paragraph.  Fill the current paragraph according to the current
  * fill column.
  */
 /* ARGSUSED */
@@ -187,10 +187,10 @@ fillpara(f, n)
 			 * if at end of line or at doublespace and previous
 			 * character was one of '.','?','!' doublespace here.
 			 */
-			if ((eolflag || 
-			    curwp->w_doto == llength(curwp->w_dotp) || 
+			if ((eolflag ||
+			    curwp->w_doto == llength(curwp->w_dotp) ||
 			    (c = lgetc(curwp->w_dotp, curwp->w_doto)) == ' '
-			    || c == '\t') && ISEOSP(wbuf[wordlen - 1]) && 
+			    || c == '\t') && ISEOSP(wbuf[wordlen - 1]) &&
 			    wordlen < MAXWORD - 1)
 				wbuf[wordlen++] = ' ';
 
@@ -233,7 +233,7 @@ fillpara(f, n)
 	return TRUE;
 }
 
-/* 
+/*
  * Delete a paragraph.  Delete n paragraphs starting with the current one.
  */
 /* ARGSUSED */

@@ -7,7 +7,7 @@ portions of GNU as they are released) are essentially free, (there are
 handling charges for obtaining it) and so is Mg.  You may never have
 to learn another editor.  (But probably will, at least long enough to
 port Mg...)  Mg was formerly named MicroGnuEmacs, the name change was
-done at the request of Richard Stallman. 
+done at the request of Richard Stallman.
 
 Mg is not associated with the GNU project, and most of it does not
 have the copyright restrictions present in GNU Emacs.  (However, some
@@ -191,4 +191,4 @@ AmigaDOS format disk or a 9 track tape (Unix tar format) to:
 	Mike Meyer
 	P.O. Box 4730
 	Berkeley, CA 94704
-	
+

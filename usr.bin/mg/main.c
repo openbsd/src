@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.9 2001/05/23 23:29:48 mickey Exp $	*/
+/*	$OpenBSD: main.c,v 1.10 2001/05/24 03:05:24 mickey Exp $	*/
 
 /*
  *	Mainline.
@@ -23,8 +23,8 @@ static void	 edinit		__P((void));
 
 int
 main(argc, argv)
-	int    argc;
-	char **argv;
+	int	argc;
+	char	**argv;
 {
 	char	*cp;
 
@@ -139,7 +139,7 @@ quit(f, n)
 }
 
 /*
- * User abort.  Should be called by any input routine that sees a C-g to abort 
+ * User abort.  Should be called by any input routine that sees a C-g to abort
  * whatever C-g is aborting these days. Currently does nothing.
  */
 /* ARGSUSED */

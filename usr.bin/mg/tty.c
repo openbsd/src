@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.8 2001/05/23 22:20:36 art Exp $	*/
+/*	$OpenBSD: tty.c,v 1.9 2001/05/24 03:05:26 mickey Exp $	*/
 
 /*
  * Terminfo display driver
@@ -105,7 +105,7 @@ ttinit()
 		tcdell = NROW * NCOL;
 
 	/* Flag to indicate that we can both insert and delete lines */
-	insdel = (insert_line || parm_insert_line) && 
+	insdel = (insert_line || parm_insert_line) &&
 	    (delete_line || parm_delete_line);
 
 	if (enter_ca_mode)
@@ -133,8 +133,8 @@ ttreinit()
 }
 
 /*
- * Clean up the terminal, in anticipation of a return to the command 
- * interpreter. This is a no-op on the ANSI display. On the SCALD display, 
+ * Clean up the terminal, in anticipation of a return to the command
+ * interpreter. This is a no-op on the ANSI display. On the SCALD display,
  * it sets the window back to half screen scrolling. Perhaps it should
  * query the display for the increment, and put it back to what it was.
  */
@@ -220,9 +220,9 @@ ttbeep()
 }
 
 /*
- * Insert nchunk blank line(s) onto the screen, scrolling the last line on 
- * the screen off the bottom.  Use the scrolling region if possible for a 
- * smoother display.  If there is no scrolling region, use a set of insert 
+ * Insert nchunk blank line(s) onto the screen, scrolling the last line on
+ * the screen off the bottom.  Use the scrolling region if possible for a
+ * smoother display.  If there is no scrolling region, use a set of insert
  * and delete line sequences.
  */
 void
@@ -273,9 +273,9 @@ ttinsl(row, bot, nchunk)
 }
 
 /*
- * Delete nchunk line(s) from "row", replacing the bottom line on the 
- * screen with a blank line.  Unless we're using the scrolling region, 
- * this is done with crafty sequences of insert and delete lines.  The 
+ * Delete nchunk line(s) from "row", replacing the bottom line on the
+ * screen with a blank line.  Unless we're using the scrolling region,
+ * this is done with crafty sequences of insert and delete lines.  The
  * presence of the echo area makes a boundry condition go away.
  */
 void
@@ -325,11 +325,11 @@ ttdell(row, bot, nchunk)
 }
 
 /*
- * This routine sets the scrolling window on the display to go from line 
- * "top" to line "bot" (origin 0, inclusive).  The caller checks for the 
- * pathological 1-line scroll window which doesn't work right and avoids 
- * it.  The "ttrow" and "ttcol" variables are set to a crazy value to 
- * ensure that the next call to "ttmove" does not turn into a no-op (the 
+ * This routine sets the scrolling window on the display to go from line
+ * "top" to line "bot" (origin 0, inclusive).  The caller checks for the
+ * pathological 1-line scroll window which doesn't work right and avoids
+ * it.  The "ttrow" and "ttcol" variables are set to a crazy value to
+ * ensure that the next call to "ttmove" does not turn into a no-op (the
  * window adjustment moves the cursor).
  */
 void
@@ -346,11 +346,11 @@ ttwindow(top, bot)
 }
 
 /*
- * Switch to full screen scroll. This is used by "spawn.c" just before it 
- * suspends the editor and by "display.c" when it is getting ready to 
- * exit.  This function does a full screen scroll by telling the terminal 
- * to set a scrolling region that is lines or nrow rows high, whichever is 
- * larger.  This behavior seems to work right on systems where you can set 
+ * Switch to full screen scroll. This is used by "spawn.c" just before it
+ * suspends the editor and by "display.c" when it is getting ready to
+ * exit.  This function does a full screen scroll by telling the terminal
+ * to set a scrolling region that is lines or nrow rows high, whichever is
+ * larger.  This behavior seems to work right on systems where you can set
  * your terminal size.
  */
 void
@@ -367,10 +367,10 @@ ttnowindow()
 }
 
 /*
- * Set the current writing color to the specified color. Watch for color 
+ * Set the current writing color to the specified color. Watch for color
  * changes that are not going to do anything (the color is already right)
- * and don't send anything to the display.  The rainbow version does this 
- * in putline.s on a line by line basis, so don't bother sending out the 
+ * and don't send anything to the display.  The rainbow version does this
+ * in putline.s on a line by line basis, so don't bother sending out the
  * color shift.
  */
 void
@@ -390,10 +390,10 @@ ttcolor(color)
 }
 
 /*
- * This routine is called by the "refresh the screen" command to try 
- * to resize the display. The new size, which must not exceed the NROW 
- * and NCOL limits, is stored back into "nrow" and * "ncol". Display can 
- * always deal with a screen NROW by NCOL. Look in "window.c" to see how 
+ * This routine is called by the "refresh the screen" command to try
+ * to resize the display. The new size, which must not exceed the NROW
+ * and NCOL limits, is stored back into "nrow" and * "ncol". Display can
+ * always deal with a screen NROW by NCOL. Look in "window.c" to see how
  * the caller deals with a change.
  */
 void
@@ -423,7 +423,7 @@ setttysize()
 #endif /* NO_RESIZE */
 
 /*
- * fake char output for charcost() 
+ * fake char output for charcost()
  */
 /* ARGSUSED */
 static int

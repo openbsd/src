@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.5 2001/05/23 22:20:35 art Exp $	*/
+/*	$OpenBSD: dir.c,v 1.6 2001/05/24 03:05:21 mickey Exp $	*/
 
 /*
  * Name:	MG 2a
@@ -10,8 +10,8 @@
 #include "def.h"
 
 #ifndef NO_DIR
-char           *wdir;
-static char     cwd[NFILEN];
+char		*wdir;
+static char	cwd[NFILEN];
 
 /*
  * Initialize anything the directory management routines need
@@ -30,10 +30,10 @@ dirinit()
 /* ARGSUSED */
 int
 changedir(f, n)
-	int    f, n;
+	int	f, n;
 {
-	int    s;
-	char   bufc[NPAT];
+	int	s;
+	char	bufc[NPAT];
 
 	if ((s = ereply("Change default directory: ", bufc, NPAT)) != TRUE)
 		return (s);

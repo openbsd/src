@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.6 2001/01/29 01:58:06 niklas Exp $	*/
+/*	$OpenBSD: dired.c,v 1.7 2001/05/24 03:05:21 mickey Exp $	*/
 
 /* dired module for mg 2a	 */
 /* by Robert A. Larson		 */
@@ -10,9 +10,9 @@
 /* ARGSUSED */
 int
 dired(f, n)
-	int     f, n;
+	int	f, n;
 {
-	char    dirname[NFILEN];
+	char	dirname[NFILEN];
 	BUFFER *bp;
 
 	dirname[0] = '\0';
@@ -27,11 +27,11 @@ dired(f, n)
 /* ARGSUSED */
 int
 d_otherwindow(f, n)
-	int     f, n;
+	int	f, n;
 {
-	char    dirname[NFILEN];
-	BUFFER *bp;
-	MGWIN  *wp;
+	char	dirname[NFILEN];
+	BUFFER	*bp;
+	MGWIN	*wp;
 
 	dirname[0] = '\0';
 	if (eread("Dired other window: ", dirname, NFILEN, EFNEW | EFCR) == ABORT)
@@ -107,8 +107,8 @@ d_findfile(f, n)
 	int f, n;
 {
 	BUFFER *bp;
-	int     s;
-	char    fname[NFILEN];
+	int	s;
+	char	fname[NFILEN];
 
 	if ((s = d_makename(curwp->w_dotp, fname)) == ABORT)
 		return FALSE;
@@ -125,10 +125,10 @@ d_findfile(f, n)
 /* ARGSUSED */
 int
 d_ffotherwindow(f, n)
-	int     f, n;
+	int	f, n;
 {
-	char    fname[NFILEN];
-	int     s;
+	char	fname[NFILEN];
+	int	s;
 	BUFFER *bp;
 	MGWIN  *wp;
 
@@ -148,10 +148,10 @@ d_ffotherwindow(f, n)
 /* ARGSUSED */
 int
 d_expunge(f, n)
-	int    f, n;
+	int	f, n;
 {
-	LINE  *lp, *nlp;
-	char   fname[NFILEN];
+	LINE	*lp, *nlp;
+	char	fname[NFILEN];
 
 	for (lp = lforw(curbp->b_linep); lp != curbp->b_linep; lp = nlp) {
 		nlp = lforw(lp);
@@ -184,10 +184,10 @@ d_expunge(f, n)
 /* ARGSUSED */
 int
 d_copy(f, n)
-	int     f, n;
+	int	f, n;
 {
-	char    frname[NFILEN], toname[NFILEN];
-	int     stat;
+	char	frname[NFILEN], toname[NFILEN];
+	int	stat;
 
 	if (d_makename(curwp->w_dotp, frname) != FALSE) {
 		ewprintf("Not a file");

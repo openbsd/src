@@ -1,4 +1,4 @@
-/*	$OpenBSD: macro.h,v 1.3 2001/01/29 01:58:08 niklas Exp $	*/
+/*	$OpenBSD: macro.h,v 1.4 2001/05/24 03:05:24 mickey Exp $	*/
 
 /* definitions for keyboard macros */
 
@@ -18,8 +18,8 @@ EXTERN union {
 	int	m_count;	/* for count-prefix	 */
 } macro[MAXMACRO];
 
-EXTERN LINE    *maclhead INIT(NULL);
-EXTERN LINE    *maclcur;
+EXTERN LINE	*maclhead INIT(NULL);
+EXTERN LINE	*maclcur;
 
 #undef	EXTERN
 #undef	INIT

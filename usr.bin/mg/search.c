@@ -1,8 +1,8 @@
-/*	$OpenBSD: search.c,v 1.6 2001/05/23 22:20:36 art Exp $	*/
+/*	$OpenBSD: search.c,v 1.7 2001/05/24 03:05:26 mickey Exp $	*/
 
 /*
  *		Search commands.
- * The functions in this file implement the search commands (both plain and 
+ * The functions in this file implement the search commands (both plain and
  * incremental searches are supported) and the query-replace command.
  *
  * The plain old search code is part of the original MicroEMACS "distribution".
@@ -46,8 +46,8 @@ int		srch_lastdir = SRCH_NOPR;	/* Last search flags.	 */
 
 /*
  * Search forward.  Get a search string from the user, and search for it
- * starting at ".".  If found, "." gets moved to just after the matched 
- * characters, and display does all the hard stuff.  If not found, it just 
+ * starting at ".".  If found, "." gets moved to just after the matched
+ * characters, and display does all the hard stuff.  If not found, it just
  * prints a message.
  */
 /* ARGSUSED */
@@ -68,9 +68,9 @@ forwsearch(f, n)
 }
 
 /*
- * Reverse search.  Get a search string from the user, and search, starting 
- * at "." and proceeding toward the front of the buffer.  If found "." is 
- * left pointing at the first character of the pattern [the last character 
+ * Reverse search.  Get a search string from the user, and search, starting
+ * at "." and proceeding toward the front of the buffer.  If found "." is
+ * left pointing at the first character of the pattern [the last character
  * that was matched].
  */
 /* ARGSUSED */
@@ -91,8 +91,8 @@ backsearch(f, n)
 }
 
 /*
- * Search again, using the same search string and direction as the last 
- * search command. The direction has been saved in "srch_lastdir", so you 
+ * Search again, using the same search string and direction as the last
+ * search command. The direction has been saved in "srch_lastdir", so you
  * know which way to go.
  */
 /* ARGSUSED */
@@ -119,7 +119,7 @@ searchagain(f, n)
 }
 
 /*
- * Use incremental searching, initially in the forward direction.  
+ * Use incremental searching, initially in the forward direction.
  * isearch ignores any explicit arguments.
  */
 /* ARGSUSED */
@@ -425,9 +425,9 @@ is_find(dir)
 }
 
 /*
- * If called with "dir" not one of SRCH_FORW or SRCH_BACK, this routine used 
- * to print an error message.  It also used to return TRUE or FALSE, depending 
- * on if it liked the "dir".  However, none of the callers looked at the 
+ * If called with "dir" not one of SRCH_FORW or SRCH_BACK, this routine used
+ * to print an error message.  It also used to return TRUE or FALSE, depending
+ * on if it liked the "dir".  However, none of the callers looked at the
  * status, so I just made the checking vanish.
  */
 static void
@@ -449,7 +449,7 @@ is_prompt(dir, flag, success)
 }
 
 /*
- * Prompt writing routine for the incremental search.  The "prompt" is just 
+ * Prompt writing routine for the incremental search.  The "prompt" is just
  * a string. The "flag" determines whether pat should be printed.
  */
 static void
@@ -546,9 +546,9 @@ stopsearch:
 }
 
 /*
- * This routine does the real work of a forward search.  The pattern is sitting 
+ * This routine does the real work of a forward search.  The pattern is sitting
  * in the external variable "pat".  If found, dot is updated, the window system
- * is notified of the change, and TRUE is returned.  If the string isn't found, 
+ * is notified of the change, and TRUE is returned.  If the string isn't found,
  * FALSE is returned.
  */
 int
@@ -595,8 +595,8 @@ fail:		;
 }
 
 /*
- * This routine does the real work of a backward search.  The pattern is 
- * sitting in the external variable "pat".  If found, dot is updated, the 
+ * This routine does the real work of a backward search.  The pattern is
+ * sitting in the external variable "pat".  If found, dot is updated, the
  * window system is notified of the change, and TRUE is returned.  If the
  * string isn't found, FALSE is returned.
  */
@@ -650,7 +650,7 @@ fail:		;
 }
 
 /*
- * Compare two characters.  The "bc" comes from the buffer.  It has its case 
+ * Compare two characters.  The "bc" comes from the buffer.  It has its case
  * folded out. The "pc" is from the pattern.
  */
 static int
@@ -669,10 +669,10 @@ eq(bc, pc)
 }
 
 /*
- * Read a pattern.  Stash it in the external variable "pat".  The "pat" is not 
- * updated if the user types in an empty line.  If the user typed an empty 
- * line, and there is no old pattern, it is an error.  Display the old pattern, 
- * in the style of Jeff Lomicka.  There is some do-it-yourself control 
+ * Read a pattern.  Stash it in the external variable "pat".  The "pat" is not
+ * updated if the user types in an empty line.  If the user typed an empty
+ * line, and there is no old pattern, it is an error.  Display the old pattern,
+ * in the style of Jeff Lomicka.  There is some do-it-yourself control
  * expansion.
  */
 int

@@ -1,19 +1,19 @@
-/*	$OpenBSD: util.c,v 1.5 2001/05/23 22:20:36 art Exp $	*/
+/*	$OpenBSD: util.c,v 1.6 2001/05/24 03:05:25 mickey Exp $	*/
 
 /*
  *		Assorted commands.
- * This file contains the command processors for a large assortment of 
- * unrelated commands.  The only thing they have in common is that they 
+ * This file contains the command processors for a large assortment of
+ * unrelated commands.  The only thing they have in common is that they
  * are all command processors.
  */
 
 #include "def.h"
 
 /*
- * Display a bunch of useful information about the current location of dot. 
- * The character under the cursor (in octal), the current line, row, and 
- * column, and approximate position of the cursor in the file (as a 
- * percentage) is displayed.  The column position assumes an infinite 
+ * Display a bunch of useful information about the current location of dot.
+ * The character under the cursor (in octal), the current line, row, and
+ * column, and approximate position of the cursor in the file (as a
+ * percentage) is displayed.  The column position assumes an infinite
  * position display; it does not truncate just because the screen does.
  * This is normally bound to "C-X =".
  */
@@ -23,7 +23,7 @@ showcpos(f, n)
 	int f, n;
 {
 	LINE	*clp;
-	long	 nchar; 
+	long	 nchar;
 	long	 cchar;
 	int	 nline, row;
 	int	 cline, cbyte;		/* Current line/char/byte */
@@ -36,7 +36,7 @@ showcpos(f, n)
 	cbyte = 0;
 	nchar = 0;
 	nline = 0;
-	for (;;) {	
+	for (;;) {
 		/* count this line */
 		++nline;
 		if (clp == curwp->w_dotp) {
@@ -95,11 +95,11 @@ getcolpos()
 }
 
 /*
- * Twiddle the two characters on either side of dot.  If dot is at the end 
- * of the line twiddle the two characters before it.  Return with an error 
- * if dot is at the beginning of line; it seems to be a bit pointless to 
- * make this work.  This fixes up a very common typo with a single stroke. 
- * Normally bound to "C-T".  This always works within a line, so "WFEDIT" 
+ * Twiddle the two characters on either side of dot.  If dot is at the end
+ * of the line twiddle the two characters before it.  Return with an error
+ * if dot is at the beginning of line; it seems to be a bit pointless to
+ * make this work.  This fixes up a very common typo with a single stroke.
+ * Normally bound to "C-T".  This always works within a line, so "WFEDIT"
  * is good enough.
  */
 /* ARGSUSED */
@@ -128,9 +128,9 @@ twiddle(f, n)
 }
 
 /*
- * Open up some blank space.  The basic plan is to insert a bunch of 
- * newlines, and then back up over them.  Everything is done by the 
- * subcommand procerssors.  They even handle the looping.  Normally this 
+ * Open up some blank space.  The basic plan is to insert a bunch of
+ * newlines, and then back up over them.  Everything is done by the
+ * subcommand procerssors.  They even handle the looping.  Normally this
  * is bound to "C-O".
  */
 /* ARGSUSED */
@@ -161,9 +161,9 @@ openline(f, n)
 /*
  * Insert a newline.  [following "feature" not present in current version of
  * Gnu, and now disabled here too] If you are at the end of the line and the
- * next line is a blank line, just move into the blank line.  This makes 
- * "C-O" and "C-X C-O" work nicely, and reduces the ammount of screen update 
- * that has to be done.  This would not be as critical if screen update were a 
+ * next line is a blank line, just move into the blank line.  This makes
+ * "C-O" and "C-X C-O" work nicely, and reduces the ammount of screen update
+ * that has to be done.  This would not be as critical if screen update were a
  * lot more efficient.
  */
 /* ARGSUSED */
@@ -195,10 +195,10 @@ newline(f, n)
 
 /*
  * Delete blank lines around dot. What this command does depends if dot is
- * sitting on a blank line. If dot is sitting on a blank line, this command 
- * deletes all the blank lines above and below the current line. If it is 
- * sitting on a non blank line then it deletes all of the blank lines after 
- * the line. Normally this command is bound to "C-X C-O". Any argument is 
+ * sitting on a blank line. If dot is sitting on a blank line, this command
+ * deletes all the blank lines above and below the current line. If it is
+ * sitting on a non blank line then it deletes all of the blank lines after
+ * the line. Normally this command is bound to "C-X C-O". Any argument is
  * ignored.
  */
 /* ARGSUSED */
@@ -266,10 +266,10 @@ delwhite(f, n)
 
 /*
  * Insert a newline, then enough tabs and spaces to duplicate the indentation
- * of the previous line.  Assumes tabs are every eight characters.  Quite 
- * simple.  Figure out the indentation of the current line.  Insert a newline 
- * by calling the standard routine.  Insert the indentation by inserting the 
- * right number of tabs and spaces.  Return TRUE if all ok.  Return FALSE if 
+ * of the previous line.  Assumes tabs are every eight characters.  Quite
+ * simple.  Figure out the indentation of the current line.  Insert a newline
+ * by calling the standard routine.  Insert the indentation by inserting the
+ * right number of tabs and spaces.  Return TRUE if all ok.  Return FALSE if
  * one of the subcomands failed. Normally bound to "C-J".
  */
 /* ARGSUSED */
@@ -307,8 +307,8 @@ indent(f, n)
 
 /*
  * Delete forward.  This is real easy, because the basic delete routine does
- * all of the work.  Watches for negative arguments, and does the right thing. 
- * If any argument is present, it kills rather than deletes, to prevent loss 
+ * all of the work.  Watches for negative arguments, and does the right thing.
+ * If any argument is present, it kills rather than deletes, to prevent loss
  * of text if typed with a big argument.  Normally bound to "C-D".
  */
 /* ARGSUSED */
@@ -330,8 +330,8 @@ forwdel(f, n)
 }
 
 /*
- * Delete backwards.  This is quite easy too, because it's all done with 
- * other functions.  Just move the cursor back, and delete forwards.  Like 
+ * Delete backwards.  This is quite easy too, because it's all done with
+ * other functions.  Just move the cursor back, and delete forwards.  Like
  * delete forward, this actually does a kill if presented with an argument.
  */
 /* ARGSUSED */
@@ -357,12 +357,12 @@ backdel(f, n)
 }
 
 /*
- * Kill line.  If called without an argument, it kills from dot to the end 
- * of the line, unless it is at the end of the line, when it kills the 
- * newline.  If called with an argument of 0, it kills from the start of the 
- * line to dot.  If called with a positive argument, it kills from dot 
- * forward over that number of newlines.  If called with a negative argument 
- * it kills any text before dot on the current line, then it kills back 
+ * Kill line.  If called without an argument, it kills from dot to the end
+ * of the line, unless it is at the end of the line, when it kills the
+ * newline.  If called with an argument of 0, it kills from the start of the
+ * line to dot.  If called with a positive argument, it kills from dot
+ * forward over that number of newlines.  If called with a negative argument
+ * it kills any text before dot on the current line, then it kills back
  * abs(arg) lines.
  */
 /* ARGSUSED */
@@ -420,13 +420,13 @@ killline(f, n)
 }
 
 /*
- * Yank text back from the kill buffer.  This is really easy.  All of the work 
- * is done by the standard insert routines.  All you do is run the loop, and 
+ * Yank text back from the kill buffer.  This is really easy.  All of the work
+ * is done by the standard insert routines.  All you do is run the loop, and
  * check for errors.  The blank lines are inserted with a call to "newline"
- * instead of a call to "lnewline" so that the magic stuff that happens when 
- * you type a carriage return also happens when a carriage return is yanked 
- * back from the kill buffer.  An attempt has been made to fix the cosmetic 
- * bug associated with a yank when dot is on the top line of the window 
+ * instead of a call to "lnewline" so that the magic stuff that happens when
+ * you type a carriage return also happens when a carriage return is yanked
+ * back from the kill buffer.  An attempt has been made to fix the cosmetic
+ * bug associated with a yank when dot is on the top line of the window
  * (nothing moves, because all of the new text landed off screen).
  */
 /* ARGSUSED */

@@ -1,15 +1,15 @@
-/*	$OpenBSD: word.c,v 1.4 2001/01/29 01:58:10 niklas Exp $	*/
+/*	$OpenBSD: word.c,v 1.5 2001/05/24 03:05:28 mickey Exp $	*/
 
 /*
  *		Word mode commands.
- * The routines in this file implement commands that work word at a time. 
+ * The routines in this file implement commands that work word at a time.
  * There are all sorts of word mode commands.
  */
 
 #include "def.h"
 
 /*
- * Move the cursor backward by "n" words. All of the details of motion are 
+ * Move the cursor backward by "n" words. All of the details of motion are
  * performed by the "backchar" and "forwchar" routines.
  */
 /* ARGSUSED */
@@ -124,8 +124,8 @@ lowerword(f, n)
 
 /*
  * Move the cursor forward by the specified number of words.  As you move
- * convert the first character of the word to upper case, and subsequent 
- * characters to lower case.  Error if you try to move past the end of the 
+ * convert the first character of the word to upper case, and subsequent
+ * characters to lower case.  Error if you try to move past the end of the
  * buffer.
  */
 /* ARGSUSED */
@@ -211,12 +211,12 @@ out:
 }
 
 /*
- * Kill backwards by "n" words.  The rules for success and failure are now 
- * different, to prevent strange behavior at the start of the buffer.  The 
- * command only fails if something goes wrong with the actual delete of the 
- * characters.  It is successful even if no characters are deleted, or if you 
- * say delete 5 words, and there are only 4 words left.  I considered making 
- * the first call to "backchar" special, but decided that that would just be 
+ * Kill backwards by "n" words.  The rules for success and failure are now
+ * different, to prevent strange behavior at the start of the buffer.  The
+ * command only fails if something goes wrong with the actual delete of the
+ * characters.  It is successful even if no characters are deleted, or if you
+ * say delete 5 words, and there are only 4 words left.  I considered making
+ * the first call to "backchar" special, but decided that that would just be
  * weird. Normally this is bound to "M-Rubout" and to "M-Backspace".
  */
 /* ARGSUSED */

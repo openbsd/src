@@ -1,13 +1,13 @@
-/*	$OpenBSD: kbd.h,v 1.9 2001/05/23 22:10:43 art Exp $	*/
+/*	$OpenBSD: kbd.h,v 1.10 2001/05/24 03:05:23 mickey Exp $	*/
 
 /*
  * kbd.h: type definitions for symbol.c and kbd.c for mg experimental
  */
 
 typedef struct {
-	KCHAR            k_base;	/* first key in element		 */
-	KCHAR            k_num;		/* last key in element		 */
-	PF              *k_funcp;	/* pointer to array of pointers
+	KCHAR	k_base;	/* first key in element		 */
+	KCHAR	k_num;		/* last key in element		 */
+	PF	*k_funcp;	/* pointer to array of pointers
 					 * to functions */
 	struct keymap_s *k_prefmap;	/* keymap of ONLY prefix key in
 					 * element */
@@ -36,25 +36,25 @@ typedef struct keymap_s KEYMAPE(1) KEYMAP;
 #define MAPELEDEF 4
 
 typedef struct MAPS_S {
-	KEYMAP         *p_map;
-	char           *p_name;
+	KEYMAP	*p_map;
+	char	*p_name;
 } MAPS;
 
-extern MAPS     map_table[];
+extern MAPS	map_table[];
 extern KEYMAP	*fundamental_map;
 
 typedef struct {
-	PF              n_funct;
-	char           *n_name;
+	PF	n_funct;
+	char	*n_name;
 } FUNCTNAMES;
 
-int	 dobindkey		__P((KEYMAP *, char *, char *));
-KEYMAP  *name_map		__P((char *));
-MAPS    *name_mode		__P((char *));
-PF       doscan			__P((KEYMAP *, int, KEYMAP **));
-PF       name_function		__P((char *));
-char    *function_name		__P((PF));
-char    *map_name		__P((KEYMAP *));
+int	dobindkey		__P((KEYMAP *, char *, char *));
+KEYMAP	*name_map		__P((char *));
+MAPS	*name_mode		__P((char *));
+PF	doscan			__P((KEYMAP *, int, KEYMAP **));
+PF	name_function		__P((char *));
+char	*function_name		__P((PF));
+char	*map_name		__P((KEYMAP *));
 
 extern MAP_ELEMENT	*ele;
 extern MAPS		*defb_modes[];

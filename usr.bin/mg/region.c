@@ -1,8 +1,8 @@
-/*	$OpenBSD: region.c,v 1.5 2001/05/23 22:20:36 art Exp $	*/
+/*	$OpenBSD: region.c,v 1.6 2001/05/24 03:05:26 mickey Exp $	*/
 
 /*
  *		Region based commands.
- * The routines in this file deal with the region, that magic space between 
+ * The routines in this file deal with the region, that magic space between
  * "." and mark.  Some functions are commands.  Some functions are just for
  * internal use.
  */
@@ -36,7 +36,7 @@ killregion(f, n)
 }
 
 /*
- * Copy all of the characters in the region to the kill buffer.  Don't move 
+ * Copy all of the characters in the region to the kill buffer.  Don't move
  * dot at all.  This is a bit like a kill region followed by a yank.
  */
 /* ARGSUSED */
@@ -79,9 +79,9 @@ copyregion(f, n)
 }
 
 /*
- * Lower case region.  Zap all of the upper case characters in the region to 
- * lower case. Use the region code to set the limits. Scan the buffer, doing 
- * the changes. Call "lchange" to ensure that redisplay is done in all 
+ * Lower case region.  Zap all of the upper case characters in the region to
+ * lower case. Use the region code to set the limits. Scan the buffer, doing
+ * the changes. Call "lchange" to ensure that redisplay is done in all
  * buffers.
  */
 /* ARGSUSED */
@@ -113,9 +113,9 @@ lowerregion(f, n)
 }
 
 /*
- * Upper case region.  Zap all of the lower case characters in the region to 
+ * Upper case region.  Zap all of the lower case characters in the region to
  * upper case.  Use the region code to set the limits.  Scan the buffer,
- * doing the changes.  Call "lchange" to ensure that redisplay is done in all 
+ * doing the changes.  Call "lchange" to ensure that redisplay is done in all
  * buffers.
  */
 /* ARGSUSED */
@@ -147,14 +147,14 @@ upperregion(f, n)
 }
 
 /*
- * This routine figures out the bound of the region in the current window, 
- * and stores the results into the fields of the REGION structure. Dot and 
- * mark are usually close together, but I don't know the order, so I scan 
- * outward from dot, in both directions, looking for mark. The size is kept 
- * in a long. At the end, after the size is figured out, it is assigned to 
- * the size field of the region structure. If this assignment loses any bits, 
- * then we print an error. This is "type independent" overflow checking. All 
- * of the callers of this routine should be ready to get an ABORT status, 
+ * This routine figures out the bound of the region in the current window,
+ * and stores the results into the fields of the REGION structure. Dot and
+ * mark are usually close together, but I don't know the order, so I scan
+ * outward from dot, in both directions, looking for mark. The size is kept
+ * in a long. At the end, after the size is figured out, it is assigned to
+ * the size field of the region structure. If this assignment loses any bits,
+ * then we print an error. This is "type independent" overflow checking. All
+ * of the callers of this routine should be ready to get an ABORT status,
  * because I might add a "if regions is big, ask before clobberring" flag.
  */
 static int
@@ -240,8 +240,8 @@ setsize(rp, size)
 static char	prefix_string[PREFIXLENGTH] = {'>', '\0'};
 
 /*
- * Prefix the region with whatever is in prefix_string.  Leaves dot at the 
- * beginning of the line after the end of the region.  If an argument is 
+ * Prefix the region with whatever is in prefix_string.  Leaves dot at the
+ * beginning of the line after the end of the region.  If an argument is
  * given, prompts for the line prefix string.
  */
 /* ARGSUSED */

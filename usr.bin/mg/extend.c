@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.14 2001/05/23 23:29:47 mickey Exp $	*/
+/*	$OpenBSD: extend.c,v 1.15 2001/05/24 03:05:22 mickey Exp $	*/
 
 /*
  *	Extended (M-X) commands, rebinding, and	startup file processing.
@@ -28,8 +28,8 @@ static char	*skipwhite	__P((char *));
 static char	*parsetoken	__P((char *));
 static int	 bindkey	__P((KEYMAP **, char *, KCHAR *, int));
 
-/* 
- * Insert a string, mainly for use from macros (created by selfinsert) 
+/*
+ * Insert a string, mainly for use from macros (created by selfinsert)
  */
 /* ARGSUSED */
 int
@@ -84,10 +84,10 @@ insert(f, n)
  */
 static int
 remap(curmap, c, funct, pref_map)
-	KEYMAP *curmap;		/* pointer to the map being changed */
-	int     c;		/* character being changed */
-	PF      funct;		/* function being changed to */
-	KEYMAP *pref_map;	/* if funct==NULL, map to bind to or
+	KEYMAP	*curmap;	/* pointer to the map being changed */
+	int	c;		/* character being changed */
+	PF	funct;		/* function being changed to */
+	KEYMAP	*pref_map;	/* if funct==NULL, map to bind to or
 				   NULL for new */
 {
 	int		 i, n1, n2, nold;
@@ -190,7 +190,7 @@ remap(curmap, c, funct, pref_map)
 					ele->k_prefmap = pref_map;
 				else {
 					if (!(mp = malloc(sizeof(KEYMAP) +
-					    (MAPINIT - 1) * 
+					    (MAPINIT - 1) *
 					    sizeof(MAP_ELEMENT)))) {
 						ewprintf("Out of memory");
 						ele->k_funcp[c - ele->k_base] =
@@ -215,7 +215,7 @@ remap(curmap, c, funct, pref_map)
 			if (curmap->map_num >= curmap->map_max &&
 			    (curmap = realocmap(curmap)) == NULL)
 				return FALSE;
-			if ((pfp = malloc((ele->k_num - c + !n2) * 
+			if ((pfp = malloc((ele->k_num - c + !n2) *
 			    sizeof(PF))) == NULL) {
 				ewprintf("Out of memory");
 				return FALSE;
@@ -266,7 +266,7 @@ realocmap(curmap)
 	int	 i;
 
 	if ((mp = (KEYMAP *)malloc((unsigned)(sizeof(KEYMAP) +
-	    (curmap->map_max + (MAPGROW - 1)) * 
+	    (curmap->map_max + (MAPGROW - 1)) *
 	    sizeof(MAP_ELEMENT)))) == NULL) {
 		ewprintf("Out of memory");
 		return NULL;
@@ -317,9 +317,9 @@ fixmap(curmap, mp, mt)
  */
 static int
 dobind(curmap, p, unbind)
-	KEYMAP *curmap;
-	char   *p;
-	int     unbind;
+	KEYMAP	*curmap;
+	char	*p;
+	int	unbind;
 {
 	KEYMAP	*pref_map = NULL;
 	PF	 funct;
@@ -381,18 +381,18 @@ dobind(curmap, p, unbind)
 }
 
 /*
- * bindkey: bind key sequence to a function in the specified map.  Used by 
- * excline so it can bind function keys.  To close to release to change 
- * calling sequence, should just pass KEYMAP *curmap rather than 
+ * bindkey: bind key sequence to a function in the specified map.  Used by
+ * excline so it can bind function keys.  To close to release to change
+ * calling sequence, should just pass KEYMAP *curmap rather than
  * KEYMAP **mapp.
  */
 #ifdef	BINDKEY
 static int
 bindkey(mapp, fname, keys, kcount)
-	KEYMAP **mapp;
-	char    *fname;
-	KCHAR   *keys;
-	int      kcount;
+	KEYMAP	**mapp;
+	char	*fname;
+	KCHAR	*keys;
+	int	kcount;
 {
 	KEYMAP	*curmap = *mapp;
 	KEYMAP	*pref_map = NULL;
@@ -484,7 +484,7 @@ int
 localbind(f, n)
 	int f, n;
 {
-	return dobind(curbp->b_modes[curbp->b_nmodes]->p_map, 
+	return dobind(curbp->b_modes[curbp->b_nmodes]->p_map,
 	    "Local set key: ", FALSE);
 }
 
@@ -526,9 +526,9 @@ localunbind(f, n)
 }
 
 /*
- * Extended command. Call the message line routine to read in the command 
- * name and apply autocompletion to it. When it comes back, look the name 
- * up in the symbol table and run the command if it is found.  Print an 
+ * Extended command. Call the message line routine to read in the command
+ * name and apply autocompletion to it. When it comes back, look the name
+ * up in the symbol table and run the command if it is found.  Print an
  * error if there is anything wrong.
  */
 int
@@ -594,7 +594,7 @@ evalexpr(f, n)
 }
 
 /*
- * evalbuffer - evaluate the current buffer as line commands. Useful for 
+ * evalbuffer - evaluate the current buffer as line commands. Useful for
  * testing startup files.
  */
 /* ARGSUSED */
@@ -671,8 +671,8 @@ load(fname)
 }
 
 /*
- * excline - run a line from a load file or eval-expression.  if FKEYS is 
- * defined, duplicate functionallity of dobind so function key values don't 
+ * excline - run a line from a load file or eval-expression.  if FKEYS is
+ * defined, duplicate functionallity of dobind so function key values don't
  * have to fit in type char.
  */
 int
@@ -815,7 +815,7 @@ excline(line)
 					case '6':
 					case '7':
 						c = *argp - '0';
-						if (argp[1] <= '7' && 
+						if (argp[1] <= '7' &&
 						    argp[1] >= '0') {
 							c <<= 3;
 							c += *++argp - '0';
@@ -941,9 +941,9 @@ parsetoken(s)
 			*s = '\0';
 	} else
 		do {
-			/* 
-			 * Strings get special treatment.  
-			 * Beware: You can \ out the end of the string! 
+			/*
+			 * Strings get special treatment.
+			 * Beware: You can \ out the end of the string!
 			 */
 			if (*s == '\\')
 				++s;

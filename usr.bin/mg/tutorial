@@ -60,7 +60,7 @@ move your hand from the keyboard, it is also not supported on other
 machines that do support Emacs.  Emacs runs on everything from a CP/M
 machine to large mainframes. Here then, in a more graphical form are
 the commands:
- 
+
 			  Previous line, C-p
 				  :
 				  :
@@ -145,10 +145,10 @@ sentence moving commands:
 Like all other commands in Emacs, these commands can be given
 arguments which cause them to be executed repeatedly.  The way you
 give a command a repeat count is by typing C-u and then the digits
-before you type the command.  
+before you type the command.
 
 For instance, C-u 8 C-f moves forward eight characters.
-	
+
 >> Try giving a suitable argument to C-n or C-p to come as close
    as you can to this line in one jump.
 
@@ -241,7 +241,7 @@ Emacs and correcting errors.  You can delete by words or lines
 as well.  Here is a summary of the delete operations:
 
 	<DEL>        delete the character just before the cursor
-	C-d   	     delete the next character after the cursor
+	C-d	     delete the next character after the cursor
 
 	M-<DEL>      kill the word immediately before the cursor
 	M-d	     kill the next word after the cursor
@@ -326,9 +326,9 @@ file).  After you type the command
 	C-x C-f   Find a file
 
 Emacs asks you to type the file name.  It echoes on the bottom line of
-the screen.  When you type <Return> to end the file name it disappears. 
+the screen.  When you type <Return> to end the file name it disappears.
 
->> Type C-x C-f, then type C-g.  This cancels the  C-x C-f command 
+>> Type C-x C-f, then type C-g.  This cancels the  C-x C-f command
    that was using the minibuffer.  So you do not find any file.
 
 In a little while the file contents appear on the screen.  You can
@@ -337,7 +337,7 @@ issue the command
 
 	C-x C-s   Save the file
 
-The contents of Emacs are written into the file.  
+The contents of Emacs are written into the file.
 
 When saving is finished, Emacs prints the name of the file written.
 You should save fairly often, so that you will not lose very much
@@ -357,7 +357,7 @@ BUFFERS
 -------
 
 If you find a second file with C-x C-f, the first file remains inside
-Emacs.  This way you can get quite a number of files inside Emacs. 
+Emacs.  This way you can get quite a number of files inside Emacs.
 
 The object inside Emacs which holds the text read from one file
 is called a "buffer."  Finding a file makes a new buffer inside Emacs.
@@ -417,7 +417,7 @@ Emacs; you can resume editing by ending that CLI or depth arranging.
 You would use C-x C-c if you were running out of memory.  You would
 also use it to exit an Emacs invoked under mail handling programs and
 other random utilities, since they may not believe you have really
-finished using the Emacs if it continues to exist. 
+finished using the Emacs if it continues to exist.
 
 There are many C-x commands.  The ones you know are:
 
@@ -453,7 +453,7 @@ at the bottom of the screen in an area called the "echo area."  The echo
 area contains the bottom line of the screen.  The line immediately above
 it is called the MODE LINE.  The mode line says something like
 
---**-Mg: TUTORIAL		  	   (fundamental)------------------------
+--**-Mg: TUTORIAL			   (fundamental)------------------------
 
 This is a very useful "information" line.
 
@@ -530,7 +530,7 @@ cursor is at the first occurrence of 'cu'.  If you now type <DEL>,
 the 'u' on the search line is erased and you'll be repositioned in the
 text to the occurrence of 'c' where the search took you before you
 typed the 'u'.  This provides a useful means for backing up while you
-are searching. 
+are searching.
 
 If you are in the middle of a search and happen to type a control
 character (other than a C-s or C-r, which tell Emacs to search for the
@@ -550,7 +550,7 @@ In this tutorial we have tried to supply just enough information to
 get you started using Emacs.  There is so much available in Emacs that
 it would be impossible to explain it all here.  However, you may want
 to learn more about Emacs since it has numerous desirable features
-that you don't know about yet.  
+that you don't know about yet.
 
 
 CONCLUSION

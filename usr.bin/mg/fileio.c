@@ -1,11 +1,11 @@
-/*	$OpenBSD: fileio.c,v 1.15 2001/05/24 00:59:38 mickey Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.16 2001/05/24 03:05:22 mickey Exp $	*/
 
 /*
  *	POSIX fileio.c
  */
 #include	"def.h"
 
-static FILE    *ffp;
+static FILE	*ffp;
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -19,10 +19,10 @@ static FILE    *ffp;
  */
 int
 ffropen(fn, bp)
-	char           *fn;
-	BUFFER         *bp;
+	char	*fn;
+	BUFFER	*bp;
 {
-	struct stat     statbuf;
+	struct stat	statbuf;
 
 	if ((ffp = fopen(fn, "r")) == NULL)
 		return (FIOFNF);
@@ -125,12 +125,11 @@ ffputbuf(bp)
  */
 int
 ffgetline(buf, nbuf, nbytes)
-	char  *buf;
-	int    nbuf;
-	int   *nbytes;
+	char	*buf;
+	int	nbuf;
+	int	*nbytes;
 {
-	int    c;
-	int    i;
+	int	c, i;
 
 	i = 0;
 	while ((c = getc(ffp)) != EOF && c != '\n') {
@@ -159,12 +158,12 @@ int
 fbackupfile(fn)
 	char  *fn;
 {
-	struct stat sb;
-	int    from, to, serrno;
-	size_t nread;
-	size_t len;
-	char   buf[BUFSIZ];
-	char  *nname;
+	struct stat	sb;
+	int		from, to, serrno;
+	size_t		nread;
+	size_t		len;
+	char		buf[BUFSIZ];
+	char		*nname;
 
 	len = strlen(fn);
 	if ((nname = malloc(len + 1 + 1)) == NULL) {
@@ -220,20 +219,20 @@ fbackupfile(fn)
 #endif
 #include <pwd.h>
 #ifndef NO_DIR
-extern char    *wdir;
+extern char	*wdir;
 #endif
 
 char *
 adjustname(fn)
-	char           *fn;
+	char	*fn;
 {
-	char           *cp;
-	static char     fnb[NFILEN];
-	struct passwd  *pwent;
+	char		*cp;
+	static char	fnb[NFILEN];
+	struct passwd	*pwent;
 #ifdef	SYMBLINK
-	struct stat     statbuf;
-	int             i, j;
-	char            linkbuf[NFILEN];
+	struct stat	statbuf;
+	int		i, j;
+	char		linkbuf[NFILEN];
 #endif
 
 	switch (*fn) {
@@ -348,10 +347,10 @@ adjustname(fn)
  */
 char *
 startupfile(suffix)
-	char           *suffix;
+	char	*suffix;
 {
-	static char     file[NFILEN];
-	char           *home;
+	static char	file[NFILEN];
+	char		*home;
 
 	if ((home = getenv("HOME")) == NULL || *home == '\0')
 		goto nohome;
@@ -393,11 +392,11 @@ nohome:
 
 int
 copy(frname, toname)
-	char   *frname;
-	char   *toname;
+	char	*frname;
+	char	*toname;
 {
-	pid_t   pid;
-	int     status;
+	pid_t	pid;
+	int	status;
 
 	if ((pid = vfork())) {
 		if (pid == -1)
@@ -411,11 +410,11 @@ copy(frname, toname)
 
 BUFFER *
 dired_(dirname)
-	char   *dirname;
+	char	*dirname;
 {
-	BUFFER *bp;
-	FILE   *dirpipe;
-	char    line[256];
+	BUFFER	*bp;
+	FILE	*dirpipe;
+	char	line[256];
 	int	len;
 
 	if ((dirname = adjustname(dirname)) == NULL) {
@@ -480,8 +479,8 @@ d_makename(lp, fn)
 #endif				/* NO_DIRED */
 
 struct filelist {
-	LIST            fl_l;
-	char            fl_name[NFILEN + 2];
+	LIST	fl_l;
+	char	fl_name[NFILEN + 2];
 };
 
 /*
@@ -490,17 +489,17 @@ struct filelist {
 
 LIST *
 make_file_list(buf)
-	char           *buf;
+	char	*buf;
 {
-	char           *dir, *file, *cp;
-	int             len, preflen;
-	DIR	       *dirp;
-	struct dirent  *dent;
-	LIST           *last;
+	char		*dir, *file, *cp;
+	int		len, preflen;
+	DIR		*dirp;
+	struct dirent	*dent;
+	LIST		*last;
 	struct filelist *current;
-	char            prefixx[NFILEN + 1];
-	struct stat     statbuf;
-	char            statname[NFILEN + 2];
+	char		prefixx[NFILEN + 1];
+	struct stat	statbuf;
+	char		statname[NFILEN + 2];
 
 	/*
 	 * We need three different strings: dir - the name of the directory

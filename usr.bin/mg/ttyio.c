@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttyio.c,v 1.15 2001/05/23 22:20:36 art Exp $	*/
+/*	$OpenBSD: ttyio.c,v 1.16 2001/05/24 03:05:27 mickey Exp $	*/
 
 /*
  * POSIX terminal I/O.
@@ -40,7 +40,7 @@ ttopen()
 {
 
 	if (!isatty(STDIN_FILENO) || !isatty(STDOUT_FILENO))
-		panic("standard input and output must be a terminal");  
+		panic("standard input and output must be a terminal");
 
 	if (ttraw() == FALSE)
 		panic("aborting due to terminal initialize failure");
@@ -223,7 +223,7 @@ ttwait(int msec)
 	fd_set		readfds;
 	struct timeval	tmout;
 
-	FD_ZERO(&readfds);   
+	FD_ZERO(&readfds);
 	FD_SET(0, &readfds);
 
 	tmout.tv_sec = msec/1000;

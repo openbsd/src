@@ -1,13 +1,13 @@
-/*	$OpenBSD: match.c,v 1.6 2001/05/23 22:20:36 art Exp $	*/
+/*	$OpenBSD: match.c,v 1.7 2001/05/24 03:05:24 mickey Exp $	*/
 
 /*
  *	Limited parenthesis matching routines
  *
- * The hacks in this file implement automatic matching * of (), [], {}, and 
- * other characters.  It would be better to have a full-blown syntax table, 
+ * The hacks in this file implement automatic matching * of (), [], {}, and
+ * other characters.  It would be better to have a full-blown syntax table,
  * but there's enough overhead in the editor as it is.
  *
- * Since I often edit Scribe code, I've made it possible to blink arbitrary 
+ * Since I often edit Scribe code, I've made it possible to blink arbitrary
  * characters -- just bind delimiter characters to "blink-matching-paren-hack"
  */
 
@@ -45,7 +45,7 @@ static struct balance {
 };
 
 /*
- * Hack to show matching paren.  Self-insert character, then show matching 
+ * Hack to show matching paren.  Self-insert character, then show matching
  * character, if any.  Bound to "blink-matching-paren-command".
  */
 int
@@ -81,7 +81,7 @@ balance()
 	int	 cbo;
 	int	 c;
 	int	 i;
-	int	 rbal; 
+	int	 rbal;
 	int	 lbal;
 	int	 depth;
 
@@ -140,8 +140,8 @@ balance()
 
 
 /*
- * Display matching character.  Matching characters that are not in the 
- * current window are displayed in the echo line. If in the current window, 
+ * Display matching character.  Matching characters that are not in the
+ * current window are displayed in the echo line. If in the current window,
  * move dot to the matching character, sit there a while, then move back.
  */
 
@@ -163,7 +163,7 @@ displaymatch(clp, cbo)
 	 * searching from the top of the window to dot.
 	 */
 	inwindow = FALSE;
-	for (tlp = curwp->w_linep; tlp != lforw(curwp->w_dotp); 
+	for (tlp = curwp->w_linep; tlp != lforw(curwp->w_dotp);
 	    tlp = lforw(tlp))
 		if (tlp == clp)
 			inwindow = TRUE;

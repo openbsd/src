@@ -1,25 +1,25 @@
-/*	$OpenBSD: line.c,v 1.7 2001/05/23 22:36:14 art Exp $	*/
+/*	$OpenBSD: line.c,v 1.8 2001/05/24 03:05:23 mickey Exp $	*/
 
 /*
  *		Text line handling.
- * 
+ *
  * The functions in this file are a general set of line management
- * utilities. They are the only routines that touch the text. They 
- * also touch the buffer and window structures to make sure that the 
- * necessary updating gets done.  There are routines in this file that 
+ * utilities. They are the only routines that touch the text. They
+ * also touch the buffer and window structures to make sure that the
+ * necessary updating gets done.  There are routines in this file that
  * handle the kill buffer too.  It isn't here for any good reason.
  *
- * Note that this code only updates the dot and mark values in the window 
- * list.  Since all the code acts on the current window, the buffer that 
- * we are editing must be displayed, which means that "b_nwnd" is non-zero, 
- * which means that the dot and mark values in the buffer headers are 
+ * Note that this code only updates the dot and mark values in the window
+ * list.  Since all the code acts on the current window, the buffer that
+ * we are editing must be displayed, which means that "b_nwnd" is non-zero,
+ * which means that the dot and mark values in the buffer headers are
  * nonsense.
  */
 
 #include "def.h"
 
 /*
- * The number of bytes member from the start of the structure type should be 
+ * The number of bytes member from the start of the structure type should be
  * computed at compile time.
  */
 
@@ -46,7 +46,7 @@ static int	 kgrow		__P((int));
  * This routine allocates a block of memory large enough to hold a LINE
  * containing "used" characters. The block is rounded up to whatever
  * needs to be allocated. (use lallocx for lines likely to grow.)
- * Return a pointer to the new block, or NULL if there isn't any memory 
+ * Return a pointer to the new block, or NULL if there isn't any memory
  * left. Print a message in the message line if no space.
  */
 LINE *
@@ -91,8 +91,8 @@ lallocx(used)
 
 /*
  * Delete line "lp".  Fix all of the links that might point to it (they are
- * moved to offset 0 of the next line.  Unlink the line from whatever buffer 
- * it might be in, and release the memory.  The buffers are updated too; the 
+ * moved to offset 0 of the next line.  Unlink the line from whatever buffer
+ * it might be in, and release the memory.  The buffers are updated too; the
  * magic conditions described in the above comments don't hold here.
  */
 void
@@ -132,10 +132,10 @@ lfree(lp)
 }
 
 /*
- * This routine is called when a character changes in place in the current 
- * buffer. It updates all of the required flags in the buffer and window 
- * system. The flag used is passed as an argument; if the buffer is being 
- * displayed in more than 1 window we change EDIT to HARD. Set MODE if the 
+ * This routine is called when a character changes in place in the current
+ * buffer. It updates all of the required flags in the buffer and window
+ * system. The flag used is passed as an argument; if the buffer is being
+ * displayed in more than 1 window we change EDIT to HARD. Set MODE if the
  * mode line needs to be updated (the "*" has to be set).
  */
 void
@@ -159,10 +159,10 @@ lchange(flag)
 }
 
 /*
- * Insert "n" copies of the character "c" at the current location of dot. 
- * In the easy case all that happens is the text is stored in the line.  
- * In the hard case, the line has to be reallocated.  When the window list 
- * is updated, take special care; I screwed it up once.  You always update 
+ * Insert "n" copies of the character "c" at the current location of dot.
+ * In the easy case all that happens is the text is stored in the line.
+ * In the hard case, the line has to be reallocated.  When the window list
+ * is updated, take special care; I screwed it up once.  You always update
  * dot in the current window.  You update mark and a dot in another window
  * if it is greater than the place where you did the insert. Return TRUE
  * if all is well, and FALSE on errors.
@@ -269,7 +269,7 @@ linsert(n, c)
 }
 
 /*
- * Insert a newline into the buffer at the current location of dot in the 
+ * Insert a newline into the buffer at the current location of dot in the
  * current window.  The funny ass-backwards way is no longer used.
  */
 int
@@ -328,10 +328,10 @@ lnewline()
 }
 
 /*
- * This function deletes "n" bytes, starting at dot. It understands how to 
- * deal with end of lines, etc.  It returns TRUE if all of the characters 
- * were deleted, and FALSE if they were not (because dot ran into the end 
- * of the buffer.  The "kflag" indicates either no insertion, or direction 
+ * This function deletes "n" bytes, starting at dot. It understands how to
+ * deal with end of lines, etc.  It returns TRUE if all of the characters
+ * were deleted, and FALSE if they were not (because dot ran into the end
+ * of the buffer.  The "kflag" indicates either no insertion, or direction
  * of insertion into the kill buffer.
  */
 int
@@ -368,7 +368,7 @@ ldelete(n, kflag)
 				/* End of buffer */
 				return FALSE;
 			lchange(WFHARD);
-			if (ldelnewline() == FALSE || 
+			if (ldelnewline() == FALSE ||
 			    (kflag != KNONE && kinsert('\n', kflag) == FALSE))
 				return FALSE;
 			--n;
@@ -415,12 +415,12 @@ ldelete(n, kflag)
 }
 
 /*
- * Delete a newline and join the current line with the next line. If the next 
+ * Delete a newline and join the current line with the next line. If the next
  * line is the magic header line always return TRUE; merging the last line
- * with the header line can be thought of as always being a successful 
- * operation.  Even if nothing is done, this makes the kill buffer work 
- * "right".  Easy cases can be done by shuffling data around.  Hard cases 
- * require that lines be moved about in memory.  Return FALSE on error and 
+ * with the header line can be thought of as always being a successful
+ * operation.  Even if nothing is done, this makes the kill buffer work
+ * "right".  Easy cases can be done by shuffling data around.  Hard cases
+ * require that lines be moved about in memory.  Return FALSE on error and
  * TRUE if all looks ok.
  */
 int
@@ -484,16 +484,16 @@ ldelnewline()
 }
 
 /*
- * Replace plen characters before dot with argument string.  Control-J 
- * characters in st are interpreted as newlines.  There is a casehack 
- * disable flag (normally it likes to match case of replacement to what 
+ * Replace plen characters before dot with argument string.  Control-J
+ * characters in st are interpreted as newlines.  There is a casehack
+ * disable flag (normally it likes to match case of replacement to what
  * was there).
  */
 int
 lreplace(plen, st, f)
-	RSIZE  plen;	/* length to remove		 */
-	char  *st;	/* replacement string		 */
-	int    f;	/* case hack disable		 */
+	RSIZE	plen;	/* length to remove		 */
+	char	*st;	/* replacement string		 */
+	int	f;	/* case hack disable		 */
 {
 	RSIZE	rlen;	/* replacement length		 */
 	int	rtype;	/* capitalization		 */
@@ -501,8 +501,8 @@ lreplace(plen, st, f)
 	int	doto;	/* offset into line		 */
 
 	/*
-	 * Find the capitalization of the word that was found.  f says use 
-	 * exact case of replacement string (same thing that happens with 
+	 * Find the capitalization of the word that was found.  f says use
+	 * exact case of replacement string (same thing that happens with
 	 * lowercase found), so bypass check.
 	 */
 	/* NOSTRICT */
@@ -563,8 +563,8 @@ lreplace(plen, st, f)
 }
 
 /*
- * Delete all of the text saved in the kill buffer.  Called by commands when 
- * a new kill context is created. The kill buffer array is released, just in 
+ * Delete all of the text saved in the kill buffer.  Called by commands when
+ * a new kill context is created. The kill buffer array is released, just in
  * case the buffer has grown to an immense size.  No errors.
  */
 void
@@ -578,10 +578,10 @@ kdelete()
 }
 
 /*
- * Insert a character to the kill buffer, enlarging the buffer if there 
- * isn't any room. Always grow the buffer in chunks, on the assumption 
- * that if you put something in the kill buffer you are going to put more 
- * stuff there too later. Return TRUE if all is well, and FALSE on errors. 
+ * Insert a character to the kill buffer, enlarging the buffer if there
+ * isn't any room. Always grow the buffer in chunks, on the assumption
+ * that if you put something in the kill buffer you are going to put more
+ * stuff there too later. Return TRUE if all is well, and FALSE on errors.
  * Print a message on errors.  Dir says whether to put it at back or front.
  */
 int
@@ -633,8 +633,8 @@ kgrow(back)
 }
 
 /*
- * This function gets characters from the kill buffer. If the character 
- * index "n" is off the end, it returns "-1". This lets the caller just 
+ * This function gets characters from the kill buffer. If the character
+ * index "n" is off the end, it returns "-1". This lets the caller just
  * scan along until it gets a "-1" back.
  */
 int
