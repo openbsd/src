@@ -1,4 +1,4 @@
-/* $OpenBSD: aztech.c,v 1.3 2002/01/02 19:36:51 mickey Exp $ */
+/* $OpenBSD: aztech.c,v 1.4 2002/01/23 20:30:38 mickey Exp $ */
 /* $RuOBSD: aztech.c,v 1.11 2001/10/20 13:23:47 pva Exp $ */
 
 /*
@@ -31,10 +31,10 @@
 
 /*
  * Sanyo LM7001J Direct PLL Frequency Synthesizer:
- *     ??? See http://www.redsword.com/tjacobs/geeb/fmcard.htm
+ *	??? See http://www.redsword.com/tjacobs/geeb/fmcard.htm
  *
  * Philips TEA5712T AM/FM Stereo DTS Radio:
- *     http://www.semiconductors.philips.com/pip/TEA5712
+ *	http://www.semiconductors.philips.com/pip/TEA5712
  */
 
 #include <sys/param.h>
@@ -59,10 +59,14 @@
 #define VOLUME_RATIO(x)	(255 * x / MAX_VOL)
 
 #define AZ_BASE_VALID(x)	((x == 0x350) || (x == 0x358))
-#define AZTECH_CAPABILITIES	RADIO_CAPS_DETECT_STEREO | 		\
-				RADIO_CAPS_DETECT_SIGNAL | 		\
-				RADIO_CAPS_SET_MONO | 			\
+#define AZTECH_CAPABILITIES	RADIO_CAPS_DETECT_STEREO |		\
+				RADIO_CAPS_DETECT_SIGNAL |		\
+				RADIO_CAPS_SET_MONO |			\
 				RADIO_CAPS_REFERENCE_FREQ
+
+
+#define AZTECH_STEREO	(1 << 0)
+#define AZTECH_SIGNAL	(1 << 1)
 
 #define	AZ_WREN_ON	(1 << 1)
 #define	AZ_WREN_OFF	(0 << 1)
@@ -225,7 +229,14 @@ az_set_freq(struct az_softc *sc, u_int32_t nfreq)
 u_int8_t
 az_state(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
-	return (3 ^ bus_space_read_1(iot, ioh, 0)) & 3;
+	u_int8_t info = 0, portdata;
+
+	portdata = bus_space_read_1(iot, ioh, 0);
+
+	info |= portdata & AZTECH_STEREO ? 0 : RADIO_INFO_STEREO;
+	info |= portdata & AZTECH_SIGNAL ? 0 : RADIO_INFO_SIGNAL;
+
+	return info;
 }
 
 /*
@@ -266,7 +277,7 @@ u_int
 az_find(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
 	struct az_softc sc;
-	u_int i, scanres = 0;
+	u_int i;
 
 	sc.lm.iot = iot;
 	sc.lm.ioh = ioh;
@@ -288,12 +299,13 @@ az_find(bus_space_tag_t iot, bus_space_handle_t ioh)
 	 * Scan whole FM range. If there is a card it'll
 	 * respond on some frequency.
 	 */
-	for (i = MIN_FM_FREQ; !scanres && i < MAX_FM_FREQ; i += 10) {
+	for (i = MIN_FM_FREQ; i < MAX_FM_FREQ; i += 10) {
 		az_set_freq(&sc, i);
-		scanres += 3 - az_state(iot, ioh);
+		if (az_state(iot, ioh))
+			return 1;
 	}
 
-	return scanres;
+	return 0;
 }
 
 void
