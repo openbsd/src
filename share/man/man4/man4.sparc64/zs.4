@@ -1,0 +1,65 @@
+.\"	$OpenBSD: zs.4,v 1.1 2001/10/08 22:37:11 miod Exp $
+.\"
+.\" Copyright (c) 1998 The OpenBSD Project
+.\" All rights reserved.
+.\"
+.\"
+.Dd March 4, 1998
+.Dt ZS 4 sparc64
+.Os
+.Sh NAME
+.Nm zs
+.Nd Zilog 8530 (ZSCC) serial communications driver
+.Sh SYNOPSIS
+.Cd "zs* at sbus? slot ? offset ?"
+.Cd "zstty* at zs? channel ?"
+.Sh DESCRIPTION
+The
+.Nm
+is a Zilog 8530 serial interface chip used in SBus-based ULTRAsparc
+.Tn Sun
+workstations.
+The Zilog 8530 provides two input/output channels per instance.
+Most
+.Tn Sun
+workstations include two of these interfaces.
+One of the interfaces is usually hardwired for use by the keyboard and mouse
+attached to the workstation console.
+The remaining additional
+.Nm
+interfaces provide RS-423
+and RS-232 serial ports for general purpose use.
+.Pp
+The
+.Nm
+driver supports all of the standard
+.Xr tty 4
+ioctl calls.
+The status of the DTR, RTS, CTS, and DCD signals can be queried with
+TIOCMGET command, but, due to limitations in the hardware,
+only the DTR and RTS signals can be modified with TIOCMSET, TIOCMBIC,
+and TIOCMBIS
+.Xr ioctl 2
+commands.
+.Sh BUGS
+The
+.Nm
+driver now supports cua minor devices, but with this known deficiency
+in the simultaneous outgoing/incoming aspect of the driver:
+The first outgoing connection succeeds, but second and subsequent
+connections fail, apparently due to a getty hang.
+The hung getty apparently prevents the cua device from being re-opened.
+.Sh SEE ALSO
+.Xr ioctl 2 ,
+.Xr kbd 4 ,
+.Xr ms 4 ,
+.Xr tty 4
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Bx 4.4 .
+Support for the TIOCM*
+.Xr ioctl 2 Ns s
+appeared in
+.Ox 2.3 .
