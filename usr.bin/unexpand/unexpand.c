@@ -1,4 +1,4 @@
-/*	$OpenBSD: unexpand.c,v 1.5 2002/02/16 21:27:56 millert Exp $	*/
+/*	$OpenBSD: unexpand.c,v 1.6 2003/04/05 20:30:45 deraadt Exp $	*/
 /*	$NetBSD: unexpand.c,v 1.5 1994/12/24 17:08:05 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)unexpand.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: unexpand.c,v 1.5 2002/02/16 21:27:56 millert Exp $";
+static char rcsid[] = "$OpenBSD: unexpand.c,v 1.6 2003/04/05 20:30:45 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -102,10 +102,14 @@ tabify(c)
 	char *cp, *dp;
 	int dcol;
 	int ocol;
+	size_t len;
 
 	ocol = 0;
 	dcol = 0;
-	cp = genbuf, dp = linebuf;
+	cp = genbuf;
+	dp = linebuf;
+	len = sizeof linebuf;
+
 	for (;;) {
 		switch (*cp) {
 
@@ -122,20 +126,28 @@ tabify(c)
 			while (((ocol + 8) &~ 07) <= dcol) {
 				if (ocol + 1 == dcol)
 					break;
-				*dp++ = '\t';
+				if (len > 1) {
+					*dp++ = '\t';
+					len--;
+				}
 				ocol += 8;
 				ocol &= ~07;
 			}
 			while (ocol < dcol) {
-				*dp++ = ' ';
+				if (len > 1) {
+					*dp++ = ' ';
+					len--;
+				}
 				ocol++;
 			}
 			if (*cp == 0 || c == 0) {
-				strcpy(dp, cp);
+				strlcpy(dp, cp, len);
 				return;
 			}
 			*dp++ = *cp;
-			ocol++, dcol++;
+			len--;
+			ocol++;
+			dcol++;
 		}
 		cp++;
 	}
