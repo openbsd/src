@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_cb.c,v 1.2 1996/03/03 21:07:16 niklas Exp $	*/
+/*	$OpenBSD: raw_cb.c,v 1.3 2003/05/13 02:09:47 jason Exp $	*/
 /*	$NetBSD: raw_cb.c,v 1.9 1996/02/13 22:00:39 christos Exp $	*/
 
 /*
@@ -61,6 +61,7 @@
 
 u_long	raw_sendspace = RAWSNDQ;
 u_long	raw_recvspace = RAWRCVQ;
+struct rawcbhead rawcb;
 
 /*
  * Allocate a control block and a nominal amount

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.48 2003/05/10 21:44:53 deraadt Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.49 2003/05/13 02:09:46 jason Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -105,7 +105,7 @@ void	 kputchar(int, int, struct tty *);
  * globals
  */
 
-struct	tty *constty;	/* pointer to console "window" tty */
+extern struct	tty *constty;	/* pointer to console "window" tty */
 int	consintr = 1;	/* ok to handle console interrupts? */
 extern	int log_open;	/* subr_log: is /dev/klog open? */
 const	char *panicstr; /* arg to first call to panic (used as a flag

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.65 2002/06/09 04:34:12 art Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.66 2003/05/13 02:09:46 jason Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -92,7 +92,7 @@ u_long	bufhash;
 TAILQ_HEAD(bqueues, buf) bufqueues[BQUEUES];
 int needbuffer;
 int nobuffers;
-struct bio_ops bioops;
+extern struct bio_ops bioops;
 
 /*
  * Buffer pool for I/O buffers.
