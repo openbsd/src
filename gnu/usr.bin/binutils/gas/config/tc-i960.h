@@ -1,6 +1,6 @@
 /* tc-i960.h - Basic 80960 instruction formats.
    Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1997, 1998, 1999,
-   2000
+   2000, 2002, 2003
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -62,13 +62,11 @@
 #define COFF_MAGIC				I960ROMAGIC
 #define OBJ_COFF_SECTION_HEADER_HAS_ALIGNMENT
 #define OBJ_COFF_MAX_AUXENTRIES			(2)
-#define TC_COUNT_RELOC(FIXP)			(!(FIXP)->fx_done)
-#define TC_COFF_FIX2RTYPE(FIXP)			tc_coff_fix2rtype(FIXP)
-#define TC_COFF_SIZEMACHDEP(FRAGP)		tc_coff_sizemachdep(FRAGP)
+#define TC_COUNT_RELOC(FIX)			(!(FIX)->fx_done)
+#define TC_COFF_FIX2RTYPE(FIX)			tc_coff_fix2rtype (FIX)
+#define TC_COFF_SIZEMACHDEP(FRAGP)		tc_coff_sizemachdep (FRAGP)
 #define TC_COFF_SET_MACHINE(HDRS)		tc_headers_hook (HDRS)
-extern void tc_headers_hook ();
-extern short tc_coff_fix2rtype ();
-extern int tc_coff_sizemachdep ();
+extern int tc_coff_sizemachdep PARAMS ((struct frag *));
 
 /* MEANING OF 'n_other' in the symbol record.
  *
@@ -128,54 +126,67 @@ struct relocation_info
       nuthin:1;			/* Unused				*/
   };
 
+/* No shared lib support, so we don't need to ensure externally
+   visible symbols can be overridden.  */
+#define EXTERN_FORCE_RELOC 0
+
+/* Makes no sense to use the difference of 2 arbitrary symbols
+   as the target of a call instruction.  */
+#define TC_FORCE_RELOCATION_SUB_SAME(FIX, SEG)	\
+  ((FIX)->fx_tcbit				\
+   || ! SEG_NORMAL (SEG)			\
+   || TC_FORCE_RELOCATION (FIX))
+
+/* reloc_callj() may replace a 'call' with a 'calls' or a
+   'bal', in which cases it modifies *fixP as appropriate.
+   In the case of a 'calls', no further work is required.  */
+extern int reloc_callj PARAMS ((struct fix *));
+
+#define TC_FORCE_RELOCATION_ABS(FIX)		\
+  (TC_FORCE_RELOCATION (FIX)			\
+   || reloc_callj (FIX))
+
+#define TC_FORCE_RELOCATION_LOCAL(FIX)		\
+  (!(FIX)->fx_pcrel				\
+   || (FIX)->fx_plt				\
+   || TC_FORCE_RELOCATION (FIX)		\
+   || reloc_callj (FIX))
+
 #ifdef OBJ_COFF
 
 /* We store the bal information in the sy_tc field.  */
 #define TC_SYMFIELD_TYPE symbolS *
 
-#define TC_ADJUST_RELOC_COUNT(FIXP,COUNT) \
-  { fixS *tcfixp = (FIXP); \
+#define TC_ADJUST_RELOC_COUNT(FIX,COUNT) \
+  { fixS *tcfixp = (FIX); \
     for (;tcfixp;tcfixp=tcfixp->fx_next) \
       if (tcfixp->fx_tcbit && tcfixp->fx_addsy != 0) \
-        ++(COUNT); \
+	++(COUNT); \
   }
 #endif
 
-extern int i960_validate_fix PARAMS ((struct fix *, segT, symbolS **));
-#define TC_VALIDATE_FIX(FIXP,SEGTYPE,LABEL) \
-	if (i960_validate_fix (FIXP, SEGTYPE, &add_symbolP) != 0) goto LABEL
+extern int i960_validate_fix PARAMS ((struct fix *, segT));
+#define TC_VALIDATE_FIX(FIX,SEGTYPE,LABEL) \
+	if (!i960_validate_fix (FIX, SEGTYPE)) goto LABEL
 
-#ifdef OBJ_ELF
-#define TC_RELOC_RTSYM_LOC_FIXUP(FIX)  \
-  ((FIX)->fx_addsy == NULL \
-   || (! S_IS_EXTERNAL ((FIX)->fx_addsy) \
-       && ! S_IS_WEAK ((FIX)->fx_addsy) \
-       && S_IS_DEFINED ((FIX)->fx_addsy) \
-       && ! S_IS_COMMON ((FIX)->fx_addsy)))
-#endif
+#define tc_fix_adjustable(FIX)		((FIX)->fx_bsr == 0)
 
 #ifndef OBJ_ELF
-#define tc_fix_adjustable(FIXP)		((FIXP)->fx_bsr == 0)
-/* This arranges for gas/write.c to not apply a relocation if
-   tc_fix_adjustable() says it is not adjustable.  */
-#define TC_FIX_ADJUSTABLE(fixP) tc_fix_adjustable (fixP)
+/* Values passed to md_apply_fix3 sometimes include symbol values.  */
+#define MD_APPLY_SYM_VALUE(FIX) tc_fix_adjustable (FIX)
 #else
-#define tc_fix_adjustable(FIXP)						\
-  ((FIXP)->fx_bsr == 0							\
-   && ! S_IS_EXTERNAL ((FIXP)->fx_addsy)				\
-   && ! S_IS_WEAK ((FIXP)->fx_addsy))
+/* Values passed to md_apply_fix3 don't include the symbol value.  */
+#define MD_APPLY_SYM_VALUE(FIX) 0
 #endif
 
 extern void brtab_emit PARAMS ((void));
 #define md_end()	brtab_emit ()
 
-extern void reloc_callj ();
-
 extern void tc_set_bal_of_call PARAMS ((symbolS *, symbolS *));
 
 extern struct symbol *tc_get_bal_of_call PARAMS ((symbolS *));
 
-extern void i960_handle_align ();
+extern void i960_handle_align PARAMS ((struct frag *));
 #define HANDLE_ALIGN(FRAG)	i960_handle_align (FRAG)
 #define NEED_FX_R_TYPE
 #define NO_RELOC -1

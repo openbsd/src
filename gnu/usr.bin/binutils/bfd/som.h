@@ -1,6 +1,6 @@
 /* HP PA-RISC SOM object file format:  definitions internal to BFD.
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 2000
-   Free Software Foundation, Inc.
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 2000, 2001,
+   2002 Free Software Foundation, Inc.
 
    Contributed by the Center for Software Science at the
    University of Utah (pa-gdb-bugs@cs.utah.edu).
@@ -26,6 +26,9 @@
 #define _SOM_H
 
 #include "libhppa.h"
+
+/* Enable PA2.0 if available */
+#define PA_2_0
 
 #include <a.out.h>
 #include <lst.h>
@@ -94,6 +97,10 @@ struct som_exec_data
        null pointer dereferencing is allowed and the like.  */
     long exec_flags;
 
+    /* We must preserve the version identifier too.  Some versions
+       of the HP linker do not grok NEW_VERSION_ID for reasons unknown.  */
+    unsigned int version_id;
+
     /* Add more stuff here as needed.  Good examples of information
        we might want to pass would be presumed_dp, entry_* and maybe
        others from the file header.  */
@@ -103,7 +110,7 @@ struct somdata
   {
     /* All the magic information about an executable which lives
        in the private BFD structure and needs to be copied from
-       the input bfd to the output bfd during a objcopy/strip.  */
+       the input bfd to the output bfd during an objcopy/strip.  */
     struct som_exec_data *exec_data;
 
     /* These three fields are only used when writing files and are
@@ -221,16 +228,16 @@ struct som_section_data_struct
 #define R_HPPA_END_TRY			R_END_TRY
 
 /* Exported functions, mostly for use by GAS.  */
-boolean bfd_som_set_section_attributes PARAMS ((asection *, int, int,
-						unsigned int, int));
-boolean bfd_som_set_subsection_attributes PARAMS ((asection *, asection *,
-						   int, unsigned int, int));
+bfd_boolean bfd_som_set_section_attributes
+  PARAMS ((asection *, int, int, unsigned int, int));
+bfd_boolean bfd_som_set_subsection_attributes
+  PARAMS ((asection *, asection *, int, unsigned int, int));
 void bfd_som_set_symbol_type PARAMS ((asymbol *, unsigned int));
-boolean bfd_som_attach_aux_hdr PARAMS ((bfd *, int, char *));
+bfd_boolean bfd_som_attach_aux_hdr PARAMS ((bfd *, int, char *));
 int ** hppa_som_gen_reloc_type
   PARAMS ((bfd *, int, int, enum hppa_reloc_field_selector_type_alt,
 	   int, asymbol *));
-boolean bfd_som_attach_compilation_unit
+bfd_boolean bfd_som_attach_compilation_unit
   PARAMS ((bfd *, const char *, const char *, const char *, const char *));
 
 #endif /* _SOM_H */

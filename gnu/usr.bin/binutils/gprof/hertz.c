@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1983, 1993, 2001
+ * Copyright (c) 1983, 1993
  *      The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,6 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#include "gprof.h"
 #include "hertz.h"
 
 

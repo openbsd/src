@@ -1,24 +1,25 @@
 /* NLM (NetWare Loadable Module) executable support for BFD.
-   Copyright 1993, 1994, 1995, 1998, 2000 Free Software Foundation, Inc.
+   Copyright 1993, 1994, 1995, 1998, 2000, 2001, 2002
+   Free Software Foundation, Inc.
 
    Written by Fred Fish @ Cygnus Support, using ELF support as the
    template.
 
-This file is part of BFD, the Binary File Descriptor library.
+   This file is part of BFD, the Binary File Descriptor library.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #include "bfd.h"
 #include "sysdep.h"
@@ -56,25 +57,25 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define nlm_swap_fixed_header_out(abfd,src,dst) \
   (nlm_swap_fixed_header_out_func(abfd)) (abfd,src,dst)
 
-/* Forward declarations of static functions */
+/* Forward declarations of static functions.  */
 
-static boolean add_bfd_section
+static bfd_boolean add_bfd_section
   PARAMS ((bfd *, char *, file_ptr, bfd_size_type, flagword));
-static boolean nlm_swap_variable_header_in
+static bfd_boolean nlm_swap_variable_header_in
   PARAMS ((bfd *));
-static boolean nlm_swap_variable_header_out
+static bfd_boolean nlm_swap_variable_header_out
   PARAMS ((bfd *));
-static boolean find_nonzero
+static bfd_boolean find_nonzero
   PARAMS ((PTR, size_t));
-static boolean nlm_swap_auxiliary_headers_in
+static bfd_boolean nlm_swap_auxiliary_headers_in
   PARAMS ((bfd *));
-static boolean nlm_swap_auxiliary_headers_out
+static bfd_boolean nlm_swap_auxiliary_headers_out
   PARAMS ((bfd *));
-static boolean nlm_slurp_symbol_table
+static bfd_boolean nlm_slurp_symbol_table
   PARAMS ((bfd *));
-static boolean nlm_slurp_reloc_fixups
+static bfd_boolean nlm_slurp_reloc_fixups
   PARAMS ((bfd *));
-static boolean nlm_compute_section_file_positions
+static bfd_boolean nlm_compute_section_file_positions
   PARAMS ((bfd *));
 static int nlm_external_reloc_compare
   PARAMS ((const void *, const void *));
@@ -82,12 +83,12 @@ static int nlm_external_reloc_compare
 /* Should perhaps use put_offset, put_word, etc.  For now, the two versions
    can be handled by explicitly specifying 32 bits or "the long type".  */
 #if ARCH_SIZE == 64
-#define put_word	bfd_h_put_64
-#define get_word	bfd_h_get_64
+#define put_word	H_PUT_64
+#define get_word	H_GET_64
 #endif
 #if ARCH_SIZE == 32
-#define put_word	bfd_h_put_32
-#define get_word	bfd_h_get_32
+#define put_word	H_PUT_32
+#define get_word	H_GET_32
 #endif
 
 const bfd_target *
@@ -95,12 +96,13 @@ nlm_object_p (abfd)
      bfd *abfd;
 {
   struct nlm_obj_tdata *preserved_tdata = nlm_tdata (abfd);
-  boolean (*backend_object_p) PARAMS ((bfd *));
+  bfd_boolean (*backend_object_p) PARAMS ((bfd *));
   PTR x_fxdhdr = NULL;
   Nlm_Internal_Fixed_Header *i_fxdhdrp;
   struct nlm_obj_tdata *new_tdata = NULL;
   const char *signature;
   enum bfd_architecture arch;
+  bfd_size_type amt;
 
   /* Some NLM formats have a prefix before the standard NLM fixed
      header.  */
@@ -112,13 +114,12 @@ nlm_object_p (abfd)
     }
 
   /* Read in the fixed length portion of the NLM header in external format.  */
-
-  x_fxdhdr = (PTR) bfd_malloc ((size_t) nlm_fixed_header_size (abfd));
+  amt = nlm_fixed_header_size (abfd);
+  x_fxdhdr = (PTR) bfd_malloc (amt);
   if (x_fxdhdr == NULL)
     goto got_no_match;
 
-  if (bfd_read ((PTR) x_fxdhdr, nlm_fixed_header_size (abfd), 1, abfd) !=
-      nlm_fixed_header_size (abfd))
+  if (bfd_bread ((PTR) x_fxdhdr, amt, abfd) != amt)
     {
       if (bfd_get_error () != bfd_error_system_call)
 	goto got_wrong_format_error;
@@ -128,9 +129,8 @@ nlm_object_p (abfd)
 
   /* Allocate an instance of the nlm_obj_tdata structure and hook it up to
      the tdata pointer in the bfd.  */
-
-  new_tdata = ((struct nlm_obj_tdata *)
-	       bfd_zalloc (abfd, sizeof (struct nlm_obj_tdata)));
+  amt = sizeof (struct nlm_obj_tdata);
+  new_tdata = (struct nlm_obj_tdata *) bfd_zalloc (abfd, amt);
   if (new_tdata == NULL)
     goto got_no_match;
 
@@ -143,7 +143,6 @@ nlm_object_p (abfd)
 
   /* Check to see if we have an NLM file for this backend by matching
      the NLM signature.  */
-
   signature = nlm_signature (abfd);
   if (signature != NULL
       && *signature != '\0'
@@ -153,14 +152,12 @@ nlm_object_p (abfd)
 
   /* There's no supported way to discover the endianess of an NLM, so test for
      a sane version number after doing byte swapping appropriate for this
-     XVEC.  (Hack alert!) */
-
+     XVEC.  (Hack alert!)  */
   if (i_fxdhdrp->version > 0xFFFF)
     goto got_wrong_format_error;
 
   /* There's no supported way to check for 32 bit versus 64 bit addresses,
      so ignore this distinction for now.  (FIXME) */
-
   /* Swap in the rest of the required header.  */
   if (!nlm_swap_variable_header_in (abfd))
     {
@@ -175,7 +172,6 @@ nlm_object_p (abfd)
      additional sections described in the cygnus_ext header.
      From this point on we assume that we have an NLM, and do not
      treat errors as indicating the wrong format.  */
-
   if (!add_bfd_section (abfd, NLM_CODE_NAME,
 			i_fxdhdrp->codeImageOffset,
 			i_fxdhdrp->codeImageSize,
@@ -225,7 +221,7 @@ got_no_match:
 
 /* Add a section to the bfd.  */
 
-static boolean
+static bfd_boolean
 add_bfd_section (abfd, name, offset, size, flags)
      bfd *abfd;
      char *name;
@@ -237,157 +233,143 @@ add_bfd_section (abfd, name, offset, size, flags)
 
   newsect = bfd_make_section (abfd, name);
   if (newsect == NULL)
-    {
-      return (false);
-    }
+    return FALSE;
+
   newsect->vma = 0;		/* NLM's are relocatable.  */
   newsect->_raw_size = size;
   newsect->filepos = offset;
   newsect->flags = flags;
-  newsect->alignment_power = bfd_log2 (0);	/* FIXME */
-  return (true);
+  newsect->alignment_power = bfd_log2 ((bfd_vma) 0);	/* FIXME */
+
+  return TRUE;
 }
 
 /* Read and swap in the variable length header.  All the fields must
    exist in the NLM, and must exist in the order they are read here.  */
 
-static boolean
+static bfd_boolean
 nlm_swap_variable_header_in (abfd)
      bfd *abfd;
 {
   unsigned char temp[NLM_TARGET_LONG_SIZE];
+  bfd_size_type amt;
 
   /* Read the description length and text members.  */
 
-  if (bfd_read ((PTR) & nlm_variable_header (abfd)->descriptionLength,
-		sizeof (nlm_variable_header (abfd)->descriptionLength),
-		1, abfd) !=
-      sizeof (nlm_variable_header (abfd)->descriptionLength))
-    return (false);
-  if (bfd_read ((PTR) nlm_variable_header (abfd)->descriptionText,
-		nlm_variable_header (abfd)->descriptionLength + 1,
-		1, abfd) !=
-      (bfd_size_type) nlm_variable_header (abfd)->descriptionLength + 1)
-    return (false);
+  amt = sizeof (nlm_variable_header (abfd)->descriptionLength);
+  if (bfd_bread ((PTR) &nlm_variable_header (abfd)->descriptionLength,
+		amt, abfd) != amt)
+    return FALSE;
+  amt = nlm_variable_header (abfd)->descriptionLength + 1;
+  if (bfd_bread ((PTR) nlm_variable_header (abfd)->descriptionText,
+		amt, abfd) != amt)
+    return FALSE;
 
   /* Read and convert the stackSize field.  */
 
-  if (bfd_read ((PTR) temp, sizeof (temp), 1, abfd) != sizeof (temp))
-    return (false);
+  amt = sizeof (temp);
+  if (bfd_bread ((PTR) temp, amt, abfd) != amt)
+    return FALSE;
   nlm_variable_header (abfd)->stackSize = get_word (abfd, (bfd_byte *) temp);
 
   /* Read and convert the reserved field.  */
 
-  if (bfd_read ((PTR) temp, sizeof (temp), 1, abfd) != sizeof (temp))
-    return (false);
+  amt = sizeof (temp);
+  if (bfd_bread ((PTR) temp, amt, abfd) != amt)
+    return FALSE;
   nlm_variable_header (abfd)->reserved = get_word (abfd, (bfd_byte *) temp);
 
   /* Read the oldThreadName field.  This field is a fixed length string.  */
 
-  if (bfd_read ((PTR) nlm_variable_header (abfd)->oldThreadName,
-		sizeof (nlm_variable_header (abfd)->oldThreadName),
-		1, abfd) !=
-      sizeof (nlm_variable_header (abfd)->oldThreadName))
-    return (false);
+  amt = sizeof (nlm_variable_header (abfd)->oldThreadName);
+  if (bfd_bread ((PTR) nlm_variable_header (abfd)->oldThreadName,
+		amt, abfd) != amt)
+    return FALSE;
 
   /* Read the screen name length and text members.  */
 
-  if (bfd_read ((PTR) & nlm_variable_header (abfd)->screenNameLength,
-		sizeof (nlm_variable_header (abfd)->screenNameLength),
-		1, abfd) !=
-      sizeof (nlm_variable_header (abfd)->screenNameLength))
-    return (false);
-  if (bfd_read ((PTR) nlm_variable_header (abfd)->screenName,
-		nlm_variable_header (abfd)->screenNameLength + 1,
-		1, abfd) !=
-      (bfd_size_type) nlm_variable_header (abfd)->screenNameLength + 1)
-    return (false);
+  amt = sizeof (nlm_variable_header (abfd)->screenNameLength);
+  if (bfd_bread ((PTR) & nlm_variable_header (abfd)->screenNameLength,
+		amt, abfd) != amt)
+    return FALSE;
+  amt = nlm_variable_header (abfd)->screenNameLength + 1;
+  if (bfd_bread ((PTR) nlm_variable_header (abfd)->screenName,
+		amt, abfd) != amt)
+    return FALSE;
 
   /* Read the thread name length and text members.  */
 
-  if (bfd_read ((PTR) & nlm_variable_header (abfd)->threadNameLength,
-		sizeof (nlm_variable_header (abfd)->threadNameLength),
-		1, abfd) !=
-      sizeof (nlm_variable_header (abfd)->threadNameLength))
-    return (false);
-  if (bfd_read ((PTR) nlm_variable_header (abfd)->threadName,
-		nlm_variable_header (abfd)->threadNameLength + 1,
-		1, abfd) !=
-      (bfd_size_type) nlm_variable_header (abfd)->threadNameLength + 1)
-    return (false);
-  return (true);
+  amt = sizeof (nlm_variable_header (abfd)->threadNameLength);
+  if (bfd_bread ((PTR) & nlm_variable_header (abfd)->threadNameLength,
+		amt, abfd) != amt)
+    return FALSE;
+  amt = nlm_variable_header (abfd)->threadNameLength + 1;
+  if (bfd_bread ((PTR) nlm_variable_header (abfd)->threadName,
+		amt, abfd) != amt)
+    return FALSE;
+  return TRUE;
 }
 
 /* Swap and write out the variable length header.  All the fields must
    exist in the NLM, and must exist in this order.  */
 
-static boolean
+static bfd_boolean
 nlm_swap_variable_header_out (abfd)
      bfd *abfd;
 {
   unsigned char temp[NLM_TARGET_LONG_SIZE];
+  bfd_size_type amt;
 
   /* Write the description length and text members.  */
-
-  if (bfd_write ((PTR) & nlm_variable_header (abfd)->descriptionLength,
-		 sizeof (nlm_variable_header (abfd)->descriptionLength),
-		 1, abfd) !=
-      sizeof (nlm_variable_header (abfd)->descriptionLength))
-    return (false);
-  if (bfd_write ((PTR) nlm_variable_header (abfd)->descriptionText,
-		 nlm_variable_header (abfd)->descriptionLength + 1,
-		 1, abfd) !=
-      (bfd_size_type) nlm_variable_header (abfd)->descriptionLength + 1)
-    return (false);
+  amt = sizeof (nlm_variable_header (abfd)->descriptionLength);
+  if (bfd_bwrite ((PTR) & nlm_variable_header (abfd)->descriptionLength, amt,
+		 abfd) != amt)
+    return FALSE;
+  amt = nlm_variable_header (abfd)->descriptionLength + 1;
+  if (bfd_bwrite ((PTR) nlm_variable_header (abfd)->descriptionText, amt,
+		 abfd) != amt)
+    return FALSE;
 
   /* Convert and write the stackSize field.  */
-
   put_word (abfd, (bfd_vma) nlm_variable_header (abfd)->stackSize,
 	    (bfd_byte *) temp);
-  if (bfd_write ((PTR) temp, sizeof (temp), 1, abfd) != sizeof (temp))
-    return (false);
+  amt = sizeof (temp);
+  if (bfd_bwrite ((PTR) temp, amt, abfd) != amt)
+    return FALSE;
 
   /* Convert and write the reserved field.  */
-
   put_word (abfd, (bfd_vma) nlm_variable_header (abfd)->reserved,
 	    (bfd_byte *) temp);
-  if (bfd_write ((PTR) temp, sizeof (temp), 1, abfd) != sizeof (temp))
-    return (false);
+  amt = sizeof (temp);
+  if (bfd_bwrite ((PTR) temp, amt, abfd) != amt)
+    return FALSE;
 
   /* Write the oldThreadName field.  This field is a fixed length string.  */
-
-  if (bfd_write ((PTR) nlm_variable_header (abfd)->oldThreadName,
-		 sizeof (nlm_variable_header (abfd)->oldThreadName),
-		 1, abfd) !=
-      sizeof (nlm_variable_header (abfd)->oldThreadName))
-    return (false);
+  amt = sizeof (nlm_variable_header (abfd)->oldThreadName);
+  if (bfd_bwrite ((PTR) nlm_variable_header (abfd)->oldThreadName, amt,
+		 abfd) != amt)
+    return FALSE;
 
   /* Write the screen name length and text members.  */
-
-  if (bfd_write ((PTR) & nlm_variable_header (abfd)->screenNameLength,
-		 sizeof (nlm_variable_header (abfd)->screenNameLength),
-		 1, abfd) !=
-      sizeof (nlm_variable_header (abfd)->screenNameLength))
-    return (false);
-  if (bfd_write ((PTR) nlm_variable_header (abfd)->screenName,
-		 nlm_variable_header (abfd)->screenNameLength + 1,
-		 1, abfd) !=
-      (bfd_size_type) nlm_variable_header (abfd)->screenNameLength + 1)
-    return (false);
+  amt = sizeof (nlm_variable_header (abfd)->screenNameLength);
+  if (bfd_bwrite ((PTR) & nlm_variable_header (abfd)->screenNameLength, amt,
+		 abfd) != amt)
+    return FALSE;
+  amt = nlm_variable_header (abfd)->screenNameLength + 1;
+  if (bfd_bwrite ((PTR) nlm_variable_header (abfd)->screenName, amt,
+		 abfd) != amt)
+    return FALSE;
 
   /* Write the thread name length and text members.  */
-
-  if (bfd_write ((PTR) & nlm_variable_header (abfd)->threadNameLength,
-		 sizeof (nlm_variable_header (abfd)->threadNameLength),
-		 1, abfd) !=
-      sizeof (nlm_variable_header (abfd)->threadNameLength))
-    return (false);
-  if (bfd_write ((PTR) nlm_variable_header (abfd)->threadName,
-		 nlm_variable_header (abfd)->threadNameLength + 1,
-		 1, abfd) !=
-      (bfd_size_type) nlm_variable_header (abfd)->threadNameLength + 1)
-    return (false);
-  return (true);
+  amt = sizeof (nlm_variable_header (abfd)->threadNameLength);
+  if (bfd_bwrite ((PTR) & nlm_variable_header (abfd)->threadNameLength, amt,
+		 abfd) != amt)
+    return FALSE;
+  amt = nlm_variable_header (abfd)->threadNameLength + 1;
+  if (bfd_bwrite ((PTR) nlm_variable_header (abfd)->threadName, amt,
+		 abfd) != amt)
+    return FALSE;
+  return TRUE;
 }
 
 /* Read and swap in the contents of all the auxiliary headers.  Because of
@@ -399,26 +381,29 @@ nlm_swap_variable_header_out (abfd)
    of auxiliary header added will break all existing tools that don't
    recognize it.  */
 
-static boolean
+static bfd_boolean
 nlm_swap_auxiliary_headers_in (abfd)
      bfd *abfd;
 {
   char tempstr[16];
-  long position;
+  file_ptr position;
+  bfd_size_type amt;
 
   for (;;)
     {
       position = bfd_tell (abfd);
-      if (bfd_read ((PTR) tempstr, sizeof (tempstr), 1, abfd) !=
-	  sizeof (tempstr))
-	return (false);
-      if (bfd_seek (abfd, position, SEEK_SET) == -1)
-	return (false);
+      amt = sizeof (tempstr);
+      if (bfd_bread ((PTR) tempstr, amt, abfd) != amt)
+	return FALSE;
+      if (bfd_seek (abfd, position, SEEK_SET) != 0)
+	return FALSE;
       if (strncmp (tempstr, "VeRsIoN#", 8) == 0)
 	{
 	  Nlm_External_Version_Header thdr;
-	  if (bfd_read ((PTR) & thdr, sizeof (thdr), 1, abfd) != sizeof (thdr))
-	    return (false);
+
+	  amt = sizeof (thdr);
+	  if (bfd_bread ((PTR) &thdr, amt, abfd) != amt)
+	    return FALSE;
 	  memcpy (nlm_version_header (abfd)->stamp, thdr.stamp,
 		  sizeof (thdr.stamp));
 	  nlm_version_header (abfd)->majorVersion =
@@ -437,8 +422,10 @@ nlm_swap_auxiliary_headers_in (abfd)
       else if (strncmp (tempstr, "MeSsAgEs", 8) == 0)
 	{
 	  Nlm_External_Extended_Header thdr;
-	  if (bfd_read ((PTR) & thdr, sizeof (thdr), 1, abfd) != sizeof (thdr))
-	    return (false);
+
+	  amt = sizeof (thdr);
+	  if (bfd_bread ((PTR) &thdr, amt, abfd) != amt)
+	    return FALSE;
 	  memcpy (nlm_extended_header (abfd)->stamp, thdr.stamp,
 		  sizeof (thdr.stamp));
 	  nlm_extended_header (abfd)->languageID =
@@ -502,22 +489,19 @@ nlm_swap_auxiliary_headers_in (abfd)
 	}
       else if (strncmp (tempstr, "CoPyRiGhT=", 10) == 0)
 	{
-	  if (bfd_read ((PTR) nlm_copyright_header (abfd)->stamp,
-			sizeof (nlm_copyright_header (abfd)->stamp),
-			1, abfd)
-	      != sizeof (nlm_copyright_header (abfd)->stamp))
-	    return (false);
-	  if (bfd_read ((PTR) & (nlm_copyright_header (abfd)
-				 ->copyrightMessageLength),
-			1, 1, abfd) != 1)
-	    return (false);
+	  amt = sizeof (nlm_copyright_header (abfd)->stamp);
+	  if (bfd_bread ((PTR) nlm_copyright_header (abfd)->stamp,
+			amt, abfd) != amt)
+	    return FALSE;
+	  if (bfd_bread ((PTR) &(nlm_copyright_header (abfd)
+				->copyrightMessageLength),
+			(bfd_size_type) 1, abfd) != 1)
+	    return FALSE;
 	  /* The copyright message is a variable length string.  */
-	  if (bfd_read ((PTR) nlm_copyright_header (abfd)->copyrightMessage,
-		    nlm_copyright_header (abfd)->copyrightMessageLength + 1,
-			1, abfd) !=
-	      ((bfd_size_type)
-	       nlm_copyright_header (abfd)->copyrightMessageLength + 1))
-	    return (false);
+	  amt = nlm_copyright_header (abfd)->copyrightMessageLength + 1;
+	  if (bfd_bread ((PTR) nlm_copyright_header (abfd)->copyrightMessage,
+			amt, abfd) != amt)
+	    return FALSE;
 	}
       else if (strncmp (tempstr, "CuStHeAd", 8) == 0)
 	{
@@ -529,42 +513,40 @@ nlm_swap_auxiliary_headers_in (abfd)
 	  PTR hdr;
 
 	  /* Read the stamp ("CuStHeAd").  */
-	  if (bfd_read ((PTR) thdr.stamp, 1, sizeof (thdr.stamp), abfd)
-	      != sizeof (thdr.stamp))
-	    return false;
+	  amt = sizeof (thdr.stamp);
+	  if (bfd_bread ((PTR) thdr.stamp, amt, abfd) != amt)
+	    return FALSE;
 	  /* Read the length of this custom header.  */
-	  if (bfd_read ((PTR) thdr.length, 1, sizeof (thdr.length), abfd)
-	      != sizeof (thdr.length))
-	    return false;
+	  amt = sizeof (thdr.length);
+	  if (bfd_bread ((PTR) thdr.length, amt, abfd) != amt)
+	    return FALSE;
 	  hdrLength = get_word (abfd, (bfd_byte *) thdr.length);
 	  /* Read further fields if we have them.  */
 	  if (hdrLength < NLM_TARGET_LONG_SIZE)
 	    dataOffset = 0;
 	  else
 	    {
-	      if (bfd_read ((PTR) thdr.dataOffset, 1,
-			    sizeof (thdr.dataOffset), abfd)
-		  != sizeof (thdr.dataOffset))
-		return false;
+	      amt = sizeof (thdr.dataOffset);
+	      if (bfd_bread ((PTR) thdr.dataOffset, amt, abfd) != amt)
+		return FALSE;
 	      dataOffset = get_word (abfd, (bfd_byte *) thdr.dataOffset);
 	    }
 	  if (hdrLength < 2 * NLM_TARGET_LONG_SIZE)
 	    dataLength = 0;
 	  else
 	    {
-	      if (bfd_read ((PTR) thdr.dataLength, 1,
-			    sizeof (thdr.dataLength), abfd)
-		  != sizeof (thdr.dataLength))
-		return false;
+	      amt = sizeof (thdr.dataLength);
+	      if (bfd_bread ((PTR) thdr.dataLength, amt, abfd) != amt)
+		return FALSE;
 	      dataLength = get_word (abfd, (bfd_byte *) thdr.dataLength);
 	    }
 	  if (hdrLength < 2 * NLM_TARGET_LONG_SIZE + 8)
 	    memset (dataStamp, 0, sizeof (dataStamp));
 	  else
 	    {
-	      if (bfd_read ((PTR) dataStamp, 1, sizeof (dataStamp), abfd)
-		  != sizeof (dataStamp))
-		return false;
+	      amt = sizeof (dataStamp);
+	      if (bfd_bread ((PTR) dataStamp, amt, abfd) != amt)
+		return FALSE;
 	    }
 
 	  /* Read the rest of the header, if any.  */
@@ -578,9 +560,9 @@ nlm_swap_auxiliary_headers_in (abfd)
 	      hdrLength -= 2 * NLM_TARGET_LONG_SIZE + 8;
 	      hdr = bfd_alloc (abfd, hdrLength);
 	      if (hdr == NULL)
-		return false;
-	      if (bfd_read (hdr, 1, hdrLength, abfd) != hdrLength)
-		return false;
+		return FALSE;
+	      if (bfd_bread (hdr, hdrLength, abfd) != hdrLength)
+		return FALSE;
 	    }
 
 	  /* If we have found a Cygnus header, process it.  Otherwise,
@@ -596,14 +578,14 @@ nlm_swap_auxiliary_headers_in (abfd)
 
 	      pos = bfd_tell (abfd);
 	      if (bfd_seek (abfd, dataOffset, SEEK_SET) != 0)
-		return false;
+		return FALSE;
 	      contents = (bfd_byte *) bfd_alloc (abfd, dataLength);
 	      if (contents == NULL)
-		return false;
-	      if (bfd_read (contents, 1, dataLength, abfd) != dataLength)
-		return false;
+		return FALSE;
+	      if (bfd_bread (contents, dataLength, abfd) != dataLength)
+		return FALSE;
 	      if (bfd_seek (abfd, pos, SEEK_SET) != 0)
-		return false;
+		return FALSE;
 
 	      memcpy (nlm_cygnus_ext_header (abfd), "CyGnUsEx", 8);
 	      nlm_cygnus_ext_header (abfd)->offset = dataOffset;
@@ -638,16 +620,16 @@ nlm_swap_auxiliary_headers_in (abfd)
 
 		  name = (char *) p;
 		  l = strlen (name) + 1;
-		  l = (l + 3) &~ 3;
+		  l = (l + 3) &~ (size_t) 3;
 		  p += l;
-		  filepos = bfd_h_get_32 (abfd, p);
+		  filepos = H_GET_32 (abfd, p);
 		  p += 4;
-		  size = bfd_h_get_32 (abfd, p);
+		  size = H_GET_32 (abfd, p);
 		  p += 4;
 
 		  newsec = bfd_make_section_anyway (abfd, name);
 		  if (newsec == (asection *) NULL)
-		    return false;
+		    return FALSE;
 		  newsec->_raw_size = size;
 		  if (filepos != 0)
 		    {
@@ -669,16 +651,14 @@ nlm_swap_auxiliary_headers_in (abfd)
 	    }
 	}
       else
-	{
-	  break;
-	}
+	break;
     }
-  return (true);
+  return TRUE;
 }
 
 /* Return whether there is a non-zero byte in a memory block.  */
 
-static boolean
+static bfd_boolean
 find_nonzero (buf, size)
      PTR buf;
      size_t size;
@@ -687,18 +667,20 @@ find_nonzero (buf, size)
 
   while (size-- != 0)
     if (*p++ != 0)
-      return true;
-  return false;
+      return TRUE;
+  return FALSE;
 }
 
 /* Swap out the contents of the auxiliary headers.  We create those
    auxiliary headers which have been set non-zero.  We do not require
    the caller to set up the stamp fields.  */
 
-static boolean
+static bfd_boolean
 nlm_swap_auxiliary_headers_out (abfd)
      bfd *abfd;
 {
+  bfd_size_type amt;
+
   /* Write out the version header if there is one.  */
   if (find_nonzero ((PTR) nlm_version_header (abfd),
 		    sizeof (Nlm_Internal_Version_Header)))
@@ -718,8 +700,34 @@ nlm_swap_auxiliary_headers_out (abfd)
 		(bfd_byte *) thdr.month);
       put_word (abfd, (bfd_vma) nlm_version_header (abfd)->day,
 		(bfd_byte *) thdr.day);
-      if (bfd_write ((PTR) & thdr, sizeof (thdr), 1, abfd) != sizeof (thdr))
-	return false;
+      if (bfd_bwrite ((PTR) &thdr, (bfd_size_type) sizeof (thdr), abfd)
+	  != sizeof (thdr))
+	return FALSE;
+    }
+
+  /* Note - the CoPyRiGhT tag is emitted before the MeSsAgEs
+     tag in order to make the NW4.x and NW5.x loaders happy.  */
+
+  /* Write out the copyright header if there is one.  */
+  if (find_nonzero ((PTR) nlm_copyright_header (abfd),
+		    sizeof (Nlm_Internal_Copyright_Header)))
+    {
+      Nlm_External_Copyright_Header thdr;
+
+      memcpy (thdr.stamp, "CoPyRiGhT=", 10);
+      amt = sizeof (thdr.stamp);
+      if (bfd_bwrite ((PTR) thdr.stamp, amt, abfd) != amt)
+	return FALSE;
+      thdr.copyrightMessageLength[0] =
+	nlm_copyright_header (abfd)->copyrightMessageLength;
+      amt = 1;
+      if (bfd_bwrite ((PTR) thdr.copyrightMessageLength, amt, abfd) != amt)
+	return FALSE;
+      /* The copyright message is a variable length string.  */
+      amt = nlm_copyright_header (abfd)->copyrightMessageLength + 1;
+      if (bfd_bwrite ((PTR) nlm_copyright_header (abfd)->copyrightMessage,
+		     amt, abfd) != amt)
+	return FALSE;
     }
 
   /* Write out the extended header if there is one.  */
@@ -816,31 +824,9 @@ nlm_swap_auxiliary_headers_out (abfd)
       put_word (abfd,
 		(bfd_vma) nlm_extended_header (abfd)->reserved5,
 		(bfd_byte *) thdr.reserved5);
-      if (bfd_write ((PTR) & thdr, sizeof (thdr), 1, abfd) != sizeof (thdr))
-	return false;
-    }
-
-  /* Write out the copyright header if there is one.  */
-  if (find_nonzero ((PTR) nlm_copyright_header (abfd),
-		    sizeof (Nlm_Internal_Copyright_Header)))
-    {
-      Nlm_External_Copyright_Header thdr;
-
-      memcpy (thdr.stamp, "CoPyRiGhT=", 10);
-      if (bfd_write ((PTR) thdr.stamp, sizeof (thdr.stamp), 1, abfd)
-	  != sizeof (thdr.stamp))
-	return false;
-      thdr.copyrightMessageLength[0] =
-	nlm_copyright_header (abfd)->copyrightMessageLength;
-      if (bfd_write ((PTR) thdr.copyrightMessageLength, 1, 1, abfd) != 1)
-	return false;
-      /* The copyright message is a variable length string.  */
-      if (bfd_write ((PTR) nlm_copyright_header (abfd)->copyrightMessage,
-		     nlm_copyright_header (abfd)->copyrightMessageLength + 1,
-		     1, abfd) !=
-	  ((bfd_size_type)
-	   nlm_copyright_header (abfd)->copyrightMessageLength + 1))
-	return false;
+      if (bfd_bwrite ((PTR) &thdr, (bfd_size_type) sizeof (thdr), abfd)
+	  != sizeof (thdr))
+	return FALSE;
     }
 
   /* Write out the custom header if there is one.   */
@@ -848,7 +834,7 @@ nlm_swap_auxiliary_headers_out (abfd)
 		    sizeof (Nlm_Internal_Custom_Header)))
     {
       Nlm_External_Custom_Header thdr;
-      boolean ds;
+      bfd_boolean ds;
       bfd_size_type hdrLength;
 
       ds = find_nonzero ((PTR) nlm_custom_header (abfd)->dataStamp,
@@ -864,21 +850,20 @@ nlm_swap_auxiliary_headers_out (abfd)
       if (! ds)
 	{
 	  BFD_ASSERT (nlm_custom_header (abfd)->hdrLength == 0);
-	  if (bfd_write ((PTR) &thdr, 1,
-			 sizeof (thdr) - sizeof (thdr.dataStamp), abfd)
-	      != sizeof (thdr) - sizeof (thdr.dataStamp))
-	    return false;
+	  amt = sizeof (thdr) - sizeof (thdr.dataStamp);
+	  if (bfd_bwrite ((PTR) &thdr, amt, abfd) != amt)
+	    return FALSE;
 	}
       else
 	{
 	  memcpy (thdr.dataStamp, nlm_custom_header (abfd)->dataStamp,
 		  sizeof (thdr.dataStamp));
-	  if (bfd_write ((PTR) &thdr, sizeof (thdr), 1, abfd) != sizeof (thdr))
-	    return false;
-	  if (bfd_write (nlm_custom_header (abfd)->hdr, 1,
-			 nlm_custom_header (abfd)->hdrLength, abfd)
-	      != nlm_custom_header (abfd)->hdrLength)
-	    return false;
+	  amt = sizeof (thdr);
+	  if (bfd_bwrite ((PTR) &thdr, amt, abfd) != amt)
+	    return FALSE;
+	  amt = nlm_custom_header (abfd)->hdrLength;
+	  if (bfd_bwrite (nlm_custom_header (abfd)->hdr, amt, abfd) != amt)
+	    return FALSE;
 	}
     }
 
@@ -896,11 +881,12 @@ nlm_swap_auxiliary_headers_out (abfd)
       put_word (abfd, (bfd_vma) nlm_cygnus_ext_header (abfd)->length,
 		(bfd_byte *) thdr.dataLength);
       memcpy (thdr.dataStamp, "CyGnUsEx", 8);
-      if (bfd_write ((PTR) &thdr, sizeof (thdr), 1, abfd) != sizeof (thdr))
-	return false;
+      amt = sizeof (thdr);
+      if (bfd_bwrite ((PTR) &thdr, amt, abfd) != amt)
+	return FALSE;
     }
 
-  return true;
+  return TRUE;
 }
 
 /* We read the NLM's public symbols and use it to generate a bfd symbol
@@ -916,7 +902,7 @@ long
 nlm_get_symtab_upper_bound (abfd)
      bfd *abfd;
 {
-  Nlm_Internal_Fixed_Header *i_fxdhdrp;	/* Nlm file header, internal form */
+  Nlm_Internal_Fixed_Header *i_fxdhdrp;	/* Nlm file header, internal form.  */
   long symcount;
   long symtab_size = 0;
 
@@ -939,7 +925,7 @@ nlm_get_symtab (abfd, alocation)
   nlm_symbol_type *symbase;
   bfd_size_type counter = 0;
 
-  if (nlm_slurp_symbol_table (abfd) == false)
+  if (! nlm_slurp_symbol_table (abfd))
     return -1;
   symbase = nlm_get_symbols (abfd);
   while (counter < bfd_get_symcount (abfd))
@@ -958,9 +944,9 @@ asymbol *
 nlm_make_empty_symbol (abfd)
      bfd *abfd;
 {
-  nlm_symbol_type *new;
+  bfd_size_type amt = sizeof (nlm_symbol_type);
+  nlm_symbol_type *new = (nlm_symbol_type *) bfd_zalloc (abfd, amt);
 
-  new = (nlm_symbol_type *) bfd_zalloc (abfd, sizeof (nlm_symbol_type));
   if (new)
     new->symbol.the_bfd = abfd;
   return &new->symbol;
@@ -981,7 +967,7 @@ nlm_get_symbol_info (ignore_abfd, symbol, ret)
 
 void
 nlm_print_symbol (abfd, afile, symbol, how)
-     bfd *abfd ATTRIBUTE_UNUSED;
+     bfd *abfd;
      PTR afile;
      asymbol *symbol;
      bfd_print_symbol_type how;
@@ -996,7 +982,7 @@ nlm_print_symbol (abfd, afile, symbol, how)
 	fprintf (file, "%s", symbol->name);
       break;
     case bfd_print_symbol_all:
-      bfd_print_symbol_vandf ((PTR) file, symbol);
+      bfd_print_symbol_vandf (abfd, (PTR) file, symbol);
       fprintf (file, " %-5s", symbol->section->name);
       if (symbol->name)
 	fprintf (file, " %s", symbol->name);
@@ -1021,25 +1007,25 @@ nlm_print_symbol (abfd, afile, symbol, how)
    The bfd symbols are copied to SYMPTRS.
 
    When we return, the bfd symcount is either zero or contains the correct
-   number of symbols.
-*/
+   number of symbols.  */
 
-static boolean
+static bfd_boolean
 nlm_slurp_symbol_table (abfd)
      bfd *abfd;
 {
-  Nlm_Internal_Fixed_Header *i_fxdhdrp;	/* Nlm file header, internal form */
-  bfd_size_type totsymcount;	/* Number of NLM symbols */
-  bfd_size_type symcount;	/* Counter of NLM symbols */
-  nlm_symbol_type *sym;		/* Pointer to current bfd symbol */
-  unsigned char symlength;	/* Symbol length read into here */
-  unsigned char symtype;	/* Type of debugging symbol */
-  bfd_byte temp[NLM_TARGET_LONG_SIZE];	/* Symbol offsets read into here */
-  boolean (*read_import_func) PARAMS ((bfd *, nlm_symbol_type *));
-  boolean (*set_public_section_func) PARAMS ((bfd *, nlm_symbol_type *));
+  Nlm_Internal_Fixed_Header *i_fxdhdrp;	/* Nlm file header, internal form.  */
+  bfd_size_type totsymcount;	/* Number of NLM symbols.  */
+  bfd_size_type symcount;	/* Counter of NLM symbols.  */
+  nlm_symbol_type *sym;		/* Pointer to current bfd symbol.  */
+  unsigned char symlength;	/* Symbol length read into here.  */
+  unsigned char symtype;	/* Type of debugging symbol.  */
+  bfd_byte temp[NLM_TARGET_LONG_SIZE];	/* Symbol offsets read into here.  */
+  bfd_boolean (*read_import_func) PARAMS ((bfd *, nlm_symbol_type *));
+  bfd_boolean (*set_public_section_func) PARAMS ((bfd *, nlm_symbol_type *));
+  bfd_size_type amt;
 
   if (nlm_get_symbols (abfd) != NULL)
-    return (true);
+    return TRUE;
 
   /* Read each raw NLM symbol, using the information to create a canonical bfd
      symbol table entry.
@@ -1055,17 +1041,15 @@ nlm_slurp_symbol_table (abfd)
 		 + i_fxdhdrp->numberOfDebugRecords
 		 + i_fxdhdrp->numberOfExternalReferences);
   if (totsymcount == 0)
-    {
-      return (true);
-    }
+    return TRUE;
 
-  if (bfd_seek (abfd, i_fxdhdrp->publicsOffset, SEEK_SET) == -1)
-    return (false);
+  if (bfd_seek (abfd, i_fxdhdrp->publicsOffset, SEEK_SET) != 0)
+    return FALSE;
 
-  sym = ((nlm_symbol_type *)
-	 bfd_zalloc (abfd, totsymcount * sizeof (nlm_symbol_type)));
+  amt = totsymcount * sizeof (nlm_symbol_type);
+  sym = ((nlm_symbol_type *) bfd_zalloc (abfd, amt));
   if (!sym)
-    return false;
+    return FALSE;
   nlm_set_symbols (abfd, sym);
 
   /* We use the bfd's symcount directly as the control count, so that early
@@ -1076,28 +1060,29 @@ nlm_slurp_symbol_table (abfd)
   symcount = i_fxdhdrp->numberOfPublics;
   while (abfd->symcount < symcount)
     {
-      if (bfd_read ((PTR) & symlength, sizeof (symlength), 1, abfd)
-	  != sizeof (symlength))
-	return (false);
+      amt = sizeof (symlength);
+      if (bfd_bread ((PTR) &symlength, amt, abfd) != amt)
+	return FALSE;
+      amt = symlength;
       sym->symbol.the_bfd = abfd;
-      sym->symbol.name = bfd_alloc (abfd, symlength + 1);
+      sym->symbol.name = bfd_alloc (abfd, amt + 1);
       if (!sym->symbol.name)
-	return false;
-      if (bfd_read ((PTR) sym->symbol.name, symlength, 1, abfd)
-	  != symlength)
-	return (false);
+	return FALSE;
+      if (bfd_bread ((PTR) sym->symbol.name, amt, abfd) != amt)
+	return FALSE;
       /* Cast away const.  */
       ((char *) (sym->symbol.name))[symlength] = '\0';
-      if (bfd_read ((PTR) temp, sizeof (temp), 1, abfd) != sizeof (temp))
-	return (false);
+      amt = sizeof (temp);
+      if (bfd_bread ((PTR) temp, amt, abfd) != amt)
+	return FALSE;
       sym->symbol.flags = BSF_GLOBAL | BSF_EXPORT;
       sym->symbol.value = get_word (abfd, temp);
       if (set_public_section_func)
 	{
 	  /* Most backends can use the code below, but unfortunately
 	     some use a different scheme.  */
-	  if ((*set_public_section_func) (abfd, sym) == false)
-	    return false;
+	  if (! (*set_public_section_func) (abfd, sym))
+	    return FALSE;
 	}
       else
 	{
@@ -1123,25 +1108,28 @@ nlm_slurp_symbol_table (abfd)
 
   if (i_fxdhdrp->numberOfDebugRecords > 0)
     {
-      if (bfd_seek (abfd, i_fxdhdrp->debugInfoOffset, SEEK_SET) == -1)
-	return (false);
+      if (bfd_seek (abfd, i_fxdhdrp->debugInfoOffset, SEEK_SET) != 0)
+	return FALSE;
 
       symcount += i_fxdhdrp->numberOfDebugRecords;
       while (abfd->symcount < symcount)
 	{
-	  if ((bfd_read ((PTR) & symtype, sizeof (symtype), 1, abfd)
-	       != sizeof (symtype))
-	   || bfd_read ((PTR) temp, sizeof (temp), 1, abfd) != sizeof (temp)
-	      || (bfd_read ((PTR) & symlength, sizeof (symlength), 1, abfd)
-		  != sizeof (symlength)))
-	    return false;
+	  amt = sizeof (symtype);
+	  if (bfd_bread ((PTR) &symtype, amt, abfd) != amt)
+	    return FALSE;
+	  amt = sizeof (temp);
+	  if (bfd_bread ((PTR) temp, amt, abfd) != amt)
+	    return FALSE;
+	  amt = sizeof (symlength);
+	  if (bfd_bread ((PTR) &symlength, amt, abfd) != amt)
+	    return FALSE;
+	  amt = symlength;
 	  sym->symbol.the_bfd = abfd;
-	  sym->symbol.name = bfd_alloc (abfd, symlength + 1);
+	  sym->symbol.name = bfd_alloc (abfd, amt + 1);
 	  if (!sym->symbol.name)
-	    return false;
-	  if (bfd_read ((PTR) sym->symbol.name, symlength, 1, abfd)
-	      != symlength)
-	    return (false);
+	    return FALSE;
+	  if (bfd_bread ((PTR) sym->symbol.name, amt, abfd) != amt)
+	    return FALSE;
 	  /* Cast away const.  */
 	  ((char *) (sym->symbol.name))[symlength] = '\0';
 	  sym->symbol.flags = BSF_LOCAL;
@@ -1169,25 +1157,23 @@ nlm_slurp_symbol_table (abfd)
 
   /* Read in the import records.  We can only do this if we know how
      to read relocs for this target.  */
-
   read_import_func = nlm_read_import_func (abfd);
   if (read_import_func != NULL)
     {
-      if (bfd_seek (abfd, i_fxdhdrp->externalReferencesOffset, SEEK_SET)
-	  == -1)
-	return (false);
+      if (bfd_seek (abfd, i_fxdhdrp->externalReferencesOffset, SEEK_SET) != 0)
+	return FALSE;
 
       symcount += i_fxdhdrp->numberOfExternalReferences;
       while (abfd->symcount < symcount)
 	{
-	  if ((*read_import_func) (abfd, sym) == false)
-	    return false;
+	  if (! (*read_import_func) (abfd, sym))
+	    return FALSE;
 	  sym++;
 	  abfd->symcount++;
 	}
     }
 
-  return (true);
+  return TRUE;
 }
 
 /* Get the relocs for an NLM file.  There are two types of relocs.
@@ -1203,31 +1189,33 @@ nlm_slurp_symbol_table (abfd)
    section pointers are needed because the relocs are not sorted by
    section.  */
 
-static boolean
+static bfd_boolean
 nlm_slurp_reloc_fixups (abfd)
      bfd *abfd;
 {
-  boolean (*read_func) PARAMS ((bfd *, nlm_symbol_type *, asection **,
-				arelent *));
-  bfd_size_type count;
+  bfd_boolean (*read_func)
+    PARAMS ((bfd *, nlm_symbol_type *, asection **, arelent *));
+  bfd_size_type count, amt;
   arelent *rels;
   asection **secs;
 
   if (nlm_relocation_fixups (abfd) != NULL)
-    return true;
+    return TRUE;
   read_func = nlm_read_reloc_func (abfd);
   if (read_func == NULL)
-    return true;
+    return TRUE;
 
   if (bfd_seek (abfd, nlm_fixed_header (abfd)->relocationFixupOffset,
 		SEEK_SET) != 0)
-    return false;
+    return FALSE;
 
   count = nlm_fixed_header (abfd)->numberOfRelocationFixups;
-  rels = (arelent *) bfd_alloc (abfd, count * sizeof (arelent));
-  secs = (asection **) bfd_alloc (abfd, count * sizeof (asection *));
+  amt = count * sizeof (arelent);
+  rels = (arelent *) bfd_alloc (abfd, amt);
+  amt = count * sizeof (asection *);
+  secs = (asection **) bfd_alloc (abfd, amt);
   if ((rels == NULL || secs == NULL) && count != 0)
-    return false;
+    return FALSE;
   nlm_relocation_fixups (abfd) = rels;
   nlm_relocation_fixup_secs (abfd) = secs;
 
@@ -1235,17 +1223,17 @@ nlm_slurp_reloc_fixups (abfd)
      the machine specific reloc information is.  */
   while (count-- != 0)
     {
-      if ((*read_func) (abfd, (nlm_symbol_type *) NULL, secs, rels) == false)
+      if (! (*read_func) (abfd, (nlm_symbol_type *) NULL, secs, rels))
 	{
 	  nlm_relocation_fixups (abfd) = NULL;
 	  nlm_relocation_fixup_secs (abfd) = NULL;
-	  return false;
+	  return FALSE;
 	}
       ++secs;
       ++rels;
     }
 
-  return true;
+  return TRUE;
 }
 
 /* Get the number of relocs.  This really just returns an upper bound,
@@ -1271,7 +1259,7 @@ nlm_get_reloc_upper_bound (abfd, sec)
   syms = nlm_get_symbols (abfd);
   if (syms == NULL)
     {
-      if (nlm_slurp_symbol_table (abfd) == false)
+      if (! nlm_slurp_symbol_table (abfd))
 	return -1;
       syms = nlm_get_symbols (abfd);
     }
@@ -1306,7 +1294,7 @@ nlm_canonicalize_reloc (abfd, sec, relptr, symbols)
   rels = nlm_relocation_fixups (abfd);
   if (rels == NULL)
     {
-      if (nlm_slurp_reloc_fixups (abfd) == false)
+      if (! nlm_slurp_reloc_fixups (abfd))
 	return -1;
       rels = nlm_relocation_fixups (abfd);
     }
@@ -1370,7 +1358,7 @@ nlm_canonicalize_reloc (abfd, sec, relptr, symbols)
    move the symbols at this point so that mangle_relocs can see the
    final values.  */
 
-static boolean
+static bfd_boolean
 nlm_compute_section_file_positions (abfd)
      bfd *abfd;
 {
@@ -1383,8 +1371,8 @@ nlm_compute_section_file_positions (abfd)
   asection *bss_sec;
   asymbol **sym_ptr_ptr;
 
-  if (abfd->output_has_begun == true)
-    return true;
+  if (abfd->output_has_begun)
+    return TRUE;
 
   /* Make sure we have a section to hold uninitialized data.  */
   bss_sec = bfd_get_section_by_name (abfd, NLM_UNINITIALIZED_DATA_NAME);
@@ -1393,11 +1381,11 @@ nlm_compute_section_file_positions (abfd)
       if (!add_bfd_section (abfd, NLM_UNINITIALIZED_DATA_NAME,
 			    (file_ptr) 0, (bfd_size_type) 0,
 			    SEC_ALLOC))
-	return false;
+	return FALSE;
       bss_sec = bfd_get_section_by_name (abfd, NLM_UNINITIALIZED_DATA_NAME);
     }
 
-  abfd->output_has_begun = true;
+  abfd->output_has_begun = TRUE;
 
   /* The fixed header.  */
   sofar = nlm_optional_prefix_size (abfd) + nlm_fixed_header_size (abfd);
@@ -1568,7 +1556,7 @@ nlm_compute_section_file_positions (abfd)
 	}
     }
 
-  return true;
+  return TRUE;
 }
 
 /* Set the contents of a section.  To do this we need to know where
@@ -1576,7 +1564,7 @@ nlm_compute_section_file_positions (abfd)
    that the sizes of all the sections must be set, and all the
    variable size header information must be known.  */
 
-boolean
+bfd_boolean
 nlm_set_section_contents (abfd, section, location, offset, count)
      bfd *abfd;
      asection *section;
@@ -1584,12 +1572,12 @@ nlm_set_section_contents (abfd, section, location, offset, count)
      file_ptr offset;
      bfd_size_type count;
 {
-  if (abfd->output_has_begun == false
-      && nlm_compute_section_file_positions (abfd) == false)
-    return false;
+  if (! abfd->output_has_begun
+      && ! nlm_compute_section_file_positions (abfd))
+    return FALSE;
 
   if (count == 0)
-    return true;
+    return TRUE;
 
   /* i386 NetWare has a very restricted set of relocs.  In order for
      objcopy to work, the NLM i386 backend needs a chance to rework
@@ -1597,23 +1585,23 @@ nlm_set_section_contents (abfd, section, location, offset, count)
      the relocs are already acceptable, this will not do anything.  */
   if (section->reloc_count != 0)
     {
-      boolean (*mangle_relocs_func) PARAMS ((bfd *, asection *, PTR,
-					     bfd_vma, bfd_size_type));
+      bfd_boolean (*mangle_relocs_func)
+	PARAMS ((bfd *, asection *, PTR, bfd_vma, bfd_size_type));
 
       mangle_relocs_func = nlm_mangle_relocs_func (abfd);
       if (mangle_relocs_func != NULL)
 	{
 	  if (!(*mangle_relocs_func) (abfd, section, location,
 				      (bfd_vma) offset, count))
-	    return false;
+	    return FALSE;
 	}
     }
 
-  if (bfd_seek (abfd, (file_ptr) (section->filepos + offset), SEEK_SET) != 0
-      || bfd_write (location, 1, count, abfd) != count)
-    return false;
+  if (bfd_seek (abfd, section->filepos + offset, SEEK_SET) != 0
+      || bfd_bwrite (location, count, abfd) != count)
+    return FALSE;
 
-  return true;
+  return TRUE;
 }
 
 /* We need to sort a list of relocs associated with sections when we
@@ -1667,35 +1655,36 @@ nlm_external_reloc_compare (p1, p2)
    section.  The exports and debugging records are obtained from the
    list of outsymbols.  */
 
-boolean
+bfd_boolean
 nlm_write_object_contents (abfd)
      bfd *abfd;
 {
   asection *sec;
-  boolean (*write_import_func) PARAMS ((bfd *, asection *, arelent *));
+  bfd_boolean (*write_import_func) PARAMS ((bfd *, asection *, arelent *));
   bfd_size_type external_reloc_count, internal_reloc_count, i, c;
   struct reloc_and_sec *external_relocs;
   asymbol **sym_ptr_ptr;
   file_ptr last;
-  boolean (*write_prefix_func) PARAMS ((bfd *));
+  bfd_boolean (*write_prefix_func) PARAMS ((bfd *));
   unsigned char *fixed_header = NULL;
+  file_ptr pos;
+  bfd_size_type amt;
 
   fixed_header = ((unsigned char *)
-		  bfd_malloc ((size_t) nlm_fixed_header_size (abfd)));
+		  bfd_malloc (nlm_fixed_header_size (abfd)));
   if (fixed_header == NULL)
     goto error_return;
 
-  if (abfd->output_has_begun == false
-      && nlm_compute_section_file_positions (abfd) == false)
+  if (! abfd->output_has_begun
+      && ! nlm_compute_section_file_positions (abfd))
     goto error_return;
 
   /* Write out the variable length headers.  */
-  if (bfd_seek (abfd,
-	     nlm_optional_prefix_size (abfd) + nlm_fixed_header_size (abfd),
-		SEEK_SET) != 0)
+  pos = nlm_optional_prefix_size (abfd) + nlm_fixed_header_size (abfd);
+  if (bfd_seek (abfd, pos, SEEK_SET) != 0)
     goto error_return;
-  if (nlm_swap_variable_header_out (abfd) == false
-      || nlm_swap_auxiliary_headers_out (abfd) == false)
+  if (! nlm_swap_variable_header_out (abfd)
+      || ! nlm_swap_auxiliary_headers_out (abfd))
     {
       bfd_set_error (bfd_error_system_call);
       goto error_return;
@@ -1703,7 +1692,7 @@ nlm_write_object_contents (abfd)
 
   /* A weak check on whether the section file positions were
      reasonable.  */
-  if (bfd_tell (abfd) > nlm_fixed_header (abfd)->codeImageOffset)
+  if (bfd_tell (abfd) > (ufile_ptr) nlm_fixed_header (abfd)->codeImageOffset)
     {
       bfd_set_error (bfd_error_invalid_operation);
       goto error_return;
@@ -1756,7 +1745,7 @@ nlm_write_object_contents (abfd)
 	  if (! bfd_is_und_section (bfd_get_section (sym)))
 	    {
 	      ++internal_reloc_count;
-	      if ((*write_import_func) (abfd, sec, rel) == false)
+	      if (! (*write_import_func) (abfd, sec, rel))
 		goto error_return;
 	    }
 	  else
@@ -1769,10 +1758,8 @@ nlm_write_object_contents (abfd)
      are output as a symbol name followed by all the relocs for that
      symbol, so we must first gather together all the relocs against
      external symbols and sort them.  */
-  external_relocs =
-    (struct reloc_and_sec *) bfd_alloc (abfd,
-					(external_reloc_count
-					 * sizeof (struct reloc_and_sec)));
+  amt = external_reloc_count * sizeof (struct reloc_and_sec);
+  external_relocs = (struct reloc_and_sec *) bfd_alloc (abfd, amt);
   if (external_relocs == (struct reloc_and_sec *) NULL)
     goto error_return;
   i = 0;
@@ -1830,9 +1817,8 @@ nlm_write_object_contents (abfd)
 	   j++)
 	++cnt;
 
-      if ((*nlm_write_external_func (abfd)) (abfd, cnt, sym,
-					     &external_relocs[i])
-	  == false)
+      if (! (*nlm_write_external_func (abfd)) (abfd, cnt, sym,
+					       &external_relocs[i]))
 	goto error_return;
 
       i += cnt;
@@ -1845,7 +1831,7 @@ nlm_write_object_contents (abfd)
   if (sym_ptr_ptr != (asymbol **) NULL)
     {
       bfd_vma (*get_public_offset_func) PARAMS ((bfd *, asymbol *));
-      boolean (*write_export_func) PARAMS ((bfd *, asymbol *, bfd_vma));
+      bfd_boolean (*write_export_func) PARAMS ((bfd *, asymbol *, bfd_vma));
 
       asymbol **sym_end;
 
@@ -1900,19 +1886,20 @@ nlm_write_object_contents (abfd)
 
 	  if (write_export_func)
 	    {
-	      if ((*write_export_func) (abfd, sym, offset) == false)
+	      if (! (*write_export_func) (abfd, sym, offset))
 		goto error_return;
 	    }
 	  else
 	    {
 	      len = strlen (sym->name);
-	      if ((bfd_write (&len, sizeof (bfd_byte), 1, abfd)
+	      if ((bfd_bwrite (&len, (bfd_size_type) sizeof (bfd_byte), abfd)
 		   != sizeof (bfd_byte))
-		  || bfd_write (sym->name, len, 1, abfd) != len)
+		  || bfd_bwrite (sym->name, (bfd_size_type) len, abfd) != len)
 		goto error_return;
 
 	      put_word (abfd, offset, temp);
-	      if (bfd_write (temp, sizeof (temp), 1, abfd) != sizeof (temp))
+	      if (bfd_bwrite (temp, (bfd_size_type) sizeof (temp), abfd)
+		  != sizeof (temp))
 		goto error_return;
 	    }
 	}
@@ -1971,18 +1958,19 @@ nlm_write_object_contents (abfd)
 		type = 2;
 
 	      /* The type is 0 for data, 1 for code, 2 for absolute.  */
-	      if (bfd_write (&type, sizeof (bfd_byte), 1, abfd)
+	      if (bfd_bwrite (&type, (bfd_size_type) sizeof (bfd_byte), abfd)
 		  != sizeof (bfd_byte))
 		goto error_return;
 
 	      put_word (abfd, offset, temp);
-	      if (bfd_write (temp, sizeof (temp), 1, abfd) != sizeof (temp))
+	      if (bfd_bwrite (temp, (bfd_size_type) sizeof (temp), abfd)
+		  != sizeof (temp))
 		goto error_return;
 
 	      len = strlen (sym->name);
-	      if ((bfd_write (&len, sizeof (bfd_byte), 1, abfd)
+	      if ((bfd_bwrite (&len, (bfd_size_type) sizeof (bfd_byte), abfd)
 		   != sizeof (bfd_byte))
-		  || bfd_write (sym->name, len, 1, abfd) != len)
+		  || bfd_bwrite (sym->name, (bfd_size_type) len, abfd) != len)
 		goto error_return;
 	    }
 	  nlm_fixed_header (abfd)->numberOfDebugRecords = c;
@@ -2026,13 +2014,13 @@ nlm_write_object_contents (abfd)
     nlm_fixed_header (abfd)->checkUnloadProcedureOffset -=
       nlm_get_text_low (abfd);
 
-  if (bfd_seek (abfd, 0, SEEK_SET) != 0)
+  if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET) != 0)
     goto error_return;
 
   write_prefix_func = nlm_write_prefix_func (abfd);
   if (write_prefix_func)
     {
-      if ((*write_prefix_func) (abfd) == false)
+      if (! (*write_prefix_func) (abfd))
 	goto error_return;
     }
 
@@ -2040,16 +2028,16 @@ nlm_write_object_contents (abfd)
 	      == nlm_optional_prefix_size (abfd));
 
   nlm_swap_fixed_header_out (abfd, nlm_fixed_header (abfd), fixed_header);
-  if (bfd_write (fixed_header, nlm_fixed_header_size (abfd), 1, abfd)
+  if (bfd_bwrite (fixed_header, nlm_fixed_header_size (abfd), abfd)
       != nlm_fixed_header_size (abfd))
     goto error_return;
 
   if (fixed_header != NULL)
     free (fixed_header);
-  return true;
+  return TRUE;
 
 error_return:
   if (fixed_header != NULL)
     free (fixed_header);
-  return false;
+  return FALSE;
 }

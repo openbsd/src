@@ -28,6 +28,8 @@ Assembly Language Programming'' in the same work.
 * MIPS autoextend::	Directives for extending MIPS 16 bit instructions
 * MIPS insn::		Directive to mark data as an instruction
 * MIPS option stack::	Directives to save and restore options
+* MIPS ASE instruction generation overrides:: Directives to control
+  			generation of MIPS ASE instructions
 @end menu
 
 @node MIPS Opts
@@ -63,25 +65,31 @@ to select big-endian output, and @samp{-EL} for little-endian.
 @itemx -mips4
 @itemx -mips5
 @itemx -mips32
+@itemx -mips32r2
 @itemx -mips64
 Generate code for a particular MIPS Instruction Set Architecture level.
 @samp{-mips1} corresponds to the @sc{r2000} and @sc{r3000} processors,
 @samp{-mips2} to the @sc{r6000} processor, @samp{-mips3} to the
 @sc{r4000} processor, and @samp{-mips4} to the @sc{r8000} and
-@sc{r10000} processors.  @samp{-mips5}, @samp{-mips32}, and
-@samp{-mips64} correspond to generic @sc{MIPS V}, @sc{MIPS32}, and
+@sc{r10000} processors.  @samp{-mips5}, @samp{-mips32}, @samp{-mips32r2}, and
+@samp{-mips64} correspond to generic @sc{MIPS V}, @sc{MIPS32},
+@sc{MIPS32 Release 2}, and
 @sc{MIPS64} ISA processors, respectively.  You can also switch
 instruction sets during the assembly; see @ref{MIPS ISA, Directives to
-override the ISA level}. 
+override the ISA level}.
 
 @item -mgp32
-Assume that 32-bit general purpose registers are available.  This
-affects synthetic instructions such as @code{move}, which will assemble
-to a 32-bit or a 64-bit instruction depending on this flag.  On some
-MIPS variants there is a 32-bit mode flag; when this flag is set,
-64-bit instructions generate a trap.  Also, some 32-bit OSes only save
-the 32-bit registers on a context switch, so it is essential never to
-use the 64-bit registers.
+@itemx -mfp32
+Some macros have different expansions for 32-bit and 64-bit registers.
+The register sizes are normally inferred from the ISA and ABI, but these
+flags force a certain group of registers to be treated as 32 bits wide at
+all times.  @samp{-mgp32} controls the size of general-purpose registers
+and @samp{-mfp32} controls the size of floating-point registers.
+
+On some MIPS variants there is a 32-bit mode flag; when this flag is
+set, 64-bit instructions generate a trap.  Also, some 32-bit OSes only
+save the 32-bit registers on a context switch, so it is essential never
+to use the 64-bit registers.
 
 @item -mgp64
 Assume that 64-bit general purpose registers are available.  This is
@@ -93,10 +101,28 @@ Generate code for the MIPS 16 processor.  This is equivalent to putting
 @samp{.set mips16} at the start of the assembly file.  @samp{-no-mips16}
 turns off this option.
 
+@item -mips3d
+@itemx -no-mips3d
+Generate code for the MIPS-3D Application Specific Extension.
+This tells the assembler to accept MIPS-3D instructions.
+@samp{-no-mips3d} turns off this option.
+
+@item -mdmx
+@itemx -no-mdmx
+Generate code for the MDMX Application Specific Extension.
+This tells the assembler to accept MDMX instructions.
+@samp{-no-mdmx} turns off this option.
+
 @item -mfix7000
-@itemx -no-mfix7000
+@itemx -mno-fix7000
 Cause nops to be inserted if the read of the destination register
 of an mfhi or mflo instruction occurs in the following two instructions.
+
+@item -mfix-vr4122-bugs
+@itemx -no-mfix-vr4122-bugs
+Insert @samp{nop} instructions to avoid errors in certain versions of
+the vr4122 core.  This option is intended to be used on GCC-generated
+code: it is not designed to catch errors in hand-written assembler code.
 
 @item -m4010
 @itemx -no-m4010
@@ -121,7 +147,7 @@ For each option @samp{-m@var{nnnn}}, generate code for the MIPS
 @sc{r@var{nnnn}} chip.  This tells the assembler to accept instructions
 specific to that chip, and to schedule for that chip's hazards.
 
-@item -mcpu=@var{cpu}
+@item -march=@var{cpu}
 Generate code for a particular MIPS cpu.  It is exactly equivalent to
 @samp{-m@var{cpu}}, except that there are more value of @var{cpu}
 understood.  Valid @var{cpu} value are:
@@ -134,6 +160,9 @@ understood.  Valid @var{cpu} value are:
 4010,
 4100,
 4111,
+vr4120,
+vr4130,
+vr4181,
 4300,
 4400,
 4600,
@@ -144,14 +173,24 @@ rm5230,
 rm5231,
 rm5261,
 rm5721,
+vr5400,
+vr5500,
 6000,
 rm7000,
 8000,
 10000,
+12000,
 mips32-4k,
 sb1
 @end quotation
 
+@item -mtune=@var{cpu}
+Schedule and tune for a particular MIPS cpu.  Valid @var{cpu} values are
+identical to @samp{-march=@var{cpu}}.
+
+@item -mabi=@var{abi}
+Record which ABI the source code uses.  The recognized arguments
+are: @samp{32}, @samp{n32}, @samp{o64}, @samp{64} and @samp{eabi}.
 
 @cindex @code{-nocpp} ignored (MIPS)
 @item -nocpp
@@ -189,6 +228,10 @@ are only supported at Instruction Set Architecture level 2 and higher.
 @itemx --no-trap
 Generate code to take a break exception rather than a trap exception when an
 error is detected.  This is the default.
+
+@item -n
+When this option is used, @code{@value{AS}} will issue a warning every
+time it generates a nop instruction from a macro.
 @end table
 
 @node MIPS Object
@@ -245,8 +288,8 @@ assembly language programmers!
 @kindex @code{.set mips@var{n}}
 @sc{gnu} @code{@value{AS}} supports an additional directive to change
 the @sc{mips} Instruction Set Architecture level on the fly: @code{.set
-mips@var{n}}.  @var{n} should be a number from 0 to 5, or 32 or 64.
-The values 1 to 5, 32, and 64 make the assembler accept instructions
+mips@var{n}}.  @var{n} should be a number from 0 to 5, or 32, 32r2, or 64.
+The values other than 0 make the assembler accept instructions
 for the corresponding @sc{isa} level, from that point on in the
 assembly.  @code{.set mips@var{n}} affects not only which instructions
 are permitted, but also how certain macros are expanded.  @code{.set
@@ -254,13 +297,13 @@ mips0} restores the @sc{isa} level to its original level: either the
 level you selected with command line options, or the default for your
 configuration.  You can use this feature to permit specific @sc{r4000}
 instructions while assembling in 32 bit mode.  Use this directive with
-care! 
+care!
 
 The directive @samp{.set mips16} puts the assembler into MIPS 16 mode,
 in which it will assemble instructions for the MIPS 16 processor.  Use
 @samp{.set nomips16} to return to normal 32 bit mode.
 
-Traditional @sc{mips} assemblers do not support this directive.  
+Traditional @sc{mips} assemblers do not support this directive.
 
 @node MIPS autoextend
 @section Directives for extending MIPS 16 bit instructions
@@ -302,5 +345,26 @@ stack and restores the settings.
 These directives can be useful inside an macro which must change an
 option such as the ISA level or instruction reordering but does not want
 to change the state of the code which invoked the macro.
+
+Traditional @sc{mips} assemblers do not support these directives.
+
+@node MIPS ASE instruction generation overrides
+@section Directives to control generation of MIPS ASE instructions
+
+@cindex MIPS MIPS-3D instruction generation override
+@kindex @code{.set mips3d}
+@kindex @code{.set nomips3d}
+The directive @code{.set mips3d} makes the assembler accept instructions
+from the MIPS-3D Application Specific Extension from that point on
+in the assembly.  The @code{.set nomips3d} directive prevents MIPS-3D
+instructions from being accepted.
+
+@cindex MIPS MDMX instruction generation override
+@kindex @code{.set mdmx}
+@kindex @code{.set nomdmx}
+The directive @code{.set mdmx} makes the assembler accept instructions
+from the MDMX Application Specific Extension from that point on
+in the assembly.  The @code{.set nomdmx} directive prevents MDMX
+instructions from being accepted.
 
 Traditional @sc{mips} assemblers do not support these directives.

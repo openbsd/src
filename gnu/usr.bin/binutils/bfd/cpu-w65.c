@@ -1,5 +1,5 @@
 /* BFD library support routines for the WDC 65816 architecture.
-   Copyright 1995, 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1995, 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
    Hacked by Steve Chamberlain of Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -22,16 +22,19 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "sysdep.h"
 #include "libbfd.h"
 
-int bfd_default_scan_num_mach();
+static bfd_boolean scan_mach
+  PARAMS ((const struct bfd_arch_info *, const char *));
 
-static boolean
+static bfd_boolean
 scan_mach (info, string)
      const struct bfd_arch_info *info ATTRIBUTE_UNUSED;
      const char *string;
 {
-  if (strcmp(string,"w65") == 0) return true;
-  if (strcmp(string,"w65816") == 0) return true;
-  return false;
+  if (strcmp(string,"w65") == 0)
+    return TRUE;
+  if (strcmp(string,"w65816") == 0)
+    return TRUE;
+  return FALSE;
 }
 
 const bfd_arch_info_type bfd_w65_arch =
@@ -44,7 +47,7 @@ const bfd_arch_info_type bfd_w65_arch =
   "w65",			/* arch_name  */
   "w65",			/* printable name */
   1,
-  true,				/* the default machine */
+  TRUE,				/* the default machine */
   bfd_default_compatible,
   scan_mach,
   0,

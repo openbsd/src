@@ -1,23 +1,39 @@
+# If you change this file, please also look at files which source this one:
+# elf32lppc.sh elf32ppclinux.sh elf32ppcsim.sh
+
 TEMPLATE_NAME=elf32
-# If you change this, please also look at:
-# elf32ppc.sh elf32ppcsim.sh elf32lppc.sh elf32lppcsim.sh elf32ppclinux.sh
+EXTRA_EM_FILE=ppc32elf
 GENERATE_SHLIB_SCRIPT=yes
 SCRIPT_NAME=elf
 OUTPUT_FORMAT="elf32-powerpc"
 TEXT_START_ADDR=0x01800000
 MAXPAGESIZE=0x10000
-ARCH=powerpc
+ARCH=powerpc:common
 MACHINE=
 BSS_PLT=
-PAD_RO=
-RODATA_PADSIZE=${MAXPAGESIZE}
-RODATA_ALIGN=". = ALIGN(${RODATA_PADSIZE}) + (. & (${RODATA_PADSIZE} - 1))"
-PAD_GOT=
-PAD_PLT=
 EXECUTABLE_SYMBOLS='PROVIDE (__stack = 0); PROVIDE (___stack = 0);'
 OTHER_BSS_END_SYMBOLS='__end = .;'
-OTHER_READWRITE_SECTIONS='
-  .fixup	: { *(.fixup) }
-  .got1		: { *(.got1) }
-  .got2		: { *(.got2) }
-'
+OTHER_READWRITE_SECTIONS="
+  .fixup        ${RELOCATING-0} : { *(.fixup) }
+  .got1         ${RELOCATING-0} : { *(.got1) }
+  .got2         ${RELOCATING-0} : { *(.got2) }
+"
+OTHER_GOT_RELOC_SECTIONS="
+  .rela.got1         ${RELOCATING-0} : { *(.rela.got1) }
+  .rela.got2         ${RELOCATING-0} : { *(.rela.got2) }
+"
+
+# Treat a host that matches the target with the possible exception of "64"
+# in the name as if it were native.
+if test `echo "$host" | sed -e s/64//` = `echo "$target" | sed -e s/64//`; then
+  case " $EMULATION_LIBPATH " in
+    *" ${EMULATION_NAME} "*)
+      NATIVE=yes
+      ;;
+  esac
+fi
+
+# Look for 64 bit target libraries in /lib64, /usr/lib64 etc., first.
+case "$EMULATION_NAME" in
+  *64*) LIBPATH_SUFFIX=64 ;;
+esac

@@ -1,5 +1,5 @@
-/* tc-sh.c -- Assemble code for the Hitachi Super-H
-   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001
+/* tc-sh.c -- Assemble code for the Renesas / SuperH SH
+   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -27,7 +27,7 @@
 #include "subsegs.h"
 #define DEFINE_TABLE
 #include "opcodes/sh-opc.h"
-#include <ctype.h>
+#include "safe-ctype.h"
 #include "struc-symbol.h"
 
 #ifdef OBJ_ELF
@@ -35,6 +35,14 @@
 #endif
 
 #include "dwarf2dbg.h"
+
+typedef struct
+  {
+    sh_arg_type type;
+    int reg;
+    expressionS immediate;
+  }
+sh_operand_info;
 
 const char comment_chars[] = "!";
 const char line_separator_chars[] = ";";
@@ -45,25 +53,55 @@ static void s_uses PARAMS ((int));
 static void sh_count_relocs PARAMS ((bfd *, segT, PTR));
 static void sh_frob_section PARAMS ((bfd *, segT, PTR));
 
-void cons ();
-void s_align_bytes ();
 static void s_uacons PARAMS ((int));
 static sh_opcode_info *find_cooked_opcode PARAMS ((char **));
 static unsigned int assemble_ppi PARAMS ((char *, sh_opcode_info *));
+static void little PARAMS ((int));
+static void big PARAMS ((int));
+static int parse_reg PARAMS ((char *, int *, int *));
+static char *parse_exp PARAMS ((char *, sh_operand_info *));
+static char *parse_at PARAMS ((char *, sh_operand_info *));
+static void get_operand PARAMS ((char **, sh_operand_info *));
+static char *get_operands
+  PARAMS ((sh_opcode_info *, char *, sh_operand_info *));
+static sh_opcode_info *get_specific
+  PARAMS ((sh_opcode_info *, sh_operand_info *));
+static void insert PARAMS ((char *, int, int, sh_operand_info *));
+static void build_relax PARAMS ((sh_opcode_info *, sh_operand_info *));
+static char *insert_loop_bounds PARAMS ((char *, sh_operand_info *));
+static unsigned int build_Mytes
+  PARAMS ((sh_opcode_info *, sh_operand_info *));
+static bfd_boolean sh_local_pcrel PARAMS ((fixS *fix));
 
 #ifdef OBJ_ELF
 static void sh_elf_cons PARAMS ((int));
 
+inline static int sh_PIC_related_p PARAMS ((symbolS *));
+static int sh_check_fixup PARAMS ((expressionS *, bfd_reloc_code_real_type *));
+inline static char *sh_end_of_match PARAMS ((char *, char *));
+
 symbolS *GOT_symbol;		/* Pre-defined "_GLOBAL_OFFSET_TABLE_" */
 #endif
 
-int shl = 0;
+static void
+big (ignore)
+     int ignore ATTRIBUTE_UNUSED;
+{
+  if (! target_big_endian)
+    as_bad (_("directive .big encountered when option -big required"));
+
+  /* Stop further messages.  */
+  target_big_endian = 1;
+}
 
 static void
 little (ignore)
      int ignore ATTRIBUTE_UNUSED;
 {
-  shl = 1;
+  if (target_big_endian)
+    as_bad (_("directive .little encountered when option -little required"));
+
+  /* Stop further messages.  */
   target_big_endian = 0;
 }
 
@@ -84,6 +122,7 @@ const pseudo_typeS md_pseudo_table[] =
   {"int", cons, 4},
   {"word", cons, 2},
 #endif /* OBJ_ELF */
+  {"big", big, 0},
   {"form", listing_psize, 0},
   {"little", little, 0},
   {"heading", listing_title, 0},
@@ -98,9 +137,21 @@ const pseudo_typeS md_pseudo_table[] =
   {"4byte", s_uacons, 4},
   {"8byte", s_uacons, 8},
 #ifdef BFD_ASSEMBLER
-  {"file", dwarf2_directive_file, 0 },
+  {"file", (void (*) PARAMS ((int))) dwarf2_directive_file, 0 },
   {"loc", dwarf2_directive_loc, 0 },
 #endif
+#ifdef HAVE_SH64
+  {"mode", s_sh64_mode, 0 },
+
+  /* Have the old name too.  */
+  {"isa", s_sh64_mode, 0 },
+
+  /* Assert that the right ABI is used.  */
+  {"abi", s_sh64_abi, 0 },
+
+  { "vtable_inherit", sh64_vtable_inherit, 0 },
+  { "vtable_entry", sh64_vtable_entry, 0 },
+#endif /* HAVE_SH64 */
   {0, 0, 0}
 };
 
@@ -112,9 +163,9 @@ int sh_relax;		/* set if -relax seen */
 
 int sh_small;
 
-/* Whether -dsp was seen.  */
+/* preset architecture set, if given; zero otherwise.  */
 
-static int sh_dsp;
+static int preset_target_arch;
 
 /* The bit mask of architectures that could
    accomodate the insns seen so far.  */
@@ -133,10 +184,36 @@ const char FLT_CHARS[] = "rRsSfFdDxXpP";
 #define GET_WHAT(x) ((x>>4))
 
 /* These are the three types of relaxable instrction.  */
+/* These are the types of relaxable instructions; except for END which is
+   a marker.  */
 #define COND_JUMP 1
 #define COND_JUMP_DELAY 2
 #define UNCOND_JUMP  3
+
+#ifdef HAVE_SH64
+
+/* A 16-bit (times four) pc-relative operand, at most expanded to 32 bits.  */
+#define SH64PCREL16_32 4
+/* A 16-bit (times four) pc-relative operand, at most expanded to 64 bits.  */
+#define SH64PCREL16_64 5
+
+/* Variants of the above for adjusting the insn to PTA or PTB according to
+   the label.  */
+#define SH64PCREL16PT_32 6
+#define SH64PCREL16PT_64 7
+
+/* A MOVI expansion, expanding to at most 32 or 64 bits.  */
+#define MOVI_IMM_32 8
+#define MOVI_IMM_32_PCREL 9
+#define MOVI_IMM_64 10
+#define MOVI_IMM_64_PCREL 11
+#define END 12
+
+#else  /* HAVE_SH64 */
+
 #define END 4
+
+#endif /* HAVE_SH64 */
 
 #define UNDEF_DISP 0
 #define COND8  1
@@ -146,6 +223,24 @@ const char FLT_CHARS[] = "rRsSfFdDxXpP";
 
 #define UNCOND12 1
 #define UNCOND32 2
+
+#ifdef HAVE_SH64
+#define UNDEF_SH64PCREL 0
+#define SH64PCREL16 1
+#define SH64PCREL32 2
+#define SH64PCREL48 3
+#define SH64PCREL64 4
+#define SH64PCRELPLT 5
+
+#define UNDEF_MOVI 0
+#define MOVI_16 1
+#define MOVI_32 2
+#define MOVI_48 3
+#define MOVI_64 4
+#define MOVI_PLT 5
+#define MOVI_GOTOFF 6
+#define MOVI_GOTPC 7
+#endif /* HAVE_SH64 */
 
 /* Branch displacements are from the address of the branch plus
    four, thus all minimum and maximum values have 4 added to them.  */
@@ -176,6 +271,85 @@ const char FLT_CHARS[] = "rRsSfFdDxXpP";
 #define UNCOND32_F (1<<30)
 #define UNCOND32_M -(1<<30)
 #define UNCOND32_LENGTH 14
+
+#ifdef HAVE_SH64
+/* The trivial expansion of a SH64PCREL16 relaxation is just a "PT label,
+   TRd" as is the current insn, so no extra length.  Note that the "reach"
+   is calculated from the address *after* that insn, but the offset in the
+   insn is calculated from the beginning of the insn.  We also need to
+   take into account the implicit 1 coded as the "A" in PTA when counting
+   forward.  If PTB reaches an odd address, we trap that as an error
+   elsewhere, so we don't have to have different relaxation entries.  We
+   don't add a one to the negative range, since PTB would then have the
+   farthest backward-reaching value skipped, not generated at relaxation.  */
+#define SH64PCREL16_F (32767 * 4 - 4 + 1)
+#define SH64PCREL16_M (-32768 * 4 - 4)
+#define SH64PCREL16_LENGTH 0
+
+/* The next step is to change that PT insn into
+     MOVI ((label - datalabel Ln) >> 16) & 65535, R25
+     SHORI (label - datalabel Ln) & 65535, R25
+    Ln:
+     PTREL R25,TRd
+   which means two extra insns, 8 extra bytes.  This is the limit for the
+   32-bit ABI.
+
+   The expressions look a bit bad since we have to adjust this to avoid overflow on a
+   32-bit host.  */
+#define SH64PCREL32_F ((((long) 1 << 30) - 1) * 2 + 1 - 4)
+#define SH64PCREL32_LENGTH (2 * 4)
+
+/* Similarly, we just change the MOVI and add a SHORI for the 48-bit
+   expansion.  */
+#if BFD_HOST_64BIT_LONG
+/* The "reach" type is long, so we can only do this for a 64-bit-long
+   host.  */
+#define SH64PCREL32_M (((long) -1 << 30) * 2 - 4)
+#define SH64PCREL48_F ((((long) 1 << 47) - 1) - 4)
+#define SH64PCREL48_M (((long) -1 << 47) - 4)
+#define SH64PCREL48_LENGTH (3 * 4)
+#else
+/* If the host does not have 64-bit longs, just make this state identical
+   in reach to the 32-bit state.  Note that we have a slightly incorrect
+   reach, but the correct one above will overflow a 32-bit number.  */
+#define SH64PCREL32_M (((long) -1 << 30) * 2)
+#define SH64PCREL48_F SH64PCREL32_F
+#define SH64PCREL48_M SH64PCREL32_M
+#define SH64PCREL48_LENGTH (3 * 4)
+#endif /* BFD_HOST_64BIT_LONG */
+
+/* And similarly for the 64-bit expansion; a MOVI + SHORI + SHORI + SHORI
+   + PTREL sequence.  */
+#define SH64PCREL64_LENGTH (4 * 4)
+
+/* For MOVI, we make the MOVI + SHORI... expansion you can see in the
+   SH64PCREL expansions.  The PCREL one is similar, but the other has no
+   pc-relative reach; it must be fully expanded in
+   shmedia_md_estimate_size_before_relax.  */
+#define MOVI_16_LENGTH 0
+#define MOVI_16_F (32767 - 4)
+#define MOVI_16_M (-32768 - 4)
+#define MOVI_32_LENGTH 4
+#define MOVI_32_F ((((long) 1 << 30) - 1) * 2 + 1 - 4)
+#define MOVI_48_LENGTH 8
+
+#if BFD_HOST_64BIT_LONG
+/* The "reach" type is long, so we can only do this for a 64-bit-long
+   host.  */
+#define MOVI_32_M (((long) -1 << 30) * 2 - 4)
+#define MOVI_48_F ((((long) 1 << 47) - 1) - 4)
+#define MOVI_48_M (((long) -1 << 47) - 4)
+#else
+/* If the host does not have 64-bit longs, just make this state identical
+   in reach to the 32-bit state.  Note that we have a slightly incorrect
+   reach, but the correct one above will overflow a 32-bit number.  */
+#define MOVI_32_M (((long) -1 << 30) * 2)
+#define MOVI_48_F MOVI_32_F
+#define MOVI_48_M MOVI_32_M
+#endif /* BFD_HOST_64BIT_LONG */
+
+#define MOVI_64_LENGTH 12
+#endif /* HAVE_SH64 */
 
 #define EMPTY { 0, 0, 0, 0 }
 
@@ -217,6 +391,118 @@ const relax_typeS md_relax_table[C (END, 0)] = {
   { 0, 0, UNCOND32_LENGTH, 0, },
   EMPTY, EMPTY, EMPTY,
   EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
+
+#ifdef HAVE_SH64
+  /* C (SH64PCREL16_32, SH64PCREL16) */
+  EMPTY,
+  { SH64PCREL16_F, SH64PCREL16_M, SH64PCREL16_LENGTH, C (SH64PCREL16_32, SH64PCREL32) },
+  /* C (SH64PCREL16_32, SH64PCREL32) */
+  { 0, 0, SH64PCREL32_LENGTH, 0 },
+  EMPTY, EMPTY,
+  /* C (SH64PCREL16_32, SH64PCRELPLT) */
+  { 0, 0, SH64PCREL32_LENGTH, 0 },
+  EMPTY, EMPTY,
+  EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
+
+  /* C (SH64PCREL16_64, SH64PCREL16) */
+  EMPTY,
+  { SH64PCREL16_F, SH64PCREL16_M, SH64PCREL16_LENGTH, C (SH64PCREL16_64, SH64PCREL32) },
+  /* C (SH64PCREL16_64, SH64PCREL32) */
+  { SH64PCREL32_F, SH64PCREL32_M, SH64PCREL32_LENGTH, C (SH64PCREL16_64, SH64PCREL48) },
+  /* C (SH64PCREL16_64, SH64PCREL48) */
+  { SH64PCREL48_F, SH64PCREL48_M, SH64PCREL48_LENGTH, C (SH64PCREL16_64, SH64PCREL64) },
+  /* C (SH64PCREL16_64, SH64PCREL64) */
+  { 0, 0, SH64PCREL64_LENGTH, 0 },
+  /* C (SH64PCREL16_64, SH64PCRELPLT) */
+  { 0, 0, SH64PCREL64_LENGTH, 0 },
+  EMPTY, EMPTY,
+  EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
+
+  /* C (SH64PCREL16PT_32, SH64PCREL16) */
+  EMPTY,
+  { SH64PCREL16_F, SH64PCREL16_M, SH64PCREL16_LENGTH, C (SH64PCREL16PT_32, SH64PCREL32) },
+  /* C (SH64PCREL16PT_32, SH64PCREL32) */
+  { 0, 0, SH64PCREL32_LENGTH, 0 },
+  EMPTY, EMPTY,
+  /* C (SH64PCREL16PT_32, SH64PCRELPLT) */
+  { 0, 0, SH64PCREL32_LENGTH, 0 },
+  EMPTY, EMPTY,
+  EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
+
+  /* C (SH64PCREL16PT_64, SH64PCREL16) */
+  EMPTY,
+  { SH64PCREL16_F, SH64PCREL16_M, SH64PCREL16_LENGTH, C (SH64PCREL16PT_64, SH64PCREL32) },
+  /* C (SH64PCREL16PT_64, SH64PCREL32) */
+  { SH64PCREL32_F,
+    SH64PCREL32_M,
+    SH64PCREL32_LENGTH,
+    C (SH64PCREL16PT_64, SH64PCREL48) },
+  /* C (SH64PCREL16PT_64, SH64PCREL48) */
+  { SH64PCREL48_F, SH64PCREL48_M, SH64PCREL48_LENGTH, C (SH64PCREL16PT_64, SH64PCREL64) },
+  /* C (SH64PCREL16PT_64, SH64PCREL64) */
+  { 0, 0, SH64PCREL64_LENGTH, 0 },
+  /* C (SH64PCREL16PT_64, SH64PCRELPLT) */
+  { 0, 0, SH64PCREL64_LENGTH, 0},
+  EMPTY, EMPTY,
+  EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
+
+  /* C (MOVI_IMM_32, UNDEF_MOVI) */
+  { 0, 0, MOVI_32_LENGTH, 0 },
+  /* C (MOVI_IMM_32, MOVI_16) */
+  { MOVI_16_F, MOVI_16_M, MOVI_16_LENGTH, C (MOVI_IMM_32, MOVI_32) },
+  /* C (MOVI_IMM_32, MOVI_32) */
+  { MOVI_32_F, MOVI_32_M, MOVI_32_LENGTH, 0 },
+  EMPTY, EMPTY, EMPTY,
+  /* C (MOVI_IMM_32, MOVI_GOTOFF) */
+  { 0, 0, MOVI_32_LENGTH, 0 },
+  EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
+
+  /* C (MOVI_IMM_32_PCREL, MOVI_16) */
+  EMPTY,
+  { MOVI_16_F, MOVI_16_M, MOVI_16_LENGTH, C (MOVI_IMM_32_PCREL, MOVI_32) },
+  /* C (MOVI_IMM_32_PCREL, MOVI_32) */
+  { 0, 0, MOVI_32_LENGTH, 0 },
+  EMPTY, EMPTY,
+  /* C (MOVI_IMM_32_PCREL, MOVI_PLT) */
+  { 0, 0, MOVI_32_LENGTH, 0 },
+  EMPTY,
+  /* C (MOVI_IMM_32_PCREL, MOVI_GOTPC) */
+  { 0, 0, MOVI_32_LENGTH, 0 },
+  EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
+
+  /* C (MOVI_IMM_64, UNDEF_MOVI) */
+  { 0, 0, MOVI_64_LENGTH, 0 },
+  /* C (MOVI_IMM_64, MOVI_16) */
+  { MOVI_16_F, MOVI_16_M, MOVI_16_LENGTH, C (MOVI_IMM_64, MOVI_32) },
+  /* C (MOVI_IMM_64, MOVI_32) */
+  { MOVI_32_F, MOVI_32_M, MOVI_32_LENGTH, C (MOVI_IMM_64, MOVI_48) },
+  /* C (MOVI_IMM_64, MOVI_48) */
+  { MOVI_48_F, MOVI_48_M, MOVI_48_LENGTH, C (MOVI_IMM_64, MOVI_64) },
+  /* C (MOVI_IMM_64, MOVI_64) */
+  { 0, 0, MOVI_64_LENGTH, 0 },
+  EMPTY,
+  /* C (MOVI_IMM_64, MOVI_GOTOFF) */
+  { 0, 0, MOVI_64_LENGTH, 0 },
+  EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
+
+  /* C (MOVI_IMM_64_PCREL, MOVI_16) */
+  EMPTY,
+  { MOVI_16_F, MOVI_16_M, MOVI_16_LENGTH, C (MOVI_IMM_64_PCREL, MOVI_32) },
+  /* C (MOVI_IMM_64_PCREL, MOVI_32) */
+  { MOVI_32_F, MOVI_32_M, MOVI_32_LENGTH, C (MOVI_IMM_64_PCREL, MOVI_48) },
+  /* C (MOVI_IMM_64_PCREL, MOVI_48) */
+  { MOVI_48_F, MOVI_48_M, MOVI_48_LENGTH, C (MOVI_IMM_64_PCREL, MOVI_64) },
+  /* C (MOVI_IMM_64_PCREL, MOVI_64) */
+  { 0, 0, MOVI_64_LENGTH, 0 },
+  /* C (MOVI_IMM_64_PCREL, MOVI_PLT) */
+  { 0, 0, MOVI_64_LENGTH, 0 },
+  EMPTY,
+  /* C (MOVI_IMM_64_PCREL, MOVI_GOTPC) */
+  { 0, 0, MOVI_64_LENGTH, 0 },
+  EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
+
+#endif /* HAVE_SH64 */
+
 };
 
 #undef EMPTY
@@ -225,79 +511,306 @@ static struct hash_control *opcode_hash_control;	/* Opcode mnemonics */
 
 
 #ifdef OBJ_ELF
-/* Parse @got, etc. and return the desired relocation.
-   If we have additional arithmetic expression, then we fill in new_exp_p.  */
-static bfd_reloc_code_real_type
-sh_elf_suffix (str_p, exp_p, new_exp_p)
-     char **str_p;
-     expressionS *exp_p, *new_exp_p;
+/* Determinet whether the symbol needs any kind of PIC relocation.  */
+
+inline static int
+sh_PIC_related_p (sym)
+     symbolS *sym;
 {
-  struct map_bfd {
-    char *string;
-    int length;
-    bfd_reloc_code_real_type reloc;
-  };
+  expressionS *exp;
 
-  char ident[20];
-  char *str = *str_p;
-  char *str2;
-  int ch;
-  int len;
-  struct map_bfd *ptr;
+  if (! sym)
+    return 0;
 
-#define MAP(str,reloc) { str, sizeof (str)-1, reloc }
+  if (sym == GOT_symbol)
+    return 1;
 
-  static struct map_bfd mapping[] = {
-    MAP ("got",		BFD_RELOC_32_GOT_PCREL),
-    MAP ("plt",		BFD_RELOC_32_PLT_PCREL),
-    MAP ("gotoff",	BFD_RELOC_32_GOTOFF),
-    { (char *)0,	0,	BFD_RELOC_UNUSED }
-  };
+#ifdef HAVE_SH64
+  if (sh_PIC_related_p (*symbol_get_tc (sym)))
+    return 1;
+#endif
 
-  if (*str++ != '@')
-    return BFD_RELOC_UNUSED;
+  exp = symbol_get_value_expression (sym);
 
-  for (ch = *str, str2 = ident;
-       (str2 < ident + sizeof (ident) - 1
-	&& (isalnum (ch) || ch == '@'));
-       ch = *++str)
+  return (exp->X_op == O_PIC_reloc
+	  || sh_PIC_related_p (exp->X_add_symbol)
+	  || sh_PIC_related_p (exp->X_op_symbol));
+}
+
+/* Determine the relocation type to be used to represent the
+   expression, that may be rearranged.  */
+
+static int
+sh_check_fixup (main_exp, r_type_p)
+     expressionS *main_exp;
+     bfd_reloc_code_real_type *r_type_p;
+{
+  expressionS *exp = main_exp;
+
+  /* This is here for backward-compatibility only.  GCC used to generated:
+
+	f@PLT + . - (.LPCS# + 2)
+
+     but we'd rather be able to handle this as a PIC-related reference
+     plus/minus a symbol.  However, gas' parser gives us:
+
+	O_subtract (O_add (f@PLT, .), .LPCS#+2)
+
+     so we attempt to transform this into:
+
+        O_subtract (f@PLT, O_subtract (.LPCS#+2, .))
+
+     which we can handle simply below.  */
+  if (exp->X_op == O_subtract)
     {
-      *str2++ = (islower (ch)) ? ch : tolower (ch);
+      if (sh_PIC_related_p (exp->X_op_symbol))
+	return 1;
+
+      exp = symbol_get_value_expression (exp->X_add_symbol);
+
+      if (exp && sh_PIC_related_p (exp->X_op_symbol))
+	return 1;
+
+      if (exp && exp->X_op == O_add
+	  && sh_PIC_related_p (exp->X_add_symbol))
+	{
+	  symbolS *sym = exp->X_add_symbol;
+
+	  exp->X_op = O_subtract;
+	  exp->X_add_symbol = main_exp->X_op_symbol;
+
+	  main_exp->X_op_symbol = main_exp->X_add_symbol;
+	  main_exp->X_add_symbol = sym;
+
+	  main_exp->X_add_number += exp->X_add_number;
+	  exp->X_add_number = 0;
+	}
+
+      exp = main_exp;
+    }
+  else if (exp->X_op == O_add && sh_PIC_related_p (exp->X_op_symbol))
+    return 1;
+
+  if (exp->X_op == O_symbol || exp->X_op == O_add || exp->X_op == O_subtract)
+    {
+#ifdef HAVE_SH64
+      if (exp->X_add_symbol
+	  && (exp->X_add_symbol == GOT_symbol
+	      || (GOT_symbol
+		  && *symbol_get_tc (exp->X_add_symbol) == GOT_symbol)))
+	{
+	  switch (*r_type_p)
+	    {
+	    case BFD_RELOC_SH_IMM_LOW16:
+	      *r_type_p = BFD_RELOC_SH_GOTPC_LOW16;
+	      break;
+
+	    case BFD_RELOC_SH_IMM_MEDLOW16:
+	      *r_type_p = BFD_RELOC_SH_GOTPC_MEDLOW16;
+	      break;
+
+	    case BFD_RELOC_SH_IMM_MEDHI16:
+	      *r_type_p = BFD_RELOC_SH_GOTPC_MEDHI16;
+	      break;
+
+	    case BFD_RELOC_SH_IMM_HI16:
+	      *r_type_p = BFD_RELOC_SH_GOTPC_HI16;
+	      break;
+
+	    case BFD_RELOC_NONE:
+	    case BFD_RELOC_UNUSED:
+	      *r_type_p = BFD_RELOC_SH_GOTPC;
+	      break;
+
+	    default:
+	      abort ();
+	    }
+	  return 0;
+	}
+#else
+      if (exp->X_add_symbol && exp->X_add_symbol == GOT_symbol)
+	{
+	  *r_type_p = BFD_RELOC_SH_GOTPC;
+	  return 0;
+	}
+#endif
+      exp = symbol_get_value_expression (exp->X_add_symbol);
+      if (! exp)
+	return 0;
     }
 
-  *str2 = '\0';
-  len = str2 - ident;
+  if (exp->X_op == O_PIC_reloc)
+    {
+#ifdef HAVE_SH64
+      switch (*r_type_p)
+	{
+	case BFD_RELOC_NONE:
+	case BFD_RELOC_UNUSED:
+	  *r_type_p = exp->X_md;
+	  break;
 
-  ch = ident[0];
-  for (ptr = &mapping[0]; ptr->length > 0; ptr++)
-    if (ch == ptr->string[0]
-	&& len == ptr->length
-	&& memcmp (ident, ptr->string, ptr->length) == 0)
+	case BFD_RELOC_SH_IMM_LOW16:
+	  switch (exp->X_md)
+	    {
+	    case BFD_RELOC_32_GOTOFF:
+	      *r_type_p = BFD_RELOC_SH_GOTOFF_LOW16;
+	      break;
+
+	    case BFD_RELOC_SH_GOTPLT32:
+	      *r_type_p = BFD_RELOC_SH_GOTPLT_LOW16;
+	      break;
+
+	    case BFD_RELOC_32_GOT_PCREL:
+	      *r_type_p = BFD_RELOC_SH_GOT_LOW16;
+	      break;
+
+	    case BFD_RELOC_32_PLT_PCREL:
+	      *r_type_p = BFD_RELOC_SH_PLT_LOW16;
+	      break;
+
+	    default:
+	      abort ();
+	    }
+	  break;
+
+	case BFD_RELOC_SH_IMM_MEDLOW16:
+	  switch (exp->X_md)
+	    {
+	    case BFD_RELOC_32_GOTOFF:
+	      *r_type_p = BFD_RELOC_SH_GOTOFF_MEDLOW16;
+	      break;
+
+	    case BFD_RELOC_SH_GOTPLT32:
+	      *r_type_p = BFD_RELOC_SH_GOTPLT_MEDLOW16;
+	      break;
+
+	    case BFD_RELOC_32_GOT_PCREL:
+	      *r_type_p = BFD_RELOC_SH_GOT_MEDLOW16;
+	      break;
+
+	    case BFD_RELOC_32_PLT_PCREL:
+	      *r_type_p = BFD_RELOC_SH_PLT_MEDLOW16;
+	      break;
+
+	    default:
+	      abort ();
+	    }
+	  break;
+
+	case BFD_RELOC_SH_IMM_MEDHI16:
+	  switch (exp->X_md)
+	    {
+	    case BFD_RELOC_32_GOTOFF:
+	      *r_type_p = BFD_RELOC_SH_GOTOFF_MEDHI16;
+	      break;
+
+	    case BFD_RELOC_SH_GOTPLT32:
+	      *r_type_p = BFD_RELOC_SH_GOTPLT_MEDHI16;
+	      break;
+
+	    case BFD_RELOC_32_GOT_PCREL:
+	      *r_type_p = BFD_RELOC_SH_GOT_MEDHI16;
+	      break;
+
+	    case BFD_RELOC_32_PLT_PCREL:
+	      *r_type_p = BFD_RELOC_SH_PLT_MEDHI16;
+	      break;
+
+	    default:
+	      abort ();
+	    }
+	  break;
+
+	case BFD_RELOC_SH_IMM_HI16:
+	  switch (exp->X_md)
+	    {
+	    case BFD_RELOC_32_GOTOFF:
+	      *r_type_p = BFD_RELOC_SH_GOTOFF_HI16;
+	      break;
+
+	    case BFD_RELOC_SH_GOTPLT32:
+	      *r_type_p = BFD_RELOC_SH_GOTPLT_HI16;
+	      break;
+
+	    case BFD_RELOC_32_GOT_PCREL:
+	      *r_type_p = BFD_RELOC_SH_GOT_HI16;
+	      break;
+
+	    case BFD_RELOC_32_PLT_PCREL:
+	      *r_type_p = BFD_RELOC_SH_PLT_HI16;
+	      break;
+
+	    default:
+	      abort ();
+	    }
+	  break;
+
+	default:
+	  abort ();
+	}
+#else
+      *r_type_p = exp->X_md;
+#endif
+      if (exp == main_exp)
+	exp->X_op = O_symbol;
+      else
+	{
+	  main_exp->X_add_symbol = exp->X_add_symbol;
+	  main_exp->X_add_number += exp->X_add_number;
+	}
+    }
+  else
+    return (sh_PIC_related_p (exp->X_add_symbol)
+	    || sh_PIC_related_p (exp->X_op_symbol));
+
+  return 0;
+}
+
+/* Add expression EXP of SIZE bytes to offset OFF of fragment FRAG.  */
+
+void
+sh_cons_fix_new (frag, off, size, exp)
+     fragS *frag;
+     int off, size;
+     expressionS *exp;
+{
+  bfd_reloc_code_real_type r_type = BFD_RELOC_UNUSED;
+
+  if (sh_check_fixup (exp, &r_type))
+    as_bad (_("Invalid PIC expression."));
+
+  if (r_type == BFD_RELOC_UNUSED)
+    switch (size)
       {
-	/* Now check for identifier@suffix+constant */
-	if (*str == '-' || *str == '+')
-	  {
-	    char *orig_line = input_line_pointer;
+      case 1:
+	r_type = BFD_RELOC_8;
+	break;
 
-	    input_line_pointer = str;
-	    expression (new_exp_p);
-	    if (new_exp_p->X_op == O_constant)
-	      {
-		exp_p->X_add_number += new_exp_p->X_add_number;
-		str = input_line_pointer;
-	      }
-	    if (new_exp_p->X_op == O_subtract)
-	      str = input_line_pointer;
+      case 2:
+	r_type = BFD_RELOC_16;
+	break;
 
-	    if (&input_line_pointer != str_p)
-	      input_line_pointer = orig_line;
-	  }
+      case 4:
+	r_type = BFD_RELOC_32;
+	break;
 
-	*str_p = str;
-	return ptr->reloc;
+#ifdef HAVE_SH64
+      case 8:
+	r_type = BFD_RELOC_64;
+	break;
+#endif
+
+      default:
+	goto error;
       }
+  else if (size != 4)
+    {
+    error:
+      as_bad (_("unsupported BFD relocation size %u"), size);
+      r_type = BFD_RELOC_UNUSED;
+    }
 
-  return BFD_RELOC_UNUSED;
+  fix_new_exp (frag, off, size, exp, 0, r_type);
 }
 
 /* The regular cons() function, that reads constants, doesn't support
@@ -308,9 +821,17 @@ static void
 sh_elf_cons (nbytes)
      register int nbytes;	/* 1=.byte, 2=.word, 4=.long */
 {
-  expressionS exp, new_exp;
-  bfd_reloc_code_real_type reloc;
-  const char *name;
+  expressionS exp;
+
+#ifdef HAVE_SH64
+
+  /* Update existing range to include a previous insn, if there was one.  */
+  sh64_update_contents_mark (TRUE);
+
+  /* We need to make sure the contents type is set to data.  */
+  sh64_flag_output ();
+
+#endif /* HAVE_SH64 */
 
   if (is_it_end_of_statement ())
     {
@@ -321,79 +842,7 @@ sh_elf_cons (nbytes)
   do
     {
       expression (&exp);
-      new_exp.X_op = O_absent;
-      new_exp.X_add_symbol = new_exp.X_op_symbol = NULL;
-      /* If the _GLOBAL_OFFSET_TABLE_ symbol hasn't been found yet,
-	 use the name of the symbol to tell whether it's the
-	 _GLOBAL_OFFSET_TABLE_.  If it has, comparing the symbols is
-	 sufficient.  */
-      if (! GOT_symbol && exp.X_add_symbol)
-	name = S_GET_NAME (exp.X_add_symbol);
-      else
-	name = NULL;
-      /* Check whether this expression involves the
-	 _GLOBAL_OFFSET_TABLE_ symbol, by itself or added to a
-	 difference of two other symbols.  */
-      if (((GOT_symbol && GOT_symbol == exp.X_add_symbol)
-	   || (! GOT_symbol && name
-	       && strcmp (name, GLOBAL_OFFSET_TABLE_NAME) == 0))
-	  && (exp.X_op == O_symbol
-	      || (exp.X_op == O_add
-		  && ((symbol_get_value_expression (exp.X_op_symbol)->X_op)
-		      == O_subtract))))
-	{
-	  reloc_howto_type *reloc_howto = bfd_reloc_type_lookup (stdoutput,
-								 BFD_RELOC_32);
-	  int size = bfd_get_reloc_size (reloc_howto);
-
-	  if (GOT_symbol == NULL)
-	    GOT_symbol = symbol_find_or_make (GLOBAL_OFFSET_TABLE_NAME);
-
-	  if (size > nbytes)
-	    as_bad (_("%s relocations do not fit in %d bytes\n"),
-		    reloc_howto->name, nbytes);
-	  else
-	    {
-	      register char *p = frag_more ((int) nbytes);
-	      int offset = nbytes - size;
-
-	      fix_new_exp (frag_now, p - frag_now->fr_literal + offset,
-			   size, &exp, 0, TC_RELOC_GLOBAL_OFFSET_TABLE);
-	    }
-	}
-      /* Check if this symbol involves one of the magic suffixes, such
-	 as @GOT, @GOTOFF or @PLT, and determine which relocation type
-	 to use.  */
-      else if ((exp.X_op == O_symbol || (exp.X_op == O_add && exp.X_op_symbol))
-	  && *input_line_pointer == '@'
-	  && ((reloc = sh_elf_suffix (&input_line_pointer, &exp, &new_exp))
-	      != BFD_RELOC_UNUSED))
-	{
-	  reloc_howto_type *reloc_howto = bfd_reloc_type_lookup (stdoutput,
-								 reloc);
-	  int size = bfd_get_reloc_size (reloc_howto);
-
-	  /* Force a GOT to be generated.  */
-	  if (GOT_symbol == NULL)
-	    GOT_symbol = symbol_find_or_make (GLOBAL_OFFSET_TABLE_NAME);
-
-	  if (size > nbytes)
-	    as_bad (_("%s relocations do not fit in %d bytes\n"),
-		    reloc_howto->name, nbytes);
-	  else
-	    {
-	      register char *p = frag_more ((int) nbytes);
-	      int offset = nbytes - size;
-
-	      fix_new_exp (frag_now, p - frag_now->fr_literal + offset, size,
-			   &exp, 0, reloc);
-	      if (new_exp.X_op != O_absent)
-		fix_new_exp (frag_now, p - frag_now->fr_literal + offset, size,
-			     &new_exp, 0, BFD_RELOC_32);
-	    }
-	}
-      else
-	emit_expr (&exp, (unsigned int) nbytes);
+      emit_expr (&exp, (unsigned int) nbytes);
     }
   while (*input_line_pointer++ == ',');
 
@@ -414,38 +863,29 @@ sh_elf_cons (nbytes)
 void
 md_begin ()
 {
-  sh_opcode_info *opcode;
+  const sh_opcode_info *opcode;
   char *prev_name = "";
   int target_arch;
 
-#ifdef TE_PE
-  /* The WinCE OS only supports little endian executables.  */
-  target_big_endian = 0;
-#else
-  if (! shl)
-    target_big_endian = 1;
-#endif
-
-  target_arch = arch_sh1_up & ~(sh_dsp ? arch_sh3e_up : arch_sh_dsp_up);
+  target_arch
+    = preset_target_arch ? preset_target_arch : arch_sh1_up & ~arch_sh_dsp_up;
   valid_arch = target_arch;
+
+#ifdef HAVE_SH64
+  shmedia_md_begin ();
+#endif
 
   opcode_hash_control = hash_new ();
 
   /* Insert unique names into hash table.  */
   for (opcode = sh_table; opcode->name; opcode++)
     {
-      if (strcmp (prev_name, opcode->name))
+      if (strcmp (prev_name, opcode->name) != 0)
 	{
 	  if (! (opcode->arch & target_arch))
 	    continue;
 	  prev_name = opcode->name;
 	  hash_insert (opcode_hash_control, opcode->name, (char *) opcode);
-	}
-      else
-	{
-	  /* Make all the opcodes with the same name point to the same
-	     string.  */
-	  opcode->name = prev_name;
 	}
     }
 }
@@ -456,15 +896,7 @@ static int reg_x, reg_y;
 static int reg_efg;
 static int reg_b;
 
-typedef struct
-  {
-    sh_arg_type type;
-    int reg;
-    expressionS immediate;
-  }
-sh_operand_info;
-
-#define IDENT_CHAR(c) (isalnum (c) || (c) == '_')
+#define IDENT_CHAR(c) (ISALNUM (c) || (c) == '_')
 
 /* Try to parse a reg name.  Return the number of chars consumed.  */
 
@@ -474,8 +906,8 @@ parse_reg (src, mode, reg)
      int *mode;
      int *reg;
 {
-  char l0 = tolower (src[0]);
-  char l1 = l0 ? tolower (src[1]) : 0;
+  char l0 = TOLOWER (src[0]);
+  char l1 = l0 ? TOLOWER (src[1]) : 0;
 
   /* We use ! IDENT_CHAR for the next character after the register name, to
      make sure that we won't accidentally recognize a symbol name such as
@@ -530,7 +962,7 @@ parse_reg (src, mode, reg)
 	      *reg = A_A0_NUM;
 	      return 2;
 	    }
-	  if (tolower (src[2]) == 'g' && ! IDENT_CHAR ((unsigned char) src[3]))
+	  if (TOLOWER (src[2]) == 'g' && ! IDENT_CHAR ((unsigned char) src[3]))
 	    {
 	      *mode = DSP_REG_N;
 	      *reg = A_A0G_NUM;
@@ -545,7 +977,7 @@ parse_reg (src, mode, reg)
 	      *reg = A_A1_NUM;
 	      return 2;
 	    }
-	  if (tolower (src[2]) == 'g' && ! IDENT_CHAR ((unsigned char) src[3]))
+	  if (TOLOWER (src[2]) == 'g' && ! IDENT_CHAR ((unsigned char) src[3]))
 	    {
 	      *mode = DSP_REG_N;
 	      *reg = A_A1G_NUM;
@@ -578,7 +1010,7 @@ parse_reg (src, mode, reg)
 	}
     }
 
-  if (l0 == 'i' && l1 && ! IDENT_CHAR ((unsigned char) src[3]))
+  if (l0 == 'i' && l1 && ! IDENT_CHAR ((unsigned char) src[2]))
     {
       if (l1 == 's')
 	{
@@ -626,34 +1058,34 @@ parse_reg (src, mode, reg)
 
   if (l0 == 's'
       && l1 == 's'
-      && tolower (src[2]) == 'r' && ! IDENT_CHAR ((unsigned char) src[3]))
+      && TOLOWER (src[2]) == 'r' && ! IDENT_CHAR ((unsigned char) src[3]))
     {
       *mode = A_SSR;
       return 3;
     }
 
-  if (l0 == 's' && l1 == 'p' && tolower (src[2]) == 'c'
+  if (l0 == 's' && l1 == 'p' && TOLOWER (src[2]) == 'c'
       && ! IDENT_CHAR ((unsigned char) src[3]))
     {
       *mode = A_SPC;
       return 3;
     }
 
-  if (l0 == 's' && l1 == 'g' && tolower (src[2]) == 'r'
+  if (l0 == 's' && l1 == 'g' && TOLOWER (src[2]) == 'r'
       && ! IDENT_CHAR ((unsigned char) src[3]))
     {
       *mode = A_SGR;
       return 3;
     }
 
-  if (l0 == 'd' && l1 == 's' && tolower (src[2]) == 'r'
+  if (l0 == 'd' && l1 == 's' && TOLOWER (src[2]) == 'r'
       && ! IDENT_CHAR ((unsigned char) src[3]))
     {
       *mode = A_DSR;
       return 3;
     }
 
-  if (l0 == 'd' && l1 == 'b' && tolower (src[2]) == 'r'
+  if (l0 == 'd' && l1 == 'b' && TOLOWER (src[2]) == 'r'
       && ! IDENT_CHAR ((unsigned char) src[3]))
     {
       *mode = A_DBR;
@@ -685,35 +1117,35 @@ parse_reg (src, mode, reg)
       *mode = A_PC;
       return 2;
     }
-  if (l0 == 'g' && l1 == 'b' && tolower (src[2]) == 'r'
+  if (l0 == 'g' && l1 == 'b' && TOLOWER (src[2]) == 'r'
       && ! IDENT_CHAR ((unsigned char) src[3]))
     {
       *mode = A_GBR;
       return 3;
     }
-  if (l0 == 'v' && l1 == 'b' && tolower (src[2]) == 'r'
+  if (l0 == 'v' && l1 == 'b' && TOLOWER (src[2]) == 'r'
       && ! IDENT_CHAR ((unsigned char) src[3]))
     {
       *mode = A_VBR;
       return 3;
     }
 
-  if (l0 == 'm' && l1 == 'a' && tolower (src[2]) == 'c'
+  if (l0 == 'm' && l1 == 'a' && TOLOWER (src[2]) == 'c'
       && ! IDENT_CHAR ((unsigned char) src[4]))
     {
-      if (tolower (src[3]) == 'l')
+      if (TOLOWER (src[3]) == 'l')
 	{
 	  *mode = A_MACL;
 	  return 4;
 	}
-      if (tolower (src[3]) == 'h')
+      if (TOLOWER (src[3]) == 'h')
 	{
 	  *mode = A_MACH;
 	  return 4;
 	}
     }
-  if (l0 == 'm' && l1 == 'o' && tolower (src[2]) == 'd'
-      && ! IDENT_CHAR ((unsigned char) src[4]))
+  if (l0 == 'm' && l1 == 'o' && TOLOWER (src[2]) == 'd'
+      && ! IDENT_CHAR ((unsigned char) src[3]))
     {
       *mode = A_MOD;
       return 3;
@@ -794,45 +1226,31 @@ parse_reg (src, mode, reg)
 	  return 3;
 	}
     }
-  if (l0 == 'f' && l1 == 'p' && tolower (src[2]) == 'u'
-      && tolower (src[3]) == 'l'
+  if (l0 == 'f' && l1 == 'p' && TOLOWER (src[2]) == 'u'
+      && TOLOWER (src[3]) == 'l'
       && ! IDENT_CHAR ((unsigned char) src[4]))
     {
       *mode = FPUL_N;
       return 4;
     }
 
-  if (l0 == 'f' && l1 == 'p' && tolower (src[2]) == 's'
-      && tolower (src[3]) == 'c'
-      && tolower (src[4]) == 'r' && ! IDENT_CHAR ((unsigned char) src[5]))
+  if (l0 == 'f' && l1 == 'p' && TOLOWER (src[2]) == 's'
+      && TOLOWER (src[3]) == 'c'
+      && TOLOWER (src[4]) == 'r' && ! IDENT_CHAR ((unsigned char) src[5]))
     {
       *mode = FPSCR_N;
       return 5;
     }
 
-  if (l0 == 'x' && l1 == 'm' && tolower (src[2]) == 't'
-      && tolower (src[3]) == 'r'
-      && tolower (src[4]) == 'x' && ! IDENT_CHAR ((unsigned char) src[5]))
+  if (l0 == 'x' && l1 == 'm' && TOLOWER (src[2]) == 't'
+      && TOLOWER (src[3]) == 'r'
+      && TOLOWER (src[4]) == 'x' && ! IDENT_CHAR ((unsigned char) src[5]))
     {
       *mode = XMTRX_M4;
       return 5;
     }
 
   return 0;
-}
-
-static symbolS *
-dot ()
-{
-  const char *fake;
-
-  /* JF: '.' is pseudo symbol with value of current location
-     in current segment.  */
-  fake = FAKE_LABEL_NAME;
-  return  symbol_new (fake,
-		      now_seg,
-		      (valueT) frag_now_fix (),
-		      frag_now);
 }
 
 static char *
@@ -848,6 +1266,12 @@ parse_exp (s, op)
   expression (&op->immediate);
   if (op->immediate.X_op == O_absent)
     as_bad (_("missing operand"));
+#ifdef OBJ_ELF
+  else if (op->immediate.X_op == O_PIC_reloc
+	   || sh_PIC_related_p (op->immediate.X_add_symbol)
+	   || sh_PIC_related_p (op->immediate.X_op_symbol))
+    as_bad (_("misplaced PIC operand"));
+#endif
   new = input_line_pointer;
   input_line_pointer = save;
   return new;
@@ -895,7 +1319,7 @@ parse_at (src, op)
   else if (src[0] == '(')
     {
       /* Could be @(disp, rn), @(disp, gbr), @(disp, pc),  @(r0, gbr) or
-         @(r0, rn) */
+         @(r0, rn).  */
       src++;
       len = parse_reg (src, &mode, &(op->reg));
       if (len && mode == A_REG_N)
@@ -906,29 +1330,42 @@ parse_at (src, op)
 	      as_bad (_("must be @(r0,...)"));
 	    }
 	  if (src[0] == ',')
-	    src++;
-	  /* Now can be rn or gbr */
-	  len = parse_reg (src, &mode, &(op->reg));
-	  if (mode == A_GBR)
 	    {
-	      op->type = A_R0_GBR;
-	    }
-	  else if (mode == A_REG_N)
-	    {
-	      op->type = A_IND_R0_REG_N;
+	      src++;
+	      /* Now can be rn or gbr.  */
+	      len = parse_reg (src, &mode, &(op->reg));
 	    }
 	  else
 	    {
-	      as_bad (_("syntax error in @(r0,...)"));
+	      len = 0;
+	    }
+	  if (len)
+	    {
+	      if (mode == A_GBR)
+		{
+		  op->type = A_R0_GBR;
+		}
+	      else if (mode == A_REG_N)
+		{
+		  op->type = A_IND_R0_REG_N;
+		}
+	      else
+		{
+		  as_bad (_("syntax error in @(r0,...)"));
+		}
+	    }
+	  else
+	    {
+	      as_bad (_("syntax error in @(r0...)"));
 	    }
 	}
       else
 	{
-	  /* Must be an @(disp,.. thing) */
+	  /* Must be an @(disp,.. thing).  */
 	  src = parse_exp (src, op);
 	  if (src[0] == ',')
 	    src++;
-	  /* Now can be rn, gbr or pc */
+	  /* Now can be rn, gbr or pc.  */
 	  len = parse_reg (src, &mode, &op->reg);
 	  if (len)
 	    {
@@ -942,13 +1379,33 @@ parse_at (src, op)
 		}
 	      else if (mode == A_PC)
 		{
-		  /* Turn a plain @(4,pc) into @(.+4,pc).  */
-		  if (op->immediate.X_op == O_constant)
+		  /* We want @(expr, pc) to uniformly address . + expr,
+		     no matter if expr is a constant, or a more complex
+		     expression, e.g. sym-. or sym1-sym2.
+		     However, we also used to accept @(sym,pc)
+		     as adressing sym, i.e. meaning the same as plain sym.
+		     Some existing code does use the @(sym,pc) syntax, so
+		     we give it the old semantics for now, but warn about
+		     its use, so that users have some time to fix their code.
+
+		     Note that due to this backward compatibility hack,
+		     we'll get unexpected results when @(offset, pc) is used,
+		     and offset is a symbol that is set later to an an address
+		     difference, or an external symbol that is set to an
+		     address difference in another source file, so we want to
+		     eventually remove it.  */
+		  if (op->immediate.X_op == O_symbol)
 		    {
-		      op->immediate.X_add_symbol = dot();
-		      op->immediate.X_op = O_symbol;
+		      op->type = A_DISP_PC;
+		      as_warn (_("Deprecated syntax."));
 		    }
-		  op->type = A_DISP_PC;
+		  else
+		    {
+		      op->type = A_DISP_PC_ABS;
+		      /* Such operands don't get corrected for PC==.+4, so
+			 make the correction here.  */
+		      op->immediate.X_add_number -= 4;
+		    }
 		}
 	      else
 		{
@@ -970,20 +1427,24 @@ parse_at (src, op)
     {
       src += parse_reg (src, &mode, &(op->reg));
       if (mode != A_REG_N)
-	{
-	  as_bad (_("illegal register after @"));
-	}
+	as_bad (_("illegal register after @"));
+
       if (src[0] == '+')
 	{
+	  char l0, l1;
+
 	  src++;
-	  if ((src[0] == 'r' && src[1] == '8')
-	      || (src[0] == 'i' && (src[1] == 'x' || src[1] == 's')))
+	  l0 = TOLOWER (src[0]);
+	  l1 = TOLOWER (src[1]);
+
+	  if ((l0 == 'r' && l1 == '8')
+	      || (l0 == 'i' && (l1 == 'x' || l1 == 's')))
 	    {
 	      src += 2;
 	      op->type = A_PMOD_N;
 	    }
-	  if ((src[0] == 'r' && src[1] == '9')
-	      || (src[0] == 'i' && src[1] == 'y'))
+	  else if (   (l0 == 'r' && l1 == '9')
+		   || (l0 == 'i' && l1 == 'y'))
 	    {
 	      src += 2;
 	      op->type = A_PMODY_N;
@@ -992,9 +1453,7 @@ parse_at (src, op)
 	    op->type = A_INC_N;
 	}
       else
-	{
-	  op->type = A_IND_N;
-	}
+	op->type = A_IND_N;
     }
   return src;
 }
@@ -1110,7 +1569,7 @@ get_specific (opcode, operands)
   while (opcode->name)
     {
       this_try = opcode++;
-      if (this_try->name != name)
+      if ((this_try->name != name) && (strcmp (this_try->name, name) != 0))
 	{
 	  /* We've looked so far down the table that we've run out of
 	     opcodes with the same name.  */
@@ -1128,11 +1587,14 @@ get_specific (opcode, operands)
 
 	  switch (arg)
 	    {
+	    case A_DISP_PC:
+	      if (user->type == A_DISP_PC_ABS)
+		break;
+	      /* Fall through.  */
 	    case A_IMM:
 	    case A_BDISP12:
 	    case A_BDISP8:
 	    case A_DISP_GBR:
-	    case A_DISP_PC:
 	    case A_MACH:
 	    case A_PR:
 	    case A_MACL:
@@ -1381,21 +1843,6 @@ get_specific (opcode, operands)
   return 0;
 }
 
-int
-check (operand, low, high)
-     expressionS *operand;
-     int low;
-     int high;
-{
-  if (operand->X_op != O_constant
-      || operand->X_add_number < low
-      || operand->X_add_number > high)
-    {
-      as_bad (_("operand must be absolute in range %d..%d"), low, high);
-    }
-  return operand->X_add_number;
-}
-
 static void
 insert (where, how, pcrel, op)
      char *where;
@@ -1501,7 +1948,6 @@ static unsigned int
 build_Mytes (opcode, operand)
      sh_opcode_info *opcode;
      sh_operand_info *operand;
-
 {
   int index;
   char nbuf[4];
@@ -1578,10 +2024,12 @@ build_Mytes (opcode, operand)
 	      insert (output + low_byte, BFD_RELOC_SH_IMM8, 0, operand + 1);
 	      break;
 	    case PCRELIMM_8BY4:
-	      insert (output, BFD_RELOC_SH_PCRELIMM8BY4, 1, operand);
+	      insert (output, BFD_RELOC_SH_PCRELIMM8BY4,
+		      operand->type != A_DISP_PC_ABS, operand);
 	      break;
 	    case PCRELIMM_8BY2:
-	      insert (output, BFD_RELOC_SH_PCRELIMM8BY2, 1, operand);
+	      insert (output, BFD_RELOC_SH_PCRELIMM8BY2,
+		      operand->type != A_DISP_PC_ABS, operand);
 	      break;
 	    case REPEAT:
 	      output = insert_loop_bounds (output, operand);
@@ -1638,9 +2086,9 @@ find_cooked_opcode (str_p)
       /* The machine independent code will convert CMP/EQ into cmp/EQ
 	 because it thinks the '/' is the end of the symbol.  Moreover,
 	 all but the first sub-insn is a parallel processing insn won't
-	 be capitailzed.  Instead of hacking up the machine independent
+	 be capitalized.  Instead of hacking up the machine independent
 	 code, we just deal with it here.  */
-      c = isupper (c) ? tolower (c) : c;
+      c = TOLOWER (c);
       name[nlen] = c;
       nlen++;
     }
@@ -1670,14 +2118,15 @@ assemble_ppi (op_end, opcode)
   int move_code;
   unsigned int size;
 
-  /* Some insn ignore one or more register fields, e.g. psts machl,a0.
-     Make sure we encode a defined insn pattern.  */
-  reg_x = 0;
-  reg_y = 0;
-
   for (;;)
     {
       sh_operand_info operand[3];
+
+      /* Some insn ignore one or more register fields, e.g. psts machl,a0.
+	 Make sure we encode a defined insn pattern.  */
+      reg_x = 0;
+      reg_y = 0;
+      reg_n = 0;
 
       if (opcode->arg[0] != A_END)
 	op_end = get_operands (opcode, op_end, operand);
@@ -1806,6 +2255,15 @@ assemble_ppi (op_end, opcode)
 		default:
 		  as_bad (_("bad padd / psub pmuls output operand"));
 		}
+		/* Generate warning if the destination register for padd / psub
+		   and pmuls is the same ( only for A0 or A1 ).
+		   If the last nibble is 1010 then A0 is used in both
+		   padd / psub and pmuls. If it is 1111 then A1 is used
+		   as destination register in both padd / psub and pmuls.  */
+
+		if ((((field_b | reg_efg) & 0x000F) == 0x000A)
+		    || (((field_b | reg_efg) & 0x000F) == 0x000F))
+		  as_warn (_("destination register is same for parallel insns"));
 	    }
 	  field_b += 0x4000 + reg_efg;
 	  break;
@@ -1880,6 +2338,26 @@ md_assemble (str)
   sh_operand_info operand[3];
   sh_opcode_info *opcode;
   unsigned int size = 0;
+
+#ifdef HAVE_SH64
+  if (sh64_isa_mode == sh64_isa_shmedia)
+    {
+      shmedia_md_assemble (str);
+      return;
+    }
+  else
+    {
+      /* If we've seen pseudo-directives, make sure any emitted data or
+	 frags are marked as data.  */
+      if (!seen_insn)
+	{
+	  sh64_update_contents_mark (TRUE);
+	  sh64_set_contents_type (CRT_SH5_ISA16);
+	}
+
+      seen_insn = TRUE;
+    }
+#endif /* HAVE_SH64 */
 
   opcode = find_cooked_opcode (&str);
   op_end = str;
@@ -1994,26 +2472,8 @@ sh_flush_pending_output ()
 
 symbolS *
 md_undefined_symbol (name)
-     char *name;
+     char *name ATTRIBUTE_UNUSED;
 {
-#ifdef OBJ_ELF
-  /* Under ELF we need to default _GLOBAL_OFFSET_TABLE.  Otherwise we
-     have no need to default values of symbols.  */
-  if (strcmp (name, GLOBAL_OFFSET_TABLE_NAME) == 0)
-    {
-      if (!GOT_symbol)
-	{
-	  if (symbol_find (name))
-	    as_bad ("GOT already in the symbol table");
-
-	  GOT_symbol = symbol_new (name, undefined_section,
-				   (valueT)0, & zero_address_frag);
-	}
-
-      return GOT_symbol;
-    }
-#endif /* OBJ_ELF */
-
   return 0;
 }
 
@@ -2022,14 +2482,14 @@ md_undefined_symbol (name)
 
 void
 tc_crawl_symbol_chain (headers)
-     object_headers *headers;
+     object_headers *headers ATTRIBUTE_UNUSED;
 {
   printf (_("call to tc_crawl_symbol_chain \n"));
 }
 
 void
 tc_headers_hook (headers)
-     object_headers *headers;
+     object_headers *headers ATTRIBUTE_UNUSED;
 {
   printf (_("call to tc_headers_hook \n"));
 }
@@ -2126,18 +2586,35 @@ s_uses (ignore)
   demand_empty_rest_of_line ();
 }
 
-CONST char *md_shortopts = "";
+const char *md_shortopts = "";
 struct option md_longopts[] =
 {
 #define OPTION_RELAX  (OPTION_MD_BASE)
-#define OPTION_LITTLE (OPTION_MD_BASE + 1)
+#define OPTION_BIG (OPTION_MD_BASE + 1)
+#define OPTION_LITTLE (OPTION_BIG + 1)
 #define OPTION_SMALL (OPTION_LITTLE + 1)
 #define OPTION_DSP (OPTION_SMALL + 1)
+#define OPTION_ISA                    (OPTION_DSP + 1)
 
   {"relax", no_argument, NULL, OPTION_RELAX},
+  {"big", no_argument, NULL, OPTION_BIG},
   {"little", no_argument, NULL, OPTION_LITTLE},
   {"small", no_argument, NULL, OPTION_SMALL},
   {"dsp", no_argument, NULL, OPTION_DSP},
+  {"isa",                    required_argument, NULL, OPTION_ISA},
+#ifdef HAVE_SH64
+#define OPTION_ABI                    (OPTION_ISA + 1)
+#define OPTION_NO_MIX                 (OPTION_ABI + 1)
+#define OPTION_SHCOMPACT_CONST_CRANGE (OPTION_NO_MIX + 1)
+#define OPTION_NO_EXPAND              (OPTION_SHCOMPACT_CONST_CRANGE + 1)
+#define OPTION_PT32                   (OPTION_NO_EXPAND + 1)
+  {"abi",                    required_argument, NULL, OPTION_ABI},
+  {"no-mix",                 no_argument, NULL, OPTION_NO_MIX},
+  {"shcompact-const-crange", no_argument, NULL, OPTION_SHCOMPACT_CONST_CRANGE},
+  {"no-expand",              no_argument, NULL, OPTION_NO_EXPAND},
+  {"expand-pt32",            no_argument, NULL, OPTION_PT32},
+#endif /* HAVE_SH64 */
+
   {NULL, no_argument, NULL, 0}
 };
 size_t md_longopts_size = sizeof (md_longopts);
@@ -2153,8 +2630,11 @@ md_parse_option (c, arg)
       sh_relax = 1;
       break;
 
+    case OPTION_BIG:
+      target_big_endian = 1;
+      break;
+
     case OPTION_LITTLE:
-      shl = 1;
       target_big_endian = 0;
       break;
 
@@ -2163,8 +2643,70 @@ md_parse_option (c, arg)
       break;
 
     case OPTION_DSP:
-      sh_dsp = 1;
+      preset_target_arch = arch_sh1_up & ~arch_sh3e_up;
       break;
+
+    case OPTION_ISA:
+      if (strcasecmp (arg, "sh4") == 0)
+	preset_target_arch = arch_sh4;
+      else if (strcasecmp (arg, "any") == 0)
+	preset_target_arch = arch_sh1_up;
+#ifdef HAVE_SH64
+      else if (strcasecmp (arg, "shmedia") == 0)
+	{
+	  if (sh64_isa_mode == sh64_isa_shcompact)
+	    as_bad (_("Invalid combination: --isa=SHcompact with --isa=SHmedia"));
+	  sh64_isa_mode = sh64_isa_shmedia;
+	}
+      else if (strcasecmp (arg, "shcompact") == 0)
+	{
+	  if (sh64_isa_mode == sh64_isa_shmedia)
+	    as_bad (_("Invalid combination: --isa=SHmedia with --isa=SHcompact"));
+	  if (sh64_abi == sh64_abi_64)
+	    as_bad (_("Invalid combination: --abi=64 with --isa=SHcompact"));
+	  sh64_isa_mode = sh64_isa_shcompact;
+	}
+#endif /* HAVE_SH64 */
+      else
+	as_bad ("Invalid argument to --isa option: %s", arg);
+      break;
+
+#ifdef HAVE_SH64
+    case OPTION_ABI:
+      if (strcmp (arg, "32") == 0)
+	{
+	  if (sh64_abi == sh64_abi_64)
+	    as_bad (_("Invalid combination: --abi=32 with --abi=64"));
+	  sh64_abi = sh64_abi_32;
+	}
+      else if (strcmp (arg, "64") == 0)
+	{
+	  if (sh64_abi == sh64_abi_32)
+	    as_bad (_("Invalid combination: --abi=64 with --abi=32"));
+	  if (sh64_isa_mode == sh64_isa_shcompact)
+	    as_bad (_("Invalid combination: --isa=SHcompact with --abi=64"));
+	  sh64_abi = sh64_abi_64;
+	}
+      else
+	as_bad ("Invalid argument to --abi option: %s", arg);
+      break;
+
+    case OPTION_NO_MIX:
+      sh64_mix = FALSE;
+      break;
+
+    case OPTION_SHCOMPACT_CONST_CRANGE:
+      sh64_shcompact_const_crange = TRUE;
+      break;
+
+    case OPTION_NO_EXPAND:
+      sh64_expand = FALSE;
+      break;
+
+    case OPTION_PT32:
+      sh64_pt32 = TRUE;
+      break;
+#endif /* HAVE_SH64 */
 
     default:
       return 0;
@@ -2180,18 +2722,28 @@ md_show_usage (stream)
   fprintf (stream, _("\
 SH options:\n\
 -little			generate little endian code\n\
+-big			generate big endian code\n\
 -relax			alter jump instructions for long displacements\n\
 -small			align sections to 4 byte boundaries, not 16\n\
--dsp			enable sh-dsp insns, and disable sh3e / sh4 insns.\n"));
+-dsp			enable sh-dsp insns, and disable sh2e/sh3e/sh4 insns.\n"));
+#ifdef HAVE_SH64
+  fprintf (stream, _("\
+-isa=[shmedia		set default instruction set for SH64\n\
+      | SHmedia\n\
+      | shcompact\n\
+      | SHcompact]\n\
+-abi=[32|64]		set size of expanded SHmedia operands and object\n\
+			file type\n\
+-shcompact-const-crange	emit code-range descriptors for constants in\n\
+			SHcompact code sections\n\
+-no-mix			disallow SHmedia code in the same section as\n\
+			constants and SHcompact code\n\
+-no-expand		do not expand MOVI, PT, PTA or PTB instructions\n\
+-expand-pt32		with -abi=64, expand PT, PTA and PTB instructions\n\
+			to 32 bits only"));
+#endif /* HAVE_SH64 */
 }
 
-void
-tc_Nout_fix_to_chars ()
-{
-  printf (_("call to tc_Nout_fix_to_chars \n"));
-  abort ();
-}
-
 /* This struct is used to pass arguments to sh_count_relocs through
    bfd_map_over_sections.  */
 
@@ -2340,8 +2892,8 @@ sh_frob_section (abfd, sec, ignore)
 	 We have already adjusted the value of sym to include the
 	 fragment address, so we undo that adjustment here.  */
       subseg_change (sec, 0);
-      fix_new (symbol_get_frag (sym),
-	       S_GET_VALUE (sym) - symbol_get_frag (sym)->fr_address,
+      fix_new (fscan->fx_frag,
+	       S_GET_VALUE (sym) - fscan->fx_frag->fr_address,
 	       4, &abs_symbol, info.count, 0, BFD_RELOC_SH_COUNT);
     }
 }
@@ -2359,6 +2911,10 @@ sh_frob_section (abfd, sec, ignore)
 void
 sh_frob_file ()
 {
+#ifdef HAVE_SH64
+  shmedia_frob_file_before_adjust ();
+#endif
+
   if (! sh_relax)
     return;
 
@@ -2375,14 +2931,14 @@ sh_frob_file ()
 }
 
 /* Called after relaxing.  Set the correct sizes of the fragments, and
-   create relocs so that md_apply_fix will fill in the correct values.  */
+   create relocs so that md_apply_fix3 will fill in the correct values.  */
 
 void
 md_convert_frag (headers, seg, fragP)
 #ifdef BFD_ASSEMBLER
      bfd *headers ATTRIBUTE_UNUSED;
 #else
-     object_headers *headers;
+     object_headers *headers ATTRIBUTE_UNUSED;
 #endif
      segT seg;
      fragS *fragP;
@@ -2450,7 +3006,7 @@ md_convert_frag (headers, seg, fragP)
 	/* Toggle the true/false bit of the bcond.  */
 	buffer[highbyte] ^= 0x2;
 
-	/* If this is a dalayed branch, we may not put the the bra in the
+	/* If this is a delayed branch, we may not put the bra in the
 	   slot.  So we change it to a non-delayed branch, like that:
 	   b! cond slot_label; bra disp; slot_label: slot_insn
 	   ??? We should try if swapping the conditional branch and
@@ -2512,7 +3068,11 @@ md_convert_frag (headers, seg, fragP)
       break;
 
     default:
+#ifdef HAVE_SH64
+      shmedia_md_convert_frag (headers, seg, fragP, TRUE);
+#else
       abort ();
+#endif
     }
 
   if (donerelax && !sh_relax)
@@ -2653,30 +3213,21 @@ sh_handle_align (frag)
 	     BFD_RELOC_SH_ALIGN);
 }
 
-/* This macro decides whether a particular reloc is an entry in a
-   switch table.  It is used when relaxing, because the linker needs
-   to know about all such entries so that it can adjust them if
-   necessary.  */
+/* See whether the relocation should be resolved locally.  */
 
-#ifdef BFD_ASSEMBLER
-#define SWITCH_TABLE_CONS(fix) (0)
-#else
-#define SWITCH_TABLE_CONS(fix)				\
-  ((fix)->fx_r_type == 0				\
-   && ((fix)->fx_size == 2				\
-       || (fix)->fx_size == 1				\
-       || (fix)->fx_size == 4))
-#endif
-
-#define SWITCH_TABLE(fix)				\
-  ((fix)->fx_addsy != NULL				\
-   && (fix)->fx_subsy != NULL				\
-   && S_GET_SEGMENT ((fix)->fx_addsy) == text_section	\
-   && S_GET_SEGMENT ((fix)->fx_subsy) == text_section	\
-   && ((fix)->fx_r_type == BFD_RELOC_32			\
-       || (fix)->fx_r_type == BFD_RELOC_16		\
-       || (fix)->fx_r_type == BFD_RELOC_8		\
-       || SWITCH_TABLE_CONS (fix)))
+static bfd_boolean
+sh_local_pcrel (fix)
+     fixS *fix;
+{
+  return (! sh_relax
+	  && (fix->fx_r_type == BFD_RELOC_SH_PCDISP8BY2
+	      || fix->fx_r_type == BFD_RELOC_SH_PCDISP12BY2
+	      || fix->fx_r_type == BFD_RELOC_SH_PCRELIMM8BY2
+	      || fix->fx_r_type == BFD_RELOC_SH_PCRELIMM8BY4
+	      || fix->fx_r_type == BFD_RELOC_8_PCREL
+	      || fix->fx_r_type == BFD_RELOC_SH_SWITCH16
+	      || fix->fx_r_type == BFD_RELOC_SH_SWITCH32));
+}
 
 /* See whether we need to force a relocation into the output file.
    This is used to force out switch and PC relative relocations when
@@ -2686,11 +3237,20 @@ int
 sh_force_relocation (fix)
      fixS *fix;
 {
+  /* These relocations can't make it into a DSO, so no use forcing
+     them for global symbols.  */
+  if (sh_local_pcrel (fix))
+    return 0;
 
-  if (fix->fx_r_type == BFD_RELOC_VTABLE_INHERIT
-      || fix->fx_r_type == BFD_RELOC_VTABLE_ENTRY
-      || fix->fx_r_type == BFD_RELOC_SH_LOOP_START
-      || fix->fx_r_type == BFD_RELOC_SH_LOOP_END)
+  /* Make sure some relocations get emitted.  */
+  if (fix->fx_r_type == BFD_RELOC_SH_LOOP_START
+      || fix->fx_r_type == BFD_RELOC_SH_LOOP_END
+      || fix->fx_r_type == BFD_RELOC_SH_TLS_GD_32
+      || fix->fx_r_type == BFD_RELOC_SH_TLS_LD_32
+      || fix->fx_r_type == BFD_RELOC_SH_TLS_IE_32
+      || fix->fx_r_type == BFD_RELOC_SH_TLS_LDO_32
+      || fix->fx_r_type == BFD_RELOC_SH_TLS_LE_32
+      || generic_force_reloc (fix))
     return 1;
 
   if (! sh_relax)
@@ -2702,29 +3262,20 @@ sh_force_relocation (fix)
 	  || fix->fx_r_type == BFD_RELOC_SH_ALIGN
 	  || fix->fx_r_type == BFD_RELOC_SH_CODE
 	  || fix->fx_r_type == BFD_RELOC_SH_DATA
+#ifdef HAVE_SH64
+	  || fix->fx_r_type == BFD_RELOC_SH_SHMEDIA_CODE
+#endif
 	  || fix->fx_r_type == BFD_RELOC_SH_LABEL);
 }
 
 #ifdef OBJ_ELF
-boolean
+bfd_boolean
 sh_fix_adjustable (fixP)
    fixS *fixP;
 {
-
-  if (fixP->fx_addsy == NULL)
-    return 1;
-
-  if (fixP->fx_r_type == BFD_RELOC_SH_PCDISP8BY2
-      || fixP->fx_r_type == BFD_RELOC_SH_PCDISP12BY2
-      || fixP->fx_r_type == BFD_RELOC_SH_PCRELIMM8BY2
-      || fixP->fx_r_type == BFD_RELOC_SH_PCRELIMM8BY4
-      || fixP->fx_r_type == BFD_RELOC_8_PCREL
-      || fixP->fx_r_type == BFD_RELOC_SH_SWITCH16
-      || fixP->fx_r_type == BFD_RELOC_SH_SWITCH32)
-    return 1;
-
-  if (! TC_RELOC_RTSYM_LOC_FIXUP (fixP)
-      || fixP->fx_r_type == BFD_RELOC_32_GOTOFF
+  if (fixP->fx_r_type == BFD_RELOC_32_PLT_PCREL
+      || fixP->fx_r_type == BFD_RELOC_32_GOT_PCREL
+      || fixP->fx_r_type == BFD_RELOC_SH_GOTPC
       || fixP->fx_r_type == BFD_RELOC_RVA)
     return 0;
 
@@ -2743,10 +3294,19 @@ sh_elf_final_processing ()
 
   /* Set file-specific flags to indicate if this code needs
      a processor with the sh-dsp / sh3e ISA to execute.  */
+#ifdef HAVE_SH64
+  /* SH5 and above don't know about the valid_arch arch_sh* bits defined
+     in sh-opc.h, so check SH64 mode before checking valid_arch.  */
+  if (sh64_isa_mode != sh64_isa_unspecified)
+    val = EF_SH5;
+  else
+#endif /* HAVE_SH64 */
   if (valid_arch & arch_sh1)
     val = EF_SH1;
   else if (valid_arch & arch_sh2)
     val = EF_SH2;
+  else if (valid_arch & arch_sh2e)
+    val = EF_SH2E;
   else if (valid_arch & arch_sh_dsp)
     val = EF_SH_DSP;
   else if (valid_arch & arch_sh3)
@@ -2767,24 +3327,16 @@ sh_elf_final_processing ()
 
 /* Apply a fixup to the object file.  */
 
-#ifdef BFD_ASSEMBLER
-int
-md_apply_fix (fixP, valp)
-     fixS *fixP;
-     valueT *valp;
-#else
 void
-md_apply_fix (fixP, val)
-     fixS *fixP;
-     long val;
-#endif
+md_apply_fix3 (fixP, valP, seg)
+     fixS * fixP;
+     valueT * valP;
+     segT seg ATTRIBUTE_UNUSED;
 {
   char *buf = fixP->fx_where + fixP->fx_frag->fr_literal;
   int lowbyte = target_big_endian ? 1 : 0;
   int highbyte = target_big_endian ? 0 : 1;
-#ifdef BFD_ASSEMBLER
-  long val = *valp;
-#endif
+  long val = (long) *valP;
   long max, min;
   int shift;
 
@@ -2810,11 +3362,11 @@ md_apply_fix (fixP, val)
 	     we need.  FIXME.  */
 	case BFD_RELOC_16:
 	  bfd_set_error (bfd_error_bad_value);
-	  return false;
+	  return;
 
 	case BFD_RELOC_8:
 	  bfd_set_error (bfd_error_bad_value);
-	  return false;
+	  return;
 	}
     }
 
@@ -2836,7 +3388,10 @@ md_apply_fix (fixP, val)
     val -= S_GET_VALUE  (fixP->fx_addsy);
 #endif
 
-#ifndef BFD_ASSEMBLER
+#ifdef BFD_ASSEMBLER
+  if (SWITCH_TABLE (fixP))
+    val -= S_GET_VALUE  (fixP->fx_subsy);
+#else
   if (fixP->fx_r_type == 0)
     {
       if (fixP->fx_size == 2)
@@ -2964,17 +3519,18 @@ md_apply_fix (fixP, val)
     case BFD_RELOC_VTABLE_INHERIT:
     case BFD_RELOC_VTABLE_ENTRY:
       fixP->fx_done = 0;
-#ifdef BFD_ASSEMBLER
-      return 0;
-#else
       return;
-#endif
 
 #ifdef OBJ_ELF
     case BFD_RELOC_32_PLT_PCREL:
       /* Make the jump instruction point to the address of the operand.  At
 	 runtime we merely add the offset to the actual PLT entry.  */
-      *valp = 0xfffffffc;
+      * valP = 0xfffffffc;
+      val = fixP->fx_offset;
+      if (fixP->fx_subsy)
+	val -= S_GET_VALUE (fixP->fx_subsy);
+      fixP->fx_addnumber = val;
+      md_number_to_chars (buf, val, 4);
       break;
 
     case BFD_RELOC_SH_GOTPC:
@@ -2994,21 +3550,37 @@ md_apply_fix (fixP, val)
          earlier versions of the PIC patches, the pcrel_adjust field
          was used to store the correction, but since the expression is
          not pcrel, I felt it would be confusing to do it this way.  */
-      *valp -= 1;
+      * valP -= 1;
       md_number_to_chars (buf, val, 4);
       break;
 
+    case BFD_RELOC_SH_TLS_GD_32:
+    case BFD_RELOC_SH_TLS_LD_32:
+    case BFD_RELOC_SH_TLS_IE_32:
+      S_SET_THREAD_LOCAL (fixP->fx_addsy);
+      /* Fallthrough */
     case BFD_RELOC_32_GOT_PCREL:
-      *valp = 0; /* Fully resolved at runtime.  No addend.  */
+    case BFD_RELOC_SH_GOTPLT32:
+      * valP = 0; /* Fully resolved at runtime.  No addend.  */
       md_number_to_chars (buf, 0, 4);
       break;
 
+    case BFD_RELOC_SH_TLS_LDO_32:
+    case BFD_RELOC_SH_TLS_LE_32:
+      S_SET_THREAD_LOCAL (fixP->fx_addsy);
+      /* Fallthrough */
     case BFD_RELOC_32_GOTOFF:
+      md_number_to_chars (buf, val, 4);
       break;
 #endif
 
     default:
+#ifdef HAVE_SH64
+      shmedia_md_apply_fix3 (fixP, valP);
+      return;
+#else
       abort ();
+#endif
     }
 
   if (shift != 0)
@@ -3024,9 +3596,8 @@ md_apply_fix (fixP, val)
   if (max != 0 && (val < min || val > max))
     as_bad_where (fixP->fx_file, fixP->fx_line, _("offset out of range"));
 
-#ifdef BFD_ASSEMBLER
-  return 0;
-#endif
+  if (fixP->fx_addsy == NULL && fixP->fx_pcrel == 0)
+    fixP->fx_done = 1;
 }
 
 /* Called just before address relaxation.  Return the length
@@ -3042,7 +3613,12 @@ md_estimate_size_before_relax (fragP, segment_type)
   switch (fragP->fr_subtype)
     {
     default:
+#ifdef HAVE_SH64
+      return shmedia_md_estimate_size_before_relax (fragP, segment_type);
+#else
       abort ();
+#endif
+
 
     case C (UNCOND_JUMP, UNDEF_DISP):
       /* Used to be a branch to somewhere which was unknown.  */
@@ -3111,17 +3687,45 @@ md_number_to_chars (ptr, use, nbytes)
      valueT use;
      int nbytes;
 {
+#ifdef HAVE_SH64
+  /* We might need to set the contents type to data.  */
+  sh64_flag_output ();
+#endif
+
   if (! target_big_endian)
     number_to_chars_littleendian (ptr, use, nbytes);
   else
     number_to_chars_bigendian (ptr, use, nbytes);
 }
 
+/* This version is used in obj-coff.c when not using BFD_ASSEMBLER.
+   eg for the sh-hms target.  */
+
 long
 md_pcrel_from (fixP)
      fixS *fixP;
 {
   return fixP->fx_size + fixP->fx_where + fixP->fx_frag->fr_address + 2;
+}
+
+long
+md_pcrel_from_section (fixP, sec)
+     fixS *fixP;
+     segT sec;
+{
+  if (! sh_local_pcrel (fixP)
+      && fixP->fx_addsy != (symbolS *) NULL
+      && (generic_force_reloc (fixP)
+	  || S_GET_SEGMENT (fixP->fx_addsy) != sec))
+    {
+      /* The symbol is undefined (or is defined but not in this section,
+	 or we're not sure about it being the final definition).  Let the
+	 linker figure it out.  We need to adjust the subtraction of a
+	 symbol to the position of the relocated data, though.  */
+      return fixP->fx_subsy ? fixP->fx_where + fixP->fx_frag->fr_address : 0;
+    }
+
+  return md_pcrel_from (fixP);
 }
 
 #ifdef OBJ_COFF
@@ -3243,7 +3847,7 @@ sh_coff_reloc_mangle (seg, fix, intr, paddr)
     {
       /* We can't store the offset in the object file, since this
 	 reloc does not take up any space, so we store it in r_offset.
-	 The fx_addnumber field was set in md_apply_fix.  */
+	 The fx_addnumber field was set in md_apply_fix3.  */
       intr->r_offset = fix->fx_addnumber;
     }
   else if (fix->fx_r_type == BFD_RELOC_SH_COUNT)
@@ -3308,7 +3912,8 @@ tc_gen_reloc (section, fixp)
 
   if (SWITCH_TABLE (fixp))
     {
-      rel->addend = rel->address - S_GET_VALUE (fixp->fx_subsy);
+      *rel->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_subsy);
+      rel->addend = 0;
       if (r_type == BFD_RELOC_16)
 	r_type = BFD_RELOC_SH_SWITCH16;
       else if (r_type == BFD_RELOC_8)
@@ -3335,6 +3940,10 @@ tc_gen_reloc (section, fixp)
       rel->addend = 0;
       rel->address = rel->addend = fixp->fx_offset;
     }
+#ifdef HAVE_SH64
+  else if (shmedia_init_reloc (rel, fixp))
+    ;
+#endif
   else if (fixp->fx_pcrel)
     rel->addend = fixp->fx_addnumber;
   else if (r_type == BFD_RELOC_32 || r_type == BFD_RELOC_32_GOTOFF)
@@ -3343,6 +3952,8 @@ tc_gen_reloc (section, fixp)
     rel->addend = 0;
 
   rel->howto = bfd_reloc_type_lookup (stdoutput, r_type);
+  if (rel->howto->type == R_SH_IND12W)
+      rel->addend += fixp->fx_offset - 4;
   if (rel->howto == NULL)
     {
       as_bad_where (fixp->fx_file, fixp->fx_line,
@@ -3356,4 +3967,99 @@ tc_gen_reloc (section, fixp)
   return rel;
 }
 
+#ifdef OBJ_ELF
+inline static char *
+sh_end_of_match (cont, what)
+     char *cont, *what;
+{
+  int len = strlen (what);
+
+  if (strncasecmp (cont, what, strlen (what)) == 0
+      && ! is_part_of_name (cont[len]))
+    return cont + len;
+
+  return NULL;
+}
+
+int
+sh_parse_name (name, exprP, nextcharP)
+     char const *name;
+     expressionS *exprP;
+     char *nextcharP;
+{
+  char *next = input_line_pointer;
+  char *next_end;
+  int reloc_type;
+  segT segment;
+
+  exprP->X_op_symbol = NULL;
+
+  if (strcmp (name, GLOBAL_OFFSET_TABLE_NAME) == 0)
+    {
+      if (! GOT_symbol)
+	GOT_symbol = symbol_find_or_make (name);
+
+      exprP->X_add_symbol = GOT_symbol;
+    no_suffix:
+      /* If we have an absolute symbol or a reg, then we know its
+	     value now.  */
+      segment = S_GET_SEGMENT (exprP->X_add_symbol);
+      if (segment == absolute_section)
+	{
+	  exprP->X_op = O_constant;
+	  exprP->X_add_number = S_GET_VALUE (exprP->X_add_symbol);
+	  exprP->X_add_symbol = NULL;
+	}
+      else if (segment == reg_section)
+	{
+	  exprP->X_op = O_register;
+	  exprP->X_add_number = S_GET_VALUE (exprP->X_add_symbol);
+	  exprP->X_add_symbol = NULL;
+	}
+      else
+	{
+	  exprP->X_op = O_symbol;
+	  exprP->X_add_number = 0;
+	}
+
+      return 1;
+    }
+
+  exprP->X_add_symbol = symbol_find_or_make (name);
+
+  if (*nextcharP != '@')
+    goto no_suffix;
+  else if ((next_end = sh_end_of_match (next + 1, "GOTOFF")))
+    reloc_type = BFD_RELOC_32_GOTOFF;
+  else if ((next_end = sh_end_of_match (next + 1, "GOTPLT")))
+    reloc_type = BFD_RELOC_SH_GOTPLT32;
+  else if ((next_end = sh_end_of_match (next + 1, "GOT")))
+    reloc_type = BFD_RELOC_32_GOT_PCREL;
+  else if ((next_end = sh_end_of_match (next + 1, "PLT")))
+    reloc_type = BFD_RELOC_32_PLT_PCREL;
+  else if ((next_end = sh_end_of_match (next + 1, "TLSGD")))
+    reloc_type = BFD_RELOC_SH_TLS_GD_32;
+  else if ((next_end = sh_end_of_match (next + 1, "TLSLDM")))
+    reloc_type = BFD_RELOC_SH_TLS_LD_32;
+  else if ((next_end = sh_end_of_match (next + 1, "GOTTPOFF")))
+    reloc_type = BFD_RELOC_SH_TLS_IE_32;
+  else if ((next_end = sh_end_of_match (next + 1, "TPOFF")))
+    reloc_type = BFD_RELOC_SH_TLS_LE_32;
+  else if ((next_end = sh_end_of_match (next + 1, "DTPOFF")))
+    reloc_type = BFD_RELOC_SH_TLS_LDO_32;
+  else
+    goto no_suffix;
+
+  *input_line_pointer = *nextcharP;
+  input_line_pointer = next_end;
+  *nextcharP = *input_line_pointer;
+  *input_line_pointer = '\0';
+
+  exprP->X_op = O_PIC_reloc;
+  exprP->X_add_number = 0;
+  exprP->X_md = reloc_type;
+
+  return 1;
+}
+#endif
 #endif /* BFD_ASSEMBLER */

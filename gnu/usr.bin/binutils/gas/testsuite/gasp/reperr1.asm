@@ -1,3 +1,0 @@
-
-	.AREPEAT	10
-	.END

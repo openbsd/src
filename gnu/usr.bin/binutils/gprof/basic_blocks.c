@@ -2,7 +2,7 @@
    of basic-block info to/from gmon.out; computing and formatting of
    basic-block related statistics.
 
-   Copyright 2000, 2001 Free Software Foundation, Inc.
+   Copyright 2000, 2001, 2002 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -21,21 +21,24 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
    02111-1307, USA.  */
 
-#include <stdio.h>
+#include "libiberty.h"
+#include "gprof.h"
 #include "basic_blocks.h"
 #include "corefile.h"
 #include "gmon_io.h"
 #include "gmon_out.h"
-#include "gprof.h"
-#include "libiberty.h"
+#include "search_list.h"
 #include "source.h"
+#include "symtab.h"
 #include "sym_ids.h"
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
+
+static int cmp_bb PARAMS ((const PTR, const PTR));
+static int cmp_ncalls PARAMS ((const PTR, const PTR));
+static void fskip_string PARAMS ((FILE *));
+static void annotate_with_count PARAMS ((char *, unsigned int, int, PTR));
 
 /* Default option values:  */
-bool bb_annotate_all_lines = FALSE;
+bfd_boolean bb_annotate_all_lines = FALSE;
 unsigned long bb_min_calls = 1;
 int bb_table_length = 10;
 
@@ -49,7 +52,9 @@ static long num_lines_executed;
    number, and address (in that order).  */
 
 static int
-DEFUN (cmp_bb, (lp, rp), const void *lp AND const void *rp)
+cmp_bb (lp, rp)
+     const PTR lp;
+     const PTR rp;
 {
   int r;
   const Sym *left = *(const Sym **) lp;
@@ -78,7 +83,9 @@ DEFUN (cmp_bb, (lp, rp), const void *lp AND const void *rp)
 /* Helper for sorting.  Order basic blocks in decreasing number of
    calls, ties are broken in increasing order of line numbers.  */
 static int
-DEFUN (cmp_ncalls, (lp, rp), const void *lp AND const void *rp)
+cmp_ncalls (lp, rp)
+     const PTR lp;
+     const PTR rp;
 {
   const Sym *left = *(const Sym **) lp;
   const Sym *right = *(const Sym **) rp;
@@ -98,7 +105,8 @@ DEFUN (cmp_ncalls, (lp, rp), const void *lp AND const void *rp)
 
 /* Skip over variable length string.  */
 static void
-DEFUN (fskip_string, (fp), FILE * fp)
+fskip_string (fp)
+     FILE *fp;
 {
   int ch;
 
@@ -113,7 +121,9 @@ DEFUN (fskip_string, (fp), FILE * fp)
    of file IFP and is provided for formatting error-messages only.  */
 
 void
-DEFUN (bb_read_rec, (ifp, filename), FILE * ifp AND const char *filename)
+bb_read_rec (ifp, filename)
+     FILE *ifp;
+     const char *filename;
 {
   int nblocks, b;
   bfd_vma addr, ncalls;
@@ -183,7 +193,7 @@ DEFUN (bb_read_rec, (ifp, filename), FILE * ifp AND const char *filename)
 	}
       else
 	{
-	  static bool user_warned = FALSE;
+	  static bfd_boolean user_warned = FALSE;
 
 	  if (!user_warned)
 	    {
@@ -201,9 +211,11 @@ DEFUN (bb_read_rec, (ifp, filename), FILE * ifp AND const char *filename)
    is the name of OFP and is provided for producing error-messages
    only.  */
 void
-DEFUN (bb_write_blocks, (ofp, filename), FILE * ofp AND const char *filename)
+bb_write_blocks (ofp, filename)
+     FILE *ofp;
+     const char *filename;
 {
-  int nblocks = 0;
+  unsigned int nblocks = 0;
   Sym *sym;
   int i;
 
@@ -229,7 +241,7 @@ DEFUN (bb_write_blocks, (ofp, filename), FILE * ofp AND const char *filename)
       for (i = 0; i < NBBS && sym->bb_addr[i]; i++)
 	{
 	  if (gmon_io_write_vma (ofp, sym->bb_addr[i])
-	      || gmon_io_write_vma (ofp, sym->bb_calls[i]))
+	      || gmon_io_write_vma (ofp, (bfd_vma) sym->bb_calls[i]))
 	    {
 	      perror (filename);
 	      done (1);
@@ -244,10 +256,10 @@ DEFUN (bb_write_blocks, (ofp, filename), FILE * ofp AND const char *filename)
 	<filename>:<line-number>: (<function-name>:<bb-addr): <ncalls>  */
 
 void
-DEFUN_VOID (print_exec_counts)
+print_exec_counts ()
 {
   Sym **sorted_bbs, *sym;
-  int i, j, len;
+  unsigned int i, j, len;
 
   if (first_output)
     first_output = FALSE;
@@ -311,12 +323,15 @@ DEFUN_VOID (print_exec_counts)
    that starts the basic-block.  */
 
 static void
-DEFUN (annotate_with_count, (buf, width, line_num, arg),
-       char *buf AND int width AND int line_num AND void *arg)
+annotate_with_count (buf, width, line_num, arg)
+     char *buf;
+     unsigned int width;
+     int line_num;
+     PTR arg;
 {
   Source_File *sf = arg;
   Sym *b;
-  int i;
+  unsigned int i;
   static unsigned long last_count;
   unsigned long last_print = (unsigned long) -1;
 
@@ -337,7 +352,7 @@ DEFUN (annotate_with_count, (buf, width, line_num, arg),
       char *p;
       unsigned long ncalls;
       int ncalls_set;
-      int len;
+      unsigned int len;
 
       ++num_executable_lines;
 
@@ -413,7 +428,7 @@ DEFUN (annotate_with_count, (buf, width, line_num, arg),
 
       if (! ncalls_set)
 	{
-	  int c;
+	  unsigned int c;
 
 	  for (c = 0; c < width; c++)
 	    buf[c] = ' ';
@@ -440,7 +455,7 @@ DEFUN (annotate_with_count, (buf, width, line_num, arg),
 	}
       else
 	{
-	  int c;
+	  unsigned int c;
 
 	  strcpy (buf + width - len, tmpbuf);
 	  for (c = 0; c < width - len; ++c)
@@ -454,7 +469,7 @@ DEFUN (annotate_with_count, (buf, width, line_num, arg),
    regarding that source file are printed.  */
 
 void
-DEFUN_VOID (print_annotated_source)
+print_annotated_source ()
 {
   Sym *sym, *line_stats, *new_line;
   Source_File *sf;

@@ -1,5 +1,0 @@
-# M*Core assembler testsuite.
-
-if [istarget mcore-*-*] {
-    run_dump_test "allinsn"
-}

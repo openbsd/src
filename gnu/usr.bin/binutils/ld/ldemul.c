@@ -1,5 +1,5 @@
 /* ldemul.c -- clearing house for ld emulation states
-   Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 2000
+   Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 2000, 2002, 2003
    Free Software Foundation, Inc.
 
 This file is part of GLD, the Gnu Linker.
@@ -21,6 +21,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 
 #include "bfd.h"
 #include "sysdep.h"
+#include "getopt.h"
 
 #include "ld.h"
 #include "ldmisc.h"
@@ -112,7 +113,7 @@ ldemul_get_script (isfile)
   return ld_emulation->get_script (isfile);
 }
 
-boolean
+bfd_boolean
 ldemul_open_dynamic_archive (arch, search, entry)
      const char *arch;
      search_dirs_type *search;
@@ -120,64 +121,90 @@ ldemul_open_dynamic_archive (arch, search, entry)
 {
   if (ld_emulation->open_dynamic_archive)
     return (*ld_emulation->open_dynamic_archive) (arch, search, entry);
-  return false;
+  return FALSE;
 }
 
-boolean
+bfd_boolean
 ldemul_place_orphan (file, s)
      lang_input_statement_type *file;
      asection *s;
 {
   if (ld_emulation->place_orphan)
     return (*ld_emulation->place_orphan) (file, s);
-  return false;
+  return FALSE;
 }
 
-int
+void
+ldemul_add_options (ns, shortopts, nl, longopts, nrl, really_longopts)
+     int ns;
+     char **shortopts;
+     int nl;
+     struct option **longopts;
+     int nrl;
+     struct option **really_longopts;
+{
+  if (ld_emulation->add_options)
+    (*ld_emulation->add_options) (ns, shortopts, nl, longopts,
+				  nrl, really_longopts);
+}
+
+bfd_boolean
+ldemul_handle_option (optc)
+     int optc;
+{
+  if (ld_emulation->handle_option)
+    return (*ld_emulation->handle_option) (optc);
+  return FALSE;
+}
+
+bfd_boolean
 ldemul_parse_args (argc, argv)
      int argc;
      char **argv;
 {
   /* Try and use the emulation parser if there is one.  */
   if (ld_emulation->parse_args)
-    {
-      return ld_emulation->parse_args (argc, argv);
-    }
-  return 0;
+    return (*ld_emulation->parse_args) (argc, argv);
+  return FALSE;
 }
 
 /* Let the emulation code handle an unrecognized file.  */
 
-boolean
+bfd_boolean
 ldemul_unrecognized_file (entry)
      lang_input_statement_type *entry;
 {
   if (ld_emulation->unrecognized_file)
     return (*ld_emulation->unrecognized_file) (entry);
-  return false;
+  return FALSE;
 }
 
 /* Let the emulation code handle a recognized file.  */
 
-boolean
+bfd_boolean
 ldemul_recognized_file (entry)
      lang_input_statement_type *entry;
 {
   if (ld_emulation->recognized_file)
     return (*ld_emulation->recognized_file) (entry);
-  return false;
+  return FALSE;
 }
 
 char *
-ldemul_choose_target ()
+ldemul_choose_target (argc, argv)
+     int argc;
+     char **argv;
 {
-  return ld_emulation->choose_target ();
+  return ld_emulation->choose_target (argc, argv);
 }
+
 
 /* The default choose_target function.  */
 
 char *
-ldemul_default_target ()
+ldemul_default_target (argc, argv)
+     int argc ATTRIBUTE_UNUSED;
+     char **argv ATTRIBUTE_UNUSED;
 {
   char *from_outside = getenv (TARGET_ENVIRON);
   if (from_outside != (char *) NULL)
@@ -256,12 +283,12 @@ ldemul_list_emulations (f)
      FILE *f;
 {
   ld_emulation_xfer_type **eptr = ld_emulations;
-  boolean first = true;
+  bfd_boolean first = TRUE;
 
   for (; *eptr; eptr++)
     {
       if (first)
-	first = false;
+	first = FALSE;
       else
 	fprintf (f, " ");
       fprintf (f, "%s", (*eptr)->emulation_name);
@@ -302,4 +329,13 @@ ldemul_find_potential_libraries (name, entry)
     return ld_emulation->find_potential_libraries (name, entry);
 
   return 0;
+}
+
+struct bfd_elf_version_expr *
+ldemul_new_vers_pattern (entry)
+     struct bfd_elf_version_expr *entry;
+{
+  if (ld_emulation->new_vers_pattern)
+    entry = (*ld_emulation->new_vers_pattern) (entry);
+  return entry;
 }

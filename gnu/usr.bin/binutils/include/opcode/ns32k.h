@@ -1,5 +1,5 @@
 /* ns32k-opcode.h -- Opcode table for National Semi 32k processor
-   Copyright 1987, 1991, 1994 Free Software Foundation, Inc.
+   Copyright 1987, 1991, 1994, 2002 Free Software Foundation, Inc.
 
 This file is part of GAS, the GNU Assembler.
 
@@ -37,7 +37,7 @@ the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307
    the opcode or the addition of data to the opcode.
    The operands in the source instruction are checked for inconsistent
    semantics.
- 
+
 	F : 32 bit float	general form
 	L : 64 bit float	    "
 	B : byte		    "
@@ -80,13 +80,13 @@ column	1 	instructions
 	6 	size in bytes of immediate
 */
 struct ns32k_opcode {
-  char *name;
+  const char *name;
   unsigned char opcode_id_size; /* not used by the assembler */
   unsigned char opcode_size;
   unsigned long opcode_seed;
-  char *operands;
+  const char *operands;
   unsigned char im_size;	/* not used by dissassembler */
-  char *default_args;		/* default to those args when none given */
+  const char *default_args;	/* default to those args when none given */
   char default_modec;		/* default to this addr-mode when ambigous
 				   ie when the argument of a general addr-mode
 				   is a plain constant */
@@ -103,20 +103,20 @@ struct ns32k_opcode {
 struct not_wot			/* ns32k opcode table: wot to do with this */
 				/* particular opcode */
 {
-  int obits;		/* number of opcode bits */
-  int ibits;		/* number of instruction bits */
-  ns32k_opcodeT	code;	/* op-code (may be > 8 bits!) */
-  char *args;		/* how to compile said opcode */
+  int obits;			/* number of opcode bits */
+  int ibits;			/* number of instruction bits */
+  ns32k_opcodeT code;		/* op-code (may be > 8 bits!) */
+  const char *args;		/* how to compile said opcode */
 };
 
 struct not			/* ns32k opcode text */
 {
-  char *            name;	/* opcode name: lowercase string  [key]  */
-  struct not_wot    detail;	/* rest of opcode table          [datum] */
+  const char *name;		/* opcode name: lowercase string  [key]  */
+  struct not_wot detail;	/* rest of opcode table          [datum] */
 };
 
 /* Instructions look like this:
-    
+
    basic instruction--1, 2, or 3 bytes
    index byte for operand A, if operand A is indexed--1 byte
    index byte for operand B, if operand B is indexed--1 byte
@@ -130,7 +130,7 @@ struct not			/* ns32k opcode text */
    The implied operands are associated with operands other than A and B.
 
    Each operand has a digit and a letter.
-   
+
    The digit gives the position in the assembly language.  The letter,
    one of the following, tells us what kind of operand it is.  */
 
@@ -481,10 +481,6 @@ static const struct ns32k_opcode ns32k_opcodes[]=
   { "scalbf",	14,24,  0x11fe, "1F2Z",		4,	"",	DEF_MODEC,DEF_MODEL	},
   { "scalbl",	14,24,  0x10fe, "1L2Z",		8,	"",	DEF_MODEC,DEF_MODEL	},
 };
-
-static const int numopcodes=sizeof(ns32k_opcodes)/sizeof(ns32k_opcodes[0]);
-
-static const struct ns32k_opcode *const endop = ns32k_opcodes+sizeof(ns32k_opcodes)/sizeof(ns32k_opcodes[0]);
 
 #define MAX_ARGS 4
 #define ARG_LEN 50

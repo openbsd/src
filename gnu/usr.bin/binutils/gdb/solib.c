@@ -302,7 +302,7 @@ solib_map_sections (so)
     }
   /* Leave bfd open, core_xfer_memory and "info files" need it.  */
   so -> abfd = abfd;
-  abfd -> cacheable = true;
+  abfd -> cacheable = TRUE;
 
   /* copy full path name into so_name, so that later symbol_file_add can find
      it */

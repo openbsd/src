@@ -2,7 +2,7 @@
    Contributed by Devon Bowen of Buffalo University
    and Torbjorn Granlund of the Swedish Institute of Computer Science.
    Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1999,
-   2000
+   2000, 2001, 2002
    Free Software Foundation, Inc.
 
 This file is part of GAS, the GNU Assembler.
@@ -22,8 +22,8 @@ along with GAS; see the file COPYING.  If not, write to the Free
 Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 02111-1307, USA.  */
 
-#include <ctype.h>
 #include "as.h"
+#include "safe-ctype.h"
 #include "subsegs.h"
 #include "m88k-opcode.h"
 
@@ -125,11 +125,14 @@ struct m88k_insn
 static char *get_bf PARAMS ((char *param, unsigned *valp));
 static char *get_cmp PARAMS ((char *param, unsigned *valp));
 static char *get_cnd PARAMS ((char *param, unsigned *valp));
+static char *get_bf2 PARAMS ((char *param, int bc));
+static char *get_bf_offset_expression PARAMS ((char *param, unsigned *offsetp));
 static char *get_cr PARAMS ((char *param, unsigned *regnop));
 static char *get_fcr PARAMS ((char *param, unsigned *regnop));
 static char *get_imm16 PARAMS ((char *param, struct m88k_insn *insn));
 static char *get_o6 PARAMS ((char *param, unsigned *valp));
-static char *get_reg PARAMS ((char *param, unsigned *regnop, int reg_prefix));
+static char *match_name PARAMS ((char *, struct field_val_assoc *, unsigned *));
+static char *get_reg PARAMS ((char *param, unsigned *regnop, unsigned int reg_prefix));
 static char *get_vec9 PARAMS ((char *param, unsigned *valp));
 static char *getval PARAMS ((char *param, unsigned int *valp));
 
@@ -146,7 +149,7 @@ static struct hash_control *op_hash = NULL;
 int md_seg_align = 7;
 
 /* These chars start a comment anywhere in a source file (except inside
-   another comment */
+   another comment.  */
 const char comment_chars[] = ";";
 
 /* These chars only start a comment at the beginning of a line.  */
@@ -162,16 +165,12 @@ const char EXP_CHARS[] = "eE";
 /* or    0H1.234E-12 (see exp chars above) */
 const char FLT_CHARS[] = "dDfF";
 
-extern void float_cons (), cons (), s_globl (), s_space (),
-  s_set (), s_lcomm ();
-
 const pseudo_typeS md_pseudo_table[] =
 {
   {"align", s_align_bytes, 4},
   {"def", s_set, 0},
   {"dfloat", float_cons, 'd'},
   {"ffloat", float_cons, 'f'},
-  {"global", s_globl, 0},
   {"half", cons, 2},
   {"bss", s_lcomm, 1},
   {"string", stringer, 0},
@@ -179,7 +178,7 @@ const pseudo_typeS md_pseudo_table[] =
   /* Force set to be treated as an instruction.  */
   {"set", NULL, 0},
   {".set", s_set, 0},
-  {0}
+  {NULL, NULL, 0}
 };
 
 void
@@ -188,32 +187,27 @@ md_begin ()
   const char *retval = NULL;
   unsigned int i = 0;
 
-  /* initialize hash table */
-
+  /* Initialize hash table.  */
   op_hash = hash_new ();
-
-  /* loop until you see the end of the list */
 
   while (*m88k_opcodes[i].name)
     {
       char *name = m88k_opcodes[i].name;
 
-      /* hash each mnemonic and record its position */
-
+      /* Hash each mnemonic and record its position.  */
       retval = hash_insert (op_hash, name, &m88k_opcodes[i]);
 
       if (retval != NULL)
 	as_fatal (_("Can't hash instruction '%s':%s"),
 		  m88k_opcodes[i].name, retval);
 
-      /* skip to next unique mnemonic or end of list */
-
+      /* Skip to next unique mnemonic or end of list.  */
       for (i++; !strcmp (m88k_opcodes[i].name, name); i++)
 	;
     }
 }
 
-CONST char *md_shortopts = "";
+const char *md_shortopts = "";
 struct option md_longopts[] = {
   {NULL, no_argument, NULL, 0}
 };
@@ -221,15 +215,15 @@ size_t md_longopts_size = sizeof (md_longopts);
 
 int
 md_parse_option (c, arg)
-     int c;
-     char *arg;
+     int c ATTRIBUTE_UNUSED;
+     char *arg ATTRIBUTE_UNUSED;
 {
   return 0;
 }
 
 void
 md_show_usage (stream)
-     FILE *stream;
+     FILE *stream ATTRIBUTE_UNUSED;
 {
 }
 
@@ -244,23 +238,20 @@ md_assemble (op)
 
   assert (op);
 
-  /* skip over instruction to find parameters */
-
-  for (param = op; *param != 0 && !isspace (*param); param++)
+  /* Skip over instruction to find parameters.  */
+  for (param = op; *param != 0 && !ISSPACE (*param); param++)
     ;
   c = *param;
   *param++ = '\0';
 
-  /* try to find the instruction in the hash table */
-
+  /* Try to find the instruction in the hash table.  */
   if ((format = (struct m88k_opcode *) hash_find (op_hash, op)) == NULL)
     {
       as_bad (_("Invalid mnemonic '%s'"), op);
       return;
     }
 
-  /* try parsing this instruction into insn */
-
+  /* Try parsing this instruction into insn.  */
   insn.exp.X_add_symbol = 0;
   insn.exp.X_op_symbol = 0;
   insn.exp.X_add_number = 0;
@@ -269,8 +260,7 @@ md_assemble (op)
 
   while (!calcop (format, param, &insn))
     {
-      /* if it doesn't parse try the next instruction */
-
+      /* If it doesn't parse try the next instruction.  */
       if (!strcmp (format[0].name, format[1].name))
 	format++;
       else
@@ -280,13 +270,11 @@ md_assemble (op)
 	}
     }
 
-  /* grow the current frag and plop in the opcode */
-
+  /* Grow the current frag and plop in the opcode.  */
   thisfrag = frag_more (4);
   md_number_to_chars (thisfrag, insn.opcode, 4);
 
-  /* if this instruction requires labels mark it for later */
-
+  /* If this instruction requires labels mark it for later.  */
   switch (insn.reloc)
     {
     case NO_RELOC:
@@ -345,7 +333,7 @@ calcop (format, param, insn)
   int f;
   unsigned val;
   unsigned opcode;
-  int reg_prefix = 'r';
+  unsigned int reg_prefix = 'r';
 
   insn->opcode = format->opcode;
   opcode = 0;
@@ -477,7 +465,7 @@ static char *
 get_reg (param, regnop, reg_prefix)
      char *param;
      unsigned *regnop;
-     int reg_prefix;
+     unsigned int reg_prefix;
 {
   unsigned c;
   unsigned regno;
@@ -529,17 +517,17 @@ get_imm16 (param, insn)
   unsigned int val;
   char *save_ptr;
 
-  if (!strncmp (param, "hi16", 4) && !isalnum (param[4]))
+  if (!strncmp (param, "hi16", 4) && !ISALNUM (param[4]))
     {
       reloc = RELOC_HI16;
       param += 4;
     }
-  else if (!strncmp (param, "lo16", 4) && !isalnum (param[4]))
+  else if (!strncmp (param, "lo16", 4) && !ISALNUM (param[4]))
     {
       reloc = RELOC_LO16;
       param += 4;
     }
-  else if (!strncmp (param, "iw16", 4) && !isalnum (param[4]))
+  else if (!strncmp (param, "iw16", 4) && !ISALNUM (param[4]))
     {
       reloc = RELOC_IW16;
       param += 4;
@@ -642,7 +630,7 @@ get_cnd (param, valp)
 {
   unsigned int val;
 
-  if (isdigit (*param))
+  if (ISDIGIT (*param))
     {
       param = getval (param, &val);
 
@@ -654,11 +642,8 @@ get_cnd (param, valp)
     }
   else
     {
-      if (isupper (*param))
-	*param = tolower (*param);
-
-      if (isupper (param[1]))
-	param[1] = tolower (param[1]);
+      param[0] = TOLOWER (param[0]);
+      param[1] = TOLOWER (param[1]);
 
       param = match_name (param, cndmsk, valp);
 
@@ -702,12 +687,10 @@ get_bf_offset_expression (param, offsetp)
 {
   unsigned offset;
 
-  if (isalpha (param[0]))
+  if (ISALPHA (param[0]))
     {
-      if (isupper (param[0]))
-	param[0] = tolower (param[0]);
-      if (isupper (param[1]))
-	param[1] = tolower (param[1]);
+      param[0] = TOLOWER (param[0]);
+      param[1] = TOLOWER (param[1]);
 
       param = match_name (param, cmpslot, offsetp);
 
@@ -896,13 +879,13 @@ get_o6 (param, valp)
 
   *valp = val;
 
-  return(param);
+  return (param);
 }
 
 #define hexval(z) \
-  (isdigit (z) ? (z) - '0' :						\
-   islower (z) ? (z) - 'a' + 10 : 					\
-   isupper (z) ? (z) - 'A' + 10 : -1)
+  (ISDIGIT (z) ? (z) - '0' :						\
+   ISLOWER (z) ? (z) - 'a' + 10 : 					\
+   ISUPPER (z) ? (z) - 'A' + 10 : (unsigned) -1)
 
 static char *
 getval (param, valp)
@@ -958,104 +941,6 @@ md_number_to_chars (buf, val, nbytes)
      int nbytes;
 {
   number_to_chars_bigendian (buf, val, nbytes);
-}
-
-#if 0
-
-/* This routine is never called.  What is it for?
-   Ian Taylor, Cygnus Support 13 Jul 1993 */
-
-void
-md_number_to_imm (buf, val, nbytes, fixP, seg_type)
-     unsigned char *buf;
-     unsigned int val;
-     int nbytes;
-     fixS *fixP;
-     int seg_type;
-{
-  if (seg_type != N_TEXT || fixP->fx_r_type == NO_RELOC)
-    {
-      switch (nbytes)
-	{
-	case 4:
-	  *buf++ = val >> 24;
-	  *buf++ = val >> 16;
-	case 2:
-	  *buf++ = val >> 8;
-	case 1:
-	  *buf = val;
-	  break;
-
-	default:
-	  abort ();
-	}
-      return;
-    }
-
-  switch (fixP->fx_r_type)
-    {
-    case RELOC_IW16:
-      buf[2] = val >> 8;
-      buf[3] = val;
-      break;
-
-    case RELOC_LO16:
-      buf[0] = val >> 8;
-      buf[1] = val;
-      break;
-
-    case RELOC_HI16:
-      buf[0] = val >> 24;
-      buf[1] = val >> 16;
-      break;
-
-    case RELOC_PC16:
-      val += 4;
-      buf[0] = val >> 10;
-      buf[1] = val >> 2;
-      break;
-
-    case RELOC_PC26:
-      val += 4;
-      buf[0] |= (val >> 26) & 0x03;
-      buf[1] = val >> 18;
-      buf[2] = val >> 10;
-      buf[3] = val >> 2;
-      break;
-
-    case RELOC_32:
-      buf[0] = val >> 24;
-      buf[1] = val >> 16;
-      buf[2] = val >> 8;
-      buf[3] = val;
-      break;
-
-    default:
-      as_fatal (_("Bad relocation type"));
-      break;
-    }
-}
-
-#endif /* 0 */
-
-void
-md_number_to_disp (buf, val, nbytes)
-     char *buf;
-     int val;
-     int nbytes;
-{
-  as_fatal (_("md_number_to_disp not defined"));
-  md_number_to_chars (buf, val, nbytes);
-}
-
-void
-md_number_to_field (buf, val, nbytes)
-     char *buf;
-     int val;
-     int nbytes;
-{
-  as_fatal (_("md_number_to_field not defined"));
-  md_number_to_chars (buf, val, nbytes);
 }
 
 #define MAX_LITTLENUMS 6
@@ -1123,7 +1008,8 @@ int md_short_jump_size = 4;
 void
 md_create_short_jump (ptr, from_addr, to_addr, frag, to_symbol)
      char *ptr;
-     addressT from_addr, to_addr;
+     addressT from_addr ATTRIBUTE_UNUSED;
+     addressT to_addr ATTRIBUTE_UNUSED;
      fragS *frag;
      symbolS *to_symbol;
 {
@@ -1145,7 +1031,8 @@ int md_long_jump_size = 4;
 void
 md_create_long_jump (ptr, from_addr, to_addr, frag, to_symbol)
      char *ptr;
-     addressT from_addr, to_addr;
+     addressT from_addr ATTRIBUTE_UNUSED;
+     addressT to_addr ATTRIBUTE_UNUSED;
      fragS *frag;
      symbolS *to_symbol;
 {
@@ -1164,158 +1051,12 @@ md_create_long_jump (ptr, from_addr, to_addr, frag, to_symbol)
 
 int
 md_estimate_size_before_relax (fragP, segment_type)
-     fragS *fragP;
-     segT segment_type;
+     fragS *fragP ATTRIBUTE_UNUSED;
+     segT segment_type ATTRIBUTE_UNUSED;
 {
   as_fatal (_("Relaxation should never occur"));
   return (-1);
 }
-
-#if 0
-
-/* As far as I can tell, this routine is never called.  What is it
-   doing here?
-   Ian Taylor, Cygnus Support 13 Jul 1993 */
-
-/*
- * Risc relocations are completely different, so it needs
- * this machine dependent routine to emit them.
- */
-void
-emit_relocations (fixP, segment_address_in_file)
-     fixS *fixP;
-     relax_addressT segment_address_in_file;
-{
-  struct reloc_info_m88k ri;
-  symbolS *symbolP;
-  extern char *next_object_file_charP;
-
-  bzero ((char *) &ri, sizeof (ri));
-  for (; fixP; fixP = fixP->fx_next)
-    {
-      if (fixP->fx_r_type >= NO_RELOC)
-	{
-	  fprintf (stderr, "fixP->fx_r_type = %d\n", fixP->fx_r_type);
-	  abort ();
-	}
-
-      if ((symbolP = fixP->fx_addsy) != NULL)
-	{
-	  ri.r_address = fixP->fx_frag->fr_address +
-	    fixP->fx_where - segment_address_in_file;
-	  if ((symbolP->sy_type & N_TYPE) == N_UNDF)
-	    {
-	      ri.r_extern = 1;
-	      ri.r_symbolnum = symbolP->sy_number;
-	    }
-	  else
-	    {
-	      ri.r_extern = 0;
-	      ri.r_symbolnum = symbolP->sy_type & N_TYPE;
-	    }
-	  if (symbolP && symbol_get_frag (symbolP))
-	    {
-	      ri.r_addend = symbol_get_frag (symbolP)->fr_address;
-	    }
-	  ri.r_type = fixP->fx_r_type;
-	  if (fixP->fx_pcrel)
-	    {
-	      ri.r_addend -= ri.r_address;
-	    }
-	  else
-	    {
-	      ri.r_addend = fixP->fx_addnumber;
-	    }
-
-	  append (&next_object_file_charP, (char *) &ri, sizeof (ri));
-	}
-    }
-}
-
-#endif /* 0 */
-
-#if 0
-
-/* This routine can be subsumed by s_lcomm in read.c.
-   Ian Taylor, Cygnus Support 13 Jul 1993 */
-
-static void
-s_bss ()
-{
-  char *name;
-  char c;
-  char *p;
-  int temp, bss_align;
-  symbolS *symbolP;
-
-  name = input_line_pointer;
-  c = get_symbol_end ();
-  p = input_line_pointer;
-  *p = c;
-  SKIP_WHITESPACE ();
-  if (*input_line_pointer != ',')
-    {
-      as_warn (_("Expected comma after name"));
-      ignore_rest_of_line ();
-      return;
-    }
-  input_line_pointer++;
-  if ((temp = get_absolute_expression ()) < 0)
-    {
-      as_warn (_("BSS length (%d.) <0! Ignored."), temp);
-      ignore_rest_of_line ();
-      return;
-    }
-  *p = 0;
-  symbolP = symbol_find_or_make (name);
-  *p = c;
-  if (*input_line_pointer == ',')
-    {
-      input_line_pointer++;
-      bss_align = get_absolute_expression ();
-    }
-  else
-    bss_align = 0;
-
-  if (!S_IS_DEFINED(symbolP)
-      || S_GET_SEGMENT(symbolP) == SEG_BSS)
-    {
-      if (! need_pass_2)
-	{
-	  char *p;
-	  segT current_seg = now_seg;
-	  subsegT current_subseg = now_subseg;
-
-	  subseg_set (SEG_BSS, 1); /* switch to bss	*/
-
-	  if (bss_align)
-	    frag_align (bss_align, 0, 0);
-
-	  /* detach from old frag */
-	  if (symbolP->sy_type == N_BSS && symbol_get_frag (symbolP) != NULL)
-	    symbol_get_frag (symbolP)->fr_symbol = NULL;
-
-	  symbol_set_frag (symbolP, frag_now);
-	  p = frag_var (rs_org, 1, 1, (relax_substateT)0, symbolP,
-			(offsetT) temp, (char *)0);
-	  *p = 0;
-	  S_SET_SEGMENT (symbolP, SEG_BSS);
-
-	  subseg_set (current_seg, current_subseg);
-	}
-    }
-  else
-    {
-      as_warn (_("Ignoring attempt to re-define symbol %s."), name);
-    }
-
-  while (!is_end_of_line[(unsigned char) *input_line_pointer])
-    {
-      input_line_pointer++;
-    }
-}
-
-#endif /* 0 */
 
 #ifdef M88KCOFF
 
@@ -1356,31 +1097,33 @@ tc_coff_fix2rtype (fixp)
    file itself.  */
 
 void
-md_apply_fix (fixp, val)
-     fixS *fixp;
-     long val;
+md_apply_fix3 (fixP, valP, seg)
+     fixS *fixP;
+     valueT * valP;
+     segT seg ATTRIBUTE_UNUSED;
 {
+  long val = * (long *) valP;
   char *buf;
 
-  buf = fixp->fx_frag->fr_literal + fixp->fx_where;
-  fixp->fx_offset = 0;
+  buf = fixP->fx_frag->fr_literal + fixP->fx_where;
+  fixP->fx_offset = 0;
 
-  switch (fixp->fx_r_type)
+  switch (fixP->fx_r_type)
     {
     case RELOC_IW16:
-      fixp->fx_offset = val >> 16;
+      fixP->fx_offset = val >> 16;
       buf[2] = val >> 8;
       buf[3] = val;
       break;
 
     case RELOC_LO16:
-      fixp->fx_offset = val >> 16;
+      fixP->fx_offset = val >> 16;
       buf[0] = val >> 8;
       buf[1] = val;
       break;
 
     case RELOC_HI16:
-      fixp->fx_offset = val >> 16;
+      fixP->fx_offset = val >> 16;
       buf[0] = val >> 8;
       buf[1] = val;
       break;
@@ -1407,6 +1150,9 @@ md_apply_fix (fixp, val)
     default:
       abort ();
     }
+
+  if (fixP->fx_addsy == NULL && fixP->fx_pcrel == 0)
+    fixP->fx_done = 1;
 }
 
 /* Where a PC relative offset is calculated from.  On the m88k they

@@ -1,6 +1,0 @@
-
-	.AREPEAT	5
-	.AENDR		
-	.AENDR
-	.END
-

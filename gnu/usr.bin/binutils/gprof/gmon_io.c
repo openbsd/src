@@ -1,6 +1,6 @@
 /* gmon_io.c - Input and output from/to gmon.out files.
 
-   Copyright 2000, 2001 Free Software Foundation, Inc.
+   Copyright 2000, 2001, 2002 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -19,53 +19,88 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
    02111-1307, USA.  */
 
+#include "gprof.h"
+#include "search_list.h"
+#include "source.h"
+#include "symtab.h"
 #include "cg_arcs.h"
 #include "basic_blocks.h"
-#include "bfd.h"
 #include "corefile.h"
 #include "call_graph.h"
 #include "gmon_io.h"
 #include "gmon_out.h"
 #include "gmon.h"		/* Fetch header for old format.  */
-#include "gprof.h"
 #include "hertz.h"
 #include "hist.h"
 #include "libiberty.h"
 
+enum gmon_ptr_size {
+  ptr_32bit,
+  ptr_64bit
+};
+
+enum gmon_ptr_signedness {
+  ptr_signed,
+  ptr_unsigned
+};
+
+static enum gmon_ptr_size gmon_get_ptr_size PARAMS ((void));
+static enum gmon_ptr_signedness gmon_get_ptr_signedness PARAMS ((void));
+
+#ifdef BFD_HOST_U_64_BIT
+static int gmon_io_read_64 PARAMS ((FILE *, BFD_HOST_U_64_BIT *));
+static int gmon_io_write_64 PARAMS ((FILE *, BFD_HOST_U_64_BIT));
+#endif
+static int gmon_read_raw_arc
+  PARAMS ((FILE *, bfd_vma *, bfd_vma *, unsigned long *));
+static int gmon_write_raw_arc
+  PARAMS ((FILE *, bfd_vma, bfd_vma, unsigned long));
+
 int gmon_input = 0;
 int gmon_file_version = 0;	/* 0 == old (non-versioned) file format.  */
 
-int
-DEFUN (gmon_io_read_vma, (ifp, valp), FILE * ifp AND bfd_vma *valp)
+static enum gmon_ptr_size
+gmon_get_ptr_size ()
 {
-  char buf[8];
-  bfd_vma val;
+  int size;
 
-  switch (GMON_PTR_SIZE)
+  /* Pick best size for pointers.  Start with the ELF size, and if not
+     elf go with the architecture's address size.  */
+  size = bfd_get_arch_size (core_bfd);
+  if (size == -1)
+    size = bfd_arch_bits_per_address (core_bfd);
+
+  switch (size)
     {
-    case 4:
-      if (fread (buf, 1, 4, ifp) != 4)
-	return 1;
-      val = bfd_get_32 (core_bfd, buf);
-      break;
+    case 32:
+      return ptr_32bit;
 
-    case 8:
-      if (fread (buf, 1, 8, ifp) != 8)
-	return 1;
-      val = bfd_get_64 (core_bfd, buf);
-      break;
+    case 64:
+      return ptr_64bit;
 
     default:
-      fprintf (stderr, _("%s: GMON_PTR_SIZE has unexpected value of %u\n"),
-	       whoami, GMON_PTR_SIZE);
+      fprintf (stderr, _("%s: address size has unexpected value of %u\n"),
+	       whoami, size);
       done (1);
     }
-  *valp = val;
-  return 0;
+}
+
+static enum gmon_ptr_signedness
+gmon_get_ptr_signedness ()
+{
+  int sext;
+
+  /* Figure out whether to sign extend.  If BFD doesn't know, assume no.  */
+  sext = bfd_get_sign_extend_vma (core_bfd);
+  if (sext == -1)
+    return ptr_unsigned;
+  return (sext ? ptr_signed : ptr_unsigned);
 }
 
 int
-DEFUN (gmon_io_read_32, (ifp, valp), FILE * ifp AND unsigned int *valp)
+gmon_io_read_32 (ifp, valp)
+     FILE *ifp;
+     unsigned int *valp;
 {
   char buf[4];
 
@@ -75,8 +110,63 @@ DEFUN (gmon_io_read_32, (ifp, valp), FILE * ifp AND unsigned int *valp)
   return 0;
 }
 
+#ifdef BFD_HOST_U_64_BIT
+static int
+gmon_io_read_64 (ifp, valp)
+     FILE *ifp;
+     BFD_HOST_U_64_BIT *valp;
+{
+  char buf[8];
+
+  if (fread (buf, 1, 8, ifp) != 8)
+    return 1;
+  *valp = bfd_get_64 (core_bfd, buf);
+  return 0;
+}
+#endif
+
 int
-DEFUN (gmon_io_read, (ifp, buf, n), FILE * ifp AND char *buf AND size_t n)
+gmon_io_read_vma (ifp, valp)
+     FILE *ifp;
+     bfd_vma *valp;
+{
+  unsigned int val32;
+#ifdef BFD_HOST_U_64_BIT
+  BFD_HOST_U_64_BIT val64;
+#endif
+
+  switch (gmon_get_ptr_size ())
+    {
+    case ptr_32bit:
+      if (gmon_io_read_32 (ifp, &val32))
+	return 1;
+      if (gmon_get_ptr_signedness () == ptr_signed)
+        *valp = (int) val32;
+      else
+        *valp = val32;
+      break;
+
+#ifdef BFD_HOST_U_64_BIT
+    case ptr_64bit:
+      if (gmon_io_read_64 (ifp, &val64))
+	return 1;
+#ifdef BFD_HOST_64_BIT
+      if (gmon_get_ptr_signedness () == ptr_signed)
+        *valp = (BFD_HOST_64_BIT) val64;
+      else
+#endif
+        *valp = val64;
+      break;
+#endif
+    }
+  return 0;
+}
+
+int
+gmon_io_read (ifp, buf, n)
+     FILE *ifp;
+     char *buf;
+     size_t n;
 {
   if (fread (buf, 1, n, ifp) != n)
     return 1;
@@ -84,45 +174,60 @@ DEFUN (gmon_io_read, (ifp, buf, n), FILE * ifp AND char *buf AND size_t n)
 }
 
 int
-DEFUN (gmon_io_write_vma, (ofp, val), FILE * ofp AND bfd_vma val)
-{
-  char buf[8];
-
-  switch (GMON_PTR_SIZE)
-    {
-    case 4:
-      bfd_put_32 (core_bfd, val, buf);
-      if (fwrite (buf, 1, 4, ofp) != 4)
-	return 1;
-      break;
-
-    case 8:
-      bfd_put_64 (core_bfd, val, buf);
-      if (fwrite (buf, 1, 8, ofp) != 8)
-	return 1;
-      break;
-
-    default:
-      fprintf (stderr, _("%s: GMON_PTR_SIZE has unexpected value of %u\n"),
-	       whoami, GMON_PTR_SIZE);
-      done (1);
-    }
-  return 0;
-}
-
-int
-DEFUN (gmon_io_write_32, (ofp, val), FILE * ofp AND unsigned int val)
+gmon_io_write_32 (ofp, val)
+     FILE *ofp;
+     unsigned int val;
 {
   char buf[4];
 
-  bfd_put_32 (core_bfd, val, buf);
+  bfd_put_32 (core_bfd, (bfd_vma) val, buf);
   if (fwrite (buf, 1, 4, ofp) != 4)
     return 1;
   return 0;
 }
 
+#ifdef BFD_HOST_U_64_BIT
+static int
+gmon_io_write_64 (ofp, val)
+     FILE *ofp;	
+     BFD_HOST_U_64_BIT val;
+{
+  char buf[8];
+
+  bfd_put_64 (core_bfd, (bfd_vma) val, buf);
+  if (fwrite (buf, 1, 8, ofp) != 8)
+    return 1;
+  return 0;
+}
+#endif
+
 int
-DEFUN (gmon_io_write_8, (ofp, val), FILE * ofp AND unsigned char val)
+gmon_io_write_vma (ofp, val)
+     FILE *ofp;
+     bfd_vma val;
+{
+
+  switch (gmon_get_ptr_size ())
+    {
+    case ptr_32bit:
+      if (gmon_io_write_32 (ofp, (unsigned int) val))
+	return 1;
+      break;
+
+#ifdef BFD_HOST_U_64_BIT
+    case ptr_64bit:
+      if (gmon_io_write_64 (ofp, (BFD_HOST_U_64_BIT) val))
+	return 1;
+      break;
+#endif
+    }
+  return 0;
+}
+
+int
+gmon_io_write_8 (ofp, val)
+     FILE *ofp;	
+     unsigned int val;
 {
   char buf[1];
 
@@ -133,50 +238,83 @@ DEFUN (gmon_io_write_8, (ofp, val), FILE * ofp AND unsigned char val)
 }
 
 int
-DEFUN (gmon_io_write, (ofp, buf, n), FILE * ofp AND char *buf AND size_t n)
+gmon_io_write (ofp, buf, n)
+     FILE *ofp;	
+     char *buf;
+     size_t n;
 {
   if (fwrite (buf, 1, n, ofp) != n)
     return 1;
   return 0;
 }
 
-/* get_vma and put_vma are for backwards compatibility only */
-static bfd_vma
-DEFUN (get_vma, (abfd, addr), bfd * abfd AND bfd_byte * addr)
+static int
+gmon_read_raw_arc (ifp, fpc, spc, cnt)
+     FILE *ifp;
+     bfd_vma *fpc;
+     bfd_vma *spc;
+     unsigned long *cnt;
 {
-  switch (sizeof (char*))
+#ifdef BFD_HOST_U_64_BIT
+  BFD_HOST_U_64_BIT cnt64;
+#endif
+  unsigned int cnt32;
+
+  if (gmon_io_read_vma (ifp, fpc)
+      || gmon_io_read_vma (ifp, spc))
+    return 1;
+
+  switch (gmon_get_ptr_size ())
     {
-    case 4:
-      return bfd_get_32 (abfd, addr);
-    case 8:
-      return bfd_get_64 (abfd, addr);
-    default:
-      fprintf (stderr, _("%s: bfd_vma has unexpected size of %ld bytes\n"),
-	       whoami, (long) sizeof (char*));
-      done (1);
+    case ptr_32bit:
+      if (gmon_io_read_32 (ifp, &cnt32))
+	return 1;
+      *cnt = cnt32;
+      break;
+
+#ifdef BFD_HOST_U_64_BIT
+    case ptr_64bit:
+      if (gmon_io_read_64 (ifp, &cnt64))
+	return 1;
+      *cnt = cnt64;
+      break;
+#endif
     }
+  return 0;
 }
 
-static void
-DEFUN (put_vma, (abfd, val, addr), bfd * abfd AND bfd_vma val AND bfd_byte * addr)
+static int
+gmon_write_raw_arc (ofp, fpc, spc, cnt)
+     FILE *ofp;
+     bfd_vma fpc;
+     bfd_vma spc;
+     unsigned long cnt;
 {
-  switch (sizeof (char*))
+
+  if (gmon_io_write_vma (ofp, fpc)
+      || gmon_io_write_vma (ofp, spc))
+    return 1;
+
+  switch (gmon_get_ptr_size ())
     {
-    case 4:
-      bfd_put_32 (abfd, val, addr);
+    case ptr_32bit:
+      if (gmon_io_write_32 (ofp, (unsigned int) cnt))
+	return 1;
       break;
-    case 8:
-      bfd_put_64 (abfd, val, addr);
+
+#ifdef BFD_HOST_U_64_BIT
+    case ptr_64bit:
+      if (gmon_io_write_64 (ofp, (BFD_HOST_U_64_BIT) cnt))
+	return 1;
       break;
-    default:
-      fprintf (stderr, _("%s: bfd_vma has unexpected size of %ld bytes\n"),
-	       whoami, (long) sizeof (char*));
-      done (1);
+#endif
     }
+  return 0;
 }
 
 void
-DEFUN (gmon_out_read, (filename), const char *filename)
+gmon_out_read (filename)
+     const char *filename;
 {
   FILE *ifp;
   struct gmon_hdr ghdr;
@@ -271,14 +409,13 @@ DEFUN (gmon_out_read, (filename), const char *filename)
 	bfd_vma high_pc;
 	int ncnt;
       };
-      int i, samp_bytes, header_size;
+      int i, samp_bytes, header_size = 0;
       unsigned long count;
       bfd_vma from_pc, self_pc;
-      struct raw_arc raw_arc;
-      struct raw_phdr raw;
       static struct hdr h;
       UNIT raw_bin_count;
       struct hdr tmp;
+      int version;
 
       /* Information from a gmon.out file is in two parts: an array of
 	 sampling hits within pc ranges, and the arcs.  */
@@ -293,25 +430,29 @@ DEFUN (gmon_out_read, (filename), const char *filename)
 	  done (1);
 	}
 
-      if (fread (&raw, 1, sizeof (struct raw_phdr), ifp)
-	  != sizeof (struct raw_phdr))
+      /* The beginning of the old BSD header and the 4.4BSD header
+	 are the same: lowpc, highpc, ncnt  */
+      if (gmon_io_read_vma (ifp, &tmp.low_pc)
+          || gmon_io_read_vma (ifp, &tmp.high_pc)
+          || gmon_io_read_32 (ifp, &tmp.ncnt))
 	{
-	  fprintf (stderr, _("%s: file too short to be a gmon file\n"),
+ bad_gmon_file:
+          fprintf (stderr, _("%s: file too short to be a gmon file\n"),
 		   filename);
 	  done (1);
 	}
 
-      tmp.low_pc = get_vma (core_bfd, (bfd_byte *) &raw.low_pc[0]);
-      tmp.high_pc = get_vma (core_bfd, (bfd_byte *) &raw.high_pc[0]);
-      tmp.ncnt = bfd_get_32 (core_bfd, (bfd_byte *) &raw.ncnt[0]);
+      /* Check to see if this a 4.4BSD-style header.  */
+      if (gmon_io_read_32 (ifp, &version))
+	goto bad_gmon_file;
 
-      if (bfd_get_32 (core_bfd, (bfd_byte *) &raw.version[0])
-	  == GMONVERSION)
+      if (version == GMONVERSION)
 	{
 	  int profrate;
 
 	  /* 4.4BSD format header.  */
-	  profrate = bfd_get_32 (core_bfd, (bfd_byte *) &raw.profrate[0]);
+          if (gmon_io_read_32 (ifp, &profrate))
+	    goto bad_gmon_file;
 
 	  if (!s_highpc)
 	    hz = profrate;
@@ -323,7 +464,16 @@ DEFUN (gmon_out_read, (filename), const char *filename)
 	      done (1);
 	    }
 
-	  header_size = sizeof (struct raw_phdr);
+	  switch (gmon_get_ptr_size ())
+	    {
+	    case ptr_32bit:
+	      header_size = GMON_HDRSIZE_BSD44_32;
+	      break;
+
+	    case ptr_64bit:
+	      header_size = GMON_HDRSIZE_BSD44_64;
+	      break;
+	    }
 	}
       else
 	{
@@ -335,13 +485,23 @@ DEFUN (gmon_out_read, (filename), const char *filename)
 	      done (1);
 	    }
 
-	  if (fseek (ifp, sizeof (struct old_raw_phdr), SEEK_SET) < 0)
+	  switch (gmon_get_ptr_size ())
 	    {
-	      perror (filename);
-	      done (1);
-	    }
+	    case ptr_32bit:
+	      header_size = GMON_HDRSIZE_OLDBSD_32;
+	      break;
 
-	  header_size = sizeof (struct old_raw_phdr);
+	    case ptr_64bit:
+	      header_size = GMON_HDRSIZE_OLDBSD_64;
+	      break;
+	    }
+	}
+
+      /* Position the file to after the header.  */
+      if (fseek (ifp, header_size, SEEK_SET) < 0)
+	{
+	  perror (filename);
+	  done (1);
 	}
 
       if (s_highpc && (tmp.low_pc != h.low_pc
@@ -406,12 +566,9 @@ DEFUN (gmon_out_read, (filename), const char *filename)
 
       /* The rest of the file consists of a bunch of
 	 <from,self,count> tuples.  */
-      while (fread (&raw_arc, sizeof (raw_arc), 1, ifp) == 1)
+      while (gmon_read_raw_arc (ifp, &from_pc, &self_pc, &count) == 0)
 	{
 	  ++narcs;
-	  from_pc = get_vma (core_bfd, (bfd_byte *) raw_arc.from_pc);
-	  self_pc = get_vma (core_bfd, (bfd_byte *) raw_arc.self_pc);
-	  count = bfd_get_32 (core_bfd, (bfd_byte *) raw_arc.count);
 
 	  DBG (SAMPLEDEBUG,
 	     printf ("[gmon_out_read] frompc 0x%lx selfpc 0x%lx count %lu\n",
@@ -447,19 +604,23 @@ DEFUN (gmon_out_read, (filename), const char *filename)
     {
       printf (_("File `%s' (version %d) contains:\n"),
 	      filename, gmon_file_version);
-      printf (_("\t%d histogram record%s\n"),
-	      nhist, nhist == 1 ? "" : "s");
-      printf (_("\t%d call-graph record%s\n"),
-	      narcs, narcs == 1 ? "" : "s");
-      printf (_("\t%d basic-block count record%s\n"),
-	      nbbs, nbbs == 1 ? "" : "s");
+      printf (nhist == 1 ?
+	      _("\t%d histogram record\n") :
+	      _("\t%d histogram records\n"), nhist);
+      printf (narcs == 1 ?
+	      _("\t%d call-graph record\n") :
+	      _("\t%d call-graph records\n"), narcs);
+      printf (nbbs == 1 ?
+	      _("\t%d basic-block count record\n") :
+	      _("\t%d basic-block count records\n"), nbbs);
       first_output = FALSE;
     }
 }
 
 
 void
-DEFUN (gmon_out_write, (filename), const char *filename)
+gmon_out_write (filename)
+     const char *filename;
 {
   FILE *ofp;
   struct gmon_hdr ghdr;
@@ -476,7 +637,7 @@ DEFUN (gmon_out_write, (filename), const char *filename)
       /* Write gmon header.  */
 
       memcpy (&ghdr.cookie[0], GMON_MAGIC, 4);
-      bfd_put_32 (core_bfd, GMON_VERSION, (bfd_byte *) ghdr.version);
+      bfd_put_32 (core_bfd, (bfd_vma) GMON_VERSION, (bfd_byte *) ghdr.version);
 
       if (fwrite (&ghdr, sizeof (ghdr), 1, ofp) != 1)
 	{
@@ -498,47 +659,90 @@ DEFUN (gmon_out_write, (filename), const char *filename)
     }
   else if (file_format == FF_BSD || file_format == FF_BSD44)
     {
-      struct raw_arc raw_arc;
       UNIT raw_bin_count;
-      struct raw_phdr h;
-      int i;
+      int i, hdrsize;
+      unsigned padsize;
+      char pad[3*4];
       Arc *arc;
       Sym *sym;
 
-      memset (&h, 0, sizeof h);
-      put_vma (core_bfd, s_lowpc, (bfd_byte *) &h.low_pc);
-      put_vma (core_bfd, s_highpc, (bfd_byte *) &h.high_pc);
-      bfd_put_32 (core_bfd,
-		  hist_num_bins * sizeof (UNIT) + sizeof (struct raw_phdr),
-		  (bfd_byte *) &h.ncnt);
+      memset (pad, 0, sizeof (pad));
 
-      /* Write header.  Use new style BSD format is explicitly
-	 specified, or if the profiling rate is non-standard;
-	 otherwise, use the old BSD format.  */
+      hdrsize = 0;
+      /* Decide how large the header will be.  Use the 4.4BSD format
+         header if explicitly specified, or if the profiling rate is
+         non-standard.  Otherwise, use the old BSD format.  */
       if (file_format == FF_BSD44
-	  || hz != hertz ())
+	  || hz != hertz())
 	{
-	  bfd_put_32 (core_bfd, GMONVERSION, (bfd_byte *) &h.version);
-	  bfd_put_32 (core_bfd, hz, (bfd_byte *) &h.profrate);
-	  if (fwrite (&h, sizeof (struct raw_phdr), 1, ofp) != 1)
+	  padsize = 3*4;
+	  switch (gmon_get_ptr_size ())
+	    {
+	    case ptr_32bit:
+	      hdrsize = GMON_HDRSIZE_BSD44_32;
+	      break;
+
+	    case ptr_64bit:
+	      hdrsize = GMON_HDRSIZE_BSD44_64;
+	      break;
+	    }
+	}
+      else
+	{
+	  padsize = 0;
+	  switch (gmon_get_ptr_size ())
+	    {
+	    case ptr_32bit:
+	      hdrsize = GMON_HDRSIZE_OLDBSD_32;
+	      break;
+
+	    case ptr_64bit:
+	      hdrsize = GMON_HDRSIZE_OLDBSD_64;
+	      /* FIXME: Checking host compiler defines here means that we can't
+		 use a cross gprof alpha OSF.  */ 
+#if defined(__alpha__) && defined (__osf__)
+	      padsize = 4;
+#endif
+	      break;
+	    }
+	}
+
+      /* Write the parts of the headers that are common to both the
+	 old BSD and 4.4BSD formats.  */
+      if (gmon_io_write_vma (ofp, s_lowpc)
+          || gmon_io_write_vma (ofp, s_highpc)
+          || gmon_io_write_32 (ofp, hist_num_bins * sizeof (UNIT) + hdrsize))
+	{
+	  perror (filename);
+	  done (1);
+	}
+
+      /* Write out the 4.4BSD header bits, if that's what we're using.  */
+      if (file_format == FF_BSD44
+	  || hz != hertz())
+	{
+          if (gmon_io_write_32 (ofp, GMONVERSION)
+	      || gmon_io_write_32 (ofp, (unsigned int) hz))
 	    {
 	      perror (filename);
 	      done (1);
 	    }
 	}
-      else
-	{
-	  if (fwrite (&h, sizeof (struct old_raw_phdr), 1, ofp) != 1)
-	    {
-	      perror (filename);
-	      done (1);
-	    }
+
+      /* Now write out any necessary padding after the meaningful
+	 header bits.  */
+      if (padsize != 0
+          && fwrite (pad, 1, padsize, ofp) != padsize)
+        {
+          perror (filename);
+	  done (1);
 	}
 
       /* Dump the samples.  */
       for (i = 0; i < hist_num_bins; ++i)
 	{
-	  bfd_put_16 (core_bfd, hist_sample[i], (bfd_byte *) & raw_bin_count[0]);
+	  bfd_put_16 (core_bfd, (bfd_vma) hist_sample[i],
+		      (bfd_byte *) &raw_bin_count[0]);
 	  if (fwrite (&raw_bin_count[0], sizeof (raw_bin_count), 1, ofp) != 1)
 	    {
 	      perror (filename);
@@ -551,12 +755,8 @@ DEFUN (gmon_out_write, (filename), const char *filename)
 	{
 	  for (arc = sym->cg.children; arc; arc = arc->next_child)
 	    {
-	      put_vma (core_bfd, arc->parent->addr,
-		       (bfd_byte *) raw_arc.from_pc);
-	      put_vma (core_bfd, arc->child->addr,
-		       (bfd_byte *) raw_arc.self_pc);
-	      bfd_put_32 (core_bfd, arc->count, (bfd_byte *) raw_arc.count);
-	      if (fwrite (&raw_arc, sizeof (raw_arc), 1, ofp) != 1)
+	      if (gmon_write_raw_arc (ofp, arc->parent->addr,
+				      arc->child->addr, arc->count))
 		{
 		  perror (filename);
 		  done (1);

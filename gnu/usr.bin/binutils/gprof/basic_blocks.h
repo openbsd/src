@@ -1,5 +1,5 @@
 /* basic_blocks.h
-   Copyright 2000 Free Software Foundation, Inc.
+   Copyright 2000, 2002 Free Software Foundation, Inc.
 
 This file is part of GNU Binutils.
 
@@ -20,13 +20,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #ifndef basic_blocks_h
 #define basic_blocks_h
 
-#include <stdio.h>
-#include "gprof.h"
-#include "source.h"
-#include "symtab.h"
-
 /* Options:  */
-extern bool bb_annotate_all_lines;	/* Force annotation of all lines?  */
+extern bfd_boolean bb_annotate_all_lines; /* Force annotation of all lines?  */
 extern int bb_table_length;		/* Length of most-used bb table.  */
 extern unsigned long bb_min_calls;	/* Minimum execution count.  */
 

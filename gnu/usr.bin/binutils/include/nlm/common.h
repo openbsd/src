@@ -1,5 +1,5 @@
 /* NLM (NetWare Loadable Module) support for BFD.
-   Copyright 1993 Free Software Foundation, Inc.
+   Copyright 1993, 2001 Free Software Foundation, Inc.
 
    Written by Fred Fish @ Cygnus Support
 
@@ -23,36 +23,35 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /* This file is part of NLM support for BFD, and contains the portions
    that are common to both the internal and external representations. */
 
-/* Semi-portable string concatenation in cpp.
-   The NLM_CAT4 hack is to avoid a problem with some strict ANSI C
-   preprocessors.  The problem is, "32_" or "64_" are not a valid
-   preprocessing tokens, and we don't want extra underscores (e.g.,
-   "nlm_32_").  The XNLM_CAT2 macro will cause the inner NLM_CAT macros
-   to be evaluated first, producing still-valid pp-tokens.  Then the
-   final concatenation can be done.  (Sigh.)  */
-
-#ifdef SABER
-#  define NLM_CAT(a,b)		a##b
-#  define NLM_CAT3(a,b,c)	a##b##c
-#  define NLM_CAT4(a,b,c,d)	a##b##c##d
-#else
-#  ifdef __STDC__
-#    define NLM_CAT(a,b)	a##b
-#    define NLM_CAT3(a,b,c)	a##b##c
-#    define XNLM_CAT2(a,b)	NLM_CAT(a,b)
-#    define NLM_CAT4(a,b,c,d)	XNLM_CAT2(NLM_CAT(a,b),NLM_CAT(c,d))
-#  else
-#    define NLM_CAT(a,b)	a/**/b
-#    define NLM_CAT3(a,b,c)	a/**/b/**/c
-#    define NLM_CAT4(a,b,c,d)	a/**/b/**/c/**/d
-#  endif
-#endif
-
 /* If NLM_ARCH_SIZE is not defined, default to 32.  NLM_ARCH_SIZE is
    optionally defined by the application. */
 
 #ifndef NLM_ARCH_SIZE
 #  define NLM_ARCH_SIZE			32
+#endif
+
+/* Due to horrible details of ANSI macro expansion, we can't use CONCAT4
+   for NLM_NAME.  CONCAT2 is used in BFD_JUMP_TABLE macros, and some of
+   them will expand to tokens that themselves are macros defined in terms
+   of NLM_NAME.  If NLM_NAME were defined using CONCAT4 (which is itself
+   defined in bfd-in.h using CONCAT2), ANSI preprocessor rules say that
+   the CONCAT2 within NLM_NAME should not be expanded.
+   So use another name.  */
+#if defined (__STDC__) || defined (ALMOST_STDC) || defined (HAVE_STRINGIZE)
+#ifdef SABER
+#define NLM_CAT4(a,b,c,d) a##b##c##d
+#else
+/* This hack is to avoid a problem with some strict ANSI C preprocessors.
+   The problem is, "32_" is not a valid preprocessing token, and we don't
+   want extra underscores (e.g., "nlm_32_").  The NLM_XCAT2 macro will
+   cause the inner CAT2 macros to be evaluated first, producing
+   still-valid pp-tokens.  Then the final concatenation can be done.  */
+#define NLM_CAT2(a,b)	  a##b
+#define NLM_XCAT2(a,b)	  NLM_CAT2(a,b)
+#define NLM_CAT4(a,b,c,d) NLM_XCAT2(NLM_CAT2(a,b),NLM_CAT2(c,d))
+#endif
+#else
+#define NLM_CAT4(a,b,c,d) a/**/b/**/c/**/d
 #endif
 
 #if NLM_ARCH_SIZE == 32

@@ -1,5 +1,5 @@
 /* budbg.c -- Interfaces to the generic debugging information routines.
-   Copyright 1995, 1996 Free Software Foundation, Inc.
+   Copyright 1995, 1996, 2002 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>.
 
    This file is part of GNU Binutils.
@@ -26,33 +26,40 @@
 
 /* Routine used to read generic debugging information.  */
 
-extern PTR read_debugging_info PARAMS ((bfd *, asymbol **, long));
+extern PTR read_debugging_info
+  PARAMS ((bfd *, asymbol **, long));
 
 /* Routine used to print generic debugging information.  */
 
-extern boolean print_debugging_info PARAMS ((FILE *, PTR));
+extern bfd_boolean print_debugging_info
+  PARAMS ((FILE *, PTR));
 
 /* Routines used to read and write stabs information.  */
 
-extern PTR start_stab PARAMS ((PTR, bfd *, boolean, asymbol **, long));
+extern PTR start_stab
+  PARAMS ((PTR, bfd *, bfd_boolean, asymbol **, long));
 
-extern boolean finish_stab PARAMS ((PTR, PTR));
+extern bfd_boolean finish_stab
+  PARAMS ((PTR, PTR));
 
-extern boolean parse_stab PARAMS ((PTR, PTR, int, int, bfd_vma, const char *));
+extern bfd_boolean parse_stab
+  PARAMS ((PTR, PTR, int, int, bfd_vma, const char *));
 
-extern boolean write_stabs_in_sections_debugging_info
+extern bfd_boolean write_stabs_in_sections_debugging_info
   PARAMS ((bfd *, PTR, bfd_byte **, bfd_size_type *, bfd_byte **,
 	   bfd_size_type *));
 
 /* Routines used to read and write IEEE debugging information.  */
 
-extern boolean parse_ieee
+extern bfd_boolean parse_ieee
   PARAMS ((PTR, bfd *, const bfd_byte *, bfd_size_type));
 
-extern boolean write_ieee_debugging_info PARAMS ((bfd *, PTR));
+extern bfd_boolean write_ieee_debugging_info
+  PARAMS ((bfd *, PTR));
 
 /* Routine used to read COFF debugging information.  */
 
-extern boolean parse_coff PARAMS ((bfd *, asymbol **, long, PTR));
+extern bfd_boolean parse_coff
+  PARAMS ((bfd *, asymbol **, long, PTR));
 
 #endif

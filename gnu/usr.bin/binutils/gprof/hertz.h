@@ -1,8 +1,6 @@
 #ifndef hertz_h
 #define hertz_h
 
-#include "gprof.h"
-
 #define	HZ_WRONG 0		/* impossible clock frequency */
 
 /*

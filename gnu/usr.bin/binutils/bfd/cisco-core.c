@@ -1,6 +1,6 @@
 /* BFD back-end for CISCO crash dumps.
-
-Copyright 1994, 1997, 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1994, 1997, 1999, 2000, 2001, 2002
+   Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -65,11 +65,17 @@ typedef struct {
   char database[4];		/* Base of .data section (not in V3 crash info) */
   char bssbase[4];		/* Base of .bss section (not in V3 crash info) */
 } crashinfo_external;
-
+
 struct cisco_core_struct
 {
   int sig;
 };
+
+static const bfd_target *cisco_core_file_validate PARAMS ((bfd *, int));
+static const bfd_target *cisco_core_file_p PARAMS ((bfd *));
+char *cisco_core_file_failing_command PARAMS ((bfd *));
+int cisco_core_file_failing_signal PARAMS ((bfd *));
+bfd_boolean cisco_core_file_matches_executable_p PARAMS ((bfd *, bfd *));
 
 /* Examine the file for a crash info struct at the offset given by
    CRASH_INFO_LOC.  */
@@ -88,11 +94,12 @@ cisco_core_file_validate (abfd, crash_info_loc)
   unsigned int rambase;
   sec_ptr asect;
   struct stat statbuf;
+  bfd_size_type amt;
 
-  if (bfd_seek (abfd, crash_info_loc, SEEK_SET) != 0)
+  if (bfd_seek (abfd, (file_ptr) crash_info_loc, SEEK_SET) != 0)
     return NULL;
 
-  nread = bfd_read (buf, 1, 4, abfd);
+  nread = bfd_bread (buf, (bfd_size_type) 4, abfd);
   if (nread != 4)
     {
       if (bfd_get_error () != bfd_error_system_call)
@@ -101,14 +108,14 @@ cisco_core_file_validate (abfd, crash_info_loc)
     }
   crashinfo_offset = MASK_ADDR (bfd_get_32 (abfd, buf));
 
-  if (bfd_seek (abfd, crashinfo_offset, SEEK_SET) != 0)
+  if (bfd_seek (abfd, (file_ptr) crashinfo_offset, SEEK_SET) != 0)
     {
       /* Most likely we failed because of a bogus (huge) offset */
       bfd_set_error (bfd_error_wrong_format);
       return NULL;
     }
 
-  nread = bfd_read (&crashinfo, 1, sizeof (crashinfo), abfd);
+  nread = bfd_bread (&crashinfo, (bfd_size_type) sizeof (crashinfo), abfd);
   if (nread != sizeof (crashinfo))
     {
       if (bfd_get_error () != bfd_error_system_call)
@@ -147,9 +154,8 @@ cisco_core_file_validate (abfd, crash_info_loc)
 
   /* OK, we believe you.  You're a core file.  */
 
-  abfd->tdata.cisco_core_data =
-    ((struct cisco_core_struct *)
-     bfd_zmalloc (sizeof (struct cisco_core_struct)));
+  amt = sizeof (struct cisco_core_struct);
+  abfd->tdata.cisco_core_data = (struct cisco_core_struct *) bfd_zmalloc (amt);
   if (abfd->tdata.cisco_core_data == NULL)
     return NULL;
 
@@ -232,16 +238,35 @@ cisco_core_file_validate (abfd, crash_info_loc)
       break;
     }
 
-  abfd->sections = NULL;
-  abfd->section_count = 0;
+  /* Create a ".data" section that maps the entire file, which is
+     essentially a dump of the target system's RAM.  */
+
+  asect = bfd_make_section_anyway (abfd, ".data");
+  if (asect == NULL)
+    goto error_return;
+  asect->flags = SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS;
+  /* The size of memory is the size of the core file itself.  */
+  asect->_raw_size = statbuf.st_size;
+  asect->vma = rambase;
+  asect->filepos = 0;
+
+  /* Create a ".crash" section to allow access to the saved
+     crash information.  */
+
+  asect = bfd_make_section_anyway (abfd, ".crash");
+  if (asect == NULL)
+    goto error_return;
+  asect->flags = SEC_HAS_CONTENTS;
+  asect->vma = 0;
+  asect->filepos = crashinfo_offset;
+  asect->_raw_size = sizeof (crashinfo);
 
   /* Create a ".reg" section to allow access to the saved
      registers.  */
 
-  asect = (asection *) bfd_zmalloc (sizeof (asection));
+  asect = bfd_make_section_anyway (abfd, ".reg");
   if (asect == NULL)
     goto error_return;
-  asect->name = ".reg";
   asect->flags = SEC_HAS_CONTENTS;
   asect->vma = 0;
   asect->filepos = bfd_get_32 (abfd, crashinfo.registers) - rambase;
@@ -250,40 +275,6 @@ cisco_core_file_validate (abfd, crash_info_loc)
      of the file, or 1024, whichever is smaller.  */
   nread = statbuf.st_size - asect->filepos;
   asect->_raw_size = (nread < 1024) ? nread : 1024;
-  asect->next = abfd->sections;
-  abfd->sections = asect;
-  ++abfd->section_count;
-
-  /* Create a ".crash" section to allow access to the saved
-     crash information.  */
-
-  asect = (asection *) bfd_zmalloc (sizeof (asection));
-  if (asect == NULL)
-    goto error_return;
-  asect->name = ".crash";
-  asect->flags = SEC_HAS_CONTENTS;
-  asect->vma = 0;
-  asect->filepos = crashinfo_offset;
-  asect->_raw_size = sizeof (crashinfo);
-  asect->next = abfd->sections;
-  abfd->sections = asect;
-  ++abfd->section_count;
-
-  /* Create a ".data" section that maps the entire file, which is
-     essentially a dump of the target system's RAM.  */
-
-  asect = (asection *) bfd_zmalloc (sizeof (asection));
-  if (asect == NULL)
-    goto error_return;
-  asect->name = ".data";
-  asect->flags = SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS;
-  /* The size of memory is the size of the core file itself.  */
-  asect->_raw_size = statbuf.st_size;
-  asect->vma = rambase;
-  asect->filepos = 0;
-  asect->next = abfd->sections;
-  abfd->sections = asect;
-  ++abfd->section_count;
 
   return abfd->xvec;
 
@@ -291,17 +282,10 @@ cisco_core_file_validate (abfd, crash_info_loc)
      and there is an error of some kind.  */
 
  error_return:
-  {
-    sec_ptr nextsect;
-    for (asect = abfd->sections; asect != NULL;)
-      {
-	nextsect = asect->next;
-	free (asect);
-	asect = nextsect;
-      }
-    free (abfd->tdata.cisco_core_data);
-    return NULL;
-  }
+  bfd_release (abfd, abfd->tdata.any);
+  abfd->tdata.any = NULL;
+  bfd_section_list_clear (abfd);
+  return NULL;
 }
 
 static const bfd_target *
@@ -322,24 +306,24 @@ cisco_core_file_p (abfd)
 
 char *
 cisco_core_file_failing_command (abfd)
-     bfd *abfd;
+     bfd *abfd ATTRIBUTE_UNUSED;
 {
   return NULL;
 }
 
 int
 cisco_core_file_failing_signal (abfd)
-     bfd *abfd;
+     bfd *abfd ATTRIBUTE_UNUSED;
 {
   return abfd->tdata.cisco_core_data->sig;
 }
 
-boolean
+bfd_boolean
 cisco_core_file_matches_executable_p (core_bfd, exec_bfd)
-     bfd *core_bfd;
-     bfd *exec_bfd;
+     bfd *core_bfd ATTRIBUTE_UNUSED;
+     bfd *exec_bfd ATTRIBUTE_UNUSED;
 {
-  return true;
+  return TRUE;
 }
 
 extern const bfd_target cisco_core_little_vec;

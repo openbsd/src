@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1983, 1993, 2001
+ * Copyright (c) 1983, 1993
  *      The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,10 +29,9 @@
 #ifndef gprof_h
 #define gprof_h
 
-#include "ansidecl.h"
-
 /* Include the BFD sysdep.h file.  */
 #include "sysdep.h"
+#include "bfd.h"
 
 /* Undefine the BFD PACKAGE and VERSION macros before including the
    gprof config.h file.  */
@@ -71,16 +70,6 @@
 
 #include "bin-bugs.h"
 
-/*
- * These may already be defined on some systems.  We could probably
- * just use the BFD versions of these, since BFD has already dealt
- * with this problem.
- */
-#undef FALSE
-#define	FALSE	0
-#undef TRUE
-#define	TRUE	1
-
 #define STYLE_FLAT_PROFILE	(1<<0)
 #define STYLE_CALL_GRAPH	(1<<1)
 #define STYLE_SUMMARY_FILE	(1<<2)
@@ -117,7 +106,6 @@ typedef enum
   }
 File_Format;
 
-typedef int bool;
 typedef unsigned char UNIT[2];	/* unit of profiling */
 
 extern const char *whoami;	/* command-name, for error messages */
@@ -128,24 +116,24 @@ extern long hz;			/* ticks per second */
 /*
  * Command-line options:
  */
-extern int debug_level;		/* debug level */
+extern int debug_level;			/* debug level */
 extern int output_style;
-extern int output_width;	/* controls column width in index */
-extern bool bsd_style_output;	/* as opposed to FSF style output */
-extern bool demangle;		/* demangle symbol names? */
-extern bool discard_underscores;	/* discard leading underscores? */
-extern bool ignore_direct_calls;	/* don't count direct calls */
-extern bool ignore_static_funcs;	/* suppress static functions */
-extern bool ignore_zeros;	/* ignore unused symbols/files */
-extern bool line_granularity;	/* function or line granularity? */
-extern bool print_descriptions;	/* output profile description */
-extern bool print_path;		/* print path or just filename? */
-extern bool ignore_non_functions;/* Ignore non-function symbols.  */
+extern int output_width;		/* controls column width in index */
+extern bfd_boolean bsd_style_output;	/* as opposed to FSF style output */
+extern bfd_boolean demangle;		/* demangle symbol names? */
+extern bfd_boolean discard_underscores;	/* discard leading underscores? */
+extern bfd_boolean ignore_direct_calls;	/* don't count direct calls */
+extern bfd_boolean ignore_static_funcs;	/* suppress static functions */
+extern bfd_boolean ignore_zeros;	/* ignore unused symbols/files */
+extern bfd_boolean line_granularity;	/* function or line granularity? */
+extern bfd_boolean print_descriptions;	/* output profile description */
+extern bfd_boolean print_path;		/* print path or just filename? */
+extern bfd_boolean ignore_non_functions; /* Ignore non-function symbols.  */
 
-extern File_Format file_format;	/* requested file format */
+extern File_Format file_format;		/* requested file format */
 
-extern bool first_output;	/* no output so far? */
+extern bfd_boolean first_output;	/* no output so far? */
 
-extern void done PARAMS ((int status));
+extern void done PARAMS ((int status)) ATTRIBUTE_NORETURN;
 
 #endif /* gprof_h */

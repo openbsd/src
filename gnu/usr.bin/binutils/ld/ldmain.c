@@ -1,29 +1,30 @@
 /* Main program of GNU linker.
-   Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000
+   Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
+   2002, 2003
    Free Software Foundation, Inc.
    Written by Steve Chamberlain steve@cygnus.com
 
-This file is part of GLD, the Gnu Linker.
+   This file is part of GLD, the Gnu Linker.
 
-GLD is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2, or (at your option)
-any later version.
+   GLD is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2, or (at your option)
+   any later version.
 
-GLD is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+   GLD is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with GLD; see the file COPYING.  If not, write to the Free
-Software Foundation, 59 Temple Place - Suite 330, Boston, MA
-02111-1307, USA.  */
+   You should have received a copy of the GNU General Public License
+   along with GLD; see the file COPYING.  If not, write to the Free
+   Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA.  */
 
 #include "bfd.h"
 #include "sysdep.h"
 #include <stdio.h>
-#include <ctype.h>
+#include "safe-ctype.h"
 #include "libiberty.h"
 #include "progress.h"
 #include "bfdlink.h"
@@ -33,15 +34,15 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "ldmain.h"
 #include "ldmisc.h"
 #include "ldwrite.h"
-#include "ldgram.h"
 #include "ldexp.h"
 #include "ldlang.h"
+#include <ldgram.h>
 #include "ldlex.h"
 #include "ldfile.h"
 #include "ldemul.h"
 #include "ldctor.h"
 
-/* Somewhere above, sys/stat.h got included . . . .  */
+/* Somewhere above, sys/stat.h got included.  */
 #if !defined(S_ISDIR) && defined(S_IFDIR)
 #define	S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
 #endif
@@ -54,8 +55,11 @@ extern PTR sbrk ();
 #endif
 #endif
 
-static char *get_emulation PARAMS ((int, char **));
-static void set_scripts_dir PARAMS ((void));
+#ifndef TARGET_SYSTEM_ROOT
+#define TARGET_SYSTEM_ROOT ""
+#endif
+
+int main PARAMS ((int, char **));
 
 /* EXPORTS */
 
@@ -65,6 +69,13 @@ const char *output_filename = "a.out";
 /* Name this program was invoked by.  */
 char *program_name;
 
+/* The prefix for system library directories.  */
+char *ld_sysroot;
+
+/* The canonical representation of ld_sysroot.  */
+char * ld_canon_sysroot;
+int ld_canon_sysroot_len;
+
 /* The file that we're creating.  */
 bfd *output_bfd = 0;
 
@@ -72,65 +83,68 @@ bfd *output_bfd = 0;
 int g_switch_value = 8;
 
 /* Nonzero means print names of input files as processed.  */
-boolean trace_files;
+bfd_boolean trace_files;
 
 /* Nonzero means same, but note open failures, too.  */
-boolean trace_file_tries;
+bfd_boolean trace_file_tries;
 
 /* Nonzero means version number was printed, so exit successfully
    instead of complaining if no input files are given.  */
-boolean version_printed;
+bfd_boolean version_printed;
 
 /* Nonzero means link in every member of an archive.  */
-boolean whole_archive;
+bfd_boolean whole_archive;
 
-/* True if we should demangle symbol names.  */
-boolean demangling;
+/* TRUE if we should demangle symbol names.  */
+bfd_boolean demangling;
 
 args_type command_line;
 
 ld_config_type config;
 
-static void remove_output PARAMS ((void));
-static boolean check_for_scripts_dir PARAMS ((char *dir));
-static boolean add_archive_element PARAMS ((struct bfd_link_info *, bfd *,
-					    const char *));
-static boolean multiple_definition PARAMS ((struct bfd_link_info *,
-					    const char *,
-					    bfd *, asection *, bfd_vma,
-					    bfd *, asection *, bfd_vma));
-static boolean multiple_common PARAMS ((struct bfd_link_info *,
-					const char *, bfd *,
-					enum bfd_link_hash_type, bfd_vma,
-					bfd *, enum bfd_link_hash_type,
-					bfd_vma));
-static boolean add_to_set PARAMS ((struct bfd_link_info *,
-				   struct bfd_link_hash_entry *,
-				   bfd_reloc_code_real_type,
-				   bfd *, asection *, bfd_vma));
-static boolean constructor_callback PARAMS ((struct bfd_link_info *,
-					     boolean constructor,
-					     const char *name,
-					     bfd *, asection *, bfd_vma));
-static boolean warning_callback PARAMS ((struct bfd_link_info *,
-					 const char *, const char *, bfd *,
-					 asection *, bfd_vma));
-static void warning_find_reloc PARAMS ((bfd *, asection *, PTR));
-static boolean undefined_symbol PARAMS ((struct bfd_link_info *,
-					 const char *, bfd *,
-					 asection *, bfd_vma, boolean));
-static boolean reloc_overflow PARAMS ((struct bfd_link_info *, const char *,
-				       const char *, bfd_vma,
-				       bfd *, asection *, bfd_vma));
-static boolean reloc_dangerous PARAMS ((struct bfd_link_info *, const char *,
-					bfd *, asection *, bfd_vma));
-static boolean unattached_reloc PARAMS ((struct bfd_link_info *,
-					 const char *, bfd *, asection *,
-					 bfd_vma));
-static boolean notice PARAMS ((struct bfd_link_info *, const char *,
-			       bfd *, asection *, bfd_vma));
+static char *get_emulation
+  PARAMS ((int, char **));
+static void set_scripts_dir
+  PARAMS ((void));
+static void remove_output
+  PARAMS ((void));
+static bfd_boolean check_for_scripts_dir
+  PARAMS ((char *));
+static bfd_boolean add_archive_element
+  PARAMS ((struct bfd_link_info *, bfd *, const char *));
+static bfd_boolean multiple_definition
+  PARAMS ((struct bfd_link_info *, const char *, bfd *, asection *, bfd_vma,
+	   bfd *, asection *, bfd_vma));
+static bfd_boolean multiple_common
+  PARAMS ((struct bfd_link_info *, const char *, bfd *,
+	   enum bfd_link_hash_type, bfd_vma, bfd *, enum bfd_link_hash_type,
+	   bfd_vma));
+static bfd_boolean add_to_set
+  PARAMS ((struct bfd_link_info *, struct bfd_link_hash_entry *,
+	   bfd_reloc_code_real_type, bfd *, asection *, bfd_vma));
+static bfd_boolean constructor_callback
+  PARAMS ((struct bfd_link_info *, bfd_boolean, const char *, bfd *,
+	   asection *, bfd_vma));
+static bfd_boolean warning_callback
+  PARAMS ((struct bfd_link_info *, const char *, const char *, bfd *,
+	   asection *, bfd_vma));
+static void warning_find_reloc
+  PARAMS ((bfd *, asection *, PTR));
+static bfd_boolean undefined_symbol
+  PARAMS ((struct bfd_link_info *, const char *, bfd *, asection *, bfd_vma,
+	   bfd_boolean));
+static bfd_boolean reloc_overflow
+  PARAMS ((struct bfd_link_info *, const char *, const char *, bfd_vma,
+	   bfd *, asection *, bfd_vma));
+static bfd_boolean reloc_dangerous
+  PARAMS ((struct bfd_link_info *, const char *, bfd *, asection *, bfd_vma));
+static bfd_boolean unattached_reloc
+  PARAMS ((struct bfd_link_info *, const char *, bfd *, asection *, bfd_vma));
+static bfd_boolean notice
+  PARAMS ((struct bfd_link_info *, const char *, bfd *, asection *, bfd_vma));
 
-static struct bfd_link_callbacks link_callbacks = {
+static struct bfd_link_callbacks link_callbacks =
+{
   add_archive_element,
   multiple_definition,
   multiple_common,
@@ -141,7 +155,8 @@ static struct bfd_link_callbacks link_callbacks = {
   reloc_overflow,
   reloc_dangerous,
   unattached_reloc,
-  notice
+  notice,
+  error_handler
 };
 
 struct bfd_link_info link_info;
@@ -169,6 +184,9 @@ main (argc, argv)
 #if defined (HAVE_SETLOCALE) && defined (HAVE_LC_MESSAGES)
   setlocale (LC_MESSAGES, "");
 #endif
+#if defined (HAVE_SETLOCALE)
+  setlocale (LC_CTYPE, "");
+#endif
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
 
@@ -183,6 +201,52 @@ main (argc, argv)
 
   xatexit (remove_output);
 
+#ifdef TARGET_SYSTEM_ROOT_RELOCATABLE
+  ld_sysroot = make_relative_prefix (program_name, BINDIR,
+				     TARGET_SYSTEM_ROOT);
+
+  if (ld_sysroot)
+    {
+      struct stat s;
+      int res = stat (ld_sysroot, &s) == 0 && S_ISDIR (s.st_mode);
+
+      if (!res)
+	{
+	  free (ld_sysroot);
+	  ld_sysroot = NULL;
+	}
+    }
+
+  if (! ld_sysroot)
+    {
+      ld_sysroot = make_relative_prefix (program_name, TOOLBINDIR,
+					 TARGET_SYSTEM_ROOT);
+
+      if (ld_sysroot)
+	{
+	  struct stat s;
+	  int res = stat (ld_sysroot, &s) == 0 && S_ISDIR (s.st_mode);
+
+	  if (!res)
+	    {
+	      free (ld_sysroot);
+	      ld_sysroot = NULL;
+	    }
+	}
+    }
+
+  if (! ld_sysroot)
+#endif
+    ld_sysroot = TARGET_SYSTEM_ROOT;
+
+  if (ld_sysroot && *ld_sysroot)
+    ld_canon_sysroot = lrealpath (ld_sysroot);
+
+  if (ld_canon_sysroot)
+    ld_canon_sysroot_len = strlen (ld_canon_sysroot);
+  else
+    ld_canon_sysroot_len = -1;
+
   /* Set the default BFD target based on the configured target.  Doing
      this permits the linker to be configured for a particular target,
      and linked against a shared BFD library which was configured for
@@ -193,19 +257,28 @@ main (argc, argv)
       xexit (1);
     }
 
+#if YYDEBUG
+  {
+    extern int yydebug;
+    yydebug = 1;
+  }
+#endif
+
   /* Initialize the data about options.  */
-  trace_files = trace_file_tries = version_printed = false;
-  whole_archive = false;
-  config.build_constructors = true;
-  config.dynamic_link = false;
-  config.has_shared = false;
+  trace_files = trace_file_tries = version_printed = FALSE;
+  whole_archive = FALSE;
+  config.build_constructors = TRUE;
+  config.dynamic_link = FALSE;
+  config.has_shared = FALSE;
   config.split_by_reloc = (unsigned) -1;
   config.split_by_file = (bfd_size_type) -1;
-  command_line.force_common_definition = false;
+  command_line.force_common_definition = FALSE;
+  command_line.inhibit_common_definition = FALSE;
   command_line.interpreter = NULL;
   command_line.rpath = NULL;
-  command_line.warn_mismatch = true;
-  command_line.check_section_addresses = true;
+  command_line.warn_mismatch = TRUE;
+  command_line.check_section_addresses = TRUE;
+  command_line.accept_unknown_input_arch = FALSE;
 
   /* We initialize DEMANGLING based on the environment variable
      COLLECT_NO_DEMANGLE.  The gcc collect2 program will demangle the
@@ -214,49 +287,64 @@ main (argc, argv)
      interface by default.  */
   demangling = getenv ("COLLECT_NO_DEMANGLE") == NULL;
 
-  link_info.callbacks = &link_callbacks;
-  link_info.relocateable = false;
-  link_info.emitrelocations = false;
-  link_info.shared = false;
-  link_info.symbolic = false;
-  link_info.static_link = false;
-  link_info.traditional_format = false;
-  link_info.optimize = false;
-  link_info.no_undefined = false;
-  link_info.allow_shlib_undefined = false;
+  link_info.relocateable = FALSE;
+  link_info.emitrelocations = FALSE;
+  link_info.task_link = FALSE;
+  link_info.shared = FALSE;
+  link_info.symbolic = FALSE;
+  link_info.export_dynamic = FALSE;
+  link_info.static_link = FALSE;
+  link_info.traditional_format = FALSE;
+  link_info.optimize = FALSE;
+  link_info.no_undefined = FALSE;
+  link_info.allow_shlib_undefined = TRUE;
+  link_info.allow_multiple_definition = FALSE;
+  link_info.allow_undefined_version = TRUE;
+  link_info.keep_memory = TRUE;
+  link_info.notice_all = FALSE;
+  link_info.nocopyreloc = FALSE;
+  link_info.new_dtags = FALSE;
+  link_info.combreloc = TRUE;
+  link_info.eh_frame_hdr = FALSE;
+  link_info.strip_discarded = TRUE;
   link_info.strip = strip_none;
-  link_info.discard = discard_none;
-  link_info.keep_memory = true;
-  link_info.input_bfds = NULL;
-  link_info.create_object_symbols_section = NULL;
+  link_info.discard = discard_sec_merge;
+  link_info.common_skip_ar_aymbols = bfd_link_common_skip_none;
+  link_info.callbacks = &link_callbacks;
   link_info.hash = NULL;
   link_info.keep_hash = NULL;
-  link_info.notice_all = false;
   link_info.notice_hash = NULL;
   link_info.wrap_hash = NULL;
-  link_info.mpc860c0 = 0;
+  link_info.input_bfds = NULL;
+  link_info.create_object_symbols_section = NULL;
+  link_info.gc_sym_list = NULL;
+  link_info.base_file = NULL;
   /* SVR4 linkers seem to set DT_INIT and DT_FINI based on magic _init
      and _fini symbols.  We are compatible.  */
   link_info.init_function = "_init";
   link_info.fini_function = "_fini";
-  link_info.new_dtags = false;
+  link_info.mpc860c0 = 0;
+  link_info.pei386_auto_import = -1;
+  link_info.pei386_runtime_pseudo_reloc = FALSE;
+  link_info.spare_dynamic_tags = 5;
   link_info.flags = (bfd_vma) 0;
   link_info.flags_1 = (bfd_vma) 0;
+  link_info.relax_finalizing = FALSE;
 
   ldfile_add_arch ("");
 
-  config.make_executable = true;
-  force_make_executable = false;
-  config.magic_demand_paged = true;
-  config.text_read_only = true;
-  config.data_bss_contig = false;
+  config.make_executable = TRUE;
+  force_make_executable = FALSE;
+  config.magic_demand_paged = TRUE;
+  config.text_read_only = TRUE;
+  config.data_bss_contig = FALSE;
 
   emulation = get_emulation (argc, argv);
   ldemul_choose_mode (emulation);
-  default_target = ldemul_choose_target ();
+  default_target = ldemul_choose_target (argc, argv);
   lang_init ();
   ldemul_before_parse ();
-  lang_has_input_file = false;
+  lang_has_input_file = FALSE;
   parse_args (argc, argv);
 
   ldemul_set_symbols ();
@@ -273,13 +361,21 @@ main (argc, argv)
 	einfo (_("%P%F: -r and -shared may not be used together\n"));
     }
 
+  if (! link_info.shared)
+    {
+      if (command_line.filter_shlib)
+	einfo (_("%P%F: -F may not be used without -shared\n"));
+      if (command_line.auxiliary_filters)
+	einfo (_("%P%F: -f may not be used without -shared\n"));
+    }
+
   /* Treat ld -r -s as ld -r -S -x (i.e., strip all local symbols).  I
      don't see how else this can be handled, since in this case we
      must preserve all externally visible symbols.  */
   if (link_info.relocateable && link_info.strip == strip_all)
     {
       link_info.strip = strip_debugger;
-      if (link_info.discard == discard_none)
+      if (link_info.discard == discard_sec_merge)
 	link_info.discard = discard_all;
     }
 
@@ -287,9 +383,10 @@ main (argc, argv)
      the -L's in argv have been processed.  */
   set_scripts_dir ();
 
-  if (had_script == false)
+  /* If we have not already opened and parsed a linker script
+     read the emulation's appropriate default script.  */
+  if (saved_script_handle == NULL)
     {
-      /* Read the emulation's appropriate default script.  */
       int isfile;
       char *s = ldemul_get_script (&isfile);
 
@@ -297,13 +394,6 @@ main (argc, argv)
 	ldfile_open_command_file (s);
       else
 	{
-	  if (trace_file_tries)
-	    {
-	      info_msg (_("using internal linker script:\n"));
-	      info_msg ("==================================================\n");
-	      info_msg (s);
-	      info_msg ("\n==================================================\n");
-	    }
 	  lex_string = s;
 	  lex_redirect (s);
 	}
@@ -312,9 +402,42 @@ main (argc, argv)
       lex_string = NULL;
     }
 
+  if (trace_file_tries)
+    {
+      if (saved_script_handle)
+	info_msg (_("using external linker script:"));
+      else
+	info_msg (_("using internal linker script:"));
+      info_msg ("\n==================================================\n");
+
+      if (saved_script_handle)
+	{
+	  static const int ld_bufsz = 8193;
+	  size_t n;
+	  char *buf = xmalloc (ld_bufsz);
+
+	  rewind (saved_script_handle);
+	  while ((n = fread (buf, 1, ld_bufsz - 1, saved_script_handle)) > 0)
+	    {
+	      buf[n] = 0;
+	      info_msg (buf);
+	    }
+	  rewind (saved_script_handle);
+	  free (buf);
+	}
+      else
+	{
+	  int isfile;
+
+	  info_msg (ldemul_get_script (&isfile));
+	}
+
+      info_msg ("\n==================================================\n");
+    }
+
   lang_final ();
 
-  if (lang_has_input_file == false)
+  if (!lang_has_input_file)
     {
       if (version_printed)
 	xexit (0);
@@ -322,9 +445,7 @@ main (argc, argv)
     }
 
   if (trace_files)
-    {
-      info_msg (_("%P: mode %s\n"), emulation);
-    }
+    info_msg (_("%P: mode %s\n"), emulation);
 
   ldemul_after_parse ();
 
@@ -350,21 +471,6 @@ main (argc, argv)
 
   /* Print error messages for any missing symbols, for any warning
      symbols, and possibly multiple definitions.  */
-
-  if (! link_info.relocateable)
-    {
-      /* Look for a text section and switch the readonly attribute in it.  */
-      asection *found = bfd_get_section_by_name (output_bfd, ".text");
-
-      if (found != (asection *) NULL)
-	{
-	  if (config.text_read_only)
-	    found->flags |= SEC_READONLY;
-	  else
-	    found->flags &= ~SEC_READONLY;
-	}
-    }
-
   if (link_info.relocateable)
     output_bfd->flags &= ~EXEC_P;
   else
@@ -382,17 +488,13 @@ main (argc, argv)
   /* Even if we're producing relocateable output, some non-fatal errors should
      be reported in the exit status.  (What non-fatal errors, if any, do we
      want to ignore for relocateable output?)  */
-
-  if (config.make_executable == false && force_make_executable == false)
+  if (!config.make_executable && !force_make_executable)
     {
-      if (trace_files == true)
-	{
-	  einfo (_("%P: link errors found, deleting executable `%s'\n"),
-		 output_filename);
-	}
+      if (trace_files)
+	einfo (_("%P: link errors found, deleting executable `%s'\n"),
+	       output_filename);
 
       /* The file will be removed by remove_output.  */
-
       xexit (1);
     }
   else
@@ -406,6 +508,7 @@ main (argc, argv)
       if (! link_info.relocateable && command_line.force_exe_suffix)
 	{
 	  int len = strlen (output_filename);
+
 	  if (len < 4
 	      || (strcasecmp (output_filename + len - 4, ".exe") != 0
 		  && strcasecmp (output_filename + len - 4, ".dll") != 0))
@@ -416,6 +519,7 @@ main (argc, argv)
 	      char *buf = xmalloc (bsize);
 	      int l;
 	      char *dst_name = xmalloc (len + 5);
+
 	      strcpy (dst_name, output_filename);
 	      strcat (dst_name, ".exe");
 	      src = fopen (output_filename, FOPEN_RB);
@@ -428,16 +532,14 @@ main (argc, argv)
 	      while ((l = fread (buf, 1, bsize, src)) > 0)
 		{
 		  int done = fwrite (buf, 1, l, dst);
+
 		  if (done != l)
-		    {
-		      einfo (_("%P: Error writing file `%s'\n"), dst_name);
-		    }
+		    einfo (_("%P: Error writing file `%s'\n"), dst_name);
 		}
+
 	      fclose (src);
 	      if (fclose (dst) == EOF)
-		{
-		  einfo (_("%P: Error closing file `%s'\n"), dst_name);
-		}
+		einfo (_("%P: Error closing file `%s'\n"), dst_name);
 	      free (dst_name);
 	      free (buf);
 	    }
@@ -496,16 +598,18 @@ get_emulation (argc, argv)
 		  i++;
 		}
 	      else
-		{
-		  einfo (_("%P%F: missing argument to -m\n"));
-		}
+		einfo (_("%P%F: missing argument to -m\n"));
 	    }
 	  else if (strcmp (argv[i], "-mips1") == 0
 		   || strcmp (argv[i], "-mips2") == 0
 		   || strcmp (argv[i], "-mips3") == 0
-		   || strcmp (argv[i], "-mips4") == 0)
+		   || strcmp (argv[i], "-mips4") == 0
+		   || strcmp (argv[i], "-mips5") == 0
+		   || strcmp (argv[i], "-mips32") == 0
+		   || strcmp (argv[i], "-mips32r2") == 0
+		   || strcmp (argv[i], "-mips64") == 0)
 	    {
-	      /* FIXME: The arguments -mips1, -mips2 and -mips3 are
+	      /* FIXME: The arguments -mips1, -mips2, -mips3, etc. are
 		 passed to the linker by some MIPS compilers.  They
 		 generally tell the linker to use a slightly different
 		 library path.  Perhaps someday these should be
@@ -531,17 +635,17 @@ get_emulation (argc, argv)
 }
 
 /* If directory DIR contains an "ldscripts" subdirectory,
-   add DIR to the library search path and return true,
-   else return false.  */
+   add DIR to the library search path and return TRUE,
+   else return FALSE.  */
 
-static boolean
+static bfd_boolean
 check_for_scripts_dir (dir)
      char *dir;
 {
   size_t dirlen;
   char *buf;
   struct stat s;
-  boolean res;
+  bfd_boolean res;
 
   dirlen = strlen (dir);
   /* sizeof counts the terminating NUL.  */
@@ -551,7 +655,7 @@ check_for_scripts_dir (dir)
   res = stat (buf, &s) == 0 && S_ISDIR (s.st_mode);
   free (buf);
   if (res)
-    ldfile_add_library_path (dir, false);
+    ldfile_add_library_path (dir, FALSE);
   return res;
 }
 
@@ -560,14 +664,36 @@ check_for_scripts_dir (dir)
    We look for the "ldscripts" directory in:
 
    SCRIPTDIR (passed from Makefile)
+	     (adjusted according to the current location of the binary)
+   SCRIPTDIR (passed from Makefile)
    the dir where this program is (for using it from the build tree)
-   the dir where this program is/../lib (for installing the tool suite elsewhere) */
+   the dir where this program is/../lib
+	     (for installing the tool suite elsewhere).  */
 
 static void
 set_scripts_dir ()
 {
   char *end, *dir;
   size_t dirlen;
+  bfd_boolean found;
+
+  dir = make_relative_prefix (program_name, BINDIR, SCRIPTDIR);
+  if (dir)
+    {
+      found = check_for_scripts_dir (dir);
+      free (dir);
+      if (found)
+	return;
+    }
+
+  dir = make_relative_prefix (program_name, TOOLBINDIR, SCRIPTDIR);
+  if (dir)
+    {
+      found = check_for_scripts_dir (dir);
+      free (dir);
+      if (found)
+	return;
+    }
 
   if (check_for_scripts_dir (SCRIPTDIR))
     /* We've been installed normally.  */
@@ -579,17 +705,16 @@ set_scripts_dir ()
   {
     /* We could have \foo\bar, or /foo\bar.  */
     char *bslash = strrchr (program_name, '\\');
+
     if (end == NULL || (bslash != NULL && bslash > end))
       end = bslash;
   }
 #endif
 
   if (end == NULL)
-    {
-      /* Don't look for ldscripts in the current directory.  There is
-         too much potential for confusion.  */
-      return;
-    }
+    /* Don't look for ldscripts in the current directory.  There is
+       too much potential for confusion.  */
+    return;
 
   dirlen = end - program_name;
   /* Make a copy of program_name in dir.
@@ -599,15 +724,14 @@ set_scripts_dir ()
   dir[dirlen] = '\0';
 
   if (check_for_scripts_dir (dir))
-    /* Don't free dir.  */
-    return;
+    {
+      free (dir);
+      return;
+    }
 
   /* Look for "ldscripts" in <the dir where our binary is>/../lib.  */
   strcpy (dir + dirlen, "/../lib");
-  if (check_for_scripts_dir (dir))
-    return;
-
-  /* Well, we tried.  */
+  check_for_scripts_dir (dir);
   free (dir);
 }
 
@@ -625,7 +749,7 @@ add_ysym (name)
 	einfo (_("%P%F: bfd_hash_table_init failed: %E\n"));
     }
 
-  if (bfd_hash_lookup (link_info.notice_hash, name, true, true)
+  if (bfd_hash_lookup (link_info.notice_hash, name, TRUE, TRUE)
       == (struct bfd_hash_entry *) NULL)
     einfo (_("%P%F: bfd_hash_lookup failed: %E\n"));
 }
@@ -645,7 +769,8 @@ add_wrap (name)
 				   61))
 	einfo (_("%P%F: bfd_hash_table_init failed: %E\n"));
     }
-  if (bfd_hash_lookup (link_info.wrap_hash, name, true, true) == NULL)
+
+  if (bfd_hash_lookup (link_info.wrap_hash, name, TRUE, TRUE) == NULL)
     einfo (_("%P%F: bfd_hash_lookup failed: %E\n"));
 }
 
@@ -682,14 +807,14 @@ add_keepsyms_file (filename)
   c = getc (file);
   while (c != EOF)
     {
-      while (isspace (c))
+      while (ISSPACE (c))
 	c = getc (file);
 
       if (c != EOF)
 	{
 	  size_t len = 0;
 
-	  while (! isspace (c) && c != EOF)
+	  while (! ISSPACE (c) && c != EOF)
 	    {
 	      buf[len] = c;
 	      ++len;
@@ -703,7 +828,7 @@ add_keepsyms_file (filename)
 
 	  buf[len] = '\0';
 
-	  if (bfd_hash_lookup (link_info.keep_hash, buf, true, true)
+	  if (bfd_hash_lookup (link_info.keep_hash, buf, TRUE, TRUE)
 	      == (struct bfd_hash_entry *) NULL)
 	    einfo (_("%P%F: bfd_hash_lookup for insertion failed: %E\n"));
 	}
@@ -712,6 +837,7 @@ add_keepsyms_file (filename)
   if (link_info.strip != strip_none)
     einfo (_("%P: `-retain-symbols-file' overrides `-s' and `-S'\n"));
 
+  free (buf);
   link_info.strip = strip_some;
 }
 
@@ -720,7 +846,7 @@ add_keepsyms_file (filename)
 /* This is called when BFD has decided to include an archive member in
    a link.  */
 
-static boolean
+static bfd_boolean
 add_archive_element (info, abfd, name)
      struct bfd_link_info *info ATTRIBUTE_UNUSED;
      bfd *abfd;
@@ -735,9 +861,9 @@ add_archive_element (info, abfd, name)
   input->the_bfd = abfd;
   input->asymbols = NULL;
   input->next = NULL;
-  input->just_syms_flag = false;
-  input->loaded = false;
-  input->search_dirs_flag = false;
+  input->just_syms_flag = FALSE;
+  input->loaded = FALSE;
+  input->search_dirs_flag = FALSE;
 
   /* FIXME: The following fields are not set: header.next,
      header.type, closed, passive_position, symbol_count,
@@ -749,12 +875,12 @@ add_archive_element (info, abfd, name)
 
   if (config.map_file != (FILE *) NULL)
     {
-      static boolean header_printed;
+      static bfd_boolean header_printed;
       struct bfd_link_hash_entry *h;
       bfd *from;
       int len;
 
-      h = bfd_link_hash_lookup (link_info.hash, name, false, false, true);
+      h = bfd_link_hash_lookup (link_info.hash, name, FALSE, FALSE, TRUE);
 
       if (h == NULL)
 	from = NULL;
@@ -786,10 +912,9 @@ add_archive_element (info, abfd, name)
 	{
 	  char buf[100];
 
-	  sprintf (buf, "%-29s %s\n\n", _("Archive member included"),
-		   _("because of file (symbol)"));
+	  sprintf (buf, _("Archive member included because of file (symbol)\n\n"));
 	  minfo ("%s", buf);
-	  header_printed = true;
+	  header_printed = TRUE;
 	}
 
       if (bfd_my_archive (abfd) == NULL)
@@ -828,13 +953,13 @@ add_archive_element (info, abfd, name)
   if (trace_files || trace_file_tries)
     info_msg ("%I\n", input);
 
-  return true;
+  return TRUE;
 }
 
 /* This is called when BFD has discovered a symbol which is defined
    multiple times.  */
 
-static boolean
+static bfd_boolean
 multiple_definition (info, name, obfd, osec, oval, nbfd, nsec, nval)
      struct bfd_link_info *info ATTRIBUTE_UNUSED;
      const char *name;
@@ -856,7 +981,7 @@ multiple_definition (info, name, obfd, osec, oval, nbfd, nsec, nval)
       || (nsec->output_section != NULL
 	  && ! bfd_is_abs_section (nsec)
 	  && bfd_is_abs_section (nsec->output_section)))
-    return true;
+    return TRUE;
 
   einfo (_("%X%C: multiple definition of `%T'\n"),
 	 nbfd, nsec, nval, name);
@@ -869,7 +994,7 @@ multiple_definition (info, name, obfd, osec, oval, nbfd, nsec, nval)
       command_line.relax = 0;
     }
 
-  return true;
+  return TRUE;
 }
 
 /* This is called when there is a definition of a common symbol, or
@@ -877,7 +1002,7 @@ multiple_definition (info, name, obfd, osec, oval, nbfd, nsec, nval)
    or when two common symbols are found.  We only do something if
    -warn-common was used.  */
 
-static boolean
+static bfd_boolean
 multiple_common (info, name, obfd, otype, osize, nbfd, ntype, nsize)
      struct bfd_link_info *info ATTRIBUTE_UNUSED;
      const char *name;
@@ -889,7 +1014,7 @@ multiple_common (info, name, obfd, otype, osize, nbfd, ntype, nsize)
      bfd_vma nsize;
 {
   if (! config.warn_common)
-    return true;
+    return TRUE;
 
   if (ntype == bfd_link_hash_defined
       || ntype == bfd_link_hash_defweak
@@ -936,14 +1061,14 @@ multiple_common (info, name, obfd, otype, osize, nbfd, ntype, nsize)
 	}
     }
 
-  return true;
+  return TRUE;
 }
 
 /* This is called when BFD has discovered a set element.  H is the
    entry in the linker hash table for the set.  SECTION and VALUE
    represent a value which should be added to the set.  */
 
-static boolean
+static bfd_boolean
 add_to_set (info, h, reloc, abfd, section, value)
      struct bfd_link_info *info ATTRIBUTE_UNUSED;
      struct bfd_link_hash_entry *h;
@@ -957,7 +1082,7 @@ add_to_set (info, h, reloc, abfd, section, value)
 	   h->root.string);
 
   if (! config.build_constructors)
-    return true;
+    return TRUE;
 
   ldctor_add_set_entry (h, reloc, (const char *) NULL, section, value);
 
@@ -970,7 +1095,7 @@ add_to_set (info, h, reloc, abfd, section, value)
 	 ourselves.  */
     }
 
-  return true;
+  return TRUE;
 }
 
 /* This is called when BFD has discovered a constructor.  This is only
@@ -978,10 +1103,10 @@ add_to_set (info, h, reloc, abfd, section, value)
    constructors in some more clever fashion.  This is similar to
    adding an element to a set, but less general.  */
 
-static boolean
+static bfd_boolean
 constructor_callback (info, constructor, name, abfd, section, value)
      struct bfd_link_info *info;
-     boolean constructor;
+     bfd_boolean constructor;
      const char *name;
      bfd *abfd;
      asection *section;
@@ -995,7 +1120,7 @@ constructor_callback (info, constructor, name, abfd, section, value)
     einfo (_("%P: warning: global constructor %s used\n"), name);
 
   if (! config.build_constructors)
-    return true;
+    return TRUE;
 
   /* Ensure that BFD_RELOC_CTOR exists now, so that we can give a
      useful error message.  */
@@ -1012,7 +1137,7 @@ constructor_callback (info, constructor, name, abfd, section, value)
   else
     strcpy (s, "__DTOR_LIST__");
 
-  h = bfd_link_hash_lookup (info->hash, set_name, true, true, true);
+  h = bfd_link_hash_lookup (info->hash, set_name, TRUE, TRUE, TRUE);
   if (h == (struct bfd_link_hash_entry *) NULL)
     einfo (_("%P%F: bfd_link_hash_lookup failed: %E\n"));
   if (h->type == bfd_link_hash_new)
@@ -1025,14 +1150,15 @@ constructor_callback (info, constructor, name, abfd, section, value)
     }
 
   ldctor_add_set_entry (h, BFD_RELOC_CTOR, name, section, value);
-  return true;
+  return TRUE;
 }
 
 /* A structure used by warning_callback to pass information through
    bfd_map_over_sections.  */
 
-struct warning_callback_info {
-  boolean found;
+struct warning_callback_info
+{
+  bfd_boolean found;
   const char *warning;
   const char *symbol;
   asymbol **asymbols;
@@ -1040,7 +1166,7 @@ struct warning_callback_info {
 
 /* This is called when there is a reference to a warning symbol.  */
 
-static boolean
+static bfd_boolean
 warning_callback (info, warning, symbol, abfd, section, address)
      struct bfd_link_info *info ATTRIBUTE_UNUSED;
      const char *warning;
@@ -1053,7 +1179,7 @@ warning_callback (info, warning, symbol, abfd, section, address)
      have a cleaner interface, but what?  */
   if (! config.warn_multiple_gp
       && strcmp (warning, "using multiple gp values") == 0)
-    return true;
+    return TRUE;
 
   if (section != NULL)
     einfo ("%C: %s\n", abfd, section, address, warning);
@@ -1069,7 +1195,6 @@ warning_callback (info, warning, symbol, abfd, section, address)
 
       /* Look through the relocs to see if we can find a plausible
 	 address.  */
-
       entry = (lang_input_statement_type *) abfd->usrdata;
       if (entry != NULL && entry->asymbols != NULL)
 	asymbols = entry->asymbols;
@@ -1092,7 +1217,7 @@ warning_callback (info, warning, symbol, abfd, section, address)
 	    }
 	}
 
-      info.found = false;
+      info.found = FALSE;
       info.warning = warning;
       info.symbol = symbol;
       info.asymbols = asymbols;
@@ -1105,7 +1230,7 @@ warning_callback (info, warning, symbol, abfd, section, address)
 	free (asymbols);
     }
 
-  return true;
+  return TRUE;
 }
 
 /* This is called by warning_callback for each section.  It checks the
@@ -1151,7 +1276,7 @@ warning_find_reloc (abfd, sec, iarg)
 	{
 	  /* We found a reloc for the symbol we are looking for.  */
 	  einfo ("%C: %s\n", abfd, sec, q->address, info->warning);
-	  info->found = true;
+	  info->found = TRUE;
 	  break;
 	}
     }
@@ -1161,14 +1286,14 @@ warning_find_reloc (abfd, sec, iarg)
 
 /* This is called when an undefined symbol is found.  */
 
-static boolean
+static bfd_boolean
 undefined_symbol (info, name, abfd, section, address, fatal)
      struct bfd_link_info *info ATTRIBUTE_UNUSED;
      const char *name;
      bfd *abfd;
      asection *section;
      bfd_vma address;
-     boolean fatal ATTRIBUTE_UNUSED;
+     bfd_boolean fatal ATTRIBUTE_UNUSED;
 {
   static char *error_name;
   static unsigned int error_count;
@@ -1180,7 +1305,6 @@ undefined_symbol (info, name, abfd, section, address, fatal)
       static struct bfd_hash_table *hash;
 
       /* Only warn once about a particular undefined symbol.  */
-
       if (hash == NULL)
 	{
 	  hash = ((struct bfd_hash_table *)
@@ -1189,10 +1313,10 @@ undefined_symbol (info, name, abfd, section, address, fatal)
 	    einfo (_("%F%P: bfd_hash_table_init failed: %E\n"));
 	}
 
-      if (bfd_hash_lookup (hash, name, false, false) != NULL)
-	return true;
+      if (bfd_hash_lookup (hash, name, FALSE, FALSE) != NULL)
+	return TRUE;
 
-      if (bfd_hash_lookup (hash, name, true, true) == NULL)
+      if (bfd_hash_lookup (hash, name, TRUE, TRUE) == NULL)
 	einfo (_("%F%P: bfd_hash_lookup failed: %E\n"));
     }
 
@@ -1236,12 +1360,12 @@ undefined_symbol (info, name, abfd, section, address, fatal)
 	       abfd, name);
     }
 
-  return true;
+  return TRUE;
 }
 
 /* This is called when a reloc overflows.  */
 
-static boolean
+static bfd_boolean
 reloc_overflow (info, name, reloc_name, addend, abfd, section, address)
      struct bfd_link_info *info ATTRIBUTE_UNUSED;
      const char *name;
@@ -1259,12 +1383,12 @@ reloc_overflow (info, name, reloc_name, addend, abfd, section, address)
   if (addend != 0)
     einfo ("+%v", addend);
   einfo ("\n");
-  return true;
+  return TRUE;
 }
 
 /* This is called when a dangerous relocation is made.  */
 
-static boolean
+static bfd_boolean
 reloc_dangerous (info, message, abfd, section, address)
      struct bfd_link_info *info ATTRIBUTE_UNUSED;
      const char *message;
@@ -1277,13 +1401,13 @@ reloc_dangerous (info, message, abfd, section, address)
   else
     einfo ("%X%C:", abfd, section, address);
   einfo (_("dangerous relocation: %s\n"), message);
-  return true;
+  return TRUE;
 }
 
 /* This is called when a reloc is being generated attached to a symbol
    that is not being output.  */
 
-static boolean
+static bfd_boolean
 unattached_reloc (info, name, abfd, section, address)
      struct bfd_link_info *info ATTRIBUTE_UNUSED;
      const char *name;
@@ -1296,14 +1420,14 @@ unattached_reloc (info, name, abfd, section, address)
   else
     einfo ("%X%C:", abfd, section, address);
   einfo (_(" reloc refers to symbol `%T' which is not being output\n"), name);
-  return true;
+  return TRUE;
 }
 
 /* This is called if link_info.notice_all is set, or when a symbol in
    link_info.notice_hash is found.  Symbols are put in notice_hash
    using the -y option.  */
 
-static boolean
+static bfd_boolean
 notice (info, name, abfd, section, value)
      struct bfd_link_info *info;
      const char *name;
@@ -1313,7 +1437,7 @@ notice (info, name, abfd, section, value)
 {
   if (! info->notice_all
       || (info->notice_hash != NULL
-	  && bfd_hash_lookup (info->notice_hash, name, false, false) != NULL))
+	  && bfd_hash_lookup (info->notice_hash, name, FALSE, FALSE) != NULL))
     {
       if (bfd_is_und_section (section))
 	einfo ("%B: reference to %s\n", abfd, name);
@@ -1324,5 +1448,5 @@ notice (info, name, abfd, section, value)
   if (command_line.cref || nocrossref_list != NULL)
     add_cref (name, abfd, section, value);
 
-  return true;
+  return TRUE;
 }

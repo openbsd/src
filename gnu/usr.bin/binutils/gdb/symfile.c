@@ -866,7 +866,7 @@ symfile_bfd_open (name)
       error ("\"%s\": can't open to read symbols: %s.", name,
 	     bfd_errmsg (bfd_get_error ()));
     }
-  sym_bfd->cacheable = true;
+  sym_bfd->cacheable = TRUE;
 
   if (!bfd_check_format (sym_bfd, bfd_object))
     {

@@ -1,7 +1,4 @@
 
-- gmon_io.c cannot deal with target architecture that have a pointer size
-  that is different from the host architectures pointer size---fix this
-  (gmon_out.h, and gmon_io.c)
 - add support for prof file format so that prof files can be displayed
   at the line-level (this is useful for the uprofile tool under DEC's
   OSF/1)

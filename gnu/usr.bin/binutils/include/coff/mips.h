@@ -17,17 +17,9 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
-/********************** FILE HEADER **********************/
-
-struct external_filehdr {
-  unsigned char f_magic[2];	/* magic number			*/
-  unsigned char f_nscns[2];	/* number of sections		*/
-  unsigned char f_timdat[4];	/* time & date stamp		*/
-  unsigned char f_symptr[4];	/* file pointer to symtab	*/
-  unsigned char f_nsyms[4];	/* number of symtab entries	*/
-  unsigned char f_opthdr[2];	/* sizeof(optional hdr)		*/
-  unsigned char f_flags[2];	/* flags			*/
-};
+#define DO_NOT_DEFINE_AOUTHDR
+#define L_LNNO_SIZE 4
+#include "coff/external.h"
 
 /* Magic numbers are defined in coff/ecoff.h.  */
 #define MIPS_ECOFF_BADMAG(x) (((x).f_magic!=MIPS_MAGIC_1) && \
@@ -38,11 +30,8 @@ struct external_filehdr {
 			      ((x).f_magic!=MIPS_MAGIC_LITTLE3) && \
 			      ((x).f_magic!=MIPS_MAGIC_BIG3))
 
-#define	FILHDR	struct external_filehdr
-#define	FILHSZ	20
 
 /********************** AOUT "OPTIONAL HEADER" **********************/
-
 
 typedef struct external_aouthdr
 {
@@ -65,30 +54,13 @@ typedef struct external_aouthdr
 #define AOUTSZ 56
 #define AOUTHDRSZ 56
 
-/********************** SECTION HEADER **********************/
-
-struct external_scnhdr {
-  unsigned char	s_name[8];	/* section name			*/
-  unsigned char	s_paddr[4];	/* physical address, aliased s_nlib */
-  unsigned char	s_vaddr[4];	/* virtual address		*/
-  unsigned char	s_size[4];	/* section size			*/
-  unsigned char	s_scnptr[4];	/* file ptr to raw data for section */
-  unsigned char	s_relptr[4];	/* file ptr to relocation	*/
-  unsigned char	s_lnnoptr[4];	/* file ptr to line numbers	*/
-  unsigned char	s_nreloc[2];	/* number of relocation entries	*/
-  unsigned char	s_nlnno[2];	/* number of line number entries*/
-  unsigned char	s_flags[4];	/* flags			*/
-};
-
-#define	SCNHDR	struct external_scnhdr
-#define	SCNHSZ	40
-
 /********************** RELOCATION DIRECTIVES **********************/
 
-struct external_reloc {
-  unsigned char r_vaddr[4];
-  unsigned char r_bits[4];
-};
+struct external_reloc
+  {
+    unsigned char r_vaddr[4];
+    unsigned char r_bits[4];
+  };
 
 #define RELOC struct external_reloc
 #define RELSZ 8
@@ -178,7 +150,8 @@ struct external_reloc {
 
 /* File header as a set of bytes */
 
-struct hdr_ext {
+struct hdr_ext
+{
 	unsigned char 	h_magic[2];
 	unsigned char	h_vstamp[2];
 	unsigned char	h_ilineMax[4];
@@ -208,7 +181,8 @@ struct hdr_ext {
 
 /* File descriptor external record */
 
-struct fdr_ext {
+struct fdr_ext
+{
 	unsigned char	f_adr[4];
 	unsigned char	f_rss[4];
 	unsigned char	f_issBase[4];
@@ -254,7 +228,8 @@ struct fdr_ext {
 
 /* Procedure descriptor external record */
 
-struct pdr_ext {
+struct pdr_ext
+{
 	unsigned char	p_adr[4];
 	unsigned char	p_isym[4];
 	unsigned char	p_iline[4];
@@ -273,7 +248,8 @@ struct pdr_ext {
 
 /* Runtime procedure table */
 
-struct rpdr_ext {
+struct rpdr_ext
+{
 	unsigned char	p_adr[4];
 	unsigned char	p_regmask[4];
 	unsigned char	p_regoffset[4];
@@ -289,13 +265,15 @@ struct rpdr_ext {
 
 /* Line numbers */
 
-struct line_ext {
+struct line_ext
+{
 	unsigned char	l_line[4];
 };
 
 /* Symbol external record */
 
-struct sym_ext {
+struct sym_ext
+{
 	unsigned char	s_iss[4];
 	unsigned char	s_value[4];
 	unsigned char	s_bits1[1];
@@ -335,7 +313,8 @@ struct sym_ext {
 
 /* External symbol external record */
 
-struct ext_ext {
+struct ext_ext
+{
 	unsigned char	es_bits1[1];
 	unsigned char	es_bits2[1];
 	unsigned char	es_ifd[2];
@@ -353,20 +332,23 @@ struct ext_ext {
 
 /* Dense numbers external record */
 
-struct dnr_ext {
+struct dnr_ext
+{
 	unsigned char	d_rfd[4];
 	unsigned char	d_index[4];
 };
 
 /* Relative file descriptor */
 
-struct rfd_ext {
+struct rfd_ext
+{
   unsigned char	rfd[4];
 };
 
 /* Optimizer symbol external record */
 
-struct opt_ext {
+struct opt_ext
+{
   unsigned char o_bits1[1];
   unsigned char o_bits2[1];
   unsigned char o_bits3[1];

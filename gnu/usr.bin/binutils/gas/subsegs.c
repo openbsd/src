@@ -1,6 +1,6 @@
 /* subsegs.c - subsegments -
    Copyright 1987, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-   1999, 2000
+   1999, 2000, 2002
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -374,7 +374,7 @@ subseg_new (segname, subseg)
     return new_seg;
   }
 #else
-  as_bad (_("Attempt to switch to nonexistent segment \"%s\""), segname);
+  as_bad (_("attempt to switch to nonexistent segment \"%s\""), segname);
   return now_seg;
 #endif
 }
@@ -426,7 +426,7 @@ subseg_get (segname, force_new)
   if (! seginfo)
     {
       /* Check whether output_section is set first because secptr may
-         be bfd_abs_section_ptr.  */
+	 be bfd_abs_section_ptr.  */
       if (secptr->output_section != secptr)
 	secptr->output_section = secptr;
       seginfo = (segment_info_type *) xmalloc (sizeof (*seginfo));
@@ -526,20 +526,16 @@ section_symbol (sec)
 #define EMIT_SECTION_SYMBOLS 1
 #endif
 
-  if (! EMIT_SECTION_SYMBOLS
-#ifdef BFD_ASSEMBLER
-      || symbol_table_frozen
-#endif
-      )
+  if (! EMIT_SECTION_SYMBOLS || symbol_table_frozen)
     {
       /* Here we know it won't be going into the symbol table.  */
-      s = symbol_create (sec->name, sec, 0, &zero_address_frag);
+      s = symbol_create (sec->symbol->name, sec, 0, &zero_address_frag);
     }
   else
     {
-      s = symbol_find_base (sec->name, 0);
+      s = symbol_find_base (sec->symbol->name, 0);
       if (s == NULL)
-	s = symbol_new (sec->name, sec, 0, &zero_address_frag);
+	s = symbol_new (sec->symbol->name, sec, 0, &zero_address_frag);
       else
 	{
 	  if (S_GET_SEGMENT (s) == undefined_section)
@@ -555,6 +551,8 @@ section_symbol (sec)
   /* Use the BFD section symbol, if possible.  */
   if (obj_sec_sym_ok_for_reloc (sec))
     symbol_set_bfdsym (s, sec->symbol);
+  else
+    symbol_get_bfdsym (s)->flags |= BSF_SECTION_SYM;
 
   seginfo->sym = s;
   return s;
@@ -587,7 +585,7 @@ subseg_text_p (sec)
 #else /* ! BFD_ASSEMBLER */
   const char * const *p;
 
-  if (sec == data_section || sec == bss_section)
+  if (sec == data_section || sec == bss_section || sec == absolute_section)
     return 0;
 
   for (p = nontext_section_names; *p != NULL; ++p)
@@ -652,7 +650,7 @@ subsegs_print_statistics (file)
 	  count++;
 	}
       fprintf (file, "\n");
-      fprintf (file, "\t%p %-10s\t%10d frags\n", frchp,
+      fprintf (file, "\t%p %-10s\t%10d frags\n", (void *) frchp,
 	       segment_name (frchp->frch_seg), count);
     }
 }

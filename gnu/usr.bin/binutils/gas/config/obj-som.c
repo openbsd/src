@@ -1,5 +1,5 @@
 /* SOM object file format.
-   Copyright 1993, 1994, 1998, 2000 Free Software Foundation, Inc.
+   Copyright 1993, 1994, 1998, 2000, 2002 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -158,7 +158,7 @@ obj_som_version (unused)
     }
 
   version_seen = 1;
-  if (bfd_som_attach_aux_hdr (stdoutput, VERSION_AUX_ID, version) == false)
+  if (!bfd_som_attach_aux_hdr (stdoutput, VERSION_AUX_ID, version))
     {
       bfd_perror (stdoutput->filename);
       as_perror (_("FATAL: Attaching version header %s"),
@@ -204,7 +204,7 @@ obj_som_copyright (unused)
     }
 
   copyright_seen = 1;
-  if (bfd_som_attach_aux_hdr (stdoutput, COPYRIGHT_AUX_ID, copyright) == false)
+  if (!bfd_som_attach_aux_hdr (stdoutput, COPYRIGHT_AUX_ID, copyright))
     {
       bfd_perror (stdoutput->filename);
       as_perror (_("FATAL: Attaching copyright header %s"),

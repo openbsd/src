@@ -21,8 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #ifndef hist_h
 #define hist_h
 
-#include "bfd.h"
-
 extern bfd_vma s_lowpc;		/* Lowpc from the profile file.  */
 extern bfd_vma s_highpc;	/* Highpc from the profile file.  */
 extern bfd_vma lowpc, highpc;	/* Range profiled, in UNIT's.  */

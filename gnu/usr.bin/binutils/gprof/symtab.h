@@ -1,6 +1,6 @@
 /* symtab.h
 
-   Copyright 2000, 2001 Free Software Foundation, Inc.
+   Copyright 2000, 2001, 2002 Free Software Foundation, Inc.
 
 This file is part of GNU Binutils.
 
@@ -21,9 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #ifndef symtab_h
 #define symtab_h
 
-#include "bfd.h"
-#include "gprof.h"
-
 /* For a profile to be intelligible to a human user, it is necessary
    to map code-addresses into source-code information.  Source-code
    information can be any combination of: (i) function-name, (ii)
@@ -31,8 +28,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
    The symbol table is used to map addresses into source-code
    information.  */
-
-#include "source.h"
 
 #define NBBS 10
 
@@ -82,7 +77,7 @@ typedef struct sym
 	double child_time;	/* Cumulative ticks in children.  */
 	int index;		/* Index in the graph list.  */
 	int top_order;		/* Graph call chain top-sort order.  */
-	bool print_flag;	/* Should this be printed?  */
+	bfd_boolean print_flag;	/* Should this be printed?  */
 	struct
 	  {
 	    double fract;	/* What % of time propagates.  */
@@ -118,6 +113,9 @@ extern Sym_Table symtab;	/* The symbol table.  */
 
 extern void sym_init        PARAMS ((Sym *));
 extern void symtab_finalize PARAMS ((Sym_Table *));
+#ifdef DEBUG
+extern Sym *dbg_sym_lookup  PARAMS ((Sym_Table *, bfd_vma));
+#endif
 extern Sym *sym_lookup      PARAMS ((Sym_Table *, bfd_vma));
 extern void find_call       PARAMS ((Sym *, bfd_vma, bfd_vma));
 

@@ -1,5 +1,5 @@
 /* rddbg.c -- Read debugging information into a generic form.
-   Copyright 1995, 1996, 1997, 2000 Free Software Foundation, Inc.
+   Copyright 1995, 1996, 1997, 2000, 2002 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>.
 
    This file is part of GNU Binutils.
@@ -29,14 +29,18 @@
 #include "debug.h"
 #include "budbg.h"
 
-static boolean read_section_stabs_debugging_info
-  PARAMS ((bfd *, asymbol **, long, PTR, boolean *));
-static boolean read_symbol_stabs_debugging_info
-  PARAMS ((bfd *, asymbol **, long, PTR, boolean *));
-static boolean read_ieee_debugging_info PARAMS ((bfd *, PTR, boolean *));
-static void save_stab PARAMS ((int, int, bfd_vma, const char *));
-static void stab_context PARAMS ((void));
-static void free_saved_stabs PARAMS ((void));
+static bfd_boolean read_section_stabs_debugging_info
+  PARAMS ((bfd *, asymbol **, long, PTR, bfd_boolean *));
+static bfd_boolean read_symbol_stabs_debugging_info
+  PARAMS ((bfd *, asymbol **, long, PTR, bfd_boolean *));
+static bfd_boolean read_ieee_debugging_info
+  PARAMS ((bfd *, PTR, bfd_boolean *));
+static void save_stab
+  PARAMS ((int, int, bfd_vma, const char *));
+static void stab_context
+  PARAMS ((void));
+static void free_saved_stabs
+  PARAMS ((void));
 
 /* Read debugging information from a BFD.  Returns a generic debugging
    pointer.  */
@@ -48,7 +52,7 @@ read_debugging_info (abfd, syms, symcount)
      long symcount;
 {
   PTR dhandle;
-  boolean found;
+  bfd_boolean found;
 
   dhandle = debug_init ();
   if (dhandle == NULL)
@@ -79,7 +83,7 @@ read_debugging_info (abfd, syms, symcount)
     {
       if (! parse_coff (abfd, syms, symcount, dhandle))
 	return NULL;
-      found = true;
+      found = TRUE;
     }
 
   if (! found)
@@ -94,23 +98,24 @@ read_debugging_info (abfd, syms, symcount)
 
 /* Read stabs in sections debugging information from a BFD.  */
 
-static boolean
+static bfd_boolean
 read_section_stabs_debugging_info (abfd, syms, symcount, dhandle, pfound)
      bfd *abfd;
      asymbol **syms;
      long symcount;
      PTR dhandle;
-     boolean *pfound;
+     bfd_boolean *pfound;
 {
   static struct
     {
       const char *secname;
       const char *strsecname;
-    } names[] = { { ".stab", ".stabstr" } };
+    } names[] = { { ".stab", ".stabstr" },
+		  { "LC_SYMTAB.stabs", "LC_SYMTAB.stabstr" } };
   unsigned int i;
   PTR shandle;
 
-  *pfound = false;
+  *pfound = FALSE;
   shandle = NULL;
 
   for (i = 0; i < sizeof names / sizeof names[0]; i++)
@@ -133,7 +138,7 @@ read_section_stabs_debugging_info (abfd, syms, symcount, dhandle, pfound)
 	      fprintf (stderr, "%s: %s: %s\n",
 		       bfd_get_filename (abfd), names[i].secname,
 		       bfd_errmsg (bfd_get_error ()));
-	      return false;
+	      return FALSE;
 	    }
 
 	  strsize = bfd_section_size (abfd, strsec);
@@ -143,17 +148,17 @@ read_section_stabs_debugging_info (abfd, syms, symcount, dhandle, pfound)
 	      fprintf (stderr, "%s: %s: %s\n",
 		       bfd_get_filename (abfd), names[i].strsecname,
 		       bfd_errmsg (bfd_get_error ()));
-	      return false;
+	      return FALSE;
 	    }
 
 	  if (shandle == NULL)
 	    {
-	      shandle = start_stab (dhandle, abfd, true, syms, symcount);
+	      shandle = start_stab (dhandle, abfd, TRUE, syms, symcount);
 	      if (shandle == NULL)
-		return false;
+		return FALSE;
 	    }
 
-	  *pfound = true;
+	  *pfound = TRUE;
 
 	  stroff = 0;
 	  next_stroff = 0;
@@ -176,7 +181,7 @@ read_section_stabs_debugging_info (abfd, syms, symcount, dhandle, pfound)
 	      if (type == 0)
 		{
 		  /* Special type 0 stabs indicate the offset to the
-                     next string table.  */
+		     next string table.  */
 		  stroff = next_stroff;
 		  next_stroff += value;
 		}
@@ -185,17 +190,17 @@ read_section_stabs_debugging_info (abfd, syms, symcount, dhandle, pfound)
 		  char *f, *s;
 
 		  f = NULL;
-		  
+
 		  if (stroff + strx > strsize)
 		    {
-		      fprintf (stderr, "%s: %s: stab entry %d is corrupt, strx = 0x%x, type = %d\n",
+		      fprintf (stderr, "%s: %s: stab entry %ld is corrupt, strx = 0x%x, type = %d\n",
 			       bfd_get_filename (abfd), names[i].secname,
-			       (stab - stabs) / 12, strx, type);
+			       (long) (stab - stabs) / 12, strx, type);
 		      continue;
 		    }
-		  
+
 		  s = (char *) strings + stroff + strx;
-		  
+
 		  while (s[strlen (s) - 1] == '\\'
 			 && stab + 12 < stabs + stabsize)
 		    {
@@ -211,8 +216,8 @@ read_section_stabs_debugging_info (abfd, syms, symcount, dhandle, pfound)
 				  (const char *) NULL);
 
 		      /* We have to restore the backslash, because, if
-                         the linker is hashing stabs strings, we may
-                         see the same string more than once.  */
+			 the linker is hashing stabs strings, we may
+			 see the same string more than once.  */
 		      *p = '\\';
 
 		      if (f != NULL)
@@ -226,12 +231,12 @@ read_section_stabs_debugging_info (abfd, syms, symcount, dhandle, pfound)
 		    {
 		      stab_context ();
 		      free_saved_stabs ();
-		      return false;
+		      return FALSE;
 		    }
 
 		  /* Don't free f, since I think the stabs code
-                     expects strings to hang around.  This should be
-                     straightened out.  FIXME.  */
+		     expects strings to hang around.  This should be
+		     straightened out.  FIXME.  */
 		}
 	    }
 
@@ -239,29 +244,29 @@ read_section_stabs_debugging_info (abfd, syms, symcount, dhandle, pfound)
 	  free (stabs);
 
 	  /* Don't free strings, since I think the stabs code expects
-             the strings to hang around.  This should be straightened
-             out.  FIXME.  */
+	     the strings to hang around.  This should be straightened
+	     out.  FIXME.  */
 	}
     }
 
   if (shandle != NULL)
     {
       if (! finish_stab (dhandle, shandle))
-	return false;
+	return FALSE;
     }
 
-  return true;
+  return TRUE;
 }
 
 /* Read stabs in the symbol table.  */
 
-static boolean
+static bfd_boolean
 read_symbol_stabs_debugging_info (abfd, syms, symcount, dhandle, pfound)
      bfd *abfd;
      asymbol **syms;
      long symcount;
      PTR dhandle;
-     boolean *pfound;
+     bfd_boolean *pfound;
 {
   PTR shandle;
   asymbol **ps, **symend;
@@ -281,12 +286,12 @@ read_symbol_stabs_debugging_info (abfd, syms, symcount, dhandle, pfound)
 
 	  if (shandle == NULL)
 	    {
-	      shandle = start_stab (dhandle, abfd, false, syms, symcount);
+	      shandle = start_stab (dhandle, abfd, FALSE, syms, symcount);
 	      if (shandle == NULL)
-		return false;
+		return FALSE;
 	    }
 
-	  *pfound = true;
+	  *pfound = TRUE;
 
 	  s = i.name;
 	  f = NULL;
@@ -313,7 +318,7 @@ read_symbol_stabs_debugging_info (abfd, syms, symcount, dhandle, pfound)
 	    {
 	      stab_context ();
 	      free_saved_stabs ();
-	      return false;
+	      return FALSE;
 	    }
 
 	  /* Don't free f, since I think the stabs code expects
@@ -327,19 +332,19 @@ read_symbol_stabs_debugging_info (abfd, syms, symcount, dhandle, pfound)
   if (shandle != NULL)
     {
       if (! finish_stab (dhandle, shandle))
-	return false;
+	return FALSE;
     }
 
-  return true;
+  return TRUE;
 }
 
 /* Read IEEE debugging information.  */
 
-static boolean
+static bfd_boolean
 read_ieee_debugging_info (abfd, dhandle, pfound)
      bfd *abfd;
      PTR dhandle;
-     boolean *pfound;
+     bfd_boolean *pfound;
 {
   asection *dsec;
   bfd_size_type size;
@@ -350,21 +355,21 @@ read_ieee_debugging_info (abfd, dhandle, pfound)
 
   dsec = bfd_get_section_by_name (abfd, ".debug");
   if (dsec == NULL)
-    return true;
+    return TRUE;
 
   size = bfd_section_size (abfd, dsec);
   contents = (bfd_byte *) xmalloc (size);
   if (! bfd_get_section_contents (abfd, dsec, contents, 0, size))
-    return false;
+    return FALSE;
 
   if (! parse_ieee (dhandle, abfd, contents, size))
-    return false;
+    return FALSE;
 
   free (contents);
 
-  *pfound = true;
+  *pfound = TRUE;
 
-  return true;
+  return TRUE;
 }
 
 /* Record stabs strings, so that we can give some context for errors.  */

@@ -23,6 +23,7 @@ SECTIONS
 {
   .text ${RELOCATING+ ${TARGET_PAGE_SIZE}+SIZEOF_HEADERS} : {
     *(.text)
+    ${RELOCATING+*(.text.*)}
     ${RELOCATING+*(.gnu.linkonce.t*)}
     *(.const*)
     *(.ro*)
@@ -40,6 +41,7 @@ SECTIONS
     *(.dtor)
     djgpp_last_dtor = . ;}
     *(.data)
+    ${RELOCATING+*(.data.*)}
 
     ${RELOCATING+*(.gcc_exc*)}
     ${RELOCATING+___EH_FRAME_BEGIN__ = . ;}
@@ -55,11 +57,14 @@ SECTIONS
   ${CONSTRUCTING+${RELOCATING-$DTOR}}
   .bss ${RELOCATING+ SIZEOF(.data) + ADDR(.data)} :
   { 					
-    *(.bss)
+    *(.bss${RELOCATING+ .bss.* .gnu.linkonce.b.*})
     *(COMMON)
     ${RELOCATING+ end = . ; PROVIDE(_end = .) ;}
     ${RELOCATING+ . = ALIGN(${SEGMENT_SIZE});}
   }
+  /* Stabs debugging sections.  */
+  .stab 0 : { *(.stab) }
+  .stabstr 0 : { *(.stabstr) }
   /* DWARF 2 */
   .debug_aranges  0 : { *(.debug_aranges) }
   .debug_pubnames 0 : { *(.debug_pubnames) }

@@ -1,5 +1,5 @@
 /* tc-mips.h -- header file for tc-mips.c.
-   Copyright 1993, 1994, 1995, 1996, 1997, 2000, 2001
+   Copyright 1993, 1994, 1995, 1996, 1997, 2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
    Contributed by the OSF and Ralph Campbell.
    Written by Keith Knowles and Ralph Campbell, working independently.
@@ -45,12 +45,13 @@ struct expressionS;
 #define MAX_RELOC_EXPANSION 3
 #define LOCAL_LABELS_FB 1
 
-/* Maximum symbol offset that can be encoded in a BFD_RELOC_MIPS_GPREL
+/* Maximum symbol offset that can be encoded in a BFD_RELOC_GPREL16
    relocation: */
-#define MAX_GPREL_OFFSET (0x7FF4)
+#define MAX_GPREL_OFFSET (0x7FF0)
 
-#define md_relax_frag(segment, fragp, stretch) mips_relax_frag(fragp, stretch)
-extern int mips_relax_frag PARAMS ((struct frag *, long));
+#define md_relax_frag(segment, fragp, stretch) \
+  mips_relax_frag(segment, fragp, stretch)
+extern int mips_relax_frag PARAMS ((asection *, struct frag *, long));
 
 #define md_undefined_symbol(name)	(0)
 #define md_operand(x)
@@ -72,16 +73,38 @@ extern void mips_handle_align PARAMS ((struct frag *));
 #define TARGET_FORMAT mips_target_format()
 extern const char *mips_target_format PARAMS ((void));
 
+/* MIPS PIC level.  */
+
+enum mips_pic_level
+{
+  /* Do not generate PIC code.  */
+  NO_PIC,
+
+  /* Generate PIC code as in the SVR4 MIPS ABI.  */
+  SVR4_PIC,
+
+  /* Generate PIC code without using a global offset table: the data
+     segment has a maximum size of 64K, all data references are off
+     the $gp register, and all text references are PC relative.  This
+     is used on some embedded systems.  */
+  EMBEDDED_PIC
+};
+
+extern enum mips_pic_level mips_pic;
+
 struct mips_cl_insn
 {
   unsigned long insn_opcode;
   const struct mips_opcode *insn_mo;
   /* The next two fields are used when generating mips16 code.  */
-  boolean use_extend;
+  bfd_boolean use_extend;
   unsigned short extend;
 };
 
 extern int tc_get_register PARAMS ((int frame));
+
+#define md_after_parse_args() mips_after_parse_args()
+extern void mips_after_parse_args PARAMS ((void));
 
 #define tc_init_after_args() mips_init_after_args()
 extern void mips_init_after_args PARAMS ((void));
@@ -95,7 +118,7 @@ extern void mips_define_label PARAMS ((symbolS *));
 #define tc_frob_file_before_adjust() mips_frob_file_before_adjust ()
 extern void mips_frob_file_before_adjust PARAMS ((void));
 
-#define tc_frob_file() mips_frob_file ()
+#define tc_frob_file_before_fix() mips_frob_file ()
 extern void mips_frob_file PARAMS ((void));
 
 #if defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF)
@@ -103,20 +126,31 @@ extern void mips_frob_file PARAMS ((void));
 extern void mips_frob_file_after_relocs PARAMS ((void));
 #endif
 
-#define TC_CONS_FIX_NEW cons_fix_new_mips
-extern void cons_fix_new_mips
-  PARAMS ((struct frag *, int, unsigned int, struct expressionS *));
-
 #define tc_fix_adjustable(fixp) mips_fix_adjustable (fixp)
 extern int mips_fix_adjustable PARAMS ((struct fix *));
 
+/* Global syms must not be resolved, to support ELF shared libraries.
+   When generating embedded code, we don't have shared libs.  */
+#define EXTERN_FORCE_RELOC			\
+  (OUTPUT_FLAVOR == bfd_target_elf_flavour	\
+   && mips_pic != EMBEDDED_PIC)
+
 /* When generating embedded PIC code we must keep PC relative
    relocations.  */
-#define TC_FORCE_RELOCATION(fixp) mips_force_relocation (fixp)
+#define TC_FORCE_RELOCATION(FIX) mips_force_relocation (FIX)
 extern int mips_force_relocation PARAMS ((struct fix *));
 
-/* md_apply_fix sets fx_done correctly.  */
-#define TC_HANDLE_FX_DONE 1
+#define TC_FORCE_RELOCATION_SUB_SAME(FIX, SEG) \
+  (! SEG_NORMAL (SEG) || mips_force_relocation (FIX))
+
+/* We use this to turn branches to global symbols into branches to
+   local symbols, so that they can be simplified.  */
+#define TC_VALIDATE_FIX(fixp, this_segment, skip_label) \
+  do \
+    if (! mips_validate_fix ((fixp), (this_segment))) \
+      goto skip_label; \
+  while (0)
+extern int mips_validate_fix PARAMS ((struct fix *, asection *));
 
 /* Register mask variables.  These are set by the MIPS assembly code
    and used by ECOFF and possibly other object file formats.  */
@@ -155,5 +189,16 @@ extern void mips_flush_pending_output PARAMS ((void));
 
 extern void mips_enable_auto_align PARAMS ((void));
 #define md_elf_section_change_hook()	mips_enable_auto_align()
+
+extern enum dwarf2_format mips_dwarf2_format PARAMS ((void));
+#define DWARF2_FORMAT() mips_dwarf2_format ()
+
+#define DWARF2_ADDR_SIZE(bfd) \
+  (DWARF2_FORMAT () == dwarf2_format_32bit ? 4 : 8)
+
+typedef struct {
+  offsetT tc_fr_offset;
+} tc_frag_data_type;
+#define TC_FRAG_TYPE tc_frag_data_type
 
 #endif /* TC_MIPS */

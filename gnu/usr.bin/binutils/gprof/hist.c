@@ -1,6 +1,6 @@
 /* hist.c  -  Histogram related operations.
 
-   Copyright 2000, 2001 Free Software Foundation, Inc.
+   Copyright 2000, 2001, 2002 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -19,20 +19,24 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
    02111-1307, USA.  */
 
-#include <stdio.h>
 #include "libiberty.h"
 #include "gprof.h"
+#include "search_list.h"
+#include "source.h"
+#include "symtab.h"
 #include "corefile.h"
 #include "gmon_io.h"
 #include "gmon_out.h"
 #include "hist.h"
-#include "symtab.h"
 #include "sym_ids.h"
 #include "utils.h"
 
 #define UNITS_TO_CODE (offset_to_code / sizeof(UNIT))
 
 static void scale_and_align_entries PARAMS ((void));
+static void print_header PARAMS ((int));
+static void print_line PARAMS ((Sym *, double));
+static int cmp_time PARAMS ((const PTR, const PTR));
 
 /* Declarations of automatically generated functions to output blurbs.  */
 extern void flat_blurb PARAMS ((FILE * fp));
@@ -76,7 +80,9 @@ SItab[] =
    is provided for formatting error messages only.  */
 
 void
-DEFUN (hist_read_rec, (ifp, filename), FILE * ifp AND const char *filename)
+hist_read_rec (ifp, filename)
+     FILE * ifp;
+     const char *filename;
 {
   bfd_vma n_lowpc, n_highpc;
   int i, ncnt, profrate;
@@ -151,7 +157,9 @@ DEFUN (hist_read_rec, (ifp, filename), FILE * ifp AND const char *filename)
    of OFP and is provided for formatting error-messages only.  */
 
 void
-DEFUN (hist_write_hist, (ofp, filename), FILE * ofp AND const char *filename)
+hist_write_hist (ofp, filename)
+     FILE * ofp;
+     const char *filename;
 {
   UNIT count;
   int i;
@@ -172,7 +180,7 @@ DEFUN (hist_write_hist, (ofp, filename), FILE * ofp AND const char *filename)
 
   for (i = 0; i < hist_num_bins; ++i)
     {
-      bfd_put_16 (core_bfd, hist_sample[i], (bfd_byte *) & count[0]);
+      bfd_put_16 (core_bfd, (bfd_vma) hist_sample[i], (bfd_byte *) &count[0]);
 
       if (fwrite (&count[0], sizeof (count), 1, ofp) != 1)
 	{
@@ -254,7 +262,7 @@ scale_and_align_entries ()
    cases, above).  */
 
 void
-DEFUN_VOID (hist_assign_samples)
+hist_assign_samples ()
 {
   bfd_vma bin_low_pc, bin_high_pc;
   bfd_vma sym_low_pc, sym_high_pc;
@@ -343,7 +351,8 @@ DEFUN_VOID (hist_assign_samples)
 /* Print header for flag histogram profile.  */
 
 static void
-DEFUN (print_header, (prefix), const char prefix)
+print_header (prefix)
+     int prefix;
 {
   char unit[64];
 
@@ -382,7 +391,9 @@ DEFUN (print_header, (prefix), const char prefix)
 
 
 static void
-DEFUN (print_line, (sym, scale), Sym * sym AND double scale)
+print_line (sym, scale)
+     Sym *sym;
+     double scale;
 {
   if (ignore_zeros && sym->ncalls == 0 && sym->hist.time == 0)
     return;
@@ -419,7 +430,9 @@ DEFUN (print_line, (sym, scale), Sym * sym AND double scale)
    lexicographic order of the function names.  */
 
 static int
-DEFUN (cmp_time, (lp, rp), const PTR lp AND const PTR rp)
+cmp_time (lp, rp)
+     const PTR lp;
+     const PTR rp;
 {
   const Sym *left = *(const Sym **) lp;
   const Sym *right = *(const Sym **) rp;
@@ -446,11 +459,11 @@ DEFUN (cmp_time, (lp, rp), const PTR lp AND const PTR rp)
 /* Print the flat histogram profile.  */
 
 void
-DEFUN_VOID (hist_print)
+hist_print ()
 {
   Sym **time_sorted_syms, *top_dog, *sym;
   unsigned int index;
-  int log_scale;
+  unsigned log_scale;
   double top_time, time;
   bfd_vma addr;
 
@@ -515,11 +528,12 @@ DEFUN_VOID (hist_print)
 	{
 	  top_time /= hz;
 
-	  while (SItab[log_scale].scale * top_time < 1000.0
-		 && ((size_t) log_scale
-		     < sizeof (SItab) / sizeof (SItab[0]) - 1))
+	  for (log_scale = 0; log_scale < ARRAY_SIZE (SItab); log_scale ++)
 	    {
-	      ++log_scale;
+	      double scaled_value = SItab[log_scale].scale * top_time;
+
+	      if (scaled_value >= 1.0 && scaled_value < 1000.0) 
+		break;
 	    }
 	}
     }

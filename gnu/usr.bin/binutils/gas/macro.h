@@ -1,5 +1,5 @@
-/* macro.h - header file for macro support for gas and gasp
-   Copyright 1994, 1995, 1996, 1997, 1998, 2000
+/* macro.h - header file for macro support for gas
+   Copyright 1994, 1995, 1996, 1997, 1998, 2000, 2002
    Free Software Foundation, Inc.
 
    Written by Steve and Judy Chamberlain of Cygnus Support,
@@ -37,14 +37,14 @@
    name and its default value.  Each time the macro is expanded, the
    formals get the actual values attatched to them.  */
 
-/* describe the formal arguments to a macro */
+/* Describe the formal arguments to a macro.  */
 
 typedef struct formal_struct {
-  struct formal_struct *next;	/* next formal in list */
-  sb name;			/* name of the formal */
-  sb def;			/* the default value */
-  sb actual;			/* the actual argument (changed on each expansion) */
-  int index;			/* the index of the formal 0..formal_count-1 */
+  struct formal_struct *next;	/* Next formal in list.  */
+  sb name;			/* Name of the formal.  */
+  sb def;			/* The default value.  */
+  sb actual;			/* The actual argument (changed on each expansion).  */
+  int index;			/* The index of the formal 0..formal_count - 1.  */
 } formal_entry;
 
 /* Other values found in the index field of a formal_entry.  */
@@ -52,13 +52,14 @@ typedef struct formal_struct {
 #define NARG_INDEX (-2)
 #define LOCAL_INDEX (-3)
 
-/* describe the macro.  */
+/* Describe the macro.  */
 
-typedef struct macro_struct {
-  sb sub;			/* substitution text.  */
-  int formal_count;		/* number of formal args.  */
-  formal_entry *formals;	/* pointer to list of formal_structs */
-  struct hash_control *formal_hash; /* hash table of formals.  */
+typedef struct macro_struct
+{
+  sb sub;				/* Substitution text.  */
+  int formal_count;			/* Number of formal args.  */
+  formal_entry *formals;		/* Pointer to list of formal_structs.  */
+  struct hash_control *formal_hash;	/* Hash table of formals.  */
 } macro_entry;
 
 /* Whether any macros have been defined.  */
@@ -72,16 +73,16 @@ extern int macro_nest;
 extern int buffer_and_nest
   PARAMS ((const char *, const char *, sb *, int (*) PARAMS ((sb *))));
 extern void macro_init
-  PARAMS ((int alternate, int mri, int strip_at,
-	   int (*) PARAMS ((const char *, int, sb *, int *))));
-extern void macro_mri_mode PARAMS ((int));
+  PARAMS ((int, int, int, int (*) PARAMS ((const char *, int, sb *, int *))));
+extern void macro_mri_mode
+  PARAMS ((int));
 extern const char *define_macro
-  PARAMS ((int idx, sb *in, sb *label, int (*get_line) PARAMS ((sb *)),
-	   const char **namep));
-extern int check_macro PARAMS ((const char *, sb *, int, const char **,
-                                macro_entry **));
-extern void delete_macro PARAMS ((const char *));
+  PARAMS ((int, sb *, sb *, int (*) PARAMS ((sb *)), const char **));
+extern int check_macro
+  PARAMS ((const char *, sb *, const char **, macro_entry **));
+extern void delete_macro
+  PARAMS ((const char *));
 extern const char *expand_irp
-  PARAMS ((int, int, sb *, sb *, int (*) PARAMS ((sb *)), int));
+  PARAMS ((int, int, sb *, sb *, int (*) PARAMS ((sb *))));
 
 #endif

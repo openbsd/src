@@ -1,3 +1,0 @@
-# nop test
-
-	nop

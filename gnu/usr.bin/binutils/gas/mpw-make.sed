@@ -58,18 +58,15 @@ LOCAL_LOADLIBES = \
 
 # Whack out the config.h dependency, it only causes excess rebuilds.
 /{OBJS}/s/{OBJS} \\Option-f "{o}"config.h/{OBJS} \\Option-f/
-/gasp.c/s/gasp\.c "{o}"config.h/gasp.c/
 
 # ALL_CFLAGS includes TDEFINES, which is not desirable at link time.
 /CC_LD/s/ALL_CFLAGS/CFLAGS/g
 
 # The resource file is called mac-as.r.
 /as.new.r/s/as\.new\.r/mac-as.r/
-/gasp.new.r/s/gasp\.new\.r/mac-as.r/
 
 # ...and the PROG_NAME doesn't have a .new in it.
 /PROG_NAME/s/PROG_NAME='"'as.new'"'/PROG_NAME='"'as'"'/
-/PROG_NAME/s/PROG_NAME='"'gasp.new'"'/PROG_NAME='"'gasp'"'/
 
 # Whack out recursive makes, they won't work.
 /^[ 	][ 	]*srcroot=/,/^[ 	][ 	]*(cd /d
@@ -90,7 +87,6 @@ install \\Option-f all install-only\
 install-only \\Option-f\
 	NewFolderRecursive "{bindir}"\
 	Duplicate -y :as.new "{bindir}"as\
-	Duplicate -y :gasp.new "{bindir}"gasp\
 
 
 # Whack out config-rebuilding targets, they won't work.

@@ -1,9 +1,6 @@
 #ifndef cg_arcs_h
 #define cg_arcs_h
 
-#include "gprof.h"
-#include "symtab.h"
-
 /*
  * Arc structure for call-graph.
  *

@@ -22,38 +22,38 @@
 #define external_exec dynix_external_exec
 
 /* struct exec for Dynix 3
- *
- * a_gdtbl and a_bootstrap are only for standalone binaries.
- * Shared data fields are not supported by the kernel as of Dynix 3.1,
- * but are supported by Dynix compiler programs.
- */
-struct dynix_external_exec {
-	unsigned char e_info[4];
-	unsigned char e_text[4];
-	unsigned char e_data[4];
-	unsigned char e_bss[4];
-	unsigned char e_syms[4];
-	unsigned char e_entry[4];
-	unsigned char e_trsize[4];
-	unsigned char e_drsize[4];
-	unsigned char e_g_code[8], e_g_data[8], e_g_desc[8];
-	unsigned char e_shdata[4];
-	unsigned char e_shbss[4];
-	unsigned char e_shdrsize[4];
-	unsigned char e_bootstrap[44];
-	unsigned char e_reserved[12];
-	unsigned char e_version[4];
-};
+ 
+   a_gdtbl and a_bootstrap are only for standalone binaries.
+   Shared data fields are not supported by the kernel as of Dynix 3.1,
+   but are supported by Dynix compiler programs.  */
+struct dynix_external_exec
+  {
+    unsigned char e_info[4];
+    unsigned char e_text[4];
+    unsigned char e_data[4];
+    unsigned char e_bss[4];
+    unsigned char e_syms[4];
+    unsigned char e_entry[4];
+    unsigned char e_trsize[4];
+    unsigned char e_drsize[4];
+    unsigned char e_g_code[8];
+    unsigned char e_g_data[8];
+    unsigned char e_g_desc[8];
+    unsigned char e_shdata[4];
+    unsigned char e_shbss[4];
+    unsigned char e_shdrsize[4];
+    unsigned char e_bootstrap[44];
+    unsigned char e_reserved[12];
+    unsigned char e_version[4];
+  };
 
 #define	EXEC_BYTES_SIZE	(128)
 
-/*
- * All executables under Dynix are demand paged with read-only text,
- * Thus no NMAGIC.
- *
- * ZMAGIC has a page of 0s at virtual 0,
- * XMAGIC has an invalid page at virtual 0
- */
+/* All executables under Dynix are demand paged with read-only text,
+   Thus no NMAGIC.
+  
+   ZMAGIC has a page of 0s at virtual 0,
+   XMAGIC has an invalid page at virtual 0.  */
 #define OMAGIC	0x12eb		/* .o */
 #define ZMAGIC	0x22eb		/* zero @ 0, demand load */
 #define XMAGIC	0x32eb		/* invalid @ 0, demand load */

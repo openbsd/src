@@ -18,58 +18,44 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 struct list {
-	char *name;	
+	char *name;
 	struct list *next;
 };
 
-void
-maybequit PARAMS ((void));
+void maybequit PARAMS ((void));
 
-void
-prompt PARAMS ((void));
+void prompt PARAMS ((void));
 
-void
-ar_clear PARAMS ((void));
+void ar_clear PARAMS ((void));
 
-void
-ar_replace PARAMS ((struct list *));
+void ar_replace PARAMS ((struct list *));
 
-void
-ar_delete PARAMS ((struct list *));
+void ar_delete PARAMS ((struct list *));
 
-void
-ar_save PARAMS ((void));
+void ar_save PARAMS ((void));
 
-void
-ar_list PARAMS ((void));
+void ar_list PARAMS ((void));
 
-void
-ar_open PARAMS ((char *, int));
+void ar_open PARAMS ((char *, int));
 
-void
-ar_directory PARAMS ((char *, struct list *, char *));
+void ar_directory PARAMS ((char *, struct list *, char *));
 
-void
-ar_addmod PARAMS ((struct list *));
+void ar_addmod PARAMS ((struct list *));
 
-void
-ar_addlib PARAMS ((char *, struct list *));
+void ar_addlib PARAMS ((char *, struct list *));
 
-void 
-ar_end PARAMS ((void));
+void ar_end PARAMS ((void));
 
-void
-ar_extract PARAMS ((struct list *));
+void ar_extract PARAMS ((struct list *));
 
-bfd *
-open_inarch PARAMS ((const char *archive_filename, const char *));
+bfd *open_inarch PARAMS ((const char *archive_filename, const char *));
 
-int
-yyparse PARAMS ((void));
+extern int yylex PARAMS ((void));
+
+int yyparse PARAMS ((void));
 
 /* Functions from ar.c */
 
-void
-extract_file PARAMS ((bfd * abfd));
+void extract_file PARAMS ((bfd * abfd));
 
 extern int interactive;

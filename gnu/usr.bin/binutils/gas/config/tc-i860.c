@@ -1,5 +1,5 @@
 /* tc-i860.c -- Assembler for the Intel i860 architecture.
-   Copyright 1989, 1992, 1993, 1994, 1995, 1998, 1999, 2000
+   Copyright 1989, 1992, 1993, 1994, 1995, 1998, 1999, 2000, 2001, 2002
    Free Software Foundation, Inc.
 
    Brought back from the dead and completely reworked
@@ -21,10 +21,10 @@
    with GAS; see the file COPYING.  If not, write to the Free Software
    Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
-#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 #include "as.h"
+#include "safe-ctype.h"
 #include "subsegs.h"
 #include "opcode/i860.h"
 #include "elf/i860.h"
@@ -409,7 +409,7 @@ i860_process_insn (str)
   opcode = 0;
 #endif
 
-  for (s = str; islower (*s) || *s == '.' || *s == '3'
+  for (s = str; ISLOWER (*s) || *s == '.' || *s == '3'
        || *s == '2' || *s == '1'; ++s)
     ;
 
@@ -485,9 +485,9 @@ i860_process_insn (str)
 
 	    /* Must be at least one digit.  */
 	    case '#':
-	      if (isdigit (*s++))
+	      if (ISDIGIT (*s++))
 		{
-		  while (isdigit (*s))
+		  while (ISDIGIT (*s))
 		    ++s;
 		  continue;
 		}
@@ -528,11 +528,11 @@ i860_process_insn (str)
 		/* Any register r0..r31.  */
 		case 'r':
 		  s++;
-		  if (!isdigit (c = *s++))
+		  if (!ISDIGIT (c = *s++))
 		    {
 		      goto error;
 		    }
-		  if (isdigit (*s))
+		  if (ISDIGIT (*s))
 		    {
 		      if ((c = 10 * (c - '0') + (*s++ - '0')) >= 32)
 			goto error;
@@ -575,10 +575,10 @@ i860_process_insn (str)
 	      else
 		s++;
 
-	      if (*s++ == 'f' && isdigit (*s))
+	      if (*s++ == 'f' && ISDIGIT (*s))
 		{
 		  mask = *s++;
-		  if (isdigit (*s))
+		  if (ISDIGIT (*s))
 		    {
 		      mask = 10 * (mask - '0') + (*s++ - '0');
 		      if (mask >= 32)
@@ -898,7 +898,6 @@ md_atof (type, litP, sizeP)
   LITTLENUM_TYPE words[MAX_LITTLENUMS];
   LITTLENUM_TYPE *wordP;
   char *t;
-  char *atof_ieee ();
 
   switch (type)
     {
@@ -956,26 +955,6 @@ md_number_to_chars (buf, val, n)
 }
 
 /* This should never be called for i860.  */
-void
-md_number_to_disp (buf, val, n)
-     char *buf ATTRIBUTE_UNUSED;
-     long val ATTRIBUTE_UNUSED;
-     int n ATTRIBUTE_UNUSED;
-{
-  as_fatal (_("md_number_to_disp\n"));
-}
-
-/* This should never be called for i860.  */
-void
-md_number_to_field (buf, val, fix)
-     char *buf ATTRIBUTE_UNUSED;
-     long val ATTRIBUTE_UNUSED;
-     void *fix ATTRIBUTE_UNUSED;
-{
-  as_fatal (_("i860_number_to_field\n"));
-}
-
-/* This should never be called for i860.  */
 int
 md_estimate_size_before_relax (fragP, segtype)
      register fragS *fragP ATTRIBUTE_UNUSED;
@@ -1013,9 +992,9 @@ print_insn (insn)
 
 
 #ifdef OBJ_ELF
-CONST char *md_shortopts = "VQ:";
+const char *md_shortopts = "VQ:";
 #else
-CONST char *md_shortopts = "";
+const char *md_shortopts = "";
 #endif
 
 #define OPTION_EB		(OPTION_MD_BASE + 0)
@@ -1228,15 +1207,15 @@ obtain_reloc_for_imm16 (fix, val)
 /* Attempt to simplify or eliminate a fixup. To indicate that a fixup
    has been eliminated, set fix->fx_done. If fix->fx_addsy is non-NULL,
    we will have to generate a reloc entry.  */
-int
-md_apply_fix3 (fix, valuep, seg)
-     fixS *fix;
-     valueT *valuep;
+
+void
+md_apply_fix3 (fix, valP, seg)
+     fixS * fix;
+     valueT * valP;
      segT seg ATTRIBUTE_UNUSED;
 {
-
   char *buf;
-  long val = (long) (*valuep);
+  long val = *valP;
   unsigned long insn;
   valueT fup;
 
@@ -1280,9 +1259,8 @@ md_apply_fix3 (fix, valuep, seg)
 	}
     }
   else if (fup & OP_IMM_U16)
-    {
-      abort ();
-    }
+    abort ();
+
   else if (fup & OP_IMM_SPLIT16)
     {
       fix->fx_r_type = obtain_reloc_for_imm16 (fix, &val);
@@ -1347,7 +1325,7 @@ md_apply_fix3 (fix, valuep, seg)
   else if (fup != OP_NONE)
     {
       as_bad_where (fix->fx_file, fix->fx_line,
-		    _("Unrecognized fix-up (0x%08x)"), fup);
+		    _("Unrecognized fix-up (0x%08lx)"), (unsigned long) fup);
       abort ();
     }
   else
@@ -1367,9 +1345,6 @@ md_apply_fix3 (fix, valuep, seg)
 	  fix->fx_done = 1;
 	}
     }
-
-  /* Return value ignored.  */
-  return 0;
 }
 
 /* Generate a machine dependent reloc from a fixup.  */

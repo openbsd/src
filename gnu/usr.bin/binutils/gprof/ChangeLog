@@ -1,14 +1,429 @@
-2001-06-11  Alan Modra  <amodra@bigpond.net.au>
+2003-03-27  Chris Demetriou  <cgd@broadcom.com>
 
-	Merge from mainline.
-	2001-05-16  Alexandre Oliva  <aoliva@redhat.com>
+	* gmon_io.c (enum gmon_ptr_size, enum gmon_ptr_signedness): New.
+	(gmon_get_ptr_size, gmon_get_ptr_signedness): New.
+	(gmon_io_read_vma, gmon_io_write_vma, gmon_read_raw_arc)
+	(gmon_write_raw_arc, gmon_out_read, gmon_out_write): Adjust to
+	use new functions and enums.
+
+2003-02-21  K Schutte  <schutte@fel.tno.nl>
+
+	* corefile.c (core_create_line_syms): Check for a NULL sentinel
+	value before using it.
+
+2002-12-02  Nick Clifton  <nickc@redhat.com>
+
+	* configure.in (LINGUAS): Add pt_BR.
+	* configure: Regenerate.
+	* po/pt_BR: New Brazillian Portugese translation.
+
+2002-11-30  Alan Modra  <amodra@bigpond.net.au>
+
+	* basic_blocks.c, basic_blocks.h, cg_arcs.c, cg_dfn.c, cg_print.c,
+	corefile.c, gmon_io.c, gprof.c, gprof.h, hist.c, mips.c, source.c,
+	source.h, sym_ids.c, sym_ids.h, symtab.h, tahoe.c, vax.c: Replace
+	boolean with bfd_boolean, true with TRUE, false with FALSE.
+	Formatting.
+
+2002-11-12  Nick Clifton  <nickc@redhat.com>
+
+	* configure.in (ALL_LINGUAS): Add da.
+	* configure: Regenerate.
+	* po/da.po: New Danish translation.
+
+2002-08-22  Nick Clifton  <nickc@redhat.com>
+
+	* gprof.c (main): Turn off default excluded functions in FLAT
+	profile.
+
+2002-08-21  John David Anglin  <dave@hiauly1.hia.nrc.ca>
+
+	* gmon_io.c (gmon_io_read_64, gmon_io_write_64): Define only if
+	BFD_HOST_U_64_BIT is defined.
+	(gmon_io_read_vma, gmon_io_write_vma): Add ifdefs.
+
+2002-07-30  Nick Clifton  <nickc@redhat.com>
+
+	* po/tr.po: Updated Turkish translation.
+
+2002-07-30  Nick Clifton  <nickc@redhat.com>
+
+	* alpha.c, cg_arcs.c, cg_dfn.c, gmon.h, gprof.c, gprof.h, hertz.c,
+	i386.c, mips.c, sparc.c, tahoe.c, utils.c, vax.c: Update Copyright
+	notice so that it applies even if the sources are modified.
+
+2002-07-29  Ulrich Drepper  <drepper@redhat.com>
+
+	* gprof.texi (Executing the Program): Add documentation on how to use
+	bbconv.pl.  Patch by Eric Hanchrow.
+
+2002-07-25  Nick Clifton  <nickc@redhat.com>
+
+	* po/es.po: Updated Spanish translation.
+	* po/fr.po: Updated French translation.
+
+2002-07-24  Dave Brolley  <brolley@redhat.com>
+
+	* corefile.c (core_create_function_syms): Use the end of the section
+	containing the symbol to compute max_vma.
+
+2002-07-24  Nick Clifton  <nickc@redhat.com>
+
+	* po/sv.po: Updated Swedish translation.
+	* po/es.po: Updated Spanish translation.
+
+2002-07-23  Nick Clifton  <nickc@redhat.com>
+
+	* po/fr.po: Updated French translation.
+	* po/id.po: New Indonesian translation.
+	* configure.in (LINGUAS): Add id.
+	* configure: Regenerate.
+
+2002-05-02  Nick Clifton  <nickc@cambridge.redhat.com>
+
+	* po/Make-in (.po.gmo): Do not attempt to create a .gmo file if
+	the sources are read-only.
+
+2002-04-04  Alan Modra  <amodra@bigpond.net.au>
+
+	* dep-in.sed: Cope with absolute paths.
+	* Makefile.am (dep.sed): Subst TOPDIR.
+	Run "make dep-am".
+	* Makefile.in: Regenerate.
+
+2002-03-21  Alan Modra  <amodra@bigpond.net.au>
+
+	* Makefile.am: Run "make dep-am".
+	* Makefile.in: Regenerate.
+
+2002-03-18  Nick Clifton  <nickc@cambridge.redhat.com>
+
+	* po/fr.po: Updated version.
+
+2002-03-13  Nick Clifton  <nickc@cambridge.redhat.com>
+
+	* po/fr.po: Updated version.
+
+2002-03-07  Daniel Jacobowitz  <drow@mvista.com>
+
+	* gprof.texi: Wrap @menu in @ifnottex, not @ifinfo.
+
+2002-02-19  Frank Ch. Eigler  <fche@redhat.com>
+
+	* hist.c (hist_print): Rewrite log_scale calculation loop.
+
+2002-02-11  Alan Modra  <amodra@bigpond.net.au>
+
+	* Makefile.am: "make dep-am".
+	* Makefile.in: Regenerate.
+
+2002-02-10  Daniel Jacobowitz  <drow@mvista.com>
+
+	* gprof.c: Include "getopt.h" after other includes, so that
+	the proper macros are defined.
+	* gen-c-prog.awk: Emit a prototype for the generated function.
+
+2002-02-01  Alan Modra  <amodra@bigpond.net.au>
+
+	* configure.in (build_warnings): Add -Wstrict-prototypes
+	-Wmissing-prototypes.
+	* aclocal.m4: Regenerate.
+	* gconfig.in: Regenerate.
+	* configure: Regenerate.
+	* Makefile.am: Run "make dep-am".
+	* Makefile.in: Regenerate.
+
+	* alpha.c (alpha_find_call): Warning fixes.
+	* mips.c (mips_find_call): Likewise.
+	* sparc.c (sparc_find_call): Likewise.
+	* basic_blocks.c: Warning fixes.  Eliminate DEFUN.
+	* call_graph.c: Likewise.
+	* cg_arcs.c: Likewise.
+	* cg_dfn.cp: Likewise.
+	* gprof.c: Likewise.
+	* gprof.h: Likewise.
+	* hist.c: Likewise.
+	* search_list.c: Likewise.
+	* source.c: Likewise.
+	* source.h: Likewise.
+	* sym_ids.c: Likewise.
+	* symtab.c: Likewise.
+	* symtab.h: Likewise.
+	* utils.c: Likewise.
+	* cg_print.c: Likewise.
+	(struct function_map, symbol_map, symbol_map_count): Move
+	declaration to..
+	* corefile: ..here.
+	* corefile.c: Warning fixes.  Eliminate DEFUN.
+	(struct function_map): Remove declaration.
+	* gmon_io.c: Warning fixes.  Eliminate DEFUN.
+	(gmon_io_read_64): Make static.
+	(gmon_io_write_64): Likewise.
+	(gmon_read_raw_arc): Likewise.
+	(gmon_write_raw_arc): Likewise.
+	(gmon_io_write_8): Don't pass char, pass int param.
+	* gmon_io.h (gmon_io_write_8): Likewise.
+
+	* Makefile.am: Run "make dep-am"
+	* Makefile.in: Regenerate.
+
+	* basic_blocks.c: Replace bool with boolean, TRUE with true and
+	FALSE with false throughout.
+	* basic_blocks.h: Likewise.
+	* cg_arcs.c: Likewise.
+	* cg_dfn.c: Likewise.
+	* cg_print.c: Likewise.
+	* corefile.c: Likewise.
+	* gmon_io.c: Likewise.
+	* gprof.c: Likewise.
+	* hist.c: Likewise.
+	* mips.c: Likewise.
+	* source.c: Likewise.
+	* source.h: Likewise.
+	* sym_ids.c: Likewise.
+	* sym_ids.h: Likewise.
+	* symtab.h: Likewise.
+	* tahoe.c: Likewise.
+	* vax.c: Likewise.
+	* gprof.h: Likewise.
+	(TRUE): Don't define.
+	(FALSE): Don't define.
+
+2002-01-31  Jason R Thorpe <thorpej@wasabisystems.com>
+
+	* TODO: Remove "host architecture pointer size" item.
+	* acconfig.h: Remove.
+	* gconfig.in: Regenerate.
+	* configure.in: Remove check for gmon pointer size.
+	* configure: Regenerate.
+	* gmon.h (GMON_HDRSIZE_BSD44_32): Define.
+	(GMON_HDRSIZE_BSD44_64): Ditto.
+	(GMON_HDRSIZE_OLDBSD_32): Ditto.
+	(GMON_HDRSIZE_OLDBSD_64): Ditto.
+	(struct raw_phdr): Wrap in #if 0, keeping it for
+	documentation purposes only.
+	(struct old_raw_phdr): Likewise.
+	(struct raw_arc): Likewise.  Change type/size of
+	"count" member to long match 4.4BSD.
+	* gmon_io: Update copyright years.
+	(gmon_io_read_64): New function.
+	(gmon_io_read_vma): Use bfd_arch_bits_per_address to
+	determine target pointer size.  Use gmon_io_read_32
+	and gmon_io_read_64.
+	(gmon_io_write_64): New function.
+	(gmon_io_write_vma): Use bfd_arch_bits_per_address to
+	determine target pointer size.  Use gmon_io_write_32
+	and gmon_io_write_64.
+	(get_vma): Remove.
+	(put_vma): Ditto.
+	(gmon_read_raw_arc): New function.
+	(gmon_write_raw_arc): New function.
+	(gmon_out_read): Do not use struct raw_phdr or
+	struct old_raw_phdr to read the gmon header.  Use
+	gmon_read_raw_arc to read call graph records.
+	(gmon_out_write): Do not use struct raw_phdr or
+	struct old_raw_phdr to write the gmon header.  Use
+	gmon_write_raw_arc to write call graph records.
+	* po/gprof.pot: Regenerate.
+	* Makefile.in: Regenerate.
+
+2002-01-31  Alan Modra  <amodra@bigpond.net.au>
+
+	* alpha.c (alpha_Instruction): Don't use.
+	(alpha_find_call): Avoid use of bitfields and casts between
+	pointers and integers of different sizes.  Avoid endian problems
+	when cross-compiling.
+	* vax.c (vax_find_call): Likewise.
+	(struct modebyte): Don't use.
+	(vax_operandmode): Pass in an unsigned char *.
+	(vax_operandlength): Likewise.
+	(vax_reladdr): Rename to vax_offset and return relative offset
+	rather than address.
+	* i386.c (i386_find_call): Avoid casts between pointers and
+	integers of different sizes.
+	* sparc.c (sparc_find_call): Likewise.  Avoid endian problems.
+	* tahoe.c (tahoe_find_call): Likewise.
+	(tahoe_reladdr): Rename to tahoe_offset and return relative offset
+	rather than address.
+
+	* basic_blocks.h: Don't include headers here.
+	* call_graph.h: Likewise.
+	* cg_arcs.h: Likewise.
+	* cg_print.h: Likewise.
+	* corefile.h: Likewise.
+	* gmon_io.h: Likewise.
+	* gmon_out.h: Likewise.
+	* hertz.h: Likewise.
+	* hist.h: Likewise.
+	* source.h: Likewise.
+	* sym_ids.h: Likewise.
+	* symtab.h: Likewise.
+	* gprof.h: Don't include ansidecl.h, do include bfd.h.
+	(bool): Don't typedef.
+	* alpha.c: Adjust #include's for above header changes.
+	* basic_blocks.c: Likewise.
+	* call_graph.c: Likewise.
+	* cg_arcs.c: Likewise.
+	* cg_dfn.c: Likewise.
+	* cg_print.c: Likewise.
+	* corefile.c: Likewise.
+	* gmon_io.c: Likewise.
+	* gprof.c: Likewise.
+	* hertz.c: Likewise.
+	* hist.c: Likewise.
+	* i386.c: Likewise.
+	* mips.c: Likewise.
+	* sparc.c: Likewise.
+	* sym_ids.c: Likewise.
+	* symtab.c: Likewise.
+	* tahoe.c: Likewise.
+	* utils.c: Likewise.
+	* vax.c: Likewise.
+
+	* po/POTFILES.in: Regenerate.
+
+2002-01-27  Daniel Jacobowitz  <drow@mvista.com>
+
+	* configure: Regenerated.
+
+2002-01-26  Richard Henderson  <rth@redhat.com>
+
+	* i386.c (i386_iscall): Static.
+	* tahoe.c (indirectchild, tahoe_operandmode): Static.
+	(tahoe_operandlength, tahoe_reladdr): Static.
+	* vax.c (indirectchild): Static.
+
+2002-01-26  Hans-Peter Nilsson  <hp@bitrange.com>
+
+	* Makefile.am (install): Depend on install-info.
+	* Makefile.in: Regenerate.
+
+2002-01-26  Jason Thorpe  <thorpej@wasabisystems.com>
+
+	* mips.c: New file.
+	* Makefile.am (sources): Add mips.c. 
+	(mips.o): New rule.
+	* Makefile.in: Regenerate. 
+	* corefile.c: Update copyright years.
+	(find_call): Call mips_find_call for bfd_arch_mips.
+
+2002-01-26  Nick Clifton  <nickc@cambridge.redhat.com>
+
+	* po/fr.po: Updated version.
+
+2002-01-25  Nick Clifton  <nickc@cambridge.redhat.com>
+
+	* po/es.po: Updated version.
+
+2002-01-17  Nick Clifton  <nickc@cambridge.redhat.com>
+
+	* po/gprof.pot: Regenerate.
+
+2002-01-07  Nick Clifton  <nickc@cambridge.redhat.com>
+
+	* po/es.po: New file: Spanish translation.
+	* configure.in (ALL_LINGUAS): Add es.
+	* configure: Regenerate.
+
+2002-01-03  Nick Clifton  <nickc@cambridge.redhat.com>
+
+	* gmon_io.c (gmon_out_read): Remove use of ngettext().  It is not
+	present under AIX.
+
+2002-01-02  Nick Clifton  <nickc@cambridge.redhat.com>
+
+	* cg_print.c (print_header): Fix spelling typo.
+
+	* gmon_io.c (gmon_out_read): Fix formatting of text messages to
+	allow easier translation into other languages.
+
+2001-12-21  Nick Clifton  <nickc@cambridge.redhat.com>
+
+	* configure.in (ALL_LINGUAS): Add sv.
+	* configure: Regenerate.
+	* po/sv.po: Import from translation project web site.
+
+2001-12-03  Nick Clifton  <nickc@cambridge.redhat.com>
+
+	* configure.in (LINGUAS): Add tr.
+	* configure: Regenerate.
+	* po/tr.po: Import from translation project's web site.
+
+2001-11-02  Nick Clifton  <nickc@cambridge.redhat.com>
+
+	* configure.in (ALL_LINGUAS): Add 'fr'.
+	* configure: Regernate.
+	* po/fr.po: New file.
+
+2001-10-03  Alan Modra  <amodra@bigpond.net.au>
+
+	* configure: Regenerate.
+
+2001-10-02  Alan Modra  <amodra@bigpond.net.au>
+
+	* Makefile.am (Makefile): Depend on bfd/configure.in.
+	Run "make dep-am".
+	* Makefile.in: Regenerate.
+
+2001-09-18  Bruno Haible  <haible@clisp.cons.org>
+
+	* gprof.c (main): For gettext, also set the LC_CTYPE locate facet.
+	* sym_ids.c: Include "safe-ctype.h" instead of <ctype.h>.
+	(parse_spec): Use ISDIGIT instead of isdigit.
+
+2001-09-18  Alan Modra  <amodra@bigpond.net.au>
+
+	* sparc.c (sparc_find_call): Warning fix.
+	* alpha.c (alpha_find_call): Likewise.
+
+2001-08-09  Alan Modra  <amodra@bigpond.net.au>
+
+	* alpha.c: Add missing prototypes.
+	* sparc.c: Likewise.
+	* tahoe.c: Likewise.
+	* vax.c: Likewise.
+	* i386.c: Likewise.
+	(i386_iscall): Don't use DEFUN.
+
+2001-07-19  Nick Clifton  <nickc@cambridge.redhat.com>
+
+	* NOTES: Rename to README for consistency with other binutils.
+
+2001-06-18  H.J. Lu <hjl@gnu.org>
+
+        * Makefile.am (diststuff): Add $(MANS).
+        (gprof.1): Remove the prefix `$(srcdir)/'.
+        * Makefile.in: Regenerated.
+
+        * gprof.1: Removed.
+
+2001-06-12  Ben Elliston  <bje@redhat.com>
+
+	* gprof.texi (File Format): Profile data files are stored in
+	target byte order, not host byte order.
+
+2001-05-16  Alexandre Oliva  <aoliva@redhat.com>
+
 	* gmon_io.c (gmon_io_read, gmon_io_write_vma,
 	gmon_io_write_32, gmon_io_write_8, gmon_io_write): Adjust
 	argument list for K&R C.
 
-	2001-03-13  David Mosberger  <davidm@hpl.hp.com>
+2001-04-06  Stephane Carrez  <Stephane.Carrez@worldnet.fr>
+
+	* gprof.texi: Put @c man begin and @c man end indications
+	to generate man page using texi2pod and pod2man.  Added SEEALSO,
+	SYNOPSIS, BUGS, FILES and DESCRIPTION from original gprof.1
+	enclosed in @ifset man condition.
+	* Makefile.am (MANCONF, TEXI2POD, POD2MAN): New variable.
+	Generate gprof.1 from gprof.texi.
+	* gprof.1: Generate from gprof.texi.
+	* Makefile.in: Regenerate.
+
+2001-03-13  David Mosberger  <davidm@hpl.hp.com>
+
 	* hist.c (hist_dimension): Declare as an array of 16 characters.
 	(hist_read_rec): If SAMPLEDEBUG, print each histogram bin count.
+
 	* basic_blocks.c: Whitespace and formatting changes.
 	* bb_exit_func.c: Ditto.
 	* call_graph.c: Ditto.
@@ -36,8 +451,10 @@
 	* tahoe.c: Ditto.
 	* utils.c: Ditto.
 	* vax.c: Ditto.
+
 	* gmon_out.h (gmon_hist_hdr): Delete.
 	(gmon_cg_arc_record): Delete.
+
 	* gmon_io.c (put_vma): Declare "static".
 	(get_vma): Ditto.
 	(gmon_io_write): New function.
@@ -54,6 +471,7 @@
 	(cg_write_arcs): Ditto.
 	* hist.c (hist_read_rec): Ditto.
 	(hist_write_hist): Ditto.
+
 	From Jes Sorensen  <jes@linuxcare.com>
 	* gmon_out.h: Use GMON_PTR_SIZE instead of sizeof(char*).
 	* gmon.h: Ditto.
@@ -64,30 +482,14 @@
 	* configure: Regenerate.
 	* Makefile.in: Regenerate.
 
-	2001-02-27  Alan Modra  <alan@linuxcare.com.au>
+2001-02-27  Alan Modra  <alan@linuxcare.com.au>
+
 	* configure.in (BFD_VERSION): New.
 	(AM_INIT_AUTOMAKE): Use $BFD_VERSION.
 	* configure: Regenerate.
 	* gconfig.in: Regenerate.
 	* Makefile.am: Run "make dep-am"
 	* Makefile.in: Regenerate.
-
-2001-06-10  Philip Blundell  <philb@gnu.org>
-
-	* configure.in: Set version to 2.11.1.
-	* configure: Regenerate.
-
-2001-06-07  Alan Modra  <amodra@bigpond.net.au>
-
-	* Many files: Update copyright notices.
-
-2001-03-16  Philip Blundell  <philb@gnu.org>
-
-	* configure: Regenerate.
-
-2001-03-11  Philip Blundell  <philb@gnu.org>
-
-	* configure.in: Set version to 2.11.
 
 2001-01-27  Michael Sokolov  <msokolov@ivan.Harhan.ORG>
 
@@ -241,7 +643,7 @@
 	[HAVE_SETITIMER]: If they define both HAVE_SETITIMER and
 	HAVE_SYSCONF, try setitimer and fall back on sysconf.
 
-Fri Apr  7 15:56:57 2000  Andrew Cagney  <cagney@b1.cygnus.com>
+2000-04-07  Andrew Cagney  <cagney@b1.cygnus.com>
  
 	* configure.in (WARN_CFLAGS): Set to -W -Wall by default.  Add
  	--enable-build-warnings option.
@@ -330,7 +732,7 @@ Fri Apr  7 15:56:57 2000  Andrew Cagney  <cagney@b1.cygnus.com>
 	* Makefile.am ($(OBJECTS)): Add gmon.h.
 	* Makefile.in: Rebuild.
 
-Mon Jun 14 10:35:28 1999  Andreas Schwab  <schwab@issan.cs.uni-dortmund.de>
+1999-06-14  Andreas Schwab  <schwab@issan.cs.uni-dortmund.de>
 
 	* gprof.texi: Fix typo.
 
@@ -382,12 +784,12 @@ Tue Feb 16 17:01:33 1999  Ian Lance Taylor  <ian@cygnus.com>
 	* Makefile.in: Rebuild.
 	* gconfig.in: Rebuild.
 
-Sun Dec  6 21:57:50 1998  Ian Lance Taylor  <ian@cygnus.com>
+1998-12-06  Ian Lance Taylor  <ian@cygnus.com>
 
 	* gprof.texi (Symspecs): Mention that you have to add any
 	underscore yourself when naming a symbol.
 
-Mon Nov  2 15:05:33 1998  Geoffrey Noer  <noer@cygnus.com>
+1998-11-02  Geoffrey Noer  <noer@cygnus.com>
 
         * configure.in: detect cygwin* instead of cygwin32*
         * configure: regenerate
@@ -1660,4 +2062,3 @@ Thu Jun  4 11:34:02 1992  Mark Eichin  (eichin at cygnus.com)
 	help in debugging the problem (with -DDEBUG)
 	* gprof.c: symbol values are now real values, don't add the vma
 	anymore. (done for solaris; should verify this on other platforms)
-	* ChangeLog: created.

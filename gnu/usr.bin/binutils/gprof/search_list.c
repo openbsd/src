@@ -1,6 +1,6 @@
 /* search-list.c
 
-   Copyright 2000, 2001 Free Software Foundation, Inc.
+   Copyright 2000, 2001, 2002 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -25,12 +25,13 @@
 
 
 void
-DEFUN (search_list_append, (list, paths),
-       Search_List * list AND const char *paths)
+search_list_append (list, paths)
+     Search_List *list;
+     const char *paths;
 {
   Search_List_Elem *new_el;
   const char *beg, *colon;
-  int len;
+  unsigned int len;
 
   colon = paths - 1;
   do

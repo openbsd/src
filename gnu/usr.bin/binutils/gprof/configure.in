@@ -23,7 +23,7 @@ AC_PROG_INSTALL
 
 AC_CHECK_FUNCS(setmode)
 
-ALL_LINGUAS=
+ALL_LINGUAS="fr tr sv es id da pt_BR"
 CY_GNU_GETTEXT
 
 AM_MAINTAINER_MODE
@@ -31,32 +31,7 @@ AC_EXEEXT
 
 AC_CHECK_HEADERS(sys/gmon_out.h)
 
-AC_MSG_CHECKING(the size of gmon pointers)
-AC_TRY_RUN([#include <stdio.h>
-#include <stdlib.h>
-#if HAVE_SYS_GMON_OUT_H
-#include <sys/gmon_out.h>
-#endif
-main()
-{
-#if HAVE_SYS_GMON_OUT_H
-  struct gmon_cg_arc_record arc;
-  FILE *f=fopen("conftestval", "w");
-  if (!f) exit(1);
-  fprintf(f, "%d\n", sizeof(arc.from_pc));
-  exit(0);
-#else
-  FILE *f=fopen("conftestval", "w");
-  if (!f) exit(1);
-  fprintf(f, "%d\n", (int) sizeof(char *));
-  exit(1);
-#endif
-}], gmon_ptr_size=`cat conftestval`, gmon_ptr_size=4, gmon_ptr_size=4)
-AC_MSG_RESULT($gmon_ptr_size)
-
-AC_DEFINE_UNQUOTED(GMON_PTR_SIZE, $gmon_ptr_size)
-
-build_warnings="-W -Wall"
+build_warnings="-W -Wall -Wstrict-prototypes -Wmissing-prototypes"
 AC_ARG_ENABLE(build-warnings,
 [  --enable-build-warnings Enable build-time compiler warnings if gcc is used],
 [case "${enableval}" in

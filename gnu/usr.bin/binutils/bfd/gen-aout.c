@@ -1,5 +1,5 @@
 /* Generate parameters for an a.out system.
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 2001
    Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -18,32 +18,11 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
-#include "config.h"
-#include <sys/types.h>
 #include "/usr/include/a.out.h"
 #include <stdio.h>
 
-#ifdef HAVE_LOCALE_H
-# include <locale.h>
-#endif
-
-#ifdef ENABLE_NLS
-# include <libintl.h>
-# define _(String) gettext (String)
-# ifdef gettext_noop
-#  define N_(String) gettext_noop (String)
-# else
-#  define N_(String) (String)
-# endif
-#else
-/* Stubs that do something close enough.  */
-# define textdomain(String) (String)
-# define gettext(String) (String)
-# define dgettext(Domain,Message) (Message)
-# define dcgettext(Domain,Message,Type) (Message)
-# define bindtextdomain(Domain,Directory) (Domain)
-# define _(String) (String)
-# define N_(String) (String)
+#ifndef _
+#define _(X) X
 #endif
 
 int
@@ -112,9 +91,12 @@ main (argc, argv)
       fprintf (stderr, _("         fix DEFAULT_ARCH in the output file yourself\n"));
       arch = "unknown";
     }
-  printf("#define DEFAULT_ARCH bfd_arch_%s\n", arch);
+  printf("#define DEFAULT_ARCH bfd_arch_%s\n\n", arch);
 
-  printf("\n#define MY(OP) CAT(%s_,OP)\n", target);
+  printf("/* Do not \"beautify\" the CONCAT* macro args.  Traditional C will not");
+  printf("   remove whitespace added here, and thus will fail to concatenate");
+  printf("   the tokens.  */");
+  printf("\n#define MY(OP) CONCAT2 (%s_,OP)\n\n", target);
   printf("#define TARGETNAME \"a.out-%s\"\n\n", target);
 
   printf("#include \"bfd.h\"\n");

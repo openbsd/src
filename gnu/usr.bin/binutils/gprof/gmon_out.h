@@ -24,8 +24,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #ifndef gmon_out_h
 #define gmon_out_h
 
-#include <gconfig.h>
-
 #define	GMON_MAGIC	"gmon"	/* magic cookie */
 #define GMON_VERSION	1	/* version number */
 

@@ -1,5 +1,6 @@
 /* Disassemble h8300 instructions.
-   Copyright 1993, 1994, 1996, 1998, 2000 Free Software Foundation, Inc.
+   Copyright 1993, 1994, 1996, 1998, 2000, 2001, 2002
+   Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -22,6 +23,19 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "opcode/h8300.h"
 #include "dis-asm.h"
 #include "opintl.h"
+#include "libiberty.h"
+
+struct h8_instruction
+{
+  int length;
+  const struct h8_opcode *opcode;
+};
+
+struct h8_instruction *h8_instructions;
+
+static void bfd_h8_disassemble_init PARAMS ((void));
+static unsigned int bfd_h8_disassemble
+  PARAMS ((bfd_vma, disassemble_info *, int));
 
 /* Run through the opcodes and sort them into order to make them easy
    to disassemble.  */
@@ -29,9 +43,16 @@ static void
 bfd_h8_disassemble_init ()
 {
   unsigned int i;
-  struct h8_opcode *p;
+  unsigned int nopcodes;
+  const struct h8_opcode *p;
+  struct h8_instruction *pi;
 
-  for (p = h8_opcodes; p->name; p++)
+  nopcodes = sizeof (h8_opcodes) / sizeof (struct h8_opcode);
+
+  h8_instructions = (struct h8_instruction *)
+    xmalloc (nopcodes * sizeof (struct h8_instruction));
+
+  for (p = h8_opcodes, pi = h8_instructions; p->name; p++, pi++)
     {
       int n1 = 0;
       int n2 = 0;
@@ -54,28 +75,33 @@ bfd_h8_disassemble_init ()
       if (i & 1)
 	abort ();
 
-      p->length = i / 2;
+      pi->length = i / 2;
+      pi->opcode = p;
     }
+
+  /* Add entry for the NULL vector terminator.  */
+  pi->length = 0;
+  pi->opcode = p;
 }
 
-unsigned int
+static unsigned int
 bfd_h8_disassemble (addr, info, mode)
      bfd_vma addr;
      disassemble_info *info;
      int mode;
 {
   /* Find the first entry in the table for this opcode.  */
-  static CONST char *regnames[] =
+  static const char *regnames[] =
     {
       "r0h", "r1h", "r2h", "r3h", "r4h", "r5h", "r6h", "r7h",
       "r0l", "r1l", "r2l", "r3l", "r4l", "r5l", "r6l", "r7l"
     };
-  static CONST char *wregnames[] =
+  static const char *wregnames[] =
     {
       "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
       "e0", "e1", "e2", "e3", "e4", "e5", "e6", "e7"
     };
-  static CONST char *lregnames[] =
+  static const char *lregnames[] =
     {
       "er0", "er1", "er2", "er3", "er4", "er5", "er6", "er7",
       "er0", "er1", "er2", "er3", "er4", "er5", "er6", "er7"
@@ -86,9 +112,9 @@ bfd_h8_disassemble (addr, info, mode)
   int abs = 0;
   int bit = 0;
   int plen = 0;
-  static boolean init = 0;
-  struct h8_opcode *q;
-  char CONST **pregnames = mode != 0 ? lregnames : wregnames;
+  static bfd_boolean init = 0;
+  const struct h8_instruction *qi;
+  char const **pregnames = mode != 0 ? lregnames : wregnames;
   int status;
   int l;
   unsigned char data[20];
@@ -112,8 +138,9 @@ bfd_h8_disassemble (addr, info, mode)
     status = info->read_memory_func (addr + l, data + l, 2, info);
 
   /* Find the exact opcode/arg combo.  */
-  for (q = h8_opcodes; q->name; q++)
+  for (qi = h8_instructions; qi->opcode->name; qi++)
     {
+      const struct h8_opcode *q = qi->opcode;
       op_type *nib = q->data.nib;
       unsigned int len = 0;
 
@@ -242,7 +269,7 @@ bfd_h8_disassemble (addr, info, mode)
 		{
 		  int i;
 
-		  for (i = 0; i < q->length; i++)
+		  for (i = 0; i < qi->length; i++)
 		    fprintf (stream, "%02x ", data[i]);
 
 		  for (; i < 6; i++)
@@ -259,7 +286,7 @@ bfd_h8_disassemble (addr, info, mode)
 		      high = data[3] & 0x7;
 
 		      fprintf (stream, "@sp+,er%d-er%d", high - count, high);
-		      return q->length;
+		      return qi->length;
 		    }
 
 		  if (strcmp (q->name, "stm.l") == 0)
@@ -270,7 +297,7 @@ bfd_h8_disassemble (addr, info, mode)
 		      low = data[3] & 0x7;
 
 		      fprintf (stream, "er%d-er%d,@-sp", low, low + count);
-		      return q->length;
+		      return qi->length;
 		    }
 
 		  /* Fill in the args.  */
@@ -384,7 +411,7 @@ bfd_h8_disassemble (addr, info, mode)
 		      }
 		  }
 
-		  return q->length;
+		  return qi->length;
 		}
 	      else
 		/* xgettext:c-format */

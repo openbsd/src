@@ -27,10 +27,12 @@
  * SUCH DAMAGE.
  */
 #include "gprof.h"
+#include "search_list.h"
+#include "source.h"
+#include "symtab.h"
 #include "cg_arcs.h"
 #include "corefile.h"
 #include "hist.h"
-#include "symtab.h"
 
 /*
  * Opcodes of the call instructions:
@@ -43,6 +45,9 @@
 #define Jxx_FUNC_RET		2
 #define Jxx_FUNC_JSR_COROUTINE	3
 
+#if 0
+/* Here to document only.  We can't use this when cross compiling as
+   the bitfield layout might not be the same as native.  */
 typedef union
   {
     struct
@@ -69,9 +74,11 @@ typedef union
     j;				/* jump format */
   }
 alpha_Instruction;
+#endif
 
 static Sym indirect_child;
 
+void alpha_find_call PARAMS ((Sym *, bfd_vma, bfd_vma));
 
 /*
  * On the Alpha we can only detect PC relative calls, which are
@@ -86,15 +93,12 @@ alpha_find_call (parent, p_lowpc, p_highpc)
      bfd_vma p_lowpc;
      bfd_vma p_highpc;
 {
-  static bfd_vma delta = 0;
-  bfd_vma dest_pc;
-  alpha_Instruction *pc;
+  bfd_vma pc, dest_pc;
+  unsigned int insn;
   Sym *child;
 
-  if (!delta)
+  if (indirect_child.name == NULL)
     {
-      delta = (bfd_vma) core_text_space - core_text_sect->vma;
-
       sym_init (&indirect_child);
       indirect_child.name = _("<indirect child>");
       indirect_child.cg.prop.fract = 1.0;
@@ -116,13 +120,13 @@ alpha_find_call (parent, p_lowpc, p_highpc)
   DBG (CALLDEBUG, printf (_("[find_call] %s: 0x%lx to 0x%lx\n"),
 			  parent->name, (unsigned long) p_lowpc,
 			  (unsigned long) p_highpc));
-  for (pc = (alpha_Instruction *) (p_lowpc + delta);
-       pc < (alpha_Instruction *) (p_highpc + delta);
-       ++pc)
+  for (pc = (p_lowpc + 3) & ~(bfd_vma) 3; pc < p_highpc; pc += 4)
     {
-      switch (pc->a.op_code)
+      insn = bfd_get_32 (core_bfd, ((unsigned char *) core_text_space
+				    + pc - core_text_sect->vma));
+      switch (insn & (0x3f << 26))
 	{
-	case OP_Jxx:
+	case OP_Jxx << 26:
 	  /*
 	   * There is no simple and reliable way to determine the
 	   * target of a jsr (the hint bits help, but there aren't
@@ -131,28 +135,29 @@ alpha_find_call (parent, p_lowpc, p_highpc)
 	   * to INDIRECT_CHILD---that way the user it at least able
 	   * to see that there are other calls as well.
 	   */
-	  if (pc->j.func == Jxx_FUNC_JSR
-	      || pc->j.func == Jxx_FUNC_JSR_COROUTINE)
+	  if ((insn & (3 << 14)) == Jxx_FUNC_JSR << 14
+	      || (insn & (3 << 14)) == Jxx_FUNC_JSR_COROUTINE << 14)
 	    {
 	      DBG (CALLDEBUG,
 		   printf (_("[find_call] 0x%lx: jsr%s <indirect_child>\n"),
-			   (unsigned long) pc - delta,
-			   pc->j.func == Jxx_FUNC_JSR ? "" : "_coroutine"));
+			   (unsigned long) pc,
+			   ((insn & (3 << 14)) == Jxx_FUNC_JSR << 14
+			    ? "" : "_coroutine")));
 	      arc_add (parent, &indirect_child, (unsigned long) 0);
 	    }
 	  break;
 
-	case OP_BSR:
+	case OP_BSR << 26:
 	  DBG (CALLDEBUG,
-	       printf (_("[find_call] 0x%lx: bsr"),
-		       (unsigned long) pc - delta));
+	       printf (_("[find_call] 0x%lx: bsr"), (unsigned long) pc));
 	  /*
 	   * Regular PC relative addressing.  Check that this is the
 	   * address of a function.  The linker sometimes redirects
 	   * the entry point by 8 bytes to skip loading the global
-	   * pointer, so we all for either address:
+	   * pointer, so we allow for either address:
 	   */
-	  dest_pc = ((bfd_vma) (pc + 1 + pc->b.disp)) - delta;
+	  dest_pc = pc + 4 + (((bfd_signed_vma) (insn & 0x1fffff)
+			       ^ 0x100000) - 0x100000);
 	  if (dest_pc >= s_lowpc && dest_pc <= s_highpc)
 	    {
 	      child = sym_lookup (&symtab, dest_pc);

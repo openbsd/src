@@ -96,7 +96,7 @@ Kinds of operands:
  
    The order of opcodes does not affect the disassembler.  */
 
-static struct i860_opcode i860_opcodes[] =
+static const struct i860_opcode i860_opcodes[] =
 {
 /* REG-Format Instructions.  */
 { "ld.c",	0x30000000, 0xcc000000, "c,d", 0 },	/* ld.c csrc2,idest */

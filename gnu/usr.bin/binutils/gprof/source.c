@@ -1,6 +1,6 @@
 /* source.c - Keep track of source files.
 
-   Copyright 2000, 2001 Free Software Foundation, Inc.
+   Copyright 2000, 2001, 2002 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -28,14 +28,15 @@
 #define EXT_ANNO "-ann"		/* Postfix of annotated files.  */
 
 /* Default option values.  */
-bool create_annotation_files = FALSE;
+bfd_boolean create_annotation_files = FALSE;
 
 Search_List src_search_list = {0, 0};
 Source_File *first_src_file = 0;
 
 
 Source_File *
-DEFUN (source_file_lookup_path, (path), const char *path)
+source_file_lookup_path (path)
+     const char *path;
 {
   Source_File *sf;
 
@@ -62,7 +63,8 @@ DEFUN (source_file_lookup_path, (path), const char *path)
 
 
 Source_File *
-DEFUN (source_file_lookup_name, (filename), const char *filename)
+source_file_lookup_name (filename)
+     const char *filename;
 {
   const char *fname;
   Source_File *sf;
@@ -89,14 +91,15 @@ DEFUN (source_file_lookup_name, (filename), const char *filename)
 
 
 FILE *
-DEFUN (annotate_source, (sf, max_width, annote, arg),
-       Source_File * sf AND int max_width
-       AND void (*annote) PARAMS ((char *buf, int w, int l, void *arg))
-       AND void *arg)
+annotate_source (sf, max_width, annote, arg)
+     Source_File *sf;
+     unsigned int max_width;
+     void (*annote) PARAMS ((char *, unsigned int, int, void *));
+     void *arg;
 {
-  static bool first_file = TRUE;
+  static bfd_boolean first_file = TRUE;
   int i, line_num, nread;
-  bool new_line;
+  bfd_boolean new_line;
   char buf[8192];
   char fname[PATH_MAX];
   char *annotation, *name_only;

@@ -1,5 +1,5 @@
 /* ELF object file format.
-   Copyright 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001
+   Copyright 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -48,11 +48,8 @@ extern int alpha_flag_mdebug;
 
 /* For now, always set ECOFF_DEBUGGING for a MIPS target.  */
 #ifdef TC_MIPS
-#ifdef MIPS_STABS_ELF
-#define ECOFF_DEBUGGING 0
-#else
-#define ECOFF_DEBUGGING 1
-#endif /* MIPS_STABS_ELF */
+#define ECOFF_DEBUGGING mips_flag_mdebug
+extern int mips_flag_mdebug;
 #endif /* TC_MIPS */
 
 #ifdef OBJ_MAYBE_ECOFF
@@ -89,7 +86,9 @@ struct elf_obj_sy
 #define ELF_TARGET_SYMBOL_FIELDS int local:1;
 
 /* Don't change this; change ELF_TARGET_SYMBOL_FIELDS instead.  */
+#ifndef TARGET_SYMBOL_FIELDS
 #define TARGET_SYMBOL_FIELDS ELF_TARGET_SYMBOL_FIELDS
+#endif
 
 /* #include "targ-cpu.h" */
 
@@ -163,11 +162,13 @@ extern void obj_elf_version PARAMS ((int));
 extern void obj_elf_common PARAMS ((int));
 extern void obj_elf_data PARAMS ((int));
 extern void obj_elf_text PARAMS ((int));
+extern void obj_elf_change_section
+  PARAMS ((const char *, int, int, int, const char *, int, int));
 extern struct fix *obj_elf_vtable_inherit PARAMS ((int));
 extern struct fix *obj_elf_vtable_entry PARAMS ((int));
 
 /* BFD wants to write the udata field, which is a no-no for the
-   globally defined sections.  */
+   predefined section symbols in bfd/section.c.  They are read-only.  */
 #ifndef obj_sec_sym_ok_for_reloc
 #define obj_sec_sym_ok_for_reloc(SEC)	((SEC)->owner != 0)
 #endif
@@ -182,32 +183,10 @@ void elf_obj_symbol_new_hook PARAMS ((symbolS *));
 #define obj_symbol_new_hook	elf_obj_symbol_new_hook
 #endif
 
-/* When setting one symbol equal to another, by default we probably
-   want them to have the same "size", whatever it means in the current
-   context.  */
+void elf_copy_symbol_attributes PARAMS ((symbolS *, symbolS *));
 #ifndef OBJ_COPY_SYMBOL_ATTRIBUTES
-#define OBJ_COPY_SYMBOL_ATTRIBUTES(DEST,SRC)			\
-do								\
-  {								\
-    struct elf_obj_sy *srcelf = symbol_get_obj (SRC);		\
-    struct elf_obj_sy *destelf = symbol_get_obj (DEST);		\
-    if (srcelf->size)						\
-      {								\
-	if (destelf->size == NULL)				\
-	  destelf->size =					\
-	    (expressionS *) xmalloc (sizeof (expressionS));	\
-	*destelf->size = *srcelf->size;				\
-      }								\
-    else							\
-      {								\
-	if (destelf->size != NULL)				\
-	  free (destelf->size);					\
-	destelf->size = NULL;					\
-      }								\
-    S_SET_SIZE ((DEST), S_GET_SIZE (SRC));			\
-    S_SET_OTHER ((DEST), S_GET_OTHER (SRC));			\
-  }								\
-while (0)
+#define OBJ_COPY_SYMBOL_ATTRIBUTES(DEST, SRC) \
+  (elf_copy_symbol_attributes (DEST, SRC))
 #endif
 
 #ifndef SEPARATE_STAB_SECTIONS

@@ -1,7 +1,7 @@
 # This shell script emits a C file. -*- C -*-
 # It does some substitutions.
 cat >e${EMULATION_NAME}.c <<EOF
-/* Copyright 1991, 1993, 1994, 1996, 1999, 2000
+/* Copyright 1991, 1993, 1994, 1996, 1999, 2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
 
 This file is part of GLD, the Gnu Linker.
@@ -26,10 +26,10 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
  */
 
 
-#include <ctype.h>
 #include "bfd.h"
 #include "sysdep.h"
 #include "libiberty.h"
+#include "safe-ctype.h"
 #include "bfdlink.h"
 
 #include "ld.h"
@@ -40,6 +40,11 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "ldlang.h"
 #include "ldfile.h"
 #include "ldemul.h"
+
+static void gld960_before_parse PARAMS ((void));
+static void gld960_set_output_arch PARAMS ((void));
+static char *gld960_choose_target PARAMS ((int, char **));
+static char *gld960_get_script PARAMS ((int *));
 
 #ifdef GNU960
 
@@ -56,7 +61,7 @@ gld960_before_parse()
       ldfile_add_library_path (concat (env,
 				       "/lib/libcoff",
 				       (const char *) NULL),
-			       false);
+			       FALSE);
     }
   }
   ldfile_output_architecture = bfd_arch_i960;
@@ -69,12 +74,12 @@ static void gld960_before_parse()
   char *env ;
   env =  getenv("G960LIB");
   if (env) {
-    ldfile_add_library_path(env, false);
+    ldfile_add_library_path(env, FALSE);
   }
   env = getenv("G960BASE");
   if (env)
     ldfile_add_library_path (concat (env, "/lib", (const char *) NULL),
-			     false);
+			     FALSE);
   ldfile_output_architecture = bfd_arch_i960;
 }
 
@@ -91,8 +96,7 @@ gld960_set_output_arch()
 
       s = concat ("i960:", ldfile_output_machine_name, (char *) NULL);
       for (s1 = s; *s1 != '\0'; s1++)
-	if (isupper ((unsigned char) *s1))
-	  *s1 = tolower ((unsigned char) *s1);
+	*s1 = TOLOWER (*s1);
       ldfile_set_output_arch (s);
       free (s);
     }
@@ -101,7 +105,9 @@ gld960_set_output_arch()
 }
 
 static char *
-gld960_choose_target()
+gld960_choose_target (argc, argv)
+     int argc ATTRIBUTE_UNUSED;
+     char **argv ATTRIBUTE_UNUSED;
 {
 #ifdef GNU960
 
@@ -137,19 +143,19 @@ cat >>e${EMULATION_NAME}.c <<EOF
 {			     
   *isfile = 0;
 
-  if (link_info.relocateable == true && config.build_constructors == true)
+  if (link_info.relocateable && config.build_constructors)
     return
 EOF
-sed $sc ldscripts/${EMULATION_NAME}.xu                     >> e${EMULATION_NAME}.c
-echo '  ; else if (link_info.relocateable == true) return' >> e${EMULATION_NAME}.c
-sed $sc ldscripts/${EMULATION_NAME}.xr                     >> e${EMULATION_NAME}.c
-echo '  ; else if (!config.text_read_only) return'         >> e${EMULATION_NAME}.c
-sed $sc ldscripts/${EMULATION_NAME}.xbn                    >> e${EMULATION_NAME}.c
-echo '  ; else if (!config.magic_demand_paged) return'     >> e${EMULATION_NAME}.c
-sed $sc ldscripts/${EMULATION_NAME}.xn                     >> e${EMULATION_NAME}.c
-echo '  ; else return'                                     >> e${EMULATION_NAME}.c
-sed $sc ldscripts/${EMULATION_NAME}.x                      >> e${EMULATION_NAME}.c
-echo '; }'                                                 >> e${EMULATION_NAME}.c
+sed $sc ldscripts/${EMULATION_NAME}.xu                 >> e${EMULATION_NAME}.c
+echo '  ; else if (link_info.relocateable) return'     >> e${EMULATION_NAME}.c
+sed $sc ldscripts/${EMULATION_NAME}.xr                 >> e${EMULATION_NAME}.c
+echo '  ; else if (!config.text_read_only) return'     >> e${EMULATION_NAME}.c
+sed $sc ldscripts/${EMULATION_NAME}.xbn                >> e${EMULATION_NAME}.c
+echo '  ; else if (!config.magic_demand_paged) return' >> e${EMULATION_NAME}.c
+sed $sc ldscripts/${EMULATION_NAME}.xn                 >> e${EMULATION_NAME}.c
+echo '  ; else return'                                 >> e${EMULATION_NAME}.c
+sed $sc ldscripts/${EMULATION_NAME}.x                  >> e${EMULATION_NAME}.c
+echo '; }'                                             >> e${EMULATION_NAME}.c
 
 else
 # Scripts read from the filesystem.
@@ -158,9 +164,9 @@ cat >>e${EMULATION_NAME}.c <<EOF
 {			     
   *isfile = 1;
 
-  if (link_info.relocateable == true && config.build_constructors == true)
+  if (link_info.relocateable && config.build_constructors)
     return "ldscripts/${EMULATION_NAME}.xu";
-  else if (link_info.relocateable == true)
+  else if (link_info.relocateable)
     return "ldscripts/${EMULATION_NAME}.xr";
   else if (!config.text_read_only)
     return "ldscripts/${EMULATION_NAME}.xbn";
@@ -195,9 +201,12 @@ struct ld_emulation_xfer_struct ld_gld960coff_emulation =
   NULL,	/* place orphan */
   NULL,	/* set symbols */
   NULL,	/* parse args */
+  NULL,	/* add_options */
+  NULL,	/* handle_option */
   NULL,	/* unrecognized file */
   NULL,	/* list options */
   NULL,	/* recognized file */
-  NULL 	/* find_potential_libraries */
+  NULL,	/* find_potential_libraries */
+  NULL	/* new_vers_pattern */
 };
 EOF

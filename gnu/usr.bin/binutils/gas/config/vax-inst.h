@@ -54,11 +54,14 @@ typedef long vax_opcodeT;	/* For initialising array of opcodes	   */
 #define VAX_WIDTH_WORD_JUMP          '!'	/* and VIT_OPCODE_SYNTHETIC set.  */
 #define VAX_WIDTH_BYTE_JUMP	     ':'	/*                                */
 
+#define VAX_JSB (0x16)		/* Jump to subroutine			   */
 #define VAX_JMP (0x17)		/* Useful for branch optimising. Jump instr*/
 #define VAX_PC_RELATIVE_MODE (0xef)	/* Use it after VAX_JMP		   */
 #define VAX_ABSOLUTE_MODE (0x9F)/* Use as @#...			   */
 #define VAX_BRB (0x11)		/* Canonical branch.			   */
 #define VAX_BRW (0x31)		/* Another canonical branch		   */
+#define VAX_CALLS (0xFB)	/* Call with arg list on stack	           */
+#define VAX_CALLG (0xFA)	/* Call with arg list in memory		   */
 #define VAX_WIDEN_WORD (0x20)	/* Add this to byte branch to get word br.  */
 #define VAX_WIDEN_LONG (0x6)	/* Add this to byte branch to get long jmp.*/
 /* Needs VAX_PC_RELATIVE_MODE byte after it*/

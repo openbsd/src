@@ -28,12 +28,23 @@
  */
 #include "libiberty.h"
 #include "gprof.h"
+#include "search_list.h"
+#include "source.h"
+#include "symtab.h"
 #include "call_graph.h"
 #include "cg_arcs.h"
 #include "cg_dfn.h"
 #include "cg_print.h"
 #include "utils.h"
 #include "sym_ids.h"
+
+static int cmp_topo PARAMS ((const PTR, const PTR));
+static void propagate_time PARAMS ((Sym *));
+static void cycle_time PARAMS ((void));
+static void cycle_link PARAMS ((void));
+static void inherit_flags PARAMS ((Sym *));
+static void propagate_flags PARAMS ((Sym **));
+static int cmp_total PARAMS ((const PTR, const PTR));
 
 Sym *cycle_header;
 unsigned int num_cycles;
@@ -45,7 +56,9 @@ unsigned int numarcs;
  * range covered by CHILD.
  */
 Arc *
-DEFUN (arc_lookup, (parent, child), Sym * parent AND Sym * child)
+arc_lookup (parent, child)
+     Sym *parent;
+     Sym *child;
 {
   Arc *arc;
 
@@ -74,8 +87,10 @@ DEFUN (arc_lookup, (parent, child), Sym * parent AND Sym * child)
  * Add (or just increment) an arc:
  */
 void
-DEFUN (arc_add, (parent, child, count),
-       Sym * parent AND Sym * child AND unsigned long count)
+arc_add (parent, child, count)
+     Sym *parent;
+     Sym *child;
+     unsigned long count;
 {
   static unsigned int maxarcs = 0;
   Arc *arc, **newarcs;
@@ -141,7 +156,9 @@ DEFUN (arc_add, (parent, child, count),
 
 
 static int
-DEFUN (cmp_topo, (lp, rp), const PTR lp AND const PTR rp)
+cmp_topo (lp, rp)
+     const PTR lp;
+     const PTR rp;
 {
   const Sym *left = *(const Sym **) lp;
   const Sym *right = *(const Sym **) rp;
@@ -151,7 +168,8 @@ DEFUN (cmp_topo, (lp, rp), const PTR lp AND const PTR rp)
 
 
 static void
-DEFUN (propagate_time, (parent), Sym * parent)
+propagate_time (parent)
+     Sym *parent;
 {
   Arc *arc;
   Sym *child;
@@ -235,7 +253,7 @@ DEFUN (propagate_time, (parent), Sym * parent)
  * its members.
  */
 static void
-DEFUN_VOID (cycle_time)
+cycle_time ()
 {
   Sym *member, *cyc;
 
@@ -259,7 +277,7 @@ DEFUN_VOID (cycle_time)
 
 
 static void
-DEFUN_VOID (cycle_link)
+cycle_link ()
 {
   Sym *sym, *cyc, *member;
   Arc *arc;
@@ -347,7 +365,8 @@ DEFUN_VOID (cycle_link)
  * fractions from parents.
  */
 static void
-DEFUN (inherit_flags, (child), Sym * child)
+inherit_flags (child)
+     Sym *child;
 {
   Sym *head, *parent, *member;
   Arc *arc;
@@ -425,7 +444,8 @@ DEFUN (inherit_flags, (child), Sym * child)
  * and while we're here, sum time for functions.
  */
 static void
-DEFUN (propagate_flags, (symbols), Sym ** symbols)
+propagate_flags (symbols)
+     Sym **symbols;
 {
   int index;
   Sym *old_head, *child;
@@ -525,7 +545,9 @@ DEFUN (propagate_flags, (symbols), Sym ** symbols)
  * first.  All else being equal, compare by names.
  */
 static int
-DEFUN (cmp_total, (lp, rp), const PTR lp AND const PTR rp)
+cmp_total (lp, rp)
+     const PTR lp;
+     const PTR rp;
 {
   const Sym *left = *(const Sym **) lp;
   const Sym *right = *(const Sym **) rp;
@@ -582,7 +604,7 @@ DEFUN (cmp_total, (lp, rp), const PTR lp AND const PTR rp)
  * time bottom up and flags top down.
  */
 Sym **
-DEFUN_VOID (cg_assemble)
+cg_assemble ()
 {
   Sym *parent, **time_sorted_syms, **top_sorted_syms;
   unsigned int index;

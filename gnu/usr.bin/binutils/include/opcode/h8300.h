@@ -1,5 +1,5 @@
 /* Opcode table for the H8/300
-   Copyright 1991, 1992, 1993, 1994, 1996, 1997, 1998, 2000
+   Copyright 1991, 1992, 1993, 1994, 1996, 1997, 1998, 2000, 2002, 2003
    Free Software Foundation, Inc.
    Written by Steve Chamberlain <sac@cygnus.com>.
    
@@ -21,7 +21,7 @@
    02111-1307, USA.  */
 
 /* Instructions are stored as a sequence of nibbles.
-   If the nibble has value 15 or less then the representation is complete.
+   If the nibble has value 15 or less than the representation is complete.
    Otherwise, we record what it contains with several flags.  */
 
 typedef int op_type;
@@ -48,7 +48,7 @@ typedef int op_type;
 #define L_32		0x04
 #define L_P             0x08
 #define L_24		0x10
-#define MEMRELAX 	0x20			/* move insn which may relax */ 
+#define MEMRELAX 	0x20			/* Move insn which may relax.  */ 
 #define SRC             0x40
 #define DST             0x80
 
@@ -66,10 +66,10 @@ typedef int op_type;
 #define DBIT            0x80000
 #define DISPREG         0x100000
 #define IGNORE 		0x200000
-#define E      		0x400000		/* FIXME: end of nibble sequence? */
+#define E      		0x400000		/* FIXME: end of nibble sequence?  */
 #define L_2		0x800000
-#define B30  		0x1000000 		/* bit 3 must be low */
-#define B31  		0x2000000		/* bit 3 must be high */
+#define B30  		0x1000000 		/* Bit 3 must be low.  */
+#define B31  		0x2000000		/* Bit 3 must be high.  */
 #define CCR		0x4000000
 #define ABS             0x8000000
 #define ABSJMP		0x10000000  
@@ -77,54 +77,57 @@ typedef int op_type;
 #define PCREL           0x40000000
 #define MEMIND          0x80000000
 
-#define IMM3 		IMM|L_3
-#define IMM2 		IMM|L_2
+#define IMM3 		IMM | L_3
+#define IMM2 		IMM | L_2
 
-#define SIZE		(L_2|L_3|L_8|L_16|L_32|L_P|L_24)
-#define MODE		(REG|IMM|DISP|IND|INC|DEC|CCR|ABS|MEMIND|EXR)
+#define SIZE		(L_2 | L_3 | L_8 | L_16 | L_32 | L_P | L_24)
+#define MODE		(REG | IMM | DISP | IND | INC | DEC | CCR | ABS | MEMIND | EXR)
 
-#define RD8 		(DST|L_8|REG)
-#define RD16 		(DST|L_16|REG)
-#define RD32 		(DST|L_32|REG)
-#define RS8 		(SRC|L_8|REG)
-#define RS16 		(SRC|L_16|REG)
-#define RS32		(SRC|L_32|REG)
+#define RD8 		(DST | L_8  | REG)
+#define RD16 		(DST | L_16 | REG)
+#define RD32 		(DST | L_32 | REG)
+#define RS8 		(SRC | L_8  | REG)
+#define RS16 		(SRC | L_16 | REG)
+#define RS32		(SRC | L_32 | REG)
 
-#define RSP 		(SRC|L_P|REG)
-#define RDP 		(DST|L_P|REG)
+#define RSP 		(SRC | L_P | REG)
+#define RDP 		(DST | L_P | REG)
 
-#define IMM8 		(IMM|SRC|L_8)
-#define IMM16 		(IMM|SRC|L_16)
-#define IMM32 		(IMM|SRC|L_32)
+#define IMM8 		(IMM | SRC | L_8)
+#define IMM16 		(IMM | SRC | L_16)
+#define IMM32 		(IMM | SRC | L_32)
 
-#define ABS8SRC 	(SRC|ABS|L_8|ABS8MEM)
-#define ABS8DST		(DST|ABS|L_8|ABS8MEM)
+#define ABS8SRC 	(SRC | ABS | L_8 | ABS8MEM)
+#define ABS8DST		(DST | ABS | L_8 | ABS8MEM)
 
-#define DISP8 		(PCREL|L_8)
-#define DISP16 		(PCREL|L_16)
+#define DISP8 		(PCREL | L_8)
+#define DISP16 		(PCREL | L_16)
 
-#define DISP8SRC	(DISP|L_8|SRC)
-#define DISP16SRC	(DISP|L_16|SRC)
+#define DISP8SRC	(DISP | L_8  | SRC)
+#define DISP16SRC	(DISP | L_16 | SRC)
 
-#define DISP8DST	(DISP|L_8|DST)
-#define DISP16DST	(DISP|L_16|DST)
+#define DISP8DST	(DISP | L_8  | DST)
+#define DISP16DST	(DISP | L_16 | DST)
 
-#define ABS16SRC 	(SRC|ABS|L_16)
-#define ABS16DST 	(DST|ABS|L_16)
-#define ABS24SRC 	(SRC|ABS|L_24)
-#define ABS24DST 	(DST|ABS|L_24)
-#define ABS32SRC 	(SRC|ABS|L_32)
-#define ABS32DST 	(DST|ABS|L_32)
+#define ABS16SRC 	(SRC | ABS | L_16)
+#define ABS16DST 	(DST | ABS | L_16)
+#define ABS24SRC 	(SRC | ABS | L_24)
+#define ABS24DST 	(DST | ABS | L_24)
+#define ABS32SRC 	(SRC | ABS | L_32)
+#define ABS32DST 	(DST | ABS | L_32)
 
-#define RDDEC 		(DST|DEC)
-#define RSINC 		(SRC|INC)
-#define RDINC		(DST|INC)
+#define RDDEC 		(DST | DEC)
+#define RSINC 		(SRC | INC)
+#define RDINC		(DST | INC)
 
-#define RDIND 		(DST|IND)
-#define RSIND 		(SRC|IND)
+#define RDIND 		(DST | IND)
+#define RSIND 		(SRC | IND)
+
+#define MS32            (SRC | L_32 | MACREG)
+#define MD32            (DST | L_32 | MACREG)
 
 #if 1
-#define OR8 RS8		/* ??? OR as in One Register? */
+#define OR8 RS8		/* ??? OR as in One Register?  */
 #define OR16 RS16
 #define OR32 RS32
 #else
@@ -151,20 +154,16 @@ struct h8_opcode
   char *name;
   struct arg args;
   struct code data;
-  int length;
-  int noperands;
-  int idx;
-  int size;
 };
 
 #ifdef DEFINE_TABLE
 
 #define BITOP(code, imm, name, op00, op01,op10,op11, op20,op21,op30)\
-{ code, 1, 2, name,	{{imm,RD8,E}},	{{op00, op01, imm, RD8, E, 0, 0, 0, 0}}, 0, 0, 0, 0},\
-{ code, 1, 6, name,	{{imm,RDIND,E}},{{op10, op11, B30|RDIND, 0, op00,op01, imm, 0, E}}, 0, 0, 0, 0},\
-{ code, 1, 6, name,	{{imm,ABS8DST,E}},{{op20, op21, ABS8DST, IGNORE, op00,op01, imm, 0,E}}, 0, 0, 0, 0}\
-,{ code, 0, 6, name,	{{imm,ABS16DST,E}},{{0x6,0xa,0x1,op30,ABS16DST,IGNORE,IGNORE,IGNORE, op00,op01, imm, 0,E}}, 0, 0, 0, 0},\
-{ code, 0, 6, name,	{{imm,ABS32DST,E}},{{0x6,0xa,0x3,op30,ABS32DST,IGNORE,IGNORE,IGNORE,IGNORE,IGNORE,IGNORE,IGNORE, op00,op01, imm, 0,E}}, 0, 0, 0, 0}
+{ code, 1, 2, name,	{{imm,RD8,E}},	{{op00, op01, imm, RD8, E, 0, 0, 0, 0}}},\
+{ code, 1, 6, name,	{{imm,RDIND,E}},{{op10, op11, B30|RDIND, 0, op00,op01, imm, 0, E}}},\
+{ code, 1, 6, name,	{{imm,ABS8DST,E}},{{op20, op21, ABS8DST, IGNORE, op00,op01, imm, 0,E}}}\
+,{ code, 0, 6, name,	{{imm,ABS16DST,E}},{{0x6,0xa,0x1,op30,ABS16DST,IGNORE,IGNORE,IGNORE, op00,op01, imm, 0,E}}},\
+{ code, 0, 6, name,	{{imm,ABS32DST,E}},{{0x6,0xa,0x3,op30,ABS32DST,IGNORE,IGNORE,IGNORE,IGNORE,IGNORE,IGNORE,IGNORE, op00,op01, imm, 0,E}}}
 
 
 #define EBITOP(code, imm, name, op00, op01,op10,op11, op20,op21,op30)\
@@ -172,33 +171,33 @@ struct h8_opcode
    BITOP(code,RS8,  name, op00, op01, op10,op11, op20,op21,op30)
 
 #define WTWOP(code,name, op1, op2) \
-{ code, 1, 2, name, {{RS16, RD16, E}}, {{ op1, op2, RS16, RD16, E, 0, 0, 0, 0}}, 0, 0, 0, 0}
+{ code, 1, 2, name, {{RS16, RD16, E}}, {{ op1, op2, RS16, RD16, E, 0, 0, 0, 0}}}
 
 #define BRANCH(code, name, op) \
-{ code, 1, 4,name,{{DISP8,E,0}}, {{ 0x4, op, DISP8, IGNORE, E, 0, 0, 0, 0}}, 0, 0, 0, 0}, \
-{ code, 0, 6,name,{{DISP16,E,0}}, {{ 0x5, 0x8, op, 0x0, DISP16, IGNORE, IGNORE, IGNORE, E,0}}, 0, 0, 0, 0} 
+{ code, 1, 4,name,{{DISP8,E,0}}, {{ 0x4, op, DISP8, IGNORE, E, 0, 0, 0, 0}}}, \
+{ code, 0, 6,name,{{DISP16,E,0}}, {{ 0x5, 0x8, op, 0x0, DISP16, IGNORE, IGNORE, IGNORE, E,0}}} 
 
 #define SOP(code, x,name) \
 {code, 1, x,  name 
 
 #define NEW_SOP(code, in,x,name) \
 {code, in, x,  name 
-#define EOP  ,0,0,0,0 }
+#define EOP  }
 
 #define TWOOP(code, name, op1, op2,op3) \
-{ code,1, 2,name, {{IMM8, RD8, E}},	{{ op1, RD8, IMM8, IGNORE, E, 0, 0, 0, 0}}, 0, 0, 0, 0},\
-{ code, 1, 2,name, {{RS8, RD8, E}},	{{ op2, op3, RS8, RD8, E, 0, 0, 0, 0}}, 0, 0, 0, 0} 
+{ code,1, 2,name, {{IMM8, RD8, E}},	{{ op1, RD8, IMM8, IGNORE, E, 0, 0, 0, 0}}},\
+{ code, 1, 2,name, {{RS8, RD8, E}},	{{ op2, op3, RS8, RD8, E, 0, 0, 0, 0}}} 
 
 #define UNOP(code,name, op1, op2) \
-{ code, 1, 2, name, {{OR8, E, 0}}, {{ op1, op2, 0, OR8, E, 0, 0, 0, 0}}, 0, 0, 0, 0}
+{ code, 1, 2, name, {{OR8, E, 0}}, {{ op1, op2, 0, OR8, E, 0, 0, 0, 0}}}
 
 #define UNOP3(code, name, op1, op2, op3) \
-{ O(code,SB), 1, 2, name, {{OR8,  E, 0}}, {{op1, op2, op3+0, OR8,  E, 0, 0, 0, 0}}, 0, 0, 0, 0}, \
-{ O(code,SW), 0, 2, name, {{OR16, E, 0}}, {{op1, op2, op3+1, OR16, E, 0, 0, 0, 0}}, 0, 0, 0, 0}, \
-{ O(code,SL), 0, 2, name, {{OR32, E, 0}}, {{op1, op2, op3+3, OR32|B30, E, 0, 0, 0, 0}}, 0, 0, 0, 0} \
-,{ O(code,SB), 1, 2, name, {{IMM, OR8 | SRC_IN_DST,  E}}, {{op1, op2, op3+4, OR8 | SRC_IN_DST,  E, 0, 0, 0, 0}}, 0, 0, 0, 0}, \
-{ O(code,SW), 0, 2, name, {{IMM, OR16 | SRC_IN_DST, E}}, {{op1, op2, op3+5, OR16 | SRC_IN_DST, E, 0, 0, 0, 0}}, 0, 0, 0, 0}, \
-{ O(code,SL), 0, 2, name, {{IMM, OR32 | SRC_IN_DST, E}}, {{op1, op2, op3+7, OR32 | SRC_IN_DST|B30 , E, 0, 0, 0, 0}}, 0, 0, 0, 0}
+{ O(code,SB), 1, 2, name, {{OR8,  E, 0}}, {{op1, op2, op3+0, OR8,  E, 0, 0, 0, 0}}}, \
+{ O(code,SW), 0, 2, name, {{OR16, E, 0}}, {{op1, op2, op3+1, OR16, E, 0, 0, 0, 0}}}, \
+{ O(code,SL), 0, 2, name, {{OR32, E, 0}}, {{op1, op2, op3+3, OR32|B30, E, 0, 0, 0, 0}}} \
+,{ O(code,SB), 1, 2, name, {{IMM, OR8 | SRC_IN_DST,  E}}, {{op1, op2, op3+4, OR8 | SRC_IN_DST,  E, 0, 0, 0, 0}}}, \
+{ O(code,SW), 0, 2, name, {{IMM, OR16 | SRC_IN_DST, E}}, {{op1, op2, op3+5, OR16 | SRC_IN_DST, E, 0, 0, 0, 0}}}, \
+{ O(code,SL), 0, 2, name, {{IMM, OR32 | SRC_IN_DST, E}}, {{op1, op2, op3+7, OR32 | SRC_IN_DST|B30 , E, 0, 0, 0, 0}}}
 
 
 #define IMM32LIST IMM32,IGNORE,IGNORE,IGNORE,IGNORE,IGNORE,IGNORE,IGNORE
@@ -215,7 +214,7 @@ struct h8_opcode
 #define PREFIXLDC 0x0,0x1,0x4,0x0
 
 
-#define O(op, size) (op*4+size)
+#define O(op, size) (op * 4 + size)
 
 #define O_RECOMPILE 0
 #define O_ADD  1
@@ -305,16 +304,27 @@ struct h8_opcode
 #define O_STM 86
 #define O_STMAC 87
 #define O_LAST 88
+/* Change made for System Call processing.  */
+#define O_SYS_CREAT 100
+#define O_SYS_OPEN 101
+#define O_SYS_READ 102
+#define O_SYS_WRITE 103
+#define O_SYS_LSEEK 104
+#define O_SYS_CLOSE 105
+#define O_SYS_STAT 106
+#define O_SYS_FSTAT 107
+/* Space reserved for future file I/O system calls.  */
+#define O_SYS_CMDLINE 120
+/* End of System Call specific Changes.  */
 #define SB 0
 #define SW 1
 #define SL 2
 #define SN 3
 
-
 /* FIXME: Lots of insns have "E, 0, 0, 0, 0" in the nibble code sequences.
    Methinks the zeroes aren't necessary.  Once confirmed, nuke 'em.  */
 
-struct h8_opcode h8_opcodes[] = 
+const struct h8_opcode h8_opcodes[] = 
 {
   TWOOP(O(O_ADD,SB),"add.b", 0x8, 0x0,0x8),
   
@@ -333,8 +343,8 @@ struct h8_opcode h8_opcodes[] =
   NEW_SOP(O(O_AND,SL),0,6,"and.l"),{{IMM32,RD32,E }},{{0x7,0xA,0x6,B30|RD32,IMM32LIST,E}} EOP,
   NEW_SOP(O(O_AND,SL),0,2,"and.l") ,{{RS32,RD32,E }},{{0x0,0x1,0xF,0x0,0x6,0x6,B30|RS32,B30|RD32,E}} EOP,
 
-  NEW_SOP(O(O_ANDC,SB),1,2,"andc"), {{IMM8,CCR,E}},{{ 0x0,0x6,IMM8,IGNORE,E,0,0,0,0}} EOP,
-  NEW_SOP(O(O_ANDC,SB),1,2,"andc"), {{IMM8,EXR,E}},{{ 0x0,0x1,0x4,0x1,0x0,0x6,IMM8,IGNORE,E,0,0,0,0}} EOP,
+  NEW_SOP(O(O_ANDC,SB),1,2,"andc"), {{IMM8,CCR|DST,E}},{{ 0x0,0x6,IMM8,IGNORE,E,0,0,0,0}} EOP,
+  NEW_SOP(O(O_ANDC,SB),1,2,"andc"), {{IMM8,EXR|DST,E}},{{ 0x0,0x1,0x4,0x1,0x0,0x6,IMM8,IGNORE,E,0,0,0,0}} EOP,
 
   BITOP(O(O_BAND,SB), IMM3|B30,"band",0x7,0x6,0x7,0xC,0x7,0xE,0x0),
   BRANCH(O(O_BRA,SB),"bra",0x0),
@@ -391,14 +401,14 @@ struct h8_opcode h8_opcodes[] =
   NEW_SOP(O(O_DEC, SW),0,2,"dec.w") ,{{DBIT,RD16,E }},{{0x1,0xB,0x5|DBIT,RD16,E}} EOP,
   NEW_SOP(O(O_DEC, SL),0,2,"dec.l") ,{{DBIT,RD32,E }},{{0x1,0xB,0x7|DBIT,RD32|B30,E}} EOP,
 
-  NEW_SOP(O(O_DIVU,SB),1,6,"divxu.b"), {{RS8,RD16,E}}, {{0x5,0x1,RS8,RD16,E,0,0,0,0}}EOP,
-  NEW_SOP(O(O_DIVU,SW),0,20,"divxu.w"),{{RS16,RD32,E}},{{0x5,0x3,RS16,B30|RD32,E}}EOP,
+  NEW_SOP(O(O_DIVU,SB),1,13,"divxu.b"), {{RS8,RD16,E}}, {{0x5,0x1,RS8,RD16,E,0,0,0,0}}EOP,
+  NEW_SOP(O(O_DIVU,SW),0,21,"divxu.w"),{{RS16,RD32,E}},{{0x5,0x3,RS16,B30|RD32,E}}EOP,
     
-  NEW_SOP(O(O_DIVS,SB),0,20,"divxs.b") ,{{RS8,RD16,E }},{{0x0,0x1,0xD,0x0,0x5,0x1,RS8,RD16,E}} EOP,
-  NEW_SOP(O(O_DIVS,SW),0,02,"divxs.w") ,{{RS16,RD32,E }},{{0x0,0x1,0xD,0x0,0x5,0x3,RS16,B30|RD32,E}} EOP,
+  NEW_SOP(O(O_DIVS,SB),0,13,"divxs.b") ,{{RS8,RD16,E }},{{0x0,0x1,0xD,0x0,0x5,0x1,RS8,RD16,E}} EOP,
+  NEW_SOP(O(O_DIVS,SW),0,21,"divxs.w") ,{{RS16,RD32,E }},{{0x0,0x1,0xD,0x0,0x5,0x3,RS16,B30|RD32,E}} EOP,
 
-  NEW_SOP(O(O_EEPMOV,SB),1,50,"eepmov.b"),{{E,0,0}},{{0x7,0xB,0x5,0xC,0x5,0x9,0x8,0xF,E}}EOP,
-  NEW_SOP(O(O_EEPMOV,SW),0,50,"eepmov.w"),{{E,0,0}},{{0x7,0xB,0xD,0x4,0x5,0x9,0x8,0xF,E}} EOP,
+  NEW_SOP(O(O_EEPMOV,SB),1,4,"eepmov.b"),{{E,0,0}},{{0x7,0xB,0x5,0xC,0x5,0x9,0x8,0xF,E}}EOP,
+  NEW_SOP(O(O_EEPMOV,SW),0,4,"eepmov.w"),{{E,0,0}},{{0x7,0xB,0xD,0x4,0x5,0x9,0x8,0xF,E}} EOP,
     
   NEW_SOP(O(O_EXTS,SW),0,2,"exts.w"),{{OR16,E,0}},{{0x1,0x7,0xD,OR16,E   }}EOP,
   NEW_SOP(O(O_EXTS,SL),0,2,"exts.l"),{{OR32,E,0}},{{0x1,0x7,0xF,OR32|B30,E   }}EOP,
@@ -419,23 +429,23 @@ struct h8_opcode h8_opcodes[] =
   SOP(O(O_JSR,SB),8,"jsr"),{{SRC|ABSJMP,E,0}},{{0x5,0xE,SRC|ABSJMP,IGNORE,IGNORE,IGNORE,IGNORE,IGNORE,E}}EOP,
   SOP(O(O_JSR,SB),8,"jsr"),{{SRC|MEMIND,E,0}},{{0x5,0xF,SRC|MEMIND,IGNORE,E,0,0,0,0}}EOP,
 
-  NEW_SOP(O(O_LDC,SB),1,2,"ldc"),{{IMM8,CCR,E}},         {{ 0x0,0x7,IMM8,IGNORE,E,0,0,0,0}}EOP,
-  NEW_SOP(O(O_LDC,SB),1,2,"ldc"),{{OR8,CCR,E}},          {{ 0x0,0x3,0x0,OR8,E,0,0,0,0}}EOP,
-  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{{ABS16SRC,CCR,E}},     {{PREFIXLDC,0x6,0xB,0x0,0x0,ABS16SRC,IGNORE,IGNORE,IGNORE,E}}EOP,
-  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{{ABS32SRC,CCR,E}},     {{PREFIXLDC,0x6,0xB,0x2,0x0,SRC|ABS32LIST,E}}EOP,
-  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{{DISP|SRC|L_16,CCR,E}},{{PREFIXLDC,0x6,0xF,B30|DISPREG,0,DISP|L_16,IGNORE,IGNORE,IGNORE,E}}EOP,
-  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{{DISP|SRC|L_32,CCR,E}},{{PREFIXLDC,0x7,0x8,B30|DISPREG,0,0x6,0xB,0x2,0x0,SRC|DISP32LIST,E}}EOP,
-  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{{RSINC,CCR,E}},        {{PREFIXLDC,0x6,0xD,B30|RSINC,0x0,E}}EOP,
-  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{{RSIND,CCR,E}},        {{PREFIXLDC,0x6,0x9,B30|RDIND,0x0,E}} EOP,
+  NEW_SOP(O(O_LDC,SB),1,2,"ldc"),{{IMM8,CCR|DST,E}},         {{ 0x0,0x7,IMM8,IGNORE,E,0,0,0,0}}EOP,
+  NEW_SOP(O(O_LDC,SB),1,2,"ldc"),{{OR8,CCR|DST,E}},          {{ 0x0,0x3,0x0,OR8,E,0,0,0,0}}EOP,
+  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{{ABS16SRC,CCR|DST,E}},     {{PREFIXLDC,0x6,0xB,0x0,0x0,ABS16SRC,IGNORE,IGNORE,IGNORE,E}}EOP,
+  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{{ABS32SRC,CCR|DST,E}},     {{PREFIXLDC,0x6,0xB,0x2,0x0,SRC|ABS32LIST,E}}EOP,
+  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{{DISP|SRC|L_16,CCR|DST,E}},{{PREFIXLDC,0x6,0xF,B30|DISPREG,0,DISP|L_16,IGNORE,IGNORE,IGNORE,E}}EOP,
+  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{{DISP|SRC|L_32,CCR|DST,E}},{{PREFIXLDC,0x7,0x8,B30|DISPREG,0,0x6,0xB,0x2,0x0,SRC|DISP32LIST,E}}EOP,
+  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{{RSINC,CCR|DST,E}},        {{PREFIXLDC,0x6,0xD,B30|RSINC,0x0,E}}EOP,
+  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{{RSIND,CCR|DST,E}},        {{PREFIXLDC,0x6,0x9,B30|RSIND,0x0,E}} EOP,
 
-  NEW_SOP(O(O_LDC,SB),1,2,"ldc"),{{IMM8,EXR,E}},         {{ 0x0,0x1,0x4,0x1,0x0,0x7,IMM8,IGNORE,E,0,0,0,0}}EOP,
-  NEW_SOP(O(O_LDC,SB),1,2,"ldc"),{{OR8,EXR,E}},          {{ 0x0,0x3,0x1,OR8,E,0,0,0,0}}EOP,
-  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{{ABS16SRC,EXR,E}},     {{ 0x0,0x1,0x4,0x1,0x6,0xb,0x0,0x0,ABS16SRC,IGNORE,IGNORE,IGNORE,E}}EOP,
-  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{{ABS32SRC,EXR,E}},     {{ 0x0,0x1,0x4,0x1,0x6,0xb,0x2,0x0,SRC|ABS32LIST,E}}EOP,
-  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{{DISP|SRC|L_16,EXR,E}},{{ 0x0,0x1,0x4,0x1,0x6,0xf,B30|DISPREG,0,DISP|L_16,IGNORE,IGNORE,IGNORE,E}}EOP,
-  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{{DISP|SRC|L_32,EXR,E}},{{ 0x0,0x1,0x4,0x1,0x7,0x8,B30|DISPREG,0,0x6,0xB,0x2,0x0,SRC|DISP32LIST,E}}EOP,
-  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{{RSINC,EXR,E}},        {{ 0x0,0x1,0x4,0x1,0x6,0xd,B30|RSINC,0x0,E}}EOP,
-  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{{RSIND,EXR,E}},        {{ 0x0,0x1,0x4,0x1,0x6,0x9,B30|RDIND,0x0,E}} EOP,
+  NEW_SOP(O(O_LDC,SB),1,2,"ldc"),{{IMM8,EXR|DST,E}},         {{ 0x0,0x1,0x4,0x1,0x0,0x7,IMM8,IGNORE,E,0,0,0,0}}EOP,
+  NEW_SOP(O(O_LDC,SB),1,2,"ldc"),{{OR8,EXR|DST,E}},          {{ 0x0,0x3,0x1,OR8,E,0,0,0,0}}EOP,
+  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{{ABS16SRC,EXR|DST,E}},     {{ 0x0,0x1,0x4,0x1,0x6,0xb,0x0,0x0,ABS16SRC,IGNORE,IGNORE,IGNORE,E}}EOP,
+  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{{ABS32SRC,EXR|DST,E}},     {{ 0x0,0x1,0x4,0x1,0x6,0xb,0x2,0x0,SRC|ABS32LIST,E}}EOP,
+  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{{DISP|SRC|L_16,EXR|DST,E}},{{ 0x0,0x1,0x4,0x1,0x6,0xf,B30|DISPREG,0,DISP|L_16,IGNORE,IGNORE,IGNORE,E}}EOP,
+  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{{DISP|SRC|L_32,EXR|DST,E}},{{ 0x0,0x1,0x4,0x1,0x7,0x8,B30|DISPREG,0,0x6,0xB,0x2,0x0,SRC|DISP32LIST,E}}EOP,
+  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{{RSINC,EXR|DST,E}},        {{ 0x0,0x1,0x4,0x1,0x6,0xd,B30|RSINC,0x0,E}}EOP,
+  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{{RSIND,EXR|DST,E}},        {{ 0x0,0x1,0x4,0x1,0x6,0x9,B30|RSIND,0x0,E}} EOP,
 
   SOP(O(O_MOV_TO_REG,SB),4,"mov.b"),{{ABS|SRC|L_16|MEMRELAX,RD8,E}},  {{ 0x6,0xA,0x0,RD8,SRC|ABS|MEMRELAX|A16LIST,E}}EOP,
   SOP(O(O_MOV_TO_REG,SB),6,"mov.b"),{{ABS|SRC|L_32|MEMRELAX,RD8,E }}, {{ 0x6,0xA,0x2,RD8,SRC|ABS|MEMRELAX|A32LIST,E }}EOP,
@@ -520,8 +530,8 @@ struct h8_opcode h8_opcodes[] =
   NEW_SOP(O(O_OR,SL),0,6,"or.l"),{{IMM32,RD32,E }},{{0x7,0xA,0x4,B30|RD32,IMM32LIST,E}} EOP,
   NEW_SOP(O(O_OR,SL),0,2,"or.l"),{{RS32,RD32,E }},{{0x0,0x1,0xF,0x0,0x6,0x4,B30|RS32,B30|RD32,E}} EOP,
 
-  NEW_SOP(O(O_ORC,SB),1,2,"orc"),{{IMM8,CCR,E}},{{ 0x0,0x4,IMM8,IGNORE,E,0,0,0,0}}EOP,
-  NEW_SOP(O(O_ORC,SB),1,2,"orc"),{{IMM8,EXR,E}},{{ 0x0,0x1,0x4,0x1,0x0,0x4,IMM8,IGNORE,E,0,0,0,0}}EOP,
+  NEW_SOP(O(O_ORC,SB),1,2,"orc"),{{IMM8,CCR|DST,E}},{{ 0x0,0x4,IMM8,IGNORE,E,0,0,0,0}}EOP,
+  NEW_SOP(O(O_ORC,SB),1,2,"orc"),{{IMM8,EXR|DST,E}},{{ 0x0,0x1,0x4,0x1,0x0,0x4,IMM8,IGNORE,E,0,0,0,0}}EOP,
 
   NEW_SOP(O(O_MOV_TO_REG,SW),1,6,"pop.w"),{{OR16,E,0}},{{ 0x6,0xD,0x7,OR16,E,0,0,0,0}}EOP,
   NEW_SOP(O(O_MOV_TO_REG,SL),0,6,"pop.l"),{{OR32,E,0}},{{ PREFIX32,0x6,0xD,0x7,OR32|B30,E,0,0,0,0}}EOP,
@@ -544,25 +554,25 @@ struct h8_opcode h8_opcodes[] =
 
   SOP(O(O_SLEEP,SN),2,"sleep"),{{E,0,0}},{{ 0x0,0x1,0x8,0x0,E,0,0,0,0}} EOP,
 
-  NEW_SOP(O(O_STC,SB), 1,2,"stc"),{{CCR,RD8,E}},{{ 0x0,0x2,0x0,RD8,E,0,0,0,0}} EOP,
+  NEW_SOP(O(O_STC,SB), 1,2,"stc"),{{CCR|SRC,RD8,E}},{{ 0x0,0x2,0x0,RD8,E,0,0,0,0}} EOP,
 
-  NEW_SOP(O(O_STC,SB),0,2,"stc"),{{CCR,RSIND,E}},        {{PREFIXLDC,0x6,0x9,B31|RDIND,0x0,E}} EOP,
-  NEW_SOP(O(O_STC,SB),0,2,"stc"),{{CCR,DISP|DST|L_16,E}},{{PREFIXLDC,0x6,0xF,B31|DISPREG,0,DST|DISP|L_16,IGNORE,IGNORE,IGNORE,E}}EOP,
-  NEW_SOP(O(O_STC,SB),0,2,"stc"),{{CCR,DISP|DST|L_32,E}},{{PREFIXLDC,0x7,0x8,B30|DISPREG,0,0x6,0xB,0xA,0x0,DST|DISP32LIST,E}}EOP,
-  NEW_SOP(O(O_STC,SB),0,2,"stc"),{{CCR,RDDEC,E}},        {{PREFIXLDC,0x6,0xD,B31|RDDEC,0x0,E}}EOP,
+  NEW_SOP(O(O_STC,SB),0,2,"stc"),{{CCR|SRC,RDIND,E}},        {{PREFIXLDC,0x6,0x9,B31|RDIND,0x0,E}} EOP,
+  NEW_SOP(O(O_STC,SB),0,2,"stc"),{{CCR|SRC,DISP|DST|L_16,E}},{{PREFIXLDC,0x6,0xF,B31|DISPREG,0,DST|DISP|L_16,IGNORE,IGNORE,IGNORE,E}}EOP,
+  NEW_SOP(O(O_STC,SB),0,2,"stc"),{{CCR|SRC,DISP|DST|L_32,E}},{{PREFIXLDC,0x7,0x8,B30|DISPREG,0,0x6,0xB,0xA,0x0,DST|DISP32LIST,E}}EOP,
+  NEW_SOP(O(O_STC,SB),0,2,"stc"),{{CCR|SRC,RDDEC,E}},        {{PREFIXLDC,0x6,0xD,B31|RDDEC,0x0,E}}EOP,
 
-  NEW_SOP(O(O_STC,SB),0,2,"stc"),{{CCR,ABS16SRC,E}},     {{PREFIXLDC,0x6,0xB,0x8,0x0,ABS16DST,IGNORE,IGNORE,IGNORE,E}}EOP,
-  NEW_SOP(O(O_STC,SB),0,2,"stc"),{{CCR,ABS32SRC,E}},     {{PREFIXLDC,0x6,0xB,0xA,0x0,DST|ABS32LIST,E}}EOP,
+  NEW_SOP(O(O_STC,SB),0,2,"stc"),{{CCR|SRC,ABS16DST,E}},     {{PREFIXLDC,0x6,0xB,0x8,0x0,ABS16DST,IGNORE,IGNORE,IGNORE,E}}EOP,
+  NEW_SOP(O(O_STC,SB),0,2,"stc"),{{CCR|SRC,ABS32DST,E}},     {{PREFIXLDC,0x6,0xB,0xA,0x0,DST|ABS32LIST,E}}EOP,
 
-  NEW_SOP(O(O_STC,SB), 1,2,"stc"),{{EXR,RD8,E}},{{ 0x0,0x2,0x1,RD8,E,0,0,0,0}} EOP,
+  NEW_SOP(O(O_STC,SB), 1,2,"stc"),{{EXR|SRC,RD8,E}},{{ 0x0,0x2,0x1,RD8,E,0,0,0,0}} EOP,
 
-  NEW_SOP(O(O_STC,SB),0,2,"stc"),{{EXR,RSIND,E}},        {{0x0,0x1,0x4,0x1,0x6,0x9,B31|RDIND,0x0,E}} EOP,
-  NEW_SOP(O(O_STC,SB),0,2,"stc"),{{EXR,DISP|DST|L_16,E}},{{0x0,0x1,0x4,0x1,0x6,0xF,B31|DISPREG,0,DST|DISP|L_16,IGNORE,IGNORE,IGNORE,E}}EOP,
-  NEW_SOP(O(O_STC,SB),0,2,"stc"),{{EXR,DISP|DST|L_32,E}},{{0x0,0x1,0x4,0x1,0x7,0x8,B30|DISPREG,0,0x6,0xB,0xA,0x0,DST|DISP32LIST,E}}EOP,
-  NEW_SOP(O(O_STC,SB),0,2,"stc"),{{EXR,RDDEC,E}},        {{0x0,0x1,0x4,0x1,0x6,0xD,B31|RDDEC,0x0,E}}EOP,
+  NEW_SOP(O(O_STC,SB),0,2,"stc"),{{EXR|SRC,RDIND,E}},        {{0x0,0x1,0x4,0x1,0x6,0x9,B31|RDIND,0x0,E}} EOP,
+  NEW_SOP(O(O_STC,SB),0,2,"stc"),{{EXR|SRC,DISP|DST|L_16,E}},{{0x0,0x1,0x4,0x1,0x6,0xF,B31|DISPREG,0,DST|DISP|L_16,IGNORE,IGNORE,IGNORE,E}}EOP,
+  NEW_SOP(O(O_STC,SB),0,2,"stc"),{{EXR|SRC,DISP|DST|L_32,E}},{{0x0,0x1,0x4,0x1,0x7,0x8,B30|DISPREG,0,0x6,0xB,0xA,0x0,DST|DISP32LIST,E}}EOP,
+  NEW_SOP(O(O_STC,SB),0,2,"stc"),{{EXR|SRC,RDDEC,E}},        {{0x0,0x1,0x4,0x1,0x6,0xD,B31|RDDEC,0x0,E}}EOP,
 
-  NEW_SOP(O(O_STC,SB),0,2,"stc"),{{EXR,ABS16SRC,E}},     {{0x0,0x1,0x4,0x1,0x6,0xB,0x8,0x0,ABS16DST,IGNORE,IGNORE,IGNORE,E}}EOP,
-  NEW_SOP(O(O_STC,SB),0,2,"stc"),{{EXR,ABS32SRC,E}},     {{0x0,0x1,0x4,0x1,0x6,0xB,0xA,0x0,DST|ABS32LIST,E}}EOP,
+  NEW_SOP(O(O_STC,SB),0,2,"stc"),{{EXR|SRC,ABS16DST,E}},     {{0x0,0x1,0x4,0x1,0x6,0xB,0x8,0x0,ABS16DST,IGNORE,IGNORE,IGNORE,E}}EOP,
+  NEW_SOP(O(O_STC,SB),0,2,"stc"),{{EXR|SRC,ABS32DST,E}},     {{0x0,0x1,0x4,0x1,0x6,0xB,0xA,0x0,DST|ABS32LIST,E}}EOP,
 
   SOP(O(O_SUB,SB),2,"sub.b"),{{RS8,RD8,E}},{{ 0x1,0x8,RS8,RD8,E,0,0,0,0}}EOP,
 
@@ -585,17 +595,17 @@ struct h8_opcode h8_opcodes[] =
   NEW_SOP(O(O_XOR,SL),0,6,"xor.l"),{{IMM32,RD32,E }},{{0x7,0xA,0x5,B30|RD32,IMM32LIST,E}} EOP,
   NEW_SOP(O(O_XOR,SL),0,2,"xor.l") ,{{RS32,RD32,E }},{{0x0,0x1,0xF,0x0,0x6,0x5,B30|RS32,B30|RD32,E}} EOP,
 
-  SOP(O(O_XORC,SB),2,"xorc"),{{IMM8,CCR,E}},{{ 0x0,0x5,IMM8,IGNORE,E,0,0,0,0}}EOP,
-  SOP(O(O_XORC,SB),2,"xorc"),{{IMM8,EXR,E}},{{ 0x0,0x1,0x4,0x1,0x0,0x5,IMM8,IGNORE,E,0,0,0,0}}EOP,
+  SOP(O(O_XORC,SB),2,"xorc"),{{IMM8,CCR|DST,E}},{{ 0x0,0x5,IMM8,IGNORE,E,0,0,0,0}}EOP,
+  SOP(O(O_XORC,SB),2,"xorc"),{{IMM8,EXR|DST,E}},{{ 0x0,0x1,0x4,0x1,0x0,0x5,IMM8,IGNORE,E,0,0,0,0}}EOP,
 
   NEW_SOP(O(O_CLRMAC,SN),1,2,"clrmac"),{{E, 0, 0}},{{0x0,0x1,0xa,0x0,E}} EOP,
   NEW_SOP(O(O_MAC,SL),1,2,"mac"),{{RSINC,RDINC,E}},{{0x0,0x1,0x6,0x0,0x6,0xd,B30|RSINC,B30|RDINC,E}} EOP,
-  NEW_SOP(O(O_LDMAC,SL),1,2,"ldmac"),{{RS32,MACREG,E}},{{0x0,0x3,MACREG,RS32,E}} EOP,
-  NEW_SOP(O(O_STMAC,SL),1,2,"stmac"),{{MACREG,RD32,E}},{{0x0,0x2,MACREG,RD32,E}} EOP,
+  NEW_SOP(O(O_LDMAC,SL),1,2,"ldmac"),{{RS32,MD32,E}},{{0x0,0x3,MD32,RS32,E}} EOP,
+  NEW_SOP(O(O_STMAC,SL),1,2,"stmac"),{{MS32,RD32,E}},{{0x0,0x2,MS32,RD32,E}} EOP,  
   NEW_SOP(O(O_LDM,SL),0,6,"ldm.l"),{{RSINC, RS32, E}},{{ 0x0,0x1,IGNORE,0x0,0x6,0xD,0x7,IGNORE,E}}EOP,
   NEW_SOP(O(O_STM,SL),0,6,"stm.l"),{{RS32, RDDEC, E}},{{0x0,0x1,IGNORE,0x0,0x6,0xD,0xF,IGNORE,E}}EOP,
-  { 0 }
+  {0, 0, 0, NULL, {{0,0,0}}, {{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}}}
 };
 #else
-extern struct h8_opcode h8_opcodes[];
+extern const struct h8_opcode h8_opcodes[];
 #endif

@@ -1,5 +1,5 @@
-/* tc-h8500.c -- Assemble code for the Hitachi H8/500
-   Copyright 1993, 1994, 1995, 1998, 2000, 2001
+/* tc-h8500.c -- Assemble code for the Renesas H8/500
+   Copyright 1993, 1994, 1995, 1998, 2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -28,7 +28,7 @@
 #define DEFINE_TABLE
 #define ASSEMBLER_TABLE
 #include "opcodes/h8500-opc.h"
-#include <ctype.h>
+#include "safe-ctype.h"
 
 const char comment_chars[] = "!";
 const char line_separator_chars[] = ";";
@@ -40,8 +40,6 @@ const char line_comment_chars[] = "!#";
    function to call to execute this pseudo-op
    Integer arg to pass to the function
    */
-
-void cons ();
 
 const pseudo_typeS md_pseudo_table[] =
 {
@@ -122,7 +120,7 @@ static struct hash_control *opcode_hash_control;	/* Opcode mnemonics */
 void
 md_begin ()
 {
-  h8500_opcode_info *opcode;
+  const h8500_opcode_info *opcode;
   char prev_buffer[100];
   int idx = 0;
 
@@ -148,14 +146,11 @@ static int crw;			/* word sized cr */
 static int cr;			/* unknown size cr */
 
 static expressionS displacement;/* displacement expression */
-static int displacement_size;	/* and size if given */
 
 static int immediate_inpage;
 static expressionS immediate;	/* immediate expression */
-static int immediate_size;	/* and size if given */
 
 static expressionS absolute;	/* absolute expression */
-static int absolute_size;	/* and size if given */
 
 typedef struct
 {
@@ -168,6 +163,8 @@ typedef struct
 h8500_operand_info;
 
 /* Try to parse a reg name.  Return the number of chars consumed.  */
+
+static int parse_reg PARAMS ((char *, int *, int *));
 
 static int
 parse_reg (src, mode, reg)
@@ -246,6 +243,8 @@ parse_reg (src, mode, reg)
   return 0;
 }
 
+static char *parse_exp PARAMS ((char *, expressionS *, int *));
+
 static char *
 parse_exp (s, op, page)
      char *s;
@@ -292,6 +291,9 @@ typedef enum
     exp_signed, exp_unsigned, exp_sandu
   } sign_type;
 
+static char *skip_colonthing
+  PARAMS ((sign_type, char *, h8500_operand_info *, int, int, int, int));
+
 static char *
 skip_colonthing (sign, ptr, exp, def, size8, size16, size24)
      sign_type sign;
@@ -311,12 +313,12 @@ skip_colonthing (sign, ptr, exp, def, size8, size16, size24)
 	  ptr++;
 	  exp->type = size8;
 	}
-      else if (ptr[0] == '1' & ptr[1] == '6')
+      else if (ptr[0] == '1' && ptr[1] == '6')
 	{
 	  ptr += 2;
 	  exp->type = size16;
 	}
-      else if (ptr[0] == '2' & ptr[1] == '4')
+      else if (ptr[0] == '2' && ptr[1] == '4')
 	{
 	  if (!size24)
 	    {
@@ -361,6 +363,8 @@ skip_colonthing (sign, ptr, exp, def, size8, size16, size24)
     }
   return ptr;
 }
+
+static int parse_reglist PARAMS ((char *, h8500_operand_info *));
 
 static int
 parse_reglist (src, op)
@@ -430,6 +434,8 @@ parse_reglist (src, op)
    #xx[:size]		immediate data
 
    */
+
+static void get_operand PARAMS ((char **, h8500_operand_info *, char));
 
 static void
 get_operand (ptr, op, ispage)
@@ -559,12 +565,14 @@ get_operand (ptr, op, ispage)
     }
 }
 
+static char *get_operands
+  PARAMS ((h8500_opcode_info *, char *, h8500_operand_info *));
+
 static char *
 get_operands (info, args, operand)
      h8500_opcode_info *info;
      char *args;
      h8500_operand_info *operand;
-
 {
   char *ptr = args;
 
@@ -602,6 +610,9 @@ get_operands (info, args, operand)
 
 int pcrel8;			/* Set when we've seen a pcrel operand */
 
+static h8500_opcode_info *get_specific
+  PARAMS ((h8500_opcode_info *, h8500_operand_info *));
+
 static h8500_opcode_info *
 get_specific (opcode, operands)
      h8500_opcode_info *opcode;
@@ -610,8 +621,7 @@ get_specific (opcode, operands)
   h8500_opcode_info *this_try = opcode;
   int found = 0;
   unsigned int noperands = opcode->nargs;
-
-  unsigned int this_index = opcode->idx;
+  int this_index = opcode->idx;
 
   while (this_index == opcode->idx && !found)
     {
@@ -843,7 +853,9 @@ get_specific (opcode, operands)
     return 0;
 }
 
-int
+static int check PARAMS ((expressionS *, int, int));
+
+static int
 check (operand, low, high)
      expressionS *operand;
      int low;
@@ -857,6 +869,8 @@ check (operand, low, high)
     }
   return operand->X_add_number;
 }
+
+static void insert PARAMS ((char *, int, expressionS *, int, int));
 
 static void
 insert (output, index, exp, reloc, pcrel)
@@ -874,10 +888,13 @@ insert (output, index, exp, reloc, pcrel)
 	       reloc);
 }
 
-void
+static void build_relaxable_instruction
+  PARAMS ((h8500_opcode_info *, h8500_operand_info *));
+
+static void
 build_relaxable_instruction (opcode, operand)
      h8500_opcode_info *opcode;
-     h8500_operand_info *operand;
+     h8500_operand_info *operand ATTRIBUTE_UNUSED;
 {
   /* All relaxable instructions start life as two bytes but can become
      three bytes long if a lonely branch and up to 9 bytes if long
@@ -917,11 +934,12 @@ build_relaxable_instruction (opcode, operand)
 
 /* Now we know what sort of opcodes it is, let's build the bytes.  */
 
+static void build_bytes PARAMS ((h8500_opcode_info *, h8500_operand_info *));
+
 static void
 build_bytes (opcode, operand)
      h8500_opcode_info *opcode;
      h8500_operand_info *operand;
-
 {
   int index;
 
@@ -1116,21 +1134,21 @@ md_assemble (str)
 
 void
 tc_crawl_symbol_chain (headers)
-     object_headers *headers;
+     object_headers *headers ATTRIBUTE_UNUSED;
 {
   printf (_("call to tc_crawl_symbol_chain \n"));
 }
 
 symbolS *
 md_undefined_symbol (name)
-     char *name;
+     char *name ATTRIBUTE_UNUSED;
 {
   return 0;
 }
 
 void
 tc_headers_hook (headers)
-     object_headers *headers;
+     object_headers *headers ATTRIBUTE_UNUSED;
 {
   printf (_("call to tc_headers_hook \n"));
 }
@@ -1154,7 +1172,6 @@ md_atof (type, litP, sizeP)
   LITTLENUM_TYPE words[MAX_LITTLENUMS];
   LITTLENUM_TYPE *wordP;
   char *t;
-  char *atof_ieee ();
 
   switch (type)
     {
@@ -1199,7 +1216,7 @@ md_atof (type, litP, sizeP)
   return 0;
 }
 
-CONST char *md_shortopts = "";
+const char *md_shortopts = "";
 struct option md_longopts[] = {
   {NULL, no_argument, NULL, 0}
 };
@@ -1207,24 +1224,19 @@ size_t md_longopts_size = sizeof (md_longopts);
 
 int
 md_parse_option (c, arg)
-     int c;
-     char *arg;
+     int c ATTRIBUTE_UNUSED;
+     char *arg ATTRIBUTE_UNUSED;
 {
   return 0;
 }
 
 void
 md_show_usage (stream)
-     FILE *stream;
+     FILE *stream ATTRIBUTE_UNUSED;
 {
 }
 
-void
-tc_aout_fix_to_chars ()
-{
-  printf (_("call to tc_aout_fix_to_chars \n"));
-  abort ();
-}
+static void wordify_scb PARAMS ((char *, int *, int *));
 
 static void
 wordify_scb (buffer, disp_size, inst_size)
@@ -1296,8 +1308,8 @@ wordify_scb (buffer, disp_size, inst_size)
 
 void
 md_convert_frag (headers, seg, fragP)
-     object_headers *headers;
-     segT seg;
+     object_headers *headers ATTRIBUTE_UNUSED;
+     segT seg ATTRIBUTE_UNUSED;
      fragS *fragP;
 {
   int disp_size = 0;
@@ -1372,20 +1384,19 @@ md_section_align (seg, size)
 }
 
 void
-md_apply_fix (fixP, val)
+md_apply_fix3 (fixP, valP, seg)
      fixS *fixP;
-     long val;
+     valueT * valP;
+     segT seg ATTRIBUTE_UNUSED;
 {
+  long val = * (long *) valP;
   char *buf = fixP->fx_where + fixP->fx_frag->fr_literal;
 
   if (fixP->fx_r_type == 0)
-    {
-      fixP->fx_r_type = fixP->fx_size == 4 ? R_H8500_IMM32 : R_H8500_IMM16;
-    }
+    fixP->fx_r_type = fixP->fx_size == 4 ? R_H8500_IMM32 : R_H8500_IMM16;
 
   switch (fixP->fx_r_type)
     {
-
     case R_H8500_IMM8:
     case R_H8500_PCREL8:
       *buf++ = val;
@@ -1416,14 +1427,15 @@ md_apply_fix (fixP, val)
       break;
     default:
       abort ();
-
     }
+
+  if (fixP->fx_addsy == NULL && fixP->fx_pcrel == 0)
+    fixP->fx_done = 1;
 }
 
-/*
-called just before address relaxation, return the length
-by which a fragment must grow to reach it's destination
-*/
+/* Called just before address relaxation, return the length
+   by which a fragment must grow to reach it's destination.  */
+
 int
 md_estimate_size_before_relax (fragP, segment_type)
      register fragS *fragP;
@@ -1492,7 +1504,7 @@ md_pcrel_from (fixP)
 
 void
 tc_coff_symbol_emit_hook (ignore)
-     symbolS *ignore;
+     symbolS *ignore ATTRIBUTE_UNUSED;
 {
 }
 
@@ -1589,10 +1601,10 @@ start_label (ptr)
      char *ptr;
 {
   /* Check for :s.w */
-  if (isalpha (ptr[1]) && ptr[2] == '.')
+  if (ISALPHA (ptr[1]) && ptr[2] == '.')
     return 0;
   /* Check for :s */
-  if (isalpha (ptr[1]) && !isalpha (ptr[2]))
+  if (ISALPHA (ptr[1]) && !ISALPHA (ptr[2]))
     return 0;
   return 1;
 }

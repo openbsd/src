@@ -1,6 +1,6 @@
 /* IBM RS/6000 "XCOFF" back-end for BFD.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 2000,
-   2001
+   2001, 2002
    Free Software Foundation, Inc.
    FIXME: Can someone provide a transliteration of this name into ASCII?
    Using the following chars caused a compiler warning on HIUX (so I replaced
@@ -11,21 +11,21 @@
    Archive support from Damon A. Permezel.
    Contributed by IBM Corporation and Cygnus Support.
 
-This file is part of BFD, the Binary File Descriptor library.
+   This file is part of BFD, the Binary File Descriptor library.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 /* This port currently only handles reading object files, except when
    compiled on an RS/6000 host.  -- no archive support, no core files.
@@ -182,7 +182,7 @@ typedef union {
 
 /* Return the c_impl field from struct core_dumpx C.  */
 
-#ifdef AIX_CORE_DUMPX_CORE
+#if defined (HAVE_ST_C_IMPL) || defined (AIX_5_CORE)
 # define CNEW_IMPL(c)	(c).c_impl
 #else
 # define CNEW_IMPL(c)	0
@@ -253,29 +253,33 @@ typedef union {
 /* Try to read into CORE the header from the core file associated with ABFD.
    Return success.  */
 
-static boolean
+static bfd_boolean
 read_hdr (bfd *abfd, CoreHdr *core)
 {
   bfd_size_type size;
 
-  if (bfd_seek (abfd, 0, SEEK_SET) != 0)
-    return false;
+  if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET) != 0)
+    return FALSE;
 
   /* Read the leading portion that old and new core dump structures have in
      common.  */
-  if (bfd_read (core, CORE_COMMONSZ, 1, abfd) != CORE_COMMONSZ)
-    return false;
+  size = CORE_COMMONSZ;
+  if (bfd_bread (core, size, abfd) != size)
+    return FALSE;
 
   /* Read the trailing portion of the structure.  */
-  size = CORE_NEW (*core) ? sizeof (core->new) : sizeof (core->old)
-    - CORE_COMMONSZ;
-  return bfd_read ((char *) core + CORE_COMMONSZ, size, 1, abfd) == size;
+  if (CORE_NEW (*core))
+    size = sizeof (core->new);
+  else
+    size = sizeof (core->old);
+  size -= CORE_COMMONSZ;
+  return bfd_bread ((char *) core + CORE_COMMONSZ, size, abfd) == size;
 }
 
 static asection *
 make_bfd_asection (abfd, name, flags, _raw_size, vma, filepos)
      bfd *abfd;
-     CONST char *name;
+     const char *name;
      flagword flags;
      bfd_size_type _raw_size;
      bfd_vma vma;
@@ -424,7 +428,7 @@ rs6000coff_core_p (abfd)
 
   /* Allocate core file header.  */
   size = CORE_NEW (core) ? sizeof (core.new) : sizeof (core.old);
-  tmpptr = (char *) bfd_zalloc (abfd, size);
+  tmpptr = (char *) bfd_zalloc (abfd, (bfd_size_type) size);
   if (!tmpptr)
     return NULL;
 
@@ -458,13 +462,13 @@ rs6000coff_core_p (abfd)
   if (!make_bfd_asection (abfd, ".stack",
 			  SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS,
 			  c_size, c_stackend - c_size, c_stack))
-    return NULL;
+    goto fail;
 
   /* .reg section for all registers.  */
   if (!make_bfd_asection (abfd, ".reg",
 			  SEC_HAS_CONTENTS,
 			  c_regsize, (bfd_vma) 0, c_regoff))
-    return NULL;
+    goto fail;
 
   /* .ldinfo section.
      To actually find out how long this section is in this particular
@@ -473,7 +477,7 @@ rs6000coff_core_p (abfd)
   if (!make_bfd_asection (abfd, ".ldinfo",
 			  SEC_HAS_CONTENTS,
 			  c_lsize, (bfd_vma) 0, c_loader))
-    return NULL;
+    goto fail;
 
 #ifndef CORE_VERSION_1
   /* .data section if present.
@@ -490,7 +494,7 @@ rs6000coff_core_p (abfd)
 			      (bfd_vma)
 				CDATA_ADDR (core.old.c_u.u_dsize),
 			      c_stack + c_size))
-	return NULL;
+	goto fail;
     }
 #endif
 
@@ -532,7 +536,7 @@ rs6000coff_core_p (abfd)
 				c_datasize,
 				(bfd_vma) CDATA_ADDR (c_datasize),
 				c_data))
-	  return NULL;
+	  goto fail;
       }
 
     /* .data sections from loaded objects.  */
@@ -544,9 +548,9 @@ rs6000coff_core_p (abfd)
     while (1)
       {
 	if (bfd_seek (abfd, c_loader, SEEK_SET) != 0)
-	  return NULL;
-	if (bfd_read (&ldinfo, size, 1, abfd) != size)
-	  return NULL;
+	  goto fail;
+	if (bfd_bread (&ldinfo, size, abfd) != size)
+	  goto fail;
 
 	if (proc64)
 	  {
@@ -567,7 +571,7 @@ rs6000coff_core_p (abfd)
 	  if (!make_bfd_asection (abfd, ".data",
 				  SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS,
 				  ldi_datasize, ldi_dataorg, ldi_core))
-	    return NULL;
+	    goto fail;
 
 	if (ldi_next == 0)
 	  break;
@@ -580,7 +584,7 @@ rs6000coff_core_p (abfd)
 	bfd_size_type i;
 
 	if (bfd_seek (abfd, c_vmm, SEEK_SET) != 0)
-	  return NULL;
+	  goto fail;
 
 	for (i = 0; i < c_vmregions; i++)
 	  {
@@ -590,8 +594,8 @@ rs6000coff_core_p (abfd)
 	    bfd_vma vminfo_addr;
 
 	    size = CORE_NEW (core) ? sizeof (vminfo.new) : sizeof (vminfo.old);
-	    if (bfd_read (&vminfo, size, 1, abfd) != size)
-	      return NULL;
+	    if (bfd_bread (&vminfo, size, abfd) != size)
+	      goto fail;
 
 	    if (CORE_NEW (core))
 	      {
@@ -611,18 +615,24 @@ rs6000coff_core_p (abfd)
 				      SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS,
 				      vminfo_size, vminfo_addr,
 				      vminfo_offset))
-		return NULL;
+		goto fail;
 	  }
       }
   }
 #endif
 
   return abfd->xvec;		/* This is garbage for now.  */
+
+ fail:
+  bfd_release (abfd, abfd->tdata.any);
+  abfd->tdata.any = NULL;
+  bfd_section_list_clear (abfd);
+  return NULL;
 }
 
-/* Return `true' if given core is from the given executable.  */
+/* Return `TRUE' if given core is from the given executable.  */
 
-boolean
+bfd_boolean
 rs6000coff_core_file_matches_executable_p (core_bfd, exec_bfd)
      bfd *core_bfd;
      bfd *exec_bfd;
@@ -632,11 +642,11 @@ rs6000coff_core_file_matches_executable_p (core_bfd, exec_bfd)
   char *path, *s;
   size_t alloc;
   const char *str1, *str2;
-  boolean ret;
+  bfd_boolean ret;
   file_ptr c_loader;
 
   if (!read_hdr (core_bfd, &core))
-    return false;
+    return FALSE;
 
   if (CORE_NEW (core))
     c_loader = CNEW_LOADER (core.new);
@@ -649,20 +659,20 @@ rs6000coff_core_file_matches_executable_p (core_bfd, exec_bfd)
     size = (int) ((LdInfo *) 0)->l32.ldinfo_filename;
 
   if (bfd_seek (core_bfd, c_loader + size, SEEK_SET) != 0)
-    return false;
+    return FALSE;
 
   alloc = 100;
-  path = bfd_malloc (alloc);
+  path = bfd_malloc ((bfd_size_type) alloc);
   if (path == NULL)
-    return false;
+    return FALSE;
   s = path;
 
   while (1)
     {
-      if (bfd_read (s, 1, 1, core_bfd) != 1)
+      if (bfd_bread (s, (bfd_size_type) 1, core_bfd) != 1)
 	{
 	  free (path);
-	  return false;
+	  return FALSE;
 	}
       if (*s == '\0')
 	break;
@@ -672,11 +682,11 @@ rs6000coff_core_file_matches_executable_p (core_bfd, exec_bfd)
 	  char *n;
 
 	  alloc *= 2;
-	  n = bfd_realloc (path, alloc);
+	  n = bfd_realloc (path, (bfd_size_type) alloc);
 	  if (n == NULL)
 	    {
 	      free (path);
-	      return false;
+	      return FALSE;
 	    }
 	  s = n + (path - s);
 	  path = n;
@@ -691,9 +701,9 @@ rs6000coff_core_file_matches_executable_p (core_bfd, exec_bfd)
   str2 = str2 != NULL ? str2 + 1 : exec_bfd->filename;
 
   if (strcmp (str1, str2) == 0)
-    ret = true;
+    ret = TRUE;
   else
-    ret = false;
+    ret = FALSE;
 
   free (path);
 

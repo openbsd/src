@@ -1,8 +1,0 @@
-
-
-	test
-+ continued
-+ lines
-
-
-	.END

@@ -1,5 +1,6 @@
 /* tc-mn10300.h -- Header file for tc-mn10300.c.
-   Copyright 1996, 1997, 2000 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 2000, 2001, 2002, 2003
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -31,18 +32,37 @@
 
 #define TARGET_FORMAT "elf32-mn10300"
 
-/* For fixup and relocation handling.  */
-#define TC_FORCE_RELOCATION(fixp) mn10300_force_relocation (fixp)
-extern int mn10300_force_relocation PARAMS ((struct fix *));
+/* No shared lib support, so we don't need to ensure externally
+   visible symbols can be overridden.  */
+#define EXTERN_FORCE_RELOC 0
 
-#define TC_HANDLES_FX_DONE
+/* Do not adjust relocations involving symbols in code sections,
+   because it breaks linker relaxations.  This could be fixed in the
+   linker, but this fix is simpler, and it pretty much only affects
+   object size a little bit.  */
+#define TC_FORCE_RELOCATION_SUB_SAME(FIX, SEC)	\
+  (((SEC)->flags & SEC_CODE) != 0		\
+   || ! SEG_NORMAL (SEC)			\
+   || TC_FORCE_RELOCATION (FIX))
 
-#define obj_fix_adjustable(fixP) mn10300_fix_adjustable (fixP)
-extern boolean mn10300_fix_adjustable PARAMS ((struct fix *));
+/* We validate subtract arguments within tc_gen_reloc(), so don't
+   report errors at this point.  */
+#define TC_VALIDATE_FIX_SUB(FIX) 1
 
-#define MD_APPLY_FIX3 md_apply_fix3
+/* Fixup debug sections since we will never relax them.  Ideally, we
+   could do away with this and instead check every single fixup with
+   TC_FORCE_RELOCATION and TC_FORCE_RELOCATION_SUB_NAME, verifying
+   that the sections of the referenced symbols (and not the sections
+   in which the fixup appears) may be subject to relaxation.  We'd
+   still have to check the section in which the fixup appears, because
+   we want to do some simplifications in debugging info that might
+   break in real code.
 
-/* Fixup debug sections since we will never relax them.  */
+   Using the infrastructure in write.c to simplify subtraction fixups
+   would enable us to remove a lot of code from tc_gen_reloc(), but
+   this is simpler, faster, and produces almost the same effect.
+   Also, in the macros above, we can't check whether the fixup is in a
+   debugging section or not, so we have to use this for now.  */
 #define TC_LINKRELAX_FIXUP(seg) (seg->flags & SEC_ALLOC)
 
 #define md_operand(x)
@@ -57,6 +77,8 @@ extern boolean mn10300_fix_adjustable PARAMS ((struct fix *));
 
 /* Don't bother to adjust relocs.  */
 #define tc_fix_adjustable(FIX) 0
+/* #define tc_fix_adjustable(FIX) mn10300_fix_adjustable (FIX) */
+extern bfd_boolean mn10300_fix_adjustable PARAMS ((struct fix *));
 
 /* We do relaxing in the assembler as well as the linker.  */
 extern const struct relax_type md_relax_table[];

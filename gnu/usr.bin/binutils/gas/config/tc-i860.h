@@ -1,5 +1,5 @@
 /* tc-i860.h -- Header file for the i860.
-   Copyright 1991, 1992, 1995, 1998, 2000
+   Copyright 1991, 1992, 1995, 1998, 2000, 2001, 2002
    Free Software Foundation, Inc.
 
    Brought back from the dead and completely reworked
@@ -71,8 +71,6 @@ extern int target_big_endian;
 #endif
 
 #define WORKING_DOT_WORD
-#define MD_APPLY_FIX3
-#define TC_HANDLES_FX_DONE
 #define DIFF_EXPR_OK
 
 /* Permit temporary numeric labels.  */
@@ -80,5 +78,12 @@ extern int target_big_endian;
 #define LISTING_HEADER		"GAS for i860"
 
 #define md_convert_frag(b,s,f)  as_fatal (_("i860_convert_frag\n"));
+
+/* Values passed to md_apply_fix3 don't include the symbol value.  */
+#define MD_APPLY_SYM_VALUE(FIX) 0
+
+/* No shared lib support, so we don't need to ensure externally
+   visible symbols can be overridden.  */
+#define EXTERN_FORCE_RELOC 0
 
 #endif /* TC_I860 */

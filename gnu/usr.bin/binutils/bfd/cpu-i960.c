@@ -1,5 +1,5 @@
 /* BFD library support routines for the i960 architecture.
-   Copyright 1990, 1991, 1993, 1994, 1996, 1999, 2000
+   Copyright 1990, 1991, 1993, 1994, 1996, 1999, 2000, 2001, 2002
    Free Software Foundation, Inc.
    Hacked by Steve Chamberlain of Cygnus Support.
 
@@ -23,24 +23,25 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "sysdep.h"
 #include "libbfd.h"
 
+static bfd_boolean scan_960_mach
+  PARAMS ((const bfd_arch_info_type *, const char *));
+static const bfd_arch_info_type *compatible
+  PARAMS ((const bfd_arch_info_type *, const bfd_arch_info_type *));
+
 /* This routine is provided a string, and tries to work out if it
    could possibly refer to the i960 machine pointed at in the
    info_struct pointer */
 
-static boolean
+static bfd_boolean
 scan_960_mach (ap, string)
      const bfd_arch_info_type *ap;
      const char *string;
 {
   unsigned long machine;
-  int i;
-  int fail_because_not_80960 = false;
-
-  for (i = 0; i < strlen (string); i ++)
-    string[i] = tolower (string[i]);
+  int fail_because_not_80960 = FALSE;
 
   /* Look for the string i960 at the front of the string.  */
-  if (strncmp ("i960", string, 4) == 0)
+  if (strncasecmp ("i960", string, 4) == 0)
     {
       string += 4;
 
@@ -50,7 +51,7 @@ scan_960_mach (ap, string)
 
       /* "i960:*" is valid, anything else is not.  */
       if (* string != ':')
-	return false;
+	return FALSE;
 
       string ++;
     }
@@ -60,38 +61,38 @@ scan_960_mach (ap, string)
     {
       string += 5;
 
-      /* Sett his to true here.  If a correct matching postfix
-	 is detected below it will be reset to false.  */
-      fail_because_not_80960 = true;
+      /* Set this to TRUE here.  If a correct matching postfix
+	 is detected below it will be reset to FALSE.  */
+      fail_because_not_80960 = TRUE;
     }
   /* No match, can't be us.  */
   else
-    return false;
+    return FALSE;
 
   if (* string == '\0')
-    return false;
+    return FALSE;
 
   if (string[0] == 'c' && string[1] == 'o' && string[2] == 'r' &&
       string[3] == 'e' && string[4] == '\0')
     machine = bfd_mach_i960_core;
-  else if (strcmp (string, "ka_sa") == 0)
+  else if (strcasecmp (string, "ka_sa") == 0)
     machine = bfd_mach_i960_ka_sa;
-  else if (strcmp (string, "kb_sb") == 0)
+  else if (strcasecmp (string, "kb_sb") == 0)
     machine = bfd_mach_i960_kb_sb;
   else if (string[1] == '\0' || string[2] != '\0') /* rest are 2-char.  */
-    return false;
+    return FALSE;
   else if (string[0] == 'k' && string[1] == 'b')
-    { machine = bfd_mach_i960_kb_sb; fail_because_not_80960 = false; }
+    { machine = bfd_mach_i960_kb_sb; fail_because_not_80960 = FALSE; }
   else if (string[0] == 's' && string[1] == 'b')
     machine = bfd_mach_i960_kb_sb;
   else if (string[0] == 'm' && string[1] == 'c')
-    { machine = bfd_mach_i960_mc; fail_because_not_80960 = false; }
+    { machine = bfd_mach_i960_mc; fail_because_not_80960 = FALSE; }
   else if (string[0] == 'x' && string[1] == 'a')
     machine = bfd_mach_i960_xa;
   else if (string[0] == 'c' && string[1] == 'a')
-    { machine = bfd_mach_i960_ca; fail_because_not_80960 = false; }
+    { machine = bfd_mach_i960_ca; fail_because_not_80960 = FALSE; }
   else if (string[0] == 'k' && string[1] == 'a')
-    { machine = bfd_mach_i960_ka_sa; fail_because_not_80960 = false; }
+    { machine = bfd_mach_i960_ka_sa; fail_because_not_80960 = FALSE; }
   else if (string[0] == 's' && string[1] == 'a')
     machine = bfd_mach_i960_ka_sa;
   else if (string[0] == 'j' && string[1] == 'x')
@@ -99,15 +100,15 @@ scan_960_mach (ap, string)
   else if (string[0] == 'h' && string[1] == 'x')
     machine = bfd_mach_i960_hx;
   else
-    return false;
+    return FALSE;
 
   if (fail_because_not_80960)
-    return false;
+    return FALSE;
 
   if (machine == ap->mach)
-    return true;
+    return TRUE;
 
-  return false;
+  return FALSE;
 }
 
 /* This routine is provided two arch_infos and works out the i960
@@ -140,7 +141,7 @@ compatible (a,b)
 #define HX	bfd_mach_i960_hx    /*8*/
 #define MAX_ARCH ((int)HX)
 
-  static CONST unsigned long matrix[MAX_ARCH+1][MAX_ARCH+1] =
+  static const unsigned long matrix[MAX_ARCH+1][MAX_ARCH+1] =
     {
       { ERROR,	CORE,	KA,	KB,	MC,	XA,	CA,	JX,	HX },
       { CORE,	CORE,	KA,	KB,	MC,	XA,	CA,	JX,	HX },
@@ -163,20 +164,19 @@ compatible (a,b)
     }
 }
 
-int bfd_default_scan_num_mach();
 #define N(a,b,d,n) \
 { 32, 32, 8,bfd_arch_i960,a,"i960",b,3,d,compatible,scan_960_mach,n,}
 
 static const bfd_arch_info_type arch_info_struct[] =
 {
-  N(bfd_mach_i960_ka_sa,"i960:ka_sa",false, &arch_info_struct[1]),
-  N(bfd_mach_i960_kb_sb,"i960:kb_sb",false, &arch_info_struct[2]),
-  N(bfd_mach_i960_mc,   "i960:mc",   false, &arch_info_struct[3]),
-  N(bfd_mach_i960_xa,   "i960:xa",   false, &arch_info_struct[4]),
-  N(bfd_mach_i960_ca,   "i960:ca",   false, &arch_info_struct[5]),
-  N(bfd_mach_i960_jx,   "i960:jx",   false, &arch_info_struct[6]),
-  N(bfd_mach_i960_hx,	"i960:hx",   false, 0),
+  N(bfd_mach_i960_ka_sa,"i960:ka_sa",FALSE, &arch_info_struct[1]),
+  N(bfd_mach_i960_kb_sb,"i960:kb_sb",FALSE, &arch_info_struct[2]),
+  N(bfd_mach_i960_mc,   "i960:mc",   FALSE, &arch_info_struct[3]),
+  N(bfd_mach_i960_xa,   "i960:xa",   FALSE, &arch_info_struct[4]),
+  N(bfd_mach_i960_ca,   "i960:ca",   FALSE, &arch_info_struct[5]),
+  N(bfd_mach_i960_jx,   "i960:jx",   FALSE, &arch_info_struct[6]),
+  N(bfd_mach_i960_hx,	"i960:hx",   FALSE, 0),
 };
 
 const bfd_arch_info_type bfd_i960_arch =
-  N(bfd_mach_i960_core, "i960:core", true, &arch_info_struct[0]);
+  N(bfd_mach_i960_core, "i960:core", TRUE, &arch_info_struct[0]);

@@ -1,6 +1,6 @@
 \input texinfo
 @c  Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-@c  2001
+@c  2001, 2002, 2003
 @c  Free Software Foundation, Inc.
 @setfilename internals.info
 @node Top
@@ -130,11 +130,12 @@ Symbol structures contain the following fields:
 @item sy_value
 This is an @code{expressionS} that describes the value of the symbol.  It might
 refer to one or more other symbols; if so, its true value may not be known
-until @code{resolve_symbol_value} is called in @code{write_object_file}.
+until @code{resolve_symbol_value} is called with @var{finalize_syms} non-zero
+in @code{write_object_file}.
 
 The expression is often simply a constant.  Before @code{resolve_symbol_value}
-is called, the value is the offset from the frag (@pxref{Frags}).  Afterward,
-the frag address has been added in.
+is called with @var{finalize_syms} set, the value is the offset from the frag
+(@pxref{Frags}).  Afterward, the frag address has been added in.
 
 @item sy_resolved
 This field is non-zero if the symbol's value has been completely resolved.  It
@@ -208,9 +209,7 @@ Set the symbol's value.
 @item S_GET_VALUE
 @cindex S_GET_VALUE
 Get the symbol's value.  This will cause @code{resolve_symbol_value} to be
-called if necessary, so @code{S_GET_VALUE} should only be called when it is
-safe to resolve symbols (i.e., after the entire input file has been read and
-all symbols have been defined).
+called if necessary.
 
 @item S_SET_SEGMENT
 @cindex S_SET_SEGMENT
@@ -513,7 +512,7 @@ A number which is added into the fixup.
 
 @item fx_addnumber
 Some CPU backends use this field to convey information between
-@code{md_apply_fix} and @code{tc_gen_reloc}.  The machine independent code does
+@code{md_apply_fix3} and @code{tc_gen_reloc}.  The machine independent code does
 not use it.
 
 @item fx_next
@@ -844,11 +843,13 @@ zero if the target is little endian.
 @itemx md_longopts_size
 @itemx md_parse_option
 @itemx md_show_usage
+@itemx md_after_parse_args
 @cindex md_shortopts
 @cindex md_longopts
 @cindex md_longopts_size
 @cindex md_parse_option
 @cindex md_show_usage
+@cindex md_after_parse_args
 GAS uses these variables and functions during option processing.
 @code{md_shortopts} is a @code{const char *} which GAS adds to the machine
 independent string passed to @code{getopt}.  @code{md_longopts} is a
@@ -860,6 +861,9 @@ GAS will call @code{md_parse_option} whenever @code{getopt} returns an
 unrecognized code, presumably indicating a special code value which appears in
 @code{md_longopts}.  GAS will call @code{md_show_usage} when a usage message is
 printed; it should print a description of the machine specific options.
+@code{md_after_pase_args}, if defined, is called after all options are
+processed, to let the backend override settings done by the generic option
+parsing.
 
 @item md_begin
 @cindex md_begin
@@ -1131,6 +1135,32 @@ the MIPS which support options to change the endianness, which function to call
 is a runtime decision.  On other targets, @code{md_number_to_chars} can be a
 simple macro.
 
+@item md_atof (@var{type},@var{litP},@var{sizeP})
+@cindex md_atof
+This function is called to convert an ASCII string into a floating point value
+in format used by the CPU.  It takes three arguments.  The first is @var{type}
+which is a byte describing the type of floating point number to be created.
+Possible values are @var{'f'} or @var{'s'} for single precision, @var{'d'} or
+@var{'r'} for double precision and @var{'x'} or @var{'p'} for extended
+precision.  Either lower or upper case versions of these letters can be used.
+
+The second parameter is @var{litP} which is a pointer to a byte array where the
+converted value should be stored.  The third argument is @var{sizeP}, which is
+a pointer to a integer that should be filled in with the number of
+@var{LITTLENUM}s emitted into the byte array.  (@var{LITTLENUM} is defined in
+gas/bignum.h).  The function should return NULL upon success or an error string
+upon failure.
+
+@item TC_LARGEST_EXPONENT_IS_NORMAL
+@cindex TC_LARGEST_EXPONENT_IS_NORMAL (@var{precision})
+This macro is used only by @file{atof-ieee.c}.  It should evaluate to true
+if floats of the given precision use the largest exponent for normal numbers
+instead of NaNs and infinities.  @var{precision} is @samp{F_PRECISION} for
+single precision, @samp{D_PRECISION} for double precision, or
+@samp{X_PRECISION} for extended double precision.
+
+The macro has a default definition which returns 0 for all cases.
+
 @item md_reloc_size
 @cindex md_reloc_size
 This variable is only used in the original version of gas (not
@@ -1209,18 +1239,105 @@ The instruction is completed using the data from the relaxation pass.
 It may also create any necessary relocations.
 @xref{Relaxation}.
 
-@item md_apply_fix
-@cindex md_apply_fix
-GAS will call this for each fixup.  It should store the correct value in the
-object file.  @code{fixup_segment} performs a generic overflow check on the
-@code{valueT *val} argument after @code{md_apply_fix} returns.  If the overflow
-check is relevant for the target machine, then @code{md_apply_fix} should
-modify @code{valueT *val}, typically to the value stored in the object file.
+@item TC_FINALIZE_SYMS_BEFORE_SIZE_SEG
+@cindex TC_FINALIZE_SYMS_BEFORE_SIZE_SEG
+Specifies the value to be assigned to @code{finalize_syms} before the function
+@code{size_segs} is called.  Since @code{size_segs} calls @code{cvt_frag_to_fill}
+which can call @code{md_convert_frag}, this constant governs whether the symbols 
+accessed in @code{md_convert_frag} will be fully resolved.  In particular it
+governs whether local symbols will have been resolved, and had their frag
+information removed.  Depending upon the processing performed by
+@code{md_convert_frag} the frag information may or may not be necessary, as may
+the resolved values of the symbols.  The default value is 1.
 
-@item TC_HANDLES_FX_DONE
-@cindex TC_HANDLES_FX_DONE
-If this macro is defined, it means that @code{md_apply_fix} correctly sets the
-@code{fx_done} field in the fixup.
+@item TC_VALIDATE_FIX (@var{fixP}, @var{seg}, @var{skip})
+@cindex TC_VALIDATE_FIX
+This macro is evaluated for each fixup (when @var{linkrelax} is not set).
+It may be used to change the fixup in @code{struct fix *@var{fixP}} before
+the generic code sees it, or to fully process the fixup.  In the latter case,
+a @code{goto @var{skip}} will bypass the generic code.
+
+@item md_apply_fix3 (@var{fixP}, @var{valP}, @var{seg})
+@cindex md_apply_fix3
+GAS will call this for each fixup that passes the @code{TC_VALIDATE_FIX} test
+when @var{linkrelax} is not set.  It should store the correct value in the
+object file.  @code{struct fix *@var{fixP}} is the fixup @code{md_apply_fix3}
+is operating on.  @code{valueT *@var{valP}} is the value to store into the
+object files, or at least is the generic code's best guess.  Specifically,
+*@var{valP} is the value of the fixup symbol, perhaps modified by
+@code{MD_APPLY_SYM_VALUE}, plus @code{@var{fixP}->fx_offset} (symbol addend),
+less @code{MD_PCREL_FROM_SECTION} for pc-relative fixups.
+@code{segT @var{seg}} is the section the fix is in.
+@code{fixup_segment} performs a generic overflow check on *@var{valP} after
+@code{md_apply_fix3} returns.  If the overflow check is relevant for the target
+machine, then @code{md_apply_fix3} should modify *@var{valP}, typically to the
+value stored in the object file.
+
+@item TC_FORCE_RELOCATION (@var{fix})
+@cindex TC_FORCE_RELOCATION
+If this macro returns non-zero, it guarantees that a relocation will be emitted
+even when the value can be resolved locally, as @code{fixup_segment} tries to
+reduce the number of relocations emitted.  For example, a fixup expression
+against an absolute symbol will normally not require a reloc.  If undefined,
+a default of @w{@code{(S_FORCE_RELOC ((@var{fix})->fx_addsy))}} is used.
+
+@item TC_FORCE_RELOCATION_ABS (@var{fix})
+@cindex TC_FORCE_RELOCATION_ABS
+Like @code{TC_FORCE_RELOCATION}, but used only for fixup expressions against an
+absolute symbol.  If undefined, @code{TC_FORCE_RELOCATION} will be used.
+
+@item TC_FORCE_RELOCATION_LOCAL (@var{fix})
+@cindex TC_FORCE_RELOCATION_LOCAL
+Like @code{TC_FORCE_RELOCATION}, but used only for fixup expressions against a
+symbol in the current section.  If undefined, fixups that are not
+@code{fx_pcrel} or @code{fx_plt} or for which @code{TC_FORCE_RELOCATION}
+returns non-zero, will emit relocs.
+
+@item TC_FORCE_RELOCATION_SUB_SAME (@var{fix}, @var{seg})
+@cindex TC_FORCE_RELOCATION_SUB_SAME
+This macro controls resolution of fixup expressions involving the
+difference of two symbols in the same section.  If this macro returns zero,
+the subtrahend will be resolved and @code{fx_subsy} set to @code{NULL} for
+@code{md_apply_fix3}.  If undefined, the default of
+@w{@code{! SEG_NORMAL (@var{seg}) || TC_FORCE_RELOCATION (@var{fix})}} will
+be used.
+
+@item TC_FORCE_RELOCATION_SUB_ABS (@var{fix})
+@cindex TC_FORCE_RELOCATION_SUB_ABS
+Like @code{TC_FORCE_RELOCATION_SUB_SAME}, but used when the subtrahend is an
+absolute symbol.  If the macro is undefined a default of @code{0} is used.
+
+@item TC_FORCE_RELOCATION_SUB_LOCAL (@var{fix})
+@cindex TC_FORCE_RELOCATION_SUB_LOCAL
+Like @code{TC_FORCE_RELOCATION_SUB_ABS}, but the subtrahend is a symbol in the
+same section as the fixup.
+
+@item TC_VALIDATE_FIX_SUB (@var{fix})
+@cindex TC_VALIDATE_FIX_SUB
+This macro is evaluated for any fixup with a @code{fx_subsy} that
+@code{fixup_segment} cannot reduce to a number.  If the macro returns
+@code{false} an error will be reported.
+
+@item MD_APPLY_SYM_VALUE (@var{fix})
+@cindex MD_APPLY_SYM_VALUE
+This macro controls whether the symbol value becomes part of the value passed
+to @code{md_apply_fix3}.  If the macro is undefined, or returns non-zero, the
+symbol value will be included.  For ELF, a suitable definition might simply be
+@code{0}, because ELF relocations don't include the symbol value in the addend.
+
+@item S_FORCE_RELOC (@var{sym}, @var{strict})
+@cindex S_FORCE_RELOC
+This macro (or function, for @code{BFD_ASSEMBLER} gas) returns true for symbols
+that should not be reduced to section symbols or eliminated from expressions,
+because they may be overridden by the linker.  ie. for symbols that are
+undefined or common, and when @var{strict} is set, weak, or global (for ELF
+assemblers that support ELF shared library linking semantics).
+
+@item EXTERN_FORCE_RELOC
+@cindex EXTERN_FORCE_RELOC
+This macro controls whether @code{S_FORCE_RELOC} returns true for global
+symbols.  If undefined, the default is @code{true} for ELF assemblers, and
+@code{false} for non-ELF.
 
 @item tc_gen_reloc
 @cindex tc_gen_reloc
@@ -1248,12 +1365,14 @@ You may define this macro to indicate whether a fixup against a locally defined
 symbol should be adjusted to be against the section symbol.  It should return a
 non-zero value if the adjustment is acceptable.
 
-@item MD_PCREL_FROM_SECTION
+@item MD_PCREL_FROM_SECTION (@var{fixp}, @var{section})
 @cindex MD_PCREL_FROM_SECTION
-If you define this macro, it should return the offset between the address of a
-PC relative fixup and the position from which the PC relative adjustment should
-be made.  On many processors, the base of a PC relative instruction is the next
-instruction, so this macro would return the length of an instruction.
+If you define this macro, it should return the position from which the PC
+relative adjustment for a PC relative fixup should be made.  On many
+processors, the base of a PC relative instruction is the next instruction,
+so this macro would return the length of an instruction, plus the address of
+the PC relative fixup.  The latter can be calculated as
+@var{fixp}->fx_where + @var{fixp}->fx_frag->fr_address .
 
 @item md_pcrel_from
 @cindex md_pcrel_from
@@ -1303,7 +1422,7 @@ colon, the adjoining tokens can be distinguished.  This option affects the
 preprocessor so that whitespace around colons is preserved.  This is useful
 when colons might be removed from the input after preprocessing but before
 assembling, so that adjoining tokens can still be distinguished if there is
-whitespace, or concatentated if there is not.
+whitespace, or concatenated if there is not.
 
 @item tc_frob_section
 @cindex tc_frob_section
@@ -1319,7 +1438,7 @@ symbols.
 @item tc_frob_symbol
 @cindex tc_frob_symbol
 If you define this macro, GAS will call it for each symbol.  You can indicate
-that the symbol should not be included in the object file by definining this
+that the symbol should not be included in the object file by defining this
 macro to set its second argument to a non-zero value.
 
 @item tc_frob_file
@@ -1330,6 +1449,10 @@ completed, but before the relocations have been generated.
 @item tc_frob_file_after_relocs
 If you define this macro, GAS will call it after the relocs have been
 generated.
+
+@item md_post_relax_hook
+If you define this macro, GAS will call it after relaxing and sizing the
+segments.
 
 @item LISTING_HEADER
 A string to use on the header line of a listing.  The default value is simply
@@ -1363,6 +1486,33 @@ default value is 100.
 The COFF @code{.section} directive will use the value of this macro to set
 a new section's attributes when a directive has no valid flags or when the
 flag is @code{w}. The default value of the macro is @code{SEC_LOAD | SEC_DATA}.
+
+@item DWARF2_FORMAT ()
+@cindex DWARF2_FORMAT
+If you define this, it should return one of @code{dwarf2_format_32bit},
+@code{dwarf2_format_64bit}, or @code{dwarf2_format_64bit_irix} to indicate
+the size of internal DWARF section offsets and the format of the DWARF initial
+length fields.  When @code{dwarf2_format_32bit} is returned, the initial
+length field will be 4 bytes long and section offsets are 32 bits in size.
+For @code{dwarf2_format_64bit} and @code{dwarf2_format_64bit_irix}, section
+offsets are 64 bits in size, but the initial length field differs.  An 8 byte
+initial length is indicated by @code{dwarf2_format_64bit_irix} and
+@code{dwarf2_format_64bit} indicates a 12 byte initial length field in
+which the first four bytes are 0xffffffff and the next 8 bytes are
+the section's length.
+
+If you don't define this, @code{dwarf2_format_32bit} will be used as
+the default.
+
+This define only affects @code{.debug_info} and @code{.debug_line}
+sections generated by the assembler.  DWARF 2 sections generated by
+other tools will be unaffected by this setting.
+
+@item DWARF2_ADDR_SIZE (@var{bfd})
+@cindex DWARF2_ADDR_SIZE
+It should return the size of an address, as it should be represented in
+debugging info.  If you don't define this macro, the default definition uses
+the number of bits per address, as defined in @var{bfd}, divided by 8.
 
 @end table
 
@@ -1406,16 +1556,10 @@ You should define this macro to copy object format specific information from
 one symbol to another.  GAS will call it when one symbol is equated to
 another.
 
-@item obj_fix_adjustable
-@cindex obj_fix_adjustable
-You may define this macro to indicate whether a fixup against a locally defined
-symbol should be adjusted to be against the section symbol.  It should return a
-non-zero value if the adjustment is acceptable.
-
 @item obj_sec_sym_ok_for_reloc
 @cindex obj_sec_sym_ok_for_reloc
 You may define this macro to indicate that it is OK to use a section symbol in
-a relocateion entry.  If it is not, GAS will define a new symbol at the start
+a relocation entry.  If it is not, GAS will define a new symbol at the start
 of a section.
 
 @item EMIT_SECTION_SYMBOLS
@@ -1457,7 +1601,7 @@ symbols.
 @item obj_frob_symbol
 @cindex obj_frob_symbol
 If you define this macro, GAS will call it for each symbol.  You can indicate
-that the symbol should not be included in the object file by definining this
+that the symbol should not be included in the object file by defining this
 macro to set its second argument to a non-zero value.
 
 @item obj_frob_file
@@ -1519,7 +1663,7 @@ case, don't describe the smaller-range, inferior mode.
 The @code{fr_subtype} field of a frag is an index into a CPU-specific
 relaxation table.  That table entry indicates the range of values that can be
 stored, the number of bytes that will have to be added to the frag to
-accomodate the addressing mode, and the index of the next entry to examine if
+accommodate the addressing mode, and the index of the next entry to examine if
 the value to be stored is outside the range accessible by the current
 addressing mode.  The @code{fr_symbol} field of the frag indicates what symbol
 is to be accessed; the @code{fr_offset} field is added in.
@@ -1607,7 +1751,7 @@ It can be accessed via @code{fr_opcode} or @code{fr_fix}.
 
 If you generate frags separately for the basic insn opcode and any relaxable
 operands, do not call @code{fix_new} thinking you can emit fixups for the
-opcode field from the relaxable frag.  It is not garanteed to be the same frag.
+opcode field from the relaxable frag.  It is not guaranteed to be the same frag.
 If you need to emit fixups for the opcode field from inspection of the
 relaxable frag, then you need to generate a common frag for both the basic
 opcode and relaxable fields, or you need to provide the frag for the opcode to

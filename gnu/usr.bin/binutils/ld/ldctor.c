@@ -1,6 +1,6 @@
 /* ldctor.c -- constructor support routines
-   Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000
-   Free Software Foundation, Inc.
+   Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
+   2002 Free Software Foundation, Inc.
    By Steve Chamberlain <sac@cygnus.com>
 
 This file is part of GLD, the Gnu Linker.
@@ -23,14 +23,13 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "bfd.h"
 #include "sysdep.h"
 #include "bfdlink.h"
-
-#include <ctype.h>
+#include "safe-ctype.h"
 
 #include "ld.h"
 #include "ldexp.h"
 #include "ldlang.h"
 #include "ldmisc.h"
-#include "ldgram.h"
+#include <ldgram.h>
 #include "ldmain.h"
 #include "ldctor.h"
 
@@ -44,7 +43,7 @@ lang_statement_list_type constructor_list;
 /* Whether the constructors should be sorted.  Note that this is
    global for the entire link; we assume that there is only a single
    CONSTRUCTORS command in the linker script.  */
-boolean constructors_sorted;
+bfd_boolean constructors_sorted;
 
 /* The sets we have seen.  */
 struct set_info *sets;
@@ -146,7 +145,7 @@ ctor_prio (name)
     return -1;
   if (name[1] != 'I' && name[1] != 'D')
     return -1;
-  if (! isdigit ((unsigned char) name[3]))
+  if (! ISDIGIT (name[3]))
     return -1;
 
   return atoi (name + 3);
@@ -205,16 +204,16 @@ ctor_cmp (p1, p2)
 void
 ldctor_build_sets ()
 {
-  static boolean called;
+  static bfd_boolean called;
   lang_statement_list_type *old;
-  boolean header_printed;
+  bfd_boolean header_printed;
   struct set_info *p;
 
   /* The emulation code may call us directly, but we only want to do
      this once.  */
   if (called)
     return;
-  called = true;
+  called = TRUE;
 
   if (constructors_sorted)
     {
@@ -257,7 +256,7 @@ ldctor_build_sets ()
 
   lang_list_init (stat_ptr);
 
-  header_printed = false;
+  header_printed = FALSE;
   for (p = sets; p != (struct set_info *) NULL; p = p->next)
     {
       struct set_element *e;
@@ -343,7 +342,7 @@ ldctor_build_sets ()
 	      if (! header_printed)
 		{
 		  minfo (_("\nSet                 Symbol\n\n"));
-		  header_printed = true;
+		  header_printed = TRUE;
 		}
 
 	      minfo ("%s", p->h->root.string);

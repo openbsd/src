@@ -1,8 +1,60 @@
 -*- text -*-
 
+* Added --info switch to objcopy and strip.
+
+* Support for Vitesse IQ2000 added by Red Hat.
+
+* Added 'S' encoding to strings to allow the display of 8-bit characters.
+
+* Added --prefix-symbols=<text>, --prefix-sections=<text> and
+  --prefix-alloc-sections=<text> to objcopy.
+
+* readelf can handle the extensions to the DWARF2 spec used by the Unified
+  Parallel C compiler.
+
+* BFD no longer declares a "boolean" type, to avoid clashes with other
+  headers that declare the same.  Users of BFD should replace boolean,
+  false and true, with int, 0 and 1, or define their own boolean type.
+
+* Support for IP2K added by Denis Chertykov.
+
+Changes in 2.13:
+
+* Support for the Fujitsu FRV architecture added by Red Hat. Models for FR400
+  and FR500 included.
+
+Changes in version 2.12:
+
+* Support for Don Knuth's MMIX, by Hans-Peter Nilsson.
+
+* size: Add --totals to display summary of sizes (Berkeley format only).
+
+* readelf: Add --wide option to not break section header or segment listing
+  lines to fit into 80 columns.
+
+* strings: Add --encoding to display wide character strings.  By Markus Kuhn.
+
+* objcopy: Add --rename-section to change section names.
+
+* readelf: Support added for DWARF 2.1 extensions.  Support added for
+  displaying the contents of .debug.macinfo sections.
+
 * New command line switches added to objcopy to allow symbols to be kept as
   global symbols, and also to specify files containing lists of such symbols.
   by Honda Hiroki.
+
+* Support for OpenRISC by Johan Rydberg.
+
+* New command line switch to objcopy --alt-machine-code which creates a binary
+  with an alternate machine code if one is defined in the architecture
+  description.  Only supported for ELF targets.  By Alexandre Oliva.
+
+* New command line switch to objcopy -B (or --binary-architecture) which sets
+  the architecture of the output file to the given argument.  This option only
+  makes sense, if the input target is binary.  Otherwise it is ignored.
+  By Stefan Geuken.
+
+* Support for PDP-11 by Lars Brinkhoff.
 
 Changes in binutils 2.11:
 
@@ -11,7 +63,7 @@ Changes in binutils 2.11:
 
 * Add --srec-len and --srec-forceS3 command line switch to objcopy.
   By Luciano Gemme.
-  
+
 * Support for the MIPS32, by Anders Norlander.
 
 * Support for the i860, by Jason Eckhardt.
@@ -24,13 +76,13 @@ Changes in binutils 2.10:
 
 * New command line switch to objdump --file-start-context which shows the
   entire file contents up to the source line first encountered for a given
-  file. 
+  file.
 
 * New command line switch to objdump -M (or --disassembler-options) which takes
   a parameter which can then be interpreted on a per-target basis by the
   disassembler.  Used by ARM targets to select register name sets, ISA, APCS or
   raw verions.
-  
+
 * objdump support for -mi386:intel which causes disassembly to be displayed
   with intel syntax.
 

@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.54 2004/02/27 17:40:15 deraadt Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.55 2004/05/17 21:54:18 drahn Exp $
 
-NEW_BINUTILS=alpha hppa i386 mips powerpc sparc sparc64 amd64
+NEW_BINUTILS=alpha arm hppa i386 mips powerpc sparc sparc64 amd64
 
 SUBDIRS=	opcodes bfd
 ALL_X11_MODULES=
@@ -16,16 +16,18 @@ MANDIR=${PREFIX}/share/man/cat
 
 MAN=		binutils/objdump.1 c++filt.1
 
-.if (${MACHINE_ARCH} != "unknown") && (${MACHINE_ARCH} != "amd64")
-SUBDIRS+=	gdb mmalloc
+.if (${MACHINE_ARCH} != "unknown") && (${MACHINE_ARCH} != "amd64") && (${MACHINE_ARCH} != "arm")
+SUBDIRS+=	gdb
 MAN+=		gdb/gdb.1
 ALL_X11_MODULES+=all-gdb
 INSTALL_X11_MODULES+=install-gdb
 .endif
 
+SUBDIRS+=	binutils
+
 .for _arch in ${MACHINE_ARCH}
 .  if !empty(NEW_BINUTILS:M${_arch})
-SUBDIRS+=	binutils ld gas
+SUBDIRS+=	ld gas
 MAN+=		binutils/ar.1 binutils/ranlib.1 \
 		binutils/objcopy.1 \
 		binutils/strings.1 binutils/strip.1 \
@@ -35,15 +37,21 @@ MAN+=		binutils/ar.1 binutils/ranlib.1 \
 
 # Used by the GNU Makefile
 ALL_MODULES=${SUBDIRS:S/^/all-/g}
+CONFIGURE_MODULES=${SUBDIRS:S/^/configure-/g}
+CONFIGURE_HOST_MODULES=${SUBDIRS:S/^/configure-/g}
+ALL_HOST_MODULES=${SUBDIRS:S/^/all-/g}
 INSTALL_MODULES=${SUBDIRS:S/^/install-/g}
 	
 all:	config.status
-	SUBDIRS='${SUBDIRS}' ${MAKE} CC="${CC}" \
+	SUBDIRS='${SUBDIRS}' \
+	  CONFIGURE_HOST_MODULES='${CONFIGURE_HOST_MODULES}' \
+	  ${MAKE} CC="${CC}" \
 	    CFLAGS="${CFLAGS} ${COPTS}" LDFLAGS=${LDSTATIC} \
 	    scriptdir=${PREFIX}/libdata \
 	    tooldir=${PREFIX} \
 	    BSDSRCDIR=${BSDSRCDIR} \
 	    ALL_MODULES="${ALL_MODULES}" \
+	    ALL_HOST_MODULES='${ALL_HOST_MODULES}' \
 	    ALL_X11_MODULES="${ALL_X11_MODULES}" all info
 	cd ${.OBJDIR}/binutils && \
 	    ${MAKE} CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" \
@@ -65,6 +73,8 @@ do-config: .USE
 	cd ${.OBJDIR} && \
 	    sed -e 's,SUBDIRS *=,SUBDIRS ?=,' <Makefile >Makefile.tmp && \
 	    mv -f Makefile.tmp Makefile
+	cd ${.OBJDIR} && \
+	    ${MAKE} ${CONFIGURE_MODULES}
 
 config: do-config
 .ifndef GLOBAL_AUTOCONF_CACHE

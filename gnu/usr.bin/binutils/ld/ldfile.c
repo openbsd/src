@@ -1,96 +1,147 @@
 /* Linker file opening and searching.
-   Copyright 1991, 1992, 1993, 1994, 1995, 1998, 1999, 2000, 2001
+   Copyright 1991, 1992, 1993, 1994, 1995, 1998, 1999, 2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
 
-This file is part of GLD, the Gnu Linker.
+   This file is part of GLD, the Gnu Linker.
 
-GLD is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2, or (at your option)
-any later version.
+   GLD is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2, or (at your option)
+   any later version.
 
-GLD is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+   GLD is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with GLD; see the file COPYING.  If not, write to the Free
-Software Foundation, 59 Temple Place - Suite 330, Boston, MA
-02111-1307, USA.  */
+   You should have received a copy of the GNU General Public License
+   along with GLD; see the file COPYING.  If not, write to the Free
+   Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA.  */
 
 /* ldfile.c:  look after all the file stuff.  */
 
 #include "bfd.h"
 #include "sysdep.h"
 #include "bfdlink.h"
+#include "safe-ctype.h"
 #include "ld.h"
 #include "ldmisc.h"
 #include "ldexp.h"
 #include "ldlang.h"
 #include "ldfile.h"
 #include "ldmain.h"
-#include "ldgram.h"
+#include <ldgram.h>
 #include "ldlex.h"
 #include "ldemul.h"
 #include "libiberty.h"
+#include "filenames.h"
 
-#include <ctype.h>
-
-const char *ldfile_input_filename;
-boolean ldfile_assumed_script = false;
-const char *ldfile_output_machine_name = "";
+const char * ldfile_input_filename;
+bfd_boolean  ldfile_assumed_script = FALSE;
+const char * ldfile_output_machine_name = "";
 unsigned long ldfile_output_machine;
 enum bfd_architecture ldfile_output_architecture;
-search_dirs_type *search_head;
+search_dirs_type * search_head;
 
 #ifndef MPW
 #ifdef VMS
-char *slash = "";
+char * slash = "";
 #else
 #if defined (_WIN32) && ! defined (__CYGWIN32__)
-char *slash = "\\";
+char * slash = "\\";
 #else
-char *slash = "/";
+char * slash = "/";
 #endif
 #endif
 #else /* MPW */
 /* The MPW path char is a colon.  */
-char *slash = ":";
+char * slash = ":";
 #endif /* MPW */
 
-/* LOCAL */
-
-static search_dirs_type **search_tail_ptr = &search_head;
-
-typedef struct search_arch {
+typedef struct search_arch
+{
   char *name;
   struct search_arch *next;
 } search_arch_type;
 
+static search_dirs_type **search_tail_ptr = &search_head;
 static search_arch_type *search_arch_head;
 static search_arch_type **search_arch_tail_ptr = &search_arch_head;
 
-static FILE *try_open PARAMS ((const char *name, const char *exten));
+static FILE *try_open
+  PARAMS ((const char *, const char *));
+static bfd_boolean is_sysrooted_pathname
+  PARAMS ((const char *, bfd_boolean));
+
+/* Test whether a pathname, after canonicalization, is the same or a
+   sub-directory of the sysroot directory.  */
+
+static bfd_boolean
+is_sysrooted_pathname (name, notsame)
+     const char *name;
+     bfd_boolean notsame;
+{
+  char * realname = ld_canon_sysroot ? lrealpath (name) : NULL;
+  int len;
+  bfd_boolean result;
+
+  if (! realname)
+    return FALSE;
+  
+  len = strlen (realname);
+
+  if (((! notsame && len == ld_canon_sysroot_len)
+       || (len >= ld_canon_sysroot_len
+	   && IS_DIR_SEPARATOR (realname[ld_canon_sysroot_len])
+	   && (realname[ld_canon_sysroot_len] = '\0') == '\0'))
+      && FILENAME_CMP (ld_canon_sysroot, realname) == 0)
+    result = TRUE;
+  else
+    result = FALSE;
+
+  if (realname)
+    free (realname);
+
+  return result;
+}
+
+/* Adds NAME to the library search path.
+   Makes a copy of NAME using xmalloc().  */
 
 void
 ldfile_add_library_path (name, cmdline)
      const char *name;
-     boolean cmdline;
+     bfd_boolean cmdline;
 {
   search_dirs_type *new;
 
+  if (!cmdline && config.only_cmd_line_lib_dirs)
+    return;
+
   new = (search_dirs_type *) xmalloc (sizeof (search_dirs_type));
   new->next = NULL;
-  new->name = name;
   new->cmdline = cmdline;
   *search_tail_ptr = new;
   search_tail_ptr = &new->next;
+
+  /* If a directory is marked as honoring sysroot, prepend the sysroot path
+     now.  */
+  if (name[0] == '=')
+    {
+      new->name = concat (ld_sysroot, name + 1, NULL);
+      new->sysrooted = TRUE;
+    }
+  else
+    {
+      new->name = xstrdup (name);
+      new->sysrooted = is_sysrooted_pathname (name, FALSE);
+    }
 }
 
 /* Try to open a BFD for a lang_input_statement.  */
 
-boolean
+bfd_boolean
 ldfile_try_open_bfd (attempt, entry)
      const char *attempt;
      lang_input_statement_type *entry;
@@ -109,7 +160,7 @@ ldfile_try_open_bfd (attempt, entry)
     {
       if (bfd_get_error () == bfd_error_invalid_target)
 	einfo (_("%F%P: invalid BFD target `%s'\n"), entry->target);
-      return false;
+      return FALSE;
     }
 
   /* If we are searching for this file, see if the architecture is
@@ -129,25 +180,124 @@ ldfile_try_open_bfd (attempt, entry)
       if (check != NULL)
 	{
 	  if (! bfd_check_format (check, bfd_object))
-	    return true;
-	  if (bfd_arch_get_compatible (check, output_bfd) == NULL)
+	    {
+	      if (check == entry->the_bfd
+		  && bfd_get_error () == bfd_error_file_not_recognized
+		  && ! ldemul_unrecognized_file (entry))
+		{
+		  int token, skip = 0;
+		  char *arg, *arg1, *arg2, *arg3;
+		  extern FILE *yyin;
+
+		  /* Try to interpret the file as a linker script.  */
+		  ldfile_open_command_file (attempt);
+
+		  ldfile_assumed_script = TRUE;
+		  parser_input = input_selected;
+		  ldlex_both ();
+		  token = INPUT_SCRIPT;
+		  while (token != 0)
+		    {
+		      switch (token)
+			{
+			case OUTPUT_FORMAT:
+			  if ((token = yylex ()) != '(')
+			    continue;
+			  if ((token = yylex ()) != NAME)
+			    continue;
+			  arg1 = yylval.name;
+			  arg2 = NULL;
+			  arg3 = NULL;
+			  token = yylex ();
+			  if (token == ',')
+			    {
+			      if ((token = yylex ()) != NAME)
+				{
+				  free (arg1);
+				  continue;
+				}
+			      arg2 = yylval.name;
+			      if ((token = yylex ()) != ','
+				  || (token = yylex ()) != NAME)
+				{
+				  free (arg1);
+				  free (arg2);
+				  continue;
+				}
+			      arg3 = yylval.name;
+			      token = yylex ();
+			    }
+			  if (token == ')')
+			    {
+			      switch (command_line.endian)
+				{
+				default:
+				case ENDIAN_UNSET:
+				  arg = arg1; break;
+				case ENDIAN_BIG:
+				  arg = arg2 ? arg2 : arg1; break;
+				case ENDIAN_LITTLE:
+				  arg = arg3 ? arg3 : arg1; break;
+				}
+			      if (strcmp (arg, lang_get_output_target ()) != 0)
+				skip = 1;
+			    }
+			  free (arg1);
+			  if (arg2) free (arg2);
+			  if (arg3) free (arg3);
+			  break;
+			case NAME:
+			case LNAME:
+			case VERS_IDENTIFIER:
+			case VERS_TAG:
+			  free (yylval.name);
+			  break;
+			case INT:
+			  if (yylval.bigint.str)
+			    free (yylval.bigint.str);
+			  break;
+		        }
+		      token = yylex ();
+		    }
+		  ldlex_popstate ();
+		  ldfile_assumed_script = FALSE;
+		  fclose (yyin);
+		  yyin = NULL;
+		  if (skip)
+		    {
+		      einfo (_("%P: skipping incompatible %s when searching for %s\n"),
+			     attempt, entry->local_sym_name);
+		      bfd_close (entry->the_bfd);
+		      entry->the_bfd = NULL;
+		      return FALSE;
+		    }
+		}
+	      return TRUE;
+	    }
+
+	  if ((bfd_arch_get_compatible (check, output_bfd,
+					command_line.accept_unknown_input_arch) == NULL)
+	      /* XCOFF archives can have 32 and 64 bit objects.  */
+	      && ! (bfd_get_flavour (check) == bfd_target_xcoff_flavour
+		    && bfd_get_flavour (output_bfd) == bfd_target_xcoff_flavour
+		    && bfd_check_format (entry->the_bfd, bfd_archive)))
 	    {
 	      einfo (_("%P: skipping incompatible %s when searching for %s\n"),
 		     attempt, entry->local_sym_name);
 	      bfd_close (entry->the_bfd);
 	      entry->the_bfd = NULL;
-	      return false;
+	      return FALSE;
 	    }
 	}
     }
 
-  return true;
+  return TRUE;
 }
 
 /* Search for and open the file specified by ENTRY.  If it is an
    archive, use ARCH, LIB and SUFFIX to modify the file name.  */
 
-boolean
+bfd_boolean
 ldfile_open_file_search (arch, entry, lib, suffix)
      const char *arch;
      lang_input_statement_type *entry;
@@ -160,8 +310,26 @@ ldfile_open_file_search (arch, entry, lib, suffix)
      directory first.  */
   if (! entry->is_archive)
     {
-      if (ldfile_try_open_bfd (entry->filename, entry))
-	return true;
+      if (entry->sysrooted && IS_ABSOLUTE_PATH (entry->filename))
+	{
+	  char *name = concat (ld_sysroot, entry->filename,
+			       (const char *) NULL);
+	  if (ldfile_try_open_bfd (name, entry))
+	    {
+	      entry->filename = name;
+	      return TRUE;
+	    }
+	  free (name);
+	}
+      else if (ldfile_try_open_bfd (entry->filename, entry))
+	{
+	  entry->sysrooted = IS_ABSOLUTE_PATH (entry->filename)
+	    && is_sysrooted_pathname (entry->filename, TRUE);
+	  return TRUE;
+	}
+
+      if (IS_ABSOLUTE_PATH (entry->filename))
+	return FALSE;
     }
 
   for (search = search_head;
@@ -173,7 +341,10 @@ ldfile_open_file_search (arch, entry, lib, suffix)
       if (entry->dynamic && ! link_info.relocateable)
 	{
 	  if (ldemul_open_dynamic_archive (arch, search, entry))
-	    return true;
+	    {
+	      entry->sysrooted = search->sysrooted;
+	      return TRUE;
+	    }
 	}
 
       string = (char *) xmalloc (strlen (search->name)
@@ -187,27 +358,20 @@ ldfile_open_file_search (arch, entry, lib, suffix)
       if (entry->is_archive)
 	sprintf (string, "%s%s%s%s%s%s", search->name, slash,
 		 lib, entry->filename, arch, suffix);
-      else if (entry->filename[0] == '/' || entry->filename[0] == '.'
-#if defined (__MSDOS__) || defined (_WIN32)
-	       || entry->filename[0] == '\\'
-	       || (isalpha (entry->filename[0])
-	           && entry->filename[1] == ':')
-#endif
-	  )
-	strcpy (string, entry->filename);
       else
 	sprintf (string, "%s%s%s", search->name, slash, entry->filename);
 
       if (ldfile_try_open_bfd (string, entry))
 	{
 	  entry->filename = string;
-	  return true;
+	  entry->sysrooted = search->sysrooted;
+	  return TRUE;
 	}
 
       free (string);
     }
 
-  return false;
+  return FALSE;
 }
 
 /* Open the input file specified by ENTRY.  */
@@ -232,7 +396,7 @@ ldfile_open_file (entry)
   else
     {
       search_arch_type *arch;
-      boolean found = false;
+      bfd_boolean found = FALSE;
 
       /* Try to open <filename><suffix> or lib<filename><suffix>.a */
       for (arch = search_arch_head;
@@ -255,7 +419,12 @@ ldfile_open_file (entry)
       /* If we have found the file, we don't need to search directories
 	 again.  */
       if (found)
-	entry->search_dirs_flag = false;
+	entry->search_dirs_flag = FALSE;
+      else if (entry->sysrooted
+	       && ld_sysroot
+	       && IS_ABSOLUTE_PATH (entry->local_sym_name))
+	einfo (_("%F%P: cannot find %s inside %s\n"),
+	       entry->local_sym_name, ld_sysroot);
       else
 	einfo (_("%F%P: cannot find %s\n"), entry->local_sym_name);
     }
@@ -302,7 +471,7 @@ try_open (name, exten)
 }
 
 /* Try to open NAME; if that fails, look for it in any directories
-   specified with -L, without and with EXTEND apppended.  */
+   specified with -L, without and with EXTEND appended.  */
 
 FILE *
 ldfile_find_command_file (name, extend)
@@ -350,7 +519,8 @@ ldfile_open_command_file (name)
 
   ldfile_input_filename = name;
   lineno = 1;
-  had_script = true;
+
+  saved_script_handle = ldlex_input_stack;
 }
 
 #ifdef GNU960
@@ -413,7 +583,7 @@ ldfile_add_arch (name)
 
 void
 ldfile_add_arch (in_name)
-     CONST char *in_name;
+     const char *in_name;
 {
   char *name = xstrdup (in_name);
   search_arch_type *new =
@@ -425,8 +595,7 @@ ldfile_add_arch (in_name)
   new->next = (search_arch_type *) NULL;
   while (*name)
     {
-      if (isupper ((unsigned char) *name))
-	*name = tolower ((unsigned char) *name);
+      *name = TOLOWER (*name);
       name++;
     }
   *search_arch_tail_ptr = new;
@@ -439,7 +608,7 @@ ldfile_add_arch (in_name)
 
 void
 ldfile_set_output_arch (string)
-     CONST char *string;
+     const char *string;
 {
   const bfd_arch_info_type *arch = bfd_scan_arch (string);
 

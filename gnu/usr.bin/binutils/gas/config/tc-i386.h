@@ -1,6 +1,6 @@
 /* tc-i386.h -- Header file for tc-i386.c
    Copyright 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001
+   2001, 2002, 2003
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -34,44 +34,6 @@ struct fix;
 #endif
 
 #ifdef BFD_ASSEMBLER
-/* This is used to determine relocation types in tc-i386.c.  The first
-   parameter is the current relocation type, the second one is the desired
-   type.  The idea is that if the original type is already some kind of PIC
-   relocation, we leave it alone, otherwise we give it the desired type */
-
-#define tc_fix_adjustable(X)  tc_i386_fix_adjustable(X)
-extern int tc_i386_fix_adjustable PARAMS ((struct fix *));
-
-#if (defined (OBJ_MAYBE_ELF) || defined (OBJ_ELF) || defined (OBJ_MAYBE_COFF) || defined (OBJ_COFF)) && !defined (TE_PE)
-/* This arranges for gas/write.c to not apply a relocation if
-   tc_fix_adjustable() says it is not adjustable.
-   The "! symbol_used_in_reloc_p" test is there specifically to cover
-   the case of non-global symbols in linkonce sections.  It's the
-   generally correct thing to do though;  If a reloc is going to be
-   emitted against a symbol then we don't want to adjust the fixup by
-   applying the reloc during assembly.  The reloc will be applied by
-   the linker during final link.  */
-#define TC_FIX_ADJUSTABLE(fixP) \
-  (! symbol_used_in_reloc_p ((fixP)->fx_addsy) && tc_fix_adjustable (fixP))
-#endif
-
-/* This expression evaluates to false if the relocation is for a local object
-   for which we still want to do the relocation at runtime.  True if we
-   are willing to perform this relocation while building the .o file.
-   This is only used for pcrel relocations, so GOTOFF does not need to be
-   checked here.  I am not sure if some of the others are ever used with
-   pcrel, but it is easier to be safe than sorry.  */
-
-#define TC_RELOC_RTSYM_LOC_FIXUP(FIX)				\
-  ((FIX)->fx_r_type != BFD_RELOC_386_PLT32			\
-   && (FIX)->fx_r_type != BFD_RELOC_386_GOT32			\
-   && (FIX)->fx_r_type != BFD_RELOC_386_GOTPC			\
-   && ((FIX)->fx_addsy == NULL					\
-       || (! S_IS_EXTERNAL ((FIX)->fx_addsy)			\
-	   && ! S_IS_WEAK ((FIX)->fx_addsy)			\
-	   && S_IS_DEFINED ((FIX)->fx_addsy)			\
-	   && ! S_IS_COMMON ((FIX)->fx_addsy))))
-
 #define TARGET_ARCH		bfd_arch_i386
 #define TARGET_MACH		(i386_mach ())
 extern unsigned long i386_mach PARAMS ((void));
@@ -79,7 +41,7 @@ extern unsigned long i386_mach PARAMS ((void));
 #ifdef TE_FreeBSD
 #define AOUT_TARGET_FORMAT	"a.out-i386-freebsd"
 #endif
-#ifdef TE_NetBSD
+#if defined(TE_NetBSD) || defined(TE_OpenBSD)
 #define AOUT_TARGET_FORMAT	"a.out-i386-netbsd"
 #endif
 #ifdef TE_386BSD
@@ -98,18 +60,32 @@ extern unsigned long i386_mach PARAMS ((void));
 #define AOUT_TARGET_FORMAT	"a.out-i386"
 #endif
 
+#ifdef TE_FreeBSD
+#define ELF_TARGET_FORMAT	"elf32-i386-freebsd"
+#endif
+#ifndef ELF_TARGET_FORMAT
+#define ELF_TARGET_FORMAT	"elf32-i386"
+#endif
+
 #if ((defined (OBJ_MAYBE_COFF) && defined (OBJ_MAYBE_AOUT)) \
      || defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF))
 extern const char *i386_target_format PARAMS ((void));
 #define TARGET_FORMAT i386_target_format ()
 #else
 #ifdef OBJ_ELF
-#define TARGET_FORMAT		"elf32-i386"
+#define TARGET_FORMAT		ELF_TARGET_FORMAT
 #endif
 #ifdef OBJ_AOUT
 #define TARGET_FORMAT		AOUT_TARGET_FORMAT
 #endif
 #endif
+
+#if (defined (OBJ_MAYBE_ELF) || defined (OBJ_ELF))
+#define md_end i386_elf_emit_arch_note
+extern void i386_elf_emit_arch_note PARAMS ((void));
+#endif
+
+#define SUB_SEGMENT_ALIGN(SEG, FRCHAIN) 0
 
 #else /* ! BFD_ASSEMBLER */
 
@@ -119,14 +95,14 @@ extern const char *i386_target_format PARAMS ((void));
 #define BFD_ARCH bfd_arch_i386
 #define COFF_FLAGS F_AR32WR
 #define TC_COUNT_RELOC(x) ((x)->fx_addsy || (x)->fx_r_type==7)
-#define TC_COFF_FIX2RTYPE(fixP) tc_coff_fix2rtype(fixP)
+#define TC_COFF_FIX2RTYPE(FIX) tc_coff_fix2rtype(FIX)
 extern short tc_coff_fix2rtype PARAMS ((struct fix *));
-#define TC_COFF_SIZEMACHDEP(frag) tc_coff_sizemachdep(frag)
+#define TC_COFF_SIZEMACHDEP(frag) tc_coff_sizemachdep (frag)
 extern int tc_coff_sizemachdep PARAMS ((fragS *frag));
 
 #ifdef TE_GO32
 /* DJGPP now expects some sections to be 2**4 aligned.  */
-#define SUB_SEGMENT_ALIGN(SEG)						\
+#define SUB_SEGMENT_ALIGN(SEG, FRCHAIN)					\
   ((strcmp (obj_segment_name (SEG), ".text") == 0			\
     || strcmp (obj_segment_name (SEG), ".data") == 0			\
     || strcmp (obj_segment_name (SEG), ".bss") == 0			\
@@ -136,12 +112,8 @@ extern int tc_coff_sizemachdep PARAMS ((fragS *frag));
    ? 4									\
    : 2)
 #else
-#define SUB_SEGMENT_ALIGN(SEG) 2
+#define SUB_SEGMENT_ALIGN(SEG, FRCHAIN) 2
 #endif
-
-#define TC_RVA_RELOC 7
-/* Need this for PIC relocations */
-#define NEED_FX_R_TYPE
 
 #ifdef TE_386BSD
 /* The BSDI linker apparently rejects objects with a machine type of
@@ -151,30 +123,6 @@ extern int tc_coff_sizemachdep PARAMS ((fragS *frag));
 #define AOUT_MACHTYPE 100
 #endif
 
-#undef REVERSE_SORT_RELOCS
-
-#endif /* ! BFD_ASSEMBLER */
-
-#ifndef LEX_AT
-#define TC_PARSE_CONS_EXPRESSION(EXP, NBYTES) x86_cons (EXP, NBYTES)
-extern void x86_cons PARAMS ((expressionS *, int));
-
-#define TC_CONS_FIX_NEW(FRAG,OFF,LEN,EXP) x86_cons_fix_new(FRAG, OFF, LEN, EXP)
-extern void x86_cons_fix_new
-  PARAMS ((fragS *, unsigned int, unsigned int, expressionS *));
-#endif
-
-#define TC_FORCE_RELOCATION(fixp) tc_i386_force_relocation(fixp)
-extern int tc_i386_force_relocation PARAMS ((struct fix *));
-
-#ifdef BFD_ASSEMBLER
-#define NO_RELOC BFD_RELOC_NONE
-#else
-#define NO_RELOC 0
-#endif
-#define tc_coff_symbol_emit_hook(a)	;	/* not used */
-
-#ifndef BFD_ASSEMBLER
 #ifndef OBJ_AOUT
 #ifndef TE_PE
 #ifndef TE_GO32
@@ -184,13 +132,15 @@ extern int tc_i386_force_relocation PARAMS ((struct fix *));
 #endif
 #endif
 #endif
-#endif
-
-#define LOCAL_LABELS_FB 1
 
 #define tc_aout_pre_write_hook(x)	{;}	/* not used */
 #define tc_crawl_symbol_chain(a)	{;}	/* not used */
 #define tc_headers_hook(a)		{;}	/* not used */
+#define tc_coff_symbol_emit_hook(a)	{;}	/* not used */
+
+#endif /* ! BFD_ASSEMBLER */
+
+#define LOCAL_LABELS_FB 1
 
 extern const char extra_symbol_chars[];
 #define tc_symbol_chars extra_symbol_chars
@@ -293,7 +243,6 @@ typedef struct
 #define CpuSSE	       0x1000	/* Streaming SIMD extensions required */
 #define CpuSSE2	       0x2000	/* Streaming SIMD extensions 2 required */
 #define Cpu3dnow       0x4000	/* 3dnow! support required */
-#define CpuUnknown     0x8000	/* The CPU is unknown,  be on the safe side.  */
 
   /* These flags are set by gas depending on the flag_code.  */
 #define Cpu64	     0x4000000   /* 64bit support required  */
@@ -463,15 +412,17 @@ typedef struct
 modrm_byte;
 
 /* x86-64 extension prefix.  */
-typedef struct
-  {
-    unsigned int mode64;
-    unsigned int extX;		/* Used to extend modrm reg field.  */
-    unsigned int extY;		/* Used to extend SIB index field.  */
-    unsigned int extZ;		/* Used to extend modrm reg/mem, SIB base, modrm base fields.  */
-    unsigned int empty;		/* Used to old-style byte registers to new style.  */
-  }
-rex_byte;
+typedef int rex_byte;
+#define REX_OPCODE	0x40
+
+/* Indicates 64 bit operand size.  */
+#define REX_MODE64	8
+/* High extension to reg field of modrm byte.  */
+#define REX_EXTX	4
+/* High extension to SIB index field.  */
+#define REX_EXTY	2
+/* High extension to base field of modrm or SIB, or reg field of opcode.  */
+#define REX_EXTZ	1
 
 /* 386 opcode byte to code indirect addressing.  */
 typedef struct
@@ -493,15 +444,76 @@ arch_entry;
 /* The name of the global offset table generated by the compiler. Allow
    this to be overridden if need be.  */
 #ifndef GLOBAL_OFFSET_TABLE_NAME
+#ifdef OBJ_ELF
 #define GLOBAL_OFFSET_TABLE_NAME "_GLOBAL_OFFSET_TABLE_"
+#else
+#define GLOBAL_OFFSET_TABLE_NAME "__GLOBAL_OFFSET_TABLE_"
 #endif
+#endif
+
+#ifndef LEX_AT
+#define TC_PARSE_CONS_EXPRESSION(EXP, NBYTES) x86_cons (EXP, NBYTES)
+extern void x86_cons PARAMS ((expressionS *, int));
+
+#define TC_CONS_FIX_NEW(FRAG,OFF,LEN,EXP) x86_cons_fix_new(FRAG, OFF, LEN, EXP)
+extern void x86_cons_fix_new
+  PARAMS ((fragS *, unsigned int, unsigned int, expressionS *));
+#endif
+
+#define DIFF_EXPR_OK    /* foo-. gets turned into PC relative relocs */
 
 #ifdef BFD_ASSEMBLER
+#define NO_RELOC BFD_RELOC_NONE
+
 void i386_validate_fix PARAMS ((struct fix *));
-#define TC_VALIDATE_FIX(FIXP,SEGTYPE,SKIP) i386_validate_fix(FIXP)
+#define TC_VALIDATE_FIX(FIX,SEGTYPE,SKIP) i386_validate_fix(FIX)
+
+#define tc_fix_adjustable(X)  tc_i386_fix_adjustable(X)
+extern int tc_i386_fix_adjustable PARAMS ((struct fix *));
+
+/* Values passed to md_apply_fix3 don't include the symbol value.  */
+#define MD_APPLY_SYM_VALUE(FIX) 0
+
+/* ELF wants external syms kept, as does PE COFF.  */
+#if defined (TE_PE) && defined (STRICT_PE_FORMAT)
+#define EXTERN_FORCE_RELOC				\
+  (OUTPUT_FLAVOR == bfd_target_elf_flavour		\
+   || OUTPUT_FLAVOR == bfd_target_coff_flavour)
+#else
+#define EXTERN_FORCE_RELOC				\
+  (OUTPUT_FLAVOR == bfd_target_elf_flavour)
 #endif
 
-#endif /* TC_I386 */
+/* This expression evaluates to true if the relocation is for a local
+   object for which we still want to do the relocation at runtime.
+   False if we are willing to perform this relocation while building
+   the .o file.  GOTOFF does not need to be checked here because it is
+   not pcrel.  I am not sure if some of the others are ever used with
+   pcrel, but it is easier to be safe than sorry.  */
+
+#define TC_FORCE_RELOCATION_LOCAL(FIX)			\
+  (!(FIX)->fx_pcrel					\
+   || (FIX)->fx_plt					\
+   || (FIX)->fx_r_type == BFD_RELOC_386_PLT32		\
+   || (FIX)->fx_r_type == BFD_RELOC_386_GOT32		\
+   || (FIX)->fx_r_type == BFD_RELOC_386_GOTPC		\
+   || TC_FORCE_RELOCATION (FIX))
+
+#else /* ! BFD_ASSEMBLER */
+
+#define NO_RELOC 0
+
+#define TC_RVA_RELOC 7
+
+/* Need this for PIC relocations */
+#define NEED_FX_R_TYPE
+
+#undef REVERSE_SORT_RELOCS
+
+/* For COFF.  */
+#define TC_FORCE_RELOCATION(FIX)			\
+  ((FIX)->fx_r_type == 7 || generic_force_reloc (FIX))
+#endif /* ! BFD_ASSEMBLER */
 
 #define md_operand(x)
 
@@ -527,9 +539,6 @@ if (fragP->fr_type == rs_align_code) 					\
 			   - fragP->fr_address				\
 			   - fragP->fr_fix));
 
-/* call md_apply_fix3 with segment instead of md_apply_fix */
-#define MD_APPLY_FIX3
-
 void i386_print_statistics PARAMS ((FILE *));
 #define tc_print_statistics i386_print_statistics
 
@@ -540,4 +549,4 @@ void i386_print_statistics PARAMS ((FILE *));
 extern void sco_id PARAMS ((void));
 #endif
 
-#define DIFF_EXPR_OK    /* foo-. gets turned into PC relative relocs */
+#endif /* TC_I386 */

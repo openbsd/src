@@ -1,21 +1,23 @@
+. ${srcdir}/emulparams/hppaelf.sh
+ 
+#override hppaelf.sh
 SCRIPT_NAME=elf
 ELFSIZE=32
 OUTPUT_FORMAT="elf32-hppa"
-TEXT_START_ADDR=0x1000
-TARGET_PAGE_SIZE=0x1000
+
+# other necessary defines, similar but not the same as linux.
 MAXPAGESIZE=0x1000
-ARCH=hppa
-MACHINE=hppa1.1		# We use 1.1 specific features.
-NOP=0x08000240
 ENTRY="__start"
-OTHER_READONLY_SECTIONS='.PARISC.unwind : { *(.PARISC.unwind) } '
+MACHINE=hppa1.1    # We use 1.1 specific features.
+OTHER_READONLY_SECTIONS=".PARISC.unwind ${RELOCATING-0} : { *(.PARISC.unwind) }"
 DATA_START_SYMBOLS='PROVIDE ($global$ = .);'
 DATA_PLT=
-PAD_RO=
-RODATA_PADSIZE=${MAXPAGESIZE}
-RODATA_ALIGN=". = ALIGN(${RODATA_PADSIZE}) + (. & (${RODATA_PADSIZE} - 1))"
-PAD_GOT=
-PAD_PLT=
 GENERATE_SHLIB_SCRIPT=yes
-TEMPLATE_NAME=elf32
-EXTRA_EM_FILE=hppaelf
+
+. ${srcdir}/emulparams/elf_obsd.sh
+
+case "${target}" in
+hppa-*-openbsd3.2)
+   unset PAD_RO RODATA_PADSIZE RODATA_ALIGN PAD_GOT PAD_PLT ;;
+esac
+

@@ -1,6 +1,6 @@
 /* as.h - global header file
    Copyright 1987, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-   1999, 2000, 2001
+   1999, 2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -43,28 +43,19 @@
 /* This is the code recommended in the autoconf documentation, almost
    verbatim.  If it doesn't work for you, let me know, and notify
    djm@gnu.ai.mit.edu as well.  */
-/* Added #undef for DJ Delorie.  The right fix is to ensure that as.h
-   is included first, before even any system header files, in all files
-   that use it.  KR 1994.11.03 */
 /* Added void* version for STDC case.  This is to be compatible with
    the declaration in bison.simple, used for m68k operand parsing.
    --KR 1995.08.08 */
 /* Force void* decl for hpux.  This is what Bison uses.  --KR 1995.08.16 */
 
-/* AIX requires this to be the first thing in the file.  */
-#ifdef __GNUC__
-# ifndef alloca
-#  ifdef __STDC__
-extern void *alloca ();
-#  else
-extern char *alloca ();
-#  endif
-# endif
-#else
+#ifndef __GNUC__
 # if HAVE_ALLOCA_H
 #  include <alloca.h>
 # else
 #  ifdef _AIX
+/* Indented so that pre-ansi C compilers will ignore it, rather than
+   choke on it.  Some versions of AIX require this to be the first
+   thing in the file.  */
  #pragma alloca
 #  else
 #   ifndef alloca /* predefined by HP cc +Olibcalls */
@@ -76,13 +67,12 @@ extern void *alloca ();
 #   endif /* alloca */
 #  endif /* _AIX */
 # endif /* HAVE_ALLOCA_H */
-#endif
+#endif /* __GNUC__ */
 
 /* Now, tend to the rest of the configuration.  */
 
 /* System include files first...  */
 #include <stdio.h>
-#include <ctype.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
 #else
@@ -101,7 +91,7 @@ extern void *alloca ();
 #include <sys/types.h>
 #endif
 
-#include <getopt.h>
+#include "getopt.h"
 /* The first getopt value for machine-independent long options.
    150 isn't special; it's just an arbitrary non-ASCII char value.  */
 #define OPTION_STD_BASE 150
@@ -178,7 +168,7 @@ extern char **environ;
 
 /* Hack to make "gcc -Wall" not complain about obstack macros.  */
 #if !defined (memcpy) && !defined (bcopy)
-#define bcopy(src,dest,size)	memcpy(dest,src,size)
+#define bcopy(src,dest,size)	memcpy (dest, src, size)
 #endif
 
 /* Make Saber happier on obstack.h.  */
@@ -198,7 +188,7 @@ extern char **environ;
 #endif /* __FILE__ */
 
 #ifndef FOPEN_WB
-#ifdef GO32
+#if defined GO32 || defined __MINGW32__
 #include "fopen-bin.h"
 #else
 #include "fopen-same.h"
@@ -618,13 +608,21 @@ int eh_frame_estimate_size_before_relax PARAMS ((fragS *));
 int eh_frame_relax_frag PARAMS ((fragS *));
 void eh_frame_convert_frag PARAMS ((fragS *));
 
+int generic_force_reloc PARAMS ((struct fix *));
+
 #include "expr.h"		/* Before targ-*.h */
 
 /* this one starts the chain of target dependant headers */
 #include "targ-env.h"
 
-#ifdef TC_ARC
-#include "struc-symbol.h"
+#ifdef OBJ_MAYBE_ELF
+#define IS_ELF (OUTPUT_FLAVOR == bfd_target_elf_flavour)
+#else
+#ifdef OBJ_ELF
+#define IS_ELF 1
+#else
+#define IS_ELF 0
+#endif
 #endif
 
 #include "write.h"

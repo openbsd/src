@@ -1,5 +1,5 @@
 /* tc-mn10300.c -- Assembler code for the Matsushita 10300
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -20,8 +20,8 @@
    Boston, MA 02111-1307, USA.  */
 
 #include <stdio.h>
-#include <ctype.h>
 #include "as.h"
+#include "safe-ctype.h"
 #include "subsegs.h"
 #include "opcode/mn10300.h"
 #include "dwarf2dbg.h"
@@ -89,9 +89,11 @@ static unsigned long check_operand PARAMS ((unsigned long,
 					    const struct mn10300_operand *,
 					    offsetT));
 static int reg_name_search PARAMS ((const struct reg_name *, int, const char *));
-static boolean data_register_name PARAMS ((expressionS *expressionP));
-static boolean address_register_name PARAMS ((expressionS *expressionP));
-static boolean other_register_name PARAMS ((expressionS *expressionP));
+static bfd_boolean data_register_name PARAMS ((expressionS *expressionP));
+static bfd_boolean address_register_name PARAMS ((expressionS *expressionP));
+static bfd_boolean other_register_name PARAMS ((expressionS *expressionP));
+static bfd_boolean r_register_name PARAMS ((expressionS *expressionP));
+static bfd_boolean xr_register_name PARAMS ((expressionS *expressionP));
 static void set_arch_mach PARAMS ((int));
 
 /*  Set linkrelax here to avoid fixups in most sections.  */
@@ -123,7 +125,7 @@ size_t md_longopts_size = sizeof (md_longopts);
 /* The target specific pseudo-ops which we support.  */
 const pseudo_typeS md_pseudo_table[] =
 {
-  { "file",     dwarf2_directive_file,  0 },
+  { "file",     (void (*) PARAMS ((int))) dwarf2_directive_file,  0 },
   { "loc",      dwarf2_directive_loc,   0 },
   { "am30",	set_arch_mach,		AM30 },
   { "am33",	set_arch_mach,		AM33 },
@@ -212,7 +214,6 @@ static const struct reg_name xr_registers[] =
   { "mcrl", 3 },
   { "mcvf", 4 },
   { "mdrq", 1 },
-  { "pc", 0 },
   { "sp", 0 },
   { "xr0", 0 },
   { "xr1", 1 },
@@ -235,9 +236,16 @@ static const struct reg_name xr_registers[] =
 #define XR_REG_NAME_CNT					\
   (sizeof (xr_registers) / sizeof (struct reg_name))
 
+/* We abuse the `value' field, that would be otherwise unused, to
+   encode the architecture on which (access to) the register was
+   introduced.  FIXME: we should probably warn when we encounter a
+   register name when assembling for an architecture that doesn't
+   support it, before parsing it as a symbol name.  */
 static const struct reg_name other_registers[] =
 {
+  { "epsw", AM33 },
   { "mdr", 0 },
+  { "pc", AM33 },
   { "psw", 0 },
   { "sp", 0 },
 };
@@ -280,14 +288,14 @@ reg_name_search (regs, regcount, name)
  *
  * in: Input_line_pointer points to 1st char of operand.
  *
- * out: A expressionS.
+ * out: An expressionS.
  *	The operand may have been a register: in this case, X_op == O_register,
  *	X_add_number is set to the register number, and truth is returned.
  *	Input_line_pointer->(next non-blank) char after operand, or is in
  *	its original state.
  */
 
-static boolean
+static bfd_boolean
 r_register_name (expressionP)
      expressionS *expressionP;
 {
@@ -302,6 +310,9 @@ r_register_name (expressionP)
   c = get_symbol_end ();
   reg_number = reg_name_search (r_registers, R_REG_NAME_CNT, name);
 
+  /* Put back the delimiting char.  */
+  *input_line_pointer = c;
+
   /* Look to see if it's in the register table.  */
   if (reg_number >= 0)
     {
@@ -312,34 +323,26 @@ r_register_name (expressionP)
       expressionP->X_add_symbol = NULL;
       expressionP->X_op_symbol = NULL;
 
-      /* Put back the delimiting char.  */
-      *input_line_pointer = c;
-      return true;
+      return TRUE;
     }
-  else
-    {
-      /* Reset the line as if we had not done anything.  */
-      /* Put back the delimiting char.  */
-      *input_line_pointer = c;
 
-      /* Reset input_line pointer.  */
-      input_line_pointer = start;
-      return false;
-    }
+  /* Reset the line as if we had not done anything.  */
+  input_line_pointer = start;
+  return FALSE;
 }
 
 /* Summary of register_name().
  *
  * in: Input_line_pointer points to 1st char of operand.
  *
- * out: A expressionS.
+ * out: An expressionS.
  *	The operand may have been a register: in this case, X_op == O_register,
  *	X_add_number is set to the register number, and truth is returned.
  *	Input_line_pointer->(next non-blank) char after operand, or is in
  *	its original state.
  */
 
-static boolean
+static bfd_boolean
 xr_register_name (expressionP)
      expressionS *expressionP;
 {
@@ -354,6 +357,9 @@ xr_register_name (expressionP)
   c = get_symbol_end ();
   reg_number = reg_name_search (xr_registers, XR_REG_NAME_CNT, name);
 
+  /* Put back the delimiting char.  */
+  *input_line_pointer = c;
+
   /* Look to see if it's in the register table.  */
   if (reg_number >= 0)
     {
@@ -364,34 +370,26 @@ xr_register_name (expressionP)
       expressionP->X_add_symbol = NULL;
       expressionP->X_op_symbol = NULL;
 
-      /* Put back the delimiting char.  */
-      *input_line_pointer = c;
-      return true;
+      return TRUE;
     }
-  else
-    {
-      /* Reset the line as if we had not done anything.  */
-      /* Put back the delimiting char.  */
-      *input_line_pointer = c;
 
-      /* Reset input_line pointer.  */
-      input_line_pointer = start;
-      return false;
-    }
+  /* Reset the line as if we had not done anything.  */
+  input_line_pointer = start;
+  return FALSE;
 }
 
 /* Summary of register_name().
  *
  * in: Input_line_pointer points to 1st char of operand.
  *
- * out: A expressionS.
+ * out: An expressionS.
  *	The operand may have been a register: in this case, X_op == O_register,
  *	X_add_number is set to the register number, and truth is returned.
  *	Input_line_pointer->(next non-blank) char after operand, or is in
  *	its original state.
  */
 
-static boolean
+static bfd_boolean
 data_register_name (expressionP)
      expressionS *expressionP;
 {
@@ -406,6 +404,9 @@ data_register_name (expressionP)
   c = get_symbol_end ();
   reg_number = reg_name_search (data_registers, DATA_REG_NAME_CNT, name);
 
+  /* Put back the delimiting char.  */
+  *input_line_pointer = c;
+
   /* Look to see if it's in the register table.  */
   if (reg_number >= 0)
     {
@@ -416,34 +417,26 @@ data_register_name (expressionP)
       expressionP->X_add_symbol = NULL;
       expressionP->X_op_symbol = NULL;
 
-      /* Put back the delimiting char.  */
-      *input_line_pointer = c;
-      return true;
+      return TRUE;
     }
-  else
-    {
-      /* Reset the line as if we had not done anything.  */
-      /* Put back the delimiting char.  */
-      *input_line_pointer = c;
 
-      /* Reset input_line pointer.  */
-      input_line_pointer = start;
-      return false;
-    }
+  /* Reset the line as if we had not done anything.  */
+  input_line_pointer = start;
+  return FALSE;
 }
 
 /* Summary of register_name().
  *
  * in: Input_line_pointer points to 1st char of operand.
  *
- * out: A expressionS.
+ * out: An expressionS.
  *	The operand may have been a register: in this case, X_op == O_register,
  *	X_add_number is set to the register number, and truth is returned.
  *	Input_line_pointer->(next non-blank) char after operand, or is in
  *	its original state.
  */
 
-static boolean
+static bfd_boolean
 address_register_name (expressionP)
      expressionS *expressionP;
 {
@@ -458,6 +451,9 @@ address_register_name (expressionP)
   c = get_symbol_end ();
   reg_number = reg_name_search (address_registers, ADDRESS_REG_NAME_CNT, name);
 
+  /* Put back the delimiting char.  */
+  *input_line_pointer = c;
+
   /* Look to see if it's in the register table.  */
   if (reg_number >= 0)
     {
@@ -468,35 +464,26 @@ address_register_name (expressionP)
       expressionP->X_add_symbol = NULL;
       expressionP->X_op_symbol = NULL;
 
-      /* Put back the delimiting char.  */
-      *input_line_pointer = c;
-      return true;
+      return TRUE;
     }
-  else
-    {
-      /* Reset the line as if we had not done anything.  */
-      /* Put back the delimiting char.  */
-      *input_line_pointer = c;
 
-      /* Reset input_line pointer.  */
-      input_line_pointer = start;
-
-      return false;
-    }
+  /* Reset the line as if we had not done anything.  */
+  input_line_pointer = start;
+  return FALSE;
 }
 
 /* Summary of register_name().
  *
  * in: Input_line_pointer points to 1st char of operand.
  *
- * out: A expressionS.
+ * out: An expressionS.
  *	The operand may have been a register: in this case, X_op == O_register,
  *	X_add_number is set to the register number, and truth is returned.
  *	Input_line_pointer->(next non-blank) char after operand, or is in
  *	its original state.
  */
 
-static boolean
+static bfd_boolean
 other_register_name (expressionP)
      expressionS *expressionP;
 {
@@ -511,30 +498,26 @@ other_register_name (expressionP)
   c = get_symbol_end ();
   reg_number = reg_name_search (other_registers, OTHER_REG_NAME_CNT, name);
 
+  /* Put back the delimiting char.  */
+  *input_line_pointer = c;
+
   /* Look to see if it's in the register table.  */
-  if (reg_number >= 0)
+  if (reg_number == 0
+      || (reg_number == AM33 && HAVE_AM33))
     {
       expressionP->X_op = O_register;
-      expressionP->X_add_number = reg_number;
+      expressionP->X_add_number = 0;
 
       /* Make the rest nice.  */
       expressionP->X_add_symbol = NULL;
       expressionP->X_op_symbol = NULL;
 
-      /* Put back the delimiting char.  */
-      *input_line_pointer = c;
-      return true;
+      return TRUE;
     }
-  else
-    {
-      /* Reset the line as if we had not done anything.  */
-      /* Put back the delimiting char.  */
-      *input_line_pointer = c;
 
-      /* Reset input_line pointer.  */
-      input_line_pointer = start;
-      return false;
-    }
+  /* Reset the line as if we had not done anything.  */
+  input_line_pointer = start;
+  return FALSE;
 }
 
 void
@@ -943,7 +926,7 @@ md_assemble (str)
   int match;
 
   /* Get the opcode.  */
-  for (s = str; *s != '\0' && !isspace (*s); s++)
+  for (s = str; *s != '\0' && !ISSPACE (*s); s++)
     ;
   if (*s != '\0')
     *s++ = '\0';
@@ -957,7 +940,7 @@ md_assemble (str)
     }
 
   str = s;
-  while (isspace (*str))
+  while (ISSPACE (*str))
     ++str;
 
   input_line_pointer = str;
@@ -1471,7 +1454,7 @@ keep_going:
       break;
     }
 
-  while (isspace (*str))
+  while (ISSPACE (*str))
     ++str;
 
   if (*str != '\0')
@@ -1805,6 +1788,8 @@ tc_gen_reloc (seg, fixp)
 
   if (fixp->fx_addsy && fixp->fx_subsy)
     {
+      reloc->sym_ptr_ptr = NULL;
+
       /* If we got a difference between two symbols, and the
 	 subtracted symbol is in the current section, use a
 	 PC-relative relocation.  If both symbols are in the same
@@ -1823,7 +1808,7 @@ tc_gen_reloc (seg, fixp)
 	      reloc->howto = bfd_reloc_type_lookup (stdoutput,
 						    BFD_RELOC_8_PCREL);
 	      return reloc;
-	      
+
 	    case BFD_RELOC_16:
 	      reloc->howto = bfd_reloc_type_lookup (stdoutput,
 						    BFD_RELOC_16_PCREL);
@@ -1850,12 +1835,42 @@ tc_gen_reloc (seg, fixp)
 	{
 	  as_bad_where (fixp->fx_file, fixp->fx_line,
 			"Difference of symbols in different sections is not supported");
-	  return NULL;
+	}
+      else
+	{
+	  char *fixpos = fixp->fx_where + fixp->fx_frag->fr_literal;
+
+	  reloc->addend = (S_GET_VALUE (fixp->fx_addsy)
+			   - S_GET_VALUE (fixp->fx_subsy) + fixp->fx_offset);
+
+	  switch (fixp->fx_r_type)
+	    {
+	    case BFD_RELOC_8:
+	      md_number_to_chars (fixpos, reloc->addend, 1);
+	      break;
+
+	    case BFD_RELOC_16:
+	      md_number_to_chars (fixpos, reloc->addend, 2);
+	      break;
+
+	    case BFD_RELOC_24:
+	      md_number_to_chars (fixpos, reloc->addend, 3);
+	      break;
+
+	    case BFD_RELOC_32:
+	      md_number_to_chars (fixpos, reloc->addend, 4);
+	      break;
+
+	    default:
+	      reloc->sym_ptr_ptr = (asymbol **) &bfd_abs_symbol;
+	      return reloc;
+	    }
 	}
 
-      reloc->sym_ptr_ptr = (asymbol **) &bfd_abs_symbol;
-      reloc->addend = (S_GET_VALUE (fixp->fx_addsy)
-		       - S_GET_VALUE (fixp->fx_subsy) + fixp->fx_offset);
+      if (reloc->sym_ptr_ptr)
+	free (reloc->sym_ptr_ptr);
+      free (reloc);
+      return NULL;
     }
   else
     {
@@ -1902,21 +1917,21 @@ md_pcrel_from (fixp)
   return fixp->fx_frag->fr_address + fixp->fx_where;
 }
 
-int
-md_apply_fix3 (fixp, valuep, seg)
-     fixS *fixp;
-     valueT *valuep;
+void
+md_apply_fix3 (fixP, valP, seg)
+     fixS * fixP;
+     valueT * valP;
      segT seg;
 {
-  char *fixpos = fixp->fx_where + fixp->fx_frag->fr_literal;
+  char * fixpos = fixP->fx_where + fixP->fx_frag->fr_literal;
   int size = 0;
-  int value;
+  int value = (int) * valP;
 
-  assert (fixp->fx_r_type < BFD_RELOC_UNUSED);
+  assert (fixP->fx_r_type < BFD_RELOC_UNUSED);
 
   /* This should never happen.  */
   if (seg->flags & SEC_ALLOC)
-      abort ();
+    abort ();
 
   /* The value we are passed in *valuep includes the symbol values.
      Since we are using BFD_ASSEMBLER, if we are doing this relocation
@@ -1929,22 +1944,20 @@ md_apply_fix3 (fixp, valuep, seg)
      *valuep, and must use fx_offset instead.  However, if the reloc
      is PC relative, we do want to use *valuep since it includes the
      result of md_pcrel_from.  */
-  if (fixp->fx_addsy == (symbolS *) NULL || fixp->fx_pcrel)
-    value = *valuep;
-  else
-    value = fixp->fx_offset;
+  if (fixP->fx_addsy != (symbolS *) NULL && ! fixP->fx_pcrel)
+    value = fixP->fx_offset;
 
   /* If the fix is relative to a symbol which is not defined, or not
      in the same segment as the fix, we cannot resolve it here.  */
-  if (fixp->fx_addsy != NULL
-      && (! S_IS_DEFINED (fixp->fx_addsy)
-	  || (S_GET_SEGMENT (fixp->fx_addsy) != seg)))
+  if (fixP->fx_addsy != NULL
+      && (! S_IS_DEFINED (fixP->fx_addsy)
+	  || (S_GET_SEGMENT (fixP->fx_addsy) != seg)))
     {
-      fixp->fx_done = 0;
-      return 0;
+      fixP->fx_done = 0;
+      return;
     }
 
-  switch (fixp->fx_r_type)
+  switch (fixP->fx_r_type)
     {
     case BFD_RELOC_8:
     case BFD_RELOC_8_PCREL:
@@ -1963,59 +1976,29 @@ md_apply_fix3 (fixp, valuep, seg)
 
     case BFD_RELOC_VTABLE_INHERIT:
     case BFD_RELOC_VTABLE_ENTRY:
-      fixp->fx_done = 0;
-      return 1;
+      fixP->fx_done = 0;
+      return;
 
     case BFD_RELOC_NONE:
     default:
-      as_bad_where (fixp->fx_file, fixp->fx_line,
-                   _("Bad relocation fixup type (%d)"), fixp->fx_r_type);
+      as_bad_where (fixP->fx_file, fixP->fx_line,
+                   _("Bad relocation fixup type (%d)"), fixP->fx_r_type);
     }
 
   md_number_to_chars (fixpos, value, size);
 
   /* If a symbol remains, pass the fixup, as a reloc, onto the linker.  */
-  if (fixp->fx_addsy == NULL)
-    fixp->fx_done = 1;
-
-  return 0;
-}
-
-/* Return nonzero if the fixup in FIXP will require a relocation,
-   even it if appears that the fixup could be completely handled
-   within GAS.  */
-
-int
-mn10300_force_relocation (fixp)
-     struct fix *fixp;
-{
-  if (fixp->fx_r_type == BFD_RELOC_VTABLE_INHERIT
-      || fixp->fx_r_type == BFD_RELOC_VTABLE_ENTRY)
-    return 1;
-
-  /* Do not adjust relocations involving symbols in code sections,
-     because it breaks linker relaxations.  This could be fixed in the
-     linker, but this fix is simpler, and it pretty much only affects
-     object size a little bit.  */
-  if ((S_GET_SEGMENT (fixp->fx_addsy)->flags & SEC_CODE)
-      && fixp->fx_subsy
-      && S_GET_SEGMENT (fixp->fx_addsy) == S_GET_SEGMENT (fixp->fx_subsy))
-    return 1;
-
-  return 0;
+  if (fixP->fx_addsy == NULL)
+    fixP->fx_done = 1;
 }
 
 /* Return zero if the fixup in fixp should be left alone and not
    adjusted.  */
 
-boolean
+bfd_boolean
 mn10300_fix_adjustable (fixp)
      struct fix *fixp;
 {
-  /* Prevent all adjustments to global symbols.  */
-  if (S_IS_EXTERN (fixp->fx_addsy) || S_IS_WEAK (fixp->fx_addsy))
-    return 0;
-
   if (fixp->fx_r_type == BFD_RELOC_VTABLE_INHERIT
       || fixp->fx_r_type == BFD_RELOC_VTABLE_ENTRY)
     return 0;

@@ -1,5 +1,5 @@
 /* ld.h -- general linker header file
-   Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000
+   Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2002
    Free Software Foundation, Inc.
 
    This file is part of GLD, the Gnu Linker.
@@ -70,7 +70,12 @@ name_list;
 struct wildcard_spec {
   const char *name;
   struct name_list *exclude_name_list;
-  boolean sorted;
+  bfd_boolean sorted;
+};
+
+struct wildcard_list {
+  struct wildcard_list *next;
+  struct wildcard_spec spec;
 };
 
 /* Extra information we hold on sections */
@@ -86,18 +91,13 @@ typedef struct user_section_struct {
 #define LONG_SIZE	(4)
 #define QUAD_SIZE	(8)
 
-/* ALIGN macro changed to ALIGN_N to avoid	*/
-/* conflict in /usr/include/machine/machparam.h */
-/* WARNING: If THIS is a 64 bit address and BOUNDARY is a 32 bit int,
-   you must coerce boundary to the same type as THIS.
-   ??? Is there a portable way to avoid this.  */
-#define ALIGN_N(this, boundary) \
-  ((( (this) + ((boundary) -1)) & (~((boundary)-1))))
-
 typedef struct {
   /* 1 => assign space to common symbols even if `relocatable_output'.  */
-  boolean force_common_definition;
-  boolean relax;
+  bfd_boolean force_common_definition;
+
+  /* 1 => do not assign addresses to common symbols.  */
+  bfd_boolean inhibit_common_definition;
+  bfd_boolean relax;
 
   /* Name of runtime interpreter to invoke.  */
   char *interpreter;
@@ -115,26 +115,22 @@ typedef struct {
   /* Big or little endian as set on command line.  */
   enum { ENDIAN_UNSET = 0, ENDIAN_BIG, ENDIAN_LITTLE } endian;
 
-  /* If true, export all symbols in the dynamic symbol table of an ELF
-     executable.  */
-  boolean export_dynamic;
-
-  /* If true, build MIPS embedded PIC relocation tables in the output
+  /* If TRUE, build MIPS embedded PIC relocation tables in the output
      file.  */
-  boolean embedded_relocs;
+  bfd_boolean embedded_relocs;
 
-  /* If true, force generation of a file with a .exe file.  */
-  boolean force_exe_suffix;
+  /* If TRUE, force generation of a file with a .exe file.  */
+  bfd_boolean force_exe_suffix;
 
-  /* If true, generate a cross reference report.  */
-  boolean cref;
+  /* If TRUE, generate a cross reference report.  */
+  bfd_boolean cref;
 
-  /* If true (which is the default), warn about mismatched input
+  /* If TRUE (which is the default), warn about mismatched input
      files.  */
-  boolean warn_mismatch;
+  bfd_boolean warn_mismatch;
 
   /* Remove unreferenced sections?  */
-  boolean gc_sections;
+  bfd_boolean gc_sections;
 
   /* Name of shared object whose symbol table should be filtered with
      this shared object.  From the --filter option.  */
@@ -148,9 +144,15 @@ typedef struct {
      .exports sections.  */
   char *version_exports_section;
 
-  /* If true (the default) check section addresses, once compute,
+  /* If TRUE (the default) check section addresses, once compute,
      fpor overlaps.  */
-  boolean check_section_addresses;
+  bfd_boolean check_section_addresses;
+
+  /* If TRUE allow the linking of input files in an unknown architecture
+     assuming that the user knows what they are doing.  This was the old
+     behaviour of the linker.  The new default behaviour is to reject such
+     input files.  */
+  bfd_boolean accept_unknown_input_arch;
 
 } args_type;
 
@@ -160,57 +162,64 @@ typedef int token_code_type;
 
 typedef struct {
   bfd_size_type specified_data_size;
-  boolean magic_demand_paged;
-  boolean make_executable;
+  bfd_boolean magic_demand_paged;
+  bfd_boolean make_executable;
 
-  /* If true, doing a dynamic link.  */
-  boolean dynamic_link;
+  /* If TRUE, doing a dynamic link.  */
+  bfd_boolean dynamic_link;
 
-  /* If true, -shared is supported.  */
+  /* If TRUE, -shared is supported.  */
   /* ??? A better way to do this is perhaps to define this in the
      ld_emulation_xfer_struct since this is really a target dependent
      parameter.  */
-  boolean has_shared;
+  bfd_boolean has_shared;
 
-  /* If true, build constructors.  */
-  boolean build_constructors;
+  /* If TRUE, build constructors.  */
+  bfd_boolean build_constructors;
 
-  /* If true, warn about any constructors.  */
-  boolean warn_constructors;
+  /* If TRUE, warn about any constructors.  */
+  bfd_boolean warn_constructors;
 
-  /* If true, warn about merging common symbols with others.  */
-  boolean warn_common;
+  /* If TRUE, warn about merging common symbols with others.  */
+  bfd_boolean warn_common;
 
-  /* If true, only warn once about a particular undefined symbol.  */
-  boolean warn_once;
+  /* If TRUE, only warn once about a particular undefined symbol.  */
+  bfd_boolean warn_once;
 
-  /* If true, warn if multiple global-pointers are needed (Alpha
+  /* If TRUE, warn if multiple global-pointers are needed (Alpha
      only).  */
-  boolean warn_multiple_gp;
+  bfd_boolean warn_multiple_gp;
 
-  /* If true, warn if the starting address of an output section
+  /* If TRUE, warn if the starting address of an output section
      changes due to the alignment of an input section.  */
-  boolean warn_section_align;
+  bfd_boolean warn_section_align;
 
-  boolean sort_common;
+  /* If TRUE, warning messages are fatal */
+  bfd_boolean fatal_warnings;
 
-  boolean text_read_only;
+  bfd_boolean sort_common;
+
+  bfd_boolean text_read_only;
 
   /* Classic ELF executable which has data and bss next to each
      other with no padding for GOT/PLT. */
-  boolean data_bss_contig;
+  bfd_boolean data_bss_contig;
 
   char *map_filename;
   FILE *map_file;
 
-  boolean stats;
+  bfd_boolean stats;
 
   /* If set, orphan input sections will be mapped to separate output
      sections.  */
-  boolean unique_orphan_sections;
+  bfd_boolean unique_orphan_sections;
 
   unsigned int split_by_reloc;
   bfd_size_type split_by_file;
+
+  /* If set, only search library directories explicitly selected
+     on the command line.  */
+  bfd_boolean only_cmd_line_lib_dirs;
 } ld_config_type;
 
 extern ld_config_type config;
@@ -221,8 +230,8 @@ typedef enum {
   lang_final_phase_enum
 } lang_phase_type;
 
-extern boolean had_script;
-extern boolean force_make_executable;
+extern FILE * saved_script_handle;
+extern bfd_boolean force_make_executable;
 
 /* Non-zero if we are processing a --defsym from the command line.  */
 extern int parsing_defsym;

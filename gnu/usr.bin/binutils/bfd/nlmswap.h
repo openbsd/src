@@ -1,5 +1,5 @@
 /* NLM (NetWare Loadable Module) swapping routines for BFD.
-   Copyright 1993, 2000 Free Software Foundation, Inc.
+   Copyright 1993, 2000, 2001 Free Software Foundation, Inc.
 
    Written by Fred Fish @ Cygnus Support, using ELF support as the
    template.
@@ -48,51 +48,51 @@ nlm_swap_fixed_header_in (abfd, realsrc, dst)
   memcpy (dst->signature, src->signature, NLM_SIGNATURE_SIZE);
   memcpy (dst->moduleName, src->moduleName, NLM_MODULE_NAME_SIZE);
   dst->version =
-    bfd_h_get_32 (abfd, (bfd_byte *) src->version);
+    H_GET_32 (abfd, src->version);
   dst->codeImageOffset =
-    bfd_h_get_32 (abfd, (bfd_byte *) src->codeImageOffset);
+    H_GET_32 (abfd, src->codeImageOffset);
   dst->codeImageSize =
-    bfd_h_get_32 (abfd, (bfd_byte *) src->codeImageSize);
+    H_GET_32 (abfd, src->codeImageSize);
   dst->dataImageOffset =
-    bfd_h_get_32 (abfd, (bfd_byte *) src->dataImageOffset);
+    H_GET_32 (abfd, src->dataImageOffset);
   dst->dataImageSize =
-    bfd_h_get_32 (abfd, (bfd_byte *) src->dataImageSize);
+    H_GET_32 (abfd, src->dataImageSize);
   dst->uninitializedDataSize =
-    bfd_h_get_32 (abfd, (bfd_byte *) src->uninitializedDataSize);
+    H_GET_32 (abfd, src->uninitializedDataSize);
   dst->customDataOffset =
-    bfd_h_get_32 (abfd, (bfd_byte *) src->customDataOffset);
+    H_GET_32 (abfd, src->customDataOffset);
   dst->customDataSize =
-    bfd_h_get_32 (abfd, (bfd_byte *) src->customDataSize);
+    H_GET_32 (abfd, src->customDataSize);
   dst->moduleDependencyOffset =
-    bfd_h_get_32 (abfd, (bfd_byte *) src->moduleDependencyOffset);
+    H_GET_32 (abfd, src->moduleDependencyOffset);
   dst->numberOfModuleDependencies =
-    bfd_h_get_32 (abfd, (bfd_byte *) src->numberOfModuleDependencies);
+    H_GET_32 (abfd, src->numberOfModuleDependencies);
   dst->relocationFixupOffset =
-    bfd_h_get_32 (abfd, (bfd_byte *) src->relocationFixupOffset);
+    H_GET_32 (abfd, src->relocationFixupOffset);
   dst->numberOfRelocationFixups =
-    bfd_h_get_32 (abfd, (bfd_byte *) src->numberOfRelocationFixups);
+    H_GET_32 (abfd, src->numberOfRelocationFixups);
   dst->externalReferencesOffset =
-    bfd_h_get_32 (abfd, (bfd_byte *) src->externalReferencesOffset);
+    H_GET_32 (abfd, src->externalReferencesOffset);
   dst->numberOfExternalReferences =
-    bfd_h_get_32 (abfd, (bfd_byte *) src->numberOfExternalReferences);
+    H_GET_32 (abfd, src->numberOfExternalReferences);
   dst->publicsOffset =
-    bfd_h_get_32 (abfd, (bfd_byte *) src->publicsOffset);
+    H_GET_32 (abfd, src->publicsOffset);
   dst->numberOfPublics =
-    bfd_h_get_32 (abfd, (bfd_byte *) src->numberOfPublics);
+    H_GET_32 (abfd, src->numberOfPublics);
   dst->debugInfoOffset =
-    bfd_h_get_32 (abfd, (bfd_byte *) src->debugInfoOffset);
+    H_GET_32 (abfd, src->debugInfoOffset);
   dst->numberOfDebugRecords =
-    bfd_h_get_32 (abfd, (bfd_byte *) src->numberOfDebugRecords);
+    H_GET_32 (abfd, src->numberOfDebugRecords);
   dst->codeStartOffset =
-    bfd_h_get_32 (abfd, (bfd_byte *) src->codeStartOffset);
+    H_GET_32 (abfd, src->codeStartOffset);
   dst->exitProcedureOffset =
-    bfd_h_get_32 (abfd, (bfd_byte *) src->exitProcedureOffset);
+    H_GET_32 (abfd, src->exitProcedureOffset);
   dst->checkUnloadProcedureOffset =
-    bfd_h_get_32 (abfd, (bfd_byte *) src->checkUnloadProcedureOffset);
+    H_GET_32 (abfd, src->checkUnloadProcedureOffset);
   dst->moduleType =
-    bfd_h_get_32 (abfd, (bfd_byte *) src->moduleType);
+    H_GET_32 (abfd, src->moduleType);
   dst->flags =
-    bfd_h_get_32 (abfd, (bfd_byte *) src->flags);
+    H_GET_32 (abfd, src->flags);
 }
 
 /* Translate an NLM fixed length file header in internal format into
@@ -108,50 +108,50 @@ nlm_swap_fixed_header_out (abfd, src, realdst)
   memset (dst, 0, sizeof *dst);
   memcpy (dst->signature, src->signature, NLM_SIGNATURE_SIZE);
   memcpy (dst->moduleName, src->moduleName, NLM_MODULE_NAME_SIZE);
-  bfd_h_put_32 (abfd, (bfd_vma) src->version,
-		(bfd_byte *) dst->version);
-  bfd_h_put_32 (abfd, (bfd_vma) src->codeImageOffset,
-		(bfd_byte *) dst->codeImageOffset);
-  bfd_h_put_32 (abfd, (bfd_vma) src->codeImageSize,
-		(bfd_byte *) dst->codeImageSize);
-  bfd_h_put_32 (abfd, (bfd_vma) src->dataImageOffset,
-		(bfd_byte *) dst->dataImageOffset);
-  bfd_h_put_32 (abfd, (bfd_vma) src->dataImageSize,
-		(bfd_byte *) dst->dataImageSize);
-  bfd_h_put_32 (abfd, (bfd_vma) src->uninitializedDataSize,
-		(bfd_byte *) dst->uninitializedDataSize);
-  bfd_h_put_32 (abfd, (bfd_vma) src->customDataOffset,
-		(bfd_byte *) dst->customDataOffset);
-  bfd_h_put_32 (abfd, (bfd_vma) src->customDataSize,
-		(bfd_byte *) dst->customDataSize);
-  bfd_h_put_32 (abfd, (bfd_vma) src->moduleDependencyOffset,
-		(bfd_byte *) dst->moduleDependencyOffset);
-  bfd_h_put_32 (abfd, (bfd_vma) src->numberOfModuleDependencies,
-		(bfd_byte *) dst->numberOfModuleDependencies);
-  bfd_h_put_32 (abfd, (bfd_vma) src->relocationFixupOffset,
-		(bfd_byte *) dst->relocationFixupOffset);
-  bfd_h_put_32 (abfd, (bfd_vma) src->numberOfRelocationFixups,
-		(bfd_byte *) dst->numberOfRelocationFixups);
-  bfd_h_put_32 (abfd, (bfd_vma) src->externalReferencesOffset,
-		(bfd_byte *) dst->externalReferencesOffset);
-  bfd_h_put_32 (abfd, (bfd_vma) src->numberOfExternalReferences,
-		(bfd_byte *) dst->numberOfExternalReferences);
-  bfd_h_put_32 (abfd, (bfd_vma) src->publicsOffset,
-		(bfd_byte *) dst->publicsOffset);
-  bfd_h_put_32 (abfd, (bfd_vma) src->numberOfPublics,
-		(bfd_byte *) dst->numberOfPublics);
-  bfd_h_put_32 (abfd, (bfd_vma) src->debugInfoOffset,
-		(bfd_byte *) dst->debugInfoOffset);
-  bfd_h_put_32 (abfd, (bfd_vma) src->numberOfDebugRecords,
-		(bfd_byte *) dst->numberOfDebugRecords);
-  bfd_h_put_32 (abfd, (bfd_vma) src->codeStartOffset,
-		(bfd_byte *) dst->codeStartOffset);
-  bfd_h_put_32 (abfd, (bfd_vma) src->exitProcedureOffset,
-		(bfd_byte *) dst->exitProcedureOffset);
-  bfd_h_put_32 (abfd, (bfd_vma) src->checkUnloadProcedureOffset,
-		(bfd_byte *) dst->checkUnloadProcedureOffset);
-  bfd_h_put_32 (abfd, (bfd_vma) src->moduleType,
-		(bfd_byte *) dst->moduleType);
-  bfd_h_put_32 (abfd, (bfd_vma) src->flags,
-		(bfd_byte *) dst->flags);
+  H_PUT_32 (abfd, src->version,
+	    dst->version);
+  H_PUT_32 (abfd, src->codeImageOffset,
+	    dst->codeImageOffset);
+  H_PUT_32 (abfd, src->codeImageSize,
+	    dst->codeImageSize);
+  H_PUT_32 (abfd, src->dataImageOffset,
+	    dst->dataImageOffset);
+  H_PUT_32 (abfd, src->dataImageSize,
+	    dst->dataImageSize);
+  H_PUT_32 (abfd, src->uninitializedDataSize,
+	    dst->uninitializedDataSize);
+  H_PUT_32 (abfd, src->customDataOffset,
+	    dst->customDataOffset);
+  H_PUT_32 (abfd, src->customDataSize,
+	    dst->customDataSize);
+  H_PUT_32 (abfd, src->moduleDependencyOffset,
+	    dst->moduleDependencyOffset);
+  H_PUT_32 (abfd, src->numberOfModuleDependencies,
+	    dst->numberOfModuleDependencies);
+  H_PUT_32 (abfd, src->relocationFixupOffset,
+	    dst->relocationFixupOffset);
+  H_PUT_32 (abfd, src->numberOfRelocationFixups,
+	    dst->numberOfRelocationFixups);
+  H_PUT_32 (abfd, src->externalReferencesOffset,
+	    dst->externalReferencesOffset);
+  H_PUT_32 (abfd, src->numberOfExternalReferences,
+	    dst->numberOfExternalReferences);
+  H_PUT_32 (abfd, src->publicsOffset,
+	    dst->publicsOffset);
+  H_PUT_32 (abfd, src->numberOfPublics,
+	    dst->numberOfPublics);
+  H_PUT_32 (abfd, src->debugInfoOffset,
+	    dst->debugInfoOffset);
+  H_PUT_32 (abfd, src->numberOfDebugRecords,
+	    dst->numberOfDebugRecords);
+  H_PUT_32 (abfd, src->codeStartOffset,
+	    dst->codeStartOffset);
+  H_PUT_32 (abfd, src->exitProcedureOffset,
+	    dst->exitProcedureOffset);
+  H_PUT_32 (abfd, src->checkUnloadProcedureOffset,
+	    dst->checkUnloadProcedureOffset);
+  H_PUT_32 (abfd, src->moduleType,
+	    dst->moduleType);
+  H_PUT_32 (abfd, src->flags,
+	    dst->flags);
 }

@@ -27,14 +27,19 @@
  * SUCH DAMAGE.
  */
 #include "gprof.h"
+#include "search_list.h"
+#include "source.h"
+#include "symtab.h"
 #include "cg_arcs.h"
 #include "corefile.h"
 #include "hist.h"
-#include "symtab.h"
 
+static int i386_iscall PARAMS ((unsigned char *));
+void i386_find_call PARAMS ((Sym *, bfd_vma, bfd_vma));
 
-int
-DEFUN (i386_iscall, (ip), unsigned char *ip)
+static int
+i386_iscall (ip)
+     unsigned char *ip;
 {
   if (*ip == 0xe8)
     return 1;
@@ -50,7 +55,7 @@ i386_find_call (parent, p_lowpc, p_highpc)
 {
   unsigned char *instructp;
   Sym *child;
-  bfd_vma destpc, delta;
+  bfd_vma pc, destpc;
 
   if (core_text_space == 0)
     {
@@ -68,25 +73,20 @@ i386_find_call (parent, p_lowpc, p_highpc)
 			  parent->name, (unsigned long) p_lowpc,
 			  (unsigned long) p_highpc));
 
-  delta = (bfd_vma) core_text_space - core_text_sect->vma;
-
-  for (instructp = (unsigned char *) (p_lowpc + delta);
-       instructp < (unsigned char *) (p_highpc + delta);
-       instructp ++)
+  for (pc = p_lowpc; pc < p_highpc; ++pc)
     {
+      instructp = (unsigned char *) core_text_space + pc - core_text_sect->vma;
       if (i386_iscall (instructp))
 	{
 	  DBG (CALLDEBUG,
-	       printf ("[findcall]\t0x%lx:call",
-		       (unsigned long) (instructp - (unsigned char *) delta)));
+	       printf ("[findcall]\t0x%lx:call", (unsigned long) pc));
 	  /*
 	   *  regular pc relative addressing
 	   *    check that this is the address of
 	   *    a function.
 	   */
 
-	  destpc = ((bfd_vma) bfd_get_32 (core_bfd, instructp + 1)
-		    + (bfd_vma) instructp - (bfd_vma) delta + 5);
+	  destpc = bfd_get_32 (core_bfd, instructp + 1) + pc + 5;
 	  if (destpc >= s_lowpc && destpc <= s_highpc)
 	    {
 	      child = sym_lookup (&symtab, destpc);

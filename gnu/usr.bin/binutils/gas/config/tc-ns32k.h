@@ -1,5 +1,5 @@
 /* tc-ns32k.h -- Opcode table for National Semi 32k processor
-   Copyright 1987, 1992, 1993, 1994, 1995, 1997, 2000
+   Copyright 1987, 1992, 1993, 1994, 1995, 1997, 2000, 2002
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -24,6 +24,7 @@
 #define TARGET_BYTES_BIG_ENDIAN	0
 
 #define TC_PCREL_ADJUST(F) md_pcrel_adjust(F)
+extern int md_pcrel_adjust PARAMS((fragS *fragP));
 
 #ifdef BFD_ASSEMBLER
 #define NO_RELOC BFD_RELOC_NONE
@@ -62,35 +63,17 @@
 #define ARG_LEN 50
 
 #define TC_CONS_FIX_NEW cons_fix_new_ns32k
-extern void fix_new_ns32k_exp PARAMS((fragS *frag,
-				   int where,
-				   int size,
-				   expressionS *exp,
-				   int pcrel,
-				   int im_disp,
-				   bit_fixS *bit_fixP,	/* really bit_fixS */
-				   int bsr,
-				   fragS *opcode_frag,
-				   unsigned int opcode_offset));
+extern void fix_new_ns32k_exp PARAMS ((fragS *, int, int, expressionS *,
+				       int, int, bit_fixS *, int, fragS *,
+				       unsigned int));
 
-extern void fix_new_ns32k PARAMS ((fragS *frag,
-				   int where,
-				   int size,
-				   symbolS *add_symbol,
-				   long offset,
-				   int pcrel,
-				   int im_disp,
-				   bit_fixS *bit_fixP,	/* really bit_fixS */
-				   int bsr,
-				   fragS *opcode_frag,
-				   unsigned int opcode_offset));
+extern void fix_new_ns32k PARAMS ((fragS *, int, int, symbolS *, long,
+				   int, int, bit_fixS *, int, fragS *,
+				   unsigned int));
 
-extern void cons_fix_new_ns32k PARAMS ((fragS *frag,
-					int where,
-					int size,
-					expressionS *exp));
+extern void cons_fix_new_ns32k PARAMS ((fragS *, int, int, expressionS *));
 
-/* the NS32x32 has a non 0 nop instruction which should be used in aligns */
+/* The NS32x32 has a non 0 nop instruction which should be used in aligns.  */
 #define NOP_OPCODE 0xa2
 
 #define md_operand(x)
@@ -99,33 +82,34 @@ extern const struct relax_type md_relax_table[];
 #define TC_GENERIC_RELAX_TABLE md_relax_table
 
 #define TC_FRAG_TYPE				\
-struct {					\
-  fragS *fr_opcode_fragP;			\
-  unsigned int fr_opcode_offset;		\
-  char fr_bsr;					\
-}
+  struct 					\
+    { 						\
+      fragS *      fr_opcode_fragP;		\
+      unsigned int fr_opcode_offset;		\
+      char         fr_bsr;			\
+    }
 
 #define TC_FRAG_INIT(X)				\
   do						\
      {						\
        frag_opcode_frag (X) = NULL;		\
        frag_opcode_offset (X) = 0;		\
-       frag_bsr (X) = 0;				\
+       frag_bsr (X) = 0;			\
      }						\
   while (0)
 
-/* Accessor macros for things which may move around */
+/* Accessor macros for things which may move around.  */
 #define frag_opcode_frag(X)   (X)->tc_frag_data.fr_opcode_fragP
 #define frag_opcode_offset(X) (X)->tc_frag_data.fr_opcode_offset
 #define frag_bsr(X)           (X)->tc_frag_data.fr_bsr
 
 #define TC_FIX_TYPE				\
-struct						\
-{						\
-  fragS *opcode_fragP;				\
-  unsigned int opcode_offset;			\
-  unsigned int bsr : 1;				\
-}
+  struct					\
+    {						\
+      fragS *      opcode_fragP;		\
+      unsigned int opcode_offset;		\
+      unsigned int bsr : 1;			\
+    }
 
 /* Accessor macros for things which may move around.
    See comments in write.h.  */
@@ -144,12 +128,12 @@ struct						\
      }						\
   while (0)
 
-#define TC_FIX_DATA_PRINT(FILE, FIXP)					\
+#define TC_FIX_DATA_PRINT(FILE, FIX)					\
   do									\
     {									\
       fprintf ((FILE), "opcode_frag=%ld, operand offset=%d, bsr=%d\n",	\
-	      (unsigned long) fix_opcode_frag (FIXP),			\
-	      fix_opcode_offset (FIXP),					\
-	      fix_bsr (FIXP));						\
+	      (unsigned long) fix_opcode_frag (FIX),			\
+	      fix_opcode_offset (FIX),					\
+	      fix_bsr (FIX));						\
     }									\
   while (0)

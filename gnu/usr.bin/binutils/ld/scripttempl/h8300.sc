@@ -38,10 +38,16 @@ SECTIONS
 	  *(.vectors)
 	} ${RELOCATING+ > vectors}
 
+.init :
+	{ 
+	  *(.init)
+	} ${RELOCATING+ > ram}
+
 .text :
 	{
 	  *(.rodata)
 	  *(.text)
+	  *(.text.*)
 	  *(.strings)
    	  ${RELOCATING+ _etext = . ; }
 	} ${RELOCATING+ > ram}
@@ -51,6 +57,7 @@ ${CONSTRUCTING+${TORS}}
 .data :
 	{
 	  *(.data)
+	  *(.data.*)
 	  *(.tiny)
 	  ${RELOCATING+ _edata = . ; }
 	} ${RELOCATING+ > ram}

@@ -1,5 +1,5 @@
-/* BFD back-end for NetBSD/VAX a.out-ish binaries.
-   Copyright 1998, 2000 Free Software Foundation, Inc.
+/* BFD back-end for NetBSD/VAX (4K page size) a.out-ish binaries.
+   Copyright 1998, 2000, 2001, 2002 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -20,13 +20,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define	BYTES_IN_WORD	4
 #undef TARGET_IS_BIG_ENDIAN_P
 
-#define	TARGET_PAGE_SIZE	4096
+#define	TARGET_PAGE_SIZE	0x1000
 #define	SEGMENT_SIZE	TARGET_PAGE_SIZE
 
 #define	DEFAULT_ARCH	bfd_arch_vax
-#define	DEFAULT_MID 	M_VAX_NETBSD
+#define	DEFAULT_MID 	M_VAX4K_NETBSD
 
-#define MY(OP) CAT(vaxnetbsd_,OP)
+/* Do not "beautify" the CONCAT* macro args.  Traditional C will not
+   remove whitespace added here, and thus will fail to concatenate
+   the tokens.  */
+#define MY(OP) CONCAT2 (vaxnetbsd_,OP)
+
 /* This needs to start with a.out so GDB knows it is an a.out variant.  */
 #define TARGETNAME "a.out-vax-netbsd"
 

@@ -1,6 +1,6 @@
 /* call_graph.c  -  Create call graphs.
 
-   Copyright 2000, 2001 Free Software Foundation, Inc.
+   Copyright 2000, 2001, 2002 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -19,17 +19,22 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
    02111-1307, USA.  */
 
+#include "gprof.h"
+#include "search_list.h"
+#include "source.h"
+#include "symtab.h"
 #include "cg_arcs.h"
 #include "call_graph.h"
 #include "corefile.h"
 #include "gmon_io.h"
 #include "gmon_out.h"
-#include "symtab.h"
 #include "sym_ids.h"
 
-extern void
-DEFUN (cg_tally, (from_pc, self_pc, count),
-       bfd_vma from_pc AND bfd_vma self_pc AND unsigned long count)
+void
+cg_tally (from_pc, self_pc, count)
+     bfd_vma from_pc;
+     bfd_vma self_pc;
+     unsigned long count;
 {
   Sym *parent;
   Sym *child;
@@ -75,7 +80,9 @@ DEFUN (cg_tally, (from_pc, self_pc, count),
    for formatting error-messages only.  */
 
 void
-DEFUN (cg_read_rec, (ifp, filename), FILE * ifp AND CONST char *filename)
+cg_read_rec (ifp, filename)
+     FILE *ifp;
+     const char *filename;
 {
   bfd_vma from_pc, self_pc;
   unsigned int count;
@@ -102,7 +109,9 @@ DEFUN (cg_read_rec, (ifp, filename), FILE * ifp AND CONST char *filename)
    only.  */
 
 void
-DEFUN (cg_write_arcs, (ofp, filename), FILE * ofp AND const char *filename)
+cg_write_arcs (ofp, filename)
+     FILE *ofp;
+     const char *filename;
 {
   Arc *arc;
   Sym *sym;

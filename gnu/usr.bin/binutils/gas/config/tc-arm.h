@@ -1,5 +1,5 @@
 /* This file is tc-arm.h
-   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001
+   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002
    Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rwe@pegasus.esprit.ec.org)
 	Modified by David Taylor (dtaylor@armltd.co.uk)
@@ -66,17 +66,17 @@
 #define TARGET_FORMAT "aif"
 #endif
 
+struct fix;
+
 #if defined OBJ_COFF || defined OBJ_ELF
 # define ARM_BI_ENDIAN
 
-# define TC_VALIDATE_FIX(fixP, segType, Label) \
-     if (arm_validate_fix (fixP)) add_symbolP = fixP->fx_addsy
-  extern boolean arm_validate_fix PARAMS ((struct fix *));
+# define TC_VALIDATE_FIX(FIX, SEGTYPE, LABEL) arm_validate_fix (FIX)
+  extern void arm_validate_fix PARAMS ((struct fix *));
 #endif
 
 #ifdef OBJ_COFF
 # if defined TE_PE
-#  define TC_FORCE_RELOCATION(x) ((x)->fx_r_type == BFD_RELOC_RVA)
 #   ifdef TE_EPOC
 #    define TARGET_FORMAT (target_big_endian ? "epoc-pe-arm-big" : "epoc-pe-arm-little")
 #   else
@@ -90,10 +90,10 @@
 #ifdef OBJ_ELF
 # define TARGET_FORMAT elf32_arm_target_format()
   extern const char * elf32_arm_target_format PARAMS ((void));
-
-# define TC_FORCE_RELOCATION(fixp) arm_force_relocation (fixp)
-  extern int arm_force_relocation PARAMS ((struct fix *));
 #endif
+
+#define TC_FORCE_RELOCATION(FIX) arm_force_relocation (FIX)
+extern int arm_force_relocation PARAMS ((struct fix *));
 
 #define md_convert_frag(b, s, f) {as_fatal (_("arm convert_frag\n"));}
 
@@ -114,18 +114,16 @@
    symbols as Thumb.  */
 
 #define TC_FIX_TYPE PTR
-#define TC_INIT_FIX_DATA(FIXP) ((FIXP)->tc_fix_data = NULL)
+#define TC_INIT_FIX_DATA(FIX) ((FIX)->tc_fix_data = NULL)
 
 #if defined OBJ_ELF || defined OBJ_COFF
-#include "write.h"        /* For definition of fixS */
-#define obj_fix_adjustable(fixP) arm_fix_adjustable (fixP)
-boolean arm_fix_adjustable PARAMS ((fixS *));
+#define EXTERN_FORCE_RELOC 1
 
-/* This arranges for gas/write.c to not apply a relocation if
-   obj_fix_adjustable() says it is not adjustable.  */
-#define TC_FIX_ADJUSTABLE(fixP) obj_fix_adjustable (fixP)
-#else
-#define obj_fix_adjustable(fixP) 0
+#define tc_fix_adjustable(FIX) arm_fix_adjustable (FIX)
+bfd_boolean arm_fix_adjustable PARAMS ((struct fix *));
+
+/* Values passed to md_apply_fix3 don't include the symbol value.  */
+#define MD_APPLY_SYM_VALUE(FIX) 0
 #endif
 
 /* We need to keep some local information on symbols.  */
@@ -169,41 +167,29 @@ void armelf_frob_symbol PARAMS ((symbolS *, int *));
 
 #define OPTIONAL_REGISTER_PREFIX '%'
 
-#define md_operand(x)
-
-#define TC_HANDLES_FX_DONE
-
-#define MD_APPLY_FIX3
-
 #define LOCAL_LABEL(name) (name[0] == '.' && (name[1] == 'L'))
 #define LOCAL_LABELS_FB   1
 #ifdef OBJ_ELF
 #define LOCAL_LABEL_PREFIX '.'
 #endif
 
-/* This expression evaluates to false if the relocation is for a local object
-   for which we still want to do the relocation at runtime.  True if we
-   are willing to perform this relocation while building the .o file.
-   This is only used for pcrel relocations, so GOTOFF does not need to be
-   checked here.  I am not sure if some of the others are ever used with
+/* This expression evaluates to true if the relocation is for a local
+   object for which we still want to do the relocation at runtime.
+   False if we are willing to perform this relocation while building
+   the .o file.  GOTOFF does not need to be checked here because it is
+   not pcrel.  I am not sure if some of the others are ever used with
    pcrel, but it is easier to be safe than sorry.  */
 
-#define TC_RELOC_RTSYM_LOC_FIXUP(FIX)  \
-   (  (FIX)->fx_r_type != BFD_RELOC_ARM_GOT12 \
-   && (FIX)->fx_r_type != BFD_RELOC_ARM_GOT32 \
-   && (FIX)->fx_r_type != BFD_RELOC_32)
+#define TC_FORCE_RELOCATION_LOCAL(FIX)			\
+  (!(FIX)->fx_pcrel					\
+   || (FIX)->fx_plt					\
+   || (FIX)->fx_r_type == BFD_RELOC_ARM_GOT12		\
+   || (FIX)->fx_r_type == BFD_RELOC_ARM_GOT32		\
+   || (FIX)->fx_r_type == BFD_RELOC_32			\
+   || TC_FORCE_RELOCATION (FIX))
 
 #define TC_CONS_FIX_NEW cons_fix_new_arm
  extern void cons_fix_new_arm PARAMS ((fragS *, int, int, expressionS *));
-
-/* Don't allow symbols to be discarded on GOT related relocs,
-   nor on globals.  */
-#define tc_fix_adjustable(x) (\
-     ((x)->fx_r_type == BFD_RELOC_ARM_PLT32 \
-   || (x)->fx_r_type == BFD_RELOC_ARM_GOT32 \
-   || (x)->fx_r_type == BFD_RELOC_ARM_GOTOFF \
-   || S_IS_EXTERN ((x)->fx_addsy) \
-   || S_IS_WEAK ((x)->fx_addsy)) ? 0 : 1)
 
 #ifdef OBJ_ELF
 #define GLOBAL_OFFSET_TABLE_NAME "_GLOBAL_OFFSET_TABLE_"

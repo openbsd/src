@@ -1,5 +1,6 @@
 /* Target definitions for 32/64-bit NLM (NetWare Loadable Module)
-   Copyright 1993, 1994, 1998, 1999, 2000, 2001 Free Software Foundation, Inc.
+   Copyright 1993, 1994, 1998, 1999, 2000, 2001, 2002
+   Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -42,8 +43,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
   bfd_generic_get_relocated_section_contents
 #define nlm_bfd_relax_section bfd_generic_relax_section
 #define nlm_bfd_gc_sections bfd_generic_gc_sections
+#define nlm_bfd_merge_sections bfd_generic_merge_sections
+#define nlm_bfd_discard_group bfd_generic_discard_group
 #define nlm_bfd_link_hash_table_create _bfd_generic_link_hash_table_create
+#define nlm_bfd_link_hash_table_free _bfd_generic_link_hash_table_free
 #define nlm_bfd_link_add_symbols _bfd_generic_link_add_symbols
+#define nlm_bfd_link_just_syms _bfd_generic_link_just_syms
 #define nlm_bfd_final_link _bfd_generic_final_link
 #define nlm_bfd_link_split_section _bfd_generic_link_split_section
 

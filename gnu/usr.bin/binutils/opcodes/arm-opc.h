@@ -1,6 +1,6 @@
 /* Opcode table for the ARM.
 
-   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000
+   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2003
    Free Software Foundation, Inc.
    
    This program is free software; you can redistribute it and/or modify
@@ -38,6 +38,10 @@ struct thumb_opcode
    %<bitfield>r		print as an ARM register
    %<bitfield>f		print a floating point constant if >7 else a
 			floating point register
+   %<code>y		print a single precision VFP reg.
+			  Codes: 0=>Sm, 1=>Sd, 2=>Sn, 3=>multi-list, 4=>Sm pair
+   %<code>z		print a double precision VFP reg
+			  Codes: 0=>Dm, 1=>Dd, 2=>Dn, 3=>multi-list
    %c			print condition code (always bits 28-31)
    %P			print floating point precision in arithmetic insn
    %Q			print floating point precision in ldf/stf insn
@@ -47,7 +51,6 @@ struct thumb_opcode
    %<bitnum>?ab		print a if bit is one else print b
    %p			print 'p' iff bits 12-15 are 15
    %t			print 't' iff bit 21 set and bit 24 clear
-   %h                   print 'h' iff bit 5 set, else print 'b'
    %o			print operand2 (immediate or register + shift)
    %a			print address for ldr/str instruction
    %s                   print address for ldr/str halfword/signextend instruction
@@ -57,6 +60,13 @@ struct thumb_opcode
    %m			print register mask for ldm/stm instruction
    %C			print the PSR sub type.
    %F			print the COUNT field of a LFM/SFM instruction.
+IWMMXT specific format options:
+   %<bitfield>g         print as an iWMMXt 64-bit register
+   %<bitfield>G         print as an iWMMXt general purpose or control register
+   %<bitfield>w         print as an iWMMXt width field - [bhwd]ss/us
+   %Z			print the Immediate of a WSHUFH instruction.
+   %L			print as an iWMMXt N/M width field.
+   %l			like 'A' except use byte offsets for 'B' & 'H' versions
 Thumb specific format options:
    %D                   print Thumb register (bits 0..2 as high number if bit 7 set)
    %S                   print Thumb register (bits 3..5 as high number if bit 6 set)
@@ -66,6 +76,7 @@ Thumb specific format options:
    %N                   print Thumb register mask (with LR)
    %O                   print Thumb register mask (with PC)
    %T                   print Thumb condition code (always bits 8-11)
+   %I                   print cirrus signed shift immediate: bits 0..3|4..6
    %<bitfield>B         print Thumb branch destination (signed displacement)
    %<bitfield>W         print (bitfield * 4) as a decimal
    %<bitfield>H         print (bitfield * 2) as a decimal
@@ -75,7 +86,7 @@ Thumb specific format options:
 /* Note: There is a partial ordering in this table - it must be searched from
    the top to obtain a correct match. */
 
-static struct arm_opcode arm_opcodes[] =
+static const struct arm_opcode arm_opcodes[] =
 {
     /* ARM instructions.  */
     {0xe1a00000, 0xffffffff, "nop\t\t\t(mov r0,r0)"},
@@ -86,6 +97,9 @@ static struct arm_opcode arm_opcodes[] =
     {0x00800090, 0x0fa000f0, "%22?sumull%c%20's\t%12-15r, %16-19r, %0-3r, %8-11r"},
     {0x00a00090, 0x0fa000f0, "%22?sumlal%c%20's\t%12-15r, %16-19r, %0-3r, %8-11r"},
 
+    /* V5J instruction.  */
+    {0x012fff20, 0x0ffffff0, "bxj%c\t%0-3r"},
+
     /* XScale instructions.  */
     {0x0e200010, 0x0fff0ff0, "mia%c\tacc0, %0-3r, %12-15r"},
     {0x0e280010, 0x0fff0ff0, "miaph%c\tacc0, %0-3r, %12-15r"},
@@ -94,6 +108,59 @@ static struct arm_opcode arm_opcodes[] =
     {0x0c500000, 0x0ff00fff, "mra%c\t%12-15r, %16-19r, acc0"},
     {0xf450f000, 0xfc70f000, "pld\t%a"},
     
+    /* Intel Wireless MMX technology instructions.  */
+#define FIRST_IWMMXT_INSN 0x0e130130
+#define IWMMXT_INSN_COUNT 47
+    {0x0e130130, 0x0f3f0fff, "tandc%22-23w%c\t%12-15r"},
+    {0x0e400010, 0x0ff00f3f, "tbcst%6-7w%c\t%16-19g, %12-15r"},
+    {0x0e130170, 0x0f3f0ff8, "textrc%22-23w%c\t%12-15r, #%0-2d"},
+    {0x0e100070, 0x0f300ff0, "textrm%3?su%22-23w%c\t%12-15r, %16-19g, #%0-2d"},
+    {0x0e600010, 0x0ff00f38, "tinsr%6-7w%c\t%16-19g, %12-15r, #%0-2d"},
+    {0x0e000110, 0x0ff00fff, "tmcr%c\t%16-19G, %12-15r"},
+    {0x0c400000, 0x0ff00ff0, "tmcrr%c\t%0-3g, %12-15r, %16-19r"},
+    {0x0e2c0010, 0x0ffc0e10, "tmia%17?tb%16?tb%c\t%5-8g, %0-3r, %12-15r"},
+    {0x0e200010, 0x0fff0e10, "tmia%c\t%5-8g, %0-3r, %12-15r"},
+    {0x0e280010, 0x0fff0e10, "tmiaph%c\t%5-8g, %0-3r, %12-15r"},
+    {0x0e100030, 0x0f300fff, "tmovmsk%22-23w%c\t%12-15r, %16-19g"},
+    {0x0e100110, 0x0ff00ff0, "tmrc%c\t%12-15r, %16-19G"},
+    {0x0c500000, 0x0ff00ff0, "tmrrc%c\t%12-15r, %16-19r, %0-3g"},
+    {0x0e130150, 0x0f3f0fff, "torc%22-23w%c\t%12-15r"},
+    {0x0e0001c0, 0x0f300fff, "wacc%22-23w%c\t%12-15g, %16-19g"},
+    {0x0e000180, 0x0f000ff0, "wadd%20-23w%c\t%12-15g, %16-19g, %0-3g"},
+    {0x0e000020, 0x0f800ff0, "waligni%c\t%12-15g, %16-19g, %0-3g, #%20-22d"},
+    {0x0e800020, 0x0fc00ff0, "walignr%20-21d%c\t%12-15g, %16-19g, %0-3g"},
+    {0x0e200000, 0x0fe00ff0, "wand%20'n%c\t%12-15g, %16-19g, %0-3g"},
+    {0x0e800000, 0x0fa00ff0, "wavg2%22?hb%20'r%c\t%12-15g, %16-19g, %0-3g"},
+    {0x0e000060, 0x0f300ff0, "wcmpeq%22-23w%c\t%12-15g, %16-19g, %0-3g"},
+    {0x0e100060, 0x0f100ff0, "wcmpgt%21?su%22-23w%c\t%12-15g, %16-19g, %0-3g"},
+    {0xfc100100, 0xfe500f00, "wldrw\t%12-15G, %A"},
+    {0x0c100000, 0x0e100e00, "wldr%L%c\t%12-15g, %l"},
+    {0x0e400100, 0x0fc00ff0, "wmac%21?su%20'z%c\t%12-15g, %16-19g, %0-3g"},
+    {0x0e800100, 0x0fd00ff0, "wmadd%21?su%c\t%12-15g, %16-19g, %0-3g"},
+    {0x0e000160, 0x0f100ff0, "wmax%21?su%22-23w%c\t%12-15g, %16-19g, %0-3g"},
+    {0x0e100160, 0x0f100ff0, "wmin%21?su%22-23w%c\t%12-15g, %16-19g, %0-3g"},
+    {0x0e000100, 0x0fc00ff0, "wmul%21?su%20?ml%c\t%12-15g, %16-19g, %0-3g"},
+    {0x0e000000, 0x0ff00ff0, "wor%c\t%12-15g, %16-19g, %0-3g"},
+    {0x0e000080, 0x0f000ff0, "wpack%20-23w%c\t%12-15g, %16-19g, %0-3g"},
+    {0x0e300040, 0x0f300ff0, "wror%22-23w%8'g%c\t%12-15g, %16-19g, %0-3g"},
+    {0x0e300148, 0x0f300ffc, "wror%22-23w%8'g%c\t%12-15g, %16-19g, %0-3G"},
+    {0x0e000120, 0x0fa00ff0, "wsad%22?hb%20'z%c\t%12-15g, %16-19g, %0-3g"},
+    {0x0e0001e0, 0x0f000ff0, "wshufh%c\t%12-15g, %16-19g, #%Z"},
+    {0x0e100040, 0x0f300ff0, "wsll%22-23w%8'g%c\t%12-15g, %16-19g, %0-3g"},
+    {0x0e100148, 0x0f300ffc, "wsll%22-23w%8'g%c\t%12-15g, %16-19g, %0-3G"},
+    {0x0e000040, 0x0f300ff0, "wsra%22-23w%8'g%c\t%12-15g, %16-19g, %0-3g"},
+    {0x0e000148, 0x0f300ffc, "wsra%22-23w%8'g%c\t%12-15g, %16-19g, %0-3G"},
+    {0x0e200040, 0x0f300ff0, "wsrl%22-23w%8'g%c\t%12-15g, %16-19g, %0-3g"},
+    {0x0e200148, 0x0f300ffc, "wsrl%22-23w%8'g%c\t%12-15g, %16-19g, %0-3G"},
+    {0xfc000100, 0xfe500f00, "wstrw\t%12-15G, %A"},
+    {0x0c000000, 0x0e100e00, "wstr%L%c\t%12-15g, %l"},
+    {0x0e0001a0, 0x0f000ff0, "wsub%20-23w%c\t%12-15g, %16-19g, %0-3g"},
+    {0x0e0000c0, 0x0f100fff, "wunpckeh%21?su%22-23w%c\t%12-15g, %16-19g"},
+    {0x0e0000e0, 0x0f100fff, "wunpckel%21?su%22-23w%c\t%12-15g, %16-19g"},
+    {0x0e1000c0, 0x0f300ff0, "wunpckih%22-23w%c\t%12-15g, %16-19g, %0-3g"},
+    {0x0e1000e0, 0x0f300ff0, "wunpckil%22-23w%c\t%12-15g, %16-19g, %0-3g"},
+    {0x0e100000, 0x0ff00ff0, "wxor%c\t%12-15g, %16-19g, %0-3g"},
+
     /* V5 Instructions.  */
     {0xe1200070, 0xfff000f0, "bkpt\t0x%16-19X%12-15X%8-11X%0-3X"},
     {0xfa000000, 0xfe000000, "blx\t%B"},
@@ -138,8 +205,8 @@ static struct arm_opcode arm_opcodes[] =
     {0x0c500000, 0x0ff00000, "mrrc%c\t%8-11d, %4-7d, %12-15r, %16-19r, cr%0-3d"},
 
     /* ARM Instructions.  */
-    {0x00000090, 0x0e100090, "str%c%6's%h\t%12-15r, %s"},
-    {0x00100090, 0x0e100090, "ldr%c%6's%h\t%12-15r, %s"},
+    {0x00000090, 0x0e100090, "str%c%6's%5?hb\t%12-15r, %s"},
+    {0x00100090, 0x0e100090, "ldr%c%6's%5?hb\t%12-15r, %s"},
     {0x00000000, 0x0de00000, "and%c%20's\t%12-15r, %16-19r, %o"},
     {0x00200000, 0x0de00000, "eor%c%20's\t%12-15r, %16-19r, %o"},
     {0x00400000, 0x0de00000, "sub%c%20's\t%12-15r, %16-19r, %o"},
@@ -168,7 +235,7 @@ static struct arm_opcode arm_opcodes[] =
     {0x0a000000, 0x0e000000, "b%24'l%c\t%b"},
     {0x0f000000, 0x0f000000, "swi%c\t%0-23x"},
 
-    /* Floating point coprocessor instructions */
+    /* Floating point coprocessor (FPA) instructions */
     {0x0e000100, 0x0ff08f10, "adf%c%P%R\t%12-14f, %16-18f, %0-3f"},
     {0x0e100100, 0x0ff08f10, "muf%c%P%R\t%12-14f, %16-18f, %0-3f"},
     {0x0e200100, 0x0ff08f10, "suf%c%P%R\t%12-14f, %16-18f, %0-3f"},
@@ -213,6 +280,167 @@ static struct arm_opcode arm_opcodes[] =
     {0x0c000200, 0x0e100f00, "sfm%c\t%12-14f, %F, %A"},
     {0x0c100200, 0x0e100f00, "lfm%c\t%12-14f, %F, %A"},
 
+    /* Floating point coprocessor (VFP) instructions */
+    {0x0eb00bc0, 0x0fff0ff0, "fabsd%c\t%1z, %0z"},
+    {0x0eb00ac0, 0x0fbf0fd0, "fabss%c\t%1y, %0y"},
+    {0x0e300b00, 0x0ff00ff0, "faddd%c\t%1z, %2z, %0z"},
+    {0x0e300a00, 0x0fb00f50, "fadds%c\t%1y, %2y, %1y"},
+    {0x0eb40b40, 0x0fff0f70, "fcmp%7'ed%c\t%1z, %0z"},
+    {0x0eb40a40, 0x0fbf0f50, "fcmp%7'es%c\t%1y, %0y"},
+    {0x0eb50b40, 0x0fff0f70, "fcmp%7'ezd%c\t%1z"},
+    {0x0eb50a40, 0x0fbf0f70, "fcmp%7'ezs%c\t%1y"},
+    {0x0eb00b40, 0x0fff0ff0, "fcpyd%c\t%1z, %0z"},
+    {0x0eb00a40, 0x0fbf0fd0, "fcpys%c\t%1y, %0y"},
+    {0x0eb70ac0, 0x0fff0fd0, "fcvtds%c\t%1z, %0y"},
+    {0x0eb70bc0, 0x0fbf0ff0, "fcvtsd%c\t%1y, %0z"},
+    {0x0e800b00, 0x0ff00ff0, "fdivd%c\t%1z, %2z, %0z"},
+    {0x0e800a00, 0x0fb00f50, "fdivs%c\t%1y, %2y, %0y"},
+    {0x0d100b00, 0x0f700f00, "fldd%c\t%1z, %A"},
+    {0x0c900b00, 0x0fd00f00, "fldmia%0?xd%c\t%16-19r%21'!, %3z"},
+    {0x0d300b00, 0x0ff00f00, "fldmdb%0?xd%c\t%16-19r!, %3z"},
+    {0x0d100a00, 0x0f300f00, "flds%c\t%1y, %A"},
+    {0x0c900a00, 0x0f900f00, "fldmias%c\t%16-19r%21'!, %3y"},
+    {0x0d300a00, 0x0fb00f00, "fldmdbs%c\t%16-19r!, %3y"},
+    {0x0e000b00, 0x0ff00ff0, "fmacd%c\t%1z, %2z, %0z"},
+    {0x0e000a00, 0x0fb00f50, "fmacs%c\t%1y, %2y, %0y"},
+    {0x0e200b10, 0x0ff00fff, "fmdhr%c\t%2z, %12-15r"},
+    {0x0e000b10, 0x0ff00fff, "fmdlr%c\t%2z, %12-15r"},
+    {0x0c400b10, 0x0ff00ff0, "fmdrr%c\t%0z, %12-15r, %16-19r"},
+    {0x0e300b10, 0x0ff00fff, "fmrdh%c\t%12-15r, %2z"},
+    {0x0e100b10, 0x0ff00fff, "fmrdl%c\t%12-15r, %2z"},
+    {0x0c500b10, 0x0ff00ff0, "fmrrd%c\t%12-15r, %16-19r, %0z"},
+    {0x0c500a10, 0x0ff00fd0, "fmrrs%c\t%12-15r, %16-19r, %4y"},
+    {0x0e100a10, 0x0ff00f7f, "fmrs%c\t%12-15r, %2y"},
+    {0x0ef1fa10, 0x0fffffff, "fmstat%c"},
+    {0x0ef00a10, 0x0fff0fff, "fmrx%c\t%12-15r, fpsid"},
+    {0x0ef10a10, 0x0fff0fff, "fmrx%c\t%12-15r, fpscr"},
+    {0x0ef80a10, 0x0fff0fff, "fmrx%c\t%12-15r, fpexc"},
+    {0x0ef90a10, 0x0fff0fff, "fmrx%c\t%12-15r, fpinst\t@ Impl def"},
+    {0x0efa0a10, 0x0fff0fff, "fmrx%c\t%12-15r, fpinst2\t@ Impl def"},
+    {0x0ef00a10, 0x0ff00fff, "fmrx%c\t%12-15r, <impl def 0x%16-19x>"},
+    {0x0e100b00, 0x0ff00ff0, "fmscd%c\t%1z, %2z, %0z"},
+    {0x0e100a00, 0x0fb00f50, "fmscs%c\t%1y, %2y, %0y"},
+    {0x0e000a10, 0x0ff00f7f, "fmsr%c\t%2y, %12-15r"},
+    {0x0c400a10, 0x0ff00fd0, "fmsrr%c\t%12-15r, %16-19r, %4y"},
+    {0x0e200b00, 0x0ff00ff0, "fmuld%c\t%1z, %2z, %0z"},
+    {0x0e200a00, 0x0fb00f50, "fmuls%c\t%1y, %2y, %0y"},
+    {0x0ee00a10, 0x0fff0fff, "fmxr%c\tfpsid, %12-15r"},
+    {0x0ee10a10, 0x0fff0fff, "fmxr%c\tfpscr, %12-15r"},
+    {0x0ee80a10, 0x0fff0fff, "fmxr%c\tfpexc, %12-15r"},
+    {0x0ee90a10, 0x0fff0fff, "fmxr%c\tfpinst, %12-15r\t@ Impl def"},
+    {0x0eea0a10, 0x0fff0fff, "fmxr%c\tfpinst2, %12-15r\t@ Impl def"},
+    {0x0ee00a10, 0x0ff00fff, "fmxr%c\t<impl def 0x%16-19x>, %12-15r"},
+    {0x0eb10b40, 0x0fff0ff0, "fnegd%c\t%1z, %0z"},
+    {0x0eb10a40, 0x0fbf0fd0, "fnegs%c\t%1y, %0y"},
+    {0x0e000b40, 0x0ff00ff0, "fnmacd%c\t%1z, %2z, %0z"},
+    {0x0e000a40, 0x0fb00f50, "fnmacs%c\t%1y, %2y, %0y"},
+    {0x0e100b40, 0x0ff00ff0, "fnmscd%c\t%1z, %2z, %0z"},
+    {0x0e100a40, 0x0fb00f50, "fnmscs%c\t%1y, %2y, %0y"},
+    {0x0e200b40, 0x0ff00ff0, "fnmuld%c\t%1z, %2z, %0z"},
+    {0x0e200a40, 0x0fb00f50, "fnmuls%c\t%1y, %2y, %0y"},
+    {0x0eb80bc0, 0x0fff0fd0, "fsitod%c\t%1z, %0y"},
+    {0x0eb80ac0, 0x0fbf0fd0, "fsitos%c\t%1y, %0y"},
+    {0x0eb10bc0, 0x0fff0ff0, "fsqrtd%c\t%1z, %0z"},
+    {0x0eb10ac0, 0x0fbf0fd0, "fsqrts%c\t%1y, %0y"},
+    {0x0d000b00, 0x0f700f00, "fstd%c\t%1z, %A"},
+    {0x0c800b00, 0x0fd00f00, "fstmia%0?xd%c\t%16-19r%21'!, %3z"},
+    {0x0d200b00, 0x0ff00f00, "fstmdb%0?xd%c\t%16-19r!, %3z"},
+    {0x0d000a00, 0x0f300f00, "fsts%c\t%1y, %A"},
+    {0x0c800a00, 0x0f900f00, "fstmias%c\t%16-19r%21'!, %3y"},
+    {0x0d200a00, 0x0fb00f00, "fstmdbs%c\t%16-19r!, %3y"},
+    {0x0e300b40, 0x0ff00ff0, "fsubd%c\t%1z, %2z, %0z"},
+    {0x0e300a40, 0x0fb00f50, "fsubs%c\t%1y, %2y, %0y"},
+    {0x0ebc0b40, 0x0fbe0f70, "fto%16?sui%7'zd%c\t%1y, %0z"},
+    {0x0ebc0a40, 0x0fbe0f50, "fto%16?sui%7'zs%c\t%1y, %0y"},
+    {0x0eb80b40, 0x0fff0fd0, "fuitod%c\t%1z, %0y"},
+    {0x0eb80a40, 0x0fbf0fd0, "fuitos%c\t%1y, %0y"},
+
+    /* Cirrus coprocessor instructions.  */
+    {0x0d100400, 0x0f500f00, "cfldrs%c\tmvf%12-15d, %A"},
+    {0x0c100400, 0x0f500f00, "cfldrs%c\tmvf%12-15d, %A"},
+    {0x0d500400, 0x0f500f00, "cfldrd%c\tmvd%12-15d, %A"},
+    {0x0c500400, 0x0f500f00, "cfldrd%c\tmvd%12-15d, %A"}, 
+    {0x0d100500, 0x0f500f00, "cfldr32%c\tmvfx%12-15d, %A"},
+    {0x0c100500, 0x0f500f00, "cfldr32%c\tmvfx%12-15d, %A"},
+    {0x0d500500, 0x0f500f00, "cfldr64%c\tmvdx%12-15d, %A"},
+    {0x0c500500, 0x0f500f00, "cfldr64%c\tmvdx%12-15d, %A"},
+    {0x0d000400, 0x0f500f00, "cfstrs%c\tmvf%12-15d, %A"},
+    {0x0c000400, 0x0f500f00, "cfstrs%c\tmvf%12-15d, %A"},
+    {0x0d400400, 0x0f500f00, "cfstrd%c\tmvd%12-15d, %A"},
+    {0x0c400400, 0x0f500f00, "cfstrd%c\tmvd%12-15d, %A"},
+    {0x0d000500, 0x0f500f00, "cfstr32%c\tmvfx%12-15d, %A"},
+    {0x0c000500, 0x0f500f00, "cfstr32%c\tmvfx%12-15d, %A"},
+    {0x0d400500, 0x0f500f00, "cfstr64%c\tmvdx%12-15d, %A"},
+    {0x0c400500, 0x0f500f00, "cfstr64%c\tmvdx%12-15d, %A"},
+    {0x0e000450, 0x0ff00ff0, "cfmvsr%c\tmvf%16-19d, %12-15r"},
+    {0x0e100450, 0x0ff00ff0, "cfmvrs%c\t%12-15r, mvf%16-19d"},
+    {0x0e000410, 0x0ff00ff0, "cfmvdlr%c\tmvd%16-19d, %12-15r"},
+    {0x0e100410, 0x0ff00ff0, "cfmvrdl%c\t%12-15r, mvd%16-19d"},
+    {0x0e000430, 0x0ff00ff0, "cfmvdhr%c\tmvd%16-19d, %12-15r"},
+    {0x0e100430, 0x0ff00fff, "cfmvrdh%c\t%12-15r, mvd%16-19d"},
+    {0x0e000510, 0x0ff00fff, "cfmv64lr%c\tmvdx%16-19d, %12-15r"},
+    {0x0e100510, 0x0ff00fff, "cfmvr64l%c\t%12-15r, mvdx%16-19d"},
+    {0x0e000530, 0x0ff00fff, "cfmv64hr%c\tmvdx%16-19d, %12-15r"},
+    {0x0e100530, 0x0ff00fff, "cfmvr64h%c\t%12-15r, mvdx%16-19d"},
+    {0x0e100610, 0x0ff0fff0, "cfmval32%c\tmvax%0-3d, mvfx%16-19d"},
+    {0x0e000610, 0x0ff0fff0, "cfmv32al%c\tmvfx%0-3d, mvax%16-19d"},
+    {0x0e100630, 0x0ff0fff0, "cfmvam32%c\tmvax%0-3d, mvfx%16-19d"},
+    {0x0e000630, 0x0ff0fff0, "cfmv32am%c\tmvfx%0-3d, mvax%16-19d"},
+    {0x0e100650, 0x0ff0fff0, "cfmvah32%c\tmvax%0-3d, mvfx%16-19d"},
+    {0x0e000650, 0x0ff0fff0, "cfmv32ah%c\tmvfx%0-3d, mvax%16-19d"},
+    {0x0e000670, 0x0ff0fff0, "cfmv32a%c\tmvfx%0-3d, mvax%16-19d"},
+    {0x0e100670, 0x0ff0fff0, "cfmva32%c\tmvax%0-3d, mvfx%16-19d"},
+    {0x0e000690, 0x0ff0fff0, "cfmv64a%c\tmvdx%0-3d, mvax%16-19d"},
+    {0x0e100690, 0x0ff0fff0, "cfmva64%c\tmvax%0-3d, mvdx%16-19d"},
+    {0x0e1006b0, 0x0ff0fff0, "cfmvsc32%c\tdspsc, mvfx%16-19d"},
+    {0x0e0006b0, 0x0ff0fff0, "cfmv32sc%c\tmvfx%0-3d, dspsc"},
+    {0x0e000400, 0x0ff00fff, "cfcpys%c\tmvf%12-15d, mvf%16-19d"},
+    {0x0e000420, 0x0ff00fff, "cfcpyd%c\tmvd%12-15d, mvd%16-19d"},
+    {0x0e000460, 0x0ff00fff, "cfcvtsd%c\tmvd%12-15d, mvf%16-19d"},
+    {0x0e000440, 0x0ff00fff, "cfcvtds%c\tmvf%12-15d, mvd%16-19d"},
+    {0x0e000480, 0x0ff00fff, "cfcvt32s%c\tmvf%12-15d, mvfx%16-19d"},
+    {0x0e0004a0, 0x0ff00fff, "cfcvt32d%c\tmvd%12-15d, mvfx%16-19d"},
+    {0x0e0004c0, 0x0ff00fff, "cfcvt64s%c\tmvf%12-15d, mvdx%16-19d"},
+    {0x0e0004e0, 0x0ff00fff, "cfcvt64d%c\tmvd%12-15d, mvdx%16-19d"},
+    {0x0e100580, 0x0ff00fff, "cfcvts32%c\tmvfx%12-15d, mvf%16-19d"},
+    {0x0e1005a0, 0x0ff00fff, "cfcvtd32%c\tmvfx%12-15d, mvd%16-19d"},
+    {0x0e1005c0, 0x0ff00fff, "cftruncs32%c\tmvfx%12-15d, mvf%16-19d"},
+    {0x0e1005e0, 0x0ff00fff, "cftruncd32%c\tmvfx%12-15d, mvd%16-19d"},
+    {0x0e000550, 0x0ff00ff0, "cfrshl32%c\tmvfx%16-19d, mvfx%0-3d, %12-15r"},
+    {0x0e000570, 0x0ff00ff0, "cfrshl64%c\tmvdx%16-19d, mvdx%0-3d, %12-15r"},
+    {0x0e000500, 0x0ff00f00, "cfsh32%c\tmvfx%12-15d, mvfx%16-19d, #%I"},
+    {0x0e200500, 0x0ff00f00, "cfsh64%c\tmvdx%12-15d, mvdx%16-19d, #%I"},
+    {0x0e100490, 0x0ff00ff0, "cfcmps%c\t%12-15r, mvf%16-19d, mvf%0-3d"},
+    {0x0e1004b0, 0x0ff00ff0, "cfcmpd%c\t%12-15r, mvd%16-19d, mvd%0-3d"},
+    {0x0e100590, 0x0ff00ff0, "cfcmp32%c\t%12-15r, mvfx%16-19d, mvfx%0-3d"},
+    {0x0e1005b0, 0x0ff00ff0, "cfcmp64%c\t%12-15r, mvdx%16-19d, mvdx%0-3d"},
+    {0x0e300400, 0x0ff00fff, "cfabss%c\tmvf%12-15d, mvf%16-19d"},
+    {0x0e300420, 0x0ff00fff, "cfabsd%c\tmvd%12-15d, mvd%16-19d"},
+    {0x0e300440, 0x0ff00fff, "cfnegs%c\tmvf%12-15d, mvf%16-19d"},
+    {0x0e300460, 0x0ff00fff, "cfnegd%c\tmvd%12-15d, mvd%16-19d"},
+    {0x0e300480, 0x0ff00ff0, "cfadds%c\tmvf%12-15d, mvf%16-19d, mvf%0-3d"},
+    {0x0e3004a0, 0x0ff00ff0, "cfaddd%c\tmvd%12-15d, mvd%16-19d, mvd%0-3d"},
+    {0x0e3004c0, 0x0ff00ff0, "cfsubs%c\tmvf%12-15d, mvf%16-19d, mvf%0-3d"},
+    {0x0e3004e0, 0x0ff00ff0, "cfsubd%c\tmvd%12-15d, mvd%16-19d, mvd%0-3d"},
+    {0x0e100400, 0x0ff00ff0, "cfmuls%c\tmvf%12-15d, mvf%16-19d, mvf%0-3d"},
+    {0x0e100420, 0x0ff00ff0, "cfmuld%c\tmvd%12-15d, mvd%16-19d, mvd%0-3d"},
+    {0x0e300500, 0x0ff00fff, "cfabs32%c\tmvfx%12-15d, mvfx%16-19d"},
+    {0x0e300520, 0x0ff00fff, "cfabs64%c\tmvdx%12-15d, mvdx%16-19d"},
+    {0x0e300540, 0x0ff00fff, "cfneg32%c\tmvfx%12-15d, mvfx%16-19d"},
+    {0x0e300560, 0x0ff00fff, "cfneg64%c\tmvdx%12-15d, mvdx%16-19d"},
+    {0x0e300580, 0x0ff00ff0, "cfadd32%c\tmvfx%12-15d, mvfx%16-19d, mvfx%0-3d"},
+    {0x0e3005a0, 0x0ff00ff0, "cfadd64%c\tmvdx%12-15d, mvdx%16-19d, mvdx%0-3d"},
+    {0x0e3005c0, 0x0ff00ff0, "cfsub32%c\tmvfx%12-15d, mvfx%16-19d, mvfx%0-3d"},
+    {0x0e3005e0, 0x0ff00ff0, "cfsub64%c\tmvdx%12-15d, mvdx%16-19d, mvdx%0-3d"},
+    {0x0e100500, 0x0ff00ff0, "cfmul32%c\tmvfx%12-15d, mvfx%16-19d, mvfx%0-3d"},
+    {0x0e100520, 0x0ff00ff0, "cfmul64%c\tmvdx%12-15d, mvdx%16-19d, mvdx%0-3d"},
+    {0x0e100540, 0x0ff00ff0, "cfmac32%c\tmvfx%12-15d, mvfx%16-19d, mvfx%0-3d"},
+    {0x0e100560, 0x0ff00ff0, "cfmsc32%c\tmvfx%12-15d, mvfx%16-19d, mvfx%0-3d"},
+    {0x0e000600, 0x0ff00f00, "cfmadd32%c\tmvax%5-7d, mvfx%12-15d, mvfx%16-19d, mvfx%0-3d"},
+    {0x0e100600, 0x0ff00f00, "cfmsub32%c\tmvax%5-7d, mvfx%12-15d, mvfx%16-19d, mvfx%0-3d"},
+    {0x0e200600, 0x0ff00f00, "cfmadda32%c\tmvax%5-7d, mvax%12-15d, mvfx%16-19d, mvfx%0-3d"},
+    {0x0e300600, 0x0ff00f00, "cfmsuba32%c\tmvax%5-7d, mvax%12-15d, mvfx%16-19d, mvfx%0-3d"},
+
     /* Generic coprocessor instructions */
     {0x0e000000, 0x0f000010, "cdp%c\t%8-11d, %20-23d, cr%12-15d, cr%16-19d, cr%0-3d, {%5-7d}"},
     {0x0e100010, 0x0f100010, "mrc%c\t%8-11d, %21-23d, %12-15r, cr%16-19d, cr%0-3d, {%5-7d}"},
@@ -227,7 +455,7 @@ static struct arm_opcode arm_opcodes[] =
 
 #define BDISP(x) ((((x) & 0xffffff) ^ 0x800000) - 0x800000) /* 26 bit */
 
-static struct thumb_opcode thumb_opcodes[] =
+static const struct thumb_opcode thumb_opcodes[] =
 {
   /* Thumb instructions.  */
 

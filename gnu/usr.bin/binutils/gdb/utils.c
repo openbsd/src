@@ -782,11 +782,27 @@ xmrealloc (md, ptr, size)
 /* Like malloc but get error if no storage available, and protect against
    the caller wanting to allocate zero bytes.  */
 
+#ifndef NO_XMALLOC
 PTR
 xmalloc (size)
      size_t size;
 {
   return (xmmalloc ((PTR) NULL, size));
+}
+
+PTR
+xcalloc (nelem, elsize)
+  size_t nelem, elsize;
+{
+  PTR newmem;
+
+  if (nelem == 0 || elsize == 0)
+    nelem = elsize = 1;
+
+  newmem = xmmalloc((PTR) NULL, nelem * elsize);
+  memset(newmem, 0,  nelem * elsize);
+
+  return (newmem);
 }
 
 /* Like mrealloc but get error if no storage available.  */
@@ -798,6 +814,7 @@ xrealloc (ptr, size)
 {
   return (xmrealloc ((PTR) NULL, ptr, size));
 }
+#endif
 
 
 /* My replacement for the read system call.

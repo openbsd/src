@@ -1,5 +1,5 @@
 /* tc-mn10200.h -- Header file for tc-mn10200.c.
-   Copyright 1996, 1997, 2000 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 2000, 2001 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -31,7 +31,6 @@
 
 #define TARGET_FORMAT "elf32-mn10200"
 
-#define MD_APPLY_FIX3
 #define md_operand(x)
 
 /* Permit temporary numeric labels.  */

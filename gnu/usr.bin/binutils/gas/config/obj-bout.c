@@ -1,5 +1,5 @@
 /* b.out object file format
-   Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1996, 2000, 2001
+   Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1996, 2000, 2001, 2002
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -78,7 +78,7 @@ const pseudo_typeS obj_pseudo_table[] =
   {"ABORT", s_ignore, 0},
   {"ident", s_ignore, 0},
 
-  {NULL}			/* End sentinel.  */
+  {NULL, NULL, 0}		/* End sentinel.  */
 };
 
 /* Relocation.  */
@@ -228,7 +228,7 @@ obj_symbol_new_hook (symbolP)
 
 static void
 obj_bout_line (ignore)
-     int ignore;
+     int ignore ATTRIBUTE_UNUSED;
 {
   /* Assume delimiter is part of expression.  */
   /* BSD4.2 as fails with delightful bug, so we are not being
@@ -260,7 +260,7 @@ obj_crawl_symbol_chain (headers)
 	  S_SET_SEGMENT (symbolP, SEG_TEXT);
 	}			/* if pusing data into text  */
 
-      resolve_symbol_value (symbolP, 1);
+      resolve_symbol_value (symbolP);
 
       /* Skip symbols which were equated to undefined or common
 	 symbols.  */

@@ -1,6 +1,6 @@
 /* symbols.c -symbol table-
    Copyright 1987, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-   1999, 2000, 2001
+   1999, 2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -22,10 +22,9 @@
 
 /* #define DEBUG_SYMS / * to debug symbol list maintenance.  */
 
-#include <ctype.h>
-
 #include "as.h"
 
+#include "safe-ctype.h"
 #include "obstack.h"		/* For "symbols.h" */
 #include "subsegs.h"
 
@@ -61,11 +60,13 @@ symbolS abs_symbol;
 
 struct obstack notes;
 
+static char *save_symbol_name PARAMS ((const char *));
 static void fb_label_init PARAMS ((void));
 static long dollar_label_instance PARAMS ((long));
 static long fb_label_instance PARAMS ((long));
 
 static void print_binary PARAMS ((FILE *, const char *, expressionS *));
+static void report_op_error PARAMS ((symbolS *, symbolS *, symbolS *));
 
 /* Return a pointer to a new symbol.  Die if we can't make a new
    symbol.  Fill in the symbol's values.  Add symbol to end of symbol
@@ -123,11 +124,10 @@ save_symbol_name (name)
 
   if (! symbols_case_sensitive)
     {
-      unsigned char *s;
+      char *s;
 
-      for (s = (unsigned char *) ret; *s != '\0'; s++)
-	if (islower (*s))
-	  *s = toupper (*s);
+      for (s = ret; *s != '\0'; s++)
+	*s = TOUPPER (*s);
     }
 
   return ret;
@@ -206,10 +206,10 @@ static unsigned long local_symbol_conversion_count;
 /* Create a local symbol and insert it into the local hash table.  */
 
 static struct local_symbol *
-local_symbol_make (name, section, offset, frag)
+local_symbol_make (name, section, value, frag)
      const char *name;
      segT section;
-     valueT offset;
+     valueT value;
      fragS *frag;
 {
   char *name_copy;
@@ -224,7 +224,7 @@ local_symbol_make (name, section, offset, frag)
   ret->lsy_name = name_copy;
   ret->lsy_section = section;
   local_symbol_set_frag (ret, frag);
-  ret->lsy_offset = offset;
+  ret->lsy_value = value;
 
   hash_jam (local_hash, name_copy, (PTR) ret);
 
@@ -246,7 +246,7 @@ local_symbol_convert (locsym)
 
   ++local_symbol_conversion_count;
 
-  ret = symbol_new (locsym->lsy_name, locsym->lsy_section, locsym->lsy_offset,
+  ret = symbol_new (locsym->lsy_name, locsym->lsy_section, locsym->lsy_value,
 		    local_symbol_get_frag (locsym));
 
   if (local_symbol_resolved_p (locsym))
@@ -254,6 +254,10 @@ local_symbol_convert (locsym)
 
   /* Local symbols are always either defined or used.  */
   ret->sy_used = 1;
+
+#ifdef TC_LOCAL_SYMFIELD_CONVERT
+  TC_LOCAL_SYMFIELD_CONVERT (locsym, ret);
+#endif
 
   symbol_table_insert (ret);
 
@@ -310,6 +314,13 @@ colon (sym_name)		/* Just seen "x:" - rattle symbols & frags.  */
 
       extern const int md_short_jump_size;
       extern const int md_long_jump_size;
+
+      if (now_seg == absolute_section)
+	{
+	  as_bad (_("cannot define symbol `%s' in absolute section"), sym_name);
+	  return NULL;
+	}
+
       possible_bytes = (md_short_jump_size
 			+ new_broken_words * md_long_jump_size);
 
@@ -353,15 +364,15 @@ colon (sym_name)		/* Just seen "x:" - rattle symbols & frags.  */
 	  if (locsym->lsy_section != undefined_section
 	      && (local_symbol_get_frag (locsym) != frag_now
 		  || locsym->lsy_section != now_seg
-		  || locsym->lsy_offset != frag_now_fix ()))
+		  || locsym->lsy_value != frag_now_fix ()))
 	    {
-	      as_bad (_("Symbol %s already defined."), sym_name);
+	      as_bad (_("symbol `%s' is already defined"), sym_name);
 	      return symbolP;
 	    }
 
 	  locsym->lsy_section = now_seg;
 	  local_symbol_set_frag (locsym, frag_now);
-	  locsym->lsy_offset = frag_now_fix ();
+	  locsym->lsy_value = frag_now_fix ();
 #endif
 	}
       else if (!S_IS_DEFINED (symbolP) || S_IS_COMMON (symbolP))
@@ -436,11 +447,11 @@ colon (sym_name)		/* Just seen "x:" - rattle symbols & frags.  */
 #ifdef BFD_ASSEMBLER
 		  if (OUTPUT_FLAVOR == bfd_target_aout_flavour)
 #endif
-		    sprintf(od_buf, "%d.%d.",
-			    S_GET_OTHER (symbolP),
-			    S_GET_DESC (symbolP));
+		    sprintf (od_buf, "%d.%d.",
+			     S_GET_OTHER (symbolP),
+			     S_GET_DESC (symbolP));
 #endif
-		  as_bad (_("Symbol \"%s\" is already defined as \"%s\"/%s%ld."),
+		  as_bad (_("symbol `%s' is already defined as \"%s\"/%s%ld"),
 			    sym_name,
 			    segment_name (S_GET_SEGMENT (symbolP)),
 			    od_buf,
@@ -454,7 +465,7 @@ colon (sym_name)		/* Just seen "x:" - rattle symbols & frags.  */
 	  if (!(frag_now == symbolP->sy_frag
 		&& S_GET_VALUE (symbolP) == frag_now_fix ()
 		&& S_GET_SEGMENT (symbolP) == now_seg))
-	    as_bad (_("Symbol %s already defined."), sym_name);
+	    as_bad (_("symbol `%s' is already defined"), sym_name);
 	}
 
     }
@@ -480,7 +491,7 @@ colon (sym_name)		/* Just seen "x:" - rattle symbols & frags.  */
   if (mri_common_symbol != NULL)
     {
       /* This symbol is actually being defined within an MRI common
-         section.  This requires special handling.  */
+	 section.  This requires special handling.  */
       if (LOCAL_SYMBOL_CHECK (symbolP))
 	symbolP = local_symbol_convert ((struct local_symbol *) symbolP);
       symbolP->sy_value.X_op = O_symbol;
@@ -517,14 +528,14 @@ symbol_table_insert (symbolP)
       error_string = hash_jam (local_hash, S_GET_NAME (symbolP),
 			       (PTR) symbolP);
       if (error_string != NULL)
-	as_fatal (_("Inserting \"%s\" into symbol table failed: %s"),
+	as_fatal (_("inserting \"%s\" into symbol table failed: %s"),
 		  S_GET_NAME (symbolP), error_string);
       return;
     }
 
   if ((error_string = hash_jam (sy_hash, S_GET_NAME (symbolP), (PTR) symbolP)))
     {
-      as_fatal (_("Inserting \"%s\" into symbol table failed: %s"),
+      as_fatal (_("inserting \"%s\" into symbol table failed: %s"),
 		S_GET_NAME (symbolP), error_string);
     }				/* on error  */
 }
@@ -566,7 +577,7 @@ symbol_find_or_make (name)
 
 symbolS *
 symbol_make (name)
-     CONST char *name;
+     const char *name;
 {
   symbolS *symbolP;
 
@@ -586,7 +597,7 @@ symbol_make (name)
 
 symbolS *
 symbol_find (name)
-     CONST char *name;
+     const char *name;
 {
 #ifdef STRIP_UNDERSCORE
   return (symbol_find_base (name, 1));
@@ -596,8 +607,25 @@ symbol_find (name)
 }
 
 symbolS *
+symbol_find_exact (name)
+     const char *name;
+{
+#ifdef BFD_ASSEMBLER
+  {
+    struct local_symbol *locsym;
+
+    locsym = (struct local_symbol *) hash_find (local_hash, name);
+    if (locsym != NULL)
+      return (symbolS *) locsym;
+  }
+#endif
+
+  return ((symbolS *) hash_find (sy_hash, name));
+}
+
+symbolS *
 symbol_find_base (name, strip_underscore)
-     CONST char *name;
+     const char *name;
      int strip_underscore;
 {
   if (strip_underscore && *name == '_')
@@ -625,24 +653,12 @@ symbol_find_base (name, strip_underscore)
 
       while ((c = *orig++) != '\0')
 	{
-	  if (islower (c))
-	    c = toupper (c);
-	  *copy++ = c;
+	  *copy++ = TOUPPER (c);
 	}
       *copy = '\0';
     }
 
-#ifdef BFD_ASSEMBLER
-  {
-    struct local_symbol *locsym;
-
-    locsym = (struct local_symbol *) hash_find (local_hash, name);
-    if (locsym != NULL)
-      return (symbolS *) locsym;
-  }
-#endif
-
-  return ((symbolS *) hash_find (sy_hash, name));
+  return symbol_find_exact (name);
 }
 
 /* Once upon a time, symbols were kept in a singly linked list.  At
@@ -822,17 +838,73 @@ verify_symbol_chain_2 (sym)
   verify_symbol_chain (p, n);
 }
 
+static void
+report_op_error (symp, left, right)
+     symbolS *symp;
+     symbolS *left, *right;
+{
+  char *file;
+  unsigned int line;
+  segT seg_left = S_GET_SEGMENT (left);
+  segT seg_right = right ? S_GET_SEGMENT (right) : 0;
+
+  if (expr_symbol_where (symp, &file, &line))
+    {
+      if (seg_left == undefined_section)
+	as_bad_where (file, line,
+		      _("undefined symbol `%s' in operation"),
+		      S_GET_NAME (left));
+      if (seg_right == undefined_section)
+	as_bad_where (file, line,
+		      _("undefined symbol `%s' in operation"),
+		      S_GET_NAME (right));
+      if (seg_left != undefined_section
+	  && seg_right != undefined_section)
+	{
+	  if (right)
+	    as_bad_where (file, line,
+			  _("invalid sections for operation on `%s' and `%s'"),
+			  S_GET_NAME (left), S_GET_NAME (right));
+	  else
+	    as_bad_where (file, line,
+			  _("invalid section for operation on `%s'"),
+			  S_GET_NAME (left));
+	}
+
+    }
+  else
+    {
+      if (seg_left == undefined_section)
+	as_bad (_("undefined symbol `%s' in operation setting `%s'"),
+		S_GET_NAME (left), S_GET_NAME (symp));
+      if (seg_right == undefined_section)
+	as_bad (_("undefined symbol `%s' in operation setting `%s'"),
+		S_GET_NAME (right), S_GET_NAME (symp));
+      if (seg_left != undefined_section
+	  && seg_right != undefined_section)
+	{
+	  if (right)
+	    as_bad_where (file, line,
+			  _("invalid sections for operation on `%s' and `%s' setting `%s'"),
+			  S_GET_NAME (left), S_GET_NAME (right), S_GET_NAME (symp));
+	  else
+	    as_bad_where (file, line,
+			  _("invalid section for operation on `%s' setting `%s'"),
+			  S_GET_NAME (left), S_GET_NAME (symp));
+	}
+    }
+}
+
 /* Resolve the value of a symbol.  This is called during the final
    pass over the symbol table to resolve any symbols with complex
    values.  */
 
 valueT
-resolve_symbol_value (symp, finalize)
+resolve_symbol_value (symp)
      symbolS *symp;
-     int finalize;
 {
   int resolved;
-  valueT final_val;
+  valueT final_val = 0;
   segT final_seg;
 
 #ifdef BFD_ASSEMBLER
@@ -840,15 +912,15 @@ resolve_symbol_value (symp, finalize)
     {
       struct local_symbol *locsym = (struct local_symbol *) symp;
 
+      final_val = locsym->lsy_value;
       if (local_symbol_resolved_p (locsym))
-	return locsym->lsy_offset / bfd_octets_per_byte (stdoutput);
+	return final_val;
 
-      final_val = (local_symbol_get_frag (locsym)->fr_address
-		   + locsym->lsy_offset) / bfd_octets_per_byte (stdoutput);
+      final_val += local_symbol_get_frag (locsym)->fr_address / OCTETS_PER_BYTE;
 
-      if (finalize)
+      if (finalize_syms)
 	{
-	  locsym->lsy_offset = final_val;
+	  locsym->lsy_value = final_val;
 	  local_symbol_mark_resolved (locsym);
 	}
 
@@ -869,8 +941,8 @@ resolve_symbol_value (symp, finalize)
 
   if (symp->sy_resolving)
     {
-      if (finalize)
-	as_bad (_("Symbol definition loop encountered at %s"),
+      if (finalize_syms)
+	as_bad (_("symbol definition loop encountered at `%s'"),
 		S_GET_NAME (symp));
       final_val = 0;
       resolved = 1;
@@ -909,19 +981,22 @@ resolve_symbol_value (symp, finalize)
 
 	case O_symbol:
 	case O_symbol_rva:
-	  left = resolve_symbol_value (add_symbol, finalize);
-	do_symbol:
+	  left = resolve_symbol_value (add_symbol);
+	  seg_left = S_GET_SEGMENT (add_symbol);
+	  if (finalize_syms)
+	    symp->sy_value.X_op_symbol = NULL;
 
+	do_symbol:
 	  if (symp->sy_mri_common)
 	    {
 	      /* This is a symbol inside an MRI common section.  The
-                 relocation routines are going to handle it specially.
-                 Don't change the value.  */
+		 relocation routines are going to handle it specially.
+		 Don't change the value.  */
 	      resolved = symbol_resolved_p (add_symbol);
 	      break;
 	    }
 
-	  if (finalize && final_val == 0)
+	  if (finalize_syms && final_val == 0)
 	    {
 	      if (LOCAL_SYMBOL_CHECK (add_symbol))
 		add_symbol = local_symbol_convert ((struct local_symbol *)
@@ -929,30 +1004,51 @@ resolve_symbol_value (symp, finalize)
 	      copy_symbol_attributes (symp, add_symbol);
 	    }
 
-	  /* If we have equated this symbol to an undefined symbol, we
-             keep X_op set to O_symbol, and we don't change
-             X_add_number.  This permits the routine which writes out
-             relocation to detect this case, and convert the
-             relocation to be against the symbol to which this symbol
-             is equated.  */
+	  /* If we have equated this symbol to an undefined or common
+	     symbol, keep X_op set to O_symbol, and don't change
+	     X_add_number.  This permits the routine which writes out
+	     relocation to detect this case, and convert the
+	     relocation to be against the symbol to which this symbol
+	     is equated.  */
 	  if (! S_IS_DEFINED (add_symbol) || S_IS_COMMON (add_symbol))
 	    {
-	      if (finalize)
+	      if (finalize_syms)
 		{
-		  S_SET_SEGMENT (symp, S_GET_SEGMENT (add_symbol));
 		  symp->sy_value.X_op = O_symbol;
 		  symp->sy_value.X_add_symbol = add_symbol;
 		  symp->sy_value.X_add_number = final_val;
+		  /* Use X_op_symbol as a flag.  */
+		  symp->sy_value.X_op_symbol = add_symbol;
+		  final_seg = seg_left;
 		}
 	      final_val = 0;
 	      resolved = symbol_resolved_p (add_symbol);
+	      symp->sy_resolving = 0;
+	      goto exit_dont_set_value;
+	    }
+	  else if (finalize_syms && final_seg == expr_section
+		   && seg_left != expr_section)
+	    {
+	      /* If the symbol is an expression symbol, do similarly
+		 as for undefined and common syms above.  Handles
+		 "sym +/- expr" where "expr" cannot be evaluated
+		 immediately, and we want relocations to be against
+		 "sym", eg. because it is weak.  */
+	      symp->sy_value.X_op = O_symbol;
+	      symp->sy_value.X_add_symbol = add_symbol;
+	      symp->sy_value.X_add_number = final_val;
+	      symp->sy_value.X_op_symbol = add_symbol;
+	      final_seg = seg_left;
+	      final_val += symp->sy_frag->fr_address + left;
+	      resolved = symbol_resolved_p (add_symbol);
+	      symp->sy_resolving = 0;
 	      goto exit_dont_set_value;
 	    }
 	  else
 	    {
 	      final_val += symp->sy_frag->fr_address + left;
 	      if (final_seg == expr_section || final_seg == undefined_section)
-		final_seg = S_GET_SEGMENT (add_symbol);
+		final_seg = seg_left;
 	    }
 
 	  resolved = symbol_resolved_p (add_symbol);
@@ -961,7 +1057,19 @@ resolve_symbol_value (symp, finalize)
 	case O_uminus:
 	case O_bit_not:
 	case O_logical_not:
-	  left = resolve_symbol_value (add_symbol, finalize);
+	  left = resolve_symbol_value (add_symbol);
+	  seg_left = S_GET_SEGMENT (add_symbol);
+
+	  /* By reducing these to the relevant dyadic operator, we get
+	     	!S -> S == 0 	permitted on anything,
+		-S -> 0 - S 	only permitted on absolute
+		~S -> S ^ ~0 	only permitted on absolute  */
+	  if (op != O_logical_not && seg_left != absolute_section
+	      && finalize_syms)
+	    report_op_error (symp, add_symbol, NULL);
+
+	  if (final_seg == expr_section || final_seg == undefined_section)
+	    final_seg = absolute_section;
 
 	  if (op == O_uminus)
 	    left = -left;
@@ -971,8 +1079,6 @@ resolve_symbol_value (symp, finalize)
 	    left = ~left;
 
 	  final_val += left + symp->sy_frag->fr_address;
-	  if (final_seg == expr_section || final_seg == undefined_section)
-	    final_seg = absolute_section;
 
 	  resolved = symbol_resolved_p (add_symbol);
 	  break;
@@ -996,92 +1102,68 @@ resolve_symbol_value (symp, finalize)
 	case O_gt:
 	case O_logical_and:
 	case O_logical_or:
-	  left = resolve_symbol_value (add_symbol, finalize);
-	  right = resolve_symbol_value (op_symbol, finalize);
+	  left = resolve_symbol_value (add_symbol);
+	  right = resolve_symbol_value (op_symbol);
 	  seg_left = S_GET_SEGMENT (add_symbol);
 	  seg_right = S_GET_SEGMENT (op_symbol);
 
 	  /* Simplify addition or subtraction of a constant by folding the
 	     constant into X_add_number.  */
-	  if (op == O_add || op == O_subtract)
+	  if (op == O_add)
 	    {
 	      if (seg_right == absolute_section)
 		{
-		  if (op == O_add)
-		    final_val += right;
-		  else
-		    final_val -= right;
-		  op = O_symbol;
-		  op_symbol = NULL;
+		  final_val += right;
 		  goto do_symbol;
 		}
-	      else if (seg_left == absolute_section && op == O_add)
+	      else if (seg_left == absolute_section)
 		{
-		  op = O_symbol;
 		  final_val += left;
 		  add_symbol = op_symbol;
 		  left = right;
-		  op_symbol = NULL;
+		  seg_left = seg_right;
+		  goto do_symbol;
+		}
+	    }
+	  else if (op == O_subtract)
+	    {
+	      if (seg_right == absolute_section)
+		{
+		  final_val -= right;
 		  goto do_symbol;
 		}
 	    }
 
-	  /* Subtraction is permitted if both operands are in the same
-	     section.  Otherwise, both operands must be absolute.  We
-	     already handled the case of addition or subtraction of a
-	     constant above.  This will probably need to be changed
-	     for an object file format which supports arbitrary
-	     expressions, such as IEEE-695.  */
-	  /* Don't emit messages unless we're finalizing the symbol value,
-	     otherwise we may get the same message multiple times.  */
-	  if ((seg_left != absolute_section
-	       || seg_right != absolute_section)
-	      && (op != O_subtract
-		  || seg_left != seg_right
-		  || seg_left == undefined_section)
-	      && finalize)
-	    {
-	      char *file;
-	      unsigned int line;
+	  /* Equality and non-equality tests are permitted on anything.
+	     Subtraction, and other comparison operators are permitted if
+	     both operands are in the same section.  Otherwise, both
+	     operands must be absolute.  We already handled the case of
+	     addition or subtraction of a constant above.  This will
+	     probably need to be changed for an object file format which
+	     supports arbitrary expressions, such as IEEE-695.
 
-	      if (expr_symbol_where (symp, &file, &line))
-		{
-		  if (seg_left == undefined_section)
-		    as_bad_where (file, line,
-				  _("undefined symbol %s in operation"),
-				  S_GET_NAME (symp->sy_value.X_add_symbol));
-		  if (seg_right == undefined_section)
-		    as_bad_where (file, line,
-				  _("undefined symbol %s in operation"),
-				  S_GET_NAME (symp->sy_value.X_op_symbol));
-		  if (seg_left != undefined_section
-		      && seg_right != undefined_section)
-		    as_bad_where (file, line,
-				  _("invalid section for operation"));
-		}
-	      else
-		{
-		  if (seg_left == undefined_section)
-		    as_bad (_("undefined symbol %s in operation setting %s"),
-			    S_GET_NAME (symp->sy_value.X_add_symbol),
-			    S_GET_NAME (symp));
-		  if (seg_right == undefined_section)
-		    as_bad (_("undefined symbol %s in operation setting %s"),
-			    S_GET_NAME (symp->sy_value.X_op_symbol),
-			    S_GET_NAME (symp));
-		  if (seg_left != undefined_section
-		      && seg_right != undefined_section)
-		    as_bad (_("invalid section for operation setting %s"),
-			    S_GET_NAME (symp));
-		}
-	    }
+	     Don't emit messages unless we're finalizing the symbol value,
+	     otherwise we may get the same message multiple times.  */
+	  if (finalize_syms
+	      && !(seg_left == absolute_section
+		   && seg_right == absolute_section)
+	      && !(op == O_eq || op == O_ne)
+	      && !((op == O_subtract
+		    || op == O_lt || op == O_le || op == O_ge || op == O_gt)
+		   && seg_left == seg_right
+		   && (seg_left != undefined_section
+		       || add_symbol == op_symbol)))
+	    report_op_error (symp, add_symbol, op_symbol);
+
+	  if (final_seg == expr_section || final_seg == undefined_section)
+	    final_seg = absolute_section;
 
 	  /* Check for division by zero.  */
 	  if ((op == O_divide || op == O_modulus) && right == 0)
 	    {
 	      /* If seg_right is not absolute_section, then we've
-                 already issued a warning about using a bad symbol.  */
-	      if (seg_right == absolute_section && finalize)
+		 already issued a warning about using a bad symbol.  */
+	      if (seg_right == absolute_section && finalize_syms)
 		{
 		  char *file;
 		  unsigned int line;
@@ -1089,7 +1171,7 @@ resolve_symbol_value (symp, finalize)
 		  if (expr_symbol_where (symp, &file, &line))
 		    as_bad_where (file, line, _("division by zero"));
 		  else
-		    as_bad (_("division by zero when setting %s"),
+		    as_bad (_("division by zero when setting `%s'"),
 			    S_GET_NAME (symp));
 		}
 
@@ -1109,8 +1191,15 @@ resolve_symbol_value (symp, finalize)
 	    case O_bit_and:		left &= right; break;
 	    case O_add:			left += right; break;
 	    case O_subtract:		left -= right; break;
-	    case O_eq:	left = left == right ? ~ (offsetT) 0 : 0; break;
-	    case O_ne:	left = left != right ? ~ (offsetT) 0 : 0; break;
+	    case O_eq:
+	    case O_ne:
+	      left = (left == right && seg_left == seg_right
+		      && (seg_left != undefined_section
+			  || add_symbol == op_symbol)
+		      ? ~ (offsetT) 0 : 0);
+	      if (symp->sy_value.X_op == O_ne)
+		left = ~left;
+	      break;
 	    case O_lt:	left = left <  right ? ~ (offsetT) 0 : 0; break;
 	    case O_le:	left = left <= right ? ~ (offsetT) 0 : 0; break;
 	    case O_ge:	left = left >= right ? ~ (offsetT) 0 : 0; break;
@@ -1122,7 +1211,15 @@ resolve_symbol_value (symp, finalize)
 
 	  final_val += symp->sy_frag->fr_address + left;
 	  if (final_seg == expr_section || final_seg == undefined_section)
-	    final_seg = absolute_section;
+	    {
+	      if (seg_left == undefined_section
+		  || seg_right == undefined_section)
+		final_seg = undefined_section;
+	      else if (seg_left == absolute_section)
+		final_seg = seg_right;
+	      else
+		final_seg = seg_left;
+	    }
 	  resolved = (symbol_resolved_p (add_symbol)
 		      && symbol_resolved_p (op_symbol));
 	  break;
@@ -1141,27 +1238,27 @@ resolve_symbol_value (symp, finalize)
       symp->sy_resolving = 0;
     }
 
-  if (finalize)
-    {
-      S_SET_VALUE (symp, final_val);
-
-#if defined (OBJ_AOUT) && ! defined (BFD_ASSEMBLER)
-      /* The old a.out backend does not handle S_SET_SEGMENT correctly
-         for a stab symbol, so we use this bad hack.  */
-      if (final_seg != S_GET_SEGMENT (symp))
-#endif
-	S_SET_SEGMENT (symp, final_seg);
-    }
+  if (finalize_syms)
+    S_SET_VALUE (symp, final_val);
 
 exit_dont_set_value:
+  /* Always set the segment, even if not finalizing the value.
+     The segment is used to determine whether a symbol is defined.  */
+#if defined (OBJ_AOUT) && ! defined (BFD_ASSEMBLER)
+  /* The old a.out backend does not handle S_SET_SEGMENT correctly
+     for a stab symbol, so we use this bad hack.  */
+  if (final_seg != S_GET_SEGMENT (symp))
+#endif
+    S_SET_SEGMENT (symp, final_seg);
+
   /* Don't worry if we can't resolve an expr_section symbol.  */
-  if (finalize)
+  if (finalize_syms)
     {
       if (resolved)
 	symp->sy_resolved = 1;
       else if (S_GET_SEGMENT (symp) != expr_section)
 	{
-	  as_bad (_("can't resolve value for symbol \"%s\""),
+	  as_bad (_("can't resolve value for symbol `%s'"),
 		  S_GET_NAME (symp));
 	  symp->sy_resolved = 1;
 	}
@@ -1182,7 +1279,7 @@ resolve_local_symbol (key, value)
      PTR value;
 {
   if (value != NULL)
-    resolve_symbol_value (value, 1);
+    resolve_symbol_value (value);
 }
 
 #endif
@@ -1542,7 +1639,7 @@ decode_local_label_name (s)
   if (s[index] != 'L')
     return s;
 
-  for (label_number = 0, p = s + index + 1; isdigit ((unsigned char) *p); ++p)
+  for (label_number = 0, p = s + index + 1; ISDIGIT (*p); ++p)
     label_number = (10 * label_number) + *p - '0';
 
   if (*p == DOLLAR_LABEL_CHAR)
@@ -1552,7 +1649,7 @@ decode_local_label_name (s)
   else
     return s;
 
-  for (instance_number = 0, p++; isdigit ((unsigned char) *p); ++p)
+  for (instance_number = 0, p++; ISDIGIT (*p); ++p)
     instance_number = (10 * instance_number) + *p - '0';
 
   message_format = _("\"%d\" (instance number %d of a %s label)");
@@ -1570,25 +1667,29 @@ S_GET_VALUE (s)
 {
 #ifdef BFD_ASSEMBLER
   if (LOCAL_SYMBOL_CHECK (s))
-    return ((struct local_symbol *) s)->lsy_offset;
+    return resolve_symbol_value (s);
 #endif
 
-  if (!s->sy_resolved && s->sy_value.X_op != O_constant)
-    resolve_symbol_value (s, 1);
+  if (!s->sy_resolved)
+    {
+      valueT val = resolve_symbol_value (s);
+      if (!finalize_syms)
+	return val;
+    }
   if (s->sy_value.X_op != O_constant)
     {
       static symbolS *recur;
 
       /* FIXME: In non BFD assemblers, S_IS_DEFINED and S_IS_COMMON
-         may call S_GET_VALUE.  We use a static symbol to avoid the
-         immediate recursion.  */
+	 may call S_GET_VALUE.  We use a static symbol to avoid the
+	 immediate recursion.  */
       if (recur == s)
 	return (valueT) s->sy_value.X_add_number;
       recur = s;
       if (! s->sy_resolved
 	  || s->sy_value.X_op != O_symbol
 	  || (S_IS_DEFINED (s) && ! S_IS_COMMON (s)))
-	as_bad (_("Attempt to get value of unresolved symbol %s"),
+	as_bad (_("attempt to get value of unresolved symbol `%s'"),
 		S_GET_NAME (s));
       recur = NULL;
     }
@@ -1605,7 +1706,7 @@ S_SET_VALUE (s, val)
 #ifdef BFD_ASSEMBLER
   if (LOCAL_SYMBOL_CHECK (s))
     {
-      ((struct local_symbol *) s)->lsy_offset = val;
+      ((struct local_symbol *) s)->lsy_value = val;
       return;
     }
 #endif
@@ -1697,6 +1798,30 @@ S_IS_DEFINED (s)
   return s->bsym->section != undefined_section;
 }
 
+
+#ifndef EXTERN_FORCE_RELOC
+#define EXTERN_FORCE_RELOC IS_ELF
+#endif
+
+/* Return true for symbols that should not be reduced to section
+   symbols or eliminated from expressions, because they may be
+   overridden by the linker.  */
+int
+S_FORCE_RELOC (s, strict)
+     symbolS *s;
+     int strict;
+{
+  if (LOCAL_SYMBOL_CHECK (s))
+    return ((struct local_symbol *) s)->lsy_section == undefined_section;
+
+  return ((strict
+	   && ((s->bsym->flags & BSF_WEAK) != 0
+	       || (EXTERN_FORCE_RELOC
+		   && (s->bsym->flags & BSF_GLOBAL) != 0)))
+	  || s->bsym->section == undefined_section
+	  || bfd_is_com_section (s->bsym->section));
+}
+
 int
 S_IS_DEBUG (s)
      symbolS *s;
@@ -1758,7 +1883,7 @@ S_IS_STABD (s)
   return S_GET_NAME (s) == 0;
 }
 
-CONST char *
+const char *
 S_GET_NAME (s)
      symbolS *s;
 {
@@ -1820,11 +1945,11 @@ S_SET_EXTERNAL (s)
     {
       char * file;
       unsigned int line;
-      
+
       /* Do not reassign section symbols.  */
       as_where (& file, & line);
       as_warn_where (file, line,
-		     _("Section symbols are already global"));
+		     _("section symbols are already global"));
       return;
     }
   s->bsym->flags |= BSF_GLOBAL;
@@ -1854,6 +1979,25 @@ S_SET_WEAK (s)
     s = local_symbol_convert ((struct local_symbol *) s);
   s->bsym->flags |= BSF_WEAK;
   s->bsym->flags &= ~(BSF_GLOBAL | BSF_LOCAL);
+}
+
+void
+S_SET_THREAD_LOCAL (s)
+     symbolS *s;
+{
+  if (LOCAL_SYMBOL_CHECK (s))
+    s = local_symbol_convert ((struct local_symbol *) s);
+  if (bfd_is_com_section (s->bsym->section)
+      && (s->bsym->flags & BSF_THREAD_LOCAL) != 0)
+    return;
+  s->bsym->flags |= BSF_THREAD_LOCAL;
+  if ((s->bsym->flags & BSF_FUNCTION) != 0)
+    as_bad (_("Accessing function `%s' as thread-local object"),
+	    S_GET_NAME (s));
+  else if (! bfd_is_und_section (s->bsym->section)
+	   && (s->bsym->section->flags & SEC_THREAD_LOCAL) == 0)
+    as_bad (_("Accessing `%s' as thread-local object"),
+	    S_GET_NAME (s));
 }
 
 void
@@ -2137,6 +2281,24 @@ symbol_equated_p (s)
   return s->sy_value.X_op == O_symbol;
 }
 
+/* Return whether a symbol is equated to another symbol, and should be
+   treated specially when writing out relocs.  */
+
+int
+symbol_equated_reloc_p (s)
+     symbolS *s;
+{
+  if (LOCAL_SYMBOL_CHECK (s))
+    return 0;
+  /* X_op_symbol, normally not used for O_symbol, is set by
+     resolve_symbol_value to flag expression syms that have been
+     equated.  */
+  return (s->sy_value.X_op == O_symbol
+	  && ((s->sy_resolved && s->sy_value.X_op_symbol != NULL)
+	      || ! S_IS_DEFINED (s)
+	      || S_IS_COMMON (s)));
+}
+
 /* Return whether a symbol has a constant value.  */
 
 int
@@ -2322,7 +2484,7 @@ print_symbol_value_1 (file, sym)
       segT s = S_GET_SEGMENT (sym);
 
       if (s != undefined_section
-          && s != expr_section)
+	  && s != expr_section)
 	fprintf (file, " %lx", (long) S_GET_VALUE (sym));
     }
   else if (indent_level < max_indent_level
@@ -2333,7 +2495,7 @@ print_symbol_value_1 (file, sym)
 #ifdef BFD_ASSEMBLER
       if (LOCAL_SYMBOL_CHECK (sym))
 	fprintf (file, "constant %lx",
-		 (long) ((struct local_symbol *) sym)->lsy_offset);
+		 (long) ((struct local_symbol *) sym)->lsy_value);
       else
 #endif
 	print_expr_1 (file, &sym->sy_value);

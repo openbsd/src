@@ -1,5 +1,5 @@
 /* bucomm.c -- Bin Utils COMmon code.
-   Copyright 1991, 1992, 1993, 1994, 1995, 1997, 1998, 2000, 2001
+   Copyright 1991, 1992, 1993, 1994, 1995, 1997, 1998, 2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
@@ -23,9 +23,11 @@
    loaded, but for now it's not necessary.  */
 
 #include "bfd.h"
+#include "bfdver.h"
 #include "libiberty.h"
 #include "bucomm.h"
 #include "filenames.h"
+#include "libbfd.h"
 
 #include <sys/stat.h>
 #include <time.h>		/* ctime, maybe time_t */
@@ -35,16 +37,21 @@
 typedef long time_t;
 #endif
 #endif
+
+static const char * endian_string PARAMS ((enum bfd_endian));
+static int display_target_list PARAMS ((void));
+static int display_info_table PARAMS ((int, int));
+static int display_target_tables PARAMS ((void));
 
-/* Error reporting */
+/* Error reporting.  */
 
 char *program_name;
 
 void
 bfd_nonfatal (string)
-     CONST char *string;
+     const char *string;
 {
-  CONST char *errmsg = bfd_errmsg (bfd_get_error ());
+  const char *errmsg = bfd_errmsg (bfd_get_error ());
 
   if (string)
     fprintf (stderr, "%s: %s: %s\n", program_name, string, errmsg);
@@ -54,7 +61,7 @@ bfd_nonfatal (string)
 
 void
 bfd_fatal (string)
-     CONST char *string;
+     const char *string;
 {
   bfd_nonfatal (string);
   xexit (1);
@@ -70,55 +77,26 @@ report (format, args)
   putc ('\n', stderr);
 }
 
-#ifdef ANSI_PROTOTYPES
 void
-fatal (const char *format, ...)
+fatal VPARAMS ((const char *format, ...))
 {
-  va_list args;
+  VA_OPEN (args, format);
+  VA_FIXEDARG (args, const char *, format);
 
-  va_start (args, format);
   report (format, args);
-  va_end (args);
+  VA_CLOSE (args);
   xexit (1);
 }
 
 void
-non_fatal (const char *format, ...)
+non_fatal VPARAMS ((const char *format, ...))
 {
-  va_list args;
+  VA_OPEN (args, format);
+  VA_FIXEDARG (args, const char *, format);
 
-  va_start (args, format);
   report (format, args);
-  va_end (args);
+  VA_CLOSE (args);
 }
-#else
-void 
-fatal (va_alist)
-     va_dcl
-{
-  char *Format;
-  va_list args;
-
-  va_start (args);
-  Format = va_arg (args, char *);
-  report (Format, args);
-  va_end (args);
-  xexit (1);
-}
-
-void 
-non_fatal (va_alist)
-     va_dcl
-{
-  char *Format;
-  va_list args;
-
-  va_start (args);
-  Format = va_arg (args, char *);
-  report (Format, args);
-  va_end (args);
-}
-#endif
 
 /* Set the default BFD target based on the configured target.  Doing
    this permits the binutils to be configured for a particular target,
@@ -136,7 +114,7 @@ set_default_bfd_target ()
 	   target, bfd_errmsg (bfd_get_error ()));
 }
 
-/* After a false return from bfd_check_format_matches with
+/* After a FALSE return from bfd_check_format_matches with
    bfd_get_error () == bfd_error_file_ambiguously_recognized, print
    the possible matching targets.  */
 
@@ -157,16 +135,233 @@ list_supported_targets (name, f)
      const char *name;
      FILE *f;
 {
-  extern const bfd_target *const *bfd_target_vector;
   int t;
+  const char **targ_names = bfd_target_list ();
 
   if (name == NULL)
     fprintf (f, _("Supported targets:"));
   else
     fprintf (f, _("%s: supported targets:"), name);
-  for (t = 0; bfd_target_vector[t] != NULL; t++)
-    fprintf (f, " %s", bfd_target_vector[t]->name);
+
+  for (t = 0; targ_names[t] != NULL; t++)
+    fprintf (f, " %s", targ_names[t]);
   fprintf (f, "\n");
+  free (targ_names);
+}
+
+/* List the supported architectures.  */
+
+void
+list_supported_architectures (name, f)
+     const char *name;
+     FILE *f;
+{
+  const char **arch;
+
+  if (name == NULL)
+    fprintf (f, _("Supported architectures:"));
+  else
+    fprintf (f, _("%s: supported architectures:"), name);
+
+  for (arch = bfd_arch_list (); *arch; arch++)
+    fprintf (f, " %s", *arch);
+  fprintf (f, "\n");
+}
+
+/* The length of the longest architecture name + 1.  */
+#define LONGEST_ARCH sizeof ("powerpc:common")
+
+static const char *
+endian_string (endian)
+     enum bfd_endian endian;
+{
+  switch (endian)
+    {
+    case BFD_ENDIAN_BIG: return "big endian";
+    case BFD_ENDIAN_LITTLE: return "little endian";
+    default: return "endianness unknown";
+    }
+}
+
+/* List the targets that BFD is configured to support, each followed
+   by its endianness and the architectures it supports.  */
+
+static int
+display_target_list ()
+{
+  char *dummy_name;
+  int t;
+  int ret = 1;
+
+  dummy_name = make_temp_file (NULL);
+  for (t = 0; bfd_target_vector[t]; t++)
+    {
+      const bfd_target *p = bfd_target_vector[t];
+      bfd *abfd = bfd_openw (dummy_name, p->name);
+      int a;
+
+      printf ("%s\n (header %s, data %s)\n", p->name,
+	      endian_string (p->header_byteorder),
+	      endian_string (p->byteorder));
+
+      if (abfd == NULL)
+	{
+          bfd_nonfatal (dummy_name);
+          ret = 0;
+	  continue;
+	}
+
+      if (! bfd_set_format (abfd, bfd_object))
+	{
+	  if (bfd_get_error () != bfd_error_invalid_operation)
+            {
+	      bfd_nonfatal (p->name);
+              ret = 0;
+            }
+	  bfd_close_all_done (abfd);
+	  continue;
+	}
+
+      for (a = (int) bfd_arch_obscure + 1; a < (int) bfd_arch_last; a++)
+	if (bfd_set_arch_mach (abfd, (enum bfd_architecture) a, 0))
+	  printf ("  %s\n",
+		  bfd_printable_arch_mach ((enum bfd_architecture) a, 0));
+      bfd_close_all_done (abfd);
+    }
+  unlink (dummy_name);
+  free (dummy_name);
+
+  return ret;
+}
+
+/* Print a table showing which architectures are supported for entries
+   FIRST through LAST-1 of bfd_target_vector (targets across,
+   architectures down).  */
+
+static int
+display_info_table (first, last)
+     int first;
+     int last;
+{
+  int t;
+  int a;
+  int ret = 1;
+  char *dummy_name;
+
+  /* Print heading of target names.  */
+  printf ("\n%*s", (int) LONGEST_ARCH, " ");
+  for (t = first; t < last && bfd_target_vector[t]; t++)
+    printf ("%s ", bfd_target_vector[t]->name);
+  putchar ('\n');
+
+  dummy_name = make_temp_file (NULL);
+  for (a = (int) bfd_arch_obscure + 1; a < (int) bfd_arch_last; a++)
+    if (strcmp (bfd_printable_arch_mach (a, 0), "UNKNOWN!") != 0)
+      {
+	printf ("%*s ", (int) LONGEST_ARCH - 1,
+		bfd_printable_arch_mach (a, 0));
+	for (t = first; t < last && bfd_target_vector[t]; t++)
+	  {
+	    const bfd_target *p = bfd_target_vector[t];
+	    bfd_boolean ok = TRUE;
+	    bfd *abfd = bfd_openw (dummy_name, p->name);
+
+	    if (abfd == NULL)
+	      {
+		bfd_nonfatal (p->name);
+                ret = 0;
+		ok = FALSE;
+	      }
+
+	    if (ok)
+	      {
+		if (! bfd_set_format (abfd, bfd_object))
+		  {
+		    if (bfd_get_error () != bfd_error_invalid_operation)
+                      {
+		        bfd_nonfatal (p->name);
+                        ret = 0;
+                      }
+		    ok = FALSE;
+		  }
+	      }
+
+	    if (ok)
+	      {
+		if (! bfd_set_arch_mach (abfd, a, 0))
+		  ok = FALSE;
+	      }
+
+	    if (ok)
+	      printf ("%s ", p->name);
+	    else
+	      {
+		int l = strlen (p->name);
+		while (l--)
+		  putchar ('-');
+		putchar (' ');
+	      }
+	    if (abfd != NULL)
+	      bfd_close_all_done (abfd);
+	  }
+	putchar ('\n');
+      }
+  unlink (dummy_name);
+  free (dummy_name);
+
+  return ret;
+}
+
+/* Print tables of all the target-architecture combinations that
+   BFD has been configured to support.  */
+
+static int
+display_target_tables ()
+{
+  int t;
+  int columns;
+  int ret = 1;
+  char *colum;
+
+  columns = 0;
+  colum = getenv ("COLUMNS");
+  if (colum != NULL)
+    columns = atoi (colum);
+  if (columns == 0)
+    columns = 80;
+
+  t = 0;
+  while (bfd_target_vector[t] != NULL)
+    {
+      int oldt = t, wid;
+
+      wid = LONGEST_ARCH + strlen (bfd_target_vector[t]->name) + 1;
+      ++t;
+      while (wid < columns && bfd_target_vector[t] != NULL)
+	{
+	  int newwid;
+
+	  newwid = wid + strlen (bfd_target_vector[t]->name) + 1;
+	  if (newwid >= columns)
+	    break;
+	  wid = newwid;
+	  ++t;
+	}
+      if (! display_info_table (oldt, t))
+        ret = 0;
+    }
+
+  return ret;
+}
+
+int
+display_info ()
+{
+  printf (_("BFD header file version %s\n"), BFD_VERSION_STRING);
+  if (! display_target_list () || ! display_target_tables ())
+    return 1;
+  else
+    return 0;
 }
 
 /* Display the archive header for an element as if it were an ls -l listing:
@@ -177,7 +372,7 @@ void
 print_arelt_descr (file, abfd, verbose)
      FILE *file;
      bfd *abfd;
-     boolean verbose;
+     bfd_boolean verbose;
 {
   struct stat buf;
 
@@ -188,7 +383,7 @@ print_arelt_descr (file, abfd, verbose)
 	  char modebuf[11];
 	  char timebuf[40];
 	  time_t when = buf.st_mtime;
-	  CONST char *ctime_result = (CONST char *) ctime (&when);
+	  const char *ctime_result = (const char *) ctime (&when);
 
 	  /* POSIX format:  skip weekday and seconds from ctime output.  */
 	  sprintf (timebuf, "%.12s %.4s", ctime_result + 4, ctime_result + 20);
@@ -221,7 +416,6 @@ make_tempname (filename, isdir)
   {
     /* We could have foo/bar\\baz, or foo\\bar, or d:bar.  */
     char *bslash = strrchr (filename, '\\');
-
     if (slash == NULL || (bslash != NULL && bslash > slash))
       slash = bslash;
     if (slash == NULL && filename[0] != '\0' && filename[1] == ':')
@@ -253,31 +447,18 @@ make_tempname (filename, isdir)
 
   if (isdir)
     {
-#ifdef HAVE_MKDTEMP
       if (mkdtemp (tmpname) == (char *) NULL)
-#else
-      mktemp (tmpname);
-#if defined (_WIN32) && !defined (__CYGWIN32__)
-      if (mkdir (tmpname) != 0)
-#else
-      if (mkdir (tmpname, 0700) != 0)
-#endif
-#endif
-	tmpname = NULL;
+      tmpname = NULL;
     }
   else
     {
       int fd;
 
-#ifdef HAVE_MKSTEMP
       fd = mkstemp (tmpname);
       if (fd == -1)
-	tmpname = NULL;
+      tmpname = NULL;
       else
-	close (fd);
-#else
-      mktemp (tmpname);
-#endif
+      close (fd);
     }
   if (slash != (char *) NULL)
     *slash = c;
@@ -297,7 +478,7 @@ parse_vma (s, arg)
   const char *end;
 
   ret = bfd_scan_vma (s, &end, 0);
-  
+
   if (*end != '\0')
     fatal (_("%s: bad number: %s"), arg, s);
 

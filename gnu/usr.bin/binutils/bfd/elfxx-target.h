@@ -1,22 +1,22 @@
 /* Target definitions for NN-bit ELF
-   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001
-   Free Software Foundation, Inc.
+   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
+   2003 Free Software Foundation, Inc.
 
-This file is part of BFD, the Binary File Descriptor library.
+   This file is part of BFD, the Binary File Descriptor library.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 /* This structure contains everything that BFD knows about a target.
    It includes things like its byte order, name, what routines to call
@@ -33,7 +33,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #endif
 
 #define bfd_elfNN_canonicalize_dynamic_symtab _bfd_elf_canonicalize_dynamic_symtab
+#ifndef bfd_elfNN_canonicalize_reloc
 #define bfd_elfNN_canonicalize_reloc	_bfd_elf_canonicalize_reloc
+#endif
 #ifndef bfd_elfNN_find_nearest_line
 #define bfd_elfNN_find_nearest_line	_bfd_elf_find_nearest_line
 #endif
@@ -44,14 +46,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #ifndef bfd_elfNN_get_reloc_upper_bound
 #define bfd_elfNN_get_reloc_upper_bound _bfd_elf_get_reloc_upper_bound
 #endif
+#ifndef bfd_elfNN_get_symbol_info
 #define bfd_elfNN_get_symbol_info	_bfd_elf_get_symbol_info
+#endif
 #define bfd_elfNN_get_symtab		_bfd_elf_get_symtab
 #define bfd_elfNN_get_symtab_upper_bound _bfd_elf_get_symtab_upper_bound
 #if 0 /* done in elf-bfd.h */
 #define bfd_elfNN_link_record_dynamic_symbol _bfd_elf_link_record_dynamic_symbol
 #endif
 #define bfd_elfNN_make_empty_symbol	_bfd_elf_make_empty_symbol
+#ifndef bfd_elfNN_new_section_hook
 #define bfd_elfNN_new_section_hook	_bfd_elf_new_section_hook
+#endif
 #define bfd_elfNN_set_arch_mach		_bfd_elf_set_arch_mach
 #ifndef bfd_elfNN_set_section_contents
 #define bfd_elfNN_set_section_contents	_bfd_elf_set_section_contents
@@ -65,6 +71,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #ifndef elf_backend_got_symbol_offset
 #define elf_backend_got_symbol_offset (bfd_vma) 0
+#endif
+#ifndef elf_backend_can_refcount
+#define elf_backend_can_refcount 0
 #endif
 #ifndef elf_backend_want_got_plt
 #define elf_backend_want_got_plt 0
@@ -84,10 +93,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #ifndef elf_backend_want_dynbss
 #define elf_backend_want_dynbss 1
 #endif
+#ifndef elf_backend_want_p_paddr_set_to_zero
+#define elf_backend_want_p_paddr_set_to_zero 0
+#endif
 
 #define bfd_elfNN_bfd_debug_info_start	bfd_void
 #define bfd_elfNN_bfd_debug_info_end	bfd_void
-#define bfd_elfNN_bfd_debug_info_accumulate	(PROTO(void,(*),(bfd*, struct sec *))) bfd_void
+#define bfd_elfNN_bfd_debug_info_accumulate \
+  (void (*) PARAMS ((bfd*, struct sec *))) bfd_void
 
 #ifndef bfd_elfNN_bfd_get_relocated_section_contents
 #define bfd_elfNN_bfd_get_relocated_section_contents \
@@ -101,6 +114,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #ifndef elf_backend_can_gc_sections
 #define elf_backend_can_gc_sections 0
 #endif
+#ifndef elf_backend_can_refcount
+#define elf_backend_can_refcount 0
+#endif
+#ifndef elf_backend_want_got_sym
+#define elf_backend_want_got_sym 1
+#endif
 #ifndef elf_backend_gc_mark_hook
 #define elf_backend_gc_mark_hook	NULL
 #endif
@@ -109,6 +128,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #endif
 #ifndef bfd_elfNN_bfd_gc_sections
 #define bfd_elfNN_bfd_gc_sections _bfd_elfNN_gc_sections
+#endif
+
+#ifndef bfd_elfNN_bfd_merge_sections
+#define bfd_elfNN_bfd_merge_sections \
+  _bfd_elf_merge_sections
+#endif
+
+#ifndef bfd_elfNN_bfd_discard_group
+#define bfd_elfNN_bfd_discard_group bfd_elf_discard_group
 #endif
 
 #ifndef bfd_elfNN_bfd_make_debug_symbol
@@ -127,7 +155,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #endif
 #ifndef bfd_elfNN_bfd_copy_private_bfd_data
 #define bfd_elfNN_bfd_copy_private_bfd_data \
-  ((boolean (*) PARAMS ((bfd *, bfd *))) bfd_true)
+  _bfd_elf_copy_private_bfd_data
 #endif
 #ifndef bfd_elfNN_bfd_print_private_bfd_data
 #define bfd_elfNN_bfd_print_private_bfd_data \
@@ -135,11 +163,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #endif
 #ifndef bfd_elfNN_bfd_merge_private_bfd_data
 #define bfd_elfNN_bfd_merge_private_bfd_data \
-  ((boolean (*) PARAMS ((bfd *, bfd *))) bfd_true)
+  ((bfd_boolean (*) PARAMS ((bfd *, bfd *))) bfd_true)
 #endif
 #ifndef bfd_elfNN_bfd_set_private_flags
 #define bfd_elfNN_bfd_set_private_flags \
-  ((boolean (*) PARAMS ((bfd *, flagword))) bfd_true)
+  ((bfd_boolean (*) PARAMS ((bfd *, flagword))) bfd_true)
 #endif
 #ifndef bfd_elfNN_bfd_is_local_label_name
 #define bfd_elfNN_bfd_is_local_label_name _bfd_elf_is_local_label_name
@@ -154,12 +182,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
   _bfd_elf_canonicalize_dynamic_reloc
 #endif
 
+#ifndef bfd_elfNN_bfd_link_hash_table_free
+#define bfd_elfNN_bfd_link_hash_table_free _bfd_generic_link_hash_table_free
+#endif
+
 #ifdef elf_backend_relocate_section
 #ifndef bfd_elfNN_bfd_link_hash_table_create
 #define bfd_elfNN_bfd_link_hash_table_create _bfd_elf_link_hash_table_create
 #endif
 #else /* ! defined (elf_backend_relocate_section) */
-/* If no backend relocate_section routine, use the generic linker.  */
+/* If no backend relocate_section routine, use the generic linker.
+   Note - this will prevent the port from being able to use some of
+   the other features of the ELF linker, because the generic hash structure
+   does not have the fields needed by the ELF linker.  In particular it
+   means that linking directly to S-records will not work.  */
 #ifndef bfd_elfNN_bfd_link_hash_table_create
 #define bfd_elfNN_bfd_link_hash_table_create \
   _bfd_generic_link_hash_table_create
@@ -171,6 +207,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define bfd_elfNN_bfd_final_link	_bfd_generic_final_link
 #endif
 #endif /* ! defined (elf_backend_relocate_section) */
+
+#ifndef bfd_elfNN_bfd_link_just_syms
+#define bfd_elfNN_bfd_link_just_syms	_bfd_elf_link_just_syms
+#endif
+
 #ifndef bfd_elfNN_bfd_link_split_section
 #define bfd_elfNN_bfd_link_split_section _bfd_generic_link_split_section
 #endif
@@ -213,10 +254,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #endif
 
 #ifndef elf_backend_collect
-#define elf_backend_collect false
+#define elf_backend_collect FALSE
 #endif
 #ifndef elf_backend_type_change_ok
-#define elf_backend_type_change_ok false
+#define elf_backend_type_change_ok FALSE
 #endif
 
 #ifndef elf_backend_sym_is_global
@@ -318,6 +359,42 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #ifndef elf_backend_hide_symbol
 #define elf_backend_hide_symbol		_bfd_elf_link_hash_hide_symbol
 #endif
+#ifndef elf_backend_emit_relocs
+#define elf_backend_emit_relocs			NULL
+#endif
+#ifndef elf_backend_count_relocs
+#define elf_backend_count_relocs		NULL
+#endif
+#ifndef elf_backend_grok_prstatus
+#define elf_backend_grok_prstatus		NULL
+#endif
+#ifndef elf_backend_grok_psinfo
+#define elf_backend_grok_psinfo			NULL
+#endif
+#ifndef elf_backend_sprintf_vma
+#define elf_backend_sprintf_vma			_bfd_elf_sprintf_vma
+#endif
+#ifndef elf_backend_fprintf_vma
+#define elf_backend_fprintf_vma			_bfd_elf_fprintf_vma
+#endif
+#ifndef elf_backend_reloc_type_class
+#define elf_backend_reloc_type_class		_bfd_elf_reloc_type_class
+#endif
+#ifndef elf_backend_discard_info
+#define elf_backend_discard_info		NULL
+#endif
+#ifndef elf_backend_ignore_discarded_relocs
+#define elf_backend_ignore_discarded_relocs	NULL
+#endif
+#ifndef elf_backend_write_section
+#define elf_backend_write_section		NULL
+#endif
+#ifndef elf_backend_mips_irix_compat
+#define elf_backend_mips_irix_compat		NULL
+#endif
+#ifndef elf_backend_mips_rtype_to_howto
+#define elf_backend_mips_rtype_to_howto		NULL
+#endif
 
 /* Previously, backends could only use SHT_REL or SHT_RELA relocation
    sections, but not both.  They defined USE_REL to indicate SHT_REL
@@ -325,9 +402,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
    For backwards compatibility, we still support this usage.  */
 #ifndef USE_REL
 #define USE_REL 0
-#else
-#undef USE_REL
-#define USE_REL 1
 #endif
 
 /* Use these in new code.  */
@@ -339,6 +413,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #endif
 #ifndef elf_backend_default_use_rela_p
 #define elf_backend_default_use_rela_p !USE_REL
+#endif
+
+#ifndef elf_backend_rela_normal
+#define elf_backend_rela_normal 0
 #endif
 
 #ifndef ELF_MACHINE_ALT1
@@ -360,7 +438,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 extern const struct elf_size_info _bfd_elfNN_size_info;
 
 #ifndef INCLUDED_TARGET_FILE
-static CONST struct elf_backend_data elfNN_bed =
+static const struct elf_backend_data elfNN_bed =
 {
   ELF_ARCH,			/* arch */
   ELF_MACHINE_CODE,		/* elf_machine_code */
@@ -399,6 +477,18 @@ static CONST struct elf_backend_data elfNN_bed =
   elf_backend_output_arch_syms,
   elf_backend_copy_indirect_symbol,
   elf_backend_hide_symbol,
+  elf_backend_emit_relocs,
+  elf_backend_count_relocs,
+  elf_backend_grok_prstatus,
+  elf_backend_grok_psinfo,
+  elf_backend_sprintf_vma,
+  elf_backend_fprintf_vma,
+  elf_backend_reloc_type_class,
+  elf_backend_discard_info,
+  elf_backend_ignore_discarded_relocs,
+  elf_backend_write_section,
+  elf_backend_mips_irix_compat,
+  elf_backend_mips_rtype_to_howto,
   elf_backend_ecoff_debug_swap,
   ELF_MACHINE_ALT1,
   ELF_MACHINE_ALT2,
@@ -411,6 +501,7 @@ static CONST struct elf_backend_data elfNN_bed =
   elf_backend_may_use_rel_p,
   elf_backend_may_use_rela_p,
   elf_backend_default_use_rela_p,
+  elf_backend_rela_normal,
   elf_backend_sign_extend_vma,
   elf_backend_want_got_plt,
   elf_backend_plt_readonly,
@@ -418,7 +509,10 @@ static CONST struct elf_backend_data elfNN_bed =
   elf_backend_plt_not_loaded,
   elf_backend_plt_alignment,
   elf_backend_can_gc_sections,
-  elf_backend_want_dynbss
+  elf_backend_can_refcount,
+  elf_backend_want_got_sym,
+  elf_backend_want_dynbss,
+  elf_backend_want_p_paddr_set_to_zero
 };
 #endif
 
@@ -443,12 +537,13 @@ const bfd_target TARGET_BIG_SYM =
   BFD_ENDIAN_BIG,
 
   /* object_flags: mask of all file flags */
-  (HAS_RELOC | EXEC_P | HAS_LINENO | HAS_DEBUG | HAS_SYMS | HAS_LOCALS |
-   DYNAMIC | WP_TEXT | D_PAGED),
+  (HAS_RELOC | EXEC_P | HAS_LINENO | HAS_DEBUG | HAS_SYMS | HAS_LOCALS
+   | DYNAMIC | WP_TEXT | D_PAGED),
 
   /* section_flags: mask of all section flags */
-  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_READONLY |
-   SEC_CODE | SEC_DATA | SEC_DEBUGGING | SEC_EXCLUDE | SEC_SORT_ENTRIES),
+  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_READONLY
+   | SEC_CODE | SEC_DATA | SEC_DEBUGGING | SEC_EXCLUDE | SEC_SORT_ENTRIES
+   | SEC_ARCH_BIT_0 | SEC_SMALL_DATA | SEC_MERGE | SEC_STRINGS | SEC_GROUP),
 
    /* leading_symbol_char: is the first char of a user symbol
       predictable, and if so what is it */
@@ -461,9 +556,9 @@ const bfd_target TARGET_BIG_SYM =
 
   /* ar_max_namelen: maximum number of characters in an archive header
      FIXME:  this really has nothing to do with ELF, this is a characteristic
-     of the archiver and should be independently tunable.  This value is
-     a WAG (wild a** guess) */
-  14,
+     of the archiver and should be independently tunable.  The System V ABI,
+     Chapter 7 (Formats & Protocols), Archive section sets this as 15.  */
+  15,
 
   /* Routines to byte-swap various sized integers from the data sections */
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,
@@ -538,12 +633,13 @@ const bfd_target TARGET_LITTLE_SYM =
   BFD_ENDIAN_LITTLE,
 
   /* object_flags: mask of all file flags */
-  (HAS_RELOC | EXEC_P | HAS_LINENO | HAS_DEBUG | HAS_SYMS | HAS_LOCALS |
-   DYNAMIC | WP_TEXT | D_PAGED),
+  (HAS_RELOC | EXEC_P | HAS_LINENO | HAS_DEBUG | HAS_SYMS | HAS_LOCALS
+   | DYNAMIC | WP_TEXT | D_PAGED),
 
   /* section_flags: mask of all section flags */
-  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_READONLY |
-   SEC_CODE | SEC_DATA | SEC_DEBUGGING | SEC_EXCLUDE | SEC_SORT_ENTRIES),
+  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_READONLY
+   | SEC_CODE | SEC_DATA | SEC_DEBUGGING | SEC_EXCLUDE | SEC_SORT_ENTRIES
+   | SEC_ARCH_BIT_0 | SEC_SMALL_DATA | SEC_MERGE | SEC_STRINGS | SEC_GROUP),
 
    /* leading_symbol_char: is the first char of a user symbol
       predictable, and if so what is it */
@@ -556,9 +652,9 @@ const bfd_target TARGET_LITTLE_SYM =
 
   /* ar_max_namelen: maximum number of characters in an archive header
      FIXME:  this really has nothing to do with ELF, this is a characteristic
-     of the archiver and should be independently tunable.  This value is
-     a WAG (wild a** guess) */
-  14,
+     of the archiver and should be independently tunable.  The System V ABI,
+     Chapter 7 (Formats & Protocols), Archive section sets this as 15.  */
+  15,
 
   /* Routines to byte-swap various sized integers from the data sections */
   bfd_getl64, bfd_getl_signed_64, bfd_putl64,

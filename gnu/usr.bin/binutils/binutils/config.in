@@ -28,9 +28,6 @@
 /* Define to `long' if <sys/types.h> doesn't define.  */
 #undef off_t
 
-/* Define if you need to in order for stat and other things to work.  */
-#undef _POSIX_SOURCE
-
 /* Define to `unsigned' if <sys/types.h> doesn't define.  */
 #undef size_t
 
@@ -60,6 +57,9 @@
 
 /* Define if you have the dcgettext function.  */
 #undef HAVE_DCGETTEXT
+
+/* Define if you have the getc_unlocked function.  */
+#undef HAVE_GETC_UNLOCKED
 
 /* Define if you have the getcwd function.  */
 #undef HAVE_GETCWD
@@ -93,6 +93,9 @@
 
 /* Define if you have the strchr function.  */
 #undef HAVE_STRCHR
+
+/* Define if you have the strcoll function.  */
+#undef HAVE_STRCOLL
 
 /* Define if you have the utimes function.  */
 #undef HAVE_UTIMES
@@ -145,12 +148,6 @@
 /* Define if you have the stpcpy function */
 #undef HAVE_STPCPY
 
-/* Define if you have the mkdtemp function */
-#undef HAVE_MKDTEMP
-
-/* Define if you have the mkstemp function */
-#undef HAVE_MKSTEMP
-
 /* Define if your locale.h file contains LC_MESSAGES. */
 #undef HAVE_LC_MESSAGES
 
@@ -165,6 +162,12 @@
 
 /* Suffix used for executables, if any. */
 #undef EXECUTABLE_SUFFIX
+
+/* Is fopen64 available? */
+#undef HAVE_FOPEN64
+
+/* Enable LFS */
+#undef _LARGEFILE64_SOURCE
 
 /* Is the type time_t defined in <time.h>? */
 #undef HAVE_TIME_T_IN_TIME_H
@@ -195,4 +198,7 @@
 
 /* Configured target name. */
 #undef TARGET
+
+/* Define to 1 if user symbol names have a leading underscore, 0 if not. */
+#undef TARGET_PREPENDS_UNDERSCORE
 

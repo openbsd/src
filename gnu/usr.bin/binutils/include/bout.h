@@ -51,42 +51,41 @@
 
 #define BMAGIC	0415
 /* We don't accept the following (see N_BADMAG macro).
- * They're just here so GNU code will compile.
- */
+   They're just here so GNU code will compile.  */
 #define	OMAGIC	0407		/* old impure format */
 #define	NMAGIC	0410		/* read-only text */
 #define	ZMAGIC	0413		/* demand load format */
 
 /* FILE HEADER
- *	All 'lengths' are given as a number of bytes.
- *	All 'alignments' are for relinkable files only;  an alignment of
- *		'n' indicates the corresponding segment must begin at an
- *		address that is a multiple of (2**n).
- */
-struct external_exec {
-	/* Standard stuff */
-	unsigned char e_info[4];	/* Identifies this as a b.out file */
-	unsigned char e_text[4];	/* Length of text */
-	unsigned char e_data[4];	/* Length of data */
-	unsigned char e_bss[4];		/* Length of uninitialized data area */
-	unsigned char e_syms[4];	/* Length of symbol table */
-	unsigned char e_entry[4];	/* Runtime start address */
-	unsigned char e_trsize[4];	/* Length of text relocation info */
-	unsigned char e_drsize[4];	/* Length of data relocation info */
+  	All 'lengths' are given as a number of bytes.
+  	All 'alignments' are for relinkable files only;  an alignment of
+  		'n' indicates the corresponding segment must begin at an
+  		address that is a multiple of (2**n).  */
+struct external_exec
+  {
+    /* Standard stuff */
+    unsigned char e_info[4];	/* Identifies this as a b.out file */
+    unsigned char e_text[4];	/* Length of text */
+    unsigned char e_data[4];	/* Length of data */
+    unsigned char e_bss[4];	/* Length of uninitialized data area */
+    unsigned char e_syms[4];	/* Length of symbol table */
+    unsigned char e_entry[4];	/* Runtime start address */
+    unsigned char e_trsize[4];	/* Length of text relocation info */
+    unsigned char e_drsize[4];	/* Length of data relocation info */
 
-	/* Added for i960 */
-	unsigned char e_tload[4];	/* Text runtime load address */
-	unsigned char e_dload[4];	/* Data runtime load address */
-	unsigned char e_talign[1];	/* Alignment of text segment */
-	unsigned char e_dalign[1];	/* Alignment of data segment */
-	unsigned char e_balign[1];	/* Alignment of bss segment */
-	unsigned char e_relaxable[1];	/* Assembled with enough info to allow linker to relax */
-};
+    /* Added for i960 */
+    unsigned char e_tload[4];	/* Text runtime load address */
+    unsigned char e_dload[4];	/* Data runtime load address */
+    unsigned char e_talign[1];	/* Alignment of text segment */
+    unsigned char e_dalign[1];	/* Alignment of data segment */
+    unsigned char e_balign[1];	/* Alignment of bss segment */
+    unsigned char e_relaxable[1];/* Assembled with enough info to allow linker to relax */
+  };
 
 #define	EXEC_BYTES_SIZE	(sizeof (struct external_exec))
 
 /* These macros use the a_xxx field names, since they operate on the exec
-   structure after it's been byte-swapped and realigned on the host machine. */
+   structure after it's been byte-swapped and realigned on the host machine.  */
 #define N_BADMAG(x)	(((x).a_info)!=BMAGIC)
 #define N_TXTOFF(x)	EXEC_BYTES_SIZE
 #define N_DATOFF(x)	( N_TXTOFF(x) + (x).a_text )
@@ -103,23 +102,24 @@ struct external_exec {
 #define N_TXTADDR(x) 0
 #endif
 
-/* A single entry in the symbol table
- */
-struct nlist {
-	union {
-		char	*n_name;
-		struct nlist *n_next;
-		long	n_strx;		/* Index into string table	*/
-	} n_un;
-	unsigned char n_type;	/* See below				*/
-	char	n_other;	/* Used in i80960 support -- see below	*/
-	short	n_desc;
-	unsigned long n_value;
-};
+/* A single entry in the symbol table.  */
+struct nlist
+  {
+    union
+      {
+	char*          n_name;
+	struct nlist * n_next;
+	long	       n_strx;	/* Index into string table	*/
+      } n_un;
+
+    unsigned char n_type;	/* See below				*/
+    char	  n_other;	/* Used in i80960 support -- see below	*/
+    short	  n_desc;
+    unsigned long n_value;
+  };
 
 
-/* Legal values of n_type
- */
+/* Legal values of n_type.  */
 #define N_UNDF	0	/* Undefined symbol	*/
 #define N_ABS	2	/* Absolute symbol	*/
 #define N_TEXT	4	/* Text symbol		*/
@@ -132,34 +132,33 @@ struct nlist {
 #define N_STAB	0340	/* Mask for all bits used for SDB entries 	*/
 
 /* MEANING OF 'n_other'
- *
- * If non-zero, the 'n_other' fields indicates either a leaf procedure or
- * a system procedure, as follows:
- *
- *	1 <= n_other <= 32 :
- *		The symbol is the entry point to a system procedure.
- *		'n_value' is the address of the entry, as for any other
- *		procedure.  The system procedure number (which can be used in
- *		a 'calls' instruction) is (n_other-1).  These entries come from
- *		'.sysproc' directives.
- *
- *	n_other == N_CALLNAME
- *		the symbol is the 'call' entry point to a leaf procedure.
- *		The *next* symbol in the symbol table must be the corresponding
- *		'bal' entry point to the procedure (see following).  These
- *		entries come from '.leafproc' directives in which two different
- *		symbols are specified (the first one is represented here).
- *	
- *
- *	n_other == N_BALNAME
- *		the symbol is the 'bal' entry point to a leaf procedure.
- *		These entries result from '.leafproc' directives in which only
- *		one symbol is specified, or in which the same symbol is
- *		specified twice.
- *
- * Note that an N_CALLNAME entry *must* have a corresponding N_BALNAME entry,
- * but not every N_BALNAME entry must have an N_CALLNAME entry.
- */
+ 
+  If non-zero, the 'n_other' fields indicates either a leaf procedure or
+  a system procedure, as follows:
+ 
+ 	1 <= n_other <= 32 :
+ 		The symbol is the entry point to a system procedure.
+ 		'n_value' is the address of the entry, as for any other
+ 		procedure.  The system procedure number (which can be used in
+ 		a 'calls' instruction) is (n_other-1).  These entries come from
+ 		'.sysproc' directives.
+ 
+ 	n_other == N_CALLNAME
+ 		the symbol is the 'call' entry point to a leaf procedure.
+ 		The *next* symbol in the symbol table must be the corresponding
+ 		'bal' entry point to the procedure (see following).  These
+ 		entries come from '.leafproc' directives in which two different
+ 		symbols are specified (the first one is represented here).
+ 	
+ 
+ 	n_other == N_BALNAME
+ 		the symbol is the 'bal' entry point to a leaf procedure.
+ 		These entries result from '.leafproc' directives in which only
+ 		one symbol is specified, or in which the same symbol is
+ 		specified twice.
+ 
+  Note that an N_CALLNAME entry *must* have a corresponding N_BALNAME entry,
+  but not every N_BALNAME entry must have an N_CALLNAME entry.  */
 #define N_CALLNAME	((char)-1)
 #define N_BALNAME	((char)-2)
 #define IS_CALLNAME(x)	(N_CALLNAME == (x))
@@ -167,29 +166,26 @@ struct nlist {
 #define IS_OTHER(x)	((x)>0 && (x) <=32)
 
 #define b_out_relocation_info relocation_info
-struct relocation_info {
-	int	 r_address;	/* File address of item to be relocated	*/
-	unsigned
+struct relocation_info
+  {
+    int	 r_address;	/* File address of item to be relocated.  */
+    unsigned
 #define r_index r_symbolnum
-		r_symbolnum:24,/* Index of symbol on which relocation is based,
-				*	if r_extern is set.  Otherwise set to
-				*	either N_TEXT, N_DATA, or N_BSS to
-				*	indicate section on which relocation is
-				*	based.
-				*/
-		r_pcrel:1,	/* 1 => relocate PC-relative; else absolute
-				 *	On i960, pc-relative implies 24-bit
-				 *	address, absolute implies 32-bit.
-				 */
-		r_length:2,	/* Number of bytes to relocate:
-				 *	0 => 1 byte
-				 *	1 => 2 bytes -- used for 13 bit pcrel
-				 *	2 => 4 bytes 
-				 */
-		r_extern:1,
-		r_bsr:1,	/* Something for the GNU NS32K assembler */
-		r_disp:1,	/* Something for the GNU NS32K assembler */
-		r_callj:1,	/* 1 if relocation target is an i960 'callj' */
-		r_relaxable:1;	/* 1 if enough info is left to relax
-				   the data */
+    r_symbolnum:24,	/* Index of symbol on which relocation is based,
+			   if r_extern is set.  Otherwise set to
+			   either N_TEXT, N_DATA, or N_BSS to
+			   indicate section on which relocation is
+			   based.  */
+      r_pcrel:1,	/* 1 => relocate PC-relative; else absolute
+			   On i960, pc-relative implies 24-bit
+			   address, absolute implies 32-bit.  */
+      r_length:2,	/* Number of bytes to relocate:
+			   0 => 1 byte
+			   1 => 2 bytes -- used for 13 bit pcrel
+			   2 => 4 bytes.  */
+      r_extern:1,
+      r_bsr:1,		/* Something for the GNU NS32K assembler.  */
+      r_disp:1,		/* Something for the GNU NS32K assembler.  */
+      r_callj:1,	/* 1 if relocation target is an i960 'callj'.  */
+      r_relaxable:1;	/* 1 if enough info is left to relax the data.  */
 };

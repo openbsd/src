@@ -105,6 +105,9 @@ struct fix
   /* Absolute number we add in.  */
   valueT fx_offset;
 
+  /* The value of dot when the fixup expression was parsed.  */
+  addressT fx_dot_value;
+
   /* Next fixS in linked list, or NULL.  */
   struct fix *fx_next;
 
@@ -157,6 +160,10 @@ struct fix
 
 typedef struct fix fixS;
 
+extern int finalize_syms;
+extern symbolS *abs_section_sym;
+extern addressT dot_value;
+
 #ifndef BFD_ASSEMBLER
 extern char *next_object_file_charP;
 
@@ -182,7 +189,7 @@ extern int get_recorded_alignment PARAMS ((segT seg));
 extern void subsegs_finish PARAMS ((void));
 extern void write_object_file PARAMS ((void));
 extern long relax_frag PARAMS ((segT, fragS *, long));
-extern void relax_segment
+extern int relax_segment
   PARAMS ((struct frag * seg_frag_root, segT seg_type));
 
 extern void number_to_chars_littleendian PARAMS ((char *, valueT, int));

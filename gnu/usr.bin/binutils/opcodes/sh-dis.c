@@ -1,20 +1,20 @@
 /* Disassemble SH instructions.
-   Copyright 1993, 1994, 1995, 1997, 1998, 2000
+   Copyright 1993, 1994, 1995, 1997, 1998, 2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #include <stdio.h>
 #include "sysdep.h"
@@ -24,11 +24,19 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "sh-opc.h"
 #include "dis-asm.h"
 
-#define LITTLE_BIT 2
+#ifdef ARCH_all
+#define INCLUDE_SHMEDIA
+#endif
+
+static void print_movxy
+  PARAMS ((const sh_opcode_info *, int, int, fprintf_ftype, void *));
+static void print_insn_ddt PARAMS ((int, struct disassemble_info *));
+static void print_dsp_reg PARAMS ((int, fprintf_ftype, void *));
+static void print_insn_ppi PARAMS ((int, struct disassemble_info *));
 
 static void
 print_movxy (op, rn, rm, fprintf_fn, stream)
-     sh_opcode_info *op;
+     const sh_opcode_info *op;
      int rn, rm;
      fprintf_ftype fprintf_fn;
      void *stream;
@@ -97,8 +105,8 @@ print_insn_ddt (insn, info)
     fprintf_fn (stream, ".word 0x%x", insn);
   else
     {
-      static sh_opcode_info *first_movx, *first_movy;
-      sh_opcode_info *opx, *opy;
+      static const sh_opcode_info *first_movx, *first_movy;
+      const sh_opcode_info *opx, *opy;
       unsigned int insn_x, insn_y;
 
       if (! first_movx)
@@ -184,7 +192,7 @@ print_insn_ppi (field_b, info)
   void *stream = info->stream;
   unsigned int nib1, nib2, nib3;
   char *dc = NULL;
-  sh_opcode_info *op;
+  const sh_opcode_info *op;
 
   if ((field_b & 0xe800) == 0)
     {
@@ -279,8 +287,8 @@ print_insn_ppi (field_b, info)
   fprintf_fn (stream, ".word 0x%x", field_b);
 }
 
-static int
-print_insn_shx (memaddr, info)
+int
+print_insn_sh (memaddr, info)
      bfd_vma memaddr;
      struct disassemble_info *info;
 {
@@ -290,16 +298,25 @@ print_insn_shx (memaddr, info)
   unsigned char nibs[4];
   int status;
   bfd_vma relmask = ~(bfd_vma) 0;
-  sh_opcode_info *op;
+  const sh_opcode_info *op;
   int target_arch;
 
   switch (info->mach)
     {
     case bfd_mach_sh:
       target_arch = arch_sh1;
+      /* SH coff object files lack information about the machine type, so
+         we end up with bfd_mach_sh unless it was set explicitly (which
+	 could have happended if this is a call from gdb or the simulator.)  */
+      if (info->symbols
+	  && bfd_asymbol_flavour(*info->symbols) == bfd_target_coff_flavour)
+	target_arch = arch_sh4;
       break;
     case bfd_mach_sh2:
       target_arch = arch_sh2;
+      break;
+    case bfd_mach_sh2e:
+      target_arch = arch_sh2e;
       break;
     case bfd_mach_sh_dsp:
       target_arch = arch_sh_dsp;
@@ -316,6 +333,16 @@ print_insn_shx (memaddr, info)
     case bfd_mach_sh4:
       target_arch = arch_sh4;
       break;
+    case bfd_mach_sh5:
+#ifdef INCLUDE_SHMEDIA
+      status = print_insn_sh64 (memaddr, info);
+      if (status != -2)
+	return status;
+#endif
+      /* When we get here for sh64, it's because we want to disassemble
+	 SHcompact, i.e. arch_sh4.  */
+      target_arch = arch_sh4;
+      break;
     default:
       abort ();
     }
@@ -328,7 +355,7 @@ print_insn_shx (memaddr, info)
       return -1;
     }
 
-  if (info->flags & LITTLE_BIT)
+  if (info->endian == BFD_ENDIAN_LITTLE)
     {
       nibs[0] = (insn[1] >> 4) & 0xf;
       nibs[1] = insn[1] & 0xf;
@@ -359,7 +386,7 @@ print_insn_shx (memaddr, info)
 	      return -1;
 	    }
 
-	  if (info->flags & LITTLE_BIT)
+	  if (info->endian == BFD_ENDIAN_LITTLE)
 	    field_b = insn[1] << 8 | insn[0];
 	  else
 	    field_b = insn[0] << 8 | insn[1];
@@ -458,7 +485,7 @@ print_insn_shx (memaddr, info)
 	      if ((rn & 0xc) != 4)
 		goto fail;
 	      rn = rn & 0x3;
-	      rn |= (rn & 2) << 1;
+	      rn |= (!(rn & 2)) << 2;
 	      break;
 	    case PPI:
 	    case REPEAT:
@@ -665,7 +692,7 @@ print_insn_shx (memaddr, info)
 	{
 	  info->flags |= 1;
 	  fprintf_fn (stream, "\t(slot ");
-	  print_insn_shx (memaddr + 2, info);
+	  print_insn_sh (memaddr + 2, info);
 	  info->flags &= ~1;
 	  fprintf_fn (stream, ")");
 	  return 4;
@@ -688,14 +715,14 @@ print_insn_shx (memaddr, info)
 
 	      if (size == 2)
 		{
-		  if ((info->flags & LITTLE_BIT) != 0)
+		  if (info->endian == BFD_ENDIAN_LITTLE)
 		    val = bfd_getl16 (bytes);
 		  else
 		    val = bfd_getb16 (bytes);
 		}
 	      else
 		{
-		  if ((info->flags & LITTLE_BIT) != 0)
+		  if (info->endian == BFD_ENDIAN_LITTLE)
 		    val = bfd_getl32 (bytes);
 		  else
 		    val = bfd_getb32 (bytes);
@@ -711,28 +738,4 @@ print_insn_shx (memaddr, info)
     }
   fprintf_fn (stream, ".word 0x%x%x%x%x", nibs[0], nibs[1], nibs[2], nibs[3]);
   return 2;
-}
-
-int
-print_insn_shl (memaddr, info)
-     bfd_vma memaddr;
-     struct disassemble_info *info;
-{
-  int r;
-
-  info->flags = LITTLE_BIT;
-  r = print_insn_shx (memaddr, info);
-  return r;
-}
-
-int
-print_insn_sh (memaddr, info)
-     bfd_vma memaddr;
-     struct disassemble_info *info;
-{
-  int r;
-
-  info->flags = 0;
-  r = print_insn_shx (memaddr, info);
-  return r;
 }

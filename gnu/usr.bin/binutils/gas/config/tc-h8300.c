@@ -1,6 +1,6 @@
-/* tc-h8300.c -- Assemble code for the Hitachi H8/300
-   Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 2000
-   Free Software Foundation, Inc.
+/* tc-h8300.c -- Assemble code for the Renesas H8/300
+   Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 2000,
+   2001, 2002, 2003 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -25,43 +25,101 @@
 #include "as.h"
 #include "subsegs.h"
 #include "bfd.h"
+
+#ifdef BFD_ASSEMBLER
+#include "dwarf2dbg.h"
+#endif
+
 #define DEFINE_TABLE
 #define h8_opcodes ops
 #include "opcode/h8300.h"
-#include <ctype.h>
+#include "safe-ctype.h"
+
+#ifdef OBJ_ELF
+#include "elf/h8.h"
+#endif
 
 const char comment_chars[] = ";";
 const char line_comment_chars[] = "#";
 const char line_separator_chars[] = "";
 
-/* This table describes all the machine specific pseudo-ops the assembler
-   has to support.  The fields are:
-   pseudo-op name without dot
-   function to call to execute this pseudo-op
-   Integer arg to pass to the function
-   */
-
-void cons ();
+void cons        PARAMS ((int));
+void sbranch     PARAMS ((int));
+void h8300hmode  PARAMS ((int));
+void h8300smode  PARAMS ((int));
+void h8300hnmode PARAMS ((int));
+void h8300snmode PARAMS ((int));
+static void pint PARAMS ((int));
 
 int Hmode;
 int Smode;
+int Nmode;
+
 #define PSIZE (Hmode ? L_32 : L_16)
 #define DMODE (L_16)
 #define DSYMMODE (Hmode ? L_24 : L_16)
-int bsize = L_8;		/* default branch displacement */
+
+int bsize = L_8;		/* Default branch displacement.  */
+
+struct h8_instruction
+{
+  int length;
+  int noperands;
+  int idx;
+  int size;
+  const struct h8_opcode *opcode;
+};
+
+struct h8_instruction *h8_instructions;
 
 void
-h8300hmode ()
+h8300hmode (arg)
+     int arg ATTRIBUTE_UNUSED;
 {
   Hmode = 1;
   Smode = 0;
+#ifdef BFD_ASSEMBLER
+  if (!bfd_set_arch_mach (stdoutput, bfd_arch_h8300, bfd_mach_h8300h))
+    as_warn (_("could not set architecture and machine"));
+#endif
 }
 
 void
-h8300smode ()
+h8300smode (arg)
+     int arg ATTRIBUTE_UNUSED;
 {
   Smode = 1;
   Hmode = 1;
+#ifdef BFD_ASSEMBLER
+  if (!bfd_set_arch_mach (stdoutput, bfd_arch_h8300, bfd_mach_h8300s))
+    as_warn (_("could not set architecture and machine"));
+#endif
+}
+
+void
+h8300hnmode (arg)
+     int arg ATTRIBUTE_UNUSED;
+{
+  Hmode = 1;
+  Smode = 0;
+  Nmode = 1;
+#ifdef BFD_ASSEMBLER
+  if (!bfd_set_arch_mach (stdoutput, bfd_arch_h8300, bfd_mach_h8300hn))
+    as_warn (_("could not set architecture and machine"));
+#endif
+}
+
+void
+h8300snmode (arg)
+     int arg ATTRIBUTE_UNUSED;
+{
+  Smode = 1;
+  Hmode = 1;
+  Nmode = 1;
+#ifdef BFD_ASSEMBLER
+  if (!bfd_set_arch_mach (stdoutput, bfd_arch_h8300, bfd_mach_h8300sn))
+    as_warn (_("could not set architecture and machine"));
+#endif
 }
 
 void
@@ -72,17 +130,31 @@ sbranch (size)
 }
 
 static void
-pint ()
+pint (arg)
+     int arg ATTRIBUTE_UNUSED;
 {
   cons (Hmode ? 4 : 2);
 }
 
+/* This table describes all the machine specific pseudo-ops the assembler
+   has to support.  The fields are:
+   pseudo-op name without dot
+   function to call to execute this pseudo-op
+   Integer arg to pass to the function.  */
+
 const pseudo_typeS md_pseudo_table[] =
 {
   {"h8300h", h8300hmode, 0},
+  {"h8300hn", h8300hnmode, 0},
   {"h8300s", h8300smode, 0},
+  {"h8300sn", h8300snmode, 0},
   {"sbranch", sbranch, L_8},
   {"lbranch", sbranch, L_16},
+
+#ifdef BFD_ASSEMBLER
+  {"file", (void (*) PARAMS ((int))) dwarf2_directive_file, 0 },
+  {"loc", dwarf2_directive_loc, 0 },
+#endif
 
   {"int", pint, 0},
   {"data.b", cons, 1},
@@ -100,42 +172,55 @@ const int md_reloc_size;
 
 const char EXP_CHARS[] = "eE";
 
-/* Chars that mean this number is a floating point constant */
-/* As in 0f12.456 */
-/* or    0d1.2345e12 */
+/* Chars that mean this number is a floating point constant
+   As in 0f12.456
+   or    0d1.2345e12.  */
 const char FLT_CHARS[] = "rRsSfFdDxXpP";
 
-static struct hash_control *opcode_hash_control;	/* Opcode mnemonics */
+static struct hash_control *opcode_hash_control;	/* Opcode mnemonics.  */
 
 /* This function is called once, at assembler startup time.  This
    should set up all the tables, etc. that the MD part of the assembler
    needs.  */
+
 void
 md_begin ()
 {
-  struct h8_opcode *opcode;
+  unsigned int nopcodes;
+  const struct h8_opcode *p;
+  struct h8_instruction *pi;
   char prev_buffer[100];
   int idx = 0;
+
+#ifdef BFD_ASSEMBLER
+  if (!bfd_set_arch_mach (stdoutput, bfd_arch_h8300, bfd_mach_h8300))
+    as_warn (_("could not set architecture and machine"));
+#endif
 
   opcode_hash_control = hash_new ();
   prev_buffer[0] = 0;
 
-  for (opcode = h8_opcodes; opcode->name; opcode++)
+  nopcodes = sizeof (h8_opcodes) / sizeof (struct h8_opcode);
+  
+  h8_instructions = (struct h8_instruction *)
+    xmalloc (nopcodes * sizeof (struct h8_instruction));
+
+  for (p = h8_opcodes, pi = h8_instructions; p->name; p++, pi++)
     {
       /* Strip off any . part when inserting the opcode and only enter
          unique codes into the hash table.  */
-      char *src = opcode->name;
+      char *src = p->name;
       unsigned int len = strlen (src);
       char *dst = malloc (len + 1);
       char *buffer = dst;
 
-      opcode->size = 0;
+      pi->size = 0;
       while (*src)
 	{
 	  if (*src == '.')
 	    {
 	      src++;
-	      opcode->size = *src;
+	      pi->size = *src;
 	      break;
 	    }
 	  *dst++ = *src++;
@@ -143,22 +228,31 @@ md_begin ()
       *dst++ = 0;
       if (strcmp (buffer, prev_buffer))
 	{
-	  hash_insert (opcode_hash_control, buffer, (char *) opcode);
+	  hash_insert (opcode_hash_control, buffer, (char *) pi);
 	  strcpy (prev_buffer, buffer);
 	  idx++;
 	}
-      opcode->idx = idx;
+      pi->idx = idx;
 
       /* Find the number of operands.  */
-      opcode->noperands = 0;
-      while (opcode->args.nib[opcode->noperands] != E)
-	opcode->noperands++;
+      pi->noperands = 0;
+      while (p->args.nib[pi->noperands] != E)
+	pi->noperands++;
 
       /* Find the length of the opcode in bytes.  */
-      opcode->length = 0;
-      while (opcode->data.nib[opcode->length * 2] != E)
-	opcode->length++;
+      pi->length = 0;
+      while (p->data.nib[pi->length * 2] != E)
+	pi->length++;
+
+      pi->opcode = p;
     }
+
+  /* Add entry for the NULL vector terminator.  */
+  pi->length = 0;
+  pi->noperands = 0;
+  pi->idx = 0;
+  pi->size = 0;
+  pi->opcode = p;
 
   linkrelax = 1;
 }
@@ -171,7 +265,7 @@ struct h8_exp
 };
 
 int dispreg;
-int opsize;			/* Set when a register size is seen */
+int opsize;			/* Set when a register size is seen.  */
 
 struct h8_op
 {
@@ -179,6 +273,18 @@ struct h8_op
   unsigned reg;
   expressionS exp;
 };
+
+static void clever_message PARAMS ((const struct h8_instruction *, struct h8_op *));
+static void build_bytes    PARAMS ((const struct h8_instruction *, struct h8_op *));
+static void do_a_fix_imm   PARAMS ((int, struct h8_op *, int));
+static void check_operand  PARAMS ((struct h8_op *, unsigned int, char *));
+static const struct h8_instruction * get_specific PARAMS ((const struct h8_instruction *, struct h8_op *, int));
+static char * get_operands PARAMS ((unsigned, char *, struct h8_op *));
+static void   get_operand  PARAMS ((char **, struct h8_op *, unsigned, int));
+static char * skip_colonthing PARAMS ((char *, expressionS *, int *));
+static char * parse_exp PARAMS ((char *, expressionS *));
+static int    parse_reg PARAMS ((char *, op_type *, unsigned *, int));
+char * colonmod24 PARAMS ((struct h8_op *, char *));
 
 /*
   parse operands
@@ -199,7 +305,6 @@ parse_reg (src, mode, reg, direction)
      op_type *mode;
      unsigned int *reg;
      int direction;
-
 {
   char *end;
   int len;
@@ -312,7 +417,7 @@ skip_colonthing (ptr, exp, mode)
       if (*ptr == '8')
 	{
 	  ptr++;
-	  /* ff fill any 8 bit quantity */
+	  /* ff fill any 8 bit quantity.  */
 	  /* exp->X_add_number -= 0x100; */
 	  *mode |= L_8;
 	}
@@ -330,7 +435,7 @@ skip_colonthing (ptr, exp, mode)
 	    {
 	      *mode |= L_16;
 	    }
-	  while (isdigit (*ptr))
+	  while (ISDIGIT (*ptr))
 	    ptr++;
 	}
     }
@@ -350,15 +455,12 @@ skip_colonthing (ptr, exp, mode)
 
    #xx[:size]		immediate data
    @(exp:[8], pc)	pc rel
-   @@aa[:8]		memory indirect
-
-   */
+   @@aa[:8]		memory indirect.  */
 
 char *
 colonmod24 (op, src)
      struct h8_op *op;
      char *src;
-
 {
   int mode = 0;
   src = skip_colonthing (src, &op->exp, &mode);
@@ -380,9 +482,9 @@ colonmod24 (op, src)
       else
 	mode = DMODE;
     }
+
   op->mode |= mode;
   return src;
-
 }
 
 static void
@@ -399,10 +501,14 @@ get_operand (ptr, op, dst, direction)
 
   op->mode = E;
 
+  /* Check for '(' and ')' for instructions ldm and stm.  */
+  if (src[0] == '(' && src[8] == ')')
+    ++ src;
+
   /* Gross.  Gross.  ldm and stm have a format not easily handled
      by get_operand.  We deal with it explicitly here.  */
-  if (src[0] == 'e' && src[1] == 'r' && isdigit (src[2])
-      && src[3] == '-' && src[4] == 'e' && src[5] == 'r' && isdigit (src[6]))
+  if (src[0] == 'e' && src[1] == 'r' && ISDIGIT (src[2])
+      && src[3] == '-' && src[4] == 'e' && src[5] == 'r' && ISDIGIT (src[6]))
     {
       int low, high;
 
@@ -428,7 +534,10 @@ get_operand (ptr, op, dst, direction)
 	 so we know this is "very special".  */
       op->reg = 0x80000000 | (high << 8) | low;
       op->mode = REG;
-      *ptr = src + 7;
+      if (src[7] == ')')
+	*ptr = src + 8;
+      else
+	*ptr = src + 7;
       return;
     }
 
@@ -596,14 +705,11 @@ get_operand (ptr, op, dst, direction)
 	      src += 2;
 	    }
 	  else
-	    {
-	      as_bad (_("expect :8 or :16 here"));
-	    }
+	    as_bad (_("expect :8 or :16 here"));
 	}
       else
-	{
-	  op->mode = PCREL | bsize;
-	}
+	op->mode = PCREL | bsize;
+
       *ptr = src;
     }
 }
@@ -655,43 +761,43 @@ get_operands (noperands, op_end, operand)
 /* Passed a pointer to a list of opcodes which use different
    addressing modes, return the opcode which matches the opcodes
    provided.  */
-static struct h8_opcode *
-get_specific (opcode, operands, size)
-     struct h8_opcode *opcode;
+
+static const struct h8_instruction *
+get_specific (instruction, operands, size)
+     const struct h8_instruction *instruction;
      struct h8_op *operands;
      int size;
 {
-  struct h8_opcode *this_try = opcode;
+  const struct h8_instruction *this_try = instruction;
   int found = 0;
-
-  unsigned int this_index = opcode->idx;
+  int this_index = instruction->idx;
 
   /* There's only one ldm/stm and it's easier to just
      get out quick for them.  */
-  if (strcmp (opcode->name, "stm.l") == 0
-      || strcmp (opcode->name, "ldm.l") == 0)
+  if (strcmp (instruction->opcode->name, "stm.l") == 0
+      || strcmp (instruction->opcode->name, "ldm.l") == 0)
     return this_try;
 
-  while (this_index == opcode->idx && !found)
+  while (this_index == instruction->idx && !found)
     {
       found = 1;
 
-      this_try = opcode++;
+      this_try = instruction++;
       if (this_try->noperands == 0)
 	{
 	  int this_size;
 
-	  this_size = this_try->how & SN;
+	  this_size = this_try->opcode->how & SN;
 	  if (this_size != size && (this_size != SB || size != SN))
 	    found = 0;
 	}
       else
 	{
-	  unsigned int i;
+	  int i;
 
 	  for (i = 0; i < this_try->noperands && found; i++)
 	    {
-	      op_type op = this_try->args.nib[i];
+	      op_type op = this_try->opcode->args.nib[i];
 	      int x = operands[i].mode;
 
 	      if ((op & (DISP | REG)) == (DISP | REG)
@@ -787,7 +893,7 @@ check_operand (operand, width, string)
 	 fs.  */
 
       if ((operand->exp.X_add_number & ~width) != 0 &&
-	  (operand->exp.X_add_number | width) != (~0))
+	  (operand->exp.X_add_number | width) != (unsigned)(~0))
 	{
 	  if (width == 255
 	      && (operand->exp.X_add_number & 0xff00) == 0xff00)
@@ -795,6 +901,14 @@ check_operand (operand, width, string)
 	      /* Just ignore this one - which happens when trying to
 		 fit a 16 bit address truncated into an 8 bit address
 		 of something like bset.  */
+	    }
+	  else if (strcmp (string, "@") == 0
+		   && width == 0xffff
+		   && (operand->exp.X_add_number & 0xff8000) == 0xff8000)
+	    {
+	      /* Just ignore this one - which happens when trying to
+		 fit a 24 bit address truncated into a 16 bit address
+		 of something like mov.w.  */
 	    }
 	  else
 	    {
@@ -915,27 +1029,27 @@ do_a_fix_imm (offset, operand, relaxmode)
 }
 
 /* Now we know what sort of opcodes it is, let's build the bytes.  */
+
 static void
 build_bytes (this_try, operand)
-     struct h8_opcode *this_try;
+     const struct h8_instruction *this_try;
      struct h8_op *operand;
 {
-  unsigned int i;
-
+  int i;
   char *output = frag_more (this_try->length);
-  op_type *nibble_ptr = this_try->data.nib;
+  op_type *nibble_ptr = this_try->opcode->data.nib;
   op_type c;
   unsigned int nibble_count = 0;
-  int absat;
-  int immat;
-  int nib;
+  int absat = 0;
+  int immat = 0;
+  int nib = 0;
   int movb = 0;
   char asnibbles[30];
   char *p = asnibbles;
 
-  if (!(this_try->inbase || Hmode))
+  if (!(this_try->opcode->inbase || Hmode))
     as_warn (_("Opcode `%s' with these operand types not available in H8/300 mode"),
-	     this_try->name);
+	     this_try->opcode->name);
 
   while (*nibble_ptr != E)
     {
@@ -945,19 +1059,15 @@ build_bytes (this_try, operand)
       d = (c & (DST | SRC_IN_DST)) != 0;
 
       if (c < 16)
-	{
-	  nib = c;
-	}
+	nib = c;
       else
 	{
 	  if (c & (REG | IND | INC | DEC))
-	    {
-	      nib = operand[d].reg;
-	    }
+	    nib = operand[d].reg;
+
 	  else if ((c & DISPREG) == (DISPREG))
-	    {
-	      nib = dispreg;
-	    }
+	    nib = dispreg;
+
 	  else if (c & ABS)
 	    {
 	      operand[d].mode = c;
@@ -971,9 +1081,8 @@ build_bytes (this_try, operand)
 	      nib = 0;
 	    }
 	  else if (c & IGNORE)
-	    {
-	      nib = 0;
-	    }
+	    nib = 0;
+
 	  else if (c & DBIT)
 	    {
 	      switch (operand[0].exp.X_add_number)
@@ -1013,14 +1122,10 @@ build_bytes (this_try, operand)
 	    }
 
 	  if (c & MEMRELAX)
-	    {
-	      operand[d].mode |= MEMRELAX;
-	    }
+	    operand[d].mode |= MEMRELAX;
 
 	  if (c & B31)
-	    {
-	      nib |= 0x8;
-	    }
+	    nib |= 0x8;
 
 	  if (c & MACREG)
 	    {
@@ -1039,25 +1144,23 @@ build_bytes (this_try, operand)
 
   /* Disgusting.  Why, oh why didn't someone ask us for advice
      on the assembler format.  */
-  if (strcmp (this_try->name, "stm.l") == 0
-      || strcmp (this_try->name, "ldm.l") == 0)
+  if (strcmp (this_try->opcode->name, "stm.l") == 0
+      || strcmp (this_try->opcode->name, "ldm.l") == 0)
     {
       int high, low;
-      high = (operand[this_try->name[0] == 'l' ? 1 : 0].reg >> 8) & 0xf;
-      low = operand[this_try->name[0] == 'l' ? 1 : 0].reg & 0xf;
+      high = (operand[this_try->opcode->name[0] == 'l' ? 1 : 0].reg >> 8) & 0xf;
+      low = operand[this_try->opcode->name[0] == 'l' ? 1 : 0].reg & 0xf;
 
       asnibbles[2] = high - low;
-      asnibbles[7] = (this_try->name[0] == 'l') ? high : low;
+      asnibbles[7] = (this_try->opcode->name[0] == 'l') ? high : low;
     }
 
   for (i = 0; i < this_try->length; i++)
-    {
-      output[i] = (asnibbles[i * 2] << 4) | asnibbles[i * 2 + 1];
-    }
+    output[i] = (asnibbles[i * 2] << 4) | asnibbles[i * 2 + 1];
 
   /* Note if this is a movb instruction -- there's a special relaxation
      which only applies to them.  */
-  if (strcmp (this_try->name, "mov.b") == 0)
+  if (strcmp (this_try->opcode->name, "mov.b") == 0)
     movb = 1;
 
   /* Output any fixes.  */
@@ -1066,40 +1169,44 @@ build_bytes (this_try, operand)
       int x = operand[i].mode;
 
       if (x & (IMM | DISP))
-	{
-	  do_a_fix_imm (output - frag_now->fr_literal + immat,
-			operand + i, x & MEMRELAX != 0);
-	}
+	do_a_fix_imm (output - frag_now->fr_literal + immat,
+		      operand + i, (x & MEMRELAX) != 0);
+
       else if (x & ABS)
-	{
-	  do_a_fix_imm (output - frag_now->fr_literal + absat,
-			operand + i, x & MEMRELAX ? movb + 1 : 0);
-	}
+	do_a_fix_imm (output - frag_now->fr_literal + absat,
+		      operand + i, (x & MEMRELAX) ? movb + 1 : 0);
+
       else if (x & PCREL)
 	{
-	  int size16 = x & L_16;
+	  int size16 = x & (L_16);
 	  int where = size16 ? 2 : 1;
 	  int size = size16 ? 2 : 1;
 	  int type = size16 ? R_PCRWORD : R_PCRBYTE;
+	  fixS *fixP;
 
 	  check_operand (operand + i, size16 ? 0x7fff : 0x7f, "@");
 
 	  if (operand[i].exp.X_add_number & 1)
-	    {
-	      as_warn (_("branch operand has odd offset (%lx)\n"),
-		       (unsigned long) operand->exp.X_add_number);
-	    }
+	    as_warn (_("branch operand has odd offset (%lx)\n"),
+		     (unsigned long) operand->exp.X_add_number);
+#ifndef OBJ_ELF
+	  /* The COFF port has always been off by one, changing it
+	     now would be an incompatible change, so we leave it as-is.
 
+	     We don't want to do this for ELF as we want to be
+	     compatible with the proposed ELF format from Hitachi.  */
 	  operand[i].exp.X_add_number -= 1;
+#endif
 	  operand[i].exp.X_add_number =
 	    ((operand[i].exp.X_add_number & 0xff) ^ 0x80) - 0x80;
 
-	  fix_new_exp (frag_now,
-		       output - frag_now->fr_literal + where,
-		       size,
-		       &operand[i].exp,
-		       1,
-		       type);
+	  fixP = fix_new_exp (frag_now,
+			      output - frag_now->fr_literal + where,
+			      size,
+			      &operand[i].exp,
+			      1,
+			      type);
+	  fixP->fx_signed = 1;
 	}
       else if (x & MEMIND)
 	{
@@ -1113,19 +1220,28 @@ build_bytes (this_try, operand)
 	}
       else if (x & ABSJMP)
 	{
+	  int where = 0;
+
+#ifdef OBJ_ELF
+	  /* To be compatible with the proposed H8 ELF format, we
+	     want the relocation's offset to point to the first byte
+	     that will be modified, not to the start of the instruction.  */
+	  where += 1;
+#endif
+
 	  /* This jmp may be a jump or a branch.  */
 
 	  check_operand (operand + i, Hmode ? 0xffffff : 0xffff, "@");
+
 	  if (operand[i].exp.X_add_number & 1)
-	    {
-	      as_warn (_("branch operand has odd offset (%lx)\n"),
-		       (unsigned long) operand->exp.X_add_number);
-	    }
+	    as_warn (_("branch operand has odd offset (%lx)\n"),
+		     (unsigned long) operand->exp.X_add_number);
+
 	  if (!Hmode)
 	    operand[i].exp.X_add_number =
 	      ((operand[i].exp.X_add_number & 0xffff) ^ 0x8000) - 0x8000;
 	  fix_new_exp (frag_now,
-		       output - frag_now->fr_literal,
+		       output - frag_now->fr_literal + where,
 		       4,
 		       &operand[i].exp,
 		       0,
@@ -1136,22 +1252,23 @@ build_bytes (this_try, operand)
 
 /* Try to give an intelligent error message for common and simple to
    detect errors.  */
+
 static void
-clever_message (opcode, operand)
-     struct h8_opcode *opcode;
+clever_message (instruction, operand)
+     const struct h8_instruction *instruction;
      struct h8_op *operand;
 {
   /* Find out if there was more than one possible opcode.  */
 
-  if ((opcode + 1)->idx != opcode->idx)
+  if ((instruction + 1)->idx != instruction->idx)
     {
-      unsigned int argn;
+      int argn;
 
       /* Only one opcode of this flavour, try to guess which operand
          didn't match.  */
-      for (argn = 0; argn < opcode->noperands; argn++)
+      for (argn = 0; argn < instruction->noperands; argn++)
 	{
-	  switch (opcode->args.nib[argn])
+	  switch (instruction->opcode->args.nib[argn])
 	    {
 	    case RD16:
 	      if (operand[argn].mode != RD16)
@@ -1202,6 +1319,7 @@ clever_message (opcode, operand)
 /* This is the guts of the machine-dependent assembler.  STR points to
    a machine dependent instruction.  This function is supposed to emit
    the frags/bytes it assembles.  */
+
 void
 md_assemble (str)
      char *str;
@@ -1209,8 +1327,8 @@ md_assemble (str)
   char *op_start;
   char *op_end;
   struct h8_op operand[2];
-  struct h8_opcode *opcode;
-  struct h8_opcode *prev_opcode;
+  const struct h8_instruction *instruction;
+  const struct h8_instruction *prev_instruction;
 
   char *dot = 0;
   char c;
@@ -1242,10 +1360,10 @@ md_assemble (str)
 
   *op_end = 0;
 
-  opcode = (struct h8_opcode *) hash_find (opcode_hash_control,
-					   op_start);
+  instruction = (const struct h8_instruction *)
+    hash_find (opcode_hash_control, op_start);
 
-  if (opcode == NULL)
+  if (instruction == NULL)
     {
       as_bad (_("unknown opcode"));
       return;
@@ -1254,9 +1372,9 @@ md_assemble (str)
   /* We used to set input_line_pointer to the result of get_operands,
      but that is wrong.  Our caller assumes we don't change it.  */
 
-  (void) get_operands (opcode->noperands, op_end, operand);
+  (void) get_operands (instruction->noperands, op_end, operand);
   *op_end = c;
-  prev_opcode = opcode;
+  prev_instruction = instruction;
 
   size = SN;
   if (dot)
@@ -1276,36 +1394,42 @@ md_assemble (str)
 	  break;
 	}
     }
-  opcode = get_specific (opcode, operand, size);
+  instruction = get_specific (instruction, operand, size);
 
-  if (opcode == 0)
+  if (instruction == 0)
     {
       /* Couldn't find an opcode which matched the operands.  */
       char *where = frag_more (2);
 
       where[0] = 0x0;
       where[1] = 0x0;
-      clever_message (prev_opcode, operand);
+      clever_message (prev_instruction, operand);
 
       return;
     }
-  if (opcode->size && dot)
+  if (instruction->size && dot)
     {
-      if (opcode->size != *dot)
+      if (instruction->size != *dot)
 	{
 	  as_warn (_("mismatch between opcode size and operand size"));
 	}
     }
 
-  build_bytes (opcode, operand);
+  build_bytes (instruction, operand);
+
+#ifdef BFD_ASSEMBLER
+  dwarf2_emit_insn (instruction->length);
+#endif
 }
 
+#ifndef BFD_ASSEMBLER
 void
 tc_crawl_symbol_chain (headers)
      object_headers *headers ATTRIBUTE_UNUSED;
 {
   printf (_("call to tc_crawl_symbol_chain \n"));
 }
+#endif
 
 symbolS *
 md_undefined_symbol (name)
@@ -1314,12 +1438,14 @@ md_undefined_symbol (name)
   return 0;
 }
 
+#ifndef BFD_ASSEMBLER
 void
 tc_headers_hook (headers)
      object_headers *headers ATTRIBUTE_UNUSED;
 {
   printf (_("call to tc_headers_hook \n"));
 }
+#endif
 
 /* Various routines to kill one day */
 /* Equal to MAX_PRECISION in atof-ieee.c */
@@ -1340,7 +1466,6 @@ md_atof (type, litP, sizeP)
   LITTLENUM_TYPE words[MAX_LITTLENUMS];
   LITTLENUM_TYPE *wordP;
   char *t;
-  char *atof_ieee ();
 
   switch (type)
     {
@@ -1385,7 +1510,7 @@ md_atof (type, litP, sizeP)
   return 0;
 }
 
-CONST char *md_shortopts = "";
+const char *md_shortopts = "";
 struct option md_longopts[] = {
   {NULL, no_argument, NULL, 0}
 };
@@ -1406,6 +1531,8 @@ md_show_usage (stream)
 {
 }
 
+void tc_aout_fix_to_chars PARAMS ((void));
+
 void
 tc_aout_fix_to_chars ()
 {
@@ -1415,7 +1542,11 @@ tc_aout_fix_to_chars ()
 
 void
 md_convert_frag (headers, seg, fragP)
+#ifdef BFD_ASSEMBLER
+     bfd *headers ATTRIBUTE_UNUSED;
+#else
      object_headers *headers ATTRIBUTE_UNUSED;
+#endif
      segT seg ATTRIBUTE_UNUSED;
      fragS *fragP ATTRIBUTE_UNUSED;
 {
@@ -1423,6 +1554,16 @@ md_convert_frag (headers, seg, fragP)
   abort ();
 }
 
+#ifdef BFD_ASSEMBLER
+valueT
+md_section_align (segment, size)
+     segT segment;
+     valueT size;
+{
+  int align = bfd_get_section_alignment (stdoutput, segment);
+  return ((size + (1 << align) - 1) & (-1 << align));
+}
+#else
 valueT
 md_section_align (seg, size)
      segT seg;
@@ -1431,13 +1572,17 @@ md_section_align (seg, size)
   return ((size + (1 << section_alignment[(int) seg]) - 1)
 	  & (-1 << section_alignment[(int) seg]));
 }
+#endif
+
 
 void
-md_apply_fix (fixP, val)
+md_apply_fix3 (fixP, valP, seg)
      fixS *fixP;
-     long val;
+     valueT *valP;
+     segT seg ATTRIBUTE_UNUSED;
 {
   char *buf = fixP->fx_where + fixP->fx_frag->fr_literal;
+  long val = *valP;
 
   switch (fixP->fx_size)
     {
@@ -1457,6 +1602,9 @@ md_apply_fix (fixP, val)
     default:
       abort ();
     }
+
+  if (fixP->fx_addsy == NULL && fixP->fx_pcrel == 0)
+    fixP->fx_done = 1;
 }
 
 int
@@ -1485,6 +1633,7 @@ md_pcrel_from (fixP)
   abort ();
 }
 
+#ifndef BFD_ASSEMBLER
 void
 tc_reloc_mangle (fix_ptr, intr, base)
      fixS *fix_ptr;
@@ -1547,3 +1696,48 @@ tc_reloc_mangle (fix_ptr, intr, base)
   else
     intr->r_symndx = -1;
 }
+#else /* BFD_ASSEMBLER */
+arelent *
+tc_gen_reloc (section, fixp)
+     asection *section ATTRIBUTE_UNUSED;
+     fixS *fixp;
+{
+  arelent *rel;
+  bfd_reloc_code_real_type r_type;
+
+  if (fixp->fx_addsy && fixp->fx_subsy)
+    {
+      if ((S_GET_SEGMENT (fixp->fx_addsy) != S_GET_SEGMENT (fixp->fx_subsy))
+	  || S_GET_SEGMENT (fixp->fx_addsy) == undefined_section)
+	{
+	  as_bad_where (fixp->fx_file, fixp->fx_line,
+			"Difference of symbols in different sections is not supported");
+	  return NULL;
+	}
+    }
+
+  rel = (arelent *) xmalloc (sizeof (arelent));
+  rel->sym_ptr_ptr = (asymbol **) xmalloc (sizeof (asymbol *));
+  *rel->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
+  rel->address = fixp->fx_frag->fr_address + fixp->fx_where;
+  rel->addend = fixp->fx_offset;
+
+  r_type = fixp->fx_r_type;
+
+#define DEBUG 0
+#if DEBUG
+  fprintf (stderr, "%s\n", bfd_get_reloc_code_name (r_type));
+  fflush(stderr);
+#endif
+  rel->howto = bfd_reloc_type_lookup (stdoutput, r_type);
+  if (rel->howto == NULL)
+    {
+      as_bad_where (fixp->fx_file, fixp->fx_line,
+		    _("Cannot represent relocation type %s"),
+		    bfd_get_reloc_code_name (r_type));
+      return NULL;
+    }
+
+  return rel;
+}
+#endif

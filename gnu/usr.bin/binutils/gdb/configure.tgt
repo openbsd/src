@@ -47,6 +47,7 @@ alpha-*-osf*)		gdb_target=alpha-osf1 ;;
 alpha-*-linux*)		gdb_target=alpha-linux ;;
 
 
+arm-*-openbsd*)		gdb_target=obsd ;;
 arm-*-*)		gdb_target=arm ;;
 
 c1-*-*)			gdb_target=convex ;;

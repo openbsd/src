@@ -1,5 +1,5 @@
 /* m68k.y -- bison grammar for m68k operand parsing
-   Copyright 1995, 1996, 1997, 1998 Free Software Foundation, Inc.
+   Copyright 1995, 1996, 1997, 1998, 2001 Free Software Foundation, Inc.
    Written by Ken Raeburn and Ian Lance Taylor, Cygnus Support
 
    This file is part of GAS, the GNU Assembler.
@@ -29,6 +29,7 @@
 #include "as.h"
 #include "tc-m68k.h"
 #include "m68k-parse.h"
+#include "safe-ctype.h"
 
 /* Remap normal yacc parser interface names (yyparse, yylex, yyerror,
    etc), as well as gratuitiously global symbol names If other parser
@@ -743,9 +744,9 @@ yylex ()
       /* In MRI mode, this can be the start of an octal number.  */
       if (flag_mri)
 	{
-	  if (isdigit (str[1])
+	  if (ISDIGIT (str[1])
 	      || ((str[1] == '+' || str[1] == '-')
-		  && isdigit (str[2])))
+		  && ISDIGIT (str[2])))
 	    break;
 	}
       /* Fall through.  */
@@ -929,7 +930,7 @@ yylex ()
 	{
 	  if (parens == 0
 	      && s > str
-	      && (s[-1] == ')' || isalnum ((unsigned char) s[-1])))
+	      && (s[-1] == ')' || ISALNUM (s[-1])))
 	    break;
 	  ++parens;
 	}

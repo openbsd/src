@@ -1,5 +1,5 @@
 /* Print National Semiconductor 32000 instructions.
-   Copyright 1986, 1988, 1991, 1992, 1994, 1998
+   Copyright 1986, 1988, 1991, 1992, 1994, 1998, 2001, 2002
    Free Software Foundation, Inc.
 
 This file is part of opcodes library.
@@ -39,6 +39,16 @@ static int print_insn_arg
   PARAMS ((int, int, int *, char *, bfd_vma, char *, int));
 static int get_displacement PARAMS ((char *, int *));
 static int invalid_float PARAMS ((char *, int));
+static long int read_memory_integer PARAMS ((unsigned char *, int));
+static int fetch_data PARAMS ((struct disassemble_info *, bfd_byte *));
+struct ns32k_option;
+static void optlist PARAMS ((int, const struct ns32k_option *, char *));
+static void list_search PARAMS ((int, const struct ns32k_option *, char *));
+static int bit_extract PARAMS ((bfd_byte *, int, int));
+static int bit_extract_simple PARAMS ((bfd_byte *, int, int));
+static void bit_copy PARAMS ((char *, int, int, char *));
+static int sign_extend PARAMS ((int, int));
+static void flip_bytes PARAMS ((char *, int));
 
 static long read_memory_integer(addr, nr)
      unsigned char *addr;
@@ -308,7 +318,6 @@ bit_extract_simple (buffer, offset, count)
      int count;
 {
   int result;
-  int mask;
   int bit;
 
   buffer += offset >> 3;
@@ -396,8 +405,8 @@ print_insn_ns32k (memaddr, info)
      bfd_vma memaddr;
      disassemble_info *info;
 {
-  register unsigned int i;
-  register char *d;
+  unsigned int i;
+  const char *d;
   unsigned short first_word;
   int ioffset;		/* bits into instruction */
   int aoffset;		/* bits into arguments */
@@ -547,10 +556,13 @@ print_insn_arg (d, ioffset, aoffsetp, buffer, addr, result, index_offset)
      char *result;
      int index_offset;
 {
-  int addr_mode;
-  float Fvalue;
-  double Lvalue;
+  union {
+    float f;
+    double d;
+    int i[2];
+  } value;
   int Ivalue;
+  int addr_mode;
   int disp1, disp2;
   int index;
   int size;
@@ -626,35 +638,35 @@ print_insn_arg (d, ioffset, aoffsetp, buffer, addr, result, index_offset)
 	      break;
 	    case 'W':
 	      Ivalue = bit_extract (buffer, *aoffsetp, 16);
-	      flip_bytes (&Ivalue, 2);
+	      flip_bytes ((char *) & Ivalue, 2);
 	      *aoffsetp += 16;
 	      Ivalue = sign_extend (Ivalue, 16);
 	      sprintf (result, "$%d", Ivalue);
 	      break;
 	    case 'D':
 	      Ivalue = bit_extract (buffer, *aoffsetp, 32);
-	      flip_bytes (&Ivalue, 4);
+	      flip_bytes ((char *) & Ivalue, 4);
 	      *aoffsetp += 32;
 	      sprintf (result, "$%d", Ivalue);
 	      break;
 	    case 'F':
-	      bit_copy (buffer, *aoffsetp, 32, (char *) &Fvalue);
-	      flip_bytes (&Fvalue, 4);
+	      bit_copy (buffer, *aoffsetp, 32, (char *) &value.f);
+	      flip_bytes ((char *) &value.f, 4);
 	      *aoffsetp += 32;
-	      if (INVALID_FLOAT (&Fvalue, 4))
-		sprintf (result, "<<invalid float 0x%.8x>>", *(int *) &Fvalue);
+	      if (INVALID_FLOAT (&value.f, 4))
+		sprintf (result, "<<invalid float 0x%.8x>>", value.i[0]);
 	      else /* assume host has ieee float */
-		sprintf (result, "$%g", Fvalue);
+		sprintf (result, "$%g", value.f);
 	      break;
 	    case 'L':
-	      bit_copy (buffer, *aoffsetp, 64, (char *) &Lvalue);
-	      flip_bytes (&Lvalue, 8);
+	      bit_copy (buffer, *aoffsetp, 64, (char *) &value.d);
+	      flip_bytes ((char *) &value.d, 8);
 	      *aoffsetp += 64;
-	      if (INVALID_FLOAT (&Lvalue, 8))
-		sprintf (result, "<<invalid long 0x%.8x%.8x>>",
-			 *(((int *) &Lvalue) + 1), *(int *) &Lvalue);
+	      if (INVALID_FLOAT (&value.d, 8))
+		sprintf (result, "<<invalid double 0x%.8x%.8x>>",
+			 value.i[1], value.i[0]);
 	      else /* assume host has ieee float */
-		sprintf (result, "$%g", Lvalue);
+		sprintf (result, "$%g", value.d);
 	      break;
 	    }
 	  break;
@@ -831,13 +843,13 @@ get_displacement (buffer, aoffsetp)
       break;
     case 0x80:
       Ivalue2 = bit_extract (buffer, *aoffsetp, 16);
-      flip_bytes (&Ivalue2, 2);
+      flip_bytes ((char *) & Ivalue2, 2);
       Ivalue = sign_extend (Ivalue2, 14);
       *aoffsetp += 16;
       break;
     case 0xc0:
       Ivalue = bit_extract (buffer, *aoffsetp, 32);
-      flip_bytes (&Ivalue, 4);
+      flip_bytes ((char *) & Ivalue, 4);
       Ivalue = sign_extend (Ivalue, 30);
       *aoffsetp += 32;
       break;

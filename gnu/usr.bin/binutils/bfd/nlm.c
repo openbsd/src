@@ -1,5 +1,5 @@
 /* NLM (NetWare Loadable Module) executable support for BFD.
-   Copyright 1993, 1994 Free Software Foundation, Inc.
+   Copyright 1993, 1994, 2001, 2002 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -25,26 +25,26 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /* Make an NLM object.  We just need to allocate the backend
    information.  */
 
-boolean
+bfd_boolean
 nlm_mkobject (abfd)
      bfd * abfd;
 {
-  nlm_tdata (abfd) =
-    (struct nlm_obj_tdata *) bfd_zalloc (abfd, sizeof (struct nlm_obj_tdata));
+  bfd_size_type amt = sizeof (struct nlm_obj_tdata);
+  nlm_tdata (abfd) = (struct nlm_obj_tdata *) bfd_zalloc (abfd, amt);
   if (nlm_tdata (abfd) == NULL)
-    return (false);
+    return FALSE;
 
   if (nlm_architecture (abfd) != bfd_arch_unknown)
     bfd_default_set_arch_mach (abfd, nlm_architecture (abfd),
 			       nlm_machine (abfd));
 
   /* since everything is done at close time, do we need any initialization? */
-  return (true);
+  return TRUE;
 }
 
 /* Set the architecture and machine for an NLM object.  */
 
-boolean
+bfd_boolean
 nlm_set_arch_mach (abfd, arch, machine)
      bfd * abfd;
      enum bfd_architecture arch;

@@ -1,6 +1,6 @@
 /* sym_ids.h
 
-   Copyright 2000, 2001 Free Software Foundation, Inc.
+   Copyright 2000, 2001, 2002 Free Software Foundation, Inc.
 
 This file is part of GNU Binutils.
 
@@ -21,8 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #ifndef sym_ids_h
 #define sym_ids_h
 
-#include "symtab.h"
-
 typedef enum
   {
     INCL_GRAPH = 0, EXCL_GRAPH,
@@ -37,8 +35,8 @@ Table_Id;
 
 extern Sym_Table syms[NUM_TABLES];
 
-extern void sym_id_add             PARAMS ((const char *, Table_Id));
-extern void sym_id_parse           PARAMS ((void));
-extern bool sym_id_arc_is_present  PARAMS ((Sym_Table *, Sym *, Sym *));
+extern void sym_id_add PARAMS ((const char *, Table_Id));
+extern void sym_id_parse PARAMS ((void));
+extern bfd_boolean sym_id_arc_is_present PARAMS ((Sym_Table *, Sym *, Sym *));
 
 #endif /* sym_ids_h */

@@ -1,6 +1,6 @@
 /* VMS object file format
-   Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 2000
-   Free Software Foundation, Inc.
+   Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 2000,
+   2002, 2003 Free Software Foundation, Inc.
 
 This file is part of GAS, the GNU Assembler.
 
@@ -33,8 +33,8 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
  * Doing the alignment here (on initialized data) can
  * mess up the calculation of global data PSECT sizes.
  */
-#define SUB_SEGMENT_ALIGN(SEG)	\
-		(((SEG) == data_section) ? 0 : LONGWORD_ALIGNMENT)
+#define SUB_SEGMENT_ALIGN(SEG, FRCHAIN)	\
+  (((SEG) == data_section) ? 0 : LONGWORD_ALIGNMENT)
 
 /* This flag is used to remember whether we are in the const or the
    data section.  By and large they are identical, but we set a no-write
@@ -138,6 +138,12 @@ typedef struct nlist obj_symbol_type;	/* Symbol table entry */
 #define S_IS_DEFINED(s)		(S_GET_TYPE(s) != N_UNDF)
 
 #define S_IS_COMMON(s)	(S_GET_TYPE(s) == N_UNDF && S_GET_VALUE(s) != 0)
+
+/* Return true for symbols that should not be reduced to section
+   symbols or eliminated from expressions, because they may be
+   overridden by the linker.  */
+#define S_FORCE_RELOC(s, strict) \
+  (!SEG_NORMAL (S_GET_SEGMENT (s)))
 
 #define S_IS_REGISTER(s)	((s)->sy_symbol.n_type == N_REGISTER)
 

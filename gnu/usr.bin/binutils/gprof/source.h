@@ -1,6 +1,6 @@
 /* source.h
 
-   Copyright 2000, 2001 Free Software Foundation, Inc.
+   Copyright 2000, 2001, 2002 Free Software Foundation, Inc.
 
 This file is part of GNU Binutils.
 
@@ -21,10 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #ifndef source_h
 #define source_h
 
-#include <stdio.h>
-#include "gprof.h"
-#include "search_list.h"
-
 typedef struct source_file
   {
     struct source_file *next;
@@ -37,7 +33,9 @@ typedef struct source_file
 Source_File;
 
 /* Options.  */
-extern bool create_annotation_files;	/* Create annotated output files?  */
+
+/* Create annotated output files?  */
+extern bfd_boolean create_annotation_files;
 
 /* List of directories to search for source files.  */
 extern Search_List src_search_list;
@@ -57,8 +55,8 @@ extern Source_File *source_file_lookup_name PARAMS ((const char *));
    Returns a pointer to the output file (which maybe stdout) such
    that summary statistics can be printed.  If the returned file
    is not stdout, it should be closed when done with it.  */
-extern FILE *annotate_source PARAMS ((Source_File * sf, int max_width,
-				      void (*annote) (char *b, int w, int l,
-						      void *arg),
-				      void *arg));
+extern FILE *annotate_source
+  PARAMS ((Source_File *sf, unsigned int max_width,
+	   void (*annote) (char *, unsigned int, int, PTR arg),
+	   PTR arg));
 #endif /* source_h */

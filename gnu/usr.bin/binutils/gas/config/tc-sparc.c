@@ -1,6 +1,6 @@
 /* tc-sparc.c -- Assemble for the SPARC
    Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-   1999, 2000, 2001
+   1999, 2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
    This file is part of GAS, the GNU Assembler.
 
@@ -20,9 +20,9 @@
    Boston, MA 02111-1307, USA.  */
 
 #include <stdio.h>
-#include <ctype.h>
 
 #include "as.h"
+#include "safe-ctype.h"
 #include "subsegs.h"
 
 #include "opcode/sparc.h"
@@ -31,6 +31,12 @@
 #include "elf/sparc.h"
 #include "dwarf2dbg.h"
 #endif
+
+/* Some ancient Sun C compilers would not take such hex constants as
+   unsigned, and would end up sign-extending them to form an offsetT,
+   so use these constants instead.  */
+#define U0xffffffff ((((unsigned long) 1 << 16) << 16) - 1)
+#define U0x80000000 ((((unsigned long) 1 << 16) << 15))
 
 static struct sparc_arch *lookup_arch PARAMS ((char *));
 static void init_default_arch PARAMS ((void));
@@ -132,7 +138,9 @@ static void s_common PARAMS ((int));
 static void s_empty PARAMS ((int));
 static void s_uacons PARAMS ((int));
 static void s_ncons PARAMS ((int));
+#ifdef OBJ_ELF
 static void s_register PARAMS ((int));
+#endif
 
 const pseudo_typeS md_pseudo_table[] =
 {
@@ -153,7 +161,7 @@ const pseudo_typeS md_pseudo_table[] =
   {"uaword", s_uacons, 4},
   {"uaxword", s_uacons, 8},
 #ifdef OBJ_ELF
-  {"file", dwarf2_directive_file, 0},
+  {"file", (void (*) PARAMS ((int))) dwarf2_directive_file, 0},
   {"loc", dwarf2_directive_loc, 0},
   /* These are specific to sparc/svr4.  */
   {"2byte", s_uacons, 2},
@@ -299,7 +307,7 @@ sparc_target_format ()
     init_default_arch ();
 
 #ifdef OBJ_AOUT
-#ifdef TE_NetBSD
+#if defined(TE_NetBSD) || defined(TE_OpenBSD)
   return "a.out-sparc-netbsd";
 #else
 #ifdef TE_SPARCAOUT
@@ -389,12 +397,12 @@ sparc_target_format ()
  */
 
 #ifdef OBJ_ELF
-CONST char *md_shortopts = "A:K:VQ:sq";
+const char *md_shortopts = "A:K:VQ:sq";
 #else
 #ifdef OBJ_AOUT
-CONST char *md_shortopts = "A:k";
+const char *md_shortopts = "A:k";
 #else
-CONST char *md_shortopts = "A:";
+const char *md_shortopts = "A:";
 #endif
 #endif
 struct option md_longopts[] = {
@@ -632,12 +640,12 @@ md_show_usage (stream)
 	continue;
       if (arch != &sparc_arch_table[0])
 	fprintf (stream, " | ");
-      if (column + strlen(arch->name) > 70)
+      if (column + strlen (arch->name) > 70)
 	{
 	  column = 0;
 	  fputc ('\n', stream);
 	}
-      column += 5 + 2 + strlen(arch->name);
+      column += 5 + 2 + strlen (arch->name);
       fprintf (stream, "-A%s", arch->name);
     }
   for (arch = &sparc_arch_table[0]; arch->name; arch++)
@@ -645,12 +653,12 @@ md_show_usage (stream)
       if (!arch->user_option_p)
 	continue;
       fprintf (stream, " | ");
-      if (column + strlen(arch->name) > 65)
+      if (column + strlen (arch->name) > 65)
 	{
 	  column = 0;
 	  fputc ('\n', stream);
 	}
-      column += 5 + 7 + strlen(arch->name);
+      column += 5 + 7 + strlen (arch->name);
       fprintf (stream, "-xarch=%s", arch->name);
     }
   fprintf (stream, _("\n\
@@ -916,7 +924,7 @@ in_signed_range (val, max)
   if (sparc_arch_size == 32)
     {
       bfd_signed_vma sign = (bfd_signed_vma) 1 << 31;
-      val = ((val & 0xffffffff) ^ sign) - sign;
+      val = ((val & U0xffffffff) ^ sign) - sign;
     }
   if (val > max)
     return 0;
@@ -1019,14 +1027,14 @@ synthetize_setuw (insn)
 	{
 	  if (sizeof (offsetT) > 4
 	      && (the_insn.exp.X_add_number < 0
-		  || the_insn.exp.X_add_number > (offsetT) 0xffffffff))
+		  || the_insn.exp.X_add_number > (offsetT) U0xffffffff))
 	    as_warn (_("set: number not in 0..4294967295 range"));
 	}
       else
 	{
 	  if (sizeof (offsetT) > 4
-	      && (the_insn.exp.X_add_number < -(offsetT) 0x80000000
-		  || the_insn.exp.X_add_number > (offsetT) 0xffffffff))
+	      && (the_insn.exp.X_add_number < -(offsetT) U0x80000000
+		  || the_insn.exp.X_add_number > (offsetT) U0xffffffff))
 	    as_warn (_("set: number not in -2147483648..4294967295 range"));
 	  the_insn.exp.X_add_number = (int) the_insn.exp.X_add_number;
 	}
@@ -1085,8 +1093,8 @@ synthetize_setsw (insn)
     }
 
   if (sizeof (offsetT) > 4
-      && (the_insn.exp.X_add_number < -(offsetT) 0x80000000
-	  || the_insn.exp.X_add_number > (offsetT) 0xffffffff))
+      && (the_insn.exp.X_add_number < -(offsetT) U0x80000000
+	  || the_insn.exp.X_add_number > (offsetT) U0xffffffff))
     as_warn (_("setsw: number not in -2147483648..4294967295 range"));
 
   low32 = the_insn.exp.X_add_number;
@@ -1128,7 +1136,7 @@ synthetize_setx (insn)
   int need_hh22_p = 0, need_hm10_p = 0, need_hi22_p = 0, need_lo10_p = 0;
   int need_xor10_p = 0;
 
-#define SIGNEXT32(x) ((((x) & 0xffffffff) ^ 0x80000000) - 0x80000000)
+#define SIGNEXT32(x) ((((x) & U0xffffffff) ^ U0x80000000) - U0x80000000)
   lower32 = SIGNEXT32 (the_insn.exp.X_add_number);
   upper32 = SIGNEXT32 (BSR (the_insn.exp.X_add_number, 32));
 #undef SIGNEXT32
@@ -1385,11 +1393,11 @@ sparc_ip (str, pinsn)
   int special_case = SPECIAL_CASE_NONE;
 
   s = str;
-  if (islower ((unsigned char) *s))
+  if (ISLOWER (*s))
     {
       do
 	++s;
-      while (islower ((unsigned char) *s) || isdigit ((unsigned char) *s));
+      while (ISLOWER (*s) || ISDIGIT (*s));
     }
 
   switch (*s)
@@ -1617,11 +1625,11 @@ sparc_ip (str, pinsn)
 		{
 		  s += 4;
 
-		  if (isdigit ((unsigned char) *s))
+		  if (ISDIGIT (*s))
 		    {
 		      long num = 0;
 
-		      while (isdigit ((unsigned char) *s))
+		      while (ISDIGIT (*s))
 			{
 			  num = num * 10 + *s - '0';
 			  ++s;
@@ -1798,10 +1806,88 @@ sparc_ip (str, pinsn)
 	      break;
 
 	    case '\0':		/* End of args.  */
-	      if (*s == '\0')
+	      if (s[0] == ',' && s[1] == '%')
 		{
-		  match = 1;
+		  static const struct tls_ops {
+		    /* The name as it appears in assembler.  */
+		    char *name;
+		    /* strlen (name), precomputed for speed */
+		    int len;
+		    /* The reloc this pseudo-op translates to.  */
+		    int reloc;
+		    /* 1 if call.  */
+		    int call;
+		  } tls_ops[] = {
+		    { "tgd_add", 7, BFD_RELOC_SPARC_TLS_GD_ADD, 0 },
+		    { "tgd_call", 8, BFD_RELOC_SPARC_TLS_GD_CALL, 1 },
+		    { "tldm_add", 8, BFD_RELOC_SPARC_TLS_LDM_ADD, 0 },
+		    { "tldm_call", 9, BFD_RELOC_SPARC_TLS_LDM_CALL, 1 },
+		    { "tldo_add", 8, BFD_RELOC_SPARC_TLS_LDO_ADD, 0 },
+		    { "tie_ldx", 7, BFD_RELOC_SPARC_TLS_IE_LDX, 0 },
+		    { "tie_ld", 6, BFD_RELOC_SPARC_TLS_IE_LD, 0 },
+		    { "tie_add", 7, BFD_RELOC_SPARC_TLS_IE_ADD, 0 }
+		  };
+		  const struct tls_ops *o;
+		  char *s1;
+		  int npar = 0;
+
+		  for (o = tls_ops; o->name; o++)
+		    if (strncmp (s + 2, o->name, o->len) == 0)
+		      break;
+		  if (o->name == NULL)
+		    break;
+
+		  if (s[o->len + 2] != '(')
+		    {
+		      as_bad (_("Illegal operands: %%%s requires arguments in ()"), o->name);
+		      return special_case;
+		    }
+
+		  if (! o->call && the_insn.reloc != BFD_RELOC_NONE)
+		    {
+		      as_bad (_("Illegal operands: %%%s cannot be used together with other relocs in the insn ()"),
+			      o->name);
+		      return special_case;
+		    }
+
+		  if (o->call
+		      && (the_insn.reloc != BFD_RELOC_32_PCREL_S2
+			  || the_insn.exp.X_add_number != 0
+			  || the_insn.exp.X_add_symbol
+			     != symbol_find_or_make ("__tls_get_addr")))
+		    {
+		      as_bad (_("Illegal operands: %%%s can be only used with call __tls_get_addr"),
+			      o->name);
+		      return special_case;
+		    }
+
+		  the_insn.reloc = o->reloc;
+		  memset (&the_insn.exp, 0, sizeof (the_insn.exp));
+		  s += o->len + 3;
+
+		  for (s1 = s; *s1 && *s1 != ',' && *s1 != ']'; s1++)
+		    if (*s1 == '(')
+		      npar++;
+		    else if (*s1 == ')')
+		      {
+			if (!npar)
+			  break;
+			npar--;
+		      }
+
+		  if (*s1 != ')')
+		    {
+		      as_bad (_("Illegal operands: %%%s requires arguments in ()"), o->name);
+		      return special_case;
+		    }
+
+		  *s1 = '\0';
+		  (void) get_expression (s);
+		  *s1 = ')';
+		  s = s1 + 1;
 		}
+	      if (*s == '\0')
+		match = 1;
 	      break;
 
 	    case '+':
@@ -1825,9 +1911,9 @@ sparc_ip (str, pinsn)
 	      break;
 
 	    case '#':		/* Must be at least one digit.  */
-	      if (isdigit ((unsigned char) *s++))
+	      if (ISDIGIT (*s++))
 		{
-		  while (isdigit ((unsigned char) *s))
+		  while (ISDIGIT (*s))
 		    {
 		      ++s;
 		    }
@@ -1846,10 +1932,10 @@ sparc_ip (str, pinsn)
 	    case 'b':		/* Next operand is a coprocessor register.  */
 	    case 'c':
 	    case 'D':
-	      if (*s++ == '%' && *s++ == 'c' && isdigit ((unsigned char) *s))
+	      if (*s++ == '%' && *s++ == 'c' && ISDIGIT (*s))
 		{
 		  mask = *s++;
-		  if (isdigit ((unsigned char) *s))
+		  if (ISDIGIT (*s))
 		    {
 		      mask = 10 * (mask - '0') + (*s++ - '0');
 		      if (mask >= 32)
@@ -1942,7 +2028,7 @@ sparc_ip (str, pinsn)
 		      goto error;
 
 		    case 'r':	/* any register */
-		      if (!isdigit ((unsigned char) (c = *s++)))
+		      if (!ISDIGIT ((c = *s++)))
 			{
 			  goto error;
 			}
@@ -1957,7 +2043,7 @@ sparc_ip (str, pinsn)
 		    case '7':
 		    case '8':
 		    case '9':
-		      if (isdigit ((unsigned char) *s))
+		      if (ISDIGIT (*s))
 			{
 			  if ((c = 10 * (c - '0') + (*s++ - '0')) >= 32)
 			    {
@@ -2022,9 +2108,9 @@ sparc_ip (str, pinsn)
 
 		if (*s++ == '%'
 		    && ((format = *s) == 'f')
-		    && isdigit ((unsigned char) *++s))
+		    && ISDIGIT (*++s))
 		  {
-		    for (mask = 0; isdigit ((unsigned char) *s); ++s)
+		    for (mask = 0; ISDIGIT (*s); ++s)
 		      {
 			mask = 10 * mask + (*s - '0');
 		      }		/* read the number */
@@ -2168,6 +2254,18 @@ sparc_ip (str, pinsn)
 		      { "l44", 3, BFD_RELOC_SPARC_L44, 1, 0 },
 		      { "uhi", 3, BFD_RELOC_SPARC_HH22, 1, 0 },
 		      { "ulo", 3, BFD_RELOC_SPARC_HM10, 1, 0 },
+		      { "tgd_hi22", 8, BFD_RELOC_SPARC_TLS_GD_HI22, 0, 0 },
+		      { "tgd_lo10", 8, BFD_RELOC_SPARC_TLS_GD_LO10, 0, 0 },
+		      { "tldm_hi22", 9, BFD_RELOC_SPARC_TLS_LDM_HI22, 0, 0 },
+		      { "tldm_lo10", 9, BFD_RELOC_SPARC_TLS_LDM_LO10, 0, 0 },
+		      { "tldo_hix22", 10, BFD_RELOC_SPARC_TLS_LDO_HIX22, 0,
+									 0 },
+		      { "tldo_lox10", 10, BFD_RELOC_SPARC_TLS_LDO_LOX10, 0,
+									 0 },
+		      { "tie_hi22", 8, BFD_RELOC_SPARC_TLS_IE_HI22, 0, 0 },
+		      { "tie_lo10", 8, BFD_RELOC_SPARC_TLS_IE_LO10, 0, 0 },
+		      { "tle_hix22", 9, BFD_RELOC_SPARC_TLS_LE_HIX22, 0, 0 },
+		      { "tle_lox10", 9, BFD_RELOC_SPARC_TLS_LE_LOX10, 0, 0 },
 		      { NULL, 0, 0, 0, 0 }
 		    };
 		    const struct ops *o;
@@ -2240,7 +2338,7 @@ sparc_ip (str, pinsn)
 		for (s1 = s; *s1 && *s1 != ',' && *s1 != ']'; s1++)
 		  ;
 
-		if (s1 != s && isdigit ((unsigned char) s1[-1]))
+		if (s1 != s && ISDIGIT (s1[-1]))
 		  {
 		    if (s1[-2] == '%' && s1[-3] == '+')
 		      s1 -= 3;
@@ -2367,6 +2465,13 @@ sparc_ip (str, pinsn)
 		      && in_signed_range (the_insn.exp.X_add_number, 0x3fff))
 		    {
 		      error_message = _(": PC-relative operand can't be a constant");
+		      goto error;
+		    }
+
+		  if (the_insn.reloc >= BFD_RELOC_SPARC_TLS_GD_HI22
+		      && the_insn.reloc <= BFD_RELOC_SPARC_TLS_TPOFF64)
+		    {
+		      error_message = _(": TLS operand can't be a constant");
 		      goto error;
 		    }
 
@@ -2663,7 +2768,7 @@ parse_keyword_arg (lookup_fn, input_pointerP, valueP)
 
   p = *input_pointerP;
   for (q = p + (*p == '#' || *p == '%');
-       isalnum ((unsigned char) *q) || *q == '_';
+       ISALNUM (*q) || *q == '_';
        ++q)
     continue;
   c = *q;
@@ -2881,47 +2986,24 @@ md_number_to_chars (buf, val, n)
 /* Apply a fixS to the frags, now that we know the value it ought to
    hold.  */
 
-int
-md_apply_fix3 (fixP, value, segment)
+void
+md_apply_fix3 (fixP, valP, segment)
      fixS *fixP;
-     valueT *value;
-     segT segment;
+     valueT *valP;
+     segT segment ATTRIBUTE_UNUSED;
 {
   char *buf = fixP->fx_where + fixP->fx_frag->fr_literal;
-  offsetT val;
+  offsetT val = * (offsetT *) valP;
   long insn;
-
-  val = *value;
 
   assert (fixP->fx_r_type < BFD_RELOC_UNUSED);
 
   fixP->fx_addnumber = val;	/* Remember value for emit_reloc.  */
 
 #ifdef OBJ_ELF
-  /* FIXME: SPARC ELF relocations don't use an addend in the data
-     field itself.  This whole approach should be somehow combined
-     with the calls to bfd_install_relocation.  Also, the value passed
-     in by fixup_segment includes the value of a defined symbol.  We
-     don't want to include the value of an externally visible symbol.  */
+  /* SPARC ELF relocations don't use an addend in the data field.  */
   if (fixP->fx_addsy != NULL)
-    {
-      if (symbol_used_in_reloc_p (fixP->fx_addsy)
-	  && (S_IS_EXTERNAL (fixP->fx_addsy)
-	      || S_IS_WEAK (fixP->fx_addsy)
-	      || (sparc_pic_code && ! fixP->fx_pcrel)
-	      || (S_GET_SEGMENT (fixP->fx_addsy) != segment
-		  && ((bfd_get_section_flags (stdoutput,
-					      S_GET_SEGMENT (fixP->fx_addsy))
-		       & SEC_LINK_ONCE) != 0
-		      || strncmp (segment_name (S_GET_SEGMENT (fixP->fx_addsy)),
-				  ".gnu.linkonce",
-				  sizeof ".gnu.linkonce" - 1) == 0)))
-	  && S_GET_SEGMENT (fixP->fx_addsy) != absolute_section
-	  && S_GET_SEGMENT (fixP->fx_addsy) != undefined_section
-	  && ! bfd_is_com_section (S_GET_SEGMENT (fixP->fx_addsy)))
-	fixP->fx_addnumber -= S_GET_VALUE (fixP->fx_addsy);
-      return 1;
-    }
+    return;
 #endif
 
   /* This is a hack.  There should be a better way to
@@ -2991,7 +3073,7 @@ md_apply_fix3 (fixP, value, segment)
            || fixP->fx_r_type == BFD_RELOC_VTABLE_ENTRY)
     {
       fixP->fx_done = 0;
-      return 1;
+      return;
     }
   else
     {
@@ -3163,14 +3245,10 @@ md_apply_fix3 (fixP, value, segment)
 	case BFD_RELOC_SPARC_LM22:
 	case BFD_RELOC_HI22:
 	  if (!fixP->fx_addsy)
-	    {
-	      insn |= (val >> 10) & 0x3fffff;
-	    }
+	    insn |= (val >> 10) & 0x3fffff;
 	  else
-	    {
-	      /* FIXME: Need comment explaining why we do this.  */
-	      insn &= ~0xffff;
-	    }
+	    /* FIXME: Need comment explaining why we do this.  */
+	    insn &= ~0xffff;
 	  break;
 
 	case BFD_RELOC_SPARC22:
@@ -3186,14 +3264,10 @@ md_apply_fix3 (fixP, value, segment)
 
 	case BFD_RELOC_LO10:
 	  if (!fixP->fx_addsy)
-	    {
-	      insn |= val & 0x3ff;
-	    }
+	    insn |= val & 0x3ff;
 	  else
-	    {
-	      /* FIXME: Need comment explaining why we do this.  */
-	      insn &= ~0xff;
-	    }
+	    /* FIXME: Need comment explaining why we do this.  */
+	    insn &= ~0xff;
 	  break;
 
 	case BFD_RELOC_SPARC_OLO10:
@@ -3264,8 +3338,6 @@ md_apply_fix3 (fixP, value, segment)
   /* Are we finished with this relocation now?  */
   if (fixP->fx_addsy == 0 && !fixP->fx_pcrel)
     fixP->fx_done = 1;
-
-  return 1;
 }
 
 /* Translate internal representation of relocation info to BFD target
@@ -3273,7 +3345,7 @@ md_apply_fix3 (fixP, value, segment)
 
 arelent **
 tc_gen_reloc (section, fixp)
-     asection *section;
+     asection *section ATTRIBUTE_UNUSED;
      fixS *fixp;
 {
   static arelent *relocs[3];
@@ -3322,8 +3394,34 @@ tc_gen_reloc (section, fixp)
     case BFD_RELOC_SPARC_UA16:
     case BFD_RELOC_SPARC_UA32:
     case BFD_RELOC_SPARC_UA64:
+    case BFD_RELOC_8_PCREL:
+    case BFD_RELOC_16_PCREL:
+    case BFD_RELOC_32_PCREL:
+    case BFD_RELOC_64_PCREL:
+    case BFD_RELOC_SPARC_PLT32:
+    case BFD_RELOC_SPARC_PLT64:
     case BFD_RELOC_VTABLE_ENTRY:
     case BFD_RELOC_VTABLE_INHERIT:
+    case BFD_RELOC_SPARC_TLS_GD_HI22:
+    case BFD_RELOC_SPARC_TLS_GD_LO10:
+    case BFD_RELOC_SPARC_TLS_GD_ADD:
+    case BFD_RELOC_SPARC_TLS_GD_CALL:
+    case BFD_RELOC_SPARC_TLS_LDM_HI22:
+    case BFD_RELOC_SPARC_TLS_LDM_LO10:
+    case BFD_RELOC_SPARC_TLS_LDM_ADD:
+    case BFD_RELOC_SPARC_TLS_LDM_CALL:
+    case BFD_RELOC_SPARC_TLS_LDO_HIX22:
+    case BFD_RELOC_SPARC_TLS_LDO_LOX10:
+    case BFD_RELOC_SPARC_TLS_LDO_ADD:
+    case BFD_RELOC_SPARC_TLS_IE_HI22:
+    case BFD_RELOC_SPARC_TLS_IE_LO10:
+    case BFD_RELOC_SPARC_TLS_IE_LD:
+    case BFD_RELOC_SPARC_TLS_IE_LDX:
+    case BFD_RELOC_SPARC_TLS_IE_ADD:
+    case BFD_RELOC_SPARC_TLS_LE_HIX22:
+    case BFD_RELOC_SPARC_TLS_LE_LOX10:
+    case BFD_RELOC_SPARC_TLS_DTPOFF32:
+    case BFD_RELOC_SPARC_TLS_DTPOFF64:
       code = fixp->fx_r_type;
       break;
     default:
@@ -3348,10 +3446,7 @@ tc_gen_reloc (section, fixp)
       switch (code)
 	{
 	case BFD_RELOC_32_PCREL_S2:
-	  if (! S_IS_DEFINED (fixp->fx_addsy)
-	      || S_IS_COMMON (fixp->fx_addsy)
-	      || S_IS_EXTERNAL (fixp->fx_addsy)
-	      || S_IS_WEAK (fixp->fx_addsy))
+	  if (generic_force_reloc (fixp))
 	    code = BFD_RELOC_SPARC_WPLT30;
 	  break;
 	case BFD_RELOC_HI22:
@@ -3411,9 +3506,13 @@ tc_gen_reloc (section, fixp)
 
 #else /* elf or coff  */
 
-  if (reloc->howto->pc_relative == 0
-      || code == BFD_RELOC_SPARC_PC10
-      || code == BFD_RELOC_SPARC_PC22)
+  if (code != BFD_RELOC_32_PCREL_S2
+      && code != BFD_RELOC_SPARC_WDISP22
+      && code != BFD_RELOC_SPARC_WDISP16
+      && code != BFD_RELOC_SPARC_WDISP19
+      && code != BFD_RELOC_SPARC_WPLT30
+      && code != BFD_RELOC_SPARC_TLS_GD_CALL
+      && code != BFD_RELOC_SPARC_TLS_LDM_CALL)
     reloc->addend = fixp->fx_addnumber;
   else if (symbol_section_p (fixp->fx_addsy))
     reloc->addend = (section->vma
@@ -3909,6 +4008,11 @@ s_proc (ignore)
 
 static int sparc_no_align_cons = 0;
 
+/* This static variable is set by sparc_cons to emit requested types
+   of relocations in cons_fix_new_sparc.  */
+
+static const char *sparc_cons_special_reloc;
+
 /* This handles the unaligned space allocation pseudo-ops, such as
    .uaword.  .uaword is just like .word, but the value does not need
    to be aligned.  */
@@ -3920,6 +4024,7 @@ s_uacons (bytes)
   /* Tell sparc_cons_align not to align this value.  */
   sparc_no_align_cons = 1;
   cons (bytes);
+  sparc_no_align_cons = 0;
 }
 
 /* This handles the native word allocation pseudo-op .nword.
@@ -4180,6 +4285,144 @@ sparc_elf_final_processing ()
   else if (current_architecture == SPARC_OPCODE_ARCH_V9B)
     elf_elfheader (stdoutput)->e_flags |= EF_SPARC_SUN_US1|EF_SPARC_SUN_US3;
 }
+
+void
+sparc_cons (exp, size)
+     expressionS *exp;
+     int size;
+{
+  char *save;
+
+  SKIP_WHITESPACE ();
+  sparc_cons_special_reloc = NULL;
+  save = input_line_pointer;
+  if (input_line_pointer[0] == '%'
+      && input_line_pointer[1] == 'r'
+      && input_line_pointer[2] == '_')
+    {
+      if (strncmp (input_line_pointer + 3, "disp", 4) == 0)
+	{
+	  input_line_pointer += 7;
+	  sparc_cons_special_reloc = "disp";
+	}
+      else if (strncmp (input_line_pointer + 3, "plt", 3) == 0)
+	{
+	  if (size != 4 && size != 8)
+	    as_bad (_("Illegal operands: %%r_plt in %d-byte data field"), size);
+	  else
+	    {
+	      input_line_pointer += 6;
+	      sparc_cons_special_reloc = "plt";
+	    }
+	}
+      else if (strncmp (input_line_pointer + 3, "tls_dtpoff", 10) == 0)
+	{
+	  if (size != 4 && size != 8)
+	    as_bad (_("Illegal operands: %%r_tls_dtpoff in %d-byte data field"), size);
+	  else
+	    {
+	      input_line_pointer += 13;
+	      sparc_cons_special_reloc = "tls_dtpoff";
+	    }
+	}
+      if (sparc_cons_special_reloc)
+	{
+	  int bad = 0;
+
+	  switch (size)
+	    {
+	    case 1:
+	      if (*input_line_pointer != '8')
+		bad = 1;
+	      input_line_pointer--;
+	      break;
+	    case 2:
+	      if (input_line_pointer[0] != '1' || input_line_pointer[1] != '6')
+		bad = 1;
+	      break;
+	    case 4:
+	      if (input_line_pointer[0] != '3' || input_line_pointer[1] != '2')
+		bad = 1;
+	      break;
+	    case 8:
+	      if (input_line_pointer[0] != '6' || input_line_pointer[1] != '4')
+		bad = 1;
+	      break;
+	    default:
+	      bad = 1;
+	      break;
+	    }
+
+	  if (bad)
+	    {
+	      as_bad (_("Illegal operands: Only %%r_%s%d allowed in %d-byte data fields"),
+		      sparc_cons_special_reloc, size * 8, size);
+	    }
+	  else
+	    {
+	      input_line_pointer += 2;
+	      if (*input_line_pointer != '(')
+		{
+		  as_bad (_("Illegal operands: %%r_%s%d requires arguments in ()"),
+			  sparc_cons_special_reloc, size * 8);
+		  bad = 1;
+		}
+	    }
+
+	  if (bad)
+	    {
+	      input_line_pointer = save;
+	      sparc_cons_special_reloc = NULL;
+	    }
+	  else
+	    {
+	      int c;
+	      char *end = ++input_line_pointer;
+	      int npar = 0;
+
+	      while (! is_end_of_line[(c = *end)])
+		{
+		  if (c == '(')
+	  	    npar++;
+		  else if (c == ')')
+	  	    {
+		      if (!npar)
+	      		break;
+		      npar--;
+		    }
+	    	  end++;
+		}
+
+	      if (c != ')')
+		as_bad (_("Illegal operands: %%r_%s%d requires arguments in ()"),
+			sparc_cons_special_reloc, size * 8);
+	      else
+		{
+		  *end = '\0';
+		  expression (exp);
+		  *end = c;
+		  if (input_line_pointer != end)
+		    {
+		      as_bad (_("Illegal operands: %%r_%s%d requires arguments in ()"),
+			      sparc_cons_special_reloc, size * 8);
+		    }
+		  else
+		    {
+		      input_line_pointer++;
+		      SKIP_WHITESPACE ();
+		      c = *input_line_pointer;
+		      if (! is_end_of_line[c] && c != ',')
+			as_bad (_("Illegal operands: garbage after %%r_%s%d()"),
+			        sparc_cons_special_reloc, size * 8);
+		    }
+		}
+	    }
+	}
+    }
+  if (sparc_cons_special_reloc == NULL)
+    expression (exp);
+}
+
 #endif
 
 /* This is called by emit_expr via TC_CONS_FIX_NEW when creating a
@@ -4204,7 +4447,31 @@ cons_fix_new_sparc (frag, where, nbytes, exp)
       && now_seg->flags & SEC_ALLOC)
     r = BFD_RELOC_SPARC_REV32;
 
-  if (sparc_no_align_cons)
+  if (sparc_cons_special_reloc)
+    {
+      if (*sparc_cons_special_reloc == 'd')
+	switch (nbytes)
+	  {
+	  case 1: r = BFD_RELOC_8_PCREL; break;
+	  case 2: r = BFD_RELOC_16_PCREL; break;
+	  case 4: r = BFD_RELOC_32_PCREL; break;
+	  case 8: r = BFD_RELOC_64_PCREL; break;
+	  default: abort ();
+	  }
+      else if (*sparc_cons_special_reloc == 'p')
+	switch (nbytes)
+	  {
+	  case 4: r = BFD_RELOC_SPARC_PLT32; break;
+	  case 8: r = BFD_RELOC_SPARC_PLT64; break;
+	  }
+      else
+	switch (nbytes)
+	  {
+	  case 4: r = BFD_RELOC_SPARC_TLS_DTPOFF32; break;
+	  case 8: r = BFD_RELOC_SPARC_TLS_DTPOFF64; break;
+	  }
+    }
+  else if (sparc_no_align_cons)
     {
       switch (nbytes)
 	{
@@ -4213,21 +4480,7 @@ cons_fix_new_sparc (frag, where, nbytes, exp)
 	case 8: r = BFD_RELOC_SPARC_UA64; break;
 	default: abort ();
 	}
-      sparc_no_align_cons = 0;
-    }
+   }
 
   fix_new_exp (frag, where, (int) nbytes, exp, 0, r);
 }
-
-#ifdef OBJ_ELF
-int
-elf32_sparc_force_relocation (fixp)
-     struct fix *fixp;
-{
-  if (fixp->fx_r_type == BFD_RELOC_VTABLE_INHERIT
-      || fixp->fx_r_type == BFD_RELOC_VTABLE_ENTRY)
-    return 1;
-
-  return 0;
-}
-#endif

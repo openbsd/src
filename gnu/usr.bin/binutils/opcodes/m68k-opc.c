@@ -1246,7 +1246,7 @@ const struct m68k_opcode m68k_opcodes[] =
 
   /* FIXME: add MAM mode (`&' after <ea> operand) / remove MACM */
 {"macw",  two(0120000, 0000000), two(0170660, 0005400), "uMum", mcf5307up | mcf5206e },
-{"macw",  two(0120000, 0001000), two(0170660, 0005400), "uMumMh", mcf5307up | mcf5206e },
+{"macw",  two(0120000, 0001000), two(0170660, 0005400), "uMumMh",mcf5307up | mcf5206e },
 {"macw",  two(0120220, 0000000), two(0170670, 0005460), "uNuoasRn", mcf5307up | mcf5206e },
 {"macw",  two(0120230, 0000000), two(0170670, 0005460), "uNuo+sRn", mcf5307up | mcf5206e },
 {"macw",  two(0120240, 0000000), two(0170670, 0005460), "uNuo-sRn", mcf5307up | mcf5206e },
@@ -1870,7 +1870,7 @@ const struct m68k_opcode m68k_opcodes[] =
 {"swbeg",	one(0045374),	one(0177777), "#w",   m68000up | mcf },
 {"swbegl",	one(0045375),	one(0177777), "#l",   m68000up | mcf },
 
-{"tas",		one(0045300),	one(0177700), "$s", m68000up | mcf5407 },
+{"tas",		one(0045300),	one(0177700), "$s", m68000up | mcf5407},
 
 #define TBL1(name,signed,round,size)					\
   {name, two(0174000, (signed<<11)|(!round<<10)|(size<<6)|0000400),	\
@@ -1951,10 +1951,12 @@ TBL("tblunb", "tblunw", "tblunl", 0, 0),
 {"unpk",	one(0100600),	one(0170770), "DsDd#w", m68020up },
 {"unpk",	one(0100610),	one(0170770), "-s-d#w", m68020up },
 
-{"wddatab",	one(0172000),   one(0177700), "~s", mcf },
-{"wddataw",	one(0172100),   one(0177700), "~s", mcf },
-{"wddatal",	one(0172200),   one(0177700), "~s", mcf },
+{"wddatab",	one(0175400),   one(0177700), "~s", mcf },
+{"wddataw",	one(0175500),   one(0177700), "~s", mcf },
+{"wddatal",	one(0175600),   one(0177700), "~s", mcf },
 
+{"wdebug",	two(0175720, 03),	two(0177770, 0xffff), "as", mcf },
+{"wdebug",	two(0175750, 03),	two(0177770, 0xffff), "ds", mcf },
 };
 
 const int m68k_numopcodes = sizeof m68k_opcodes / sizeof m68k_opcodes[0];

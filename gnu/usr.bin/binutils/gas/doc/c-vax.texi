@@ -2,7 +2,7 @@
 @c Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
-@c VAX/VMS description exhanced and corrected by Klaus K"aempf, kkaempf@progis.de
+@c VAX/VMS description enhanced and corrected by Klaus K"aempf, kkaempf@progis.de
 @ifset GENERIC
 @node Vax-Dependent
 @chapter VAX Dependent Features

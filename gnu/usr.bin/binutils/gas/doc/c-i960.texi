@@ -76,7 +76,7 @@ number of times the branch @emph{was} taken.
 @cindex branch statistics table, i960
 A table of every such @code{Label} is also generated, so that the
 external postprocessor @code{gbr960} (supplied by Intel) can locate all
-the counters.  This table is always labelled @samp{__BRANCH_TABLE__};
+the counters.  This table is always labeled @samp{__BRANCH_TABLE__};
 this is a local symbol to permit collecting statistics for many separate
 object files.  The table is word aligned, and begins with a two-word
 header.  The first word, initialized to 0, is used in maintaining linked

@@ -1,5 +1,5 @@
 /* BFD backend for hp-ux 9000/300
-   Copyright 1990, 1991, 1993, 1994, 1995, 1997, 2000, 2001
+   Copyright 1990, 1991, 1993, 1994, 1995, 1997, 2000, 2001, 2002
    Free Software Foundation, Inc.
    Written by Glenn Engel.
 
@@ -20,7 +20,6 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 /*
-
     hpux native  ------------> |               |
                                | hp300hpux bfd | ----------> hpux w/gnu ext
     hpux w/gnu extension ----> |               |
@@ -101,7 +100,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
    This should also be fixed.  */
 
 #define TARGETNAME "a.out-hp300hpux"
-#define MY(OP) CAT(hp300hpux_,OP)
+
+/* Do not "beautify" the CONCAT* macro args.  Traditional C will not
+   remove whitespace added here, and thus will fail to concatenate
+   the tokens.  */
+#define MY(OP) CONCAT2 (hp300hpux_,OP)
 
 #define external_exec hp300hpux_exec_bytes
 #define external_nlist hp300hpux_nlist_bytes
@@ -124,7 +127,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /* provide overrides for routines in this file */
 /***********************************************/
 /* these don't use MY because that causes problems within JUMP_TABLE
-   (CAT winds up being expanded recursively, which ANSI C compilers
+   (CONCAT2 winds up being expanded recursively, which ANSI C compilers
    will not do).  */
 #define MY_get_symtab hp300hpux_get_symtab
 #define MY_get_symtab_upper_bound hp300hpux_get_symtab_upper_bound
@@ -182,7 +185,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define HP_RLENGTH_LONG		0x02
 #define HP_RLENGTH_ALIGN	0x03
 
-#define NAME(x,y) CAT3(hp300hpux,_32_,y)
+#define NAME(x,y) CONCAT3 (hp300hpux,_32_,y)
 #define ARCH_SIZE 32
 
 /* aoutx.h requires definitions for BMAGIC and QMAGIC.  */
@@ -190,6 +193,27 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define QMAGIC 0314
 
 #include "aoutx.h"
+
+static const bfd_target * MY (callback)
+  PARAMS ((bfd *));
+static bfd_boolean MY (write_object_contents)
+  PARAMS ((bfd *));
+static void convert_sym_type
+  PARAMS ((struct external_nlist *, aout_symbol_type *, bfd *));
+
+bfd_boolean MY (slurp_symbol_table)
+  PARAMS ((bfd *));
+void MY (swap_std_reloc_in)
+  PARAMS ((bfd *, struct hp300hpux_reloc *, arelent *, asymbol **,
+	   bfd_size_type));
+bfd_boolean MY (slurp_reloc_table)
+  PARAMS ((bfd *, sec_ptr, asymbol **));
+long MY (get_symtab)
+  PARAMS ((bfd *, asymbol **));
+long MY (get_symtab_upper_bound)
+  PARAMS ((bfd *));
+long MY (canonicalize_reloc)
+  PARAMS ((bfd *, sec_ptr, arelent **, asymbol **));
 
 /* Since the hpux symbol table has nlist elements interspersed with
    strings and we need to insert som strings for secondary symbols, we
@@ -257,9 +281,10 @@ MY (callback) (abfd)
   return abfd->xvec;
 }
 
-extern boolean aout_32_write_syms PARAMS ((bfd * abfd));
+extern bfd_boolean aout_32_write_syms
+  PARAMS ((bfd * abfd));
 
-static boolean
+static bfd_boolean
 MY (write_object_contents) (abfd)
      bfd *abfd;
 {
@@ -291,12 +316,12 @@ MY (write_object_contents) (abfd)
   /* update fields not covered by default swap_exec_header_out */
 
   /* this is really the sym table size but we store it in drelocs */
-  bfd_h_put_32 (abfd, bfd_get_symcount (abfd) * 12, exec_bytes.e_drelocs);
+  H_PUT_32 (abfd, (bfd_get_symcount (abfd) * 12), exec_bytes.e_drelocs);
 
-  if (bfd_seek (abfd, 0L, false) != 0
-      || (bfd_write ((PTR) & exec_bytes, 1, EXEC_BYTES_SIZE, abfd)
+  if (bfd_seek (abfd, (file_ptr) 0, FALSE) != 0
+      || (bfd_bwrite ((PTR) &exec_bytes, (bfd_size_type) EXEC_BYTES_SIZE, abfd)
 	  != EXEC_BYTES_SIZE))
-    return false;
+    return FALSE;
 
   /* Write out the symbols, and then the relocs.  We must write out
        the symbols first so that we know the symbol indices.  */
@@ -304,27 +329,27 @@ MY (write_object_contents) (abfd)
   if (bfd_get_symcount (abfd) != 0)
     {
       /* Skip the relocs to where we want to put the symbols.  */
-      if (bfd_seek (abfd, (file_ptr) N_DRELOFF (*execp) + execp->a_drsize,
+      if (bfd_seek (abfd, (file_ptr) (N_DRELOFF (*execp) + execp->a_drsize),
 		    SEEK_SET) != 0)
-	return false;
+	return FALSE;
     }
 
   if (!MY (write_syms) (abfd))
-    return false;
+    return FALSE;
 
   if (bfd_get_symcount (abfd) != 0)
     {
-      if (bfd_seek (abfd, (long) (N_TRELOFF (*execp)), false) != 0)
-	return false;
+      if (bfd_seek (abfd, (file_ptr) N_TRELOFF (*execp), SEEK_CUR) != 0)
+	return FALSE;
       if (!NAME (aout,squirt_out_relocs) (abfd, obj_textsec (abfd)))
-	return false;
-      if (bfd_seek (abfd, (long) (N_DRELOFF (*execp)), false) != 0)
-	return false;
+	return FALSE;
+      if (bfd_seek (abfd, (file_ptr) N_DRELOFF (*execp), SEEK_CUR) != 0)
+	return FALSE;
       if (!NAME (aout,squirt_out_relocs) (abfd, obj_datasec (abfd)))
-	return false;
+	return FALSE;
     }
 
-  return true;
+  return TRUE;
 }
 
 /* convert the hp symbol type to be the same as aout64.h usage so we */
@@ -439,7 +464,7 @@ NAME (aout,swap_exec_header_in) (abfd, raw_bytes, execp)
      are memcmp'd, and thus the contents do matter. */
   memset (execp, 0, sizeof (struct internal_exec));
   /* Now fill in fields in the execp, from the bytes in the raw data.  */
-  execp->a_info = bfd_h_get_32 (abfd, bytes->e_info);
+  execp->a_info = H_GET_32 (abfd, bytes->e_info);
   execp->a_text = GET_WORD (abfd, bytes->e_text);
   execp->a_data = GET_WORD (abfd, bytes->e_data);
   execp->a_bss = GET_WORD (abfd, bytes->e_bss);
@@ -458,14 +483,16 @@ NAME (aout,swap_exec_header_in) (abfd, raw_bytes, execp)
     {
       long syms;
       struct aout_data_struct *rawptr;
-      if (bfd_h_get_32 (abfd, bytes->e_passize) != 0)
+      bfd_size_type amt;
+
+      if (H_GET_32 (abfd, bytes->e_passize) != 0)
 	break;
-      if (bfd_h_get_32 (abfd, bytes->e_syms) != 0)
+      if (H_GET_32 (abfd, bytes->e_syms) != 0)
 	break;
-      if (bfd_h_get_32 (abfd, bytes->e_supsize) != 0)
+      if (H_GET_32 (abfd, bytes->e_supsize) != 0)
 	break;
 
-      syms = bfd_h_get_32 (abfd, bytes->e_drelocs);
+      syms = H_GET_32 (abfd, bytes->e_drelocs);
       if (syms == 0)
 	break;
 
@@ -473,7 +500,8 @@ NAME (aout,swap_exec_header_in) (abfd, raw_bytes, execp)
       execp->a_syms = syms;
 
       /* allocate storage for where we will store this result */
-      rawptr = (struct aout_data_struct *) bfd_zalloc (abfd, sizeof (*rawptr));
+      amt = sizeof (*rawptr);
+      rawptr = (struct aout_data_struct *) bfd_zalloc (abfd, amt);
 
       if (rawptr == NULL)
 	return;
@@ -506,7 +534,7 @@ NAME (aout,swap_exec_header_in) (abfd, raw_bytes, execp)
    ...
 */
 
-boolean
+bfd_boolean
 MY (slurp_symbol_table) (abfd)
      bfd *abfd;
 {
@@ -517,22 +545,23 @@ MY (slurp_symbol_table) (abfd)
   char *strings;
   aout_symbol_type *cached;
   unsigned num_syms = 0;
+  bfd_size_type amt;
 
   /* If there's no work to be done, don't do any */
   if (obj_aout_symbols (abfd) != (aout_symbol_type *) NULL)
-    return true;
+    return TRUE;
   symbol_bytes = exec_hdr (abfd)->a_syms;
 
-  strings = (char *) bfd_alloc (abfd,
-				symbol_bytes + SYM_EXTRA_BYTES);
+  amt = symbol_bytes + SYM_EXTRA_BYTES;
+  strings = (char *) bfd_alloc (abfd, amt);
   if (!strings)
-    return false;
+    return FALSE;
   syms = (struct external_nlist *) (strings + SYM_EXTRA_BYTES);
   if (bfd_seek (abfd, obj_sym_filepos (abfd), SEEK_SET) != 0
-      || bfd_read ((PTR) syms, symbol_bytes, 1, abfd) != symbol_bytes)
+      || bfd_bread ((PTR) syms, symbol_bytes, abfd) != symbol_bytes)
     {
       bfd_release (abfd, syms);
-      return false;
+      return FALSE;
     }
 
   sym_end = (struct external_nlist *) (((char *) syms) + symbol_bytes);
@@ -548,11 +577,11 @@ MY (slurp_symbol_table) (abfd)
   /* now that we know the symbol count, update the bfd header */
   bfd_get_symcount (abfd) = num_syms;
 
-  cached = ((aout_symbol_type *)
-	    bfd_zalloc (abfd,
-			bfd_get_symcount (abfd) * sizeof (aout_symbol_type)));
-  if (cached == NULL && bfd_get_symcount (abfd) != 0)
-    return false;
+  amt = num_syms;
+  amt *= sizeof (aout_symbol_type);
+  cached = (aout_symbol_type *) bfd_zalloc (abfd, amt);
+  if (cached == NULL && num_syms != 0)
+    return FALSE;
 
   /* as we march thru the hp symbol table, convert it into a list of
      null terminated strings to hold the symbol names.  Make sure any
@@ -579,7 +608,7 @@ MY (slurp_symbol_table) (abfd)
 	cache_save = *cache_ptr;
 	convert_sym_type (sym_pointer, cache_ptr, abfd);
 	if (!translate_from_native_sym_flags (abfd, cache_ptr))
-	  return false;
+	  return FALSE;
 
 	/********************************************************/
 	/* for hpux, the 'lenght' value indicates the length of */
@@ -608,7 +637,7 @@ MY (slurp_symbol_table) (abfd)
 
   obj_aout_symbols (abfd) = cached;
 
-  return true;
+  return TRUE;
 }
 
 void
@@ -625,8 +654,8 @@ MY (swap_std_reloc_in) (abfd, bytes, cache_ptr, symbols, symcount)
   int r_pcrel = 0;
   struct aoutdata *su = &(abfd->tdata.aout_data->a);
 
-  cache_ptr->address = bfd_h_get_32 (abfd, bytes->r_address);
-  r_index = bfd_h_get_16 (abfd, bytes->r_index);
+  cache_ptr->address = H_GET_32 (abfd, bytes->r_address);
+  r_index = H_GET_16 (abfd, bytes->r_index);
 
   switch (bytes->r_type[0])
     {
@@ -690,13 +719,13 @@ MY (swap_std_reloc_in) (abfd, bytes, cache_ptr, symbols, symcount)
     }
 }
 
-boolean
+bfd_boolean
 MY (slurp_reloc_table) (abfd, asect, symbols)
      bfd *abfd;
      sec_ptr asect;
      asymbol **symbols;
 {
-  unsigned int count;
+  bfd_size_type count;
   bfd_size_type reloc_size;
   PTR relocs;
   arelent *reloc_cache;
@@ -706,10 +735,10 @@ MY (slurp_reloc_table) (abfd, asect, symbols)
   arelent *cache_ptr;
 
   if (asect->relocation)
-    return true;
+    return TRUE;
 
   if (asect->flags & SEC_CONSTRUCTOR)
-    return true;
+    return TRUE;
 
   if (asect == obj_datasec (abfd))
     {
@@ -724,32 +753,31 @@ MY (slurp_reloc_table) (abfd, asect, symbols)
     }
 
   bfd_set_error (bfd_error_invalid_operation);
-  return false;
+  return FALSE;
 
 doit:
   if (bfd_seek (abfd, asect->rel_filepos, SEEK_SET) != 0)
-    return false;
+    return FALSE;
   each_size = obj_reloc_entry_size (abfd);
 
   count = reloc_size / each_size;
 
-  reloc_cache = (arelent *) bfd_zalloc (abfd, (size_t) (count * sizeof
-							(arelent)));
+  reloc_cache = (arelent *) bfd_zalloc (abfd, count * sizeof (arelent));
   if (!reloc_cache && count != 0)
-    return false;
+    return FALSE;
 
   relocs = (PTR) bfd_alloc (abfd, reloc_size);
   if (!relocs && reloc_size != 0)
     {
       bfd_release (abfd, reloc_cache);
-      return false;
+      return FALSE;
     }
 
-  if (bfd_read (relocs, 1, reloc_size, abfd) != reloc_size)
+  if (bfd_bread (relocs, reloc_size, abfd) != reloc_size)
     {
       bfd_release (abfd, relocs);
       bfd_release (abfd, reloc_cache);
-      return false;
+      return FALSE;
     }
 
   rptr = (struct hp300hpux_reloc *) relocs;
@@ -759,13 +787,13 @@ doit:
   for (; counter < count; counter++, rptr++, cache_ptr++)
     {
       MY (swap_std_reloc_in) (abfd, rptr, cache_ptr, symbols,
-			      bfd_get_symcount (abfd));
+			      (bfd_size_type) bfd_get_symcount (abfd));
     }
 
   bfd_release (abfd, relocs);
   asect->relocation = reloc_cache;
   asect->reloc_count = count;
-  return true;
+  return TRUE;
 }
 
 /************************************************************************/
@@ -774,12 +802,13 @@ doit:
 /* call aout_32 versions if the input file was generated by gcc         */
 /************************************************************************/
 
-long aout_32_get_symtab PARAMS ((bfd * abfd, asymbol ** location));
-long aout_32_get_symtab_upper_bound PARAMS ((bfd * abfd));
-
-long aout_32_canonicalize_reloc PARAMS ((bfd * abfd, sec_ptr section,
-					 arelent ** relptr,
-					 asymbol ** symbols));
+long aout_32_get_symtab
+  PARAMS ((bfd * abfd, asymbol ** location));
+long aout_32_get_symtab_upper_bound
+  PARAMS ((bfd * abfd));
+long aout_32_canonicalize_reloc
+  PARAMS ((bfd * abfd, sec_ptr section, arelent ** relptr,
+	   asymbol ** symbols));
 
 long
 MY (get_symtab) (abfd, location)

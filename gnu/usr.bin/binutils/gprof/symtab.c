@@ -1,6 +1,6 @@
 /* symtab.c
 
-   Copyright 2000, 2001 Free Software Foundation, Inc.
+   Copyright 2000, 2001, 2002 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -20,9 +20,13 @@
    02111-1307, USA.  */
 
 #include "gprof.h"
+#include "search_list.h"
+#include "source.h"
+#include "symtab.h"
 #include "cg_arcs.h"
 #include "corefile.h"
-#include "symtab.h"
+
+static int cmp_addr PARAMS ((const PTR, const PTR));
 
 Sym_Table symtab;
 
@@ -30,7 +34,8 @@ Sym_Table symtab;
 /* Initialize a symbol (so it's empty).  */
 
 void
-DEFUN (sym_init, (sym), Sym * sym)
+sym_init (sym)
+     Sym *sym;
 {
   memset (sym, 0, sizeof (*sym));
 
@@ -54,10 +59,12 @@ DEFUN (sym_init, (sym), Sym * sym)
    the global symbol survives.  */
 
 static int
-DEFUN (cmp_addr, (lp, rp), const PTR lp AND const PTR rp)
+cmp_addr (lp, rp)
+     const PTR lp;
+     const PTR rp;
 {
-  Sym *left = (Sym *) lp;
-  Sym *right = (Sym *) rp;
+  const Sym *left = (const Sym *) lp;
+  const Sym *right = (const Sym *) rp;
 
   if (left->addr > right->addr)
     return 1;
@@ -72,7 +79,8 @@ DEFUN (cmp_addr, (lp, rp), const PTR lp AND const PTR rp)
 
 
 void
-DEFUN (symtab_finalize, (tab), Sym_Table * tab)
+symtab_finalize (tab)
+     Sym_Table *tab;
 {
   Sym *src, *dst;
   bfd_vma prev_addr;
@@ -169,7 +177,9 @@ DEFUN (symtab_finalize, (tab), Sym_Table * tab)
 #ifdef DEBUG
 
 Sym *
-DEFUN (dbg_sym_lookup, (symtab, address), Sym_Table * symtab AND bfd_vma address)
+dbg_sym_lookup (sym_tab, address)
+     Sym_Table *sym_tab;
+     bfd_vma address;
 {
   long low, mid, high;
   Sym *sym;
@@ -177,8 +187,8 @@ DEFUN (dbg_sym_lookup, (symtab, address), Sym_Table * symtab AND bfd_vma address
   fprintf (stderr, "[dbg_sym_lookup] address 0x%lx\n",
 	   (unsigned long) address);
 
-  sym = symtab->base;
-  for (low = 0, high = symtab->len - 1; low != high;)
+  sym = sym_tab->base;
+  for (low = 0, high = sym_tab->len - 1; low != high;)
     {
       mid = (high + low) >> 1;
 
@@ -208,7 +218,9 @@ DEFUN (dbg_sym_lookup, (symtab, address), Sym_Table * symtab AND bfd_vma address
 /* Look up an address in the symbol-table that is sorted by address.
    If address does not hit any symbol, 0 is returned.  */
 Sym *
-DEFUN (sym_lookup, (symtab, address), Sym_Table * symtab AND bfd_vma address)
+sym_lookup (sym_tab, address)
+     Sym_Table *sym_tab;
+     bfd_vma address;
 {
   long low, high;
   long mid = -1;
@@ -217,11 +229,11 @@ DEFUN (sym_lookup, (symtab, address), Sym_Table * symtab AND bfd_vma address)
   int probes = 0;
 #endif /* DEBUG */
 
-  if (!symtab->len)
+  if (!sym_tab->len)
     return 0;
 
-  sym = symtab->base;
-  for (low = 0, high = symtab->len - 1; low != high;)
+  sym = sym_tab->base;
+  for (low = 0, high = sym_tab->len - 1; low != high;)
     {
       DBG (LOOKUPDEBUG, ++probes);
       mid = (high + low) / 2;
@@ -238,7 +250,7 @@ DEFUN (sym_lookup, (symtab, address), Sym_Table * symtab AND bfd_vma address)
 	    {
 	      DBG (LOOKUPDEBUG,
 		   printf ("[sym_lookup] %d probes (symtab->len=%u)\n",
-			   probes, symtab->len - 1));
+			   probes, sym_tab->len - 1));
 	      return &sym[mid];
 	    }
 	}
@@ -259,7 +271,7 @@ DEFUN (sym_lookup, (symtab, address), Sym_Table * symtab AND bfd_vma address)
       else
 	{
 	  DBG (LOOKUPDEBUG, printf ("[sym_lookup] %d (%u) probes, fall off\n",
-				    probes, symtab->len - 1));
+				    probes, sym_tab->len - 1));
 	  return &sym[mid + 1];
 	}
     }

@@ -1,5 +1,5 @@
 /* BFD support for the AMD 29000 architecture.
-   Copyright 1992, 2000 Free Software Foundation, Inc.
+   Copyright 1992, 2000, 2002 Free Software Foundation, Inc.
    Hacked by Steve Chamberlain of Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -32,7 +32,7 @@ const bfd_arch_info_type bfd_a29k_arch =
     "a29k",
     "a29k",
     4,
-    true, /* the one and only */
+    TRUE, /* the one and only */
     bfd_default_compatible,
     bfd_default_scan ,
     0,

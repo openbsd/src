@@ -1,5 +1,5 @@
 /* BFD back-end for NetBSD/sparc a.out-ish binaries.
-   Copyright 1990, 1991, 1992, 1994, 1995, 1997, 1998, 2000
+   Copyright 1990, 1991, 1992, 1994, 1995, 1997, 1998, 2000, 2001, 2003
    Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
-#define BYTES_IN_WORD	4
 #define TARGET_IS_BIG_ENDIAN_P
 
 /* SPARC chips use either 4K or 8K pages, but object files always
@@ -28,7 +27,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define DEFAULT_ARCH	bfd_arch_sparc
 #define DEFAULT_MID 	M_SPARC_NETBSD
 
-#define MY(OP) CAT(sparcnetbsd_,OP)
+/* Do not "beautify" the CONCAT* macro args.  Traditional C will not
+   remove whitespace added here, and thus will fail to concatenate
+   the tokens.  */
+#define MY(OP) CONCAT2 (sparcnetbsd_,OP)
+
 /* This needs to start with a.out so GDB knows it is an a.out variant.  */
 #define TARGETNAME "a.out-sparc-netbsd"
 

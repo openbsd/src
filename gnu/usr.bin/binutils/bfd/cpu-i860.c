@@ -1,5 +1,5 @@
 /* BFD support for the Intel 860 architecture.
-   Copyright 1992, 1995, 2000 Free Software Foundation, Inc.
+   Copyright 1992, 1995, 2000, 2002 Free Software Foundation, Inc.
    Created mostly by substituting "860" for "386" in cpu-i386.c
    Harry Dolan <dolan@ssd.intel.com>, October 1995
 
@@ -33,7 +33,7 @@ const bfd_arch_info_type bfd_i860_arch =
     "i860",			/* Architecture name */
     "i860",			/* Printable name */
     3,				/* Section alignment exponent */
-    true,			/* Is this the default architecture? */
+    TRUE,			/* Is this the default architecture? */
     bfd_default_compatible,
     bfd_default_scan,
     0,				/* Next in list */

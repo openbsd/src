@@ -1,11 +1,12 @@
+/* DO NOT EDIT!  -*- buffer-read-only: t -*-  This file is automatically 
+   generated from "libcoff-in.h" and "coffcode.h".
+   Run "make headers" in your build bfd/ to regenerate.  */
+
 /* BFD COFF object file private structure.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001
+   2000, 2001, 2002
    Free Software Foundation, Inc.
    Written by Cygnus Support.
-
-** NOTE: libcoff.h is a GENERATED file.  Don't change it; instead,
-** change libcoff-in.h or coffcode.h.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -77,16 +78,16 @@ typedef struct coff_tdata
   /* The unswapped external symbols.  May be NULL.  Read by
      _bfd_coff_get_external_symbols.  */
   PTR external_syms;
-  /* If this is true, the external_syms may not be freed.  */
-  boolean keep_syms;
+  /* If this is TRUE, the external_syms may not be freed.  */
+  bfd_boolean keep_syms;
 
   /* The string table.  May be NULL.  Read by
      _bfd_coff_read_string_table.  */
   char *strings;
-  /* If this is true, the strings may not be freed.  */
-  boolean keep_strings;
-  /* If this is true, the strings have been written out already.  */
-  boolean strings_written;
+  /* If this is TRUE, the strings may not be freed.  */
+  bfd_boolean keep_strings;
+  /* If this is TRUE, the strings have been written out already.  */
+  bfd_boolean strings_written;
 
   /* is this a PE format coff file */
   int pe;
@@ -120,10 +121,10 @@ typedef struct pe_tdata
   struct internal_extra_pe_aouthdr pe_opthdr;
   int dll;
   int has_reloc_section;
-  boolean (*in_reloc_p) PARAMS((bfd *, reloc_howto_type *));
+  bfd_boolean (*in_reloc_p) PARAMS((bfd *, reloc_howto_type *));
   flagword real_flags;
   int target_subsystem;
-  boolean force_minimum_alignment;
+  bfd_boolean force_minimum_alignment;
 } pe_data_type;
 
 #define pe_data(bfd)		((bfd)->tdata.pe_obj_data)
@@ -135,11 +136,11 @@ struct xcoff_tdata
   /* Basic COFF information.  */
   coff_data_type coff;
 
-  /* True if this is an XCOFF64 file. */
-  boolean xcoff64;
+  /* TRUE if this is an XCOFF64 file. */
+  bfd_boolean xcoff64;
 
-  /* True if a large a.out header should be generated.  */
-  boolean full_aouthdr;
+  /* TRUE if a large a.out header should be generated.  */
+  bfd_boolean full_aouthdr;
 
   /* TOC value.  */
   bfd_vma toc;
@@ -176,7 +177,7 @@ struct xcoff_tdata
 
 #define xcoff_data(abfd) ((abfd)->tdata.xcoff_obj_data)
 
-/* We take the address of the first element of a asymbol to ensure that the
+/* We take the address of the first element of an asymbol to ensure that the
  * macro is only ever applied to an asymbol.  */
 #define coffsymbol(asymbol) ((coff_symbol_type *)(&((asymbol)->the_bfd)))
 
@@ -187,12 +188,12 @@ struct coff_section_tdata
 {
   /* The relocs, swapped into COFF internal form.  This may be NULL.  */
   struct internal_reloc *relocs;
-  /* If this is true, the relocs entry may not be freed.  */
-  boolean keep_relocs;
+  /* If this is TRUE, the relocs entry may not be freed.  */
+  bfd_boolean keep_relocs;
   /* The section contents.  This may be NULL.  */
   bfd_byte *contents;
-  /* If this is true, the contents entry may not be freed.  */
-  boolean keep_contents;
+  /* If this is TRUE, the contents entry may not be freed.  */
+  bfd_boolean keep_contents;
   /* Information cached by coff_find_nearest_line.  */
   bfd_vma offset;
   unsigned int i;
@@ -294,7 +295,7 @@ struct coff_link_hash_table
 #define coff_link_hash_traverse(table, func, info)			\
   (bfd_link_hash_traverse						\
    (&(table)->root,							\
-    (boolean (*) PARAMS ((struct bfd_link_hash_entry *, PTR))) (func),	\
+    (bfd_boolean (*) PARAMS ((struct bfd_link_hash_entry *, PTR))) (func), \
     (info)))
 
 /* Get the COFF linker hash table from a link_info structure.  */
@@ -302,50 +303,64 @@ struct coff_link_hash_table
 #define coff_hash_table(p) ((struct coff_link_hash_table *) ((p)->hash))
 
 /* Functions in coffgen.c.  */
-extern const bfd_target *coff_object_p PARAMS ((bfd *));
-extern struct sec *coff_section_from_bfd_index PARAMS ((bfd *, int));
-extern long coff_get_symtab_upper_bound PARAMS ((bfd *));
-extern long coff_get_symtab PARAMS ((bfd *, asymbol **));
-extern int coff_count_linenumbers PARAMS ((bfd *));
-extern struct coff_symbol_struct *coff_symbol_from PARAMS ((bfd *, asymbol *));
-extern boolean coff_renumber_symbols PARAMS ((bfd *, int *));
-extern void coff_mangle_symbols PARAMS ((bfd *));
-extern boolean coff_write_symbols PARAMS ((bfd *));
-extern boolean coff_write_linenumbers PARAMS ((bfd *));
-extern alent *coff_get_lineno PARAMS ((bfd *, asymbol *));
-extern asymbol *coff_section_symbol PARAMS ((bfd *, char *));
-extern boolean _bfd_coff_get_external_symbols PARAMS ((bfd *));
-extern const char *_bfd_coff_read_string_table PARAMS ((bfd *));
-extern boolean _bfd_coff_free_symbols PARAMS ((bfd *));
-extern struct coff_ptr_struct *coff_get_normalized_symtab PARAMS ((bfd *));
-extern long coff_get_reloc_upper_bound PARAMS ((bfd *, sec_ptr));
-extern asymbol *coff_make_empty_symbol PARAMS ((bfd *));
-extern void coff_print_symbol PARAMS ((bfd *, PTR filep, asymbol *,
-				       bfd_print_symbol_type how));
-extern void coff_get_symbol_info PARAMS ((bfd *, asymbol *,
-					  symbol_info *ret));
-extern boolean _bfd_coff_is_local_label_name PARAMS ((bfd *, const char *));
-extern asymbol *coff_bfd_make_debug_symbol PARAMS ((bfd *, PTR,
-						    unsigned long));
-extern boolean coff_find_nearest_line PARAMS ((bfd *,
-					       asection *,
-					       asymbol **,
-					       bfd_vma offset,
-					       CONST char **filename_ptr,
-					       CONST char **functionname_ptr,
-					       unsigned int *line_ptr));
-extern int coff_sizeof_headers PARAMS ((bfd *, boolean reloc));
-extern boolean bfd_coff_reloc16_relax_section
-  PARAMS ((bfd *, asection *, struct bfd_link_info *, boolean *));
+extern const bfd_target *coff_object_p
+  PARAMS ((bfd *));
+extern struct sec *coff_section_from_bfd_index
+  PARAMS ((bfd *, int));
+extern long coff_get_symtab_upper_bound
+  PARAMS ((bfd *));
+extern long coff_get_symtab
+  PARAMS ((bfd *, asymbol **));
+extern int coff_count_linenumbers
+  PARAMS ((bfd *));
+extern struct coff_symbol_struct *coff_symbol_from
+  PARAMS ((bfd *, asymbol *));
+extern bfd_boolean coff_renumber_symbols
+  PARAMS ((bfd *, int *));
+extern void coff_mangle_symbols
+  PARAMS ((bfd *));
+extern bfd_boolean coff_write_symbols
+  PARAMS ((bfd *));
+extern bfd_boolean coff_write_linenumbers
+  PARAMS ((bfd *));
+extern alent *coff_get_lineno
+  PARAMS ((bfd *, asymbol *));
+extern asymbol *coff_section_symbol
+  PARAMS ((bfd *, char *));
+extern bfd_boolean _bfd_coff_get_external_symbols
+  PARAMS ((bfd *));
+extern const char *_bfd_coff_read_string_table
+  PARAMS ((bfd *));
+extern bfd_boolean _bfd_coff_free_symbols
+  PARAMS ((bfd *));
+extern struct coff_ptr_struct *coff_get_normalized_symtab
+  PARAMS ((bfd *));
+extern long coff_get_reloc_upper_bound
+  PARAMS ((bfd *, sec_ptr));
+extern asymbol *coff_make_empty_symbol
+  PARAMS ((bfd *));
+extern void coff_print_symbol
+  PARAMS ((bfd *, PTR filep, asymbol *, bfd_print_symbol_type));
+extern void coff_get_symbol_info
+  PARAMS ((bfd *, asymbol *, symbol_info *ret));
+extern bfd_boolean _bfd_coff_is_local_label_name
+  PARAMS ((bfd *, const char *));
+extern asymbol *coff_bfd_make_debug_symbol
+  PARAMS ((bfd *, PTR, unsigned long));
+extern bfd_boolean coff_find_nearest_line
+  PARAMS ((bfd *, asection *, asymbol **, bfd_vma, const char **,
+	   const char **, unsigned int *));
+extern int coff_sizeof_headers
+  PARAMS ((bfd *, bfd_boolean));
+extern bfd_boolean bfd_coff_reloc16_relax_section
+  PARAMS ((bfd *, asection *, struct bfd_link_info *, bfd_boolean *));
 extern bfd_byte *bfd_coff_reloc16_get_relocated_section_contents
   PARAMS ((bfd *, struct bfd_link_info *, struct bfd_link_order *,
-	   bfd_byte *, boolean relocateable, asymbol **));
-extern bfd_vma bfd_coff_reloc16_get_value PARAMS ((arelent *,
-						   struct bfd_link_info *,
-						   asection *));
-extern void bfd_perform_slip PARAMS ((bfd *abfd, unsigned int slip,
-				      asection *input_section,
-				      bfd_vma val));
+	   bfd_byte *, bfd_boolean, asymbol **));
+extern bfd_vma bfd_coff_reloc16_get_value
+   PARAMS ((arelent *, struct bfd_link_info *, asection *));
+extern void bfd_perform_slip
+  PARAMS ((bfd *, unsigned int, asection *, bfd_vma));
 
 /* Functions and types in cofflink.c.  */
 
@@ -443,11 +458,11 @@ struct coff_final_link_info
   /* Output BFD.  */
   bfd *output_bfd;
   /* Used to indicate failure in traversal routine.  */
-  boolean failed;
+  bfd_boolean failed;
   /* If doing "task linking" set only during the time when we want the
      global symbol writer to convert the storage class of defined global
      symbols from global to static. */
-  boolean global_to_static;
+  bfd_boolean global_to_static;
   /* Hash table for long symbol names.  */
   struct bfd_strtab_hash *strtab;
   /* When doing a relocateable link, an array of information kept for
@@ -521,7 +536,7 @@ struct coff_section_alignment_entry
 
 extern struct bfd_hash_entry *_bfd_coff_link_hash_newfunc
   PARAMS ((struct bfd_hash_entry *, struct bfd_hash_table *, const char *));
-extern boolean _bfd_coff_link_hash_table_init
+extern bfd_boolean _bfd_coff_link_hash_table_init
   PARAMS ((struct coff_link_hash_table *, bfd *,
 	   struct bfd_hash_entry *(*) (struct bfd_hash_entry *,
 				       struct bfd_hash_table *,
@@ -530,26 +545,26 @@ extern struct bfd_link_hash_table *_bfd_coff_link_hash_table_create
   PARAMS ((bfd *));
 extern const char *_bfd_coff_internal_syment_name
   PARAMS ((bfd *, const struct internal_syment *, char *));
-extern boolean _bfd_coff_link_add_symbols
+extern bfd_boolean _bfd_coff_link_add_symbols
   PARAMS ((bfd *, struct bfd_link_info *));
-extern boolean _bfd_coff_final_link
+extern bfd_boolean _bfd_coff_final_link
   PARAMS ((bfd *, struct bfd_link_info *));
 extern struct internal_reloc *_bfd_coff_read_internal_relocs
-  PARAMS ((bfd *, asection *, boolean, bfd_byte *, boolean,
+  PARAMS ((bfd *, asection *, bfd_boolean, bfd_byte *, bfd_boolean,
 	   struct internal_reloc *));
-extern boolean _bfd_coff_generic_relocate_section
+extern bfd_boolean _bfd_coff_generic_relocate_section
   PARAMS ((bfd *, struct bfd_link_info *, bfd *, asection *, bfd_byte *,
 	   struct internal_reloc *, struct internal_syment *, asection **));
 
 extern struct bfd_hash_entry *_bfd_coff_debug_merge_hash_newfunc
   PARAMS ((struct bfd_hash_entry *, struct bfd_hash_table *, const char *));
-extern boolean _bfd_coff_write_global_sym
+extern bfd_boolean _bfd_coff_write_global_sym
   PARAMS ((struct coff_link_hash_entry *, PTR));
-extern boolean _bfd_coff_write_task_globals
+extern bfd_boolean _bfd_coff_write_task_globals
   PARAMS ((struct coff_link_hash_entry *, PTR));
-extern boolean _bfd_coff_link_input_bfd
+extern bfd_boolean _bfd_coff_link_input_bfd
   PARAMS ((struct coff_final_link_info *, bfd *));
-extern boolean _bfd_coff_reloc_link_order
+extern bfd_boolean _bfd_coff_reloc_link_order
   PARAMS ((bfd *, struct coff_final_link_info *, asection *,
 	   struct bfd_link_order *));
 
@@ -559,66 +574,68 @@ extern boolean _bfd_coff_reloc_link_order
 
 /* Functions in xcofflink.c.  */
 
-extern long _bfd_xcoff_get_dynamic_symtab_upper_bound PARAMS ((bfd *));
+extern long _bfd_xcoff_get_dynamic_symtab_upper_bound
+  PARAMS ((bfd *));
 extern long _bfd_xcoff_canonicalize_dynamic_symtab
   PARAMS ((bfd *, asymbol **));
-extern long _bfd_xcoff_get_dynamic_reloc_upper_bound PARAMS ((bfd *));
+extern long _bfd_xcoff_get_dynamic_reloc_upper_bound
+  PARAMS ((bfd *));
 extern long _bfd_xcoff_canonicalize_dynamic_reloc
   PARAMS ((bfd *, arelent **, asymbol **));
 extern struct bfd_link_hash_table *_bfd_xcoff_bfd_link_hash_table_create
   PARAMS ((bfd *));
-extern boolean _bfd_xcoff_bfd_link_add_symbols
+extern void _bfd_xcoff_bfd_link_hash_table_free
+  PARAMS ((struct bfd_link_hash_table *));
+extern bfd_boolean _bfd_xcoff_bfd_link_add_symbols
   PARAMS ((bfd *, struct bfd_link_info *));
-extern boolean _bfd_xcoff_bfd_final_link
+extern bfd_boolean _bfd_xcoff_bfd_final_link
   PARAMS ((bfd *, struct bfd_link_info *));
-extern boolean _bfd_ppc_xcoff_relocate_section
+extern bfd_boolean _bfd_ppc_xcoff_relocate_section
   PARAMS ((bfd *, struct bfd_link_info *, bfd *, asection *, bfd_byte *,
 	   struct internal_reloc *, struct internal_syment *, asection **));
 
 /* Functions in coff-ppc.c.  FIXME: These are called be pe.em in the
    linker, and so should start with bfd and be declared in bfd.h.  */
 
-extern boolean ppc_allocate_toc_section PARAMS ((struct bfd_link_info *));
-extern boolean ppc_process_before_allocation
+extern bfd_boolean ppc_allocate_toc_section
+  PARAMS ((struct bfd_link_info *));
+extern bfd_boolean ppc_process_before_allocation
   PARAMS ((bfd *, struct bfd_link_info *));
 
-/* And more taken from the source .. */
-
+/* Extracted from coffcode.h.  */
 typedef struct coff_ptr_struct
 {
+  /* Remembers the offset from the first symbol in the file for
+     this symbol. Generated by coff_renumber_symbols. */
+  unsigned int offset;
 
-       /* Remembers the offset from the first symbol in the file for
-          this symbol. Generated by coff_renumber_symbols. */
-unsigned int offset;
+  /* Should the value of this symbol be renumbered.  Used for
+     XCOFF C_BSTAT symbols.  Set by coff_slurp_symbol_table.  */
+  unsigned int fix_value : 1;
 
-       /* Should the value of this symbol be renumbered.  Used for
-          XCOFF C_BSTAT symbols.  Set by coff_slurp_symbol_table.  */
-unsigned int fix_value : 1;
+  /* Should the tag field of this symbol be renumbered.
+     Created by coff_pointerize_aux. */
+  unsigned int fix_tag : 1;
 
-       /* Should the tag field of this symbol be renumbered.
-          Created by coff_pointerize_aux. */
-unsigned int fix_tag : 1;
+  /* Should the endidx field of this symbol be renumbered.
+     Created by coff_pointerize_aux. */
+  unsigned int fix_end : 1;
 
-       /* Should the endidx field of this symbol be renumbered.
-          Created by coff_pointerize_aux. */
-unsigned int fix_end : 1;
+  /* Should the x_csect.x_scnlen field be renumbered.
+     Created by coff_pointerize_aux. */
+  unsigned int fix_scnlen : 1;
 
-       /* Should the x_csect.x_scnlen field be renumbered.
-          Created by coff_pointerize_aux. */
-unsigned int fix_scnlen : 1;
+  /* Fix up an XCOFF C_BINCL/C_EINCL symbol.  The value is the
+     index into the line number entries.  Set by coff_slurp_symbol_table.  */
+  unsigned int fix_line : 1;
 
-       /* Fix up an XCOFF C_BINCL/C_EINCL symbol.  The value is the
-          index into the line number entries.  Set by
-          coff_slurp_symbol_table.  */
-unsigned int fix_line : 1;
-
-       /* The container for the symbol structure as read and translated
-           from the file. */
-
-union {
-   union internal_auxent auxent;
-   struct internal_syment syment;
- } u;
+  /* The container for the symbol structure as read and translated
+     from the file. */
+  union
+  {
+    union internal_auxent auxent;
+    struct internal_syment syment;
+  } u;
 } combined_entry_type;
 
 
@@ -626,17 +643,17 @@ union {
 
 typedef struct coff_symbol_struct
 {
-   /* The actual symbol which the rest of BFD works with */
-asymbol symbol;
+  /* The actual symbol which the rest of BFD works with */
+  asymbol symbol;
 
-   /* A pointer to the hidden information for this symbol */
-combined_entry_type *native;
+  /* A pointer to the hidden information for this symbol */
+  combined_entry_type *native;
 
-   /* A pointer to the linenumber information for this symbol */
-struct lineno_cache_entry *lineno;
+  /* A pointer to the linenumber information for this symbol */
+  struct lineno_cache_entry *lineno;
 
-   /* Have the line numbers been relocated yet ? */
-boolean done_lineno;
+  /* Have the line numbers been relocated yet ? */
+  bfd_boolean done_lineno;
 } coff_symbol_type;
 /* COFF symbol classifications.  */
 
@@ -656,227 +673,166 @@ enum coff_symbol_classification
 
 typedef struct
 {
-  void (*_bfd_coff_swap_aux_in) PARAMS ((
-       bfd            *abfd,
-       PTR             ext,
-       int             type,
-       int             class,
-       int             indaux,
-       int             numaux,
-       PTR             in));
+  void (*_bfd_coff_swap_aux_in)
+    PARAMS ((bfd *, PTR, int, int, int, int, PTR));
 
-  void (*_bfd_coff_swap_sym_in) PARAMS ((
-       bfd            *abfd ,
-       PTR             ext,
-       PTR             in));
+  void (*_bfd_coff_swap_sym_in)
+    PARAMS ((bfd *, PTR, PTR));
 
-  void (*_bfd_coff_swap_lineno_in) PARAMS ((
-       bfd            *abfd,
-       PTR            ext,
-       PTR             in));
+  void (*_bfd_coff_swap_lineno_in)
+    PARAMS ((bfd *, PTR, PTR));
 
- unsigned int (*_bfd_coff_swap_aux_out) PARAMS ((
-       bfd     *abfd,
-       PTR     in,
-       int     type,
-       int     class,
-       int     indaux,
-       int     numaux,
-       PTR     ext));
+  unsigned int (*_bfd_coff_swap_aux_out)
+    PARAMS ((bfd *, PTR, int, int, int, int, PTR));
 
- unsigned int (*_bfd_coff_swap_sym_out) PARAMS ((
-      bfd      *abfd,
-      PTR      in,
-      PTR      ext));
+  unsigned int (*_bfd_coff_swap_sym_out)
+    PARAMS ((bfd *, PTR, PTR));
 
- unsigned int (*_bfd_coff_swap_lineno_out) PARAMS ((
-       bfd     *abfd,
-       PTR     in,
-       PTR     ext));
+  unsigned int (*_bfd_coff_swap_lineno_out)
+    PARAMS ((bfd *, PTR, PTR));
 
- unsigned int (*_bfd_coff_swap_reloc_out) PARAMS ((
-       bfd     *abfd,
-       PTR     src,
-       PTR     dst));
+  unsigned int (*_bfd_coff_swap_reloc_out)
+    PARAMS ((bfd *, PTR, PTR));
 
- unsigned int (*_bfd_coff_swap_filehdr_out) PARAMS ((
-       bfd     *abfd,
-       PTR     in,
-       PTR     out));
+  unsigned int (*_bfd_coff_swap_filehdr_out)
+    PARAMS ((bfd *, PTR, PTR));
 
- unsigned int (*_bfd_coff_swap_aouthdr_out) PARAMS ((
-       bfd     *abfd,
-       PTR     in,
-       PTR     out));
+  unsigned int (*_bfd_coff_swap_aouthdr_out)
+    PARAMS ((bfd *, PTR, PTR));
 
- unsigned int (*_bfd_coff_swap_scnhdr_out) PARAMS ((
-       bfd     *abfd,
-       PTR     in,
-       PTR     out));
+  unsigned int (*_bfd_coff_swap_scnhdr_out)
+    PARAMS ((bfd *, PTR, PTR));
 
- unsigned int _bfd_filhsz;
- unsigned int _bfd_aoutsz;
- unsigned int _bfd_scnhsz;
- unsigned int _bfd_symesz;
- unsigned int _bfd_auxesz;
- unsigned int _bfd_relsz;
- unsigned int _bfd_linesz;
- unsigned int _bfd_filnmlen;
- boolean _bfd_coff_long_filenames;
- boolean _bfd_coff_long_section_names;
- unsigned int _bfd_coff_default_section_alignment_power;
- boolean _bfd_coff_force_symnames_in_strings;
- unsigned int _bfd_coff_debug_string_prefix_length;
- void (*_bfd_coff_swap_filehdr_in) PARAMS ((
-       bfd     *abfd,
-       PTR     ext,
-       PTR     in));
- void (*_bfd_coff_swap_aouthdr_in) PARAMS ((
-       bfd     *abfd,
-       PTR     ext,
-       PTR     in));
- void (*_bfd_coff_swap_scnhdr_in) PARAMS ((
-       bfd     *abfd,
-       PTR     ext,
-       PTR     in));
- void (*_bfd_coff_swap_reloc_in) PARAMS ((
-       bfd     *abfd,
-       PTR     ext,
-       PTR     in));
- boolean (*_bfd_coff_bad_format_hook) PARAMS ((
-       bfd     *abfd,
-       PTR     internal_filehdr));
- boolean (*_bfd_coff_set_arch_mach_hook) PARAMS ((
-       bfd     *abfd,
-       PTR     internal_filehdr));
- PTR (*_bfd_coff_mkobject_hook) PARAMS ((
-       bfd     *abfd,
-       PTR     internal_filehdr,
-       PTR     internal_aouthdr));
- flagword (*_bfd_styp_to_sec_flags_hook) PARAMS ((
-       bfd     *abfd,
-       PTR     internal_scnhdr,
-       const char *name,
-       asection *section));
- void (*_bfd_set_alignment_hook) PARAMS ((
-       bfd     *abfd,
-       asection *sec,
-       PTR     internal_scnhdr));
- boolean (*_bfd_coff_slurp_symbol_table) PARAMS ((
-       bfd     *abfd));
- boolean (*_bfd_coff_symname_in_debug) PARAMS ((
-       bfd     *abfd,
-       struct internal_syment *sym));
- boolean (*_bfd_coff_pointerize_aux_hook) PARAMS ((
-       bfd *abfd,
-       combined_entry_type *table_base,
-       combined_entry_type *symbol,
-       unsigned int indaux,
-       combined_entry_type *aux));
- boolean (*_bfd_coff_print_aux) PARAMS ((
-       bfd *abfd,
-       FILE *file,
-       combined_entry_type *table_base,
-       combined_entry_type *symbol,
-       combined_entry_type *aux,
-       unsigned int indaux));
- void (*_bfd_coff_reloc16_extra_cases) PARAMS ((
-       bfd     *abfd,
-       struct bfd_link_info *link_info,
-       struct bfd_link_order *link_order,
-       arelent *reloc,
-       bfd_byte *data,
-       unsigned int *src_ptr,
-       unsigned int *dst_ptr));
- int (*_bfd_coff_reloc16_estimate) PARAMS ((
-       bfd *abfd,
-       asection *input_section,
-       arelent *r,
-       unsigned int shrink,
-       struct bfd_link_info *link_info));
- enum coff_symbol_classification (*_bfd_coff_classify_symbol) PARAMS ((
-       bfd *abfd,
-       struct internal_syment *));
- boolean (*_bfd_coff_compute_section_file_positions) PARAMS ((
-       bfd *abfd));
- boolean (*_bfd_coff_start_final_link) PARAMS ((
-       bfd *output_bfd,
-       struct bfd_link_info *info));
- boolean (*_bfd_coff_relocate_section) PARAMS ((
-       bfd *output_bfd,
-       struct bfd_link_info *info,
-       bfd *input_bfd,
-       asection *input_section,
-       bfd_byte *contents,
-       struct internal_reloc *relocs,
-       struct internal_syment *syms,
-       asection **sections));
- reloc_howto_type *(*_bfd_coff_rtype_to_howto) PARAMS ((
-       bfd *abfd,
-       asection *sec,
-       struct internal_reloc *rel,
-       struct coff_link_hash_entry *h,
-       struct internal_syment *sym,
-       bfd_vma *addendp));
- boolean (*_bfd_coff_adjust_symndx) PARAMS ((
-       bfd *obfd,
-       struct bfd_link_info *info,
-       bfd *ibfd,
-       asection *sec,
-       struct internal_reloc *reloc,
-       boolean *adjustedp));
- boolean (*_bfd_coff_link_add_one_symbol) PARAMS ((
-       struct bfd_link_info *info,
-       bfd *abfd,
-       const char *name,
-       flagword flags,
-       asection *section,
-       bfd_vma value,
-       const char *string,
-       boolean copy,
-       boolean collect,
-       struct bfd_link_hash_entry **hashp));
+  unsigned int _bfd_filhsz;
+  unsigned int _bfd_aoutsz;
+  unsigned int _bfd_scnhsz;
+  unsigned int _bfd_symesz;
+  unsigned int _bfd_auxesz;
+  unsigned int _bfd_relsz;
+  unsigned int _bfd_linesz;
+  unsigned int _bfd_filnmlen;
+  bfd_boolean _bfd_coff_long_filenames;
+  bfd_boolean _bfd_coff_long_section_names;
+  unsigned int _bfd_coff_default_section_alignment_power;
+  bfd_boolean _bfd_coff_force_symnames_in_strings;
+  unsigned int _bfd_coff_debug_string_prefix_length;
 
- boolean (*_bfd_coff_link_output_has_begun) PARAMS ((
-       bfd * abfd,
-       struct coff_final_link_info * pfinfo));
- boolean (*_bfd_coff_final_link_postscript) PARAMS ((
-       bfd * abfd,
-       struct coff_final_link_info * pfinfo));
+  void (*_bfd_coff_swap_filehdr_in)
+    PARAMS ((bfd *, PTR, PTR));
+
+  void (*_bfd_coff_swap_aouthdr_in)
+    PARAMS ((bfd *, PTR, PTR));
+
+  void (*_bfd_coff_swap_scnhdr_in)
+    PARAMS ((bfd *, PTR, PTR));
+
+  void (*_bfd_coff_swap_reloc_in)
+    PARAMS ((bfd *abfd, PTR, PTR));
+
+  bfd_boolean (*_bfd_coff_bad_format_hook)
+    PARAMS ((bfd *, PTR));
+
+  bfd_boolean (*_bfd_coff_set_arch_mach_hook)
+    PARAMS ((bfd *, PTR));
+
+  PTR (*_bfd_coff_mkobject_hook)
+    PARAMS ((bfd *, PTR, PTR));
+
+  bfd_boolean (*_bfd_styp_to_sec_flags_hook)
+    PARAMS ((bfd *, PTR, const char *, asection *, flagword *));
+
+  void (*_bfd_set_alignment_hook)
+    PARAMS ((bfd *, asection *, PTR));
+
+  bfd_boolean (*_bfd_coff_slurp_symbol_table)
+    PARAMS ((bfd *));
+
+  bfd_boolean (*_bfd_coff_symname_in_debug)
+    PARAMS ((bfd *, struct internal_syment *));
+
+  bfd_boolean (*_bfd_coff_pointerize_aux_hook)
+    PARAMS ((bfd *, combined_entry_type *, combined_entry_type *,
+            unsigned int, combined_entry_type *));
+
+  bfd_boolean (*_bfd_coff_print_aux)
+    PARAMS ((bfd *, FILE *, combined_entry_type *, combined_entry_type *,
+            combined_entry_type *, unsigned int));
+
+  void (*_bfd_coff_reloc16_extra_cases)
+    PARAMS ((bfd *, struct bfd_link_info *, struct bfd_link_order *, arelent *,
+           bfd_byte *, unsigned int *, unsigned int *));
+
+  int (*_bfd_coff_reloc16_estimate)
+    PARAMS ((bfd *, asection *, arelent *, unsigned int,
+            struct bfd_link_info *));
+
+  enum coff_symbol_classification (*_bfd_coff_classify_symbol)
+    PARAMS ((bfd *, struct internal_syment *));
+
+  bfd_boolean (*_bfd_coff_compute_section_file_positions)
+    PARAMS ((bfd *));
+
+  bfd_boolean (*_bfd_coff_start_final_link)
+    PARAMS ((bfd *, struct bfd_link_info *));
+
+  bfd_boolean (*_bfd_coff_relocate_section)
+    PARAMS ((bfd *, struct bfd_link_info *, bfd *, asection *, bfd_byte *,
+            struct internal_reloc *, struct internal_syment *, asection **));
+
+  reloc_howto_type *(*_bfd_coff_rtype_to_howto)
+    PARAMS ((bfd *, asection *, struct internal_reloc *,
+            struct coff_link_hash_entry *, struct internal_syment *,
+            bfd_vma *));
+
+  bfd_boolean (*_bfd_coff_adjust_symndx)
+    PARAMS ((bfd *, struct bfd_link_info *, bfd *, asection *,
+            struct internal_reloc *, bfd_boolean *));
+
+  bfd_boolean (*_bfd_coff_link_add_one_symbol)
+    PARAMS ((struct bfd_link_info *, bfd *, const char *, flagword,
+            asection *, bfd_vma, const char *, bfd_boolean, bfd_boolean,
+            struct bfd_link_hash_entry **));
+
+  bfd_boolean (*_bfd_coff_link_output_has_begun)
+    PARAMS ((bfd *, struct coff_final_link_info *));
+
+  bfd_boolean (*_bfd_coff_final_link_postscript)
+    PARAMS ((bfd *, struct coff_final_link_info *));
 
 } bfd_coff_backend_data;
 
-#define coff_backend_info(abfd) ((bfd_coff_backend_data *) (abfd)->xvec->backend_data)
+#define coff_backend_info(abfd) \
+  ((bfd_coff_backend_data *) (abfd)->xvec->backend_data)
 
 #define bfd_coff_swap_aux_in(a,e,t,c,ind,num,i) \
-        ((coff_backend_info (a)->_bfd_coff_swap_aux_in) (a,e,t,c,ind,num,i))
+  ((coff_backend_info (a)->_bfd_coff_swap_aux_in) (a,e,t,c,ind,num,i))
 
 #define bfd_coff_swap_sym_in(a,e,i) \
-        ((coff_backend_info (a)->_bfd_coff_swap_sym_in) (a,e,i))
+  ((coff_backend_info (a)->_bfd_coff_swap_sym_in) (a,e,i))
 
 #define bfd_coff_swap_lineno_in(a,e,i) \
-        ((coff_backend_info ( a)->_bfd_coff_swap_lineno_in) (a,e,i))
+  ((coff_backend_info ( a)->_bfd_coff_swap_lineno_in) (a,e,i))
 
 #define bfd_coff_swap_reloc_out(abfd, i, o) \
-        ((coff_backend_info (abfd)->_bfd_coff_swap_reloc_out) (abfd, i, o))
+  ((coff_backend_info (abfd)->_bfd_coff_swap_reloc_out) (abfd, i, o))
 
 #define bfd_coff_swap_lineno_out(abfd, i, o) \
-        ((coff_backend_info (abfd)->_bfd_coff_swap_lineno_out) (abfd, i, o))
+  ((coff_backend_info (abfd)->_bfd_coff_swap_lineno_out) (abfd, i, o))
 
 #define bfd_coff_swap_aux_out(a,i,t,c,ind,num,o) \
-        ((coff_backend_info (a)->_bfd_coff_swap_aux_out) (a,i,t,c,ind,num,o))
+  ((coff_backend_info (a)->_bfd_coff_swap_aux_out) (a,i,t,c,ind,num,o))
 
 #define bfd_coff_swap_sym_out(abfd, i,o) \
-        ((coff_backend_info (abfd)->_bfd_coff_swap_sym_out) (abfd, i, o))
+  ((coff_backend_info (abfd)->_bfd_coff_swap_sym_out) (abfd, i, o))
 
 #define bfd_coff_swap_scnhdr_out(abfd, i,o) \
-        ((coff_backend_info (abfd)->_bfd_coff_swap_scnhdr_out) (abfd, i, o))
+  ((coff_backend_info (abfd)->_bfd_coff_swap_scnhdr_out) (abfd, i, o))
 
 #define bfd_coff_swap_filehdr_out(abfd, i,o) \
-        ((coff_backend_info (abfd)->_bfd_coff_swap_filehdr_out) (abfd, i, o))
+  ((coff_backend_info (abfd)->_bfd_coff_swap_filehdr_out) (abfd, i, o))
 
 #define bfd_coff_swap_aouthdr_out(abfd, i,o) \
-        ((coff_backend_info (abfd)->_bfd_coff_swap_aouthdr_out) (abfd, i, o))
+  ((coff_backend_info (abfd)->_bfd_coff_swap_aouthdr_out) (abfd, i, o))
 
 #define bfd_coff_filhsz(abfd) (coff_backend_info (abfd)->_bfd_filhsz)
 #define bfd_coff_aoutsz(abfd) (coff_backend_info (abfd)->_bfd_aoutsz)
@@ -886,88 +842,92 @@ typedef struct
 #define bfd_coff_relsz(abfd)  (coff_backend_info (abfd)->_bfd_relsz)
 #define bfd_coff_linesz(abfd) (coff_backend_info (abfd)->_bfd_linesz)
 #define bfd_coff_filnmlen(abfd) (coff_backend_info (abfd)->_bfd_filnmlen)
-#define bfd_coff_long_filenames(abfd) (coff_backend_info (abfd)->_bfd_coff_long_filenames)
+#define bfd_coff_long_filenames(abfd) \
+  (coff_backend_info (abfd)->_bfd_coff_long_filenames)
 #define bfd_coff_long_section_names(abfd) \
-        (coff_backend_info (abfd)->_bfd_coff_long_section_names)
+  (coff_backend_info (abfd)->_bfd_coff_long_section_names)
 #define bfd_coff_default_section_alignment_power(abfd) \
-        (coff_backend_info (abfd)->_bfd_coff_default_section_alignment_power)
+  (coff_backend_info (abfd)->_bfd_coff_default_section_alignment_power)
 #define bfd_coff_swap_filehdr_in(abfd, i,o) \
-        ((coff_backend_info (abfd)->_bfd_coff_swap_filehdr_in) (abfd, i, o))
+  ((coff_backend_info (abfd)->_bfd_coff_swap_filehdr_in) (abfd, i, o))
 
 #define bfd_coff_swap_aouthdr_in(abfd, i,o) \
-        ((coff_backend_info (abfd)->_bfd_coff_swap_aouthdr_in) (abfd, i, o))
+  ((coff_backend_info (abfd)->_bfd_coff_swap_aouthdr_in) (abfd, i, o))
 
 #define bfd_coff_swap_scnhdr_in(abfd, i,o) \
-        ((coff_backend_info (abfd)->_bfd_coff_swap_scnhdr_in) (abfd, i, o))
+  ((coff_backend_info (abfd)->_bfd_coff_swap_scnhdr_in) (abfd, i, o))
 
 #define bfd_coff_swap_reloc_in(abfd, i, o) \
-        ((coff_backend_info (abfd)->_bfd_coff_swap_reloc_in) (abfd, i, o))
+  ((coff_backend_info (abfd)->_bfd_coff_swap_reloc_in) (abfd, i, o))
 
 #define bfd_coff_bad_format_hook(abfd, filehdr) \
-        ((coff_backend_info (abfd)->_bfd_coff_bad_format_hook) (abfd, filehdr))
+  ((coff_backend_info (abfd)->_bfd_coff_bad_format_hook) (abfd, filehdr))
 
 #define bfd_coff_set_arch_mach_hook(abfd, filehdr)\
-        ((coff_backend_info (abfd)->_bfd_coff_set_arch_mach_hook) (abfd, filehdr))
+  ((coff_backend_info (abfd)->_bfd_coff_set_arch_mach_hook) (abfd, filehdr))
 #define bfd_coff_mkobject_hook(abfd, filehdr, aouthdr)\
-        ((coff_backend_info (abfd)->_bfd_coff_mkobject_hook) (abfd, filehdr, aouthdr))
+  ((coff_backend_info (abfd)->_bfd_coff_mkobject_hook)\
+   (abfd, filehdr, aouthdr))
 
-#define bfd_coff_styp_to_sec_flags_hook(abfd, scnhdr, name, section)\
-        ((coff_backend_info (abfd)->_bfd_styp_to_sec_flags_hook)\
-         (abfd, scnhdr, name, section))
+#define bfd_coff_styp_to_sec_flags_hook(abfd, scnhdr, name, section, flags_ptr)\
+  ((coff_backend_info (abfd)->_bfd_styp_to_sec_flags_hook)\
+   (abfd, scnhdr, name, section, flags_ptr))
 
 #define bfd_coff_set_alignment_hook(abfd, sec, scnhdr)\
-        ((coff_backend_info (abfd)->_bfd_set_alignment_hook) (abfd, sec, scnhdr))
+  ((coff_backend_info (abfd)->_bfd_set_alignment_hook) (abfd, sec, scnhdr))
 
 #define bfd_coff_slurp_symbol_table(abfd)\
-        ((coff_backend_info (abfd)->_bfd_coff_slurp_symbol_table) (abfd))
+  ((coff_backend_info (abfd)->_bfd_coff_slurp_symbol_table) (abfd))
 
 #define bfd_coff_symname_in_debug(abfd, sym)\
-        ((coff_backend_info (abfd)->_bfd_coff_symname_in_debug) (abfd, sym))
+  ((coff_backend_info (abfd)->_bfd_coff_symname_in_debug) (abfd, sym))
 
 #define bfd_coff_force_symnames_in_strings(abfd)\
-       (coff_backend_info (abfd)->_bfd_coff_force_symnames_in_strings)
+  (coff_backend_info (abfd)->_bfd_coff_force_symnames_in_strings)
 
 #define bfd_coff_debug_string_prefix_length(abfd)\
-       (coff_backend_info (abfd)->_bfd_coff_debug_string_prefix_length)
+  (coff_backend_info (abfd)->_bfd_coff_debug_string_prefix_length)
 
 #define bfd_coff_print_aux(abfd, file, base, symbol, aux, indaux)\
-        ((coff_backend_info (abfd)->_bfd_coff_print_aux)\
-         (abfd, file, base, symbol, aux, indaux))
+  ((coff_backend_info (abfd)->_bfd_coff_print_aux)\
+   (abfd, file, base, symbol, aux, indaux))
 
-#define bfd_coff_reloc16_extra_cases(abfd, link_info, link_order, reloc, data, src_ptr, dst_ptr)\
-        ((coff_backend_info (abfd)->_bfd_coff_reloc16_extra_cases)\
-         (abfd, link_info, link_order, reloc, data, src_ptr, dst_ptr))
+#define bfd_coff_reloc16_extra_cases(abfd, link_info, link_order,\
+                                     reloc, data, src_ptr, dst_ptr)\
+  ((coff_backend_info (abfd)->_bfd_coff_reloc16_extra_cases)\
+   (abfd, link_info, link_order, reloc, data, src_ptr, dst_ptr))
 
 #define bfd_coff_reloc16_estimate(abfd, section, reloc, shrink, link_info)\
-        ((coff_backend_info (abfd)->_bfd_coff_reloc16_estimate)\
-         (abfd, section, reloc, shrink, link_info))
+  ((coff_backend_info (abfd)->_bfd_coff_reloc16_estimate)\
+   (abfd, section, reloc, shrink, link_info))
 
 #define bfd_coff_classify_symbol(abfd, sym)\
-        ((coff_backend_info (abfd)->_bfd_coff_classify_symbol)\
-         (abfd, sym))
+  ((coff_backend_info (abfd)->_bfd_coff_classify_symbol)\
+   (abfd, sym))
 
 #define bfd_coff_compute_section_file_positions(abfd)\
-        ((coff_backend_info (abfd)->_bfd_coff_compute_section_file_positions)\
-         (abfd))
+  ((coff_backend_info (abfd)->_bfd_coff_compute_section_file_positions)\
+   (abfd))
 
 #define bfd_coff_start_final_link(obfd, info)\
-        ((coff_backend_info (obfd)->_bfd_coff_start_final_link)\
-         (obfd, info))
+  ((coff_backend_info (obfd)->_bfd_coff_start_final_link)\
+   (obfd, info))
 #define bfd_coff_relocate_section(obfd,info,ibfd,o,con,rel,isyms,secs)\
-        ((coff_backend_info (ibfd)->_bfd_coff_relocate_section)\
-         (obfd, info, ibfd, o, con, rel, isyms, secs))
+  ((coff_backend_info (ibfd)->_bfd_coff_relocate_section)\
+   (obfd, info, ibfd, o, con, rel, isyms, secs))
 #define bfd_coff_rtype_to_howto(abfd, sec, rel, h, sym, addendp)\
-        ((coff_backend_info (abfd)->_bfd_coff_rtype_to_howto)\
-         (abfd, sec, rel, h, sym, addendp))
+  ((coff_backend_info (abfd)->_bfd_coff_rtype_to_howto)\
+   (abfd, sec, rel, h, sym, addendp))
 #define bfd_coff_adjust_symndx(obfd, info, ibfd, sec, rel, adjustedp)\
-        ((coff_backend_info (abfd)->_bfd_coff_adjust_symndx)\
-         (obfd, info, ibfd, sec, rel, adjustedp))
-#define bfd_coff_link_add_one_symbol(info,abfd,name,flags,section,value,string,cp,coll,hashp)\
-        ((coff_backend_info (abfd)->_bfd_coff_link_add_one_symbol)\
-         (info, abfd, name, flags, section, value, string, cp, coll, hashp))
+  ((coff_backend_info (abfd)->_bfd_coff_adjust_symndx)\
+   (obfd, info, ibfd, sec, rel, adjustedp))
+#define bfd_coff_link_add_one_symbol(info, abfd, name, flags, section,\
+                                     value, string, cp, coll, hashp)\
+  ((coff_backend_info (abfd)->_bfd_coff_link_add_one_symbol)\
+   (info, abfd, name, flags, section, value, string, cp, coll, hashp))
 
 #define bfd_coff_link_output_has_begun(a,p) \
-        ((coff_backend_info (a)->_bfd_coff_link_output_has_begun) (a,p))
+  ((coff_backend_info (a)->_bfd_coff_link_output_has_begun) (a,p))
 #define bfd_coff_final_link_postscript(a,p) \
-        ((coff_backend_info (a)->_bfd_coff_final_link_postscript) (a,p))
+  ((coff_backend_info (a)->_bfd_coff_final_link_postscript) (a,p))
 

@@ -99,6 +99,9 @@ END_RELOC_NUMBERS (R_MIPS_maxext)
    position independent code.  */
 #define EF_MIPS_CPIC		0x00000004
 
+/* ???  Unknown flag, set in IRIX 6's BSDdup2.o in libbsd.a.  */
+#define EF_MIPS_XGOT		0x00000008
+
 /* Code in file uses UCODE (obsolete) */
 #define EF_MIPS_UCODE		0x00000010
 
@@ -145,6 +148,9 @@ END_RELOC_NUMBERS (R_MIPS_maxext)
 /* -mips64 code.  */
 #define E_MIPS_ARCH_64          0x60000000
 
+/* -mips32r2 code.  */
+#define E_MIPS_ARCH_32R2        0x70000000
+
 /* The ABI of the file.  Also see EF_MIPS_ABI2 above. */
 #define EF_MIPS_ABI		0x0000F000
 
@@ -172,13 +178,14 @@ END_RELOC_NUMBERS (R_MIPS_maxext)
    the rest are open. */
 
 #define E_MIPS_MACH_3900	0x00810000
-
 #define E_MIPS_MACH_4010	0x00820000
 #define E_MIPS_MACH_4100	0x00830000
 #define E_MIPS_MACH_4650	0x00850000
+#define E_MIPS_MACH_4120	0x00870000
 #define E_MIPS_MACH_4111	0x00880000
-#define E_MIPS_MACH_MIPS32_4K	0x00890000
 #define E_MIPS_MACH_SB1         0x008a0000
+#define E_MIPS_MACH_5400	0x00910000
+#define E_MIPS_MACH_5500	0x00980000
 
 /* Processor specific section indices.  These sections do not actually
    exist.  Symbols with a st_shndx field corresponding to one of these

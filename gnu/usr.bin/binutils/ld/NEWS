@@ -1,5 +1,53 @@
 -*- text -*-
 
+* Added support for Xtensa architecture.
+
+* Added --with-sysroot configure switch to specify a target system root, for
+  linking against a target filesystem image.
+
+* Added --accept-unknown-linker-format to restore old linker behaviour (pre
+  2.14) of silently accepting and linking in any files in an unknown binary
+  file format.
+
+* Added --no-omagic to undo the effects of the -N option.
+
+* Support for Texas Instruments TMS320C4x and TMS320C3x series of
+  DSP's contributed by Michael Hayes and Svein E. Seldal.
+  
+* Added --with-lib-path configure switch to specify default value for
+  LIB_PATH.
+
+* ARM port to QNX operating system added by Graeme Peterson.
+
+* IP2K support added by Denis Chertykov.
+
+Changes in 2.13:
+
+* Support for the Fujitsu FRV architecture added by Red Hat. Models for FR400
+  and FR500 included.
+
+Changes in version 2.13:
+
+* DEC VAX ELF support, by Matt Thomas.
+
+Changes in version 2.12:
+
+* Support for Don Knuth's MMIX, by Hans-Peter Nilsson.
+
+* Support for the OpenRISC 32-bit embedded processor by OpenCores.
+
+* Support for -z nocopyreloc in the x86 ELF linker, which disables
+  production of copy relocs.  Warning: using this option may result in
+  non-sharable applications.
+
+* Support for -z combreloc in the ELF linker, which puts dynamic
+  relocations against the same symbol together, so that dynamic linker
+  can use an one-entry symbol lookup cache.
+
+* Support for ELF SHF_MERGE section merging, by Jakub Jelinek.
+
+Changes in version 2.11:
+
 * Support for AMD x86-64 architecture, by Jan Hubicka, SuSE Labs.
 
 * Support added for eliminating duplicate DWARF2 debug information by
@@ -26,6 +74,8 @@
 
 * Support for CRIS (Axis Communications ETRAX series).
 
+* Support for PDP-11 and 2.11BSD a.out format, by Lars Brinkhoff.
+
 Changes in version 2.10:
 
 * Added AT> to the linker script language to allow load-time allocation of 
@@ -49,7 +99,7 @@ Changes in version 2.10:
   wildcard file names.
 
 * Added -O option to optimize linker output (as of this writing, this only
-affects ELF shared library generation).
+  affects ELF shared library generation).
 
 * The -e option now accepts a number as well as a symbol name.
 

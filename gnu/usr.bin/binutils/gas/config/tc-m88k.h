@@ -1,8 +1,8 @@
 /* m88k.h -- Assembler for the Motorola 88000
    Contributed by Devon Bowen of Buffalo University
    and Torbjorn Granlund of the Swedish Institute of Computer Science.
-   Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 2000
-   Free Software Foundation, Inc.
+   Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 2000,
+   2002 Free Software Foundation, Inc.
 
 This file is part of GAS, the GNU Assembler.
 
@@ -98,7 +98,7 @@ struct reloc_info_m88k
 #ifndef max
 #define max(a,b)	(((a) > (b)) ? (a) : (b))
 #endif
-#define SUB_SEGMENT_ALIGN(SEG)	max (section_alignment[(int) (SEG)], 4)
+#define SUB_SEGMENT_ALIGN(SEG, FRCHAIN)	max (section_alignment[(int) (SEG)], 4)
 
 /* Fill in rs_align_code fragments.  */
 extern void m88k_handle_align PARAMS ((fragS *));

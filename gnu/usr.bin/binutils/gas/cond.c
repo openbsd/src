@@ -60,15 +60,19 @@ static char *get_mri_string PARAMS ((int, int *));
 
 static struct conditional_frame *current_cframe = NULL;
 
+/* Performs the .ifdef (test_defined == 1) and
+   the .ifndef (test_defined == 0) pseudo op.  */
+
 void
-s_ifdef (arg)
-     int arg;
+s_ifdef (test_defined)
+     int test_defined;
 {
   /* Points to name of symbol.  */
-  register char *name;
+  char *name;
   /* Points to symbol.  */
-  register symbolS *symbolP;
+  symbolS *symbolP;
   struct conditional_frame cframe;
+  char c;
 
   /* Leading whitespace is part of operand.  */
   SKIP_WHITESPACE ();
@@ -79,29 +83,43 @@ s_ifdef (arg)
       as_bad (_("invalid identifier for \".ifdef\""));
       obstack_1grow (&cond_obstack, 0);
       ignore_rest_of_line ();
+      return;
     }
+
+  c = get_symbol_end ();
+  symbolP = symbol_find (name);
+  *input_line_pointer = c;
+
+  initialize_cframe (&cframe);
+  
+  if (cframe.dead_tree)
+    cframe.ignoring = 1;
   else
     {
-      char c;
+      int is_defined;
 
-      c = get_symbol_end ();
-      symbolP = symbol_find (name);
-      *input_line_pointer = c;
+      /* Use the same definition of 'defined' as .equiv so that a symbol
+	 which has been referenced but not yet given a value/address is
+	 considered to be undefined.  */
+      is_defined =
+	symbolP != NULL
+	&& S_IS_DEFINED (symbolP)
+	&& S_GET_SEGMENT (symbolP) != reg_section;
 
-      initialize_cframe (&cframe);
-      cframe.ignoring = cframe.dead_tree || !((symbolP != 0) ^ arg);
-      current_cframe = ((struct conditional_frame *)
-			obstack_copy (&cond_obstack, &cframe,
-				      sizeof (cframe)));
+      cframe.ignoring = ! (test_defined ^ is_defined);
+    }
 
-      if (LISTING_SKIP_COND ()
-	  && cframe.ignoring
-	  && (cframe.previous_cframe == NULL
-	      || ! cframe.previous_cframe->ignoring))
-	listing_list (2);
+  current_cframe = ((struct conditional_frame *)
+		    obstack_copy (&cond_obstack, &cframe,
+				  sizeof (cframe)));
 
-      demand_empty_rest_of_line ();
-    }				/* if a valid identifyer name */
+  if (LISTING_SKIP_COND ()
+      && cframe.ignoring
+      && (cframe.previous_cframe == NULL
+	  || ! cframe.previous_cframe->ignoring))
+    listing_list (2);
+
+  demand_empty_rest_of_line ();
 }
 
 void
@@ -257,11 +275,11 @@ s_elseif (arg)
 {
   if (current_cframe == NULL)
     {
-      as_bad (_("\".elseif\" without matching \".if\" - ignored"));
+      as_bad (_("\".elseif\" without matching \".if\""));
     }
   else if (current_cframe->else_seen)
     {
-      as_bad (_("\".elseif\" after \".else\" - ignored"));
+      as_bad (_("\".elseif\" after \".else\""));
       as_bad_where (current_cframe->else_file_line.file,
 		    current_cframe->else_file_line.line,
 		    _("here is the previous \"else\""));
@@ -365,11 +383,11 @@ s_else (arg)
 {
   if (current_cframe == NULL)
     {
-      as_bad (_(".else without matching .if - ignored"));
+      as_bad (_("\".else\" without matching \".if\""));
     }
   else if (current_cframe->else_seen)
     {
-      as_bad (_("duplicate \"else\" - ignored"));
+      as_bad (_("duplicate \"else\""));
       as_bad_where (current_cframe->else_file_line.file,
 		    current_cframe->else_file_line.line,
 		    _("here is the previous \"else\""));

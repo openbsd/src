@@ -40,6 +40,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #ifndef O_BINARY
 #define O_BINARY 0
 #endif
+#include <stdbool.h>
 
 #include "xcoffsolib.h"
 
@@ -440,10 +441,10 @@ xfer_memory (memaddr, myaddr, len, write, target)
      int write;
      struct target_ops *target;
 {
-  boolean res;
+  bool res;
   struct section_table *p;
   CORE_ADDR nextsectaddr, memend;
-  boolean (*xfer_fn) PARAMS ((bfd *, sec_ptr, PTR, file_ptr, bfd_size_type));
+  bool (*xfer_fn) PARAMS ((bfd *, sec_ptr, PTR, file_ptr, bfd_size_type));
 
   if (len <= 0)
     abort();

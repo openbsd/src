@@ -1,26 +1,427 @@
-2001-06-11  Alan Modra  <amodra@bigpond.net.au>
+2003-05-13  Stephane Carrez  <stcarrez@nerim.fr>
 
-	Merge from mainline.
-	2001-05-23  Thiemo Seufer <seufer@csv.ica.uni-stuttgart.de>
+	* m68hc11.h (M68HC12_BANK_VIRT): Define to 0x010000
+
+2003-04-07  Michael Snyder  <msnyder@redhat.com>
+
+	* h8300.h (ldc/stc): Fix up src/dst swaps.
+
+2003-04-09  J. Grant  <jg-binutils@jguk.org>
+
+	* mips.h: Correct comment typo.
+
+2003-03-21  Martin Schwidefsky  <schwidefsky@de.ibm.com>
+
+	* s390.h (s390_opcode_arch_val): Rename to s390_opcode_mode_val.
+	(S390_OPCODE_ESAME): Rename to S390_OPCODE_ZARCH.
+	(s390_opcode): Remove architecture. Add modes and min_cpu.
+
+2003-03-17 D.Venkatasubramanian <dvenkat@noida.hcltech.com>
+
+	* h8300.h (O_SYS_CMDLINE): New pseudo opcode for command line
+	processing.
+
+2003-02-21  Noida D.Venkatasubramanian  <dvenkat@noida.hcltech.com>
+
+	* h8300.h (ldmac, stmac): Replace MACREG with MS32 and MD32.
+
+2003-01-23  Alan Modra  <amodra@bigpond.net.au>
+
+	* m68hc11.h (cpu6812s): Define.
+
+2003-01-07  Chris Demetriou  <cgd@broadcom.com>
+
+	* mips.h: Fix missing space in comment.
+	(INSN_ISA1, INSN_ISA2, INSN_ISA3, INSN_ISA4, INSN_ISA5)
+	(INSN_ISA32, INSN_ISA32R2, INSN_ISA64): Shift values right
+	by four bits.
+
+2003-01-02  Chris Demetriou  <cgd@broadcom.com>
+
+	* mips.h: Update copyright years to include 2002 (which had
+	been missed previously) and 2003.  Make comments about "+A",
+	"+B", and "+C" operand types more descriptive.
+
+2002-12-31  Chris Demetriou  <cgd@broadcom.com>
+
+	* mips.h: Note that the "+D" operand type name is now used.
+
+2002-12-30  Chris Demetriou  <cgd@broadcom.com>
+
+	* mips.h: Document "+" as the start of two-character operand
+	type names, and add new "K", "+A", "+B", and "+C" operand types.
+	(OP_MASK_INSMSB, OP_SH_INSMSB, OP_MASK_EXTMSB)
+	(OP_SH_EXTMSB, INSN_ISA32R2, ISA_MIPS32R2, CPU_MIPS32R2): New
+	defines.
+
+2002-12-24    Dmitry Diky <diwil@mail.ru>
+
+	* msp430.h: New file.  Defines msp430 opcodes.
+
+2002-12-30 D.Venkatasubramanian <dvenkat@noida.hcltech.com>
+
+	* h8300.h: Added some more pseudo opcodes for system call
+	processing.
+
+2002-12-19  Chris Demetriou  <cgd@broadcom.com>
+
+	* mips.h (OP_OP_COP0, OP_OP_COP1, OP_OP_COP2, OP_OP_COP3)
+	(OP_OP_LWC1, OP_OP_LWC2, OP_OP_LWC3, OP_OP_LDC1, OP_OP_LDC2)
+	(OP_OP_LDC3, OP_OP_SWC1, OP_OP_SWC2, OP_OP_SWC3, OP_OP_SDC1)
+	(OP_OP_SDC2, OP_OP_SDC3): Define.
+
+2002-12-16  Alan Modra  <amodra@bigpond.net.au>
+
+	* hppa.h (completer_chars): #if 0 out.
+
+	* ns32k.h (struct ns32k_opcode): Constify "name", "operands" and
+	"default_args".
+	(struct not_wot): Constify "args".
+	(struct not): Constify "name".
+	(numopcodes): Delete.
+	(endop): Delete.
+
+2002-12-13  Alan Modra  <amodra@bigpond.net.au>
+
+	* pj.h (pj_opc_info_t): Add union.
+
+2002-12-04  David Mosberger  <davidm@hpl.hp.com>
+
+	* ia64.h: Fix copyright message.
+	(IA64_OPND_AR_CSD): New operand kind.
+
+2002-12-03  Richard Henderson  <rth@redhat.com>
+
+	* ia64.h (enum ia64_opnd): Add IA64_OPND_LDXMOV.
+
+2002-12-03  Alan Modra  <amodra@bigpond.net.au>
+
+	* cgen.h (struct cgen_maybe_multi_ifield): Add "const PTR p" to union.
+	Constify "leaf" and "multi".
+
+2002-11-19  Klee Dienes  <kdienes@apple.com>
+
+	* h8300.h (h8_opcode): Remove 'noperands', 'idx', and 'size'
+	fields.
+	(h8_opcodes). Modify initializer and initializer macros to no
+	longer initialize the removed fields.
+	
+2002-11-19  Svein E. Seldal  <Svein.Seldal@solidas.com>
+
+	* tic4x.h (c4x_insts): Fixed LDHI constraint
+
+2002-11-18  Klee Dienes  <kdienes@apple.com>
+
+	* h8300.h (h8_opcode): Remove 'length' field.
+	(h8_opcodes): Mark as 'const' (both the declaration and
+	definition).  Modify initializer and initializer macros to no
+	longer initialize the length field.
+
+2002-11-18  Klee Dienes  <kdienes@apple.com>
+
+	* arc.h (arc_ext_opcodes): Declare as extern.
+	(arc_ext_operands): Declare as extern.
+	* i860.h (i860_opcodes): Declare as const.
+
+2002-11-18  Svein E. Seldal  <Svein.Seldal@solidas.com>
+
+	* tic4x.h: File reordering. Added enhanced opcodes.
+
+2002-11-16  Svein E. Seldal  <Svein.Seldal@solidas.com>
+
+	* tic4x.h: Major rewrite of entire file. Define instruction
+	  classes, and put each instruction into a class.
+
+2002-11-11  Svein E. Seldal  <Svein.Seldal@solidas.com>
+
+	* tic4x.h: Added new opcodes and corrected some bugs.  Add support
+	for new DSP types.
+
+2002-10-14  Alan Modra  <amodra@bigpond.net.au>
+
+	* cgen.h: Test __BFD_H_SEEN__ rather than BFD_VERSION_DATE.
+
+2002-09-30  Gavin Romig-Koch  <gavin@redhat.com>
+            Ken Raeburn  <raeburn@cygnus.com>
+            Aldy Hernandez  <aldyh@redhat.com>
+            Eric Christopher  <echristo@redhat.com>
+            Richard Sandiford  <rsandifo@redhat.com>
+
+	* mips.h: Update comment for new opcodes.
+	(OP_MASK_VECBYTE, OP_SH_VECBYTE): New.
+	(OP_MASK_VECALIGN, OP_SH_VECALIGN): New.
+	(INSN_4111, INSN_4120, INSN_5400, INSN_5500): New.
+	(CPU_VR4120, CPU_VR5400, CPU_VR5500): New.
+	(OPCODE_IS_MEMBER): Handle the new CPU_* values and INSN_* flags.
+	Don't match CPU_R4111 with INSN_4100.
+
+2002-08-19  Elena Zannoni <ezannoni@redhat.com>
+ 
+        From matthew green  <mrg@redhat.com>
+
+        * ppc.h (PPC_OPCODE_SPE): New opcode flag for Powerpc e500
+	instructions.
+        (PPC_OPCODE_ISEL, PPC_OPCODE_BRLOCK, PPC_OPCODE_PMR,
+	PPC_OPCODE_CACHELCK, PPC_OPCODE_RFMCI): New opcode flags for the
+	e500x2 Integer select, branch locking, performance monitor,
+	cache locking and machine check APUs, respectively.
+	(PPC_OPCODE_EFS): New opcode type for efs* instructions.
+	(PPC_OPCODE_CLASSIC): New opcode type for Classic PowerPC instructions.
+
+2002-08-13  Stephane Carrez  <stcarrez@nerim.fr>
+
+	* m68hc11.h (M6812_OP_PAGE): Define to identify call operand.
+	(M68HC12_BANK_VIRT, M68HC12_BANK_MASK, M68HC12_BANK_BASE,
+	M68HC12_BANK_SHIFT, M68HC12_BANK_PAGE_MASK): Define for 68HC12
+	memory banks.
+	(M6811_OC1M5, M6811_OC1M4, M6811_MODF): Fix value.
+
+2002-07-09  Thiemo Seufer <seufer@csv.ica.uni-stuttgart.de>
+
+	* mips.h (INSN_MIPS16): New define.
+
+2002-07-08  Alan Modra  <amodra@bigpond.net.au>
+
+	* i386.h: Remove IgnoreSize from movsx and movzx.
+
+2002-06-08  Alan Modra  <amodra@bigpond.net.au>
+
+	* a29k.h: Replace CONST with const.
+	(CONST): Don't define.
+	* convex.h: Replace CONST with const.
+	(CONST): Don't define.
+	* dlx.h: Replace CONST with const.
+	* or32.h (CONST): Don't define.
+
+2002-05-30  Chris G. Demetriou  <cgd@broadcom.com>
+
+	* mips.h (OP_SH_ALN, OP_MASK_ALN, OP_SH_VSEL, OP_MASK_VSEL)
+	(MDMX_FMTSEL_IMM_QH, MDMX_FMTSEL_IMM_OB, MDMX_FMTSEL_VEC_QH)
+	(MDMX_FMTSEL_VEC_OB, INSN_READ_MDMX_ACC, INSN_WRITE_MDMX_ACC)
+	(INSN_MDMX): New constants, for MDMX support.
+	(opcode character list): Add "O", "Q", "X", "Y", and "Z" for MDMX.
+
+2002-05-28  Kuang Hwa Lin <kuang@sbcglobal.net>
+
+	* dlx.h: New file.
+
+2002-05-25  Alan Modra  <amodra@bigpond.net.au>
+
+	* ia64.h: Use #include "" instead of <> for local header files.
+	* sparc.h: Likewise.
+
+2002-05-22  Thiemo Seufer <seufer@csv.ica.uni-stuttgart.de>
+
+	* mips.h: Add M_DROL, M_DROL_I, M_DROR, M_DROR_I macro cases.
+
+2002-05-17  Andrey Volkov  <avolkov@sources.redhat.com>
+
+        * h8300.h: Corrected defs of all control regs 
+	and eepmov instr.
+		      
+2002-04-11  Alan Modra  <amodra@bigpond.net.au>
+
+	* i386.h: Add intel mode cmpsd and movsd.
+	Put them before SSE2 insns, so that rep prefix works.
+
+2002-03-15  Chris G. Demetriou  <cgd@broadcom.com>
+
+	* mips.h (INSN_MIPS3D): New definition used to mark MIPS-3D
+	instructions.
+	(OPCODE_IS_MEMBER): Adjust comments to indicate that ASE bit masks
+	may be passed along with the ISA bitmask.
+
+2002-03-05  Paul Koning  <pkoning@equallogic.com>
+
+	* pdp11.h: Add format codes for float instruction formats.
+
+2002-02-25  Alan Modra  <amodra@bigpond.net.au>
+
+	* ppc.h (PPC_OPCODE_POWER4, PPC_OPCODE_NOPOWER4): Define.
+
+Mon Feb 18 17:31:48 CET 2002  Jan Hubicka  <jh@suse.cz>
+
+	* i386.h (push,pop): Fix Reg64 to WordReg to allow 16bit operands.
+
+Mon Feb 11 12:53:19 CET 2002  Jan Hubicka  <jh@suse.cz>
+
+	* i386.h (push,pop): Allow 16bit operands in 64bit mode.
+	(xchg): Fix.
+	(in, out): Disable 64bit operands.
+	(call, jmp): Avoid REX prefixes.
+	(jcxz): Prohibit in 64bit mode
+	(jrcxz, loop): Add 64bit variants.
+	(movq): Fix patterns.
+	(movmskps, pextrw, pinstrw): Add 64bit variants.
+
+2002-01-31  Ivan Guzvinec  <ivang@opencores.org>
+
+	* or32.h: New file.
+
+2002-01-22  Graydon Hoare  <graydon@redhat.com>
+
+	* cgen.h (CGEN_MAYBE_MULTI_IFLD): New structure.
+	(CGEN_OPERAND): Add CGEN_MAYBE_MULTI_IFLD field.
+
+2002-01-21  Thomas Klausner <wiz@danbala.ifoer.tuwien.ac.at>
+
+	* h8300.h: Comment typo fix.
+
+2002-01-03  matthew green  <mrg@redhat.com>
+
+	* ppc.h (PPC_OPCODE_BOOKE): BookE is not Motorola specific.
+	(PPC_OPCODE_BOOKE64): Likewise.
+
+Mon Dec 31 16:45:41 2001  Jeffrey A Law  (law@cygnus.com)
+
+	* hppa.h (call, ret): Move to end of table.
+	(addb, addib): PA2.0 variants should have been PA2.0W.
+	(ldw, ldh, ldb, stw, sth, stb, stwa): Reorder to keep disassembler
+	happy.
+	(fldw, fldd, fstw, fstd, bb): Likewise.
+	(short loads/stores): Tweak format specifier slightly to keep
+	disassembler happy.
+	(indexed loads/stores): Likewise.
+	(absolute loads/stores): Likewise.
+
+2001-12-04  Alexandre Oliva  <aoliva@redhat.com>
+
+	* d10v.h (OPERAND_NOSP): New macro.
+
+2001-11-29  Alexandre Oliva  <aoliva@redhat.com>
+
+	* d10v.h (OPERAND_SP): New macro.
+
+2001-11-15  Alan Modra  <amodra@bigpond.net.au>
+
+	* ppc.h (struct powerpc_operand <insert, extract>): Add dialect param.
+
+2001-11-11  Timothy Wall  <twall@alum.mit.edu>
+
+	* tic54x.h: Revise opcode layout; don't really need a separate
+	structure for parallel opcodes.
+
+2001-11-13  Zack Weinberg <zack@codesourcery.com>
+	    Alan Modra  <amodra@bigpond.net.au>
+
+	* i386.h (i386_optab): Add entries for "sldr", "smsw" and "str" to
+	accept WordReg.
+
+2001-11-04  Chris Demetriou  <cgd@broadcom.com>
+
+	* mips.h (OPCODE_IS_MEMBER): Remove extra space.
+
+2001-10-30  Hans-Peter Nilsson  <hp@bitrange.com>
+
+	* mmix.h: New file.
+
+2001-10-18  Chris Demetriou  <cgd@broadcom.com>
+
+	* mips.h (OPCODE_IS_MEMBER): Add a no-op term to the end
+	of the expression, to make source code merging easier.
+
+2001-10-17  Chris Demetriou  <cgd@broadcom.com>
+
+	* mips.h: Sort coprocessor instruction argument characters
+	in comment, add a few more words of description for "H".
+
+2001-10-17  Chris Demetriou  <cgd@broadcom.com>
+
+	* mips.h (INSN_SB1): New cpu-specific instruction bit.
+	(OPCODE_IS_MEMBER): Allow instructions matching INSN_SB1
+	if cpu is CPU_SB1.
+
+2001-10-17  matthew green  <mrg@redhat.com>
+
+	* ppc.h (PPC_OPCODE_BOOKE64): Fix typo.
+
+2001-10-12  matthew green  <mrg@redhat.com>
+
+	* ppc.h (PPC_OPCODE_BOOKE, PPC_OPCODE_BOOKE64, PPC_OPCODE_403): New
+	opcode flags for BookE 32-bit, BookE 64-bit and PowerPC 403
+	instructions, respectively.
+
+2001-09-27  Nick Clifton  <nickc@cambridge.redhat.com>
+
+	* v850.h: Remove spurious comment.
+
+2001-09-21  Nick Clifton  <nickc@cambridge.redhat.com>
+
+	* h8300.h: Fix compile time warning messages
+
+2001-09-04  Richard Henderson  <rth@redhat.com>
+
+	* alpha.h (struct alpha_operand): Pack elements into bitfields.
+
+2001-08-31  Eric Christopher  <echristo@redhat.com>
+
+	* mips.h: Remove CPU_MIPS32_4K.
+
+2001-08-27  Torbjorn Granlund  <tege@swox.com>
+
+	* ppc.h (PPC_OPERAND_DS): Define.
+
+2001-08-25  Andreas Jaeger  <aj@suse.de>
+
+	* d30v.h: Fix declaration of reg_name_cnt.
+
+	* d10v.h: Fix declaration of d10v_reg_name_cnt.
+
+	* arc.h: Add prototypes from opcodes/arc-opc.c.
+
+2001-08-16  Thiemo Seufer <seufer@csv.ica.uni-stuttgart.de>
+
+	* mips.h (INSN_10000): Define.
+	(OPCODE_IS_MEMBER): Check for INSN_10000.
+
+2001-08-10  Alan Modra  <amodra@one.net.au>
+
+	* ppc.h: Revert 2001-08-08.
+
+2001-08-10  Richard Sandiford  <rsandifo@redhat.com>
+
+	* mips.h (INSN_GP32): Remove.
+	(OPCODE_IS_MEMBER): Remove gp32 parameter.
+	(M_MOVE): New macro identifier.
+
+2001-08-08  Alan Modra  <amodra@one.net.au>
+
+	1999-10-25  Torbjorn Granlund  <tege@swox.com>
+	* ppc.h (struct powerpc_operand): New field `reloc'.
+
+2001-08-01  Aldy Hernandez  <aldyh@redhat.com>
+
+	* mips.h (INSN_ISA_MASK): Nuke bits 12-15.
+
+2001-07-12  Jeff Johnston  <jjohnstn@redhat.com>
+
+	* cgen.h (CGEN_INSN): Add regex support.
+	(build_insn_regex): Declare.
+
+2001-07-11  Frank Ch. Eigler  <fche@redhat.com>
+
+	* cgen.h (CGEN_MACH): Add insn_chunk_bitsize field.
+	(cgen_cpu_desc): Ditto.
+
+2001-07-07  Ben Elliston  <bje@redhat.com>
+
+	* m88k.h: Clean up and reformat. Remove unused code.
+
+2001-06-14  Geoffrey Keating  <geoffk@redhat.com>
+
+	* cgen.h (cgen_keyword): Add nonalpha_chars field.
+
+2001-05-23  Thiemo Seufer <seufer@csv.ica.uni-stuttgart.de>
+
 	* mips.h (CPU_R12000): Define.
 
-	2001-05-15  Thiemo Seufer <seufer@csv.ica.uni-stuttgart.de>
+2001-05-23  John Healy  <jhealy@redhat.com>
+
+	* cgen.h: Increased CGEN_MAX_SYNTAX_ELEMENTS to 48.
+
+2001-05-15  Thiemo Seufer <seufer@csv.ica.uni-stuttgart.de>
+
 	* mips.h (INSN_ISA_MASK): Define.
-
-	2001-03-21  Kazu Hirata  <kazu@hxi.com>
-	* h8300.h: Fix formatting.
-
-	2001-02-28  Igor Shevlyakov  <igor@windriver.com>
-	* m68k.h: new defines for Coldfire V4. Update mcf to know
-	about mcf5407.
-
-	2001-02-10  Nick Clifton  <nickc@redhat.com>
-	* mips.h: Remove extraneous whitespace.  Formating change to allow
-	for future contribution.
-
-2001-06-07  Alan Modra  <amodra@bigpond.net.au>
-
-	* Many files: Update copyright notices.
 
 2001-05-12  Alan Modra  <amodra@one.net.au>
 
@@ -33,10 +434,23 @@
 	* i386.h (i386_optab): Move InvMem to first operand of pmovmskb
 	and pextrw to swap reg/rm assignments.
 
+2001-04-05  Hans-Peter Nilsson  <hp@axis.com>
+
+	* cris.h (enum cris_insn_version_usage): Correct comment for
+	cris_ver_v3p.
+
 2001-03-24  Alan Modra  <alan@linuxcare.com.au>
 
 	* i386.h (i386_optab): Correct entry for "movntdq".  Add "punpcklqdq".
 	Add InvMem to first operand of "maskmovdqu".
+
+2001-03-22  Hans-Peter Nilsson  <hp@axis.com>
+
+	* cris.h (ADD_PC_INCR_OPCODE): New macro.
+
+2001-03-21  Kazu Hirata  <kazu@hxi.com>
+
+	* h8300.h: Fix formatting.
 
 2001-03-22  Alan Modra  <alan@linuxcare.com.au>
 
@@ -46,10 +460,34 @@
 
 	* i386.h (REGNAM_AL, REGNAM_AX, REGNAM_EAX): Define.
 
-Mon Feb 12 17:39:31 CET 2001  Jan Hubicka  <jh@suse.cz>
+2001-02-28  Igor Shevlyakov  <igor@windriver.com>
+
+	* m68k.h: new defines for Coldfire V4. Update mcf to know
+	about mcf5407.
+
+2001-02-18  lars brinkhoff  <lars@nocrew.org>
+
+	* pdp11.h: New file.
+
+2001-02-12  Jan Hubicka  <jh@suse.cz>
 
 	* i386.h (i386_optab): SSE integer converison instructions have
 	64bit versions on x86-64.
+
+2001-02-10  Nick Clifton  <nickc@redhat.com>
+
+	* mips.h: Remove extraneous whitespace.  Formating change to allow
+	for future contribution.
+
+2001-02-09  Martin Schwidefsky  <schwidefsky@de.ibm.com>
+
+	* s390.h: New file.
+
+2001-02-02  Patrick Macdonald  <patrickm@redhat.com>
+
+        * cgen.h (CGEN_SYNTAX_CHAR_TYPE): Typedef as unsigned short.
+        (CGEN_MAX_SYNTAX_ELEMENTS): Rename from CGEN_MAX_SYNTAX_BYTES.
+        (CGEN_SYNTAX): Define using CGEN_MAX_SYNTAX_ELEMENTS.
 
 2001-01-24  Karsten Keil  <kkeil@suse.de>
 
@@ -62,7 +500,7 @@ Mon Feb 12 17:39:31 CET 2001  Jan Hubicka  <jh@suse.cz>
 	(pa_opcodes): Add entries for missing wide mode ldi,ldo,ldw,stw.
 	Remove duplicate "ldw j(s,b),x".  Sort some entries.
 
-Sat Jan 13 09:56:32 MET 2001  Jan Hubicka  <jh@suse.cz>
+2001-01-13  Jan Hubicka  <jh@suse.cz>
 
 	* i386.h (i386_optab): Fix pusha and ret templates.
 
@@ -117,7 +555,7 @@ Sat Jan 13 09:56:32 MET 2001  Jan Hubicka  <jh@suse.cz>
 
 	* i386.h (i386_optab): Replace "Imm" with "EncImm".
 	(i386_regtab): Add flags field.
-	
+
 2000-12-12  Nick Clifton  <nickc@redhat.com>
 
 	* mips.h: Fix formatting.
@@ -142,7 +580,7 @@ Sat Jan 13 09:56:32 MET 2001  Jan Hubicka  <jh@suse.cz>
         (ISA_UNKNOWN): New constant to indicate unknown ISA.
         (ISA_MIPS1, ISA_MIPS2, ISA_MIPS3, ISA_MIPS4, ISA_MIPS5,
         ISA_MIPS32): New constants, defined to be the mask of INSN_*
-        constants available at that ISA level. 
+        constants available at that ISA level.
         (CPU_UNKNOWN): New constant to indicate unknown CPU.
         (CPU_4K, CPU_MIPS32_4K): Rename the former to the latter,
         define it with a unique value.
@@ -150,7 +588,7 @@ Sat Jan 13 09:56:32 MET 2001  Jan Hubicka  <jh@suse.cz>
         constant meanings.
 
         * mips.h (INSN_ISA64, ISA_MIPS5, ISA_MIPS64): New
-        definitions. 
+        definitions.
 
         * mips.h (CPU_SB1): New constant.
 
@@ -164,21 +602,21 @@ Sat Jan 13 09:56:32 MET 2001  Jan Hubicka  <jh@suse.cz>
 	* ia64.h (enum ia64_dependency_semantics): Add IA64_DVS_STOP.
 
 2000-09-13  Anders Norlander  <anorland@acc.umu.se>
-	
+
 	* mips.h: Use defines instead of hard-coded processor numbers.
 	(CPU_R2000, CPU_R3000, CPU_R3900, CPU_R4000, CPU_R4010,
-	CPU_VR4100, CPU_R4111, CPU_R4300, CPU_R4400, CPU_R4600, CPU_R4650, 
+	CPU_VR4100, CPU_R4111, CPU_R4300, CPU_R4400, CPU_R4600, CPU_R4650,
 	CPU_R5000, CPU_R6000, CPU_R8000, CPU_R10000, CPU_MIPS32, CPU_4K,
 	CPU_4KC, CPU_4KM, CPU_4KP): Define..
 	(OPCODE_IS_MEMBER): Use new defines.
- 	(OP_MASK_SEL, OP_SH_SEL): Define.
+	(OP_MASK_SEL, OP_SH_SEL): Define.
 	(OP_MASK_CODE20, OP_SH_CODE20): Define.
- 	Add 'P' to used characters.
- 	Use 'H' for coprocessor select field.
+	Add 'P' to used characters.
+	Use 'H' for coprocessor select field.
 	Use 'm' for 20 bit breakpoint code.
- 	Document new arg characters and add to used characters.
- 	(INSN_MIPS32): New define for MIPS32 extensions.
- 	(OPCODE_IS_MEMBER): Recognize MIPS32 instructions.
+	Document new arg characters and add to used characters.
+	(INSN_MIPS32): New define for MIPS32 extensions.
+	(OPCODE_IS_MEMBER): Recognize MIPS32 instructions.
 
 2000-09-05  Alan Modra  <alan@linuxcare.com.au>
 
@@ -358,7 +796,7 @@ Fri Apr 21 13:20:53 2000  Richard Henderson  <rth@cygnus.com>
 	* cgen.h (CGEN_INSN_MACH_HAS_P): New macro.
 	(CGEN_CPU_TABLE): flags: new field.
 	Add prototypes for new functions.
-	
+
 2000-02-24  Alan Modra  <alan@spri.levels.unisa.edu.au>
 
 	* i386.h: Add some more UNIXWARE_COMPAT comments.
@@ -476,7 +914,7 @@ Sun Sep 19 10:40:59 1999  Jeffrey A Law  (law@cygnus.com)
 Sat Sep 18 11:41:16 1999  Jeffrey A Law  (law@cygnus.com)
 
 	* hppa.h (pa_opcodes): Use 'fX' for first register operand
-	in xmpyu.  
+	in xmpyu.
 
 	* hppa.h (pa_opcodes): Fix mask for probe and probei.
 
@@ -562,7 +1000,7 @@ Wed Jul 28 02:04:24 1999  Jerry Quinn <jquinn@nortelnetworks.com>
 
 	* hppa.h (pa_opcodes): Mark all PA2.0 opcodes with FLAG_STRICT.
 
-	* hppa.h (pa_opcodes):  Change xmpyu, fmpyfadd, 
+	* hppa.h (pa_opcodes):  Change xmpyu, fmpyfadd,
 	and fmpynfadd to use 'J' and 'K' instead of 'E' and 'X'.
 
 1999-07-13  Alan Modra  <alan@spri.levels.unisa.edu.au>
@@ -590,7 +1028,7 @@ Fri Jun 25 04:22:04 1999  Jerry Quinn <jquinn@nortelnetworks.com>
 Fri May 28 15:26:11 1999  Jeffrey A Law  (law@cygnus.com)
 
 	* hppa.h (pa_opcodes): Move integer arithmetic instructions after
-	integer logical instructions.  
+	integer logical instructions.
 
 1999-05-28  Linus Nordberg  <linus.nordberg@canit.se>
 
@@ -607,7 +1045,7 @@ Thu May 27 04:13:54 1999  Joel Sherrill (joel@OARcorp.com
 
 Wed May 26 16:57:44 1999  Jeffrey A Law  (law@cygnus.com)
 
-	* hppa.h (pa_opcodes): Add second entry for "comb", "comib", 
+	* hppa.h (pa_opcodes): Add second entry for "comb", "comib",
 	"addb", and "addib" to be used by the disassembler.
 
 1999-05-12  Alan Modra  <alan@apri.levels.unisa.edu.au>
@@ -718,7 +1156,7 @@ Sat Feb 13 14:13:44 1999  Richard Henderson  <rth@cygnus.com>
 	(CGEN_INSN_ATTR): New type.
 
 Mon Feb  1 21:09:14 1999  Catherine Moore  <clm@cygnus.com>
- 
+
         * i386.h (d_Suf, x_Suf, sld_Suf, sldx_Suf, bwld_Suf):  Define.
         (x_FP, d_FP, dls_FP, sldx_FP):  Define.
         Change *Suf definitions to include x and d suffixes.
@@ -741,7 +1179,7 @@ Mon Feb  1 21:09:14 1999  Catherine Moore  <clm@cygnus.com>
 	* cgen.h (enum cgen_mode): Add CGEN_MODE_TARGET_MAX, CGEN_MODE_INT,
 	CGEN_MODE_UINT.
 
-Sat Jan 16 01:29:25 1999  Jeffrey A Law  (law@cygnus.com)
+1999-01-16  Jeffrey A Law  (law@cygnus.com)
 
 	* hppa.h (bv): Fix mask.
 
@@ -759,16 +1197,16 @@ Sat Jan 16 01:29:25 1999  Jeffrey A Law  (law@cygnus.com)
 Wed Dec  9 10:38:48 1998  David Taylor  <taylor@texas.cygnus.com>
 
 	The following is part of a change made by Edith Epstein
- 	<eepstein@sophia.cygnus.com> as part of a project to merge in
- 	changes by HP; HP did not create ChangeLog entries.
+	<eepstein@sophia.cygnus.com> as part of a project to merge in
+	changes by HP; HP did not create ChangeLog entries.
 
 	* hppa.h (completer_chars): list of chars to not put a space
- 	after.
+	after.
 
 Sun Dec  6 13:21:34 1998  Ian Lance Taylor  <ian@cygnus.com>
 
 	* i386.h (i386_optab): Permit w suffix on processor control and
- 	status word instructions.
+	status word instructions.
 
 1998-11-30  Doug Evans  <devans@casey.cygnus.com>
 
@@ -829,7 +1267,7 @@ Fri Oct  9 13:38:13 1998  Doug Evans  <devans@seba.cygnus.com>
 Mon Oct  5 00:21:07 1998  Jeffrey A Law  (law@cygnus.com)
 
 	* hppa.h: Add "fid".
-	
+
 Sun Oct  4 21:00:00 1998  Alan Modra  <alan@spri.levels.unisa.edu.au>
 
 	From Robert Andrew Dale <rob@nb.net>
@@ -883,7 +1321,7 @@ Fri Jun 26 11:09:06 1998  Jeffrey A Law  (law@cygnus.com)
 
 	* mn10300.h: Add "machine" field for instructions.
 	(MN103, AM30): Define machine types.
-	
+
 Fri Jun 19 16:09:09 1998  Alan Modra  <alan@spri.levels.unisa.edu.au>
 
 	* i386.h: Use FP, not sl_Suf, for fxsave and fxrstor.
@@ -1488,9 +1926,9 @@ Mon Nov  4 12:52:48 1996  Jeffrey A Law  (law@cygnus.com)
 Fri Nov  1 10:31:02 1996  Richard Henderson  <rth@tamu.edu>
 
 	* alpha.h: Don't include "bfd.h"; private relocation types are now
- 	negative to minimize problems with shared libraries.  Organize
- 	instruction subsets by AMASK extensions and PALcode
- 	implementation.
+	negative to minimize problems with shared libraries.  Organize
+	instruction subsets by AMASK extensions and PALcode
+	implementation.
 	(struct alpha_operand): Move flags slot for better packing.
 
 Tue Oct 29 12:19:10 1996  Jeffrey A Law  (law@cygnus.com)
@@ -1543,9 +1981,9 @@ Fri Aug 23 10:39:08 1996  Jeffrey A Law  (law@cygnus.com)
 Thu Aug 22 16:51:25 1996  J.T. Conklin  <jtc@rtl.cygnus.com>
 
 	* v850.h (v850_operands): Add insert and extract fields, pointers
- 	to functions used to handle unusual operand encoding.
+	to functions used to handle unusual operand encoding.
 	(V850_OPERAND_REG, V850_OPERAND_SRG, V850_OPERAND_CC,
- 	V850_OPERAND_SIGNED): Defined.
+	V850_OPERAND_SIGNED): Defined.
 
 Wed Aug 21 17:45:10 1996  J.T. Conklin  <jtc@rtl.cygnus.com>
 
@@ -1559,11 +1997,11 @@ Tue Aug 20 14:52:02 1996  J.T. Conklin  <jtc@rtl.cygnus.com>
 Fri Aug 16 14:44:15 1996  James G. Smith  <jsmith@cygnus.co.uk>
 
 	* mips.h (OP_SH_LOCC, OP_SH_HICC, OP_MASK_CC, OP_SH_COP1NORM,
- 	OP_MASK_COP1NORM, OP_SH_COP1SPEC, OP_MASK_COP1SPEC,
- 	OP_MASK_COP1SCLR, OP_MASK_COP1CMP, OP_SH_COP1CMP, OP_SH_FORMAT,
- 	OP_MASK_FORMAT, OP_SH_TRUE, OP_MASK_TRUE, OP_SH_GE, OP_MASK_GE,
- 	OP_SH_UNSIGNED, OP_MASK_UNSIGNED, OP_SH_HINT, OP_MASK_HINT):
- 	Defined.
+	OP_MASK_COP1NORM, OP_SH_COP1SPEC, OP_MASK_COP1SPEC,
+	OP_MASK_COP1SCLR, OP_MASK_COP1CMP, OP_SH_COP1CMP, OP_SH_FORMAT,
+	OP_MASK_FORMAT, OP_SH_TRUE, OP_MASK_TRUE, OP_SH_GE, OP_MASK_GE,
+	OP_SH_UNSIGNED, OP_MASK_UNSIGNED, OP_SH_HINT, OP_MASK_HINT):
+	Defined.
 
 Fri Aug 16 00:15:15 1996  Jeffrey A Law  (law@cygnus.com)
 
@@ -1573,7 +2011,7 @@ Fri Aug 16 00:15:15 1996  Jeffrey A Law  (law@cygnus.com)
 Thu Aug 15 13:11:46 1996  Martin M. Hunt  <hunt@pizza.cygnus.com>
 
 	* d10v.h: Add some additional defines to support the
- 	assembler in determining which operations can be done in parallel.
+	assembler in determining which operations can be done in parallel.
 
 Tue Aug  6 11:13:22 1996  Jeffrey A Law  (law@cygnus.com)
 
@@ -1589,7 +2027,7 @@ Fri Jul 26 11:47:10 1996  Martin M. Hunt  <hunt@pizza.cygnus.com>
 Thu Jul 25 12:06:22 1996  Martin M. Hunt  <hunt@pizza.cygnus.com>
 
 	* d10v.h: Changes for divs, parallel-only instructions, and
- 	signed numbers.
+	signed numbers.
 
 Mon Jul 22 11:21:15 1996  Martin M. Hunt  <hunt@pizza.cygnus.com>
 
@@ -1611,7 +2049,7 @@ Thu Jul 11 12:09:15 1996  Jeffrey A Law  (law@cygnus.com)
 
 Wed Jul  3 14:30:12 1996  J.T. Conklin  <jtc@rtl.cygnus.com>
 
- 	* m68k.h (mcf5200): New macro.
+	* m68k.h (mcf5200): New macro.
 	Document names of coldfire control registers.
 
 Tue Jul  2 23:05:45 1996  Jeffrey A Law  (law@cygnus.com)
@@ -1761,7 +2199,7 @@ Tue Oct 24 10:49:10 1995  Jeffrey A Law  (law@cygnus.com)
 Mon Oct 23 11:09:16 1995  James G. Smith  <jsmith@pasanda.cygnus.co.uk>
 
 	* mips.h: Added INSN_4100 flag to mark NEC VR4100 specific
- 	instructions.
+	instructions.
 
 Mon Oct 16 10:28:15 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
 

@@ -2,14 +2,16 @@
 # AIX always uses shared libraries.  The section VMA appears to be
 # unimportant.  The native linker aligns the sections on boundaries
 # specified by the -H option.
+
 cat <<EOF
-OUTPUT_FORMAT("${OUTPUT_FORMAT}")
 OUTPUT_ARCH(${ARCH})
 ${RELOCATING+${LIB_SEARCH_DIRS}}
 ENTRY(__start)
 SECTIONS
 {
   .pad 0 : { *(.pad) }
+
+  . = 0x10000000;
   .text ${RELOCATING-0} : {
     ${RELOCATING+PROVIDE (_text = .);}
     *(.text)
@@ -22,11 +24,14 @@ SECTIONS
     *(.tb)
     ${RELOCATING+PROVIDE (_etext = .);}
   }
-  .data 0 : {
+  . = ALIGN (0x10000000);
+  .data . : {
     ${RELOCATING+PROVIDE (_data = .);}
     *(.data)
     *(.rw)
     *(.sv)
+    *(.sv64)
+    *(.sv3264)
     *(.ua)
     . = ALIGN(4);
     ${CONSTRUCTING+CONSTRUCTORS}
@@ -45,10 +50,12 @@ SECTIONS
     ${RELOCATING+PROVIDE (_end = .);}
     ${RELOCATING+PROVIDE (end = .);}
   }
-  .loader 0 : {
+
+  .loader : {
     *(.loader)
   }
-  .debug 0 : {
+  
+  .debug : {
     *(.debug)
   }
 }

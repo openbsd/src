@@ -1,6 +1,6 @@
 /* read.h - of read.c
    Copyright 1986, 1990, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000
+   2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -105,6 +105,7 @@ extern void aout_process_stab PARAMS ((int, const char *, int, int, int));
 extern char *demand_copy_C_string PARAMS ((int *len_pointer));
 extern char get_absolute_expression_and_terminator
   PARAMS ((long *val_pointer));
+extern offsetT get_absolute_expr PARAMS ((expressionS *));
 extern offsetT get_absolute_expression PARAMS ((void));
 extern unsigned int next_char_of_string PARAMS ((void));
 extern void s_mri_sect PARAMS ((char *));
@@ -137,8 +138,10 @@ extern void generate_lineno_debug PARAMS ((void));
 extern void s_abort PARAMS ((int)) ATTRIBUTE_NORETURN;
 extern void s_align_bytes PARAMS ((int arg));
 extern void s_align_ptwo PARAMS ((int));
+extern void s_app_file_string PARAMS ((char *));
 extern void s_app_file PARAMS ((int));
 extern void s_app_line PARAMS ((int));
+extern void s_bad_endr PARAMS ((int));
 extern void s_comm PARAMS ((int));
 extern void s_data PARAMS ((int));
 extern void s_desc PARAMS ((int));
@@ -181,3 +184,4 @@ extern void s_text PARAMS ((int));
 extern void stringer PARAMS ((int append_zero));
 extern void s_xstab PARAMS ((int what));
 extern void s_rva PARAMS ((int));
+extern void s_incbin PARAMS ((int));

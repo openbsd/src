@@ -1,6 +1,6 @@
 /* listing.c - mainting assembly listings
    Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001
+   2001, 2002
    Free Software Foundation, Inc.
 
 This file is part of GAS, the GNU Assembler.
@@ -91,10 +91,9 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
                         on a line
 */
 
-#include <ctype.h>
-
 #include "as.h"
-#include <obstack.h>
+#include "obstack.h"
+#include "safe-ctype.h"
 #include "input-file.h"
 #include "subsegs.h"
 
@@ -270,8 +269,7 @@ file_info (file_name)
   p = (file_info_type *) xmalloc (sizeof (file_info_type));
   p->next = file_info_head;
   file_info_head = p;
-  p->filename = xmalloc ((unsigned long) strlen (file_name) + 1);
-  strcpy (p->filename, file_name);
+  p->filename = xstrdup (file_name);
   p->pos = 0;
   p->linenum = 0;
   p->at_end = 0;
@@ -370,7 +368,7 @@ listing_newline (ps)
 		  unsigned char c = *src++;
 
 		  /* Omit control characters in the listing.  */
-		  if (isascii (c) && ! iscntrl (c))
+		  if (!ISCNTRL (c))
 		    *dest++ = c;
 		}
 
@@ -485,7 +483,7 @@ buffer_line (file, line, size)
 	}
 
       last_open_file_info = file;
-      last_open_file = fopen (file->filename, "r");
+      last_open_file = fopen (file->filename, FOPEN_RT);
       if (last_open_file == NULL)
 	{
 	  file->at_end = 1;
@@ -514,9 +512,12 @@ buffer_line (file, line, size)
   if (c == EOF)
     {
       file->at_end = 1;
-      *p++ = '.';
-      *p++ = '.';
-      *p++ = '.';
+      if (count + 2 < size)
+	{
+	  *p++ = '.';
+	  *p++ = '.';
+	  *p++ = '.';
+	}
     }
   file->linenum++;
   *p++ = 0;
@@ -614,36 +615,36 @@ calc_hex (list)
 	  data_buffer_size += 2;
 	  octet_in_frag++;
 	}
-    if (frag_ptr->fr_type == rs_fill)
-      {
-	unsigned int var_rep_max = octet_in_frag;
-	unsigned int var_rep_idx = octet_in_frag;
+      if (frag_ptr->fr_type == rs_fill)
+	{
+	  unsigned int var_rep_max = octet_in_frag;
+	  unsigned int var_rep_idx = octet_in_frag;
 
-	/* Print as many bytes from the variable part as is sensible.  */
-	while (((offsetT) octet_in_frag
-		< (frag_ptr->fr_fix + frag_ptr->fr_var * frag_ptr->fr_offset))
-	       && data_buffer_size < MAX_BYTES - 3)
-	  {
-	    if (address == ~(unsigned int) 0)
-	      {
-		address = frag_ptr->fr_address / OCTETS_PER_BYTE;
-	      }
-	    sprintf (data_buffer + data_buffer_size,
-		     "%02X",
-		     (frag_ptr->fr_literal[var_rep_idx]) & 0xff);
+	  /* Print as many bytes from the variable part as is sensible.  */
+	  while (((offsetT) octet_in_frag
+		  < (frag_ptr->fr_fix + frag_ptr->fr_var * frag_ptr->fr_offset))
+		 && data_buffer_size < MAX_BYTES - 3)
+	    {
+	      if (address == ~(unsigned int) 0)
+		{
+		  address = frag_ptr->fr_address / OCTETS_PER_BYTE;
+		}
+	      sprintf (data_buffer + data_buffer_size,
+		       "%02X",
+		       (frag_ptr->fr_literal[var_rep_idx]) & 0xff);
 #if 0
-	    data_buffer[data_buffer_size++] = '*';
-	    data_buffer[data_buffer_size++] = '*';
+	      data_buffer[data_buffer_size++] = '*';
+	      data_buffer[data_buffer_size++] = '*';
 #endif
-	    data_buffer_size += 2;
+	      data_buffer_size += 2;
 
-	    var_rep_idx++;
-	    octet_in_frag++;
+	      var_rep_idx++;
+	      octet_in_frag++;
 
-	    if ((offsetT) var_rep_idx >= frag_ptr->fr_fix + frag_ptr->fr_var)
-	      var_rep_idx = var_rep_max;
-	  }
-      }
+	      if ((offsetT) var_rep_idx >= frag_ptr->fr_fix + frag_ptr->fr_var)
+		var_rep_idx = var_rep_max;
+	    }
+	}
 
       frag_ptr = frag_ptr->fr_next;
     }
@@ -908,7 +909,7 @@ debugging_pseudo (list, line)
   was_debug = in_debug;
   in_debug = 0;
 
-  while (isspace ((unsigned char) *line))
+  while (ISSPACE (*line))
     line++;
 
   if (*line != '.')
@@ -1061,7 +1062,7 @@ listing_listing (name)
 	      if (!((listing & LISTING_NODEBUG)
 		    && debugging_pseudo (list, list->line_contents)))
 		{
- 		  print_lines (list,
+		  print_lines (list,
 			       list->file->linenum == 0 ? list->line : list->file->linenum,
 			       list->line_contents, calc_hex (list));
 		}
@@ -1121,7 +1122,7 @@ listing_print (name)
     }
   else
     {
-      list_file = fopen (name, "w");
+      list_file = fopen (name, FOPEN_WT);
       if (list_file != NULL)
 	using_stdout = 0;
       else
@@ -1295,7 +1296,7 @@ listing_title (depth)
 	}
       else if (*input_line_pointer == '\n')
 	{
-	  as_bad (_("New line in title"));
+	  as_bad (_("new line in title"));
 	  demand_empty_rest_of_line ();
 	  return;
 	}

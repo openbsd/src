@@ -1,5 +1,5 @@
 /* BFD back-end for HP/UX core files.
-   Copyright 1993, 1994, 1996, 1998, 1999, 2001
+   Copyright 1993, 1994, 1996, 1998, 1999, 2001, 2002
    Free Software Foundation, Inc.
    Written by Stu Grossman, Cygnus Support.
    Converted to back-end form by Ian Lance Taylor, Cygnus SUpport
@@ -100,12 +100,24 @@ struct hpux_core_struct
 #define core_kernel_thread_id(bfd) (core_hdr(bfd)->lwpid)
 #define core_user_thread_id(bfd) (core_hdr(bfd)->user_tid)
 
-static void swap_abort PARAMS ((void));
+static asection *make_bfd_asection
+  PARAMS ((bfd *, const char *, flagword, bfd_size_type, bfd_vma,
+	   unsigned int));
+static const bfd_target *hpux_core_core_file_p
+  PARAMS ((bfd *));
+static char *hpux_core_core_file_failing_command
+  PARAMS ((bfd *));
+static int hpux_core_core_file_failing_signal
+  PARAMS ((bfd *));
+static bfd_boolean hpux_core_core_file_matches_executable_p
+  PARAMS ((bfd *, bfd *));
+static void swap_abort
+  PARAMS ((void));
 
 static asection *
 make_bfd_asection (abfd, name, flags, _raw_size, vma, alignment_power)
      bfd *abfd;
-     CONST char *name;
+     const char *name;
      flagword flags;
      bfd_size_type _raw_size;
      bfd_vma vma;
@@ -114,7 +126,7 @@ make_bfd_asection (abfd, name, flags, _raw_size, vma, alignment_power)
   asection *asect;
   char *newname;
 
-  newname = bfd_alloc (abfd, strlen (name) + 1);
+  newname = bfd_alloc (abfd, (bfd_size_type) strlen (name) + 1);
   if (!newname)
     return NULL;
 
@@ -131,16 +143,6 @@ make_bfd_asection (abfd, name, flags, _raw_size, vma, alignment_power)
   asect->alignment_power = alignment_power;
 
   return asect;
-}
-
-static asymbol *
-hpux_core_make_empty_symbol (abfd)
-     bfd *abfd;
-{
-  asymbol *new = (asymbol *) bfd_zalloc (abfd, sizeof (asymbol));
-  if (new)
-    new->the_bfd = abfd;
-  return new;
 }
 
 /* this function builds a bfd target if the file is a corefile.
@@ -160,7 +162,7 @@ hpux_core_core_file_p (abfd)
   int  unknown_sections = 0;
 
   core_hdr (abfd) = (struct hpux_core_struct *)
-    bfd_zalloc (abfd, sizeof (struct hpux_core_struct));
+    bfd_zalloc (abfd, (bfd_size_type) sizeof (struct hpux_core_struct));
   if (!core_hdr (abfd))
     return NULL;
 
@@ -169,21 +171,23 @@ hpux_core_core_file_p (abfd)
       int val;
       struct corehead core_header;
 
-      val = bfd_read ((void *) &core_header, 1, sizeof core_header, abfd);
+      val = bfd_bread ((void *) &core_header,
+		      (bfd_size_type) sizeof core_header, abfd);
       if (val <= 0)
 	break;
       switch (core_header.type)
 	{
 	case CORE_KERNEL:
 	case CORE_FORMAT:
-	  bfd_seek (abfd, core_header.len, SEEK_CUR);	/* Just skip this */
+	  /* Just skip this.  */
+	  bfd_seek (abfd, (file_ptr) core_header.len, SEEK_CUR);
           good_sections++;
 	  break;
 	case CORE_EXEC:
 	  {
 	    struct proc_exec proc_exec;
-	    if (bfd_read ((void *) &proc_exec, 1, core_header.len, abfd)
-		!= core_header.len)
+	    if (bfd_bread ((void *) &proc_exec, (bfd_size_type) core_header.len,
+			  abfd) != core_header.len)
 	      break;
 	    strncpy (core_command (abfd), proc_exec.cmd, MAXCOMLEN + 1);
             good_sections++;
@@ -197,13 +201,13 @@ hpux_core_core_file_p (abfd)
             /* We need to read this section, 'cause we need to determine
                whether the core-dumped app was threaded before we create
                any .reg sections. */
-	    if (bfd_read (&proc_info, 1, core_header.len, abfd)
+	    if (bfd_bread (&proc_info, (bfd_size_type) core_header.len, abfd)
 		!= core_header.len)
 	      break;
 
               /* However, we also want to create those sections with the
                  file positioned at the start of the record, it seems. */
-            if (bfd_seek (abfd, -core_header.len, SEEK_CUR) != 0)
+            if (bfd_seek (abfd, (file_ptr) -core_header.len, SEEK_CUR) != 0)
               break;
 
 #if defined(PROC_INFO_HAS_THREAD_ID)
@@ -233,7 +237,7 @@ hpux_core_core_file_p (abfd)
                                         core_header.len,
                                         (int) &proc_info - (int) & proc_info.hw_regs,
                                         2))
-                  return NULL;
+		  goto fail;
               }
             else
               {
@@ -246,7 +250,7 @@ hpux_core_core_file_p (abfd)
 					    core_header.len,
 					    (int) &proc_info - (int) & proc_info.hw_regs,
 					    2))
-		      return NULL;
+		      goto fail;
                   }
                 /* We always make one of these sections, for every thread. */
                 sprintf (secname, ".reg/%d", core_kernel_thread_id (abfd));
@@ -255,10 +259,10 @@ hpux_core_core_file_p (abfd)
                                         core_header.len,
                                         (int) &proc_info - (int) & proc_info.hw_regs,
                                         2))
-                  return NULL;
+		  goto fail;
               }
 	    core_signal (abfd) = proc_info.sig;
-            if (bfd_seek (abfd, core_header.len, SEEK_CUR) != 0)
+            if (bfd_seek (abfd, (file_ptr) core_header.len, SEEK_CUR) != 0)
               break;
             good_sections++;
 	  }
@@ -273,9 +277,9 @@ hpux_core_core_file_p (abfd)
 	  if (!make_bfd_asection (abfd, ".data",
 				  SEC_ALLOC + SEC_LOAD + SEC_HAS_CONTENTS,
 				  core_header.len, core_header.addr, 2))
-	    return NULL;
+	    goto fail;
 
-	  bfd_seek (abfd, core_header.len, SEEK_CUR);
+	  bfd_seek (abfd, (file_ptr) core_header.len, SEEK_CUR);
           good_sections++;
 	  break;
 
@@ -289,7 +293,8 @@ hpux_core_core_file_p (abfd)
 	  unknown_sections++;
           break;
 
-         default: return 0; /*unrecognized core file type */
+         default:
+	   goto fail; /*unrecognized core file type */
 	}
     }
 
@@ -307,6 +312,12 @@ hpux_core_core_file_p (abfd)
        abfd->filename);
 
   return abfd->xvec;
+
+ fail:
+  bfd_release (abfd, core_hdr (abfd));
+  core_hdr (abfd) = NULL;
+  bfd_section_list_clear (abfd);
+  return NULL;
 }
 
 static char *
@@ -325,28 +336,17 @@ hpux_core_core_file_failing_signal (abfd)
 }
 
 /* ARGSUSED */
-static boolean
+static bfd_boolean
 hpux_core_core_file_matches_executable_p (core_bfd, exec_bfd)
-     bfd *core_bfd, *exec_bfd;
+     bfd *core_bfd ATTRIBUTE_UNUSED;
+     bfd *exec_bfd ATTRIBUTE_UNUSED;
 {
-  return true;			/* FIXME, We have no way of telling at this point */
+  return TRUE;			/* FIXME, We have no way of telling at this point */
 }
 
-#define hpux_core_get_symtab_upper_bound _bfd_nosymbols_get_symtab_upper_bound
-#define hpux_core_get_symtab _bfd_nosymbols_get_symtab
-#define hpux_core_print_symbol _bfd_nosymbols_print_symbol
-#define hpux_core_get_symbol_info _bfd_nosymbols_get_symbol_info
-#define hpux_core_bfd_is_local_label_name \
-  _bfd_nosymbols_bfd_is_local_label_name
-#define hpux_core_get_lineno _bfd_nosymbols_get_lineno
-#define hpux_core_find_nearest_line _bfd_nosymbols_find_nearest_line
-#define hpux_core_bfd_make_debug_symbol _bfd_nosymbols_bfd_make_debug_symbol
-#define hpux_core_read_minisymbols _bfd_nosymbols_read_minisymbols
-#define hpux_core_minisymbol_to_symbol _bfd_nosymbols_minisymbol_to_symbol
-
 /* If somebody calls any byte-swapping routines, shoot them.  */
 static void
-swap_abort()
+swap_abort ()
 {
   abort(); /* This way doesn't require any declaration for ANSI to fuck up */
 }
@@ -390,15 +390,15 @@ const bfd_target hpux_core_vec =
      bfd_false, bfd_false
     },
 
-       BFD_JUMP_TABLE_GENERIC (_bfd_generic),
-       BFD_JUMP_TABLE_COPY (_bfd_generic),
-       BFD_JUMP_TABLE_CORE (hpux_core),
-       BFD_JUMP_TABLE_ARCHIVE (_bfd_noarchive),
-       BFD_JUMP_TABLE_SYMBOLS (hpux_core),
-       BFD_JUMP_TABLE_RELOCS (_bfd_norelocs),
-       BFD_JUMP_TABLE_WRITE (_bfd_generic),
-       BFD_JUMP_TABLE_LINK (_bfd_nolink),
-       BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
+    BFD_JUMP_TABLE_GENERIC (_bfd_generic),
+    BFD_JUMP_TABLE_COPY (_bfd_generic),
+    BFD_JUMP_TABLE_CORE (hpux_core),
+    BFD_JUMP_TABLE_ARCHIVE (_bfd_noarchive),
+    BFD_JUMP_TABLE_SYMBOLS (_bfd_nosymbols),
+    BFD_JUMP_TABLE_RELOCS (_bfd_norelocs),
+    BFD_JUMP_TABLE_WRITE (_bfd_generic),
+    BFD_JUMP_TABLE_LINK (_bfd_nolink),
+    BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
     NULL,
 

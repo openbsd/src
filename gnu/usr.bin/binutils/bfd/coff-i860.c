@@ -1,5 +1,5 @@
 /* BFD back-end for Intel 860 COFF files.
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1999, 2000
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1999, 2000, 2001, 2002
    Free Software Foundation, Inc.
    Created mostly by substituting "860" for "386" in coff-i386.c
    Harry Dolan <dolan@ssd.intel.com>, October 1995
@@ -36,6 +36,7 @@ static reloc_howto_type *coff_i860_rtype_to_howto
   PARAMS ((bfd *, asection *, struct internal_reloc *,
 	   struct coff_link_hash_entry *, struct internal_syment *,
 	   bfd_vma *));
+static const bfd_target * i3coff_object_p PARAMS ((bfd *));
 
 #define COFF_DEFAULT_SECTION_ALIGNMENT_POWER (2)
 /* The page size is a guess based on ELF.  */
@@ -113,7 +114,7 @@ coff_i860_reloc (abfd, reloc_entry, symbol, data, input_section, output_bfd,
 	    {
 	      short x = bfd_get_16 (abfd, addr);
 	      DOIT (x);
-	      bfd_put_16 (abfd, x, addr);
+	      bfd_put_16 (abfd, (bfd_vma) x, addr);
 	    }
 	    break;
 
@@ -121,7 +122,7 @@ coff_i860_reloc (abfd, reloc_entry, symbol, data, input_section, output_bfd,
 	    {
 	      long x = bfd_get_32 (abfd, addr);
 	      DOIT (x);
-	      bfd_put_32 (abfd, x, addr);
+	      bfd_put_32 (abfd, (bfd_vma) x, addr);
 	    }
 	    break;
 
@@ -135,7 +136,7 @@ coff_i860_reloc (abfd, reloc_entry, symbol, data, input_section, output_bfd,
 }
 
 #ifndef PCRELOFFSET
-#define PCRELOFFSET false
+#define PCRELOFFSET FALSE
 #endif
 
 static reloc_howto_type howto_table[] =
@@ -150,29 +151,29 @@ static reloc_howto_type howto_table[] =
 	 0,	                /* rightshift */
 	 2,	                /* size (0 = byte, 1 = short, 2 = long) */
 	 32,	                /* bitsize */
-	 false,	                /* pc_relative */
+	 FALSE,	                /* pc_relative */
 	 0,	                /* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 coff_i860_reloc,       /* special_function */
 	 "dir32",               /* name */
-	 true,	                /* partial_inplace */
+	 TRUE,	                /* partial_inplace */
 	 0xffffffff,            /* src_mask */
 	 0xffffffff,            /* dst_mask */
-	 true),                /* pcrel_offset */
+	 TRUE),                /* pcrel_offset */
   /* {7}, */
   HOWTO (R_IMAGEBASE,            /* type */
 	 0,	                /* rightshift */
 	 2,	                /* size (0 = byte, 1 = short, 2 = long) */
 	 32,	                /* bitsize */
-	 false,	                /* pc_relative */
+	 FALSE,	                /* pc_relative */
 	 0,	                /* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 coff_i860_reloc,       /* special_function */
 	 "rva32",	           /* name */
-	 true,	                /* partial_inplace */
+	 TRUE,	                /* partial_inplace */
 	 0xffffffff,            /* src_mask */
 	 0xffffffff,            /* dst_mask */
-	 false),                /* pcrel_offset */
+	 FALSE),                /* pcrel_offset */
   EMPTY_HOWTO (010),
   EMPTY_HOWTO (011),
   EMPTY_HOWTO (012),
@@ -184,12 +185,12 @@ static reloc_howto_type howto_table[] =
 	 0,			/* rightshift */
 	 0,			/* size (0 = byte, 1 = short, 2 = long) */
 	 8,			/* bitsize */
-	 false,			/* pc_relative */
+	 FALSE,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 coff_i860_reloc,	/* special_function */
 	 "8",			/* name */
-	 true,			/* partial_inplace */
+	 TRUE,			/* partial_inplace */
 	 0x000000ff,		/* src_mask */
 	 0x000000ff,		/* dst_mask */
 	 PCRELOFFSET),		/* pcrel_offset */
@@ -197,12 +198,12 @@ static reloc_howto_type howto_table[] =
 	 0,			/* rightshift */
 	 1,			/* size (0 = byte, 1 = short, 2 = long) */
 	 16,			/* bitsize */
-	 false,			/* pc_relative */
+	 FALSE,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 coff_i860_reloc,	/* special_function */
 	 "16",			/* name */
-	 true,			/* partial_inplace */
+	 TRUE,			/* partial_inplace */
 	 0x0000ffff,		/* src_mask */
 	 0x0000ffff,		/* dst_mask */
 	 PCRELOFFSET),		/* pcrel_offset */
@@ -210,12 +211,12 @@ static reloc_howto_type howto_table[] =
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
 	 32,			/* bitsize */
-	 false,			/* pc_relative */
+	 FALSE,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 coff_i860_reloc,	/* special_function */
 	 "32",			/* name */
-	 true,			/* partial_inplace */
+	 TRUE,			/* partial_inplace */
 	 0xffffffff,		/* src_mask */
 	 0xffffffff,		/* dst_mask */
 	 PCRELOFFSET),		/* pcrel_offset */
@@ -223,12 +224,12 @@ static reloc_howto_type howto_table[] =
 	 0,			/* rightshift */
 	 0,			/* size (0 = byte, 1 = short, 2 = long) */
 	 8,			/* bitsize */
-	 true,			/* pc_relative */
+	 TRUE,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 coff_i860_reloc,	/* special_function */
 	 "DISP8",		/* name */
-	 true,			/* partial_inplace */
+	 TRUE,			/* partial_inplace */
 	 0x000000ff,		/* src_mask */
 	 0x000000ff,		/* dst_mask */
 	 PCRELOFFSET),		/* pcrel_offset */
@@ -236,12 +237,12 @@ static reloc_howto_type howto_table[] =
 	 0,			/* rightshift */
 	 1,			/* size (0 = byte, 1 = short, 2 = long) */
 	 16,			/* bitsize */
-	 true,			/* pc_relative */
+	 TRUE,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 coff_i860_reloc,	/* special_function */
 	 "DISP16",		/* name */
-	 true,			/* partial_inplace */
+	 TRUE,			/* partial_inplace */
 	 0x0000ffff,		/* src_mask */
 	 0x0000ffff,		/* dst_mask */
 	 PCRELOFFSET),		/* pcrel_offset */
@@ -249,12 +250,12 @@ static reloc_howto_type howto_table[] =
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
 	 32,			/* bitsize */
-	 true,			/* pc_relative */
+	 TRUE,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 coff_i860_reloc,	/* special_function */
 	 "DISP32",		/* name */
-	 true,			/* partial_inplace */
+	 TRUE,			/* partial_inplace */
 	 0xffffffff,		/* src_mask */
 	 0xffffffff,		/* dst_mask */
 	 PCRELOFFSET)		/* pcrel_offset */
@@ -342,7 +343,7 @@ coff_i860_rtype_to_howto (abfd, sec, rel, h, sym, addendp)
 	 with and without this section bypassed and then do a binary comparison,
 	 the addresses which are different can be looked up in the map.  The
 	 case in which this section has been bypassed has addresses which correspond
-	 to values I can find in the map */
+	 to values I can find in the map.  */
       *addendp -= sym->n_value;
     }
 
@@ -363,7 +364,7 @@ static const bfd_target *
 i3coff_object_p(a)
      bfd *a;
 {
-  return coff_object_p(a);
+  return coff_object_p (a);
 }
 
 const bfd_target

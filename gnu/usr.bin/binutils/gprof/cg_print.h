@@ -21,9 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #ifndef cg_print_h
 #define cg_print_h
 
-#include "gprof.h"
-#include "symtab.h"
-
 extern double print_time;	/* Total of time being printed.  */
 
 extern void cg_print                    PARAMS ((Sym **));

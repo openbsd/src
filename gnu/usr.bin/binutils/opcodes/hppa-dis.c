@@ -1,5 +1,5 @@
 /* Disassembler for the PA-RISC. Somewhat derived from sparc-pinsn.c.
-   Copyright 1989, 1990, 1992, 1993, 1994, 1995, 1998, 1999, 2000, 2001
+   Copyright 1989, 1990, 1992, 1993, 1994, 1995, 1998, 1999, 2000, 2001, 2003
    Free Software Foundation, Inc.
 
    Contributed by the Center for Software Science at the
@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 /* Integer register names, indexed by the numbers which appear in the
    opcodes.  */
-static const char *const reg_names[] = 
+static const char *const reg_names[] =
  {"flags", "r1", "rp", "r3", "r4", "r5", "r6", "r7", "r8", "r9",
   "r10", "r11", "r12", "r13", "r14", "r15", "r16", "r17", "r18", "r19",
   "r20", "r21", "r22", "r23", "r24", "r25", "r26", "dp", "ret0", "ret1",
@@ -34,10 +34,10 @@ static const char *const reg_names[] =
 
 /* Floating point register names, indexed by the numbers which appear in the
    opcodes.  */
-static const char *const fp_reg_names[] = 
- {"fpsr", "fpe2", "fpe4", "fpe6", 
-  "fr4", "fr5", "fr6", "fr7", "fr8", 
-  "fr9", "fr10", "fr11", "fr12", "fr13", "fr14", "fr15", 
+static const char *const fp_reg_names[] =
+ {"fpsr", "fpe2", "fpe4", "fpe6",
+  "fr4", "fr5", "fr6", "fr7", "fr8",
+  "fr9", "fr10", "fr11", "fr12", "fr13", "fr14", "fr15",
   "fr16", "fr17", "fr18", "fr19", "fr20", "fr21", "fr22", "fr23",
   "fr24", "fr25", "fr26", "fr27", "fr28", "fr29", "fr30", "fr31"};
 
@@ -123,6 +123,8 @@ static const char *const short_bytes_compl_names[] = {
   "", ",b,m", ",e", ",e,m"
 };
 static const char *const float_format_names[] = {",sgl", ",dbl", "", ",quad"};
+static const char *const fcnv_fixed_names[] = {",w", ",dw", "", ",qw"};
+static const char *const fcnv_ufixed_names[] = {",uw", ",udw", "", ",uqw"};
 static const char *const float_comp_names[] =
 {
   ",false?", ",false", ",?", ",!<=>", ",=", ",=t", ",?=", ",!<>",
@@ -136,7 +138,7 @@ static const char *const saturation_names[] = {",us", ",ss", 0, ""};
 static const char *const read_write_names[] = {",r", ",w"};
 static const char *const add_compl_names[] = { 0, "", ",l", ",tsv" };
 
-/* For a bunch of different instructions form an index into a 
+/* For a bunch of different instructions form an index into a
    completer name table.  */
 #define GET_COMPL(insn) (GET_FIELD (insn, 26, 26) | \
 			 GET_FIELD (insn, 18, 18) << 1)
@@ -194,8 +196,8 @@ fput_fp_reg_r (reg, info)
   if (reg < 4)
     (*info->fprintf_func) (info->stream, "fpe%d", reg * 2 + 1);
   else
-    (*info->fprintf_func) (info->stream, "%sR", reg ? fp_reg_names[reg] 
-						    : "fr0");
+    (*info->fprintf_func) (info->stream, "%sR",
+			   reg ? fp_reg_names[reg] : "fr0");
 }
 
 static void
@@ -336,8 +338,8 @@ extract_12 (word)
      unsigned word;
 {
   return sign_extend (GET_FIELD (word, 19, 28) |
-                      GET_FIELD (word, 29, 29) << 10 |
-                      (word & 0x1) << 11, 12) << 2;
+		      GET_FIELD (word, 29, 29) << 10 |
+		      (word & 0x1) << 11, 12) << 2;
 }
 
 /* Extract a 17 bit constant from branch instructions, returning the
@@ -348,9 +350,9 @@ extract_17 (word)
      unsigned word;
 {
   return sign_extend (GET_FIELD (word, 19, 28) |
-                      GET_FIELD (word, 29, 29) << 10 |
-                      GET_FIELD (word, 11, 15) << 11 |
-                      (word & 0x1) << 16, 17) << 2;
+		      GET_FIELD (word, 29, 29) << 10 |
+		      GET_FIELD (word, 11, 15) << 11 |
+		      (word & 0x1) << 16, 17) << 2;
 }
 
 static int
@@ -358,10 +360,10 @@ extract_22 (word)
      unsigned word;
 {
   return sign_extend (GET_FIELD (word, 19, 28) |
-                      GET_FIELD (word, 29, 29) << 10 |
-                      GET_FIELD (word, 11, 15) << 11 |
-                      GET_FIELD (word, 6, 10) << 16 |
-                      (word & 0x1) << 21, 22) << 2;
+		      GET_FIELD (word, 29, 29) << 10 |
+		      GET_FIELD (word, 11, 15) << 11 |
+		      GET_FIELD (word, 6, 10) << 16 |
+		      (word & 0x1) << 21, 22) << 2;
 }
 
 /* Print one instruction.  */
@@ -397,7 +399,7 @@ print_insn_hppa (memaddr, info)
 #endif
 	  (*info->fprintf_func) (info->stream, "%s", opcode->name);
 
-	  if (!strchr ("cfCY?-+nHNZFIuv", opcode->args[0]))
+	  if (!strchr ("cfCY?-+nHNZFIuv{", opcode->args[0]))
 	    (*info->fprintf_func) (info->stream, " ");
 	  for (s = opcode->args; *s != '\0'; ++s)
 	    {
@@ -417,7 +419,7 @@ print_insn_hppa (memaddr, info)
 		  fput_reg (GET_FIELD (insn, 27, 31), info);
 		  break;
 
-		/* Handle floating point registers.  */
+		  /* Handle floating point registers.  */
 		case 'f':
 		  switch (*++s)
 		    {
@@ -437,21 +439,19 @@ print_insn_hppa (memaddr, info)
 			fput_fp_reg (GET_FIELD (insn, 6, 10), info);
 		      break;
 
-		    /* 'fA' will not generate a space before the regsiter
-			name.  Normally that is fine.  Except that it
-			causes problems with xmpyu which has no FP format
-			completer.  */
+		      /* 'fA' will not generate a space before the regsiter
+			 name.  Normally that is fine.  Except that it
+			 causes problems with xmpyu which has no FP format
+			 completer.  */
 		    case 'X':
 		      fputs_filtered (" ", info);
-
-		    /* FALLTHRU */
+		      /* FALLTHRU */
 
 		    case 'A':
 		      if (GET_FIELD (insn, 24, 24))
 			fput_fp_reg_r (GET_FIELD (insn, 6, 10), info);
 		      else
 			fput_fp_reg (GET_FIELD (insn, 6, 10), info);
-		      
 		      break;
 		    case 'b':
 		      if (GET_FIELD (insn, 25, 25))
@@ -516,14 +516,13 @@ print_insn_hppa (memaddr, info)
 			break;
 		      }
 
-		    /* 'fe' will not generate a space before the register
-			name.  Normally that is fine.  Except that it
-			causes problems with fstw fe,y(b) which has no FP
-			format completer.  */
+		      /* 'fe' will not generate a space before the register
+			 name.  Normally that is fine.  Except that it
+			 causes problems with fstw fe,y(b) which has no FP
+			 format completer.  */
 		    case 'E':
 		      fputs_filtered (" ", info);
-
-		    /* FALLTHRU */
+		      /* FALLTHRU */
 
 		    case 'e':
 		      if (GET_FIELD (insn, 30, 30))
@@ -541,29 +540,52 @@ print_insn_hppa (memaddr, info)
 		  fput_const (extract_5_load (insn), info);
 		  break;
 		case 's':
-		  (*info->fprintf_func) (info->stream,
-					 "sr%d", GET_FIELD (insn, 16, 17));
+		  {
+		    int space = GET_FIELD (insn, 16, 17);
+		    /* Zero means implicit addressing, not use of sr0.  */
+		    if (space != 0)
+		      (*info->fprintf_func) (info->stream, "sr%d", space);
+		  }
 		  break;
 
 		case 'S':
-		  (*info->fprintf_func) (info->stream, "sr%d", extract_3 (insn));
+		  (*info->fprintf_func) (info->stream, "sr%d",
+					 extract_3 (insn));
 		  break;
 
-		/* Handle completers.  */
+		  /* Handle completers.  */
 		case 'c':
 		  switch (*++s)
 		    {
 		    case 'x':
-		      (*info->fprintf_func) (info->stream, "%s ",
-					     index_compl_names[GET_COMPL (insn)]);
+		      (*info->fprintf_func)
+			(info->stream, "%s",
+			 index_compl_names[GET_COMPL (insn)]);
+		      break;
+		    case 'X':
+		      (*info->fprintf_func)
+			(info->stream, "%s ",
+			 index_compl_names[GET_COMPL (insn)]);
 		      break;
 		    case 'm':
-		      (*info->fprintf_func) (info->stream, "%s ",
-					     short_ldst_compl_names[GET_COMPL (insn)]);
+		      (*info->fprintf_func)
+			(info->stream, "%s",
+			 short_ldst_compl_names[GET_COMPL (insn)]);
+		      break;
+		    case 'M':
+		      (*info->fprintf_func)
+			(info->stream, "%s ",
+			 short_ldst_compl_names[GET_COMPL (insn)]);
+		      break;
+		    case 'A':
+		      (*info->fprintf_func)
+			(info->stream, "%s ",
+			 short_bytes_compl_names[GET_COMPL (insn)]);
 		      break;
 		    case 's':
-		      (*info->fprintf_func) (info->stream, "%s ",
-					     short_bytes_compl_names[GET_COMPL (insn)]);
+		      (*info->fprintf_func)
+			(info->stream, "%s",
+			 short_bytes_compl_names[GET_COMPL (insn)]);
 		      break;
 		    case 'c':
 		    case 'C':
@@ -606,8 +628,9 @@ print_insn_hppa (memaddr, info)
 		      (*info->fprintf_func) (info->stream, ",l");
 		      break;
 		    case 'w':
-		      (*info->fprintf_func) (info->stream, "%s ",
-					     read_write_names[GET_FIELD (insn, 25, 25)]);
+		      (*info->fprintf_func)
+			(info->stream, "%s ",
+			 read_write_names[GET_FIELD (insn, 25, 25)]);
 		      break;
 		    case 'W':
 		      (*info->fprintf_func) (info->stream, ",w");
@@ -632,18 +655,18 @@ print_insn_hppa (memaddr, info)
 		      break;
 		    case 'a':
 		      (*info->fprintf_func)
-			(info->stream, "%s", add_compl_names[GET_FIELD
-							    (insn, 20, 21)]);
+			(info->stream, "%s",
+			 add_compl_names[GET_FIELD (insn, 20, 21)]);
 		      break;
 		    case 'Y':
 		      (*info->fprintf_func)
-			(info->stream, ",dc%s", add_compl_names[GET_FIELD
-							       (insn, 20, 21)]);
+			(info->stream, ",dc%s",
+			 add_compl_names[GET_FIELD (insn, 20, 21)]);
 		      break;
 		    case 'y':
 		      (*info->fprintf_func)
-			(info->stream, ",c%s", add_compl_names[GET_FIELD
-							      (insn, 20, 21)]);
+			(info->stream, ",c%s",
+			 add_compl_names[GET_FIELD (insn, 20, 21)]);
 		      break;
 		    case 'v':
 		      if (GET_FIELD (insn, 20, 20))
@@ -672,28 +695,28 @@ print_insn_hppa (memaddr, info)
 		      /* EXTRD/W has a following condition.  */
 		      if (*(s + 1) == '?')
 			(*info->fprintf_func)
-			  (info->stream, "%s", signed_unsigned_names[GET_FIELD
-								    (insn, 21, 21)]);
+			  (info->stream, "%s",
+			   signed_unsigned_names[GET_FIELD (insn, 21, 21)]);
 		      else
 			(*info->fprintf_func)
-			  (info->stream, "%s ", signed_unsigned_names[GET_FIELD
-								     (insn, 21, 21)]);
+			  (info->stream, "%s ",
+			   signed_unsigned_names[GET_FIELD (insn, 21, 21)]);
 		      break;
 		    case 'h':
 		      (*info->fprintf_func)
-			  (info->stream, "%s", mix_half_names[GET_FIELD
-							     (insn, 17, 17)]);
+			(info->stream, "%s",
+			 mix_half_names[GET_FIELD (insn, 17, 17)]);
 		      break;
 		    case 'H':
 		      (*info->fprintf_func)
-			  (info->stream, "%s", saturation_names[GET_FIELD
-							       (insn, 24, 25)]);
+			(info->stream, "%s ",
+			 saturation_names[GET_FIELD (insn, 24, 25)]);
 		      break;
 		    case '*':
 		      (*info->fprintf_func)
-			  (info->stream, ",%d%d%d%d ",
-			   GET_FIELD (insn, 17, 18), GET_FIELD (insn, 20, 21),
-			   GET_FIELD (insn, 22, 23), GET_FIELD (insn, 24, 25));
+			(info->stream, ",%d%d%d%d ",
+			 GET_FIELD (insn, 17, 18), GET_FIELD (insn, 20, 21),
+			 GET_FIELD (insn, 22, 23), GET_FIELD (insn, 24, 25));
 		      break;
 
 		    case 'q':
@@ -754,85 +777,101 @@ print_insn_hppa (memaddr, info)
 		    }
 		  break;
 
-		/* Handle conditions.  */
+		  /* Handle conditions.  */
 		case '?':
 		  {
 		    s++;
 		    switch (*s)
 		      {
 		      case 'f':
-			(*info->fprintf_func) (info->stream, "%s ",
-					       float_comp_names[GET_FIELD
-							       (insn, 27, 31)]);
+			(*info->fprintf_func)
+			  (info->stream, "%s ",
+			   float_comp_names[GET_FIELD (insn, 27, 31)]);
 			break;
 
-		      /* these four conditions are for the set of instructions
+			/* these four conditions are for the set of instructions
 			   which distinguish true/false conditions by opcode
 			   rather than by the 'f' bit (sigh): comb, comib,
 			   addb, addib */
 		      case 't':
-			fputs_filtered (compare_cond_names[GET_FIELD (insn, 16, 18)],
-					info);
+			fputs_filtered
+			  (compare_cond_names[GET_FIELD (insn, 16, 18)], info);
 			break;
 		      case 'n':
-			fputs_filtered (compare_cond_names[GET_FIELD (insn, 16, 18)
-					+ GET_FIELD (insn, 4, 4) * 8], info);
+			fputs_filtered
+			  (compare_cond_names[GET_FIELD (insn, 16, 18)
+					      + GET_FIELD (insn, 4, 4) * 8],
+			   info);
 			break;
 		      case 'N':
-			fputs_filtered (compare_cond_64_names[GET_FIELD (insn, 16, 18)
-					+ GET_FIELD (insn, 2, 2) * 8], info);
+			fputs_filtered
+			  (compare_cond_64_names[GET_FIELD (insn, 16, 18)
+						 + GET_FIELD (insn, 2, 2) * 8],
+			   info);
 			break;
 		      case 'Q':
-			fputs_filtered (cmpib_cond_64_names[GET_FIELD (insn, 16, 18)],
-					info);
+			fputs_filtered
+			  (cmpib_cond_64_names[GET_FIELD (insn, 16, 18)],
+			   info);
 			break;
 		      case '@':
-			fputs_filtered (add_cond_names[GET_FIELD (insn, 16, 18)
-					+ GET_FIELD (insn, 4, 4) * 8], info);
+			fputs_filtered
+			  (add_cond_names[GET_FIELD (insn, 16, 18)
+					  + GET_FIELD (insn, 4, 4) * 8],
+			   info);
 			break;
 		      case 's':
-			(*info->fprintf_func) (info->stream, "%s ",
-					       compare_cond_names[GET_COND (insn)]);
+			(*info->fprintf_func)
+			  (info->stream, "%s ",
+			   compare_cond_names[GET_COND (insn)]);
 			break;
 		      case 'S':
-			(*info->fprintf_func) (info->stream, "%s ",
-					       compare_cond_64_names[GET_COND (insn)]);
+			(*info->fprintf_func)
+			  (info->stream, "%s ",
+			   compare_cond_64_names[GET_COND (insn)]);
 			break;
 		      case 'a':
-			(*info->fprintf_func) (info->stream, "%s ",
-					       add_cond_names[GET_COND (insn)]);
+			(*info->fprintf_func)
+			  (info->stream, "%s ",
+			   add_cond_names[GET_COND (insn)]);
 			break;
 		      case 'A':
-			(*info->fprintf_func) (info->stream, "%s ",
-					       add_cond_64_names[GET_COND (insn)]);
+			(*info->fprintf_func)
+			  (info->stream, "%s ",
+			   add_cond_64_names[GET_COND (insn)]);
 			break;
 		      case 'd':
-			(*info->fprintf_func) (info->stream, "%s",
-					       add_cond_names[GET_FIELD (insn, 16, 18)]);
+			(*info->fprintf_func)
+			  (info->stream, "%s",
+			   add_cond_names[GET_FIELD (insn, 16, 18)]);
 			break;
 
 		      case 'W':
-			(*info->fprintf_func) 
+			(*info->fprintf_func)
 			  (info->stream, "%s",
-			   wide_add_cond_names[GET_FIELD (insn, 16, 18) + 
-					      GET_FIELD (insn, 4, 4) * 8]);
+			   wide_add_cond_names[GET_FIELD (insn, 16, 18) +
+					       GET_FIELD (insn, 4, 4) * 8]);
 			break;
 
 		      case 'l':
-			(*info->fprintf_func) (info->stream, "%s ",
-					       logical_cond_names[GET_COND (insn)]);
+			(*info->fprintf_func)
+			  (info->stream, "%s ",
+			   logical_cond_names[GET_COND (insn)]);
 			break;
 		      case 'L':
-			(*info->fprintf_func) (info->stream, "%s ",
-					       logical_cond_64_names[GET_COND (insn)]);
+			(*info->fprintf_func)
+			  (info->stream, "%s ",
+			   logical_cond_64_names[GET_COND (insn)]);
 			break;
 		      case 'u':
-			(*info->fprintf_func) (info->stream, "%s ",
-					       unit_cond_names[GET_COND (insn)]);
+			(*info->fprintf_func)
+			  (info->stream, "%s ",
+			   unit_cond_names[GET_COND (insn)]);
 			break;
 		      case 'U':
-			(*info->fprintf_func) (info->stream, "%s ",
-					       unit_cond_64_names[GET_COND (insn)]);
+			(*info->fprintf_func)
+			  (info->stream, "%s ",
+			   unit_cond_64_names[GET_COND (insn)]);
 			break;
 		      case 'y':
 		      case 'x':
@@ -847,8 +886,9 @@ print_insn_hppa (memaddr, info)
 			  (*info->fprintf_func) (info->stream, " ");
 			break;
 		      case 'X':
-			(*info->fprintf_func) (info->stream, "%s ",
-					       shift_cond_64_names[GET_FIELD (insn, 16, 18)]);
+			(*info->fprintf_func)
+			  (info->stream, "%s ",
+			   shift_cond_64_names[GET_FIELD (insn, 16, 18)]);
 			break;
 		      case 'B':
 			(*info->fprintf_func)
@@ -909,14 +949,13 @@ print_insn_hppa (memaddr, info)
 		    (*info->fprintf_func) (info->stream, " ");
 		  break;
 		case 'w':
-		  (*info->print_address_func) (memaddr + 8 + extract_12 (insn),
-					       info);
+		  (*info->print_address_func)
+		    (memaddr + 8 + extract_12 (insn), info);
 		  break;
 		case 'W':
 		  /* 17 bit PC-relative branch.  */
-		  (*info->print_address_func) ((memaddr + 8 
-						+ extract_17 (insn)),
-					       info);
+		  (*info->print_address_func)
+		    ((memaddr + 8 + extract_17 (insn)), info);
 		  break;
 		case 'z':
 		  /* 17 bit displacement.  This is an offset from a register
@@ -934,25 +973,25 @@ print_insn_hppa (memaddr, info)
 		  /* be,l %sr0,%r31 implicit output.  */
 		  (*info->fprintf_func) (info->stream, "%%sr0,%%r31");
 		  break;
-		  
+
 		case '@':
 		  (*info->fprintf_func) (info->stream, "0");
 		  break;
 
 		case '.':
 		  (*info->fprintf_func) (info->stream, "%d",
-				    GET_FIELD (insn, 24, 25));
+					 GET_FIELD (insn, 24, 25));
 		  break;
 		case '*':
 		  (*info->fprintf_func) (info->stream, "%d",
-				    GET_FIELD (insn, 22, 25));
+					 GET_FIELD (insn, 22, 25));
 		  break;
 		case '!':
 		  (*info->fprintf_func) (info->stream, "%%sar");
 		  break;
 		case 'p':
 		  (*info->fprintf_func) (info->stream, "%d",
-				    31 - GET_FIELD (insn, 22, 26));
+					 31 - GET_FIELD (insn, 22, 26));
 		  break;
 		case '~':
 		  {
@@ -964,7 +1003,7 @@ print_insn_hppa (memaddr, info)
 		  }
 		case 'P':
 		  (*info->fprintf_func) (info->stream, "%d",
-				    GET_FIELD (insn, 22, 26));
+					 GET_FIELD (insn, 22, 26));
 		  break;
 		case 'q':
 		  {
@@ -976,7 +1015,7 @@ print_insn_hppa (memaddr, info)
 		  }
 		case 'T':
 		  (*info->fprintf_func) (info->stream, "%d",
-				    32 - GET_FIELD (insn, 27, 31));
+					 32 - GET_FIELD (insn, 27, 31));
 		  break;
 		case '%':
 		  {
@@ -1004,7 +1043,8 @@ print_insn_hppa (memaddr, info)
 		  fput_const (GET_FIELD (insn, 6, 31), info);
 		  break;
 		case 'v':
-		  (*info->fprintf_func) (info->stream, ",%d", GET_FIELD (insn, 23, 25));
+		  (*info->fprintf_func) (info->stream, ",%d",
+					 GET_FIELD (insn, 23, 25));
 		  break;
 		case 'O':
 		  fput_const ((GET_FIELD (insn, 6,20) << 5 |
@@ -1026,47 +1066,48 @@ print_insn_hppa (memaddr, info)
 			       GET_FIELD (insn, 27, 31)), info);
 		  break;
 		case 'u':
-		  (*info->fprintf_func) (info->stream, ",%d", GET_FIELD (insn, 23, 25));
+		  (*info->fprintf_func) (info->stream, ",%d",
+					 GET_FIELD (insn, 23, 25));
 		  break;
 		case 'F':
 		  /* if no destination completer and not before a completer
 		     for fcmp, need a space here */
 		  if (s[1] == 'G' || s[1] == '?')
-		    fputs_filtered (float_format_names[GET_FIELD (insn, 19, 20)],
-				    info);
+		    fputs_filtered
+		      (float_format_names[GET_FIELD (insn, 19, 20)], info);
 		  else
-		    (*info->fprintf_func) (info->stream, "%s ",
-					   float_format_names[GET_FIELD
-							      (insn, 19, 20)]);
+		    (*info->fprintf_func)
+		      (info->stream, "%s ",
+		       float_format_names[GET_FIELD (insn, 19, 20)]);
 		  break;
 		case 'G':
-		  (*info->fprintf_func) (info->stream, "%s ",
-				    float_format_names[GET_FIELD (insn,
-								  17, 18)]);
+		  (*info->fprintf_func)
+		    (info->stream, "%s ",
+		     float_format_names[GET_FIELD (insn, 17, 18)]);
 		  break;
 		case 'H':
 		  if (GET_FIELD (insn, 26, 26) == 1)
 		    (*info->fprintf_func) (info->stream, "%s ",
-				    float_format_names[0]);
+					   float_format_names[0]);
 		  else
 		    (*info->fprintf_func) (info->stream, "%s ",
-				    float_format_names[1]);
+					   float_format_names[1]);
 		  break;
 		case 'I':
 		  /* if no destination completer and not before a completer
 		     for fcmp, need a space here */
 		  if (s[1] == '?')
-		    fputs_filtered (float_format_names[GET_FIELD (insn, 20, 20)],
-				    info);
+		    fputs_filtered
+		      (float_format_names[GET_FIELD (insn, 20, 20)], info);
 		  else
-		    (*info->fprintf_func) (info->stream, "%s ",
-					   float_format_names[GET_FIELD
-							      (insn, 20, 20)]);
+		    (*info->fprintf_func)
+		      (info->stream, "%s ",
+		       float_format_names[GET_FIELD (insn, 20, 20)]);
 		  break;
 
-                case 'J':
-                  fput_const (extract_14 (insn), info);
-                  break;
+		case 'J':
+		  fput_const (extract_14 (insn), info);
+		  break;
 
 		case '#':
 		  {
@@ -1083,7 +1124,7 @@ print_insn_hppa (memaddr, info)
 		    fput_const (disp, info);
 		    break;
 		  }
-                case 'K':
+		case 'K':
 		case 'd':
 		  {
 		    int sign = GET_FIELD (insn, 31, 31);
@@ -1119,11 +1160,33 @@ print_insn_hppa (memaddr, info)
 		    break;
 		  }
 
-		/* ?!? FIXME */
 		case '_':
+		  break; /* Dealt with by '{' */
+
 		case '{':
-		  fputs_filtered ("Disassembler botch.\n", info);
-		  break;
+		  {
+		    int sub = GET_FIELD (insn, 14, 16);
+		    int df = GET_FIELD (insn, 17, 18);
+		    int sf = GET_FIELD (insn, 19, 20);
+		    const char * const * source = float_format_names;
+		    const char * const * dest = float_format_names;
+		    char *t = "";
+		    if (sub == 4)
+		      {
+			fputs_filtered (",UND ", info);
+			break;
+		      }
+		    if ((sub & 3) == 3)
+		      t = ",t";
+		    if ((sub & 3) == 1)
+		      source = sub & 4 ? fcnv_ufixed_names : fcnv_fixed_names;
+		    if (sub & 2)
+		      dest = sub & 4 ? fcnv_ufixed_names : fcnv_fixed_names;
+
+		    (*info->fprintf_func) (info->stream, "%s%s%s ",
+					   t, source[sf], dest[df]);
+		    break;
+		  }
 
 		case 'm':
 		  {
@@ -1169,9 +1232,8 @@ print_insn_hppa (memaddr, info)
 		  }
 
 		case 'X':
-		  (*info->print_address_func) ((memaddr + 8 
-						+ extract_22 (insn)),
-					       info);
+		  (*info->print_address_func)
+		    (memaddr + 8 + extract_22 (insn), info);
 		  break;
 		case 'L':
 		  fputs_filtered (",%r2", info);

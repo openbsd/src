@@ -20,14 +20,15 @@
 
 /********************** FILE HEADER **********************/
 
-struct external_filehdr {
-	char f_magic[2];	/* magic number			*/
-	char f_nscns[2];	/* number of sections		*/
-	char f_timdat[4];	/* time & date stamp		*/
-	char f_symptr[4];	/* file pointer to symtab	*/
-	char f_nsyms[4];	/* number of symtab entries	*/
-	char f_opthdr[2];	/* sizeof(optional hdr)		*/
-	char f_flags[2];	/* flags			*/
+struct external_filehdr
+{
+  char f_magic[2];	/* magic number			*/
+  char f_nscns[2];	/* number of sections		*/
+  char f_timdat[4];	/* time & date stamp		*/
+  char f_symptr[4];	/* file pointer to symtab	*/
+  char f_nsyms[4];	/* number of symtab entries	*/
+  char f_opthdr[2];	/* sizeof(optional hdr)		*/
+  char f_flags[2];	/* flags			*/
 };
 
 #define OMAGIC      (0407)	/* old impure format. data immediately
@@ -65,12 +66,11 @@ struct external_filehdr {
 
 /********************** AOUT "OPTIONAL HEADER" **********************/
 
-typedef struct {
-	unsigned long	phys_addr;
-	unsigned long	bitarray;
+typedef struct
+{
+  unsigned long	phys_addr;
+  unsigned long	bitarray;
 } TAGBITS;
-
-
 
 typedef struct 
 {
@@ -99,19 +99,19 @@ AOUTHDR;
 
 /********************** SECTION HEADER **********************/
 
-
-struct external_scnhdr {
-	char		s_name[8];	/* section name			*/
-	char		s_paddr[4];	/* physical address, aliased s_nlib */
-	char		s_vaddr[4];	/* virtual address		*/
-	char		s_size[4];	/* section size			*/
-	char		s_scnptr[4];	/* file ptr to raw data for section */
-	char		s_relptr[4];	/* file ptr to relocation	*/
-	char		s_lnnoptr[4];	/* file ptr to line numbers	*/
-	char		s_nreloc[2];	/* number of relocation entries	*/
-	char		s_nlnno[2];	/* number of line number entries*/
-	char		s_flags[4];	/* flags			*/
-	char 		s_align[4];	/* section alignment		*/
+struct external_scnhdr
+{
+  char		s_name[8];	/* section name			*/
+  char		s_paddr[4];	/* physical address, aliased s_nlib */
+  char		s_vaddr[4];	/* virtual address		*/
+  char		s_size[4];	/* section size			*/
+  char		s_scnptr[4];	/* file ptr to raw data for section */
+  char		s_relptr[4];	/* file ptr to relocation	*/
+  char		s_lnnoptr[4];	/* file ptr to line numbers	*/
+  char		s_nreloc[2];	/* number of relocation entries	*/
+  char		s_nlnno[2];	/* number of line number entries*/
+  char		s_flags[4];	/* flags			*/
+  char 		s_align[4];	/* section alignment		*/
 };
 
 
@@ -132,19 +132,21 @@ struct external_scnhdr {
  * grouping will have l_lnno = 0 and in place of physical address will be the
  * symbol table index of the function name.
  */
-struct external_lineno {
-	union {
-		char l_symndx[4];	/* function name symbol index, iff l_lnno == 0*/
-		char l_paddr[4];	/* (physical) address of line number	*/
-	} l_addr;
-	char l_lnno[2];		/* line number		*/
-	char padding[2];	/* force alignment	*/
+struct external_lineno
+{
+  union
+  {
+    char l_symndx[4];	/* function name symbol index, iff l_lnno == 0*/
+    char l_paddr[4];	/* (physical) address of line number	*/
+  } l_addr;
+
+  char l_lnno[2];		/* line number		*/
+  char padding[2];	/* force alignment	*/
 };
 
 
 #define	LINENO	struct external_lineno
 #define	LINESZ	8
-
 
 /********************** SYMBOLS **********************/
 
@@ -154,13 +156,17 @@ struct external_lineno {
 
 struct external_syment 
 {
-  union {
+  union
+  {
     char e_name[E_SYMNMLEN];
-    struct {
+
+    struct
+    {
       char e_zeroes[4];
       char e_offset[4];
     } e;
   } e;
+
   char e_value[4];
   char e_scnum[2];
   char e_flags[2];
@@ -170,77 +176,98 @@ struct external_syment
   char pad2[2];
 };
 
-
-
-
 #define N_BTMASK	(0x1f)
 #define N_TMASK		(0x60)
 #define N_BTSHFT	(5)
 #define N_TSHIFT	(2)
   
-union external_auxent {
-	struct {
-		char x_tagndx[4];	/* str, un, or enum tag indx */
-		union {
-			struct {
-			    char  x_lnno[2]; /* declaration line number */
-			    char  x_size[2]; /* str/union/array size */
-			} x_lnsz;
-			char x_fsize[4];	/* size of function */
-		} x_misc;
-		union {
-			struct {		/* if ISFCN, tag, or .bb */
-			    char x_lnnoptr[4];	/* ptr to fcn line # */
-			    char x_endndx[4];	/* entry ndx past block end */
-			} x_fcn;
-			struct {		/* if ISARY, up to 4 dimen. */
-			    char x_dimen[E_DIMNUM][2];
-			} x_ary;
-		} x_fcnary;
-		char x_tvndx[2];		/* tv index */
-	} x_sym;
+union external_auxent
+{
+  struct
+  {
+    char x_tagndx[4];	/* str, un, or enum tag indx */
 
-	union {
-		char x_fname[E_FILNMLEN];
-		struct {
-			char x_zeroes[4];
-			char x_offset[4];
-		} x_n;
-	} x_file;
+    union
+    {
+      struct
+      {
+	char  x_lnno[2]; /* declaration line number */
+	char  x_size[2]; /* str/union/array size */
+      } x_lnsz;
 
-	struct {
-		char x_scnlen[4];			/* section length */
-		char x_nreloc[2];	/* # relocation entries */
-		char x_nlinno[2];	/* # line numbers */
-	} x_scn;
+      char x_fsize[4];	/* size of function */
 
-        struct {
-		char x_tvfill[4];	/* tv fill value */
-		char x_tvlen[2];	/* length of .tv */
-		char x_tvran[2][2];	/* tv range */
-	} x_tv;		/* info about .tv section (in auxent of symbol .tv)) */
+    } x_misc;
 
-	/******************************************
-	 *  I960-specific *2nd* aux. entry formats
-	 ******************************************/
-	struct {
-	  /* This is a very old typo that keeps getting propagated. */
+    union
+    {
+      struct 		/* if ISFCN, tag, or .bb */
+      {
+	char x_lnnoptr[4];	/* ptr to fcn line # */
+	char x_endndx[4];	/* entry ndx past block end */
+      } x_fcn;
+
+      struct 		/* if ISARY, up to 4 dimen. */
+      {
+	char x_dimen[E_DIMNUM][2];
+      } x_ary;
+
+    } x_fcnary;
+
+    char x_tvndx[2];		/* tv index */
+
+  } x_sym;
+
+  union
+  {
+    char x_fname[E_FILNMLEN];
+
+    struct
+    {
+      char x_zeroes[4];
+      char x_offset[4];
+    } x_n;
+
+  } x_file;
+
+  struct
+  {
+    char x_scnlen[4];			/* section length */
+    char x_nreloc[2];	/* # relocation entries */
+    char x_nlinno[2];	/* # line numbers */
+
+  } x_scn;
+
+  struct
+  {
+    char x_tvfill[4];	/* tv fill value */
+    char x_tvlen[2];	/* length of .tv */
+    char x_tvran[2][2];	/* tv range */
+
+  } x_tv;		/* info about .tv section (in auxent of symbol .tv)) */
+
+  /******************************************
+   *  I960-specific *2nd* aux. entry formats
+   ******************************************/
+  struct
+  {
+    /* This is a very old typo that keeps getting propagated. */
 #define x_stdindx x_stindx
-		char x_stindx[4];	/* sys. table entry */
-	} x_sc;	/* system call entry */
+    char x_stindx[4];	/* sys. table entry */
+  } x_sc;	/* system call entry */
 
-	struct {
-		char x_balntry[4]; /* BAL entry point */
-	} x_bal; /* BAL-callable function */
+  struct
+  {
+    char x_balntry[4]; /* BAL entry point */
+  } x_bal; /* BAL-callable function */
 
-        struct {
-		char x_timestamp[4];	        /* time stamp */
-		char 	x_idstring[20];	        /* producer identity string */
-	} x_ident;	                        /* Producer ident info */
+  struct
+  {
+    char x_timestamp[4];	        /* time stamp */
+    char 	x_idstring[20];	        /* producer identity string */
 
+  } x_ident;	                        /* Producer ident info */
 };
-
-
 
 #define	SYMENT	struct external_syment
 #define	SYMESZ	24
@@ -251,7 +278,8 @@ union external_auxent {
 
 /********************** RELOCATION DIRECTIVES **********************/
 
-struct external_reloc {
+struct external_reloc
+{
   char r_vaddr[4];
   char r_symndx[4];
   char r_type[2];

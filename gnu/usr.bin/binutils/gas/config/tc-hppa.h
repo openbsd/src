@@ -1,6 +1,6 @@
 /* tc-hppa.h -- Header file for the PA
-   Copyright 1989, 1993, 1994, 1995, 1997, 1998, 1999, 2000, 2001
-   Free Software Foundation, Inc.
+   Copyright 1989, 1993, 1994, 1995, 1997, 1998, 1999, 2000, 2001, 2002,
+   2003 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -68,13 +68,20 @@
 #define TARGET_FORMAT "som"
 #endif
 
-#ifdef TE_LINUX
+#if defined(TE_LINUX) || defined(TE_NetBSD) || defined(TE_OpenBSD)
 /* Define to compile in an extra assembler option, -c, which enables a
    warning (once per file) when a comment is encountered.
    The hppa comment char is a `;' which tends to occur in random C asm
    statements.  A semicolon is a line separator for most assemblers.
    It's hard to find these lurking semicolons.  Thus...  */
 #define WARN_COMMENTS 1
+#endif
+
+#if defined(TE_NetBSD) || defined(TE_OpenBSD)
+/* XXX the original OpenBSD code has labels without colons,
+   so this is required, for now -- fredette@netbsd.org */
+/* Labels are not required to have a colon for a suffix.  */
+#define LABELS_WITHOUT_COLONS 1
 #endif
 
 /* FIXME.  Why oh why aren't these defined somewhere globally?  */
@@ -126,10 +133,15 @@ extern void pa_check_eof PARAMS ((void));
 int hppa_fix_adjustable PARAMS((struct fix *));
 #define tc_fix_adjustable hppa_fix_adjustable
 
+#define EXTERN_FORCE_RELOC 1
+
 /* Because of the strange PA calling conventions, it is sometimes
    necessary to emit a relocation for a call even though it would
    normally appear safe to handle it completely within GAS.  */
-#define TC_FORCE_RELOCATION(FIXP) hppa_force_relocation (FIXP)
+#define TC_FORCE_RELOCATION(FIX) hppa_force_relocation (FIX)
+
+/* Values passed to md_apply_fix3 don't include the symbol value.  */
+#define MD_APPLY_SYM_VALUE(FIX) 0
 
 #ifdef OBJ_SOM
 /* If a symbol is imported, but never used, then the symbol should
@@ -153,9 +165,7 @@ int hppa_fix_adjustable PARAMS((struct fix *));
 #endif
 
 #ifdef OBJ_ELF
-/* It's OK to subtract two symbols in the same section without
-   emitting a relocation.  */
-#define TC_FORCE_RELOCATION_SECTION(FIXP, SEC) 0
+#define DIFF_EXPR_OK 1
 
 /* Handle .type psuedo.  Given a type string of `millicode', set the
    internal elf symbol type to STT_PARISC_MILLI, and return
@@ -170,7 +180,8 @@ int hppa_fix_adjustable PARAMS((struct fix *));
 
 #define tc_frob_symbol(sym,punt) \
   { \
-    if ((S_GET_SEGMENT (sym) == &bfd_und_section && ! symbol_used_p (sym)) \
+    if ((S_GET_SEGMENT (sym) == &bfd_und_section && ! symbol_used_p (sym) && \
+  	 ELF_ST_VISIBILITY (S_GET_OTHER (sym)) == STV_DEFAULT) \
 	|| (S_GET_SEGMENT (sym) == &bfd_abs_section \
 	    && ! S_IS_EXTERNAL (sym)) \
 	|| strcmp (S_GET_NAME (sym), "$global$") == 0 \
@@ -194,6 +205,6 @@ int hppa_force_reg_syms_absolute
   PARAMS ((expressionS *, operatorT, expressionS *));
 
 #define TC_FIX_TYPE PTR
-#define TC_INIT_FIX_DATA(FIXP) ((FIXP)->tc_fix_data = NULL)
+#define TC_INIT_FIX_DATA(FIX) ((FIX)->tc_fix_data = NULL)
 
 #endif /* _TC_HPPA_H */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1983, 1993, 2001
+ * Copyright (c) 1983, 1993
  *      The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,12 +26,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-#include <stdio.h>
 #include "libiberty.h"
 #include "gprof.h"
+#include "search_list.h"
+#include "source.h"
+#include "symtab.h"
 #include "cg_arcs.h"
 #include "cg_dfn.h"
-#include "symtab.h"
 #include "utils.h"
 
 #define	DFN_INCR_DEPTH (128)
@@ -43,6 +44,12 @@ typedef struct
   }
 DFN_Stack;
 
+static bfd_boolean is_numbered PARAMS ((Sym *));
+static bfd_boolean is_busy PARAMS ((Sym *));
+static void find_cycle PARAMS ((Sym *));
+static void pre_visit PARAMS ((Sym *));
+static void post_visit PARAMS ((Sym *));
+
 DFN_Stack *dfn_stack = NULL;
 int dfn_maxdepth = 0;
 int dfn_depth = 0;
@@ -52,8 +59,9 @@ int dfn_counter = DFN_NAN;
 /*
  * Is CHILD already numbered?
  */
-static bool
-DEFUN (is_numbered, (child), Sym * child)
+static bfd_boolean
+is_numbered (child)
+     Sym *child;
 {
   return child->cg.top_order != DFN_NAN && child->cg.top_order != DFN_BUSY;
 }
@@ -62,8 +70,9 @@ DEFUN (is_numbered, (child), Sym * child)
 /*
  * Is CHILD already busy?
  */
-static bool
-DEFUN (is_busy, (child), Sym * child)
+static bfd_boolean
+is_busy (child)
+     Sym *child;
 {
   if (child->cg.top_order == DFN_NAN)
     {
@@ -80,7 +89,8 @@ DEFUN (is_busy, (child), Sym * child)
  * depth-first number).
  */
 static void
-DEFUN (find_cycle, (child), Sym * child)
+find_cycle (child)
+     Sym *child;
 {
   Sym *head = 0;
   Sym *tail;
@@ -203,7 +213,8 @@ DEFUN (find_cycle, (child), Sym * child)
  * the stack and mark it busy.
  */
 static void
-DEFUN (pre_visit, (parent), Sym * parent)
+pre_visit (parent)
+     Sym *parent;
 {
   ++dfn_depth;
 
@@ -227,7 +238,8 @@ DEFUN (pre_visit, (parent), Sym * parent)
  * and number functions if PARENT is head of a cycle.
  */
 static void
-DEFUN (post_visit, (parent), Sym * parent)
+post_visit (parent)
+     Sym *parent;
 {
   Sym *member;
 
@@ -261,7 +273,8 @@ DEFUN (post_visit, (parent), Sym * parent)
  * Given this PARENT, depth first number its children.
  */
 void
-DEFUN (cg_dfn, (parent), Sym * parent)
+cg_dfn (parent)
+     Sym *parent;
 {
   Arc *arc;
 

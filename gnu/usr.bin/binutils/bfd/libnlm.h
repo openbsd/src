@@ -1,5 +1,5 @@
 /* BFD back-end data structures for NLM (NetWare Loadable Modules) files.
-   Copyright 1993, 1994 Free Software Foundation, Inc.
+   Copyright 1993, 1994, 2001, 2002 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -52,32 +52,33 @@ typedef struct
   struct nlm_relent *relocs;
 } nlmNAME(symbol_type);
 
-extern boolean nlm_mkobject PARAMS ((bfd *));
-extern boolean nlm_set_arch_mach PARAMS ((bfd *, enum bfd_architecture,
-					  unsigned long));
+extern bfd_boolean nlm_mkobject
+  PARAMS ((bfd *));
+extern bfd_boolean nlm_set_arch_mach
+  PARAMS ((bfd *, enum bfd_architecture, unsigned long));
 
 extern void nlmNAME(get_symbol_info)
-     PARAMS ((bfd *, asymbol *, symbol_info *));
+  PARAMS ((bfd *, asymbol *, symbol_info *));
 extern long nlmNAME(get_symtab_upper_bound)
-     PARAMS ((bfd *));
+  PARAMS ((bfd *));
 extern long nlmNAME(get_symtab)
-     PARAMS ((bfd *, asymbol **));
+  PARAMS ((bfd *, asymbol **));
 extern asymbol *nlmNAME(make_empty_symbol)
-     PARAMS ((bfd *));
+  PARAMS ((bfd *));
 extern void nlmNAME(print_symbol)
-     PARAMS ((bfd *, PTR, asymbol *, bfd_print_symbol_type));
+  PARAMS ((bfd *, PTR, asymbol *, bfd_print_symbol_type));
 extern long nlmNAME(get_reloc_upper_bound)
-     PARAMS ((bfd *, asection *));
+  PARAMS ((bfd *, asection *));
 extern long nlmNAME(canonicalize_reloc)
-     PARAMS ((bfd *, asection *, arelent **, asymbol **));
+  PARAMS ((bfd *, asection *, arelent **, asymbol **));
 extern const bfd_target *nlmNAME(object_p)
-     PARAMS ((bfd *));
-extern boolean nlmNAME(set_arch_mach)
-     PARAMS ((bfd *, enum bfd_architecture, unsigned long));
-extern boolean nlmNAME(set_section_contents)
-     PARAMS ((bfd *, asection *, PTR, file_ptr, bfd_size_type));
-extern boolean nlmNAME(write_object_contents)
-     PARAMS ((bfd *));
+  PARAMS ((bfd *));
+extern bfd_boolean nlmNAME(set_arch_mach)
+  PARAMS ((bfd *, enum bfd_architecture, unsigned long));
+extern bfd_boolean nlmNAME(set_section_contents)
+  PARAMS ((bfd *, asection *, PTR, file_ptr, bfd_size_type));
+extern bfd_boolean nlmNAME(write_object_contents)
+  PARAMS ((bfd *));
 
 /* Some private data is stashed away for future use using the tdata pointer
    in the bfd structure.  */
@@ -161,20 +162,20 @@ struct nlm_backend_data
   /* Architecture.  */
   enum bfd_architecture arch;
   /* Machine.  */
-  long mach;
+  unsigned int mach;
   /* Some NLM formats do not use the uninitialized data section, so
      all uninitialized data must be put into the regular data section
      instead.  */
-  boolean no_uninitialized_data;
+  bfd_boolean no_uninitialized_data;
   /* Some NLM formats have a prefix on the file.  If this function is
      not NULL, it will be called by nlm_object_p.  It should return
-     true if this file could match this format, and it should leave
-     the BFD such that a bfd_read will pick up the fixed header.  */
-  boolean (*nlm_backend_object_p) PARAMS ((bfd *));
+     TRUE if this file could match this format, and it should leave
+     the BFD such that a bfd_bread will pick up the fixed header.  */
+  bfd_boolean (*nlm_backend_object_p) PARAMS ((bfd *));
   /* Write out the prefix.  This function may be NULL.  This must
      write out the same number of bytes as is in the field
      optional_prefix_size.  */
-  boolean (*nlm_write_prefix) PARAMS ((bfd *));
+  bfd_boolean (*nlm_write_prefix) PARAMS ((bfd *));
   /* Read a relocation fixup from abfd.  The reloc information is
      machine specific.  The second argument is the symbol if this is
      an import, or NULL if this is a reloc fixup.  This function
@@ -182,36 +183,33 @@ struct nlm_backend_data
      belongs in, and the fourth argument to the reloc itself; it does
      not need to fill in the sym_ptr_ptr field for a reloc against an
      import symbol.  */
-  boolean (*nlm_read_reloc) PARAMS ((bfd *, nlmNAME(symbol_type) *,
-				     asection **, arelent *));
+  bfd_boolean (*nlm_read_reloc)
+    PARAMS ((bfd *, nlmNAME(symbol_type) *, asection **, arelent *));
   /* To make objcopy to an i386 NLM work, the i386 backend needs a
      chance to work over the relocs.  This is a bit icky.  */
-  boolean (*nlm_mangle_relocs) PARAMS ((bfd *, asection *, PTR data,
-					bfd_vma offset,
-					bfd_size_type count));
+  bfd_boolean (*nlm_mangle_relocs)
+    PARAMS ((bfd *, asection *, PTR data, bfd_vma offset, bfd_size_type count));
   /* Read an import record from abfd.  It would be nice if this
      were in a machine-dependent format, but it doesn't seem to be. */
-  boolean (*nlm_read_import) PARAMS ((bfd *, nlmNAME(symbol_type) *));
+  bfd_boolean (*nlm_read_import) PARAMS ((bfd *, nlmNAME(symbol_type) *));
   /* Write an import record to abfd. */
-  boolean (*nlm_write_import) PARAMS ((bfd *, asection *, arelent *));
+  bfd_boolean (*nlm_write_import) PARAMS ((bfd *, asection *, arelent *));
   /* Set the section for a public symbol.  This may be NULL, in which
      case a default method will be used.  */
-  boolean (*nlm_set_public_section) PARAMS ((bfd *, nlmNAME(symbol_type) *));
+  bfd_boolean (*nlm_set_public_section)
+    PARAMS ((bfd *, nlmNAME(symbol_type) *));
   /* Get the offset to write out for a public symbol.  This may be
      NULL, in which case a default method will be used.  */
   bfd_vma (*nlm_get_public_offset) PARAMS ((bfd *, asymbol *));
   /* Swap the fixed header in and out */
-  void (*nlm_swap_fhdr_in) PARAMS ((bfd *,
-				    PTR,
-				    Nlm_Internal_Fixed_Header *));
-  void (*nlm_swap_fhdr_out) PARAMS ((bfd *,
-				     struct nlm_internal_fixed_header *,
-				     PTR));
+  void (*nlm_swap_fhdr_in)
+    PARAMS ((bfd *, PTR, Nlm_Internal_Fixed_Header *));
+  void (*nlm_swap_fhdr_out)
+    PARAMS ((bfd *, struct nlm_internal_fixed_header *, PTR));
   /* Write out an external reference.  */
-  boolean (*nlm_write_external) PARAMS ((bfd *, bfd_size_type,
-					 asymbol *,
-					 struct reloc_and_sec *));
-  boolean (*nlm_write_export) PARAMS ((bfd *, asymbol *, bfd_vma));
+  bfd_boolean (*nlm_write_external)
+    PARAMS ((bfd *, bfd_size_type, asymbol *, struct reloc_and_sec *));
+  bfd_boolean (*nlm_write_export) PARAMS ((bfd *, asymbol *, bfd_vma));
 };
 
 #define nlm_backend(bfd) \

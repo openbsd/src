@@ -1,5 +1,6 @@
 /* BFD library support routines for the Z800n architecture.
-   Copyright 1992, 1993, 1994, 2000 Free Software Foundation, Inc.
+   Copyright 1992, 1993, 1994, 2000, 2001, 2002
+   Free Software Foundation, Inc.
    Hacked by Steve Chamberlain of Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -21,6 +22,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "bfd.h"
 #include "sysdep.h"
 #include "libbfd.h"
+
+static const bfd_arch_info_type *compatible
+  PARAMS ((const bfd_arch_info_type *, const bfd_arch_info_type *));
 
 #if 0				/* not used currently */
 /*
@@ -117,15 +121,15 @@ howto8_pcrel_callback (abfd, reloc_entry, symbol_in, data,
 }
 
 static reloc_howto_type howto_16
-= NEWHOWTO (howto16_callback, "abs16", 1, false, false);
+= NEWHOWTO (howto16_callback, "abs16", 1, FALSE, FALSE);
 static reloc_howto_type howto_8
-= NEWHOWTO (howto8_callback, "abs8", 0, false, false);
+= NEWHOWTO (howto8_callback, "abs8", 0, FALSE, FALSE);
 
 static reloc_howto_type howto_8_FFnn
-= NEWHOWTO (howto8_FFnn_callback, "ff00+abs8", 0, false, false);
+= NEWHOWTO (howto8_FFnn_callback, "ff00+abs8", 0, FALSE, FALSE);
 
 static reloc_howto_type howto_8_pcrel
-= NEWHOWTO (howto8_pcrel_callback, "pcrel8", 0, false, true);
+= NEWHOWTO (howto8_pcrel_callback, "pcrel8", 0, FALSE, TRUE);
 
 static reloc_howto_type *
 local_bfd_reloc_type_lookup (arch, code)
@@ -148,24 +152,6 @@ local_bfd_reloc_type_lookup (arch, code)
 }
 #endif
 
-int bfd_default_scan_num_mach ();
-
-static boolean
-scan_mach (info, string)
-     const struct bfd_arch_info *info;
-     const char *string;
-{
-  if (strcmp (string, "z8001") == 0 || strcmp (string, "z8k") == 0)
-    {
-      return bfd_mach_z8001 == info->mach;
-    }
-  if (strcmp (string, "z8002") == 0)
-    {
-      return bfd_mach_z8002 == info->mach;
-    }
-  return false;
-}
-
 /* This routine is provided two arch_infos and returns whether
    they'd be compatible */
 
@@ -181,10 +167,12 @@ compatible (a, b)
 
 static const bfd_arch_info_type arch_info_struct[] =
 {
-  {32, 32, 8, bfd_arch_z8k, bfd_mach_z8001, "z8k", "z8001", 1, false, compatible, scan_mach, 0,},
+  { 32, 16, 8, bfd_arch_z8k, bfd_mach_z8002, "z8k", "z8002", 1, FALSE,
+    compatible, bfd_default_scan, 0 }
 };
 
 const bfd_arch_info_type bfd_z8k_arch =
 {
-  32, 16, 8, bfd_arch_z8k, bfd_mach_z8002, "z8k", "z8002", 1, true, compatible, scan_mach, &arch_info_struct[0],
+  32, 32, 8, bfd_arch_z8k, bfd_mach_z8001, "z8k", "z8001", 1, TRUE,
+  compatible, bfd_default_scan, &arch_info_struct[0]
 };

@@ -1,5 +1,6 @@
 /* BFD back-end for Motorola 68000 COFF binaries.
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1999, 2000
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1999,
+   2000, 2001, 2002
    Free Software Foundation, Inc.
    Written by Cygnus Support.
 
@@ -66,19 +67,20 @@ static reloc_howto_type *m68kcoff_common_addend_rtype_to_howto
 #define RELOC_SPECIAL_FN m68kcoff_common_addend_special_fn
 #endif
 
-static boolean m68k_coff_is_local_label_name PARAMS ((bfd *, const char *));
+static bfd_boolean m68k_coff_is_local_label_name
+  PARAMS ((bfd *, const char *));
 
 /* On the delta, a symbol starting with L% is local.  We won't see
    such a symbol on other platforms, so it should be safe to always
    consider it local here.  */
 
-static boolean
+static bfd_boolean
 m68k_coff_is_local_label_name (abfd, name)
      bfd *abfd;
      const char *name;
 {
   if (name[0] == 'L' && name[1] == '%')
-    return true;
+    return TRUE;
 
   return _bfd_coff_is_local_label_name (abfd, name);
 }
@@ -98,15 +100,15 @@ extern reloc_howto_type m68kcoff_howto_table[];
 static
 #endif
 reloc_howto_type m68kcoff_howto_table[] =
-{
-  HOWTO(R_RELBYTE,	       0,  0,  	8,  false, 0, complain_overflow_bitfield, RELOC_SPECIAL_FN, "8",	true, 0x000000ff,0x000000ff, false),
-  HOWTO(R_RELWORD,	       0,  1, 	16, false, 0, complain_overflow_bitfield, RELOC_SPECIAL_FN, "16",	true, 0x0000ffff,0x0000ffff, false),
-  HOWTO(R_RELLONG,	       0,  2, 	32, false, 0, complain_overflow_bitfield, RELOC_SPECIAL_FN, "32",	true, 0xffffffff,0xffffffff, false),
-  HOWTO(R_PCRBYTE,	       0,  0, 	8,  true,  0, complain_overflow_signed, RELOC_SPECIAL_FN, "DISP8",    true, 0x000000ff,0x000000ff, false),
-  HOWTO(R_PCRWORD,	       0,  1, 	16, true,  0, complain_overflow_signed, RELOC_SPECIAL_FN, "DISP16",   true, 0x0000ffff,0x0000ffff, false),
-  HOWTO(R_PCRLONG,	       0,  2, 	32, true,  0, complain_overflow_signed, RELOC_SPECIAL_FN, "DISP32",   true, 0xffffffff,0xffffffff, false),
-  HOWTO(R_RELLONG_NEG,	       0,  -2, 	32, false, 0, complain_overflow_bitfield, RELOC_SPECIAL_FN, "-32",	true, 0xffffffff,0xffffffff, false),
-};
+  {
+    HOWTO (R_RELBYTE,	       0,  0,  	8,  FALSE, 0, complain_overflow_bitfield, RELOC_SPECIAL_FN, "8",	TRUE, 0x000000ff,0x000000ff, FALSE),
+    HOWTO (R_RELWORD,	       0,  1, 	16, FALSE, 0, complain_overflow_bitfield, RELOC_SPECIAL_FN, "16",	TRUE, 0x0000ffff,0x0000ffff, FALSE),
+    HOWTO (R_RELLONG,	       0,  2, 	32, FALSE, 0, complain_overflow_bitfield, RELOC_SPECIAL_FN, "32",	TRUE, 0xffffffff,0xffffffff, FALSE),
+    HOWTO (R_PCRBYTE,	       0,  0, 	8,  TRUE,  0, complain_overflow_signed,   RELOC_SPECIAL_FN, "DISP8",    TRUE, 0x000000ff,0x000000ff, FALSE),
+    HOWTO (R_PCRWORD,	       0,  1, 	16, TRUE,  0, complain_overflow_signed,   RELOC_SPECIAL_FN, "DISP16",   TRUE, 0x0000ffff,0x0000ffff, FALSE),
+    HOWTO (R_PCRLONG,	       0,  2, 	32, TRUE,  0, complain_overflow_signed,   RELOC_SPECIAL_FN, "DISP32",   TRUE, 0xffffffff,0xffffffff, FALSE),
+    HOWTO (R_RELLONG_NEG,      0, -2, 	32, FALSE, 0, complain_overflow_bitfield, RELOC_SPECIAL_FN, "-32",	TRUE, 0xffffffff,0xffffffff, FALSE),
+  };
 #endif /* not ONLY_DECLARE_RELOCS */
 
 #ifndef BADMAG
@@ -122,58 +124,61 @@ extern int m68k_howto2rtype PARAMS ((reloc_howto_type *));
 extern reloc_howto_type *m68k_reloc_type_lookup
   PARAMS ((bfd *, bfd_reloc_code_real_type));
 #else
+
 #ifdef STATIC_RELOCS
-static
+#define STAT_REL static
+#else
+#define STAT_REL
 #endif
-void
+
+STAT_REL reloc_howto_type * m68k_reloc_type_lookup PARAMS ((bfd *, bfd_reloc_code_real_type));
+STAT_REL int m68k_howto2rtype PARAMS ((reloc_howto_type *));
+STAT_REL void m68k_rtype2howto PARAMS ((arelent *, int));
+
+
+STAT_REL void
 m68k_rtype2howto(internal, relocentry)
      arelent *internal;
      int relocentry;
 {
   switch (relocentry)
-  {
-   case R_RELBYTE:	internal->howto = m68kcoff_howto_table + 0; break;
-   case R_RELWORD:	internal->howto = m68kcoff_howto_table + 1; break;
-   case R_RELLONG:	internal->howto = m68kcoff_howto_table + 2; break;
-   case R_PCRBYTE:	internal->howto = m68kcoff_howto_table + 3; break;
-   case R_PCRWORD:	internal->howto = m68kcoff_howto_table + 4; break;
-   case R_PCRLONG:	internal->howto = m68kcoff_howto_table + 5; break;
-   case R_RELLONG_NEG:	internal->howto = m68kcoff_howto_table + 6; break;
-  }
+    {
+    case R_RELBYTE:	internal->howto = m68kcoff_howto_table + 0; break;
+    case R_RELWORD:	internal->howto = m68kcoff_howto_table + 1; break;
+    case R_RELLONG:	internal->howto = m68kcoff_howto_table + 2; break;
+    case R_PCRBYTE:	internal->howto = m68kcoff_howto_table + 3; break;
+    case R_PCRWORD:	internal->howto = m68kcoff_howto_table + 4; break;
+    case R_PCRLONG:	internal->howto = m68kcoff_howto_table + 5; break;
+    case R_RELLONG_NEG:	internal->howto = m68kcoff_howto_table + 6; break;
+    }
 }
 
-#ifdef STATIC_RELOCS
-static
-#endif
-int
+STAT_REL int
 m68k_howto2rtype (internal)
      reloc_howto_type *internal;
 {
   if (internal->pc_relative)
-  {
-    switch (internal->bitsize)
     {
-     case 32: return R_PCRLONG;
-     case 16: return R_PCRWORD;
-     case 8: return R_PCRBYTE;
+      switch (internal->bitsize)
+	{
+	case 32: return R_PCRLONG;
+	case 16: return R_PCRWORD;
+	case 8: return R_PCRBYTE;
+	}
     }
-  }
   else
-  {
-    switch (internal->bitsize)
-     {
-      case 32: return R_RELLONG;
-      case 16: return R_RELWORD;
-      case 8: return R_RELBYTE;
-     }
-  }
+    {
+      switch (internal->bitsize)
+	{
+	case 32: return R_RELLONG;
+	case 16: return R_RELWORD;
+	case 8: return R_RELBYTE;
+	}
+    }
   return R_RELLONG;
 }
 
-#ifdef STATIC_RELOCS
-static
-#endif
-reloc_howto_type *
+STAT_REL reloc_howto_type *
 m68k_reloc_type_lookup (abfd, code)
      bfd *abfd ATTRIBUTE_UNUSED;
      bfd_reloc_code_real_type code;
@@ -312,7 +317,7 @@ m68kcoff_common_addend_special_fn (abfd, reloc_entry, symbol, data,
 	  {
 	    short x = bfd_get_16 (abfd, addr);
 	    DOIT (x);
-	    bfd_put_16 (abfd, x, addr);
+	    bfd_put_16 (abfd, (bfd_vma) x, addr);
 	  }
 	  break;
 
@@ -320,7 +325,7 @@ m68kcoff_common_addend_special_fn (abfd, reloc_entry, symbol, data,
 	  {
 	    long x = bfd_get_32 (abfd, addr);
 	    DOIT (x);
-	    bfd_put_32 (abfd, x, addr);
+	    bfd_put_32 (abfd, (bfd_vma) x, addr);
 	  }
 	  break;
 
@@ -426,7 +431,7 @@ m68kcoff_common_addend_rtype_to_howto (abfd, sec, rel, h, sym, addendp)
    after the add_symbols entry point has been called for all the
    objects, and before the final_link entry point is called.  */
 
-boolean
+bfd_boolean
 bfd_m68k_coff_create_embedded_relocs (abfd, info, datasec, relsec, errmsg)
      bfd *abfd;
      struct bfd_link_info *info;
@@ -438,24 +443,26 @@ bfd_m68k_coff_create_embedded_relocs (abfd, info, datasec, relsec, errmsg)
   bfd_size_type symesz;
   struct internal_reloc *irel, *irelend;
   bfd_byte *p;
+  bfd_size_type amt;
 
   BFD_ASSERT (! info->relocateable);
 
   *errmsg = NULL;
 
   if (datasec->reloc_count == 0)
-    return true;
+    return TRUE;
 
   extsyms = obj_coff_external_syms (abfd);
   symesz = bfd_coff_symesz (abfd);
 
-  irel = _bfd_coff_read_internal_relocs (abfd, datasec, true, NULL, false,
+  irel = _bfd_coff_read_internal_relocs (abfd, datasec, TRUE, NULL, FALSE,
 					 NULL);
   irelend = irel + datasec->reloc_count;
 
-  relsec->contents = (bfd_byte *) bfd_alloc (abfd, datasec->reloc_count * 12);
+  amt = (bfd_size_type) datasec->reloc_count * 12;
+  relsec->contents = (bfd_byte *) bfd_alloc (abfd, amt);
   if (relsec->contents == NULL)
-    return false;
+    return FALSE;
 
   p = relsec->contents;
 
@@ -474,7 +481,7 @@ bfd_m68k_coff_create_embedded_relocs (abfd, info, datasec, relsec, errmsg)
 	{
 	  *errmsg = _("unsupported reloc type");
 	  bfd_set_error (bfd_error_bad_value);
-	  return false;
+	  return FALSE;
 	}
 
       if (irel->r_symndx == -1)
@@ -506,7 +513,7 @@ bfd_m68k_coff_create_embedded_relocs (abfd, info, datasec, relsec, errmsg)
 	strncpy (p + 4, targetsec->output_section->name, 8);
     }
 
-  return true;
+  return TRUE;
 }
 #endif /* neither ONLY_DECLARE_RELOCS not STATIC_RELOCS  */
 

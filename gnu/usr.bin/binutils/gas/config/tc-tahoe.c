@@ -1,6 +1,6 @@
 /* This file is tc-tahoe.c
 
-   Copyright 1987, 1988, 1989, 1990, 1991, 1992, 1995, 2000
+   Copyright 1987, 1988, 1989, 1990, 1991, 1992, 1995, 2000, 2001, 2002
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -20,6 +20,7 @@
    Software Foundation, 59 Temple Place - Suite 330, Boston, MA
    02111-1307, USA.  */
 #include "as.h"
+#include "safe-ctype.h"
 #include "obstack.h"
 
 /* This bit glommed from tahoe-inst.h.  */
@@ -385,7 +386,7 @@ md_begin ()
     as_fatal (errorval);
 }
 
-CONST char *md_shortopts = "ad:STt:V";
+const char *md_shortopts = "ad:STt:V";
 struct option md_longopts[] = {
   {NULL, no_argument, NULL, 0}
 };
@@ -469,11 +470,12 @@ md_number_to_imm (con, value, nbytes)
 #endif /* comment */
 
 void
-tc_apply_fix (fixP, val)
-     fixS *fixP;
-     long val;
+md_apply_fix3 (fixP, valP, seg)
+     fixS *fixP ATTRIBUTE_UNUSED;
+     valueT * valP ATTRIBUTE_UNUSED;
+     segT seg ATTRIBUTE_UNUSED:
 {
-  /* should never be called */
+  /* Should never be called.  */
   know (0);
 }
 
@@ -885,11 +887,11 @@ tahoe_reg_parse (start)
 				   R or r, and then a number.  */
     case 'R':
     case 'r':
-      if (isdigit (*regpoint))
+      if (ISDIGIT (*regpoint))
 	{
 	  /* Got the first digit.  */
 	  regnum = *regpoint++ - '0';
-	  if ((regnum == 1) && isdigit (*regpoint))
+	  if ((regnum == 1) && ISDIGIT (*regpoint))
 	    {
 	      /* Its a two digit number.  */
 	      regnum = 10 + (*regpoint++ - '0');
@@ -1064,7 +1066,7 @@ tip_op (optex, topP)
 	  as_warn (_("Casting a branch displacement is bad form, and is ignored."));
 	else
 	  {
-	    c = (isupper (*point) ? tolower (*point) : *point);
+	    c = TOLOWER (*point);
 	    call_width = ((c == 'b') ? 1 :
 			  ((c == 'w') ? 2 : 4));
 	  }
@@ -1244,10 +1246,10 @@ tip_op (optex, topP)
 
 	default:
 	  /*
-	   * Major bug. We can't handle the case of a operator
+	   * Major bug. We can't handle the case of an operator
 	   * expression in a synthetic opcode variable-length
 	   * instruction.  We don't have a frag type that is smart
-	   * enough to relax a operator, and so we just force all
+	   * enough to relax an operator, and so we just force all
 	   * operators to behave like SEG_PASS1s.  Clearly, if there is
 	   * a demand we can invent a new or modified frag type and
 	   * then coding up a frag for this case will be easy.
@@ -1863,7 +1865,7 @@ md_assemble (instruction_string)
 		    }
 		  else
 		    {
-		      /* It's a integer, and I know it's size.  */
+		      /* It's an integer, and I know it's size.  */
 		      if ((unsigned) this_add_number < 0x40)
 			{
 			  /* Will it fit in a literal? */

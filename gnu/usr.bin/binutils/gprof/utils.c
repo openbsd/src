@@ -26,17 +26,21 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-#include <demangle.h>
+#include "demangle.h"
 #include "gprof.h"
-#include "cg_arcs.h"
+#include "search_list.h"
+#include "source.h"
 #include "symtab.h"
+#include "cg_arcs.h"
+#include "utils.h"
 
 
 /*
  * Print name of symbol.  Return number of characters printed.
  */
 int
-DEFUN (print_name_only, (self), Sym * self)
+print_name_only (self)
+     Sym *self;
 {
   const char *name = self->name;
   const char *filename;
@@ -95,7 +99,8 @@ DEFUN (print_name_only, (self), Sym * self)
 
 
 void
-DEFUN (print_name, (self), Sym * self)
+print_name (self)
+     Sym *self;
 {
   print_name_only (self);
 

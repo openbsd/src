@@ -68,23 +68,23 @@ typedef enum {
   O_multiply,
   /* (X_add_symbol / X_op_symbol) + X_add_number.  */
   O_divide,
-  /* X_add_symbol % X_op_symbol) + X_add_number.  */
+  /* (X_add_symbol % X_op_symbol) + X_add_number.  */
   O_modulus,
-  /* X_add_symbol << X_op_symbol) + X_add_number.  */
+  /* (X_add_symbol << X_op_symbol) + X_add_number.  */
   O_left_shift,
-  /* X_add_symbol >> X_op_symbol) + X_add_number.  */
+  /* (X_add_symbol >> X_op_symbol) + X_add_number.  */
   O_right_shift,
-  /* X_add_symbol | X_op_symbol) + X_add_number.  */
+  /* (X_add_symbol | X_op_symbol) + X_add_number.  */
   O_bit_inclusive_or,
-  /* X_add_symbol |~ X_op_symbol) + X_add_number.  */
+  /* (X_add_symbol |~ X_op_symbol) + X_add_number.  */
   O_bit_or_not,
-  /* X_add_symbol ^ X_op_symbol) + X_add_number.  */
+  /* (X_add_symbol ^ X_op_symbol) + X_add_number.  */
   O_bit_exclusive_or,
-  /* X_add_symbol & X_op_symbol) + X_add_number.  */
+  /* (X_add_symbol & X_op_symbol) + X_add_number.  */
   O_bit_and,
-  /* X_add_symbol + X_op_symbol) + X_add_number.  */
+  /* (X_add_symbol + X_op_symbol) + X_add_number.  */
   O_add,
-  /* X_add_symbol - X_op_symbol) + X_add_number.  */
+  /* (X_add_symbol - X_op_symbol) + X_add_number.  */
   O_subtract,
   /* (X_add_symbol == X_op_symbol) + X_add_number.  */
   O_eq,
@@ -107,6 +107,8 @@ typedef enum {
   /* machine dependent operators */
   O_md1,  O_md2,  O_md3,  O_md4,  O_md5,  O_md6,  O_md7,  O_md8,
   O_md9,  O_md10, O_md11, O_md12, O_md13, O_md14, O_md15, O_md16,
+  O_md17, O_md18, O_md19, O_md20, O_md21, O_md22, O_md23, O_md24,
+  O_md25, O_md26, O_md27, O_md28, O_md29, O_md30, O_md31, O_md32,
   /* this must be the largest value */
   O_max
 } operatorT;

@@ -1,5 +1,5 @@
-/* macro.c - macro support for gas and gasp
-   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000
+/* macro.c - macro support for gas
+   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
 
    Written by Steve and Judy Chamberlain of Cygnus Support,
@@ -24,20 +24,14 @@
 
 #include "config.h"
 
-/* AIX requires this to be the first thing in the file.  */
-#ifdef __GNUC__
-# ifndef alloca
-#  ifdef __STDC__
-extern void *alloca ();
-#  else
-extern char *alloca ();
-#  endif
-# endif
-#else
+#ifndef __GNUC__
 # if HAVE_ALLOCA_H
 #  include <alloca.h>
 # else
 #  ifdef _AIX
+/* Indented so that pre-ansi C compilers will ignore it, rather than
+   choke on it.  Some versions of AIX require this to be the first
+   thing in the file.  */
  #pragma alloca
 #  else
 #   ifndef alloca /* predefined by HP cc +Olibcalls */
@@ -49,7 +43,7 @@ extern void *alloca ();
 #   endif /* alloca */
 #  endif /* _AIX */
 # endif /* HAVE_ALLOCA_H */
-#endif
+#endif /* __GNUC__ */
 
 #include <stdio.h>
 #ifdef HAVE_STRING_H
@@ -57,11 +51,11 @@ extern void *alloca ();
 #else
 #include <strings.h>
 #endif
-#include <ctype.h>
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
 #endif
 #include "libiberty.h"
+#include "safe-ctype.h"
 #include "sb.h"
 #include "hash.h"
 #include "macro.h"
@@ -69,7 +63,7 @@ extern void *alloca ();
 #include "asintl.h"
 
 /* The routines in this file handle macro definition and expansion.
-   They are called by both gasp and gas.  */
+   They are called by gas.  */
 
 /* Internal functions.  */
 
@@ -81,8 +75,8 @@ static int get_apost_token PARAMS ((int, sb *, sb *, int));
 static int sub_actual
   PARAMS ((int, sb *, sb *, struct hash_control *, int, sb *, int));
 static const char *macro_expand_body
-  PARAMS ((sb *, sb *, formal_entry *, struct hash_control *, int, int));
-static const char *macro_expand PARAMS ((int, sb *, macro_entry *, sb *, int));
+  PARAMS ((sb *, sb *, formal_entry *, struct hash_control *, int));
+static const char *macro_expand PARAMS ((int, sb *, macro_entry *, sb *));
 
 #define ISWHITE(x) ((x) == ' ' || (x) == '\t')
 
@@ -99,13 +93,13 @@ static const char *macro_expand PARAMS ((int, sb *, macro_entry *, sb *, int));
 
 /* The macro hash table.  */
 
-static struct hash_control *macro_hash;
+struct hash_control *macro_hash;
 
 /* Whether any macros have been defined.  */
 
 int macro_defined;
 
-/* Whether we are in GASP alternate mode.  */
+/* Whether we are in alternate syntax mode.  */
 
 static int macro_alternate;
 
@@ -189,7 +183,7 @@ buffer_and_nest (from, to, ptr, get_line)
 
 	  /* Skip over a label.  */
 	  while (i < ptr->len
-		 && (isalnum ((unsigned char) ptr->ptr[i])
+		 && (ISALNUM (ptr->ptr[i])
 		     || ptr->ptr[i] == '_'
 		     || ptr->ptr[i] == '$'))
 	    i++;
@@ -212,11 +206,11 @@ buffer_and_nest (from, to, ptr, get_line)
 	    i++;
 	  if (strncasecmp (ptr->ptr + i, from, from_len) == 0
 	      && (ptr->len == (i + from_len)
-		  || ! isalnum (ptr->ptr[i + from_len])))
+		  || ! ISALNUM (ptr->ptr[i + from_len])))
 	    depth++;
 	  if (strncasecmp (ptr->ptr + i, to, to_len) == 0
 	      && (ptr->len == (i + to_len)
-		  || ! isalnum (ptr->ptr[i + to_len])))
+		  || ! ISALNUM (ptr->ptr[i + to_len])))
 	    {
 	      depth--;
 	      if (depth == 0)
@@ -228,8 +222,8 @@ buffer_and_nest (from, to, ptr, get_line)
 	    }
 	}
 
-      /* Add a CR to the end and keep running.  */
-      sb_add_char (ptr, '\n');
+      /* Add the original end-of-line char to the end and keep running.  */
+      sb_add_char (ptr, more);
       line_start = ptr->len;
       more = get_line (ptr);
     }
@@ -247,13 +241,13 @@ get_token (idx, in, name)
      sb *name;
 {
   if (idx < in->len
-      && (isalpha ((unsigned char) in->ptr[idx])
+      && (ISALPHA (in->ptr[idx])
 	  || in->ptr[idx] == '_'
 	  || in->ptr[idx] == '$'))
     {
       sb_add_char (name, in->ptr[idx++]);
       while (idx < in->len
-	     && (isalnum ((unsigned char) in->ptr[idx])
+	     && (ISALNUM (in->ptr[idx])
 		 || in->ptr[idx] == '_'
 		 || in->ptr[idx] == '$'))
 	{
@@ -372,7 +366,7 @@ get_any_string (idx, in, out, expand, pretend_quoted)
 
   if (idx < in->len)
     {
-      if (in->len > 2 && in->ptr[idx + 1] == '\'' && ISBASE (in->ptr[idx]))
+      if (in->len > idx + 2 && in->ptr[idx + 1] == '\'' && ISBASE (in->ptr[idx]))
 	{
 	  while (!ISSEP (in->ptr[idx]))
 	    sb_add_char (out, in->ptr[idx++]);
@@ -384,11 +378,12 @@ get_any_string (idx, in, out, expand, pretend_quoted)
 	  int val;
 	  char buf[20];
 	  /* Turns the next expression into a string.  */
+	  /* xgettext: no-c-format */
 	  idx = (*macro_expr) (_("% operator needs absolute expression"),
 			       idx + 1,
 			       in,
 			       &val);
-	  sprintf(buf, "%d", val);
+	  sprintf (buf, "%d", val);
 	  sb_add_string (out, buf);
 	}
       else if (in->ptr[idx] == '"'
@@ -573,8 +568,7 @@ define_macro (idx, in, label, get_line, namep)
 
   /* And stick it in the macro hash table.  */
   for (idx = 0; idx < name.len; idx++)
-    if (isupper ((unsigned char) name.ptr[idx]))
-      name.ptr[idx] = tolower (name.ptr[idx]);
+    name.ptr[idx] = TOLOWER (name.ptr[idx]);
   namestr = sb_terminate (&name);
   hash_jam (macro_hash, namestr, (PTR) macro);
 
@@ -643,6 +637,7 @@ sub_actual (start, in, t, formal_hash, kind, out, copyifnotthere)
     {
       /* Doing this permits people to use & in macro bodies.  */
       sb_add_char (out, '&');
+      sb_add_sb (out, t);
     }
   else if (copyifnotthere)
     {
@@ -659,12 +654,11 @@ sub_actual (start, in, t, formal_hash, kind, out, copyifnotthere)
 /* Expand the body of a macro.  */
 
 static const char *
-macro_expand_body (in, out, formals, formal_hash, comment_char, locals)
+macro_expand_body (in, out, formals, formal_hash, locals)
      sb *in;
      sb *out;
      formal_entry *formals;
      struct hash_control *formal_hash;
-     int comment_char;
      int locals;
 {
   sb t;
@@ -695,14 +689,7 @@ macro_expand_body (in, out, formals, formal_hash, comment_char, locals)
       else if (in->ptr[src] == '\\')
 	{
 	  src++;
-	  if (in->ptr[src] == comment_char && comment_char != '\0')
-	    {
-	      /* This is a comment, just drop the rest of the line.  */
-	      while (src < in->len
-		     && in->ptr[src] != '\n')
-		src++;
-	    }
-	  else if (in->ptr[src] == '(')
+	  if (in->ptr[src] == '(')
 	    {
 	      /* Sub in till the next ')' literally.  */
 	      src++;
@@ -732,15 +719,14 @@ macro_expand_body (in, out, formals, formal_hash, comment_char, locals)
 	      sb_add_char (out, '&');
 	      src++;
 	    }
-	  else if (macro_mri
-		   && isalnum ((unsigned char) in->ptr[src]))
+	  else if (macro_mri && ISALNUM (in->ptr[src]))
 	    {
 	      int ind;
 	      formal_entry *f;
 
-	      if (isdigit ((unsigned char) in->ptr[src]))
+	      if (ISDIGIT (in->ptr[src]))
 		ind = in->ptr[src] - '0';
-	      else if (isupper ((unsigned char) in->ptr[src]))
+	      else if (ISUPPER (in->ptr[src]))
 		ind = in->ptr[src] - 'A' + 10;
 	      else
 		ind = in->ptr[src] - 'a' + 10;
@@ -764,7 +750,7 @@ macro_expand_body (in, out, formals, formal_hash, comment_char, locals)
 	    }
 	}
       else if ((macro_alternate || macro_mri)
-	       && (isalpha ((unsigned char) in->ptr[src])
+	       && (ISALPHA (in->ptr[src])
 		   || in->ptr[src] == '_'
 		   || in->ptr[src] == '$')
 	       && (! inquote
@@ -786,7 +772,7 @@ macro_expand_body (in, out, formals, formal_hash, comment_char, locals)
 	      formal_entry *f;
 
 	      src = sb_skip_white (src + 5, in);
-	      while (in->ptr[src] != '\n' && in->ptr[src] != comment_char)
+	      while (in->ptr[src] != '\n')
 		{
 		  static int loccnt;
 		  char buf[20];
@@ -812,17 +798,6 @@ macro_expand_body (in, out, formals, formal_hash, comment_char, locals)
 		  src = sb_skip_comma (src, in);
 		}
 	    }
-	}
-      else if (comment_char != '\0'
-	       && in->ptr[src] == comment_char
-	       && src + 1 < in->len
-	       && in->ptr[src + 1] == comment_char
-	       && !inquote)
-	{
-	  /* Two comment chars in a row cause the rest of the line to
-             be dropped.  */
-	  while (src < in->len && in->ptr[src] != '\n')
-	    src++;
 	}
       else if (in->ptr[src] == '"'
 	       || (macro_mri && in->ptr[src] == '\''))
@@ -906,12 +881,11 @@ macro_expand_body (in, out, formals, formal_hash, comment_char, locals)
    body.  */
 
 static const char *
-macro_expand (idx, in, m, out, comment_char)
+macro_expand (idx, in, m, out)
      int idx;
      sb *in;
      macro_entry *m;
      sb *out;
-     int comment_char;
 {
   sb t;
   formal_entry *ptr;
@@ -936,24 +910,32 @@ macro_expand (idx, in, m, out, comment_char)
          be referred to in the macro body as \0.  */
       if (idx < in->len && in->ptr[idx] == '.')
 	{
-	  formal_entry *n;
+	  /* The Microtec assembler ignores this if followed by a white space.
+	     (Macro invocation with empty extension) */
+	  idx++;
+	  if (    idx < in->len
+		  && in->ptr[idx] != ' '
+		  && in->ptr[idx] != '\t')
+	    {
+	      formal_entry *n;
 
-	  n = (formal_entry *) xmalloc (sizeof (formal_entry));
-	  sb_new (&n->name);
-	  sb_new (&n->def);
-	  sb_new (&n->actual);
-	  n->index = QUAL_INDEX;
+	      n = (formal_entry *) xmalloc (sizeof (formal_entry));
+	      sb_new (&n->name);
+	      sb_new (&n->def);
+	      sb_new (&n->actual);
+	      n->index = QUAL_INDEX;
 
-	  n->next = m->formals;
-	  m->formals = n;
+	      n->next = m->formals;
+	      m->formals = n;
 
-	  idx = get_any_string (idx + 1, in, &n->actual, 1, 0);
+	      idx = get_any_string (idx, in, &n->actual, 1, 0);
+	    }
 	}
     }
 
   /* Peel off the actuals and store them away in the hash tables' actuals.  */
   idx = sb_skip_white (idx, in);
-  while (idx < in->len && in->ptr[idx] != comment_char)
+  while (idx < in->len)
     {
       int scan;
 
@@ -1055,8 +1037,7 @@ macro_expand (idx, in, m, out, comment_char)
       sb_add_string (&ptr->actual, buffer);
     }
 
-  err = macro_expand_body (&m->sub, out, m->formals, m->formal_hash,
-			   comment_char, 1);
+  err = macro_expand_body (&m->sub, out, m->formals, m->formal_hash, 1);
   if (err != NULL)
     return err;
 
@@ -1089,14 +1070,12 @@ macro_expand (idx, in, m, out, comment_char)
 }
 
 /* Check for a macro.  If one is found, put the expansion into
-   *EXPAND.  COMMENT_CHAR is the comment character--this is used by
-   gasp.  Return 1 if a macro is found, 0 otherwise.  */
+   *EXPAND.  Return 1 if a macro is found, 0 otherwise.  */
 
 int
-check_macro (line, expand, comment_char, error, info)
+check_macro (line, expand, error, info)
      const char *line;
      sb *expand;
-     int comment_char;
      const char **error;
      macro_entry **info;
 {
@@ -1105,14 +1084,14 @@ check_macro (line, expand, comment_char, error, info)
   macro_entry *macro;
   sb line_sb;
 
-  if (! isalpha ((unsigned char) *line)
+  if (! ISALPHA (*line)
       && *line != '_'
       && *line != '$'
       && (! macro_mri || *line != '.'))
     return 0;
 
   s = line + 1;
-  while (isalnum ((unsigned char) *s)
+  while (ISALNUM (*s)
 	 || *s == '_'
 	 || *s == '$')
     ++s;
@@ -1121,8 +1100,7 @@ check_macro (line, expand, comment_char, error, info)
   memcpy (copy, line, s - line);
   copy[s - line] = '\0';
   for (cs = copy; *cs != '\0'; cs++)
-    if (isupper ((unsigned char) *cs))
-      *cs = tolower (*cs);
+    *cs = TOLOWER (*cs);
 
   macro = (macro_entry *) hash_find (macro_hash, copy);
 
@@ -1135,7 +1113,7 @@ check_macro (line, expand, comment_char, error, info)
     sb_add_char (&line_sb, *s++);
 
   sb_new (expand);
-  *error = macro_expand (0, &line_sb, macro, expand, comment_char);
+  *error = macro_expand (0, &line_sb, macro, expand);
 
   sb_kill (&line_sb);
 
@@ -1160,13 +1138,12 @@ delete_macro (name)
    success, or an error message otherwise.  */
 
 const char *
-expand_irp (irpc, idx, in, out, get_line, comment_char)
+expand_irp (irpc, idx, in, out, get_line)
      int irpc;
      int idx;
      sb *in;
      sb *out;
      int (*get_line) PARAMS ((sb *));
-     int comment_char;
 {
   const char *mn;
   sb sub;
@@ -1204,10 +1181,10 @@ expand_irp (irpc, idx, in, out, get_line, comment_char)
   sb_reset (out);
 
   idx = sb_skip_comma (idx, in);
-  if (idx >= in->len || in->ptr[idx] == comment_char)
+  if (idx >= in->len)
     {
       /* Expand once with a null string.  */
-      err = macro_expand_body (&sub, out, &f, h, comment_char, 0);
+      err = macro_expand_body (&sub, out, &f, h, 0);
       if (err != NULL)
 	return err;
     }
@@ -1215,7 +1192,7 @@ expand_irp (irpc, idx, in, out, get_line, comment_char)
     {
       if (irpc && in->ptr[idx] == '"')
 	++idx;
-      while (idx < in->len && in->ptr[idx] != comment_char)
+      while (idx < in->len)
 	{
 	  if (!irpc)
 	    idx = get_any_string (idx, in, &f.actual, 1, 0);
@@ -1226,7 +1203,7 @@ expand_irp (irpc, idx, in, out, get_line, comment_char)
 		  int nxt;
 
 		  nxt = sb_skip_white (idx + 1, in);
-		  if (nxt >= in->len || in->ptr[nxt] == comment_char)
+		  if (nxt >= in->len)
 		    {
 		      idx = nxt;
 		      break;
@@ -1236,7 +1213,7 @@ expand_irp (irpc, idx, in, out, get_line, comment_char)
 	      sb_add_char (&f.actual, in->ptr[idx]);
 	      ++idx;
 	    }
-	  err = macro_expand_body (&sub, out, &f, h, comment_char, 0);
+	  err = macro_expand_body (&sub, out, &f, h, 0);
 	  if (err != NULL)
 	    return err;
 	  if (!irpc)

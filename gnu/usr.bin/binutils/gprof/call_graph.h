@@ -21,10 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #ifndef call_graph_h
 #define call_graph_h
 
-#include <stdio.h>
-#include "gprof.h"
-#include "symtab.h"
-
 extern void cg_tally      PARAMS ((bfd_vma, bfd_vma, unsigned long));
 extern void cg_read_rec   PARAMS ((FILE *, const char *));
 extern void cg_write_arcs PARAMS ((FILE *, const char *));

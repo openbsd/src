@@ -16,7 +16,7 @@ is compiled.
 
 @section Syntax
 I don't know anything about the 32x32 syntax assembled by
-@code{@value{AS}}.  Someone who undersands the processor (I've never seen
+@code{@value{AS}}.  Someone who understands the processor (I've never seen
 one) and the possible syntaxes should write this section.
 
 @section Floating Point

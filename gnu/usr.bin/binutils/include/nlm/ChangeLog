@@ -1,6 +1,8 @@
-2001-06-07  Alan Modra  <amodra@bigpond.net.au>
+2001-10-02  Alan Modra  <amodra@bigpond.net.au>
 
-	* Many files: Update copyright notices.
+	* common.h (NLM_CAT, NLM_CAT3): Don't define.
+	(NLM_CAT4): Update conditions under which this is defined.  Document
+	why CONCAT4 can't be used.
 
 Fri May  6 13:31:04 1994  Ian Lance Taylor  (ian@tweedledumb.cygnus.com)
 

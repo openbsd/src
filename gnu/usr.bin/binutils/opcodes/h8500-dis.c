@@ -1,5 +1,5 @@
 /* Disassemble h8500 instructions.
-   Copyright 1993, 1998, 2000 Free Software Foundation, Inc.
+   Copyright 1993, 1998, 2000, 2001, 2002 Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -29,6 +29,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define MAXLEN 8
 
 #include <setjmp.h>
+
+static int fetch_data PARAMS ((struct disassemble_info *, bfd_byte *));
 
 struct private
 {
@@ -76,7 +78,7 @@ print_insn_h8500 (addr, info)
      bfd_vma addr;
      disassemble_info *info;
 {
-  h8500_opcode_info *opcode;
+  const h8500_opcode_info *opcode;
   void *stream = info->stream;
   fprintf_ftype func = info->fprintf_func;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1983, 1993, 2001
+ * Copyright (c) 1983, 1991, 1993, 2001
  *      The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,37 +29,53 @@
 #ifndef gmon_h
 #define gmon_h
 
-struct raw_phdr
-  {
-    /* FIXME: Checking a host compiler define means that we can't use
-       a cross gprof to the alpha.  */
-    char low_pc[GMON_PTR_SIZE];	/* base pc address of sample buffer */
-    char high_pc[GMON_PTR_SIZE];/* max pc address of sampled buffer */
-    char ncnt[4];		/* size of sample buffer (plus this header) */
+/* Size of the 4.4BSD gmon header */
+#define GMON_HDRSIZE_BSD44_32 (4 + 4 + 4 + 4 + 4 + (3 * 4))
+#define GMON_HDRSIZE_BSD44_64 (8 + 8 + 4 + 4 + 4 + (3 * 4))
 
-    char version[4];		/* version number */
-    char profrate[4];		/* profiling clock rate */
-    char spare[3*4];		/* reserved */
-  };
+#if 0 /* For documentation purposes only.  */
+  struct raw_phdr
+    {
+      char low_pc[sizeof(void *)]; /* base pc address of sample buffer */
+      char high_pc[sizeof(void *)];/* max pc address of sampled buffer */
+      char ncnt[4];		   /* size of sample buffer (plus this
+				      header) */
+
+      char version[4];		   /* version number */
+      char profrate[4];		   /* profiling clock rate */
+      char spare[3*4];		   /* reserved */
+    };
+#endif
 
 #define GMONVERSION     0x00051879
 
-struct old_raw_phdr
-  {
-    char low_pc[GMON_PTR_SIZE];	/* base pc address of sample buffer */
-    char high_pc[GMON_PTR_SIZE];/* max pc address of sampled buffer */
-    char ncnt[4];		/* size of sample buffer (plus this header) */
+/* Size of the old BSD gmon header */
+#define GMON_HDRSIZE_OLDBSD_32 (4 + 4 + 4) 
 
-    /* FIXME: Checking host compiler defines here means that we can't
-       use a cross gprof alpha OSF.  */
-#if defined (__alpha__) && defined (__osf__)
-    /*
-     * DEC's OSF v3.0 uses 4 bytes of padding to bring the header to
-     * a size that is a multiple of 8.
-     */
-    char pad[4];
+/* FIXME: Checking host compiler defines here means that we can't
+   use a cross gprof alpha OSF.  */
+#if defined(__alpha__) && defined (__osf__) 
+#define GMON_HDRSIZE_OLDBSD_64 (8 + 8 + 4 + 4)
+#else
+#define GMON_HDRSIZE_OLDBSD_64 (8 + 8 + 4)
 #endif
-  };
+
+#if 0 /* For documentation purposes only.  */
+  struct old_raw_phdr
+    {
+      char low_pc[sizeof(void *)]; /* base pc address of sample buffer */
+      char high_pc[sizeof(void *)];/* max pc address of sampled buffer */
+      char ncnt[4];		   /* size of sample buffer (plus this
+				      header) */
+#if defined (__alpha__) && defined (__osf__)
+      /*
+       * DEC's OSF v3.0 uses 4 bytes of padding to bring the header to
+       * a size that is a multiple of 8.
+       */
+      char pad[4];
+#endif
+    };
+#endif
 
 /*
  * Histogram counters are unsigned shorts:
@@ -114,12 +130,14 @@ struct tostruct
  * as to get a packed representation (otherwise, different compilers
  * might introduce different padding):
  */
-struct raw_arc
-  {
-    char from_pc[GMON_PTR_SIZE];
-    char self_pc[GMON_PTR_SIZE];
-    char count[4];
-  };
+#if 0 /* For documentation purposes only.  */
+  struct raw_arc
+    {
+      char from_pc[sizeof(void *)];
+      char self_pc[sizeof(void *)];
+      char count[sizeof(long)];
+    };
+#endif
 
 /*
  * General rounding functions:

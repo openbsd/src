@@ -1,6 +1,6 @@
 /* gmon_io.h
 
-   Copyright 2000, 2001 Free Software Foundation, Inc.
+   Copyright 2000, 2001, 2002 Free Software Foundation, Inc.
 
 This file is part of GNU Binutils.
 
@@ -20,9 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #ifndef gmon_io_h
 #define gmon_io_h
-
-#include "bfd.h"
-#include "gmon.h"
 
 /* Some platforms need to put stdin into binary mode, to read
    binary files.  */
@@ -54,7 +51,7 @@ extern int gmon_io_read_32 PARAMS ((FILE *ifp, unsigned int *valp));
 extern int gmon_io_read PARAMS ((FILE *ifp, char *buf, size_t n));
 extern int gmon_io_write_vma PARAMS ((FILE *ifp, bfd_vma val));
 extern int gmon_io_write_32 PARAMS ((FILE *ifp, unsigned int val));
-extern int gmon_io_write_8 PARAMS ((FILE *ifp, unsigned char val));
+extern int gmon_io_write_8 PARAMS ((FILE *ifp, unsigned int val));
 extern int gmon_io_write PARAMS ((FILE *ifp, char *buf, size_t n));
 
 extern void gmon_out_read   PARAMS ((const char *));

@@ -1,23 +1,24 @@
 /* BFD back-end for Irix core files.
-   Copyright 1993, 1994, 1996, 1999, 2001 Free Software Foundation, Inc.
+   Copyright 1993, 1994, 1996, 1999, 2001, 2002
+   Free Software Foundation, Inc.
    Written by Stu Grossman, Cygnus Support.
    Converted to back-end form by Ian Lance Taylor, Cygnus Support
 
-This file is part of BFD, the Binary File Descriptor library.
+   This file is part of BFD, the Binary File Descriptor library.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 /* This file can only be compiled on systems which use Irix style core
    files (namely, Irix 4 and Irix 5, so far).  */
@@ -30,7 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #include <core.out.h>
 
-struct sgi_core_struct 
+struct sgi_core_struct
 {
   int sig;
   char cmd[CORE_NAMESIZE];
@@ -41,19 +42,128 @@ struct sgi_core_struct
 #define core_command(bfd) (core_hdr(bfd)->cmd)
 
 static asection *make_bfd_asection
-  PARAMS ((bfd *, CONST char *, flagword, bfd_size_type, bfd_vma, file_ptr));
-static const bfd_target *irix_core_core_file_p PARAMS ((bfd *));
-static char *irix_core_core_file_failing_command PARAMS ((bfd *));
-static int irix_core_core_file_failing_signal PARAMS ((bfd *));
-static boolean irix_core_core_file_matches_executable_p 
+  PARAMS ((bfd *, const char *, flagword, bfd_size_type, bfd_vma, file_ptr));
+static const bfd_target *irix_core_core_file_p
+  PARAMS ((bfd *));
+static char *irix_core_core_file_failing_command
+  PARAMS ((bfd *));
+static int irix_core_core_file_failing_signal
+  PARAMS ((bfd *));
+static bfd_boolean irix_core_core_file_matches_executable_p
   PARAMS ((bfd *, bfd *));
-static asymbol *irix_core_make_empty_symbol PARAMS ((bfd *));
-static void swap_abort PARAMS ((void));
+static void swap_abort
+  PARAMS ((void));
+#ifdef CORE_MAGIC64
+static int do_sections64
+  PARAMS ((bfd *, struct coreout *));
+#endif
+static int do_sections
+  PARAMS ((bfd *, struct coreout *));
+
+/* Helper function for irix_core_core_file_p:
+   32-bit and 64-bit versions.  */
+
+#ifdef CORE_MAGIC64
+static int
+do_sections64 (abfd, coreout)
+     bfd * abfd;
+     struct coreout * coreout;
+{
+  struct vmap64 vmap;
+  char *secname;
+  int i, val;
+
+  for (i = 0; i < coreout->c_nvmap; i++)
+    {
+      val = bfd_bread ((PTR) &vmap, (bfd_size_type) sizeof vmap, abfd);
+      if (val != sizeof vmap)
+	break;
+
+      switch (vmap.v_type)
+	{
+	case VDATA:
+	  secname = ".data";
+	  break;
+	case VSTACK:
+	  secname = ".stack";
+	  break;
+#ifdef VMAPFILE
+	case VMAPFILE:
+	  secname = ".mapfile";
+	  break;
+#endif
+	default:
+	  continue;
+	}
+
+      /* A file offset of zero means that the
+	 section is not contained in the corefile.  */
+      if (vmap.v_offset == 0)
+	continue;
+
+      if (!make_bfd_asection (abfd, secname,
+			      SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS,
+			      vmap.v_len, vmap.v_vaddr, vmap.v_offset))
+	/* Fail.  */
+	return 0;
+    }
+
+  return 1;
+}
+#endif
+
+/* 32-bit version.  */
+
+static int
+do_sections (abfd, coreout)
+     bfd * abfd;
+     struct coreout *coreout;
+{
+  struct vmap vmap;
+  char *secname;
+  int i, val;
+
+  for (i = 0; i < coreout->c_nvmap; i++)
+    {
+      val = bfd_bread ((PTR) &vmap, (bfd_size_type) sizeof vmap, abfd);
+      if (val != sizeof vmap)
+	break;
+
+      switch (vmap.v_type)
+	{
+	case VDATA:
+	  secname = ".data";
+	  break;
+	case VSTACK:
+	  secname = ".stack";
+	  break;
+#ifdef VMAPFILE
+	case VMAPFILE:
+	  secname = ".mapfile";
+	  break;
+#endif
+	default:
+	  continue;
+	}
+
+      /* A file offset of zero means that the
+	 section is not contained in the corefile.  */
+      if (vmap.v_offset == 0)
+	continue;
+
+      if (!make_bfd_asection (abfd, secname,
+			      SEC_ALLOC | SEC_LOAD+SEC_HAS_CONTENTS,
+			      vmap.v_len, vmap.v_vaddr, vmap.v_offset))
+	/* Fail.  */
+	return 0;
+    }
+  return 1;
+}
 
 static asection *
 make_bfd_asection (abfd, name, flags, _raw_size, vma, filepos)
      bfd *abfd;
-     CONST char *name;
+     const char *name;
      flagword flags;
      bfd_size_type _raw_size;
      bfd_vma vma;
@@ -79,12 +189,11 @@ irix_core_core_file_p (abfd)
      bfd *abfd;
 {
   int val;
-  int i;
-  char *secname;
   struct coreout coreout;
   struct idesc *idg, *idf, *ids;
+  bfd_size_type amt;
 
-  val = bfd_read ((PTR)&coreout, 1, sizeof coreout, abfd);
+  val = bfd_bread ((PTR) &coreout, (bfd_size_type) sizeof coreout, abfd);
   if (val != sizeof coreout)
     {
       if (bfd_get_error () != bfd_error_system_call)
@@ -92,14 +201,24 @@ irix_core_core_file_p (abfd)
       return 0;
     }
 
-#ifndef CORE_MAGICN32
-#define CORE_MAGICN32 CORE_MAGIC
-#endif
-  if ((coreout.c_magic != CORE_MAGIC && coreout.c_magic != CORE_MAGICN32)
-      || coreout.c_version != CORE_VERSION1)
+  if (coreout.c_version != CORE_VERSION1)
     return 0;
 
-  core_hdr (abfd) = (struct sgi_core_struct *) bfd_zalloc (abfd, sizeof (struct sgi_core_struct));
+  /* Have we got a corefile?  */
+  switch (coreout.c_magic)
+    {
+    case CORE_MAGIC:	break;
+#ifdef CORE_MAGIC64
+    case CORE_MAGIC64:	break;
+#endif
+#ifdef CORE_MAGICN32
+    case CORE_MAGICN32:	break;
+#endif
+    default:		return 0;	/* Un-identifiable or not corefile.  */
+    }
+
+  amt = sizeof (struct sgi_core_struct);
+  core_hdr (abfd) = (struct sgi_core_struct *) bfd_zalloc (abfd, amt);
   if (!core_hdr (abfd))
     return NULL;
 
@@ -107,47 +226,21 @@ irix_core_core_file_p (abfd)
   core_signal (abfd) = coreout.c_sigcause;
 
   if (bfd_seek (abfd, coreout.c_vmapoffset, SEEK_SET) != 0)
-    return NULL;
+    goto fail;
 
-  for (i = 0; i < coreout.c_nvmap; i++)
+  /* Process corefile sections.  */
+#ifdef CORE_MAGIC64
+  if (coreout.c_magic == (int) CORE_MAGIC64)
     {
-      struct vmap vmap;
-
-      val = bfd_read ((PTR)&vmap, 1, sizeof vmap, abfd);
-      if (val != sizeof vmap)
-	break;
-
-      switch (vmap.v_type)
-	{
-	case VDATA:
-	  secname = ".data";
-	  break;
-	case VSTACK:
-	  secname = ".stack";
-	  break;
-#ifdef VMAPFILE
-	case VMAPFILE:
-	  secname = ".mapfile";
-	  break;
-#endif
-	default:
-	  continue;
-	}
-
-      /* A file offset of zero means that the section is not contained
-	 in the corefile.  */
-      if (vmap.v_offset == 0)
-	continue;
-
-      if (!make_bfd_asection (abfd, secname,
-			      SEC_ALLOC+SEC_LOAD+SEC_HAS_CONTENTS,
-			      vmap.v_len,
-			      vmap.v_vaddr,
-			      vmap.v_offset))
-	return NULL;
+      if (! do_sections64 (abfd, & coreout))
+	goto fail;
     }
+  else
+#endif
+    if (! do_sections (abfd, & coreout))
+      goto fail;
 
-  /* Make sure that the regs are contiguous within the core file. */
+  /* Make sure that the regs are contiguous within the core file.  */
 
   idg = &coreout.c_idesc[I_GPREGS];
   idf = &coreout.c_idesc[I_FPREGS];
@@ -155,21 +248,28 @@ irix_core_core_file_p (abfd)
 
   if (idg->i_offset + idg->i_len != idf->i_offset
       || idf->i_offset + idf->i_len != ids->i_offset)
-    return 0;			/* Can't deal with non-contig regs */
+    goto fail;			/* Can't deal with non-contig regs */
 
   if (bfd_seek (abfd, idg->i_offset, SEEK_SET) != 0)
-    return NULL;
+    goto fail;
 
-  make_bfd_asection (abfd, ".reg",
-		     SEC_HAS_CONTENTS,
-		     idg->i_len + idf->i_len + ids->i_len,
-		     0,
-		     idg->i_offset);
- 
+  if (!make_bfd_asection (abfd, ".reg",
+			  SEC_HAS_CONTENTS,
+			  idg->i_len + idf->i_len + ids->i_len,
+			  0,
+			  idg->i_offset))
+    goto fail;
+
   /* OK, we believe you.  You're a core file (sure, sure).  */
   bfd_default_set_arch_mach (abfd, bfd_arch_mips, 0);
 
   return abfd->xvec;
+
+ fail:
+  bfd_release (abfd, core_hdr (abfd));
+  core_hdr (abfd) = NULL;
+  bfd_section_list_clear (abfd);
+  return NULL;
 }
 
 static char *
@@ -186,34 +286,12 @@ irix_core_core_file_failing_signal (abfd)
   return core_signal (abfd);
 }
 
-static boolean
+static bfd_boolean
 irix_core_core_file_matches_executable_p (core_bfd, exec_bfd)
      bfd *core_bfd, *exec_bfd;
 {
-  return true;			/* XXX - FIXME */
+  return TRUE;			/* XXX - FIXME */
 }
-
-static asymbol *
-irix_core_make_empty_symbol (abfd)
-     bfd *abfd;
-{
-  asymbol *new = (asymbol *) bfd_zalloc (abfd, sizeof (asymbol));
-  if (new)
-    new->the_bfd = abfd;
-  return new;
-}
-
-#define irix_core_get_symtab_upper_bound _bfd_nosymbols_get_symtab_upper_bound
-#define irix_core_get_symtab _bfd_nosymbols_get_symtab
-#define irix_core_print_symbol _bfd_nosymbols_print_symbol
-#define irix_core_get_symbol_info _bfd_nosymbols_get_symbol_info
-#define irix_core_bfd_is_local_label_name \
-  _bfd_nosymbols_bfd_is_local_label_name
-#define irix_core_get_lineno _bfd_nosymbols_get_lineno
-#define irix_core_find_nearest_line _bfd_nosymbols_find_nearest_line
-#define irix_core_bfd_make_debug_symbol _bfd_nosymbols_bfd_make_debug_symbol
-#define irix_core_read_minisymbols _bfd_nosymbols_read_minisymbols
-#define irix_core_minisymbol_to_symbol _bfd_nosymbols_minisymbol_to_symbol
 
 /* If somebody calls any byte-swapping routines, shoot them.  */
 static void
@@ -260,19 +338,19 @@ const bfd_target irix_core_vec =
      bfd_false, bfd_false,
      bfd_false, bfd_false
     },
-    
-       BFD_JUMP_TABLE_GENERIC (_bfd_generic),
-       BFD_JUMP_TABLE_COPY (_bfd_generic),
-       BFD_JUMP_TABLE_CORE (irix_core),
-       BFD_JUMP_TABLE_ARCHIVE (_bfd_noarchive),
-       BFD_JUMP_TABLE_SYMBOLS (irix_core),
-       BFD_JUMP_TABLE_RELOCS (_bfd_norelocs),
-       BFD_JUMP_TABLE_WRITE (_bfd_generic),
-       BFD_JUMP_TABLE_LINK (_bfd_nolink),
-       BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
+
+    BFD_JUMP_TABLE_GENERIC (_bfd_generic),
+    BFD_JUMP_TABLE_COPY (_bfd_generic),
+    BFD_JUMP_TABLE_CORE (irix_core),
+    BFD_JUMP_TABLE_ARCHIVE (_bfd_noarchive),
+    BFD_JUMP_TABLE_SYMBOLS (_bfd_nosymbols),
+    BFD_JUMP_TABLE_RELOCS (_bfd_norelocs),
+    BFD_JUMP_TABLE_WRITE (_bfd_generic),
+    BFD_JUMP_TABLE_LINK (_bfd_nolink),
+    BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
     NULL,
-    
+
     (PTR) 0			/* backend_data */
 };
 

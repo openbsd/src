@@ -1,7 +1,0 @@
-exp.asm:56 can't add two relocatable expressions
-exp.asm:57 the * operator cannot take non-absolute arguments.
-exp.asm:58 the / operator cannot take non-absolute arguments.
-exp.asm:59 the | operator cannot take non-absolute arguments.
-exp.asm:60 the & operator cannot take non-absolute arguments.
-exp.asm:61 the ~ operator cannot take non-absolute arguments.
-exp.asm:62 the * operator cannot take non-absolute arguments.
