@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf.c,v 1.12 2001/11/01 12:13:45 art Exp $	*/
+/*	$OpenBSD: grf.c,v 1.13 2001/11/05 20:12:31 art Exp $	*/
 /*	$NetBSD: grf.c,v 1.32 1996/12/23 09:10:01 veego Exp $	*/
 
 /*
@@ -317,7 +317,7 @@ grfselect(dev, rw, p)
 paddr_t
 grfmmap(dev, off, prot)
 	dev_t dev;
-	off_t off
+	off_t off;
 	int prot;
 {
 	struct grf_softc *gp;
