@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_machdep_asm.S,v 1.6 2003/01/26 20:24:36 jason Exp $	*/
+/*	$OpenBSD: uthread_machdep_asm.S,v 1.7 2003/02/10 19:21:34 marc Exp $	*/
 /* David Leonard <d@csee.uq.edu.au>. Public domain. */
 
 #include <machine/asm.h>
@@ -45,7 +45,7 @@ ENTRY(_thread_machdep_fpsave)
 	 * If %psr were readable, exitting could be faster.  The EF
 	 * bit is only set if the FPU is enabled, and we only need
 	 * to save fpu state if it is enabled.  But, RDPSR is a
-	 * priviledged instruction.
+	 * privileged instruction.
 	 */
 
 	/* save registers */
