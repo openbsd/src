@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcmd.3,v 1.4 1996/08/19 08:29:37 tholo Exp $
+.\"	$OpenBSD: rcmd.3,v 1.5 1996/09/01 22:33:04 millert Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -56,7 +56,12 @@ The
 function
 is used by the super-user to execute a command on
 a remote machine using an authentication scheme based
-on reserved port numbers.
+on reserved port numbers.  If the user is not the super-user,
+.Fn rcmd
+will invoke
+.Xr rcmdsh 3
+to run the command via
+.Xr rsh 1 .
 The
 .Fn rresvport
 function
@@ -88,6 +93,9 @@ is set to the standard name of the host
 and a connection is established to a server
 residing at the well-known Internet port
 .Fa inport .
+If the user is not the super-user, the only valid port is
+.Li shell/tcp ,
+(usually port 514).
 .Pp
 If the connection succeeds,
 a socket in the Internet domain of type
@@ -119,6 +127,9 @@ command) will be made the same as the
 and no
 provision is made for sending arbitrary signals to the remote process,
 although you may be able to get its attention by using out-of-band data.
+Note that if the user is not the super-user,
+.Fa fd2p
+must be 0.
 .Pp
 The protocol is described in detail in
 .Xr rshd 8 .
@@ -196,6 +207,7 @@ is overloaded to mean ``All network ports in use.''
 .Xr rsh 1 ,
 .Xr intro 2 ,
 .Xr rexec 3 ,
+.Xr rcmdsh 3 ,
 .Xr rexecd 8 ,
 .Xr rlogind 8 ,
 .Xr rshd 8
