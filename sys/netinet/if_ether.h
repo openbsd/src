@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.29 2003/06/02 23:28:13 millert Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.30 2004/05/18 21:10:14 brad Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -44,6 +44,17 @@
 #define ETHER_HDR_LEN	((ETHER_ADDR_LEN * 2) + ETHER_TYPE_LEN)
 #define ETHER_MIN_LEN	64	/* Minimum frame length, CRC included	*/
 #define ETHER_MAX_LEN	1518	/* Maximum frame length, CRC included	*/
+#define	ETHER_MAX_LEN_JUMBO	9018	/* max jumbo frame len, including CRC */
+
+#define	ETHER_VLAN_ENCAP_LEN	4	/* len of 802.1Q VLAN encapsulation */
+
+/*
+ * Mbuf adjust factor to force 32-bit alignment of IP header.
+ * Drivers should do m_adj(m, ETHER_ALIGN) when setting up a
+ * receive so the upper layers get the IP header properly aligned
+ * past the 14-byte Ethernet header.
+ */
+#define	ETHER_ALIGN		2	/* driver adjust for IP hdr alignment */
 
 /*
  * Ethernet address - 6 octets
@@ -55,7 +66,6 @@ struct ether_addr {
 /*
  * The length of the combined header.
  */
-
 struct	ether_header {
 	u_int8_t  ether_dhost[ETHER_ADDR_LEN];
 	u_int8_t  ether_shost[ETHER_ADDR_LEN];
@@ -68,6 +78,7 @@ struct	ether_header {
 
 #define	ETHERMTU	(ETHER_MAX_LEN - ETHER_HDR_LEN - ETHER_CRC_LEN)
 #define	ETHERMIN	(ETHER_MIN_LEN - ETHER_HDR_LEN - ETHER_CRC_LEN)
+#define	ETHERMTU_JUMBO	(ETHER_MAX_LEN_JUMBO - ETHER_HDR_LEN - ETHER_CRC_LEN)
 
 /*
  * Ethernet CRC32 polynomials (big- and little-endian verions).
