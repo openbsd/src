@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5210.c,v 1.10 2005/02/16 01:31:25 reyk Exp $	*/
+/*     $OpenBSD: ar5210.c,v 1.11 2005/02/17 22:32:48 reyk Exp $        */
 
 /*
  * Copyright (c) 2004 Reyk Floeter <reyk@vantronix.net>.
@@ -444,7 +444,7 @@ ar5k_ar5210_reset(hal, op_mode, channel, change_channel, status)
 		}
 	}
 
-	AR5K_REG_ENABLE_BITS(AR5K_AR5210_BEACON,
+	AR5K_REG_DISABLE_BITS(AR5K_AR5210_BEACON,
 	    AR5K_AR5210_BEACON_EN | AR5K_AR5210_BEACON_RESET_TSF);
 
 	return (AH_TRUE);
@@ -506,7 +506,7 @@ ar5k_ar5210_perCalibration(hal, channel)
 	HAL_CHANNEL *channel;
 {
 	HAL_BOOL ret = AH_TRUE;
-	u_int32_t phy_sig, phy_agc, phy_sat;
+	u_int32_t phy_sig, phy_agc, phy_sat, beacon;
 
 #define AGC_DISABLE	{						\
         AR5K_REG_ENABLE_BITS(AR5K_AR5210_PHY_AGC,			\
@@ -524,7 +524,8 @@ ar5k_ar5210_perCalibration(hal, channel)
 	 */
 	AR5K_REG_ENABLE_BITS(AR5K_AR5210_DIAG_SW,
 	    AR5K_AR5210_DIAG_SW_DIS_TX | AR5K_AR5210_DIAG_SW_DIS_RX);
-	AR5K_REG_DISABLE_BITS(AR5K_AR5210_BEACON, AR5K_AR5210_BEACON_EN);
+	beacon = AR5K_REG_READ(AR5K_AR5210_BEACON);
+	AR5K_REG_WRITE(AR5K_AR5210_BEACON, beacon & ~AR5K_AR5210_BEACON_EN);
 
 	AR5K_DELAY(2300);
 
@@ -597,7 +598,7 @@ ar5k_ar5210_perCalibration(hal, channel)
 	 */
 	AR5K_REG_DISABLE_BITS(AR5K_AR5210_DIAG_SW,
 	    AR5K_AR5210_DIAG_SW_DIS_TX | AR5K_AR5210_DIAG_SW_DIS_RX);
-	AR5K_REG_ENABLE_BITS(AR5K_AR5210_BEACON, AR5K_AR5210_BEACON_EN);
+	AR5K_REG_WRITE(AR5K_AR5210_BEACON, beacon);
 
 #undef AGC_ENABLE
 #undef AGC_DISABLE
@@ -1551,8 +1552,12 @@ ar5k_ar5210_setRegulatoryDomain(hal, regdomain, status)
 	HAL_STATUS *status;
 
 {
+	ieee80211_regdomain_t ieee_regdomain;
+
+	ieee_regdomain = ar5k_regdomain_to_ieee(regdomain);
+
 	if (ar5k_eeprom_regulation_domain(hal, AH_TRUE,
-		ar5k_regdomain_to_ieee(regdomain)) == AH_TRUE) {
+		&ieee_regdomain) == AH_TRUE) {
 		*status = HAL_OK;
 		return (AH_TRUE);
 	}
@@ -1609,22 +1614,18 @@ ar5k_ar5210_writeAssocid(hal, bssid, assoc_id, tim_offset)
 	 */
 	memcpy(&low_id, bssid, 4);
 	memcpy(&high_id, bssid + 4, 2);
+	memcpy(&hal->ah_bssid, bssid, IEEE80211_ADDR_LEN);
 	AR5K_REG_WRITE(AR5K_AR5210_BSS_ID0, htole32(low_id));
 	AR5K_REG_WRITE(AR5K_AR5210_BSS_ID1, htole32(high_id) |
 	    ((assoc_id & 0x3fff) << AR5K_AR5210_BSS_ID1_AID_S));
-	memcpy(&hal->ah_bssid, bssid, IEEE80211_ADDR_LEN);
 
 	if (assoc_id == 0) {
 		ar5k_ar5210_disablePSPoll(hal);
 		return;
 	}
 
-	AR5K_REG_WRITE(AR5K_AR5210_BEACON,
-	    (AR5K_REG_READ(AR5K_AR5210_BEACON) &
-		~AR5K_AR5210_BEACON_TIM) |
-	    (((tim_offset ? tim_offset + 4 : 0) <<
-		AR5K_AR5210_BEACON_TIM_S) &
-		AR5K_AR5210_BEACON_TIM));
+	AR5K_REG_WRITE_BITS(AR5K_AR5210_BEACON, AR5K_AR5210_BEACON_TIM,
+	    tim_offset ? tim_offset + 4 : 0);
 
 	ar5k_ar5210_enablePSPoll(hal, NULL, 0);
 }
@@ -1749,16 +1750,7 @@ u_int16_t
 ar5k_ar5210_getRegDomain(hal)
 	struct ath_hal *hal;
 {
-	u_int16_t regdomain;
-	ieee80211_regdomain_t ieee_regdomain;
-
-	if (ar5k_eeprom_regulation_domain(hal,
-		AH_FALSE, ieee_regdomain) == AH_TRUE) {
-		regdomain = ar5k_regdomain_from_ieee(ieee_regdomain);
-		return (regdomain > 0 ? regdomain : hal->ah_regdomain);
-	}
-
-	return (0);
+	return (ar5k_get_regdomain(hal));
 }
 
 HAL_BOOL
@@ -2158,11 +2150,10 @@ ar5k_ar5210_beaconInit(hal, next_beacon, interval)
 		break;
 
 	default:
-		timer1 = (next_beacon - AR5K_TUNE_DMA_BEACON_RESP) <<
-		    0x00000003;
-		timer2 = (next_beacon - AR5K_TUNE_SW_BEACON_RESP) <<
-		    0x00000003;
+		timer1 = (next_beacon - AR5K_TUNE_DMA_BEACON_RESP) << 3;
+		timer2 = (next_beacon - AR5K_TUNE_SW_BEACON_RESP) << 3;
 		timer3 = next_beacon + hal->ah_atim_window;
+		break;
 	}
 
 	/*
@@ -2230,15 +2221,14 @@ ar5k_ar5210_setStationBeaconTimers(hal, state, tsf, dtim_count, cfp_count)
 	    (AR5K_REG_READ(AR5K_AR5210_BEACON) &~
 		(AR5K_AR5210_BEACON_PERIOD | AR5K_AR5210_BEACON_TIM)) |
 	    AR5K_REG_SM(state->bs_tim_offset ? state->bs_tim_offset + 4 : 0,
-		AR5K_AR5210_BEACON_TIM) | AR5K_REG_SM(state->bs_interval,
-		    AR5K_AR5210_BEACON_PERIOD));
+		AR5K_AR5210_BEACON_TIM) |
+	    AR5K_REG_SM(state->bs_interval, AR5K_AR5210_BEACON_PERIOD));
 
 	/*
 	 * Write new beacon miss threshold, if it appears to be valid
 	 */
-	if ((state->bs_bmiss_threshold > (AR5K_AR5210_RSSI_THR_BM_THR >>
-		 AR5K_AR5210_RSSI_THR_BM_THR_S)) &&
-	    (state->bs_bmiss_threshold & 0x00007) != 0)
+	if (state->bs_bmiss_threshold <=
+	    (AR5K_AR5210_RSSI_THR_BM_THR >> AR5K_AR5210_RSSI_THR_BM_THR_S))
 		AR5K_REG_WRITE_BITS(AR5K_AR5210_RSSI_THR,
 		    AR5K_AR5210_RSSI_THR_BM_THR, state->bs_bmiss_threshold);
 }
@@ -2383,7 +2373,8 @@ ar5k_ar5210_setInterrupts(hal, new_mask)
 	hal->ah_imr = new_mask;
 
 	/* ..re-enable interrupts */
-	AR5K_REG_WRITE(AR5K_AR5210_IER, AR5K_AR5210_IER_ENABLE);
+	if (int_mask)
+		AR5K_REG_WRITE(AR5K_AR5210_IER, AR5K_AR5210_IER_ENABLE);
 
 	return (old_mask);
 }

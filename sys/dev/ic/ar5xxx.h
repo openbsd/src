@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.h,v 1.8 2005/01/09 18:18:15 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.h,v 1.9 2005/02/17 22:32:48 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004 Reyk Floeter <reyk@vantronix.net>.
@@ -565,7 +565,7 @@ typedef enum ieee80211_state HAL_LED_STATE;
         (((_v) >= AR5K_EEPROM_VERSION_3_3) ? _v3_3 : _v3_0)
 
 #define AR5K_EEPROM_ANT_GAIN(_v)	AR5K_EEPROM_OFF(_v, 0x00c4, 0x00c3)
-#define AR5K_EEPROM_ANT_GAIN_5GHZ(_v)	((int8_t)(((_v) >> 8) >> 0xff))
+#define AR5K_EEPROM_ANT_GAIN_5GHZ(_v)	((int8_t)(((_v) >> 8) & 0xff))
 #define AR5K_EEPROM_ANT_GAIN_2GHZ(_v)	((int8_t)((_v) & 0xff))
 
 #define AR5K_EEPROM_MODES_11A(_v)	AR5K_EEPROM_OFF(_v, 0x00c5, 0x00d4)
@@ -722,11 +722,12 @@ typedef struct {
  */
 
 #define AR5K_TXPOWER_OFDM(_r, _v)	(				\
-        ((0 & 1) << ((_v) + 6)) | (((_r) & 0x3f) << (_v))		\
+        ((0 & 1) << ((_v) + 6)) | 					\
+        (((hal->ah_txpower.txp_rates[(_r)]) & 0x3f) << (_v))		\
 )
 
 #define AR5K_TXPOWER_CCK(_r, _v)	(				\
-        ((_r) & 0x3f) << (_v)						\
+        (hal->ah_txpower.txp_rates[(_r)] & 0x3f) << (_v)		\
 )
 
 /*
@@ -1041,7 +1042,7 @@ struct ath_hal {
 	struct {
 		u_int16_t	txp_pcdac[AR5K_EEPROM_POWER_TABLE_SIZE];
 		u_int16_t	txp_rates[AR5K_MAX_RATES];
-		u_int		txp_max;
+		int16_t		txp_min, txp_max;
 		HAL_BOOL	txp_tpc;
 	} ah_txpower;
 
@@ -1131,6 +1132,7 @@ typedef struct ath_hal*(ar5k_attach_t)
 
 /* Default regulation domain if stored value EEPROM value is invalid */
 #define AR5K_TUNE_REGDOMAIN	DMN_FCC1_FCCA
+#define AR5K_TUNE_CTRY		CTRY_DEFAULT
 
 /*
  * Common initial register values
@@ -1215,6 +1217,14 @@ typedef struct ath_hal*(ar5k_attach_t)
         AR5K_REG_WRITE(hal->ah_phy + ((_reg) << 2), _val)
 #define AR5K_PHY_READ(_reg)						\
         AR5K_REG_READ(hal->ah_phy + ((_reg) << 2))
+
+#define AR5K_EEPROM_READ(_o, _v)	{				\
+	if ((ret = hal->ah_eeprom_read(hal, (_o),			\
+		 &(_v))) != 0)						\
+		return (ret);						\
+}			
+#define AR5K_EEPROM_READ_HDR(_o, _v)					\
+        AR5K_EEPROM_READ(_o, hal->ah_capabilities.cap_eeprom._v);	\
 
 /* Read status of selected queue */
 #define AR5K_REG_READ_Q(_reg, _queue)					\
@@ -1410,6 +1420,8 @@ HAL_BOOL		 ath_hal_init_channels(struct ath_hal *, HAL_CHANNEL *,
 void			 ar5k_radar_alert(struct ath_hal *);
 ieee80211_regdomain_t	 ar5k_regdomain_to_ieee(u_int16_t);
 u_int16_t		 ar5k_regdomain_from_ieee(ieee80211_regdomain_t);
+u_int16_t		 ar5k_get_regdomain(struct ath_hal *);
+
 u_int32_t		 ar5k_bitswap(u_int32_t, u_int);
 u_int			 ar5k_clocktoh(u_int, HAL_BOOL);
 u_int			 ar5k_htoclock(u_int, HAL_BOOL);
@@ -1421,7 +1433,7 @@ HAL_BOOL		 ar5k_register_timeout(struct ath_hal *, u_int32_t,
 int			 ar5k_eeprom_init(struct ath_hal *);
 int			 ar5k_eeprom_read_mac(struct ath_hal *, u_int8_t *);
 HAL_BOOL		 ar5k_eeprom_regulation_domain(struct ath_hal *,
-    HAL_BOOL, ieee80211_regdomain_t);
+    HAL_BOOL, ieee80211_regdomain_t *);
 
 HAL_BOOL		 ar5k_channel(struct ath_hal *, HAL_CHANNEL *);
 HAL_BOOL		 ar5k_rfregs(struct ath_hal *, HAL_CHANNEL *, u_int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.9 2005/02/03 03:21:37 kevlo Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.10 2005/02/17 22:32:48 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004 Reyk Floeter <reyk@vantronix.net>.
@@ -197,7 +197,6 @@ ath_hal_attach(device, sc, st, sh, status)
 	hal->ah_radar.r_enabled = AR5K_TUNE_RADAR_ALERT;
 	hal->ah_turbo = AH_FALSE;
 	hal->ah_txpower.txp_tpc = AR5K_TUNE_TPC_TXPOWER;
-	hal->ah_txpower.txp_max = AR5K_TUNE_MAX_TXPOWER;
 	hal->ah_imr = 0;
 	hal->ah_atim_window = 0;
 	hal->ah_aifs = AR5K_TUNE_AIFS;
@@ -228,7 +227,7 @@ ath_hal_attach(device, sc, st, sh, status)
 		    hal->ah_capabilities.cap_regdomain.reg_current;
 
 		/* Try to write default regulation domain to EEPROM */
- 		ar5k_eeprom_regulation_domain(hal, AH_TRUE, ieee_regdomain);
+ 		ar5k_eeprom_regulation_domain(hal, AH_TRUE, &ieee_regdomain);
 	}
 
 	hal->ah_capabilities.cap_regdomain.reg_hw = ieee_regdomain;
@@ -478,7 +477,7 @@ ar5k_regdomain_from_ieee(ieee)
 	u_int32_t regdomain = (u_int32_t)ieee;
 
 	if (regdomain & 0xf0000000)
-		return ((u_int16_t)DMN_DEFAULT);
+		return ((u_int16_t)AR5K_TUNE_REGDOMAIN);
 
         return (regdomain & 0xff);
 }
@@ -490,6 +489,37 @@ ar5k_regdomain_to_ieee(regdomain)
 	ieee80211_regdomain_t ieee = (ieee80211_regdomain_t)regdomain & 0xff;
 
 	return (ieee);
+}
+
+u_int16_t
+ar5k_get_regdomain(hal)
+	struct ath_hal *hal;
+{
+#ifndef COUNTRYCODE
+	/*
+	 * Use the regulation domain found in the EEPROM, if not
+	 * forced by a static country code.
+	 */
+	u_int16_t regdomain;
+	ieee80211_regdomain_t ieee_regdomain;
+
+	if (ar5k_eeprom_regulation_domain(hal,
+		AH_FALSE, &ieee_regdomain) == AH_TRUE) {
+		if ((regdomain = ar5k_regdomain_from_ieee(ieee_regdomain)))
+			return (regdomain);
+	}
+
+	return (hal->ah_regdomain);
+#else
+	/*
+	 * Get the regulation domain by country code. This will ignore
+	 * the settings found in the EEPROM.
+	 */
+	u_int16_t code;
+	
+	code = ieee80211_name2countrycode(COUNTRYCODE);
+	return (ieee80211_countrycode2regdomain(code));
+#endif
 }
 
 u_int32_t
@@ -591,18 +621,6 @@ ar5k_eeprom_bin2freq(hal, bin, mode)
 	return (val);
 }
 
-#define EEPROM_READ_VAL(_o, _v)	{					\
-	if ((ret = hal->ah_eeprom_read(hal, (_o),			\
-		 &(_v))) != 0)						\
-		return (ret);						\
-}			
-
-#define EEPROM_READ_HDR(_o, _v)	{					\
-	if ((ret = hal->ah_eeprom_read(hal, (_o),			\
-		 &hal->ah_capabilities.cap_eeprom._v)) != 0)		\
-		return (ret);						\
-}
-
 int
 ar5k_eeprom_read_ants(hal, offset, mode)
 	struct ath_hal *hal;
@@ -614,28 +632,28 @@ ar5k_eeprom_read_ants(hal, offset, mode)
 	u_int16_t val;
 	int ret, i = 0;
 
-	EEPROM_READ_VAL(o++, val);
+	AR5K_EEPROM_READ(o++, val);
 	ee->ee_switch_settling[mode]	= (val >> 8) & 0x7f;
 	ee->ee_ant_tx_rx[mode]		= (val >> 2) & 0x3f;
 	ee->ee_ant_control[mode][i]	= (val << 4) & 0x3f;
 
-	EEPROM_READ_VAL(o++, val);
+	AR5K_EEPROM_READ(o++, val);
 	ee->ee_ant_control[mode][i++]	|= (val >> 12) & 0xf;
 	ee->ee_ant_control[mode][i++]	= (val >> 6) & 0x3f;
 	ee->ee_ant_control[mode][i++]	= val & 0x3f;
 
-	EEPROM_READ_VAL(o++, val);
+	AR5K_EEPROM_READ(o++, val);
 	ee->ee_ant_control[mode][i++]	= (val >> 10) & 0x3f;
 	ee->ee_ant_control[mode][i++]	= (val >> 4) & 0x3f;
 	ee->ee_ant_control[mode][i]	= (val << 2) & 0x3f;
 
-	EEPROM_READ_VAL(o++, val);
+	AR5K_EEPROM_READ(o++, val);
 	ee->ee_ant_control[mode][i++]	|= (val >> 14) & 0x3;
 	ee->ee_ant_control[mode][i++]	= (val >> 8) & 0x3f;
 	ee->ee_ant_control[mode][i++]	= (val >> 2) & 0x3f;
 	ee->ee_ant_control[mode][i]	= (val << 4) & 0x3f;
 
-	EEPROM_READ_VAL(o++, val);
+	AR5K_EEPROM_READ(o++, val);
 	ee->ee_ant_control[mode][i++]	|= (val >> 12) & 0xf;
 	ee->ee_ant_control[mode][i++]	= (val >> 6) & 0x3f;
 	ee->ee_ant_control[mode][i++]	= val & 0x3f;
@@ -673,7 +691,7 @@ ar5k_eeprom_read_modes(hal, offset, mode)
 	u_int16_t val;
 	int ret;
 
-	EEPROM_READ_VAL(o++, val);
+	AR5K_EEPROM_READ(o++, val);
 	ee->ee_tx_end2xlna_enable[mode]	= (val >> 8) & 0xff;
 	ee->ee_thr_62[mode]		= val & 0xff;
 
@@ -681,11 +699,11 @@ ar5k_eeprom_read_modes(hal, offset, mode)
 		ee->ee_thr_62[mode] =
 		    mode == AR5K_EEPROM_MODE_11A ? 15 : 28;
 
-	EEPROM_READ_VAL(o++, val);
+	AR5K_EEPROM_READ(o++, val);
 	ee->ee_tx_end2xpa_disable[mode]	= (val >> 8) & 0xff;
 	ee->ee_tx_frm2xpa_enable[mode]	= val & 0xff;
 
-	EEPROM_READ_VAL(o++, val);
+	AR5K_EEPROM_READ(o++, val);
 	ee->ee_pga_desired_size[mode]	= (val >> 8) & 0xff;
 
 	if ((val & 0xff) & 0x80)
@@ -697,7 +715,7 @@ ar5k_eeprom_read_modes(hal, offset, mode)
 		ee->ee_noise_floor_thr[mode] =
 		    mode == AR5K_EEPROM_MODE_11A ? -54 : -1;
 
-	EEPROM_READ_VAL(o++, val);
+	AR5K_EEPROM_READ(o++, val);
 	ee->ee_xlna_gain[mode]		= (val >> 5) & 0xff;
 	ee->ee_x_gain[mode]		= (val >> 1) & 0xf;
 	ee->ee_xpd[mode]		= val & 0x1;
@@ -706,7 +724,7 @@ ar5k_eeprom_read_modes(hal, offset, mode)
 		ee->ee_fixed_bias[mode] = (val >> 13) & 0x1;
 
 	if (hal->ah_ee_version >= AR5K_EEPROM_VERSION_3_3) {
-		EEPROM_READ_VAL(o++, val);
+		AR5K_EEPROM_READ(o++, val);
 		ee->ee_false_detect[mode] = (val >> 6) & 0x7f;
 
 		if (mode == AR5K_EEPROM_MODE_11A)
@@ -723,7 +741,7 @@ ar5k_eeprom_read_modes(hal, offset, mode)
 	} else {
 		ee->ee_i_gain[mode] = (val >> 13) & 0x7;
 		
-		EEPROM_READ_VAL(o++, val);
+		AR5K_EEPROM_READ(o++, val);
 		ee->ee_i_gain[mode] |= (val << 3) & 0x38;
 
 		if (mode == AR5K_EEPROM_MODE_11G)
@@ -768,29 +786,29 @@ ar5k_eeprom_init(hal)
 	/*
 	 * Read values from EEPROM and store them in the capability structure
 	 */
-	EEPROM_READ_HDR(AR5K_EEPROM_MAGIC, ee_magic);
-	EEPROM_READ_HDR(AR5K_EEPROM_PROTECT, ee_protect);
-	EEPROM_READ_HDR(AR5K_EEPROM_REG_DOMAIN, ee_regdomain);
-	EEPROM_READ_HDR(AR5K_EEPROM_VERSION, ee_version);
-	EEPROM_READ_HDR(AR5K_EEPROM_HDR, ee_header);
+	AR5K_EEPROM_READ_HDR(AR5K_EEPROM_MAGIC, ee_magic);
+	AR5K_EEPROM_READ_HDR(AR5K_EEPROM_PROTECT, ee_protect);
+	AR5K_EEPROM_READ_HDR(AR5K_EEPROM_REG_DOMAIN, ee_regdomain);
+	AR5K_EEPROM_READ_HDR(AR5K_EEPROM_VERSION, ee_version);
+	AR5K_EEPROM_READ_HDR(AR5K_EEPROM_HDR, ee_header);
 
 	/* Return if we have an old EEPROM */
 	if (hal->ah_ee_version < AR5K_EEPROM_VERSION_3_0)
 		return (0);
 
-	EEPROM_READ_HDR(AR5K_EEPROM_ANT_GAIN(hal->ah_ee_version), ee_ant_gain);
+	AR5K_EEPROM_READ_HDR(AR5K_EEPROM_ANT_GAIN(hal->ah_ee_version), ee_ant_gain);
 
 	if (hal->ah_ee_version >= AR5K_EEPROM_VERSION_4_0) {
-		EEPROM_READ_HDR(AR5K_EEPROM_MISC0, ee_misc0);
-		EEPROM_READ_HDR(AR5K_EEPROM_MISC1, ee_misc1);
+		AR5K_EEPROM_READ_HDR(AR5K_EEPROM_MISC0, ee_misc0);
+		AR5K_EEPROM_READ_HDR(AR5K_EEPROM_MISC1, ee_misc1);
 	}
 
 	if (hal->ah_ee_version < AR5K_EEPROM_VERSION_3_3) {
-		EEPROM_READ_VAL(AR5K_EEPROM_OBDB0_2GHZ, val);
+		AR5K_EEPROM_READ(AR5K_EEPROM_OBDB0_2GHZ, val);
 		ee->ee_ob[AR5K_EEPROM_MODE_11B][0] = val & 0x7;
 		ee->ee_db[AR5K_EEPROM_MODE_11B][0] = (val >> 3) & 0x7;
 
-		EEPROM_READ_VAL(AR5K_EEPROM_OBDB1_2GHZ, val);
+		AR5K_EEPROM_READ(AR5K_EEPROM_OBDB1_2GHZ, val);
 		ee->ee_ob[AR5K_EEPROM_MODE_11G][0] = val & 0x7;
 		ee->ee_db[AR5K_EEPROM_MODE_11G][0] = (val >> 3) & 0x7;
 	}
@@ -802,7 +820,7 @@ ar5k_eeprom_init(hal)
 	ee->ee_ctls = AR5K_EEPROM_N_CTLS(hal->ah_ee_version);
 
 	for (i = 0; i < ee->ee_ctls; i++) {
-		EEPROM_READ_VAL(offset++, val);
+		AR5K_EEPROM_READ(offset++, val);
 		ee->ee_ctl[i] = (val >> 8) & 0xff;
 		ee->ee_ctl[i + 1] = val & 0xff;
 	}
@@ -820,13 +838,13 @@ ar5k_eeprom_init(hal)
 	if ((ret = ar5k_eeprom_read_ants(hal, &offset, mode)) != 0)
 		return (ret);
 
-	EEPROM_READ_VAL(offset++, val);
+	AR5K_EEPROM_READ(offset++, val);
 	ee->ee_adc_desired_size[mode]	= (int8_t)((val >> 8) & 0xff);
 	ee->ee_ob[mode][3]		= (val >> 5) & 0x7;
 	ee->ee_db[mode][3]		= (val >> 2) & 0x7;
 	ee->ee_ob[mode][2]		= (val << 1) & 0x7;
 
-	EEPROM_READ_VAL(offset++, val);
+	AR5K_EEPROM_READ(offset++, val);
 	ee->ee_ob[mode][2]		|= (val >> 15) & 0x1;
 	ee->ee_db[mode][2]		= (val >> 12) & 0x7;
 	ee->ee_ob[mode][1]		= (val >> 9) & 0x7;
@@ -838,7 +856,7 @@ ar5k_eeprom_init(hal)
 		return (ret);
 
 	if (hal->ah_ee_version >= AR5K_EEPROM_VERSION_4_1) {
-		EEPROM_READ_VAL(offset++, val);
+		AR5K_EEPROM_READ(offset++, val);
 		ee->ee_margin_tx_rx[mode] = val & 0x3f;
 	}
 
@@ -851,7 +869,7 @@ ar5k_eeprom_init(hal)
 	if ((ret = ar5k_eeprom_read_ants(hal, &offset, mode)) != 0)
 		return (ret);
 
-	EEPROM_READ_VAL(offset++, val);
+	AR5K_EEPROM_READ(offset++, val);
 	ee->ee_adc_desired_size[mode]	= (int8_t)((val >> 8) & 0xff);
 	ee->ee_ob[mode][1]		= (val >> 4) & 0x7;
 	ee->ee_db[mode][1]		= val & 0x7;
@@ -860,13 +878,13 @@ ar5k_eeprom_init(hal)
 		return (ret);
 
 	if (hal->ah_ee_version >= AR5K_EEPROM_VERSION_4_0) {
-		EEPROM_READ_VAL(offset++, val);
+		AR5K_EEPROM_READ(offset++, val);
 		ee->ee_cal_pier[mode][0] =
 		    ar5k_eeprom_bin2freq(hal, val & 0xff, mode);
 		ee->ee_cal_pier[mode][1] =
 		    ar5k_eeprom_bin2freq(hal, (val >> 8) & 0xff, mode);
 
-		EEPROM_READ_VAL(offset++, val);
+		AR5K_EEPROM_READ(offset++, val);
 		ee->ee_cal_pier[mode][2] =
 		    ar5k_eeprom_bin2freq(hal, val & 0xff, mode);
 	}
@@ -884,7 +902,7 @@ ar5k_eeprom_init(hal)
 	if ((ret = ar5k_eeprom_read_ants(hal, &offset, mode)) != 0)
 		return (ret);
 
-	EEPROM_READ_VAL(offset++, val);
+	AR5K_EEPROM_READ(offset++, val);
 	ee->ee_adc_desired_size[mode]	= (int8_t)((val >> 8) & 0xff);
 	ee->ee_ob[mode][1]		= (val >> 4) & 0x7;
 	ee->ee_db[mode][1]		= val & 0x7;
@@ -893,17 +911,17 @@ ar5k_eeprom_init(hal)
 		return (ret);
 
 	if (hal->ah_ee_version >= AR5K_EEPROM_VERSION_4_0) {
-		EEPROM_READ_VAL(offset++, val);
+		AR5K_EEPROM_READ(offset++, val);
 		ee->ee_cal_pier[mode][0] =
 		    ar5k_eeprom_bin2freq(hal, val & 0xff, mode);
 		ee->ee_cal_pier[mode][1] =
 		    ar5k_eeprom_bin2freq(hal, (val >> 8) & 0xff, mode);
 
-		EEPROM_READ_VAL(offset++, val);
+		AR5K_EEPROM_READ(offset++, val);
 		ee->ee_turbo_max_power[mode] = val & 0x7f;
 		ee->ee_xr_power[mode] = (val >> 7) & 0x3f;
 
-		EEPROM_READ_VAL(offset++, val);
+		AR5K_EEPROM_READ(offset++, val);
 		ee->ee_cal_pier[mode][2] =
 		    ar5k_eeprom_bin2freq(hal, val & 0xff, mode);
 
@@ -911,12 +929,12 @@ ar5k_eeprom_init(hal)
 			ee->ee_margin_tx_rx[mode] = (val >> 8) & 0x3f;
 		}
 
-		EEPROM_READ_VAL(offset++, val);
+		AR5K_EEPROM_READ(offset++, val);
 		ee->ee_i_cal[mode] = (val >> 8) & 0x3f;
 		ee->ee_q_cal[mode] = (val >> 3) & 0x1f;
 
 		if (hal->ah_ee_version >= AR5K_EEPROM_VERSION_4_2) {
-			EEPROM_READ_VAL(offset++, val);
+			AR5K_EEPROM_READ(offset++, val);
 			ee->ee_cck_ofdm_gain_delta = val & 0xff;
 		}
 	}
@@ -927,9 +945,6 @@ ar5k_eeprom_init(hal)
 
 	return (0);
 }
-
-#undef EEPROM_READ_VAL
-#undef EEPROM_READ_HDR
 
 int
 ar5k_eeprom_read_mac(hal, mac)
@@ -973,27 +988,27 @@ HAL_BOOL
 ar5k_eeprom_regulation_domain(hal, write, regdomain)
 	struct ath_hal *hal;
 	HAL_BOOL write;
-	ieee80211_regdomain_t regdomain;
+	ieee80211_regdomain_t *regdomain;
 {
 	/* Read current value */
 	if (write != AH_TRUE) {
-		regdomain = hal->ah_capabilities.cap_regdomain.reg_current;
+		*regdomain = hal->ah_capabilities.cap_regdomain.reg_current;
 		return (AH_TRUE);
 	}
 
 	/* Try to write a new value */
-	hal->ah_capabilities.cap_regdomain.reg_current = regdomain;
+	hal->ah_capabilities.cap_regdomain.reg_current = *regdomain;
 
 	if (hal->ah_capabilities.cap_eeprom.ee_protect &
 	    AR5K_EEPROM_PROTECT_WR_128_191)
 		return (AH_FALSE);
 
-	hal->ah_capabilities.cap_eeprom.ee_regdomain =
-	    ar5k_regdomain_from_ieee(regdomain);
-
 	if (hal->ah_eeprom_write(hal, AR5K_EEPROM_REG_DOMAIN,
 		hal->ah_capabilities.cap_eeprom.ee_regdomain) != 0) 
 		return (AH_FALSE);
+
+	hal->ah_capabilities.cap_eeprom.ee_regdomain =
+	    ar5k_regdomain_from_ieee(*regdomain);
 
 	return (AH_TRUE);
 }
@@ -1026,13 +1041,12 @@ ar5k_channel(hal, channel)
 	/*
 	 * Set the channel and wait
 	 */
-	if (hal->ah_radio == AR5K_AR5110) {
+	if (hal->ah_radio == AR5K_AR5110)
 		ret = ar5k_ar5110_channel(hal, channel);
-	} else if (hal->ah_radio == AR5K_AR5111) {
+	else if (hal->ah_radio == AR5K_AR5111)
 		ret = ar5k_ar5111_channel(hal, channel);
-	} else {
+	else
 		ret = ar5k_ar5112_channel(hal, channel);
-	}
 
 	if (ret == AH_FALSE)
 		return (ret);
@@ -1119,8 +1133,6 @@ ar5k_ar5111_channel(hal, channel)
 	u_int32_t data0, data1, clock;
 	struct ar5k_athchan_2ghz ath_channel_2ghz;
 	
-	AR5K_TRACE;
-
 	/*
 	 * Set the channel on the AR5111 radio
 	 */
@@ -1163,8 +1175,6 @@ ar5k_ar5112_channel(hal, channel)
 	u_int32_t data, data0, data1, data2;
 	u_int16_t c;
 	
-	AR5K_TRACE;
-
 	c = channel->c_channel;
 
 	/*
