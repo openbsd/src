@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.32 2000/01/17 06:51:58 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.33 2000/07/02 02:41:57 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -1607,18 +1607,6 @@ pmap_kremove(va, size)
 	vsize_t size;
 {
 	pmap_remove(kernel_pmap, va, va + size);
-}
-
-int
-kvtop(va)
-	caddr_t va;
-{
-	if ((vaddr_t)va < virtual_avail)
-		return (int)va;
-	else if ((vaddr_t)va >= HPPA_IOBEGIN)
-		return (int)va;
-	else
-		return (int)pmap_extract(pmap_kernel(), (vaddr_t)va);
 }
 
 #if defined(PMAPDEBUG) && defined(DDB)

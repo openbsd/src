@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.34 2000/06/05 12:58:29 art Exp $	*/
+/*	$OpenBSD: locore.S,v 1.35 2000/07/02 02:41:57 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -159,10 +159,9 @@ ENTRY($start)
 	copy	arg3, t2
 	ldi	NBPG+TF_SIZE, t1
 $start_zero_tf
-	stw	r0, 0(t2)
-	stw	r0, 4(t2)
+	stws,ma r0, 4(t2)
 	addib,>= -8, t1, $start_zero_tf
-	ldo	8(t2), t2
+	stws,ma r0, 4(t2)	/* XXX could use ,bc here, but gas is broken */
 
 	/*
 	 * kernel stack lives here (arg3 is page-aligned esym)
@@ -344,7 +343,7 @@ pdc_call_unmapped1
 	ldw	HPPA_FRAME_ARG(7)(r1), t2
 	ldw	HPPA_FRAME_ARG(8)(r1), t3
 	ldw	HPPA_FRAME_ARG(9)(r1), t4
-	stw	t1, HPPA_FRAME_ARG(4)(sp)
+	stw	t1, HPPA_FRAME_ARG(4)(sp)	/* XXX can use ,bc */
 	stw	t2, HPPA_FRAME_ARG(5)(sp)
 	stw	t3, HPPA_FRAME_ARG(6)(sp)
 	stw	t4, HPPA_FRAME_ARG(7)(sp)
@@ -362,7 +361,7 @@ pdc_call_unmapped1
 	mfctl	cr25, t2
 	mfctl	cr26, t3
 	mfctl	cr27, t4	
-	stw	t1, HPPA_FRAME_ARG(12)(sp)
+	stw	t1, HPPA_FRAME_ARG(12)(sp)	/* XXX can use ,bc */
 	stw	t2, HPPA_FRAME_ARG(13)(sp)
 	stw	t3, HPPA_FRAME_ARG(14)(sp)
 	stw	t4, HPPA_FRAME_ARG(15)(sp)
@@ -518,10 +517,11 @@ $syscall
 	 *	stack contains a print of some past trapframe, so
 	 *	we do not save hard to get information, but do restore
 	 *	the whole context later on return anyway.
+	 * XXXXXX this is very bad. everything must be saved
 	 */
 	ldil	L%curproc, t3
 	ldw	R%curproc(sr1, t3), t3
-	ldw	p_addr(sr1, t3), t2
+	ldw	p_addr(sr1, t3), t2	/* XXX can use ,sl */
 
 	/* calculate kernel sp, load, create kernel stack frame */
 	copy	sp, t4
@@ -537,13 +537,29 @@ $syscall
 	 * will be saved accordingly in either syscall()
 	 * or deeper called functions
 	 */
-	stw	r3 , TF_R3 -TF_SIZE(sr1, t3)
 	stw	r27, TF_R27-TF_SIZE(sr1, t3)	/* dp */
+	stw	r3 , TF_R3 -TF_SIZE(sr1, t3)
 #ifdef DDB
-	stw	r0, 0(t3)	/* terminate frame */
+	/* save callee-save registers */
+	stw	r4,   1*4(sr1, t3)
+	stw	r5,   2*4(sr1, t3)
+	stw	r6,   3*4(sr1, t3)
+	stw	r7,   4*4(sr1, t3)
+	stw	r8,   5*4(sr1, t3)
+	stw	r9,   6*4(sr1, t3)
+	stw	r10,  7*4(sr1, t3)
+	stw	r11,  8*4(sr1, t3)
+	stw	r12,  9*4(sr1, t3)
+	stw	r13, 10*4(sr1, t3)
+	stw	r14, 11*4(sr1, t3)
+	stw	r15, 12*4(sr1, t3)
+	stw	r16, 13*4(sr1, t3)
+	stw	r17, 14*4(sr1, t3)
+	stw	r18, 15*4(sr1, t3)
+	stw	r0, 0(sr1, t3)	/* terminate frame */
 	copy	r0 , r3
-	stw	r0, HPPA_FRAME_PSP(sp)
-	stw	r0, HPPA_FRAME_CRP(sp)
+	stw	r0, HPPA_FRAME_PSP(sr1, sp)
+	stw	r0, HPPA_FRAME_CRP(sr1, sp)
 #endif
 
 	/*
@@ -555,7 +571,7 @@ $syscall
 	 * we keep it at 10, since bundling will keep it
 	 * at the same speed as 9 anyway.
 	 */
-	stw	arg0, 1*4(sr1, t3)
+	stw	arg0, 1*4(sr1, t3)	/* XXX can use ,bc */
 	stw	arg1, 2*4(sr1, t3)
 	stw	arg2, 3*4(sr1, t3)
 	stw	arg3, 4*4(sr1, t3)
@@ -1202,7 +1218,7 @@ $tlbd_t
 	 * the correct mapping or NULL.
 	 */
 	ldw	hpt_entry(r16), r24
-$hash_loop_tlbd_t
+$hash_loop_tlbd_t		/* XXX must use ,sl */
 	comb,=,n r0, r24, TLABEL(all)
 	ldw	pv_va(r24), r25
 	ldw	pv_space(r24), r17
@@ -1255,7 +1271,7 @@ $tlb_gottalook_t
 	 */
 	ldw	hpt_entry(r24),r24
 $hash_loop_t
-	comb,=,n r0, r24, TLABEL(all)
+	comb,=,n r0, r24, $tlbiflpa
 	ldw	pv_va(r24),r25
 	ldw	pv_space(r24),r17
 	comb,<>,n r9,r25,$hash_loop_t
@@ -1352,7 +1368,7 @@ $tlbmiss_l
 	 */
 	ldw	hpt_entry(r16),r24
 $hash_loop_l
-	comb,=,n r0, r24, TLABEL(all)
+	comb,=,n r0, r24, $tlbiflpa
 	ldw	pv_va(r24),r25
 	ldw	pv_space(r24),r17
 	comb,<>,n r9,r25,$hash_loop_l
@@ -1391,6 +1407,58 @@ $tlb_itlb_l
 	nop ! nop
 	rfir
 	nop
+
+$tlbiflpa
+	ldi	T_DTLBMISSNA, r16
+	comb,<>,n r1, r16, TLABEL(all)
+	mfctl	iir, r17
+	extru	r17, 5, 6, r16
+	comib,<>,n 1, r16, TLABEL(all)
+	ldi	0x4d, r25
+	extru	r17, 25, 8, r16
+	comb,<>,n r25, r16, TLABEL(all)
+
+	/* ok, this is a miss in LPA */
+	mfctl	ipsw, r16
+	depi	1, PSW_N_POS, 1, r16
+	depi	0, 26, 27, r17
+	mtctl	r16, ipsw
+
+	ldi	$tlbiflpa_zr, r25
+	bv	r17(r25)
+$tlbiflpa_zr
+	copy	r0, r0	!	rfir
+	copy	r0, r1	!	rfir
+	copy	r0, r2	!	rfir
+	copy	r0, r3	!	rfir
+	copy	r0, r4	!	rfir
+	copy	r0, r5	!	rfir
+	copy	r0, r6	!	rfir
+	copy	r0, r7	!	rfir
+	copy	r0, r8	!	rfir
+	copy	r0, r9	!	rfir
+	copy	r0, r10	!	rfir
+	copy	r0, r11	!	rfir
+	copy	r0, r12	!	rfir
+	copy	r0, r13	!	rfir
+	copy	r0, r14	!	rfir
+	copy	r0, r15	!	rfir
+	copy	r0, r16	!	rfir
+	copy	r0, r17	!	rfir
+	copy	r0, r18	!	rfir
+	copy	r0, r19	!	rfir
+	copy	r0, r20	!	rfir
+	copy	r0, r21	!	rfir
+	copy	r0, r22	!	rfir
+	copy	r0, r23	!	rfir
+	copy	r0, r24	!	rfir
+	copy	r0, r25	!	rfir
+	copy	r0, r26	!	rfir
+	copy	r0, r27	!	rfir
+	copy	r0, r28	!	rfir
+	copy	r0, r29	!	rfir
+	copy	r0, r30	!	rfir
+	copy	r0, r31	!	rfir
 
 	.export	$tlb_missend, entry
 $tlb_missend

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.15 2000/06/15 19:11:24 mickey Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.16 2000/07/02 02:41:56 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -77,6 +77,12 @@ extern const char *cpu_typename;
 #endif
 
 /*
+ * COPR/SFUs
+ */
+#define	HPPA_FPUS	0xc0
+#define	HPPA_PMSFUS	0x20	/* ??? */
+
+/*
  * Exported definitions unique to hp700/PA-RISC cpu support.
  */
 
@@ -122,12 +128,20 @@ extern const char *cpu_typename;
 
 #define DELAY(x) delay(x)
 
+static __inline long
+kvtop (const caddr_t va)
+{
+	long ret;
+	/* XXX will it keep page offset ok? */
+	__asm __volatile ("lpa %%r0(%0), %1" : "=r" (ret) : "r" (va));
+	return ret;
+}
+
 extern int (*cpu_desidhash) __P((void));
 
 void	delay __P((u_int us));
 void	hppa_init __P((paddr_t start));
 void	trap __P((int type, struct trapframe *frame));
-int	kvtop __P((const caddr_t va));
 int	dma_cachectl __P((caddr_t p, int size));
 int	spcopy __P((pa_space_t ssp, const void *src,
 		    pa_space_t dsp, void *dst, size_t size));
