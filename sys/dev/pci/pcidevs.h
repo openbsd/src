@@ -1874,6 +1874,7 @@
 /* Xircom products */
 #define	PCI_PRODUCT_XIRCOM_X3201_3	0x0002		/* X3201-3 */
 #define	PCI_PRODUCT_XIRCOM_X3201_3_21143	0x0003		/* X3201-3 (21143) */
+#define	PCI_PRODUCT_XIRCOM_MPCI_MODEM	0x000c		/* MiniPCI Modem */
 
 /* Yamaha products */
 #define	PCI_PRODUCT_YAMAHA_YMF724	0x0004		/* 724 */

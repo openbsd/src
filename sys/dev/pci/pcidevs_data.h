@@ -5937,6 +5937,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "X3201-3 (21143)",
 	},
 	{
+	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_MPCI_MODEM,
+	    0,
+	    "Xircom",
+	    "MiniPCI Modem",
+	},
+	{
 	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF724,
 	    0,
 	    "Yamaha",
