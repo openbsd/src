@@ -1,4 +1,4 @@
-.\" $OpenBSD: wskbd.4,v 1.14 2004/09/30 19:59:26 mickey Exp $
+.\" $OpenBSD: wskbd.4,v 1.15 2005/04/01 02:07:07 uwe Exp $
 .\" $NetBSD: wskbd.4,v 1.5 2000/03/20 11:51:59 pk Exp $
 .\"
 .\" Copyright (c) 1999
@@ -44,6 +44,8 @@
 (Sun serial keyboard)
 .Cd "wskbd* at hilkbd? mux 1"
 (HIL keyboard)
+.Cd "wskbd* at zkbd? mux 1"
+(Zaurus keyboard)
 .Sh DESCRIPTION
 The
 .Nm
@@ -150,5 +152,6 @@ driver supports it.
 .Xr ukbd 4 ,
 .Xr wscons 4 ,
 .Xr wsmux 4 ,
+.Xr zkbd 4 ,
 .Xr zskbd 4 ,
 .Xr wsconsctl 8
