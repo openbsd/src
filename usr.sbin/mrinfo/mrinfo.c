@@ -514,7 +514,7 @@ main(argc, argv)
 		src = ip->ip_src.s_addr;
 		dst = ip->ip_dst.s_addr;
 		iphdrlen = ip->ip_hl << 2;
-		ipdatalen = ip->ip_len;
+		ipdatalen = ntohs(ip->ip_len);
 		if (iphdrlen + ipdatalen != recvlen) {
 		    log(LOG_WARNING, 0,
 		      "packet shorter (%u bytes) than hdr+data length (%u+%u)",
