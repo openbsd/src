@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.4 2001/05/31 22:10:49 art Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.5 2001/05/31 23:49:08 art Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -130,7 +130,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 			ooff = _dl_find_symbol(symn, _dl_objects, &this, 0, 1);
 			if (this == NULL)
 				goto resolve_failed;
-			*r_addr = ooff + this->st_value;
+			*r_addr = ooff + this->st_value + relas->r_addend;
 			break;
 		case R_TYPE(NONE):
 			break;
