@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf_hide.c,v 1.5 1997/07/23 19:31:53 kstailey Exp $ */
+/*	$OpenBSD: elf_hide.c,v 1.6 2001/01/23 21:00:20 art Exp $ */
 
 /*
  * Copyright (c) 1997 Dale Rahn. All rights reserved.
@@ -43,25 +43,25 @@
 #ifdef _NLIST_DO_ELF
 #include <sys/exec_elf.h>
 
-void load_strtab(Elf32_Ehdr *pehdr, char *pexe);
+void load_strtab(Elf_Ehdr *pehdr, char *pexe);
 void dump_strtab();
 char *get_str(int indx);
 
-void load_symtab(Elf32_Ehdr *pehdr, char *pexe);
+void load_symtab(Elf_Ehdr *pehdr, char *pexe);
 void dump_symtab();
 
-void load_shstr_tab(Elf32_Ehdr *pehdr, char *pexe);
+void load_shstr_tab(Elf_Ehdr *pehdr, char *pexe);
 char *get_shstr(int indx);
 void fprint_shstr(FILE * channel, int indx);
 
 void hide_sym();
 
-void reorder_syms(Elf32_Ehdr *ehdr, Elf32_Shdr *symsect,
-	Elf32_Sym *symtab, int symtabsize, int symtabsecnum);
+void reorder_syms(Elf_Ehdr *ehdr, Elf_Shdr *symsect,
+	Elf_Sym *symtab, int symtabsize, int symtabsecnum);
 
-typedef int Symmap;
+typedef long Symmap;
 
-void renum_reloc_syms(Elf32_Ehdr *ehdr, Symmap *symmap, int symtabsecnum);
+void renum_reloc_syms(Elf_Ehdr *ehdr, Symmap *symmap, int symtabsecnum);
 
 char * pexe;
 
@@ -70,13 +70,13 @@ elf_hide(int pfile, char *p)
 {
 	int i;
 
-	Elf32_Ehdr *pehdr;
-	Elf32_Shdr *pshdr;
-	Elf32_Phdr *pphdr;
+	Elf_Ehdr *pehdr;
+	Elf_Shdr *pshdr;
+	Elf_Phdr *pphdr;
 	struct stat sb;
 
 	pexe = p;
-	pehdr = (Elf32_Ehdr *)pexe;
+	pehdr = (Elf_Ehdr *)pexe;
 
 #ifdef DEBUG
 	printf("elf header\n");
@@ -98,7 +98,7 @@ elf_hide(int pfile, char *p)
 	load_shstr_tab(pehdr, pexe);
 #ifdef DEBUG
 	for (i = 0; i < pehdr->e_shnum; i++) {
-		pshdr = (Elf32_Phdr *) (pexe + pehdr->e_shoff +
+		pshdr = (Elf_Phdr *) (pexe + pehdr->e_shoff +
 			(i * pehdr->e_shentsize));
 
 		printf("section header %d\n",i);
@@ -119,7 +119,7 @@ elf_hide(int pfile, char *p)
 
 #ifdef DEBUG
 	for (i = 0; i < pehdr->e_phnum; i++) {
-		pshdr = (Elf32_Phdr *) (pexe + pehdr->e_phoff +
+		pshdr = (Elf_Phdr *) (pexe + pehdr->e_phoff +
 			(i * pehdr->e_phentsize);
 
 		printf("program header %d\n", i);
@@ -135,7 +135,7 @@ elf_hide(int pfile, char *p)
 #endif /* DEBUG */
 #if 0
 	for (i = 0; i < pehdr->e_shnum; i++) {
-		pshdr = (Elf32_Phdr *) (pexe + pehdr->e_shoff +
+		pshdr = (Elf_Phdr *) (pexe + pehdr->e_shoff +
 			(i * pehdr->e_shentsize);
 		if (0 == strcmp(".strtab", get_shstr(pshdr->sh_name))) {
 			break;
@@ -154,14 +154,14 @@ elf_hide(int pfile, char *p)
 char *shstrtab;
 
 void
-load_shstr_tab(Elf32_Ehdr *pehdr, char *pexe)
+load_shstr_tab(Elf_Ehdr *pehdr, char *pexe)
 {
-	Elf32_Shdr *pshdr;
+	Elf_Shdr *pshdr;
 	shstrtab = NULL;
 	if (pehdr->e_shstrndx == 0) {
 		return;
 	}
-	pshdr = (Elf32_Shdr *)(pexe + pehdr->e_shoff +
+	pshdr = (Elf_Shdr *)(pexe + pehdr->e_shoff +
 		(pehdr->e_shstrndx * pehdr->e_shentsize));
 
 	shstrtab = (char *)(pexe + pshdr->sh_offset);
@@ -183,29 +183,29 @@ get_shstr(int indx)
 }
 
 void
-load_symtab(Elf32_Ehdr *pehdr, char *pexe)
+load_symtab(Elf_Ehdr *pehdr, char *pexe)
 {
-	Elf32_Sym *symtab;
-	Elf32_Shdr *symsect;
+	Elf_Sym *symtab;
+	Elf_Shdr *symsect;
 	int	   symtabsize;
-	Elf32_Shdr *pshdr;
-	Elf32_Shdr *psymshdr;
+	Elf_Shdr *pshdr;
+	Elf_Shdr *psymshdr;
 	char *shname;
 	int i;
 	symtab = NULL;
 	for (i = 0; i < pehdr->e_shnum; i++) {
-		pshdr = (Elf32_Shdr *)(pexe + pehdr->e_shoff +
+		pshdr = (Elf_Shdr *)(pexe + pehdr->e_shoff +
 		(i * pehdr->e_shentsize) );
 		if (SHT_REL != pshdr->sh_type && SHT_RELA != pshdr->sh_type){
 			continue;
 		}
-		psymshdr = (Elf32_Shdr *)(pexe + pehdr->e_shoff +
+		psymshdr = (Elf_Shdr *)(pexe + pehdr->e_shoff +
 			(pshdr->sh_link * pehdr->e_shentsize) );
 #ifdef DEBUG
 		fprint_shstr(stdout, pshdr->sh_name);
 		printf("\n");
 #endif
-		symtab = (Elf32_Sym *)(pexe + psymshdr->sh_offset);
+		symtab = (Elf_Sym *)(pexe + psymshdr->sh_offset);
 		symsect = psymshdr;
 		symtabsize = psymshdr->sh_size;
 
@@ -218,12 +218,12 @@ load_symtab(Elf32_Ehdr *pehdr, char *pexe)
 }
 
 void
-dump_symtab (Elf32_Shdr *symsect, Elf32_Sym *symtab, int symtabsize)
+dump_symtab (Elf_Shdr *symsect, Elf_Sym *symtab, int symtabsize)
 {
 	int i;
-	Elf32_Sym *psymtab;
+	Elf_Sym *psymtab;
 
-	for (i = 0 ; i < (symtabsize/sizeof(Elf32_Sym)); i++) {
+	for (i = 0 ; i < (symtabsize/sizeof(Elf_Sym)); i++) {
 		psymtab = &(symtab[i]);
 		if ((psymtab->st_info & 0xf0) == 0x10 &&
 			(psymtab->st_shndx != SHN_UNDEF)) {
@@ -242,14 +242,14 @@ dump_symtab (Elf32_Shdr *symsect, Elf32_Sym *symtab, int symtabsize)
 char * strtab;
 int strtabsize;
 void
-load_strtab(Elf32_Ehdr *pehdr, char *pexe)
+load_strtab(Elf_Ehdr *pehdr, char *pexe)
 {
-	Elf32_Shdr *pshdr;
+	Elf_Shdr *pshdr;
 	char *shname;
 	int i;
 	strtab = NULL;
 	for (i = 0; i < pehdr->e_shnum; i++) {
-		pshdr = (Elf32_Shdr *) (pexe + pehdr->e_shoff +
+		pshdr = (Elf_Shdr *) (pexe + pehdr->e_shoff +
 			(i * pehdr->e_shentsize));
 
 		shname = get_shstr(pshdr->sh_name);
@@ -305,12 +305,12 @@ get_str(int indx)
 int in_keep_list(char *symbol);
 
 void
-hide_sym(Elf32_Ehdr *ehdr, Elf32_Shdr *symsect,
-	Elf32_Sym *symtab, int symtabsize, int symtabsecnum)
+hide_sym(Elf_Ehdr *ehdr, Elf_Shdr *symsect,
+	Elf_Sym *symtab, int symtabsize, int symtabsecnum)
 {
 	int i;
 	unsigned char info;
-	Elf32_Sym *psymtab;
+	Elf_Sym *psymtab;
 
 #ifdef __mips__
 	int f;
@@ -318,7 +318,7 @@ hide_sym(Elf32_Ehdr *ehdr, Elf32_Shdr *symsect,
 	f = time(NULL) * 200;
 #endif
 
-	for (i = 0 ; i < (symtabsize/sizeof(Elf32_Sym)); i++) {
+	for (i = 0 ; i < (symtabsize/sizeof(Elf_Sym)); i++) {
 		psymtab = &(symtab[i]);
 		if ((psymtab->st_info & 0xf0) == 0x10 &&
 			(psymtab->st_shndx != SHN_UNDEF)) {
@@ -367,19 +367,19 @@ hide_sym(Elf32_Ehdr *ehdr, Elf32_Shdr *symsect,
 	reorder_syms(ehdr, symsect, symtab, symtabsize, symtabsecnum);
 }
 void
-reorder_syms(Elf32_Ehdr *ehdr, Elf32_Shdr *symsect,
-	Elf32_Sym *symtab, int symtabsize, int symtabsecnum)
+reorder_syms(Elf_Ehdr *ehdr, Elf_Shdr *symsect,
+	Elf_Sym *symtab, int symtabsize, int symtabsecnum)
 {
 	int i;
 	int nsyms;
 	int cursym;
-	Elf32_Sym *tmpsymtab;
+	Elf_Sym *tmpsymtab;
 	Symmap *symmap;
 
 
-	nsyms = symtabsize / sizeof(Elf32_Sym);
+	nsyms = symtabsize / sizeof(Elf_Sym);
 
-	tmpsymtab = (Elf32_Sym *)calloc(1,symtabsize);
+	tmpsymtab = (Elf_Sym *)calloc(1,symtabsize);
 	symmap = (Symmap *)calloc(1, sizeof(Symmap) * (nsyms));
 
 	assert (NULL != tmpsymtab);
@@ -394,7 +394,7 @@ reorder_syms(Elf32_Ehdr *ehdr, Elf32_Shdr *symsect,
 				get_str(tmpsymtab[i].st_name));
 #endif
 			bcopy (&(tmpsymtab[i]),
-				&(symtab[cursym]), sizeof(Elf32_Sym));
+				&(symtab[cursym]), sizeof(Elf_Sym));
 			symmap[i] = cursym;
 			cursym++;
 		}
@@ -407,7 +407,7 @@ reorder_syms(Elf32_Ehdr *ehdr, Elf32_Shdr *symsect,
 				get_str(tmpsymtab[i].st_name));
 #endif
 			bcopy (&(tmpsymtab[i]),
-				&(symtab[cursym]), sizeof(Elf32_Sym));
+				&(symtab[cursym]), sizeof(Elf_Sym));
 			symmap[i] = cursym;
 			cursym++;
 		}
@@ -422,17 +422,17 @@ reorder_syms(Elf32_Ehdr *ehdr, Elf32_Shdr *symsect,
 	free (symmap);
 }
 void
-renum_reloc_syms(Elf32_Ehdr *ehdr, Symmap *symmap, int symtabsecnum)
+renum_reloc_syms(Elf_Ehdr *ehdr, Symmap *symmap, int symtabsecnum)
 {
-	Elf32_Shdr *pshdr;
+	Elf_Shdr *pshdr;
 	int i, j;
 	int num_reloc;
-	Elf32_Rel  *prel;
-	Elf32_Rela *prela;
+	Elf_Rel  *prel;
+	Elf_RelA *prela;
 	int symnum;
 
 	for (i = 0; i < ehdr->e_shnum; i++) {
-		pshdr = (Elf32_Shdr *)(pexe + ehdr->e_shoff +
+		pshdr = (Elf_Shdr *)(pexe + ehdr->e_shoff +
 		(i * ehdr->e_shentsize) );
 		if ((pshdr->sh_type == SHT_RELA) &&
 			pshdr->sh_link == symtabsecnum)
@@ -441,16 +441,16 @@ renum_reloc_syms(Elf32_Ehdr *ehdr, Symmap *symmap, int symtabsecnum)
 #ifdef DEBUG
 			printf ("section %d has rela relocations in symtab\n", i);
 #endif
-			prela = (Elf32_Rela *)(pexe + pshdr->sh_offset);
-			num_reloc = pshdr->sh_size /sizeof (Elf32_Rela);
+			prela = (Elf_RelA *)(pexe + pshdr->sh_offset);
+			num_reloc = pshdr->sh_size /sizeof (Elf_RelA);
 			for (j = 0; j < num_reloc; j++) {
-				symnum = ELF32_R_SYM(prela[j].r_info);
+				symnum = ELF_R_SYM(prela[j].r_info);
 #ifdef DEBUG
 				printf("sym num o %d n %d\n", symnum,
 					symmap[symnum]);
 #endif
-				prela[j].r_info = ELF32_R_INFO (symmap[symnum],
-					ELF32_R_TYPE(prela[j].r_info));
+				prela[j].r_info = ELF_R_INFO (symmap[symnum],
+					ELF_R_TYPE(prela[j].r_info));
 			}
 
 		}
@@ -460,16 +460,16 @@ renum_reloc_syms(Elf32_Ehdr *ehdr, Symmap *symmap, int symtabsecnum)
 #ifdef DEBUG
 			printf ("section %d has rel relocations in symtab\n", i);
 #endif
-			prel = (Elf32_Rel *)(pexe + pshdr->sh_offset);
-			num_reloc = pshdr->sh_size /sizeof (Elf32_Rel);
+			prel = (Elf_Rel *)(pexe + pshdr->sh_offset);
+			num_reloc = pshdr->sh_size /sizeof (Elf_Rel);
 			for (j = 0; j < num_reloc; j++) {
-				symnum = ELF32_R_SYM(prel[j].r_info);
+				symnum = ELF_R_SYM(prel[j].r_info);
 #ifdef DEBUG
 				printf("sym num o %d n %d\n", symnum,
 					symmap[symnum]);
 #endif
-				prel[j].r_info = ELF32_R_INFO (symmap[symnum],
-					ELF32_R_TYPE(prel[j].r_info));
+				prel[j].r_info = ELF_R_INFO (symmap[symnum],
+					ELF_R_TYPE(prel[j].r_info));
 			}
 		}
 	}
