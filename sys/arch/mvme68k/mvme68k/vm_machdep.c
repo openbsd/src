@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.13 1999/09/03 18:01:24 art Exp $ */
+/*	$OpenBSD: vm_machdep.c,v 1.14 1999/09/27 20:30:32 smurph Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -66,11 +66,12 @@
  * address in each process; in the future we will probably relocate
  * the frame pointers on the stack after copying.
  */
+
 void
 cpu_fork(p1, p2, stack, stacksize)
 	register struct proc *p1, *p2;
-	void *stack;
-	size_t stacksize;
+   void *stack;
+   size_t stacksize;
 {
 	register struct pcb *pcb = &p2->p_addr->u_pcb;
 	register struct trapframe *tf;
@@ -82,7 +83,7 @@ cpu_fork(p1, p2, stack, stacksize)
 	savectx(curpcb);
 	*pcb = p1->p_addr->u_pcb;
 
-	PMAP_ACTIVATE(p2->p_vmspace->vm_map.pmap, pcb, 0);
+	PMAP_ACTIVATE(&p2->p_vmspace->vm_pmap, pcb, 0);
 
 	/*
 	 * Copy the trap frame, and arrange for the child to return directly
@@ -91,15 +92,16 @@ cpu_fork(p1, p2, stack, stacksize)
 	tf = (struct trapframe *)((u_int)p2->p_addr + USPACE) - 1;
 	p2->p_md.md_regs = (int *)tf;
 	*tf = *(struct trapframe *)p1->p_md.md_regs;
-
-	/*
+	
+   /*
 	 * If specified, give the child a different stack.
 	 */
 	if (stack != NULL)
 		tf->tf_regs[15] = (u_int)stack + stacksize;
-
-	sf = (struct switchframe *)tf - 1;
+	
+   sf = (struct switchframe *)tf - 1;
 	sf->sf_pc = (u_int)proc_trampoline;
+
 	pcb->pcb_regs[6] = (int)child_return;	/* A2 */
 	pcb->pcb_regs[7] = (int)p2;		/* A3 */
 	pcb->pcb_regs[11] = (int)sf;		/* SSP */
@@ -184,8 +186,9 @@ pagemove(from, to, size)
 		pmap_remove(pmap_kernel(),
 			    (vm_offset_t)from, (vm_offset_t)from + PAGE_SIZE);
 		pmap_enter(pmap_kernel(),
-			   (vm_offset_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1,
-			   VM_PROT_READ|VM_PROT_WRITE);
+			   (vm_offset_t)to, pa, 
+            VM_PROT_READ|VM_PROT_WRITE, 1, 
+            VM_PROT_READ|VM_PROT_WRITE);
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
@@ -294,7 +297,7 @@ vmapbuf(bp, siz)
 		if (pa == 0)
 			panic("vmapbuf: null page frame");
 		pmap_enter(vm_map_pmap(phys_map), kva, trunc_page(pa),
-			   VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
+			   VM_PROT_READ|VM_PROT_WRITE, TRUE, VM_PROT_READ|VM_PROT_WRITE);
 		addr += PAGE_SIZE;
 		kva += PAGE_SIZE;
 	}

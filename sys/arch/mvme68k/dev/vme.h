@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.h,v 1.5 1996/12/11 21:04:14 deraadt Exp $ */
+/*	$OpenBSD: vme.h,v 1.6 1999/09/27 20:30:31 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -226,6 +226,10 @@ struct vme2reg {
 /*58*/	volatile u_long		vme2_t2cmp;
 /*5c*/	volatile u_long		vme2_t2count;
 /*60*/	volatile u_long		vme2_tctl;
+#define VME2_TCTL_CEN		0x01
+#define VME2_TCTL_COC		0x02
+#define VME2_TCTL_COVF		0x04
+#define VME2_TCTL_OVF		0xf0
 #define VME2_TCTL_SCON		0x40000000	/* we are SCON */
 #define VME2_TCTL_SYSFAIL	0x20000000	/* light SYSFAIL led */
 #define VME2_TCTL_SRST		0x00800000	/* system reset */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bug.c,v 1.3 1996/04/28 11:03:18 deraadt Exp $ */
+/*	$OpenBSD: bug.c,v 1.4 1999/09/27 20:30:31 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -45,7 +45,7 @@ char
 bug_inchr()
 {
 	int s = splhigh();
-	char a;
+	volatile char a;
 
 	promcall = 1;
 	asm volatile ("subql #2,sp");
@@ -62,7 +62,7 @@ int
 bug_instat()
 {
 	int s = splhigh();
-	short ret;
+	volatile short ret;
 
 	promcall = 1;
 	MVMEPROM_CALL(MVMEPROM_INSTAT);
@@ -126,7 +126,7 @@ int
 bug_diskrd(arg)
 	bug_dskio *arg;
 {
-	int ret;
+	volatile int ret;
 
 	promcall = 1;
 	bug_drdcnt++;
@@ -137,13 +137,14 @@ bug_diskrd(arg)
 	promcall = 0;
 	return (!(ret & 0x4));
 }
+
 /* returns 0: success, nonzero: error */
 u_int bug_dwrcnt = 0;
 int
 bug_diskwr(arg)
 	bug_dskio *arg;
 {
-	int ret;
+	volatile int ret;
 
 	promcall = 1;
 	bug_dwrcnt ++;
@@ -246,3 +247,8 @@ asm_bug_stat()
 	asm volatile ("movl _asm_callbuf+8,d0");
 	asm volatile ("movl _asm_callbuf+12,d1");
 }
+
+
+
+
+

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkbad.c,v 1.4 1999/07/20 03:23:05 csapuntz Exp $ */
+/*	$OpenBSD: dkbad.c,v 1.5 1999/09/27 20:30:32 smurph Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -45,6 +45,9 @@
  * the specified sector.  Return index if found.
  * Return -1 if not found.
  */
+#ifndef NBT_BAD
+#define NBT_BAD 126
+#endif 
 
 isbad(bt, cyl, trk, sec)
 	register struct dkbad *bt;

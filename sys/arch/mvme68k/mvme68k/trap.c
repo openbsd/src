@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.21 1999/09/03 18:01:23 art Exp $ */
+/*	$OpenBSD: trap.c,v 1.22 1999/09/27 20:30:32 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -720,8 +720,7 @@ writeback(fp, docachepush)
 		 */
 		if (docachepush) {
 			pmap_enter(pmap_kernel(), (vm_offset_t)vmmap,
-				   trunc_page(f->f_fa), VM_PROT_WRITE, TRUE,
-				   VM_PROT_WRITE);
+				   trunc_page(f->f_fa), VM_PROT_WRITE, TRUE, VM_PROT_WRITE);
 			fa = (u_int)&vmmap[(f->f_fa & PGOFSET) & ~0xF];
 			bcopy((caddr_t)&f->f_pd0, (caddr_t)fa, 16);
 			DCFL(pmap_extract(pmap_kernel(), (vm_offset_t)fa));
@@ -947,7 +946,7 @@ dumpwb(num, s, a, d)
 	       num, a, d, f7sz[(s & SSW4_SZMASK) >> 5],
 	       f7tt[(s & SSW4_TTMASK) >> 3], f7tm[s & SSW4_TMMASK]);
 	printf("	       PA ");
-	pa = pmap_extract(p->p_vmspace->vm_map.pmap, (vm_offset_t)a);
+	pa = pmap_extract(&p->p_vmspace->vm_pmap, (vm_offset_t)a);
 	if (pa == 0)
 		printf("<invalid address>");
 	else
