@@ -52,7 +52,9 @@ returns information about a mounted file system.
 .Fa Path
 is the path name of any file within the mounted file system.
 .Fa Buf
-is a pointer to a statfs structure defined as follows:
+is a pointer to a
+.Nm statfs
+structure defined as follows:
 .Bd -literal
 typedef struct { int32_t val[2]; } fsid_t;
 

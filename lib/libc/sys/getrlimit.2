@@ -62,7 +62,7 @@ parameter is one of the following:
 .Bl -tag -width RLIMIT_FSIZEAA
 .It Li RLIMIT_CORE
 The largest size (in bytes)
-.Xr core
+.Pa core
 file that may be created.
 .It Li RLIMIT_CPU
 The maximum amount of cpu time (in seconds) to be used by
@@ -136,7 +136,7 @@ equivalent.
 .Pp
 The system refuses to extend the data or stack space when the limits
 would be exceeded in the normal way: a
-.Xr break
+.Xr brk 2
 call fails if the data space limit is reached.
 When the stack limit is reached, the process receives
 a segmentation fault

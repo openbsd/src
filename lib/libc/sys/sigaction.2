@@ -43,10 +43,16 @@
 .Fd #include <signal.h>
 .Bd -literal
 struct sigaction {
-	void     (*sa_handler)();
+	union {		/* signal handler */
+		void	(*__sa_handler) __P((int));
+		void	(*__sa_sigaction) __P((int, siginfo_t *, void *));
+	} __sigaction_u;
 	sigset_t sa_mask;
 	int	 sa_flags;
 };
+
+#define sa_handler	__sigaction_u.__sa_handler
+#define sa_sigaction	__sigaction_u.__sa_sigaction
 .Ed
 .Ft int
 .Fn sigaction "int sig" "const struct sigaction *act" "struct sigaction *oact"
@@ -140,6 +146,14 @@ until another
 call is made, or an 
 .Xr execve 2
 is performed.
+The value of 
+.Fa sa_handler
+(or, if the
+.Dv SA_SIGINFO
+flag is set, the value of
+.Fa sa_sigaction
+instead) indicates what action should be performed when a
+signal arrives.
 A signal-specific default action may be reset by
 setting
 .Fa sa_handler
@@ -302,6 +316,14 @@ is set to indicated the reason.
 .Sh EXAMPLE
 The handler routine can be declared:
 .Bd -literal -offset indent
+void handler(sig)
+int sig;
+int nothing;		/* this will be NULL */
+struct sigcontext *scp;
+.Pp
+.Ed
+or if SA_SIGINFO is enabled,
+.Bd -literal -offset indent
 void handler(sig, sip, scp)
 int sig;
 siginfo_t *sip;
@@ -322,7 +344,12 @@ as described in
 .Pa <sys/siginfo.h> .
 If
 .Dv SA_SIGINFO
-is not set, this is NULL.
+is not set, this pointer will be NULL instead.
+The function specified in
+.Fa sa_sigaction
+will be called instead of the function specified by
+.Fa sa_handler
+(Note that in some implementations these are in fact the same).
 .Fa Scp
 is a pointer to the
 .Fa sigcontext
