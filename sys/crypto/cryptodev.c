@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.13 2001/06/18 10:55:01 deraadt Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.14 2001/06/23 01:29:40 pvalchev Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -279,7 +279,7 @@ crypto_op(struct csession *cse, struct crypt_op *cop, struct proc *p)
 	struct cryptodesc *crde = NULL, *crda = NULL;
 	int i, error;
 
-	if (cop->len > 64*1024-4)		/* XXX -4 because of hifn bug */
+	if (cop->len > 256*1024-4)
 		return (E2BIG);
 
 	if (cse->txform && (cop->len % cse->txform->blocksize) != 0)
