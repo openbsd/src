@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.49 2002/12/05 13:43:17 markus Exp $
+# $OpenBSD: Makefile,v 1.50 2002/12/05 14:14:50 henning Exp $
 
 PFTESTS=1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27
 PFTESTS+=28 29 30 31 32 33 34 35 36 37 38 39
@@ -26,7 +26,6 @@ pf${n}:
 REGRESS_TARGETS+=selfpf${n}
 selfpf${n}:
 	if pfctl -nv -f - < ${.CURDIR}/pf${n}.in | \
-	    sed 's/^@[^ ]* //' |\
 	    pfctl -nvf - > /dev/null; then \
 		true ; \
 	else \
