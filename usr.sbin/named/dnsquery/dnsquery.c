@@ -1,4 +1,4 @@
-/*	$OpenBSD: dnsquery.c,v 1.6 2001/10/24 13:06:36 mpech Exp $	*/
+/*	$OpenBSD: dnsquery.c,v 1.7 2002/06/01 20:31:41 deraadt Exp $	*/
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -39,7 +39,7 @@ char *argv[];
 	/* if no args, exit */
 	if (argc == 1) {
 		fprintf(stderr, "Usage:  %s [-h] host [-n ns] [-t type] [-c class] [-r retry] [-p period] [-s] [-v] [-d] [-a]\n", argv[0]);
-		exit(-1);
+		exit(1);
 	}
 
 	/* handle args */
@@ -55,7 +55,7 @@ char *argv[];
 		case 'h' :	if (strlen(optarg) > sizeof(name)-1) {
 				    fprintf(stderr,
 				    "Domain name too long (%s)\n", optarg);
-					exit(-1);
+					exit(1);
 				}
 				strlcpy(name, optarg, sizeof name);
 				break;
@@ -69,7 +69,7 @@ char *argv[];
 					class = proto_class;
 				else {
 				    fprintf(stderr, "Bad class (%s)\n", optarg);
-					exit(-1);
+					exit(1);
 				}
 			    }
 				break;
@@ -83,7 +83,7 @@ char *argv[];
 					type = proto_type;
 				else {
 				    fprintf(stderr, "Bad type (%s)\n", optarg);
-					exit(-1);
+					exit(1);
 				}
 			    }
 				break;
@@ -107,7 +107,7 @@ char *argv[];
 					if (res_init() == -1) {
 						fprintf(stderr,
 							"res_init() failed\n");
-						exit(-1);
+						exit(1);
 				}
 				if (nameservers >= MAXNS) break;
 				(void) inet_aton(optarg,
@@ -118,7 +118,7 @@ char *argv[];
 						fprintf(stderr,
 						       "Bad nameserver (%s)\n",
 							optarg);
-						exit(-1);
+						exit(1);
 					}
 					bcopy((char *) q_nsname->h_addr,
 					      (char *) &q_nsaddr[nameservers],
@@ -131,14 +131,14 @@ char *argv[];
 
 		default : 	fprintf(stderr, 
 				"\tUsage:  %s [-n ns] [-h host] [-t type] [-c class] [-r retry] [-p period] [-s] [-v] [-d] [-a]\n", argv[0]);
-				exit(-1);
+				exit(1);
 		}
 	}
 	if (optind < argc) {
 		if (strlen(argv[optind]) > sizeof(name)-1) {
 		    fprintf(stderr,
 		    "Domain name too long (%s)\n", argv[optind]);
-			exit(-1);
+			exit(1);
 		}
 		strlcpy(name, argv[optind], sizeof name);
 	}
@@ -153,7 +153,7 @@ char *argv[];
 		if (!(_res.options & RES_INIT))
 			if (res_init() == -1) {
 				fprintf(stderr, "res_init() failed\n");
-				exit(-1);
+				exit(1);
 			}
 		if (debug) 
 			_res.options |= RES_DEBUG;
@@ -184,7 +184,7 @@ char *argv[];
 			else
 				fprintf(stderr, "Query failed (h_errno = %d) : %s\n", 
 						h_errno, h_errlist[h_errno]);
-			exit(-1);
+			exit(1);
 		}
 	}
 	else if (res_search(name, class, type, answer, len) < 0) {
@@ -194,7 +194,7 @@ char *argv[];
 		else
 			fprintf(stderr, "Query failed (h_errno = %d) : %s\n", 
 						h_errno, h_errlist[h_errno]);
-		exit(-1);
+		exit(1);
 	}
 	__p_query(answer);
 	exit(0);
