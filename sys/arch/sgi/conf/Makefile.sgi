@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sgi,v 1.1 2004/08/06 21:12:18 pefo Exp $
+#	$OpenBSD: Makefile.sgi,v 1.2 2004/08/08 11:56:13 pefo Exp $
 
 # Makefile for OpenBSD
 #
@@ -180,7 +180,7 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 
 depend:: .depend
 .depend: ${SRCS} assym.h param.c
-	mkdep ${AFLAGS} ${CPPFLAGS} ${SGI}/sgi/locore.s
+	mkdep ${AFLAGS} ${CPPFLAGS} ${SGI}/sgi/locore.S
 	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 #	mkdep -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 
