@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_an_pci.c,v 1.1 2000/04/10 13:55:01 millert Exp $	*/
+/*	$OpenBSD: if_an_pci.c,v 1.2 2000/04/10 18:09:46 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -111,24 +111,18 @@ an_pci_attach(parent, self, aux)
 	struct an_softc *sc = (struct an_softc *)self;
 	struct pci_attach_args *pa = aux;
 	pci_intr_handle_t ih;
-	bus_addr_t iobase;
-	bus_size_t iosize;
 	bus_space_handle_t ioh;
 	bus_space_tag_t iot = pa->pa_iot;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcireg_t csr;
 	const char *intrstr;
 
-	/* Map the I/O ports (note that non-standard location). */
-	if (pci_io_find(pc, pa->pa_tag, AN_PCI_LOIO, &iobase, &iosize)) {
-		printf(": can't find I/O base\n");
-		return;
-	}
-	if (bus_space_map(iot, iobase, iosize, 0, &ioh)) {
+	/* Map the I/O ports. */
+	if (pci_mapreg_map(pa, AN_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
+	    &iot, &ioh, NULL, NULL) != 0) {
 		printf(": can't map I/O space\n");
 		return;
 	}
-
 	sc->an_btag = iot;
 	sc->an_bhandle = ioh;
 
