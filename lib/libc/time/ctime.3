@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ctime.3,v 1.20 2000/03/31 00:10:14 millert Exp $
+.\"	$OpenBSD: ctime.3,v 1.21 2000/04/15 02:15:26 aaron Exp $
 .\"
 .\"
 .Dd February 16, 1999
@@ -266,8 +266,7 @@ field of a returned
 points to a static array of characters, which
 will also be overwritten at the next call
 (and by calls to
-.Fn tzset
-).
+.Fn tzset ) .
 .Pp
 The default system time zone may be set by running
 .Li Dq zic -l timezone

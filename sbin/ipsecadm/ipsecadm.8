@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.22 2000/04/12 21:47:59 aaron Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.23 2000/04/15 02:15:14 aaron Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -136,7 +136,7 @@ Allowed modifiers are:
 .Fl dst ,
 .Fl src ,
 and
-.Fl spi.
+.Fl spi .
 .It delspi
 The specified SA will be deleted.
 Allowed modifiers are:
@@ -368,7 +368,7 @@ to uniquely specify the SA.
 The default value is 50 which means
 .Nm IPPROTO_ESP .
 Other accepted values are 51
-.Nm ( IPPROTO_AH ),
+.Nm ( IPPROTO_AH ) ,
 and 4
 .Nm ( IPPROTO_IP ) .
 One can also specify the symbolic names "esp", "ah", and "ip4",
@@ -387,7 +387,7 @@ The second security protocol used by
 It defaults to
 .Nm IPPROTO_AH .
 Other accepted values are 50
-.Nm ( IPPROTO_ESP ),
+.Nm ( IPPROTO_ESP ) ,
 and 4
 .Nm ( IPPROTO_IP ) .
 One can also specify the symbolic names "esp", "ah", and "ip4",

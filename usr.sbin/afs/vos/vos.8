@@ -3,7 +3,7 @@
 .Os
 .Sh NAME
 .Nm vos
-.Nd Manage AFS volumes and the VLDB.
+.Nd manage AFS volumes and the VLDB
 .Sh SYNOPSIS
 .Nm vos
 .Op Ar command
@@ -16,7 +16,7 @@ utility is used to manage AFS volumes and the volume location database (VLDB).
 .Nm
 provides several commands:
 .Pp
-.Bl -tag -width Fl -compact
+.Bl -tag -width createentry -compact
 .It Cm addsite
 not yet implemented
 .It Cm apropos
@@ -96,7 +96,8 @@ Specifies which AFS cell to use, if the default cell is not to be used.
 .Op Fl noauth
 Specifies that
 .Nm
-should not try to authenticate the connection to the server. This may be
+should not try to authenticate the connection to the server.
+This may be
 useful with shell scripts, or if there is a problem with the AFS cell.
 Note that the server will reject many commands if
 .Fl noauth
@@ -112,32 +113,32 @@ The syntax of the
 .Nm
 commands:
 .Pp
-.Nm vos addsite
+.Ic vos addsite
 .Bd -filled -offset indent -compact
 not yet implemented
 .Ed
 .Pp
-.Nm vos apropos
+.Ic vos apropos
 .Bd -filled -offset indent -compact
 apropos
 .Ed
 .Pp
-.Nm vos backup
+.Ic vos backup
 .Bd -filled -offset indent -compact
 not yet implemented
 .Ed
 .Pp
-.Nm vos backupsys
+.Ic vos backupsys
 .Bd -filled -offset indent -compact
 not yet implemented
 .Ed
 .Pp
-.Nm vos changeaddr
+.Ic vos changeaddr
 .Bd -filled -offset indent -compact
 not yet implemented
 .Ed
 .Pp
-.Nm vos create
+.Ic vos create
 .Op Fl server
 .Ar fileserver
 .Op Fl part
@@ -154,10 +155,10 @@ Create a new volume named
 on server
 .Ar fileserver
 partition
-.Ar partition.
+.Ar partition .
 .Ed
 .Pp
-.Nm vos createentry
+.Ic vos createentry
 .Op Fl id
 .Ar "id of volume"
 .Op Fl host
@@ -173,19 +174,20 @@ partition
 .Op Fl noauth
 .Op Fl localauth
 .Bd -filled -offset indent -compact
-Create a vldb entry manually. This command should
+Create a vldb entry manually.
+This command should
 .Em not
 be used unless you know
 .Em exactly
 what you are doing.
 .Ed
 .Pp
-.Nm vos delentry
+.Ic vos delentry
 .Bd -filled -offset indent -compact
 not yet implemented
 .Ed
 .Pp
-.Nm vos dump
+.Ic vos dump
 .Op Fl id
 .Ar volume
 .Op Fl server Ar fileserver
@@ -199,7 +201,7 @@ not yet implemented
 Dump a volume to a file.
 .Ed
 .Pp
-.Nm vos endtrans
+.Ic vos endtrans
 .Op Fl server
 .Ar server
 .Op Fl trans
@@ -208,10 +210,11 @@ Dump a volume to a file.
 .Op Fl noauth
 .Op Fl verbose
 .Bd -filled -offset indent -compact
-End a transaction. XXX what is this?
+End a transaction.
+XXX what is this?
 .Ed
 .Pp
-.Nm vos examine
+.Ic vos examine
 .Op Fl id
 .Ar volume
 .Op Fl host
@@ -225,28 +228,28 @@ End a transaction. XXX what is this?
 Print information about a volume.
 .Ed
 .Pp
-.Nm vos volinfo
+.Ic vos volinfo
 .Bd -filled -offset indent -compact
-.Nm vos volinfo
+.Ic vos volinfo
 is an alias for the
-.Nm vos examine
+.Ic vos examine
 command.
 .Ed
 .Pp
-.Nm vos help
+.Ic vos help
 .Bd -filled -offset indent -compact
 print help
 .Ed
 .Pp
-.Nm vos ?
+.Ic vos ?
 .Bd -filled -offset indent -compact
-.Nm vos ?
+.Ic vos ?
 is an alias for the
-.Nm vos help
+.Ic vos help
 command.
 .Ed
 .Pp
-.Nm vos listpart
+.Ic vos listpart
 .Op Fl server
 .Ar fileserver
 .Op Fl cell Ar cellname
@@ -257,7 +260,7 @@ command.
 List partitions on a fileserver.
 .Ed
 .Pp
-.Nm vos listvldb
+.Ic vos listvldb
 .Op Fl server
 .Ar fileserver
 .Op Fl cell Ar cellname
@@ -269,7 +272,7 @@ List volumes in the volume location database without reading them on the
 fileserver.
 .Ed
 .Pp
-.Nm vos listvol
+.Ic vos listvol
 .Op Fl server
 .Ar fileserver
 .Op Fl partition
@@ -282,17 +285,17 @@ fileserver.
 List volumes on a fileserver, without consulting the volume location database.
 .Ed
 .Pp
-.Nm vos lock
+.Ic vos lock
 .Bd -filled -offset indent -compact
 not yet implemented
 .Ed
 .Pp
-.Nm vos move
+.Ic vos move
 .Bd -filled -offset indent -compact
 not yet implemented
 .Ed
 .Pp
-.Nm vos partinfo
+.Ic vos partinfo
 .Op Fl server
 .Ar fileserver
 .Op Fl partition
@@ -305,32 +308,32 @@ not yet implemented
 Print the total and remaining diskspace on a fileserver.
 .Ed
 .Pp
-.Nm vos release
+.Ic vos release
 .Bd -filled -offset indent -compact
 not yet implemented
 .Ed
 .Pp
-.Nm vos remove
+.Ic vos remove
 .Bd -filled -offset indent -compact
 not yet implemented
 .Ed
 .Pp
-.Nm vos remsite
+.Ic vos remsite
 .Bd -filled -offset indent -compact
 not yet implemented
 .Ed
 .Pp
-.Nm vos rename
+.Ic vos rename
 .Bd -filled -offset indent -compact
 not yet implemented
 .Ed
 .Pp
-.Nm vos restore
+.Ic vos restore
 .Bd -filled -offset indent -compact
 not yet implemented
 .Ed
 .Pp
-.Nm vos status
+.Ic vos status
 .Op Fl server
 .Ar fileserver
 .Op Fl cell Ar cellname
@@ -340,37 +343,37 @@ not yet implemented
 Show volume server transactions.
 .Ed
 .Pp
-.Nm vos syncserv
+.Ic vos syncserv
 .Bd -filled -offset indent -compact
 not yet implemented
 .Ed
 .Pp
-.Nm vos syncvldb
+.Ic vos syncvldb
 .Bd -filled -offset indent -compact
 not yet implemented
 .Ed
 .Pp
-.Nm vos syncsite
+.Ic vos syncsite
 .Bd -filled -offset indent -compact
 print the syncsite
 .Ed
 .Pp
-.Nm vos unlock
+.Ic vos unlock
 .Bd -filled -offset indent -compact
 not yet implemented
 .Ed
 .Pp
-.Nm vos unlockvldb
+.Ic vos unlockvldb
 .Bd -filled -offset indent -compact
 not yet implemented
 .Ed
 .Pp
-.Nm vos zap
+.Ic vos zap
 .Bd -filled -offset indent -compact
 not yet implemented
 .Ed
 .Pp
-.Nm vos quit
+.Ic vos quit
 .Bd -filled -offset indent -compact
 Exit interactive mode.
 .Ed

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fhopen.2,v 1.1 2000/02/07 05:01:13 assar Exp $
+.\"	$OpenBSD: fhopen.2,v 1.2 2000/04/15 02:15:24 aaron Exp $
 .\"	$NetBSD: fhopen.2,v 1.2 1999/12/02 21:42:36 kleink Exp $
 .\"
 .\" Copyright (c) 1999 National Aeronautics & Space Administration
@@ -53,7 +53,7 @@
 .Fn fhstatfs "const fhandle_t *fhp" "struct statfs *buf"
 .Sh DESCRIPTION
 These functions provide a means to access a file given the file handle
-.Fa fhp.
+.Fa fhp .
 As this method bypasses directory access restrictions, these calls are
 restricted to the superuser.
 .Pp

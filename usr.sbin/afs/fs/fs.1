@@ -24,7 +24,7 @@ The
 .Nm
 utility provides several commands:
 .Pp
-.Bl -tag -width Fl -compact
+.Bl -tag -width setmaxpriority -compact
 .It Cm apropos
 locate commands by keyword
 .It Cm arladebug
@@ -61,13 +61,13 @@ not yet implemented
 get priority of a file/dir
 .It Cm gp
 shorthand for the
-.Nm getpriority
+.Cm getpriority
 command
 .It Cm getmaxpriority
 get max priority for a file gc
 .It Cm gmp
 shorthand for the
-.Nm getmaxpriority
+.Cm getmaxpriority
 command
 .It Cm help
 get help for
@@ -76,7 +76,7 @@ get help for
 show acl
 .It Cm la
 shorthand for the
-.Nm listacl
+.Cm listacl
 command
 .It Cm listcells
 list cells that the cache handler can communicate with
@@ -84,11 +84,11 @@ list cells that the cache handler can communicate with
 show volume quota
 .It Cm lq
 shorthand for the
-.Nm listquita
+.Cm listquota
 command
 .It Cm quota
 shorthand for the
-.Nm listquota
+.Cm listquota
 command
 .It Cm lsmount
 show a mount point
@@ -114,13 +114,13 @@ delete a mount point
 remove priority from file/directory
 .It Cm rmp
 shorthand for the
-.Nm removepriority
+.Cm removepriority
 command
 .It Cm setacl
 add an acl entry on a directory
 .It Cm sa
 shorthand for the
-.Nm setacl
+.Cm setacl
 command
 .It Cm setcachesize
 change disk cache size
@@ -130,19 +130,19 @@ change cell status
 set priority of a file/directory
 .It Cm sp
 shorthand for the
-.Nm setpriority
+.Cm setpriority
 command
 .It Cm setmaxpriority
 set upper limit of prio gc
 .It Cm smq
 shorthand for the
-.Nm setmaxpriority
+.Cm setmaxpriority
 comand
 .It Cm setquota
 change quota on a volume
 .It Cm sq
 shorthand for the
-.Nm setquota
+.Cm setquota
 command
 .It Cm setserverprefs
 not yet implemented
@@ -181,7 +181,8 @@ Specifies which AFS cell to use, if the default cell is not to be used.
 .Op Fl noauth
 Specifies that
 .Nm
-should not try to authenticate the connection to the server. This may be
+should not try to authenticate the connection to the server.
+This may be
 useful with shell scripts, or if there is a problem with the AFS cell.
 Note that the server will reject many commands if
 .Fl noauth
@@ -192,12 +193,12 @@ The syntax of the
 .Nm
 commands:
 .Pp
-.Nm fs apropos
+.Ic fs apropos
 .Bd -filled -offset indent -compact
 Locate commands by keyword
 .Ed
 .Pp
-.Nm fs arladebug
+.Ic fs arladebug
 .Op Ar flags
 .Op Fl cell Ar cellname
 .Op Fl noauth
@@ -205,118 +206,119 @@ Locate commands by keyword
 Tweek arla-debugging flags.
 .Ed
 .Pp
-.Nm fs checkservers
+.Ic fs checkservers
 .Op Fl cell Ar cellname
 .Op Fl noauth
 .Op Fl nopoll
 .Bd -filled -offset indent -compact
-Check if the server in a cell are up. If
+Check if the server in a cell are up.
+If
 .Fl nopoll
 is specified, the servers are not contactad; only internal information is
 printed.
 .Ed
 .Pp
-.Nm fs checkvolumes
+.Ic fs checkvolumes
 .Bd -filled -offset indent -compact
 Not implemented yet.
 .Ed
 .Pp
-.Nm fs cleanacl
+.Ic fs cleanacl
 .Bd -filled -offset indent -compact
 Not implemented yet.
 .Ed
 .Pp
-.Nm fs copyacl
+.Ic fs copyacl
 .Bd -filled -offset indent -compact
 Not implemented yet.
 .Ed
 .Pp
-.Nm fs diskfree
+.Ic fs diskfree
 .Ar path
 .Bd -filled -offset indent -compact
 show free partition space
 .Ed
 .Pp
-.Nm fs examine
+.Ic fs examine
 .Op Ar path
 .Bd -filled -offset indent -compact
 Print detailed information about the volume mounted on the specified path
 or the current directory.
 .Ed
 .Pp
-.Nm fs flush
+.Ic fs flush
 .Ar path
 .Bd -filled -offset indent -compact
 Flush the file specified, causing it to be stored on the fileserver.
 .Ed
 .Pp
-.Nm fs flushvolume
+.Ic fs flushvolume
 .Ar path
 .Bd -filled -offset indent -compact
 Flush all the files in the volume where the file specified is stored,
-causing them to be stored on the fileserver. Meta information about the
-volume is also flushed.
+causing them to be stored on the fileserver.
+Meta information about the volume is also flushed.
 .Ed
 .Pp
-.Nm fs gcpags
+.Ic fs gcpags
 .Bd -filled -offset indent -compact
 Remove unused PAGs from the kernel.
 .Ed
 .Pp
-.Nm fs getcacheparms
+.Ic fs getcacheparms
 .Bd -filled -offset indent -compact
 Print information about cache usage.
 .Ed
 .Pp
-.Nm fs getcrypt
+.Ic fs getcrypt
 .Bd -filled -offset indent -compact
 Display wether traffic between the client and server is encrypted.
 .Ed
 .Pp
-.Nm fs getcellstatus
+.Ic fs getcellstatus
 .Ar cellname
 .Bd -filled -offset indent -compact
 Indicate if setuid files are enabled for the specified cell.
 .Ed
 .Pp
-.Nm fs getfid
+.Ic fs getfid
 .Ar path
 .Bd -filled -offset indent -compact
 Print fid information for a file.
 .Ed
 .Pp
-.Nm fs getserverprefs
+.Ic fs getserverprefs
 .Bd -filled -offset indent -compact
 Not implemented yet.
 .Ed
 .Pp
-.Nm fs getpriority
+.Ic fs getpriority
 .Bd -filled -offset indent -compact
 Display priority of a file or directory.
 .Ed
 .Pp
-.Nm fs gp
+.Ic fs gp
 .Bd -filled -offset indent -compact
 shorthand for the
-.Nm getpriority
+.Cm getpriority
 command
 .Ed
 .Pp
-.Nm fs getmaxpriority
+.Ic fs getmaxpriority
 .Bd -filled -offset indent -compact
 Display max priority for a file.
 .Ed
 .Pp
-.Nm fs gmp
+.Ic fs gmp
 .Op Fl cell Ar cellname
 .Op Fl noauth
 .Bd -filled -offset indent -compact
 Shorthand for the
-.Nm getmaxpriority
+.Cm getmaxpriority
 command.
 .Ed
 .Pp
-.Nm fs help
+.Ic fs help
 .Op Fl cell Ar cellname
 .Op Fl noauth
 .Bd -filled -offset indent -compact
@@ -324,74 +326,76 @@ Get help for
 .Nm
 .Ed
 .Pp
-.Nm fs listacl
+.Ic fs listacl
 .Ar path
 .Bd -filled -offset indent -compact
 Show acl for the specified path or the current directory.
 .Ed
 .Pp
-.Nm fs la
+.Ic fs la
 .Op Fl cell Ar cellname
 .Op Fl noauth
 .Bd -filled -offset indent -compact
 Shorthand for the
-.Nm listacl
+.Cm listacl
 command.
 .Ed
 .Pp
-.Nm fs listcells
+.Ic fs listcells
 .Bd -filled -offset indent -compact
-List cells that the cache handler can communicate with. These are the cells
-listed in the file
-.Nm /etc/afs/CellServDB.
+List cells that the cache handler can communicate with.
+These are the cells listed in the file
+.Pa /etc/afs/CellServDB .
 .Ed
 .Pp
-.Nm fs listquota
+.Ic fs listquota
 .Op Ar path
 .Bd -filled -offset indent -compact
 Show the quota for the volume of the file or directory specified.
 .Ed
 .Pp
-.Nm fs lq
+.Ic fs lq
 .Bd -filled -offset indent -compact
 shorthand for the
-.Nm listquita
+.Cm listquota
 command
 .Ed
 .Pp
-.Nm fs quota
+.Ic fs quota
 .Op Fl cell Ar cellname
 .Op Fl noauth
 .Bd -filled -offset indent -compact
 Shorthand for the
-.Nm listquota
+.Ic listquota
 command.
 .Ed
 .Pp
-.Nm fs lsmount
+.Ic fs lsmount
 .Bd -filled -offset indent -compact
 .Ar path
 Show a mount point.
 .Ed
 .Pp
-.Nm fs messages
+.Ic fs messages
 .Bd -filled -offset indent -compact
 Not implemented yet.
 .Ed
 .Pp
-.Nm fs mkmount
+.Ic fs mkmount
 .Ar directory
 .Ar volume
 .Bd -filled -offset indent -compact
-Create a mountpoint. Note that the there must not exist a directory named as
+Create a mountpoint.
+Note that the there must not exist a directory named as
 the mount point you are creating.
 .Ed
 .Pp
-.Nm fs connect
+.Ic fs connect
 .Op Ar mode
 .Bd -filled -offset indent -compact
 Set or get connected mode, if a mode is specified, the cache manager will be
-set to that mode. If not, the current mode will be printed.
+set to that mode.
+If not, the current mode will be printed.
 Valid modes are:
 .Bl -tag -width -Fl -compact
 .It Cm connected
@@ -404,66 +408,68 @@ attempt is made to contact a fileserver-
 .El
 .Pp
 Disconnected mode is very useful for machines that are not connected to
-the network at all times, such as laptops. Disconnected mode is to be
-considered very experimental at this stage.
+the network at all times, such as laptops.
+Disconnected mode is to be considered very experimental at this stage.
 .Ed
 .Pp
-.Nm fs monitor
+.Ic fs monitor
 .Bd -filled -offset indent -compact
 Not implemented yet.
 .Ed
 .Pp
-.Nm fs newcell
+.Ic fs newcell
 .Fl cell Ar cellname
 .Fl servers Ar vldb-servers
 .Op Fl help
 .Bd -filled -offset indent -compact
 Add a new cell to the running configuration of the cache manager, or update
-already existing information. This information should also be entered in the
-file
-.Nm /etc/afs/CellServDB.
+already existing information.
+This information should also be entered in the file
+.Pa /etc/afs/CellServDB .
 .Ed
 .Pp
-.Nm fs nop
+.Ic fs nop
 .Bd -filled -offset indent -compact
-Do a pioctl-nop. This is useful for debugging.
+Do a pioctl-nop.
+This is useful for debugging.
 .Ed
 .Pp
-.Nm fs quit
-.Bd -filled -offset indent -compact
-Leave interactive mode.
-.Ed
-.Pp
-.Nm fs exit
+.Ic fs quit
 .Bd -filled -offset indent -compact
 Leave interactive mode.
 .Ed
 .Pp
-.Nm fs rmmount
+.Ic fs exit
+.Bd -filled -offset indent -compact
+Leave interactive mode.
+.Ed
+.Pp
+.Ic fs rmmount
 .Ar mountpoint
 .Bd -filled -offset indent -compact
 Delete a mount point.
 .Ed
 .Pp
-.Nm fs removepriority
+.Ic fs removepriority
 .Ar file
 .Bd -filled -offset indent -compact
 Remove priority from file/directory.
 .Ed
 .Pp
-.Nm fs rmp
+.Ic fs rmp
 .Bd -filled -offset indent -compact
 Shorthand for the
-.Nm removepriority
+.Cm removepriority
 command.
 .Ed
 .Pp
-.Nm fs setacl
+.Ic fs setacl
 .Bd -filled -offset indent -compact
-Add an acl entry on a directory. Each entry consists of two components:
+Add an acl entry on a directory.
+Each entry consists of two components:
 a user or group and a character string describing the permissions granted
-for that user or group. These characters and the permission they represent
-are:
+for that user or group.
+These characters and the permission they represent are:
 .Bl -tag -width Fl -compact
 .It Cm r
 read the files
@@ -482,7 +488,7 @@ administer the acl, that is, to change the acl
 .El
 .Pp
 There are also a few convinience strings recognized by
-.Nm fs setacl:
+.Ic fs setacl :
 .Bl -tag -width Fl -compact
 .It Cm none
 removes all permissions.
@@ -496,138 +502,139 @@ add all permissions.
 .El
 .Pp
 Note that in AFS you set the permissions on a directory, and the permissions
-of a file are those of their directory. So, if you move a file from one
+of a file are those of their directory.
+So, if you move a file from one
 directory to another, you might change the permission of the file, as
 the two directorys may have different permissions.
 .Pp
 Of the traditional
 .Ux
 permission bits only the user part is honored, and is used for any
-user permissioned by the directorys acl. The group and world permission
-bits are ignored, but they are stored.
+user permissioned by the directorys acl.
+The group and world permission bits are ignored, but they are stored.
 .Ed
 .Pp
-.Nm fs sa
+.Ic fs sa
 .Bd -filled -offset indent -compact
 shorthand for the
-.Nm setacl
+.Cm setacl
 command
 .Ed
 .Pp
-.Nm fs setcachesize
+.Ic fs setcachesize
 .Ar lowvnodes
 .Op Ar highvnodes Ar lowbytes Ar highbytes
 .Bd -filled -offset indent -compact
 Set the size of the disk cache.
 .Ed
 .Pp
-.Nm fs setcell
+.Ic fs setcell
 .Bd -filled -offset indent -compact
 Not implemented yet.
 .Ed
 .Pp
-.Nm fs setpriority
+.Ic fs setpriority
 .Ar file
 .Ar priority
 .Bd -filled -offset indent -compact
 Set priority of a file/directory.
 .Ed
 .Pp
-.Nm fs sp
+.Ic fs sp
 .Bd -filled -offset indent -compact
 Shorthand for the
-.Nm setpriority
+.Cm setpriority
 command.
 .Ed
 .Pp
-.Nm fs setmaxpriority
+.Ic fs setmaxpriority
 .Ar macprio
 .Bd -filled -offset indent -compact
 Set upper limit of priority.
 .Ed
 .Pp
-.Nm fs smq
+.Ic fs smq
 .Bd -filled -offset indent -compact
 shorthand for the
-.Nm setmaxpriority
+.Cm setmaxpriority
 comand
 .Ed
 .Pp
-.Nm fs setquota
+.Ic fs setquota
 .Ar path
 .Ar quota
 .Bd -filled -offset indent -compact
 Set the quota (in Kbytes) on a volume.
 .Ed
 .Pp
-.Nm fs sq
+.Ic fs sq
 .Bd -filled -offset indent -compact
 Shorthand for the
-.Nm setquota
+.Cm setquota
 command.
 .Ed
 .Pp
-.Nm fs setserverprefs
+.Ic fs setserverprefs
 .Bd -filled -offset indent -compact
 Not implemented yet.
 .Ed
 .Pp
-.Nm fs setcrypt
+.Ic fs setcrypt
 .Ar flag
 .Bd -filled -offset indent -compact
 If 'no' is specified, encryption of the traffic to/from fileservers is
 disabled, and if 'yes' is specified, it is enabled.
 .Ed
 .Pp
-.Nm fs setvol
+.Ic fs setvol
 .Bd -filled -offset indent -compact
 Not implemented yet.
 .Ed
 .Pp
-.Nm fs suidcells
+.Ic fs suidcells
 .Bd -filled -offset indent -compact
 Print cells and wether setuid execution is allowed for them.
 .Ed
 .Pp
-.Nm fs sysname
+.Ic fs sysname
 .Op Ar sysname
 .Bd -filled -offset indent -compact
 Get or set the value of the '@sys' value.
 .Ed
 .Pp
-.Nm fs version
+.Ic fs version
 .Bd -filled -offset indent -compact
 Print version of fs and fs_lib.
 .Ed
 .Pp
-.Nm fs venuslog
+.Ic fs venuslog
 .Bd -filled -offset indent -compact
 Make afsd print status.
 .Ed
 .Pp
-.Nm fs whereis
+.Ic fs whereis
 .Op Ar path
 .Bd -filled -offset indent -compact
 Show server(s) of the specified file or the current directory.
 .Ed
 .Pp
-.Nm fs whichcell
+.Ic fs whichcell
 .Op Ar path
 .Bd -filled -offset indent -compact
 Show cell of a file or the current directory.
 .Ed
 .Pp
-.Nm fs wscell
+.Ic fs wscell
 .Bd -filled -offset indent -compact
 Display default cell of the client.
 .Ed
 .Pp
-.Nm fs xfsdebug
+.Ic fs xfsdebug
 .Bd -filled -offset indent -compact
 Tweek xfs-debugging flags
 .Ed
 .Pp
-.Nm fs xfsprint
+.Ic fs xfsprint
 .Op Ar flags
 .Bd -filled -offset indent -compact
 Make xfs print debug info.

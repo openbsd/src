@@ -1,4 +1,4 @@
-.\"	$OpenBSD: exports.5,v 1.9 2000/03/04 22:19:30 aaron Exp $
+.\"	$OpenBSD: exports.5,v 1.10 2000/04/15 02:15:15 aaron Exp $
 .\"	$NetBSD: exports.5,v 1.9 1996/02/18 11:57:50 fvdl Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -104,7 +104,7 @@ Export options are specified as follows:
 The credential of the specified user is used for remote access by root.
 The credential includes all the groups to which the user is a member
 on the local machine (see
-.Xr id 1 ).
+.Xr id 1 ) .
 The user may be specified by name or number.
 .Pp
 .Sm off
@@ -174,7 +174,7 @@ addresses may be used in place of names.)
 The second way is to specify a
 .Dq netgroup
 as defined in the netgroup file (see
-.Xr netgroup 5 ).
+.Xr netgroup 5 ) .
 The third way is to specify an internet subnetwork using a network and
 network mask that is defined as the set of all hosts with addresses within
 the subnetwork.
@@ -200,7 +200,7 @@ and optionally
 .Sm on
 If the mask is not specified, it will default to the mask for that network
 class (A, B or C; see
-.Xr inet 5 ).
+.Xr inet 5 ) .
 .Pp
 For example:
 .Bd -literal -offset indent

@@ -26,7 +26,7 @@ The
 .Nm
 utility provides several commands:
 .Pp
-.Bl -tag -width Fl -compact
+.Bl -tag -width "membership groups" -compact
 .It Cm adduser
 add a user to a group
 .It Cm chown
@@ -73,7 +73,8 @@ Specifies which AFS cell to use, if the default cell is not to be used.
 .Op Fl noauth
 Specifies that
 .Nm
-should not try to authenticate the connection to the server. This may be
+should not try to authenticate the connection to the server.
+This may be
 useful with shell scripts, or if there is a problem with the AFS cell.
 Note that the server will reject many commands if
 .Fl noauth
@@ -84,7 +85,7 @@ The syntax of the
 .Nm
 commands:
 .Pp
-.Nm pts adduser
+.Ic pts adduser
 .Op Fl name
 .Ar user
 .Op Fl group
@@ -95,7 +96,7 @@ commands:
 Add the specified user to the specified group.
 .Ed
 .Pp
-.Nm pts chown
+.Ic pts chown
 .Op Fl name
 .Ar user/group
 .Op Fl owner
@@ -106,47 +107,49 @@ Add the specified user to the specified group.
 Change owner of a group or user.
 .Ed
 .Pp
-.Nm pts creategroup
+.Ic pts creategroup
 .Op Fl name
 .Ar name
 .Op Fl id Ar idnumber
 .Op Fl cell Ar cellname
 .Op Fl noauth
 .Bd -filled -offset indent -compact
-Create a new group. If
+Create a new group.
+If
 .Fl id
 is not specified, a new idnumber is taken automatically.
 .Ed
 .Pp
-.Nm pts cg
+.Ic pts cg
 .Bd -filled -offset indent -compact
-.Nm pts cg
+.Ic pts cg
 is an alias for the
-.Nm pts creategroup
+.Ic pts creategroup
 command.
 .Ed
 .Pp
-.Nm pts createuser
+.Ic pts createuser
 .Op Fl name
 .Ar name
 .Op Fl id Ar idnumber
 .Op Fl cell Ar cellname
 .Op Fl noauth
 .Bd -filled -offset indent -compact
-Create a new user. If
+Create a new user.
+If
 .Fl id
 is not specified, a new idnumber is taken automatically.
 .Ed
 .Pp
-.Nm pts dump
+.Ic pts dump
 .Ar server
 .Op Fl cell cellname
 .Bd -filled -offset indent -compact
-Dump the Protection Database in a human readable form. The database is read
-from the given database server.
+Dump the Protection Database in a human readable form.
+The database is read from the given database server.
 .Ed
 .Pp
-.Nm pts delete
+.Ic pts delete
 .Op Fl name
 .Ar name/group
 .Op Fl cell Ar cellname
@@ -155,7 +158,7 @@ from the given database server.
 Delete a user or group from the database.
 .Ed
 .Pp
-.Nm pts examine
+.Ic pts examine
 .Ar user/group
 .Op Fl cell Ar cellname
 .Op Fl noauth
@@ -163,21 +166,21 @@ Delete a user or group from the database.
 Print verbose information about a user or a group.
 .Ed
 .Pp
-.Nm pts help
+.Ic pts help
 or
-.Nm pts ?
+.Ic pts ?
 .Bd -filled -offset indent -compact
 Print help about
 .Nm
 .Ed
 .Pp
-.Nm pts listmax
+.Ic pts listmax
 .Op Fl cell Ar cellname
 .Bd -filled -offset indent -compact
 Print the largest uid and gid.
 .Ed
 .Pp
-.Nm pts listowned
+.Ic pts listowned
 .Op Fl id
 .Ar user/group
 .Op Fl cell Ar cellname
@@ -186,7 +189,7 @@ Print the largest uid and gid.
 List the groups owned by a user or group.
 .Ed
 .Pp
-.Nm pts membership
+.Ic pts membership
 .Op Fl nameorid Ar user/group
 .Op Fl cell Ar cellname
 .Op Fl noauth
@@ -194,15 +197,15 @@ List the groups owned by a user or group.
 List the members of a group, or the groups a user is a member of.
 .Ed
 .Pp
-.Nm pts groups
+.Ic pts groups
 .Bd -filled -offset indent -compact
-.Nm pts groups
+.Ic pts groups
 is an alias for the
-.Nm pts membership
+.Ic pts membership
 command.
 .Ed
 .Pp
-.Nm pts removeuser
+.Ic pts removeuser
 .Op Fl user
 .Ar user
 .Op Fl group
@@ -213,7 +216,7 @@ command.
 Remove a users membership from a group.
 .Ed
 .Pp
-.Nm pts rename
+.Ic pts rename
 .Op Fl from
 .Ar "old name"
 .Op Fl to
@@ -224,19 +227,19 @@ Remove a users membership from a group.
 Rename a user or group.
 .Ed
 .Pp
-.Nm pts setfields
+.Ic pts setfields
 .Bd -filled -offset indent -compact
 This command is available in the original AFS client, but has not been
 implemented yet.
 .Ed
 .Pp
-.Nm pts setmax
+.Ic pts setmax
 .Bd -filled -offset indent -compact
 This command is available in the original AFS client, but has not been
 implemented yet.
 .Ed
 .Pp
-.Nm pts syncdb
+.Ic pts syncdb
 .Bd -filled -offset indent -compact
 This command has not been implemented yet.
 .Ed

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: select.2,v 1.16 2000/01/22 02:17:55 aaron Exp $
+.\"	$OpenBSD: select.2,v 1.17 2000/04/15 02:15:24 aaron Exp $
 .\"	$NetBSD: select.2,v 1.5 1995/06/27 22:32:28 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -242,14 +242,14 @@ before and after the call to
 and using
 .Fn timersub
 (as described in
-.Xr getitimer 2 Ns ).
+.Xr getitimer 2 ) .
 .Pp
 Internally to the kernel,
 .Fn select
 works poorly if multiple processes wait on the same file descriptor.
 Given that, it is rather surprising to see that many daemons are
 written that way (i.e.,
-.Xr httpd 8 ).
+.Xr httpd 8 ) .
 .Sh HISTORY
 The
 .Fn select

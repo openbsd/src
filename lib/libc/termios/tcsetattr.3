@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcsetattr.3,v 1.9 1999/07/05 13:09:08 aaron Exp $
+.\"	$OpenBSD: tcsetattr.3,v 1.10 2000/04/15 02:15:25 aaron Exp $
 .\"
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -206,7 +206,7 @@ function sets the flags stored in the
 .Li termios
 structure to a state disabling
 all input and output processing, giving a
-.Dq raw I/O path.
+.Dq raw I/O path .
 It should be noted that there is no function to reverse this effect.
 This is because there are a variety of processing options that could be
 re-enabled and the correct method is for an application to snapshot the

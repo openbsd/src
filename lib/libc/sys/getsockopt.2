@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockopt.2,v 1.14 1999/08/15 13:14:11 deraadt Exp $
+.\"	$OpenBSD: getsockopt.2,v 1.15 2000/04/15 02:15:24 aaron Exp $
 .\"	$NetBSD: getsockopt.2,v 1.7 1995/02/27 12:33:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -191,8 +191,8 @@ are queued on socket and a
 .Xr close 2
 is performed.
 If the socket promises reliable delivery of data and
-.Dv SO_LINGER is set,
-the system will block the process on the
+.Dv SO_LINGER
+is set, the system will block the process on the
 .Xr close 2
 attempt until it is able to transmit the data or until it decides it
 is unable to deliver the information (a timeout period measured in seconds,

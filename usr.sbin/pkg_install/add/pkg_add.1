@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.19 2000/04/12 21:47:55 aaron Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.20 2000/04/15 02:15:19 aaron Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -276,7 +276,7 @@ final location, otherwise it is extracted into the staging area.
 If the package contains a
 .Ar require
 script (see
-.Xr pkg_create 1 ),
+.Xr pkg_create 1 ) ,
 it is executed with the following arguments:
 .Bl -tag -width indentindent
 .It Ar pkg-name
@@ -315,7 +315,7 @@ the staging area into their final locations.
 If the package contains an
 .Ar mtreefile
 file (see
-.Xr pkg_create 1 ),
+.Xr pkg_create 1 ) ,
 then mtree is invoked as:
 .Pp
 .Bd -filled -offset indent -compact

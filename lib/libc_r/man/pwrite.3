@@ -1,4 +1,4 @@
-.\" $OpenBSD: pwrite.3,v 1.7 1999/07/09 13:35:25 aaron Exp $
+.\" $OpenBSD: pwrite.3,v 1.8 2000/04/15 02:15:26 aaron Exp $
 .\" David Leonard <d@openbsd.org>, 1998. Public domain.
 .Dd September 7, 1998
 .Dt PWRITE 3
@@ -18,7 +18,7 @@ function writes
 bytes from offset
 .Fa offset
 in the file opened on file descriptor
-.Fa filedes.
+.Fa filedes .
 .Pp
 This function is provided for use in a threaded, parallel I/O
 environment, where race conditions may exist between two threads

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.3,v 1.4 2000/03/04 22:19:32 aaron Exp $
+.\"	$OpenBSD: scsi.3,v 1.5 2000/04/15 02:15:28 aaron Exp $
 .\" Copyright (c) 1994 HD Associates (hd@world.std.com)
 .\" All rights reserved.
 .\"
@@ -164,8 +164,8 @@ are the flags defined in
 Only two of these flags are supported in this release of the software:
 .Fr SCCMD_READ
 indicates a data in phase (a transfer into the user buffer at
-.Ar scsireg->databuf
-), and
+.Ar scsireg->databuf ) ,
+and
 .Fr SCCMD_WRITE
 indicates a data out phase (a transfer out of the user buffer).
 .Pp
@@ -244,7 +244,7 @@ The decoding is similar to
 the command specifier processing of
 .Fn scsireq_build
 except that the data is extracted from the data pointed to by
-.Fr scsireq->databuf.
+.Fr scsireq->databuf .
 The stdarg list should be pointers to integers instead of integer
 values.
 A seek field type and a suppression modifier are added.

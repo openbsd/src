@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.3,v 1.21 2000/04/12 21:48:03 aaron Exp $
+.\" $OpenBSD: keynote.3,v 1.22 2000/04/15 02:15:27 aaron Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -63,7 +63,7 @@ struct keynote_keylist
 };
 .Ed
 .Ft int
-.Fd keynote_errno;
+.Fd keynote_errno ;
 .Ft int
 .Fn kn_init "void"
 .Ft int
@@ -792,7 +792,7 @@ and sets
 to
 .Er ERROR_NOTFOUND
 if one of the arguments was
-.Dv NULL,
+.Dv NULL ,
 .Er ERROR_MEMORY
 if necessary memory could not be allocated, or
 .Er ERROR_SYNTAX

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: telnetd.8,v 1.11 1999/07/09 13:35:51 aaron Exp $
+.\"	$OpenBSD: telnetd.8,v 1.12 2000/04/15 02:15:30 aaron Exp $
 .\"	$NetBSD: telnetd.8,v 1.8 1996/03/20 04:25:55 tls Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -96,10 +96,10 @@ be used for authentication.
 Note that this option is only useful if
 .Nm
 has been compiled with support for the
-.Dv AUTHENTICATION
+.Cm AUTHENTICATION
 option.
 There are several valid values for
-.Ar authmode:
+.Ar authmode :
 .Bl -tag -width debug
 .It debug
 Turns on authentication debugging code.
@@ -148,7 +148,7 @@ to the connection, allowing the user to see what
 .Nm
 is doing.
 There are several possible values for
-.Ar debugmode:
+.Ar debugmode :
 .Bl -tag -width exercise
 .It Cm options
 Prints information about the negotiation of
@@ -185,7 +185,7 @@ Specifies which entry from
 .Pa /etc/gettytab
 should be used to get banner strings, login program and
 other information.  The default entry is
-.Dv default.
+.Dq default.
 .It Fl h
 Disables the printing of host-specific information before
 login has been completed.
@@ -194,13 +194,11 @@ This option is only applicable to
 .Tn UNICOS
 systems prior to 7.0.
 It specifies the
-.Dv ID
+.Em ID
 from
 .Pa /etc/inittab
-to use when init starts login sessions.  The default
-.Dv ID
-is
-.Dv fe.
+to use when init starts login sessions.  The default ID is
+.Dq fe .
 .It Fl k
 This option is only useful if
 .Nm
@@ -209,7 +207,7 @@ support.  If the
 .Fl k
 option is specified, then if the remote client does not
 support the
-.Dv LINEMODE
+.Cm LINEMODE
 option, then
 .Nm
 will operate in character at a time mode.
@@ -217,28 +215,28 @@ It will still support kludge linemode, but will only
 go into kludge linemode if the remote client requests
 it.
 (This is done by the client sending
-.Dv DONT SUPPRESS-GO-AHEAD
+.Tn DONT SUPPRESS-GO-AHEAD
 and
-.Dv DONT ECHO . )
+.Tn DONT ECHO . )
 The
 .Fl k
 option is most useful when there are remote clients
 that do not support kludge linemode, but pass the heuristic
 (if they respond with
-.Dv WILL TIMING-MARK
+.Tn WILL TIMING-MARK
 in response to a
-.Dv DO TIMING-MARK)
+.Tn DO TIMING-MARK)
 for kludge linemode support.
 .It Fl l
 Specifies line mode.  Tries to force clients to use line-
 at-a-time mode.
 If the
-.Dv LINEMODE
+.Tn LINEMODE
 option is not supported, it will go
 into kludge linemode.
 .It Fl n
 Disable
-.Dv TCP
+.Tn TCP
 keep-alives.  Normally
 .Nm
 enables the
@@ -252,7 +250,7 @@ be reached may be cleaned up.
 This option is only enabled when
 .Nm
 is compiled for
-.Dv UNICOS.
+.Tn UNICOS .
 It specifies an inclusive range of pseudo-terminal devices to
 use.  If the system has sysconf variable
 .Dv _SC_CRAY_NPTY
@@ -275,7 +273,7 @@ from
 .It Fl u Ar len
 This option is used to specify the size of the field
 in the
-.Dv utmp
+.Li utmp
 structure that holds the remote host name.
 If the resolved host name is longer than
 .Ar len ,
@@ -313,10 +311,10 @@ operates by allocating a pseudo-terminal device (see
 .Xr pty 4 )
 for a client, then creating a login process which has
 the slave side of the pseudo-terminal as
-.Dv stdin ,
-.Dv stdout
+.Li stdin ,
+.Li stdout ,
 and
-.Dv stderr .
+.Li stderr .
 .Nm
 manipulates the master side of the pseudo-terminal,
 implementing the
@@ -366,21 +364,21 @@ options:
 .Bl -tag -width "DO AUTHENTICATION"
 .It "WILL ECHO"
 When the
-.Dv LINEMODE
+.Cm LINEMODE
 option is enabled, a
-.Dv WILL ECHO
+.Tn WILL ECHO
 or
-.Dv WONT ECHO
+.Tn WONT ECHO
 will be sent to the client to indicate the
 current state of terminal echoing.
 When terminal echo is not desired, a
-.Dv WILL ECHO
+.Tn WILL ECHO
 is sent to indicate that
 .Tn telnetd
 will take care of echoing any data that needs to be
 echoed to the terminal, and then nothing is echoed.
 When terminal echo is desired, a
-.Dv WONT ECHO
+.Tn WONT ECHO
 is sent to indicate that
 .Tn telnetd
 will not be doing any terminal echoing, so the
@@ -391,7 +389,7 @@ Indicates that the client is willing to send a
 of the Network Virtual Terminal.
 .It "WILL SGA"
 Indicates that it will not be sending
-.Dv IAC GA,
+.Tn IAC GA ,
 go ahead, commands.
 .It "WILL STATUS"
 Indicates a willingness to send the client, upon
@@ -400,15 +398,15 @@ request, of the current status of all
 options.
 .It "WILL TIMING-MARK"
 Whenever a
-.Dv DO TIMING-MARK
+.Tn DO TIMING-MARK
 command is received, it is always responded
 to with a
-.Dv WILL TIMING-MARK
+.Tn WILL TIMING-MARK
 .It "WILL LOGOUT"
 When a
-.Dv DO LOGOUT
+.Tn DO LOGOUT
 is received, a
-.Dv WILL LOGOUT
+.Tn WILL LOGOUT
 is sent in response, and the
 .Tn TELNET
 session is shut down.
@@ -437,11 +435,11 @@ This is not really supported, but is sent to identify a
 .Bx 4.2
 .Xr telnet 1
 client, which will improperly respond with
-.Dv WILL ECHO.
+.Tn WILL ECHO .
 If a
-.Dv WILL ECHO
+.Tn WILL ECHO
 is received, a
-.Dv DONT ECHO
+.Tn DONT ECHO
 will be sent in response.
 .It "DO TERMINAL-TYPE"
 Indicates a desire to be able to request the
@@ -449,7 +447,7 @@ name of the type of terminal that is attached
 to the client side of the connection.
 .It "DO SGA"
 Indicates that it does not need to receive
-.Dv IAC GA,
+.Tn IAC GA ,
 the go ahead command.
 .It "DO NAWS"
 Requests that the client inform the server when
@@ -478,9 +476,9 @@ Only sent if
 .Nm
 is compiled with support for both linemode and
 kludge linemode, and the client responded with
-.Dv WONT LINEMODE.
+.Tn WONT LINEMODE .
 If the client responds with
-.Dv WILL TM,
+.Tn WILL TM ,
 the it is assumed that the client supports
 kludge linemode.
 Note that the
@@ -579,5 +577,5 @@ lower case.
 .Nm
 never sends
 .Tn TELNET
-.Dv IAC GA
+.Tn IAC GA
 (go ahead) commands.

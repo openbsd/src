@@ -1,4 +1,4 @@
-.\"	$OpenBSD: raidctl.8,v 1.13 2000/04/12 21:47:59 aaron Exp $
+.\"	$OpenBSD: raidctl.8,v 1.14 2000/04/15 02:15:16 aaron Exp $
 .\"     $NetBSD: raidctl.8,v 1.11 2000/01/05 03:02:41 oster Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -176,8 +176,8 @@ This
 be done before the RAID device is labeled and before
 filesystems are created on the RAID device, and is normally used after
 a system crash (and before a
-.Xr fsck 8
-) to ensure the integrity of the parity.
+.Xr fsck 8 )
+to ensure the integrity of the parity.
 .It Fl I Ar serial_number Ar dev
 Initialize the component labels on each component of the device.
 .Ar serial_number

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtadvd.conf.5,v 1.6 2000/04/12 21:47:57 aaron Exp $
+.\"	$OpenBSD: rtadvd.conf.5,v 1.7 2000/04/15 02:15:20 aaron Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -36,33 +36,33 @@
 .Nm rtadvd.conf
 .Nd config file for router advertisement daemon
 .Sh DESCRIPTION
-The file describes how the router advertisement packet must be constructed
+This file describes how the router advertisement packets must be constructed
 for each of the interfaces.
 .Pp
-It obeys famous
+It obeys the famous
 .Xr termcap 5
 file format.
 Each line in the file describes a network interface.
 Fields are separated by a colon
-.Po
-.Dq \&:
-.Pc ,
+.Pq Sq \&: ,
 and each field contains one capability description.
-Lines may be concatenated by \e character.
-The comment marker is `#' character.
+Lines may be concatenated by the
+.Sq \e
+character.
+The comment marker is the `#' character.
 .Pp
 .Sh CAPABILITIES
 Capabilities describe the value to be filled into ICMPv6 router
-advertisement message and to control
+advertisement messages and to control
 .Xr rtadvd 8
 behavior.
 Therefore, you are encouraged to read IETF neighbor discovery documents
-if you would like to modify sample configuration file.
+if you would like to modify the sample configuration file.
 .Pp
 Note that almost all items have default values.
 If you omit an item, the default value of the item will be used.
 .Pp
-There are two items to control interval of sending router advertisements.
+There are two items which control the interval of sending router advertisements.
 .Bl -tag -width indent
 .It Cm \&maxinterval
 (num) The maximum time allowed between sending unsolicited
@@ -76,10 +76,10 @@ and no greater than 1800 seconds.
 router advertisements
 .Pq unit: seconds .
 The default value is the one third of value of
-.Ic maxinterval.
+.Cm maxinterval .
 Its value must be no less than 3 seconds and no greater than .75 *
 the value of
-.Ic maxinterval.
+.Cm maxinterval .
 .El
 .Pp
 The following items are for ICMPv6 router advertisement message
@@ -132,7 +132,7 @@ If its value is more than 1, you must specify the index of the prefix
 for each item below.
 Indices vary from 0 to N-1, where N is the
 value of
-.Ic addrs.
+.Cm addrs .
 Each index shall follows the name of each item, e.g.,
 .Dq prefixlen2 .
 .It Cm \&prefixlen
@@ -161,7 +161,7 @@ file format as well as IPv6 numeric address, the field MUST be quoted by
 doublequote character.
 This field cannot be
 omitted if the value of
-.Ic addrs
+.Cm addrs
 is more than 0.
 .It Cm \&vltime
 (num) Valid lifetime field
