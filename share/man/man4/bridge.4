@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bridge.4,v 1.7 1999/03/19 22:47:33 jason Exp $
+.\"	$OpenBSD: bridge.4,v 1.8 1999/03/31 02:00:29 jason Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -60,7 +60,7 @@ devices.
 They are defined in
 .Aq Pa sys/sockio.h .
 .Pp
-.Bl -tag -width SIOCBRDGIDX
+.Bl -tag -width SIOCBRDGGIFFLGS
 .It Dv SIOCBRDGIFS
 .Pq Li "struct ifbifconf"
 Retrieve member interface list from a bridge.  This request takes an
@@ -89,17 +89,17 @@ needs to be in advance.
 The argument structure is defined as follows:
 .Bd -literal -offset indent
 struct ifbreq {
-	char ifbr_name[IFNAMSIZ];    /* bridge name */
-	char ifbr_ifsname[IFNAMSIZ]; /* member name */
-	u_int32_t ifbr_ifsflags;     /* member flags */
+	char ifbr_name[IFNAMSIZ];    /* brdg nam */
+	char ifbr_ifsname[IFNAMSIZ]; /* if name */
+	u_int32_t ifbr_ifsflags;     /* if flags */
 };
 
-#define IFBIF_LEARNING  0x1 /* ifs can learn addrs */
-#define IFBIF_DISCOVER  0x2 /* ifs gets fwd'd pkts */
+#define IFBIF_LEARNING  0x1 /* learns addrs */
+#define IFBIF_DISCOVER  0x2 /* gets fwd'd pkts */
 
 struct ifbifconf {
-	char ifbic_name[IFNAMSIZ]; /* bridge name */
-	u_int32_t       ifbic_len; /* buffer size */
+	char ifbic_name[IFNAMSIZ]; /* brdg name */
+	u_int32_t       ifbic_len; /* buf size */
 	union {
 		caddr_t ifbicu_buf; /* buffer */
 		struct  ifbreq *ifbicu_req;
@@ -156,22 +156,22 @@ needs to be in advance.
 The argument structure is defined as follows:
 .Bd -literal -offset indent
 struct ifbareq {
-	char ifba_name[IFNAMSIZ];    /* bridge name */
+	char ifba_name[IFNAMSIZ];    /* brdg nam */
 	char ifba_ifsname[IFNAMSIZ]; /* dest ifs */
 	u_int8_t ifba_age;           /* addr age */
 	u_int8_t ifba_flags;         /* addr age */
-	struct ether_addr ifba_dst;  /* dest addr */
+	struct ether_addr ifba_dst;  /* dst addr */
 };
 
-#define IFBAF_TYPEMASK 0x03  /* address type mask */
-#define IFBAF_DYNAMIC  0x00  /* dynamically learned */
+#define IFBAF_TYPEMASK 0x03  /* addr type mask */
+#define IFBAF_DYNAMIC  0x00  /* dynamic addr */
 #define IFBAF_STATIC   0x01  /* static address */
 
 struct ifbaconf {
-	char ifbac_name[IFNAMSIZ]; /* bridge name */
-	u_int32_t ifbac_len;       /* buffer size */
+	char ifbac_name[IFNAMSIZ]; /* brdg name */
+	u_int32_t ifbac_len;       /* buf size */
 	union {
-		caddr_t ifbacu_buf;     /* buffer */
+		caddr_t ifbacu_buf;     /* buf */
 		struct ifbareq *ifbacu_req;
 	} ifbac_ifbacu;
 #define	ifbac_buf       ifbac_ifbacu.ifbacu_buf
@@ -227,6 +227,9 @@ struct ifbcachetoreq {
 .It Dv SIOCBRDGGTO
 .Pq Li "struct ifbcachetoreq"
 Retrieve the address cache expiration time (see above).
+.It Dv SIOCBRDGFLUSH
+.Pq Li "struct ifbreq"
+Flush all dynamically learned addresses from the cache.
 .El
 .Sh ERRORS
 If the
@@ -240,6 +243,7 @@ For an add request, this means that the named interface is not configured
 into the system.
 For delete operation, it means that the named interface is not a member
 of the bridge.
+For a address cache deletion, the address was not found in the table.
 .It Bq Eq ENOMEM
 Memory could not be allocated for an interface or cache entry
 to be added to the bridge.
@@ -248,15 +252,19 @@ The named interface is already a member of the bridge.
 .It Bq Eq EBUSY
 The named interface is already a member of another bridge.
 .It Bq Eq EINVAL
-The named interface is not an Ethernet interface.
+The named interface is not an Ethernet interface or an invalid ioctl
+was performed on the bridge.
 .It Bq Eq ENETDOWN
-The named interface is not ready for receiving packets.
+Address cache operation (flush, add, delete) on a bridge that is
+in the down state.
 .It Bq Eq EPERM
 Super-user privilege is required to add and delete interfaces to and from
 bridges and to set the bridge interface flags.
 .It Bq Eq EFAULT
 The buffer used in a SIOCBRDGIFS or SIOCBRDGRTS request points outside
 of the process's allocated address space.
+.It Bq Eq ESRCH
+No such member interface in the bridge.
 .El
 .Sh SEE ALSO
 .Xr errno 2 ,
