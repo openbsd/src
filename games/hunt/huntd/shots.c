@@ -1,18 +1,21 @@
+/*	$OpenBSD: shots.c,v 1.3 1999/01/29 07:30:36 d Exp $	*/
 /*	$NetBSD: shots.c,v 1.3 1997/10/11 08:13:50 lukem Exp $	*/
-/*	$OpenBSD: shots.c,v 1.2 1999/01/21 05:47:42 d Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
  *  San Francisco, California
  */
 
-# include	<err.h>
-# include	<signal.h>
-# include	<stdlib.h>
-# include	"hunt.h"
+#include <err.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <syslog.h>
+#include "hunt.h"
+#include "conf.h"
+#include "server.h"
 
-# define	PLUS_DELTA(x, max)	if (x < max) x++; else x--
-# define	MINUS_DELTA(x, min)	if (x > min) x--; else x++
+#define	PLUS_DELTA(x, max)	if (x < max) x++; else x--
+#define	MINUS_DELTA(x, min)	if (x > min) x--; else x++
 
 static	void	chkshot __P((BULLET *, BULLET *));
 static	void	chkslime __P((BULLET *, BULLET *));
@@ -21,9 +24,7 @@ static	void	find_under __P((BULLET *, BULLET *));
 static	int	iswall __P((int, int));
 static	void	mark_boot __P((BULLET *));
 static	void	mark_player __P((BULLET *));
-#ifdef DRONE
-static	void	move_drone __P((BULLET *));
-#endif
+static	int	move_drone __P((BULLET *));
 static	void	move_flyer __P((PLAYER *));
 static	int	move_normal_shot __P((BULLET *));
 static	void	move_slime __P((BULLET *, int, BULLET *));
@@ -44,114 +45,130 @@ moveshots()
 
 	rollexpl();
 	if (Bullets == NULL)
-		goto ret;
+		goto no_bullets;
 
 	/*
-	 * First we move through the bullet list BULSPD times, looking
+	 * First we move through the bullet list conf_bulspd times, looking
 	 * for things we may have run into.  If we do run into
 	 * something, we set up the explosion and disappear, checking
 	 * for damage to any player who got in the way.
 	 */
 
+	/* Move the list to a working list */
 	blist = Bullets;
 	Bullets = NULL;
+
+	/* Work with bullets on the working list (blist) */
 	for (bp = blist; bp != NULL; bp = next) {
 		next = bp->b_next;
+
 		x = bp->b_x;
 		y = bp->b_y;
-		Maze[y][x] = bp->b_over;
-		for (pp = Player; pp < End_player; pp++)
-			check(pp, y, x);
-# ifdef MONITOR
-		for (pp = Monitor; pp < End_monitor; pp++)
-			check(pp, y, x);
-# endif
 
+		/* Un-draw the bullet on all screens: */
+		Maze[y][x] = bp->b_over;
+		check(ALL_PLAYERS, y, x);
+
+		/* Decide how to move the bullet: */
 		switch (bp->b_type) {
+
+		  /* Normal, atomic bullets: */
 		  case SHOT:
 		  case GRENADE:
 		  case SATCHEL:
 		  case BOMB:
 			if (move_normal_shot(bp)) {
+				/* Still there: put back on the active list */
 				bp->b_next = Bullets;
 				Bullets = bp;
 			}
 			break;
-# ifdef OOZE
+
+		  /* Slime bullets that explode into slime on impact: */
 		  case SLIME:
 			if (bp->b_expl || move_normal_shot(bp)) {
+				/* Still there: put back on the active list */
 				bp->b_next = Bullets;
 				Bullets = bp;
 			}
 			break;
-# endif
-# ifdef DRONE
+
+		  /* Drones that wander about: */
 		  case DSHOT:
 			if (move_drone(bp)) {
+				/* Still there: put back on the active list */
 				bp->b_next = Bullets;
 				Bullets = bp;
 			}
 			break;
-# endif
+
+		  /* Other/unknown: */
 		  default:
+			/* Place it back on the active list: */
 			bp->b_next = Bullets;
 			Bullets = bp;
 			break;
 		}
 	}
 
+	/* Again, hang the Bullets list off `blist' and work with that: */
 	blist = Bullets;
 	Bullets = NULL;
 	for (bp = blist; bp != NULL; bp = next) {
 		next = bp->b_next;
+		/* Is the bullet exploding? */
 		if (!bp->b_expl) {
+			/*
+			 * Its still flying through the air.
+			 * Put it back on the bullet list.
+			 */
 			save_bullet(bp);
-# ifdef MONITOR
+
+			/* All the monitors can see the bullet: */
 			for (pp = Monitor; pp < End_monitor; pp++)
 				check(pp, bp->b_y, bp->b_x);
-# endif
-# ifdef DRONE
+
+			/* All the scanning players can see the drone: */
 			if (bp->b_type == DSHOT)
 				for (pp = Player; pp < End_player; pp++)
 					if (pp->p_scan >= 0)
 						check(pp, bp->b_y, bp->b_x);
-# endif
-			continue;
+		} else {
+			/* It is exploding. Check what we hit: */
+			chkshot(bp, next);
+			/* Release storage for the destroyed bullet: */
+			free(bp);
 		}
-
-		chkshot(bp, next);
-		free((char *) bp);
 	}
 
+	/* Re-draw all the players: (in case a bullet wiped them out) */
 	for (pp = Player; pp < End_player; pp++)
 		Maze[pp->p_y][pp->p_x] = pp->p_face;
 
-ret:
-# ifdef BOOTS
+no_bullets:
+
+	/* Move flying boots through the air: */
 	for (pp = Boot; pp < &Boot[NBOOTS]; pp++)
 		if (pp->p_flying >= 0)
 			move_flyer(pp);
-# endif
+
+	/* Move flying players through the air: */
 	for (pp = Player; pp < End_player; pp++) {
-# ifdef FLY
 		if (pp->p_flying >= 0)
 			move_flyer(pp);
-# endif
-		sendcom(pp, REFRESH);	/* Flush out the explosions */
+		/* Flush out the explosions: */
+		sendcom(pp, REFRESH);
 		look(pp);
-		sendcom(pp, REFRESH);
 	}
-# ifdef MONITOR
-	for (pp = Monitor; pp < End_monitor; pp++)
-		sendcom(pp, REFRESH);
-# endif
 
-	return;
+	/* Flush out and synchronise all the displays: */
+	sendcom(ALL_PLAYERS, REFRESH);
 }
 
 /*
  * move_normal_shot:
- *	Move a normal shot along its trajectory
+ *	Move a normal shot along its trajectory.
+ *	Returns false if the bullet no longer needs tracking.
  */
 static int
 move_normal_shot(bp)
@@ -160,13 +177,21 @@ move_normal_shot(bp)
 	int	i, x, y;
 	PLAYER	*pp;
 
-	for (i = 0; i < BULSPD; i++) {
+	/*
+	 * Walk an unexploded bullet along conf_bulspd times, moving it
+	 * one unit along each step. We flag it as exploding if it
+	 * meets something.
+	 */
+
+	for (i = 0; i < conf_bulspd; i++) {
+
+		/* Stop if the bullet has already exploded: */
 		if (bp->b_expl)
 			break;
 
+		/* Adjust the bullet's co-ordinates: */
 		x = bp->b_x;
 		y = bp->b_y;
-
 		switch (bp->b_face) {
 		  case LEFTS:
 			x--;
@@ -182,21 +207,25 @@ move_normal_shot(bp)
 			break;
 		}
 
+
+		/* Look at what the bullet is colliding with : */
 		switch (Maze[y][x]) {
+		  /* Gun shots have a chance of collision: */
 		  case SHOT:
-			if (rand_num(100) < 5) {
+			if (rand_num(100) < conf_pshot_coll) {
 				zapshot(Bullets, bp);
 				zapshot(bp->b_next, bp);
 			}
 			break;
+		  /* Grenades only have a chance of collision: */
 		  case GRENADE:
-			if (rand_num(100) < 10) {
+			if (rand_num(100) < conf_pgren_coll) {
 				zapshot(Bullets, bp);
 				zapshot(bp->b_next, bp);
 			}
 			break;
-# ifdef	REFLECT
-		  case WALL4:	/* reflecting walls */
+		  /* Reflecting walls richochet the bullet: */
+		  case WALL4:
 			switch (bp->b_face) {
 			  case LEFTS:
 				bp->b_face = BELOW;
@@ -212,10 +241,8 @@ move_normal_shot(bp)
 				break;
 			}
 			Maze[y][x] = WALL5;
-# ifdef MONITOR
 			for (pp = Monitor; pp < End_monitor; pp++)
 				check(pp, y, x);
-# endif
 			break;
 		  case WALL5:
 			switch (bp->b_face) {
@@ -233,13 +260,10 @@ move_normal_shot(bp)
 				break;
 			}
 			Maze[y][x] = WALL4;
-# ifdef MONITOR
 			for (pp = Monitor; pp < End_monitor; pp++)
 				check(pp, y, x);
-# endif
 			break;
-# endif
-# ifdef RANDOM
+		  /* Dispersion doors randomly disperse bullets: */
 		  case DOOR:
 			switch (rand_num(4)) {
 			  case 0:
@@ -256,72 +280,103 @@ move_normal_shot(bp)
 				break;
 			}
 			break;
-# endif
-# ifdef FLY
+		  /* Bullets zing past fliers: */
 		  case FLYER:
 			pp = play_at(y, x);
 			message(pp, "Zing!");
 			break;
-# endif
+		  /* Bullets encountering a player: */
 		  case LEFTS:
 		  case RIGHT:
 		  case BELOW:
 		  case ABOVE:
 			/*
-			 * give the person a chance to catch a
-			 * grenade if s/he is facing it
+			 * Give the person a chance to catch a
+			 * grenade if s/he is facing it:
 			 */
 			pp = play_at(y, x);
 			pp->p_ident->i_shot += bp->b_charge;
 			if (opposite(bp->b_face, Maze[y][x])) {
-			    if (rand_num(100) < 10) {
+			    /* Give them a 10% chance: */
+			    if (rand_num(100) < conf_pgren_catch) {
+				/* They caught it! */
 				if (bp->b_owner != NULL)
 					message(bp->b_owner,
 					    "Your charge was absorbed!");
+
+				/*
+				 * The target player stole from the bullet's
+				 * owner. Charge stolen statistics:
+				 */
 				if (bp->b_score != NULL)
 					bp->b_score->i_robbed += bp->b_charge;
+
+				/* They acquire more ammo: */
 				pp->p_ammo += bp->b_charge;
-				if (pp->p_damage + bp->b_size * MINDAM
+
+				/* Check if it would have destroyed them: */
+				if (pp->p_damage + bp->b_size * conf_mindam
 				    > pp->p_damcap)
+					/* Lucky escape statistics: */
 					pp->p_ident->i_saved++;
+
+				/* Tell them: */
 				message(pp, "Absorbed charge (good shield!)");
+
+				/* Absorbtion statistics: */
 				pp->p_ident->i_absorbed += bp->b_charge;
+
+				/* Deallocate storage: */
 				free((char *) bp);
-				(void) sprintf(Buf, "%3d", pp->p_ammo);
-				cgoto(pp, STAT_AMMO_ROW, STAT_VALUE_COL);
-				outstr(pp, Buf, 3);
+
+				/* Update ammo display: */
+				ammo_update(pp);
+
+				/* No need for caller to keep tracking it: */
 				return FALSE;
 			    }
+
+			    /* Bullets faced head-on (statistics): */
 			    pp->p_ident->i_faced += bp->b_charge;
 			}
+
 			/*
 			 * Small chance that the bullet just misses the
 			 * person.  If so, the bullet just goes on its
-			 * merry way without exploding.
+			 * merry way without exploding. (5% chance)
 			 */
-			if (rand_num(100) < 5) {
+			if (rand_num(100) < conf_pmiss) {
+				/* Ducked statistics: */
 				pp->p_ident->i_ducked += bp->b_charge;
-				if (pp->p_damage + bp->b_size * MINDAM
+
+				/* Check if it would have killed them: */
+				if (pp->p_damage + bp->b_size * conf_mindam
 				    > pp->p_damcap)
+					/* Lucky escape statistics: */
 					pp->p_ident->i_saved++;
+
+				/* Shooter missed statistics: */
 				if (bp->b_score != NULL)
 					bp->b_score->i_missed += bp->b_charge;
+
+				/* Tell target that they were missed: */
 				message(pp, "Zing!");
-				if (bp->b_owner == NULL)
-					break;
-				message(bp->b_owner,
+
+				/* Tell the bullet owner they missed: */
+				if (bp->b_owner != NULL)
+				    message(bp->b_owner,
 					((bp->b_score->i_missed & 0x7) == 0x7) ?
 					"My!  What a bad shot you are!" :
 					"Missed him");
+
+				/* Don't fall through */
 				break;
+			} else {
+				/* The player is to be blown up: */
+				bp->b_expl = TRUE;
 			}
-			/*
-			 * The shot hit that sucker!  Blow it up.
-			 */
-			/* FALLTHROUGH */
-# ifndef RANDOM
-		  case DOOR:
-# endif
+			break;
+		  /* Bullet hits a wall, and always explodes: */
 		  case WALL1:
 		  case WALL2:
 		  case WALL3:
@@ -329,28 +384,29 @@ move_normal_shot(bp)
 			break;
 		}
 
+		/* Update the bullet's new position: */
 		bp->b_x = x;
 		bp->b_y = y;
 	}
+
+	/* Caller should keep tracking the bullet: */
 	return TRUE;
 }
 
-# ifdef	DRONE
 /*
  * move_drone:
  *	Move the drone to the next square
+ *	Returns FALSE if the drone need no longer be tracked.
  */
-static void
+static int
 move_drone(bp)
 	BULLET	*bp;
 {
 	int	mask, count;
-	int	n, dir;
+	int	n, dir = -1;
 	PLAYER	*pp;
 
-	/*
-	 * See if we can give someone a blast
-	 */
+	/* See if we can give someone a blast: */
 	if (isplayer(Maze[bp->b_y][bp->b_x - 1])) {
 		dir = WEST;
 		goto drone_move;
@@ -368,9 +424,7 @@ move_drone(bp)
 		goto drone_move;
 	}
 
-	/*
-	 * Find out what directions are clear
-	 */
+	/* Find out what directions are clear and move that way: */
 	mask = count = 0;
 	if (!iswall(bp->b_y, bp->b_x - 1))
 		mask |= WEST, count++;
@@ -381,23 +435,17 @@ move_drone(bp)
 	if (!iswall(bp->b_y, bp->b_x + 1))
 		mask |= EAST, count++;
 
-	/*
-	 * All blocked up, just you wait
-	 */
+	/* All blocked up, just wait: */
 	if (count == 0)
 		return TRUE;
 
-	/*
-	 * Only one way to go.
-	 */
+	/* Only one way to go: */
 	if (count == 1) {
 		dir = mask;
 		goto drone_move;
 	}
 
-	/*
-	 * Get rid of the direction that we came from
-	 */
+	/* Avoid backtracking, and remove the direction we came from: */
 	switch (bp->b_face) {
 	  case LEFTS:
 		if (mask & EAST)
@@ -417,9 +465,7 @@ move_drone(bp)
 		break;
 	}
 
-	/*
-	 * Pick one of the remaining directions
-	 */
+	/* Pick one of the remaining directions: */
 	n = rand_num(count);
 	if (n >= 0 && mask & NORTH)
 		dir = NORTH, n--;
@@ -430,12 +476,11 @@ move_drone(bp)
 	if (n >= 0 && mask & WEST)
 		dir = WEST, n--;
 
-	/*
-	 * Now that we know the direction of movement,
-	 * just update the position of the drone
-	 */
 drone_move:
+	/* Move the drone: */
 	switch (dir) {
+	  case -1:
+		/* no move */
 	  case WEST:
 		bp->b_x--;
 		bp->b_face = LEFTS;
@@ -453,81 +498,91 @@ drone_move:
 		bp->b_face = BELOW;
 		break;
 	}
+
+	/* Look at what the drone moved onto: */
 	switch (Maze[bp->b_y][bp->b_x]) {
 	  case LEFTS:
 	  case RIGHT:
 	  case BELOW:
 	  case ABOVE:
 		/*
-		 * give the person a chance to catch a
-		 * drone if s/he is facing it
+		 * Players have a 1% chance of absorbing a drone,
+		 * if they are facing it.
 		 */
-		if (rand_num(100) < 1 &&
-		opposite(bp->b_face, Maze[bp->b_y][bp->b_x])) {
+		if (rand_num(100) < conf_pdroneabsorb && opposite(bp->b_face, 
+		    Maze[bp->b_y][bp->b_x])) {
+
+			/* Feel the power: */
 			pp = play_at(bp->b_y, bp->b_x);
 			pp->p_ammo += bp->b_charge;
 			message(pp, "**** Absorbed drone ****");
+
+			/* Release drone storage: */
 			free((char *) bp);
-			(void) sprintf(Buf, "%3d", pp->p_ammo);
-			cgoto(pp, STAT_AMMO_ROW, STAT_VALUE_COL);
-			outstr(pp, Buf, 3);
+
+			/* Update ammo: */
+			ammo_update(pp);
+
+			/* No need for caller to keep tracking drone: */
 			return FALSE;
 		}
+		/* Detonate the drone: */
 		bp->b_expl = TRUE;
 		break;
 	}
+
+	/* Keep tracking the drone. */
 	return TRUE;
 }
-# endif
 
 /*
  * save_bullet:
- *	Put this bullet back onto the bullet list
+ *	Put a bullet back onto the bullet list
  */
 static void
 save_bullet(bp)
 	BULLET	*bp;
 {
+
+	/* Save what the bullet will be flying over: */
 	bp->b_over = Maze[bp->b_y][bp->b_x];
+
 	switch (bp->b_over) {
+	  /* Bullets that can pass through each other: */
 	  case SHOT:
 	  case GRENADE:
 	  case SATCHEL:
 	  case BOMB:
-# ifdef OOZE
 	  case SLIME:
-# ifdef VOLCANO
 	  case LAVA:
-# endif
-# endif
-# ifdef DRONE
 	  case DSHOT:
-# endif
 		find_under(Bullets, bp);
 		break;
 	}
 
 	switch (bp->b_over) {
+	  /* A bullet hits a player: */
 	  case LEFTS:
 	  case RIGHT:
 	  case ABOVE:
 	  case BELOW:
-# ifdef FLY
 	  case FLYER:
-# endif
 		mark_player(bp);
 		break;
-# ifdef BOOTS
+
+	  /* A bullet passes a boot: */
 	  case BOOT:
 	  case BOOT_PAIR:
 		mark_boot(bp);
-# endif
+		/* FALLTHROUGH */
 		
+	  /* The bullet flies over everything else: */
 	  default:
 		Maze[bp->b_y][bp->b_x] = bp->b_type;
 		break;
 	}
 
+	/* Insert the bullet into the Bullets list: */
 	bp->b_next = Bullets;
 	Bullets = bp;
 }
@@ -546,9 +601,15 @@ move_flyer(pp)
 		fixshots(pp->p_y, pp->p_x, pp->p_over);
 		pp->p_undershot = FALSE;
 	}
+
+	/* Restore what the flier was flying over */
 	Maze[pp->p_y][pp->p_x] = pp->p_over;
+
+	/* Fly: */
 	x = pp->p_x + pp->p_flyx;
 	y = pp->p_y + pp->p_flyy;
+
+	/* Bouncing off the edges of the maze: */
 	if (x < 1) {
 		x = 1 - x;
 		pp->p_flyx = -pp->p_flyx;
@@ -565,9 +626,16 @@ move_flyer(pp)
 		y = (HEIGHT - 2) - (y - (HEIGHT - 2));
 		pp->p_flyy = -pp->p_flyy;
 	}
+
+	/* Make sure we don't land on something we can't: */
 again:
 	switch (Maze[y][x]) {
 	  default:
+		/*
+		 * Flier is over something other than space, a wall 
+		 * or a door. Randomly move (drift) the flier a little bit
+		 * and then try again:
+		 */
 		switch (rand_num(4)) {
 		  case 0:
 			PLUS_DELTA(x, WIDTH - 2);
@@ -583,42 +651,45 @@ again:
 			break;
 		}
 		goto again;
+	  /* Give a little boost when about to land on a wall or door: */
 	  case WALL1:
 	  case WALL2:
 	  case WALL3:
-# ifdef	REFLECT
 	  case WALL4:
 	  case WALL5:
-# endif
-# ifdef	RANDOM
 	  case DOOR:
-# endif
 		if (pp->p_flying == 0)
 			pp->p_flying++;
 		break;
+	  /* Spaces are okay: */
 	  case SPACE:
 		break;
 	}
+
+	/* Update flier's coordinates: */
 	pp->p_y = y;
 	pp->p_x = x;
+
+	/* Consume 'flying' time: */
 	if (pp->p_flying-- == 0) {
-# ifdef BOOTS
+		/* Land: */
 		if (pp->p_face != BOOT && pp->p_face != BOOT_PAIR) {
-# endif
+			/* Land a player - they stustain a fall: */
 			checkdam(pp, (PLAYER *) NULL, (IDENT *) NULL,
-				rand_num(pp->p_damage / 5), FALL);
+				rand_num(pp->p_damage / conf_fall_frac), FALL);
 			pp->p_face = rand_dir();
 			showstat(pp);
-# ifdef BOOTS
-		}
-		else {
+		} else {
+			/* Land boots: */
 			if (Maze[y][x] == BOOT)
 				pp->p_face = BOOT_PAIR;
 			Maze[y][x] = SPACE;
 		}
-# endif
 	}
+
+	/* Save under the flier: */
 	pp->p_over = Maze[y][x];
+	/* Draw in the flier: */
 	Maze[y][x] = pp->p_face;
 	showexpl(y, x, pp->p_face);
 }
@@ -648,27 +719,24 @@ chkshot(bp, next)
 	  case BOMB:
 		delta = bp->b_size - 1;
 		break;
-# ifdef	OOZE
 	  case SLIME:
-# ifdef VOLCANO
 	  case LAVA:
-# endif
 		chkslime(bp, next);
 		return;
-# endif
-# ifdef DRONE
 	  case DSHOT:
 		bp->b_type = SLIME;
 		chkslime(bp, next);
 		return;
-# endif
 	}
+
+	/* Draw the explosion square: */
 	for (y = bp->b_y - delta; y <= bp->b_y + delta; y++) {
 		if (y < 0 || y >= HEIGHT)
 			continue;
 		dy = y - bp->b_y;
 		absdy = (dy < 0) ? -dy : dy;
 		for (x = bp->b_x - delta; x <= bp->b_x + delta; x++) {
+			/* Draw a part of the explosion cloud: */
 			if (x < 0 || x >= WIDTH)
 				continue;
 			dx = x - bp->b_x;
@@ -683,26 +751,29 @@ chkshot(bp, next)
 			else
 				expl = '*';
 			showexpl(y, x, expl);
+
+			/* Check what poor bastard was in the explosion: */
 			switch (Maze[y][x]) {
 			  case LEFTS:
 			  case RIGHT:
 			  case ABOVE:
 			  case BELOW:
-# ifdef FLY
 			  case FLYER:
-# endif
 				if (dx < 0)
 					dx = -dx;
 				if (absdy > dx)
 					damage = bp->b_size - absdy;
 				else
 					damage = bp->b_size - dx;
+
+				/* Everybody hurts, sometimes. */
 				pp = play_at(y, x);
 				checkdam(pp, bp->b_owner, bp->b_score,
-					damage * MINDAM, bp->b_type);
+					damage * conf_mindam, bp->b_type);
 				break;
 			  case GMINE:
 			  case MINE:
+				/* Mines detonate in a chain reaction: */
 				add_shot((Maze[y][x] == GMINE) ?
 					GRENADE : SHOT,
 					y, x, LEFTS,
@@ -716,7 +787,6 @@ chkshot(bp, next)
 	}
 }
 
-# ifdef	OOZE
 /*
  * chkslime:
  *	handle slime shot exploding
@@ -729,16 +799,13 @@ chkslime(bp, next)
 	BULLET	*nbp;
 
 	switch (Maze[bp->b_y][bp->b_x]) {
+	  /* Slime explodes on walls and doors: */
 	  case WALL1:
 	  case WALL2:
 	  case WALL3:
-# ifdef	REFLECT
 	  case WALL4:
 	  case WALL5:
-# endif
-# ifdef	RANDOM
 	  case DOOR:
-# endif
 		switch (bp->b_face) {
 		  case LEFTS:
 			bp->b_x++;
@@ -755,13 +822,18 @@ chkslime(bp, next)
 		}
 		break;
 	}
+
+	/* Duplicate the unit of slime: */
 	nbp = (BULLET *) malloc(sizeof (BULLET));
+	if (nbp == NULL) {
+		syslog(LOG_ERR, "malloc: %m");
+		return;
+	}
 	*nbp = *bp;
-# ifdef VOLCANO
-	move_slime(nbp, nbp->b_type == SLIME ? SLIMESPEED : LAVASPEED, next);
-# else
-	move_slime(nbp, SLIMESPEED, next);
-# endif
+
+	/* Move it around: */
+	move_slime(nbp, nbp->b_type == SLIME ? conf_slimespeed : 
+	    conf_lavaspeed, next);
 }
 
 /*
@@ -769,7 +841,7 @@ chkslime(bp, next)
  *	move the given slime shot speed times and add it back if
  *	it hasn't fizzled yet
  */
-void
+static void
 move_slime(bp, speed, next)
 	BULLET	*bp;
 	int	speed;
@@ -787,40 +859,40 @@ move_slime(bp, speed, next)
 		return;
 	}
 
-# ifdef VOLCANO
+	/* Draw it: */
 	showexpl(bp->b_y, bp->b_x, bp->b_type == LAVA ? LAVA : '*');
-# else
-	showexpl(bp->b_y, bp->b_x, '*');
-# endif
+
 	switch (Maze[bp->b_y][bp->b_x]) {
+	  /* Someone got hit by slime or lava: */
 	  case LEFTS:
 	  case RIGHT:
 	  case ABOVE:
 	  case BELOW:
-# ifdef FLY
 	  case FLYER:
-# endif
 		pp = play_at(bp->b_y, bp->b_x);
 		message(pp, "You've been slimed.");
-		checkdam(pp, bp->b_owner, bp->b_score, MINDAM, bp->b_type);
+		checkdam(pp, bp->b_owner, bp->b_score, conf_mindam, bp->b_type);
 		break;
+	  /* Bullets detonate in slime and lava: */
 	  case SHOT:
 	  case GRENADE:
 	  case SATCHEL:
 	  case BOMB:
-# ifdef DRONE
 	  case DSHOT:
-# endif
 		explshot(next, bp->b_y, bp->b_x);
 		explshot(Bullets, bp->b_y, bp->b_x);
 		break;
 	}
 
+
+	/* Drain the slime/lava of some energy: */
 	if (--bp->b_charge <= 0) {
-		free((char *) bp);
+		/* It fizzled: */
+		free(bp);
 		return;
 	}
 
+	/* Figure out which way the slime should flow: */
 	dirmask = 0;
 	count = 0;
 	switch (bp->b_face) {
@@ -892,6 +964,7 @@ move_slime(bp, speed, next)
 		}
 	}
 
+	/* Spawn little slimes off in every possible direction: */
 	i = bp->b_charge / count;
 	j = bp->b_charge % count;
 	if (dirmask & WEST) {
@@ -939,24 +1012,15 @@ iswall(y, x)
 	  case WALL1:
 	  case WALL2:
 	  case WALL3:
-# ifdef	REFLECT
 	  case WALL4:
 	  case WALL5:
-# endif
-# ifdef	RANDOM
 	  case DOOR:
-# endif
-# ifdef OOZE
 	  case SLIME:
-# ifdef VOLCANO
 	  case LAVA:
-# endif
-# endif
 		return TRUE;
 	}
 	return FALSE;
 }
-# endif
 
 /*
  * zapshot:
@@ -967,27 +1031,24 @@ zapshot(blist, obp)
 	BULLET	*blist, *obp;
 {
 	BULLET	*bp;
-	FLAG	explode;
 
-	explode = FALSE;
 	for (bp = blist; bp != NULL; bp = bp->b_next) {
-		if (bp->b_x != obp->b_x || bp->b_y != obp->b_y)
-			continue;
-		if (bp->b_face == obp->b_face)
-			continue;
-		explode = TRUE;
-		break;
+		/* Find co-located bullets not facing the same way: */
+		if (bp->b_face != obp->b_face
+		    && bp->b_x == obp->b_x && bp->b_y == obp->b_y)
+		{
+			/* Bullet collision: */
+			explshot(blist, obp->b_y, obp->b_x);
+			return;
+		}
 	}
-	if (!explode)
-		return;
-	explshot(blist, obp->b_y, obp->b_x);
 }
 
 /*
  * explshot -
  *	Make all shots at this location blow up
  */
-void
+static void
 explshot(blist, y, x)
 	BULLET	*blist;
 	int	y, x;
@@ -998,7 +1059,7 @@ explshot(blist, y, x)
 		if (bp->b_x == x && bp->b_y == y) {
 			bp->b_expl = TRUE;
 			if (bp->b_owner != NULL)
-				message(bp->b_owner, "Shot intercepted");
+				message(bp->b_owner, "Shot intercepted.");
 		}
 }
 
@@ -1015,8 +1076,10 @@ play_at(y, x)
 	for (pp = Player; pp < End_player; pp++)
 		if (pp->p_x == x && pp->p_y == y)
 			return pp;
-	errx(1, "driver: couldn't find player at (%d,%d)", x, y);
-	/* NOTREACHED */
+
+	/* Internal fault: */
+	syslog(LOG_ERR, "play_at: not a player");
+	abort();
 }
 
 /*
@@ -1112,7 +1175,6 @@ mark_player(bp)
 		}
 }
 
-# ifdef BOOTS
 /*
  * mark_boot:
  *	mark a boot as under a shot
@@ -1129,4 +1191,3 @@ mark_boot(bp)
 			break;
 		}
 }
-# endif

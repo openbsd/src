@@ -1,6 +1,5 @@
+/*	$OpenBSD: otto.c,v 1.3 1999/01/29 07:30:33 d Exp $	*/
 /*	$NetBSD: otto.c,v 1.2 1997/10/10 16:32:39 lukem Exp $	*/
-/*	$OpenBSD: otto.c,v 1.2 1999/01/21 05:47:39 d Exp $	*/
-# ifdef OTTO
 /*
  *	otto	- a hunt otto-matic player
  *
@@ -11,13 +10,18 @@
  *	subroutine library.
  */
 
-# include	<sys/time.h>
-# include	<curses.h>
-# include	<ctype.h>
-# include	<signal.h>
-# include	<stdlib.h>
-# include	<unistd.h>
-# include	"hunt.h"
+#include <sys/time.h>
+#include <ctype.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include "hunt.h"
+#include "client.h"
+#include "display.h"
+
+int	Otto_mode;
+int	Otto_count;
 
 # undef		WALL
 # undef		NORTH
@@ -29,26 +33,7 @@
 # undef		BACK
 # undef		RIGHT
 
-# ifdef HPUX
-# define	random		rand
-# endif
-
-# ifndef USE_CURSES
-extern	char	screen[SCREEN_HEIGHT][SCREEN_WIDTH2];
-# define	SCREEN(y, x)	screen[y][x]
-# else
-# if defined(BSD_RELEASE) && BSD_RELEASE >= 44
-# define	SCREEN(y, x)	stdscr->lines[y]->line[x].ch
-# else
-# define	SCREEN(y, x)	stdscr->_y[y][x]
-# endif
-# endif
-
-# ifndef DEBUG
-# define	STATIC		static
-# else
-# define	STATIC
-# endif
+# define	SCREEN(y, x)	display_atyx(y, x)
 
 # define	OPPONENT	"{}i!"
 # define	PROPONENT	"^v<>"
@@ -58,6 +43,7 @@ extern	char	screen[SCREEN_HEIGHT][SCREEN_WIDTH2];
 
 /* number of "directions" */
 # define	NUMDIRECTIONS	4
+# define	direction(abs,rel)	(((abs) + (rel)) % NUMDIRECTIONS)
 
 /* absolute directions (facings) - counterclockwise */
 # define	NORTH		0
@@ -76,12 +62,8 @@ extern	char	screen[SCREEN_HEIGHT][SCREEN_WIDTH2];
 # define	RELCHARS	"FLBR"
 # define	DIRKEYS		"khjl"
 
-STATIC	char	command[BUFSIZ];
-STATIC	int	comlen;
-
-# ifdef	DEBUG
-STATIC FILE	*debug = NULL;
-# endif
+static	char	command[1024];	/* XXX */
+static	int	comlen;
 
 # define	DEADEND		0x1
 # define	ON_LEFT		0x2
@@ -96,30 +78,30 @@ struct	item	{
 	int	flags;
 };
 
-STATIC	struct	item	flbr[NUMDIRECTIONS];
+static	struct	item	flbr[NUMDIRECTIONS];
 
 # define	fitem	flbr[FRONT]
 # define	litem	flbr[LEFT]
 # define	bitem	flbr[BACK]
 # define	ritem	flbr[RIGHT]
 
-STATIC	int		facing;
-STATIC	int		row, col;
-STATIC	int		num_turns;		/* for wandering */
-STATIC	char		been_there[HEIGHT][WIDTH2];
-STATIC	struct itimerval	pause_time	= { { 0, 0 }, { 0, 55000 }};
+static	int		facing;
+static	int		row, col;
+static	int		num_turns;		/* for wandering */
+static	char		been_there[HEIGHT][WIDTH2];
+static	struct itimerval	pause_time	= { { 0, 0 }, { 0, 55000 }};
 
-STATIC	void		attack __P((int, struct item *));
-STATIC	void		duck __P((int));
-STATIC	void		face_and_move_direction __P((int, int));
-STATIC	int		go_for_ammo __P((char));
-STATIC	void		ottolook __P((int, struct item *));
-STATIC	void		look_around __P((void));
-STATIC	SIGNAL_TYPE	nothing __P((int));
-STATIC	int		stop_look __P((struct item *, char, int, int));
-STATIC	void		wander __P((void));
+static	void		attack __P((int, struct item *));
+static	void		duck __P((int));
+static	void		face_and_move_direction __P((int, int));
+static	int		go_for_ammo __P((char));
+static	void		ottolook __P((int, struct item *));
+static	void		look_around __P((void));
+static	void		nothing __P((int));
+static	int		stop_look __P((struct item *, char, int, int));
+static	void		wander __P((void));
 
-STATIC SIGNAL_TYPE
+static void
 nothing(dummy)
 	int dummy;
 {
@@ -131,16 +113,8 @@ otto(y, x, face)
 	char	face;
 {
 	int		i;
-	extern	int	Otto_count;
 	int		old_mask;
 
-# ifdef	DEBUG
-	if (debug == NULL) {
-		debug = fopen("bug", "w");
-		setbuf(debug, NULL);
-	}
-	fprintf(debug, "\n%c(%d,%d)", face, y, x);
-# endif
 	(void) signal(SIGALRM, nothing);
 	old_mask = sigblock(sigmask(SIGALRM));
 	setitimer(ITIMER_REAL, &pause_time, NULL);
@@ -174,12 +148,10 @@ otto(y, x, face)
 	if (strchr(SHOTS, bitem.what) != NULL && !(bitem.what & ON_SIDE)) {
 		duck(BACK);
 		memset(been_there, 0, sizeof been_there);
-# ifdef BOOTS
 	} else if (go_for_ammo(BOOT_PAIR)) {
 		memset(been_there, 0, sizeof been_there);
 	} else if (go_for_ammo(BOOT)) {
 		memset(been_there, 0, sizeof been_there);
-# endif
 	} else if (go_for_ammo(GMINE))
 		memset(been_there, 0, sizeof been_there);
 	else if (go_for_ammo(MINE))
@@ -190,14 +162,9 @@ otto(y, x, face)
 done:
 	(void) write(Socket, command, comlen);
 	Otto_count += comlen;
-# ifdef	DEBUG
-	(void) fwrite(command, 1, comlen, debug);
-# endif
 }
 
-# define	direction(abs,rel)	(((abs) + (rel)) % NUMDIRECTIONS)
-
-STATIC int
+static int
 stop_look(itemp, c, dist, side)
 	struct	item	*itemp;
 	char	c;
@@ -213,10 +180,8 @@ stop_look(itemp, c, dist, side)
 
 	case MINE:
 	case GMINE:
-# ifdef BOOTS
 	case BOOT:
 	case BOOT_PAIR:
-# endif
 		if (itemp->distance == -1) {
 			itemp->distance = dist;
 			itemp->what = c;
@@ -231,9 +196,7 @@ stop_look(itemp, c, dist, side)
 	case GRENADE:
 	case SATCHEL:
 	case BOMB:
-# ifdef OOZE
 	case SLIME:
-# endif
 		if (itemp->distance == -1 || (!side
 		    && (itemp->flags & ON_SIDE
 		    || itemp->what == GMINE || itemp->what == MINE))) {
@@ -272,7 +235,7 @@ stop_look(itemp, c, dist, side)
 	}
 }
 
-STATIC void
+static void
 ottolook(rel_dir, itemp)
 	int		rel_dir;
 	struct	item	*itemp;
@@ -372,17 +335,13 @@ ottolook(rel_dir, itemp)
 	}
 }
 
-STATIC void
+static void
 look_around()
 {
 	int	i;
 
 	for (i = 0; i < NUMDIRECTIONS; i++) {
 		ottolook(i, &flbr[i]);
-# ifdef	DEBUG
-		fprintf(debug, " ottolook(%c)=%c(%d)(0x%x)",
-			RELCHARS[i], flbr[i].what, flbr[i].distance, flbr[i].flags);
-# endif
 	}
 }
 
@@ -390,7 +349,7 @@ look_around()
  *	as a side effect modifies facing and location (row, col)
  */
 
-STATIC void
+static void
 face_and_move_direction(rel_dir, distance)
 	int	rel_dir, distance;
 {
@@ -427,7 +386,7 @@ face_and_move_direction(rel_dir, distance)
 	}
 }
 
-STATIC void
+static void
 attack(rel_dir, itemp)
 	int		rel_dir;
 	struct	item	*itemp;
@@ -455,7 +414,7 @@ attack(rel_dir, itemp)
 	}
 }
 
-STATIC void
+static void
 duck(rel_dir)
 	int	rel_dir;
 {
@@ -505,7 +464,7 @@ duck(rel_dir)
  *	go for the closest mine if possible
  */
 
-STATIC int
+static int
 go_for_ammo(mine)
 	char	mine;
 {
@@ -532,7 +491,7 @@ go_for_ammo(mine)
 	return TRUE;
 }
 
-STATIC void
+static void
 wander()
 {
 	int	i, j, rel_dir, dir_mask, dir_count;
@@ -557,12 +516,8 @@ wander()
 				((flbr[FRONT].flags & BEEN) ? 7 : HEIGHT)))
 			continue;
 		dir_mask |= 1 << j;
-# ifdef notdef
-		dir_count++;
-# else
 		dir_count = 1;
 		break;
-# endif
 	}
 	if (dir_count == 0) {
 		duck(random() % NUMDIRECTIONS);
@@ -585,10 +540,6 @@ wander()
 	else
 		num_turns = 0;
 
-# ifdef DEBUG
-	fprintf(debug, " w(%c)", RELCHARS[rel_dir]);
-# endif
 	face_and_move_direction(rel_dir, 1);
 }
 
-# endif /* OTTO */

@@ -1,18 +1,16 @@
+/*	$OpenBSD: terminal.c,v 1.3 1999/01/29 07:30:37 d Exp $	*/
 /*	$NetBSD: terminal.c,v 1.2 1997/10/10 16:34:05 lukem Exp $	*/
-/*	$OpenBSD: terminal.c,v 1.2 1999/01/21 05:47:42 d Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
  *  San Francisco, California
  */
 
-#if __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-# include	"hunt.h"
-# define	TERM_WIDTH	80	/* Assume terminals are 80-char wide */
+#include "hunt.h"
+#include "server.h"
+
+#define	TERM_WIDTH	80	/* Assume terminals are 80-char wide */
 
 /*
  * cgoto:
@@ -24,8 +22,18 @@ cgoto(pp, y, x)
 	PLAYER	*pp;
 	int	y, x;
 {
+
+	if (pp == ALL_PLAYERS) {
+		for (pp = Player; pp < End_player; pp++)
+			cgoto(pp, y, x);
+		for (pp = Monitor; pp < End_monitor; pp++)
+			cgoto(pp, y, x);
+		return;
+	}
+
 	if (x == pp->p_curx && y == pp->p_cury)
 		return;
+
 	sendcom(pp, MOVE, y, x);
 	pp->p_cury = y;
 	pp->p_curx = x;
@@ -40,6 +48,15 @@ outch(pp, ch)
 	PLAYER	*pp;
 	char	ch;
 {
+
+	if (pp == ALL_PLAYERS) {
+		for (pp = Player; pp < End_player; pp++)
+			outch(pp, ch);
+		for (pp = Monitor; pp < End_monitor; pp++)
+			outch(pp, ch);
+		return;
+	}
+
 	if (++pp->p_curx >= TERM_WIDTH) {
 		pp->p_curx = 0;
 		pp->p_cury++;
@@ -57,11 +74,43 @@ outstr(pp, str, len)
 	char	*str;
 	int	len;
 {
+	if (pp == ALL_PLAYERS) {
+		for (pp = Player; pp < End_player; pp++)
+			outstr(pp, str, len);
+		for (pp = Monitor; pp < End_monitor; pp++)
+			outstr(pp, str, len);
+		return;
+	}
+
 	pp->p_curx += len;
 	pp->p_cury += (pp->p_curx / TERM_WIDTH);
 	pp->p_curx %= TERM_WIDTH;
 	while (len--)
 		(void) putc(*str++, pp->p_output);
+}
+
+/*
+ * outat:
+ *	draw a string at a location on the client.
+ *	Cursor doesn't move if the location is invalid
+ */
+void
+outyx(pp, y, x, fmt)
+	PLAYER	*pp;
+	int	y;
+	int	x;
+	const char *fmt;
+{
+	va_list ap;
+	char buf[BUFSIZ];
+	int len;
+
+	va_start(ap, fmt);
+	len = vsnprintf(buf, sizeof buf, fmt, ap);
+	if (y >= 0 && x >= 0)
+		cgoto(pp, y, x);
+	outstr(pp, buf, len);
+	va_end(ap);
 }
 
 /*
@@ -72,6 +121,15 @@ void
 clrscr(pp)
 	PLAYER	*pp;
 {
+
+	if (pp == ALL_PLAYERS) {
+		for (pp = Player; pp < End_player; pp++)
+			clrscr(pp);
+		for (pp = Monitor; pp < End_monitor; pp++)
+			clrscr(pp);
+		return;
+	}
+
 	sendcom(pp, CLEAR);
 	pp->p_cury = 0;
 	pp->p_curx = 0;
@@ -88,54 +146,58 @@ ce(pp)
 	sendcom(pp, CLRTOEOL);
 }
 
-#if 0		/* XXX lukem*/
-/*
- * ref;
- *	Refresh the screen
- */
-void
-ref(pp)
-	PLAYER	*pp;
-{
-	sendcom(pp, REFRESH);
-}
-#endif
-
 /*
  * sendcom:
  *	Send a command to the given user
  */
 void
-#if __STDC__
-sendcom(PLAYER *pp, int command, ...)
-#else
-sendcom(pp, command, va_alist)
-	PLAYER	*pp;
-	int	command;
-	va_dcl
-#endif
+sendcom(pp, command)
+	PLAYER *pp;
+	int command;
 {
 	va_list	ap;
-	int	arg1, arg2;
-#if __STDC__
+	char	buf[3];
+	int	len = 0;
+
 	va_start(ap, command);
-#else
-	va_start(ap);
-#endif
-	(void) putc(command, pp->p_output);
+	buf[len++] = command;
 	switch (command & 0377) {
 	case MOVE:
-		arg1 = va_arg(ap, int);
-		arg2 = va_arg(ap, int);
-		(void) putc(arg1, pp->p_output);
-		(void) putc(arg2, pp->p_output);
+		buf[len++] = va_arg(ap, int);
+		buf[len++] = va_arg(ap, int);
 		break;
 	case ADDCH:
 	case READY:
-		arg1 = va_arg(ap, int);
-		(void) putc(arg1, pp->p_output);
+	case ENDWIN:
+		buf[len++] = va_arg(ap, int);
 		break;
 	}
+	va_end(ap);
 
-	va_end(ap);		/* No return needed for void functions. */
+	if (pp == ALL_PLAYERS) {
+		for (pp = Player; pp < End_player; pp++)
+			fwrite(buf, sizeof buf[0], len, pp->p_output);
+		for (pp = Monitor; pp < End_monitor; pp++)
+			fwrite(buf, sizeof buf[0], len, pp->p_output);
+		return;
+	} else
+		fwrite(buf, sizeof buf[0], len, pp->p_output);
 }
+
+/*
+ * sync:
+ *	Flush the output buffer to the player
+ */
+void
+flush(pp)
+	PLAYER	*pp;
+{
+	if (pp == ALL_PLAYERS) {
+		for (pp = Player; pp < End_player; pp++)
+			fflush(pp->p_output);
+		for (pp = Monitor; pp < End_monitor; pp++)
+			fflush(pp->p_output);
+	} else
+		fflush(pp->p_output);
+}
+

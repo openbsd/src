@@ -1,5 +1,5 @@
+/*	$OpenBSD: extern.c,v 1.3 1999/01/29 07:30:35 d Exp $	*/
 /*	$NetBSD: extern.c,v 1.2 1997/10/10 16:33:24 lukem Exp $	*/
-/*	$OpenBSD: extern.c,v 1.2 1999/01/21 05:47:41 d Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -7,10 +7,9 @@
  */
 
 # include	"hunt.h"
+# include	"server.h"
 
-# ifdef MONITOR
 FLAG	Am_monitor = FALSE;		/* current process is a monitor */
-# endif
 
 char	Buf[BUFSIZ];			/* general scribbling buffer */
 char	Maze[HEIGHT][WIDTH2];		/* the maze */
@@ -33,18 +32,12 @@ EXPL	*Last_expl;			/* last explosion on Expl[0] */
 
 PLAYER	Player[MAXPL];			/* all the players */
 PLAYER	*End_player = Player;		/* last active player slot */
-# ifdef BOOTS
 PLAYER	Boot[NBOOTS];			/* all the boots */
-# endif
 IDENT	*Scores;			/* score cache */
-# ifdef MONITOR
 PLAYER	Monitor[MAXMON];		/* all the monitors */
 PLAYER	*End_monitor = Monitor;		/* last active monitor slot */
-# endif
 
-# ifdef VOLCANO
 int	volcano = 0;			/* Explosion size */
-# endif
 
 int	shot_req[MAXBOMB]	= {
 				BULREQ, GRENREQ, SATREQ,

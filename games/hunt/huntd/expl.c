@@ -1,15 +1,19 @@
+/*	$OpenBSD: expl.c,v 1.3 1999/01/29 07:30:35 d Exp $	*/
 /*	$NetBSD: expl.c,v 1.2 1997/10/10 16:33:18 lukem Exp $	*/
-/*	$OpenBSD: expl.c,v 1.2 1999/01/21 05:47:41 d Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
  *  San Francisco, California
  */
 
-# include	<stdlib.h>
-# include	"hunt.h"
+#include <stdlib.h>
+#include <syslog.h>
+#include "hunt.h"
+#include "server.h"
+#include "conf.h"
 
 static	void	remove_wall __P((int, int));
+static	void	init_removed __P((void));
 
 
 /*
@@ -45,7 +49,6 @@ showexpl(y, x, type)
 		cgoto(pp, y, x);
 		outch(pp, type);
 	}
-# ifdef MONITOR
 	for (pp = Monitor; pp < End_monitor; pp++) {
 		if (pp->p_maze[y][x] == type)
 			continue;
@@ -53,18 +56,13 @@ showexpl(y, x, type)
 		cgoto(pp, y, x);
 		outch(pp, type);
 	}
-# endif
 	switch (Maze[y][x]) {
 	  case WALL1:
 	  case WALL2:
 	  case WALL3:
-# ifdef RANDOM
 	  case DOOR:
-# endif
-# ifdef REFLECT
 	  case WALL4:
 	  case WALL5:
-# endif
 		if (y >= UBOUND && y < DBOUND && x >= LBOUND && x < RBOUND)
 			remove_wall(y, x);
 		break;
@@ -99,10 +97,8 @@ rollexpl()
 				cgoto(pp, y, x);
 				outch(pp, c);
 			}
-# ifdef MONITOR
 		for (pp = Monitor; pp < End_monitor; pp++)
 			check(pp, y, x);
-# endif
 		free((char *) ep);
 	}
 	for (x = EXPLEN - 1; x > 0; x--)
@@ -110,12 +106,18 @@ rollexpl()
 	Last_expl = Expl[0] = NULL;
 }
 
-/* There's about 700 walls in the initial maze.  So we pick a number
- * that keeps the maze relatively full. */
-# define MAXREMOVE	40
+static	REGEN	*removed = NULL;
+static	REGEN	*rem_index = NULL;
 
-static	REGEN	removed[MAXREMOVE];
-static	REGEN	*rem_index = removed;
+static void
+init_removed()
+{
+	rem_index = removed = malloc(conf_maxremove * sizeof(REGEN));
+	if (rem_index == NULL) {
+		syslog(LOG_ERR, "malloc: %m");
+		cleanup(1);
+	}
+}
 
 /*
  * remove_wall - add a location where the wall was blown away.
@@ -127,16 +129,14 @@ remove_wall(y, x)
 	int	y, x;
 {
 	REGEN	*r;
-# if defined(MONITOR) || defined(FLY)
 	PLAYER	*pp;
-# endif
-# ifdef	FLY
 	char	save_char = 0;
-# endif
+
+	if (removed == NULL)
+		init_removed();
 
 	r = rem_index;
 	while (r->r_y != 0) {
-# ifdef FLY
 		switch (Maze[r->r_y][r->r_x]) {
 		  case SPACE:
 		  case LEFTS:
@@ -147,63 +147,51 @@ remove_wall(y, x)
 			save_char = Maze[r->r_y][r->r_x];
 			goto found;
 		}
-# else
-		if (Maze[r->r_y][r->r_x] == SPACE)
-			break;
-# endif
-		if (++r >= &removed[MAXREMOVE])
+		if (++r >= removed + conf_maxremove)
 			r = removed;
 	}
 
 found:
 	if (r->r_y != 0) {
 		/* Slot being used, put back this wall */
-# ifdef FLY
 		if (save_char == SPACE)
 			Maze[r->r_y][r->r_x] = Orig_maze[r->r_y][r->r_x];
 		else {
+			/* We throw the player off the wall: */
 			pp = play_at(r->r_y, r->r_x);
 			if (pp->p_flying >= 0)
-				pp->p_flying += rand_num(10);
+				pp->p_flying += rand_num(conf_flytime / 2);
 			else {
-				pp->p_flying = rand_num(20);
-				pp->p_flyx = 2 * rand_num(6) - 5;
-				pp->p_flyy = 2 * rand_num(6) - 5;
+				pp->p_flying = rand_num(conf_flytime);
+				pp->p_flyx = 2 * rand_num(conf_flystep + 1) -
+				    conf_flystep;
+				pp->p_flyy = 2 * rand_num(conf_flystep + 1) -
+				    conf_flystep;
 			}
 			pp->p_over = Orig_maze[r->r_y][r->r_x];
 			pp->p_face = FLYER;
 			Maze[r->r_y][r->r_x] = FLYER;
 			showexpl(r->r_y, r->r_x, FLYER);
 		}
-# else
 		Maze[r->r_y][r->r_x] = Orig_maze[r->r_y][r->r_x];
-# endif
-# ifdef RANDOM
-		if (rand_num(100) == 0)
+		if (conf_random && rand_num(100) < conf_prandom)
 			Maze[r->r_y][r->r_x] = DOOR;
-# endif
-# ifdef REFLECT
-		if (rand_num(100) == 0)		/* one percent of the time */
+		if (conf_reflect && rand_num(100) == conf_preflect)
 			Maze[r->r_y][r->r_x] = WALL4;
-# endif
-# ifdef MONITOR
 		for (pp = Monitor; pp < End_monitor; pp++)
 			check(pp, r->r_y, r->r_x);
-# endif
 	}
 
 	r->r_y = y;
 	r->r_x = x;
-	if (++r >= &removed[MAXREMOVE])
+	if (++r >= removed + conf_maxremove)
 		rem_index = removed;
 	else
 		rem_index = r;
 
 	Maze[y][x] = SPACE;
-# ifdef MONITOR
 	for (pp = Monitor; pp < End_monitor; pp++)
 		check(pp, y, x);
-# endif
 }
 
 /*
@@ -215,7 +203,9 @@ clearwalls()
 {
 	REGEN	*rp;
 
-	for (rp = removed; rp < &removed[MAXREMOVE]; rp++)
+	if (removed == NULL)
+		init_removed();
+	for (rp = removed; rp < removed + conf_maxremove; rp++)
 		rp->r_y = 0;
 	rem_index = removed;
 }

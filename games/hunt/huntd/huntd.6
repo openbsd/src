@@ -1,5 +1,5 @@
 .\"	$NetBSD: huntd.6,v 1.3 1998/01/09 08:03:42 perry Exp $
-.\"	$OpenBSD: huntd.6,v 1.2 1999/01/21 05:47:41 d Exp $
+.\"	$OpenBSD: huntd.6,v 1.3 1999/01/29 07:30:36 d Exp $
 .\"
 .\"  Hunt
 .\"  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -19,19 +19,12 @@
 .Nm huntd
 .Op Fl s
 .Op Fl p Ar port
+.Op Fl a Ar addr
 .Sh DESCRIPTION
 .Nm huntd
 controls the multi-player
 .Xr hunt 6
 game.
-When it starts up, it tries to notify all members of the
-.Pa hunt-players
-mailing list (see
-.Xr sendmail 8)
-by faking a
-.Xr talk 1
-request from user
-.Sq Hunt Game .
 .Pp
 The
 .Fl s
@@ -44,12 +37,16 @@ This is similar to running it under the control of
 but it consumes a process table entry when no one is playing.
 .Pp
 The
-.Fl p
+.Fl p Ar port
 option changes the udp port number used to rendezvous with the player
 process and thus allows for private games of hunt.
-This option turns off the notification of players on the
-.Pa hunt-players
-mailing list.
+.Pp
+The
+.Fl a Ar addr
+option is used to cause the server to bind to a specific interface address.
+The
+.Ar addr
+must be given as an IP address.
 .Sh INETD
 .Pp
 To run
@@ -88,11 +85,120 @@ Otherwise, the
 process starts up a
 .Nm huntd
 on the local machine and trys to rendezvous with it.
+.Pp
+Regardless of how
+.Nm huntd
+is started, it always checks incoming connections with
+.Xr host_access 5 ,
+using a service name of
+.Sq huntd .
+.Sh "CONFIGURATION"
+When
+.Nm huntd
+starts, it looks for configuration files that determine
+game parameters.
+Each line of a configuration file is of the form
+.Ar var No = Ar value .
+Comments start with a hash sign (`#').
+The configuration files loaded in order (if they exist) are:
+.Pa /etc/hunt.conf ,
+.Pa "$HOME/.hunt.conf" ,
+and
+.Pa ./.hunt.conf .
+.Pp
+Many of these variables require intimate knowledge of the
+driver source code.
+The complete list of configurable variables is:
+.Bl -tag -width pdroneabsorb -compact
+.It random
+enable dispersion doors (default 1)
+.It reflect
+enable generation of reflection walls (default 1)
+.It monitor
+enable monitors (default 1)
+.It ooze
+enable slime shots (default 1)
+.It fly
+enable flight (default 1)
+.It volcano
+enable volcanoes (default 1)
+.It drone
+enable drone (default 1)
+.It boots
+enable boots (default 1)
+.It scan
+enable scanning (default 1)
+.It cloak
+enable cloaking (default 1)
+.It logerr
+errors to stderr as well as syslog(8) (default 1)
+.It scoredecay
+nr deaths before nr kills begins to decay (default 15)
+.It maxremove
+Maximum number of holes in the maze wall (default 40)
+.It linger
+Seconds to keep game open with no players (default 90)
+.It flytime
+max time flying (default 20)
+.It flystep
+max displacement each flying time unit (default 5)
+.It volcano_max
+max size of volcano (default 50)
+.It ptrip_face
+chace of tripping a grenade on pickup,  (default 2)
+.It ptrip_back
+\&" when backing onto it (default 95)
+.It ptrip_side
+\&" when walking sideways into it (default 50)
+.It prandom
+percentage of time dispersion doors appear (default 1)
+.It preflect
+percentage of time reflection walls appear (default 1)
+.It pshot_coll
+percent chance of shots colliding (default 5)
+.It pgren_coll
+percent chance of grenades colliding (default 10)
+.It pgren_catch
+facing player chance of catching grenade (default 10)
+.It pmiss
+chance of bullet missing player (default 5)
+.It pdroneabsorb
+chance of absorbing a drone (default 1)
+.It fall_frac
+divisor of damage used for fall damage (default 5)
+.It bulspd
+speed of bullets (default 5)
+.It ishots
+initial ammo for player (default 15)
+.It nshots
+ammo boost for all when new player joins (default 5)
+.It maxncshot
+max number of simultaneous shots per player (default 2)
+.It maxdam
+the initial shield for each player (default 10)
+.It mindam
+minimum damage from one unit of ammo (default 5)
+.It stabdam
+damage from stabbing (default 2)
+.It killgain
+shield gained from killing someone (default 2)
+.It slimefactor
+charge multiplier for slime (default 3)
+.It slimespeed
+speed of slime (default 5)
+.It lavaspeed
+speed of volcano lava (default 1)
+.It cloaklen
+duration of a cloak (default 20)
+.It scanlen
+duration of a scan (default 20)
+.It mindshot
+minimum shot class needed to make a drone (default 2)
+.El
 .Sh "SEE ALSO"
 .Xr hunt 6 ,
-.Xr talk 1 ,
-.Xr sendmaail 8 ,
-.Xr inetd 8
+.Xr inetd 8 ,
+.Xr hosts_options 5 .
 .Sh AUTHORS
 Conrad Huang, Ken Arnold, and Greg Couch;
 .br

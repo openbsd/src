@@ -1,12 +1,14 @@
+/*	$OpenBSD: makemaze.c,v 1.3 1999/01/29 07:30:36 d Exp $	*/
 /*	$NetBSD: makemaze.c,v 1.2 1997/10/10 16:33:43 lukem Exp $	*/
-/*	$OpenBSD: makemaze.c,v 1.2 1999/01/21 05:47:42 d Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
  *  San Francisco, California
  */
 
-# include	"hunt.h"
+#include "hunt.h"
+#include "server.h"
+#include "conf.h"
 
 # define	ISCLEAR(y,x)	(Maze[y][x] == SPACE)
 # define	ODD(n)		((n) & 01)
@@ -107,7 +109,7 @@ candig(y, x)
 	return TRUE;			/* OK */
 }
 
-void
+static void
 dig_maze(x, y)
 	int	x, y;
 {
@@ -155,7 +157,7 @@ dig_maze(x, y)
 	}
 }
 
-void
+static void
 remap()
 {
 	int	y, x;
@@ -167,6 +169,7 @@ remap()
 			sp = &Maze[y][x];
 			if (*sp == SPACE)
 				continue;
+			/* Find occupied adjacent cells. */
 			stat = 0;
 			if (y - 1 >= 0 && Maze[y - 1][x] != SPACE)
 				stat |= NORTH;
@@ -180,25 +183,23 @@ remap()
 			  case WEST | EAST:
 			  case EAST:
 			  case WEST:
-				*sp = WALL1;
+				*sp = WALL1;			   /* - */
 				break;
 			  case NORTH | SOUTH:
 			  case NORTH:
 			  case SOUTH:
-				*sp = WALL2;
+				*sp = WALL2;			   /* | */
 				break;
 			  case 0:
-# ifdef RANDOM
-				*sp = DOOR;
-# endif
-# ifdef REFLECT
-				*sp = rand_num(2) ? WALL4 : WALL5;
-# endif
+				if (conf_random)
+					*sp = DOOR;
+				if (conf_reflect)
+					*sp = rand_num(2) ? WALL4 : WALL5;
 				break;
 			  default:
-				*sp = WALL3;
+				*sp = WALL3;			   /* + */
 				break;
 			}
 		}
-	memcpy(Orig_maze, Maze, sizeof Maze);
+	memcpy(Orig_maze, Maze, sizeof Orig_maze);
 }
