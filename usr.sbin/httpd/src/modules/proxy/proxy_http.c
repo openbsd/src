@@ -368,7 +368,7 @@ int ap_proxy_http_handler(request_rec *r, cache_req *c, char *url,
         /* Create a "Via:" request header entry and merge it */
         i = ap_get_server_port(r);
         if (ap_is_default_port(i, r)) {
-            strcpy(portstr, "");
+            strlcpy(portstr, "", sizeof(portstr));
         }
         else {
             ap_snprintf(portstr, sizeof portstr, ":%d", i);
@@ -533,7 +533,7 @@ int ap_proxy_http_handler(request_rec *r, cache_req *c, char *url,
             /* Create a "Via:" response header entry and merge it */
             i = ap_get_server_port(r);
             if (ap_is_default_port(i, r)) {
-                strcpy(portstr, "");
+                strlcpy(portstr, "", sizeof(portstr));
             }
             else {
                 ap_snprintf(portstr, sizeof portstr, ":%d", i);
