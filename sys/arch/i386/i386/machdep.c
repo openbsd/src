@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.316 2005/02/24 21:14:11 grange Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.317 2005/04/02 02:44:58 tedu Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1371,6 +1371,11 @@ amd_family5_setup(cpu_device, model, step)
 	}
 }
 
+struct amd_pn_flag {
+	int mask;
+	const char *name;
+};
+
 void
 amd_family6_setup(cpu_device, model, step)
 	const char *cpu_device;
@@ -1380,12 +1385,33 @@ amd_family6_setup(cpu_device, model, step)
 	extern void (*pagezero)(void *, size_t);
 	extern void sse2_pagezero(void *, size_t);
 	extern void i686_pagezero(void *, size_t);
+	static struct amd_pn_flag amd_pn_flags[] = {
+	    {0, "TS"},
+	    {1, "FID"},
+	    {2, "VID"},
+	    {4, "TTP"},
+	    {8, "TM"},
+	    {16, "STC"}
+	};
+	u_int regs[4];
+	int i;
 
 	if (cpu_feature & CPUID_SSE2)
 		pagezero = sse2_pagezero;
 	else
 		pagezero = i686_pagezero;
-	k7_powernow_init(curcpu()->ci_signature);
+	cpuid(0x80000000, regs);
+	if (regs[0] > 0x80000007) {
+		cpuid(0x80000007, regs);
+		printf("%s: AMD Powernow:", cpu_device);
+		for (i = 0; i < 6; i++) {
+			if (regs[3] & amd_pn_flags[i].mask)
+				printf(" %s", amd_pn_flags[i].name);
+		}
+		printf("\n");
+		if (regs[3] & 6)
+			k7_powernow_init(curcpu()->ci_signature);
+	}
 #endif
 }
 
@@ -1670,7 +1696,7 @@ identifycpu(struct cpu_info *ci)
 		}
 	}
 
-	/* Find the amount of on-chip L2 cache.  Add support for AMD K6-3...*/
+	/* Find the amount of on-chip L2 cache. */
 	cachesize = -1;
 	if (vendor == CPUVENDOR_INTEL && cpuid_level >= 2 && family < 0xf) {
 		int intel_cachetable[] = { 0, 128, 256, 512, 1024, 2048 };
@@ -1678,6 +1704,13 @@ identifycpu(struct cpu_info *ci)
 		if ((cpu_cache_edx & 0xFF) >= 0x40 &&
 		    (cpu_cache_edx & 0xFF) <= 0x45)
 			cachesize = intel_cachetable[(cpu_cache_edx & 0xFF) - 0x40];
+	} else if (vendor == CPUVENDOR_AMD && class == CPUCLASS_686) {
+		u_int regs[4];
+		cpuid(0x80000000, regs);
+		if (regs[0] >= 0x80000006) {
+			cpuid(0x80000006, regs);
+			cachesize = (regs[2] >> 16);
+		}
 	}
 
 	/* Remove leading and duplicated spaces from cpu_brandstr */
