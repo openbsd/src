@@ -1,7 +1,7 @@
 /*
  * David Leonard, 1998. Public Domain. <david.leonard@csee.uq.edu.au>
  *
- * $OpenBSD: uthread_autoinit.c,v 1.6 1999/03/10 10:05:39 d Exp $
+ * $OpenBSD: uthread_autoinit.c,v 1.7 1999/11/25 07:01:32 d Exp $
  */
 
 #include <stdio.h>
@@ -49,7 +49,7 @@ _thread_dot_init()
  * found in the .dynamic section into the _INIT field. This then gets
  * automatically run by GNU ELF's ld.so.
  */
-#ifdef pmax
+#ifdef __mips__
 extern int _init() __attribute__((constructor,section (".dynamic")));
 int 
 _init()
@@ -58,7 +58,7 @@ _init()
 	_thread_init();
 	return 0; 
 }
-#endif /* mips */
+#endif /* __mips__ */
 
 /*
  * A GNU C installation may know how to automatically run
@@ -68,7 +68,7 @@ _init()
  * the collect2 stage of linkage will inform __main (from libgcc.a)
  * to call it.
  */
-#ifdef __GNUC__
+#if defined(__GNUC__) /* && defined(notyet) /* internal compiler error??? */
 void _thread_init_constructor __P((void)) __attribute__((constructor));
 void
 _thread_init_constructor()
@@ -80,6 +80,6 @@ _thread_init_constructor()
 
 /*
  * Dummy symbol referenced by uthread_init.o so this compilation unit 
- * is always loaded.
+ * is always loaded from archives.
  */
 int _thread_autoinit_dummy_decl = 0;

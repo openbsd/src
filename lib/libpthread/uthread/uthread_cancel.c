@@ -1,3 +1,4 @@
+/*	$OpenBSD: uthread_cancel.c,v 1.2 1999/11/25 07:01:32 d Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public domain.
  */
@@ -12,35 +13,33 @@ pthread_cancel(pthread)
 	int ret;
 
 	if ((ret = _find_thread(pthread))) {
-	} else if (pthread->state == PS_DEAD)
-		ret = 0;
-	else {
-		/* Set the threads's I've-been-cancelled flag: */
-		pthread->flags |= PTHREAD_CANCELLING;
+	} else if ((pthread->flags & PTHREAD_FLAGS_CANCELED) == 0) {
+		/* Set the thread's I've-been-cancelled flag: */
+		pthread->flags |= PTHREAD_FLAGS_CANCELED;
 		/* Check if we need to kick it back into the run queue: */
 		if ((pthread->cancelstate == PTHREAD_CANCEL_ENABLE) &&
 		    ((pthread->canceltype == PTHREAD_CANCEL_ASYNCHRONOUS) ||
-		     (pthread->flags & PTHREAD_AT_CANCEL_POINT)))
+		     (pthread->flags & PTHREAD_FLAGS_CANCELPT)))
 			switch (pthread->state) {
-			case PS_RUNNING:
-				/* No need to resume: */
-				break;
 			case PS_WAIT_WAIT:
 			case PS_FDR_WAIT:
 			case PS_FDW_WAIT:
 			case PS_SLEEP_WAIT:
 			case PS_SELECT_WAIT:
+			case PS_POLL_WAIT:
 			case PS_SIGSUSPEND:
 				/* Interrupt and resume: */
 				pthread->interrupted = 1;
+				if (pthread->flags & PTHREAD_FLAGS_IN_WORKQ)
+					PTHREAD_WORKQ_REMOVE(pthread);
 				PTHREAD_NEW_STATE(pthread,PS_RUNNING);
 				break;
 			case PS_MUTEX_WAIT:
 			case PS_COND_WAIT:
+			case PS_SIGWAIT:
 			case PS_FDLR_WAIT:
 			case PS_FDLW_WAIT:
 			case PS_FILE_WAIT:
-			case PS_SIGWAIT:
 			case PS_JOIN:
 			case PS_SUSPENDED:
 			case PS_SIGTHREAD:
@@ -48,8 +47,10 @@ pthread_cancel(pthread)
 				/* XXX may be incorrect */
 				PTHREAD_NEW_STATE(pthread,PS_RUNNING);
 				break;
+			case PS_RUNNING:
+			case PS_DEADLOCK:
+			case PS_SPINBLOCK:
 			case PS_DEAD:
-			case PS_STATE_MAX:
 				/* Ignore */
 				break;
 		}
@@ -134,14 +135,14 @@ _thread_enter_cancellation_point()
 
 	/* Look for a cancellation before we block: */
 	_thread_cancellation_point();
-	_thread_run->flags |= PTHREAD_AT_CANCEL_POINT;
+	_thread_run->flags |= PTHREAD_FLAGS_CANCELPT;
 }
 
 void
 _thread_leave_cancellation_point()
 {
 
-	_thread_run->flags &=~ PTHREAD_AT_CANCEL_POINT;
+	_thread_run->flags &=~ PTHREAD_FLAGS_CANCELPT;
 	/* Look for a cancellation after we unblock: */
 	_thread_cancellation_point();
 }
@@ -155,9 +156,9 @@ _thread_cancellation_point()
 {
 
 	if ((_thread_run->cancelstate == PTHREAD_CANCEL_ENABLE) &&
-	    ((_thread_run->flags & (PTHREAD_CANCELLING|PTHREAD_EXITING)) ==
-		PTHREAD_CANCELLING)) {
-		_thread_run->flags &=~ PTHREAD_CANCELLING;
+	    ((_thread_run->flags & (PTHREAD_FLAGS_CANCELED|PTHREAD_EXITING)) ==
+		PTHREAD_FLAGS_CANCELED)) {
+		_thread_run->flags &=~ PTHREAD_FLAGS_CANCELED;
 		pthread_exit(PTHREAD_CANCELED);
 		PANIC("cancel");
 	}

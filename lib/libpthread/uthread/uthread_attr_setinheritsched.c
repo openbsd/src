@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_attr_setinheritsched.c,v 1.1 1999/05/26 00:18:22 d Exp $	*/
+/*	$OpenBSD: uthread_attr_setinheritsched.c,v 1.2 1999/11/25 07:01:31 d Exp $	*/
 /*
  * Copyright (c) 1998 Daniel Eischen <eischen@vigrid.com>.
  * All rights reserved.
@@ -30,6 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ * $FreeBSD: uthread_attr_setinheritsched.c,v 1.3 1999/08/28 00:03:24 peter Exp $
  */
 #include <errno.h>
 #ifdef _THREAD_SAFE

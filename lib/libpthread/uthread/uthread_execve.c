@@ -1,3 +1,4 @@
+/*	$OpenBSD: uthread_execve.c,v 1.5 1999/11/25 07:01:34 d Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -20,7 +21,7 @@
  * THIS SOFTWARE IS PROVIDED BY JOHN BIRRELL AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -29,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_execve.c,v 1.4 1999/05/26 00:18:23 d Exp $
+ * $FreeBSD: uthread_execve.c,v 1.8 1999/08/28 00:03:30 peter Exp $
  */
 #include <errno.h>
 #include <fcntl.h>
@@ -92,6 +93,9 @@ execve(const char *name, char *const * argv, char *const * envp)
 			/* Copy the mask and flags for this signal: */
 			act.sa_mask = _thread_sigact[i - 1].sa_mask;
 			act.sa_flags = _thread_sigact[i - 1].sa_flags;
+
+			/* Ensure the scheduling signal is masked: */
+			sigaddset(&act.sa_mask, _SCHED_SIGNAL);
 
 			/* Change the signal action for the process: */
 			_thread_sys_sigaction(i, &act, &oact);

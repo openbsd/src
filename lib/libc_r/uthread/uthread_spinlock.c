@@ -1,3 +1,4 @@
+/*	$OpenBSD: uthread_spinlock.c,v 1.6 1999/11/25 07:01:46 d Exp $	*/
 /*
  * Copyright (c) 1997 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -20,7 +21,7 @@
  * THIS SOFTWARE IS PROVIDED BY JOHN BIRRELL AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -29,8 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: uthread_spinlock.c,v 1.5 1999/03/23 05:07:56 jb Exp $
- * $OpenBSD: uthread_spinlock.c,v 1.5 1999/05/26 00:18:26 d Exp $
+ * $FreeBSD: uthread_spinlock.c,v 1.7 1999/08/28 00:03:52 peter Exp $
  *
  */
 
@@ -63,7 +63,7 @@ _spinlock(spinlock_t *lck)
 	}
 
 	/* The running thread now owns the lock: */
-	lck->lock_owner = _thread_run;
+	lck->lock_owner = (long) _thread_run;
 }
 
 /*
@@ -101,7 +101,7 @@ _spinlock_debug(spinlock_t *lck, const char *fname, int lineno)
 	}
 
 	/* The running thread now owns the lock: */
-	lck->lock_owner = _thread_run;
+	lck->lock_owner = (long) _thread_run;
 	lck->fname = fname;
 	lck->lineno = lineno;
 }

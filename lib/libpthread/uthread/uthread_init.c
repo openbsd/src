@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_init.c,v 1.9 1999/05/26 00:18:24 d Exp $	*/
+/*	$OpenBSD: uthread_init.c,v 1.10 1999/11/25 07:01:37 d Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -30,6 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ * $FreeBSD: uthread_init.c,v 1.18 1999/08/28 00:03:36 peter Exp $
  */
 
 #include <errno.h>
@@ -37,80 +38,68 @@
 #include <string.h>
 #include <fcntl.h>
 #include <paths.h>
+#include <poll.h>
 #include <unistd.h>
+#include <sys/param.h>
+#include <sys/sysctl.h>
 #include <sys/time.h>
 #include <sys/ttycom.h>
 #include <sys/param.h>
-#include <sys/ioctl.h>
-#include <signal.h>
+#include <sys/user.h>
+#include <sys/mman.h>
 #ifdef _THREAD_SAFE
 #include <machine/reg.h>
 #include <pthread.h>
-#include <pthread_np.h>
 #include "pthread_private.h"
 
-/* Allocate space for global thread variables here: */
+/* Global thread variables. */
+struct pthread	_thread_kern_thread;
+struct pthread *volatile _thread_run = &_thread_kern_thread;
+struct pthread *volatile _last_user_thread = &_thread_kern_thread;
+struct pthread *volatile _thread_single = NULL;
+_thread_list_t	_thread_list = TAILQ_HEAD_INITIALIZER(_thread_list);
+int		_thread_kern_pipe[2] = { -1, -1 };
+int volatile	_queue_signals = 0;
+int		_thread_kern_in_sched = 0;
+struct timeval	kern_inc_prio_time = { 0, 0 };
+_thread_list_t	_dead_list = TAILQ_HEAD_INITIALIZER(_dead_list);
+struct pthread *_thread_initial = NULL;
+struct pthread_attr pthread_attr_default = { 
+                SCHED_RR, 0, TIMESLICE_USEC, PTHREAD_DEFAULT_PRIORITY,
+                PTHREAD_CREATE_RUNNING, PTHREAD_CREATE_JOINABLE,
+                NULL, NULL, NULL, PTHREAD_STACK_DEFAULT };
+struct pthread_mutex_attr pthread_mutexattr_default = { 
+		PTHREAD_MUTEX_DEFAULT, PTHREAD_PRIO_NONE, 0, 0 };
+struct pthread_cond_attr pthread_condattr_default = { COND_TYPE_FAST, 0 };
+int		_pthread_stdio_flags[3];
+struct fd_table_entry **_thread_fd_table = NULL;
+struct pollfd *_thread_pfd_table = NULL;
+const int	dtablecount = 4096/sizeof(struct fd_table_entry);
+int		_thread_dtablesize = 0;
+int		_clock_res_nsec = CLOCK_RES_NSEC;
+pthread_mutex_t	_gc_mutex = NULL;
+pthread_cond_t	_gc_cond = NULL;
+struct sigaction _thread_sigact[NSIG];
+pq_queue_t	_readyq;
+_thread_list_t	_waitingq;
+_thread_list_t	_workq;
+volatile int	_spinblock_count = 0;
+volatile int	_sigq_check_reqd = 0;
+pthread_switch_routine_t _sched_switch_hook = NULL;
+_stack_list_t	_stackq;
+int		_thread_kern_new_state = 0;
 
-static struct pthread	  kern_thread;
-struct pthread * volatile _thread_kern_threadp = &kern_thread;
-struct pthread * volatile _thread_run = &kern_thread;
-struct pthread * volatile _last_user_thread = &kern_thread;
-struct pthread * volatile _thread_single = NULL;
-struct pthread * volatile _thread_link_list = NULL;
-int             	  _thread_kern_pipe[2] = { -1, -1 };
-int             	  _thread_kern_in_select = 0;
-int             	  _thread_kern_in_sched = 0;
-struct timeval  	  kern_inc_prio_time = { 0, 0 };
-struct pthread * volatile _thread_dead = NULL;
-struct pthread *	  _thread_initial = NULL;
-struct pthread_attr 	  pthread_attr_default = {
-	SCHED_RR,			/* sched_policy */
-	0,				/* sched_inherit */
-	TIMESLICE_USEC,			/* sched_interval */
-	PTHREAD_DEFAULT_PRIORITY,	/* prio */
-	PTHREAD_CREATE_RUNNING,		/* suspend */
-	PTHREAD_CREATE_JOINABLE,	/* flags */
-	NULL,				/* arg_attr */
-	NULL,				/* cleanup_attr */
-	NULL,				/* stackaddr_attr */
-	PTHREAD_STACK_DEFAULT		/* stacksize_attr */
-};
-struct pthread_mutex_attr pthread_mutexattr_default = {
-	PTHREAD_MUTEX_DEFAULT,		/* m_type */
-	PTHREAD_PRIO_NONE,		/* m_protocol */
-	0,				/* m_ceiling */
-	0				/* m_flags */
-};
-struct pthread_cond_attr pthread_condattr_default = {
-	COND_TYPE_FAST,			/* c_type */
-	0				/* c_flags */
-};
-int			  _pthread_stdio_flags[3];
-struct fd_table_entry **  _thread_fd_table = NULL;
-int    			  _thread_dtablesize = NOFILE_MAX;
-pthread_mutex_t		  _gc_mutex = NULL;
-pthread_cond_t		  _gc_cond = NULL;
-struct  sigaction 	  _thread_sigact[NSIG];
-
-const int dtablecount = 4096/sizeof(struct fd_table_entry);
-pq_queue_t		  _readyq;
-_waitingq_t		  _waitingq;
-volatile int		  _waitingq_check_reqd = 0;
-pthread_switch_routine_t  _sched_switch_hook = NULL;
-
-/* Automatic init module. */
 extern int _thread_autoinit_dummy_decl;
 
 #ifdef GCC_2_8_MADE_THREAD_AWARE
-/* see src/gnu/usr.bin/gcc/libgcc2.c */
 typedef void *** (*dynamic_handler_allocator)();
 extern void __set_dynamic_handler_allocator(dynamic_handler_allocator);
 
 static pthread_key_t except_head_key;
 
 typedef struct {
-  void **__dynamic_handler_chain;
-  void *top_elt[2];
+	void **__dynamic_handler_chain;
+	void *top_elt[2];
 } except_struct;
 
 static void ***dynamic_allocator_handler_fn()
@@ -136,6 +125,9 @@ _thread_init(void)
 	int		fd;
 	int             flags;
 	int             i;
+	size_t		len;
+	int		mib[2];
+	struct clockinfo clockinfo;
 	struct sigaction act;
 
 	/* Check if this function has already been called: */
@@ -152,26 +144,27 @@ _thread_init(void)
 		 * Setup a new session for this process which is
 		 * assumed to be running as root.
 		 */
-    		if (setsid() == -1)
+		if (setsid() == -1)
 			PANIC("Can't set session ID");
-    		if (revoke(_PATH_CONSOLE) != 0)
+		if (revoke(_PATH_CONSOLE) != 0)
 			PANIC("Can't revoke console");
-    		if ((fd = _thread_sys_open(_PATH_CONSOLE, O_RDWR)) < 0)
+		if ((fd = _thread_sys_open(_PATH_CONSOLE, O_RDWR)) < 0)
 			PANIC("Can't open console");
-    		if (setlogin("root") == -1)
+		if (setlogin("root") == -1)
 			PANIC("Can't set login to root");
-    		if (_thread_sys_ioctl(fd,TIOCSCTTY, (char *) NULL) == -1)
+		if (_thread_sys_ioctl(fd,TIOCSCTTY, (char *) NULL) == -1)
 			PANIC("Can't set controlling terminal");
-    		if (_thread_sys_dup2(fd,0) == -1 ||
-    		    _thread_sys_dup2(fd,1) == -1 ||
-    		    _thread_sys_dup2(fd,2) == -1)
+		if (_thread_sys_dup2(fd,0) == -1 ||
+		    _thread_sys_dup2(fd,1) == -1 ||
+		    _thread_sys_dup2(fd,2) == -1)
 			PANIC("Can't dup2");
 	}
 
 	/* Get the standard I/O flags before messing with them : */
 	for (i = 0; i < 3; i++)
-		if ((_pthread_stdio_flags[i] =
-		    _thread_sys_fcntl(i,F_GETFL, NULL)) == -1)
+		if (((_pthread_stdio_flags[i] =
+		    _thread_sys_fcntl(i,F_GETFL, NULL)) == -1) &&
+		    (errno != EBADF))
 			PANIC("Cannot get stdio flags");
 
 	/*
@@ -202,9 +195,8 @@ _thread_init(void)
 		/* Abort this application: */
 		PANIC("Cannot get kernel write pipe flags");
 	}
-	/* Initialize the ready queue: */
-	else if (_pq_init(&_readyq, PTHREAD_MIN_PRIORITY, PTHREAD_MAX_PRIORITY) 
-!= 0) {
+	/* Allocate and initialize the ready queue: */
+	else if (_pq_alloc(&_readyq, PTHREAD_MIN_PRIORITY, PTHREAD_MAX_PRIORITY) != 0) {
 		/* Abort this application: */
 		PANIC("Cannot allocate priority ready queue.");
 	}
@@ -217,23 +209,19 @@ _thread_init(void)
 		PANIC("Cannot allocate memory for initial thread");
 	} else {
 		/* Zero the global kernel thread structure: */
-		memset(_thread_kern_threadp, 0, sizeof(struct pthread));
-		_thread_kern_threadp->magic = PTHREAD_MAGIC;
+		memset(&_thread_kern_thread, 0, sizeof(struct pthread));
+		_thread_kern_thread.flags = PTHREAD_FLAGS_PRIVATE;
+		memset(_thread_initial, 0, sizeof(struct pthread));
 
-		/* Set the kernel's name for the debugger: */
-		pthread_set_name_np(_thread_kern_threadp, "kern");
-
-		/* The kernel thread is a library thread: */
-		_thread_kern_threadp->flags = PTHREAD_FLAGS_PRIVATE;
-
-		/* Initialize the waiting queue: */
+		/* Initialize the waiting and work queues: */
 		TAILQ_INIT(&_waitingq);
+		TAILQ_INIT(&_workq);
 
 		/* Initialize the scheduling switch hook routine: */
 		_sched_switch_hook = NULL;
 
-		/* Zero the initial thread: */
-		memset(_thread_initial, 0, sizeof(struct pthread));
+		/* Initialize the thread stack cache: */
+		SLIST_INIT(&_stackq);
 
 		/*
 		 * Write a magic value to the thread structure
@@ -250,33 +238,38 @@ _thread_init(void)
 		_thread_initial->state = PS_RUNNING;
 
 		/* Initialise the queue: */
-		_thread_queue_init(&(_thread_initial->join_queue));
+		TAILQ_INIT(&(_thread_initial->join_queue));
 
 		/* Initialize the owned mutex queue and count: */
 		TAILQ_INIT(&(_thread_initial->mutexq));
 		_thread_initial->priority_mutex_count = 0;
 
+		/* Give it a useful name */
+		pthread_set_name_np(_thread_initial, "main");
+
 		/* Initialise the rest of the fields: */
-		_thread_initial->sched_defer_count = 0;
-		_thread_initial->yield_on_sched_undefer = 0;
+		_thread_initial->poll_data.nfds = 0;
+		_thread_initial->poll_data.fds = NULL;
+		_thread_initial->sig_defer_count = 0;
+		_thread_initial->yield_on_sig_undefer = 0;
 		_thread_initial->specific_data = NULL;
 		_thread_initial->cleanup = NULL;
-		_thread_initial->queue = NULL;
-		_thread_initial->qnxt = NULL;
-		_thread_initial->nxt = NULL;
 		_thread_initial->flags = 0;
 		_thread_initial->error = 0;
 		_thread_initial->cancelstate = PTHREAD_CANCEL_ENABLE;
 		_thread_initial->canceltype = PTHREAD_CANCEL_DEFERRED;
-		pthread_set_name_np(_thread_initial, "init");
-		_SPINUNLOCK(&_thread_initial->lock);
-		_thread_link_list = _thread_initial;
+		_SPINLOCK_INIT(&_thread_initial->lock);
+		TAILQ_INIT(&_thread_list);
+		TAILQ_INSERT_HEAD(&_thread_list, _thread_initial, tle);
 		_thread_run = _thread_initial;
 
 		/* Initialise the global signal action structure: */
 		sigfillset(&act.sa_mask);
 		act.sa_handler = (void (*) ()) _thread_sig_handler;
 		act.sa_flags = 0;
+
+		/* Initialize signal handling: */
+		_thread_sig_init();
 
 		/* Enter a loop to get the existing signal status: */
 		for (i = 1; i < NSIG; i++) {
@@ -286,7 +279,7 @@ _thread_init(void)
 
 			/* Get the signal handler details: */
 			else if (_thread_sys_sigaction(i, NULL,
-			    &_thread_sigact[i - 1]) != 0) {
+						       &_thread_sigact[i - 1]) != 0) {
 				/*
 				 * Abort this process if signal
 				 * initialisation fails: 
@@ -309,6 +302,13 @@ _thread_init(void)
 			PANIC("Cannot initialise signal handler");
 		}
 
+		/* Get the kernel clockrate: */
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_CLOCKRATE;
+		len = sizeof (struct clockinfo);
+		if (sysctl(mib, 2, &clockinfo, &len, NULL, 0) == 0)
+			_clock_res_nsec = clockinfo.tick * 1000;
+
 		/* Get the table size: */
 		if ((_thread_dtablesize = getdtablesize()) < 0) {
 			/*
@@ -319,11 +319,22 @@ _thread_init(void)
 		}
 		/* Allocate memory for the file descriptor table: */
 		if ((_thread_fd_table = (struct fd_table_entry **) malloc(sizeof(struct fd_table_entry *) * _thread_dtablesize)) == NULL) {
+			/* Avoid accesses to file descriptor table on exit: */
+			_thread_dtablesize = 0;
+
 			/*
 			 * Cannot allocate memory for the file descriptor
 			 * table, so abort this process. 
 			 */
 			PANIC("Cannot allocate memory for file descriptor table");
+		}
+		/* Allocate memory for the pollfd table: */
+		if ((_thread_pfd_table = (struct pollfd *) malloc(sizeof(struct pollfd) * _thread_dtablesize)) == NULL) {
+			/*
+			 * Cannot allocate memory for the file descriptor
+			 * table, so abort this process. 
+			 */
+			PANIC("Cannot allocate memory for pollfd table");
 		} else {
 			/*
 			 * Enter a loop to initialise the file descriptor
@@ -333,13 +344,21 @@ _thread_init(void)
 				/* Initialise the file descriptor table: */
 				_thread_fd_table[i] = NULL;
 			}
+
+			/* Initialize stdio file descriptor table entries: */
+			for (i = 0; i < 3; i++) {
+				if ((_thread_fd_table_init(i) != 0) &&
+				    (errno != EBADF))
+					PANIC("Cannot initialize stdio file "
+					    "descriptor table entry");
+			}
 		}
 	}
 
 #ifdef GCC_2_8_MADE_THREAD_AWARE
 	/* Create the thread-specific data for the exception linked list. */
 	if(pthread_key_create(&except_head_key, NULL) != 0)
-        	PANIC("Failed to create thread specific execption head");
+		PANIC("Failed to create thread specific execption head");
 
 	/* Setup the gcc exception handler per thread. */
 	__set_dynamic_handler_allocator( dynamic_allocator_handler_fn );
@@ -352,10 +371,8 @@ _thread_init(void)
 
 	gettimeofday(&kern_inc_prio_time, NULL);
 
-	/* Pull in automatic thread unit. */
-	_thread_autoinit_dummy_decl = 1;
+	_thread_autoinit_dummy_decl = 0;
 
 	return;
 }
-
-#endif _THREAD_SAFE
+#endif

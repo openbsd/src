@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_mutex_protocol.c,v 1.1 1999/05/26 00:18:25 d Exp $	*/
+/*	$OpenBSD: uthread_mutex_protocol.c,v 1.2 1999/11/25 07:01:40 d Exp $	*/
 /*
  * Copyright (c) 1998 Daniel Eischen <eischen@vigrid.com>.
  * All rights reserved.
@@ -30,6 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ * $FreeBSD: uthread_mutex_protocol.c,v 1.3 1999/08/28 00:03:41 peter Exp $
  */
 #include <string.h>
 #include <stdlib.h>

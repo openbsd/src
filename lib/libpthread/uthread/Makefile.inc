@@ -1,5 +1,5 @@
-#	$Id: Makefile.inc,v 1.8 1999/06/15 00:07:39 d Exp $
-#	$OpenBSD: Makefile.inc,v 1.8 1999/06/15 00:07:39 d Exp $
+# $OpenBSD: Makefile.inc,v 1.9 1999/11/25 07:01:30 d Exp $
+# $FreeBSD: Makefile.inc,v 1.19 1999/08/28 00:03:19 peter Exp $
 
 # uthread sources
 .PATH: ${.CURDIR}/uthread
@@ -15,7 +15,6 @@ SRCS+= \
 	uthread_attr_getschedparam.c \
 	uthread_attr_getschedpolicy.c \
 	uthread_attr_getscope.c \
-	uthread_attr_setstackaddr.c \
 	uthread_attr_getstackaddr.c \
 	uthread_attr_getstacksize.c \
 	uthread_attr_setcreatesuspend_np.c \
@@ -28,7 +27,6 @@ SRCS+= \
 	uthread_attr_setstacksize.c \
 	uthread_autoinit.c \
 	uthread_bind.c \
-	uthread_fchflags.c \
 	uthread_cancel.c \
 	uthread_clean.c \
 	uthread_close.c \
@@ -63,7 +61,7 @@ SRCS+= \
 	uthread_getschedparam.c \
 	uthread_getsockname.c \
 	uthread_getsockopt.c \
-	uthread_info.c \
+	uthread_info_openbsd.c \
 	uthread_init.c \
 	uthread_ioctl.c \
 	uthread_join.c \
@@ -82,9 +80,8 @@ SRCS+= \
 	uthread_once.c \
 	uthread_open.c \
 	uthread_pipe.c \
-	uthread_priority_queue.c \
 	uthread_poll.c \
-	uthread_queue.c \
+	uthread_priority_queue.c \
 	uthread_read.c \
 	uthread_readv.c \
 	uthread_recvfrom.c \
@@ -116,6 +113,7 @@ SRCS+= \
 	uthread_socketpair.c \
 	uthread_spec.c \
 	uthread_spinlock.c \
+	uthread_stack.c \
 	uthread_suspend_np.c \
 	uthread_switch_np.c \
 	uthread_vfork.c \

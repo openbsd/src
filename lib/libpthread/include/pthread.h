@@ -30,13 +30,19 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
  *
- * $OpenBSD: pthread.h,v 1.8 1999/06/15 00:10:37 d Exp $
+ * $OpenBSD: pthread.h,v 1.9 1999/11/25 07:01:29 d Exp $
  *
+ * $FreeBSD: pthread.h,v 1.13 1999/07/31 08:36:07 rse Exp $
  */
 #ifndef _PTHREAD_H_
 #define _PTHREAD_H_
 
 #ifdef _POSIX_THREADS
+#ifdef notyet
+#warning -pthread option no longer needed - upgrade gcc
+#endif
+#undef _POSIX_THREADS
+#endif
 
 /*
  * Header files.
@@ -62,7 +68,7 @@
  * Note that those commented out are not currently supported by the
  * implementation.
  */
-
+#define _POSIX_THREADS
 #define _POSIX_THREAD_ATTR_STACKADDR
 #define _POSIX_THREAD_ATTR_STACKSIZE
 #define _POSIX_THREAD_PRIORITY_SCHEDULING
@@ -113,7 +119,6 @@ struct pthread_mutex_attr;
 struct pthread_once;
 struct pthread_rwlock;
 struct pthread_rwlockattr;
-struct sched_param;
 
 /*
  * Primitive system data type definitions required by P1003.1c.
@@ -209,7 +214,6 @@ int		pthread_attr_init __P((pthread_attr_t *));
 int		pthread_attr_setstacksize __P((pthread_attr_t *, size_t));
 int		pthread_attr_setstackaddr __P((pthread_attr_t *, void *));
 int		pthread_attr_setdetachstate __P((pthread_attr_t *, int));
-int		pthread_cancel __P((pthread_t));
 void		pthread_cleanup_pop __P((int execute));
 void		pthread_cleanup_push __P((void (*routine) (void *),
 			void *routine_arg));
@@ -252,7 +256,7 @@ int		pthread_mutex_lock __P((pthread_mutex_t *));
 int		pthread_mutex_trylock __P((pthread_mutex_t *));
 int		pthread_mutex_unlock __P((pthread_mutex_t *));
 int		pthread_once __P((pthread_once_t *,
-			void (*init_routine) (void)));
+			void (*) (void)));
 int		pthread_rwlock_destroy __P((pthread_rwlock_t *));
 int		pthread_rwlock_init __P((pthread_rwlock_t *,
 			const pthread_rwlockattr_t *));
@@ -268,12 +272,13 @@ int		pthread_rwlockattr_setpshared __P((pthread_rwlockattr_t *,
 			int *));
 int		pthread_rwlockattr_destroy __P((pthread_rwlockattr_t *));
 pthread_t	pthread_self __P((void));
-int		pthread_setcancelstate __P((int, int *));
-int		pthread_setcanceltype __P((int, int *));
 int		pthread_setspecific __P((pthread_key_t, const void *));
 int		pthread_sigmask __P((int, const sigset_t *, sigset_t *));
-void		pthread_testcancel __P((void));
 
+int		pthread_cancel __P((pthread_t));
+int		pthread_setcancelstate __P((int, int *));
+int		pthread_setcanceltype __P((int, int *));
+void		pthread_testcancel __P((void));
 
 int		pthread_getprio __P((pthread_t));
 int		pthread_setprio __P((pthread_t, int));
@@ -326,15 +331,13 @@ int		pthread_attr_setcleanup __P((pthread_attr_t *,
 			void (*routine) (void *), void *));
 
 
-#if 0
+#ifdef notyet
 /*
- * Single Unix Specification v2 (UNIX98) also wants these:
+ * Single Unix Specification v2 (UNIX98) defines these:
  */
-
 #define PTHREAD_PRIO_INHERIT
 #define PTHREAD_PRIO_NONE
 #define PTHREAD_PRIO_PROTECT
-
 int		pthread_attr_getguardsize __P((const pthread_attr_t *, 
 			size_t *));
 int		pthread_attr_setguardsize __P((const pthread_attr_t *, 
@@ -343,12 +346,8 @@ int		pthread_getconcurrency __P((void));
 int		pthread_mutexattr_gettype __P((const pthread_mutexattr_t *,
 			int *));
 int		pthread_setconcurrency __P((int));
-
 #endif	/* susv2 */
 
 __END_DECLS
 
-#else /* ! _POSIX_THREADS */
-#warning "included <pthread.h> without -pthread compiler option"
-#endif /* ! _POSIX_THREADS */
 #endif /* _PTHREAD_H_ */

@@ -1,138 +1,97 @@
+/*	$OpenBSD: uthread_poll.c,v 1.3 1999/11/25 07:01:41 d Exp $	*/
 /*
- * David Leonard <d@openbsd.org>, 1999. Public Domain.
+ * Copyright (c) 1999 Daniel Eischen <eischen@vigrid.com>
+ * All rights reserved.
  *
- * $OpenBSD: uthread_poll.c,v 1.2 1999/01/08 05:09:22 d Exp $
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Daniel Eischen.
+ * 4. Neither the name of the author nor the names of any co-contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY DANIEL EISCHEN AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * $FreeBSD: uthread_poll.c,v 1.4 1999/08/30 00:02:08 deischen Exp $
  */
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+#include <poll.h>
 #include <sys/types.h>
 #include <sys/time.h>
-#include <poll.h>
-#include <stdlib.h>
+#include <sys/fcntl.h>
 #ifdef _THREAD_SAFE
 #include <pthread.h>
 #include "pthread_private.h"
 
-static void
-poll_helper(nfds, fds, data)
-	int nfds;
-	struct pollfd *fds;
-	struct pthread_select_data *data;
+
+int 
+poll(struct pollfd fds[], int nfds, int timeout)
 {
-	int maxfd;
-	int i;
-	int event;
-	int fd;
+	struct timespec	ts;
+	int		numfds = nfds;
+	int             i, ret = 0, found = 0;
+	struct pthread_poll_data data;
 
-	FD_ZERO(&data->readfds);
-	FD_ZERO(&data->writefds);
-	FD_ZERO(&data->exceptfds);
-
-	maxfd = -1;
-	for (i = 0; i < nfds; i++) {
-		event = fds[i].events;
-		fd = fds[i].fd;
-
-		if (event & POLLIN)
-			FD_SET(fd, &data->readfds);
-		if (event & POLLOUT)
-			FD_SET(fd, &data->writefds);
-		if (fd > maxfd)
-			maxfd = fd;
+	if (numfds > _thread_dtablesize) {
+		numfds = _thread_dtablesize;
 	}
-	data->nfds = maxfd + 1;
-}
-
-int
-poll(fds, nfds, timeout)
-	struct pollfd fds[];
-	int nfds;  
-	int timeout;  
-{
-	fd_set rfds, wfds, rwfds;
-	int i;
-	struct timespec ts;
-	int fd, event;
-	struct pthread_select_data data;
-	struct timeval zero_timeout = { 0, 0 };
-	int ret;
-
-	if (timeout < 0) {
-		/* Wait forever: */
+	/* Check if a timeout was specified: */
+	if (timeout == -1) {
+		/* Wait for ever: */
 		_thread_kern_set_timeout(NULL);
-	} else {
+	} else if (timeout > 0) {
+		/* Convert the timeout in msec to a timespec: */
 		ts.tv_sec = timeout / 1000;
-		ts.tv_nsec = (timeout % 1000) * 1000000L;
+		ts.tv_nsec = (timeout % 1000) * 1000;
+
+		/* Set the wake up time: */
 		_thread_kern_set_timeout(&ts);
+	} else if (timeout < 0) {
+		/* a timeout less than zero but not == -1 is invalid */
+		errno = EINVAL;
+		return (-1);
 	}
 
-	/* Obtain locks needed: */
-	ret = 0;
-	FD_ZERO(&rfds);
-	FD_ZERO(&wfds);
-	FD_ZERO(&rwfds);
-	for (i = 0; i < nfds; i++) {
-		event = fds[i].events;
-		fd = fds[i].fd;
+	if (((ret = _thread_sys_poll(fds, numfds, 0)) == 0) && (timeout != 0)) {
+		data.nfds = numfds;
+		data.fds = fds;
 
-		if (event & (POLLIN|POLLOUT))
-			if (!FD_ISSET(fd, &rwfds) && !FD_ISSET(fd, &rfds) &&
-			    !FD_ISSET(fd, &wfds)) {
-				if ((ret = _FD_LOCK(fd, FD_RDWR, NULL)) != 0)
-					break;
-				FD_SET(fd, &rwfds);
-				continue;
-			}
-
-		if (event & POLLIN)
-			if (!FD_ISSET(fd, &rwfds) && !FD_ISSET(fd, &rfds)) {
-				if ((ret = _FD_LOCK(fd, FD_READ, NULL)) != 0)
-					break;
-				FD_SET(fd, &rfds);
-			}
-
-		if (event & POLLOUT)
-			if (!FD_ISSET(fd, &rwfds) && !FD_ISSET(fd, &wfds)) {
-				if ((ret = _FD_LOCK(fd, FD_WRITE, NULL)) != 0) 
-					break;
-				FD_SET(fd, &wfds);
-			}
-	}
-
-	if (ret == 0) {
-		poll_helper(nfds, fds, &data);
-		ret = _thread_sys_select(data.nfds, &data.readfds, 
-		    &data.writefds, NULL, &zero_timeout);
-		if (ret == 0) {
-			poll_helper(nfds, fds, &data);
-			_thread_run->data.select_data = &data;
-			_thread_run->interrupted = 0;
-			_thread_kern_sched_state(PS_SELECT_WAIT, __FILE__, __LINE__);
-			if (_thread_run->interrupted) {
-				errno = EINTR;
-				ret = -1;
-			}
+		/*
+		 * Clear revents in case of a timeout which leaves fds
+		 * unchanged:
+		 */
+		for (i = 0; i < numfds; i++) {
+			fds[i].revents = 0;
 		}
 
-		if (ret >= 0)
-			ret = _thread_sys_poll(fds, nfds, 0);
-	}
-
-	/* Clean up the locks: */
-	for (i = 0; i < nfds; i++) {
-		fd = fds[i].fd;
-		if (FD_ISSET(fd, &rwfds)) {
-			_FD_UNLOCK(fd, FD_RDWR);
-			FD_CLR(fd, &rwfds);
-		}
-		if (FD_ISSET(fd, &rfds)) {
-			_FD_UNLOCK(fd, FD_READ);
-			FD_CLR(fd, &rfds);
-		}
-		if (FD_ISSET(fd, &wfds)) {
-			_FD_UNLOCK(fd, FD_WRITE);
-			FD_CLR(fd, &wfds);
+		_thread_run->data.poll_data = &data;
+		_thread_run->interrupted = 0;
+		_thread_kern_sched_state(PS_POLL_WAIT, __FILE__, __LINE__);
+		if (_thread_run->interrupted) {
+			errno = EINTR;
+			ret = -1;
+		} else {
+			ret = data.nfds;
 		}
 	}
 

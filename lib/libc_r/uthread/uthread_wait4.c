@@ -1,3 +1,4 @@
+/*	$OpenBSD: uthread_wait4.c,v 1.5 1999/11/25 07:01:47 d Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -20,7 +21,7 @@
  * THIS SOFTWARE IS PROVIDED BY JOHN BIRRELL AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -29,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_wait4.c,v 1.4 1999/06/09 07:16:17 d Exp $
+ * $FreeBSD: uthread_wait4.c,v 1.5 1999/08/28 00:03:53 peter Exp $
  */
 #include <errno.h>
 #include <sys/wait.h>
@@ -44,6 +45,8 @@ wait4(pid_t pid, int *istat, int options, struct rusage * rusage)
 
 	/* This is a cancellation point: */
 	_thread_enter_cancellation_point();
+
+	_thread_kern_sig_defer();
 
 	/* Perform a non-blocking wait4 syscall: */
 	while ((ret = _thread_sys_wait4(pid, istat, options | WNOHANG, rusage)) == 0 && (options & WNOHANG) == 0) {
@@ -60,6 +63,8 @@ wait4(pid_t pid, int *istat, int options, struct rusage * rusage)
 			break;
 		}
 	}
+
+	_thread_kern_sig_undefer();
 
 	/* No longer in a cancellation point: */
 	_thread_leave_cancellation_point();

@@ -1,7 +1,7 @@
 /*
  * OpenBSD/mips machine-dependent thread macros
  *
- * $OpenBSD: uthread_machdep.h,v 1.3 1999/01/17 23:49:49 d Exp $
+ * $OpenBSD: uthread_machdep.h,v 1.4 1999/11/25 07:01:28 d Exp $
  */
 
 #include <machine/regnum.h>
@@ -23,8 +23,8 @@
 	    j->sc_regs[RA] = j->sc_pc; /* for gdb */		\
 	    j->sc_pc = (int)entry;				\
 	    /* stack */						\
-	    j->sc_regs[SP] = (int) (thr)->stack			\
-				+ (pattr)->stacksize_attr	\
+	    j->sc_regs[SP] = (int) (thr)->stack->base		\
+				+ (thr)->stack->size		\
 				- sizeof(double);		\
 	}
 

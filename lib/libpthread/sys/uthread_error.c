@@ -1,3 +1,4 @@
+/*	$OpenBSD: uthread_error.c,v 1.2 1999/11/25 07:01:30 d Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * Copyright (c) 1994 by Chris Provenzano, proven@mit.edu
@@ -31,6 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ * $FreeBSD: uthread_error.c,v 1.2 1999/08/05 12:14:13 deischen Exp $
  */
 #ifdef _THREAD_SAFE
 #include <pthread.h>

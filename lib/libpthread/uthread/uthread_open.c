@@ -1,3 +1,4 @@
+/*	$OpenBSD: uthread_open.c,v 1.5 1999/11/25 07:01:41 d Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -20,7 +21,7 @@
  * THIS SOFTWARE IS PROVIDED BY JOHN BIRRELL AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -29,8 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: uthread_open.c,v 1.4 1998/04/29 09:59:07 jb Exp $
- * $OpenBSD: uthread_open.c,v 1.4 1999/06/09 07:16:17 d Exp $
+ * $FreeBSD: uthread_open.c,v 1.6 1999/08/28 00:03:42 peter Exp $
  *
  */
 #include <stdarg.h>
@@ -47,6 +47,7 @@ open(const char *path, int flags,...)
 {
 	int             fd;
 	int             mode = 0;
+	int             status;
 	va_list         ap;
 
 	/* This is a cancellation point: */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_cond.c,v 1.7 1999/06/09 07:06:54 d Exp $	*/
+/*	$OpenBSD: uthread_cond.c,v 1.8 1999/11/25 07:01:33 d Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -30,6 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ * $FreeBSD: uthread_cond.c,v 1.18 1999/08/30 00:02:07 deischen Exp $
  */
 #include <stdlib.h>
 #include <errno.h>
@@ -45,6 +46,28 @@ static inline pthread_t	cond_queue_deq(pthread_cond_t);
 static inline void	cond_queue_remove(pthread_cond_t, pthread_t);
 static inline void	cond_queue_enq(pthread_cond_t, pthread_t);
 
+/* Reinitialize a condition variable to defaults. */
+int
+_cond_reinit(pthread_cond_t * cond)
+{
+	int ret = 0;
+
+	if (cond == NULL)
+		ret = EINVAL;
+	else if (*cond == NULL)
+		ret = pthread_cond_init(cond, NULL);
+	else {
+		/*
+		 * Initialize the condition variable structure:
+		 */
+		TAILQ_INIT(&(*cond)->c_queue);
+		(*cond)->c_flags = COND_FLAGS_INITED;
+		(*cond)->c_type = COND_TYPE_FAST;
+		(*cond)->c_mutex = NULL;
+		memset(&(*cond)->lock, 0, sizeof((*cond)->lock));
+	}
+	return (ret);
+}
 
 int
 pthread_cond_init(pthread_cond_t * cond, const pthread_condattr_t * cond_attr)
@@ -96,7 +119,7 @@ pthread_cond_init(pthread_cond_t * cond, const pthread_condattr_t * cond_attr)
 				pcond->c_flags |= COND_FLAGS_INITED;
 				pcond->c_type = type;
 				pcond->c_mutex = NULL;
-				_SPINUNLOCK(&pcond->lock);
+				_SPINLOCK_INIT(&pcond->lock);
 				*cond = pcond;
 			}
 		}
@@ -136,6 +159,7 @@ int
 pthread_cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex)
 {
 	int             rval = 0;
+	int             status;
 
 	/* This is a cancellation point: */
 	_thread_enter_cancellation_point();
@@ -149,6 +173,9 @@ pthread_cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex)
 	 */
 	else if (*cond != NULL ||
 	    (rval = pthread_cond_init(cond,NULL)) == 0) {
+		/* Lock the condition variable structure: */
+		_SPINLOCK(&(*cond)->lock);
+
 		/*
 		 * If the condvar was statically allocated, properly
 		 * initialize the tail queue.
@@ -157,9 +184,6 @@ pthread_cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex)
 			TAILQ_INIT(&(*cond)->c_queue);
 			(*cond)->c_flags |= COND_FLAGS_INITED;
 		}
-
-		/* Lock the condition variable structure: */
-		_SPINLOCK(&(*cond)->lock);
 
 		/* Process according to condition variable type: */
 		switch ((*cond)->c_type) {
@@ -242,11 +266,16 @@ pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex,
 		       const struct timespec * abstime)
 {
 	int             rval = 0;
+	int             status;
 
 	/* This is a cancellation point: */
 	_thread_enter_cancellation_point();
 
-	if (cond == NULL)
+	if (cond == NULL || abstime == NULL)
+		rval = EINVAL;
+
+	else if (abstime->tv_sec < 0 || 
+		abstime->tv_nsec < 0 || abstime->tv_nsec >= 1000000000)
 		rval = EINVAL;
 
 	/*
@@ -255,6 +284,9 @@ pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex,
 	 */
 	else if (*cond != NULL ||
 	    (rval = pthread_cond_init(cond,NULL)) == 0) {
+		/* Lock the condition variable structure: */
+		_SPINLOCK(&(*cond)->lock);
+
 		/*
 		 * If the condvar was statically allocated, properly
 		 * initialize the tail queue.
@@ -263,10 +295,6 @@ pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex,
 			TAILQ_INIT(&(*cond)->c_queue);
 			(*cond)->c_flags |= COND_FLAGS_INITED;
 		}
-
-
-		/* Lock the condition variable structure: */
-		_SPINLOCK(&(*cond)->lock);
 
 		/* Process according to condition variable type: */
 		switch ((*cond)->c_type) {
@@ -367,6 +395,7 @@ pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex,
 			rval = EINVAL;
 			break;
 		}
+
 	}
 
 	/* No longer in a cancellation point: */
@@ -385,6 +414,12 @@ pthread_cond_signal(pthread_cond_t * cond)
 	if (cond == NULL || *cond == NULL)
 		rval = EINVAL;
 	else {
+		/*
+		 * Defer signals to protect the scheduling queues
+		 * from access by the signal handler:
+		 */
+		_thread_kern_sig_defer();
+
 		/* Lock the condition variable structure: */
 		_SPINLOCK(&(*cond)->lock);
 
@@ -419,6 +454,12 @@ pthread_cond_signal(pthread_cond_t * cond)
 
 		/* Unlock the condition variable structure: */
 		_SPINUNLOCK(&(*cond)->lock);
+
+		/*
+		 * Undefer and handle pending signals, yielding if
+		 * necessary:
+		 */
+		_thread_kern_sig_undefer();
 	}
 
 	/* Return the completion status: */
@@ -435,14 +476,10 @@ pthread_cond_broadcast(pthread_cond_t * cond)
 		rval = EINVAL;
 	else {
 		/*
-		 * Guard against preemption by a scheduling signal.
-		 * A change of thread state modifies the waiting
-		 * and priority queues.  In addition, we must assure
-		 * that all threads currently waiting on the condition
-		 * variable are signaled and are not timedout by a
-		 * scheduling signal that causes a preemption.
+		 * Defer signals to protect the scheduling queues
+		 * from access by the signal handler:
 		 */
-		_thread_kern_sched_defer();
+		_thread_kern_sig_defer();
 
 		/* Lock the condition variable structure: */
 		_SPINLOCK(&(*cond)->lock);
@@ -478,9 +515,11 @@ pthread_cond_broadcast(pthread_cond_t * cond)
 		/* Unlock the condition variable structure: */
 		_SPINUNLOCK(&(*cond)->lock);
 
-		/* Reenable preemption and yield if necessary.
+		/*
+		 * Undefer and handle pending signals, yielding if
+		 * necessary:
 		 */
-		_thread_kern_sched_undefer();
+		_thread_kern_sig_undefer();
 	}
 
 	/* Return the completion status: */
@@ -498,7 +537,7 @@ cond_queue_deq(pthread_cond_t cond)
 
 	if ((pthread = TAILQ_FIRST(&cond->c_queue)) != NULL) {
 		TAILQ_REMOVE(&cond->c_queue, pthread, qe);
-		pthread->flags &= ~PTHREAD_FLAGS_QUEUED;
+		pthread->flags &= ~PTHREAD_FLAGS_IN_CONDQ;
 	}
 
 	return(pthread);
@@ -517,9 +556,9 @@ cond_queue_remove(pthread_cond_t cond, pthread_t pthread)
 	 * guard against removing the thread from the queue if
 	 * it isn't in the queue.
 	 */
-	if (pthread->flags & PTHREAD_FLAGS_QUEUED) {
+	if (pthread->flags & PTHREAD_FLAGS_IN_CONDQ) {
 		TAILQ_REMOVE(&cond->c_queue, pthread, qe);
-		pthread->flags &= ~PTHREAD_FLAGS_QUEUED;
+		pthread->flags &= ~PTHREAD_FLAGS_IN_CONDQ;
 	}
 }
 
@@ -545,6 +584,6 @@ cond_queue_enq(pthread_cond_t cond, pthread_t pthread)
 			tid = TAILQ_NEXT(tid, qe);
 		TAILQ_INSERT_BEFORE(tid, pthread, qe);
 	}
-	pthread->flags |= PTHREAD_FLAGS_QUEUED;
+	pthread->flags |= PTHREAD_FLAGS_IN_CONDQ;
 }
 #endif

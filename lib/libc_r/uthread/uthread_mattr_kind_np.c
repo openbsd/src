@@ -1,3 +1,4 @@
+/*	$OpenBSD: uthread_mattr_kind_np.c,v 1.5 1999/11/25 07:01:38 d Exp $	*/
 /*
  * Copyright (c) 1996 Jeffrey Hsu <hsu@freebsd.org>.
  * All rights reserved.
@@ -20,7 +21,7 @@
  * THIS SOFTWARE IS PROVIDED BY JOHN BIRRELL AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -29,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_mattr_kind_np.c,v 1.4 1999/05/26 00:18:25 d Exp $
+ * $FreeBSD: uthread_mattr_kind_np.c,v 1.4 1999/08/28 00:03:39 peter Exp $
  */
 #include <errno.h>
 #ifdef _THREAD_SAFE
@@ -68,7 +69,8 @@ pthread_mutexattr_settype(pthread_mutexattr_t *attr, int type)
 {
 	int	ret;
 	if (attr == NULL || *attr == NULL || type >= MUTEX_TYPE_MAX) {
-		return EINVAL;
+		errno = EINVAL;
+		ret = -1;
 	} else {
 		(*attr)->m_type = type;
 		ret = 0;

@@ -1,7 +1,7 @@
 /*
  * David Leonard <d@openbsd.org>, 1999. Public Domain.
  *
- * $OpenBSD: uthread_msync.c,v 1.2 1999/06/09 07:16:17 d Exp $
+ * $OpenBSD: uthread_msync.c,v 1.3 1999/11/25 07:01:38 d Exp $
  */
 
 #include <sys/types.h>
@@ -17,13 +17,6 @@ msync(addr, len, flags)
 	int flags;
 {
 	int ret;
-
-	/*
-	 * XXX This is quite pointless unless we know how to get the
-	 * file descriptor associated with the memory, and lock it for
-	 * write. The only real use of this wrapper is to guarantee
-	 * a cancellation point, as per the standard. sigh.
-	 */
 
 	/* This is a cancellation point: */
 	_thread_enter_cancellation_point();

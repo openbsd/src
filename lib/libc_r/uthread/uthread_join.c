@@ -1,3 +1,4 @@
+/*	$OpenBSD: uthread_join.c,v 1.6 1999/11/25 07:01:37 d Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -20,7 +21,7 @@
  * THIS SOFTWARE IS PROVIDED BY JOHN BIRRELL AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -29,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_join.c,v 1.5 1999/06/09 07:16:17 d Exp $
+ * $FreeBSD: uthread_join.c,v 1.9 1999/08/28 00:03:37 peter Exp $
  */
 #include <errno.h>
 #ifdef _THREAD_SAFE
@@ -40,34 +41,26 @@ int
 pthread_join(pthread_t pthread, void **thread_return)
 {
 	int ret = 0;
-	pthread_t pthread1 = NULL;
 
-	/* This operation is a cancel point: */
+	/* This is a cancellation point: */
 	_thread_enter_cancellation_point();
 
 	/* Check if the caller has specified an invalid thread: */
-	if (pthread == NULL || pthread->magic != PTHREAD_MAGIC) {
+	if (pthread == NULL || pthread->magic != PTHREAD_MAGIC)
 		/* Invalid thread: */
-		_thread_leave_cancellation_point();
-		return(EINVAL);
-	}
+		ret = EINVAL;
 
 	/* Check if the caller has specified itself: */
-	if (pthread == _thread_run) {
+	else if (pthread == _thread_run)
 		/* Avoid a deadlock condition: */
-		_thread_leave_cancellation_point();
-		return(EDEADLK);
-	}
+		ret = EDEADLK;
 
 	/*
 	 * Find the thread in the list of active threads or in the
 	 * list of dead threads:
 	 */
-	if (_find_thread(pthread) == 0 ||
-	    _find_dead_thread(pthread) == 0)
-		pthread1  = pthread;
-
-	if (pthread1 == NULL)
+	else if (_find_thread(pthread) != 0 &&
+	    _find_dead_thread(pthread) != 0)
 		/* Return an error: */
 		ret = ESRCH;
 
@@ -79,7 +72,7 @@ pthread_join(pthread_t pthread, void **thread_return)
 	/* Check if the thread is not dead: */
 	else if (pthread->state != PS_DEAD) {
 		/* Add the running thread to the join queue: */
-		_thread_queue_enq(&(pthread->join_queue), _thread_run);
+		TAILQ_INSERT_TAIL(&(pthread->join_queue), _thread_run, qe);
 
 		/* Schedule the next thread: */
 		_thread_kern_sched_state(PS_JOIN, __FILE__, __LINE__);

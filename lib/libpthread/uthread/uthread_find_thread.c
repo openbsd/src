@@ -1,3 +1,4 @@
+/*	$OpenBSD: uthread_find_thread.c,v 1.4 1999/11/25 07:01:35 d Exp $	*/
 /*
  * Copyright (c) 1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -20,7 +21,7 @@
  * THIS SOFTWARE IS PROVIDED BY JOHN BIRRELL AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -29,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_find_thread.c,v 1.3 1999/01/06 05:29:23 d Exp $
+ * $FreeBSD: uthread_find_thread.c,v 1.5 1999/08/28 00:03:32 peter Exp $
  */
 #include <errno.h>
 #ifdef _THREAD_SAFE
@@ -47,20 +48,20 @@ _find_thread(pthread_t pthread)
 		/* Invalid thread: */
 		return(EINVAL);
 
-	/* Lock the thread list: */
-	_lock_thread_list();
+	/*
+	 * Defer signals to protect the thread list from access
+	 * by the signal handler:
+	 */
+	_thread_kern_sig_defer();
 
-	/* Point to the first thread in the list: */
-	pthread1 = _thread_link_list;
-
-	/* Search for the thread to join to: */
-	while (pthread1 != NULL && pthread1 != pthread) {
-		/* Point to the next thread: */
-		pthread1 = pthread1->nxt;
+	/* Search for the specified thread: */
+	TAILQ_FOREACH(pthread1, &_thread_list, tle) {
+		if (pthread == pthread1)
+			break;
 	}
 
-	/* Unlock the thread list: */
-	_unlock_thread_list();
+	/* Undefer and handle pending signals, yielding if necessary: */
+	_thread_kern_sig_undefer();
 
 	/* Return zero if the thread exists: */
 	return ((pthread1 != NULL) ? 0:ESRCH);
@@ -84,13 +85,10 @@ _find_dead_thread(pthread_t pthread)
 	if (pthread_mutex_lock(&_gc_mutex) != 0)
 		PANIC("Cannot lock gc mutex");
 
-	/* Point to the first thread in the list: */
-	pthread1 = _thread_dead;
-
-	/* Search for the thread to join to: */
-	while (pthread1 != NULL && pthread1 != pthread) {
-		/* Point to the next thread: */
-		pthread1 = pthread1->nxt_dead;
+	/* Search for the specified thread: */
+	TAILQ_FOREACH(pthread1, &_dead_list, dle) {
+		if (pthread1 == pthread)
+			break;
 	}
 
 	/* Unlock the garbage collector mutex: */

@@ -1,3 +1,4 @@
+/*	$OpenBSD: uthread_exit.c,v 1.10 1999/11/25 07:01:34 d Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -20,7 +21,7 @@
  * THIS SOFTWARE IS PROVIDED BY JOHN BIRRELL AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -29,14 +30,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_exit.c,v 1.9 1999/06/14 23:23:40 d Exp $
+ * $FreeBSD: uthread_exit.c,v 1.12 1999/08/30 15:45:42 dt Exp $
  */
 #include <errno.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
 #ifdef _THREAD_SAFE
 #include <pthread.h>
 #include "pthread_private.h"
@@ -77,31 +76,21 @@ void _exit(int status)
 	_thread_sys__exit(status);
 }
 
-/*
- * Append a small number onto the end of a string.
- * This avoids the need to use sprintf, which is unsafe sometimes.
- */
 static void
-numlcat(char *s, int num, size_t size)
+numlcat(char *s, int l, size_t sz)
 {
-	int i;
-	char digit[7];
+	char digit[2];
 
-	if (num<0) {
-		num = -num;
-		strlcat(s, "-", size);
+	/* Inefficient. */
+	if (l < 0) {
+		l = -l;
+		strlcat(s, "-", sz);
 	}
-	digit[sizeof digit - 1] = '\0';
-	for (i = sizeof digit - 2; i >= 0; i--) {
-		digit[i] = '0' + (num % 10);
-		num /= 10;
-		if (num == 0)
-			break;
-	}
-	if (i<0)
-		strlcat(s, "inf", size);
-	else
-		strlcat(s, &digit[i], size);
+	if (l >= 10)
+		numlcat(s, l / 10, sz);
+	digit[0] = "0123456789"[l % 10];
+	digit[1] = '\0';
+	strlcat(s, digit, sz);
 }
 
 void
@@ -118,30 +107,36 @@ _thread_exit(const char *fname, int lineno, const char *string)
 	strlcat(s, fname, sizeof s);
 	strlcat(s, " (errno = ", sizeof s);
 	numlcat(s, errno, sizeof s);
-	strlcat(s, ", pid = ", sizeof s);
-	numlcat(s, _thread_sys_getpid(), sizeof s);
 	strlcat(s, ")\n", sizeof s);
 
 	/* Write the string to the standard error file descriptor: */
 	_thread_sys_write(2, s, strlen(s));
 
-	/* Write a dump of the current thread status: */
-	_thread_dump_info();
-
-	/* Try to dump a core file: */
+	/* Force this process to exit: */
+	/* XXX - Do we want abort to be conditional on _PTHREADS_INVARIANTS? */
+#if defined(_PTHREADS_INVARIANTS)
 	abort();
+#else
+	_exit(1);
+#endif
 }
 
 void
 pthread_exit(void *status)
 {
+	int             sig;
+	long            l;
 	pthread_t       pthread;
 
 	/* Check if this thread is already in the process of exiting: */
 	if ((_thread_run->flags & PTHREAD_EXITING) != 0) {
-		char msg[128];
-		snprintf(msg,sizeof msg,"Thread %p has called pthread_exit() from a destructor. POSIX 1003.1 1996 s16.2.5.2 does not allow this!",_thread_run);
-		PANIC(msg);
+		PANIC("Thread has called pthread_exit() from a destructor. POSIX 1003.1 1996 s16.2.5.2 does not allow this!");
+	}
+
+	/* Free thread-specific poll_data structure, if allocated */
+	if (_thread_run->poll_data.fds != NULL) {
+		free(_thread_run->poll_data.fds);
+		_thread_run->poll_data.fds = NULL;
 	}
 
 	/* Flag this thread as exiting: */
@@ -164,22 +159,24 @@ pthread_exit(void *status)
 	}
 
 	/*
-	 * Guard against preemption by a scheduling signal.  A change of
-	 * thread state modifies the waiting and priority queues.
+	 * Defer signals to protect the scheduling queues from access
+	 * by the signal handler:
 	 */
-	_thread_kern_sched_defer();
+	_thread_kern_sig_defer();
 
 	/* Check if there are any threads joined to this one: */
-	while ((pthread = _thread_queue_deq(&(_thread_run->join_queue))) != NULL) {
+	while ((pthread = TAILQ_FIRST(&(_thread_run->join_queue))) != NULL) {
+		/* Remove the thread from the queue: */
+		TAILQ_REMOVE(&_thread_run->join_queue, pthread, qe);
+
 		/* Wake the joined thread and let it detach this thread: */
 		PTHREAD_NEW_STATE(pthread,PS_RUNNING);
 	}
 
 	/*
-	 * Reenable preemption and yield if a scheduling signal
-	 * occurred while in the critical region.
+	 * Undefer and handle pending signals, yielding if necessary:
 	 */
-	_thread_kern_sched_undefer();
+	_thread_kern_sig_undefer();
 
 	/*
 	 * Lock the garbage collector mutex to ensure that the garbage
@@ -189,8 +186,21 @@ pthread_exit(void *status)
 		PANIC("Cannot lock gc mutex");
 
 	/* Add this thread to the list of dead threads. */
-	_thread_run->nxt_dead = _thread_dead;
-	_thread_dead = _thread_run;
+	TAILQ_INSERT_HEAD(&_dead_list, _thread_run, dle);
+
+	/*
+	 * Defer signals to protect the scheduling queues from access
+	 * by the signal handler:
+	 */
+	_thread_kern_sig_defer();
+
+	/* Remove this thread from the thread list: */
+	TAILQ_REMOVE(&_thread_list, _thread_run, tle);
+
+	/*
+	 * Undefer and handle pending signals, yielding if necessary:
+	 */
+	_thread_kern_sig_undefer();
 
 	/*
 	 * Signal the garbage collector thread that there is something

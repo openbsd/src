@@ -1,3 +1,4 @@
+/*	$OpenBSD: uthread_file.c,v 1.4 1999/11/25 07:01:34 d Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -20,7 +21,7 @@
  * THIS SOFTWARE IS PROVIDED BY JOHN BIRRELL AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -29,8 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: uthread_file.c,v 1.6 1998/09/09 16:50:33 dt Exp $
- * $OpenBSD: uthread_file.c,v 1.3 1998/12/23 22:44:39 d Exp $
+ * $FreeBSD: uthread_file.c,v 1.9 1999/08/28 00:03:32 peter Exp $
  *
  * POSIX stdio FILE locking functions. These assume that the locking
  * is only required at FILE structure level, not at file descriptor
@@ -44,6 +44,13 @@
 #ifdef _THREAD_SAFE
 #include <pthread.h>
 #include "pthread_private.h"
+
+/*
+ * Weak symbols for externally visible functions in this file:
+ */
+#pragma	weak	flockfile=_flockfile
+#pragma	weak	ftrylockfile=_ftrylockfile
+#pragma	weak	funlockfile=_funlockfile
 
 /*
  * The FILE lock structure. The FILE *fp is locked if the owner is
@@ -237,14 +244,14 @@ _flockfile_debug(FILE * fp, const char *fname, int lineno)
 }
 
 void
-flockfile(FILE * fp)
+_flockfile(FILE * fp)
 {
 	_flockfile_debug(fp, "?", 1);
 	return;
 }
 
 int
-ftrylockfile(FILE * fp)
+_ftrylockfile(FILE * fp)
 {
 	int	ret = -1;
 	int	idx = file_idx(fp);
@@ -254,15 +261,6 @@ ftrylockfile(FILE * fp)
 	if (fp->_file >= 0) {
 		/* Lock the hash table: */
 		_SPINLOCK(&hash_lock);
-
-		/* Check if the static array has not been initialised: */
-		if (!init_done) {
-			/* Initialise the global array: */
-			memset(flh,0,sizeof(flh));
-
-			/* Flag the initialisation as complete: */
-			init_done = 1;
-		}
 
 		/* Get a pointer to any existing lock for the file: */
 		if ((p = find_lock(idx, fp)) == NULL) {
@@ -305,13 +303,20 @@ ftrylockfile(FILE * fp)
 }
 
 void 
-funlockfile(FILE * fp)
+_funlockfile(FILE * fp)
 {
+	int	status;
 	int	idx = file_idx(fp);
 	struct	file_lock	*p;
 
 	/* Check if this is a real file: */
 	if (fp->_file >= 0) {
+		/*
+		 * Defer signals to protect the scheduling queues from
+		 * access by the signal handler:
+		 */
+		_thread_kern_sig_defer();
+
 		/* Lock the hash table: */
 		_SPINLOCK(&hash_lock);
 
@@ -319,7 +324,7 @@ funlockfile(FILE * fp)
 		 * Get a pointer to the lock for the file and check that
 		 * the running thread is the one with the lock:
 		 */
-		if (init_done && (p = find_lock(idx, fp)) != NULL &&
+		if ((p = find_lock(idx, fp)) != NULL &&
 		    p->owner == _thread_run) {
 			/*
 			 * Check if this thread has locked the FILE
@@ -358,6 +363,12 @@ funlockfile(FILE * fp)
 
 		/* Unlock the hash table: */
 		_SPINUNLOCK(&hash_lock);
+
+		/*
+		 * Undefer and handle pending signals, yielding if
+		 * necessary:
+		 */
+		_thread_kern_sig_undefer();
 	}
 	return;
 }

@@ -1,3 +1,4 @@
+/*	$OpenBSD: uthread_close.c,v 1.6 1999/11/25 07:01:33 d Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -20,7 +21,7 @@
  * THIS SOFTWARE IS PROVIDED BY JOHN BIRRELL AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -29,8 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_close.c,v 1.5 1999/06/09 07:16:16 d Exp $
+ * $FreeBSD: uthread_close.c,v 1.7 1999/08/28 00:03:26 peter Exp $
  */
+#include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -44,16 +46,26 @@ close(int fd)
 {
 	int		flags;
 	int		ret;
+	int		status;
 	struct stat	sb;
+	struct fd_table_entry	*entry;
 
 	/* This is a cancelation point: */
 	_thread_enter_cancellation_point();
 
-	/* Lock the file descriptor while the file is closed: */
-	if ((ret = _FD_LOCK(fd, FD_RDWR, NULL)) == 0) {
-		/* Get file descriptor status. */
-		_thread_sys_fstat(fd, &sb);
-
+	if ((fd == _thread_kern_pipe[0]) || (fd == _thread_kern_pipe[1])) {
+		/*
+		 * Don't allow silly programs to close the kernel pipe.
+		 */
+		errno = EBADF;
+		ret = -1;
+	}
+	/*
+	 * Lock the file descriptor while the file is closed and get
+	 * the file descriptor status:
+	 */
+	else if (((ret = _FD_LOCK(fd, FD_RDWR, NULL)) == 0) &&
+	    ((ret = _thread_sys_fstat(fd, &sb)) == 0)) {
 		/*
 		 * Check if the file should be left as blocking.
 		 *
@@ -81,11 +93,14 @@ close(int fd)
 			_thread_sys_fcntl(fd, F_SETFL, flags & ~O_NONBLOCK);
 		}
 
+		/* XXX: Assumes well behaved threads. */
+		/* XXX: Defer real close to avoid race condition */
+		entry = _thread_fd_table[fd];
+		_thread_fd_table[fd] = NULL;
+		free(entry);
+
 		/* Close the file descriptor: */
 		ret = _thread_sys_close(fd);
-
-		free(_thread_fd_table[fd]);
-		_thread_fd_table[fd] = NULL;
 	}
 
 	/* No longer in a cancellation point: */

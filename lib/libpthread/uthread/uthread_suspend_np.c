@@ -1,3 +1,4 @@
+/*	$OpenBSD: uthread_suspend_np.c,v 1.4 1999/11/25 07:01:46 d Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -20,7 +21,7 @@
  * THIS SOFTWARE IS PROVIDED BY JOHN BIRRELL AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -29,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_suspend_np.c,v 1.3 1999/05/26 00:18:26 d Exp $
+ * $FreeBSD: uthread_suspend_np.c,v 1.7 1999/08/28 00:03:53 peter Exp $
  */
 #include <errno.h>
 #ifdef _THREAD_SAFE
@@ -53,20 +54,19 @@ pthread_suspend_np(pthread_t thread)
 		}
 
 		/*
-		 * Guard against preemption by a scheduling signal.
-		 * A change of thread state modifies the waiting
-		 * and priority queues.
+		 * Defer signals to protect the scheduling queues from
+		 * access by the signal handler:
 		 */
-		_thread_kern_sched_defer();
+		_thread_kern_sig_defer();
 
 		/* Suspend the thread. */
 		PTHREAD_NEW_STATE(thread,PS_SUSPENDED);
 
 		/*
-		 * Reenable preemption and yield if a scheduling signal
-		 * occurred while in the critical region.
+		 * Undefer and handle pending signals, yielding if
+		 * necessary:
 		 */
-		_thread_kern_sched_undefer();
+		_thread_kern_sig_undefer();
 	}
 	return(ret);
 }

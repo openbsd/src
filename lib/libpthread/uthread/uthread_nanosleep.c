@@ -1,3 +1,4 @@
+/*	$OpenBSD: uthread_nanosleep.c,v 1.5 1999/11/25 07:01:40 d Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -20,7 +21,7 @@
  * THIS SOFTWARE IS PROVIDED BY JOHN BIRRELL AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -29,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_nanosleep.c,v 1.4 1999/06/09 07:16:17 d Exp $
+ * $FreeBSD: uthread_nanosleep.c,v 1.10 1999/08/28 00:03:41 peter Exp $
  */
 #include <stdio.h>
 #include <errno.h>
@@ -42,9 +43,8 @@ nanosleep(const struct timespec * time_to_sleep,
 		  struct timespec * time_remaining)
 {
 	int             ret = 0;
-	struct timespec start_time;
-	struct timespec wakeup_time;
 	struct timespec current_time;
+	struct timespec current_time1;
 	struct timespec remaining_time;
 	struct timeval  tv;
 
@@ -52,20 +52,26 @@ nanosleep(const struct timespec * time_to_sleep,
 	_thread_enter_cancellation_point();
 
 	/* Check if the time to sleep is legal: */
-	if (time_to_sleep == NULL || time_to_sleep->tv_nsec < 0 || time_to_sleep->tv_nsec > 1000000000 || time_to_sleep->tv_sec < 0) {
+	if (time_to_sleep == NULL || time_to_sleep->tv_sec < 0 ||
+		time_to_sleep->tv_nsec < 0 || time_to_sleep->tv_nsec >= 1000000000) {
 		/* Return an EINVAL error : */
 		errno = EINVAL;
 		ret = -1;
 	} else {
 		/* Get the current time: */
 		gettimeofday(&tv, NULL);
-		TIMEVAL_TO_TIMESPEC(&tv, &start_time);
+		TIMEVAL_TO_TIMESPEC(&tv, &current_time);
 
 		/* Calculate the time for the current thread to wake up: */
-		timespecadd(time_to_sleep, &start_time, &wakeup_time);
+		_thread_run->wakeup_time.tv_sec = current_time.tv_sec + time_to_sleep->tv_sec;
+		_thread_run->wakeup_time.tv_nsec = current_time.tv_nsec + time_to_sleep->tv_nsec;
 
-		_thread_run->wakeup_time.tv_sec = wakeup_time.tv_sec;
-		_thread_run->wakeup_time.tv_nsec = wakeup_time.tv_nsec;
+		/* Check if the nanosecond field has overflowed: */
+		if (_thread_run->wakeup_time.tv_nsec >= 1000000000) {
+			/* Wrap the nanosecond field: */
+			_thread_run->wakeup_time.tv_sec += 1;
+			_thread_run->wakeup_time.tv_nsec -= 1000000000;
+		}
 		_thread_run->interrupted = 0;
 
 		/* Reschedule the current thread to sleep: */
@@ -73,15 +79,31 @@ nanosleep(const struct timespec * time_to_sleep,
 
 		/* Get the current time: */
 		gettimeofday(&tv, NULL);
-		TIMEVAL_TO_TIMESPEC(&tv, &current_time);
+		TIMEVAL_TO_TIMESPEC(&tv, &current_time1);
 
 		/* Calculate the remaining time to sleep: */
-		timespecsub(&wakeup_time, &current_time, &remaining_time);
+		remaining_time.tv_sec = time_to_sleep->tv_sec + current_time.tv_sec - current_time1.tv_sec;
+		remaining_time.tv_nsec = time_to_sleep->tv_nsec + current_time.tv_nsec - current_time1.tv_nsec;
+
+		/* Check if the nanosecond field has underflowed: */
+		if (remaining_time.tv_nsec < 0) {
+			/* Handle the underflow: */
+			remaining_time.tv_sec -= 1;
+			remaining_time.tv_nsec += 1000000000;
+		}
+
+		/* Check if the nanosecond field has overflowed: */
+		if (remaining_time.tv_nsec >= 1000000000) {
+			/* Handle the overflow: */
+			remaining_time.tv_sec += 1;
+			remaining_time.tv_nsec -= 1000000000;
+		}
 
 		/* Check if the sleep was longer than the required time: */
 		if (remaining_time.tv_sec < 0) {
 			/* Reset the time left: */
-			timespecclear(&remaining_time);
+			remaining_time.tv_sec = 0;
+			remaining_time.tv_nsec = 0;
 		}
 
 		/* Check if the time remaining is to be returned: */

@@ -1,3 +1,4 @@
+/*	$OpenBSD: uthread_read.c,v 1.5 1999/11/25 07:01:41 d Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -20,7 +21,7 @@
  * THIS SOFTWARE IS PROVIDED BY JOHN BIRRELL AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -29,8 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: uthread_read.c,v 1.6 1998/06/10 22:28:43 jb Exp $
- * $OpenBSD: uthread_read.c,v 1.4 1999/06/09 07:16:17 d Exp $
+ * $FreeBSD: uthread_read.c,v 1.8 1999/08/28 00:03:43 peter Exp $
  *
  */
 #include <sys/types.h>
@@ -52,14 +52,11 @@ read(int fd, void *buf, size_t nbytes)
 	_thread_enter_cancellation_point();
 
 	/* POSIX says to do just this: */
-	if (nbytes == 0) {
-		/* No longer in a cancellation point: */
-		_thread_leave_cancellation_point();
-		return (0);
-	}
+	if (nbytes == 0)
+		ret = 0;
 
 	/* Lock the file descriptor for read: */
-	if ((ret = _FD_LOCK(fd, FD_READ, NULL)) == 0) {
+	else if ((ret = _FD_LOCK(fd, FD_READ, NULL)) == 0) {
 		/* Get the read/write mode type: */
 		type = _thread_fd_table[fd]->flags & O_ACCMODE;
 
@@ -67,14 +64,11 @@ read(int fd, void *buf, size_t nbytes)
 		if (type != O_RDONLY && type != O_RDWR) {
 			/* File is not open for read: */
 			errno = EBADF;
-			_FD_UNLOCK(fd, FD_READ);
-			/* No longer in a cancellation point: */
-			_thread_leave_cancellation_point();
-			return (-1);
+			ret = -1;
 		}
 
 		/* Perform a non-blocking read syscall: */
-		while ((ret = _thread_sys_read(fd, buf, nbytes)) < 0) {
+		else while ((ret = _thread_sys_read(fd, buf, nbytes)) < 0) {
 			if ((_thread_fd_table[fd]->flags & O_NONBLOCK) == 0 &&
 			    (errno == EWOULDBLOCK || errno == EAGAIN)) {
 				_thread_run->data.fd.fd = fd;
@@ -101,8 +95,10 @@ read(int fd, void *buf, size_t nbytes)
 		}
 		_FD_UNLOCK(fd, FD_READ);
 	}
+
 	/* No longer in a cancellation point: */
 	_thread_leave_cancellation_point();
+
 	return (ret);
 }
 #endif

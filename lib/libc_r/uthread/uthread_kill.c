@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_kill.c,v 1.6 1999/05/26 00:18:24 d Exp $	*/
+/*	$OpenBSD: uthread_kill.c,v 1.7 1999/11/25 07:01:37 d Exp $	*/
 /*
  * Copyright (c) 1997 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -21,7 +21,7 @@
  * THIS SOFTWARE IS PROVIDED BY JOHN BIRRELL AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -30,6 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ * $FreeBSD: uthread_kill.c,v 1.9 1999/08/28 00:03:38 peter Exp $
  */
 #include <errno.h>
 #include <signal.h>
@@ -47,18 +48,18 @@ pthread_kill(pthread_t pthread, int sig)
 		/* Invalid signal: */
 		ret = EINVAL;
 
-	/* Ignored signals get dropped on the floor. */
-	else if (_thread_sigact[sig - 1].sa_handler == SIG_IGN)
-		ret = 0;
-
-	/* Find the thread in the list of active threads: */
-	else if ((ret = _find_thread(pthread)) == 0) {
+	/*
+	 * Ensure the thread is in the list of active threads, and the
+	 * signal is valid (signal 0 specifies error checking only) and
+	 * not being ignored:
+	 */
+	else if (((ret = _find_thread(pthread)) == 0) && (sig > 0) &&
+	    (_thread_sigact[sig - 1].sa_handler != SIG_IGN)) {
 		/*
-		 * Guard against preemption by a scheduling signal.
-		 * A change of thread state modifies the waiting
-		 * and priority queues.
+		 * Defer signals to protect the scheduling queues from
+		 * access by the signal handler:
 		 */
-		_thread_kern_sched_defer();
+		_thread_kern_sig_defer();
 
 		switch (pthread->state) {
 		case PS_SIGSUSPEND:
@@ -91,14 +92,18 @@ pthread_kill(pthread_t pthread, int sig)
 				sigaddset(&pthread->sigpend,sig);
 			break;
 
-		case PS_SELECT_WAIT:
 		case PS_FDR_WAIT:
 		case PS_FDW_WAIT:
+		case PS_POLL_WAIT:
 		case PS_SLEEP_WAIT:
+		case PS_SELECT_WAIT:
 			if (!sigismember(&pthread->sigmask, sig) &&
 			    (_thread_sigact[sig - 1].sa_handler != SIG_IGN)) {
 				/* Flag the operation as interrupted: */
 				pthread->interrupted = 1;
+
+				if (pthread->flags & PTHREAD_FLAGS_IN_WORKQ)
+					PTHREAD_WORKQ_REMOVE(pthread);
 
 				/* Change the state of the thread to run: */
 				PTHREAD_NEW_STATE(pthread,PS_RUNNING);
@@ -117,11 +122,43 @@ pthread_kill(pthread_t pthread, int sig)
 			break;
 		}
 
+
 		/*
-		 * Reenable preemption and yield if a scheduling signal
-		 * occurred while in the critical region.
+		 * Check that a custom handler is installed
+		 * and if the signal is not blocked:
 		 */
-		_thread_kern_sched_undefer();
+		if (_thread_sigact[sig - 1].sa_handler != SIG_DFL &&
+		    _thread_sigact[sig - 1].sa_handler != SIG_IGN &&
+		    sigismember(&pthread->sigpend, sig) &&
+		    !sigismember(&pthread->sigmask, sig)) {
+			pthread_t pthread_saved = _thread_run;
+
+			/* Current thread inside critical region? */
+			if (_thread_run->sig_defer_count > 0)
+				pthread->sig_defer_count++;
+
+			_thread_run = pthread;
+
+			/* Clear the pending signal: */
+			sigdelset(&pthread->sigpend, sig);
+
+			/*
+			 * Dispatch the signal via the custom signal
+			 * handler:
+			 */
+			(*(_thread_sigact[sig - 1].sa_handler))(sig);
+
+			_thread_run = pthread_saved;
+
+			if (_thread_run->sig_defer_count > 0)
+				pthread->sig_defer_count--;
+		}
+
+		/*
+		 * Undefer and handle pending signals, yielding if
+		 * necessary:
+		 */
+		_thread_kern_sig_undefer();
 	}
 
 	/* Return the completion status: */

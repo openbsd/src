@@ -1,3 +1,4 @@
+/*	$OpenBSD: uthread_spec.c,v 1.6 1999/11/25 07:01:46 d Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -20,7 +21,7 @@
  * THIS SOFTWARE IS PROVIDED BY JOHN BIRRELL AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -29,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_spec.c,v 1.5 1999/05/14 22:29:52 alex Exp $
+ * $FreeBSD: uthread_spec.c,v 1.13 1999/08/28 00:03:52 peter Exp $
  */
 #include <signal.h>
 #include <stdlib.h>
@@ -113,7 +114,7 @@ _thread_cleanupspecific(void)
 				_SPINUNLOCK(&key_table[key].lock);
 
 				/*
-				 * If there is a destructor, call it
+				 * If there is a destructore, call it
 				 * with the key table entry unlocked:
 				 */
 				if (destructor)

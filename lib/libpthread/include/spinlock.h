@@ -29,8 +29,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: spinlock.h,v 1.3 1999/01/18 00:03:34 d Exp $
- * $OpenBSD: spinlock.h,v 1.3 1999/01/18 00:03:34 d Exp $
+ * $Id: spinlock.h,v 1.4 1999/11/25 07:01:29 d Exp $
+ * $OpenBSD: spinlock.h,v 1.4 1999/11/25 07:01:29 d Exp $
  *
  * Lock definitions used in both libc and libpthread.
  *
@@ -60,6 +60,8 @@ typedef struct {
 #else
 #define	_SPINLOCK(_lck)		_spinlock(_lck)
 #endif
+
+#define _SPINLOCK_INIT(_lck)	_SPINUNLOCK(_lck)
 
 /*
  * Thread function prototype definitions:

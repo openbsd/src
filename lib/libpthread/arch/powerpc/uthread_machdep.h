@@ -1,7 +1,7 @@
 /*
  * OpenBSD/powerpc machine-dependent thread macros
  *
- * $OpenBSD: uthread_machdep.h,v 1.3 1999/04/21 03:45:21 rahnds Exp $
+ * $OpenBSD: uthread_machdep.h,v 1.4 1999/11/25 07:01:29 d Exp $
  */
 
 /* save the floating point state of a thread */
@@ -24,8 +24,8 @@
 		(thr)->saved_jmp_buf[JMP_lr] =		\
 			(unsigned int) entry;		\
 		(thr)->saved_jmp_buf[JMP_r1] =		\
-			((unsigned int) (thr)->stack	\
-			+ (pattr)->stacksize_attr	\
+			((unsigned int) (thr)->stack->base	\
+			+ (thr)->stack->size		\
 			- 0x4) & ~0xf;			\
 		{					\
 			unsigned int *pbacklink =	\

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_setprio.c,v 1.4 1999/05/26 00:18:25 d Exp $	*/
+/*	$OpenBSD: uthread_setprio.c,v 1.5 1999/11/25 07:01:43 d Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -30,6 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ * $FreeBSD: uthread_setprio.c,v 1.6 1999/08/28 00:03:47 peter Exp $
  */
 #include <errno.h>
 #ifdef _THREAD_SAFE

@@ -1,3 +1,4 @@
+/*	$OpenBSD: uthread_sendto.c,v 1.4 1999/11/25 07:01:43 d Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -20,7 +21,7 @@
  * THIS SOFTWARE IS PROVIDED BY JOHN BIRRELL AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -29,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_sendto.c,v 1.3 1999/02/16 16:41:13 millert Exp $
+ * $FreeBSD: uthread_sendto.c,v 1.5 1999/08/28 00:03:46 peter Exp $
  */
 #include <errno.h>
 #include <sys/types.h>
@@ -40,7 +41,7 @@
 #include "pthread_private.h"
 
 ssize_t
-sendto(int fd, const void *msg, size_t len, int flags, const struct sockaddr *to, socklen_t to_len)
+sendto(int fd, const void *msg, size_t len, int flags, const struct sockaddr * to, socklen_t to_len)
 {
 	int             ret;
 

@@ -1,3 +1,4 @@
+/*	$OpenBSD: uthread_rwlock.c,v 1.3 1999/11/25 07:01:42 d Exp $	*/
 /*-
  * Copyright (c) 1998 Alex Nash
  * All rights reserved.
@@ -23,8 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$FreeBSD: uthread_rwlock.c,v 1.3 1998/09/07 21:07:59 alex Exp $
- *	$OpenBSD: uthread_rwlock.c,v 1.2 1998/12/23 22:49:46 d Exp $
+ * $FreeBSD: uthread_rwlock.c,v 1.4 1999/08/28 00:03:45 peter Exp $
  */
 
 #ifdef _THREAD_SAFE
