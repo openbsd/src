@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.89 2001/05/27 00:39:27 angelos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.90 2001/05/27 03:16:10 angelos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -700,13 +700,30 @@ findpcb:
 #ifdef IPSEC
 			/* 
 			 * We need to copy the required security levels
-			 * from the old pcb.
+			 * from the old pcb. Ditto for any other
+			 * IPsec-related information.
 			 */
 			{
 			  struct inpcb *newinp = (struct inpcb *)so->so_pcb;
 			  bcopy(inp->inp_seclevel, newinp->inp_seclevel,
 				sizeof(inp->inp_seclevel));
 			  newinp->inp_secrequire = inp->inp_secrequire;
+			  if (inp->inp_ipsec_localid != NULL) {
+			  	newinp->inp_ipsec_localid = inp->inp_ipsec_localid;
+				newinp->inp_ipsec_localid->ref_count++;
+			  }
+			  if (inp->inp_ipsec_remoteid != NULL) {
+			  	newinp->inp_ipsec_remoteid = inp->inp_ipsec_remoteid;
+				newinp->inp_ipsec_remoteid->ref_count++;
+			  }
+			  if (inp->inp_ipsec_localcred != NULL) {
+			  	newinp->inp_ipsec_localcred = inp->inp_ipsec_localcred;
+				newinp->inp_ipsec_localcred->ref_count++;
+			  }
+			  if (inp->inp_ipsec_remotecred != NULL) {
+			  	newinp->inp_ipsec_remotecred = inp->inp_ipsec_remotecred;
+				newinp->inp_ipsec_remotecred->ref_count++;
+			  }
 			}
 #endif /* IPSEC */
 #ifdef INET6
@@ -766,6 +783,7 @@ findpcb:
 	}
 
 #ifdef IPSEC
+	/* Find most recent IPsec tag */
 	mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE, NULL);
         s = splnet();
 	if (mtag != NULL) {
@@ -778,9 +796,20 @@ findpcb:
 
 	/* Latch SA */
 	if (inp->inp_tdb_in != tdb) {
-		if (tdb)
+		if (tdb) {
 		        tdb_add_inp(tdb, inp, 1);
-		else { /* Just reset */
+			if (inp->inp_ipsec_remoteid == NULL &&
+			    tdb->tdb_srcid != NULL) {
+				inp->inp_ipsec_remoteid = tdb->tdb_srcid;
+				tdb->tdb_srcid->ref_count++;
+			}
+			if (inp->inp_ipsec_remotecred == NULL &&
+			    tdb->tdb_remote_cred != NULL) {
+				inp->inp_ipsec_remotecred =
+				    tdb->tdb_remote_cred;
+				tdb->tdb_remote_cred->ref_count++;
+			}
+		} else { /* Just reset */
 		        TAILQ_REMOVE(&inp->inp_tdb_in->tdb_inp_in, inp,
 				     inp_tdb_in_next);
 			inp->inp_tdb_in = NULL;
