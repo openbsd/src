@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls_43.c,v 1.4 1997/01/02 12:20:42 mickey Exp $	*/
+/*	$OpenBSD: vfs_syscalls_43.c,v 1.5 1997/06/06 22:19:18 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls_43.c,v 1.4 1996/03/14 19:31:52 christos Exp $	*/
 
 /*
@@ -156,50 +156,21 @@ compat_43_sys_lstat(p, v, retval)
 		syscallarg(char *) path;
 		syscallarg(struct ostat *) ub;
 	} */ *uap = v;
-	struct vnode *vp, *dvp;
-	struct stat sb, sb1;
+	struct stat sb;
 	struct ostat osb;
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF | LOCKPARENT, UIO_USERSPACE,
+	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF, UIO_USERSPACE,
 	    SCARG(uap, path), p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
-	/*
-	 * For symbolic links, always return the attributes of its
-	 * containing directory, except for mode, size, and links.
-	 */
-	vp = nd.ni_vp;
-	dvp = nd.ni_dvp;
-	if (vp->v_type != VLNK) {
-		if (dvp == vp)
-			vrele(dvp);
-		else
-			vput(dvp);
-		error = vn_stat(vp, &sb, p);
-		vput(vp);
-		if (error)
-			return (error);
-	} else {
-		error = vn_stat(dvp, &sb, p);
-		vput(dvp);
-		if (error) {
-			vput(vp);
-			return (error);
-		}
-		error = vn_stat(vp, &sb1, p);
-		vput(vp);
-		if (error)
-			return (error);
-		sb.st_mode &= ~S_IFDIR;
-		sb.st_mode |= S_IFLNK;
-		sb.st_nlink = sb1.st_nlink;
-		sb.st_size = sb1.st_size;
-		sb.st_blocks = sb1.st_blocks;
-	}
+	error = vn_stat(nd.ni_vp, &sb, p);
+	vput(nd.ni_vp);
+	if (error)
+		return (error);
 	cvtstat(&sb, &osb);
-	error = copyout((caddr_t)&osb, (caddr_t)SCARG(uap, ub), sizeof (osb));
+	error = copyout(&osb, SCARG(uap, ub), sizeof (osb));
 	return (error);
 }
 
