@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.9 2004/04/02 18:34:33 otto Exp $	*/
+/*	$OpenBSD: engine.c,v 1.10 2004/08/13 14:52:49 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -36,7 +36,7 @@
  */
 
 #if defined(SNAMES) && defined(LIBC_SCCS) && !defined(lint)
-static char enginercsid[] = "$OpenBSD: engine.c,v 1.9 2004/04/02 18:34:33 otto Exp $";
+static char enginercsid[] = "$OpenBSD: engine.c,v 1.10 2004/08/13 14:52:49 millert Exp $";
 #endif /* SNAMES and LIBC_SCCS and not lint */
 
 /*
@@ -273,8 +273,9 @@ int eflags;
 
 		/* despite initial appearances, there is no match here */
 		NOTE("false alarm");
+		if (m->coldp == stop)
+			break;
 		start = m->coldp + 1;	/* recycle starting later */
-		assert(start <= stop);
 	}
 
 	/* fill in the details if requested */
