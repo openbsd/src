@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.94 1998/12/21 03:33:43 deraadt Exp $
+#	$OpenBSD: rc,v 1.95 1998/12/28 06:58:30 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -242,9 +242,12 @@ if [ "X${check_quotas}" = X"YES" ]; then
 fi
 
 # build ps databases
-echo 'building databases...'
+echo -n 'building ps databases:'
+echo -n " kvm"
 kvm_mkdb
+echo -n " dev"
 dev_mkdb
+echo "."
 
 chmod 666 /dev/tty[pqrs]*
 
