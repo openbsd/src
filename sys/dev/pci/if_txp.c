@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.3 2001/04/08 05:40:23 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.4 2001/04/08 18:26:38 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -81,7 +81,7 @@
 #include <dev/pci/pcidevs.h>
 
 #include <dev/pci/if_txpreg.h>
-#include <dev/pci/typhoon_image.h>
+#include <dev/microcode/typhoon/typhoon_image.h>
 
 int txp_probe	__P((struct device *, void *, void *));
 void txp_attach	__P((struct device *, struct device *, void *));
@@ -249,7 +249,7 @@ txp_reset_adapter(sc)
 	u_int32_t r;
 	int i;
 
-	WRITE_REG(sc, TXP_SRR, 0x7f);
+	WRITE_REG(sc, TXP_SRR, TXP_SRR_ALL);
 	DELAY(1000);
 	WRITE_REG(sc, TXP_SRR, 0);
 
@@ -298,21 +298,21 @@ txp_download_fw(sc)
 	/* Ack the status */
 	WRITE_REG(sc, TXP_ISR, TXP_INT_A2H_0);
 
-	/* Tell boot firmware to get ready for image */
-	WRITE_REG(sc, TXP_H2A_1, fileheader->addr);
-	WRITE_REG(sc, TXP_H2A_0, TXP_BOOTCMD_RUNTIME_IMAGE);
-
 	fileheader = (struct txp_fw_file_header *)TyphoonImage;
 	if (strncmp("TYPHOON", fileheader->magicid, sizeof(fileheader->magicid))) {
 		printf(": fw invalid magic\n");
 		return (-1);
 	}
 
+	/* Tell boot firmware to get ready for image */
+	WRITE_REG(sc, TXP_H2A_1, fileheader->addr);
+	WRITE_REG(sc, TXP_H2A_0, TXP_BOOTCMD_RUNTIME_IMAGE);
+
 	secthead = (struct txp_fw_section_header *)(TyphoonImage +
 	    sizeof(struct txp_fw_file_header));
 
 	if (txp_download_fw_wait(sc)) {
-		printf(": fw wait failed, initial\n", sect);
+		printf(": fw wait failed, initial\n");
 		return (-1);
 	}
 
@@ -382,6 +382,8 @@ txp_download_fw_section(sc, sect, sectnum)
 	bus_dmamap_t dmamap;
 	int rseg, err = 0;
 	caddr_t kva;
+	struct mbuf m;
+	u_int16_t csum;
 
 	/* Skip zero length sections */
 	if (sect->nbytes == 0)
@@ -428,6 +430,19 @@ txp_download_fw_section(sc, sect, sectnum)
 
 	bcopy(((u_int8_t *)sect) + sizeof(*sect), kva, sect->nbytes);
 
+	m.m_type = MT_DATA;
+	m.m_next = m.m_nextpkt = NULL;
+	m.m_len = sect->nbytes;
+	m.m_data = kva;
+	m.m_flags = 0;
+	csum = in_cksum(&m, sect->nbytes);
+	if (csum != sect->cksum) {
+		printf(": fw section %d, bad cksum (expected 0x%x got 0x%x)\n",
+		    sectnum, sect->cksum, csum);
+		err = -1;
+		goto bail;
+	}
+
 	bus_dmamap_sync(dmat, dmamap,
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
@@ -445,9 +460,10 @@ txp_download_fw_section(sc, sect, sectnum)
 		err = -1;
 	}
 
-
 	bus_dmamap_sync(dmat, dmamap,
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
+
+bail:
 	bus_dmamap_unload(dmat, dmamap);
 bail_destroy:
 	bus_dmamap_destroy(dmat, dmamap);
@@ -563,6 +579,18 @@ void
 txp_start(ifp)
 	struct ifnet *ifp;
 {
+	struct mbuf *m;
+
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+		return;
+
+	for (;;) {
+		IF_DEQUEUE(&ifp->if_snd, m);
+		if (m == NULL)
+			break;
+		/* XXX enqueue and send the packet */
+		m_freem(m);
+	}
 }
 
 void

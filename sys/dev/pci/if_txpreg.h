@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txpreg.h,v 1.2 2001/04/08 05:28:50 jason Exp $ */
+/*	$OpenBSD: if_txpreg.h,v 1.3 2001/04/08 18:26:38 jason Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell <aaron@monkey.org>.
@@ -77,6 +77,11 @@
 #define	TXP_INT_A2H_1		0x00000004	/* arm->host comm 1 */
 #define	TXP_INT_A2H_0		0x00000002	/* arm->host comm 0 */
 #define	TXP_INT_LATCH		0x00000001	/* interrupt latch */
+
+/*
+ * soft reset register (SRR)
+ */
+#define	TXP_SRR_ALL		0x0000007f	/* full reset */
 
 /*
  * Typhoon boot commands.
