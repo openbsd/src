@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.43 2004/05/05 11:19:07 henning Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.44 2004/05/05 11:40:46 henning Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -297,13 +297,13 @@ main(int argc, char *argv[])
 	close(pipe_fd[0]);
 	privfd = pipe_fd[1];
 
-	if ((routefd = socket(PF_ROUTE, SOCK_RAW, 0)) != -1)
-		add_protocol("AF_ROUTE", routefd, routehandler, ifi);
-
 	priv_script_init("PREINIT", NULL);
 	if (ifi->client->alias)
 		priv_script_write_params("alias_", ifi->client->alias);
 	priv_script_go();
+
+	if ((routefd = socket(PF_ROUTE, SOCK_RAW, 0)) != -1)
+		add_protocol("AF_ROUTE", routefd, routehandler, ifi);
 
 	/* set up the interface */
 	discover_interfaces(ifi);
