@@ -1,4 +1,4 @@
-dnl	$OpenBSD: packages,v 1.33 2004/02/27 17:49:14 miod Exp $
+dnl	$OpenBSD: packages,v 1.34 2004/03/01 11:56:35 miod Exp $
 As complete as your OpenBSD system is, you may want to add any of several
 excellent third party software applications.  There are several ways to do
 this.  You can:
@@ -1226,25 +1226,25 @@ dnl
 define({:-PORTS-:},
 {:-ifelse(
 MACHINE_ARCH,alpha,{:-FreeBSD
-	ports or NetBSD package collection-:},
+	ports or NetBSD pkgsrc-:},
 MACHINE_ARCH,amd64,{:-FreeBSD
-	ports or NetBSD package collection-:},
+	ports or NetBSD pkgsrc-:},
 MACHINE_ARCH,arm,{:-NetBSD
-	package collection-:},
+	pkgsrc-:},
 dnl MACHINE_ARCH,hppa,{:-NetBSD
-dnl 	package collection-:},
+dnl 	pkgsrc-:},
 MACHINE_ARCH,i386,{:-FreeBSD
-	ports or NetBSD package collection-:},
+	ports or NetBSD pkgsrc-:},
 MACHINE_ARCH,m68k,{:-NetBSD
-	package collection-:},
+	pkgsrc-:},
 MACHINE_ARCH,powerpc,{:-NetBSD
-	package collection-:},
+	pkgsrc-:},
 MACHINE_ARCH,sparc,{:-NetBSD
-	package collection-:},
+	pkgsrc-:},
 MACHINE_ARCH,sparc64,{:-FreeBSD
-	ports or NetBSD package collection-:},
+	ports or NetBSD pkgsrc-:},
 MACHINE_ARCH,vax,{:-NetBSD
-	package collection-:})-:})dnl
+	pkgsrc-:})-:})dnl
 dnl
 dnl If this architecture supports FreeBSD or NetBSD emulation by default,
 dnl define text that tells which binary packages you can try to run.
@@ -1254,17 +1254,28 @@ define({:-EMUL-:},
 MACHINE_ARCH,alpha,{:-NetBSD-:},
 MACHINE_ARCH,i386,{:-FreeBSD-:})-:})dnl
 dnl
+dnl Same as above, defining a manual page to check for more compat
+dnl information.
+dnl
+define({:-EMULMAN-:},
+{:-ifelse(
+MACHINE_ARCH,i386,{:-compat_freebsd(8)-:})-:})dnl
+dnl
 Installing other applications:
 
 	If an OpenBSD package or port does not exist for an application
 	you're pretty much on your own.  The first thing to do is ask
 	<ports@OpenBSD.org> if anyone is working on a port -- there may
 	be one in progress.
-	
-	ifelse(PORTS,,,{:-If no such port exists, you might want to tinker with the PORTS.
+	ifelse(PORTS,,,{:-
+	If no such port exists, you might want to tinker with the PORTS.
 -:})dnl
-	ifelse(EMUL,,,{:-It is also quite possible that the EMUL binary packages,
-	if they exist, will work for you.
+	ifelse(EMUL,,,{:-
+	It is also quite possible that the EMUL binary packages,
+	if they exist, will work for you. Note that you will need to
+	enable EMUL binaries emulation with sysctl(8) and set up a
+	complete emulation environment.ifelse(EMULMAN,,,{:- Refer to the EMULMAN
+	manual page for more information about this.-:})
 -:})dnl
 
 	If you can't find an existing port try to make your own and
