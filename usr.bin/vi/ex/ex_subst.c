@@ -361,6 +361,7 @@ s(sp, cmdp, s, re, flags)
 	int cflag, lflag, nflag, pflag, rflag;
 	int didsub, do_eol_match, eflags, empty_ok, eval;
 	int linechanged, matched, quit, rval;
+	unsigned long ul;
 	char *bp, *lb;
 
 	NEEDFILE(sp, cmdp);
@@ -414,18 +415,18 @@ s(sp, cmdp, s, re, flags)
 			if (lno != OOBLNO)
 				goto usage;
 			errno = 0;
-			lno = strtoul(s, &s, 10);
+			if ((ul = strtoul(s, &s, 10)) > UINT_MAX)
+				errno = ERANGE;
 			if (*s == '\0')		/* Loop increment correction. */
 				--s;
 			if (errno == ERANGE) {
-				if (lno == LONG_MAX)
+				if (ul > UINT_MAX)
 					msgq(sp, M_ERR, "153|Count overflow");
-				else if (lno == LONG_MIN)
-					msgq(sp, M_ERR, "154|Count underflow");
 				else
 					msgq(sp, M_SYSERR, NULL);
 				return (1);
 			}
+			lno = (recno_t)ul;
 			/*
 			 * In historic vi, the count was inclusive from the
 			 * second address.
