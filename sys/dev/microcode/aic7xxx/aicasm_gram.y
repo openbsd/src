@@ -42,7 +42,7 @@
 
 #include "aicasm.h"
 #include "aicasm_symbol.h"
-#include "sequencer.h"
+#include "aicasm_insformat.h"
 
 int yylineno;
 char *yyfilename;

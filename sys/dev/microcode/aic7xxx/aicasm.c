@@ -1,4 +1,4 @@
-/* $OpenBSD: aicasm.c,v 1.2 2002/02/16 04:36:33 smurph Exp $ */
+/* $OpenBSD: aicasm.c,v 1.3 2002/02/16 05:06:52 smurph Exp $ */
 /*
  * Aic7xxx SCSI host adapter firmware asssembler
  *
@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: aicasm.c,v 1.2 2002/02/16 04:36:33 smurph Exp $
+ * $Id: aicasm.c,v 1.3 2002/02/16 05:06:52 smurph Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aicasm/aicasm.c,v 1.32 2001/07/18 21:03:32 gibbs Exp $
  */
@@ -45,7 +45,7 @@
 
 #include "aicasm.h"
 #include "aicasm_symbol.h"
-#include "sequencer.h"
+#include "aicasm_insformat.h"
 
 typedef struct patch {
 	TAILQ_ENTRY(patch) links;
