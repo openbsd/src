@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.8 1997/10/26 00:47:05 deraadt Exp $	*/
+/*	$OpenBSD: disk.c,v 1.9 1997/10/28 10:06:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -139,7 +139,7 @@ DISK_getbiosmetrics(name)
 		warn("sysctl(machdep.chr2blk)");
 		return (NULL);
 	}
-	devno = MAKEBOOTDEV(major(devno), 0, 0, DISKUNIT(devno), 0);
+	devno = MAKEBOOTDEV(major(devno), 0, 0, DISKUNIT(devno), RAW_PART);
 
 	mib[0] = CTL_MACHDEP;
 	mib[1] = CPU_BIOS;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.25 1997/10/26 02:41:19 mickey Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.26 1997/10/28 10:06:34 deraadt Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -188,8 +188,8 @@ main(argc, argv)
 		mib[2] = sb.st_rdev;
 		size = sizeof(devno);
 		if(sysctl(mib, 3, &devno, &size, NULL, 0) >= 0) {
-			devno = MAKEBOOTDEV(major(devno),0,0,DISKUNIT(devno),0);
-
+			devno = MAKEBOOTDEV(major(devno), 0, 0,
+			    DISKUNIT(devno), RAW_PART);
 			mib[0] = CTL_MACHDEP;
 			mib[1] = CPU_BIOS;
 			mib[2] = BIOS_DISKINFO;
