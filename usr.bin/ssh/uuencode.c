@@ -41,7 +41,6 @@ uuencode(unsigned char *bufin, unsigned int nbytes, char *bufcoded)
 		outptr[-1] = '=';
 		outptr[-2] = '=';
 	} else if (i == nbytes) {
-		debug("uuencode: i == nbytes");
 		*(outptr++) = '=';
 	}
 	*outptr = '\0';
