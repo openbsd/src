@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.131 2002/07/14 07:14:09 jakob Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.132 2002/07/20 17:55:45 millert Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
 static const char rcsid[] = 
-    "$OpenBSD: ftpd.c,v 1.131 2002/07/14 07:14:09 jakob Exp $";
+    "$OpenBSD: ftpd.c,v 1.132 2002/07/20 17:55:45 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -864,8 +864,12 @@ end_login()
 	}
 	pw = NULL;
 	/* umask is restored in ftpcmd.y */
-	setusercontext(NULL, getpwuid(0), (uid_t)0,
-	    LOGIN_SETPRIORITY|LOGIN_SETRESOURCES);
+	if (setusercontext(NULL, getpwuid(0), (uid_t)0,
+	    LOGIN_SETPRIORITY|LOGIN_SETRESOURCES) != 0) {
+		perror_reply(451, "Local resource failure: setusercontext");
+		syslog(LOG_NOTICE, "setusercontext: %p");
+		exit(1);
+	}
 	logged_in = 0;
 	guest = 0;
 	dochroot = 0;
@@ -952,7 +956,12 @@ pass(passwd)
 		flags |= LOGIN_SETUMASK;
 	else
 		(void) umask(defumask);
-	setusercontext(lc, pw, (uid_t)0, flags);
+	if (setusercontext(lc, pw, (uid_t)0, flags) != 0) {
+		perror_reply(451, "Local resource failure: setusercontext");
+		syslog(LOG_NOTICE, "setusercontext: %p");
+		dologout(1);
+		/* NOTREACHED */
+	}
 
 	/* open wtmp before chroot */
 	ftpdlogwtmp(ttyline, pw->pw_name, remotehost);
