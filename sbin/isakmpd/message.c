@@ -1,5 +1,5 @@
-/*	$OpenBSD: message.c,v 1.13 1999/04/02 01:09:22 niklas Exp $	*/
-/*	$EOM: message.c,v 1.112 1999/04/02 00:58:19 niklas Exp $	*/
+/*	$OpenBSD: message.c,v 1.14 1999/04/05 21:02:03 niklas Exp $	*/
+/*	$EOM: message.c,v 1.114 1999/04/05 20:36:12 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -949,6 +949,7 @@ message_recv (struct message *msg)
       if (!msg->orig)
 	{
 	  message_free (msg);
+	  free (ks);
 	  return -1;
 	}
       memcpy (msg->orig, buf, sz);
@@ -964,7 +965,11 @@ message_recv (struct message *msg)
    */
   if (GET_ISAKMP_HDR_NEXT_PAYLOAD (buf) != ISAKMP_PAYLOAD_NONE
       && message_sort_payloads (msg, GET_ISAKMP_HDR_NEXT_PAYLOAD (buf)))
-    return -1;
+    {
+      if (ks)
+	free (ks);
+      return -1;
+    }
 
   /*
    * Run generic payload tests now.  If anything fails these checks, the
@@ -973,7 +978,11 @@ message_recv (struct message *msg)
    * XXX Should SAs and even transports be cleaned up then too?
    */
   if (message_validate_payloads (msg))
-    return -1;
+    {
+      if (ks)
+	free (ks);
+      return -1;
+    }
 
   /*
    * Now we can validate DOI-specific exchange types.  If we have no SA
@@ -984,6 +993,8 @@ message_recv (struct message *msg)
     {
       log_print ("message_recv: invalid DOI exchange type %d", exch_type);
       message_drop (msg, ISAKMP_NOTIFY_INVALID_EXCHANGE_TYPE, 0, 0, 1);
+      if (ks)
+	free (ks);
       return -1;
     }
 
@@ -991,16 +1002,22 @@ message_recv (struct message *msg)
   if (!msg->exchange)
     {
       log_print ("message_recv: no exchange");
-      /* XXX I got here in an informational exchange.. I should not!  */
       message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 0, 1);
+      if (ks)
+	free (ks);
       return -1;
     }
 
   /* Make sure the IV we used gets saved in the proper SA.  */
-  if (!msg->exchange->keystate && ks)
+  if (ks)
     {
-      msg->exchange->keystate = ks;
-      msg->exchange->crypto = ks->xf;
+      if (!msg->exchange->keystate)
+	{
+	  msg->exchange->keystate = ks;
+	  msg->exchange->crypto = ks->xf;
+	}
+      else
+	free (ks);
     }
 
   /* Handle the flags.  */
@@ -1096,11 +1113,17 @@ message_add_payload (struct message *msg, u_int8_t payload, u_int8_t *buf,
 
   payload_node = malloc (sizeof *payload_node);
   if (!payload_node)
-    return -1;
+    {
+      log_error ("message_add_payload: malloc (%d) failed",
+		 sizeof *payload_node);
+      return -1;
+    }
   new_iov
     = (struct iovec *)realloc (msg->iov, (msg->iovlen + 1) * sizeof *msg->iov);
   if (!new_iov)
     {
+      log_error ("message_add_payload: realloc (%p, %d) failed", msg->iov,
+		 (msg->iovlen + 1) * sizeof *msg->iov);
       free (payload_node);
       return -1;
     }
@@ -1175,6 +1198,10 @@ message_send_notification (struct message *msg, struct sa *isakmp_sa,
 			   msg->exchange->doi->id, 0, &args, 0, 0);
 }
 
+/*
+ * Build the informational message into MSG.
+ * XXX We deallocate MSG on failure here, but how can we tell the caller?
+ */
 void
 message_send_info (struct message *msg)
 {
@@ -1186,6 +1213,12 @@ message_send_info (struct message *msg)
   sz = (args->discr == 'N' ? ISAKMP_NOTIFY_SPI_OFF + args->spi_sz
 	: ISAKMP_DELETE_SPI_OFF + args->u.d.nspis * args->spi_sz);
   buf = calloc (1, sz);
+  if (!buf)
+    {
+      log_error ("message_send_info: calloc (1, %d) failed", sz);
+      message_free (msg);
+    }
+
   switch (args->discr)
     {
     case 'N':
@@ -1213,7 +1246,7 @@ message_send_info (struct message *msg)
 
   if (message_add_payload (msg, payload, buf, sz, 1))
     {
-      /* Log!  */
+      free (buf);
       message_free (msg);
       return;
     }
@@ -1309,7 +1342,11 @@ message_encrypt (struct message *msg)
     * exchange->crypto->blocksize;
   buf = realloc (msg->iov[1].iov_base, sz);
   if (!buf)
-    return -1;
+    {
+      log_error ("message_encrypt: realloc (%p, %d) failed",
+		 msg->iov[1].iov_base, sz);
+      return -1;
+    }
   msg->iov[1].iov_base = buf;
   for (i = 2; i < msg->iovlen; i++)
     {
@@ -1411,8 +1448,6 @@ message_negotiate_sa (struct message *msg,
   struct proto *proto;
   int suite_ok_so_far = 0;
   struct exchange *exchange = msg->exchange;
-  u_int8_t *spi;
-  size_t spi_sz;
 
   /*
    * This algorithm is a weird bottom-up thing... mostly due to the
@@ -1517,21 +1552,6 @@ message_negotiate_sa (struct message *msg,
 			     "message_negotiate_sa: proposal %d succeeded",
 			     GET_ISAKMP_PROP_NO (propp->p));
 
-		  /* Record the other guy's (i.e. our outgoing) SPI.  */
-		  spi_sz = GET_ISAKMP_PROP_SPI_SZ (propp->p);
-		  if (spi_sz)
-		    {
-		      spi = malloc (spi_sz);
-		      if (!spi)
-			goto cleanup;
-		      memcpy (spi, propp->p + ISAKMP_PROP_SPI_OFF, spi_sz);
-		    }
-		  else
-		    spi = 0;
-		  TAILQ_FIRST (&sa->protos)->spi[0] = spi;
-		  log_debug_buf (LOG_MESSAGE, 40, "message_negotiate_sa: SPI",
-				 spi, spi_sz);
-
 		  /* Skip to the last transform of this SA.  */
 		  while ((next_tp
 			  = step_transform (tp, &next_propp, &next_sap))
@@ -1576,7 +1596,10 @@ message_negotiate_sa (struct message *msg,
   return 0;
 
  cleanup:
-  /* Remove potentially succeeded choices from the SA.  */
+  /*
+   * Remove potentially succeeded choices from the SA.
+   * XXX Do we leak struct protos and related data here?
+   */
   while (TAILQ_FIRST (&sa->protos))
     TAILQ_REMOVE (&sa->protos, TAILQ_FIRST (&sa->protos), link);
   return -1;
@@ -1608,7 +1631,11 @@ message_add_sa_payload (struct message *msg)
       extra_sa_len = 0;
       sa_buf = malloc (sa_len);
       if (!sa_buf)
-	goto cleanup;
+	{
+	  log_error ("message_add_sa_payload: malloc (%d) failed", sa_len);
+	  goto cleanup;
+	}
+
       SET_ISAKMP_SA_DOI (sa_buf, doi->id);
       doi->setup_situation (sa_buf);
 
@@ -1621,16 +1648,35 @@ message_add_sa_payload (struct message *msg)
       /* Allocate transient transform and proposal payload/size vectors.  */
       transforms = calloc (nprotos, sizeof *transforms);
       if (!transforms)
-        goto cleanup;
+	{
+	  log_error ("message_add_sa_payload: calloc (%d, %d) failed", nprotos,
+		     sizeof *transforms);
+	  goto cleanup;
+	}
+
       transform_lens = calloc (nprotos, sizeof *transform_lens);
       if (!transform_lens)
-        goto cleanup;
+	{
+	  log_error ("message_add_sa_payload: calloc (%d, %d) failed", nprotos,
+		     sizeof *transform_lens);
+	  goto cleanup;
+	}
+
       proposals = calloc (nprotos, sizeof *proposals);
       if (!proposals)
-        goto cleanup;
+	{
+	  log_error ("message_add_sa_payload: calloc (%d, %d) failed", nprotos,
+		     sizeof *proposals);
+	  goto cleanup;
+	}
+
       proposal_lens = calloc (nprotos, sizeof *proposal_lens);
       if (!proposal_lens)
-        goto cleanup;
+	{
+	  log_error ("message_add_sa_payload: calloc (%d, %d) failed", nprotos,
+		     sizeof *proposal_lens);
+	  goto cleanup;
+	}
 
       /* Pick out the chosen transforms.  */
       for (proto = TAILQ_FIRST (&sa->protos), i = 0; proto;
@@ -1639,7 +1685,11 @@ message_add_sa_payload (struct message *msg)
 	  transform_lens[i] = GET_ISAKMP_GEN_LENGTH (proto->chosen->p);
 	  transforms[i] = malloc (transform_lens[i]);
 	  if (!transforms[i])
-	    goto cleanup;
+	    {
+	      log_error ("message_add_sa_payload: malloc (%d) failed",
+			 transform_lens[i]);
+	      goto cleanup;
+	    }
 
 	  /* Get incoming SPI from application.  */
 	  if (doi->get_spi)
@@ -1659,7 +1709,11 @@ message_add_sa_payload (struct message *msg)
 	  proposal_lens[i] = ISAKMP_PROP_SPI_OFF + spi_sz;
 	  proposals[i] = malloc (proposal_lens[i]);
 	  if (!proposals[i])
-	    goto cleanup;
+	    {
+	      log_error ("message_add_sa_payload: malloc (%d) failed",
+			 proposal_lens[i]);
+	      goto cleanup;
+	    }
 
 	  memcpy (transforms[i], proto->chosen->p, transform_lens[i]);
 	  memcpy (proposals[i], proto->chosen->context->p,
