@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.28 1998/06/08 18:56:45 mickey Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.29 1998/06/08 19:27:33 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner, Michael Shalayeff
@@ -34,6 +34,7 @@
 
 #include <sys/param.h>
 #include <machine/biosvar.h>
+#include <dev/isa/isareg.h>
 #include <stand/boot/bootarg.h>
 #include "libsa.h"
 
@@ -312,9 +313,9 @@ memprobe()
 			printf(" %luK", (u_long)im->size);
 
 			/* We ignore "good" memory in the 640K-1M hole */
-			if(im->addr < 0xA0000)
+			if(im->addr < IOM_BEGIN)
 				cnvmem += im->size;
-			if(im->addr >= 0x100000)
+			if(im->addr >= IOM_END)
 				extmem += im->size;
 		}
 	}
