@@ -15,7 +15,7 @@
 .\" * Paul Vixie          <paul@vix.com>          uunet!decwrl!vixie!paul
 .\" */
 .\"
-.\" $Id: crontab.5,v 1.10 2000/03/19 17:57:03 aaron Exp $
+.\" $Id: crontab.5,v 1.11 2000/04/15 11:53:29 aaron Exp $
 .\"
 .Dd June 8, 1999
 .Dt CRONTAB 5
@@ -33,10 +33,10 @@ daemon of the general form:
 at these times on these dates run this command
 .Dc .
 There may be a system
-.Nm crontab
+.Nm
 .Pf ( Pa /etc/crontab )
 and each user may have their own
-.Nm crontab
+.Nm
 .Pf ( Pa /var/cron/tabs/<user> ) .
 Commands in any given
 .Nm
@@ -384,7 +384,7 @@ When specifying
 both day 0 and day 7 will be considered Sunday.
 BSD and ATT seem to disagree about this.
 .Pp
-Lists and ranges are allowed to co-exist in the same field.
+Lists and ranges are allowed to coexist in the same field.
 .Dq 1\&-3,7\&-9
 would
 be rejected by ATT or BSD
