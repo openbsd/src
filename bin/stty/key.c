@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.c,v 1.8 1997/08/24 06:49:30 deraadt Exp $	*/
+/*	$OpenBSD: key.c,v 1.9 2001/06/25 03:40:25 millert Exp $	*/
 /*	$NetBSD: key.c,v 1.11 1995/09/07 06:57:11 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)key.c	8.4 (Berkeley) 2/20/95";
 #else
-static char rcsid[] = "$OpenBSD: key.c,v 1.8 1997/08/24 06:49:30 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: key.c,v 1.9 2001/06/25 03:40:25 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,6 +58,7 @@ void	f_all __P((struct info *));
 void	f_cbreak __P((struct info *));
 void	f_columns __P((struct info *));
 void	f_dec __P((struct info *));
+void	f_ek __P((struct info *));
 void	f_everything __P((struct info *));
 void	f_extproc __P((struct info *));
 void	f_ispeed __P((struct info *));
@@ -87,6 +88,7 @@ static struct key {
 	{ "columns",	f_columns,	F_NEEDARG },
 	{ "cooked", 	f_sane,		0 },
 	{ "dec",	f_dec,		0 },
+	{ "ek",		f_ek,		0 },
 	{ "everything",	f_everything,	0 },
 	{ "extproc",	f_extproc,	F_OFFOK },
 	{ "ispeed",	f_ispeed,	F_NEEDARG },
@@ -187,6 +189,16 @@ f_dec(ip)
 	ip->t.c_lflag &= ~ECHOPRT;
 	ip->t.c_lflag |= ECHOE|ECHOKE|ECHOCTL;
 	ip->t.c_iflag &= ~IXANY;
+	ip->set = 1;
+}
+
+void
+f_ek(ip)
+	struct info *ip;
+{
+
+	ip->t.c_cc[VERASE] = CERASE;
+	ip->t.c_cc[VKILL] = CKILL;
 	ip->set = 1;
 }
 
