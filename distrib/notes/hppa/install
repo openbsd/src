@@ -1,0 +1,140 @@
+dnl	$OpenBSD: install,v 1.1 2002/12/19 01:00:13 miod Exp $
+dnl lots of texts coming from {mac68k,mvme68k,vax}/install intially
+
+At the moment, the only way to install OpenBSD is to use a diskless setup.
+No installation media is provided.
+
+
+Diskless Setup Configuration:
+
+In order to bootstrap via the network, you must provide a second system to
+act as a boot server. It is convenient if this is a second OpenBSD machine
+as the necessary services are already installed, although source code for
+such programs as mopd can be found in OpenBSD's source tree, and should be
+reasonably portable to other UN*X-like operating systems. More information
+on diskless booting can be found in the OpenBSD diskless(8) manual page.
+
+Your MACHINE expects to be able to download a so-called LIF (``Logical
+Interchange Format'') image, containing both the boot code and the kernel,
+via the HP rboot protocol, for older firmware, or via bootp or dhcp, for
+more recent firmware.
+
+
+Old firmware operation
+
+PDC ROM v1.4 and below are easily recognizable, as they will start with a
+text banner. There are two levels of interactive commands in this version.
+The first level is a short menu:
+
+	b)   Boot from specified device
+	s)   Search for bootable device
+	a)   Enter Boot Administration mode
+	x)   Exit and continue boot sequence
+
+	Select from menu:
+
+In this case, you will need to setup rbootd on the server. Start by creating
+an /etc/rbootd.conf file on the bootserver. The format of this file is the
+ethernet address followed by the LIF filename. Here is an example:
+
+	08:00:09:70:c4:11		boot.lif
+
+Then start rbootd (or configure /etc/rc.conf to always start rbootd). Once
+rbootd is running, the server name will then appear on the MACHINE as part of
+the possible boot choices in a boot device search (``s'' command).
+
+
+Modern firmware operation
+
+PDC ROM 1.5 and above will start with a small graphics window at the screen
+center (unless you are using a serial console). There is only one interactive
+mode, with a BOOT_ADMIN> prompt, which provides both boot settings and
+commands.
+
+In this case, you will need to setup either bootpd or dhcpd on the server.
+Assuming a bootp setup, start by editing the /etc/bootptab on the bootserver,
+and declare an information block. Here is an example:
+
+	boron:\
+		ha=08000970c411:\
+		bf=boot.lif:\
+		hd=:\
+		ht=ethernet:\
+		ip=10.42.42.42:\
+		rp=/export/MACHINE:\
+		sm=255.0.0.0:\
+		td=/tftpboot:
+
+Do not forget to enable bootpd, either as a standalone process, or via inetd.
+
+You will also need to enable tftpd, for the MACHINE to download its boot.lif
+(bf entry) image from the server in the /tftpboot (td entry) directory.
+
+
+Common operation
+
+Next you need to export a directory for your new machine to mount over
+NFS. This is accomplished by adding an entry to /etc/exports such as:
+
+	/export/MACHINE -maproot=root snake
+
+where ``snake'' is the hostname of your MACHINE.
+
+Finally, you need to add an entry for your MACHINE in /etc/bootparams.
+For example:
+
+	snake		root=myserver:/export/MACHINE
+
+Enable rpc.bootparamd either by turning it on in /etc/rc.conf and rebooting,
+or by running it manually.
+
+Unpack at least `base{:--:}OSrev.tgz' and `etc{:--:}OSrev.tgz' sets on the server in the
+root directory for your target machine, `/export/MACHINE' in this example. If
+you elect to use a separately NFS-mounted filesystem for `/usr' with your
+diskless setup, make sure the "./usr" base files in base{:--:}OSrev.tgz end
+up in the correct location. One way to do this is to temporarily use a
+loopback mount on the server, re-routing <root>/usr to your server's exported
+OpenBSD "/usr" directory.
+
+A few configuration files in <root>/etc need to be edited:
+
+	dhclient.conf
+		DHCP client information, if necessary, check dhclient.conf(5)
+		for the syntax.
+	fstab
+		Enter the entries for the remotely mounted filesystems.
+		For example:
+		  server:/export/root/client       /     nfs  rw 0 0
+		  server:/export/exec/MACHINE.OpenBSD /usr  nfs  rw 0 0
+		Be sure to add the server swap space, such as:
+		  server:/export/swap/client /swap swap sw,nfsmntpt=/swap 0 0
+		after creating the `<root>/swap' directory.
+	hostname.if (likely, hostname.ie0)
+		Configuration of the host adapter, check hostname.if(5)
+		for the syntax.
+	hosts
+		Add the IP addresses of both server and client.
+	mygate
+		This file contains the IP address of the default gateway.
+	myname
+		This file contains the client's hostname, with a
+		fully-qualified domain name.
+	resolv.conf
+		Name server configuration, check resolv.conf(5) for the
+		syntax.
+
+Now you must populate the the `/dev' directory for your client. After
+changing your working directory to `<root>/dev', run the MAKEDEV script.
+Depending on your host operating system, you may get error messages about
+unknown users and groups. These errors are inconsequential for the purpose
+of installing OpenBSD.  However, you will want to correct them after
+booting your machine. To do so, simply re-run MAKEDEV on your OpenBSD
+machine once it has booted.
+
+Once these files are configured, your system should be able to behave like
+any other OpenBSD system once booted. On your MACHINE, escape to a prompt and
+boot from the network by entering ``boot lan isl''. On old PDC firmware, you
+will need to enter administration mode first.
+
+dnl this is a bit hypocritical. Oh well.
+OpenBSDCongratulations

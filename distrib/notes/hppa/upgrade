@@ -1,0 +1,5 @@
+dnl	$OpenBSD: upgrade,v 1.1 2002/12/19 01:00:13 miod Exp $
+Since OpenBSD/OSREV is the first MACHINE release, there is no upgrade
+functionnality.
+dnl
+dnl OpenBSDUpgrade({:-the CD-ROM, the miniroot, or the installation floppy-:})

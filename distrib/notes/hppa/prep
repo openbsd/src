@@ -1,0 +1,8 @@
+dnl	$OpenBSD: prep,v 1.1 2002/12/19 01:00:13 miod Exp $
+
+The MACHINE computers do not generally need any specific preparation.
+
+You might want to check that the console ``path'' in the PDC firmware points
+to the device you plan to use, and change it if necessary.
+
+dnl need to provide more details on how to do so! c'n'p boot(8)

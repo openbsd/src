@@ -1,0 +1,37 @@
+dnl	$OpenBSD: contents,v 1.1 2002/12/19 01:00:13 miod Exp $
+TopPart
+
+OpenBSDdistsets
+
+OpenBSDbsd
+
+OpenBSDrd
+
+		boot.lif	A LIF bootable kernel image, suitable for
+				network boot
+dnl
+dnl		installboot	The OpenBSD/MACHINE boot loader installation
+dnl				program
+dnl		bootxx		The OpenBSD/MACHINE LIF boot block
+
+DistributionDescription(six)
+
+OpenBSDbase(80.0,191.3)
+
+OpenBSDcomp(22.5,68.3)
+
+OpenBSDetc(1.5,5.6,noupgrade)
+
+OpenBSDgame(7.7,16.4)
+
+OpenBSDman(2.0,6.9)
+
+OpenBSDmisc(1.7,5.6)
+dnl
+dnl OpenBSDxbase
+dnl
+dnl OpenBSDxfont
+dnl
+dnl OpenBSDxserv
+dnl
+dnl OpenBSDxshare

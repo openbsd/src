@@ -1,0 +1,4 @@
+dnl	$OpenBSD: whatis,v 1.1 2002/12/19 01:00:13 miod Exp $
+OpenBSD/MACHINE OSREV is a new port for the Hewlett-Packard HPPA computers.
+Despite its young age as a supported port, it already supports a wide range
+of machines and devices, and more hardware support is being worked on.
