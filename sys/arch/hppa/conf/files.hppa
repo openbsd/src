@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.54 2004/09/15 21:32:42 mickey Exp $
+#	$OpenBSD: files.hppa,v 1.55 2004/10/08 13:04:36 grange Exp $
 #
 # hppa-specific configuration info
 
@@ -275,5 +275,4 @@ file	arch/hppa/hppa/in_cksum.c		inet
 file	arch/hppa/dev/clock.c
 file	arch/hppa/hppa/fpemu.S			fpemul
 
-file	dev/cons.c
 file	dev/cninit.c

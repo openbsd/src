@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme88k,v 1.33 2004/10/01 19:00:51 miod Exp $
+#	$OpenBSD: files.mvme88k,v 1.34 2004/10/08 13:04:36 grange Exp $
 #
 maxpartitions 16
 
@@ -68,7 +68,6 @@ file	arch/mvme88k/dev/vmes.c				vmes needs-count
 file	arch/mvme88k/dev/vmel.c				vmel needs-count
 
 # list of standard files
-file	dev/cons.c
 file	dev/cninit.c
 
 file	netinet/in_cksum.c

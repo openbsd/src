@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mac68k,v 1.30 2004/09/16 09:14:03 mickey Exp $
+#	$OpenBSD: files.mac68k,v 1.31 2004/10/08 13:04:36 grange Exp $
 #	$NetBSD: files.mac68k,v 1.61 1997/03/01 20:22:16 scottr Exp $
 
 # mac68k-specific configuration info
@@ -119,7 +119,6 @@ file	arch/mac68k/mac68k/trap.c
 file	arch/mac68k/mac68k/via.c
 file	arch/mac68k/mac68k/vm_machdep.c
 
-file	dev/cons.c
 file	dev/cninit.c
 
 major	{sd = 4}

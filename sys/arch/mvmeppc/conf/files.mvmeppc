@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvmeppc,v 1.7 2004/01/23 10:41:06 miod Exp $
+#	$OpenBSD: files.mvmeppc,v 1.8 2004/10/08 13:04:36 grange Exp $
 
 #
 # mvmeppc-specific configuration info
@@ -7,7 +7,6 @@ maxpartitions 16
 
 maxusers 2 8 64
 
-file	dev/cons.c
 file	dev/cninit.c
 file	arch/mvmeppc/mvmeppc/db_interface.c
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hp300,v 1.23 2004/09/16 09:14:03 mickey Exp $
+#	$OpenBSD: files.hp300,v 1.24 2004/10/08 13:04:36 grange Exp $
 #	$NetBSD: files.hp300,v 1.28 1997/05/12 08:23:28 thorpej Exp $
 #
 # hp300-specific configuration info
@@ -182,7 +182,6 @@ file	arch/hp300/hp300/vm_machdep.c
 file	arch/hp300/hp300/disksubr.c
 file	arch/hp300/dev/dma.c
 
-file	dev/cons.c
 file	dev/cninit.c
 
 #

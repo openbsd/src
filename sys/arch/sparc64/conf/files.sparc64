@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.54 2004/10/01 18:18:48 jason Exp $
+#	$OpenBSD: files.sparc64,v 1.55 2004/10/08 13:04:36 grange Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -183,7 +183,6 @@ device zskbd: tty, wskbddev, sunkbd
 attach zskbd at zs
 file	arch/sparc64/dev/z8530kbd.c		zskbd needs-flag
 
-file	dev/cons.c
 file	arch/sparc64/dev/consinit.c
 
 file	arch/sparc64/fpu/fpu.c

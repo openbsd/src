@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.62 2004/09/18 07:12:14 pvalchev Exp $
+#	$OpenBSD: files.alpha,v 1.63 2004/10/08 13:04:35 grange Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -283,7 +283,6 @@ file	arch/alpha/alpha/vm_machdep.c
 file	arch/alpha/alpha/disksubr.c
 file	arch/alpha/dev/bus_dma.c
 file	dev/clock_subr.c
-file	dev/cons.c
 
 
 #

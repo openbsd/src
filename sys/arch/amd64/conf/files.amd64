@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.6 2004/09/16 09:14:03 mickey Exp $
+#	$OpenBSD: files.amd64,v 1.7 2004/10/08 13:04:35 grange Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -37,7 +37,6 @@ file	arch/amd64/amd64/mpbios.c		mpbios
 
 
 file	arch/amd64/amd64/consinit.c
-file	dev/cons.c
 file	dev/cninit.c
 
 file	arch/amd64/amd64/dkcsum.c

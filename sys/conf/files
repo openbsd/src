@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.316 2004/09/15 21:32:42 mickey Exp $
+#	$OpenBSD: files,v 1.317 2004/10/08 13:04:35 grange Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -456,6 +456,7 @@ file ddb/db_hangman.c			ddb
 file dev/auconv.c			auconv
 file dev/audio.c			audio			needs-flag
 file dev/ccd.c				ccd			needs-flag
+file dev/cons.c
 file dev/ic/ncr5380sbc.c		ncr5380sbc
 file dev/ic/ncr53c7xx.c			ncr53c7xx
 file dev/ic/pdq.c			pdq

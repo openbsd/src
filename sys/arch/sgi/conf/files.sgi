@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sgi,v 1.4 2004/09/09 22:11:39 pefo Exp $
+#	$OpenBSD: files.sgi,v 1.5 2004/10/08 13:04:36 grange Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -113,7 +113,6 @@ major {rd = 8}
 #	Common files
 #
 
-file	dev/cons.c
 file	dev/cninit.c
 file	netinet/in_cksum.c
 file	netns/ns_cksum.c			ns

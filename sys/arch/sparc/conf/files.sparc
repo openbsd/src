@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.60 2004/09/16 09:14:04 mickey Exp $
+#	$OpenBSD: files.sparc,v 1.61 2004/10/08 13:04:36 grange Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -272,8 +272,6 @@ file	arch/sparc/dev/isp_sbus.c	isp_sbus
 #
 # Generic Sparc stuff
 #
-
-file	dev/cons.c
 
 file	arch/sparc/fpu/fpu.c
 file	arch/sparc/fpu/fpu_add.c

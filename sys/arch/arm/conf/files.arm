@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arm,v 1.2 2004/08/04 20:20:19 miod Exp $
+#	$OpenBSD: files.arm,v 1.3 2004/10/08 13:04:35 grange Exp $
 #	$NetBSD: files.arm,v 1.76 2003/11/05 12:53:15 scw Exp $
 
 # CPU types.  Make sure to update <arm/cpuconf.h> if you change this list.
@@ -30,9 +30,6 @@
 
 # PMAP_DEBUG (heavily abused option)
 #defflag				PMAP_DEBUG
-
-# MI console support
-file	dev/cons.c
 
 # generic networking files
 file	arch/arm/arm/in_cksum_arm.S		inet

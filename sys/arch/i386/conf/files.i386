@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.129 2004/10/03 21:28:34 jcs Exp $
+#	$OpenBSD: files.i386,v 1.130 2004/10/08 13:04:36 grange Exp $
 #
 # new style config file for i386 architecture
 #
@@ -43,7 +43,6 @@ file	arch/i386/i386/trap.c
 file	arch/i386/i386/vm_machdep.c
 file	arch/i386/i386/dkcsum.c		bios
 file	lib/libz/adler32.c		!ppp_deflate & !ipsec & !crypto
-file	dev/cons.c
 file	dev/cninit.c
 file	arch/i386/i386/mptramp.s	multiprocessor
 file	arch/i386/i386/lock_machdep.c	multiprocessor
