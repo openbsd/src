@@ -40,14 +40,14 @@
 .Nm pstat
 .Nd display system data structures
 .Sh SYNOPSIS
-.Nm pstat
+.Nm
 .Op Fl Tfknstv
 .Op Fl M Ar core
 .Op Fl N Ar system
 .Sh DESCRIPTION
-.Nm Pstat
+.Nm
 displays open file entry, swap space utilization,
-terminal state, and vnode data structures.
+terminal state, and vnode data structure information.
 If
 .Ar corefile
 is given, the information is sought there, otherwise
@@ -140,14 +140,10 @@ Calculated column position of terminal.
 Miscellaneous state variables encoded thus:
 .Pp
 .Bl -tag -width indent -compact
-.It T
-delay timeout in progress
 .It W
 waiting for open to complete
 .It O
 open
-.It F
-outq has been flushed during DMA
 .It C
 carrier is on
 .It T
@@ -166,6 +162,16 @@ output stopped
 further input blocked
 .It Y
 tty in async I/O mode
+.It D
+next character is escaped lowercase special
+.It E
+printing erase sequence
+.It L
+next character is literal
+.It P
+retyping suspended input
+.It N
+counting tab width, ignoring output flush
 .El
 .It SESS
 Enclosing session.
@@ -341,6 +347,6 @@ regardless of whether those partitions are being used.
 Does not understand NFS swap servers.
 .Sh HISTORY
 The
-.Nm pstat
+.Nm
 command appeared in
 .Bx 4.0 .
