@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.41 2002/09/05 21:37:18 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.42 2002/09/11 15:55:58 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -105,7 +105,8 @@ pagemove(from, to, size)
 	paddr_t pa;
 
 	while (size > 0) {
-		pmap_extract(pmap_kernel(), (vaddr_t)from, &pa);
+		if (pmap_extract(pmap_kernel(), (vaddr_t)from, &pa) == FALSE)
+			panic("pagemove");
 		pmap_kremove((vaddr_t)from, PAGE_SIZE);
 		pmap_kenter_pa((vaddr_t)to, pa, UVM_PROT_RW);
 		from += PAGE_SIZE;
@@ -214,7 +215,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	*HPPA_FRAME_CARG(0, sp) = tf->tf_sp;
 	*HPPA_FRAME_CARG(1, sp) = KERNMODE(func);
 	*HPPA_FRAME_CARG(2, sp) = (register_t)arg;
-	*(register_t*)(osp) = 0;
+	*(register_t*)(osp) = (sp - HPPA_FRAME_SIZE);
 	*(register_t*)(sp + HPPA_FRAME_PSP) = osp;
 	*(register_t*)(osp + HPPA_FRAME_CRP) = (register_t)&switch_trampoline;
 	tf->tf_sp = sp;
@@ -233,8 +234,6 @@ cpu_exit(p)
 
 	exit2(p);
 	cpu_switch(p);
-
-	/* switch_exit(p); */
 }
 
 void

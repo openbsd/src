@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.77 2002/09/09 18:33:42 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.78 2002/09/11 15:55:58 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -1175,7 +1175,7 @@ setregs(p, pack, stack, retval)
 	tf->tf_r3 = stack;
 	suword((caddr_t)(stack), 0);
 	stack += HPPA_FRAME_SIZE;
-	suword((caddr_t)(stack - HPPA_FRAME_CRP), 0);
+	suword((caddr_t)(stack + HPPA_FRAME_CRP), 0);
 	tf->tf_sp = stack;
 
 	retval[1] = 0;
@@ -1237,8 +1237,8 @@ sendsig(catcher, sig, mask, code, type, val)
 		sigexit(p, SIGILL);
 
 	sss += HPPA_FRAME_SIZE;
-	if (suword((caddr_t)scp + sss - HPPA_FRAME_PSP, 0) ||
-	    suword((caddr_t)scp + sss - HPPA_FRAME_CRP, 0))
+	if (suword((caddr_t)scp + sss, 0) ||
+	    suword((caddr_t)scp + sss + HPPA_FRAME_CRP, 0))
 		sigexit(p, SIGILL);
 
 #ifdef DEBUG
