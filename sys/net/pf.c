@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.116 2001/07/18 22:24:07 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.117 2001/07/19 00:07:36 krw Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -1312,8 +1312,10 @@ pf_match_port(u_int8_t op, u_int16_t a1, u_int16_t a2, u_int16_t p)
 	NTOHS(a2);
 	NTOHS(p);
 	switch (op) {
-	case PF_OP_GL:
-		return (p >= a1) && (p <= a2);
+	case PF_OP_IRG:
+		return (p > a1) && (p < a2);
+	case PF_OP_XRG:
+		return (p < a1) || (p > a2);
 	case PF_OP_EQ:
 		return (p == a1);
 	case PF_OP_NE:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.14 2001/07/18 09:53:14 markus Exp $	*/
+/*	$OpenBSD: parse.y,v 1.15 2001/07/19 00:07:36 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -658,7 +658,7 @@ yylex(void)
 	case '<':
 		next = getc(fin);
 		if (next == '>') {
-			yylval.i = PF_OP_GL;
+			yylval.i = PF_OP_XRG;
 			return (PORTBINARY);
 		} else  if (next == '=') {
 			yylval.i = PF_OP_LE;
@@ -671,7 +671,7 @@ yylex(void)
 	case '>':
 		next = getc(fin);
 		if (next == '<') {
-			yylval.i = PF_OP_GL;
+			yylval.i = PF_OP_IRG;
 			return (PORTBINARY);
 		} else  if (next == '=') {
 			yylval.i = PF_OP_GE;

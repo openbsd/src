@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.38 2001/07/17 23:25:42 provos Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.39 2001/07/19 00:07:36 krw Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -199,8 +199,10 @@ print_port(u_int8_t op, u_int16_t p1, u_int16_t p2, char *proto)
 	p1 = ntohs(p1);
 	p2 = ntohs(p2);
 	printf("port ");
-	if (op == PF_OP_GL)
+	if (op == PF_OP_IRG)
 		printf("%u >< %u ", p1, p2);
+	else if (op == PF_OP_XRG)
+		printf("%u <> %u ", p1, p2);
 	else if (op == PF_OP_EQ) {
 		if (s != NULL)
 			printf("= %s ", s->s_name);
