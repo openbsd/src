@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.3 2005/03/08 20:12:18 norby Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.4 2005/03/12 10:49:12 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -323,7 +323,7 @@ calc_next_hop(struct vertex *dst, struct vertex *parent)
 				    rtr_link->id != parent->ls_id)
 					continue;
 				dst->nexthop.s_addr = rtr_link->data;
-			}			
+			}
 			return;
 		case LSA_TYPE_NETWORK:
 			for (i = 0; i < lsa_num_links(parent); i++) {
@@ -334,7 +334,7 @@ calc_next_hop(struct vertex *dst, struct vertex *parent)
 					break;
 				case LINK_TYPE_TRANSIT_NET:
 					if ((htonl(dst->ls_id) &
-					    dst->lsa->data.net.mask) == 
+					    dst->lsa->data.net.mask) ==
 					    (rtr_link->data &
 					     dst->lsa->data.net.mask)) {
 						dst->nexthop.s_addr =
@@ -348,7 +348,7 @@ calc_next_hop(struct vertex *dst, struct vertex *parent)
 					fatalx("calc_next_hop: invalid link "
 					    "type");
 				}
-			}			
+			}
 			return;
 		default:
 			fatalx("calc_next_hop: invalid dst type");

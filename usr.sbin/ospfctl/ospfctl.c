@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.4 2005/02/02 19:08:42 henning Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.5 2005/03/12 10:49:12 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -120,8 +120,8 @@ main(int argc, char *argv[])
 		    &ifidx, sizeof(ifidx));
 		break;
 	case SHOW_NBR:
-		printf("%-15s %-3s %-17s %-9s %-15s %s\n",
-		    "ID", "Pri", "State", "DeadTime", "Address", "Interface");
+		printf("%-15s %-3s %-17s %-9s %-15s %s\n", "ID", "Pri",
+		    "State", "DeadTime", "Address", "Interface");
 	case SHOW_NBR_DTAIL:
 		imsg_compose(ibuf, IMSG_CTL_SHOW_NBR, 0, 0, -1, NULL, 0);
 		break;
@@ -438,8 +438,8 @@ show_database_head(struct in_addr aid, u_int8_t type)
 	printf("\n%-15s %s\n", "", header);
 	free(header);
 
-	printf("\n%-15s %-15s %-4s %-10s %-8s\n",
-	    "Link ID", "Adv Router", "Age", "Seq#", "Checksum");
+	printf("\n%-15s %-15s %-4s %-10s %-8s\n", "Link ID", "Adv Router",
+	    "Age", "Seq#", "Checksum");
 }
 
 int

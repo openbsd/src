@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.9 2005/03/07 10:28:14 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.10 2005/03/12 10:49:12 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -551,7 +551,8 @@ orig_rtr_lsa(struct area *area)
 
 	log_debug("orig_rtr_lsa: area %s", inet_ntoa(area->id));
 
-	if ((buf = buf_dynamic(sizeof(lsa_hdr), READ_BUF_SIZE /* XXX */)) == NULL)
+	/* XXX READ_BUF_SIZE */
+	if ((buf = buf_dynamic(sizeof(lsa_hdr), READ_BUF_SIZE)) == NULL)
 		fatal("orig_rtr_lsa");
 
 	/* reserve space for LSA header and LSA Router header */
@@ -735,7 +736,8 @@ orig_net_lsa(struct iface *iface)
 
 	log_debug("orig_net_lsa: iface %s", iface->name);
 
-	if ((buf = buf_dynamic(sizeof(lsa_hdr), READ_BUF_SIZE /* XXX */)) == NULL)
+	/* XXX READ_BUF_SIZE */
+	if ((buf = buf_dynamic(sizeof(lsa_hdr), READ_BUF_SIZE)) == NULL)
 		fatal("orig_net_lsa");
 
 	/* reserve space for LSA header and LSA Router header */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.2 2005/03/11 15:48:58 deraadt Exp $ */
+/*	$OpenBSD: control.c,v 1.3 2005/03/12 10:49:12 norby Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -225,7 +225,6 @@ control_dispatch_imsg(int fd, short event, void *bula)
 		case IMSG_CTL_RELOAD:
 			ospfe_imsg_compose_parent(imsg.hdr.type, 0, NULL, 0);
 			break;
-
 		case IMSG_CTL_SHOW_INTERFACE:
 			if (imsg.hdr.len == IMSG_HEADER_SIZE +
 			    sizeof(ifidx)) {

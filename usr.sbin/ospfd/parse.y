@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.6 2005/03/07 10:28:14 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.7 2005/03/12 10:49:12 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -192,7 +192,8 @@ conf_main	: METRIC number {
 			defaults.dead_interval = $2;
 		}
 		| TRANSMITDELAY number {
-			if ($2 < MIN_TRANSMIT_DELAY || $2 > MAX_TRANSMIT_DELAY) {
+			if ($2 < MIN_TRANSMIT_DELAY ||
+			    $2 > MAX_TRANSMIT_DELAY) {
 				yyerror("transfer-delay out of range (%d-%d)",
 				    MIN_TRANSMIT_DELAY, MAX_TRANSMIT_DELAY);
 				YYERROR;
@@ -330,7 +331,8 @@ areaoptsl	: interface nl
 			area->dead_interval = $2;
 		}
 		| TRANSMITDELAY number nl {
-			if ($2 < MIN_TRANSMIT_DELAY || $2 > MAX_TRANSMIT_DELAY) {
+			if ($2 < MIN_TRANSMIT_DELAY ||
+			    $2 > MAX_TRANSMIT_DELAY) {
 				yyerror("transfer-delay out of range (%d-%d)",
 				    MIN_TRANSMIT_DELAY, MAX_TRANSMIT_DELAY);
 				YYERROR;
@@ -413,7 +415,8 @@ interfaceoptsl	: authkey nl
 			iface->dead_interval = $2;
 		}
 		| TRANSMITDELAY number nl {
-			if ($2 < MIN_TRANSMIT_DELAY || $2 > MAX_TRANSMIT_DELAY) {
+			if ($2 < MIN_TRANSMIT_DELAY ||
+			    $2 > MAX_TRANSMIT_DELAY) {
 				yyerror("transfer-delay out of range (%d-%d)",
 				    MIN_TRANSMIT_DELAY, MAX_TRANSMIT_DELAY);
 				YYERROR;
