@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld.c,v 1.35 2003/01/19 23:33:40 espie Exp $	*/
+/*	$OpenBSD: rtld.c,v 1.36 2003/01/19 23:35:02 espie Exp $	*/
 /*	$NetBSD: rtld.c,v 1.43 1996/01/14 00:35:17 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -622,6 +622,16 @@ again:
 				 sodp->sod_minor, &usehints, ipath);
 		if (ipath)
 			remove_search_path(ipath);
+
+		if (path == NULL && smp != main_map && main_map != NULL &&
+		    !no_intern_search && 
+		    LD_PATHS(main_map->som_dynamic) != 0) {
+		    	ipath = LM_PATHS(main_map);
+			add_search_path(ipath);
+			path = rtfindlib(name, sodp->sod_major,
+			     sodp->sod_minor, &usehints, ipath);
+			remove_search_path(ipath);
+		}
 
 		if (path == NULL) {
 			errno = ENOENT;
