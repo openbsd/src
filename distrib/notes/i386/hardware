@@ -53,6 +53,11 @@ Supported devices {:-include-:}:
 		IBM PC-RT 4-port serial boards [*]
 	Parallel ports.
 	Ethernet adapters:
+		Alteon Tigon I & II PCI Gigabit Ethernet adapters, including:
+			3Com 3c985
+			Alteon ACEnic
+			Netgear GA620
+			SGI Tigon
 		AMD LANCE and PCnet-based ISA Ethernet adapters [*], including:
 			Novell NE1500T
 			Novell NE2100
