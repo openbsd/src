@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.6 2002/06/05 20:52:47 provos Exp $	*/
+/*	$OpenBSD: policy.c,v 1.7 2002/06/05 21:09:02 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -410,25 +410,6 @@ systrace_readpolicy(char *filename)
 			policy->flags |= POLICY_DETACHED;
 			policy = NULL;
 			continue;
-		} else if (!strncasecmp(p, "if", 2)) {
-			int match;
-			char *predicate;
-
-			/* Process predicates */
-			p += 2;
-			p += strspn(p, " \t");
-			predicate = strsep(&p, ",");
-			if (p == NULL)
-				goto error;
-
-			match = systrace_predicatematch(predicate);
-			if (match == -1)
-				goto error;
-			/* If the predicate does not match skip rule */
-			if (!match)
-				continue;
-
-			p += strspn(p, " \t");
 		}
 
 		emulation = strsep(&p, "-");
@@ -443,6 +424,24 @@ systrace_readpolicy(char *filename)
 			goto error;
 		p++;
 		rule = p;
+
+		if ((p = strrchr(p, ',')) != NULL &&
+		    !strncasecmp(p, ", if", 4)) {
+			int match;
+
+			*p = '\0';
+
+			/* Process predicates */
+			p += 4;
+			p += strspn(p, " \t");
+
+			match = systrace_predicatematch(p);
+			if (match == -1)
+				goto error;
+			/* If the predicate does not match skip rule */
+			if (!match)
+				continue;
+		}
 
 		if (filter_parse_simple(rule, &action, &future) == -1) {
 			if (parse_filter(rule, &parsed) == -1)
