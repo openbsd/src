@@ -1,9 +1,6 @@
-#	$OpenBSD: Makefile,v 1.3 1997/09/21 11:43:46 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 1998/09/15 10:01:38 pattonme Exp $
 
 PROG=	ipmon
 MAN=	ipmon.8	
-CFLAGS+=-DIPL_NAME=\"/dev/ipl\" -DLOGFAC=LOG_LOCAL0 \
-	-I${.CURDIR}/../../sys/netinet
-
 
 .include <bsd.prog.mk>

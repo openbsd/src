@@ -1,4 +1,4 @@
-/*    $OpenBSD: ipt.c,v 1.11 1998/01/26 04:16:40 dgregor Exp $     */
+/*    $OpenBSD: ipt.c,v 1.12 1998/09/15 10:05:51 pattonme Exp $     */
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
  *
@@ -46,15 +46,19 @@
 #include <arpa/inet.h>
 #include <resolv.h>
 #include <ctype.h>
-#include "ip_fil_compat.h"
+#if defined(__OpenBSD__)
+# include <netinet/ip_fil_compat.h>
+#else
+# include <netinet/ip_compat.h>
+#endif
 #include <netinet/tcpip.h>
-#include "ip_fil.h"
+#include <netinet/ip_fil.h>
 #include "ipf.h"
 #include "ipt.h"
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipt.c	1.19 6/3/96 (C) 1993-1996 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ipt.c,v 1.11 1998/01/26 04:16:40 dgregor Exp $";
+static const char rcsid[] = "@(#)$Id: ipt.c,v 1.12 1998/09/15 10:05:51 pattonme Exp $";
 #endif
 
 extern	char	*optarg;

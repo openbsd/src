@@ -1,4 +1,4 @@
-/*    $OpenBSD: ipft_ef.c,v 1.8 1998/01/26 04:16:32 dgregor Exp $     */
+/*    $OpenBSD: ipft_ef.c,v 1.9 1998/09/15 10:05:50 pattonme Exp $     */
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
  *
@@ -45,14 +45,18 @@ etherfind -n -t
 #include <netinet/ip_icmp.h>
 #include <net/if.h>
 #include <netdb.h>
-#include "ip_fil_compat.h"
+#if defined(__OpenBSD__)
+# include <netinet/ip_fil_compat.h>
+#else
+# include <netinet/ip_compat.h>
+#endif
 #include <netinet/tcpip.h>
 #include "ipf.h"
 #include "ipt.h"
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipft_ef.c	1.6 2/4/96 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ipft_ef.c,v 1.8 1998/01/26 04:16:32 dgregor Exp $";
+static const char rcsid[] = "@(#)$Id: ipft_ef.c,v 1.9 1998/09/15 10:05:50 pattonme Exp $";
 #endif
 
 static	int	etherf_open __P((char *));

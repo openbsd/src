@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ipmon.8,v 1.4 1998/01/26 04:16:46 dgregor Exp $          
+.\"     $OpenBSD: ipmon.8,v 1.5 1998/09/15 10:01:39 pattonme Exp $          
 .TH ipmon 8
 .SH NAME
 ipmon \- monitors /dev/ipl for logged packets
@@ -50,9 +50,6 @@ Set the logfile to be opened for reading NAT log records from to <device>.
 IP addresses and port numbers will be mapped, where possible, back into
 hostnames and service names.
 .TP
-.B "\-N <device>"
-Set the logfile to be opened for reading NAT log records from to <device>.
-.TP
 .B \-o
 Specify which log files to actually read data from.  N - NAT logfile,
 S - State logfile, I - normal IP Filter logfile.  The \fB-a\fP option is
@@ -66,10 +63,6 @@ as for \fB-o\fP.
 .B \-s
 Packet information read in will be sent through syslogd rather than
 saved to a file.  The following levels are used:
-.TP
-.B "\-S <device>"
-Set the logfile to be opened for reading state log records from to <device>.
-.TP
 .IP
 .B LOG_INFO
 \- packets logged using the "log" keyword as the action rather
@@ -88,6 +81,9 @@ than pass or block.
 .B \-S
 Treat the logfile as being composed of state log records.
 .TP
+.B "\-S <device>"
+Set the logfile to be opened for reading state log records from to <device>.
+.IP
 .B \-t
 read the input file/device in a manner akin to tail(1).
 .TP
@@ -102,6 +98,12 @@ saved and will abort if it fails an assertion which detects an anomaly in the
 recorded data.
 .SH FILES
 /dev/ipl
+.br
+/dev/ipnat
+.br
+/dev/ipstate
 .SH SEE ALSO
-ipf(8), ipfstat(8)
+ipf(1), ipftest(1), ipnat(1), ipf(4), ipl(4), ipnat(4), ipf(5), ipnat(5), ipfstat(8)
+.br
+http://coombs.anu.edu.au/ipfilter/
 .SH BUGS

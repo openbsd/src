@@ -1,4 +1,4 @@
-/*    $OpenBSD: ipft_pc.c,v 1.10 1998/06/11 00:01:20 provos Exp $     */
+/*    $OpenBSD: ipft_pc.c,v 1.11 1998/09/15 10:05:50 pattonme Exp $     */
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
  *
@@ -27,14 +27,18 @@
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 #include <net/if.h>
-#include "ip_fil_compat.h"
+#if defined(__OpenBSD__)
+# include <netinet/ip_fil_compat.h>
+#else
+# include <netinet/ip_compat.h>
+#endif
 #include <netinet/tcpip.h>
 #include "ipf.h"
 #include "ipt.h"
 #include "pcap.h"
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)$Id: ipft_pc.c,v 1.10 1998/06/11 00:01:20 provos Exp $";
+static const char rcsid[] = "@(#)$Id: ipft_pc.c,v 1.11 1998/09/15 10:05:50 pattonme Exp $";
 #endif
 
 struct	llc	{
@@ -47,9 +51,9 @@ struct	llc	{
  * While many of these maybe the same, some do have different header formats
  * which make this useful.
  */
-#define	DLT_MAX	12
+#define	DLT_MAX	14
 
-static	struct	llc	llcs[DLT_MAX+1] = {
+static	struct	llc	llcs[DLT_MAX] = {
 	{ 0, 0, 0 },	/* DLT_NULL */
 	{ 14, 12, 2 },	/* DLT_E10MB */
 	{ 0, 0, 0 },	/* DLT_EN3MB */
@@ -118,7 +122,7 @@ char	*fname;
 		swap_hdr(&ph);
 	}
 
-	if (ph.pc_v_maj != PCAP_VERSION_MAJ || ph.pc_type > DLT_MAX) {
+	if (ph.pc_v_maj != PCAP_VERSION_MAJ || ph.pc_type >= DLT_MAX) {
 		(void) close(fd);
 		return -2;
 	}
