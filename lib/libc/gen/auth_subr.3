@@ -1,4 +1,4 @@
-.\"	$OpenBSD: auth_subr.3,v 1.5 2002/03/16 05:49:26 millert Exp $
+.\"	$OpenBSD: auth_subr.3,v 1.6 2002/03/16 19:20:05 millert Exp $
 .\"
 .\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -480,7 +480,27 @@ sets the sessions state to
 Typically this is either
 .Li AUTH_OKAY
 or 0.
+.Sh CAVEATS
+The
+.Fn auth_check_change
+and
+.Fn auth_check_expire
+functions call
+.Fn getpwnam
+or
+.Fn getpwuid ,
+overwriting the static storage used by the
+.Xr getpwent 3
+family of routines.
+The calling program must either make a local copy of the passwd struct
+pointer via the
+.Xr pw_dup 3
+function or use the
+.Xr auth_setpwd 3
+function to copy the passwd struct into
+.Fa as .
 .Sh SEE ALSO
 .Xr authenticate 3 ,
 .Xr login_cap 3 ,
+.Xr pw_dup 3 ,
 .Xr login.conf 5
