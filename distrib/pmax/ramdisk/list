@@ -1,0 +1,84 @@
+#
+#	$OpenBSD: list,v 1.1 1998/11/09 06:16:12 millert Exp $
+#
+
+# copy the crunched binary, link to it, and kill it
+COPY	${OBJDIR}/raminst		raminst
+LINK	raminst			bin/cat
+LINK	raminst			bin/chmod
+LINK	raminst			bin/cp
+LINK	raminst			bin/cpio
+LINK	raminst			bin/dd
+LINK	raminst			bin/df
+LINK	raminst			bin/ed
+LINK	raminst			bin/expr
+LINK	raminst			bin/ln
+LINK	raminst			bin/ls
+LINK	raminst			bin/mkdir
+LINK	raminst			bin/mv
+LINK	raminst			bin/ksh bin/sh
+ARGVLINK ksh			-sh
+LINK	raminst			bin/rm
+LINK	raminst			bin/stty
+LINK	raminst			bin/sleep
+LINK	raminst			bin/tar
+LINK	raminst			sbin/disklabel
+LINK	raminst			sbin/fsck
+LINK	raminst			sbin/halt
+LINK	raminst			sbin/dhclient
+LINK	raminst			sbin/ifconfig
+LINK	raminst			sbin/init
+LINK	raminst			sbin/mknod
+LINK	raminst			sbin/mount
+LINK	raminst			sbin/mount_cd9660
+LINK	raminst			sbin/mount_ffs
+LINK	raminst			sbin/mount_kernfs
+LINK	raminst			sbin/mount_nfs
+LINK	raminst			sbin/mount_mfs
+LINK	raminst			sbin/newfs
+LINK	raminst			sbin/reboot
+LINK	raminst			sbin/route
+LINK	raminst			sbin/umount
+LINK	raminst			usr/bin/chgrp
+LINK	raminst			usr/bin/ftp
+LINK	raminst			usr/bin/egrep
+LINK	raminst			usr/bin/fgrep
+LINK	raminst			usr/bin/grep
+LINK	raminst			usr/bin/gzip
+LINK	raminst			usr/bin/less
+LINK	raminst			usr/bin/more
+LINK	raminst			usr/bin/sed
+LINK	raminst			usr/bin/pax
+LINK	raminst			usr/sbin/chown
+SPECIAL	/bin/rm raminst
+
+# copy the MAKEDEV script and make some devices
+COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV
+SPECIAL	cd dev; sh MAKEDEV raminst
+
+# we need the contents of /usr/mdec
+COPY	${DESTDIR}/usr/mdec/bootrz	usr/mdec/bootrz
+COPY	${DESTDIR}/usr/mdec/rzboot	usr/mdec/rzboot
+
+# various files that we need in /etc for the install
+COPY	${DESTDIR}/etc/group		etc
+COPY	${DESTDIR}/etc/protocols	etc
+COPY	${DESTDIR}/etc/services		etc
+COPY	${DESTDIR}/etc/spwd.db		etc
+
+# and the common installation tools (XXX - not common right now)
+COPY	${CURDIR}/dot.commonutils	.commonutils
+COPY	${CURDIR}/termcap.vt		usr/share/misc/termcap
+
+# so DNS can work
+SYMLINK /tmp/resolv.conf.shadow		etc/resolv.conf
+
+# and the installation tools
+SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/dot.profile > .profile
+SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/dot.instutils > .instutils
+SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/disktab.shadow > etc/disktab.shadow
+SPECIAL	sed -e "/^VERSION=/s/=.*/=${REV}/" -e '/^#[ 	].*$/d' < ${CURDIR}/../../miniroot/install.sub > install.sub
+SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/../../miniroot/install.sh > install
+SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/../../miniroot/upgrade.sh > upgrade
+SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/install.md > install.md
+SPECIAL	chmod 755 install upgrade
