@@ -1,5 +1,5 @@
 /*	$NetBSD: db_disasm.c,v 1.8 2001/06/12 05:31:44 simonb Exp $	*/
-/*	$OpenBSD: db_disasm.c,v 1.2 2001/09/08 05:41:13 drahn Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.3 2001/09/08 05:48:09 drahn Exp $	*/
 /*
  * Copyright (c) 1996 Dale Rahn. All rights reserved.
  *
@@ -675,10 +675,10 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt, char **ppoutpu
 			db_find_sym_and_offset(BD, &name, &offset);
 			if (name) {
 				if (offset == 0) {
-				pstr += sprintf (pstr, "0x%x (%s)", addr + LI,
+				pstr += sprintf (pstr, "0x%x (%s)", addr + BD,
 					name, offset);
 				} else {
-				pstr += sprintf (pstr, "0x%x (%s+0x%x)", addr + LI,
+				pstr += sprintf (pstr, "0x%x (%s+0x%x)", addr + BD,
 					name, offset);
 				}
 			} else {
