@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.126 2004/04/07 18:24:19 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.127 2004/04/08 17:10:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -920,14 +920,6 @@ $syscall_end
 	ldo	R%$name(%r1), %r1
 
 #ifdef HP7000_CPU
-LDILDO(itlb_x)
-LDILDO(itlbna_x)
-LDILDO(dtlb_x)
-LDILDO(dtlbna_x)
-LDILDO(tlbd_x)
-#endif
-
-#ifdef HP7100_CPU
 LDILDO(itlb_s)
 LDILDO(itlbna_s)
 LDILDO(dtlb_s)
@@ -935,7 +927,7 @@ LDILDO(dtlbna_s)
 LDILDO(tlbd_s)
 #endif
 
-#ifdef HP7200_CPU
+#if defined(HP7100_CPU) || defined(HP7200_CPU)
 LDILDO(itlb_t)
 LDILDO(itlbna_t)
 LDILDO(dtlb_t)
@@ -1261,7 +1253,6 @@ EXIT(TLABEL(emu))
 	extru	r17, 24, 25, r17
 
 	.align	32
-$tlbd_x
 $tlbd_s
 $tlbd_t
 	TLB_STATS_PRE(tlbd)
@@ -1275,8 +1266,6 @@ $tlbd_t
 	rfir
 	nop
 
-$itlb_x
-$itlbna_x
 $itlb_s
 $itlbna_s
 $itlb_t
@@ -1294,8 +1283,6 @@ $itlbna_t
 	rfir
 	nop
 
-$dtlb_x
-$dtlbna_x
 $dtlb_s
 $dtlbna_s
 	/*
@@ -1737,7 +1724,6 @@ EXIT(TLABEL(all))
  * void desidhash_s(void)
  */
 LEAF_ENTRY(desidhash_s)
-ALTENTRY(desidhash_x)
 	sync
 	MFCPU_T(DR_CPUCFG,22)	/* t1 */
 	MFCPU_T(DR_CPUCFG,22)
