@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.h,v 1.13 2003/03/27 18:01:57 henning Exp $ */
+/*	$OpenBSD: pfctl.h,v 1.14 2003/04/05 21:44:46 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -86,7 +86,7 @@ char		*qid_to_qname(u_int32_t, const char *);
 char		*rate2str(double);
 
 void	 print_altq(const struct pf_altq *, unsigned, u_int16_t);
-void	 print_queue(const struct pf_altq *, unsigned, u_int16_t);
+void	 print_queue(const struct pf_altq *, unsigned, u_int16_t, int);
 
 void	 print_addr(struct pf_addr_wrap *, sa_family_t, int);
 void	 print_host(struct pf_state_host *, sa_family_t, int);

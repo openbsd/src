@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.49 2003/04/03 14:41:46 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.50 2003/04/05 21:44:46 henning Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -171,7 +171,7 @@ void
 print_altq(const struct pf_altq *a, unsigned level, u_int16_t bwpercent)
 {
 	if (a->qname[0] != NULL) {
-		print_queue(a, level, bwpercent);
+		print_queue(a, level, bwpercent, 0);
 		return;
 	}
 
@@ -206,7 +206,8 @@ print_altq(const struct pf_altq *a, unsigned level, u_int16_t bwpercent)
 }
 
 void
-print_queue(const struct pf_altq *a, unsigned level, u_int16_t bwpercent)
+print_queue(const struct pf_altq *a, unsigned level, u_int16_t bwpercent,
+    int print_interface)
 {
 	unsigned	i;
 
@@ -214,6 +215,8 @@ print_queue(const struct pf_altq *a, unsigned level, u_int16_t bwpercent)
 	for (i = 0; i < level; ++i)
 		printf(" ");
 	printf("%s ", a->qname);
+	if (print_interface)
+		printf("on %s ", a->ifname);
 	if (a->scheduler == ALTQT_CBQ || a->scheduler == ALTQT_HFSC) {
 		if (bwpercent > 0) {
 			if (bwpercent < 100)

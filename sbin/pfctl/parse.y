@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.350 2003/04/05 21:04:53 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.351 2003/04/05 21:44:45 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -237,7 +237,7 @@ void	expand_rule(struct pf_rule *, struct node_if *, struct node_host *,
 	    struct node_gid *, struct node_icmp *);
 int	expand_altq(struct pf_altq *, struct node_if *, struct node_queue *,
 	    struct node_queue_bw bwspec);
-int	expand_queue(struct pf_altq *, struct node_queue *,
+int	expand_queue(struct pf_altq *, struct node_if *, struct node_queue *,
 	    struct node_queue_bw);
 
 int	 check_rulestate(int);
@@ -847,7 +847,7 @@ altqif		: ALTQ interface queue_opts QUEUE qassign {
 		}
 		;
 
-queuespec	: QUEUE STRING queue_opts qassign {
+queuespec	: QUEUE STRING interface queue_opts qassign {
 			struct pf_altq	a;
 
 			if (check_rulestate(PFCTL_STATE_QUEUE))
@@ -861,30 +861,30 @@ queuespec	: QUEUE STRING queue_opts qassign {
 				    "%d chars)", PF_QNAME_SIZE-1);
 				YYERROR;
 			}
-			if ($3.tbrsize) {
+			if ($4.tbrsize) {
 				yyerror("cannot specify tbrsize for queue");
 				YYERROR;
 			}
-			if ($3.priority > 255) {
+			if ($4.priority > 255) {
 				yyerror("priority out of range: max 255");
 				YYERROR;
 			}
-			a.priority = $3.priority;
-			a.qlimit = $3.qlimit;
-			a.scheduler = $3.scheduler.qtype;
+			a.priority = $4.priority;
+			a.qlimit = $4.qlimit;
+			a.scheduler = $4.scheduler.qtype;
 			switch (a.scheduler) {
 			case ALTQT_CBQ:
 				a.pq_u.cbq_opts =
-				    $3.scheduler.data.cbq_opts;
+				    $4.scheduler.data.cbq_opts;
 				break;
 			case ALTQT_PRIQ:
 				a.pq_u.priq_opts =
-				    $3.scheduler.data.priq_opts;
+				    $4.scheduler.data.priq_opts;
 				break;
 			default:
 				break;
 			}
-			if (expand_queue(&a, $4, $3.queue_bwspec))
+			if (expand_queue(&a, $3, $5, $4.queue_bwspec))
 				YYERROR;
 		}
 		;
@@ -3160,10 +3160,10 @@ expand_altq(struct pf_altq *a, struct node_if *interfaces,
 }
 
 int
-expand_queue(struct pf_altq *a, struct node_queue *nqueues,
-    struct node_queue_bw bwspec)
+expand_queue(struct pf_altq *a, struct node_if *interfaces,
+    struct node_queue *nqueues, struct node_queue_bw bwspec)
 {
-	struct node_queue	*n;
+	struct node_queue	*n, *nq;
 	struct pf_altq		 pa;
 	u_int8_t		 found = 0;
 	u_int8_t		 errs = 0;
@@ -3179,96 +3179,110 @@ expand_queue(struct pf_altq *a, struct node_queue *nqueues,
 		return (1);
 	}
 
-	LOOP_THROUGH(struct node_queue, tqueue, queues,
-		if (!strncmp(a->qname, tqueue->queue, PF_QNAME_SIZE)) {
-			/* found ourselve in queues */
-			found++;
+	LOOP_THROUGH(struct node_if, interface, interfaces,
+		LOOP_THROUGH(struct node_queue, tqueue, queues,
+			if (!strncmp(a->qname, tqueue->queue, PF_QNAME_SIZE) &&
+			    (interface->ifname[0] == 0 ||
+			    (!interface->not && !strncmp(interface->ifname,
+			    tqueue->ifname, IFNAMSIZ)) ||
+			    (interface->not && strncmp(interface->ifname,
+			    tqueue->ifname, IFNAMSIZ)))) {
+				/* found ourselve in queues */
+				found++;
 
-			memcpy(&pa, a, sizeof(struct pf_altq));
+				memcpy(&pa, a, sizeof(struct pf_altq));
 
-			if (pa.scheduler != ALTQT_NONE &&
-			    pa.scheduler != tqueue->scheduler) {
-				yyerror("exactly one scheduler type per "
-				    "interface allowed");
-				return (1);
-			}
-			pa.scheduler = tqueue->scheduler;
-
-			/* scheduler dependent error checking */
-			switch (pa.scheduler) {
-			case ALTQT_PRIQ:
-				if (nqueues != NULL) {
-					yyerror("priq queues cannot have "
-					    "child queues");
+				if (pa.scheduler != ALTQT_NONE &&
+				    pa.scheduler != tqueue->scheduler) {
+					yyerror("exactly one scheduler type "
+					    "per interface allowed");
 					return (1);
 				}
-				if (bwspec.bw_absolute > 0 ||
-				    bwspec.bw_percent < 100) {
-					yyerror("priq doesn't take bandwidth");
-					return (1);
+				pa.scheduler = tqueue->scheduler;
+
+				/* scheduler dependent error checking */
+				switch (pa.scheduler) {
+				case ALTQT_PRIQ:
+					if (nqueues != NULL) {
+						yyerror("priq queues cannot "
+						    "have child queues");
+						return (1);
+					}
+					if (bwspec.bw_absolute > 0 ||
+					    bwspec.bw_percent < 100) {
+						yyerror("priq doesn't take "
+						    "bandwidth");
+						return (1);
+					}
+					break;
+				default:
+					break;
 				}
-				break;
-			default:
-				break;
-			}
 
-			if (strlcpy(pa.ifname, tqueue->ifname,
-			    sizeof(pa.ifname)) >= sizeof(pa.ifname))
-				errx(1, "expand_queue: strlcpy");
-			if (strlcpy(pa.parent, tqueue->parent,
-			    sizeof(pa.parent)) >= sizeof(pa.parent))
-				errx(1, "expand_queue: strlcpy");
+				if (strlcpy(pa.ifname, tqueue->ifname,
+				    sizeof(pa.ifname)) >= sizeof(pa.ifname))
+					errx(1, "expand_queue: strlcpy");
+				if (strlcpy(pa.parent, tqueue->parent,
+				    sizeof(pa.parent)) >= sizeof(pa.parent))
+					errx(1, "expand_queue: strlcpy");
 
-			if (eval_pfqueue(pf, &pa, bwspec.bw_absolute,
-			    bwspec.bw_percent))
-				errs++;
-			else
-				if (pfctl_add_altq(pf, &pa))
+				if (eval_pfqueue(pf, &pa, bwspec.bw_absolute,
+				    bwspec.bw_percent))
 					errs++;
+				else
+					if (pfctl_add_altq(pf, &pa))
+						errs++;
 
-			if (nqueues == NULL)
-				continue;
-
-			LOOP_THROUGH(struct node_queue, queue, nqueues,
-				n = calloc(1, sizeof(struct node_queue));
-				if (n == NULL)
-					err(1, "expand_queue: calloc");
-				if (strlcpy(n->parent, a->qname,
-				    sizeof(n->parent)) >= sizeof(n->parent))
-					errx(1, "expand_queue: strlcpy");
-				if (strlcpy(n->queue, queue->queue,
-				    sizeof(n->queue)) >= sizeof(n->queue))
-					errx(1, "expand_queue: strlcpy");
-				if (strlcpy(n->ifname, tqueue->ifname,
-				    sizeof(n->ifname)) >= sizeof(n->ifname))
-					errx(1, "expand_queue: strlcpy");
-				n->scheduler = tqueue->scheduler;
-				n->next = NULL;
-				n->tail = n;
-				if (queues == NULL)
-					queues = n;
-				else {
-					queues->tail->next = n;
-					queues->tail = n;
+				for(nq = nqueues; nq != NULL; nq = nq->next) {
+					n = calloc(1,
+					    sizeof(struct node_queue));
+					if (n == NULL)
+						err(1, "expand_queue: calloc");
+					if (strlcpy(n->parent, a->qname,
+					    sizeof(n->parent)) >=
+					    sizeof(n->parent))
+						errx(1, "expand_queue strlcpy");
+					if (strlcpy(n->queue, nq->queue,
+					    sizeof(n->queue)) >=
+					    sizeof(n->queue))
+						errx(1, "expand_queue strlcpy");
+					if (strlcpy(n->ifname, tqueue->ifname,
+					    sizeof(n->ifname)) >=
+					    sizeof(n->ifname))
+						errx(1, "expand_queue strlcpy");
+					n->scheduler = tqueue->scheduler;
+					n->next = NULL;
+					n->tail = n;
+					if (queues == NULL)
+						queues = n;
+					else {
+						queues->tail->next = n;
+						queues->tail = n;
+					}
 				}
-			);
-		}
+				if ((pf->opts & PF_OPT_VERBOSE) && (
+				    (found == 1 && interface->ifname[0] == 0) ||
+				    (found > 0 && interface->ifname[0] != 0))) {
+					print_queue(&pf->paltq->altq, 0,
+					    bwspec.bw_percent,
+					    interface->ifname[0] != 0);
+					if (nqueues && nqueues->tail) {
+						printf("{ ");
+						LOOP_THROUGH(struct node_queue,
+						    queue, nqueues,
+							printf("%s ",
+							    queue->queue);
+						);
+						printf("}");
+					}
+					printf("\n");
+				}
+			}
+		);
 	);
 
-	if ((pf->opts & PF_OPT_VERBOSE) && found > 0) {
-		print_altq(&pf->paltq->altq, 0, bwspec.bw_percent);
-		if (nqueues && nqueues->tail) {
-			printf("{ ");
-			LOOP_THROUGH(struct node_queue, queue,
-			    nqueues,
-				printf("%s ", queue->queue);
-			);
-			printf("}");
-		}
-		printf("\n");
-	}
-
 	FREE_LIST(struct node_queue, nqueues);
+	FREE_LIST(struct node_if, interfaces);
 
 	if (!found) {
 		yyerror("queue %s has no parent", a->qname);
