@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.48 2001/12/23 03:50:03 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.49 2002/01/07 17:23:31 mpech Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -96,7 +96,7 @@ struct peer {
 int			 rule_consistent(struct pf_rule *);
 int			 yyparse(void);
 struct pf_rule_addr	*new_addr(void);
-void		 	 ipmask(struct pf_addr *, u_int8_t, int);
+void		 	 ipmask(struct pf_addr *, u_int8_t);
 void			 expand_rule_hosts(struct pf_rule *,
 			    struct node_if *, struct node_proto *,
 			    struct node_host *, struct node_port *,
@@ -426,9 +426,9 @@ xhost		: '!' host			{ $$ = $2; $$->not = 1; }
 host		: address			{
 			$$ = $1;
 			if ($$->af == AF_INET)
-				ipmask(&$$->mask, 32, AF_INET); 
+				ipmask(&$$->mask, 32); 
 			else
-				ipmask(&$$->mask, 128, AF_INET6);
+				ipmask(&$$->mask, 128);
 		}
 		| address '/' NUMBER		{
 			if ($$->af == AF_INET) {
@@ -443,7 +443,7 @@ host		: address			{
 				}
 			}
 			$$ = $1;
-			ipmask(&$$->mask, $3, $$->af);
+			ipmask(&$$->mask, $3);
 		}
 		;
 
@@ -1628,7 +1628,7 @@ parse_nat(FILE *input, struct pfctl *xpf)
 }
 
 void
-ipmask(struct pf_addr *m, u_int8_t b, int af)
+ipmask(struct pf_addr *m, u_int8_t b)
 {
 	int i, j = 0;
 
