@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.5 1998/03/01 00:37:58 niklas Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.6 1998/03/01 11:36:44 niklas Exp $	*/
 /*	$NetBSD: pmap.h,v 1.16 1996/03/31 22:15:32 pk Exp $	*/
 
 /* 
@@ -196,8 +196,11 @@ void		 pmap_zero_page __P((vm_offset_t));
 #ifdef MACHINE_NONCONTIG
 u_int		 pmap_free_pages __P((void));
 boolean_t	 pmap_next_page __P((vm_offset_t *));
+void		 pmap_startup __P((vm_offset_t *, vm_offset_t *));
+vm_offset_t	 pmap_steal_memory __P((vm_size_t));
+void		 pmap_virtual_space __P((vm_offset_t *, vm_offset_t *));
 #endif
-#if defined(MACHINE_NONCONTIG) || defined(MACHINE_NEW_NONCONTIG)
+#ifdef MACHINE_NEW_NONCONTIG
 #if defined(PMAP_STEAL_MEMORY)
 vm_offset_t	 pmap_steal_memory __P((vm_size_t, vm_offset_t *,
 		    vm_offset_t *));
