@@ -1,5 +1,5 @@
-/*	$OpenBSD: umidi_quirks.c,v 1.4 2002/07/09 15:22:08 nate Exp $	*/
-/*	$NetBSD: umidi_quirks.c,v 1.4 2002/06/19 13:55:30 tshiozak Exp $ */
+/*	$OpenBSD: umidi_quirks.c,v 1.5 2003/05/19 00:36:52 nate Exp $	*/
+/*	$NetBSD: umidi_quirks.c,v 1.4 2002/06/19 13:55:30 tshiozak Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
