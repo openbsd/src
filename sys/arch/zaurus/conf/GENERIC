@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.22 2005/01/20 23:34:36 uwe Exp $
+#	$OpenBSD: GENERIC,v 1.23 2005/01/25 21:16:57 drahn Exp $
 #
 # GENERIC machine description file
 #
@@ -45,10 +45,10 @@ options 	XSCALE_CACHE_WRITE_THROUGH
 #options 	XSCALE_CACHE_WRITE_BACK
 makeoptions	CPUFLAGS="-mcpu=xscale"
 
-#option WSDISPLAY_COMPAT_USL		# VT handling
+option WSDISPLAY_COMPAT_USL		# VT handling
 option WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 option WSDISPLAY_DEFAULTSCREENS=2
-#option WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+option WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 
 #config		bsd	swap generic
 config		bsd	root on wd0a
