@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsh.c,v 1.36 2004/01/17 21:42:48 millert Exp $	*/
+/*	$OpenBSD: rsh.c,v 1.37 2005/04/01 04:06:40 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990 The Regents of the University of California.
@@ -37,7 +37,7 @@ static const char copyright[] =
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)rsh.c	5.24 (Berkeley) 7/1/91";*/
-static const char rcsid[] = "$OpenBSD: rsh.c,v 1.36 2004/01/17 21:42:48 millert Exp $";
+static const char rcsid[] = "$OpenBSD: rsh.c,v 1.37 2005/04/01 04:06:40 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -77,14 +77,10 @@ main(int argc, char *argv[])
 	struct passwd *pw;
 	struct servent *sp;
 	sigset_t mask, omask;
-	int argoff, asrsh, ch, dflag, nflag, one, rem, uid;
-	char *args, *host, *user;
+	int argoff = 0, asrsh = 0, ch, dflag = 0, nflag = 0, one = 1, rem, uid;
+	char *args, *host = NULL, *user = NULL;
 	pid_t pid = 0;
 	extern char *__progname;
-
-	argoff = asrsh = dflag = nflag = 0;
-	one = 1;
-	host = user = NULL;
 
 	/* if called as something other than "rsh", use it as the host name */
 	if (strcmp(__progname, "rsh") != 0)
@@ -155,9 +151,12 @@ main(int argc, char *argv[])
 	    PF_UNSPEC);
 	if (rem < 0)
 		exit(1);
-
 	if (rfd2 < 0)
 		errx(1, "can't establish stderr");
+
+	(void)seteuid(uid);
+	(void)setuid(uid);
+
 	if (dflag) {
 		if (setsockopt(rem, SOL_SOCKET, SO_DEBUG, &one,
 		    sizeof(one)) < 0)
@@ -166,9 +165,6 @@ main(int argc, char *argv[])
 		    sizeof(one)) < 0)
 			warn("setsockopt");
 	}
-
-	(void)seteuid(uid);
-	(void)setuid(uid);
 	sigemptyset(&mask);
 	sigaddset(&mask, SIGINT);
 	sigaddset(&mask, SIGQUIT);
