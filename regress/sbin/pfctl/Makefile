@@ -1,4 +1,14 @@
-# $OpenBSD: Makefile,v 1.78 2003/02/19 19:17:35 henning Exp $
+# $OpenBSD: Makefile,v 1.79 2003/02/19 22:43:56 henning Exp $
+
+# TARGETS
+# pf: feed pfNN.in through pfctl and check wether the output matches pfNN.ok
+# selfpf: feed pfctl output through pfctl again and verify it stays the same
+# pfail: invalid rulesets pfctl must reject; pfailNN.in and pfailNN.ok
+# pfsetup: set up lo1 and perform more tests
+# pfr: table tests
+# pfsimple: just check wether pfctl accepts a given ruleset, not checking output
+# pfload: load ruleset into anchor regress:regress and verify pfctl -vvsr
+# pfopt: as target pf, but supply extra command line options
 
 PFTESTS=1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27
 PFTESTS+=28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50
@@ -18,7 +28,7 @@ PFTABLE=1 2 3 4 5 6 7 8 9 10 11 12
 PFOPT=1 2 3 4 5
 
 .for n in ${PFFAIL}
-REGRESS_TARGETS+=pfail${n}
+PFAIL_TARGETS+=pfail${n}
 
 pfail${n}:
 	pfctl -nv -f - < ${.CURDIR}/pfail${n}.in 2>&1 | \
@@ -26,30 +36,41 @@ pfail${n}:
 
 .endfor
 
+pfail:	${PFAIL_TARGETS}
+REGRESS_TARGETS+=pfail
+
 .for n in ${PFTESTS}
-REGRESS_TARGETS+=pf${n}
+PF_TARGETS+=pf${n}
 
 pf${n}:
 	pfctl -nv -f - < ${.CURDIR}/pf${n}.in | \
 	    diff -u ${.CURDIR}/pf${n}.ok /dev/stdin
 
-REGRESS_TARGETS+=selfpf${n}
+SELFPF_TARGETS+=selfpf${n}
 selfpf${n}:
 	pfctl -nv -f - < ${.CURDIR}/pf${n}.ok | \
 	    diff -u ${.CURDIR}/pf${n}.ok /dev/stdin
 
 .endfor
 
+pf:	${PF_TARGETS}
+selfpf:	${SELFPF_TARGETS}
+REGRESS_TARGETS+=pf
+REGRESS_TARGETS+=selfpf
+
 .for n in ${PFSIMPLE}
-REGRESS_TARGETS+=pfsimple${n}
+PFSIMPLE_TARGETS+=pfsimple${n}
 
 pfsimple${n}:
 	pfctl -nf - < ${.CURDIR}/pfsimple${n}.in
 
 .endfor
 
+pfsimple:	${PFSIMPLE_TARGETS}
+REGRESS_TARGETS+=pfsimple
+
 .for n in ${PFLOAD}
-REGRESS_TARGETS+=pfload${n}
+PFLOAD_TARGETS+=pfload${n}
 
 pfload${n}:
 	${SUDO} pfctl -a regress:regress -f - < ${.CURDIR}/pf${n}.in
@@ -60,8 +81,11 @@ pfload${n}:
 
 .endfor
 
+pfload:	${PFLOAD_TARGETS}
+REGRESS_TARGETS+=pfload
+
 .for n in ${PFTABLE}
-REGRESS_TARGETS+=pfr${n}
+PFR_TARGETS+=pfr${n}
 
 pfr${n}:
 	${SUDO} /bin/ksh ${.CURDIR}/pfr.exec ${.CURDIR}/pfr${n}.in | \
@@ -69,8 +93,11 @@ pfr${n}:
 
 .endfor
 
+pfr:	${PFR_TARGETS}
+REGRESS_TARGETS+=pfr
+
 .for n in ${PFOPT}
-REGRESS_TARGETS+=pfopt${n}
+PFOPT_TARGETS+=pfopt${n}
 
 pfopt${n}:
 	pfctl -nv -f - `cat ${.CURDIR}/pfopt${n}.opts` \
@@ -79,9 +106,11 @@ pfopt${n}:
 
 .endfor
 
-.ifdef DO_PFSETUP
+pfopt:	${PFOPT_TARGETS}
+REGRESS_TARGETS+=pfopt
+
 .for n in ${PFSETUP}
-REGRESS_TARGETS+=pfsetup${n}
+PFSETUP_TARGETS+=pfsetup${n}
 
 pfsetup${n}:
 	${SUDO} ${SHELL} ${.CURDIR}/pfsetup${n}.setup
@@ -90,6 +119,11 @@ pfsetup${n}:
 	${SUDO} ${SHELL} ${.CURDIR}/pfsetup${n}.clean
 
 .endfor
+
+pfsetup:	${PFSETUP_TARGETS}
+
+.ifdef DO_PFSETUP
+REGRESS_TARGETS+=pfsetup
 .endif
 
 .PHONY: ${REGRESS_TARGETS}
