@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ed.c,v 1.29 1997/04/14 02:06:22 millert Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.30 1997/06/20 20:25:27 mickey Exp $	*/
 /*	$NetBSD: if_ed.c,v 1.105 1996/10/21 22:40:45 thorpej Exp $	*/
 
 /*
@@ -1029,7 +1029,7 @@ ed_find_WD80x3(sc, cf, ia)
 
  out:
 	/*
-	 * XXX Sould always unmap, but we can't yet.
+	 * XXX Should always unmap, but we can't yet.
 	 * XXX Need to squish "indirect" first.
 	 */
 	if (rv == 0) {
