@@ -384,6 +384,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/cacreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/cacvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/iha.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/rtl81x9reg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/siopreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/siopvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/siopvar_common.ph
@@ -391,6 +392,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/stivar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/twereg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/twevar.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/mii/bmtphyreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/mii/brgphyreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/mii/mii_bitbang.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/mii/xmphyreg.ph

@@ -108,7 +108,6 @@
 ./usr/include/dev/ic/advmcode.h
 ./usr/include/dev/ic/adw.h
 ./usr/include/dev/ic/adwlib.h
-./usr/include/dev/ic/adwmcode.h
 ./usr/include/dev/ic/aic6360reg.h
 ./usr/include/dev/ic/aic6360var.h
 ./usr/include/dev/ic/aic7xxxreg.h
@@ -209,6 +208,7 @@
 ./usr/include/dev/ic/rlnvar.h
 ./usr/include/dev/ic/rtl80x9reg.h
 ./usr/include/dev/ic/rtl80x9var.h
+./usr/include/dev/ic/rtl81x9reg.h
 ./usr/include/dev/ic/s3_617.h
 ./usr/include/dev/ic/siopreg.h
 ./usr/include/dev/ic/siopvar.h
@@ -291,6 +291,7 @@
 ./usr/include/dev/midivar.h
 ./usr/include/dev/mii
 ./usr/include/dev/mii/amphyreg.h
+./usr/include/dev/mii/bmtphyreg.h
 ./usr/include/dev/mii/brgphyreg.h
 ./usr/include/dev/mii/icsphyreg.h
 ./usr/include/dev/mii/inphyreg.h
@@ -340,7 +341,6 @@
 ./usr/include/dev/pci/if_lmc_types.h
 ./usr/include/dev/pci/if_lmcioctl.h
 ./usr/include/dev/pci/if_lmcvar.h
-./usr/include/dev/pci/if_rlreg.h
 ./usr/include/dev/pci/if_sfreg.h
 ./usr/include/dev/pci/if_sisreg.h
 ./usr/include/dev/pci/if_skreg.h
