@@ -1,4 +1,4 @@
-.\"	$NetBSD: fstab.5,v 1.5 1995/02/03 18:17:32 jtc Exp $
+.\"	$NetBSD: fstab.5,v 1.5.2.1 1995/11/16 20:11:11 pk Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -68,7 +68,7 @@ The first field,
 describes the block special device or
 remote filesystem to be mounted.
 For filesystems of type
-.Em ufs ,
+.Em ffs ,
 the special file name is the block special file name, 
 and not the character special file name.
 If a program needs the character special file name,
@@ -83,12 +83,20 @@ For swap partitions, this field should be specified as ``none''.
 The third field,
 .Pq Fa fs_vfstype ,
 describes the type of the filesystem.
-The system currently supports nine types of filesystems:
+The system currently supports eleven types of filesystems:
 .Bl -tag -width indent -offset indent
-.It Em fdesc
-an implementation of /dev/fd
+.It Em adosfs
+An
+.Tn AmigaDOS
+filesystem
 .It Em cd9660
 an ISO 9660 CD-ROM filesystem
+.It Em fdesc
+an implementation of /dev/fd
+.It Em ffs 
+a local
+.Tn UNIX
+filesystem
 .It Em kernfs
 various and sundry kernel statistics
 .It Em mfs 
@@ -103,10 +111,8 @@ a Sun Microsystems compatible ``Network File System''
 a local filesystem of process information
 .It Em swap 
 a disk partition to be used for swapping
-.It Em ufs 
-a local
-.Tn UNIX
-filesystem
+.It Em union
+a translucent filesystem
 .El
 .Pp
 The fourth field,
