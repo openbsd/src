@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.18 1999/12/08 12:30:17 itojun Exp $	*/
+/*	$OpenBSD: if.c,v 1.19 2000/01/18 05:39:34 itojun Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-static char *rcsid = "$OpenBSD: if.c,v 1.18 1999/12/08 12:30:17 itojun Exp $";
+static char *rcsid = "$OpenBSD: if.c,v 1.19 2000/01/18 05:39:34 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -193,7 +193,7 @@ intpr(interval, ifnetaddr)
 					while (multiaddr != 0) {
 						kread(multiaddr, (char *)&inm,
 						    sizeof inm);
-						printf("\n%23s %-17.17s ", "",
+						printf("\n%25s %-17.17s ", "",
 						    routename(inm.inm_addr.s_addr));
 						multiaddr = (u_long)inm.inm_list.le_next;
 					}
@@ -206,6 +206,26 @@ intpr(interval, ifnetaddr)
 				    netname6(&ifaddr.in6.ia_addr,
 					&ifaddr.in6.ia_prefixmask.sin6_addr));
 				printf("%-17.17s ", routename6(sin6));
+				if (aflag) {
+					u_long multiaddr;
+					struct in6_multi inm;
+					char hbuf[INET6_ADDRSTRLEN];
+		
+					multiaddr = (u_long)ifaddr.in6.ia6_multiaddrs.lh_first;
+					while (multiaddr != 0) {
+						kread(multiaddr, (char *)&inm,
+						    sizeof inm);
+						inet_ntop(AF_INET6, &inm.in6m_addr,
+							hbuf, sizeof(hbuf));
+						if (vflag)
+							n = strlen(hbuf) < 17 ? 17 : strlen(hbuf);
+						else
+							n = 17;
+						printf("\n%25s %-*.*s ", "",
+						    n, n, hbuf);
+						multiaddr = (u_long)inm.in6m_entry.le_next;
+					}
+				}
 				break;
 #endif
 			case AF_IPX:

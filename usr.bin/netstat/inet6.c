@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.3 2000/01/05 00:07:08 itojun Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.4 2000/01/18 05:39:35 itojun Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-/*__RCSID("$OpenBSD: inet6.c,v 1.3 2000/01/05 00:07:08 itojun Exp $");*/
+/*__RCSID("$OpenBSD: inet6.c,v 1.4 2000/01/18 05:39:35 itojun Exp $");*/
 /*__RCSID("KAME Id: inet6.c,v 1.4 1999/12/02 04:47:27 itojun Exp");*/
 #endif
 #endif /* not lint */
@@ -60,7 +60,6 @@ static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #endif
-#include <netinet6/in6_pcb.h>
 #include <netinet6/in6_var.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/pim6_var.h>
@@ -78,7 +77,6 @@ static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 
 #ifdef INET6
 
-struct	in6pcb in6pcb;
 struct	socket sockb;
 
 char	*inet6name __P((struct in6_addr *));
