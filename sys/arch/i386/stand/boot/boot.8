@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.8,v 1.23 2000/11/22 20:24:09 mickey Exp $
+.\"	$OpenBSD: boot.8,v 1.24 2000/12/27 18:50:53 brad Exp $
 .\"
 .\" Copyright (c) 1997-2000 Michael Shalayeff
 .\" All rights reserved.
@@ -127,7 +127,7 @@ program, followed by the
 prompt, which means you are in the interactive mode and may enter commands.
 If you do not,
 .Nm
-will proceed loading kernel with the current parameters after the
+will proceed to loading the kernel with the current parameters after the
 timeout period has expired.
 .El
 .Sh COMMANDS
@@ -136,12 +136,12 @@ The following commands are accepted at the
 prompt:
 .Bl -tag -width stty_device_speed_____
 .It boot Op Ar image Op Fl abcds
-Boots kernel image specified by
+Boots the kernel image specified by
 .Ar image
 with any options given.
 Image specification consists of a pair
 .Em device : filename ,
-either or both of each maybe omitted (':' is not needed if both are omitted),
+either or both can be omitted (':' is not needed if both are omitted),
 in which case values from
 .Nm
 variables will be used.
@@ -157,7 +157,7 @@ Issues machine-dependent commands.
 These are defined for i386 architecture:
 .Bl -tag -width diskinfo_
 .It Nm diskinfo
-Prints list of hard disks installed on your system including:
+Prints a list of hard disks installed on your system including:
 BIOS device number, and the BIOS geometry.
 .It Nm memory
 If used without any arguments this command will print out
@@ -177,7 +177,7 @@ Both size and base address could be specified as octal,
 decimal, or hexadecimal numbers, as accepted by the
 .Xr strtoul 3
 routine.
-Memory segments are not required to be adjucent to each other,
+Memory segments are not required to be adjacent to each other,
 the only requirement is that there is real physical memory under
 the range added.
 For example:
@@ -185,10 +185,10 @@ For example:
 machine mem +0x2000000@0x1000000
 .Ed
 .Pp
-would add 32M of memory right after first 16M.
-The other usefull command would be to winthdraw some range
-of memory form OS usage (as might be wrongfully reported as
-usefull by BIOS):
+would add 32M of memory right after the first 16M.
+The other useful command would be to withdraw a range
+of memory from OS usage (might be wrongfully reported as
+useful by the BIOS).
 .Bd -unfilled -offset indent
 machine mem -0x100000@0xf00000
 .Ed
@@ -204,7 +204,7 @@ Prints contents of the specified
 in long format including: attributes and file type, owner, group,
 size, filename.
 .It reboot
-Reboots machine by initiating a warm boot procedure.
+Reboots the machine by initiating a warm boot procedure.
 .It set Op Ar varname Op Ar value
 If invoked without arguments, prints a list of variables and their values.
 If only
