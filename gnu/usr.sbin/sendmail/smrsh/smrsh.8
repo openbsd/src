@@ -11,7 +11,7 @@
 .\"
 .\"     $Sendmail: smrsh.8,v 8.11.16.2 2000/12/15 19:50:46 gshapiro Exp $
 .\"
-.TH SMRSH 8 "$Date: 2001/01/15 21:09:11 $"
+.TH SMRSH 8 "$Date: 2001/01/17 04:53:19 $"
 .SH NAME
 smrsh \- restricted shell for sendmail
 .SH SYNOPSIS
@@ -39,7 +39,7 @@ Briefly,
 .I smrsh
 limits programs to be in a single directory,
 by default
-/usr/adm/sm.bin,
+/usr/libexec/sm.bin,
 allowing the system administrator to choose the set of acceptable commands,
 and to the shell builtin commands ``exec'', ``exit'', and ``echo''.
 It also rejects any commands with the characters
@@ -56,7 +56,7 @@ so forwarding to ``/usr/ucb/vacation'',
 and
 ``vacation''
 all actually forward to
-``/usr/adm/sm.bin/vacation''.
+``/usr/libexec/sm.bin/vacation''.
 .PP
 System administrators should be conservative about populating
 the sm.bin directory.
@@ -74,15 +74,7 @@ directory.
 Note that this does not restrict the use of shell or perl scripts
 in the sm.bin directory (using the ``#!'' syntax);
 it simply disallows execution of arbitrary programs.
-.SH COMPILATION
-Compilation should be trivial on most systems.
-You may need to use \-DPATH=\e"\fIpath\fP\e"
-to adjust the default search path
-(defaults to ``/bin:/usr/bin:/usr/ucb'')
-and/or \-DCMDBIN=\e"\fIdir\fP\e"
-to change the default program directory
-(defaults to ``/usr/adm/sm.bin'').
 .SH FILES
-/usr/adm/sm.bin \- directory for restricted programs
+/usr/libexec/sm.bin \- directory for restricted programs
 .SH SEE ALSO
 sendmail(8)
