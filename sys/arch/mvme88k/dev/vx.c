@@ -1,6 +1,6 @@
-/*	$OpenBSD: vx.c,v 1.22 2003/08/15 20:32:14 tedu Exp $ */
+/*	$OpenBSD: vx.c,v 1.23 2003/10/05 20:27:48 miod Exp $ */
 /*
- * Copyright (c) 1999 Steve Murphree, Jr. 
+ * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,7 +24,7 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */  
+ */
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -150,14 +150,14 @@ int create_free_queue(struct vxsoftc *);
 void print_dump(struct vxsoftc *);
 struct envelope *get_cmd_tail(struct vxsoftc *);
 
-struct cfattach vx_ca = {       
+struct cfattach vx_ca = {
 	sizeof(struct vxsoftc), vxmatch, vxattach
-};      
+};
 
 struct cfdriver vx_cd = {
 	NULL, "vx", DV_TTY, 0
-}; 
-      
+};
+
 #define VX_UNIT(x) (int)(minor(x) / 9)
 #define VX_PORT(x) (int)(minor(x) % 9)
 
@@ -170,7 +170,7 @@ struct tty * vxtty(dev)
 	int unit, port;
 	struct vxsoftc *sc;
 	unit = VX_UNIT(dev);
-	if (unit >= vx_cd.cd_ndevs || 
+	if (unit >= vx_cd.cd_ndevs ||
 	    (sc = (struct vxsoftc *) vx_cd.cd_devs[unit]) == NULL) {
 		return (NULL);
 	}
@@ -178,7 +178,7 @@ struct tty * vxtty(dev)
 	return sc->sc_info[port].tty;
 }
 
-int   
+int
 vxmatch(parent, self, aux)
 	struct device *parent;
 	void *self;
@@ -186,7 +186,7 @@ vxmatch(parent, self, aux)
 {
 	struct vxreg *vx_reg;
 	struct confargs *ca = aux;
-   
+
 #ifdef OLD_MAPPINGS
 	ca->ca_vaddr = ca->ca_paddr;
 #endif
@@ -208,21 +208,21 @@ vxattach(parent, self, aux)
 {
 	struct vxsoftc *sc = (struct vxsoftc *)self;
 	struct confargs *ca = aux;
-	
+
 	/* set up dual port memory and registers and init*/
 	sc->vx_reg = (struct vxreg *)ca->ca_vaddr;
 	sc->channel = (struct channel *)(ca->ca_vaddr + 0x0100);
 #if defined(MVME187) || defined(MVME197)
 	sc->sc_vme2 = ca->ca_master;
-#endif 
-	sc->sc_ipl = ca->ca_ipl; 
-	sc->sc_vec = ca->ca_vec; 
+#endif
+	sc->sc_ipl = ca->ca_ipl;
+	sc->sc_vec = ca->ca_vec;
 	sc->board_addr = (unsigned int)ca->ca_vaddr;
 
 	printf("\n");
 
 	if (create_channels(sc)) {
-		printf("%s: failed to create channel %d\n", sc->sc_dev.dv_xname, 
+		printf("%s: failed to create channel %d\n", sc->sc_dev.dv_xname,
 		       sc->channel->channel_number);
 		return;
 	}
@@ -408,7 +408,7 @@ int vxopen (dev, flag, mode, p)
 	unit = VX_UNIT(dev);
 	port = VX_PORT(dev);
 
-	if (unit >= vx_cd.cd_ndevs || 
+	if (unit >= vx_cd.cd_ndevs ||
 	    (sc = (struct vxsoftc *) vx_cd.cd_devs[unit]) == NULL) {
 		return (ENODEV);
 	}
@@ -431,7 +431,7 @@ int vxopen (dev, flag, mode, p)
 #ifdef DEBUG_VXT
 		printf("unit %d, port %d, ", unit, port);
 		printf("error = %d\n", opkt.error_l);
-#endif 
+#endif
 		return (ENODEV);
 	}
 
@@ -442,7 +442,7 @@ int vxopen (dev, flag, mode, p)
 	if (vxt->tty) {
 		tp = vxt->tty;
 	} else {
-		tp = vxt->tty = ttymalloc();  
+		tp = vxt->tty = ttymalloc();
 	}
 
 	/* set line status */
@@ -506,7 +506,7 @@ int vxopen (dev, flag, mode, p)
 	return ((*linesw[tp->t_line].l_open)(dev, tp));
 }
 
-int 
+int
 vx_param(tp, t)
 	struct tty *tp;
 	struct termios *t;
@@ -517,7 +517,7 @@ vx_param(tp, t)
 
 	dev = tp->t_dev;
 	unit = VX_UNIT(dev);
-	if (unit >= vx_cd.cd_ndevs || 
+	if (unit >= vx_cd.cd_ndevs ||
 	    (sc = (struct vxsoftc *) vx_cd.cd_devs[unit]) == NULL) {
 		return (ENODEV);
 	}
@@ -530,7 +530,7 @@ vx_param(tp, t)
 	return 0;
 }
 
-int 
+int
 vxclose (dev, flag, mode, p)
 	dev_t dev;
 	int flag;
@@ -544,7 +544,7 @@ vxclose (dev, flag, mode, p)
 	int s;
 	struct close_packet cpkt;
 	unit = VX_UNIT(dev);
-	if (unit >= vx_cd.cd_ndevs || 
+	if (unit >= vx_cd.cd_ndevs ||
 	    (sc = (struct vxsoftc *) vx_cd.cd_devs[unit]) == NULL) {
 		return (ENODEV);
 	}
@@ -579,7 +579,7 @@ vxclose (dev, flag, mode, p)
 	return (0);
 }
 
-void 
+void
 read_wakeup(sc, port)
 	struct vxsoftc *sc;
 	int port;
@@ -587,8 +587,8 @@ read_wakeup(sc, port)
 	struct read_wakeup_packet rwp;
 	struct vx_info *volatile vxt;
 	vxt = &sc->sc_info[port];
-	/* 
-	 * If we already have a read_wakeup paket 
+	/*
+	 * If we already have a read_wakeup paket
 	 * for this port, do nothing.
 	 */
 	if (vxt->read_pending) {
@@ -609,13 +609,13 @@ read_wakeup(sc, port)
 
 	/*
 	 * Do not wait.  Characters will be transferred
-	 * to (*linesw[tp->t_line].l_rint)(c,tp); by 
+	 * to (*linesw[tp->t_line].l_rint)(c,tp); by
 	 * vx_intr()  (IPC will notify via interrupt)
 	 */
 	bpp_send(sc, &rwp, NOWAIT);
 }
 
-int 
+int
 vxread (dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
@@ -627,7 +627,7 @@ vxread (dev, uio, flag)
 	struct vxsoftc *volatile sc;
 
 	unit = VX_UNIT(dev);
-	if (unit >= vx_cd.cd_ndevs || 
+	if (unit >= vx_cd.cd_ndevs ||
 	    (sc = (struct vxsoftc *) vx_cd.cd_devs[unit]) == NULL) {
 		return (ENODEV);
 	}
@@ -638,7 +638,7 @@ vxread (dev, uio, flag)
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
 
-int 
+int
 vxwrite (dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
@@ -653,7 +653,7 @@ vxwrite (dev, uio, flag)
 	u_short get, put;
 
 	unit = VX_UNIT(dev);
-	if (unit >= vx_cd.cd_ndevs || 
+	if (unit >= vx_cd.cd_ndevs ||
 	    (sc = (struct vxsoftc *) vx_cd.cd_devs[unit]) == NULL) {
 		return (ENODEV);
 	}
@@ -706,7 +706,7 @@ vxwrite (dev, uio, flag)
 		}
 	}
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
-}  
+}
 
 int
 vxioctl (dev, cmd, data, flag, p)
@@ -722,7 +722,7 @@ vxioctl (dev, cmd, data, flag, p)
 	struct vx_info *vxt;
 	struct vxsoftc *sc;
 	unit = VX_UNIT(dev);
-	if (unit >= vx_cd.cd_ndevs || 
+	if (unit >= vx_cd.cd_ndevs ||
 	    (sc = (struct vxsoftc *) vx_cd.cd_devs[unit]) == NULL) {
 		return (ENODEV);
 	}
@@ -778,7 +778,7 @@ vxioctl (dev, cmd, data, flag, p)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(p, 0); 
+		error = suser(p, 0);
 		if (error != 0)
 			return (EPERM);
 
@@ -968,7 +968,7 @@ vx_ccparam(sc, par, port)
 	else lflag &= ~VICANON;
 	if (par->c_lflag & ISIG) lflag |= VISIG;
 	else lflag &= ~VISIG;
-#endif 
+#endif
 	pkt.command = CMD_IOCTL;
 	pkt.ioctl_cmd_l = IOCTL_TCSETA;
 	pkt.command_pipe_number = sc->channel_number;
@@ -1008,7 +1008,7 @@ vxstart(tp)
 	dev = tp->t_dev;
 	port = VX_PORT(dev);
 	unit = VX_UNIT(dev);
-	if (unit >= vx_cd.cd_ndevs || 
+	if (unit >= vx_cd.cd_ndevs ||
 	    (sc = (struct vxsoftc *) vx_cd.cd_devs[unit]) == NULL) {
 		return;
 	}
@@ -1038,16 +1038,16 @@ vxstart(tp)
 	return;
 }
 
-void 
+void
 read_chars(sc, port)
 	struct vxsoftc *sc;
 	int port;
 {
-	/* 
+	/*
 	 * This routine is called by vx_intr() when there are
-	 * characters in the read ring.  It will process one 
+	 * characters in the read ring.  It will process one
 	 * cooked line, put the chars in the line disipline ring,
-	 * and then return.  The characters may then 
+	 * and then return.  The characters may then
 	 * be read by vxread.
 	 */
 	struct vx_info *vxt;
@@ -1066,7 +1066,7 @@ read_chars(sc, port)
 #ifdef DEBUG_VXT
 	printf("read_chars() get=%d, put=%d ", get, put);
 	printf("open = %d ring at 0x%x\n", open, rp);
-#endif 
+#endif
 	while (get != put) {
 		frame_count = rp->data[rp->get++ & (RRING_BUF_SIZE - 1)];
 		rp->get &= (RRING_BUF_SIZE - 1);
@@ -1122,7 +1122,6 @@ vx_intr(arg)
 
 	if (vme2->vme2_vbr & VME2_SYSFAIL) {
 		/* do something... print_dump(sc); */
-		
 	}
 #endif /* defined(MVME187) || defined(MVME197) */
 	if (!cold) sc->sc_intrcnt.ev_count++;
@@ -1132,7 +1131,7 @@ vx_intr(arg)
 		valid = env_isvalid(get_status_head(sc));
 		cmd = pktp->command;
 		port = pktp->device_number;
-		/* if we are waiting on this packet, strore the info so bpp_send 
+		/* if we are waiting on this packet, strore the info so bpp_send
 		   can process the packet  */
 		if (sc->sc_bppwait_pktp == pktp)
 			memcpy2(&sc->sc_bppwait_pkt, pktp, sizeof(struct packet));
@@ -1149,34 +1148,34 @@ vx_intr(arg)
 		switch (cmd) {
 		case CMD_READW:
 #ifdef DEBUG_VXT
-			printf("READW Packet\n");  
-#endif 
-			read_chars(sc, port);          
+			printf("READW Packet\n");
+#endif
+			read_chars(sc, port);
 			return 1;
 			break;
 		case CMD_WRITEW:
 #ifdef DEBUG_VXT
 			printf("WRITEW Packet\n");  /* Still don't know XXXsmurph */
-#endif 
+#endif
 			return 1;
 			break;
 		case CMD_EVENT:
 #ifdef DEBUG_VXT
-			printf("EVENT Packet\n");  
-#endif 
+			printf("EVENT Packet\n");
+#endif
 			vx_event(sc, &pkt);
 			return 1;
 			break;
 		case CMD_PROCCESED:
 #ifdef DEBUG_VXT
 			printf("CMD_PROCCESED Packet\n");
-#endif 
+#endif
 			return 1;
 			break;
 		default:
 #ifdef DEBUG_VXT
-			printf("Other packet 0x%x\n", cmd);  
-#endif 
+			printf("Other packet 0x%x\n", cmd);
+#endif
 			return 1;
 			break;
 		}
@@ -1184,7 +1183,7 @@ vx_intr(arg)
 	return 1;
 }
 
-int 
+int
 vx_event(sc, evntp)
 	struct vxsoftc *sc;
 	struct packet *evntp;
@@ -1225,19 +1224,15 @@ vx_event(sc, evntp)
 	}
 	if (code & E_PR_FAULT) {
 		/* do something... */
-		
 	}
 	if (code & E_PR_POUT) {
 		/* do something... */
-		
 	}
 	if (code & E_PR_SELECT) {
 		/* do something... */
-		
 	}
 	if (code & E_SWITCH) {
 		/* do something... */
-		
 	}
 	if (code & E_BREAK) {
 		vx_break (sc, evntp->device_number);
@@ -1300,27 +1295,25 @@ vx_break (sc, port)
 void
 memcpy2(void *dest, const void *src, size_t size)
 {
-	int i;
-	short *d, *s;
-	d = (short *) dest;
-	s = (short *) src;
-	for (i=0; i<(size/2); i++) {
-		*d = *s;
-		d++;
-		s++;
-	}
+	size_t i;
+	u_int16_t *d, *s;
+
+	d = (u_int16_t *)dest;
+	s = (u_int16_t *)src;
+	size /= 2;
+	for (i = 0; i < size; i++)
+		*d++ = *s++;
 }
 
 void
 wzero(void *addr, size_t size)
 {
-	int i;
-	short *d;
-	d = (short *) addr;
-	for (i=0; i<(size/2); i++) {
-		*d = 0;
-		d++;
-	}
+	u_int16_t *d;
+
+	d = (u_int16_t *)addr;
+	size /= 2;
+	while (size-- != 0)
+		*d++ = 0;
 }
 
 int
@@ -1362,7 +1355,7 @@ create_free_queue(sc)
 }
 
 void *
-get_free_envelope(sc) 
+get_free_envelope(sc)
 	struct vxsoftc *sc;
 {
 	void *envp;
@@ -1373,7 +1366,7 @@ get_free_envelope(sc)
 	return envp;
 }
 
-void 
+void
 put_free_envelope(sc, ep)
 	struct vxsoftc *sc;
 	void * ep;
@@ -1385,7 +1378,7 @@ put_free_envelope(sc, ep)
 	sc->elist_tail = envp;
 }
 
-void * 
+void *
 get_free_packet(sc)
 	struct vxsoftc *sc;
 {
@@ -1397,7 +1390,7 @@ get_free_packet(sc)
 	return pktp;
 }
 
-void 
+void
 put_free_packet(sc, pp)
 	struct vxsoftc *sc;
 	void *pp;
@@ -1410,12 +1403,12 @@ put_free_packet(sc, pp)
 	sc->plist_tail = pktp;
 }
 
-/* 
+/*
  * This is the nitty gritty.  All the rest if this code
- * was hell to come by.  Getting this right from the 
- * Moto manual took *time*!  
+ * was hell to come by.  Getting this right from the
+ * Moto manual took *time*!
  */
-int 
+int
 create_channels(sc)
 	struct vxsoftc *sc;
 {
@@ -1450,7 +1443,7 @@ create_channels(sc)
 		sc->channel->datasize = 0; /* 32 bit data mode */
 
 		/* loop until TAS bit is zero */
-		while ((ipc_csr->ipc_tas & IPC_TAS_TAS)); 
+		while ((ipc_csr->ipc_tas & IPC_TAS_TAS));
 		ipc_csr->ipc_tas |= IPC_TAS_TAS;
 		/* load address of channel header */
 		ipc_csr->ipc_addrh = HI(sc->channel);
@@ -1477,29 +1470,29 @@ create_channels(sc)
 	/* check and see if the channel was created */
 	if (!status && sc->channel->valid) {
 		sc->channel_number = sc->channel->channel_number;
-		printf("%s: created channel %d\n", sc->sc_dev.dv_xname, 
+		printf("%s: created channel %d\n", sc->sc_dev.dv_xname,
 		       sc->channel->channel_number);
 		return 0;
 	} else {
 		switch (status) {
 		case 0x0000:
-			printf("%s: channel not valid\n", 
+			printf("%s: channel not valid\n",
 			       sc->sc_dev.dv_xname);
 			break;
 		case 0xFFFF:
-			printf("%s: invalid CSR command\n", 
+			printf("%s: invalid CSR command\n",
 			       sc->sc_dev.dv_xname);
 			break;
 		case 0xC000:
-			printf("%s: could not read channel structure\n", 
+			printf("%s: could not read channel structure\n",
 			       sc->sc_dev.dv_xname);
 			break;
 		case 0x8000:
-			printf("%s: could not write channel structure\n", 
+			printf("%s: could not write channel structure\n",
 			       sc->sc_dev.dv_xname);
 			break;
 		default:
-			printf("%s: unknown IPC CSR command error 0x%x\n", 
+			printf("%s: unknown IPC CSR command error 0x%x\n",
 			       sc->sc_dev.dv_xname, status);
 			break;
 		}
@@ -1528,7 +1521,7 @@ get_next_envelope(thisenv)
 	return ((void *)thisenv->link);
 }
 
-int 
+int
 env_isvalid(thisenv)
 	struct envelope *thisenv;
 {
@@ -1537,7 +1530,7 @@ env_isvalid(thisenv)
 
 struct envelope *
 get_cmd_tail(sc)
-	struct vxsoftc *sc; 
+	struct vxsoftc *sc;
 {
 	unsigned long retaddr;
 	retaddr = (unsigned long)sc->vx_reg;
@@ -1562,7 +1555,6 @@ set_status_head(sc, envp)
 {
 	sc->channel->status_pipe_head_ptr_h = HI(envp);
 	sc->channel->status_pipe_head_ptr_l = LO(envp);
-	return;   
 }
 
 struct packet *
@@ -1570,15 +1562,15 @@ get_packet(sc, thisenv)
 	struct vxsoftc *sc;
 	struct envelope *thisenv;
 {
-	unsigned long baseaddr; 
+	unsigned long baseaddr;
 
 	if (thisenv == NULL) return NULL;
 	baseaddr = (unsigned long)sc->vx_reg;
-	/* 
+	/*
 	 * packet ptr returned on status pipe is only last two bytes
 	 * so we must supply the full address based on the board address.
 	 * This also works for all envelopes because every address is an
-	 * offset to the board address 
+	 * offset to the board address
 	 */
 	baseaddr |= thisenv->packet_ptr;
 	return ((void *)baseaddr);
@@ -1587,7 +1579,7 @@ get_packet(sc, thisenv)
 /*
  *	Send a command via BPP
  */
-int 
+int
 bpp_send(struct vxsoftc *sc, void *pkt, int wait_flag)
 {
 	struct envelope *envp;
@@ -1612,7 +1604,7 @@ bpp_send(struct vxsoftc *sc, void *pkt, int wait_flag)
 		while (pktp->command != CMD_PROCCESED) {
 #ifdef DEBUG_VXT
 			printf("Polling for packet 0x%x in envelope 0x%x...\n", pktp, envp);
-#endif 
+#endif
 			vx_intr(sc);
 			delay(5000);
 		}
@@ -1626,7 +1618,7 @@ bpp_send(struct vxsoftc *sc, void *pkt, int wait_flag)
  *	BPP commands
  */
 
-int 
+int
 vx_init(sc)
 	struct vxsoftc *sc;
 {
@@ -1656,7 +1648,7 @@ vx_init(sc)
 		sc->sc_info[i].rringp = rringp;
 #ifdef DEBUG_VXT
 		printf("write at 0x%8x, read at 0x%8x\n", wringp, rringp);
-#endif 
+#endif
 		infp->write_ring_size = WRING_DATA_SIZE;
 		infp->read_ring_size = RRING_DATA_SIZE;
 		infp->def_termio.c_iflag = VBRKINT;

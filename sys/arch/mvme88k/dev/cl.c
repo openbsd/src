@@ -1,8 +1,8 @@
-/*	$OpenBSD: cl.c,v 1.31 2003/10/03 16:44:50 miod Exp $ */
+/*	$OpenBSD: cl.c,v 1.32 2003/10/05 20:27:47 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
- *   
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -22,7 +22,7 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */  
+ */
 
 /* DMA mode still does not work!!! */
 
@@ -64,7 +64,7 @@
 #define CL_RXDMAINT	0x82
 #define CL_TXDMAINT	0x42
 #define CL_TXMASK	0x47
-#define CL_RXMASK	0x87 
+#define CL_RXMASK	0x87
 #define CL_TXINTR	0x02
 #define CL_RXINTR	0x02
 
@@ -189,13 +189,13 @@ void cloutput(struct tty *tp);
 void cl_chkinput(void);
 #endif
 
-struct cfattach cl_ca = {       
+struct cfattach cl_ca = {
 	sizeof(struct clsoftc), clprobe, clattach
-};      
-  
+};
+
 struct cfdriver cl_cd = {
 	NULL, "cl", DV_TTY, 0
-}; 
+};
 
 #define CLCDBUF 80
 
@@ -213,7 +213,7 @@ struct tty *cltty(dev)
 	int unit, channel;
 	struct clsoftc *sc;
 	unit = CL_UNIT(dev);
-	if (unit >= cl_cd.cd_ndevs || 
+	if (unit >= cl_cd.cd_ndevs ||
 		(sc = (struct clsoftc *) cl_cd.cd_devs[unit]) == NULL) {
 		return (NULL);
 	}
@@ -221,19 +221,19 @@ struct tty *cltty(dev)
 	return sc->sc_cl[channel].tty;
 }
 
-int	
+int
 clprobe(parent, self, aux)
 	struct device *parent;
 	void *self;
 	void *aux;
 {
 	/* probing onboard 166/167/187 CL-cd2400
-	 * should be previously configured, 
+	 * should be previously configured,
 	 * we can check the value before resetting the chip
 	 */
 	struct clreg *cl_reg;
 	struct confargs *ca = aux;
-	
+
 	if (brdtyp == BRD_188)
 		return 0;
 
@@ -241,7 +241,7 @@ clprobe(parent, self, aux)
 	ca->ca_vaddr = ca->ca_paddr = (void *)CD2400_BASE_ADDR;
 	cl_reg = (struct clreg *)ca->ca_vaddr;
 
-	if (badvaddr((vm_offset_t)&cl_reg->cl_gfrcr,1))
+	if (badvaddr((vaddr_t)&cl_reg->cl_gfrcr,1))
 		return 0;
 	return 1;
 }
@@ -377,7 +377,7 @@ cl_initchannel(sc, channel)
 	cl_reg->cl_ier	= 0x00;
 	/* if the port is not the console, should be init for all ports??*/
 	if (sc->sc_cl[channel].cl_consio != 1) {
-		cl_reg->cl_cmr	= 0x02; 
+		cl_reg->cl_cmr	= 0x02;
 		cl_reg->cl_cor1	= 0x17;
 		cl_reg->cl_cor2	= 0x00;
 		cl_reg->cl_cor3	= 0x02;
@@ -483,7 +483,6 @@ clmctl(dev, bits, how)
 			if( msvr & 0x01) {
 				bits |= TIOCM_RTS;
 			}
-			
 		}
 		break;
 	}
@@ -516,9 +515,9 @@ clopen(dev, flag, mode, p)
 	struct cl_info *cl;
 	struct clsoftc *sc;
 	struct tty *tp;
-	
+
 	unit = CL_UNIT(dev);
-	if (unit >= cl_cd.cd_ndevs || 
+	if (unit >= cl_cd.cd_ndevs ||
 		(sc = (struct clsoftc *) cl_cd.cd_devs[unit]) == NULL) {
 		return (ENODEV);
 	}
@@ -582,7 +581,7 @@ clopen(dev, flag, mode, p)
 #ifdef CL_DMA_WORKS
 			{
 			sc->cl_reg->cl_cmr	=
-				/* CL_TXDMAINT | */ CL_RXDMAINT; 
+				/* CL_TXDMAINT | */ CL_RXDMAINT;
 			sc->cl_reg->cl_ier	= 0xa8;
 			sc->cl_reg->cl_licr	= 0x00;
 			}
@@ -612,11 +611,11 @@ if (channel == 2) { /* test one channel now */
 #if 0
 			/* tx only */
 			sc->cl_reg->cl_licr	= (CL_DMAMODE << 4);
-			sc->cl_reg->cl_cmr	= 0x42; 
+			sc->cl_reg->cl_cmr	= 0x42;
 #endif
 		/* rx only */
 			sc->cl_reg->cl_licr	= 0x00;
-			sc->cl_reg->cl_cmr	= 0x82; 
+			sc->cl_reg->cl_cmr	= 0x82;
 }
 			sc->cl_reg->cl_ccr = 0x20;
 			while (sc->cl_reg->cl_ccr != 0) {
@@ -660,7 +659,7 @@ clparam(tp, t)
 
 	dev = tp->t_dev;
 	unit = CL_UNIT(dev);
-	if (unit >= cl_cd.cd_ndevs || 
+	if (unit >= cl_cd.cd_ndevs ||
 		(sc = (struct clsoftc *) cl_cd.cd_devs[unit]) == NULL) {
 		return (ENODEV);
 	}
@@ -689,7 +688,7 @@ cloutput(tp)
 
 	dev = tp->t_dev;
 	unit = CL_UNIT(dev);
-	if (unit >= cl_cd.cd_ndevs || 
+	if (unit >= cl_cd.cd_ndevs ||
 		(sc = (struct clsoftc *) cl_cd.cd_devs[unit]) == NULL) {
 		return;
 	}
@@ -729,7 +728,7 @@ clclose(dev, flag, mode, p)
 	struct clsoftc *sc;
 	int s;
 	unit = CL_UNIT(dev);
-	if (unit >= cl_cd.cd_ndevs || 
+	if (unit >= cl_cd.cd_ndevs ||
 		(sc = (struct clsoftc *) cl_cd.cd_devs[unit]) == NULL) {
 		return (ENODEV);
 	}
@@ -739,7 +738,7 @@ clclose(dev, flag, mode, p)
 	(*linesw[tp->t_line].l_close)(tp, flag);
 
 	s = splcl();
-	
+
 	sc->cl_reg->cl_car = channel;
 	if(cl->cl_consio == 0 && (tp->t_cflag & HUPCL) != 0) {
 		sc->cl_reg->cl_msvr_rts = 0x00;
@@ -771,7 +770,7 @@ clread(dev, uio, flag)
 	struct cl_info *cl;
 	struct clsoftc *sc;
 	unit = CL_UNIT(dev);
-	if (unit >= cl_cd.cd_ndevs || 
+	if (unit >= cl_cd.cd_ndevs ||
 		(sc = (struct clsoftc *) cl_cd.cd_devs[unit]) == NULL) {
 		return (ENODEV);
 	}
@@ -794,7 +793,7 @@ clwrite(dev, uio, flag)
 	struct cl_info *cl;
 	struct clsoftc *sc;
 	unit = CL_UNIT(dev);
-	if (unit >= cl_cd.cd_ndevs || 
+	if (unit >= cl_cd.cd_ndevs ||
 		(sc = (struct clsoftc *) cl_cd.cd_devs[unit]) == NULL) {
 		return (ENODEV);
 	}
@@ -820,7 +819,7 @@ clioctl(dev, cmd, data, flag, p)
 	struct cl_info *cl;
 	struct clsoftc *sc;
 	unit = CL_UNIT(dev);
-	if (unit >= cl_cd.cd_ndevs || 
+	if (unit >= cl_cd.cd_ndevs ||
 		(sc = (struct clsoftc *) cl_cd.cd_devs[unit]) == NULL) {
 		return (ENODEV);
 	}
@@ -874,9 +873,9 @@ clioctl(dev, cmd, data, flag, p)
 		*(int *)data = cl->cl_swflags;
 		break;
 	case TIOCSFLAGS:
-		error = suser(p, 0); 
+		error = suser(p, 0);
 		if (error != 0)
-			return(EPERM); 
+			return(EPERM);
 
 		cl->cl_swflags = *(int *)data;
 		cl->cl_swflags &= /* only allow valid flags */
@@ -940,7 +939,7 @@ clcninit(cp)
 	struct consdev *cp;
 {
 	struct clreg *volatile cl_reg;
-	
+
 	cl_cons.cl_paddr = (void *)CD2400_BASE_ADDR;
 	cl_cons.cl_vaddr   = (struct clreg *)IIOV(cl_cons.cl_paddr);
 	cl_cons.pcctwoaddr = (void *)IIOV(0xfff42000);
@@ -1048,7 +1047,7 @@ clcngetc(dev)
 			cl_reg->cl_teoir = 0x00;
 		}
 	}
-	
+
 	return data;
 }
 
@@ -1146,7 +1145,7 @@ cl_chkinput()
 	if (dopoll == 0)
 		return;
 	for (unit = 0; unit < cl_cd.cd_ndevs; unit++) {
-		if (unit >= cl_cd.cd_ndevs || 
+		if (unit >= cl_cd.cd_ndevs ||
 			(sc = (struct clsoftc *) cl_cd.cd_devs[unit]) == NULL) {
 			continue;
 		}
@@ -1173,7 +1172,7 @@ cl_chkinput()
 }
 #endif
 
-u_char 
+u_char
 clgetc(sc, channel)
 	struct clsoftc *sc;
 	int *channel;
@@ -1237,7 +1236,7 @@ clccparam(sc, par, channel)
 
 	s = splcl();
 	sc->cl_reg->cl_car = channel;
-	if (par->c_ospeed == 0) { 
+	if (par->c_ospeed == 0) {
 		/* dont kill the console */
 		if(sc->sc_cl[channel].cl_consio == 0) {
 			/* disconnect, drop RTS DTR stop receiver */
@@ -1293,7 +1292,7 @@ clccparam(sc, par, channel)
 		} else {
 			cor1 = 0x10 | clen; /* ignore parity */
 		}
-		if (sc->cl_reg->cl_cor1 != cor1) { 
+		if (sc->cl_reg->cl_cor1 != cor1) {
 			sc->cl_reg->cl_cor1 = cor1;
 			sc->cl_reg->cl_ccr = 0x20;
 			while (sc->cl_reg->cl_ccr != 0) {
@@ -1337,7 +1336,7 @@ clccparam(sc, par, channel)
 
 static int clknum = 0;
 
-u_char 
+u_char
 cl_clkdiv(speed)
 	int speed;
 {
@@ -1355,7 +1354,7 @@ cl_clkdiv(speed)
 	return cl_clocks[4].divisor;
 }
 
-u_char 
+u_char
 cl_clknum(speed)
 	int speed;
 {
@@ -1374,7 +1373,7 @@ cl_clknum(speed)
 	return cl_clocks[4].clock;
 }
 
-u_char 
+u_char
 cl_clkrxtimeout(speed)
 	int speed;
 {
@@ -1423,7 +1422,7 @@ clstart(tp)
 	}
 #endif
 	unit = CL_UNIT(dev);
-	if (unit >= cl_cd.cd_ndevs || 
+	if (unit >= cl_cd.cd_ndevs ||
 		(sc = (struct clsoftc *) cl_cd.cd_devs[unit]) == NULL) {
 		return;
 	}
@@ -1486,7 +1485,7 @@ cl_mintr(arg)
 		log(LOG_WARNING, "cl_mintr: channel %x timer 2 unexpected\n",channel);
 	}
 	if (misr & 0x20) {
-		log(LOG_WARNING, "cl_mintr: channel %x cts %x\n",channel, 
+		log(LOG_WARNING, "cl_mintr: channel %x cts %x\n",channel,
 		((msvr & 0x20) != 0x0)
 		);
 	}
@@ -1642,7 +1641,7 @@ cl_rxintr(arg)
 	int i;
 	u_char reoir;
 	u_char buffer[CL_FIFO_MAX +1];
-	
+
 	rir = sc->cl_reg->cl_rir;
 	if((rir & 0x40) == 0x0) {
 		/* only if intr is not shared ??? */
@@ -1706,7 +1705,7 @@ log(LOG_WARNING, "cl_txintr: DMAMODE channel %x dmabsts %x risrl %x risrh %x\n",
 #endif
 #if USE_BUFFER
 			cl_appendbufn(sc, channel, sc->rx[nbuf], cnt);
-#else 
+#else
 			{
 				int i;
 				u_char *pbuf;

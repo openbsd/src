@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssh.c,v 1.15 2003/09/22 21:39:39 miod Exp $	*/
+/*	$OpenBSD: ssh.c,v 1.16 2003/10/05 20:27:48 miod Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -80,7 +80,7 @@ void ssh_sched(struct ssh_softc *);
 int  ssh_poll(struct ssh_softc *, struct ssh_acb *);
 int  sshintr(struct ssh_softc *);
 void scsi_period_to_ssh(struct ssh_softc *, int);
-void ssh_start(struct ssh_softc *, int, int, u_char *, int, u_char *, int); 
+void ssh_start(struct ssh_softc *, int, int, u_char *, int, u_char *, int);
 void ssh_dump_acb(struct ssh_acb *);
 void sshinitialize(struct ssh_softc *sc);
 
@@ -218,7 +218,7 @@ ssh_scsicmd(xs)
 	sc = slp->adapter_softc;
 	flags = xs->flags;
 	xs->error = XS_NOERROR;
-	
+
 	/* XXXX ?? */
 	if (flags & SCSI_DATA_UIO)
 		panic("ssh: scsi data uio requested");
@@ -254,10 +254,10 @@ ssh_scsicmd(xs)
 	 * We should move this ssh_sched() XXX
 	 */
 	if (xs->flags & SCSI_DATA_IN) { /* read */
-		dma_cachectl((vm_offset_t)xs->data, xs->datalen,
+		dma_cachectl((vaddr_t)xs->data, xs->datalen,
 							DMA_CACHE_SYNC_INVAL);
 	} else {			/* write */
-		dma_cachectl((vm_offset_t)xs->data, xs->datalen,
+		dma_cachectl((vaddr_t)xs->data, xs->datalen,
 							DMA_CACHE_SYNC);
 	}
 
@@ -472,7 +472,7 @@ ssh_scsidone(acb, stat)
 		TAILQ_REMOVE(&sc->ready_list, acb, chain);
 		SSH_TRACE('d','r',stat,0)
 	} else {
-		register struct ssh_acb *acb2;
+		struct ssh_acb *acb2;
 		for (acb2 = sc->nexus_list.tqh_first; acb2;
 		    acb2 = acb2->chain.tqe_next)
 			if (acb2 == acb) {
@@ -510,7 +510,7 @@ ssh_scsidone(acb, stat)
 
 void
 sshabort(sc, rp, where)
-	register struct ssh_softc *sc;
+	struct ssh_softc *sc;
 	ssh_regmap_p rp;
 	char *where;
 {
@@ -572,15 +572,15 @@ sshinitialize(sc)
 	 * Also should verify that dev doesn't span non-contiguous
 	 * physical pages.
 	 */
-	sc->sc_scriptspa = kvtop((vm_offset_t)scripts);
+	sc->sc_scriptspa = kvtop((vaddr_t)scripts);
 
 	/*
 	 * malloc sc_acb to ensure that DS is on a long word boundary.
 	 */
 
-	MALLOC(sc->sc_acb, struct ssh_acb *, 
+	MALLOC(sc->sc_acb, struct ssh_acb *,
 		sizeof(struct ssh_acb) * SSH_NACB, M_DEVBUF, M_NOWAIT);
-	if (sc->sc_acb == NULL) 
+	if (sc->sc_acb == NULL)
 		panic("sshinitialize: ACB malloc failed!");
 
 	sc->sc_tcp[1] = 1000 / sc->sc_clock_freq;
@@ -674,9 +674,9 @@ sshreset(sc)
 		for (i = 0; i < SSH_NACB; i++) {
 
 			pmap_cache_ctrl(pmap_kernel(),
-				trunc_page((vm_offset_t)acb),
-				round_page((vm_offset_t)acb+sizeof(*acb)),
-				CACHE_INH);
+			    trunc_page((vaddr_t)acb),
+			    round_page((vaddr_t)acb + sizeof(*acb)),
+			    CACHE_INH);
 
 			TAILQ_INSERT_TAIL(&sc->free_list, acb, chain);
 			acb++;
@@ -746,20 +746,20 @@ ssh_start (sc, target, lun, cbuf, clen, buf, len)
 	acb->msg[0] = -1;
 	acb->ds.scsi_addr = (0x10000 << target) | (sc->sc_sync[target].sxfer << 8);
 	acb->ds.idlen = 1;
-	acb->ds.idbuf = (char *) kvtop((vm_offset_t)&acb->msgout[0]);
+	acb->ds.idbuf = (char *) kvtop((vaddr_t)&acb->msgout[0]);
 	acb->ds.cmdlen = clen;
-	acb->ds.cmdbuf = (char *) kvtop((vm_offset_t)cbuf);
+	acb->ds.cmdbuf = (char *) kvtop((vaddr_t)cbuf);
 	acb->ds.stslen = 1;
-	acb->ds.stsbuf = (char *) kvtop((vm_offset_t)&acb->stat[0]);
+	acb->ds.stsbuf = (char *) kvtop((vaddr_t)&acb->stat[0]);
 	acb->ds.msglen = 1;
-	acb->ds.msgbuf = (char *) kvtop((vm_offset_t)&acb->msg[0]);
+	acb->ds.msgbuf = (char *) kvtop((vaddr_t)&acb->msg[0]);
 	acb->msg[1] = -1;
 	acb->ds.msginlen = 1;
 	acb->ds.extmsglen = 1;
 	acb->ds.synmsglen = 3;
-	acb->ds.msginbuf = (char *) kvtop((vm_offset_t)&acb->msg[1]);
-	acb->ds.extmsgbuf = (char *) kvtop((vm_offset_t)&acb->msg[2]);
-	acb->ds.synmsgbuf = (char *) kvtop((vm_offset_t)&acb->msg[3]);
+	acb->ds.msginbuf = (char *) kvtop((vaddr_t)&acb->msg[1]);
+	acb->ds.extmsgbuf = (char *) kvtop((vaddr_t)&acb->msg[2]);
+	acb->ds.synmsgbuf = (char *) kvtop((vaddr_t)&acb->msg[3]);
 	bzero(&acb->ds.chain, sizeof (acb->ds.chain));
 
 	if (sc->sc_sync[target].state == SYNC_START) {
@@ -803,7 +803,7 @@ ssh_start (sc, target, lun, cbuf, clen, buf, len)
 	addr = buf;
 	dmaend = NULL;
 	while (count > 0) {
-		acb->ds.chain[nchain].databuf = (char *) kvtop((vm_offset_t)addr);
+		acb->ds.chain[nchain].databuf = (char *) kvtop((vaddr_t)addr);
 		if (count < (tcount = NBPG - ((int) addr & PGOFSET)))
 			tcount = count;
 		acb->ds.chain[nchain].datalen = tcount;
@@ -840,12 +840,7 @@ ssh_start (sc, target, lun, cbuf, clen, buf, len)
 	}
 #endif
 
-#if CACHECTL
-	/* push data cache for all data the 53c710 needs to access */
-	dma_cachectl(sc, sizeof (struct ssh_softc), DMA_CACHE_SYNC);
-	dma_cachectl(acb, sizeof (*acb), DMA_CACHE_SYNC);
-#endif
-	dma_cachectl((vm_offset_t)cbuf, clen, DMA_CACHE_SYNC);
+	dma_cachectl((vaddr_t)cbuf, clen, DMA_CACHE_SYNC);
 
 	/*
 	 * Flushing the buf from data cache is very important for MVME187
@@ -855,10 +850,10 @@ ssh_start (sc, target, lun, cbuf, clen, buf, len)
 	 */
 	if (buf != NULL && len != 0) {
 		if (acb->xs->flags & SCSI_DATA_IN) { /* read */
-			dma_cachectl((vm_offset_t)buf, len,
+			dma_cachectl((vaddr_t)buf, len,
 						DMA_CACHE_SYNC_INVAL);
 		} else {			/* write */
-			dma_cachectl((vm_offset_t)buf, len, DMA_CACHE_SYNC);
+			dma_cachectl((vaddr_t)buf, len, DMA_CACHE_SYNC);
 		}
 	}
 
@@ -877,7 +872,7 @@ ssh_start (sc, target, lun, cbuf, clen, buf, len)
 			    sc->sc_dev.dv_xname);
 		rp->ssh_temp = 0;
 		rp->ssh_sbcl = sc->sc_sync[target].sbcl;
-		rp->ssh_dsa = kvtop((vm_offset_t)&acb->ds);
+		rp->ssh_dsa = kvtop((vaddr_t)&acb->ds);
 		rp->ssh_dsp = sc->sc_scriptspa;
 		SSH_TRACE('s',1,0,0)
 	} else {
@@ -961,9 +956,9 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 	if (dstat & SSH_DSTAT_SIR && rp->ssh_dsps == 0xff00) {
 		/* Normal completion status, or check condition */
 #ifdef DEBUG
-		if (rp->ssh_dsa != kvtop((vm_offset_t)&acb->ds)) {
+		if (rp->ssh_dsa != kvtop((vaddr_t)&acb->ds)) {
 			printf ("ssh: invalid dsa: %x %x\n", rp->ssh_dsa,
-			    kvtop((vm_offset_t)&acb->ds));
+			    kvtop((vaddr_t)&acb->ds));
 			panic("*** ssh DSA invalid ***");
 		}
 #endif
@@ -1021,10 +1016,6 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 				scsi_period_to_ssh (sc, target);
 			}
 		}
-#if CACHECTL
-		/*cmmu_inval_cache(kvtop((vm_offset_t)&acb->stat[0]), 1);*/
-		dma_cachectl(&acb->stat[0], 1);
-#endif
 		*status = acb->stat[0];
 #ifdef DEBUG
 		if (rp->ssh_sbcl & SSH_BSY) {
@@ -1259,10 +1250,6 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 			}
 			if (j < DMAMAXIO)
 				acb->ds.chain[j].datalen = 0;
-#if CACHECTL
-			dma_cachectl(acb->ds.chain,
-				sizeof(acb->ds.chain));
-#endif
 		}
 		++sc->sc_tinfo[target].dconns;
 		/*
@@ -1324,10 +1311,7 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 			sc->sc_nexus = acb;
 			sc->sc_flags |= acb->status;
 			acb->status = 0;
-#if CACHECTL
-			dma_cachectl(&acb->stat[0], sizeof(acb->stat[0]));
-#endif
-			rp->ssh_dsa = kvtop((vm_offset_t)&acb->ds);
+			rp->ssh_dsa = kvtop((vaddr_t)&acb->ds);
 			rp->ssh_sxfer = sc->sc_sync[acb->xs->sc_link->target].sxfer;
 			rp->ssh_sbcl = sc->sc_sync[acb->xs->sc_link->target].sbcl;
 			break;
@@ -1338,9 +1322,6 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 			    sc->nexus_list.tqh_first);
 			panic("unable to find reselecting device");
 		}
-#if CACHECTL
-		dma_cachectl (acb, sizeof(*acb));
-#endif
 		rp->ssh_temp = 0;
 		rp->ssh_dcntl |= SSH_DCNTL_STD;
 		return (0);
@@ -1373,7 +1354,7 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 		}
 		target = sc->sc_nexus->xs->sc_link->target;
 		rp->ssh_temp = 0;
-		rp->ssh_dsa = kvtop((vm_offset_t)&sc->sc_nexus->ds);
+		rp->ssh_dsa = kvtop((vaddr_t)&sc->sc_nexus->ds);
 		rp->ssh_sxfer = sc->sc_sync[target].sxfer;
 		rp->ssh_sbcl = sc->sc_sync[target].sbcl;
 		rp->ssh_dsp = sc->sc_scriptspa;
@@ -1384,14 +1365,10 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 			printf("%s: Bad message-in with no active command?\n",
 			    sc->sc_dev.dv_xname);
 		/* Unrecognized message in byte */
-#if CACHECTL
-		/*cmmu_inval_cache(kvtop((vm_offset_t)&acb->msg[1]), 1);*/
-		dma_cachectl (&acb->msg[1],1);
-#endif
 		printf ("%s: Unrecognized message in data sfbr %x msg %x sbcl %x\n",
 			sc->sc_dev.dv_xname, rp->ssh_sfbr, acb->msg[1], rp->ssh_sbcl);
 		/* what should be done here? */
-		/*DCIAS(kvtop((vm_offset_t)&acb->msg[1]));*/
+		/*DCIAS(kvtop((vaddr_t)&acb->msg[1]));*/
 		rp->ssh_dsp = sc->sc_scriptspa + Ent_switch;
 		return (0);
 	}
@@ -1472,7 +1449,7 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 			goto bad_phase;
 		}
 #if XXX
-		switch (rp->ssh_sbcl & 7) 
+		switch (rp->ssh_sbcl & 7)
 #endif
 		switch (rp->ssh_sstat2 & 7) {
 		case 0:		/* data out */
@@ -1538,7 +1515,7 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 			 * mode and single step mode, which we are not using.
 			 * I will give it a shot... nivas
 			 */
-	
+
 			if (kludge_city) {
 				dummy = rp->ssh_dsp;
 				rp->ssh_dsp = dummy;
@@ -1596,12 +1573,6 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 	}
 
 	if (sstat0 == 0 && dstat & SSH_DSTAT_SIR) {
-#if CACHECTL
-		/*cmmu_inval_cache(kvtop((vm_offset_t)&acb->stat[0]), 1); */
-		/*cmmu_inval_cache(kvtop((vm_offset_t)&acb->msg[0]), 1); */
-		dma_cachectl (&acb->stat[0], 1);
-		dma_cachectl (&acb->msg[0], 1);
-#endif
 		printf ("SSH interrupt: %lx sts %x msg %x %x sbcl %x\n",
 		    rp->ssh_dsps, acb->stat[0], acb->msg[0], acb->msg[1],
 		    rp->ssh_sbcl);
@@ -1634,7 +1605,7 @@ bad_phase:
 	 */
 	printf ("sshchkintr: target %x ds %x\n", target, &acb->ds);
 	printf ("scripts %x ds %x rp %x dsp %x dcmd %x\n", sc->sc_scriptspa,
-	    kvtop((vm_offset_t)&acb->ds), kvtop((vm_offset_t)rp), rp->ssh_dsp,
+	    kvtop((vaddr_t)&acb->ds), kvtop((vaddr_t)rp), rp->ssh_dsp,
 	    *((long *)&rp->ssh_dcmd));
 	printf ("sshchkintr: istat %x dstat %x sstat0 %x dsps %x "
 	    "dsa %x sbcl %x sts %x msg %x %x sfbr %x\n",
@@ -1702,10 +1673,10 @@ ssh_select(sc)
 
 int
 sshintr (sc)
-	register struct ssh_softc *sc;
+	struct ssh_softc *sc;
 {
 	ssh_regmap_p rp;
-	register u_char istat, dstat, sstat0;
+	u_char istat, dstat, sstat0;
 	int status;
 	int s = splbio();
 
@@ -1722,7 +1693,7 @@ sshintr (sc)
 	sstat0 = sc->sc_sstat0;
 	if (dstat & SSH_DSTAT_SIR)
 		sc->sc_intcode = rp->ssh_dsps; /* XXX use sc_intcode instead of dsps */
-	
+
 	/* Clear the copies in sc */
 	sc->sc_istat = 0;
 	sc->sc_dstat = 0;
@@ -1740,12 +1711,6 @@ sshintr (sc)
 
 #ifdef DEBUG
 	if (ssh_debug & 5) {
-#if CACHECTL
-		/*cmmu_inval_cache(kvtop((vm_offset_t)&sc->sc_nexus->stat[0]),
-			sizeof(sc->sc_nexus->stat[0])); */
-		dma_cachectl(&sc->sc_nexus->stat[0],
-			sizeof(sc->sc_nexus->stat[0]));
-#endif
 		printf ("%s: intr istat %x dstat %x sstat0 %x dsps %x sbcl %x sts %x msg %x\n",
 		    sc->sc_dev.dv_xname, istat, dstat, sstat0,
 		    rp->ssh_dsps,  rp->ssh_sbcl,
@@ -1786,7 +1751,7 @@ sshintr (sc)
  * not be correct for other 53c710 boards.
  * XXX fix this - nivas
  */
-void 
+void
 scsi_period_to_ssh (sc, target)
 	struct ssh_softc *sc;
 	int target;

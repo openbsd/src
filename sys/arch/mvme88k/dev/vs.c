@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.19 2003/06/02 23:27:52 millert Exp $ */
+/*	$OpenBSD: vs.c,v 1.20 2003/10/05 20:27:48 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -79,20 +79,20 @@ void vs_copy(void *, void *, unsigned short);
 void vs_zero(void *, u_long);
 int do_vspoll(struct vs_softc *, int);
 void thaw_queue(struct vs_softc *, u_int8_t);
-void vs_link_sg_element(sg_list_element_t *, vm_offset_t, int);
-void vs_link_sg_list(sg_list_element_t *, vm_offset_t, int);
+void vs_link_sg_element(sg_list_element_t *, vaddr_t, int);
+void vs_link_sg_list(sg_list_element_t *, vaddr_t, int);
 
 static __inline__ void vs_clear_return_info(struct vs_softc *);
 
-/* 
+/*
  * 16 bit 's' memory functions.  MVME328 is a D16 board.
  * We must program with that in mind or else...
- * bcopy/bzero (the 'b' meaning byte) is implemented in 
- * 32 bit operations for speed, so thay are not really 
- * 'byte' operations at all!!  MVME1x7 can be set up to 
- * handle D32 -> D16 read/writes via VMEChip2 Address 
+ * bcopy/bzero (the 'b' meaning byte) is implemented in
+ * 32 bit operations for speed, so thay are not really
+ * 'byte' operations at all!!  MVME1x7 can be set up to
+ * handle D32 -> D16 read/writes via VMEChip2 Address
  * modifiers, however MVME188 can not.  These next two
- * function insure 16 bit copy/zero operations.  The 
+ * function insure 16 bit copy/zero operations.  The
  * structures are all implemented with 16 bit or less
  * types.   smurph
  */
@@ -102,16 +102,16 @@ vs_copy(src, dst, cnt)
 	void *src;
 	void *dst;
 	unsigned short cnt;
-{ 
-	register unsigned short *volatile x, *volatile y;
-	register unsigned short volatile z; 
+{
+	unsigned short *volatile x, *volatile y;
+	unsigned short volatile z;
 
-	z = cnt >> 1; 
-	x = (unsigned short *)src; 
-	y = (unsigned short *)dst; 
+	z = cnt >> 1;
+	x = (unsigned short *)src;
+	y = (unsigned short *)dst;
 
 	while (z--) {
-		*y++ = *x++; 
+		*y++ = *x++;
 	}
 }
 
@@ -120,12 +120,12 @@ vs_zero(src, cnt)
 	void *src;
 	u_long cnt;
 {
-	register unsigned short *source;
-	register unsigned short zero = 0;
-	register unsigned short z; 
+	unsigned short *source;
+	unsigned short zero = 0;
+	unsigned short z;
 
 	source = (unsigned short *) src;
-	z = cnt >> 1; 
+	z = cnt >> 1;
 
 	while (z--) {
 		*source++ = zero;
@@ -146,7 +146,7 @@ vs_minphys(bp)
 	minphys(bp);
 }
 
-int 
+int
 do_vspoll(sc, to)
 	struct vs_softc *sc;
 	int to;
@@ -209,7 +209,7 @@ vs_poll(sc, xs)
 	return (COMPLETE);
 }
 
-void 
+void
 thaw_queue(sc, target)
 	struct vs_softc *sc;
 	u_int8_t target;
@@ -222,13 +222,13 @@ thaw_queue(sc, target)
 	while (THAW_REG & 0x01);
 }
 
-void 
+void
 vs_scsidone (sc, xs, stat)
 	struct vs_softc *sc;
 	struct scsi_xfer *xs;
-	int stat;                             
+	int stat;
 {
-	int tgt; 
+	int tgt;
 	xs->status = stat;
 
 	while (xs->status == SCSI_CHECK) {
@@ -240,7 +240,7 @@ vs_scsidone (sc, xs, stat)
 	tgt = xs->sc_link->target + 1;
 	xs->flags |= ITSDONE;
 	/*sc->sc_tinfo[slp->target].cmds++;*/
-	
+
 	/* thaw all work queues */
 	thaw_queue(sc, tgt);
 	scsi_done(xs);
@@ -298,7 +298,7 @@ vs_scsicmd(xs)
 	} else if (xs->cmd->opcode == 0x08) {
 		printf("READ_COMMAND    ");
 	}
-#endif 
+#endif
 	if (flags & SCSI_POLL) {
 		cqep = mc;
 		iopb = miopb;
@@ -328,15 +328,15 @@ vs_scsicmd(xs)
 	 */
 	if (xs->flags & SCSI_DATA_IN) {	 /* read */
 #if defined(mvme88k)
-		dma_cachectl((vm_offset_t)xs->data, xs->datalen,
+		dma_cachectl((vaddr_t)xs->data, xs->datalen,
 			     DMA_CACHE_SYNC_INVAL);
-#endif      
+#endif
 		iopb->iopb_OPTION |= OPT_READ;
 	} else {			 /* write */
 #if defined(mvme88k)
-		dma_cachectl((vm_offset_t)xs->data, xs->datalen,
+		dma_cachectl((vaddr_t)xs->data, xs->datalen,
 			     DMA_CACHE_SYNC);
-#endif      
+#endif
 		iopb->iopb_OPTION |= OPT_WRITE;
 	}
 
@@ -351,7 +351,7 @@ vs_scsicmd(xs)
 
 	/*
 	 * Wait until we can use the command queue entry.
-	 * Should only have to wait if the master command 
+	 * Should only have to wait if the master command
 	      * queue entry is busy and we are polling.
 	 */
 	while (cqep->cqe_QECR & M_QECR_GO);
@@ -381,10 +381,10 @@ vs_scsicmd(xs)
 	VL(buf, iopb->iopb_BUFF);
 	VL(len, iopb->iopb_LENGTH);
 #ifdef SDEBUG
-	printf("tgt %d lun %d buf %x len %d wqn %d ipl %d crsw 0x%x\n", 
-	       slp->target, slp->lun, buf, len, cqep->cqe_WORK_QUEUE, 
+	printf("tgt %d lun %d buf %x len %d wqn %d ipl %d crsw 0x%x\n",
+	       slp->target, slp->lun, buf, len, cqep->cqe_WORK_QUEUE,
 	       iopb->iopb_LEVEL, crb->crb_CRSW);
-#endif 
+#endif
 	cqep->cqe_QECR |= M_QECR_GO;
 
 	if (flags & SCSI_POLL) {
@@ -426,12 +426,12 @@ vs_chksense(xs)
 	miopb->iopb_EVCT = (u_char)sc->sc_evec;
 	miopb->iopb_LEVEL = 0; /*sc->sc_ipl;*/
 	miopb->iopb_ADDR = ADDR_MOD;
-	LV(miopb->iopb_BUFF, kvtop((vm_offset_t)&xs->sense));
+	LV(miopb->iopb_BUFF, kvtop((vaddr_t)&xs->sense));
 	LV(miopb->iopb_LENGTH, sizeof(struct scsi_sense_data));
 
 	vs_zero(mc, sizeof(M328_CQE));
 	mc->cqe_IOPB_ADDR = OFF(miopb);
-	mc->cqe_IOPB_LENGTH = sizeof(M328_short_IOPB) + 
+	mc->cqe_IOPB_LENGTH = sizeof(M328_short_IOPB) +
 			      sizeof(struct scsi_sense);
 	mc->cqe_WORK_QUEUE = 0;
 	mc->cqe_QECR = M_QECR_GO;
@@ -446,7 +446,7 @@ vs_chksense(xs)
 	xs->status = riopb->iopb_STATUS >> 8;
 #ifdef SDEBUG
 	scsi_print_sense(xs, 2);
-#endif   
+#endif
 	splx(s);
 }
 
@@ -603,7 +603,7 @@ vs_resync(sc)
 {
 	M328_CQE *mc = (M328_CQE*)&sc->sc_vsreg->sh_MCE;
 	M328_IOPB *riopb = (M328_IOPB *)&sc->sc_vsreg->sh_RET_IOPB;
-	M328_DRCF *devreset = (M328_DRCF *)&sc->sc_vsreg->sh_MCE_IOPB;  
+	M328_DRCF *devreset = (M328_DRCF *)&sc->sc_vsreg->sh_MCE_IOPB;
 	u_short i;
 	for (i=0; i<7; i++) {
 		vs_zero(devreset, sizeof(M328_DRCF));
@@ -624,7 +624,7 @@ vs_resync(sc)
 		if (riopb->iopb_STATUS) {
 #ifdef SDEBUG
 			printf("status: %x\n", riopb->iopb_STATUS);
-#endif 
+#endif
 			sc->sc_tinfo[i].avail = 0;
 		} else {
 			sc->sc_tinfo[i].avail = 1;
@@ -643,7 +643,7 @@ vs_reset(sc)
 	u_int s;
 	M328_CQE *mc = (M328_CQE*)&sc->sc_vsreg->sh_MCE;
 	M328_IOPB *riopb = (M328_IOPB *)&sc->sc_vsreg->sh_RET_IOPB;
-	M328_SRCF *reset = (M328_SRCF *)&sc->sc_vsreg->sh_MCE_IOPB;  
+	M328_SRCF *reset = (M328_SRCF *)&sc->sc_vsreg->sh_MCE_IOPB;
 
 	vs_zero(reset, sizeof(M328_SRCF));
 	reset->srcf_CMD = IOPB_RESET;
@@ -761,7 +761,7 @@ vs_checkintr(sc, xs, status)
 		printf("[er]");
 	}
 	printf("\n");
-#endif   
+#endif
 	if (len != xs->datalen) {
 		xs->resid = xs->datalen - len;
 	} else {
@@ -779,14 +779,14 @@ vs_checkintr(sc, xs, status)
 /* normal interrupt routine */
 int
 vs_nintr(sc)
-	register struct vs_softc *sc;
+	struct vs_softc *sc;
 {
 	M328_CRB *crb = (M328_CRB *)&sc->sc_vsreg->sh_CRB;
 	M328_CMD *m328_cmd;
 	struct scsi_xfer *xs;
 	int status;
 	int s;
-	
+
 	if ((CRSW & CONTROLLER_ERROR) == CONTROLLER_ERROR)
 		return(vs_eintr(sc));
 
@@ -798,10 +798,10 @@ vs_nintr(sc)
 #ifdef SDEBUG
 	printf("Interrupt!!! ");
 	printf("m328_cmd == 0x%x\n", m328_cmd);
-#endif 
+#endif
 	/*
 	 * If this is a controller error, there won't be a m328_cmd
-	 * pointer in the CTAG feild.  Bad things happen if you try 
+	 * pointer in the CTAG feild.  Bad things happen if you try
 	 * to point to address 0.  Controller error should be handled
 	 * in vsdma.c  I'll change this soon - steve.
 	 */
@@ -828,7 +828,7 @@ vs_nintr(sc)
 
 int
 vs_eintr(sc)
-	register struct vs_softc *sc;
+	struct vs_softc *sc;
 {
 	M328_CEVSB *crb = (M328_CEVSB *)&sc->sc_vsreg->sh_CRB;
 	M328_CMD *m328_cmd;
@@ -841,17 +841,17 @@ vs_eintr(sc)
 #endif
 	int ecode = crb->cevsb_ERROR;
 	int status, s;
-	
+
 	s = splbio();
 
 	/* Got a valid interrupt on this device */
 	sc->sc_intrcnt_e.ev_count++;
-	
+
 	VL((unsigned long)m328_cmd, crb->cevsb_CTAG);
 #ifdef SDEBUG
 	printf("Error Interrupt!!! ");
 	printf("m328_cmd == 0x%x\n", m328_cmd);
-#endif 
+#endif
 	xs = m328_cmd->xs;
 
 	if (crsw & M_CRSW_RST) {
@@ -895,9 +895,9 @@ vs_eintr(sc)
 #endif
 	}
 #ifdef SDEBUG
-	printf("%s: crsw = 0x%x iopb_type = %d iopb_len = %d wq = %d error = 0x%x\n", 
+	printf("%s: crsw = 0x%x iopb_type = %d iopb_len = %d wq = %d error = 0x%x\n",
 	       vs_name(sc), crsw, type, length, wq, ecode);
-#endif 
+#endif
 	if (CRSW & M_CRSW_ER)
 		CRB_CLR_ER(CRSW);
 	CRB_CLR_DONE(CRSW);
@@ -910,7 +910,7 @@ vs_eintr(sc)
 
 static __inline__ void
 vs_clear_return_info(sc)
-	register struct vs_softc *sc;
+	struct vs_softc *sc;
 {
         M328_IOPB *riopb = (M328_IOPB *)&sc->sc_vsreg->sh_RET_IOPB;
 	M328_CEVSB *crb = (M328_CEVSB *)&sc->sc_vsreg->sh_CRB;
@@ -937,7 +937,7 @@ void
 vs_dealloc_scatter_gather(sg)
 	M328_SG sg;
 {
-	register int i;
+	int i;
 
 	if (sg->level > 0) {
 		for (i=0; sg->down[i] && i<MAX_SG_ELEMENTS; i++) {
@@ -950,8 +950,8 @@ vs_dealloc_scatter_gather(sg)
 void
 vs_link_sg_element(element, phys_add, len)
 	sg_list_element_t *element;
-	register vm_offset_t phys_add;
-	register int len;
+	vaddr_t phys_add;
+	int len;
 {
 	element->count.bytes = len;
 	LV(element->address, phys_add);
@@ -964,8 +964,8 @@ vs_link_sg_element(element, phys_add, len)
 void
 vs_link_sg_list(list, phys_add, elements)
 	sg_list_element_t *list;
-	register vm_offset_t phys_add;
-	register int elements;
+	vaddr_t phys_add;
+	int elements;
 {
 
 	list->count.scatter.gather  = elements;
@@ -976,13 +976,13 @@ vs_link_sg_list(list, phys_add, elements)
 	list->address_modifier = 0xD;
 }
 
-M328_SG 
+M328_SG
 vs_build_memory_structure(xs, iopb)
 	struct scsi_xfer *xs;
 	M328_IOPB  *iopb;	       /* the iopb */
 {
 	M328_SG   sg;
-	vm_offset_t starting_point_virt, starting_point_phys, point_virt, 
+	vaddr_t starting_point_virt, starting_point_phys, point_virt,
 	point1_phys, point2_phys, virt;
 	unsigned len;
 	int       level;
@@ -1001,8 +1001,8 @@ vs_build_memory_structure(xs, iopb)
 	 */
 
 	level = 0;
-	virt = starting_point_virt = (vm_offset_t)xs->data;
-	point1_phys = starting_point_phys = kvtop((vm_offset_t)xs->data);
+	virt = starting_point_virt = (vaddr_t)xs->data;
+	point1_phys = starting_point_phys = kvtop((vaddr_t)xs->data);
 	len = xs->datalen;
 	/*
 	 * Check if we need scatter/gather
@@ -1011,7 +1011,7 @@ vs_build_memory_structure(xs, iopb)
 	if (len > PAGE_SIZE) {
 		for (level = 0, point_virt = round_page(starting_point_virt+1);
 		    /* if we do already scatter/gather we have to stay in the loop and jump */
-		    point_virt < virt + (vm_offset_t)len || sg ;
+		    point_virt < virt + (vaddr_t)len || sg ;
 		    point_virt += PAGE_SIZE) {			   /* out later */
 
 			point2_phys = kvtop(point_virt);
@@ -1045,34 +1045,34 @@ vs_build_memory_structure(xs, iopb)
 						sg->up->elements = 1;
 					}
 					/* link this full list also in physical memory */
-					vs_link_sg_list(&(sg->up->list[sg->up->elements-1]), 
-							kvtop((vm_offset_t)sg->list),
+					vs_link_sg_list(&(sg->up->list[sg->up->elements-1]),
+							kvtop((vaddr_t)sg->list),
 							sg->elements);
 					sg = sg->up;	  /* Climb up */
 				}
 				while (sg->level) {  /* As long as we are not a the base level */
-					register int i;
+					int i;
 
 					i = sg->elements;
 					/* We need a new element */
-					sg->down[i] = vs_alloc_scatter_gather();  
+					sg->down[i] = vs_alloc_scatter_gather();
 					sg->down[i]->level = sg->level - 1;
 					sg->down[i]->up = sg;
 					sg->elements++;
 					sg = sg->down[i]; /* Climb down */
 				}
 #endif /* 1 */
-				if (point_virt < virt+(vm_offset_t)len) {
+				if (point_virt < virt+(vaddr_t)len) {
 					/* linking element */
-					vs_link_sg_element(&(sg->list[sg->elements]), 
-							   starting_point_phys, 
+					vs_link_sg_element(&(sg->list[sg->elements]),
+							   starting_point_phys,
 							   point_virt-starting_point_virt);
 					sg->elements++;
 				} else {
 					/* linking last element */
-					vs_link_sg_element(&(sg->list[sg->elements]), 
-							   starting_point_phys, 
-							   (vm_offset_t)(virt+len)-starting_point_virt);
+					vs_link_sg_element(&(sg->list[sg->elements]),
+							   starting_point_phys,
+							   (vaddr_t)(virt+len)-starting_point_virt);
 					sg->elements++;
 					break;			       /* We have now collected all blocks */
 				}
@@ -1090,15 +1090,15 @@ vs_build_memory_structure(xs, iopb)
 	if (sg) {
 		while (sg->up) {
 			/* link this list also in physical memory */
-			vs_link_sg_list(&(sg->up->list[sg->up->elements-1]), 
-					kvtop((vm_offset_t)sg->list),
+			vs_link_sg_list(&(sg->up->list[sg->up->elements-1]),
+					kvtop((vaddr_t)sg->list),
 					sg->elements);
 			sg = sg->up;		       /* Climb up */
 		}
 
 		iopb->iopb_OPTION |= M_OPT_SG;
 		iopb->iopb_ADDR |= M_ADR_SG_LINK;
-		LV(iopb->iopb_BUFF, kvtop((vm_offset_t)sg->list));
+		LV(iopb->iopb_BUFF, kvtop((vaddr_t)sg->list));
 		LV(iopb->iopb_LENGTH, sg->elements);
 		LV(iopb->iopb_SGTTL, len);
 	} else {

@@ -1,7 +1,7 @@
-/*	$OpenBSD: if_ie.c,v 1.25 2003/09/29 09:08:19 miod Exp $ */
+/*	$OpenBSD: if_ie.c,v 1.26 2003/10/05 20:27:47 miod Exp $ */
 
 /*-
- * Copyright (c) 1998 Steve Murphree, Jr. 
+ * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
  * Copyright (c) 1992, 1993, University of Vermont and State
@@ -59,7 +59,7 @@
  *
  * Majorly cleaned up and 3C507 code merged by Charles Hannum.
  *
- * Converted to SUN ie driver by Charles D. Cranor, 
+ * Converted to SUN ie driver by Charles D. Cranor,
  *		October 1994, January 1995.
  * This sun version based on i386 version 1.30.
  */
@@ -194,10 +194,10 @@ struct ie_softc {
 	struct ie_sys_ctl_block *volatile scb;
 
 	/*
-	 * pointer and size of a block of KVA where the buffers 
+	 * pointer and size of a block of KVA where the buffers
 	 * are to be allocated from
 	 */
-        
+
 	caddr_t buf_area;
 	int buf_area_sz;
 
@@ -343,7 +343,7 @@ ie_ack(sc, mask)
 	command_and_wait(sc, scb->ie_status & mask, 0, 0);
 }
 
-int 
+int
 iematch(parent, vcf, args)
 	struct device *parent;
 	void	*vcf, *args;
@@ -353,7 +353,7 @@ iematch(parent, vcf, args)
 	if (badvaddr((unsigned)IIOV(ca->ca_vaddr), 1)){
 		return(0);
 	}
-	return(1);                      
+	return(1);
 }
 
 /*
@@ -410,7 +410,7 @@ ieattach(parent, self, aux)
 	extern void myetheraddr(u_char *);	/* should be elsewhere */
 	int     pri = ca->ca_ipl;
 	struct ieob *volatile ieo;
-	vm_offset_t pa;
+	paddr_t pa;
 
 	sc->reset_596 = ie_obreset;
 	sc->chan_attn = ie_obattend;
@@ -533,7 +533,7 @@ ieintr(v)
 	void *v;
 {
 	struct ie_softc *sc = v;
-	register u_short status;
+	u_short status;
 
 	status = sc->scb->ie_status;
 /*printf("I");*/
@@ -604,9 +604,9 @@ ierint(sc)
 			sc->sc_arpcom.ac_if.if_ipackets++;
 			if (!--timesthru) {
 				sc->sc_arpcom.ac_if.if_ierrors +=
-				    MK_32(scb->ie_err_crc) + 
+				    MK_32(scb->ie_err_crc) +
 				    MK_32(scb->ie_err_align) +
-				    MK_32(scb->ie_err_resource) + 
+				    MK_32(scb->ie_err_resource) +
 				    MK_32(scb->ie_err_overrun) +
 				    MK_32(scb->ie_err_coll) +
 				    MK_32(scb->ie_err_short);
@@ -905,7 +905,7 @@ sc->xmit_cbuffs[sc->xctail]);
 	    ASWAP(sc->xmit_buffs[sc->xctail]);
 	sc->xmit_cmds[sc->xctail]->ie_xmit_count = 0;
 
-	sc->scb->ie_command_list = 
+	sc->scb->ie_command_list =
 	  ASWAP(sc->xmit_cmds[sc->xctail]);
 	command_and_wait(sc, IE_CU_START, 0, 0);
 
@@ -921,7 +921,7 @@ sc->xmit_cbuffs[sc->xctail]);
  * length of the data available.  This enables us to allocate mbuf
  * clusters in many situations where before we would have had a long
  * chain of partially-full mbufs.  This should help to speed up the
- * operation considerably.  (Provided that it works, of course.)  
+ * operation considerably.  (Provided that it works, of course.)
  */
 int
 ieget(sc, mp, ehp, to_bpf)
@@ -1252,7 +1252,7 @@ iestart(ifp)
 		len = 0;
 		buffer = sc->xmit_cbuffs[sc->xchead];
 
-		for (m0 = m; m && (len +m->m_len) < IE_TBUF_SIZE; 
+		for (m0 = m; m && (len +m->m_len) < IE_TBUF_SIZE;
 		                                           m = m->m_next) {
 			bcopy(mtod(m, caddr_t), buffer, m->m_len);
 			buffer += m->m_len;
@@ -1285,7 +1285,7 @@ iestart(ifp)
 /*
  * set up IE's ram space
  */
-int 
+int
 ie_setupram(sc)
 	struct ie_softc *sc;
 {
@@ -1374,9 +1374,9 @@ chan_attn_timeout(rock)
  * or be accepted, depending on the command.  If the command pointer
  * is null, then pretend that the command is not an action command.
  * If the command pointer is not null, and the command is an action
- * command, wait for 
- * ((struct ie_cmd_common *volatile)pcmd)->ie_cmd_status & MASK 
- * to become true.  
+ * command, wait for
+ * ((struct ie_cmd_common *volatile)pcmd)->ie_cmd_status & MASK
+ * to become true.
  */
 int
 command_and_wait(sc, cmd, pcmd, mask)
@@ -1514,7 +1514,7 @@ Align(ptr)
  * note: this function was written to be easy to understand, rather than
  *       highly efficient (it isn't in the critical path).
  */
-void 
+void
 setup_bufs(sc)
 	struct ie_softc *sc;
 {
@@ -1731,7 +1731,7 @@ ieinit(sc)
 		cmd->com.ie_cmd_cmd = IE_CMD_IASETUP | IE_CMD_LAST;
 		cmd->com.ie_cmd_link = 0xffffffff;
 
-		(sc->memcopy)(sc->sc_arpcom.ac_enaddr, 
+		(sc->memcopy)(sc->sc_arpcom.ac_enaddr,
 		      (caddr_t)&cmd->ie_address, sizeof cmd->ie_address);
 
 		if (command_and_wait(sc, IE_CU_START, cmd, IE_STAT_COMPL) ||
@@ -1780,7 +1780,7 @@ iestop(sc)
 
 int
 ieioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	u_long cmd;
 	caddr_t data;
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsvar.h,v 1.6 2003/06/02 23:27:52 millert Exp $ */
+/*	$OpenBSD: vsvar.h,v 1.7 2003/10/05 20:27:48 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #define	DMAMAXIO	(MAXPHYS/NBPG+1)
 #define  LO(x) (u_short)((unsigned long)x & 0x0000FFFF)
 #define  HI(x) (u_short)((unsigned long)x >> 16)
-#define  OFF(x) (u_short)((long)kvtop((vm_offset_t)x) - (long)kvtop((vm_offset_t)sc->sc_vsreg))
+#define  OFF(x) (u_short)((long)kvtop((vaddr_t)x) - (long)kvtop((vaddr_t)sc->sc_vsreg))
 #define  vs_name(sc)	(sc)->sc_dev.dv_xname
 
 /****************     Scater/Gather Stuff                *******************/
@@ -62,12 +62,12 @@ typedef struct {
 	unsigned short  :3;
 	unsigned short  transfer_type :2;
 	/* 				0x0 is reserved */
-   #define SHORT_TREANSFER 		0x1	
-   #define LONG_TRANSFER			0x2	
-   #define SCATTER_GATTER_LIST_IN_SHORT_IO	0x3	
+   #define SHORT_TREANSFER 		0x1
+   #define LONG_TRANSFER			0x2
+   #define SCATTER_GATTER_LIST_IN_SHORT_IO	0x3
 	unsigned short  memory_type :2;
-   #define NORMAL_TYPE			0x0	
-   #define BLOCK_MODE			0x1	
+   #define NORMAL_TYPE			0x0
+   #define BLOCK_MODE			0x1
 	/*				0x2 is reserved */
 	/*				0x3 is reserved */
 	unsigned short  address_modifier :8;
@@ -180,11 +180,11 @@ int vs_scsicmd(struct scsi_xfer *);
 M328_SG vs_alloc_scatter_gather(void);
 void    vs_dealloc_scatter_gather(M328_SG sg);
 void    vs_link_scatter_gather_element(sg_list_element_t *element,
-					    register vm_offset_t phys_add,
-					    register int len);
+					    vaddr_t phys_add,
+					    int len);
 void    vs_link_scatter_gather_list(sg_list_element_t *list,
-					 register vm_offset_t phys_add,
-					 register int elements);
+					 vaddr_t phys_add,
+					 int elements);
 M328_SG vs_build_memory_structure(struct scsi_xfer *xs, M328_IOPB *iopb);
 
 #endif /* _M328VAR_H */

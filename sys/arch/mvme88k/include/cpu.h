@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.21 2003/09/20 13:57:35 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.22 2003/10/05 20:27:46 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ struct clockframe {
  * conversion between physical and kernel virtual addresses is easy.
  */
 
-#ifdef VIRTMAP 
+#ifdef VIRTMAP
 /* This will do non 1:1 phys/virt memory mapping in the future - SPM */
 #define	ISIIOVA(va) \
 	((char *)(va) >= intiobase && (char *)(va) < intiolimit)
@@ -131,7 +131,7 @@ extern int	want_resched;		/* resched() was called */
 
 /*
  * Give a profiling tick to the current process when the user profiling
- * buffer pages are invalid.  On the sparc, request an ast to send us 
+ * buffer pages are invalid.  On the sparc, request an ast to send us
  * through trap(), marking the proc as needing a profiling tick.
  */
 #define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, want_ast = 1)
@@ -191,9 +191,8 @@ struct md_p {
 
 extern struct md_p md;
 
-
-int badvaddr(vm_offset_t va, int size);
-void nmihand(void *framep);
+int badvaddr(vaddr_t, int);
+void nmihand(void *);
 
 #endif /* _KERNEL */
 #endif /* __MACHINE_CPU_H__ */

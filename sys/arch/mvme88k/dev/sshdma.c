@@ -1,4 +1,4 @@
-/*	$OpenBSD: sshdma.c,v 1.12 2003/06/02 23:27:52 millert Exp $	*/
+/*	$OpenBSD: sshdma.c,v 1.13 2003/10/05 20:27:48 miod Exp $	*/
 
 /*
  * Copyright (c) 1996 Nivas Madhur
@@ -83,11 +83,11 @@ struct scsi_device afsc_scsidev = {
 
 struct cfattach ssh_ca = {
         sizeof(struct ssh_softc), afscmatch, afscattach,
-};    
- 
+};
+
 struct cfdriver ssh_cd = {
-        NULL, "ssh", DV_DULL, 0 
-}; 
+        NULL, "ssh", DV_DULL, 0
+};
 
 int
 afscmatch(pdp, vcf, args)
@@ -96,7 +96,7 @@ afscmatch(pdp, vcf, args)
 {
 	struct confargs *ca = args;
 
-	if (badvaddr((vm_offset_t)IIOV(ca->ca_vaddr), 4)) {
+	if (badvaddr((vaddr_t)IIOV(ca->ca_vaddr), 4)) {
 	    return(0);
 	}
 
@@ -164,10 +164,9 @@ afscattach(parent, self, auxp)
 		 */
 
 		struct pcctworeg *pcc2 = (struct pcctworeg *)ca->ca_master;
-		
-		pmap_cache_ctrl(pmap_kernel(), trunc_page((vm_offset_t)sc),
-			round_page((vm_offset_t)sc + sizeof(*sc)),
-			CACHE_INH);
+
+		pmap_cache_ctrl(pmap_kernel(), trunc_page((vaddr_t)sc),
+		    round_page((vaddr_t)sc + sizeof(*sc)), CACHE_INH);
 
 		pcctwointr_establish(PCC2V_NCR, &sc->sc_ih);
 		/* enable interrupts at ca_ipl */
@@ -184,7 +183,7 @@ afscattach(parent, self, auxp)
 	 * (see dk_establish).
 	 */
 	tmp = bootpart;
-	if (ca->ca_paddr != bootaddr) 
+	if (ca->ca_paddr != bootaddr)
 		bootpart = -1;          /* invalid flag to dk_establish */
 	config_found(self, &sc->sc_link, scsiprint);
 	bootpart = tmp;             /* restore old value */

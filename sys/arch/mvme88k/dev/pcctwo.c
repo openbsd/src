@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcctwo.c,v 1.17 2003/06/02 07:06:56 deraadt Exp $ */
+/*	$OpenBSD: pcctwo.c,v 1.18 2003/10/05 20:27:48 miod Exp $ */
 /*
  * Copyright (c) 1995 Theo de Raadt
  * All rights reserved.
@@ -96,7 +96,7 @@ void *vcf, *args;
 		return (0);
 	}
 
-	if (badvaddr((vm_offset_t)pcc2, 4)) {
+	if (badvaddr((vaddr_t)pcc2, 4)) {
 		printf("==> pcctwo: failed address check.\n");
 		return (0);
 	}
@@ -171,7 +171,7 @@ void *args;
 	 */
 	sc->sc_paddr = ca->ca_paddr;
 	sc->sc_vaddr = (void *)IIOV(sc->sc_paddr);
-	
+
 	pcc2bus = ca->ca_bustype;
 
 	switch (pcc2bus) {
@@ -181,16 +181,16 @@ void *args;
 #if NBUSSW > 0
 	case BUS_BUSSWITCH:
 		sc->sc_pcc2 = (struct pcctworeg *)sc->sc_vaddr;
-		/* 
+		/*
 		 * fake up our address so that pcc2 child devices
 		 * are offeset of 0xFFF00000 - XXX smurph
 		 */
                 sc->sc_paddr -= PCC2_PCC2CHIP_OFF;
                 sc->sc_vaddr -= PCC2_PCC2CHIP_OFF;
                 /* make sure the bus is mc68040 compatible */
-		sc->sc_pcc2->pcc2_genctl |= PCC2_GENCTL_C040;	
+		sc->sc_pcc2->pcc2_genctl |= PCC2_GENCTL_C040;
 		break;
-#endif 
+#endif
 	}
 	sys_pcc2 = sc->sc_pcc2;
 

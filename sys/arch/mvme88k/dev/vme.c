@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.21 2003/09/28 22:14:33 miod Exp $ */
+/*	$OpenBSD: vme.c,v 1.22 2003/10/05 20:27:48 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -49,7 +49,7 @@
 #include "syscon.h"
 
 #include <mvme88k/dev/vme.h>
-#if NSYSCON > 0 
+#if NSYSCON > 0
 #include <mvme88k/dev/sysconreg.h>
 #endif
 
@@ -72,11 +72,11 @@ struct vme2reg *sys_vme2 = NULL;
 
 struct cfattach vme_ca = {
         sizeof(struct vmesoftc), vmematch, vmeattach
-}; 
- 
+};
+
 struct cfdriver vme_cd = {
         NULL, "vme", DV_DULL, 0
-}; 
+};
 
 int
 vmematch(parent, cf, args)
@@ -186,9 +186,9 @@ vmerw(sc, uio, flags, bus)
 	int flags;
 	int bus;
 {
-	register vm_offset_t v;
-	register int c;
-	register struct iovec *iov;
+	vaddr_t v;
+	int c;
+	struct iovec *iov;
 	void *vme;
 	int error = 0;
 
@@ -263,7 +263,7 @@ vmescan(parent, child, args, bustype)
 		oca.ca_len = 4096;
 
 	oca.ca_offset = (u_int)oca.ca_paddr;
-	oca.ca_vaddr = vmemap(sc, (vm_offset_t)oca.ca_paddr, oca.ca_len,
+	oca.ca_vaddr = vmemap(sc, (vaddr_t)oca.ca_paddr, oca.ca_len,
 	    oca.ca_bustype);
 	if (!oca.ca_vaddr)
 		oca.ca_vaddr = (void *)-1;
@@ -276,7 +276,7 @@ vmescan(parent, child, args, bustype)
 	}
 	/*
 	 * If match works, the driver is responsible for
-	 * vmunmap()ing if it does not need the mapping. 
+	 * vmunmap()ing if it does not need the mapping.
 	 */
 	config_attach(parent, cf, &oca, vmeprint);
 	return (1);
@@ -358,12 +358,12 @@ vme_findvec(void)
  */
 
 /*
- * All VME bus devices will use a vector starting with VBR1 + 0x10 
- * and determined by intr_findvec(). (in machdep.c) vmeintr_establish() 
- * should be called with the 'vec' argument = 0 to 'auto vector' a 
+ * All VME bus devices will use a vector starting with VBR1 + 0x10
+ * and determined by intr_findvec(). (in machdep.c) vmeintr_establish()
+ * should be called with the 'vec' argument = 0 to 'auto vector' a
  * VME device.
  *
- * The 8 SW interrupters will start with VBR1.  The rest will start 
+ * The 8 SW interrupters will start with VBR1.  The rest will start
  * with VBR0< 4) & 0xFF.
  */
 
@@ -389,7 +389,7 @@ vmeintr_establish(vec, ih)
 		    VME2_IRQ_VME(ih->ih_ipl);
 		break;
 #endif
-#if NSYSCON > 0 
+#if NSYSCON > 0
 	case BUS_SYSCON:
 		syscon = (struct sysconreg *)sc->sc_vaddr;
 		break;
@@ -459,11 +459,11 @@ vme2chip_init(sc)
 	/*
 	 * Map the Software VME irq levels to the cpu level 7.
 	*/
-	vme2->vme2_irql3 = (7 << VME2_IRQL3_SW7SHIFT) | (7 << VME2_IRQL3_SW6SHIFT) | 
+	vme2->vme2_irql3 = (7 << VME2_IRQL3_SW7SHIFT) | (7 << VME2_IRQL3_SW6SHIFT) |
 			(7 << VME2_IRQL3_SW5SHIFT) | (7 << VME2_IRQL3_SW4SHIFT) |
-			(7 << VME2_IRQL3_SW3SHIFT) | (7 << VME2_IRQL3_SW2SHIFT) | 
+			(7 << VME2_IRQL3_SW3SHIFT) | (7 << VME2_IRQL3_SW2SHIFT) |
 			(7 << VME2_IRQL3_SW1SHIFT) | (7 << VME2_IRQL3_SW0SHIFT);
-		/* 
+		/*
 		 * pseudo driver, abort interrupt handler
 		 */
 		sc->sc_abih.ih_fn = vme2abort;
@@ -499,7 +499,7 @@ vmesyscon_init(sc)
 	       vme2->vme2_master2 << 16, vme2->vme2_master2 & 0xffff0000,
 	       vme2->vme2_master2 << 16, vme2->vme2_master2 & 0xffff0000);
 
-	/* 
+	/*
 	 * pseudo driver, abort interrupt handler
 	 */
 	sc->sc_abih.ih_fn = sysconabort;
@@ -561,7 +561,7 @@ vme2abort(eframe)
 		printf("%s: abort irq not set\n", sc->sc_dev.dv_xname);
 		return (0);
 	}
-#endif 
+#endif
 	vme2->vme2_irqclr = VME2_IRQ_AB;
 	nmihand(frame);
 	return (1);

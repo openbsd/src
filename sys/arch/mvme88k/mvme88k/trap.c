@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.53 2003/10/02 10:20:12 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.54 2003/10/05 20:27:47 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -59,12 +59,11 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/asm_macro.h>   /* enable/disable interrupts */
-#include <machine/bugio.h>		/* bugreturn() */
 #include <machine/cpu.h>
 #include <machine/locore.h>
 #ifdef M88100
-#include <machine/m88100.h>
-#include <machine/m8820x.h>
+#include <machine/m88100.h>		/* DMT_xxx */
+#include <machine/m8820x.h>		/* CMMU_PFSR_xxx */
 #endif
 #ifdef M88110
 #include <machine/m88110.h>
@@ -85,10 +84,10 @@
 unsigned traptrace = 0;
 #endif
 
-#if DDB
-#define DEBUG_MSG db_printf
+#ifdef DDB
+#define DEBUG_MSG(x) db_printf x
 #else
-#define DEBUG_MSG printf
+#define DEBUG_MSG(x)
 #endif /* DDB */
 
 #define USERMODE(PSR)   (((PSR) & PSR_MODE) == 0)
@@ -98,7 +97,7 @@ unsigned traptrace = 0;
 extern int procfs_domem(struct proc *, struct proc *, void *, struct uio *);
 
 extern void regdump(struct trapframe *f);
-void error_fatal(struct m88100_saved_state *frame);
+__dead void error_fatal(struct m88100_saved_state *frame);
 
 char  *trap_type[] = {
 	"Reset",
@@ -153,35 +152,38 @@ userret(struct proc *p, struct m88100_saved_state *frame, u_quad_t oticks)
 	if (p->p_flag & P_PROFIL) {
 		extern int psratio;
 
-		addupc_task(p, frame->sxip & ~3,
+		addupc_task(p, frame->sxip & XIP_ADDR,
 		    (int)(p->p_sticks - oticks) * psratio);
 	}
 	curpriority = p->p_priority;
 }
 
-void
+__dead void
 panictrap(int type, struct m88100_saved_state *frame)
 {
+#ifdef DDB
 	static int panicing = 0;
 
 	if (panicing++ == 0) {
 		if (type == 2 && cputyp == CPU_88100) {
 			/* instruction exception */
-			DEBUG_MSG("\nInstr access fault (%s) v = %x, frame %x\n",
+			db_printf("\nInstr access fault (%s) v = %x, frame %x\n",
 				  pbus_exception_type[(frame->ipfsr >> 16) & 0x7],
-				  frame->sxip & ~3, frame);
+				  frame->sxip & XIP_ADDR, frame);
 		} else if (type == 3 && cputyp == CPU_88100) {
 			/* data access exception */
-			DEBUG_MSG("\nData access fault (%s) v = %x, frame %x\n",
+			db_printf("\nData access fault (%s) v = %x, frame %x\n",
 				  pbus_exception_type[(frame->dpfsr >> 16) & 0x7],
-				  frame->sxip & ~3, frame);
+				  frame->sxip & XIP_ADDR, frame);
 		} else
-			DEBUG_MSG("\ntrap type %d, v = %x, frame %x\n", type, frame->sxip & ~3, frame);
+			db_printf("\ntrap type %d, v = %x, frame %x\n", type, frame->sxip & XIP_ADDR, frame);
 		regdump(frame);
 	}
+#endif
 	if ((u_int)type < trap_types)
 		panic(trap_type[type]);
-	panic("trap");
+	else
+		panic("trap %d", type);
 	/*NOTREACHED*/
 }
 
@@ -195,21 +197,21 @@ m88100_trap(unsigned type, struct m88100_saved_state *frame)
 	struct proc *p;
 	u_quad_t sticks = 0;
 	struct vm_map *map;
-	vm_offset_t va;
+	vaddr_t va;
 	vm_prot_t ftype;
 	int fault_type, pbus_type;
 	u_long fault_code;
 	unsigned nss, fault_addr;
 	struct vmspace *vm;
 	union sigval sv;
-	int result;
+	int result, s;
 	int sig = 0;
 	unsigned pc = PC_REGS(frame);  /* get program counter (sxip) */
 
 	extern struct vm_map *kernel_map;
-	extern unsigned guarded_access_start;
-	extern unsigned guarded_access_end;
-	extern unsigned guarded_access_bad;
+	extern caddr_t guarded_access_start;
+	extern caddr_t guarded_access_end;
+	extern caddr_t guarded_access_bad;
 
 	if (type != last_trap[3]) {
 		last_trap[0] = last_trap[1];
@@ -231,56 +233,40 @@ m88100_trap(unsigned type, struct m88100_saved_state *frame)
 	switch (type) {
 	default:
 		panictrap(frame->vector, frame);
+		break;
 		/*NOTREACHED*/
 
 #if defined(DDB)
 	case T_KDB_BREAK:
-		{
-			int s = splhigh();
-			db_enable_interrupt();
-			ddb_break_trap(T_KDB_BREAK,(db_regs_t*)frame);
-			db_disable_interrupt();
-			splx(s);
-			return;
-		}
+		s = splhigh();
+		db_enable_interrupt();
+		ddb_break_trap(T_KDB_BREAK, (db_regs_t*)frame);
+		db_disable_interrupt();
+		splx(s);
+		return;
 	case T_KDB_ENTRY:
-		{
-			int s = splhigh();
-			db_enable_interrupt();
-			ddb_entry_trap(T_KDB_ENTRY,(db_regs_t*)frame);
-			db_disable_interrupt();
-			splx(s);
-			return;
-		}
-
-#if 0
-	case T_ILLFLT:
-		{
-			int s = splhigh();
-			db_enable_interrupt();
-			ddb_error_trap(type == T_ILLFLT ? "unimplemented opcode" :
-				       "error fault", (db_regs_t*)frame);
-			db_disable_interrupt();
-			splx(s);
-			return;
-		}
-#endif /* 0 */
+		s = splhigh();
+		db_enable_interrupt();
+		ddb_entry_trap(T_KDB_ENTRY, (db_regs_t*)frame);
+		db_disable_interrupt();
+		splx(s);
+		return;
 #endif /* DDB */
 	case T_ILLFLT:
-		DEBUG_MSG("Unimplemented opcode!\n");
+		DEBUG_MSG(("Unimplemented opcode!\n"));
 		panictrap(frame->vector, frame);
 		break;
 	case T_INT:
 	case T_INT+T_USER:
-		/* This function pointer is set in machdep.c 
+		/* This function pointer is set in machdep.c
 		   It calls m188_ext_int or sbc_ext_int depending
 		   on the value of brdtyp - smurph */
 		(*md.interrupt_func)(T_INT, frame);
 		return;
 
 	case T_MISALGNFLT:
-		DEBUG_MSG("kernel misaligned "
-			  "access exception @ 0x%08x\n", frame->sxip);
+		DEBUG_MSG(("kernel misaligned "
+			  "access exception @ 0x%08x\n", frame->sxip));
 		panictrap(frame->vector, frame);
 		break;
 
@@ -288,8 +274,8 @@ m88100_trap(unsigned type, struct m88100_saved_state *frame)
 		/* kernel mode instruction access fault.
 		 * Should never, never happen for a non-paged kernel.
 		 */
-		DEBUG_MSG("kernel mode instruction "
-			  "page fault @ 0x%08x\n", frame->sxip);
+		DEBUG_MSG(("kernel mode instruction "
+			  "page fault @ 0x%08x\n", frame->sxip));
 		panictrap(frame->vector, frame);
 		break;
 
@@ -311,7 +297,7 @@ m88100_trap(unsigned type, struct m88100_saved_state *frame)
 			fault_code = VM_PROT_READ;
 		}
 
-		va = trunc_page((vm_offset_t)fault_addr);
+		va = trunc_page((vaddr_t)fault_addr);
 		if (va == 0) {
 			panic("trap: bad kernel access at %x", fault_addr);
 		}
@@ -324,16 +310,16 @@ m88100_trap(unsigned type, struct m88100_saved_state *frame)
 		printf("Kernel Data access fault #%d (%s) v = 0x%x, frame 0x%x cpu %d\n",
 		       pbus_type, pbus_exception_type[pbus_type],
 		       fault_addr, frame, frame->cpu);
-#endif 
+#endif
 
 		switch (pbus_type) {
 		case CMMU_PFSR_BERROR:
 			/*
 		 	 * If it is a guarded access, bus error is OK.
 		 	 */
-			if ((frame->sxip & ~3) >=
+			if ((frame->sxip & XIP_ADDR) >=
 			      (unsigned)&guarded_access_start &&
-			    (frame->sxip & ~3) <=
+			    (frame->sxip & XIP_ADDR) <=
 			      (unsigned)&guarded_access_end) {
 				frame->snip =
 				  ((unsigned)&guarded_access_bad    ) | NIP_V;
@@ -356,9 +342,9 @@ m88100_trap(unsigned type, struct m88100_saved_state *frame)
 			break;
 		case CMMU_PFSR_SUCCESS:
 			/*
-			 * The fault was resolved. Call data_access_emulation 
-			 * to drain the data unit pipe line and reset dmt0 
-			 * so that trap won't get called again. 
+			 * The fault was resolved. Call data_access_emulation
+			 * to drain the data unit pipe line and reset dmt0
+			 * so that trap won't get called again.
 			 */
 			data_access_emulation((unsigned *)frame);
 			frame->dpfsr = 0;
@@ -366,7 +352,7 @@ m88100_trap(unsigned type, struct m88100_saved_state *frame)
 			return;
 		case CMMU_PFSR_SFAULT:
 		case CMMU_PFSR_PFAULT:
-			result = uvm_fault(map, va, 0, ftype);
+			result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
 			if (result == 0) {
 				/*
 				 * We could resolve the fault. Call
@@ -396,10 +382,10 @@ m88100_trap(unsigned type, struct m88100_saved_state *frame)
 		frame->sfip =
 		    ((unsigned)p->p_addr->u_pcb.pcb_onfault + 4) | FIP_V;
 		frame->sxip = 0;
-		/* We sort of resolved the fault ourselves because 
+		/* We sort of resolved the fault ourselves because
 		 * we know where it came from [copyxxx()]
-		 * But we must still think about the other possible 
-		 * transactions in dmt1 & dmt2.  Mark dmt0 so that 
+		 * But we must still think about the other possible
+		 * transactions in dmt1 & dmt2.  Mark dmt0 so that
 		 * data_access_emulation skips it. XXX smurph
 		 */
 		frame->dmt0 |= DMT_SKIP;
@@ -423,17 +409,17 @@ user_fault:
 		printf("User Data access fault #%d (%s) v = 0x%x, frame 0x%x cpu %d\n",
 		       pbus_type, pbus_exception_type[pbus_type],
 		       fault_addr, frame, frame->cpu);
-#endif 
+#endif
 
-		if (frame->dmt0 & (DMT_WRITE|DMT_LOCKBAR)) {
-			ftype = VM_PROT_READ|VM_PROT_WRITE;
+		if (frame->dmt0 & (DMT_WRITE | DMT_LOCKBAR)) {
+			ftype = VM_PROT_READ | VM_PROT_WRITE;
 			fault_code = VM_PROT_WRITE;
 		} else {
 			ftype = VM_PROT_READ;
 			fault_code = VM_PROT_READ;
 		}
 
-		va = trunc_page((vm_offset_t)fault_addr);
+		va = trunc_page((vaddr_t)fault_addr);
 
 		vm = p->p_vmspace;
 		map = &vm->vm_map;
@@ -447,7 +433,7 @@ user_fault:
 			result = EACCES;
 			break;
 		default:
-			result = uvm_fault(map, va, 0, ftype);
+			result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
 			break;
 		}
 
@@ -550,7 +536,7 @@ user_fault:
 			       p->p_md.md_ss_addr, p->p_md.md_ss_instr); /* XXX */
 #endif
 			/* check and see if we got here by accident */
-			if ((p->p_md.md_ss_addr != pc && 
+			if ((p->p_md.md_ss_addr != pc &&
 			     p->p_md.md_ss_taken_addr != pc) ||
 			    instr != SSBREAKPOINT) {
 				sig = SIGTRAP;
@@ -562,9 +548,9 @@ user_fault:
 			va = p->p_md.md_ss_addr;
 			if (va != 0) {
 				iov.iov_base = (caddr_t)&instr;
-				iov.iov_len = sizeof(int); 
+				iov.iov_len = sizeof(int);
 				uio.uio_iov = &iov;
-				uio.uio_iovcnt = 1; 
+				uio.uio_iovcnt = 1;
 				uio.uio_offset = (off_t)va;
 				uio.uio_resid = sizeof(int);
 				uio.uio_segflg = UIO_SYSSPACE;
@@ -578,9 +564,9 @@ user_fault:
 			va = p->p_md.md_ss_taken_addr;
 			if (instr != 0) {
 				iov.iov_base = (caddr_t)&instr;
-				iov.iov_len = sizeof(int); 
+				iov.iov_len = sizeof(int);
 				uio.uio_iov = &iov;
-				uio.uio_iovcnt = 1; 
+				uio.uio_iovcnt = 1;
 				uio.uio_offset = (off_t)va;
 				uio.uio_resid = sizeof(int);
 				uio.uio_segflg = UIO_SYSSPACE;
@@ -633,7 +619,7 @@ user_fault:
 	if (sig) {
 		sv.sival_int = fault_addr;
 		trapsignal(p, sig, fault_code, fault_type, sv);
-		/*		
+		/*
 		 * don't want multiple faults - we are going to
 		 * deliver signal.
 		 */
@@ -652,7 +638,7 @@ m88110_trap(unsigned type, struct m88100_saved_state *frame)
 	struct proc *p;
 	u_quad_t sticks = 0;
 	struct vm_map *map;
-	vm_offset_t va;
+	vaddr_t va;
 	vm_prot_t ftype;
 	int fault_type;
 	u_long fault_code;
@@ -670,7 +656,7 @@ m88110_trap(unsigned type, struct m88100_saved_state *frame)
 	extern struct vm_map *kernel_map;
 	extern unsigned guarded_access_start;
 	extern unsigned guarded_access_end;
-	extern pt_entry_t *pmap_pte(pmap_t, vm_offset_t);
+	extern pt_entry_t *pmap_pte(pmap_t, vaddr_t);
 
 	uvmexp.traps++;
 	if ((p = curproc) == NULL)
@@ -696,21 +682,26 @@ m88110_trap(unsigned type, struct m88100_saved_state *frame)
 	switch (type) {
 	default:
 		panictrap(frame->vector, frame);
+		break;
 		/*NOTREACHED*/
+
 	case T_197_READ+T_USER:
 	case T_197_READ:
-		DEBUG_MSG("DMMU read miss: Hardware Table Searches should be enabled!\n");
+		DEBUG_MSG(("DMMU read miss: Hardware Table Searches should be enabled!\n"));
 		panictrap(frame->vector, frame);
+		break;
 		/*NOTREACHED*/
 	case T_197_WRITE+T_USER:
 	case T_197_WRITE:
-		DEBUG_MSG("DMMU write miss: Hardware Table Searches should be enabled!\n");
+		DEBUG_MSG(("DMMU write miss: Hardware Table Searches should be enabled!\n"));
 		panictrap(frame->vector, frame);
+		break;
 		/*NOTREACHED*/
 	case T_197_INST+T_USER:
 	case T_197_INST:
-		DEBUG_MSG("IMMU miss: Hardware Table Searches should be enabled!\n");
+		DEBUG_MSG(("IMMU miss: Hardware Table Searches should be enabled!\n"));
 		panictrap(frame->vector, frame);
+		break;
 		/*NOTREACHED*/
 #ifdef DDB
 	case T_KDB_TRACE:
@@ -751,12 +742,12 @@ m88110_trap(unsigned type, struct m88100_saved_state *frame)
 #endif /* 0 */
 #endif /* DDB */
 	case T_ILLFLT:
-		DEBUG_MSG("Unimplemented opcode!\n");
+		DEBUG_MSG(("Unimplemented opcode!\n"));
 		panictrap(frame->vector, frame);
 		break;
 	case T_NON_MASK:
 	case T_NON_MASK+T_USER:
-		/* This function pointer is set in machdep.c 
+		/* This function pointer is set in machdep.c
 		   It calls m197_ext_int - smurph */
 		(*md.interrupt_func)(T_NON_MASK, frame);
 		return;
@@ -765,18 +756,20 @@ m88110_trap(unsigned type, struct m88100_saved_state *frame)
 		(*md.interrupt_func)(T_INT, frame);
 		return;
 	case T_MISALGNFLT:
-		DEBUG_MSG("kernel mode misaligned "
-			  "access exception @ 0x%08x\n", frame->exip);
+		DEBUG_MSG(("kernel mode misaligned "
+			  "access exception @ 0x%08x\n", frame->exip));
 		panictrap(frame->vector, frame);
+		break;
 		/*NOTREACHED*/
 
 	case T_INSTFLT:
 		/* kernel mode instruction access fault.
 		 * Should never, never happen for a non-paged kernel.
 		 */
-		DEBUG_MSG("kernel mode instruction "
-			  "page fault @ 0x%08x\n", frame->exip);
+		DEBUG_MSG(("kernel mode instruction "
+			  "page fault @ 0x%08x\n", frame->exip));
 		panictrap(frame->vector, frame);
+		break;
 		/*NOTREACHED*/
 
 	case T_DATAFLT:
@@ -797,7 +790,7 @@ m88110_trap(unsigned type, struct m88100_saved_state *frame)
 			fault_code = VM_PROT_WRITE;
 		}
 
-		va = trunc_page((vm_offset_t)fault_addr);
+		va = trunc_page((vaddr_t)fault_addr);
 		if (va == 0) {
 			panic("trap: bad kernel access at %x", fault_addr);
 		}
@@ -809,9 +802,9 @@ m88110_trap(unsigned type, struct m88100_saved_state *frame)
 			/*
 			 * If it is a guarded access, bus error is OK.
 			 */
-			if ((frame->exip & ~3) >=
+			if ((frame->exip & XIP_ADDR) >=
 			      (unsigned)&guarded_access_start &&
-			    (frame->exip & ~3) <=
+			    (frame->exip & XIP_ADDR) <=
 			      (unsigned)&guarded_access_end) {
 				return;
 			}
@@ -821,19 +814,19 @@ m88110_trap(unsigned type, struct m88100_saved_state *frame)
 			 * On a segment or a page fault, call uvm_fault() to
 			 * resolve the fault.
 			 */
-			result = uvm_fault(map, va, 0, ftype);
+			result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
 			if (result == 0)
 				return;
 		}
 		if (frame->dsr & CMMU_DSR_WE) {	/* write fault  */
 			/*
-			 * This could be a write protection fault or an 
+			 * This could be a write protection fault or an
 			 * exception to set the used and modified bits
-			 * in the pte. Basically, if we got a write error, 
-			 * then we already have a pte entry that faulted 
+			 * in the pte. Basically, if we got a write error,
+			 * then we already have a pte entry that faulted
 			 * in from a previous seg fault or page fault.
-			 * Get the pte and check the status of the 
-			 * modified and valid bits to determine if this 
+			 * Get the pte and check the status of the
+			 * modified and valid bits to determine if this
 			 * indeed a real write fault.  XXX smurph
 			 */
 			pte = pmap_pte(map->pmap, va);
@@ -850,7 +843,7 @@ m88110_trap(unsigned type, struct m88100_saved_state *frame)
 				printf("Kernel Write protect???? pte %x\n",
 				    *pte);
 #endif
-				result = uvm_fault(map, va, 0, ftype);
+				result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
 				if (result == 0)
 					return;
 #endif
@@ -885,7 +878,7 @@ m88110_user_fault:
 			}
 		}
 
-		va = trunc_page((vm_offset_t)fault_addr);
+		va = trunc_page((vaddr_t)fault_addr);
 
 		vm = p->p_vmspace;
 		map = &vm->vm_map;
@@ -902,7 +895,7 @@ m88110_user_fault:
 			} else
 			if (frame->dsr & (CMMU_DSR_SI | CMMU_DSR_PI)) {
 				/* segment or page fault */
-				result = uvm_fault(map, va, 0, ftype);
+				result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
 #ifdef DEBUG
 				if (result != 0)
 					printf("Data Access Error @ 0x%x\n", va);
@@ -914,14 +907,14 @@ m88110_user_fault:
 			} else
 			if (frame->dsr & CMMU_DSR_WE) {
 				/* write fault  */
-				/* This could be a write protection fault or an 
+				/* This could be a write protection fault or an
 				 * exception to set the used and modified bits
 				 * in the pte. Basically, if we got a write
 				 * error, then we already have a pte entry that
 				 * faulted in from a previous seg fault or page
 				 * fault.
-				 * Get the pte and check the status of the 
-				 * modified and valid bits to determine if this 
+				 * Get the pte and check the status of the
+				 * modified and valid bits to determine if this
 				 * indeed a real write fault.  XXX smurph
 				 */
 				pte = pmap_pte(vm_map_pmap(map), va);
@@ -945,20 +938,20 @@ m88110_user_fault:
 					printf("Write protect???? pte %x\n",
 					    *pte);
 #endif
-					result = uvm_fault(map, va, 0, ftype);
+					result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
 				}
 			} else {
 #ifdef DEBUG
 				printf("unexpected data fault dsr %x\n",
 				    frame->dsr);
 #endif
-				result = uvm_fault(map, va, 0, ftype);
+				result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
 			}
 		} else {
 			/* instruction faults */
 			if (frame->isr & (CMMU_ISR_SI | CMMU_ISR_PI)) {
 				/* segment or page fault */
-				result = uvm_fault(map, va, 0, ftype);
+				result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
 			} else
 			if (frame->isr &
 			    (CMMU_ISR_BE | CMMU_ISR_SP | CMMU_ISR_TBE)) {
@@ -969,7 +962,7 @@ m88110_user_fault:
 				printf("unexpected instr fault dsr %x\n",
 				    frame->isr);
 #endif
-				result = uvm_fault(map, va, 0, ftype);
+				result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
 			}
 		}
 
@@ -1057,15 +1050,15 @@ m88110_user_fault:
 				fault_type = TRAP_TRACE;
 				break;
 			}
-#endif 
+#endif
 			/* restore original instruction and clear BP  */
 			/*sig = suiword((caddr_t)pc, p->p_md.md_ss_instr);*/
 			instr = p->p_md.md_ss_instr;
 			if (instr != 0) {
 				iov.iov_base = (caddr_t)&instr;
-				iov.iov_len = sizeof(int); 
+				iov.iov_len = sizeof(int);
 				uio.uio_iov = &iov;
-				uio.uio_iovcnt = 1; 
+				uio.uio_iovcnt = 1;
 				uio.uio_offset = (off_t)pc;
 				uio.uio_resid = sizeof(int);
 				uio.uio_segflg = UIO_SYSSPACE;
@@ -1107,7 +1100,7 @@ m88110_user_fault:
 	if (sig) {
 		sv.sival_int = fault_addr;
 		trapsignal(p, sig, fault_code, fault_type, sv);
-		/*		
+		/*
 		 * don't want multiple faults - we are going to
 		 * deliver signal.
 		 */
@@ -1119,34 +1112,31 @@ m88110_user_fault:
 
 #endif /* MVME197 */
 
-void
+__dead void
 error_fatal(struct m88100_saved_state *frame)
 {
+#ifdef DDB
 	switch (frame->vector) {
 	case 0:
-		DEBUG_MSG("\n[RESET EXCEPTION (Really Bad News[tm]) frame 0x%08x]\n", frame);
-		DEBUG_MSG("This is usually caused by a branch to a NULL function pointer.\n");
-		DEBUG_MSG("e.g. jump to address 0.  Use the debugger trace command to track it down.\n");
+		db_printf("\n[RESET EXCEPTION (Really Bad News[tm]) frame 0x%08x]\n", frame);
+		db_printf("This is usually caused by a branch to a NULL function pointer.\n");
+		db_printf("e.g. jump to address 0.  Use the debugger trace command to track it down.\n");
 		break;
 	default:
-		DEBUG_MSG("\n[ERROR EXCEPTION (Bad News[tm]) frame 0x%08x]\n", frame);
-		DEBUG_MSG("This is usually an exception within an exception.  The trap\n");
-		DEBUG_MSG("frame shadow registers you are about to see are invalid.\n");
-		DEBUG_MSG("(read totaly useless)  But R1 to R31 might be interesting.\n");
+		db_printf("\n[ERROR EXCEPTION (Bad News[tm]) frame 0x%08x]\n", frame);
+		db_printf("This is usually an exception within an exception.  The trap\n");
+		db_printf("frame shadow registers you are about to see are invalid.\n");
+		db_printf("(read totaly useless)  But R1 to R31 might be interesting.\n");
 		break;
 	}
 	regdump((struct trapframe*)frame);
 #ifdef M88100
-	DEBUG_MSG("trap trace %d -> %d -> %d -> %d  ", last_trap[0], last_trap[1], last_trap[2], last_trap[3]);
-	DEBUG_MSG("last exception vector = %d\n", last_vector);
-#endif 
-#if DDB 
-	Debugger();
-	DEBUG_MSG("You really can't restart after exception %d!\n", frame->vector);
+	db_printf("trap trace %d -> %d -> %d -> %d  ", last_trap[0], last_trap[1], last_trap[2], last_trap[3]);
+	db_printf("last exception vector = %d\n", last_vector);
+#endif
 	Debugger();
 #endif /* DDB */
-	bugreturn();  /* This gets us to Bug instead of a loop forever */
-
+	panic("unrecoverable exception %d", frame->vector);
 }
 
 #ifdef M88100
@@ -1248,7 +1238,7 @@ m88100_syscall(register_t code, struct m88100_saved_state *tf)
 	 *       jmp r1 	  <- sfip
 	 *  err: or.u r3, r0, hi16(errno)
 	 *	 st r2, r3, lo16(errno)
-	 *	 subu r2, r0, 1 
+	 *	 subu r2, r0, 1
 	 *	 jmp r1
 	 *
 	 * So, when we take syscall trap, sxip/snip/sfip will be as
@@ -1424,7 +1414,7 @@ m88110_syscall(register_t code, struct m88100_saved_state *tf)
 	 *       jmp r1
 	 *  err: or.u r3, r0, hi16(errno)
 	 *	 st r2, r3, lo16(errno)
-	 *	 subu r2, r0, 1 
+	 *	 subu r2, r0, 1
 	 *	 jmp r1
 	 *
 	 * So, when we take syscall trap, exip/enip will be as
@@ -1432,7 +1422,7 @@ m88110_syscall(register_t code, struct m88100_saved_state *tf)
 	 * Given this,
 	 * 1. If the system call returned 0, need to jmp r1.
 	 *	   exip += 8
-	 * 2. If the system call returned an errno > 0, increment 
+	 * 2. If the system call returned an errno > 0, increment
 	 *    exip += 4 and plug the value in r2. This will have us
 	 *    executing "br err" on return to user space.
 	 * 3. If the system call code returned ERESTART,
@@ -1456,7 +1446,7 @@ m88110_syscall(register_t code, struct m88100_saved_state *tf)
 		tf->r[3] = rval[1];
 		tf->epsr &= ~PSR_C;
 		tf->exip += 4 + 4;
-		tf->exip &= ~3;
+		tf->exip &= XIP_ADDR;
 		break;
 	case ERESTART:
 		/*
@@ -1469,7 +1459,7 @@ m88110_syscall(register_t code, struct m88100_saved_state *tf)
 	case EJUSTRETURN:
 		tf->epsr &= ~PSR_C;
 		tf->exip += 4;
-		tf->exip &= ~3;
+		tf->exip &= XIP_ADDR;
 		break;
 	default:
 		if (p->p_emul->e_errno)
@@ -1477,7 +1467,7 @@ m88110_syscall(register_t code, struct m88100_saved_state *tf)
 		tf->r[2] = error;
 		tf->epsr |= PSR_C;   /* fail */
 		tf->exip += 4;
-		tf->exip &= ~3;
+		tf->exip &= XIP_ADDR;
 		break;
 	}
 
@@ -1508,11 +1498,11 @@ child_return(arg)
 	tf->r[3] = 0;
 	tf->epsr &= ~PSR_C;
 	if (cputyp != CPU_88110) {
-		tf->snip = tf->sfip & ~3;
+		tf->snip = tf->sfip & XIP_ADDR;
 		tf->sfip = tf->snip + 4;
 	} else {
 		tf->exip += 4 + 4;
-		tf->exip &= ~3;
+		tf->exip &= XIP_ADDR;
 	}
 
 	userret(p, tf, p->p_sticks);
@@ -1526,7 +1516,7 @@ child_return(arg)
 * User Single Step Debugging Support *
 \************************************/
 
-unsigned 
+unsigned
 ss_get_value(struct proc *p, unsigned addr, int size)
 {
 	struct uio uio;
@@ -1534,9 +1524,9 @@ ss_get_value(struct proc *p, unsigned addr, int size)
 	unsigned value;
 
 	iov.iov_base = (caddr_t)&value;
-	iov.iov_len = size; 
+	iov.iov_len = size;
 	uio.uio_iov = &iov;
-	uio.uio_iovcnt = 1; 
+	uio.uio_iovcnt = 1;
 	uio.uio_offset = (off_t)addr;
 	uio.uio_resid = size;
 	uio.uio_segflg = UIO_SYSSPACE;
@@ -1546,7 +1536,7 @@ ss_get_value(struct proc *p, unsigned addr, int size)
 	return value;
 }
 
-int 
+int
 ss_put_value(struct proc *p, unsigned addr, unsigned value, int size)
 {
 	struct uio uio;
@@ -1554,9 +1544,9 @@ ss_put_value(struct proc *p, unsigned addr, unsigned value, int size)
 	int i;
 
 	iov.iov_base = (caddr_t)&value;
-	iov.iov_len = size; 
+	iov.iov_len = size;
 	uio.uio_iov = &iov;
-	uio.uio_iovcnt = 1; 
+	uio.uio_iovcnt = 1;
 	uio.uio_offset = (off_t)addr;
 	uio.uio_resid = size;
 	uio.uio_segflg = UIO_SYSSPACE;
@@ -1712,9 +1702,9 @@ register struct proc *p;
 			brpc = ss_branch_taken(curinstr, pc, ss_getreg_val, sstf);
 			if (brpc != pc) {   /* self-branches are hopeless */
 #if 0
-				printf("SS %s (%d): next taken breakpoint set at %x\n", 
+				printf("SS %s (%d): next taken breakpoint set at %x\n",
 				       p->p_comm, p->p_pid, brpc);
-#endif 
+#endif
 				p->p_md.md_ss_taken_addr = brpc;
 				p->p_md.md_ss_taken_instr = ss_get_value(p, brpc, sizeof(int));
 				/* Store breakpoint instruction at the "next" location now. */
@@ -1724,15 +1714,15 @@ register struct proc *p;
 		}
 		pc = ss_next_instr_address(p, pc, 0);
 #if 0
-		printf("SS %s (%d): next breakpoint set at %x\n", 
+		printf("SS %s (%d): next breakpoint set at %x\n",
 		       p->p_comm, p->p_pid, pc);
-#endif 
+#endif
 	} else {
 		pc = PC_REGS(sstf) + 4;
 #if 0
-		printf("SS %s (%d): next breakpoint set at %x\n", 
+		printf("SS %s (%d): next breakpoint set at %x\n",
 		       p->p_comm, p->p_pid, pc);
-#endif 
+#endif
 	}
 
 	if (p->p_md.md_ss_addr) {

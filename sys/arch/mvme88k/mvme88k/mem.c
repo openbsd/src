@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.18 2003/06/02 23:27:52 millert Exp $ */
+/*	$OpenBSD: mem.c,v 1.19 2003/10/05 20:27:47 miod Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -94,9 +94,9 @@ mmrw(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	register vm_offset_t o, v;
-	register int c;
-	register struct iovec *iov;
+	vaddr_t o, v;
+	int c;
+	struct iovec *iov;
 	int error = 0;
 	static int physlock = 0;
 	extern caddr_t vmmap;
@@ -131,7 +131,7 @@ mmrw(dev, uio, flags)
 				error = EFAULT;
 				goto unlock;
 			}
-			pmap_enter(pmap_kernel(), (vm_offset_t)vmmap,
+			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
 			    trunc_page(v),
 			    uio->uio_rw == UIO_READ ? VM_PROT_READ : VM_PROT_WRITE,
 			    (uio->uio_rw == UIO_READ ? VM_PROT_READ : VM_PROT_WRITE) | PMAP_WIRED);
@@ -139,8 +139,8 @@ mmrw(dev, uio, flags)
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);
-			pmap_remove(pmap_kernel(), (vm_offset_t)vmmap,
-			    (vm_offset_t)vmmap + NBPG);
+			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
+			    (vaddr_t)vmmap + NBPG);
 			pmap_update(pmap_kernel());
 			continue;
 
@@ -165,7 +165,7 @@ mmrw(dev, uio, flags)
 						bzero(zeropage, PAGE_SIZE);
 					}
 					c = min(c, NBPG - (int)v);
-					v = (vm_offset_t)zeropage;
+					v = (vaddr_t)zeropage;
 				} else
 #endif
 					return (EFAULT);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.h,v 1.18 2003/09/16 20:52:19 miod Exp $	*/
+/*	$OpenBSD: locore.h,v 1.19 2003/10/05 20:27:46 miod Exp $	*/
 
 #ifndef _MACHINE_LOCORE_H_
 #define _MACHINE_LOCORE_H_
@@ -11,27 +11,27 @@
 
 /* locore_asm_routines.S */
 
-unsigned int do_load_word(vm_offset_t address,
+unsigned int do_load_word(vaddr_t address,
     boolean_t supervisor_mode);
-unsigned int do_load_half(vm_offset_t address,
+unsigned int do_load_half(vaddr_t address,
     boolean_t supervisor_mode);
-unsigned int do_load_byte(vm_offset_t address,
-    boolean_t supervisor_mode);
-
-void do_store_word(vm_offset_t address, unsigned int data,
-    boolean_t supervisor_mode);
-void do_store_half(vm_offset_t address, unsigned int data,
-    boolean_t supervisor_mode);
-void do_store_byte(vm_offset_t address, unsigned int data,
+unsigned int do_load_byte(vaddr_t address,
     boolean_t supervisor_mode);
 
-unsigned do_xmem_word(vm_offset_t address, unsigned int data,
+void do_store_word(vaddr_t address, unsigned int data,
     boolean_t supervisor_mode);
-unsigned do_xmem_byte(vm_offset_t address, unsigned int data,
+void do_store_half(vaddr_t address, unsigned int data,
+    boolean_t supervisor_mode);
+void do_store_byte(vaddr_t address, unsigned int data,
+    boolean_t supervisor_mode);
+
+unsigned do_xmem_word(vaddr_t address, unsigned int data,
+    boolean_t supervisor_mode);
+unsigned do_xmem_byte(vaddr_t address, unsigned int data,
     boolean_t supervisor_mode);
 
 unsigned read_processor_identification_register(void);
-int badaddr(vm_offset_t addr, int size);
+int badaddr(vaddr_t addr, int size);
 #define badwordaddr(x) badaddr(x, 4)
 void set_cpu_number(unsigned number);
 void doboot(void);
@@ -50,7 +50,7 @@ unsigned getipl(void);
 /* machdep.c */
 
 void _doboot(void);
-vm_offset_t get_slave_stack(void);
+vaddr_t get_slave_stack(void);
 void slave_pre_main(void);
 int slave_main(void);
 int intr_findvec(int start, int end);

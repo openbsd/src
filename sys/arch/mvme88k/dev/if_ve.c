@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ve.c,v 1.20 2003/09/29 09:08:19 miod Exp $ */
+/*	$OpenBSD: if_ve.c,v 1.21 2003/10/05 20:27:47 miod Exp $ */
 /*-
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1982, 1992, 1993
@@ -36,7 +36,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/mbuf.h> 
+#include <sys/mbuf.h>
 #include <sys/syslog.h>
 #include <sys/socket.h>
 #include <sys/device.h>
@@ -86,7 +86,7 @@ void ve_tint(struct vam7990_softc *);
 
 int ve_put(struct vam7990_softc *, int, struct mbuf *);
 struct mbuf *ve_get(struct vam7990_softc *, int, int);
-void ve_read(struct vam7990_softc *, int, int); 
+void ve_read(struct vam7990_softc *, int, int);
 
 void ve_shutdown(void *);
 
@@ -148,9 +148,9 @@ nvram_cmd(sc, cmd, addr)
 	struct vereg1 *reg1 = ((struct ve_softc *)sc)->sc_r1;
 
 	for (i=0;i<8;i++) {
-		reg1->ver1_ear=((cmd|(addr<<1))>>i); 
-		CDELAY; 
-	} 
+		reg1->ver1_ear=((cmd|(addr<<1))>>i);
+		CDELAY;
+	}
 }
 
 /* read nvram one bit at a time */
@@ -171,12 +171,12 @@ nvram_read(sc, nvram_addr)
 	ENABLE_NVRAM;
 	nvram_cmd(sc, NVRAM_READ, nvram_addr);
 	for (wbit=0; wbit<15; wbit++) {
-		(reg1->ver1_ear & 0x01) ? 
+		(reg1->ver1_ear & 0x01) ?
 			(val = (val | mask)) : (val = (val & (~mask)));
 		mask = mask>>1;
 		CDELAY;
 	}
-	(reg1->ver1_ear & 0x01) ? 
+	(reg1->ver1_ear & 0x01) ?
 		(val = (val | 0x8000)) : (val = (val & 0x7FFF));
 	CDELAY;
 	DISABLE_NVRAM;
@@ -271,7 +271,7 @@ veattach(parent, self, aux)
 	/* Are we the boot device? */
 	if (ca->ca_paddr == bootaddr)
 		bootdv = self;
-	
+
 	lesc->sc_r1 = (struct vereg1 *)ca->ca_vaddr;
 	lesc->sc_ipl = ca->ca_ipl;
 	lesc->sc_vec = ca->ca_vec;
@@ -291,13 +291,13 @@ veattach(parent, self, aux)
 	default:
 		panic("ve: invalid address");
 	}
-	
+
 	sc->sc_mem = (void *)mapiodev(addr, LEMEMSIZE);
-	
+
 	if (sc->sc_mem == NULL)	panic("ve: no more memory in external I/O map");
 	sc->sc_memsize = LEMEMSIZE;
 	sc->sc_conf3 = LE_C3_BSWP;
-	sc->sc_addr = kvtop((vm_offset_t)sc->sc_mem);
+	sc->sc_addr = kvtop((vaddr_t)sc->sc_mem);
 
 	/* get ether address via bug call */
 	veetheraddr(sc);
@@ -400,7 +400,7 @@ ve_config(sc)
 
 	printf("\n%s: address %s\n", sc->sc_dev.dv_xname,
 	       ether_sprintf(sc->sc_arpcom.ac_enaddr));
-	printf("%s: %d receive buffers, %d transmit buffers\n", 
+	printf("%s: %d receive buffers, %d transmit buffers\n",
 	       sc->sc_dev.dv_xname, sc->sc_nrbuf, sc->sc_ntbuf);
 
 	sc->sc_sh = shutdownhook_establish(ve_shutdown, sc);
@@ -882,7 +882,7 @@ ve_intr(arg)
 
 	/* clear the interrupting condition */
 	(*sc->sc_wrcsr)(sc, LE_CSR0,
-			isr & (LE_C0_INEA | LE_C0_BABL | LE_C0_MISS | 
+			isr & (LE_C0_INEA | LE_C0_BABL | LE_C0_MISS |
 			       LE_C0_MERR | LE_C0_RINT | LE_C0_TINT | LE_C0_IDON));
 	if (isr & LE_C0_ERR) {
 		if (isr & LE_C0_BABL) {
@@ -1294,8 +1294,8 @@ ve_copytobuf_contig(sc, from, boff, len)
 {
 	volatile caddr_t buf = sc->sc_mem;
 	volatile caddr_t phys = (caddr_t)sc->sc_addr;
-	dma_cachectl((vm_offset_t)phys + boff, len, DMA_CACHE_SYNC);
-	dma_cachectl((vm_offset_t)buf + boff, len, DMA_CACHE_SYNC);
+	dma_cachectl((vaddr_t)phys + boff, len, DMA_CACHE_SYNC);
+	dma_cachectl((vaddr_t)buf + boff, len, DMA_CACHE_SYNC);
 
 	/*
 	 * Just call bcopy() to do the work.
@@ -1311,8 +1311,8 @@ ve_copyfrombuf_contig(sc, to, boff, len)
 {
 	volatile caddr_t buf = sc->sc_mem;
 	volatile caddr_t phys = (caddr_t)sc->sc_addr;
-	dma_cachectl((vm_offset_t)phys + boff, len, DMA_CACHE_SYNC_INVAL);
-	dma_cachectl((vm_offset_t)buf + boff, len, DMA_CACHE_SYNC_INVAL);
+	dma_cachectl((vaddr_t)phys + boff, len, DMA_CACHE_SYNC_INVAL);
+	dma_cachectl((vaddr_t)buf + boff, len, DMA_CACHE_SYNC_INVAL);
 	/*
 	 * Just call bcopy() to do the work.
 	 */
@@ -1326,8 +1326,8 @@ ve_zerobuf_contig(sc, boff, len)
 {
 	volatile caddr_t buf = sc->sc_mem;
 	volatile caddr_t phys = (caddr_t)sc->sc_addr;
-	dma_cachectl((vm_offset_t)phys + boff, len, DMA_CACHE_SYNC);
-	dma_cachectl((vm_offset_t)buf + boff, len, DMA_CACHE_SYNC);
+	dma_cachectl((vaddr_t)phys + boff, len, DMA_CACHE_SYNC);
+	dma_cachectl((vaddr_t)buf + boff, len, DMA_CACHE_SYNC);
 
 	/*
 	 * Just let bzero() do the work

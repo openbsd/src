@@ -1,27 +1,27 @@
-/*	$OpenBSD: vmparam.h,v 1.23 2003/10/02 10:18:11 miod Exp $ */
-/* 
+/*	$OpenBSD: vmparam.h,v 1.24 2003/10/05 20:27:46 miod Exp $ */
+/*
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
- * any improvements or extensions that they make and grant Carnegie Mellon 
+ *
+ * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
 
@@ -77,14 +77,14 @@
  */
 #define	MAXSLP 		20
 
-#define	VM_MIN_ADDRESS		((vm_offset_t) 0)
-#define	VM_MAX_ADDRESS		((vm_offset_t) 0xffc00000)
+#define	VM_MIN_ADDRESS		((vaddr_t) 0)
+#define	VM_MAX_ADDRESS		((vaddr_t) 0xffc00000)
 #define VM_MAXUSER_ADDRESS	VM_MAX_ADDRESS
 
 /* on vme188, max = 0xf0000000 */
 
-#define VM_MIN_KERNEL_ADDRESS	((vm_offset_t) 0)
-#define VM_MAX_KERNEL_ADDRESS	((vm_offset_t) 0x20000000)
+#define VM_MIN_KERNEL_ADDRESS	((vaddr_t) 0)
+#define VM_MAX_KERNEL_ADDRESS	((vaddr_t) 0x20000000)
 
 #define KERNEL_STACK_SIZE	(3 * PAGE_SIZE)	/* kernel stack size */
 #define INTSTACK_SIZE		(4 * PAGE_SIZE)	/* interrupt stack size */
