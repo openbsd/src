@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.17 2004/11/17 01:44:29 deraadt Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.18 2004/11/17 14:13:47 deraadt Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -102,11 +102,6 @@
 #endif
 
 #include <dev/usb/if_atureg.h>
-
-#include <dev/microcode/atmel/atuwi_rfmd_fw.h>
-#include <dev/microcode/atmel/atuwi_rfmd2958_fw.h>
-#include <dev/microcode/atmel/atuwi_rfmd2958-smc_fw.h>
-#include <dev/microcode/atmel/atuwi_intersil_fw.h>
 
 #ifdef ATU_DEBUG
 #define DPRINTF(x)	do { if (atudebug) printf x; } while (0)
@@ -978,13 +973,10 @@ atu_get_opmode(struct atu_softc *sc, u_int8_t *mode)
 int
 atu_upload_internal_firmware(struct atu_softc *sc)
 {
-	int8_t			state;
-	int			bytes_left = 0;
-	u_int8_t		*ptr = NULL;
-	int			block_size;
-	int			block = 0;
-	u_int8_t		status[6];
-	int			err;
+	u_char	state, *ptr = NULL, *firm = NULL, status[6];
+	int	block_size, block = 0, err;
+	size_t	bytes_left = 0;
+	char	*name = NULL;
 
 	/*
 	 * Uploading firmware is done with the DFU (Device Firmware Upgrade)
@@ -1008,36 +1000,31 @@ atu_upload_internal_firmware(struct atu_softc *sc)
 	/* Choose the right firmware for the device */
 	switch (sc->atu_radio) {
 	case RadioRFMD:
-		ptr = atuwi_fw_rfmd_int;
-		bytes_left = sizeof(atuwi_fw_rfmd_int);
-		DPRINTF(("%s: loading RFMD firmware...\n",
-		    USBDEVNAME(sc->atu_dev)));
+		name = "atu-rfmd-int";
 		break;
 	case RadioRFMD2958:
-		ptr = atuwi_fw_rfmd2958_int;
-		bytes_left = sizeof(atuwi_fw_rfmd2958_int);
-		DPRINTF(("%s: loading RFMD2958 firmware...\n",
-		    USBDEVNAME(sc->atu_dev)));
+		name = "atu-rfmd2958-int";
 		break;
 	case RadioRFMD2958_SMC:
-		ptr = atuwi_fw_rfmd2958_smc_int;
-		bytes_left = sizeof(atuwi_fw_rfmd2958_smc_int);
-		DPRINTF(("%s: loading RFMD2958-smc firmware...\n",
-		    USBDEVNAME(sc->atu_dev)));
+		name = "atu-rfmd2958smc-int";
 		break;
 	case RadioIntersil:
-		ptr = atuwi_fw_intersil_int;
-		bytes_left = sizeof(atuwi_fw_intersil_int);
-		DPRINTF(("%s: loading Intersil firmware...\n",
-		    USBDEVNAME(sc->atu_dev)));
+		name = "atu-intersil-int";
 		break;
 	default:
-		DPRINTF(("%s: unknown device type?\n",
-		    USBDEVNAME(sc->atu_dev)));
-		bytes_left = 0;
 		break;
 	}
 
+	DPRINTF(("%s: loading firmware %s...\n",
+	    USBDEVNAME(sc->atu_dev), name));
+	err = loadfirmware(name, &firm, &bytes_left);
+	if (err != 0) {
+		printf("%s: loadfirmware error %d\n",
+		    USBDEVNAME(sc->atu_dev), err);
+		return (err);
+	}
+
+	ptr = firm;
 	state = atu_get_dfu_state(sc);
 
 	while (bytes_left >= 0 && state > 0) {
@@ -1049,6 +1036,7 @@ atu_upload_internal_firmware(struct atu_softc *sc)
 			if (err) {
 				DPRINTF(("%s: dfu_getstatus failed!\n",
 				    USBDEVNAME(sc->atu_dev)));
+				free(firm, M_DEVBUF);
 				return err;
 			}
 			/* success means state => DnLoadIdle */
@@ -1070,6 +1058,7 @@ atu_upload_internal_firmware(struct atu_softc *sc)
 			if (err) {
 				DPRINTF(("%s: dfu_dnload failed\n",
 				    USBDEVNAME(sc->atu_dev)));
+				free(firm, M_DEVBUF);
 				return err;
 			}
 
@@ -1087,6 +1076,7 @@ atu_upload_internal_firmware(struct atu_softc *sc)
 
 		state = atu_get_dfu_state(sc);
 	}
+	free(firm, M_DEVBUF);
 
 	if (state != DFUState_ManifestSync) {
 		DPRINTF(("%s: state != manifestsync... eek!\n",
@@ -1131,13 +1121,10 @@ atu_upload_internal_firmware(struct atu_softc *sc)
 int
 atu_upload_external_firmware(struct atu_softc *sc)
 {
-	u_int8_t		*ptr = NULL;
-	int			bytes_left = 0;
-	int			block_size;
-	int			block = 0;
-	u_int8_t		mode;
-	u_int8_t		channel;
-	int			err;
+	u_char	*ptr = NULL, *firm = NULL, mode, channel;
+	int	block_size, block = 0, err;
+	size_t	bytes_left = 0;
+	char	*name = NULL;
 
 	err = atu_get_opmode(sc, &mode);
 	if (err) {
@@ -1172,35 +1159,31 @@ atu_upload_external_firmware(struct atu_softc *sc)
 
 	switch (sc->atu_radio) {
 	case RadioRFMD:
-		ptr = atuwi_fw_rfmd_ext;
-		bytes_left = sizeof(atuwi_fw_rfmd_ext);
-		DPRINTF(("%s: loading external RFMD firmware\n",
-		    USBDEVNAME(sc->atu_dev)));
+		name = "atu-rfmd-ext";
 		break;
 	case RadioRFMD2958:
-		ptr = atuwi_fw_rfmd2958_ext;
-		bytes_left = sizeof(atuwi_fw_rfmd2958_ext);
-		DPRINTF(("%s: loading external RFMD2958 "
-		    "firmware\n", USBDEVNAME(sc->atu_dev)));
+		name = "atu-rfmd2958-ext";
 		break;
 	case RadioRFMD2958_SMC:
-		ptr = atuwi_fw_rfmd2958_smc_ext;
-		bytes_left = sizeof(atuwi_fw_rfmd2958_smc_ext);
-		DPRINTF(("%s: loading external RFMD2958-smc "
-		    "firmware\n", USBDEVNAME(sc->atu_dev)));
+		name = "atu-rfmd2958smc-ext";
 		break;
 	case RadioIntersil:
-		ptr = atuwi_fw_intersil_ext;
-		bytes_left = sizeof(atuwi_fw_intersil_ext);
-		DPRINTF(("%s: loading external Intersil "
-		    "firmware\n", USBDEVNAME(sc->atu_dev)));
+		name = "atu-intersil-ext";
 		break;
 	default:
-		DPRINTF(("%s: unknown device type?\n",
-		    USBDEVNAME(sc->atu_dev)));
 		bytes_left = 0;
 		break;
 	}
+
+	DPRINTF(("%s: loading external firmware %s\n",
+	    USBDEVNAME(sc->atu_dev), name));
+	err = loadfirmware(name, &firm, &bytes_left);
+	if (err != 0) {
+		printf("%s: loadfirmware error %d\n",
+		    USBDEVNAME(sc->atu_dev), err);
+		return (err);
+	}
+	ptr = firm;
 
 	while (bytes_left) {
 		if (bytes_left > 1024)
@@ -1215,6 +1198,7 @@ atu_upload_external_firmware(struct atu_softc *sc)
 		if (err) {
 			DPRINTF(("%s: could not load external firmware "
 			    "block\n", USBDEVNAME(sc->atu_dev)));
+			free(firm, M_DEVBUF);
 			return err;
 		}
 
@@ -1222,6 +1206,7 @@ atu_upload_external_firmware(struct atu_softc *sc)
 		block++;
 		bytes_left -= block_size;
 	}
+	free(firm, M_DEVBUF);
 
 	err = atu_usb_request(sc, UT_WRITE_VENDOR_DEVICE, 0x0e, 0x0802,
 	    block, 0, NULL);
