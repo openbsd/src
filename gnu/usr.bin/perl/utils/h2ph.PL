@@ -119,7 +119,7 @@ foreach $file (@ARGV) {
                         "eval 'sub $name $proto\{\n$t    ${args}eval \"$new\";\n$t}' unless defined(\&$name);\n";
 		    }
 		    else {
-                      print OUT "unless defined(\&$name) {\nsub $name $proto\{\n    ${args}eval \"$new\";\n}\n}\n";
+                      print OUT "unless(defined(\&$name)) {\nsub $name $proto\{\n    ${args}eval \"$new\";\n}\n}\n";
 		    }
 		    %curargs = ();
 		}
