@@ -55,6 +55,8 @@ ENGINE_load_cryptodev(void)
 #include <crypto/cryptodev.h>
 #include <sys/ioctl.h>
 
+#include <ssl/aes.h>
+
 #include <errno.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -68,7 +70,7 @@ ENGINE_load_cryptodev(void)
 #include <sys/sysctl.h>
 #include <machine/cpu.h>
 #include <machine/specialreg.h>
-static void check_viac3aes(void);
+static int check_viac3aes(void);
 #endif
 
 struct dev_crypto_state {
@@ -259,7 +261,26 @@ get_cryptodev_ciphers(const int **cnids)
 	 * On i386, always check for the VIA C3 AES instructions;
 	 * even if /dev/crypto is disabled.
 	 */
-	check_viac3aes();
+	if (check_viac3aes() == 1) {
+		int have_NID_aes_128_cbc = 0;
+		int have_NID_aes_192_cbc = 0;
+		int have_NID_aes_256_cbc = 0;
+
+		for (i = 0; i < count; i++) {
+			if (nids[i] == NID_aes_128_cbc)
+				have_NID_aes_128_cbc = 1;
+			if (nids[i] == NID_aes_192_cbc)
+				have_NID_aes_192_cbc = 1;
+			if (nids[i] == NID_aes_256_cbc)
+				have_NID_aes_256_cbc = 1;
+		}
+		if (!have_NID_aes_128_cbc)
+			nids[count++] = NID_aes_128_cbc;
+		if (!have_NID_aes_192_cbc)
+			nids[count++] = NID_aes_192_cbc;
+		if (!have_NID_aes_256_cbc)
+			nids[count++] = NID_aes_256_cbc;
+	}
 #endif
 
 	if (count > 0)
@@ -575,8 +596,8 @@ EVP_CIPHER cryptodev_aes_256_cbc = {
 
 #if defined(__i386__)
 
-volatile static void
-viac3_crypto(int *cw, const void *src, void *dst, void *key, int rep,
+static inline void
+viac3_xcrypt_cbc(int *cw, const void *src, void *dst, void *key, int rep,
     void *iv)
 {
 #ifdef notdef
@@ -632,9 +653,9 @@ xcrypt_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 			useout = spare;
 	}
 
-	cw[0] = C3_CRYPT_CWLO_ALG_AES | C3_CRYPT_CWLO_KEYGEN_HW |
-	    C3_CRYPT_CWLO_NORMAL |
-	    ctx->encrypt ? C3_CRYPT_CWLO_ENCRYPT : C3_CRYPT_CWLO_DECRYPT;
+	cw[0] = C3_CRYPT_CWLO_ALG_AES | C3_CRYPT_CWLO_KEYGEN_SW |
+	    C3_CRYPT_CWLO_NORMAL;
+	cw[0] |= ctx->encrypt ? C3_CRYPT_CWLO_ENCRYPT : C3_CRYPT_CWLO_DECRYPT;
 	cw[1] = cw[2] = cw[3] = 0;
 
 	switch (ctx->key_len * 8) {
@@ -663,7 +684,7 @@ xcrypt_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		ivp = ivs;
 	}
 
-	viac3_crypto(cw, usein, useout, ctx->cipher_data,  inl / 16, ivp);
+	viac3_xcrypt_cbc(cw, usein, useout, ctx->cipher_data,  inl / 16, ivp);
 
 	if (ISUNALIGNED(out)) {
 		bcopy(spare, out, inl);
@@ -687,18 +708,43 @@ static int
 xcrypt_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     const unsigned char *iv, int enc)
 {
-	bcopy(key, ctx->cipher_data, ctx->key_len);
+	AES_KEY *k = ctx->cipher_data;
+	u_long *kk = (u_long *)key;
+	int i;
+
+	bzero(k, sizeof *k);
+#ifdef notdef
+	for (i = 0; i < ctx->key_len / 4; i++)
+		printf("%08x ", kk[i]);
+	printf("\n");
+#endif
+
+	if (enc)
+		AES_set_encrypt_key(key, ctx->key_len * 8, k);
+	else
+		AES_set_decrypt_key(key, ctx->key_len * 8, k);
+
+	/* Damn OpenSSL byte swaps the expanded key!! */
+	for (i = 0; i < 4 * (AES_MAXNR + 1); i++)
+		k->rd_key[i] = htonl(k->rd_key[i]);
+
+#ifdef notdef
+	for (i = 0; i < 4 * (AES_MAXNR + 1); i++)
+		printf("%08x ", k->rd_key[i]);
+	printf("\n");
+#endif
+
 	return (1);
 }
 
 static int
 xcrypt_cleanup(EVP_CIPHER_CTX *ctx)
 {
-	bzero(ctx->cipher_data, ctx->key_len);
+	bzero(ctx->cipher_data, ctx->cipher->ctx_size);
 	return (1);
 }
 
-static void
+static int
 check_viac3aes(void)
 {
 	int mib[2] = { CTL_MACHDEP, CPU_XCRYPT }, value;
@@ -706,24 +752,25 @@ check_viac3aes(void)
 
 	if (sysctl(mib, sizeof(mib)/sizeof(mib[0]), &value, &size,
 	    NULL, 0) < 0)
-		return;
+		return (0);
 	if (value == 0)
-		return;
+		return (0);
 
 	cryptodev_aes_128_cbc.init = xcrypt_init_key;
 	cryptodev_aes_128_cbc.do_cipher = xcrypt_cipher;
 	cryptodev_aes_128_cbc.cleanup = xcrypt_cleanup;
-	cryptodev_aes_128_cbc.ctx_size = 128;
+	cryptodev_aes_128_cbc.ctx_size = sizeof(AES_KEY);
 
 	cryptodev_aes_192_cbc.init = xcrypt_init_key;
 	cryptodev_aes_192_cbc.do_cipher = xcrypt_cipher;
 	cryptodev_aes_192_cbc.cleanup = xcrypt_cleanup;
-	cryptodev_aes_192_cbc.ctx_size = 128;
+	cryptodev_aes_192_cbc.ctx_size = sizeof(AES_KEY);
 
 	cryptodev_aes_256_cbc.init = xcrypt_init_key;
 	cryptodev_aes_256_cbc.do_cipher = xcrypt_cipher;
 	cryptodev_aes_256_cbc.cleanup = xcrypt_cleanup;
-	cryptodev_aes_256_cbc.ctx_size = 128;
+	cryptodev_aes_256_cbc.ctx_size = sizeof(AES_KEY);
+	return (1);
 }
 #endif /* __i386__ */
 
