@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdchk.8,v 1.4 1999/04/02 16:21:36 aaron Exp $
+.\"	$OpenBSD: tcpdchk.8,v 1.5 1999/05/28 23:00:10 aaron Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -96,22 +96,19 @@ Display the contents of each access control rule.  Daemon lists, client
 lists, shell commands and options are shown in a pretty-printed format;
 this makes it easier for you to spot any discrepancies between what you
 want and what the program understands.
+.El
 .Sh FILES
-The default locations of the 
-.Xr tcpd 8
-access control tables are:
-.Pp
 .Bl -tag -width /etc/hosts.allow -compact
 .It Pa /etc/hosts.allow
-Access control table (allow list)
+access control table (allow list)
 .It Pa /etc/hosts.deny
-Access control table (deny list)
+access control table (deny list)
 .El
 .Sh SEE ALSO
 .Xr hosts_access 5 ,
 .Xr hosts_options 5 ,
 .Xr inetd.conf 5 ,
-.Xr tcpdmatch 8 .
+.Xr tcpdmatch 8
 .Sh AUTHOR
 .Bd -unfilled -offset indent
 Wietse Venema (wietse@wzv.win.tue.nl),

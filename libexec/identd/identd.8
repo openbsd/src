@@ -1,4 +1,4 @@
-.\"	$OpenBSD: identd.8,v 1.9 1999/05/23 14:11:11 aaron Exp $
+.\"	$OpenBSD: identd.8,v 1.10 1999/05/28 23:00:08 aaron Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -175,14 +175,15 @@ IT CURRENTLY STANDS.
 This flag enables some debugging code that normally should NOT
 be enabled since that breaks the protocol and may reveal information
 that should not be available to outsiders.
-.Pp
+.El
 .Sh SEE ALSO
 .Xr inetd.conf 5
 .Sh NOTES
 .Nm
 uses the 
 .Li LOG_DAEMON
-syslogd(8) facility to log messages.
+.Xr syslogd 8
+facility to log messages.
 .Pp
 Unlike previous versions of 
 .Nm identd,

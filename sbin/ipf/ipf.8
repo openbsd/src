@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipf.8,v 1.8 1999/05/16 19:56:13 alex Exp $
+.\"	$OpenBSD: ipf.8,v 1.9 1999/05/28 22:59:59 aaron Exp $
 .Dd February 6, 1999
 .Dt IPF 8
 .Os
@@ -96,6 +96,7 @@ display the statistics prior to them being zeroed.
 .It Fl Z
 Zero global statistics held in the kernel for filtering only (this doesn't
 affect fragment or state statistics).
+.El
 .Sh FILES
 .Bl -tag -width /usr/share/ipf -compact
 .It Pa /usr/share/ipf
@@ -112,6 +113,7 @@ logging socket
 name of the 
 .Nm
 state socket
+.El
 .Sh SEE ALSO
 .Xr ipftest 1 ,
 .Xr ipf 4 ,
@@ -121,7 +123,7 @@ state socket
 .Xr ipfstat 8 ,
 .Xr ipmon 8 ,
 .Xr ipnat 8
-.br
+.Pp
 http://coombs.anu.edu.au/ipfilter/
 .Sh DIAGNOSTICS
 Needs to be run as root for the packet filtering lists to actually

@@ -1,4 +1,4 @@
-.\"	$Id: smtpfwdd.8,v 1.8 1999/05/23 14:11:13 aaron Exp $
+.\"	$Id: smtpfwdd.8,v 1.9 1999/05/28 23:00:09 aaron Exp $
 .Dd Dec 10, 1997
 .Dt SMTPFWDD 8
 .Os
@@ -73,7 +73,10 @@ Specify a
 to run as. This user must not be root but
 should normally be a user that is able to run 
 .Xr sendmail 8
-and use the -f option to specify the sender of a mail message.
+and use the
+.Fl f
+option to specify the sender of a mail message.
+.El
 .Sh SEE ALSO
 .Xr inetd 8 ,
 .Xr sendmail 8 ,

@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.6 1998/12/21 01:02:25 niklas Exp $
+.\" $OpenBSD: isakmpd.8,v 1.7 1999/05/28 23:00:02 aaron Exp $
 .\" $EOM: isakmpd.8,v 1.13 1998/12/21 00:09:36 niklas Exp $
 .\"
 .\" Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -92,7 +92,9 @@ will not output anything).
 .It Fl f Ar fifo
 The
 .Fl f
-option specifies the FIFO (a.k.a. named pipe) where the daemon listens for
+option specifies the
+.Tn FIFO
+(a.k.a. named pipe) where the daemon listens for
 user requests.  If the path given is a dash
 .Pq Sq \&- ,
 .Nm
@@ -117,8 +119,9 @@ This is useful for setting up regression tests.
 .It Fl R Ar report-file
 When you signal
 .Nm
-a SIGUSR1 it will report its internal state to a report file,
-normally
+a
+.Dv SIGUSR1
+it will report its internal state to a report file, normally
 .Pa /var/run/isakmpd.report ,
 but this can be changed by feeding
 the file name as an argument to the
@@ -139,6 +142,7 @@ The FIFO used to manually control
 .Nm isakmpd
 .It Pa /var/run/isakmpd.report
 The report file
+.El
 .Sh SEE ALSO
 .Xr ipsec 4 ,
 .Xr isakmpd.conf 5 ,
