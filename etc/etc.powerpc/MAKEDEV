@@ -1,5 +1,5 @@
 #!/bin/sh -
-#       $OpenBSD: MAKEDEV,v 1.17 1998/07/19 00:16:16 rahnds Exp $
+#       $OpenBSD: MAKEDEV,v 1.18 1998/09/16 04:04:38 rahnds Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -88,7 +88,7 @@ all)
 	sh MAKEDEV ofdisk5 ofdisk6 ofdisk7 ofdisk8 ofdisk9 
 	sh MAKEDEV vnd0 vnd1 vnd2 vnd3
 	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
-	sh MAKEDEV rd0
+	sh MAKEDEV rd0 ipl
 	sh MAKEDEV ttyo0
 	sh MAKEDEV tty00 tty01 pty0
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
@@ -382,6 +382,15 @@ bpf*)
 	rm -f bpf${unit}
 	mknod bpf${unit} c 22 ${unit}
 	chown root.wheel bpf${unit}
+	;;
+
+ipl)
+	rm -f ipl ipnat ipstate ipauth
+	mknod ipl c 39 0
+	mknod ipnat c 39 1
+	mknod ipstate c 39 2
+	mknod ipauth c 39 3
+	chown root.wheel ipl ipnat ipstate ipauth
 	;;
 
 tun*)
