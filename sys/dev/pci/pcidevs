@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.16 1997/03/20 20:29:55 chuck Exp $
+$OpenBSD: pcidevs,v 1.17 1997/04/10 16:33:11 pefo Exp $
 /*	$NetBSD: pcidevs,v 1.20 1996/10/19 13:01:49 jonathan Exp $	*/
 
 
@@ -543,6 +543,8 @@ product LEADTEK S3_805	0x0000	S3 805
 
 /* Matrox products */
 product MATROX ATLAS		0x0518	MGA-2 Atlas PX2085
+product MATROX MILLENIUM	0x0519	MGA-2064 Millenium
+product MATROX MYSTIQUE		0x051a	MGA-1064 Mystique
 product MATROX IMPRESSION	0x0d10	MGA Impression
 
 /* Mylex products */

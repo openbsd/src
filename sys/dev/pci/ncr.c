@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.26 1997/03/03 00:25:03 millert Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.27 1997/04/10 16:33:08 pefo Exp $	*/
 /*	$NetBSD: ncr.c,v 1.55 1997/01/10 05:57:10 perry Exp $	*/
 
 /**************************************************************************
@@ -91,6 +91,7 @@
 **    (0=asynchronous)
 */
 
+#define SCSI_NCR_MAX_SYNC 0
 #ifndef SCSI_NCR_MAX_SYNC
 #define SCSI_NCR_MAX_SYNC   (10000)
 #endif /* SCSI_NCR_MAX_SYNC */
@@ -218,7 +219,7 @@
 #include <dev/pci/ncr_reg.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
-#ifndef __alpha__
+#if !defined __alpha__ && !defined __mips__
 #define DELAY(x)	delay(x)
 #endif
 #endif /* __NetBSD__ || __OpenBSD__ */      
@@ -1356,7 +1357,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$OpenBSD: ncr.c,v 1.26 1997/03/03 00:25:03 millert Exp $\n";
+	"\n$OpenBSD: ncr.c,v 1.27 1997/04/10 16:33:08 pefo Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -3120,6 +3121,10 @@ static void ncr_script_copy_and_bind (struct script *script, ncb_p np)
 #else  /* !(__NetBSD__ || __OpenBSD__) */
 	np->script = (struct script *)
 		malloc (sizeof (struct script), M_DEVBUF, M_WAITOK);
+#if defined(__mips__)
+	R4K_HitFlushDCache(np->script, sizeof (struct script));
+	np->script = (struct script *)PHYS_TO_UNCACHED(vtophys(np->script));
+#endif /* __mips__ */
 #endif /* __NetBSD__ || __OpenBSD__ */      
 
 	np->p_script = vtophys(np->script);
@@ -3396,6 +3401,11 @@ ncr_attach(parent, self, aux)
 	int wide = 0;
 	u_char rev = pci_conf_read(pc, pa->pa_tag, PCI_CLASS_REG) & 0xff;
 
+#if defined(__mips__)
+	R4K_HitFlushDCache(np, sizeof (struct ncb));
+	np = (struct ncb *)PHYS_TO_UNCACHED(vtophys(np));
+#endif /* __mips__ */
+
 	printf(": NCR ");
 	switch (pa->pa_id) {
 	case NCR_810_ID:
@@ -3533,14 +3543,22 @@ static	void ncr_attach (pcici_t config_id, int unit)
 	np->rv_dcntl  = INB (nc_dcntl) | CLSE | PFEN | NOCOM;
 	np->rv_ctest3 = INB (nc_ctest3);
 	np->rv_ctest5 = 0;
+#if defined(__mips__)
+	np->rv_scntl3 = 0x24;	/* default: 67MHz clock */
+#else
 	np->rv_scntl3 = 0x13;	/* default: 40MHz clock */
+#endif
 
 	/*
 	**	Do chip dependent initialization.
 	*/
 
 	np->maxwide   = 0;
+#if defined(__mips__)
+	np->ns_sync   = 22;	/* in units of 4ns */
+#else
 	np->ns_sync   = 25;	/* in units of 4ns */
+#endif
 	np->maxoffs   = 8;
 
 	/*
@@ -3580,7 +3598,6 @@ static	void ncr_attach (pcici_t config_id, int unit)
 				"succeeded" : "failed");
 		}
 #endif /* NCR_TEKRAM_EEPROM */
-		ncr_getclock(np);
 		break;
 	}
 
@@ -3915,6 +3932,14 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 	**
 	**----------------------------------------------------
 	*/
+
+#if defined(__mips__)
+	if (xp->data && xp->datalen) {
+		R4K_HitFlushDCache(xp->data, xp->datalen);
+	}
+	R4K_HitFlushDCache(xp->cmd, xp->cmdlen);
+	R4K_HitFlushDCache(&xp->sense, sizeof(struct scsi_sense_data));
+#endif /* __mips__ */
 
 	oldspl = splbio();
 
@@ -4684,11 +4709,14 @@ void ncr_init (ncb_p np, char * msg, u_long code)
 	OUTB (nc_scid  , RRE|np->myaddr);/*  host adapter SCSI address       */
 	OUTW (nc_respid, 1ul<<np->myaddr);/*  id to respond to		     */
 	OUTB (nc_istat , SIGP	);	/*  Signal Process		     */
-	OUTB (nc_dmode , np->rv_dmode);	/* XXX modify burstlen ??? */
+	OUTB (nc_dmode , 0x80 /*np->rv_dmode*/);/* XXX modify burstlen ??? */
 	OUTB (nc_dcntl , np->rv_dcntl);
 	OUTB (nc_ctest3, np->rv_ctest3);
 	OUTB (nc_ctest5, np->rv_ctest5);
 	OUTB (nc_ctest4, MPEE	);	/*  enable master parity checking    */
+#if defined(__mips__)
+	OUTB (nc_stest1, 0x80   );	/*  Disable external SCSI clock      */
+#endif
 	OUTB (nc_stest2, EXT    );	/*  Extended Sreq/Sack filtering     */
 	OUTB (nc_stest3, TE     );	/*  TolerANT enable		     */
 	OUTB (nc_stime0, 0x0b	);	/*  HTH = disabled, STO = 0.1 sec.   */
@@ -4713,6 +4741,12 @@ void ncr_init (ncb_p np, char * msg, u_long code)
 	if (SCSI_NCR_MAX_SYNC) {
 		u_long period;
 		period =1000000/SCSI_NCR_MAX_SYNC; /* ns = 10e6 / kHz */
+
+		/* Don't negotiate a period that we cant't handle !!! */
+		if(period % np->ns_sync) {
+			period = ((period / np->ns_sync) + 1) * np->ns_sync;
+		}
+
 		if (period <= 11 * np->ns_sync) {
 			if (period < 4 * np->ns_sync)
 				usrsync = np->ns_sync;
@@ -6508,6 +6542,10 @@ static	void ncr_alloc_ccb (ncb_p np, u_long target, u_long lun)
 		lp = (lcb_p) malloc (sizeof (struct lcb), M_DEVBUF, M_NOWAIT);
 		if (!lp) return;
 
+#if defined(__mips__)
+		R4K_HitFlushDCache(lp, sizeof (struct lcb));
+		lp = (struct lcb *)PHYS_TO_UNCACHED(vtophys(lp));
+#endif /* __mips__ */
 		/*
 		**	Initialize it
 		*/
@@ -6546,9 +6584,13 @@ static	void ncr_alloc_ccb (ncb_p np, u_long target, u_long lun)
 	**	Allocate a ccb
 	*/
 	cp = (ccb_p) malloc (sizeof (struct ccb), M_DEVBUF, M_NOWAIT);
-
 	if (!cp)
 		return;
+
+#if defined(__mips__)
+	R4K_HitFlushDCache(cp, sizeof (struct ccb));
+	cp = (struct ccb *)PHYS_TO_UNCACHED(vtophys(cp));
+#endif /* __mips__ */
 
 	if (DEBUG_FLAGS & DEBUG_ALLOC) {
 		printf ("new ccb @%p.\n", cp);
@@ -6820,6 +6862,9 @@ static int ncr_snooptest (struct ncb* np)
 	**	Set memory and register.
 	*/
 	ncr_cache = host_wr;
+#if defined(__mips__)
+	R4K_HitFlushDCache(&ncr_cache, sizeof (ncr_cache));
+#endif /* __mips__ */
 	OUTL (nc_temp, ncr_wr);
 	/*
 	**	Start script (exchange values)

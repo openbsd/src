@@ -531,6 +531,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "MGA-2 Atlas PX2085",
 	},
 	{
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MILLENIUM,
+	    0,
+	    "Matrox",
+	    "MGA-2064 Millenium",
+	},
+	{
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MYSTIQUE,
+	    0,
+	    "Matrox",
+	    "MGA-1064 Mystique",
+	},
+	{
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_IMPRESSION,
 	    0,
 	    "Matrox",

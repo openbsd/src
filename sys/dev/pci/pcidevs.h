@@ -548,6 +548,8 @@
 
 /* Matrox products */
 #define	PCI_PRODUCT_MATROX_ATLAS	0x0518		/* MGA-2 Atlas PX2085 */
+#define	PCI_PRODUCT_MATROX_MILLENIUM	0x0519		/* MGA-2064 Millenium */
+#define	PCI_PRODUCT_MATROX_MYSTIQUE	0x051a		/* MGA-1064 Mystique */
 #define	PCI_PRODUCT_MATROX_IMPRESSION	0x0d10		/* MGA Impression */
 
 /* Mylex products */
