@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.218 2001/01/11 19:39:58 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.219 2001/01/11 19:45:47 mickey Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -410,6 +410,5 @@ pseudo-device	sequencer	1
 # for IPv6
 pseudo-device	gif		4
 #pseudo-device	faith		1
-pseudo-device	crypto		1
 
 #option DEBUG_ISAPNP
