@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.5 2001/08/20 20:23:52 jason Exp $
+#	$OpenBSD: files.sparc64,v 1.6 2001/08/20 22:49:36 jason Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -114,6 +114,14 @@ file	arch/sparc64/sparc64/db_disasm.c	ddb
 
 file	arch/sparc64/dev/md_root.c	memory_disk_hooks
 
+#
+# Media Indepedent Interface (mii)
+#
+include "../../../dev/mii/files.mii"
+
+#
+# Machine-independent SCSI drivers
+#
 include "../../../scsi/files.scsi"
 major { sd = 7 }
 major { vnd = 8 }
