@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.13 2001/02/16 05:26:27 drahn Exp $
+#	$OpenBSD: RAMDISK,v 1.14 2001/02/16 05:56:50 drahn Exp $
 #
 # PPC GENERIC config file
 #
@@ -54,7 +54,8 @@ pci*	at mpcpcibr?
 pci*	at ppb? bus ?
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 
-ncr*	at pci? dev ? function ?
+siop*	at pci? dev ? function ?
+#ncr*	at pci? dev ? function ?
 de*	at pci? dev ? function ?
 vgafb0	at pci? dev ? function ?	# PCI VGA graphics 
 #ep*	at pci? dev ? function ?	# 3Com 3c59x
@@ -97,7 +98,8 @@ adb*    at obio?                        # Apple Desktop Bus
 
 #### SCSI attachment points
 
-scsibus*	at ncr?
+scsibus*	at siop?
+#scsibus*	at ncr?
 #scsibus*	at adv?
 #scsibus*	at ahc?
 #scsibus*	at bha?

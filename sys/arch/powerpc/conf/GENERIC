@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.25 2001/02/16 05:26:27 drahn Exp $
+#	$OpenBSD: GENERIC,v 1.26 2001/02/16 05:56:50 drahn Exp $
 #
 # PPC GENERIC config file
 #
@@ -37,7 +37,8 @@ pci*		at mpcpcibr?
 ppb*		at pci? dev ? function ?	# PCI-PCI bridges
 pci*		at ppb? bus ?
 
-ncr*		at pci? dev ? function ?
+siop*		at pci? dev ? function ?
+#ncr*		at pci? dev ? function ?
 fxp*		at pci? dev ? function ?
 de*		at pci? dev ? function ?
 #vme*		at pci? dev ? function ?
@@ -84,7 +85,8 @@ ams*	at adb?				# ADB mouse
 
 #### SCSI attachment points
 
-scsibus*	at ncr?
+scsibus*	at siop?
+#scsibus*	at ncr?
 #scsibus*	at adv?
 #scsibus*	at ahc?
 #scsibus*	at bha?
