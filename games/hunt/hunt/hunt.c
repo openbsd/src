@@ -1,4 +1,4 @@
-/*	$OpenBSD: hunt.c,v 1.7 1999/12/12 15:00:51 d Exp $	*/
+/*	$OpenBSD: hunt.c,v 1.8 2001/06/25 05:55:46 pvalchev Exp $	*/
 /*	$NetBSD: hunt.c,v 1.8 1998/09/13 15:27:28 hubertf Exp $	*/
 /*
  *  Hunt
@@ -133,7 +133,7 @@ main(ac, av)
 		default:
 		usage:
 			fputs(
-"usage:\thunt [-qmcsfS] [-n name] [-t team] [-p port] [-w message] [host]\n",
+"usage:\thunt [-bcfmqsS] [-n name] [-p port] [-t team] [-w message] [[-h] host]\n",
 			stderr);
 			exit(1);
 		}
