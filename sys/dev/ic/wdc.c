@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.64 2003/10/16 10:07:59 grange Exp $     */
+/*      $OpenBSD: wdc.c,v 1.65 2003/10/16 11:30:00 grange Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -117,7 +117,10 @@ void  wdc_kill_pending(struct channel_softc *);
 #define DEBUG_DETACH 0x80
 
 #ifdef WDCDEBUG
-int wdcdebug_mask = 0;
+#ifndef WDCDEBUG_MASK
+#define WDCDEBUG_MASK 0x00
+#endif
+int wdcdebug_mask = WDCDEBUG_MASK;
 int wdc_nxfer = 0;
 #define WDCDEBUG_PRINT(args, level) do {	\
 	if ((wdcdebug_mask & (level)) != 0)	\
