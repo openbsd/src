@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.25 1999/02/26 03:16:26 art Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.26 2000/02/02 04:59:07 millert Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -1369,7 +1369,9 @@ nfs_remove(v)
 	if (vp->v_usecount < 1)
 		panic("nfs_remove: bad v_usecount");
 #endif
-	if (vp->v_usecount == 1 || (np->n_sillyrename &&
+	if (vp->v_type == VDIR)
+		error = EPERM;
+	else if (vp->v_usecount == 1 || (np->n_sillyrename &&
 	    VOP_GETATTR(vp, &vattr, cnp->cn_cred, cnp->cn_proc) == 0 &&
 	    vattr.va_nlink > 1)) {
 		/*
@@ -2356,7 +2358,6 @@ nfsmout:
 		vrele(newvp);
 	return (error);
 }
-static char hextoasc[] = "0123456789abcdef";
 
 /*
  * Silly rename. To make the NFS filesystem that is stateless look a little
@@ -2374,28 +2375,25 @@ nfs_sillyrename(dvp, vp, cnp)
 	register struct sillyrename *sp;
 	struct nfsnode *np;
 	int error;
-	short pid;
 
 	cache_purge(dvp);
 	np = VTONFS(vp);
-#ifndef DIAGNOSTIC
-	if (vp->v_type == VDIR)
-		panic("nfs: sillyrename dir");
-#endif
 	MALLOC(sp, struct sillyrename *, sizeof (struct sillyrename),
 		M_NFSREQ, M_WAITOK);
 	sp->s_cred = crdup(cnp->cn_cred);
 	sp->s_dvp = dvp;
 	VREF(dvp);
 
+	if (vp->v_type == VDIR) {
+#ifdef DIAGNOSTIC
+		printf("nfs: sillyrename dir\n");
+#endif
+		error = EINVAL;
+		goto bad;
+	}
+
 	/* Fudge together a funny name */
-	pid = cnp->cn_proc->p_pid;
-	bcopy(".nfsAxxxx4.4", sp->s_name, 13);
-	sp->s_namlen = 12;
-	sp->s_name[8] = hextoasc[pid & 0xf];
-	sp->s_name[7] = hextoasc[(pid >> 4) & 0xf];
-	sp->s_name[6] = hextoasc[(pid >> 8) & 0xf];
-	sp->s_name[5] = hextoasc[(pid >> 12) & 0xf];
+	sp->s_namlen = sprintf(sp->s_name, ".nfsA%05x4.4", cnp->cn_proc->p_pid);
 
 	/* Try lookitups until we get one that isn't there */
 	while (nfs_lookitup(dvp, sp->s_name, sp->s_namlen, sp->s_cred,
