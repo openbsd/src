@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.37 2001/06/19 16:21:49 millert Exp $	*/
+/*	$OpenBSD: login.c,v 1.38 2001/06/24 17:12:52 millert Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -77,7 +77,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: login.c,v 1.37 2001/06/19 16:21:49 millert Exp $";
+static char rcsid[] = "$OpenBSD: login.c,v 1.38 2001/06/24 17:12:52 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -413,7 +413,6 @@ main(argc, argv)
 			quickexit(1);
 		}
 		rootlogin = 0;
-		/* XXX - kerb5 uses a '/' not a '.' ??? */
 		if ((instance = strchr(username, '.')) != NULL) {
 			if (strncmp(instance, ".root", 5) == 0)
 				rootlogin = 1;
@@ -726,7 +725,7 @@ failed:
 	if (lastchance)
 		(void)printf("WARNING: Your password has expired.  You must change your password, now!\n");
 
-	if (setusercontext(lc, pwd, pwd->pw_uid,
+	if (setusercontext(lc, pwd, rootlogin ? 0 : pwd->pw_uid,
 	    LOGIN_SETALL & ~LOGIN_SETPATH) < 0) {
 		warn("unable to set user context");
 		quickexit(1);
