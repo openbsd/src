@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_kbd.c,v 1.21 1999/09/06 00:12:40 aaron Exp $	*/
+/*	$OpenBSD: pcvt_kbd.c,v 1.22 1999/09/08 12:56:42 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -115,12 +115,10 @@ static int	tpmrate   = KBD_TPD500|KBD_TPM100;
 static u_char	altkpflag = 0;
 static u_short	altkpval  = 0;
 
-#ifdef PCVT_SCROLLBACK
 static u_short *scrollback_savedscreen = (u_short *)0;
 static size_t scrnsv_size = (size_t)-1;
 static void scrollback_save_screen ( void );
 static void scrollback_restore_screen ( void );
-#endif
 
 extern int kbd_reset;
 
@@ -1095,12 +1093,10 @@ loop:
 
 #if PCVT_KBD_FIFO
 
-#ifdef PCVT_SCROLLBACK
 	if (noblock == 31337) {
 		vsp->scrolling = 1;
 		goto scroll_reset;
 	}
-#endif
 
 	/* see if there is data from the keyboard available either from */
 	/* the keyboard fifo or from the 8042 keyboard controller	*/
@@ -1488,7 +1484,6 @@ regular:
 
 	kbd_status.extended = kbd_status.ext1 = 0;
 
-#ifdef PCVT_SCROLLBACK
 	if ((key == 85) && shift_down && kbd_lastkey != 85)
 	{
 		if (vsp->scr_offset >= (vsp->screen_rows - 1))
@@ -1578,7 +1573,6 @@ scroll_reset:
 			vsp->scrolling = 1;
 			goto scroll_reset;
 	     }
-#endif
 
 	if(kbd_reset && (key == 76) && ctrl_down && (meta_down||altgr_down)) {
 		printf("\nconsole halt requested: going down.\n");
@@ -3149,7 +3143,6 @@ cfkey12(void)
 
 #endif	/* NVT > 0 */
 
-#ifdef PCVT_SCROLLBACK
 static void
 scrollback_save_screen(void)
 {
@@ -3178,6 +3171,5 @@ scrollback_restore_screen(void)
 	if (scrollback_savedscreen)
 		bcopy(scrollback_savedscreen, vsp->Crtat, scrnsv_size);
 }
-#endif
 
 /* ------------------------------- EOF -------------------------------------*/

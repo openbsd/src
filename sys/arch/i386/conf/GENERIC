@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.127 1999/09/06 00:12:39 aaron Exp $
+#	$OpenBSD: GENERIC,v 1.128 1999/09/08 12:56:41 aaron Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -30,8 +30,6 @@ option		COMPAT_IBCS2	# binary compatibility with SCO and ISC
 option		COMPAT_LINUX	# binary compatibility with Linux
 option		COMPAT_FREEBSD	# binary compatibility with FreeBSD
 option		COMPAT_BSDOS	# binary compatibility with BSD/OS
-
-#option		PCVT_SCROLLBACK	# pcvt console scrollback support
 
 maxusers	32		# estimated number of users
 
