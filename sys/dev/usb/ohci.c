@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.51 2004/09/30 11:33:56 dlg Exp $ */
+/*	$OpenBSD: ohci.c,v 1.52 2004/12/26 22:41:40 miod Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -103,7 +103,7 @@ int ohcidebug = 0;
 
 /*
  * The OHCI controller is little endian, so on big endian machines
- * the data strored in memory needs to be swapped.
+ * the data stored in memory needs to be swapped.
  */
 #if defined(__FreeBSD__)
 #if BYTE_ORDER == BIG_ENDIAN
