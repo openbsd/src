@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.10 2001/05/23 22:20:35 art Exp $	*/
+/*	$OpenBSD: echo.c,v 1.11 2001/05/23 22:23:55 art Exp $	*/
 
 /*
  *	Echo line reading and writing.
@@ -13,11 +13,7 @@
 #include "macro.h"
 #endif /* !NO_MACRO */
 
-#ifdef	__STDC__
 #include <stdarg.h>
-#else /* __STDC__ */
-#include <varargs.h>
-#endif /* __STDC__ */
 
 static int	veread		__P((const char *, char *buf, int, int, va_list));
 static int      complt		__P((int, int, char *, int));
@@ -127,26 +123,11 @@ eyesno(sp)
  */
 /* VARARGS */
 int
-#ifdef __STDC__
 ereply(const char *fmt, char *buf, int nbuf, ...)
-#else /* __STDC__ */
-ereply(va_alist)
-	va_dcl
-#endif /* __STDC__ */
 {
 	va_list	 ap;
 	int	 i;
-#ifdef __STDC__
 	va_start(ap, nbuf);
-#else /* __STDC__ */
-	char	*fmt, *buf;
-	int	 nbuf;
-
-	va_start(ap);
-	fmt = va_arg(ap, char *);
-	buf = va_arg(ap, char *);
-	nbuf = va_arg(ap, int);
-#endif /* __STDC__ */
 	i = veread(fmt, buf, nbuf, EFNEW | EFCR, ap);
 	va_end(ap);
 	return i;
@@ -161,29 +142,11 @@ ereply(va_alist)
  */
 /* VARARGS */
 int
-#ifdef __STDC__
 eread(const char *fmt, char *buf, int nbuf, int flag, ...)
-#else /* __STDC__ */
-eread(va_alist)
-	char *fmt, *buf;
-	int   buf, flag;
-	va_dcl
-#endif /* __STDC__ */
 {
 	int	 i;
 	va_list	 ap;
-#ifdef __STDC__
 	va_start(ap, flag);
-#else /* __STDC__ */
-	char	*fmt, *buf;
-	int	 nbuf;
-
-	va_start(ap);
-	fmt = va_arg(ap, char *);
-	buf = va_arg(ap, char *);
-	nbuf = va_arg(ap, int);
-	flag = va_arg(ap, int);
-#endif /* __STDC__ */
 	i = veread(fmt, buf, nbuf, flag, ap);
 	va_end(ap);
 	return i;
@@ -619,28 +582,15 @@ getxtra(lp1, lp2, cpos, wflag)
  */
 /* VARARGS */
 void
-#ifdef __STDC__
 ewprintf(const char *fmt, ...)
-#else /* __STDC__ */
-ewprintf(va_alist)
-	va_dcl
-#endif /* __STDC__ */
 {
 	va_list	 ap;
-#ifndef __STDC__
-	char	*fmt;
-#endif /* !__STDC__ */
 
 #ifndef NO_MACRO
 	if (inmacro)
 		return;
 #endif /* !NO_MACRO */
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else /* __STDC__ */
-	va_start(ap);
-	fmt = va_arg(ap, char *);
-#endif /* __STDC__ */
 	ttcolor(CTEXT);
 	ttmove(nrow - 1, 0);
 	eformat(fmt, ap);
