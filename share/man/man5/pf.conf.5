@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.122 2002/11/26 19:09:07 deraadt Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.123 2002/11/26 19:13:05 deraadt Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1334,16 +1334,16 @@ Syntax for
 in BNF:
 .Bd -literal
 line           = ( option | pf_rule | nat_rule | binat_rule | rdr_rule |
-		   antispoof_rule | altq_rule | queue_rule )
+		 antispoof_rule | altq_rule | queue_rule )
 
 option         = set ( [ "timeout" ( timeout | "{" timeout-list "}" ) ] |
-                       [ "optimization" [ "default" | "normal" |
-				"high-latency" | "satellite" |
-				"aggressive" | "conservative" ] ]
-                       [ "limit" ( limit | "{" limit-list "}" ) ] |
-                       [ "loginterface" ( interface-name | "none" ) ] |
-                       [ "block-policy" ( "drop" | "return" ) ] |
-                       [ "require-order" ( "yes" | "no" ) ] ).
+                 [ "optimization" [ "default" | "normal" |
+		 "high-latency" | "satellite" |
+		 "aggressive" | "conservative" ] ]
+                 [ "limit" ( limit | "{" limit-list "}" ) ] |
+                 [ "loginterface" ( interface-name | "none" ) ] |
+                 [ "block-policy" ( "drop" | "return" ) ] |
+                 [ "require-order" ( "yes" | "no" ) ] ).
 
 pf_rule        = action ( "in" | "out" )
                  [ "log" | "log-all" ] [ "quick" ]
@@ -1416,7 +1416,7 @@ host           = [ "!" ] address [ "/" mask-bits ] .
 redirhost      = address [ "/" mask-bits ] .
 routehost      = ( interface-name [ address [ "/" mask-bits ] ] )
 address        = ( interface-name | "(" interface-name ")" | host-name |
-                   ipv4-dotted-quad | ipv6-coloned-hex ) .
+                 ipv4-dotted-quad | ipv6-coloned-hex ) .
 host-list      = host [ [ "," ] host-list ] .
 redirost-list  = redirhost [ [","] redirhost-list ] .
 routehost-list = routehost [ [","] routehost-list ] .
@@ -1443,13 +1443,13 @@ icmp-type-code = ( icmp-type-name | icmp-type-number )
 icmp-list      = icmp-type-code [ [ "," ] icmp-list ] .
 
 tos            = "tos" ( "lowdelay" | "throughput" | "reliability" |
-                         [ "0x" ] number ) .
+                 [ "0x" ] number ) .
 
 state-opts     = state-opt [ [ "," ] state-opts ] .
 state-opt      = ( "max" number ) | ( timeout seconds ) .
 
 fragmentation  = [ "fragment reassemble" | "fragment crop" |
-                   "fragment drop-ovl" ] .
+                 "fragment drop-ovl" ] .
 
 timeout-list   = timeout [ [ "," ] timeout-list ] .
 timeout        = ( "tcp.first" | "tcp.opening" | "tcp.established" |
