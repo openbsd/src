@@ -1,4 +1,4 @@
-/*	$OpenBSD: pack.c,v 1.7 1996/12/11 22:36:14 niklas Exp $	*/
+/*	$OpenBSD: pack.c,v 1.8 1996/12/12 00:24:41 niklas Exp $	*/
 /*	$NetBSD: pack.c,v 1.5 1996/08/31 21:15:11 mycroft Exp $	*/
 
 /*
@@ -166,22 +166,19 @@ void
 packdevi()
 {
 	register struct devi *i, *l, *p;
-	register struct deva *d;
+	register struct devbase *d;
 	register int j, m, n;
 
 	packed = emalloc((ndevi + 1) * sizeof *packed);
 	n = 0;
-	for (d = alldevas; d != NULL; d = d->d_next) {
+	for (d = allbases; d != NULL; d = d->d_next) {
 		/*
-		 * For each instance of each attachment, add or collapse
+		 * For each instance of each device, add or collapse
 		 * all its aliases.
 		 */
-		for (i = d->d_ihead; i != NULL; i = i->i_asame) {
+		for (i = d->d_ihead; i != NULL; i = i->i_bsame) {
 			m = n;
 			for (l = i; l != NULL; l = l->i_alias) {
-				/* Skip if we already handled this one.  */
-				if (l->i_cfindex >= 0)
-					continue;
 				l->i_pvlen = 0;
 				l->i_pvoff = -1;
 				l->i_locoff = -1;
