@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.14 2004/02/01 22:20:09 henning Exp $
+.\" $OpenBSD: bgpctl.8,v 1.15 2004/03/12 17:42:25 claudio Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -45,6 +45,25 @@ according to the given
 Show statistics about sent and received BGP messages.
 .It Li timers
 Show the BGP timers.
+.El
+.It Li show rib Ar filter
+Show routes from the bgpd Routing Information Base.
+.Ar filter
+can be an IP address, a CIDR prefix, an AS filter or nothing:
+.Pp
+.Bl -tag -width <address>/<len>_all -compact
+.It Li <address>
+Show best matching route for address.
+.It Li <address>/<len>
+Show RIB entry for this CIDR prefix.
+.It Li <address>/<len> all
+Show all entries in the specified range.
+.It Li as <as>
+Show all entries with <as> anywhere in the AS path.
+.It Li source-as <as>
+Show all entries with <as> as rightmost AS.
+.It Li transit-as <as>
+Show all entries with <as> anywhere but rightmost.
 .El
 .It Li show fib Ar filter
 Show routes from bgpd's view of the Forward Information Base.
