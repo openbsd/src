@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.103 2001/01/17 21:31:55 brad Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.104 2001/03/29 10:09:13 beck Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -2122,6 +2122,16 @@ misc  type=dir uname=root gname=daemon mode=755
 #./www/htdocs/manual/search
 search  type=dir uname=root gname=daemon mode=755
 #./www/htdocs/manual/search
+..
+
+#./www/htdocs/manual/howto
+search  type=dir uname=root gname=daemon mode=755
+#./www/htdocs/manual/howto
+..
+
+#./www/htdocs/manual/programs
+search  type=dir uname=root gname=daemon mode=755
+#./www/htdocs/manual/programs
 ..
 
 #./www/htdocs/manual
