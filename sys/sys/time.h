@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.15 2003/06/02 23:28:22 millert Exp $	*/
+/*	$OpenBSD: time.h,v 1.16 2003/08/11 05:37:59 kevlo Exp $	*/
 /*	$NetBSD: time.h,v 1.18 1996/04/23 10:29:33 mycroft Exp $	*/
 
 /*
@@ -154,6 +154,7 @@ struct clockinfo {
 #define CLOCK_REALTIME	0
 #define CLOCK_VIRTUAL	1
 #define CLOCK_PROF	2
+#define	CLOCK_MONOTONIC	3
 
 #define TIMER_RELTIME	0x0	/* relative timer */
 #define TIMER_ABSTIME	0x1	/* absolute timer */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.34 2003/06/02 23:28:06 millert Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.35 2003/08/11 05:38:05 kevlo Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -120,12 +120,23 @@ sys_clock_gettime(p, v, retval)
 	clockid_t clock_id;
 	struct timeval atv;
 	struct timespec ats;
+	int s;
 
 	clock_id = SCARG(uap, clock_id);
-	if (clock_id != CLOCK_REALTIME)
+	switch (clock_id) {
+	case CLOCK_REALTIME:
+		microtime(&atv);
+		break;
+	case CLOCK_MONOTONIC:
+		/* XXX "hz" granularity */
+		s = splclock();
+		atv = mono_time;
+		splx(s);
+		break;
+	default:
 		return (EINVAL);
+	}
 
-	microtime(&atv);
 	TIMEVAL_TO_TIMESPEC(&atv,&ats);
 
 	return copyout(&ats, SCARG(uap, tp), sizeof(ats));
@@ -151,17 +162,22 @@ sys_clock_settime(p, v, retval)
 		return (error);
 
 	clock_id = SCARG(uap, clock_id);
-	if (clock_id != CLOCK_REALTIME)
+	switch (clock_id) {
+	case CLOCK_REALTIME:
+		TIMESPEC_TO_TIMEVAL(&atv, &ats);
+		if ((error = settime(&atv)) != 0)
+			return (error);
+		break;
+	case CLOCK_MONOTONIC:
+		return (EINVAL);	/* read-only clock */
+	default:
 		return (EINVAL);
+	}
 
 	if ((error = copyin(SCARG(uap, tp), &ats, sizeof(ats))) != 0)
 		return (error);
 
-	TIMESPEC_TO_TIMEVAL(&atv,&ats);
-
-	error = settime(&atv);
-
-	return (error);
+	return (0);
 }
 
 int
@@ -179,15 +195,18 @@ sys_clock_getres(p, v, retval)
 	int error = 0;
 
 	clock_id = SCARG(uap, clock_id);
-	if (clock_id != CLOCK_REALTIME)
-		return (EINVAL);
-
-	if (SCARG(uap, tp)) {
+	switch (clock_id) {
+	case CLOCK_REALTIME:
+	case CLOCK_MONOTONIC:
 		ts.tv_sec = 0;
 		ts.tv_nsec = 1000000000 / hz;
-
-		error = copyout(&ts, SCARG(uap, tp), sizeof (ts));
+		break;
+	default:
+		return (EINVAL);
 	}
+
+	if (SCARG(uap, tp))
+		error = copyout(&ts, SCARG(uap, tp), sizeof (ts));
 
 	return error;
 }
