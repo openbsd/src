@@ -1,4 +1,4 @@
-/* $Id: cmds.c,v 1.14 2001/07/27 14:13:08 rees Exp $ */
+/* $Id: cmds.c,v 1.15 2001/08/02 17:09:18 rees Exp $ */
 
 /*
  * Smartcard commander.
@@ -35,21 +35,34 @@ if it has been or is hereafter advised of the possibility of
 such damages.
 */
 
+#ifdef __palmos__
+#pragma pack(2)
+#include <Common.h>
+#include <System/SysAll.h>
+#include <UI/UIAll.h>
+#include <System/Unix/sys_types.h>
+#include <System/Unix/unix_stdio.h>
+#include <System/Unix/unix_stdlib.h>
+#include <System/Unix/unix_string.h>
+#include <string.h>
+#include "getopt.h"
+#include "sectok.h"
+#include "field.h"
+#else
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <signal.h>
 #include <string.h>
 #include <sectok.h>
+#endif
 
 #include "sc.h"
 
+#define MAXFILELEN 0xffff
 #define CARDIOSIZE 200
 
-struct {
-    char *cmd, *help;
-    int (*action) (int ac, char *av[]);
-} dispatch_table[] = {
+struct dispatchtable dispatch_table[] = {
     /* Non-card commands */
     { "help", "[command]", help },
     { "?", "[command]", help },
@@ -64,7 +77,9 @@ struct {
     { "isearch", "", isearch },
     { "class", "[ class ]", class },
     { "read", "[ -x ] filesize", dread },
+#ifndef __palmos__
     { "write", "input-filename", dwrite },
+#endif
 
     /* Cyberflex commands */
     { "ls", "[ -l ]", ls },
@@ -75,10 +90,14 @@ struct {
     { "jatr", "", jatr },
     { "jdata", "", jdata },
     { "login", "[ -d ] [ -k keyno ] [ -v ] [ -x hex-aut0 ]", jlogin },
+#ifndef __palmos__
     { "jaut", "", jaut },
     { "jload", "[ -p progID ] [ -c contID ] [ -s cont_size ] [ -i inst_size ] [ -a aid ] [ -v ] filename", jload },
+#endif
     { "junload", "[ -p progID ] [ -c contID ]", junload },
+#ifndef __palmos__
     { "setpass", "[ -d ] [ -x hex-aut0 ]", jsetpass },
+#endif
     { NULL, NULL, NULL }
 };
 
@@ -185,7 +204,11 @@ int dclose(int ac, char *av[])
 
 int quit(int ac, char *av[])
 {
+#ifndef __palmos__
     exit(0);
+#else
+    return -1;
+#endif
 }
 
 int apdu(int ac, char *av[])
@@ -321,8 +344,9 @@ int class(int ac, char *av[])
 
 int dread(int ac, char *av[])
 {
-    int i, n, col = 0, p3, fsize, xflag = 0, sw;
-    unsigned char buf[CARDIOSIZE];
+    int i, n, col = 0, fsize, xflag = 0, sw;
+    unsigned int p3;
+    unsigned char buf[CARDIOSIZE+1];
 
     optind = optreset = 1;
 
@@ -344,7 +368,7 @@ int dread(int ac, char *av[])
     if (fd < 0 && reset(0, NULL) < 0)
 	return -1;
 
-    for (p3 = 0; fsize && p3 < 100000; p3 += n) {
+    for (p3 = 0; fsize && p3 < MAXFILELEN; p3 += n) {
 	n = (fsize < CARDIOSIZE) ? fsize : CARDIOSIZE;
 	n = sectok_apdu(fd, cla, 0xb0, p3 >> 8, p3 & 0xff, 0, NULL, n, buf, &sw);
 	if (!sectok_swOK(sw)) {
@@ -357,8 +381,14 @@ int dread(int ac, char *av[])
 		if (col++ % 16 == 15)
 		    printf("\n");
 	    }
-	} else
+	} else {
+#ifdef __palmos__
+	    buf[n] = '\0';
+	    printf("%s", buf);
+#else
 	    fwrite(buf, 1, n, stdout);
+#endif
+	}
 	fsize -= n;
     }
 
@@ -368,6 +398,7 @@ int dread(int ac, char *av[])
     return 0;
 }
 
+#ifndef __palmos__
 int dwrite(int ac, char *av[])
 {
     int n, p3, sw;
@@ -401,3 +432,4 @@ int dwrite(int ac, char *av[])
 
     return (n ? 0 : -1);
 }
+#endif

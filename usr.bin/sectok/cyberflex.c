@@ -1,4 +1,4 @@
-/* $Id: cyberflex.c,v 1.17 2001/07/29 21:43:48 rees Exp $ */
+/* $Id: cyberflex.c,v 1.18 2001/08/02 17:09:18 rees Exp $ */
 
 /*
 copyright 1999, 2000
@@ -30,6 +30,7 @@ if it has been or is hereafter advised of the possibility of
 such damages.
 */
 
+#ifndef __palmos__
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -47,6 +48,19 @@ such damages.
 #define SHA1Final SHA1_Final
 #else /* __linux */
 #include <sha1.h>
+#endif
+#else
+#pragma pack(2)
+#include <Common.h>
+#include <System/SysAll.h>
+#include <System/Unix/sys_types.h>
+#include <System/Unix/unix_stdio.h>
+#include <System/Unix/unix_stdlib.h>
+#include <System/Unix/unix_string.h>
+#include <UI/UIAll.h>
+#include "getopt.h"
+#include "field.h"
+#define NO_SHA
 #endif
 #include <sectok.h>
 
@@ -70,14 +84,19 @@ static unsigned char AUT0[20];
 
 int aut0_vfyd;
 
+static void print_acl(int isdir, unsigned char *acl);
+
+#ifndef __palmos__
 /* default signed applet key of Cyberflex Access */
 static des_cblock app_key = {0x6A, 0x21, 0x36, 0xF5, 0xD8, 0x0C, 0x47, 0x83};
-
-static void print_acl(int isdir, unsigned char *acl);
+#endif
 
 static int
 get_AUT0(int ac, char *av[], char *prompt, int confirm, unsigned char *digest)
 {
+#ifdef NO_SHA
+    memcpy(digest, DFLTAUT0, sizeof DFLTAUT0);
+#else
     int i, dflag = 0, xflag = 0;
     SHA1_CTX ctx;
     char *s, *s2;
@@ -88,7 +107,7 @@ get_AUT0(int ac, char *av[], char *prompt, int confirm, unsigned char *digest)
     while ((i = getopt(ac, av, "dk:x:")) != -1) {
 	switch (i) {
 	case 'd':
-	    memmove(digest, DFLTAUT0, sizeof DFLTAUT0);
+	    memcpy(digest, DFLTAUT0, sizeof DFLTAUT0);
 	    dflag = 1;
 	    break;
 	case 'x':
@@ -118,6 +137,7 @@ get_AUT0(int ac, char *av[], char *prompt, int confirm, unsigned char *digest)
 	bzero(s, strlen(s));
 	SHA1Final(digest, &ctx);
     }
+#endif
 
     return 0;
 }
@@ -219,7 +239,7 @@ int jatr(int ac, char *av[])
 	n += sectok_parse_input(av[1], &buf[n], 15);
     } else {
 	/* no historical bytes given, use default */
-	memmove(&buf[n], DFLTATR, sizeof DFLTATR);
+	memcpy(&buf[n], DFLTATR, sizeof DFLTATR);
 	n += sizeof DFLTATR;
     }
     buf[0] |= ((n - 2) & 0xf);
@@ -349,7 +369,7 @@ sectok_fmt_aidname(char *aidname, int aidlen, unsigned char *aid)
 	    break;
 	}
     if (istext) {
-	memmove(aidname, aid, aidlen);
+	memcpy(aidname, aid, aidlen);
 	aidname[aidlen] = '\0';
 	if (aid[0] == 0xfc)
 	    aidname[0] = '#';
@@ -571,6 +591,7 @@ int jdelete(int ac, char *av[])
 
 unsigned char progID[2], contID[2];
 
+#ifndef __palmos__
 int jload(int ac, char *av[])
 {
     char *cp, *filename, progname[5], contname[5];
@@ -776,7 +797,7 @@ int jload(int ac, char *av[])
     data[8] = inst_size & 0xff;	/* instance size 0x0400 (1024) byte, lower */
     data[9] = 0x00;		/* AID length 0x0005, upper */
     data[10] = aidlen;		/* AID length 0x0005, lower */
-    memmove(&data[11], aid, aidlen);
+    memcpy(&data[11], aid, aidlen);
 
     sectok_apdu(fd, cla, 0x0c, 0x13, 0, 11 + aidlen, data, 0, NULL, &sw);
     if (!sectok_swOK(sw)) {
@@ -788,6 +809,7 @@ int jload(int ac, char *av[])
     /* That's it! :) */
     return 0;
 }
+#endif
 
 int junload(int ac, char *av[])
 {
@@ -796,9 +818,9 @@ int junload(int ac, char *av[])
 
     /* Use old defaults */
     if (progID[0] == 0)
-	memmove(progID, "ww", 2);
+	memcpy(progID, "ww", 2);
     if (contID[0] == 0)
-	memmove(contID, "wx", 2);
+	memcpy(contID, "wx", 2);
 
     optind = optreset = 1;
 
@@ -861,6 +883,7 @@ int junload(int ac, char *av[])
     return 0;
 }
 
+#ifndef __palmos__
 #define DELIMITER " :\t\n"
 #define KEY_BLOCK_SIZE 14
 
@@ -1046,3 +1069,4 @@ int cyberflex_load_rsa(int fd, unsigned char *buf)
 	free(key_elements[i]);
     return 0;
 }
+#endif
