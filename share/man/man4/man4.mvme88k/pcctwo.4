@@ -1,0 +1,92 @@
+.\"	$OpenBSD: pcctwo.4,v 1.1 2003/08/07 19:22:38 miod Exp $
+.\"
+.\" Copyright (c) 2003 Paul Weissmann
+.\" All rights reserved.
+.\"
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by Paul Weissmann
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd May 14, 2003
+.Dt PCCTWO 4 mvme88k
+.Os
+.Sh NAME
+.Nm pcctwo
+.Nd PCCchip2 local bus controller
+.Sh SYNOPSIS
+.Cd "pcctwo0 at mainbus0 addr 0xfff00000        " Pq "MVME187"
+.Cd "pcctwo0 at bussw0 offset 0x42000           " Pq "MVME197"
+.Sh DESCRIPTION
+The
+.Nm
+.Tn PCCchip2
+ASIC provides an interface to the different local bus-attached I/O
+devices as found on some of the
+.Tn MVME88k
+Single-Board Computers.
+On
+.Tn MVME187
+boards it is attached directly to the processor bus, while on
+.Tn MVME197
+boards it attaches to the
+.Xr bussw 4
+.Tn BusSwitch
+ASIC.
+.Pp
+Features Summary:
+.Pp
+.Bl -bullet -compact
+.It
+8-bit parallel I/O port
+.It
+Master/slave interface for
+.Xr cl 4
+.Tn CD2401
+serial controller
+.It
+Host interface to
+.Xr ie 4
+.Tn Intel
+i82596CA LAN coprocessor
+.It
+Host interface to
+.Xr ssh 4
+.Tn NCR
+53C710 SCSI I/O processor
+.It
+Interface to the
+.Xr memc 4
+Memory controller ASIC
+.El
+.Sh SEE ALSO
+.Xr bussw 4 ,
+.\" .Xr cl 4 ,
+.Xr ie 4 ,
+.Xr intro 4 ,
+.\" .Xr memc 4 ,
+.Xr pcctwo 4 ,
+.Xr ssh 4

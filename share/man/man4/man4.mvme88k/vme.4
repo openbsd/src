@@ -1,0 +1,92 @@
+.\"	$OpenBSD: vme.4,v 1.1 2003/08/07 19:22:38 miod Exp $
+.\"
+.\" Copyright (c) 2003 Paul Weissmann
+.\" All rights reserved.
+.\"
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by Paul Weissmann
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd May 14, 2003
+.Dt VME 4 mvme88k
+.Os
+.Sh NAME
+.Nm vme
+.Nd VMEchip2 VMEbus interface chip
+.Sh SYNOPSIS
+.Cd "vme0   at pcctwo0 offset 0x40000"
+.Cd "vme0   at syscon0 offset 0x85000"
+.Cd "vmes0  at vme0"
+.Cd "vmel0  at vme0"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides access to the VMEchip2 ASIC which interfaces from the
+MC68040-compatible local bus to the
+.Tn VMEbus .
+On
+.Tn MVME187
+and
+.Tn MVME197
+boards it is attached to the
+.Xr pcctwo 4
+.Tn PCCchip2
+local bus controller.
+On
+.Tn MVME188
+boards it attaches to the
+.Xr syscon 4
+bus controller.
+.Pp
+Features Summary:
+.Pp
+.Bl -bullet -compact
+.It
+Local Bus to VMEbus interface
+.It
+VMEbus to Local Bus interface
+.It
+32-bit Local Bus to VMEbus DMA controller
+.It
+VMEbus interrupter
+.It
+VMEbus system controller
+.It
+Global control status register set
+.It
+Interrupt handler
+.It
+Watchdog timer
+.It
+Two 32-bit tick timers
+.It
+Support for RESET and ABORT switches
+.El
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr pcctwo 4
+\" .Xr syscon 4

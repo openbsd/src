@@ -1,0 +1,87 @@
+.\"	$OpenBSD: ve.4,v 1.1 2003/08/07 19:22:38 miod Exp $
+.\"
+.\" Copyright (c) 2003 Paul Weissmann
+.\" All rights reserved.
+.\"
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by Paul Weissmann
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd May 14, 2003
+.Dt VE 4 mvme88k
+.Os
+.Sh NAME
+.Nm ve
+.Nd MVME376 Ethernet I/O adapter
+.Sh SYNOPSIS
+.Cd "ve0 at vmes0 addr 0xffff1200 ipl 1 len 0x100"
+.Cd "ve1 at vmes0 addr 0xffff1400 ipl 1 len 0x100"
+.Cd "ve2 at vmes0 addr 0xffff1600 ipl 1 len 0x100"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides access to the AMD 7990/LANCE-based MVME376 VME board.
+This in turn provides an interface to the
+.Tn Ethernet
+network.
+.Pp
+Each of the host's network addresses
+is specified at boot time with an
+.Dv SIOCSIFADDR
+.Xr ioctl 2 .
+The
+.Nm
+interface employs the address resolution protocol described in
+.Xr arp 4
+to dynamically map between Internet and
+.Tn Ethernet
+addresses on the local network.
+.Pp
+Depending on the version of the board, the type of the Ethernet connector
+varies. In most cases either an BNC or AUI connector is provided.
+.Pp
+By default, the system will select the media type automatically, but the
+.Xr ifconfig 8
+command can be used to force the media selection.
+The media types are shown below:
+.Bl -tag -width "media autoselect" -offset indent
+.It media autoselect
+Attempt to autoselect the media type (default)
+.It media 10base5
+Use the AUI connector
+.It media 10base2
+Use the BNC connector
+.El
+.Sh SEE ALSO
+.Xr arp 4 ,
+.Xr ifmedia 4 ,
+.Xr inet 4 ,
+.Xr intro 4 ,
+.Xr netintro 4 ,
+.Xr vme 4 ,
+.Xr hostname.if 5 ,
+.Xr ifconfig 8
