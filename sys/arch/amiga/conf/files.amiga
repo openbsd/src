@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amiga,v 1.32 1999/09/09 21:27:36 espie Exp $
+#	$OpenBSD: files.amiga,v 1.33 1999/11/05 17:15:34 espie Exp $
 #	$NetBSD: files.amiga,v 1.62 1997/08/27 19:32:47 is Exp $
 
 
@@ -80,6 +80,7 @@ device	ite
 attach	ite at grf
 file	arch/amiga/dev/ite.c		ite needs-flag
 file	arch/amiga/dev/kbdmap.c		ite
+file	arch/amiga/dev/ite_blank.c		ite
 file	arch/amiga/dev/kf_8x8.c		ite
 file	arch/amiga/dev/kf_8x11.c	kfont_8x11
 file	arch/amiga/dev/kf_custom.c	kfont_custom

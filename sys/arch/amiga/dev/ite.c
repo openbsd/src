@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite.c,v 1.10 1997/09/18 13:39:58 niklas Exp $  */
+/*	$OpenBSD: ite.c,v 1.11 1999/11/05 17:15:34 espie Exp $  */
 /*	$NetBSD: ite.c,v 1.47 1996/12/23 09:10:20 veego Exp $	*/
 
 /*
@@ -76,6 +76,7 @@
 
 #include "grfcc.h"
 #include "ite.h"
+#include "ite_blank.h"
 
 /*
  * XXX go ask sys/kern/tty.c:ttselect()
@@ -556,6 +557,7 @@ iteioctl(dev, cmd, addr, flag, p)
 	struct ite_softc *ip;
 	struct itebell *ib;
 	struct tty *tp;
+	int *blank_arg;
 	int error;
 	
 	ip = getitesp(dev);
@@ -609,6 +611,17 @@ iteioctl(dev, cmd, addr, flag, p)
 		start_repeat_timeo = irp->start;
 		next_repeat_timeo = irp->next;
 		return(0);
+	case ITEIOCSBLKTIME:
+		blank_arg = (int *)addr;
+		if (blank_time != *blank_arg) {
+			blank_time = *blank_arg;
+			ite_reset_blanker(ip);
+		}
+		return (0);
+	case ITEIOCGBLKTIME:
+		blank_arg = (int *)addr;
+		*blank_arg = blank_time;
+		return (0);
 	}
 #if NGRFCC > 0
 	/* XXX */
@@ -680,6 +693,7 @@ ite_on(dev, flag)
 	
 	ip = getitesp(dev); 
 
+
 	/* force ite active, overriding graphics mode */
 	if (flag & 1) {
 		ip->flags |= ITE_ACTIVE;
@@ -695,6 +709,7 @@ ite_on(dev, flag)
 	if (ip->flags & ITE_INGRF)
 		return (0);
 	iteinit(dev);
+	ite_enable_blanker(ip);
 	return (0);
 }
 
@@ -710,6 +725,7 @@ ite_off(dev, flag)
 		ip->flags |= ITE_INGRF;
 	if ((ip->flags & ITE_ACTIVE) == 0)
 		return;
+	ite_disable_blanker(ip);
 	if ((flag & 1) ||
 	    (ip->flags & (ITE_INGRF | ITE_ISCONS | ITE_INITED)) == ITE_INITED)
 		SUBR_DEINIT(ip);
@@ -898,6 +914,7 @@ ite_filter(c, caller)
 	if (kbd_ite == NULL || kbd_ite->tp == NULL)
 		return;
 
+	ite_restart_blanker(kbd_ite);
 	kbd_tty = kbd_ite->tp;
 
 	/* have to make sure we're at spltty in here */
