@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.32 1999/05/16 21:48:37 niklas Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.33 1999/05/20 12:52:35 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -221,7 +221,7 @@ struct tdb				/* tunnel descriptor block */
     u_int32_t	      tdb_flags;  	/* Flags related to this TDB */
 
     TAILQ_ENTRY(tdb)  tdb_expnext;	/* Expiration cluster list link */
-    LIST_ENTRY(tdb)   tdb_explink;	/* Expiration ordered list link */
+    TAILQ_ENTRY(tdb)  tdb_explink;	/* Expiration ordered list link */
 
     u_int32_t         tdb_exp_allocations;  /* Expire after so many flows */
     u_int32_t         tdb_soft_allocations; /* Expiration warning */ 
@@ -390,7 +390,7 @@ extern u_int8_t hmac_opad_buffer[64];
 
 struct tdb *tdbh[TDB_HASHMOD];
 extern TAILQ_HEAD(expclusterlist_head, tdb) expclusterlist;
-extern LIST_HEAD(explist_head, tdb) explist;
+extern TAILQ_HEAD(explist_head, tdb) explist;
 extern struct xformsw xformsw[], *xformswNXFORMSW;
 
 /* Check if a given tdb has encryption, authentication and/or tunneling */

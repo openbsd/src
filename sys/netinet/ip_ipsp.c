@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.42 1999/05/16 21:48:35 niklas Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.43 1999/05/20 12:52:35 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -94,7 +94,7 @@ u_int32_t kernfs_epoch = 0;
 
 struct expclusterlist_head expclusterlist =
     TAILQ_HEAD_INITIALIZER(expclusterlist);
-struct explist_head explist = LIST_HEAD_INITIALIZER(explist);
+struct explist_head explist = TAILQ_HEAD_INITIALIZER(explist);
 
 u_int8_t hmac_ipad_buffer[64] = {
     0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 
@@ -446,9 +446,9 @@ handle_expirations(void *arg)
 {
     struct tdb *tdb;
 
-    for (tdb = LIST_FIRST(&explist);
+    for (tdb = TAILQ_FIRST(&explist);
 	 tdb && tdb->tdb_timeout <= time.tv_sec;
-	 tdb = LIST_FIRST(&explist))
+	 tdb = TAILQ_FIRST(&explist))
     {
 	/* Hard expirations first */
 	if ((tdb->tdb_flags & TDBF_TIMER) &&
@@ -495,12 +495,14 @@ handle_expirations(void *arg)
 /*
  * Ensure the tdb is in the right place in the expiration list.
  */
+
 void
 tdb_expiration(struct tdb *tdb, int flags)
 {
     u_int64_t next_timeout = 0;
     struct tdb *t, *former_expirer, *next_expirer;
-    int will_be_first, sole_reason, early, s;
+    int will_be_first, sole_reason, early;
+    int s = spltdb();
 
     /* Find the earliest expiration.  */
     if ((tdb->tdb_flags & TDBF_FIRSTUSE) && tdb->tdb_first_use != 0 &&
@@ -519,17 +521,17 @@ tdb_expiration(struct tdb *tdb, int flags)
 	next_timeout = tdb->tdb_soft_timeout;
 
     /* No change?  */
-    if (next_timeout == tdb->tdb_timeout)
+    if (next_timeout == tdb->tdb_timeout) {
+      splx(s);
       return;
-
-    s = spltdb();
+    }
 
     /*
-     * Find out some useful facts: Will we our tdb be first to expire?
+     * Find out some useful facts: Will our tdb be first to expire?
      * Was our tdb the sole reason for the old timeout?
      */
     former_expirer = TAILQ_FIRST(&expclusterlist);
-    next_expirer = LIST_NEXT(tdb, tdb_explink);
+    next_expirer = TAILQ_NEXT(tdb, tdb_explink);
     will_be_first = (next_timeout != 0 &&
 		     (former_expirer == NULL ||
 		      next_timeout < former_expirer->tdb_timeout));
@@ -562,14 +564,14 @@ tdb_expiration(struct tdb *tdb, int flags)
     /* Our old position, if any, is not relevant anymore.  */
     if (tdb->tdb_timeout != 0)
     {
-        if (tdb->tdb_expnext.tqe_prev)
+        if (tdb->tdb_expnext.tqe_prev != NULL)
 	{
 	    if (next_expirer && tdb->tdb_timeout == next_expirer->tdb_timeout)
 	      TAILQ_INSERT_BEFORE(tdb, next_expirer, tdb_expnext);
 	    TAILQ_REMOVE(&expclusterlist, tdb, tdb_expnext);
 	    tdb->tdb_expnext.tqe_prev = NULL;
 	}
-	LIST_REMOVE(tdb, tdb_explink);
+	TAILQ_REMOVE(&explist, tdb, tdb_explink);
     }
 
     tdb->tdb_timeout = next_timeout;
@@ -585,28 +587,88 @@ tdb_expiration(struct tdb *tdb, int flags)
      * back-to-front.
      */
     early = will_be_first || (flags & TDBEXP_EARLY);
-    for (t = (early ? former_expirer :
+    for (t = (early ? TAILQ_FIRST(&expclusterlist) :
 	      TAILQ_LAST(&expclusterlist, expclusterlist_head));
-	 t && (early ? (t->tdb_timeout <= next_timeout) : 
-	       (t->tdb_timeout > next_timeout));
+	 t != NULL && (early ? (t->tdb_timeout <= next_timeout) : 
+		       (t->tdb_timeout > next_timeout));
 	 t = (early ? TAILQ_NEXT(t, tdb_expnext) :
 	      TAILQ_PREV(t, expclusterlist_head, tdb_expnext)))
       ;
-    if (early ? t == TAILQ_FIRST(&expclusterlist) : !t)
+    if (t == (early ? TAILQ_FIRST(&expclusterlist) : NULL))
     {
 	/* We are to become the first expiration.  */
 	TAILQ_INSERT_HEAD(&expclusterlist, tdb, tdb_expnext);
-	LIST_INSERT_HEAD(&explist, tdb, tdb_explink);
+	TAILQ_INSERT_HEAD(&explist, tdb, tdb_explink);
     }
     else
     {
 	if (early)
 	  t = (t ? TAILQ_PREV(t, expclusterlist_head, tdb_expnext) :
 	       TAILQ_LAST(&expclusterlist, expclusterlist_head));
+	if (TAILQ_NEXT(t, tdb_expnext))
+	  TAILQ_INSERT_BEFORE(TAILQ_NEXT(t, tdb_expnext), tdb, tdb_explink);
+	else
+	  TAILQ_INSERT_TAIL(&explist, tdb, tdb_explink);
 	if (t->tdb_timeout < next_timeout)
 	  TAILQ_INSERT_AFTER(&expclusterlist, t, tdb, tdb_expnext);
-	LIST_INSERT_AFTER(t, tdb, tdb_explink);
     }
+
+#ifdef DIAGNOSTIC
+    /*
+     * Check various invariants.
+     */
+    if (tdb->tdb_expnext.tqe_prev != NULL) {
+	t = TAILQ_FIRST(&expclusterlist);
+	if (t != tdb && t->tdb_timeout >= tdb->tdb_timeout)
+	  panic("tdb_expiration: "
+		"expclusterlist first link out of order (%p, %p)",
+		tdb, t);
+	t = TAILQ_PREV(tdb, expclusterlist_head, tdb_expnext);
+	if (t != NULL && t->tdb_timeout >= tdb->tdb_timeout)
+	  panic("tdb_expiration: "
+		"expclusterlist prev link out of order (%p, %p)",
+		tdb, t);
+	else if (t == NULL && tdb != TAILQ_FIRST(&expclusterlist))
+	  panic("tdb_expiration: "
+		"expclusterlist first link out of order (%p, %p)",
+		tdb, TAILQ_FIRST(&expclusterlist));
+	t = TAILQ_NEXT(tdb, tdb_expnext);
+	if (t != NULL && t->tdb_timeout <= tdb->tdb_timeout)
+	  panic("tdb_expiration: "
+		"expclusterlist next link out of order (%p, %p)",
+		tdb, t);
+	else if (t == NULL &&
+		 tdb != TAILQ_LAST(&expclusterlist, expclusterlist_head))
+	  panic("tdb_expiration: "
+		"expclusterlist last link out of order (%p, %p)",
+		tdb, TAILQ_LAST(&expclusterlist, expclusterlist_head));
+	t = TAILQ_LAST(&expclusterlist, expclusterlist_head);
+	if (t != tdb && t->tdb_timeout <= tdb->tdb_timeout)
+	  panic("tdb_expiration: "
+		"expclusterlist last link out of order (%p, %p)",
+		tdb, t);
+    }
+    t = TAILQ_FIRST(&explist);
+    if (t != NULL && t->tdb_timeout > tdb->tdb_timeout)
+      panic("tdb_expiration: explist first link out of order (%p, %p)", tdb,
+	    t);
+    t = TAILQ_PREV(tdb, explist_head, tdb_explink);
+    if (t != NULL && t->tdb_timeout > tdb->tdb_timeout)
+      panic("tdb_expiration: explist prev link out of order (%p, %p)", tdb, t);
+    else if (t == NULL && tdb != TAILQ_FIRST(&explist))
+      panic("tdb_expiration: explist first link out of order (%p, %p)", tdb,
+	    TAILQ_FIRST(&explist));
+    t = TAILQ_NEXT(tdb, tdb_explink);
+    if (t != NULL && t->tdb_timeout < tdb->tdb_timeout)
+      panic("tdb_expiration: explist next link out of order (%p, %p)", tdb, t);
+    else if (t == NULL && tdb != TAILQ_LAST(&explist, explist_head))
+      panic("tdb_expiration: explist last link out of order (%p, %p)", tdb,
+	    TAILQ_LAST(&explist, explist_head));
+    t = TAILQ_LAST(&explist, explist_head);
+    if (t != tdb && t->tdb_timeout < tdb->tdb_timeout)
+      panic("tdb_expiration: explist last link out of order (%p, %p)", tdb, t);
+#endif
+
     splx(s);
 }
 
