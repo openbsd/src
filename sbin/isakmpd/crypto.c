@@ -1,5 +1,5 @@
-/*	$OpenBSD: crypto.c,v 1.6 1999/04/19 21:22:49 niklas Exp $	*/
-/*	$EOM: crypto.c,v 1.25 1999/04/17 23:20:21 niklas Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.7 2000/01/26 15:23:04 niklas Exp $	*/
+/*	$EOM: crypto.c,v 1.26 1999/12/08 20:31:02 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -81,7 +81,11 @@ struct crypto_xf transforms[] = {
 };
 
 /* Hmm, the function prototypes for des are really dumb */
+#ifdef __OpenBSD__
 #define DC	(des_cblock *)
+#else
+#define DC	(void *)
+#endif
 
 enum cryptoerr
 des1_init (struct keystate *ks, u_int8_t *key, u_int16_t len)
