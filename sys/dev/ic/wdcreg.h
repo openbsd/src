@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcreg.h,v 1.5 2002/05/03 09:18:46 gluk Exp $     */
+/*      $OpenBSD: wdcreg.h,v 1.6 2002/06/02 01:37:22 csapuntz Exp $     */
 /*	$NetBSD: wdcreg.h,v 1.22 1999/03/07 14:02:54 bouyer Exp $	*/
 
 /*-
@@ -185,8 +185,8 @@
 #define ATAPI_SMART_OFFLINE	0xD4 /* SMART execute offline immediately */
 #define ATAPI_SMART_READLOG	0xD5 /* SMART read log */
 #define ATAPI_SMART_WRITELOG	0xD6 /* SMART write log */
+#define ATAPI_SMART_EN		0xD8 /* SMART enable operations */
 #define ATAPI_SMART_DS		0xD9 /* SMART disable operations */
-#define ATAPI_SMART_EN		0xD8 /* SMART disable operations */
 #define ATAPI_SMART_STATUS	0xDA /* SMART return status */
 
 /* Bytes used by ATAPI_PACKET_COMMAND ( feature register) */
