@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.104 2004/09/17 13:53:08 ho Exp $	 */
+/* $OpenBSD: exchange.c,v 1.105 2004/12/06 12:28:21 ho Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -1533,6 +1533,18 @@ exchange_nonce(struct exchange *exchange, int peer, size_t nonce_sz,
 	size_t         *nonce_len;
 	int		initiator = exchange->initiator ^ peer;
 	char            header[32];
+
+	if (nonce_sz < 8 || nonce_sz > 256) {
+		/*
+		 * RFC2409, ch 5: The length of nonce payload MUST be 
+		 * between 8 and 256 bytes inclusive.
+		 * XXX I'm assuming the generic payload header is not included.
+		 */
+		LOG_DBG((LOG_EXCHANGE, 20,
+		    "exchange_nonce: invalid nonce length %lu",
+		    (unsigned long)nonce_sz));
+		return -1;
+	}
 
 	nonce = initiator ? &exchange->nonce_i : &exchange->nonce_r;
 	nonce_len =
