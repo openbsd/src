@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcphy.c,v 1.11 2004/11/16 14:26:22 brad Exp $	*/
+/*	$OpenBSD: dcphy.c,v 1.12 2004/12/25 03:51:24 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -260,7 +260,6 @@ dcphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			break;
 		default:
 			return(EINVAL);
-			break;
 		}
 		break;
 
@@ -272,20 +271,20 @@ dcphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			return (0);
 
 		/*
-		 * Only used for autonegotiation.
-		 */
-		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
-			return (0);
-
-		/*
 		 * Is the interface even up?
 		 */
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			return (0);
 
+		/*
+		 * Only used for autonegotiation.
+		 */
+		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
+			break;
+
 		reg = CSR_READ_4(dc_sc, DC_10BTSTAT);
 		if (!(reg & DC_TSTAT_LS10) || !(reg & DC_TSTAT_LS100))
-			return (0);
+			break;
 
 		/*
 		 * Only retry autonegotiation every 5 seconds.
@@ -301,8 +300,7 @@ dcphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			break;
 
 		sc->mii_ticks = 0;
-		/*if (DC_IS_INTEL(dc_sc))*/
-			sc->mii_flags &= ~MIIF_DOINGAUTO;
+		sc->mii_flags &= ~MIIF_DOINGAUTO;
 		dcphy_auto(sc, 0);
 
 		break;
