@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.10 1995/06/18 14:48:01 cgd Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.11 1995/12/19 23:07:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 #include <nfs/nfsmount.h>
 
 time_t nqnfsstarttime = (time_t)0;
-u_long nqnfs_prog, nqnfs_vers;
+u_int32_t nqnfs_prog, nqnfs_vers;
 int nqsrv_clockskew = NQ_CLOCKSKEW;
 int nqsrv_writeslack = NQ_WRITESLACK;
 int nqsrv_maxlease = NQ_MAXLEASE;
@@ -148,7 +148,7 @@ extern int nfsd_waiting;
  */
 nqsrv_getlease(vp, duration, flags, nd, nam, cachablep, frev, cred)
 	struct vnode *vp;
-	u_long *duration;
+	u_int *duration;
 	int flags;
 	struct nfsd *nd;
 	struct mbuf *nam;
@@ -190,7 +190,7 @@ nqsrv_getlease(vp, duration, flags, nd, nam, cachablep, frev, cred)
 			if (fh.fh_fsid.val[0] == lp->lc_fsid.val[0] &&
 			    fh.fh_fsid.val[1] == lp->lc_fsid.val[1] &&
 			    !bcmp(fh.fh_fid.fid_data, lp->lc_fiddata,
-				  fh.fh_fid.fid_len - sizeof (long))) {
+				  fh.fh_fid.fid_len - sizeof (int32_t))) {
 				/* Found it */
 				lp->lc_vp = vp;
 				vp->v_lease = lp;
@@ -288,7 +288,7 @@ doreply:
 	lp->lc_vp = vp;
 	lp->lc_fsid = fh.fh_fsid;
 	bcopy(fh.fh_fid.fid_data, lp->lc_fiddata,
-	    fh.fh_fid.fid_len - sizeof (long));
+	    fh.fh_fid.fid_len - sizeof (int32_t));
 	LIST_INSERT_HEAD(lpp, lp, lc_hash);
 	vp->v_lease = lp;
 	s = splsoftclock();
@@ -446,7 +446,7 @@ nqsrv_send_eviction(vp, lp, slp, nam, cred)
 	struct sockaddr_in *saddr;
 	fhandle_t *fhp;
 	caddr_t bpos, cp;
-	u_long xid;
+	u_int32_t xid;
 	int len = 1, ok = 1, i = 0;
 	int sotype, *solockp;
 
@@ -502,7 +502,7 @@ nqsrv_send_eviction(vp, lp, slp, nam, cred)
 			 */
 			if (sotype == SOCK_STREAM) {
 				M_PREPEND(m, NFSX_UNSIGNED, M_WAIT);
-				*mtod(m, u_long *) = htonl(0x80000000 |
+				*mtod(m, u_int32_t *) = htonl(0x80000000 |
 					(m->m_pkthdr.len - NFSX_UNSIGNED));
 			}
 			if (((lph->lph_flag & (LC_UDP | LC_CLTP)) == 0 &&
@@ -680,8 +680,8 @@ nqnfsrv_getlease(nfsd, mrep, md, dpos, cred, nam, mrq)
 	struct vnode *vp;
 	nfsv2fh_t nfh;
 	fhandle_t *fhp;
-	register u_long *tl;
-	register long t1;
+	register u_int32_t *tl;
+	register int32_t t1;
 	u_quad_t frev;
 	caddr_t bpos;
 	int error = 0;
@@ -691,7 +691,7 @@ nqnfsrv_getlease(nfsd, mrep, md, dpos, cred, nam, mrq)
 
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
-	nfsm_dissect(tl, u_long *, 2*NFSX_UNSIGNED);
+	nfsm_dissect(tl, u_int32_t *, 2*NFSX_UNSIGNED);
 	flags = fxdr_unsigned(int, *tl++);
 	nfsd->nd_duration = fxdr_unsigned(int, *tl);
 	if (error = nfsrv_fhtovp(fhp,
@@ -706,7 +706,7 @@ nqnfsrv_getlease(nfsd, mrep, md, dpos, cred, nam, mrq)
 	error = VOP_GETATTR(vp, &va, cred, nfsd->nd_procp);
 	vput(vp);
 	nfsm_reply(NFSX_NQFATTR + 4*NFSX_UNSIGNED);
-	nfsm_build(tl, u_long *, 4*NFSX_UNSIGNED);
+	nfsm_build(tl, u_int32_t *, 4*NFSX_UNSIGNED);
 	*tl++ = txdr_unsigned(cache);
 	*tl++ = txdr_unsigned(nfsd->nd_duration);
 	txdr_hyper(&frev, tl);
@@ -731,8 +731,8 @@ nqnfsrv_vacated(nfsd, mrep, md, dpos, cred, nam, mrq)
 	struct nqlease *tlp = (struct nqlease *)0;
 	nfsv2fh_t nfh;
 	fhandle_t *fhp;
-	register u_long *tl;
-	register long t1;
+	register u_int32_t *tl;
+	register int32_t t1;
 	struct nqm *lphnext;
 	int error = 0, i, len, ok, gotit = 0;
 	char *cp2;
@@ -798,9 +798,9 @@ nqnfs_getlease(vp, rwflag, cred, p)
 	struct ucred *cred;
 	struct proc *p;
 {
-	register u_long *tl;
+	register u_int32_t *tl;
 	register caddr_t cp;
-	register long t1;
+	register int32_t t1;
 	register struct nfsnode *np;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	caddr_t bpos, dpos, cp2;
@@ -814,13 +814,13 @@ nqnfs_getlease(vp, rwflag, cred, p)
 	mb = mreq = nfsm_reqh(vp, NQNFSPROC_GETLEASE, NFSX_FH+2*NFSX_UNSIGNED,
 		 &bpos);
 	nfsm_fhtom(vp);
-	nfsm_build(tl, u_long *, 2*NFSX_UNSIGNED);
+	nfsm_build(tl, u_int32_t *, 2*NFSX_UNSIGNED);
 	*tl++ = txdr_unsigned(rwflag);
 	*tl = txdr_unsigned(nmp->nm_leaseterm);
 	reqtime = time.tv_sec;
 	nfsm_request(vp, NQNFSPROC_GETLEASE, p, cred);
 	np = VTONFS(vp);
-	nfsm_dissect(tl, u_long *, 4*NFSX_UNSIGNED);
+	nfsm_dissect(tl, u_int32_t *, 4*NFSX_UNSIGNED);
 	cachable = fxdr_unsigned(int, *tl++);
 	reqtime += fxdr_unsigned(int, *tl++);
 	if (reqtime > time.tv_sec) {
@@ -844,7 +844,7 @@ nqnfs_vacated(vp, cred)
 	register struct mbuf *m;
 	register int i;
 	caddr_t bpos;
-	u_long xid;
+	u_int32_t xid;
 	int error = 0;
 	struct mbuf *mreq, *mb, *mb2, *mheadend;
 	struct nfsmount *nmp;
@@ -865,7 +865,7 @@ nqnfs_vacated(vp, cred)
 		mreq, i, &mheadend, &xid);
 	if (nmp->nm_sotype == SOCK_STREAM) {
 		M_PREPEND(m, NFSX_UNSIGNED, M_WAIT);
-		*mtod(m, u_long *) = htonl(0x80000000 | (m->m_pkthdr.len -
+		*mtod(m, u_int32_t *) = htonl(0x80000000 | (m->m_pkthdr.len -
 			NFSX_UNSIGNED));
 	}
 	myrep.r_flags = 0;
@@ -887,8 +887,8 @@ nqnfs_callback(nmp, mrep, md, dpos)
 	caddr_t dpos;
 {
 	register struct vnode *vp;
-	register u_long *tl;
-	register long t1;
+	register u_int32_t *tl;
+	register int32_t t1;
 	nfsv2fh_t nfh;
 	fhandle_t *fhp;
 	struct nfsnode *np;

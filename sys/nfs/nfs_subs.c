@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.21 1995/09/08 13:52:23 ws Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.22 1995/12/19 23:07:43 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -79,20 +79,20 @@
  * This is kinda hokey, but may save a little time doing byte swaps
  */
 u_long nfs_procids[NFS_NPROCS];
-u_long nfs_xdrneg1;
-u_long rpc_call, rpc_vers, rpc_reply, rpc_msgdenied, rpc_autherr,
+u_int32_t nfs_xdrneg1;
+u_int32_t rpc_call, rpc_vers, rpc_reply, rpc_msgdenied, rpc_autherr,
 	rpc_mismatch, rpc_auth_unix, rpc_msgaccepted, rpc_rejectedcred,
 	rpc_auth_kerb;
-u_long nfs_vers, nfs_prog, nfs_true, nfs_false;
+u_int32_t nfs_vers, nfs_prog, nfs_true, nfs_false;
 
 /* And other global data */
-static u_long nfs_xid = 0;
+static u_int32_t nfs_xid = 0;
 enum vtype ntov_type[7] = { VNON, VREG, VDIR, VBLK, VCHR, VLNK, VNON };
 extern struct proc *nfs_iodwant[NFS_MAXASYNCDAEMON];
 extern int nqnfs_piggy[NFS_NPROCS];
 extern struct nfsrtt nfsrtt;
 extern time_t nqnfsstarttime;
-extern u_long nqnfs_prog, nqnfs_vers;
+extern u_int32_t nqnfs_prog, nqnfs_vers;
 extern int nqsrv_clockskew;
 extern int nqsrv_writeslack;
 extern int nqsrv_maxlease;
@@ -113,7 +113,7 @@ nfsm_reqh(vp, procid, hsiz, bposp)
 	caddr_t *bposp;
 {
 	register struct mbuf *mb;
-	register u_long *tl;
+	register u_int32_t *tl;
 	register caddr_t bpos;
 	struct mbuf *mb2;
 	struct nfsmount *nmp;
@@ -133,11 +133,11 @@ nfsm_reqh(vp, procid, hsiz, bposp)
 		if (nmp->nm_flag & NFSMNT_NQNFS) {
 			nqflag = NQNFS_NEEDLEASE(vp, procid);
 			if (nqflag) {
-				nfsm_build(tl, u_long *, 2*NFSX_UNSIGNED);
+				nfsm_build(tl, u_int32_t *, 2*NFSX_UNSIGNED);
 				*tl++ = txdr_unsigned(nqflag);
 				*tl = txdr_unsigned(nmp->nm_leaseterm);
 			} else {
-				nfsm_build(tl, u_long *, NFSX_UNSIGNED);
+				nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED);
 				*tl = 0;
 			}
 		}
@@ -165,10 +165,10 @@ nfsm_rpchead(cr, nqnfs, procid, auth_type, auth_len, auth_str, mrest,
 	struct mbuf *mrest;
 	int mrest_len;
 	struct mbuf **mbp;
-	u_long *xidp;
+	u_int32_t *xidp;
 {
 	register struct mbuf *mb;
-	register u_long *tl;
+	register u_int32_t *tl;
 	register caddr_t bpos;
 	register int i;
 	struct mbuf *mreq, *mb2;
@@ -192,7 +192,7 @@ nfsm_rpchead(cr, nqnfs, procid, auth_type, auth_len, auth_str, mrest,
 	/*
 	 * First the RPC header.
 	 */
-	nfsm_build(tl, u_long *, 8*NFSX_UNSIGNED);
+	nfsm_build(tl, u_int32_t *, 8*NFSX_UNSIGNED);
 	if (++nfs_xid == 0)
 		nfs_xid++;
 	*tl++ = *xidp = txdr_unsigned(nfs_xid);
@@ -214,7 +214,7 @@ nfsm_rpchead(cr, nqnfs, procid, auth_type, auth_len, auth_str, mrest,
 	*tl = txdr_unsigned(authsiz);
 	switch (auth_type) {
 	case RPCAUTH_UNIX:
-		nfsm_build(tl, u_long *, auth_len);
+		nfsm_build(tl, u_int32_t *, auth_len);
 		*tl++ = 0;		/* stamp ?? */
 		*tl++ = 0;		/* NULL hostname */
 		*tl++ = txdr_unsigned(cr->cr_uid);
@@ -225,7 +225,7 @@ nfsm_rpchead(cr, nqnfs, procid, auth_type, auth_len, auth_str, mrest,
 			*tl++ = txdr_unsigned(cr->cr_groups[i]);
 		break;
 	case RPCAUTH_NQNFS:
-		nfsm_build(tl, u_long *, 2*NFSX_UNSIGNED);
+		nfsm_build(tl, u_int32_t *, 2*NFSX_UNSIGNED);
 		*tl++ = txdr_unsigned(cr->cr_uid);
 		*tl = txdr_unsigned(auth_len);
 		siz = auth_len;
@@ -253,7 +253,7 @@ nfsm_rpchead(cr, nqnfs, procid, auth_type, auth_len, auth_str, mrest,
 		}
 		break;
 	};
-	nfsm_build(tl, u_long *, 2*NFSX_UNSIGNED);
+	nfsm_build(tl, u_int32_t *, 2*NFSX_UNSIGNED);
 	*tl++ = txdr_unsigned(RPCAUTH_NULL);
 	*tl = 0;
 	mb->m_next = mrest;
@@ -523,14 +523,14 @@ nfsm_strtmbuf(mb, bpos, cp, siz)
 {
 	register struct mbuf *m1, *m2;
 	long left, xfer, len, tlen;
-	u_long *tl;
+	u_int32_t *tl;
 	int putsize;
 
 	putsize = 1;
 	m2 = *mb;
 	left = M_TRAILINGSPACE(m2);
 	if (left > 0) {
-		tl = ((u_long *)(*bpos));
+		tl = ((u_int32_t *)(*bpos));
 		*tl++ = txdr_unsigned(siz);
 		putsize = 0;
 		left -= NFSX_UNSIGNED;
@@ -551,7 +551,7 @@ nfsm_strtmbuf(mb, bpos, cp, siz)
 		m1->m_len = NFSMSIZ(m1);
 		m2->m_next = m1;
 		m2 = m1;
-		tl = mtod(m1, u_long *);
+		tl = mtod(m1, u_int32_t *);
 		tlen = 0;
 		if (putsize) {
 			*tl++ = txdr_unsigned(siz);
@@ -662,7 +662,7 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 	extern int (**spec_nfsv2nodeop_p)();
 	register struct nfsnode *np;
 	register struct nfsnodehashhead *nhpp;
-	register long t1;
+	register int32_t t1;
 	caddr_t dpos, cp2;
 	int error = 0, isnq;
 	struct mbuf *md;
@@ -684,10 +684,10 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 	if (vtyp == VNON || vtyp == VREG)
 		vtyp = IFTOVT(vmode);
 	if (isnq) {
-		rdev = fxdr_unsigned(long, fp->fa_nqrdev);
+		rdev = fxdr_unsigned(int32_t, fp->fa_nqrdev);
 		fxdr_nqtime(&fp->fa_nqmtime, &mtime);
 	} else {
-		rdev = fxdr_unsigned(long, fp->fa_nfsrdev);
+		rdev = fxdr_unsigned(int32_t, fp->fa_nfsrdev);
 		fxdr_nfstime(&fp->fa_nfsmtime, &mtime);
 	}
 	/*
@@ -745,19 +745,19 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 	vap->va_fsid = vp->v_mount->mnt_stat.f_fsid.val[0];
 	if (isnq) {
 		fxdr_hyper(&fp->fa_nqsize, &vap->va_size);
-		vap->va_blocksize = fxdr_unsigned(long, fp->fa_nqblocksize);
+		vap->va_blocksize = fxdr_unsigned(int32_t, fp->fa_nqblocksize);
 		fxdr_hyper(&fp->fa_nqbytes, &vap->va_bytes);
-		vap->va_fileid = fxdr_unsigned(long, fp->fa_nqfileid);
+		vap->va_fileid = fxdr_unsigned(int32_t, fp->fa_nqfileid);
 		fxdr_nqtime(&fp->fa_nqatime, &vap->va_atime);
-		vap->va_flags = fxdr_unsigned(u_long, fp->fa_nqflags);
+		vap->va_flags = fxdr_unsigned(u_int32_t, fp->fa_nqflags);
 		fxdr_nqtime(&fp->fa_nqctime, &vap->va_ctime);
-		vap->va_gen = fxdr_unsigned(u_long, fp->fa_nqgen);
+		vap->va_gen = fxdr_unsigned(u_int32_t, fp->fa_nqgen);
 		fxdr_hyper(&fp->fa_nqfilerev, &vap->va_filerev);
 	} else {
-		vap->va_size = fxdr_unsigned(u_long, fp->fa_nfssize);
-		vap->va_blocksize = fxdr_unsigned(long, fp->fa_nfsblocksize);
-		vap->va_bytes = fxdr_unsigned(long, fp->fa_nfsblocks) * NFS_FABLKSIZE;
-		vap->va_fileid = fxdr_unsigned(long, fp->fa_nfsfileid);
+		vap->va_size = fxdr_unsigned(u_int32_t, fp->fa_nfssize);
+		vap->va_blocksize = fxdr_unsigned(int32_t, fp->fa_nfsblocksize);
+		vap->va_bytes = fxdr_unsigned(int32_t, fp->fa_nfsblocks) * NFS_FABLKSIZE;
+		vap->va_fileid = fxdr_unsigned(int32_t, fp->fa_nfsfileid);
 		fxdr_nfstime(&fp->fa_nfsatime, &vap->va_atime);
 		vap->va_flags = 0;
 		fxdr_nfstime(&fp->fa_nfsctime, &vap->va_ctime);

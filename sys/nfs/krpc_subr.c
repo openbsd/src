@@ -1,4 +1,4 @@
-/*	$NetBSD: krpc_subr.c,v 1.10 1995/08/08 20:43:43 gwr Exp $	*/
+/*	$NetBSD: krpc_subr.c,v 1.11 1995/12/19 23:07:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross, Adam Glass
@@ -96,11 +96,11 @@ struct rpc_call {
 };
 
 struct rpc_reply {
-	u_int32_t	rp_xid;		/* request transaction id */
-	int32_t 	rp_direction;	/* call direction (1) */
-	int32_t 	rp_astatus;	/* accept status (0: accepted) */
+	u_int32_t rp_xid;		/* request transaction id */
+	int32_t   rp_direction;		/* call direction (1) */
+	int32_t   rp_astatus;		/* accept status (0: accepted) */
 	union {
-		u_int32_t	rpu_errno;
+		u_int32_t rpu_errno;
 		struct {
 			struct auth_info rok_auth;
 			u_int32_t	rok_status;
@@ -129,13 +129,13 @@ int
 krpc_portmap(sin,  prog, vers, portp)
 	struct sockaddr_in *sin;		/* server address */
 	u_int prog, vers;	/* host order */
-	u_int16_t *portp;		/* network order */
+	u_int16_t *portp;	/* network order */
 {
 	struct sdata {
-		u_int32_t	prog;		/* call program */
-		u_int32_t	vers;		/* call version */
-		u_int32_t	proto;		/* call protocol */
-		u_int32_t	port;		/* call port (unused) */
+		u_int32_t prog;		/* call program */
+		u_int32_t vers;		/* call version */
+		u_int32_t proto;	/* call protocol */
+		u_int32_t port;		/* call port (unused) */
 	} *sdata;
 	struct rdata {
 		u_int16_t pad;
@@ -200,7 +200,7 @@ krpc_call(sa, prog, vers, func, data, from_p)
 	struct uio auio;
 	int error, rcvflg, timo, secs, len;
 	static u_int32_t xid = ~0xFF;
-	u_int tport;
+	u_int16_t tport;
 
 	/*
 	 * Validate address family.
@@ -237,13 +237,13 @@ krpc_call(sa, prog, vers, func, data, from_p)
 	 * Enable broadcast if necessary.
 	 */
 	if (from_p) {
-		int *on;
+		int32_t *on;
 		m = m_get(M_WAIT, MT_SOOPTS);
 		if (m == NULL) {
 			error = ENOBUFS;
 			goto out;
 		}
-		on = mtod(m, int *);
+		on = mtod(m, int32_t *);
 		m->m_len = sizeof(*on);
 		*on = 1;
 		if ((error = sosetopt(so, SOL_SOCKET, SO_BROADCAST, m)))

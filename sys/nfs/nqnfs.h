@@ -1,4 +1,4 @@
-/*	$NetBSD: nqnfs.h,v 1.4 1994/12/13 17:17:08 mycroft Exp $	*/
+/*	$NetBSD: nqnfs.h,v 1.5 1995/12/19 23:08:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -82,18 +82,18 @@
 struct nqhost {
 	union {
 		struct {
-			u_short udp_flag;
-			u_short	udp_port;
+			u_int16_t udp_flag;
+			u_int16_t udp_port;
 			union nethostaddr udp_haddr;
 		} un_udp;
 		struct {
-			u_short connless_flag;
-			u_short connless_spare;
+			u_int16_t connless_flag;
+			u_int16_t connless_spare;
 			union nethostaddr connless_haddr;
 		} un_connless;
 		struct {
-			u_short conn_flag;
-			u_short conn_spare;
+			u_int16_t conn_flag;
+			u_int16_t conn_spare;
 			struct nfssvc_sock *conn_slp;
 		} un_conn;
 	} lph_un;
@@ -190,7 +190,7 @@ CIRCLEQ_HEAD(, nqlease) nqtimerhead;
  * List head for the file handle hash table.
  */
 #define	NQFHHASH(f) \
-	(&nqfhhashtbl[(*((u_long *)(f))) & nqfhhash])
+	(&nqfhhashtbl[(*((u_int32_t *)(f))) & nqfhhash])
 LIST_HEAD(nqfhhashhead, nqlease) *nqfhhashtbl;
 u_long nqfhhash;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.38 1995/08/13 00:00:08 mycroft Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.39 1995/12/19 23:07:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -106,7 +106,7 @@ nfs_statfs(mp, sbp, p)
 	register struct vnode *vp;
 	register struct nfsv2_statfs *sfp;
 	register caddr_t cp;
-	register long t1;
+	register int32_t t1;
 	caddr_t bpos, dpos, cp2;
 	int error = 0, isnq;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
@@ -133,13 +133,13 @@ nfs_statfs(mp, sbp, p)
 #endif
 	sbp->f_flags = nmp->nm_flag;
 	sbp->f_iosize = NFS_MAXDGRAMDATA;
-	sbp->f_bsize = fxdr_unsigned(long, sfp->sf_bsize);
-	sbp->f_blocks = fxdr_unsigned(long, sfp->sf_blocks);
-	sbp->f_bfree = fxdr_unsigned(long, sfp->sf_bfree);
-	sbp->f_bavail = fxdr_unsigned(long, sfp->sf_bavail);
+	sbp->f_bsize = fxdr_unsigned(int32_t, sfp->sf_bsize);
+	sbp->f_blocks = fxdr_unsigned(int32_t, sfp->sf_blocks);
+	sbp->f_bfree = fxdr_unsigned(int32_t, sfp->sf_bfree);
+	sbp->f_bavail = fxdr_unsigned(int32_t, sfp->sf_bavail);
 	if (isnq) {
-		sbp->f_files = fxdr_unsigned(long, sfp->sf_files);
-		sbp->f_ffree = fxdr_unsigned(long, sfp->sf_ffree);
+		sbp->f_files = fxdr_unsigned(int32_t, sfp->sf_files);
+		sbp->f_ffree = fxdr_unsigned(int32_t, sfp->sf_ffree);
 	} else {
 		sbp->f_files = 0;
 		sbp->f_ffree = 0;

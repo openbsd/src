@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsrtt.h,v 1.2 1994/06/29 06:42:37 cgd Exp $	*/
+/*	$NetBSD: nfsrtt.h,v 1.3 1995/12/19 23:08:05 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -91,7 +91,7 @@ struct nfsdrt {
 	struct drt {
 		int	flag;		/* Bits as defined above */
 		int	proc;		/* NFS procedure number */
-		u_long	ipadr;		/* IP address of client */
+		u_int32_t ipadr;	/* IP address of client */
 		int	resptime;	/* Response time (usec) */
 		struct timeval tstamp;	/* Timestamp of log entry */
 	} drt[NFSRTTLOGSIZ];

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcv2.h,v 1.6 1994/06/29 06:42:43 cgd Exp $	*/
+/*	$NetBSD: rpcv2.h,v 1.7 1995/12/19 23:08:26 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -88,3 +88,9 @@
 #define	RPCMNT_NAMELEN	255
 #define	RPCMNT_PATHLEN	1024
 #define	RPCPROG_NFS	100003
+
+/* Structs for common parts of the rpc's */
+struct rpcv2_time {
+        u_int32_t rpc_sec;
+        u_int32_t rpc_usec;
+};

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsv2.h,v 1.9 1994/06/29 06:42:40 cgd Exp $	*/
+/*	$NetBSD: nfsv2.h,v 1.10 1995/12/19 23:08:15 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -128,22 +128,22 @@ extern int		vttoif_tab[];
 #define	vtonfs_mode(t,m) \
 		txdr_unsigned(((t) == VFIFO) ? MAKEIMODE(VCHR, (m)) : \
 				MAKEIMODE((t), (m)))
-#define	nfstov_mode(a)	(fxdr_unsigned(u_short, (a))&07777)
-#define	vtonfs_type(a)	txdr_unsigned(nfs_type[((long)(a))])
-#define	nfstov_type(a)	ntov_type[fxdr_unsigned(u_long,(a))&0x7]
+#define	nfstov_mode(a)	(fxdr_unsigned(u_int16_t, (a))&07777)
+#define	vtonfs_type(a)	txdr_unsigned(nfs_type[((int32_t)(a))])
+#define	nfstov_type(a)	ntov_type[fxdr_unsigned(u_int32_t,(a))&0x7]
 
 /* File types */
 typedef enum { NFNON=0, NFREG=1, NFDIR=2, NFBLK=3, NFCHR=4, NFLNK=5 } nfstype;
 
 /* Structs for common parts of the rpc's */
 struct nfsv2_time {
-	u_long	nfs_sec;
-	u_long	nfs_usec;
+	u_int32_t nfs_sec;
+	u_int32_t nfs_usec;
 };
 
 struct nqnfs_time {
-	u_long	nq_sec;
-	u_long	nq_nsec;
+	u_int32_t nq_sec;
+	u_int32_t nq_nsec;
 };
 
 /*
@@ -151,46 +151,46 @@ struct nqnfs_time {
  * NFS version 2 and the NQNFS protocol. Note that the union is only
  * used to that one pointer can refer to both variants. These structures
  * go out on the wire and must be densely packed, so no quad data types
- * are used. (all fields are longs or u_longs or structures of same)
+ * are used. (all fields are int32_ts or u_int32_ts or structures of same)
  * NB: You can't do sizeof(struct nfsv2_fattr), you must use the
  *     NFSX_FATTR(isnq) macro.
  */
 struct nfsv2_fattr {
-	u_long	fa_type;
-	u_long	fa_mode;
-	u_long	fa_nlink;
-	u_long	fa_uid;
-	u_long	fa_gid;
+	u_int32_t fa_type;
+	u_int32_t fa_mode;
+	u_int32_t fa_nlink;
+	u_int32_t fa_uid;
+	u_int32_t fa_gid;
 	union {
 		struct {
-			u_long	nfsfa_size;
-			u_long	nfsfa_blocksize;
-			u_long	nfsfa_rdev;
-			u_long	nfsfa_blocks;
-			u_long	nfsfa_fsid;
-			u_long	nfsfa_fileid;
+			u_int32_t nfsfa_size;
+			u_int32_t nfsfa_blocksize;
+			u_int32_t nfsfa_rdev;
+			u_int32_t nfsfa_blocks;
+			u_int32_t nfsfa_fsid;
+			u_int32_t nfsfa_fileid;
 			struct nfsv2_time nfsfa_atime;
 			struct nfsv2_time nfsfa_mtime;
 			struct nfsv2_time nfsfa_ctime;
 		} fa_nfsv2;
 		struct {
 			struct {
-				u_long	nqfa_qsize[2];
+				u_int32_t nqfa_qsize[2];
 			} nqfa_size;
-			u_long	nqfa_blocksize;
-			u_long	nqfa_rdev;
+			u_int32_t nqfa_blocksize;
+			u_int32_t nqfa_rdev;
 			struct {
-				u_long	nqfa_qbytes[2];
+				u_int32_t nqfa_qbytes[2];
 			} nqfa_bytes;
-			u_long	nqfa_fsid;
-			u_long	nqfa_fileid;
+			u_int32_t nqfa_fsid;
+			u_int32_t nqfa_fileid;
 			struct nqnfs_time nqfa_atime;
 			struct nqnfs_time nqfa_mtime;
 			struct nqnfs_time nqfa_ctime;
-			u_long	nqfa_flags;
-			u_long	nqfa_gen;
+			u_int32_t nqfa_flags;
+			u_int32_t nqfa_gen;
 			struct {
-				u_long	nqfa_qfilerev[2];
+				u_int32_t nqfa_qfilerev[2];
 			} nqfa_filerev;
 		} fa_nqnfs;
 	} fa_un;
@@ -220,23 +220,23 @@ struct nfsv2_fattr {
 #define	fa_nqfilerev		fa_un.fa_nqnfs.nqfa_filerev
 
 struct nfsv2_sattr {
-	u_long	sa_mode;
-	u_long	sa_uid;
-	u_long	sa_gid;
+	u_int32_t sa_mode;
+	u_int32_t sa_uid;
+	u_int32_t sa_gid;
 	union {
 		struct {
-			u_long	nfssa_size;
+			u_int32_t nfssa_size;
 			struct nfsv2_time nfssa_atime;
 			struct nfsv2_time nfssa_mtime;
 		} sa_nfsv2;
 		struct {
 			struct {
-				u_long	nqsa_qsize[2];
+				u_int32_t nqsa_qsize[2];
 			} nqsa_size;
 			struct nqnfs_time nqsa_atime;
 			struct nqnfs_time nqsa_mtime;
-			u_long	nqsa_flags;
-			u_long	nqsa_rdev;
+			u_int32_t nqsa_flags;
+			u_int32_t nqsa_rdev;
 		} sa_nqnfs;
 	} sa_un;
 };
@@ -252,11 +252,11 @@ struct nfsv2_sattr {
 #define	sa_nqrdev		sa_un.sa_nqnfs.nqsa_rdev
 
 struct nfsv2_statfs {
-	u_long	sf_tsize;
-	u_long	sf_bsize;
-	u_long	sf_blocks;
-	u_long	sf_bfree;
-	u_long	sf_bavail;
-	u_long	sf_files;	/* Nqnfs only */
-	u_long	sf_ffree;	/* ditto      */
+	u_int32_t sf_tsize;
+	u_int32_t sf_bsize;
+	u_int32_t sf_blocks;
+	u_int32_t sf_bfree;
+	u_int32_t sf_bavail;
+	u_int32_t sf_files;	/* Nqnfs only */
+	u_int32_t sf_ffree;	/* ditto      */
 };

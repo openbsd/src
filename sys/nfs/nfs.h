@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.8 1995/03/26 20:37:29 jtc Exp $	*/
+/*	$NetBSD: nfs.h,v 1.9 1995/12/19 23:07:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -86,7 +86,7 @@ struct nfsd_args {
 struct nfsd_srvargs {
 	struct nfsd	*nsd_nfsd;	/* Pointer to in kernel nfsd struct */
 	uid_t		nsd_uid;	/* Effective uid mapped to cred */
-	u_long		nsd_haddr;	/* Ip address of client */
+	u_int32_t	nsd_haddr;	/* Ip address of client */
 	struct ucred	nsd_cr;		/* Cred. uid maps to */
 	int		nsd_authlen;	/* Length of auth string (ret) */
 	char		*nsd_authstr;	/* Auth string (ret) */
@@ -180,7 +180,7 @@ struct nfsreq {
 	caddr_t		r_dpos;
 	struct nfsmount *r_nmp;
 	struct vnode	*r_vp;
-	u_long		r_xid;
+	u_int32_t	r_xid;
 	int		r_flags;	/* flags on request, see below */
 	int		r_retry;	/* max retransmission count */
 	int		r_rexmit;	/* current retrans count */
@@ -221,7 +221,7 @@ struct nfsstats nfsstats;
  * Network address hash list element
  */
 union nethostaddr {
-	u_long had_inetaddr;
+	u_int32_t had_inetaddr;
 	struct mbuf *had_nam;
 };
 
@@ -246,7 +246,7 @@ struct nfssvc_sock {
 	u_long		ns_uidhash;
 
 	int		ns_flag;
-	u_long		ns_sref;
+	u_int32_t	ns_sref;
 	struct file	*ns_fp;
 	struct socket	*ns_so;
 	int		ns_solock;
@@ -285,7 +285,7 @@ struct nfsd {
 	struct mbuf	*nd_md;
 	caddr_t		nd_dpos;	/* Position in list */
 	int		nd_procnum;	/* RPC procedure number */
-	u_long		nd_retxid;	/* RPC xid */
+	u_int32_t	nd_retxid;	/* RPC xid */
 	int		nd_repstat;	/* Reply status value */
 	struct ucred	nd_cr;		/* Credentials for req. */
 	int		nd_nqlflag;	/* Leasing flag */

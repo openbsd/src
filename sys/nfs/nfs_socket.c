@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.21 1995/08/13 00:00:01 mycroft Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.22 1995/12/19 23:07:38 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -93,10 +93,10 @@
 /*
  * External data, mostly RPC constants in XDR form
  */
-extern u_long rpc_reply, rpc_msgdenied, rpc_mismatch, rpc_vers, rpc_auth_unix,
-	rpc_msgaccepted, rpc_call, rpc_autherr, rpc_rejectedcred,
+extern u_int32_t rpc_reply, rpc_msgdenied, rpc_mismatch, rpc_vers,
+	rpc_auth_unix, rpc_msgaccepted, rpc_call, rpc_autherr, rpc_rejectedcred,
 	rpc_auth_kerb;
-extern u_long nfs_prog, nfs_vers, nqnfs_prog, nqnfs_vers;
+extern u_int32_t nfs_prog, nfs_vers, nqnfs_prog, nqnfs_vers;
 extern time_t nqnfsstarttime;
 extern int nonidempotent[NFS_NPROCS];
 
@@ -173,7 +173,7 @@ nfs_connect(nmp, rep)
 	struct sockaddr *saddr;
 	struct sockaddr_in *sin;
 	struct mbuf *m;
-	u_short tport;
+	u_int16_t tport;
 
 	nmp->nm_so = (struct socket *)0;
 	saddr = mtod(nmp->nm_nam, struct sockaddr *);
@@ -258,20 +258,20 @@ nfs_connect(nmp, rep)
 			panic("nfscon sotype");
 		if (so->so_proto->pr_flags & PR_CONNREQUIRED) {
 			MGET(m, M_WAIT, MT_SOOPTS);
-			*mtod(m, int *) = 1;
-			m->m_len = sizeof(int);
+			*mtod(m, int32_t *) = 1;
+			m->m_len = sizeof(int32_t);
 			sosetopt(so, SOL_SOCKET, SO_KEEPALIVE, m);
 		}
 		if (so->so_proto->pr_protocol == IPPROTO_TCP) {
 			MGET(m, M_WAIT, MT_SOOPTS);
-			*mtod(m, int *) = 1;
-			m->m_len = sizeof(int);
+			*mtod(m, int32_t *) = 1;
+			m->m_len = sizeof(int32_t);
 			sosetopt(so, IPPROTO_TCP, TCP_NODELAY, m);
 		}
-		sndreserve = (nmp->nm_wsize + NFS_MAXPKTHDR + sizeof (u_long))
-				* 2;
-		rcvreserve = (nmp->nm_rsize + NFS_MAXPKTHDR + sizeof (u_long))
-				* 2;
+		sndreserve = (nmp->nm_wsize + NFS_MAXPKTHDR +
+		    sizeof (u_int32_t)) * 2;
+		rcvreserve = (nmp->nm_rsize + NFS_MAXPKTHDR +
+		    sizeof (u_int32_t)) * 2;
 	}
 	if (error = soreserve(so, sndreserve, rcvreserve))
 		goto bad;
@@ -435,7 +435,7 @@ nfs_receive(rep, aname, mp)
 	struct iovec aio;
 	register struct mbuf *m;
 	struct mbuf *control;
-	u_long len;
+	u_int32_t len;
 	struct mbuf **getnam;
 	int error, sotype, rcvflg;
 	struct proc *p = curproc;	/* XXX */
@@ -494,13 +494,13 @@ tryagain:
 		nfs_sndunlock(&rep->r_nmp->nm_flag);
 		if (sotype == SOCK_STREAM) {
 			aio.iov_base = (caddr_t) &len;
-			aio.iov_len = sizeof(u_long);
+			aio.iov_len = sizeof(u_int32_t);
 			auio.uio_iov = &aio;
 			auio.uio_iovcnt = 1;
 			auio.uio_segflg = UIO_SYSSPACE;
 			auio.uio_rw = UIO_READ;
 			auio.uio_offset = 0;
-			auio.uio_resid = sizeof(u_long);
+			auio.uio_resid = sizeof(u_int32_t);
 			auio.uio_procp = p;
 			do {
 			   rcvflg = MSG_WAITALL;
@@ -514,8 +514,8 @@ tryagain:
 			if (!error && auio.uio_resid > 0) {
 			    log(LOG_INFO,
 				 "short receive (%d/%d) from nfs server %s\n",
-				 sizeof(u_long) - auio.uio_resid,
-				 sizeof(u_long),
+				 sizeof(u_int32_t) - auio.uio_resid,
+				 sizeof(u_int32_t),
 				 rep->r_nmp->nm_mountp->mnt_stat.f_mntfromname);
 			    error = EPIPE;
 			}
@@ -636,9 +636,9 @@ nfs_reply(myrep)
 {
 	register struct nfsreq *rep;
 	register struct nfsmount *nmp = myrep->r_nmp;
-	register long t1;
+	register int32_t t1;
 	struct mbuf *mrep, *nam, *md;
-	u_long rxid, *tl;
+	u_int32_t rxid, *tl;
 	caddr_t dpos, cp2;
 	int error;
 
@@ -685,7 +685,7 @@ nfs_reply(myrep)
 		 */
 		md = mrep;
 		dpos = mtod(md, caddr_t);
-		nfsm_dissect(tl, u_long *, 2*NFSX_UNSIGNED);
+		nfsm_dissect(tl, u_int32_t *, 2*NFSX_UNSIGNED);
 		rxid = *tl++;
 		if (*tl != rpc_reply) {
 			if (nmp->nm_flag & NFSMNT_NQNFS) {
@@ -808,7 +808,7 @@ nfs_request(vp, mrest, procnum, procp, cred, mrp, mdp, dposp)
 {
 	register struct mbuf *m, *mrep;
 	register struct nfsreq *rep;
-	register u_long *tl;
+	register u_int32_t *tl;
 	register int i;
 	struct nfsmount *nmp;
 	struct mbuf *md, *mheadend;
@@ -818,7 +818,7 @@ nfs_request(vp, mrest, procnum, procp, cred, mrp, mdp, dposp)
 	caddr_t dpos, cp2;
 	int t1, nqlflag, cachable, s, error = 0, mrest_len, auth_len, auth_type;
 	int trylater_delay = NQ_TRYLATERDEL, trylater_cnt = 0, failed_auth = 0;
-	u_long xid;
+	u_int32_t xid;
 	u_quad_t frev;
 	char *auth_str;
 
@@ -870,7 +870,7 @@ kerbauth:
 	 */
 	if (nmp->nm_sotype == SOCK_STREAM) {
 		M_PREPEND(m, NFSX_UNSIGNED, M_WAIT);
-		*mtod(m, u_long *) = htonl(0x80000000 |
+		*mtod(m, u_int32_t *) = htonl(0x80000000 |
 			 (m->m_pkthdr.len - NFSX_UNSIGNED));
 	}
 	rep->r_mreq = m;
@@ -967,7 +967,7 @@ tryagain:
 	/*
 	 * break down the rpc header and check if ok
 	 */
-	nfsm_dissect(tl, u_long *, 3*NFSX_UNSIGNED);
+	nfsm_dissect(tl, u_int32_t *, 3*NFSX_UNSIGNED);
 	if (*tl++ == rpc_msgdenied) {
 		if (*tl == rpc_mismatch)
 			error = EOPNOTSUPP;
@@ -993,13 +993,13 @@ tryagain:
 	 * for nfs_reqhead(), but for now just dump it
 	 */
 	if (*++tl != 0) {
-		i = nfsm_rndup(fxdr_unsigned(long, *tl));
+		i = nfsm_rndup(fxdr_unsigned(int32_t, *tl));
 		nfsm_adv(i);
 	}
-	nfsm_dissect(tl, u_long *, NFSX_UNSIGNED);
+	nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
 	/* 0 == ok */
 	if (*tl == 0) {
-		nfsm_dissect(tl, u_long *, NFSX_UNSIGNED);
+		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
 		if (*tl != 0) {
 			error = fxdr_unsigned(int, *tl);
 			m_freem(mrep);
@@ -1031,11 +1031,11 @@ tryagain:
 		 * For nqnfs, get any lease in reply
 		 */
 		if (nmp->nm_flag & NFSMNT_NQNFS) {
-			nfsm_dissect(tl, u_long *, NFSX_UNSIGNED);
+			nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
 			if (*tl) {
 				np = VTONFS(vp);
 				nqlflag = fxdr_unsigned(int, *tl);
-				nfsm_dissect(tl, u_long *, 4*NFSX_UNSIGNED);
+				nfsm_dissect(tl, u_int32_t *, 4*NFSX_UNSIGNED);
 				cachable = fxdr_unsigned(int, *tl++);
 				reqtime += fxdr_unsigned(int, *tl++);
 				if (reqtime > time.tv_sec) {
@@ -1075,7 +1075,7 @@ nfs_rephead(siz, nd, err, cache, frev, mrq, mbp, bposp)
 	struct mbuf **mbp;
 	caddr_t *bposp;
 {
-	register u_long *tl;
+	register u_int32_t *tl;
 	register struct mbuf *mreq;
 	caddr_t bpos;
 	struct mbuf *mb, *mb2;
@@ -1091,7 +1091,7 @@ nfs_rephead(siz, nd, err, cache, frev, mrq, mbp, bposp)
 		MCLGET(mreq, M_WAIT);
 	} else
 		mreq->m_data += max_hdr;
-	tl = mtod(mreq, u_long *);
+	tl = mtod(mreq, u_int32_t *);
 	mreq->m_len = 6*NFSX_UNSIGNED;
 	bpos = ((caddr_t)tl)+mreq->m_len;
 	*tl++ = txdr_unsigned(nd->nd_retxid);
@@ -1118,7 +1118,7 @@ nfs_rephead(siz, nd, err, cache, frev, mrq, mbp, bposp)
 			break;
 		case EPROGMISMATCH:
 			*tl = txdr_unsigned(RPC_PROGMISMATCH);
-			nfsm_build(tl, u_long *, 2*NFSX_UNSIGNED);
+			nfsm_build(tl, u_int32_t *, 2*NFSX_UNSIGNED);
 			*tl++ = txdr_unsigned(2);
 			*tl = txdr_unsigned(2);	/* someday 3 */
 			break;
@@ -1128,7 +1128,7 @@ nfs_rephead(siz, nd, err, cache, frev, mrq, mbp, bposp)
 		default:
 			*tl = 0;
 			if (err != VNOVAL) {
-				nfsm_build(tl, u_long *, NFSX_UNSIGNED);
+				nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED);
 				if (err)
 					*tl = txdr_unsigned(nfsrv_errmap[err - 1]);
 				else
@@ -1143,7 +1143,7 @@ nfs_rephead(siz, nd, err, cache, frev, mrq, mbp, bposp)
 	 */
 	if (nd->nd_nqlflag != NQL_NOVAL && err == 0) {
 		if (nd->nd_nqlflag) {
-			nfsm_build(tl, u_long *, 5*NFSX_UNSIGNED);
+			nfsm_build(tl, u_int32_t *, 5*NFSX_UNSIGNED);
 			*tl++ = txdr_unsigned(nd->nd_nqlflag);
 			*tl++ = txdr_unsigned(cache);
 			*tl++ = txdr_unsigned(nd->nd_duration);
@@ -1151,7 +1151,7 @@ nfs_rephead(siz, nd, err, cache, frev, mrq, mbp, bposp)
 		} else {
 			if (nd->nd_nqlflag != 0)
 				panic("nqreph");
-			nfsm_build(tl, u_long *, NFSX_UNSIGNED);
+			nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED);
 			*tl = 0;
 		}
 	}
@@ -1415,10 +1415,10 @@ nfs_realign(m, hsiz)
 	     * This never happens for UDP, rarely happens for TCP
 	     * but frequently happens for iso transport.
 	     */
-	    if ((m->m_len & 0x3) || (mtod(m, int) & 0x3)) {
+	    if ((m->m_len & 0x3) || (mtod(m, long) & 0x3)) {
 		olen = m->m_len;
 		fcp = mtod(m, caddr_t);
-		if ((int)fcp & 0x3) {
+		if ((long)fcp & 0x3) {
 			m->m_flags &= ~M_PKTHDR;
 			if (m->m_flags & M_EXT)
 				m->m_data = m->m_ext.ext_buf +
@@ -1496,12 +1496,12 @@ nfs_getreq(nd, has_header)
 	int has_header;
 {
 	register int len, i;
-	register u_long *tl;
-	register long t1;
+	register u_int32_t *tl;
+	register int32_t t1;
 	struct uio uio;
 	struct iovec iov;
 	caddr_t dpos, cp2;
-	u_long nfsvers, auth_type;
+	u_int32_t nfsvers, auth_type;
 	int error = 0, nqnfs = 0;
 	struct mbuf *mrep, *md;
 
@@ -1509,14 +1509,14 @@ nfs_getreq(nd, has_header)
 	md = nd->nd_md;
 	dpos = nd->nd_dpos;
 	if (has_header) {
-		nfsm_dissect(tl, u_long *, 10*NFSX_UNSIGNED);
-		nd->nd_retxid = fxdr_unsigned(u_long, *tl++);
+		nfsm_dissect(tl, u_int32_t *, 10*NFSX_UNSIGNED);
+		nd->nd_retxid = fxdr_unsigned(u_int32_t , *tl++);
 		if (*tl++ != rpc_call) {
 			m_freem(mrep);
 			return (EBADRPC);
 		}
 	} else {
-		nfsm_dissect(tl, u_long *, 8*NFSX_UNSIGNED);
+		nfsm_dissect(tl, u_int32_t *, 8*NFSX_UNSIGNED);
 	}
 	nd->nd_repstat = 0;
 	if (*tl++ != rpc_vers) {
@@ -1541,7 +1541,7 @@ nfs_getreq(nd, has_header)
 		nd->nd_procnum = NFSPROC_NOOP;
 		return (0);
 	}
-	nd->nd_procnum = fxdr_unsigned(u_long, *tl++);
+	nd->nd_procnum = fxdr_unsigned(u_int32_t , *tl++);
 	if (nd->nd_procnum == NFSPROC_NULL)
 		return (0);
 	if (nd->nd_procnum >= NFS_NPROCS ||
@@ -1568,7 +1568,7 @@ nfs_getreq(nd, has_header)
 			return (EBADRPC);
 		}
 		nfsm_adv(nfsm_rndup(len));
-		nfsm_dissect(tl, u_long *, 3*NFSX_UNSIGNED);
+		nfsm_dissect(tl, u_int32_t *, 3*NFSX_UNSIGNED);
 		nd->nd_cr.cr_uid = fxdr_unsigned(uid_t, *tl++);
 		nd->nd_cr.cr_gid = fxdr_unsigned(gid_t, *tl++);
 		len = fxdr_unsigned(int, *tl);
@@ -1576,7 +1576,7 @@ nfs_getreq(nd, has_header)
 			m_freem(mrep);
 			return (EBADRPC);
 		}
-		nfsm_dissect(tl, u_long *, (len + 2)*NFSX_UNSIGNED);
+		nfsm_dissect(tl, u_int32_t *, (len + 2)*NFSX_UNSIGNED);
 		for (i = 0; i < len; i++)
 			if (i < NGROUPS)
 				nd->nd_cr.cr_groups[i] = fxdr_unsigned(gid_t, *tl++);
@@ -1598,7 +1598,7 @@ nfs_getreq(nd, has_header)
 		iov.iov_base = (caddr_t)nd->nd_authstr;
 		iov.iov_len = RPCAUTH_MAXSIZ;
 		nfsm_mtouio(&uio, uio.uio_resid);
-		nfsm_dissect(tl, u_long *, 2 * NFSX_UNSIGNED);
+		nfsm_dissect(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
 		nd->nd_flag |= NFSD_NEEDAUTH;
 	}
 
@@ -1621,10 +1621,10 @@ nfs_getreq(nd, has_header)
 	 * For nqnfs, get piggybacked lease request.
 	 */
 	if (nqnfs && nd->nd_procnum != NQNFSPROC_EVICTED) {
-		nfsm_dissect(tl, u_long *, NFSX_UNSIGNED);
+		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
 		nd->nd_nqlflag = fxdr_unsigned(int, *tl);
 		if (nd->nd_nqlflag) {
-			nfsm_dissect(tl, u_long *, NFSX_UNSIGNED);
+			nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
 			nd->nd_duration = fxdr_unsigned(int, *tl);
 		} else
 			nd->nd_duration = NQ_MINLEASE;

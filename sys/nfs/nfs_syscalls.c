@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.16 1995/10/07 06:28:57 mycroft Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.17 1995/12/19 23:07:46 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -74,8 +74,8 @@
 #include <nfs/nfsrtt.h>
 
 /* Global defs. */
-extern u_long nfs_prog, nfs_vers;
-extern int (*nfsrv_procs[NFS_NPROCS])();
+extern u_int32_t nfs_prog, nfs_vers;
+extern int32_t (*nfsrv_procs[NFS_NPROCS])();
 extern struct proc *nfs_iodwant[NFS_MAXASYNCDAEMON];
 extern int nfs_numasync;
 extern time_t nqnfsstarttime;
@@ -325,7 +325,7 @@ nfssvc_addsock(fp, mynam)
 #endif /* ISO */
 	}
 	if (so->so_type == SOCK_STREAM)
-		siz = NFS_MAXPACKET + sizeof (u_long);
+		siz = NFS_MAXPACKET + sizeof (u_int32_t);
 	else
 		siz = NFS_MAXPACKET;
 	if (error = soreserve(so, siz, siz)) {
@@ -588,7 +588,7 @@ nfssvc_nfsd(nsd, argp, p)
 			 */
 			if (sotype == SOCK_STREAM) {
 				M_PREPEND(m, NFSX_UNSIGNED, M_WAIT);
-				*mtod(m, u_long *) = htonl(0x80000000 | siz);
+				*mtod(m, u_int32_t *) = htonl(0x80000000 | siz);
 			}
 			if (solockp)
 				(void) nfs_sndlock(solockp, (struct nfsreq *)0);

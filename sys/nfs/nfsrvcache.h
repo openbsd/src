@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsrvcache.h,v 1.8 1994/12/13 17:17:07 mycroft Exp $	*/
+/*	$NetBSD: nfsrvcache.h,v 1.9 1995/12/19 23:08:11 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,15 +47,15 @@
 struct nfsrvcache {
 	TAILQ_ENTRY(nfsrvcache) rc_lru;		/* LRU chain */
 	LIST_ENTRY(nfsrvcache) rc_hash;		/* Hash chain */
-	u_long	rc_xid;				/* rpc id number */
+	u_int32_t rc_xid;			/* rpc id number */
 	union {
 		struct mbuf *ru_repmb;		/* Reply mbuf list OR */
 		int ru_repstat;			/* Reply status */
 	} rc_un;
 	union nethostaddr rc_haddr;		/* Host address */
-	short	rc_proc;			/* rpc proc number */
-	u_char	rc_state;		/* Current state of request */
-	u_char	rc_flag;		/* Flag bits */
+	u_int16_t rc_proc;			/* rpc proc number */
+	u_char	  rc_state;			/* Current state of request */
+	u_char	  rc_flag;			/* Flag bits */
 };
 
 #define	rc_reply	rc_un.ru_repmb

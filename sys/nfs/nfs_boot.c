@@ -1,4 +1,4 @@
-/*    $NetBSD: nfs_boot.c,v 1.19 1995/06/12 00:48:31 mycroft Exp $ */
+/*    $NetBSD: nfs_boot.c,v 1.20 1995/12/19 23:07:24 cgd Exp $ */
 
 /*
  * Copyright (c) 1995 Adam Glass, Gordon Ross
@@ -490,8 +490,8 @@ md_mount(mdsin, path, fhp)
 {
 	/* The RPC structures */
 	struct rdata {
-		u_int32_t	errno;
-		u_char	fh[NFS_FHSIZE];
+		u_int32_t errno;
+		u_int8_t  fh[NFS_FHSIZE];
 	} *rdata;
 	struct mbuf *m;
 	int error;

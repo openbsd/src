@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.6 1995/05/23 06:25:30 mycroft Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.7 1995/12/19 23:08:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -128,16 +128,16 @@ extern struct mbuf *nfsm_reqh();
 		(v) = tvp; }
 
 #define	nfsm_strsiz(s,m) \
-		{ nfsm_dissect(tl,u_long *,NFSX_UNSIGNED); \
-		if (((s) = fxdr_unsigned(long,*tl)) > (m)) { \
+		{ nfsm_dissect(tl,u_int32_t *,NFSX_UNSIGNED); \
+		if (((s) = fxdr_unsigned(int32_t,*tl)) > (m)) { \
 			m_freem(mrep); \
 			error = EBADRPC; \
 			goto nfsmout; \
 		} }
 
 #define	nfsm_srvstrsiz(s,m) \
-		{ nfsm_dissect(tl,u_long *,NFSX_UNSIGNED); \
-		if (((s) = fxdr_unsigned(long,*tl)) > (m) || (s) <= 0) { \
+		{ nfsm_dissect(tl,u_int32_t *,NFSX_UNSIGNED); \
+		if (((s) = fxdr_unsigned(int32_t,*tl)) > (m) || (s) <= 0) { \
 			error = EBADRPC; \
 			nfsm_reply(0); \
 		} }
@@ -176,7 +176,7 @@ extern struct mbuf *nfsm_reqh();
 		} \
 		t2 = nfsm_rndup(s)+NFSX_UNSIGNED; \
 		if (t2 <= M_TRAILINGSPACE(mb)) { \
-			nfsm_build(tl,u_long *,t2); \
+			nfsm_build(tl,u_int32_t *,t2); \
 			*tl++ = txdr_unsigned(s); \
 			*(tl+((t2>>2)-2)) = 0; \
 			bcopy((caddr_t)(a), (caddr_t)tl, (s)); \
@@ -214,7 +214,7 @@ extern struct mbuf *nfsm_reqh();
 		}
 
 #define nfsm_srvmtofh(f) \
-		nfsm_dissect(tl, u_long *, NFSX_FH); \
+		nfsm_dissect(tl, u_int32_t *, NFSX_FH); \
 		bcopy((caddr_t)tl, (caddr_t)f, NFSX_FH)
 
 #define	nfsm_clget \
@@ -229,7 +229,7 @@ extern struct mbuf *nfsm_reqh();
 			bp = mtod(mp, caddr_t); \
 			be = bp+mp->m_len; \
 		} \
-		tl = (u_long *)bp
+		tl = (u_int32_t *)bp
 
 #define	nfsm_srvfillattr \
 	fp->fa_type = vtonfs_type(va.va_type); \

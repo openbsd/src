@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.13 1994/08/18 22:47:46 mycroft Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.14 1995/12/19 23:07:27 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -69,10 +69,6 @@ u_long nfsnodehash;
 nfs_nhinit()
 {
 
-#ifndef lint
-	if ((sizeof(struct nfsnode) - 1) & sizeof(struct nfsnode))
-		printf("nfs_nhinit: bad size %d\n", sizeof(struct nfsnode));
-#endif /* not lint */
 	nfsnodehashtbl = hashinit(desiredvnodes, M_NFSNODE, &nfsnodehash);
 }
 
