@@ -1,87 +1,38 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
-<HTML>
- <HEAD>
-  <TITLE>Test Page for the SSL/TLS-aware Apache Installation on Web Site</TITLE>
-  <STYLE TYPE="text/css">
-  H1 {
-      font-weight: bold;
-      font-size: 18pt;
-      line-height: 18pt;
-      font-family: arial,helvetica;
-      font-variant: normal;
-      font-style: normal;
-  }
-  BODY {
-      color: black;
-      background-color: white;
-      background-image: url(manual/images/feather.jpg);
-      background-repeat: no-repeat;
-  }
-  </STYLE>
- </HEAD>
-<!-- Background white, links blue (unvisited), navy (visited), red (active) -->
- <BODY
-  BGCOLOR="#FFFFFF"
-  TEXT="#000000"
-  LINK="#0000FF"
-  VLINK="#0000FF"
-  ALINK="#FF0000"
- >
-  <BLOCKQUOTE>
-  <BLOCKQUOTE>
-  <BR>
-  <H1>
-  Hey, it worked <I>!</I><BR>
-  The SSL/TLS-aware Apache webserver was<BR>
-  successfully installed on this website.
-  </H1>
-  <P>
-  If you can see this page, then the people who own this website have just
-  installed the <A HREF="http://www.apache.org/">Apache Web server</A>
-  software and the <A HREF="http://www.modssl.org/">Apache
-  Interface to OpenSSL (mod_ssl)</A> successfully.  They now have to add
-  content to this directory and replace this placeholder page, or else point
-  the server at their real content.
-  </P>
-  <BLOCKQUOTE>
-   <STRONG>ATTENTION!</STRONG><BR>
-   If you are seeing this page instead of the site you expected, please
-   <STRONG>contact the administrator of the site involved.</STRONG>
-   (Try sending mail to <SAMP>&lt;webmaster@<EM>domain</EM>&gt;</SAMP>.)
-   Although this site is
-   running the Apache software it almost certainly has no other connection
-   to the Apache Group, so please do not send mail about this site or its
-   contents to the Apache authors.  If you do, your message will be
-   <STRONG>ignored</STRONG>.
-  </BLOCKQUOTE>
-  <P>
-  The Apache online
-  <A
-   HREF="manual/index.html"
-  >documentation</A>
-  has been included with this distribution.<BR>
-  Especially also read the 
-  <A
-   HREF="manual/mod/mod_ssl/"
-  >mod_ssl User Manual</A>
-  carefully.
-  </P>
-  <P>
-  Your are allowed to use the images below on your SSL-aware Apache Web server.<BR>
-  Thanks for using Apache, mod_ssl and OpenSSL!
-  </P>
-  <P>
-  <DIV ALIGN="CENTER">
-   <A HREF="http://www.apache.org/"
-   ><IMG SRC="manual/images/apache_pb.gif" ALT="Apache Webserver" BORDER=0></A>
-   &nbsp;
-   <A HREF="http://www.modssl.org/"
-   ><IMG SRC="manual/images/mod_ssl_sb.gif" ALT="mod_ssl Interface" BORDER=0></A>
-   &nbsp;
-   <A HREF="http://www.openssl.org/"
-   ><IMG SRC="manual/images/openssl_ics.gif" ALT="OpenSSL Toolkit" BORDER=0></A>
-  </DIV>
-  </BLOCKQUOTE>
-  </BLOCKQUOTE>
- </BODY>
-</HTML>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Test Page for Apache Installation</title>
+</head>
+<!-- Background white, links blue (unvisited), navy (visited), red
+(active) -->
+<body bgcolor="#FFFFFF" text="#000000" link="#0000FF"
+vlink="#000080" alink="#FF0000">
+<p>If you can see this, it means that the installation of the <a
+href="http://www.apache.org/foundation/preFAQ.html">Apache web
+server</a> software on this system was successful. You may now add
+content to this directory and replace this page.</p>
+
+<hr width="50%" size="8" />
+<h2 align="center">Seeing this instead of the website you
+expected?</h2>
+
+<p>This page is here because the site administrator has changed the
+configuration of this web server. Please <strong>contact the person
+responsible for maintaining this server with questions.</strong>
+The Apache Software Foundation, which wrote the web server software
+this site administrator is using, has nothing to do with
+maintaining this site and cannot help resolve configuration
+issues.</p>
+
+<hr width="50%" size="8" />
+<p>The Apache <a href="manual/">documentation</a> has been included
+with this distribution.</p>
+
+<p>You are free to use the image below on an Apache-powered web
+server. Thanks for using Apache!</p>
+
+<div align="center"><img src="apache_pb.gif" alt="" /></div>
+</body>
+</html>
+
