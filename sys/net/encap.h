@@ -1,4 +1,4 @@
-/*	$OpenBSD: encap.h,v 1.7 1997/07/11 23:37:52 provos Exp $	*/
+/*	$OpenBSD: encap.h,v 1.8 1997/07/14 08:46:40 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -28,6 +28,16 @@
  *
  * Declarations useful in the encapsulation code.
  */
+
+/* Sysctl definitions */
+
+#define ENCAPCTL_ENCDEBUG	1
+#define ENCAPCTL_MAXID		2
+
+#define ENCAPCTL_NAMES {\
+	{ 0, 0 }, \
+	{ "encdebug", CTLTYPE_INT }, \
+}
 
 /*
  * Definitions for encapsulation-related phenomena.

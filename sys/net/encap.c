@@ -1,4 +1,4 @@
-/*	$OpenBSD: encap.c,v 1.8 1997/07/11 23:37:51 provos Exp $	*/
+/*	$OpenBSD: encap.c,v 1.9 1997/07/14 08:46:39 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -92,7 +92,7 @@ encap_sysctl(int *name, u_int namelen, void *oldp, size_t *oldplenp,
 
     switch (name[0]) 
     {
-        case IPSECCTL_ENCDEBUG:
+        case ENCAPCTL_ENCDEBUG:
 	    return (sysctl_int(oldp, oldplenp, newp, newlen, &encdebug));
 
 	default:
