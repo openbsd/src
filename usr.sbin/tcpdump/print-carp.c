@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-carp.c,v 1.1 2004/04/28 02:17:03 mcbride Exp $	*/
+/*	$OpenBSD: print-carp.c,v 1.2 2004/04/29 04:08:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 William C. Fenner.
@@ -30,7 +30,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-carp.c,v 1.1 2004/04/28 02:17:03 mcbride Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-carp.c,v 1.2 2004/04/29 04:08:43 deraadt Exp $";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -50,7 +50,7 @@ static const char rcsid[] =
 void
 carp_print(register const u_char *bp, register u_int len, int ttl)
 {
-	int version, type, auth_type;
+	int version, type;
 	char *type_s;
 
 	TCHECK(bp[0]);
@@ -69,10 +69,6 @@ carp_print(register const u_char *bp, register u_int len, int ttl)
 	TCHECK(bp[5]);
 	printf("vhid=%d advbase=%d advskew=%d", bp[5], bp[1], bp[2]);
 	if (vflag) {
-		int naddrs = bp[3];
-		int i;
-		char c;
-
 		if (TTEST2(bp[0], len) && in_cksum((const u_short*)bp, len, 0))
 			printf(" (bad carp cksum %x!)",
 				EXTRACT_16BITS(&bp[6]));
