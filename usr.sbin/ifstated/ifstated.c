@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.20 2004/10/05 21:17:02 mpf Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.21 2005/02/07 12:38:44 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -67,7 +67,6 @@ void	external_evtimer_setup(struct ifsd_state *, int);
 int	scan_ifstate(int, int, struct ifsd_state *);
 void	fetch_state(void);
 void	usage(void);
-void	doconfig(const char*);
 void	adjust_expressions(struct ifsd_expression_list *, int);
 void	eval_state(struct ifsd_state *);
 void	state_change(void);
@@ -75,12 +74,12 @@ void	do_action(struct ifsd_action *);
 void	remove_action(struct ifsd_action *, struct ifsd_state *);
 void	remove_expression(struct ifsd_expression *, struct ifsd_state *);
 void	log_init(int);
-void	logit(int level, const char *fmt, ...);
+void	logit(int, const char *, ...);
 
 void
 usage(void)
 {
-	extern char* __progname;
+	extern char *__progname;
 
 	fprintf(stderr, "usage: %s [-dhinv] [-D macro=value] [-f file]\n",
 	    __progname);
