@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.8 1997/07/01 18:54:50 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.9 1997/08/24 20:31:50 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.22 1996/01/04 20:11:20 pk Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.8 1997/07/01 18:54:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.9 1997/08/24 20:31:50 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -360,7 +360,7 @@ printif(ifrm, ifaliases)
 	struct ifconf ifc;
 	struct ifreq ifreq, *ifrp;
 	int i, len = 8192;
-	int noinet = 1;
+	int count = 0, noinet = 1;
 
 	getsock(af);
 	if (s < 0)
@@ -410,11 +410,16 @@ printif(ifrm, ifaliases)
 				ifr.ifr_addr.sa_family = p->af_af;
 				(*p->af_status)(0);
 			}
+			count++;
 			noinet = 0;
 			continue;
 		}
 	}
 	free(inbuf);
+	if (count == 0) {
+		fprintf(stderr, "%s: no such interface\n", name);
+		exit(1);
+	}
 }
 
 #define RIDADDR 0
