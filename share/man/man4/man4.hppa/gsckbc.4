@@ -1,4 +1,4 @@
-.\" $OpenBSD: gsckbc.4,v 1.1 2003/01/31 23:03:12 miod Exp $
+.\" $OpenBSD: gsckbc.4,v 1.2 2003/02/17 23:12:50 miod Exp $
 .\"
 .\" Copyright (c) 2003, Miodrag Vallat.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .Sh SYNOPSIS
 .Cd "gsckbc* at gsc? irq 26"
 .Cd "gsckbd* at gsckbc?"
-.\" .Cd "gsms*   at gsckbc?"
+.Cd "pms*    at gsckbc?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -48,5 +48,5 @@ port or the
 port.
 .Sh SEE ALSO
 .Xr gsc 4 ,
-.Xr gsckbd 4
-.\" .Xr gscms 4
+.Xr gsckbd 4 ,
+.Xr pms 4
