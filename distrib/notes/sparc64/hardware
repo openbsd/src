@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.84 2005/02/18 06:53:10 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.85 2005/03/05 01:49:27 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- SBUS based workstations:
 		Ultra 1
@@ -378,7 +378,10 @@ dnl		PCI Alteon Tigon I/II PCI Gigabit Ethernet boards (ti)
 		SBUS framebuffers:
 			bwtwo - monochrome, unaccelerated
 			cgthree - 8 bit color, unaccelerated
-			cgsix - 8 bit color
+			cgsix - 8 bit color, accelerated (GX, GX+, TGX, TGX+)
+			cgtwelve - 24 bit color, 1 bit overlay,
+			    accelerated (but the driver does not support
+			    hardware acceleration)
 			Fujitsu AG-10e (agten) - 24-bit color, accelerated
 			    (currently only supported in 8-bit
 			    unaccelerated mode)
@@ -416,6 +419,8 @@ dnl		PCI Alteon Tigon I/II PCI Gigabit Ethernet boards (ti)
 		FireHose controller (fhc)
 		Central controller (central)
 		Clock board (clkbrd) 
+		SBus Expansion Subsystem (SUNW,xbox) (xbox)
+		    (currently restricted to non-DMA devices)
 
 
 Hardware that we do NOT currently support, but get many questions about:
