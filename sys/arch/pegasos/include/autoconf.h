@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.1 2003/10/31 03:54:33 drahn Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.2 2004/01/22 21:28:33 miod Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -74,7 +74,7 @@ typedef struct bushook {
 struct confargs {
 	char	*ca_name;		/* Device name. */
 	bushook_t *ca_bus;		/* bus device resides on. */
-	/* macobio hooks ??  - XXX reinvesigate usage */
+	/* macobio hooks ??  - XXX reinvestigate usage */
 	bus_space_tag_t ca_iot;
 	bus_space_tag_t ca_memt; /* XXX */
 	bus_dma_tag_t ca_dmat;
