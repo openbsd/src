@@ -41,7 +41,7 @@ CWARNFLAGS= 	-Werror -Wall -Wstrict-prototypes \
 		-Wno-format -Wno-uninitialized \
 		# -Wmissing-prototypes
 CFLAGS= 	${DEBUG} ${CWARNFLAGS} -O2 -msoft-float -pipe
-AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
+AFLAGS=		-m68020 -x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -Ttext 0E004000 -e start
 STRIPFLAGS=	-d
 
