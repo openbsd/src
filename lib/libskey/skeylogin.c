@@ -10,7 +10,7 @@
  *
  * S/Key verification check, lookups, and authentication.
  *
- * $OpenBSD: skeylogin.c,v 1.47 2002/11/16 22:31:55 millert Exp $
+ * $OpenBSD: skeylogin.c,v 1.48 2002/11/16 22:54:46 millert Exp $
  */
 
 #include <sys/param.h>
@@ -95,6 +95,8 @@ skeylookup(mp, name)
 	FILE *keyfile;
 	int fd;
 
+	memset(mp, 0, sizeof(*mp));
+
 	/* Check to see that /etc/skey has not been disabled. */
 	if (stat(_PATH_SKEYDIR, &statbuf) != 0)
 		return (-1);
@@ -105,7 +107,6 @@ skeylookup(mp, name)
 
 	/* Open the user's databse entry, creating it as needed. */
 	/* XXX - really want "/etc/skey/L/USER" where L is 1st char of USER */
-	mp->keyfile = NULL;
 	if (snprintf(filename, sizeof(filename), "%s/%s", _PATH_SKEYDIR,
 	    name) >= sizeof(filename)) {
 		errno = ENAMETOOLONG;
@@ -135,7 +136,6 @@ skeylookup(mp, name)
 	}
 
 	/* At this point, we are committed. */
-	memset(mp, 0, sizeof(*mp));
 	mp->keyfile = keyfile;
 
 	if ((nread = fread(mp->buf, 1, sizeof(mp->buf), keyfile)) == 0 ||
