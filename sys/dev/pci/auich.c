@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.5 2001/01/11 19:22:33 mickey Exp $	*/
+/*	$OpenBSD: auich.c,v 1.6 2001/01/11 21:40:05 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -209,7 +209,7 @@ struct auich_softc {
 int auich_debug = 0xfffe;
 #define	AUICH_DEBUG_CODECIO	0x0001
 #define	AUICH_DEBUG_DMA		0x0002
-#define	AUICH_DEBUG_PARAM		0x0004
+#define	AUICH_DEBUG_PARAM	0x0004
 #else
 #define	DPRINTF(x,y)	/* nothing */
 #endif
@@ -231,9 +231,9 @@ static const struct auich_devtype {
 	int	options;
 	char	name[8];
 } auich_devices[] = {
-	{ PCI_PRODUCT_INTEL_82801AA_ACA, 0, "AUICH" },
-	{ PCI_PRODUCT_INTEL_82801AB_ACA, 0, "AUICH0" },
-	{ PCI_PRODUCT_INTEL_82801BA_ACA, 0, "AUICH2" },
+	{ PCI_PRODUCT_INTEL_82801AA_ACA, 0, "ICH" },
+	{ PCI_PRODUCT_INTEL_82801AB_ACA, 0, "ICH0" },
+	{ PCI_PRODUCT_INTEL_82801BA_ACA, 0, "ICH2" },
 	{ PCI_PRODUCT_INTEL_82440MX_ACA, 0, "440MX" },
 };
 
@@ -794,7 +794,7 @@ auich_freem(v, ptr, pool)
 
 	for (p = sc->sc_dmas; p->addr != ptr; p = p->next)
 		if (p->next == NULL) {
-			printf("auich_free: trying to free not allocated memory");
+			printf("auich_freem: trying to free not allocated memory");
 			return;
 		}
 
