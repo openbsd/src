@@ -1,4 +1,4 @@
-/*	$OpenBSD: fhc.c,v 1.7 2004/09/27 18:32:35 jason Exp $	*/
+/*	$OpenBSD: fhc.c,v 1.8 2004/09/27 19:23:07 jason Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net)
@@ -64,10 +64,14 @@ fhc_attach(struct fhc_softc *sc)
 	int node0, node;
 	u_int32_t ctrl;
 
-	printf(" board %d: %s\n", sc->sc_board,
+	printf(" board %d: %s", sc->sc_board,
 	    getpropstring(sc->sc_node, "board-model"));
 
 	sc->sc_cbt = fhc_alloc_bus_tag(sc);
+
+	sc->sc_ign = sc->sc_board << 1;
+	bus_space_write_4(sc->sc_bt, sc->sc_ireg, FHC_I_IGN, sc->sc_ign);
+	sc->sc_ign = bus_space_read_4(sc->sc_bt, sc->sc_ireg, FHC_I_IGN);
 
 	ctrl = bus_space_read_4(sc->sc_bt, sc->sc_preg, FHC_P_CTRL);
 	if (!sc->sc_is_central)
@@ -268,7 +272,8 @@ fhc_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 		intrregs = bus_space_vaddr(sc->sc_bt, *hp);
 		intrmapptr = &intrregs->imap;
 		intrclrptr = &intrregs->iclr;
-		vec = INTVEC(*intrmapptr);
+		vec = ((sc->sc_ign << INTMAP_IGN_SHIFT) & INTMAP_IGN) |
+		    INTINO(ihandle);
 	} else
 		vec = INTVEC(ihandle);
 

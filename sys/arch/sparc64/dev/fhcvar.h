@@ -1,4 +1,4 @@
-/*	$OpenBSD: fhcvar.h,v 1.4 2004/09/27 18:32:35 jason Exp $	*/
+/*	$OpenBSD: fhcvar.h,v 1.5 2004/09/27 19:23:07 jason Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net).
@@ -45,6 +45,7 @@ struct fhc_softc {
 	int sc_node;
 	int sc_is_central;		/* parent is central */
 	int sc_board;
+	u_int32_t sc_ign;
 	bus_space_tag_t sc_bt;
 	bus_space_tag_t sc_cbt;
 	int sc_nrange;
