@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldconfig.8,v 1.5 2001/01/30 02:39:05 brad Exp $
+.\"	$OpenBSD: ldconfig.8,v 1.6 2001/04/11 05:06:37 aaron Exp $
 .\"
 .\" Copyright (c) 1993,1995 Paul Kranenburg
 .\" All rights reserved.
@@ -76,11 +76,11 @@ equivalent of the
 switch of
 .Xr ld.
 .Pp
-.Nm Ldconfig
+.Nm
 is typically run as part of the boot sequence.
 .Pp
 The following options are recognized by
-.Nm ldconfig:
+.Nm ldconfig :
 .Bl -tag -width indent
 .It Fl R
 Rescan the previously configured directories. This opens the hints file
@@ -116,11 +116,13 @@ will only load shared libraries from the
 .Ev ld.so.hints
 file. In particular, the
 .Ev LD_LIBRARY_PATH
-is not used to search for libraries. Thus, the role of ldconfig is dual. In
-addition to building a set of hints for quick lookup, it also serves to
+is not used to search for libraries. Thus, the role of
+.Nm
+is dual.
+In addition to building a set of hints for quick lookup, it also serves to
 specify the trusted collection of directories from which shared objects can
 be safely loaded. It is presumed that the set of directories specified to
-.Nm ldconfig
+.Nm
 are under control of the system's administrator.
 .Xr ld.so
 further assists set-user-Id programs by erasing the
