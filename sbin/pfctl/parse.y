@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.202 2002/11/23 09:33:54 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.203 2002/11/23 15:59:57 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -193,7 +193,7 @@ void	expand_label_nr(const char *, char *);
 void	expand_label(char *, const char *, u_int8_t, struct node_host *,
 	    struct node_port *, struct node_host *, struct node_port *,
 	    u_int8_t);
-void  expand_rule(struct pf_rule *, struct node_if *, struct node_host *,
+void	expand_rule(struct pf_rule *, struct node_if *, struct node_host *,
 	    struct node_proto *, struct node_host *, struct node_port *,
 	    struct node_host *, struct node_port *, struct node_uid *,
 	    struct node_gid *, struct node_icmp *);
