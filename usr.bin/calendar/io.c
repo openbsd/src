@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.12 2001/07/09 07:04:48 deraadt Exp $	*/
+/*	$OpenBSD: io.c,v 1.13 2001/09/03 15:53:00 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: io.c,v 1.12 2001/07/09 07:04:48 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.13 2001/09/03 15:53:00 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,10 +69,6 @@ static char rcsid[] = "$OpenBSD: io.c,v 1.12 2001/07/09 07:04:48 deraadt Exp $";
 #include "pathnames.h"
 #include "calendar.h"
 
-
-char *calendarFile = "calendar";  /* default calendar file */
-char *calendarHome = ".calendar"; /* HOME */
-char *calendarNoMail = "nomail";  /* don't sent mail if this file exist */
 
 struct iovec header[] = {
 	{"From: ", 6},
@@ -321,20 +317,12 @@ openf(path)
 FILE *
 opencal()
 {
-	int fd, pdes[2];
+	int pdes[2];
 	int fdin;
-	struct stat sbuf;
 
 	/* open up calendar file as stdin */
 	if ((fdin = openf(calendarFile)) == -1) {
-		if (doall) {
-			if (chdir(calendarHome) != 0)
-				return (NULL);
-			if (stat(calendarNoMail, &sbuf) == 0)
-				return (NULL);
-			if ((fdin = openf(calendarFile)) == -1)
-				return (NULL);
-		} else {
+		if (!doall) {
 			char *home = getenv("HOME");
 			if (home == NULL || *home == '\0')
 				errx(1, "cannot get home directory");
@@ -360,8 +348,17 @@ opencal()
 			(void)close(pdes[1]);
 		}
 		(void)close(pdes[0]);
-		(void)setuid(geteuid());
-		(void)setgid(getegid());
+		/* Set stderr to /dev/null.  Necessary so that cron does not
+		 * wait for cpp to finish if it's running calendar -a.
+		 */
+		if (doall) {
+			int fderr;
+			fderr = open(_PATH_DEVNULL, O_WRONLY, 0);
+			if (fderr == -1)
+				_exit(0);
+			(void)dup2(fderr, STDERR_FILENO);
+			(void)close(fderr);
+		}
 		execl(_PATH_CPP, "cpp", "-P", "-I.", _PATH_INCLUDE, (char *)NULL);
 		warn(_PATH_CPP);
 		_exit(1);
@@ -376,10 +373,7 @@ opencal()
 		return (stdout);
 
 	/* set output to a temporary file, so if no output don't send mail */
-	(void)snprintf(path, sizeof(path), "%s/_calXXXXXX", _PATH_TMP);
-	if ((fd = mkstemp(path)) < 0)
-		return (NULL);
-	return (fdopen(fd, "w+"));
+	return(tmpfile());
 }
 
 void
@@ -410,8 +404,6 @@ closecal(fp)
 			(void)close(pdes[0]);
 		}
 		(void)close(pdes[1]);
-		(void)setuid(geteuid());
-		(void)setgid(getegid());
 		execl(_PATH_SENDMAIL, "sendmail", "-i", "-t", "-F",
 		    "\"Reminder Service\"", (char *)NULL);
 		warn(_PATH_SENDMAIL);
@@ -427,7 +419,6 @@ closecal(fp)
 		(void)write(pdes[1], buf, nread);
 	(void)close(pdes[1]);
 done:	(void)fclose(fp);
-	(void)unlink(path);
 	while (wait(&status) >= 0)
 		;
 }

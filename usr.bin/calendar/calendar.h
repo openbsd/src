@@ -1,4 +1,4 @@
-/*	$OpenBSD: calendar.h,v 1.4 1998/12/13 07:31:07 pjanzen Exp $	*/
+/*	$OpenBSD: calendar.h,v 1.5 2001/09/03 15:53:00 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -40,6 +40,7 @@ extern time_t f_time;
 extern struct iovec header[];
 extern struct tm *tp;
 extern char *calendarFile;
+extern char *calendarHome;
 extern char *optarg;
 
 struct fixs {
@@ -108,3 +109,9 @@ extern int f_dayBefore;	/* days before current date */
 
 #define NUMEV 2	/* Total number of such special events */
 extern struct specialev spev[NUMEV];
+
+/* For calendar -a, specify a maximum time (in seconds) to spend parsing
+ * each user's calendar files.  This prevents them from hanging calendar
+ * (e.g. by using named pipes)
+ */
+#define USERTIMEOUT 20
