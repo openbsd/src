@@ -1,4 +1,4 @@
-/*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
+/*      $OpenBSD: eap.c,v 1.7 1999/10/10 00:36:46 csapuntz Exp $ */
 /*	$NetBSD: eap.c,v 1.25 1999/02/18 07:59:30 mycroft Exp $	*/
 
 /*
@@ -705,7 +705,7 @@ eap_attach(parent, self, aux)
 		printf("\n");
 		return;
 	}
-	printf(": %s\n", sc->sc_dev.dv_xname, intrstr);
+	printf(": %s\n", intrstr);
 
 	if (!sc->sc_1371) {
 		/* Enable interrupts and looping mode. */
