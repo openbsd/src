@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.70 2002/04/01 16:19:59 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.71 2002/04/22 00:19:59 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -73,10 +73,10 @@
 #define	PDB_PHYS	0x00020000
 #define	PDB_POOL	0x00040000
 int pmapdebug = 0
+	| PDB_INIT
 /*	| PDB_FOLLOW */
 /*	| PDB_VP */
 /*	| PDB_PV */
-/*	| PDB_INIT */
 /*	| PDB_ENTER */
 /*	| PDB_REMOVE */
 /*	| PDB_STEAL */
@@ -87,8 +87,9 @@ int pmapdebug = 0
 #define	DPRINTF(l,s)	/* */
 #endif
 
-vaddr_t	virtual_steal, virtual_avail;
+vaddr_t	virtual_avail;
 paddr_t physical_steal, physical_end;
+vaddr_t pmap_pv_page;
 
 #if defined(HP7100LC_CPU) || defined(HP7300LC_CPU)
 int		pmap_hptsize = 256;	/* patchable */
@@ -147,7 +148,8 @@ pmap_sdir_set(pa_space_t space, paddr_t pa)
 	if (!vtop)
 		panic("pmap_sdir_set: zero vtop");
 #endif
-	asm("stwas	%0, 0(%1)":: "r" (pa), "r" (vtop + (space << 2)));
+	asm("stwas	%0, 0(%1)\n\tsync"
+	    :: "r" (pa), "r" (vtop + (space << 2)));
 }
 
 static __inline paddr_t
@@ -156,7 +158,8 @@ pmap_sdir_get(pa_space_t space)
 	paddr_t vtop, pa;
 
 	mfctl(CR_VTOP, vtop);
-	asm("ldwax,s	%2(%1), %0": "=&r" (pa) : "r" (vtop), "r" (space));
+	asm("ldwax,s	%2(%1), %0\n\tsync"
+	    : "=&r" (pa) : "r" (vtop), "r" (space));
 
 	return (pa);
 }
@@ -166,7 +169,8 @@ pmap_pde_get(paddr_t pa, vaddr_t va)
 {
 	pt_entry_t *pde;
 
-	asm("ldwax,s	%2(%1), %0": "=&r" (pde) : "r" (pa), "r" (va >> 22));
+	asm("ldwax,s	%2(%1), %0\n\tsync"
+	    : "=&r" (pde) : "r" (pa), "r" (va >> 22));
 
 	return (pde);
 }
@@ -174,7 +178,11 @@ pmap_pde_get(paddr_t pa, vaddr_t va)
 static __inline void
 pmap_pde_set(struct pmap *pm, vaddr_t va, paddr_t ptp)
 {
-	asm("stwas	%0, 0(%1)"
+#ifdef PMAPDEBUG
+	if (ptp & PGOFSET)
+		panic("pmap_pde_set, unaligned ptp 0x%x", ptp);
+#endif
+	asm("stwas	%0, 0(%1)\n\tsync"
 	    :: "r" (ptp), "r" ((paddr_t)pm->pm_pdir + ((va >> 20) & 0xffc)));
 }
 
@@ -186,6 +194,22 @@ pmap_pde_alloc(struct pmap *pm, vaddr_t va, struct vm_page **pdep)
 
 	DPRINTF(PDB_FOLLOW|PDB_VP,
 	    ("pmap_pde_alloc(%p, 0x%x, %p)\n", pm, va, pdep));
+
+	/* special hacking for pre-mapping the kernel */
+	if (!pmap_initialized) {
+		if (physical_steal >= physical_end)
+			panic("pmap_pde_alloc: out of steallage");
+
+		pa = physical_steal;
+		physical_steal += PAGE_SIZE;
+		bzero((void *)pa, PAGE_SIZE);
+		fdcache(HPPA_SID_KERNEL, pa, PAGE_SIZE);
+		pmap_pde_set(pm, va, pa);
+		pm->pm_stats.resident_count++;	/* count PTP as resident */
+
+		DPRINTF(PDB_VP, ("pmap_pde_alloc: pde %x\n", pa));
+		return ((pt_entry_t *)pa);
+	}
 
 	va &= PDE_MASK;
 	pg = uvm_pagealloc(&pm->pm_obj, va, NULL,
@@ -243,8 +267,8 @@ pmap_pte_get(pt_entry_t *pde, vaddr_t va)
 {
 	pt_entry_t pte;
 
-	asm("ldwax,s	%2(%1),%0" : "=&r" (pte)
-	    : "r" (pde),  "r" ((va >> 12) & 0x3ff));
+	asm("ldwax,s	%2(%1),%0"
+	    : "=&r" (pte) : "r" (pde),  "r" ((va >> 12) & 0x3ff));
 
 	return (pte);
 }
@@ -258,12 +282,18 @@ pmap_pte_set(pt_entry_t *pde, vaddr_t va, pt_entry_t pte)
 #ifdef PMAPDEBUG
 	if (!pde)
 		panic("pmap_pte_set: zero pde");
-	if (pte && pte < virtual_steal &&
+
+	if (pte && pte < physical_end &&
 	    hppa_trunc_page(pte) != (paddr_t)&gateway_page)
 		panic("pmap_pte_set: invalid pte");
 
-	if (pte && !(pte & PTE_PROT(TLB_UNCACHABLE)))
+	if (pte && !(pte & PTE_PROT(TLB_UNCACHABLE))) {
+		printf("pmap_pte_set: cached pte\n");
 		Debugger();
+	}
+
+	if ((paddr_t)pde & PGOFSET)
+		panic("pmap_pte_set, unaligned pde %p", pde);
 #endif
 	asm("stwas	%0, 0(%1)"
 	    :: "r" (pte), "r" ((paddr_t)pde + ((va >> 10) & 0xffc)));
@@ -380,13 +410,12 @@ pmap_bootstrap(vstart)
 	extern char etext, etext1;
 	extern u_int totalphysmem, *ie_mem;
 	extern paddr_t hppa_vtop;
-	vaddr_t addr = hppa_round_page(vstart), t;
+	vaddr_t va, addr = hppa_round_page(vstart), t;
 	vsize_t size;
 #if 0 && (defined(HP7100LC_CPU) || defined(HP7300LC_CPU))
 	struct vp_entry *hptp;
 #endif
 	struct pmap *kpm;
-	int i;
 
 	DPRINTF(PDB_FOLLOW|PDB_INIT, ("pmap_bootstrap(0x%x)\n", vstart));
 
@@ -427,7 +456,8 @@ pmap_bootstrap(vstart)
 	hppa_vtop = addr;
 	bzero((void *)addr, (hppa_sid_max + 1) * 4);
 	fdcache(HPPA_SID_KERNEL, addr, (hppa_sid_max + 1) * 4);
-	printf("vtop: 0x%x @ 0x%x\n", (hppa_sid_max + 1) * 4, addr);
+	DPRINTF(PDB_INIT, ("vtop: 0x%x @ 0x%x\n",
+	    (hppa_sid_max + 1) * 4, addr));
 	addr += (hppa_sid_max + 1) * 4;
 	pmap_sdir_set(HPPA_SID_KERNEL, kpm->pm_pdir);
 
@@ -465,24 +495,14 @@ pmap_bootstrap(vstart)
 	}
 #endif	/* HP7100LC_CPU | HP7300LC_CPU */
 
-	/* map the kernel space, which will give us virtual_avail */
-	vstart = hppa_round_page(addr + (totalphysmem - (atop(addr))) *
-	    (16 + sizeof(struct pv_head) + sizeof(struct vm_page)));
 	/* XXX PCXS needs two separate inserts in separate btlbs */
 	t = (vaddr_t)&etext1;
 	if (btlb_insert(HPPA_SID_KERNEL, 0, 0, &t,
 	    pmap_sid2pid(HPPA_SID_KERNEL) |
-	    pmap_prot(pmap_kernel(), VM_PROT_READ|VM_PROT_EXECUTE)) < 0)
+	    pmap_prot(pmap_kernel(), UVM_PROT_RX)) < 0)
 		panic("pmap_bootstrap: cannot block map kernel text");
-	t = vstart - (vaddr_t)&etext1;
-	if (btlb_insert(HPPA_SID_KERNEL, (vaddr_t)&etext1, (vaddr_t)&etext1, &t,
-	    pmap_sid2pid(HPPA_SID_KERNEL) | TLB_UNCACHABLE |
-	    pmap_prot(pmap_kernel(), VM_PROT_ALL)) < 0)
-		panic("pmap_bootstrap: cannot block map kernel");
-	vstart = (vaddr_t)&etext1 + t;
-	virtual_avail = vstart;
 	kpm->pm_stats.wired_count = kpm->pm_stats.resident_count =
-	    physmem = atop(vstart);
+	    physmem = atop(t);
 
 	if (&etext < &etext1) {
 		physical_steal = (vaddr_t)&etext;
@@ -497,62 +517,27 @@ pmap_bootstrap(vstart)
 	 */
 
 	addr = hppa_round_page(addr);
+	pmap_pv_page = addr;
+	addr += PAGE_SIZE;
 	size = hppa_round_page(sizeof(struct pv_head) * totalphysmem);
 	bzero ((caddr_t)addr, size);
+	virtual_avail = addr + size;
 
 	DPRINTF(PDB_INIT, ("pmseg.pvent: 0x%x @ 0x%x\n", size, addr));
 
 	/* XXX we might need to split this for isa */
-	virtual_steal = addr + size;
-	i = atop(virtual_avail - virtual_steal);
-	uvm_page_physload(0, totalphysmem + i,
-		atop(virtual_avail), totalphysmem + i, VM_FREELIST_DEFAULT);
+	uvm_page_physload(0, totalphysmem,
+		atop(virtual_avail), totalphysmem, VM_FREELIST_DEFAULT);
 	/* we have only one initial phys memory segment */
 	vm_physmem[0].pmseg.pvhead = (struct pv_head *)addr;
 
-	DPRINTF(PDB_INIT, ("stealspool: 0x%x @ 0x%x\n",
-	    virtual_avail - virtual_steal, virtual_steal));
-}
+	addr += size;
+	/* now we know how much to map */
+	for (va = (vaddr_t)&etext1; va < addr; va += PAGE_SIZE)
+		pmap_kenter_pa(va, va, UVM_PROT_RW);
 
-/*
- * pmap_steal_memory(size, startp, endp)
- *	steals memory block of size `size' from directly mapped
- *	segment (mapped behind the scenes).
- *	directly mapped cannot be grown dynamically once allocated.
- */
-vaddr_t
-pmap_steal_memory(size, startp, endp)
-	vsize_t size;
-	vaddr_t *startp;
-	vaddr_t *endp;
-{
-	vaddr_t va;
-
-	DPRINTF(PDB_FOLLOW|PDB_STEAL,
-	    ("pmap_steal_memory(%x, %x, %x)\n", size, startp, endp));
-
-	if (startp)
-		*startp = virtual_avail;
-	if (endp)
-		*endp = VM_MAX_KERNEL_ADDRESS;
-
-	size = hppa_round_page(size);
-	if (size <= virtual_avail - virtual_steal) {
-
-		DPRINTF(PDB_STEAL,
-		    ("pmap_steal_memory: steal %d bytes (%x+%x,%x)\n",
-		    size, virtual_steal, size, virtual_avail));
-
-		va = virtual_steal;
-		virtual_steal += size;
-
-		/* make seg0 smaller (reduce fake top border) */
-		vm_physmem[0].end -= atop(size);
-		vm_physmem[0].avail_end -= atop(size);
-	} else
-		va = NULL;
-
-	return va;
+	DPRINTF(PDB_INIT, ("bootstrap: mapped %p - 0x%x\n",
+	    &etext1, addr));
 }
 
 void
@@ -564,9 +549,6 @@ pmap_init()
 	    &pool_allocator_nointr);
 	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pmappv",
 	    &pmap_allocator_pv);
-	/* deplete the steal area */
-	pool_prime(&pmap_pv_pool, (virtual_avail - virtual_steal) / PAGE_SIZE *
-	    pmap_pv_pool.pr_itemsperpage);
 
 	simple_lock_init(&pvalloc_lock);
 
@@ -589,6 +571,13 @@ pmap_init()
 		pmap_pte_set(pde, SYSCALLGATE, (paddr_t)&gateway_page |
 		    PTE_PROT(TLB_UNCACHABLE|TLB_GATE_PROT));
 	}
+}
+
+void
+pmap_virtual_space(vaddr_t *startp, vaddr_t *endp)
+{
+	*startp = virtual_avail;
+	*endp = VM_MAX_KERNEL_ADDRESS;
 }
 
 struct pmap *
@@ -796,7 +785,7 @@ pmap_remove(pmap, sva, eva)
 	struct pv_head *pvh;
 	struct pv_entry *pve;
 	pt_entry_t *pde, pte;
-	int bank, off;
+	int bank, off, batch;
 	u_int pdemask;
 
 	DPRINTF(PDB_FOLLOW|PDB_REMOVE,
@@ -811,6 +800,7 @@ pmap_remove(pmap, sva, eva)
 				sva += ~PDE_MASK + 1 - PAGE_SIZE;
 				continue;
 			}
+			batch = pdemask == sva && sva + ~PDE_MASK + 1 < eva;
 		}
 
 		if ((pte = pmap_pte_get(pde, sva))) {
@@ -829,7 +819,9 @@ pmap_remove(pmap, sva, eva)
 			fdcache(pmap->pm_space, sva, PAGE_SIZE);
 			pdtlb(pmap->pm_space, sva);
 
-			pmap_pte_set(pde, sva, 0);
+			/* iff properly accounted pde will be dropped anyway */
+			if (!batch)
+				pmap_pte_set(pde, sva, 0);
 
 			bank = vm_physseg_find(atop(pte), &off);
 			if (pmap_initialized && bank != -1) {
@@ -886,8 +878,7 @@ pmap_write_protect(pmap, sva, eva, prot)
 			if ((pte & PTE_PROT(TLB_AR_MASK)) == tlbprot)
 				continue;
 
-			if (pte & PTE_PROT(TLB_EXECUTE))
-				ficache(pmap->pm_space, sva, PAGE_SIZE);
+			ficache(pmap->pm_space, sva, PAGE_SIZE);
 			pitlb(pmap->pm_space, sva);
 			fdcache(pmap->pm_space, sva, PAGE_SIZE);
 			pdtlb(pmap->pm_space, sva);
@@ -1247,24 +1238,14 @@ pmap_kremove(va, size)
 void *
 pmap_pv_page_alloc(struct pool *pp, int flags)
 {
-	vaddr_t va;
-
 	DPRINTF(PDB_FOLLOW|PDB_POOL,
 	    ("pmap_pv_page_alloc(%p, %x)\n", pp, flags));
 
-	/*
-		TODO
-	if (list not empty) {
-		get from the list;
-		return (va);
+	if (pmap_pv_page) {
+		void *v = (void *)pmap_pv_page;
+		pmap_pv_page = 0;
+		return (v);
 	}
-	*/
-
-	if ((va = pmap_steal_memory(PAGE_SIZE, NULL, NULL)))
-		return (void *)va;
-
-	DPRINTF(PDB_FOLLOW|PDB_POOL,
-	    ("pmap_pv_page_alloc: uvm_km_alloc_poolpage1\n"));
 
 	return ((void *)uvm_km_alloc_poolpage1(kernel_map, uvm.kernel_object,
 	    (flags & PR_WAITOK) ? TRUE : FALSE));
@@ -1277,8 +1258,8 @@ pmap_pv_page_free(struct pool *pp, void *v)
 
 	DPRINTF(PDB_FOLLOW|PDB_POOL, ("pmap_pv_page_free(%p, %p)\n", pp, v));
 
-	if (va < virtual_avail) {
-		/* TODO save on list somehow */
-	} else
+	if (va < virtual_avail)
+		panic("pmap_pv_page_alloc: freeing the last page");
+	else
 		uvm_km_free_poolpage1(kernel_map, va);
 }

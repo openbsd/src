@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.67 2002/04/21 22:30:46 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.68 2002/04/22 00:19:59 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -517,13 +517,13 @@ hppa_init(start)
 	v = hppa_round_page(v);
 	bzero ((void *)v1, (v - v1));
 
+	msgbufp = (struct msgbuf *)v;
+	v += hppa_round_page(MSGBUFSIZE);
+	bzero(msgbufp, MSGBUFSIZE);
+	msgbufmapped = 1;
+
 	/* sets physmem */
 	pmap_bootstrap(v);
-
-	/* alloc msgbuf */
-	if (!(msgbufp = (void *)pmap_steal_memory(MSGBUFSIZE, NULL, NULL)))
-		panic("cannot allocate msgbuf");
-	msgbufmapped = 1;
 
 	/* locate coprocessors and SFUs */
 	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_COPROC, PDC_COPROC_DFLT,
@@ -545,6 +545,7 @@ hppa_init(start)
 #ifdef DDB
 	ddb_init();
 #endif
+	fcacheall();
 }
 
 void
