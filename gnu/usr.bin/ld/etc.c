@@ -1,81 +1,57 @@
-/* * $OpenBSD: etc.c,v 1.3 2000/04/24 03:33:27 form Exp $*/
-/*
- */
+/* $OpenBSD: etc.c,v 1.4 2002/05/24 06:08:52 ericj Exp $ */
+
+/* Public Domain */
+
+#include <sys/types.h>
 
 #include <err.h>
 #include <stdlib.h>
 #include <string.h>
 
-/*
- * Like strdup but get fatal error if memory is exhausted.
- */
+#define	OOM_MSG	"Out of memory"
+
 char *
-xstrdup(s)
-	char *s;
+xstrdup(const char *s)
 {
-	char *result = strdup(s);
+	char *ptr;
 
-	if (!result)
-		errx(1, "virtual memory exhausted");
-
-	return result;
+	if ((ptr = strdup(s)) == NULL)
+		err(1, OOM_MSG);
+	return (ptr);
 }
 
-/*
- * Like malloc but get fatal error if memory is exhausted.
- */
 void *
-xmalloc(size)
-	size_t size;
+xmalloc(size_t size)
 {
-	register void	*result = (void *)malloc(size);
-
-	if (!result)
-		errx(1, "virtual memory exhausted");
-
-	return result;
-}
-
-/*
- * Like realloc but get fatal error if memory is exhausted.
- */
-void *
-xrealloc(ptr, size)
 	void *ptr;
-	size_t size;
-{
-	register void	*result;
 
-	if (ptr == NULL)
-		result = (void *)malloc(size);
-	else
-		result = (void *)realloc(ptr, size);
-
-	if (!result)
-		errx(1, "virtual memory exhausted");
-
-	return result;
+	if ((ptr = malloc(size)) == NULL)
+		err(1, OOM_MSG);
+	return (ptr);
 }
 
-/*
- * Return a newly-allocated string whose contents concatenate
- * the strings S1, S2, S3.
- */
+void *
+xrealloc(void *ptr, size_t size)
+{
+	void *nptr;
+
+	if ((nptr = realloc(ptr, size)) == NULL)
+		err(1, OOM_MSG);
+	return (nptr);
+}
+
 char *
-concat(s1, s2, s3)
-	const char *s1, *s2, *s3;
+concat(const char *s1, const char *s2, const char *s3)
 {
-	register int	len1 = strlen(s1),
-			len2 = strlen(s2),
-			len3 = strlen(s3);
+	char *str;
+	size_t len;
 
-	register char *result = (char *)xmalloc(len1 + len2 + len3 + 1);
+	len = strlen(s1) + strlen(s2) + strlen(s3) + 1;
+	str = xmalloc(len);
 
-	strcpy(result, s1);
-	strcpy(result + len1, s2);
-	strcpy(result + len1 + len2, s3);
-	result[len1 + len2 + len3] = 0;
+	strlcpy(str, s1, len);
+	strlcat(str, s2, len);
+	strlcat(str, s3, len);
 
-	return result;
+	return (str);
 }
-
