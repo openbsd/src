@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vgafb.4,v 1.1 2002/01/25 04:49:37 jason Exp $
+.\"	$OpenBSD: vgafb.4,v 1.2 2002/04/04 04:00:53 jason Exp $
 .\"
 .\" Copyright (c) 2002 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .Os
 .Sh NAME
 .Nm vgafb
-.Nd unaccelerated 8-bit VGA color frame buffer
+.Nd VGA frame buffer
 .Sh SYNOPSIS
 .Cd "vgafb* at pci? dev ? function ?"
 .Cd "wsdisplay* at vgafb?"
@@ -48,6 +48,9 @@ It does not provide direct device driver entry points
 but makes its functions available via the internal
 .Xr wsdisplay 4
 interface.
+Both unaccelerated access as a dumb framebuffer and
+accelerated access methods are provided to
+.Xr wscons .
 .Sh SEE ALSO
 .Xr wscons 4 ,
 .Xr wsdisplay 4
