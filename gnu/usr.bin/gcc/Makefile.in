@@ -906,9 +906,14 @@ libgcc2.a: libgcc2.c libgcc2.ready $(CONFIG_H) $(LIB2FUNCS_EXTRA) \
 	  else true; \
 	  fi; \
 	done
+	-if [ x${HPUX_GAS} = x ] ; then \
+	  if $(RANLIB_TEST) ; then $(RANLIB) tmplibgcc2.a; else true; fi; \
+	else true; fi; \
 	mv tmplibgcc2.a libgcc2.a
 # These lines were deleted from above the mv command
-# because ranlibing libgcc.a itself should suffice.
+# because it was thought ranlibing libgcc.a itself should suffice.
+# However that was not true, as some make variants treats unranlibed
+# archives as always out-of-date.
 #	-if [ x${HPUX_GAS} = x ] ; then \
 #	  if $(RANLIB_TEST) ; then $(RANLIB) tmplibgcc2.a; else true; fi; \
 #	else true; fi
