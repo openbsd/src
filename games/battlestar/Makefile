@@ -9,5 +9,14 @@ MAN=	battlestar.6
 DPADD=	${LIBCURSES} ${LIBTERMLIB}
 LDADD=	-lcurses -ltermlib
 HIDEGAME=hidegame
+BINGRP=	games
+
+beforeinstall: 
+	@if [ ! -f ${DESTDIR}/var/games/battlestar.log ]; then \
+	    ${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 664 \
+		/dev/null ${DESTDIR}/var/games/battlestar.log ; \
+	else \
+                true ; \
+        fi
 
 .include <bsd.prog.mk>
