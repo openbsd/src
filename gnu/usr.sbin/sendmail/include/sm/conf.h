@@ -922,7 +922,9 @@ extern unsigned int sleepX __P((unsigned int seconds));
 #   undef SPT_TYPE
 #   define SPT_TYPE	SPT_BUILTIN	/* setproctitle is in libc */
 #   define HASSETLOGIN	1	/* has setlogin(2) */
-#   define HASSETREUID	0	/* OpenBSD has broken setreuid(2) emulation */
+#   if OpenBSD < 200305
+#    define HASSETREUID	0	/* setreuid(2) broken in OpenBSD < 3.3 */
+#   endif
 #   define HASSETEGID	1	/* use setegid(2) to set saved gid */
 #   define HASURANDOMDEV	1	/* has /dev/urandom(4) */
 #   if OpenBSD >= 200006
