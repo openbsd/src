@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.20 2003/06/24 21:54:38 henric Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.21 2003/07/03 20:36:07 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -148,15 +148,15 @@ int	cs4231_halt_input(void *);
 int	cs4231_getdev(void *, struct audio_device *);
 int	cs4231_set_port(void *, mixer_ctrl_t *);
 int	cs4231_get_port(void *, mixer_ctrl_t *);
-int	cs4231_query_devinfo(void *addr, mixer_devinfo_t *);
+int	cs4231_query_devinfo(void *, mixer_devinfo_t *);
 void *	cs4231_alloc(void *, int, size_t, int, int);
 void	cs4231_free(void *, void *, int);
 size_t	cs4231_round_buffersize(void *, int, size_t);
 int	cs4231_get_props(void *);
 int	cs4231_trigger_output(void *, void *, void *, int,
-    void (*intr)(void *), void *arg, struct audio_params *);
+    void (*)(void *), void *, struct audio_params *);
 int	cs4231_trigger_input(void *, void *, void *, int,
-    void (*intr)(void *), void *arg, struct audio_params *);
+    void (*)(void *), void *, struct audio_params *);
 
 struct audio_hw_if cs4231_sa_hw_if = {
 	cs4231_open,
@@ -202,9 +202,7 @@ struct audio_device cs4231_device = {
 };
 
 int
-cs4231_match(parent, vcf, aux)
-	struct device *parent;
-	void *vcf, *aux;
+cs4231_match(struct device *parent, void *vcf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -212,9 +210,7 @@ cs4231_match(parent, vcf, aux)
 }
 
 void    
-cs4231_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+cs4231_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct cs4231_softc *sc = (struct cs4231_softc *)self;
@@ -282,9 +278,7 @@ cs4231_attach(parent, self, aux)
  * Write to one of the indexed registers of cs4231.
  */
 void
-cs4231_write(sc, r, v)
-	struct cs4231_softc *sc;
-	u_int8_t r, v;
+cs4231_write(struct cs4231_softc *sc, u_int8_t r, u_int8_t v)
 {
 	CS_WRITE(sc, AD1848_IADDR, r);
 	CS_WRITE(sc, AD1848_IDATA, v);
@@ -294,19 +288,14 @@ cs4231_write(sc, r, v)
  * Read from one of the indexed registers of cs4231.
  */
 u_int8_t
-cs4231_read(sc, r)
-	struct cs4231_softc *sc;
-	u_int8_t r;
+cs4231_read(struct cs4231_softc *sc, u_int8_t r)
 {
 	CS_WRITE(sc, AD1848_IADDR, r);
 	return (CS_READ(sc, AD1848_IDATA));
 }
 
 int
-cs4231_set_speed(sc, argp)
-	struct cs4231_softc *sc;
-	u_long *argp;
-
+cs4231_set_speed(struct cs4231_softc *sc, u_long *argp)
 {
 	/*
 	 * The available speeds are in the following table. Keep the speeds in
@@ -374,11 +363,9 @@ cs4231_set_speed(sc, argp)
  * Audio interface functions
  */
 int
-cs4231_open(addr, flags)
-	void *addr;
-	int flags;
+cs4231_open(void *vsc, int flags)
 {
-	struct cs4231_softc *sc = addr;
+	struct cs4231_softc *sc = vsc;
 	int tries;
 
 	if (sc->sc_open)
@@ -422,8 +409,7 @@ cs4231_open(addr, flags)
 }
 
 void
-cs4231_setup_output(sc)
-	struct cs4231_softc *sc;
+cs4231_setup_output(struct cs4231_softc *sc)
 {
 	u_int8_t pc, mi, rm, lm;
 
@@ -493,10 +479,9 @@ cs4231_setup_output(sc)
 }
 
 void
-cs4231_close(addr)
-	void *addr;
+cs4231_close(void *vsc)
 {
-	struct cs4231_softc *sc = addr;
+	struct cs4231_softc *sc = vsc;
 
 	cs4231_halt_input(sc);
 	cs4231_halt_output(sc);
@@ -506,9 +491,7 @@ cs4231_close(addr)
 }
 
 int
-cs4231_query_encoding(addr, fp)
-	void *addr;
-	struct audio_encoding *fp;
+cs4231_query_encoding(void *vsc, struct audio_encoding *fp)
 {
 	int err = 0;
 
@@ -574,12 +557,10 @@ cs4231_query_encoding(addr, fp)
 }
 
 int
-cs4231_set_params(addr, setmode, usemode, p, r)
-	void *addr;
-	int setmode, usemode;
-	struct audio_params *p, *r;
+cs4231_set_params(void *vsc, int setmode, int usemode,
+    struct audio_params *p, struct audio_params *r)
 {
-	struct cs4231_softc *sc = (struct cs4231_softc *)addr;
+	struct cs4231_softc *sc = (struct cs4231_softc *)vsc;
 	int err, bits, enc = p->encoding;
 	void (*pswcode)(void *, u_char *, int cnt) = NULL;
 	void (*rswcode)(void *, u_char *, int cnt) = NULL;
@@ -669,18 +650,15 @@ cs4231_set_params(addr, setmode, usemode, p, r)
 }
 
 int
-cs4231_round_blocksize(addr, blk)
-	void *addr;
-	int blk;
+cs4231_round_blocksize(void *vsc, int blk)
 {
 	return (blk & (-4));
 }
 
 int
-cs4231_commit_settings(addr)
-	void *addr;
+cs4231_commit_settings(void *vsc)
 {
-	struct cs4231_softc *sc = (struct cs4231_softc *)addr;
+	struct cs4231_softc *sc = (struct cs4231_softc *)vsc;
 	int s, tries;
 	u_int8_t r, fs;
 
@@ -741,10 +719,9 @@ cs4231_commit_settings(addr)
 }
 
 int
-cs4231_halt_output(addr)
-	void *addr;
+cs4231_halt_output(void *vsc)
 {
-	struct cs4231_softc *sc = (struct cs4231_softc *)addr;
+	struct cs4231_softc *sc = (struct cs4231_softc *)vsc;
 
 	/* XXX Kills some capture bits */
 	APC_WRITE(sc, APC_CSR, APC_READ(sc, APC_CSR) &
@@ -757,10 +734,9 @@ cs4231_halt_output(addr)
 }
 
 int
-cs4231_halt_input(addr)
-	void *addr;
+cs4231_halt_input(void *vsc)
 {
-	struct cs4231_softc *sc = (struct cs4231_softc *)addr;
+	struct cs4231_softc *sc = (struct cs4231_softc *)vsc;
 
 	/* XXX Kills some playback bits */
 	APC_WRITE(sc, APC_CSR, APC_CSR_CAPTURE_PAUSE);
@@ -771,20 +747,16 @@ cs4231_halt_input(addr)
 }
 
 int
-cs4231_getdev(addr, retp)
-	void *addr;
-	struct audio_device *retp;
+cs4231_getdev(void *vsc, struct audio_device *retp)
 {
 	*retp = cs4231_device;
 	return (0);
 }
 
 int
-cs4231_set_port(addr, cp)
-	void *addr;
-	mixer_ctrl_t *cp;
+cs4231_set_port(void *vsc, mixer_ctrl_t *cp)
 {
-	struct cs4231_softc *sc = (struct cs4231_softc *)addr;
+	struct cs4231_softc *sc = (struct cs4231_softc *)vsc;
 	int error = EINVAL;
 
 	DPRINTF(("cs4231_set_port: port=%d type=%d\n", cp->dev, cp->type));
@@ -972,11 +944,9 @@ cs4231_set_port(addr, cp)
 }
 
 int
-cs4231_get_port(addr, cp)
-	void *addr;
-	mixer_ctrl_t *cp;
+cs4231_get_port(void *vsc, mixer_ctrl_t *cp)
 {
-	struct cs4231_softc *sc = (struct cs4231_softc *)addr;
+	struct cs4231_softc *sc = (struct cs4231_softc *)vsc;
 	int error = EINVAL;
 
 	DPRINTF(("cs4231_get_port: port=%d type=%d\n", cp->dev, cp->type));
@@ -1140,9 +1110,7 @@ cs4231_get_port(addr, cp)
 }
 
 int
-cs4231_query_devinfo(addr, dip)
-	void *addr;
-	mixer_devinfo_t *dip;
+cs4231_query_devinfo(void *vsc, mixer_devinfo_t *dip)
 {
 	int err = 0;
 
@@ -1341,17 +1309,13 @@ cs4231_query_devinfo(addr, dip)
 }
 
 size_t
-cs4231_round_buffersize(addr, direction, size)
-	void *addr;
-	int direction;
-	size_t size;
+cs4231_round_buffersize(void *vsc, int direction, size_t size)
 {
 	return (size);
 }
 
 int
-cs4231_get_props(addr)
-	void *addr;
+cs4231_get_props(void *vsc)
 {
 	return (AUDIO_PROP_FULLDUPLEX);
 }
@@ -1360,10 +1324,9 @@ cs4231_get_props(addr)
  * Hardware interrupt handler
  */
 int
-cs4231_intr(v)
-	void *v;
+cs4231_intr(void *vsc)
 {
-	struct cs4231_softc *sc = (struct cs4231_softc *)v;
+	struct cs4231_softc *sc = (struct cs4231_softc *)vsc;
 	u_int32_t csr;
 	u_int8_t reg, status;
 	struct cs_dma *p;
@@ -1465,14 +1428,9 @@ cs4231_intr(v)
 }
 
 void *
-cs4231_alloc(addr, direction, size, pool, flags)
-	void *addr;
-	int direction;
-	size_t size;
-	int pool;
-	int flags;
+cs4231_alloc(void *vsc, int direction, size_t size, int pool, int flags)
 {
-	struct cs4231_softc *sc = (struct cs4231_softc *)addr;
+	struct cs4231_softc *sc = (struct cs4231_softc *)vsc;
 	bus_dma_tag_t dmat = sc->sc_dmatag;
 	struct cs_dma *p;
 
@@ -1514,12 +1472,9 @@ fail:
 }
 
 void
-cs4231_free(addr, ptr, pool)
-	void *addr;
-	void *ptr;
-	int pool;
+cs4231_free(void *vsc, void *ptr, int pool)
 {
-	struct cs4231_softc *sc = addr;
+	struct cs4231_softc *sc = vsc;
 	bus_dma_tag_t dmat = sc->sc_dmatag;
 	struct cs_dma *p, **pp;
 
@@ -1538,14 +1493,10 @@ cs4231_free(addr, ptr, pool)
 }
 
 int
-cs4231_trigger_output(addr, start, end, blksize, intr, arg, param)
-	void *addr, *start, *end;
-	int blksize;
-	void (*intr)(void *);
-	void *arg;
-	struct audio_params *param;
+cs4231_trigger_output(void *vsc, void *start, void *end, int blksize,
+    void (*intr)(void *), void *arg, struct audio_params *param)
 {
-	struct cs4231_softc *sc = addr;
+	struct cs4231_softc *sc = vsc;
 	struct cs_channel *chan = &sc->sc_playback;
 	struct cs_dma *p;
 	u_int32_t csr;
@@ -1604,14 +1555,10 @@ cs4231_trigger_output(addr, start, end, blksize, intr, arg, param)
 }
 
 int
-cs4231_trigger_input(addr, start, end, blksize, intr, arg, param)
-	void *addr, *start, *end;
-	int blksize;
-	void (*intr)(void *);
-	void *arg;
-	struct audio_params *param;
+cs4231_trigger_input(void *vsc, void *start, void *end, int blksize,
+    void (*intr)(void *), void *arg, struct audio_params *param)
 {
-	struct cs4231_softc *sc = addr;
+	struct cs4231_softc *sc = vsc;
 	struct cs_channel *chan = &sc->sc_capture;
 	struct cs_dma *p;
 	u_int32_t csr;

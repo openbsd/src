@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma_sbus.c,v 1.10 2003/06/24 21:54:38 henric Exp $	*/
+/*	$OpenBSD: dma_sbus.c,v 1.11 2003/07/03 20:36:07 jason Exp $	*/
 /*	$NetBSD: dma_sbus.c,v 1.5 2000/07/09 20:57:42 pk Exp $ */
 
 /*-
@@ -123,9 +123,7 @@ struct cfdriver dma_cd = {
 };
 
 int
-dmaprint_sbus(aux, busname)
-	void *aux;
-	const char *busname;
+dmaprint_sbus(void *aux, const char *busname)
 {
 	struct sbus_attach_args *sa = aux;
 	bus_space_tag_t t = sa->sa_bustag;
@@ -138,10 +136,7 @@ dmaprint_sbus(aux, busname)
 }
 
 int
-dmamatch_sbus(parent, vcf, aux)
-	struct device *parent;
-	void *vcf;
-	void *aux;
+dmamatch_sbus(struct device *parent, void *vcf, void *aux)
 {
 	struct cfdata *cf = vcf;
 	struct sbus_attach_args *sa = aux;
@@ -281,8 +276,7 @@ dmabus_intr_establish(
 }
 
 bus_space_tag_t
-dma_alloc_bustag(sc)
-	struct dma_softc *sc;
+dma_alloc_bustag(struct dma_softc *sc)
 {
 	struct sparc_bus_space_tag *sbt;
 
