@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsuspend.c,v 1.2 2001/11/11 23:26:35 deraadt Exp $	*/
+/*	$OpenBSD: sigsuspend.c,v 1.3 2002/10/21 18:58:57 marc Exp $	*/
 /*
  * Copyright (c) 1998 Daniel M. Eischen <eischen@vigrid.com>
  * All rights reserved.
@@ -204,7 +204,7 @@ int main (int argc, char *argv[])
 	CHECKe(kill (getpid (), SIGURG));
 	sleep (1);
 	/* sigsuspend should wake up for SIGURG */
-	ASSERT(sigcounts[SIGURG] == 3);
+	ASSERT(sigcounts[SIGURG] == 2);
 
 	/*
 	 * Verify that a SIGUSR2 signal will release a sigsuspended
