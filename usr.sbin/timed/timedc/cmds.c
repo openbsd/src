@@ -36,7 +36,7 @@ static char sccsid[] = "@(#)cmds.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.4 $"
+#ident "$Revision: 1.5 $"
 #endif
 
 #include "timedc.h"
@@ -89,7 +89,7 @@ daydiff(char *hostname)
 	int trials;
 	struct timeval tout, now;
 	fd_set ready;
-	struct sockaddr from;
+	struct sockaddr_in from;
 	int fromlen;
 	unsigned long sec;
 
@@ -122,7 +122,7 @@ daydiff(char *hostname)
 
 			fromlen = sizeof(from);
 			if (recvfrom(sock,&sec,sizeof(sec),0,
-				     &from,&fromlen) < 0) {
+				(struct sockaddr *)&from,&fromlen) < 0) {
 				perror("recvfrom(date read)");
 				return 0;
 			}
@@ -275,7 +275,7 @@ msite(int argc, char *argv[])
 	fd_set ready;
 	struct sockaddr_in dest;
 	int i, length;
-	struct sockaddr from;
+	struct sockaddr_in from;
 	struct timeval tout;
 	struct tsp msg;
 	struct servent *srvp;
@@ -324,13 +324,21 @@ msite(int argc, char *argv[])
 		FD_SET(sock, &ready);
 		if (select(FD_SETSIZE, &ready, (fd_set *)0, (fd_set *)0,
 			   &tout)) {
-			length = sizeof(struct sockaddr);
+			length = sizeof(from);
 			cc = recvfrom(sock, &msg, sizeof(struct tsp), 0,
-				      &from, &length);
+			      (struct sockaddr *)&from, &length);
 			if (cc < 0) {
 				perror("recvfrom");
 				continue;
 			}
+			if (cc < sizeof(struct tsp)) {
+				fprintf(stderr,
+				    "short packet (%u/%u bytes) from %s\n",
+				    cc, sizeof(struct tsp),
+				    inet_ntoa(from.sin_addr));
+				continue;
+			}
+ 			bytehostorder(&msg);
 			bytehostorder(&msg);
 			if (msg.tsp_type == TSP_ACK) {
 				printf("master timedaemon at %s is %s\n",
@@ -416,7 +424,7 @@ tracing(int argc, char *argv[])
 	int cc;
 	fd_set ready;
 	struct sockaddr_in dest;
-	struct sockaddr from;
+	struct sockaddr_in from;
 	struct timeval tout;
 	struct tsp msg;
 	struct servent *srvp;
@@ -461,11 +469,16 @@ tracing(int argc, char *argv[])
 	FD_ZERO(&ready);
 	FD_SET(sock, &ready);
 	if (select(FD_SETSIZE, &ready, (fd_set *)0, (fd_set *)0, &tout)) {
-		length = sizeof(struct sockaddr);
+		length = sizeof(from);
 		cc = recvfrom(sock, &msg, sizeof(struct tsp), 0,
-			      &from, &length);
+		    (struct sockaddr *)&from, &length);
 		if (cc < 0) {
 			perror("recvfrom");
+			return;
+		}
+		if (cc < sizeof(struct tsp)) {
+			fprintf(stderr, "short packet (%u/%u bytes) from %s\n",
+			    cc, sizeof(struct tsp), inet_ntoa(from.sin_addr));
 			return;
 		}
 		bytehostorder(&msg);
