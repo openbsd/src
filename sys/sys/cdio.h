@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.h,v 1.8 1999/11/12 05:56:31 angelos Exp $	*/
+/*	$OpenBSD: cdio.h,v 1.9 1999/12/08 06:32:56 angelos Exp $	*/
 /*	$NetBSD: cdio.h,v 1.11 1996/02/19 18:29:04 scottr Exp $	*/
 
 #ifndef _SYS_CDIO_H_
@@ -415,6 +415,4 @@ union dvd_authinfo {
         struct dvd_lu_send_title_key    lstk;
         struct dvd_lu_send_asf          lsasf;
 };
-
-#define FIBMAP          _IOWR('f', 122, daddr_t)
 #endif /* !_SYS_CDIO_H_ */
