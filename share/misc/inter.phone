@@ -1,4 +1,4 @@
-#	$OpenBSD: inter.phone,v 1.24 2002/05/01 15:32:57 mickey Exp $
+#	$OpenBSD: inter.phone,v 1.25 2002/06/05 23:13:45 mickey Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 #	$FreeBSD-Id: inter.phone,v 1.15 1997/02/22 13:56:06 peter Exp $
 #
@@ -10861,9 +10861,9 @@
 421:901:mobile - Eurotel NMT:Slovak Republic
 421:903:mobile - Eurotel GSM:Slovak Republic
 421:904:mobile - Eurotel GSM:Slovak Republic
-421:905:mobile - Globtel GSM:Slovak Republic
-421:907:mobile - Globtel GSM:Slovak Republic
-421:908:mobile - Globtel GSM:Slovak Republic
+421:905:mobile - Orange GSM:Slovak Republic
+421:907:mobile - Orange GSM:Slovak Republic
+421:908:mobile - Orange GSM:Slovak Republic
 501:2:Belize City:Belize
 501:8:Belmopan:Belize
 502:2:Guatemala City:Guatemala
