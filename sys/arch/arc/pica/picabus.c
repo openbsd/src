@@ -1,4 +1,4 @@
-/*	$OpenBSD: picabus.c,v 1.6 1997/04/19 17:20:04 pefo Exp $	*/
+/*	$OpenBSD: picabus.c,v 1.7 1997/05/24 18:36:26 pefo Exp $	*/
 /*	$NetBSD: tc.c,v 1.2 1995/03/08 00:39:05 cgd Exp $	*/
 
 /*
@@ -104,7 +104,7 @@ struct pica_dev {
 struct pica_dev acer_pica_61_cpu[] = {
 	{{ "dallas_rtc",0, 0, },
 	   0,			 pica_intrnull, (void *)PICA_SYS_CLOCK, },
-	{{ "lpr",	1, 0, },
+	{{ "lpt",	1, 0, },
 	   PICA_SYS_LB_IE_PAR1,	 pica_intrnull, (void *)PICA_SYS_PAR1, },
 	{{ "fdc",	2, 0, },
 	   PICA_SYS_LB_IE_FLOPPY,pica_intrnull, (void *)PICA_SYS_FLOPPY, },
