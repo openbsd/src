@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.293 2004/05/23 00:06:01 tedu Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.294 2004/05/23 20:28:46 tedu Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3945,13 +3945,13 @@ splraise(ncpl)
  * Restore an old interrupt priority level.  If any thereby unmasked
  * interrupts are pending, call Xspllower() to process them.
  */
-void									\
-splx(ncpl)								\
-	int ncpl;							\
-{									\
-	cpl = ncpl;							\
-	if (ipending & IUNMASK(ncpl))					\
-		Xspllower();						\
+void
+splx(ncpl)
+	int ncpl;
+{
+	cpl = ncpl;
+	if (ipending & IUNMASK(ncpl))
+		Xspllower();
 }
 
 /*
@@ -3967,4 +3967,3 @@ spllower(ncpl)
 	splx(ncpl);
 	return (ocpl);
 }
-
