@@ -1,4 +1,4 @@
-/*	$OpenBSD: mopchk.c,v 1.7 2002/06/10 21:05:25 maja Exp $	*/
+/*	$OpenBSD: mopchk.c,v 1.8 2003/04/19 17:42:57 avsm Exp $	*/
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: mopchk.c,v 1.7 2002/06/10 21:05:25 maja Exp $";
+static char rcsid[] = "$OpenBSD: mopchk.c,v 1.8 2003/04/19 17:42:57 avsm Exp $";
 #endif
 
 /*
@@ -158,7 +158,7 @@ main(argc, argv)
 void
 Usage()
 {
-	(void) fprintf(stderr, "usage: %d [-a] [-v] [filename...]\n",Program);
+	(void) fprintf(stderr, "usage: %s [-a] [-v] [filename...]\n",Program);
 	exit(1);
 }
 
