@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.128 2002/06/07 08:53:42 beck Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.129 2002/06/08 02:21:53 millert Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -2038,7 +2038,7 @@ lock		uname=uucp gname=dialer mode=1775
 ..
 
 # ./var/spool/lpd
-lpd
+lpd		gname=daemon mode=0775
 # ./var/spool/lpd
 ..
 
@@ -2048,7 +2048,7 @@ mqueue		mode=0700
 ..
 
 # ./var/spool/output
-output
+output		gname=daemon mode=0775
 # ./var/spool/output
 ..
 

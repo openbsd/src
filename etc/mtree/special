@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.43 2002/05/23 18:43:00 deraadt Exp $
+#	$OpenBSD: special,v 1.44 2002/06/08 02:21:53 millert Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -184,7 +184,7 @@ mqueue		type=dir mode=0700 uname=root gname=wheel ignore
 ..	#var/spool/mqueue
 news		type=dir mode=0755 uname=root gname=wheel optional ignore
 ..	#var/spool/news
-output		type=dir mode=0755 uname=root gname=wheel ignore
+output		type=dir mode=0775 uname=root gname=daemon ignore
 ..	#var/spool/output
 smtpd		type=dir mode=0755 uname=uucp gname=daemon ignore
 ..	#var/spool/smtpd
