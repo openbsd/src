@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.41 2002/07/12 00:25:30 deraadt Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.42 2003/01/03 04:57:54 deraadt Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.41 2002/07/12 00:25:30 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.42 2003/01/03 04:57:54 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1044,6 +1044,10 @@ cd(argc, argv)
 		if (verbose)
 			fputs("CWD command not recognized, trying XCWD.\n", ttyout);
 		r = command("XCWD %s", argv[1]);
+	}
+	if (r == ERROR && code == 550) {
+		dirchange = 0;
+		return;
 	}
 	if (r == COMPLETE)
 		dirchange = 1;
