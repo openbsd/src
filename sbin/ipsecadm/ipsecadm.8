@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.46 2001/12/01 19:05:01 deraadt Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.47 2001/12/10 03:26:51 ho Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -41,12 +41,12 @@
 .Op command
 .Ar modifiers ...
 .Sh NOTE
-Before
-.Xr ipsecadm 8
-can be used, IPsec must be enabled by setting one or more of the following
+To use
+.Xr ipsecadm 8 ,
+IPsec must be enabled by having one or more of the following
 .Xr sysctl 3
-variables:
-.Bl -tag -width xxxxxxxxxxxxxxxxxxxxxx
+variables set:
+.Bl -tag -offset 4n -width xxxxxxxxxxxxxxxxxxxxxx
 .It net.inet.esp.enable
 Enable the ESP IPsec protocol
 .It net.inet.ah.enable
@@ -55,8 +55,9 @@ Enable the AH IPsec protocol
 Enable the IPComp protocol
 .El
 .Pp
-To enable these operations across reboots, see
-.Pa /etc/sysctl.conf .
+Both the ESP and AH protocols are enabled by default.
+To keep local modifications of these variables across reboots, see
+.Xr sysctl.conf 5 .
 .Sh DESCRIPTION
 The
 .Nm ipsecadm
@@ -196,18 +197,18 @@ Allowed modifiers are:
 .Fl delete ,
 .Fl in ,
 .Fl out ,
-.Fl deny ,
 .Fl srcid ,
 .Fl dstid ,
 .Fl srcid_type ,
 .Fl dstid_type ,
-.Fl use ,
 .Fl acquire ,
 .Fl require ,
 .Fl dontacq ,
-.Fl permit ,
+.Fl use ,
+.Fl bypass ,
+.Fl permit
 and
-.Fl bypass .
+.Fl deny .
 The
 .Xr netstat 1
 command shows all specified flows.
@@ -255,6 +256,8 @@ or
 flow is used to specify a flow for which IPsec processing will be
 bypassed, i.e packets will/need not be processed by any SAs.
 For
+.Nm bypass
+or
 .Nm permit
 flows, additional modifiers are restricted to:
 .Fl addr ,
@@ -560,6 +563,9 @@ create or delete a
 .Nm bypass
 flow.
 Packets matching this flow will not be processed by IPsec.
+.It Fl permit
+Same as
+.Fl bypass .
 .It Fl deny
 For
 .Nm flow ,
@@ -675,6 +681,7 @@ Delete all esp SAs and their flows and routing information:
 .Xr ipsec 4 ,
 .Xr protocols 5 ,
 .Xr services 5 ,
+.Xr sysctl.conf 5 ,
 .Xr isakmpd 8 ,
 .Xr photurisd 8 ,
 .Xr vpn 8
