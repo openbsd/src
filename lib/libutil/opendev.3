@@ -1,4 +1,4 @@
-.\"	$OpenBSD: opendev.3,v 1.3 1996/06/18 09:13:41 downsj Exp $
+.\"	$OpenBSD: opendev.3,v 1.4 1996/06/20 10:46:01 deraadt Exp $
 .\"
 .\" Copyright (c) 1996, Jason Downs.  All rights reserved.
 .\"
@@ -59,8 +59,9 @@ OPENDEV_PART	attempt to open the raw partition during expansion
 OPENDEV_DRCT	attempt to open the device itself during expansion
 .Ed
 .Pp
-.Ar Realpath
-will be modified to point at the fully expanded device name.
+If
+.Ar realpath
+is not NULL, it is modified to point at the fully expanded device name.
 .Pp
 .Sh RETURN VALUES
 The
