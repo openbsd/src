@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.74 2004/12/14 01:50:42 deraadt Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.75 2004/12/17 14:10:40 grange Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -408,7 +408,7 @@ txp_download_fw(sc)
 
 	err = loadfirmware("3c990", &buf, &buflen);
 	if (err) {
-		printf(": failed loadfirmware of file 3c990: errno %d\n",
+		printf("failed loadfirmware of file 3c990: errno %d\n",
 		    err);
 		return (err);
 	}
