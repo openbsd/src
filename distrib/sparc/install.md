@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.45 2002/08/27 02:18:34 krw Exp $
+#	$OpenBSD: install.md,v 1.46 2002/09/24 23:45:05 deraadt Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -98,7 +98,7 @@ md_prep_disklabel()
 	md_checkfordisklabel $_disk
 	case $? in
 	0)	;;
-	1)	echo WARNING: Label on disk $_disk has no label. You will be creating a new one.
+	1)	echo WARNING: Disk $_disk has no label. You will be creating a new one.
 		echo
 		;;
 	2)	echo WARNING: Label on disk $_disk is corrupted. You will be repairing.
