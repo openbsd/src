@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.196 2001/04/10 22:52:00 aaron Exp $
+#	$OpenBSD: files,v 1.197 2001/05/02 20:30:28 mickey Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -27,14 +27,14 @@ device	midi
 attach	midi at midibus
 
 # raster operations attributes
-define  rasops1
-define  rasops2
-define  rasops4
-define  rasops8
-define  rasops15
-define  rasops16
-define  rasops24
-define  rasops32
+define	rasops1
+define	rasops2
+define	rasops4
+define	rasops8
+define	rasops15
+define	rasops16
+define	rasops24
+define	rasops32
 
 # net device attributes - we have generic code for arc(net), ether(net),
 # and fddi.
@@ -64,26 +64,26 @@ define	wsmousedev {[mux = -1]}
 define	wsrasteremulops
 
 # common PC display functions
-define pcdisplayops
-file   dev/ic/pcdisplay_subr.c         pcdisplayops
-file   dev/ic/pcdisplay_chars.c        pcdisplayops
+define	pcdisplayops
+file	dev/ic/pcdisplay_subr.c		pcdisplayops
+file	dev/ic/pcdisplay_chars.c	pcdisplayops
 
 # VGA graphics
-device  vga: wsemuldisplaydev, pcdisplayops
-file    dev/ic/vga.c            vga     needs-flag
-file    dev/ic/vga_subr.c       vga
+device	vga: wsemuldisplaydev, pcdisplayops
+file	dev/ic/vga.c		vga & vga_pci	needs-flag
+file	dev/ic/vga_subr.c	vga & vga_pci
 
 # Attribute for devices that read/write an IEEE 802.3u MII bus using the
 # bit-bang method.
 define	mii_bitbang
 file	dev/mii/mii_bitbang.c	mii_bitbang
 
-define  wdc_base
-define  ata {[channel = -1], [drive = -1]}
-define  atapi {[channel = -1]}
+define	wdc_base
+define	ata {[channel = -1], [drive = -1]}
+define	atapi {[channel = -1]}
 # Common code for ESDI/IDE/etc. controllers
-device  wdc: ata, atapi, wdc_base
-file    dev/ic/wdc.c wdc_base
+device	wdc: ata, atapi, wdc_base
+file	dev/ic/wdc.c wdc_base
 
 # "Chipset" drivers.  These are the bus-independent routines which
 # contain the cfdrivers.  Attachments are provided by files.<bus>
@@ -143,19 +143,19 @@ device	esp: scsi, ncr53c9x
 file	dev/ic/ncr53c9x.c	ncr53c9x
 
 # common stuff for siop and esiop
-define siop_common
-file dev/ic/siop_common.c		siop_common
+define	siop_common
+file	dev/ic/siop_common.c		siop_common
 
 # Symbios/NCR 53c720/53c8xx SCSI controllers
-device siop: scsi,siop_common
-file dev/ic/siop.c			siop
+device	siop: scsi,siop_common
+file	dev/ic/siop.c			siop
 
 # 3Com Etherlink-III Ethernet controller
 device	ep: ether, ifnet, ifmedia, mii
 file	dev/ic/elink3.c		ep
 
 # WaveLan
-# device wlp: ether, ifnet
+# device	wlp: ether, ifnet
 
 # Aironet 802.11 DS Ethernet controller
 device	an: ether, ifnet, ifmedia
@@ -211,8 +211,8 @@ device	com: tty
 file	dev/ic/com.c		com & (com_isa | com_isapnp | com_commulti | com_pcmcia | com_pica | com_algor | com_gsc | com_puc) needs-flag
 
 # PC-like keyboard controller
-device pckbc { [slot = -1] }
-file   dev/ic/pckbc.c          pckbc needs-flag
+device	pckbc { [slot = -1] }
+file	dev/ic/pckbc.c		pckbc needs-flag
 
 # OPL2/OPL3 FM synth driver
 device	opl: midibus, midisyn
@@ -220,8 +220,8 @@ file	dev/ic/opl.c			opl
 file	dev/ic/oplinstrs.c		opl
 
 # AC-97 CODECs
-define  ac97
-file    dev/ic/ac97.c			ac97
+define	ac97
+file	dev/ic/ac97.c			ac97
 
 # Cyclades Cyclom multiport serial cards
 device	cy: tty
@@ -238,7 +238,7 @@ file	dev/ic/sti.c		sti & (sti_pci | sti_sgc)	needs-flag
 # Initio ULTRA WIDE/ULTRA2 WIDE SCSI Controllers
 device	iha: scsi
 file	dev/ic/iha.c		iha
- 
+
 # Attributes which machine-independent bus support can be attached to.
 # These should be defined here, because some of these busses can have
 # devices which provide these attributes, and we'd like to avoid hairy
@@ -316,7 +316,7 @@ file ddb/db_write_cmd.c			ddb
 file ddb/db_usrreq.c			ddb
 file ddb/db_hangman.c			ddb
 file dev/auconv.c			auconv
-file dev/audio.c			audio 			needs-flag
+file dev/audio.c			audio			needs-flag
 file dev/ccd.c				ccd			needs-flag
 file dev/ic/ncr5380sbc.c		ncr5380sbc
 file dev/ic/ncr53c7xx.c			ncr53c7xx
@@ -330,22 +330,22 @@ file dev/mulaw.c			mulaw
 file dev/sequencer.c			sequencer		needs-flag
 file dev/vnd.c				vnd			needs-flag
 file dev/rnd.c
-file dev/raidframe/rf_acctrace.c        raid                    needs-flag
-file dev/raidframe/rf_alloclist.c       raid                    needs-flag
-file dev/raidframe/rf_aselect.c         raid                    needs-flag
-file dev/raidframe/rf_callback.c        raid                    needs-flag
-file dev/raidframe/rf_chaindecluster.c  raid                    needs-flag
-file dev/raidframe/rf_copyback.c        raid                    needs-flag
-file dev/raidframe/rf_cvscan.c          raid                    needs-flag
-file dev/raidframe/rf_dagdegrd.c        raid                    needs-flag
-file dev/raidframe/rf_dagdegwr.c        raid                    needs-flag
-file dev/raidframe/rf_dagffrd.c         raid                    needs-flag
-file dev/raidframe/rf_dagffwr.c         raid                    needs-flag
-file dev/raidframe/rf_dagfuncs.c        raid                    needs-flag
-file dev/raidframe/rf_dagutils.c        raid                    needs-flag
-file dev/raidframe/rf_debugMem.c        raid                    needs-flag
-file dev/raidframe/rf_debugprint.c      raid                    needs-flag
-file dev/raidframe/rf_decluster.c       raid                    needs-flag
+file dev/raidframe/rf_acctrace.c	raid			needs-flag
+file dev/raidframe/rf_alloclist.c	raid			needs-flag
+file dev/raidframe/rf_aselect.c		raid			needs-flag
+file dev/raidframe/rf_callback.c	raid			needs-flag
+file dev/raidframe/rf_chaindecluster.c	raid			needs-flag
+file dev/raidframe/rf_copyback.c	raid			needs-flag
+file dev/raidframe/rf_cvscan.c		raid			needs-flag
+file dev/raidframe/rf_dagdegrd.c	raid			needs-flag
+file dev/raidframe/rf_dagdegwr.c	raid			needs-flag
+file dev/raidframe/rf_dagffrd.c		raid			needs-flag
+file dev/raidframe/rf_dagffwr.c		raid			needs-flag
+file dev/raidframe/rf_dagfuncs.c	raid			needs-flag
+file dev/raidframe/rf_dagutils.c	raid			needs-flag
+file dev/raidframe/rf_debugMem.c	raid			needs-flag
+file dev/raidframe/rf_debugprint.c	raid			needs-flag
+file dev/raidframe/rf_decluster.c	raid			needs-flag
 file dev/raidframe/rf_declusterPQ.c	raid			needs-flag
 file dev/raidframe/rf_diskqueue.c	raid			needs-flag
 file dev/raidframe/rf_disks.c		raid			needs-flag
@@ -387,9 +387,9 @@ file dev/raidframe/rf_shutdown.c	raid			needs-flag
 file dev/raidframe/rf_sstf.c		raid			needs-flag
 file dev/raidframe/rf_states.c		raid			needs-flag
 file dev/raidframe/rf_stripelocks.c	raid			needs-flag
-file dev/raidframe/rf_strutils.c        raid                    needs-flag
-file dev/raidframe/rf_threadstuff.c     raid                    needs-flag
-file dev/raidframe/rf_utils.c           raid                    needs-flag
+file dev/raidframe/rf_strutils.c	raid			needs-flag
+file dev/raidframe/rf_threadstuff.c	raid			needs-flag
+file dev/raidframe/rf_utils.c		raid			needs-flag
 file isofs/cd9660/cd9660_bmap.c		cd9660
 file isofs/cd9660/cd9660_lookup.c	cd9660
 file isofs/cd9660/cd9660_node.c		cd9660
@@ -611,7 +611,7 @@ file netinet/ip_spd.c			(inet | inet6) & (ipsec | tcp_signature)
 file netinet/ip_ipip.c			inet | inet6
 file netinet/ip_ether.c			inet & ipsec
 file netinet/ipsec_input.c		(inet | inet6) & ipsec
-file netinet/ipsec_output.c             (inet | inet6) & ipsec
+file netinet/ipsec_output.c		(inet | inet6) & ipsec
 file netinet/ip_esp.c			inet & ipsec
 file netinet/ip_ah.c			inet & ipsec
 file crypto/rijndael.c			(inet & ipsec) | crypto | uvm_swap_encrypt
@@ -793,13 +793,13 @@ file uvm/uvm_vnode.c			uvm
 #file netinet6/in6_cksum.c		inet6
 file netinet6/in6_pcb.c			inet6
 #file netinet6/raw_ipv6.c		inet6
-#file netinet6/ipv6_input.c   		inet6
+#file netinet6/ipv6_input.c		inet6
 #file netinet6/ipv6_discovery.c		inet6
 #file netinet6/ipv6_addrconf.c		inet6
 #file netinet6/ipv6_rtrequest.c		inet6
-#file netinet6/ipv6_output.c  		inet6
+#file netinet6/ipv6_output.c		inet6
 #file netinet6/in6_proto.c		inet6
-#file netinet6/ipv6_trans.c   		inet6
+#file netinet6/ipv6_trans.c		inet6
 
 # ... KAME IPv6
 file net/if_faith.c			faith			needs-count
