@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.1 2004/11/21 15:36:17 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.2 2004/11/21 15:44:56 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -23,6 +23,7 @@ use OpenBSD::Error;
 
 my $path;
 my @ldconfig = ('/sbin/ldconfig');
+
 
 sub init_path($)
 {
@@ -67,4 +68,32 @@ sub ensure_ldconfig
 	$OpenBSD::PackingElement::Lib::todo = 0;
 }
 
+our $registered_libs = {};
+
+sub register_lib
+{
+	my ($stem, $minor, $pkg) = @_;
+	if (!defined $registered_libs->{"$stem"} || $registered_libs->{"$stem"}->[0] < $minor) {
+		$registered_libs->{"$stem"} = [$minor, $pkg];
+	}
+}
+
+my $done_system = 0;
+
+sub add_system_libs
+{
+	my ($destdir) = @_;
+	return if $done_system;
+	$done_system = 1;
+	for my $dirname ("/usr/lib", "/usr/X11R6/lib") {
+		opendir(my $dir, $destdir.$dirname) or next;
+		while (my $d = readdir($dir)) {
+			next unless $d =~ m/^(.*\.so\.\d+)\.(\d+)$/;
+			my ($stem, $minor) = ($1, $2);
+			$stem = "$dirname/$stem";
+			register_lib($stem, $minor, 'system');
+		}
+		closedir($dir);
+	}
+}
 1;

@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.126 2004/11/21 13:32:18 espie Exp $
+# $OpenBSD: pkg_add,v 1.127 2004/11/21 15:44:55 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -487,25 +487,6 @@ sub find_old_lib
 	return 0;
 }
 
-my $syst_avail;
-
-sub add_system_libs
-{
-	my ($destdir, $avail) = @_;
-	for my $dirname ("/usr/lib", "/usr/X11R6/lib") {
-		opendir(my $dir, $destdir.$dirname) or next;
-		while (my $d = readdir($dir)) {
-			next unless $d =~ m/^(.*\.so\.\d+)\.(\d+)$/;
-			my ($stem, $minor) = ($1, $2);
-			$stem = "$dirname/$stem";
-			if (!defined $avail->{"$stem"} || $avail->{"$stem"}->[0] < $minor) {
-				$avail->{"$stem"} = [$minor, 'system'];
-			}
-		}
-		closedir($dir);
-	}
-}
-
 sub lookup_library
 {
 	my ($state, $lib, $available, $plist, $dependencies, $harder) = @_;
@@ -515,16 +496,15 @@ sub lookup_library
 	    return 1;
 	}
 	if ($harder && $lib !~ m|/|) {
-		if (!defined $syst_avail) {
-			$syst_avail = {};
-			add_system_libs($state->{destdir}, $syst_avail);
-		}
+		require OpenBSD::SharedLibs;
+
+		OpenBSD::SharedLibs::add_system_libs($state->{destdir});
 		if (check_lib_spec($state->{very_verbose},
-		    $state->{destdir}."/usr", $lib, $syst_avail)) {
+		    $state->{destdir}."/usr", $lib, $OpenBSD::SharedLibs::registered_libs)) {
 			return 1;
 		}
 		if (check_lib_spec($state->{very_verbose},
-		    $state->{destdir}."/usr/X11R6", $lib, $syst_avail)) {
+		    $state->{destdir}."/usr/X11R6", $lib, $OpenBSD::SharedLibs::registered_libs)) {
 			return 1;
 		}
 	}
@@ -623,7 +603,6 @@ sub install_package
 		    }
 		}
 	}
-#	add_system_libs($state->{destdir}, $available);
 	for my $lib (@{$plist->{wantlib}}) {
 		if (!lookup_library($state, $lib->{name}, $available, 
 		    $plist, $handle->{solved_dependencies}, 1)) {
