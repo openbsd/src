@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.31 2002/07/25 22:18:27 nordin Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.32 2002/10/02 17:43:38 nordin Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -420,13 +420,13 @@ sys_getitimer(p, v, retval)
 	register_t *retval;
 {
 	register struct sys_getitimer_args /* {
-		syscallarg(u_int) which;
+		syscallarg(int) which;
 		syscallarg(struct itimerval *) itv;
 	} */ *uap = v;
 	struct itimerval aitv;
 	int s;
 
-	if (SCARG(uap, which) > ITIMER_PROF)
+	if (SCARG(uap, which) < ITIMER_REAL || SCARG(uap, which) > ITIMER_PROF)
 		return (EINVAL);
 	s = splclock();
 	if (SCARG(uap, which) == ITIMER_REAL) {
@@ -459,7 +459,7 @@ sys_setitimer(p, v, retval)
 	register_t *retval;
 {
 	register struct sys_setitimer_args /* {
-		syscallarg(u_int) which;
+		syscallarg(int) which;
 		syscallarg(struct itimerval *) itv;
 		syscallarg(struct itimerval *) oitv;
 	} */ *uap = v;
@@ -468,7 +468,7 @@ sys_setitimer(p, v, retval)
 	int s, error;
 	int timo;
 
-	if (SCARG(uap, which) > ITIMER_PROF)
+	if (SCARG(uap, which) < ITIMER_REAL || SCARG(uap, which) > ITIMER_PROF)
 		return (EINVAL);
 	itvp = SCARG(uap, itv);
 	if (itvp && (error = copyin((void *)itvp, (void *)&aitv,
