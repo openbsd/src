@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.110 2002/06/30 16:12:24 miod Exp $
+#	$OpenBSD: GENERIC,v 1.111 2002/06/30 16:23:04 miod Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 
 machine	alpha
@@ -235,8 +235,8 @@ ne1	at	isa? port 0x300 irq 10		# NE[12]000 ethernet cards
 ne2	at	isa? port 0x280 irq 9		# NE[12]000 ethernet cards
 ep*	at	isa? port ? irq ?		# 3C509 ethernet cards
 #wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
-#lc0	at	isa? port 0x200 irq ?		# DEC EtherWorks
-#lc1	at	isa? port 0x280 irq ?		# DEC EtherWorks
+lc0	at	isa? port 0x200 irq ?		# DEC EtherWorks
+lc1	at	isa? port 0x280 irq ?		# DEC EtherWorks
 
 cy0	at	isa? iomem 0xd4000 irq 12	# ISA cyclom card
 fdc0	at	isa? port 0x3f0 irq 6 drq 2     # floppy controller
