@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.82 2001/12/24 04:12:40 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.83 2002/01/07 02:34:04 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1596,6 +1596,8 @@ m188_ext_int(u_int v, struct m88100_saved_state *eframe)
 		return;
 	}
 
+	uvmexp.intrs++;
+
 	/* 
 	 * We want to service all interrupts marked in the IST register
 	 * They are all valid because the mask would have prevented them
@@ -1617,10 +1619,9 @@ m188_ext_int(u_int v, struct m88100_saved_state *eframe)
 			       m188_curspl[2], m188_curspl[3]);
 			for (i = 0; i < 8; i++)
 				printf("int_mask[%d] = 0x%08x\n", i, int_mask_val[i]);
-			printf("--CPU %d halted--", cpu_number());
+			printf("--CPU %d halted--\n", cpu_number());
 			spl7();
-			while (1)
-				;
+			for(;;) ;
 		}
 
 		if (level > 7 || (char)level < 0) {
@@ -1642,87 +1643,84 @@ m188_ext_int(u_int v, struct m88100_saved_state *eframe)
 		/* find the first bit set in the current mask */
 		intbit = ff1(cur_mask);
 		if (OBIO_INTERRUPT_MASK & (1 << intbit)) {
-			if (guarded_access(ivec[level], 4, (u_char *)&vec) == EFAULT) {
-				printf("Unable to get vector for this vmebus interrupt (level %x)\n", level);
-				goto out_m188;
+			if (guarded_access(ivec[level], 4, (u_char *)&vec) ==
+			    EFAULT) {
+				panic("unable to get vector for this vmebus "
+				    "interrupt (level %x)", level);
 			}
 			vec = obio_vec[intbit];
 			if (vec == 0) {
-				printf("unknown onboard interrupt: mask = 0x%b\n", 1 << intbit, IST_STRING);
-				panic("m188_ext_int");
+				panic("unknown onboard interrupt: mask = 0x%b",
+				    1 << intbit, IST_STRING);
 			}
-			
-			
-			#define M88K_OBIO1_IRQ	8
-
 		} else if (HW_FAILURE_MASK & (1 << intbit)) {
 			vec = obio_vec[intbit];
 			if (vec == 0) {
-				printf("unknown hadware failure: mask = 0x%b\n", 1 << intbit, IST_STRING);
-				panic("m188_ext_int");
+				panic("unknown hardware failure: mask = 0x%b",
+				    1 << intbit, IST_STRING);
 			}
 		} else if (VME_INTERRUPT_MASK & (1 << intbit)) {
-			if (guarded_access(ivec[level], 4, (u_char *)&vec) == EFAULT) {
-				printf("Unable to get vector for this vmebus interrupt (level %x)\n", level);
-				goto out_m188;
+			if (guarded_access(ivec[level], 4, (u_char *)&vec) ==
+			    EFAULT) {
+				panic("unable to get vector for this vmebus "
+				    "interrupt (level %x)", level);
 			}
 			vec &= VME_VECTOR_MASK;
 			if (vec & VME_BERR_MASK) {
-				printf("m188_ext_int: vme vec timeout\n");
-				goto out_m188;
+				panic("vme vec timeout");
 			}
 			if (vec == 0) {
-				printf("unknown vme interrupt: mask = 0x%b\n", 1 << intbit, IST_STRING);
-				panic("m188_ext_int");
+				panic("unknown vme interrupt: mask = 0x%b",
+				    1 << intbit, IST_STRING);
 			}
 		} else {
-			printf("unknown interrupt: level = %d intbit = 0x%x mask = 0x%b\n",
-			       level, intbit, 1 << intbit, IST_STRING);
-			panic("m188_ext_int");
+			panic("unknown interrupt: level = %d intbit = 0x%x "
+			    "mask = 0x%b",
+			    level, intbit, 1 << intbit, IST_STRING);
 		}
 		if (vec > 0xFF) {
-			panic("m188_ext_int: interrupt vector 0x%x greater than 255!\nlevel = %d iack = 0x%x", 
-			      vec, level, ivec[level]);
+			panic("interrupt vector 0x%x greater than 255!\n"
+			    "level = %d iack = 0x%x", 
+			    vec, level, ivec[level]);
 		}
 
-		if ((intr = intr_handlers[vec]) == 0){
+		if ((intr = intr_handlers[vec]) == NULL) {
 			/* increment intr counter */
 			intrcnt[M88K_SPUR_IRQ]++; 
-			printf("Spurious interrupt: level = %d vec = 0x%x, intbit = %d mask = 0x%b\n",
-			       level, vec, intbit, 1 << intbit, IST_STRING);
-
-		}
-		/*
-		 * Walk through all interrupt handlers in the chain for the
-		 * given vector, calling each handler in turn, till some handler
-		 * returns a value != 0.
-		 */
-		for (ret = 0; intr; intr = intr->ih_next) {
-			if (intr->ih_wantframe != 0)
-				ret = (*intr->ih_fn)((void *)eframe);
-			else
-				ret = (*intr->ih_fn)(intr->ih_arg);
-			if (ret){
-				/* increment intr counter */
-				intrcnt[level]++; 
+			printf("Spurious interrupt: level = %d vec = 0x%x, "
+			    "intbit = %d mask = 0x%b\n",
+			    level, vec, intbit, 1 << intbit, IST_STRING);
+		} else {
+			/*
+			 * Walk through all interrupt handlers in the chain
+			 * for the given vector, calling each handler in turn,
+			 * till some handler returns a value != 0.
+			 */
+			for (ret = 0; intr; intr = intr->ih_next) {
+				if (intr->ih_wantframe != 0)
+					ret = (*intr->ih_fn)((void *)eframe);
+				else
+					ret = (*intr->ih_fn)(intr->ih_arg);
+				if (ret != 0) {
+					/* increment intr counter */
+					intrcnt[level]++; 
+					break;
+				}
+			}
+			if (ret == 0) {
+				printf("Unclaimed interrupt: level = %d "
+				    "vec = 0x%x, intbit = %d mask = 0x%b\n",
+				    level, vec, intbit,
+				    1 << intbit, IST_STRING);
 				break;
 			}
 		}
-		if (ret == 0) {
-			printf("Unclaimed interrupt: level = %d vec = 0x%x, intbit = %d mask = 0x%b\n",
-			       level, vec, intbit, 1 << intbit, IST_STRING);
-			break;
-		}
-#if 0
-		disable_interrupt();
-#endif 
 	} while ((cur_mask = ISR_GET_CURRENT_MASK(cpu)) != 0);
 
 	/*
 	 * process any remaining data access exceptions before
 	 * returning to assembler
 	 */
-out_m188:
 	disable_interrupt();
 	if (eframe->dmt0 & DMT_VALID) {
 		m88100_trap(T_DATAFLT, eframe);
@@ -1736,7 +1734,6 @@ out_m188:
 	 */
 	setipl((u_char)eframe->mask);
 	flush_pipeline();
-	return;
 }
 
 #endif /* MVME188 */
@@ -1760,8 +1757,8 @@ m187_ext_int(u_int v, struct m88100_saved_state *eframe)
 	u_char vec;
 
 	/* get level and mask */
-	asm volatile("ld.b	%0,%1" : "=r" (mask) : "" (*md.intr_mask));
-	asm volatile("ld.b	%0,%1" : "=r" (level) : "" (*md.intr_ipl));
+	__asm __volatile("ld.b	%0,%1" : "=r" (mask) : "" (*md.intr_mask));
+	__asm __volatile("ld.b	%0,%1" : "=r" (level) : "" (*md.intr_ipl));
 
 	/*
 	 * It is really bizarre for the mask and level to the be the same.
@@ -1772,7 +1769,6 @@ m187_ext_int(u_int v, struct m88100_saved_state *eframe)
 
 	if ((mask == level) && level) {
 		panic("mask == level, %d\n", level);
-		return;
 	}
 
 	/*
@@ -1782,7 +1778,6 @@ m187_ext_int(u_int v, struct m88100_saved_state *eframe)
 
 	if (level == 0) {
 		panic("Bogons... level %x and mask %x\n", level, mask);
-		return;
 	}
 
 	/* and block interrupts at level or lower */
@@ -1790,19 +1785,20 @@ m187_ext_int(u_int v, struct m88100_saved_state *eframe)
 	/* and stash it away in the trap frame */
 	eframe->mask = mask;
 
+	uvmexp.intrs++;
+
 	if (level > 7 || (char)level < 0) {
 		panic("int level (%x) is not between 0 and 7", level);
 	}
 
 	/* generate IACK and get the vector */
-	asm volatile("tb1	0, r0, 0"); 
+	__asm __volatile("tb1	0, r0, 0"); 
 	if (guarded_access(ivec[level], 1, &vec) == EFAULT) {
-		printf("Unable to get vector for this interrupt (level %x)\n", level);
-		goto out;
+		panic("Unable to get vector for this interrupt (level %x)\n", level);
 	}
-	asm volatile("tb1	0, r0, 0"); 
-	asm volatile("tb1	0, r0, 0"); 
-	asm volatile("tb1	0, r0, 0"); 
+	__asm __volatile("tb1	0, r0, 0"); 
+	__asm __volatile("tb1	0, r0, 0"); 
+	__asm __volatile("tb1	0, r0, 0"); 
 
 	if (vec > 0xFF) {
 		panic("interrupt vector %x greater than 255", vec);
@@ -1810,38 +1806,40 @@ m187_ext_int(u_int v, struct m88100_saved_state *eframe)
 
 	enable_interrupt();
 
-	if ((intr = intr_handlers[vec]) == 0) {
+	if ((intr = intr_handlers[vec]) == NULL) {
 		/* increment intr counter */
 		intrcnt[M88K_SPUR_IRQ]++; 
 		printf("Spurious interrupt (level %x and vec %x)\n",
 		       level, vec);
-	}
-	if (intr && intr->ih_ipl != level) {
-		panic("Handler ipl %x not the same as level %x. vec = 0x%x",
-		      intr->ih_ipl, level, vec);
-	}
-
-	/*
-	 * Walk through all interrupt handlers in the chain for the
-	 * given vector, calling each handler in turn, till some handler
-	 * returns a value != 0.
-	 */
-
-	for (ret = 0; intr; intr = intr->ih_next) {
-		if (intr->ih_wantframe != 0)
-			ret = (*intr->ih_fn)((void *)eframe);
-		else
-			ret = (*intr->ih_fn)(intr->ih_arg);
-		if (ret){
-			/* increment intr counter */
-			intrcnt[level]++; 
-			break;
+	} else {
+		if (intr && intr->ih_ipl != level) {
+			panic("Handler ipl %x not the same as level %x. "
+			    "vec = 0x%x",
+			    intr->ih_ipl, level, vec);
 		}
-	}
 
-	if (ret == 0) {
-		printf("Unclaimed interrupt (level %x and vec %x)\n",
-		       level, vec);
+		/*
+		 * Walk through all interrupt handlers in the chain for the
+		 * given vector, calling each handler in turn, till some handler
+		 * returns a value != 0.
+		 */
+
+		for (ret = 0; intr; intr = intr->ih_next) {
+			if (intr->ih_wantframe != 0)
+				ret = (*intr->ih_fn)((void *)eframe);
+			else
+				ret = (*intr->ih_fn)(intr->ih_arg);
+			if (ret != 0) {
+				/* increment intr counter */
+				intrcnt[level]++; 
+				break;
+			}
+		}
+
+		if (ret == 0) {
+			printf("Unclaimed interrupt (level %x and vec %x)\n",
+			    level, vec);
+		}
 	}
 
 	/*
@@ -1850,12 +1848,11 @@ m187_ext_int(u_int v, struct m88100_saved_state *eframe)
 	 */
 	disable_interrupt();
 
-out:
-		if (eframe->dmt0 & DMT_VALID) {
+	if (eframe->dmt0 & DMT_VALID) {
 		m88100_trap(T_DATAFLT, eframe);
-			data_access_emulation((unsigned *)eframe);
-			eframe->dmt0 &= ~DMT_VALID;
-		}
+		data_access_emulation((unsigned *)eframe);
+		eframe->dmt0 &= ~DMT_VALID;
+	}
 	mask = eframe->mask;
 
 	/*
@@ -1876,8 +1873,8 @@ m197_ext_int(u_int v, struct m88100_saved_state *eframe)
 	u_char vec;
 
 	/* get src and mask */
-	asm volatile("ld.b	%0,%1" : "=r" (mask) : "" (*md.intr_mask));
-	asm volatile("ld.b	%0,%1" : "=r" (src) : "" (*md.intr_src));
+	__asm __volatile("ld.b	%0,%1" : "=r" (mask) : "" (*md.intr_mask));
+	__asm __volatile("ld.b	%0,%1" : "=r" (src) : "" (*md.intr_src));
 	
 	if (v == T_NON_MASK) {
 		/* This is the abort switch */
@@ -1885,7 +1882,7 @@ m197_ext_int(u_int v, struct m88100_saved_state *eframe)
 		vec = BS_ABORTVEC;
 	} else {
 		/* get level  */
-		asm volatile("ld.b	%0,%1" : "=r" (level) : "" (*md.intr_ipl));
+		__asm __volatile("ld.b	%0,%1" : "=r" (level) : "" (*md.intr_ipl));
 	}
 
 	/*
@@ -1894,8 +1891,7 @@ m197_ext_int(u_int v, struct m88100_saved_state *eframe)
 	 */
 
 	if (level == 0) {
-		printf("Bogons... level %x and mask %x\n", level, mask);
-		goto m197beatit;
+		panic("Bogons... level %x and mask %x\n", level, mask);
 	}
 
 	/* and block interrupts at level or lower */
@@ -1903,20 +1899,21 @@ m197_ext_int(u_int v, struct m88100_saved_state *eframe)
 	/* and stash it away in the trap frame */
 	eframe->mask = mask;
 
+	uvmexp.intrs++;
+
 	if (level > 7 || (char)level < 0) {
 		panic("int level (%x) is not between 0 and 7", level);
 	}
 
 	if (v != T_NON_MASK) {
 		/* generate IACK and get the vector */
-		asm volatile("tb1	0, r0, 0"); 
+		__asm __volatile("tb1	0, r0, 0"); 
 		if (guarded_access(ivec[level], 1, &vec) == EFAULT) {
-			printf("Unable to get vector for this interrupt (level %x)\n", level);
-			goto m197out;
+			panic("Unable to get vector for this interrupt (level %x)\n", level);
 		}
-		asm volatile("tb1	0, r0, 0"); 
-		asm volatile("tb1	0, r0, 0"); 
-		asm volatile("tb1	0, r0, 0");
+		__asm __volatile("tb1	0, r0, 0"); 
+		__asm __volatile("tb1	0, r0, 0"); 
+		__asm __volatile("tb1	0, r0, 0");
 	}
 
 	if (vec > 0xFF) {
@@ -1925,43 +1922,43 @@ m197_ext_int(u_int v, struct m88100_saved_state *eframe)
 
 	enable_interrupt();
 
-	if ((intr = intr_handlers[vec]) == 0) {
+	if ((intr = intr_handlers[vec]) == NULL) {
 		/* increment intr counter */
 		intrcnt[M88K_SPUR_IRQ]++; 
 		printf("Spurious interrupt (level %x and vec %x)\n",
 		       level, vec);
-	}
-	if (intr && intr->ih_ipl != level) {
-		panic("Handler ipl %x not the same as level %x. vec = 0x%x",
-		      intr->ih_ipl, level, vec);
-	}
-
-	/*
-	 * Walk through all interrupt handlers in the chain for the
-	 * given vector, calling each handler in turn, till some handler
-	 * returns a value != 0.
-	 */
-
-	for (ret = 0; intr; intr = intr->ih_next) {
-		if (intr->ih_wantframe != 0)
-			ret = (*intr->ih_fn)((void *)eframe);
-		else
-			ret = (*intr->ih_fn)(intr->ih_arg);
-		if (ret){
-			/* increment intr counter */
-			intrcnt[level]++; 
-			break;
+	} else {
+		if (intr && intr->ih_ipl != level) {
+			panic("Handler ipl %x not the same as level %x. "
+			    "vec = 0x%x",
+			    intr->ih_ipl, level, vec);
 		}
-	}
 
-	if (ret == 0) {
-		printf("Unclaimed interrupt (level %x and vec %x)\n",
-		       level, vec);
+		/*
+		 * Walk through all interrupt handlers in the chain for the
+		 * given vector, calling each handler in turn, till some handler
+		 * returns a value != 0.
+		 */
+		for (ret = 0; intr; intr = intr->ih_next) {
+			if (intr->ih_wantframe != 0)
+				ret = (*intr->ih_fn)((void *)eframe);
+			else
+				ret = (*intr->ih_fn)(intr->ih_arg);
+			if (ret != 0) {
+				/* increment intr counter */
+				intrcnt[level]++; 
+				break;
+			}
+		}
+
+		if (ret == 0) {
+			printf("Unclaimed interrupt (level %x and vec %x)\n",
+			    level, vec);
+		}
 	}
 
 	disable_interrupt();
 
-m197out:
 	mask = eframe->mask;
 
 	/*
@@ -1969,9 +1966,6 @@ m197out:
 	 * was taken.
 	 */
 	setipl((u_char)mask);
-
-m197beatit:
-	return;
 }
 #endif 
 
