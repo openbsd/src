@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tset.1,v 1.4 1998/06/15 17:56:09 mickey Exp $
+.\"	$OpenBSD: tset.1,v 1.5 1998/10/30 00:24:40 aaron Exp $
 .\"	$NetBSD: tset.1,v 1.4.2.1 1995/12/05 02:53:34 jtc Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -59,11 +59,11 @@
 .Op Fl m Ar mapping
 .Op Ar terminal
 .Sh DESCRIPTION
-.Nm Tset
+.Nm tset
 initializes terminals.
-.Nm Tset
+.Nm tset
 first determines the type of terminal that you are using.
-This determination is done as follows, using the first terminal type found.
+This determination is done as follows, using the first terminal type found:
 .sp
 .Bl -bullet -compact -offset indent
 .It
@@ -94,7 +94,7 @@ is retrieved.
 If no termcap entry is found for the type, the user is prompted for another
 terminal type.
 .Pp
-Once the termcap entry is retrieved, the window size, backspace, interrupt
+Once the termcap entry is retrieved, the window size, backspace, interrupt,
 and line kill characters (among many other things) are set and the terminal
 and tab initialization strings are sent to the standard error output.
 Finally, if the erase, interrupt and line kill characters have changed,
@@ -107,7 +107,7 @@ When invoked as
 sets cooked and echo modes, turns off cbreak and raw modes, turns on
 newline translation and resets any unset special characters to their
 default values before doing the terminal initialization described above.
-This is useful after a program dies leaving a terminal in a abnormal state.
+This is useful after a program dies leaving a terminal in an abnormal state.
 Note, you may have to type
 .Dq Li <LF>reset<LF>
 (the line-feed character is normally control-J) to get the terminal
@@ -119,18 +119,18 @@ The options are as follows:
 .It Fl
 The terminal type is displayed to the standard output, and the terminal is
 not initialized in any way.
-.It Fl e
+.It Fl e Ar ch
 Set the erase character to
 .Ar ch .
 .It Fl I
 Do not send the terminal or tab initialization strings to the terminal.
-.It Fl i
+.It Fl i Ar ch
 Set the interrupt character to
 .Ar ch .
-.It Fl k
+.It Fl k Ar ch
 Set the line kill character to
 .Ar ch .
-.It Fl m
+.It Fl m Ar mapping
 Specify a mapping from a port type to a terminal.
 See below for more information.
 .It Fl Q
@@ -175,9 +175,9 @@ option is specified, the terminal type and the termcap entry are written
 to the standard output, separated by a space and without a terminating
 newline.
 This can be assigned to an array by
-.Nm csh
+.Xr csh 1
 and
-.Nm ksh
+.Xr ksh 1
 users and then used like any other shell array.
 .Pp
 When the
@@ -186,12 +186,12 @@ option is specified, the commands to enter the information into the
 shell's environment are written to the standard output.
 If the
 .Ev SHELL
-environment variable ends in ``csh'', the commands are for the
-.Nm csh ,
+environment variable ends in ``csh'', the commands are for
+.Xr csh 1 ,
 otherwise, they are for
-.Xr sh .
+.Xr sh 1 .
 Note, the
-.Nm csh
+.Xr csh 1
 commands set and unset the shell variable
 .Dq noglob ,
 leaving it unset.
@@ -219,7 +219,7 @@ unset noglob
 .Ed
 .Sh TERMINAL TYPE MAPPING
 When the terminal is not hardwired into the system (or the current system
-information is incorrect) the terminal type derived from the
+information is incorrect), the terminal type derived from the
 .Pa /etc/ttys
 file or the
 .Ev TERM
@@ -253,7 +253,7 @@ kind of terminal''.
 The argument to the
 .Fl m
 option consists of an optional port type, an optional operator, an optional
-baud rate specification, an optional colon (``:'') character and a terminal
+baud rate specification, an optional colon (``:'') character, and a terminal
 type.
 The port type is a string (delimited by either the operator or the colon
 character).
@@ -268,7 +268,7 @@ means greater than,
 .Dq Li \&<
 means less than,
 .Dq Li \&@
-means equal to
+means equal to,
 and
 .Dq Li \&!
 inverts the sense of the test.
@@ -315,10 +315,10 @@ terminal.
 No whitespace characters are permitted in the
 .Fl m
 option argument.
-Also, to avoid problems with metacharacters, it is suggested that the entire
+Also, to avoid problems with meta-characters, it is suggested that the entire
 .Fl m
 option argument be placed within single quote characters, and that
-.Nm csh
+.Xr csh 1
 users insert a backslash character (``\e'') before any exclamation
 marks (``!'').
 .Sh ENVIRONMENT
@@ -354,7 +354,7 @@ The
 .Fl A ,
 .Fl E ,
 .Fl h ,
-.Fl u
+.Fl u ,
 and
 .Fl v
 options have been deleted from the

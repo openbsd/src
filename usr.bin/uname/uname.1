@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uname.1,v 1.3 1998/02/24 00:05:59 deraadt Exp $
+.\"	$OpenBSD: uname.1,v 1.4 1998/10/30 00:24:41 aaron Exp $
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -37,7 +37,7 @@
 .Os
 .Sh NAME
 .Nm uname
-.Nd Print operating system name
+.Nd print operating system name
 .Sh SYNOPSIS
 .Nm uname
 .Op Fl amnpsrv
@@ -54,19 +54,19 @@ Behave as though all of the options
 .Fl mnrsv 
 were specified.
 .It Fl m
-print the machine hardware name.
+Print the machine hardware name.
 .It Fl n
-print the nodename (the nodename may be a name
+Print the nodename (the nodename may be a name
 that the system is known by to a communications
 network).
 .It Fl p
-print the processor type in more detail.
+Print the processor type in more detail.
 .It Fl s
-print the operating system name.
+Print the operating system name.
 .It Fl r
-print the operating system release.
+Print the operating system release.
 .It Fl v
-print the operating system version.
+Print the operating system version.
 .El
 .Pp
 If no options are specified, 

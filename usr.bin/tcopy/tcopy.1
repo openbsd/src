@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcopy.1,v 1.3 1997/04/16 03:43:54 millert Exp $
+.\"	$OpenBSD: tcopy.1,v 1.4 1998/10/30 00:24:38 aaron Exp $
 .\"	$NetBSD: tcopy.1,v 1.4 1997/04/15 07:23:07 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1991, 1993
@@ -47,10 +47,10 @@
 .Oo Ar src Op Ar dest
 .Oc
 .Sh DESCRIPTION
-.Nm Tcopy
+.Nm tcopy
 is designed to copy magnetic tapes.  The only assumption made
 about the tape is that there are two tape marks at the end.
-.Nm Tcopy
+.Nm tcopy
 with only a source tape
 .Pf ( Ar /dev/rst0
 by default) specified will print
@@ -72,9 +72,9 @@ Specify a maximum block size,
 .Ar maxblk .
 .It Fl v
 Given the two tapes,
-.ar src
+.Ar src
 and
-.Ar dest
+.Ar dest ,
 verify that they are identical.
 .It Fl x
 Output all informational messages to the standard error.

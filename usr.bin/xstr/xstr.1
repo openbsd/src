@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xstr.1,v 1.2 1996/06/26 05:44:34 deraadt Exp $
+.\"	$OpenBSD: xstr.1,v 1.3 1998/10/30 00:24:45 aaron Exp $
 .\"	$NetBSD: xstr.1,v 1.4 1994/11/26 09:25:22 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1993
@@ -47,7 +47,7 @@
 .Op Fl 
 .Op Ar file
 .Sh DESCRIPTION
-.Nm Xstr
+.Nm xstr
 maintains a file
 .Pa strings
 into which strings in component parts of a large program are hashed.
@@ -58,10 +58,10 @@ are also read-only.
 Available options:
 .Bl -tag -width Ds
 .It Fl
-.Nm Xstr
+.Nm xstr
 reads from the standard input.
 .It Fl c
-.Nm Xstr
+.Nm xstr
 will extract the strings from the C source
 .Ar file
 or the standard input
@@ -101,7 +101,7 @@ of the program.
 If possible, the array can be made read-only (shared) saving
 space and swap overhead.
 .Pp
-.Nm Xstr
+.Nm xstr
 can also be used on a single file.
 A command
 .Bd -literal -offset indent
@@ -131,7 +131,7 @@ cc \-c x.c
 mv x.o name.o
 .Ed
 .Pp
-.Nm Xstr
+.Nm xstr
 does not touch the file
 .Pa strings
 unless new items are added, thus
@@ -142,13 +142,13 @@ unless truly necessary.
 .Sh FILES
 .Bl -tag -width /tmp/xsxx* -compact
 .It Pa strings
-Data base of strings
+data base of strings
 .It Pa x.c
-Massaged C source
+massaged C source
 .It Pa xs.c
 C source for definition of array `xstr'
 .It Pa /tmp/xs*
-Temp file when `xstr name' doesn't touch
+temporary file when `xstr name' doesn't touch
 .Pa strings
 .El
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tr.1,v 1.2 1996/06/26 05:41:50 deraadt Exp $
+.\"	$OpenBSD: tr.1,v 1.3 1998/10/30 00:24:40 aaron Exp $
 .\"	$NetBSD: tr.1,v 1.5 1994/12/07 08:35:13 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -230,7 +230,7 @@ it's interpreted as a decimal value.
 .Pp
 The
 .Nm tr
-utility exits 0 on success, and >0 if an error occurs.
+utility exits 0 on success or >0 if an error occurred.
 .Sh EXAMPLES
 The following examples are shown as given to the shell:
 .sp
@@ -255,7 +255,7 @@ the range is intended to map in another range, i.e. the command
 ``tr [a-z] [A-Z]'' will work as it will map the ``['' character in
 .Ar string1
 to the ``['' character in
-.Ar string2.
+.Ar string2 .
 However, if the shell script is deleting or squeezing characters as in
 the command ``tr -d [a-z]'', the characters ``['' and ``]'' will be 
 included in the deletion or compression list which would not have happened

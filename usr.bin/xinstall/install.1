@@ -1,4 +1,4 @@
-.\"	$OpenBSD: install.1,v 1.5 1997/04/17 19:13:55 millert Exp $
+.\"	$OpenBSD: install.1,v 1.6 1998/10/30 00:24:44 aaron Exp $
 .\"	$NetBSD: install.1,v 1.4 1994/11/14 04:57:17 jtc Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
@@ -107,7 +107,7 @@ Specify an owner.  A numeric UID is allowed.
 Preserve the modification time.
 Copy the file, as if the
 .Fl C
-(Compare and copy) option is specified,
+(compare and copy) option is specified,
 except if the target file doesn't already exist or is different,
 then preserve the modification time of the file.
 .It Fl S
@@ -119,7 +119,7 @@ flag a temporary file is used and then renamed to be
 the target.  The reason this is safer is that if the copy or
 rename fails, the existing target is left untouched.
 .It Fl s
-.Nm Install
+.Nm install
 exec's the command
 .Pa /usr/bin/strip
 to strip binaries so that install can be portable over a large
@@ -186,7 +186,7 @@ The
 and
 .Fl S
 flags are non-standard and should not relied upon for portability.
-.br
+.Pp
 Temporary files may be left in the target directory if
 .Nm install
 exits abnormally.

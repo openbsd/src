@@ -1,4 +1,4 @@
-.\"	$OpenBSD: w.1,v 1.6 1998/03/23 08:45:50 deraadt Exp $
+.\"	$OpenBSD: w.1,v 1.7 1998/10/30 00:24:43 aaron Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -70,11 +70,11 @@ Output is sorted by idle time.
 .It Fl M
 Extract values associated with the name list from the specified
 core instead of the default
-.Dq /dev/kmem .
+.Pa /dev/kmem .
 .It Fl N
 Extract the name list from the specified system instead of the
 default
-.Dq /bsd .
+.Pa /bsd .
 .It Fl a
 Attempt to translate network addresses into names.
 .El
@@ -88,10 +88,10 @@ name is specified, the output is restricted to that user.
 list of users on the system
 .El
 .Sh SEE ALSO
-.Xr who 1 ,
 .Xr finger 1 ,
 .Xr ps 1 ,
 .Xr uptime 1 ,
+.Xr who 1
 .Sh BUGS
 The notion of the
 .Dq current process

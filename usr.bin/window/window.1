@@ -1,4 +1,4 @@
-.\"	$OpenBSD: window.1,v 1.3 1997/02/25 00:04:34 downsj Exp $
+.\"	$OpenBSD: window.1,v 1.4 1998/10/30 00:24:44 aaron Exp $
 .\"	$NetBSD: window.1,v 1.3 1995/09/28 10:35:05 tls Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -51,7 +51,7 @@
 .Op Fl e Ar escape-char
 .Op Fl c Ar command
 .Sh DESCRIPTION
-.Nm Window
+.Nm window
 implements a window environment on
 .Tn ASCII
 terminals.
@@ -60,7 +60,7 @@ A window is a rectangular portion of the physical terminal
 screen associated with a set of processes.  Its size and
 position can be changed by the user at any time.  Processes
 communicate with their window in the same way they normally
-interact with a terminal\-through their standard input, output,
+interact with a terminal - through their standard input, output,
 and diagnostic file descriptors.  The window program handles the
 details of redirecting input and output to and from the
 windows.  At any one time, only one window can receive
@@ -76,7 +76,7 @@ in the user's home directory are
 executed.  If it does not exist, two equal sized windows spanning
 the terminal screen are created by default.
 .Pp
-The command line options are
+The command line options are:
 .Bl -tag -width Fl
 .It Fl t
 Turn on terse mode (see
@@ -369,7 +369,7 @@ A statement is either a conditional or an expression.  Expression
 statements are terminated with a new line or ``;''.  To continue
 an expression on the next line, terminate the first line with ``\\''.
 .Ss Conditional Statement
-.Nm Window
+.Nm window
 has a single control structure:
 the fully bracketed if statement in the form
 .Pp
@@ -927,7 +927,7 @@ field of the terminal's
 .Ev TERMCAP
 entry, is used.
 .Sh ENVIRONMENT
-.Nm Window
+.Nm window
 utilizes these environment variables:
 .Ev HOME ,
 .Ev SHELL ,
@@ -937,9 +937,9 @@ utilizes these environment variables:
 .Sh FILES
 .Bl -tag -width /dev/[pt]ty[pq]? -compact
 .It Pa ~/.windowrc
-startup command file.
+startup command file
 .It Pa /dev/[pt]ty[pq]? 
-pseudo-terminal devices.
+pseudo-terminal devices
 .El
 .Sh HISTORY
 The

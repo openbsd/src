@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vacation.1,v 1.3 1997/09/20 07:33:09 deraadt Exp $
+.\"	$OpenBSD: vacation.1,v 1.4 1998/10/30 00:24:42 aaron Exp $
 .\"	$NetBSD: vacation.1,v 1.5 1995/08/31 21:57:08 jtc Exp $
 .\"
 .\" Copyright (c) 1985, 1987, 1990, 1991, 1993
@@ -48,7 +48,7 @@
 .Op Fl a Ar alias
 .Ar login
 .Sh DESCRIPTION
-.Nm Vacation
+.Nm vacation
 returns a message to the sender of a message telling them that you
 are currently not reading your mail.  The intended use is in a
 .Pa .forward
@@ -123,7 +123,7 @@ database in the file
 .Pa .vacation.db
 in your home directory.
 .Pp
-.Nm Vacation
+.Nm vacation
 expects a file
 .Pa .vacation.msg ,
 in your home directory, containing a message to be sent back to each
@@ -141,7 +141,7 @@ please contact Keith Bostic <bostic@CS.Berkeley.EDU>.
 --eric
 .Ed
 .Pp
-.Nm Vacation
+.Nm vacation
 reads the first line from the standard input for a
 .Ux
 .Dq From

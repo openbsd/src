@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tty.1,v 1.2 1996/06/26 05:42:02 deraadt Exp $
+.\"	$OpenBSD: tty.1,v 1.3 1998/10/30 00:24:41 aaron Exp $
 .\"	$NetBSD: tty.1,v 1.4 1994/12/07 00:46:55 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -67,9 +67,9 @@ option is deprecated in favor of the
 command.
 .El
 .Pp
-.Nm Tty
+.Nm tty
 exits 0 if the standard input is a terminal, 1 if the standard input is
-not a terminal, and >1 if an error occurs.
+not a terminal, or >1 if an error occurred.
 .Sh SEE ALSO
 .Xr test 1 ,
 .Xr ttyname 3

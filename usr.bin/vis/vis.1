@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vis.1,v 1.2 1996/06/26 05:42:38 deraadt Exp $
+.\"	$OpenBSD: vis.1,v 1.3 1998/10/30 00:24:42 aaron Exp $
 .\"	$NetBSD: vis.1,v 1.5 1994/11/17 07:56:00 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
@@ -46,7 +46,7 @@
 .Op Fl F Ar foldwidth
 .Op Ar file ...
 .Sh DESCRIPTION
-.Nm Vis
+.Nm vis
 is a filter for converting non-printable characters
 into a visual representation.  It differs from
 .Ql cat -v
@@ -61,8 +61,8 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl b
 Turns off prepending of backslash before up-arrow control sequences
-and meta characters, and disables the doubling of backslashes.  This
-produces output which is neither invertible or precise, but does
+and meta-characters, and disables the doubling of backslashes.  This
+produces output which is neither invertible nor precise, but does
 represent a minimum of change to the input.  It is similar to
 .Dq Li cat -v .
 .It Fl c
@@ -103,7 +103,7 @@ becomes like
 an invertible version of the
 .Xr fold 1
 utility.  That is, the output
-can be unfolded by running the output through
+can be unfolded by running the output through.
 .It Fl o
 Request a format which displays non-printable characters as
 an octal number, \eddd.
@@ -111,7 +111,6 @@ an octal number, \eddd.
 Only characters considered unsafe to send to a terminal are encoded.
 This flag allows backspace, bell, and carriage return in addition
 to the default space, tab and newline.
-.Xr unvis 1 .
 .It Fl t
 Tabs are also encoded.
 .It Fl w
@@ -123,5 +122,5 @@ White space (space-tab-newline) is also encoded.
 .Sh HISTORY
 The
 .Nm
-command appears in
+command appeared in
 .Bx 4.4 .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tee.1,v 1.2 1996/06/26 05:40:31 deraadt Exp $
+.\"	$OpenBSD: tee.1,v 1.3 1998/10/30 00:24:38 aaron Exp $
 .\"	$NetBSD: tee.1,v 1.4 1994/12/09 01:43:37 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@ signal.
 .Pp
 The following operands are available:
 .Bl -tag -width file
-.It file
+.It Ar file
 A pathname of an output
 .Ar file .
 .El
@@ -81,7 +81,7 @@ option.
 .Pp
 The
 .Nm tee
-utility exits 0 on success, and >0 if an error occurs.
+utility exits 0 on success or >0 if an error occurred.
 .Sh STANDARDS
 The
 .Nm tee

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: what.1,v 1.2 1996/06/26 05:42:51 deraadt Exp $
+.\"	$OpenBSD: what.1,v 1.3 1998/10/30 00:24:43 aaron Exp $
 .\"	$NetBSD: what.1,v 1.3 1994/11/17 06:59:38 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -42,9 +42,9 @@
 .Nd "show what versions of object modules were used to construct a file"
 .Sh SYNOPSIS
 .Nm what
-.Ar name Ar ...
+.Ar name Op Ar ...
 .Sh DESCRIPTION
-.Nm What
+.Nm what
 reads each file
 .Ar name
 and searches for sequences of the form
@@ -52,7 +52,8 @@ and searches for sequences of the form
 as inserted by the source code control system.  It prints the remainder
 of the string following this marker, up to a null character, newline, double
 quote, or
-.Dq \&> character.
+.Dq \&>
+character.
 .Sh BUGS
 As
 .Bx

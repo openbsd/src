@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unifdef.1,v 1.2 1996/06/26 05:42:10 deraadt Exp $
+.\"	$OpenBSD: unifdef.1,v 1.3 1998/10/30 00:24:41 aaron Exp $
 .\"	$NetBSD: unifdef.1,v 1.4 1994/12/07 00:33:48 jtc Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -55,10 +55,10 @@
 .Ar ...
 .Op Ar file
 .Sh DESCRIPTION
-.Nm Unifdef
+.Nm unifdef
 is useful for removing ifdef'ed lines
 from a file while otherwise leaving the file alone.
-.Nm Unifdef
+.Nm unifdef
 acts on
 #ifdef, #ifndef, #else, and #endif lines,
 and it knows only enough about C
@@ -74,16 +74,17 @@ it will not complain if it gets
 to the end of a line and finds no backslash for continuation.
 .Pp
 Available options:
+.Pp
 .Bl -tag -width Ds -compact
 .It Fl D Ns Ar sym
 .It Fl U Ns Ar sym
-Specify which symbols to define or undefine.
+Specify which symbols to define or undefine,
 and the lines inside those ifdefs will be copied to the output or removed as
 appropriate.
 The ifdef, ifndef, else, and endif lines associated with
 .Ar sym
 will also be removed.
-Ifdefs involving symbols you don't specify
+ifdefs involving symbols you don't specify
 and ``#if'' control lines
 are untouched and copied out
 along with their associated
@@ -106,6 +107,7 @@ are retained and vice versa.
 .It Fl l
 Replace removed lines with blank lines
 instead of deleting them.
+.Pp
 .It Fl t
 Disables parsing for C comments and quotes, which is useful
 for plain text.
@@ -132,7 +134,7 @@ and
 above.
 .El
 .Pp
-.Nm Unifdef
+.Nm unifdef
 copies its output to
 .Em stdout
 and will take its input from
@@ -141,7 +143,7 @@ if no
 .Ar file
 argument is given.
 .Pp
-.Nm Unifdef
+.Nm unifdef
 works nicely with the
 .Fl D Ns Ar sym
 option added to

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uniq.1,v 1.2 1996/06/26 05:42:12 deraadt Exp $
+.\"	$OpenBSD: uniq.1,v 1.3 1998/10/30 00:24:41 aaron Exp $
 .\"	$NetBSD: uniq.1,v 1.5 1994/12/06 07:51:15 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -55,7 +55,7 @@
 .Sh DESCRIPTION
 The
 .Nm uniq
-utility reads the standard input comparing adjacent lines, and writes
+utility reads the standard input comparing adjacent lines and writes
 a copy of each unique input line to the standard output.
 The second and succeeding copies of identical adjacent input lines are
 not written.
@@ -116,7 +116,7 @@ as the name of an output file.
 .Pp
 The
 .Nm uniq
-utility exits 0 on success, and >0 if an error occurs.
+utility exits 0 on success or >0 if an error occurred.
 .Sh COMPATIBILITY
 The historic
 .Cm \&\(pl Ns Ar number

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: talk.1,v 1.3 1998/04/27 15:45:51 pjanzen Exp $
+.\"	$OpenBSD: talk.1,v 1.4 1998/10/30 00:24:38 aaron Exp $
 .\"	$NetBSD: talk.1,v 1.3 1994/12/09 02:14:23 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -45,7 +45,7 @@
 .Ar person
 .Op Ar ttyname
 .Sh DESCRIPTION
-.Nm Talk
+.Nm talk
 is a visual communication program which copies lines from your
 terminal to that of another user.
 .Pp
@@ -73,7 +73,7 @@ When first called,
 .Nm talk
 sends the message
 .Bd -literal -offset indent -compact
-Message from TalkDaemon@his_machine...
+Message from TalkDaemon@their_machine...
 talk: connection requested by your_name@your_machine.
 talk: respond with: talk your_name@your_machine
 .Ed
@@ -84,7 +84,7 @@ of the message should reply by typing
 .Dl talk \ your_name@your_machine
 .Pp
 It doesn't matter from which machine the recipient replies, as
-long as his login-name is the same.  If the machine is not the one to which
+long as their login name is the same.  If the machine is not the one to which
 the talk request was sent, it is noted on the screen.
 Once communication is established,
 the two parties may type simultaneously, with their output appearing

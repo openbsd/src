@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vgrindefs.5,v 1.2 1996/06/26 05:42:32 deraadt Exp $
+.\"	$OpenBSD: vgrindefs.5,v 1.3 1998/10/30 00:24:42 aaron Exp $
 .\"	$NetBSD: vgrindefs.5,v 1.3 1994/11/17 08:28:07 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -53,7 +53,7 @@ The data base is
 very similar to 
 .Xr termcap 5 .
 .Sh FIELDS
-The following table names and describes each field.  
+The following table names and describes each field:
 .Pp
 .Bl -column Namexxx Tpexxx
 .Sy Name	Type	Description
@@ -73,7 +73,7 @@ The following table names and describes each field.
 .Pp
 .Sh EXAMPLES
 The following entry, which describes the C language, is 
-typical of a language entry.
+typical of a language entry:
 .Bd -literal
 C|c:\
 :pb=^\ed?*?\ed?\ep\ed?\e(\ea?\e):bb={:be=}:cb=/*:ce=*/:sb=":se=\ee":\e
@@ -101,7 +101,7 @@ and string
 capabilities which give a regular expression or 
 keyword list.
 .Sh REGULAR  EXPRESSIONS
-.Nm Vgrindefs
+.Nm vgrindefs
 uses regular expression which are very similar to those of 
 .Xr ex 1
 and
@@ -115,24 +115,24 @@ are to be included as normal characters.
 The metasymbols and their meanings are:
 .Bl -tag -width indent
 .It $
-the end of a line
+End of a line.
 .It \&^
-the beginning of a line
+Beginning of a line.
 .It \ed
-a delimiter (space, tab, newline, start of line)
+A delimiter (space, tab, newline, start of line).
 .It \ea
-matches any string of symbols (like .* in lex)
+Matches any string of symbols (like .* in lex).
 .It \ep
-matches any alphanumeric name.  In a procedure definition (pb) the string
+Matches any alphanumeric name.  In a procedure definition (pb) the string
 that matches this symbol is used as the procedure name.
 .It ()
-grouping
+Grouping.
 .It \&|
-alternation
+Alternation.
 .It ?
-last item is optional
+Last item is optional.
 .It \ee
-preceding any string means that the string will not match an
+Preceding any string means that the string will not match an
 input string if the input string is preceded by an escape character (\e).
 This is typically used for languages (like C) which can include the
 string delimiter in a string by escaping it.
@@ -149,11 +149,11 @@ specified in lower case.
 .Sh FILES
 .Bl -tag -width /usr/share/misc/vgrindefs -compact
 .It Pa /usr/share/misc/vgrindefs
-File containing terminal descriptions.
+file containing terminal descriptions
 .El
 .Sh SEE ALSO
-.Xr vgrind 1 ,
-.Xr troff 1
+.Xr troff 1 ,
+.Xr vgrind 1
 .Sh HISTORY
 The
 .Nm

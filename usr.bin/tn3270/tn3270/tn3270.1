@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tn3270.1,v 1.2 1996/06/26 05:41:34 deraadt Exp $
+.\"	$OpenBSD: tn3270.1,v 1.3 1998/10/30 00:24:39 aaron Exp $
 .\" Copyright (c) 1986, 1990 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -44,9 +44,9 @@
 .Op Fl d
 .Op Fl n Ar filename
 .Op Fl t Ar commandname
-.Op Ar sysname Op port
+.Op Ar sysname Op Ar port
 .Sh DESCRIPTION
-.Nm Tn3270
+.Nm tn3270
 permits a full-screen, full-duplex connection
 from a
 .Tn UNIX
@@ -54,7 +54,7 @@ machine
 to an
 .Tn IBM
 (or compatible) machine.
-.Nm Tn3270
+.Nm tn3270
 gives the appearance of being logged in
 to the remote machine
 from an
@@ -62,12 +62,12 @@ from an
 3270 terminal.
 Of course, you must have an account on the machine
 to which you connect in order to log in.
-.Nm Tn3270
+.Nm tn3270
 looks to the user in many respects
 like the Yale
 .Tn ASCII
 Terminal Communication System II.
-.Nm Tn3270
+.Nm tn3270
 is actually a modification of the Arpanet
 .Tn TELNET
 user interface (see
@@ -80,11 +80,14 @@ The flags to
 are as follows:
 .Bl -tag -width Fl
 .It Fl d
-Turn on socket-level tracing (for super-user only)
+Turn on socket-level tracing (for super-user only).
 .It Fl n Ns Ar filename
 Specify a file to receive network trace data
-output (from commands "toggle netdata" and
-"toggle options", see
+output (from commands
+.Ic toggle netdata
+and
+.Ic toggle options ,
+see
 .Xr telnet 1 ) ;
 the default is for output
 to be directed to the standard error file.
@@ -93,7 +96,7 @@ Specify a
 .Tn UNIX
 command to process
 .Tn IBM
-4994 style transparent mode
+4994-style transparent mode
 data received from the remote
 .Tn IBM
 machine.
@@ -146,7 +149,7 @@ the following table describes the emulation:
 .It 27*132	3278 model 5
 .It 43*80	3278 model 4
 .It 32*80	3278 model 3
-.It 24*80	3278 model 2.
+.It 24*80	3278 model 2
 .El
 .Ed
 .Pp
@@ -156,7 +159,7 @@ process.
 This emulation involves mapping
 3270-style commands from the host
 into appropriate sequences to control the user's terminal screen.
-.Nm Tn3270
+.Nm tn3270
 uses
 .Xr curses 3
 and the
@@ -234,10 +237,10 @@ Specify
 .Tn UNIX
 command for
 .Tn IBM
-4994 style transparent mode processing.
+4994-style transparent mode processing.
 .El
 .Pp
-.Nm Tn3270
+.Nm tn3270
 command mode may also be entered, after connecting to a host, by typing
 a special escape sequence.
 If
@@ -271,11 +274,11 @@ or by typing ``quit'' or ``close'' while in local command mode.
 .Sh NOTES
 The
 .Tn IBM
-4994 style transparent mode command is invoked when
+4994-style transparent mode command is invoked when
 .Nm tn3270
 receives
 .Tn IBM
-4994 style transparent output from the remote host.
+4994-style transparent output from the remote host.
 Output and input pipes are created for communication between the two
 processes.
 The pipes are closed when a 3270 clear command is received from the remote
@@ -299,14 +302,14 @@ and
 .Dv CRMOD
 turned off.
 .Sh ENVIRONMENT
-.Nm Tn3270
+.Nm tn3270
 checks the following environment variables:
 .Ev TERM ,
 .Ev MAP3270 ,
 .Ev MAP3270[A...] .
 Information on these can be found in
 .Xr mset 1 .
-.Nm Tn3270
+.Nm tn3270
 also checks
 .Ev SHELL ,
 .Ev KEYBD
@@ -318,7 +321,7 @@ and
 .Xr curses 3 ,
 .Xr termcap 3 ,
 .Xr termcap 5 ,
-.Xr map3270 5 ,
+.Xr map3270 5
 .Rs
 .%T "Yale ASCII Terminal Communication"
 .%B "System II Program Description/Operator's Manual"
@@ -330,7 +333,7 @@ The
 command appeared in
 .Bx 4.3 .
 .Sh BUGS
-Tn3270 is slow and uses system resources prodigiously.
+tn3270 is slow and uses system resources prodigiously.
 .Pp
 Not all 3270 functions are supported,
 nor all Yale enhancements.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: top.1,v 1.4 1998/08/21 13:55:24 kstailey Exp $
+.\"	$OpenBSD: top.1,v 1.5 1998/10/30 00:24:39 aaron Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -35,7 +35,7 @@
 .Os OpenBSD
 .Sh NAME
 .Nm top
-.Nd display and update information about the top cpu processes
+.Nd display and update information about the top CPU processes
 .Sh SYNOPSIS
 .Nm
 .Op Fl SbiInqu
@@ -50,7 +50,7 @@ displays the top processes on the system and periodically updates this
 information.  If standard output is an intelligent terminal (see below) then
 as many processes as will fit on the terminal screen are displayed
 by default.  Otherwise, a good number of them are shown (around 20).
-Raw cpu percentage is used to rank the processes.  If
+Raw CPU percentage is used to rank the processes.  If
 .Ar number
 is given, then the top
 .Ar number
@@ -106,18 +106,18 @@ to -20 so that it will run faster.  This can be used when the system is
 being very sluggish to improve the possibility of discovering the problem.
 This option can only be used by root.
 .It Fl u
-Do not take the time to map uid numbers to usernames.  Normally,
+Do not take the time to map UID numbers to usernames.  Normally,
 .Nm
 will read as much of the password database as is necessary to map
-all the user id numbers it encounters into login names.  This option
-disables all that, while possibly decreasing execution time.  The uid
+all the user ID numbers it encounters into login names.  This option
+disables all that, while possibly decreasing execution time.  The UID
 numbers are displayed instead of the names.
 .It Fl d Ar count
 Show only
 .Ar count
 displays, then exit.  A display is considered to be one update of the
-screen.  This option allows the user to select the number of displays he
-wants to see before
+screen.  This option allows the user to select the number of displays they
+want to see before
 .Nm
 automatically exits.  For intelligent terminals, no upper limit
 is set.  The default is 1 for dumb terminals.
@@ -136,12 +136,12 @@ version of top supports
 .Ar res ,
 .Ar time ,
 and
-.Ar pri.
+.Ar pri .
 .It Fl U Ar username
 Show only those processes owned by
 .Ar username .
 This option currently only accepts usernames and will not understand
-uid numbers.
+UID numbers.
 .El
 .Pp
 Both
@@ -177,9 +177,9 @@ are actually toggles.  A second specification of any of these options
 will negate the first.  Thus a user who has the environment variable
 .Ev TOP
 set to 
-.Li -I
+.Dq -I
 may use the command 
-.Li top -I
+.Dq top -I
 to see idle processes.
 .Sh INTERACTIVE MODE
 When
@@ -218,7 +218,7 @@ Quit
 .It d
 Change the number of displays to show (prompt for new number).
 Remember that the next display counts as one, so typing
-.Li d1
+.Dq d1
 will make
 .Nm
 show one final display and then immediately exit.
@@ -259,7 +259,7 @@ Toggle the display of idle processes.
 .\" .Pp
 The top few lines of the display show general information
 about the state of the system, including
-the last process id assigned to a process
+the last process ID assigned to a process,
 .\" (on most systems),
 the three load averages,
 the current time,
@@ -273,7 +273,7 @@ It also includes information about physial and virtual memory allocation.
 The remainder of the screen displays information about individual
 processes.  This display is similar in spirit to
 .Xr ps 1
-but it is not exactly the same.  PID is the process id, USERNAME is the name
+but it is not exactly the same.  PID is the process ID, USERNAME is the name
 of the process's owner (if
 .Fl u
 is specified, a UID column will be substituted for USERNAME),
@@ -290,8 +290,8 @@ STATE is the current state (one of
 .Li zomb ,
 or
 .Li stop ) ,
-TIME is the number of system and user cpu seconds that the process has used,
-WCPU, when displayed, is the weighted cpu percentage (this is the same
+TIME is the number of system and user CPU seconds that the process has used,
+WCPU, when displayed, is the weighted CPU percentage (this is the same
 value that
 .Xr ps 1
 displays as CPU),
@@ -304,7 +304,7 @@ COMMAND is the name of the command that the process is currently running
 The
 .Em ABANDONED
 state (known in the kernel as
-.Em SWAIT
+.Em SWAIT Ns )
 was abandoned, thus the name.  A process should never end up in this state.
 .Sh AUTHOR
 William LeFebvre, EECS Department, Northwestern University
@@ -355,4 +355,4 @@ close approximation to reality.
 .Xr ps 1 ,
 .Xr stty 1 ,
 .Xr mem 4 ,
-.Xr renice 8 .
+.Xr renice 8

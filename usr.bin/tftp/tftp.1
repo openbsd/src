@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tftp.1,v 1.2 1996/06/26 05:40:35 deraadt Exp $
+.\"	$OpenBSD: tftp.1,v 1.3 1998/10/30 00:24:39 aaron Exp $
 .\"	$NetBSD: tftp.1,v 1.5 1995/08/18 14:45:44 pk Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -44,7 +44,7 @@
 .Nm tftp
 .Op Ar host
 .Sh DESCRIPTION
-.Nm Tftp
+.Nm tftp
 is the user interface to the Internet
 .Tn TFTP
 (Trivial File Transfer Protocol),
@@ -56,7 +56,7 @@ may be specified on the command line, in which case
 uses
 .Ar host
 as the default host for future transfers (see the
-.Cm connect
+.Ic connect
 command below).
 .Sh COMMANDS
 Once
@@ -66,16 +66,18 @@ is running, it issues the prompt
 and recognizes the following commands:
 .Pp
 .Bl -tag -width verbose -compact
-.It Cm \&? Ar command-name ...
+.It Ic \&? Ar command-name Op Ar ...
 Print help information.
 .Pp
-.It Cm ascii
-Shorthand for "mode ascii"
+.It Ic ascii
+Shorthand for
+.Ic mode ascii .
 .Pp
-.It Cm binary
-Shorthand for "mode binary"
+.It Ic binary
+Shorthand for
+.Ic mode binary .
 .Pp
-.It Cm connect Ar host-name Op Ar port
+.It Ic connect Ar host Op Ar port
 Set the
 .Ar host
 (and optionally
@@ -87,23 +89,23 @@ protocol, unlike the
 .Tn FTP
 protocol,
 does not maintain connections between transfers; thus, the
-.Cm connect
+.Ic connect
 command does not actually create a connection,
 but merely remembers what host is to be used for transfers.
 You do not have to use the 
-.Cm connect
+.Ic connect
 command; the remote host can be specified as part of the
-.Cm get
+.Ic get
 or
-.Cm put
+.Ic put
 commands.
 .Pp
-.It Cm get Ar filename
-.It Cm get Ar remotename localname
-.It Cm get Ar file1 file2 ...  fileN
+.It Ic get Ar filename
+.It Ic get Ar remotename localname
+.It Ic get Ar file Op Ar ...
 Get a file or set of files from the specified
 .Ar sources .
-.Ar Source
+.Ar source
 can be in one of two forms:
 a filename on the remote host, if the host has already been specified,
 or a string of the form
@@ -112,19 +114,19 @@ to specify both a host and filename at the same time.
 If the latter form is used,
 the last hostname specified becomes the default for future transfers.
 .Pp
-.It Cm mode Ar transfer-mode
+.It Ic mode Ar transfer-mode
 Set the mode for transfers; 
 .Ar transfer-mode
 may be one of
-.Em ascii
+.Ic ascii
 or
-.Em binary .
+.Ic binary .
 The default is
-.Em ascii .
+.Ic ascii .
 .Pp
-.It Cm put Ar file
-.It Cm put Ar localfile remotefile
-.It Cm put Ar file1 file2 ... fileN remote-directory
+.It Ic put Ar file
+.It Ic put Ar localfile remotefile
+.It Ic put Ar file1 file2 ... fileN remote-directory
 Put a file or set of files to the specified
 remote file or directory.
 The destination
@@ -140,33 +142,32 @@ assumed to be a
 .Tn UNIX
 machine.
 .Pp
-.It Cm quit
+.It Ic quit
 Exit
 .Nm tftp .
-An end of file also exits.
+An end-of-file also exits.
 .Pp
-.It Cm rexmt Ar retransmission-timeout
+.It Ic rexmt Ar retransmission-timeout
 Set the per-packet retransmission timeout, in seconds.
 .Pp
-.It Cm status
+.It Ic status
 Show current status.
 .Pp
-.It Cm timeout Ar total-transmission-timeout
+.It Ic timeout Ar total-transmission-timeout
 Set the total transmission timeout, in seconds.
 .Pp
-.It Cm trace
+.It Ic trace
 Toggle packet tracing.
 .Pp
-.It Cm verbose
+.It Ic verbose
 Toggle verbose mode.
 .El
 .Sh BUGS
-.Pp
-Because there is no user-login or validation within
+Because there is no user login or validation within
 the
 .Tn TFTP
 protocol, the remote site will probably have some
-sort of file-access restrictions in place.  The
+sort of file access restrictions in place.  The
 exact methods are specific to each site and therefore
 difficult to document here.
 .Sh HISTORY

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypcat.1,v 1.2 1996/05/21 21:32:40 deraadt Exp $
+.\"	$OpenBSD: ypcat.1,v 1.3 1998/10/30 00:24:45 aaron Exp $
 .\"	$NetBSD: ypcat.1,v 1.4 1996/05/13 02:43:36 thorpej Exp $
 .\"
 .\" Copyright (c) 1993 Winning Strategies, Inc.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: ypcat.1,v 1.2 1996/05/21 21:32:40 deraadt Exp $
+.\"	$Id: ypcat.1,v 1.3 1998/10/30 00:24:45 aaron Exp $
 .\"
 .Dd December 3, 1993
 .Dt YPCAT 1
@@ -45,11 +45,11 @@
 .Nm ypcat 
 .Fl x
 .Sh DESCRIPTION
-.Nm Ypcat
+.Nm ypcat
 prints out the values of all keys from the 
 .Tn YP
 database specified by
-.Ar mapname,
+.Ar mapname ,
 which may be a map name or a map nickname.
 .Pp
 The options are as follows:
@@ -68,11 +68,11 @@ Display the map nickname table.
 .El
 .Sh SEE ALSO
 .Xr domainname 1 ,
-.Xr ypbind 8 ,
 .Xr ypmatch 1 ,
-.Xr yppoll 8 ,
-.Xr ypset 8 ,
 .Xr ypwhich 1 ,
-.Xr yp 8
+.Xr yp 8 ,
+.Xr ypbind 8 ,
+.Xr yppoll 8 ,
+.Xr ypset 8
 .Sh AUTHOR
 Theo De Raadt

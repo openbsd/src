@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tput.1,v 1.2 1996/06/26 05:41:47 deraadt Exp $
+.\"	$OpenBSD: tput.1,v 1.3 1998/10/30 00:24:40 aaron Exp $
 .\"	$NetBSD: tput.1,v 1.4 1994/12/07 08:49:10 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -47,7 +47,7 @@
 .Op Ar attribute-args
 .Ar ...
 .Sh DESCRIPTION
-.Nm Tput
+.Nm tput
 makes terminal-dependent information available to users or shell
 applications.
 The options are as follows:
@@ -63,7 +63,7 @@ retrieves the
 variable from the environment.
 .El
 .Pp
-.Nm Tput
+.Nm tput
 outputs a string if the
 .Ar attribute
 is of type string; a number if it is of type integer.
@@ -107,7 +107,7 @@ if it is not.
 If the attribute is of type boolean,
 .Nm tput
 exits 0 if the terminal has this attribute, and 1 if it does not.
-.Nm Tput
+.Nm tput
 exits 2 if any error occurred.
 .Sh EXAMPLES
 .Bl -tag -width "tput cm 6 11 DC 6" -compact
@@ -120,10 +120,10 @@ goto line 6 column 11 and delete 6 characters
 .Xr termcap 3 ,
 .Xr termcap 5
 .Sh BUGS
-.Nm Tput
+.Nm tput
 can't really distinguish between different types of attributes.
 .Sh HISTORY
 The
 .Nm
-command appears in
+command appeared in
 .Bx 4.4 .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vgrind.1,v 1.2 1996/06/26 05:42:31 deraadt Exp $
+.\"	$OpenBSD: vgrind.1,v 1.3 1998/10/30 00:24:42 aaron Exp $
 .\"	$NetBSD: vgrind.1,v 1.4 1994/11/17 08:28:04 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -54,7 +54,7 @@
 .Op Fl x
 .Ar name Ar ...
 .Sh DESCRIPTION
-.Nm Vgrind
+.Nm vgrind
 formats the program sources which are arguments 
 in a nice style using
 .Xr troff 1 .
@@ -62,7 +62,7 @@ Comments are placed in italics, keywords in bold face,
 and the name of the current function is listed down the margin of each
 page as it is encountered.
 .Pp
-.Nm Vgrind
+.Nm vgrind
 runs in two basic modes, filter mode (see the
 .Fl f
 option) or regular mode.  In filter mode 
@@ -82,7 +82,7 @@ ends processing
 .Pp
 These lines are formatted as described above.  The output from this
 filter can be passed to 
-.Xr troff
+.Xr troff 1
 for output.  There need be no particular ordering with 
 .Xr eqn 1
 or
@@ -101,23 +101,23 @@ passes any lines beginning with a decimal point without conversion.
 The options are:
 .Bl -tag -width Ar
 .It Fl 
-forces input to be taken from standard input (default if
+Forces input to be taken from standard input (default if
 .Fl f
-is specified )
+is specified).
 .It Fl W
-forces output to the (wide) Versatec printer rather than the (narrow)
-Varian
+Forces output to the (wide) Versatec printer rather than the (narrow)
+Varian.
 .It Fl d Ar file
-specifies an alternate language definitions
+Specifies an alternate language definitions
 file (default is
-.Pa /usr/share/misc/vgrindefs )
+.Pa /usr/share/misc/vgrindefs Ns ).
 .It Fl f
-forces filter mode
+Forces filter mode.
 .It Fl h Ar header
-specifies a particular header to put on every output page (default is
-the file name)
+Specifies a particular header to put on every output page (default is
+the file name).
 .It Fl l
-specifies the language to use.  Currently known are
+Specifies the language to use.  Currently known are
 .Tn PASCAL
 .Pq Fl l Ns Ar p ,
 .Tn MODEL
@@ -141,16 +141,16 @@ and
 .Tn ICON
 .Pq Fl l Ns Ar I .
 .It Fl n
-forces no keyword bolding
+Forces no keyword bolding.
 .It Fl s
-specifies a point size to use on output (exactly the same as the argument
-of a .ps)
+Specifies a point size to use on output (exactly the same as the argument
+of a .ps).
 .It Fl t
-similar to the same option in
-.Xr troff
+Similar to the same option in
+.Xr troff 1
 causing formatted text to go to the standard output
 .It Fl x
-outputs the index file in a ``pretty'' format. 
+Outputs the index file in a ``pretty'' format. 
 The index file itself is produced whenever 
 .Nm vgrind
 is run with a file called 
@@ -182,7 +182,7 @@ language descriptions
 .Xr getcap 3 ,
 .Xr vgrindefs 5
 .Sh BUGS
-Vfontedpr assumes that a certain programming style is followed:
+vfontedpr assumes that a certain programming style is followed:
 .Pp
 For 
 .Tn C
