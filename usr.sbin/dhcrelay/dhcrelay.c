@@ -42,7 +42,7 @@
 
 #include "dhcpd.h"
 
-void	 usage(char *);
+void	 usage(void);
 void	 relay(struct interface_info *, struct dhcp_packet *, int,
 	    unsigned int, struct iaddr, struct hardware *);
 char	*print_hw_addr(int, int, unsigned char *);
@@ -74,13 +74,6 @@ struct server_list {
 	struct sockaddr_in to;
 } *servers;
 
-static char copyright [] =
-"Copyright 1997, 1998, 1999 The Internet Software Consortium.";
-static char arr [] = "All rights reserved.";
-static char message [] = "Internet Software Consortium DHCP Relay Agent";
-static char contrib [] = "Please contribute if you find this software useful.";
-static char url [] = "For info, please visit http://www.isc.org/dhcp-contrib.html";
-
 int main (argc, argv)
 	int argc;
 	char **argv;
@@ -106,19 +99,19 @@ int main (argc, argv)
 	for (i = 1; i < argc; i++) {
 		if (!strcmp (argv [i], "-p")) {
 			if (++i == argc)
-				usage (s);
+				usage();
 			local_port = htons (atoi (argv [i]));
 			debug ("binding to user-specified port %d",
 			       ntohs (local_port));
 		} else if (!strcmp (argv [i], "-pf")) {
 			if (++i == argc)
-				usage (s);
+				usage();
 			path_dhcrelay_pid = argv [i];
 		} else if (!strcmp (argv [i], "-d")) {
 			no_daemon = 1;
  		} else if (!strcmp (argv [i], "-i")) {
 			if (++i == argc || interfaces != NULL) {
-				usage (s);
+				usage();
 			}
 			if ((interfaces = calloc(1,
 			    sizeof(struct interface_info))) == NULL)
@@ -128,7 +121,7 @@ int main (argc, argv)
 		} else if (!strcmp (argv [i], "-q")) {
 			quiet = 1;
  		} else if (argv [i][0] == '-') {
- 		    usage (s);
+ 		    usage();
  		} else {
 			struct hostent *he;
 			struct in_addr ia, *iap = (struct in_addr *)0;
@@ -174,7 +167,7 @@ int main (argc, argv)
   
 	/* We need at least one server. */
 	if (!sp) {
-		usage (s);
+		usage();
 	}
 
 	/* Set up the server sockaddrs. */
@@ -328,19 +321,14 @@ void relay (ip, packet, length, from_port, from, hfrom)
 				 
 }
 
-void usage (appname)
-	char *appname;
+void
+usage(void)
 {
-	note (message);
-	note (copyright);
-	note (arr);
-	note ("%s", "");
-	note (contrib);
-	note (url);
-	note ("%s", "");
+	extern char	*__progname;
 
-	warn ("Usage: %s [-q] [-d] [-i if0] [...-i ifN] [-p <port>]", appname);
-	error ("      [-pf pidfilename] [server1 [... serverN]]");
+	fprintf(stderr, "Usage: %s [-q] [-d] [-p <port>]", __progname);
+	fprintf(stderr, "server1 [... serverN]\n");
+	exit (1);
 }
 
 void cleanup ()
