@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_signal.c,v 1.7 1997/09/15 03:01:49 deraadt Exp $	 */
+/*	$OpenBSD: svr4_signal.c,v 1.8 1997/09/15 06:04:58 millert Exp $	 */
 /*	$NetBSD: svr4_signal.c,v 1.24 1996/12/06 03:21:53 christos Exp $	 */
 
 /*
@@ -200,6 +200,8 @@ svr4_to_bsd_sigaction(ssa, bsa)
 		bsa->sa_flags |= SA_RESETHAND;
 	if ((ssa->sa_flags & SVR4_SA_NOCLDSTOP) != 0)
 		bsa->sa_flags |= SA_NOCLDSTOP;
+	if ((ssa->sa_flags & SVR4_SA_NOCLDWAIT) != 0)
+		bsa->sa_flags |= SA_NOCLDWAIT;
 	if ((ssa->sa_flags & SVR4_SA_NODEFER) != 0)
 		bsa->sa_flags |= SA_NODEFER;
 	if ((ssa->sa_flags & SVR4_SA_SIGINFO) != 0)
@@ -225,6 +227,8 @@ bsd_to_svr4_sigaction(bsa, ssa)
 		ssa->sa_flags |= SVR4_SA_NODEFER;
 	if ((bsa->sa_flags & SA_NOCLDSTOP) != 0)
 		ssa->sa_flags |= SVR4_SA_NOCLDSTOP;
+	if ((bsa->sa_flags & SA_NOCLDWAIT) != 0)
+		ssa->sa_flags |= SVR4_SA_NOCLDWAIT;
 	if ((bsa->sa_flags & SA_SIGINFO) != 0)
 		ssa->sa_flags |= SVR4_SA_SIGINFO;
 }

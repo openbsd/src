@@ -1,4 +1,4 @@
-/*	$OpenBSD: osf1_signal.c,v 1.4 1997/09/15 03:01:47 deraadt Exp $	*/
+/*	$OpenBSD: osf1_signal.c,v 1.5 1997/09/15 06:09:58 millert Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,6 +157,8 @@ osf1_to_bsd_sigaction(osa, bsa)
 		bsa->sa_flags |= SA_RESETHAND;
 	if ((osa->sa_flags & OSF1_SA_NOCLDSTOP) != 0)
 		bsa->sa_flags |= SA_NOCLDSTOP;
+	if ((osa->sa_flags & OSF1_SA_NOCLDWAIT) != 0)
+		bsa->sa_flags |= SA_NOCLDWAIT;
 	if ((osa->sa_flags & OSF1_SA_NODEFER) != 0)
 		bsa->sa_flags |= SA_NODEFER;
 	if ((osa->sa_flags & OSF1_SA_SIGINFO) != 0)
@@ -178,6 +180,8 @@ bsd_to_osf1_sigaction(bsa, osa)
 		osa->sa_flags |= OSF1_SA_RESTART;
 	if ((bsa->sa_flags & SA_NOCLDSTOP) != 0)
 		osa->sa_flags |= OSF1_SA_NOCLDSTOP;
+	if ((bsa->sa_flags & SA_NOCLDWAIT) != 0)
+		osa->sa_flags |= OSF1_SA_NOCLDWAIT;
 	if ((bsa->sa_flags & SA_NODEFER) != 0)
 		osa->sa_flags |= OSF1_SA_NODEFER;
 	if ((bsa->sa_flags & SA_RESETHAND) != 0)

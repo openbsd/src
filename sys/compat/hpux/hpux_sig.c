@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_sig.c,v 1.5 1997/07/27 09:10:39 deraadt Exp $	*/
+/*	$OpenBSD: hpux_sig.c,v 1.6 1997/09/15 06:05:52 millert Exp $	*/
 /*	$NetBSD: hpux_sig.c,v 1.16 1997/04/01 19:59:02 scottr Exp $	*/
 
 /*
@@ -319,6 +319,8 @@ hpux_sys_sigaction(p, v, retval)
 			sa->sa_flags |= HPUXSA_RESETHAND;
 		if (p->p_flag & P_NOCLDSTOP)
 			sa->sa_flags |= HPUXSA_NOCLDSTOP;
+		if (p->p_flag & P_NOCLDWAIT)
+			sa->sa_flags |= HPUXSA_NOCLDWAIT;
 		if (copyout((caddr_t)sa, (caddr_t)SCARG(uap, osa),
 		    sizeof (action)))
 			return (EFAULT);
@@ -341,6 +343,8 @@ hpux_sys_sigaction(p, v, retval)
 			act.sa_flags |= SA_ONSTACK;
 		if (sa->sa_flags & HPUXSA_NOCLDSTOP)
 			act.sa_flags |= SA_NOCLDSTOP;
+		if (sa->sa_flags & HPUXSA_NOCLDWAIT)
+			act.sa_flags |= SA_NOCLDWAIT;
 		setsigvec(p, sig, &act);
 #if 0
 /* XXX -- SOUSIG no longer exists, do something here */

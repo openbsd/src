@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux.h,v 1.5 1997/07/27 09:10:38 deraadt Exp $	*/
+/*	$OpenBSD: hpux.h,v 1.6 1997/09/15 06:05:51 millert Exp $	*/
 /*	$NetBSD: hpux.h,v 1.11 1997/04/01 19:58:58 scottr Exp $	*/
 
 /*
@@ -289,6 +289,9 @@ struct hpux_sigaction {
 #define HPUXSA_ONSTACK		1
 #define HPUXSA_RESETHAND	4
 #define HPUXSA_NOCLDSTOP	8
+#define HPUXSA_NODEFER		32
+#define HPUXSA_RESTART		64
+#define HPUXSA_NOCLDWAIT	128
 
 #define	HPUXSIG_BLOCK	0	/* block specified signal set */
 #define	HPUXSIG_UNBLOCK	1	/* unblock specified signal set */
