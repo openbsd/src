@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_run.c,v 1.9 1997/07/23 23:35:46 niklas Exp $	*/
+/*	$OpenBSD: db_run.c,v 1.10 1997/08/07 09:18:06 niklas Exp $	*/
 /*	$NetBSD: db_run.c,v 1.8 1996/02/05 01:57:12 christos Exp $	*/
 
 /* 
@@ -242,15 +242,16 @@ db_single_step(regs)
  *	the functions/macros defined below.
  *
  * extern boolean_t
- *	inst_branch(),		returns true if the instruction might branch
+ *	inst_branch(ins),	returns true if the instruction might branch
  * extern unsigned
- *	branch_taken(),		return the address the instruction might
+ *	branch_taken(ins, pc, getreg_val, regs),
+ *				return the address the instruction might
  *				branch to
- *	db_getreg_val();	return the value of a user register,
+ *	getreg_val(regs, reg),	return the value of a user register,
  *				as indicated in the hardware instruction
  *				encoding, e.g. 8 for r8
  *			
- * next_instr_address(pc,bd)	returns the address of the first
+ * next_instr_address(pc, bd)	returns the address of the first
  *				instruction following the one at "pc",
  *				which is either in the taken path of
  *				the branch (bd==1) or not.  This is
