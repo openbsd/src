@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.6 2003/10/28 17:26:01 espie Exp $
+# $OpenBSD: pkg_delete,v 1.7 2003/11/03 11:04:21 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -291,15 +291,12 @@ $state->{verbose} = $opt_v;
 $state->{extra} = $opt_c;
 $ENV{'PKG_DELETE_EXTRA'} = $state->{extra} ? "Yes" : "No";
 
-my (%toremove, %extra_rm);
-my $bad;
-for my $pkgname (@ARGV) {
-	$toremove{$pkgname} = 1;
-}
-my @todo;
-push(@todo, @ARGV);
+# First, resolve pkg names
 
-while (my $pkgname = pop @todo) {
+my @realnames;
+my $bad;
+
+for my $pkgname (@ARGV) {
 	unless (is_installed($pkgname)) {
 	    if (OpenBSD::PackageName::is_stem($pkgname)) {
 		my @l = OpenBSD::PackageName::findstem($pkgname, 
@@ -314,6 +311,19 @@ while (my $pkgname = pop @todo) {
 	    }
 	}
 	next unless is_installed($pkgname);
+	push(@realnames, $pkgname);
+}
+
+# Then check that dependencies are okay
+my (%toremove, %extra_rm);
+my @todo;
+for my $pkgname (@realnames) {
+	$toremove{$pkgname} = 1;
+}
+
+push(@todo, @realnames);
+
+while (my $pkgname = pop @todo) {
 	my $deps = OpenBSD::RequiredBy->new($pkgname)->list();
 	if (@$deps > 0) {
 		for my $dep (@$deps) {
@@ -332,20 +342,11 @@ if ($bad) {
 	exit(1);
 }
 
+# and finally, handle the removal
 { do {
 	$removed = 0;
-	for my $pkgname (@ARGV) {
+	for my $pkgname (@realnames) {
 		next if $done{$pkgname};
-		unless (is_installed($pkgname)) {
-			if (OpenBSD::PackageName::is_stem($pkgname)) {
-			    my @l = OpenBSD::PackageName::findstem($pkgname, installed_packages());
-			    if (@l == 1) {
-			    	$pkgname = $l[0];
-			    } elsif (@l != 0) {
-			    	print "Ambiguous: $pkgname could be ", join(' ', @l),"\n";
-			    }
-			}
-		}
 		unless (is_installed($pkgname)) {
 			print "$pkgname was not installed\n";
 			$done{$pkgname} = 1;
