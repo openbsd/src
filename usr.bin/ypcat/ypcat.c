@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypcat.c,v 1.7 2002/01/02 20:07:09 deraadt Exp $ */
+/*	$OpenBSD: ypcat.c,v 1.8 2002/07/19 03:21:41 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
@@ -33,7 +33,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypcat.c,v 1.7 2002/01/02 20:07:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypcat.c,v 1.8 2002/07/19 03:21:41 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -66,7 +66,7 @@ struct ypalias {
 int key;
 
 void
-usage()
+usage(void)
 {
 	fprintf(stderr, "Usage:\n");
 	fprintf(stderr, "\typcat [-k] [-d domainname] [-t] mapname\n");
@@ -75,13 +75,8 @@ usage()
 }
 
 int
-printit(instatus, inkey, inkeylen, inval, invallen, indata)
-int instatus;
-char *inkey;
-int inkeylen;
-char *inval;
-int invallen;
-char *indata;
+printit(u_long instatus, char *inkey, int inkeylen, char *inval, int invallen,
+    void *indata)
 {
 	if (instatus != YP_TRUE)
 		return instatus;
@@ -92,16 +87,13 @@ char *indata;
 }
 
 int
-main(argc, argv)
-char **argv;
+main(int argc, char *argv[])
 {
-	char *domain = NULL;
+	char *domain = NULL, *inmap;
 	struct ypall_callback ypcb;
-	char *inmap;
 	extern char *optarg;
 	extern int optind;
-	int notrans;
-	int c, r, i;
+	int notrans, c, r, i;
 
 	notrans = key = 0;
 	while ((c=getopt(argc, argv, "xd:kt")) != -1)

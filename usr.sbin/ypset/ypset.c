@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypset.c,v 1.6 2002/05/30 19:09:06 deraadt Exp $ */
+/*	$OpenBSD: ypset.c,v 1.7 2002/07/19 03:17:43 deraadt Exp $ */
 /*	$NetBSD: ypset.c,v 1.8 1996/05/13 02:46:33 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypset.c,v 1.6 2002/05/30 19:09:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypset.c,v 1.7 2002/07/19 03:17:43 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -54,27 +54,23 @@ static char rcsid[] = "$OpenBSD: ypset.c,v 1.6 2002/05/30 19:09:06 deraadt Exp $
 extern bool_t xdr_domainname();
 
 void
-usage()
+usage(void)
 {
-	fprintf(stderr, "Usage:\n");
-	fprintf(stderr, "\typset [-h host ] [-d domain] server\n");
+	fprintf(stderr, "usage: ypset [-h host ] [-d domain] server\n");
 	exit(1);
 }
 
 int
-bind_tohost(sin, dom, server)
-struct sockaddr_in *sin;
-char *dom, *server;
+bind_tohost(struct sockaddr_in *sin, char *dom, char *server)
 {
 	struct ypbind_setdom ypsd;
-	struct timeval tv;
-	struct hostent *hp;
-	CLIENT *client;
-	int sock, port;
-	int r;
 	struct in_addr iaddr;
+	struct hostent *hp;
+	struct timeval tv;
+	CLIENT *client;
+	int sock, port, r;
 
-	if( (port=htons(getrpcport(server, YPPROG, YPPROC_NULL, IPPROTO_UDP))) == 0) {
+	if ((port=htons(getrpcport(server, YPPROG, YPPROC_NULL, IPPROTO_UDP))) == 0) {
 		fprintf(stderr, "%s not running ypserv.\n", server);
 		exit(1);
 	}
@@ -109,7 +105,7 @@ char *dom, *server;
 
 	r = clnt_call(client, YPBINDPROC_SETDOM,
 		xdr_ypbind_setdom, &ypsd, xdr_void, NULL, tv);
-	if(r) {
+	if (r) {
 		fprintf(stderr, "Sorry, cannot ypset for domain %s on host.\n", dom);
 		clnt_destroy(client);
 		return YPERR_YPBIND;
@@ -119,8 +115,7 @@ char *dom, *server;
 }
 
 int
-main(argc, argv)
-char **argv;
+main(int argc, char *argv[])
 {
 	struct sockaddr_in sin;
 	struct hostent *hent;
@@ -135,7 +130,7 @@ char **argv;
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 
-	while( (c=getopt(argc, argv, "h:d:")) != -1)
+	while ((c=getopt(argc, argv, "h:d:")) != -1)
 		switch(c) {
 		case 'd':
 			domainname = optarg;
@@ -156,7 +151,7 @@ char **argv;
 			usage();
 		}
 
-	if(optind + 1 != argc )
+	if (optind + 1 != argc )
 		usage();
 
 	if (bind_tohost(&sin, domainname, argv[optind]))

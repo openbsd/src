@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypmatch.c,v 1.7 2002/06/02 06:42:28 deraadt Exp $ */
+/*	$OpenBSD: ypmatch.c,v 1.8 2002/07/19 03:22:39 deraadt Exp $ */
 /*	$NetBSD: ypmatch.c,v 1.8 1996/05/07 01:24:52 jtc Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypmatch.c,v 1.7 2002/06/02 06:42:28 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypmatch.c,v 1.8 2002/07/19 03:22:39 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -64,7 +64,7 @@ struct ypalias {
 };
 
 void
-usage()
+usage(void)
 {
 	fprintf(stderr, "Usage:\n");
 	fprintf(stderr, "\typmatch [-d domain] [-t] [-k] key [key ...] mname\n");
@@ -78,20 +78,17 @@ usage()
 }
 
 int
-main(argc, argv)
-char **argv;
+main(int argc, char *argv[])
 {
-	char *domainname;
-	char *inkey, *inmap, *outbuf;
+	char *domainname, *inkey, *inmap, *outbuf;
 	extern char *optarg;
 	extern int optind;
-	int outbuflen, key, notrans;
+	int outbuflen, key, notrans, rval;
 	int c, r, i;
-	int rval;
 
 	domainname = NULL;
 	notrans = key = 0;
-	while( (c=getopt(argc, argv, "xd:kt")) != -1)
+	while ((c=getopt(argc, argv, "xd:kt")) != -1)
 		switch (c) {
 		case 'x':
 			for(i=0; i<sizeof ypaliases/sizeof ypaliases[0]; i++)
@@ -112,7 +109,7 @@ char **argv;
 			usage();
 		}
 
-	if( (argc-optind) < 2 )
+	if ((argc-optind) < 2 )
 		usage();
 
 	if (!domainname) {
@@ -122,7 +119,7 @@ char **argv;
 	inmap = argv[argc-1];
 	if (!notrans) {
 		for(i=0; i<sizeof ypaliases/sizeof ypaliases[0]; i++)
-			if( strcmp(inmap, ypaliases[i].alias) == 0)
+			if (strcmp(inmap, ypaliases[i].alias) == 0)
 				inmap = ypaliases[i].name;
 	}
 
@@ -134,7 +131,7 @@ char **argv;
 			strlen(inkey), &outbuf, &outbuflen);
 		switch (r) {
 		case 0:
-			if(key)
+			if (key)
 				printf("%s: ", inkey);
 			printf("%*.*s\n", outbuflen, outbuflen, outbuf);
 			break;
@@ -143,7 +140,7 @@ char **argv;
 			exit(1);
 		default:
 			fprintf(stderr, "Can't match key %s in map %s. Reason: %s\n",
-				inkey, inmap, yperr_string(r));
+			    inkey, inmap, yperr_string(r));
 			rval = 1;
 			break;
 		}

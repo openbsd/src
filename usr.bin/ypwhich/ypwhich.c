@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypwhich.c,v 1.12 2002/06/02 06:42:28 deraadt Exp $	*/
+/*	$OpenBSD: ypwhich.c,v 1.13 2002/07/19 03:20:17 deraadt Exp $	*/
 /*	$NetBSD: ypwhich.c,v 1.6 1996/05/13 02:43:48 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypwhich.c,v 1.12 2002/06/02 06:42:28 deraadt Exp $";
+static char rcsid[] = "$Id: ypwhich.c,v 1.13 2002/07/19 03:20:17 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -73,11 +73,11 @@ struct ypalias {
 };
 
 void
-usage()
+usage(void)
 {
-	fprintf(stderr, "Usage:\n");
-	fprintf(stderr, "\typwhich [-d domain] [[-h host] [-t] -m [mname] | host]\n");
-	fprintf(stderr, "\typwhich -x\n");
+	fprintf(stderr,
+	    "usage: ypwhich [-d domain] [[-h host] [-t] -m [mname] | host]\n");
+	fprintf(stderr, "       ypwhich -x\n");
 	exit(1);
 }
 
@@ -86,16 +86,14 @@ usage()
  * Like yp_bind except can query a specific host
  */
 int
-bind_host(dom, sin)
-char *dom;
-struct sockaddr_in *sin;
+bind_host(char *dom, struct sockaddr_in *sin)
 {
 	struct hostent *hent = NULL;
 	struct ypbind_resp ypbr;
+	struct in_addr ss_addr;
 	struct timeval tv;
 	CLIENT *client;
 	int sock, r;
-	struct in_addr ss_addr;
 
 	sock = RPC_ANYSOCK;
 	tv.tv_sec = 15;
@@ -139,22 +137,17 @@ struct sockaddr_in *sin;
 
 	return 0;
 }
-	
-int
-main(argc, argv)
-	int argc;
-	char **argv;
-{
-	char *domain, *master, *map;
-	struct ypmaplist *ypml, *y;
-	struct hostent *hent;
-	struct sockaddr_in sin;
-	int notrans, mode, getmap;
-	int c, r, i;
-	CLIENT *client;
-	char	*host = NULL;
 
-	map = NULL;
+int
+main(int argc, char *argv[])
+{
+	char *domain, *master, *map = NULL, *host = NULL;
+	int notrans, mode, getmap, c, r, i;
+	struct ypmaplist *ypml, *y;
+	struct sockaddr_in sin;
+	struct hostent *hent;
+	CLIENT *client = NULL;
+
 	getmap = notrans = mode = 0;
 
 	yp_get_default_domain(&domain);
@@ -221,21 +214,20 @@ main(argc, argv)
 	if (argc > 1)
 		usage();
 
-	if (host != NULL) {
+	if (host != NULL)
 		client = yp_bind_host(host,YPPROG,YPVERS,0,1);
-	}
-	
+
 	if (argv[0]) {
 		map = argv[0];
 		for (i=0; (!notrans) && i<sizeof ypaliases/sizeof ypaliases[0]; i++)
 			if (strcmp(map, ypaliases[i].alias) == 0)
 				map = ypaliases[i].name;
 
-		if (host != NULL) {
+		if (host != NULL)
 			r = yp_master_host(client, domain, map, &master);
-		} else {
+		else
 			r = yp_master(domain, map, &master);
-		}
+
 		switch (r) {
 		case 0:
 			printf("%s\n", master);
@@ -253,11 +245,11 @@ main(argc, argv)
 	}
 
 	ypml = NULL;
-	if (host != NULL) {
+	if (host != NULL)
 		r = yp_maplist_host(client, domain, &ypml);
-	} else {
+	else
 		r = yp_maplist(domain, &ypml);
-	}
+
 	r = 0;
 	switch (r) {
 	case 0:
