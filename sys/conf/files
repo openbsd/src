@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.124 1999/07/30 13:43:35 d Exp $
+#	$OpenBSD: files,v 1.125 1999/08/04 13:10:54 peter Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -272,7 +272,6 @@ file dev/raidframe/rf_sstf.c		raid			needs-flag
 file dev/raidframe/rf_states.c		raid			needs-flag
 file dev/raidframe/rf_stripelocks.c	raid			needs-flag
 file dev/raidframe/rf_strutils.c        raid                    needs-flag
-file dev/raidframe/rf_sys.c             raid                    needs-flag
 file dev/raidframe/rf_threadstuff.c     raid                    needs-flag
 file dev/raidframe/rf_utils.c           raid                    needs-flag
 file isofs/cd9660/cd9660_bmap.c		cd9660

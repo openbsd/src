@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_optnames.h,v 1.2 1999/02/16 00:03:03 niklas Exp $	*/
+/*	$OpenBSD: rf_optnames.h,v 1.3 1999/08/04 13:10:55 peter Exp $	*/
 /*	$NetBSD: rf_optnames.h,v 1.4 1999/02/05 00:06:13 oster Exp $	*/
 /*
  * rf_optnames.h
@@ -113,7 +113,7 @@ RF_DBG_OPTION(interactiveScript, 0)	/* set as a debug option for now */
 RF_DBG_OPTION(looptestShowWrites, 0)		/* user-level loop test write
 						 * debugging */
 RF_DBG_OPTION(traceDebug, 0)
-#endif				/* !KERNEL */
+#endif				/* !_KERNEL */
 
 #if RF_INCLUDE_PARITYLOGGING > 0
 RF_DBG_OPTION(forceParityLogReint, 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_debugMem.h,v 1.2 1999/02/16 00:02:34 niklas Exp $	*/
+/*	$OpenBSD: rf_debugMem.h,v 1.3 1999/08/04 13:10:54 peter Exp $	*/
 /*	$NetBSD: rf_debugMem.h,v 1.4 1999/02/05 00:06:08 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -83,7 +83,7 @@ RF_DECLARE_EXTERN_MUTEX(rf_debug_mem_mutex)
       rf_real_Free(__p_, _sz_, __LINE__, __FILE__); \
 }
 
-#else				/* KERNEL */
+#else				/* _KERNEL */
 
 #include <sys/types.h>
 typedef u_int32_t U32;

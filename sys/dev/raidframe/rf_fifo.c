@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_fifo.c,v 1.2 1999/02/16 00:02:46 niklas Exp $	*/
+/*	$OpenBSD: rf_fifo.c,v 1.3 1999/08/04 13:10:54 peter Exp $	*/
 /*	$NetBSD: rf_fifo.c,v 1.3 1999/02/05 00:06:11 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -182,7 +182,7 @@ n_in_q(headp, tailp, countp, n, deq)
 }
 #endif
 
-#if !defined(KERNEL) && RF_INCLUDE_QUEUE_RANDOM > 0
+#if !defined(_KERNEL) && RF_INCLUDE_QUEUE_RANDOM > 0
 RF_DiskQueueData_t *
 rf_RandomPeek(q_in)
 	void   *q_in;
@@ -233,7 +233,7 @@ rf_RandomDequeue(q_in)
 	RF_ASSERT((q->hq_count + q->lq_count) == (req->queue->queueLength - 1));
 	return (req);
 }
-#endif				/* !KERNEL && RF_INCLUDE_QUEUE_RANDOM > 0 */
+#endif				/* !_KERNEL && RF_INCLUDE_QUEUE_RANDOM > 0 */
 
 /* Return ptr to item at head of queue.  Used to examine request
  * info without actually dequeueing the request.

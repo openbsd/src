@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_states.c,v 1.3 1999/07/30 14:45:33 peter Exp $	*/
+/*	$OpenBSD: rf_states.c,v 1.4 1999/08/04 13:10:55 peter Exp $	*/
 /*	$NetBSD: rf_states.c,v 1.7 1999/07/08 00:45:24 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -44,13 +44,13 @@
 #include "rf_map.h"
 #include "rf_etimer.h"
 
-#if defined(KERNEL) && (DKUSAGE > 0)
+#if defined(_KERNEL) && (DKUSAGE > 0)
 #include <sys/dkusage.h>
 #include <io/common/iotypes.h>
 #include <io/cam/dec_cam.h>
 #include <io/cam/cam.h>
 #include <io/cam/pdrv.h>
-#endif				/* KERNEL && DKUSAGE > 0 */
+#endif				/* _KERNEL && DKUSAGE > 0 */
 
 /* prototypes for some of the available states.
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_diskqueue.c,v 1.3 1999/07/30 14:45:32 peter Exp $	*/
+/*	$OpenBSD: rf_diskqueue.c,v 1.4 1999/08/04 13:10:54 peter Exp $	*/
 /*	$NetBSD: rf_diskqueue.c,v 1.7 1999/06/04 01:51:00 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -148,7 +148,7 @@ static RF_DiskQueueSW_t diskqueuesw[] = {
 		rf_RandomDequeue,
 		rf_RandomPeek,
 	rf_FifoPromote},
-#endif				/* !KERNEL && RF_INCLUDE_QUEUE_RANDOM > 0 */
+#endif				/* !_KERNEL && RF_INCLUDE_QUEUE_RANDOM > 0 */
 };
 #define NUM_DISK_QUEUE_TYPES (sizeof(diskqueuesw)/sizeof(RF_DiskQueueSW_t))
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_pq.c,v 1.2 1999/02/16 00:03:09 niklas Exp $	*/
+/*	$OpenBSD: rf_pq.c,v 1.3 1999/08/04 13:10:55 peter Exp $	*/
 /*	$NetBSD: rf_pq.c,v 1.3 1999/02/05 00:06:14 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -745,7 +745,7 @@ QDelta(
 	/* PQ in kernel currently not supported because the encoding/decoding
 	 * table is not present */
 	bzero(dest, length);
-#else				/* KERNEL */
+#else				/* _KERNEL */
 	/* this code probably doesn't work and should be rewritten  -wvcii */
 	/* 13 5 bit quants in a 64 bit word */
 	length /= 8;

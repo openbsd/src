@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_etimer.h,v 1.3 1999/08/03 13:56:37 peter Exp $	*/
+/*	$OpenBSD: rf_etimer.h,v 1.4 1999/08/04 13:10:54 peter Exp $	*/
 /*	$NetBSD: rf_etimer.h,v 1.3 1999/02/05 00:06:11 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -30,17 +30,20 @@
 #ifndef _RF__RF_TIMER_H_
 #define _RF__RF_TIMER_H_
 
+
 #include "rf_options.h"
 #include "rf_utils.h"
 
 #include <sys/time.h>
-#include <sys/kernel.h>
 
 struct RF_Etimer_s {
 	struct timeval st;
 	struct timeval et;
 	struct timeval diff;
 };
+
+#if defined(_KERNEL)
+#include <sys/kernel.h>
 
 #define RF_ETIMER_START(_t_) 					\
 		{						\
@@ -66,5 +69,7 @@ struct RF_Etimer_s {
 
 #define RF_ETIMER_VAL_US(_t_)      (RF_TIMEVAL_TO_US((_t_).diff))
 #define RF_ETIMER_VAL_MS(_t_)      (RF_TIMEVAL_TO_US((_t_).diff)/1000)
+
+#endif /* _KERNEL */
 
 #endif				/* !_RF__RF_TIMER_H_ */

@@ -120,11 +120,11 @@ main()
 
 	/* generate the inverse tables. (i,j,p,q) */
 	/* The table just stores a. Get b back from the parity */
-	printf("#ifdef KERNEL\n");
+	printf("#ifdef _KERNEL\n");
 	printf("RF_ua1024_t rf_qinv[1];        /* don't compile monster table into kernel */\n");
 	printf("#elif defined(NO_PQ)\n");
 	printf("RF_ua1024_t rf_qinv[29*29];\n");
-	printf("#else /* !KERNEL && NO_PQ */\n");
+	printf("#else /* !_KERNEL && NO_PQ */\n");
 	printf("RF_ua1024_t rf_qinv[29*29] = {\n");
 	for (i = 0; i < 29; i++) {
 		for (j = 0; j < 29; j++) {
@@ -156,7 +156,7 @@ main()
 	}
 	printf("};\n");
 	printf("\n#endif /* (RF_INCLUDE_PQ > 0) || (RF_INCLUDE_RAID6 > 0) */\n\n");
-	printf("#endif /* !KERNEL && NO_PQ */\n");
+	printf("#endif /* !_KERNEL && NO_PQ */\n");
 	printf("#endif /* !_RF__RF_INVERTQ_H_ */\n");
 	exit(0);
 }

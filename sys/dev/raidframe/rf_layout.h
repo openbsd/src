@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_layout.h,v 1.2 1999/02/16 00:02:54 niklas Exp $	*/
+/*	$OpenBSD: rf_layout.h,v 1.3 1999/08/04 13:10:54 peter Exp $	*/
 /*	$NetBSD: rf_layout.h,v 1.3 1999/02/05 00:06:12 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -55,7 +55,7 @@ typedef struct RF_LayoutSW_s {
 	/* layout-specific parsing */
 	int     (*MakeLayoutSpecific) (FILE * fp, RF_Config_t * cfgPtr, void *arg);
 	void   *makeLayoutSpecificArg;
-#endif				/* !KERNEL */
+#endif				/* !_KERNEL */
 
 #if RF_UTILITY == 0
 	/* initialization routine */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_driver.c,v 1.4 1999/08/03 13:56:37 peter Exp $	*/
+/*	$OpenBSD: rf_driver.c,v 1.5 1999/08/04 13:10:54 peter Exp $	*/
 /*	$NetBSD: rf_driver.c,v 1.12 1999/07/19 01:36:07 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -441,7 +441,6 @@ rf_Configure(raidPtr, cfgPtr)
 		rf_clear_debug_print_buffer();
 
 		DO_INIT_CONFIGURE(rf_ConfigureAllocList);
-		DO_INIT_CONFIGURE(rf_ConfigureEtimer);
 		/*
 	         * Yes, this does make debugging general to the whole system instead
 	         * of being array specific. Bummer, drag.
@@ -746,14 +745,14 @@ bp_in is a buf pointer.  void * to facilitate ignoring it outside the kernel
 		IO_BUF_ERR(bp, EINVAL, raidPtr->raidid);
 		return (EINVAL);
 	}
-#if defined(KERNEL) && DFSTRACE > 0
+#if defined(_KERNEL) && DFSTRACE > 0
 	if (rf_DFSTraceAccesses) {
 		dfsrecord.raidAddr = raidAddress;
 		dfsrecord.numBlocks = numBlocks;
 		dfsrecord.type = type;
 		dfs_log(DFS_NOTE, (char *) &dfsrecord, sizeof(dfsrecord), 0);
 	}
-#endif				/* KERNEL && DFSTRACE > 0 */
+#endif				/* _KERNEL && DFSTRACE > 0 */
 
 	rf_get_threadid(tid);
 	if (rf_accessDebug) {
@@ -1026,7 +1025,7 @@ rf_PrintThroughputStats(RF_Raid_t * raidPtr)
 		    / (raidPtr->throughputstats.sum_io_us / 1000000.0));
 	}
 }
-#endif				/* !KERNEL && !SIMULATE */
+#endif				/* !_KERNEL && !SIMULATE */
 
 void 
 rf_StartUserStats(RF_Raid_t * raidPtr)
