@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.12 2003/05/09 21:36:05 drahn Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.13 2003/10/15 01:06:13 drahn Exp $	*/
 /*
  * Copyright (c) 1996, 2001, 2003 Dale Rahn. All rights reserved.
  *
@@ -229,6 +229,7 @@ const struct opcode opcodes[] = {
 	{ "",		0x0,		0x0, "" }
 
 };
+
 /* 13 * 4 = 4c */
 const struct opcode opcodes_13[] = {
 /* 0x13 << 2 */
@@ -391,6 +392,7 @@ const struct opcode opcodes_3a[] = {
 	{ "lwa",	0xfc000003, 0xe8000002, " %{D},${ds}${A}" },
 	{ "",		0x0,		0x0, "" }
 };
+
 /* 3b * 4 = ec */
 const struct opcode opcodes_3b[] = {
 	{ "fdivs",	0xfc00003e, 0xec000024, "%{RC} f%{D},f%{A},f%{B}" },
@@ -406,6 +408,7 @@ const struct opcode opcodes_3b[] = {
 	{ "fnmadds",	0xfc00003e, 0xec00003e, "%{RC} f%{D},f%{A},f%{C},f%{B}" },
 	{ "",		0x0,		0x0, "" }
 };
+
 /* 3e * 4 = f8 */
 const struct opcode opcodes_3e[] = {
 	{ "std",	0xfc000003, 0xf8000000, " %{D},${ds}${A}" },
