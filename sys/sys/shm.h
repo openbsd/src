@@ -1,4 +1,4 @@
-/*	$OpenBSD: shm.h,v 1.6 1998/06/11 18:32:24 deraadt Exp $	*/
+/*	$OpenBSD: shm.h,v 1.7 1998/06/11 19:21:30 deraadt Exp $	*/
 /*	$NetBSD: shm.h,v 1.20 1996/04/09 20:55:35 cgd Exp $	*/
 
 /*
@@ -62,6 +62,7 @@ struct shmid_ds {
 	void		*shm_internal;	/* sysv stupidity */
 };
 
+#ifdef _KERNEL
 struct oshmid_ds {
 	struct oipc_perm shm_perm;	/* operation permission structure */
 	int		shm_segsz;	/* size of segment in bytes */
@@ -73,6 +74,7 @@ struct oshmid_ds {
 	time_t		shm_ctime;	/* time of last change by shmctl() */
 	void		*shm_internal;	/* sysv stupidity */
 };
+#endif
 
 #ifdef _KERNEL
 

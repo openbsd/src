@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.h,v 1.5 1998/06/11 18:32:22 deraadt Exp $	*/
+/*	$OpenBSD: sem.h,v 1.6 1998/06/11 19:21:29 deraadt Exp $	*/
 /*	$NetBSD: sem.h,v 1.8 1996/02/09 18:25:29 christos Exp $	*/
 
 /*
@@ -32,6 +32,7 @@ struct semid_ds {
 	long		sem_pad3[4];	/* SVABI/386 says I need this here */
 };
 
+#ifdef _KERNEL
 struct osemid_ds {
 	struct oipc_perm sem_perm;	/* operation permission struct */
 	struct sem	*sem_base;	/* pointer to first semaphore in set */
@@ -44,6 +45,7 @@ struct osemid_ds {
 	long		sem_pad2;	/* SVABI/386 says I need this here */
 	long		sem_pad3[4];	/* SVABI/386 says I need this here */
 };
+#endif
 
 /*
  * semop's sops parameter structure

@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.h,v 1.4 1998/06/11 18:32:21 deraadt Exp $	*/
+/*	$OpenBSD: msg.h,v 1.5 1998/06/11 19:21:28 deraadt Exp $	*/
 /*	$NetBSD: msg.h,v 1.9 1996/02/09 18:25:18 christos Exp $	*/
 
 /*
@@ -50,6 +50,7 @@ struct msqid_ds {
 	long		msg_pad4[4];
 };
 
+#ifdef _KERNEL
 struct omsqid_ds {
 	struct oipc_perm msg_perm;	/* msg queue permission bits */
 	struct msg	*msg_first;	/* first message in the queue */
@@ -67,6 +68,7 @@ struct omsqid_ds {
 	long		msg_pad3;
 	long		msg_pad4[4];
 };
+#endif
 
 struct msg {
 	struct msg	*msg_next;	/* next msg in the chain */

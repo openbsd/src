@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipc.h,v 1.3 1998/06/11 18:32:19 deraadt Exp $	*/
+/*	$OpenBSD: ipc.h,v 1.4 1998/06/11 19:21:27 deraadt Exp $	*/
 /*	$NetBSD: ipc.h,v 1.15 1996/02/09 18:25:12 christos Exp $	*/
 
 /*
@@ -62,6 +62,7 @@ struct ipc_perm {
 	key_t	key;	/* user specified msg/sem/shm key */
 };
 
+#ifdef _KERNEL
 struct oipc_perm {
 	ushort	cuid;	/* creator user id */
 	ushort	cgid;	/* creator group id */
@@ -71,6 +72,7 @@ struct oipc_perm {
 	ushort	seq;	/* sequence # (to generate unique msg/sem/shm id) */
 	key_t	key;	/* user specified msg/sem/shm key */
 };
+#endif
 
 /* common mode bits */
 #define	IPC_R		000400	/* read permission */
