@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib.c,v 1.7 1999/12/08 23:09:45 millert Exp $	*/
+/*	$OpenBSD: lib.c,v 1.8 2001/09/08 00:12:40 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -653,15 +653,17 @@ int isclvar(char *s)	/* is s of form var=something ? */
 {
 	char *os = s;
 
-	if (!isalpha(*s) && *s != '_')
+	if (!isalpha((uschar) *s) && *s != '_')
 		return 0;
 	for ( ; *s; s++)
-		if (!(isalnum(*s) || *s == '_'))
+		if (!(isalnum((uschar) *s) || *s == '_'))
 			break;
 	return *s == '=' && s > os && *(s+1) != '=';
 }
 
 /* strtod is supposed to be a proper test of what's a valid number */
+/* appears to be broken in gcc on linux: thinks 0x123 is a valid FP number */
+/* wrong: violates 4.10.1.4 of ansi C standard */
 
 #include <math.h>
 int is_number(char *s)

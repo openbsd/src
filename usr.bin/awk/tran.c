@@ -1,4 +1,4 @@
-/*	$OpenBSD: tran.c,v 1.6 1999/12/08 23:09:46 millert Exp $	*/
+/*	$OpenBSD: tran.c,v 1.7 2001/09/08 00:12:40 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -126,6 +126,8 @@ void envinit(char **envp)	/* set up ENVIRON variable */
 	cp->sval = (char *) ENVtab;
 	for ( ; *envp; envp++) {
 		if ((p = strchr(*envp, '=')) == NULL)
+			continue;
+		if( p == *envp ) /* no left hand side name in env string */
 			continue;
 		*p++ = 0;	/* split into two strings at = */
 		if (is_number(p))
@@ -388,13 +390,14 @@ char *tostring(char *s)	/* make a copy of string s */
 	return(p);
 }
 
-char *qstring(char *s, int delim)	/* collect string up to next delim */
+char *qstring(char *is, int delim)	/* collect string up to next delim */
 {
-	char *os = s;
+	char *os = is;
 	int c, n;
-	char *buf, *bp;
+	uschar *s = (uschar *) is;
+	uschar *buf, *bp;
 
-	if ((buf = (char *) malloc(strlen(s)+3)) == NULL)
+	if ((buf = (uschar *) malloc(strlen(s)+3)) == NULL)
 		FATAL( "out of space in qstring(%s)", s);
 	for (bp = buf; (c = *s) != delim; s++) {
 		if (c == '\n')
@@ -431,5 +434,5 @@ char *qstring(char *s, int delim)	/* collect string up to next delim */
 		}
 	}
 	*bp++ = 0;
-	return buf;
+	return (char *) buf;
 }

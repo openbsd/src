@@ -1,4 +1,4 @@
-/*	$OpenBSD: awk.h,v 1.8 1999/12/08 23:09:45 millert Exp $	*/
+/*	$OpenBSD: awk.h,v 1.9 2001/09/08 00:12:40 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -182,8 +182,7 @@ extern	int	pairstack[], paircnt;
 #define isexit(n)	((n)->csub == JEXIT)
 #define	isbreak(n)	((n)->csub == JBREAK)
 #define	iscont(n)	((n)->csub == JCONT)
-#define	isnext(n)	((n)->csub == JNEXT)
-#define	isnextfile(n)	((n)->csub == JNEXTFILE)
+#define	isnext(n)	((n)->csub == JNEXT || (n)->csub == JNEXTFILE)
 #define	isret(n)	((n)->csub == JRET)
 #define isrec(n)	((n)->tval & REC)
 #define isfld(n)	((n)->tval & FLD)
@@ -208,7 +207,7 @@ typedef struct rrow {
 	union {
 		int i;
 		Node *np;
-		char *up;
+		uschar *up;
 	} lval;		/* because Al stores a pointer in it! */
 	int	*lfollow;
 } rrow;
@@ -216,7 +215,7 @@ typedef struct rrow {
 typedef struct fa {
 	uschar	gototab[NSTATES][NCHARS];
 	uschar	out[NSTATES];
-	char	*restr;
+	uschar	*restr;
 	int	*posns[NSTATES];
 	int	anchor;
 	int	use;

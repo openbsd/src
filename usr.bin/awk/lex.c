@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.4 1999/12/08 23:09:45 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.5 2001/09/08 00:12:40 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -296,16 +296,18 @@ int yylex(void)
 				input(); yylval.i = POWEQ; RET(ASGNOP);
 			} else
 				RET(POWER);
-	
+
 		case '$':
 			/* BUG: awkward, if not wrong */
 			c = gettok(&buf, &bufsize);
-			if (c == '(' || c == '[' || (infunc && isarg(buf) >= 0)) {
-				unputstr(buf);
-				RET(INDIRECT);
-			} else if (isalpha(c)) {
+			if (isalpha(c)) {
 				if (strcmp(buf, "NF") == 0) {	/* very special */
 					unputstr("(NF)");
+					RET(INDIRECT);
+				}
+				c = peek();
+				if (c == '(' || c == '[' || (infunc && isarg(buf) >= 0)) {
+					unputstr(buf);
 					RET(INDIRECT);
 				}
 				yylval.cp = setsymtab(buf, "", 0.0, STR|NUM, symtab);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: awkgram.y,v 1.6 1999/12/08 23:09:45 millert Exp $	*/
+/*	$OpenBSD: awkgram.y,v 1.7 2001/09/08 00:12:40 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -317,7 +317,6 @@ st:
 stmt:
 	  BREAK st		{ if (!inloop) SYNTAX("break illegal outside of loops");
 				  $$ = stat1(BREAK, NIL); }
-	| CLOSE pattern st	{ $$ = stat1(CLOSE, $2); }
 	| CONTINUE st		{  if (!inloop) SYNTAX("continue illegal outside of loops");
 				  $$ = stat1(CONTINUE, NIL); }
 	| do {inloop++;} stmt {--inloop;} WHILE '(' pattern ')' st
@@ -366,6 +365,7 @@ term:
 	| BLTIN				{ $$ = op2(BLTIN, itonp($1), rectonode()); }
 	| CALL '(' ')'			{ $$ = op2(CALL, celltonode($1,CVAR), NIL); }
 	| CALL '(' patlist ')'		{ $$ = op2(CALL, celltonode($1,CVAR), $3); }
+	| CLOSE term			{ $$ = op1(CLOSE, $2); }
 	| DECR var			{ $$ = op1(PREDECR, $2); }
 	| INCR var			{ $$ = op1(PREINCR, $2); }
 	| var DECR			{ $$ = op1(POSTDECR, $1); }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: FIXES,v 1.9 1999/12/08 23:09:45 millert Exp $	*/
+/*	$OpenBSD: FIXES,v 1.10 2001/09/08 00:12:40 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -26,6 +26,56 @@ THIS SOFTWARE.
 This file lists all bug fixes, changes, etc., made since the AWK book
 was sent to the printers in August, 1987.
 
+Nov 15, 2000:
+	fixed a bug introduced in august 1997 that caused expressions
+	like $f[1] to be syntax errors.  thanks to arnold robbins for
+	noticing this and providing a fix.
+
+Oct 30, 2000:
+	fixed some nextfile bugs: not handling all cases.  thanks to
+	arnold robbins for pointing this out.  new regressions added.
+
+	close() is now a function.  it returns whatever the library
+	fclose returns, and -1 for closing a file or pipe that wasn't
+	opened.
+
+Sep 24, 2000:
+	permit \n explicitly in character classes; won't work right
+	if comes in as "[\n]" but ok as /[\n]/, because of multiple
+	processing of \'s.  thanks to arnold robbins.
+
+July 5, 2000:
+	minor fiddles in tran.c to keep compilers happy about uschar.
+	thanks to norman wilson.
+
+May 25, 2000:
+	yet another attempt at making 8-bit input work, with another
+	band-aid in b.c (member()), and some (uschar) casts to head 
+	off potential errors in subscripts (like isdigit).  also
+	changed HAT to NCHARS-2.  thanks again to santiago vila.
+
+	changed maketab.c to ignore apparently out of range definitions
+	instead of halting; new freeBSD generates one.  thanks to
+	jon snader <jsnader@ix.netcom.com> for pointing out the problem.
+
+May 2, 2000:
+	fixed an 8-bit problem in b.c by making several char*'s into
+	unsigned char*'s.  not clear i have them all yet.  thanks to
+	Santiago Vila <sanvila@unex.es> for the bug report.
+
+Apr 21, 2000:
+	finally found and fixed a memory leak in function call; it's
+	been there since functions were added ~1983.  thanks to
+	jon bentley for the test case that found it.
+
+	added test in envinit to catch environment "variables" with
+	names begining with '='; thanks to Berend Hasselman.
+
+Jul 28, 1999:
+	added test in defn() to catch function foo(foo), which
+	otherwise recurses until core dump.  thanks to arnold
+	robbins for noticing this.
+
 Jun 20, 1999:
 	added *bp in gettok in lex.c; appears possible to exit function
 	without terminating the string.  thanks to russ cox.
@@ -49,6 +99,7 @@ Apr 21, 1999:
 Apr 16, 1999:
 	with code kindly provided by Bruce Lilly, awk now parses 
 	/=/ and similar constructs more sensibly in more places.
+	Bruce also provided some helpful test cases.
 
 Apr 5, 1999:
 	changed true/false to True/False in run.c to make it
