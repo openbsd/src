@@ -33,7 +33,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: Makefile,v 1.3 2000/01/28 05:29:59 fgsch Exp $
+#	$Id: Makefile,v 1.4 2000/01/28 06:11:30 fgsch Exp $
 #
 
 SRCS=kernfsmod.c
@@ -50,7 +50,7 @@ CFLAGS+= -D_KERNEL -I/sys -I.
 all:	$(MODOBJ)
 
 clean:
-	rm -f vnode_if.[ch] $(OBJS) $(KOBJS) $(MODOBJ) $(KMOD)
+	rm -f $(OBJS) $(KOBJS) $(MODOBJ) $(KMOD)
 
 load:
 	modload -o $(KMOD) -e$(KMOD) $(MODOBJ)
