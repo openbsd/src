@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.202 2003/03/04 18:03:09 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.203 2003/03/04 18:36:18 deraadt Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -99,6 +99,7 @@ For example,
 .Pp
 .Bd -literal -offset indent
 .Ic ext_if = \&"kue0\&"
+.Ic all_ifs = \&"{\&" $ext_if lo0 \&"}\&"
 .Xo Ic pass out on $ext_if from any\ 
 .Ic to any keep state
 .Xc
