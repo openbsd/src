@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.12 2003/05/01 18:59:36 avsm Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.13 2004/06/21 16:53:11 avsm Exp $
 
 MAN=	lynx.1
 CLEANFILES=	lynx.cat1 lynx.1
 DPADD=	${LIBSSL} ${LIBCRYPTO}
-GNUCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}"
+GNUCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" CPP="${CPP}"
 CONFIGURE_ARGS= --with-ssl=/usr --enable-ipv6
 HTMLDIR=	/usr/share/doc/html
 HELPFILES=	keystrokes/alt_edit_help.html keystrokes/bookmark_help.html \
