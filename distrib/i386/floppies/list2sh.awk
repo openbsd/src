@@ -1,4 +1,4 @@
-#	$OpenBSD: list2sh.awk,v 1.6 2001/08/23 02:37:02 krw Exp $
+#	$OpenBSD: list2sh.awk,v 1.7 2001/08/26 03:27:11 krw Exp $
 
 BEGIN {
 	printf("cd ${CURDIR}\n");
@@ -52,10 +52,8 @@ $1 == "COPYDIR" {
 }
 $1 == "SPECIAL" {
 	printf("echo '%s'\n", $0);
-	printf("(cd ${TARGDIR};");
 	sub(/^[ \t]*SPECIAL[ \t]*/, "");
-	printf(" %s", $0);
-	printf(")\n");
+	printf("(cd ${TARGDIR}; %s)\n", $0);
 	next;
 }
 {
