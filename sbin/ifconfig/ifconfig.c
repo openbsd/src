@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.88 2003/12/23 14:52:12 markus Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.89 2004/01/13 01:42:45 mcbride Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.88 2003/12/23 14:52:12 markus Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.89 2004/01/13 01:42:45 mcbride Exp $";
 #endif
 #endif /* not lint */
 
@@ -648,17 +648,30 @@ printif(struct ifreq *ifrm, int ifaliases)
 #ifdef HAVE_IFADDRS_H
 	struct ifaddrs *ifap, *ifa;
 	const char *namep;
+	char ch, *oname = NULL;
 	struct ifreq *ifrp;
-	int count = 0, noinet = 1;
+	int nlen, count = 0, noinet = 1;
 
 	if (getifaddrs(&ifap) != 0)
 		err(1, "getifaddrs");
 
+	if (ifrm) {
+		oname = strdup(ifrm->ifr_name);
+		if (oname == NULL)
+			err(1, "strdup");
+		nlen = strlen(oname);
+	}
+
 	namep = NULL;
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-		if (ifrm && strncmp(ifrm->ifr_name, ifa->ifa_name,
-		    sizeof(ifrm->ifr_name)))
+		if (oname && strncmp(oname, ifa->ifa_name, nlen))
 			continue;
+		if (oname) {
+			/* Check for end or a digit ! */
+			ch = ifa->ifa_name[nlen];
+			if (ch && (ch < '0' || ch > '9'))
+				continue;
+		}
 		(void) strlcpy(name, ifa->ifa_name, sizeof(name));
 
 #ifdef INET6
@@ -711,6 +724,8 @@ printif(struct ifreq *ifrm, int ifaliases)
 		}
 	}
 	freeifaddrs(ifap);
+	if (oname != NULL)
+		free(oname);
 	if (count == 0) {
 		fprintf(stderr, "%s: no such interface\n", name);
 		exit(1);
