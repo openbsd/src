@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecreg.h,v 1.6 2000/08/13 22:03:09 deraadt Exp $	*/
+/*	$OpenBSD: ubsecreg.h,v 1.7 2000/08/13 22:06:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -71,7 +71,7 @@
 
 #define	UBSEC_CARD(sid)		(((sid) & 0xf0000000) >> 28)
 #define	UBSEC_SESSION(sid)	( (sid) & 0x0fffffff)
-#define	UBSEC_SID(crd,ses)	(((crd) << 28) | ((ses) & 0x0fffffff))
+#define	UBSEC_SID(crd, sesn)	(((crd) << 28) | ((sesn) & 0x0fffffff))
 #define	MAX_SCATTER		64
 
 struct ubsec_pktctx {

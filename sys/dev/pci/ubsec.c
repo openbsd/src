@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.23 2000/08/13 22:03:09 deraadt Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.24 2000/08/13 22:06:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -284,8 +284,8 @@ ubsec_feed(sc)
 	void *v, *mcr2;
 
 	npkts = sc->sc_nqueue;
-	if (npkts > 20)
-		npkts = 20;
+	if (npkts > 5)
+		npkts = 5;
 	if (npkts < 2)
 		goto feed1;
 
@@ -366,10 +366,10 @@ ubsec_newsession(sidp, cri)
 {
 	struct cryptoini *c, *encini = NULL, *macini = NULL;
 	struct ubsec_softc *sc = NULL;
-	struct ubsec_session *ses;
+	struct ubsec_session *ses = NULL;
 	MD5_CTX md5ctx;
 	SHA1_CTX sha1ctx;
-	int i;
+	int i, sesn;
 
 	if (sidp == NULL || cri == NULL)
 		return (EINVAL);
@@ -401,34 +401,32 @@ ubsec_newsession(sidp, cri)
 
 	if (sc->sc_sessions == NULL) {
 		ses = sc->sc_sessions = (struct ubsec_session *)malloc(
-			sizeof(struct ubsec_session), M_DEVBUF, M_NOWAIT);
+		    sizeof(struct ubsec_session), M_DEVBUF, M_NOWAIT);
 		if (ses == NULL)
 			return (ENOMEM);
-		i = 0;
+		sesn = 0;
 		sc->sc_nsessions = 1;
 	} else {
-		for (i = 0; i < sc->sc_nsessions; i++) {
-			if (sc->sc_sessions[i].ses_used == 0) {
-				ses = &sc->sc_sessions[i];
+		for (sesn = 0; sesn < sc->sc_nsessions; sesn++) {
+			if (sc->sc_sessions[sesn].ses_used == 0) {
+				ses = &sc->sc_sessions[sesn];
 				break;
 			}
 		}
 
 		if (ses == NULL) {
-			ses = (struct ubsec_session *)malloc(
-			    (sc->sc_nsessions + 1) *
+			sesn = sc->sc_nsessions;
+			ses = (struct ubsec_session *)malloc((sesn + 1) *
 			    sizeof(struct ubsec_session), M_DEVBUF, M_NOWAIT);
 			if (ses == NULL)
 				return (ENOMEM);
-			for (i = 0; i < sc->sc_nsessions; i++) {
-				bcopy(&sc->sc_sessions[i], &ses[i],
-				    sizeof(struct ubsec_session));
-				bzero(&sc->sc_sessions[i],
-				    sizeof(struct ubsec_session));
-			}
+			bcopy(sc->sc_sessions, ses, (sesn + 1) *
+			    sizeof(struct ubsec_session));
+			bzero(sc->sc_sessions, sesn *
+			    sizeof(struct ubsec_session));
 			free(sc->sc_sessions, M_DEVBUF);
 			sc->sc_sessions = ses;
-			ses = &sc->sc_sessions[sc->sc_nsessions];
+			ses = &sc->sc_sessions[sesn];
 			sc->sc_nsessions++;
 		}
 	}
@@ -444,8 +442,7 @@ ubsec_newsession(sidp, cri)
 			bcopy(encini->cri_key, &ses->ses_deskey[0], 8);
 			bcopy(encini->cri_key, &ses->ses_deskey[2], 8);
 			bcopy(encini->cri_key, &ses->ses_deskey[4], 8);
-		}
-		else 
+		} else
 			bcopy(encini->cri_key, &ses->ses_deskey[0], 24);
 		SWAP32(ses->ses_deskey[0]);
 		SWAP32(ses->ses_deskey[1]);
@@ -498,8 +495,7 @@ ubsec_newsession(sidp, cri)
 			macini->cri_key[i] ^= HMAC_OPAD_VAL;
 	}
 
-	*sidp = UBSEC_SID(sc->sc_dv.dv_unit, i);
-
+	*sidp = UBSEC_SID(sc->sc_dv.dv_unit, sesn);
 	return (0);
 }
 
@@ -562,7 +558,8 @@ ubsec_process(crp)
 	}
 	bzero(q, sizeof(struct ubsec_q));
 
-	ses = q->q_ses = &sc->sc_sessions[UBSEC_SESSION(crp->crp_sid)];
+	q->q_sesn = UBSEC_SESSION(crp->crp_sid);
+	ses = &sc->sc_sessions[q->q_sesn];
 
 	q->q_mcr = (struct ubsec_mcr *)malloc(sizeof(struct ubsec_mcr),
 	    M_DEVBUF, M_NOWAIT);
@@ -924,7 +921,7 @@ ubsec_callback(q)
 				continue;
 			m_copydata((struct mbuf *)crp->crp_buf,
 			    crd->crd_skip + crd->crd_len - 8, 8,
-			    (u_int8_t *)q->q_ses->ses_iv);
+			    (u_int8_t *)q->q_sc->sc_sessions[q->q_sesn].ses_iv);
 			break;
 		}
 	}
