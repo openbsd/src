@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.59 2001/06/28 02:58:52 kjc Exp $
+#	$OpenBSD: MAKEDEV,v 1.60 2001/07/05 02:54:06 mickey Exp $
 #	$NetBSD: MAKEDEV,v 1.8.4.1 1996/06/18 00:41:56 cgd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -84,6 +84,7 @@
 #	uk*	SCSI Unknown device
 #	ss*	SCSI scanners
 #	altq	ALTQ control interface
+#	iop	I2O controller device
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin
 this=$0
@@ -164,7 +165,7 @@ all)
 	sh $this uk0 uk1 ss0 ss1
 	sh $this ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6 ttyc7
 	sh $this local xfs0 altq
-	sh $this usbs wscons ttyCcfg 
+	sh $this usbs wscons ttyCcfg iop0 iop1
 	;;
 
 raminst)
@@ -191,6 +192,13 @@ wsmux|wskbd|wsmouse)
         chown root.wheel wsmouse wskbd
         chmod 600 wsmouse wskbd
         ;;
+
+iop*)
+	rm -f iop$unit
+	mknod iop$unit c 54 $unit
+	chown root.wheel iop$unit
+	chmod 660 iop$unit
+	;;
 
 usbs)
 	sh $this usb usb0 usb1

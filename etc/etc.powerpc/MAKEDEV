@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.52 2001/07/01 10:52:13 dhartmei Exp $
+#	$OpenBSD: MAKEDEV,v 1.53 2001/07/05 02:54:07 mickey Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -78,6 +78,7 @@
 #	lkm	loadable kernel modules interface
 #	*random	inkernal random data source
 #	altq	ALTQ control interface
+#	iop	I2O controller device
 #
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin
@@ -165,6 +166,7 @@ all)
 	sh $this pci
 	sh $this lkm xfs0 altq
 	sh $this usbs
+	sh $this iop0 iop1
 	sh $this local
 	;;
 
@@ -195,6 +197,13 @@ std)
 	mknod stdout		c 21 1	; chmod 666 stdout
 	mknod stderr		c 21 2	; chmod 666 stderr
 	mknod ksyms		c 43 0  ; chmod 640 ksyms ; chown root.kmem ksyms
+	;;
+
+iop*)
+	rm -f iop$unit
+	mknod iop$unit c 73 $unit
+	chown root.wheel iop$unit
+	chmod 660 iop$unit
 	;;
 
 usbs)
