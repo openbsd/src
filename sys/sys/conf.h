@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.42 2001/06/24 19:48:59 kjell Exp $	*/
+/*	$OpenBSD: conf.h,v 1.43 2001/06/26 03:04:30 provos Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -358,13 +358,6 @@ extern struct cdevsw cdevsw[];
 	(dev_type_read((*))) enodev, (dev_type_write((*))) enodev, \
 	(dev_type_ioctl((*))) enodev, (dev_type_stop((*))) nullop, \
 	0, (dev_type_select((*))) enodev, (dev_type_mmap((*))) enodev }
-
-/* open, close, read, ioctl */
-#define	cdev_gen_ipf(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, (dev_type_select((*))) enodev, \
-	(dev_type_mmap((*))) enodev }
 
 /* open, close, read, write, ioctl, select */
 #define cdev_xfs_init(c, n) { \
