@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.16 2000/06/15 20:35:57 ho Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.17 2000/07/18 15:17:19 mickey Exp $	*/
 /*	$NetBSD: pchb.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
 
 /*
@@ -307,11 +307,29 @@ pchbattach(parent, self, aux)
 				    && (r = bus_space_read_1(sc->bt, sc->bh,
 					I82802_RNG_DATA)) != 0
 				    /*&& runfipstest()>=0*/) {
-					printf (": RNG(%x)", r);
+					struct timeval tv1, tv2;
 
-					sc->i = 4;
+					/* benchmark the RNG */
+					microtime(&tv1);
+					for (i = 8 * 1024; i--; ) {
+						while(!(bus_space_read_1(sc->bt,
+						    sc->bh, I82802_RNG_RNGST) &
+						    I82802_RNG_RNGST_DATAV));
+						(void)bus_space_read_1(sc->bt,
+						    sc->bh, I82802_RNG_DATA);
+					}
+					microtime(&tv2);
+
+					timersub(&tv2, &tv1, &tv1);
+					if (tv1.tv_sec)
+						tv1.tv_usec +=
+						    1000000 * tv1.tv_sec;
+					printf(": rng active, %dK/sec",
+					    8 * 1000000 / tv1.tv_usec);
+
 					timeout_set(&sc->sc_tmo, pchb_rnd, sc);
-					timeout_add(&sc->sc_tmo, 1);
+					sc->i = 4;
+					pchb_rnd(sc);
 				}
 			}
 			break;
@@ -342,21 +360,20 @@ pchb_rnd(v)
 	void *v;
 {
 	struct pchb_softc *sc = v;
-	int s, ret = -1;
+	int s, ret;
 
 	s = splhigh();
-	if (bus_space_read_1(sc->bt, sc->bh, I82802_RNG_RNGST) &
-	    I82802_RNG_RNGST_DATAV)
-		ret = bus_space_read_1(sc->bt, sc->bh, I82802_RNG_DATA);
-	splx(s);
+	while (!(bus_space_read_1(sc->bt, sc->bh, I82802_RNG_RNGST) &
+	    I82802_RNG_RNGST_DATAV));
+	ret = bus_space_read_1(sc->bt, sc->bh, I82802_RNG_DATA);
 
-	if (ret >= 0) {
-		if (sc->i--)
-			sc->ax = (sc->ax << 8) + ret;
-		else {
-			sc->i = 4;
-			add_true_randomness(sc->ax);
-		}
+	if (sc->i--) {
+		sc->ax = (sc->ax << 8) | ret;
+		splx(s);
+	} else {
+		sc->i = 4;
+		splx(s);
+		add_true_randomness(sc->ax);
 	}
 	timeout_add(&sc->sc_tmo, 1);
 }
