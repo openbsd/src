@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.14 2000/01/17 20:18:16 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.15 2000/01/24 20:44:14 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 Michael Shalayeff
@@ -230,6 +230,13 @@ cpu_fork(p1, p2, stack, stacksize)
 	tf->tf_ipsw = PSW_C | PSW_Q | PSW_P | PSW_D | PSW_I /* | PSW_L */;
 	pcbp->pcb_fpregs[32] = 0;
 #endif
+
+	/*
+	 * Set up return value registers as libc:fork() expects
+	 */
+	tf->tf_ret0 = p1->p_pid;
+	tf->tf_ret1 = 1;	/* ischild */
+	tf->tf_t1 = 0;		/* errno */
 
 	/*
 	 * If specified, give the child a different stack.
