@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.3 2000/02/03 00:53:59 angelos Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.4 2000/02/03 09:55:19 angelos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -56,6 +56,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
@@ -65,7 +66,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $Id: wicontrol.c,v 1.3 2000/02/03 00:53:59 angelos Exp $";
+	"@(#) $Id: wicontrol.c,v 1.4 2000/02/03 09:55:19 angelos Exp $";
 #endif
 
 static void wi_getval		__P((char *, struct wi_req *));
@@ -316,10 +317,15 @@ static void wi_setkeys(iface, key, idx)
         wi_getval(iface, &wreq);
         keys = (struct wi_ltv_keys *)&wreq;
 
-        if (strlen(key) > 14) {
-                err(1, "encryption key must be no "
-                    "more than 14 characters long");
-        }
+        if (key[0] == '0' && (key[1] == 'x' || key[1] == 'X')) {
+	        if (strlen(key) > 30)
+		        err(1, "encryption key must be no "
+			    "more than 28 hex digits long");
+	} else {
+	        if (strlen(key) > 14)
+		        err(1, "encryption key must be no "
+			    "more than 14 characters long");
+	}
 
         if (idx > 3)
                 err(1, "only 4 encryption keys available");
@@ -337,22 +343,32 @@ static void wi_setkeys(iface, key, idx)
 static void wi_printkeys(wreq)
         struct wi_req           *wreq;
 {
-        int                     i, j;
+        int                     i, j, bn;
         struct wi_key           *k;
         struct wi_ltv_keys      *keys;
         char                    *ptr;
 
 	keys = (struct wi_ltv_keys *)wreq;
 
-	for (i = 0; i < 4; i++) {
+	for (i = 0, bn = 0; i < 4; i++, bn = 0) {
                 k = &keys->wi_keys[i];
                 ptr = (char *)k->wi_keydat;
                 for (j = 0; j < k->wi_keylen; j++) {
-                        if (ptr[i] == '\0')
-                                ptr[i] = ' ';
-                }
-                ptr[j] = '\0';
-                printf("[ %s ]", ptr);
+		        if (!isprint(ptr[j])) {
+			        bn = 1;
+				break;
+			}
+		}
+
+		if (bn)	{
+		        printf("[ 0x");
+		        for (j = 0; j < k->wi_keylen; j++)
+			      printf("%02x", ((unsigned char *) ptr)[j]);
+			printf(" ]");
+		} else {
+		        ptr[j] = '\0';
+			printf("[ %s ]", ptr);
+		}
         }
 
         return;
