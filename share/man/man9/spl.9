@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spl.9,v 1.13 2002/07/23 14:03:07 art Exp $
+.\"	$OpenBSD: spl.9,v 1.14 2002/07/28 20:55:00 nordin Exp $
 .\"	$NetBSD: spl.9,v 1.1 1997/03/11 06:15:05 mikel Exp $
 .\"
 .\" Copyright (c) 1997 Michael Long.
@@ -173,7 +173,7 @@ macros.
 .Pp
 The
 .Fn splassert
-function makes that the system is running at a certain priority level.
+function checks that the system is running at a certain priority level.
 The argument
 .Fa s
 should be one of these constants:
