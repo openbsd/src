@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl_cardbus.c,v 1.1 2002/06/08 00:10:54 aaron Exp $ */
+/*	$OpenBSD: if_rl_cardbus.c,v 1.2 2002/06/08 10:01:38 jason Exp $ */
 /*	$NetBSD: if_rl_cardbus.c,v 1.3.8.3 2001/11/14 19:14:02 nathanw Exp $	*/
 
 /*
@@ -117,18 +117,17 @@ struct rl_cardbus_softc {
 	int sc_intrline;
 };
 
-static int rl_cardbus_match	__P((struct device *, void *, void *));
-static void rl_cardbus_attach	__P((struct device *, struct device *, void *));
-static int rl_cardbus_detach	__P((struct device *, int));
-void rl_cardbus_setup		__P((struct rl_cardbus_softc *));
+static int rl_cardbus_match(struct device *, void *, void *);
+static void rl_cardbus_attach(struct device *, struct device *, void *);
+static int rl_cardbus_detach(struct device *, int);
+void rl_cardbus_setup(struct rl_cardbus_softc *);
 
 struct cfattach rl_cardbus_ca = {
 	sizeof(struct rl_cardbus_softc), rl_cardbus_match, rl_cardbus_attach,
 	    rl_cardbus_detach
 };
 
-const struct rl_type *rl_cardbus_lookup
-	__P((const struct cardbus_attach_args *));
+const struct rl_type *rl_cardbus_lookup (const struct cardbus_attach_args *);
 
 const struct rl_type *
 rl_cardbus_lookup(ca)
