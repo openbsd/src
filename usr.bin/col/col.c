@@ -1,4 +1,4 @@
-/*	$OpenBSD: col.c,v 1.5 1997/07/25 21:30:12 mickey Exp $	*/
+/*	$OpenBSD: col.c,v 1.6 2000/11/21 18:15:09 aaron Exp $	*/
 /*	$NetBSD: col.c,v 1.7 1995/09/02 05:48:50 jtc Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)col.c	8.5 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: col.c,v 1.5 1997/07/25 21:30:12 mickey Exp $";
+static char rcsid[] = "$OpenBSD: col.c,v 1.6 2000/11/21 18:15:09 aaron Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -522,8 +522,7 @@ xmalloc(p, size)
 void
 usage()
 {
-
-	(void)fprintf(stderr, "usage: col [-bfx] [-l nline]\n");
+	(void)fprintf(stderr, "usage: col [-bfhx] [-l num]\n");
 	exit(1);
 }
 
