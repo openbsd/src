@@ -53,7 +53,6 @@ ftruncate(fd, length)
 	int	fd;
 	off_t	length;
 {
-	quad_t __syscall __P((quad_t, ...));
 
 	return(__syscall((quad_t)SYS_ftruncate, fd, 0, length));
 }

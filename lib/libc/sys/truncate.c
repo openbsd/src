@@ -53,7 +53,6 @@ truncate(path, length)
 	const char *path;
 	off_t length;
 {
-	quad_t __syscall __P((quad_t, ...));
 
 	return(__syscall((quad_t)SYS_truncate, path, 0, length));
 }

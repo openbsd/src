@@ -54,7 +54,7 @@ lseek(fd, offset, whence)
 	off_t	offset;
 	int	whence;
 {
-	extern quad_t __syscall();
+	extern off_t __syscall();
 
 	return(__syscall((quad_t)SYS_lseek, fd, 0, offset, whence));
 }

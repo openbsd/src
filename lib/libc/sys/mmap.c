@@ -58,7 +58,6 @@ mmap(addr, len, prot, flags, fd, offset)
 	int	fd;
 	off_t	offset;
 {
-	quad_t __syscall __P((quad_t, ...));
 
 	return((caddr_t)(long)__syscall((quad_t)SYS_mmap, addr, len, prot,
 	    flags, fd, 0, offset));
