@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.5 2002/02/10 23:15:05 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.6 2002/06/19 19:13:50 pvalchev Exp $
 
 ##########################################################
 ## Compile time options, These set defaults ##############
@@ -307,5 +307,4 @@ OPTIONS = -DMAIL_AGENT=\"$(MAIL_AGENT)\" -DSMTP_USER=\"$(SMTP_USER)\" \
 	-DJUNIPER_SUPPORT=$(JUNIPER_SUPPORT) -DNS_MATCH=$(NS_MATCH) \
 	-DUSE_REGEX=$(USE_REGEX)
 
-CFLAGS += -g -O -Wall -DUSE_FLOCK -DUSE_MKSTEMP $(OPTIONS)
-
+CFLAGS += -DUSE_FLOCK -DUSE_MKSTEMP $(OPTIONS)
