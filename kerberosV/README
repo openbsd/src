@@ -40,6 +40,23 @@ quite incomplete. A number of manpages for library functions are also
 available.
 
 
+BSD Auth
+========
+
+There's also a BSD Authentication login script in src/libexec/login_krb5,
+which you can enable by typing 
+
+# cd /usr/src/libexec/login_krb5
+# make ; make install
+
+Then change the line with "auth-defaults" in /etc/login.conf to include the
+string "krb5" at the end of the authentication methods. You should now be
+able to login with Kerberos 5 passwords by typing your login name followed
+by ":krb5" on the login prompt.
+
+Su does not work at this time, but we expect it to do so in the near future.
+
+
 TODO
 ====
 
@@ -47,14 +64,11 @@ Things todo, in no particular order:
 
  - Make sure to not try krb5 auth when no ticket exists. (same goes for krb4)
    (i think this is actually ok, but it needs to be verified.)
- - hprop, iprop
- - kf, kfd
  - kpasswdd and hack krb5 support in our passwd
  - krb5-config script
  - kx, kxd
  - krb5 support in login, xdm, xlock, su and sudo
  - rxtelnet, rxterm
- - string2key
  - pop-server and push
  - rsh, rshd
  - ssh and sshd
