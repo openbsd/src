@@ -32,16 +32,27 @@ else
 	done
 	ssh-add -l > /dev/null 2>&1
 	if [ $? -ne 0 ]; then
-		fail "ssh-add -l did succeed exit code 0"
+		fail "ssh-add -l failed: exit code $?"
+	fi
+	# the same for full pubkey output
+	ssh-add -L > /dev/null 2>&1
+	if [ $? -ne 0 ]; then
+		fail "ssh-add -L failed: exit code $?"
 	fi
 
 	trace  "simple connect via agent"
 	for p in 1 2; do
 		ssh -o "Protocol=$p" -F $OBJ/ssh_config somehost exit 5$p
 		if [ $? -ne 5$p ]; then
-			fail "ssh connect with protocol $p failed"
+			fail "ssh connect with protocol $p failed (exit code $?)"
 		fi
 	done
+
+	trace  "delete all agent keys"
+	ssh-add -D > /dev/null 2>&1
+	if [ $? -ne 0 ]; then
+		fail "ssh-add -D failed: exit code $?"
+	fi
 
 	trace "kill agent"
 	ssh-agent -k > /dev/null
