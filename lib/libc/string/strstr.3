@@ -29,18 +29,20 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strstr.3,v 1.7 2005/02/25 03:12:44 cloder Exp $
+.\"	$OpenBSD: strstr.3,v 1.8 2005/03/30 03:04:19 deraadt Exp $
 .\"
 .Dd June 29, 1991
 .Dt STRSTR 3
 .Os
 .Sh NAME
-.Nm strstr
+.Nm strstr , strcasestr
 .Nd locate a substring in a string
 .Sh SYNOPSIS
 .Fd #include <string.h>
 .Ft char *
 .Fn strstr "const char *big" "const char *little"
+.Ft char *
+.Fn strcasestr "const char *big" "const char *little"
 .Sh DESCRIPTION
 The
 .Fn strstr
@@ -48,23 +50,27 @@ function locates the first occurrence of the NUL-terminated string
 .Fa little
 in the NUL-terminated string
 .Fa big .
+.Pp
+The
+.Fn strcasestr
+function is similar to
+.Fn strstr
+but ignores the case of both strings.
+.Pp
 If
 .Fa little
-is the empty string,
-.Fn strstr
-returns
-.Fa big ;
+is an empty string,
+.Fa big
+is returned;
 if
 .Fa little
 occurs nowhere in
 .Fa big ,
-.Fn strstr
-returns
-.Dv NULL ;
-otherwise
-.Fn strstr
-returns a pointer to the first character of the first occurrence of
-.Fa little .
+.Dv NULL
+is returned;
+otherwise a pointer to the first character of the first occurrence of
+.Fa little
+is returned.
 .Sh SEE ALSO
 .Xr memchr 3 ,
 .Xr strchr 3 ,
