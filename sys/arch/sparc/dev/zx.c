@@ -1,4 +1,4 @@
-/*	$OpenBSD: zx.c,v 1.3 2003/06/06 19:42:47 miod Exp $	*/
+/*	$OpenBSD: zx.c,v 1.4 2003/06/28 15:11:25 miod Exp $	*/
 /*	$NetBSD: zx.c,v 1.5 2002/10/02 16:52:46 thorpej Exp $	*/
 
 /*
@@ -169,6 +169,8 @@ struct wsdisplay_accessops zx_accessops = {
 
 #define	ZX_BWIDTH	13
 #define	ZX_WWIDTH	11	/* word width */
+
+#define	ZX_COORDS(x, y)	((x) | ((y) << ZX_WWIDTH))
 
 void	zx_attach(struct device *, struct device *, void *);
 int	zx_match(struct device *, void *, void *);
@@ -458,10 +460,10 @@ zx_reset(struct zx_softc *sc, u_int mode)
 		SETREG(zd->zd_rop, ZX_STD_ROP);
 		SETREG(zd->zd_widclip, 0);
 
-		SETREG(zc->zc_extent, (sc->sc_sunfb.sf_width - 1) |
-		    ((sc->sc_sunfb.sf_height - 1) << ZX_WWIDTH));
+		SETREG(zc->zc_extent, ZX_COORDS(sc->sc_sunfb.sf_width - 1,
+		    sc->sc_sunfb.sf_height - 1));
 		SETREG(zc->zc_addrspace, ZX_ADDRSPC_FONT_OBGR);
-		SETREG(zc->zc_fill, 0x80000000);
+		SETREG(zc->zc_fill, ZX_COORDS(0, 0) | ZX_EXTENT_DIR_BACKWARDS);
 		SETREG(zc->zc_fontt, 0);
 
 		while ((zc->zc_csr & ZX_CSR_BLT_BUSY) != 0)
@@ -487,8 +489,8 @@ zx_reset(struct zx_softc *sc, u_int mode)
 		SETREG(zd->zd_widclip, 0);
 		SETREG(zd->zd_wmask, 0xffff);
 		SETREG(zd->zd_planemask, 0x00ffffff);
-		SETREG(zc->zc_extent, (sc->sc_sunfb.sf_width - 1) |
-		    ((sc->sc_sunfb.sf_height - 1) << ZX_WWIDTH));
+		SETREG(zc->zc_extent, ZX_COORDS(sc->sc_sunfb.sf_width - 1,
+		    sc->sc_sunfb.sf_height - 1));
 		SETREG(zc->zc_fill, 0);
 		while ((zc->zc_csr & ZX_CSR_BLT_BUSY) != 0)
 			;
@@ -617,8 +619,8 @@ zx_fillrect(struct rasops_info *ri, int x, int y, int w, int h, long attr,
 
 	SETREG(zd->zd_rop, rop);
 	SETREG(zd->zd_fg, bg << 24);
-	SETREG(zc->zc_extent, w | (h << ZX_WWIDTH));
-	SETREG(zc->zc_fill, x | (y << ZX_WWIDTH) | 0x80000000);
+	SETREG(zc->zc_extent, ZX_COORDS(w, h));
+	SETREG(zc->zc_fill, ZX_COORDS(x, y) | ZX_EXTENT_DIR_BACKWARDS);
 }
 
 void
@@ -654,9 +656,9 @@ zx_copyrect(struct rasops_info *ri, int sx, int sy, int dx, int dy, int w,
 		;
 
 	SETREG(zd->zd_rop, ZX_STD_ROP);
-	SETREG(zc->zc_extent, w | (h << ZX_WWIDTH) | dir);
-	SETREG(zc->zc_src, sx | (sy << ZX_WWIDTH));
-	SETREG(zc->zc_copy, dx | (dy << ZX_WWIDTH));
+	SETREG(zc->zc_extent, ZX_COORDS(w, h) | dir);
+	SETREG(zc->zc_src, ZX_COORDS(sx, sy));
+	SETREG(zc->zc_copy, ZX_COORDS(dx, dy));
 }
 
 void
@@ -682,10 +684,30 @@ void
 zx_eraserows(void *cookie, int row, int num, long attr)
 {
 	struct rasops_info *ri;
+	struct zx_softc *sc;
+	volatile struct zx_command *zc;
+	volatile struct zx_draw *zd;
+	int fg, bg;
 
 	ri = (struct rasops_info *)cookie;
 
-	zx_fillrect(ri, 0, row, ri->ri_cols, num, attr, ZX_STD_ROP);
+	if (num == ri->ri_rows && (ri->ri_flg & RI_FULLCLEAR)) {
+		sc = ri->ri_hw;
+		zc = sc->sc_zc;
+		zd = sc->sc_zd_ss0;
+
+		rasops_unpack_attr(attr, &fg, &bg, NULL);
+
+		while ((zc->zc_csr & ZX_CSR_BLT_BUSY) != 0)
+			;
+
+		SETREG(zd->zd_rop, ZX_STD_ROP);
+		SETREG(zd->zd_fg, bg << 24);
+		SETREG(zc->zc_extent,
+		    ZX_COORDS(ri->ri_width - 1, ri->ri_height - 1));
+		SETREG(zc->zc_fill, ZX_COORDS(0, 0) | ZX_EXTENT_DIR_BACKWARDS);
+	} else
+		zx_fillrect(ri, 0, row, ri->ri_cols, num, attr, ZX_STD_ROP);
 }
 
 void
@@ -733,7 +755,7 @@ zx_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	font = ri->ri_font;
 
 	dp = (volatile u_int32_t *)ri->ri_bits +
-	    ((row * font->fontheight) << ZX_WWIDTH) + col * font->fontwidth;
+	    ZX_COORDS(col * font->fontwidth, row * font->fontheight);
 	fb = (u_int8_t *)font->data + (uc - font->firstchar) *
 	    ri->ri_fontscale;
 	fs = font->stride;
@@ -759,7 +781,7 @@ zx_putchar(void *cookie, int row, int col, u_int uc, long attr)
 		}
 	}
 
-	/* underline XXX does this really work??? */
+	/* underline */
 	if (ul) {
 		dp -= 2 << ZX_WWIDTH;
 		*dp = 0xffffffff;
