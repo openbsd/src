@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.24 1999/07/02 18:18:24 aaron Exp $
+.\"	$OpenBSD: sysctl.3,v 1.25 1999/07/04 12:25:14 aaron Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -420,6 +420,12 @@ Structure giving the sizes of the above arrays.
 .El
 .It Dv KERN_RAWPARTITION
 The raw partition of a disk (a == 0).
+.It Dv KERN_RND
+Returns statistics about the
+.Pa /dev/random
+device in a
+.Li struct rndstats
+structure.
 .It Dv KERN_SAVED_IDS
 Returns 1 if saved set-group-ID and saved set-user-ID are available.
 .It Dv KERN_SECURELVL
