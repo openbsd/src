@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.11 1997/02/12 14:57:02 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.12 1997/07/06 16:23:48 niklas Exp $	*/
 /*	$NetBSD: trap.c,v 1.19 1996/11/27 01:28:30 cgd Exp $	*/
 
 /*
@@ -40,6 +40,10 @@
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
+
+#ifdef DDB
+#include <machine/db_machdep.h>
+#endif
 
 #ifdef COMPAT_OSF1
 #include <compat/osf1/osf1_syscall.h>
@@ -183,7 +187,7 @@ trap(a0, a1, a2, entry, framep)
 		 * user are properly aligned, and so if the kernel
 		 * does cause an unaligned access it's a kernel bug.
 		 */
-		goto dopanic;
+		goto we_re_toast;
 
 	case ALPHA_KENTRY_ARITH:
 		/* 
@@ -200,7 +204,7 @@ sigfpe:			i = SIGFPE;
 		}
 
 		/* Always fatal in kernel.  Should never happen. */
-		goto dopanic;
+		goto we_re_toast;
 
 	case ALPHA_KENTRY_IF:
 		/*
@@ -208,7 +212,7 @@ sigfpe:			i = SIGFPE;
 		 * happen.
 		 */
 		if (!user)
-			goto dopanic;
+			goto we_re_toast;
 
 		switch (a0) {
 		case ALPHA_IF_CODE_GENTRAP:
@@ -248,7 +252,7 @@ panic("foo");
 			if (fpcurproc == p) {
 				printf("trap: fp disabled for fpcurproc == %p",
 				    p);
-				goto dopanic;
+				goto we_re_toast;
 			}
 	
 			alpha_pal_wrfen(1);
@@ -263,7 +267,7 @@ panic("foo");
 
 		default:
 			printf("trap: unknown IF type 0x%lx\n", a0);
-			goto dopanic;
+			goto we_re_toast;
 		}
 		break;
 
@@ -356,7 +360,7 @@ panic("foo");
 				break;
 #ifdef DIAGNOSTIC
 			default:		/* XXX gcc -Wuninitialized */
-				goto dopanic;
+				goto we_re_toast;
 #endif
 			}
 	
@@ -406,7 +410,7 @@ panic("foo");
 					p->p_addr->u_pcb.pcb_onfault = 0;
 					goto out;
 				}
-				goto dopanic;
+				goto we_re_toast;
 			}
 			v = (caddr_t)a0;
 			ucode = ftype;
@@ -417,11 +421,16 @@ panic("foo");
 
 		default:
 			printf("trap: unknown MMCSR value 0x%lx\n", a1);
-			goto dopanic;
+			goto we_re_toast;
 		}
 		break;
 
 	default:
+	we_re_toast:
+#ifdef DDB
+		if (kdb_trap(entry, 0, framep))
+			return;
+#endif
 		goto dopanic;
 	}
 
