@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.95 2004/07/09 19:01:45 jmc Exp $
+.\"	$OpenBSD: afterboot.8,v 1.96 2004/07/21 13:48:25 jaredy Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -276,7 +276,9 @@ lookup file bind
 .Pp
 If using a caching name server, add the line "nameserver 127.0.0.1" first.
 To get a local caching name server to run
-you will need to set "named_flags" in
+you will need to set
+.Va named_flags
+in
 .Pa /etc/rc.conf.local .
 The same holds true if the machine is going to be a
 name server for your domain.
@@ -507,7 +509,9 @@ and
 If you've installed X, you may want to turn on
 .Xr xdm 1 ,
 the X Display Manager.
-To do this, change the value of xdm_flags in
+To do this, change the value of
+.Va xdm_flags
+in
 .Pa /etc/rc.conf.local .
 .Ss Printers
 Edit
@@ -595,7 +599,7 @@ This makes it possible to send mail locally, but not receive mail from remote
 servers, which is ideal if you have one central incoming mail machine and
 several clients.
 To cause sendmail to accept external network connections, modify the
-.Dq sendmail_flags
+.Va sendmail_flags
 variable in
 .Pa /etc/rc.conf.local
 to use the
@@ -606,7 +610,7 @@ This file was generated from
 Note that sendmail now also listens on port 587 by default.
 This is to implement the RFC 2476 message submission protocol.
 You may disable this via the
-.Dq no_default_msa
+.Ic no_default_msa
 option in your sendmail .mc file.
 See
 .Pa /usr/share/sendmail/README
@@ -711,7 +715,7 @@ as root
 and see if anything unexpected is present.
 Do you need anything else?
 Do you wish to change things?
-e.g., if you do not
+For example, if you do not
 like root getting standard output of the daily scripts, and want only
 the security scripts that are mailed internally, you can type
 .Ic crontab -e
@@ -818,7 +822,7 @@ After either of these two methods, you can place the new kernel (called
 .Pa bsd )
 in
 .Pa /
-(i.e.
+(i.e.\&
 .Pa /bsd )
 and the system will boot it next time.
 Most people save their backup kernels as
