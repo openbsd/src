@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.9 1997/01/24 19:57:57 niklas Exp $	*/
+/*	$OpenBSD: sio.c,v 1.10 1997/07/31 11:03:03 deraadt Exp $	*/
 /*	$NetBSD: sio.c,v 1.15 1996/12/05 01:39:36 cgd Exp $	*/
 
 /*
@@ -94,6 +94,7 @@ void	sio_eisa_attach_hook __P((struct device *, struct device *,
 	    struct eisabus_attach_args *));
 int	sio_eisa_maxslots __P((void *));
 int	sio_eisa_intr_map __P((void *, u_int, eisa_intr_handle_t *));
+void	siocfiddle __P((struct isabus_attach_args *iba));
 
 void	sio_bridge_callback __P((void *));
 
@@ -213,8 +214,7 @@ sio_isa_attach_hook(parent, self, iba)
 	struct device *parent, *self;
 	struct isabus_attach_args *iba;
 {
-
-	/* Nothing to do. */
+	siocfiddle(iba);
 }
 
 void
@@ -255,4 +255,49 @@ sio_eisa_intr_map(v, irq, ihp)
 
 	*ihp = irq;
 	return 0;
+}
+
+
+/*
+ * Look for and gently fondle the 87312 Super I/O chip.
+ */
+
+#define SIOC_IDE_ENABLE	0x40
+#define	SIOC_NPORTS	2
+void
+siocfiddle(iba)
+	struct isabus_attach_args *iba;
+{
+	bus_space_tag_t iot = iba->iba_iot;
+	bus_space_handle_t ioh;
+	extern int cputype;
+	int addr;
+	u_int8_t reg0;
+
+	/* Decide based on machine type */
+	switch (cputype) {
+	case 11:			/* DEC AXPpci */
+	case 12:			/* DEC 2100 A50 */
+		addr = 0x26e;
+		break;
+	case 26:			/* DEC EB164 */
+		addr = 0x398;
+		break;
+	default:
+		return;
+	}
+
+	if (bus_space_map(iot, addr, SIOC_NPORTS, 0, &ioh))
+		return;
+
+	/* select and read register 0 */
+	bus_space_write_1(iot, ioh, 0, 0);
+	reg0 = bus_space_read_1(iot, ioh, 1);
+
+	/* write back with IDE enabled flag set, and do it twice!  */
+	bus_space_write_1(iot, ioh, 0, 0);
+	bus_space_write_1(iot, ioh, 1, reg0 | SIOC_IDE_ENABLE);
+	bus_space_write_1(iot, ioh, 1, reg0 | SIOC_IDE_ENABLE);
+
+	bus_space_unmap(iot, ioh, SIOC_NPORTS);
 }
