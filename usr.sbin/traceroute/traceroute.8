@@ -1,4 +1,4 @@
-.\"	$NetBSD: traceroute.8,v 1.5 1995/03/26 21:45:22 glass Exp $
+.\"	$NetBSD: traceroute.8,v 1.6 1995/10/12 03:05:50 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -189,7 +189,7 @@ flag) are sent at each ttl setting and a
 line is printed showing the ttl, address of the gateway and
 round trip time of each probe.  If the probe answers come from
 different gateways, the address of each responding system will
-be printed.  If there is no response within a 3 sec. timeout
+be printed.  If there is no response within a 5 sec. timeout
 interval (changed with the
 .Fl w
 flag), a "*" is printed for that
