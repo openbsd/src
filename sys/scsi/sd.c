@@ -1,5 +1,5 @@
-/*	$OpenBSD: sd.c,v 1.10 1996/05/10 12:31:39 deraadt Exp $	*/
-/*	$NetBSD: sd.c,v 1.98 1996/05/05 19:52:53 christos Exp $	*/
+/*	$OpenBSD: sd.c,v 1.11 1996/05/22 11:57:30 deraadt Exp $	*/
+/*	$NetBSD: sd.c,v 1.100 1996/05/14 10:38:47 leo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -398,7 +398,7 @@ sdclose(dev, flag, fmt, p)
 
 		scsi_prevent(sd->sc_link, PR_ALLOW,
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
-		sd->sc_link->flags &= ~SDEV_OPEN;
+		sd->sc_link->flags &= ~(SDEV_OPEN|SDEV_MEDIA_LOADED);
 	}
 
 	sdunlock(sd);
@@ -502,7 +502,7 @@ sdstart(v)
 	struct scsi_rw_big cmd_big;
 	struct scsi_rw cmd_small;
 	struct scsi_generic *cmdp;
-	int blkno, nblks, cmdlen;
+	int blkno, nblks, cmdlen, error;
 	struct partition *p;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("sdstart "));
@@ -591,11 +591,13 @@ sdstart(v)
 		 * Call the routine that chats with the adapter.
 		 * Note: we cannot sleep as we may be an interrupt
 		 */
-		if (scsi_scsi_cmd(sc_link, cmdp, cmdlen,
+		error = scsi_scsi_cmd(sc_link, cmdp, cmdlen,
 		    (u_char *)bp->b_data, bp->b_bcount,
 		    SDRETRIES, 10000, bp, SCSI_NOSLEEP |
-		    ((bp->b_flags & B_READ) ? SCSI_DATA_IN : SCSI_DATA_OUT)))
-			printf("%s: not queued", sd->sc_dev.dv_xname);
+		    ((bp->b_flags & B_READ) ? SCSI_DATA_IN : SCSI_DATA_OUT));
+		if (error)
+			printf("%s: not queued, error %d\n",
+			    sd->sc_dev.dv_xname, error);
 	}
 }
 
