@@ -1,5 +1,5 @@
-/*	$OpenBSD: rsh.c,v 1.3 2000/05/31 03:09:22 itojun Exp $	*/
-/*	$KAME: rsh.c,v 1.3 2000/05/31 03:06:07 itojun Exp $	*/
+/*	$OpenBSD: rsh.c,v 1.4 2001/02/15 17:37:33 itojun Exp $	*/
+/*	$KAME: rsh.c,v 1.5 2001/02/15 17:28:04 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -70,7 +70,7 @@ rsh_relay(int s_src, int s_dst)
 	if (error == -1)
 		exit_failure("select %d: %s", s_src, ERRSTR);
 	else if (error == 0)
-		exit_failure("connecion timeout");
+		exit_failure("connection timeout");
 
 	n = read(s_src, rshbuf, sizeof(rshbuf));
 	if (rshbuf[0] != 0) {
@@ -181,7 +181,7 @@ rsh_dual_relay(int s_src, int s_dst)
 		if (error == -1)
 			exit_failure("select 4 sockets: %s", ERRSTR);
 		else if (error == 0)
-			exit_failure("connecion timeout");
+			exit_failure("connection timeout");
 
 		if (half == NO && FD_ISSET(s_src, &readfds)) {
 			s_rcv = s_src;

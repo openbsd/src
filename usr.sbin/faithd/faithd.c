@@ -1,5 +1,5 @@
-/*	$OpenBSD: faithd.c,v 1.9 2000/10/06 02:46:58 itojun Exp $	*/
-/*	$KAME: faithd.c,v 1.31 2000/10/05 22:20:37 itojun Exp $	*/
+/*	$OpenBSD: faithd.c,v 1.10 2001/02/15 17:37:33 itojun Exp $	*/
+/*	$KAME: faithd.c,v 1.35 2001/02/10 05:24:52 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -85,6 +85,7 @@
 #endif
 
 #include "faithd.h"
+#include "prefix.h"
 
 char *serverpath = NULL;
 char *serverarg[MAXARGV + 1];
@@ -103,6 +104,7 @@ static int sockfd = 0;
 int dflag = 0;
 static int pflag = 0;
 static int inetd = 0;
+static char *configfile = NULL;
 
 int main __P((int, char **));
 #if 0
@@ -167,6 +169,11 @@ inetd_main(int argc, char **argv)
 	const int on = 1;
 	char sbuf[NI_MAXSERV], snum[NI_MAXSERV];
 
+	if (config_load(configfile) < 0 && configfile) {
+		exit_failure("could not load config file");
+		/*NOTREACHED*/
+	}
+
 	if (strrchr(argv[0], '/') == NULL)
 		snprintf(path, sizeof(path), "%s/%s", DEFAULT_DIR, argv[0]);
 	else
@@ -183,11 +190,15 @@ inetd_main(int argc, char **argv)
 #endif
 
 	melen = sizeof(me);
-	if (getsockname(STDIN_FILENO, (struct sockaddr *)&me, &melen) < 0)
+	if (getsockname(STDIN_FILENO, (struct sockaddr *)&me, &melen) < 0) {
 		exit_failure("getsockname: %s", ERRSTR);
+		/*NOTREACHED*/
+	}
 	fromlen = sizeof(from);
-	if (getpeername(STDIN_FILENO, (struct sockaddr *)&from, &fromlen) < 0)
+	if (getpeername(STDIN_FILENO, (struct sockaddr *)&from, &fromlen) < 0) {
 		exit_failure("getpeername: %s", ERRSTR);
+		/*NOTREACHED*/
+	}
 	if (getnameinfo((struct sockaddr *)&me, melen, NULL, 0,
 	    sbuf, sizeof(sbuf), NI_NUMERICHOST) == 0)
 		service = sbuf;
@@ -201,8 +212,10 @@ inetd_main(int argc, char **argv)
 	snprintf(procname, sizeof(procname), "accepting port %s", snum);
 	openlog(logname, LOG_PID | LOG_NOWAIT, LOG_DAEMON);
 
-	if (argc >= MAXARGV)
+	if (argc >= MAXARGV) {
 		exit_failure("too many arguments");
+		/*NOTREACHED*/
+	}
 	serverarg[0] = serverpath = path;
 	for (i = 1; i < argc; i++)
 		serverarg[i] = argv[i];
@@ -210,8 +223,10 @@ inetd_main(int argc, char **argv)
 
 	error = setsockopt(STDIN_FILENO, SOL_SOCKET, SO_OOBINLINE, &on,
 	    sizeof(on));
-	if (error < 0)
+	if (error < 0) {
 		exit_failure("setsockopt(SO_OOBINLINE): %s", ERRSTR);
+		/*NOTREACHED*/
+	}
 
 	play_child(STDIN_FILENO, (struct sockaddr *)&from);
 	exit_failure("should not reach here");
@@ -230,10 +245,13 @@ daemon_main(int argc, char **argv)
 	char *ns;
 #endif /* FAITH_NS */
 
-	while ((c = getopt(argc, argv, "dp46")) != -1) {
+	while ((c = getopt(argc, argv, "df:p46")) != -1) {
 		switch (c) {
 		case 'd':
 			dflag++;
+			break;
+		case 'f':
+			configfile = optarg;
 			break;
 		case 'p':
 			pflag++;
@@ -253,6 +271,11 @@ daemon_main(int argc, char **argv)
 	}
 	argc -= optind;
 	argv += optind;
+
+	if (config_load(configfile) < 0 && configfile) {
+		exit_failure("could not load config file");
+		/*NOTREACHED*/
+	}
 
 #ifdef FAITH_NS
 	if ((ns = getenv(FAITH_NS)) != NULL) {
@@ -416,8 +439,10 @@ again:
 		len = sizeof(srcaddr);
 		s_src = accept(s_wld, (struct sockaddr *)&srcaddr,
 			&len);
-		if (s_src == -1)
+		if (s_src == -1) {
 			exit_failure("socket: %s", ERRSTR);
+			/*NOTREACHED*/
+		}
 
 		child_pid = fork();
 		
@@ -428,6 +453,7 @@ again:
 			openlog(logname, LOG_PID | LOG_NOWAIT, LOG_DAEMON);
 			play_child(s_src, (struct sockaddr *)&srcaddr);
 			exit_failure("should never reach here");
+			/*NOTREACHED*/
 		} else {
 			/* parent process */
 			close(s_src);
@@ -450,6 +476,7 @@ play_child(int s_src, struct sockaddr *srcaddr)
 	int s_dst, error, hport, nresvport, on = 1;
 	struct timeval tv;
 	struct sockaddr *sa4;
+	const struct config *conf;
 	
 	tv.tv_sec = 1;
 	tv.tv_usec = 0;
@@ -459,8 +486,10 @@ play_child(int s_src, struct sockaddr *srcaddr)
 	syslog(LOG_INFO, "accepted a client from %s", src);
 
 	error = getsockname(s_src, (struct sockaddr *)&dstaddr6, &len);
-	if (error == -1)
+	if (error == -1) {
 		exit_failure("getsockname: %s", ERRSTR);
+		/*NOTREACHED*/
+	}
 
 	getnameinfo((struct sockaddr *)&dstaddr6, len,
 		dst6, sizeof(dst6), NULL, 0, NI_NUMERICHOST);
@@ -497,6 +526,7 @@ play_child(int s_src, struct sockaddr *srcaddr)
 		    (struct sockaddr_in *)&dstaddr4)) {
 			close(s_src);
 			exit_failure("map6to4 failed");
+			/*NOTREACHED*/
 		}
 		syslog(LOG_INFO, "translating from v6 to v4");
 		break;
@@ -506,6 +536,7 @@ play_child(int s_src, struct sockaddr *srcaddr)
 		    (struct sockaddr_in6 *)&dstaddr4)) {
 			close(s_src);
 			exit_failure("map4to6 failed");
+			/*NOTREACHED*/
 		}
 		syslog(LOG_INFO, "translating from v4 to v6");
 		break;
@@ -519,6 +550,15 @@ play_child(int s_src, struct sockaddr *srcaddr)
 	sa4 = (struct sockaddr *)&dstaddr4;
 	getnameinfo(sa4, sa4->sa_len,
 		dst4, sizeof(dst4), NULL, 0, NI_NUMERICHOST);
+
+	conf = config_match(srcaddr, sa4);
+	if (!conf || !conf->permit) {
+		close(s_src);
+		exit_failure("translation to %s not permitted for %s", dst4,
+		    prefix_string(&conf->match));
+		/*NOTREACHED*/
+	}
+
 	syslog(LOG_INFO, "the translator is connecting to %s", dst4);
 
 	setproctitle("port %s, %s -> %s", service, src, dst4);
@@ -540,31 +580,55 @@ play_child(int s_src, struct sockaddr *srcaddr)
 			s_dst = socket(sa4->sa_family, SOCK_STREAM, 0);
 		break;
 	}
-	if (s_dst == -1)
+	if (s_dst < 0) {
 		exit_failure("socket: %s", ERRSTR);
+		/*NOTREACHED*/
+	}
+
+	if (conf->src.a.ss_family) {
+		if (bind(s_dst, (struct sockaddr *)&conf->src.a,
+		    conf->src.a.ss_len) < 0) {
+			exit_failure("bind: %s", ERRSTR);
+			/*NOTREACHED*/
+		}
+	}
 
 	error = setsockopt(s_dst, SOL_SOCKET, SO_OOBINLINE, &on, sizeof(on));
-	if (error == -1)
+	if (error < 0) {
 		exit_failure("setsockopt(SO_OOBINLINE): %s", ERRSTR);
+		/*NOTREACHED*/
+	}
 
 	error = setsockopt(s_src, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
-	if (error == -1)
+	if (error < 0) {
 		exit_failure("setsockopt(SO_SNDTIMEO): %s", ERRSTR);
+		/*NOTREACHED*/
+	}
 	error = setsockopt(s_dst, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
-	if (error == -1)
+	if (error < 0) {
 		exit_failure("setsockopt(SO_SNDTIMEO): %s", ERRSTR);
+		/*NOTREACHED*/
+	}
 
 	error = connect(s_dst, sa4, sa4->sa_len);
-	if (error == -1)
+	if (error < 0) {
 		exit_failure("connect: %s", ERRSTR);
+		/*NOTREACHED*/
+	}
 
 	switch (hport) {
 	case FTP_PORT:
 		ftp_relay(s_src, s_dst);
 		break;
 	case RSH_PORT:
+		syslog(LOG_WARNING,
+		    "WARINNG: it is insecure to relay rsh port");
 		rsh_relay(s_src, s_dst);
 		break;
+	case RLOGIN_PORT:
+		syslog(LOG_WARNING,
+		    "WARINNG: it is insecure to relay rlogin port");
+		/*FALLTHROUGH*/
 	default:
 		tcp_relay(s_src, s_dst, service);
 		break;
@@ -590,8 +654,10 @@ faith_prefix(struct sockaddr *dst)
 	mib[2] = IPPROTO_IPV6;
 	mib[3] = IPV6CTL_FAITH_PREFIX;
 	size = sizeof(struct in6_addr);
-	if (sysctl(mib, 4, &faith_prefix, &size, NULL, 0) < 0)
+	if (sysctl(mib, 4, &faith_prefix, &size, NULL, 0) < 0) {
 		exit_failure("sysctl: %s", ERRSTR);
+		/*NOTREACHED*/
+	}
 
 	if (memcmp(dst, &faith_prefix,
 			sizeof(struct in6_addr) - sizeof(struct in_addr) == 0) {
@@ -721,11 +787,15 @@ start_daemon(void)
 	if (daemon(0, 0) == -1)
 		exit_stderr("daemon: %s", ERRSTR);
 
-	if (signal(SIGCHLD, sig_child) == SIG_ERR)
+	if (signal(SIGCHLD, sig_child) == SIG_ERR) {
 		exit_failure("signal CHLD: %s", ERRSTR);
+		/*NOTREACHED*/
+	}
 
-	if (signal(SIGTERM, sig_terminate) == SIG_ERR)
+	if (signal(SIGTERM, sig_terminate) == SIG_ERR) {
 		exit_failure("signal TERM: %s", ERRSTR);
+		/*NOTREACHED*/
+	}
 }
 
 static void
@@ -737,7 +807,7 @@ exit_stderr(const char *fmt, ...)
 	va_start(ap, fmt);
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
-	fprintf(stderr, "%s", buf);
+	fprintf(stderr, "%s\n", buf);
 	exit(EXIT_FAILURE);
 }
 
@@ -986,7 +1056,7 @@ update_myaddrs()
 static void
 usage()
 {
-	fprintf(stderr, "usage: %s [-dp] service [serverpath [serverargs]]\n",
+	fprintf(stderr, "usage: %s [-dp] [-f conf] service [serverpath [serverargs]]\n",
 		faithdname);
 	exit(0);
 }
