@@ -481,7 +481,7 @@ ipaddr_string(ina)
 	u_char *p;
 
 	p = (u_char *) ina;
-	sprintf(b, "%d.%d.%d.%d", p[0], p[1], p[2], p[3]);
+	snprintf(b, sizeof(b), "%d.%d.%d.%d", p[0], p[1], p[2], p[3]);
 	return (b);
 }
 

@@ -134,7 +134,7 @@ setarp(s, ia, ha, len)
 	extern char *inet_ntoa();
 
 	a = inet_ntoa(*ia);
-	sprintf(buf, "arp -d %s; arp -s %s %s temp",
+	snprintf(buf, sizeof(buf), "arp -d %s; arp -s %s %s temp",
 		a, a, haddrtoa(ha, len));
 	if (debug > 2)
 		report(LOG_INFO, buf);
@@ -162,7 +162,8 @@ haddrtoa(haddr, hlen)
 
 	bufptr = haddrbuf;
 	while (hlen > 0) {
-		sprintf(bufptr, "%02X:", (unsigned) (*haddr++ & 0xFF));
+		snprintf(bufptr, sizeof(haddrbuf) - (bufptr - haddrbuf),
+		    "%02X:", (unsigned) (*haddr++ & 0xFF));
 		bufptr += 3;
 		hlen--;
 	}

@@ -185,7 +185,7 @@ getether(ifname, eap)
 	char *enaddr;
 	int unit = -1;				/* which unit to attach */
 
-	sprintf(devname, "/dev/%s", ifname);
+	snprintf(devname, sizeof(devname), "/dev/%s", ifname);
 	fd = open(devname, 2);
 	if (fd < 0) {
 		/* Try without the trailing digit. */

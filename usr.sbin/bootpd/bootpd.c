@@ -21,7 +21,7 @@ SOFTWARE.
 ************************************************************************/
 
 #ifndef lint
-static char rcsid[] = "$Id: bootpd.c,v 1.7 1998/11/28 04:11:24 millert Exp $";
+static char rcsid[] = "$Id: bootpd.c,v 1.8 1998/12/20 21:16:49 millert Exp $";
 #endif
 
 /*
@@ -613,6 +613,12 @@ handle_request()
 	char *clntpath;
 	char *homedir, *bootfile;
 	int n;
+
+	/*
+	 * Force C strings in packet to be NUL-terminated.
+	 */
+	bp->bp_sname[BP_SNAME_LEN-1] = '\0';
+	bp->bp_file[BP_FILE_LEN-1] = '\0';
 
 	/* XXX - SLIP init: Set bp_ciaddr = recv_addr here? */
 

@@ -101,7 +101,7 @@ report(priority, fmt, va_alist)
 #endif
 {
 	va_list ap;
-	static char buf[128];
+	static char buf[256];
 
 	if ((priority < 0) || (priority >= numlevels)) {
 		priority = numlevels - 1;
@@ -111,7 +111,7 @@ report(priority, fmt, va_alist)
 #else
 	va_start(ap);
 #endif
-	vsprintf(buf, fmt, ap);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 
 	/*
