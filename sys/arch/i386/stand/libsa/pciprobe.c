@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciprobe.c,v 1.2 1999/01/31 14:56:01 espie Exp $	*/
+/*	$OpenBSD: pciprobe.c,v 1.3 1999/08/25 00:54:19 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -60,7 +60,7 @@ pciprobe()
 
 	printf(" pci");
 #ifdef DEBUG
-	printf("[ver %d.%d, %x 0x%x %d]", (rev>>8)&0xFF, (rev&0xFF),
+	printf("[V%d.%d, %x 0x%x %d]", (rev>>8)&0xFF, (rev&0xFF),
 		hw_chars, entry32, (rc>>8)&0xFF);
 #endif
 

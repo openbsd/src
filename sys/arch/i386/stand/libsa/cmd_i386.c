@@ -1,7 +1,8 @@
-/*	$OpenBSD: cmd_i386.c,v 1.21 1998/05/25 19:20:51 mickey Exp $	*/
+/*	$OpenBSD: cmd_i386.c,v 1.22 1999/08/25 00:54:19 mickey Exp $	*/
 
 /*
- * Copyright (c) 1997 Michael Shalayeff, Tobias Weingartner
+ * Copyright (c) 1997-1999 Michael Shalayeff
+ * Copyright (c) 1997 Tobias Weingartner
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +33,6 @@
  *
  */
 
-#ifndef _TEST
 #include <sys/param.h>
 #include <sys/reboot.h>
 #include <machine/biosvar.h>
@@ -46,12 +46,10 @@
 
 extern const char version[];
 
-static int Xboot __P((void));
-static int Xdiskinfo __P((void));
-static int Xmemory __P((void));
-static int Xregs __P((void));
-static int Xcnvmem __P((void));
-static int Xextmem __P((void));
+int Xboot __P((void));
+int Xdiskinfo __P((void));
+int Xmemory __P((void));
+int Xregs __P((void));
 
 /* From gidt.S */
 int bootbuf __P((void*, int));
@@ -60,57 +58,36 @@ const struct cmd_table cmd_machine[] = {
 	{ "boot",     CMDT_CMD, Xboot },
 	{ "diskinfo", CMDT_CMD, Xdiskinfo },
 	{ "memory",   CMDT_CMD, Xmemory },
+#ifdef DEBUG
 	{ "regs",     CMDT_CMD, Xregs },
-	{ "cnvmem",   CMDT_CMD, Xcnvmem},
-	{ "extmem",   CMDT_CMD, Xextmem},
+#endif
 	{ NULL, 0 }
 };
 
-
-/* Set size of conventional ram */
-static int
-Xcnvmem()
-{
-	if (cmd.argc != 2)
-		printf("cnvmem %d\n", cnvmem);
-	else
-		cnvmem = strtol(cmd.argv[1], NULL, 0);
-
-	return 0;
-}
-
-/* Set size of extended ram */
-static int
-Xextmem()
-{
-	if (cmd.argc != 2)
-		printf("extmem %d\n", extmem);
-	else
-		extmem = strtol(cmd.argv[1], NULL, 0);
-
-	return 0;
-}
-
-static int
+int
 Xdiskinfo()
 {
+#ifndef _TEST
 	dump_diskinfo();
-
+#endif
 	return 0;
 }
 
-static int
+#ifdef DEBUG
+int
 Xregs()
 {
 	DUMP_REGS;
 	return 0;
 }
+#endif
 
-static int
+int
 Xboot()
 {
+#ifndef _TEST
 	int dev, part, st;
-	char buf[DEV_BSIZE], *dest = (void*)0x7c00;
+	char buf[DEV_BSIZE], *dest = (void*)BOOTBIOS_ADDR;
 
 	if(cmd.argc != 2) {
 		printf("machine boot {fd,hd}<0123>[abcd]\n");
@@ -161,26 +138,48 @@ Xboot()
 
 bad:
 	printf("Invalid device!\n");
+#endif
 	return 0;
 }
 
-static int
+int
 Xmemory()
 {
-	bios_memmap_t *tm = memory_map;
-	int count, total = 0;
+	if (cmd.argc >= 2) {
+		int i;
+		/* parse the memory specs */
 
-	for(count = 0; tm[count].type != BIOS_MAP_END; count++){
-		printf("Region %d: type %u at 0x%lx for %luKB\n", count,
-			tm[count].type, (long)tm[count].addr, (long)tm[count].size);
+		for (i = 1; i < cmd.argc; i++) {
+			char *p;
+			long addr, size;
 
-		if(tm[count].type == BIOS_MAP_FREE)
-			total += tm[count].size;
+			p = cmd.argv[i];
+
+			size = strtol(p + 1, &p, 0);
+			if (*p && *p == '@')
+				addr = strtol(p + 1, NULL, 0);
+			else
+				addr = 0;
+			if (addr == 0 && (*p != '@' || size == 0)) {
+				printf ("bad language\n");
+				return 0;
+			} else {
+				switch (cmd.argv[i][0]) {
+				case '-':
+					mem_delete(addr, addr + size);
+					break;
+				case '+':
+					mem_add(addr, addr + size);
+					break;
+				default :
+					printf ("bad OP\n");
+					return 0;
+				}
+			}
+		}
 	}
 
-	printf("Low ram: %dKB  High ram: %dKB\n", cnvmem, extmem);
-	printf("Total free memory: %dKB\n", total);
+	dump_biosmem(NULL);
 
 	return 0;
 }
-#endif

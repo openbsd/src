@@ -1,7 +1,7 @@
-/*	$OpenBSD: apmprobe.c,v 1.6 1999/05/09 15:09:05 mickey Exp $	*/
+/*	$OpenBSD: apmprobe.c,v 1.7 1999/08/25 00:54:19 mickey Exp $	*/
 
 /*
- * Copyright (c) 1997 Michael Shalayeff
+ * Copyright (c) 1997-1999 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -14,22 +14,21 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Michael Shalayeff.
+ *      This product includes software developed by Michael Shalayeff.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR 
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR OR HIS RELATIVES BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF MIND, USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
  * APM derived from: apm_init.S, LP (Laptop Package)
@@ -125,9 +124,32 @@ apm_connect(ai)
 	if (f & 0xff)
 		return f >> 8;
 
-	ai->apm_entry    = BIOS_regs.biosr_bx;
-	ai->apm_data_len = 0x10000;
-	ai->apm_code_len = 0x10000 - (ai->apm_code16_base & 0xffff);
+	ai->apm_entry      = BIOS_regs.biosr_bx;
+	ai->apm_code_len   = BIOS_regs.biosr_si;
+	ai->apm_code16_len = BIOS_regs.biosr_si;
+	ai->apm_data_len   = BIOS_regs.biosr_di;
+#ifdef DEBUG
+	if (debug)
+		printf ("cs=%x:%x, ds=%x:%x\n",
+			ai->apm_code32_base, ai->apm_code_len,
+			ai->apm_data_base,   ai->apm_data_len);
+#endif
+	ai->apm_code_len   &= 0xffff;
+	ai->apm_code16_len &= 0xffff;
+	ai->apm_data_len   &= 0xffff;
+
+	/* inform apm bios about our driver version */
+	__asm __volatile (DOINT(0x15) "\n\t"
+			  "setc %b1\n\t"
+			  "movb %%ah, %h1"
+			  : "=b" (f)
+			  : "a" (APM_DRIVER_VERSION),
+			    "0" (APM_DEV_APM_BIOS),
+			    "c" (APM_VERSION)
+			  : "cc");
+
+	ai->apm_code_len   = 0x10000 - (ai->apm_code32_base & 0xffff);
+	ai->apm_code16_len = 0x10000 - (ai->apm_code16_base & 0xffff);
 
 	/*
 	 * this is a hack to make all those weird boxes keeping
@@ -146,11 +168,11 @@ apm_connect(ai)
 	return 0;
 }
 
+static bios_apminfo_t ai;
+
 void
 apmprobe()
 {
-	bios_apminfo_t ai;
-
 	if ((ai.apm_detail = apm_check())) {
 
 		apm_disconnect();
@@ -158,9 +180,10 @@ apmprobe()
 			printf(": connect error\n");
 #ifdef DEBUG
 		if (debug)
-			printf(": %x text=%x/%x[%x] data=%x[%x] @ %x",
-			       ai.apm_detail, ai.apm_code32_base,
-			       ai.apm_code16_base, ai.apm_code_len,
+			printf("apm[%x cs=%x[%x]/%x[%x] ds=%x[%x] @ %x]",
+			       ai.apm_detail,
+			       ai.apm_code32_base, ai.apm_code_len,
+			       ai.apm_code16_base, ai.apm_code16_len,
 			       ai.apm_data_base, ai.apm_data_len,
 			       ai.apm_entry);
 		else
@@ -170,5 +193,15 @@ apmprobe()
 #endif
 		addbootarg(BOOTARG_APMINFO, sizeof(ai), &ai);
 	}
+}
+
+void
+apmcheck()
+{
+#ifdef DEBUG
+	printf("apm");
+#endif
+	mem_delete(i386_trunc_page(ai.apm_data_base),
+		   i386_round_page(ai.apm_data_base + ai.apm_data_len));
 }
 

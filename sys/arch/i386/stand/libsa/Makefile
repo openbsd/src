@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.35 1998/07/20 18:14:55 mickey Exp $
+#	$OpenBSD: Makefile,v 1.36 1999/08/25 00:54:19 mickey Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -13,7 +13,7 @@ DIR_KERN=$S/lib/libkern
 SRCS+=	machdep.c dev_i386.c exec_i386.c cmd_i386.c
 
 .if defined(DEBUGFLAGS) && !empty(DEBUGFLAGS:M-D_TEST)
-SRCS+=	unixdev.c unixsys.S nullfs.c
+SRCS+=	unixdev.c unixsys.S nullfs.c memprobe.c
 CLEANFILES+=	gidt.o debug_i386.o alloca.o \
 	biosdev.o bioscons.o gateA20.o apmprobe.o \
 	memprobe.o diskprobe.o pciprobe.o smpprobe.o \

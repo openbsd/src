@@ -1,6 +1,6 @@
-.\"	$OpenBSD: boot.8,v 1.13 1999/07/09 19:00:48 weingart Exp $
+.\"	$OpenBSD: boot.8,v 1.14 1999/08/25 00:54:18 mickey Exp $
 .\"
-.\" Copyright (c) 1997 Michael Shalayeff
+.\" Copyright (c) 1997-1999 Michael Shalayeff
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -13,21 +13,22 @@
 .\"    documentation and/or other materials provided with the distribution.
 .\" 3. All advertising materials mentioning features or use of this software
 .\"    must display the following acknowledgement:
-.\"	This product includes software developed by Michael Shalayeff.
+.\"      This product includes software developed by Michael Shalayeff.
 .\" 4. The name of the author may not be used to endorse or promote products
 .\"    derived from this software without specific prior written permission.
 .\"
 .\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
-.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
-.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-.\" SUCH DAMAGE.
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR OR HIS RELATIVES BE LIABLE FOR ANY DIRECT,
+.\" INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+.\" (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+.\" SERVICES; LOSS OF MIND, USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+.\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+.\" THE POSSIBILITY OF SUCH DAMAGE.
+.\"
 .\"
 .Dd September 1, 1997
 .Dt BOOT 8 i386
@@ -122,7 +123,7 @@ timeout period has expired.
 The following commands are accepted at the
 .Nm
 prompt:
-.Bl -tag -width stty_device_baudrate_____
+.Bl -tag -width stty_device_speed_____
 .It boot Op Ar image Op Fl abcds
 Boots kernel image specified by the
 .Ar image
@@ -139,18 +140,25 @@ on the console device.
 .It help
 Prints a list of available commands and machine dependant
 commands, if any.
-.It machine Op Ar subcommand
+.It machine Op Ar command
 Issues machine-dependant commands. These are defined for i386 architecture:
 .Bl -tag -width diskinfo_
-.It Nm cnvmem
-Prints/sets the amount of conventional memory.
 .It Nm diskinfo
 Prints list of hard disks installed on your system including:
 BIOS device number, and the BIOS geometry.
-.It Nm extmem
-Prints/sets the amount of extended memory.
 .It Nm memory
-Prints physical memory map.
+If used without any arguments this commad will print out
+the memory configuration as determined through BIOS routines.
+Otherwise the arguments would specify the expressions to modify the
+memory configuration. The expression would have a form of:
+.Pp
+.Dl [+-]<size>@<address>
+.Pp
+Meaning to add(+) or exempt(-) the specified by the
+.Ar <size>
+amount of memory at the location specified by the
+.Ar <address>
+argument.
 .It Nm regs
 Prints contents of processor registers if compiled with
 .Em DEBUG .
@@ -190,12 +198,12 @@ Active console device name.
 .It Nm image
 File name containing the kernel image.
 .El
-.It stty Op Ar device Op Ar baudrate
+.It stty Op Ar device Op Ar speed
 Displays or sets the
-.Ar baudrate
+.Ar speed
 for a console
 .Ar device .
-If changing speed for the currently
+If changing baudrate for the currently
 active console, gives you five seconds of pause
 before changing the baud rate to allow you to change your terminal's
 speed to match.  If changing speed

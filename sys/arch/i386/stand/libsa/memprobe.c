@@ -1,7 +1,8 @@
-/*	$OpenBSD: memprobe.c,v 1.31 1999/01/24 16:07:39 niklas Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.32 1999/08/25 00:54:19 mickey Exp $	*/
 
 /*
- * Copyright (c) 1997 Tobias Weingartner, Michael Shalayeff
+ * Copyright (c) 1997-1999 Michael Shalayeff
+ * Copyright (c) 1997 Tobias Weingartner
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,7 +40,6 @@
 #include "libsa.h"
 
 u_int cnvmem, extmem;		/* XXX - compatibility */
-bios_memmap_t *memory_map;
 
 
 /* Check gateA20
@@ -49,8 +49,8 @@ bios_memmap_t *memory_map;
 static __inline int
 checkA20(void)
 {
-	char *p = (char *)0x100000;
-	char *q = (char *)0x000000;
+	register char *p = (char *)0x100000;
+	register char *q = (char *)0x000000;
 	int st;
 
 	/* Simple check */
@@ -87,8 +87,7 @@ bios_E820(mp)
 			if (rc & 0xff || sig != 0x534d4150)
 				break;
 			gotcha++;
-			mp->size >>= 10; /* / 1024 */
-			if (mp->type == 0)
+			if (!mp->type)
 				mp->type = BIOS_MAP_RES;
 			mp++;
 	} while (off);
@@ -96,7 +95,7 @@ bios_E820(mp)
 	if (!gotcha)
 		return (NULL);
 #ifdef DEBUG
-	printf(" 0x15[E820]");
+	printf("0x15[E820] ");
 #endif
 	return (mp);
 }
@@ -125,16 +124,16 @@ bios_E801(mp)
 	if(rc & 0xff)
 		return (NULL);
 #ifdef DEBUG
-	printf(" 0x15[E801]");
+	printf("0x15[E801] ");
 #endif
 	/* Fill out BIOS map */
 	mp->addr = (1024 * 1024);	/* 1MB */
-	mp->size = (m1 & 0xffff);
+	mp->size = (m1 & 0xffff) * 1024;
 	mp->type = BIOS_MAP_FREE;
 
 	mp++;
 	mp->addr = (1024 * 1024) * 16;	/* 16MB */
-	mp->size = (m2 & 0xffff) * 64;
+	mp->size = (m2 & 0xffff) * 64 * 1024;
 	mp->type = BIOS_MAP_FREE;
 
 	return ++mp;
@@ -158,11 +157,11 @@ bios_8800(mp)
 	if(rc & 0xff)
 		return (NULL);
 #ifdef DEBUG
-	printf(" 0x15[8800]");
+	printf("0x15[8800] ");
 #endif
 	/* Fill out a BIOS_MAP */
 	mp->addr = 1024 * 1024;		/* 1MB */
-	mp->size = mem & 0xffff;
+	mp->size = (mem & 0xffff) * 1024;
 	mp->type = BIOS_MAP_FREE;
 
 	return ++mp;
@@ -178,13 +177,13 @@ bios_int12(mp)
 {
 	int mem;
 #ifdef DEBUG
-	printf(" 0x12");
+	printf("0x12 ");
 #endif
 	__asm __volatile(DOINT(0x12) : "=a" (mem) :: "%ecx", "%edx", "cc");
 
 	/* Fill out a bios_memmap_t */
 	mp->addr = 0;
-	mp->size = mem & 0xffff;
+	mp->size = (mem & 0xffff) * 1024;
 	mp->type = BIOS_MAP_FREE;
 
 	return ++mp;
@@ -262,7 +261,7 @@ badprobe(mp)
 {
 	int ram;
 #ifdef DEBUG
-	printf(" Scan");
+	printf("scan ");
 #endif
 	/* probe extended memory
 	 *
@@ -274,19 +273,23 @@ badprobe(mp)
 			break;
 
 	mp->addr = 1024 * 1024;
-	mp->size = ram - 1024;
+	mp->size = (ram - 1024) * 1024;
 	mp->type = BIOS_MAP_FREE;
 
 	return ++mp;
 }
 
 bios_memmap_t bios_memmap[32];	/* This is easier */
+#ifndef _TEST
 void
 memprobe()
 {
 	bios_memmap_t *pm = bios_memmap, *im;
+
 #ifdef DEBUG
-	printf("Probing memory:");
+	printf(" mem(");
+#else
+	printf(" mem[");
 #endif
 	if(!(pm = bios_E820(bios_memmap))) {
 		im = bios_int12(bios_memmap);
@@ -302,36 +305,154 @@ memprobe()
 			pm = im;
 		}
 	}
-#ifdef DEBUG
-	printf("\n");
-#endif
+
 	pm->type = BIOS_MAP_END;
+	/* gotta peephole optimize the list */
+
+	apmcheck();
+
 	/* Register in global var */
 	addbootarg(BOOTARG_MEMMAP, 
 		(pm - bios_memmap + 1) * sizeof(*bios_memmap), bios_memmap);
-	memory_map = bios_memmap; /* XXX for 'machine mem' command only */
-	printf("memory:");
 
-	/* XXX - Compatibility, remove later */
+#ifdef DEBUG
+	printf(")[");
+#endif
+
+	/* XXX - Compatibility, remove later (smpprobe() relies on it) */
 	extmem = cnvmem = 0;
 	for(im = bios_memmap; im->type != BIOS_MAP_END; im++) {
 		/* Count only "good" memory chunks 4K and up in size */
-		if ((im->type == BIOS_MAP_FREE) && (im->size >= 4)) {
-			printf(" %luK", (u_long)im->size);
+		if ((im->type == BIOS_MAP_FREE) && (im->size >= 12*1024)) {
+			if (im->size > 1024 * 1024)
+				printf("%uM ", (u_int)im->size / (1024 * 1024));
+			else
+				printf("%uK ", (u_int)im->size / 1024);
 
-			/* We ignore "good" memory in the 640K-1M hole */
+			/*
+			 * Compute compatibility values:
+			 * cnvmem -- is the upper boundary of conventional
+			 *	memory (below IOM_BEGIN (=640k))
+			 * extmem -- is the size of the contignous extended
+			 *	memory segment starting at 1M
+			 *
+			 * We ignore "good" memory in the 640K-1M hole.
+			 * We drop "machine {cnvmem,extmem}" commands.
+			 */
 			if(im->addr < IOM_BEGIN)
-				cnvmem += im->size;
-			if(im->addr >= IOM_END)
-				extmem += im->size;
+				cnvmem = max(cnvmem, im->addr + im->size);
+			if(im->addr == IOM_END)
+				extmem = im->size;
+		}
+	}
+	cnvmem /= 1024;
+	extmem /= 1024;
+
+	/* Check if gate A20 is on */
+	printf("a20=o%s] ", checkA20()? "n" : "ff!");
+}
+#endif
+
+void
+dump_biosmem(tm)
+	bios_memmap_t *tm;
+{
+	register bios_memmap_t *p;
+	register u_int total = 0;
+
+	if (!tm)
+		tm = bios_memmap;
+
+	for(p = tm; p->type != BIOS_MAP_END; p++) {
+		printf("Region %d: type %u at 0x%x for %uKB\n", p - tm,
+			p->type, (u_int)p->addr, (u_int)p->size / 1024);
+
+		if(p->type == BIOS_MAP_FREE)
+			total += p->size / 1024;
+	}
+
+	printf("Low ram: %dKB  High ram: %dKB\n", cnvmem, extmem);
+	printf("Total free memory: %uKB\n", total);
+}
+
+int
+mem_delete(sa, ea)
+	long sa, ea;
+{
+	register bios_memmap_t *p;
+
+	for (p = bios_memmap; p->type != BIOS_MAP_END; p++) {
+		if (p->type == BIOS_MAP_FREE) {
+			register int32_t sp = p->addr, ep = p->addr + p->size;
+
+			/* can we eat it as a whole? */
+			if ((sa - sp) <= NBPG && (ep - ea) <= NBPG) {
+				bcopy (p + 1, p, (char *)bios_memmap +
+				       sizeof(bios_memmap) - (char *)p);
+				break;
+			/* eat head or legs */
+			} else if (sa <= sp && sp < ea) {
+				p->addr = ea;
+				p->size = ep - ea;
+				break;
+			} else if (sa < ep && ep <= ea) {
+				p->size = sa - sp;
+				break;
+			} else if (sp < sa && ea < ep) {
+				/* bite in half */
+				bcopy (p, p + 1, (char *)bios_memmap +
+				       sizeof(bios_memmap) - (char *)p -
+				       sizeof(bios_memmap[0]));
+				p[1].addr = ea;
+				p[1].size = ep - ea;
+				p->size = sa - sp;
+				break;
+			}
+		}
+	}
+	return 0;
+}
+
+int
+mem_add(sa, ea)
+	long sa, ea;
+{
+	register bios_memmap_t *p;
+
+	for (p = bios_memmap; p->type != BIOS_MAP_END; p++) {
+		if (p->type == BIOS_MAP_FREE) {
+			register int32_t sp = p->addr, ep = p->addr + p->size;
+
+			/* is it already there? */
+			if (sp <= sa && ea <= ep) {
+				break;
+			/* join head or legs */
+			} else if (sa < sp && sp <= ea) {
+				p->addr = sa;
+				p->size = ep - sa;
+				break;
+			} else if (sa <= ep && ep < ea) {
+				p->size = ea - sp;
+				break;
+			} else if (ea < sp) {
+				/* insert before */
+				bcopy (p, p + 1, (char *)bios_memmap +
+				       sizeof(bios_memmap) - (char *)(p - 1));
+				p->addr = sa;
+				p->size = ea - sa;
+				break;
+			}
 		}
 	}
 
-	/* Check if gate A20 is on */
-	if(checkA20())
-		printf(" [A20 on]");
-	else
-		printf(" [A20 off!]");
+	/* meaning add new item at the end of the list */
+	if (p->type == BIOS_MAP_END) {
+		p[1] = p[0];
+		p->type = BIOS_MAP_FREE;
+		p->addr = sa;
+		p->size = ea - sa;
+	}
 
-	printf("\n");
+	return 0;
 }
+

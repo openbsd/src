@@ -1,7 +1,7 @@
-/*	$OpenBSD: bios.c,v 1.23 1998/11/15 16:33:01 art Exp $	*/
+/*	$OpenBSD: bios.c,v 1.24 1999/08/25 00:54:18 mickey Exp $	*/
 
 /*
- * Copyright (c) 1997 Michael Shalayeff
+ * Copyright (c) 1997-1999 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -14,22 +14,21 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Michael Shalayeff.
+ *      This product includes software developed by Michael Shalayeff.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR 
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR OR HIS RELATIVES BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF MIND, USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 /* #define BIOS_DEBUG */
@@ -100,13 +99,13 @@ biosprobe(parent, match, aux)
 #ifdef BIOS_DEBUG
 	printf("%s%d: boot API ver %x, %x; args %p[%d]\n",
 	       bia->bios_dev, bios_cd.cd_ndevs,
-	       bootapiver, BOOT_APIVER, bootargp, bootargc);
+	       bootapiver, BOOTARG_APIVER, bootargp, bootargc);
 #endif
 	/* there could be only one */
 	if (bios_cd.cd_ndevs || strcmp(bia->bios_dev, bios_cd.cd_name))
 		return 0;
 
-	if (bootapiver < BOOT_APIVER || bootargp == NULL )
+	if (bootapiver < BOOTARG_APIVER || bootargp == NULL )
 		return 0;
 
 	return 1;
@@ -330,7 +329,7 @@ bios_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 
 	switch (name[0]) {
 	case BIOS_DEV:
-		if (bootapiver < BOOT_APIVER)
+		if (bootapiver < BOOTARG_APIVER)
 			return EOPNOTSUPP;
 		if ((pdi = bios_getdiskinfo(bootdev)) == NULL)
 			return ENXIO;
@@ -339,7 +338,7 @@ bios_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case BIOS_DISKINFO:
 		if (namelen != 2)
 			return ENOTDIR;
-		if (bootapiver < BOOT_APIVER)
+		if (bootapiver < BOOTARG_APIVER)
 			return EOPNOTSUPP;
 		if ((pdi = bios_getdiskinfo(name[1])) == NULL)
 			return ENXIO;
