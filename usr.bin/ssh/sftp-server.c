@@ -22,7 +22,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: sftp-server.c,v 1.10 2001/01/10 22:56:22 markus Exp $");
+RCSID("$OpenBSD: sftp-server.c,v 1.11 2001/01/15 21:45:29 markus Exp $");
 
 #include "ssh.h"
 #include "buffer.h"
@@ -774,6 +774,7 @@ process_readdir(void)
 			stats[count].long_name = ls_file(dp->d_name, &st);
 			count++;
 			/* send up to 100 entries in one message */
+			/* XXX check packet size instead */
 			if (count == 100)
 				break;
 		}
@@ -872,15 +873,19 @@ void
 process_rename(void)
 {
 	u_int32_t id;
+	struct stat st;
 	char *oldpath, *newpath;
-	int ret, status;
+	int ret, status = SSH2_FX_FAILURE;
 
 	id = get_int();
 	oldpath = get_string(NULL);
 	newpath = get_string(NULL);
 	TRACE("rename id %d old %s new %s", id, oldpath, newpath);
-	ret = rename(oldpath, newpath);
-	status = (ret == -1) ? errno_to_portable(errno) : SSH2_FX_OK;
+	/* fail if 'newpath' exists */
+	if (stat(newpath, &st) == -1) {
+		ret = rename(oldpath, newpath);
+		status = (ret == -1) ? errno_to_portable(errno) : SSH2_FX_OK;
+	}
 	send_status(id, status);
 	xfree(oldpath);
 	xfree(newpath);
@@ -989,7 +994,9 @@ main(int ac, char **av)
 
 	handle_init();
 
+#ifdef DEBUG_SFTP_SERVER
         log_init("sftp-server", SYSLOG_LEVEL_DEBUG1, SYSLOG_FACILITY_AUTH, 0);
+#endif
 
 	in = dup(STDIN_FILENO);
 	out = dup(STDOUT_FILENO);
