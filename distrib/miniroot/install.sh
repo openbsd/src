@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.144 2004/06/26 20:10:17 krw Exp $
+#	$OpenBSD: install.sh,v 1.145 2004/07/04 22:30:25 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2004 Todd Miller, Theo de Raadt, Ken Westerback
@@ -124,7 +124,7 @@ if [ ! -f /etc/fstab ]; then
 			if [[ $_pp == $ROOTDEV ]]; then
 				echo "$ROOTDEV /" >$FILESYSTEMS
 				continue
-			elif [[ $_type == swap ]]; then
+			elif [[ $_pp == $SWAPDEV || $_type == swap ]]; then
 				echo "$_pp" >>$SWAPLIST
 				continue
 			elif [[ $_type != *BSD ]]; then
@@ -134,7 +134,7 @@ if [ ! -f /etc/fstab ]; then
 			_partitions[$_i]=$_pp
 			_psizes[$_i]=$_ps
 
-			# If the user assigned a mount point, use it if possible.
+			# Set _mount_points[$_i].
 			if [[ -f /tmp/fstab.$DISK ]]; then
 				while read _pp _mp _rest; do
 					[[ $_pp == "/dev/${_partitions[$_i]}" ]] || continue
@@ -146,37 +146,21 @@ if [ ! -f /etc/fstab ]; then
 					[[ $_mp == '/' ]] && break
 					# Otherwise, record user specified mount point.
 					_mount_points[$_i]=$_mp
-				done < /tmp/fstab.$DISK
+				done </tmp/fstab.$DISK
 			fi
 			: $(( _i += 1 ))
-		done < /tmp/disklabel.$DISK
+		done </tmp/disklabel.$DISK
 
-		if [[ $DISK == $ROOTDISK ]]; then
-			# Ensure that ROOTDEV was configured.
-			if [[ -n $(grep "^$ROOTDEV /$" $FILESYSTEMS) ]]; then
-				echo "The root filesystem will be mounted on $ROOTDEV."
-			else
-				echo "ERROR: Unable to mount the root filesystem on $ROOTDEV."
-				DISK=
-			fi
-			# Ensure that $SWAPDEV was configured as swap space.
-			if [[ -n $(grep "^$SWAPDEV" $SWAPLIST) ]]; then
-				echo "$SWAPDEV will be used for swap space."
-				# But we really don't want it in the installed
-				# /etc/fstab.
-				grep -v "^$SWAPDEV" $SWAPLIST > $SWAPLIST.tmp
-				mv $SWAPLIST.tmp $SWAPLIST
-			else
-				echo "ERROR: Unable to use $SWAPDEV for swap space."
-				DISK=
-			fi
-			[[ -n $DISK ]] || echo "You must reconfigure $ROOTDISK."
+		if [[ $DISK == $ROOTDISK && -z $(grep "^$ROOTDEV /$" $FILESYSTEMS) ]]; then
+			echo "ERROR: No root partition ($ROOTDEV)."
+			DISK=
+			continue
 		fi
 
-		# If there are no BSD partitions, or $DISK has been reset, go on to next disk.
-		[[ ${#_partitions[*]} -gt 0 && -n $DISK ]] || continue
+		# If there are no BSD partitions go on to next disk.
+		[[ ${#_partitions[*]} -gt 0 ]] || continue
 
-		# Now prompt the user for the mount points. Loop until "done" entered.
+		# Now prompt the user for the mount points.
 		_i=0
 		while : ; do
 			_pp=${_partitions[$_i]}
@@ -233,15 +217,14 @@ if [ ! -f /etc/fstab ]; then
 
 	cat << __EOT
 
-You have configured the following partitions and mount points:
-
+OpenBSD filesystems:
 $(<$FILESYSTEMS)
 
-The next step creates a filesystem on each partition, ERASING existing data.
+The next step *DESTROYS* all existing data on these partitions!
 __EOT
 
 	ask_yn "Are you really sure that you're ready to proceed?"
-	[[ $resp == n ]] && { echo "ok, try again later..." ; exit ; }
+	[[ $resp == n ]] && { echo "Ok, try again later." ; exit ; }
 
 	# Read $FILESYSTEMS, creating a new filesystem on each listed
 	# partition and saving the partition and mount point information
@@ -312,12 +295,13 @@ __EOT
 			fi
 			: $(( _i += 1 ))
 		done
-	done >> /tmp/fstab
+	done >>/tmp/fstab
 
 	# Append all non-default swap devices to fstab.
 	while read _dev; do
-		echo "/dev/$_dev none swap sw 0 0" >>/tmp/fstab
-	done < $SWAPLIST
+		[[ $_dev == $SWAPDEV ]] || \
+			echo "/dev/$_dev none swap sw 0 0" >>/tmp/fstab
+	done <$SWAPLIST
 
 	munge_fstab
 fi
