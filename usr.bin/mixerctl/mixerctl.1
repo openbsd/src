@@ -1,4 +1,4 @@
-.\" $OpenBSD: mixerctl.1,v 1.9 1998/12/16 02:38:50 aaron Exp $
+.\" $OpenBSD: mixerctl.1,v 1.10 2000/03/10 18:34:39 aaron Exp $
 .\" $NetBSD: mixerctl.1,v 1.8 1998/05/09 12:41:16 augustss Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -60,46 +60,49 @@
 The
 .Nm
 command displays or sets various audio system mixing variables.
-If a list of variables is present on the command line, then
+If a list of variables is present on the command line,
 .Nm
 prints the current value of those variables for the specified device.
-If the
-.Fl a
-flag is specified, all variables for the device are printed.
-If the
-.Fl w
-flag is specified
+By default,
 .Nm
-attempts to set the specified variables to the given values.
+operates on the
+.Pa /dev/mixer
+device.
+.Pp
+The options are as follows:
+.Bl -tag -width "-w name=value"
+.It Fl a
+Print all device variables and their current values.
+.It Fl w Ar name=value
+Attempt to set the specified variable
+.Ar name
+to
+.Ar value .
+.It Fl v
+Show the possible values of enumeration and set valued variables.
+Enumerated values are shown in
+.Dq []
+and set values are shown in
+.Dq {} .
+.It Fl f Ar file
+Specify an alternative audio mixing device.
+.It Fl n
+Suppress printing of the variable name.
+.El
 .Pp
 Values may be specified in either absolute or relative forms.
 The relative form is indicated by a prefix of
-.Dq +
+.Ql +
 or
-.Dq -
-to denote an increase or decrease respectively.
-.Pp
-The
-.Fl f
-flag can be used to give an alternative mixer device, the default is
-.Pa /dev/mixer .
-.Pp
-The
-.Fl n
-flag suppresses printing of the variable name.
-.Pp
-The
-.Fl v
-flag shows the possible values of enumeration and set valued
-variables.  Enumerated values are shown in [] and set values
-are shown in {}.
+.Ql -
+to denote an increase or decrease, respectively.
 .Pp
 The exact set of controls that can be manipulated depends on
-the mixer.  The general format (in both getting and setting a value)
-is
-.br
-.Va "class.name" = value
-.br
+the mixer.
+The general format (in both getting and setting a value) is
+.Pp
+.Va class.name = value
+.Pp
 The
 .Va class
 can have values like
@@ -107,17 +110,23 @@ can have values like
 or
 .Li outputs
 indicating that the control affects the input resp. output to the
-mixer.  The
+mixer.
+The
 .Va name
 indicates what part of the mixer the control affects.
 Continuous mixer values, e.g., volume, have numeric values
-in the range 0-255.  If value can be set for each channel independently
-the values are printed separated by commas.  Discrete mixer values, e.g.,
-the recording source, have symbolic names.  Depending on the mixer it
+in the range 0-255.
+If value can be set for each channel independently
+the values are printed separated by commas.
+Discrete mixer values, e.g.,
+the recording source, have symbolic names.
+Depending on the mixer it
 may either be an enumeration or a set.
 .Sh EXAMPLES
 The command
+.Pp
 .Dl "mixerctl -a -v"
+.Pp
 can produce
 .Bd -literal
 inputs.mic=0,0 volume
@@ -136,9 +145,12 @@ monitor.monitor=0 volume
 mixer audio device
 .El
 .Sh ENVIRONMENT
+The following environment variables affect the execution of
+.Nm mixerctl :
 .Bl -tag -width MIXERDEVICE
 .It Ev MIXERDEVICE
-the mixer device to use.
+The audio mixer device to use.
+.El
 .Sh SEE ALSO
 .Xr audioctl 1 ,
 .Xr audio 4 ,
@@ -148,4 +160,3 @@ The
 .Nm
 command first appeared in
 .Nx 1.3 .
-
