@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp_tty.c,v 1.12 2001/06/15 03:38:34 itojun Exp $	*/
+/*	$OpenBSD: ppp_tty.c,v 1.13 2002/02/13 08:14:48 kjc Exp $	*/
 /*	$NetBSD: ppp_tty.c,v 1.12 1997/03/24 21:23:10 christos Exp $	*/
 
 /*
@@ -712,6 +712,15 @@ pppstart(tp, force)
     if (tp->t_oproc != NULL)
 	(*tp->t_oproc)(tp);
 
+#ifdef ALTQ
+    /*
+     * if ALTQ is enabled, don't invoke NETISR_PPP.
+     * pppintr() could loop without doing anything useful
+     * under rate-limiting.
+     */
+    if (ALTQ_IS_ENABLED(&sc->sc_if.if_snd))
+	return 0;
+#endif
     /*
      * If the transmit queue has drained and the tty has not hung up
      * or been disconnected from the ppp unit, then tell if_ppp.c that
