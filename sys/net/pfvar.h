@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.45 2001/08/21 17:25:59 deraadt Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.46 2001/08/25 21:54:26 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -73,6 +73,8 @@ struct pf_rule {
 	u_int8_t	 log;
 	u_int8_t	 quick;
 
+#define PF_STATE_NORMAL		0x1
+#define PF_STATE_MODULATE	0x2
 	u_int8_t	 keep_state;
 	u_int8_t	 proto;
 	u_int8_t	 type;
@@ -96,6 +98,7 @@ struct pf_state_host {
 struct pf_state_peer {
 	u_int32_t	seqlo;		/* Max sequence number sent 	*/
 	u_int32_t	seqhi;		/* Max the other end ACKd + win	*/
+	u_int32_t	seqdiff;	/* Sequence number modulator	*/
 	u_int16_t	max_win;
 	u_int8_t	state;
 };

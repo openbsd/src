@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.22 2001/08/23 05:36:53 millert Exp $	*/
+/*	$OpenBSD: parse.y,v 1.23 2001/08/25 21:54:26 frantzen Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -127,8 +127,8 @@ typedef struct {
 %}
 
 %token	PASS BLOCK SCRUB RETURN IN OUT LOG LOGALL QUICK ON FROM TO FLAGS
-%token	RETURNRST RETURNICMP PROTO ALL ANY ICMPTYPE CODE KEEP STATE PORT
-%token	RDR NAT ARROW NODF MINTTL ERROR
+%token	RETURNRST RETURNICMP PROTO ALL ANY ICMPTYPE CODE KEEP MODULATE STATE
+%token	PORT RDR NAT ARROW NODF MINTTL ERROR
 %token	<v.string> STRING
 %token	<v.number> NUMBER
 %token	<v.i>	PORTUNARY PORTBINARY
@@ -453,7 +453,8 @@ icmptype	: STRING			{
 
 
 keep		: /* empty */			{ $$ = 0; }
-		| KEEP STATE			{ $$ = 1; }
+		| KEEP STATE			{ $$ = PF_STATE_NORMAL; }
+		| MODULATE STATE		{ $$ = PF_STATE_MODULATE; }
 		;
 
 minttl		: /* empty */			{ $$ = 0; }
@@ -610,7 +611,11 @@ rule_consistent(struct pf_rule *r)
 			yyerror("quick does not apply to scrub");
 			problems++;
 		}
-		if (r->keep_state) {
+		if (r->keep_state == PF_STATE_MODULATE) {
+			yyerror("modulate state does not apply to scrub");
+			problems++;
+		}
+		if (r->keep_state == PF_STATE_NORMAL) {
 			yyerror("keep state does not apply to scrub");
 			problems++;
 		}
@@ -643,6 +648,11 @@ rule_consistent(struct pf_rule *r)
 	}
 	if (r->proto != IPPROTO_ICMP && (r->type || r->code)) {
 		yyerror("icmp-type/code only applies to icmp");
+		problems++;
+	}
+	if (r->keep_state == PF_STATE_MODULATE && r->proto &&
+	    r->proto != IPPROTO_TCP) {
+		yyerror("modulate state can only be applied to TCP rules");
 		problems++;
 	}
 	return (-problems);
@@ -749,6 +759,7 @@ lookup(char *s)
 		{ "keep",	KEEP},
 		{ "log",	LOG},
 		{ "log-all",	LOGALL},
+		{ "modulate",	MODULATE},
 		{ "min-ttl",	MINTTL},
 		{ "nat",	NAT},
 		{ "no-df",	NODF},

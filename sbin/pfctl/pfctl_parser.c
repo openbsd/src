@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.44 2001/08/23 04:10:51 deraadt Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.45 2001/08/25 21:54:26 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -190,7 +190,11 @@ print_host(struct pf_state_host *h)
 void
 print_seq(struct pf_state_peer *p)
 {
-	printf("[%u + %u]", p->seqlo, p->seqhi - p->seqlo);
+	if (p->seqdiff)
+		printf("[%u + %u](+%u)", p->seqlo, p->seqhi - p->seqlo,
+		    p->seqdiff);
+	else
+		printf("[%u + %u]", p->seqlo, p->seqhi - p->seqlo);
 }
 
 void
@@ -423,17 +427,23 @@ print_state(struct pf_state *s)
 	else
 		printf(" <- ");
 	print_host(&s->ext);
-	printf("\n");
 
+	printf("    ");
 	if (s->proto == IPPROTO_TCP) {
-		printf("   %s:%s  ", tcpstates[src->state],
-			tcpstates[dst->state]);
+		if (src->state <= TCPS_TIME_WAIT &&
+		    dst->state <= TCPS_TIME_WAIT) {
+			printf("   %s:%s\n", tcpstates[src->state],
+			    tcpstates[dst->state]);
+		} else {
+			printf("   <BAD STATE LEVELS>\n");
+		}
+		printf("   ");
 		print_seq(src);
-		printf("    ");
+		printf("  ");
 		print_seq(dst);
 		printf("\n");
 	} else {
-		printf("   %u:%u  ", src->state, dst->state);
+		printf("   %u:%u\n", src->state, dst->state);
 	}
 
 	sec = s->creation % 60;
@@ -560,8 +570,10 @@ print_rule(struct pf_rule *r)
 				printf("code %u ", r->code-1);
 		}
 	}
-	if (r->keep_state)
+	if (r->keep_state == PF_STATE_NORMAL)
 		printf("keep state ");
+	else if (r->keep_state == PF_STATE_MODULATE)
+		printf("modulate state ");
 	if (r->rule_flag & PFRULE_NODF)
 		printf("no-df ");
 	if (r->min_ttl)

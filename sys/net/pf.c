@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.137 2001/08/22 03:02:25 frantzen Exp $ */
+/*	$OpenBSD: pf.c,v 1.138 2001/08/25 21:54:25 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -692,10 +692,10 @@ pf_print_state(struct pf_state *s)
 	pf_print_host(s->gwy.addr, s->gwy.port);
 	printf(" ");
 	pf_print_host(s->ext.addr, s->ext.port);
-	printf(" [lo=%lu high=%lu win=%u]", s->src.seqlo, s->src.seqhi,
-		 s->src.max_win);
-	printf(" [lo=%lu high=%lu win=%u]", s->dst.seqlo, s->dst.seqhi,
-		 s->dst.max_win);
+	printf(" [lo=%lu high=%lu win=%u modulator=%u]", s->src.seqlo,
+	    s->src.seqhi, s->src.max_win, s->src.seqdiff);
+	printf(" [lo=%lu high=%lu win=%u modulator=%u]", s->dst.seqlo,
+	    s->dst.seqhi, s->dst.max_win, s->dst.seqdiff);
 	printf(" %u:%u", s->src.state, s->dst.state);
 }
 
@@ -2086,17 +2086,28 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 				s->gwy.port = s->lan.port;
 			}
 		}
-		s->src.seqlo = ntohl(th->th_seq) + len;
-		s->src.seqhi = s->src.seqlo + 1;
+
+		s->src.seqlo = ntohl(th->th_seq);
+		s->src.seqhi = s->src.seqlo + len + 1;
+		if (th->th_flags == TH_SYN && rm != NULL
+		    && rm->keep_state == PF_STATE_MODULATE) {
+			/* Generate sequence number modulator */
+			while ((s->src.seqdiff = arc4random()) == 0)
+				;
+			pf_change_a(&th->th_seq, &th->th_sum,
+			    htonl(s->src.seqlo + s->src.seqdiff));
+			rewrite = 1;
+		} else
+			s->src.seqdiff = 0;
 		if (th->th_flags & TH_SYN)
 			s->src.seqhi++;
 		if (th->th_flags & TH_FIN)
 			s->src.seqhi++;
 		s->src.max_win = MAX(ntohs(th->th_win), 1);
-
 		s->dst.seqlo = 0;	/* Haven't seen these yet */
 		s->dst.seqhi = 1;
 		s->dst.max_win = 1;
+		s->dst.seqdiff = 0;	/* Defer random generation */
 		s->src.state = TCPS_SYN_SENT;
 		s->dst.state = TCPS_CLOSED;
 		s->creation = pftv.tv_sec;
@@ -2266,10 +2277,12 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 		}
 		s->src.seqlo  = 0;
 		s->src.seqhi = 0;
+		s->src.seqdiff = 0;
 		s->src.max_win = 0;
 		s->src.state = 1;
 		s->dst.seqlo = 0;
 		s->dst.seqhi = 0;
+		s->dst.seqdiff = 0;
 		s->dst.max_win = 0;
 		s->dst.state = 0;
 		s->creation = pftv.tv_sec;
@@ -2384,10 +2397,12 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 		}
 		s->src.seqlo = 0;
 		s->src.seqhi = 0;
+		s->src.seqdiff = 0;
 		s->src.max_win = 0;
 		s->src.state = 0;
 		s->dst.seqlo = 0;
 		s->dst.seqhi = 0;
+		s->dst.seqdiff = 0;
 		s->dst.max_win = 0;
 		s->dst.state = 0;
 		s->creation = pftv.tv_sec;
@@ -2454,16 +2469,9 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 	struct pf_tree_key key;
 	u_int16_t len = h->ip_len - off - (th->th_off << 2);
 	u_int16_t win = ntohs(th->th_win);
-	u_int32_t seq = ntohl(th->th_seq), ack = ntohl(th->th_ack);
-	u_int32_t end;
+	u_int32_t ack, end, seq;
 	int ackskew;
 	struct pf_state_peer *src, *dst;
-
-	end = seq + len;
-	if (th->th_flags & TH_SYN)
-		end++;
-	if (th->th_flags & TH_FIN)
-		end++;
 
 	key.proto   = IPPROTO_TCP;
 	key.addr[0] = h->ip_src;
@@ -2492,9 +2500,29 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 	 *	tcp_filtering.ps
 	 */
 
+	seq = ntohl(th->th_seq);
 	if (src->seqlo == 0) {
 		/* First packet from this end.  Set its state */
-		src->seqlo = end;
+
+		/* Deferred generation of sequence number modulator */
+		if (dst->seqdiff) {
+			while ((src->seqdiff = arc4random()) == 0)
+				;
+			ack = ntohl(th->th_ack) - dst->seqdiff;
+			pf_change_a(&th->th_seq, &th->th_sum, htonl(seq +
+			    src->seqdiff));
+			pf_change_a(&th->th_ack, &th->th_sum, htonl(ack));
+		} else {
+			ack = ntohl(th->th_ack);
+		}
+
+		end = seq + len;
+		if (th->th_flags & TH_SYN)
+			end++;
+		if (th->th_flags & TH_FIN)
+			end++;
+
+		src->seqlo = seq;
 		if (src->state < TCPS_SYN_SENT)
 			src->state = TCPS_SYN_SENT;
 
@@ -2507,6 +2535,20 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 			src->seqhi = end + MAX(1, dst->max_win);
 		if (win > src->max_win)
 			src->max_win = win;
+
+	} else {
+		ack = ntohl(th->th_ack) - dst->seqdiff;
+		if (src->seqdiff) {
+			/* Modulate sequence numbers */
+			pf_change_a(&th->th_seq, &th->th_sum, htonl(seq +
+			    src->seqdiff));
+			pf_change_a(&th->th_ack, &th->th_sum, htonl(ack));
+		}
+		end = seq + len;
+		if (th->th_flags & TH_SYN)
+			end++;
+		if (th->th_flags & TH_FIN)
+			end++;
 	}
 
 	if ((th->th_flags & TH_ACK) == 0) {
@@ -2571,9 +2613,12 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 			src->state = dst->state = TCPS_TIME_WAIT;
 
 		/* update expire time */
-		if (src->state >= TCPS_FIN_WAIT_2 ||
+		if (src->state >= TCPS_FIN_WAIT_2 &&
 		    dst->state >= TCPS_FIN_WAIT_2)
 			(*state)->expire = pftv.tv_sec + 5;
+		else if (src->state >= TCPS_FIN_WAIT_2 ||
+		    dst->state >= TCPS_FIN_WAIT_2)
+			(*state)->expire = pftv.tv_sec + 15;
 		else if (src->state >= TCPS_CLOSING &&
 		    dst->state >= TCPS_CLOSING)
 			(*state)->expire = pftv.tv_sec + 300;
@@ -2684,7 +2729,11 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 			    &th->th_sum, (*state)->lan.addr,
 			    (*state)->lan.port);
 		m_copyback(m, off, sizeof(*th), (caddr_t)th);
+	} else if (src->seqdiff) {
+		/* Copyback sequence modulation */
+		m_copyback(m, off, sizeof(*th), (caddr_t)th);
 	}
+
 	if ((*state)->rule != NULL) {
 		(*state)->rule->packets++;
 		(*state)->rule->bytes += h->ip_len;
@@ -2842,7 +2891,6 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 				    ("pf: ICMP error message too short (tcp)\n"));
 				return (PF_DROP);
 			}
-			seq = ntohl(th.th_seq);
 
 			key.proto   = IPPROTO_TCP;
 			key.addr[0] = h2.ip_dst;
@@ -2864,6 +2912,11 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 				src = &(*state)->src;
 				dst = &(*state)->dst;
 			}
+
+			/* Demodulate sequence number */
+			seq = ntohl(th.th_seq) - src->seqdiff;
+			if (src->seqdiff)
+				pf_change_a(&th.th_seq, &th.th_sum, htonl(seq));
 
 			if (!SEQ_GEQ(src->seqhi, seq) ||
 			    !SEQ_GEQ(seq, src->seqlo - dst->max_win)) {
@@ -2892,10 +2945,10 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 					    &h->ip_sum);
 				}
 				m_copyback(m, off, ICMP_MINLEN, (caddr_t)ih);
-				m_copyback(m, ipoff2, sizeof(h2),
-				    (caddr_t)&h2);
-				m_copyback(m, off2, 8,
-				    (caddr_t)&th);
+				m_copyback(m, ipoff2, sizeof(h2), (caddr_t)&h2);
+				m_copyback(m, off2, 8, (caddr_t)&th);
+			} else if (src->seqdiff) {
+				m_copyback(m, off2, 8, (caddr_t)&th);
 			}
 
 			return (PF_PASS);

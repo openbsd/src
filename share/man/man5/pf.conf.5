@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.11 2001/08/19 16:44:39 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.12 2001/08/25 21:54:26 frantzen Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -49,7 +49,7 @@ rule       = action ( "in" | "out" )
              [ "on" interface-name ]
              [ "proto" ( proto-name | proto-number | "{" proto-list "}" ) ]
              hosts
-             [ flags ] [ icmp-type ] [ "keep-state" ]
+             [ flags ] [ icmp-type ] [ "keep-state" ] [ "modulate-state" ]
              [ "no-df" ] [ "min-ttl" number ] .
 
 action     = "pass" | "block" [ return ] | "scrub" .
@@ -123,6 +123,8 @@ In addition to the action specified, a log message is generated.
 .It Em log-all
 Used with 
 .Sq keep state
+or
+.Sq modulate state
 rules.
 Not only the packet that creates state is logged, but all packets of
 the connection.
@@ -298,6 +300,40 @@ see
 .Xr nat.conf 5
 .Pc
 implicitely create state for connections.
+.Sh STATE MODULATION
+Much of the security derived from TCP is attributable to how well the
+initial sequence numbers (ISN) are chosen.  Some popular stack implementations
+choose
+.Cm very
+poor ISNs thus are normally susceptible to ISN prediction exploits.  By
+applying a "modulate state" rule to a TCP connection, 
+.Em pf
+will create a high quality random sequence number for each connection
+endpoint.
+.Pp
+The "modulate state" directive implicitly keeps state on the rule and is
+only applicable to TCP connections.
+.Pp
+For instance:
+.Bd -literal
+    block out all
+    block in  all
+    pass out proto tcp from any to any                      modulate state
+    pass in  proto tcp from any to any port = 25 flags S/SA modulate state
+.Ed
+.Pp
+Caveat:  If
+.Em pf
+picks up an already established connection (the firewall was rebooted, the
+state table was flushed...) it will not randomize the sequence number and it
+will fall back to operating as if "keep state" was specified for that
+connection.
+.Pp
+Caveat:  If the state table is flushed or the firewall is rebooted,
+currently established modulated connections can not be continued or picked
+up again by the firewall.  The sequence numbers will be out of sync without
+the modulator.
+
 .Sh NORMALIZATION
 Packet normalization is envoked via the
 .Pa scrub
@@ -366,8 +402,8 @@ pass in on kue0 proto udp from any to any port = domain keep state
 # TCP
 # -----------------------------------------------------------------------
 
-# pass out all TCP connections and keep state
-pass out on kue0 proto tcp all keep state
+# pass out all TCP connections and modulate state
+pass out on kue0 proto tcp all modulate state
 
 # pass in certain TCP connections and keep state (SSH, SMTP, DNS, IDENT)
 pass in on kue0 proto tcp from any to any port { ssh, smtp, domain, auth } keep state
