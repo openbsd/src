@@ -237,17 +237,17 @@ _mapme:
 
 #if !defined(SUN4M)
 sun4m_notsup:
-	.asciz	"cr .( NetBSD/sparc: this kernel does not support the sun4m) cr"
+	.asciz	"cr .( OpenBSD/sparc: this kernel does not support the sun4m) cr"
 #endif
 #if !defined(SUN4C)
 sun4c_notsup:
-	.asciz	"cr .( NetBSD/sparc: this kernel does not support the sun4c) cr"
+	.asciz	"cr .( OpenBSD/sparc: this kernel does not support the sun4c) cr"
 #endif
 #if !defined(SUN4)
 sun4_notsup:
 	! the extra characters at the end are to ensure the zs fifo drains
 	! before we halt. Sick, eh?
-	.asciz	"NetBSD/sparc: this kernel does not support the sun4\n\r \b"
+	.asciz	"OpenBSD/sparc: this kernel does not support the sun4\n\r \b"
 #endif
 	_ALIGN
 
