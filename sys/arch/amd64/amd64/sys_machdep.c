@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.2 2004/02/21 03:00:23 deraadt Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.3 2004/02/27 23:45:55 deraadt Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.1 2003/04/26 18:39:32 fvdl Exp $	*/
 
 /*-
@@ -73,18 +73,18 @@
 extern struct vm_map *kernel_map;
 
 #if 0
-int x86_64_get_ioperm(struct proc *, void *, register_t *);
-int x86_64_set_ioperm(struct proc *, void *, register_t *);
+int amd64_get_ioperm(struct proc *, void *, register_t *);
+int amd64_set_ioperm(struct proc *, void *, register_t *);
 #endif
-int x86_64_iopl(struct proc *, void *, register_t *);
-int x86_64_get_mtrr(struct proc *, void *, register_t *);
-int x86_64_set_mtrr(struct proc *, void *, register_t *);
+int amd64_iopl(struct proc *, void *, register_t *);
+int amd64_get_mtrr(struct proc *, void *, register_t *);
+int amd64_set_mtrr(struct proc *, void *, register_t *);
 
 /* XXXfvdl disabled USER_LDT stuff until I check this stuff */
 
 #if defined(USER_LDT) && 0
 int
-x86_64_get_ldt(p, args, retval)
+amd64_get_ldt(p, args, retval)
 	struct proc *p;
 	void *args;
 	register_t *retval;
@@ -93,13 +93,13 @@ x86_64_get_ldt(p, args, retval)
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 	int nldt, num;
 	union descriptor *lp;
-	struct x86_64_get_ldt_args ua;
+	struct amd64_get_ldt_args ua;
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return (error);
 
 #ifdef	LDT_DEBUG
-	printf("x86_64_get_ldt: start=%d num=%d descs=%p\n", ua.start,
+	printf("amd64_get_ldt: start=%d num=%d descs=%p\n", ua.start,
 	    ua.num, ua.desc);
 #endif
 
@@ -133,7 +133,7 @@ x86_64_get_ldt(p, args, retval)
 }
 
 int
-x86_64_set_ldt(p, args, retval)
+amd64_set_ldt(p, args, retval)
 	struct proc *p;
 	void *args;
 	register_t *retval;
@@ -141,14 +141,14 @@ x86_64_set_ldt(p, args, retval)
 	int error, i, n;
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
-	struct x86_64_set_ldt_args ua;
+	struct amd64_set_ldt_args ua;
 	union descriptor desc;
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return (error);
 
 #ifdef	LDT_DEBUG
-	printf("x86_64_set_ldt: start=%d num=%d descs=%p\n", ua.start,
+	printf("amd64_set_ldt: start=%d num=%d descs=%p\n", ua.start,
 	    ua.num, ua.desc);
 #endif
 
@@ -200,7 +200,7 @@ x86_64_set_ldt(p, args, retval)
 		if (old_ldt != ldt)
 			uvm_km_free(kernel_map, (vaddr_t)old_ldt, old_len);
 #ifdef LDT_DEBUG
-		printf("x86_64_set_ldt(%d): new_ldt=%p\n", p->p_pid, new_ldt);
+		printf("amd64_set_ldt(%d): new_ldt=%p\n", p->p_pid, new_ldt);
 #endif
 	}
 
@@ -286,11 +286,11 @@ extern int allowaperture;
 #endif
 
 int
-x86_64_iopl(struct proc *p, void *args, register_t *retval)
+amd64_iopl(struct proc *p, void *args, register_t *retval)
 {
 	int error;
 	struct trapframe *tf = p->p_md.md_regs;
-	struct x86_64_iopl_args ua;
+	struct amd64_iopl_args ua;
 
 	if ((error = suser(p, 0)) != 0)
 		return error;
@@ -317,14 +317,14 @@ x86_64_iopl(struct proc *p, void *args, register_t *retval)
 #if 0
 
 int
-x86_64_get_ioperm(p, args, retval)
+amd64_get_ioperm(p, args, retval)
 	struct proc *p;
 	void *args;
 	register_t *retval;
 {
 	int error;
 	struct pcb *pcb = &p->p_addr->u_pcb;
-	struct x86_64_get_ioperm_args ua;
+	struct amd64_get_ioperm_args ua;
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return (error);
@@ -333,14 +333,14 @@ x86_64_get_ioperm(p, args, retval)
 }
 
 int
-x86_64_set_ioperm(p, args, retval)
+amd64_set_ioperm(p, args, retval)
 	struct proc *p;
 	void *args;
 	register_t *retval;
 {
 	int error;
 	struct pcb *pcb = &p->p_addr->u_pcb;
-	struct x86_64_set_ioperm_args ua;
+	struct amd64_set_ioperm_args ua;
 
 	if (securelevel > 1)
 		return EPERM;
@@ -359,9 +359,9 @@ x86_64_set_ioperm(p, args, retval)
 #ifdef MTRR
 
 int
-x86_64_get_mtrr(struct proc *p, void *args, register_t *retval)
+amd64_get_mtrr(struct proc *p, void *args, register_t *retval)
 {
-	struct x86_64_get_mtrr_args ua;
+	struct amd64_get_mtrr_args ua;
 	int error, n;
 
 	if (mtrr_funcs == NULL)
@@ -383,10 +383,10 @@ x86_64_get_mtrr(struct proc *p, void *args, register_t *retval)
 }
 
 int
-x86_64_set_mtrr(struct proc *p, void *args, register_t *retval)
+amd64_set_mtrr(struct proc *p, void *args, register_t *retval)
 {
 	int error, n;
-	struct x86_64_set_mtrr_args ua;
+	struct amd64_set_mtrr_args ua;
 
 	if (mtrr_funcs == NULL)
 		return ENOSYS;
@@ -424,46 +424,46 @@ sys_sysarch(struct proc *p, void *v, register_t *retval)
 
 	switch(SCARG(uap, op)) {
 #if defined(USER_LDT) && 0
-	case X86_64_GET_LDT: 
-		error = x86_64_get_ldt(p, SCARG(uap, parms), retval);
+	case AMD64_GET_LDT: 
+		error = amd64_get_ldt(p, SCARG(uap, parms), retval);
 		break;
 
-	case X86_64_SET_LDT: 
-		error = x86_64_set_ldt(p, SCARG(uap, parms), retval);
+	case AMD64_SET_LDT: 
+		error = amd64_set_ldt(p, SCARG(uap, parms), retval);
 		break;
 #endif
-	case X86_64_IOPL: 
-		error = x86_64_iopl(p, SCARG(uap, parms), retval);
+	case AMD64_IOPL: 
+		error = amd64_iopl(p, SCARG(uap, parms), retval);
 		break;
 
 #if 0
-	case X86_64_GET_IOPERM: 
-		error = x86_64_get_ioperm(p, SCARG(uap, parms), retval);
+	case AMD64_GET_IOPERM: 
+		error = amd64_get_ioperm(p, SCARG(uap, parms), retval);
 		break;
 
-	case X86_64_SET_IOPERM: 
-		error = x86_64_set_ioperm(p, SCARG(uap, parms), retval);
+	case AMD64_SET_IOPERM: 
+		error = amd64_set_ioperm(p, SCARG(uap, parms), retval);
 		break;
 #endif
 #ifdef MTRR
-	case X86_64_GET_MTRR:
-		error = x86_64_get_mtrr(p, SCARG(uap, parms), retval);
+	case AMD64_GET_MTRR:
+		error = amd64_get_mtrr(p, SCARG(uap, parms), retval);
 		break;
-	case X86_64_SET_MTRR:
-		error = x86_64_set_mtrr(p, SCARG(uap, parms), retval);
+	case AMD64_SET_MTRR:
+		error = amd64_set_mtrr(p, SCARG(uap, parms), retval);
 		break;
 #endif
 
 #if defined(PERFCTRS) && 0
-	case X86_64_PMC_INFO:
+	case AMD64_PMC_INFO:
 		error = pmc_info(p, SCARG(uap, parms), retval);
 		break;
 
-	case X86_64_PMC_STARTSTOP:
+	case AMD64_PMC_STARTSTOP:
 		error = pmc_startstop(p, SCARG(uap, parms), retval);
 		break;
 
-	case X86_64_PMC_READ:
+	case AMD64_PMC_READ:
 		error = pmc_read(p, SCARG(uap, parms), retval);
 		break;
 #endif
