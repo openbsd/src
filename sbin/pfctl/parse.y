@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.211 2002/11/24 17:33:57 pb Exp $	*/
+/*	$OpenBSD: parse.y,v 1.212 2002/11/25 15:50:58 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -227,7 +227,7 @@ void	ifa_load(void);
 struct	node_host *ifa_exists(char *);
 struct	node_host *ifa_lookup(char *, enum pfctl_iflookup_mode);
 void	decide_address_family(struct node_host *, sa_family_t *);
-void    remove_invalid_hosts(struct node_host **, sa_family_t *);
+void	remove_invalid_hosts(struct node_host **, sa_family_t *);
 u_int16_t	parseicmpspec(char *, sa_family_t);
 
 typedef struct {
