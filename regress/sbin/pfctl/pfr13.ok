@@ -367,7 +367,7 @@
    fe80::/16
    fe80::/24
    fe80::1
-# pass load table <regress> persist { 11 } file "DIR/pfr.addrs1" { !12 }
+# pass load table <regress> persist { 11/8 } file "DIR/pfr.addrs1" { !12/8 }
 # pass show 
    1.1.1.1
    10.0.0.0/8

@@ -1,23 +1,23 @@
 # create
-# pass add -n 1.1.1.1 !1.1.1.2 10.10 !10.11 ::1 !::2
+# pass add -n 1.1.1.1 !1.1.1.2 10.10/16 !10.11/16 ::1 !::2
 6/6 addresses added (dummy).
 # pass add -nf-
 6/6 addresses added (dummy).
-# pass add -nqv 1.1.1.1 !1.1.1.2 10.10 !10.11 ::1 !::2
+# pass add -nqv 1.1.1.1 !1.1.1.2 10.10/16 !10.11/16 ::1 !::2
 A  1.1.1.1
 A  10.10.0.0/16
 A  ::1
 A !1.1.1.2
 A !10.11.0.0/16
 A !::2
-# pass add -nqvv 1.1.1.1 !1.1.1.2 10.10 !10.11 ::1 !::2
+# pass add -nqvv 1.1.1.1 !1.1.1.2 10.10/16 !10.11/16 ::1 !::2
 A  1.1.1.1
 A  10.10.0.0/16
 A  ::1
 A !1.1.1.2
 A !10.11.0.0/16
 A !::2
-# pass add 1.1.1.1 !1.1.1.2 10.10 !10.11 ::1 !::2
+# pass add 1.1.1.1 !1.1.1.2 10.10/16 !10.11/16 ::1 !::2
 6/6 addresses added.
 # pass show 
    1.1.1.1
@@ -88,13 +88,13 @@ D !1.1.1.4
    fe82::/16
   !fe81::/16
   !fe83::/16
-# pass replace -n 10 !10.10 10.10.10 !10.10.10.10
+# pass replace -n 10/8 !10.10/16 10.10.10/24 !10.10.10.10
 4 addresses added (dummy).
 4 addresses deleted (dummy).
 # pass replace -nf-
 4 addresses added (dummy).
 4 addresses deleted (dummy).
-# pass replace -nqv 10 !10.10 10.10.10 !10.10.10.10
+# pass replace -nqv 10/8 !10.10/16 10.10.10/24 !10.10.10.10
 A  10.0.0.0/8
 A  10.10.10.0/24
 A !10.10.0.0/16
@@ -103,7 +103,7 @@ D  fe80::/16
 D  fe82::/16
 D !fe81::/16
 D !fe83::/16
-# pass replace -nqvv 10 !10.10 10.10.10 !10.10.10.10
+# pass replace -nqvv 10/8 !10.10/16 10.10.10/24 !10.10.10.10
 A  10.0.0.0/8
 A  10.10.10.0/24
 A !10.10.0.0/16
@@ -112,7 +112,7 @@ D  fe80::/16
 D  fe82::/16
 D !fe81::/16
 D !fe83::/16
-# pass replace 10 !10.10 10.10.10 !10.10.10.10
+# pass replace 10/8 !10.10/16 10.10.10/24 !10.10.10.10
 4 addresses added.
 4 addresses deleted.
 # pass add -n fe80::/16 !fe80:fe80::/32 fe80:fe80:fe80::/48
