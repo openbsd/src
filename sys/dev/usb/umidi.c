@@ -1,5 +1,5 @@
-/*	$OpenBSD: umidi.c,v 1.3 2002/06/11 07:49:56 nate Exp $	*/
-/*	$NetBSD: umidi.c,v 1.14 2002/03/08 17:24:06 kent Exp $	*/
+/*	$OpenBSD: umidi.c,v 1.4 2002/07/09 15:22:08 nate Exp $	*/
+/*	$NetBSD: umidi.c,v 1.15 2002/06/19 13:51:34 tshiozak Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -808,9 +808,9 @@ bind_jacks_to_mididev(struct umidi_softc *sc,
 static void
 unbind_jacks_from_mididev(struct umidi_mididev *mididev)
 {
-	if ((mididev->flags&FWRITE) && mididev->out_jack)
+	if ((mididev->flags & FWRITE) && mididev->out_jack)
 		close_out_jack(mididev->out_jack);
-	if ((mididev->flags&FWRITE) && mididev->in_jack)
+	if ((mididev->flags & FREAD) && mididev->in_jack)
 		close_in_jack(mididev->in_jack);
 
 	if (mididev->out_jack)
@@ -904,8 +904,14 @@ close_out_jack(struct umidi_jack *jack)
 
 	if (jack->opened) {
 		s = splusb();
-		LIST_REMOVE(jack, u.out.queue_entry);
-		if (jack==jack->endpoint->queue_tail) {
+		LIST_FOREACH(tail,
+			     &jack->endpoint->queue_head,
+			     u.out.queue_entry)
+			if (tail == jack) {
+				LIST_REMOVE(jack, u.out.queue_entry);
+				break;
+			}
+		if (jack == jack->endpoint->queue_tail) {
 			/* find tail */
 			LIST_FOREACH(tail,
 				     &jack->endpoint->queue_head,
@@ -1073,8 +1079,8 @@ dump_ep(struct umidi_endpoint *ep)
 static void
 dump_jack(struct umidi_jack *jack)
 {
-	DPRINTFN(10, ("\t\t\tep=%p, mididev=%p\n",
-		      jack->endpoint, jack->mididev));
+	DPRINTFN(10, ("\t\t\tep=%p\n",
+		      jack->endpoint));
 }
 
 #endif /* UMIDI_DEBUG */
@@ -1241,7 +1247,7 @@ in_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	}
 	if (!jack->binded || !jack->opened)
 		return;
-	DPR_PACKET(in, ep->sc, &jack->buffer);
+	DPR_PACKET(in, ep->sc, &jack->packet);
 	if (jack->u.in.intr) {
 		for (i=0; i<len; i++) {
 			(*jack->u.in.intr)(jack->arg, ep->buffer[i+1]);
