@@ -1,4 +1,4 @@
-/*	$Id: str2key.c,v 1.1.1.1 1995/12/14 06:52:45 tholo Exp $	*/
+/*	$Id: str2key.c,v 1.2 1995/12/17 19:12:08 tholo Exp $	*/
 
 /* Copyright (C) 1993 Eric Young - see README for more details */
 #include "des_locl.h"
@@ -35,7 +35,7 @@ int des_string_to_key(char *str, des_cblock (*key))
   des_set_odd_parity((des_cblock *)key);
   i=des_check_key;
   des_check_key=0;
-  des_set_key((des_cblock *)key,ks);
+  des_set_key_schedule((des_cblock *)key,ks);
   des_check_key=i;
   des_cbc_cksum((des_cblock *)str,(des_cblock *)key,(long)length,ks,
 		(des_cblock *)key);
@@ -99,10 +99,10 @@ int des_string_to_2keys(char *str, des_cblock (*key1), des_cblock (*key2))
   des_set_odd_parity((des_cblock *)key2);
   i=des_check_key;
   des_check_key=0;
-  des_set_key((des_cblock *)key1,ks);
+  des_set_key_schedule((des_cblock *)key1,ks);
   des_cbc_cksum((des_cblock *)str,(des_cblock *)key1,(long)length,ks,
 		(des_cblock *)key1);
-  des_set_key((des_cblock *)key2,ks);
+  des_set_key_schedule((des_cblock *)key2,ks);
   des_cbc_cksum((des_cblock *)str,(des_cblock *)key2,(long)length,ks,
 		(des_cblock *)key2);
   des_check_key=i;

@@ -3,10 +3,10 @@
 .\" For copying and distribution information,
 .\" please see the file <mit-copyright.h>.
 .\"
-.\"	$Id: des_crypt.3,v 1.1.1.1 1995/12/14 06:52:44 tholo Exp $
+.\"	$Id: des_crypt.3,v 1.2 1995/12/17 19:12:03 tholo Exp $
 .TH DES_CRYPT 3  "Kerberos Version 4.0" "MIT Project Athena"
 .SH NAME
-des_read_password, des_string_to_key, des_random_key, des_set_key,
+des_read_password, des_string_to_key, des_random_key, des_set_key_schedule,
 des_ecb_encrypt, des_cbc_encrypt, des_pcbc_encrypt, des_cbc_cksum,
 des_quad_cksum, \- (new) DES encryption
 .SH SYNOPSIS
@@ -31,7 +31,7 @@ int des_random_key(key)
 des_cblock *key;
 .PP
 .ft B
-int des_set_key(key,schedule)
+int des_set_key_schedule(key,schedule)
 des_cblock *key;
 des_key_schedule schedule;
 .PP
@@ -90,7 +90,7 @@ For each key that may be simultaneously active, create a
 struct,
 defined in "des.h". Next, create key schedules (from the 8-byte keys) as
 needed, via
-.I des_set_key,
+.I des_set_key_schedule ,
 prior to using the encryption or checksum routines. Then
 setup the input and output areas.  Make sure to note the restrictions
 on lengths being multiples of eight bytes. Finally, invoke the
@@ -175,13 +175,13 @@ then after calling
 .I des_random_key
 should
 call the
-.I des_set_key
+.I des_set_key_schedule
 routine when needed.
 No meaningful value is returned.  Void is not used for compatibility
 with other compilers.
 .PP
 .PP
-.I des_set_key
+.I des_set_key_schedule
 calculates a key schedule from all eight bytes of the input key, pointed
 to by the
 .I key
@@ -219,7 +219,7 @@ argument is non-zero, the
 (ciphertext) using the key_schedule specified by the
 .I schedule
 argument, previously set via
-.I des_set_key
+.I des_set_key_schedule
 .PP
 If encrypt is zero, the
 .I input

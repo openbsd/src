@@ -1,4 +1,4 @@
-/*	$Id: set_key.c,v 1.1.1.1 1995/12/14 06:52:43 tholo Exp $	*/
+/*	$Id: set_key.c,v 1.2 1995/12/17 19:12:07 tholo Exp $	*/
 
 /* Copyright (C) 1993 Eric Young - see README for more details */
 /* set_key.c v 1.4 eay 24/9/91
@@ -95,7 +95,7 @@ static char shifts2[16]={0,0,1,1,1,1,1,1,0,1,1,1,1,1,1,0};
  * return -1 if key parity error,
  * return -2 if illegal weak key.
  */
-int des_set_key(des_cblock (*key), struct des_ks_struct *schedule)
+int des_set_key_schedule(des_cblock (*key), struct des_ks_struct *schedule)
 {
   register u_int32_t c,d,t,s;
   register unsigned char *in;
@@ -175,5 +175,5 @@ int des_set_key(des_cblock (*key), struct des_ks_struct *schedule)
 
 int des_key_sched(des_cblock *key, des_key_schedule schedule)
 {
-  return(des_set_key(key, (struct des_ks_struct *)schedule));
+  return(des_set_key_schedule(key, (struct des_ks_struct *)schedule));
 }
