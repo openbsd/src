@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.46 2004/03/16 23:11:20 jmc Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.47 2004/08/03 04:11:49 mjc Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.46 2004/03/16 23:11:20 jmc Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.47 2004/08/03 04:11:49 mjc Exp $";
 #endif
 #endif /* not lint */
 
@@ -916,12 +916,8 @@ filemode(void)
 			*fbp++ = 'W';
 		if (fp.f_flag & FAPPEND)
 			*fbp++ = 'A';
-#ifdef FSHLOCK	/* currently gone */
-		if (fp.f_flag & FSHLOCK)
-			*fbp++ = 'S';
-		if (fp.f_flag & FEXLOCK)
-			*fbp++ = 'X';
-#endif
+		if (fp.f_flag & FHASLOCK)
+			*fbp++ = 'L';
 		if (fp.f_flag & FASYNC)
 			*fbp++ = 'I';
 		*fbp = '\0';

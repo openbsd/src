@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pstat.8,v 1.26 2004/03/17 09:59:19 jmc Exp $
+.\"	$OpenBSD: pstat.8,v 1.27 2004/08/03 04:11:49 mjc Exp $
 .\"	$NetBSD: pstat.8,v 1.9.4.1 1996/06/02 09:08:17 mrg Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
@@ -73,10 +73,8 @@ open for reading
 open for writing
 .It A
 open for appending
-.It S
-shared lock present
-.It X
-exclusive lock present
+.It L
+exclusive or shared lock present
 .It I
 signal pgrp when data ready
 .El
