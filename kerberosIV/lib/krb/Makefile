@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2001/01/09 02:41:18 angelos Exp $
+# $OpenBSD: Makefile,v 1.6 2001/05/14 14:03:03 hin Exp $
 
 LIB	= krb
 
@@ -114,7 +114,7 @@ CLEANFILES	+= krb_err.h krb_err.c
 
 MAN=	kerberos.3 krb_realmofhost.3 krb_sendauth.3 krb_set_tkt_string.3 \
 	kuserok.3 tf_util.3
-MAN+=	krb.conf.5 krb.realms.5
+MAN+=	krb.conf.5 krb.realms.5 krb.extra.5
 MLINKS+=kerberos.3 krb_mk_req.3 kerberos.3 krb_rd_req.3 kerberos.3 krb_kntoln.3 \
 	kerberos.3 krb_set_key.3 kerberos.3 krb_get_cred.3 kerberos.3 krb_mk_priv.3 \
 	kerberos.3 krb_rd_priv.3 kerberos.3 krb_mk_safe.3 kerberos.3 krb_rd_safe.3 \
