@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamlogd.c,v 1.4 2004/03/01 17:03:10 otto Exp $	*/
+/*	$OpenBSD: spamlogd.c,v 1.5 2004/03/07 20:20:07 otto Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -20,37 +20,24 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <sys/fcntl.h>
-#include <sys/wait.h>
-#include <net/if.h>
 #include <netinet/in.h>
-#include <net/pfvar.h>
 #include <arpa/inet.h>
 #include <db.h>
 #include <err.h>
-#include <errno.h>
 #include <fcntl.h>
-#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <syslog.h>
 #include <string.h>
-#include <time.h>
 #include <unistd.h>
 
 #include "grey.h"
 #define PATH_TCPDUMP "/usr/sbin/tcpdump"
 
-extern struct passwd *pw;
-extern FILE * grey;
-extern int debug;
-
 struct syslog_data sdata = SYSLOG_DATA_INIT;
-size_t whitecount, whitealloc;
-char **whitelist;
 int inbound; /* do we only whitelist inbound smtp? */
-int pfdev;
+
+extern char *__progname;
 
 int
 dbupdate(char *dbname, char *ip)
@@ -129,13 +116,13 @@ dbupdate(char *dbname, char *ip)
 	db->sync(db, 0);
 	db->close(db);
 	db = NULL;
-	return(-1);
+	return (-1);
 }
 
 static int
 usage(void)
 {
-	fprintf(stderr, "usage: spamlogd [-I] [-i netif]\n");
+	fprintf(stderr, "usage: %s [-I] [-i netif]\n", __progname);
 	exit(1);
 }
 
