@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.10 1998/11/17 23:41:43 aaron Exp $
+.\"	$OpenBSD: malloc.3,v 1.11 1999/03/23 21:07:57 millert Exp $
 .\"
 .Dd August 27, 1996
 .Dt MALLOC 3
@@ -101,8 +101,9 @@ The
 .Fn realloc
 function changes the size of the object pointed to by
 .Fa ptr
-to the size specified by
-.Fa size .
+to
+.Fa size
+bytes and returns a pointer to the (possibly moved) object.
 The contents of the object are unchanged up to the lesser
 of the new and old sizes.
 If the new size is larger, the value of the newly allocated portion
