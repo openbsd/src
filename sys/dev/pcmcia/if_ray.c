@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ray.c,v 1.10 2000/12/29 21:30:58 mickey Exp $	*/
+/*	$OpenBSD: if_ray.c,v 1.11 2001/01/10 17:55:37 angelos Exp $	*/
 /*	$NetBSD: if_ray.c,v 1.21 2000/07/05 02:35:54 onoe Exp $	*/
 
 /*
@@ -153,7 +153,7 @@
 #endif
 
 #ifndef	RAY_MODE_DEFAULT
-#define	RAY_MODE_DEFAULT	SC_MODE_ADHOC
+#define	RAY_MODE_DEFAULT	SC_MODE_INFRA
 #endif
 
 #ifndef	RAY_DEF_NWID
