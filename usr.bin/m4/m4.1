@@ -1,4 +1,4 @@
-.\"	@(#) $OpenBSD: m4.1,v 1.36 2004/05/25 18:41:17 espie Exp $
+.\"	@(#) $OpenBSD: m4.1,v 1.37 2004/05/25 20:24:24 jmc Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -150,8 +150,8 @@ They may be redefined, losing their original meaning.
 Return values are null unless otherwise stated.
 .Bl -tag -width changequote
 .It Fn builtin name
-Calls a built-in by its 
-.Fa name , 
+Calls a built-in by its
+.Fa name ,
 overriding possible redefinitions.
 .It Fn changecom startcomment endcomment
 Change the start and end comment sequences.
@@ -166,15 +166,15 @@ The symbols may be up to five characters long.
 If no arguments are
 given it restores the default open and close single quotes.
 .It Fn decr arg
-Decrements the argument 
-.Fa arg 
+Decrements the argument
+.Fa arg
 by 1.
-The argument 
+The argument
 .Fa arg
 must be a valid numeric string.
 .It Fn define name value
-Define a new macro named by the first argument 
-.Fa name 
+Define a new macro named by the first argument
+.Fa name
 to have the
 value of the second argument
 .Fa value .
@@ -245,9 +245,9 @@ The word
 .Qq unix
 is predefined.
 .It Fn ifelse a b yes ...
-If the first argument 
+If the first argument
 .Fa a
-matches the second argument 
+matches the second argument
 .Fa b
 then
 .Fn ifelse
