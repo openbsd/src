@@ -208,7 +208,7 @@ main(argc, argv)
 
 	strcpy(modout, modobj);
 
-	p = strchr(modout, '.');
+	p = strrchr(modout, '.');
 	if (!p || strcmp(p, ".o"))
 		errx(2, "module object must end in .o");
 	if (out == NULL) {
