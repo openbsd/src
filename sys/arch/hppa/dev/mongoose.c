@@ -1,4 +1,4 @@
-/*	$OpenBSD: mongoose.c,v 1.6 2000/02/09 06:01:20 mickey Exp $	*/
+/*	$OpenBSD: mongoose.c,v 1.7 2000/08/15 19:42:56 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -64,6 +64,7 @@ struct mongoose_regs {
 };
 
 #define	MONGOOSE_CTRL		0x00000
+#define	MONGOOSE_NINTS		16
 struct mongoose_ctrl {
 	struct dma0 {
 		struct {
@@ -164,6 +165,18 @@ struct mongoose_ctrl {
 
 #define	MONGOOSE_IOMAP	0x100000
 
+struct hppa_isa_iv {
+	const char *iv_name;
+	int (*iv_handler) __P((void *arg));
+	void *iv_arg;
+	int iv_pri;
+
+	struct evcnt iv_evcnt;
+	/* don't do sharing, we won't have many slots anyway
+	struct hppa_isa_iv *iv_next;
+	*/
+};
+
 struct mongoose_softc {
 	struct  device sc_dev;
 	void *sc_ih;
@@ -173,8 +186,12 @@ struct mongoose_softc {
 	volatile struct mongoose_ctrl *sc_ctrl;
 	bus_addr_t sc_iomap;
 
+	/* interrupts section */
 	struct hppa_eisa_chipset sc_ec;
 	struct hppa_isa_chipset sc_ic;
+	struct hppa_isa_iv sc_iv[MONGOOSE_NINTS];
+
+	/* isa/eisa bus guts */
 	struct hppa_bus_space_tag sc_eiot;
 	struct hppa_bus_space_tag sc_ememt;
 	struct hppa_bus_dma_tag sc_edmat;
@@ -225,27 +242,83 @@ mg_intr_string(void *v, int irq)
 	return buf;
 }
 
-void *
-mg_intr_establish(void *v, int irq, int type, int level,
-	int (*fn) __P((void *)), void *arg, char *name)
-{
-	void *cookie = "cookie";
-
-	
-	return cookie;
-}
-
-void
-mg_intr_disestablish(void *v, void *cookie)
-{
-
-}
-
 void
 mg_isa_attach_hook(struct device *parent, struct device *self,
 	struct isabus_attach_args *iba)
 {
 
+}
+
+void *
+mg_intr_establish(void *v, int irq, int type, int pri,
+	int (*handler) __P((void *)), void *arg, char *name)
+{
+	struct hppa_isa_iv *iv;
+	struct mongoose_softc *sc = v;
+	volatile u_int8_t *imr, *pic;
+
+	if (!sc || irq < 0 || irq >= MONGOOSE_NINTS ||
+	    (0 <= irq && irq < MONGOOSE_NINTS && sc->sc_iv[irq].iv_handler))
+		return NULL;
+
+	if (type != IST_LEVEL && type != IST_EDGE) {
+#ifdef DEBUG
+		printf("%s: bad interrupt level (%d)\n", sc->sc_dev.dv_xname,
+		    type);
+#endif
+		return NULL;
+	}
+
+	iv = &sc->sc_iv[irq];
+	if (iv->iv_handler) {
+#ifdef DEBUG
+		printf("%s: irq %d already established\n", sc->sc_dev.dv_xname,
+		    irq);
+#endif
+		return NULL;
+	}
+
+	iv->iv_name = name;
+	iv->iv_pri = pri;
+	iv->iv_handler = handler;
+	iv->iv_arg = arg;
+	
+	if (irq < 8) {
+		imr = &sc->sc_ctrl->imr0;
+		pic = &sc->sc_ctrl->pic0;
+	} else {
+		imr = &sc->sc_ctrl->imr1;
+		pic = &sc->sc_ctrl->pic1;
+		irq -= 8;
+	}
+
+	*imr |= 1 << irq;
+	*pic |= (type == IST_LEVEL) << irq;
+
+	/* TODO: ack it? */
+
+	return iv;
+}
+
+void
+mg_intr_disestablish(void *v, void *cookie)
+{
+	struct hppa_isa_iv *iv = cookie;
+	struct mongoose_softc *sc = v;
+ 	int irq = iv - sc->sc_iv;
+ 	volatile u_int8_t *imr;
+
+	if (!sc || !cookie)
+		return;
+
+	if (irq < 8)
+		imr = &sc->sc_ctrl->imr0;
+	else
+		imr = &sc->sc_ctrl->imr1;
+	*imr &= ~(1 << irq);
+	/* TODO: ack it? */
+
+	iv->iv_handler = NULL;
 }
 
 int
@@ -257,6 +330,15 @@ mg_intr_check(void *v, int irq, int type)
 int
 mg_intr(void *v)
 {
+	struct mongoose_softc *sc = v;
+	struct hppa_isa_iv *iv;
+	int s, irq = 0;
+
+	iv = &sc->sc_iv[irq];
+	s = splx(iv->iv_pri);
+	(iv->iv_handler)(iv->iv_arg);
+	splx(s);
+
 	return 0;
 }
 
@@ -546,20 +628,16 @@ mgattach(parent, self, aux)
 	ea.mongoose_eisa.eba_ec = &sc->sc_ec;
 	config_found(self, &ea.mongoose_eisa, mgprint);
 
-#if 0
-	/* TODO: attach ISA */
 	sc->sc_ic.ic_v = sc;
 	sc->sc_ic.ic_attach_hook = mg_isa_attach_hook;
 	sc->sc_ic.ic_intr_establish = mg_intr_establish;
 	sc->sc_ic.ic_intr_disestablish = mg_intr_disestablish;
 	sc->sc_ic.ic_intr_check = mg_intr_check;
-	/* inherit the bus tags for eisa from the mainbus */
-	sc->sc_iiot = *ca->ca_iot;
-	sc->sc_imemt = *ca->ca_iot;
-	sc->sc_iiot.hbt_cookie = sc->sc_imemt.hbt_cookie = sc;
-	sc->sc_iiot.hbt_map = mg_isa_iomap;
-	sc->sc_imemt.hbt_map = mg_isa_memmap;
-	sc->sc_imemt.hbt_unmap = mg_isa_memunmap;
+	/* inherit the bus tags for isa from the eisa */
+	bt = &sc->sc_imemt;
+	bcopy(&sc->sc_ememt, bt, sizeof(*bt));
+	bt = &sc->sc_iiot;
+	bcopy(&sc->sc_eiot, bt, sizeof(*bt));
 	/* TODO: DMA tags */
 	/* attachment guts */
 	ea.mongoose_isa.iba_busname = "isa";
@@ -570,7 +648,6 @@ mgattach(parent, self, aux)
 #endif
 	ea.mongoose_isa.iba_ic = &sc->sc_ic;
 	config_found(self, &ea.mongoose_isa, mgprint);
-#endif
 #undef	R
 
 	/* attach interrupt */
