@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipcs.1,v 1.16 2003/06/10 09:12:10 jmc Exp $
+.\"	$OpenBSD: ipcs.1,v 1.17 2005/02/22 14:47:45 jmc Exp $
 .\"
 .\" Copyright (c) 1994 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .Nd report System V interprocess communication facilities status
 .Sh SYNOPSIS
 .Nm ipcs
-.Op Fl abcmopqstMQST
+.Op Fl abcMmopQqSsTt
 .Op Fl C Ar core
 .Op Fl N Ar system
 .Sh DESCRIPTION
@@ -62,11 +62,18 @@ The
 is the maximum number of bytes in a message on a message queue,
 the size of a shared memory segment,
 or the number of semaphores in a set of semaphores.
+.It Fl C Ar core
+Extract values associated with the name list from the specified
+core instead of the running kernel.
 .It Fl c
 Show the creator's name and group for active semaphores, message queues,
 and shared memory segments.
+.It Fl M
+Display system information about shared memory.
 .It Fl m
 Display information about active shared memory segments.
+.It Fl N Ar system
+Extract the name list from the specified system instead of the running kernel.
 .It Fl o
 Show outstanding usage for active message queues,
 and shared memory segments.
@@ -83,10 +90,16 @@ is the last process to send a message to or receive a message from
 a message queue,
 the process that created a semaphore, or the last process to attach
 or detach a shared memory segment.
+.It Fl Q
+Display system information about messages queues.
 .It Fl q
 Display information about active message queues.
+.It Fl S
+Display system information about semaphores.
 .It Fl s
 Display information about active semaphores.
+.It Fl T
+Display system information about shared memory, message queues and semaphores.
 .It Fl t
 Show access times for active semaphores, message queues,
 and shared memory segments.
@@ -95,19 +108,6 @@ of the last control operation on an IPC object,
 the last send or receive of a message,
 the last attach or detach of a shared memory segment,
 or the last operation on a semaphore.
-.It Fl C Ar core
-Extract values associated with the name list from the specified
-core instead of the running kernel.
-.It Fl M
-Display system information about shared memory.
-.It Fl N Ar system
-Extract the name list from the specified system instead of the running kernel.
-.It Fl Q
-Display system information about messages queues.
-.It Fl S
-Display system information about semaphores.
-.It Fl T
-Display system information about shared memory, message queues and semaphores.
 .El
 .Pp
 If none of the
