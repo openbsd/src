@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.35 1997/12/11 03:16:34 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.36 1998/01/02 05:42:49 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1494,6 +1494,8 @@ sys_chflags(p, v, retval)
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		error = EROFS;
+	else if (SCARG(uap, flags) == VNOVAL)
+		error = EINVAL;
 	else {
 		VATTR_NULL(&vattr);
 		vattr.va_flags = SCARG(uap, flags);
@@ -1529,6 +1531,8 @@ sys_fchflags(p, v, retval)
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		error = EROFS;
+	else if (SCARG(uap, flags) == VNOVAL)
+		error = EINVAL;
 	else {
 		VATTR_NULL(&vattr);
 		vattr.va_flags = SCARG(uap, flags);
