@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.9 2004/01/08 14:41:04 henning Exp $
+.\" $OpenBSD: bgpctl.8,v 1.10 2004/01/10 19:09:40 henning Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -45,6 +45,23 @@ according to the given
 Show statistics about sent and received BGP messages.
 .It Li timers
 Show the BGP timers.
+.El
+.It Li show fib Ar filter
+Show routes from bgpd's view of the Forward Information Base.
+.Ar filter
+can be an IP address, in which case the route to this address is shown,
+or a flag:
+.Bl -tag -width connected -compact
+.It Li connected
+Show only connected routes.
+.It Li static
+Show only static routes.
+.It Li bgp
+Show only routes originating from
+.Ar bgpd
+itself.
+.It Li nexthop
+Show only routes required to reach a BGP nexthop.
 .El
 .It Li reload
 Reload the configuration file.
