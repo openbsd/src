@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.16 1997/03/10 04:27:42 millert Exp $	*/
+/*	$OpenBSD: mount.c,v 1.17 1997/05/28 21:28:36 deraadt Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: mount.c,v 1.16 1997/03/10 04:27:42 millert Exp $";
+static char rcsid[] = "$OpenBSD: mount.c,v 1.17 1997/05/28 21:28:36 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -594,6 +594,12 @@ disklabelcheck(fs)
 		if (labelfs == NULL ||
 		    strcmp(labelfs, fs->fs_vfstype) == 0)
 			return (0);
+		if (strcmp(fs->fs_vfstype, "ufs") == 0 &&
+		    strcmp(labelfs, "ffs") == 0) {
+			warnx("%s: fstab uses outdated type 'ufs' -- fix please",
+			    fs->fs_spec);
+			return (0);
+		}
 		warnx("%s: fstab type %s != disklabel type %s",
 		    fs->fs_spec, fs->fs_vfstype, labelfs);
 		return (1);
