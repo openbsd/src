@@ -3,3 +3,5 @@ DISKLESS
 GENERIC
 RAMDISK
 SMD_TEST
+libcompat
+libkern
