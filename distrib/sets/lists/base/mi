@@ -57,6 +57,7 @@
 ./root
 ./sbin
 ./sbin/badsect
+./sbin/dhclient
 ./sbin/ccdconfig
 ./sbin/clri
 ./sbin/disklabel

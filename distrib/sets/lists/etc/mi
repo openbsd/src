@@ -106,3 +106,5 @@
 ./var/cron/tabs/root
 ./var/msgs/bounds
 ./etc/sysctl.conf
+./etc/dhcpd.conf
+./etc/dhcpd.interfaces
