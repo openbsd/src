@@ -221,7 +221,7 @@ calling level then it is displayed once with a repeat count.
 
 =item B<-S>
 
-Display I<merged> subroutine call tree to stdout.  Statistics is
+Display I<merged> subroutine call tree to stdout.  Statistics are
 displayed for each branch of the tree.  
 
 When a function is called multiple (I<not necessarily consecutive>)
