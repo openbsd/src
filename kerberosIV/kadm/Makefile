@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 1998/05/15 06:22:16 art Exp $
+#	$OpenBSD: Makefile,v 1.9 1999/03/09 00:01:42 niklas Exp $
 
 .include <bsd.obj.mk>
 
@@ -18,8 +18,12 @@ kadm_err.c kadm_err.h: kadm_err.et
 	compile_et kadm_err.et
 	-test -h kadm_err.et && rm kadm_err.et
 
+beforedepend prereq: kadm_err.h
+
 includes: kadm_err.h
-	-cd ${.OBJDIR}; cmp -s kadm_err.h ${DESTDIR}/usr/include/kerberosIV/kadm_err.h || \
-	    install -c -o ${BINOWN} -g ${BINGRP} -m 444 kadm_err.h ${DESTDIR}/usr/include/kerberosIV
+	-cd ${.OBJDIR}; cmp -s kadm_err.h \
+	    ${DESTDIR}/usr/include/kerberosIV/kadm_err.h || \
+	    install -c -o ${BINOWN} -g ${BINGRP} -m 444 kadm_err.h \
+	    ${DESTDIR}/usr/include/kerberosIV
 
 .include <bsd.lib.mk>

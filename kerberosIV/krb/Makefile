@@ -100,8 +100,12 @@ krb_err.c krb_err.h: krb_err.et
 	compile_et krb_err.et
 	-test -h krb_err.et && rm krb_err.et
 
+beforedepend prereq: krb_err.h
+
 includes: krb_err.h
-	-cd ${.OBJDIR}; cmp -s krb_err.h ${DESTDIR}/usr/include/kerberosIV/krb_err.h || \
-	    ${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 krb_err.h ${DESTDIR}/usr/include/kerberosIV
+	-cd ${.OBJDIR}; cmp -s krb_err.h \
+	    ${DESTDIR}/usr/include/kerberosIV/krb_err.h || \
+	    ${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 \
+	    krb_err.h ${DESTDIR}/usr/include/kerberosIV
 
 .include <bsd.lib.mk>

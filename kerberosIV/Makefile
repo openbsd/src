@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.25 1998/09/07 00:47:12 niklas Exp $
+#	$OpenBSD: Makefile,v 1.26 1999/03/09 00:01:42 niklas Exp $
 #	from @(#)Makefile	5.1 (Berkeley) 6/25/90
 
 SUBDIR=
@@ -15,6 +15,8 @@ SUBDIR+=ext_srvtab kadmin kadmind kdb_destroy kdb_init kdb_edit \
 
 SUBDIR+=man doc
 
+LIBDIRS=acl krb kadm kafs kdb
+
 .include <bsd.own.mk> # for AFS
 
 .if (${AFS} == "yes")
@@ -22,14 +24,12 @@ SUBDIR+=afslog
 .endif
 
 build:
-	(cd ${.CURDIR}/include && ${SUDO} ${MAKE} includes)
 	${MAKE} cleandir
+	${MAKE} depend
 	${SUDO} ${MAKE} includes
-	(cd ${.CURDIR}/acl && ${MAKE} depend && ${MAKE} && ${SUDO} ${MAKE} install)
-	(cd ${.CURDIR}/krb && ${MAKE} depend && ${MAKE} && ${SUDO} ${MAKE} install)
-	(cd ${.CURDIR}/kadm && ${MAKE} depend && ${MAKE} && ${SUDO} ${MAKE} install)
-	(cd ${.CURDIR}/kafs && ${MAKE} depend && ${MAKE} && ${SUDO} ${MAKE} install)
-	(cd ${.CURDIR}/kdb && ${MAKE} depend && ${MAKE} && ${SUDO} ${MAKE} install)
+	for dir in ${LIBDIRS}; do \
+		(cd ${.CURDIR}/$$dir && ${MAKE} && ${SUDO} ${MAKE} install) \
+	done
 
 .include <bsd.dep.mk>
 .include <bsd.subdir.mk>

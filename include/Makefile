@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.61 1999/03/02 21:47:33 niklas Exp $
+#	$OpenBSD: Makefile,v 1.62 1999/03/09 00:01:41 niklas Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -40,6 +40,9 @@ RDIRS=	../lib/libc_r ../lib/libcom_err ../lib/libcompat ../lib/libcurses \
 	../lib/libpcap ../lib/libutil ../lib/libwrap ../lib/libz \
 	../sys/arch/${MACHINE}
 
+# Places using Makefile that needs a prerequisite target met before includes
+PRDIRS=
+
 # Directories with an includes target that use Makefile.bsd-wrapper
 WDIRS=	../lib/libssl ../gnu/lib/libg++/libg++ ../gnu/lib/libg++/libio \
 	../gnu/lib/libg++/librx ../gnu/lib/libg++/libstdc++ \
@@ -56,9 +59,14 @@ NOOBJ=	noobj
 SYS_INCLUDE?=	copies
 .if (${KERBEROS} == "yes")
 RDIRS+=	../kerberosIV/include ../kerberosIV/kadm ../kerberosIV/krb
+PRDIRS+=../kerberosIV/kadm ../kerberosIV/krb
 .endif
 
 prereq:
+	@-for i in ${PRDIRS}; do \
+		echo preparing in ${.CURDIR}/$$i; \
+		(cd ${.CURDIR}/$$i; ${MAKE} prereq) \
+	done
 	@-for i in ${PWDIRS}; do \
 		echo preparing in ${.CURDIR}/$$i; \
 		(cd ${.CURDIR}/$$i; ${MAKE} -f Makefile.bsd-wrapper prereq) \
