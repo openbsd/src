@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.74 2004/05/12 22:56:59 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.75 2004/05/13 01:22:56 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -337,11 +337,6 @@ trap(type, frame)
 	case T_CONDITION | T_USER:
 		break;
 
-	case T_ILLEGAL | T_USER:
-		sv.sival_int = va;
-		trapsignal(p, SIGILL, type &~ T_USER, ILL_ILLOPC, sv);
-		break;
-
 	case T_PRIV_OP | T_USER:
 		sv.sival_int = va;
 		trapsignal(p, SIGILL, type &~ T_USER, ILL_PRVOPC, sv);
@@ -471,11 +466,25 @@ trap(type, frame)
 		panic("trap: divide by zero in the kernel");
 		break;
 
+	case T_ILLEGAL:
+	case T_ILLEGAL | T_USER:
+		/* see if it's a SPOP1,,0 */
+		if ((frame->tf_iir & 0xfffffe00) == 0x10000200) {
+			frame_regmap(frame, frame->tf_iir & 0x1f) = 0;
+			frame->tf_ipsw |= PSL_N;
+			break;
+		}
+		if (type & T_USER) {
+			sv.sival_int = va;
+			trapsignal(p, SIGILL, type &~ T_USER, ILL_ILLOPC, sv);
+			break;
+		}
+		/* FALLTHROUGH */
+
 	case T_LOWERPL:
 	case T_DPROT:
 	case T_IPROT:
 	case T_OVERFLOW:
-	case T_ILLEGAL:
 	case T_HIGHERPL:
 	case T_TAKENBR:
 	case T_POWERFAIL:
