@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootparam.c,v 1.4 1996/09/27 07:13:47 mickey Exp $	*/
+/*	$OpenBSD: bootparam.c,v 1.5 1996/10/15 09:58:32 mickey Exp $	*/
 /*	$NetBSD: bootparam.c,v 1.7 1996/02/26 23:05:14 gwr Exp $	*/
 
 /*
@@ -449,7 +449,7 @@ xdr_inaddr_decode(pkt, ia)
 	*pkt += sizeof(*xi);
 	if (xi->atype != htonl(1)) {
 #ifdef	RPC_DEBUG
-		printf("xdr_inaddr_decode: bad addrtype=%d\n",
+		printf("xdr_inaddr_decode: bad addrtype=%ld\n",
 			   ntohl(xi->atype));
 #endif
 		return(-1);

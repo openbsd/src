@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootp.c,v 1.3 1996/09/27 07:44:41 mickey Exp $	*/
+/*	$OpenBSD: bootp.c,v 1.4 1996/10/15 09:58:29 mickey Exp $	*/
 /*	$NetBSD: bootp.c,v 1.7 1995/09/18 21:19:20 pk Exp $	*/
 
 /*
@@ -175,7 +175,7 @@ bootprecv(d, pkt, len, tleft)
 	if (bp->bp_xid != htonl(d->xid)) {
 #ifdef BOOTP_DEBUG
 		if (debug) {
-			printf("bootprecv: expected xid 0x%x, got 0x%x\n",
+			printf("bootprecv: expected xid 0x%lx, got 0x%lx\n",
 			    d->xid, ntohl(bp->bp_xid));
 		}
 #endif

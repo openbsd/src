@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc.c,v 1.3 1996/09/27 07:13:49 mickey Exp $	*/
+/*	$OpenBSD: rpc.c,v 1.4 1996/10/15 09:58:37 mickey Exp $	*/
 /*	$NetBSD: rpc.c,v 1.12 1996/02/26 23:05:26 gwr Exp $	*/
 
 /*
@@ -260,7 +260,7 @@ recvrpc(d, pkt, len, tleft)
 	if (x != rpc_xid) {
 #ifdef RPC_DEBUG
 		if (debug)
-			printf("recvrpc: rp_xid %d != xid %d\n", x, rpc_xid);
+			printf("recvrpc: rp_xid %ld != xid %d\n", x, rpc_xid);
 #endif
 		return -1;
 	}
@@ -269,7 +269,7 @@ recvrpc(d, pkt, len, tleft)
 	if (x != RPC_REPLY) {
 #ifdef RPC_DEBUG
 		if (debug)
-			printf("recvrpc: rp_direction %d != REPLY\n", x);
+			printf("recvrpc: rp_direction %ld != REPLY\n", x);
 #endif
 		return -1;
 	}
@@ -277,7 +277,7 @@ recvrpc(d, pkt, len, tleft)
 	x = ntohl(reply->rp_astatus);
 	if (x != RPC_MSGACCEPTED) {
 		errno = ntohl(reply->rp_u.rpu_errno);
-		printf("recvrpc: reject, astat=%d, errno=%d\n", x, errno);
+		printf("recvrpc: reject, astat=%ld, errno=%d\n", x, errno);
 		return -1;
 	}
 

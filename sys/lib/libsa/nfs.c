@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.c,v 1.4 1996/09/27 07:13:48 mickey Exp $	*/
+/*	$OpenBSD: nfs.c,v 1.5 1996/10/15 09:58:34 mickey Exp $	*/
 /*	$NetBSD: nfs.c,v 1.15 1996/05/14 10:28:26 leo Exp $	*/
 
 /*-
@@ -371,7 +371,7 @@ nfs_close(f)
 
 #ifdef NFS_DEBUG
 	if (debug)
-		printf("nfs_close: fp=0x%x\n", fp);
+		printf("nfs_close: fp=%p\n", fp);
 #endif
 
 	if (fp)
