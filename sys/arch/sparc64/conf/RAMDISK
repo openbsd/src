@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISK,v 1.2 2001/09/21 03:49:40 jason Exp $
+# 	$OpenBSD: RAMDISK,v 1.3 2001/09/21 19:54:01 jason Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -12,7 +12,7 @@ maxusers	2
 option		NBUF=16
 
 option		RAMDISK_HOOKS
-option		MINIROOTSIZE=8192
+option		MINIROOTSIZE=6144
 
 #option		DDB		# need this to see what's happening
 
@@ -43,6 +43,7 @@ ppb*	at pci? dev ? function ?
 ebus*	at pci?
 
 hme*	at pci? dev ? function ?
+gem*	at pci? dev ? function ?
 
 #### Standard system devices -- all required for a given architecture
 
@@ -102,7 +103,6 @@ cd*		at scsibus? target ? lun ?	# SCSI CD-ROMs
 nsphy*	at mii? phy ?				# NS and compatible PHYs
 qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
 ukphy*	at mii? phy ?				# Unknown PHYs
-
 
 pseudo-device	rd	2	# ramdisk
 pseudo-device	loop	1	# network loopback
