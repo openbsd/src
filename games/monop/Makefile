@@ -1,3 +1,4 @@
+#	$OpenBSD: Makefile,v 1.2 1996/03/09 01:33:29 niklas Exp $
 #	$NetBSD: Makefile,v 1.12 1995/03/23 08:34:32 cgd Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
@@ -16,7 +17,7 @@ cards.pck: initdeck
 	${.OBJDIR}/initdeck ${.CURDIR}/cards.inp
 
 initdeck: initdeck.c
-	${CC} ${CFLAGS} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${.CURDIR}/initdeck.c ${LDADD}
+	${HOSTCC} ${CFLAGS} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${.CURDIR}/initdeck.c ${LDADD}
 
 beforeinstall:
 	install -c -o ${BINOWN} -g ${BINGRP} -m 444 cards.pck \

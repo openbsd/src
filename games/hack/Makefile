@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 1995/03/23 08:29:07 cgd Exp $
+#	$OpenBSD: Makefile,v 1.2 1996/03/09 01:33:28 niklas Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	hack
@@ -27,7 +27,7 @@ hack.onames.h: makedefs def.objects.h
 	${.OBJDIR}/makedefs ${.CURDIR}/def.objects.h > hack.onames.h
 
 makedefs: makedefs.c
-	${CC} ${CFLAGS} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${.CURDIR}/${.PREFIX}.c ${LDADD}
+	${HOSTCC} ${CFLAGS} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${.CURDIR}/${.PREFIX}.c ${LDADD}
 
 beforeinstall: 
 	install -c -o games -g games -m 600 /dev/null \
