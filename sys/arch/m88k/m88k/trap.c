@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.3 2004/06/03 05:17:36 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.4 2004/06/03 05:18:43 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -921,7 +921,7 @@ m88110_user_fault:
 			} else
 			if (frame->tf_dsr & (CMMU_DSR_CP | CMMU_DSR_WA)) {
 				/* copyback or write allocate error */
-				result = 0;
+				result = EACCES;
 			} else
 			if (frame->tf_dsr & CMMU_DSR_WE) {
 				/* write fault  */
