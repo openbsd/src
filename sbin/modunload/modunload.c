@@ -1,4 +1,4 @@
-/*	$OpenBSD: modunload.c,v 1.8 1999/08/17 09:13:14 millert Exp $	*/
+/*	$OpenBSD: modunload.c,v 1.9 2001/07/07 00:15:14 millert Exp $	*/
 /*	$NetBSD: modunload.c,v 1.9 1995/05/28 05:23:05 jtc Exp $	*/
 
 /*
@@ -72,7 +72,7 @@ main(argc, argv)
 	char *argv[];
 {
 	int c;
-	int modnum = -1;
+	long modnum = -1;
 	char *modname = NULL;
 	char *endptr;
 	struct lmc_unload ulbuf;
@@ -81,8 +81,7 @@ main(argc, argv)
 		switch (c) {
 		case 'i':
 			modnum = strtol(optarg, &endptr, 0);
-			if (modnum == LONG_MIN || modnum == LONG_MAX ||
-			    *endptr != '\0')
+			if (modnum < 0 || modnum > INT_MAX || *endptr != '\0')
                                 errx(1, "not a valid number");
 			break;	/* number */
 		case 'n':
@@ -115,7 +114,7 @@ main(argc, argv)
 	 * Unload the requested module.
 	 */
 	ulbuf.name = modname;
-	ulbuf.id = modnum;
+	ulbuf.id = (int)modnum;
 
 	if (ioctl(devfd, LMUNLOAD, &ulbuf) == -1) {
 		switch (errno) {
