@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.66 2001/06/01 20:08:31 mickey Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.67 2001/06/22 21:31:02 art Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.66 2001/06/01 20:08:31 mickey Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.67 2001/06/22 21:31:02 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -634,7 +634,14 @@ parse(string, flags)
 		struct kmembuckets *kb = (struct kmembuckets *)buf;
 		if (!nflag)
 			(void)printf("%s = ", string);
-		(void)printf("(calls = %qu, total_allocated = %qu, total_free = %qu, elements = %qu, high_watermark = %qu, could_free = %qu)\n", kb->kb_calls, kb->kb_total, kb->kb_totalfree, kb->kb_elmpercl, kb->kb_highwat, kb->kb_couldfree);
+		printf("(");
+		printf("calls = %llu ", (long long)kb->kb_calls);
+		printf("total_allocated = %llu ", (long long)kb->kb_total);
+		printf("total_free = %lld ", (long long)kb->kb_totalfree);
+		printf("elements = %lld ", (long long)kb->kb_elmpercl);
+		printf("high watermark = %lld ", kb->kb_highwat);
+		printf("could_free = %lld", kb->kb_couldfree);
+		printf(")\n");
 		return;
 	}
 	if (special & KMEMSTATS) {
