@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.50 2000/02/21 08:21:22 mjacob Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.51 2000/04/08 19:19:33 csapuntz Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -100,6 +100,8 @@ int scsidebug_targets = SCSIDEBUG_TARGETS;
 int scsidebug_luns = SCSIDEBUG_LUNS;
 int scsidebug_level = SCSIDEBUG_LEVEL;
 
+int scsi_autoconf = SCSI_AUTOCONF;
+
 int scsibusprint __P((void *, const char *));
 
 int
@@ -144,6 +146,10 @@ scsibusattach(parent, self, aux)
 	struct scsibus_softc *sb = (struct scsibus_softc *)self;
 	struct scsi_link *sc_link_proto = aux;
 	int nbytes, i;
+	extern int cold;
+
+	if (!cold)
+		scsi_autoconf = 0;
 
 	sc_link_proto->scsibus = sb->sc_dev.dv_unit;
 	sb->adapter_link = sc_link_proto;
@@ -707,17 +713,17 @@ scsi_probedev(scsi, target, lun)
 #endif /* SCSIDEBUG */
 
 	(void) scsi_test_unit_ready(sc_link,
-	    SCSI_AUTOCONF | SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY | SCSI_IGNORE_MEDIA_CHANGE);
+	    scsi_autoconf | SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY | SCSI_IGNORE_MEDIA_CHANGE);
 
 #ifdef SCSI_2_DEF
 	/* some devices need to be told to go to SCSI2 */
 	/* However some just explode if you tell them this.. leave it out */
-	scsi_change_def(sc_link, SCSI_AUTOCONF | SCSI_SILENT);
+	scsi_change_def(sc_link, scsi_autoconf | SCSI_SILENT);
 #endif /* SCSI_2_DEF */
 
 	/* Now go ask the device all about itself. */
 	bzero(&inqbuf, sizeof(inqbuf));
-	if (scsi_inquire(sc_link, &inqbuf, SCSI_AUTOCONF) != 0)
+	if (scsi_inquire(sc_link, &inqbuf, scsi_autoconf) != 0)
 		goto bad;
 
 	{

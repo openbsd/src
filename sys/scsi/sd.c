@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.41 1999/12/05 02:49:17 deraadt Exp $	*/
+/*	$OpenBSD: sd.c,v 1.42 2000/04/08 19:19:33 csapuntz Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -207,7 +207,7 @@ sdattach(parent, self, aux)
 
 	if ((sd->sc_link->quirks & SDEV_NOSTARTUNIT) == 0) {
 		error = scsi_start(sd->sc_link, SSS_START,
-				   SCSI_AUTOCONF | SCSI_IGNORE_ILLEGAL_REQUEST |
+				   scsi_autoconf | SCSI_IGNORE_ILLEGAL_REQUEST |
 				   SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT);
 	} else
 		error = 0;
@@ -221,7 +221,7 @@ sdattach(parent, self, aux)
 		result = SDGP_RESULT_OFFLINE;
 	else
 		result = (*sd->sc_ops->sdo_get_parms)(sd, &sd->params,
-		    SCSI_AUTOCONF);
+		    scsi_autoconf);
 
 	printf("%s: ", sd->sc_dev.dv_xname);
 	switch (result) {

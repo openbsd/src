@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.8 1998/03/22 20:19:59 tholo Exp $	*/
+/*	$OpenBSD: ch.c,v 1.9 2000/04/08 19:19:33 csapuntz Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -188,7 +188,7 @@ chattach(parent, self, aux)
 	 * Get information about the device.  Note we can't use
 	 * interrupts yet.
 	 */
-	if (ch_get_params(sc, SCSI_AUTOCONF))
+	if (ch_get_params(sc, scsi_autoconf))
 		printf("%s: offline\n", sc->sc_dev.dv_xname);
 	else {
 #define PLURAL(c)	(c) == 1 ? "" : "s"

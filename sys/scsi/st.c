@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.27 1999/09/05 20:58:03 niklas Exp $	*/
+/*	$OpenBSD: st.c,v 1.28 2000/04/08 19:19:33 csapuntz Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -402,9 +402,9 @@ stattach(parent, self, aux)
 	printf("\n");
 	printf("%s: %s", st->sc_dev.dv_xname, st->quirkdata ? "rogue, " : "");
 	if (scsi_test_unit_ready(sc_link,
-	    SCSI_AUTOCONF | SCSI_SILENT | SCSI_IGNORE_MEDIA_CHANGE) ||
+	    scsi_autoconf | SCSI_SILENT | SCSI_IGNORE_MEDIA_CHANGE) ||
 	    st_mode_sense(st,
-	    SCSI_AUTOCONF | SCSI_SILENT | SCSI_IGNORE_MEDIA_CHANGE))
+	    scsi_autoconf | SCSI_SILENT | SCSI_IGNORE_MEDIA_CHANGE))
 		printf("drive empty\n");
 	else {
 		printf("density code 0x%x, ", st->media_density);
