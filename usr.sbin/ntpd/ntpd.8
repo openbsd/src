@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.8,v 1.10 2004/11/02 18:00:38 henning Exp $
+.\" $OpenBSD: ntpd.8,v 1.11 2004/12/06 20:57:17 mickey Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -41,6 +41,16 @@ as described in RFC 1305.
 uses the
 .Xr adjtime 2
 system call to correct the local system time without causing time jumps.
+Adjustments larger then 128ms are logged using
+.Xr syslog 3 .
+The threshold value is chosen to avoid local clock drift thrash the log files.
+Should
+.Nm
+be started with
+.Fl d
+option all calls to
+.Xr adjtime 2
+will be logged.
 .Pp
 .Nm
 is usually started at boot time, and can be enabled by
