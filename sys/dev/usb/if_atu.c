@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.47 2004/12/23 13:19:38 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1079,8 +1079,6 @@ atu_task(void *arg)
 		DPRINTF(("%s: ==========================> END OF SCAN!\n",
 		    USBDEVNAME(sc->atu_dev)));
 
-		ifp->if_flags |= IFF_DEBUG;
-
 		s = splnet();
 		/* ieee80211_next_scan(ifp); */
 		ieee80211_end_scan(ifp);
@@ -1146,12 +1144,6 @@ USB_ATTACH(atu)
 	usbd_device_handle		dev = uaa->device;
 	u_int8_t			mode, channel;
 	int i;
-#ifdef IEEE80211_DEBUG
-	/* XXX gotta clean this up later */
-	extern int			ieee80211_debug;
-
-	ieee80211_debug = 11;
-#endif
 
 	sc->sc_state = ATU_S_UNCONFIG;
 
