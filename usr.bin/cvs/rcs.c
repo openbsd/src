@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.17 2004/12/16 18:55:52 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.18 2004/12/17 21:13:58 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -37,7 +37,8 @@
 #include "rcs.h"
 #include "log.h"
 
-#define RCS_BUFSIZE   8192
+#define RCS_BUFSIZE     16384 
+#define RCS_BUFEXTSIZE   8192
 
 
 /* RCS token types */
@@ -76,10 +77,11 @@
 
 /* opaque parse data */
 struct rcs_pdata {
-	u_int  rp_line;
+	u_int  rp_lines;
 
 	char  *rp_buf;
 	size_t rp_blen;
+	char  *rp_bufend;
 
 	/* pushback token buffer */
 	char   rp_ptok[128];
@@ -114,6 +116,7 @@ static void     rcs_freedelta       (struct rcs_delta *);
 static void     rcs_freepdata       (struct rcs_pdata *);
 static int      rcs_gettok          (RCSFILE *);
 static int      rcs_pushtok         (RCSFILE *, const char *, int);
+static int      rcs_growbuf         (RCSFILE *);
 static int      rcs_patch_lines     (struct rcs_foo *, struct rcs_foo *);
 
 static struct rcs_delta*  rcs_findrev    (RCSFILE *, RCSNUM *);
@@ -148,6 +151,7 @@ static struct rcs_key {
 	{ "text",     RCS_TOK_TEXT,     RCS_TOK_STRING, RCS_NOSCOL   },
 };
 
+#define RCS_NKEYS   (sizeof(rcs_keys)/sizeof(rcs_keys[0]))
 
 
 /*
@@ -720,7 +724,7 @@ rcs_parse(RCSFILE *rfp)
 	}
 	memset(pdp, 0, sizeof(*pdp));
 
-	pdp->rp_line = 1;
+	pdp->rp_lines = 0;
 	pdp->rp_pttype = RCS_TOK_ERR;
 
 	pdp->rp_file = fopen(rfp->rf_path, "r");
@@ -737,6 +741,7 @@ rcs_parse(RCSFILE *rfp)
 		return (-1);
 	}
 	pdp->rp_blen = RCS_BUFSIZE;
+	pdp->rp_bufend = pdp->rp_buf + pdp->rp_blen - 1;
 
 	/* ditch the strict lock */
 	rfp->rf_flags &= ~RCS_RF_SLOCK;
@@ -791,7 +796,7 @@ rcs_parse(RCSFILE *rfp)
 	}
 
 	cvs_log(LP_DEBUG, "RCS file `%s' parsed OK (%u lines)", rfp->rf_path,
-	    pdp->rp_line);
+	    pdp->rp_lines);
 
 	rcs_freepdata(pdp);
 
@@ -830,7 +835,7 @@ rcs_parse_admin(RCSFILE *rfp)
 		}
 
 		rk = NULL;
-		for (i = 0; i < sizeof(rcs_keys)/sizeof(rcs_keys[0]); i++)
+		for (i = 0; i < RCS_NKEYS; i++)
 			if (rcs_keys[i].rk_id == tok)
 				rk = &(rcs_keys[i]);
 
@@ -971,7 +976,7 @@ rcs_parse_delta(RCSFILE *rfp)
 		}
 
 		rk = NULL;
-		for (i = 0; i < sizeof(rcs_keys)/sizeof(rcs_keys[0]); i++)
+		for (i = 0; i < RCS_NKEYS; i++)
 			if (rcs_keys[i].rk_id == tok)
 				rk = &(rcs_keys[i]);
 
@@ -1401,7 +1406,7 @@ rcs_parse_branches(RCSFILE *rfp, struct rcs_delta *rdp)
  * Free the contents of a delta structure.
  */
 
-void
+static void
 rcs_freedelta(struct rcs_delta *rdp)
 {
 	struct rcs_branch *rb;
@@ -1464,12 +1469,12 @@ rcs_gettok(RCSFILE *rfp)
 {
 	u_int i;
 	int ch, last, type;
-	char *bp, *bep;
+	size_t len;
+	char *bp;
 	struct rcs_pdata *pdp = (struct rcs_pdata *)rfp->rf_pdata;
 
 	type = RCS_TOK_ERR;
 	bp = pdp->rp_buf;
-	bep = pdp->rp_buf + pdp->rp_blen - 1;
 	*bp = '\0';
 
 	if (pdp->rp_pttype != RCS_TOK_ERR) {
@@ -1484,7 +1489,7 @@ rcs_gettok(RCSFILE *rfp)
 	do {
 		ch = getc(pdp->rp_file);
 		if (ch == '\n')
-			pdp->rp_line++;
+			pdp->rp_lines++;
 	} while (isspace(ch));
 
 	if (ch == EOF) {
@@ -1494,30 +1499,38 @@ rcs_gettok(RCSFILE *rfp)
 	} else if (ch == ':') {
 		type = RCS_TOK_COLON;
 	} else if (isalpha(ch)) {
+		type = RCS_TOK_STRING;
 		*(bp++) = ch;
-		while (bp <= bep - 1) {
+		for (;;) {
 			ch = getc(pdp->rp_file);
 			if (!isalnum(ch) && ch != '_' && ch != '-') {
 				ungetc(ch, pdp->rp_file);
 				break;
 			}
 			*(bp++) = ch;
+			if (bp == pdp->rp_bufend - 1) {
+				len = bp - pdp->rp_buf;
+				if (rcs_growbuf(rfp) < 0) {
+					type = RCS_TOK_ERR;
+					break;
+				}
+				bp = pdp->rp_buf + len;
+			}
 		}
 		*bp = '\0';
 
-		for (i = 0; i < sizeof(rcs_keys)/sizeof(rcs_keys[0]); i++) {
-			if (strcmp(rcs_keys[i].rk_str, pdp->rp_buf) == 0) {
-				type = rcs_keys[i].rk_id;
-				break;
+		if (type != RCS_TOK_ERR) {
+			for (i = 0; i < RCS_NKEYS; i++) {
+				if (strcmp(rcs_keys[i].rk_str,
+				    pdp->rp_buf) == 0) {
+					type = rcs_keys[i].rk_id;
+					break;
+				}
 			}
 		}
-
-		/* not a keyword, assume it's just a string */
-		if (type == RCS_TOK_ERR)
-			type = RCS_TOK_STRING;
-
 	} else if (ch == '@') {
 		/* we have a string */
+		type = RCS_TOK_STRING;
 		for (;;) {
 			ch = getc(pdp->rp_file);
 			if (ch == '@') {
@@ -1527,15 +1540,20 @@ rcs_gettok(RCSFILE *rfp)
 					break;
 				}
 			} else if (ch == '\n')
-				pdp->rp_line++;
+				pdp->rp_lines++;
 
 			*(bp++) = ch;
-			if (bp == bep)
-				break;
+			if (bp == pdp->rp_bufend - 1) {
+				len = bp - pdp->rp_buf;
+				if (rcs_growbuf(rfp) < 0) {
+					type = RCS_TOK_ERR;
+					break;
+				}
+				bp = pdp->rp_buf + len;
+			}
 		}
 
 		*bp = '\0';
-		type = RCS_TOK_STRING;
 	} else if (isdigit(ch)) {
 		*(bp++) = ch;
 		last = ch;
@@ -1543,7 +1561,7 @@ rcs_gettok(RCSFILE *rfp)
 
 		for (;;) {
 			ch = getc(pdp->rp_file);
-			if (bp == bep)
+			if (bp == pdp->rp_bufend)
 				break;
 			if (!isdigit(ch) && ch != '.') {
 				ungetc(ch, pdp->rp_file);
@@ -1557,7 +1575,7 @@ rcs_gettok(RCSFILE *rfp)
 			last = ch;
 			*(bp++) = ch;
 		}
-		*(bp) = '\0';
+		*bp = '\0';
 	}
 
 	return (type);
@@ -1707,4 +1725,32 @@ rcs_freefoo(struct rcs_foo *fp)
 	}
 	free(fp->rl_data);
 	free(fp);
+}
+
+/*
+ * rcs_growbuf()
+ *
+ * Attempt to grow the internal parse buffer for the RCS file <rf> by
+ * RCS_BUFEXTSIZE.
+ * In case of failure, the original buffer is left unmodified.
+ * Returns 0 on success, or -1 on failure.
+ */
+
+static int
+rcs_growbuf(RCSFILE *rf)
+{
+	void *tmp;
+	struct rcs_pdata *pdp = (struct rcs_pdata *)rf->rf_pdata;
+
+	tmp = realloc(pdp->rp_buf, pdp->rp_blen + RCS_BUFEXTSIZE);
+	if (tmp == NULL) {
+		cvs_log(LP_ERRNO, "failed to grow RCS parse buffer");
+		return (-1);
+	}
+
+	pdp->rp_buf = (char *)tmp;
+	pdp->rp_blen += RCS_BUFEXTSIZE;
+	pdp->rp_bufend = pdp->rp_buf + pdp->rp_blen - 1;
+
+	return (0);
 }
