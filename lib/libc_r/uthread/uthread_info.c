@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_info.c,v 1.10 2001/08/21 19:24:53 fgsch Exp $	*/
+/*	$OpenBSD: uthread_info.c,v 1.11 2002/10/21 23:10:29 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -152,9 +152,13 @@ _thread_dump_info(void)
 				    pthread->data.fd.fname,
 				    pthread->data.fd.branch);
 				_thread_sys_write(fd, s, strlen(s));
-				snprintf(s, sizeof(s), "owner %pr/%pw\n",
-				    _thread_fd_table[pthread->data.fd.fd]->r_owner,
-				    _thread_fd_table[pthread->data.fd.fd]->w_owner);
+				if (_thread_fd_table[pthread->data.fd.fd])
+				    snprintf(s, sizeof(s), "owner %pr/%pw\n",
+					     _thread_fd_table[pthread->data.fd.fd]->r_owner,
+					     _thread_fd_table[pthread->data.fd.fd]->w_owner);
+				else
+				    snprintf(s, sizeof(s), "owner [unknown]\n");
+
 				_thread_sys_write(fd, s, strlen(s));
 				break;
 			case PS_SIGWAIT:
