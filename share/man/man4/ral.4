@@ -1,4 +1,4 @@
-.\" $OpenBSD: ral.4,v 1.10 2005/03/09 11:23:20 damien Exp $
+.\" $OpenBSD: ral.4,v 1.11 2005/03/09 12:40:08 jmc Exp $
 .\"
 .\" Copyright (c) 2005
 .\"	Damien Bergamini <damien.bergamini@free.fr>
@@ -33,12 +33,13 @@ chipset.
 The RT2500 chipset consists of two integrated chips, a RT2560 MAC/BBP and a
 radio transceiver (the model of which depends on the card revision).
 .Pp
-The RT2522, RT2523, RT2524, RT2525, RT2525e radio transceivers operate in
+The RT2522, RT2523, RT2524, RT2525, and RT2525e radio transceivers operate in
 the 2.4GHz band (802.11b/g) whereas the RT5222 is a dual-band radio
 transceiver that can operate in the 2.4GHz and 5.2GHz bands (802.11a).
 .Pp
 The transmit speed is user-selectable or can be adapted automatically by the
-driver depending on the received-signal strength. See
+driver depending on the received-signal strength.
+See
 .Xr rssadapt 9
 for more information.
 .Pp
