@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.15 1997/02/03 21:30:14 kstailey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.16 1997/02/03 23:22:38 kstailey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.77 1996/10/13 03:47:51 christos Exp $	*/
 
 /*
@@ -482,6 +482,7 @@ struct sigframe {
 	sig_t	sf_handler;		/* handler addr for u_sigc */
 	struct	sigstate sf_state;	/* state of the hardware */
 	struct	sigcontext sf_sc;	/* actual context */
+	siginfo_t sf_si;
 };
 
 #ifdef DEBUG
