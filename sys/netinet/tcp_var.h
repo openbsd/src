@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.10 1998/03/18 02:37:49 angelos Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.11 1998/06/10 03:40:05 beck Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -240,7 +240,8 @@ struct	tcpstat {
 #define TCPCTL_BADDYNAMIC	6 /* return bad dynamic port bitmap */ 
 #define	TCPCTL_RECVSPACE	7 /* receive buffer space */
 #define	TCPCTL_SENDSPACE	8 /* send buffer space */
-#define	TCPCTL_MAXID		9
+#define	TCPCTL_IDENT	        9 /* get connection owner */
+#define	TCPCTL_MAXID		10
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -252,7 +253,13 @@ struct	tcpstat {
 	{ "baddynamic", CTLTYPE_STRUCT }, \
 	{ "recvspace",	CTLTYPE_INT }, \
 	{ "sendspace",	CTLTYPE_INT }, \
+	{ "ident", CTLTYPE_STRUCT }, \
 }
+
+struct tcp_ident_mapping {
+	struct sockaddr faddr, laddr;
+	int euid, ruid;
+};
 
 #ifdef _KERNEL
 struct	inpcbtable tcbtable;	/* head of queue of active tcpcb's */

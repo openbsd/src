@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.21 1998/05/18 21:11:09 provos Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.22 1998/06/10 03:40:07 beck Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -81,6 +81,8 @@ extern	int tcptv_keep_init;
 
 /* from in_pcb.c */
 extern	struct baddynamicports baddynamicports;
+
+static int tcp_ident __P((void *, size_t *, void *,	size_t));
 
 /*
  * Process a TCP user request for TCP tb.  If this is a send request
@@ -578,6 +580,59 @@ tcp_usrclosed(tp)
 }
 
 /*
+ * Look up a socket for ident.. 
+ */
+
+static int
+tcp_ident(oldp, oldlenp, newp, newlen)
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+{
+	int error = 0, s;
+	tcp_ident_mapping tir;
+	struct inpcb *inp;
+	struct sockaddr_in *fin, *lin;
+	
+
+	if (oldp == NULL || newp != NULL || newlen != 0) 
+		return (EINVAL);
+	if  (*oldlenp < sizeof(tir)) 
+		return (ENOMEM);
+	if ((error = copyin (oldp, &tir, sizeof (tir))) != 0 )
+		return (error);
+	if (tir.faddr.sa_len != sizeof (struct sockaddr) 
+	    || (tir.faddr.sa_family != AF_INET))    
+		return (EINVAL); 
+	fin = (struct sockaddr_in *) &tir.faddr;
+	lin = (struct sockaddr_in *) &tir.laddr;
+	
+	
+	s = splsoftnet ();
+	inp = in_pcbhashlookup (&tcbtable,  fin->sin_addr, fin->sin_port,
+	    lin->sin_addr, lin->sin_port);
+	if (inp == NULL) {
+		++tcpstat.tcps_pcbhashmiss;
+		inp = in_pcblookup (&tcbtable, fin->sin_addr, fin->sin_port,
+		    lin->sin_addr, lin->sin_port, 0);
+	}
+	if (inp != NULL && (inp->inp_socket->so_state & SS_CONNECTOUT)) {
+		tir.ruid = inp->inp_socket->so_ruid;
+		tir.euid = inp->inp_socket->so_euid;
+	} else {
+		tir.ruid = -1;
+		tir.euid = -1;
+	}
+	splx(s);
+
+	*oldlenp = sizeof (tir);
+	error = copyout ((void *)&tir, oldp, sizeof (tir));
+	return (error);
+}
+  
+
+/*
  * Sysctl for tcp variables.
  */
 int
@@ -623,7 +678,8 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 
 	case TCPCTL_SENDSPACE:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,&tcp_sendspace));
-
+	case TCPCTL_IDENT: 
+	        return (tcp_ident(oldp, oldlenp, newp, newlen));
 	default:
 		return (ENOPROTOOPT);
 	}
