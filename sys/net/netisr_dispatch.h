@@ -1,4 +1,4 @@
-/*	$OpenBSD: netisr_dispatch.h,v 1.7 2004/11/28 23:39:45 canacar Exp $	*/
+/*	$OpenBSD: netisr_dispatch.h,v 1.8 2005/01/14 12:04:02 grange Exp $	*/
 /* $NetBSD: netisr_dispatch.h,v 1.2 2000/07/02 04:40:47 cgd Exp $ */
 
 /*
@@ -22,6 +22,7 @@
 
 #ifndef _NET_NETISR_DISPATCH_H_
 #define _NET_NETISR_DISPATCH_H_
+#include "bluetooth.h"
 #include "ether.h"
 #include "ppp.h"
 #include "bridge.h"
@@ -68,4 +69,7 @@
 #endif
 #if NPPPOE > 0
 	DONETISR(NETISR_PPPOE,pppoeintr);
+#endif
+#if NBLUETOOTH > 0
+	DONETISR(NETISR_BT,btintr);
 #endif

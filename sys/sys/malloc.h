@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.74 2004/12/30 08:28:39 niklas Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.75 2005/01/14 12:04:02 grange Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -176,7 +176,9 @@
 
 #define	M_KEVENT	137	/* kqueue related */
 
-#define	M_LAST		138	/* Must be last type + 1 */
+#define	M_BLUETOOTH	138	/* Bluetooth */
+
+#define	M_LAST		139	/* Must be last type + 1 */
 
 
 #define	INITKMEMNAMES { \
@@ -303,6 +305,7 @@
 	"NTFS decomp",	/* 135 M_NTFSDECOMP */ \
 	"NTFS vrun",	/* 136 M_NTFSRUN */ \
 	"kqueue",	/* 137 M_KEVENT */ \
+	"bluetooth",	/* 138 M_BLUETOOTH */ \
 }
 
 struct kmemstats {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.48 2004/11/26 13:07:52 markus Exp $	*/
+/*	$OpenBSD: socket.h,v 1.49 2005/01/14 12:04:02 grange Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -132,7 +132,9 @@ struct	linger {
 #define AF_KEY		30
 #define pseudo_AF_HDRCMPLT 31		/* Used by BPF to not rewrite headers
 					   in interface output routine */
-#define	AF_MAX		32
+#define	AF_BLUETOOTH	32		/* Bluetooth */
+
+#define	AF_MAX		33
 
 /*
  * Structure used by kernel to store most
@@ -210,6 +212,7 @@ struct sockproto {
 #define	PF_SIP		AF_SIP
 #define PF_KEY		AF_KEY
 #define PF_BPF		pseudo_AF_HDRCMPLT
+#define	PF_BLUETOOTH	AF_BLUETOOTH
 #define	PF_MAX		AF_MAX
 
 /*

@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.324 2005/01/14 01:08:11 pvalchev Exp $
+#	$OpenBSD: files,v 1.325 2005/01/14 12:04:02 grange Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -60,6 +60,7 @@ define	ieee1394
 define	sppp
 define	token
 define	wlan
+define	bluetooth
 
 # "Chipset" attributes.  These are the machine-independent portions
 # of device drivers.
@@ -815,6 +816,9 @@ file netatalk/at_proto.c		netatalk
 file netatalk/ddp_input.c		netatalk
 file netatalk/ddp_output.c		netatalk
 file netatalk/ddp_usrreq.c		netatalk
+file netbt/bt_input.c			bluetooth		needs-flag
+file netbt/bt_proto.c			bluetooth
+file netbt/hci_raw.c			bluetooth
 file netnatm/natm_pcb.c			natm
 file netnatm/natm_proto.c		natm
 file netnatm/natm.c			natm

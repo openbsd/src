@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.101 2005/01/14 11:49:01 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.102 2005/01/14 12:04:02 grange Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -61,6 +61,7 @@
  *	@(#)if.c	8.3 (Berkeley) 1/4/94
  */
 
+#include "bluetooth.h"
 #include "bpfilter.h"
 #include "bridge.h"
 #include "carp.h"
@@ -581,6 +582,9 @@ do { \
 #endif
 #ifdef DECNET
 	IF_DETACH_QUEUES(decnetintrq);
+#endif
+#if NBLUETOOTH > 0
+	IF_DETACH_QUEUES(btintrq);
 #endif
 #undef IF_DETACH_QUEUES
 
