@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: rmgroup.sh,v 1.1 1996/12/08 13:57:08 downsj Exp $
+# $OpenBSD: rmgroup.sh,v 1.2 1998/07/16 16:47:41 millert Exp $
 #
 # Copyright (c) 1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 # All rights reserved.
@@ -27,5 +27,5 @@ if egrep -q -- "^$group:" $db; then
 		cp -pf $db $db.bak &&
 		mv -f  $db.new $db
 else 
-	echo "Group \"$group\" does not exists in $db."; exit 1
+	echo "Group \"$group\" does not exist in $db."; exit 1
 fi
