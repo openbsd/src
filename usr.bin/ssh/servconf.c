@@ -10,7 +10,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: servconf.c,v 1.120 2003/05/15 04:08:44 jakob Exp $");
+RCSID("$OpenBSD: servconf.c,v 1.121 2003/05/15 14:02:47 jakob Exp $");
 
 #if defined(KRB4)
 #include <krb.h>
@@ -180,11 +180,7 @@ fill_default_server_options(ServerOptions *options)
 	if (options->kerberos_or_local_passwd == -1)
 		options->kerberos_or_local_passwd = 1;
 	if (options->kerberos_ticket_cleanup == -1)
-#if defined(KRB4) || defined(KRB5)
 		options->kerberos_ticket_cleanup = 1;
-#else
-		options->kerberos_ticket_cleanup = 0;
-#endif
 	if (options->kerberos_tgt_passing == -1)
 		options->kerberos_tgt_passing = 0;
 	if (options->afs_token_passing == -1)
@@ -254,7 +250,7 @@ typedef enum {
 	sHostbasedUsesNameFromPacketOnly, sClientAliveInterval,
 	sClientAliveCountMax, sAuthorizedKeysFile, sAuthorizedKeysFile2,
 	sUsePrivilegeSeparation,
-	sDeprecated
+	sDeprecated, sUnsupported
 } ServerOpCodes;
 
 /* Textual representation of the tokens. */
@@ -279,11 +275,22 @@ static struct {
 	{ "rsaauthentication", sRSAAuthentication },
 	{ "pubkeyauthentication", sPubkeyAuthentication },
 	{ "dsaauthentication", sPubkeyAuthentication },			/* alias */
+#if defined(KRB4) || defined(KRB5)
 	{ "kerberosauthentication", sKerberosAuthentication },
 	{ "kerberosorlocalpasswd", sKerberosOrLocalPasswd },
 	{ "kerberosticketcleanup", sKerberosTicketCleanup },
 	{ "kerberostgtpassing", sKerberosTgtPassing },
+#else
+	{ "kerberosauthentication", sUnsupported },
+	{ "kerberosorlocalpasswd", sUnsupported },
+	{ "kerberosticketcleanup", sUnsupported },
+	{ "kerberostgtpassing", sUnsupported },
+#endif
+#if defined(AFS)
 	{ "afstokenpassing", sAFSTokenPassing },
+#else
+	{ "afstokenpassing", sUnsupported },
+#endif
 	{ "passwordauthentication", sPasswordAuthentication },
 	{ "kbdinteractiveauthentication", sKbdInteractiveAuthentication },
 	{ "challengeresponseauthentication", sChallengeResponseAuthentication },
@@ -845,6 +852,13 @@ parse_flag:
 
 	case sDeprecated:
 		logit("%s line %d: Deprecated option %s",
+		    filename, linenum, arg);
+		while (arg)
+		    arg = strdelim(&cp);
+		break;
+
+	case sUnsupported:
+		logit("%s line %d: Unsupported option %s",
 		    filename, linenum, arg);
 		while (arg)
 		    arg = strdelim(&cp);
