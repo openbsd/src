@@ -18,7 +18,7 @@ Unlike SunOS and the OpenBOOT ROM, a generic OpenBSD kernel numbers
 scsi drives sequentially as it finds them.  The drive with the
 lowest scsi-id will be called sd0, the next one sd1, etc.
 
-To ease the installation process, two OpenBSD kernels are provide in
+To ease the installation process, two OpenBSD kernels are provided in
 the installation sets.  The default OpenBSD kernel (bsd) is set up
 to use the OpenBSD mapping, while a special kernel (bsd.scsi3) is
 set up to match the Sun mapping above by hard-wiring scsi-id#3 to sd0
