@@ -1,4 +1,4 @@
-.\" $OpenBSD: VOP_LOOKUP.9,v 1.7 2003/04/15 04:14:29 jmc Exp $
+.\" $OpenBSD: VOP_LOOKUP.9,v 1.8 2003/04/30 04:53:18 tedu Exp $
 .\"
 .\" Copyright (c) 2003 Ted Unangst
 .\" All rights reserved.
@@ -85,10 +85,19 @@
 .Fa "struct vattr *vap"
 .Fc
 .Ft int
+.Fo VOP_PRINT
+.Fa "struct vnode *vp"
+.Fc
+.Ft int
 .Fo VOP_READLINK
 .Fa "struct vnode *vp"
 .Fa "struct uio *uio"
 .Fa "struct ucred *cred"
+.Fc
+.Ft int
+.Fo VOP_REALLOCBLKS
+.Fa "struct vnode *vp"
+.Fa "struct cluster_save *buflist"
 .Fc
 .Ft int
 .Fo VOP_RECLAIM
@@ -122,6 +131,10 @@
 .Fa "struct proc *p"
 .Fc
 .Ft int
+.Fo VOP_STRATEGY
+.Fa "struct buf *bp"
+.Fc
+.Ft int
 .Fo VOP_SYMLINK
 .Fa "struct vnode *dvp"
 .Fa "struct vnode *vpp"
@@ -134,6 +147,12 @@
 .Fa "struct vnode *vp"
 .Fa "int flags"
 .Fa "struct proc *p"
+.Fc
+.Ft int
+.Fo VOP_WHITEOUT
+.Fa "struct vnode *dvp"
+.Fa "struct componentname *cnp"
+.Fa "int flags"
 .Fc
 .\" and many more
 .Sh DESCRIPTION
@@ -248,12 +267,26 @@ On success, the new vnode is returned locked in
 .Ar vpp .
 .Ar dvp
 must be locked on entry and is unlocked on exit.
+.Sh VOP_PRINT
+.Fn VOP_PRINT
+prints information about the vnode to the kernel message buffer.
+It is not used normally, but exists only for debugging purposes.
 .Sh VOP_READLINK
 .Fn VOP_READLINK
 reads a symbolic link and returns the target's name in
 .Ar uio .
 .Ar vp
 is locked on entry and exit and must be a symlink.
+.Sh VOP_REALLOCBLKS
+.Fn VOP_REALLOCBLKS
+is called by the vfs write clustering code.
+It gives the file system an opporunity to rearrange the on disk blocks
+for a file to reduce fragmentation.
+.Ar vp
+is the locked vnode for the file, and
+.Ar buflist
+is a cluster of the outstanding buffers about to written.
+Currently, only FFS implements this call.
 .Sh VOP_RECLAIM
 .Fn VOP_RECLAIM
 is used by
@@ -297,6 +330,11 @@ will be removed from the directory
 Both are locked on entry and unlocked on exit.
 The name of the directory for removal is additionally contained in
 .Ar cnp .
+.Sh VOP_STRATEGY
+.Fn VOP_STRATEGY
+is the only VOP call not taking a vnode argument.
+It calls the appropriate strategy function for the device backing the
+buffer's vnode.
 .Sh VOP_SYMLINK
 .Fn VOP_SYMLINK
 creates a symbolic link with name
@@ -330,6 +368,19 @@ is locked and 0 if not.
 It should be used cautiously, as not all file systems implement locks
 effectively.
 Note the asymmetry between vn_lock and VOP_UNLOCK.
+.Sh VOP_WHITEOUT
+.Fn VOP_WHITEOUT
+manipulates whiteout entries in a directory.
+.Ar dvp
+is the directory containing, or to contain, the whiteout.
+It is locked on entry and exit.
+.Ar cnp
+contains the name of the whiteout.
+.Ar flags
+is used to indicate the operation.
+Whiteouts may be created or deleted.
+A whiteout entry is normally used to indicate the absence of a file on a
+translucent file system.
 .Sh IMPLEMENTATION NOTES
 The
 .Nm VOP
