@@ -74,7 +74,8 @@ static const char *talk[] = {
 	"blah blah",
 	"i'd love to hack, but i can't",
 	"Wait, yes, I am on drugs",
-	"during release it is a constant.  almost noone helps."
+	"during release it is a constant.  almost noone helps.",
+	"i let you guys do whatever you wanted"
 };
 
 static const int ntalk = sizeof(talk)/sizeof(talk[0]);
