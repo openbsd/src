@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.55 1998/09/11 04:02:27 millert Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.56 1998/10/03 22:01:47 millert Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.55 1998/09/11 04:02:27 millert Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.56 1998/10/03 22:01:47 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -107,6 +107,7 @@ enum {
 	UNSPEC, EDIT, EDITOR, READ, RESTORE, SETWRITEABLE, WRITE, WRITEBOOT
 } op = UNSPEC;
 
+int	pflag;
 int	rflag;
 int	tflag;
 int	nwflag;
@@ -147,7 +148,7 @@ main(argc, argv)
 	struct disklabel *lp;
 	FILE *t;
 
-	while ((ch = getopt(argc, argv, "BENRWb:enrs:tvw")) != -1)
+	while ((ch = getopt(argc, argv, "BENRWb:enprs:tvw")) != -1)
 		switch (ch) {
 #if NUMBOOT > 0
 		case 'B':
@@ -188,6 +189,9 @@ main(argc, argv)
 			if (op != UNSPEC)
 				usage();
 			op = EDIT;
+			break;
+		case 'p':
+			++pflag;
 			break;
 		case 'r':
 			++rflag;
@@ -712,6 +716,10 @@ readlabel(f)
 		}
 		warnx(msg);
 		return(NULL);
+	} else if (pflag) {
+		lp = &lab;
+		if (ioctl(f, DIOCGPDINFO, lp) < 0)
+			err(4, "ioctl DIOCGPDINFO");
 	} else {
 		lp = &lab;
 		if (ioctl(f, DIOCGDINFO, lp) < 0)

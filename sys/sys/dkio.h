@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkio.h,v 1.2 1996/03/03 12:11:35 niklas Exp $	*/
+/*	$OpenBSD: dkio.h,v 1.3 1998/10/03 22:01:48 millert Exp $	*/
 /*	$NetBSD: dkio.h,v 1.1 1996/01/30 18:21:48 thorpej Exp $	*/
 
 /*
@@ -59,5 +59,7 @@
 #define DIOCSBAD	_IOW('d', 110, struct dkbad)	/* set kernel dkbad */
 #define DIOCEJECT	_IO('d', 112)		/* eject removable disk */
 #define DIOCLOCK	_IOW('d', 113, int)	/* lock/unlock pack */
+
+#define DIOCGPDINFO	_IOR('d', 114, struct disklabel)/* get physical */
 
 #endif /* _SYS_DKIO_H_ */
