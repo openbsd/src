@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ed.c,v 1.10 1996/04/21 22:23:41 deraadt Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.11 1996/04/27 22:19:59 niklas Exp $	*/
 /*	$NetBSD: if_ed.c,v 1.93 1996/04/11 22:28:55 cgd Exp $	*/
 
 /*
@@ -1855,8 +1855,8 @@ loop:
 			    sizeof(packet_hdr));
 		else
 			ed_pio_readmem(sc, (long)packet_ptr,
-			    (caddr_t) &packet_hdr, sizeof(packet_hdr));
-		len = packet_hdr.count;
+			    (caddr_t)&packet_hdr, sizeof(packet_hdr));
+		len = bus_to_host_2(bc, packet_hdr.count);
 
 		/*
 		 * Try do deal with old, buggy chips that sometimes duplicate

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.2 1996/04/21 22:16:46 deraadt Exp $	*/
+/*	$OpenBSD: bus.h,v 1.3 1996/04/27 22:18:16 niklas Exp $	*/
 /*	$NetBSD: bus.h,v 1.2 1996/04/05 23:59:37 thorpej Exp $	*/
 
 /*
@@ -113,5 +113,14 @@ void	bus_mem_unmap __P((bus_chipset_tag_t t, bus_mem_handle_t memh,
     ((void)(*(volatile u_int32_t *)((h) + (o)) = (v)))
 #define	bus_mem_write_8(t, h, o, v)					\
     ((void)(*(volatile u_int64_t *)((h) + (o)) = (v)))
+
+/* These are extensions to the general NetBSD bus interface.  */
+#define bus_to_host_2(t, v) (v)
+#define bus_to_host_4(t, v) (v)
+#define bus_to_host_8(t, v) (v)
+
+#define bus_from_host_2(t, v) (v)
+#define bus_from_host_4(t, v) (v)
+#define bus_from_host_8(t, v) (v)
 
 #endif /* _I386_BUS_H_ */
