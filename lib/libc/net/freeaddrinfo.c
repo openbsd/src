@@ -42,6 +42,8 @@ freeaddrinfo(ai)
 	while (ai) {
 		p = ai;
 		ai = ai->ai_next;
+		if (p->ai_canonname)
+			free(p->ai_canonname);
 		free((void *)p);
 	}
 }
