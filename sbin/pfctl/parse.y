@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.196 2002/11/19 17:31:24 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.197 2002/11/19 18:51:09 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -572,7 +572,10 @@ queuespec	: QUEUE STRING bandwidth priority qlimit schedtype qassign {
 			a.priority = $4;
 			a.qlimit = $5;
 			a.scheduler = $6.qtype;
-			a.pq_u.cbq_opts.flags = $6.data.cbq_opts.flags;
+			switch (a.scheduler) {
+			case ALTQT_CBQ:
+				a.pq_u.cbq_opts.flags = $6.data.cbq_opts.flags;
+			}
 			if (expand_queue(&a, $7, $3))
 				YYERROR;
 
