@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.48 2002/07/02 01:36:19 millert Exp $	*/
+/*	$OpenBSD: login.c,v 1.49 2002/10/16 01:08:56 millert Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -68,22 +68,23 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
+static const char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: login.c,v 1.48 2002/07/02 01:36:19 millert Exp $";
+static const char rcsid[] = "$OpenBSD: login.c,v 1.49 2002/10/16 01:08:56 millert Exp $";
 #endif /* not lint */
 
 /*
  * login [ name ]
  * login -h hostname	(for telnetd, etc.)
  * login -f name	(for pre-authenticated login: datakit, xterm, etc.)
+ * login -p		(preserve existing environment; for getty)
  */
 
 #include <sys/param.h>
@@ -170,17 +171,6 @@ main(int argc, char *argv[])
 	struct stat st;
 	uid_t uid;
 
-	(void)signal(SIGALRM, timedout);
-	if (argc > 1) {
-		needto = 0;
-		(void)alarm(timeout);
-	} else
-		needto = 1;
-	(void)signal(SIGQUIT, SIG_IGN);
-	(void)signal(SIGINT, SIG_IGN);
-	(void)signal(SIGHUP, SIG_IGN);
-	(void)setpriority(PRIO_PROCESS, 0, 0);
-
 	openlog("login", LOG_ODELAY, LOG_AUTH);
 
 	fqdn = lipaddr = ripaddr = fullname = type = NULL;
@@ -188,31 +178,11 @@ main(int argc, char *argv[])
 	tries = 10;
 	backoff = 3;
 
-	/*
-	 * Since login deals with sensitive information, turn off coredumps.
-	 */
-	if (getrlimit(RLIMIT_CORE, &scds) < 0) {
-		syslog(LOG_ERR, "couldn't get core dump size: %m");
-		scds.rlim_cur = scds.rlim_max = QUAD_MIN;
-	}
-	cds.rlim_cur = cds.rlim_max = 0;
-	if (setrlimit(RLIMIT_CORE, &cds) < 0) {
-		syslog(LOG_ERR, "couldn't set core dump size to 0: %m");
-		scds.rlim_cur = scds.rlim_max = QUAD_MIN;
-	}
-
-	/*
-	 * -p is used by getty to tell login not to destroy the environment
-	 * -f is used to skip a second login authentication
-	 * -h is used by other servers to pass the name of the remote
-	 *    host to login so that it may be placed in utmp and wtmp
-	 */
 	domain = NULL;
-	if (gethostname(localhost, sizeof(localhost)) < 0)
+	if (gethostname(localhost, sizeof(localhost)) < 0) {
 		syslog(LOG_ERR, "couldn't get local hostname: %m");
-	else
-		domain = strchr(localhost, '.');
-	if (domain) {
+		strlcpy(localhost, "localhost", sizeof(localhost));
+	} else if ((domain = strchr(localhost, '.'))) {
 		domain++;
 		if (*domain && strchr(domain, '.') == NULL)
 			domain = localhost;
@@ -224,6 +194,12 @@ main(int argc, char *argv[])
 	}
 	auth_setoption(as, "login", "yes");
 
+	/*
+	 * -p is used by getty to tell login not to destroy the environment
+	 * -f is used to skip a second login authentication
+	 * -h is used by other servers to pass the name of the remote
+	 *    host to login so that it may be placed in utmp and wtmp
+	 */
 	fflag = pflag = 0;
 	uid = getuid();
 	while ((ch = getopt(argc, argv, "fh:pu:L:R:")) != -1)
@@ -311,6 +287,28 @@ main(int argc, char *argv[])
 	for (cnt = getdtablesize(); cnt > 2; cnt--)
 		(void)close(cnt);
 
+	/*
+	 * If effective user is not root, just run su(1) to emulate login(1).
+	 */
+	if (geteuid() != 0) {
+		char *av[5], **ap;
+
+		auth_close(as);
+		closelog();
+
+		ap = av;
+		*ap++ = _PATH_SU;
+		*ap++ = "-L";
+		if (!pflag)
+			*ap++ = "-l";
+		if (!ask)
+			*ap++ = username;
+		*ap = NULL;
+		execv(_PATH_SU, av);
+		warn("unable to exec %s", _PATH_SU);
+		_exit(1);
+	}
+
 	ttyn = ttyname(STDIN_FILENO);
 	if (ttyn == NULL || *ttyn == '\0') {
 		(void)snprintf(tname, sizeof(tname), "%s??", _PATH_TTY);
@@ -320,6 +318,30 @@ main(int argc, char *argv[])
 		++tty;
 	else
 		tty = ttyn;
+
+	/*
+	 * Since login deals with sensitive information, turn off coredumps.
+	 */
+	if (getrlimit(RLIMIT_CORE, &scds) < 0) {
+		syslog(LOG_ERR, "couldn't get core dump size: %m");
+		scds.rlim_cur = scds.rlim_max = QUAD_MIN;
+	}
+	cds.rlim_cur = cds.rlim_max = 0;
+	if (setrlimit(RLIMIT_CORE, &cds) < 0) {
+		syslog(LOG_ERR, "couldn't set core dump size to 0: %m");
+		scds.rlim_cur = scds.rlim_max = QUAD_MIN;
+	}
+
+	(void)signal(SIGALRM, timedout);
+	if (argc > 1) {
+		needto = 0;
+		(void)alarm(timeout);
+	} else
+		needto = 1;
+	(void)signal(SIGQUIT, SIG_IGN);
+	(void)signal(SIGINT, SIG_IGN);
+	(void)signal(SIGHUP, SIG_IGN);
+	(void)setpriority(PRIO_PROCESS, 0, 0);
 
 #ifdef notyet
 	/* XXX - we don't (yet) support per-tty auth stuff */
@@ -352,7 +374,7 @@ main(int argc, char *argv[])
 		shell = strrchr(script, '/') + 1;
 		auth_setstate(as, AUTH_OKAY);
 		auth_call(as, script, shell,
-		    fflag ? "-f" : username, fflag ? username : 0, 0);
+		    fflag ? "-f" : username, fflag ? username : 0, (char *)0);
 		if (!(auth_getstate(as) & AUTH_ALLOW))
 			quickexit(1);
 		auth_setenv(as);

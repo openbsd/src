@@ -1,11 +1,8 @@
-#	$OpenBSD: Makefile,v 1.20 2001/06/25 05:51:25 art Exp $
+#	$OpenBSD: Makefile,v 1.21 2002/10/16 01:08:56 millert Exp $
 
 PROG=	login
 SRCS=	login.c failedlogin.c
 DPADD=	${LIBUTIL}
 LDADD=	-lutil
-
-BINOWN=	root
-BINMODE=4555
 
 .include <bsd.prog.mk>

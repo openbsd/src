@@ -1,4 +1,4 @@
-.\"	$OpenBSD: login.1,v 1.18 2002/05/06 23:34:33 millert Exp $
+.\"	$OpenBSD: login.1,v 1.19 2002/10/16 01:08:56 millert Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -173,6 +173,14 @@ and
 do not fork before executing the
 .Nm
 utility.
+.Pp
+Note that if
+.Nm
+is invoked by a non-root user, it will execute
+.Xr su 1
+in
+.Nm
+emulation mode instead.
 .Sh ENVIRONMENT
 .Nm
 sets the following environment variables:
@@ -223,6 +231,7 @@ makes login quieter
 .Sh SEE ALSO
 .Xr chpass 1 ,
 .Xr passwd 1 ,
+.Xr su 1 ,
 .Xr telnet 1 ,
 .Xr getpass 3 ,
 .Xr setusercontext 3 ,
