@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.7 2004/11/01 19:48:58 espie Exp $
+# $OpenBSD: Update.pm,v 1.8 2004/11/02 18:50:36 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -23,9 +23,11 @@ use OpenBSD::Delete;
 package OpenBSD::PackingElement;
 sub can_update
 {
-	my ($self, $okay) = @_;
+	my ($self, $state) = @_;
 
-	$$okay = $self->updatable();
+	if (!$self->updatable()) {
+		$state->{okay} = 0;
+	}
 }
 
 sub validate_depend
@@ -89,28 +91,62 @@ sub updatable() { 0 }
 package OpenBSD::PackingElement::LibDepend;
 sub validate_depend
 {
-	my ($self, $okay, $wanting, $toreplace, $replacement) = @_;
+	my ($self, $state, $wanting, $toreplace, $replacement) = @_;
 
 	if (defined $self->{name}) {
 		return unless $self->{name} eq $wanting;
 	}
 	return unless OpenBSD::PkgSpec::match($self->{pattern}, $toreplace);
 	if (!OpenBSD::PkgSpec::match($self->{pattern}, $replacement)) {
-		$$okay = 0;
+		$state->{okay} = 0;
+		return;
+	}
+	for my $spec (split(/,/, $self->{libspec})) {
+		my $dir;
+		if ($spec =~ m|.*/|) {
+			$dir = "$&";
+			$spec = $';
+		} else {
+			$dir = "lib";
+		}
+		if ($spec =~ m/^(.*)\.(\d+)\.(\d+)$/) {
+			my ($libname, $major, $minor) = ($1, $2, $3);
+			my $v = $state->{libs}->{"$dir/lib$libname"};
+			if (!defined $v) {
+				print "No such lib $libname\n";
+				$state->{okay} = 0;
+			}
+			unless ($v->[0] == $major && $v->[1] >= $minor) {
+				print "Bad library version for $libname\n";
+				$state->{okay} = 0;
+			}
+		}
+	}
+}
+
+package OpenBSD::PackingElement::Lib;
+sub can_update
+{
+	my ($self, $state) = @_;
+
+	my $localbase = $state->{localbase};
+	my $libname = $self->fullname();
+	if ($libname =~ m/^\Q$localbase\E\/(.*)\.so\.(\d+)\.(\d+)$/) {
+		$state->{libs}->{$1} = [$2, $3];
 	}
 }
 
 package OpenBSD::PackingElement::NewDepend;
 sub validate_depend
 {
-	my ($self, $okay, $wanting, $toreplace, $replacement) = @_;
+	my ($self, $state, $wanting, $toreplace, $replacement) = @_;
 
 	if (defined $self->{name}) {
 		return unless $self->{name} eq $wanting;
 	}
 	return unless OpenBSD::PkgSpec::match($self->{pattern}, $toreplace);
 	if (!OpenBSD::PkgSpec::match($self->{pattern}, $replacement)) {
-		$$okay = 0;
+		$state->{okay} = 0;
 	}
 }
 
@@ -125,7 +161,10 @@ sub can_do
 
 	my $wantlist = [];
 	my $r = OpenBSD::RequiredBy->new($toreplace);
-	my $okay = 1;
+	$state->{okay} = 1;
+	$state->{libs} = {};
+	my $plist = OpenBSD::PackingList->fromfile(installed_info($toreplace).CONTENTS);
+	$plist->visit('can_update', $state);
 	if (-f $$r) {
 		$wantlist = $r->list();
 		my $done_wanted = {};
@@ -135,12 +174,10 @@ sub can_do
 			print "Verifying dependencies still match for $wanting\n";
 			my $p2 = OpenBSD::PackingList->fromfile(installed_info($wanting).CONTENTS,
 			    \&OpenBSD::PackingList::DependOnly);
-			$p2->visit('validate_depend', \$okay, $wanting, $toreplace, $replacement);
+			$p2->visit('validate_depend', $state, $wanting, $toreplace, $replacement);
 		}
 	}
 
-	my $plist = OpenBSD::PackingList->fromfile(installed_info($toreplace).CONTENTS);
-	$plist->visit('can_update', \$okay);
 	eval {
 		OpenBSD::Delete::validate_plist($plist, $state->{destdir});
 	};
@@ -150,7 +187,7 @@ sub can_do
 
 	$plist->{wantlist} = $wantlist;
 	
-	return $okay ? $plist : $okay;
+	return $state->{okay} ? $plist : 0;
 }
 
 sub adjust_dependency
