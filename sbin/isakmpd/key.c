@@ -1,4 +1,4 @@
-/* $OpenBSD: key.c,v 1.15 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $OpenBSD: key.c,v 1.16 2004/05/23 16:13:39 deraadt Exp $	 */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -34,7 +34,7 @@ void
 key_free(int type, int private, void *key)
 {
 	switch (type) {
-		case ISAKMP_KEY_PASSPHRASE:
+	case ISAKMP_KEY_PASSPHRASE:
 		free(key);
 		break;
 	case ISAKMP_KEY_RSA:
@@ -49,37 +49,38 @@ key_free(int type, int private, void *key)
 
 /* Convert from internal form to serialized */
 void
-key_serialize(int type, int private, void *key, u_int8_t **data, size_t *datalen)
+key_serialize(int type, int private, void *key, u_int8_t **data, size_t *datalenp)
 {
 	u_int8_t       *p;
+	size_t		datalen;
 
 	switch (type) {
 	case ISAKMP_KEY_PASSPHRASE:
-		*datalen = strlen((char *) key);
+		*datalenp = strlen((char *) key);
 		*data = (u_int8_t *) strdup((char *) key);
 		break;
 	case ISAKMP_KEY_RSA:
 		switch (private) {
 		case ISAKMP_KEYTYPE_PUBLIC:
-			*datalen = i2d_RSAPublicKey((RSA *) key, NULL);
-			*data = p = malloc(*datalen);
+			datalen = i2d_RSAPublicKey((RSA *) key, NULL);
+			*data = p = malloc(datalen);
 			if (!p) {
 				log_error("key_serialize: malloc (%lu) failed",
-				    (unsigned long) *datalen);
+				    (unsigned long) datalen);
 				return;
 			}
-			*datalen = i2d_RSAPublicKey((RSA *) key, &p);
+			*datalenp = i2d_RSAPublicKey((RSA *) key, &p);
 			break;
 
 		case ISAKMP_KEYTYPE_PRIVATE:
-			*datalen = i2d_RSAPrivateKey((RSA *) key, NULL);
-			*data = p = malloc(*datalen);
+			datalen = i2d_RSAPrivateKey((RSA *) key, NULL);
+			*data = p = malloc(datalen);
 			if (!p) {
 				log_error("key_serialize: malloc (%lu) failed",
-				    (unsigned long) *datalen);
+				    (unsigned long) datalen);
 				return;
 			}
-			*datalen = i2d_RSAPrivateKey((RSA *) key, &p);
+			*datalenp = i2d_RSAPrivateKey((RSA *) key, &p);
 			break;
 		}
 		break;
@@ -158,27 +159,31 @@ key_internalize(int type, int private, u_int8_t *data, int datalen)
 /* Convert from printable to serialized */
 void
 key_from_printable(int type, int private, char *key, u_int8_t **data,
-    u_int32_t *datalen)
+    u_int32_t *datalenp)
 {
+	u_int32_t datalen;
+
 	switch (type) {
 	case ISAKMP_KEY_PASSPHRASE:
-		*datalen = strlen(key);
+		*datalenp = strlen(key);
 		*data = (u_int8_t *) strdup(key);
 		break;
 
 	case ISAKMP_KEY_RSA:
-		*datalen = (strlen(key) + 1) / 2;	/* Round up, just in case */
-		*data = malloc(*datalen);
+		datalen = (strlen(key) + 1) / 2;	/* Round up, just in case */
+		*data = malloc(datalen);
 		if (!*data) {
-			log_error("key_from_printable: malloc (%d) failed", *datalen);
+			log_error("key_from_printable: malloc (%d) failed", datalen);
+			*datalenp = 0;
 			return;
 		}
-		*datalen = hex2raw(key, *data, *datalen);
+		*datalenp = hex2raw(key, *data, datalen);
 		break;
 
 	default:
 		log_error("key_from_printable: unknown/unsupported key type %d", type);
-		*data = 0;
+		*data = NULL;
+		*datalenp = 0;
 		break;
 	}
 }
