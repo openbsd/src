@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7990.c,v 1.17 2000/03/10 00:53:58 smurph Exp $	*/
+/*	$OpenBSD: am7990.c,v 1.18 2000/03/14 19:50:13 deraadt Exp $	*/
 /*	$NetBSD: am7990.c,v 1.22 1996/10/13 01:37:19 christos Exp $	*/
 
 /*-
@@ -68,7 +68,6 @@
 #include <net/bpfdesc.h>
 #endif
 
-#define LEDEBUG 1
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
 
