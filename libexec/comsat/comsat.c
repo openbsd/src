@@ -1,4 +1,4 @@
-/*	$OpenBSD: comsat.c,v 1.21 2002/02/16 21:27:29 millert Exp $	*/
+/*	$OpenBSD: comsat.c,v 1.22 2002/06/19 22:44:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: comsat.c,v 1.21 2002/02/16 21:27:29 millert Exp $";
+static char rcsid[] = "$OpenBSD: comsat.c,v 1.22 2002/06/19 22:44:04 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -205,6 +205,7 @@ mailfor(name)
 	char *name;
 {
 	struct utmp *utp = &utmp[nutmp];
+	char utname[UT_NAMESIZE+1];
 	char *cp;
 	off_t offset;
 
@@ -212,9 +213,12 @@ mailfor(name)
 		return;
 	*cp = '\0';
 	offset = atoi(cp + 1);
-	while (--utp >= utmp)
-		if (!strncmp(utp->ut_name, name, sizeof(utmp[0].ut_name)))
+	while (--utp >= utmp) {
+		memcpy(utname, utp->ut_name, UT_NAMESIZE);
+		utname[sizeof(utname)-1] = '\0';
+		if (!strncmp(utname, name, UT_NAMESIZE))
 			notify(utp, offset);
+	}
 }
 
 static char *cr;
@@ -227,7 +231,7 @@ notify(utp, offset)
 	FILE *tp;
 	struct stat stb;
 	struct termios ttybuf;
-	char tty[MAXPATHLEN], name[sizeof(utmp[0].ut_name) + 1];
+	char tty[MAXPATHLEN], name[UT_NAMESIZE + 1];
 
 	(void)snprintf(tty, sizeof(tty), "%s%.*s",
 	    _PATH_DEV, (int)sizeof(utp->ut_line), utp->ut_line);
@@ -237,7 +241,8 @@ notify(utp, offset)
 		return;
 	}
 	if (stat(tty, &stb) || !(stb.st_mode & S_IEXEC)) {
-		dsyslog(LOG_DEBUG, "%s: wrong mode on %s", utp->ut_name, tty);
+		dsyslog(LOG_DEBUG, "%.*s: wrong mode on %s",
+		    (int)sizeof(utp->ut_name), utp->ut_name, tty);
 		return;
 	}
 	dsyslog(LOG_DEBUG, "notify %s on %s", utp->ut_name, tty);
@@ -246,13 +251,15 @@ notify(utp, offset)
 	(void)signal(SIGALRM, SIG_DFL);
 	(void)alarm((u_int)30);
 	if ((tp = fopen(tty, "w")) == NULL) {
-		dsyslog(LOG_ERR, "%s: %s", tty, strerror(errno));
+		dsyslog(LOG_ERR, "%.*s: %s", (int)sizeof(utp->ut_name),
+		    tty, strerror(errno));
 		_exit(1);
 	}
 	(void)tcgetattr(fileno(tp), &ttybuf);
 	cr = (ttybuf.c_oflag & ONLCR) && (ttybuf.c_oflag & OPOST) ?
 	    "\n" : "\n\r";
-	(void)strlcpy(name, utp->ut_name, sizeof(name));
+	memcpy(name, utp->ut_name, UT_NAMESIZE);
+	name[sizeof(name)-1] = '\0';
 	(void)fprintf(tp, "%s\007New mail for %s@%.*s\007 has arrived:%s----%s",
 	    cr, name, (int)sizeof(hostname), hostname, cr, cr);
 	jkfprintf(tp, name, offset);
