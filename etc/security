@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.43 2000/12/22 08:04:48 todd Exp $
+#	$OpenBSD: security,v 1.44 2001/01/31 19:12:10 deraadt Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -39,8 +39,8 @@ awk -F: '{
 		printf("Line %d has an empty login field:\n%s\n", NR, $0);
 	else if ($1 !~ /^[A-Za-z0-9][A-Za-z0-9_-]*$/)
 		printf("Login %s has non-alphanumeric characters.\n", $1);
-	if (length($1) > 8)
-		printf("Login %s has more than 8 characters.\n", $1);
+	if (length($1) > 32)
+		printf("Login %s has more than 32 characters.\n", $1);
 	if ($2 == "")
 		printf("Login %s has no password.\n", $1);
 	if ($2 != "" && length($2) != 13 && ($10 ~ /.*sh$/ || $10 == "") &&

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.17 2001/01/28 19:34:28 niklas Exp $	*/
+/*	$OpenBSD: main.c,v 1.18 2001/01/31 19:13:36 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";*/
-static char rcsid[] = "$OpenBSD: main.c,v 1.17 2001/01/28 19:34:28 niklas Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.18 2001/01/31 19:13:36 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -90,7 +90,7 @@ int crmod, digit, lower, upper;
 
 char	hostname[MAXHOSTNAMELEN];
 struct	utsname kerninfo;
-char	name[16];
+char	name[MAXLOGNAME];
 char	dev[] = _PATH_DEV;
 char	ttyn[32];
 char	*portselector();
