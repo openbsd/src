@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.1 2003/10/19 18:38:06 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.2 2003/10/26 10:33:24 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -59,7 +59,7 @@ package name itself plus the
 .Dq .tar.gz ,
 or
 .Dq .tar
-suffix) or an FTP location in the form of an URL.
+suffix) or URL refering to FTP, HTTP, or SCP locations.
 For example, the following is valid:
 .Pp
 .Ic pkg_add -v ftp://ftp.openbsd.org/pub/OpenBSD/2.7/packages/i386/m4-1.4.tgz
@@ -114,101 +114,6 @@ If an installation script exists for a given package, do not execute it.
 .It Fl n
 Don't actually install a package, just report the steps that
 would be taken if it was.
-.It Fl R
-Do not record the installation of a package.
-This means that you cannot deinstall it later, so only use this option if
-you know what you are doing!
-.It Fl f
-Force installation to proceed even if prerequisite packages are not
-installed or the requirements script fails.
-Although
-.Nm
-will still try to find and auto-install missing prerequisite packages,
-a failure to find one will not be fatal.
-.It Fl p Ar prefix
-Set
-.Ar prefix
-as the directory in which to extract files from a package.
-If a package has set its default directory, it will be overridden
-by this flag.
-Note that only the first
-.Cm @cwd
-directive will be replaced, since
-.Nm
-has no way of knowing which directory settings are relative and
-which are absolute.
-It is rare in any case to see more than one
-directory transition made, but when such does happen and you wish
-to have control over
-.Em all
-directory transitions, then you may then wish to look into the use of
-.Cm MASTER
-and
-.Cm SLAVE
-modes (see the
-.Fl M
-and
-.Fl S
-options).
-.It Fl t Ar template
-Use
-.Ar template
-as the input to
-.Xr mkdtemp 3
-when creating a
-.Dq staging area .
-By default, this is the string
-.Pa /var/tmp/instmp.XXXXXX ,
-but it may be necessary to override it (see CAVEATS).
-Be sure to leave some number of
-.Dq X
-characters for
-.Xr mkdtemp 3
-to fill in with a unique ID.
-.Pp
-You can get a performance boost by setting the staging area
-.Ar template
-to reside on the same disk partition as target directories for package
-file installation; often this is
-.Pa /usr .
-.It Fl M
-Run in
-.Cm MASTER
-mode.
-This is a very specialized mode for running
-.Nm
-and is meant to be run in conjunction with
-.Cm SLAVE
-mode.
-When run in this mode,
-.Nm
-does no work beyond extracting the package into a temporary staging
-area (see the
-.Fl t
-option), reading in the packing list, and then dumping it (prefaced by
-the current staging area) to the standard output where it may be filtered by a
-program such as
-.Xr sed 1 .
-When used in conjunction with
-.Cm SLAVE
-mode, it allows you to make radical changes to the package structure
-before acting on its contents.
-.It Fl S
-Run in
-.Cm SLAVE
-mode.
-This is a very specialized mode for running
-.Nm
-and is meant to be run in conjunction with
-.Cm MASTER
-mode.
-When run in this mode,
-.Nm
-expects the release contents to be already extracted and waiting
-in the staging area, the location of which is read as a string
-from the standard input.
-The complete packing list is also read from stdin,
-and the contents then acted on as normal.
 .El
 .Pp
 By default, when adding packages via FTP, the
@@ -232,7 +137,8 @@ connection.
 .Ss Technical details
 .Nm
 extracts each package's
-.Dq packing list
+.Dq packing information
+(the packing list, description, and installation/deinstallation scripts)
 into a special staging directory in
 .Pa /var/tmp
 (or
@@ -254,18 +160,17 @@ with an already recorded as installed package.
 If it is, installation is terminated.
 .It
 All package dependencies (from
-.Cm @pkgdep
+.Cm @pkgdep ,
+.Cm @libdepend ,
+and
+.Cm @newdepend
 directives, see
 .Xr pkg_create 1 )
 are read from the packing list.
-If any of these required packages are not currently installed,
-an attempt is made to find and install it;
-if the missing package cannot be found or installed,
+If any of these dependencies are not currently fullfilled,
+an attempt is made to find a package that meets them and install it;
+if no adequate package can be found and installed,
 the installation is terminated.
-.It
-A staging area is created under
-.Pa /var/tmp ,
-and the package is extracted into the staging area.
 .It
 If the package contains a
 .Ar require
@@ -300,35 +205,8 @@ If the
 .Ar install
 script exits with a non-zero status code, the installation is terminated.
 .It
-The packing list is used as a guide for moving (or copying, as necessary)
-files from the staging area into their final locations.
-.It
-If the package contains an
-.Ar mtreefile
-file (see
-.Xr pkg_create 1 ) ,
-then mtree is invoked as:
-.Pp
-.Bd -filled -offset indent -compact
-.Cm mtree
-.Fl u
-.Fl f
-.Ar mtreefile
-.Fl d
-.Fl e
-.Fl p
-.Pa prefix
-.Ed
-.Pp
-where
-.Pa prefix
-is either the prefix specified with the
-.Fl p
-flag or, if no
-.Fl p
-flag was specified, the name of the first directory named by a
-.Cm @cwd
-directive within this package.
+The packing list is used as a guide for extracting
+files from the package into their final locations.
 .It
 If an
 .Ar install
