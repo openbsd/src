@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.3 1999/05/24 17:57:18 millert Exp $	*/
+/*	$OpenBSD: init.c,v 1.4 2003/04/06 18:39:11 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.3 1999/05/24 17:57:18 millert Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.4 2003/04/06 18:39:11 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -214,56 +214,80 @@ optval(desc, tcolflag)
 	}
 }
 
+/*
+ * Convert obsolescent "+pos1 [-pos2]" format to POSIX -k form.
+ * Note that the conversion is tricky, see the manual for details.
+ */
 void
 fixit(argc, argv)
 	int *argc;
 	char **argv;
 {
-	int i, j, v, w, x;
-	static char *vbuf, *vpos, *tpos;
+	int i, j;
+	long v, w, x;
+	char *p, *ep;
+	char buf[128], *bufp, *bufend;
+	size_t n;
 
-	if ((vpos = vbuf = calloc(ND*20, sizeof(char))) == NULL)
-		errx(2, "cannot allocate memory");
-
+	bufend = buf + sizeof(buf);
 	for (i = 1; i < *argc; i++) {
 		if (argv[i][0] == '+') {
-			tpos = argv[i]+1;
-			argv[i] = vpos;
-			vpos += sprintf(vpos, "-k");
-			tpos += sscanf(tpos, "%d", &v);
-			while (isdigit(*tpos))
-				tpos++;
-			vpos += sprintf(vpos, "%d", v+1);
-			if (*tpos == '.') {
-				tpos += sscanf(++tpos, "%d", &x);
-				vpos += sprintf(vpos, ".%d", x+1);
+			bufp = buf;
+			p = argv[i] + 1;
+			v = strtol(p, &ep, 10);
+			if (ep == p || v < 0 ||
+			    (v == LONG_MAX && errno == ERANGE))
+				errx(2, "invalid field number");
+			p = ep;
+			if (*p == '.') {
+				x = strtol(++p, &ep, 10);
+				if (ep == p || x < 0 ||
+				    (x == LONG_MAX && errno == ERANGE))
+					errx(2, "invalid field number");
+				p = ep;
+				n = snprintf(bufp, bufend - bufp, "-k%ld.%ld%s",
+				    v+1, x+1, p);
+			} else {
+				n = snprintf(bufp, bufend - bufp, "-k%ld%s",
+				    v+1, p);
 			}
-			while (*tpos)
-				*vpos++ = *tpos++;
-			vpos += sprintf(vpos, ",");
+			if (n >= bufend - bufp)
+				errx(2, "bad field specification");
+			bufp += n;
+
 			if (argv[i+1] &&
 			    argv[i+1][0] == '-' && isdigit(argv[i+1][1])) {
-				tpos = argv[i+1] + 1;
-				tpos += sscanf(tpos, "%d", &w);
-				while (isdigit(*tpos))
-					tpos++;
+				p = argv[i+1] + 1;
+				w = strtol(p, &ep, 10);
+				if (ep == p || w < 0 ||
+				    (w == LONG_MAX && errno == ERANGE))
+					errx(2, "invalid field number");
+				p = ep;
 				x = 0;
-				if (*tpos == '.') {
-					tpos += sscanf(++tpos, "%d", &x);
-					while (isdigit(*tpos))
-						tpos++;
+				if (*p == '.') {
+					x = strtol(++p, &ep, 10);
+					if (ep == p || x < 0 ||
+					    (x == LONG_MAX && errno == ERANGE))
+						errx(2, "invalid field number");
+					p = ep;
 				}
-				if (x) {
-					vpos += sprintf(vpos, "%d", w+1);
-					vpos += sprintf(vpos, ".%d", x);
-				} else
-					vpos += sprintf(vpos, "%d", w);
-				while (*tpos)
-					*vpos++ = *tpos++;
-				for (j= i+1; j < *argc; j++)
+				if (x == 0) {
+					n = snprintf(bufp, bufend - bufp,
+					    ",%ld%s", w, p);
+				} else {
+					n = snprintf(bufp, bufend - bufp,
+					    ",%ld.%ld%s", w+1, x, p);
+				}
+				if (n >= bufend - bufp)
+					errx(2, "bad field specification");
+
+				/* shift over argv */
+				for (j = i+1; j < *argc; j++)
 					argv[j] = argv[j+1];
 				*argc -= 1;
 			}
+			if ((argv[i] = strdup(buf)) == NULL)
+				err(2, NULL);
 		}
 	}
 }
