@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.35 2001/11/06 19:53:16 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.36 2001/11/07 01:02:36 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -471,9 +471,10 @@ for (i = 0; i < errnum; i++) {
 }
 
 void
-child_return(p)
-	struct proc *p;
+child_return(arg)
+	void *arg;
 {
+	struct proc *p = (struct proc *)arg;
 	struct trapframe *tf = trapframe(p);
 
 	tf->fixreg[0] = 0;
