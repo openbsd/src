@@ -1,4 +1,4 @@
-/*	$OpenBSD: krpc_subr.c,v 1.7 1997/04/27 23:06:01 angelos Exp $	*/
+/*	$OpenBSD: krpc_subr.c,v 1.8 1998/02/23 09:46:53 deraadt Exp $	*/
 /*	$NetBSD: krpc_subr.c,v 1.12.4.1 1996/06/07 00:52:26 cgd Exp $	*/
 
 /*
@@ -515,6 +515,10 @@ xdr_string_decode(m, str, len_p)
 
 	if (slen > *len_p)
 		slen = *len_p;
+	if (slen > m->m_pkthdr.len) {
+		m_freem(m);
+		return (NULL);
+	}
 	m_copydata(m, 4, slen, str);
 	m_adj(m, mlen);
 
