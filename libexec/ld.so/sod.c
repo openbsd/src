@@ -1,4 +1,4 @@
-/*      $OpenBSD: sod.c,v 1.5 2001/06/08 06:49:20 art Exp $       */
+/*      $OpenBSD: sod.c,v 1.6 2001/09/22 04:29:32 drahn Exp $       */
 /*  
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -194,9 +194,9 @@ _dl_unmaphints()
 {
 
 	if (HINTS_VALID) {
-		_dl_munmap((caddr_t)hheader, hsize);
-		_dl_close(hfd);
-		hheader = (void *)-1;
+		if (hfd != 0)
+			_dl_close(hfd);
+		hfd = 0;
 	}
 }
 
