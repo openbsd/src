@@ -151,10 +151,11 @@ print_type (char *name, Type *type, enum argtype argtype,
 	  case TPOINTER :
 	  {
 	       char *tmp;
+	       size_t len = strlen(name) + 2;
 
-	       tmp = (char *)emalloc (strlen(name) + 2);
+	       tmp = (char *)emalloc (len);
 	       *tmp = '*';
-	       strcpy (tmp+1, name);
+	       strlcpy (tmp+1, name, len - 1);
 	       print_type (tmp, type->subtype, argtype, decl, f);
 	       free (tmp);
 	       break;
@@ -168,11 +169,12 @@ print_type (char *name, Type *type, enum argtype argtype,
 	  case TVARRAY :
 	  {
 	       char *s;
+	       size_t len = strlen (name) + 6;
 
-	       s = (char *)emalloc (strlen (name) + 6);
+	       s = (char *)emalloc (len);
 	       *s = '*';
-	       strcpy (s + 1, name);
-	       strcat (s, "_len");
+	       strlcpy (s + 1, name, len - 1);
+	       strlcat (s, "_len", len);
 
 	       fprintf (f, "struct {\n");
 	       if (type->indextype)
@@ -784,8 +786,8 @@ encode_varray (char *name, Type *type, FILE *f, EncodeType encodetype,
      char tmp[256];
      Type lentype = {TULONG};
 	       
-     strcpy (tmp, name);
-     strcat (tmp, ".len");
+     strlcpy (tmp, name, sizeof tmp);
+     strlcat (tmp, ".len", sizeof tmp);
 
      encode_type (tmp, type->indextype ? type->indextype : &lentype,
 		  f, encodetype, side);
@@ -1051,9 +1053,9 @@ encode_entry (List *list, Listitem *item, void *arg)
      char tmp[256];
      struct context *context = (struct context *)arg;
 
-     strcpy (tmp, context->name);
-     strcat (tmp, ".");
-     strcat (tmp, s->name);
+     strlcpy (tmp, context->name, sizeof tmp);
+     strlcat (tmp, ".", sizeof tmp);
+     strlcat (tmp, s->name, sizeof tmp);
 
      if (s->type->type == TPOINTER
 	 && s->type->subtype->type == TUSERDEF
@@ -1483,9 +1485,10 @@ genencodein (List *list, Listitem *item, void *arg)
     
     if (a->argtype == TIN || a->argtype == TINOUT) {
 	if (a->type->type == TPOINTER) {
-	    char *tmp = (char *)emalloc (strlen (a->name) + 4);
+	    size_t len = strlen (a->name) + 4;
+	    char *tmp = (char *)emalloc (len);
 	    
-	    sprintf (tmp, "(*%s)", a->name);
+	    snprintf (tmp, len, "(*%s)", a->name);
 	    
 	    encode_type (tmp, a->type->subtype, f, ENCODE_RX, CLIENT);
 	    free (tmp);

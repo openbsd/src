@@ -125,13 +125,13 @@ main (int argc, char **argv)
 	unlink (tmp_filename);
 	errx (1, "malloc: out of memory");
     }
-    strcpy (arg, cpp);
-    strcat (arg, " ");
+    strlcpy (arg, cpp, arglen);
+    strlcat (arg, " ", arglen);
     for (i = 1; i < argc - 1; ++i) {
-	strcat (arg, argv[i]);
-	strcat (arg, " ");
+	strlcat (arg, argv[i], arglen);
+	strlcat (arg, " ", arglen);
     }
-    strcat (arg, tmp_filename);
+    strlcat (arg, tmp_filename, arglen);
 
     yyin = popen (arg, "r");
     if (yyin == NULL) {
