@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.15 2001/05/09 15:31:27 art Exp $ */
+/*	$OpenBSD: param.h,v 1.16 2001/05/10 22:46:52 miod Exp $ */
 /*      $NetBSD: param.h,v 1.39 1999/10/22 21:14:34 ragge Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -70,6 +70,10 @@
 #define	PGSHIFT		12			/* LOG2(NBPG) */
 #define	NBPG		(1 << PGSHIFT)		/* (1 << PGSHIFT) bytes/page */
 #define	PGOFSET		(NBPG - 1)               /* byte offset into page */
+
+#define	PAGE_SHIFT	12
+#define	PAGE_SIZE	(1 << PAGE_SHIFT)
+#define	PAGE_MASK	(PAGE_SHIFT - 1)
 
 #define	VAX_PGSHIFT	9
 #define	VAX_NBPG	(1 << VAX_PGSHIFT)

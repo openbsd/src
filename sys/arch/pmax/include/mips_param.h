@@ -17,6 +17,10 @@
 #define	PGSHIFT		12		/* LOG2(NBPG) */
 #define	NPTEPG		(NBPG/4)
 
+#define	PAGE_SHIFT	12
+#define	PAGE_SIZE	(1 << PAGE_SHIFT)
+#define	PAGE_MASK	(PAGE_SHIFT - 1)
+
 #define NBSEG		0x400000	/* bytes/segment */
 #define	SEGOFSET	(NBSEG-1)	/* byte offset into segment */
 #define	SEGSHIFT	22		/* LOG2(NBSEG) */

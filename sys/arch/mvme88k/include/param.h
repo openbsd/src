@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.16 2001/05/05 20:56:46 art Exp $ */
+/*	$OpenBSD: param.h,v 1.17 2001/05/10 22:46:43 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1988 University of Utah.
@@ -40,7 +40,7 @@
  * from: Utah $Hdr: machparam.h 1.11 89/08/14$
  *
  *	@(#)param.h	7.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.16 2001/05/05 20:56:46 art Exp $
+ *	$Id: param.h,v 1.17 2001/05/10 22:46:43 miod Exp $
  */
 #ifndef _MACHINE_PARAM_H_
 #define _MACHINE_PARAM_H_
@@ -70,11 +70,14 @@
 #define  ALIGN(p)		(((u_int)(p) + ALIGNBYTES) & ~ALIGNBYTES)
 #define  ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
 
-#ifndef NBPG
 #define NBPG		4096		/* bytes/page */
-#endif /* NBPG */
 #define PGOFSET		(NBPG-1)	/* byte offset into page */
 #define PGSHIFT		12		/* LOG2(NBPG) */
+
+#define	PAGE_SHIFT	12
+#define	PAGE_SIZE	(1 << PAGE_SHIFT)
+#define	PAGE_MASK	(PAGE_SHIFT - 1)
+
 #define NPTEPG		(NBPG/(sizeof(u_int)))
 
 #define NBSEG		(1<<22)		/* bytes/segment */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.12 2001/05/05 20:56:33 art Exp $	*/
+/*	$OpenBSD: param.h,v 1.13 2001/05/10 22:46:29 miod Exp $	*/
 /*	$NetBSD: param.h,v 1.35 1997/07/10 08:22:36 veego Exp $	*/
 
 /*
@@ -53,6 +53,11 @@
 #define	MACHINE		"amiga"
 
 #define	PGSHIFT		13		/* LOG2(NBPG) */
+
+#define	PAGE_SHIFT	13
+#define	PAGE_SIZE	(1 << PAGE_SHIFT)
+#define	PAGE_MASK	(PAGE_SHIFT - 1)
+
 #define	KERNBASE	0x00000000	/* start of kernel virtual */
 
 #define	SEGSHIFT	24		/* LOG2(NBSEG) [68030 value] */

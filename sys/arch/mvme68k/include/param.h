@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.9 2001/05/05 20:56:44 art Exp $ */
+/*	$OpenBSD: param.h,v 1.10 2001/05/10 22:46:41 miod Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -62,6 +62,11 @@
 #define	PGSHIFT		12		/* LOG2(NBPG) */
 #define	NBPG		(1 << PGSHIFT)	/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
+
+#define	PAGE_SHIFT	12
+#define	PAGE_SIZE	(1 << PAGE_SHIFT)
+#define	PAGE_MASK	(PAGE_SHIFT - 1)
+
 #define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
 
 #define	SEGSHIFT	22		/* LOG2(NBSEG) */
