@@ -1,4 +1,4 @@
-/*      $OpenBSD: sv.c,v 1.1 1998/07/07 22:44:10 csapuntz Exp $ */
+/*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
@@ -93,11 +93,22 @@ struct sv_dma {
 #define DMAADDR(map) ((map)->segs[0].ds_addr)
 #define KERNADDR(map) ((void *)((map)->addr))
 
+enum {
+  SV_DMAA_CONFIGURED = 1,
+  SV_DMAC_CONFIGURED = 2,
+  SV_DMAA_TRIED_CONFIGURE = 4,
+  SV_DMAC_TRIED_CONFIGURE = 8
+};
+
 struct sv_softc {
 	struct device sc_dev;		/* base device */
 	void *sc_ih;			/* interrupt vectoring */
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
+
+        pci_chipset_tag_t sc_pci_chipset_tag;
+        pcitag_t  sc_pci_tag;
+
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_ioh;
 	bus_space_handle_t sc_dmaa_ioh;
 	bus_space_handle_t sc_dmac_ioh;
 	bus_dma_tag_t sc_dmatag;	/* DMA tag */
@@ -110,10 +121,10 @@ struct sv_softc {
 	void	(*sc_rintr)(void *);	/* dma completion intr handler */
 	void	*sc_rarg;		/* arg for sc_intr() */
 	char	sc_enable;
-        char    trd;
+        char    sc_trd;
 
-        
-	u_int	sc_record_source;	/* recording source mask */
+        char    sc_dma_configured;
+        u_int	sc_record_source;	/* recording source mask */
 };
 
 
@@ -194,7 +205,7 @@ sv_write (sc, reg, val)
      u_int8_t reg, val;
      
 {
-  bus_space_write_1(sc->iot, sc->ioh, reg, val);
+  bus_space_write_1(sc->sc_iot, sc->sc_ioh, reg, val);
 }
 
 static __inline__ u_int8_t
@@ -203,7 +214,7 @@ sv_read (sc, reg)
      u_int8_t reg;
      
 {
-  return (bus_space_read_1(sc->iot, sc->ioh, reg));
+  return (bus_space_read_1(sc->sc_iot, sc->sc_ioh, reg));
 }
 
 static __inline__ u_int8_t
@@ -213,7 +224,7 @@ sv_read_indirect (sc, reg)
 {
     u_int8_t iaddr = 0;
 
-    if (sc->trd > 0)
+    if (sc->sc_trd > 0)
       iaddr |= SV_IADDR_TRD;
 
     iaddr |= (reg & SV_IADDR_MASK);
@@ -238,7 +249,7 @@ sv_write_indirect (sc, reg, val)
     if (reg == SV_DMA_DATA_FORMAT)
       iaddr |= SV_IADDR_MCE;
 
-    if (sc->trd > 0)
+    if (sc->sc_trd > 0)
       iaddr |= SV_IADDR_TRD;
 
     iaddr |= (reg & SV_IADDR_MASK);
@@ -279,6 +290,9 @@ sv_attach(parent, self, aux)
 
   printf ("\n");
 
+  sc->sc_pci_chipset_tag = pc;
+  sc->sc_pci_tag = pa->pa_tag;
+
   /* Map the enhanced port only */
   if (pci_io_find(pc, pa->pa_tag, SV_ENHANCED_PORTBASE_SLOT, 
 		  &iobase, &iosize)) {
@@ -286,49 +300,56 @@ sv_attach(parent, self, aux)
     return;
   }
 
-  if (bus_space_map(sc->iot, iobase, iosize, 0, &sc->ioh)) {
+  if (bus_space_map(sc->sc_iot, iobase, iosize, 0, &sc->sc_ioh)) {
       printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
       return;
   }
 
   sc->sc_dmatag = pa->pa_dmat;
 
-  /* Map the DMA channels */
   dmareg = pci_conf_read(pa->pa_pc, pa->pa_tag, SV_DMAA_CONFIG_OFF);
   iosize = 0x10;
   dmaio =  dmareg & ~(iosize - 1);
+  
+  if (dmaio) {
+    dmareg &= 0xF;
+    
+    if (bus_space_map(sc->sc_iot, dmaio, iosize, 0, &sc->sc_dmaa_ioh)) {
+      /* The BIOS assigned us some bad I/O address! Make sure to clear
+         and disable this DMA before we enable the device */
+      pci_conf_write(pa->pa_pc, pa->pa_tag, SV_DMAA_CONFIG_OFF, 0);
 
-  if (!dmaio)
-    dmaio = 0xac00;
+      printf ("%s: can't map DMA i/o space\n", sc->sc_dev.dv_xname);
+      goto enable;
+    }
 
-  if (bus_space_map(sc->iot, dmaio, iosize, 0, &sc->sc_dmaa_ioh)) {
-    printf ("%s: can't map DMA i/o space\n", sc->sc_dev.dv_xname);
-    /* XXX - cleanup */
-    return;
+    pci_conf_write(pa->pa_pc, pa->pa_tag, SV_DMAA_CONFIG_OFF,
+		   dmaio | dmareg | 
+		   SV_DMA_CHANNEL_ENABLE | SV_DMAA_EXTENDED_ADDR);
+    sc->sc_dma_configured |= SV_DMAA_CONFIGURED;
   }
-
-  dmareg &= 0xF;
-  pci_conf_write(pa->pa_pc, pa->pa_tag, SV_DMAA_CONFIG_OFF,
-		 dmaio | dmareg | 
-		 SV_DMA_CHANNEL_ENABLE | SV_DMAA_EXTENDED_ADDR);
 
   dmareg = pci_conf_read(pa->pa_pc, pa->pa_tag, SV_DMAC_CONFIG_OFF);
   dmaio = dmareg & ~(iosize - 1);
-  if (!dmaio)
-    dmaio = 0xac00 + iosize;
+  if (dmaio) {
+    dmareg &= 0xF;
 
-  if (bus_space_map(sc->iot, dmaio, iosize, 0, &sc->sc_dmac_ioh)) {
-    printf ("%s: can't map DMA i/o space\n", sc->sc_dev.dv_xname);
+    if (bus_space_map(sc->sc_iot, dmaio, iosize, 0, &sc->sc_dmac_ioh)) {
+      /* The BIOS assigned us some bad I/O address! Make sure to clear
+         and disable this DMA before we enable the device */
+      pci_conf_write (pa->pa_pc, pa->pa_tag, SV_DMAC_CONFIG_OFF, 
+		      dmareg & ~SV_DMA_CHANNEL_ENABLE); 
+      printf ("%s: can't map DMA i/o space\n", sc->sc_dev.dv_xname);
+      goto enable;
+    }
 
-    /* XXXX - cleanup */
-    return;
+    pci_conf_write(pa->pa_pc, pa->pa_tag, SV_DMAC_CONFIG_OFF, 
+		   dmaio | dmareg | SV_DMA_CHANNEL_ENABLE);
+    sc->sc_dma_configured |= SV_DMAC_CONFIGURED;
   }
 
-  dmareg &= 0xF;
-  pci_conf_write(pa->pa_pc, pa->pa_tag, SV_DMAC_CONFIG_OFF, 
-		 dmaio | dmareg | SV_DMA_CHANNEL_ENABLE);
-  
   /* Enable the device. */
+ enable:
   csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
   pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
 		 csr | PCI_COMMAND_MASTER_ENABLE 
@@ -359,12 +380,12 @@ sv_attach(parent, self, aux)
   /* Enable DMA interrupts */
   reg = sv_read(sc, SV_CODEC_INTMASK);
   reg &= ~(SV_INTMASK_DMAA | SV_INTMASK_DMAC);
-  reg |= SV_INTMASK_SINT | SV_INTMASK_UD | SV_INTMASK_SINT;
+  reg |= SV_INTMASK_UD | SV_INTMASK_SINT | SV_INTMASK_MIDI;
   sv_write(sc, SV_CODEC_INTMASK, reg);
 
   sv_read(sc, SV_CODEC_STATUS);
 
-  sc->trd = 0;
+  sc->sc_trd = 0;
   sc->sc_enable = 0;
 
   /* Map and establish the interrupt. */
@@ -412,7 +433,7 @@ sv_dumpregs(sc)
 
   for (idx = 0; idx < 0x10; idx++) {
     printf ("DMA %02x = %02x\n", idx, 
-	    bus_space_read_1(sc->iot, sc->sc_dmaa_ioh, idx));
+	    bus_space_read_1(sc->sc_iot, sc->sc_dmaa_ioh, idx));
   }
 
   return;
@@ -502,12 +523,81 @@ sv_open(addr, flags)
 	void *addr;
 	int flags;
 {
-	struct sv_softc *sc = addr;
 
-        sc->sc_pintr = 0;
-        sc->sc_rintr = 0;
+    struct sv_softc *sc = addr;
+    int  intr_mask = 0;
+    u_int8_t reg;
 
-        return (0);
+    /* Map the DMA channels, if necessary */
+    if (!(sc->sc_dma_configured & SV_DMAA_CONFIGURED)) {
+	/* XXX - there seems to be no general way to find an
+	   I/O range */
+	int dmaio;
+	int iosize = 0x10;
+
+	if (sc->sc_dma_configured & SV_DMAA_TRIED_CONFIGURE)
+	    return (ENXIO);
+
+	for (dmaio = 0xa000; dmaio < 0xb000; dmaio += iosize) {
+	    if (!bus_space_map(sc->sc_iot, dmaio, iosize, 0, 
+			      &sc->sc_dmaa_ioh)) {
+		goto found_dmaa;
+	    }
+	}
+
+	sc->sc_dma_configured |= SV_DMAA_TRIED_CONFIGURE;
+	return (ENXIO);
+    found_dmaa:
+	  
+	pci_conf_write(sc->sc_pci_chipset_tag, sc->sc_pci_tag,
+		       SV_DMAA_CONFIG_OFF, 
+		       dmaio | SV_DMA_CHANNEL_ENABLE 
+		       | SV_DMAA_EXTENDED_ADDR);
+
+	sc->sc_dma_configured |= SV_DMAA_CONFIGURED;
+	intr_mask = 1;
+    }
+
+    if (!(sc->sc_dma_configured & SV_DMAC_CONFIGURED)) {
+	/* XXX - there seems to be no general way to find an
+	   I/O range */
+	int dmaio;
+	int iosize = 0x10;
+
+	if (sc->sc_dma_configured & SV_DMAC_TRIED_CONFIGURE)
+	    return (ENXIO);
+
+	for (dmaio = 0xa000; dmaio < 0xb000; dmaio += iosize) {
+	    if (!bus_space_map(sc->sc_iot, dmaio, iosize, 0, 
+			      &sc->sc_dmac_ioh)) {
+		goto found_dmac;
+	    }
+	}
+
+	sc->sc_dma_configured |= SV_DMAC_TRIED_CONFIGURE;	    
+	return (ENXIO);
+    found_dmac:
+	  
+	pci_conf_write(sc->sc_pci_chipset_tag, sc->sc_pci_tag,
+		       SV_DMAC_CONFIG_OFF, 
+		       dmaio | SV_DMA_CHANNEL_ENABLE);
+
+	sc->sc_dma_configured |= SV_DMAC_CONFIGURED;
+	intr_mask = 1;
+    }
+
+    /* Make sure DMA interrupts are enabled */
+    if (intr_mask) {
+	reg = sv_read(sc, SV_CODEC_INTMASK);
+	reg &= ~(SV_INTMASK_DMAA | SV_INTMASK_DMAC);
+	reg |= SV_INTMASK_UD | SV_INTMASK_SINT | SV_INTMASK_MIDI;
+	sv_write(sc, SV_CODEC_INTMASK, reg);
+    }
+
+    sc->sc_pintr = 0;
+    sc->sc_rintr = 0;
+
+    return (0);
 }
 
 /*
@@ -748,11 +838,11 @@ sv_dma_init_input(addr, buf, cc)
 
 	dma_count = (cc >> 1) - 1;
 
-	bus_space_write_4(sc->iot, sc->sc_dmac_ioh, SV_DMA_ADDR0,
+	bus_space_write_4(sc->sc_iot, sc->sc_dmac_ioh, SV_DMA_ADDR0,
 			  DMAADDR(p));
-	bus_space_write_4(sc->iot, sc->sc_dmac_ioh, SV_DMA_COUNT0,
+	bus_space_write_4(sc->sc_iot, sc->sc_dmac_ioh, SV_DMA_COUNT0,
 			  dma_count);
-	bus_space_write_1(sc->iot, sc->sc_dmac_ioh, SV_DMA_MODE,
+	bus_space_write_1(sc->sc_iot, sc->sc_dmac_ioh, SV_DMA_MODE,
 			  DMA37MD_WRITE | DMA37MD_LOOP);
 
 	return (0);
@@ -778,11 +868,11 @@ sv_dma_init_output(addr, buf, cc)
 
 	dma_count = cc - 1;
 
-	bus_space_write_4(sc->iot, sc->sc_dmaa_ioh, SV_DMA_ADDR0,
+	bus_space_write_4(sc->sc_iot, sc->sc_dmaa_ioh, SV_DMA_ADDR0,
 			  DMAADDR(p));
-	bus_space_write_4(sc->iot, sc->sc_dmaa_ioh, SV_DMA_COUNT0,
+	bus_space_write_4(sc->sc_iot, sc->sc_dmaa_ioh, SV_DMA_COUNT0,
 			  dma_count);
-	bus_space_write_1(sc->iot, sc->sc_dmaa_ioh, SV_DMA_MODE,
+	bus_space_write_1(sc->sc_iot, sc->sc_dmaa_ioh, SV_DMA_MODE,
 			  DMA37MD_READ | DMA37MD_LOOP);
 
 	return (0);
@@ -1114,7 +1204,7 @@ sv_mixer_set_port(addr, cp)
 	rval = cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT];
       }
 
-      sc->trd = 1;
+      sc->sc_trd = 1;
 
       reg = sv_read_indirect(sc, ports[idx].l_port);
       reg &= ~(ports[idx].mask);
@@ -1132,7 +1222,7 @@ sv_mixer_set_port(addr, cp)
 	sv_write_indirect(sc, ports[idx].r_port, reg);
       }
 
-      sc->trd = 0;
+      sc->sc_trd = 0;
       sv_read_indirect(sc, ports[idx].l_port);
     }
 
