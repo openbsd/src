@@ -43,13 +43,15 @@ CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dpmax
 #CDIAGFLAGS=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes \
 #		-Wno-uninitialized -Wno-format -Wno-main
 # ... and this we will use for now to get the kernel compiled
-CDIAGFLAGS=	-Werror -Wno-main
+CDIAGFLAGS=	-Werror \
+		-Wno-uninitialized -Wno-format -Wno-main
 
-CMACHFLAGS=	-mno-abicalls -mcpu=r3000
+GP=		-G 0
+CMACHFLAGS=	-mno-abicalls -mno-half-pic -mcpu=r3000 ${GP}
 
 CFLAGS=		${DEBUG} -O ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
-LINKFLAGS=	-N -Ttext 80030000 -e start
+LINKFLAGS=	-N -Ttext 80030000 -e start ${GP}
 STRIPFLAGS=	-d
 TOUCHFLAGS=	-f -c
 
