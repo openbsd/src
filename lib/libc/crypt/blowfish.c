@@ -1,4 +1,4 @@
-/* $OpenBSD: blowfish.c,v 1.9 1998/08/10 18:40:59 provos Exp $ */
+/* $OpenBSD: blowfish.c,v 1.10 1998/08/21 23:31:28 deraadt Exp $ */
 /*
  * Blowfish block cipher for OpenBSD
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -611,16 +611,16 @@ blf_ecb_encrypt(c, data, len)
      u_int32_t len;
 #endif
 {
-#if BYTE_ORDER == LITTLE_ENDIAN
 	u_int32_t l, r;
-#endif
 	u_int32_t i;
 
 	for (i = 0; i < len; i += 8) {
 #if BYTE_ORDER == LITTLE_ENDIAN
 		BLF_BLK_ENC;
 #else
-		Blowfish_encipher(c, data, data + 4);
+		memcpy(&l, data, sizeof l);
+		memcpy(&r, data + 4, sizeof r);
+		Blowfish_encipher(c, &l, &r);
 #endif
 		data += 8;
 	}
@@ -637,16 +637,16 @@ blf_ecb_decrypt(c, data, len)
      u_int32_t len;
 #endif
 {
-#if BYTE_ORDER == LITTLE_ENDIAN
 	u_int32_t l, r;
-#endif
 	u_int32_t i;
 
 	for (i = 0; i < len; i += 8) {
 #if BYTE_ORDER == LITTLE_ENDIAN
 		BLF_BLK_DEC;
 #else
-		Blowfish_decipher(c, data, data + 4);
+		memcpy(&l, data, sizeof l);
+		memcpy(&r, data + 4, sizeof r);
+		Blowfish_decipher(c, &l, &r);
 #endif
 		data += 8;
 	}
@@ -664,9 +664,7 @@ blf_cbc_encrypt(c, iv, data, len)
      u_int32_t len;
 #endif
 {
-#if BYTE_ORDER == LITTLE_ENDIAN
 	u_int32_t l, r;
-#endif
 	u_int32_t i;
 
 	for (i = 0; i < len; i += 8) {
@@ -675,7 +673,9 @@ blf_cbc_encrypt(c, iv, data, len)
 #if BYTE_ORDER == LITTLE_ENDIAN
 		BLF_BLK_ENC;
 #else
-		Blowfish_encipher(c, data, data + 4);
+		memcpy(&l, data, sizeof l);
+		memcpy(&r, data + 4, sizeof r);
+		Blowfish_encipher(c, &l, &r);
 #endif
 		iv = data;
 		data += 8;
@@ -694,9 +694,7 @@ blf_cbc_decrypt(c, iva, data, len)
      u_int32_t len;
 #endif
 {
-#if BYTE_ORDER == LITTLE_ENDIAN
 	u_int32_t l, r;
-#endif
 	u_int8_t *iv;
 	u_int32_t i;
 
@@ -706,7 +704,9 @@ blf_cbc_decrypt(c, iva, data, len)
 #if BYTE_ORDER == LITTLE_ENDIAN
 		BLF_BLK_DEC;
 #else
-		Blowfish_decipher(c, data, data + 4);
+		memcpy(&l, data, sizeof l);
+		memcpy(&r, data + 4, sizeof r);
+		Blowfish_decipher(c, &l, &r);
 #endif
 		*(u_int32_t *)data ^= *(u_int32_t *)iv;
 		*(u_int32_t *)(data + 4) ^= *(u_int32_t *)(iv + 4);
@@ -716,7 +716,9 @@ blf_cbc_decrypt(c, iva, data, len)
 #if BYTE_ORDER == LITTLE_ENDIAN
 	BLF_BLK_DEC;
 #else
-	Blowfish_decipher(c, data, data + 4);
+	memcpy(&l, data, sizeof l);
+	memcpy(&r, data + 4, sizeof r);
+	Blowfish_decipher(c, &l, &r);
 #endif
 	*(u_int32_t *)data ^= *(u_int32_t *)iva;
 	*(u_int32_t *)(data + 4) ^= *(u_int32_t *)(iva + 4);
