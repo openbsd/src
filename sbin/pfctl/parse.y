@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.325 2003/02/19 22:00:20 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.326 2003/02/20 00:18:19 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1588,6 +1588,10 @@ number		: STRING			{
 		;
 
 address		: '(' STRING ')'		{
+			if (ifa_exists($2) == NULL) {
+				yyerror("interface %s does not exist", $2);
+				YYERROR;
+			}
 			$$ = calloc(1, sizeof(struct node_host));
 			if ($$ == NULL)
 				err(1, "address: calloc");
