@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.401 2003/11/16 23:23:16 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.402 2003/11/21 01:43:43 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -144,15 +144,15 @@ struct pf_rule		*pf_get_translation(struct pf_pdesc *, struct mbuf *,
 			    struct pf_addr *, u_int16_t,
 			    struct pf_addr *, u_int16_t *);
 int			 pf_test_tcp(struct pf_rule **, struct pf_state **,
-			    int, struct ifnet *, struct mbuf *, int, int,
+			    int, struct ifnet *, struct mbuf *, int,
 			    void *, struct pf_pdesc *, struct pf_rule **,
 			    struct pf_ruleset **);
 int			 pf_test_udp(struct pf_rule **, struct pf_state **,
-			    int, struct ifnet *, struct mbuf *, int, int,
+			    int, struct ifnet *, struct mbuf *, int,
 			    void *, struct pf_pdesc *, struct pf_rule **,
 			    struct pf_ruleset **);
 int			 pf_test_icmp(struct pf_rule **, struct pf_state **,
-			    int, struct ifnet *, struct mbuf *, int, int,
+			    int, struct ifnet *, struct mbuf *, int,
 			    void *, struct pf_pdesc *, struct pf_rule **,
 			    struct pf_ruleset **);
 int			 pf_test_other(struct pf_rule **, struct pf_state **,
@@ -164,13 +164,13 @@ int			 pf_test_fragment(struct pf_rule **, int,
 			    struct pf_pdesc *, struct pf_rule **,
 			    struct pf_ruleset **);
 int			 pf_test_state_tcp(struct pf_state **, int,
-			    struct ifnet *, struct mbuf *, int, int,
+			    struct ifnet *, struct mbuf *, int,
 			    void *, struct pf_pdesc *, u_short *);
 int			 pf_test_state_udp(struct pf_state **, int,
-			    struct ifnet *, struct mbuf *, int, int,
+			    struct ifnet *, struct mbuf *, int,
 			    void *, struct pf_pdesc *);
 int			 pf_test_state_icmp(struct pf_state **, int,
-			    struct ifnet *, struct mbuf *, int, int,
+			    struct ifnet *, struct mbuf *, int,
 			    void *, struct pf_pdesc *);
 int			 pf_test_state_other(struct pf_state **, int,
 			    struct ifnet *, struct pf_pdesc *);
@@ -2182,7 +2182,7 @@ pf_set_rt_ifp(struct pf_state *s, struct pf_addr *saddr)
 
 int
 pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
-    struct ifnet *ifp, struct mbuf *m, int ipoff, int off, void *h,
+    struct ifnet *ifp, struct mbuf *m, int off, void *h,
     struct pf_pdesc *pd, struct pf_rule **am, struct pf_ruleset **rsm)
 {
 	struct pf_rule		*nat = NULL, *rdr = NULL;
@@ -2496,7 +2496,7 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 
 int
 pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
-    struct ifnet *ifp, struct mbuf *m, int ipoff, int off, void *h,
+    struct ifnet *ifp, struct mbuf *m, int off, void *h,
     struct pf_pdesc *pd, struct pf_rule **am, struct pf_ruleset **rsm)
 {
 	struct pf_rule		*nat = NULL, *rdr = NULL;
@@ -2723,7 +2723,7 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 
 int
 pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
-    struct ifnet *ifp, struct mbuf *m, int ipoff, int off, void *h,
+    struct ifnet *ifp, struct mbuf *m, int off, void *h,
     struct pf_pdesc *pd, struct pf_rule **am, struct pf_ruleset **rsm)
 {
 	struct pf_rule		*nat = NULL, *rdr = NULL;
@@ -3257,7 +3257,7 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct ifnet *ifp,
 
 int
 pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
-    struct mbuf *m, int ipoff, int off, void *h, struct pf_pdesc *pd,
+    struct mbuf *m, int off, void *h, struct pf_pdesc *pd,
     u_short *reason)
 {
 	struct pf_state		 key;
@@ -3665,7 +3665,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 
 int
 pf_test_state_udp(struct pf_state **state, int direction, struct ifnet *ifp,
-    struct mbuf *m, int ipoff, int off, void *h, struct pf_pdesc *pd)
+    struct mbuf *m, int off, void *h, struct pf_pdesc *pd)
 {
 	struct pf_state_peer	*src, *dst;
 	struct pf_state		 key;
@@ -3726,7 +3726,7 @@ pf_test_state_udp(struct pf_state **state, int direction, struct ifnet *ifp,
 
 int
 pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
-    struct mbuf *m, int ipoff, int off, void *h, struct pf_pdesc *pd)
+    struct mbuf *m, int off, void *h, struct pf_pdesc *pd)
 {
 	struct pf_addr	*saddr = pd->src, *daddr = pd->dst;
 	u_int16_t	 icmpid, *icmpsum;
@@ -4917,7 +4917,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 		action = pf_normalize_tcp(dir, ifp, m, 0, off, h, &pd);
 		if (action == PF_DROP)
 			goto done;
-		action = pf_test_state_tcp(&s, dir, ifp, m, 0, off, h, &pd,
+		action = pf_test_state_tcp(&s, dir, ifp, m, off, h, &pd,
 		    &reason);
 		if (action == PF_PASS) {
 			r = s->rule.ptr;
@@ -4925,7 +4925,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_tcp(&r, &s, dir, ifp,
-			    m, 0, off, h, &pd, &a, &ruleset);
+			    m, off, h, &pd, &a, &ruleset);
 		break;
 	}
 
@@ -4943,14 +4943,14 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 			action = PF_DROP;
 			goto done;
 		}
-		action = pf_test_state_udp(&s, dir, ifp, m, 0, off, h, &pd);
+		action = pf_test_state_udp(&s, dir, ifp, m, off, h, &pd);
 		if (action == PF_PASS) {
 			r = s->rule.ptr;
 			a = s->anchor.ptr;
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_udp(&r, &s, dir, ifp,
-			    m, 0, off, h, &pd, &a, &ruleset);
+			    m, off, h, &pd, &a, &ruleset);
 		break;
 	}
 
@@ -4968,7 +4968,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 			action = PF_DROP;
 			goto done;
 		}
-		action = pf_test_state_icmp(&s, dir, ifp, m, 0, off, h, &pd);
+		action = pf_test_state_icmp(&s, dir, ifp, m, off, h, &pd);
 		if (action == PF_PASS) {
 			r = s->rule.ptr;
 			r->packets++;
@@ -4981,7 +4981,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_icmp(&r, &s, dir, ifp,
-			    m, 0, off, h, &pd, &a, &ruleset);
+			    m, off, h, &pd, &a, &ruleset);
 		break;
 	}
 
@@ -5182,7 +5182,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 		action = pf_normalize_tcp(dir, ifp, m, 0, off, h, &pd);
 		if (action == PF_DROP)
 			goto done;
-		action = pf_test_state_tcp(&s, dir, ifp, m, 0, off, h, &pd,
+		action = pf_test_state_tcp(&s, dir, ifp, m, off, h, &pd,
 		    &reason);
 		if (action == PF_PASS) {
 			r = s->rule.ptr;
@@ -5190,7 +5190,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_tcp(&r, &s, dir, ifp,
-			    m, 0, off, h, &pd, &a, &ruleset);
+			    m, off, h, &pd, &a, &ruleset);
 		break;
 	}
 
@@ -5208,14 +5208,14 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 			action = PF_DROP;
 			goto done;
 		}
-		action = pf_test_state_udp(&s, dir, ifp, m, 0, off, h, &pd);
+		action = pf_test_state_udp(&s, dir, ifp, m, off, h, &pd);
 		if (action == PF_PASS) {
 			r = s->rule.ptr;
 			a = s->anchor.ptr;
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_udp(&r, &s, dir, ifp,
-			    m, 0, off, h, &pd, &a, &ruleset);
+			    m, off, h, &pd, &a, &ruleset);
 		break;
 	}
 
@@ -5234,7 +5234,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 			goto done;
 		}
 		action = pf_test_state_icmp(&s, dir, ifp,
-		    m, 0, off, h, &pd);
+		    m, off, h, &pd);
 		if (action == PF_PASS) {
 			r = s->rule.ptr;
 			r->packets++;
@@ -5243,7 +5243,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_icmp(&r, &s, dir, ifp,
-			    m, 0, off, h, &pd, &a, &ruleset);
+			    m, off, h, &pd, &a, &ruleset);
 		break;
 	}
 
