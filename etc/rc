@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.202 2002/07/27 22:11:58 matthieu Exp $
+#	$OpenBSD: rc,v 1.203 2002/08/20 08:42:59 hugh Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -346,6 +346,25 @@ echo clearing /tmp
     find . ! -name . ! -name lost+found ! -name quota.user \
 	! -name quota.group -execdir rm -rf -- {} \; -type d -prune)
 
+# create Unix sockets directories  for X if needed and make sure they have
+# correct permissions
+if [ -d /usr/X11R6/lib ]; then 
+	for d in /tmp/.X11-unix /tmp/.ICE-unix ; do
+		if [ -d $d ]; then 
+			if [ `ls -ld $d | cut -d' ' -f4` != root ]; then
+				chown root $d
+			fi
+			if [ `ls -ld $d | cut -d' ' -f1` != drwxrwxrwt ]; then
+				chmod 1777 $d
+			fi
+		elif [ -e $d ]; then
+			echo "Error: $d exists and isn't a directory."
+		else
+			mkdir -m 1777 $d
+		fi
+	done
+fi
+
 [ -f /etc/rc.securelevel ] && . /etc/rc.securelevel
 if [ X${securelevel} != X"" ]; then
 	echo -n 'setting kernel security level: '
@@ -600,24 +619,6 @@ if [ "X${wsmoused_flags}" != X"NO" -a -x /usr/sbin/wsmoused ]; then
 	echo 'starting wsmoused...';	/usr/sbin/wsmoused ${wsmoused_flags}
 fi
 
-# create Unix sockets directories  for X if needed and make sure they have
-# correct permissions
-if [ -d /usr/X11R6/lib ]; then 
-	for d in /tmp/.X11-unix /tmp/.ICE-unix ; do
-		if [ -d $d ]; then 
-			if [ `ls -ld $d | cut -d' ' -f4` != root ]; then
-				chown root $d
-			fi
-			if [ `ls -ld $d | cut -d' ' -f1` != drwxrwxrwt ]; then
-				chmod 1777 $d
-			fi
-		elif [ -e $d ]; then
-			echo "Error: $d exists and isn't a directory."
-		else
-			mkdir -m 1777 $d
-		fi
-	done
-fi
 # Alternatively, on some architectures, xdm may be started in /etc/ttys.
 if [ "X${xdm_flags}" != X"NO" ]; then
 	echo 'starting xdm...';		/usr/X11R6/bin/xdm ${xdm_flags}
