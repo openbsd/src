@@ -1,4 +1,4 @@
-/*	$OpenBSD: swapctl.c,v 1.8 2002/05/15 23:24:43 art Exp $	*/
+/*	$OpenBSD: swapctl.c,v 1.9 2002/05/15 23:30:08 art Exp $	*/
 /*	$NetBSD: swapctl.c,v 1.9 1998/07/26 20:23:15 mycroft Exp $	*/
 
 /*
@@ -319,7 +319,7 @@ add_swap(path)
 }
 
 /*
- * del_swap:  remove the pathname to the list of swap devices.
+ * del_swap:  remove the pathname from the list of swap devices.
  */
 void
 del_swap(path)
