@@ -1,4 +1,4 @@
-/* $Id: r1r2.c,v 1.8 2001/08/02 17:02:05 rees Exp $ */
+/* $Id: r1r2.c,v 1.9 2003/04/02 22:57:51 deraadt Exp $ */
 
 /*
 copyright 1999
@@ -133,9 +133,9 @@ char *sectok_get_sw(int sw)
 
     s = scsws(sw);
     if (s)
-	sprintf(buf, "%04x %s", sw, s);
+	snprintf(buf, sizeof buf, "%04x %s", sw, s);
     else
-	sprintf(buf, "%04x", sw);
+	snprintf(buf, sizeof buf, "%04x", sw);
     return buf;
 }
 
@@ -153,7 +153,7 @@ static char *scsws(int sw)
 
     if (sectok_r2(r1r2s[i].sw) != 0xff)
 	return r1r2s[i].s;
-    sprintf(buf, r1r2s[i].s, r2);
+    snprintf(buf, sizeof buf, r1r2s[i].s, r2);
     return buf;
 }
 

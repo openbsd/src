@@ -1,4 +1,4 @@
-/* $Id: sc7816.c,v 1.8 2001/08/02 17:02:05 rees Exp $ */
+/* $Id: sc7816.c,v 1.9 2003/04/02 22:57:51 deraadt Exp $ */
 
 /*
 copyright 2000
@@ -156,7 +156,7 @@ scwrite(int fd, int cla, int ins, int p1, int p2, int p3, unsigned char *buf, in
 
     scperf_buf = malloc (64);
 
-    sprintf (scperf_buf, "scwrite (ins %02x, p3 %02x) start", ins, p3);
+    snprintf (scperf_buf, 64, "scwrite (ins %02x, p3 %02x) start", ins, p3);
     SetTime(scperf_buf);
 #endif /* SCPERF */
     rv = scrw(fd, cla, ins, p1, p2, p3, buf, 0, NULL, sw1p, sw2p);
@@ -176,7 +176,7 @@ scread(int fd, int cla, int ins, int p1, int p2, int p3, unsigned char *buf, int
 
     scperf_buf = malloc (64);
 
-    sprintf (scperf_buf, "scread (ins %02x, p3 %02x) start", ins, p3);
+    snprintf (scperf_buf, 64, "scread (ins %02x, p3 %02x) start", ins, p3);
     SetTime(scperf_buf);
 #endif /* SCPERF */
     rv = scrw(fd, cla, ins, p1, p2, 0, NULL, p3, buf, sw1p, sw2p);
