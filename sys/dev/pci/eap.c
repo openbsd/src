@@ -1,4 +1,4 @@
-/*	$OpenBSD: eap.c,v 1.4 1999/01/02 00:02:49 niklas Exp $	*/
+/*	$OpenBSD: eap.c,v 1.5 1999/03/23 08:00:34 deraadt Exp $	*/
 /*	$NetBSD: eap.c,v 1.17 1998/08/25 04:56:01 thorpej Exp $	*/
 
 /*
@@ -444,7 +444,7 @@ eap_attach(parent, self, aux)
 		printf("\n");
 		return;
 	}
-	printf(": interrupting at %s\n", intrstr);
+	printf(": %s\n", intrstr);
 
 	/* Enable interrupts and looping mode. */
 	EWRITE4(sc, EAP_SIC, EAP_P2_INTR_EN | EAP_R1_INTR_EN);
