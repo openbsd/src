@@ -22,8 +22,29 @@ further information regarding configuration in the file /usr/X11R6/README.
 Several popular binary packages (pre-compiled applications) are available
 for most architetures.  If you installed from a CD-ROM the packages
 are on the same CD-ROM you installed from in the directory 2.5/packages.
-Those packages (and others) are also available via ftp at
-ftp://ftp.openbsd.org/pub/OpenBSD/2.5/packages/
+
+CD-ROM Space permitted us to include the following packages for the most common
+architectures:
+        Xaw3d-1.3.tgz		aalib-1.2.tgz		autoconf-2.13.tgz
+	bash-2.03.tgz		bison-1.25.tgz		bzip2-0.9.0c.tgz
+	compface-1.0.tgz	cucipop-1.31.tgz	egcs-1.1.2.tgz
+	emacs-20.3.tgz		enscript-1.6.1.tgz	ethereal-0.5.1.tgz
+	fetchmail-4.7.9.tgz	gettext-0.10.35.tgz	ghostscript-5.10.tgz
+	gimp-1.1.4.tgz		glib-1.2.1.tgz		gmake-3.77.tgz
+	gnuplot-3.7.tgz		gtk+-1.2.1.tgz		gv-3.5.8.tgz
+	id-utils-3.2.tgz	iozone-2.01.tgz		ircii-2.8.2-epic3.004.tgz
+	jpeg-6b.tgz		m4-1.4.tgz		mm-2.7.tgz
+	mpeg_lib-1.2.1.tgz	netpbm-19940301.tgz	netpipes-4.1.1-export.tgz
+	nmh-1.0.tgz		pine-4.10.tgz		png-1.0.3.tgz
+	screen-3.7.6.tgz	sharutils-4.2.tgz	sniffit-0.3.5.tgz
+	tar-1.12.tgz		tcl-8.0.5.tgz		tcsh-6.08.00.tgz
+	tiff-3.4.tgz		tk-8.0.5.tgz		unzip-5.40.tgz
+	xcolors-1.3.tgz		xntp3-5.93e-export.tgz
+
+These and many other packages are also available via ftp at
+	ftp://ftp.openbsd.org/pub/OpenBSD/2.5/packages/
+If you do not find a package you want on the CD, please go look at your
+nearest FTP mirror site.
 
 Select your architecture and download the tarballs of your choice.  For example
 to install the emacs package for i386, execute
