@@ -1,4 +1,4 @@
-/*	$OpenBSD: match.c,v 1.4 2001/01/29 01:58:08 niklas Exp $	*/
+/*	$OpenBSD: match.c,v 1.5 2001/05/23 15:20:19 art Exp $	*/
 
 /*
  *	Limited parenthesis matching routines
@@ -169,17 +169,17 @@ displaymatch(clp, cbo)
 			inwindow = TRUE;
 
 	if (inwindow == TRUE) {
-		tlp = curwp->w_dotp;	/* save current position	*/
+		tlp = curwp->w_dotp;	/* save current position */
 		tbo = curwp->w_doto;
 
-		curwp->w_dotp = clp;	/* move to new position		*/
+		curwp->w_dotp = clp;	/* move to new position */
 		curwp->w_doto = cbo;
 		curwp->w_flag |= WFMOVE;
 
-		update();		/* show match			*/
-		sleep(1);		/* wait a bit			*/
+		update();		/* show match */
+		ttwait(1000);		/* wait for key or 1 second */
 
-		curwp->w_dotp = tlp;	/* return to old position	*/
+		curwp->w_dotp = tlp;	/* return to old position */
 		curwp->w_doto = tbo;
 		curwp->w_flag |= WFMOVE;
 		update();
