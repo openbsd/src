@@ -4,13 +4,14 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: l64a.c,v 1.2 1996/08/19 08:33:33 tholo Exp $";
+static char *rcsid = "$OpenBSD: l64a.c,v 1.3 1997/08/17 22:58:34 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#include <errno.h>
 #include <stdlib.h>
 
 char *
-l64a (value)
+l64a(value)
 	long value;
 {
 	static char buf[8];
@@ -18,8 +19,10 @@ l64a (value)
 	int digit;
 	int i;
 
-	if (!value) 
-		return NULL;
+	if (value < 0) {
+		errno = EINVAL;
+		return(NULL);
+	}
 
 	for (i = 0; value != 0 && i < 6; i++) {
 		digit = value & 0x3f;
@@ -39,5 +42,5 @@ l64a (value)
 
 	*s = '\0';
 
-	return buf;
+	return(buf);
 }
