@@ -1,4 +1,4 @@
-#	$OpenBSD: NETTAN,v 1.21 1997/09/02 04:11:23 downsj Exp $
+#	$OpenBSD: NETTAN,v 1.22 1997/09/21 09:40:09 niklas Exp $
 #
 #	NETTAN -- Applitron Datasystem AB
 #
@@ -78,6 +78,7 @@ config		bsd	swap generic
 
 mainbus0	at root
 
+bios0	at mainbus0
 isa0	at mainbus0
 pci0	at mainbus0 bus ?
 

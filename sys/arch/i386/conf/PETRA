@@ -1,4 +1,4 @@
-#	$OpenBSD: PETRA,v 1.5 1997/09/02 04:11:24 downsj Exp $
+#	$OpenBSD: PETRA,v 1.6 1997/09/21 09:40:09 niklas Exp $
 #
 #	PETRA -- everything that's currently supported with certain
 #		 changes for Applitron's fileserver petra, a 128 MB
@@ -45,6 +45,7 @@ config		bsd	root on sd0a swap on ccd0b dumps on ccd0b
 
 mainbus0 at root
 
+bios0	at mainbus0
 isa0	at mainbus0
 eisa0	at mainbus0
 pci0	at mainbus0 bus ?

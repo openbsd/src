@@ -1,4 +1,4 @@
-#	$OpenBSD: OPRAH,v 1.16 1997/09/02 04:11:23 downsj Exp $
+#	$OpenBSD: OPRAH,v 1.17 1997/09/21 09:40:08 niklas Exp $
 #
 #	OPRAH -- Niklas Hallqvist's test machine
 #
@@ -73,6 +73,7 @@ option		INET		# IP + ICMP + TCP + UDP
 config		bsd	swap generic
 
 mainbus0	at root
+bios0	at mainbus0
 isa0	at mainbus0
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
