@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsreg.h,v 1.8 2004/05/22 19:34:12 miod Exp $	*/
+/*	$OpenBSD: vsreg.h,v 1.9 2004/07/18 19:45:51 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -177,7 +177,7 @@
 #define	CEVSB_ERR_OF	0x83			/* Overflow */
 #define	CEVSB_ERR_BD	0x84			/* Bad direction */
 #define	CEVSB_ERR_NR	0x86			/* Non-Recoverabl Error */
-#define	CESVB_ERR_PANIC	0xff			/* Board Painc!!! */
+#define	CEVSB_ERR_PANIC	0xff			/* Board Painc!!! */
 #define	CEVSB_AUXERR		0x00000e	/* cougar error code */
 #define	CEVSB_SIZE		0x000010
 
