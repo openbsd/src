@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsreg.h,v 1.5 2003/09/29 09:08:19 miod Exp $ */
+/*	$OpenBSD: vsreg.h,v 1.6 2004/05/20 16:42:54 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1990 The Regents of the University of California.
@@ -564,22 +564,6 @@ struct vsreg
 /**************** END Short I/O Format                   *******************/
 
 /*
- * Scatter gather structure
- */
-
-typedef struct ipsg
-{
-    volatile u_short      sg_count;       /* byte/entry count */
-    volatile u_short      sg_addrhi;      /* datablock/entry address high */
-    volatile u_short      sg_addrlo;      /* datablock/entry address low */
-    volatile u_short      sg_meminfo;     /* memory information */
-}IPSG;
-
-#define MACSI_SG        256     /* number of MACSI scat/gat entries     */
-#define S_MACSI_SG      (MACSI_SG * sizeof(IPSG))
-#define MACSI_SG_RSIZE  65535   /* max len of each scatter/gather entry */
-
-/*
  *  SCSI IOPB definitions
  */
 
@@ -670,12 +654,6 @@ typedef struct ipsg
 #define COUGAR_PANIC            0xFF    /* COUGAR paniced */
 
 #define MACSI_INVALID_TIMEOUT   0x843   /* The SCSI byte to byte timer expired */
-
-/*
- *      Handy vector macro.
- */
-
-#define VEC(c, vec)     (((c) -> mc_ipl << 8) + (vec))
 
 /*
  *      VME addressing modes

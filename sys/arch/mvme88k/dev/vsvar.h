@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsvar.h,v 1.8 2003/12/26 10:41:43 miod Exp $ */
+/*	$OpenBSD: vsvar.h,v 1.9 2004/05/20 16:42:54 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #define	DMAMAXIO	(MAXPHYS/NBPG+1)
 #define  LO(x) (u_short)((unsigned long)x & 0x0000FFFF)
 #define  HI(x) (u_short)((unsigned long)x >> 16)
-#define  OFF(x) (u_short)((long)kvtop((vaddr_t)x) - (long)kvtop((vaddr_t)sc->sc_vsreg))
+#define  OFF(x) (u_short)((vaddr_t)x - (vaddr_t)sc->sc_vsreg)
 #define  vs_name(sc)	(sc)->sc_dev.dv_xname
 
 /****************     Scater/Gather Stuff                *******************/
@@ -94,19 +94,6 @@ typedef struct {
 
 /**************** END Scater/Gather Stuff                *******************/
 
-struct vs_tinfo {
-	int	cmds;		/* #commands processed */
-	int	dconns;		/* #disconnects */
-	int	touts;		/* #timeouts */
-	int	perrs;		/* #parity errors */
-	int	senses;		/* #request sense commands sent */
-	ushort	lubusy;		/* What local units/subr. are busy? */
-	u_char	flags;
-	u_char	period;		/* Period suggestion */
-	u_char	offset;		/* Offset suggestion */
-	int	avail;		/* Is there a device there */
-} tinfo_t;
-
 struct  vs_softc {
 	struct  device sc_dev;
 	struct  intrhand sc_ih_e;
@@ -117,22 +104,7 @@ struct  vs_softc {
 	u_short  sc_evec;
 	u_short  sc_nvec;
 	struct  scsi_link sc_link;	/* proto for sub devices */
-	u_long  sc_chnl;		/* channel 0 or 1 for dual bus cards */
-	u_long  sc_qhp;			/* Command queue head pointer */
 	struct   vsreg  *sc_vsreg;
-#define SSH_NACB 8
-	struct vs_tinfo sc_tinfo[SSH_NACB];
-	u_char  sc_flags;
-	u_char  sc_sien;
-	u_char  sc_dien;
-	u_char  sc_minsync;
-	struct map *hus_map;
-	/* one for each target */
-	struct syncpar {
-		u_char state;
-		u_char sxfer;
-		u_char sbcl;
-	} sc_sync[8];
 };
 
 /* sync states */

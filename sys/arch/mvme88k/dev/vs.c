@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.34 2004/05/09 05:34:00 krw Exp $ */
+/*	$OpenBSD: vs.c,v 1.35 2004/05/20 16:42:54 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -134,7 +134,6 @@ vsattach(parent, self, args)
 {
 	struct vs_softc *sc = (struct vs_softc *)self;
 	struct confargs *ca = args;
-	struct vsreg *rp;
 	int evec;
 	int tmp;
 	bus_space_tag_t iot = ca->ca_iot;
@@ -157,7 +156,7 @@ vsattach(parent, self, args)
 
 	printf(" vec 0x%x", evec);
 
-	sc->sc_vsreg = rp = (void *)bus_space_vaddr(iot, ioh);
+	sc->sc_vsreg = (void *)bus_space_vaddr(iot, ioh);
 
 	sc->sc_ipl = ca->ca_ipl;
 	sc->sc_nvec = ca->ca_vec;
@@ -211,9 +210,6 @@ do_vspoll(sc, to, canreset)
 	/*spl0();*/
 	while (!(CRSW & (M_CRSW_CRBV | M_CRSW_CC))) {
 		if (--i <= 0) {
-#ifdef SDEBUG2
-			printf ("waiting: timeout %d crsw 0x%x\n", to, CRSW);
-#endif
 			i = 50000;
 			--to;
 			if (to <= 0) {
@@ -308,8 +304,7 @@ vs_scsicmd(xs)
 	struct scsi_link *slp = xs->sc_link;
 	struct vs_softc *sc = slp->adapter_softc;
 	int flags;
-	unsigned long buf, len;
-	u_short iopb_len;
+	unsigned int iopb_len;
 	M328_CQE *mc = (M328_CQE*)&sc->sc_vsreg->sh_MCE;
 	M328_CRB *crb = (M328_CRB *)&sc->sc_vsreg->sh_CRB;
 	M328_IOPB *miopb = (M328_IOPB *)&sc->sc_vsreg->sh_MCE_IOPB;
@@ -319,50 +314,16 @@ vs_scsicmd(xs)
 
 	flags = xs->flags;
 
-#ifdef SDEBUG
-	printf("scsi_cmd() ");
-	if (xs->cmd->opcode == 0) {
-		printf("TEST_UNIT_READY ");
-	} else if (xs->cmd->opcode == REQUEST_SENSE) {
-		printf("REQUEST_SENSE   ");
-	} else if (xs->cmd->opcode == INQUIRY) {
-		printf("INQUIRY         ");
-	} else if (xs->cmd->opcode == MODE_SELECT) {
-		printf("MODE_SELECT     ");
-	} else if (xs->cmd->opcode == MODE_SENSE) {
-		printf("MODE_SENSE      ");
-	} else if (xs->cmd->opcode == START_STOP) {
-		printf("START_STOP      ");
-	} else if (xs->cmd->opcode == RESERVE) {
-		printf("RESERVE         ");
-	} else if (xs->cmd->opcode == RELEASE) {
-		printf("RELEASE         ");
-	} else if (xs->cmd->opcode == PREVENT_ALLOW) {
-		printf("PREVENT_ALLOW   ");
-	} else if (xs->cmd->opcode == POSITION_TO_ELEMENT) {
-		printf("POSITION_TO_EL  ");
-	} else if (xs->cmd->opcode == CHANGE_DEFINITION) {
-		printf("CHANGE_DEF      ");
-	} else if (xs->cmd->opcode == MODE_SENSE_BIG) {
-		printf("MODE_SENSE_BIG  ");
-	} else if (xs->cmd->opcode == MODE_SELECT_BIG) {
-		printf("MODE_SELECT_BIG ");
-	} else if (xs->cmd->opcode == 0x25) {
-		printf("READ_CAPACITY   ");
-	} else if (xs->cmd->opcode == 0x08) {
-		printf("READ_COMMAND    ");
-	}
-#endif
 	if (flags & SCSI_POLL) {
 		cqep = mc;
 		iopb = miopb;
 	} else {
 		cqep = vs_getcqe(sc);
+		if (cqep == NULL) {
+			xs->error = XS_DRIVER_STUFFUP;
+			return (TRY_AGAIN_LATER);
+		}
 		iopb = vs_getiopb(sc);
-	}
-	if (cqep == NULL) {
-		xs->error = XS_DRIVER_STUFFUP;
-		return (TRY_AGAIN_LATER);
 	}
 
 	iopb_len = sizeof(M328_short_IOPB) + xs->cmdlen;
@@ -428,13 +389,6 @@ vs_scsicmd(xs)
 	if (crb->crb_CRSW & M_CRSW_AQ) {
 		cqep->cqe_QECR = M_QECR_AA;
 	}
-	VL(buf, iopb->iopb_BUFF);
-	VL(len, iopb->iopb_LENGTH);
-#ifdef SDEBUG
-	printf("tgt %d lun %d buf %x len %d wqn %d ipl %d crsw 0x%x\n",
-	       slp->target, slp->lun, buf, len, cqep->cqe_WORK_QUEUE,
-	       iopb->iopb_LEVEL, crb->crb_CRSW);
-#endif
 	cqep->cqe_QECR |= M_QECR_GO;
 
 	if (flags & SCSI_POLL) {
@@ -493,9 +447,6 @@ vs_chksense(xs)
 	}
 	*/
 	xs->status = riopb->iopb_STATUS >> 8;
-#ifdef SDEBUG
-	scsi_print_sense(xs);
-#endif
 	splx(s);
 }
 
@@ -525,12 +476,11 @@ vs_getiopb(sc)
 	int slot;
 
 	if (mcsb->mcsb_QHDP == 0) {
-		slot = NUM_CQE;
+		slot = NUM_CQE - 1;
 	} else {
 		slot = mcsb->mcsb_QHDP - 1;
 	}
 	iopb = (M328_IOPB *)&sc->sc_vsreg->sh_IOPB[slot];
-	d16_bzero(iopb, sizeof(M328_IOPB));
 	return iopb;
 }
 
@@ -551,7 +501,6 @@ vs_initialize(sc)
 	CRB_CLR_DONE(CRSW);
 	d16_bzero(cib, sizeof(M328_CIB));
 	mcsb->mcsb_QHDP = 0;
-	sc->sc_qhp = 0;
 	cib->cib_NCQE = 10;
 	cib->cib_BURST = 0;
 	cib->cib_NVECT = sc->sc_ipl << 8;
@@ -651,7 +600,6 @@ vs_resync(sc)
 	struct vs_softc *sc;
 {
 	M328_CQE *mc = (M328_CQE*)&sc->sc_vsreg->sh_MCE;
-	M328_IOPB *riopb = (M328_IOPB *)&sc->sc_vsreg->sh_RET_IOPB;
 	M328_DRCF *devreset = (M328_DRCF *)&sc->sc_vsreg->sh_MCE_IOPB;
 	u_short i;
 	for (i=0; i<7; i++) {
@@ -670,14 +618,6 @@ vs_resync(sc)
 		mc->cqe_QECR = M_QECR_GO;
 		/* poll for the command to complete */
 		do_vspoll(sc, 0, 0);
-		if (riopb->iopb_STATUS) {
-#ifdef SDEBUG
-			printf("status: %x\n", riopb->iopb_STATUS);
-#endif
-			sc->sc_tinfo[i].avail = 0;
-		} else {
-			sc->sc_tinfo[i].avail = 1;
-		}
 		if (CRSW & M_CRSW_ER) {
 			CRB_CLR_ER(CRSW);
 		}
@@ -754,63 +694,6 @@ vs_checkintr(sc, xs, status)
 	*status = riopb->iopb_STATUS >> 8;
 	error = riopb->iopb_STATUS & 0xFF;
 
-#ifdef SDEBUG
-	printf("scsi_chk() ");
-
-	if (xs->cmd->opcode == 0) {
-		printf("TEST_UNIT_READY ");
-	} else if (xs->cmd->opcode == REQUEST_SENSE) {
-		printf("REQUEST_SENSE   ");
-	} else if (xs->cmd->opcode == INQUIRY) {
-		printf("INQUIRY         ");
-	} else if (xs->cmd->opcode == MODE_SELECT) {
-		printf("MODE_SELECT     ");
-	} else if (xs->cmd->opcode == MODE_SENSE) {
-		printf("MODE_SENSE      ");
-	} else if (xs->cmd->opcode == START_STOP) {
-		printf("START_STOP      ");
-	} else if (xs->cmd->opcode == RESERVE) {
-		printf("RESERVE         ");
-	} else if (xs->cmd->opcode == RELEASE) {
-		printf("RELEASE         ");
-	} else if (xs->cmd->opcode == PREVENT_ALLOW) {
-		printf("PREVENT_ALLOW   ");
-	} else if (xs->cmd->opcode == POSITION_TO_ELEMENT) {
-		printf("POSITION_TO_EL  ");
-	} else if (xs->cmd->opcode == CHANGE_DEFINITION) {
-		printf("CHANGE_DEF      ");
-	} else if (xs->cmd->opcode == MODE_SENSE_BIG) {
-		printf("MODE_SENSE_BIG  ");
-	} else if (xs->cmd->opcode == MODE_SELECT_BIG) {
-		printf("MODE_SELECT_BIG ");
-	} else if (xs->cmd->opcode == 0x25) {
-		printf("READ_CAPACITY   ");
-	} else if (xs->cmd->opcode == 0x08) {
-		printf("READ_COMMAND    ");
-	}
-
-	printf("tgt %d lun %d buf %x len %d status %x ", target, lun, buf, len, riopb->iopb_STATUS);
-
-	if (CRSW & M_CRSW_EX) {
-		printf("[ex]");
-	}
-	if (CRSW & M_CRSW_QMS) {
-		printf("[qms]");
-	}
-	if (CRSW & M_CRSW_SC) {
-		printf("[sc]");
-	}
-	if (CRSW & M_CRSW_SE) {
-		printf("[se]");
-	}
-	if (CRSW & M_CRSW_AQ) {
-		printf("[aq]");
-	}
-	if (CRSW & M_CRSW_ER) {
-		printf("[er]");
-	}
-	printf("\n");
-#endif
 	if (len != xs->datalen) {
 		xs->resid = xs->datalen - len;
 	} else {
@@ -845,10 +728,6 @@ vs_nintr(vsc)
 	sc->sc_intrcnt_n.ev_count++;
 
 	VL((unsigned long)m328_cmd, crb->crb_CTAG);
-#ifdef SDEBUG
-	printf("Interrupt!!! ");
-	printf("m328_cmd == 0x%x\n", m328_cmd);
-#endif
 	/*
 	 * If this is a controller error, there won't be a m328_cmd
 	 * pointer in the CTAG feild.  Bad things happen if you try
@@ -885,11 +764,6 @@ vs_eintr(vsc)
 	M328_CMD *m328_cmd;
 	struct scsi_xfer *xs;
 	int crsw = crb->cevsb_CRSW;
-#ifdef SDEBUG
-	int type = crb->cevsb_TYPE;
-	int length = crb->cevsb_IOPB_LENGTH;
-	int wq = crb->cevsb_WORK_QUEUE;
-#endif
 	int ecode = crb->cevsb_ERROR;
 	int status, s;
 
@@ -899,10 +773,6 @@ vs_eintr(vsc)
 	sc->sc_intrcnt_e.ev_count++;
 
 	VL((unsigned long)m328_cmd, crb->cevsb_CTAG);
-#ifdef SDEBUG
-	printf("Error Interrupt!!! ");
-	printf("m328_cmd == 0x%x\n", m328_cmd);
-#endif
 	xs = m328_cmd->xs;
 
 	if (crsw & M_CRSW_RST) {
@@ -945,10 +815,6 @@ vs_eintr(vsc)
 		Debugger();
 #endif
 	}
-#ifdef SDEBUG
-	printf("%s: crsw = 0x%x iopb_type = %d iopb_len = %d wq = %d error = 0x%x\n",
-	       vs_name(sc), crsw, type, length, wq, ecode);
-#endif
 	if (CRSW & M_CRSW_ER)
 		CRB_CLR_ER(CRSW);
 	CRB_CLR_DONE(CRSW);
