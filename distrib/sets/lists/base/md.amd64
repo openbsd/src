@@ -32,7 +32,7 @@
 ./usr/lib/gcc-lib/x86_64-unknown-openbsd3.5/3.3.2/collect2
 ./usr/lib/gcc-lib/x86_64-unknown-openbsd3.5/3.3.2/specs
 ./usr/lib/libasn1.so.13.1
-./usr/lib/libc.so.32.0
+./usr/lib/libc.so.33.0
 ./usr/lib/libcom_err.so.13.1
 ./usr/lib/libcrypto.so.10.4
 ./usr/lib/libcurses++.so.2.0
@@ -56,7 +56,7 @@
 ./usr/lib/libpanel.so.2.0
 ./usr/lib/libpcap.so.2.1
 ./usr/lib/libperl.so.8.2
-./usr/lib/libpthread.so.4.0
+./usr/lib/libpthread.so.5.0
 ./usr/lib/libreadline.so.2.0
 ./usr/lib/libsectok.so.5.0
 ./usr/lib/libskey.so.4.0
