@@ -1,4 +1,5 @@
-/*	$NetBSD: ufs_ihash.c,v 1.2 1994/06/29 06:47:26 cgd Exp $	*/
+/*	$OpenBSD: ufs_ihash.c,v 1.2 1996/02/27 07:21:26 niklas Exp $	*/
+/*	$NetBSD: ufs_ihash.c,v 1.3 1996/02/09 22:36:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -123,7 +124,7 @@ ufs_ihashins(ip)
 	struct inode **ipp, *iq;
 
 	ipp = &ihashtbl[INOHASH(ip->i_dev, ip->i_number)];
-	if (iq = *ipp)
+	if ((iq = *ipp) != NULL)
 		iq->i_prev = &ip->i_next;
 	ip->i_next = iq;
 	ip->i_prev = ipp;
@@ -146,7 +147,7 @@ ufs_ihashrem(ip)
 {
 	register struct inode *iq;
 
-	if (iq = ip->i_next)
+	if ((iq = ip->i_next) != NULL)
 		iq->i_prev = ip->i_prev;
 	*ip->i_prev = iq;
 #ifdef DIAGNOSTIC

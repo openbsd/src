@@ -1,4 +1,5 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.7 1995/07/24 21:20:53 cgd Exp $	*/
+/*	$OpenBSD: ufs_readwrite.c,v 1.2 1996/02/27 07:21:31 niklas Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.8 1996/02/09 22:36:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -59,14 +60,16 @@
  * Vnode op for reading.
  */
 /* ARGSUSED */
-READ(ap)
+int
+READ(v)
+	void *v;
+{
 	struct vop_read_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int a_ioflag;
 		struct ucred *a_cred;
-	} */ *ap;
-{
+	} */ *ap = v;
 	register struct vnode *vp;
 	register struct inode *ip;
 	register struct uio *uio;
@@ -145,8 +148,9 @@ READ(ap)
 				break;
 			xfersize = size;
 		}
-		if (error =
-		    uiomove((char *)bp->b_data + blkoffset, (int)xfersize, uio))
+		error = uiomove((char *)bp->b_data + blkoffset, (int)xfersize,
+				uio);
+		if (error)
 			break;
 		brelse(bp);
 	}
@@ -159,14 +163,16 @@ READ(ap)
 /*
  * Vnode op for writing.
  */
-WRITE(ap)
+int
+WRITE(v)
+	void *v;
+{
 	struct vop_write_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int a_ioflag;
 		struct ucred *a_cred;
-	} */ *ap;
-{
+	} */ *ap = v;
 	register struct vnode *vp;
 	register struct uio *uio;
 	register struct inode *ip;

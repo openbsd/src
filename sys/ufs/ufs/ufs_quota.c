@@ -1,4 +1,5 @@
-/*	$NetBSD: ufs_quota.c,v 1.7 1995/03/08 01:51:38 cgd Exp $	*/
+/*	$OpenBSD: ufs_quota.c,v 1.2 1996/02/27 07:21:29 niklas Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.8 1996/02/09 22:36:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -137,7 +138,7 @@ chkdq(ip, change, cred, flags)
 		for (i = 0; i < MAXQUOTAS; i++) {
 			if ((dq = ip->i_dquot[i]) == NODQUOT)
 				continue;
-			if (error = chkdqchg(ip, change, cred, i))
+			if ((error = chkdqchg(ip, change, cred, i)) != 0)
 				return (error);
 		}
 	}
@@ -252,7 +253,7 @@ chkiq(ip, change, cred, flags)
 		for (i = 0; i < MAXQUOTAS; i++) {
 			if ((dq = ip->i_dquot[i]) == NODQUOT)
 				continue;
-			if (error = chkiqchg(ip, change, cred, i))
+			if ((error = chkiqchg(ip, change, cred, i)) != 0)
 				return (error);
 		}
 	}
@@ -372,7 +373,7 @@ quotaon(p, mp, type, fname)
 
 	vpp = &ump->um_quotas[type];
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fname, p);
-	if (error = vn_open(&nd, FREAD|FWRITE, 0))
+	if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0)
 		return (error);
 	vp = nd.ni_vp;
 	VOP_UNLOCK(vp);
@@ -417,7 +418,7 @@ again:
 			continue;
 		if (vget(vp, 1))
 			goto again;
-		if (error = getinoquota(VTOI(vp))) {
+		if ((error = getinoquota(VTOI(vp))) != 0) {
 			vput(vp);
 			break;
 		}
@@ -498,7 +499,7 @@ getquota(mp, id, type, addr)
 	struct dquot *dq;
 	int error;
 
-	if (error = dqget(NULLVP, id, VFSTOUFS(mp), type, &dq))
+	if ((error = dqget(NULLVP, id, VFSTOUFS(mp), type, &dq)) != 0)
 		return (error);
 	error = copyout((caddr_t)&dq->dq_dqb, addr, sizeof (struct dqblk));
 	dqrele(NULLVP, dq);
@@ -521,9 +522,10 @@ setquota(mp, id, type, addr)
 	struct dqblk newlim;
 	int error;
 
-	if (error = copyin(addr, (caddr_t)&newlim, sizeof (struct dqblk)))
+	error = copyin(addr, (caddr_t)&newlim, sizeof (struct dqblk));
+	if (error)
 		return (error);
-	if (error = dqget(NULLVP, id, ump, type, &ndq))
+	if ((error = dqget(NULLVP, id, ump, type, &ndq)) != 0)
 		return (error);
 	dq = ndq;
 	while (dq->dq_flags & DQ_LOCK) {
@@ -580,9 +582,10 @@ setuse(mp, id, type, addr)
 	struct dqblk usage;
 	int error;
 
-	if (error = copyin(addr, (caddr_t)&usage, sizeof (struct dqblk)))
+	error = copyin(addr, (caddr_t)&usage, sizeof (struct dqblk));
+	if (error)
 		return (error);
-	if (error = dqget(NULLVP, id, ump, type, &ndq))
+	if ((error = dqget(NULLVP, id, ump, type, &ndq)) != 0)
 		return (error);
 	dq = ndq;
 	while (dq->dq_flags & DQ_LOCK) {
