@@ -6,7 +6,7 @@
  * Various small changes by Theo de Raadt <deraadt@fsa.ca>
  * Parser rewritten (adding YP support) by Roland McGrath <roland@frob.com>
  *
- * $Id: bootparamd.c,v 1.2 1996/04/21 23:41:48 deraadt Exp $
+ * $Id: bootparamd.c,v 1.3 1996/08/31 01:20:48 deraadt Exp $
  */
 
 #include <sys/types.h>
@@ -174,7 +174,8 @@ bootparamproc_whoami_1_svc(whoami, rqstp)
 	if (dolog)
 		syslog(LOG_NOTICE, "This is host %s\n", he->h_name);
 
-	strcpy(askname, he->h_name);
+	strncpy(askname, he->h_name, sizeof askname-1);
+	askname[sizeof askname-1] = '\0';
 	if (!lookup_bootparam(askname, hostname, NULL, NULL, NULL)) {
 		res.client_name = hostname;
 		getdomainname(domain_name, MAX_MACHINE_NAME);
@@ -232,7 +233,8 @@ bootparamproc_getfile_1_svc(getfile, rqstp)
 	if (!he)
 		goto failed;
 
-	strcpy(askname, he->h_name);
+	strncpy(askname, he->h_name, sizeof askname-1);
+	askname[sizeof askname-1] = '\0';
 	err = lookup_bootparam(askname, NULL, getfile->file_id,
 	    &res.server_name, &res.server_path);
 	if (err == 0) {
