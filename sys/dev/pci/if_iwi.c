@@ -1,4 +1,4 @@
-/*	$Id: if_iwi.c,v 1.3 2004/10/27 21:33:52 damien Exp $  */
+/*	$Id: if_iwi.c,v 1.4 2004/10/28 22:12:00 jcs Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -223,7 +223,7 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 		printf("\n");
 		return;
 	}
-	printf(": %s\n", intrstr);
+	printf(": %s", intrstr);
 
 	if (iwi_reset(sc) != 0) {
 		printf(": could not reset adapter\n");
@@ -248,6 +248,8 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	val = iwi_read_prom_word(sc, IWI_EEPROM_MAC + 2);
 	ic->ic_myaddr[4] = val >> 8;
 	ic->ic_myaddr[5] = val & 0xff;
+
+	printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
 
 	/* set supported .11b rates */
 	ic->ic_sup_rates[IEEE80211_MODE_11B] = iwi_rateset_11b;
