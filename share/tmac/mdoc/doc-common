@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc-common,v 1.21 2000/08/21 21:13:38 deraadt Exp $
+.\"	$OpenBSD: doc-common,v 1.22 2001/01/27 22:42:45 brad Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -181,6 +181,7 @@
 .	if "\\$3"mvme88k" .as vT \ (MVME88K)
 .	if "\\$3"pc532" .as vT \ (PC532)
 .	if "\\$3"pmax"  .as vT \ (PMAX)
+.	if "\\$3"powerpc"  .as vT \ (PowerPC)
 .	if "\\$3"sparc" .as vT \ (SPARC)
 .	if "\\$3"sun3"  .as vT \ (Sun3)
 .	if "\\$3"tahoe" .as vT \ (Tahoe)
