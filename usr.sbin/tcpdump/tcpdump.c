@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.25 2001/11/07 18:48:00 deraadt Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.26 2001/12/07 22:34:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@ static const char copyright[] =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.25 2001/11/07 18:48:00 deraadt Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.26 2001/12/07 22:34:28 deraadt Exp $ (LBL)";
 #endif
 
 /*
@@ -357,9 +357,16 @@ main(int argc, char **argv)
 	if (pcap_setfilter(pd, &fcode) < 0)
 		error("%s", pcap_geterr(pd));
 	if (WFileName) {
-		pcap_dumper_t *p = pcap_dump_open(pd, WFileName);
+		pcap_dumper_t *p;
+
+		p = pcap_dump_open(pd, WFileName);
 		if (p == NULL)
 			error("%s", pcap_geterr(pd));
+		{
+			FILE *fp = (FILE *)p;	/* XXX touching pcap guts! */
+			fflush(fp);
+			setvbuf(fp, NULL, _IONBF, 0);
+		}
 		printer = pcap_dump;
 		pcap_userdata = (u_char *)p;
 	} else {
