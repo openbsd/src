@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.3 1997/01/17 07:13:43 millert Exp $	*/
+/*	$OpenBSD: map.c,v 1.4 1997/07/25 22:13:23 mickey Exp $	*/
 /*	$NetBSD: map.c,v 1.4 1994/12/07 05:08:07 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/9/93";
 #endif
-static char rcsid[] = "$OpenBSD: map.c,v 1.3 1997/01/17 07:13:43 millert Exp $";
+static char rcsid[] = "$OpenBSD: map.c,v 1.4 1997/07/25 22:13:23 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -46,6 +46,7 @@ static char rcsid[] = "$OpenBSD: map.c,v 1.3 1997/01/17 07:13:43 millert Exp $";
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <err.h>
 #include "extern.h"
 
 int	baudrate __P((char *));
@@ -83,7 +84,7 @@ add_mapping(port, arg)
 	copy = strdup(arg);
 	mapp = malloc((u_int)sizeof(MAP));
 	if (copy == NULL || mapp == NULL)
-		err("%s", strerror(errno));
+		err(1, "malloc");
 	mapp->next = NULL;
 	if (maplist == NULL)
 		cur = maplist = mapp;
@@ -159,7 +160,7 @@ next:	if (*arg == ':') {
 	/* If user specified a port with an option flag, set it. */
 done:	if (port) {
 		if (mapp->porttype)
-badmopt:		err("illegal -m option format: %s", copy);
+badmopt:		errx(1, "illegal -m option format: %s", copy);
 		mapp->porttype = port;
 	}
 

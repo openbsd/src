@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.c,v 1.3 1997/01/17 07:13:44 millert Exp $	*/
+/*	$OpenBSD: term.c,v 1.4 1997/07/25 22:13:24 mickey Exp $	*/
 /*	$NetBSD: term.c,v 1.6 1994/12/07 05:08:12 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.1 (Berkeley) 6/9/93";
 #endif
-static char rcsid[] = "$OpenBSD: term.c,v 1.3 1997/01/17 07:13:44 millert Exp $";
+static char rcsid[] = "$OpenBSD: term.c,v 1.4 1997/07/25 22:13:24 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -48,6 +48,7 @@ static char rcsid[] = "$OpenBSD: term.c,v 1.3 1997/01/17 07:13:44 millert Exp $"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <err.h>
 #include "extern.h"
 
 char    tbuf[1024];      		/* Termcap entry. */
@@ -113,12 +114,11 @@ found:	if ((p = getenv("TERMCAP")) != NULL && *p != '/')
 
 	/* Find the termcap entry.  If it doesn't exist, ask the user. */
 	while ((rval = tgetent(tbuf, ttype)) == 0) {
-		(void)fprintf(stderr,
-		    "tset: terminal type %s is unknown\n", ttype);
+		warnx("terminal type %s is unknown", ttype);
 		ttype = askuser(NULL);
 	}
 	if (rval == -1)
-		err("termcap: %s", strerror(errno ? errno : ENOENT));
+		warnx("termcap: %s", strerror(errno ? errno : ENOENT));
 	*tcapbufp = tbuf;
 	return (ttype);
 }
@@ -132,10 +132,8 @@ askuser(dflt)
 	char *p;
 
 	/* We can get recalled; if so, don't continue uselessly. */
-	if (feof(stdin) || ferror(stdin)) {
-		(void)fprintf(stderr, "\n");
+	if (feof(stdin) || ferror(stdin))
 		exit(1);
-	}
 	for (;;) {
 		if (dflt)
 			(void)fprintf(stderr, "Terminal type? [%s] ", dflt);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.3 1997/07/25 21:05:45 mickey Exp $	*/
+/*	$OpenBSD: misc.c,v 1.4 1997/07/25 22:13:24 mickey Exp $	*/
 /*	$NetBSD: misc.c,v 1.3 1994/12/07 05:08:09 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/9/93";
 #endif
-static char rcsid[] = "$OpenBSD: misc.c,v 1.3 1997/07/25 21:05:45 mickey Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.4 1997/07/25 22:13:24 mickey Exp $";
 #endif /* not lint */
 
 #include <fcntl.h>
@@ -47,6 +47,7 @@ static char rcsid[] = "$OpenBSD: misc.c,v 1.3 1997/07/25 21:05:45 mickey Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <err.h>
 #include "extern.h"
 
 void
@@ -57,13 +58,13 @@ cat(file)
 	char buf[1024];
 
 	if ((fd = open(file, O_RDONLY, 0)) < 0)
-		err("%s: %s", file, strerror(errno));
+		err(1, file);
 
 	while ((nr = read(fd, buf, sizeof(buf))) > 0)
 		if ((nw = write(STDERR_FILENO, buf, nr)) == -1)
-			err("write to stderr: %s", strerror(errno));
+			err(1, "write to stderr");
 	if (nr != 0)
-		err("%s: %s", file, strerror(errno));
+		err(1, file);
 	(void)close(fd);
 }
 
@@ -72,33 +73,4 @@ outc(c)
 	int c;
 {
 	(void)putc(c, stderr);
-}
-
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
-void
-#ifdef __STDC__
-err(const char *fmt, ...)
-#else
-err(fmt, va_alist)
-	char *fmt;
-        va_dcl
-#endif
-{
-	va_list ap;
-#ifdef __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	(void)fprintf(stderr, "tset: ");
-	(void)vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	(void)fprintf(stderr, "\n");
-	exit(1);
-	/* NOTREACHED */
 }

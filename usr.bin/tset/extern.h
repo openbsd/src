@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.2 1996/06/26 05:41:54 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.3 1997/07/25 22:13:23 mickey Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1994/12/07 05:08:06 jtc Exp $	*/
 
 /*-
@@ -52,7 +52,6 @@ extern int erasechar, intrchar, killchar;
 
 void	 add_mapping __P((char *, char *));
 void	 cat __P((char *));
-void	 err __P((const char *, ...));
 char	*get_termcap_entry __P((char *, char **));
 char	*mapped __P((char *));
 void	 outc __P((int));
