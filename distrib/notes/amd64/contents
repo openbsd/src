@@ -1,9 +1,9 @@
-dnl	$OpenBSD: contents,v 1.2 2004/02/07 21:44:40 miod Exp $
+dnl	$OpenBSD: contents,v 1.3 2004/02/07 22:47:49 miod Exp $
 TopPart
 dnl uncomment as stuff becomes available
 dnl
 dnl OpenBSDfloppy
-dnl 
+dnl
 dnl		floppyB{:--:}OSrev.fs	Another MACHINE boot and installation floppy;
 dnl				this one features all the drivers not available
 dnl				in floppy{:--:}OSrev.fs, such as SCSI, RAID, gigabit
@@ -25,38 +25,41 @@ OpenBSDrd
 
 OpenBSDcd
 
-As well you may be interested in
-
-.../OSREV/tools/
-		miscellaneous MACHINE installation utilities like
-		rawrite.exe, ntrw.exe, gzip.exe, and pfdisk.exe;
-		see installation section, below.
-
+dnl Uncomment when floppies are available, and if this really is
+dnl worth providing...
+dnl
+dnl As well you may be interested in
+dnl
+dnl .../OSREV/tools/
+dnl		miscellaneous MACHINE installation utilities like
+dnl		rawrite.exe, ntrw.exe, gzip.exe, and pfdisk.exe;
+dnl		see installation section, below.
+dnl
 dnl
 dnl uncomment as stuff becomes available
 dnl OpenBSDfloppydesc(three,Each,s)
-
-In addition, the "tools/" directory contains some utilities that might be
-useful for the installation.
-
+dnl
+dnl In addition, the "tools/" directory contains some utilities that might be
+dnl useful for the installation.
+dnl
 DistributionDescription(six)
 
 OpenBSDbase
 
 OpenBSDcomp
 
-OpenBSDetc
+OpenBSDetc(,,noupgrade)
 
 OpenBSDgame
 
 OpenBSDman
 
 OpenBSDmisc
-dnl 
+dnl
 dnl OpenBSDxbase
-dnl 
+dnl
 dnl OpenBSDxfont
-dnl 
+dnl
 dnl OpenBSDxserv
-dnl 
+dnl
 dnl OpenBSDxshare

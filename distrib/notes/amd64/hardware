@@ -1,38 +1,17 @@
-dnl	$OpenBSD: hardware,v 1.2 2004/02/07 21:35:56 deraadt Exp $
-OpenBSD/MACHINE OSREV works across a broad range of standard PC's and
-clones, with a wide variety of processors and I/O bus architectures.  It
-can be expected to install and run with minimal difficulties on most
-current products.  The cases where problems may be encountered are
-typically older proprietary PC's, laptops or specialized server boxes
-that rely on a custom BIOS to paper over implementation differences.
+dnl	$OpenBSD: hardware,v 1.3 2004/02/07 22:47:49 miod Exp $
+OpenBSD/MACHINE OSREV should work on all Athlon 64-based designs.
 
 OpenBSD does not currently support multiple processors (SMP), but will
 run using one processor on a multi-processor system board.
-
-The minimal configuration to install the system is 12M or 16M of RAM and
-perhaps 100M of disk space.  A custom kernel might be able to run with only
-8MB.  To install the entire system requires much more disk space, and to run
-X or compile the system, more RAM is recommended.  (16M of RAM will actually
-allow you to run X and/or compile but it won't be speedy. Note that until
-you have around 32M of RAM, getting more RAM is more important than getting
-a faster CPU.)
 
 Supported hardware {:-include-:}:
 	Processors
 		All versions of the AMD Athlon 64 processors
 	Buses
-		All standard ISA, EISA, VLB, and PCI bus based machines,
-		including:
-			Intel 450GX/KX based machines
-			Intel 450NX based machines
-			ServerWorks chipset-based machines
-			(We just had to mention those last three, since
-			 they are the hardest to support)
+		All standard ISA and PCI bus bridges
 		Both 16-bit PCMCIA Cards and newer 32-bit CardBus
 		support
 		Universal Serial Bus (USB)
-		The MCA bus found in various IBM PS/2 machines is not
-		supported.
 	Bus Interfaces
 		Standard PCI-PCI bridges, including PCI expansion
 		backplanes
@@ -68,61 +47,61 @@ Supported hardware {:-include-:}:
 		Silicon Image SiI3112
 	SCSI Host Adapters
 		Adaptec AHA-1540, AHA-154xA, AHA-154xB, AHA-1542C,
-		    AHA-1542CF, AHA-1542CP, AHA-1640 [B] [C]
-		Adaptec AHA-174x [B] [C]
-		Adaptec AIC-6260 and AIC-6360 based boards, including: [B]
+		    AHA-1542CF, AHA-1542CP, AHA-1640
+		Adaptec AHA-174x
+		Adaptec AIC-6260 and AIC-6360 based boards, including:
 		    the Adaptec AHA-152x and the SoundBlaster SCSI host adapter.
 		    (Note that you cannot boot from these boards if they do not
 		    have a boot ROM; only the AHA-152x and motherboards using
 		    this chip are likely to be bootable, consequently.)
 		Adaptec AIC-7770-based boards, including the Adaptec
-		    AHA-274x and AHA-284x families) [C]
+		    AHA-274x and AHA-284x families)
 		Adaptec AHA-[23]94x[W] cards and some on-board PCI designs
-		    using the AIC7870 and AIC7880 chips. [C]
+		    using the AIC7870 and AIC7880 chips.
 		Adaptec AHA-[23]94xU[2W] cards and some on-board PCI designs
-		    using the AIC789[01], AIC7895, AIC789[67] chips [C]
+		    using the AIC789[01], AIC7895, AIC789[67] chips
 		Adaptec AIC-789[29] chips and products like the
-		    AHA-29160 based upon it which do 160MB/sec SCSI. [C]
+		    AHA-29160 based upon it which do 160MB/sec SCSI.
 		    (However, the 7899G card is currently not supported with
 		     more than one device attached)
 		AdvanSys 'U', 'UW', 'U2W' and 'U160' PCI SCSI
 		    controllers including the ABP940U[AW],
-		    ASB3940U[AW]-00, ASB3940U2W-00 and ASB3950U160 [A] [B] [C]
-		AMD Am53c974 PCscsi-PCI SCSI controllers, including: [A] [B] [C]
+		    ASB3940U[AW]-00, ASB3940U2W-00 and ASB3950U160
+		AMD Am53c974 PCscsi-PCI SCSI controllers, including:
 		    Tekram DC-390
-		Buslogic BT-54x (Adaptec AHA-154x clones) [B] [C]
+		Buslogic BT-54x (Adaptec AHA-154x clones)
 		BusLogic 445, 74x, 9xx  (but not the new "FlashPoint" series
-		    of BusLogic SCSI adapters) [B] [C]
+		    of BusLogic SCSI adapters)
 		Initio INIC-940 and INIC-950 based PCI SCSI host
-		  adapters, including: [A] [C]
+		  adapters, including:
 		    Initio INI-9090U
 		    Initio INI-9100U/UW
 		    Iwill 2935UW
 		    DTC Domex 3194U Plus
-		QLogic PCI SCSI controllers [A] [C]
-		Seagate/Future Domain ISA SCSI adapter cards, including: [B] [C]
+		QLogic PCI SCSI controllers
+		Seagate/Future Domain ISA SCSI adapter cards, including:
 		    ST01/02
 		    Future Domain TMC-885
 		    Future Domain TMC-950
 		Symbios Logic (NCR) 53C8xx, 53C1010, and 53C1510D-based
 		  PCI SCSI host adapters (including generic/no name cards, old
 		  ASUS cards, the DTC-3130 series, Diamond Fireport series,
-		  etc.) [B] [C]
-		Tekram DC-300B and DC-320E (Adaptec AHA-154x clones) [B] [C]
+		  etc.)
+		Tekram DC-300B and DC-320E (Adaptec AHA-154x clones)
 		Tekram DC-3x5U (DC-315U, DC-395U/UW/F) TRM-S1040 based
-		  PCI SCSI host adapters [A] [C]
-		Ultrastor 14f, 24f, and 34f [A] [C]
-		WD-7000 SCSI host adapters [A] [B] [C]
+		  PCI SCSI host adapters
+		Ultrastor 14f, 24f, and 34f
+		WD-7000 SCSI host adapters
 	RAID and Cache Controllers
-		3ware Escalade 3W-5x00, 3W-6x00 [A] [C]
-		Adaptec FSA-based RAID controllers, including: [A] [C]
+		3ware Escalade 3W-5x00, 3W-6x00
+		Adaptec FSA-based RAID controllers, including:
 		    Adaptec AAC-2622, AAC-364, AAC-3642
 		    Dell PERC 2/Si, PERC 2/QC, PERC 3/Si, PERC 3/Di,
 		      PERC 3/QC
 		    HP NetRAID-4M
 		American Megatrends Inc. MegaRAID controllers in "Mass
-		  Storage" mode [A] [C]
-		Compaq Smart ARRAY PCI/EISA adapters, including: [A] [C]
+		  Storage" mode
+		Compaq Smart ARRAY PCI/EISA adapters, including:
 		    Compaq Integrated Array
 		    Compaq IAES
 		    Compaq IDA, IDA-2
@@ -131,9 +110,9 @@ Supported hardware {:-include-:}:
 		      4250ES, 431
 		    Compaq SMART, SMART-2/E, SMART-2/P, SMART-2DH,
 		      SMART-2SL
-		DPT SmartCache and SmartRaid III/IV PCI/EISA adapters [A] [C]
-		Intel (and formerly ICP-Vortex) GDT series [A] [C]
-		I2O (intelligent I/O) RAID controllers, including: [A] [C]
+		DPT SmartCache and SmartRaid III/IV PCI/EISA adapters
+		Intel (and formerly ICP-Vortex) GDT series
+		I2O (intelligent I/O) RAID controllers, including:
 		    Adaptec SCSI RAID (ASR-2100S, ASR-2110S, ASR-3200S,
 		      etc)
 		    American Megatrends Inc. MegaRAID controllers
@@ -148,7 +127,7 @@ Supported hardware {:-include-:}:
 		Most ATAPI CD-ROM, CD-R, CD-RW, and DVD drives
 	Tape Drives
 		Most SCSI tape drives
-		Most SCSI tape changers [G]
+		Most SCSI tape changers
 		QIC-02 and QIC-36 format (Archive- and Wangtek-
 		   compatible) tape drives [*]
 	MDA, CGA, VGA, SVGA, and HGC Display Adapters.  (Note that not
@@ -160,20 +139,20 @@ Supported hardware {:-include-:}:
 		16550-based ports
 		ST16660-base ports
 		XR16850-based ports (only in the pccom driver)
-		AST-style 4-port serial boards [G]
+		AST-style 4-port serial boards
 		BOCA 8-port serial cards [*]
-		Cyclades Cyclom-{4, 8, 16}Y serial boards [G]
-		Cyclades-Z series multiport serial boards [G]
+		Cyclades Cyclom-{4, 8, 16}Y serial boards
+		Cyclades-Z series multiport serial boards
 		IBM PC-RT 4-port serial boards [*]
 		Addonics FlexPort 8S [*]
 	Parallel Ports
-		Any standard parallel port [G]
+		Any standard parallel port
 	Communication Controllers
 		Universal Serial Bus host controllers, including:
-		    USB Universal Host Controller [A] [B] [C]
-		    USB Open Host Controller [A] [B] [C]
+		    USB Universal Host Controller
+		    USB Open Host Controller
 		PCI `universal' communication cards, providing serial
-		  and parallel ports, including: [G]
+		  and parallel ports, including:
 		    Dolphin Peripherals 4014 (dual parallel) and
 			4035 (dual serial)
 		    SIIG Cyber 2P1S (dual parallel, single serial)
@@ -223,13 +202,13 @@ Supported hardware {:-include-:}:
 		    SUNIX 408x (2 port serial and 2 port parallel)
 		    SUNIX 409x (4 port serial and 2 port parallel)
 	Ethernet Adapters
-		3Com 3c501 [A] [B] [C]
-		3Com 3c503 [B]
-		3Com 3c505 [A] [B] [C]
-		3Com 3c507 [A] [B] [C]
+		3Com 3c501
+		3Com 3c503
+		3Com 3c505
+		3Com 3c507
 		3Com 3c509, 3c579, and 3c59x (disabling PnP on 3c509B is
 		    recommended)
-		3Com 3c515 [B]
+		3Com 3c515
 		3Com 3c9xx Etherlink XL adapters, including:
 		    3Com 3c900/3c900B PCI adapters
 		    3Com 3c905/3c905B/3c905C PCI adapters
@@ -244,13 +223,12 @@ Supported hardware {:-include-:}:
 		    Dell Latitude laptop docking station embedded
 			3c905
 		    NVidia nForce2 integrated 3Com 9201 (nForce2-ST, nForce2-GT)
-		3Com 3c990 3XP Typhoon/Sidewinder PCI adapters, including: [A]
-		  [B] [C]
+		3Com 3c990 3XP Typhoon/Sidewinder PCI adapters, including:
 		    3C990-TX-95
 		    3C990-TX-97
 		    3C990-TX-SVR95
 		    3C990-TX-SVR97
-		Adaptec "Starfire" AIC-6915 based PCI adapters, including: [G]
+		Adaptec "Starfire" AIC-6915 based PCI adapters, including:
 		    Adaptec Single32 ANA-69011
 		    Adaptec Single64 ANA-62011 and ANA-62020
 		    Adaptec Duo64 ANA-62022
@@ -260,7 +238,7 @@ Supported hardware {:-include-:}:
 		    Accton EN2242 MiniPCI
 		    Linksys LNE100TX v4.x
 		    Mototech ME316
-		ADMtek AN986-based USB adapters, including: [A] [B] [C]
+		ADMtek AN986-based USB adapters, including:
 		    Abocom UFE1000
 		    Abocom DSB650TX
 		    Accton USB320-EC
@@ -280,23 +258,23 @@ Supported hardware {:-include-:}:
 		    SMC 2202USB
 		    SMC EZ Connect USB
 		    SOHOware NUB100
-		AMD LANCE and PCnet-based ISA Ethernet adapters, including: [B]
+		AMD LANCE and PCnet-based ISA Ethernet adapters, including:
 		    Novell NE1500T
 		    Novell NE2100
 		    Kingston 21xx
-		AMD PCnet-based PCI Ethernet adapters, including: [B] [C]
+		AMD PCnet-based PCI Ethernet adapters, including:
 		    BOCALANcard/PCI
 		    AT&T StarLAN 10, EN100, and StarLAN Fiber
 		ASIX 88140A/88141 PCI Ethernet adapters, including:
 		    CNet Pro110B
 		    Alfa Inc. GFC2204
-		CATC USB-EL1210A-based USB adapters, including: [G]
+		CATC USB-EL1210A-based USB adapters, including:
 		    CATC Netmate and Netmate II
 		    Belkin F5U011/F5U111
 		Davicom DM9009, DM9100, DM9102, and DM9102A based PCI adapters,
 		including:
 		    Jaton XpressNet
-		DEC EtherWORKS III adapters, including: [G]
+		DEC EtherWORKS III adapters, including:
 		    DEC DE203, DE204, DE205
 		Digital DC21x4x-based PCI Ethernet adapters, including:
 		    Older SMC PCI EtherPower 10, 10/100 (models
@@ -315,8 +293,8 @@ Supported hardware {:-include-:}:
 		    CompuShack Goldline Quattro
 		    Phobos P430TX
 		    Znyx ZX346
-		Intel EtherExpress 16 [A] [B] [C]
-		Intel EtherExpress PRO/10 ISA [A] [B] [C]
+		Intel EtherExpress 16
+		Intel EtherExpress PRO/10 ISA
 		Intel i8255x-based (except the i82556) PCI adapters,
 		including:
 		    Intel EtherExpress PRO/10+
@@ -325,8 +303,7 @@ Supported hardware {:-include-:}:
 		    Intel EtherExpress PRO/100 Dual Port
 		    Intel PRO/100 VE, PRO/100 VM, and PRO/100 S
 		Intel 21145-based PCI adapters
-		Kawasaki LSI KL5KUSB101B-based USB adapters, including: [A]
-		  [B] [C]
+		Kawasaki LSI KL5KUSB101B-based USB adapters, including:
 		    3Com 3c19250
 		    3Com 3c460 HomeConnect
 		    ADS Technologies USB-10T
@@ -356,9 +333,9 @@ Supported hardware {:-include-:}:
 		    SVEC PN102-TX Fast Ethernet card
 		Myson Technologies MTD803 3-in-1 Fast Ethernet adapters
 		National Semiconductor DP83815-based PCI adapters,
-		  including: [B] [C]
+		  including:
 		    Netgear FA311/FA312
-		Novell NE1000, NE2000 [B]
+		Novell NE1000, NE2000
 		RealTek 8129, RealTek 8139 Ethernet adapters, including:
 		    Accton MPX 5030/5038
 		    Allied Telesyn AT2550
@@ -372,24 +349,24 @@ Supported hardware {:-include-:}:
 		    Nortel BayStack 21
 		    OvisLink LEF-8129TX, LEF-8139TX
 		    SMC EZ Card 10/100 PCI 1211-TX
-		RealTek RTL8150L based USB adapters, including: [G]
+		RealTek RTL8150L based USB adapters, including:
 		    Melco Inc. LUA-KTX
 		    GreenHouse GH-USB100B
 		    Linksys USB100M
-		SiS 900 and SiS 7016-based PCI adapters, including: [B] [C]
+		SiS 900 and SiS 7016-based PCI adapters, including:
 		    Mototech ME313
 		    NetSurf NS-KFE30D
-		SMC/WD 8003, 8013, and the SMC "Elite16" ISA boards [B]
-		SMC/WD 8216 (the SMC "Elite16 Ultra" ISA boards) [B]
+		SMC/WD 8003, 8013, and the SMC "Elite16" ISA boards
+		SMC/WD 8216 (the SMC "Elite16 Ultra" ISA boards)
 		  (See special notice later in this document)
-		SMC 8416 EtherEZ PnP (with PnP mode off) [B]
-		SMC 9432 (EtherPower II) EPIC 10/100 [C]
-		Sun Happy Meal PCI adapters, including: [G]
+		SMC 8416 EtherEZ PnP (with PnP mode off)
+		SMC 9432 (EtherPower II) EPIC 10/100
+		Sun Happy Meal PCI adapters, including:
 		    Fast Ethernet
 		    Quad Fast Ethernet
-		Sundance ST201-based PCI adapters, including: [G]
+		Sundance ST201-based PCI adapters, including:
 		    D-Link DFE-550TX
-		Texas Instruments ThunderLAN PCI adapters, including: [C]
+		Texas Instruments ThunderLAN PCI adapters, including:
 		    Compaq Netelligent PCI Adapters
 		    Compaq NetFlex 3/P
 		    Compaq Deskpro integrated adapter
@@ -397,65 +374,63 @@ Supported hardware {:-include-:}:
 		    Olicom OC2135, OC2183, OC2325, OC2326
 		    Racore 8165 and 8148
 		    TI ThunderLAN adapters
-		VIA Rhine/RhineII/RhineIII Ethernet adapters, including: [C]
+		VIA Rhine/RhineII/RhineIII Ethernet adapters, including:
 		    Addtron AEF-360TX
 		    Hawking PN102TX
 		    D-Link DFE530TX
-		Winbond W89C840F Ethernet adapters, including: [A]
+		Winbond W89C840F Ethernet adapters, including:
 		    Trendware TE100-PCIE
 		    Compex RL100-ATX 10/100baseTX
 	Wireless Ethernet Adapters
 		Compact Flash Adapters (will show up as PCMCIA adapters)
-		    Buffalo AirStation CF [A] [B] [C]
-		    ELSA XI800 CF [A] [B] [C]
+		    Buffalo AirStation CF
+		    ELSA XI800 CF
 		PCMCIA Adapters
-		    3Com AirConnect 3CRWE737A PCMCIA [A] [B] [C]
-		    ACTIONTEC HWC01170 PCMCIA [A] [B] [C]
-		    Addtron AWP-100 PCMCIA [A] [B] [C]
-		    Agere Orinoco PCMCIA [A] [B] [C]
-		    Aironet 4500/4800 802.11DS ISA PnP, PCMCIA and PCI [A] [B]
-		    BUFFALO AirStation PCMCIA [A] [B] [C]
-		    Cabletron RoamAbout PCMCIA [A] [B] [C]
-		    Cisco 340/350 802.11DS PCMCIA and PCI [A] [B]
-		    Compaq Agency NC5004 PCMCIA [A] [B] [C]
-		    Contec FLEXLAN/FX-DS110-PCC PCMCIA [A] [B] [C]
-		    Corega PCC-11 PCMCIA [A] [B] [C]
-		    Corega PCCA-11 PCMCIA [A] [B] [C]
-		    Corega PCCB-11 PCMCIA [A] [B] [C]
-		    Corega CGWLPCIA11 PCMCIA [A] [B] [C]
-		    Dlink DWL650 PCMCIA [A] [B] [C]
-		    ELSA XI300 PCMCIA [A] [B] [C]
-		    ELSA XI325 PCMCIA [A] [B] [C]
-		    ELSA XI325H PCMCIA [A] [B] [C]
-		    EMTAC A2424i PCMCIA [A] [B] [C]
-		    Ericsson Wireless LAN CARD C11 PCMCIA [A] [B] [C]
-		    Gemtek WL-311 PCMCIA [A] [B] [C]
-		    Hawking Technology WE110P PCMCIA [A] [B] [C]
-		    I-O DATA WN-B11/PCM PCMCIA [A] [B] [C]
-		    Intel PRO/Wireless 2011 PCMCIA [A] [B] [C]
-		    Intersil Prism II PCMCIA [A] [B] [C]
-		    Linksys Instant Wireless WPC11 PCMCIA [A] [B] [C]
+		    3Com AirConnect 3CRWE737A PCMCIA
+		    ACTIONTEC HWC01170 PCMCIA
+		    Addtron AWP-100 PCMCIA
+		    Agere Orinoco PCMCIA
+		    Aironet 4500/4800 802.11DS ISA PnP, PCMCIA and PCI
+		    BUFFALO AirStation PCMCIA
+		    Cabletron RoamAbout PCMCIA
+		    Cisco 340/350 802.11DS PCMCIA and PCI
+		    Compaq Agency NC5004 PCMCIA
+		    Contec FLEXLAN/FX-DS110-PCC PCMCIA
+		    Corega PCC-11 PCMCIA
+		    Corega PCCA-11 PCMCIA
+		    Corega PCCB-11 PCMCIA
+		    Corega CGWLPCIA11 PCMCIA
+		    Dlink DWL650 PCMCIA
+		    ELSA XI300 PCMCIA
+		    ELSA XI325 PCMCIA
+		    ELSA XI325H PCMCIA
+		    EMTAC A2424i PCMCIA
+		    Ericsson Wireless LAN CARD C11 PCMCIA
+		    Gemtek WL-311 PCMCIA
+		    Hawking Technology WE110P PCMCIA
+		    I-O DATA WN-B11/PCM PCMCIA
+		    Intel PRO/Wireless 2011 PCMCIA
+		    Intersil Prism II PCMCIA
+		    Linksys Instant Wireless WPC11 PCMCIA
 		    Linksys Instant Wireless WPC11 2.5 PCMCIA
-		      [A] [B] [C]
 		    Linksys Instant Wireless WPC11 3.0 PCMCIA
-		      [A] [B] [C]
-		    Lucent WaveLAN PCMCIA [A] [B] [C]
-		    NANOSPEED ROOT-RZ2000 PCMCIA [A] [B] [C]
-		    NEC CMZ-RT-WP PCMCIA [A] [B] [C]
-		    Netgear MA401 PCMCIA [A] [B] [C]
-		    Netgear MA401RA PCMCIA [A] [B] [C]
-		    Nokia C020 Wireless LAN PCMCIA [A] [B] [C]
-		    Nokia C110/C111 Wireless LAN PCMCIA [A] [B] [C]
-		    NTT-ME 11Mbps Wireless LAN PCMCIA [A] [B] [C]
-		    Proxim Harmony PCMCIA [A] [B] [C]
-		    Proxim RangeLAN-DS PCMCIA [A] [B] [C]
-		    RayLink Aviator2.4/Pro 802.11FH PCMCIA [A] [B]
-		    Samsung MagicLAN SWL-2000N PCMCIA [A] [B] [C]
-		    SMC 2632 EZ Connect PCMCIA [A] [B] [C]
-		    Symbol Spectrum24 PCMCIA [A] [B] [C]
-		    TDK LAK-CD011WL PCMCIA [A] [B] [C]
-		    US Robotics 2410 PCMCIA [A] [B] [C]
-		    US Robotics 2445 PCMCIA [A] [B] [C]
+		    Lucent WaveLAN PCMCIA
+		    NANOSPEED ROOT-RZ2000 PCMCIA
+		    NEC CMZ-RT-WP PCMCIA
+		    Netgear MA401 PCMCIA
+		    Netgear MA401RA PCMCIA
+		    Nokia C020 Wireless LAN PCMCIA
+		    Nokia C110/C111 Wireless LAN PCMCIA
+		    NTT-ME 11Mbps Wireless LAN PCMCIA
+		    Proxim Harmony PCMCIA
+		    Proxim RangeLAN-DS PCMCIA
+		    RayLink Aviator2.4/Pro 802.11FH PCMCIA
+		    Samsung MagicLAN SWL-2000N PCMCIA
+		    SMC 2632 EZ Connect PCMCIA
+		    Symbol Spectrum24 PCMCIA
+		    TDK LAK-CD011WL PCMCIA
+		    US Robotics 2410 PCMCIA
+		    US Robotics 2445 PCMCIA
 		PCI Adapters
 		    3Com AirConnect 3CRWE777A PCI
 		    Belkin F5D6000 PCI (a rebadged WL11000P)
@@ -469,8 +444,7 @@ Supported hardware {:-include-:}:
 		    Netgear MA301 PCI
 		    US Robotics 2415 PCI (rebadged WL11000P)
 	Gigabit Ethernet Adapters
-		Alteon Tigon I/II PCI Gigabit Ethernet boards, including: [A]
-		  [B] [C]
+		Alteon Tigon I/II PCI Gigabit Ethernet boards, including:
 		    3Com 3c985 and 3c985B
 		    Alteon ACEnic V (fiber and copper)
 		    Digital EtherWORKS 1000SX
@@ -496,7 +470,7 @@ Supported hardware {:-include-:}:
 		      (PWLA8492MF)
 		    Intel PRO/1000MF Server Adapter (LX Fiber) (PWLA8490LX)
 		National Semiconductor DP83280 and DP83281 based PCI
-		adapters, including: [A] [B] [C]
+		adapters, including:
 		    Addtron AEG320T
 		    Asante FriendlyNet GigaNIX 1000TA and 1000TPC
 		    D-Link DGE-500T
@@ -507,8 +481,7 @@ Supported hardware {:-include-:}:
 		Level1 LXT1001 based adapters (untested), including: [*]
 		    SMC TigerCard 1000
 		    D-Link DGE-500SX
-		Broadcom BCM570x (Tigon3) based PCI adapters, including: [A]
-		  [B] [C]
+		Broadcom BCM570x (Tigon3) based PCI adapters, including:
 		    3Com 3c996-T
 		    3Com 3c996-SX
 		    3Com 3c996B-T
@@ -517,11 +490,10 @@ Supported hardware {:-include-:}:
 		    Netgear GA302T
 		    SysKonnect SK-9D21
 		    SysKonnect SK-9D41
-		Sundance/Tamarack TC9021 based PCI adapters, including: [G]
+		Sundance/Tamarack TC9021 based PCI adapters, including:
 		    D-Link DGE-550T (10/100/1000baseTX)
 		    Antares Microsystems Gigabit Ethernet board
 		SysKonnect and Marvell based adapters, including:
-		  [A] [B] [C]
 		    SysKonnect SK-9821 (1000baseT)
 		    SysKonnect SK-9822 (dual 1000baseT)
 		    SysKonnect SK-9841 (1000baseLX)
@@ -540,23 +512,23 @@ Supported hardware {:-include-:}:
 		Efficient Networks EN-155 and Adaptec ANA-590X ATM
 		interfaces [*]
 	FDDI Adapters
-		Digital DEFEA EISA and PCI FDDI adapters [G]
+		Digital DEFEA EISA and PCI FDDI adapters
 	Wan Adapters
 		Lan Media Corporation SSI (T1)/HSSI/DS1/DS3 WAN
-		interfaces [G]
+		interfaces
 	Cryptography Accelerators
 		Broadcom Bluesteelnet uBsec 5501, 5601, 5801, 5802, 5805,
-		  5820, 5821, 5822, 5823 [G]
-		Hifn 6500-based boards [G]
+		  5820, 5821, 5822, 5823
+		Hifn 6500-based boards
 		Hifn 7751/7811/7951/7955/7956-based boards (hifn),
-		  including: [G]
+		  including:
 		    Soekris Engineering vpn1201, vpn1211, vpn1401, and vpn1411
 		    GTGI PowerCrypt Encryption Accelerator
 		    NetSec 7751
 		    Hifn 7751 and 9751 reference boards
 		    Invertex AEON
-		SafeNet SafeXcel 1141/1741 [G]
-	PC Cards (PCMCIA [B] and CardBus [B] [C])
+		SafeNet SafeXcel 1141/1741
+	PC Cards (PCMCIA and CardBus)
 		ATA cards, including:
 		    ATA/IDE card drives
 		    ATA/IDE CD-ROM adapters
@@ -642,28 +614,28 @@ Supported hardware {:-include-:}:
 		    cards should work
 		Wireless Ethernet adapters:
 		    See above
-	Universal Serial Bus (USB) Devices [A] [B] [C]
-		USB Audio [G]
-		USB Diamond Multimedia Rio MP3 players [G]
-		USB Ethernet adapters, see above [G]
-		USB Generic Human Interface Devices (catch-all) [G]
-		USB Handspring Visor [G]
+	Universal Serial Bus (USB) Devices
+		USB Audio
+		USB Diamond Multimedia Rio MP3 players
+		USB Ethernet adapters, see above
+		USB Generic Human Interface Devices (catch-all)
+		USB Handspring Visor
 		USB Hubs
 		USB Keyboards
 		USB Mass Storage devices, i.e., USB floppy drives and
 		  USB memory stick controllers
-		USB Mice [G]
-		USB Modems [G]
-		USB Printers [G]
-		USB Scanners [G]
-		USB-USB cables [G]
+		USB Mice
+		USB Modems
+		USB Printers
+		USB Scanners
+		USB-USB cables
 		USB Y@p phone [*]
-	Pointing Devices [G]
+	Pointing Devices
 		"Logitech"-style bus mice
 		"Microsoft"-style bus mice
 		"PS/2"-style mice
 		Serial mice (uses serial port driver)
-	Sound Devices [G]
+	Sound Devices
 		AMD 768 and 8111 AC'97
 		C-Media CMI8[37]38
 		Cirrus Logic CrystalClear CS4280, CS4281
@@ -703,14 +675,14 @@ Supported hardware {:-include-:}:
 	Miscellaneous Devices
 		APM power management,
 		Brooktree 8[47][89] based frame grabber and TV tuner cards,
-		including: [G]
+		including:
 		    Hauppauge Wincast TV
 		    STB TV PCI Television Tuner
 		    Miro PC TV
 		    Intel Smart Video Recorder III
 		    IMS TV Turbo
 		    AVer Media TV/FM
-		Hardware monitoring sensors, including: [G]
+		Hardware monitoring sensors, including:
 		    National Semiconductor LM78, LM78-J, LM79
 		    Winbond W83697HF, W83627HF, W83627THF, W83781D, W83782D
 		    VIA VT82C686A, VT8231
@@ -724,12 +696,6 @@ Supported hardware {:-include-:}:
 		Most serial port or modem cards
 		NE2100 Ethernet cards
 
-Drivers for hardware marked with [G] are only included in the GENERIC
-kernels, but are NOT included on the various distribution floppies
-(including the cd-rom boot image).
-Drivers for hardware marked with [A] are not included in floppy A.
-Drivers for hardware marked with [B] are not included in floppy B.
-Drivers for hardware marked with [C] are not included in floppy C.
 Support for devices marked with [*] is not included in the GENERIC kernel,
 and will require you to compile a custom kernel to enable it.
 
