@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: servconf.c,v 1.27 1999/11/24 19:53:50 markus Exp $");
+RCSID("$Id: servconf.c,v 1.28 1999/11/24 20:19:37 markus Exp $");
 
 #include "ssh.h"
 #include "servconf.h"
@@ -224,7 +224,7 @@ parse_token(const char *cp, const char *filename,
 	unsigned int i;
 
 	for (i = 0; keywords[i].name; i++)
-		if (strcmp(cp, keywords[i].name) == 0)
+		if (strcasecmp(cp, keywords[i].name) == 0)
 			return keywords[i].opcode;
 
 	fprintf(stderr, "%s: line %d: Bad configuration option: %s\n",
@@ -256,13 +256,6 @@ read_server_config(ServerOptions *options, const char *filename)
 		if (!*cp || *cp == '#')
 			continue;
 		cp = strtok(cp, WHITESPACE);
-		{
-			char *t = cp;
-			for (; *t != 0; t++)
-				if ('A' <= *t && *t <= 'Z')
-					*t = *t - 'A' + 'a';	/* tolower */
-
-		}
 		opcode = parse_token(cp, filename, linenum);
 		switch (opcode) {
 		case sBadOption:

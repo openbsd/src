@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: readconf.c,v 1.19 1999/11/24 19:53:49 markus Exp $");
+RCSID("$Id: readconf.c,v 1.20 1999/11/24 20:19:37 markus Exp $");
 
 #include "ssh.h"
 #include "cipher.h"
@@ -211,7 +211,7 @@ parse_token(const char *cp, const char *filename, int linenum)
 	unsigned int i;
 
 	for (i = 0; keywords[i].name; i++)
-		if (strcmp(cp, keywords[i].name) == 0)
+		if (strcasecmp(cp, keywords[i].name) == 0)
 			return keywords[i].opcode;
 
 	fprintf(stderr, "%s: line %d: Bad configuration option: %s\n",
@@ -239,13 +239,6 @@ process_config_line(Options *options, const char *host,
 
 	/* Get the keyword. (Each line is supposed to begin with a keyword). */
 	cp = strtok(cp, WHITESPACE);
-	{
-		char *t = cp;
-		for (; *t != 0; t++)
-			if ('A' <= *t && *t <= 'Z')
-				*t = *t - 'A' + 'a';	/* tolower */
-
-	}
 	opcode = parse_token(cp, filename, linenum);
 
 	switch (opcode) {
