@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.33 2004/12/08 16:07:43 jfb Exp $	*/
+/*	$OpenBSD: proto.c,v 1.34 2004/12/08 19:28:10 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -153,6 +153,7 @@ struct cvs_resp cvs_responses[] = {
 	{ CVS_RESP_CLRSTICKY,  "Clear-sticky"           },
 	{ CVS_RESP_RCSDIFF,    "Rcs-diff"               },
 	{ CVS_RESP_TEMPLATE,   "Template"               },
+	{ CVS_RESP_COPYFILE,   "Copy-file"              },
 };
 
 #define CVS_NBREQ   (sizeof(cvs_requests)/sizeof(cvs_requests[0]))

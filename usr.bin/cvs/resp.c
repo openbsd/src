@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.13 2004/12/07 17:10:56 tedu Exp $	*/
+/*	$OpenBSD: resp.c,v 1.14 2004/12/08 19:28:10 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -72,6 +72,7 @@ static int  cvs_resp_mode      (struct cvsroot *, int, char *);
 static int  cvs_resp_modxpand  (struct cvsroot *, int, char *);
 static int  cvs_resp_rcsdiff   (struct cvsroot *, int, char *);
 static int  cvs_resp_template  (struct cvsroot *, int, char *);
+static int  cvs_resp_copyfile  (struct cvsroot *, int, char *);
 
 
 struct cvs_resphdlr {
@@ -84,7 +85,7 @@ struct cvs_resphdlr {
 	{ cvs_resp_newentry },
 	{ cvs_resp_newentry },
 	{ cvs_resp_cksum    },
-	{ NULL              },
+	{ cvs_resp_copyfile },
 	{ cvs_resp_updated  },
 	{ cvs_resp_updated  },
 	{ cvs_resp_updated  },	/* 10 */
@@ -474,6 +475,32 @@ cvs_resp_cksum(struct cvsroot *root, int type, char *line)
 	cvs_fcksum = strdup(line);
 	if (cvs_fcksum == NULL) {
 		cvs_log(LP_ERRNO, "failed to copy checksum string");
+		return (-1);
+	}
+
+	return (0);
+}
+
+
+/*
+ * cvs_resp_copyfile()
+ *
+ * Handler for the `Copy-file' response, which is used to copy the contents
+ * of a file to another file for which the name is provided.  The CVS protocol
+ * documentation states that this response is only used prior to a `Merged'
+ * response to create a backup of the file.
+ */
+static int
+cvs_resp_copyfile(struct cvsroot *root, int type, char *line)
+{
+	char newname[MAXNAMLEN];
+
+	/* read the new file name given by the server */
+	if (cvs_getln(root, newname, sizeof(newname)) < 0)
+		return (-1);
+
+	if (rename(line, newname) == -1) {
+		cvs_log(LP_ERRNO, "failed to rename %s to %s", line, newname);
 		return (-1);
 	}
 
