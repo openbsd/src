@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.87 2003/08/23 18:12:20 fgsch Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.88 2003/08/23 19:21:15 deraadt Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -308,8 +308,8 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		if ((error = sysctl_int(oldp, oldlenp, newp, newlen, &level)) ||
 		    newp == NULL)
 			return (error);
-		if ((securelevel > 0 || level < -1)
-		    && level < securelevel && p->p_pid != 1)
+		if ((securelevel > 0 || level < -1) &&
+		    level < securelevel && p->p_pid != 1)
 			return (EPERM);
 		securelevel = level;
 		return (0);

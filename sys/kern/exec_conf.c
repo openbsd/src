@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_conf.c,v 1.13 2003/08/21 18:56:07 tedu Exp $	*/
+/*	$OpenBSD: exec_conf.c,v 1.14 2003/08/23 19:21:15 deraadt Exp $	*/
 /*	$NetBSD: exec_conf.c,v 1.16 1995/12/09 05:34:47 cgd Exp $	*/
 
 /*
@@ -186,8 +186,8 @@ init_exec(void)
 	 */
 	if (exec_maxhdrsz == 0) {
 		for (i = 0; i < nexecs; i++)
-			if (execsw[i].es_check != NULL
-			    && execsw[i].es_hdrsz > exec_maxhdrsz)
+			if (execsw[i].es_check != NULL &&
+			    execsw[i].es_hdrsz > exec_maxhdrsz)
 				exec_maxhdrsz = execsw[i].es_hdrsz;
 	}
 }

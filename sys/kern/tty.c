@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.59 2003/08/15 20:32:18 tedu Exp $	*/
+/*	$OpenBSD: tty.c,v 1.60 2003/08/23 19:21:15 deraadt Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -1175,8 +1175,8 @@ ttywait(tp)
 	error = 0;
 	s = spltty();
 	while ((tp->t_outq.c_cc || ISSET(tp->t_state, TS_BUSY)) &&
-	    (ISSET(tp->t_state, TS_CARR_ON) || ISSET(tp->t_cflag, CLOCAL))
-	    && tp->t_oproc) {
+	    (ISSET(tp->t_state, TS_CARR_ON) || ISSET(tp->t_cflag, CLOCAL)) &&
+	    tp->t_oproc) {
 		(*tp->t_oproc)(tp);
 		if ((tp->t_outq.c_cc || ISSET(tp->t_state, TS_BUSY)) &&
 		    (ISSET(tp->t_state, TS_CARR_ON) || ISSET(tp->t_cflag, CLOCAL))
