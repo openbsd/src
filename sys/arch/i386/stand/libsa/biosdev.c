@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.16 1997/05/30 02:21:52 mickey Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.17 1997/05/31 15:34:56 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -35,7 +35,6 @@
 #include <sys/param.h>
 #include <sys/reboot.h>
 #include <sys/disklabel.h>
-#include <string.h>
 #include <libsa.h>
 #include "biosdev.h"
 
