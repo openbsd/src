@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.11 1996/11/11 23:30:25 kstailey Exp $
+#	$OpenBSD: MAKEDEV,v 1.12 1996/12/06 10:49:47 deraadt Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -82,7 +82,8 @@ case $i in
 
 all)
 	sh MAKEDEV std sd0 sd1 sd2 sd3 sd4 xd0 xd1 xd2 xd3 xy0 xy1 xy2 xy3
-	sh MAKEDEV cd0 st0 st1 fd0
+	sh MAKEDEV cd0 st0 st1
+	sh MAKEDEV fd0 fdB0 fdC0 fdD0 fdE0 fdF0 fdG0 fdH0
 	sh MAKEDEV uk0 uk1
 	sh MAKEDEV ss0 ss1
 	sh MAKEDEV pty0 vnd0 vnd1 vnd2 vnd3 audio tun0 tun1 tun2 tun3

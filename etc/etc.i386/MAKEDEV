@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.33 1996/12/05 13:18:12 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.34 1996/12/06 10:49:44 deraadt Exp $
 #	$NetBSD: MAKEDEV,v 1.40 1996/03/31 00:50:47 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -90,13 +90,15 @@ do
 case $i in
 
 all)
-	sh MAKEDEV std fd wt0 fd0 fd1 wd0 wd1 wd2 wd3 sd0 sd1 sd2
+	sh MAKEDEV std fd wt0 wd0 wd1 wd2 wd3 sd0 sd1 sd2
 	sh MAKEDEV tty00 tty01 tty02 tty03 pty0 pty1 st0 st1 ch0 cd0 cd1
 	sh MAKEDEV mcd0 acd0 vnd0 vnd1 lpa0 lpa1 ccd0 ccd1 ccd2 ccd3
 	sh MAKEDEV lpt0 lpt1 lpt2 ttyC0 ttyC1 ttyC2 bpf0 bpf1 bpf2 bpf3
 	sh MAKEDEV ipl tun0 tun1 tun2
 	sh MAKEDEV speaker lkm mms0 lms0 pms0 audio joy0 joy1 apm pcmcia local
 	sh MAKEDEV random uk0 uk1 ss0 ss1 pctr
+	sh MAKEDEV fd0 fdB0 fdC0 fdD0 fdE0 fdF0 fdG0 fdH0 
+	sh MAKEDEV fd1 fdB1 fdC1 fdD1 fdE1 fdF1 fdG1 fdH1 
 # MISSING:
 #	sh MAKEDEV mouse-?
 	;;
