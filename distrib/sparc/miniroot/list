@@ -32,7 +32,7 @@ SYMLINK	/tmp	var/tmp
 COPY	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV
 COPY	${DESTDIR}/dev/MAKEDEV.local	dev/MAKEDEV.local
 SPECIAL	cd dev; sh MAKEDEV all
-SPECIAL	/bin/rm dev/MAKEDEV
+#SPECIAL	/bin/rm dev/MAKEDEV
 
 # we need the contents of /usr/mdec
 COPYDIR	${DESTDIR}/usr/mdec	usr/mdec

@@ -89,7 +89,7 @@ md_get_ifdevs() {
 
 md_get_partition_range() {
     # return range of valid partition letters
-    echo "[a-h]"
+    echo "[a-p]"
 }
 
 md_installboot() {
@@ -156,11 +156,11 @@ pairs are on cylinder boundaries (the number of sector per cylinder is
 given in the `sectors/cylinder' entry, which is not shown here).
 
 Do not change any parameters except the partition layout and the label name.
-It's probably also wisest not to touch the `8 partitions:' line, even
-in case you have defined less than eight partitions.
+It's probably also wisest not to touch the `16 partitions:' line, even
+in case you have defined less than sixteen partitions.
 
 [Example]
-8 partitions:
+16 partitions:
 #        size   offset    fstype   [fsize bsize   cpg]
   a:    50176        0    4.2BSD     1024  8192    16   # (Cyl.    0 - 111)
   b:    64512    50176      swap                        # (Cyl.  112 - 255)

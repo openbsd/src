@@ -32,9 +32,17 @@
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
+
 TERM=sun
 export TERM
 
+if [ -e /usr/bin/vim ]; then
+	EDITOR=vim
+else
+	EDITOR=ed
+fi
+export EDITOR
+	
 umask 022
 
 if [ "X${DONEPROFILE}" = "X" ]; then
