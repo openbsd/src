@@ -1,7 +1,8 @@
-# $OpenBSD: Makefile.hdb.inc,v 1.1 2003/05/14 09:05:59 hin Exp $
+# $OpenBSD: Makefile.hdb.inc,v 1.2 2003/05/17 05:20:18 mho Exp $
 
-INCLUDE_FILES+=	${KRB5SRC}/lib/hdb/{hdb.h,hdb-protos.h,hdb-private.h} \
-		hdb_err.h ${.CURDIR}/hdb_asn1.h
+DIR_HDB=	${KRB5SRC}/lib/hdb
+HDR_HDB=	hdb.h hdb-protos.h hdb-private.h
+HDR_OBJ+=	hdb_err.h hdb_asn1.h
 
 includes:	hdb_err.h hdb_asn1.h
 

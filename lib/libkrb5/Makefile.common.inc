@@ -1,16 +1,12 @@
-# $OpenBSD: Makefile.common.inc,v 1.1 2003/05/14 09:05:59 hin Exp $
+# $OpenBSD: Makefile.common.inc,v 1.2 2003/05/17 05:20:18 mho Exp $
 
 KRB5SRC	= ${KRB5DIR}/src
-
-KRB4DIR	= ${KRB5DIR}/../kerberosIV
-KRB4SRC	= ${KRB4DIR}/src
 
 CFLAGS	+= -DHAVE_CONFIG_H -DBINDIR=\"/usr/bin\" -DSBINDIR=\"/usr/sbin\"\
 	   -DLIBEXECDIR=\"/usr/libexec\" -DSYSCONFDIR=\"/etc/kerberosV\" \
 	   -I${DESTDIR}/usr/include/kerberosV \
-	   -I${DESTDIR}/usr/include/kerberosIV \
 	   -I${KRB5DIR}/include -I${KRB5SRC}/lib/roken\
-	   -I${KRB5SRC}/include -I${KRB4SRC}/lib/sl 
+	   -I${KRB5SRC}/include -I${KRB5SRC}/lib/sl 
 CFLAGS+=	-Wall
 
 .include <bsd.own.mk>				# for 'NOPIC' definition

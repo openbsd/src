@@ -1,8 +1,10 @@
-# $OpenBSD: Makefile.krb5.inc,v 1.2 2003/05/15 04:16:10 hin Exp $
+# $OpenBSD: Makefile.krb5.inc,v 1.3 2003/05/17 05:20:18 mho Exp $
 
-INCLUDE_FILES+=	${KRB5SRC}/lib/krb5/{krb5.h,krb5-protos.h,krb5-private.h} \
-		${KRB5DIR}/include/krb5-types.h \
-		krb5_err.h heim_err.h k524_err.h
+DIR_KRB5INC=${.CURDIR}/../../kerberosV/include
+DIR_KRB5LIB=${KRB5SRC}/lib/krb5
+HDR_KRB5INC=	krb5-types.h
+HDR_KRB5LIB=	krb5.h krb5-protos.h krb5-private.h
+HDR_OBJ+=	krb5_err.h heim_err.h k524_err.h
 
 includes:	krb5_err.h heim_err.h k524_err.h
 

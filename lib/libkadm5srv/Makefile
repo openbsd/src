@@ -1,14 +1,32 @@
-# $OpenBSD: Makefile,v 1.1 2003/05/14 23:48:20 hin Exp $
+# $OpenBSD: Makefile,v 1.2 2003/05/17 05:20:18 mho Exp $
 
 KRB5DIR	= ${.CURDIR}/../../kerberosV
 .include <${.CURDIR}/../libkrb5/Makefile.common.inc>
 
 LIB=	kadm5srv
 
-INCLUDE_DIR=	${DESTDIR}/usr/include/kerberosV/kadm5
-INCLUDE_FILES=	${KRB5SRC}/lib/kadm5/{admin.h,private.h} kadm5_err.h
+DIR_KADM5SRV=	${KRB5SRC}/lib/kadm5
+HDR_KADM5SRV=	admin.h kadm5-private.h kadm5-protos.h private.h
+HDR_OBJ=	kadm5_err.h
 
 includes:	kadm5_err.h
+	@test -d ${DESTDIR}/usr/include/kerberosV/kadm5 || \
+		mkdir ${DESTDIR}/usr/include/kerberosV/kadm5
+	@echo -n ${DIR_KADM5SRV}:; \
+	cd ${DIR_KADM5SRV}; for i in ${HDR_KADM5SRV}; do \
+		echo -n " $$i"; \
+		cmp -s $$i ${DESTDIR}/usr/include/kerberosV/kadm5/$$i || \
+			${INSTALL} ${INSTALL_COPY} -m 444 \
+			-o ${BINOWN} -g $(BINGRP) $$i \
+			${DESTDIR}/usr/include/kerberosV/kadm5; done; \
+		echo
+	@echo -n ${.OBJDIR}:; \
+	cd ${.OBJDIR}; for i in ${HDR_OBJ}; do \
+		echo -n " $$i"; \
+		cmp -s $$i ${DESTDIR}/usr/include/kerberosV/kadm5/$$i || \
+			${INSTALL} ${INSTALL_COPY} -m 444 \
+			-o ${BINOWN} -g $(BINGRP) $$i \
+			${DESTDIR}/usr/include/kerberosV/kadm5; done
 
 SRCS=	acl.c           \
 	admin.h         \

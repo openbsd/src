@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2003/05/17 02:03:19 hin Exp $
+# $OpenBSD: Makefile,v 1.6 2003/05/17 05:20:18 mho Exp $
 
 KRB5DIR=	${.CURDIR}/../../kerberosV
 .include "Makefile.common.inc"
@@ -14,14 +14,57 @@ LIB	= krb5
 .include "Makefile.krb5.inc"
 
 includes:
-	@for i in $(INCLUDE_FILES); do \
-	    j="cmp -s $$i ${DESTDIR}/usr/include/kerberosV/$$i || \
-		${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 \
-		$$i ${DESTDIR}/usr/include/kerberosV"; \
-	    echo $$j; \
-	pwd; \
-	    eval "$$j"; \
-	done
+	@test -d ${DESTDIR}/usr/include/kerberosV || \
+		mkdir ${DESTDIR}/usr/include/kerberosV
+	@echo -n ${DIR_KRB5INC}:; \
+	cd ${DIR_KRB5INC}; for i in ${HDR_KRB5INC}; do \
+		echo -n " $$i"; \
+		cmp -s $$i ${DESTDIR}/usr/include/kerberosV/$$i || \
+			${INSTALL} ${INSTALL_COPY} -m 444 \
+			-o ${BINOWN} -g $(BINGRP) $$i \
+			${DESTDIR}/usr/include/kerberosV; done; \
+		echo
+	@echo -n ${DIR_KRB5LIB}:; \
+	cd ${DIR_KRB5LIB}; for i in ${HDR_KRB5LIB}; do \
+		echo -n " $$i"; \
+		cmp -s $$i ${DESTDIR}/usr/include/kerberosV/$$i || \
+			${INSTALL} ${INSTALL_COPY} -m 444 \
+			-o ${BINOWN} -g $(BINGRP) $$i \
+			${DESTDIR}/usr/include/kerberosV; done; \
+		echo
+	@echo -n ${DIRKAFS}:; \
+	cd ${DIR_KAFS}; for i in ${HDR_KAFS}; do \
+		echo -n " $$i"; \
+		cmp -s $$i ${DESTDIR}/usr/include/kerberosV/$$i || \
+			${INSTALL} ${INSTALL_COPY} -m 444 \
+			-o ${BINOWN} -g $(BINGRP) $$i \
+			${DESTDIR}/usr/include/kerberosV; done; \
+		echo
+	@echo -n ${DIR_HDB}:; \
+	cd ${DIR_HDB}; for i in ${HDR_HDB}; do \
+		echo -n " $$i"; \
+		cmp -s $$i ${DESTDIR}/usr/include/kerberosV/$$i || \
+			${INSTALL} ${INSTALL_COPY} -m 444 \
+			-o ${BINOWN} -g $(BINGRP) $$i \
+			${DESTDIR}/usr/include/kerberosV; done; \
+		echo
+	@echo -n ${DIR_ASN1}:; \
+	cd ${DIR_ASN1}; for i in ${HDR_ASN1}; do \
+		echo -n " $$i"; \
+		cmp -s $$i ${DESTDIR}/usr/include/kerberosV/$$i || \
+			${INSTALL} ${INSTALL_COPY} -m 444 \
+			-o ${BINOWN} -g $(BINGRP) $$i \
+			${DESTDIR}/usr/include/kerberosV; done; \
+		echo
+	@echo -n ${.OBJDIR}:; \
+	cd ${.OBJDIR}; for i in ${HDR_OBJ}; do \
+		echo -n " $$i"; \
+		cmp -s $$i ${DESTDIR}/usr/include/kerberosV/$$i || \
+			${INSTALL} ${INSTALL_COPY} -m 444 \
+			-o ${BINOWN} -g $(BINGRP) $$i \
+			${DESTDIR}/usr/include/kerberosV; done; \
+		echo
+
 
 SHLIB_LINKS	= kafs asn1
 ALIB_LINKS	= $(SHLIB_LINKS) hdb

@@ -1,6 +1,7 @@
-# $OpenBSD: Makefile.kafs.inc,v 1.2 2003/05/15 04:16:10 hin Exp $
+# $OpenBSD: Makefile.kafs.inc,v 1.3 2003/05/17 05:20:18 mho Exp $
 
-INCLUDE_FILES+=	${KRB5SRC}/lib/kafs/kafs.h
+DIR_KAFS=	${KRB5SRC}/lib/kafs
+HDR_KAFS=	kafs.h
 
 CFLAGS += -I${KRB5SRC}/lib/kafs
 

@@ -1,9 +1,10 @@
-# $OpenBSD: Makefile.asn1.inc,v 1.1 2003/05/14 09:05:59 hin Exp $
+# $OpenBSD: Makefile.asn1.inc,v 1.2 2003/05/17 05:20:18 mho Exp $
 
 .PATH:	${KRB5SRC}/lib/asn1
 
-INCLUDE_FILES+=	krb5_asn1.h asn1_err.h \
-		${KRB5SRC}/lib/asn1/{der.h,asn1-common.h}
+DIR_ASN1=	${KRB5SRC}/lib/asn1
+HDR_ASN1=	der.h #asn1-common.h
+HDR_OBJ+=	krb5_asn1.h asn1_err.h
 
 includes:	krb5_asn1.h asn1_err.h
 
