@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.27 2001/05/16 12:51:50 ho Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.28 2001/05/16 19:38:27 mickey Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.37.4.1 2000/06/30 16:27:53 simonb Exp $ */
 
 /*
@@ -265,7 +265,9 @@ wsscreen_attach(sc, console, emul, type, cookie, ccol, crow, defattr)
 	struct wsscreen_internal *dconf;
 	struct wsscreen *scr;
 
-	scr = malloc(sizeof(struct wsscreen), M_DEVBUF, M_WAITOK);
+	scr = malloc(sizeof(struct wsscreen), M_DEVBUF, M_NOWAIT);
+	if (!scr)
+		return (scr);
 
 	if (console) {
 		dconf = &wsdisplay_console_conf;
@@ -650,6 +652,8 @@ wsdisplay_common_attach(sc, console, scrdata, accessops, accesscookie)
 		KASSERT(wsdisplay_console_device == NULL);
 
 		sc->sc_scr[0] = wsscreen_attach(sc, 1, 0, 0, 0, 0, 0, 0);
+		if (sc->sc_scr[0] == NULL)
+			return;
 		wsdisplay_console_device = sc;
 
 		printf(": console (%s, %s emulation)",
