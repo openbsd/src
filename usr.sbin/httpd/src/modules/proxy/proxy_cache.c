@@ -1047,7 +1047,7 @@ int ap_proxy_cache_check(request_rec *r, char *url, struct cache_conf * conf,
 /* if the cache file exists, open it */
     cachefp = NULL;
     ap_log_error(APLOG_MARK, APLOG_DEBUG | APLOG_NOERRNO, r->server, "Request for %s, pragma_req=%s, ims=%ld", url,
-                 (pragma_req == NULL) ? "(unset)" : pragma_req, c->ims);
+                 (pragma_req == NULL) ? "(unset)" : pragma_req, (long)c->ims);
 /* find out about whether the request can access the cache */
     if (c->filename != NULL && r->method_number == M_GET &&
         strlen(url) < 1024) {

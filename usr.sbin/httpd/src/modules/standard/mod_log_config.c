@@ -1,4 +1,4 @@
-/*	$OpenBSD: mod_log_config.c,v 1.14 2003/08/21 13:11:36 henning Exp $ */
+/*	$OpenBSD: mod_log_config.c,v 1.15 2004/01/15 12:17:18 otto Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -453,7 +453,7 @@ static const char *log_request_time(request_rec *r, char *a)
 
 static const char *log_request_duration(request_rec *r, char *a)
 {
-    return ap_psprintf(r->pool, "%ld", time(NULL) - r->request_time);
+    return ap_psprintf(r->pool, "%ld", (long)(time(NULL) - r->request_time));
 }
 
 /* These next two routines use the canonical name:port so that log

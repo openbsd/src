@@ -1,4 +1,4 @@
-/*	$OpenBSD: http_protocol.c,v 1.24 2004/01/13 16:32:53 otto Exp $ */
+/*	$OpenBSD: http_protocol.c,v 1.25 2004/01/15 12:17:18 otto Exp $ */
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
@@ -1421,7 +1421,7 @@ API_EXPORT(void) ap_note_digest_auth_failure(request_rec *r)
 	    r->proxyreq == STD_PROXY ? "Proxy-Authenticate"
 		  : "WWW-Authenticate",
 	    ap_psprintf(r->pool, "Digest realm=\"%s\", nonce=\"%lu\"",
-		ap_auth_name(r), r->request_time));
+		ap_auth_name(r), (unsigned long)r->request_time));
 }
 
 API_EXPORT(int) ap_get_basic_auth_pw(request_rec *r, const char **pw)
