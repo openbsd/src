@@ -1,4 +1,4 @@
-/*	$OpenBSD: ossaudio.c,v 1.2 1998/04/26 22:15:42 provos Exp $	*/
+/*	$OpenBSD: ossaudio.c,v 1.3 2001/02/09 18:44:10 mickey Exp $	*/
 /*	$NetBSD: ossaudio.c,v 1.23 1997/10/19 07:41:52 augustss Exp $	*/
 
 /*
@@ -512,10 +512,10 @@ getdevinfo(fp, p)
 {
 	mixer_devinfo_t mi;
 	int i;
-	static struct {
-		char *name;
+	static const struct oss_devs {
+		const char *name;
 		int code;
-	} *dp, devs[] = {
+	} devs[] = {
 		{ AudioNmicrophone,	OSS_SOUND_MIXER_MIC },
 		{ AudioNline,		OSS_SOUND_MIXER_LINE },
 		{ AudioNcd,		OSS_SOUND_MIXER_CD },
@@ -537,12 +537,13 @@ getdevinfo(fp, p)
 /*		{ AudioNmixerout,	?? },*/
 		{ 0, -1 }
 	};
+	register const struct oss_devs *dp;
 	int (*ioctlf) __P((struct file *, u_long, caddr_t, struct proc *)) =
 	    fp->f_ops->fo_ioctl;
 	struct vnode *vp;
 	struct vattr va;
 	static struct audiodevinfo devcache = { 0 };
-	struct audiodevinfo *di = &devcache;
+	register struct audiodevinfo *di = &devcache;
 
 	/* Figure out what device it is so we can check if the
 	 * cached data is valid.
