@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.24 1998/02/24 22:06:54 weingart Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.25 1998/05/25 19:20:56 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -59,4 +59,6 @@ extern u_int32_t bios_cksumlen;
 /* memprobe.c */
 extern bios_memmap_t *memory_map;
 
+#ifndef _TEST
 #define MACHINE_CMD	cmd_machine /* we have i386 specific sommands */
+#endif

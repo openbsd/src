@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_i386.c,v 1.20 1998/04/18 07:39:49 deraadt Exp $	*/
+/*	$OpenBSD: dev_i386.c,v 1.21 1998/05/25 19:20:53 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -47,7 +47,7 @@ const char bdevs[][4] = {
 const int nbdevs = NENTS(bdevs);
 
 const char cdevs[][4] = {
-	"", "", "", "", "", "", "", "",
+	"cn", "", "", "", "", "", "", "",
 	"com", "", "", "", "pc"
 };
 const int ncdevs = NENTS(cdevs);

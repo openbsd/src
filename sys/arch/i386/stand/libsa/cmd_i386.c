@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd_i386.c,v 1.20 1998/02/24 22:06:47 weingart Exp $	*/
+/*	$OpenBSD: cmd_i386.c,v 1.21 1998/05/25 19:20:51 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff, Tobias Weingartner
@@ -32,6 +32,7 @@
  *
  */
 
+#ifndef _TEST
 #include <sys/param.h>
 #include <sys/reboot.h>
 #include <machine/biosvar.h>
@@ -60,8 +61,8 @@ const struct cmd_table cmd_machine[] = {
 	{ "diskinfo", CMDT_CMD, Xdiskinfo },
 	{ "memory",   CMDT_CMD, Xmemory },
 	{ "regs",     CMDT_CMD, Xregs },
-	{"cnvmem",    CMDT_CMD, Xcnvmem},
-	{"extmem",    CMDT_CMD, Xextmem},
+	{ "cnvmem",   CMDT_CMD, Xcnvmem},
+	{ "extmem",   CMDT_CMD, Xextmem},
 	{ NULL, 0 }
 };
 
@@ -182,3 +183,4 @@ Xmemory()
 
 	return 0;
 }
+#endif

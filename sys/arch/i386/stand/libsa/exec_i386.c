@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.21 1998/05/18 22:07:29 mickey Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.22 1998/05/25 19:20:54 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -54,6 +54,7 @@ machdep_start(startaddr, howto, loadaddr, ssym, esym)
 	char *startaddr, *loadaddr, *ssym, *esym;
 	int howto;
 {
+#ifndef _TEST
 	dev_t bootdev = bootdev_dip->bootdev;
 	size_t ac = BOOTARG_LEN;
 	caddr_t av = (caddr_t)BOOTARG_OFF;
@@ -82,4 +83,5 @@ machdep_start(startaddr, howto, loadaddr, ssym, esym)
 	(*(startfuncp)startaddr)(howto, bootdev, BOOTARG_APIVER,
 	    round_to_size(esym), extmem, cnvmem, ac, (int)av);
 	/* not reached */
+#endif
 }

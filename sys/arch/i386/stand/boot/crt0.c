@@ -1,7 +1,7 @@
-/*	$OpenBSD: crt0.c,v 1.2 1997/03/31 23:06:22 mickey Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.3 1998/05/25 19:20:49 mickey Exp $	*/
 
 /*
- * Copyright (c) 1997 Michael Shalayeff
+ * Copyright (c) 1997-1998 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,10 +39,11 @@
 #include <sys/syscall.h>
 #include <termios.h>
 #include "libsa.h"
-#include "unixdev.h"
+#include <lib/libsa/unixdev.h>
 
-extern void start __P((void)) asm("start");
-extern int  main __P((int, char **, char **));
+void start __P((void)) asm("start");
+void _rtt __P((void));
+extern int  boot __P((dev_t));
 static void domap __P((void));
 static void seterm __P((void));
 
@@ -51,7 +52,13 @@ start()
 {
 	domap();
 	seterm();
-	uexit(main(0, NULL, NULL));
+	uexit(boot(0));
+}
+
+void
+_rtt()
+{
+	uexit(1);
 }
 
 #define ummap(a,l,p,f,fd,o) (caddr_t)syscall((quad_t)SYS_mmap,a,l,p,f,fd,0,o)
