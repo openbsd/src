@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsksymdef.h,v 1.13 2001/06/13 20:36:24 mickey Exp $	*/
+/*	$OpenBSD: wsksymdef.h,v 1.14 2001/09/04 21:28:54 mickey Exp $	*/
 /*	$NetBSD: wsksymdef.h,v 1.34.4.1 2000/07/07 09:49:54 hannken Exp $ */
 
 /*-
@@ -350,6 +350,10 @@
 #define KS_Cyrillic_e		0xdc
 #define KS_Cyrillic_yu		0xc0
 #define KS_Cyrillic_ya		0xd1
+#define KS_Cyrillic_gheukr	0xad
+#define KS_Cyrillic_GHEUKR	0xbd
+#define KS_Cyrillic_yeukr	0xa4
+#define KS_Cyrillic_YEUKR	0xb4
 
 /*
  * Group 1 (modifiers)
@@ -572,6 +576,7 @@
 #define KB_SG			0x0f00
 #define KB_SF			0x1000
 #define KB_PT			0x1100
+#define KB_UA			0x1200
 
 #define KB_NODEAD		0x0001
 #define KB_DECLK		0x0002	/* DEC LKnnn layout */
@@ -597,6 +602,7 @@
 	{ KB_HU,	"hu" }, \
 	{ KB_BE,	"be" }, \
 	{ KB_RU,	"ru" }, \
+	{ KB_UA,	"ua" }, \
 	{ KB_SG,	"sg" }, \
 	{ KB_SF,	"sf" }, \
 	{ KB_PT,	"pt" }
