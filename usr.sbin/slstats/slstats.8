@@ -1,4 +1,4 @@
-.\"	$OpenBSD: slstats.8,v 1.13 2003/09/06 17:27:53 jmc Exp $
+.\"	$OpenBSD: slstats.8,v 1.14 2004/09/21 21:19:54 jaredy Exp $
 .\"	$NetBSD: slstats.8,v 1.2.6.1 1996/06/07 01:42:24 thorpej Exp $
 .\"
 .\" Contributed by Van Jacobson (van@ee.lbl.gov), Dec 31, 1989.
@@ -40,19 +40,17 @@
 .Nm slstats
 .Op Fl v
 .Op Fl i Ar interval
-.Op Ar unit-number
+.Op Ar interface
 .Sh DESCRIPTION
 The
 .Nm slstats
 utility reports slip-related statistics for the
-.Nm sl Ns
-.So
-.Ar unit-number
-.Sc
+.Li sl Ns Em N
 interface.
 If the
-.Ar unit-number
-is unspecified, it defaults to 0.
+.Ar interface
+is unspecified, it defaults to
+.Li sl0 .
 These statistics are displayed at regular intervals.
 .Pp
 The display is split horizontally into input and output sections
@@ -69,7 +67,7 @@ The options are as follows:
 Display additional statistics demonstrating the efficacy of VJ header
 compression and providing more explicit information on failure
 distribution.
-.It Fl i
+.It Fl i Ar interval
 Specifies the interval between reports.
 The default interval is 5 seconds.
 .El
@@ -124,6 +122,6 @@ Only reported when the
 option is specified.
 .El
 .Sh SEE ALSO
+.Xr sl 4 ,
+.Xr slattach 8 ,
 .Xr sliplogin 8
-.Sh BUGS
-Should take an interface name and not a unit number.
