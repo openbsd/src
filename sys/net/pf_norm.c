@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.67 2003/07/10 04:20:59 itojun Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.68 2003/07/10 05:50:10 itojun Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -1131,7 +1131,7 @@ pf_normalize_ip6(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 		plen = ntohs(h->ip6_plen);
 	if (plen == 0)
 		goto drop;
-	if (sizeof(struct ip6_hdr) + plen < m->m_pkthdr.len)
+	if (sizeof(struct ip6_hdr) + plen > m->m_pkthdr.len)
 		goto shortpkt;
 
 	/* Enforce a minimum ttl, may cause endless packet loops */
@@ -1143,11 +1143,12 @@ pf_normalize_ip6(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
  fragment:
 	if (ntohs(h->ip6_plen) == 0 || jumbolen)
 		goto drop;
+	plen = ntohs(h->ip6_plen);
 
 	if (!pf_pull_hdr(m, off, &frag, sizeof(frag), NULL, NULL, AF_INET6))
 		goto shortpkt;
 	fragoff = ntohs(frag.ip6f_offlg & IP6F_OFF_MASK);
-	if (fragoff + (m->m_pkthdr.len - off - sizeof(frag)) > IPV6_MAXPACKET)
+	if (fragoff + (plen - off - sizeof(frag)) > IPV6_MAXPACKET)
 		goto badfrag;
 
 	/* do something about it */
