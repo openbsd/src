@@ -1,5 +1,5 @@
-/*	$OpenBSD: null_subr.c,v 1.2 1996/02/27 07:58:02 niklas Exp $	*/
-/*	$NetBSD: null_subr.c,v 1.5 1996/02/09 22:40:28 christos Exp $	*/
+/*	$OpenBSD: null_subr.c,v 1.3 1996/05/22 12:04:35 deraadt Exp $	*/
+/*	$NetBSD: null_subr.c,v 1.6 1996/05/10 22:50:52 jtk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -157,6 +157,11 @@ null_node_alloc(mp, lowervp, vpp)
 	vp->v_data = xp;
 	xp->null_vnode = vp;
 	xp->null_lowervp = lowervp;
+	xp->null_flags = 0;
+#ifdef DIAGNOSTIC
+	xp->null_pid = -1;
+	xp->null_lockpc = xp->null_lockpc2 = 0;
+#endif
 	/*
 	 * Before we insert our new node onto the hash chains,
 	 * check to see if someone else has beaten us to it.
@@ -232,12 +237,16 @@ loop:
  * Try to find an existing null_node vnode refering
  * to it, otherwise make a new null_node vnode which
  * contains a reference to the lower vnode.
+ *
+ * >>> we assume that the lower node is already locked upon entry, so we mark
+ * the upper node as locked too (if caller requests it). <<<
  */
 int
-null_node_create(mp, lowervp, newvpp)
+null_node_create(mp, lowervp, newvpp, takelock)
 	struct mount *mp;
 	struct vnode *lowervp;
 	struct vnode **newvpp;
+	int takelock;
 {
 	struct vnode *aliasvp;
 
@@ -247,7 +256,7 @@ null_node_create(mp, lowervp, newvpp)
 		 * to the alias vnode.
 		 */
 #ifdef NULLFS_DIAGNOSTIC
-		vprint("null_node_create: exists", NULLTOV(ap));
+		vprint("null_node_create: exists", aliasvp);
 #endif
 		/* VREF(aliasvp); --- done in null_node_find */
 	} else {
@@ -277,19 +286,24 @@ null_node_create(mp, lowervp, newvpp)
 	if (lowervp->v_usecount < 1) {
 		/* Should never happen... */
 		vprint("null_node_create: alias", aliasvp);
-		vprint("null_node_create: lower", lowervp);
 		panic("null_node_create: lower has 0 usecount.");
 	};
 #endif
 
 #ifdef NULLFS_DIAGNOSTIC
 	vprint("null_node_create: alias", aliasvp);
-	vprint("null_node_create: lower", lowervp);
 #endif
+	/* lower node was locked: mark it as locked and take
+	   upper layer lock */
+	VTONULL(aliasvp)->null_flags |= NULL_LLOCK;
+	if (takelock)
+		VOP_LOCK(aliasvp);
 
 	*newvpp = aliasvp;
 	return (0);
 }
+
+#ifdef notyet
 #ifdef NULLFS_DIAGNOSTIC
 struct vnode *
 null_checkvp(vp, fil, lno)
@@ -338,4 +352,5 @@ null_checkvp(vp, fil, lno)
 #endif
 	return a->null_lowervp;
 }
+#endif
 #endif

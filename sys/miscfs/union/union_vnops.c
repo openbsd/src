@@ -1,5 +1,5 @@
-/*	$OpenBSD: union_vnops.c,v 1.3 1996/02/27 08:09:03 niklas Exp $	*/
-/*	$NetBSD: union_vnops.c,v 1.28 1996/02/13 13:13:03 mycroft Exp $	*/
+/*	$OpenBSD: union_vnops.c,v 1.4 1996/05/22 12:04:37 deraadt Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.30 1996/05/13 07:13:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994 The Regents of the University of California.
@@ -347,7 +347,8 @@ union_lookup(v)
 				iswhiteout = 1;
 			} else if (lowerdvp != NULLVP) {
 				lerror = VOP_GETATTR(upperdvp, &va,
-					cnp->cn_cred, cnp->cn_proc);
+						     cnp->cn_cred,
+						     cnp->cn_proc);
 				if (lerror == 0 && (va.va_flags & OPAQUE))
 					iswhiteout = 1;
 			}
@@ -1059,6 +1060,10 @@ union_seek(v)
 	return (VCALL(vp, VOFFSET(vop_seek), ap));
 }
 
+/* a_dvp: directory in which to link
+   a_vp: new target of the link
+   a_cnp: name for the link
+   */
 int
 union_remove(v)
 	void *v;
@@ -1490,6 +1495,18 @@ union_readlink(v)
 
 	return (error);
 }
+
+/*
+ * When operations want to vput() a union node yet retain a lock on
+ * the upper VP (say, to do some further operations like link(),
+ * mkdir(), ...), they set UN_KLOCK on the union node, then call
+ * vput() which calls VOP_UNLOCK() and comes here.  union_unlock()
+ * unlocks the union node (leaving the upper VP alone), clears the
+ * KLOCK flag, and then returns to vput().  The caller then does whatever
+ * is left to do with the upper VP, and insures that it gets unlocked.
+ *
+ * If UN_KLOCK isn't set, then the upper VP is unlocked here.
+ */
 
 int
 union_abortop(v)

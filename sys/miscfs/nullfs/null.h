@@ -1,5 +1,5 @@
-/*	$OpenBSD: null.h,v 1.2 1996/02/27 07:58:01 niklas Exp $	*/
-/*	$NetBSD: null.h,v 1.5 1996/02/09 22:40:26 christos Exp $	*/
+/*	$OpenBSD: null.h,v 1.3 1996/05/22 12:04:35 deraadt Exp $	*/
+/*	$NetBSD: null.h,v 1.7 1996/05/17 20:53:11 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,9 +57,26 @@ struct null_node {
 	LIST_ENTRY(null_node)	null_hash;	/* Hash list */
 	struct vnode	        *null_lowervp;	/* VREFed once */
 	struct vnode		*null_vnode;	/* Back pointer */
+	unsigned int		null_flags;	/* locking, etc. */
+#ifdef DIAGNOSTIC
+	pid_t			null_pid;	/* who's locking it? */
+	caddr_t			null_lockpc; /* their return addr */
+	caddr_t			null_lockpc2; /* their return addr^2 */
+#endif
 };
 
-extern int null_node_create __P((struct mount *mp, struct vnode *target, struct vnode **vpp));
+#if !defined(__GNUC__) || __GNUC__ < 2 || \
+	(__GNUC__ == 2 && __GNUC_MINOR__ < 5)
+#define RETURN_PC(frameno) (void *)0
+#else
+#define RETURN_PC(frameno) __builtin_return_address(frameno)
+#endif
+
+#define NULL_WANTED	0x01
+#define NULL_LOCKED	0x02
+#define NULL_LLOCK	0x04
+
+extern int null_node_create __P((struct mount *mp, struct vnode *target, struct vnode **vpp, int lockit));
 
 #define	MOUNTTONULLMOUNT(mp) ((struct null_mount *)((mp)->mnt_data))
 #define	VTONULL(vp) ((struct null_node *)(vp)->v_data)
