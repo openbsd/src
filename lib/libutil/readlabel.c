@@ -1,4 +1,4 @@
-/*	$OpenBSD: readlabel.c,v 1.8 2004/05/28 07:03:47 deraadt Exp $	*/
+/*	$OpenBSD: readlabel.c,v 1.9 2004/09/18 19:24:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -80,6 +80,7 @@ readlabelfs(char *device, int verbose)
 			rpath[strlen(rpath) - 1] = 'a' + getrawpartition();
 			break;
 		}
+		/* FALLTHROUGH */
 	default:
 		if (verbose)
 			warnx("%s: not a device node", device);
