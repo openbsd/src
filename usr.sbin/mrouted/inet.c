@@ -194,13 +194,13 @@ inet_parse(s)
  */
 int
 inet_cksum(addr, len)
-	u_short *addr;
+	u_int16_t *addr;
 	u_int len;
 {
 	register int nleft = (int)len;
-	register u_short *w = addr;
-	u_short answer = 0;
-	register int sum = 0;
+	register u_int16_t *w = addr;
+	u_int16_t answer = 0;
+	register int32_t sum = 0;
 
 	/*
 	 *  Our algorithm is simple, using a 32 bit accumulator (sum),

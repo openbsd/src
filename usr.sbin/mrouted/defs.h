@@ -222,7 +222,7 @@ extern int		inet_valid_subnet(u_int32_t nsubnet, u_int32_t nmask);
 extern char *		inet_fmt(u_int32_t addr, char *s);
 extern char *		inet_fmts(u_int32_t addr, u_int32_t mask, char *s);
 extern u_int32_t	inet_parse(char *s);
-extern int		inet_cksum(u_short *addr, u_int len);
+extern int		inet_cksum(u_int16_t *addr, u_int len);
 
 /* prune.c */
 extern unsigned		kroutes;

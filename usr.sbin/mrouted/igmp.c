@@ -321,7 +321,7 @@ send_igmp(src, dst, type, code, group, datalen)
     igmp->igmp_code         = code;
     igmp->igmp_group.s_addr = group;
     igmp->igmp_cksum        = 0;
-    igmp->igmp_cksum        = inet_cksum((u_short *)igmp,
+    igmp->igmp_cksum        = inet_cksum((u_int16_t *)igmp,
 					 IGMP_MINLEN + datalen);
 
     if (IN_MULTICAST(ntohl(dst))) {
