@@ -1,5 +1,5 @@
+/*	$OpenBSD: ki2c.c,v 1.2 2004/01/11 21:01:04 drahn Exp $	*/
 /*	$NetBSD: ki2c.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
-/*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.  All rights reserved.

@@ -1,5 +1,5 @@
+/*	$OpenBSD: snapper.c,v 1.2 2004/01/11 21:01:04 drahn Exp $	*/
 /*	$NetBSD: snapper.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
-/*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 
 /*-
  * Copyright (c) 2002 Tsubai Masanari.  All rights reserved.
