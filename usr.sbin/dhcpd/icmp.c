@@ -53,7 +53,7 @@ static int icmp_protocol_fd;
 
 void icmp_startup (routep, handler)
 	int routep;
-	void (*handler) PROTO ((struct iaddr, u_int8_t *, int));
+	void (*handler)(struct iaddr, u_int8_t *, int);
 {
 	struct protoent *proto;
 	int protocol = 1;
@@ -134,7 +134,7 @@ void icmp_echoreply (protocol)
 	int status, len;
 	socklen_t salen;
 	struct iaddr ia;
-	void (*handler) PROTO ((struct iaddr, u_int8_t *, int));
+	void (*handler)(struct iaddr, u_int8_t *, int);
 
 	salen = sizeof from;
 	status = recvfrom (protocol -> fd, (char *)icbuf, sizeof icbuf, 0,
@@ -159,9 +159,8 @@ void icmp_echoreply (protocol)
 
 	/* If we were given a second-stage handler, call it. */
 	if (protocol -> local) {
-		handler = ((void (*) PROTO ((struct iaddr,
-					    u_int8_t *, int)))
-			   protocol -> local);
+		handler = ((void (*)(struct iaddr, u_int8_t *, int))
+		    protocol -> local);
 		memcpy (ia.iabuf, &from.sin_addr, sizeof from.sin_addr);
 		ia.len = sizeof from.sin_addr;
 

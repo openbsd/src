@@ -42,12 +42,11 @@
 
 #include "dhcpd.h"
 
-static time_t tree_evaluate_recurse PROTO ((int *, unsigned char **, int *,
-					  struct tree *));
-static time_t do_host_lookup PROTO ((int *, unsigned char **, int *,
-					  struct dns_host_entry *));
-static void do_data_copy PROTO ((int *, unsigned char **, int *,
-				 unsigned char *, int));
+static time_t tree_evaluate_recurse(int *, unsigned char **, int *,
+    struct tree *);
+static time_t do_host_lookup(int *, unsigned char **, int *,
+    struct dns_host_entry *);
+static void do_data_copy(int *, unsigned char **, int *, unsigned char *, int);
 
 pair cons (car, cdr)
 	caddr_t car;

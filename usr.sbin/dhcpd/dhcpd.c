@@ -51,7 +51,7 @@ static char url [] = "For info, please visit http://www.isc.org/dhcp-contrib.htm
 #include "dhcpd.h"
 #include "version.h"
 
-static void usage PROTO ((char *));
+static void usage(char *);
 
 time_t cur_time;
 struct group root_group;
@@ -206,7 +206,7 @@ int main (argc, argv)
 	discover_interfaces (DISCOVER_SERVER);
 
 	/* Initialize icmp support... */
-	icmp_startup (1, lease_pinged);
+	icmp_startup(1, lease_pinged);
 
 #ifndef DEBUG
 	if (daemon) {

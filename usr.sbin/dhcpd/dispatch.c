@@ -55,9 +55,8 @@ struct protocol *protocols;
 struct timeout *timeouts;
 static struct timeout *free_timeouts;
 static int interfaces_invalidated;
-void (*bootp_packet_handler) PROTO ((struct interface_info *,
-				     struct dhcp_packet *, int, unsigned int,
-				     struct iaddr, struct hardware *));
+void (*bootp_packet_handler)(struct interface_info *,
+    struct dhcp_packet *, int, unsigned int, struct iaddr, struct hardware *);
 
 static int interface_status(struct interface_info *ifinfo);
 
@@ -542,7 +541,7 @@ int locate_network (packet)
 
 void add_timeout (when, where, what)
 	time_t when;
-	void (*where) PROTO ((void *));
+	void (*where)(void *);
 	void *what;
 {
 	struct timeout *t, *q;
@@ -603,7 +602,7 @@ void add_timeout (when, where, what)
 }
 
 void cancel_timeout (where, what)
-	void (*where) PROTO ((void *));
+	void (*where)(void *);
 	void *what;
 {
 	struct timeout *t, *q;
@@ -632,7 +631,7 @@ void cancel_timeout (where, what)
 void add_protocol (name, fd, handler, local)
 	char *name;
 	int fd;
-	void (*handler) PROTO ((struct protocol *));
+	void (*handler)(struct protocol *);
 	void *local;
 {
 	struct protocol *p;
