@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtw_pci.c,v 1.2 2004/12/31 00:16:15 jsg Exp $	*/
+/*	$OpenBSD: if_rtw_pci.c,v 1.3 2005/02/09 10:51:25 mcbride Exp $	*/
 /*	$NetBSD: if_rtw_pci.c,v 1.1 2004/09/26 02:33:36 dyoung Exp $	*/
 
 /*-
@@ -115,6 +115,7 @@ const struct rtw_pci_product {
 } rtw_pci_products[] = {
 	{ PCI_VENDOR_REALTEK,		PCI_PRODUCT_REALTEK_RT8180 },
 	{ PCI_VENDOR_BELKIN2,		PCI_PRODUCT_BELKIN2_F5D6001 },
+	{ PCI_VENDOR_DLINK,		PCI_PRODUCT_DLINK_DWL610 },
 
 	{ 0,				0 },
 };
