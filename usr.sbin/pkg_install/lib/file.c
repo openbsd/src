@@ -1,7 +1,7 @@
-/*	$OpenBSD: file.c,v 1.7 1998/10/13 23:09:52 marc Exp $	*/
+/*	$OpenBSD: file.c,v 1.8 1999/09/20 16:54:44 espie Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: file.c,v 1.7 1998/10/13 23:09:52 marc Exp $";
+static const char *rcsid = "$OpenBSD: file.c,v 1.8 1999/09/20 16:54:44 espie Exp $";
 #endif
 
 /*
@@ -165,15 +165,15 @@ Boolean
 isURL(char *fname)
 {
     /*
-     * I'm sure there are other types of URL specifications that I could
-     * also be looking for here, but for now I'll just be happy to get ftp
-     * working.
+     * Hardcode url types... not perfect, but working.
      */
     if (!fname)
 	return FALSE;
     while (isspace(*fname))
 	++fname;
     if (!strncmp(fname, "ftp://", 6))
+	return TRUE;
+    if (!strncmp(fname, "http://", 7))
 	return TRUE;
     return FALSE;
 }
@@ -187,7 +187,11 @@ fileURLHost(char *fname, char *where, int max)
     while (isspace(*fname))
 	++fname;
     /* Don't ever call this on a bad URL! */
-    fname += strlen("ftp://");
+    fname = strchr(fname, ':');
+    if (fname)
+    	fname+=3;
+    else
+    	return NULL;
     /* Do we have a place to stick our work? */
     if ((ret = where) != NULL) {
 	while (*fname && *fname != '/' && max--)
@@ -212,7 +216,11 @@ fileURLFilename(char *fname, char *where, int max)
     while (isspace(*fname))
 	++fname;
     /* Don't ever call this on a bad URL! */
-    fname += strlen("ftp://");
+    fname = strchr(fname, ':');
+    if (fname)
+    	fname+=3;
+    else
+    	return NULL;
     /* Do we have a place to stick our work? */
     if ((ret = where) != NULL) {
 	while (*fname && *fname != '/')
@@ -257,15 +265,21 @@ fileGetURL(char *base, char *spec)
 	   handed as a dependency. */
 	if (base) {
 	    strcpy(fname, base);
-	    /* Advance back two slashes to get to the root of the package hierarchy */
+	    /* OpenBSD packages are currently stored in a flat space, so
+	       we don't yet need to backup the category and switch to all.
+	     */
 	    cp = strrchr(fname, '/');
+#if 0
 	    if (cp) {
 		*cp = '\0';	/* chop name */
 		cp = strrchr(fname, '/');
 	    }
+#endif
 	    if (cp) {
 		*(cp + 1) = '\0';
+#if 0
 		strcat(cp, "All/");
+#endif
 		strcat(cp, spec);
 		strcat(cp, ".tgz");
 	    }
