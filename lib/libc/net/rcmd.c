@@ -57,9 +57,11 @@ static char *rcsid = "$NetBSD: rcmd.c,v 1.12 1995/06/03 22:33:34 mycroft Exp $";
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
+#include <syslog.h>
 
 int	__ivaliduser __P((FILE *, u_long, const char *, const char *));
-static int __icheckhost __P((u_long, const char *));
+static int __icheckhost __P((u_int32_t, const char *));
+static char *__gethostloop __P((u_int32_t));
 
 int
 rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
@@ -253,7 +255,7 @@ ruserok(rhost, superuser, ruser, luser)
 	char **ap;
 	int i;
 #define MAXADDRS	35
-	u_long addrs[MAXADDRS + 1];
+	u_int32_t addrs[MAXADDRS + 1];
 
 	if ((hp = gethostbyname(rhost)) == NULL)
 		return (-1);
@@ -262,7 +264,7 @@ ruserok(rhost, superuser, ruser, luser)
 	addrs[i] = 0;
 
 	for (i = 0; i < MAXADDRS && addrs[i]; i++)
-		if (iruserok(addrs[i], superuser, ruser, luser) == 0)
+		if (iruserok((u_long)addrs[i], superuser, ruser, luser) == 0)
 			return (0);
 	return (-1);
 }
@@ -352,9 +354,9 @@ again:
  * Returns 0 if ok, -1 if not ok.
  */
 int
-__ivaliduser(hostf, raddr, luser, ruser)
+__ivaliduser(hostf, raddrl, luser, ruser)
 	FILE *hostf;
-	u_long raddr;
+	u_long raddrl;
 	const char *luser, *ruser;
 {
 	register char *user, *p;
@@ -362,9 +364,9 @@ __ivaliduser(hostf, raddr, luser, ruser)
 	char buf[MAXHOSTNAMELEN + 128];		/* host + login */
 	const char *auser, *ahost;
 	int hostok, userok;
-	char rhost[MAXHOSTNAMELEN];
-	struct hostent *hp;
+	char *rhost = (char *)-1;
 	char domain[MAXHOSTNAMELEN];
+	u_int32_t raddr = (u_int32_t)raddrl;
 
 	getdomainname(domain, sizeof(domain));
 
@@ -372,7 +374,8 @@ __ivaliduser(hostf, raddr, luser, ruser)
 		p = buf;
 		/* Skip lines that are too long. */
 		if (strchr(p, '\n') == NULL) {
-			while ((ch = getc(hostf)) != '\n' && ch != EOF);
+			while ((ch = getc(hostf)) != '\n' && ch != EOF)
+				;
 			continue;
 		}
 		while (*p != '\n' && *p != ' ' && *p != '\t' && *p != '\0') {
@@ -397,25 +400,24 @@ __ivaliduser(hostf, raddr, luser, ruser)
 		auser = *user ? user : luser;
 		ahost = buf;
 
-		if ((hp = gethostbyaddr((char *) &raddr,
-					sizeof(raddr), AF_INET)) == NULL) {
-			abort();
-			return -1;
-		}
-		(void) strncpy(rhost, hp->h_name, sizeof(rhost));
-		rhost[sizeof(rhost) - 1] = '\0';
-
+		/*
+		 * innetgr() must lookup a hostname (we do not attempt
+		 * to change the semantics so that netgroups may have
+		 * #.#.#.# addresses in the list.)
+		 */
 		if (ahost[0] == '+')
 			switch (ahost[1]) {
 			case '\0':
 				hostok = 1;
 				break;
-
 			case '@':
-				hostok = innetgr(&ahost[2], rhost, NULL,
-						 domain);
+				if (rhost == (char *)-1)
+					rhost = __gethostloop(raddr);
+				hostok = 0;
+				if (rhost)
+					hostok = innetgr(&ahost[2], rhost,
+					    NULL, domain);
 				break;
-
 			default:
 				hostok = __icheckhost(raddr, &ahost[1]);
 				break;
@@ -425,12 +427,14 @@ __ivaliduser(hostf, raddr, luser, ruser)
 			case '\0':
 				hostok = -1;
 				break;
-
 			case '@':
-				hostok = -innetgr(&ahost[2], rhost, NULL,
-						  domain);
+				if (rhost == (char *)-1)
+					rhost = __gethostloop(raddr);
+				hostok = 0;
+				if (rhost)
+					hostok = -innetgr(&ahost[2], rhost,
+					    NULL, domain);
 				break;
-
 			default:
 				hostok = -__icheckhost(raddr, &ahost[1]);
 				break;
@@ -444,14 +448,12 @@ __ivaliduser(hostf, raddr, luser, ruser)
 			case '\0':
 				userok = 1;
 				break;
-
 			case '@':
 				userok = innetgr(&auser[2], NULL, ruser,
-						 domain);
+				    domain);
 				break;
-
 			default:
-				userok = strcmp(ruser, &auser[1]) == 0;
+				userok = strcmp(ruser, &auser[1]) ? 0 : 1;
 				break;
 			}
 		else if (auser[0] == '-')
@@ -459,59 +461,96 @@ __ivaliduser(hostf, raddr, luser, ruser)
 			case '\0':
 				userok = -1;
 				break;
-
 			case '@':
 				userok = -innetgr(&auser[2], NULL, ruser,
-						  domain);
+				    domain);
 				break;
-
 			default:
-				userok = -(strcmp(ruser, &auser[1]) == 0);
+				userok = strcmp(ruser, &auser[1]) ? 0 : -1;
 				break;
 			}
 		else
-			userok = strcmp(ruser, auser) == 0;
+			userok = strcmp(ruser, auser) ? 0 : 1;
 
 		/* Check if one component did not match */
 		if (hostok == 0 || userok == 0)
 			continue;
 
 		/* Check if we got a forbidden pair */
-		if (userok == -1 || hostok == -1)
-			return -1;
+		if (userok <= -1 || hostok <= -1)
+			return (-1);
 
 		/* Check if we got a valid pair */
-		if (hostok == 1 && userok == 1)
-			return 0;
+		if (hostok >= 1 && userok >= 1)
+			return (0);
 	}
-	return -1;
+	return (-1);
 }
 
 /*
- * Returns "true" if match, 0 if no match.
+ * Returns "true" if match, 0 if no match.  If we do not find any
+ * semblance of an A->PTR->A loop, allow a simple #.#.#.# match to work.
  */
 static int
 __icheckhost(raddr, lhost)
-	u_long raddr;
+	u_int32_t raddr;
 	const char *lhost;
 {
 	register struct hostent *hp;
-	register u_long laddr;
 	register char **pp;
+	struct in_addr in;
 
-	/* Try for raw ip address first. */
-	if (isdigit(*lhost) && (long)(laddr = inet_addr(lhost)) != -1)
-		return (raddr == laddr);
+	hp = gethostbyname(lhost);
+	if (hp != NULL) {
+		/* Spin through ip addresses. */
+		for (pp = hp->h_addr_list; *pp; ++pp)
+			if (!bcmp(&raddr, *pp, sizeof(raddr)))
+				return (1);
+	}
 
-	/* Better be a hostname. */
-	if ((hp = gethostbyname(lhost)) == NULL)
-		return (0);
-
-	/* Spin through ip addresses. */
-	for (pp = hp->h_addr_list; *pp; ++pp)
-		if (!bcmp(&raddr, *pp, sizeof(u_long)))
-			return (1);
-
-	/* No match. */
+	in.s_addr = raddr;
+	if (strcmp(lhost, inet_ntoa(in)) == 0)
+		return (1);
 	return (0);
+}
+
+/*
+ * Return the hostname associated with the supplied address.
+ * Do a reverse lookup as well for security. If a loop cannot
+ * be found, pack the result of inet_ntoa() into the string.
+ */
+static char *
+__gethostloop(raddr)
+	u_int32_t raddr;
+{
+	static char remotehost[MAXHOSTNAMELEN];
+	struct hostent *hp;
+	struct in_addr in;
+
+	hp = gethostbyaddr((char *) &raddr, sizeof(raddr), AF_INET);
+	if (hp == NULL)
+		return (NULL);
+
+	/*
+	 * Look up the name and check that the supplied
+	 * address is in the list
+	 */
+	strncpy(remotehost, hp->h_name, sizeof(remotehost) - 1);
+	remotehost[sizeof(remotehost) - 1] = '\0';
+	hp = gethostbyname(remotehost);
+	if (hp == NULL)
+		return (NULL);
+
+	for (; hp->h_addr_list[0] != NULL; hp->h_addr_list++)
+		if (!bcmp(hp->h_addr_list[0], (caddr_t)&raddr, sizeof(raddr)))
+			return (remotehost);
+
+	/*
+	 * either the DNS adminstrator has made a configuration
+	 * mistake, or someone has attempted to spoof us
+	 */
+	in.s_addr = raddr;
+	syslog(LOG_NOTICE, "rcmd: address %s not listed for host %s",
+	    inet_ntoa(in), hp->h_name);
+	return (NULL);
 }
