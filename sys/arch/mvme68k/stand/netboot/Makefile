@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 1996/04/28 10:49:16 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 1996/05/10 20:02:18 deraadt Exp $
 
 RELOC=0x3F0000
 
@@ -6,6 +6,8 @@ S=	${.CURDIR}/../../../..
 DEFS= -DSTANDALONE -DSUN_BOOTPARAMS
 INCPATH=-I${.CURDIR} -I${.CURDIR}/../libsa -I${S} -I${S}/lib/libsa
 CFLAGS=	-O2 ${INCPATH} ${DEFS} ${COPTS}
+
+CLEANFILES+=netboot netboot.bin
 
 .include "${S}/arch/${MACHINE}/stand/libsa/Makefile.inc"
 .PATH: ${S}/arch/${MACHINE}/stand/libsa
