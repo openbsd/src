@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.36 2003/12/17 16:59:43 jason Exp $
+dnl	$OpenBSD: hardware,v 1.37 2003/12/17 17:29:23 jason Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -440,6 +440,7 @@ work. It's our best guess that they do, but any feedback is appreciated.
 			D-Link DGE-530T (1000baseT)
 			Linksys EG1032v2 (1000baseT)
 			Linksys EG1064v2 (1000baseT)
+			SMC 9452TX (1000baseT)
 	ATM Adapters [*]
 		Efficient Networks EN-155 and Adaptec ANA-590x ATM interfaces
 		  (en)
