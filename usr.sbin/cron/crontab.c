@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: crontab.c,v 1.14 1999/05/29 18:51:12 millert Exp $";
+static char rcsid[] = "$Id: crontab.c,v 1.15 1999/11/20 20:45:16 millert Exp $";
 #endif
 
 /* crontab - install and manage per-user crontab files
@@ -31,6 +31,7 @@ static char rcsid[] = "$Id: crontab.c,v 1.14 1999/05/29 18:51:12 millert Exp $";
 #include "cron.h"
 #include <errno.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #ifdef USE_UTIMES
@@ -56,7 +57,7 @@ static char	*Options[] = { "???", "list", "delete", "edit", "replace" };
 
 static	PID_T		Pid;
 static	char		User[MAX_UNAME], RealUser[MAX_UNAME];
-static	char		Filename[MAX_FNAME];
+static	char		Filename[MAX_FNAME], *TempFilename;
 static	FILE		*NewCrontab;
 static	int		CheckErrorCount;
 static	enum opt_t	Option;
@@ -68,6 +69,7 @@ static	void		list_cmd __P((void)),
 			check_error __P((char *)),
 			parse_args __P((int c, char *v[]));
 static	int		replace_cmd __P((void));
+static	void		clean_turds __P((int));
 
 
 static void
@@ -329,6 +331,11 @@ edit_cmd() {
 		}
 	}
 
+	/* Turn off signals. */
+	(void)signal(SIGHUP, SIG_IGN);
+	(void)signal(SIGINT, SIG_IGN);
+	(void)signal(SIGQUIT, SIG_IGN);
+
 	(void) sprintf(Filename, "/tmp/crontab.XXXXXXXXXX");
 	if ((t = mkstemp(Filename)) == -1) {
 		perror(Filename);
@@ -405,10 +412,6 @@ edit_cmd() {
 	 * close and reopen the file around the edit.
 	 */
 
-	/* Turn off signals. */
-	(void)signal(SIGHUP, SIG_IGN);
-	(void)signal(SIGINT, SIG_IGN);
-	(void)signal(SIGQUIT, SIG_IGN);
 	switch (pid = fork()) {
 	case -1:
 		perror("fork");
@@ -518,9 +521,10 @@ edit_cmd() {
  */
 static int
 replace_cmd() {
-	char	n[MAX_FNAME], envstr[MAX_ENVSTR], tn[MAX_FNAME];
+	char	n[MAX_FNAME], envstr[MAX_ENVSTR];
 	FILE	*tmp;
-	int	ch, eof;
+	int	ch, eof, fd;
+	int	error = 0;
 	entry	*e;
 	time_t	now = time(NULL);
 	char	**envp = env_init();
@@ -530,12 +534,25 @@ replace_cmd() {
 		return (-2);
 	}
 
-	(void) sprintf(n, "tmp.%d", Pid);
-	(void) sprintf(tn, CRON_TAB(n));
-	if (!(tmp = fopen(tn, "w+"))) {
-		perror(tn);
+	TempFilename = strdup(__CONCAT(SPOOL_DIR,"tmp.XXXXXXXXXX"));
+	if (TempFilename == NULL) {
+		fprintf(stderr, "%s: Cannot allocate memory.\n", ProgramName);
 		return (-2);
 	}
+	if ((fd = mkstemp(TempFilename)) == -1 || !(tmp = fdopen(fd, "w+"))) {
+		perror(TempFilename);
+		if (fd != -1) {
+			fprintf(stderr, "%s: Cannot allocate memory.\n",
+			    ProgramName);
+			close(fd);
+			unlink(TempFilename);
+		}
+		return (-2);
+	}
+
+	(void) signal(SIGHUP, clean_turds);
+	(void) signal(SIGINT, clean_turds);
+	(void) signal(SIGQUIT, clean_turds);
 
 	/* write a signature at the top of the file.
 	 *
@@ -556,9 +573,10 @@ replace_cmd() {
 
 	if (ferror(tmp)) {
 		fprintf(stderr, "%s: error while writing new crontab to %s\n",
-			ProgramName, tn);
-		fclose(tmp);  unlink(tn);
-		return (-2);
+			ProgramName, TempFilename);
+		fclose(tmp);
+		error = -2;
+		goto done;
 	}
 
 	/* check the syntax of the file being installed.
@@ -587,51 +605,63 @@ replace_cmd() {
 
 	if (CheckErrorCount != 0) {
 		fprintf(stderr, "errors in crontab file, can't install.\n");
-		fclose(tmp);  unlink(tn);
-		return (-1);
+		fclose(tmp);
+		error = -1;
+		goto done;
 	}
 
 #ifdef HAS_FCHOWN
 	if (fchown(fileno(tmp), ROOT_UID, -1) < OK)
 #else
-	if (chown(tn, ROOT_UID, -1) < OK)
+	if (chown(TempFilename, ROOT_UID, -1) < OK)
 #endif
 	{
 		perror("chown");
-		fclose(tmp);  unlink(tn);
-		return (-2);
+		fclose(tmp);
+		error = -2;
+		goto done;
 	}
 
 #ifdef HAS_FCHMOD
 	if (fchmod(fileno(tmp), 0600) < OK)
 #else
-	if (chmod(tn, 0600) < OK)
+	if (chmod(TempFilename, 0600) < OK)
 #endif
 	{
 		perror("chown");
-		fclose(tmp);  unlink(tn);
-		return (-2);
+		fclose(tmp);
+		error = -2;
+		goto done;
 	}
 
 	if (fclose(tmp) == EOF) {
 		perror("fclose");
-		unlink(tn);
-		return (-2);
+		error = -2;
+		goto done;
 	}
 
 	(void) sprintf(n, CRON_TAB(User));
-	if (rename(tn, n)) {
+	if (rename(TempFilename, n)) {
 		fprintf(stderr, "%s: error renaming %s to %s\n",
-			ProgramName, tn, n);
+			ProgramName, TempFilename, n);
 		perror("rename");
-		unlink(tn);
-		return (-2);
+		error = -2;
+		goto done;
 	}
+	TempFilename = NULL;
 	log_it(RealUser, Pid, "REPLACE", User);
 
 	poke_daemon();
 
-	return (0);
+done:
+	(void) signal(SIGHUP, SIG_DFL);
+	(void) signal(SIGINT, SIG_DFL);
+	(void) signal(SIGQUIT, SIG_DFL);
+	if (TempFilename) {
+		(void) unlink(TempFilename);
+		free(TempFilename);
+	}
+	return (error);
 }
 
 
@@ -655,4 +685,17 @@ poke_daemon() {
 		return;
 	}
 #endif /*USE_UTIMES*/
+}
+
+
+static void
+clean_turds(sig)
+	int sig;
+{
+	if (TempFilename[0])
+		(void) unlink(TempFilename);
+	if (sig) {
+		(void) signal(sig, SIG_DFL);
+		(void) kill(getpid(), sig);
+	}
 }
