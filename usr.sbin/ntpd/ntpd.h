@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.30 2004/07/28 16:38:43 henning Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.31 2004/07/29 11:01:48 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -95,6 +95,7 @@ struct ntp_offset {
 
 struct ntp_peer {
 	TAILQ_ENTRY(ntp_peer)		 entry;
+	u_int32_t			 id;
 	struct ntp_addr_wrap		 addr_head;
 	struct ntp_addr			*addr;
 	struct ntp_query		*query;

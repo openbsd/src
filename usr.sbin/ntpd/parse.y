@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.16 2004/07/28 16:56:21 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.17 2004/07/29 11:01:48 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -41,6 +41,7 @@ static int			 lineno = 1;
 static int			 errors = 0;
 static int			 pdebug = 1;
 char				*infile;
+static u_int32_t		 maxid;
 
 int	 yyerror(const char *, ...);
 int	 yyparse(void);
@@ -171,6 +172,7 @@ conf_main	: LISTEN ON address	{
 				p = calloc(1, sizeof(struct ntp_peer));
 				if (p == NULL)
 					fatal("conf_main server calloc");
+				p->id = ++maxid;
 				h->next = NULL;
 				p->addr = h;
 				p->addr_head.a = h;
@@ -189,6 +191,7 @@ conf_main	: LISTEN ON address	{
 
 			if ((p = calloc(1, sizeof(struct ntp_peer))) == NULL)
 				fatal("conf_main server calloc");
+			p->id = ++maxid;
 			for (h = $2->a; h != NULL; h = next) {
 				next = h->next;
 				if (h->ss.ss_family != AF_INET &&
@@ -478,6 +481,7 @@ parse_config(char *filename, struct ntpd_conf *xconf)
 	conf = xconf;
 	lineno = 1;
 	errors = 0;
+	maxid = 0;
 	TAILQ_INIT(&conf->listen_addrs);
 	TAILQ_INIT(&conf->ntp_peers);
 
