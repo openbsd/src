@@ -1,4 +1,4 @@
-#	$NetBSD: files.ultrix,v 1.2 1995/12/26 04:22:30 jonathan Exp $
+#	$NetBSD: files.ultrix,v 1.3 1996/01/07 13:38:49 jonathan Exp $
 #
 # Config file description for machine-independent Ultrix compat code.
 # Included by ports that need it.
@@ -6,6 +6,7 @@
 # ports should define any machine-specific files they need in their
 # own file lists.
 
+file	compat/ultrix/ultrix_pathname.c		compat_ultrix
 file	compat/ultrix/ultrix_ioctl.c		compat_ultrix
 file	compat/ultrix/ultrix_misc.c		compat_ultrix
 file	compat/ultrix/ultrix_syscalls.c		compat_ultrix

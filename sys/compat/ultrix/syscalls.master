@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.14 1995/12/26 10:06:15 jonathan Exp $
+	$NetBSD: syscalls.master,v 1.15 1996/01/07 13:38:57 jonathan Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -47,7 +47,7 @@
 			    int mode); }
 6	NOARGS		{ int sys_close(int fd); }
 7	NOARGS		{ int compat_43_sys_wait(void); } owait
-8	NOARGS		{ int compat_43_sys_creat(char *path, int mode); }
+8	STD		{ int ultrix_sys_creat(char *path, int mode); }
 9	NOARGS		{ int sys_link(char *path, char *link); }
 10	NOARGS		{ int sys_unlink(char *path); }
 11	STD		{ int ultrix_sys_execv(char *path, char **argp); }
@@ -74,15 +74,15 @@
 30	OBSOL		v7 utime
 31	OBSOL		v7 stty
 32	OBSOL		v7 gtty
-33	NOARGS		{ int sys_access(char *path, int flags); }
+33	STD		{ int ultrix_sys_access(char *path, int flags); }
 34	OBSOL		v7 nice
 35	OBSOL		v7 ftime
 36	NOARGS		{ int sys_sync(void); }
 37	NOARGS		{ int sys_kill(int pid, int signum); }
-38	NOARGS		{ int compat_43_sys_stat(char *path, \
+38	STD		{ int ultrix_sys_stat(char *path, \
 			    struct ostat *ub); } ostat
 39	OBSOL		v7 setpgrp
-40	NOARGS		{ int compat_43_sys_lstat(char *path, \
+40	STD		{ int ultrix_sys_lstat(char *path, \
 			    struct ostat *ub); } olstat
 41	NOARGS		{ int sys_dup(u_int fd); }
 42	NOARGS		{ int sys_pipe(void); }

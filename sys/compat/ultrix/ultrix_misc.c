@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.19 1996/01/03 21:07:33 jonathan Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.20 1996/01/07 13:38:51 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,9 +60,9 @@
 #include <sys/dir.h>
 #include <sys/proc.h>
 #include <sys/file.h>
-#include <sys/stat.h>
 #include <sys/filedesc.h>
-#include <sys/ioctl.h>
+/*#include <sys/stat.h>*/
+/*#include <sys/ioctl.h>*/
 #include <sys/kernel.h>
 #include <sys/exec.h>
 #include <sys/malloc.h>
@@ -79,6 +79,7 @@
 #include <sys/wait.h>
 #include <sys/utsname.h>
 #include <sys/unistd.h>
+
 #include <sys/syscallargs.h>
 
 #include <compat/ultrix/ultrix_syscall.h>
@@ -111,7 +112,6 @@ struct emul emul_ultrix = {
 	0,
 	copyargs,
 	cpu_exec_ecoff_setregs,
-	/* 0, 0, */
 	sigcode,
 	esigcode,
 };
@@ -181,21 +181,11 @@ ultrix_sys_wait3(p, v, retval)
 	return (sys_wait4(p, &ua, retval));
 }
 
-ultrix_sys_execv(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct ultrix_sys_execv_args *uap = v;
-	struct sys_execve_args ouap;
-
-	SCARG(&ouap, path) = SCARG(uap, path);
-	SCARG(&ouap, argp) = SCARG(uap, argp);
-	SCARG(&ouap, envp) = NULL;
-
-	return (sys_execve(p, &ouap, retval));
-}
-
+/*
+ * Ultrix binaries pass in FD_MAX as the first arg to select().
+ * On Ultrix, that is 4096, which is more than the NetBSD sys_select()
+ * can handle.
+ */
 ultrix_sys_select(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -260,6 +250,7 @@ struct dirent {
 
 #define	SUN__MAP_NEW	0x80000000	/* if not, old mmap & cannot handle */
 
+int
 ultrix_sys_mmap(p, v, retval)
 	register struct proc *p;
 	void *v;
@@ -357,6 +348,7 @@ struct ultrix_utsname {
 	char    machine[9];
 };
 
+int
 ultrix_sys_uname(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -400,40 +392,8 @@ ultrix_sys_setpgrp(p, v, retval)
 		return sys_setpgid(p, uap, retval);
 }
 
-ultrix_sys_open(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct ultrix_sys_open_args *uap = v;
-	int l, r;
-	int noctty;
-	int ret;
-	
-	/* convert open flags into NetBSD flags */
-	l = SCARG(uap, flags);
-	noctty = l & 0x8000;
-	r =	(l & (0x0001 | 0x0002 | 0x0008 | 0x0040 | 0x0200 | 0x0400 | 0x0800));
-	r |=	((l & (0x0004 | 0x1000 | 0x4000)) ? O_NONBLOCK : 0);
-	r |=	((l & 0x0080) ? O_SHLOCK : 0);
-	r |=	((l & 0x0100) ? O_EXLOCK : 0);
-	r |=	((l & 0x2000) ? O_FSYNC : 0);
-
-	SCARG(uap, flags) = r;
-	ret = sys_open(p, (struct sys_open_args *)uap, retval);
-
-	if (!ret && !noctty && SESS_LEADER(p) && !(p->p_flag & P_CONTROLT)) {
-		struct filedesc *fdp = p->p_fd;
-		struct file *fp = fdp->fd_ofiles[*retval];
-
-		/* ignore any error, just give it a try */
-		if (fp->f_type == DTYPE_VNODE)
-			(fp->f_ops->fo_ioctl)(fp, TIOCSCTTY, (caddr_t)0, p);
-	}
-	return ret;
-}
-
 #if defined (NFSSERVER)
+int
 ultrix_sys_nfssvc(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -473,6 +433,7 @@ struct ultrix_ustat {
 	char	f_fpack[6];	/* filsys pack name */
 };
 
+int
 ultrix_sys_ustat(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -494,6 +455,7 @@ ultrix_sys_ustat(p, v, retval)
 	return 0;
 }
 
+int
 ultrix_sys_quotactl(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -504,6 +466,7 @@ ultrix_sys_quotactl(p, v, retval)
 	return EINVAL;
 }
 
+int
 ultrix_sys_vhangup(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -513,81 +476,7 @@ ultrix_sys_vhangup(p, v, retval)
 	return 0;
 }
 
-struct ultrix_statfs {
-	long	f_type;		/* type of info, zero for now */
-	long	f_bsize;	/* fundamental file system block size */
-	long	f_blocks;	/* total blocks in file system */
-	long	f_bfree;	/* free blocks */
-	long	f_bavail;	/* free blocks available to non-super-user */
-	long	f_files;	/* total file nodes in file system */
-	long	f_ffree;	/* free file nodes in fs */
-	fsid_t	f_fsid;		/* file system id */
-	long	f_spare[7];	/* spare for later */
-};
-
-static
-sunstatfs(sp, buf)
-	struct statfs *sp;
-	caddr_t buf;
-{
-	struct ultrix_statfs ssfs;
-
-	bzero(&ssfs, sizeof ssfs);
-	ssfs.f_type = 0;
-	ssfs.f_bsize = sp->f_bsize;
-	ssfs.f_blocks = sp->f_blocks;
-	ssfs.f_bfree = sp->f_bfree;
-	ssfs.f_bavail = sp->f_bavail;
-	ssfs.f_files = sp->f_files;
-	ssfs.f_ffree = sp->f_ffree;
-	ssfs.f_fsid = sp->f_fsid;
-	return copyout((caddr_t)&ssfs, buf, sizeof ssfs);
-}	
-
-ultrix_sys_statfs(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct ultrix_sys_statfs_args *uap = v;
-	register struct mount *mp;
-	register struct statfs *sp;
-	int error;
-	struct nameidata nd;
-
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
-	if (error = namei(&nd))
-		return (error);
-	mp = nd.ni_vp->v_mount;
-	sp = &mp->mnt_stat;
-	vrele(nd.ni_vp);
-	if (error = VFS_STATFS(mp, sp, p))
-		return (error);
-	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
-	return sunstatfs(sp, (caddr_t)SCARG(uap, buf));
-}
-
-ultrix_sys_fstatfs(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct ultrix_sys_fstatfs_args *uap = v;
-	struct file *fp;
-	struct mount *mp;
-	register struct statfs *sp;
-	int error;
-
-	if (error = getvnode(p->p_fd, SCARG(uap, fd), &fp))
-		return (error);
-	mp = ((struct vnode *)fp->f_data)->v_mount;
-	sp = &mp->mnt_stat;
-	if (error = VFS_STATFS(mp, sp, p))
-		return (error);
-	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
-	return sunstatfs(sp, (caddr_t)SCARG(uap, buf));
-}
-
+int
 ultrix_sys_exportfs(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -600,20 +489,6 @@ ultrix_sys_exportfs(p, v, retval)
 	 * with MOUNT_EXPORT?
 	 */
 	return 0;
-}
-
-int
-ultrix_sys_mknod(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct ultrix_sys_mknod_args *uap = v;
-
-	if (S_ISFIFO(SCARG(uap, mode)))
-		return sys_mkfifo(p, uap, retval);
-
-	return sys_mknod(p, (struct sys_mknod_args *)uap, retval);
 }
 
 int
