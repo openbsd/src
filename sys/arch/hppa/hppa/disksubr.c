@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.1 1999/05/12 14:53:08 mickey Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.2 1999/06/12 17:51:31 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -613,34 +613,34 @@ readliflabel (bp, strat, lp, osdep, partoffp, cylp, spoofonly)
 
 	bcopy (bp->b_data, &osdep->u._hppa.lifvol, sizeof(struct lifvol));
 	if (osdep->u._hppa.lifvol.vol_id != LIF_VOL_ID) {
-		if (partoffp)
-			*partoffp = -1;
-		return "no LIF volume found";
+		fsoff = 0;
+	} else {
+		register struct lifdir *p;
+
+		/* read LIF directory */
+		bp->b_blkno = btodb(LIF_DIRSTART);
+		bp->b_bcount = lp->d_secsize;
+		bp->b_flags = B_BUSY | B_READ;
+		bp->b_cylin = (LIF_DIRSTART) / lp->d_secpercyl;
+		(*strat)(bp);
+
+		if (biowait(bp)) {
+			if (partoffp)
+				*partoffp = -1;
+			return "LIF directory I/O error";
+		}
+
+		bcopy(bp->b_data, osdep->u._hppa.lifdir, LIF_DIRSIZE);
+		/* scan for LIF_DIR_FS dir entry */
+		for (fsoff = -1,  p = &osdep->u._hppa.lifdir[0];
+		     fsoff < 0 && p < &osdep->u._hppa.lifdir[LIF_NUMDIR]; p++)
+			if (p->dir_type == LIF_DIR_FS)
+				fsoff = lifstodb(p->dir_addr);
+
+		/* if no suitable lifdir entry found assume LIF_FILESTART */
+		if (fsoff < 0)
+			fsoff = btodb(LIF_FILESTART);
 	}
-
-	/* read LIF directory */
-	bp->b_blkno = btodb(LIF_DIRSTART);
-	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = (LIF_DIRSTART) / lp->d_secpercyl;
-	(*strat)(bp);
-
-	if (biowait(bp)) {
-		if (partoffp)
-			*partoffp = -1;
-		return "LIF directory I/O error";
-	}
-
-	bcopy(bp->b_data, osdep->u._hppa.lifdir, LIF_DIRSIZE);
-	/* scan for LIF_DIR_FS dir entry */
-	for (fsoff = -1,  p = &osdep->u._hppa.lifdir[0];
-	     fsoff < 0 && p < &osdep->u._hppa.lifdir[LIF_NUMDIR]; p++)
-		if (p->dir_type == LIF_DIR_FS)
-			fsoff = lifstodb(p->dir_addr);
-
-	/* if no suitable lifdir entry found assume LIF_FILESTART */
-	if (fsoff < 0)
-		fsoff = btodb(LIF_FILESTART);
 
 	*partoffp = fsoff;
 
