@@ -1,4 +1,4 @@
-/*	$OpenBSD: poll.h,v 1.3 1998/08/11 21:18:19 deraadt Exp $ */
+/*	$OpenBSD: poll.h,v 1.4 1998/08/12 17:34:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Theo de Raadt
@@ -47,6 +47,8 @@ struct pollfd {
 #define	POLLRDBAND	0x0080
 #define	POLLWRBAND	0x0100
 
+#ifndef _KERNEL
 int   poll __P((struct pollfd[], int, int));
+#endif /* _KERNEL */
 
 #endif /* !_SYS_POLL_H_ */
