@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.30 2003/03/29 01:08:15 mickey Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.31 2003/04/03 21:41:19 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -596,6 +596,11 @@ getstr(cp, size)
 	}
 }
 
+struct pdc_memmap pdc_memmap PDC_ALIGNMENT;
+struct pdc_sysmap_find pdc_find PDC_ALIGNMENT;
+struct pdc_sysmap_addrs pdc_addr PDC_ALIGNMENT;
+struct pdc_iodc_read pdc_iodc_read PDC_ALIGNMENT;
+
 void
 pdc_scanbus(self, ca, maxmod)
 	struct device *self;
@@ -605,8 +610,6 @@ pdc_scanbus(self, ca, maxmod)
 	int i;
 
 	for (i = maxmod; i--; ) {
-		struct pdc_iodc_read pdc_iodc_read PDC_ALIGNMENT;
-		struct pdc_memmap pdc_memmap PDC_ALIGNMENT;
 		struct confargs nca;
 		int error;
 
@@ -627,39 +630,38 @@ pdc_scanbus(self, ca, maxmod)
 			nca.ca_hpa = pdc_memmap.hpa;
 		else if ((error = pdc_call((iodcio_t)pdc, 0, PDC_SYSMAP,
 		    PDC_SYSMAP_HPA, &pdc_memmap, &nca.ca_dp)) == 0) {
-			struct pdc_sysmap_find find PDC_ALIGNMENT;
-			struct pdc_sysmap_addrs addr PDC_ALIGNMENT;
-			struct device_path path PDC_ALIGNMENT;
+			struct device_path path;
 			int im, ia;
 
 			nca.ca_hpa = pdc_memmap.hpa;
 
 			/* TODO fetch the hpa size and the addrs */
 			for (im = 0; !(error = pdc_call((iodcio_t)pdc, 0,
-			    PDC_SYSMAP, PDC_SYSMAP_FIND, &find, &path, im)) &&
-			    find.hpa != nca.ca_hpa; im++)
+			    PDC_SYSMAP, PDC_SYSMAP_FIND,
+			    &pdc_find, &path, im)) &&
+			    pdc_find.hpa != nca.ca_hpa; im++)
 				;
 
 			if (!error)
-				nca.ca_hpasz = find.size << PGSHIFT;
+				nca.ca_hpasz = pdc_find.size << PGSHIFT;
 
-			if (!error && find.naddrs) {
-				nca.ca_naddrs = find.naddrs;
+			if (!error && pdc_find.naddrs) {
+				nca.ca_naddrs = pdc_find.naddrs;
 				if (nca.ca_naddrs > 16) {
 					nca.ca_naddrs = 16;
 					printf("WARNING: too many (%d) addrs\n",
-					    find.naddrs);
+					    pdc_find.naddrs);
 				}
 
 				if (autoconf_verbose)
 					printf(">> ADDRS:");
 
 				for (ia = 0; !(error = pdc_call((iodcio_t)pdc,
-				    0, PDC_SYSMAP, PDC_SYSMAP_ADDR, &addr,
+				    0, PDC_SYSMAP, PDC_SYSMAP_ADDR, &pdc_addr,
 				    im, ia)) && ia < nca.ca_naddrs; ia++) {
-					nca.ca_addrs[ia].addr = addr.hpa;
+					nca.ca_addrs[ia].addr = pdc_addr.hpa;
 					nca.ca_addrs[ia].size =
-					    addr.size << PGSHIFT;
+					    pdc_addr.size << PGSHIFT;
 
 					if (autoconf_verbose)
 						printf(" 0x%x[0x%x]",
