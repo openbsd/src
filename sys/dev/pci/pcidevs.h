@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.829 2005/01/31 04:25:44 martin Exp 
+ *	OpenBSD: pcidevs,v 1.830 2005/02/02 19:39:54 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -745,8 +745,10 @@
 #define	PCI_PRODUCT_ATI_RADEON_IGP9100_AGP	0x5838		/* Radeon IGP 9100 AGP */
 #define	PCI_PRODUCT_ATI_RADEON_RV280_2	0x5941		/* Radeon 9200 2nd */
 #define	PCI_PRODUCT_ATI_RADEON_RV280	0x5961		/* Radeon 9200 */
+#define	PCI_PRODUCT_ATI_RADEON_RV280_SE_2	0x5964		/* Radeon 9200 SE 2nd */
 #define	PCI_PRODUCT_ATI_RADEON_RV280_M	0x5c61		/* Radeon Mobility 9200 */
 #define	PCI_PRODUCT_ATI_RADEON_M9PLUS	0x5c63		/* Radeon Mobility 9200 (M9+) */
+#define	PCI_PRODUCT_ATI_RADEON_RV280_SE	0x5d44		/* Radeon 9200 SE */
 #define	PCI_PRODUCT_ATI_RS200_AGP	0x7010		/* RS200 AGP */
 #define	PCI_PRODUCT_ATI_RS200_PCI	0xcab2		/* RS200 PCI */
 
