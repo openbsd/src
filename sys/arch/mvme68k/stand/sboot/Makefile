@@ -1,12 +1,12 @@
-#	$OpenBSD: Makefile,v 1.6 1997/04/27 20:56:30 millert Exp $
+#	$OpenBSD: Makefile,v 1.7 1997/10/20 00:33:49 deraadt Exp $
 
 S=	${.CURDIR}/../../../..
 INCL?= -I${.CURDIR} -I${.CURDIR}/../libsa -I${S}/lib/libsa -I${S}
 COPTS?= ${DEFS} ${INCL}
 
-.include "${S}/arch/${MACHINE}/stand/libbug/Makefile.inc"
-.include "${S}/arch/${MACHINE}/stand/libsa/Makefile.inc"
-.include "${S}/arch/${MACHINE}/stand/libz/Makefile.inc"
+.include "${S}/arch/mvme68k/stand/libbug/Makefile.inc"
+.include "${S}/arch/mvme68k/stand/libsa/Makefile.inc"
+.include "${S}/arch/mvme68k/stand/libz/Makefile.inc"
 
 SRCS=   sboot.c clock.c etherfun.c if_le.c
 

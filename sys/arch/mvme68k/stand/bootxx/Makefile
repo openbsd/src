@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$OpenBSD: Makefile,v 1.2 1997/04/22 16:13:41 gvf Exp $
+#	$OpenBSD: Makefile,v 1.3 1997/10/20 00:33:44 deraadt Exp $
 
 RELOC=0x3F0000 
 
@@ -10,10 +10,10 @@ INCPATH=-I${.CURDIR} -I${.CURDIR}/../libsa -I${.CURDIR}/../libbug \
 CFLAGS=	-O2 ${INCPATH} ${DEFS} ${COPTS}
 CLEANFILES+=bootxx
 
-.include "${S}/arch/${MACHINE}/stand/bugcrt/Makefile.inc"
-.include "${S}/arch/${MACHINE}/stand/libbug/Makefile.inc"
-.include "${S}/arch/${MACHINE}/stand/libsa/Makefile.inc"
-.include "${S}/arch/${MACHINE}/stand/libz/Makefile.inc"
+.include "${S}/arch/mvme68k/stand/bugcrt/Makefile.inc"
+.include "${S}/arch/mvme68k/stand/libbug/Makefile.inc"
+.include "${S}/arch/mvme68k/stand/libsa/Makefile.inc"
+.include "${S}/arch/mvme68k/stand/libz/Makefile.inc"
 
 SRCS=   bootxx.c conf.c version.c
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 1997/04/27 20:56:30 millert Exp $
+#	$OpenBSD: Makefile,v 1.8 1997/10/20 00:33:48 deraadt Exp $
 
 RELOC=0x3F0000
 SIZE?=	size
@@ -10,10 +10,10 @@ INCPATH=-I${.CURDIR} -I${.CURDIR}/../libsa -I${.CURDIR}/../libbug \
 CFLAGS=	-O2 ${DEFS} ${INCPATH} ${COPTS}
 CLEANFILES+=netboot netboot.bin
 
-.include "${S}/arch/${MACHINE}/stand/bugcrt/Makefile.inc"
-.include "${S}/arch/${MACHINE}/stand/libbug/Makefile.inc"
-.include "${S}/arch/${MACHINE}/stand/libsa/Makefile.inc"
-.include "${S}/arch/${MACHINE}/stand/libz/Makefile.inc"
+.include "${S}/arch/mvme68k/stand/bugcrt/Makefile.inc"
+.include "${S}/arch/mvme68k/stand/libbug/Makefile.inc"
+.include "${S}/arch/mvme68k/stand/libsa/Makefile.inc"
+.include "${S}/arch/mvme68k/stand/libz/Makefile.inc"
 
 SRCS=   boot.c conf.c version.c devopen.c dev_net.c
 SRCS+=	if_ie.c if_le.c
