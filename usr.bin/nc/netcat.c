@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.22 2001/06/26 07:38:05 jasoni Exp $ */
+/* $OpenBSD: netcat.c,v 1.23 2001/06/26 19:31:10 ericj Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -184,20 +184,20 @@ main(argc, argv)
 			 * functions to talk to the caller.
 			 */
 			if (uflag) {
-				int ret;
+				int rv;
 				char buf[1024];
 				char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
 				struct sockaddr_storage z;
 
 				len = sizeof(z);
-				ret = recvfrom(s, buf, sizeof(buf), MSG_PEEK,
+				rv = recvfrom(s, buf, sizeof(buf), MSG_PEEK,
 					(struct sockaddr *)&z, &len);
-				if (ret < 0)
+				if (rv < 0)
 					errx(1, "%s", strerror(errno));
 
-				ret = connect(s, (struct sockaddr *)&z,
+				rv = connect(s, (struct sockaddr *)&z,
 					len);
-				if (ret < 0)
+				if (rv < 0)
 					errx(1, "%s", strerror(errno));
 
 				connfd = s;
