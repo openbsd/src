@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.22 2004/10/12 16:39:35 claudio Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.23 2005/01/25 16:55:04 norby Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -232,7 +232,7 @@ relay(struct interface_info *ip, struct dhcp_packet *packet, int length,
 	}
 
 	if (ip == NULL) {
-		note("ignoring non BOOTREPLY form server");
+		note("ignoring non BOOTREPLY from server");
 		return;
 	}
 
