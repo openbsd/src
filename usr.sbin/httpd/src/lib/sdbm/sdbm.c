@@ -93,6 +93,7 @@ register int mode;
 
 	db = sdbm_prep(dirname, pagname, flags, mode);
 	free((char *) dirname);
+	free((char *) pagname);
 	return db;
 }
 
