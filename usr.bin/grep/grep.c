@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.9 2003/06/23 00:55:09 tedu Exp $	*/
+/*	$OpenBSD: grep.c,v 1.10 2003/06/23 02:02:41 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -90,7 +90,7 @@ enum {
 };
 
 /* Housekeeping */
-int	 first;		/* flag whether or not this is our fist match */
+int	 first;		/* flag whether or not this is our first match */
 int	 tail;		/* lines left to print */
 int	 lead;		/* number of lines in leading context queue */
 
