@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvsd.c,v 1.3 2004/07/25 03:29:35 jfb Exp $	*/
+/*	$OpenBSD: cvsd.c,v 1.4 2004/08/02 15:59:38 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -636,8 +636,6 @@ static void
 cvsd_child_loop(void)
 {
 	int ret, timeout;
-	uid_t uid;
-	gid_t gid;
 	struct pollfd pfd[1];
 
 	pfd[0].fd = cvsd_privfd;
