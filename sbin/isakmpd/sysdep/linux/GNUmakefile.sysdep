@@ -1,4 +1,4 @@
-#	$OpenBSD: GNUmakefile.sysdep,v 1.7 2003/06/03 15:20:41 ho Exp $
+#	$OpenBSD: GNUmakefile.sysdep,v 1.8 2004/06/26 03:40:57 mcbride Exp $
 
 #
 # Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -33,7 +33,7 @@ LIBSYSDEP:=	${LIBSYSDEPDIR}/libsysdep.a
 LDADD+=		-lgmp ${LIBSYSDEP} ${LIBCRYPTO}
 DPADD+=		${LIBGMP} ${LIBSYSDEP}
 
-CFLAGS+=	-DHAVE_GETNAMEINFO -DUSE_OLD_SOCKADDR -DHAVE_PCAP \
+CFLAGS+=	-DUSE_OLD_SOCKADDR -DHAVE_PCAP \
 		-DNEED_SYSDEP_APP -DMP_FLAVOUR=MP_FLAVOUR_GMP \
 		-I/usr/src/linux/include -I${.CURDIR}/sysdep/common \
 		-I/usr/include/openssl

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sysdep,v 1.5 2003/06/03 14:53:11 ho Exp $
+#	$OpenBSD: Makefile.sysdep,v 1.6 2004/06/26 03:40:57 mcbride Exp $
 
 #
 # Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -51,7 +51,7 @@ CFLAGS+=	-I/usr/build/keynote
 LDFLAGS+=	-L/usr/build/keynote
 .endif
 
-CFLAGS+=	-DNO_IDEA -DNO_RC5 -DHAVE_GETNAMEINFO -DHAVE_GETIFADDRS \
+CFLAGS+=	-DNO_IDEA -DNO_RC5 -DHAVE_GETIFADDRS \
 		-I${.CURDIR}/sysdep/common
 CFLAGS+=	-I/usr/include -I/usr/contrib/include
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: GNUmakefile.sysdep,v 1.5 2003/06/03 14:53:11 ho Exp $
+#	$OpenBSD: GNUmakefile.sysdep,v 1.6 2004/06/26 03:40:57 mcbride Exp $
 
 #
 # Copyright (c) 1999 Håkan Olsson.  All rights reserved.
@@ -36,8 +36,6 @@ LIBSYSDEP:=	${LIBSYSDEPDIR}/libsysdep.a
 
 LDADD+=		-lgmp ${LIBSYSDEP}
 DPADD+=		${LIBGMP} ${LIBSYSDEP}
-
-CFLAGS+=	-DHAVE_GETNAMEINFO
 
 FEATURES=	debug tripledes des blowdish cast ec aggressive
 # Not yet
