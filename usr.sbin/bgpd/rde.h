@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.19 2004/01/13 13:45:50 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.20 2004/01/13 16:08:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -221,9 +221,10 @@ void		 attr_optadd(struct attr_flags *, u_int8_t, u_int8_t,
 		     u_char *, u_int16_t);
 
 int		 aspath_verify(void *, u_int16_t, u_int16_t);
-#define		 AS_ERR_LEN	-1
-#define		 AS_ERR_TYPE	-2
-#define		 AS_ERR_LOOP	-3
+#define		 AS_ERR_LOOP	-1
+#define		 AS_ERR_LEN	-2
+#define		 AS_ERR_TYPE	-3
+#define		 AS_ERR_BAD	-4
 struct aspath	*aspath_create(void *, u_int16_t);
 void		 aspath_destroy(struct aspath *);
 int		 aspath_write(void *, u_int16_t, struct aspath *, u_int16_t,

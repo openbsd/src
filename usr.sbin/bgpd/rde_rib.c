@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.23 2004/01/13 13:45:50 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.24 2004/01/13 16:08:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -239,6 +239,7 @@ static u_int16_t	aspath_extract(void *, int);
 /*
  * Extract the asnum out of the as segment at the specified position.
  * Direct access is not possible because of non-aligned reads.
+ * ATTENTION: no bounds check are done.
  */
 static u_int16_t
 aspath_extract(void *seg, int pos)
@@ -246,7 +247,7 @@ aspath_extract(void *seg, int pos)
 	u_char		*ptr = seg;
 	u_int16_t	 as = 0;
 
-	ENSURE(0 <= pos && pos < 0xff);
+	ENSURE(0 <= pos && pos < 255);
 
 	ptr += 2 + 2 * pos;
 	as = *ptr++;
@@ -272,6 +273,10 @@ aspath_verify(void *data, u_int16_t len, u_int16_t myAS)
 
 		if (seg_size > len)
 			return AS_ERR_LEN;
+
+		if (seg_size == 0)
+			/* empty aspath segment are not allowed */
+			return AS_ERR_BAD;
 
 		for (i = 0; i < seg_len; i++) {
 			if (myAS == aspath_extract(seg, i))
@@ -314,8 +319,15 @@ aspath_write(void *p, u_int16_t len, struct aspath *aspath, u_int16_t myAS,
 		return (-1);
 
 	/* first calculate new size */
-	type = aspath->data[0];
-	size = aspath->data[1];
+	if (aspath->hdr.len > 0) {
+		ENSURE(aspath->hdr.len > 2);
+		type = aspath->data[0];
+		size = aspath->data[1];
+	} else {
+		/* empty as path */
+		type = AS_SET;
+		size = 0;
+	}
 	if (prepend == 0)
 		as_len = aspath->hdr.len;
 	else if (type == AS_SET || size + prepend > 255)
@@ -338,7 +350,7 @@ aspath_write(void *p, u_int16_t len, struct aspath *aspath, u_int16_t myAS,
 	/* header */
 	b[wpos++] = attr_flag;
 	b[wpos++] = ATTR_ASPATH;
-	if (as_len > 0xff) {
+	if (as_len > 255) {
 		tmp = as_len;
 		tmp = htons(tmp);
 		memcpy(b, &tmp, 2);
@@ -428,12 +440,11 @@ aspath_neighbour(struct aspath *aspath)
 	 * should not break anything.
 	 */
 
-	if (aspath->hdr.len < 2)
-		fatalx("aspath_neighbour: aspath has no data");
+	if (aspath->hdr.len == 0)
+		return 0;
 
-	if (aspath->data[1] > 0)
-		return aspath_extract(aspath->data, 0);
-	return 0;
+	ENSURE(aspath->hdr.len > 2);
+	return aspath_extract(aspath->data, 0);
 }
 
 #define AS_HASH_INITIAL 8271
