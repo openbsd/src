@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.11 2002/06/23 03:03:37 deraadt Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.12 2002/06/27 10:21:35 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -643,14 +643,14 @@ setusercontext(lc, pwd, uid, flags)
 
 	if (flags & LOGIN_SETGROUP) {
 		if (setgid(pwd->pw_gid) < 0) {
-			syslog(LOG_ERR, "setgid(%d): %m", pwd->pw_gid);
+			syslog(LOG_ERR, "setgid(%u): %m", (u_int)pwd->pw_gid);
 			login_close(flc);
 			return (-1);
 		}
 
 		if (initgroups(pwd->pw_name, pwd->pw_gid) < 0) {
-			syslog(LOG_ERR, "initgroups(%s,%d): %m",
-			    pwd->pw_name, pwd->pw_gid);
+			syslog(LOG_ERR, "initgroups(%s,%u): %m",
+			    pwd->pw_name, (u_int)pwd->pw_gid);
 			login_close(flc);
 			return (-1);
 		}
