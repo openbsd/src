@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahareg.h,v 1.3 1996/05/07 07:36:05 deraadt Exp $	*/
+/*	$OpenBSD: ahareg.h,v 1.4 2002/06/07 20:41:06 niklas Exp $	*/
 typedef u_int8_t physaddr[3];
 typedef u_int8_t physlen[3];
 #define	ltophys	_lto3b
@@ -129,9 +129,8 @@ struct aha_ccb {
 #define	CCB_SENDING	0x04
 #endif
 	int timeout;
-	struct isadma_seg ccb_phys[1];	/* phys segment of this ccb */
-	struct isadma_seg data_phys[AHA_NSEG];	/* phys segments of data */
-	int data_nseg;			/* number of phys segments of data */
+	bus_dmamap_t dmam;
+	bus_dmamap_t ccb_dmam;
 };
 
 /*

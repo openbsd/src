@@ -1,8 +1,7 @@
-/*	$OpenBSD: aha.c,v 1.45 2002/06/07 01:25:07 niklas Exp $	*/
+/*	$OpenBSD: aha.c,v 1.46 2002/06/07 20:41:06 niklas Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
-#define integrate
 
 /*
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
@@ -66,6 +65,7 @@
 
 #include <machine/intr.h>
 #include <machine/pio.h>
+#include <machine/bus.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -119,6 +119,7 @@ struct aha_softc {
 	struct device sc_dev;
 	struct isadev sc_id;
 	void *sc_ih;
+	bus_dma_tag_t sc_dmat;
 
 	int sc_iobase;
 	int sc_irq, sc_drq;
@@ -140,11 +141,11 @@ int	aha_debug = 1;
 #endif /* AHADEBUG */
 
 int aha_cmd(int, struct aha_softc *, int, u_char *, int, u_char *);
-integrate void aha_finish_ccbs(struct aha_softc *);
+void aha_finish_ccbs(struct aha_softc *);
 int ahaintr(void *);
-integrate void aha_reset_ccb(struct aha_softc *, struct aha_ccb *);
+void aha_reset_ccb(struct aha_softc *, struct aha_ccb *);
 void aha_free_ccb(struct aha_softc *, struct aha_ccb *);
-integrate void aha_init_ccb(struct aha_softc *, struct aha_ccb *);
+int aha_init_ccb(struct aha_softc *, struct aha_ccb *, int);
 struct aha_ccb *aha_get_ccb(struct aha_softc *, int);
 struct aha_ccb *aha_ccb_phys_kv(struct aha_softc *, u_long);
 void aha_queue_ccb(struct aha_softc *, struct aha_ccb *);
@@ -253,7 +254,7 @@ aha_cmd(iobase, sc, icnt, ibuf, ocnt, obuf)
 		if (!i) {
 			printf("%s: aha_cmd, host not idle(0x%x)\n",
 			    name, sts);
-			return ENXIO;
+			return (ENXIO);
 		}
 	}
 	/*
@@ -280,7 +281,7 @@ aha_cmd(iobase, sc, icnt, ibuf, ocnt, obuf)
 				printf("%s: aha_cmd, cmd/data port full\n",
 				    name);
 			outb(iobase + AHA_CTRL_PORT, AHA_CTRL_SRST);
-			return ENXIO;
+			return (ENXIO);
 		}
 		outb(iobase + AHA_CMD_PORT, *ibuf++);
 	}
@@ -300,7 +301,7 @@ aha_cmd(iobase, sc, icnt, ibuf, ocnt, obuf)
 				printf("%s: aha_cmd, cmd/data port empty %d\n",
 				    name, ocnt);
 			outb(iobase + AHA_CTRL_PORT, AHA_CTRL_SRST);
-			return ENXIO;
+			return (ENXIO);
 		}
 		*obuf++ = inb(iobase + AHA_DATA_PORT);
 	}
@@ -320,11 +321,11 @@ aha_cmd(iobase, sc, icnt, ibuf, ocnt, obuf)
 		if (!i) {
 			printf("%s: aha_cmd, host not finished(0x%x)\n",
 			    name, sts);
-			return ENXIO;
+			return (ENXIO);
 		}
 	}
 	outb(iobase + AHA_CTRL_PORT, AHA_CTRL_IRST);
-	return 0;
+	return (0);
 }
 
 int
@@ -332,7 +333,7 @@ aha_isapnp_probe(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	return 1;
+	return (1);
 }
 
 
@@ -354,17 +355,17 @@ ahaprobe(parent, match, aux)
 
 	for (i = 0; i < nbtports; i++)
 		if (btports[i] == ia->ia_iobase)
-			return 0;
+			return (0);
 #endif
 
 	/* See if there is a unit at this location. */
 	if (aha_find(ia, NULL, 0) != 0)
-		return 0;
+		return (0);
 
 	ia->ia_msize = 0;
 	ia->ia_iosize = 4;
 	/* IRQ and DRQ set by aha_find(). */
-	return 1;
+	return (1);
 }
 
 /*
@@ -387,6 +388,7 @@ ahaattach(parent, self, aux)
 	if (aha_find(ia, sc, isapnp) != 0)
 		panic("ahaattach: aha_find of %s failed", self->dv_xname);
 	sc->sc_iobase = ia->ia_iobase;
+	sc->sc_dmat = ia->ia_dmat;
 
 	if (sc->sc_drq != DRQUNK && isapnp == 0)
 		isadma_cascade(sc->sc_drq);
@@ -414,7 +416,7 @@ ahaattach(parent, self, aux)
 	config_found(self, &sc->sc_link, scsiprint);
 }
 
-integrate void
+void
 aha_finish_ccbs(sc)
 	struct aha_softc *sc;
 {
@@ -492,8 +494,8 @@ AGAIN:
 
 		if ((ccb->xs->flags & SCSI_POLL) == 0)
 			timeout_del(&ccb->xs->stimeout);
-		isadma_copyfrombuf((caddr_t)ccb, CCB_PHYS_SIZE,
-		    1, ccb->ccb_phys);
+		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmam, 0,
+			ccb->ccb_dmam->dm_mapsize, BUS_DMASYNC_POSTREAD);
 		aha_done(sc, ccb);
 
 	next:
@@ -526,7 +528,7 @@ ahaintr(arg)
 	 */
 	sts = inb(iobase + AHA_INTR_PORT);
 	if ((sts & AHA_INTR_ANYINTR) == 0)
-		return 0;
+		return (0);
 	outb(iobase + AHA_CTRL_PORT, AHA_CTRL_IRST);
 
 #ifdef AHADIAG
@@ -549,10 +551,10 @@ ahaintr(arg)
 	if (sts & AHA_INTR_MBIF)
 		aha_finish_ccbs(sc);
 
-	return 1;
+	return (1);
 }
 
-integrate void
+void
 aha_reset_ccb(sc, ccb)
 	struct aha_softc *sc;
 	struct aha_ccb *ccb;
@@ -574,16 +576,17 @@ aha_free_ccb(sc, ccb)
 
 	s = splbio();
 
-	if (ccb->ccb_phys[0].addr)
-	        isadma_unmap((caddr_t)ccb, CCB_PHYS_SIZE, 1, ccb->ccb_phys);
+	if (ccb->ccb_dmam->dm_segs[0].ds_addr != 0)
+		bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmam);
 
 	/* remove from hash table */
 
-	hashnum = CCB_HASH(ccb->ccb_phys[0].addr);
+	hashnum = CCB_HASH(ccb->ccb_dmam->dm_segs[0].ds_addr);
 	hashccb = &sc->sc_ccbhash[hashnum];
 
 	while (*hashccb) {
-		if ((*hashccb)->ccb_phys[0].addr == ccb->ccb_phys[0].addr) {
+		if ((*hashccb)->ccb_dmam->dm_segs[0].ds_addr ==
+		    ccb->ccb_dmam->dm_segs[0].ds_addr) {
 			*hashccb = (*hashccb)->nexthash;
 			break;
 		}
@@ -603,13 +606,37 @@ aha_free_ccb(sc, ccb)
 	splx(s);
 }
 
-integrate void
-aha_init_ccb(sc, ccb)
+int
+aha_init_ccb(sc, ccb, flags)
 	struct aha_softc *sc;
 	struct aha_ccb *ccb;
+	int flags;
 {
+	int error, wait, state = 0;
+
 	bzero(ccb, sizeof(struct aha_ccb));
 	aha_reset_ccb(sc, ccb);
+
+	wait = (flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK;
+	/* Create a DMA map for the data area.  */
+	error = bus_dmamap_create(sc->sc_dmat, MAXPHYS, (MAXPHYS / NBPG) + 1,
+	    MAXPHYS, 0, wait | BUS_DMA_ALLOCNOW, &ccb->dmam);
+	if (error)
+		goto fail;
+	state++;
+
+	/* Create a DMA map for the command control block.  */
+	error = bus_dmamap_create(sc->sc_dmat, CCB_PHYS_SIZE, 1, CCB_PHYS_SIZE,
+	    0, wait | BUS_DMA_ALLOCNOW, &ccb->ccb_dmam);
+	if (error)
+		goto fail;
+
+	return (0);
+
+ fail:
+	if (state > 0)
+		bus_dmamap_destroy(sc->sc_dmat, ccb->dmam);
+	return (error);
 }
 
 /*
@@ -624,14 +651,9 @@ aha_get_ccb(sc, flags)
 	int flags;
 {
 	struct aha_ccb *ccb;
-	int hashnum, mflags, s;
+	int hashnum, s;
 
 	s = splbio();
-
-	if (flags & SCSI_NOSLEEP)
-		mflags = ISADMA_MAP_BOUNCE;
-	else
-		mflags = ISADMA_MAP_BOUNCE | ISADMA_MAP_WAITOK;
 
 	/*
 	 * If we can and have to, sleep waiting for one to come free
@@ -644,35 +666,36 @@ aha_get_ccb(sc, flags)
 			break;
 		}
 		if (sc->sc_numccbs < AHA_CCB_MAX) {
-			ccb = (struct aha_ccb *) malloc(sizeof(struct aha_ccb),
-			    M_TEMP, M_NOWAIT);
-			if (!ccb) {
+			MALLOC(ccb, struct aha_ccb *, sizeof *ccb, M_DEVBUF,
+			    (flags & SCSI_NOSLEEP) ? M_NOWAIT : M_WAITOK);
+			if (ccb == NULL) {
 				printf("%s: can't malloc ccb\n",
 				    sc->sc_dev.dv_xname);
 				goto out;
 			}
-			aha_init_ccb(sc, ccb);
-			sc->sc_numccbs++;
-			break;
+			if (aha_init_ccb(sc, ccb, flags) == 0) {
+				sc->sc_numccbs++;
+				break;
+			}
+			FREE(ccb, M_DEVBUF);
+			ccb = NULL;
 		}
-		if ((flags & SCSI_NOSLEEP) != 0)
+		if (flags & SCSI_NOSLEEP)
 			goto out;
 		tsleep(&sc->sc_free_ccb, PRIBIO, "ahaccb", 0);
 	}
 
 	ccb->flags |= CCB_ALLOC;
 
-	if (isadma_map((caddr_t)ccb, CCB_PHYS_SIZE, ccb->ccb_phys,
-	    mflags | ISADMA_MAP_CONTIG) == 1) {
-		hashnum = CCB_HASH(ccb->ccb_phys[0].addr);
+	if (bus_dmamap_load(sc->sc_dmat, ccb->ccb_dmam, ccb, CCB_PHYS_SIZE,
+	    NULL, BUS_DMA_NOWAIT) != 0) {
+		aha_free_ccb(sc, ccb);
+		ccb = NULL;
+	} else {
+		hashnum = CCB_HASH(ccb->ccb_dmam->dm_segs[0].ds_addr);
 		ccb->nexthash = sc->sc_ccbhash[hashnum];
 		sc->sc_ccbhash[hashnum] = ccb;
-	} else {
-		ccb->ccb_phys[0].addr = 0;
-		aha_free_ccb(sc, ccb);
-		ccb = 0;
 	}
-
 out:
 	splx(s);
 	return (ccb);
@@ -690,11 +713,11 @@ aha_ccb_phys_kv(sc, ccb_phys)
 	struct aha_ccb *ccb = sc->sc_ccbhash[hashnum];
 
 	while (ccb) {
-		if (ccb->ccb_phys[0].addr == ccb_phys)
+		if (ccb->ccb_dmam->dm_segs[0].ds_addr == ccb_phys)
 			break;
 		ccb = ccb->nexthash;
 	}
-	return ccb;
+	return (ccb);
 }
 
 /*
@@ -777,9 +800,9 @@ aha_start_ccbs(sc)
 #endif
 
 		/* Link ccb to mbo. */
-		isadma_copytobuf((caddr_t)ccb, CCB_PHYS_SIZE,
-		    1, ccb->ccb_phys);
-		ltophys(ccb->ccb_phys[0].addr, wmbo->ccb_addr);
+		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmam, 0,
+		    ccb->ccb_dmam->dm_mapsize, BUS_DMASYNC_PREWRITE);
+		ltophys(ccb->ccb_dmam->dm_segs[0].ds_addr, wmbo->ccb_addr);
 		if (ccb->flags & CCB_ABORT)
 			wmbo->cmd = AHA_MBO_ABORT;
 		else
@@ -873,12 +896,14 @@ aha_done(sc, ccb)
 		return;
 	}
 
-	if (ccb->data_nseg) {
+	if (ccb->dmam->dm_nsegs > 0) {
 		if (xs->flags & SCSI_DATA_IN)
-			isadma_copyfrombuf(xs->data, xs->datalen,
-			    ccb->data_nseg, ccb->data_phys);
-		isadma_unmap(xs->data, xs->datalen,
-		    ccb->data_nseg, ccb->data_phys);
+			bus_dmamap_sync(sc->sc_dmat, ccb->dmam, 0,
+			    ccb->dmam->dm_mapsize, BUS_DMASYNC_POSTREAD);
+		if (xs->flags & SCSI_DATA_OUT)
+			bus_dmamap_sync(sc->sc_dmat, ccb->dmam, 0,
+			    ccb->dmam->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmat, ccb->dmam);
 	}
 	aha_free_ccb(sc, ccb);
 	scsi_done(xs);
@@ -918,7 +943,7 @@ aha_find(ia, sc, isapnp)
 		if (aha_debug)
 			printf("aha_find: No answer from adaptec board\n");
 #endif /* AHADEBUG */
-		return 1;
+		return (1);
 	}
 
 	/*
@@ -948,7 +973,7 @@ aha_find(ia, sc, isapnp)
 	default:
 		printf("aha_find: illegal drq setting %x\n",
 		    config.reply.chan);
-		return 1;
+		return (1);
 	}
 	if (isapnp)
 		irq = ia->ia_irq;
@@ -975,7 +1000,7 @@ aha_find(ia, sc, isapnp)
 	default:
 		printf("aha_find: illegal irq setting %x\n",
 		    config.reply.intr);
-		return EIO;
+		return (EIO);
 	}
 	if (isapnp)
 		drq = ia->ia_drq;
@@ -993,14 +1018,14 @@ aha_find(ia, sc, isapnp)
 		if (ia->ia_irq == IRQUNK)
 			ia->ia_irq = irq;
 		else if (ia->ia_irq != irq)
-			return 1;
+			return (1);
 		if (ia->ia_drq == DRQUNK)
 			ia->ia_drq = drq;
 		else if (ia->ia_drq != drq)
-			return 1;
+			return (1);
 	}
 
-	return 0;
+	return (0);
 }
 
 /*
@@ -1232,7 +1257,7 @@ aha_scsi_cmd(xs)
 	struct aha_softc *sc = sc_link->adapter_softc;
 	struct aha_ccb *ccb;
 	struct aha_scat_gath *sg;
-	int seg, flags, mflags;
+	int seg, flags;
 #ifdef	TFS
 	struct iovec *iovp;
 	int datalen;
@@ -1246,13 +1271,9 @@ aha_scsi_cmd(xs)
 	 * then we can't allow it to sleep
 	 */
 	flags = xs->flags;
-	if (flags & SCSI_NOSLEEP)
-		mflags = ISADMA_MAP_BOUNCE;
-	else
-		mflags = ISADMA_MAP_BOUNCE | ISADMA_MAP_WAITOK;
 	if ((ccb = aha_get_ccb(sc, flags)) == NULL) {
 		xs->error = XS_DRIVER_STUFFUP;
-		return TRY_AGAIN_LATER;
+		return (TRY_AGAIN_LATER);
 	}
 	ccb->xs = xs;
 	ccb->timeout = xs->timeout;
@@ -1296,27 +1317,30 @@ aha_scsi_cmd(xs)
 			/*
 			 * Set up the scatter-gather block.
 			 */
-			ccb->data_nseg = isadma_map(xs->data, xs->datalen,
-			    ccb->data_phys, mflags);
-			for (seg = 0; seg < ccb->data_nseg; seg++) {
-				ltophys(ccb->data_phys[seg].addr,
+			if (bus_dmamap_load(sc->sc_dmat, ccb->dmam, xs->data,
+			    xs->datalen, NULL, BUS_DMA_NOWAIT) != 0) {
+				aha_free_ccb(sc, ccb);
+				xs->error = XS_DRIVER_STUFFUP;
+				return (TRY_AGAIN_LATER);
+			}
+			for (seg = 0; seg < ccb->dmam->dm_nsegs; seg++) {
+				ltophys(ccb->dmam->dm_segs[seg].ds_addr,
 				    sg[seg].seg_addr);
-				ltophys(ccb->data_phys[seg].length,
+				ltophys(ccb->dmam->dm_segs[seg].ds_len,
 				    sg[seg].seg_len);
 			}
 		}
-		/* end of iov/kv decision */
-		if (ccb->data_nseg == 0) {
-			printf("%s: aha_scsi_cmd, cannot map\n",
-			    sc->sc_dev.dv_xname);
-			goto bad;
-		} else if (flags & SCSI_DATA_OUT)
-			isadma_copytobuf(xs->data, xs->datalen,
-			    ccb->data_nseg, ccb->data_phys);
+		if (flags & SCSI_DATA_OUT)
+			bus_dmamap_sync(sc->sc_dmat, ccb->dmam, 0,
+			    ccb->dmam->dm_mapsize, BUS_DMASYNC_PREWRITE);
+		if (flags & SCSI_DATA_IN)
+			bus_dmamap_sync(sc->sc_dmat, ccb->dmam, 0,
+			    ccb->dmam->dm_mapsize, BUS_DMASYNC_PREREAD);
 		ltophys((unsigned)
-		    ((struct aha_ccb *)(ccb->ccb_phys[0].addr))->scat_gath,
+		    ((struct aha_ccb *)(ccb->ccb_dmam->dm_segs[0].ds_addr))->
+		    scat_gath,
 		    ccb->data_addr);
-		ltophys(ccb->data_nseg * sizeof(struct aha_scat_gath),
+		ltophys(ccb->dmam->dm_nsegs * sizeof(struct aha_scat_gath),
 		    ccb->data_length);
 	} else {		/* No data xfer, use non S/G values */
 		ltophys(0, ccb->data_addr);
@@ -1345,22 +1369,26 @@ aha_scsi_cmd(xs)
 		while ((ccb->xs->flags & ITSDONE) == 0) {
 			tsleep(ccb, PRIBIO, "ahawait", 0);
 		}
-		if (ccb->data_nseg) {
+		if (ccb->dmam->dm_nsegs > 0) {
+			if (flags & SCSI_DATA_OUT)
+				bus_dmamap_sync(sc->sc_dmat, ccb->dmam, 0,
+				    ccb->dmam->dm_mapsize,
+				    BUS_DMASYNC_POSTWRITE);
 			if (flags & SCSI_DATA_IN)
-				isadma_copyfrombuf(xs->data, xs->datalen,
-				    ccb->data_nseg, ccb->data_phys);
-			isadma_unmap(xs->data, xs->datalen,
-			    ccb->data_nseg, ccb->data_phys);
+				bus_dmamap_sync(sc->sc_dmat, ccb->dmam, 0,
+				    ccb->dmam->dm_mapsize,
+				    BUS_DMASYNC_POSTREAD);
+			bus_dmamap_unload(sc->sc_dmat, ccb->dmam);
 		}
 		aha_free_ccb(sc, ccb);
 		scsi_done(xs);
 		splx(s);
-		return COMPLETE;
+		return (COMPLETE);
 	}
 	splx(s);
 
 	if ((flags & SCSI_POLL) == 0)
-		return SUCCESSFULLY_QUEUED;
+		return (SUCCESSFULLY_QUEUED);
 
 	/*
 	 * If we can't use interrupts, poll on completion
@@ -1370,12 +1398,7 @@ aha_scsi_cmd(xs)
 		if (aha_poll(sc, xs, ccb->timeout))
 			aha_timeout(ccb);
 	}
-	return COMPLETE;
-
-bad:
-	xs->error = XS_DRIVER_STUFFUP;
-	aha_free_ccb(sc, ccb);
-	return COMPLETE;
+	return (COMPLETE);
 }
 
 /*
@@ -1398,11 +1421,11 @@ aha_poll(sc, xs, count)
 		if (inb(iobase + AHA_INTR_PORT) & AHA_INTR_ANYINTR)
 			ahaintr(sc);
 		if (xs->flags & ITSDONE)
-			return 0;
+			return (0);
 		delay(1000);	/* only happens in boot so ok */
 		count--;
 	}
-	return 1;
+	return (1);
 }
 
 void
@@ -1416,7 +1439,8 @@ aha_timeout(arg)
 	int s;
 
 	s = splbio();
-	isadma_copyfrombuf((caddr_t)ccb, CCB_PHYS_SIZE, 1, ccb->ccb_phys);
+	bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmam, 0,
+	    ccb->ccb_dmam->dm_mapsize, BUS_DMASYNC_POSTREAD);
 	xs = ccb->xs;
 	sc_link = xs->sc_link;
 	sc = sc_link->adapter_softc;
