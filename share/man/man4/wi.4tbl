@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.32 2004/02/07 20:08:53 miod Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.33 2004/03/15 22:02:02 millert Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -331,4 +331,10 @@ IBSS creation does not currently work with Symbol cards.
 .Pp
 The host-based access point mode on the Intersil PRISM cards has
 bugs when used with firmware versions prior to 0.8.3 and is completely
-unusable with firmware versions 0.7.5 and 1.4.0-1.4.2.
+unusable with firmware versions prior to 0.8.0 and 1.4.0-1.4.2.
+.Pp
+Software WEP is currently only supported in HostAP and BSS modes.
+.Pp
+HostAP mode doesn't support WDS or power saving.  Clients attempting
+to use power saving mode may experience significant packet loss
+(disabling power saving on the client will fix this).
