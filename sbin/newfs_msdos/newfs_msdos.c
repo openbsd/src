@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs_msdos.c,v 1.7 1997/04/14 12:07:04 deraadt Exp $ */
+/*	$OpenBSD: newfs_msdos.c,v 1.8 1997/04/30 13:51:51 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Joerg Wunsch
@@ -275,9 +275,6 @@ main(argc, argv)
 			break;
 	if (i == sizeof table / sizeof(struct descrip))
 		errx(1, "cannot find format description for %d KB", format);
-
-	if (read(fd, (char *)bs.raw, sizeof bs) != sizeof bs)
-		err(1, "boot sector read()");
 
 	/* prepare and write the boot sector */
 	setup_boot_sector_from_template(&bs, dp);
