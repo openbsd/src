@@ -1,4 +1,4 @@
-.\"	$OpenBSD: modload.8,v 1.3 1996/07/08 22:09:31 ccappuc Exp $
+.\"	$OpenBSD: modload.8,v 1.4 1996/08/05 11:01:15 mickey Exp $
 .\"	$NetBSD: modload.8,v 1.5 1995/03/18 14:56:43 cgd Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
@@ -34,7 +34,7 @@
 .Nd load a kernel module
 .Sh SYNOPSIS
 .Nm modload
-.Op Fl dv
+.Op Fl dvuv
 .Op Fl A Ar kernel
 .Op Fl e Ar entry
 .Op Fl p Ar postinstall
@@ -54,6 +54,13 @@ are as follows:
 Debug.  Used to debug
 .Nm
 itself.
+.It Fl q
+Be very quiet.
+.It Fl u
+Delete the loaded module
+.Pq Ar output_file
+after loading.  If the output file was not specified, this option causes the
+temporary file to be kept rather than deleted.
 .It Fl v
 Print comments about the loading process.
 .It Fl A Ar kernel
@@ -80,7 +87,8 @@ For a loadable system call, the third argument is the system
 call number.
 .It Fl o Ar output_file
 Specify the name of the output file that is produced by
-the linker.
+the linker.  If this option is not specified, a file in the /tmp directory
+is used with the name generated from the module name with a `.out' extension.
 .El
 .Sh FILES
 .Bl -tag -width /usr/include/sys/lkm.h -compact

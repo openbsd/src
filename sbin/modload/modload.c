@@ -1,4 +1,4 @@
-/*	$OpenBSD: modload.c,v 1.5 1996/07/02 06:37:52 deraadt Exp $	*/
+/*	$OpenBSD: modload.c,v 1.6 1996/08/05 11:01:17 mickey Exp $	*/
 /*	$NetBSD: modload.c,v 1.13 1995/05/28 05:21:58 jtc Exp $	*/
 
 /*
@@ -39,6 +39,7 @@
 #include <sys/mount.h>
 #include <sys/lkm.h>
 #include <sys/file.h>
+#include <sys/wait.h>
 #include <errno.h>
 #include <a.out.h>
 #include <stdio.h>
@@ -46,11 +47,8 @@
 #include <string.h>
 #include <err.h>
 #include <unistd.h>
+#include <limits.h>
 #include "pathnames.h"
-
-#ifndef DFLT_ENTRY
-#define	DFLT_ENTRY	"xxxinit"
-#endif	/* !DFLT_ENTRY */
 
 #define	min(a, b)	((a) < (b) ? (a) : (b))
 
@@ -63,53 +61,61 @@
  * -T		address to link to in hex (assumes it's a page boundry)
  * <target>	object file
  */
-#define	LINKCMD		"ld -A %s -e _%s -o %s -T %x %s"
 
 int debug = 0;
 int verbose = 0;
+int quiet = 0;
+int dounlink = 0;
 
-int
+void
 linkcmd(kernel, entry, outfile, address, object)
 	char *kernel, *entry, *outfile;
 	u_int address;	/* XXX */
 	char *object;
 {
-	char cmdbuf[1024];
-	int error = 0;
+	char addrbuf[32], entrybuf[_POSIX2_LINE_MAX];
+	pid_t pid;
+	int status;
 
-	sprintf(cmdbuf, LINKCMD, kernel, entry, outfile, address, object);
+	snprintf(entrybuf, sizeof entrybuf, "_%s", entry);
+	snprintf(addrbuf, sizeof addrbuf, "%x", address);
 
 	if (debug)
-		printf("%s\n", cmdbuf);
+		printf("%s -A %s -e %s -o %s -T %s %s\n",
+			_PATH_LD, kernel, entrybuf, outfile,
+			addrbuf, object);
 
-	switch (system(cmdbuf)) {
-	case 0:				/* SUCCESS! */
-		break;
-	case 1:				/* uninformitive error */
-		/*
-		 * Someone needs to fix the return values from the NetBSD
-		 * ld program -- it's totally uninformative.
-		 *
-		 * No such file		(4 on SunOS)
-		 * Can't write output	(2 on SunOS)
-		 * Undefined symbol	(1 on SunOS)
-		 * etc.
-		 */
-	case 127:			/* can't load shell */
-	case 32512:
-	default:
-		error = 1;
-		break;
+	
+	if ((pid = fork()) < 0)
+		err(18, "fork");
+
+	if(pid == 0) {
+		execl(_PATH_LD, "ld", "-A", kernel, "-e", entrybuf, "-o",
+		outfile, "-T", addrbuf, object, (char *)0);
+		exit(128 + errno);
 	}
 
-	return error;
+	waitpid(pid, &status, 0);
+
+	if(WIFSIGNALED(status)) {
+		errx(1, "%s got signal: %s", _PATH_LD,
+		sys_siglist[WTERMSIG(status)]);
+	}
+
+	if(WEXITSTATUS(status) > 128) {
+		errno = WEXITSTATUS(status) - 128;
+		err(1, "exec(%s)", _PATH_LD);
+	}
+
+	if(WEXITSTATUS(status) != 0)
+		errx(1, "%s: return code %d", _PATH_LD, WEXITSTATUS(status));
 }
 
 void
 usage()
 {
 
-	fprintf(stderr, "usage: modload [-d] [-v] [-A <kernel>] [-e <entry]\n");
+	fprintf(stderr, "usage: modload [-dvqu] [-A <kernel>] [-e <entry]\n");
 	fprintf(stderr,
 	    "\t[-p <postinstall>] [-o <output file>] <input file>\n");
 	exit(1);
@@ -147,7 +153,7 @@ main(argc, argv)
 {
 	int c;
 	char *kname = _PATH_UNIX;
-	char *entry = DFLT_ENTRY;
+	char *entry = NULL;
 	char *post = NULL;
 	char *out = NULL;
 	char *modobj;
@@ -160,7 +166,7 @@ main(argc, argv)
 	int sz, bytesleft;
 	char buf[MODIOBUF];
 
-	while ((c = getopt(argc, argv, "dvA:e:p:o:")) != EOF) {
+	while ((c = getopt(argc, argv, "dvuqA:e:p:o:")) != EOF) {
 		switch (c) {
 		case 'd':
 			debug = 1;
@@ -168,6 +174,12 @@ main(argc, argv)
 		case 'v':
 			verbose = 1;
 			break;	/* verbose */
+		case 'u':
+			dounlink = 1;
+			break; /* unlink tmp file */
+		case 'q':
+			quiet = 1;
+			break; /* be quiet */
 		case 'A':
 			kname = optarg;
 			break;	/* kernel */
@@ -206,21 +218,44 @@ main(argc, argv)
 		err(3, _PATH_LKM);
 	fileopen |= DEV_OPEN;
 
-	strcpy(modout, modobj);
-
-	p = strrchr(modout, '.');
-	if (!p || strcmp(p, ".o"))
+	p = strrchr(modobj, '.');
+	if (!p || p[1] != 'o' || p[2] != '\0')
 		errx(2, "module object must end in .o");
 	if (out == NULL) {
+		p = strrchr(modobj, '/');
+		if (p)
+			p++;                    /* skip over '/' */
+		else
+			p = modobj;
+		sprintf(modout, "%s%sut", _PATH_TMP, p);
 		out = modout;
-		*p = '\0';
+		/*
+		 * reverse meaning of -u - if we've generated a /tmp
+		 * file, remove it automatically...
+		 */
+		dounlink = !dounlink;
 	}
+
+	if (!entry) {   /* calculate default entry point */
+		entry = strrchr(modobj, '/');
+		if (entry)
+			entry++;                /* skip over '/' */
+		else
+			entry = modobj;
+		entry = strdup(entry);          /* so we can modify it */
+		if (!entry)
+			errx(1, "Could not allocate memory");
+		entry[strlen(entry) - 2] = '\0'; /* chop off .o */
+	}
+
+	if((modfd = open(out, O_RDWR | O_CREAT, 0666)) < 0)
+		err(1, "creating %s", out);
+	close(modfd);
 
 	/*
 	 * Prelink to get file size
 	 */
-	if (linkcmd(kname, entry, out, 0, modobj))
-		errx(1, "can't prelink `%s' creating `%s'", modobj, out);
+	linkcmd(kname, entry, out, 0, modobj);
 
 	/*
 	 * Pre-open the 0-linked module to get the size information
@@ -268,9 +303,7 @@ main(argc, argv)
 	/*
 	 * Relink at kernel load address
 	 */
-	if (linkcmd(kname, entry, out, resrv.addr, modobj))
-		errx(1, "can't link `%s' creating `%s' bound to 0x%08x",
-		    modobj, out, resrv.addr);
+	linkcmd(kname, entry, out, resrv.addr, modobj);
 
 	/*
 	 * Open the relinked module to load it...
@@ -330,7 +363,8 @@ main(argc, argv)
 	 * Success!
 	 */
 	fileopen &= ~PART_RESRV;	/* loaded */
-	printf("Module loaded as ID %d\n", resrv.slot);
+	if (!quiet)
+		printf("Module loaded as ID %d\n", resrv.slot);
 
 	/*
 	 * Execute the post-install program, if specified.
@@ -355,6 +389,9 @@ main(argc, argv)
 		execl(post, post, id, type, offset, 0);
 		err(16, "can't exec `%s'", post);
 	}
+
+	if(dounlink && unlink(out) != 0)
+		err(17, "unlink(%s)", out);
 
 	return 0;
 }
