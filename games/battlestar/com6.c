@@ -1,4 +1,4 @@
-/*	$OpenBSD: com6.c,v 1.6 1997/09/01 18:13:13 millert Exp $	*/
+/*	$OpenBSD: com6.c,v 1.7 1997/09/01 19:30:55 millert Exp $	*/
 /*	$NetBSD: com6.c,v 1.5 1995/04/27 21:30:23 mycroft Exp $	*/
 
 /*
@@ -106,7 +106,7 @@ static FILE *score_fp;
 open_score_file()
 {
 	if ((score_fp = fopen(_PATH_SCORE, "a")) == NULL)
-		warn("can't append to %s", _PATH_SCORE);
+		warn("can't append to high scores file (%s)", _PATH_SCORE);
 }
 
 void
@@ -124,13 +124,15 @@ char ch;
 	date = ctime(&tv);
 	date[24] = '\0';
 
-	fprintf(score_fp, "%s  %8s  %c%20s", date, uname, ch, rate());
-	if (wiz)
-		fprintf(score_fp, "   wizard\n");
-	else if (tempwiz)
-		fprintf(score_fp, "   WIZARD!\n");
-	else
-		fprintf(score_fp, "\n");
+	if (score_fp != NULL) {
+		fprintf(score_fp, "%s  %8s  %c%20s", date, uname, ch, rate());
+		if (wiz)
+			fprintf(score_fp, "   wizard\n");
+		else if (tempwiz)
+			fprintf(score_fp, "   WIZARD!\n");
+		else
+			fprintf(score_fp, "\n");
+	}
 
 	sigprocmask(SIG_SETMASK, &osigset, (sigset_t *)0);
 }
