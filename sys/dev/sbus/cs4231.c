@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.13 2002/09/09 20:25:17 jason Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.14 2002/09/10 05:43:31 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -603,9 +603,13 @@ cs4231_set_params(addr, setmode, usemode, p, r)
 		bits = FMT_ALAW >> 5;
 		break;
 	case AUDIO_ENCODING_SLINEAR_LE:
-		if (p->precision != 16)
+		if (p->precision == 8) {
+			bits = FMT_PCM8 >> 5;
+			pswcode = rswcode = change_sign8;
+		} else if (p->precision == 16)
+			bits = FMT_TWOS_COMP >> 5;
+		else
 			return (EINVAL);
-		bits = FMT_TWOS_COMP >> 5;
 		break;
 	case AUDIO_ENCODING_ULINEAR:
 		if (p->precision != 8)
@@ -613,30 +617,37 @@ cs4231_set_params(addr, setmode, usemode, p, r)
 		bits = FMT_PCM8 >> 5;
 		break;
 	case AUDIO_ENCODING_SLINEAR_BE:
-		if (p->precision != 16)
+		if (p->precision == 8) {
+			bits = FMT_PCM8 >> 5;
+			pswcode = rswcode = change_sign8;
+		} else if (p->precision == 16)
+			bits = FMT_TWOS_COMP_BE >> 5;
+		else
 			return (EINVAL);
-		bits = FMT_TWOS_COMP_BE >> 5;
 		break;
 	case AUDIO_ENCODING_SLINEAR:
-		/* emulate with ulinear8 conversion */
 		if (p->precision != 8)
 			return (EINVAL);
 		bits = FMT_PCM8 >> 5;
 		pswcode = rswcode = change_sign8;
 		break;
 	case AUDIO_ENCODING_ULINEAR_LE:
-		/* emulate with slinear_le16 conversion */
-		if (p->precision != 16)
+		if (p->precision == 8)
+			bits = FMT_PCM8 >> 5;
+		else if (p->precision == 16) {
+			bits = FMT_TWOS_COMP >> 5;
+			pswcode = rswcode = change_sign16_le;
+		} else
 			return (EINVAL);
-		bits = FMT_TWOS_COMP >> 5;
-		pswcode = rswcode = change_sign16;
 		break;
 	case AUDIO_ENCODING_ULINEAR_BE:
-		/* emulate with slinear_be16 conversion */
-		if (p->precision != 16)
+		if (p->precision == 8)
+			bits = FMT_PCM8 >> 5;
+		else if (p->precision == 16) {
+			bits = FMT_TWOS_COMP_BE >> 5;
+			pswcode = rswcode = change_sign16_be;
+		} else
 			return (EINVAL);
-		bits = FMT_TWOS_COMP_BE >> 5;
-		pswcode = rswcode = change_sign16;
 		break;
 	case AUDIO_ENCODING_ADPCM:
 		if (p->precision != 8)
