@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.61 2003/10/15 02:43:09 drahn Exp $	*/
+/*	$OpenBSD: trap.c,v 1.62 2003/12/21 15:17:32 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -556,7 +556,7 @@ mpc_print_pci_stat();
 			name = "0";
 			offset = frame->srr0;
 		}
-		panic ("trap type %x at %x (%s+0x%x) lr %x",
+		panic ("trap type %x at %x (%s+0x%lx) lr %x",
 			type, frame->srr0, name, offset, frame->lr);
 
 

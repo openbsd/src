@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.18 2003/02/12 22:41:35 jason Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.19 2003/12/21 15:17:30 miod Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.13 1996/04/29 20:50:08 leo Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
 #define	DB_ELFSIZE	32
 
 typedef	vm_offset_t	db_addr_t;	/* address - unsigned */
-typedef	int		db_expr_t;	/* expression - signed */
+typedef	long		db_expr_t;	/* expression - signed */
 struct powerpc_saved_state {
 	struct trapframe tf;
 };
