@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.35 2004/12/14 17:52:37 jfb Exp $	*/
+/*	$OpenBSD: proto.c,v 1.36 2004/12/16 17:09:33 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -196,6 +196,16 @@ cvs_connect(struct cvsroot *root)
 	int argc, infd[2], outfd[2], errfd[2];
 	char *argv[16], *cvs_server_cmd, *vresp;
 
+	if (root->cr_method == CVS_METHOD_PSERVER) {
+		cvs_log(LP_ERR, "no pserver support due to security issues");
+		return (-1);
+	} else if ((root->cr_method == CVS_METHOD_KSERVER) ||
+	    (root->cr_method == CVS_METHOD_GSERVER) ||
+	    (root->cr_method == CVS_METHOD_EXT) ||
+	    (root->cr_method == CVS_METHOD_FORK)) {
+		cvs_log(LP_ERR, "connection method not supported yet");
+		return (-1);
+	}
 
 	if (root->cr_flags & CVS_ROOT_CONNECTED) {
 		cvs_log(LP_NOTICE, "already connected to CVSROOT");
@@ -248,7 +258,6 @@ cvs_connect(struct cvsroot *root)
 			argv[argc++] = "-l";
 			argv[argc++] = root->cr_user;
 		}
-
 
 		cvs_server_cmd = getenv("CVS_SERVER");
 		if (cvs_server_cmd == NULL)
@@ -664,7 +673,7 @@ cvs_sendreq(struct cvsroot *root, u_int rid, const char *arg)
 	struct cvs_req *req;
 
 	if (root->cr_srvin == NULL) {
-		cvs_log(LP_ERR, "cannot send request: Not connected");
+		cvs_log(LP_ERR, "cannot send request %u: Not connected", rid);
 		return (-1);
 	}
 
