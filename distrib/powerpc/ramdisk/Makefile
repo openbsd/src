@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2000/06/15 02:49:00 rahnds Exp $
+#	$OpenBSD: Makefile,v 1.10 2000/08/08 01:08:07 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -43,10 +43,10 @@ ${IMAGE}: rd_setup do_files rd_teardown
 .endif
 
 bsd:
-	cd ${TOP}/../../sys/arch/powerpc/conf && config RAMDISKMAC
-	cd ${TOP}/../../sys/arch/powerpc/compile/RAMDISKMAC && \
+	cd ${TOP}/../../sys/arch/powerpc/conf && config RAMDISK
+	cd ${TOP}/../../sys/arch/powerpc/compile/RAMDISK && \
 	    make clean && make
-	cp ${TOP}/../../sys/arch/powerpc/compile/RAMDISKMAC/bsd bsd
+	cp ${TOP}/../../sys/arch/powerpc/compile/RAMDISK/bsd bsd
 
 rd_setup: 
 	dd if=/dev/zero of=${IMAGE} bs=512 count=${NBLKS}

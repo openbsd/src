@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.13 1999/09/23 21:33:44 aaron Exp $
+#	$OpenBSD: install.md,v 1.14 2000/08/08 01:08:07 deraadt Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -41,19 +41,18 @@
 #
 
 # Machine-dependent install sets
-MDSETS="kernel bsdmix bsdofw"
+MDSETS="kernel"
 
 md_set_term() {
-	if [ ! -z "$TERM" ]; then
-		return
-	fi
+	test -n "$TERM" && return
 	echo -n "Specify terminal type [vt100]: "
-	getresp "vt100"
-	TERM="$resp"
+	getresp vt100
+	TERM=$resp
 	export TERM
 }
 
 md_makerootwritable() {
+	:
 }
 
 md_machine_arch() {
@@ -62,17 +61,17 @@ md_machine_arch() {
 
 md_get_diskdevs() {
 	# return available disk devices
-	cat /kern/msgbuf | egrep "^[sw]d[0-9]|ofdisk[0-9] " | sed -e "s/[ :(].*//" | sort -u
+	bsort `cat /kern/msgbuf | egrep "^[sw]d[0-9]+|ofdisk[0-9] " | cutword 1`
 }
 
 md_get_cddevs() {
 	# return available CDROM devices
-	cat /kern/msgbuf | egrep "^cd[0-9] " | sed -e "s/[ :(].*//" | sort -u
+	bsort `cat /kern/msgbuf | egrep "^cd[0-9]+ " | cutword 1`
 }
 
 md_get_partition_range() {
     # return range of valid partition letters
-    echo "[a-p]"
+    echo [a-p]
 }
 
 md_questions() {
@@ -332,70 +331,72 @@ __md_prep_disklabel_1
 
 md_welcome_banner() {
 {
-	if [ "$MODE" = "install" ]; then
-		echo ""
-		echo "Welcome to the OpenBSD/PowerPC ${VERSION} installation program."
-		cat << \__welcome_banner_1
+	if [ "$MODE" = install ]; then
+		cat << __EOT
+Welcome to the OpenBSD/powerpc ${VERSION_MAJOR}.${VERSION_MINOR} installation program.
 
-This program is designed to help you put OpenBSD on your disk,
-in a simple and rational way.  You'll be asked several questions,
-and it would probably be useful to have your disk's hardware
-manual, the installation notes, and a calculator handy.
-__welcome_banner_1
+This program is designed to help you put OpenBSD on your disk in a simple and
+rational way.
+__EOT
 
 	else
-		echo ""
-		echo "Welcome to the OpenBSD/PowerPC ${VERSION} upgrade program."
-		cat << \__welcome_banner_2
+		cat << __EOT
+Welcome to the OpenBSD/powerpc ${VERSION_MAJOR}.${VERSION_MINOR} upgrade program.
 
-This program is designed to help you upgrade your OpenBSD system in a
-simple and rational way.
-
-As a reminder, installing the `etc' binary set is NOT recommended.
-Once the rest of your system has been upgraded, you should manually
-merge any changes to files in the `etc' set into those files which
+This program is designed to help you upgrade your OpenBSD system in a simple
+and rational way.  As a reminder, installing the 'etc' binary set is NOT
+recommended.  Once the rest of your system has been upgraded, you should
+manually merge any changes to files in the 'etc' set into those files which
 already exist on your system.
-__welcome_banner_2
+
+__EOT
 	fi
 
-cat << \__welcome_banner_3
+cat << __EOT
 
-As with anything which modifies your disk's contents, this
-program can cause SIGNIFICANT data loss, and you are advised
-to make sure your data is backed up before beginning the
-installation process.
+As with anything which modifies your disk's contents, this program can cause
+SIGNIFICANT data loss, and you are advised to make sure your data is backed
+up before beginning the installation process.
 
-Default answers are displayed in brackets after the questions.
-You can hit Control-C at any time to quit, but if you do so at a
-prompt, you may have to hit return.  Also, quitting in the middle of
-installation may leave your system in an inconsistent state.
+Default answers are displayed in brackets after the questions.  You can hit
+Control-C at any time to quit, but if you do so at a prompt, you may have
+to hit return.  Also, quitting in the middle of installation may leave your
+system in an inconsistent state.  If you hit Control-C and restart the
+install, the install program will remember many of your old answers.
 
-__welcome_banner_3
+__EOT
 } | more
 }
 
 md_not_going_to_install() {
-	cat << \__not_going_to_install_1
+	cat << __EOT
 
-OK, then.  Enter `halt' at the prompt to halt the machine.  Once the
-machine has halted, power-cycle the system to load new boot code.
+OK, then.  Enter 'halt' at the prompt to halt the machine.  Once the machine
+has halted, power-cycle the system to load new boot code.
 
-__not_going_to_install_1
+__EOT
 }
 
 md_congrats() {
 	local what;
-	if [ "$MODE" = "install" ]; then
-		what="installed";
+	if [ "$MODE" = install ]; then
+		what=installed
 	else
-		what="upgraded";
+		what=upgraded
 	fi
-	cat << __congratulations_1
+	cat << __EOT
 
-CONGRATULATIONS!  You have successfully $what OpenBSD!
-To boot the installed system, enter halt at the command prompt. Once the
-system has halted, reset the machine and boot from the disk.
+CONGRATULATIONS!  You have successfully $what OpenBSD!  To boot the
+installed system, enter halt at the command prompt. Once the system has
+halted, reset the machine and boot from the disk.
 
-__congratulations_1
+__EOT
 }
 
+hostname() {
+	case $# in
+		0)      cat /kern/hostname ;;
+		1)      echo "$1" > /kern/hostname ;;
+		*)      echo usage: hostname [name-of-host]
+	esac
+}

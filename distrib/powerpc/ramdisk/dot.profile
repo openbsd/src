@@ -1,4 +1,4 @@
-#       $OpenBSD: dot.profile,v 1.3 2000/01/30 01:21:22 deraadt Exp $
+#       $OpenBSD: dot.profile,v 1.4 2000/08/08 01:08:07 deraadt Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -41,19 +41,35 @@ alias dmesg="cat /kern/msgbuf"
 if [ "X${DONEPROFILE}" = "X" ]; then
 	DONEPROFILE=YES
 
+	# mount kernfs and re-mount the boot media (perhaps r/w)
+	mount_kernfs /kern /kern
+	mount_ffs -o update /dev/rd0a /
+
 	# set up some sane defaults
 	echo 'erase ^?, werase ^W, kill ^U, intr ^C'
 	stty newcrt werase ^W intr ^C kill ^U erase ^? 9600
-	echo ''
 
-	mount /dev/rd0a /
 
-	# mount the kern_fs so that we can examine the dmesg state
-	mount -t kernfs /kern /kern
+	# Installing or upgrading?
+	_forceloop=""
+	while [ "X$_forceloop" = X"" ]; do
+		echo -n '(I)nstall, (U)pgrade or (S)hell? '
+		read _forceloop
+		case "$_forceloop" in
+			i*|I*)
+				/install
+				;;
 
-	# pull in the functions that people will use from the shell prompt.
-	. /.instutils
+			u*|U*)
+				/upgrade
+				;;
 
-	echo "Follow the installation directions to install or upgrade"
-	echo "the OpenBSD distribution sets."
+			s*|S*)
+				;;
+
+			*)
+				_forceloop=""
+				;;
+		esac
+	done
 fi
