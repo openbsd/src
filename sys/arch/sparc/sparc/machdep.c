@@ -873,6 +873,8 @@ mapdev(rr, virt, offset, size, bustype)
 		iobase = IODEV_BASE;
 
 	size = round_page(size);
+	if (size == 0) panic("mapdev: zero size");
+
 	if (virt)
 		v = trunc_page(virt);
 	else {
