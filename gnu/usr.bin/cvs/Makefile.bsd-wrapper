@@ -1,8 +1,9 @@
-#	$Id: Makefile.bsd-wrapper,v 1.15 1996/05/06 22:52:19 tholo Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.16 1996/05/30 22:13:12 niklas Exp $
 
 MAN=	man/cvs.1 man/cvs.5 man/cvsbug.8
 GNUCFLAGS=	CFLAGS="${CFLAGS} -DSERVER_FLOWCONTROL"
-CLEANFILES=	man/cvs.cat1 man/cvs.cat5 man/cvsbug.cat8
+CLEANFILES=	man/cvs.cat1 man/cvs.cat5 man/cvsbug.cat8 lib/getdate.c \
+		macintosh/Makefile os2/Makefile
 
 all:	config.status
 	${MAKE} ${GNUCFLAGS} LDFLAGS=${LDSTATIC}
