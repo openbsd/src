@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.8 1998/07/14 00:14:01 deraadt Exp $	*/
+/*	$OpenBSD: inet.c,v 1.9 1998/08/14 21:30:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996
@@ -86,7 +86,7 @@ pcap_lookupdev(errbuf)
 	register char *errbuf;
 {
 	register int fd, minunit, n;
-	register char *cp, *ibuf = NULL;
+	register char *cp, *ibuf = NULL, *nibuf;
 	register struct ifreq *ifrp, *ifend, *ifnext, *mp;
 	struct ifconf ifc;
 	struct ifreq ifr;
@@ -101,11 +101,14 @@ pcap_lookupdev(errbuf)
 	}
 	while (1) {
 		ifc.ifc_len = len;
-		ifc.ifc_buf = ibuf = realloc(ibuf, len);
-		if (ibuf == NULL) {
+		nibuf = realloc(ibuf, len);
+		if (nibuf == NULL) {
+			if (ibuf)
+				free(ibuf);
 			close(fd);
 			return (NULL);
 		}
+		ifc.ifc_buf = ibuf = nibuf;
 		if (ioctl(fd, SIOCGIFCONF, (char *)&ifc) < 0) {
 			(void)close(fd);
 			free(ibuf);
