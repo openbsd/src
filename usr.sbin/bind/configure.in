@@ -13,7 +13,7 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-AC_REVISION($Revision: 1.7 $)
+AC_REVISION($Revision: 1.8 $)
 
 AC_INIT(lib/dns/name.c)
 AC_PREREQ(2.13)
@@ -1465,20 +1465,8 @@ AC_SUBST(ISC_EXTRA_OBJS)
 AC_SUBST(ISC_EXTRA_SRCS)
 
 #
-# Determine the printf format characters to use when printing
-# values of type isc_int64_t.  We make the assumption that platforms
-# where a "long long" is the same size as a "long" (e.g., Alpha/OSF1)
-# want "%ld" and everyone else can use "%lld".  Win32 uses "%I64d",
-# but that's defined elsewhere since we don't use configure on Win32.
-#
-AC_MSG_CHECKING(printf format modifier for 64-bit integers)
-AC_TRY_RUN([main() { exit(!(sizeof(long long int) == sizeof(long int))); }],
-	[AC_MSG_RESULT(l)
-	ISC_PLATFORM_QUADFORMAT='#define ISC_PLATFORM_QUADFORMAT "l"'],
-	[AC_MSG_RESULT(ll)
-	ISC_PLATFORM_QUADFORMAT='#define ISC_PLATFORM_QUADFORMAT "ll"'],
-	[AC_MSG_RESULT(assuming target platform uses ll)
-	ISC_PLATFORM_QUADFORMAT='#define ISC_PLATFORM_QUADFORMAT "ll"'])
+# All platforms use %lld for "long long", regardless of its size.
+ISC_PLATFORM_QUADFORMAT='#define ISC_PLATFORM_QUADFORMAT "ll"'
 AC_SUBST(ISC_PLATFORM_QUADFORMAT)
 
 #
