@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.19 2002/08/23 22:57:03 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.20 2002/08/23 23:29:32 art Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -307,7 +307,7 @@ resolve_failed:
 			Elf_Addr soff;
 
 			soff = _dl_find_symbol(symn, object->next, &srcsym,
-			    SYM_SEARCH_SELF|SYM_WARNNOTFOUND|SYM_NOTPLT,
+			    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_NOTPLT,
 			    size);
 			if (srcsym == NULL)
 				goto resolve_failed;
