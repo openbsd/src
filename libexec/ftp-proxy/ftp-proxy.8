@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp-proxy.8,v 1.12 2001/12/06 00:26:32 beck Exp $
+.\"	$OpenBSD: ftp-proxy.8,v 1.13 2001/12/06 00:27:29 deraadt Exp $
 .\"
 .\" Copyright (c) 1996-2001
 .\"	Obtuse Systems Corporation, All rights reserved.
@@ -146,7 +146,8 @@ Meaningful values of debuglevel are 0-3, where 0 is no debug output and
 3 is lots of debug output, the default being 0.
 .El
 .Pp
-ftp-proxy is run from
+.Nm ftp-proxy
+is run from
 .Xr inetd 8
 and requires that ftp connections are redirected to it using an rdr
 rule.
@@ -158,15 +159,17 @@ in
 .Xr nat.conf 5
 (this example assumes xl0 is the interface facing an internal network).
 .Xr inetd 8
-must then be configured to run ftp-proxy on the port from above
-using
+must then be configured to run
+.Nm ftp-proxy
+on the port from above using
 .Pp
 8081 stream tcp nowait root /usr/libexec/ftp-proxy ftp-proxy
 .Pp
 in
 .Xr inetd.conf 5 .
 .Pp
-ftp-proxy accepts the redirected control connections and forwards them
+.Nm ftp-proxy
+accepts the redirected control connections and forwards them
 to the server.
 The proxy replaces the address and port number that the client
 sends through the control connection to the server with his own
