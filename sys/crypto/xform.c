@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.25 2004/05/07 14:42:26 millert Exp $	*/
+/*	$OpenBSD: xform.c,v 1.26 2004/06/26 05:05:12 hshoexer Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -512,28 +512,19 @@ SHA512_Update_int(void *ctx, u_int8_t *buf, u_int16_t len)
  */
 
 u_int32_t
-deflate_compress(data, size, out)
-	u_int8_t *data;
-	u_int32_t size;
-	u_int8_t **out;
+deflate_compress(u_int8_t *data, u_int32_t size, u_int8_t **out)
 {
 	return deflate_global(data, size, 0, out);
 }
 
 u_int32_t
-deflate_decompress(data, size, out)
-	u_int8_t *data;
-	u_int32_t size;
-	u_int8_t **out;
+deflate_decompress(u_int8_t *data, u_int32_t size, u_int8_t **out)
 {
 	return deflate_global(data, size, 1, out);
 }
 
 u_int32_t
-lzs_dummy(data, size, out)
-	u_int8_t *data;
-	u_int32_t size;
-	u_int8_t **out;
+lzs_dummy(u_int8_t *data, u_int32_t size, u_int8_t **out)
 {
 	*out = NULL;
 	return (0);
