@@ -1,3 +1,8 @@
+./dev/scan0
+./dev/scan1
+./dev/vme16
+./dev/vme24
+./dev/vme32
 ./sbin/edlabel
 ./sbin/ldconfig
 ./usr/bin/c++filt
@@ -743,7 +748,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/if_wbreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/if_wxreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/if_wxvar.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/isescivar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/isesvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/maestro_reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/ncrreg.ph
@@ -905,7 +909,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/ohcivar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/uaudioreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/ucomvar.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/uftdireg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/uftdireg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/ugraphire_rdesc.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/uhcireg.ph
