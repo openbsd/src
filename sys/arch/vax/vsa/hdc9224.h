@@ -1,5 +1,6 @@
-/*	$OpenBSD: hdc9224.h,v 1.2 1997/05/29 00:05:33 niklas Exp $ */
 /*	$NetBSD: hdc9224.h,v 1.1 1996/07/20 18:55:12 ragge Exp $ */
+/*	$OpenBSD: hdc9224.h,v 1.3 1998/05/11 07:34:51 niklas Exp $ */
+
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -193,5 +194,3 @@ struct hdc9224_UDCreg { /* internal disk controller registers */
 #define UDC_DS_WRPROT	(1<<2)	/* write protect (floppy only!) */
 #define UDC_DS_READY	(1<<1)	/* drive ready bit */
 #define UDC_DS_WRFAULT	(1<<0)	/* write fault */
-
-
