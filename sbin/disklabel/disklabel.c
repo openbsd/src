@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.27 1997/02/16 07:42:52 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.28 1997/02/17 16:30:25 imp Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.27 1997/02/16 07:42:52 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.28 1997/02/17 16:30:25 imp Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -88,7 +88,6 @@ static char rcsid[] = "$OpenBSD: disklabel.c,v 1.27 1997/02/16 07:42:52 deraadt 
 
 char	*dkname, *specname;
 char	tmpfil[] = _PATH_TMPFILE;
-
 char	namebuf[BBSIZE], *np = namebuf;
 struct	disklabel lab;
 char	bootarea[BBSIZE];
