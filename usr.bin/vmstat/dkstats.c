@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkstats.c,v 1.3 1996/06/26 05:42:40 deraadt Exp $	*/
+/*	$OpenBSD: dkstats.c,v 1.4 1997/02/04 04:51:20 kstailey Exp $	*/
 /*	$NetBSD: dkstats.c,v 1.1 1996/05/10 23:19:27 thorpej Exp $	*/
 
 /*
@@ -199,9 +199,6 @@ int	select;
 
 	if (dk_ndrive < 0)
 		errx(1, "invalid _disk_count %d.", dk_ndrive);
-	else if (dk_ndrive == 0) {
-		warnx("No drives attached.");
-	}
 	else {
 		/* Get a pointer to the first disk. */
 		deref_nl(X_DISKLIST, &disk_head, sizeof(disk_head));
