@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.10 2002/11/26 17:34:43 jason Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.11 2002/12/04 15:44:21 markus Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -578,6 +578,7 @@ bstp_make_blocking(sc, bif)
 			if (bif->bif_change_detection_enabled) {
 				bstp_topology_change_detection(sc);
 			}
+			bridge_rtdelete(sc, bif->ifp, 1);
 		}
 		bstp_set_port_state(bif, BSTP_IFSTATE_BLOCKING);
 		bstp_timer_stop(&bif->bif_forward_delay_timer);
@@ -987,6 +988,7 @@ bstp_disable_port(sc, bif)
 	bstp_timer_stop(&bif->bif_forward_delay_timer);
 	bstp_configuration_update(sc);
 	bstp_port_state_selection(sc);
+	bridge_rtdelete(sc, bif->ifp, 1);
 
 	if (bstp_root_bridge(sc) && (!root))	{
 		sc->sc_max_age = sc->sc_bridge_max_age;

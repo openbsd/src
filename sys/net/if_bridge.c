@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.103 2002/10/10 17:27:40 dhartmei Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.104 2002/12/04 15:44:21 markus Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -141,7 +141,6 @@ void	bridge_timer(void *);
 int	bridge_rtfind(struct bridge_softc *, struct ifbaconf *);
 void	bridge_rtage(struct bridge_softc *);
 void	bridge_rttrim(struct bridge_softc *);
-void	bridge_rtdelete(struct bridge_softc *, struct ifnet *);
 int	bridge_rtdaddr(struct bridge_softc *, struct ether_addr *);
 int	bridge_rtflush(struct bridge_softc *, int);
 struct ifnet *	bridge_rtupdate(struct bridge_softc *,
@@ -346,7 +345,7 @@ bridge_ioctl(ifp, cmd, data)
 				error = ifpromisc(p->ifp, 0);
 
 				LIST_REMOVE(p, next);
-				bridge_rtdelete(sc, p->ifp);
+				bridge_rtdelete(sc, p->ifp, 0);
 				bridge_flushrule(p);
 				free(p, M_DEVBUF);
 				break;
@@ -648,7 +647,7 @@ bridge_ifdetach(ifp)
 	LIST_FOREACH(bif, &sc->sc_iflist, next) {
 		if (bif->ifp == ifp) {
 			LIST_REMOVE(bif, next);
-			bridge_rtdelete(sc, ifp);
+			bridge_rtdelete(sc, ifp, 0);
 			bridge_flushrule(bif);
 			free(bif, M_DEVBUF);
 			ifp->if_bridge = NULL;
@@ -921,6 +920,18 @@ bridge_output(ifp, m, sa, rt)
 			dst_if = p->ifp;
 			if ((dst_if->if_flags & IFF_RUNNING) == 0)
 				continue;
+
+			/*
+			 * If this is not the original output interface,
+			 * and the interface is participating in spanning
+			 * tree, make sure the port is in a state that
+			 * allows forwarding.
+			 */
+			if (dst_if != ifp &&
+			    (p->bif_flags & IFBIF_STP) &&
+			    (p->bif_state != BSTP_IFSTATE_FORWARDING))
+				continue;
+
 #ifdef ALTQ
 			if (ALTQ_IS_ENABLED(&dst_if->if_snd) == 0)
 #endif
@@ -1378,8 +1389,7 @@ bridge_broadcast(sc, ifp, eh, m)
 			continue;
 
 		if ((p->bif_flags & IFBIF_STP) &&
-		    (p->bif_state == BSTP_IFSTATE_BLOCKING ||
-		    p->bif_state == BSTP_IFSTATE_DISABLED))
+		    (p->bif_state != BSTP_IFSTATE_FORWARDING))
 			continue;
 
 		if ((p->bif_flags & IFBIF_DISCOVER) == 0 &&
@@ -1863,9 +1873,10 @@ bridge_rtdaddr(sc, ea)
  * Delete routes to a specific interface member.
  */
 void
-bridge_rtdelete(sc, ifp)
+bridge_rtdelete(sc, ifp, dynonly)
 	struct bridge_softc *sc;
 	struct ifnet *ifp;
+	int dynonly;
 {
 	int i;
 	struct bridge_rtnode *n, *p;
@@ -1880,14 +1891,22 @@ bridge_rtdelete(sc, ifp)
 	for (i = 0; i < BRIDGE_RTABLE_SIZE; i++) {
 		n = LIST_FIRST(&sc->sc_rts[i]);
 		while (n != LIST_END(&sc->sc_rts[i])) {
-			if (n->brt_if == ifp) {		/* found one */
-				p = LIST_NEXT(n, brt_next);
-				LIST_REMOVE(n, brt_next);
-				sc->sc_brtcnt--;
-				free(n, M_DEVBUF);
-				n = p;
-			} else
+			if (n->brt_if != ifp) {
+				/* Not ours */
 				n = LIST_NEXT(n, brt_next);
+				continue;
+			}
+			if (dynonly &&
+			    (n->brt_flags & IFBAF_TYPEMASK) != IFBAF_DYNAMIC) {
+				/* only deleting dynamics */
+				n = LIST_NEXT(n, brt_next);
+				continue;
+			}
+			p = LIST_NEXT(n, brt_next);
+			LIST_REMOVE(n, brt_next);
+			sc->sc_brtcnt--;
+			free(n, M_DEVBUF);
+			n = p;
 		}
 	}
 	if (sc->sc_brtcnt == 0 && (sc->sc_if.if_flags & IFF_UP) == 0) {
@@ -2527,7 +2546,7 @@ bridge_fragment(sc, ifp, eh, m)
 
 	for (; m; m = m0) {
 		m0 = m->m_nextpkt;
-		m->m_nextpkt = 0;
+		m->m_nextpkt = NULL;
 		if (error == 0) {
 			if (hassnap) {
 				M_PREPEND(m, LLC_SNAPFRAMELEN, M_DONTWAIT);
