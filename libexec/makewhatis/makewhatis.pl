@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # ex:ts=8 sw=4:
 
-# $OpenBSD: makewhatis.pl,v 1.4 2000/03/31 15:56:59 espie Exp $
+# $OpenBSD: makewhatis.pl,v 1.5 2000/04/04 15:31:06 espie Exp $
 #
 # Copyright (c) 2000 Marc Espie.
 # 
@@ -273,7 +273,7 @@ sub find_manpages
     $list=[];
     find(
 	sub {
-	return unless /\.\d\w*(?:\.Z|\.gz)?$/;
+	return unless /\.[\dln]\w*(?:\.Z|\.gz)?$/;
 	return unless -f $_;
 	my $inode = (stat _)[1];
 	return if defined $nodes{$inode};
@@ -302,7 +302,7 @@ sub scan_manpages
 	} else {
 	    $file = new IO::File $_ or die "$0: Can't read $_\n";
 	}
-	if (m/\.[1-9][^.]*$/) {
+	if (m/\.[1-9ln][^.]*$/) {
 	    $subjects = handle_unformated($file, $_);
 	} elsif (m/\.0$/) {
 	    $subjects = handle_formated($file, $_);
