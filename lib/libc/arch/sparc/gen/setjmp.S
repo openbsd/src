@@ -37,7 +37,7 @@
 
 #if defined(LIBC_SCCS) 
 	.text
-	.asciz "$OpenBSD: setjmp.S,v 1.2 1996/08/19 08:17:44 tholo Exp $"
+	.asciz "$OpenBSD: setjmp.S,v 1.3 2002/08/05 15:29:28 art Exp $"
 #endif /* LIBC_SCCS */
 
 /*
@@ -107,6 +107,6 @@ ENTRY(longjmp)
 
 Lbotch:
 	/* oops, caller botched it */
-	call	_longjmperror
+	call	_C_LABEL(longjmperror)
 	 nop
 	unimp	0
