@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_kern.c,v 1.19 2001/12/31 18:23:15 fgsch Exp $	*/
+/*	$OpenBSD: uthread_kern.c,v 1.20 2002/01/04 03:39:09 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -245,10 +245,12 @@ _thread_kern_sched(struct sigcontext * scp)
 			 * attempt to add or remove the thread from any
 			 * scheduling queue to which it belongs.
 			 */
+#ifdef notyet
 			if (curthread->check_pending != 0) {
 				curthread->check_pending = 0;
 				_thread_sig_check_pending(curthread);
 			}
+#endif
 		}
 
 		/*
