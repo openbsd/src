@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.3 1998/07/14 17:47:27 mickey Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.4 1998/08/29 01:17:06 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -26,8 +26,6 @@
 #ifndef	_HPPA_CPU_H_
 #define	_HPPA_CPU_H_
 
-#include <machine/iodc.h>
-#include <machine/iomod.h>
 #include <machine/frame.h>
 
 /*
@@ -66,7 +64,10 @@
 #define CACHE_LINE_SIZE 32
 
 #ifdef _KERNEL
+#define DELAY(x) delay(x)
+void	delay __P((u_int));
 void	hppa_init __P((void));
+void	trap __P((int, struct trapframe *));
 #endif
 
 /*
@@ -74,7 +75,7 @@ void	hppa_init __P((void));
  */
 
 #define	BOOTARG_LEN	(NBPG)
-#define	BOOTARG_OFF	(NBPG)
+#define	BOOTARG_OFF	(0x10000)
 
 /*
  * CTL_MACHDEP definitions.
