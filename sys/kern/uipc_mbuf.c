@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.19 1999/12/31 23:37:08 provos Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.20 2000/03/02 21:40:49 angelos Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -718,6 +718,42 @@ bad:
 	m_freem(n);
 	MPFail++;
 	return (NULL);
+}
+
+/*
+ * Return a pointer to mbuf/offset of location in mbuf chain.
+ */
+struct mbuf *
+m_getptr(struct mbuf *m, int loc, int *off)
+{
+    while (loc >= 0)
+    {
+	/* Normal end of search */
+	if (m->m_len > loc)
+	{
+	    *off = loc;
+	    return m;
+	}
+	else
+	{
+	    loc -= m->m_len;
+
+	    if (m->m_next == NULL)
+	    {
+		if (loc == 0)
+		{
+		    *off = m->m_len; /* Point at the end of valid data */
+		    return m;
+		}
+		else
+		  return NULL;
+	    }
+	    else
+	      m = m->m_next;
+	}
+    }
+
+    return NULL;
 }
 
 /*
