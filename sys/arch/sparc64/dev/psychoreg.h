@@ -1,4 +1,4 @@
-/*	$OpenBSD: psychoreg.h,v 1.2 2001/08/29 02:47:58 jason Exp $	*/
+/*	$OpenBSD: psychoreg.h,v 1.3 2001/09/01 23:56:43 jason Exp $	*/
 /*	$NetBSD: psychoreg.h,v 1.7 2001/07/20 00:07:13 eeh Exp $ */
 
 /*
@@ -171,12 +171,13 @@ struct psychoreg {
 
 	struct pci_ctl {
 		u_int64_t	pci_csr;	/* PCI a/b control/status register */	/* 1fe.0000.2000,4000 */
+		u_int64_t	pad1;
 		u_int64_t	pci_afsr;	/* PCI a/b AFSR register */		/* 1fe.0000.2010,4010 */
 		u_int64_t	pci_afar;	/* PCI a/b AFAR register */		/* 1fe.0000.2018,4018 */
 		u_int64_t	pci_diag;	/* PCI a/b diagnostic register */	/* 1fe.0000.2020,4020 */
 		u_int64_t	pci_tasr;	/* PCI target address space reg (IIi)*/	/* 1fe.0000.2028,4028 */
 
-		u_int64_t	pad12[251];
+		u_int64_t	pad12[250];
 
 		/* This is really the IOMMU's, not the PCI bus's */
 		struct iommu_strbuf pci_strbuf;						/* 1fe.0000.2800-210 */
