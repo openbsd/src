@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc,v 1.14 2004/02/20 10:29:05 jmc Exp $
+.\"	$OpenBSD: doc,v 1.15 2004/06/06 22:38:09 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -2484,30 +2484,44 @@
 .in \\n(.iu-\\n(Dsu
 ..
 .\"
-.\" NS Vt macro - Variable type (for forcing old style variable declarations)
-.\" this is not done in the same manner as .Ot for fortrash - clean up later
+.\" NS Vt macro - Variable type
 .de Vt
-.\" if a function declaration was the last thing given, want vertical space
-.if \\n(fD>0 \{\
-.	Pp
-.	nr fD 0
-.\}
-.\"	if a subroutine was the last thing given, want vertical space
-.if \\n(fZ>0 \{\
-.	ie \\n(fX==0 \{\
-.		Pp
-.		rs
+.if \\n(aC==0 \{\
+.       ie \\n(.$==0 .tm Usage: .Vt variable_type ... \\*(Pu (#\\n(.c)
+.	el \{\
+.		ds mN Vt
+.		aV \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
 .	\}
-.	el .br
 .\}
-.nr fX \\n(fX+1
-.nr cF \\n(.f
-.nr cZ \\n(.s
-\\*(fT\&\\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
-.ie \\n(oT==0 .br
-.el \&\ \&
-.ft \\n(cF
-.fs \\n(cZ
+.if \\n(aC>\\n(aP \{\
+.	if \\n(nS>0 \{\
+.		\" if a function declaration was the last
+.		\" thing given, want vertical space
+.		if \\n(fD>0 \{\
+.			Pp
+.			nr fD 0
+.		\}
+.		\" if a subroutine was the last thing
+.		\" given, want vertical space
+.		if \\n(fZ>0 \{\
+.			ie \\n(fX==0 \{\
+.				Pp
+.\"				rs
+.			\}
+.			el .br
+.		\}
+.		nr fX 1
+.	\}
+.	as b1 \\*(vY
+.	nr aP \\n(aP+1
+.	nr cF \\n(.f
+.	nr cZ \\n(.s
+.	nR
+.	if \\n(nS>0 \{\
+.		ie \\n(oT==0 .br
+.		el \&\ \&
+.	\}
+.\}
 ..
 .\"
 .\" NS Ft macro - Function type
