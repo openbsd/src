@@ -1,7 +1,7 @@
 /*
  * David Leonard, 1998. Public Domain. <david.leonard@csee.uq.edu.au>
  *
- * $OpenBSD: uthread_autoinit.c,v 1.11 2003/01/31 04:46:17 marc Exp $
+ * $OpenBSD: uthread_autoinit.c,v 1.12 2003/01/31 18:48:03 marc Exp $
  */
 
 
@@ -29,7 +29,6 @@ Init _thread_initialiser;
  */
 #if defined(__GNUC__)
 extern void _thread_init_constructor(void) __attribute__((constructor));
-extern void _GLOBAL_$I$_thread_init_constructor(void);
 
 void
 _thread_init_constructor()
