@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.1,v 1.2 1999/05/25 21:42:22 angelos Exp $
+.\" $OpenBSD: keynote.1,v 1.3 1999/05/27 01:09:44 angelos Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -22,7 +22,6 @@
 .\"
 .Dd April 29, 1999
 .Dt keynote 1
-.Os
 .\" .TH keynote 1 local
 .Sh NAME
 .Nm keynote
@@ -30,26 +29,196 @@
 .Xr KeyNote 3
 operations
 .Sh SYNOPSIS
-.Nm keynote
-.Op sign|verify|sigver|keygen
-.Op ...
-.Sh DESCRIPTION
-.Nm keynote
-does the operation indicated by the first argument. For more details on the
-specific flags for each operation, see the respective manpages (
-.Xr keynote-sign 1 ,
-.Xr keynote-verify 1 ,
-.Xr keynote-sigver 1 ,
+.Nm keynote keygen
+.Ar AlgorithmName
+.Ar KeySize
+.Ar PublicKeyFile
+.Ar PrivateKeyFile
+.Op print-offset
+.Op print-length
+
+.Nm keynote sign
+.Op Fl v
+.Ar AlgorithmName
+.Ar AssertionFile
+.Ar PrivateKeyFile
+
+.Nm keynote sigver
+.Op AssertionFile
+
+.Nm keynote verify
+.Op Fl h
+.Op Fl e Ar file
+.Fl l Ar file
+.Fl r Ar retlist
+.Op Fl k Ar file
+.Op Fl l Ar file
+.Op Ar file ...
+.Sh KEY GENERATION
+"keynote keygen" creates a public/private key of size
+.Fa KeySize ,
+(in bits) for the algorithm specified by
+.Fa AlgorithmName .
+Typical keysizes are 512, 1024, or 2048 (bits). The minimum key size
+for DSA keys is 512 (bits). Supported
+.Fa AlgorithmName
+identifiers are:
+.Bl -tag -width indent
+.It ``dsa-hex:''
+.It ``dsa-base64:''
+.It ``rsa-hex:''
+.It ``rsa-base64:''
+.El
+.Pp
+Notice that the trailing colon is required. The resulting public key is
+stored in file
+.Fa PublicKeyFile .
+Similarly, the resulting private key is stored in file
+.Fa PrivateKeyFile .
+Either of the filenames can be specified to be ``-'', in which
+case the corresponding key(s) will be printed in standard output.
+.Pp
+The optional parameters
+.Fa print-offset
 and
-.Xr keynote-keygen 1
-respectively).
+.Fa print-length
+specify the offset from the begining of the line where the key
+will be printed, and the number of characters of the key that will
+be printed per line.
+.Fa print-length
+includes
+.Fa AlgorithmName
+for the first line and has to be longer (by at least 2) than
+.Fa AlgorithmName .
+.Fa print-length
+also accounts for the line-continuation character (backslash) at
+the end of each line, and the doublequotes at the begining and end
+of the key encoding.  Default values are 12 and 50 respectively.
+.Pp
+.Sh ASSERTION SIGNING
+"keynote sign" reads the assertion contained in
+.Fa AssertionFile
+and generates a signature specified by
+.Fa AlgorithmName
+using the private key stored in
+.Fa PrivateKeyFile .
+The private key is expected to be of the form output by
+"keynote keygen".  The private key algorithm and the
+.Fa AlgorithmName
+specified as an argument are expected to match. There is no requirement
+for the internal or ASCII encodings to match.  Valid
+.Fa AlgorithmName
+identifiers are:
+.Bl -tag -width indent
+.It ``sig-dsa-sha1-hex:''
+.It ``sig-dsa-sha1-base64:''
+.It ``sig-rsa-sha1-hex:''
+.It ``sig-rsa-sha1-base64:''
+.It ``sig-rsa-md5-hex:''
+.It ``sig-rsa-md5-base64:''
+.El
+.Pp
+Notice that the trailing colon is required.
+The resulting signature is printed in standard output. This can then
+be added (via cut-and-paste or some script) at the end of the
+assertion, in the
+.Fa Signature
+field.
+.Pp
+The public key corresponding to the private key in
+.Fa PrivateKeyFile
+is expected to already be included in the
+.Fa Authorizer
+field of the assertion, either directly or indirectly (i.e., through
+use of a
+.Fa Local-Constants
+attribute). Furthermore, the assertion must have a
+.Fa Signature
+field (even if it is empty), as the signature is computed on
+everything between the
+.Fa KeyNote-Version
+and
+.Fa Signature
+keywords (inclusive), and the
+.Fa AlgorithmName
+string.
+.Pp
+If the
+.Fl v
+flag is provided, "keynote sign" will also verify the newly-created
+signature using the
+.Fa Authorizer
+field key.
+.Pp
+.Sh SIGNATURE VERIFICATION
+"keynote sigver" reads the assertion contained in
+.Fa AssertionFile
+and verifies the public-key signature on it.
+.Pp
+.Sh QUERY TOOL
+For each operand that names a
+.A file ,
+"keynote verify" reads the file and parses the assertions contained
+therein (one assertion per file).
+.Pp
+Files given with the
+.Fl l
+flag are assumed to contain trusted assertions (no signature
+verification is performed, and the
+.Fa Authorizer
+field can contain non-key principals.
+There should be at least one assertion with the
+.Fa POLICY
+keyword in the
+.Fa Authorizer
+field.
+.Pp
+The
+.Fl r
+flag is used to provide a comma-separated list of return values, in
+increasing order of compliance from left to right.
+.Pp
+Files given with the
+.Fl e
+flag are assumed to contain environment variables and their values,
+in the format:
+.Bd -literal -offset indent
+ varname = "value"
+.Ed
+.Pp
+.Fa varname
+can begin with any letter (upper or lower case) or number,
+and can contain underscores.
+.Fa value
+is a quoted string, and can contain any character, and escape
+(backslash) processing is performed, as specified in the KeyNote
+draft. 
+.Pp
+The remaining options are:
+.Bl -tag -width indent
+.It Fl h
+Print a usage message and exit.
+.It Fl k Ar file
+Add a key from
+.Fa file
+in the action authorizers.
+.El
+.Pp
+Exactly one
+.Fl r
+and least one of each
+.Fl e ,
+.Fl l ,
+and
+.Fl k
+flags should be given per invocation. If no flags are given,
+"keynote verify" prints the usage message and exits with error code -1.
+.Pp
+"keynote verify" exits with code -1 if there was an error, and 0 on success.
+.Pp
 .Sh SEE ALSO
 .Xr keynote 3 ,
-.Xr keynote 4 ,
-.Xr keynote-keygen 1 ,
-.Xr keynote-sign 1 ,
-.Xr keynote-sigver 1 ,
-.Xr keynote-verify 1
+.Xr keynote 4
 .Bl -tag -width "AAAAAAA"
 .It ``The KeyNote Trust-Management System'' 
 M. Blaze, J. Feigenbaum, A. D. Keromytis,

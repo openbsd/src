@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.distribution,v 1.1 1999/05/24 02:11:40 angelos Exp $
+# $OpenBSD: Makefile.distribution,v 1.2 1999/05/27 01:09:43 angelos Exp $
 #
 # The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 #
@@ -134,25 +134,16 @@ test: all
 		-l testsuite/test-assertion5 -l testsuite/test-assertion6 \
 		-l testsuite/test-assertion7 || ${TRUE}
 
-manpages: mankeynote mansystem mansign manver mansigver mankeygen
+manpages: mankeynote mansystem manutility
 
 mankeynote:
-	${NROFF} ${NROFFFLAGS} man/keynote.3 > man/keynote.0
+	${NROFF} ${NROFFFLAGS} man/keynote.3 > man/keynote-library.0
 
 mansystem:
 	${NROFF} ${NROFFFLAGS} man/keynote.4 > man/keynote-system.0
 
-mansign:
-	${NROFF} ${NROFFFLAGS} man/keynote-sign.1 > man/keynote-sign.0
-
-mansigver:
-	${NROFF} ${NROFFFLAGS} man/keynote-sigver.1 > man/keynote-sigver.0
-
-manver:
-	${NROFF} ${NROFFFLAGS} man/keynote-verify.1 > man/keynote-verify.0
-
-mankeygen:
-	${NROFF} ${NROFFFLAGS} man/keynote-keygen.1 > man/keynote-keygen.0
+manutility:
+	${NROFF} ${NROFFFLAGS} man/keynote.1 > man/keynote-utility.0
 
 distribution: test cleanall manpages
 	${MKDIR} ${KNSUBDIR}

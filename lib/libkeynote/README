@@ -1,4 +1,4 @@
-# $OpenBSD: README,v 1.2 1999/05/24 02:11:41 angelos Exp $
+# $OpenBSD: README,v 1.3 1999/05/27 01:09:43 angelos Exp $
 
 This is release 2-beta2 of the KeyNote trust management library reference
 implementation.
@@ -53,8 +53,8 @@ Compile tips:
 The Makefile creates the libkeynote.a library and the keynote program.
 *** Notice that the 4 programs of previous releases have been folded into one
 
-There is a man page for the library calls (keynote.3) and one for each of the
-keynote utility functions, in the man/ directory. There is also a man page
+There is a man page for the library calls (keynote.3) and one for the command
+line tool (keynote.1), in the man/ directory. There is also a man page
 about KeyNote itself (keynote.4), which contains some text from the spec.
 
 To view them, use:
@@ -62,10 +62,6 @@ To view them, use:
   nroff -mandoc keynote.1 | more
   nroff -mandoc keynote.3 | more
   nroff -mandoc keynote.4 | more
-  nroff -mandoc keynote-verify.1 | more
-  nroff -mandoc keynote-keygen.1 | more
-  nroff -mandoc keynote-sign.1 | more
-  nroff -mandoc keynote-sigver.1 | more
 
 Alternatively, you can just install them in your manpath. If your
 nroff does not support the -mandoc flag, use -man instead. For those
