@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.64 2004/02/29 05:19:37 tedu Exp $	*/
+/*	$OpenBSD: ping.c,v 1.65 2004/03/21 20:00:55 markus Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: ping.c,v 1.64 2004/02/29 05:19:37 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: ping.c,v 1.65 2004/03/21 20:00:55 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -398,6 +398,7 @@ main(int argc, char *argv[])
 		if (IN_MULTICAST(ntohl(to->sin_addr.s_addr)))
 			errx(1, "record route not valid to multicast destinations");
 #ifdef IP_OPTIONS
+		memset(rspace, 0, sizeof(rspace));
 		rspace[IPOPT_OPTVAL] = IPOPT_RR;
 		rspace[IPOPT_OLEN] = sizeof(rspace)-1;
 		rspace[IPOPT_OFFSET] = IPOPT_MINOFF;
