@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.11 1999/10/09 03:42:04 csapuntz Exp $     */
+/*      $OpenBSD: pciide.c,v 1.12 1999/11/02 02:43:45 chris Exp $     */
 /*	$NetBSD: pciide.c,v 1.40 1999/07/12 13:49:38 bouyer Exp $	*/
 
 /*
@@ -230,11 +230,11 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	  0,
 	  piix_chip_map
 	},
-	{ PCI_PRODUCT_INTEL_82801AA_IDE,
+	{ PCI_PRODUCT_INTEL_82801AA_IDE, /* Intel 82801AA IDE (ICH) */
 	  0,
 	  piix_chip_map,
 	},
-	{ PCI_PRODUCT_INTEL_82801AB_IDE,
+	{ PCI_PRODUCT_INTEL_82801AB_IDE, /* Intel 82801AB IDE (ICH0) */
 	  0,
 	  piix_chip_map,
 	},
@@ -1113,7 +1113,7 @@ default_chip_map(sc, pa)
 		} else {
 			pciide_mapreg_dma(sc, pa);
 		if (sc->sc_dma_ok != 0)
-			printf(", (partial support) ");
+			printf(", (partial support)");
 		}
 	} else {
 		printf(": no DMA");
