@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.24 2001/06/27 04:51:47 art Exp $	*/
+/*	$OpenBSD: buf.h,v 1.25 2001/08/30 12:38:52 gluk Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -215,7 +215,6 @@ void    buf_undirty __P((struct buf *));
 int	bwrite __P((struct buf *));
 struct buf *getblk __P((struct vnode *, daddr_t, int, int, int));
 struct buf *geteblk __P((int));
-struct buf *getnewbuf __P((int slpflag, int slptimeo));
 struct buf *incore __P((struct vnode *, daddr_t));
 
 void	minphys __P((struct buf *bp));

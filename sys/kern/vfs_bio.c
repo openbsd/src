@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.38 2001/05/05 20:57:01 art Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.39 2001/08/30 12:38:52 gluk Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -107,6 +107,7 @@ struct bio_ops bioops;
 static __inline struct buf *bio_doread __P((struct vnode *, daddr_t, int,
 					    struct ucred *, int));
 int count_lock_queue __P((void));
+int getnewbuf __P((int slpflag, int slptimeo, struct buf **));
 
 /*
  * We keep a few counters to monitor the utilization of the buffer cache
@@ -678,7 +679,7 @@ getblk(vp, blkno, size, slpflag, slptimeo)
 	int size, slpflag, slptimeo;
 {
 	struct bufhashhdr *bh;
-	struct buf *bp;
+	struct buf *bp, *nbp = NULL;
 	int s, err;
 
 	/*
@@ -719,13 +720,17 @@ start:
 	}
 
 	if (bp == NULL) {
-		if ((bp = getnewbuf(slpflag, slptimeo)) == NULL)
+		if (nbp == NULL && getnewbuf(slpflag, slptimeo, &nbp) != 0) {
 			goto start;
+		}
+		bp = nbp;
 		binshash(bp, bh);
 		bp->b_blkno = bp->b_lblkno = blkno;
 		s = splbio();
 		bgetvp(vp, bp);
 		splx(s);
+	} else if (nbp != NULL) {
+		brelse(nbp);
 	}
 	allocbuf(bp, size);
 
@@ -741,8 +746,7 @@ geteblk(size)
 {
 	struct buf *bp;
 
-	while ((bp = getnewbuf(0, 0)) == 0)
-		;
+	getnewbuf(0, 0, &bp);
 	SET(bp->b_flags, B_INVAL);
 	binshash(bp, &invalhash);
 	allocbuf(bp, size);
@@ -783,8 +787,7 @@ allocbuf(bp, size)
 		int amt;
 
 		/* find a buffer */
-		while ((nbp = getnewbuf(0, 0)) == NULL)
-			;
+		getnewbuf(0, 0, &nbp);
  		SET(nbp->b_flags, B_INVAL);
 		binshash(nbp, &invalhash);
 
@@ -844,13 +847,21 @@ out:
  * Find a buffer which is available for use.
  * Select something from a free list.
  * Preference is to AGE list, then LRU list.
+ *
+ * We must notify getblk if we slept during the buffer allocation. When
+ * that happens, we allocate a buffer anyway (unless tsleep is interrupted
+ * or times out) and return !0.
  */
-struct buf *
-getnewbuf(slpflag, slptimeo)
+int
+getnewbuf(slpflag, slptimeo, bpp)
 	int slpflag, slptimeo;
+	struct buf **bpp;
 {
-	register struct buf *bp;
-	int s;
+	struct buf *bp;
+	int s, ret, error;
+
+	*bpp = NULL;
+	ret = 0;
 
 start:
 	s = splbio();
@@ -863,18 +874,25 @@ start:
 	if ((numcleanbufs <= locleanbufs) && curproc != syncerproc) {
 		/* wait for a free buffer of any kind */
 		needbuffer++;
-		tsleep(&needbuffer, slpflag|(PRIBIO+1), "getnewbuf", slptimeo);
+		error = tsleep(&needbuffer, slpflag|(PRIBIO+1), "getnewbuf",
+				slptimeo);
 		splx(s);
-		return (0);
+		if (error)
+			return (1);
+		ret = 1;
+		goto start;
 	}
 	if ((bp = bufqueues[BQ_AGE].tqh_first) == NULL &&
 	    (bp = bufqueues[BQ_LRU].tqh_first) == NULL) {
 		/* wait for a free buffer of any kind */
 		syncer_needbuffer = 1;
-		tsleep(&syncer_needbuffer, slpflag|(PRIBIO-3), "getnewbuf",
-			slptimeo);
+		error = tsleep(&syncer_needbuffer, slpflag|(PRIBIO-3),
+				"getnewbuf", slptimeo);
 		splx(s);
-		return (0);
+		if (error)
+			return (1);
+		ret = 1;
+		goto start;
 	}
 
 	bremfree(bp);
@@ -903,7 +921,9 @@ start:
 		 */
 		SET(bp->b_flags, B_AGE);
 		bawrite(bp);
-		return (0);
+		/* bawrite can sleep, return 1 */
+		ret = 1;
+		goto start;
 	}
 
 	/* disassociate us from our vnode, if we had one... */
@@ -937,7 +957,8 @@ start:
 	}
 
 	bremhash(bp);
-	return (bp);
+	*bpp = bp;
+	return (ret);
 }
 
 /*
