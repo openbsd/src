@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.7 2004/07/27 16:56:10 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.8 2004/07/27 17:15:00 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -74,6 +74,7 @@ static const char *cvs_ign_std[] = {
 	"*.depend",
 	"CVS",
 	"core",
+	".#*",
 #ifdef OLD_SMELLY_CRUFT
 	"RCSLOG",
 	"tags",
@@ -81,7 +82,6 @@ static const char *cvs_ign_std[] = {
 	"RCS",
 	"SCCS",
 	"#*",
-	".#*",
 	",*",
 #endif
 };
