@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.1 2002/05/16 10:46:34 jakob Exp $	*/
+/*	$OpenBSD: ntp.c,v 1.2 2002/05/16 10:52:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 by N.M. Maclaren. All rights reserved.
@@ -28,7 +28,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -49,7 +48,6 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
-
 
 /* NTP definitions.  Note that these assume 8-bit bytes - sigh.  There
  * is little point in parameterising everything, as it is neither
@@ -84,30 +82,28 @@
 #define MILLION_L    1000000l		/* For conversion to/from timeval */
 #define MILLION_D       1.0e6		/* Must be equal to MILLION_L */
 
-
 struct ntp_data {
-	unsigned char status;
-	unsigned char version;
-	unsigned char mode;
-	unsigned char stratum;
-	unsigned char polling;
-	unsigned char precision;
-	double dispersion;
-	double reference;
-	double originate;
-	double receive;
-	double transmit;
-	double current;
+	u_char	status;
+	u_char	version;
+	u_char	mode;
+	u_char	stratum;
+	u_char	polling;
+	u_char	precision;
+	double	dispersion;
+	double	reference;
+	double	originate;
+	double	receive;
+	double	transmit;
+	double	current;
 };
-
 
 void	ntp_client(const char *, struct timeval *, struct timeval *);
 int	sync_ntp(int, const struct sockaddr *, double *, double *);
 void	make_packet(struct ntp_data *);
 int	write_packet(int, const struct sockaddr *, struct ntp_data *);
 int	read_packet(int, struct ntp_data *, double *, double *, double *);
-void	pack_ntp(unsigned char *, int, struct ntp_data *);
-void	unpack_ntp(struct ntp_data *, unsigned char *, int);
+void	pack_ntp(u_char *, int, struct ntp_data *);
+void	unpack_ntp(struct ntp_data *, u_char *, int);
 double	current_time(double);
 void	create_timeval(double, struct timeval *, struct timeval *);
 
@@ -202,8 +198,10 @@ sync_ntp(int fd, const struct sockaddr *peer, double *offset, double *error)
 		fprintf(stderr,"Offset: %.6f +/- %.6f disp=%.6f\n",
 		    x, y, dispersion);
 
-		if ((a = x - *offset) < 0.0) a = -a;
-		if (accepts <= 1) a = 0.0;
+		if ((a = x - *offset) < 0.0)
+			a = -a;
+		if (accepts <= 1)
+			a = 0.0;
 		b = *error + y;
 		if (y < *error) {
 			*offset = x;
@@ -215,7 +213,8 @@ sync_ntp(int fd, const struct sockaddr *peer, double *offset, double *error)
 		if (a > b)
 			errx(1, "Inconsistent times recieved from NTP server");
 
-		if (*error <= minerr) break;
+		if (*error <= minerr)
+			break;
         }
 
 	return accepts;
@@ -239,14 +238,14 @@ make_packet(struct ntp_data *data)
 int
 write_packet(int fd, const struct sockaddr *peer, struct ntp_data *data)
 {
-	unsigned char transmit[NTP_PACKET_MIN];
-	int length;
+	u_char	transmit[NTP_PACKET_MIN];
+	int	length;
 
 	pack_ntp(transmit, NTP_PACKET_MIN, data);
 	length = sendto(fd, transmit, NTP_PACKET_MIN, 0, peer, sizeof(*peer));
-	if(length <= 0) {
+	if (length <= 0) {
 		warnx("Unable to send NTP packet to server");
-        	return 1;
+		return 1;
 	}
 
 	return 0;
@@ -260,25 +259,29 @@ int
 read_packet(int fd, struct ntp_data *data, double *off, double *error,
     double *dispersion)
 {
-	unsigned char receive[NTP_PACKET_MAX+1];
-	double delay1, delay2, x, y;
-	int length;
-	fd_set rfds;
-	struct timeval tv;
+	u_char	receive[NTP_PACKET_MAX+1];
+	double	delay1, delay2, x, y;
+	int	length;
+	fd_set	rfds;
+	struct	timeval tv;
 
 	tv.tv_sec = 0;
 	tv.tv_usec = 1000000 * MAX_DELAY / MAX_QUERIES;
 
+	/* XXX potential fdset overflow */
 	FD_ZERO(&rfds);
 	FD_SET(fd, &rfds);
 
 	if (select (fd + 1, &rfds, NULL, NULL, &tv) < 1)
 		return 1; /* failure or timeout */
+		/* XXX does not deal with all possible return values */
+
+	/* assumes fd was ready */
 
 	length = recvfrom(fd, receive, NTP_PACKET_MAX + 1, 0, NULL, 0);
 	if (length <= 0) {
 		warnx("Unable to receive NTP packet from server");
-        	return 1;
+		return 1;
 	}
 
 	if (length < NTP_PACKET_MIN || length > NTP_PACKET_MAX) {
@@ -299,11 +302,12 @@ read_packet(int fd, struct ntp_data *data, double *off, double *error,
 		return 1;
 	}
 
-	/* Note that the conventions are very poorly defined in the NTP
+	/*
+	 * Note that the conventions are very poorly defined in the NTP
 	 * protocol, so we have to guess.  Any full NTP server perpetrating
 	 * completely unsynchronised packets is an abomination, anyway, so
-	 * reject it. */
-
+	 * reject it.
+	 */
 	delay1 = data->transmit - data->receive;
 	delay2 = data->current - data->originate;
 
@@ -338,7 +342,7 @@ read_packet(int fd, struct ntp_data *data, double *off, double *error,
  * and endian problems.  Note that it ignores fields irrelevant to
  * SNTP. */
 void
-pack_ntp(unsigned char *packet, int length, struct ntp_data *data)
+pack_ntp(u_char	*packet, int length, struct ntp_data *data)
 {
 	int i, k;
 	double d;
@@ -376,7 +380,7 @@ pack_ntp(unsigned char *packet, int length, struct ntp_data *data)
  * layout and endian problems.  Note that it ignores fields irrelevant
  * to SNTP. */
 void
-unpack_ntp(struct ntp_data *data, unsigned char *packet, int length)
+unpack_ntp(struct ntp_data *data, u_char *packet, int length)
 {
 	int i;
 	double d;
