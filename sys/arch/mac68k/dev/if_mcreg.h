@@ -1,8 +1,8 @@
-/*	$OpenBSD: if_mcreg.h,v 1.1 1998/05/08 22:15:32 gene Exp $	*/
-/*	$NetBSD: if_mcreg.h,v 1.2 1997/11/07 13:31:18 briggs Exp $	*/
+/*	$OpenBSD: if_mcreg.h,v 1.2 2004/12/15 06:48:24 martin Exp $	*/
+/*	NetBSD: if_mcreg.h,v 1.3 2004/03/26 12:15:46 wiz Exp $	*/
 
 /*-
- * Copyright (c) 1997 David Huang <khym@bga.com>
+ * Copyright (c) 1997 David Huang <khym@azeotrope.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

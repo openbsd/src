@@ -1,8 +1,8 @@
-/*	$OpenBSD: if_mcvar.h,v 1.3 2002/04/20 00:17:05 miod Exp $	*/
-/*	$NetBSD: if_mcvar.h,v 1.3 1997/12/07 17:47:48 scottr Exp $	*/
+/*	$OpenBSD: if_mcvar.h,v 1.4 2004/12/15 06:48:24 martin Exp $	*/
+/*	$NetBSD: if_mcvar.h,v 1.8 2004/03/26 12:15:46 wiz Exp $	*/
 
 /*-
- * Copyright (c) 1997 David Huang <khym@bga.com>
+ * Copyright (c) 1997 David Huang <khym@azeotrope.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@
 #error Must have at least two buffers for DMA!
 #endif
 
-#define	MC_NPAGES	((MC_RXDMABUFS * 0x800 + NBPG - 1) / NBPG)
+#define	MC_NPAGES	((MC_RXDMABUFS * 0x800 + PAGE_SIZE - 1) / PAGE_SIZE)
 
 struct mc_rxframe {
 	u_int8_t	rx_rcvcnt;
@@ -82,4 +82,4 @@ int	mcsetup(struct mc_softc *, u_int8_t *);
 void	mcintr(void *arg);
 void	mc_rint(struct mc_softc *sc);
 u_char	mc_get_enaddr(bus_space_tag_t t, bus_space_handle_t h,
-	    vm_offset_t o, u_char *dst);
+		bus_size_t o, u_char *dst);
