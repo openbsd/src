@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.22 2003/09/26 16:14:33 deraadt Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.23 2003/10/22 18:51:55 canacar Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -31,6 +31,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <stdio.h>
@@ -45,15 +46,7 @@
 #include <stdarg.h>
 #include <fcntl.h>
 #include <util.h>
-
-#define DEF_SNAPLEN 116		/* default plus allow for larger header of pflog */
-#define PCAP_TO_MS 500		/* pcap read timeout (ms) */
-#define PCAP_NUM_PKTS 1000	/* max number of packets to process at each loop */
-#define PCAP_OPT_FIL 0		/* filter optimization */
-#define FLUSH_DELAY 60		/* flush delay */
-
-#define PFLOGD_LOG_FILE		"/var/log/pflog"
-#define PFLOGD_DEFAULT_IF	"pflog0"
+#include "pflogd.h"
 
 pcap_t *hpcap;
 pcap_dumper_t *dpcap;
@@ -148,37 +141,47 @@ sig_alrm(int sig)
 	gotsig_alrm = 1;
 }
 
-int
-init_pcap(void)
+void
+set_pcap_filter(void)
 {
 	struct bpf_program bprog;
-	pcap_t *oldhpcap = hpcap;
-
-	hpcap = pcap_open_live(interface, snaplen, 1, PCAP_TO_MS, errbuf);
-	if (hpcap == NULL) {
-		logmsg(LOG_ERR, "Failed to initialize: %s", errbuf);
-		hpcap = oldhpcap;
-		return (-1);
-	}
 
 	if (pcap_compile(hpcap, &bprog, filter, PCAP_OPT_FIL, 0) < 0)
 		logmsg(LOG_WARNING, "%s", pcap_geterr(hpcap));
-	else if (pcap_setfilter(hpcap, &bprog) < 0)
-		logmsg(LOG_WARNING, "%s", pcap_geterr(hpcap));
-	if (filter != NULL)
-		free(filter);
+	else {
+		if (pcap_setfilter(hpcap, &bprog) < 0)
+			logmsg(LOG_WARNING, "%s", pcap_geterr(hpcap));
+		pcap_freecode(&bprog);
+	}
+}
+
+int
+init_pcap(void)
+{
+	hpcap = pcap_open_live(interface, snaplen, 1, PCAP_TO_MS, errbuf);
+	if (hpcap == NULL) {
+		logmsg(LOG_ERR, "Failed to initialize: %s", errbuf);
+		hpcap = NULL;
+		return (-1);
+	}
 
 	if (pcap_datalink(hpcap) != DLT_PFLOG) {
 		logmsg(LOG_ERR, "Invalid datalink type");
 		pcap_close(hpcap);
-		hpcap = oldhpcap;
+		hpcap = NULL;
 		return (-1);
 	}
 
-	if (oldhpcap)
-		pcap_close(oldhpcap);
+	set_pcap_filter();
 
 	snaplen = pcap_snapshot(hpcap);
+
+	/* lock */
+	if (ioctl(pcap_fileno(hpcap), BIOCLOCK) < 0) {
+		logmsg(LOG_ERR, "BIOCLOCK: %s", strerror(errno));
+		return (-1);
+	}
+
 	return (0);
 }
 
@@ -187,7 +190,7 @@ reset_dump(void)
 {
 	struct pcap_file_header hdr;
 	struct stat st;
-	int tmpsnap;
+	int fd;
 	FILE *fp;
 
 	if (hpcap == NULL)
@@ -201,17 +204,18 @@ reset_dump(void)
 	 * Basically reimplement pcap_dump_open() because it truncates
 	 * files and duplicates headers and such.
 	 */
-	fp = fopen(filename, "a+");
+	fd = priv_open_log();
+	if (fd < 0)
+		return (1);
+
+	fp = fdopen(fd, "a+");
+
 	if (fp == NULL) {
-		snprintf(hpcap->errbuf, PCAP_ERRBUF_SIZE, "%s: %s",
-		    filename, pcap_strerror(errno));
-		logmsg(LOG_ERR, "Error: %s", pcap_geterr(hpcap));
+		logmsg(LOG_ERR, "Error: %s: %s", filename, strerror(errno));
 		return (1);
 	}
 	if (fstat(fileno(fp), &st) == -1) {
-		snprintf(hpcap->errbuf, PCAP_ERRBUF_SIZE, "%s: %s",
-		    filename, pcap_strerror(errno));
-		logmsg(LOG_ERR, "Error: %s", pcap_geterr(hpcap));
+		logmsg(LOG_ERR, "Error: %s: %s", filename, strerror(errno));
 		return (1);
 	}
 
@@ -222,10 +226,9 @@ reset_dump(void)
 	if (st.st_size == 0) {
 		if (snaplen != pcap_snapshot(hpcap)) {
 			logmsg(LOG_NOTICE, "Using snaplen %d", snaplen);
-			if (init_pcap()) {
-				logmsg(LOG_ERR, "Failed to initialize");
-				if (hpcap == NULL) return (-1);
-				logmsg(LOG_NOTICE, "Using old settings");
+			if (priv_set_snaplen(snaplen)) {
+				logmsg(LOG_WARNING,
+				    "Failed, using old settings");
 			}
 		}
 		hdr.magic = TCPDUMP_MAGIC;
@@ -259,22 +262,16 @@ reset_dump(void)
 			    "Invalid/incompatible log file, move it away");
 			fclose(fp);
 			return (1);
-		    }
+		}
 		if (hdr.snaplen != snaplen) {
 			logmsg(LOG_WARNING,
-			    "Existing file specifies a snaplen of %u, using it",
+			    "Existing file has different snaplen %u, using it",
 			    hdr.snaplen);
-			tmpsnap = snaplen;
-			snaplen = hdr.snaplen;
-			if (init_pcap()) {
-				logmsg(LOG_ERR, "Failed to re-initialize");
-				if (hpcap == 0)
-					return (-1);
-				logmsg(LOG_NOTICE,
-					"Using old settings, offset: %llu",
-					(unsigned long long)st.st_size);
+			if (priv_set_snaplen(hdr.snaplen)) {
+				logmsg(LOG_WARNING,
+				    "Failed, using old settings, offset %llu",
+				    (unsigned long long) st.st_size);
 			}
-			snaplen = tmpsnap;
 		}
 	}
 
@@ -327,23 +324,32 @@ main(int argc, char **argv)
 
 	(void)umask(S_IRWXG | S_IRWXO);
 
-	signal(SIGTERM, sig_close);
-	signal(SIGINT, sig_close);
-	signal(SIGQUIT, sig_close);
-	signal(SIGALRM, sig_alrm);
-	signal(SIGHUP, sig_hup);
-	alarm(delay);
-
+	/* filter will be used by the privileged process */
 	if (argc) {
 		filter = copy_argv(argv);
 		if (filter == NULL)
 			logmsg(LOG_NOTICE, "Failed to form filter expression");
 	}
 
+	/* initialize pcap before dropping privileges */
 	if (init_pcap()) {
 		logmsg(LOG_ERR, "Exiting, init failure");
 		exit(1);
 	}
+
+	/* Privilege separation begins here */	
+	if (priv_init()) {
+		logmsg(LOG_ERR, "unable to privsep");
+		exit(1);
+	}
+
+	/* Process is now unprivileged and inside a chroot */
+	signal(SIGTERM, sig_close);
+	signal(SIGINT, sig_close);
+	signal(SIGQUIT, sig_close);
+	signal(SIGALRM, sig_alrm);
+	signal(SIGHUP, sig_hup);
+	alarm(delay);
 
 	if (reset_dump()) {
 		logmsg(LOG_ERR, "Failed to open log file %s", filename);
