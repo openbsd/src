@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.8 2001/10/15 03:36:16 jason Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.9 2001/12/14 14:55:57 jason Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -869,6 +869,9 @@ _psycho_bus_map(t, btype, offset, size, flags, vaddr, hp)
 	ss = psycho_get_childspace(t->type);
 	DPRINTF(PDB_BUSMAP, (" cspace %d", ss));
 
+	if (btype == 0)
+		btype = t->type;
+
 	for (i = 0; i < pp->pp_nrange; i++) {
 		bus_addr_t paddr;
 
@@ -880,7 +883,7 @@ _psycho_bus_map(t, btype, offset, size, flags, vaddr, hp)
 		DPRINTF(PDB_BUSMAP, ("\n_psycho_bus_map: mapping paddr space %lx offset %lx paddr %qx\n",
 		    (long)ss, (long)offset,
 		    (unsigned long long)paddr));
-		return (bus_space_map2(sc->sc_bustag, t->type, paddr,
+		return (bus_space_map2(sc->sc_bustag, btype, paddr,
 		    size, flags, vaddr, hp));
 	}
 	DPRINTF(PDB_BUSMAP, (" FAILED\n"));
