@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.11 2002/03/06 20:20:42 mickey Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.12 2002/03/06 20:24:03 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -146,11 +146,11 @@ cpuattach(parent, self, aux)
 		    :: "r" (&ver) : "memory");
 		mtctl(0, CR_CCR);
 		ver = HPPA_FPUVER(ver);
-		name = hppa_mod_info(HPPA_TYPE_FPU, (ver >> 5) & 0x1f);
+		name = hppa_mod_info(HPPA_TYPE_FPU, ver >> 5);
 		if (name)
-			printf("FPU %s rev %d", name, ver & 0x1f);
+			printf("FPU %s rev %d", name, ver);
 		else
-			printf("FPU v%d.%02d", (ver >> 5) & 0x1f, ver & 0x1f);
+			printf("FPU v%d.%02d", ver >> 5, ver & 0x1f);
 	}
 
 	/* if (pdc_model.sh)
