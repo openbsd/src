@@ -1,4 +1,4 @@
-/*	$OpenBSD: isadma.c,v 1.18 1998/01/21 14:17:13 niklas Exp $	*/
+/*	$OpenBSD: isadma.c,v 1.19 1998/03/02 07:02:08 todd Exp $	*/
 /*	$NetBSD: isadma.c,v 1.32 1997/09/05 01:48:33 thorpej Exp $	*/
 
 /*-
@@ -333,13 +333,14 @@ isa_dmastart(isadev, chan, addr, nbytes, p, flags, busdmaflags)
 	}
 
 	dmam = sc->sc_dmamaps[chan];
-	if (dmam == NULL)
+	if (dmam == NULL) {
 #ifdef __ISADMA_COMPAT
 		if (compat)
 			dmam = sc->sc_dmamaps[chan] = isadma_dmam[chan];
 		else
 #endif /* __ISADMA_COMPAT */
 		panic("isa_dmastart: no DMA map for chan %d\n", chan);
+	}
 
 	error = bus_dmamap_load(sc->sc_dmat, dmam, addr, nbytes, p,
 	    busdmaflags);
