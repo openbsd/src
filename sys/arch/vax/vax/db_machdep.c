@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.2 1995/07/05 09:54:09 ragge Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.3 1996/01/28 12:05:55 ragge Exp $	*/
 
 /* 
  * Mach Operating System
@@ -43,6 +43,7 @@
 
 #include <machine/db_machdep.h>
 #include <machine/trap.h>
+#include <machine/frame.h>
 #include <machine/../vax/gencons.h>
 
 #include <setjmp.h>
@@ -52,7 +53,10 @@ extern jmp_buf	*db_recover;
 int	db_active = 0;
 
 /*
- *  kdb_trap - field a TRACE or BPT trap
+ * DDB is called by either <ESC> - D on keyboard, via a TRACE or
+ * BPT trap or from kernel, normally as a result of a panic.
+ * If it is the result of a panic, set the ddb register frame to
+ * contain the registers when panic was called. (easy to debug).
  */
 int
 kdb_trap(frame)
@@ -60,26 +64,42 @@ kdb_trap(frame)
 {
 	int s;
 
-#if 0
-	if ((boothowto&RB_KDB) == 0)
-		return(0);
-#endif
-
 	switch (frame->trap) {
 	case T_BPTFLT:	/* breakpoint */
 	case T_TRCTRAP:	/* single_step */
 		break;
+
+	case T_KDBTRAP:
+		if (panicstr) {
+			struct	callsframe *pf, *df;
+
+			df = (void *)frame->fp; /* start of debug's calls */
+			pf = (void *)df->ca_fp;	/* start of panic's calls */
+			bcopy(&pf->ca_argno, &ddb_regs.r0, sizeof(int) * 12);
+			ddb_regs.fp = pf->ca_fp;
+			ddb_regs.pc = pf->ca_pc;
+			ddb_regs.ap = pf->ca_ap;
+			ddb_regs.sp = (unsigned)pf;
+			ddb_regs.psl = frame->psl & ~0xffe0;
+			ddb_regs.psl = pf->ca_maskpsw & 0xffe0;
+		}
+		break;
+
 	default:
+		if ((boothowto & RB_KDB) == 0)
+			return 0;
+
 		kdbprinttrap(frame->trap, frame->code);
 		if (db_recover != 0) {
 			db_error("Faulted in DDB; continuing...\n");
 			/*NOTREACHED*/
 		}
 	}
-	bcopy(frame, &ddb_regs, sizeof(struct trapframe));
 
-	/* XXX Should switch to interrupt stack here. */
+	if (!panicstr)
+		bcopy(frame, &ddb_regs, sizeof(struct trapframe));
 
+	/* XXX Should switch to interrupt stack here, if needed. */
 
 	s = splddb();
 	mtpr(0, PR_RXCS);
@@ -91,7 +111,9 @@ kdb_trap(frame)
 	mtpr(GC_TIE, PR_TXCS);
 	splx(s);
 
-	bcopy(&ddb_regs, frame, sizeof(struct trapframe));
+	if (!panicstr)
+		bcopy(&ddb_regs, frame, sizeof(struct trapframe));
+	frame->sp = mfpr(PR_USP);
 
 	return (1);
 }
@@ -140,7 +162,7 @@ db_write_bytes(addr, size, data)
 {
 	register char	*dst;
 
-	dst = addr;
+	dst = (char *)addr;
 	for (;size;size--)
 		*dst++ = *data++;
 }
@@ -155,7 +177,6 @@ Debugger()
 
 /*
  * Machine register set.
- * XXX - lost stackpointer.
  */
 struct db_variable db_regs[] = {
 	"r0",	&ddb_regs.r0,	FCN_NULL,
@@ -172,6 +193,7 @@ struct db_variable db_regs[] = {
 	"r11",	&ddb_regs.r11,	FCN_NULL,
 	"ap",	&ddb_regs.ap,	FCN_NULL,
 	"fp",	&ddb_regs.fp,	FCN_NULL,
+	"sp",	&ddb_regs.sp,	FCN_NULL,
 	"pc",	&ddb_regs.pc,	FCN_NULL,
 	"psl",	&ddb_regs.psl,	FCN_NULL,
 };
@@ -196,6 +218,7 @@ kdbrint(tkn)
 
 	if (ddbescape && ((tkn & 0x7f) == 'D')) {
 		mtpr(0xf, PR_SIRR);
+		ddbescape = 0;
 		return 1;
 	}
 
