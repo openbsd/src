@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.5 1998/08/31 17:42:32 millert Exp $	*/
+/*	$OpenBSD: mem.c,v 1.6 1999/04/23 05:18:07 downsj Exp $	*/
 /*	$NetBSD: mem.c,v 1.11 1996/05/05 06:18:41 briggs Exp $	*/
 
 /*
@@ -195,6 +195,11 @@ mmmmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
+	extern int numranges;
+	extern u_long low[8];
+	extern u_long high[8];
+	int seg;
+	
 	/*
 	 * /dev/mem is the only one that makes sense through this
 	 * interface.  For /dev/kmem any physaddr we return here
@@ -210,8 +215,10 @@ mmmmap(dev, off, prot)
 	 *
 	 * XXX could be extended to allow access to IO space but must
 	 * be very careful.
-	if ((unsigned)off < lowram || (unsigned)off >= 0xFFFFFFFC)
-		return (-1);
 	 */
-	return (mac68k_btop(off));
+	for (seg = 0; seg < numranges; seg++) {
+		if (((u_long)off >= low[seg]) && ((u_long)off <= high[seg]))
+			return (mac68k_btop(off));
+	}
+	return (-1);
 }
