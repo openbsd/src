@@ -31,7 +31,7 @@
 .Nd generates build environment for a crunched binary
 .Sh SYNOPSIS
 .Nm \&crunchgen
-.Op Fl fq
+.Op Fl fqE
 .Op Fl m Ar makefile-name
 .Op Fl c Ar c-file-name
 .Op Fl e Ar exec-file-name
@@ -94,6 +94,9 @@ Set output Makefile name to
 The default name is ``<conf-name>.mk''.
 .It Fl q
 Quiet operation.  Status messages are suppressed.
+.It Fl E
+Don't prepend stub names with an underscore. Used for architectures that
+don't have underscore prepended to symbol names. Example mips ELF.
 .It Fl D Ar src-root
 Assume that relative source directory specifications begin with
 .Ar srt-root .
