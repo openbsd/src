@@ -1,4 +1,4 @@
-/*      $OpenBSD: bus_dma.c,v 1.13 2004/01/29 20:26:48 miod Exp $        */
+/*      $OpenBSD: bus_dma.c,v 1.14 2004/05/08 20:12:23 miod Exp $        */
 /*      $NetBSD: bus_dma.c,v 1.2 2001/06/10 02:31:25 briggs Exp $        */
 
 /*-
@@ -147,6 +147,12 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
         bus_addr_t curaddr, lastaddr, baddr, bmask;
         vaddr_t vaddr = (vaddr_t)buf;
         int seg;
+	pmap_t pmap;
+
+	if (p != NULL)
+		pmap = p->p_vmspace->vm_map.pmap;
+	else
+		pmap = pmap_kernel();
 
         lastaddr = *lastaddrp;
         bmask = ~(map->_dm_boundary - 1);
@@ -155,11 +161,10 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
                 /*
                  * Get the physical address for this segment.
                  */
-                if (p != NULL)
-                        (void) pmap_extract(p->p_vmspace->vm_map.pmap,
-                            vaddr, (paddr_t *)&curaddr);
-                else
-                        curaddr = vtophys(vaddr);
+		if (pmap_extract(pmap, vaddr, (paddr_t *)&curaddr) == FALSE) {
+			panic("dmamap_load_buffer pmap %p vaddr %lx "
+			    "pmap_extract failed", pmap, vaddr);
+		}
 
                 /*
                  * If we're beyond the bounce threshold, notify
@@ -415,16 +420,14 @@ _bus_dmamap_sync(t, map, offset, len, op)
 	int op;
 {
 	int i;
-	switch (op) {
-	case BUS_DMASYNC_POSTREAD:
-	case BUS_DMASYNC_POSTWRITE:
-	case BUS_DMASYNC_PREWRITE:
-	case BUS_DMASYNC_PREREAD:
-		for (i = map->dm_nsegs; i--; )
-			invdcache((void *)PCI_MEM_TO_PHYS(map->dm_segs[i].ds_addr), 
-			    len);
-		break;
-	}
+
+	/* XXX and if it's not a PCI device??? */
+	if ((op & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE)) == 0)
+		return;
+
+	for (i = map->dm_nsegs; i--; )
+		invdcache((void *)PCI_MEM_TO_PHYS(map->dm_segs[i].ds_addr), 
+		    len);
 }
 
 /*
