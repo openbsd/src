@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrs.c,v 1.3 1997/12/09 07:57:18 art Exp $	*/
+/*	$OpenBSD: getaddrs.c,v 1.4 1997/12/09 14:43:58 art Exp $	*/
 /* $KTH: getaddrs.c,v 1.20 1997/11/09 06:13:32 assar Exp $ */
 
 /*
@@ -61,9 +61,10 @@ int
 k_get_all_addrs (struct in_addr **l)
 {
      int fd;
-     char buf[BUFSIZ];
+     char *inbuf = NULL;
      struct ifreq ifreq;
      struct ifconf ifconf;
+     int len = 8192;
      int num, j;
      char *p;
      
@@ -74,16 +75,28 @@ k_get_all_addrs (struct in_addr **l)
      if (fd < 0)
 	 return -1;
 
-     ifconf.ifc_len = sizeof(buf);
-     ifconf.ifc_buf = buf;
-     if(ioctl(fd, SIOCGIFCONF, &ifconf) < 0){
-	 close (fd);
-	 return -1;
+     while (1) {
+	 ifconf.ifc_len = len;
+	 ifconf.ifc_buf = inbuf = realloc(inbuf, len);
+	 if (inbuf == NULL)
+	       err(1, "malloc");
+	 if (ioctl(fd, SIOCGIFCONF, &ifconf) < 0) {
+	   close(fd);
+	   free(inbuf);
+	   inbuf = NULL;
+	   return -1;
+	 }
+	 if (ifconf.ifc_len + sizeof(ifreq) < len)
+	   break;
+	 len *= 2;
      }
+
      num = ifconf.ifc_len / sizeof(struct ifreq);
      *l = malloc(num * sizeof(struct in_addr));
      if(*l == NULL) {
-	 close (fd);
+	 close(fd);
+	 free(inbuf);
+	 inbuf = NULL;
 	 return -1;
      }
 
@@ -96,16 +109,20 @@ k_get_all_addrs (struct in_addr **l)
 
 	  if(strncmp(ifreq.ifr_name, ifr->ifr_name, sizeof(ifr->ifr_name))) {
 	       if(ioctl(fd, SIOCGIFFLAGS, ifr) < 0) {
-		    close (fd);
-		    free (*l);
+		    close(fd);
+		    free(*l);
 		    *l = NULL;
+		    free(inbuf);
+		    inbuf = NULL;
 		    return -1;
 	       }
 	       if (ifr->ifr_flags & IFF_UP) {
 		    if(ioctl(fd, SIOCGIFADDR, ifr) < 0) {
-			 close (fd);
-			 free (*l);
+			 close(fd);
+			 free(*l);
 			 *l = NULL;
+			 free(inbuf);
+			 inbuf = NULL;
 			 return -1;
 		    }
 		    (*l)[j++] = ((struct sockaddr_in *)&ifr->ifr_addr)->sin_addr;
@@ -117,10 +134,12 @@ k_get_all_addrs (struct in_addr **l)
      if (j != num)
 	if ((*l = realloc (*l, j * sizeof(struct in_addr))) == NULL)
 	{
+	    free(inbuf);
+	    inbuf = NULL;
 	    close(fd);
 	    return -1;
 	}
      
-     close (fd);
+     close(fd);
      return j;
 }
