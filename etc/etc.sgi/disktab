@@ -1,0 +1,106 @@
+# Disk geometry and partition layout tables. 
+# Key:
+#	dt	controller type
+#	ty	type of disk (fixed, removeable, simulated)
+#	d[0-4]	drive-type-dependent parameters
+#	ns	#sectors/track
+#	nt	#tracks/cylinder
+#	nc	#cylinders/disk
+#	sc	#sectors/cylinder, ns*nt default
+#	su	#sectors/unit, sc*nc default
+#	se	sector size, DEV_BSIZE default
+#	rm	rpm, 3600 default
+#	sf	supports bad144-style bad sector forwarding
+#	sk	sector skew per track, default 0
+#	cs	sector skew per cylinder, default 0
+#	hs	headswitch time, default 0
+#	ts	one-cylinder seek time, default 0
+#	il	sector interleave (n:1), 1 default
+#	bs	boot block size, default BBSIZE
+#	sb	superblock size, default SBSIZE
+#	o[a-p]	partition offsets in sectors
+#	p[a-p]	partition sizes in sectors
+#	b[a-p]	partition block sizes in bytes
+#	f[a-p]	partition fragment sizes in bytes
+#	t[a-p]	partition types (filesystem, swap, etc)
+#
+# All partition sizes reserve space for bad sector tables.
+# (5 cylinders needed for maintenance + replacement sectors)
+#
+
+rdroot|ramdiskroot|RAM-disk root FS image:\
+	:ty=simulated:se#512:nc#16:nt#4:ns#128:\
+	:ta=4.2BSD:oa#0:pa#8192:fa#512:ba#4096:\
+	:ob#0:pb#0:oc#0:pc#8192:
+	
+# Seagate ST31200N
+ST31200N-MBR:\
+        :ty=winchester:ns#84:nt#9:nc#2700:\
+	:pa#65536:oa#4096:ba#8192:fa#1024:ta=4.2bsd:\
+        :pb#131072:ob#69632:bb#8192:fb#1024:tb=swap:\
+        :pc#2037104:oc#4096:bc#8192:fc#1024:\
+	:pd#2041200:od#0:bd#8192:fd#1024:\
+	:pe#4064:oe#32:be#8192:fe#1024:te=msdos:\
+        :pg#619200:og#200704:bg#8192:fg#1024:tg=4.2bsd:\
+        :ph#1221296:oh#819904:bh#8192:fh#1024:th=4.2bsd:
+
+# QUANTUM, Trailblazer 850 with MBR boot.
+TRB850S-MBR:\
+        :ty=winchester:ns#113:nt#4:nc#3653:\
+	:pa#88096:oa#10240:ba#8192:fa#1024:ta=4.2bsd:\
+        :pb#131072:ob#131072:bb#8192:fb#1024:tb=swap:\
+        :pc#1647060:oc#0:bc#8192:fc#1024:\
+        :pd#10208:od#32:bd#8192:fd#1024:td=msdos:\
+        :pe#586000:oe#229408:be#8192:fe#1024:te=4.2bsd:\
+        :pf#415826:of#815408:bf#8192:ff#1024:tf=4.2bsd:\
+        :pg#415826:og#1231234:bg#8192:fg#1024:tg=4.2bsd:\
+        :ph#831652:oh#815408:bh#8192:fh#1024:th=4.2bsd:
+
+#QUANTUM, FIREBALL1080S
+FIREBALL1080S-MBR:\
+        :ty=winchester:ns#139:nt#4:nc#3835:\
+	:pa#120832:oa#10240:ba#8192:fa#1024:ta=4.2bsd:\
+        :pb#131072:ob#131072:bb#8192:fb#1024:tb=swap:\
+        :pc#2132260:oc#0:bc#8192:fc#1024:\
+        :pd#10208:od#32:bd#8192:fd#1024:td=msdos:\
+        :pe#781250:oe#262144:be#8192:fe#1024:te=4.2bsd:\
+        :pf#544433:of#1043394:bf#8192:ff#1024:tf=4.2bsd:\
+        :pg#544433:og#1587827:bg#8192:fg#1024:tg=4.2bsd:\
+        :ph#1088866:oh#1043394:bh#8192:fh#1024:th=4.2bsd:
+
+#QUANTUM, FIREBALL_TM3200S
+FIREBALL_TM3200S-MBR:\
+        :ty=winchester:ns#184:nt#5:nc#6810:\
+	:pa#120832:oa#10240:ba#8192:fa#1024:ta=4.2bsd:\
+        :pb#131072:ob#131072:bb#8192:fb#1024:tb=swap:\
+        :pc#6265200:oc#0:bc#8192:fc#1024:\
+        :pd#10208:od#32:bd#8192:fd#1024:td=msdos:\
+        :pe#781250:oe#262144:be#8192:fe#1024:te=4.2bsd:\
+        :pf#1205000:of#1043394:bf#8192:ff#1024:tf=4.2bsd:\
+        :pg#2008403:og#2248394:bg#8192:fg#1024:tg=4.2bsd:\
+        :ph#2008403:oh#4256797:bh#8192:fh#1024:th=4.2bsd:
+
+# QUANTUM ATLAS, XP34300
+XP34300:\
+	:ty=winchester:ns#107:nt#20:nc#3907:\
+	:pa#131072:oa#0:ba#8192:fa#1024:ta=4.2bsd:\
+	:pb#131072:ob#131072:bb#8192:fb#1024:tb=swap:\
+	:pc#8360980:oc#0:bc#8192:fc#1024:\
+	:pd#1024000:od#262144:bd#8192:fd#1024:td=4.2bsd:\
+	:pe#1024000:oe#1286144:be#8192:fe#1024:te=4.2bsd:\
+	:pf#2048000:of#2310144:bf#8192:ff#1024:tf=4.2bsd:\
+	:pg#2048000:og#4358144:bg#8192:fg#1024:tg=4.2bsd:\
+	:ph#1954836:oh#6406144:bh#8192:fh#1024:th=4.2bsd:\
+	:pi#2712458:oi#262144:bi#8192:fi#1024:ti=4.2bsd:\
+	:pj#2712458:oj#2974602:bj#8192:fj#1024:tj=4.2bsd:\
+	:pk#2673920:ok#5687060:bk#8192:fk#1024:tk=4.2bsd:\
+	:pl#4068688:ol#262144:bl#8192:fl#1024:tl=4.2bsd:\
+	:pm#4030148:om#4330832:bm#8192:fm#1024:tm=4.2bsd:\
+	:pn#8098836:on#262144:bn#8192:fn#1024:tn=4.2bsd:
+
+#iomega ZIP with MBR boot partition
+ZIP-MBR:\
+	:ty=zip:ns#32:nt#64:nc#96:\
+	:pa#188416:oa#4096:ba#8192:fa#1024:ta=4.2bsd:\
+	:pc#192512:oc#4096:bc#8192:fc#1024:\
+        :pd#4064:od#32:bd#8192:fd#1024:td=msdos:\
