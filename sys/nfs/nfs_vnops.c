@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.11 1996/07/27 11:08:48 deraadt Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.12 1996/11/12 15:51:34 mickey Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -3059,7 +3059,7 @@ nfs_bwrite(v)
 	void *v;
 {
 	struct vop_bwrite_args /* {
-		struct vnode *a_bp;
+		struct buf *a_bp;
 	} */ *ap = v;
 
 	return (nfs_writebp(ap->a_bp, 1));
