@@ -13,7 +13,7 @@ Generic header file for ssh.
 
 */
 
-/* RCSID("$Id: ssh.h,v 1.12 1999/10/16 19:23:35 provos Exp $"); */
+/* RCSID("$Id: ssh.h,v 1.13 1999/10/16 20:47:14 markus Exp $"); */
 
 #ifndef SSH_H
 #define SSH_H
@@ -45,7 +45,7 @@ Generic header file for ssh.
 
 /* Minor protocol version.  Different version indicates minor incompatibility
    that does not prevent interoperation. */
-#define PROTOCOL_MINOR		3
+#define PROTOCOL_MINOR		5
 
 /* Name for the service.  The port named by this service overrides the default
    port if present. */
@@ -118,7 +118,7 @@ only by root, whereas ssh_config should be world-readable. */
 
 /* Name of the environment variable containing the pathname of the
    authentication socket. */
-#define SSH_AUTHSOCKET_ENV_NAME	"SSH_AUTH_SOCKET"
+#define SSH_AUTHSOCKET_ENV_NAME	"SSH_AUTH_SOCK"
 
 /* Force host key length and server key length to differ by at least this
    many bits.  This is to make double encryption with rsaref work. */
@@ -140,6 +140,7 @@ only by root, whereas ssh_config should be world-readable. */
 				/* 5 is TIS */
 #define SSH_AUTH_KERBEROS	6
 #define SSH_PASS_KERBEROS_TGT	7
+				/* 8 to 15 are reserved */
 #define SSH_PASS_AFS_TOKEN	21
 
 /* Protocol flags.  These are bit masks. */
@@ -189,6 +190,10 @@ only by root, whereas ssh_config should be world-readable. */
 #define SSH_CMSG_AUTH_RHOSTS_RSA		35	/* user,mod (s,mpi) */
 #define SSH_MSG_DEBUG				36	/* string */
 #define SSH_CMSG_REQUEST_COMPRESSION		37	/* level 1-9 (int) */
+#define SSH_CMSG_MAX_PACKET_SIZE		38	/* size 4k-1024k (int) */
+#define SSH_CMSG_AUTH_TIS			39	/* this is proto-1.5, but we ignore TIS */
+#define SSH_SMSG_AUTH_TIS_CHALLENGE		40
+#define SSH_CMSG_AUTH_TIS_RESPONSE		41
 
 #define SSH_CMSG_AUTH_KERBEROS			42	/* (KTEXT) */
 #define SSH_SMSG_AUTH_KERBEROS_RESPONSE		43	/* (KTEXT) */

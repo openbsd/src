@@ -10,7 +10,8 @@ SRCS=	sshd.c auth-rhosts.c auth-passwd.c auth-rsa.c auth-rh-rsa.c \
 	pty.c log-server.c login.c hostfile.c canohost.c servconf.c \
 	tildexpand.c uidswap.c serverloop.c rsa.c buffer.c packet.c \
 	xmalloc.c ttymodes.c channels.c bufaux.c authfd.c authfile.c \
-	crc32.c match.c mpaux.c cipher.c compress.c deattack.c
+	crc32.c match.c mpaux.c cipher.c compress.c deattack.c \
+	nchan.c compat.c
 
 .include <bsd.own.mk> # for KERBEROS and AFS
 

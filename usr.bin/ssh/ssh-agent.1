@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 23 20:10:43 1995 ylo
 .\"
-.\" $Id: ssh-agent.1,v 1.4 1999/10/14 18:17:42 markus Exp $
+.\" $Id: ssh-agent.1,v 1.5 1999/10/16 20:47:14 markus Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSH-AGENT 1
@@ -62,7 +62,7 @@ A connection to the agent is inherited by child programs:
 A unix-domain socket is created
 .Pq Pa /tmp/ssh-XXXX/agent.<pid> ,
 and the name of this socket is stored in the
-.Ev SSH_AUTH_SOCKET
+.Ev SSH_AUTH_SOCK
 environment
 variable.  The socket is made accessible only to the current user.
 This method is easily abused by root or another instance of the same

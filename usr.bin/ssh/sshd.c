@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.32 1999/10/14 18:54:45 markus Exp $");
+RCSID("$Id: sshd.c,v 1.33 1999/10/16 20:47:14 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -30,6 +30,7 @@ RCSID("$Id: sshd.c,v 1.32 1999/10/14 18:54:45 markus Exp $");
 #include "mpaux.h"
 #include "servconf.h"
 #include "uidswap.h"
+#include "compat.h"
 
 #ifdef LIBWRAP
 #include <tcpd.h>
@@ -715,12 +716,14 @@ main(int ac, char **av)
   if (remote_major == 1 && remote_minor == 0)
     packet_disconnect("Your ssh version is too old and is no longer supported.  Please install a newer version.");
 
-  if (strcmp(remote_version, SSH_VERSION) != 0)
-    {
-      debug("Agent forwarding disabled, remote version is not '%s'.",
-	    SSH_VERSION);
-      no_agent_forwarding_flag = 1;
-    }
+  if (remote_major == 1 && remote_minor == 3) {
+    enable_compat13();
+    if (strcmp(remote_version, SSH_VERSION) != 0) {
+        debug("Agent forwarding disabled, remote version '%s' is not compatible.",
+    	  SSH_VERSION);
+        no_agent_forwarding_flag = 1;
+      }
+  }
 
   /* Check whether logins are permitted from this host. */
   if (options.num_allow_hosts > 0)
@@ -1375,6 +1378,11 @@ do_authentication(char *user, int privileged_port)
 	  xfree(password);
 	  break;
 
+	case SSH_CMSG_AUTH_TIS:
+	  /* TIS Authentication is unsupported */
+	  log("TIS authentication disabled.");
+	  break;
+
 	default:
 	  /* Any unknown messages will be ignored (and failure returned)
 	     during authentication. */
@@ -1639,6 +1647,10 @@ void do_authenticated(struct passwd *pw)
 	    do_exec_no_pty(command, pw, display, proto, data);
 	  xfree(command);
 	  return;
+
+	case SSH_CMSG_MAX_PACKET_SIZE:
+      	  debug("The server does not support limiting packet size.");
+	  goto fail;
 
 	default:
 	  /* Any unknown messages in this phase are ignored, and a failure

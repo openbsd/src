@@ -15,7 +15,7 @@ login (authentication) dialog.
 */
 
 #include "includes.h"
-RCSID("$Id: sshconnect.c,v 1.20 1999/10/16 19:23:35 provos Exp $");
+RCSID("$Id: sshconnect.c,v 1.21 1999/10/16 20:47:14 markus Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -26,6 +26,7 @@ RCSID("$Id: sshconnect.c,v 1.20 1999/10/16 19:23:35 provos Exp $");
 #include "cipher.h"
 #include "mpaux.h"
 #include "uidswap.h"
+#include "compat.h"
 
 #include <md5.h>
 
@@ -915,12 +916,15 @@ void ssh_exchange_identification()
   debug("Remote protocol version %d.%d, remote software version %.100s",
 	remote_major, remote_minor, remote_version);
 
-  if (options.forward_agent && strcmp(remote_version, SSH_VERSION) != 0)
-    {
-      log("Agent forwarding disabled, remote version is not '%s'.",
+
+  if (remote_major == 1 && remote_minor == 3) {
+    enable_compat13();
+    if (options.forward_agent && strcmp(remote_version, SSH_VERSION) != 0) {
+      log("Agent forwarding disabled, remote version '%s' is not compatible.",
 	    SSH_VERSION);
       options.forward_agent = 0;
     }
+  }
 #if 0
   /* Removed for now, to permit compatibility with latter versions.  The server
      will reject our version and disconnect if it doesn't support it. */
