@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.55 2004/10/24 11:50:47 deraadt Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.56 2004/10/25 15:35:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -68,7 +68,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $OpenBSD: wicontrol.c,v 1.55 2004/10/24 11:50:47 deraadt Exp $";
+	"@(#) $OpenBSD: wicontrol.c,v 1.56 2004/10/25 15:35:46 deraadt Exp $";
 #endif
 
 int  wi_getval(char *, struct wi_req *);
@@ -885,6 +885,7 @@ main(int argc, char *argv[])
 
 	while ((ch = getopt(argc, argv,
 	    "a:c:d:e:f:hi:k:lm:n:op:q:r:s:t:v:x:A:D:E:F:LM:S:P:R:T:")) != -1) {
+		dumpinfo = 0;
 		for (p = 0; ch && wi_opt[p].key; p++)
 			if (ch == wi_opt[p].key) {
 				if (ch == 'p' && !isdigit(*optarg))
@@ -896,6 +897,8 @@ main(int argc, char *argv[])
 				dumpinfo = ch = 0;
 			}
 		switch (ch) {
+		case '\0':
+			break;
 		case 'i':
 			if (!ifspecified)
 				iface = optarg;
