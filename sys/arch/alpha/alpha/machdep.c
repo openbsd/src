@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.44 2001/05/05 20:56:30 art Exp $ */
+/* $OpenBSD: machdep.c,v 1.45 2001/05/05 22:33:23 art Exp $ */
 /* $NetBSD: machdep.c,v 1.206 2000/05/23 05:12:54 thorpej Exp $ */
 
 /*-
@@ -1032,8 +1032,6 @@ cpu_startup()
 	 * CPUs.
 	 */
 	hwrpb_primary_init();
-
-	configure();
 }
 
 /*

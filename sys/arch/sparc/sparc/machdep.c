@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.55 2001/05/05 21:26:41 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.56 2001/05/05 22:34:19 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -373,11 +373,6 @@ cpu_startup()
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
-
-	/*
-	 * Configure the system.  The cpu code will turn on the cache.
-	 */
-	configure();
 }
 
 /*

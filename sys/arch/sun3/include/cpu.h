@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.11 2000/03/02 23:01:45 todd Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.12 2001/05/05 22:34:21 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.20 1995/12/21 05:02:10 mycroft Exp $	*/
 
 /*
@@ -157,9 +157,6 @@ union sun3sir {
 #define SUN3_MACH_E    0x08
 
 extern	unsigned char cpu_machine_id;
-
-/* autoconf.c */
-void	configure __P((void));
 
 /* dma.c */
 long	dvma_kvtopa __P((long, int));

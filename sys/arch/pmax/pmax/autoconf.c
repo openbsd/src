@@ -45,7 +45,7 @@
 /*
  * Setup the system to run on the current machine.
  *
- * Configure() is called at boot time.  Available
+ * cpu_configure() is called at boot time.  Available
  * devices are determined (from possibilities mentioned in ioconf.c),
  * and the drivers are initialized.
  */
@@ -81,10 +81,7 @@ void xconsinit __P((void));	/* XXX console-init continuation */
 int spl0 __P((void));
 #endif
 
-void	configure __P((void));
 void	makebootdev __P((char *cp));
-
-
 
 /*
  * The following several variables are related to
@@ -111,7 +108,7 @@ void configure_scsi __P((void));
  * for attached scsi devices.
  */
 void
-configure()
+cpu_configure()
 {
 	int s;
 

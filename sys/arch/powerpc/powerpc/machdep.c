@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.58 2001/05/05 20:56:51 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.59 2001/05/05 22:34:14 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -582,11 +582,7 @@ cpu_startup()
 	 */
 	bufinit();
 
-	/*
-	 * Configure devices.
-	 */
 	devio_malloc_safe = 1;
-	configure();
 }
 	
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.68 2001/05/05 20:56:41 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.69 2001/05/05 22:33:54 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.134 1997/02/14 06:15:30 scottr Exp $	*/
 
 /*
@@ -503,7 +503,6 @@ again:
 #endif
 	}
 	iomem_malloc_safe = 1;
-	configure();
 }
 
 void doboot __P((void))

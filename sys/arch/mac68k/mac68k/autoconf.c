@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.11 1997/11/28 21:09:54 gene Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.12 2001/05/05 22:33:52 art Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.38 1996/12/18 05:46:09 scottr Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 /*
  * Setup the system to run on the current machine.
  *
- * Configure() is called at boot time.  Available
+ * cpu_configure() is called at boot time.  Available
  * devices are determined (from possibilities mentioned in ioconf.c),
  * and the drivers are initialized.
  */
@@ -91,12 +91,8 @@ static int target_to_unit __P((u_long, u_long, u_long));
 void	setroot __P((void));
 void	swapconf __P((void));
 
-/*
- * configure:
- * called at boot time, configure all devices on the system
- */
 void
-configure()
+cpu_configure()
 {
 	extern int	cold;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.11 2000/01/24 05:20:54 smurph Exp $ */
+/*	$OpenBSD: autoconf.c,v 1.12 2001/05/05 22:33:57 art Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -74,7 +74,7 @@
 /*
  * Setup the system to run on the current machine.
  *
- * Configure() is called at boot time.  Available
+ * cpu_configure() is called at boot time.  Available
  * devices are determined (from possibilities mentioned in ioconf.c),
  * and the drivers are initialized.
  */
@@ -181,7 +181,8 @@ mainbus_attach(parent, self, args)
 /*
  * Determine mass storage and memory configuration for a machine.
  */
-configure()
+void
+cpu_configure()
 {
 	bootdv = NULL; /* set by device drivers (if found) */
 

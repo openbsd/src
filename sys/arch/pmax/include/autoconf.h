@@ -74,5 +74,4 @@ void	set_clockintr __P((void (*)(struct clockframe *)));
 #endif
 void	set_iointr __P((void (*)(void *, int)));
 int	badaddr			__P((void *, u_int));
-void	configure __P((void));
 void	makebootdev __P((char *cp));

@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.30 2001/05/05 20:56:56 art Exp $ */
+/* $OpenBSD: machdep.c,v 1.31 2001/05/05 22:34:29 art Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -283,7 +283,6 @@ cpu_startup()
 	 */
 
 	bufinit();
-	configure();
 }
 
 long	dumplo = 0;

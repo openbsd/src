@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.42 2001/05/05 20:56:32 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.43 2001/05/05 22:33:28 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.95 1997/08/27 18:31:17 is Exp $	*/
 
 /*
@@ -603,10 +603,6 @@ again:
 		printf("kernel does not support -c; continuing..\n");
 #endif
 	}
-	configure();
-#ifdef DEBUG_KERNEL_START
-	printf("survived configure...\n");
-#endif
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.27 2001/05/05 20:56:49 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.28 2001/05/05 22:34:09 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.67 1996/10/23 20:04:40 mhitch Exp $	*/
 
 /*
@@ -885,11 +885,6 @@ cpu_startup()
 	 * Set up CPU-specific registers, cache, etc.
 	 */
 	initcpu();
-
-	/*
-	 * Configure the system.
-	 */
-	configure();
 }
 
 /*

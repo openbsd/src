@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.33 2001/05/05 20:56:47 art Exp $	*/
+/* $OpenBSD: machdep.c,v 1.34 2001/05/05 22:34:02 art Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -129,7 +129,6 @@ void m88110_Xfp_precise __P((void));
 void setupiackvectors __P((void));
 void regdump __P((struct trapframe *f));
 void dumpsys __P((void));
-void configure __P((void));
 void consinit __P((void));
 void kdb_init __P((void));
 
@@ -822,7 +821,6 @@ cpu_startup()
 		printf("kernel does not support -c; continuing..\n");
 #endif
 	}
-	configure();
 }
 
 /*

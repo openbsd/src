@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.13 2000/09/02 13:45:38 espie Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.14 2001/05/05 22:33:28 art Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.59 1998/01/15 21:55:51 is Exp $	*/
 
 /*
@@ -53,7 +53,7 @@ int cold;	/* 1 if still booting */
  * called at boot time, configure all devices on system
  */
 void
-configure()
+cpu_configure()
 {
 	int s;
 

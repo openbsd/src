@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.7 1999/07/23 19:11:27 jason Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.8 2001/05/05 22:34:17 art Exp $	*/
 /*	$NetBSD: autoconf.h,v 1.20 1997/05/24 20:03:03 pk Exp $ */
 
 /*
@@ -209,7 +209,6 @@ struct	device *parsedisk __P((char *, int, int, dev_t *));
 void	mountroot_hook_establish __P((void (*) __P((struct device *)),
 				      struct device *));
 
-void	configure __P((void));
 void	bootstrap __P((void));
 int	firstchild __P((int));
 int	nextsibling __P((int));

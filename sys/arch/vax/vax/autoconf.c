@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.11 2001/02/11 06:34:37 hugh Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.12 2001/05/05 22:34:28 art Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.45 1999/10/23 14:56:05 ragge Exp $	*/
 
 /*
@@ -70,20 +70,20 @@ extern int cold; 	/* cold-start flag */
 #define MAINBUS	0
 
 void
-configure()
+cpu_configure()
 {
 	extern int boothowto;
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("mainbus not configured");
 
-    setroot();
-    /*
-     * Configure swap area and related system
-     * parameter based on device(s) used.
-     */
-    swapconf();
-    cpu_dumpconf();
+	setroot();
+	/*	
+	 * Configure swap area and related system
+	 * parameter based on device(s) used.
+	 */
+	swapconf();
+	cpu_dumpconf();
 
 	/*
 	 * We're ready to start up. Clear CPU cold start flag.

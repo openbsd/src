@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.38 2001/04/30 16:42:25 art Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.39 2001/05/05 22:34:18 art Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -787,7 +787,7 @@ st_crazymap(n)
  * command.
  */
 void
-configure()
+cpu_configure()
 {
 	struct confargs oca;
 	register int node = 0;
@@ -840,14 +840,14 @@ configure()
 					memregcf = cf;
 		}
 		if (memregcf == NULL)
-			panic("configure: no memreg found!");
+			panic("cpu_configure: no memreg found!");
 
 		rr.rr_iospace = PMAP_OBIO;
 		rr.rr_paddr = (void *)memregcf->cf_loc[0];
 		rr.rr_len = NBPG;
 		par_err_reg = (u_int *)bus_map(&rr, NBPG);
 		if (par_err_reg == NULL)
-			panic("configure: ROM hasn't mapped memreg!");
+			panic("cpu_configure: ROM hasn't mapped memreg!");
 	}
 #endif
 #if defined(SUN4C)
@@ -1068,7 +1068,7 @@ int autoconf_nzs = 0;	/* must be global so obio.c can see it */
 /*
  * Attach the mainbus.
  *
- * Our main job is to attach the CPU (the root node we got in configure())
+ * Our main job is to attach the CPU (the root node we got in cpu_configure())
  * and iterate down the list of `mainbus devices' (children of that node).
  * We also record the `node id' of the default frame buffer, if any.
  */

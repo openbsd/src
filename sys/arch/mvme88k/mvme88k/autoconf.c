@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.11 2001/04/29 19:00:02 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.12 2001/05/05 22:34:01 art Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -59,7 +59,6 @@
 struct	device *parsedisk __P((char *, int, int, dev_t *));
 void	setroot __P((void));
 void	swapconf __P((void));
-void	configure __P((void));
 char	buginchr __P((void));
 int	getsb __P((char *, int));
 void	dumpconf __P((void));
@@ -72,7 +71,7 @@ int cold;   /* 1 if still booting */
  * called at boot time, configure all devices on the system.
  */
 void
-configure()
+cpu_configure()
 {
 	bootdv = NULL; /* set by device drivers (if found) */
 
