@@ -1,4 +1,4 @@
-#	$OpenBSD: SHEPHERD_PIE,v 1.19 2002/10/31 00:19:02 mickey Exp $
+#	$OpenBSD: SHEPHERD_PIE,v 1.20 2002/12/13 10:23:47 miod Exp $
 #
 # Diskless kernel config
 #
@@ -156,7 +156,7 @@ ie1	at gsc1 irq 8
 # MI devices
 option	WSEMUL_VT100
 #wsdisplay*	at vgafb?
-wsdisplay*	at sti?
+#wsdisplay*	at sti?
 #wskbd*		at pckbd?
 #wskbd*		at hkbd?
 #wsmouse*	at pms?

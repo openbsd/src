@@ -1,4 +1,4 @@
-#	$OpenBSD: GECKO,v 1.16 2002/10/01 21:18:17 mickey Exp $
+#	$OpenBSD: GECKO,v 1.17 2002/12/13 10:23:47 miod Exp $
 #
 # HP 9000/712/{60,80,80i,100} boxens
 #
@@ -49,7 +49,7 @@ ps2p0	at gsc0 offset 0x8000 irq 26
 ps2p1	at gsc0 offset 0x8100	# mouse shares the same irq
 
 # MI devices
-wsdisplay*	at sti?
+#wsdisplay*	at sti?
 wskbd*		at ps2p0?
 wsmouse*	at ps2p1?
 

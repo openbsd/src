@@ -1,4 +1,4 @@
-#	$OpenBSD: generic.hppa,v 1.6 2002/03/15 21:14:24 mickey Exp $
+#	$OpenBSD: generic.hppa,v 1.7 2002/12/13 10:23:47 miod Exp $
 #
 # Generic kernel config (all that is supportted)
 #
@@ -100,7 +100,7 @@ scsibus* at bha?
 # MI devices
 option	WSEMUL_DUMB
 #wsdisplay*	at vgafb?
-wsdisplay*	at sti?
+#wsdisplay*	at sti?
 wskbd*		at pckbd?
 #wskbd*		at hkbd?
 wsmouse*	at pms?
