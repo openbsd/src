@@ -1,48 +1,95 @@
-/*	$NetBSD: nl_types.h,v 1.5 1995/03/01 08:01:23 jtc Exp $	*/
+/*	$NetBSD: nl_types.h,v 1.6 1996/05/13 23:11:15 jtc Exp $	*/
 
-/***********************************************************
-Copyright 1990, by Alfalfa Software Incorporated, Cambridge, Massachusetts.
-
-                        All Rights Reserved
-
-Permission to use, copy, modify, and distribute this software and its
-documentation for any purpose and without fee is hereby granted,
-provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in
-supporting documentation, and that Alfalfa's name not be used in
-advertising or publicity pertaining to distribution of the software
-without specific, written prior permission.
-
-ALPHALPHA DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
-ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
-ALPHALPHA BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
-ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
-WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
-ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
-SOFTWARE.
-
-If you make any modifications, bugfixes or other changes to this software
-we'd appreciate it if you could send a copy to us so we can keep things
-up-to-date.  Many thanks.
-				Kee Hinckley
-				Alfalfa Software, Inc.
-				267 Allston St., #3
-				Cambridge, MA 02139  USA
-				nazgul@alfalfa.com
-    
-******************************************************************/
+/*-
+ * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by J.T. Conklin.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #ifndef _NL_TYPES_H_
 #define _NL_TYPES_H_
 #include <sys/cdefs.h>
 
-#define	NL_SETD	0
+#ifdef _NLS_PRIVATE
+/*
+ * MESSAGE CATALOG FILE FORMAT.
+ *
+ * The NetBSD message catalog format is similar to the format used by
+ * Svr4 systems.  The differences are:
+ *   * fixed byte order (big endian)
+ *   * fixed data field sizes
+ *
+ * A message catalog contains four data types: a catalog header, one
+ * or more set headers, one or more message headers, and one or more
+ * text strings.
+ */
 
-typedef	long	nl_catd;
+#define _NLS_MAGIC	0xff88ff89
+
+struct _nls_cat_hdr {
+	int32_t __magic;
+	int32_t __nsets;
+	int32_t __mem;
+	int32_t __msg_hdr_offset;
+	int32_t __msg_txt_offset;
+} ;
+
+struct _nls_set_hdr {
+	int32_t __setno;	/* set number: 0 < x <= NL_SETMAX */
+	int32_t __nmsgs;	/* number of messages in the set  */
+	int32_t __index;	/* index of first msg_hdr in msg_hdr table */
+} ;
+
+struct _nls_msg_hdr {
+	int32_t __msgno;	/* msg number: 0 < x <= NL_MSGMAX */
+	int32_t __msglen;
+	int32_t __offset;
+} ;
+
+#endif
+
+#define	NL_SETD		1
+#define NL_CAT_LOCALE   1
+
+typedef struct {
+	void	*__data;
+	int	__size;
+} *nl_catd;
+
 typedef long	nl_item;
 
 extern nl_catd 	catopen __P((__const char *, int));
-extern char    *catgets __P((nl_catd, int, int, char *));
+extern char    *catgets __P((nl_catd, int, int, const char *));
 extern int	catclose __P((nl_catd));
 
 #endif	/* _NL_TYPES_H_ */
