@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.7 2000/08/02 17:40:58 aaron Exp $	*/
+/*	$OpenBSD: dc.c,v 1.8 2000/08/02 19:01:06 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/pci/if_dc.c,v 1.8 2000/03/09 19:28:19 rwatson Exp $
+ * $FreeBSD: src/sys/pci/if_dc.c,v 1.19 2000/08/01 19:34:13 wpaul Exp $
  */
 
 /*
@@ -857,8 +857,9 @@ void dc_miibus_statchg(self)
 }
 
 #define DC_POLY		0xEDB88320
-#define DC_BITS		9
-#define DC_BITS_PNIC_II	7
+#define DC_BITS_512	9
+#define DC_BITS_128	7
+#define DC_BITS_64	6
 
 u_int32_t dc_crc_le(sc, addr)
 	struct dc_softc		*sc;
@@ -874,11 +875,18 @@ u_int32_t dc_crc_le(sc, addr)
 			crc = (crc >> 1) ^ (((crc ^ data) & 1) ? DC_POLY : 0);
 	}
 
-	/* The hash table on the PNIC II is only 128 bits wide. */
-	if (DC_IS_PNICII(sc))
-		return (crc & ((1 << DC_BITS_PNIC_II) - 1));
+	/*
+	 * The hash table on the PNIC II and the MX98715AEC-C/D/E
+	 * chips is only 128 bits wide.
+	 */
+	if (sc->dc_flags & DC_128BIT_HASH)
+		return (crc & ((1 << DC_BITS_128) - 1));
 
-	return (crc & ((1 << DC_BITS) - 1));
+	/* The hash table on the MX98715BEC is only 64 bits wide. */
+	if (sc->dc_flags & DC_64BIT_HASH)
+		return (crc & ((1 << DC_BITS_64) - 1));
+
+	return (crc & ((1 << DC_BITS_512) - 1));
 }
 
 /*
@@ -1169,7 +1177,13 @@ void dc_setcfg(sc, media)
 		DC_CLRBIT(sc, DC_NETCFG, DC_NETCFG_SPEEDSEL);
 		DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_HEARTBEAT);
 		if (sc->dc_pmode == DC_PMODE_MII) {
-			DC_SETBIT(sc, DC_WATCHDOG, DC_WDOG_JABBERDIS);
+			int watchdogreg;
+
+			/* there's a write enable bit here that reads as 1 */
+			watchdogreg = CSR_READ_4(sc, DC_WATCHDOG);
+			watchdogreg &= ~DC_WDOG_CTLWREN;
+			watchdogreg |= DC_WDOG_JABBERDIS;
+			CSR_WRITE_4(sc, DC_WATCHDOG, watchdogreg);
 			DC_CLRBIT(sc, DC_NETCFG, (DC_NETCFG_PCS|
 			    DC_NETCFG_PORTSEL|DC_NETCFG_SCRAMBLER));
 			if (sc->dc_type == DC_TYPE_98713)
@@ -1184,8 +1198,9 @@ void dc_setcfg(sc, media)
 				DC_PN_GPIO_SETBIT(sc, DC_PN_GPIO_100TX_LOOP);
 				DC_SETBIT(sc, DC_PN_NWAY, DC_PN_NWAY_SPEEDSEL);
 			}
-			DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_PORTSEL|
-			    DC_NETCFG_PCS|DC_NETCFG_SCRAMBLER);
+			DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_PORTSEL);
+			DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_PCS);
+			DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_SCRAMBLER);
 		}
 	}
 
@@ -1193,7 +1208,13 @@ void dc_setcfg(sc, media)
 		DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_SPEEDSEL);
 		DC_CLRBIT(sc, DC_NETCFG, DC_NETCFG_HEARTBEAT);
 		if (sc->dc_pmode == DC_PMODE_MII) {
-			DC_SETBIT(sc, DC_WATCHDOG, DC_WDOG_JABBERDIS);
+			int watchdogreg;
+
+			/* there's a write enable bit here that reads as 1 */
+			watchdogreg = CSR_READ_4(sc, DC_WATCHDOG);
+			watchdogreg &= ~DC_WDOG_CTLWREN;
+			watchdogreg |= DC_WDOG_JABBERDIS;
+			CSR_WRITE_4(sc, DC_WATCHDOG, watchdogreg);
 			DC_CLRBIT(sc, DC_NETCFG, (DC_NETCFG_PCS|
 			    DC_NETCFG_PORTSEL|DC_NETCFG_SCRAMBLER));
 			if (sc->dc_type == DC_TYPE_98713)
@@ -1208,8 +1229,8 @@ void dc_setcfg(sc, media)
 				DC_CLRBIT(sc, DC_PN_NWAY, DC_PN_NWAY_SPEEDSEL);
 			}
 			DC_CLRBIT(sc, DC_NETCFG, DC_NETCFG_PORTSEL);
+			DC_CLRBIT(sc, DC_NETCFG, DC_NETCFG_PCS);
 			DC_CLRBIT(sc, DC_NETCFG, DC_NETCFG_SCRAMBLER);
-			DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_PCS);
 		}
 	}
 
@@ -1373,6 +1394,7 @@ void dc_attach_common(sc)
 
 	/* if (error && DC_IS_INTEL(sc)) {
 		sc->dc_pmode = DC_PMODE_SYM;
+		sc->dc_flags |= DC_21143_NWAY;
 		mii_phy_probe(dev, &sc->dc_miibus,
 		    dc_ifmedia_upd, dc_ifmedia_sts);
 		error = 0;
@@ -1875,16 +1897,27 @@ void dc_tick(xsc)
 	mii = &sc->sc_mii;
 
 	if (sc->dc_flags & DC_REDUCED_MII_POLL) {
-		r = CSR_READ_4(sc, DC_ISR);
-		if (DC_IS_INTEL(sc)) {
-			if (r & DC_ISR_LINKFAIL) 
+		if (sc->dc_flags & DC_21143_NWAY) {
+			r = CSR_READ_4(sc, DC_10BTSTAT);
+			if (IFM_SUBTYPE(mii->mii_media_active) ==
+			    IFM_100_TX && (r & DC_TSTAT_LS100)) {
 				sc->dc_link = 0;
+				mii_mediachg(mii);
+			}
+			if (IFM_SUBTYPE(mii->mii_media_active) ==
+			    IFM_10_T && (r & DC_TSTAT_LS10)) {
+				sc->dc_link = 0;
+				mii_mediachg(mii);
+			}
 			if (sc->dc_link == 0)
 				mii_tick(mii);
 		} else {
+			r = CSR_READ_4(sc, DC_ISR);
 			if ((r & DC_ISR_RX_STATE) == DC_RXSTATE_WAIT &&
-			    sc->dc_cdata.dc_tx_prod == 0)
+			    sc->dc_cdata.dc_tx_cnt == 0)
 				mii_tick(mii);
+				if (!(mii->mii_media_status & IFM_ACTIVE))
+					sc->dc_link = 0;
 		}
 	} else
 		mii_tick(mii);
@@ -1918,7 +1951,10 @@ void dc_tick(xsc)
 		}
 	}
 
-	timeout_add(&sc->dc_tick_tmo, hz);
+	if (sc->dc_flags & DC_21143_NWAY && !sc->dc_link)
+		timeout_add(&sc->dc_tick_tmo, hz / 10);
+	else
+		timeout_add(&sc->dc_tick_tmo, hz);
 
 	splx(s);
 
@@ -2319,7 +2355,11 @@ void dc_init(xsc)
 	(void)splx(s);
 
 	timeout_set(&sc->dc_tick_tmo, dc_tick, sc);
-	timeout_add(&sc->dc_tick_tmo, hz);
+
+	if (sc->dc_flags & DC_21143_NWAY)
+		timeout_add(&sc->dc_tick_tmo, hz / 10);
+	else
+		timeout_add(&sc->dc_tick_tmo, hz);
 
 	return;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.4 2000/06/12 16:23:22 aaron Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.5 2000/08/02 19:01:07 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -94,6 +94,7 @@ struct dc_type dc_devs[] = {
 	{ PCI_VENDOR_COMPEX, PCI_PRODUCT_COMPEX_98713 },
 	{ PCI_VENDOR_LITEON, PCI_PRODUCT_LITEON_PNIC },
 	{ PCI_VENDOR_LITEON, PCI_PRODUCT_LITEON_PNICII },
+	{ PCI_VENDOR_ACCTON, PCI_PRODUCT_ACCTON_EN1217 },
 	{ 0, 0 }
 };
 
@@ -289,20 +290,28 @@ void dc_pci_attach(parent, self, aux)
 		}
 		break;
 	case PCI_VENDOR_MACRONIX:
+	case PCI_VENDOR_ACCTON:
 		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_MACRONIX_MX98713) {
 			found = 1;
 			if (revision < DC_REVISION_98713A) {
 				sc->dc_type = DC_TYPE_98713;
-				sc->dc_flags |= DC_REDUCED_MII_POLL;
 			}
-			if (revision >= DC_REVISION_98713A)
+			if (revision >= DC_REVISION_98713A) {
 				sc->dc_type = DC_TYPE_98713A;
+				sc->dc_flags |= DC_21143_NWAY;
+			}
+			sc->dc_flags |= DC_REDUCED_MII_POLL;
 			sc->dc_flags |= DC_TX_POLL|DC_TX_USE_TX_INTR;
 		}
-		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_MACRONIX_MX98715) {
+		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_MACRONIX_MX98715 ||
+		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ACCTON_EN1217) {
 			found = 1;
+			if (revision >= DC_REVISION_98715AEC_C &&
+			    revision < DC_REVISION_98725)
+				sc->dc_flags |= DC_128BIT_HASH;
 			sc->dc_type = DC_TYPE_987x5;
 			sc->dc_flags |= DC_TX_POLL|DC_TX_USE_TX_INTR;
+			sc->dc_flags |= DC_REDUCED_MII_POLL|DC_21143_NWAY;
 		}
 		break;
 	case PCI_VENDOR_COMPEX:
@@ -322,6 +331,8 @@ void dc_pci_attach(parent, self, aux)
 			found = 1;
 			sc->dc_type = DC_TYPE_PNICII;
 			sc->dc_flags |= DC_TX_POLL|DC_TX_USE_TX_INTR;
+			sc->dc_flags |= DC_REDUCED_MII_POLL|DC_21143_NWAY;
+			sc->dc_flags |= DC_128BIT_HASH;
 		}
 		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_LITEON_PNIC) {
 			found = 1;
@@ -387,8 +398,10 @@ void dc_pci_attach(parent, self, aux)
 		DELAY(10000);
 		if (media & DC_CWUC_MII_ABILITY)
 			sc->dc_pmode = DC_PMODE_MII;
-		if (media & DC_CWUC_SYM_ABILITY)
+		if (media & DC_CWUC_SYM_ABILITY) {
 			sc->dc_pmode = DC_PMODE_SYM;
+			sc->dc_flags |= DC_21143_NWAY;
+		}
 		/*
 		 * If none of the bits are set, then this NIC
 		 * isn't meant to support 'wake up LAN' mode.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcreg.h,v 1.6 2000/07/21 15:52:10 mickey Exp $ */
+/*	$OpenBSD: dcreg.h,v 1.7 2000/08/02 19:01:06 aaron Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/pci/if_dcreg.h,v 1.3 2000/01/19 19:03:08 wpaul Exp $
+ * $FreeBSD: src/sys/pci/if_dcreg.h,v 1.9 2000/08/02 16:31:11 wpaul Exp $
  */
 
 /*
@@ -343,6 +343,7 @@
 #define DC_WDOG_RXWDOGDIS	0x00000010
 #define DC_WDOG_RXWDOGCLK	0x00000020
 #define DC_WDOG_MUSTBEZERO	0x00000100
+#define DC_WDOG_CTLWREN		0x08000000
 
 /*
  * Size of a setup frame.
@@ -674,6 +675,9 @@ struct dc_softc {
 #define DC_TX_STORENFWD		0x00000100
 #define DC_REDUCED_MII_POLL	0x00000200
 #define DC_TX_INTR_ALWAYS	0x00000400
+#define DC_21143_NWAY		0x00000800
+#define DC_128BIT_HASH		0x00001000
+#define DC_64BIT_HASH		0x00002000
 
 /*
  * register space access macros
@@ -695,6 +699,7 @@ struct dc_softc {
 #define DC_REVISION_98713	0x00
 #define DC_REVISION_98713A	0x10
 #define DC_REVISION_98715	0x20
+#define DC_REVISION_98715AEC_C	0x25
 #define DC_REVISION_98725	0x30
 
 /*
