@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: tgetpass.c,v 1.2 1996/11/17 16:34:06 millert Exp $";
+static char rcsid[] = "$Id: tgetpass.c,v 1.3 1997/02/21 17:10:08 millert Exp $";
 #endif /* lint */
 
 #include "config.h"
@@ -206,18 +206,12 @@ char * tgetpass(prompt, timeout, user, host)
 	tv.tv_sec = timeout;
 	tv.tv_usec = 0;
 
-	/* how many file descriptors may we have? */
-#ifdef HAVE_SYSCONF
-	n = sysconf(_SC_OPEN_MAX);
-#else
-	n = getdtablesize();
-#endif /* HAVE_SYSCONF */
-
 	/*
 	 * get password or return empty string if nothing to read by timeout
 	 */
 	buf[0] = '\0';
-	if (select(n, &readfds, 0, 0, &tv) > 0 && fgets(buf, sizeof(buf), input)) {
+	if (select(fileno(input) + 1, &readfds, 0, 0, &tv) > 0 &&
+	    fgets(buf, sizeof(buf), input)) {
 	    n = strlen(buf);
 	    if (buf[n - 1] == '\n')
 		buf[n - 1] = '\0';
