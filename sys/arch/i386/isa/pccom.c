@@ -1,6 +1,37 @@
-/*	$OpenBSD: pccom.c,v 1.23 1998/04/05 07:36:42 downsj Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.24 1998/05/14 05:54:44 downsj Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
+/*
+ * Copyright (c) 1997 - 1998, Jason Downs.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Jason Downs for the
+ *      OpenBSD system.
+ * 4. Neither the name(s) of the author(s) nor the name OpenBSD
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) ``AS IS'' AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
  *	Charles M. Hannum.  All rights reserved.
@@ -79,6 +110,8 @@ cdev_decl(com);
 bdev_decl(com);
 
 static u_char tiocm_xxx2mcr __P((int));
+
+void pccom_xr16850_fifo_init __P((bus_space_tag_t, bus_space_handle_t));
 
 /*
  * XXX the following two cfattach structs should be different, and possibly
@@ -651,7 +684,7 @@ comattach(parent, self, aux)
 	 */
 	lcr = bus_space_read_1(iot, ioh, com_lcr);
 
-	bus_space_write_1(iot, ioh, com_lcr, 0xbf);
+	bus_space_write_1(iot, ioh, com_lcr, LCR_EFR);
 	bus_space_write_1(iot, ioh, com_efr, 0);
 	bus_space_write_1(iot, ioh, com_lcr, 0);
 
@@ -678,14 +711,14 @@ comattach(parent, self, aux)
 		if (bus_space_read_1(iot, ioh, com_efr) == 0) {
 			sc->sc_uarttype = COM_UART_ST16650;
 		} else {
-			bus_space_write_1(iot, ioh, com_lcr, 0xbf); /* magic */
+			bus_space_write_1(iot, ioh, com_lcr, LCR_EFR);
 			if (bus_space_read_1(iot, ioh, com_efr) == 0)
 				sc->sc_uarttype = COM_UART_ST16650V2;
 		}
 	}
 
 	if (sc->sc_uarttype == COM_UART_ST16650V2) {	/* Probe for XR16850s */
-		u_char dlbl, dlbh;
+		u_int8_t dlbl, dlbh;
 
 		/* Enable latch access and get the current values. */
 		bus_space_write_1(iot, ioh, com_lcr, lcr | LCR_DLAB);
@@ -766,11 +799,13 @@ comattach(parent, self, aux)
 		SET(sc->sc_hwflags, COM_HW_FIFO);
 		sc->sc_fifolen = 32;
 		break;
+#ifdef notyet
 	case COM_UART_TI16750:
 		printf(": ti16750, 64 byte fifo\n");
 		SET(sc->sc_hwflags, COM_HW_FIFO);
 		sc->sc_fifolen = 64;
 		break;
+#endif
 	case COM_UART_XR16850:
 		printf(": xr16850 (rev %d), 128 byte fifo\n", sc->sc_uartrev);
 		SET(sc->sc_hwflags, COM_HW_FIFO);
@@ -898,15 +933,17 @@ comopen(dev, flag, mode, p)
 		case COM_UART_ST16650:
 		case COM_UART_ST16650V2:
 		case COM_UART_XR16850:
-			bus_space_write_1(iot, ioh, com_lcr, 0xbf);
+			bus_space_write_1(iot, ioh, com_lcr, LCR_EFR);
 			bus_space_write_1(iot, ioh, com_efr, EFR_ECB);
 			bus_space_write_1(iot, ioh, com_ier, 0);
 			bus_space_write_1(iot, ioh, com_efr, 0);
 			bus_space_write_1(iot, ioh, com_lcr, 0);
 			break;
+#ifdef notyet
 		case COM_UART_TI16750:
 			bus_space_write_1(iot, ioh, com_ier, 0);
 			break;
+#endif
 		}
 
 #ifdef COM_HAYESP
@@ -945,15 +982,32 @@ comopen(dev, flag, mode, p)
 			u_int8_t fifo = FIFO_ENABLE|FIFO_RCV_RST|FIFO_XMT_RST;
 			u_int8_t lcr;
 
-			if (tp->t_ispeed <= 1200)
-				fifo |= FIFO_TRIGGER_1;
-			else
-				fifo |= FIFO_TRIGGER_8;
-			if (sc->sc_uarttype == COM_UART_TI16750) {
+			switch (sc->sc_uarttype) {
+			case COM_UART_ST16650V2:
+				if (tp->t_ispeed <= 1200)
+					fifo |= FIFO_RCV_TRIGGER_8|FIFO_XMT_TRIGGER_8;
+				else
+					fifo |= FIFO_RCV_TRIGGER_28|FIFO_XMT_TRIGGER_30;
+				break;
+			case COM_UART_XR16850:
+				pccom_xr16850_fifo_init(iot, ioh);
+				if (tp->t_ispeed <= 1200)
+					fifo |= FIFO_RCV3_TRIGGER_8|FIFO_XMT3_TRIGGER_8;
+				else
+					fifo |= FIFO_RCV3_TRIGGER_60|FIFO_XMT3_TRIGGER_56;
+				break;
+#ifdef notyet
+			case COM_UART_TI16750:
 				fifo |= FIFO_ENABLE_64BYTE;
 				lcr = bus_space_read_1(iot, ioh, com_lcr);
 				bus_space_write_1(iot, ioh, com_lcr,
 				    lcr | LCR_DLAB);
+#endif
+			default:
+				if (tp->t_ispeed <= 1200)
+					fifo |= FIFO_TRIGGER_1;
+				else
+					fifo |= FIFO_TRIGGER_8;
 			}
 
 			/*
@@ -978,8 +1032,10 @@ comopen(dev, flag, mode, p)
 				    com_lsr), LSR_RXRDY))
 				    	break;
 			}
+#ifndef notyet
 			if (sc->sc_uarttype == COM_UART_TI16750)
 				bus_space_write_1(iot, ioh, com_lcr, lcr);
+#endif
 		}
 
 		/* flush any pending I/O */
@@ -1091,14 +1147,16 @@ comclose(dev, flag, mode, p)
 		case COM_UART_ST16650:
 		case COM_UART_ST16650V2:
 		case COM_UART_XR16850:
-			bus_space_write_1(iot, ioh, com_lcr, 0xbf);
+			bus_space_write_1(iot, ioh, com_lcr, LCR_EFR);
 			bus_space_write_1(iot, ioh, com_efr, EFR_ECB);
 			bus_space_write_1(iot, ioh, com_ier, IER_SLEEP);
 			bus_space_write_1(iot, ioh, com_lcr, 0);
 			break;
+#ifdef notyet
 		case COM_UART_TI16750:
 			bus_space_write_1(iot, ioh, com_ier, IER_SLEEP);
 			break;
+#endif
 		}
 	}
 	CLR(tp->t_state, TS_BUSY | TS_FLUSH);
@@ -1315,7 +1373,7 @@ comparam(tp, t)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int ospeed = comspeed(t->c_ospeed);
-	u_char lcr;
+	u_int8_t lcr;
 	tcflag_t oldcflag;
 	int s;
 
@@ -1404,17 +1462,43 @@ comparam(tp, t)
 
 		if (!ISSET(sc->sc_hwflags, COM_HW_HAYESP) &&
 		    ISSET(sc->sc_hwflags, COM_HW_FIFO)) {
-			if (sc->sc_uarttype == COM_UART_TI16750) {
+			u_int8_t fifo = FIFO_ENABLE;
+#ifdef notyet
+			u_int8_t lcr2;
+#endif
+
+			switch (sc->sc_uarttype) {
+			case COM_UART_ST16650V2:
+				if (tp->t_ispeed <= 1200)
+					fifo |= FIFO_RCV_TRIGGER_8|FIFO_XMT_TRIGGER_8;
+				else
+					fifo |= FIFO_RCV_TRIGGER_28|FIFO_XMT_TRIGGER_30;
+				break;
+			case COM_UART_XR16850:
+				if (tp->t_ispeed <= 1200)
+					fifo |= FIFO_RCV3_TRIGGER_8|FIFO_XMT3_TRIGGER_8;
+				else
+					fifo |= FIFO_RCV3_TRIGGER_60|FIFO_XMT3_TRIGGER_56;
+				break;
+#ifdef notyet
+			case COM_UART_TI16750:
+				fifo |= FIFO_ENABLE_64BYTE;
+				lcr2 = bus_space_read_1(iot, ioh, com_lcr);
 				bus_space_write_1(iot, ioh, com_lcr,
-				    lcr | LCR_DLAB);
-				bus_space_write_1(iot, ioh, com_fifo,
-				    FIFO_ENABLE | FIFO_ENABLE_64BYTE |
-				    (t->c_ispeed <= 1200 ? FIFO_TRIGGER_1 : FIFO_TRIGGER_8));
-				bus_space_write_1(iot, ioh, com_lcr, lcr);
-			} else
-				bus_space_write_1(iot, ioh, com_fifo,
-				    FIFO_ENABLE |
-				    (t->c_ispeed <= 1200 ? FIFO_TRIGGER_1 : FIFO_TRIGGER_8));
+				    lcr2 | LCR_DLAB);
+#endif
+			default:
+				if (tp->t_ispeed <= 1200)
+					fifo |= FIFO_TRIGGER_1;
+				else
+					fifo |= FIFO_TRIGGER_8;
+			}
+			bus_space_write_1(iot, ioh, com_fifo, fifo);
+
+#ifdef notyet
+			if (sc->sc_uarttype == COM_UART_TI16750)
+				bus_space_write_1(iot, ioh, com_lcr, lcr2);
+#endif
 		}
 	} else
 		bus_space_write_1(iot, ioh, com_lcr, lcr);
@@ -1655,7 +1739,7 @@ comsoft()
 		s = spltty();
 		rxget = sc->sc_rxget;
 		while (rxget != sc->sc_rxput) {
-			u_char	lsr;
+			u_int8_t lsr;
 
 			lsr = sc->sc_rxbuf[rxget];
 			rxget = (rxget + 1) & RBUFMASK;
@@ -1694,7 +1778,7 @@ comsoft()
 				line->l_start(tp);
 			}
 			else if (lsr == 0) {
-				u_char	msr;
+				u_int8_t msr;
 
 				msr = sc->sc_rxbuf[rxget];
 				rxget = (rxget + 1) & RBUFMASK;
@@ -1732,7 +1816,7 @@ comintr(arg)
 	struct tty *tp = sc->sc_tty;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	u_char	lsr;
+	u_int8_t lsr;
 	u_int	rxput;
 
 	if (ISSET(sc->sc_hwflags, COM_HW_ABSENT) || !sc->sc_tty)
@@ -1743,7 +1827,7 @@ comintr(arg)
 
 	rxput = sc->sc_rxput;
 	do {
-		u_char	msr, delta;
+		u_int8_t msr, delta;
 
 		for (;;) {
 			lsr = bus_space_read_1(iot, ioh, com_lsr);
@@ -1812,6 +1896,22 @@ comintr(arg)
 	return 1;
 }
 
+void
+pccom_xr16850_fifo_init(iot, ioh)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+{
+	u_int8_t lcr, efr, fctl;
+
+	lcr = bus_space_read_1(iot, ioh, com_lcr);
+	bus_space_write_1(iot, ioh, com_lcr, LCR_EFR);
+	efr = bus_space_read_1(iot, ioh, com_efr);
+	bus_space_write_1(iot, ioh, com_efr, efr | EFR_ECB);
+	fctl = bus_space_read_1(iot, ioh, com_fctl);
+	bus_space_write_1(iot, ioh, com_fctl, fctl | FCTL_TRIGGER3);
+	bus_space_write_1(iot, ioh, com_lcr, lcr);
+}
+
 /*
  * Following are all routines needed for PCCOM to act as console
  */
@@ -1874,7 +1974,7 @@ cominit(iot, ioh, rate)
 	int rate;
 {
 	int s = splhigh();
-	u_char stat;
+	u_int8_t stat;
 
 	bus_space_write_1(iot, ioh, com_lcr, LCR_DLAB);
 	rate = comspeed(comdefaultrate);
@@ -1894,7 +1994,7 @@ comcngetc(dev)
 	int s = splhigh();
 	bus_space_tag_t iot = comconsiot;
 	bus_space_handle_t ioh = comconsioh;
-	u_char stat, c;
+	u_int8_t stat, c;
 
 	while (!ISSET(stat = bus_space_read_1(iot, ioh, com_lsr), LSR_RXRDY))
 		;
@@ -1915,7 +2015,7 @@ comcnputc(dev, c)
 	int s = splhigh();
 	bus_space_tag_t iot = comconsiot;
 	bus_space_handle_t ioh = comconsioh;
-	u_char stat;
+	u_int8_t stat;
 	register int timo;
 
 #ifdef KGDB
