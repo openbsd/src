@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.2 2001/09/08 22:52:51 jason Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.3 2001/09/10 16:03:02 jason Exp $	*/
 /*	$NetBSD: fpu.c,v 1.11 2000/12/06 01:47:50 mrg Exp $ */
 
 /*
@@ -59,7 +59,7 @@
 #include <sparc64/fpu/fpu_extern.h>
 
 #ifdef DEBUG
-int fpe_debug = 0;
+int fpe_debug = 0xf;
 
 /*
  * Dump a `fpn' structure.
@@ -72,6 +72,18 @@ fpu_dumpfpn(struct fpn *fp)
 	printf("%s %c.%x %x %x %xE%d", class[fp->fp_class + 2],
 	    fp->fp_sign ? '-' : ' ', fp->fp_mant[0], fp->fp_mant[1],
 	    fp->fp_mant[2], fp->fp_mant[3], fp->fp_exp);
+}
+
+void
+fpu_dumpstate(struct fpstate64 *fp)
+{
+	int i;
+
+	for (i = 0; i < 64; i++) {
+		printf("%%f%02d: %08x  ", i, fp->fs_regs[i]);
+		if ((i & 3) == 3)
+			printf("\n");
+	}
 }
 #endif
 
@@ -311,6 +323,8 @@ fpu_execute(fe, instr)
 		return (BADREG);
 #endif
 	fs = fe->fe_fpstate;
+	DPRINTF(FPE_REG, ("BEFORE:\n"));
+	DUMPSTATE(FPE_REG, fs);
 	fe->fe_fsr = fs->fs_fsr & ~FSR_CX;
 	fe->fe_cx = 0;
 #ifdef SUN4U
@@ -414,6 +428,7 @@ fpu_execute(fe, instr)
 		}
 	}
 #endif /* SUN4U */
+	DPRINTF(FPE_INSN, ("opf: %x\n", opf));
 	switch (opf >>= 2) {
 
 	default:
@@ -454,7 +469,8 @@ fpu_execute(fe, instr)
 		break;
 
 	case FADD >> 2:
-		DPRINTF(FPE_INSN, ("fpu_execute: FADD\n"));
+		DPRINTF(FPE_INSN, ("fpu_execute: FADD (%d %d -> %d)\n",
+		    instr.i_opf.i_rs1, instr.i_opf.i_rs2, instr.i_opf.i_rd));
 		fpu_explode(fe, &fe->fe_f1, type, rs1);
 		fpu_explode(fe, &fe->fe_f2, type, rs2);
 		fp = fpu_add(fe);
@@ -526,24 +542,36 @@ fpu_execute(fe, instr)
 	case FXTOS >> 2:
 	case FXTOD >> 2:
 	case FXTOQ >> 2:
-		DPRINTF(FPE_INSN, ("fpu_execute: FXTOx\n"));
+		DPRINTF(FPE_INSN, ("fpu_execute: FXTOx (%d -> %d)\n",
+		    instr.i_opf.i_rs2, instr.i_opf.i_rd));
 		type = FTYPE_LNG;
 		fpu_explode(fe, fp = &fe->fe_f1, type, rs2);
 		type = opf & 3;	/* sneaky; depends on instruction encoding */
 		break;
 
 	case FTOX >> 2:
-		DPRINTF(FPE_INSN, ("fpu_execute: FTOx\n"));
+		DPRINTF(FPE_INSN, ("fpu_execute: FTOX\n"));
+		rd = instr.i_opf.i_rd & (~1);
 		fpu_explode(fe, fp = &fe->fe_f1, type, rs2);
 		type = FTYPE_LNG;
 		break;
 #endif /* SUN4U */
 
 	case FTOS >> 2:
-	case FTOD >> 2:
-	case FTOQ >> 2:
 	case FTOI >> 2:
-		DPRINTF(FPE_INSN, ("fpu_execute: FTOx\n"));
+		rd = instr.i_opf.i_rd;
+		goto fto;
+	case FTOD >> 2:
+		rd = instr.i_opf.i_rd & (~1);
+		goto fto;
+
+	case FTOQ >> 2:
+		rd = instr.i_opf.i_rd & (~3);
+		goto fto;
+
+fto:
+		DPRINTF(FPE_INSN, ("fpu_execute: FTOx (%d -> %d)\n",
+		    instr.i_opf.i_rs2, instr.i_opf.i_rd));
 		fpu_explode(fe, fp = &fe->fe_f1, type, rs2);
 		type = opf & 3;	/* sneaky; depends on instruction encoding */
 		break;
@@ -578,5 +606,8 @@ fpu_execute(fe, instr)
 			fs->fs_regs[rd + 3] = space[3];
 		}
 	}
+	DPRINTF(FPE_REG, ("AFTER (rd %d, type %d, space %x/%x/%x/%x):\n", rd, type,
+	    space[0], space[1], space[2], space[3]));
+	DUMPSTATE(FPE_REG, fs);
 	return (0);	/* success */
 }
