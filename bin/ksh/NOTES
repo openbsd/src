@@ -1,4 +1,4 @@
-$OpenBSD: NOTES,v 1.8 2003/02/26 03:53:35 david Exp $
+$OpenBSD: NOTES,v 1.9 2003/10/26 15:07:25 jmc Exp $
 
 General features of at&t ksh88 that are not (yet) in pdksh:
     - exported aliases and functions (not in ksh93).
@@ -131,7 +131,7 @@ Known differences between pdksh & at&t ksh (that are not likely to change)
     - . file: at&t ksh parses the whole file before executing anything,
       pdksh executes as it parses.  This means aliases defined in the file
       will affect how pdksh parses the file, but won't affect how at&t ksh
-      parses the file.  Also means pdksh will not parse statements occuring
+      parses the file.  Also means pdksh will not parse statements occurring
       after a (executed) return statement.
     - a return in $ENV in at&t ksh will cause the shell to exit, while in
       pdksh it will stop executing the script (this is consistent with

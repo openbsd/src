@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ktrace.9,v 1.4 2003/10/23 18:31:34 jmc Exp $
+.\"	$OpenBSD: ktrace.9,v 1.5 2003/10/26 15:07:25 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Michael Shalayeff
 .\"
@@ -57,7 +57,7 @@
 .Fn ktrsysret "struct proc *p" "register_t code" "int error" "register_t retval"
 .Sh DESCRIPTION
 This interface is meant for kernel subsystems and machine dependent code
-to inform the user about the events occuring to the process should
+to inform the user about the events occurring to the process should
 tracing of such be enabled using the
 .Xr ktrace 2
 system call.

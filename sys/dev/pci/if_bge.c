@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.21 2003/10/13 16:18:56 krw Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.22 2003/10/26 15:07:25 jmc Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2109,14 +2109,14 @@ bge_intr(xsc)
 	if (!(CSR_READ_4(sc, BGE_MISC_LOCAL_CTL) & BGE_MLC_INTR_STATE))
 		return (0);
 #endif
-	/* Ack interrupt and stop others from occuring. */
+	/* Ack interrupt and stop others from occurring. */
 	CSR_WRITE_4(sc, BGE_MBX_IRQ0_LO, 1);
 
 	/*
 	 * Process link state changes.
 	 * Grrr. The link status word in the status block does
 	 * not work correctly on the BCM5700 rev AX and BX chips,
-	 * according to all avaibable information. Hence, we have
+	 * according to all available information. Hence, we have
 	 * to enable MII interrupts in order to properly obtain
 	 * async link changes. Unfortunately, this also means that
 	 * we have to read the MAC status register to detect link

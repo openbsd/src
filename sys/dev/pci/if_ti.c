@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.46 2003/03/06 23:07:27 jason Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.47 2003/10/26 15:07:26 jmc Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2048,7 +2048,7 @@ int ti_intr(xsc)
 	if (!(CSR_READ_4(sc, TI_MISC_HOST_CTL) & TI_MHC_INTSTATE))
 		return (0);
 
-	/* Ack interrupt and stop others from occuring. */
+	/* Ack interrupt and stop others from occurring. */
 	CSR_WRITE_4(sc, TI_MB_HOSTINTR, 1);
 
 	if (ifp->if_flags & IFF_RUNNING) {

@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.124 2003/09/18 09:49:43 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.125 2003/10/26 15:11:47 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -703,7 +703,7 @@ is set.
 Default flags passed to the C++ compiler for building.
 Many ports ignore it.
 .It Ev CXXOPTS
-User setttings.
+User settings.
 Supplementary options appended to ${CXXFLAGS} for building.
 .It Ev DEF_UMASK
 Correct value of umask for the port to build and package correctly.
@@ -908,7 +908,7 @@ Set to a link to the homepage of the software, if applicable.
 Set to the list of files that cannot be checksummed.
 For use by ports which
 fetch dynamically generated archives that can't be checksummed.
-Avoid using IGNOREFILES whenver possible.
+Avoid using IGNOREFILES whenever possible.
 .It Ev LIB_DEPENDS
 Libraries this port depends upon.
 Each item has the form
