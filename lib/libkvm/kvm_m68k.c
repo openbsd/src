@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_m68k.c,v 1.6 2001/05/18 09:08:37 art Exp $ */
+/*	$OpenBSD: kvm_m68k.c,v 1.7 2001/05/19 05:03:59 millert Exp $ */
 /*	$NetBSD: kvm_m68k.c,v 1.9 1996/05/07 06:09:11 leo Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_m68k.c,v 1.6 2001/05/18 09:08:37 art Exp $";
+static char *rcsid = "$OpenBSD: kvm_m68k.c,v 1.7 2001/05/19 05:03:59 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -133,7 +133,7 @@ _kvm_vatop(kd, sta, va, pa)
 		 * Fortunately it is 1-to-1 mapped so we don't have to. 
 		 */
 		if (sta == cpu_kh->sysseg_pa) {
-			if (_kvm_pread(kd, (kd->pmfd, (char *)&ste, sizeof(ste), (off_t)_kvm_pa2off(kd, addr)) < 0)
+			if (_kvm_pread(kd, kd->pmfd, (char *)&ste, sizeof(ste), (off_t)_kvm_pa2off(kd, addr)) < 0)
 				goto invalid;
 		} else if (KREAD(kd, addr, &ste))
 			goto invalid;
