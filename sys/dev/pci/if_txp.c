@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.26 2001/05/09 02:25:08 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.27 2001/05/10 00:44:33 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -536,6 +536,7 @@ txp_intr(vsc)
 	void *vsc;
 {
 	struct txp_softc *sc = vsc;
+	struct txp_hostvar *hv = sc->sc_hostvar;
 	u_int32_t isr;
 	int claimed = 0;
 
@@ -556,7 +557,8 @@ txp_intr(vsc)
 		if ((*sc->sc_rxlor.r_roff) != (*sc->sc_rxlor.r_woff))
 			txp_rx_reclaim(sc, &sc->sc_rxlor);
 
-		txp_rxbuf_reclaim(sc);
+		if (hv->hv_rx_buf_write_idx == hv->hv_rx_buf_read_idx)
+			txp_rxbuf_reclaim(sc);
 
 		if (sc->sc_txhir.r_cnt && (sc->sc_txhir.r_cons !=
 		    TXP_OFFSET2IDX(*(sc->sc_txhir.r_off))))
