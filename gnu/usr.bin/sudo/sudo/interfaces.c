@@ -1,4 +1,4 @@
-/*	$OpenBSD: interfaces.c,v 1.7 1998/11/21 01:34:52 millert Exp $	*/
+/*	$OpenBSD: interfaces.c,v 1.8 1998/12/07 21:32:39 millert Exp $	*/
 
 /*
  *  CU sudo version 1.5.7
@@ -81,7 +81,7 @@ extern char *realloc	__P((VOID *, size_t));
 #endif /* !STDC_HEADERS && !__GNUC__ */
 
 #ifndef lint
-static const char rcsid[] = "$From: interfaces.c,v 1.45 1998/11/18 20:31:25 millert Exp $";
+static const char rcsid[] = "$From: interfaces.c,v 1.46 1998/12/07 21:16:00 millert Exp $";
 #endif /* lint */
 
 /*
@@ -141,6 +141,7 @@ void load_interfaces()
 	if (ioctl(sock, SIOCGIFCONF, (caddr_t) ifconf) < 0) {
 #endif /* _ISC */
 	    (void) free(ifconf_buf);
+	    (void) close(sock);
 	    return;
 	}
 
@@ -255,6 +256,7 @@ void load_interfaces()
 	}
     }
     (void) free(ifconf_buf);
+    (void) close(sock);
 }
 
 #else /* !SIOCGIFCONF || STUB_LOAD_INTERFACES */
