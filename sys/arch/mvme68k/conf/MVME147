@@ -1,4 +1,4 @@
-#	$NetBSD: AVAGO,v 1.6 1994/10/26 02:32:32 cgd Exp $
+#	$Id: MVME147,v 1.3 1995/11/07 08:42:21 deraadt Exp $
 
 machine		mvme68k m68k
 

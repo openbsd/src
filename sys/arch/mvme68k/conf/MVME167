@@ -1,4 +1,4 @@
-#	$NetBSD: AVAGO,v 1.6 1994/10/26 02:32:32 cgd Exp $
+#	$Id: MVME167,v 1.3 1995/11/07 08:42:22 deraadt Exp $
 
 machine		mvme68k m68k
 
@@ -10,8 +10,8 @@ options		FPCOPROC	# Support for MC6888[12] (Required)
 options		MAPPEDCOPY	# GOOD? BAD? UGLY? PRETTY?
 
 #options	MVME147		# (requires M68030)
-options		MVME162		# (requires M68040)
-#options	MVME167		# includes 166 (requires M68040)
+#options	MVME162		# (requires M68040)
+options		MVME167		# includes 166 (requires M68040)
 
 maxusers	6
 
@@ -87,7 +87,7 @@ ie0	at pcctwo0 offset 0x46000 ipl 1
 siop0	at pcctwo0 offset 0x47000 ipl 2
 cl0	at pcctwo0 offset 0x45000 ipl 3
 vme0	at pcctwo0 offset 0x40000
-lptwo0	at pcctwo0 ipl 1
+#lptwo0	at pcctwo0 ipl 1
 memc0	at pcctwo0 offset 0x43000
 memc1	at pcctwo0 offset 0x43100
 sram0	at mainbus0 addr 0xffe00000
