@@ -1,4 +1,4 @@
-/* $Id: cyberflex.c,v 1.14 2001/07/26 21:05:15 rees Exp $ */
+/* $Id: cyberflex.c,v 1.15 2001/07/26 22:12:56 rees Exp $ */
 
 /*
 copyright 1999, 2000
@@ -384,7 +384,7 @@ int ls(int ac, char *av[])
 	    continue;
 
 	/* Format name */
-	sectok_fmt_fid(fname, f0, f1);
+	sectok_fmt_fid(fname, &buf[4]);
 
 	/* Format size */
 	fsize = (buf[2] << 8) | buf[3];
@@ -555,6 +555,7 @@ int jload(int ac, char *av[])
     int cont_size = 1152, inst_size = 1024;
     des_cblock tmp;
     des_key_schedule schedule;
+    static unsigned char acl[] = {0x5, 0, 0, 0xff, 0, 0, 0, 0};
 
     optind = optreset = 1;
 
@@ -626,8 +627,8 @@ int jload(int ac, char *av[])
     if (!aut0_vfyd)
 	jaut(0, NULL);
 
-    sectok_fmt_fid(progname, progID[0], progID[1]);
-    sectok_fmt_fid(contname, contID[0], contID[1]);
+    sectok_fmt_fid(progname, progID);
+    sectok_fmt_fid(contname, contID);
 
     if (vflag) {
 	printf ("applet file             \"%s\"\n", filename);
@@ -697,7 +698,7 @@ int jload(int ac, char *av[])
 	return -1;
 
     /* create program file */
-    if (cyberflex_create_file(fd, cla, progID, size, 3, &sw) < 0) {
+    if (cyberflex_create_file_acl(fd, cla, progID, size, 3, acl, &sw) < 0) {
 	/* error */
 	printf("can't create %s: %s\n", progname, sectok_get_sw(sw));
 	return -1;
@@ -799,8 +800,8 @@ int junload(int ac, char *av[])
     if (!aut0_vfyd)
 	jaut(0, NULL);
 
-    sectok_fmt_fid(progname, progID[0], progID[1]);
-    sectok_fmt_fid(contname, contID[0], contID[1]);
+    sectok_fmt_fid(progname, progID);
+    sectok_fmt_fid(contname, contID);
 
     if (vflag) {
 	printf ("program ID              %s\n", progname);
