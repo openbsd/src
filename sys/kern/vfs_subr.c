@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.66 2001/09/16 00:42:44 millert Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.67 2001/09/19 22:52:41 csapuntz Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1974,7 +1974,8 @@ loop:
 				}
 				break;
 			}
-			bp->b_flags |= B_BUSY | B_VFLUSH;
+			bremfree(bp);
+			bp->b_flags |= B_BUSY;
 			/*
 			 * XXX Since there are no node locks for NFS, I believe
 			 * there is a slight chance that a delayed write will
@@ -2012,7 +2013,8 @@ loop:
 			continue;
 		if ((bp->b_flags & B_DELWRI) == 0)
 			panic("vflushbuf: not dirty");
-		bp->b_flags |= B_BUSY | B_VFLUSH;
+		bremfree(bp);
+		bp->b_flags |= B_BUSY;
 		splx(s);
 		/*
 		 * Wait for I/O associated with indirect blocks to complete,
