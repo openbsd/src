@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4M,v 1.46 2003/03/05 14:34:39 miod Exp $
+#	$OpenBSD: SUN4M,v 1.47 2003/03/06 21:48:25 miod Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -163,6 +163,10 @@ wsdisplay* at pnozz?
 # Parallax XVideo and PowerVideo
 tvtwo* at sbus? slot ? offset ?
 wsdisplay* at tvtwo?
+
+# Fujitsu AG-10e framebuffer.
+agten* at sbus? slot ? offset ?
+wsdisplay* at agten?
 
 # Microcontroller found on Tadpole
 tctrl0  at obio0

@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISK,v 1.37 2003/03/05 14:34:39 miod Exp $
+# 	$OpenBSD: RAMDISK,v 1.38 2003/03/06 21:48:24 miod Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -273,6 +273,10 @@ wsdisplay* at pnozz?
 # Parallax XVideo and PowerVideo
 tvtwo* at sbus? slot ? offset ?
 wsdisplay* at tvtwo?
+
+# Fujitsu AG-10e framebuffer.
+agten* at sbus? slot ? offset ?
+wsdisplay* at agten?
 
 # SCSI bus layer.  SCSI devices attach to the SCSI bus, which attaches
 # to the underlying hardware controller.
