@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: upgrade.sh,v 1.58 2004/07/30 00:16:30 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.59 2004/10/02 18:45:08 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2004 Todd Miller, Theo de Raadt, Ken Westerback
@@ -51,14 +51,12 @@ MODE=upgrade
 . install.sub
 
 # Have the user confirm that $ROOTDEV is the root filesystem.
-resp=
-while [ -z "$resp" ]; do
+while :; do
 	ask "Root filesystem?" "$ROOTDEV"
 	resp=${resp##*/}
-	if [ ! -b /dev/$resp ]; then
-		echo "Sorry, ${resp} is not a block device."
-		resp=
-	fi
+	[[ -b /dev/$resp ]] && break
+
+	echo "Sorry, $resp is not a block device."
 done
 ROOTDEV=$resp
 

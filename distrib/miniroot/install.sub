@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.353 2004/09/29 00:05:14 krw Exp $
+#	$OpenBSD: install.sub,v 1.354 2004/10/02 18:45:08 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2004 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1658,11 +1658,9 @@ for _set in base etc misc comp man game xbase xetc xshare xfont xserv site ; do
 done
 
 # decide upon an editor
-if [ -z "$EDITOR" ] ; then
-	EDITOR=ed
-	[ -x /usr/bin/vi ] && EDITOR=vi
-	export EDITOR
-fi
+: ${EDITOR:=ed}
+[[ -x /usr/bin/vi ]] && EDITOR=vi
+export EDITOR
 
 # umount all filesystems, just in case we are re-running install or upgrade.
 [[ -f /etc/fstab ]] && umount -av 1>/dev/null 2>&1

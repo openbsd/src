@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.147 2004/07/30 00:16:30 krw Exp $
+#	$OpenBSD: install.sh,v 1.148 2004/10/02 18:45:08 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2004 Todd Miller, Theo de Raadt, Ken Westerback
@@ -339,16 +339,14 @@ ask_yn "Configure the network?" yes
 
 _oifs=$IFS
 IFS=
-resp=
-while [[ -z $resp ]]; do
+while :; do
 	askpass "Password for root account? (will not echo)"
 	_password=$resp
 
 	askpass "Password for root account? (again)"
-	if [ "$_password" != "$resp" ]; then
-		echo "Passwords do not match, try again."
-		resp=
-	fi
+	[[ $resp == $_password ]] && break
+
+	echo "Passwords do not match, try again."
 done
 IFS=$_oifs
 
