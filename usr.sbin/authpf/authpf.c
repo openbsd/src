@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.30 2002/12/01 19:59:45 mcbride Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.32 2002/12/04 08:06:58 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -175,8 +175,7 @@ main(int argc, char *argv[])
 		syslog(LOG_ERR, "path to pidfile too long");
 		goto die;
 	}
-		
-	
+
 	/*
 	 * If someone else is already using this ip, then this person
 	 * wants to switch users - so kill the old process and exit
@@ -208,8 +207,8 @@ main(int argc, char *argv[])
 		if (flock(fileno(pidfp), LOCK_EX|LOCK_NB) == 0)
 			break;
 		save_errno = errno;
-		
-		/* Mark our pid, and username to our file. */   
+
+		/* Mark our pid, and username to our file. */
 
 		rewind(pidfp);
 		/* 31 == MAXLOGNAME - 1 */
@@ -660,7 +659,7 @@ changefilter(int add, char *luser, char *ipsrc)
 	pf.pbinat = &pb;
 	pf.prdr = &pd;
 	pf.prule = &pr;
-	if (parse_rules(fin, &pf) < 0) {
+	if (parse_rules(fin, &pf, 0) < 0) {
 		syslog(LOG_ERR,
 		    "syntax error in rule file: authpf rules not loaded");
 		goto error;
