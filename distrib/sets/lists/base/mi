@@ -65,8 +65,6 @@
 ./sbin/dmesg
 ./sbin/dump
 ./sbin/dumpfs
-./sbin/fastboot
-./sbin/fasthalt
 ./sbin/fsck
 ./sbin/fsck_ext2fs
 ./sbin/fsck_ffs

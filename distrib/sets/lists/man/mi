@@ -635,8 +635,6 @@
 ./usr/share/man/cat8/dumpfs.0
 ./usr/share/man/cat8/edquota.0
 ./usr/share/man/cat8/ext_srvtab.0
-./usr/share/man/cat8/fastboot.0
-./usr/share/man/cat8/fasthalt.0
 ./usr/share/man/cat8/fingerd.0
 ./usr/share/man/cat8/fsck.0
 ./usr/share/man/cat8/fsck_ext2fs.0
