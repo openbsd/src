@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.5 2003/10/01 02:43:17 kevlo Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.6 2003/12/22 12:59:45 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -62,8 +62,8 @@ struct limits_t {
 
 TAILQ_HEAD(limits, limits_t) limits = TAILQ_HEAD_INITIALIZER(limits);
 
-char	 *configfile;
-int	  reload = 0;
+char			 *configfile;
+volatile sig_atomic_t	  reload = 0;
 
 int
 main(int argc, char *argv[])
