@@ -4682,7 +4682,7 @@ dns_resolver_create(dns_view_t *view,
 			DESTROYLOCK(&res->buckets[i].lock);
 			goto cleanup_buckets;
 		}
-		sprintf(name, "res%u", i);
+		snprintf(name, sizeof(name), "res%u", i);
 		isc_task_setname(res->buckets[i].task, name, res);
 		ISC_LIST_INIT(res->buckets[i].fctxs);
 		res->buckets[i].exiting = ISC_FALSE;

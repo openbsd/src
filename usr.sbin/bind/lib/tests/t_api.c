@@ -253,7 +253,7 @@ main(int argc, char **argv) {
 	 * Output start stanza to journal.
 	 */
 
-	sprintf(T_buf, "%s:", argv[0]);
+	snprintf(T_buf, sizeof(T_buf), "%s:", argv[0]);
 	len = strlen(T_buf);
 	(void) t_getdate(T_buf + len, T_BIGBUF - len);
 	t_putinfo("S", T_buf);
@@ -334,7 +334,7 @@ main(int argc, char **argv) {
 		++tnum;
 	}
 
-	sprintf(T_buf, "%s:", argv[0]);
+	snprintf(T_buf, sizeof(T_buf), "%s:", argv[0]);
 	len = strlen(T_buf);
 	(void) t_getdate(T_buf + len, T_BIGBUF - len);
 	t_putinfo("E", T_buf);
@@ -353,7 +353,7 @@ t_assert(const char *component, int anum, int class, const char *what, ...) {
 	 * Format text to a buffer.
 	 */
 	va_start(args, what);
-	(void)vsprintf(T_buf, what, args);
+	(void)vsnprintf(T_buf, sizeof(T_buf), what, args);
 	va_end(args);
 
 	(void)t_putinfo("A", T_buf);
@@ -365,7 +365,7 @@ t_info(const char *format, ...) {
 	va_list	args;
 
 	va_start(args, format);
-	(void) vsprintf(T_buf, format, args);
+	(void) vsnprintf(T_buf, sizeof(T_buf), format, args);
 	va_end(args);
 	(void) t_putinfo("I", T_buf);
 }

@@ -85,11 +85,12 @@ dns_byaddr_createptrname(isc_netaddr_t *address, isc_boolean_t nibble,
 
 	bytes = (unsigned char *)(&address->type);
 	if (address->family == AF_INET) {
-		(void)sprintf(textname, "%u.%u.%u.%u.in-addr.arpa.",
-			      (bytes[3] & 0xff),
-			      (bytes[2] & 0xff),
-			      (bytes[1] & 0xff),
-			      (bytes[0] & 0xff));
+		(void)snprintf(textname, sizeof(textname),
+			       "%u.%u.%u.%u.in-addr.arpa.",
+			       (bytes[3] & 0xff),
+			       (bytes[2] & 0xff),
+			       (bytes[1] & 0xff),
+			       (bytes[0] & 0xff));
 	} else if (address->family == AF_INET6) {
 		if (nibble) {
 			cp = textname;

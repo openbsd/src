@@ -1468,18 +1468,19 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 		if ((channel->flags & ISC_LOG_PRINTLEVEL) != 0 &&
 		    level_string[0] == '\0') {
 			if (level < ISC_LOG_CRITICAL)
-				sprintf(level_string,
-					isc_msgcat_get(isc_msgcat,
-						       ISC_MSGSET_LOG,
-						       ISC_MSG_LEVEL,
-						       "level %d: "),
-					level);
+				snprintf(level_string, sizeof(level_string),
+					 isc_msgcat_get(isc_msgcat,
+						        ISC_MSGSET_LOG,
+						        ISC_MSG_LEVEL,
+						        "level %d: "),
+					 level);
 			else if (level > ISC_LOG_DYNAMIC)
-				sprintf(level_string, "%s %d: ",
-					log_level_strings[0], level);
+				snprintf(level_string, sizeof(level_string),
+					 "%s %d: ", log_level_strings[0],
+					 level);
 			else
-				sprintf(level_string, "%s: ",
-					log_level_strings[-level]);
+				snprintf(level_string, sizeof(level_string),
+					 "%s: ", log_level_strings[-level]);
 		}
 
 		/*

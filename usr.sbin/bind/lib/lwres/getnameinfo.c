@@ -172,7 +172,7 @@ lwres_getnameinfo(const struct sockaddr *sa, size_t salen, char *host,
 		 */
 	} else if ((flags & NI_NUMERICSERV) != 0 ||
 		   (sp = getservbyport(port, proto)) == NULL) {
-		sprintf(numserv, "%d", ntohs(port));
+		snprintf(numserv, sizeof(numserv), "%d", ntohs(port));
 		if ((strlen(numserv) + 1) > servlen)
 			ERR(ENI_MEMORY);
 		strcpy(serv, numserv);
