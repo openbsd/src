@@ -73,7 +73,7 @@ vstatus_read (int fd, vstatus *v)
     }
     len = VSTATUS_SIZE;
 
-    ret = lseek (fd, SEEK_SET, 0);
+    ret = lseek (fd, 0, SEEK_SET);
     if (ret) {
 	ret = errno;
 	goto err_out;
@@ -129,7 +129,7 @@ vstatus_write (int fd, vstatus *v)
     }
     len = VSTATUS_SIZE;
 
-    ret = lseek (fd, SEEK_SET, 0);
+    ret = lseek (fd, 0, SEEK_SET);
     if (ret) {
 	ret = errno;
 	goto err_out;
