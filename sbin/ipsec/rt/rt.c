@@ -56,11 +56,30 @@ main(int argc, char **argv)
 {
     struct sockaddr_encap *dst, *msk, *gw;
     struct rt_msghdr *rtm;
-    int sd;
+    int sd, proto;
 
     if (argc != 11)
       fprintf(stderr, "usage: %s isrc isrcmask idst idstmask tproto sport dport raddr spi fespah\n", argv[0]), exit(1);
-	
+    
+    switch(argv[10][0]) {
+    case '0':
+	 proto = IPPROTO_AH;
+	 break;
+    case '1':
+	 proto = IPPROTO_ESP;
+	 break;
+    case '-':
+	 proto = 0;
+	 break;
+    case 'p':
+	 proto = atoi(argv[10]+1);
+	 break;
+    default:
+	 fprintf(stderr, "flag fespah: wrong value %s\n", argv[10]);
+	 exit(-1);
+    }	 
+
+
     sd = socket(PF_ROUTE, SOCK_RAW, AF_UNSPEC);
     if (sd < 0)
       perror("socket"), exit(1);
@@ -110,7 +129,7 @@ main(int argc, char **argv)
     gw->sen_type = SENT_IPSP;
     gw->sen_ipsp_dst.s_addr = inet_addr(argv[8]);
     gw->sen_ipsp_spi = htonl(strtoul(argv[9], NULL, 16));
-    gw->sen_ipsp_sproto = atoi(argv[10]) == 1 ? IPPROTO_ESP : IPPROTO_AH;
+    gw->sen_ipsp_sproto = proto;
 
     msk->sen_len = SENT_IP4_LEN;
     msk->sen_family = AF_ENCAP;
