@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hosts_access.5,v 1.5 1997/07/27 18:22:47 downsj Exp $
+.\"	$OpenBSD: hosts_access.5,v 1.6 1997/07/27 18:43:30 downsj Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -86,7 +86,9 @@ A newline character is ignored when it is preceded by a backslash
 character. This permits you to break up long lines so that they are
 easier to edit.
 .It
-Blank lines or lines that begin with a `#\' character are ignored.
+Blank lines or lines that begin with a
+.Sq #
+character are ignored.
 This permits you to insert comments and whitespace so that the tables
 are easier to read.
 .It
@@ -122,26 +124,51 @@ checks are case insensitive.
 The access control language implements the following patterns:
 .Bl -bullet -tag -width XXX
 .It
-A string that begins with a `.\' character. A host name is matched if
+A string that begins with a
+.So
+.Ns .
+.Sc
+character. A host name is matched if
 the last components of its name match the specified pattern.  For
-example, the pattern `.tue.nl\' matches the host name
-`wzv.win.tue.nl\'.
+example, the pattern 
+.Sq .tue.nl
+matches the host name
+.Sq wzv.win.tue.nl .
 .It
-A string that ends with a `.\' character. A host address is matched if
-its first numeric fields match the given string.  For example, the
-pattern `131.155.\' matches the address of (almost) every host on the
-Eind\%hoven University network (131.155.x.x).
+A string that ends with a
+.So
+.Ns .
+.Sc
+character. A host address is matched if its first numeric fields match the
+given string.  For example, the pattern
+.So
+131.155.
+.Sc
+matches the address of (almost) every host on the Eind\%hoven University
+network (131.155.x.x).
 .It
-A string that begins with an `@\' character is treated as an NIS
+A string that begins with an
+.Sq @
+character is treated as an NIS
 (formerly YP) netgroup name. A host name is matched if it is a host
 member of the specified netgroup. Netgroup matches are not supported
 for daemon process names or for client user names.
 .It
-An expression of the form `n.n.n.n/m.m.m.m\' is interpreted as a
-`net/mask\' pair. A host address is matched if `net\' is equal to the
-bitwise AND of the address and the `mask\'. For example, the net/mask
-pattern `131.155.72.0/255.255.254.0\' matches every address in the
-range `131.155.72.0\' through `131.155.73.255\'.
+An expression of the form
+.Sq n.n.n.n/m.m.m.m
+is interpreted as a
+.Sq net/mask
+pair. A host address is matched if
+.Sq net
+is equal to the bitwise AND of the address and the
+.Sq mask .
+For example, the net/mask
+pattern
+.Sq 131.155.72.0/255.255.254.0
+matches every address in the range
+.Sq 131.155.72.0
+through
+.Sq 131.155.73.255 .
 .El
 .Sh WILDCARDS
 The access control language supports explicit wildcards:
@@ -169,15 +196,18 @@ what type of network it is talking to.
 .\" without -DPARANOID when you want more control over such requests.
 .Sh OPERATORS
 .IP EXCEPT
-Intended use is of the form: `list_1 EXCEPT list_2\'; this construct
-matches anything that matches 
+Intended use is of the form:
+.Sq list_1 EXCEPT list_2 ;
+this construct matches anything that matches 
 .Ar list_1
 unless it matches
 .Ar list_2 .
 The EXCEPT operator can be used in daemon_lists and in
 client_lists. The EXCEPT operator can be nested: if the control
-language would permit the use of parentheses, `a EXCEPT b EXCEPT c\'
-would parse as `(a EXCEPT (b EXCEPT c))\'.
+language would permit the use of parentheses,
+.Sq a EXCEPT b EXCEPT c
+would parse as
+.Sq (a EXCEPT (b EXCEPT c)) .
 .Sh SHELL COMMANDS
 If the first-matched access control rule contains a shell command, that
 command is subjected to %<letter> substitutions (see next section).
@@ -186,8 +216,9 @@ The result is executed by a
 child process with standard
 input, output and error connected to 
 .Pa /dev/null .
-Specify an `&\' at the end of the command if you do not want to wait until
-it has completed.
+Specify an
+.Sq &
+at the end of the command if you do not want to wait until it has completed.
 .Pp
 Shell commands should not rely on the PATH setting of the inetd.
 Instead, they should use absolute path names, or they should begin with
@@ -222,7 +253,9 @@ depending on how much information is available.
 .It %u
 The client user name (or "unknown").
 .It %%
-Expands to a single `%\' character.
+Expands to a single
+.Sq %
+character.
 .El
 .Pp
 Characters in % expansions that may confuse the shell are replaced by
@@ -237,7 +270,8 @@ process_name@host_pattern : client_list ...
 Patterns like these can be used when the machine has different internet
 addresses with different internet hostnames.  Service providers can use
 this facility to offer FTP, GOPHER or WWW archives with internet names
-that may even belong to different organizations. See also the `twist'
+that may even belong to different organizations. See also the
+.Sq twist
 option in the
 .Xr hosts_options 5
 document.  Many systems can have more than one internet address on one physical
@@ -308,11 +342,13 @@ attacks.
 Before accepting a client request, the wrappers can use the IDENT
 service to find out that the client did not send the request at all.
 When the client host provides IDENT service, a negative IDENT lookup
-result (the client matches `UNKNOWN@host') is strong evidence of a host
-spoofing attack.
+result (the client matches
+.Sq UNKNOWN@host )
+is strong evidence of a host spoofing attack.
 .Pp
-A positive IDENT lookup result (the client matches `KNOWN@host') is
-less trustworthy. It is possible for an intruder to spoof both the
+A positive IDENT lookup result (the client matches
+.Sq KNOWN@host )
+is less trustworthy. It is possible for an intruder to spoof both the
 client connection and the IDENT lookup, although doing so is much
 harder than spoofing just a client connection. It may also be that
 the client\'s IDENT server is lying.
@@ -360,7 +396,10 @@ ALL: .foobar.edu EXCEPT terminalserver.foobar.edu
 .Ed
 .Ed
 .Pp
-The first rule permits access from hosts in the local domain (no `.\'
+The first rule permits access from hosts in the local domain (no
+.So
+.Ns .
+.Sc
 in the host name) and from members of the 
 .Ar some_netgroup
 netgroup.  The second rule permits access from all hosts in the
