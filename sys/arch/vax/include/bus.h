@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.3 2001/07/30 14:16:00 art Exp $	*/
+/*	$OpenBSD: bus.h,v 1.4 2002/03/07 18:08:08 jason Exp $	*/
 /*	$NetBSD: bus.h,v 1.14 2000/06/26 04:56:13 simonb Exp $	*/
 
 /*-
@@ -859,14 +859,17 @@ vax_mem_copy_region_4(t, h1, o1, h2, o2, c)
 /*
  * Flags used in various bus DMA methods.
  */
-#define	BUS_DMA_WAITOK		0x00	/* safe to sleep (pseudo-flag) */
-#define	BUS_DMA_NOWAIT		0x01	/* not safe to sleep */
-#define	BUS_DMA_ALLOCNOW	0x02	/* perform resource allocation now */
-#define	BUS_DMA_COHERENT	0x04	/* hint: map memory DMA coherent */
-#define	BUS_DMA_BUS1		0x10	/* placeholders for bus functions... */
-#define	BUS_DMA_BUS2		0x20
-#define	BUS_DMA_BUS3		0x40
-#define	BUS_DMA_BUS4		0x80
+#define	BUS_DMA_WAITOK		0x000	/* safe to sleep (pseudo-flag) */
+#define	BUS_DMA_NOWAIT		0x001	/* not safe to sleep */
+#define	BUS_DMA_ALLOCNOW	0x002	/* perform resource allocation now */
+#define	BUS_DMA_COHERENT	0x004	/* hint: map memory DMA coherent */
+#define	BUS_DMA_BUS1		0x010	/* placeholders for bus functions... */
+#define	BUS_DMA_BUS2		0x020
+#define	BUS_DMA_BUS3		0x040
+#define	BUS_DMA_BUS4		0x080
+#define	BUS_DMA_STREAMING	0x100	/* hint: sequential, unidirectional */
+#define	BUS_DMA_READ		0x200	/* mapping is device -> memory only */
+#define	BUS_DMA_WRITE		0x400	/* mapping is memory -> device only */
 
 #define	VAX_BUS_DMA_SPILLPAGE	BUS_DMA_BUS1	/* VS4000 kludge */
 /*

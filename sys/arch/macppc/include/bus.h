@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.3 2001/12/14 03:02:50 drahn Exp $	*/
+/*	$OpenBSD: bus.h,v 1.4 2002/03/07 18:08:08 jason Exp $	*/
 
 /*
  * Copyright (c) 1997 Per Fogelstrom.  All rights reserved.
@@ -378,16 +378,18 @@ bus_space_copy_4 __P((void *v, bus_space_handle_t h1, bus_space_handle_t h2,
 #define BUS_BARRIER_WRITE       BUS_SPACE_BARRIER_WRITE
 
 
-#define	BUS_DMA_WAITOK		0x00
-#define	BUS_DMA_NOWAIT		0x01
-#define	BUS_DMA_ALLOCNOW	0x02
-#define	BUS_DMAMEM_NOSYNC	0x04
-#define	BUS_DMA_COHERENT	0x08
-#define	BUS_DMA_BUS1		0x10	/* placeholders for bus functions... */
-#define	BUS_DMA_BUS2		0x20
-#define	BUS_DMA_BUS3		0x40
-#define	BUS_DMA_BUS4		0x80
-#define BUS_DMA_READ            0x100
+#define	BUS_DMA_WAITOK		0x000	/* safe to sleep (pseudo-flag) */
+#define	BUS_DMA_NOWAIT		0x001	/* not safe to sleep */
+#define	BUS_DMA_ALLOCNOW	0x002	/* perform resource allocation now */
+#define	BUS_DMAMEM_NOSYNC	0x004
+#define	BUS_DMA_COHERENT	0x008	/* hint: map memory DMA coherent */
+#define	BUS_DMA_BUS1		0x010	/* placeholders for bus functions... */
+#define	BUS_DMA_BUS2		0x020
+#define	BUS_DMA_BUS3		0x040
+#define	BUS_DMA_BUS4		0x080
+#define BUS_DMA_READ            0x100	/* mapping is device -> memory only */
+#define	BUS_DMA_WRITE		0x200	/* mapping is memory -> device only */
+#define	BUS_DMA_STREAMING	0x400	/* hint: sequential, unidirectional */
 
 
 /* Forwards needed by prototypes below. */

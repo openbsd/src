@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.9 2002/02/19 05:03:42 jason Exp $	*/
+/*	$OpenBSD: bus.h,v 1.10 2002/03/07 18:08:08 jason Exp $	*/
 /*	$NetBSD: bus.h,v 1.31 2001/09/21 15:30:41 wiz Exp $	*/
 
 /*-
@@ -1420,14 +1420,13 @@ bus_space_copy_region_stream_8(t, h1, o1, h2, o2, c)
 #define	BUS_DMA_ALLOCNOW	0x002	/* perform resource allocation now */
 #define	BUS_DMA_COHERENT	0x004	/* hint: map memory DMA coherent */
 #define	BUS_DMA_NOWRITE		0x008	/* I suppose the following two should default on */
-#define	BUS_DMA_BUS1		0x010	
+#define	BUS_DMA_BUS1		0x010	/* placeholders for bus functions... */
 #define	BUS_DMA_BUS2		0x020
 #define	BUS_DMA_BUS3		0x040
 #define	BUS_DMA_BUS4		0x080
 #define	BUS_DMA_STREAMING	0x100	/* hint: sequential, unidirectional */
 #define	BUS_DMA_READ		0x200	/* mapping is device -> memory only */
 #define	BUS_DMA_WRITE		0x400	/* mapping is memory -> device only */
-
 
 #define	BUS_DMA_NOCACHE		BUS_DMA_BUS1
 #define	BUS_DMA_DVMA		BUS_DMA_BUS2	/* Don't bother with alignment */

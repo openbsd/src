@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.17 2002/02/16 03:13:32 mickey Exp $	*/
+/*	$OpenBSD: bus.h,v 1.18 2002/03/07 18:08:08 jason Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -286,11 +286,18 @@ extern const struct hppa_bus_space_tag hppa_bustag;
 #define	bus_space_barrier(t,h,o,l,op) \
 	((t)->hbt_barrier((t)->hbt_cookie, (h), (o), (l), (op)))
 
-#define	BUS_DMA_WAITOK		0x00
-#define	BUS_DMA_NOWAIT		0x01
-#define	BUS_DMA_ALLOCNOW	0x02
-#define	BUS_DMA_COHERENT	0x04
-#define	BUS_DMAMEM_NOSYNC	0x10
+#define	BUS_DMA_WAITOK		0x000	/* safe to sleep (pseudo-flag) */
+#define	BUS_DMA_NOWAIT		0x001	/* not safe to sleep */
+#define	BUS_DMA_ALLOCNOW	0x002	/* perform resource allocation now */
+#define	BUS_DMA_COHERENT	0x004	/* hint: map memory DMA coherent */
+#define	BUS_DMAMEM_NOSYNC	0x010
+#define	BUS_DMA_BUS1		0x020	/* placeholders for bus functions... */
+#define	BUS_DMA_BUS2		0x040
+#define	BUS_DMA_BUS3		0x080
+#define	BUS_DMA_BUS4		0x100
+#define	BUS_DMA_STREAMING	0x200	/* hint: sequential, unidirectional */
+#define	BUS_DMA_READ		0x400	/* mapping is device -> memory only */
+#define	BUS_DMA_WRITE		0x800	/* mapping is memory -> device only */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;

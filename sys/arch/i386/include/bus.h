@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.31 2001/11/05 17:25:57 art Exp $	*/
+/*	$OpenBSD: bus.h,v 1.32 2002/03/07 18:08:08 jason Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -732,14 +732,17 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 /*
  * Flags used in various bus DMA methods.
  */
-#define	BUS_DMA_WAITOK		0x00	/* safe to sleep (pseudo-flag) */
-#define	BUS_DMA_NOWAIT		0x01	/* not safe to sleep */
-#define	BUS_DMA_ALLOCNOW	0x02	/* perform resource allocation now */
-#define	BUS_DMA_COHERENT	0x04	/* hint: map memory DMA coherent */
-#define	BUS_DMA_BUS1		0x10	/* placeholders for bus functions... */
-#define	BUS_DMA_BUS2		0x20
-#define	BUS_DMA_BUS3		0x40
-#define	BUS_DMA_BUS4		0x80
+#define	BUS_DMA_WAITOK		0x000	/* safe to sleep (pseudo-flag) */
+#define	BUS_DMA_NOWAIT		0x001	/* not safe to sleep */
+#define	BUS_DMA_ALLOCNOW	0x002	/* perform resource allocation now */
+#define	BUS_DMA_COHERENT	0x004	/* hint: map memory DMA coherent */
+#define	BUS_DMA_BUS1		0x010	/* placeholders for bus functions... */
+#define	BUS_DMA_BUS2		0x020
+#define	BUS_DMA_BUS3		0x040
+#define	BUS_DMA_BUS4		0x080
+#define	BUS_DMA_STREAMING	0x100	/* hint: sequential, unidirectional */
+#define	BUS_DMA_READ		0x200	/* mapping is device -> memory only */
+#define	BUS_DMA_WRITE		0x400	/* mapping is memory -> device only */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;
