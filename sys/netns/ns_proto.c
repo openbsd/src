@@ -1,4 +1,5 @@
-/*	$NetBSD: ns_proto.c,v 1.5 1994/06/29 06:41:48 cgd Exp $	*/
+/*	$OpenBSD: ns_proto.c,v 1.2 1996/03/04 08:20:31 niklas Exp $	*/
+/*	$NetBSD: ns_proto.c,v 1.6 1996/02/13 22:14:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -41,21 +42,24 @@
 #include <sys/domain.h>
 #include <sys/mbuf.h>
 
+#include <net/if.h>
 #include <net/radix.h>
-
-#include <netns/ns.h>
+#include <net/route.h>
 
 /*
  * NS protocol family: IDP, ERR, PE, SPP, ROUTE.
  */
-void	ns_init();
-int	idp_output(), idp_usrreq();
-void	idp_input(), idp_ctlinput();
-int	idp_raw_usrreq(), idp_ctloutput();
-void	spp_input(), spp_ctlinput();
-int	spp_usrreq(), spp_usrreq_sp(), spp_ctloutput();
-void	spp_init(), spp_fasttimo(), spp_slowtimo();
-int	raw_usrreq();
+#include <netns/ns.h>
+#include <netns/ns_pcb.h>
+#include <netns/ns_if.h>
+#include <netns/ns_var.h>
+#include <netns/idp.h>
+#include <netns/idp_var.h>
+#include <netns/ns_error.h>
+#include <netns/sp.h>
+#include <netns/spidp.h>
+#include <netns/spp_timer.h>
+#include <netns/spp_var.h>
 
 extern	struct domain nsdomain;
 
@@ -86,7 +90,7 @@ struct protosw nssw[] = {
   0,		0,		0,		0,
 },
 { SOCK_RAW,	&nsdomain,	NSPROTO_ERROR,	PR_ATOMIC|PR_ADDR,
-  idp_ctlinput,	idp_output,	0,		idp_ctloutput,
+  0,		idp_output,	idp_ctlinput,	idp_ctloutput,
   idp_raw_usrreq,
   0,		0,		0,		0,
 },

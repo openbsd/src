@@ -1,4 +1,5 @@
-/*	$NetBSD: ns.c,v 1.9 1995/06/13 08:37:00 mycroft Exp $	*/
+/*	$OpenBSD: ns.c,v 1.2 1996/03/04 08:20:22 niklas Exp $	*/
+/*	$NetBSD: ns.c,v 1.10 1996/02/13 22:13:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -36,6 +37,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/ioctl.h>
 #include <sys/protosw.h>
@@ -48,6 +50,7 @@
 
 #include <netns/ns.h>
 #include <netns/ns_if.h>
+#include <netns/ns_var.h>
 
 #ifdef NS
 
@@ -59,6 +62,7 @@ extern struct sockaddr_ns ns_netmask, ns_hostmask;
  * Generic internet control operations (ioctl's).
  */
 /* ARGSUSED */
+int
 ns_control(so, cmd, data, ifp)
 	struct socket *so;
 	u_long cmd;
@@ -68,8 +72,7 @@ ns_control(so, cmd, data, ifp)
 	register struct ifreq *ifr = (struct ifreq *)data;
 	register struct ns_aliasreq *ifra = (struct ns_aliasreq *)data;
 	register struct ns_ifaddr *ia;
-	struct ifaddr *ifa;
-	int error, dstIsNew, hostIsNew;
+	int dstIsNew, hostIsNew, error = 0;
 
 	/*
 	 * Find address for this interface, if it exists.
@@ -148,8 +151,6 @@ ns_control(so, cmd, data, ifp)
 	}
 
 	switch (cmd) {
-		int error;
-
 	case SIOCSIFDSTADDR:
 		if ((ifp->if_flags & IFF_POINTOPOINT) == 0)
 			return (EINVAL);
@@ -159,7 +160,7 @@ ns_control(so, cmd, data, ifp)
 		}
 		if (ifp->if_ioctl) {
 			error = (*ifp->if_ioctl)(ifp, SIOCSIFDSTADDR,
-			    (caddr_t)ia);
+						 (caddr_t)ia);
 			if (error)
 				return (error);
 		}
@@ -202,6 +203,8 @@ ns_control(so, cmd, data, ifp)
 		if (ifra->ifra_addr.sns_family == AF_NS &&
 					    (hostIsNew || dstIsNew))
 			error = ns_ifinit(ifp, ia, &ifra->ifra_addr, 0);
+		else
+			error = 0;
 		return (error);
 
 	default:
@@ -214,6 +217,7 @@ ns_control(so, cmd, data, ifp)
 /*
 * Delete any previous route for an old address.
 */
+void
 ns_ifscrub(ifp, ia)
 	register struct ifnet *ifp;
 	register struct ns_ifaddr *ia; 
@@ -230,10 +234,12 @@ ns_ifscrub(ifp, ia)
  * Initialize an interface's internet address
  * and routing table entry.
  */
+int
 ns_ifinit(ifp, ia, sns, scrub)
 	register struct ifnet *ifp;
 	register struct ns_ifaddr *ia;
 	register struct sockaddr_ns *sns;
+	int scrub;
 {
 	struct sockaddr_ns oldaddr;
 	register union ns_host *h = &ia->ia_addr.sns_addr.x_host;
@@ -315,7 +321,7 @@ ns_iaonnetof(dst)
 	union ns_net net = dst->x_net;
 
 	for (ia = ns_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next) {
-		if (ifp = ia->ia_ifp) {
+		if ((ifp = ia->ia_ifp) != NULL) {
 			if (ifp->if_flags & IFF_POINTOPOINT) {
 				compare = &satons_addr(ia->ia_dstaddr);
 				if (ns_hosteq(*dst, *compare))

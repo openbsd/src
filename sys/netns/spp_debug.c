@@ -1,4 +1,5 @@
-/*	$NetBSD: spp_debug.c,v 1.5 1994/06/29 06:41:53 cgd Exp $	*/
+/*	$OpenBSD: spp_debug.c,v 1.2 1996/03/04 08:20:32 niklas Exp $	*/
+/*	$NetBSD: spp_debug.c,v 1.6 1996/02/13 22:14:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -63,9 +64,10 @@ int	sppconsdebug = 0;
 /*
  * spp debug routines
  */
+void
 spp_trace(act, ostate, sp, si, req)
 	short act;
-	u_char ostate;
+	u_int ostate;
 	struct sppcb *sp;
 	struct spidp *si;
 	int req;

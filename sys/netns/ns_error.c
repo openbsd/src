@@ -1,4 +1,5 @@
-/*	$NetBSD: ns_error.c,v 1.5 1994/06/29 06:41:36 cgd Exp $	*/
+/*	$OpenBSD: ns_error.c,v 1.2 1996/03/04 08:20:24 niklas Exp $	*/
+/*	$NetBSD: ns_error.c,v 1.6 1996/02/13 22:13:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1984, 1988, 1993
@@ -44,12 +45,20 @@
 #include <sys/time.h>
 #include <sys/kernel.h>
 
+#include <net/if.h>
 #include <net/route.h>
 
 #include <netns/ns.h>
 #include <netns/ns_pcb.h>
+#include <netns/ns_if.h>
+#include <netns/ns_var.h>
 #include <netns/idp.h>
+#include <netns/idp_var.h>
 #include <netns/ns_error.h>
+#include <netns/sp.h>
+#include <netns/spidp.h>
+#include <netns/spp_timer.h>
+#include <netns/spp_var.h>
 
 #ifdef lint
 #define NS_ERRPRINTFS 1
@@ -63,7 +72,9 @@
 int	ns_errprintfs = 0;
 #endif
 
+int
 ns_err_x(c)
+	int c;
 {
 	register u_short *w, *lim, *base = ns_errstat.ns_es_codes;
 	u_short x = c;
@@ -87,10 +98,11 @@ ns_err_x(c)
  * Generate an error packet of type error
  * in response to bad packet.
  */
-
+void
 ns_error(om, type, param)
 	struct mbuf *om;
 	int type;
+	int param;
 {
 	register struct ns_epidp *ep;
 	struct mbuf *m;
@@ -166,6 +178,7 @@ freeit:
 	m_freem(om);
 }
 
+void
 ns_printhost(p)
 register struct ns_addr *p;
 {
@@ -183,11 +196,14 @@ register struct ns_addr *p;
 /*
  * Process a received NS_ERR message.
  */
+void
 ns_err_input(m)
 	struct mbuf *m;
 {
 	register struct ns_errp *ep;
+#ifdef NS_ERRPRINTFS
 	register struct ns_epidp *epidp = mtod(m, struct ns_epidp *);
+#endif
 	register int i;
 	int type, code, param;
 
@@ -264,11 +280,11 @@ ns_err_input(m)
 #endif
 		switch(ep->ns_err_idp.idp_pt) {
 		case NSPROTO_SPP:
-			spp_ctlinput(code, (caddr_t)ep);
+			spp_ctlinput(code, NULL, ep);
 			break;
 
 		default:
-			idp_ctlinput(code, (caddr_t)ep);
+			idp_ctlinput(code, NULL, ep);
 		}
 		
 		goto freeit;
@@ -296,6 +312,7 @@ nstime()
 }
 #endif
 
+int
 ns_echo(m)
 struct mbuf *m;
 {

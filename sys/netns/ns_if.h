@@ -1,4 +1,5 @@
-/*	$NetBSD: ns_if.h,v 1.7 1995/06/13 08:37:02 mycroft Exp $	*/
+/*	$OpenBSD: ns_if.h,v 1.2 1996/03/04 08:20:25 niklas Exp $	*/
+/*	$NetBSD: ns_if.h,v 1.8 1996/02/13 22:13:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -56,8 +57,8 @@ struct ns_ifaddr {
 struct	ns_aliasreq {
 	char	ifra_name[IFNAMSIZ];		/* if name, e.g. "en0" */
 	struct	sockaddr_ns ifra_addr;
-	struct	sockaddr_ns ifra_broadaddr;
-#define ifra_dstaddr ifra_broadaddr
+	struct	sockaddr_ns ifra_dstaddr;
+#define ifra_broadaddr ifra_dstaddr
 };
 /*
  * Given a pointer to an ns_ifaddr (ifaddr),
@@ -81,5 +82,4 @@ struct nsip_req {
 TAILQ_HEAD(ns_ifaddrhead, ns_ifaddr);
 extern	struct	ns_ifaddrhead ns_ifaddr;
 extern	struct	ifqueue	nsintrq;	/* XNS input packet queue */
-struct	ns_ifaddr *ns_iaonnetof();
 #endif

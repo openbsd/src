@@ -1,4 +1,5 @@
-/*	$NetBSD: ns_ip.c,v 1.13 1995/06/13 08:37:05 mycroft Exp $	*/
+/*	$OpenBSD: ns_ip.c,v 1.2 1996/03/04 08:20:27 niklas Exp $	*/
+/*	$NetBSD: ns_ip.c,v 1.14 1996/02/13 22:13:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -385,6 +386,7 @@ nsip_route(m)
 			(struct ifnet *)ifn));
 }
 
+int
 nsip_free(ifp)
 struct ifnet *ifp;
 {
@@ -399,13 +401,14 @@ struct ifnet *ifp;
 	return (0);
 }
 
-nsip_ctlinput(cmd, sa)
+void *
+nsip_ctlinput(cmd, sa, v)
 	int cmd;
 	struct sockaddr *sa;
+	void *v;
 {
 	extern u_char inetctlerrmap[];
 	struct sockaddr_in *sin;
-	int in_rtchange();
 
 	if ((unsigned)cmd >= PRC_NCMDS)
 		return;
@@ -425,8 +428,10 @@ nsip_ctlinput(cmd, sa)
 		nsip_rtchange(&sin->sin_addr);
 		break;
 	}
+	return NULL;
 }
 
+void
 nsip_rtchange(dst)
 	register struct in_addr *dst;
 {
