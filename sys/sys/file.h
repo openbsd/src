@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.3 1996/08/27 14:47:06 shawn Exp $	*/
+/*	$OpenBSD: file.h,v 1.4 1998/03/01 19:33:54 deraadt Exp $	*/
 /*	$NetBSD: file.h,v 1.11 1995/03/26 20:24:13 jtc Exp $	*/
 
 /*
@@ -56,8 +56,8 @@ struct file {
 #define	DTYPE_SOCKET	2	/* communications endpoint */
 #define	DTYPE_PIPE	3	/* pipe */
 	short	f_type;		/* descriptor type */
-	short	f_count;	/* reference count */
-	short	f_msgcount;	/* references from message queue */
+	long	f_count;	/* reference count */
+	long	f_msgcount;	/* references from message queue */
 	struct	ucred *f_cred;	/* credentials associated with descriptor */
 	struct	fileops {
 		int	(*fo_read)	__P((struct file *fp, struct uio *uio,
