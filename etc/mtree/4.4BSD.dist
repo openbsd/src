@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.94 2000/05/19 15:54:37 marc Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.95 2000/05/25 19:09:22 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1083,6 +1083,34 @@ i386
 
 # ./usr/share/man/cat3
 cat3
+
+alpha
+..
+amiga
+..
+arc
+..
+hp300
+..
+i386
+..
+mac68k
+..
+mvme68k
+..
+mvme88k
+..
+pmax
+..
+powerpc
+..
+sparc
+..
+sun3
+..
+vax
+..
+
 # ./usr/share/man/cat3
 ..
 
@@ -1126,6 +1154,34 @@ vax
 
 # ./usr/share/man/cat5
 cat5
+
+alpha
+..
+amiga
+..
+arc
+..
+hp300
+..
+i386
+..
+mac68k
+..
+mvme68k
+..
+mvme88k
+..
+pmax
+..
+powerpc
+..
+sparc
+..
+sun3
+..
+vax
+..
+
 # ./usr/share/man/cat5
 ..
 
