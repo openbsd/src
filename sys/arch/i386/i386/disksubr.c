@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.10 1996/10/16 11:30:39 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.11 1996/10/23 15:24:07 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -318,7 +318,7 @@ writedisklabel(dev, strat, lp, osdep)
 	struct buf *bp;
 	struct disklabel *dlp;
 	int error, dospartoff, cyl, i;
-	int ourpart;
+	int ourpart = -1;
 
 	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
@@ -356,8 +356,8 @@ writedisklabel(dev, strat, lp, osdep)
 			 * need sector address for SCSI/IDE,
 			 * cylinder for ESDI/ST506/RLL
 			 */
-			dospartoff = dp->dp_start;
-			cyl = DPCYL(dp->dp_scyl, dp->dp_ssect);
+			dospartoff = dp2->dp_start;
+			cyl = DPCYL(dp2->dp_scyl, dp2->dp_ssect);
 		}
 	}
 	
