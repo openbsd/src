@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.2 1996/03/03 21:07:20 niklas Exp $	*/
+/*	$OpenBSD: route.h,v 1.3 1998/02/22 01:23:29 niklas Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -228,11 +228,12 @@ struct route_cb {
 };
 
 #ifdef _KERNEL
-#define	RTFREE(rt) \
+#define	RTFREE(rt) do { \
 	if ((rt)->rt_refcnt <= 1) \
 		rtfree(rt); \
 	else \
-		(rt)->rt_refcnt--;
+		(rt)->rt_refcnt--; \
+} while (0)
 
 struct	route_cb route_cb;
 struct	rtstat	rtstat;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.14 1997/11/06 05:59:02 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.15 1998/02/22 01:21:31 niklas Exp $	*/
 /*	$NetBSD: nfs_serv.c,v 1.25 1996/03/02 15:55:52 jtk Exp $	*/
 
 /*
@@ -1777,45 +1777,27 @@ nfsrv_rename(nfsd, slp, procp, mrq)
 	tvp = tond.ni_vp;
 	if (tvp != NULL) {
 		if (fvp->v_type == VDIR && tvp->v_type != VDIR) {
-			if (v3)
-				error = EEXIST;
-			else
-				error = EISDIR;
+			error = v3 ? EEXIST : EISDIR;
 			goto out;
 		} else if (fvp->v_type != VDIR && tvp->v_type == VDIR) {
-			if (v3)
-				error = EEXIST;
-			else
-				error = ENOTDIR;
+			error = v3 ? EEXIST : ENOTDIR;
 			goto out;
 		}
 		if (tvp->v_type == VDIR && tvp->v_mountedhere) {
-			if (v3)
-				error = EXDEV;
-			else
-				error = ENOTEMPTY;
+			error = v3 ? EXDEV : ENOTEMPTY;
 			goto out;
 		}
 	}
 	if (fvp->v_type == VDIR && fvp->v_mountedhere) {
-		if (v3)
-			error = EXDEV;
-		else
-			error = ENOTEMPTY;
+		error = v3 ? EXDEV : ENOTEMPTY;
 		goto out;
 	}
 	if (fvp->v_mount != tdvp->v_mount) {
-		if (v3)
-			error = EXDEV;
-		else
-			error = ENOTEMPTY;
+		error = v3 ? EXDEV : ENOTEMPTY;
 		goto out;
 	}
 	if (fvp == tdvp)
-		if (v3)
-			error = EINVAL;
-		else
-			error = ENOTEMPTY;
+		error = v3 ? EINVAL : ENOTEMPTY;
 	/*
 	 * If source is the same as the destination (that is the
 	 * same vnode with the same name in the same directory),

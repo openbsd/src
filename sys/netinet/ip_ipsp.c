@@ -1,5 +1,5 @@
 
-/*	$OpenBSD: ip_ipsp.c,v 1.23 1997/11/04 09:11:15 provos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.24 1998/02/22 01:23:33 niklas Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -264,6 +264,7 @@ handle_expirations(void *arg)
 	
 	/* Soft expirations */
 	if (tdb->tdb_flags & TDBF_SOFT_TIMER)
+	{
 	  if (tdb->tdb_soft_timeout <= time.tv_sec)
 	  {
 	      encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb);
@@ -277,9 +278,11 @@ handle_expirations(void *arg)
 		  encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb);
 		  tdb->tdb_flags &= ~TDBF_SOFT_FIRSTUSE;
 	      }
-	
+	}
+
 	/* Hard expirations */
 	if (tdb->tdb_flags & TDBF_TIMER)
+	{
 	  if (tdb->tdb_exp_timeout <= time.tv_sec)
 	  {
 	      encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb);
@@ -293,6 +296,7 @@ handle_expirations(void *arg)
 		  encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb);
 		  tdb_delete(tdb, 0);
 	      }
+	}
 
 	free(exp, M_TDB);
     }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_new.c,v 1.15 1998/01/21 18:43:33 provos Exp $	*/
+/*	$OpenBSD: ip_esp_new.c,v 1.16 1998/02/22 01:23:32 niklas Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -808,6 +808,7 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
 
     /* Notify on expiration */
     if (tdb->tdb_flags & TDBF_SOFT_PACKETS)
+    {
       if (tdb->tdb_cur_packets >= tdb->tdb_soft_packets)
       {
 	  encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb);
@@ -820,8 +821,10 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
 	      encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb);
 	      tdb->tdb_flags &= ~TDBF_SOFT_BYTES;
 	  }
-    
+    }
+
     if (tdb->tdb_flags & TDBF_PACKETS)
+    {
       if (tdb->tdb_cur_packets >= tdb->tdb_exp_packets)
       {
 	  encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb);
@@ -834,6 +837,7 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
 	      encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb);
 	      tdb_delete(tdb, 0);
 	  }
+    }
 
     return m;
 }
@@ -1097,6 +1101,7 @@ esp_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 
     /* Notify on expiration */
     if (tdb->tdb_flags & TDBF_SOFT_PACKETS)
+    {
       if (tdb->tdb_cur_packets >= tdb->tdb_soft_packets)
       {
 	  encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb);
@@ -1109,8 +1114,10 @@ esp_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 	      encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb);
 	      tdb->tdb_flags &= ~TDBF_SOFT_BYTES;
 	  }
-    
+    }
+
     if (tdb->tdb_flags & TDBF_PACKETS)
+    {
       if (tdb->tdb_cur_packets >= tdb->tdb_exp_packets)
       {
 	  encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb);
@@ -1123,6 +1130,7 @@ esp_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 	      encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb);
 	      tdb_delete(tdb, 0);
 	  }
+    }
 
     return 0;
 }	

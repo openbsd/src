@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_var.h,v 1.7 1997/11/06 05:59:04 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_var.h,v 1.8 1998/02/22 01:21:32 niklas Exp $	*/
 /*	$NetBSD: nfs_var.h,v 1.3 1996/02/18 11:53:54 fvdl Exp $	*/
 
 /*
@@ -60,6 +60,7 @@ struct componentname;
 struct nfsd_srvargs;
 struct nfsrv_descript;
 struct nfs_fattr;
+union nethostaddr;
 
 /* nfs_bio.c */
 int nfs_bioread __P((struct vnode *, struct uio *, int, struct ucred *));
