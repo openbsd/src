@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # ex:ts=8 sw=4:
 
-# $OpenBSD: makewhatis.pl,v 1.18 2001/03/14 10:58:05 espie Exp $
+# $OpenBSD: makewhatis.pl,v 1.19 2001/04/03 16:33:49 espie Exp $
 #
 # Copyright (c) 2000 Marc Espie.
 # 
@@ -157,6 +157,9 @@ sub add_unformated_subject
     s/\\\(tm/(tm)/g;
 	# font changes
     s/\\f[BIRP]//g;
+    	# fine space adjustments
+    while (s/\\[vh]\'.*?\'//g)
+    	{}
     unless (s/\s+\\-\s+/ ($section) - / || s/\\\-/($section) -/ ||
     	s/\s-\s/ ($section) - /) {
 	print STDERR "Weird subject line in $filename:\n$_\n" if $picky;
