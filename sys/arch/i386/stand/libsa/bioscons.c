@@ -1,4 +1,4 @@
-/*	$OpenBSD: bioscons.c,v 1.1 1997/08/12 21:39:01 mickey Exp $	*/
+/*	$OpenBSD: bioscons.c,v 1.2 1997/08/12 23:34:21 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -66,19 +66,18 @@ kbd_getc(dev)
 	dev_t dev;
 {
 	u_int8_t rv;
-	__asm volatile("movb $1, %%ah\n\t"
-		       DOINT(0x16) "\n\t"
-		       "setz %%al"
-		       : "=a" (rv) :: "%ecx", "%edx", "cc" );
-	if (rv)
-		return 0;
 
-	if (minor(dev) & 0x80)
-		return 1;
+	if (dev & 0x80) {
+		__asm volatile("movb $1, %%ah\n\t"
+			       DOINT(0x16) "\n\t"
+			       "setnz %%al"
+			       : "=a" (rv) :: "%ecx", "%edx", "cc" );
+		return rv;
+	}
 
-	__asm volatile("xorl %%eax, %%eax\n\t"
-		       DOINT(0x16) "\n\t"
-		       : "=a" (rv) :: "%ecx", "edx", "cc" );
+	__asm __volatile("xorl %%eax, %%eax\n\t"
+			 DOINT(0x16)
+			 : "=a" (rv) :: "%ecx", "edx", "cc" );
 	return rv;
 }
 
@@ -87,10 +86,9 @@ kbd_putc(dev, c)
 	dev_t dev;
 	int c;
 {
-	__asm volatile("movb $0x0e, %%ah\n\t"
-		       "movl $0, %%ebx\n\t"
+	__asm __volatile("movb $0x0e, %%ah\n\t"
 		       DOINT(0x10)
-		       :: "a" (c) : "%ecx", "%edx", "cc" );
+		       :: "a" (c), "b" (0) : "%ecx", "%edx", "cc" );
 }
 
 void
@@ -98,7 +96,7 @@ com_probe(cn)
 	struct consdev *cn;
 {
 	register int i, n;
-	__asm volatile(DOINT(0x11) "\n\t" /* get equipment (9-11 # of coms) */
+	__asm __volatile(DOINT(0x11) "\n\t" /* get equipment (9-11 # of coms) */
 		       : "=a" (n) :: "%ecx", "%edx", "cc");
 	n >>= 9;
 	n &= 7;
