@@ -1,4 +1,4 @@
-.\"	$NetBSD: dm.8,v 1.3 1995/03/21 15:09:04 cgd Exp $
+.\"	$OpenBSD: dm.8,v 1.2 1998/09/06 12:14:04 pjanzen Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,7 +48,7 @@ is a program used to regulate game playing.
 .Nm Dm
 expects to be invoked with the name of a game that a user wishes to play.
 This is done by creating symbolic links to
-.Nm dm ,
+.Nm dm
 in the directory
 .Pa /usr/games
 for all of the regulated games.
@@ -57,7 +57,7 @@ The actual binaries for these games should be placed in a
 directory,
 .Pa /usr/games/hide ,
 that may only be accessed by the
-.Nm dm
+.Nm
 program.
 .Nm Dm
 determines if the requested game is available and, if so, runs it.
@@ -80,32 +80,32 @@ configuration file
 .It Pa /etc/nogames
 turns off game playing
 .It Pa /usr/games/hide
-directory of ``real'' binaries
+directory of actual binaries
 .It Pa /var/log/games.log
-game logging file
+game logging file (if logging was compiled in)
 .El
 .Sh SEE ALSO
 .Xr dm.conf 5
-.Sh BUGS
-Two problems result from
-.Nm dm
-running the games setuid
-.Dq games .
-First, all games that allow users to run
-.Tn UNIX
-commands should carefully
-set both the real and effective user id's immediately before executing
-those commands.  Probably more important is that
-.Nm dm
-never be setuid
-anything but
-.Dq games
-so that compromising a game will result only in
-the user's ability to play games at will.  Secondly, games which previously
-had no reason to run setuid and which accessed user files may have to
-be modified.
 .Sh HISTORY
 The
-.Nm dm
+.Nm
 command appeared in
 .Bx 4.3 tahoe .
+.Sh SECURITY CONSIDERATIONS
+Some issues arise from
+.Nm
+running the games setgid
+.Dq games .
+All games that allow users to run
+.Ux
+commands should carefully
+set both the real and effective group id's before executing
+those commands.
+Probably more important is that
+.Nm
+never be setgid anything but
+.Dq games
+so that compromising a game will result only in
+the user's ability to play games at will.
+Also, games which previously had no reason to run setgid and which
+accessed user files may have to be modified.
