@@ -1,4 +1,4 @@
-.\"	$OpenBSD: files.conf.5,v 1.4 2003/03/04 21:32:22 david Exp $
+.\"	$OpenBSD: files.conf.5,v 1.5 2003/04/02 20:44:18 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Miodrag Vallat.
 .\" All rights reserved.
@@ -92,7 +92,7 @@ such as
 cards not using interrupts
 .Pc ,
 or which can autoconfigure themselves
-.Po 
+.Po
 such as
 .Xr pci 4
 devices
@@ -132,7 +132,7 @@ The syntax
 .El
 defines a simple attribute, which can be later used to factorize
 code dependencies.
-An attachment-like attribute will also require locators to be specified, 
+An attachment-like attribute will also require locators to be specified,
 such as
 .Bl -item -offset indent -compact
 .It
@@ -246,7 +246,7 @@ keyword:
 .It
 .Em include "dev/pci/files.pci"
 .El
-will include the rules for machine-independent pci code.
+will include the rules for machine-independent PCI code.
 .Pp
 The files
 .Pa sys/arch/machine/conf/files.machine ,
