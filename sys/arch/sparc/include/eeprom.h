@@ -1,4 +1,4 @@
-/*	$OpenBSD: eeprom.h,v 1.5 1996/08/13 08:05:27 downsj Exp $	*/
+/*	$OpenBSD: eeprom.h,v 1.6 1996/08/16 16:28:25 ccappuc Exp $	*/
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -348,6 +348,15 @@ struct eeprom {
 };
 
 #define EEPROM_BASE     0xffd04000
+
+/*
+ * The size of the eeprom on machines with the old clock is 2k.  However,
+ * on machines with the new clock (and the `eeprom' in the nvram area)
+ * there are only 2040 bytes available. (???).  Since we really only
+ * care about the `diagnostic' area, we'll use it's size when dealing
+ * with the eeprom in general.
+ */
+#define EEPROM_SIZE             0x500
 
 #ifdef _KERNEL
 extern	char *eeprom_va;
