@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_new.c,v 1.50 1999/12/06 08:55:03 angelos Exp $	*/
+/*	$OpenBSD: ip_esp_new.c,v 1.51 1999/12/06 22:33:29 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -442,45 +442,50 @@ esp_new_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	if (!(m1->m_flags & M_PKTHDR))
 	  m->m_pkthdr.len -= (2 * sizeof(u_int32_t) + tdb->tdb_ivlen);
     }
+    if (roff + 2 * sizeof(u_int32_t) + tdb->tdb_ivlen >= m1->m_len)
+    {
+	/*
+	 * Part or all of the ESP header is at the end of this mbuf, so first
+	 * let's remove the remainder of the ESP header from the
+	 * begining of the remainder of the mbuf chain, if any.
+	 */
+	if (roff + 2 * sizeof(u_int32_t) + tdb->tdb_ivlen > m1->m_len)
+	{
+	    /* Adjust the next mbuf by the remainder */
+	    m_adj(m1->m_next, roff + 2 * sizeof(u_int32_t) +
+		  tdb->tdb_ivlen - m1->m_len);
+
+	    /* The second mbuf is guaranteed not to have a pkthdr... */
+	    m->m_pkthdr.len -= roff + 2 * sizeof(u_int32_t) + tdb->tdb_ivlen -
+			       m1->m_len;
+	}
+
+	/* Now, let's unlink the mbuf chain for a second...*/
+	mo = m1->m_next;
+	m1->m_next = NULL;
+
+	/* ...and trim the end of the first part of the chain...sick */
+	m_adj(m1, -(m1->m_len - roff));
+	if (!(m1->m_flags & M_PKTHDR))
+	  m->m_pkthdr.len -= (m1->m_len - roff);
+
+	/* Finally, let's relink */
+	m1->m_next = mo;
+    }
     else
-      if (roff + 2 * sizeof(u_int32_t) + tdb->tdb_ivlen > m1->m_len)
-      {
-	  /*
-	   * Part of the ESP header is at the end of this mbuf, so first
-	   * let's remove the remainder of the ESP header from the
-	   * begining of the remainder of the mbuf chain.
-	   */
-	  m_adj(m1->m_next, roff + 2 * sizeof(u_int32_t) +
-		tdb->tdb_ivlen - m1->m_len);
-	  m->m_pkthdr.len -= roff + 2 * sizeof(u_int32_t) + tdb->tdb_ivlen -
-			     m1->m_len;
-
-	  /* Now, let's unlink the mbuf chain for a second...*/
-	  mo = m1->m_next;
-	  m1->m_next = NULL;
-
-	  /* ...and trim the end of the first part of the chain...sick */
-	  m_adj(m1, -(m1->m_len - roff));
-	  if (!(m1->m_flags & M_PKTHDR))
-	    m->m_pkthdr.len -= (m1->m_len - roff);
-
-	  /* Finally, let's relink */
-	  m1->m_next = mo;
-      }
-      else
-      {
-	  /* 
-	   * The ESP header lies in the "middle" of the mbuf...do an
-	   * overlapping copy of the remainder of the mbuf over the ESP
-	   * header.
-	   */
-	  bcopy(mtod(m1, u_char *) + roff + 2 * sizeof(u_int32_t) +
-		tdb->tdb_ivlen,
-		mtod(m1, u_char *) + roff,
-		m1->m_len - (roff + 2 * sizeof(u_int32_t) + tdb->tdb_ivlen));
-	  m1->m_len -= (2 * sizeof(u_int32_t) + tdb->tdb_ivlen);
-	  m->m_pkthdr.len -= (2 * sizeof(u_int32_t) + tdb->tdb_ivlen);
-      }
+    {
+	/* 
+	 * The ESP header lies in the "middle" of the mbuf...do an
+	 * overlapping copy of the remainder of the mbuf over the ESP
+	 * header.
+	 */
+	bcopy(mtod(m1, u_char *) + roff + 2 * sizeof(u_int32_t) +
+	      tdb->tdb_ivlen,
+	      mtod(m1, u_char *) + roff,
+	      m1->m_len - (roff + 2 * sizeof(u_int32_t) + tdb->tdb_ivlen));
+	m1->m_len -= (2 * sizeof(u_int32_t) + tdb->tdb_ivlen);
+	m->m_pkthdr.len -= (2 * sizeof(u_int32_t) + tdb->tdb_ivlen);
+    }
 
     /* Point to the encrypted data */
     idat = mtod(mi, unsigned char *) + (mi->m_len - ilen);
