@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dc.4,v 1.1 1999/12/08 22:35:34 aaron Exp $
+.\"	$OpenBSD: dc.4,v 1.2 2000/01/10 08:14:11 deraadt Exp $
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ee.columbia.edu>. All rights reserved.
 .\"
@@ -134,7 +134,7 @@ driver supports the following media types:
 Enable autoselection of the media type and options.
 The user can manually override
 the autoselected mode by adding media options to the
-.Pa /etc/rc.conf
+.Xr hostname.if 5
 file.
 .Pp
 Note: the built-in NWAY autonegotiation on the original PNIC 82c168
@@ -265,7 +265,7 @@ driver was written by
 .An Bill Paul Aq wpaul@ee.columbia.edu .
 .Sh BUGS
 The Macronix application notes claim that in order to put the
-chips in normal operation, the driver must write a certian magic
+chips in normal operation, the driver must write a certain magic
 number into the CSR16 register. The numbers are documented in
 the app notes, but the exact meaning of the bits is not.
 .Pp

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ste.4,v 1.1 1999/12/07 01:45:29 aaron Exp $
+.\"	$OpenBSD: ste.4,v 1.2 2000/01/10 08:14:11 deraadt Exp $
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
 .\"
@@ -64,8 +64,8 @@ driver supports the following media types:
 Enable autoselection of the media type and options.
 The user can manually override
 the autoselected mode by adding media options to the
-.Pa /etc/rc.conf
-fine.
+.Xr hostname.if 5
+file.
 .It 10baseT/UTP
 Set 10Mbps operation. The
 .Ar mediaopt
