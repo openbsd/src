@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.3 1996/03/14 08:09:49 tholo Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.4 1996/07/29 06:22:14 tholo Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -99,6 +99,9 @@ tcp_fasttimo()
 void
 tcp_slowtimo()
 {
+#ifndef TCP_COMPAT_42
+	u_int random __P((void));
+#endif /* !TCP_COMPAT_42 */
 	register struct inpcb *ip, *ipnxt;
 	register struct tcpcb *tp;
 	int s;
@@ -137,11 +140,13 @@ tcp_slowtimo()
 tpgone:
 		;
 	}
-	tcp_iss += TCP_ISSINCR/PR_SLOWHZ;		/* increment iss */
 #ifdef TCP_COMPAT_42
+	tcp_iss += TCP_ISSINCR/PR_SLOWHZ;		/* increment iss */
 	if ((int)tcp_iss < 0)
 		tcp_iss = 0;				/* XXX */
-#endif
+#else /* TCP_COMPAT_42 */
+	tcp_iss += random() % (TCP_ISSINCR / PR_SLOWHZ) + 1; /* increment iss */
+#endif /* !TCP_COMPAT_42 */
 	tcp_now++;					/* for timestamps */
 	splx(s);
 }

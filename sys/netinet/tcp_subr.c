@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.5 1996/05/15 09:32:01 mickey Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.6 1996/07/29 06:22:14 tholo Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -91,8 +91,13 @@ int	tcbhashsize = TCBHASHSIZE;
 void
 tcp_init()
 {
-
+#ifdef TCP_COMPAT_42
 	tcp_iss = 1;		/* wrong */
+#else /* TCP_COMPAT_42 */
+	u_int random __P((void));
+
+	tcp_iss = random() + 1;
+#endif /* !TCP_COMPAT_42 */
 	in_pcbinit(&tcbtable, tcbhashsize);
 	if (max_protohdr < sizeof(struct tcpiphdr))
 		max_protohdr = sizeof(struct tcpiphdr);

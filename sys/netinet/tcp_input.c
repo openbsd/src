@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.3 1996/03/03 22:30:45 niklas Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.4 1996/07/29 06:22:12 tholo Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -243,6 +243,9 @@ tcp_input(m, va_alist)
 	register struct mbuf *m;
 #endif
 {
+#ifndef TCP_COMPAT_42
+	u_int random __P((void));
+#endif /* !TCP_COMPAT_42 */
 	register struct tcpiphdr *ti;
 	register struct inpcb *inp;
 	caddr_t optp = NULL;
@@ -619,7 +622,11 @@ findpcb:
 			tp->iss = iss;
 		else
 			tp->iss = tcp_iss;
+#ifdef TCP_COMPAT_42
 		tcp_iss += TCP_ISSINCR/2;
+#else /* TCP_COMPAT_42 */
+		tcp_iss += random() % (TCP_ISSINCR / 2) + 1;
+#endif /* !TCP_COMPAT_42 */
 		tp->irs = ti->ti_seq;
 		tcp_sendseqinit(tp);
 		tcp_rcvseqinit(tp);

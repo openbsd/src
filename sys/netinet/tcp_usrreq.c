@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.4 1996/07/25 09:46:12 deraadt Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.5 1996/07/29 06:22:15 tholo Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -85,6 +85,9 @@ tcp_usrreq(so, req, m, nam, control)
 	int req;
 	struct mbuf *m, *nam, *control;
 {
+#ifndef TCP_COMPAT_42
+	u_int random __P((void));
+#endif /* !TCP_COMPAT_42 */
 	register struct inpcb *inp;
 	register struct tcpcb *tp = NULL;
 	int s;
@@ -210,7 +213,12 @@ tcp_usrreq(so, req, m, nam, control)
 		tcpstat.tcps_connattempt++;
 		tp->t_state = TCPS_SYN_SENT;
 		tp->t_timer[TCPT_KEEP] = TCPTV_KEEP_INIT;
-		tp->iss = tcp_iss; tcp_iss += TCP_ISSINCR/2;
+		tp->iss = tcp_iss;
+#ifdef TCP_COMPAT_42
+		tcp_iss += TCP_ISSINCR/2;
+#else /* TCP_COMPAT_42 */
+		tcp_iss += random() % (TCP_ISSINCR / 2) + 1;
+#endif /* !TCP_COMPAT_42 */
 		tcp_sendseqinit(tp);
 		error = tcp_output(tp);
 		break;
