@@ -6,7 +6,7 @@ divert(-1)
 # Note that lines beginning with "dnl" below are comments.
 
 divert(0)dnl
-VERSIONID(`@(#)openbsd-proto.mc $Revision: 1.8 $')dnl
+VERSIONID(`@(#)openbsd-proto.mc $Revision: 1.9 $')dnl
 OSTYPE(openbsd)dnl
 dnl
 dnl If you have a non-static IP address you may wish to forward outgoing mail
@@ -99,7 +99,7 @@ dnl define(`confCLIENT_KEY', `CERT_DIR/mykey.pem')dnl
 dnl
 dnl Masquerading -- rewriting the From address to a specific domain.
 dnl Please see the "MASQUERADING AND RELAYING" section of
-dnl /usr/share/sendmail/cf/cf/README for details.
+dnl /usr/share/sendmail/README for details.
 dnl
 dnl MASQUERADE_AS(`mycompany.com')dnl
 dnl
