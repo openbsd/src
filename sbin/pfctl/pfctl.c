@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.96 2002/12/04 08:07:28 deraadt Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.97 2002/12/05 12:26:55 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -403,7 +403,7 @@ pfctl_get_pool(int dev, struct pf_pool *pool, u_int32_t nr,
 	pp.r_num = nr;
 	pp.ticket = ticket;
 	if (ioctl(dev, DIOCGETADDRS, &pp)) {
-		warnx("DIOCGETADDRS");
+		warn("DIOCGETADDRS");
 		return (-1);
 	}
 	mpnr = pp.nr;
@@ -411,7 +411,7 @@ pfctl_get_pool(int dev, struct pf_pool *pool, u_int32_t nr,
 	for (pnr = 0; pnr < mpnr; ++pnr) {
 		pp.nr = pnr;
 		if (ioctl(dev, DIOCGETADDR, &pp)) {
-			warnx("DIOCGETADDR");
+			warn("DIOCGETADDR");
 			return (-1);
 		}
 		pa = calloc(1, sizeof(struct pf_pooladdr));
@@ -444,14 +444,14 @@ pfctl_show_rules(int dev, int opts, int format)
 	u_int32_t nr, mnr;
 
 	if (ioctl(dev, DIOCGETRULES, &pr)) {
-		warnx("DIOCGETRULES");
+		warn("DIOCGETRULES");
 		return (-1);
 	}
 	mnr = pr.nr;
 	for (nr = 0; nr < mnr; ++nr) {
 		pr.nr = nr;
 		if (ioctl(dev, DIOCGETRULE, &pr)) {
-			warnx("DIOCGETRULE");
+			warn("DIOCGETRULE");
 			return (-1);
 		}
 
@@ -496,14 +496,14 @@ pfctl_show_altq(int dev)
 		return (-1);
 
 	if (ioctl(dev, DIOCGETALTQS, &pa)) {
-		warnx("DIOCGETALTQS");
+		warn("DIOCGETALTQS");
 		return (-1);
 	}
 	mnr = pa.nr;
 	for (nr = 0; nr < mnr; ++nr) {
 		pa.nr = nr;
 		if (ioctl(dev, DIOCGETALTQ, &pa)) {
-			warnx("DIOCGETALTQ");
+			warn("DIOCGETALTQ");
 			return (-1);
 		}
 		pfctl_insert_altq_node(&root, pa.altq);
@@ -523,14 +523,14 @@ pfctl_show_nat(int dev)
 	u_int32_t mnr, nr;
 
 	if (ioctl(dev, DIOCGETNATS, &pn)) {
-		warnx("DIOCGETNATS");
+		warn("DIOCGETNATS");
 		return (-1);
 	}
 	mnr = pn.nr;
 	for (nr = 0; nr < mnr; ++nr) {
 		pn.nr = nr;
 		if (ioctl(dev, DIOCGETNAT, &pn)) {
-			warnx("DIOCGETNAT");
+			warn("DIOCGETNAT");
 			return (-1);
 		}
 		if (pfctl_get_pool(dev, &pn.nat.rpool, nr,
@@ -540,14 +540,14 @@ pfctl_show_nat(int dev)
 		pfctl_clear_pool(&pn.nat.rpool);
 	}
 	if (ioctl(dev, DIOCGETRDRS, &pr)) {
-		warnx("DIOCGETRDRS");
+		warn("DIOCGETRDRS");
 		return (-1);
 	}
 	mnr = pr.nr;
 	for (nr = 0; nr < mnr; ++nr) {
 		pr.nr = nr;
 		if (ioctl(dev, DIOCGETRDR, &pr)) {
-			warnx("DIOCGETRDR");
+			warn("DIOCGETRDR");
 			return (-1);
 		}
 		if (pfctl_get_pool(dev, &pr.rdr.rpool, nr,
@@ -557,14 +557,14 @@ pfctl_show_nat(int dev)
 		pfctl_clear_pool(&pr.rdr.rpool);
 	}
 	if (ioctl(dev, DIOCGETBINATS, &pb)) {
-		warnx("DIOCGETBINATS");
+		warn("DIOCGETBINATS");
 		return (-1);
 	}
 	mnr = pb.nr;
 	for (nr = 0; nr < mnr; ++nr) {
 		pb.nr = nr;
 		if (ioctl(dev, DIOCGETBINAT, &pb)) {
-			warnx("DIOCGETBINAT");
+			warn("DIOCGETBINAT");
 			return (-1);
 		}
 		print_binat(&pb.binat);
@@ -589,7 +589,7 @@ pfctl_show_states(int dev, u_int8_t proto, int opts)
 				err(1, "realloc");
 		}
 		if (ioctl(dev, DIOCGETSTATES, &ps) < 0) {
-			warnx("DIOCGETSTATES");
+			warn("DIOCGETSTATES");
 			return (-1);
 		}
 		if (ps.ps_len + sizeof(struct pfioc_state) < len)
@@ -617,7 +617,7 @@ pfctl_show_status(int dev)
 	struct pf_status status;
 
 	if (ioctl(dev, DIOCGETSTATUS, &status)) {
-		warnx("DIOCGETSTATUS");
+		warn("DIOCGETSTATUS");
 		return (-1);
 	}
 	print_status(&status);
