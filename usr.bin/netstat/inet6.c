@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.23 2002/06/09 04:07:10 jsyn Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.24 2002/10/26 18:56:53 itojun Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-/*__RCSID("$OpenBSD: inet6.c,v 1.23 2002/06/09 04:07:10 jsyn Exp $");*/
+/*__RCSID("$OpenBSD: inet6.c,v 1.24 2002/10/26 18:56:53 itojun Exp $");*/
 /*__RCSID("KAME Id: inet6.c,v 1.10 2000/02/09 10:49:31 itojun Exp");*/
 #endif
 #endif /* not lint */
@@ -1015,7 +1015,7 @@ rip6_stats(off, name)
 #define	p(f, m) if (rip6stat.f || sflag <= 1) \
     printf(m, (unsigned long long)rip6stat.f, plural(rip6stat.f))
 	p(rip6s_ipackets, "\t%llu message%s received\n");
-	p(rip6s_isum, "\t%llu checksum calcuration%s on inbound\n");
+	p(rip6s_isum, "\t%llu checksum calculation%s on inbound\n");
 	p(rip6s_badsum, "\t%llu message%s with bad checksum\n");
 	p(rip6s_nosock, "\t%llu message%s dropped due to no socket\n");
 	p(rip6s_nosockmcast,
