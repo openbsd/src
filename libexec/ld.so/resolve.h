@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.16 2002/08/11 16:51:04 drahn Exp $ */
+/*	$OpenBSD: resolve.h,v 1.17 2002/08/23 22:57:03 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -134,7 +134,29 @@ extern int  _dl_md_reloc(elf_object_t *object, int rel, int relsz);
 extern void _dl_md_reloc_got(elf_object_t *object, int lazy);
 
 Elf_Addr _dl_find_symbol(const char *name, elf_object_t *startlook,
-	    const Elf_Sym **ref, int myself, int warnnotfound, int inplt);
+    const Elf_Sym **ref, int flags, int sym_size);
+/*
+ * defines for _dl_find_symbol() flag field, three bits of meaning
+ * myself 	- clear: search all objects,	set: search only this object
+ * warnnotfound - clear: no warning, 		set: warn if not found
+ * inplt	- clear: possible plt ref	set: real matching function.
+ *
+ * inplt - due to how ELF handles function addresses in shared libraries
+ * &func may actually refer to the plt entry in the main program
+ * rather than the actual function address in the .so file.
+ * This rather bizarre behavior is documented in the SVR4 ABI.
+ * when getting the function address to relocate a PLT entry
+ * the 'real' function address is necessary, not the possible PLT address.
+ */
+/* myself */
+#define SYM_SEARCH_ALL		0
+#define SYM_SEARCH_SELF		1
+/* warnnotfound */
+#define SYM_NOWARNNOTFOUND	0
+#define SYM_WARNNOTFOUND	2
+/* inplt */
+#define SYM_NOTPLT		0
+#define SYM_PLT			4
 
 void _dl_rtld(elf_object_t *object);
 void _dl_call_init(elf_object_t *object);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.12 2002/08/11 16:51:04 drahn Exp $ */
+/*	$OpenBSD: resolve.c,v 1.13 2002/08/23 22:57:03 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -175,9 +175,10 @@ _dl_lookup_object(const char *name)
 
 Elf_Addr
 _dl_find_symbol(const char *name, elf_object_t *startlook,
-    const Elf_Sym **ref, int myself, int warnnotfound, int inplt)
+    const Elf_Sym **ref, int flags, int req_size)
 {
 	const Elf_Sym *weak_sym = 0;
+	const char *weak_symn = ""; /* remove warning */
 	Elf_Addr weak_offs = 0;
 	unsigned long h = 0;
 	const char *p = name;
@@ -191,10 +192,13 @@ _dl_find_symbol(const char *name, elf_object_t *startlook,
 		h &= ~g;
 	}
 
-	for (object = startlook; object; object = (myself ? 0 : object->next)) {
+	for (object = startlook;
+	    object;
+	    object = ((flags & SYM_SEARCH_SELF) ? 0 : object->next)) {
 		const Elf_Sym	*symt = object->dyn.symtab;
 		const char	*strt = object->dyn.strtab;
 		long	si;
+		const char *symn;
 
 		for (si = object->buckets[h % object->nbuckets];
 		    si != STN_UNDEF; si = object->chains[si]) {
@@ -208,29 +212,47 @@ _dl_find_symbol(const char *name, elf_object_t *startlook,
 			    ELF_ST_TYPE(sym->st_info) != STT_FUNC)
 				continue;
 
+			symn = strt + sym->st_name;
 			if (sym != *ref &&
-			    _dl_strcmp(strt + sym->st_name, name))
+			    _dl_strcmp(symn, name))
 				continue;
 
+			/* allow this symbol if we are referring to a function
+			 * which has a value, even if section is UNDEF.
+			 * this allows &func to refer to PLT as per the
+			 * ELF spec. st_value is checked above.
+			 * if flags has SYM_PLT set, we must have actual
+			 * symbol, so this symbol is skipped.
+			 */
 			if (sym->st_shndx == SHN_UNDEF)  {
-				if ((inplt || sym->st_value == 0 ||
-				    ELF_ST_TYPE(sym->st_info) != STT_FUNC)) {
+				if ((flags & SYM_PLT) || sym->st_value == 0 ||
+				    ELF_ST_TYPE(sym->st_info) != STT_FUNC) {
 					continue;
 				}
 			}
 
 			if (ELF_ST_BIND(sym->st_info) == STB_GLOBAL) {
 				*ref = sym;
+				if (req_size != sym->st_size &&
+				    req_size != 0 &&
+				    (ELF_ST_TYPE(sym->st_info) != STT_FUNC)) {
+					_dl_printf("%s: %s : WARNING: "
+					    "symbol(%s) size mismatch ",
+					    _dl_progname, object->load_name,
+					    symn);
+					_dl_printf("relink your program\n");
+				}
 				return(object->load_offs);
 			} else if (ELF_ST_BIND(sym->st_info) == STB_WEAK) {
 				if (!weak_sym) {
 					weak_sym = sym;
+					weak_symn = symn;
 					weak_offs = object->load_offs;
 				}
 			}
 		}
 	}
-	if (warnnotfound) {
+	if (flags & SYM_WARNNOTFOUND) {
 		if (!weak_sym && *ref &&
 		    ELF_ST_BIND((*ref)->st_info) != STB_WEAK) {
 			_dl_printf("%s: undefined symbol '%s'\n",
@@ -238,5 +260,13 @@ _dl_find_symbol(const char *name, elf_object_t *startlook,
 		}
 	}
 	*ref = weak_sym;
+	if (weak_sym && req_size != weak_sym->st_size &&
+	    req_size != 0 && (ELF_ST_TYPE(weak_sym->st_info) != STT_FUNC)) {
+		_dl_printf("%s: %s : WARNING: "
+		    "symbol(%s) size mismatch ",
+		    _dl_progname, object->load_name,
+		    weak_symn);
+		_dl_printf("relink your program\n");
+	}
 	return(weak_offs);
 }

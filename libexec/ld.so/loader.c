@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.47 2002/08/12 01:05:23 drahn Exp $ */
+/*	$OpenBSD: loader.c,v 1.48 2002/08/23 22:57:03 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -255,7 +255,8 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 		Elf_Addr ooff;
 
 		sym = NULL;
-		ooff = _dl_find_symbol("atexit", _dl_objects, &sym, 0, 0, 1);
+		ooff = _dl_find_symbol("atexit", _dl_objects, &sym,
+		    SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|SYM_PLT, 0);
 		if (sym == NULL) {
 			_dl_printf("cannot find atexit, destructors will not be run!\n");
 		} else {
@@ -529,14 +530,16 @@ _dl_call_init(elf_object_t *object)
  * XXX that should be fixed.
  */
 	sym = NULL;
-	ooff = _dl_find_symbol("__CTOR_LIST__", object, &sym, 1, 1, 1);
+	ooff = _dl_find_symbol("__CTOR_LIST__", object, &sym,
+	    SYM_SEARCH_SELF|SYM_WARNNOTFOUND|SYM_PLT, 0);
 	if (sym != NULL) {
 		int i = *(int *)(sym->st_value + ooff);
 		while (i--)
 			*(int *)(sym->st_value + ooff + 4 + 4 * i) += ooff;
 	}
 	sym = NULL;
-	ooff = _dl_find_symbol("__DTOR_LIST__", object, &sym, 1, 1, 1);
+	ooff = _dl_find_symbol("__DTOR_LIST__", object, &sym,
+	    SYM_SEARCH_SELF|SYM_WARNNOTFOUND|SYM_PLT, 0);
 	if (sym != NULL) {
 		int i = *(int *)(sym->st_value + ooff);
 		while (i--)
@@ -549,7 +552,8 @@ _dl_call_init(elf_object_t *object)
  * XXX Instead we rely on a symbol named '.init' and call it if it exists.
  */
 	sym = NULL;
-	ooff = _dl_find_symbol(".init", object, &sym, 1, 1, 1);
+	ooff = _dl_find_symbol(".init", object, &sym,
+	    SYM_SEARCH_SELF|SYM_WARNNOTFOUND|SYM_PLT, 0);
 	if (sym != NULL) {
 		DL_DEB(("calling .init in '%s'\n",object->load_name));
 		(*(void(*)(void))(sym->st_value + ooff))();
@@ -577,8 +581,9 @@ _dl_getenv(const char *var, char **env)
 		if (*vp == '\0' && *ep++ == '=')
 			return((char *)ep);
 	}
-	return(0);
+	return(NULL);
 }
+
 static void
 _dl_unsetenv(const char *var, char **env)
 {

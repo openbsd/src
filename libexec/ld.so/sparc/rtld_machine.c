@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.6 2002/08/11 16:51:04 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.7 2002/08/23 22:57:03 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -254,8 +254,11 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 			} else {
 				this = NULL;
 				ooff = _dl_find_symbol(symn,
-				    _dl_objects, &this, 0, 1,
-				    type == R_TYPE(JMP_SLOT));
+				    _dl_objects, &this,
+				    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|
+				    ((type == R_TYPE(JMP_SLOT)) ?
+					SYM_PLT : SYM_NOTPLT),
+				    sym->st_size);
 				if (this == NULL) {
 resolve_failed:
 					_dl_printf("%s: %s: can't resolve "
@@ -267,20 +270,6 @@ resolve_failed:
 					continue;
 				}
 				value += (Elf_Addr)(ooff + this->st_value);
-#ifdef notyet
-/*
- * XXX Hmm, we should change the API of _dl_find_symbol and do this in there,
- * XXX or maybe make a wrapper.
- */
-				if (this->st_size != sym->st_size &&
-				    sym->st_size != 0) {
-					_dl_printf("%s: %s : WARNING: "
-					    "symbol(%s) size mismatch ",
-					    _dl_progname, object->load_name,
-					    symn);
-					_dl_printf("relink your program\n");
-				}
-#endif
 			}
 		}
 
@@ -292,7 +281,9 @@ resolve_failed:
 			Elf_Addr soff;
 
 			soff = _dl_find_symbol(symn, object->next, &srcsym,
-				0, 2, 0);
+			    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|
+			    ((type == R_TYPE(JMP_SLOT)) ? SYM_PLT : SYM_NOTPLT),
+			    size);
 			if (srcsym == NULL)
 				goto resolve_failed;
 
@@ -349,7 +340,8 @@ _dl_bind(elf_object_t *object, Elf_Word reloff)
 	symn = object->dyn.strtab + sym->st_name;
 
 	addr = (Elf_Addr *)(object->load_offs + rela->r_offset);
-	ooff = _dl_find_symbol(symn, _dl_objects, &this, 0, 1, 1);
+	ooff = _dl_find_symbol(symn, _dl_objects, &this,
+	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, 0);
 	if (this == NULL) {
 		_dl_printf("lazy binding failed!\n");
 		*((int *)0) = 0;	/* XXX */
