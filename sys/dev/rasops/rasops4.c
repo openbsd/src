@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops4.c,v 1.4 2002/07/27 22:17:49 miod Exp $	*/
+/*	$OpenBSD: rasops4.c,v 1.5 2002/07/27 22:18:20 miod Exp $	*/
 /*	$NetBSD: rasops4.c,v 1.4 2001/11/15 09:48:15 lukem Exp $	*/
 
 /*-
@@ -490,6 +490,6 @@ rasops4_putchar16(cookie, row, col, uc, attr)
  * Grab routines common to depths where (bpp < 8)
  */
 #define NAME(ident)	rasops4_##ident
-#define PIXEL_SHIFT	3
+#define PIXEL_SHIFT	2
 
 #include <dev/rasops/rasops_bitops.h>
