@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.11 2004/01/29 04:20:34 drahn Exp $	*/
+/*	$OpenBSD: param.h,v 1.12 2004/02/07 23:27:32 millert Exp $	*/
 /*	$NetBSD: param.h,v 1.6 1996/04/01 21:47:57 mark Exp $	*/
 
 /*
@@ -61,41 +61,12 @@
  * Should be set to 1 if the difference of two pointers is of type long
  * or the value of sizeof is of type unsigned long.
  */
-#ifdef __alpha__
+#ifdef __LP64__
 #define PTRDIFF_IS_LONG		1
 #define SIZEOF_IS_ULONG		1
-#elif __i386__
-#define PTRDIFF_IS_LONG		0
-#define SIZEOF_IS_ULONG		0
-#elif __hppa__
-#define PTRDIFF_IS_LONG		0
-#define SIZEOF_IS_ULONG		0
-#elif __m68k__
-#define PTRDIFF_IS_LONG		0
-#define SIZEOF_IS_ULONG		0
-#elif __mips__
-#define PTRDIFF_IS_LONG		0
-#define SIZEOF_IS_ULONG		0
-#elif __ns32k__
-#define PTRDIFF_IS_LONG		0
-#define SIZEOF_IS_ULONG		0
-#elif __sparc__
-#define PTRDIFF_IS_LONG		0
-#define SIZEOF_IS_ULONG		0
-#elif __vax__
-#define PTRDIFF_IS_LONG         0
-#define SIZEOF_IS_ULONG         0
-#elif __arm__
-#define PTRDIFF_IS_LONG		0
-#define SIZEOF_IS_ULONG		0
-#elif __powerpc__
-#define PTRDIFF_IS_LONG		0
-#define SIZEOF_IS_ULONG		0
-#elif __m88k__
-#define PTRDIFF_IS_LONG		0
-#define SIZEOF_IS_ULONG		0
 #else
-#error unknown machine type
+#define PTRDIFF_IS_LONG		0
+#define SIZEOF_IS_ULONG		0
 #endif
 
 /*
