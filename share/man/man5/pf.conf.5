@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.214 2003/03/10 14:15:02 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.215 2003/03/12 00:49:49 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -185,18 +185,17 @@ table <badhosts> persist
 block on fxp0 from { <private>, <badhosts> } to any
 .Ed
 .Pp
-creates a table called private, and then blocks all traffic coming from
-RFC 1918 style private network blocks.
-Later, addresses may be added to the rule with the following commands, so that
-traffic from these hosts can be dropped:
+creates a table called private, to hold RFC 1918 private network
+blocks, and a table called badhosts, which is initially empty.
+A filter rule is set up to block all traffic coming from addresses listed in
+either table.
+The private table cannot have its contents changed and the badhosts table
+will exist even when no active filter rules reference it.
+Addresses may later be added to the badhosts table, so that traffic from
+these hosts can be blocked by using
 .Bd -literal -offset indent
 # pfctl -t badhosts -Tadd 204.92.77.111
 .Ed
-.Pp
-When no active rules which refer to the badhosts table exist (such as when the
-rules are flushed), the
-.Ar persist
-keyword ensures that the table will not be lost.
 .Pp
 A table can also be initialized with an address list specified in one or more
 external files, using the following syntax:
@@ -205,8 +204,14 @@ table <spam> persist file \&"/etc/spammers\&" file \&"/etc/openrelays\&"
 block on fxp0 from <spam> to any
 .Ed
 .Pp
-In addition to being specified by IP address, hosts may also be specified
-by their hostname.
+The files
+.Pa /etc/spammers
+and
+.Pa /etc/openrelays
+list IP addresses, one per line.
+Any lines beginning with a # are treated as comments and ignored.
+In addition to being specified by IP address, hosts may also be
+specified by their hostname.
 When the resolver is called to add a hostname to a table,
 .Em all
 resulting IPv4 and IPv6 addresses are placed into the table.
@@ -549,7 +554,7 @@ Each
 .Ar queue
 has a unique
 .Ar priority
-assigned, ranging from 0 to 7.
+assigned, ranging from 0 to 15.
 Packets in the
 .Ar queue
 with the highest
@@ -561,29 +566,52 @@ The interfaces on which queueing should be activated are declared using
 the
 .Ar altq on
 declaration.
-The
-.Ar scheduler
-type is required.
-The maximum rate for all queues on this interface is specified using the
+.Ar altq on
+has the following keywords:
+.Bl -tag -width xxxx
+.It Ar <interface>
+Queueing is enabled on the named interface.
+.It Ar <scheduler>
+Specifies which queueing scheduler to use.
+Currently supported values
+are
+.Ar cbq
+for Class Based Queueing and
+.Ar priq
+for Priority Queueing.
+.It Ar bandwidth <bw>
+The maximum bitrate for all queues on an 
+interface may be specified using the
 .Ar bandwidth
-directive; if not specified the interface's bandwidth is used.
-The value must not exceed the interface bandwidth and can be specified
-in absolute and percentage values, where the latter is relative to the
-interface bandwidth.
-The maximum number of packets in this queue is specified using the
-.Ar qlimit
-directive.
-Token bucket regulator size may be adjusted using the
-.Ar tbrsize
-directive.
-If not given, heuristics based on the interface bandwidth are used.
-All sub-queues for this interface have to be listed after the
-.Ar queue
-directive.
+keyword.
+The value can be specified as an absolute value or as a
+percentage of the interface bandwidth.
+When using an absolute value, the suffixes
+.Ar b , 
+.Ar Kb , 
+.Ar Mb , 
+and 
+.Ar Gb 
+are used to represent bytes, kilobytes, megabytes, and
+gigabytes, respectively.
+The value must not exceed the interface bandwidth.  
+If 
+.Ar bandwidth
+is not specified, the interface bandwidth is used.
+.It Ar qlimit <limit>
+The maximum number of packets held in the queue.
+The default is 50.
+.It Ar tbrsize <size>
+Adjusts the size, in bytes, of the token bucket regulator.
+If not specified, heuristics based on the 
+interface bandwidth are used to determine the size.
+.It Ar queue <list>
+Defines a list of subqueues to create on an interface.
+.El
 .Pp
 In the following example, the interface dc0
 should queue up to 5 Mbit/s in four second-level queues using
-.Ar cbq .
+Class Based Queueing.
 Those four queues will be shown in a later example.
 .Bd -literal -offset indent
 altq on dc0 cbq bandwidth 5Mb queue { std, http, mail, ssh }
@@ -596,7 +624,7 @@ directive, a sequence of
 directives may be defined.
 The name associated with a
 .Ar queue
-must match a listed rule in the
+must match a queue defined in the
 .Ar altq
 directive (e.g. mail), or, for the
 .Ar cbq
@@ -604,23 +632,34 @@ directive (e.g. mail), or, for the
 in a parent
 .Ar queue
 declaration.
-The maximum bitrate to be processed by this queue is established using the
-.Ar bandwidth
-keyword.
+The following keywords can be used:
+.Bl -tag -width xxxx
+.It Ar bandwidth <bw>
+Specifies the maximum bitrate to be processed by the queue.
 This value must not exceed the value of the parent
 .Ar queue
-and can be specified as an absolute value or a percentage of the
-parent's bandwidth.
+and can be specified as an absolute value or a percentage of the parent
+queue's bandwidth.
+The
 .Ar priq
-does not support a bandwidth specification.
-Between queues a
-.Ar priority
-level can also be set.
-The range is 0..7 with a default of 1.
-Queues with a higher priority level are preferred in the case of overload.
-The maximum number of packets in a queue can be limited using the
-.Ar qlimit
-keyword.
+scheduler does not support bandwidth specification.
+.It Ar priority <level>
+Between queues a priority level can be set.
+For
+.Ar cbq ,
+the range is 0 to 7 and for
+.Ar priq ,
+the range is 0 to 15.
+The default for both is 1. 
+.Ar Priq 
+queues with a higher priority are always served first.
+.Ar Cbq
+queues with a higher priority are preferred in the case of overload.
+.It Ar qlimit <limit>
+The maximum number of packets held in the queue.
+The default is 50.
+.El
+.Pp
 The
 .Ar scheduler
 can get additional parameters with
@@ -668,7 +707,7 @@ Normally only one
 .Ar queue
 is specified; when a second one is specified it will instead be used for
 packets which have a
-.Em tos
+.Em TOS
 of
 .Em lowdelay
 and for TCP ACKs with no data payload.
@@ -711,7 +750,8 @@ pass out on dc0 inet proto tcp from any to any port 25 \e
 Translation rules modify either the source or destination address of the
 packets associated with a stateful connection.
 A stateful connection is automatically created to track packets matching
-such a rule.
+such a rule as long as they are not blocked by the filtering section of
+.Nm pf.conf .
 The translation engine modifies the specified address and/or port in the
 packet, recalculates IP, TCP and UDP checksums as necessary, and passes it to
 the packet filter for evaluation.
@@ -812,17 +852,21 @@ should be used as redirection target instead, which allows external
 connections only to daemons bound to this address or not bound to
 any address.
 .Pp
+See
+.Sx TRANSLATION EXAMPLES
+below.
+.Pp
 .Sh PACKET FILTERING
 .Xr pf 4
 has the ability to
 .Ar block
 and
 .Ar pass
-packets based on attributes of their layer 2 (see
+packets based on attributes of their layer 3 (see
 .Xr ip 4
 and
 .Xr ip6 4 Ns )
-and layer 3 (see
+and layer 4 (see
 .Xr icmp 4 ,
 .Xr icmp6 4 ,
 .Xr tcp 4 ,
@@ -883,6 +927,10 @@ block all
 .Ed
 .Pp
 as the first filter rule.
+.Pp
+See
+.Sx FILTER EXAMPLES
+below.
 .Sh PARAMETERS
 The rule parameters specify the packets to which a rule applies.
 A packet always comes in on, or goes out through, one interface.
@@ -1778,6 +1826,24 @@ rdr on kue0 inet proto udp from any to (kue0) port 8080 -> 10.1.2.151 \e
 # translate outgoing ftp control connections to send them to localhost
 # for proxying with ftp-proxy(8) running on port 8081
 rdr on fxp0 proto tcp from any to any port 21 -> 127.0.0.1 port 8081
+.Pp
+In this example, a NAT gateway is set up to translate internal addresses
+using a pool of public addresses (192.0.2.16/28) and to redirect
+incoming web server connections to a group of web servers on the internal
+network.
+Interface fxp0 is the external interface.
+.Pp
+# NAT LOAD BALANCE
+# translate outgoing packets' source addresses using an address pool.  A
+# given source address is always translated to the same pool address by
+# using the source-hash keyword.
+nat on fxp0 inet from any to any -> 192.0.2.16/28 source-hash
+.Pp
+# RDR ROUND ROBIN
+# translate incoming web server connections to a group of web servers on
+# the internal network
+rdr on fxp0 proto tcp from any to any port 80 \e
+      -> { 10.1.2.155, 10.1.2.160, 10.1.2.161 } round-robin
 .Ed
 .Sh FILTER EXAMPLES
 .Bd -literal
