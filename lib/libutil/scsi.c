@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.3 2001/09/05 22:32:36 deraadt Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.4 2001/09/06 01:36:04 deraadt Exp $	*/
 
 /* Copyright (c) 1994 HD Associates
  * (contact: dufault@hda.com)
@@ -390,7 +390,10 @@ int scsireq_buff_decode(u_char *buff, size_t len, char *fmt, ...)
 int scsireq_buff_decode_visit(u_char *buff, size_t len, char *fmt,
 void (*arg_put)(void *, int, void *, int, char *), void *puthook)
 {
-	return do_buff_decode(buff, len, arg_put, puthook, fmt, NULL);
+	va_list ap;
+
+	/* XXX */
+	return do_buff_decode(buff, len, arg_put, puthook, fmt, ap);
 }
 
 /* next_field: Return the next field in a command specifier.  This
