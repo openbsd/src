@@ -1,5 +1,5 @@
-/*	$OpenBSD: sa.h,v 1.7 1999/03/02 15:48:23 niklas Exp $	*/
-/*	$EOM: sa.h,v 1.42 1999/03/02 15:42:58 niklas Exp $	*/
+/*	$OpenBSD: sa.h,v 1.8 1999/03/31 00:52:27 niklas Exp $	*/
+/*	$EOM: sa.h,v 1.43 1999/03/30 21:46:19 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -154,6 +154,9 @@ struct sa {
 /* Establish the SA when it is needed.  */
 #define SA_FLAG_ONDEMAND	4
 
+/* This SA has been replaced by another newer one.  */
+#define SA_FLAG_REPLACED	8
+
 extern void proto_free (struct proto *proto);
 extern int sa_add_transform (struct sa *, struct payload *, int,
 			     struct proto **);
@@ -170,6 +173,7 @@ extern struct sa *sa_lookup (u_int8_t *, u_int8_t *);
 extern struct sa *sa_lookup_by_header (u_int8_t *, int);
 extern struct sa *sa_lookup_by_name (char *, int);
 extern struct sa *sa_lookup_from_icookie (u_int8_t *);
+extern void sa_mark_replaced (struct sa *);
 extern void sa_soft_expire (struct sa *);
 extern void sa_hard_expire (struct sa *);
 extern void sa_report (void);
