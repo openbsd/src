@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.35 1998/03/10 20:43:17 millert Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.36 1998/08/04 21:26:35 millert Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -1098,9 +1098,9 @@ ccdiodone(vbp)
 		 * Note that mirror component buffers aren't counted against
 		 * the original I/O buffer.
 		 */
-		bp->b_resid -= count;
-		if (bp->b_resid < 0)
+		if (count > bp->b_resid)
 			panic("ccdiodone: count");
+		bp->b_resid -= count;
 		if (bp->b_resid == 0)
 			ccdintr(&ccd_softc[unit], bp);
 	}
