@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2002/05/11 00:20:18 espie Exp $
+# $OpenBSD: Makefile,v 1.9 2002/06/09 19:05:40 hin Exp $
 
 LIB	= krb
 
@@ -7,7 +7,7 @@ KRBDEPTH=../..
 
 INCLUDE_FILES	= ${KRBSRC}/lib/krb/{krb.h,krb-protos.h,prot.h} krb_err.h
 
-.PATH:	${KRBSRC}/lib/krb ${KRBSRC}/lib/roken ${KRBSRC}/lib/des
+.PATH:	${KRBSRC}/lib/krb ${KRB5SRC}/lib/roken ${KRBSRC}/lib/des
 
 CFLAGS	+= -I${KRBSRC}/lib/des -I${KRBSRC}/lib/krb -I${BSDSRCDIR}/lib/libcom_err
 
