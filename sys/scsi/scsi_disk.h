@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_disk.h,v 1.13 2002/12/15 20:53:33 krw Exp $	*/
+/*	$OpenBSD: scsi_disk.h,v 1.14 2003/06/24 22:42:07 mickey Exp $	*/
 /*	$NetBSD: scsi_disk.h,v 1.10 1996/07/05 16:19:05 christos Exp $	*/
 
 /*
@@ -310,10 +310,9 @@ union scsi_disk_pages {
 		u_int8_t head_unload;	/* head unload delay */
 		u_int8_t pin_34_2;	/* pin 34 (6) pin 2 (7/11) definition */
 		u_int8_t pin_4_1;	/* pin 4 (8/9) pin 1 (13) definition */
+		u_int8_t rpm[2];	/* media rotation speed */
 		u_int8_t reserved1;
 		u_int8_t reserved2;
-		u_int8_t reserved3;
-		u_int8_t reserved4;
 	} flex_geometry;
 	struct page_reduced_geometry {
 		u_int8_t pg_code;	/* page code (should be 6) */

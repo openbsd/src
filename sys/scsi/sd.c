@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.61 2003/05/21 23:43:58 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.62 2003/06/24 22:42:07 mickey Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1023,7 +1023,7 @@ sdgetdisklabel(dev, sd, lp, clp, spoofonly)
 	bcopy(packname, lp->d_packname, len);
 
 	lp->d_secperunit = sd->params.disksize;
-	lp->d_rpm = 3600;
+	lp->d_rpm = sd->params.rot_rate;
 	lp->d_interleave = 1;
 	lp->d_flags = 0;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd_scsi.c,v 1.4 2002/09/04 23:07:28 tdeval Exp $	*/
+/*	$OpenBSD: sd_scsi.c,v 1.5 2003/06/24 22:42:07 mickey Exp $	*/
 /*	$NetBSD: sd_scsi.c,v 1.8 1998/10/08 20:21:13 thorpej Exp $	*/
 
 /*-
@@ -107,7 +107,7 @@ sd_scsibus_mode_sense(sd, scsi_sense, page, flags)
 	bzero(&scsi_cmd, sizeof(scsi_cmd));
 	scsi_cmd.opcode = MODE_SENSE;
 	scsi_cmd.page = page;
-	scsi_cmd.length = 0x20;
+	scsi_cmd.length = sizeof(*scsi_sense);
 	/*
 	 * If the command worked, use the results to fill out
 	 * the parameter structure
@@ -179,10 +179,10 @@ sd_scsibus_get_parms(sd, dp, flags)
 	struct sd_scsibus_mode_sense_data scsi_sense;
 	union scsi_disk_pages *sense_pages;
 	u_long sectors;
-	int page;
-	int error;
+	int page, error;
+	u_int16_t rpm;
 
-	dp->rot_rate = 3600;		/* XXX any way of getting this? */
+	dp->rot_rate = 3600;
 
 	/*
 	 * If offline, the SDEV_MEDIA_LOADED flag will be
@@ -213,6 +213,9 @@ sd_scsibus_get_parms(sd, dp, flags)
 		 */
 		dp->heads = sense_pages->rigid_geometry.nheads;
 		dp->cyls = _3btol(sense_pages->rigid_geometry.ncyl);
+		rpm = _2btol(scsi_sense.pages.rigid_geometry.rpm);
+		if (rpm)
+			dp->rot_rate = rpm;
 		if (scsi_sense.header.blk_desc_len >= 8)
 			dp->blksize = _3btol(scsi_sense.blk_desc.blklen);
 		else
@@ -239,6 +242,9 @@ sd_scsibus_get_parms(sd, dp, flags)
 		     (size_t)scsi_sense.header.blk_desc_len);
 		dp->heads = sense_pages->flex_geometry.nheads;
 		dp->cyls = _2btol(sense_pages->flex_geometry.ncyl);
+		rpm  = _2btol(scsi_sense.pages.flex_geometry.rpm);
+		if (rpm)
+			dp->rot_rate = rpm;
 		if (scsi_sense.header.blk_desc_len >= 8)
 			dp->blksize = _3btol(scsi_sense.blk_desc.blklen);
 		else
@@ -303,6 +309,7 @@ fake_it:
 	dp->cyls = sectors / (64 * 32);
 	dp->blksize = 512;
 	dp->disksize = sectors;
+
 	return (SDGP_RESULT_OK);
 }
 
