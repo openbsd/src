@@ -209,6 +209,9 @@ file arch/powerpc/mac/gpio.c			gpio
 attach wdc at obio with wdc_obio
 file arch/powerpc/mac/wdc_obio.c		wdc_obio
 
+attach wi at obio with wi_obio
+file	arch/powerpc/mac/if_wi_obio.c		wi_obio
+
 define grfdev {}
 
 device grfati: grfdev
