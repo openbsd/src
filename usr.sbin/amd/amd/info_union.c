@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)info_union.c	8.1 (Berkeley) 6/6/93
- *	$Id: info_union.c,v 1.4 2002/07/18 00:50:23 pvalchev Exp $
+ *	$Id: info_union.c,v 1.5 2002/07/18 02:14:45 deraadt Exp $
  */
 
 /*
@@ -64,17 +64,20 @@
 /*
  * No way to probe - check the map name begins with "union:"
  */
-int union_init(char *map, time_t *tp)
+int
+union_init(char *map, time_t *tp)
 {
 	*tp = 0;
 	return strncmp(map, UNION_PREFIX, UNION_PREFLEN) == 0 ? 0 : ENOENT;
 }
 
-int union_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp)
+int
+union_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp)
 {
 	char *mapd = strdup(map + UNION_PREFLEN);
 	char **v = strsplit(mapd, ':', '\"');
 	char **p;
+
 	for (p = v; p[1]; p++)
 		;
 	*pval = xmalloc(strlen(*p) + 5);
@@ -84,7 +87,8 @@ int union_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp)
 	return 0;
 }
 
-int union_reload(mnt_map *m, char *map, void (*fn)())
+int
+union_reload(mnt_map *m, char *map, void (*fn)())
 {
 	char *mapd = strdup(map + UNION_PREFLEN);
 	char **v = strsplit(mapd, ':', '\"');
@@ -93,12 +97,14 @@ int union_reload(mnt_map *m, char *map, void (*fn)())
 	/*
 	 * Add fake /defaults entry
 	 */
-	(*fn)(m, strdup("/defaults"), strdup("type:=link;opts:=nounmount;sublink:=${key}"));
+	(*fn)(m, strdup("/defaults"),
+	    strdup("type:=link;opts:=nounmount;sublink:=${key}"));
 
 	for (dir = v; *dir; dir++) {
-		int dlen;
-		DIRENT *dp;
 		DIR *dirp = opendir(*dir);
+		DIRENT *dp;
+		int dlen;
+
 		if (!dirp) {
 			plog(XLOG_USER, "Cannot read directory %s: %m", *dir);
 			continue;
@@ -109,9 +115,10 @@ int union_reload(mnt_map *m, char *map, void (*fn)())
 #endif
 		while ((dp = readdir(dirp))) {
 			char *val;
+
 			if (dp->d_name[0] == '.' &&
-					(dp->d_name[1] == '\0' ||
-					(dp->d_name[1] == '.' && dp->d_name[2] == '\0')))
+			    (dp->d_name[1] == '\0' ||
+			    (dp->d_name[1] == '.' && dp->d_name[2] == '\0')))
 				continue;
 
 #ifdef DEBUG
@@ -123,12 +130,15 @@ int union_reload(mnt_map *m, char *map, void (*fn)())
 		}
 		closedir(dirp);
 	}
+
 	/*
 	 * Add wildcard entry
 	 */
-	{ char *val = xmalloc(strlen(dir[-1]) + 5);
-	  snprintf(val, strlen(dir[-1]) + 5, "fs:=%s", dir[-1]);
-	  (*fn)(m, strdup("*"), val);
+	{
+		char *val = xmalloc(strlen(dir[-1]) + 5);
+
+		snprintf(val, strlen(dir[-1]) + 5, "fs:=%s", dir[-1]);
+		(*fn)(m, strdup("*"), val);
 	}
 	free(mapd);
 	free(v);

@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)info_passwd.c	8.1 (Berkeley) 6/6/93
- *	$Id: info_passwd.c,v 1.5 2002/07/18 02:03:00 deraadt Exp $
+ *	$Id: info_passwd.c,v 1.6 2002/07/18 02:14:45 deraadt Exp $
  */
 
 /*
@@ -56,7 +56,8 @@
 /*
  * Nothing to probe - check the map name is PASSWD_MAP.
  */
-int passwd_init(char *map, time_t *tp)
+int
+passwd_init(char *map, time_t *tp)
 {
 	*tp = 0;
 	return strcmp(map, PASSWD_MAP) == 0 ? 0 : ENOENT;
@@ -67,10 +68,12 @@ int passwd_init(char *map, time_t *tp)
  * Grab the entry via the getpwname routine
  * Modify time is ignored by passwd - XXX
  */
-int passwd_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp)
+int
+passwd_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp)
 {
-	char *dir = 0;
 	struct passwd *pw;
+	char *dir = 0;
+
 	if (strcmp(key, "/defaults") == 0) {
 		*pval = strdup("type:=nfs");
 		return 0;
@@ -88,10 +91,9 @@ int passwd_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp)
 		 * This allows cross-domain entries in your passwd file.
 		 * ... but forget about security!
 		 */
-		char *user;
-		char *p, *q;
-		char val[MAXPATHLEN];
-		char rhost[MAXHOSTNAMELEN];
+		char val[MAXPATHLEN], rhost[MAXHOSTNAMELEN];
+		char *user, *p, *q;
+
 		dir = strdup(pw->pw_dir);
 		/*
 		 * Find user name.  If no / then Invalid...
@@ -123,6 +125,7 @@ int passwd_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp)
 				strlcat(rhost, p, sizeof(rhost));
 			}
 		} while (q);
+
 		/*
 		 * Sanity check
 		 */
@@ -134,8 +137,9 @@ int passwd_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp)
 		q = strchr(rhost, '.');
 		if (q)
 			*q = '\0';
-		snprintf(val, sizeof(val), "rfs:=%s/%s;rhost:=%s;sublink:=%s;fs:=${autodir}%s",
-			dir, rhost, rhost, user, pw->pw_dir);
+		snprintf(val, sizeof(val),
+		    "rfs:=%s/%s;rhost:=%s;sublink:=%s;fs:=${autodir}%s",
+		    dir, rhost, rhost, user, pw->pw_dir);
 		if (q)
 			*q = '.';
 		*pval = strdup(val);

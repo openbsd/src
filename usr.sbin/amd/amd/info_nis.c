@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)info_nis.c	8.1 (Berkeley) 6/6/93
- *	$Id: info_nis.c,v 1.6 2002/07/18 02:03:00 deraadt Exp $
+ *	$Id: info_nis.c,v 1.7 2002/07/18 02:14:45 deraadt Exp $
  */
 
 /*
@@ -60,9 +60,10 @@ static int has_yp_order = FALSE;
 /*
  * Figure out the nis domain name
  */
-static int determine_nis_domain(P_void)
+static int
+determine_nis_domain(P_void)
 {
-static	int nis_not_running = 0;
+	static int nis_not_running = 0;
 
 	char default_domain[YPMAXDOMAIN];
 
@@ -97,8 +98,9 @@ struct nis_callback_data {
 /*
  * Callback from yp_all
  */
-static int callback(int status, char *key, int kl, char *val,
-	int vl, struct nis_callback_data *data)
+static int
+callback(int status, char *key, int kl, char *val,
+    int vl, struct nis_callback_data *data)
 {
 	if (status == YP_TRUE) {
 		/*
@@ -106,6 +108,7 @@ static int callback(int status, char *key, int kl, char *val,
 		 */
 		char *kp = strnsave(key, kl);
 		char *vp = strnsave(val, vl);
+
 		(*data->ncd_fn)(data->ncd_m, kp, vp);
 
 		/*
@@ -124,17 +127,18 @@ static int callback(int status, char *key, int kl, char *val,
 
 #ifdef DEBUG
 			plog(XLOG_ERROR, "yp enumeration of %s: %s, status=%d, e=%d",
-					data->ncd_map, yperr_string(e), status, e);
+			    data->ncd_map, yperr_string(e), status, e);
 #else
-			plog(XLOG_ERROR, "yp enumeration of %s: %s", data->ncd_map, yperr_string(e));
+			plog(XLOG_ERROR, "yp enumeration of %s: %s",
+			    data->ncd_map, yperr_string(e));
 #endif
 		}
-
 		return TRUE;
 	}
 }
 
-int nis_reload(mnt_map *m, char *map, void (*fn)())
+int
+nis_reload(mnt_map *m, char *map, void (*fn)())
 {
 	struct ypall_callback cbinfo;
 	int error;
@@ -155,7 +159,8 @@ int nis_reload(mnt_map *m, char *map, void (*fn)())
 	error = yp_all(domain, map, &cbinfo);
 
 	if (error)
-		plog(XLOG_ERROR, "error grabbing nis map of %s: %s", map, yperr_string(ypprot_err(error)));
+		plog(XLOG_ERROR, "error grabbing nis map of %s: %s",
+		    map, yperr_string(ypprot_err(error)));
 
 	return error;
 }
@@ -164,11 +169,12 @@ int nis_reload(mnt_map *m, char *map, void (*fn)())
 /*
  * Try to locate a key using NIS.
  */
-int nis_search(mnt_map *m, char *map, char *key, char **val, time_t *tp)
+int
+nis_search(mnt_map *m, char *map, char *key, char **val, time_t *tp)
 {
 	int outlen;
-	int res;
 	int order;
+	int res;
 
 	/*
 	 * Make sure domain initialised
@@ -237,7 +243,8 @@ int nis_search(mnt_map *m, char *map, char *key, char **val, time_t *tp)
 	}
 }
 
-int nis_init(char *map, time_t *tp)
+int
+nis_init(char *map, time_t *tp)
 {
 	int order;
 	int yp_order_result;
@@ -245,6 +252,7 @@ int nis_init(char *map, time_t *tp)
 
 	if (!domain) {
 		int error = determine_nis_domain();
+
 		if (error)
 			return error;
 	}

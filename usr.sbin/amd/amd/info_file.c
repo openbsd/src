@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)info_file.c	8.1 (Berkeley) 6/6/93
- *	$Id: info_file.c,v 1.2 2002/07/18 00:50:23 pvalchev Exp $
+ *	$Id: info_file.c,v 1.3 2002/07/18 02:14:45 deraadt Exp $
  */
 
 /*
@@ -51,17 +51,20 @@
 
 #define	MAX_LINE_LEN	2048
 
-static int read_line(char *buf, int size, FILE *fp)
+static int
+read_line(char *buf, int size, FILE *fp)
 {
 	int done = 0;
 
 	do {
 		while (fgets(buf, size, fp)) {
 			int len = strlen(buf);
+
 			done += len;
 			if (len > 1 && buf[len-2] == '\\' &&
-					buf[len-1] == '\n') {
+			    buf[len-1] == '\n') {
 				int ch;
+
 				buf += len - 2;
 				size -= len - 2;
 				*buf = '\n'; buf[1] = '\0';
@@ -69,22 +72,23 @@ static int read_line(char *buf, int size, FILE *fp)
 				 * Skip leading white space on next line
 				 */
 				while ((ch = getc(fp)) != EOF &&
-					isascii(ch) && isspace(ch))
-						;
+				    isascii(ch) && isspace(ch))
+					;
 				(void) ungetc(ch, fp);
 			} else {
 				return done;
 			}
 		}
 	} while (size > 0 && !feof(fp));
-
 	return done;
 }
 
 /*
  * Try to locate a key in a file
  */
-static int search_or_reload_file(FILE *fp, char *map, char *key, char **val, mnt_map *m, void (*fn)(mnt_map *m, char*, char*))
+static int
+search_or_reload_file(FILE *fp, char *map, char *key, char **val, mnt_map *m,
+    void (*fn)(mnt_map *m, char*, char*))
 {
 	char key_val[MAX_LINE_LEN];
 	int chuck = 0;
@@ -95,13 +99,15 @@ static int search_or_reload_file(FILE *fp, char *map, char *key, char **val, mnt
 		char *cp;
 		char *hash;
 		int len = strlen(key_val);
+
 		line_no++;
 
 		/*
 		 * Make sure we got the whole line
 		 */
 		if (key_val[len-1] != '\n') {
-			plog(XLOG_WARNING, "line %d in \"%s\" is too long", line_no, map);
+			plog(XLOG_WARNING, "line %d in \"%s\" is too long",
+			    line_no, map);
 			chuck = 1;
 		} else {
 			key_val[len-1] = '\0';
@@ -157,7 +163,8 @@ static int search_or_reload_file(FILE *fp, char *map, char *key, char **val, mnt
 				if (!fn)
 					return 0;
 			} else {
-				plog(XLOG_USER, "%s: line %d has no value field", map, line_no);
+				plog(XLOG_USER, "%s: line %d has no value field",
+				    map, line_no);
 			}
 		}
 
@@ -168,7 +175,7 @@ again:
 		 */
 		if (chuck) {
 			while (fgets(key_val, sizeof(key_val), fp) &&
-				!strchr(key_val, '\n'))
+			    !strchr(key_val, '\n'))
 					;
 			chuck = 0;
 		}
@@ -177,11 +184,14 @@ again:
 	return fn ? 0 : ENOENT;
 }
 
-static FILE *file_open(char *map, time_t *tp)
+static FILE *
+file_open(char *map, time_t *tp)
 {
 	FILE *mapf = fopen(map, "r");
+
 	if (mapf && tp) {
 		struct stat stb;
+
 		if (fstat(fileno(mapf), &stb) < 0)
 			*tp = clocktime();
 		else
@@ -190,9 +200,11 @@ static FILE *file_open(char *map, time_t *tp)
 	return mapf;
 }
 
-int file_init(char *map, time_t *tp)
+int
+file_init(char *map, time_t *tp)
 {
 	FILE *mapf = file_open(map, tp);
+
 	if (mapf) {
 		(void) fclose(mapf);
 		return 0;
@@ -200,9 +212,11 @@ int file_init(char *map, time_t *tp)
 	return errno;
 }
 
-int file_reload(mnt_map *m, char *map, void (*fn)())
+int
+file_reload(mnt_map *m, char *map, void (*fn)())
 {
 	FILE *mapf = file_open(map, (time_t *) 0);
+
 	if (mapf) {
 		int error = search_or_reload_file(mapf, map, 0, 0, m, fn);
 		(void) fclose(mapf);
@@ -212,10 +226,12 @@ int file_reload(mnt_map *m, char *map, void (*fn)())
 	return errno;
 }
 
-int file_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp)
+int
+file_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp)
 {
 	time_t t;
 	FILE *mapf = file_open(map, &t);
+
 	if (mapf) {
 		int error;
 		if (*tp < t) {
@@ -231,9 +247,11 @@ int file_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp)
 	return errno;
 }
 
-int file_mtime(char *map, time_t *tp)
+int
+file_mtime(char *map, time_t *tp)
 {
 	FILE *mapf = file_open(map, tp);
+
 	if (mapf) {
 		(void) fclose(mapf);
 		return 0;
