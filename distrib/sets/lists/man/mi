@@ -608,6 +608,7 @@
 ./usr/share/man/cat5/remote.0
 ./usr/share/man/cat5/resolv.conf.0
 ./usr/share/man/cat5/rpc.0
+./usr/share/man/cat5/rpcauth.0
 ./usr/share/man/cat5/securenet.0
 ./usr/share/man/cat5/services.0
 ./usr/share/man/cat5/shells.0
