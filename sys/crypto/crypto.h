@@ -159,6 +159,7 @@ extern int crypto_unregister(u_int32_t, int);
 extern int32_t crypto_get_driverid(void);
 extern void crypto_thread(void);
 extern int crypto_invoke(struct cryptop *);
+extern void crypto_done(struct cryptop *);
 
 struct mbuf;
 int	mbuf2pages(struct mbuf *, int *, long *, int *, int, int *);
