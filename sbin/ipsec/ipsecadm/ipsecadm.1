@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.1,v 1.14 1998/07/17 17:44:15 angelos Exp $
+.\" $OpenBSD: ipsecadm.1,v 1.15 1998/08/01 06:12:19 angelos Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -100,6 +100,18 @@ hashes will be used for authentication. Allowed modifiers are:
 .Fl auth ,
 and
 .Fl key .
+.It ip4
+Setup an SPI which uses the IP-in-IP encapsulation protocol. This mode
+offers no security services by itself, but can be used to route other
+(experimental or otherwise) protocols over an IP network. The SPI value
+is not used for anything other than referencing the information, and
+does not appear on the wire. Unlike other setups, like new esp, there
+is no necessary setup in the receiving side. Allowed modifiers are:
+.Fl dst ,
+.Fl src ,
+.Fl spi ,
+and
+.Fl tunnel .
 .It delspi
 The specified Security Association (SA) will be deleted. An SA consists of
 the destination address, SPI and security protocol. Allowed modifiers are:
@@ -217,6 +229,8 @@ or
 to uniquely specify the SA.
 The default value is 50 which means
 .Nm IPPROTO_ESP .
+One can also specify the symbolic names "esp", "ah", and "ip4",
+case insensitive.
 .It chain
 Delete the whole SPI chain, otherwise delete only the SPI given.
 .It dst2
@@ -230,20 +244,30 @@ The second security protocol used by
 .Nm group .
 It defaults to
 .Nm IPPROTO_AH .
+One can also specify the symbolic names "esp", "ah", and "ip4",
+case insensitive.
 .It addr
 The source address, source network mask, destination address and destination
 network mask against which packets need to match to use the specified
 Security Association.
 .It transport
 The protocol number which packets need to match to use the specified
-Security Association. Per default the protocol number is not used for
-matching.
+Security Association. By default the protocol number is not used for
+matching. Instead of a number, a valid protocol name that appears in
+.Xr protocols 5
+can be used.
 .It sport
 The source port which packets have to match for the flow.
-Per default the source port is not used for matching.
+By default the source port is not used for matching.
+Instead of a number, a valid service name that appears in
+.Xr services 5
+can be used.
 .It dport
 The destination port which packets have to match for the flow.
-Per default the source port is not used for matching.
+By default the source port is not used for matching.
+Instead of a number, a valid service name that appears in
+.Xr services 5
+can be used.
 .It local
 The
 .Nm flow
@@ -267,6 +291,9 @@ ipsecadm old ah -auth md5 -spi 1001 -dst 169.20.12.2 -src 169.20.12.3
 -key 12341234deadbeef
 .Ed
 .Sh SEE ALSO
+.Xr services 5 ,
+.Xr protocols 5 ,
 .Xr netstat 1 ,
 .Xr ipsec 4 ,
+.Xr vpn 8 ,
 .Xr photurisd 8 .

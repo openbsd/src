@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.17 1998/07/29 21:02:54 angelos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.18 1998/08/01 06:12:20 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -178,6 +178,9 @@ main(argc, argv)
 	u_int32_t spi = 0, spi2 = 0;
 	struct in_addr src, dst, dst2, osrc, odst, osmask, odmask;
 	u_char *ivp = NULL, *keyp = NULL, *authp = NULL;
+	struct protoent *tp;
+	struct servent *svp;
+	char *transportproto = NULL;
 
 	osrc.s_addr = odst.s_addr = src.s_addr = dst.s_addr = dst2.s_addr = 0;
 	osmask.s_addr = odmask.s_addr = 0;
@@ -296,15 +299,46 @@ main(argc, argv)
 		  odmask.s_addr = inet_addr(argv[i+1]); i++;
 	     } else if (!strcmp(argv[i]+1, "transport") && 
 			iscmd(mode, FLOW) && i+1 < argc) {
-		  tproto = atoi(argv[i+1]);
+		  if (isalpha(argv[i+1][0])) {
+			tp = getprotobyname(argv[i+1]);
+			if (tp == NULL) {
+				fprintf(stderr, "%s: unknown protocol %s\n", argv[0], argv[i+1]);
+				exit(1);
+			}
+			tproto = tp->p_proto;
+			transportproto = argv[i+1];
+		  } else {
+		  	tproto = atoi(argv[i+1]);
+			tp = getprotobynumber(tproto);
+			if (tp == NULL)
+				transportproto = "UNKNOWN";
+			else
+				transportproto = tp->p_name; /* This is static, but it doesn't matter for this application */
+		  }
 		  i++;
 	     } else if (!strcmp(argv[i]+1, "sport") && 
 			iscmd(mode, FLOW) && i+1 < argc) {
-		  sport = atoi(argv[i+1]);
+		  if (isalpha(argv[i+1][0])) {
+			svp = getservbyname(argv[i+1], transportproto);
+			if (svp == NULL) {
+				fprintf(stderr, "%s: unknown service port %s for protocol %s\n", argv[0], argv[i+1], transportproto);
+				exit(1);
+			}
+			sport = svp->s_port;
+		  } else
+		  	sport = atoi(argv[i+1]);
 		  i++;
 	     } else if (!strcmp(argv[i]+1, "dport") && 
 			iscmd(mode, FLOW) && i+1 < argc) {
-		  dport = atoi(argv[i+1]);
+		  if (isalpha(argv[i+1][0])) {
+			svp = getservbyname(argv[i+1], transportproto);
+			if (svp == NULL) {
+				fprintf(stderr, "%s: unknown service port %s for protocol %s\n", argv[0], argv[i+1], transportproto);
+				exit(1);
+			}
+			dport = svp->s_port;
+		  } else
+		  	dport = atoi(argv[i+1]);
 		  i++;
 	     } else if (!strcmp(argv[i]+1, "dst") && i+1 < argc) {
 		  dst.s_addr = inet_addr(argv[i+1]);
