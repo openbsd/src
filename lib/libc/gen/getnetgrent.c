@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetgrent.c,v 1.13 2002/07/06 03:07:41 deraadt Exp $	*/
+/*	$OpenBSD: getnetgrent.c,v 1.14 2003/09/29 15:52:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: getnetgrent.c,v 1.13 2002/07/06 03:07:41 deraadt Exp $";
+static char *rcsid = "$OpenBSD: getnetgrent.c,v 1.14 2003/09/29 15:52:28 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -702,7 +702,7 @@ int
 innetgr(grp, host, user, domain)
 	const char	*grp, *host, *user, *domain;
 {
-	char	*ypdom = NULL;
+	char	*ypdom = NULL, *grpdup;
 #ifdef YP
 	char	*line = NULL;
 #endif
@@ -738,9 +738,13 @@ innetgr(grp, host, user, domain)
 	if (domain != NULL)
 		return 0;
 
+	grpdup = strdup(grp);
+	if (grpdup == NULL)
+		return (0);
+
 	/* Too bad need the slow recursive way */
 	sl = _ng_sl_init();
-	found = in_find(ypdom, sl, strdup(grp), host, user, domain);
+	found = in_find(ypdom, sl, grpdup, host, user, domain);
 	_ng_sl_free(sl, 1);
 
 	return found;
