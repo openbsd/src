@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.18 2003/12/18 20:22:51 jmc Exp $
+.\"	$OpenBSD: awk.1,v 1.19 2003/12/19 09:27:36 jmc Exp $
 .\" EX/EE is a Bd
 .\"
 .\" Copyright (C) Lucent Technologies 1997
@@ -706,6 +706,11 @@ BEGIN { # Simulate echo(1)
         for (i = 1; i < ARGC; i++) printf "%s ", ARGV[i]
         printf "\en"
         exit }
+.Ed
+.Pp
+Print an error message to standard error:
+.Bd -literal -offset indent
+{ print "error!" > "/dev/stderr" }
 .Ed
 .Sh SEE ALSO
 .Xr egrep 1 ,
