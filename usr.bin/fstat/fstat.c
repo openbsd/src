@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.23 1999/07/01 21:41:58 deraadt Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.24 1999/07/02 19:23:50 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.23 1999/07/01 21:41:58 deraadt Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.24 1999/07/02 19:23:50 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -96,6 +96,7 @@ static char *rcsid = "$OpenBSD: fstat.c,v 1.23 1999/07/01 21:41:58 deraadt Exp $
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <netdb.h>
 #include <err.h>
 #include "fstat.h"
 
@@ -904,32 +905,15 @@ void
 getinetproto(number)
 	int number;
 {
-	char *cp;
+	static int isopen;
+	register struct protoent *pe;
 
-	switch(number) {
-	case IPPROTO_IP:
-		cp = "ip"; break;
-	case IPPROTO_ICMP:
-		cp ="icmp"; break;
-	case IPPROTO_GGP:
-		cp ="ggp"; break;
-	case IPPROTO_TCP:
-		cp ="tcp"; break;
-	case IPPROTO_EGP:
-		cp ="egp"; break;
-	case IPPROTO_PUP:
-		cp ="pup"; break;
-	case IPPROTO_UDP:
-		cp ="udp"; break;
-	case IPPROTO_IDP:
-		cp ="idp"; break;
-	case IPPROTO_RAW:
-		cp ="raw"; break;
-	default:
+	if (!isopen)
+		setprotoent(++isopen);
+	if ((pe = getprotobynumber(number)) != NULL)
+		printf(" %s", pe->p_name);
+	else
 		printf(" %d", number);
-		return;
-	}
-	printf(" %s", cp);
 }
 
 int
