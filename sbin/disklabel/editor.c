@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.1 1997/09/30 17:54:17 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.2 1997/10/02 00:02:55 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.1 1997/09/30 17:54:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.2 1997/10/02 00:02:55 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -76,7 +76,7 @@ struct disklabel *readlabel __P((int));
 struct disklabel *makebootarea __P((char *, struct disklabel *, int));
 int	writelabel __P((int, char *, struct disklabel *));
 extern	char *bootarea, *specname;
-extern	int rflag;
+extern	int donothing;
 
 /*
  * Simple partition editor.  Primarily intended for new labels.
@@ -171,6 +171,10 @@ editor(lp, f)
 			break;
 
 		case 'q':
+			if (donothing) {
+				puts("In no change mode, not writing label.");
+				return(1);
+			}
 			if (memcmp(lp, &label, sizeof(label)) == 0) {
 				puts("No changes.");
 				return(1);
