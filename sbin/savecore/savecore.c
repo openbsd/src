@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.9 1998/03/25 23:38:52 deraadt Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.10 1998/06/29 22:43:58 deraadt Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -251,8 +251,11 @@ kmem_setup()
 	KREAD(kd_kern, current_nl[X_DUMPMAG].n_value, &dumpmag);
 
 	if (kernel == NULL) {
-		(void)kvm_read(kd_kern, current_nl[X_VERSION].n_value,
-			vers, sizeof(vers));
+		if (kvm_read(kd_kern, current_nl[X_VERSION].n_value,
+		    vers, sizeof(vers)) == -1) {
+			syslog(LOG_ERR, "%s: kvm_read: version misread", dump_sys);
+			exit(1);
+		}
 		vers[sizeof(vers) - 1] = '\0';
 	}
 
@@ -294,8 +297,11 @@ check_kmem()
 	register int	panicloc;
 	char core_vers[1024];
 
-	(void)kvm_read(kd_dump, dump_nl[X_VERSION].n_value, core_vers,
-		sizeof(core_vers));
+	if (kvm_read(kd_dump, dump_nl[X_VERSION].n_value, core_vers,
+	    sizeof(core_vers) != sizeof(core_vers))
+		syslog(LOG_ERR, "%s: kvm_read: version misread", dump_sys);
+		exit(1);
+	}
 	core_vers[sizeof(core_vers) - 1] = '\0';
 
 	if (strcmp(vers, core_vers) && kernel == 0)
