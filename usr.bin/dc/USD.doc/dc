@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dc,v 1.1 2003/09/19 18:03:13 otto Exp $
+.\"	$OpenBSD: dc,v 1.2 2003/09/22 19:08:27 otto Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -37,7 +37,7 @@
 .EH 'USD:5-%''DC \- An Interactive Desk Calculator'
 .OH 'DC \- An Interactive Desk Calculator''USD:5-%'
 .\".RP
-....TM 75-1271-8 39199 39199-11
+.\" ....TM 75-1271-8 39199 39199-11
 .ND
 .TL
 DC \- An Interactive Desk Calculator
@@ -46,7 +46,7 @@ Robert Morris
 .AU
 Lorinda Cherry
 .AI
-.MH
+.\" .MH
 .AB
 DC is an interactive desk calculator program implemented
 on the
@@ -66,6 +66,12 @@ systems to several thousand on the largest.
 .AE
 .PP
 .SH
+.PP
+.ft I
+Editor's note: the description of the implementation details of DC in this
+paper is only valid for the original version of DC.
+The current version of DC uses a different approach.
+.ft
 .PP
 DC is an arbitrary precision arithmetic package implemented
 on the
@@ -113,7 +119,7 @@ The value of the number is pushed onto the main stack.
 A number is an unbroken string of the digits 0-9
 and the capital letters A\-F which are treated as digits
 with values 10\-15 respectively.
-The number may be preceded by an underscore \*_ to input a
+The number may be preceded by an underscore _ to input a
 negative number.
 Numbers may contain decimal points.
 .SH
@@ -178,7 +184,6 @@ is treated as a stack and its top value is popped onto the main stack.
 .LP
 All registers start with empty value which is treated as a zero
 by the command \fBl\fP and is treated as an error by the command \fBL\fP.
-.SH
 .SH
 d
 .IP
