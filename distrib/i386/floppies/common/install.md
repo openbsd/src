@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.1 1999/08/06 20:49:08 deraadt Exp $
+#	$OpenBSD: install.md,v 1.2 1999/08/15 10:05:05 millert Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -208,10 +208,6 @@ things) just split the space into a root and swap partition for now.
 
 __EOT
 	disklabel -f /tmp/fstab.${_disk} -E ${_disk}
-}
-
-md_copy_kernel() {
-	check_kernel
 }
 
 md_welcome_banner() {

@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.6 1999/04/01 21:30:31 deraadt Exp $
+#       $OpenBSD: install.md,v 1.7 1999/08/15 10:05:06 millert Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -42,9 +42,8 @@
 TMPWRITEABLE=/tmp/writeable
 KERNFSMOUNTED=/tmp/kernfsmounted
 
-md_copy_kernel() {
-	echo "This must be done later by hand"
-}
+# Machine-dependent install sets
+MDSETS=kernel
 
 md_set_term() {
 	if [ ! -z "$TERM" ]; then

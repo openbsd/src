@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.11 1999/04/01 21:30:41 deraadt Exp $
+#	$OpenBSD: install.md,v 1.12 1999/08/15 10:05:07 millert Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -45,8 +45,7 @@ TMPWRITEABLE=/tmp/writeable
 KERNFSMOUNTED=/tmp/kernfsmounted
 
 # Machine-dependent install sets
-MDSETS=""
-# TTT MDSETS="xbin xman xinc xcon"
+MDSETS=kernel
 
 md_set_term() {
 	if [ ! -z "$TERM" ]; then
@@ -194,12 +193,6 @@ __md_prep_disklabel_1
 
 	disklabel -W ${_disk}
 	disklabel -f /tmp/fstab.${_disk} -E ${_disk}
-}
-
-md_copy_kernel() {
-	echo -n "Copying kernel..."
-	cp -p /bsd /mnt/bsd
-	echo "done."
 }
 
 md_welcome_banner() {

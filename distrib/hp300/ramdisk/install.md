@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$OpenBSD: install.md,v 1.17 1999/04/01 04:39:50 millert Exp $
+#	$OpenBSD: install.md,v 1.18 1999/08/15 10:05:04 millert Exp $
 #	$NetBSD: install.md,v 1.1.2.4 1996/08/26 15:45:14 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -391,10 +391,6 @@ __md_prep_disklabel_1
 
 	disklabel -W ${_disk}
 	disklabel -f /tmp/fstab.${_disk} -E ${_disk}
-}
-
-md_copy_kernel() {
-	check_kernel
 }
 
 # Note, while they might not seem machine-dependent, the

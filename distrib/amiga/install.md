@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.7 1998/10/28 17:53:28 millert Exp $
+#	$OpenBSD: install.md,v 1.8 1999/08/15 10:05:04 millert Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -140,10 +140,6 @@ md_prep_disklabel()
 		echo "your disk partitioning in AmigaOS?"
 		;;
 	esac
-}
-
-md_copy_kernel() {
-	check_kernel
 }
 
 md_welcome_banner() {

@@ -41,8 +41,7 @@
 #
 
 # Machine-dependent install sets
-# MDSETS="xbin xman xinc xcon" XXX
-MDSETS=""
+MDSETS=kernel
 
 md_set_term() {
 	if [ ! -z "$TERM" ]; then
@@ -190,12 +189,6 @@ __md_prep_disklabel_1
 	echo -n "Press [Enter] to continue "
 	getresp ""
 	edlabel /dev/r${_disk}c
-}
-
-md_copy_kernel() {
-	echo -n "Copying kernel..."
-	cp -p /netbsd /mnt/netbsd
-	echo "done."
 }
 
 md_welcome_banner() {
