@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.34 2001/06/27 19:29:15 markus Exp $
+#	$OpenBSD: Makefile,v 1.35 2001/06/28 02:32:32 hin Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -30,7 +30,7 @@ DPADD+=  ${LIBKRBAFS}
 
 .if (${KERBEROS5:L} == "yes")
 CFLAGS+= -DKRB5 -I${DESTDIR}/usr/include/kerberosV
-LDADD+=  -lkrb5 -lasn1
+LDADD+=  -lkrb5 -lasn1 -lcom_err
 DPADD+=  ${LIBKRB5} ${LIBASN1}
 .endif # KERBEROS5
 
