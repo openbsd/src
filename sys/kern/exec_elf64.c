@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf64.c,v 1.11 2001/01/22 14:25:03 art Exp $	*/
+/*	$OpenBSD: exec_elf64.c,v 1.12 2001/02/03 23:32:13 art Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -142,7 +142,6 @@ struct emul emul_elf64 = {
 	sigcode,
 	esigcode,
 };
-
 
 /*
  * Copy arguments onto the stack in the normal way, but add some
@@ -298,7 +297,7 @@ elf64_load_psection(vcset, vp, ph, addr, size, prot)
 		psize = trunc_page(*size);
 		NEW_VMCMD(vcset, vmcmd_map_pagedvn, psize, *addr, vp,
 		    offset, *prot);
-		if(psize != *size) {
+		if (psize != *size) {
 			NEW_VMCMD(vcset, vmcmd_map_readvn, *size - psize,
 			    *addr + psize, vp, offset + psize, *prot);
 		}
@@ -541,6 +540,12 @@ exec_elf64_makecmds(p, epp)
 	 */
 	error = ENOEXEC;
 	p->p_os = OOS_OPENBSD;
+
+#ifdef NATIVE_EXEC_ELF
+	if (elf64_os_pt_note(p, epp, epp->ep_hdr, "OpenBSD", 8, 4) == 0) {
+		goto native;
+	}
+#endif
 	for (i = 0; i < sizeof elf64_probes / sizeof elf64_probes[0] && error;
 	     i++)
 		if (os == OOS_NULL || ((1 << os) & elf64_probes[i].os_mask))
@@ -554,6 +559,7 @@ exec_elf64_makecmds(p, epp)
 		goto bad;
 #endif /* NATIVE_EXEC_ELF */
 
+native:
 	/*
 	 * Load all the necessary sections
 	 */
