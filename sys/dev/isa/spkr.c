@@ -1,4 +1,4 @@
-/*	$OpenBSD: spkr.c,v 1.2 1999/01/02 00:58:12 niklas Exp $	*/
+/*	$OpenBSD: spkr.c,v 1.3 2000/09/29 23:23:38 miod Exp $	*/
 /*	$NetBSD: spkr.c,v 1.1 1998/04/15 20:26:18 drochner Exp $	*/
 
 /*
@@ -172,7 +172,7 @@ playtone(pitch, value, sustain)
 
     if (pitch == -1)
 	rest(whole * snum / (value * sdenom));
-    else
+    else if (pitch >= 0 && pitch < sizeof(pitchtab))
     {
 	sound = (whole * snum) / (value * sdenom)
 		- (whole * (FILLTIME - fill)) / (value * FILLTIME);
