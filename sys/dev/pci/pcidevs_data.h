@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.743 2004/06/18 14:49:22 henning Exp 
+ *	OpenBSD: pcidevs,v 1.744 2004/06/20 19:52:11 couderc Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -3483,6 +3483,22 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82850/82860 AGP",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82852_IO1,
+	    "82852/82855 CPU-I/O-1",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82852_AGP,
+	    "82852/82855 AGP",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82852_IO2,
+	    "82852/82855 CPU-I/O-2",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82852_IO3,
+	    "82852/82855 CPU-I/O-3",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82860_PCI1,
 	    "82860 PCI-PCI",
 	},
@@ -5199,12 +5215,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Quadro4 700 XGL",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCEFX5600,
+	    "GeForce FX 5600",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4TI4200GO,
 	    "GeForce4 Ti 4200 Go",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCEFX5200,
 	    "GeForce FX 5200",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCEFXGO5200,
+	    "GeForce FX Go 5200",
 	},
 	{
 	    PCI_VENDOR_OAKTECH, PCI_PRODUCT_OAKTECH_OTI1007,
