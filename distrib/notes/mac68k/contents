@@ -6,13 +6,13 @@ out as follows:
 		INSTALL.mac68k	This file
 		bins/		mac68k binary distribution sets;
 				see below.
-		inst/		The mac68k installation utilities.
+		inst/		The mac68k installation utilities for MacOS.
 
-The OpenBSD/mac68k binary distribution sets contain the binaries which
-comprise the OpenBSD 2.1 release for the mac68k.  There are eight binary
-distribution sets, and the "security" distribution set.  The binary
-distribution sets can be found in subdirectories of the "mac68k/bins"
-subdirectory of the OpenBSD 2.1 distribution tree, and are as follows:
+The OpenBSD/mac68k binary distribution sets contain all the binaries which
+are need to run the OpenBSD 2.1 release for the mac68k.  There are eight binary
+distribution sets, and a "security" distribution set.  The binary
+distribution sets can be found in the subdirectory "mac68k/bins" of the
+OpenBSD 2.1 distribution tree, and are as follows:
 
 	bsd21	The OpenBSD/mac68k 2.1 kernel binary.  You MUST
 		install this file.  It is the kernel that you need
@@ -29,13 +29,15 @@ subdirectory of the OpenBSD 2.1 distribution tree, and are as follows:
 
 	comp21	The OpenBSD/mac68k Compiler tools.  All of the tools
 		relating to C, C++, and FORTRAN (yes, there are two!).
-		This set includes the system include files
+		This set includes the system header files
 		(/usr/include), the linker, the compiler tool chain,
 		and the various system libraries (except the shared
 		libraries, which are included as part of the base
 		set).  This set also includes the manual pages for all
 		of the utilities it contains, as well as the system
-		call and library manual pages.
+		call and library manual pages.  It is very almost a must
+		to install this set if one wants an even minimally
+		functional system.
 		[ 4.0M gzipped, 12.7M uncompressed ]
 
 	etc21	This distribution set contains the system
@@ -47,36 +49,36 @@ subdirectory of the OpenBSD 2.1 distribution tree, and are as follows:
 		CAREFULLY upgrade your configuration files by hand.)
 		[ 50K gzipped, 280K uncompressed ]
 
-	games21	This set includes the games and their manual pages.
+	games21	This set includes the BSD games and their manual pages.
+		It's installation is optional.
 		[ 1.0M gzipped, 3.0M uncompressed ]
 
 	man21	This set includes all of the manual pages for the
 		binaries and other software contained in the base set.
 		Note that it does not include any of the manual pages
-		that are included in the other sets.
+		that are included in the other sets.  Installation of
+		this set is completely optional but is highly recommended.
 		[ 0.7M gzipped, 2.8M uncompressed ]
 
 	misc21	This set includes the system dictionaries (which are
 		rather large), the typesettable document set, and
 		man pages for other architectures which happen to be
-		installed from the source tree by default.
+		installed from the source tree by default as well as
+		many other sundry system files and programs.  This set
+		is not necessarry but will improve the functionallity
+		of many system programs.
 		[ 1.6M gzipped, 5.7M uncompressed ]
 
 	text21	This set includes OpenBSD's text processing tools,
 		including groff, all related programs, and their
-		manual pages.
+		manual pages.  This set is highly recommended as
+		these programs are depended upon for such basic 
+		system functions as reading manual pages.
 		[ 0.8M gzipped, 2.9M uncompressed ]
 
 The mac68k binary distribution sets are distributed in the same form as
-the source distribution sets; catted together, the members of a set
-form a gzipped tar file.
-
-The instructions given for extracting the source sets work equally
-well for the binary sets, but it is worth noting that if you use that
-method, the files are extracted "below" the current directory.  That
-is, if you want to extract the binaries "into" your system, i.e.
-replace the system binaries with them, you have to run the "tar xfp"
-from /.  Also note that if you upgrade or install this way, those
-programs that you are using at the time will NOT be replaced.  If you
-follow the normal installation or upgrade procedures, this will be
-taken care of for you.
+the source distribution sets; that is, the members of a set
+form a gzipped tar file which is assumed to be relative to the root
+of a system's directory tree.  In other words, all sets files should be
+extracted from '/'.  The instructions given for extracting the source sets
+work equally well for the binary sets.
