@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: dot.profile,v 1.8 2002/04/13 17:36:56 deraadt Exp $
+#	$OpenBSD: dot.profile,v 1.9 2002/04/21 07:08:41 deraadt Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -34,12 +34,6 @@ export PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 umask 022
 set -o emacs # emacs-style command line editing
 
-# Terminals in termcap, default TERM.
-# This assumes a *small* termcap file.
-TERMS=`grep '^[A-z]' /usr/share/misc/termcap | sed -e 's/|[^|]*$//' -e 's/|/ /g'`
-TERM=vt220
-PAGER=more
-
 rootdisk=`dmesg|sed -n -e '/OpenBSD /h' -e '//!H' -e '${
 	g
 	p
@@ -53,40 +47,10 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 
 	mount -u ${rootdisk:-/dev/rd0a} /
 
-	isin() {
-		local   _a
-
-		_a=$1; shift
-		while [ $# != 0 ]; do
-			if [ "$_a" = "$1" ]; then return 0; fi
-			shift
-		done
-		return 1
-	}
-
-
 	# set up some sane defaults
 	echo 'erase ^?, werase ^W, kill ^U, intr ^C, status ^T'
 	stty newcrt werase ^W intr ^C kill ^U erase ^? status ^T 9600
 	echo ''
-
-	# get the terminal type
-	echo "Supported terminals are:"
-	echo $TERMS
-	_forceloop=""
-	while [ "X$_forceloop" = X"" ]; do
-		echo -n "TERM = ($TERM) "
-		read resp
-		if [ "X$resp" = "X" ]; then
-			break
-		fi
-		if isin $resp $TERMS ; then
-			TERM=$resp
-			break;
-		fi
-		echo "Type $resp unknown."
-	done
-	export TERM
 
 	# Installing or upgrading?
 	_forceloop=""
