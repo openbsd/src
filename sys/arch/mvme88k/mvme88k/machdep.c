@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.157 2004/09/30 14:55:54 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.158 2004/10/01 05:49:01 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -77,6 +77,7 @@
 #include <machine/kcore.h>
 #include <machine/locore.h>
 #include <machine/reg.h>
+#include <machine/trap.h>
 #ifdef M88100
 #include <machine/m88100.h>		/* DMT_VALID */
 #endif
