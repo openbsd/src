@@ -1,4 +1,4 @@
-.\" $OpenBSD
+.\"	$OpenBSD: ocurses.3,v 1.10 2003/06/06 19:01:00 jmc Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,7 +46,7 @@ These routines give the user a method of updating screens with reasonable
 optimization.
 They keep an image of the current screen,
 and the user sets up an image of a new one.
-Then the
+Then
 .Fn refresh
 tells the routines to make the current screen look like the new one.
 In order to initialize the routines, the routine
@@ -56,18 +56,6 @@ screens are used.
 The routine
 .Fn endwin
 should be called before exiting.
-.Sh SEE ALSO
-.Xr ioctl 2 ,
-.Xr getenv 3 ,
-.Xr termcap 3 ,
-.Xr tty 4 ,
-.Xr termcap 5
-.Rs
-.%T Screen Updating and Cursor Movement Optimization: A Library Package
-.%A Ken Arnold
-.Re
-.Sh AUTHORS
-.An Ken Arnold
 .Sh FUNCTIONS
 .Bl -column "subwin(win,lines,cols,begin_y,begin_x)   "
 .It addch(ch)	add a character to
@@ -192,8 +180,20 @@ as changed
 .It wstandout(win)	start standout mode on
 .Em win
 .El
+.Sh SEE ALSO
+.Xr ioctl 2 ,
+.Xr getenv 3 ,
+.Xr termcap 3 ,
+.Xr tty 4 ,
+.Xr termcap 5
+.Rs
+.%T Screen Updating and Cursor Movement Optimization: A Library Package
+.%A Ken Arnold
+.Re
 .Sh HISTORY
 The
 .Nm
 package appeared in
 .Bx 4.0 .
+.Sh AUTHORS
+.An Ken Arnold
