@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.S,v 1.5 1997/08/08 16:50:19 weingart Exp $	*/
+/*	$OpenBSD: mbr.S,v 1.6 1997/08/08 17:13:13 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff and Tobias Weingartner
@@ -206,6 +206,7 @@ err_stop:
 	/* Found bootable partition */
 found:
 	DBGMSG(CHAR_B)
+#if 0
 	pushl	%edx
 	pushl	%esi
 	pushl	%ecx
@@ -228,6 +229,7 @@ found:
 	call	message
 
 	popl	%eax
+	decl	%ax
 	xor		$0x03, %ax
 	andl	$0x0F, %ax
 	orl		$0x30, %ax
@@ -242,6 +244,7 @@ found:
 	/* Restore %esi and %edx */
 	popl	%esi
 	popl	%edx
+#endif
 
 	/* Load values from active partition table entry */
 	# movb	1(%si), %dh	# head
