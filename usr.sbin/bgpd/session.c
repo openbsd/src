@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.188 2004/08/11 16:48:45 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.189 2004/09/09 21:53:57 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -91,6 +91,7 @@ struct peer		*npeers;
 volatile sig_atomic_t	 session_quit = 0;
 int			 pending_reconf = 0;
 int			 csock = -1;
+u_int			 peer_cnt;
 struct imsgbuf		 ibuf_rde;
 struct imsgbuf		 ibuf_main;
 
@@ -165,7 +166,7 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 	pid_t			 pid;
 	time_t			 nextaction;
 	u_int			 pfd_elms = 0, peer_l_elms = 0, mrt_l_elms = 0;
-	u_int			 listener_cnt, peer_cnt, ctl_cnt, mrt_cnt;
+	u_int			 listener_cnt, ctl_cnt, mrt_cnt;
 	u_int			 new_cnt;
 	struct passwd		*pw;
 	struct peer		*p, **peer_l = NULL, *last, *next;
@@ -261,10 +262,8 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 			next = p->next;
 			if (!pending_reconf) {
 				/* new peer that needs init? */
-				if (p->state == STATE_NONE) {
+				if (p->state == STATE_NONE)
 					init_peer(p);
-					peer_cnt++;
-				}
 
 				/* reinit due? */
 				if (p->conf.reconf_action == RECONF_REINIT) {
@@ -531,6 +530,7 @@ init_peer(struct peer *p)
 	p->capa.announce = p->conf.capabilities;
 	p->capa.ann_mp = 1;
 	p->capa.ann_refresh = 1;
+	peer_cnt++;
 
 	change_state(p, STATE_IDLE, EVNT_NONE);
 	p->IdleHoldTimer = time(NULL);	/* start ASAP */
