@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbd.c,v 1.8 2002/03/28 01:27:23 miod Exp $	*/
+/*	$OpenBSD: akbd.c,v 1.9 2002/03/28 04:17:40 drahn Exp $	*/
 /*	$NetBSD: akbd.c,v 1.13 2001/01/25 14:08:55 tsubai Exp $	*/
 
 /*
@@ -475,9 +475,6 @@ akbd_ioctl(v, cmd, data, flag, p)
 		return 0;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	case WSKBDIO_SETMODE:
-		printf("akbd_ioctl: set raw = %d\n", *(int *)data);
-		/*
-		*/
 		sc->sc_rawkbd = *(int *)data == WSKBD_RAW;
 		timeout_del(&sc->sc_rawrepeat_ch);
 		return (0);
