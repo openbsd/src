@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)srvr_afs.c	8.1 (Berkeley) 6/6/93
- *	$Id: srvr_afs.c,v 1.2 2002/08/03 08:29:31 pvalchev Exp $
+ *	$Id: srvr_afs.c,v 1.3 2002/08/05 07:24:26 pvalchev Exp $
  */
 
 /*
@@ -92,7 +92,7 @@ void
 wakeup_srvr(fserver *fs)
 {
 	fs->fs_flags &= ~FSF_WANT;
-	wakeup((voidp) fs);
+	wakeup((void *)fs);
 }
 
 /*
@@ -126,17 +126,17 @@ timeout_srvr(fserver *fs)
 		 * Free the net address
 		 */
 		if (fs->fs_ip)
-			free((voidp) fs->fs_ip);
+			free((void *)fs->fs_ip);
 
 		/*
 		 * Free the host name.
 		 */
-		free((voidp) fs->fs_host);
+		free((void *)fs->fs_host);
 
 		/*
 		 * Discard the fserver object.
 		 */
-		free((voidp) fs);
+		free((void *)fs);
 	}
 }
 
@@ -167,7 +167,7 @@ free_srvr(fserver *fs)
 		/*
 		 * Keep structure lying around for a while
 		 */
-		fs->fs_cid = timeout(ttl, timeout_srvr, (voidp) fs);
+		fs->fs_cid = timeout(ttl, timeout_srvr, (void *)fs);
 		/*
 		 * Mark the fileserver down and invalid again
 		 */

@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq_subr.c	8.1 (Berkeley) 6/6/93
- *	$Id: amq_subr.c,v 1.8 2002/08/03 08:29:31 pvalchev Exp $
+ *	$Id: amq_subr.c,v 1.9 2002/08/05 07:24:26 pvalchev Exp $
  */
 
 /*
@@ -48,12 +48,12 @@
 #include <ctype.h>
 
 /*ARGSUSED*/
-voidp
-amqproc_null_1(voidp argp, struct svc_req *rqstp)
+void *
+amqproc_null_1(void *argp, struct svc_req *rqstp)
 {
 	static char res;
 
-	return (voidp) &res;
+	return (void *)&res;
 }
 
 /*
@@ -61,7 +61,7 @@ amqproc_null_1(voidp argp, struct svc_req *rqstp)
  */
 /*ARGSUSED*/
 amq_mount_tree_p *
-amqproc_mnttree_1(voidp argp, struct svc_req *rqstp)
+amqproc_mnttree_1(void *argp, struct svc_req *rqstp)
 {
 	static am_node *mp;
 
@@ -73,8 +73,8 @@ amqproc_mnttree_1(voidp argp, struct svc_req *rqstp)
  * Unmount a single node
  */
 /*ARGSUSED*/
-voidp
-amqproc_umnt_1(voidp argp, struct svc_req *rqstp)
+void *
+amqproc_umnt_1(void *argp, struct svc_req *rqstp)
 {
 	static char res;
 
@@ -82,7 +82,7 @@ amqproc_umnt_1(voidp argp, struct svc_req *rqstp)
 	if (mp)
 		forcibly_timeout_mp(mp);
 
-	return (voidp) &res;
+	return (void *)&res;
 }
 
 /*
@@ -90,7 +90,7 @@ amqproc_umnt_1(voidp argp, struct svc_req *rqstp)
  */
 /*ARGSUSED*/
 amq_mount_stats *
-amqproc_stats_1(voidp argp, struct svc_req *rqstp)
+amqproc_stats_1(void *argp, struct svc_req *rqstp)
 {
 	return (amq_mount_stats *) &amd_stats;
 }
@@ -100,7 +100,7 @@ amqproc_stats_1(voidp argp, struct svc_req *rqstp)
  */
 /*ARGSUSED*/
 amq_mount_tree_list *
-amqproc_export_1(voidp argp, struct svc_req *rqstp)
+amqproc_export_1(void *argp, struct svc_req *rqstp)
 {
 	static amq_mount_tree_list aml;
 
@@ -111,7 +111,7 @@ amqproc_export_1(voidp argp, struct svc_req *rqstp)
 }
 
 int *
-amqproc_setopt_1(voidp argp, struct svc_req *rqstp)
+amqproc_setopt_1(void *argp, struct svc_req *rqstp)
 {
 	static int rc;
 
@@ -155,7 +155,7 @@ amqproc_setopt_1(voidp argp, struct svc_req *rqstp)
 }
 
 amq_mount_info_list *
-amqproc_getmntfs_1(voidp argp, struct svc_req *rqstp)
+amqproc_getmntfs_1(void *argp, struct svc_req *rqstp)
 {
 	extern qelem mfhead;
 	return (amq_mount_info_list *) &mfhead;	/* XXX */
@@ -186,7 +186,7 @@ struct svc_req *rqstp;
 
 int *
 amqproc_mount_1(argp, rqstp)
-voidp argp;
+void *argp;
 struct svc_req *rqstp;
 {
 	static int rc;
@@ -223,7 +223,7 @@ struct svc_req *rqstp;
 		cp++;
 
 	root_newmap(s, cp, (char *) 0);
-	rc = mount_auto_node(s, (voidp) root_node);
+	rc = mount_auto_node(s, (void *)root_node);
 	if (rc < 0)
 		return 0;
 	return &rc;
@@ -233,7 +233,7 @@ struct svc_req *rqstp;
  * Disable "amq -M" functionality since it is inherently insecure.
  */
 int *
-amqproc_mount_1(voidp argp, struct svc_req *rqstp)
+amqproc_mount_1(void *argp, struct svc_req *rqstp)
 {
 	static int rc;
 	char *s = *(amq_string *) argp;
@@ -246,7 +246,7 @@ amqproc_mount_1(voidp argp, struct svc_req *rqstp)
 #endif
 
 amq_string *
-amqproc_getvers_1(voidp argp, struct svc_req *rqstp)
+amqproc_getvers_1(void *argp, struct svc_req *rqstp)
 {
 	static amq_string res;
 

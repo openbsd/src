@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mapc.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: mapc.c,v 1.6 2002/08/03 08:29:31 pvalchev Exp $";
+static char *rcsid = "$Id: mapc.c,v 1.7 2002/08/05 07:24:26 pvalchev Exp $";
 #endif /* not lint */
 
 /*
@@ -282,9 +282,9 @@ mapc_showtypes(FILE *fp)
 	}
 }
 
-static Const char *reg_error = "?";
+static const char *reg_error = "?";
 void
-regerror(Const char *m)
+regerror(const char *m)
 {
 	reg_error = m;
 }
@@ -482,7 +482,7 @@ mapc_create(char *map, char *opt)
 	m->modify = modify;
 	m->search = alloc >= MAPC_ALL ? error_search : mt->search;
 	m->mtime = mt->mtime;
-	bzero((voidp) m->kvhash, sizeof(m->kvhash));
+	bzero((void *)m->kvhash, sizeof(m->kvhash));
 	m->map_name = strdup(map);
 	m->refc = 1;
 	m->wildcard = 0;
@@ -511,17 +511,17 @@ mapc_clear(mnt_map *m)
 		kv *k = m->kvhash[i];
 		while (k) {
 			kv *n = k->next;
-			free((voidp) k->key);
+			free((void *)k->key);
 			if (k->val)
-				free((voidp) k->val);
-			free((voidp) k);
+				free((void *)k->val);
+			free((void *)k);
 			k = n;
 		}
 	}
 	/*
 	 * Zero the hash slots
 	 */
-	bzero((voidp) m->kvhash, sizeof(m->kvhash));
+	bzero((void *)m->kvhash, sizeof(m->kvhash));
 	/*
 	 * Free the wildcard if it exists
 	 */
@@ -568,9 +568,9 @@ mapc_free(mnt_map *m)
 	 */
 	if (m && --m->refc == 0) {
 		mapc_clear(m);
-		free((voidp) m->map_name);
+		free((void *)m->map_name);
 		rem_que(&m->hdr);
-		free((voidp) m);
+		free((void *)m);
 	}
 }
 
@@ -733,7 +733,7 @@ mapc_sync(mnt_map *m)
  * Reload all the maps
  * Called when Amd gets hit by a SIGHUP.
  */
-void mapc_reload(P_void)
+void mapc_reload(void)
 {
 	mnt_map *m;
 
@@ -794,7 +794,7 @@ root_newmap(char *dir, char *opts, char *map)
 }
 
 int
-mapc_keyiter(mnt_map *m, void (*fn)(char*,voidp), voidp arg)
+mapc_keyiter(mnt_map *m, void (*fn)(char *,void *), void *arg)
 {
 	int i;
 	int c = 0;
@@ -818,7 +818,7 @@ mapc_keyiter(mnt_map *m, void (*fn)(char*,voidp), voidp arg)
  * Finally throw away the root map.
  */
 int
-root_keyiter(void (*fn)(char*,voidp), voidp arg)
+root_keyiter(void (*fn)(char *,void *), void *arg)
 {
 	if (root_map) {
 		int c = mapc_keyiter(root_map, fn, arg);

@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)util.c	8.1 (Berkeley) 6/6/93
- *	$Id: util.c,v 1.8 2002/08/03 08:29:31 pvalchev Exp $
+ *	$Id: util.c,v 1.9 2002/08/05 07:24:26 pvalchev Exp $
  */
 
 /*
@@ -51,7 +51,7 @@
 
 
 char *
-strnsave(Const char *str, int len)
+strnsave(const char *str, int len)
 {
 	char *sp = (char *) xmalloc(len+1);
 
@@ -83,7 +83,7 @@ strealloc(char *p, char *s)
 {
 	int len = strlen(s) + 1;
 
-	p = (char *) xrealloc((voidp) p, len);
+	p = (char *) xrealloc((void *)p, len);
 
 	strcpy(p, s);
 #ifdef DEBUG_MEM
@@ -144,7 +144,7 @@ strsplit(char *s, int ch, int qc)
 		 * save string in new ivec slot
 		 */
 		ivec[ic++] = v;
-		ivec = (char **) xrealloc((voidp) ivec, (ic+1)*sizeof(char *));
+		ivec = (char **) xrealloc((void *)ivec, (ic+1)*sizeof(char *));
 #ifdef DEBUG
 		Debug(D_STR)
 			plog(XLOG_DEBUG, "strsplit saved \"%s\"", v);
@@ -281,7 +281,7 @@ bind_resv_port(int so, u_short *pp)
 	struct sockaddr_in sin;
 	int rc;
 
-	bzero((voidp) &sin, sizeof(sin));
+	bzero((void *)&sin, sizeof(sin));
 	sin.sin_family = AF_INET;
 
 	rc = bindresvport(so, &sin);
@@ -467,7 +467,7 @@ auto_fumount(am_node *mp)
  * TODO: Need a better strategy for handling errors
  */
 static pid_t
-dofork(P_void)
+dofork(void)
 {
 	pid_t pid;
 top:
@@ -487,7 +487,7 @@ top:
 }
 
 pid_t
-background(P_void)
+background(void)
 {
 	pid_t pid = dofork();
 	if (pid == 0) {

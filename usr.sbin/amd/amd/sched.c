@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sched.c	8.1 (Berkeley) 6/6/93
- *	$Id: sched.c,v 1.7 2002/08/03 08:29:31 pvalchev Exp $
+ *	$Id: sched.c,v 1.8 2002/08/05 07:24:26 pvalchev Exp $
  */
 
 /*
@@ -55,9 +55,9 @@ struct pjob {
 	qelem hdr;			/* Linked list */
 	pid_t pid;			/* Process ID of job */
 	cb_fun cb_fun;			/* Callback function */
-	voidp cb_closure;		/* Closure for callback */
+	void *cb_closure;		/* Closure for callback */
 	union wait w;			/* Status filled in by sigchld */
-	voidp wchan;			/* Wait channel */
+	void *wchan;			/* Wait channel */
 };
 
 extern qelem proc_list_head;
@@ -87,7 +87,7 @@ rem_que(qelem *elem)
 }
 
 static pjob *
-sched_job(cb_fun cf, voidp ca)
+sched_job(cb_fun cf, void *ca)
 {
 	pjob *p = ALLOC(pjob);
 
@@ -103,12 +103,12 @@ sched_job(cb_fun cf, voidp ca)
 }
 
 void
-run_task(task_fun tf, voidp ta, cb_fun cf, voidp ca)
+run_task(task_fun tf, void *ta, cb_fun cf, void *ca)
 {
 	pjob *p = sched_job(cf, ca);
 	sigset_t mask, omask;
 
-	p->wchan = (voidp) p;
+	p->wchan = (void *)p;
 
 	sigemptyset(&mask);
 	sigaddset(&mask, SIGCHLD);
@@ -128,7 +128,7 @@ run_task(task_fun tf, voidp ta, cb_fun cf, voidp ca)
  * Schedule a task to be run when woken up
  */
 void
-sched_task(cb_fun cf, voidp ca, voidp wchan)
+sched_task(cb_fun cf, void *ca, void *wchan)
 {
 	/*
 	 * Allocate a new task
@@ -139,7 +139,7 @@ sched_task(cb_fun cf, voidp ca, voidp wchan)
 #endif
 	p->wchan = wchan;
 	p->pid = 0;
-	bzero((voidp) &p->w, sizeof(p->w));
+	bzero((void *)&p->w, sizeof(p->w));
 }
 
 static void
@@ -151,7 +151,7 @@ wakeupjob(pjob *p)
 }
 
 void
-wakeup(voidp wchan)
+wakeup(void *wchan)
 {
 	pjob *p, *p2;
 #ifdef DEBUG_SLEEP
@@ -185,7 +185,7 @@ wakeup(voidp wchan)
 }
 
 void
-wakeup_task(int rc, int term, voidp cl)
+wakeup_task(int rc, int term, void *cl)
 {
 	wakeup(cl);
 }
@@ -243,7 +243,7 @@ sigchld(int sig)
  * This must be called with SIGCHLD disabled
  */
 void
-do_task_notify(P_void)
+do_task_notify(void)
 {
 	/*
 	 * Keep taking the first item off the list and processing it.
@@ -267,6 +267,6 @@ do_task_notify(P_void)
 			(*p->cb_fun)(p->w.w_retcode,
 				p->w.w_termsig, p->cb_closure);
 
-		free((voidp) p);
+		free((void *)p);
 	}
 }

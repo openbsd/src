@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)rpc_fwd.c	8.1 (Berkeley) 6/6/93
- *	$Id: rpc_fwd.c,v 1.4 2002/08/03 08:29:31 pvalchev Exp $
+ *	$Id: rpc_fwd.c,v 1.5 2002/08/05 07:24:26 pvalchev Exp $
  */
 
 /*
@@ -73,7 +73,7 @@ struct rpc_forward {
 	u_int	rf_xid;		/* Packet id */
 	u_int	rf_oldid;	/* Original packet id */
 	fwd_fun	rf_fwd;		/* Forwarding function */
-	voidp	rf_ptr;
+	void *	rf_ptr;
 	struct sockaddr_in rf_sin;
 };
 
@@ -160,7 +160,7 @@ fwd_free(rpc_forward *p)
 #ifdef DEBUG
 	/*dlog("fwd_free: rpc_head = %#x", rpc_head.q_forw);*/
 #endif /* DEBUG */
-	free((voidp) p);
+	free((void *)p);
 }
 
 /*
@@ -219,8 +219,8 @@ fwd_locate(u_int id)
  * different address.
  */
 int
-fwd_packet(int type_id, voidp pkt, int len, struct sockaddr_in *fwdto,
-    struct sockaddr_in *replyto, voidp i, fwd_fun cb)
+fwd_packet(int type_id, void *pkt, int len, struct sockaddr_in *fwdto,
+    struct sockaddr_in *replyto, void *i, fwd_fun cb)
 {
 	rpc_forward *p;
 	u_int *pkt_int;
@@ -306,7 +306,7 @@ fwd_packet(int type_id, voidp pkt, int len, struct sockaddr_in *fwdto,
 	if (replyto)
 		p->rf_sin = *replyto;
 	else
-		bzero((voidp) &p->rf_sin, sizeof(p->rf_sin));
+		bzero((void *)&p->rf_sin, sizeof(p->rf_sin));
 	p->rf_ptr = i;
 
 	return error;
@@ -320,7 +320,7 @@ fwd_reply()
 {
 	int len;
 #ifdef DYNAMIC_BUFFERS
-	voidp pkt;
+	void *pkt;
 #else
 	u_int pkt[MAX_PACKET_SIZE/sizeof(u_int)+1];
 #endif /* DYNAMIC_BUFFERS */
@@ -342,7 +342,7 @@ fwd_reply()
 	/*
 	 * Allocate a buffer
 	 */
-	pkt = (voidp) malloc((unsigned) len);
+	pkt = (void *)malloc((unsigned) len);
 	if (!pkt) {
 		plog(XLOG_ERROR, "Out of buffers in fwd_reply");
 		return;
@@ -411,7 +411,7 @@ again:
 		/*
 		 * Call forwarding function
 		 */
-		(*p->rf_fwd)((voidp) pkt, rc, &src_addr, &p->rf_sin, p->rf_ptr, TRUE);
+		(*p->rf_fwd)((void *)pkt, rc, &src_addr, &p->rf_sin, p->rf_ptr, TRUE);
 	}
 
 	/*
@@ -424,6 +424,6 @@ out:;
 	/*
 	 * Free the packet
 	 */
-	free((voidp) pkt);
+	free((void *)pkt);
 #endif /* DYNAMIC_BUFFERS */
 }

@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq.c	8.1 (Berkeley) 6/7/93
- *	$Id: amq.c,v 1.7 2002/08/03 21:49:24 deraadt Exp $
+ *	$Id: amq.c,v 1.8 2002/08/05 07:24:26 pvalchev Exp $
  */
 
 /*
@@ -52,7 +52,7 @@ char copyright[] = "\
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$Id: amq.c,v 1.7 2002/08/03 21:49:24 deraadt Exp $";
+static char rcsid[] = "$Id: amq.c,v 1.8 2002/08/05 07:24:26 pvalchev Exp $";
 static char sccsid[] = "@(#)amq.c	8.1 (Berkeley) 6/7/93";
 #endif /* not lint */
 
@@ -374,7 +374,7 @@ Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
 	bzero(&server_addr, sizeof server_addr);
 	server_addr.sin_family = AF_INET;
 	if (hp) {
-		bcopy((voidp) hp->h_addr, (voidp) &server_addr.sin_addr,
+		bcopy((void *)hp->h_addr, (void *)&server_addr.sin_addr,
 			sizeof(server_addr.sin_addr));
 	} else {
 		/* fake "localhost" */
@@ -499,7 +499,7 @@ Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
 	 * Get Version
 	 */
 	if (getvers_flag) {
-		amq_string *spp = amqproc_getvers_1((voidp) 0, clnt);
+		amq_string *spp = amqproc_getvers_1((void *)0, clnt);
 		if (spp && *spp) {
 			printf("%s.\n", *spp);
 			free(*spp);
@@ -548,7 +548,7 @@ Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
 	} else if (unmount_flag) {
 		goto show_usage;
 	} else if (stats_flag) {
-		amq_mount_stats *ms = amqproc_stats_1((voidp) 0, clnt);
+		amq_mount_stats *ms = amqproc_stats_1((void *)0, clnt);
 		if (ms) {
 			show_ms(ms);
 		} else {
@@ -557,7 +557,7 @@ Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
 			errs = 1;
 		}
 	} else if (!nodefault) {
-		amq_mount_tree_list *mlp = amqproc_export_1((voidp) 0, clnt);
+		amq_mount_tree_list *mlp = amqproc_export_1((void *)0, clnt);
 		if (mlp) {
 			enum show_opt e = Calc;
 			int mwid = 0, dwid = 0, pwid = 0;
@@ -634,7 +634,7 @@ int ty;
 #ifdef DEBUG
 xfree(f, l, p)
 char *f, *l;
-voidp p;
+void *p;
 {
 	free(p);
 }

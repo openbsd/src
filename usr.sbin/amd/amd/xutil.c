@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)xutil.c	8.1 (Berkeley) 6/6/93
- *	$Id: xutil.c,v 1.8 2002/08/03 08:29:31 pvalchev Exp $
+ *	$Id: xutil.c,v 1.9 2002/08/05 07:24:26 pvalchev Exp $
  */
 
 #include "config.h"
@@ -78,10 +78,10 @@ struct opt_tab xlog_opt[] = {
 	{ 0, 0 }
 };
 
-voidp
+void *
 xmalloc(int len)
 {
-	voidp p;
+	void *p;
 	int retries = 600;
 
 	/*
@@ -91,7 +91,7 @@ xmalloc(int len)
 		len = 1;
 
 	do {
-		p = (voidp) malloc((unsigned) len);
+		p = (void *)malloc((unsigned) len);
 		if (p) {
 #if defined(DEBUG) && defined(DEBUG_MEM)
 			Debug(D_MEM) plog(XLOG_DEBUG, "Allocated size %d; block %#x", len, p);
@@ -112,8 +112,8 @@ xmalloc(int len)
 	return 0;
 }
 
-voidp
-xrealloc(voidp ptr, int len)
+void *
+xrealloc(void *ptr, int len)
 {
 #if defined(DEBUG) && defined(DEBUG_MEM)
 	Debug(D_MEM) plog(XLOG_DEBUG, "Reallocated size %d; block %#x", len, ptr);
@@ -123,9 +123,9 @@ xrealloc(voidp ptr, int len)
 		len = 1;
 
 	if (ptr)
-		ptr = (voidp) realloc(ptr, (unsigned) len);
+		ptr = (void *)realloc(ptr, (unsigned) len);
 	else
-		ptr = (voidp) xmalloc((unsigned) len);
+		ptr = (void *)xmalloc((unsigned) len);
 
 	if (!ptr) {
 		plog(XLOG_FATAL, "Out of memory in realloc");
@@ -136,7 +136,7 @@ xrealloc(voidp ptr, int len)
 }
 
 #if defined(DEBUG) && defined(DEBUG_MEM)
-xfree(char *f, int l, voidp p)
+xfree(char *f, int l, void *p)
 {
 	Debug(D_MEM) plog(XLOG_DEBUG, "Free in %s:%d: block %#x", f, l, p);
 #undef free
@@ -148,7 +148,7 @@ static int mem_bytes;
 static int orig_mem_bytes;
 
 static void
-checkup_mem(P_void)
+checkup_mem(void)
 {
 	extern struct mallinfo __mallinfo;
 	if (mem_bytes != __mallinfo.uordbytes) {
@@ -471,7 +471,7 @@ time_t clock_valid = 0;
 time_t xclock_valid = 0;
 #ifndef clocktime
 time_t
-clocktime(P_void)
+clocktime(void)
 {
 	time_t now = time(&clock_valid);
 	if (xclock_valid > now) {

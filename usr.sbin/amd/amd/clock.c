@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	8.1 (Berkeley) 6/6/93
- *	$Id: clock.c,v 1.3 2002/08/03 08:29:31 pvalchev Exp $
+ *	$Id: clock.c,v 1.4 2002/08/05 07:24:26 pvalchev Exp $
  */
 
 /*
@@ -56,7 +56,7 @@ typedef struct callout callout;
 struct callout {
 	callout	*c_next;		/* List of callouts */
 	void	(*c_fn)();		/* Function to call */
-	voidp	c_closure;		/* Closure to pass to call */
+	void	*c_closure;		/* Closure to pass to call */
 	time_t	c_time;			/* Time of call */
 	int	c_id;			/* Unique identifier */
 };
@@ -79,7 +79,7 @@ time_t next_softclock;			/* Time of next call to softclock() */
 #define	CID_UNDEF	(0)
 
 static callout *
-alloc_callout(P_void)
+alloc_callout(void)
 {
 	callout *cp = free_callouts;
 	if (cp) {
@@ -94,7 +94,7 @@ static void
 free_callout(callout *cp)
 {
 	if (nfree_callouts > CALLOUT_FREE_SLOP) {
-		free((voidp) cp);
+		free((void *)cp);
 	} else {
 		cp->c_next = free_callouts;
 		free_callouts = cp;
@@ -108,7 +108,7 @@ free_callout(callout *cp)
  * (*fn)(closure) will be called at clocktime() + secs
  */
 int
-timeout(unsigned int secs, void (*fn)(), voidp closure)
+timeout(unsigned int secs, void (*fn)(), void *closure)
 {
 	callout *cp, *cp2;
 	time_t t = clocktime() + secs;
@@ -184,7 +184,7 @@ reschedule_timeouts(time_t now, time_t then)
  * Clock handler
  */
 int
-softclock(P_void)
+softclock(void)
 {
 	time_t now;
 	callout *cp;
@@ -210,7 +210,7 @@ softclock(P_void)
 			 * and try to allocate a callout
 			 */
 			void (*fn)() = cp->c_fn;
-			voidp closure = cp->c_closure;
+			void *closure = cp->c_closure;
 
 			callouts.c_next = cp->c_next;
 			free_callout(cp);

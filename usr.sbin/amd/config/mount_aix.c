@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mount_aix.c	8.1 (Berkeley) 6/6/93
- *	$Id: mount_aix.c,v 1.1.1.1 1995/10/18 08:47:14 deraadt Exp $
+ *	$Id: mount_aix.c,v 1.2 2002/08/05 07:24:26 pvalchev Exp $
  */
 
 
@@ -58,7 +58,7 @@ int info_size;
 char *args;
 {
 	struct vmount *vp = (struct vmount *) p;
-	bzero((voidp) vp, sizeof(*vp));
+	bzero((void *)vp, sizeof(*vp));
 	/*
 	 * Fill in standard fields
 	 */
@@ -131,7 +131,7 @@ char *args;
 
 		size = aix3_mkvp(buf, type, flags, rfs, dir, host, data, sizeof(struct nfs_args), args);
 		if (free_rfs)
-			free((voidp) rfs);
+			free((void *)rfs);
 		free(host);
 
 		} break;

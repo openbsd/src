@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq_clnt.c	8.1 (Berkeley) 6/6/93
- *	$Id: amq_clnt.c,v 1.2 2002/08/03 08:29:32 pvalchev Exp $
+ *	$Id: amq_clnt.c,v 1.3 2002/08/05 07:24:26 pvalchev Exp $
  *
  */
 
@@ -45,8 +45,8 @@
 
 static struct timeval TIMEOUT = { ALLOWED_MOUNT_TIME, 0 };
 
-voidp
-amqproc_null_1(voidp argp, CLIENT *clnt)
+void *
+amqproc_null_1(void *argp, CLIENT *clnt)
 {
 	static char res;
 
@@ -54,7 +54,7 @@ amqproc_null_1(voidp argp, CLIENT *clnt)
 	if (clnt_call(clnt, AMQPROC_NULL, xdr_void, argp, xdr_void, &res, TIMEOUT) != RPC_SUCCESS) {
 		return (NULL);
 	}
-	return ((voidp)&res);
+	return ((void *)&res);
 }
 
 
@@ -71,7 +71,7 @@ amqproc_mnttree_1(amq_string *argp, CLIENT *clnt)
 }
 
 
-voidp
+void *
 amqproc_umnt_1(amq_string *argp, CLIENT *clnt)
 {
 	static char res;
@@ -80,12 +80,12 @@ amqproc_umnt_1(amq_string *argp, CLIENT *clnt)
 	if (clnt_call(clnt, AMQPROC_UMNT, xdr_amq_string, argp, xdr_void, &res, TIMEOUT) != RPC_SUCCESS) {
 		return (NULL);
 	}
-	return ((voidp)&res);
+	return ((void *)&res);
 }
 
 
 amq_mount_stats *
-amqproc_stats_1(voidp argp, CLIENT *clnt)
+amqproc_stats_1(void *argp, CLIENT *clnt)
 {
 	static amq_mount_stats res;
 
@@ -98,7 +98,7 @@ amqproc_stats_1(voidp argp, CLIENT *clnt)
 
 
 amq_mount_tree_list *
-amqproc_export_1(voidp argp, CLIENT *clnt)
+amqproc_export_1(void *argp, CLIENT *clnt)
 {
 	static amq_mount_tree_list res;
 
@@ -123,7 +123,7 @@ amqproc_setopt_1(amq_setopt *argp, CLIENT *clnt)
 
 
 amq_mount_info_list *
-amqproc_getmntfs_1(voidp argp, CLIENT *clnt)
+amqproc_getmntfs_1(void *argp, CLIENT *clnt)
 {
 	static amq_mount_info_list res;
 
@@ -136,7 +136,7 @@ amqproc_getmntfs_1(voidp argp, CLIENT *clnt)
 
 
 int *
-amqproc_mount_1(voidp argp, CLIENT *clnt)
+amqproc_mount_1(void *argp, CLIENT *clnt)
 {
 	static int res;
 
@@ -149,7 +149,7 @@ amqproc_mount_1(voidp argp, CLIENT *clnt)
 
 
 amq_string *
-amqproc_getvers_1(voidp argp, CLIENT *clnt)
+amqproc_getvers_1(void *argp, CLIENT *clnt)
 {
 	static amq_string res;
 

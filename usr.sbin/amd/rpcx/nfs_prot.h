@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_prot.h,v 1.2 1996/03/25 15:54:58 niklas Exp $	*/
+/*	$OpenBSD: nfs_prot.h,v 1.3 2002/08/05 07:24:26 pvalchev Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -404,14 +404,14 @@ bool_t xdr_statfsres();
 #undef NFSPROC_STATFS
 #define NFSPROC_STATFS ((u_long)17)
 
-extern voidp nfsproc_null_2();
+extern void *nfsproc_null_2();
 extern attrstat *nfsproc_getattr_2();
 extern attrstat *nfsproc_setattr_2();
-extern voidp nfsproc_root_2();
+extern void *nfsproc_root_2();
 extern diropres *nfsproc_lookup_2();
 extern readlinkres *nfsproc_readlink_2();
 extern readres *nfsproc_read_2();
-extern voidp nfsproc_writecache_2();
+extern void *nfsproc_writecache_2();
 extern attrstat *nfsproc_write_2();
 extern diropres *nfsproc_create_2();
 extern nfsstat *nfsproc_remove_2();

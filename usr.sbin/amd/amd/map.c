@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.6 2002/08/03 08:29:31 pvalchev Exp $	*/
+/*	$OpenBSD: map.c,v 1.7 2002/08/05 07:24:26 pvalchev Exp $	*/
 
 /*-
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -40,7 +40,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)map.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: map.c,v 1.6 2002/08/03 08:29:31 pvalchev Exp $";
+static char *rcsid = "$OpenBSD: map.c,v 1.7 2002/08/05 07:24:26 pvalchev Exp $";
 #endif /* not lint */
 
 #include "am.h"
@@ -114,10 +114,10 @@ exported_ap_realloc_map(int nsize)
 	if (nsize < 0 || nsize == exported_ap_size)
 		return 0;
 
-	exported_ap = (am_node **) xrealloc((voidp) exported_ap, nsize * sizeof(am_node*));
+	exported_ap = (am_node **) xrealloc((void *)exported_ap, nsize * sizeof(am_node*));
 
 	if (nsize > exported_ap_size)
-		bzero((char*) (exported_ap+exported_ap_size),
+		bzero((char *) (exported_ap+exported_ap_size),
 			(nsize - exported_ap_size) * sizeof(am_node*));
 	exported_ap_size = nsize;
 
@@ -135,7 +135,7 @@ am_node *root_node;
  * Fills in the map number of the node,
  * but leaves everything else uninitialised.
  */
-am_node *exported_ap_alloc(P_void)
+am_node *exported_ap_alloc(void)
 {
 	am_node *mp, **mpp;
 
@@ -213,7 +213,7 @@ exported_ap_free(am_node *mp)
 	/*
 	 * Free the mount node
 	 */
-	free((voidp) mp);
+	free((void *)mp);
 }
 
 /*
@@ -664,7 +664,7 @@ map_flush_srvr(fserver *fs)
  * automount node to be automounted.
  */
 int
-mount_auto_node(char *dir, voidp arg)
+mount_auto_node(char *dir, void *arg)
 {
 	int error = 0;
 
@@ -730,7 +730,7 @@ make_root_node(void)
  * them out.
  */
 void
-umount_exported(P_void)
+umount_exported(void)
 {
 	int i;
 
@@ -838,7 +838,7 @@ flush_kernel_name_cache(am_node *mp)
 #endif /* FLUSH_KERNEL_NAME_CACHE */
 
 static int
-unmount_node_wrap(voidp vp)
+unmount_node_wrap(void *vp)
 {
 #ifndef FLUSH_KERNEL_NAME_CACHE
 	return unmount_node((am_node*) vp);
@@ -888,7 +888,7 @@ unmount_node_wrap(voidp vp)
 }
 
 static void
-free_map_if_success(int rc, int term, voidp closure)
+free_map_if_success(int rc, int term, void *closure)
 {
 	am_node *mp = (am_node *) closure;
 	mntfs *mf = mp->am_mnt;
@@ -934,7 +934,7 @@ free_map_if_success(int rc, int term, voidp closure)
 	/*
 	 * Wakeup anything waiting for this mount
 	 */
-	wakeup((voidp) mf);
+	wakeup((void *)mf);
 }
 
 static int
@@ -969,8 +969,8 @@ unmount_mp(am_node *mp)
 			 * Note that we are unmounting this node
 			 */
 			mf->mf_flags |= MFF_UNMOUNTING;
-			run_task(unmount_node_wrap, (voidp) mp,
-				 free_map_if_success, (voidp) mp);
+			run_task(unmount_node_wrap, (void *)mp,
+				 free_map_if_success, (void *)mp);
 			was_backgrounded = 1;
 #ifdef DEBUG
 			dlog("unmount attempt backgrounded");
@@ -982,7 +982,7 @@ unmount_mp(am_node *mp)
 		dlog("Trying unmount in foreground");
 #endif
 		mf->mf_flags |= MFF_UNMOUNTING;
-		free_map_if_success(unmount_node(mp), 0, (voidp) mp);
+		free_map_if_success(unmount_node(mp), 0, (void *)mp);
 #ifdef DEBUG
 		dlog("unmount attempt done");
 #endif /* DEBUG */

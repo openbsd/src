@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)srvr_nfs.c	8.1 (Berkeley) 6/6/93
- *	$Id: srvr_nfs.c,v 1.4 2002/08/03 08:29:31 pvalchev Exp $
+ *	$Id: srvr_nfs.c,v 1.5 2002/08/05 07:24:26 pvalchev Exp $
  */
 
 /*
@@ -109,7 +109,7 @@ flush_srvr_nfs_cache(void)
  * Startup the NFS ping
  */
 static void
-start_ping(P_void)
+start_ping(void)
 {
 	XDR ping_xdr;
 	struct rpc_msg ping_msg;
@@ -146,8 +146,8 @@ start_ping(P_void)
  */
 /*ARGSUSED*/
 static void
-got_portmap(voidp pkt, int len, struct sockaddr_in *sa,
-    struct sockaddr_in *ia, voidp idv, int done)
+got_portmap(void *pkt, int len, struct sockaddr_in *sa,
+    struct sockaddr_in *ia, void *idv, int done)
 {
 	fserver *fs2 = (fserver *) idv;
 	fserver *fs = 0;
@@ -161,7 +161,7 @@ got_portmap(voidp pkt, int len, struct sockaddr_in *sa,
 
 	if (fs == fs2) {
 		u_long port = 0;	/* XXX - should be short but protocol is naff */
-		int error = done ? pickup_rpc_reply(pkt, len, (voidp) &port, xdr_u_long) : -1;
+		int error = done ? pickup_rpc_reply(pkt, len, (void *)&port, xdr_u_long) : -1;
 		nfs_private *np = (nfs_private *) fs->fs_private;
 		if (!error && port) {
 #ifdef DEBUG
@@ -217,14 +217,14 @@ call_portmap(fserver *fs, AUTH *auth, unsigned long prog,
 	pmap.pm_prot = prot;
 	pmap.pm_port = 0;
 	len = make_rpc_packet(iobuf, sizeof(iobuf), PMAPPROC_GETPORT,
-			&pmap_msg, (voidp) &pmap, xdr_pmap, auth);
+			&pmap_msg, (void *)&pmap, xdr_pmap, auth);
 	if (len > 0) {
 		struct sockaddr_in sin;
-		bzero((voidp) &sin, sizeof(sin));
+		bzero((void *)&sin, sizeof(sin));
 		sin = *fs->fs_ip;
 		sin.sin_port = htons(PMAPPORT);
-		error = fwd_packet(RPC_XID_PORTMAP, (voidp) iobuf, len,
-				&sin, &sin, (voidp) fs, got_portmap);
+		error = fwd_packet(RPC_XID_PORTMAP, (void *)iobuf, len,
+				&sin, &sin, (void *)fs, got_portmap);
 	} else {
 		error = -len;
 	}
@@ -259,8 +259,8 @@ recompute_portmap(fserver *fs)
  */
 /*ARGSUSED*/
 static void
-nfs_pinged(voidp pkt, int len, struct sockaddr_in *sp,
-    struct sockaddr_in *tsp, voidp idv, int done)
+nfs_pinged(void *pkt, int len, struct sockaddr_in *sp,
+    struct sockaddr_in *tsp, void *idv, int done)
 {
 	/* XXX EVIL! XXX */
 	int xid = (int) ((long)idv);
@@ -319,7 +319,7 @@ nfs_pinged(voidp pkt, int len, struct sockaddr_in *sp,
 			 * Adjust ping interval
 			 */
 			untimeout(fs->fs_cid);
-			fs->fs_cid = timeout(fs->fs_pinger, nfs_keepalive, (voidp) fs);
+			fs->fs_cid = timeout(fs->fs_pinger, nfs_keepalive, (void *)fs);
 
 			/*
 			 * Update ttl for this server
@@ -451,8 +451,8 @@ nfs_keepalive(fserver *fs)
 	 * XXX EVIL!  We cast xid to a pointer, then back to an int when
 	 * XXX we get the reply.
 	 */
-	error = fwd_packet(MK_RPC_XID(RPC_XID_NFSPING, np->np_xid), (voidp) ping_buf,
-		ping_len, fs->fs_ip, (struct sockaddr_in *) 0, (voidp) ((long)np->np_xid), nfs_pinged);
+	error = fwd_packet(MK_RPC_XID(RPC_XID_NFSPING, np->np_xid), (void *)ping_buf,
+		ping_len, fs->fs_ip, (struct sockaddr_in *) 0, (void *)((long)np->np_xid), nfs_pinged);
 
 	/*
 	 * See if a hard error occured
@@ -506,11 +506,11 @@ nfs_keepalive(fserver *fs)
 	dlog("NFS timeout in %d seconds", fstimeo);
 #endif /* DEBUG */
 
-	fs->fs_cid = timeout(fstimeo, nfs_timed_out, (voidp) fs);
+	fs->fs_cid = timeout(fstimeo, nfs_timed_out, (void *)fs);
 }
 
 int
-nfs_srvr_port(fserver *fs, u_short *port, voidp wchan)
+nfs_srvr_port(fserver *fs, u_short *port, void *wchan)
 {
 	int error = -1;
 	if ((fs->fs_flags & FSF_VALID) == FSF_VALID) {
@@ -548,7 +548,7 @@ nfs_srvr_port(fserver *fs, u_short *port, voidp wchan)
 		 * come back here and new, better things to happen.
 		 */
 		fs->fs_flags |= FSF_WANT;
-		sched_task(wakeup_task, wchan, (voidp) fs);
+		sched_task(wakeup_task, wchan, (void *)fs);
 	}
 	return error;
 }
@@ -638,9 +638,9 @@ find_nfs_srvr(mntfs *mf)
 		switch (hp->h_addrtype) {
 		case AF_INET:
 			ip = ALLOC(sockaddr_in);
-			bzero((voidp) ip, sizeof(*ip));
+			bzero((void *)ip, sizeof(*ip));
 			ip->sin_family = AF_INET;
-			bcopy((voidp) hp->h_addr, (voidp) &ip->sin_addr, sizeof(ip->sin_addr));
+			bcopy((void *)hp->h_addr, (void *)&ip->sin_addr, sizeof(ip->sin_addr));
 
 			ip->sin_port = htons(NFS_PORT);
 			break;
@@ -673,7 +673,7 @@ find_nfs_srvr(mntfs *mf)
 	fs->fs_type = "nfs";
 	fs->fs_pinger = AM_PINGER;
 	np = ALLOC(nfs_private);
-	bzero((voidp) np, sizeof(*np));
+	bzero((void *)np, sizeof(*np));
 	np->np_mountd_inval = TRUE;
 	np->np_xid = NPXID_ALLOC();
 	np->np_error = -1;
@@ -682,7 +682,7 @@ find_nfs_srvr(mntfs *mf)
 	 * MAX_ALLOWED_PINGS of the fast variety have failed.
 	 */
 	np->np_ttl = clocktime() + MAX_ALLOWED_PINGS * FAST_NFS_PING - 1;
-	fs->fs_private = (voidp) np;
+	fs->fs_private = (void *)np;
 	fs->fs_prfree = (void (*)()) free;
 
 	if (!(fs->fs_flags & FSF_ERROR)) {

@@ -167,7 +167,7 @@ Sun Mar 17 12:05:27 1991  Jan-Simon Pendry  (jsp at forest)
 
 	* (wire.c) Fixed to work with new 4.4BSD sockaddr's.
 
-	* Changed const to Const everywhere and added new define in config.h.
+	* Changed const to const everywhere and added new define in config.h.
 
 	* (mk-amd-map.c) New -p option which just writes the output to
 	stdout.  Useful for making NIS or Hesiod maps.

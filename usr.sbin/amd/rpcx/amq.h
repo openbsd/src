@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq.h	8.1 (Berkeley) 6/6/93
- *	$Id: amq.h,v 1.2 1997/01/31 14:42:22 graichen Exp $
+ *	$Id: amq.h,v 1.3 2002/08/05 07:24:26 pvalchev Exp $
  *
  */
 
@@ -132,11 +132,11 @@ bool_t xdr_amq_setopt();
 #define AMQ_PROGRAM ((u_long)300019)
 #define AMQ_VERSION ((u_long)1)
 #define AMQPROC_NULL ((u_long)0)
-extern voidp amqproc_null_1();
+extern void *amqproc_null_1();
 #define AMQPROC_MNTTREE ((u_long)1)
 extern amq_mount_tree_p *amqproc_mnttree_1();
 #define AMQPROC_UMNT ((u_long)2)
-extern voidp amqproc_umnt_1();
+extern void *amqproc_umnt_1();
 #define AMQPROC_STATS ((u_long)3)
 extern amq_mount_stats *amqproc_stats_1();
 #define AMQPROC_EXPORT ((u_long)4)

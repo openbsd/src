@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)info_nis.c	8.1 (Berkeley) 6/6/93
- *	$Id: info_nis.c,v 1.8 2002/08/03 08:29:31 pvalchev Exp $
+ *	$Id: info_nis.c,v 1.9 2002/08/05 07:24:26 pvalchev Exp $
  */
 
 /*
@@ -61,7 +61,7 @@ static int has_yp_order = FALSE;
  * Figure out the nis domain name
  */
 static int
-determine_nis_domain(P_void)
+determine_nis_domain(void)
 {
 	static int nis_not_running = 0;
 
@@ -153,8 +153,8 @@ nis_reload(mnt_map *m, char *map, void (*fn)())
 	data.ncd_m = m;
 	data.ncd_map = map;
 	data.ncd_fn = fn;
-	cbinfo.data = (voidp)&data;
-	cbinfo.foreach = (voidp)&callback;
+	cbinfo.data = (void *)&data;
+	cbinfo.foreach = (void *)&callback;
 
 	error = yp_all(domain, map, &cbinfo);
 

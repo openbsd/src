@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.4 2002/08/03 08:29:32 pvalchev Exp $	*/
+/*	$OpenBSD: mount.h,v 1.5 2002/08/05 07:24:26 pvalchev Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -117,15 +117,15 @@ bool_t xdr_exportnode();
 #define MOUNTPROG ((u_long)100005)
 #define MOUNTVERS ((u_long)1)
 #define MOUNTPROC_NULL ((u_long)0)
-extern voidp mountproc_null_1();
+extern void *mountproc_null_1();
 #define MOUNTPROC_MNT ((u_long)1)
 extern fhstatus *mountproc_mnt_1();
 #define MOUNTPROC_DUMP ((u_long)2)
 extern mountlist *mountproc_dump_1();
 #define MOUNTPROC_UMNT ((u_long)3)
-extern voidp mountproc_umnt_1();
+extern void *mountproc_umnt_1();
 #define MOUNTPROC_UMNTALL ((u_long)4)
-extern voidp mountproc_umntall_1();
+extern void *mountproc_umntall_1();
 #define MOUNTPROC_EXPORT ((u_long)5)
 extern exports *mountproc_export_1();
 #define MOUNTPROC_EXPORTALL ((u_long)6)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: am.h,v 1.7 2002/08/03 08:29:32 pvalchev Exp $	*/
+/*	$OpenBSD: am.h,v 1.8 2002/08/05 07:24:26 pvalchev Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -175,10 +175,10 @@ extern char *wire;		/* Name of primary connected network */
 #define	NEXP_AP	(254)
 #define NEXP_AP_MARGIN (128)
 
-typedef int (*task_fun)(voidp);
-typedef void (*cb_fun)(int, int, voidp);
-typedef void (*fwd_fun)(voidp, int, struct sockaddr_in *,
-				struct sockaddr_in *, voidp, int);
+typedef int (*task_fun)(void *);
+typedef void (*cb_fun)(int, int, void *);
+typedef void (*fwd_fun)(void *, int, struct sockaddr_in *,
+				struct sockaddr_in *, void *, int);
 
 /*
  * String comparison macros
@@ -223,26 +223,26 @@ struct fhstatus;
  */
 extern void	 am_mounted(am_node *);
 extern void	 am_unmounted(am_node *);
-extern pid_t	 background(P_void);
+extern pid_t	 background(void);
 extern int	 bind_resv_port(int, unsigned short *);
 extern int	 compute_mount_flags(struct mntent *);
-extern int	 softclock(P_void);
+extern int	 softclock(void);
 #ifdef DEBUG
 extern int	 debug_option(char *);
 #endif /* DEBUG */
 extern void	 deslashify(char *);
 extern void	 discard_mntlist(mntlist *mp);
-/*extern void	 domain_strip(char*, char *);*/
+/*extern void	 domain_strip(char *, char *);*/
 extern mntfs	*dup_mntfs(mntfs *);
 extern fserver	*dup_srvr(fserver*);
 extern int	eval_fs_opts(am_opts *, char *, char *, char *, char *, char *);
 extern char	*expand_key(char *);
-extern am_node	*exported_ap_alloc(P_void);
+extern am_node	*exported_ap_alloc(void);
 extern am_node	*find_ap(char *);
 extern am_node	*find_mf(mntfs *);
 extern mntfs	*find_mntfs(am_ops *, am_opts *, char *, char *, char *,
 		 char *, char *);
-extern void	 flush_mntfs(P_void);
+extern void	 flush_mntfs(void);
 extern void	 flush_nfs_fhandle_cache(fserver *);
 extern void	 flush_srvr_nfs_cache(void);
 extern void	 forcibly_timeout_mp(am_node *);
@@ -251,10 +251,10 @@ extern void	 free_opts(am_opts *);
 extern void	 free_map(am_node *);
 extern void	 free_mntlist(mntlist *);
 extern void	 free_srvr(fserver *);
-extern int	 fwd_init(P_void);
-extern int	 fwd_packet(int, voidp, int, struct sockaddr_in *,
-		 struct sockaddr_in *, voidp, fwd_fun);
-extern void	 fwd_reply(P_void);
+extern int	 fwd_init(void);
+extern int	 fwd_packet(int, void *, int, struct sockaddr_in *,
+		 struct sockaddr_in *, void *, fwd_fun);
+extern void	 fwd_reply(void);
 extern void	 get_args(int, char *[]);
 extern char	*getwire(void);
 #ifdef NEED_MNTOPT_PARSER
@@ -268,71 +268,71 @@ extern void	 insert_am(am_node *, am_node *);
 extern void	 ins_que(qelem *, qelem *);
 extern int	 islocalnet(u_int32_t);
 extern int	 make_nfs_auth(void);
-extern void	 make_root_node(P_void);
+extern void	 make_root_node(void);
 extern int	 make_rpc_packet(char *, int, u_long, struct rpc_msg *,
-		 voidp, xdrproc_t, AUTH *);
+		 void *, xdrproc_t, AUTH *);
 extern void	 map_flush_srvr(fserver *);
 extern void	 mapc_add_kv(mnt_map *, char *, char *);
 extern mnt_map	*mapc_find(char *, char *);
 extern void	 mapc_free(mnt_map *);
-extern int	 mapc_keyiter(mnt_map*, void (*)(char *,voidp), voidp);
+extern int	 mapc_keyiter(mnt_map*, void (*)(char *,void *), void *);
 extern int	 mapc_search(mnt_map *, char *, char **);
-extern void	 mapc_reload(P_void);
+extern void	 mapc_reload(void);
 extern void	 mapc_showtypes(FILE *);
 extern void	 mf_mounted(mntfs *mf);
 extern int	 mkdirs(char *, int);
 extern void	 mk_fattr(am_node *, int);
 extern void	 mnt_free(struct mntent *);
-extern int	 mount_auto_node(char *, voidp);
+extern int	 mount_auto_node(char *, void *);
 extern int	 mount_automounter(pid_t);
-extern int	 mount_exported(P_void);
+extern int	 mount_exported(void);
 extern int	 mount_fs(struct mntent *, int, caddr_t, int, MTYPE_TYPE);
 extern int	 mount_nfs_fh(struct fhstatus *, char *, char *, char *, mntfs *);
 extern int	 mount_node(am_node *);
-extern mntfs	*new_mntfs(P_void);
+extern mntfs	*new_mntfs(void);
 extern void	 new_ttl(am_node *);
 extern am_node	*next_map(int *);
-extern int	 nfs_srvr_port(fserver *, u_short *, voidp);
+extern int	 nfs_srvr_port(fserver *, u_short *, void *);
 extern void	 normalize_slash(char *);
 extern void	 ops_showfstypes(FILE *);
-extern int	 pickup_rpc_reply(voidp, int, voidp, xdrproc_t);
+extern int	 pickup_rpc_reply(void *, int, void *, xdrproc_t);
 extern mntlist	*read_mtab(char *);
 extern mntfs	*realloc_mntfs(mntfs *, am_ops *, am_opts *, char *,
 		 char *, char *, char *, char *);
 extern void	 rem_que(qelem *);
-extern void	 reschedule_timeout_mp(P_void);
-extern void	 restart(P_void);
+extern void	 reschedule_timeout_mp(void);
+extern void	 restart(void);
 #ifdef UPDATE_MTAB
 extern void	 rewrite_mtab(mntlist *);
 #endif /* UPDATE_MTAB */
 extern void	 rmdirs(char *);
 extern am_node	*root_ap(char *, int);
-extern int	 root_keyiter(void (*)(char *,voidp), voidp);
+extern int	 root_keyiter(void (*)(char *,void *), void *);
 extern void	 root_newmap(char *, char *, char *);
 extern void	 rpc_msg_init(struct rpc_msg *, u_long, u_long, u_long);
-extern void	 run_task(task_fun, voidp, cb_fun, voidp);
-extern void	 sched_task(cb_fun, voidp, voidp);
-extern void	 show_rcs_info(Const char *, char *);
+extern void	 run_task(task_fun, void *, cb_fun, void *);
+extern void	 sched_task(cb_fun, void *, void *);
+extern void	 show_rcs_info(const char *, char *);
 extern void	 sigchld(int);
 extern void	 srvrlog(fserver *, char *);
 extern char	*str3cat(char *, char *, char *, char *);
-extern char	*strnsave(Const char *, int);
+extern char	*strnsave(const char *, int);
 extern char	*strealloc(char *, char *);
 extern char	**strsplit(char *, int, int);
 extern int	 switch_option(char *);
 extern int	 switch_to_logfile(char *);
-extern void	 do_task_notify(P_void);
-extern int	 timeout(unsigned int, void (*fn)(), voidp);
-extern void	 timeout_mp(P_void);
-extern void	 umount_exported(P_void);
+extern void	 do_task_notify(void);
+extern int	 timeout(unsigned int, void (*fn)(), void *);
+extern void	 timeout_mp(void);
+extern void	 umount_exported(void);
 extern int	 umount_fs(char *);
 /*extern int unmount_node(am_node*);
-extern int unmount_node_wrap(voidp);*/
-extern void	 unregister_amq(P_void);
+extern int unmount_node_wrap(void *);*/
+extern void	 unregister_amq(void);
 extern void	 untimeout(int);
 extern int	 valid_key(char *);
-extern void	 wakeup(voidp);
-extern void	 wakeup_task(int, int, voidp);
+extern void	 wakeup(void *);
+extern void	 wakeup_task(int, int, void *);
 extern void	 wakeup_srvr(fserver *);
 extern void	 write_mntent(struct mntent *);
 #ifdef UPDATE_MTAB
@@ -482,7 +482,7 @@ struct fserver {
 	int		fs_pinger;	/* Ping (keepalive) interval */
 	int		fs_flags;	/* Flags */
 	char		*fs_type;	/* File server type */
-	voidp		fs_private;	/* Private data */
+	void 		*fs_private;	/* Private data */
 	void		(*fs_prfree)();	/* Free private data */
 };
 #define	FSF_VALID	0x0001		/* Valid information available */
@@ -511,7 +511,7 @@ struct mntfs {
 	int		mf_refc;	/* Number of references to this node */
 	int		mf_cid;		/* Callout id */
 	void		(*mf_prfree)();	/* Free private space */
-	voidp		mf_private;	/* Private - per-fs data */
+	void 		*mf_private;	/* Private - per-fs data */
 };
 
 #define	MFF_MOUNTED	0x0001		/* Node is mounted */

@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)am_ops.c	8.1 (Berkeley) 6/6/93
- *	$Id: am_ops.c,v 1.4 2002/08/03 08:29:31 pvalchev Exp $
+ *	$Id: am_ops.c,v 1.5 2002/08/05 07:24:26 pvalchev Exp $
  */
 
 #include "am.h"
@@ -158,7 +158,7 @@ ops_match(am_opts *fo, char *key, char *g_key, char *path, char *keym,
 	 * Check the filesystem is happy
 	 */
 	if (fo->fs_mtab)
-		free((voidp) fo->fs_mtab);
+		free((void *)fo->fs_mtab);
 
 	if ((fo->fs_mtab = (*rop->fs_match)(fo)))
 		return rop;

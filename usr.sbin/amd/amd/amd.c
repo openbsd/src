@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amd.c	8.1 (Berkeley) 6/6/93
- *	$Id: amd.c,v 1.10 2002/08/03 08:29:31 pvalchev Exp $
+ *	$Id: amd.c,v 1.11 2002/08/05 07:24:26 pvalchev Exp $
  */
 
 #ifndef lint
@@ -146,7 +146,7 @@ parent_exit(int sig)
 }
 
 static pid_t
-daemon_mode(P_void)
+daemon_mode(void)
 {
 	pid_t bgpid;
 

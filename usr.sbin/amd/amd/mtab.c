@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mtab.c	8.1 (Berkeley) 6/6/93
- *	$Id: mtab.c,v 1.3 2002/08/03 08:29:31 pvalchev Exp $
+ *	$Id: mtab.c,v 1.4 2002/08/05 07:24:26 pvalchev Exp $
  */
 
 #include "am.h"
@@ -51,7 +51,7 @@ mnt_free(struct mntent *mp)
 	free(mp->mnt_dir);
 	free(mp->mnt_type);
 	free(mp->mnt_opts);
-	free((voidp) mp);
+	free((void *)mp);
 }
 
 /*
@@ -66,7 +66,7 @@ discard_mntlist(mntlist *mp)
 		mp = mp->mnext;
 		if (mp2->mnt)
 			mnt_free(mp2->mnt);
-		free((voidp) mp2);
+		free((void *)mp2);
 	}
 }
 

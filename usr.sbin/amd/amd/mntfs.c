@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mntfs.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: mntfs.c,v 1.3 2002/08/03 08:29:31 pvalchev Exp $";
+static char *rcsid = "$Id: mntfs.c,v 1.4 2002/08/05 07:24:26 pvalchev Exp $";
 #endif /* not lint */
 
 
@@ -177,7 +177,7 @@ find_mntfs(am_ops *ops, am_opts *mo, char *mp, char *info,
 				/*
 				 * Remember who we are restarting
 				 */
-				mf2->mf_private = (voidp) dup_mntfs(mf);
+				mf2->mf_private = (void *)dup_mntfs(mf);
 				mf2->mf_prfree = free_mntfs;
 				return mf2;
 			}
@@ -215,10 +215,10 @@ new_mntfs()
 static void
 uninit_mntfs(mntfs *mf, int rmd)
 {
-	if (mf->mf_auto) free((voidp) mf->mf_auto);
-	if (mf->mf_mopts) free((voidp) mf->mf_mopts);
-	if (mf->mf_remopts) free((voidp) mf->mf_remopts);
-	if (mf->mf_info) free((voidp) mf->mf_info);
+	if (mf->mf_auto) free((void *)mf->mf_auto);
+	if (mf->mf_mopts) free((void *)mf->mf_mopts);
+	if (mf->mf_remopts) free((void *)mf->mf_remopts);
+	if (mf->mf_info) free((void *)mf->mf_info);
 	if (mf->mf_private && mf->mf_prfree)
 		(*mf->mf_prfree)(mf->mf_private);
 	/*
@@ -226,7 +226,7 @@ uninit_mntfs(mntfs *mf, int rmd)
 	 */
 	if (rmd && (mf->mf_flags & MFF_MKMNT))
 		rmdirs(mf->mf_mount);
-	if (mf->mf_mount) free((voidp) mf->mf_mount);
+	if (mf->mf_mount) free((void *)mf->mf_mount);
 
 	/*
 	 * Clean up the file server
@@ -251,7 +251,7 @@ discard_mntfs(mntfs *mf)
 	 * Free memory
 	 */
 	uninit_mntfs(mf, TRUE);
-	free((voidp) mf);
+	free((void *)mf);
 
 	--mntfs_allocated;
 }
@@ -306,7 +306,7 @@ free_mntfs(mntfs *mf)
 			if (mf->mf_flags & (MFF_MOUNTED|MFF_MOUNTING|MFF_UNMOUNTING))
 				dlog("mntfs reference for %s still active", mf->mf_mount);
 #endif /* DEBUG */
-			mf->mf_cid = timeout(ALLOWED_MOUNT_TIME, discard_mntfs, (voidp) mf);
+			mf->mf_cid = timeout(ALLOWED_MOUNT_TIME, discard_mntfs, (void *)mf);
 		}
 	}
 }

@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mk-amd-map.c	8.1 (Berkeley) 6/28/93
- *	$Id: mk-amd-map.c,v 1.5 2002/07/18 10:10:56 pvalchev Exp $
+ *	$Id: mk-amd-map.c,v 1.6 2002/08/05 07:24:26 pvalchev Exp $
  */
 
 /*
@@ -52,7 +52,7 @@ char copyright[] = "\
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$Id: mk-amd-map.c,v 1.5 2002/07/18 10:10:56 pvalchev Exp $";
+static char rcsid[] = "$Id: mk-amd-map.c,v 1.6 2002/08/05 07:24:26 pvalchev Exp $";
 static char sccsid[] = "@(#)mk-amd-map.c	8.1 (Berkeley) 6/28/93";
 #endif /* not lint */
 
@@ -74,7 +74,7 @@ static char sccsid[] = "@(#)mk-amd-map.c	8.1 (Berkeley) 6/28/93";
 #define create_database(name) dbm_open(name, O_RDWR|O_CREAT, 0644)
 
 static int
-store_data(voidp db, char *k, char *v)
+store_data(void *db, char *k, char *v)
 {
 	datum key, val;
 
@@ -125,7 +125,7 @@ read_line(char *buf, int size, FILE *fp)
  * Read through a map
  */
 static int
-read_file(FILE *fp, char *map, voidp db)
+read_file(FILE *fp, char *map, void *db)
 {
 	char key_val[2048];
 	int chuck = 0;

@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mtab_file.c	8.1 (Berkeley) 6/6/93
- *	$Id: mtab_file.c,v 1.2 2002/06/10 21:07:14 itojun Exp $
+ *	$Id: mtab_file.c,v 1.3 2002/08/05 07:24:26 pvalchev Exp $
  */
 
 #include "am.h"
@@ -229,7 +229,7 @@ eacces:
 			tv.tv_sec = 0;
 			tv.tv_usec = (mypid & 0x07) << 17;
 			if (tv.tv_usec)
-				if (select(0, (voidp) 0, (voidp) 0, (voidp) 0, &tv) < 0)
+				if (select(0, (void *)0, (void *)0, (void *)0, &tv) < 0)
 					plog(XLOG_WARNING, "mtab nap failed: %m");
 
 			goto again;
