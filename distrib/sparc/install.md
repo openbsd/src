@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.30 1999/10/13 02:47:42 jason Exp $
+#	$OpenBSD: install.md,v 1.31 2000/03/11 02:29:03 deraadt Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -106,15 +106,13 @@ md_machine_arch() {
 
 md_get_diskdevs() {
 	# return available disk devices
-	md_get_msgbuf | sed -n -e '1,/^OpenBSD /d' \
-				-e '/^sd[0-9] /{s/ .*//;p;}' \
+	md_get_msgbuf | sed -n 	-e '/^sd[0-9] /{s/ .*//;p;}' \
 				-e '/^x[dy][0-9] /{s/ .*//;p;}' 
 }
 
 md_get_cddevs() {
 	# return available CDROM devices
-	md_get_msgbuf | sed -n -e '1,/^OpenBSD /d' \
-				-e '/^cd[0-9] /{s/ .*//;p;}'
+	md_get_msgbuf | sed -n 	-e '/^cd[0-9] /{s/ .*//;p;}'
 }
 
 md_get_partition_range() {
