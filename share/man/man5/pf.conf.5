@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.40 2002/04/24 18:10:25 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.41 2002/04/30 16:23:01 mpech Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -557,7 +557,7 @@ block return-rst  in  log on $ext_if proto tcp all
 block return-icmp out log on $ext_if proto udp all
 block return-icmp in  log on $ext_if proto udp all
 
-# block anything coming form source we have no back routes for
+# block anything coming from source we have no back routes for
 block in from no-route to any
 
 # block and log outgoing packets that don't have our address as source,
