@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_obio.c,v 1.4 2000/03/31 04:49:35 rahnds Exp $	*/
+/*	$OpenBSD: wdc_obio.c,v 1.5 2000/05/04 03:48:57 rahnds Exp $	*/
 /*	$NetBSD: wdc_obio.c,v 1.4 1999/06/14 08:53:06 tsubai Exp $	*/
 
 /*-
@@ -141,7 +141,7 @@ wdc_obio_attach(parent, self, aux)
 	struct confargs *ca = aux;
 	struct channel_softc *chp = &sc->wdc_channel;
 	int intr;
-	int use_dma = 0;
+	int use_dma = 1;
 	bus_addr_t cmdbase;
 	bus_size_t cmdsize;
 	bus_addr_t ctlbase;
