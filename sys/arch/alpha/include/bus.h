@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.5 1997/01/24 19:57:09 niklas Exp $	*/
+/*	$OpenBSD: bus.h,v 1.6 1997/03/21 00:16:32 niklas Exp $	*/
 /*	$NetBSD: bus.h,v 1.10 1996/12/02 22:19:32 cgd Exp $	*/
 
 /*
@@ -240,6 +240,24 @@ struct alpha_bus_space {
 
 
 /*
+ *	void bus_space_read_raw_multi_N __P((bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset,
+ *	    u_int8_t *addr, size_t count));
+ *
+ * Read `count' bytes in 2, 4 or 8 byte wide quantities from bus space
+ * described by tag/handle/offset and copy into buffer provided.  The buffer
+ * must have proper alignment for the N byte wide entities.  Furthermore
+ * possible byte-swapping should be done by these functions.
+ */
+
+#define	bus_space_read_raw_multi_2(t, h, o, a, c) \
+    bus_space_read_multi_2((t), (h), (o), (u_int16_t *)(a), (c) >> 1)
+#define	bus_space_read_raw_multi_4(t, h, o, a, c) \
+    bus_space_read_multi_4((t), (h), (o), (u_int32_t *)(a), (c) >> 2)
+#define	bus_space_read_raw_multi_8(t, h, o, a, c) \
+    bus_space_read_multi_8((t), (h), (o), (u_int64_t *)(a), (c) >> 4)
+
+/*
  * Bus read region operations.
  */
 #define	bus_space_read_region_1(t, h, o, a, c)				\
@@ -273,6 +291,23 @@ struct alpha_bus_space {
 #define	bus_space_write_multi_8(t, h, o, a, c)				\
 	__abs_nonsingle(wm,8,(t),(h),(o),(a),(c))
 
+/*
+ *	void bus_space_write_raw_multi_N __P((bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset,
+ *	    u_int8_t *addr, size_t count));
+ *
+ * Write `count' bytes in 2, 4 or 8 byte wide quantities from the buffer
+ * provided to bus space described by tag/handle/offset.  The buffer
+ * must have proper alignment for the N byte wide entities.  Furthermore
+ * possible byte-swapping should be done by these functions.
+ */
+
+#define	bus_space_write_raw_multi_2(t, h, o, a, c) \
+    bus_space_write_multi_2((t), (h), (o), (u_int16_t *)(a), (c) >> 1)
+#define	bus_space_write_raw_multi_4(t, h, o, a, c) \
+    bus_space_write_multi_4((t), (h), (o), (u_int32_t *)(a), (c) >> 2)
+#define	bus_space_write_raw_multi_8(t, h, o, a, c) \
+    bus_space_write_multi_8((t), (h), (o), (u_int64_t *)(a), (c) >> 4)
 
 /*
  * Bus write region operations.
