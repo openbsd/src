@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.234 2000/03/28 01:20:14 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.235 2000/03/29 21:00:35 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1035,6 +1035,11 @@ product INTEL 82440BX		0x71a0	82440BX PCI-AGP (PAC)
 product INTEL 82440BX_AGP	0x71a1	82440BX AGP (PAC)
 product INTEL PCI450_PB		0x84c4	450 PCIset (Orion) Host-PCI
 product INTEL PCI450_MC		0x84c5	450 PCIset (Orion) Memory
+product INTEL 82840_HB		0x1a21	82840 Host
+product INTEL 82840_AGP		0x1a23	82840 AGP
+product INTEL 82840_PCI		0x1a24	82840 PCI
+product INTEL 82806AA		0x1360	82806AA PCI64
+product INTEL 82806AA_APIC	0x1161	82806AA PCI64 APIC
 
 /* Intergraph products */
 product INTERGRAPH 4D50T	0x00e4	Powerstorm 4D50T
