@@ -1,4 +1,4 @@
-/*	$OpenBSD: whois.c,v 1.24 2003/04/15 23:24:45 millert Exp $	*/
+/*	$OpenBSD: whois.c,v 1.25 2003/04/15 23:30:33 millert Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: whois.c,v 1.24 2003/04/15 23:24:45 millert Exp $";
+static const char rcsid[] = "$OpenBSD: whois.c,v 1.25 2003/04/15 23:30:33 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -234,6 +234,8 @@ whois(const char *query, const char *server, const char *port, int flags)
 
 		if ((p = strstr(buf, WHOIS_SERVER_ID))) {
 			p += sizeof(WHOIS_SERVER_ID) - 1;
+			while (isblank(*p))
+				p++;
 			if ((len = strcspn(p, " \t\n\r"))) {
 				if ((nhost = malloc(len + 1)) == NULL)
 					err(1, "malloc");
