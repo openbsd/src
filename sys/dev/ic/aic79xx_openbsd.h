@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.h,v 1.10 2004/12/13 04:07:26 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.h,v 1.11 2004/12/16 01:33:26 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -256,10 +256,6 @@ typedef enum
 } ahd_power_state;
 
 void ahd_power_state_change(struct ahd_softc *, ahd_power_state);
-
-/******************************** VL/EISA *************************************/
-int aic7770_map_registers(struct ahd_softc *);
-int aic7770_map_int(struct ahd_softc *, int);
 
 /********************************* Debug **************************************/
 void	ahd_print_path(struct ahd_softc *, struct scb *);
