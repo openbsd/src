@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.90 2002/05/28 02:14:09 mickey Exp $
+	$OpenBSD: pcmciadevs,v 1.91 2002/06/07 20:59:19 fgsch Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -63,6 +63,7 @@ vendor NETGEAR			0x0149	Netgear
 vendor SIMPLETECH		0x014d	Simple Technology
 vendor SYMBOL2			0x014d	Symbol
 vendor LUCENT			0x0156	Lucent
+vendor GEMPLUS			0x0157	Gemplus
 vendor AIRONET			0x015f	Aironet Wireless Communications
 vendor ERICSSON			0x016b	Ericsson
 vendor PSION			0x016c	Psion
@@ -182,6 +183,9 @@ product FARALLON SKYLINE	0x0a01 SkyLINE Wireless
 product FUJITSU SCSI600		0x0401 Fujitsu 600
 product FUJITSU LA10S		0x1003 Fujitsu CF Ethernet
 product FUJITSU LA501		0x2000 Fujitsu Towa LA501
+
+/* Gemplus */
+product GEMPLUS GPR400		0x3004 GPR400 Smartcard Reader
  
 /* Greycell */
 product GREYCELL GCS2000	0x0201 Grey Cell GCS2000 Gold II Ethernet
