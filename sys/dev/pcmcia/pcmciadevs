@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.17 1999/07/20 15:57:10 deraadt Exp $
+	$OpenBSD: pcmciadevs,v 1.18 1999/07/21 04:36:39 fgsch Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -104,6 +104,7 @@ product MOTOROLA MONTANA_336	0x0505 Motorola Montana 33.6
 
 /* IBM Products */
 product IBM INFOMOVER		0x0002 National Semiconductor InfoMover
+product IBM PORTABLE_CDROM_DRIVE 0x002d Portable CD-ROM Drive
 product IBM HOME_AND_AWAY	0x002e IBM Home and Away
 product IBM WIRELESS_LAN_ENTRY	0x0032 Wireless LAN Entry
 
