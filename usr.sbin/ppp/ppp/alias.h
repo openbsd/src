@@ -7,7 +7,7 @@
     This software is placed into the public domain with no restrictions
     on its distribution.
 
-    $Id: alias.h,v 1.2 1999/03/08 01:40:22 brian Exp $
+    $Id: alias.h,v 1.3 1999/03/24 20:32:58 brian Exp $
 */
 
 
@@ -88,7 +88,7 @@ struct alias_link;
 
 /* Transparent Proxying */
     extern int
-    PacketAliasProxyRule(char *);
+    PacketAliasProxyRule(const char *);
 
 
 /********************** Mode flags ********************/
