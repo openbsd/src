@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.112 2004/03/22 04:54:18 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.113 2004/04/09 19:30:41 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -125,9 +125,9 @@ pfattach(int num)
 	pool_init(&pf_state_pl, sizeof(struct pf_state), 0, 0, 0, "pfstatepl",
 	    NULL);
 	pool_init(&pf_altq_pl, sizeof(struct pf_altq), 0, 0, 0, "pfaltqpl",
-	    NULL);
+	    &pool_allocator_nointr);
 	pool_init(&pf_pooladdr_pl, sizeof(struct pf_pooladdr), 0, 0, 0,
-	    "pfpooladdrpl", NULL);
+	    "pfpooladdrpl", &pool_allocator_nointr);
 	pfr_initialize();
 	pfi_initialize();
 	pf_osfp_initialize();

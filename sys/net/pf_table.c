@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.47 2004/03/09 21:44:41 mcbride Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.48 2004/04/09 19:30:41 frantzen Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -187,9 +187,9 @@ void
 pfr_initialize(void)
 {
 	pool_init(&pfr_ktable_pl, sizeof(struct pfr_ktable), 0, 0, 0,
-	    "pfrktable", NULL);
+	    "pfrktable", &pool_allocator_nointr);
 	pool_init(&pfr_kentry_pl, sizeof(struct pfr_kentry), 0, 0, 0,
-	    "pfrkentry", NULL);
+	    "pfrkentry", &pool_allocator_nointr);
 
 	pfr_sin.sin_len = sizeof(pfr_sin);
 	pfr_sin.sin_family = AF_INET;
