@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.39 2001/04/09 22:09:52 ho Exp $	*/
+/*	$OpenBSD: message.c,v 1.40 2001/04/12 15:48:37 ho Exp $	*/
 /*	$EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	*/
 
 /*
@@ -1152,6 +1152,7 @@ void
 message_send (struct message *msg)
 {
   struct exchange *exchange = msg->exchange;
+  struct message *m;
 
   /* Remove retransmissions on this message  */
   if (msg->retrans)
@@ -1193,6 +1194,20 @@ message_send (struct message *msg)
   message_dump_raw ("message_send", msg, LOG_MESSAGE);
   msg->flags |= MSG_IN_TRANSIT;
   exchange->in_transit = msg;
+  
+  /*
+   * If we get a retransmission of a message before our response
+   * has left the queue, don't queue it again, as it will result
+   * in a circular list.
+   */
+  for (m = TAILQ_FIRST (&msg->transport->sendq); m; m = TAILQ_NEXT (m, link))
+    if (m == msg)
+      {
+	LOG_DBG ((LOG_MESSAGE, 60, "message_send: msg %p already on sendq", 
+		  m));
+	return;
+      }
+
   TAILQ_INSERT_TAIL (&msg->transport->sendq, msg, link);
 }
 
