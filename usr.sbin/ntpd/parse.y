@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.10 2004/07/09 10:53:33 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.11 2004/07/09 19:28:03 otto Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -163,6 +163,7 @@ conf_main	: LISTEN ON address	{
 					fatal("conf_main server calloc");
 				h->next = NULL;
 				p->addr = h;
+				p->addr_head = h;
 				TAILQ_INSERT_TAIL(&conf->ntp_peers, p, entry);
 			}
 		}
