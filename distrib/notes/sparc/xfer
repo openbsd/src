@@ -252,8 +252,8 @@ To install or upgrade OpenBSD using a tape, you need to do the following:
 	sh -x /tmp/maketape noboot
 
 	
-If you're using a system other than OpenBSD or SunOS, the tape name and
-other requirements may change.
+	If you're using a system other than OpenBSD or SunOS, the tape
+	name and other requirements may change.
 
 
 To install OpenBSD using a remote partition, mounted via
