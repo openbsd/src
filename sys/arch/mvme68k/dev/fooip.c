@@ -1,4 +1,4 @@
-/*	$Id: fooip.c,v 1.2 1995/11/07 08:48:57 deraadt Exp $ */
+/*	$OpenBSD: fooip.c,v 1.3 1996/04/28 11:06:03 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -68,9 +68,12 @@ struct fooipsoftc {
 void fooipattach __P((struct device *, struct device *, void *));
 int  fooipmatch __P((struct device *, void *, void *));
 
-struct cfdriver fooipcd = {
-	NULL, "fooip", fooipmatch, fooipattach,
-	DV_DULL, sizeof(struct fooipsoftc), 0
+struct cfattach fooip_ca = {
+	sizeof(struct fooipsoftc), fooipmatch, fooipattach
+};
+
+struct cfdriver fooip_cd = {
+	NULL, "fooip", DV_DULL, 0
 };
 
 int  fooipintr __P((void *));

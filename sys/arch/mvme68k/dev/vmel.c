@@ -1,4 +1,4 @@
-/*	$Id: vmel.c,v 1.2 1995/11/07 08:49:37 deraadt Exp $ */
+/*	$OpenBSD: vmel.c,v 1.3 1996/04/28 11:06:16 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -56,9 +56,12 @@ struct vmelsoftc {
 	struct vmesoftc		*sc_vme;
 };
 
-struct cfdriver vmelcd = {
-	NULL, "vmel", vmelmatch, vmelattach,
-	DV_DULL, sizeof(struct vmelsoftc), 0
+struct cfattach vmel_ca = {
+	sizeof(struct vmelsoftc), vmelmatch, vmelattach
+};
+
+struct cfdriver vmel_cd = {
+	NULL, "vmel", DV_DULL, 0
 };
 
 int
@@ -97,8 +100,8 @@ vmelopen(dev, flag, mode)
 	dev_t dev;
 	int flag, mode;
 {
-	if (minor(dev) >= vmelcd.cd_ndevs ||
-	    vmelcd.cd_devs[minor(dev)] == NULL)
+	if (minor(dev) >= vmel_cd.cd_ndevs ||
+	    vmel_cd.cd_devs[minor(dev)] == NULL)
 		return (ENODEV);
 	return (0);
 }
@@ -122,7 +125,7 @@ vmelioctl(dev, cmd, data, flag, p)
 	struct proc *p;
 {
 	int unit = minor(dev);
-	struct vmelsoftc *sc = (struct vmelsoftc *) vmelcd.cd_devs[unit];
+	struct vmelsoftc *sc = (struct vmelsoftc *) vmel_cd.cd_devs[unit];
 	int error = 0;
 
 	switch (cmd) {
@@ -140,7 +143,7 @@ vmelread(dev, uio, flags)
 	int flags;
 {
 	int unit = minor(dev);
-	struct vmelsoftc *sc = (struct vmelsoftc *) vmelcd.cd_devs[unit];
+	struct vmelsoftc *sc = (struct vmelsoftc *) vmel_cd.cd_devs[unit];
 
 	return (vmerw(sc->sc_vme, uio, flags, BUS_VMEL));
 }
@@ -152,7 +155,7 @@ vmelwrite(dev, uio, flags)
 	int flags;
 {
 	int unit = minor(dev);
-	struct vmelsoftc *sc = (struct vmelsoftc *) vmelcd.cd_devs[unit];
+	struct vmelsoftc *sc = (struct vmelsoftc *) vmel_cd.cd_devs[unit];
 
 	return (vmerw(sc->sc_vme, uio, flags, BUS_VMEL));
 }
@@ -163,7 +166,7 @@ vmelmmap(dev, off, prot)
 	int off, prot;
 {
 	int unit = minor(dev);
-	struct vmelsoftc *sc = (struct vmelsoftc *) vmelcd.cd_devs[unit];
+	struct vmelsoftc *sc = (struct vmelsoftc *) vmel_cd.cd_devs[unit];
 	caddr_t pa;
 
 	pa = vmepmap(sc->sc_vme, (caddr_t)off, NBPG, BUS_VMEL);

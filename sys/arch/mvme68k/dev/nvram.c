@@ -1,4 +1,4 @@
-/*	$Id: nvram.c,v 1.2 1995/11/07 08:49:17 deraadt Exp $ */
+/*	$OpenBSD: nvram.c,v 1.3 1996/04/28 11:06:11 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -56,9 +56,12 @@ struct nvramsoftc {
 void	nvramattach __P((struct device *, struct device *, void *));
 int	nvrammatch __P((struct device *, void *, void *));
 
-struct cfdriver nvramcd = {
-	NULL, "nvram", nvrammatch, nvramattach,
-	DV_DULL, sizeof(struct nvramsoftc), 0
+struct cfattach nvram_ca = {
+	sizeof(struct nvramsoftc), nvrammatch, nvramattach
+};
+
+struct cfdriver nvram_cd = {
+	NULL, "nvram", DV_DULL, 0
 };
 
 int
@@ -238,7 +241,7 @@ timetochip(c)
 inittodr(base)
 	time_t base;
 {
-	struct nvramsoftc *sc = (struct nvramsoftc *) nvramcd.cd_devs[0];
+	struct nvramsoftc *sc = (struct nvramsoftc *) nvram_cd.cd_devs[0];
 	register struct clockreg *cl = sc->sc_regs;
 	int sec, min, hour, day, mon, year;
 	int badbase = 0, waszero = base == 0;
@@ -292,7 +295,7 @@ inittodr(base)
  */
 resettodr()
 {
-	struct nvramsoftc *sc = (struct nvramsoftc *) nvramcd.cd_devs[0];
+	struct nvramsoftc *sc = (struct nvramsoftc *) nvram_cd.cd_devs[0];
 	register struct clockreg *cl = sc->sc_regs;
 	struct chiptime c;
 
@@ -316,8 +319,8 @@ nvramopen(dev, flag, mode)
 	dev_t dev;
 	int flag, mode;
 {
-	if (minor(dev) >= nvramcd.cd_ndevs ||
-	    nvramcd.cd_devs[minor(dev)] == NULL)
+	if (minor(dev) >= nvram_cd.cd_ndevs ||
+	    nvram_cd.cd_devs[minor(dev)] == NULL)
 		return (ENODEV);
 	return (0);
 }
@@ -341,7 +344,7 @@ nvramioctl(dev, cmd, data, flag, p)
 	struct proc *p;
 {
 	int unit = minor(dev);
-	struct nvramsoftc *sc = (struct nvramsoftc *) nvramcd.cd_devs[unit];
+	struct nvramsoftc *sc = (struct nvramsoftc *) nvram_cd.cd_devs[unit];
 	int error = 0;
 	
 	switch (cmd) {
@@ -363,7 +366,7 @@ nvramread(dev, uio, flags)
 	int flags;
 {
 	int unit = minor(dev);
-	struct nvramsoftc *sc = (struct nvramsoftc *) nvramcd.cd_devs[unit];
+	struct nvramsoftc *sc = (struct nvramsoftc *) nvram_cd.cd_devs[unit];
 
 	return (memdevrw(sc->sc_vaddr, sc->sc_len, uio, flags));
 }
@@ -376,7 +379,7 @@ nvramwrite(dev, uio, flags)
 	int flags;
 {
 	int unit = minor(dev);
-	struct nvramsoftc *sc = (struct nvramsoftc *) nvramcd.cd_devs[unit];
+	struct nvramsoftc *sc = (struct nvramsoftc *) nvram_cd.cd_devs[unit];
 
 	return (memdevrw(sc->sc_vaddr, sc->sc_len, uio, flags));
 }
@@ -392,7 +395,7 @@ nvrammmap(dev, off, prot)
 	int off, prot;
 {
 	int unit = minor(dev);
-	struct nvramsoftc *sc = (struct nvramsoftc *) nvramcd.cd_devs[unit];
+	struct nvramsoftc *sc = (struct nvramsoftc *) nvram_cd.cd_devs[unit];
 
 	if (minor(dev) != 0)
 		return (-1);

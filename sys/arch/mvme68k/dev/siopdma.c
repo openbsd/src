@@ -1,4 +1,4 @@
-/*	$Id: siopdma.c,v 1.2 1995/11/07 08:49:32 deraadt Exp $ */
+/*	$OpenBSD: siopdma.c,v 1.3 1996/04/28 11:06:20 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -78,9 +78,13 @@ struct scsi_device afsc_scsidev = {
 	NULL,		/* Use default done routine */
 };
 
-struct cfdriver siopcd = {
-	NULL, "siop", afscmatch, afscattach, 
-	DV_DULL, sizeof(struct siop_softc), NULL, 0 };
+struct cfattach siop_ca = {
+	sizeof(struct siop_softc), afscmatch, afscattach,
+};
+
+struct cfdriver siop_cd = {
+	NULL, "siop", DV_DULL, 0
+};
 
 int
 afscmatch(pdp, vcf, args)

@@ -1,4 +1,4 @@
-/*	$Id: clock.c,v 1.2 1995/11/07 08:48:53 deraadt Exp $ */
+/*	$OpenBSD: clock.c,v 1.3 1996/04/28 11:06:02 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -119,9 +119,12 @@ struct clocksoftc {
 void	clockattach __P((struct device *, struct device *, void *));
 int	clockmatch __P((struct device *, void *, void *));
 
-struct cfdriver clockcd = {
-	NULL, "clock", clockmatch, clockattach,
-	DV_DULL, sizeof(struct clocksoftc), 0
+struct cfattach clock_ca = {
+	sizeof(struct clocksoftc), clockmatch, clockattach
+};
+
+struct cfdriver clock_cd = {
+	NULL, "clock", DV_DULL, 0
 };
 
 int	clockintr __P((void *));

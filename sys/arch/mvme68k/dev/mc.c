@@ -1,4 +1,4 @@
-/*	$Id: mc.c,v 1.2 1995/11/07 08:49:09 deraadt Exp $ */
+/*	$OpenBSD: mc.c,v 1.3 1996/04/28 11:06:08 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -65,9 +65,12 @@ void mcattach __P((struct device *, struct device *, void *));
 int  mcmatch __P((struct device *, void *, void *));
 int  mcabort __P((struct frame *));
 
-struct cfdriver mccd = {
-	NULL, "mc", mcmatch, mcattach,
-	DV_DULL, sizeof(struct mcsoftc), 0
+struct cfattach mc_ca = {
+	sizeof(struct mcsoftc), mcmatch, mcattach
+};
+
+struct cfdriver mc_cd = {
+	NULL, "mc", DV_DULL, 0
 };
 
 struct mcreg *sys_mc = NULL;
@@ -129,7 +132,7 @@ mc_scan(parent, child, args)
 	oca.ca_bustype = BUS_MC;
 	oca.ca_master = (void *)sc->sc_mc;
 	oca.ca_name = cf->cf_driver->cd_name;
-	if ((*cf->cf_driver->cd_match)(parent, cf, &oca) == 0)
+	if ((*cf->cf_attach->ca_match)(parent, cf, &oca) == 0)
 		return (0);
 	config_attach(parent, cf, &oca, mc_print);
 	return (1);
@@ -208,7 +211,7 @@ void
 mc_enableflashwrite(on)
 	int on;
 {
-	struct mcsoftc *sc = (struct mcsoftc *) mccd.cd_devs[0];
+	struct mcsoftc *sc = (struct mcsoftc *) mc_cd.cd_devs[0];
 	volatile char *ena, x;
 
 	ena = sc->sc_vaddr +

@@ -1,4 +1,4 @@
-/*	$Id: pcctwo.c,v 1.2 1995/11/07 08:49:22 deraadt Exp $ */
+/*	$OpenBSD: pcctwo.c,v 1.3 1996/04/28 11:06:13 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -63,9 +63,12 @@ struct pcctwosoftc {
 void pcctwoattach __P((struct device *, struct device *, void *));
 int  pcctwomatch __P((struct device *, void *, void *));
 
-struct cfdriver pcctwocd = {
-	NULL, "pcctwo", pcctwomatch, pcctwoattach,
-	DV_DULL, sizeof(struct pcctwosoftc), 0
+struct cfattach pcctwo_ca = {
+	sizeof(struct pcctwosoftc), pcctwomatch, pcctwoattach
+};
+
+struct cfdriver pcctwo_cd = {
+	NULL, "pcctwo", DV_DULL, 0
 };
 
 struct pcctworeg *sys_pcc2 = NULL;
@@ -130,7 +133,7 @@ pcctwo_scan(parent, child, args)
 	oca.ca_bustype = BUS_PCCTWO;
 	oca.ca_master = (void *)sc->sc_pcc2;
 	oca.ca_name = cf->cf_driver->cd_name;
-	if ((*cf->cf_driver->cd_match)(parent, cf, &oca) == 0)
+	if ((*cf->cf_attach->ca_match)(parent, cf, &oca) == 0)
 		return (0);
 	config_attach(parent, cf, &oca, pcctwo_print);
 	return (1);

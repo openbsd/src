@@ -1,4 +1,4 @@
-/*	$Id: cl.c,v 1.9 1995/12/16 19:42:39 rahnds Exp $ */
+/*	$OpenBSD: cl.c,v 1.10 1996/04/28 11:06:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -185,8 +185,12 @@ static void clputc __P((struct clsoftc *sc, int unit, u_char c));
 static u_char clgetc __P((struct clsoftc *sc, int *channel));
 static void cloutput __P( (struct tty *tp));
 
-struct cfdriver clcd = {
-	NULL, "cl", clprobe, clattach, DV_TTY, sizeof(struct clsoftc), 0
+struct cfattach cl_ca = {
+	sizeof(struct clsoftc), clprobe, clattach
+};
+
+struct cfdriver cl_cd = {
+	NULL, "cl", DV_TTY, 0
 };
 
 #define CLCDBUF 80
@@ -205,8 +209,8 @@ struct tty * cltty(dev)
 	int unit, channel;
 	struct clsoftc *sc;
 	unit = CL_UNIT(dev);
-	if (unit >= clcd.cd_ndevs || 
-		(sc = (struct clsoftc *) clcd.cd_devs[unit]) == NULL) {
+	if (unit >= cl_cd.cd_ndevs || 
+		(sc = (struct clsoftc *) cl_cd.cd_devs[unit]) == NULL) {
 		return (NULL);
 	}
 	channel = CL_CHANNEL(dev);
@@ -419,7 +423,7 @@ int clmctl (dev, bits, how)
 	int s;
 	struct clsoftc *sc;
 	/* should only be called with valid device */
-	sc = (struct clsoftc *) clcd.cd_devs[CL_UNIT(dev)];
+	sc = (struct clsoftc *) cl_cd.cd_devs[CL_UNIT(dev)];
 	/*
 	printf("mctl: dev %x, bits %x, how %x,\n",dev, bits, how);
 	*/
@@ -515,8 +519,8 @@ int clopen (dev, flag, mode, p)
 	struct tty *tp;
 	
 	unit = CL_UNIT(dev);
-	if (unit >= clcd.cd_ndevs || 
-		(sc = (struct clsoftc *) clcd.cd_devs[unit]) == NULL) {
+	if (unit >= cl_cd.cd_ndevs || 
+		(sc = (struct clsoftc *) cl_cd.cd_devs[unit]) == NULL) {
 		return (ENODEV);
 	}
 	channel = CL_CHANNEL(dev);
@@ -655,8 +659,8 @@ int clparam(tp, t)
 
 	dev = tp->t_dev;
 	unit = CL_UNIT(dev);
-	if (unit >= clcd.cd_ndevs || 
-		(sc = (struct clsoftc *) clcd.cd_devs[unit]) == NULL) {
+	if (unit >= cl_cd.cd_ndevs || 
+		(sc = (struct clsoftc *) cl_cd.cd_devs[unit]) == NULL) {
 		return (ENODEV);
 	}
 	channel = CL_CHANNEL(dev);
@@ -682,8 +686,8 @@ void cloutput(tp)
 
 	dev = tp->t_dev;
 	unit = CL_UNIT(dev);
-	if (unit >= clcd.cd_ndevs || 
-		(sc = (struct clsoftc *) clcd.cd_devs[unit]) == NULL) {
+	if (unit >= cl_cd.cd_ndevs || 
+		(sc = (struct clsoftc *) cl_cd.cd_devs[unit]) == NULL) {
 		return;
 	}
 	channel = CL_CHANNEL(dev);
@@ -720,8 +724,8 @@ int clclose (dev, flag, mode, p)
 	struct clsoftc *sc;
 	int s;
 	unit = CL_UNIT(dev);
-	if (unit >= clcd.cd_ndevs || 
-		(sc = (struct clsoftc *) clcd.cd_devs[unit]) == NULL) {
+	if (unit >= cl_cd.cd_ndevs || 
+		(sc = (struct clsoftc *) cl_cd.cd_devs[unit]) == NULL) {
 		return (ENODEV);
 	}
 	channel = CL_CHANNEL(dev);
@@ -760,8 +764,8 @@ int flag;
 	struct cl_info *cl;
 	struct clsoftc *sc;
 	unit = CL_UNIT(dev);
-	if (unit >= clcd.cd_ndevs || 
-		(sc = (struct clsoftc *) clcd.cd_devs[unit]) == NULL) {
+	if (unit >= cl_cd.cd_ndevs || 
+		(sc = (struct clsoftc *) cl_cd.cd_devs[unit]) == NULL) {
 		return (ENODEV);
 	}
 	channel = CL_CHANNEL(dev);
@@ -781,8 +785,8 @@ int clwrite (dev, uio, flag)
 	struct cl_info *cl;
 	struct clsoftc *sc;
 	unit = CL_UNIT(dev);
-	if (unit >= clcd.cd_ndevs || 
-		(sc = (struct clsoftc *) clcd.cd_devs[unit]) == NULL) {
+	if (unit >= cl_cd.cd_ndevs || 
+		(sc = (struct clsoftc *) cl_cd.cd_devs[unit]) == NULL) {
 		return (ENODEV);
 	}
 	channel = CL_CHANNEL(dev);
@@ -805,8 +809,8 @@ int clioctl (dev, cmd, data, flag, p)
 	struct cl_info *cl;
 	struct clsoftc *sc;
 	unit = CL_UNIT(dev);
-	if (unit >= clcd.cd_ndevs || 
-		(sc = (struct clsoftc *) clcd.cd_devs[unit]) == NULL) {
+	if (unit >= cl_cd.cd_ndevs || 
+		(sc = (struct clsoftc *) cl_cd.cd_devs[unit]) == NULL) {
 		return (ENODEV);
 	}
 	channel = CL_CHANNEL(dev);
@@ -1118,9 +1122,9 @@ cl_chkinput()
 
 	if (dopoll == 0)
 		return;
-	for (unit = 0; unit < clcd.cd_ndevs; unit++) {
-		if (unit >= clcd.cd_ndevs || 
-			(sc = (struct clsoftc *) clcd.cd_devs[unit]) == NULL) {
+	for (unit = 0; unit < cl_cd.cd_ndevs; unit++) {
+		if (unit >= cl_cd.cd_ndevs || 
+			(sc = (struct clsoftc *) cl_cd.cd_devs[unit]) == NULL) {
 			continue;
 		}
 		if (cl_instat(sc)) {
@@ -1384,8 +1388,8 @@ clstart(tp)
 	}
 #endif
 	unit = CL_UNIT(dev);
-	if (unit >= clcd.cd_ndevs || 
-		(sc = (struct clsoftc *) clcd.cd_devs[unit]) == NULL) {
+	if (unit >= cl_cd.cd_ndevs || 
+		(sc = (struct clsoftc *) cl_cd.cd_devs[unit]) == NULL) {
 		return;
 	}
 
@@ -1771,7 +1775,7 @@ u_char *msg;
 /*
 		*ptime = time.tv_sec;
 */
-		log(LOG_WARNING, "%s%d[%d]: %s overrun\n", clcd.cd_name,
+		log(LOG_WARNING, "%s%d[%d]: %s overrun\n", cl_cd.cd_name,
 			0 /* fix */, channel, msg);
 	}
 	return;
@@ -1781,7 +1785,7 @@ cl_parity (sc, channel)
 	struct clsoftc *sc;
 	int channel;
 {
-	log(LOG_WARNING, "%s%d[%d]: parity error\n", clcd.cd_name, 0, channel);
+	log(LOG_WARNING, "%s%d[%d]: parity error\n", cl_cd.cd_name, 0, channel);
 	return;
 }
 void
@@ -1789,7 +1793,7 @@ cl_frame (sc, channel)
 	struct clsoftc *sc;
 	int channel;
 {
-	log(LOG_WARNING, "%s%d[%d]: frame error\n", clcd.cd_name, 0, channel);
+	log(LOG_WARNING, "%s%d[%d]: frame error\n", cl_cd.cd_name, 0, channel);
 	return;
 }
 void
@@ -1797,7 +1801,7 @@ cl_break (sc, channel)
 	struct clsoftc *sc;
 	int channel;
 {
-	log(LOG_WARNING, "%s%d[%d]: break detected\n", clcd.cd_name, 0, channel);
+	log(LOG_WARNING, "%s%d[%d]: break detected\n", cl_cd.cd_name, 0, channel);
 	return;
 }
 
@@ -1847,7 +1851,7 @@ cl_dumpport(channel)
 
 	cl_reg = cl_cons.cl_vaddr;
 
-	sc = (struct clsoftc *) clcd.cd_devs[0];
+	sc = (struct clsoftc *) cl_cd.cd_devs[0];
 
 	s = splcl();
 	cl_reg->cl_car	= (u_char) channel;

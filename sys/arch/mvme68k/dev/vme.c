@@ -1,4 +1,4 @@
-/*	$Id: vme.c,v 1.2 1995/11/07 08:49:36 deraadt Exp $ */
+/*	$OpenBSD: vme.c,v 1.3 1996/04/28 11:06:18 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -72,9 +72,12 @@ int vme2abort __P((struct frame *frame));
 
 static int vmebustype;
 
-struct cfdriver vmecd = {
-	NULL, "vme", vmematch, vmeattach,
-	DV_DULL, sizeof(struct vmesoftc), 0
+struct cfattach vme_ca = {
+	sizeof(struct vmesoftc), vmematch, vmeattach
+};
+
+struct cfdriver vme_cd = {
+	NULL, "vme", DV_DULL, 0
 };
 
 int
@@ -291,7 +294,7 @@ vmescan(parent, child, args, bustype)
 		oca.ca_vaddr = (void *)-1;
 	oca.ca_master = (void *)sc;
 	oca.ca_name = cf->cf_driver->cd_name;
-	if ((*cf->cf_driver->cd_match)(parent, cf, &oca) == 0) {
+	if ((*cf->cf_attach->ca_match)(parent, cf, &oca) == 0) {
 		if (oca.ca_vaddr != (void *)-1)
 			vmeunmap(oca.ca_vaddr, oca.ca_len);
 		return (0);
@@ -355,7 +358,7 @@ vmeintr_establish(vec, ih)
 	int vec;
 	struct intrhand *ih;
 {
-	struct vmesoftc *sc = (struct vmesoftc *) vmecd.cd_devs[0];
+	struct vmesoftc *sc = (struct vmesoftc *) vme_cd.cd_devs[0];
 #if NPCC > 0
 	struct vme1reg *vme1;
 #endif
@@ -542,7 +545,7 @@ int
 vme2abort(frame)
 	struct frame *frame;
 {
-	struct vmesoftc *sc = (struct vmesoftc *)vmecd.cd_devs[0];
+	struct vmesoftc *sc = (struct vmesoftc *)vme_cd.cd_devs[0];
 	struct vme2reg *vme2 = (struct vme2reg *)sc->sc_vaddr;
 
 	if (vme2->vme2_irqstat & VME2_IRQ_AB == 0) {

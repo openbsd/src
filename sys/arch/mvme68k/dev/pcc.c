@@ -1,4 +1,4 @@
-/*	$Id: pcc.c,v 1.2 1995/11/07 08:49:20 deraadt Exp $ */
+/*	$OpenBSD: pcc.c,v 1.3 1996/04/28 11:06:12 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -65,9 +65,12 @@ void pccattach __P((struct device *, struct device *, void *));
 int  pccmatch __P((struct device *, void *, void *));
 int  pccabort __P((struct frame *));
 
-struct cfdriver pcccd = {
-	NULL, "pcc", pccmatch, pccattach,
-	DV_DULL, sizeof(struct pccsoftc), 0
+struct cfattach pcc_ca = {
+	sizeof(struct pccsoftc), pccmatch, pccattach
+};
+
+struct cfdriver pcc_cd = {
+	NULL, "pcc", DV_DULL, 0
 };
 
 struct pccreg *sys_pcc = NULL;
@@ -128,7 +131,7 @@ pcc_scan(parent, child, args)
 	oca.ca_bustype = BUS_PCC;
 	oca.ca_master = (void *)sc->sc_pcc;
 	oca.ca_name = cf->cf_driver->cd_name;
-	if ((*cf->cf_driver->cd_match)(parent, cf, &oca) == 0)
+	if ((*cf->cf_attach->ca_match)(parent, cf, &oca) == 0)
 		return (0);
 	config_attach(parent, cf, &oca, pcc_print);
 	return (1);

@@ -1,4 +1,4 @@
-/*	$Id: ipic.c,v 1.2 1995/11/07 08:49:04 deraadt Exp $ */
+/*	$OpenBSD: ipic.c,v 1.3 1996/04/28 11:06:06 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -52,9 +52,12 @@
 void ipicattach __P((struct device *, struct device *, void *));
 int  ipicmatch __P((struct device *, void *, void *));
 
-struct cfdriver ipiccd = {
-	NULL, "ipic", ipicmatch, ipicattach,
-	DV_DULL, sizeof(struct ipicsoftc), 0
+struct cfattach ipic_ca = {
+	sizeof(struct ipicsoftc), ipicmatch, ipicattach
+};
+
+struct cfdriver ipic_cd = {
+	NULL, "ipic", DV_DULL, 0
 };
 
 int
@@ -140,7 +143,7 @@ ipicscan(parent, child, args)
 		oca.ca_master = (void *)sc;
 		oca.ca_name = cf->cf_driver->cd_name;
 
-		if ((*cf->cf_driver->cd_match)(parent, cf, &oca) == 0) {
+		if ((*cf->cf_attach->ca_match)(parent, cf, &oca) == 0) {
 			unmapiodev(ipv, NBPG);
 			continue;
 		}

@@ -1,4 +1,4 @@
-/*	$Id: if_le.c,v 1.3 1995/12/27 22:31:29 deraadt Exp $ */
+/*	$OpenBSD: if_le.c,v 1.4 1996/04/28 11:06:05 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -147,8 +147,14 @@ struct le_softc {
 /* autoconfiguration driver */
 void	leattach(struct device *, struct device *, void *);
 int	lematch(struct device *, void *, void *);
-struct	cfdriver lecd =
-    { NULL, "le", lematch, leattach, DV_IFNET, sizeof(struct le_softc) };
+
+struct	cfattach le_ca = {
+	sizeof(struct le_softc), lematch, leattach
+};
+
+struct	cfdriver le_cd = {
+	NULL, "le", DV_IFNET, 0
+};
 
 /* Forwards */
 void	leattach(struct device *, struct device *, void *);
@@ -415,7 +421,7 @@ int
 leinit(unit)
 	int unit;
 {
-	register struct le_softc *sc = lecd.cd_devs[unit];
+	register struct le_softc *sc = le_cd.cd_devs[unit];
 	register struct ifnet *ifp = &sc->sc_if;
 	register int s;
 
@@ -438,7 +444,7 @@ void
 lestart(ifp)
 	register struct ifnet *ifp;
 {
-	register struct le_softc *sc = lecd.cd_devs[ifp->if_unit];
+	register struct le_softc *sc = le_cd.cd_devs[ifp->if_unit];
 	register struct letmd *tmd;
 	register struct mbuf *m;
 	register int len;
@@ -817,7 +823,7 @@ leioctl(ifp, cmd, data)
 	caddr_t data;
 {
 	register struct ifaddr *ifa;
-	register struct le_softc *sc = lecd.cd_devs[ifp->if_unit];
+	register struct le_softc *sc = le_cd.cd_devs[ifp->if_unit];
 	register struct lereg1 *ler1;
 	int s = splnet(), error = 0;
 

@@ -1,4 +1,4 @@
-/*	$Id: memc.c,v 1.2 1995/11/07 08:49:12 deraadt Exp $ */
+/*	$OpenBSD: memc.c,v 1.3 1996/04/28 11:06:09 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -65,9 +65,12 @@ struct memcsoftc {
 void memcattach __P((struct device *, struct device *, void *));
 int  memcmatch __P((struct device *, void *, void *));
 
-struct cfdriver memccd = {
-	NULL, "memc", memcmatch, memcattach,
-	DV_DULL, sizeof(struct memcsoftc), 0
+struct cfattach memc_ca = {
+	sizeof(struct memcsoftc), memcmatch, memcattach
+};
+
+struct cfdriver memc_cd = {
+	NULL, "memc", DV_DULL, 0
 };
 
 int memcintr __P((struct frame *frame));

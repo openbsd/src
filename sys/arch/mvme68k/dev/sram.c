@@ -1,4 +1,4 @@
-/*	$Id: sram.c,v 1.2 1995/11/07 08:49:35 deraadt Exp $ */
+/*	$OpenBSD: sram.c,v 1.3 1996/04/28 11:06:19 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -62,9 +62,12 @@ struct sramsoftc {
 void sramattach __P((struct device *, struct device *, void *));
 int  srammatch __P((struct device *, void *, void *));
 
-struct cfdriver sramcd = {
-	NULL, "sram", srammatch, sramattach,
-	DV_DULL, sizeof(struct sramsoftc), 0
+struct cfattach sram_ca = {
+	sizeof(struct sramsoftc), srammatch, sramattach
+};
+
+struct cfdriver sram_cd = {
+	NULL, "sram", DV_DULL, 0
 };
 
 int
@@ -149,8 +152,8 @@ sramopen(dev, flag, mode)
 	dev_t dev;
 	int flag, mode;
 {
-	if (minor(dev) >= sramcd.cd_ndevs ||
-	    sramcd.cd_devs[minor(dev)] == NULL)
+	if (minor(dev) >= sram_cd.cd_ndevs ||
+	    sram_cd.cd_devs[minor(dev)] == NULL)
 		return (ENODEV);
 	return (0);
 }
@@ -174,7 +177,7 @@ sramioctl(dev, cmd, data, flag, p)
 	struct proc *p;
 {
 	int unit = minor(dev);
-	struct sramsoftc *sc = (struct sramsoftc *) sramcd.cd_devs[unit];
+	struct sramsoftc *sc = (struct sramsoftc *) sram_cd.cd_devs[unit];
 	int error = 0;
 	
 	switch (cmd) {
@@ -196,7 +199,7 @@ sramread(dev, uio, flags)
 	int flags;
 {
 	int unit = minor(dev);
-	struct sramsoftc *sc = (struct sramsoftc *) sramcd.cd_devs[unit];
+	struct sramsoftc *sc = (struct sramsoftc *) sram_cd.cd_devs[unit];
 
 	return (memdevrw(sc->sc_vaddr, sc->sc_len, uio, flags));
 }
@@ -209,7 +212,7 @@ sramwrite(dev, uio, flags)
 	int flags;
 {
 	int unit = minor(dev);
-	struct sramsoftc *sc = (struct sramsoftc *) sramcd.cd_devs[unit];
+	struct sramsoftc *sc = (struct sramsoftc *) sram_cd.cd_devs[unit];
 
 	return (memdevrw(sc->sc_vaddr, sc->sc_len, uio, flags));
 }
@@ -220,7 +223,7 @@ srammmap(dev, off, prot)
 	int off, prot;
 {
 	int unit = minor(dev);
-	struct sramsoftc *sc = (struct sramsoftc *) sramcd.cd_devs[unit];
+	struct sramsoftc *sc = (struct sramsoftc *) sram_cd.cd_devs[unit];
 
 	if (minor(dev) != 0)
 		return (-1);

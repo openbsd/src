@@ -1,4 +1,4 @@
-/*	$Id: bugtty.c,v 1.2 1995/11/07 08:48:51 deraadt Exp $ */
+/*	$OpenBSD: bugtty.c,v 1.3 1996/04/28 11:05:59 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -50,9 +50,12 @@
 int bugttymatch __P((struct device *parent, void *self, void *aux));
 void bugttyattach __P((struct device *parent, struct device *self, void *aux));
 
-struct cfdriver bugttycd = {
-	NULL, "bugtty", bugttymatch, bugttyattach,
-	DV_TTY, sizeof(struct device)
+struct cfattach bugtty_ca = {
+	sizeof(struct device), bugttymatch, bugttyattach
+};
+
+struct cfdriver bugtty_cd = {
+	NULL, "bugtty", DV_TTY, 0
 };
 
 /* prototypes */

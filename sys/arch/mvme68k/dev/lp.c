@@ -1,4 +1,4 @@
-/*	$Id: lp.c,v 1.2 1995/11/07 08:49:08 deraadt Exp $ */
+/*	$OpenBSD: lp.c,v 1.3 1996/04/28 11:06:07 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -57,9 +57,12 @@ struct lpsoftc {
 void lpattach __P((struct device *, struct device *, void *));
 int  lpmatch __P((struct device *, void *, void *));
 
-struct cfdriver lpcd = {
-	NULL, "lp", lpmatch, lpattach,
-	DV_DULL, sizeof(struct lpsoftc), 0
+struct cfattach lp_ca = {
+	sizeof(struct lpsoftc), lpmatch, lpattach
+};
+
+struct cfdriver lp_cd = {
+	NULL, "lp", DV_DULL, 0
 };
 
 int lpintr __P((void *));
