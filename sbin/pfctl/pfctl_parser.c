@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.73 2002/05/23 09:47:20 deraadt Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.74 2002/05/27 10:33:32 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -373,7 +373,7 @@ print_op(u_int8_t op, const char *a1, const char *a2)
 void
 print_port(u_int8_t op, u_int16_t p1, u_int16_t p2, char *proto)
 {
-	char a1[5], a2[5];
+	char a1[6], a2[6];
 	struct servent *s = getservbyport(p1, proto);
 
 	p1 = ntohs(p1);
