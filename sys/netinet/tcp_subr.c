@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.52 2001/07/21 09:26:06 itojun Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.53 2002/01/14 03:11:55 provos Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -446,10 +446,10 @@ tcp_respond(tp, template, m, ack, seq, flags)
  * protocol control block.
  */
 struct tcpcb *
-tcp_newtcpcb(inp)
-	struct inpcb *inp;
+tcp_newtcpcb(struct inpcb *inp)
 {
-	register struct tcpcb *tp;
+	struct tcpcb *tp;
+	int i;
 
 	tp = malloc(sizeof(*tp), M_PCB, M_NOWAIT);
 	if (tp == NULL)
@@ -458,7 +458,10 @@ tcp_newtcpcb(inp)
 	LIST_INIT(&tp->segq);
 	tp->t_maxseg = tcp_mssdflt;
 	tp->t_maxopd = 0;
-  
+
+	for (i = 0; i < TCPT_NTIMERS; i++)
+		TCP_TIMER_INIT(tp, i);
+
 #ifdef TCP_SACK
 	tp->sack_disable = tcp_do_sack ? 0 : 1;
 #endif

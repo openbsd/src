@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.54 2001/06/26 06:55:32 aaron Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.55 2002/01/14 03:11:55 provos Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -321,7 +321,7 @@ tcp_usrreq(so, req, m, nam, control)
 		soisconnecting(so);
 		tcpstat.tcps_connattempt++;
 		tp->t_state = TCPS_SYN_SENT;
-		tp->t_timer[TCPT_KEEP] = tcptv_keep_init;	
+		TCP_TIMER_ARM(tp, TCPT_KEEP, tcptv_keep_init);	
 #ifdef TCP_COMPAT_42
 		tp->iss = tcp_iss;
 		tcp_iss += TCP_ISSINCR/2;
@@ -774,7 +774,7 @@ tcp_usrclosed(tp)
 		 * not left in FIN_WAIT_2 forever.
 		 */
 		if (tp->t_state == TCPS_FIN_WAIT_2)
-			tp->t_timer[TCPT_2MSL] = tcp_maxidle;
+			TCP_TIMER_ARM(tp, TCPT_2MSL, tcp_maxidle);
 	}
 	return (tp);
 }

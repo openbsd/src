@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.44 2001/11/24 19:29:07 deraadt Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.45 2002/01/14 03:11:55 provos Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -335,7 +335,7 @@ again:
 				flags &= ~TH_FIN;
 			win = 1;
 		} else {
-			tp->t_timer[TCPT_PERSIST] = 0;
+			TCP_TIMER_DISARM(tp, TCPT_PERSIST);
 			tp->t_rxtshift = 0;
 		}
 	}
@@ -372,10 +372,10 @@ again:
 		 */
 		len = 0;
 		if (win == 0) {
-			tp->t_timer[TCPT_REXMT] = 0;
+			TCP_TIMER_DISARM(tp, TCPT_REXMT);
 			tp->t_rxtshift = 0;
 			tp->snd_nxt = tp->snd_una;
-			if (tp->t_timer[TCPT_PERSIST] == 0)
+			if (TCP_TIMER_ISARMED(tp, TCPT_PERSIST) == 0)
 				tcp_setpersist(tp);
 		}
 	}
@@ -462,9 +462,9 @@ again:
 	 * that the retransmission timer is set.
 	 */
 	if (SEQ_GT(tp->snd_max, tp->snd_una) &&
-	    tp->t_timer[TCPT_REXMT] == 0 &&
-	    tp->t_timer[TCPT_PERSIST] == 0) {
-		tp->t_timer[TCPT_REXMT] = tp->t_rxtcur;
+	    TCP_TIMER_ISARMED(tp, TCPT_REXMT) == 0 &&
+	    TCP_TIMER_ISARMED(tp, TCPT_PERSIST) == 0) {
+		TCP_TIMER_ARM(tp, TCPT_REXMT, tp->t_rxtcur);
 		return (0);
 	}
 #endif /* TCP_SACK */
@@ -491,8 +491,8 @@ again:
 	 * if window is nonzero, transmit what we can,
 	 * otherwise force out a byte.
 	 */
-	if (so->so_snd.sb_cc && tp->t_timer[TCPT_REXMT] == 0 &&
-	    tp->t_timer[TCPT_PERSIST] == 0) {
+	if (so->so_snd.sb_cc && TCP_TIMER_ISARMED(tp, TCPT_REXMT) == 0 &&
+	    TCP_TIMER_ISARMED(tp, TCPT_PERSIST) == 0) {
 		tp->t_rxtshift = 0;
 		tcp_setpersist(tp);
 	}
@@ -787,7 +787,7 @@ send:
 	 * case, since we know we aren't doing a retransmission.
 	 * (retransmit and persist are mutually exclusive...)
 	 */
-	if (len || (flags & (TH_SYN|TH_FIN)) || tp->t_timer[TCPT_PERSIST])
+	if (len || (flags & (TH_SYN|TH_FIN)) || TCP_TIMER_ISARMED(tp, TCPT_PERSIST))
 		th->th_seq = htonl(tp->snd_nxt);
 	else
 		th->th_seq = htonl(tp->snd_max);
@@ -954,7 +954,7 @@ send:
 	 * In transmit state, time the transmission and arrange for
 	 * the retransmit.  In persist state, just set snd_max.
 	 */
-	if (tp->t_force == 0 || tp->t_timer[TCPT_PERSIST] == 0) {
+	if (tp->t_force == 0 || TCP_TIMER_ISARMED(tp, TCPT_PERSIST) == 0) {
 		tcp_seq startseq = tp->snd_nxt;
 
 		/*
@@ -1000,21 +1000,21 @@ send:
 #ifdef TCP_SACK
  timer:
 		if (!tp->sack_disable && sack_rxmit &&
-		    tp->t_timer[TCPT_REXMT] == 0 &&
+		    TCP_TIMER_ISARMED(tp, TCPT_REXMT) == 0 &&
 		    tp->snd_nxt != tp->snd_max) {
-			tp->t_timer[TCPT_REXMT] = tp->t_rxtcur;
-			if (tp->t_timer[TCPT_PERSIST]) {
-				tp->t_timer[TCPT_PERSIST] = 0;
+			TCP_TIMER_ARM(tp, TCPT_REXMT, tp->t_rxtcur);
+			if (TCP_TIMER_ISARMED(tp, TCPT_PERSIST)) {
+				TCP_TIMER_DISARM(tp, TCPT_PERSIST);
 				tp->t_rxtshift = 0;
 			}
 		}
 #endif
 
-		if (tp->t_timer[TCPT_REXMT] == 0 &&
+		if (TCP_TIMER_ISARMED(tp, TCPT_REXMT) == 0 &&
 		    tp->snd_nxt != tp->snd_una) {
-			tp->t_timer[TCPT_REXMT] = tp->t_rxtcur;
-			if (tp->t_timer[TCPT_PERSIST]) {
-				tp->t_timer[TCPT_PERSIST] = 0;
+			TCP_TIMER_ARM(tp, TCPT_REXMT, tp->t_rxtcur);
+			if (TCP_TIMER_ISARMED(tp, TCPT_PERSIST)) {
+				TCP_TIMER_DISARM(tp, TCPT_PERSIST);
 				tp->t_rxtshift = 0;
 			}
 		}
@@ -1131,21 +1131,21 @@ out:
 }
 
 void
-tcp_setpersist(tp)
-	register struct tcpcb *tp;
+tcp_setpersist(struct tcpcb *tp)
 {
-	register int t = ((tp->t_srtt >> 2) + tp->t_rttvar) >> 1;
+	int t = ((tp->t_srtt >> 2) + tp->t_rttvar) >> 1;
+	int nticks;
 
-	if (tp->t_timer[TCPT_REXMT])
+	if (TCP_TIMER_ISARMED(tp, TCPT_REXMT))
 		panic("tcp_output REXMT");
 	/*
 	 * Start/restart persistance timer.
 	 */
 	if (t < tp->t_rttmin)
 		t = tp->t_rttmin;
-	TCPT_RANGESET(tp->t_timer[TCPT_PERSIST],
-	    t * tcp_backoff[tp->t_rxtshift],
+	TCPT_RANGESET(nticks, t * tcp_backoff[tp->t_rxtshift],
 	    TCPTV_PERSMIN, TCPTV_PERSMAX);
+	TCP_TIMER_ARM(tp, TCPT_PERSIST, nticks);
 	if (tp->t_rxtshift < TCP_MAXRXTSHIFT)
 		tp->t_rxtshift++;
 }

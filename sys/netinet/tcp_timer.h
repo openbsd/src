@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.h,v 1.4 2001/06/09 07:03:43 angelos Exp $	*/
+/*	$OpenBSD: tcp_timer.h,v 1.5 2002/01/14 03:11:55 provos Exp $	*/
 /*	$NetBSD: tcp_timer.h,v 1.6 1995/03/26 20:32:37 jtc Exp $	*/
 
 /*
@@ -113,6 +113,21 @@
 char *tcptimers[] =
     { "REXMT", "PERSIST", "KEEP", "2MSL" };
 #endif /* TCPTIMERS */
+
+/*
+ * Init, arm, disarm, and test TCP timers.
+ */
+#define	TCP_TIMER_INIT(tp, timer)					\
+	(tp)->t_timer[(timer)] = 0
+
+#define	TCP_TIMER_ARM(tp, timer, nticks)				\
+	(tp)->t_timer[(timer)] = (nticks)
+
+#define	TCP_TIMER_DISARM(tp, timer)					\
+	(tp)->t_timer[(timer)] = 0
+
+#define	TCP_TIMER_ISARMED(tp, timer)					\
+	&(tp)->t_timer[(timer)]
 
 /*
  * Force a time value to be in a certain range.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.23 2002/01/02 20:35:40 deraadt Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.24 2002/01/14 03:11:55 provos Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -154,7 +154,7 @@ tcp_canceltimers(tp)
 	register int i;
 
 	for (i = 0; i < TCPT_NTIMERS; i++)
-		tp->t_timer[i] = 0;
+		TCP_TIMER_DISARM(tp, i);
 }
 
 int	tcp_backoff[TCP_MAXRXTSHIFT + 1] =
@@ -203,7 +203,7 @@ tcp_timers(tp, timer)
 	case TCPT_2MSL:
 		if (tp->t_state != TCPS_TIME_WAIT &&
 		    tp->t_idle <= tcp_maxidle)
-			tp->t_timer[TCPT_2MSL] = tcp_keepintvl;
+			TCP_TIMER_ARM(tp,TCPT_2MSL, tcp_keepintvl);
 		else
 			tp = tcp_close(tp);
 		break;
@@ -228,7 +228,7 @@ tcp_timers(tp, timer)
 		TCPT_RANGESET((long) tp->t_rxtcur,
 		    rto * tcp_backoff[tp->t_rxtshift],
 		    tp->t_rttmin, TCPTV_REXMTMAX);
-		tp->t_timer[TCPT_REXMT] = tp->t_rxtcur;
+		TCP_TIMER_ARM(tp, TCPT_REXMT, tp->t_rxtcur);
 
 		/* 
 		 * If we are losing and we are trying path MTU discovery,
@@ -416,9 +416,9 @@ tcp_timers(tp, timer)
 				(struct mbuf *)NULL,
 				tp->rcv_nxt, tp->snd_una - 1, 0);
 #endif
-			tp->t_timer[TCPT_KEEP] = tcp_keepintvl;
+			TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepintvl);
 		} else
-			tp->t_timer[TCPT_KEEP] = tcp_keepidle;
+			TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepidle);
 		break;
 	dropit:
 		tcpstat.tcps_keepdrops++;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.100 2001/07/07 22:22:04 provos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.101 2002/01/14 03:11:55 provos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -864,7 +864,7 @@ findpcb:
 	 */
 	tp->t_idle = 0;
 	if (tp->t_state != TCPS_SYN_RECEIVED)
-		tp->t_timer[TCPT_KEEP] = tcp_keepidle;
+		TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepidle);
 
 #ifdef TCP_SACK
 	if (!tp->sack_disable)
@@ -960,9 +960,9 @@ findpcb:
 				 * decide between more output or persist.
 				 */
 				if (tp->snd_una == tp->snd_max)
-					tp->t_timer[TCPT_REXMT] = 0;
-				else if (tp->t_timer[TCPT_PERSIST] == 0)
-					tp->t_timer[TCPT_REXMT] = tp->t_rxtcur;
+					TCP_TIMER_DISARM(tp, TCPT_REXMT);
+				else if (TCP_TIMER_ISARMED(tp, TCPT_PERSIST) == 0)
+					TCP_TIMER_ARM(tp, TCPT_REXMT, tp->t_rxtcur);
 
 				if (sb_notify(&so->so_snd))
 					sowwakeup(so);
@@ -1190,7 +1190,7 @@ findpcb:
 		tcp_rcvseqinit(tp);
 		tp->t_flags |= TF_ACKNOW;
 		tp->t_state = TCPS_SYN_RECEIVED;
-		tp->t_timer[TCPT_KEEP] = tcptv_keep_init;
+		TCP_TIMER_ARM(tp, TCPT_KEEP, tcptv_keep_init);
 		dropsocket = 0;		/* committed to socket */
 		tcpstat.tcps_accepts++;
 		goto trimthenstep6;
@@ -1243,7 +1243,7 @@ findpcb:
 			if (SEQ_LT(tp->snd_nxt, tp->snd_una))
 				tp->snd_nxt = tp->snd_una;
 		}
-		tp->t_timer[TCPT_REXMT] = 0;
+		TCP_TIMER_DISARM(tp, TCPT_REXMT);
 		tp->irs = th->th_seq;
 		tcp_rcvseqinit(tp);
 		tp->t_flags |= TF_ACKNOW;
@@ -1593,7 +1593,7 @@ trimthenstep6:
 				 * to keep a constant cwnd packets in the
 				 * network.
 				 */
-				if (tp->t_timer[TCPT_REXMT] == 0)
+				if (TCP_TIMER_ISARMED(tp, TCPT_REXMT) == 0)
 					tp->t_dupacks = 0;
 #if defined(TCP_SACK) && defined(TCP_FACK)
 				/* 
@@ -1630,7 +1630,7 @@ trimthenstep6:
 #endif
 #ifdef TCP_SACK
                     			if (!tp->sack_disable) {
-						tp->t_timer[TCPT_REXMT] = 0;
+						TCP_TIMER_DISARM(tp, TCPT_REXMT);
 						tp->t_rtt = 0;
 						tcpstat.tcps_sndrexmitfast++;
 #if defined(TCP_SACK) && defined(TCP_FACK) 
@@ -1653,7 +1653,7 @@ trimthenstep6:
 						goto drop;
 					}
 #endif /* TCP_SACK */
-					tp->t_timer[TCPT_REXMT] = 0;
+					TCP_TIMER_DISARM(tp, TCPT_REXMT);
 					tp->t_rtt = 0;
 					tp->snd_nxt = th->th_ack;
 					tp->snd_cwnd = tp->t_maxseg;
@@ -1774,10 +1774,10 @@ trimthenstep6:
 		 * timer, using current (possibly backed-off) value.
 		 */
 		if (th->th_ack == tp->snd_max) {
-			tp->t_timer[TCPT_REXMT] = 0;
+			TCP_TIMER_DISARM(tp, TCPT_REXMT);
 			needoutput = 1;
-		} else if (tp->t_timer[TCPT_PERSIST] == 0)
-			tp->t_timer[TCPT_REXMT] = tp->t_rxtcur;
+		} else if (TCP_TIMER_ISARMED(tp, TCPT_PERSIST) == 0)
+			TCP_TIMER_ARM(tp, TCPT_REXMT, tp->t_rxtcur);
 		/*
 		 * When new data is acked, open the congestion window.
 		 * If the window gives us less than ssthresh packets
@@ -1840,7 +1840,7 @@ trimthenstep6:
 				 */
 				if (so->so_state & SS_CANTRCVMORE) {
 					soisdisconnected(so);
-					tp->t_timer[TCPT_2MSL] = tcp_maxidle;
+					TCP_TIMER_ARM(tp, TCPT_2MSL, tcp_maxidle);
 				}
 				tp->t_state = TCPS_FIN_WAIT_2;
 			}
@@ -1856,7 +1856,7 @@ trimthenstep6:
 			if (ourfinisacked) {
 				tp->t_state = TCPS_TIME_WAIT;
 				tcp_canceltimers(tp);
-				tp->t_timer[TCPT_2MSL] = 2 * TCPTV_MSL;
+				TCP_TIMER_ARM(tp, TCPT_2MSL, 2 * TCPTV_MSL);
 				soisdisconnected(so);
 			}
 			break;
@@ -1880,7 +1880,7 @@ trimthenstep6:
 		 * it and restart the finack timer.
 		 */
 		case TCPS_TIME_WAIT:
-			tp->t_timer[TCPT_2MSL] = 2 * TCPTV_MSL;
+			TCP_TIMER_ARM(tp, TCPT_2MSL, 2 * TCPTV_MSL);
 			goto dropafterack;
 		}
 	}
@@ -2053,7 +2053,7 @@ dodata:							/* XXX */
 		case TCPS_FIN_WAIT_2:
 			tp->t_state = TCPS_TIME_WAIT;
 			tcp_canceltimers(tp);
-			tp->t_timer[TCPT_2MSL] = 2 * TCPTV_MSL;
+			TCP_TIMER_ARM(tp, TCPT_2MSL, 2 * TCPTV_MSL);
 			soisdisconnected(so);
 			break;
 
@@ -2061,7 +2061,7 @@ dodata:							/* XXX */
 		 * In TIME_WAIT state restart the 2 MSL time_wait timer.
 		 */
 		case TCPS_TIME_WAIT:
-			tp->t_timer[TCPT_2MSL] = 2 * TCPTV_MSL;
+			TCP_TIMER_ARM(tp, TCPT_2MSL, 2 * TCPTV_MSL);
 			break;
 		}
 	}
@@ -2659,7 +2659,7 @@ tcp_sack_partialack(tp, th)
 {
 	if (SEQ_LT(th->th_ack, tp->snd_last)) {
 		/* Turn off retx. timer (will start again next segment) */
-		tp->t_timer[TCPT_REXMT] = 0;
+		TCP_TIMER_DISARM(tp, TCPT_REXMT);
 		tp->t_rtt = 0;
 #ifndef TCP_FACK
 		/* 
@@ -3080,7 +3080,7 @@ tcp_newreno(tp, th)
 		 */
 		tcp_seq onxt = tp->snd_nxt;
 		u_long  ocwnd = tp->snd_cwnd;
-		tp->t_timer[TCPT_REXMT] = 0;
+		TCP_TIMER_DISARM(tp, TCPT_REXMT);
 		tp->t_rtt = 0;
 		tp->snd_nxt = th->th_ack;
 		/* 
