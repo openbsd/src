@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.18 2002/06/09 16:26:10 itojun Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.19 2002/08/16 09:32:39 itojun Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -62,6 +62,7 @@
 #include <netinet/in_var.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
+#include <netinet/ip_var.h>
 #include <netinet/ip_gre.h>
 #include <netinet/if_ether.h>
 #else
@@ -247,13 +248,13 @@ gre_input(struct mbuf *m, ...)
 	ret = gre_input2(m, hlen, IPPROTO_GRE);
 	/*
 	 * ret == 0: packet not processed, but input from here
-	 * means no matching tunnel that is up is found,
-	 * so we can just free the mbuf and return.  It is also
+	 * means no matching tunnel that is up is found.
+	 * we inject it to raw ip socket to see if anyone picks it up.
 	 * possible that we received a WCCPv1-style GRE packet
 	 * but we're not set to accept them.
 	 */
 	if (!ret)
-		m_freem(m);
+		rip_input(m, hlen, IPPROTO_GRE);
 }
 
 /*
