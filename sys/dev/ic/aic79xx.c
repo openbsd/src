@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.17 2004/12/10 03:44:00 krw Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.18 2004/12/10 17:00:36 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -7170,6 +7170,21 @@ ahd_reset_cmds_pending(struct ahd_softc *ahd)
 	ahd->flags &= ~AHD_UPDATE_PEND_CMDS;
 }
 
+void
+ahd_done_with_status(struct ahd_softc *ahd, struct scb *scb, uint32_t status)
+{
+	cam_status ostat;
+	cam_status cstat;
+
+	ostat = aic_get_transaction_status(scb);
+	if (ostat == CAM_REQ_INPROG)
+		aic_set_transaction_status(scb, status);
+	cstat = aic_get_transaction_status(scb);
+	if (cstat != CAM_REQ_CMP)
+		aic_freeze_scb(scb);
+	ahd_done(ahd, scb);
+}
+
 int
 ahd_search_qinfifo(struct ahd_softc *ahd, int target, char channel,
 		   int lun, u_int tag, role_t role, uint32_t status,
@@ -7239,25 +7254,10 @@ ahd_search_qinfifo(struct ahd_softc *ahd, int target, char channel,
 			found++;
 			switch (action) {
 			case SEARCH_COMPLETE:
-			{
-				cam_status ostat;
-				cam_status cstat;
-
-				ostat = aic_get_transaction_status(scb);
-				if (ostat == CAM_REQ_INPROG)
-					aic_set_transaction_status(scb, status);
-				cstat = aic_get_transaction_status(scb);
-				if (cstat != CAM_REQ_CMP)
-					aic_freeze_scb(scb);
 				if ((scb->flags & SCB_ACTIVE) == 0)
 					printf("Inactive SCB in qinfifo\n");
-				if (scb->xs->error != CAM_REQ_CMP)
-					printf("SEARCH_COMPLETE(0x%x): ostat 0x%x, cstat 0x%x, xs_error 0x%x\n",
-						SCB_GET_TAG(scb), ostat, cstat, scb->xs->error);
-				ahd_done(ahd, scb);
-
+				ahd_done_with_status(ahd, scb, status);
 				/* FALLTHROUGH */
-			}
 			case SEARCH_REMOVE:
 				break;
 			case SEARCH_PRINT:
@@ -7386,21 +7386,10 @@ ahd_search_scb_list(struct ahd_softc *ahd, int target, char channel,
 		found++;
 		switch (action) {
 		case SEARCH_COMPLETE:
-		{
-			cam_status ostat;
-			cam_status cstat;
-
-			ostat = aic_get_transaction_status(scb);
-			if (ostat == CAM_REQ_INPROG)
-				aic_set_transaction_status(scb, status);
-			cstat = aic_get_transaction_status(scb);
-			if (cstat != CAM_REQ_CMP)
-				aic_freeze_scb(scb);
 			if ((scb->flags & SCB_ACTIVE) == 0)
 				printf("Inactive SCB in Waiting List\n");
-			ahd_done(ahd, scb);
+			ahd_done_with_status(ahd, scb, status);
 			/* FALLTHROUGH */
-		}
 		case SEARCH_REMOVE:
 			ahd_rem_wscb(ahd, scbid, prev, next, tid);
 			if (prev == SCB_LIST_NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.h,v 1.14 2004/11/23 05:15:35 krw Exp $	*/
+/*	$OpenBSD: aic79xx.h,v 1.15 2004/12/10 17:00:36 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -1447,6 +1447,8 @@ typedef enum {
 	SEARCH_REMOVE,
 	SEARCH_PRINT
 } ahd_search_action;
+void			ahd_done_with_status(struct ahd_softc *ahd,
+					     struct scb *scb, uint32_t status);
 int			ahd_search_qinfifo(struct ahd_softc *ahd, int target,
 					   char channel, int lun, u_int tag,
 					   role_t role, uint32_t status,
