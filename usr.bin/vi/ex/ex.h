@@ -6,7 +6,7 @@
  *
  * See the LICENSE file for redistribution information.
  *
- *	@(#)ex.h	10.23 (Berkeley) 6/30/96
+ *	@(#)ex.h	10.24 (Berkeley) 8/12/96
  */
 
 #define	PROMPTCHAR	':'		/* Prompt using a colon. */
@@ -155,21 +155,12 @@ struct _excmd {
 	u_int32_t flags;		/* Current flags. */
 };
 
-/* Cd paths. */
-typedef struct _cdpath CDPATH;
-struct _cdpath {			/* Cd path structure. */
-	TAILQ_ENTRY(_cdpath) q;		/* Linked list of cd paths. */
-	char *path;			/* Path. */
-};
-
 /* Ex private, per-screen memory. */
 typedef struct _ex_private {
 	CIRCLEQ_HEAD(_tqh, _tagq) tq;	/* Tag queue. */
 	TAILQ_HEAD(_tagfh, _tagf) tagfq;/* Tag file list. */
 	LIST_HEAD(_csch, _csc) cscq;    /* Cscope connection list. */
 	char	*tag_last;		/* Saved last tag string. */
-
-	TAILQ_HEAD(_cdh, _cdpath) cdq;	/* Cd path list. */
 
 	CHAR_T	*lastbcomm;		/* Last bang command. */
 

@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)vi.summary	8.2 (Berkeley) 6/27/96
+.\"	@(#)vi.summary	8.3 (Berkeley) 8/18/96
 .\"
 .ds CH
 .ds CF
@@ -49,10 +49,10 @@
 .vs 11
 .nr HM .50i
 .nr FM .25i
-.nr PO 0
-.po 0
-.nr LL 3.5i
-.ll 3.5i
+.nr PO 1.0i
+.po 1.0i
+.nr LL 4.5i
+.ll 4.5i
 .de nc
 .bp
 ..

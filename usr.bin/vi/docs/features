@@ -41,11 +41,6 @@ List of suggested features:
   of the screen aren't filled except by accident, so that the text
   you ask for is always concentrated in the center of the screen.
 
-+ Add "set searchdir" for a list of directories to look in for
-  files to edit.  The semantic is that ":e foo" is replaced with
-  the file name that is found, so there's no confusion as to
-  which file is written.
-
 + Change
 	:di[splay] tags		-> :tags
 	:di[splay] screens	-> :screens

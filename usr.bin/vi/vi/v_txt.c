@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)v_txt.c	10.79 (Berkeley) 8/11/96";
+static const char sccsid[] = "@(#)v_txt.c	10.80 (Berkeley) 8/13/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -2111,8 +2111,8 @@ retry:		for (len = 0,
 
 	/* Shift remaining text up, and move the cursor to the end. */
 	if (nlen) {
-		BINC_RET(sp, tp->lb, tp->lb_len, tp->len + nlen);
 		off = p - tp->lb;
+		BINC_RET(sp, tp->lb, tp->lb_len, tp->len + nlen);
 		p = tp->lb + off;
 
 		tp->cno += nlen;
@@ -2126,11 +2126,10 @@ retry:		for (len = 0,
 
 	/* If a single match and it's a directory, retry it. */
 	if (argc == 1 && !stat(cmd.argv[0]->bp, &sb) && S_ISDIR(sb.st_mode)) {
-isdir:		off = p - tp->lb;
-		p = tp->lb + off;
-
-		if (tp->owrite == 0) {
+isdir:		if (tp->owrite == 0) {
+			off = p - tp->lb;
 			BINC_RET(sp, tp->lb, tp->lb_len, tp->len + 1);
+			p = tp->lb + off;
 			if (tp->insert != 0)
 				(void)memmove(p + 1, p, tp->insert);
 			++tp->len;

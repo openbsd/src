@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_argv.c	10.23 (Berkeley) 8/11/96";
+static const char sccsid[] = "@(#)ex_argv.c	10.25 (Berkeley) 8/13/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -29,10 +29,10 @@ static const char sccsid[] = "@(#)ex_argv.c	10.23 (Berkeley) 8/11/96";
 #include "../common/common.h"
 
 static int argv_alloc __P((SCR *, size_t));
+static int argv_comp __P((const void *, const void *));
 static int argv_fexp __P((SCR *, EXCMD *,
 	char *, size_t, char *, size_t *, char **, size_t *, int));
-static int argv_prefix __P((SCR *,
-	char *, char *, char **, size_t *, size_t *));
+static int argv_lexp __P((SCR *, EXCMD *, char *));
 static int argv_sexp __P((SCR *, char **, size_t *, size_t *));
 
 /*
@@ -74,7 +74,7 @@ argv_exp0(sp, excp, cmd, cmdlen)
 
 	exp = EXP(sp);
 	argv_alloc(sp, cmdlen);
-	memmove(exp->args[exp->argsoff]->bp, cmd, cmdlen);
+	memcpy(exp->args[exp->argsoff]->bp, cmd, cmdlen);
 	exp->args[exp->argsoff]->bp[cmdlen] = '\0';
 	exp->args[exp->argsoff]->len = cmdlen;
 	++exp->argsoff;
@@ -149,7 +149,7 @@ argv_exp2(sp, excp, cmd, cmdlen)
 
 #define	SHELLECHO	"echo "
 #define	SHELLOFFSET	(sizeof(SHELLECHO) - 1)
-	memmove(bp, SHELLECHO, SHELLOFFSET);
+	memcpy(bp, SHELLECHO, SHELLOFFSET);
 	p = bp + SHELLOFFSET;
 	len = SHELLOFFSET;
 
@@ -216,18 +216,12 @@ argv_exp2(sp, excp, cmd, cmdlen)
 	case 0:
 		p = bp + SHELLOFFSET;
 		len -= SHELLOFFSET;
+		rval = argv_exp3(sp, excp, p, len);
 		break;
 	case 1:
 		if (*p == '*') {
-			*p++ = '\0';
-			n = p - bp;
-			if (argv_prefix(sp,
-			    bp + SHELLOFFSET, p, &bp, &blen, &len)) {
-				rval = 1;
-				goto err;
-			}
-			p = bp + n;
-			len -= n;
+			*p = '\0';
+			rval = argv_lexp(sp, excp, bp + SHELLOFFSET);
 			break;
 		}
 		/* FALLTHROUGH */
@@ -237,14 +231,9 @@ argv_exp2(sp, excp, cmd, cmdlen)
 			goto err;
 		}
 		p = bp;
+		rval = argv_exp3(sp, excp, p, len);
 		break;
 	}
-
-#if defined(DEBUG) && 0
-	TRACE(sp, "after shell: %d: {%s}\n", len, bp);
-#endif
-
-	rval = argv_exp3(sp, excp, p, len);
 
 err:	FREE_SPACE(sp, bp, blen);
 	return (rval);
@@ -352,7 +341,7 @@ argv_fexp(sp, excp, cmd, cmdlen, p, lenp, bpp, blenp, is_bang)
 			}
 			len += tlen = strlen(exp->lastbcomm);
 			ADD_SPACE_RET(sp, bp, blen, len);
-			memmove(p, exp->lastbcomm, tlen);
+			memcpy(p, exp->lastbcomm, tlen);
 			p += tlen;
 			F_SET(excp, E_MODIFY);
 			break;
@@ -365,7 +354,7 @@ argv_fexp(sp, excp, cmd, cmdlen, p, lenp, bpp, blenp, is_bang)
 			tlen = strlen(t);
 			len += tlen;
 			ADD_SPACE_RET(sp, bp, blen, len);
-			memmove(p, t, tlen);
+			memcpy(p, t, tlen);
 			p += tlen;
 			F_SET(excp, E_MODIFY);
 			break;
@@ -377,7 +366,7 @@ argv_fexp(sp, excp, cmd, cmdlen, p, lenp, bpp, blenp, is_bang)
 			}
 			len += tlen = strlen(t);
 			ADD_SPACE_RET(sp, bp, blen, len);
-			memmove(p, t, tlen);
+			memcpy(p, t, tlen);
 			p += tlen;
 			F_SET(excp, E_MODIFY);
 			break;
@@ -508,33 +497,34 @@ argv_free(sp)
 }
 
 /*
- * argv_prefix --
+ * argv_lexp --
  *	Find all file names matching the prefix and append them to the
  *	buffer.
  */
 static int
-argv_prefix(sp, path, wp, bpp, blenp, lenp)
+argv_lexp(sp, excp, path)
 	SCR *sp;
-	char *path, *wp, **bpp;
-	size_t *blenp, *lenp;
+	EXCMD *excp;
+	char *path;
 {
-	DIR *dirp;
 	struct dirent *dp;
-	size_t blen, clen, dlen, doffset, len, nlen;
-	char *bp, *dname, *name, *p;
+	DIR *dirp;
+	EX_PRIVATE *exp;
+	int off;
+	size_t dlen, len, nlen;
+	char *dname, *name, *p;
 
-	/*
-	 * Open the directory, set up the name and length for comparison,
-	 * the prepended directory and length.
-	 */
+	exp = EXP(sp);
+
+	/* Set up the name and length for comparison. */
 	if ((p = strrchr(path, '/')) == NULL) {
-		dlen = 0;
 		dname = ".";
+		dlen = 0;
 		name = path;
 	} else { 
 		if (p == path) {
 			dname = "/";
-			dlen = 0;
+			dlen = 1;
 		} else {
 			*p = '\0';
 			dname = path;
@@ -544,77 +534,65 @@ argv_prefix(sp, path, wp, bpp, blenp, lenp)
 	}
 	nlen = strlen(name);
 
-	if ((dirp = opendir(dname)) == NULL) {
-		msgq_str(sp, M_SYSERR, dname, "%s");
-		return (1);
-	}
-
-	/* Local copies of the buffer variables. */
-	bp = *bpp;
-	blen = *blenp;
-
 	/*
-	 * We're passed a pointer to the name (after the echo command at
-	 * the start of the buffer) and a pointer to the place to start
-	 * writing.  Set a pointer to the start of the write area, and a
-	 * value for the amount of space we have to write.
-	 */
-	p = wp;
-	len = wp - bp;
-	blen -= len;
-
-	/*
-	 * Read the directory, checking for files with a matching prefix.
-	 *
 	 * XXX
 	 * We don't use the d_namlen field, it's not portable enough; we
 	 * assume that d_name is nul terminated, instead.
 	 */
-	while ((dp = readdir(dirp)) != NULL) {
-		clen = strlen(dp->d_name);
-		if (nlen == 0 ||
-		    (clen >= nlen && !memcmp(dp->d_name, name, nlen))) {
-			if (blen < clen + dlen + 5) {
-				doffset = dname - bp;
-				ADD_SPACE_GOTO(sp, bp, *blenp,
-				    *blenp * 2 + clen + dlen + 5);
-				p = bp + len;
-				blen = *blenp - len;
-				if (dname == path)
-					dname = bp + doffset;
-			}
-			if (dlen != 0) {
-				memcpy(p, dname, dlen);
-				p += dlen;
-				*p++ = '/';
-				len += dlen + 1;
-				blen -= dlen + 1;
-			}
-			memcpy(p, dp->d_name, clen);
-			p += clen;
-			*p++ = ' ';
-			len += clen + 1;
-			blen -= clen + 1;
+	if ((dirp = opendir(dname)) == NULL) {
+		msgq_str(sp, M_SYSERR, dname, "%s");
+		return (1);
+	}
+	for (off = exp->argsoff; (dp = readdir(dirp)) != NULL;) {
+		if (nlen == 0) {
+			if (dp->d_name[0] == '.')
+				continue;
+			len = strlen(dp->d_name);
+		} else {
+			len = strlen(dp->d_name);
+			if (len < nlen || memcmp(dp->d_name, name, nlen))
+				continue;
 		}
-	}
-	(void)closedir(dirp);
 
-	/*
-	 * If we didn't find a match, complain that the expansion failed.  We
-	 * can't know for certain that's the error, but it's a good guess, and
-	 * it matches historic practice. 
-	 */
-	if (p == wp) {
+		/* Directory + name + slash + null. */
+		argv_alloc(sp, dlen + len + 2);
+		p = exp->args[exp->argsoff]->bp;
+		if (dlen != 0) {
+			memcpy(p, dname, dlen);
+			p += dlen;
+			if (dlen > 1 || dname[0] != '/')
+				*p++ = '/';
+		}
+		memcpy(p, dp->d_name, len + 1);
+		exp->args[exp->argsoff]->len = dlen + len + 1;
+		++exp->argsoff;
+		excp->argv = exp->args;
+		excp->argc = exp->argsoff;
+	}
+	closedir(dirp);
+
+	if (off == exp->argsoff) {
+		/*
+		 * If we didn't find a match, complain that the expansion
+		 * failed.  We can't know for certain that's the error, but
+		 * it's a good guess, and it matches historic practice. 
+		 */
 		msgq(sp, M_ERR, "304|Shell expansion failed");
-alloc_err:	return (1);
+		return (1);
 	}
-
-	/* Delete the final <space>, nul terminate the string. */
-	*--p = '\0';
-	*lenp = len - 1;
-	*bpp = bp;		/* *blenp is already updated. */
-
+	qsort(exp->args + off, exp->argsoff - off, sizeof(ARGS *), argv_comp);
 	return (0);
+}
+
+/*
+ * argv_comp --
+ *	Alphabetic comparison.
+ */
+static int
+argv_comp(a, b)
+	const void *a, *b;
+{
+	return (strcmp((char *)(*(ARGS **)a)->bp, (char *)(*(ARGS **)b)->bp));
 }
 
 /*

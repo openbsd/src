@@ -24,8 +24,6 @@ int argv_free __P((SCR *));
 int ex_at __P((SCR *, EXCMD *));
 int ex_bang __P((SCR *, EXCMD *));
 int ex_cd __P((SCR *, EXCMD *));
-int ex_cdalloc __P((SCR *, char *));
-int ex_cdfree __P((SCR *));
 int ex_cscope __P((SCR *, EXCMD *));
 int cscope_display __P((SCR *));
 int cscope_search __P((SCR *, TAGQ *, TAG *));

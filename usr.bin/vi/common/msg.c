@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)msg.c	10.42 (Berkeley) 8/11/96";
+static const char sccsid[] = "@(#)msg.c	10.45 (Berkeley) 8/18/96";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -516,6 +516,7 @@ msgq_status(sp, lno, flags)
 	recno_t lno;
 	u_int flags;
 {
+	static int poisoned;
 	recno_t last;
 	size_t blen, len;
 	int cnt, needsep;
@@ -537,12 +538,13 @@ msgq_status(sp, lno, flags)
 	/* Copy in the argument count. */
 	if (F_ISSET(sp, SC_STATUS_CNT) && sp->argv != NULL) {
 		for (cnt = 0, ap = sp->argv; *ap != NULL; ++ap, ++cnt);
-		(void)sprintf(p,
-		    msg_cat(sp, "317|%d files to edit", NULL), cnt);
-		p += strlen(p);
-		*p++ = ':';
-		*p++ = ' ';
-
+		if (cnt > 1) {
+			(void)sprintf(p,
+			    msg_cat(sp, "317|%d files to edit", NULL), cnt);
+			p += strlen(p);
+			*p++ = ':';
+			*p++ = ' ';
+		}
 		F_CLR(sp, SC_STATUS_CNT);
 	}
 
@@ -624,7 +626,25 @@ msgq_status(sp, lno, flags)
 	(void)sprintf(p, " (pid %lu)", (u_long)getpid());
 	p += strlen(p);
 #endif
+	len = p - bp;
+
+	/*
+	 * Poison.
+	 *
+	 * This message may not be altered in any way, without the written
+	 * permission of Keith Bostic.  See the LICENSE file for further
+	 * information.
+	 */
+#define	POISON	"   (UNLICENSED)"
+	if (!poisoned && len + 1 + (sizeof(POISON) - 1) < sp->cols) {
+		memcpy(p, POISON, sizeof(POISON) - 1);
+		p += sizeof(POISON) - 1;
+		len += sizeof(POISON) - 1;
+		poisoned = 1;
+	}
+
 	*p++ = '\n';
+	++len;
 
 	/*
 	 * There's a nasty problem with long path names.  Cscope and tags files
@@ -633,21 +653,26 @@ msgq_status(sp, lno, flags)
 	 * has already typed ahead, and chaos results.  If we assume that the
 	 * characters in the filenames and informational messages only take a
 	 * single screen column each, we can trim the filename.
+	 *
+	 * XXX
+	 * Status lines get put up at fairly awkward times.  For example, when
+	 * you do a filter read (e.g., :read ! echo foo) in the top screen of a
+	 * split screen, we have to repaint the status lines for all the screens
+	 * below the top screen.  We don't want users having to enter continue
+	 * characters for those screens.  Make it really hard to screw this up.
 	 */
 	s = bp;
-	if (LF_ISSET(MSTAT_TRUNCATE))
-		if ((p - s) >= sp->cols) {
-			for (; s < np &&
-			    (*s != '/' || (p - s) > sp->cols - 3); ++s);
-			if (s == np)
-				s = bp;
-			else {
-				*--s = '.';
-				*--s = '.';
-				*--s = '.';
-			}
+	if (LF_ISSET(MSTAT_TRUNCATE) && len >= sp->cols) {
+		for (; s < np && (*s != '/' || (p - s) > sp->cols - 3); ++s);
+		if (s == np) {
+			s = p - (sp->cols - 5);
+			*--s = ' ';
 		}
-	len = p - s;
+		*--s = '.';
+		*--s = '.';
+		*--s = '.';
+		len = p - s;
+	}
 
 	/* Flush any waiting ex messages. */
 	(void)ex_fflush(sp);

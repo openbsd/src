@@ -1,4 +1,4 @@
-@(#)FAQ	8.10 (Berkeley) 8/10/96
+@(#)FAQ	8.12 (Berkeley) 8/17/96
 
 Q: How can I get vi to display my character set?
 A: Vi uses the C library routine isprint(3) to determine if a character
@@ -21,6 +21,10 @@ A: Vi uses the C library routine isprint(3) to determine if a character
    HP-UX 10.X	en_US.iso88591
    SunOS  4.X	iso_8859_1
    SunOS  5.X	iso_8859_1
+
+   If there's no other solution, you can use the print and noprint edit
+   options of vi to specify that a specific character is printable or not
+   printable.
 	
 Q: My map won't work!
 A: One thing that you should immediately check if a vi map doesn't work
@@ -95,8 +99,8 @@ A: This is almost certainly a problem with the system's terminfo or
 
 Q: The entire screen repaints on every keystroke!
 A: Your system's curses implementation is broken.  You should use the
-   curses implementation provided with vi or a curses replacment such as
-   ncurses.  Eric Raymond is one of the maintainers of the freely
+   curses implementation provided with vi or a curses replacement such
+   as ncurses.  Eric Raymond is one of the maintainers of the freely
    redistributable ncurses package.  You can download ncurses from
    http://www.ccil.org/~esr/ncurses.html, or you can contact him at
    esr@snark.thyrsus.com.

@@ -1,29 +1,29 @@
-#	@(#)README	8.143 (Berkeley) 7/9/96
+#	@(#)README	8.146 (Berkeley) 8/18/96
 
-This is the README for nex/nvi, a freely redistributable replacement for
-the ex/vi text editors originally distributed as part of the Fourth
+This is the README for nex/nvi, a freely redistributable implementation
+of the ex/vi text editors originally distributed as part of the Fourth
 Berkeley Software Distribution (4BSD), by the University of California,
 Berkeley.
 
 The source code for nex/nvi can be retrieved by using anonymous ftp to
-ftp.cs.berkeley.edu.  The files ucb/4bsd/nvi.tar.Z and ucb/4bsd/nvi.tar.gz
-are the compressed and gzip'd archives, respectively, of version 1.71 of
-nex/nvi.  This version is believed to be stable and reasonably problem
-free.  The file ucb/4bsd/nvi.ALPHA.###.tar.gz is a gzip'd archive of the
-current alpha-test release of nex/nvi.  This version reflects the current
-development tree, and is more likely to have unanticipated problems.
+ftp.cs.berkeley.edu.  The file ucb/4bsd/nvi.tar.gz is the gzip'd archive,
+of version 1.71 of nex/nvi.  This version is believed to be stable and
+problem free.  The file ucb/4bsd/nvi-###.ALPHA.tar.gz is a gzip'd archive
+of the current alpha-test release of nex/nvi.  This version reflects the
+current development tree, and will be more likely to have problems.
 
-See the file build/README for information on building nvi.
+See the file:
+	build/README	for information on building nvi.
+	LAYOUT		for a description of where everything is.
+	LICENSE		for the copyright and redistribution terms.
 
-See the file LAYOUT for a description of where everything is.
+If you have any questions about nex/nvi, problems with it, or concerns
+about the conditions for redistribution, please contact me:
 
-See the file COPYRIGHT for the nex/nvi copyright and redistribution terms.
-
-If you have any questions about nex/nvi, or problems making it work,
-please contact me by electronic mail at one of the following addresses:
-
-	uunet!bostic
-	bostic@cs.berkeley.edu
+	Keith Bostic		+1-508-287-4781
+	394 E. Riding Dr.	bostic@bostic.com
+	Carlisle, MA 01741
+	USA
 
 Keith Bostic
 
@@ -46,8 +46,10 @@ o This software is several years old and is the product of many folks' work.
 
 	Sven Verdoolaege added the Perl5 interpreter.
 
-o Many, many people provided enhancements, bug reports and testing, far too
-  many to individually thank.
+	Rob Mayoff provided the original Cscope support.
+
+o Many, many people suggested enhancements, and provided bug reports and
+  testing, far too many to individually thank.
 
 o From the original vi acknowledgements, by William Joy and Mark Horton:
 
@@ -67,7 +69,7 @@ o Status:
 
 This software is in beta test, and it's pretty stable.  Almost all of the
 historic functionality in ex/vi is there, the only major missing pieces
-are open mode and the lisp option.
+are open mode and the lisp edit option.
 
 Nvi is largely 8-bit clean.  This isn't difficult to fix, and was left in
 during initial development to keep things simple.  Wide character support
@@ -87,7 +89,7 @@ reproduce the bug, and I'll try to fix it locally.  Stack traces of core
 dumps are only rarely helpful -- an example file with a set of keystrokes
 that causes the problem is almost invariably necessary.  I know it's
 annoying, but simply playing with the bug until you can reproduce it at
-will with minimal keystrokes is immensely helpful to me.
+will, with minimal keystrokes, is immensely helpful to me.
 
 Please include the following in the bug report;
 

@@ -1,4 +1,14 @@
+1.73 -> 1.74 (08/18/96)
+	+ Fix bug where the status line wasn't redisplayed if the user ran
+	  an ex command that trashed the screen.
+	+ Fix bug where the long version of the status line wasn't displayed
+	  when switching screens.
+	+ Rework fast-path filename completion code to sort the entries, and
+	  strip out . and .. by default.
+	+ Fix bug where ex went to the first line instead of the last one when
+	  reading in a file.
 1.72 -> 1.73 (08/12/96)
+	+ Do filename completion and some file expansion internally for speed.
 	+ Fix CSCOPE_DIRS environmental variable support.
 	+ Ex parser fix for global commands in script files.
 	+ Add the O_PATH option, so you can specify a directory search path

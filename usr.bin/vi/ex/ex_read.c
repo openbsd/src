@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_read.c	10.37 (Berkeley) 7/12/96";
+static const char sccsid[] = "@(#)ex_read.c	10.38 (Berkeley) 8/12/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -267,15 +267,20 @@ ex_read(sp, cmdp)
 	rval = ex_readfp(sp, name, fp, &cmdp->addr1, &nlines, 0);
 
 	/*
-	 * Set the cursor to the first line read in, if anything read
-	 * in, otherwise, the address.  (Historic vi set it to the
-	 * line after the address regardless, but since that line may
-	 * not exist we don't bother.)
+	 * In vi, set the cursor to the first line read in, if anything read
+	 * in, otherwise, the address.  (Historic vi set it to the line after
+	 * the address regardless, but since that line may not exist we don't
+	 * bother.)
+	 *
+	 * In ex, set the cursor to the last line read in, if anything read in,
+	 * otherwise, the address.
 	 */
-	sp->lno = cmdp->addr1.lno;
-	if (nlines)
-		++sp->lno;
-
+	if (F_ISSET(sp, SC_VI)) {
+		sp->lno = cmdp->addr1.lno;
+		if (nlines)
+			++sp->lno;
+	} else
+		sp->lno = cmdp->addr1.lno + nlines;
 	return (rval);
 }
 

@@ -1,13 +1,13 @@
-#	@(#)Makefile	8.18 (Berkeley) 3/27/96
+#	@(#)Makefile	8.16 (Berkeley) 8/15/94
 
 DIR=	usd/13.viref
 SRCS=	vi.ref ex.cmd.roff set.opt.roff vi.cmd.roff ref.so
+EXTRA=	merge.awk spell.ok
 MACROS=	-me
-CLEANFILES+=vi.ref.ps vi.ref.txt index index.so
+CLEANFILES+=vi.ref.txt index index.so
 
 paper.ps: vi.ref index.so
 	soelim vi.ref | ${TBL} | ${ROFF} > ${.TARGET}
-	rm -f vi.ref.ps && mv $@ vi.ref.ps
 
 vi.ref.txt: vi.ref index.so
 	soelim vi.ref | ${TBL} | groff ${MACROS} -Tascii > $@

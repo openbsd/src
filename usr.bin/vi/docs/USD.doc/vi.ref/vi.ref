@@ -1,37 +1,14 @@
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
-.\" Copyright (c) 1994, 1995
+.\" Copyright (c) 1994, 1995, 1996
 .\"	Keith Bostic.  All rights reserved.
 .\"
-.\" Redistribution and use in source and binary forms, with or without
-.\" modification, are permitted provided that the following conditions
-.\" are met:
-.\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer.
-.\" 2. Redistributions in binary form must reproduce the above copyright
-.\"    notice, this list of conditions and the following disclaimer in the
-.\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"	This product includes software developed by the University of
-.\"	California, Berkeley and its contributors.
-.\" 4. Neither the name of the University nor the names of its contributors
-.\"    may be used to endorse or promote products derived from this software
-.\"    without specific prior written permission.
+.\" This document may not be republished without written permission from
+.\" Keith Bostic. 
 .\"
-.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
-.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
-.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-.\" SUCH DAMAGE.
+.\" See the LICENSE file for redistribution information.
 .\"
-.\"     @(#)vi.ref	8.76 (Berkeley) 6/28/96
+.\"     @(#)vi.ref	8.82 (Berkeley) 8/18/96
 .\"
 .\"
 .so ref.so
@@ -51,20 +28,41 @@ University of California, Berkeley
 Berkeley, California  94720
 .sp 1
 \*(td
+.)l
 .sp 3
+.(l C
 .i Abstract
-.sp
 .)l
 .(q
 .pp
 This document is the reference guide for the 4.4BSD
 implementations of
 .EV nex nvi ,
-which are reimplementations of the historic Berkeley
+which are implementations of the historic Berkeley
 .EV ex vi
 editors.
 .)q
 .sp 3
+.(l C
+.i Licensing
+.)l
+.sp
+.lp
+Copyright (c) 1991, 1992, 1993, 1994
+.ti +5
+The Regents of the University of California.  All Rights Reserved.
+.lp
+Copyright (c) 1991, 1992, 1993, 1994, 1995, 1996
+.ti +5
+Keith Bostic.  All Rights Reserved.
+.sp
+.pp
+The vi program is shareware.  You are welcome to copy, modify and share
+it with others under the conditions listed in the LICENSE file.  If your
+company finds vi sufficiently useful that you would have purchased it,
+or your company wishes to redistribute it, contributions to the authors
+would be appreciated.
+.bp 2
 .(l C
 .i Acknowledgements
 .)l
@@ -97,6 +95,11 @@ Scrolling and reworking for
 .CO nvi
 was done by Elan Amir.
 .pp
+George Neville-Neil added the Tcl interpreter,
+and Sven Verdoolaege added the Perl5 interpreter.
+.pp
+Rob Mayoff added Cscope support.
+.pp
 The Institute of Electrical and Electronics Engineers has
 given us permission to reprint portions of their documentation.
 Portions of this document are reprinted and reproduced from
@@ -108,19 +111,10 @@ Engineers, Inc.
 The financial support of UUNET Communications Services is gratefully
 acknowledged.
 .)q
-.sp 6
-.lp
-Copyright (c) 1991, 1993, 1994
-.ti +5
-The Regents of the University of California.  All Rights Reserved.
-.lp
-Copyright (c) 1994, 1995
-.ti +5
-Keith Bostic.  All Rights Reserved.
 .sy echo -n >index
 .oh 'Nvi/Nex Reference''USD:13-%'
 .eh 'USD:13-%''Nvi/Nex Reference'
-.bp 3
+.bp 4
 .SH 1 Description
 .pp
 .CO Vi
@@ -915,29 +909,38 @@ itself has eight subcommands:
 and
 .CO \&t .
 .pp
-.IP "cs[cope] a[dd] directory"
+.IP "cs[cope] a[dd] file"
 The
 .CO add
-command attaches to the
+command attaches to the specified
 .CO cscope
-database in the specified directory.
-The directory name is expanded using the standard filename expansions.
+database.
+The file name is expanded using the standard filename expansions.
+If
+.CO file
+is a directory, the file
+.QQ cscope.out
+in that directory is used as the database.
+.pp
 After
 .CO nvi
 attaches to a new database,
 all subsequent
 .CO cscope
 queries will be asked of that database.
-The result of any single query is the collection of responses from all
-of the databases to the query.
+The result of any single query is the collection of response to the query
+from all of the attached databases.
 .sp
 If the
 .QQ CSCOPE_DIRS
 environmental variable is set when
 .CO nvi
-is run, it is expected to be a <blank>-separated list of directories containing
+is run,
+it is expected to be a <colon> or <blank>-separated list of
 .CO cscope
-databases to which the user wishes to attach.
+databases or directories containing
+.CO cscope
+databases, to which the user wishes to attach.
 .IP ":cs[cope] f[ind] c|d|e|f|g|i|s|t buffer|pattern"
 The
 .CO find
@@ -972,8 +975,9 @@ In addition, if the file
 .QQ cscope.tpath
 appears in the same directory as the
 .CO cscope
-database, it is expected to contain a colon-separated list of directory
-names where files referenced by its associated
+database,
+it is expected to contain a colon-separated list of directory names
+where files referenced by its associated
 .CO cscope
 database may be found.
 .sp
@@ -1223,7 +1227,7 @@ source directories for more information.
 As a quick reference, the following function calls are provided for
 both the Perl and Tcl interfaces.
 The Perl interface uses a slightly different naming convention,
-e.g. ``viFindScreen'' is named ``VI:FindScreen''.
+e.g. ``viFindScreen'' is named ``VI::FindScreen''.
 .IP "viFindScreen file"
 Return the
 .LI "screenId" associated with
@@ -1845,7 +1849,7 @@ of the file.
 .nf
 .so index.so
 .fi
-.bp 2
+.bp 3
 .1c
 .ce 1
 \fB\s+2Table of Contents\s0\fP

@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)exf.c	10.46 (Berkeley) 8/11/96";
+static const char sccsid[] = "@(#)exf.c	10.47 (Berkeley) 8/12/96";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -475,22 +475,23 @@ file_spath(sp, frp, sbp, existsp)
 	}
 
 	/* Try the O_PATH option values. */
-	for (found = 0, p = t = O_STR(sp, O_PATH);; ++p) {
+	for (found = 0, p = t = O_STR(sp, O_PATH);; ++p)
 		if (*p == ':' || *p == '\0') {
 			if (t < p - 1) {
 				savech = *p;
 				*p = '\0';
 				len = snprintf(path,
 				    sizeof(path), "%s/%s", t, name);
-				if (!stat(path, sbp))
-					found = 1;
 				*p = savech;
+				if (!stat(path, sbp)) {
+					found = 1;
+					break;
+				}
 			}
 			t = p + 1;
+			if (*p == '\0')
+				break;
 		}
-		if (*p == '\0' || found)
-			break;
-	}
 
 	/* If we found it, build a new pathname and discard the old one. */
 	if (found) {

@@ -29,8 +29,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)vi.in	8.4 (Berkeley) 6/27/96
+.\"	@(#)vi.in	8.5 (Berkeley) 8/18/96
 .\"
+.nr LL 6.5i
+.nr FL 6.5i
 .EH 'USD:11-%''An Introduction to Display Editing with Vi'
 .OH 'An Introduction to Display Editing with Vi''USD:11-%'
 .bd S 3

@@ -29,15 +29,14 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)ex.summary	8.2 (Berkeley) 6/27/96
+.\"	@(#)ex.summary	8.3 (Berkeley) 8/18/96
 .\"
 .ds p \v'-0.2'.\v'+0.2'
 .ds U \s-2UNIX\s+2
 .ds c \v'-0.2':\v'+0.2'
-.nr PO .25i
-.nr LL 6.75i
-.lt 6.75i
-.ll 6.75i
+.nr LL 6.5i
+.lt 6.5i
+.ll 6.5i
 .ds CH
 .ds LF Computing Services, U.C. Berkeley
 .ds RF April 3, 1979
@@ -51,11 +50,10 @@
 .ft B
 .ce 1
 Ex/Edit Command Summary (Version 2.0)
+.sp 1
 .ft R
 .nr VS 11
 .nr PS 9
-.nr HM 0.5i
-.nr CW
 .2C
 .PP
 .I Ex
@@ -251,10 +249,6 @@ rather than with its special meaning,
 precede it by a backslash (\\).
 The backslash always has a special meaning.
 .1C
-.rm LF
-.rm RF
-.rm CF
-.nr FM 0.4
 .TS
 cp10 cp10 cp10 cp10
 ltw(1.0i) lt2w(0.40i)fB ltw(3.0i) ltw(1.8i).
@@ -497,10 +491,13 @@ after the current line
 T}
 .TE
 .FS
-\(dg Seek assistance from a consultant as soon as possible
-after saving a file with the
+.ll 6.5i
+\(dg You should seek assistance from a system administrator as soon as
+possible after saving a file with the
 .I preserve
-command, because the file is saved on system storage space for only one week.
+command, because the preserved copy of the file is saved in a
+directory used to store temporary files, and thus, the preserved
+copy may only be available for a short period of time.
 .FE
 .SP
 .nf
@@ -731,4 +728,3 @@ moving in the reverse direction
 through the buffer.
 T}
 .TE
-

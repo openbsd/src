@@ -29,14 +29,14 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)edittut.ms	8.2 (Berkeley) 6/27/96
+.\"	@(#)edittut.ms	8.3 (Berkeley) 8/18/96
 .\"
+.ll 6.5i
+.nr LL 6.5i
 .EH 'USD:11-%''Edit:  A Tutorial'
 .OH 'Edit:  A Tutorial''USD:11-%'
 .LP
 .ds u \s-2UNIX\s0
-.ll 5i
-.nr LL 5i
 .ND
 .sp 4
 .ce
