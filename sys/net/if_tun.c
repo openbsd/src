@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.38 2001/08/03 21:13:40 itojun Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.39 2001/08/21 11:03:45 brian Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -312,6 +312,29 @@ tun_ioctl(ifp, cmd, data)
 	case SIOCSIFMTU:
 		ifp->if_mtu = ((struct ifreq *)data)->ifr_mtu;
 		break;
+	case SIOCADDMULTI:
+	case SIOCDELMULTI: {
+		struct ifreq *ifr = (struct ifreq *)data;
+		if (ifr == 0) {
+			error = EAFNOSUPPORT;	   /* XXX */
+			break;
+		}
+		switch (ifr->ifr_addr.sa_family) {
+#ifdef INET
+		case AF_INET:
+			break;
+#endif
+#ifdef INET6
+		case AF_INET6:
+			break;
+#endif
+		default:
+			error = EAFNOSUPPORT;
+			break;
+		}
+		break;
+	}
+
 	case SIOCSIFFLAGS:
 		break;
 	default:
