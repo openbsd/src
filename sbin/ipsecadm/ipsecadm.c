@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.51 2001/03/22 03:34:18 angelos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.52 2001/03/28 19:15:43 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -666,14 +666,14 @@ main(int argc, char **argv)
 	if (!strcmp(argv[i] + 1, "spi") && spi == SPI_LOCAL_USE &&
 	    (i + 1 < argc) && !bypass && !deny)
 	{
-	    spi = htonl(strtoul(argv[i + 1], NULL, 16));
+	    spi = strtoul(argv[i + 1], NULL, 16);
 	    if (spi >= SPI_RESERVED_MIN && spi <= SPI_RESERVED_MAX)
 	    {
 		fprintf(stderr, "%s: invalid spi %s\n", argv[0], argv[i + 1]);
 		exit(1);
 	    }
 
-	    sa.sadb_sa_spi = spi;
+	    sa.sadb_sa_spi = htonl(spi);
 	    i++;
 	    continue;
 	}
@@ -681,7 +681,7 @@ main(int argc, char **argv)
 	if (!strcmp(argv[i] + 1, "spi2") && spi2 == SPI_LOCAL_USE && 
 	    iscmd(mode, GRP_SPI) && (i + 1 < argc))
 	{
-	    spi2 = htonl(strtoul(argv[i + 1], NULL, 16));
+	    spi2 = strtoul(argv[i + 1], NULL, 16);
 	    if (spi2 == SPI_LOCAL_USE ||
 		(spi2 >= SPI_RESERVED_MIN && spi2 <= SPI_RESERVED_MAX))
 	    {
@@ -689,7 +689,7 @@ main(int argc, char **argv)
 		exit(1);
 	    }
 
-	    sa2.sadb_sa_spi = spi2;
+	    sa2.sadb_sa_spi = htonl(spi2);
 	    i++;
 	    continue;
 	}
