@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.24 2001/10/08 22:17:14 art Exp $
+#	$OpenBSD: GENERIC,v 1.25 2001/10/15 18:33:16 deraadt Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -37,7 +37,7 @@ scsibus* at siop?
 auxio*	at ebus?
 beeper*	at ebus?
 
-com*	at ebus?
+#com*	at ebus?	#*BROKEN*
 
 audioce*	at ebus?
 audio*		at audioce?
