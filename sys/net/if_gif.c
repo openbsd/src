@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.8 2000/10/07 04:05:37 itojun Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.9 2000/12/30 21:52:50 angelos Exp $	*/
 /*	$KAME: if_gif.c,v 1.32 2000/10/07 03:20:55 itojun Exp $	*/
 
 /*
@@ -75,8 +75,11 @@
 
 #include "gif.h"
 #include "bpfilter.h"
+#include "bridge.h"
 
 #include <net/net_osdep.h>
+
+extern int ifqmaxlen;
 
 #if NGIF > 0
 
@@ -102,14 +105,53 @@ gifattach(dummy)
 		sc->gif_if.if_mtu    = GIF_MTU;
 		sc->gif_if.if_flags  = IFF_POINTOPOINT | IFF_MULTICAST;
 		sc->gif_if.if_ioctl  = gif_ioctl;
+		sc->gif_if.if_start = gif_start;
 		sc->gif_if.if_output = gif_output;
 		sc->gif_if.if_type   = IFT_GIF;
+		sc->gif_if.if_snd.ifq_maxlen = ifqmaxlen;
+		sc->gif_if.if_softc = sc;
 		if_attach(&sc->gif_if);
 
 #if NBPFILTER > 0
 		bpfattach(&sc->gif_if.if_bpf, &sc->gif_if, DLT_NULL,
 			  sizeof(u_int));
 #endif
+	}
+}
+
+void
+gif_start(ifp)
+        struct ifnet *ifp;
+{
+        struct sockaddr dst;
+        struct mbuf *m;
+	int s;
+
+#if NBRIDGE > 0
+	bzero(&dst, sizeof(dst));
+
+	/*
+	 * XXX The assumption here is that only the ethernet bridge
+	 * uses the start routine of this interface, and it's thus
+	 * safe to do this.
+	 */
+	dst.sa_family = AF_LINK;
+#endif /* NBRIDGE */
+
+	for (;;) {
+	        s = splimp();
+		IF_DEQUEUE(&ifp->if_snd, m);
+		splx(s);
+
+		if (m == NULL) return;
+
+#if NBRIDGE > 0
+		/* Sanity check -- interface should be member of a bridge */
+		if (ifp->if_bridge == NULL) m_freem(m);
+		else gif_output(ifp, m, &dst, NULL);
+#else
+		m_freem(m)
+#endif /* NBRIDGE */
 	}
 }
 
@@ -146,6 +188,9 @@ gif_output(ifp, m, dst, rt)
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 	if (!(ifp->if_flags & IFF_UP) ||
 	    sc->gif_psrc == NULL || sc->gif_pdst == NULL) {
+		log(LOG_NOTICE,
+		    "gif_output: attempt to use unconfigured interface %s\n",
+		    ifp->if_xname);
 		m_freem(m);
 		error = ENETDOWN;
 		goto end;
@@ -322,7 +367,7 @@ gif_ioctl(ifp, cmd, data)
 		bcopy((caddr_t)dst, (caddr_t)sa, size);
 		sc->gif_pdst = sa;
 		
-		ifp->if_flags |= IFF_UP;
+		ifp->if_flags |= IFF_UP | IFF_RUNNING;
 		if_up(ifp);		/* send up RTM_IFINFO */
 
 		error = 0;
