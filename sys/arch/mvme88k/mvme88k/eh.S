@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.41 2003/09/17 22:22:32 miod Exp $   */
+/*   $OpenBSD: eh.S,v 1.42 2003/09/20 13:57:37 miod Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -221,9 +221,6 @@
  */
 #define	EF_SR3		(EF_R0 + 5)
 #define	EF_FLAGS	EF_MODE
-
-/* Define this to make interrupts use their own stack */
-#undef	INTSTACK
 
 	data
 	align 4
@@ -1659,34 +1656,10 @@ ASLOCAL(fpu_enable)
 	ld	r2,   r31,  REG_OFF(EF_EPSR)
 	bb1	PSR_SUPERVISOR_MODE_BIT, r2, 1f	/* if in kernel mode */
 
-#ifdef INTSTACK
-	/*
-	 * If interrupt exception, switch to interrupt stack if not
-	 * already there. Else, switch to kernel stack.
-	 */
-	ld	r3,   r31,  REG_OFF(EF_VECTOR)
-	cmp	r3,   r3,   1	/* is interrupt ? */
-	bb0	eq,   r3,   2f
-	or.u	r31,  r0,   hi16(_ASM_LABEL(intstack_end))
-	or	r31,  r31,  lo16(_ASM_LABEL(intstack_end))
-	br	3f
-2:
-#endif
 	or.u	r31,  r0,   hi16(_ASM_LABEL(kstack))
 	ld	r31,  r31,  lo16(_ASM_LABEL(kstack))
 	addu	r31,  r31,  USIZE	/* point at proper end */
-#ifdef INTSTACK
-	br	3f
 1:
-	ld	r3,   r31,  REG_OFF(EF_VECTOR)
-	cmp	r3,   r3,   1	/* is interrupt ? */
-	bb0	eq,   r3,   3f	/* no, we will stay on kern stack */
-	or.u	r31,  r0,   hi16(_ASM_LABEL(intstack_end))
-	or	r31,  r31,  lo16(_ASM_LABEL(intstack_end))
-3:
-#else
-1:
-#endif
 
 	/*
 	 * here - r30 holds a pointer to the exception frame.
@@ -1699,7 +1672,7 @@ ASLOCAL(fpu_enable)
 #endif /* DDB */
 
 	ld	r2,   r30,  REG_OFF(EF_VECTOR)
-	bcnd.n	eq0,  r2,   8f			/* is error */
+	bcnd.n	eq0,  r2,   8f			/* error exception */
 	 ld	r14,  r30,  REG_OFF(EF_RET)
 
 	/*
@@ -1808,7 +1781,7 @@ ASLOCAL(return_from_exception_handler)
 	bb0	DMT_VALID_BIT, r3, _ASM_LABEL(check_ast)
 
 	/*
-	 * If it's not the interrupt exception, and interrupts were
+	 * If it's the interrupt exception, and interrupts were
 	 * initially disabled, enable interrupts again...
 	 */
 	ld	r2, FPTR, REG_OFF(EF_VECTOR)
@@ -1877,7 +1850,7 @@ ASLOCAL(check_ast)
 	 or	r2, r0, IPL_SOFTCLOCK
 	/* at ipl 1 now */
 	bsr	_C_LABEL(dosoftint)
-        /* is this needed? we are going to restore the ipl below XXX nivas */
+	/* is this needed? we are going to restore the ipl below XXX nivas */
 	bsr.n	_C_LABEL(setipl)
 	 or	r2, r0, IPL_NONE		/* ints are enabled */
 	addu	r31, r31, 32
@@ -2722,34 +2695,10 @@ ASLOCAL(m88110_fpu_enable)
 	ld	r2,   r31,  REG_OFF(EF_EPSR)
 	bb1	PSR_SUPERVISOR_MODE_BIT, r2, 1f	/* if in kernel mode */
 
-#ifdef INTSTACK
-	/*
-	 * If interrupt exception, switch to interrupt stack if not
-	 * already there. Else, switch to kernel stack.
-	 */
-	ld	r3,   r31,  REG_OFF(EF_VECTOR)
-	cmp	r3,   r3,   1	/* is interrupt ? */
-	bb0	eq,   r3,   2f
-	or.u	r31,  r0,   hi16(_ASM_LABEL(intstack_end))
-	or	r31,  r31,  lo16(_ASM_LABEL(intstack_end))
-	br	3f
-2:
-#endif
 	or.u	r31,  r0,   hi16(_ASM_LABEL(kstack))
 	ld	r31,  r31,  lo16(_ASM_LABEL(kstack))
 	addu	r31,  r31,  USIZE		/* point at proper end */
-#ifdef INTSTACK
-	br	3f
 1:
-	ld	r3,   r31,  REG_OFF(EF_VECTOR)
-	cmp	r3,   r3,   1	/* is interrupt ? */
-	bb0	eq,   r3,   3f	/* no, we will stay on kern stack */
-	or.u	r31,  r0,   hi16(_ASM_LABEL(intstack_end))
-	or	r31,  r31,  lo16(_ASM_LABEL(intstack_end))
-3:
-#else
-1:
-#endif
 
 	/*
 	 * here - r30 holds a pointer to the exception frame.

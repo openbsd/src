@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.30 2003/08/20 20:33:47 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.31 2003/09/20 13:57:37 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -65,7 +65,7 @@
 #include <machine/m88100.h>
 #include <machine/psl.h>
 #include <machine/param.h>
-#include <machine/vmparam.h>	/* INTSTACK_SIZE */
+#include <machine/vmparam.h>
 
 /*
  * The memory looks like:
@@ -386,7 +386,7 @@ ASLOCAL(slave_start)
 	 subu	r31, r31, 48    		/* allocate frame */
 
 	bsr	_C_LABEL(get_slave_stack)
-	addu	r31, r2, INTSTACK_SIZE + 4096
+	addu	r31, r2, INTSTACK_SIZE
 
 	/*
 	 * SR1 now contains our cpu number. We can now release the
@@ -430,7 +430,7 @@ ASLOCAL(inter_processor_lock)
 
 	.align 4096
 GLOBAL(intstack)
-	space (4 * NBPG)	/* 16K, just to be safe */
+	space (INTSTACK_SIZE)	/* 16K, just to be safe */
 ASGLOBAL(intstack_end)
 ASGLOBAL(slavestack)
 	space (NBPG)		/* 4K, small, interim stack */

@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.112 2003/09/16 20:52:22 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.113 2003/09/20 13:57:37 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -113,7 +113,7 @@
 #endif /* DDB */
 
 struct intrhand *intr_handlers[256];
-vm_offset_t interrupt_stack[MAX_CPUS] = {0};
+vm_offset_t interrupt_stack[MAX_CPUS];
 
 /* machine dependant function pointers. */
 struct md_p md;
@@ -1458,14 +1458,14 @@ setupiackvectors()
 vm_offset_t 
 get_slave_stack()
 {
-	vm_offset_t addr = 0;
-	addr = (vm_offset_t)uvm_km_zalloc(kernel_map, INTSTACK_SIZE + 4096);
+	vm_offset_t addr;
+
+	addr = (vm_offset_t)uvm_km_zalloc(kernel_map, INTSTACK_SIZE);
 
 	if (addr == NULL)
-		panic("Cannot allocate slave stack");
+		panic("Cannot allocate slave stack for cpu %d",
+		    cpu_number());
 
-	if (interrupt_stack[0] == 0)
-		interrupt_stack[0] = (vm_offset_t) intstack;
 	interrupt_stack[cpu_number()] = addr;
 	return addr;
 }

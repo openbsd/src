@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.20 2003/06/02 23:27:52 millert Exp $ */
+/*	$OpenBSD: cpu.h,v 1.21 2003/09/20 13:57:35 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -77,11 +77,9 @@ struct clockframe {
 	struct trapframe tf;
 };
 
-extern int intstack;
-
 #define	CLKF_USERMODE(framep)	((((struct trapframe *)(framep))->epsr & PSR_MODE) == 0)
-#define	CLKF_PC(framep)		(((struct trapframe *)(framep))->sxip & ~3)
-#define	CLKF_INTR(framep)	(((struct trapframe *)(framep))->r[31] > intstack)
+#define	CLKF_PC(framep)		(((struct trapframe *)(framep))->sxip & XIP_ADDR)
+#define	CLKF_INTR(framep)	(((struct trapframe *)(framep))->r[31] >= UADDR)
 
 /*
  * Get interrupt glue.
