@@ -1,4 +1,4 @@
-/*	$OpenBSD: macectrl.S,v 1.4 2004/09/10 08:58:27 pefo Exp $ */
+/*	$OpenBSD: macectrl.S,v 1.5 2004/09/27 18:52:01 pefo Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -36,11 +36,16 @@
 	.set	mips3
 	.set	noreorder		# Noreorder is default style!
 
+/*
+ *  Update the HW interrupt mask anding the argument with the
+ *  interrupt mask for enabled interrupts. Only enabled interrupt
+ *  sources can be unmasked.
+ */
 	.globl	hw_setintrmask
 LEAF(hw_setintrmask, 0)
-	lw	v0, mace_intem
 	PTR_L	v1, hwmask_addr
-	nor	a0, zero, a0
+	lw	v0, mace_intem
+	not	a0, a0
 	beqz	v1, 1f			# addr not set, skip.
 	and	v0, a0
 	jr	ra
