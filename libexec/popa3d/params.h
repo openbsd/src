@@ -1,4 +1,4 @@
-/* $OpenBSD: params.h,v 1.2 2001/08/13 20:19:33 camield Exp $ */
+/* $OpenBSD: params.h,v 1.3 2001/08/13 20:36:52 camield Exp $ */
 
 /*
  * Global POP daemon parameters.
@@ -127,7 +127,8 @@
  * it harder (but still far from impossible, on most systems) to check
  * for valid usernames. Adjust it for your crypt(3).
  */
-#define AUTH_DUMMY_SALT			"xx"
+/*  echo -n "dummyblowfishsalt" | encrypt -b 7 */
+#define AUTH_DUMMY_SALT			"$2a$07$deZMiFIouL0vgRsEG.AJY.Jx2Z8wJj3g5qs11UQWrBj8MERIu/rXi"
 
 #endif
 
