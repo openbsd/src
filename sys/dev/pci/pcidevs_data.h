@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.97 1998/10/21 01:54:49 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.99 1998/10/31 12:15:36 matthieu Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -111,10 +111,16 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Voodoo2",
 	},
 	{
+	    PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_BANSHEE,
+	    0,
+	    "3DFX Interactive",
+	    "Banshee",
+	},
+	{
 	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_300SX,
 	    0,
 	    "3D Labs",
-	    "300SX (Glint)",
+	    "GLINT 300SX",
 	},
 	{
 	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_500TX,
@@ -126,13 +132,25 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_DELTA,
 	    0,
 	    "3D Labs",
-	    "GLINT DELTA",
+	    "GLINT Delta",
+	},
+	{
+	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_PERMEDIA,
+	    0,
+	    "3D Labs",
+	    "GLINT Permedia",
 	},
 	{
 	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_500MX,
 	    0,
 	    "3D Labs",
 	    "GLINT 500MX",
+	},
+	{
+	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_PERMEDIA2,
+	    0,
+	    "3D Labs",
+	    "GLINT Permedia 2",
 	},
 	{
 	    PCI_VENDOR_ACC, PCI_PRODUCT_ACC_2188,
@@ -477,16 +495,34 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Mach64 ET",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_VT,
-	    0,
-	    "ATI Technologies",
-	    "Mach64 VT",
-	},
-	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGEPRO,
 	    0,
 	    "ATI Technologies",
 	    "Rage Pro",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GD,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 GD",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GI,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 GI",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GP,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 GP",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GQ,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 GQ",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GT,
@@ -495,10 +531,82 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Mach64 GT",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GU,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 GU",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GV,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 GV",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GW,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 GW",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GX,
 	    0,
 	    "ATI Technologies",
 	    "Mach64 GX",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GZ,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 GZ",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LB,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 LB",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LD,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 LD",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LG,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 LG",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LI,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 LI",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LP,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 LP",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_VT,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 VT",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_VU,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 VU",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_VV,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 VV",
 	},
 	{
 	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_S5933,
@@ -645,6 +753,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "65555",
 	},
 	{
+	    PCI_VENDOR_CHIPS, PCI_PRODUCT_CHIPS_68554,
+	    0,
+	    "Chips and Technologies",
+	    "68554",
+	},
+	{
+	    PCI_VENDOR_CHIPS, PCI_PRODUCT_CHIPS_69000,
+	    0,
+	    "Chips and Technologies",
+	    "69000",
+	},
+	{
 	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD7548,
 	    0,
 	    "Cirrus Logic",
@@ -685,6 +805,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Cirrus Logic",
 	    "CL-GD5480",
+	},
+	{
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD5462,
+	    0,
+	    "Cirrus Logic",
+	    "CL-GD5462",
+	},
+	{
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD5464,
+	    0,
+	    "Cirrus Logic",
+	    "CL-GD6464",
 	},
 	{
 	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_PD6729,
@@ -1521,16 +1653,34 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "MGA Millennium II 2164WA-B AGP",
 	},
 	{
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MILL_II_G200_PCI,
+	    0,
+	    "Matrox",
+	    "MGA Millennium G200 PCI",
+	},
+	{
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MILL_II_G200_AGP,
+	    0,
+	    "Matrox",
+	    "MGA Millennium G200 AGP",
+	},
+	{
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_PRODUCTIVA_PCI,
+	    0,
+	    "Matrox",
+	    "MGA Productiva G100 PCI",
+	},
+	{
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_PRODUCTIVA_AGP,
+	    0,
+	    "Matrox",
+	    "MGA Productiva G100 AGP",
+	},
+	{
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MYSTIQUE,
 	    0,
 	    "Matrox",
 	    "MGA 1064SG",
-	},
-	{
-	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_PRODUCTIVA,
-	    0,
-	    "Matrox",
-	    "MGA Productiva G100 AGP",
 	},
 	{
 	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_960P,
@@ -1569,10 +1719,28 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "PowerVR PCX2",
 	},
 	{
+	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NM2070,
+	    0,
+	    "Neomagic",
+	    "Magicgraph NM2070",
+	},
+	{
+	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_128V,
+	    0,
+	    "Neomagic",
+	    "Magicgraph 128V",
+	},
+	{
+	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_128ZV,
+	    0,
+	    "Neomagic",
+	    "Magicgraph 128ZV",
+	},
+	{
 	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NM2160,
 	    0,
 	    "Neomagic",
-	    "NM2160",
+	    "Magicgraph NM2160",
 	},
 	{
 	    PCI_VENDOR_NETVIN, PCI_PRODUCT_NETVIN_NV5000,
@@ -1681,6 +1849,30 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Number 9",
 	    "Imagine-128 II",
+	},
+	{
+	    PCI_VENDOR_NUMBER9, PCI_PRODUCT_NUMBER9_I128_T2R,
+	    0,
+	    "Number 9",
+	    "Imagine-128 T2R",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NV1,
+	    0,
+	    "Nvidia",
+	    "NV1",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_DAC64,
+	    0,
+	    "Nvidia",
+	    "DAC64",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_RIVA_TNT,
+	    0,
+	    "Nvidia",
+	    "Riva TNT",
 	},
 	{
 	    PCI_VENDOR_OAKTECH, PCI_PRODUCT_OAKTECH_OTI1007,
@@ -2123,7 +2315,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_STB2, PCI_PRODUCT_STB2_RIVA128,
 	    0,
-	    "STB (2nd ID)",
+	    "NVidia/SGS-Thomson",
 	    "Velocity128",
 	},
 	{
@@ -2205,6 +2397,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "PCI2030",
 	},
 	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PERMEDIA,
+	    0,
+	    "Texas Instruments",
+	    "3DLabs Permedia",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PERMEDIA2,
+	    0,
+	    "Texas Instruments",
+	    "3DLabs Permedia 2",
+	},
+	{
 	    PCI_VENDOR_TOSHIBA, PCI_PRODUCT_TOSHIBA_R4X00,
 	    0,
 	    "Toshiba America",
@@ -2233,6 +2437,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Trident Microsystems",
 	    "TGUI 9360",
+	},
+	{
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9388,
+	    0,
+	    "Trident Microsystems",
+	    "TGUI 9388",
 	},
 	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_CYBER_9397,
@@ -2277,6 +2487,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "TGUI 9750 (3D Image)",
 	},
 	{
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9850,
+	    0,
+	    "Trident Microsystems",
+	    "TGUI 9850",
+	},
+	{
 	    PCI_VENDOR_TRITECH, PCI_PRODUCT_TRITECH_TR25202,
 	    0,
 	    "TriTech Microelectronics",
@@ -2310,7 +2526,13 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_TSENG, PCI_PRODUCT_TSENG_ET6000,
 	    0,
 	    "Tseng Labs",
-	    "ET6000",
+	    "ET6000/ET6100",
+	},
+	{
+	    PCI_VENDOR_TSENG, PCI_PRODUCT_TSENG_ET6300,
+	    0,
+	    "Tseng Labs",
+	    "ET6300",
 	},
 	{
 	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM82C881,
@@ -5447,7 +5669,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_STB2, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "STB (2nd ID)",
+	    "NVidia/SGS-Thomson",
 	    NULL,
 	},
 	{
