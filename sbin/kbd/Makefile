@@ -1,5 +1,9 @@
-#	$OpenBSD: Makefile,v 1.20 2004/01/29 08:36:13 mickey Exp $
+#	$OpenBSD: Makefile,v 1.21 2004/02/07 21:06:13 miod Exp $
 
+#
+# Be sure to change src/distrib/special/kbd/Makefile as well if you add
+# architectures to this list!
+#
 .if (${MACHINE} == "i386") || (${MACHINE} == "amd64") || \
     (${MACHINE} == "macppc") || (${MACHINE} == "pegasos") || \
     (${MACHINE} == "alpha") || (${MACHINE} == "hppa") || \
