@@ -298,14 +298,14 @@ ims332PosCursor(fi, x, y)
 	struct fbinfo *fi;
 	int x, y;
 {
-	if (y < 0)
-	  y = 0;
-	else if (y > fi -> fi_type.fb_width - fi -> fi_cursor.width - 1)
-	  y = fi -> fi_type.fb_width - fi -> fi_cursor.width - 1;
 	if (x < 0)
 	  x = 0;
-	else if (x > fi -> fi_type.fb_height - fi -> fi_cursor.height - 1)
-	  x = fi -> fi_type.fb_height - fi -> fi_cursor.height - 1;
+	else if (x > fi -> fi_type.fb_width - fi -> fi_cursor.width - 1)
+	  x = fi -> fi_type.fb_width - fi -> fi_cursor.width - 1;
+	if (y < 0)
+	  y = 0;
+	else if (y > fi -> fi_type.fb_height - fi -> fi_cursor.height - 1)
+	  y = fi -> fi_type.fb_height - fi -> fi_cursor.height - 1;
 
 	fi -> fi_cursor.x = x;
 	fi -> fi_cursor.y = y;
