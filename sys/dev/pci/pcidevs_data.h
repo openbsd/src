@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.68 1998/07/19 05:53:25 downsj Exp 
+ *	OpenBSD: pcidevs,v 1.69 1998/07/20 15:05:14 mickey Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -141,6 +141,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "M1461 Host-PCI Bridge",
 	},
 	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1521,
+	    0,
+	    "Acer Labs",
+	    "M1523 Host-PCI Bridge",
+	},
+	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1541,
 	    0,
 	    "Acer Labs",
@@ -153,10 +159,22 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "M4803",
 	},
 	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1523,
+	    0,
+	    "Acer Labs",
+	    "M1523 PCI-ISA Bridge",
+	},
+	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1543,
 	    0,
 	    "Acer Labs",
 	    "M1543 PCI-ISA Bridge",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5219,
+	    0,
+	    "Acer Labs",
+	    "M5219 UDMA IDE Controller",
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5229,

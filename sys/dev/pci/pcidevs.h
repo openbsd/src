@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.68 1998/07/19 05:53:25 downsj Exp 
+ *	OpenBSD: pcidevs,v 1.69 1998/07/20 15:05:14 mickey Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -560,9 +560,12 @@
 #define	PCI_PRODUCT_ALI_M1449	0x1449		/* M1449 PCI-ISA Bridge */
 #define	PCI_PRODUCT_ALI_M1451	0x1451		/* M1451 Host-PCI Bridge */
 #define	PCI_PRODUCT_ALI_M1461	0x1461		/* M1461 Host-PCI Bridge */
+#define	PCI_PRODUCT_ALI_M1521	0x1521		/* M1523 Host-PCI Bridge */
 #define	PCI_PRODUCT_ALI_M1541	0x1541		/* M1543 Host-PCI Bridge */
 #define	PCI_PRODUCT_ALI_M4803	0x5215		/* M4803 */
+#define	PCI_PRODUCT_ALI_M1523	0x1523		/* M1523 PCI-ISA Bridge */
 #define	PCI_PRODUCT_ALI_M1543	0x1533		/* M1543 PCI-ISA Bridge */
+#define	PCI_PRODUCT_ALI_M5219	0x5219		/* M5219 UDMA IDE Controller */
 #define	PCI_PRODUCT_ALI_M5229	0x5229		/* M5229 UDMA IDE Controller */
 #define	PCI_PRODUCT_ALI_M5237	0x5237		/* M5237 USB Host Controller */
 #define	PCI_PRODUCT_ALI_M5243	0x5243		/* M5243 AGP/PCI-PCI Bridge */
