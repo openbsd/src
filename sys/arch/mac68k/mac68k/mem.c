@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.12 2001/06/08 03:27:36 aaron Exp $	*/
+/*	$OpenBSD: mem.c,v 1.13 2001/06/27 04:22:37 art Exp $	*/
 /*	$NetBSD: mem.c,v 1.22 1999/03/27 00:30:07 mycroft Exp $	*/
 
 /*
@@ -57,9 +57,7 @@
 
 #include <vm/vm.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 extern u_long maxaddr;
 
@@ -162,15 +160,9 @@ mmrw(dev, uio, flags)
 		case 1:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
-#if defined(UVM)
 			if (!uvm_kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
-#else
-			if (!kernacc((caddr_t)v, c,
-			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
-				return (EFAULT);
-#endif
 			error = uiomove((caddr_t)v, c, uio);
 			continue;
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.3 2001/05/08 17:30:40 aaron Exp $
+#	$OpenBSD: genassym.cf,v 1.4 2001/06/27 04:22:37 art Exp $
 #	$NetBSD: genassym.cf,v 1.7 1998/01/06 08:46:16 thorpej Exp $
 
 #
@@ -48,9 +48,7 @@ include	<sys/user.h>
 
 include	<vm/vm.h>
 
-ifdef UVM
 include <uvm/uvm_extern.h>
-endif
 
 include	<machine/cpu.h>
 include	<machine/trap.h>
@@ -74,11 +72,7 @@ define	SSLEEP			SSLEEP
 define	SRUN			SRUN
 
 # interrupt/fault metering
-ifdef UVM
 define	UVMEXP_INTRS		offsetof(struct uvmexp, intrs)
-else
-define	V_INTR			offsetof(struct vmmeter, v_intr)
-endif
 
 define	MD_REGS 		offsetof(struct mdproc, md_regs)
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nubus.c,v 1.16 2001/06/08 08:09:00 art Exp $	*/
+/*	$OpenBSD: nubus.c,v 1.17 2001/06/27 04:22:37 art Exp $	*/
 /*	$NetBSD: nubus.c,v 1.35 1997/04/22 20:20:32 scottr Exp $	*/
 
 /*
@@ -41,9 +41,7 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_map.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
@@ -821,11 +819,7 @@ nubus_mapin(paddr, sz)
 	sz = m68k_round_page(sz);
 
 	/* Get some kernel virtual address space. */
-#if defined(UVM)
 	va = uvm_km_valloc_wait(kernel_map, sz);
-#else
-	va = kmem_alloc_wait(kernel_map, sz);
-#endif
 	if (va == 0)
 		panic("bus_mapin");
 	retval = va + off;

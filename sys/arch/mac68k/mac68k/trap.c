@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.23 2001/06/10 01:36:32 beck Exp $	*/
+/*	$OpenBSD: trap.c,v 1.24 2001/06/27 04:22:38 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.68 1998/12/22 08:47:07 scottr Exp $	*/
 
 /*
@@ -74,9 +74,7 @@
 #include <vm/vm.h>
 #include <vm/pmap.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #ifdef COMPAT_SUNOS
 #include <compat/sunos/sunos_syscall.h>
@@ -263,11 +261,7 @@ trap(type, code, v, frame)
 	u_quad_t sticks;
 	union sigval sv;
 
-#if defined(UVM)
 	uvmexp.traps++;
-#else
-	cnt.v_trap++;
-#endif
 	p = curproc;
 	ucode = 0;
 
@@ -541,52 +535,32 @@ copyfault:
 		if (ssir & SIR_SERIAL) {
 			void zssoft __P((int));
 			siroff(SIR_SERIAL);
-#if defined(UVM)
 			uvmexp.softs++;
-#else
-			cnt.v_soft++;
-#endif
 			zssoft(0);
 		}
 		if (ssir & SIR_NET) {
 			void netintr __P((void));
 			siroff(SIR_NET);
-#if defined(UVM)
 			uvmexp.softs++;
-#else
-			cnt.v_soft++;
-#endif
 			netintr();
 		}
 		if (ssir & SIR_CLOCK) {
 			void softclock __P((void));
 			siroff(SIR_CLOCK);
-#if defined(UVM)
 			uvmexp.softs++;
-#else
-			cnt.v_soft++;
-#endif
 			softclock();
 		}
 		if (ssir & SIR_DTMGR) {
 			void mrg_execute_deferred __P((void));
 			siroff(SIR_DTMGR);
-#if defined(UVM)
 			uvmexp.softs++;
-#else
-			cnt.v_soft++;
-#endif
 			mrg_execute_deferred();
 		}
 		/*
 		 * If this was not an AST trap, we are all done.
 		 */
 		if (type != (T_ASTFLT|T_USER)) {
-#if defined(UVM)
 			uvmexp.traps--;
-#else
-			cnt.v_trap--;
-#endif
 			return;
 		}
 		spl0();
@@ -646,21 +620,12 @@ copyfault:
 			goto dopanic;
 		}
 #endif
-#if defined(UVM)
 		rv = uvm_fault(map, va, 0, ftype);
 #ifdef DEBUG
 		if (rv && MDB_ISPID(p->p_pid))
 			printf("uvm_fault(%p, 0x%lx, 0, 0x%x) -> 0x%x\n",
 			    map, va, ftype, rv);
 #endif
-#else /* ! UVM */
-		rv = vm_fault(map, va, ftype, FALSE);
-#ifdef DEBUG
-		if (rv && MDB_ISPID(p->p_pid))
-			printf("vm_fault(%p, %lx, %x, 0) -> %x\n",
-				map, va, ftype, rv);
-#endif
-#endif /* UVM */
 		/*
 		 * If this was a stack access, we keep track of the maximum
 		 * accessed stack size.  Also, if vm_fault gets a protection
@@ -692,13 +657,8 @@ copyfault:
 		if (type == T_MMUFLT) {
 			if (p->p_addr->u_pcb.pcb_onfault)
 				goto copyfault;
-#if defined(UVM)
 			printf("uvm_fault(%p, 0x%lx, 0, 0x%x) -> 0x%x\n",
 			    map, va, ftype, rv);
-#else
-			printf("vm_fault(%p, %lx, %x, 0) -> %x\n",
-			    map, va, ftype, rv);
-#endif
 			printf("  type %x, code [mmu,,ssw]: %x\n",
 				type, code);
 			goto dopanic;
@@ -1043,11 +1003,7 @@ syscall(code, frame)
 	register_t args[8], rval[2];
 	u_quad_t sticks;
 
-#if defined(UVM)
 	uvmexp.syscalls++;
-#else
-	cnt.v_syscall++;
-#endif
 	if (!USERMODE(frame.f_sr))
 		panic("syscall");
 	p = curproc;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf.c,v 1.13 2001/05/17 18:48:35 aaron Exp $	*/
+/*	$OpenBSD: grf.c,v 1.14 2001/06/27 04:22:37 art Exp $	*/
 /*	$NetBSD: grf.c,v 1.41 1997/02/24 06:20:04 scottr Exp $	*/
 
 /*
@@ -72,9 +72,7 @@
 #include <vm/vm_page.h>
 #include <vm/vm_pager.h>
 
-#if defined(UVM)
 #include <uvm/uvm.h>
-#endif
 
 #include "nubus.h"
 #include "itevar.h"
@@ -375,14 +373,9 @@ grfmap(dev, addrp, p)
 	vn.v_specinfo = &si;	/* XXX */
 	vn.v_rdev = dev;	/* XXX */
 
-#if defined(UVM)
 	error = uvm_mmap(&p->p_vmspace->vm_map, (vm_offset_t *)addrp,
 	    (vm_size_t)len, VM_PROT_ALL, VM_PROT_ALL, flags, (caddr_t)&vn, 0,
 	    p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
-#else
-	error = vm_mmap(&p->p_vmspace->vm_map, (vm_offset_t *) addrp,
-	    (vm_size_t) len, VM_PROT_ALL, VM_PROT_ALL, flags, (caddr_t) &vn, 0);
-#endif
 
 	/* Offset into page: */
 	*addrp += (unsigned long) gp->sc_grfmode->fboff & 0xfff;
@@ -417,12 +410,8 @@ grfunmap(dev, addr, p)
 
 	size = round_page(gp->sc_grfmode->fbsize);
 
-#if defined(UVM)
 	rv = uvm_unmap(&p->p_vmspace->vm_map, (vm_offset_t)addr,
 	    (vm_offset_t)addr + size);
-#else
-	rv = vm_deallocate(&p->p_vmspace->vm_map, (vm_offset_t) addr, size);
-#endif
 
 	return (rv == KERN_SUCCESS ? 0 : EINVAL);
 }

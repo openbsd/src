@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.7 2001/06/09 20:34:36 beck Exp $	*/
+/*	$OpenBSD: bus_space.c,v 1.8 2001/06/27 04:22:37 art Exp $	*/
 /*	$NetBSD: bus_space.c,v 1.5 1999/03/26 23:41:30 mycroft Exp $	*/
 
 /*-
@@ -52,9 +52,7 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 int	bus_mem_add_mapping __P((bus_addr_t, bus_size_t,
 	    int, bus_space_handle_t *));
@@ -171,11 +169,7 @@ bus_mem_add_mapping(bpa, size, flags, bshp)
 		panic("bus_mem_add_mapping: overflow");
 #endif
 
-#if defined(UVM)
 	va = uvm_km_valloc(kernel_map, endpa - pa);
-#else
-	va = kmem_alloc_pageable(kernel_map, endpa - pa);
-#endif
 	if (va == 0)
 		return (ENOMEM);
 
@@ -218,11 +212,7 @@ bus_space_unmap(t, bsh, size)
 	/*
 	 * Free the kernel virtual mapping.
 	 */
-#if defined(UVM)
 	uvm_km_free(kernel_map, va, endva - va);
-#else
-	kmem_free(kernel_map, va, endva - va);
-#endif
 
 	if (extent_free(iomem_ex, bpa, size,
 	    EX_NOWAIT | (iomem_malloc_safe ? EX_MALLOCOK : 0))) {
