@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.14 2001/06/18 21:09:23 millert Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.15 2001/07/04 17:20:24 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)local_passwd.c	5.5 (Berkeley) 5/6/91";*/
-static char rcsid[] = "$OpenBSD: local_passwd.c,v 1.14 2001/06/18 21:09:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: local_passwd.c,v 1.15 2001/07/04 17:20:24 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -48,6 +48,7 @@ static char rcsid[] = "$OpenBSD: local_passwd.c,v 1.14 2001/06/18 21:09:23 mille
 #include <unistd.h>
 #include <ctype.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <util.h>
 #include <login_cap.h>
 
@@ -57,6 +58,7 @@ extern int pwd_check __P((struct passwd *, login_cap_t *, char *));
 extern int pwd_gettries __P((struct passwd *, login_cap_t *));
 
 char *getnewpasswd __P((struct passwd *, login_cap_t *, int));
+void kbintr __P((int));
 
 int
 local_passwd(uname, authenticated)
@@ -65,8 +67,10 @@ local_passwd(uname, authenticated)
 {
 	struct passwd *pw;
 	login_cap_t *lc;
-	int pfd, tfd;
+	sigset_t fullset;
 	time_t period;
+	int pfd, tfd;
+	char *s = NULL;
 
 	if (!(pw = getpwnam(uname))) {
 #ifdef YP
@@ -87,18 +91,6 @@ local_passwd(uname, authenticated)
 		return(1);
 	}
 
-	pw_init();
-	tfd = pw_lock(0);
-	if (tfd < 0) {
-		if (errno == EEXIST)
-			errx(1, "the passwd file is busy.");
-		else
-			err(1, "can't open passwd temp file");
-	}
-	pfd = open(_PATH_MASTERPASSWD, O_RDONLY, 0);
-	if (pfd < 0 || fcntl(pfd, F_SETFD, 1) == -1)
-		pw_error(_PATH_MASTERPASSWD, 1, 1);
-
 	/* Get the new password. */
 	pw->pw_passwd = getnewpasswd(pw, lc, authenticated);
 
@@ -108,6 +100,53 @@ local_passwd(uname, authenticated)
 		pw->pw_change = time(NULL) + period;
 	else
 		pw->pw_change = 0;
+
+	/* Drop user's real uid and block all signals to avoid a DoS. */
+	setuid(0);
+	sigfillset(&fullset);
+	sigdelset(&fullset, SIGINT);
+	sigprocmask(SIG_BLOCK, &fullset, NULL);
+
+	/* Get a lock on the passwd file and open it. */
+	pw_init();
+	for (;;) {
+		int i, c, d;
+
+		(void)fputs("Please wait", stderr);
+		for (i = 0; i < (s ? 64 : 8) && (tfd = pw_lock(0)) == -1; i++) {
+			(void)signal(SIGINT, kbintr);
+			fputc('.', stderr);
+			usleep(250000);
+			(void)signal(SIGINT, SIG_IGN);
+		}
+		fputc('\n', stderr);
+		if (tfd != -1)
+			break;
+
+		/* Unable to lock passwd file, let the user decide. */
+		if (errno == EEXIST) {
+			if (s == NULL)
+				s = "The passwd file is busy,";
+			else
+				s = "The passwd file is still busy,";
+		} else
+			s = "Unable to open passwd temp file,";
+		(void)fprintf(stderr,
+		    "%s do you want to wait until it is available? [y/n] ", s);
+		(void)signal(SIGINT, kbintr);
+		c = getchar();
+		(void)signal(SIGINT, SIG_IGN);
+		if (c != '\n')
+			while ((d = getchar()) != '\n' && d != EOF)
+				;
+		if (tolower(c) != 'y') {
+			printf("Password unchanged\n");
+			exit(1);
+		}
+	}
+	pfd = open(_PATH_MASTERPASSWD, O_RDONLY, 0);
+	if (pfd < 0 || fcntl(pfd, F_SETFD, 1) == -1)
+		pw_error(_PATH_MASTERPASSWD, 1, 1);
 
 	/* Update master.passwd file and build .db version. */
 	pw_copy(pfd, tfd, pw);
@@ -163,4 +202,14 @@ getnewpasswd(pw, lc, authenticated)
 		pw_error(NULL, 0, 0);
 	}
 	return(crypt(buf, salt));
+}
+
+void
+kbintr(signo)
+	int signo;
+{
+	char msg[] = "\nPassword unchanged\n";
+
+	write(STDOUT_FILENO, msg, sizeof(msg) - 1);
+	_exit(1);
 }
