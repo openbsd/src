@@ -239,6 +239,7 @@ vm86_return(p, retval)
 	struct proc *p;
 	int retval;
 {
+	union sigval sv;
 
 	/*
 	 * We can't set the virtual flags in our real trap frame,
@@ -253,7 +254,8 @@ vm86_return(p, retval)
 		sigexit(p, SIGILL);
 		/* NOTREACHED */
 	}
-	trapsignal(p, SIGURG, retval, 0, 0);
+	sv.sival_int = 0;
+	trapsignal(p, SIGURG, retval, 0, sv);
 }
 
 #define	CLI	0xFA
@@ -278,6 +280,8 @@ vm86_gpfault(p, type)
 	int type;
 {
 	struct trapframe *tf = p->p_md.md_regs;
+	union sigval sv;
+
 	/*
 	 * we want to fetch some stuff from the current user virtual
 	 * address space for checking.  remember that the frame's
@@ -368,8 +372,10 @@ vm86_gpfault(p, type)
 		goto bad;
 	}
 
-	if (trace && tf->tf_eflags & PSL_VM)
-		trapsignal(p, SIGTRAP, T_TRCTRAP, TRAP_TRACE, 0);
+	if (trace && tf->tf_eflags & PSL_VM) {
+		sv.sival_int = 0;
+		trapsignal(p, SIGTRAP, T_TRCTRAP, TRAP_TRACE, sv);
+	}
 	return;
 
 bad:
