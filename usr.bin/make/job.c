@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.38 2000/11/24 14:36:34 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.39 2000/12/27 19:07:58 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -126,7 +126,7 @@
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: job.c,v 1.38 2000/11/24 14:36:34 espie Exp $";
+static char rcsid[] = "$OpenBSD: job.c,v 1.39 2000/12/27 19:07:58 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -1115,7 +1115,8 @@ Job_CheckCommands(gn, abortProc)
 		(void) fflush(stdout);
   		return FALSE;
 	    } else {
-		(*abortProc)("%s %s. Stop", msg, gn->name);
+		(*abortProc)("%s %s. Stop in %s.", msg, gn->name,
+			Var_Value(".CURDIR", VAR_GLOBAL));
 		return FALSE;
 	    }
 	}
