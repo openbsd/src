@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart.c,v 1.20 2003/08/15 20:32:14 tedu Exp $	*/
+/*	$OpenBSD: dart.c,v 1.21 2003/08/21 21:48:23 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -63,6 +63,8 @@
    #define dprintf(stuff)
 #endif
 
+#define	NDARTPORTS	2	/* Number of ports */
+
 struct dart_info {
 	struct tty		*tty;
 	u_char			dart_swflags;
@@ -73,8 +75,8 @@ struct dartsoftc {
 	struct device		sc_dev;
 	struct evcnt		sc_intrcnt;
 	union  dartreg		*dart_reg;
-        union  dart_pt_io	*port_reg[2];
-	struct dart_info	sc_dart[2];
+        union  dart_pt_io	*port_reg[NDARTPORTS];
+	struct dart_info	sc_dart[NDARTPORTS];
 	struct intrhand		sc_ih;
 	int			sc_flags;
 	int			sc_ipl;
@@ -163,10 +165,14 @@ struct tty*
 darttty(dev)
 	dev_t dev;
 {
-	int port;
+	unsigned int port;
 	struct dartsoftc *sc;
-	sc = (struct dartsoftc *) dart_cd.cd_devs[0];
+
 	port = DART_PORT(dev);
+	if (dart_cd.cd_ndevs == 0 || port > NDARTPORTS)
+		return (NULL);
+
+	sc = (struct dartsoftc *) dart_cd.cd_devs[0];
 	return sc->sc_dart[port].tty;
 }
 
@@ -314,7 +320,8 @@ dartstart(tp)
 	int c;
 
 	dev = tp->t_dev;
-	if((port = DART_PORT(dev)) > 1)
+	port = DART_PORT(dev);
+	if (dart_cd.cd_ndevs == 0 || port > NDARTPORTS)
 		return;
 	
 	sc = (struct dartsoftc *) dart_cd.cd_devs[0];
@@ -438,9 +445,10 @@ dartmctl (dev, flags, how)
 	struct dartsoftc *sc;
 	int s; 
 
-	if ((port = DART_PORT(dev)) > 1) {
+	port = DART_PORT(dev);
+	if (dart_cd.cd_ndevs == 0 || port > NDARTPORTS)
 		return (ENODEV);
-	}
+	
 	sc = (struct dartsoftc *) dart_cd.cd_devs[0];
 	dart = &sc->sc_dart[port];
 	addr = sc->dart_reg;
@@ -545,7 +553,11 @@ dartioctl(dev, cmd, data, flag, p)
 	struct tty *tp;
 	struct dart_info *dart;
 	struct dartsoftc *sc;
+
 	port = DART_PORT(dev);
+	if (dart_cd.cd_ndevs == 0 || port > NDARTPORTS)
+		return (ENODEV);
+	
 	sc = (struct dartsoftc *) dart_cd.cd_devs[0];
 	dart = &sc->sc_dart[port];
 	tp = dart->tty;
@@ -635,9 +647,9 @@ dartparam(tp, t)
 
 	dev = tp->t_dev;
 	dprintf(("dartparam: setting param for dev(%d, %d)\n", major(dev), minor(dev)));
-	if ((port = DART_PORT(dev)) > 1) {
+	port = DART_PORT(dev);
+	if (dart_cd.cd_ndevs == 0 || port > NDARTPORTS)
 		return (ENODEV);
-	}
 
 	sc = (struct dartsoftc *) dart_cd.cd_devs[0];
 	dart = &sc->sc_dart[port];
@@ -809,9 +821,10 @@ dartopen (dev, flag, mode, p)
 	struct dartsoftc *sc;
 	struct tty *tp;
 
-	if ((port = DART_PORT(dev)) > 1) {
+	port = DART_PORT(dev);
+	if (dart_cd.cd_ndevs == 0 || port > NDARTPORTS)
 		return (ENODEV);
-	}
+
 	sc = (struct dartsoftc *) dart_cd.cd_devs[0]; /* the only one */
 	dart = &sc->sc_dart[port];
 	s = spltty();
@@ -871,10 +884,10 @@ dartclose (dev, flag, mode, p)
 	struct dartsoftc *sc;
 	int port;
 
-	if ((port = DART_PORT(dev)) > 1) {
-		printf("dartclose: inavalid device dev(%d, %d)\n", major(dev), minor(dev)); 
+	port = DART_PORT(dev);
+	if (dart_cd.cd_ndevs == 0 || port > NDARTPORTS)
 		return (ENODEV);
-	}
+	
 	sc = (struct dartsoftc *) dart_cd.cd_devs[0];
 	dart = &sc->sc_dart[port];
 	tp = dart->tty;
@@ -895,9 +908,10 @@ dartread (dev, uio, flag)
 	struct dart_info *dart;
 	struct dartsoftc *sc;
 
-	if ((port = DART_PORT(dev)) > 1) {
+	port = DART_PORT(dev);
+	if (dart_cd.cd_ndevs == 0 || port > NDARTPORTS)
 		return (ENODEV);
-	}
+	
 	sc = (struct dartsoftc *) dart_cd.cd_devs[0];
 	dart = &sc->sc_dart[port];
 	tp = dart->tty;
@@ -918,9 +932,10 @@ dartwrite(dev, uio, flag)
 	struct dart_info *dart;
 	struct dartsoftc *sc;
 
-	if ((port = DART_PORT(dev)) > 1) {
+	port = DART_PORT(dev);
+	if (dart_cd.cd_ndevs == 0 || port > NDARTPORTS)
 		return (ENODEV);
-	}
+	
 	sc = (struct dartsoftc *)dart_cd.cd_devs[0];
 	dart = &sc->sc_dart[port];
 
