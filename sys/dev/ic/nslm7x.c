@@ -1,4 +1,4 @@
-/*	$OpenBSD: nslm7x.c,v 1.6 2004/02/10 19:58:16 grange Exp $	*/
+/*	$OpenBSD: nslm7x.c,v 1.7 2004/05/07 07:00:46 grange Exp $	*/
 /*	$NetBSD: nslm7x.c,v 1.17 2002/11/15 14:55:41 ad Exp $ */
 
 /*-
@@ -645,25 +645,34 @@ generic_svolt(struct lm_softc *sc, struct sensor *sensors)
 void
 generic_fanrpm(struct lm_softc *sc, struct sensor *sensors)
 {
-	int i, sdata, divisor;
+	int i, sdata, divisor, vidfan;
 
 	for (i = 0; i < 3; i++) {
 		sdata = (*sc->lm_readreg)(sc, LMD_SENSORBASE + 8 + i);
-		DPRINTF(("sdata[fan%d] 0x%x\n", i, sdata));
+		vidfan = (*sc->lm_readreg)(sc, LMD_VIDFAN);
+		DPRINTF(("sdata[fan%d] 0x%x", i, sdata));
 		if (i == 2)
-			divisor = 2;	/* Fixed divisor for FAN3 */
+			divisor = 1;	/* Fixed divisor for FAN3 */
 		else if (i == 1)	/* Bits 7 & 6 of VID/FAN  */
-			divisor = ((*sc->lm_readreg)(sc,
-			    LMD_VIDFAN) >> 6) & 0x3;
+			divisor = (vidfan >> 6) & 0x3;
 		else
-			divisor = ((*sc->lm_readreg)(sc,
-			    LMD_VIDFAN) >> 4) & 0x3;
+			divisor = (vidfan >> 4) & 0x3;
+		DPRINTF((", divisor %d\n", 2 << divisor));
 
 		if (sdata == 0xff) {
-			sensors[i].flags |= SENSOR_FINVALID;
+			/* Fan can be too slow, try to adjust the divisor */
+			if (i < 2 && divisor < 3) {
+				divisor++;
+				vidfan &= ~(0x3 << (i == 0 ? 4 : 6));
+				vidfan |= (divisor & 0x3) << (i == 0 ? 4 : 6);
+				(*sc->lm_writereg)(sc, LMD_VIDFAN, vidfan);
+			}
+			sensors[i].value = 0;
 		} else if (sdata == 0x00) {
+			sensors[i].flags |= SENSOR_FINVALID;
 			sensors[i].value = 0;
 		} else {
+			sensors[i].flags &= ~SENSOR_FINVALID;
 			sensors[i].value = 1350000 / (sdata << divisor);
 		}
 	}
