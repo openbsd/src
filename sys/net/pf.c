@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.378 2003/07/19 13:08:58 cedric Exp $ */
+/*	$OpenBSD: pf.c,v 1.379 2003/07/29 00:51:32 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -205,6 +205,9 @@ u_int16_t		 pf_calc_mss(struct pf_addr *, sa_family_t,
 				u_int16_t);
 int			 pf_check_proto_cksum(struct mbuf *, int, int,
 			    u_int8_t, sa_family_t);
+int			 pf_addr_wrap_neq(struct pf_addr_wrap *,
+			    struct pf_addr_wrap *);
+
 
 struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] =
     { { &pf_state_pl, PFSTATE_HIWAT }, { &pf_frent_pl, PFFRAG_FRENT_HIWAT } };
@@ -808,33 +811,15 @@ pf_calc_skip_steps(struct pf_rulequeue *rules)
 			PF_SET_SKIP_STEPS(PF_SKIP_AF);
 		if (cur->proto != prev->proto)
 			PF_SET_SKIP_STEPS(PF_SKIP_PROTO);
-		if (cur->src.addr.type == PF_ADDR_DYNIFTL ||
-		    prev->src.addr.type == PF_ADDR_DYNIFTL ||
-		    cur->src.addr.type == PF_ADDR_TABLE ||
-		    prev->src.addr.type == PF_ADDR_TABLE ||
-		    cur->src.not != prev->src.not ||
-		    (cur->src.addr.type == PF_ADDR_NOROUTE) !=
-		    (prev->src.addr.type == PF_ADDR_NOROUTE) ||
-		    !PF_AEQ(&cur->src.addr.v.a.addr,
-		    &prev->src.addr.v.a.addr, 0) ||
-		    !PF_AEQ(&cur->src.addr.v.a.mask,
-		    &prev->src.addr.v.a.mask, 0))
+		if (cur->src.not != prev->src.not ||
+		    pf_addr_wrap_neq(&cur->src.addr, &prev->src.addr))
 			PF_SET_SKIP_STEPS(PF_SKIP_SRC_ADDR);
 		if (cur->src.port[0] != prev->src.port[0] ||
 		    cur->src.port[1] != prev->src.port[1] ||
 		    cur->src.port_op != prev->src.port_op)
 			PF_SET_SKIP_STEPS(PF_SKIP_SRC_PORT);
-		if (cur->dst.addr.type == PF_ADDR_DYNIFTL ||
-		    prev->dst.addr.type == PF_ADDR_DYNIFTL ||
-		    cur->dst.addr.type == PF_ADDR_TABLE ||
-		    prev->dst.addr.type == PF_ADDR_TABLE ||
-		    cur->dst.not != prev->dst.not ||
-		    (cur->dst.addr.type == PF_ADDR_NOROUTE) !=
-		    (prev->dst.addr.type == PF_ADDR_NOROUTE) ||
-		    !PF_AEQ(&cur->dst.addr.v.a.addr,
-		    &prev->dst.addr.v.a.addr, 0) ||
-		    !PF_AEQ(&cur->dst.addr.v.a.mask,
-		    &prev->dst.addr.v.a.mask, 0))
+		if (cur->dst.not != prev->dst.not ||
+		    pf_addr_wrap_neq(&cur->dst.addr, &prev->dst.addr))
 			PF_SET_SKIP_STEPS(PF_SKIP_DST_ADDR);
 		if (cur->dst.port[0] != prev->dst.port[0] ||
 		    cur->dst.port[1] != prev->dst.port[1] ||
@@ -846,6 +831,34 @@ pf_calc_skip_steps(struct pf_rulequeue *rules)
 	}
 	for (i = 0; i < PF_SKIP_COUNT; ++i)
 		PF_SET_SKIP_STEPS(i);
+}
+
+int
+pf_addr_wrap_neq(struct pf_addr_wrap *aw1, struct pf_addr_wrap *aw2)
+{
+	if (aw1->type != aw2->type)
+		return (1);
+	switch (aw1->type) {
+	case PF_ADDR_ADDRMASK:
+		if (PF_ANEQ(&aw1->v.a.addr, &aw2->v.a.addr, 0))
+			return (1);
+		if (PF_ANEQ(&aw1->v.a.mask, &aw2->v.a.mask, 0))
+			return (1);
+		return (0);
+	case PF_ADDR_DYNIFTL:
+		if (aw1->p.dyn->ifp != aw2->p.dyn->ifp)
+			return (1);
+		if (PF_ANEQ(&aw1->v.a.mask, &aw2->v.a.mask, 0))
+			return (1);
+		return (0);
+	case PF_ADDR_NOROUTE:
+		return (0);
+	case PF_ADDR_TABLE:
+		return (aw1->p.tbl != aw2->p.tbl);
+	default:
+		printf("invalid address type: %d\n", aw1->type);
+		return (1);
+	}
 }
 
 void
