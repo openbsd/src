@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.226 2001/09/21 00:01:19 art Exp $
+#	$OpenBSD: files,v 1.227 2001/10/04 21:43:37 gluk Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -15,10 +15,15 @@ define	ifmedia
 define	mii {[phy = -1]}
 define	midibus { }
 define	midisyn
+define	radio {}
 
 # audio device attributes
 define	mulaw
 define	auconv
+
+# radio device attributes
+define tea5757
+define lm700x
 
 # audio and midi devices, attaches to audio hardware driver
 device	audio
@@ -281,6 +286,10 @@ file	dev/usb/uhci.c			uhci	needs-flag
 device	ohci: usbus
 file	dev/usb/ohci.c			ohci	needs-flag
 
+# radio devices, attaches to radio hardware driver
+device	radio
+attach	radio at radio
+
 # legitimate pseudo-devices
 pseudo-device vnd: disk
 pseudo-device ccd: disk
@@ -358,6 +367,7 @@ file ddb/db_usrreq.c			ddb
 file ddb/db_hangman.c			ddb
 file dev/auconv.c			auconv
 file dev/audio.c			audio			needs-flag
+file dev/radio.c			radio			needs-flag
 file dev/ccd.c				ccd			needs-flag
 file dev/ic/ncr5380sbc.c		ncr5380sbc
 file dev/ic/ncr53c7xx.c			ncr53c7xx
@@ -365,6 +375,8 @@ file dev/ic/pdq.c			pdq
 file dev/ic/pdq_ifsubr.c		pdq
 file dev/ic/dp8390.c			dp8390nic
 file dev/ic/rtl80x9.c			rtl80x9
+file dev/ic/tea5757.c			tea5757
+file dev/ic/lm700x.c			lm700x
 file dev/midi.c				midi | midibus		needs-flag
 file dev/midisyn.c			midisyn
 file dev/mulaw.c			mulaw
