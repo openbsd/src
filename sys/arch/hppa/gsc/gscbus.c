@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscbus.c,v 1.17 2002/02/05 04:26:06 mickey Exp $	*/
+/*	$OpenBSD: gscbus.c,v 1.18 2002/02/06 20:12:43 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -69,7 +69,7 @@
  *
  */
 
-#define GSCDEBUG
+/* #define GSCDEBUG */
 
 #include <sys/param.h>
 #include <sys/systm.h>
