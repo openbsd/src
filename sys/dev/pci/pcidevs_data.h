@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.305 2000/09/01 00:16:18 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.306 2000/09/01 02:06:33 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -247,6 +247,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "3D Labs",
 	    "GLINT Permedia 2",
+	},
+	{
+	    PCI_VENDOR_TRIWARE, PCI_PRODUCT_TRIWARE_ESCALADE,
+	    0,
+	    "3ware",
+	    "Escalade Storage Controller",
 	},
 	{
 	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_PC4500,
@@ -8199,7 +8205,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
-	    PCI_VENDOR_THREEWARE, 0,
+	    PCI_VENDOR_TRIWARE, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "3ware",
 	    NULL,

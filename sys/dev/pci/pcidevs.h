@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.305 2000/09/01 00:16:18 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.306 2000/09/01 02:06:33 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -520,7 +520,7 @@
 #define	PCI_VENDOR_LMC	0x1376		/* LAN Media Corp */
 #define	PCI_VENDOR_NETGEAR	0x1385		/* Netgear */
 #define	PCI_VENDOR_HIFN	0x13a3		/* Hi/Fn */
-#define	PCI_VENDOR_THREEWARE	0x13c1		/* 3ware */
+#define	PCI_VENDOR_TRIWARE	0x13c1		/* 3ware */
 #define	PCI_VENDOR_SUNDANCE	0x13f0		/* Sundance */
 #define	PCI_VENDOR_CMI	0x13f6		/* C-Media Electronics Inc. */
 #define	PCI_VENDOR_LAVA	0x1407		/* Lava */
@@ -601,6 +601,8 @@
 #define	PCI_PRODUCT_3DLABS_PERMEDIA	0x0004		/* GLINT Permedia */
 #define	PCI_PRODUCT_3DLABS_500MX	0x0006		/* GLINT 500MX */
 #define	PCI_PRODUCT_3DLABS_PERMEDIA2	0x0007		/* GLINT Permedia 2 */
+
+#define	PCI_PRODUCT_TRIWARE_ESCALADE	0x1000		/* Escalade Storage Controller */
 
 /* Aironet Products */
 #define	PCI_PRODUCT_AIRONET_PC4500	0x4500		/* PC4500 Wireless */
