@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.31 1996/12/05 17:16:05 deraadt Exp $	*/
+/*	$OpenBSD: fd.c,v 1.32 1996/12/05 17:22:40 deraadt Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -970,7 +970,7 @@ fdioctl(dev, cmd, addr, flag, p)
 		lp->d_secsize = 128 << fd->sc_type->secsize;
 		lp->d_secpercyl = fd->sc_type->seccyl;
 		lp->d_ntracks = fd->sc_type->heads;
-		lp->d_nsectors = fd->sc_type->seccyl;
+		lp->d_nsectors = fd->sc_type->sectrac;
 		lp->d_ncylinders = fd->sc_type->tracks;
 
 		strncpy(lp->d_typename, "floppy disk", 16);
