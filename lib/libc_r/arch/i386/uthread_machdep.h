@@ -1,7 +1,7 @@
 /*
  * OpenBSD/i386 machine-dependent thread macros
  *
- * $OpenBSD: uthread_machdep.h,v 1.4 1999/01/17 23:49:49 d Exp $
+ * $OpenBSD: uthread_machdep.h,v 1.5 1999/03/10 09:50:33 d Exp $
  */
 
 #include <machine/reg.h>
@@ -74,7 +74,7 @@ _thread_machdep_setjmp_helper(a)
 	__asm__("mov %%es, %0\n" : "=m" (a->mjb_es) );
 	__asm__("mov %%fs, %0\n" : "=m" (a->mjb_fs) );
 	__asm__("mov %%gs, %0\n" : "=m" (a->mjb_gs) );
-	v = setjmp(a->u.jb);
+	v = _setjmp(a->u.jb);
 	if (v) {
 		__asm__("mov %0, %%gs\n" :: "m" (a->mjb_gs) );
 		__asm__("mov %0, %%fs\n" :: "m" (a->mjb_fs) );
@@ -84,5 +84,5 @@ _thread_machdep_setjmp_helper(a)
 	return (v);
 }
 
-#define _thread_machdep_longjmp(a,v)	longjmp((a).u.jb,v)
+#define _thread_machdep_longjmp(a,v)	_longjmp((a).u.jb,v)
 #define _thread_machdep_setjmp(a)	_thread_machdep_setjmp_helper(&(a))
