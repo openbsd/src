@@ -1,7 +1,12 @@
 #!/bin/sh
 
-RELEASE=24
+set RELEASE=$1
 SPLITSIZE=240640
+
+if [ "X${RELEASE}" = "X" ]; then
+	echo "Usage: `basename $0` <OSREVISION>"
+	exit 1
+fi
 
 GZIP=--best
 export GZIP
@@ -58,3 +63,5 @@ find share \
 (cd ${RELEASEDIR}/ssrc${RELEASE}; cksum ssrc${RELEASE}.* > CKSUM; \
 	md5 ssrc${RELEASE}.* > MD5)
 chmod 444 ${RELEASEDIR}/ssrc${RELEASE}/*
+
+

@@ -1,6 +1,11 @@
 #!/bin/csh -f
 
-set RELEASE=24
+set RELEASE=$1
+
+if ( "X${RELEASE}" == "X" ) then
+	echo "Usage: `basename $0` <OSREVISION>"
+	exit 1
+endif
 
 if (! $?RELEASEDIR) then
 	echo RELEASEDIR must be set
