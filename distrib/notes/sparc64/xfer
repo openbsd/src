@@ -26,93 +26,79 @@ dnl from one of the FTP mirrors over the internet, you may wish to transfer
 dnl the sets to a local FTP or NFS server, or copy them to a partition on
 dnl the target system's disk.
 
-dnl XXX uncomment when floppy available
-dnl OpenBSDXferFloppyFromDOS
-dnl
-dnl OpenBSDXferFloppyFromUnix
-dnl
-dnl XXX uncomment when floppy or miniroot available
-dnl XXX make sure to adapt text, especially examples, if only floppy
-dnl XXX or miniroot is available, but not both.
-dnl Creating a bootable hard disk using SunOS or other Un*x-like system:
-dnl 
-dnl 	If you don't have a floppy drive you can copy the floppy
+OpenBSDXferFloppyFromDOS
+
+OpenBSDXferFloppyFromUnix
+
+dnl XXX make sure to adapt text, especially examples, once miniroot
+dnl is available as well.
+Creating a bootable hard disk using SunOS or other Un*x-like system:
+
+dnl	If you don't have a floppy drive you can copy the floppy
 dnl 	installation image "floppy{:--:}OSrev.fs" or the mini-root "miniroot{:--:}OSrev.fs"
 dnl 	onto the hard disk you intend to boot on.  Traditionally, the
 dnl 	way to do this is to use dd(1) to place the bootable filesystem
 dnl 	image in the "swap" partition of the disk (while running in
 dnl 	single user mode), and then booting from that partition.
-dnl 
-dnl 	Using the "b" partition allows you to boot without overwriting
-dnl 	any useful parts of the disk, you can also use another partition,
-dnl 	but don't used the "a" or "c" partition without understanding
-dnl 	the disklabel issues described below under "incompatible systems".
-dnl 
-dnl 	This requires that you be running SunOS, Solaris, OpenBSD or NetBSD
-dnl 	which have a compatible view of SunOS disk labels and partitions.
-dnl 
-dnl 	Use the dd(1) utility to copy the file to the hard drive.
-dnl 	Under SunOS, the command would be:
-dnl 
-dnl 		dd if=floppy{:--:}OSrev.fs of=/dev/rsd0b bs=36b
+	If you don't have a floppy drive you can copy the floppy
+	installation image "floppy{:--:}OSrev.fs" onto the hard disk
+	you intend to boot on.  Traditionally, the way to do this is
+	to use dd(1) to place the bootable filesystem image in the
+	"swap" partition of the disk (while running in single user
+	mode), and then booting from that partition.
+
+	Using the "b" partition allows you to boot without overwriting
+	any useful parts of the disk, you can also use another partition,
+	but don't used the "a" or "c" partition without understanding
+	the disklabel issues described below under "incompatible systems".
+
+	This requires that you be running SunOS, Solaris, OpenBSD or NetBSD
+	which have a compatible view of SunOS disk labels and partitions.
+
+	Use the dd(1) utility to copy the file to the hard drive.
+	Under SunOS, the command would be:
+
+		dd if=floppy{:--:}OSrev.fs of=/dev/rsd0b bs=36b
 dnl 				- or -
 dnl 		dd if=miniroot{:--:}OSrev.fs of=/dev/rsd0b bs=36b
-dnl 
-dnl 	The blocksize is arbitrary as long as it's a multiple of 512-bytes
-dnl 	and within the maximum supported by the driver, i.e. bs=126b may
-dnl 	not work for all cases.  Again, device/partition names may vary,
-dnl 	depending on the OS involved.
-dnl 
-dnl 	If you are preparing the hard drive on an incompatible system or
-dnl 	don't care about the hard disk contents, you can also install the
-dnl 	bootable image starting at the beginning of the disk. This lets
-dnl 	you prepare a bootable hard-drive even if don't have a working
-dnl 	operating system on your Sparc, but it important to understand
-dnl 	that the bootable image installed this way includes a "disk label"
-dnl 	which can wipe out any pre-existing disklabels or partitioning for
-dnl 	the drive.
-dnl 
-dnl 	The floppy image is used only for booting, and can be placed in
-dnl 	a partition that will be overwritten during the install process,
-dnl 	since it actually runs off a ram-disk image in the kernel.  In
-dnl 	contrast the miniroot is a normal unix root filesystem and you
-dnl 	must place in a partition that will not be overwritten until you've
-dnl 	completed the installation process.
-dnl 
-dnl 	To copy the floppy image to the whole disk, overwriting labels:
-dnl 
-dnl 		dd if=floppy{:--:}OSrev.fs of=/dev/rsdXc bs=36b
-dnl 
-dnl 	Two notes - X should be replaced by the unit number of the target
-dnl 	disk, which is most likely *not* the disk/partition that's your
-dnl 	current root partition.  Again names may vary depending on the
-dnl 	OS involved.  Second, after doing this, the disklabel will be one
-dnl 	that would be appropriate for a floppy, i.e. one partition of 2880
-dnl 	block, and you'll probably want to change that later on.
-dnl 
-dnl 	If you're starting with a virgin disk and trying to do this under
-dnl 	SunOS, use format(8) and newfs(8) to set up the partitions and
-dnl 	mark the intended partition as an normal partition type.  If you're
-dnl 	using OpenBSD, perhaps on another architecture, OpenBSD will
-dnl 	create a "fictitious label" that will let you access the whole
-dnl 	disk.
-dnl 
-dnl 	To copy the floppy image to the hard disk, preserving SunOS,
-dnl 	Solaris, NetBSD or OpenBSD labels:
-dnl 
-dnl 		dd if=floppy{:--:}OSrev.fs of=/dev/rsdXc bs=1b skip=1 seek=1
-dnl 
-dnl 	You need to be sure that your version of dd(1) supports the
-dnl 	skip and seek operands, otherwise you can try a technique like:
-dnl 
-dnl 		dd if=/dev/rsdXc of=/tmp/label bs=1b count=1
-dnl 		dd if=floppy{:--:}OSrev.fs of=/dev/rsdXc bs=36b
-dnl 		dd if=/tmp/label of=/dev/rsdXc bs=1b count=1
-dnl 
-dnl 	In either case, you've created a situation where the disklabel
-dnl 	and the filesystem information don't agree about the partition
-dnl 	size and geometry, however the results will be usable.
-dnl 
+
+	The blocksize is arbitrary as long as it's a multiple of 512-bytes
+	and within the maximum supported by the driver, i.e. bs=126b may
+	not work for all cases.  Again, device/partition names may vary,
+	depending on the OS involved.
+
+	If you are preparing the hard drive on an incompatible system or
+	don't care about the hard disk contents, you can also install the
+	bootable image starting at the beginning of the disk. This lets
+	you prepare a bootable hard-drive even if don't have a working
+	operating system on your machine, but it important to understand
+	that the bootable image installed this way includes a "disk label"
+	which can wipe out any pre-existing disklabels or partitioning for
+	the drive.
+
+	If you're starting with a virgin disk and trying to do this under
+	SunOS, use format(8) and newfs(8) to set up the partitions and
+	mark the intended partition as an normal partition type.  If you're
+	using OpenBSD, perhaps on another architecture, OpenBSD will
+	create a "fictitious label" that will let you access the whole
+	disk.
+
+	To copy the floppy image to the hard disk, preserving SunOS,
+	Solaris, NetBSD or OpenBSD labels:
+
+		dd if=floppy{:--:}OSrev.fs of=/dev/rsdXc bs=1b skip=1 seek=1
+
+	You need to be sure that your version of dd(1) supports the
+	skip and seek operands, otherwise you can try a technique like:
+
+		dd if=/dev/rsdXc of=/tmp/label bs=1b count=1
+		dd if=floppy{:--:}OSrev.fs of=/dev/rsdXc bs=36b
+		dd if=/tmp/label of=/dev/rsdXc bs=1b count=1
+
+	In either case, you've created a situation where the disklabel
+	and the filesystem information don't agree about the partition
+	size and geometry, however the results will be usable.
+
 Creating a network bootable setup using SunOS or other Un*x-like system:
 
 	The details of setting up a network bootable environment vary
@@ -130,14 +116,13 @@ Creating a network bootable setup using SunOS or other Un*x-like system:
 
 OpenBSDXferPrelude
 
-dnl XXX uncomment when floppy available
-dnl The floppy installation allows installing OpenBSD directly from FTP
-dnl mirror sites over the internet, however you must consider the speed and
-dnl reliability of your internet connection for this option.  It may save
-dnl much time and frustration to use ftp get/reget to transfer the
-dnl distribution sets to a local server or disk and perform the installation
-dnl from there, rather than directly from the internet.
-dnl 
+The floppy installation allows installing OpenBSD directly from FTP
+mirror sites over the internet, however you must consider the speed and
+reliability of your internet connection for this option.  It may save
+much time and frustration to use ftp get/reget to transfer the
+distribution sets to a local server or disk and perform the installation
+from there, rather than directly from the internet.
+
 
 OpenBSDXferBareTape
 

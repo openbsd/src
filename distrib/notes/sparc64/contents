@@ -7,9 +7,23 @@ dnl				an existing OpenBSD, NetBSD, Linux or Solaris
 dnl				installation to allow installing or upgrading
 dnl				to OpenBSD OSREV
 dnl
-dnl XXX uncomment when floppy available
-dnl OpenBSDfloppy
-dnl
+OpenBSDfloppy
+				This floppy image will boot on SBus-based
+				MACHINE models, such as:
+				- Ultra 1
+				- Ultra 2 (not tested)
+
+		floppyB{:--:}OSrev.fs	Another MACHINE boot and installation floppy;
+				see below.
+				This floppy image will boot on PCI-based
+				MACHINE models, such as:
+				- Ultra 5
+				- Ultra 10
+dnl XXX remove the following lines once floppyB is working
+				IMPORTANT! Please note that, as the moment of
+				writing, this floppy image is not working
+				correctly; your mileage may vary.
+
 OpenBSDdistsets
 
 OpenBSDbsd
@@ -29,9 +43,8 @@ requiring a pre-existing working operating system.
 
 The kernel and boot images are provided for net booting installations.
 
-dnl XXX uncomment when floppy available
-dnl OpenBSDfloppydesc(single,The)
-dnl
+OpenBSDfloppydesc(two,Each,s)
+
 DistributionDescription(six)
 
 OpenBSDbase(25.0,73.6,shared)

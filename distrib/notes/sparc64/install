@@ -1,20 +1,18 @@
 OpenBSDInstallPrelude
 
-dnl XXX uncomment and alter once there is floppy, cdrom or miniroot
+dnl XXX uncomment and alter once there is cdrom or miniroot
 dnl XXX available.
 dnl There are several ways to install OpenBSD onto a disk. The easiest way
 dnl in terms of preliminary setup is to use the OpenBSD miniroot that can
 dnl be booted off your local disk's swap partition.   The normal way is to
 dnl use the OpenBSD installation floppy.
-dnl
-dnl If your Sparc is hooked up in a network and you can find a server to
-dnl arrange for a diskless setup, which is a convenient way to install on a
-dnl machine whose disk does not currently hold a usable operating system.
-dnl This is difficult to get set up correctly the first time, but easy to
-dnl use afterwards.  (see ``Installing using a diskless setup'' below).
-Currently, the only way to install OpenBSD/MACHINE is to use a diskless
-setup, which is a convenient way to install on a machine whose disk does
-not currently hold a usable operating system.
+There are several ways to install OpenBSD onto a disk. The easiest way
+in terms of preliminary setup is to use the OpenBSD installation
+floppy.
+
+If your machine is hooked up in a network and you can find a server to
+arrange for a diskless setup, which is a convenient way to install on a
+machine whose disk does not currently hold a usable operating system.
 This is difficult to get set up correctly the first time, but easy to
 use afterwards.  (see ``Installing using a diskless setup'' below).
 
@@ -35,14 +33,14 @@ After taking care of all that, bring your system down gracefully using
 the shutdown(8) and/or halt(8) commands.  This will get you to the monitor
 prompt.
 
-dnl XXX no floppy available yet
-dnl Booting from Floppy Disk installation media:
-dnl
-dnl        ok boot floppy bsd
-dnl
-dnl This will cause the kernel contained in the floppy to be booted.
-dnl
-dnl
+
+Booting from Floppy Disk installation media:
+
+       ok boot floppy bsd
+
+This will cause the kernel contained in the floppy to be booted.
+
+
 dnl XXX no cdrom release yet
 dnl Booting From CD-ROM installation media:
 dnl 
@@ -57,18 +55,24 @@ dnl
 dnl
 dnl XXX no miniroot filesystem yet
 dnl Booting from disk (miniroot or floppy image):
-dnl
+dnl When miniroot available replace occurences of ``floppy image''
+dnl with ``miniroot'' since these instructions are primarily intended
+dnl for miniroot installation.
+Booting from disk (using the floppy image):
+
 dnl Boot the miniroot by typing the appropriate command at the PROM:
-dnl
-dnl	ok boot disk:b bsd
-dnl
+Boot the floppy image by typing the appropriate command at the PROM:
+
+	ok boot disk:b bsd
+
 dnl If you've loaded the miniroot onto some other disk than the default
-dnl drive 0, modify the boot specifier accordingly, keeping in mind the
-dnl drive vs. scsi-id shuffling and partition a=0, b=1... 
-dnl
-dnl	ok boot disk1:b bsd     # example - scsi target 1 or
-dnl				# second ide drive
-dnl
+If you've loaded the floppy image onto some other disk than the default
+drive 0, modify the boot specifier accordingly, keeping in mind the
+partition naming a=0, b=1... 
+
+	ok boot disk1:b bsd     # example - scsi target 1 or
+				# second ide drive
+
 
 Installing using a diskless setup:
 
@@ -88,36 +92,27 @@ command at the monitor prompt:
 
 dnl XXX Update title when installation media becomes available.
 dnl Installing using the Floppy, CD-ROM, miniroot or netboot procedure:
-Installing using the netboot procedure:
+Installing using the Floppy or netboot procedure:
 
 OpenBSDInstallPart2
 
 	Boot your machine from the installation media as described above.
 
-dnl XXX restore paragraph when floppy available
-dnl	It will take a while to load the kernel especially from a floppy
-dnl	or slow network connection, most likely more than a minute.  If
-dnl	some action doesn't eventually happen, or the spinning cursor has
-dnl	stopped and nothing further has happened, either your boot media
-dnl	is bad, your diskless setup isn't correct, or you may have
-dnl	a hardware or configuration problem.
-	It will take a while to load the kernel especially from a slow
-	network connection, most likely more than a minute.  If some
-	action doesn't eventually happen, or the spinning cursor has
+	It will take a while to load the kernel especially from a floppy
+	or slow network connection, most likely more than a minute.  If
+	some action doesn't eventually happen, or the spinning cursor has
 	stopped and nothing further has happened, either your boot media
 	is bad, your diskless setup isn't correct, or you may have
 	a hardware or configuration problem.
 
 OpenBSDBootMsgs
 
-dnl XXX Uncomment when floppy boot available
-dnl	While booting, you will probably see several warnings.  You
-dnl	may be warned that the kernel can't figure out what device
-dnl	it booted from.  Do not be alarmed, this is completely normal.
-dnl	This warning occurs because while OpenBSD/MACHINE can boot from
-dnl	the floppy drive, the kernel itself lacks a floppy driver for some
-dnl	MACHINE models.
-dnl
+	While booting, you will probably see several warnings.  You
+	may be warned that the kernel can't figure out what device
+	it booted from.  Do not be alarmed, this is completely normal.
+	This warning occurs because while OpenBSD/MACHINE can boot from
+	the floppy drive, the kernel itself lacks a floppy driver.
+
 	You will next be asked for your terminal type.  If you are
 	installing from a keyboard/monitor console, the default of
 	"sun" if correct.  If you are installing from a serial console

@@ -45,7 +45,7 @@ Supported devices {:-include-:}:
 Hardware the we do NOT currently support, but get many questions about:
 	Multiprocessor machines
 	Audio drivers
-	Floppy driver
+	Floppy driver (except for booting)
 	FFB (Creator), PGX and AFB (Elite 3D) framebuffers
         SBus ZX framebuffer (aka Leo)
 	other PCI and SBus cards have not been tested yet.

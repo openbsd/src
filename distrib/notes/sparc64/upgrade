@@ -3,6 +3,6 @@ are not expected.
 If you have been using an old OpenBSD/MACHINE snapshot, you can follow the
 following instructions.
 
-dnl XXX replace when floppy disk available
+dnl XXX uncomment once miniroot available
 dnl OpenBSDUpgrade({:-the miniroot, or the installation floppy-:})
-OpenBSDUpgrade({:-the miniroot-:})
+OpenBSDUpgrade({:-the installation floppy-:})
