@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: scc.4,v 1.4 2001/10/05 14:45:53 mpech Exp $
+.\"	$OpenBSD: scc.4,v 1.5 2002/09/30 18:09:48 miod Exp $
 .\"
 .Dd March 7, 1998
 .Dt SCC 4 alpha
@@ -42,7 +42,7 @@
 The
 .Nm
 driver provides support for the Zilog 8530 Serial Communications
-Controller (SCC) via the IOCTL asic on Turbochannel-based alphas
+Controller (SCC) via the IOCTL asic on TURBOchannel-based alphas
 (the DEC 3000 series).
 Each scc device has two serial ports.
 .Pp
@@ -50,7 +50,7 @@ Input and output for each line may set to one of following baud rates;
 50, 75, 110, 134.5, 150, 300, 600, 1200, 1800, 2400, 4800, 9600,
 19200, 38400, or 57600.
 Speeds up to 230400 are supported by the chip and the motherboard,
-but speeds  higher than 57600 do not work reliably without an external
+but speeds higher than 57600 do not work reliably without an external
 clock signal.
 .Sh FILES
 .Bl -tag -width Pa
@@ -59,6 +59,9 @@ clock signal.
 .El
 .Pp
 The mapping from units to serial-hardware outlets is idiosyncratic.
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr tty 4
 .Sh HISTORY
 The
 .Nm
@@ -66,7 +69,7 @@ driver first appeared in
 .Bx 4.4 .
 .Sh BUGS
 The IOCTL asic provides internal DMA channels that can be programmed
-to transfer  up to 4096 bytes of data into, or out, of an SCC without
+to transfer up to 4096 bytes of data into, or out, of an SCC without
 further software intervention.
 This feature of the ioctl asic is not yet supported.
 .Pp

@@ -1,4 +1,4 @@
-.\"     $OpenBSD: intro.4,v 1.14 2002/06/02 03:34:35 mickey Exp $
+.\"     $OpenBSD: intro.4,v 1.15 2002/09/30 18:09:48 miod Exp $
 .\"
 .\" Copyright (c) 1998 The OpenBSD Project
 .\" All Rights Reserved.
@@ -86,6 +86,8 @@ American Megatrends Inc.
 MegaRAID Controllers.
 .It Xr an 4
 Aironet Communications 4500/4800 IEEE 802.11DS wireless network adapter.
+.It Xr asc 4
+NCR 53c[f]94 on-board or TURBOchannel SCSI controller.
 .It Xr aue 4
 ADMtek AN986-based USB Ethernet adapters.
 .It Xr bge 4
@@ -109,6 +111,8 @@ DPT SmartCache/SmartRAID III and IV SCSI controllers.
 Ensoniq AudioPCI (ES137x) audio.
 .It Xr ec 4
 3Com Etherlink II Ethernet (3C503).
+.It Xr em 4
+Intel i82542, i82543, and i82544 Pro/1000 Gigabit Ethernet.
 .It Xr ep 4
 3Com Etherlink III Ethernet (3C5x9, 3C59x).
 .It Xr eso 4
@@ -126,14 +130,14 @@ DEFPA PCI FDDI controller.
 EtherExpress PRO/100 Ethernet.
 .It Xr gdt 4
 ICP-Vortex GDT RAID controllers.
-.It Xr gx 4
-Intel i82542, i82543, and i82544 Pro/1000 Gigabit Ethernet.
 .It Xr hifn 4
 Hi/Fn 7751 Encryption Accelerator.
 .It Xr ises 4
 Securealink PCC-ISES hardware crypto accelerator.
 .It Xr isp 4
 QLogic PCI SCSI controllers.
+.It Xr lc 4
+DEC EtherWORKS III Ethernet interfaces.
 .It Xr le 4
 AMD Lance Ethernet.
 .It Xr lmc 4
@@ -172,18 +176,20 @@ SMC 9432 10/100 Mbps Ethernet cards.
 3Com 3XP Typhoon/Sidewinder (3CR990) Ethernet.
 .It Xr ubsec 4
 Broadcom Bluesteelnet uBsec 5501, 5601, 5805, and 5820.
-.It Xr uftdi 4
-FTDI FT8U100AX-based USB serial adapters.
-.It Xr upl 4
-Prolific PL2301/PL2302-based host-to-host USB connectors.
-.It Xr uplcom 4
-I/O Data USB-RSAQ2 USB serial adapters.
-.It Xr urio 4
-Diamond Multimedia Rio MP3 device interface.
-.It Xr uvisor 4
-Handspring Visor device interface.
-.It Xr uyap 4
-YAP phone firmware interface.
+.\" keep commented until usb is enabled by default... and bring up-to-date
+.\" when it isn't anymore.
+.\" .It Xr uftdi 4
+.\" FTDI FT8U100AX-based USB serial adapters.
+.\" .It Xr upl 4
+.\" Prolific PL2301/PL2302-based host-to-host USB connectors.
+.\" .It Xr uplcom 4
+.\" I/O Data USB-RSAQ2 USB serial adapters.
+.\" .It Xr urio 4
+.\" Diamond Multimedia Rio MP3 device interface.
+.\" .It Xr uvisor 4
+.\" Handspring Visor device interface.
+.\" .It Xr uyap 4
+.\" YAP phone firmware interface.
 .It Xr vga 4
 PC display adapter driver for VGA compatible adapters.
 .It Xr vr 4

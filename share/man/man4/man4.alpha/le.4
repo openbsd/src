@@ -1,4 +1,4 @@
-.\"     $OpenBSD: le.4,v 1.5 2001/11/13 13:54:26 mpech Exp $
+.\"     $OpenBSD: le.4,v 1.6 2002/09/30 18:09:48 miod Exp $
 .\"
 .\" Copyright (c) 1998 The OpenBSD Project
 .\" All rights reserved.
@@ -10,7 +10,8 @@
 .Nm le
 .Nd Alpha on-board or PCI LANCE ethernet interface
 .Sh SYNOPSIS
-.Cd "le* at  tc? slot ? offset ? " Pq "TurboChannel Alphas"
+.Cd "le* at ioasic? offset ?" Pq "TURBOchannel Alphas"
+.Cd "le* at tc? slot ? offset ?" Pq "TURBOchannel Alphas"
 .Cd "le* at pci? dev ? function ?" Pq "PCI LANCE Ethernet (untested)"
 .Sh DESCRIPTION
 The
@@ -34,5 +35,9 @@ network.
 The PCI form of the Lance driver is untested.
 .Sh SEE ALSO
 .Xr arp 4 ,
-.Xr inet 4 ,
-.Xr intro 4
+.Xr ifmedia 4 ,
+.Xr intro 4 ,
+.Xr netintro 4 ,
+.Xr pci 4 ,
+.Xr hostname.if 5 ,
+.Xr ifconfig 8
