@@ -29,7 +29,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypserv_db.c,v 1.2 1996/01/20 00:47:01 chuck Exp $";
+static char rcsid[] = "$Id: ypserv_db.c,v 1.3 1996/05/30 01:36:07 deraadt Exp $";
 #endif
 
 /*
@@ -49,6 +49,8 @@ static char rcsid[] = "$Id: ypserv_db.c,v 1.2 1996/01/20 00:47:01 chuck Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <netdb.h>
+#include <arpa/nameser.h>
+#include <resolv.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
@@ -104,10 +106,10 @@ ypdb_init()
 
 int
 yp_private(key,ypprivate)
-        datum	key;
-        int	ypprivate;
+	datum	key;
+	int	ypprivate;
 {
-        int	result;
+	int	result;
 
   	if (ypprivate) return (FALSE);
 
@@ -208,9 +210,9 @@ ypdb_close_db(db)
 DBM *
 ypdb_open_db(domain, map, status, map_info)
 	domainname	domain;
-        mapname		map;
+	mapname		map;
 	ypstat		*status;
-        struct opt_map	**map_info;
+	struct opt_map	**map_info;
 {
 	char map_path[MAXPATHLEN];
 	static char   *domain_key = YP_INTERDOMAIN_KEY;
@@ -363,7 +365,7 @@ ypdb_open_db(domain, map, status, map_info)
 ypstat
 lookup_host(nametable, host_lookup, db, keystr, result)
 	int	nametable;
-        int	host_lookup;
+	int	host_lookup;
 	DBM	*db;
 	char	*keystr;
 	ypresp_val *result;
@@ -377,6 +379,10 @@ lookup_host(nametable, host_lookup, db, keystr, result)
 	char	*ptr;
 	
 	if (!host_lookup) return(YP_NOKEY);
+
+	if ((_res.options & RES_INIT) == 0)
+		res_init();
+	bcopy("b", _res.lookups, sizeof("b"));
 
 	if (nametable) {
 		host = gethostbyname(keystr);
@@ -427,9 +433,9 @@ lookup_host(nametable, host_lookup, db, keystr, result)
 ypresp_val
 ypdb_get_record(domain, map, key, ypprivate)
 	domainname	domain;
-        mapname		map;
-        keydat		key;
-        int		ypprivate;
+	mapname		map;
+	keydat		key;
+	int		ypprivate;
 {
 	static	ypresp_val res;
 	static	char keystr[YPMAXRECORD+1];
@@ -479,8 +485,8 @@ done:
 ypresp_key_val
 ypdb_get_first(domain, map, ypprivate)
 	domainname domain;
-        mapname map;
-        int ypprivate;
+	mapname map;
+	int ypprivate;
 {
 	static ypresp_key_val res;
 	DBM	*db;
@@ -521,9 +527,9 @@ ypdb_get_first(domain, map, ypprivate)
 ypresp_key_val
 ypdb_get_next(domain, map, key, ypprivate)
 	domainname domain;
-        mapname map;
-        keydat key;
-        int ypprivate;
+	mapname map;
+	keydat key;
+	int ypprivate;
 {
 	static ypresp_key_val res;
 	DBM	*db;
@@ -579,7 +585,7 @@ ypdb_get_next(domain, map, key, ypprivate)
 ypresp_order
 ypdb_get_order(domain, map)
 	domainname domain;
-        mapname map;
+	mapname map;
 {
 	static ypresp_order res;
 	static char   *order_key = YP_LAST_KEY;
@@ -614,7 +620,7 @@ ypdb_get_order(domain, map)
 ypresp_master
 ypdb_get_master(domain, map)
 	domainname domain;
-        mapname map;
+	mapname map;
 {
 	static ypresp_master res;
 	static char   *master_key = YP_MASTER_KEY;
@@ -649,7 +655,7 @@ ypdb_get_master(domain, map)
 bool_t
 ypdb_xdr_get_all(xdrs, req)
 	XDR *xdrs;
-        ypreq_nokey *req;
+	ypreq_nokey *req;
 {
 	static ypresp_all resp;
 	DBM	*db;
@@ -668,7 +674,7 @@ ypdb_xdr_get_all(xdrs, req)
 	k = ypdb_firstkey(db);
 	while (yp_private(k,FALSE)) {
 		k = ypdb_nextkey(db);
-        };
+	};
 	
 	while(1) {
 		
@@ -690,7 +696,7 @@ ypdb_xdr_get_all(xdrs, req)
 		if (!xdr_ypresp_all(xdrs, &resp)) {
 #ifdef DEBUG
 			yplog("  ypdb_xdr_get_all: xdr_ypresp_all failed");
-#endif				        
+#endif					
 			return(FALSE);
 		}
 			
@@ -708,7 +714,7 @@ ypdb_xdr_get_all(xdrs, req)
 	if (!xdr_ypresp_all(xdrs, &resp)) {
 #ifdef DEBUG
 		yplog("  ypdb_xdr_get_all: final xdr_ypresp_all failed");
-#endif				        
+#endif
 		return(FALSE);
 	}
 		
