@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.123 2002/01/07 23:16:38 jason Exp $
+#	$OpenBSD: files.pci,v 1.124 2002/01/08 23:06:01 jason Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -294,11 +294,6 @@ file	dev/pci/if_gem_pci.c		gem_pci
 device	lofn: crypto
 attach	lofn at pci
 file	dev/pci/lofn.c			lofn
-
-# Hi/fn 7811
-device	nofn: crypto
-attach	nofn at pci
-file	dev/pci/nofn.c			nofn
 
 # Hi/fn 7751
 device	hifn: crypto
