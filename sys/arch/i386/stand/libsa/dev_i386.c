@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_i386.c,v 1.17 1997/08/13 14:24:02 niklas Exp $	*/
+/*	$OpenBSD: dev_i386.c,v 1.18 1997/08/21 22:19:33 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -136,7 +136,6 @@ putchar(c)
 		while(++pos % 8);
 		break;
 	case '\n':
-		cnputc('\r');
 	case '\r':
 		cnputc(c);
 		pos=0;
