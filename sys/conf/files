@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.191 2001/03/18 04:34:56 nate Exp $
+#	$OpenBSD: files,v 1.192 2001/03/21 23:24:50 art Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -437,6 +437,7 @@ file kern/subr_xxx.c
 file kern/sys_generic.c
 file kern/sys_pipe.c
 file kern/sys_process.c
+file kern/subr_pool.c
 file kern/sys_socket.c
 file kern/syscalls.c			syscall_debug
 file kern/sysv_ipc.c			sysvshm | sysvsem | sysvmsg
@@ -776,9 +777,6 @@ file uvm/uvm_swap_encrypt.c		uvm & uvm_swap_encrypt
 file uvm/uvm_unix.c			uvm
 file uvm/uvm_user.c			uvm
 file uvm/uvm_vnode.c			uvm
-
-# XXX
-file kern/subr_pool.c			uvm
 
 # ... NRL IPv6
 #file netinet6/in6.c			inet6
