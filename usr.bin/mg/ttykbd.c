@@ -17,7 +17,7 @@
  * extend.c.
  */
 
-char	*keystrings[] = { NULL } ;
+char           *keystrings[] = {NULL};
 #endif
 
 /*
@@ -25,12 +25,12 @@ char	*keystrings[] = { NULL } ;
  * available.  The keys file is located in the same manner as the startup
  * file is, depending on what startupfile() does on your system.
  */
-extern	int	ttputc();
+extern int      ttputc();
 
 ttykeymapinit()
 {
-	extern int dobindkey();	/* XXX */
-	char *cp;
+	extern int      dobindkey();	/* XXX */
+	char           *cp;
 #ifdef FKEYS
 	/* Bind keypad function keys. */
 	if (key_left)
@@ -54,13 +54,13 @@ ttykeymapinit()
 #endif
 #ifndef	NO_STARTUP
 	if (cp = gettermtype()) {
-		extern char *startupfile();
+		extern char    *startupfile();
 		if (((cp = startupfile(cp)) != NULL)
-			&& (load(cp) != TRUE))
+		    && (load(cp) != TRUE))
 			ewprintf("Error reading key initialization file");
 	}
 #endif
-	if (keypad_xmit)			/* turn on keypad	*/
+	if (keypad_xmit)	/* turn on keypad	 */
 		putpad(keypad_xmit, 1);
 }
 
@@ -71,7 +71,7 @@ ttykeymaptidy()
 {
 
 	if (keypad_local)
-		putpad(keypad_local, 1);	/* turn off keypad	*/
+		putpad(keypad_local, 1);	/* turn off keypad	 */
 }
 
 #endif

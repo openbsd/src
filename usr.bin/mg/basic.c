@@ -7,17 +7,19 @@
  * mark. Only moves between lines, which might make the
  * current buffer framing bad, are hard.
  */
-#include	"def.h"
+#include "def.h"
 
-VOID	setgoal();
+VOID setgoal __P((void));
 
 /*
  * Go to beginning of line.
  */
-/*ARGSUSED*/
+/* ARGSUSED */
+int
 gotobol(f, n)
+	int f, n;
 {
-	curwp->w_doto  = 0;
+	curwp->w_doto = 0;
 	return (TRUE);
 }
 
@@ -27,22 +29,24 @@ gotobol(f, n)
  * 0. Error if you try to move back from
  * the beginning of the buffer.
  */
-/*ARGSUSED*/
+/* ARGSUSED */
+int
 backchar(f, n)
-register int n;
+	int	n;
 {
-	register LINE	*lp;
+	LINE   *lp;
 
-	if (n < 0) return forwchar(f, -n);
+	if (n < 0)
+		return forwchar(f, -n);
 	while (n--) {
 		if (curwp->w_doto == 0) {
-			if ((lp=lback(curwp->w_dotp)) == curbp->b_linep) {
+			if ((lp = lback(curwp->w_dotp)) == curbp->b_linep) {
 				if (!(f & FFRAND))
 					ewprintf("Beginning of buffer");
 				return (FALSE);
 			}
-			curwp->w_dotp  = lp;
-			curwp->w_doto  = llength(lp);
+			curwp->w_dotp = lp;
+			curwp->w_doto = llength(lp);
 			curwp->w_flag |= WFMOVE;
 		} else
 			curwp->w_doto--;
@@ -53,10 +57,12 @@ register int n;
 /*
  * Go to end of line.
  */
-/*ARGSUSED*/
+/* ARGSUSED */
+int
 gotoeol(f, n)
+	int f, n;
 {
-	curwp->w_doto  = llength(curwp->w_dotp);
+	curwp->w_doto = llength(curwp->w_dotp);
 	return (TRUE);
 }
 
@@ -66,21 +72,24 @@ gotoeol(f, n)
  * 0. Error if you try to move forward
  * from the end of the buffer.
  */
-/*ARGSUSED*/
+/* ARGSUSED */
+int
 forwchar(f, n)
-register int n;
+	int f, n;
 {
-	if (n < 0) return backchar(f, -n);
+
+	if (n < 0)
+		return backchar(f, -n);
 	while (n--) {
 		if (curwp->w_doto == llength(curwp->w_dotp)) {
-			curwp->w_dotp  = lforw(curwp->w_dotp);
+			curwp->w_dotp = lforw(curwp->w_dotp);
 			if (curwp->w_dotp == curbp->b_linep) {
 				curwp->w_dotp = lback(curwp->w_dotp);
 				if (!(f & FFRAND))
 					ewprintf("End of buffer");
 				return FALSE;
 			}
-			curwp->w_doto  = 0;
+			curwp->w_doto = 0;
 			curwp->w_flag |= WFMOVE;
 		} else
 			curwp->w_doto++;
@@ -93,11 +102,14 @@ register int n;
  * buffer. Setting WFHARD is conservative,
  * but almost always the case.
  */
+int
 gotobob(f, n)
+	int f, n;
 {
-	(VOID) setmark(f, n) ;
-	curwp->w_dotp  = lforw(curbp->b_linep);
-	curwp->w_doto  = 0;
+
+	(VOID) setmark(f, n);
+	curwp->w_dotp = lforw(curbp->b_linep);
+	curwp->w_doto = 0;
 	curwp->w_flag |= WFHARD;
 	return TRUE;
 }
@@ -107,11 +119,14 @@ gotobob(f, n)
  * Setting WFHARD is conservative, but
  * almost always the case.
  */
+int
 gotoeob(f, n)
+	int f, n;
 {
-	(VOID) setmark(f, n) ;
-	curwp->w_dotp  = lback(curbp->b_linep);
-	curwp->w_doto  = llength(curwp->w_dotp);
+
+	(VOID) setmark(f, n);
+	curwp->w_dotp = lback(curbp->b_linep);
+	curwp->w_doto = llength(curwp->w_dotp);
 	curwp->w_flag |= WFHARD;
 	return TRUE;
 }
@@ -123,37 +138,42 @@ gotoeob(f, n)
  * actually do it. The last command controls how
  * the goal column is set.
  */
-/*ARGSUSED*/
+/* ARGSUSED */
+int
 forwline(f, n)
+	int f, n;
 {
-	register LINE	*dlp;
+	LINE  *dlp;
 
 	if (n < 0)
-		return backline(f|FFRAND, -n);
-	if ((lastflag&CFCPCN) == 0)		/* Fix goal.		*/
+		return backline(f | FFRAND, -n);
+	if ((lastflag & CFCPCN) == 0)	/* Fix goal.		 */
 		setgoal();
 	thisflag |= CFCPCN;
-	if (n == 0) return TRUE;
+	if (n == 0)
+		return TRUE;
 	dlp = curwp->w_dotp;
-	while (dlp!=curbp->b_linep && n--)
+	while (dlp != curbp->b_linep && n--)
 		dlp = lforw(dlp);
 	curwp->w_flag |= WFMOVE;
-	if(dlp==curbp->b_linep) {	/* ^N at end of buffer creates lines (like gnu) */
-		if(!(curbp->b_flag&BFCHG)) {	/* first change */
+	if (dlp == curbp->b_linep) {	/* ^N at end of buffer creates lines
+					 * (like gnu) */
+		if (!(curbp->b_flag & BFCHG)) {	/* first change */
 			curbp->b_flag |= BFCHG;
 			curwp->w_flag |= WFMODE;
 		}
 		curwp->w_doto = 0;
-		while(n-- >= 0) {
-			if((dlp = lallocx(0)) == NULL) return FALSE;
+		while (n-- >= 0) {
+			if ((dlp = lallocx(0)) == NULL)
+				return FALSE;
 			dlp->l_fp = curbp->b_linep;
 			dlp->l_bp = lback(dlp->l_fp);
 			dlp->l_bp->l_fp = dlp->l_fp->l_bp = dlp;
 		}
 		curwp->w_dotp = lback(curbp->b_linep);
 	} else {
-		curwp->w_dotp  = dlp;
-		curwp->w_doto  = getgoal(dlp);
+		curwp->w_dotp = dlp;
+		curwp->w_doto = getgoal(dlp);
 	}
 	return TRUE;
 }
@@ -165,36 +185,38 @@ forwline(f, n)
  * call your alternate. Figure out the new line and
  * call "movedot" to perform the motion.
  */
-/*ARGSUSED*/
+/* ARGSUSED */
+int
 backline(f, n)
+	int	f, n;
 {
-	register LINE	*dlp;
+	LINE   *dlp;
 
-	if (n < 0) return forwline(f|FFRAND, -n);
-	if ((lastflag&CFCPCN) == 0)		/* Fix goal.		*/
+	if (n < 0)
+		return forwline(f | FFRAND, -n);
+	if ((lastflag & CFCPCN) == 0)	/* Fix goal.		 */
 		setgoal();
 	thisflag |= CFCPCN;
 	dlp = curwp->w_dotp;
-	while (n-- && lback(dlp)!=curbp->b_linep)
+	while (n-- && lback(dlp) != curbp->b_linep)
 		dlp = lback(dlp);
-	curwp->w_dotp  = dlp;
-	curwp->w_doto  = getgoal(dlp);
+	curwp->w_dotp = dlp;
+	curwp->w_doto = getgoal(dlp);
 	curwp->w_flag |= WFMOVE;
 	return TRUE;
 }
 
 /*
- * Set the current goal column,
- * which is saved in the external variable "curgoal",
- * to the current cursor column. The column is never off
- * the edge of the screen; it's more like display then
- * show position.
+ * Set the current goal column, which is saved in the external variable
+ * "curgoal", to the current cursor column. The column is never off
+ * the edge of the screen; it's more like display then show position.
  */
 VOID
-setgoal() {
+setgoal()
+{
 
-	curgoal = getcolpos() - 1;		/* Get the position.	*/
-/* we can now display past end of display, don't chop! */
+	curgoal = getcolpos() - 1;	/* Get the position.	 */
+	/* we can now display past end of display, don't chop! */
 }
 
 /*
@@ -204,11 +226,14 @@ setgoal() {
  * routine above) and returns the best offset to use
  * when a vertical motion is made into the line.
  */
-getgoal(dlp) register LINE *dlp; {
-	register int	c;
-	register int	col;
-	register int	newcol;
-	register int	dbo;
+int
+getgoal(dlp)
+	LINE  *dlp;
+{
+	int    c;
+	int    col;
+	int    newcol;
+	int    dbo;
 
 	col = 0;
 	dbo = 0;
@@ -217,10 +242,10 @@ getgoal(dlp) register LINE *dlp; {
 		newcol = col;
 		if (c == '\t'
 #ifdef	NOTAB
-				&& !(curbp->b_flag & BFNOTAB)
+		    && !(curbp->b_flag & BFNOTAB)
 #endif
 			)
-		    newcol |= 0x07;
+			newcol |= 0x07;
 		else if (ISCTRL(c) != FALSE)
 			++newcol;
 		++newcol;
@@ -240,32 +265,34 @@ getgoal(dlp) register LINE *dlp; {
  * the window is zapped, we have to do a hard
  * update and get it back.
  */
-/*ARGSUSED*/
+/* ARGSUSED */
+int
 forwpage(f, n)
-register int n;
+	int    f, n;
 {
-	register LINE	*lp;
+	LINE  *lp;
 
 	if (!(f & FFARG)) {
-		n = curwp->w_ntrows - 2;	/* Default scroll.	*/
-		if (n <= 0)			/* Forget the overlap	*/
-			n = 1;			/* if tiny window.	*/
+		n = curwp->w_ntrows - 2;	/* Default scroll.	 */
+		if (n <= 0)			/* Forget the overlap	 */
+			n = 1;			/* if tiny window.	 */
 	} else if (n < 0)
-		return backpage(f|FFRAND, -n);
+		return backpage(f | FFRAND, -n);
 #ifdef	CVMVAS
-	else					/* Convert from pages	*/
-		n *= curwp->w_ntrows;		/* to lines.		*/
+	else					/* Convert from pages	 */
+		n *= curwp->w_ntrows;		/* to lines.		 */
 #endif
 	lp = curwp->w_linep;
-	while (n-- && lforw(lp)!=curbp->b_linep)
+	while (n-- && lforw(lp) != curbp->b_linep)
 		lp = lforw(lp);
 	curwp->w_linep = lp;
 	curwp->w_flag |= WFHARD;
 	/* if in current window, don't move dot */
-	for(n = curwp->w_ntrows; n-- && lp!=curbp->b_linep; lp = lforw(lp))
-		if(lp==curwp->w_dotp) return TRUE;
-	curwp->w_dotp  = curwp->w_linep;
-	curwp->w_doto  = 0;
+	for (n = curwp->w_ntrows; n-- && lp != curbp->b_linep; lp = lforw(lp))
+		if (lp == curwp->w_dotp)
+			return TRUE;
+	curwp->w_dotp = curwp->w_linep;
+	curwp->w_doto = 0;
 	return TRUE;
 }
 
@@ -277,58 +304,64 @@ register int n;
  * hard update is done because the top line in
  * the window is zapped.
  */
-/*ARGSUSED*/
+/* ARGSUSED */
+int
 backpage(f, n)
-register int n;
+	int    f, n;
 {
-	register LINE	*lp;
+	LINE  *lp;
 
 	if (!(f & FFARG)) {
-		n = curwp->w_ntrows - 2;	/* Default scroll.	*/
-		if (n <= 0)			/* Don't blow up if the */
-			n = 1;			/* window is tiny.	*/
+		n = curwp->w_ntrows - 2;	/* Default scroll.	 */
+		if (n <= 0)			/* Don't blow up if the  */
+			n = 1;			/* window is tiny.	 */
 	} else if (n < 0)
-		return forwpage(f|FFRAND, -n);
+		return forwpage(f | FFRAND, -n);
 #ifdef	CVMVAS
-	else					/* Convert from pages	*/
-		n *= curwp->w_ntrows;		/* to lines.		*/
+	else					/* Convert from pages	 */
+		n *= curwp->w_ntrows;		/* to lines.		 */
 #endif
 	lp = curwp->w_linep;
-	while (n-- && lback(lp)!=curbp->b_linep)
+	while (n-- && lback(lp) != curbp->b_linep)
 		lp = lback(lp);
 	curwp->w_linep = lp;
 	curwp->w_flag |= WFHARD;
 	/* if in current window, don't move dot */
-	for(n = curwp->w_ntrows; n-- && lp!=curbp->b_linep; lp = lforw(lp))
-		if(lp==curwp->w_dotp) return TRUE;
+	for (n = curwp->w_ntrows; n-- && lp != curbp->b_linep; lp = lforw(lp))
+		if (lp == curwp->w_dotp)
+			return TRUE;
 	curwp->w_dotp = curwp->w_linep;
 	curwp->w_doto = 0;
 	return TRUE;
 }
 
-/* These functions are provided for compatibility with Gosling's Emacs.
- *    They are used to scroll the display up (or down) one line at a time.
+/*
+ * These functions are provided for compatibility with Gosling's Emacs. They
+ * are used to scroll the display up (or down) one line at a time.
  */
-
 #ifdef GOSMACS
+VOID
 forw1page(f, n)
-int f, n;
+	int f, n;
 {
-	if (!(f & FFARG))  {
-        	n = 1;
+
+	if (!(f & FFARG)) {
+		n = 1;
 		f = FFUNIV;
 	}
-	forwpage(f|FFRAND, n);
+	forwpage(f | FFRAND, n);
 }
 
+VOID
 back1page(f, n)
-int f, n;
+	int f, n;
 {
+
 	if (!(f & FFARG)) {
-        	n = 1;
+		n = 1;
 		f = FFUNIV;
 	}
-	backpage(f|FFRAND, n);
+	backpage(f | FFRAND, n);
 }
 #endif
 
@@ -336,9 +369,11 @@ int f, n;
  * Page the other window. Check to make sure it exists, then
  * nextwind, forwpage and restore window pointers.
  */
+int
 pagenext(f, n)
+	int    f, n;
 {
-	register MGWIN *wp;
+	MGWIN *wp;
 
 	if (wheadp->w_wndp == NULL) {
 		ewprintf("No other window");
@@ -358,6 +393,7 @@ pagenext(f, n)
 VOID
 isetmark()
 {
+
 	curwp->w_markp = curwp->w_dotp;
 	curwp->w_marko = curwp->w_doto;
 }
@@ -367,9 +403,12 @@ isetmark()
  * to the value of dot. A message is written to
  * the echo line.  (ewprintf knows about macros)
  */
-/*ARGSUSED*/
+/* ARGSUSED */
+int
 setmark(f, n)
+	int f, n;
 {
+
 	isetmark();
 	ewprintf("Mark set");
 	return TRUE;
@@ -382,11 +421,13 @@ setmark(f, n)
  * that moves the mark about. The only possible
  * error is "no mark".
  */
-/*ARGSUSED*/
+/* ARGSUSED */
+int
 swapmark(f, n)
+	int    f, n;
 {
-	register LINE	*odotp;
-	register int	odoto;
+	LINE  *odotp;
+	int    odoto;
 
 	if (curwp->w_markp == NULL) {
 		ewprintf("No mark in this window");
@@ -394,8 +435,8 @@ swapmark(f, n)
 	}
 	odotp = curwp->w_dotp;
 	odoto = curwp->w_doto;
-	curwp->w_dotp  = curwp->w_markp;
-	curwp->w_doto  = curwp->w_marko;
+	curwp->w_dotp = curwp->w_markp;
+	curwp->w_doto = curwp->w_marko;
 	curwp->w_markp = odotp;
 	curwp->w_marko = odoto;
 	curwp->w_flag |= WFMOVE;
@@ -409,30 +450,32 @@ swapmark(f, n)
  * it is the line number, else prompt for a line number
  * to use.
  */
-/*ARGSUSED*/
+/* ARGSUSED */
+int
 gotoline(f, n)
-register int n;
+	int    f, n;
 {
-	register LINE	*clp;
-	register int	s;
-	char		buf[32];
+	LINE  *clp;
+	int    s;
+	char   buf[32];
 
 	if (!(f & FFARG)) {
-		if ((s=ereply("Goto line: ", buf, sizeof(buf))) != TRUE)
+		if ((s = ereply("Goto line: ", buf, sizeof(buf))) != TRUE)
 			return s;
 		n = atoi(buf);
 	}
-
 	if (n > 0) {
-		clp = lforw(curbp->b_linep);	/* "clp" is first line	*/
+		clp = lforw(curbp->b_linep);	/* "clp" is first line	 */
 		while (--n > 0) {
-			if (lforw(clp) == curbp->b_linep) break;
+			if (lforw(clp) == curbp->b_linep)
+				break;
 			clp = lforw(clp);
 		}
 	} else {
 		clp = lback(curbp->b_linep);	/* clp is last line */
 		while (n < 0) {
-			if (lback(clp) == curbp->b_linep) break;
+			if (lback(clp) == curbp->b_linep)
+				break;
 			clp = lback(clp);
 			n++;
 		}

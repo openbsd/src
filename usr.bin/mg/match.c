@@ -14,24 +14,34 @@
 #include	"def.h"
 #include	"key.h"
 
-static int	balance();
-static VOID	displaymatch();
+static int      balance();
+static VOID     displaymatch();
 
-/* Balance table. When balance() encounters a character
- * that is to be matched, it first searches this table
- * for a balancing left-side character.	 If the character
- * is not in the table, the character is balanced by itself.
+/*
+ * Balance table. When balance() encounters a character that is to be
+ * matched, it first searches this table for a balancing left-side character.
+ * f the character is not in the table, the character is balanced by itself.
  * This is to allow delimiters in Scribe documents to be matched.
  */
 
 static struct balance {
-	char left, right;
-} bal[] = {
-	{ '(', ')' },
-	{ '[', ']' },
-	{ '{', '}' },
-	{ '<', '>' },
-	{ '\0','\0'}
+	char            left, right;
+}               bal[] = {
+	{
+		'(', ')'
+	},
+	{
+		'[', ']'
+	},
+	{
+		'{', '}'
+	},
+	{
+		'<', '>'
+	},
+	{
+		'\0', '\0'
+	}
 };
 
 /*
@@ -41,13 +51,14 @@ static struct balance {
 
 showmatch(f, n)
 {
-	register int  i, s;
+	register int    i, s;
 
-	if (f & FFRAND) return FALSE;
+	if (f & FFRAND)
+		return FALSE;
 	for (i = 0; i < n; i++) {
 		if ((s = selfinsert(FFRAND, 1)) != TRUE)
 			return s;
-		if (balance() != TRUE) /* unbalanced -- warn user */
+		if (balance() != TRUE)	/* unbalanced -- warn user */
 			ttbeep();
 	}
 	return TRUE;
@@ -61,16 +72,17 @@ showmatch(f, n)
  * is found, it uses displaymatch() to display the match.
  */
 
-static balance()
+static
+balance()
 {
-	register LINE	*clp;
-	register int	cbo;
-	int	c;
-	int	i;
-	int	rbal, lbal;
-	int	depth;
+	register LINE  *clp;
+	register int    cbo;
+	int             c;
+	int             i;
+	int             rbal, lbal;
+	int             depth;
 
-	rbal = key.k_chars[key.k_count-1];
+	rbal = key.k_chars[key.k_count - 1];
 
 	/* See if there is a matching character -- default to the same */
 
@@ -80,7 +92,6 @@ static balance()
 			lbal = bal[i].left;
 			break;
 		}
-
 	/* Move behind the inserted character.	We are always guaranteed    */
 	/* that there is at least one character on the line, since one was  */
 	/* just self-inserted by blinkparen.				    */
@@ -88,19 +99,19 @@ static balance()
 	clp = curwp->w_dotp;
 	cbo = curwp->w_doto - 1;
 
-	depth = 0;			/* init nesting depth		*/
+	depth = 0;		/* init nesting depth		 */
 
 	for (;;) {
-		if (cbo == 0) {			/* beginning of line	*/
+		if (cbo == 0) {	/* beginning of line	 */
 			clp = lback(clp);
 			if (clp == curbp->b_linep)
 				return (FALSE);
-			cbo = llength(clp)+1;
+			cbo = llength(clp) + 1;
 		}
-		if (--cbo == llength(clp))	/* end of line		*/
+		if (--cbo == llength(clp))	/* end of line		 */
 			c = '\n';
 		else
-			c = lgetc(clp,cbo);	/* somewhere in middle	*/
+			c = lgetc(clp, cbo);	/* somewhere in middle	 */
 
 		/* Check for a matching character.  If still in a nested */
 		/* level, pop out of it and continue search.  This check */
@@ -108,17 +119,16 @@ static balance()
 		/* matches will work too.				 */
 		if (c == lbal) {
 			if (depth == 0) {
-				displaymatch(clp,cbo);
+				displaymatch(clp, cbo);
 				return (TRUE);
-			}
-			else
+			} else
 				depth--;
 		}
-		/* Check for another level of nesting.	*/
+		/* Check for another level of nesting.	 */
 		if (c == rbal)
 			depth++;
 	}
-	/*NOTREACHED*/
+	/* NOTREACHED */
 }
 
 
@@ -130,20 +140,21 @@ static balance()
  * sit there a while, then move back.
  */
 
-static VOID displaymatch(clp, cbo)
-register LINE *clp;
-register int  cbo;
+static          VOID
+displaymatch(clp, cbo)
+	register LINE  *clp;
+	register int    cbo;
 {
-	register LINE	*tlp;
-	register int	tbo;
-	register int	cp;
-	register int	bufo;
-	register int	c;
-	int		inwindow;
-	char		buf[NLINE];
+	register LINE  *tlp;
+	register int    tbo;
+	register int    cp;
+	register int    bufo;
+	register int    c;
+	int             inwindow;
+	char            buf[NLINE];
 
-	/* Figure out if matching char is in current window by	*/
-	/* searching from the top of the window to dot.		*/
+	/* Figure out if matching char is in current window by	 */
+	/* searching from the top of the window to dot.		 */
 
 	inwindow = FALSE;
 	for (tlp = curwp->w_linep; tlp != lforw(curwp->w_dotp); tlp = lforw(tlp))
@@ -154,36 +165,38 @@ register int  cbo;
 		tlp = curwp->w_dotp;	/* save current position */
 		tbo = curwp->w_doto;
 
-		curwp->w_dotp  = clp;	/* move to new position */
-		curwp->w_doto  = cbo;
+		curwp->w_dotp = clp;	/* move to new position */
+		curwp->w_doto = cbo;
 		curwp->w_flag |= WFMOVE;
 
-		update();		/* show match */
-		sleep(1);		/* wait a bit */
+		update();	/* show match */
+		sleep(1);	/* wait a bit */
 
-		curwp->w_dotp	= tlp;	/* return to old position */
-		curwp->w_doto	= tbo;
-		curwp->w_flag  |= WFMOVE;
+		curwp->w_dotp = tlp;	/* return to old position */
+		curwp->w_doto = tbo;
+		curwp->w_flag |= WFMOVE;
 		update();
-	}
-	else {	/* match not in this window so display line in echo area */
+	} else {		/* match not in this window so display line
+				 * in echo area */
 		bufo = 0;
-		for (cp = 0; cp < llength(clp); cp++) { /* expand tabs	*/
-			c = lgetc(clp,cp);
+		for (cp = 0; cp < llength(clp); cp++) {	/* expand tabs	 */
+			c = lgetc(clp, cp);
 			if (c != '\t'
 #ifdef	NOTAB
-				|| (curbp->b_flag & BFNOTAB)
+			    || (curbp->b_flag & BFNOTAB)
 #endif
-				) if(ISCTRL(c)) {
-				    buf[bufo++] = '^';
-				    buf[bufo++] = CCHR(c);
-				} else buf[bufo++] = c;
+				)
+				if (ISCTRL(c)) {
+					buf[bufo++] = '^';
+					buf[bufo++] = CCHR(c);
+				} else
+					buf[bufo++] = c;
 			else
 				do {
 					buf[bufo++] = ' ';
 				} while (bufo & 7);
 		}
 		buf[bufo++] = '\0';
-		ewprintf("Matches %s",buf);
+		ewprintf("Matches %s", buf);
 	}
 }

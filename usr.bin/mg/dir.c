@@ -8,14 +8,16 @@
 #include "def.h"
 
 #ifndef NO_DIR
-char	*wdir;
-static char cwd[NFILEN];
+char           *wdir;
+static char     cwd[NFILEN];
 
 /*
  * Initialize anything the directory management routines need
  */
+VOID
 dirinit()
 {
+
 	if (!(wdir = getcwd(cwd, sizeof(cwd))))
 		panic("Can't get current directory!");
 }
@@ -23,34 +25,38 @@ dirinit()
 /*
  * Change current working directory
  */
-/*ARGSUSED*/
+/* ARGSUSED */
+int
 changedir(f, n)
+	int    f, n;
 {
-	register int s;
-	char bufc[NPAT];
+	int    s;
+	char   bufc[NPAT];
 
-	if ((s=ereply("Change default directory: ", bufc, NPAT)) != TRUE)
-		return(s);
+	if ((s = ereply("Change default directory: ", bufc, NPAT)) != TRUE)
+		return (s);
 	if (bufc[0] == '\0')
 		(VOID) strcpy(bufc, wdir);
 	if (chdir(bufc) == -1) {
 		ewprintf("Can't change dir to %s", bufc);
-		return(FALSE);
+		return (FALSE);
 	} else {
 		if (!(wdir = getcwd(cwd, sizeof(cwd))))
 			panic("Can't get current directory!");
 		ewprintf("Current directory is now %s", wdir);
-		return(TRUE);
+		return (TRUE);
 	}
 }
 
 /*
  * Show current directory
  */
-/*ARGSUSED*/
+/* ARGSUSED */
+int
 showcwdir(f, n)
 {
+
 	ewprintf("Current directory: %s", wdir);
-	return(TRUE);
+	return (TRUE);
 }
 #endif

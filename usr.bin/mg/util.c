@@ -16,60 +16,62 @@
  * display; it does not truncate just because the screen does.
  * This is normally bound to "C-X =".
  */
-/*ARGSUSED*/
+/* ARGSUSED */
 showcpos(f, n)
 {
-	register LINE	*clp;
-	register long	nchar;
-	long		cchar;
-	register int	nline, row;
-	int		cline, cbyte;	/* Current line/char/byte */
-	int		ratio;
+	register LINE  *clp;
+	register long   nchar;
+	long            cchar;
+	register int    nline, row;
+	int             cline, cbyte;	/* Current line/char/byte */
+	int             ratio;
 
-	clp = lforw(curbp->b_linep);		/* Collect the data.	*/
+	clp = lforw(curbp->b_linep);	/* Collect the data.	 */
 	nchar = 0;
 	nline = 0;
 	for (;;) {
-		++nline;			/* Count this line	*/
+		++nline;	/* Count this line	 */
 		if (clp == curwp->w_dotp) {
-			cline = nline;		/* Mark line		*/
+			cline = nline;	/* Mark line		 */
 			cchar = nchar + curwp->w_doto;
 			if (curwp->w_doto == llength(clp))
 				cbyte = '\n';
 			else
 				cbyte = lgetc(clp, curwp->w_doto);
 		}
-		nchar += llength(clp);		/* Now count the chars	*/
+		nchar += llength(clp);	/* Now count the chars	 */
 		clp = lforw(clp);
-		if (clp == curbp->b_linep) break;
-		nchar++;			/* count the newline	*/
+		if (clp == curbp->b_linep)
+			break;
+		nchar++;	/* count the newline	 */
 	}
-	row = curwp->w_toprow + 1;		/* Determine row.	*/
+	row = curwp->w_toprow + 1;	/* Determine row.	 */
 	clp = curwp->w_linep;
-	while (clp!=curbp->b_linep && clp!=curwp->w_dotp) {
+	while (clp != curbp->b_linep && clp != curwp->w_dotp) {
 		++row;
 		clp = lforw(clp);
 	}
-	/*NOSTRICT*/
-	ratio = nchar ? (100L*cchar) / nchar : 100;
+	/* NOSTRICT */
+	ratio = nchar ? (100L * cchar) / nchar : 100;
 	ewprintf("Char: %c (0%o)  point=%ld(%d%%)  line=%d  row=%d  col=%d",
-		cbyte, cbyte, cchar, ratio, cline, row, getcolpos());
+		 cbyte, cbyte, cchar, ratio, cline, row, getcolpos());
 	return TRUE;
 }
 
-getcolpos() {
-	register int	col, i, c;
+getcolpos()
+{
+	register int    col, i, c;
 
-	col = 1;				/* Determine column.	*/
-	for (i=0; i<curwp->w_doto; ++i) {
+	col = 1;		/* Determine column.	 */
+	for (i = 0; i < curwp->w_doto; ++i) {
 		c = lgetc(curwp->w_dotp, i);
 		if (c == '\t'
 #ifdef	NOTAB
-			&& !(curbp->b_flag & BFNOTAB)
+		    && !(curbp->b_flag & BFNOTAB)
 #endif
 			) {
-		    col |= 0x07;
-		    ++col;
+			col |= 0x07;
+			++col;
 		} else if (ISCTRL(c) != FALSE)
 			++col;
 		++col;
@@ -86,24 +88,26 @@ getcolpos() {
  * to "C-T". This always works within a line, so
  * "WFEDIT" is good enough.
  */
-/*ARGSUSED*/
+/* ARGSUSED */
 twiddle(f, n)
 {
-	register LINE	*dotp;
-	register int	doto;
-	register int	cr;
-	VOID	 lchange();
+	register LINE  *dotp;
+	register int    doto;
+	register int    cr;
+	VOID            lchange();
 
 	dotp = curwp->w_dotp;
 	doto = curwp->w_doto;
-	if(doto==llength(dotp)) {
-		if(--doto<=0) return FALSE;
+	if (doto == llength(dotp)) {
+		if (--doto <= 0)
+			return FALSE;
 	} else {
-		if(doto==0) return FALSE;
+		if (doto == 0)
+			return FALSE;
 		++curwp->w_doto;
 	}
 	cr = lgetc(dotp, doto--);
-	lputc(dotp, doto+1, lgetc(dotp, doto));
+	lputc(dotp, doto + 1, lgetc(dotp, doto));
 	lputc(dotp, doto, cr);
 	lchange(WFEDIT);
 	return TRUE;
@@ -116,22 +120,22 @@ twiddle(f, n)
  * procerssors. They even handle the looping. Normally
  * this is bound to "C-O".
  */
-/*ARGSUSED*/
+/* ARGSUSED */
 openline(f, n)
 {
-	register int	i;
-	register int	s;
+	register int    i;
+	register int    s;
 
 	if (n < 0)
 		return FALSE;
 	if (n == 0)
 		return TRUE;
-	i = n;					/* Insert newlines.	*/
+	i = n;			/* Insert newlines.	 */
 	do {
 		s = lnewline();
-	} while (s==TRUE && --i);
-	if (s == TRUE)				/* Then back up overtop */
-		s = backchar(f | FFRAND, n);	/* of them all.		*/
+	} while (s == TRUE && --i);
+	if (s == TRUE)		/* Then back up overtop */
+		s = backchar(f | FFRAND, n);	/* of them all.		 */
 	return s;
 }
 
@@ -147,25 +151,26 @@ openline(f, n)
  * as critical if screen update were a lot
  * more efficient.
  */
-/*ARGSUSED*/
+/* ARGSUSED */
 newline(f, n)
 {
-	register LINE	*lp;
-	register int	s;
+	register LINE  *lp;
+	register int    s;
 
-	if (n < 0) return FALSE;
+	if (n < 0)
+		return FALSE;
 	while (n--) {
 		lp = curwp->w_dotp;
 #ifdef undef
 		if (llength(lp) == curwp->w_doto
-		&& lforw(lp) != curbp->b_linep
-		&& llength(lforw(lp)) == 0) {
-			if ((s=forwchar(FFRAND, 1)) != TRUE)
+		    && lforw(lp) != curbp->b_linep
+		    && llength(lforw(lp)) == 0) {
+			if ((s = forwchar(FFRAND, 1)) != TRUE)
 				return s;
 		} else
 #endif
-			if ((s=lnewline()) != TRUE)
-				return s;
+		if ((s = lnewline()) != TRUE)
+			return s;
 	}
 	return TRUE;
 }
@@ -180,56 +185,59 @@ newline(f, n)
  * blank lines after the line. Normally this command
  * is bound to "C-X C-O". Any argument is ignored.
  */
-/*ARGSUSED*/
+/* ARGSUSED */
 deblank(f, n)
 {
-	register LINE	*lp1;
-	register LINE	*lp2;
-	register RSIZE	nld;
+	register LINE  *lp1;
+	register LINE  *lp2;
+	register RSIZE  nld;
 
 	lp1 = curwp->w_dotp;
-	while (llength(lp1)==0 && (lp2=lback(lp1))!=curbp->b_linep)
+	while (llength(lp1) == 0 && (lp2 = lback(lp1)) != curbp->b_linep)
 		lp1 = lp2;
 	lp2 = lp1;
 	nld = (RSIZE) 0;
-	while ((lp2=lforw(lp2))!=curbp->b_linep && llength(lp2)==0)
+	while ((lp2 = lforw(lp2)) != curbp->b_linep && llength(lp2) == 0)
 		++nld;
 	if (nld == 0)
 		return (TRUE);
 	curwp->w_dotp = lforw(lp1);
 	curwp->w_doto = 0;
-	return ldelete((RSIZE)nld, KNONE);
+	return ldelete((RSIZE) nld, KNONE);
 }
 
 /*
  * Delete any whitespace around dot, then insert a space.
  */
-justone(f, n) {
+justone(f, n)
+{
 	(VOID) delwhite(f, n);
 	return linsert(1, ' ');
 }
 /*
  * Delete any whitespace around dot.
  */
-/*ARGSUSED*/
+/* ARGSUSED */
 delwhite(f, n)
 {
-	register int	col, c, s;
+	register int    col, c, s;
 
 	col = curwp->w_doto;
 	while (((c = lgetc(curwp->w_dotp, col)) == ' ' || c == '\t')
-			&& col < llength(curwp->w_dotp))
+	       && col < llength(curwp->w_dotp))
 		++col;
 	do {
 		if (curwp->w_doto == 0) {
 			s = FALSE;
 			break;
 		}
-		if ((s = backchar(FFRAND, 1)) != TRUE) break;
+		if ((s = backchar(FFRAND, 1)) != TRUE)
+			break;
 	} while ((c = lgetc(curwp->w_dotp, curwp->w_doto)) == ' ' || c == '\t');
 
-	if (s == TRUE) (VOID) forwchar(FFRAND, 1);
-	(VOID) ldelete((RSIZE)(col - curwp->w_doto), KNONE);
+	if (s == TRUE)
+		(VOID) forwchar(FFRAND, 1);
+	(VOID) ldelete((RSIZE) (col - curwp->w_doto), KNONE);
 	return TRUE;
 }
 /*
@@ -244,19 +252,20 @@ delwhite(f, n)
  * of the subcomands failed. Normally bound
  * to "C-J".
  */
-/*ARGSUSED*/
+/* ARGSUSED */
 indent(f, n)
 {
-	register int	nicol;
-	register int	c;
-	register int	i;
+	register int    nicol;
+	register int    c;
+	register int    i;
 
-	if (n < 0) return (FALSE);
+	if (n < 0)
+		return (FALSE);
 	while (n--) {
 		nicol = 0;
-		for (i=0; i<llength(curwp->w_dotp); ++i) {
+		for (i = 0; i < llength(curwp->w_dotp); ++i) {
 			c = lgetc(curwp->w_dotp, i);
-			if (c!=' ' && c!='\t')
+			if (c != ' ' && c != '\t')
 				break;
 			if (c == '\t')
 				nicol |= 0x07;
@@ -264,11 +273,11 @@ indent(f, n)
 		}
 		if (lnewline() == FALSE || ((
 #ifdef	NOTAB
-		    curbp->b_flag&BFNOTAB) ?
-			linsert(nicol, ' ') == FALSE : (
+					     curbp->b_flag & BFNOTAB) ?
+					    linsert(nicol, ' ') == FALSE : (
 #endif
-		    ((i=nicol/8)!=0 && linsert(i, '\t')==FALSE) ||
-		    ((i=nicol%8)!=0 && linsert(i,  ' ')==FALSE))))
+		      ((i = nicol / 8) != 0 && linsert(i, '\t') == FALSE) ||
+		       ((i = nicol % 8) != 0 && linsert(i, ' ') == FALSE))))
 			return FALSE;
 	}
 	return TRUE;
@@ -283,13 +292,13 @@ indent(f, n)
  * loss of text if typed with a big argument.
  * Normally bound to "C-D".
  */
-/*ARGSUSED*/
+/* ARGSUSED */
 forwdel(f, n)
 {
 	if (n < 0)
 		return backdel(f | FFRAND, -n);
-	if (f & FFARG) {			/* Really a kill.	*/
-		if ((lastflag&CFKILL) == 0)
+	if (f & FFARG) {	/* Really a kill.	 */
+		if ((lastflag & CFKILL) == 0)
 			kdelete();
 		thisflag |= CFKILL;
 	}
@@ -303,19 +312,19 @@ forwdel(f, n)
  * Like delete forward, this actually does a kill
  * if presented with an argument.
  */
-/*ARGSUSED*/
+/* ARGSUSED */
 backdel(f, n)
 {
-	register int	s;
+	register int    s;
 
 	if (n < 0)
 		return forwdel(f | FFRAND, -n);
-	if (f & FFARG) {			/* Really a kill.	*/
-		if ((lastflag&CFKILL) == 0)
+	if (f & FFARG) {	/* Really a kill.	 */
+		if ((lastflag & CFKILL) == 0)
 			kdelete();
 		thisflag |= CFKILL;
 	}
-	if ((s=backchar(f | FFRAND, n)) == TRUE)
+	if ((s = backchar(f | FFRAND, n)) == TRUE)
 		s = ldelete((RSIZE) n, (f & FFARG) ? KFORW : KNONE);
 	return s;
 }
@@ -331,38 +340,39 @@ backdel(f, n)
  * kills any text before dot on the current line,
  * then it kills back abs(arg) lines.
  */
-/*ARGSUSED*/
-killline(f, n) {
-	register RSIZE	chunk;
-	register LINE	*nextp;
-	register int	i, c;
-	VOID	 kdelete();
+/* ARGSUSED */
+killline(f, n)
+{
+	register RSIZE  chunk;
+	register LINE  *nextp;
+	register int    i, c;
+	VOID            kdelete();
 
-	if ((lastflag&CFKILL) == 0)		/* Clear kill buffer if */
-		kdelete();			/* last wasn't a kill.	*/
+	if ((lastflag & CFKILL) == 0)	/* Clear kill buffer if */
+		kdelete();	/* last wasn't a kill.	 */
 	thisflag |= CFKILL;
 	if (!(f & FFARG)) {
 		for (i = curwp->w_doto; i < llength(curwp->w_dotp); ++i)
 			if ((c = lgetc(curwp->w_dotp, i)) != ' ' && c != '\t')
 				break;
 		if (i == llength(curwp->w_dotp))
-			chunk = llength(curwp->w_dotp)-curwp->w_doto + 1;
+			chunk = llength(curwp->w_dotp) - curwp->w_doto + 1;
 		else {
-			chunk = llength(curwp->w_dotp)-curwp->w_doto;
+			chunk = llength(curwp->w_dotp) - curwp->w_doto;
 			if (chunk == 0)
 				chunk = 1;
 		}
 	} else if (n > 0) {
-		chunk = llength(curwp->w_dotp)-curwp->w_doto+1;
+		chunk = llength(curwp->w_dotp) - curwp->w_doto + 1;
 		nextp = lforw(curwp->w_dotp);
 		i = n;
 		while (--i) {
 			if (nextp == curbp->b_linep)
 				break;
-			chunk += llength(nextp)+1;
+			chunk += llength(nextp) + 1;
 			nextp = lforw(nextp);
 		}
-	} else {				/* n <= 0		*/
+	} else {		/* n <= 0		 */
 		chunk = curwp->w_doto;
 		curwp->w_doto = 0;
 		i = n;
@@ -371,14 +381,14 @@ killline(f, n) {
 				break;
 			curwp->w_dotp = lback(curwp->w_dotp);
 			curwp->w_flag |= WFMOVE;
-			chunk += llength(curwp->w_dotp)+1;
+			chunk += llength(curwp->w_dotp) + 1;
 		}
 	}
 	/*
 	 * KFORW here is a bug. Should be KBACK/KFORW, but we need to
 	 * rewrite the ldelete code (later)?
 	 */
-	return (ldelete(chunk,	KFORW));
+	return (ldelete(chunk, KFORW));
 }
 
 /*
@@ -396,21 +406,22 @@ killline(f, n) {
  * the window (nothing moves, because all of the new
  * text landed off screen).
  */
-/*ARGSUSED*/
+/* ARGSUSED */
 yank(f, n)
 {
-	register int	c;
-	register int	i;
-	register LINE	*lp;
-	register int	nline;
-	VOID	 isetmark();
+	register int    c;
+	register int    i;
+	register LINE  *lp;
+	register int    nline;
+	VOID            isetmark();
 
-	if (n < 0) return FALSE;
-	nline = 0;				/* Newline counting.	*/
+	if (n < 0)
+		return FALSE;
+	nline = 0;		/* Newline counting.	 */
 	while (n--) {
-		isetmark();			/* mark around last yank */
+		isetmark();	/* mark around last yank */
 		i = 0;
-		while ((c=kremove(i)) >= 0) {
+		while ((c = kremove(i)) >= 0) {
 			if (c == '\n') {
 				if (newline(FFRAND, 1) == FALSE)
 					return FALSE;
@@ -422,23 +433,25 @@ yank(f, n)
 			++i;
 		}
 	}
-	lp = curwp->w_linep;			/* Cosmetic adjustment	*/
-	if (curwp->w_dotp == lp) {		/* if offscreen insert. */
-		while (nline-- && lback(lp)!=curbp->b_linep)
+	lp = curwp->w_linep;	/* Cosmetic adjustment	 */
+	if (curwp->w_dotp == lp) {	/* if offscreen insert. */
+		while (nline-- && lback(lp) != curbp->b_linep)
 			lp = lback(lp);
-		curwp->w_linep = lp;		/* Adjust framing.	*/
+		curwp->w_linep = lp;	/* Adjust framing.	 */
 		curwp->w_flag |= WFHARD;
 	}
 	return TRUE;
 }
 
 #ifdef	NOTAB
-/*ARGSUSED*/
+/* ARGSUSED */
 space_to_tabstop(f, n)
-int f, n;
+	int             f, n;
 {
-    if(n<0) return FALSE;
-    if(n==0) return TRUE;
-    return linsert((n<<3) - (curwp->w_doto & 7), ' ');
+	if (n < 0)
+		return FALSE;
+	if (n == 0)
+		return TRUE;
+	return linsert((n << 3) - (curwp->w_doto & 7), ' ');
 }
 #endif

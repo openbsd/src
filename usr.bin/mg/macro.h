@@ -7,17 +7,17 @@
 
 #define MAXMACRO 256		/* maximum functs in a macro */
 
-EXTERN	int inmacro	INIT(FALSE);
-EXTERN	int macrodef	INIT(FALSE);
-EXTERN	int macrocount	INIT(0);
+EXTERN int inmacro INIT(FALSE);
+EXTERN int macrodef INIT(FALSE);
+EXTERN int macrocount INIT(0);
 
-EXTERN	union {
+EXTERN union {
 	PF	m_funct;
-	int	m_count;	/* for count-prefix	*/
-}	macro[MAXMACRO];
+	int	m_count;	/* for count-prefix	 */
+} macro[MAXMACRO];
 
-EXTERN	LINE *maclhead	INIT(NULL);
-EXTERN	LINE *maclcur;
+EXTERN LINE    *maclhead INIT(NULL);
+EXTERN LINE    *maclcur;
 
 #undef	EXTERN
 #undef	INIT

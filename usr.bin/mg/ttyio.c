@@ -28,19 +28,6 @@ struct	termios	newtty;
 int	nrow;				/* Terminal size, rows.		*/
 int	ncol;				/* Terminal size, columns.	*/
 
-/* XXX - move most of these to def.h? */
-void ttopen __P((void));
-int ttraw __P((void));
-void ttclose __P((void));
-int ttcooked __P((void));
-void ttputc __P((int));
-void ttflush __P((void));
-int ttgetc __P((void));
-void setttysize __P((void));
-int typeahead __P((void));
-void panic __P((char *));
-int ttwait __P((void));
-
 /*
  * This function gets called once, to set up the terminal.
  * On systems w/o TCSASOFT we turn off off flow control,
@@ -128,7 +115,7 @@ ttcooked()
  * Write character to the display.  Characters are buffered up,
  * to make things a little bit more efficient.
  */
-void
+int
 ttputc(c)
 	int c;
 {
@@ -136,6 +123,7 @@ ttputc(c)
 	if (nobuf >= NOBUF)
 		ttflush();
 	obuf[nobuf++] = c;
+	return(c);
 }
 
 /*
@@ -209,7 +197,7 @@ typeahead()
 /*
  * panic - just exit, as quickly as we can.
  */
-void
+VOID
 panic(s)
 	char *s;
 {

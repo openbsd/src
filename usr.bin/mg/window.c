@@ -13,11 +13,11 @@
  * If GOSREC is defined, with no argument it defaults to 1
  * and works like in Gosling.
  */
-/*ARGSUSED*/
+/* ARGSUSED */
 reposition(f, n)
 {
 #ifndef GOSREC
-	curwp->w_force = (f & FFARG) ? (n>=0 ? n+1 : n) : 0;
+	curwp->w_force = (f & FFARG) ? (n >= 0 ? n + 1 : n) : 0;
 #else
 	curwp->w_force = n;
 #endif
@@ -41,25 +41,25 @@ reposition(f, n)
  * the window bigger again, and send another command,
  * everything will get fixed!
  */
-/*ARGSUSED*/
+/* ARGSUSED */
 refresh(f, n)
 {
 	register MGWIN *wp;
-	register int	oldnrow;
-	register int	oldncol;
+	register int    oldnrow;
+	register int    oldncol;
 
 	oldnrow = nrow;
 	oldncol = ncol;
 	ttresize();
-	if (nrow!=oldnrow || ncol!=oldncol) {
-		wp = wheadp;			/* Find last.		*/
+	if (nrow != oldnrow || ncol != oldncol) {
+		wp = wheadp;	/* Find last.		 */
 		while (wp->w_wndp != NULL)
 			wp = wp->w_wndp;
-		if (nrow < wp->w_toprow+3) {	/* Check if too small.	*/
+		if (nrow < wp->w_toprow + 3) {	/* Check if too small.	 */
 			ewprintf("Display unusable");
 			return (FALSE);
 		}
-		wp->w_ntrows = nrow-wp->w_toprow-2;
+		wp->w_ntrows = nrow - wp->w_toprow - 2;
 		sgarbf = TRUE;
 		update();
 		ewprintf("New size %d by %d", nrow, ncol);
@@ -76,12 +76,12 @@ refresh(f, n)
  * nothing if there is only 1 window on
  * the screen.
  */
-/*ARGSUSED*/
+/* ARGSUSED */
 nextwind(f, n)
 {
 	register MGWIN *wp;
 
-	if ((wp=curwp->w_wndp) == NULL)
+	if ((wp = curwp->w_wndp) == NULL)
 		wp = wheadp;
 	curwp = wp;
 	curbp = wp->w_bufp;
@@ -97,7 +97,7 @@ nextwind(f, n)
  * although the command does not do a lot
  * if there is 1 window.
  */
-/*ARGSUSED*/
+/* ARGSUSED */
 prevwind(f, n)
 {
 	register MGWIN *wp1;
@@ -126,19 +126,19 @@ prevwind(f, n)
  * distruction of a window makes a buffer
  * become undisplayed.
  */
-/*ARGSUSED*/
+/* ARGSUSED */
 onlywind(f, n)
 {
 	register MGWIN *wp;
-	register LINE	*lp;
-	register int	i;
+	register LINE  *lp;
+	register int    i;
 
 	while (wheadp != curwp) {
 		wp = wheadp;
 		wheadp = wp->w_wndp;
 		if (--wp->w_bufp->b_nwnd == 0) {
-			wp->w_bufp->b_dotp  = wp->w_dotp;
-			wp->w_bufp->b_doto  = wp->w_doto;
+			wp->w_bufp->b_dotp = wp->w_dotp;
+			wp->w_bufp->b_doto = wp->w_doto;
 			wp->w_bufp->b_markp = wp->w_markp;
 			wp->w_bufp->b_marko = wp->w_marko;
 		}
@@ -148,23 +148,23 @@ onlywind(f, n)
 		wp = curwp->w_wndp;
 		curwp->w_wndp = wp->w_wndp;
 		if (--wp->w_bufp->b_nwnd == 0) {
-			wp->w_bufp->b_dotp  = wp->w_dotp;
-			wp->w_bufp->b_doto  = wp->w_doto;
+			wp->w_bufp->b_dotp = wp->w_dotp;
+			wp->w_bufp->b_doto = wp->w_doto;
 			wp->w_bufp->b_markp = wp->w_markp;
 			wp->w_bufp->b_marko = wp->w_marko;
 		}
 		free((char *) wp);
 	}
 	lp = curwp->w_linep;
-	i  = curwp->w_toprow;
-	while (i!=0 && lback(lp)!=curbp->b_linep) {
+	i = curwp->w_toprow;
+	while (i != 0 && lback(lp) != curbp->b_linep) {
 		--i;
 		lp = lback(lp);
 	}
 	curwp->w_toprow = 0;
-	curwp->w_ntrows = nrow-2;		/* 2 = mode, echo.	*/
-	curwp->w_linep	= lp;
-	curwp->w_flag  |= WFMODE|WFHARD;
+	curwp->w_ntrows = nrow - 2;	/* 2 = mode, echo.	 */
+	curwp->w_linep = lp;
+	curwp->w_flag |= WFMODE | WFHARD;
 	return TRUE;
 }
 
@@ -175,34 +175,34 @@ onlywind(f, n)
  * a "malloc" failure allocating the structure
  * for the new window.
  */
-/*ARGSUSED*/
+/* ARGSUSED */
 splitwind(f, n)
 {
 	register MGWIN *wp;
-	register LINE	*lp;
-	register int	ntru;
-	register int	ntrd;
-	int		ntrl;
-	MGWIN		*wp1, *wp2;
+	register LINE  *lp;
+	register int    ntru;
+	register int    ntrd;
+	int             ntrl;
+	MGWIN          *wp1, *wp2;
 
 	if (curwp->w_ntrows < 3) {
 		ewprintf("Cannot split a %d line window", curwp->w_ntrows);
 		return (FALSE);
 	}
-	if ((wp = (MGWIN *)malloc(sizeof(MGWIN))) == NULL) {
+	if ((wp = (MGWIN *) malloc(sizeof(MGWIN))) == NULL) {
 		ewprintf("Can't get %d", sizeof(MGWIN));
 		return (FALSE);
 	}
-	++curbp->b_nwnd;			/* Displayed twice.	*/
-	wp->w_bufp  = curbp;
-	wp->w_dotp  = curwp->w_dotp;
-	wp->w_doto  = curwp->w_doto;
+	++curbp->b_nwnd;	/* Displayed twice.	 */
+	wp->w_bufp = curbp;
+	wp->w_dotp = curwp->w_dotp;
+	wp->w_doto = curwp->w_doto;
 	wp->w_markp = curwp->w_markp;
 	wp->w_marko = curwp->w_marko;
-	wp->w_flag  = 0;
+	wp->w_flag = 0;
 	wp->w_force = 0;
-	ntru = (curwp->w_ntrows-1) / 2;		/* Upper size		*/
-	ntrl = (curwp->w_ntrows-1) - ntru;	/* Lower size		*/
+	ntru = (curwp->w_ntrows - 1) / 2;	/* Upper size		 */
+	ntrl = (curwp->w_ntrows - 1) - ntru;	/* Lower size		 */
 	lp = curwp->w_linep;
 	ntrd = 0;
 	while (lp != curwp->w_dotp) {
@@ -210,15 +210,15 @@ splitwind(f, n)
 		lp = lforw(lp);
 	}
 	lp = curwp->w_linep;
-	if (ntrd <= ntru) {			/* Old is upper window. */
-		if (ntrd == ntru)		/* Hit mode line.	*/
+	if (ntrd <= ntru) {	/* Old is upper window. */
+		if (ntrd == ntru)	/* Hit mode line.	 */
 			lp = lforw(lp);
 		curwp->w_ntrows = ntru;
 		wp->w_wndp = curwp->w_wndp;
 		curwp->w_wndp = wp;
-		wp->w_toprow = curwp->w_toprow+ntru+1;
+		wp->w_toprow = curwp->w_toprow + ntru + 1;
 		wp->w_ntrows = ntrl;
-	} else {				/* Old is lower window	*/
+	} else {		/* Old is lower window	 */
 		wp1 = NULL;
 		wp2 = wheadp;
 		while (wp2 != curwp) {
@@ -229,19 +229,19 @@ splitwind(f, n)
 			wheadp = wp;
 		else
 			wp1->w_wndp = wp;
-		wp->w_wndp   = curwp;
+		wp->w_wndp = curwp;
 		wp->w_toprow = curwp->w_toprow;
 		wp->w_ntrows = ntru;
-		++ntru;				/* Mode line.		*/
+		++ntru;		/* Mode line.		 */
 		curwp->w_toprow += ntru;
-		curwp->w_ntrows	 = ntrl;
+		curwp->w_ntrows = ntrl;
 		while (ntru--)
 			lp = lforw(lp);
 	}
-	curwp->w_linep = lp;			/* Adjust the top lines */
-	wp->w_linep = lp;			/* if necessary.	*/
-	curwp->w_flag |= WFMODE|WFHARD;
-	wp->w_flag |= WFMODE|WFHARD;
+	curwp->w_linep = lp;	/* Adjust the top lines */
+	wp->w_linep = lp;	/* if necessary.	 */
+	curwp->w_flag |= WFMODE | WFHARD;
+	wp->w_flag |= WFMODE | WFHARD;
 	return TRUE;
 }
 
@@ -253,12 +253,12 @@ splitwind(f, n)
  * hard work. You don't just set "force reframe"
  * because dot would move.
  */
-/*ARGSUSED*/
+/* ARGSUSED */
 enlargewind(f, n)
 {
 	register MGWIN *adjwp;
-	register LINE	*lp;
-	register int	i;
+	register LINE  *lp;
+	register int    i;
 
 	if (n < 0)
 		return shrinkwind(f, -n);
@@ -266,7 +266,7 @@ enlargewind(f, n)
 		ewprintf("Only one window");
 		return FALSE;
 	}
-	if ((adjwp=curwp->w_wndp) == NULL) {
+	if ((adjwp = curwp->w_wndp) == NULL) {
 		adjwp = wheadp;
 		while (adjwp->w_wndp != curwp)
 			adjwp = adjwp->w_wndp;
@@ -275,23 +275,23 @@ enlargewind(f, n)
 		ewprintf("Impossible change");
 		return FALSE;
 	}
-	if (curwp->w_wndp == adjwp) {		/* Shrink below.	*/
+	if (curwp->w_wndp == adjwp) {	/* Shrink below.	 */
 		lp = adjwp->w_linep;
-		for (i=0; i<n && lp!=adjwp->w_bufp->b_linep; ++i)
+		for (i = 0; i < n && lp != adjwp->w_bufp->b_linep; ++i)
 			lp = lforw(lp);
-		adjwp->w_linep	= lp;
+		adjwp->w_linep = lp;
 		adjwp->w_toprow += n;
-	} else {				/* Shrink above.	*/
+	} else {		/* Shrink above.	 */
 		lp = curwp->w_linep;
-		for (i=0; i<n && lback(lp)!=curbp->b_linep; ++i)
+		for (i = 0; i < n && lback(lp) != curbp->b_linep; ++i)
 			lp = lback(lp);
-		curwp->w_linep	= lp;
+		curwp->w_linep = lp;
 		curwp->w_toprow -= n;
 	}
 	curwp->w_ntrows += n;
 	adjwp->w_ntrows -= n;
-	curwp->w_flag |= WFMODE|WFHARD;
-	adjwp->w_flag |= WFMODE|WFHARD;
+	curwp->w_flag |= WFMODE | WFHARD;
+	adjwp->w_flag |= WFMODE | WFHARD;
 	return TRUE;
 }
 
@@ -304,8 +304,8 @@ enlargewind(f, n)
 shrinkwind(f, n)
 {
 	register MGWIN *adjwp;
-	register LINE	*lp;
-	register int	i;
+	register LINE  *lp;
+	register int    i;
 
 	if (n < 0)
 		return enlargewind(f, -n);
@@ -317,32 +317,32 @@ shrinkwind(f, n)
 	 * Bit of flakiness - KRANDOM means it was an internal call, and
 	 * to be trusted implicitly about sizes.
 	 */
-	if ( !(f & FFRAND) && curwp->w_ntrows <= n) {
+	if (!(f & FFRAND) && curwp->w_ntrows <= n) {
 		ewprintf("Impossible change");
 		return (FALSE);
 	}
-	if ((adjwp=curwp->w_wndp) == NULL) {
+	if ((adjwp = curwp->w_wndp) == NULL) {
 		adjwp = wheadp;
 		while (adjwp->w_wndp != curwp)
 			adjwp = adjwp->w_wndp;
 	}
-	if (curwp->w_wndp == adjwp) {		/* Grow below.		*/
+	if (curwp->w_wndp == adjwp) {	/* Grow below.		 */
 		lp = adjwp->w_linep;
-		for (i=0; i<n && lback(lp)!=adjwp->w_bufp->b_linep; ++i)
+		for (i = 0; i < n && lback(lp) != adjwp->w_bufp->b_linep; ++i)
 			lp = lback(lp);
-		adjwp->w_linep	= lp;
+		adjwp->w_linep = lp;
 		adjwp->w_toprow -= n;
-	} else {				/* Grow above.		*/
+	} else {		/* Grow above.		 */
 		lp = curwp->w_linep;
-		for (i=0; i<n && lp!=curbp->b_linep; ++i)
+		for (i = 0; i < n && lp != curbp->b_linep; ++i)
 			lp = lforw(lp);
-		curwp->w_linep	= lp;
+		curwp->w_linep = lp;
 		curwp->w_toprow += n;
 	}
 	curwp->w_ntrows -= n;
 	adjwp->w_ntrows += n;
-	curwp->w_flag |= WFMODE|WFHARD;
-	adjwp->w_flag |= WFMODE|WFHARD;
+	curwp->w_flag |= WFMODE | WFHARD;
+	adjwp->w_flag |= WFMODE | WFHARD;
 	return (TRUE);
 }
 
@@ -350,29 +350,31 @@ shrinkwind(f, n)
  * Delete current window. Call shrink-window to do the screen
  * updating, then throw away the window.
  */
-/*ARGSUSED*/
+/* ARGSUSED */
 delwind(f, n)
 {
 	register MGWIN *wp, *nwp;
 
-	wp = curwp;			/* Cheap...		*/
+	wp = curwp;		/* Cheap...		 */
 	/* shrinkwind returning false means only one window... */
 	if (shrinkwind(FFRAND, wp->w_ntrows + 1) == FALSE)
 		return FALSE;
 	if (--wp->w_bufp->b_nwnd == 0) {
-		wp->w_bufp->b_dotp  = wp->w_dotp;
-		wp->w_bufp->b_doto  = wp->w_doto;
+		wp->w_bufp->b_dotp = wp->w_dotp;
+		wp->w_bufp->b_doto = wp->w_doto;
 		wp->w_bufp->b_markp = wp->w_markp;
 		wp->w_bufp->b_marko = wp->w_marko;
 	}
 	/* since shrinkwind did't crap out, we know we have a second window */
-	if (wp == wheadp) wheadp = curwp = wp->w_wndp;
-	else if ((curwp = wp->w_wndp) == NULL) curwp = wheadp;
+	if (wp == wheadp)
+		wheadp = curwp = wp->w_wndp;
+	else if ((curwp = wp->w_wndp) == NULL)
+		curwp = wheadp;
 	curbp = curwp->w_bufp;
 	for (nwp = wheadp; nwp != NULL; nwp = nwp->w_wndp)
 		if (nwp->w_wndp == wp) {
 			nwp->w_wndp = wp->w_wndp;
-			break ;
+			break;
 		}
 	free((char *) wp);
 	return TRUE;
@@ -385,15 +387,16 @@ delwind(f, n)
  * might be better. Return a pointer, or
  * NULL on error.
  */
-MGWIN	*
-wpopup() {
+MGWIN *
+wpopup()
+{
 	register MGWIN *wp;
 
 	if (wheadp->w_wndp == NULL
-	&& splitwind(FFRAND, 0) == FALSE)
+	    && splitwind(FFRAND, 0) == FALSE)
 		return NULL;
-	wp = wheadp;				/* Find window to use	*/
-	while (wp!=NULL && wp==curwp)
+	wp = wheadp;		/* Find window to use	 */
+	while (wp != NULL && wp == curwp)
 		wp = wp->w_wndp;
 	return wp;
 }

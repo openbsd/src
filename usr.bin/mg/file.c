@@ -3,25 +3,25 @@
  */
 #include	"def.h"
 
-BUFFER	*findbuffer();
-VOID	makename();
-VOID	upmodes();
-static	char *itos();
+static char *itos	__P((char *, unsigned int));
 
 /*
  * insert a file into the current buffer. Real easy - just call the
  * insertfile routine with the file name.
  */
-/*ARGSUSED*/
+/* ARGSUSED */
+int
 fileinsert(f, n)
+	int    f, n;
 {
-	register int	s;
-	char		fname[NFILEN];
+	int    s;
+	char   fname[NFILEN];
 
-	if ((s=eread("Insert file: ", fname, NFILEN, EFNEW|EFCR|EFFILE)) != TRUE)
+	s = eread("Insert file: ", fname, NFILEN, EFNEW | EFCR | EFFILE);
+	if (s != TRUE)
 		return (s);
 	return insertfile(adjustname(fname), (char *) NULL, FALSE);
-						/* don't set buffer name */
+	/* don't set buffer name */
 }
 
 /*
@@ -32,22 +32,27 @@ fileinsert(f, n)
  * the file, create a new buffer, read in the
  * text, and switch to the new buffer.
  */
-/*ARGSUSED*/
+/* ARGSUSED */
+int
 filevisit(f, n)
+	int     f, n;
 {
-	register BUFFER *bp;
-	int	s;
-	char	fname[NFILEN];
-	char	*adjf;
+	BUFFER *bp;
+	int     s;
+	char    fname[NFILEN];
+	char   *adjf;
 
-	if ((s=eread("Find file: ", fname, NFILEN, EFNEW|EFCR|EFFILE)) != TRUE)
+	s = eread("Find file: ", fname, NFILEN, EFNEW | EFCR | EFFILE);
+	if (s != TRUE)
 		return s;
 	adjf = adjustname(fname);
-	if ((bp = findbuffer(adjf)) == NULL) return FALSE;
+	if ((bp = findbuffer(adjf)) == NULL)
+		return FALSE;
 	curbp = bp;
-	if (showbuffer(bp, curwp, WFHARD) != TRUE) return FALSE;
+	if (showbuffer(bp, curwp, WFHARD) != TRUE)
+		return FALSE;
 	if (bp->b_fname[0] == 0)
-		return readin(adjf);		/* Read it in.		*/
+		return readin(adjf);	/* Read it in.		 */
 	return TRUE;
 }
 
@@ -55,25 +60,29 @@ filevisit(f, n)
  * Pop to a file in the other window. Same as last function, just
  * popbuf instead of showbuffer.
  */
-/*ARGSUSED*/
+/* ARGSUSED */
+int
 poptofile(f, n)
+	int     f, n;
 {
-	register BUFFER *bp;
-	register MGWIN *wp;
-	int	s;
-	char	fname[NFILEN];
-	char	*adjf;
+	BUFFER *bp;
+	MGWIN  *wp;
+	int     s;
+	char    fname[NFILEN];
+	char   *adjf;
 
-	if ((s=eread("Find file in other window: ", fname, NFILEN,
-		     EFNEW|EFCR|EFFILE)) != TRUE)
+	if ((s = eread("Find file in other window: ", fname, NFILEN,
+		       EFNEW | EFCR | EFFILE)) != TRUE)
 		return s;
 	adjf = adjustname(fname);
-	if ((bp = findbuffer(adjf)) == NULL) return FALSE;
-	if ((wp = popbuf(bp)) == NULL) return FALSE;
+	if ((bp = findbuffer(adjf)) == NULL)
+		return FALSE;
+	if ((wp = popbuf(bp)) == NULL)
+		return FALSE;
 	curbp = bp;
 	curwp = wp;
 	if (bp->b_fname[0] == 0)
-		return readin(adjf);		/* Read it in.		*/
+		return readin(adjf);	/* Read it in.		 */
 	return TRUE;
 }
 
@@ -83,21 +92,21 @@ poptofile(f, n)
  */
 BUFFER *
 findbuffer(fname)
-char *fname;
+	char           *fname;
 {
-	register BUFFER *bp;
-	char	bname[NBUFN], *cp;
-	unsigned count = 1;
+	BUFFER         *bp;
+	char            bname[NBUFN], *cp;
+	unsigned int    count = 1;
 
-	for (bp=bheadp; bp!=NULL; bp=bp->b_bufp) {
+	for (bp = bheadp; bp != NULL; bp = bp->b_bufp) {
 		if (fncmp(bp->b_fname, fname) == 0)
 			return bp;
 	}
-	makename(bname, fname);			/* New buffer name.	*/
+	makename(bname, fname);	/* New buffer name.	 */
 	cp = bname + strlen(bname);
-	while(bfind(bname, FALSE) != NULL) {
-		*cp = '<';		/* add "<count>" to then name	*/
-		(VOID) strcpy(itos(cp, ++count)+1, ">");
+	while (bfind(bname, FALSE) != NULL) {
+		*cp = '<';	/* add "<count>" to then name	 */
+		(VOID) strcpy(itos(cp, ++count) + 1, ">");
 	}
 	return bfind(bname, TRUE);
 }
@@ -106,12 +115,14 @@ char *fname;
  * Put the decimal representation of num into a buffer.  Hacked to be
  * faster, smaller, and less general.
  */
-static char *itos(bufp, num)
-char *bufp;
-unsigned num;
+static char *
+itos(bufp, num)
+	char           *bufp;
+	unsigned int    num;
 {
+
 	if (num >= 10) {
-		bufp = itos(bufp, num/10);
+		bufp = itos(bufp, num / 10);
 		num %= 10;
 	}
 	*++bufp = '0' + num;
@@ -124,18 +135,21 @@ unsigned num;
  * for unsaved changes. This is called by the "read" command, the
  * "visit" command, and the mainline (for "uemacs file").
  */
-readin(fname) char *fname; {
-	register int		status;
-	register MGWIN		*wp;
+int
+readin(fname)
+	char  *fname;
+{
+	int    status;
+	MGWIN *wp;
 
-	if (bclear(curbp) != TRUE)		/* Might be old.	*/
+	if (bclear(curbp) != TRUE)	/* Might be old.	 */
 		return TRUE;
-	status = insertfile(fname, fname, TRUE) ;
-	curbp->b_flag &= ~BFCHG;		/* No change.		*/
-	for (wp=wheadp; wp!=NULL; wp=wp->w_wndp) {
+	status = insertfile(fname, fname, TRUE);
+	curbp->b_flag &= ~BFCHG;/* No change.		 */
+	for (wp = wheadp; wp != NULL; wp = wp->w_wndp) {
 		if (wp->w_bufp == curbp) {
-			wp->w_dotp  = wp->w_linep = lforw(curbp->b_linep);
-			wp->w_doto  = 0;
+			wp->w_dotp = wp->w_linep = lforw(curbp->b_linep);
+			wp->w_doto = 0;
 			wp->w_markp = NULL;
 			wp->w_marko = 0;
 		}
@@ -160,97 +174,105 @@ readin(fname) char *fname; {
  * read in, but not on a new file (you don't need to make a backup
  * copy of nothing).
  */
-static char *line = NULL;
-static int linesize = 0;
+static char    *line = NULL;
+static int      linesize = 0;
 
-insertfile(fname, newname, needinfo) char fname[], newname[]; {
-	register LINE	*lp1;
-	register LINE	*lp2;
-	register MGWIN *wp;
-	int		nbytes;
-	LINE		*olp;			/* Line we started at */
-	int		opos;			/* and offset into it */
-	int		s, nline;
-	BUFFER		*bp;
+int
+insertfile(fname, newname, needinfo)
+	char   *fname, *newname;
+	int     needinfo;
+{
+	LINE   *lp1;
+	LINE   *lp2;
+	MGWIN  *wp;
+	int     nbytes;
+	LINE   *olp;	/* Line we started at */
+	int     opos;	/* and offset into it */
+	int     s, nline;
+	BUFFER *bp;
 
 	if (line == NULL) {
 		line = malloc(NLINE);
 		linesize = NLINE;
 	}
-	bp = curbp;				/* Cheap.		*/
+	bp = curbp;		/* Cheap.		 */
 	if (newname != (char *) NULL)
 		(VOID) strcpy(bp->b_fname, newname);
-	/* Hard file open.	*/
-	if ((s=ffropen(fname, needinfo ? bp : (BUFFER *) NULL)) == FIOERR)
+	/* Hard file open.	 */
+	if ((s = ffropen(fname, needinfo ? bp : (BUFFER *) NULL)) == FIOERR)
 		goto out;
-	if (s == FIOFNF) {			/* File not found.	*/
+	if (s == FIOFNF) {	/* File not found.	 */
 		if (newname != NULL)
 			ewprintf("(New file)");
-		else	ewprintf("(File not found)");
+		else
+			ewprintf("(File not found)");
 		goto out;
 	}
 	opos = curwp->w_doto;
 	/* Open a new line, at point, and start inserting after it */
 	(VOID) lnewline();
 	olp = lback(curwp->w_dotp);
-	if(olp == curbp->b_linep) {
+	if (olp == curbp->b_linep) {
 		/* if at end of buffer, create a line to insert before */
 		(VOID) lnewline();
 		curwp->w_dotp = lback(curwp->w_dotp);
 	}
-	nline = 0;			/* Don't count fake line at end */
-	while ((s=ffgetline(line, linesize, &nbytes)) != FIOERR) {
+	nline = 0;		/* Don't count fake line at end */
+	while ((s = ffgetline(line, linesize, &nbytes)) != FIOERR) {
 doneread:
-	    switch(s) {
-	    case FIOSUC:
-		++nline;
-		/* and continue */
-	    case FIOEOF:	/* the last line of the file		*/
-		if ((lp1=lalloc(nbytes)) == NULL) {
-			s = FIOERR;		/* Keep message on the	*/
-			goto endoffile;		/* display.		*/
-		}
-		bcopy(line, &ltext(lp1)[0], nbytes);
-		lp2 = lback(curwp->w_dotp);
-		lp2->l_fp = lp1;
-		lp1->l_fp = curwp->w_dotp;
-		lp1->l_bp = lp2;
-		curwp->w_dotp->l_bp = lp1;
-		if(s==FIOEOF) goto endoffile;
-		break;
-	    case FIOLONG: {	/* a line to long to fit in our buffer	*/
-		    char *cp;
-		    int newsize;
+		switch (s) {
+		case FIOSUC:
+			++nline;
+			/* and continue */
+		case FIOEOF:	/* the last line of the file		 */
+			if ((lp1 = lalloc(nbytes)) == NULL) {
+				s = FIOERR;	/* Keep message on the	 */
+				goto endoffile;	/* display.		 */
+			}
+			bcopy(line, &ltext(lp1)[0], nbytes);
+			lp2 = lback(curwp->w_dotp);
+			lp2->l_fp = lp1;
+			lp1->l_fp = curwp->w_dotp;
+			lp1->l_bp = lp2;
+			curwp->w_dotp->l_bp = lp1;
+			if (s == FIOEOF)
+				goto endoffile;
+			break;
+		case FIOLONG:{	/* a line too long to fit in our buffer	 */
+				char           *cp;
+				int             newsize;
 
-		    newsize = linesize * 2;
-		    if(newsize < 0 || 
-		       (cp = malloc((unsigned)newsize)) == NULL) {
-			    ewprintf("Could not allocate %d bytes",
-				    newsize);
-			    s = FIOERR;
-			    goto endoffile;
-		    }
-		    bcopy(line, cp, linesize);
-		    free(line);
-		    line = cp;
-		    s=ffgetline(line+linesize, linesize, &nbytes);
-		    nbytes += linesize;
-		    linesize = newsize;
-		    if (s == FIOERR)
-			goto endoffile;
-		    goto doneread;
+				newsize = linesize * 2;
+				if (newsize < 0 ||
+				(cp = malloc((unsigned) newsize)) == NULL) {
+					ewprintf("Could not allocate %d bytes",
+						 newsize);
+					s = FIOERR;
+					goto endoffile;
+				}
+				bcopy(line, cp, linesize);
+				free(line);
+				line = cp;
+				s = ffgetline(line + linesize, linesize, &nbytes);
+				nbytes += linesize;
+				linesize = newsize;
+				if (s == FIOERR)
+					goto endoffile;
+				goto doneread;
+			}
+		default:
+			ewprintf("Unknown code %d reading file", s);
+			s = FIOERR;
+			break;
 		}
-	    default:
-		ewprintf("Unknown code %d reading file", s);
-		s = FIOERR;
-		break;
-	    }
 	}
 endoffile:
-	(VOID) ffclose((BUFFER *) NULL);	/* Ignore errors.	*/
-	if (s==FIOEOF) {			/* Don't zap an error.	*/
-		if (nline == 1) ewprintf("(Read 1 line)");
-		else		ewprintf("(Read %d lines)", nline);
+	(VOID) ffclose((BUFFER *) NULL);	/* Ignore errors.	 */
+	if (s == FIOEOF) {	/* Don't zap an error.	 */
+		if (nline == 1)
+			ewprintf("(Read 1 line)");
+		else
+			ewprintf("(Read %d lines)", nline);
 	}
 	/* Set mark at the end of the text */
 	curwp->w_dotp = curwp->w_markp = lback(curwp->w_dotp);
@@ -258,38 +280,44 @@ endoffile:
 	(VOID) ldelnewline();
 	curwp->w_dotp = olp;
 	curwp->w_doto = opos;
-	if(olp == curbp->b_linep) curwp->w_dotp = lforw(olp);
+	if (olp == curbp->b_linep)
+		curwp->w_dotp = lforw(olp);
 #ifndef NO_BACKUP
 	if (newname != NULL)
-		bp->b_flag |= BFCHG | BFBAK;	/* Need a backup.	*/
-	else	bp->b_flag |= BFCHG;
+		bp->b_flag |= BFCHG | BFBAK;	/* Need a backup.	 */
+	else
+		bp->b_flag |= BFCHG;
 #else
 	bp->b_flag |= BFCHG;
 #endif
-	/* if the insert was at the end of buffer, set lp1 to the end of
-	 * buffer line, and lp2 to the beginning of the newly inserted
-	 * text.  (Otherwise lp2 is set to NULL.)  This is
-	 * used below to set pointers in other windows correctly if they
-	 * are also at the end of buffer.
+	/*
+	 * if the insert was at the end of buffer, set lp1 to the end of
+	 * buffer line, and lp2 to the beginning of the newly inserted text.
+	 * (Otherwise lp2 is set to NULL.)  This is used below to set
+	 * pointers in other windows correctly if they are also at the end of
+	 * buffer.
 	 */
 	lp1 = bp->b_linep;
 	if (curwp->w_markp == lp1) {
 		lp2 = curwp->w_dotp;
 	} else {
-		(VOID) ldelnewline();		/* delete extranious newline */
+		(VOID) ldelnewline();	/* delete extranious newline */
 out:		lp2 = NULL;
 	}
-	for (wp=wheadp; wp!=NULL; wp=wp->w_wndp) {
+	for (wp = wheadp; wp != NULL; wp = wp->w_wndp) {
 		if (wp->w_bufp == curbp) {
-			wp->w_flag |= WFMODE|WFEDIT;
+			wp->w_flag |= WFMODE | WFEDIT;
 			if (wp != curwp && lp2 != NULL) {
-				if (wp->w_dotp == lp1)	wp->w_dotp  = lp2;
-				if (wp->w_markp == lp1) wp->w_markp = lp2;
-				if (wp->w_linep == lp1) wp->w_linep = lp2;
+				if (wp->w_dotp == lp1)
+					wp->w_dotp = lp2;
+				if (wp->w_markp == lp1)
+					wp->w_markp = lp2;
+				if (wp->w_linep == lp1)
+					wp->w_linep = lp2;
 			}
 		}
 	}
-	return s != FIOERR;			/* False if error.	*/
+	return s != FIOERR;	/* False if error.	 */
 }
 
 /*
@@ -301,27 +329,30 @@ out:		lp2 = NULL;
  * BDC3		optional right scan delimiter.
  */
 VOID
-makename(bname, fname) char bname[]; char fname[]; {
-	register char	*cp1;
-	register char	*cp2;
+makename(bname, fname)
+	char  *bname;
+	char  *fname;
+{
+	char  *cp1;
+	char  *cp2;
 
 	cp1 = &fname[0];
 	while (*cp1 != 0)
 		++cp1;
 	--cp1;			/* insure at least 1 character ! */
 #ifdef	BDC2
-	while (cp1!=&fname[0] && cp1[-1]!=BDC1 && cp1[-1]!=BDC2)
+	while (cp1 != &fname[0] && cp1[-1] != BDC1 && cp1[-1] != BDC2)
 		--cp1;
 #else
-	while (cp1!=&fname[0] && cp1[-1]!=BDC1)
+	while (cp1 != &fname[0] && cp1[-1] != BDC1)
 		--cp1;
 #endif
 	cp2 = &bname[0];
 #ifdef	BDC3
-	while (cp2!=&bname[NBUFN-1] && *cp1!=0 && *cp1!=BDC3)
+	while (cp2 != &bname[NBUFN - 1] && *cp1 != 0 && *cp1 != BDC3)
 		*cp2++ = *cp1++;
 #else
-	while (cp2!=&bname[NBUFN-1] && *cp1!=0)
+	while (cp2 != &bname[NBUFN - 1] && *cp1 != 0)
 		*cp2++ = *cp1++;
 #endif
 	*cp2 = 0;
@@ -336,20 +367,22 @@ makename(bname, fname) char bname[]; char fname[]; {
  * is more compatable with Gosling EMACS than
  * with ITS EMACS.
  */
-/*ARGSUSED*/
+/* ARGSUSED */
+int
 filewrite(f, n)
+	int    f, n;
 {
-	register int	s;
-	char		fname[NFILEN];
-	char		*adjfname;
+	int    s;
+	char   fname[NFILEN];
+	char  *adjfname;
 
-	if ((s=eread("Write file: ", fname, NFILEN,
-		      EFNEW|EFCR|EFFILE)) != TRUE)
+	if ((s = eread("Write file: ", fname, NFILEN,
+		       EFNEW | EFCR | EFFILE)) != TRUE)
 		return (s);
 	adjfname = adjustname(fname);
 	/* old attributes are no longer current */
 	bzero(&curbp->b_fi, sizeof(curbp->b_fi));
-	if ((s=writeout(curbp, adjfname)) == TRUE) {
+	if ((s = writeout(curbp, adjfname)) == TRUE) {
 		(VOID) strcpy(curbp->b_fname, adjfname);
 #ifndef NO_BACKUP
 		curbp->b_flag &= ~(BFBAK | BFCHG);
@@ -369,10 +402,11 @@ filewrite(f, n)
 #ifndef	MAKEBACKUP
 #define	MAKEBACKUP TRUE
 #endif
-static int	makebackup = MAKEBACKUP;
+static int      makebackup = MAKEBACKUP;
 #endif
 
-/*ARGSUSED*/
+/* ARGSUSED */
+int
 filesave(f, n)
 {
 	return buffsave(curbp);
@@ -387,28 +421,31 @@ filesave(f, n)
  * Allow user to select whether or not to make backup files
  * by looking at the value of makebackup.
  */
-buffsave(bp) BUFFER *bp; {
-	register int	s;
+int
+buffsave(bp)
+	BUFFER *bp;
+{
+	int     s;
 
-	if ((bp->b_flag&BFCHG) == 0)	{	/* Return, no changes.	*/
+	if ((bp->b_flag & BFCHG) == 0) {	/* Return, no changes.	 */
 		ewprintf("(No changes need to be saved)");
 		return TRUE;
 	}
-	if (bp->b_fname[0] == '\0') {		/* Must have a name.	*/
+	if (bp->b_fname[0] == '\0') {	/* Must have a name.	 */
 		ewprintf("No file name");
 		return (FALSE);
 	}
 #ifndef NO_BACKUP
-	if (makebackup && (bp->b_flag&BFBAK)) {
+	if (makebackup && (bp->b_flag & BFBAK)) {
 		s = fbackupfile(bp->b_fname);
-		if (s == ABORT)			/* Hard error.		*/
+		if (s == ABORT)	/* Hard error.		 */
 			return FALSE;
-		if (s == FALSE			/* Softer error.	*/
-		&& (s=eyesno("Backup error, save anyway")) != TRUE)
+		if (s == FALSE	/* Softer error.	 */
+		    && (s = eyesno("Backup error, save anyway")) != TRUE)
 			return s;
 	}
 #endif
-	if ((s=writeout(bp, bp->b_fname)) == TRUE) {
+	if ((s = writeout(bp, bp->b_fname)) == TRUE) {
 #ifndef NO_BACKUP
 		bp->b_flag &= ~(BFCHG | BFBAK);
 #else
@@ -420,19 +457,22 @@ buffsave(bp) BUFFER *bp; {
 }
 
 #ifndef NO_BACKUP
-/* Since we don't have variables (we probably should)
- * this is a command processor for changing the value of
- * the make backup flag.  If no argument is given,
- * sets makebackup to true, so backups are made.  If
- * an argument is given, no backup files are made when
- * saving a new version of a file. Only used when BACKUP
- * is #defined.
+/*
+ * Since we don't have variables (we probably should) this is a command
+ * processor for changing the value of the make backup flag.  If no argument
+ * is given, sets makebackup to true, so backups are made.  If an argument is
+ * given, no backup files are made when saving a new version of a file. Only
+ * used when BACKUP is #defined.
  */
-/*ARGSUSED*/
+/* ARGSUSED */
+int
 makebkfile(f, n)
 {
-	if(f & FFARG) makebackup = n > 0;
-	else makebackup = !makebackup;
+
+	if (f & FFARG)
+		makebackup = n > 0;
+	else
+		makebackup = !makebackup;
 	ewprintf("Backup files %sabled", makebackup ? "en" : "dis");
 	return TRUE;
 }
@@ -454,18 +494,22 @@ makebkfile(f, n)
  * in the "fileio.c" package. Most of the grief
  * is checking of some sort.
  */
-writeout(bp, fn) register BUFFER *bp; char *fn; {
-	register int	s;
+int
+writeout(bp, fn)
+	BUFFER *bp;
+	char   *fn;
+{
+	int     s;
 
-	if ((s=ffwopen(fn,bp)) != FIOSUC)	/* Open writes message. */
+	if ((s = ffwopen(fn, bp)) != FIOSUC)	/* Open writes message. */
 		return (FALSE);
 	s = ffputbuf(bp);
-	if (s == FIOSUC) {			/* No write error.	*/
+	if (s == FIOSUC) {	/* No write error.	 */
 		s = ffclose(bp);
-		if (s==FIOSUC)
+		if (s == FIOSUC)
 			ewprintf("Wrote %s", fn);
-	} else					/* Ignore close error	*/
-		(VOID) ffclose(bp);		/* if a write error.	*/
+	} else			/* Ignore close error	 */
+		(VOID) ffclose(bp);	/* if a write error.	 */
 	return s == FIOSUC;
 }
 
@@ -474,9 +518,12 @@ writeout(bp, fn) register BUFFER *bp; char *fn; {
  * mode line updated.
  */
 VOID
-upmodes(bp) register BUFFER *bp; {
-	register MGWIN *wp;
+upmodes(bp)
+	BUFFER *bp;
+{
+	MGWIN  *wp;
 
 	for (wp = wheadp; wp != NULL; wp = wp->w_wndp)
-		if (bp == NULL || curwp->w_bufp == bp) wp->w_flag |= WFMODE;
+		if (bp == NULL || curwp->w_bufp == bp)
+			wp->w_flag |= WFMODE;
 }

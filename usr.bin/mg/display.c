@@ -23,8 +23,8 @@
  */
 /* These defines really belong in sysdef.h */
 #ifndef XCHAR
-#  define	XCHAR	int
-#  define	XSHORT	int
+#define	XCHAR	int
+#define	XSHORT	int
 #endif
 
 #ifdef	STANDOUT_GLITCH
@@ -37,17 +37,17 @@
  * the longest line possible. Only some of this is
  * used if "ncol" isn't the same as "NCOL".
  */
-typedef struct	{
-	short	v_hash;			/* Hash code, for compares.	*/
-	short	v_flag;			/* Flag word.			*/
-	short	v_color;		/* Color of the line.		*/
-	XSHORT	v_cost;			/* Cost of display.		*/
-	char	v_text[NCOL];		/* The actual characters.	*/
-}	VIDEO;
+typedef struct {
+	short           v_hash;		/* Hash code, for compares.	 */
+	short           v_flag;		/* Flag word.			 */
+	short           v_color;	/* Color of the line.		 */
+	XSHORT          v_cost;		/* Cost of display.		 */
+	char            v_text[NCOL];	/* The actual characters.	 */
+} VIDEO;
 
-#define VFCHG	0x0001			/* Changed.			*/
-#define VFHBAD	0x0002			/* Hash and cost are bad.	*/
-#define VFEXT	0x0004			/* extended line (beond ncol)	*/
+#define VFCHG	0x0001			/* Changed.			 */
+#define VFHBAD	0x0002			/* Hash and cost are bad.	 */
+#define VFEXT	0x0004			/* extended line (beond ncol)	 */
 
 /*
  * SCORE structures hold the optimal
@@ -57,45 +57,42 @@ typedef struct	{
  * fields can be "char", and the score a "short", but
  * this makes the code worse on the VAX.
  */
-typedef struct	{
-	XCHAR	s_itrace;		/* "i" index for track back.	*/
-	XCHAR	s_jtrace;		/* "j" index for trace back.	*/
-	XSHORT	s_cost;			/* Display cost.		*/
-}	SCORE;
+typedef struct {
+	XCHAR           s_itrace;	/* "i" index for track back.	 */
+	XCHAR           s_jtrace;	/* "j" index for trace back.	 */
+	XSHORT          s_cost;		/* Display cost.		 */
+} SCORE;
 
-int	sgarbf	= TRUE;			/* TRUE if screen is garbage.	*/
-int	vtrow	= 0;			/* Virtual cursor row.		*/
-int	vtcol	= 0;			/* Virtual cursor column.	*/
-int	tthue	= CNONE;		/* Current color.		*/
-int	ttrow	= HUGE;			/* Physical cursor row.		*/
-int	ttcol	= HUGE;			/* Physical cursor column.	*/
-int	tttop	= HUGE;			/* Top of scroll region.	*/
-int	ttbot	= HUGE;			/* Bottom of scroll region.	*/
-int	lbound	= 0;			/* leftmost bound of the current line */
-					/* being displayed		*/
 
-VIDEO	*vscreen[NROW-1];		/* Edge vector, virtual.	*/
-VIDEO	*pscreen[NROW-1];		/* Edge vector, physical.	*/
-VIDEO	video[2*(NROW-1)];		/* Actual screen data.		*/
-VIDEO	blanks;				/* Blank line image.		*/
+VOID     vtmove         __P((int, int));
+VOID     vtputc         __P((int));
+VOID     vtpute         __P((int));
+int      vtputs         __P((char *));
+VOID     vteeol         __P((void));
+VOID     updext         __P((int, int));
+VOID     modeline       __P((MGWIN *));
+VOID     setscores      __P((int, int));
+VOID     traceback      __P((int, int, int, int));
+VOID     ucopy          __P((VIDEO *, VIDEO *));
+VOID     uline          __P((int, VIDEO *, VIDEO *));
+VOID     hash           __P((VIDEO *));
 
-/*
- * Some predeclerations to make ANSI compilers happy
- */
-VOID	vtinit();
-VOID	vttidy();
-VOID	vtmove();
-VOID	vtputc();
-VOID	vtpute();
-VOID	vteeol();
-VOID	update();
-VOID	updext();
-VOID	ucopy();
-VOID	uline();
-VOID	modeline();
-VOID	hash();
-VOID	setscores();
-VOID	traceback();
+
+int             sgarbf = TRUE;		/* TRUE if screen is garbage.	 */
+int             vtrow = 0;		/* Virtual cursor row.		 */
+int             vtcol = 0;		/* Virtual cursor column.	 */
+int             tthue = CNONE;		/* Current color.		 */
+int             ttrow = HUGE;		/* Physical cursor row.		 */
+int             ttcol = HUGE;		/* Physical cursor column.	 */
+int             tttop = HUGE;		/* Top of scroll region.	 */
+int             ttbot = HUGE;		/* Bottom of scroll region.	 */
+int             lbound = 0;		/* leftmost bound of the current line */
+					/* being displayed		 */
+
+VIDEO          *vscreen[NROW - 1];	/* Edge vector, virtual.	 */
+VIDEO          *pscreen[NROW - 1];	/* Edge vector, physical.	 */
+VIDEO           video[2 * (NROW - 1)];	/* Actual screen data.		 */
+VIDEO           blanks;			/* Blank line image.		 */
 
 #ifdef	GOSLING
 /*
@@ -105,7 +102,7 @@ VOID	traceback();
  * It would be "SCORE	score[NROW][NROW]" in old speak.
  * Look at "setscores" to understand what is up.
  */
-SCORE	score[NROW*NROW];
+SCORE score[NROW * NROW];
 #endif
 
 /*
@@ -120,21 +117,22 @@ SCORE	score[NROW*NROW];
  * on the first call to redisplay.
  */
 VOID
-vtinit() {
-	register VIDEO	*vp;
-	register int	i;
+vtinit()
+{
+	VIDEO *vp;
+	int    i;
 
 	ttopen();
 	ttinit();
 	vp = &video[0];
-	for (i=0; i<NROW-1; ++i) {
+	for (i = 0; i < NROW - 1; ++i) {
 		vscreen[i] = vp;
 		++vp;
 		pscreen[i] = vp;
 		++vp;
 	}
 	blanks.v_color = CTEXT;
-	for (i=0; i<NCOL; ++i)
+	for (i = 0; i < NCOL; ++i)
 		blanks.v_text[i] = ' ';
 }
 
@@ -146,10 +144,12 @@ vtinit() {
  * close the terminal channel.
  */
 VOID
-vttidy() {
+vttidy()
+{
+
 	ttcolor(CTEXT);
-	ttnowindow();				/* No scroll window.	*/
-	ttmove(nrow-1, 0);			/* Echo line.		*/
+	ttnowindow();		/* No scroll window.	 */
+	ttmove(nrow - 1, 0);	/* Echo line.		 */
 	tteeol();
 	tttidy();
 	ttflush();
@@ -164,7 +164,10 @@ vttidy() {
  * more efficient. No checking for errors.
  */
 VOID
-vtmove(row, col) {
+vtmove(row, col)
+	int row, col;
+{
+
 	vtrow = row;
 	vtcol = col;
 }
@@ -182,20 +185,22 @@ vtmove(row, col) {
  * Three guesses how we found this.
  */
 VOID
-vtputc(c) register int c; {
-	register VIDEO	*vp;
+vtputc(c)
+	int    c;
+{
+	VIDEO *vp;
 
 	vp = vscreen[vtrow];
 	if (vtcol >= ncol)
-		vp->v_text[ncol-1] = '$';
+		vp->v_text[ncol - 1] = '$';
 	else if (c == '\t'
 #ifdef	NOTAB
-		&& !(curbp->b_flag & BFNOTAB)
+		 && !(curbp->b_flag & BFNOTAB)
 #endif
-	    ) {
+		) {
 		do {
 			vtputc(' ');
-		} while (vtcol<ncol && (vtcol&0x07)!=0);
+		} while (vtcol < ncol && (vtcol & 0x07) != 0);
 	} else if (ISCTRL(c)) {
 		vtputc('^');
 		vtputc(CCHR(c));
@@ -203,47 +208,49 @@ vtputc(c) register int c; {
 		vp->v_text[vtcol++] = c;
 }
 
-/* Put a character to the virtual screen in an extended line.  If we are
- * not yet on left edge, don't print it yet.  Check for overflow on
- * the right margin.
+/*
+ * Put a character to the virtual screen in an extended line.  If we are not
+ * yet on left edge, don't print it yet.  Check for overflow on the right
+ * margin.
  */
 VOID
 vtpute(c)
-int c;
+	int    c;
 {
-    register VIDEO	*vp;
+	VIDEO *vp;
 
-    vp = vscreen[vtrow];
+	vp = vscreen[vtrow];
 
-    if (vtcol >= ncol) vp->v_text[ncol - 1] = '$';
-    else if (c == '\t'
+	if (vtcol >= ncol)
+		vp->v_text[ncol - 1] = '$';
+	else if (c == '\t'
 #ifdef	NOTAB
-		       && !(curbp->b_flag & BFNOTAB)
+		 && !(curbp->b_flag & BFNOTAB)
 #endif
-					  ) {
-	do {
-	    vtpute(' ');
+		) {
+		do {
+			vtpute(' ');
+		}
+		while (((vtcol + lbound) & 0x07) != 0 && vtcol < ncol);
+	} else if (ISCTRL(c) != FALSE) {
+		vtpute('^');
+		vtpute(CCHR(c));
+	} else {
+		if (vtcol >= 0)
+			vp->v_text[vtcol] = c;
+		++vtcol;
 	}
-	while (((vtcol + lbound)&0x07) != 0 && vtcol < ncol);
-    } else if (ISCTRL(c) != FALSE) {
-	vtpute('^');
-	vtpute(CCHR(c));
-    } else {
-	if (vtcol >= 0) vp->v_text[vtcol] = c;
-	++vtcol;
-    }
 }
 
-/* Erase from the end of the
- * software cursor to the end of the
- * line on which the software cursor is
- * located. The display routines will decide
- * if a hardware erase to end of line command
- * should be used to display this.
+/*
+ * Erase from the end of the software cursor to the end of the line on which
+ * the software cursor is located. The display routines will decide if a
+ * hardware erase to end of line command should be used to display this.
  */
 VOID
-vteeol() {
-	register VIDEO	*vp;
+vteeol()
+{
+	VIDEO *vp;
 
 	vp = vscreen[vtrow];
 	while (vtcol < ncol)
@@ -260,37 +267,37 @@ vteeol() {
  * virtual and physical screens the same.
  */
 VOID
-update() {
-	register LINE	*lp;
-	register MGWIN *wp;
-	register VIDEO	*vp1;
-	VIDEO		*vp2;
-	register int	i;
-	register int	j;
-	register int	c;
-	register int	hflag;
-	register int	currow;
-	register int	curcol;
-	register int	offs;
-	register int	size;
-	VOID traceback ();
-	VOID uline ();
+update()
+{
+	LINE  *lp;
+	MGWIN *wp;
+	VIDEO *vp1;
+	VIDEO *vp2;
+	int    i;
+	int    j;
+	int    c;
+	int    hflag;
+	int    currow;
+	int    curcol;
+	int    offs;
+	int    size;
 
-	if (typeahead()) return;
-	if (sgarbf) {				/* must update everything */
+	if (typeahead())
+		return;
+	if (sgarbf) {		/* must update everything */
 		wp = wheadp;
-		while(wp != NULL) {
+		while (wp != NULL) {
 			wp->w_flag |= WFMODE | WFHARD;
 			wp = wp->w_wndp;
 		}
 	}
-	hflag = FALSE;				/* Not hard.		*/
+	hflag = FALSE;			/* Not hard.		 */
 	wp = wheadp;
 	while (wp != NULL) {
-		if (wp->w_flag != 0) {		/* Need update.		*/
-			if ((wp->w_flag&WFFORCE) == 0) {
+		if (wp->w_flag != 0) {	/* Need update.		 */
+			if ((wp->w_flag & WFFORCE) == 0) {
 				lp = wp->w_linep;
-				for (i=0; i<wp->w_ntrows; ++i) {
+				for (i = 0; i < wp->w_ntrows; ++i) {
 					if (lp == wp->w_dotp)
 						goto out;
 					if (lp == wp->w_bufp->b_linep)
@@ -298,46 +305,46 @@ update() {
 					lp = lforw(lp);
 				}
 			}
-			i = wp->w_force;	/* Reframe this one.	*/
+			i = wp->w_force;	/* Reframe this one.	 */
 			if (i > 0) {
 				--i;
 				if (i >= wp->w_ntrows)
-					i = wp->w_ntrows-1;
+					i = wp->w_ntrows - 1;
 			} else if (i < 0) {
 				i += wp->w_ntrows;
 				if (i < 0)
 					i = 0;
 			} else
-				i = wp->w_ntrows/2;
+				i = wp->w_ntrows / 2;
 			lp = wp->w_dotp;
-			while (i!=0 && lback(lp)!=wp->w_bufp->b_linep) {
+			while (i != 0 && lback(lp) != wp->w_bufp->b_linep) {
 				--i;
 				lp = lback(lp);
 			}
 			wp->w_linep = lp;
-			wp->w_flag |= WFHARD;	/* Force full.		*/
-		out:
-			lp = wp->w_linep;	/* Try reduced update.	*/
-			i  = wp->w_toprow;
-			if ((wp->w_flag&~WFMODE) == WFEDIT) {
+			wp->w_flag |= WFHARD;	/* Force full.		 */
+	out:
+			lp = wp->w_linep;	/* Try reduced update.	 */
+			i = wp->w_toprow;
+			if ((wp->w_flag & ~WFMODE) == WFEDIT) {
 				while (lp != wp->w_dotp) {
 					++i;
 					lp = lforw(lp);
 				}
 				vscreen[i]->v_color = CTEXT;
-				vscreen[i]->v_flag |= (VFCHG|VFHBAD);
+				vscreen[i]->v_flag |= (VFCHG | VFHBAD);
 				vtmove(i, 0);
-				for (j=0; j<llength(lp); ++j)
+				for (j = 0; j < llength(lp); ++j)
 					vtputc(lgetc(lp, j));
 				vteeol();
-			} else if ((wp->w_flag&(WFEDIT|WFHARD)) != 0) {
+			} else if ((wp->w_flag & (WFEDIT | WFHARD)) != 0) {
 				hflag = TRUE;
-				while (i < wp->w_toprow+wp->w_ntrows) {
+				while (i < wp->w_toprow + wp->w_ntrows) {
 					vscreen[i]->v_color = CTEXT;
-					vscreen[i]->v_flag |= (VFCHG|VFHBAD);
+					vscreen[i]->v_flag |= (VFCHG | VFHBAD);
 					vtmove(i, 0);
 					if (lp != wp->w_bufp->b_linep) {
-						for (j=0; j<llength(lp); ++j)
+						for (j = 0; j < llength(lp); ++j)
 							vtputc(lgetc(lp, j));
 						lp = lforw(lp);
 					}
@@ -345,14 +352,14 @@ update() {
 					++i;
 				}
 			}
-			if ((wp->w_flag&WFMODE) != 0)
+			if ((wp->w_flag & WFMODE) != 0)
 				modeline(wp);
-			wp->w_flag  = 0;
+			wp->w_flag = 0;
 			wp->w_force = 0;
 		}
 		wp = wp->w_wndp;
 	}
-	lp = curwp->w_linep;			/* Cursor location.	*/
+	lp = curwp->w_linep;	/* Cursor location.	 */
 	currow = curwp->w_toprow;
 	while (lp != curwp->w_dotp) {
 		++currow;
@@ -364,59 +371,62 @@ update() {
 		c = lgetc(lp, i++);
 		if (c == '\t'
 #ifdef	NOTAB
-			&& !(curbp->b_flag & BFNOTAB)
+		    && !(curbp->b_flag & BFNOTAB)
 #endif
-			) curcol |= 0x07;
+			)
+			curcol |= 0x07;
 		else if (ISCTRL(c) != FALSE)
 			++curcol;
 		++curcol;
 	}
-	if (curcol >= ncol - 1) {		/* extended line. */
-		 /* flag we are extended and changed */
+	if (curcol >= ncol - 1) {	/* extended line. */
+		/* flag we are extended and changed */
 		vscreen[currow]->v_flag |= VFEXT | VFCHG;
-		updext(currow, curcol);		/* and output extended line */
-	} else lbound = 0;			/* not extended line */
+		updext(currow, curcol);	/* and output extended line */
+	} else
+		lbound = 0;	/* not extended line */
 
-	/* make sure no lines need to be de-extended because the cursor is
-	no longer on them */
-
+	/*
+	 * make sure no lines need to be de-extended because the cursor is no
+	 * longer on them
+	 */
 	wp = wheadp;
-
 	while (wp != NULL) {
-	    lp = wp->w_linep;
-	    i = wp->w_toprow;
-	    while (i < wp->w_toprow + wp->w_ntrows) {
-		if (vscreen[i]->v_flag & VFEXT) {
-		    /* always flag extended lines as changed */
-		    vscreen[i]->v_flag |= VFCHG;
-		    if ((wp != curwp) || (lp != wp->w_dotp) ||
-				(curcol < ncol - 1)) {
-			vtmove(i, 0);
-			for (j = 0; j < llength(lp); ++j)
-				vtputc(lgetc(lp, j));
-			vteeol();
-			/* this line no longer is extended */
-			vscreen[i]->v_flag &= ~VFEXT;
-		    }
+		lp = wp->w_linep;
+		i = wp->w_toprow;
+		while (i < wp->w_toprow + wp->w_ntrows) {
+			if (vscreen[i]->v_flag & VFEXT) {
+				/* always flag extended lines as changed */
+				vscreen[i]->v_flag |= VFCHG;
+				if ((wp != curwp) || (lp != wp->w_dotp) ||
+				    (curcol < ncol - 1)) {
+					vtmove(i, 0);
+					for (j = 0; j < llength(lp); ++j)
+						vtputc(lgetc(lp, j));
+					vteeol();
+					/* this line no longer is extended */
+					vscreen[i]->v_flag &= ~VFEXT;
+				}
+			}
+			lp = lforw(lp);
+			++i;
 		}
-		lp = lforw(lp);
-		++i;
-	    }
-	    /* if garbaged then fix up mode lines */
-	    if (sgarbf != FALSE) vscreen[i]->v_flag |= VFCHG;
-	    /* and onward to the next window */
-	    wp = wp->w_wndp;
+		/* if garbaged then fix up mode lines */
+		if (sgarbf != FALSE)
+			vscreen[i]->v_flag |= VFCHG;
+		/* and onward to the next window */
+		wp = wp->w_wndp;
 	}
 
-	if (sgarbf != FALSE) {			/* Screen is garbage.	*/
-		sgarbf = FALSE;			/* Erase-page clears	*/
-		epresf = FALSE;			/* the message area.	*/
-		tttop  = HUGE;			/* Forget where you set */
-		ttbot  = HUGE;			/* scroll region.	*/
-		tthue  = CNONE;			/* Color unknown.	*/
+	if (sgarbf != FALSE) {	/* Screen is garbage.	 */
+		sgarbf = FALSE;	/* Erase-page clears	 */
+		epresf = FALSE;	/* the message area.	 */
+		tttop = HUGE;	/* Forget where you set */
+		ttbot = HUGE;	/* scroll region.	 */
+		tthue = CNONE;	/* Color unknown.	 */
 		ttmove(0, 0);
 		tteeop();
-		for (i=0; i<nrow-1; ++i) {
+		for (i = 0; i < nrow - 1; ++i) {
 			uline(i, vscreen[i], &blanks);
 			ucopy(vscreen[i], pscreen[i]);
 		}
@@ -426,34 +436,34 @@ update() {
 	}
 #ifdef	GOSLING
 	if (hflag != FALSE) {			/* Hard update?		*/
-		for (i=0; i<nrow-1; ++i) {	/* Compute hash data.	*/
+		for (i = 0; i < nrow - 1; ++i) {/* Compute hash data.	*/
 			hash(vscreen[i]);
 			hash(pscreen[i]);
 		}
 		offs = 0;			/* Get top match.	*/
-		while (offs != nrow-1) {
+		while (offs != nrow - 1) {
 			vp1 = vscreen[offs];
 			vp2 = pscreen[offs];
 			if (vp1->v_color != vp2->v_color
-			||  vp1->v_hash	 != vp2->v_hash)
+			    || vp1->v_hash != vp2->v_hash)
 				break;
 			uline(offs, vp1, vp2);
 			ucopy(vp1, vp2);
 			++offs;
 		}
-		if (offs == nrow-1) {		/* Might get it all.	*/
+		if (offs == nrow - 1) {		/* Might get it all.	*/
 			ttmove(currow, curcol - lbound);
 			ttflush();
 			return;
 		}
-		size = nrow-1;			/* Get bottom match.	*/
+		size = nrow - 1;		/* Get bottom match.	*/
 		while (size != offs) {
-			vp1 = vscreen[size-1];
-			vp2 = pscreen[size-1];
+			vp1 = vscreen[size - 1];
+			vp2 = pscreen[size - 1];
 			if (vp1->v_color != vp2->v_color
-			||  vp1->v_hash	 != vp2->v_hash)
+			    || vp1->v_hash != vp2->v_hash)
 				break;
-			uline(size-1, vp1, vp2);
+			uline(size - 1, vp1, vp2);
 			ucopy(vp1, vp2);
 			--size;
 		}
@@ -461,17 +471,17 @@ update() {
 			panic("Illegal screen size in update");
 		setscores(offs, size);		/* Do hard update.	*/
 		traceback(offs, size, size, size);
-		for (i=0; i<size; ++i)
-			ucopy(vscreen[offs+i], pscreen[offs+i]);
+		for (i = 0; i < size; ++i)
+			ucopy(vscreen[offs + i], pscreen[offs + i]);
 		ttmove(currow, curcol - lbound);
 		ttflush();
 		return;
 	}
 #endif
-	for (i=0; i<nrow-1; ++i) {		/* Easy update.		*/
+	for (i = 0; i < nrow - 1; ++i) {	/* Easy update.		*/
 		vp1 = vscreen[i];
 		vp2 = pscreen[i];
-		if ((vp1->v_flag&VFCHG) != 0) {
+		if ((vp1->v_flag & VFCHG) != 0) {
 			uline(i, vp1, vp2);
 			ucopy(vp1, vp2);
 		}
@@ -489,39 +499,46 @@ update() {
  * display has done an update.
  */
 VOID
-ucopy(vvp, pvp) register VIDEO *vvp; register VIDEO *pvp; {
+ucopy(vvp, pvp)
+	VIDEO *vvp;
+	VIDEO *pvp;
+{
 
-	vvp->v_flag &= ~VFCHG;			/* Changes done.	*/
-	pvp->v_flag  = vvp->v_flag;		/* Update model.	*/
-	pvp->v_hash  = vvp->v_hash;
-	pvp->v_cost  = vvp->v_cost;
+	vvp->v_flag &= ~VFCHG;		/* Changes done.	 */
+	pvp->v_flag = vvp->v_flag;	/* Update model.	 */
+	pvp->v_hash = vvp->v_hash;
+	pvp->v_cost = vvp->v_cost;
 	pvp->v_color = vvp->v_color;
 	bcopy(vvp->v_text, pvp->v_text, ncol);
 }
 
-/* updext: update the extended line which the cursor is currently
- * on at a column greater than the terminal width. The line
- * will be scrolled right or left to let the user see where
- * the cursor is
+/*
+ * updext: update the extended line which the cursor is currently on at a
+ * column greater than the terminal width. The line will be scrolled right or
+ * left to let the user see where the cursor is
  */
 VOID
 updext(currow, curcol)
-int currow, curcol;
+	int    currow, curcol;
 {
-    register LINE *lp;			/* pointer to current line */
-    register int j;			/* index into line */
+	LINE  *lp;			/* pointer to current line */
+	int    j;			/* index into line */
 
-    /* calculate what column the left bound should be */
-    /* (force cursor into middle half of screen) */
-    lbound = curcol - (curcol % (ncol>>1)) - (ncol>>2);
-    /* scan through the line outputing characters to the virtual screen */
-    /* once we reach the left edge */
-    vtmove(currow, -lbound);			/* start scanning offscreen */
-    lp = curwp->w_dotp;				/* line to output */
-    for (j=0; j<llength(lp); ++j)		/* until the end-of-line */
-	vtpute(lgetc(lp, j));
-    vteeol();					/* truncate the virtual line */
-    vscreen[currow]->v_text[0] = '$';		/* and put a '$' in column 1 */
+	/*
+	 * calculate what column the left bound should be
+	 * (force cursor into middle half of screen)
+	 */
+	lbound = curcol - (curcol % (ncol >> 1)) - (ncol >> 2);
+	/*
+	 * scan through the line outputing characters to the virtual screen
+	 * once we reach the left edge
+	 */
+	vtmove(currow, -lbound);		/* start scanning offscreen */
+	lp = curwp->w_dotp;			/* line to output */
+	for (j = 0; j < llength(lp); ++j)	/* until the end-of-line */
+		vtpute(lgetc(lp, j));
+	vteeol();		/* truncate the virtual line */
+	vscreen[currow]->v_text[0] = '$';	/* and put a '$' in column 1 */
 }
 
 /*
@@ -533,19 +550,24 @@ int currow, curcol;
  * line when updating CMODE color lines, because of the way that
  * reverse video works on most terminals.
  */
-VOID uline(row, vvp, pvp) VIDEO *vvp; VIDEO *pvp; {
+VOID
+uline(row, vvp, pvp)
+	int		row;
+	VIDEO          *vvp;
+	VIDEO          *pvp;
+{
 #ifdef	MEMMAP
-	putline(row+1, 1, &vvp->v_text[0]);
+	putline(row + 1, 1, &vvp->v_text[0]);
 #else
-	register char	*cp1;
-	register char	*cp2;
-	register char	*cp3;
-	char		*cp4;
-	char		*cp5;
-	register int	nbflag;
+	char  *cp1;
+	char  *cp2;
+	char  *cp3;
+	char  *cp4;
+	char  *cp5;
+	int    nbflag;
 
-	if (vvp->v_color != pvp->v_color) {	/* Wrong color, do a	*/
-		ttmove(row, 0);			/* full redraw.		*/
+	if (vvp->v_color != pvp->v_color) {	/* Wrong color, do a	 */
+		ttmove(row, 0);			/* full redraw.		 */
 #ifdef	STANDOUT_GLITCH
 		if (pvp->v_color != CTEXT && magic_cookie_glitch >= 0)
 			tteeol();
@@ -553,12 +575,12 @@ VOID uline(row, vvp, pvp) VIDEO *vvp; VIDEO *pvp; {
 		ttcolor(vvp->v_color);
 #ifdef	STANDOUT_GLITCH
 		cp1 = &vvp->v_text[magic_cookie_glitch > 0 ? magic_cookie_glitch : 0];
-		/* the odd code for magic_cookie_glitch==0
-		 * is to avoid putting the invisable
-		 * glitch character on the next line.
+		/*
+		 * the odd code for magic_cookie_glitch==0 is to avoid
+		 * putting the invisable glitch character on the next line.
 		 * (Hazeltine executive 80 model 30)
 		 */
-		cp2 = &vvp->v_text[ncol - (magic_cookie_glitch >= 0 ? (magic_cookie_glitch!=0 ? magic_cookie_glitch : 1) : 0)];
+		cp2 = &vvp->v_text[ncol - (magic_cookie_glitch >= 0 ? (magic_cookie_glitch != 0 ? magic_cookie_glitch : 1) : 0)];
 #else
 		cp1 = &vvp->v_text[0];
 		cp2 = &vvp->v_text[ncol];
@@ -572,37 +594,39 @@ VOID uline(row, vvp, pvp) VIDEO *vvp; VIDEO *pvp; {
 #endif
 		return;
 	}
-	cp1 = &vvp->v_text[0];			/* Compute left match.	*/
+	cp1 = &vvp->v_text[0];	/* Compute left match.	 */
 	cp2 = &pvp->v_text[0];
-	while (cp1!=&vvp->v_text[ncol] && cp1[0]==cp2[0]) {
+	while (cp1 != &vvp->v_text[ncol] && cp1[0] == cp2[0]) {
 		++cp1;
 		++cp2;
 	}
-	if (cp1 == &vvp->v_text[ncol])		/* All equal.		*/
+	if (cp1 == &vvp->v_text[ncol])	/* All equal.		 */
 		return;
 	nbflag = FALSE;
-	cp3 = &vvp->v_text[ncol];		/* Compute right match. */
+	cp3 = &vvp->v_text[ncol];	/* Compute right match. */
 	cp4 = &pvp->v_text[ncol];
 	while (cp3[-1] == cp4[-1]) {
 		--cp3;
 		--cp4;
-		if (cp3[0] != ' ')		/* Note non-blanks in	*/
-			nbflag = TRUE;		/* the right match.	*/
+		if (cp3[0] != ' ')	/* Note non-blanks in	 */
+			nbflag = TRUE;	/* the right match.	 */
 	}
-	cp5 = cp3;				/* Is erase good?	*/
-	if (nbflag==FALSE && vvp->v_color==CTEXT) {
-		while (cp5!=cp1 && cp5[-1]==' ')
+	cp5 = cp3;			/* Is erase good?	 */
+	if (nbflag == FALSE && vvp->v_color == CTEXT) {
+		while (cp5 != cp1 && cp5[-1] == ' ')
 			--cp5;
 		/* Alcyon hack */
-		if ((int)(cp3-cp5) <= tceeol)
+		if ((int) (cp3 - cp5) <= tceeol)
 			cp5 = cp3;
 	}
 	/* Alcyon hack */
-	ttmove(row, (int)(cp1-&vvp->v_text[0]));
+	ttmove(row, (int) (cp1 - &vvp->v_text[0]));
 #ifdef	STANDOUT_GLITCH
 	if (vvp->v_color != CTEXT && magic_cookie_glitch > 0) {
-		if(cp1 < &vvp->v_text[magic_cookie_glitch]) cp1 = &vvp->v_text[magic_cookie_glitch];
-		if(cp5 > &vvp->v_text[ncol-magic_cookie_glitch]) cp5 = &vvp->v_text[ncol-magic_cookie_glitch];
+		if (cp1 < &vvp->v_text[magic_cookie_glitch])
+			cp1 = &vvp->v_text[magic_cookie_glitch];
+		if (cp5 > &vvp->v_text[ncol - magic_cookie_glitch])
+			cp5 = &vvp->v_text[ncol - magic_cookie_glitch];
 	} else if (magic_cookie_glitch < 0)
 #endif
 		ttcolor(vvp->v_color);
@@ -610,59 +634,62 @@ VOID uline(row, vvp, pvp) VIDEO *vvp; VIDEO *pvp; {
 		ttputc(*cp1++);
 		++ttcol;
 	}
-	if (cp5 != cp3)				/* Do erase.		*/
+	if (cp5 != cp3)			/* Do erase.		 */
 		tteeol();
 #endif
 }
 
 /*
- * Redisplay the mode line for
- * the window pointed to by the "wp".
- * This is the only routine that has any idea
- * of how the modeline is formatted. You can
- * change the modeline format by hacking at
- * this routine. Called by "update" any time
- * there is a dirty window.
- * Note that if STANDOUT_GLITCH is defined, first and last
- * magic_cookie_glitch characters may never be seen.
+ * Redisplay the mode line for the window pointed to by the "wp".
+ * This is the only routine that has any idea of how the modeline is
+ * formatted. You can change the modeline format by hacking at this
+ * routine. Called by "update" any time there is a dirty window.  Note
+ * that if STANDOUT_GLITCH is defined, first and last magic_cookie_glitch
+ * characters may never be seen.
  */
 VOID
-modeline(wp) register MGWIN *wp; {
-	register int	n;
-	register BUFFER *bp;
-	int	mode;
+modeline(wp)
+	MGWIN  *wp;
+{
+	int     n;
+	BUFFER *bp;
+	int     mode;
 
-	n = wp->w_toprow+wp->w_ntrows;		/* Location.		*/
-	vscreen[n]->v_color = CMODE;		/* Mode line color.	*/
-	vscreen[n]->v_flag |= (VFCHG|VFHBAD);	/* Recompute, display.	*/
-	vtmove(n, 0);				/* Seek to right line.	*/
+	n = wp->w_toprow + wp->w_ntrows;	/* Location.		 */
+	vscreen[n]->v_color = CMODE;		/* Mode line color.	 */
+	vscreen[n]->v_flag |= (VFCHG | VFHBAD);	/* Recompute, display.	 */
+	vtmove(n, 0);				/* Seek to right line.	 */
 	bp = wp->w_bufp;
-	vtputc('-'); vtputc('-');
-	if ((bp->b_flag&BFCHG) != 0) {		/* "*" if changed.	*/
-		vtputc('*'); vtputc('*');
+	vtputc('-');
+	vtputc('-');
+	if ((bp->b_flag & BFCHG) != 0) {	/* "*" if changed.	 */
+		vtputc('*');
+		vtputc('*');
 	} else {
-		vtputc('-'); vtputc('-');
+		vtputc('-');
+		vtputc('-');
 	}
 	vtputc('-');
-	n  = 5;
+	n = 5;
 	n += vtputs("Mg: ");
 	if (bp->b_bname[0] != '\0')
 		n += vtputs(&(bp->b_bname[0]));
-	while (n < 42) {			/* Pad out with blanks	*/
+	while (n < 42) {		/* Pad out with blanks	 */
 		vtputc(' ');
 		++n;
 	}
 	vtputc('(');
 	++n;
-	for(mode=0;;) {
-	    n += vtputs(bp->b_modes[mode]->p_name);
-	    if(++mode > bp->b_nmodes) break;
-	    vtputc('-');
-	    ++n;
+	for (mode = 0;;) {
+		n += vtputs(bp->b_modes[mode]->p_name);
+		if (++mode > bp->b_nmodes)
+			break;
+		vtputc('-');
+		++n;
 	}
 	vtputc(')');
 	++n;
-	while (n < ncol) {			/* Pad out.		*/
+	while (n < ncol) {		/* Pad out.		 */
 		vtputc('-');
 		++n;
 	}
@@ -670,8 +697,11 @@ modeline(wp) register MGWIN *wp; {
 /*
  * output a string to the mode line, report how long it was.
  */
-vtputs(s) register char *s; {
-	register int n = 0;
+int
+vtputs(s)
+	char  *s;
+{
+	int    n = 0;
 
 	while (*s != '\0') {
 		vtputc(*s++);
@@ -679,36 +709,37 @@ vtputs(s) register char *s; {
 	}
 	return n;
 }
+
 #ifdef	GOSLING
 /*
- * Compute the hash code for
- * the line pointed to by the "vp". Recompute
- * it if necessary. Also set the approximate redisplay
- * cost. The validity of the hash code is marked by
- * a flag bit. The cost understand the advantages
- * of erase to end of line. Tuned for the VAX
- * by Bob McNamara; better than it used to be on
+ * Compute the hash code for the line pointed to by the "vp".
+ * Recompute it if necessary. Also set the approximate redisplay
+ * cost. The validity of the hash code is marked by a flag bit.
+ * The cost understand the advantages of erase to end of line.
+ * Tuned for the VAX by Bob McNamara; better than it used to be on
  * just about any machine.
  */
 VOID
-hash(vp) register VIDEO *vp; {
-	register int	i;
-	register int	n;
-	register char	*s;
+hash(vp)
+	VIDEO *vp;
+{
+	int    i;
+	int    n;
+	char  *s;
 
-	if ((vp->v_flag&VFHBAD) != 0) {		/* Hash bad.		*/
-		s = &vp->v_text[ncol-1];
-		for (i=ncol; i!=0; --i, --s)
+	if ((vp->v_flag & VFHBAD) != 0) {	/* Hash bad.		 */
+		s = &vp->v_text[ncol - 1];
+		for (i = ncol; i != 0; --i, --s)
 			if (*s != ' ')
 				break;
-		n = ncol-i;			/* Erase cheaper?	*/
+		n = ncol - i;			/* Erase cheaper?	 */
 		if (n > tceeol)
 			n = tceeol;
-		vp->v_cost = i+n;		/* Bytes + blanks.	*/
-		for (n=0; i!=0; --i, --s)
-			n = (n<<5) + n + *s;
-		vp->v_hash = n;			/* Hash code.		*/
-		vp->v_flag &= ~VFHBAD;		/* Flag as all done.	*/
+		vp->v_cost = i + n;		/* Bytes + blanks.	 */
+		for (n = 0; i != 0; --i, --s)
+			n = (n << 5) + n + *s;
+		vp->v_hash = n;			/* Hash code.		 */
+		vp->v_flag &= ~VFHBAD;		/* Flag as all done.	 */
 	}
 }
 
@@ -739,77 +770,80 @@ hash(vp) register VIDEO *vp; {
  * bit better; but it looks ugly.
  */
 VOID
-setscores(offs, size) {
-	register SCORE	*sp;
-	SCORE		*sp1;
-	register int	tempcost;
-	register int	bestcost;
-	register int	j;
-	register int	i;
-	register VIDEO	**vp;
-	VIDEO		**pp, **vbase, **pbase;
+setscores(offs, size)
+	int offs;
+	int size;
+{
+	SCORE *sp;
+	SCORE *sp1;
+	int    tempcost;
+	int    bestcost;
+	int    j;
+	int    i;
+	VIDEO **vp, **pp;
+	VIDEO **vbase, **pbase;
 
-	vbase = &vscreen[offs-1];		/* By hand CSE's.	*/
-	pbase = &pscreen[offs-1];
-	score[0].s_itrace = 0;			/* [0, 0]		*/
+	vbase = &vscreen[offs - 1];	/* By hand CSE's.	 */
+	pbase = &pscreen[offs - 1];
+	score[0].s_itrace = 0;		/* [0, 0]		 */
 	score[0].s_jtrace = 0;
-	score[0].s_cost	  = 0;
-	sp = &score[1];				/* Row 0, inserts.	*/
+	score[0].s_cost = 0;
+	sp = &score[1];			/* Row 0, inserts.	 */
 	tempcost = 0;
 	vp = &vbase[1];
-	for (j=1; j<=size; ++j) {
+	for (j = 1; j <= size; ++j) {
 		sp->s_itrace = 0;
-		sp->s_jtrace = j-1;
+		sp->s_jtrace = j - 1;
 		tempcost += tcinsl;
 		tempcost += (*vp)->v_cost;
 		sp->s_cost = tempcost;
 		++vp;
 		++sp;
 	}
-	sp = &score[NROW];			/* Column 0, deletes.	*/
+	sp = &score[NROW];		/* Column 0, deletes.	 */
 	tempcost = 0;
-	for (i=1; i<=size; ++i) {
-		sp->s_itrace = i-1;
+	for (i = 1; i <= size; ++i) {
+		sp->s_itrace = i - 1;
 		sp->s_jtrace = 0;
-		tempcost  += tcdell;
+		tempcost += tcdell;
 		sp->s_cost = tempcost;
 		sp += NROW;
 	}
-	sp1 = &score[NROW+1];			/* [1, 1].		*/
+	sp1 = &score[NROW + 1];		/* [1, 1].		 */
 	pp = &pbase[1];
-	for (i=1; i<=size; ++i) {
+	for (i = 1; i <= size; ++i) {
 		sp = sp1;
 		vp = &vbase[1];
-		for (j=1; j<=size; ++j) {
-			sp->s_itrace = i-1;
+		for (j = 1; j <= size; ++j) {
+			sp->s_itrace = i - 1;
 			sp->s_jtrace = j;
-			bestcost = (sp-NROW)->s_cost;
-			if (j != size)		/* Cd(A[i])=0 @ Dis.	*/
+			bestcost = (sp - NROW)->s_cost;
+			if (j != size)	/* Cd(A[i])=0 @ Dis.	 */
 				bestcost += tcdell;
-			tempcost = (sp-1)->s_cost;
+			tempcost = (sp - 1)->s_cost;
 			tempcost += (*vp)->v_cost;
-			if (i != size)		/* Ci(B[j])=0 @ Dsj.	*/
+			if (i != size)	/* Ci(B[j])=0 @ Dsj.	 */
 				tempcost += tcinsl;
 			if (tempcost < bestcost) {
 				sp->s_itrace = i;
-				sp->s_jtrace = j-1;
+				sp->s_jtrace = j - 1;
 				bestcost = tempcost;
 			}
-			tempcost = (sp-NROW-1)->s_cost;
+			tempcost = (sp - NROW - 1)->s_cost;
 			if ((*pp)->v_color != (*vp)->v_color
-			||  (*pp)->v_hash  != (*vp)->v_hash)
+			    || (*pp)->v_hash != (*vp)->v_hash)
 				tempcost += (*vp)->v_cost;
 			if (tempcost < bestcost) {
-				sp->s_itrace = i-1;
-				sp->s_jtrace = j-1;
+				sp->s_itrace = i - 1;
+				sp->s_jtrace = j - 1;
 				bestcost = tempcost;
 			}
 			sp->s_cost = bestcost;
-			++sp;			/* Next column.		*/
+			++sp;		/* Next column.		 */
 			++vp;
 		}
 		++pp;
-		sp1 += NROW;			/* Next row.		*/
+		sp1 += NROW;		/* Next row.		 */
 	}
 }
 
@@ -825,27 +859,33 @@ setscores(offs, size) {
  * which is acceptable because this routine is much less compute
  * intensive then the code that builds the score matrix!
  */
-VOID traceback(offs, size, i, j) {
-	register int	itrace;
-	register int	jtrace;
-	register int	k;
-	register int	ninsl;
-	register int	ndraw;
-	register int	ndell;
+VOID
+traceback(offs, size, i, j)
+	int    offs;
+	int    size;
+	int    i;
+	int    j;
+{
+	int    itrace;
+	int    jtrace;
+	int    k;
+	int    ninsl;
+	int    ndraw;
+	int    ndell;
 
-	if (i==0 && j==0)			/* End of update.	*/
+	if (i == 0 && j == 0)	/* End of update.	 */
 		return;
-	itrace = score[(NROW*i) + j].s_itrace;
-	jtrace = score[(NROW*i) + j].s_jtrace;
-	if (itrace == i) {			/* [i, j-1]		*/
-		ninsl = 0;			/* Collect inserts.	*/
+	itrace = score[(NROW * i) + j].s_itrace;
+	jtrace = score[(NROW * i) + j].s_jtrace;
+	if (itrace == i) {	/* [i, j-1]		 */
+		ninsl = 0;	/* Collect inserts.	 */
 		if (i != size)
 			ninsl = 1;
 		ndraw = 1;
-		while (itrace!=0 || jtrace!=0) {
-			if (score[(NROW*itrace) + jtrace].s_itrace != itrace)
+		while (itrace != 0 || jtrace != 0) {
+			if (score[(NROW * itrace) + jtrace].s_itrace != itrace)
 				break;
-			jtrace = score[(NROW*itrace) + jtrace].s_jtrace;
+			jtrace = score[(NROW * itrace) + jtrace].s_jtrace;
 			if (i != size)
 				++ninsl;
 			++ndraw;
@@ -853,34 +893,34 @@ VOID traceback(offs, size, i, j) {
 		traceback(offs, size, itrace, jtrace);
 		if (ninsl != 0) {
 			ttcolor(CTEXT);
-			ttinsl(offs+j-ninsl, offs+size-1, ninsl);
+			ttinsl(offs + j - ninsl, offs + size - 1, ninsl);
 		}
-		do {				/* B[j], A[j] blank.	*/
-			k = offs+j-ndraw;
+		do {		/* B[j], A[j] blank.	 */
+			k = offs + j - ndraw;
 			uline(k, vscreen[k], &blanks);
 		} while (--ndraw);
 		return;
 	}
-	if (jtrace == j) {			/* [i-1, j]		*/
-		ndell = 0;			/* Collect deletes.	*/
+	if (jtrace == j) {	/* [i-1, j]		 */
+		ndell = 0;	/* Collect deletes.	 */
 		if (j != size)
 			ndell = 1;
-		while (itrace!=0 || jtrace!=0) {
-			if (score[(NROW*itrace) + jtrace].s_jtrace != jtrace)
+		while (itrace != 0 || jtrace != 0) {
+			if (score[(NROW * itrace) + jtrace].s_jtrace != jtrace)
 				break;
-			itrace = score[(NROW*itrace) + jtrace].s_itrace;
+			itrace = score[(NROW * itrace) + jtrace].s_itrace;
 			if (j != size)
 				++ndell;
 		}
 		if (ndell != 0) {
 			ttcolor(CTEXT);
-			ttdell(offs+i-ndell, offs+size-1, ndell);
+			ttdell(offs + i - ndell, offs + size - 1, ndell);
 		}
 		traceback(offs, size, itrace, jtrace);
 		return;
 	}
 	traceback(offs, size, itrace, jtrace);
-	k = offs+j-1;
-	uline(k, vscreen[k], pscreen[offs+i-1]);
+	k = offs + j - 1;
+	uline(k, vscreen[k], pscreen[offs + i - 1]);
 }
 #endif

@@ -6,66 +6,65 @@
  * this as a reasonable way to allow for widly varying and ever changing
  * varieties of terminal types.	 This should be used where practical.
  */
-/* Known problems:
- *	If you have a terminal with no clear to end of screen and
- *	memory of lines below the ones visible on the screen, display
- *	will be wrong in some cases.  I doubt that any such terminal
- *	was ever made, but I thought everyone with delete line would
- *	have clear to end of screen too...
+/*
+ * Known problems: If you have a terminal with no clear to end of screen and
+ * memory of lines below the ones visible on the screen, display will be
+ * wrong in some cases.  I doubt that any such terminal was ever made, but I
+ * thought everyone with delete line would have clear to end of screen too...
  *
- *	Code for terminals without clear to end of screen and/or clear
- *	to end of line has not been extensivly tested.
+ * Code for terminals without clear to end of screen and/or clear to end of line
+ * has not been extensivly tested.
  *
- *	Cost calculations are very rough.  Costs of insert/delete line
- *	may be far from the truth.  This is accentuated by display.c
- *	not knowing about multi-line insert/delete.
+ * Cost calculations are very rough.  Costs of insert/delete line may be far
+ * from the truth.  This is accentuated by display.c not knowing about
+ * multi-line insert/delete.
  *
- *	Using scrolling region vs insert/delete line should probably
- *	be based on cost rather than the assuption that scrolling
- *	region operations look better.
+ * Using scrolling region vs insert/delete line should probably be based on cost
+ * rather than the assuption that scrolling region operations look better.
  */
 #include	"def.h"
 
-#include	<curses.h>
 #include	<term.h>
 
-extern	int	ttrow;
-extern	int	ttcol;
-extern	int	tttop;
-extern	int	ttbot;
-extern	int	tthue;
+extern int      ttrow;
+extern int      ttcol;
+extern int      tttop;
+extern int      ttbot;
+extern int      tthue;
 
-extern	int	ttputc();
+extern int      ttputc();
 
-int	tceeol;			/* Costs are set later */
-int	tcinsl;
-int	tcdell;
+int             tceeol;		/* Costs are set later */
+int             tcinsl;
+int             tcdell;
 
-static	int	insdel;		/* Do we have both insert & delete line? */
-static	char *	scroll_fwd;	/* How to scroll forward. */
+static int      insdel;		/* Do we have both insert & delete line? */
+static char    *scroll_fwd;	/* How to scroll forward. */
 
 #ifdef NO_RESIZE
-static	setttysize();
+static          setttysize();
 #endif
 
 /*
  * Initialize the terminal when the editor
  * gets started up.
  */
-ttinit() {
-	char *tv_stype;
-	char *t, *p;
+VOID
+ttinit()
+{
+	char           *tv_stype;
+	char           *t, *p;
 #ifndef gettermtype		/* (avoid declaration if #define) */
-	char *gettermtype();	/* system dependent function to determin terminal type */
+	char           *gettermtype();	/* system dependent function to
+					 * determin terminal type */
 #endif
 
 	if ((tv_stype = gettermtype()) == NULL)
 		panic("Could not determine terminal type");
-	if (setupterm(tv_stype, 1, NULL) == ERR) {
+	if (setupterm(tv_stype, 1, NULL)) {
 		(void) asprintf(&p, "Unknown terminal type: %s", tv_stype);
 		panic(p);
 	}
-
 	scroll_fwd = scroll_forward;
 	if (!scroll_fwd || !*scroll_fwd) {
 		/* this is what GNU Emacs does */
@@ -73,10 +72,9 @@ ttinit() {
 		if (!scroll_fwd || !*scroll_fwd)
 			scroll_fwd = "\n";
 	}
-
 	if (!cursor_address || !cursor_up)
 		panic("This terminal is to stupid to run mg");
-	ttresize();			/* set nrow & ncol	*/
+	ttresize();		/* set nrow & ncol	 */
 
 	if (!clr_eol)
 		tceeol = ncol;
@@ -85,8 +83,8 @@ ttinit() {
 
 	/* Estimate cost of inserting a line */
 	if (change_scroll_region && scroll_reverse)
-		tcinsl = charcost(change_scroll_region)*2 +
-				  charcost(scroll_reverse);
+		tcinsl = charcost(change_scroll_region) * 2 +
+			charcost(scroll_reverse);
 	else if (parm_insert_line)
 		tcinsl = charcost(parm_insert_line);
 	else if (insert_line)
@@ -96,20 +94,20 @@ ttinit() {
 
 	/* Estimate cost of deleting a line */
 	if (change_scroll_region)
-		tcdell = charcost(change_scroll_region)*2 +
-				  charcost(scroll_fwd);
+		tcdell = charcost(change_scroll_region) * 2 +
+			charcost(scroll_fwd);
 	else if (parm_delete_line)
 		tcdell = charcost(parm_delete_line);
 	else if (delete_line)
 		tcdell = charcost(delete_line);
-	else	
+	else
 		tcdell = NROW * NCOL;	/* make this cost high enough */
 
 	/* Flag to indicate that we can both insert and delete lines */
 	insdel = (insert_line || parm_insert_line) && (delete_line || parm_delete_line);
 
 	if (enter_ca_mode)
-		putpad(enter_ca_mode, 1);	/* init the term */
+		putpad(enter_ca_mode, 1);	/* enter application mode */
 
 	setttysize();
 }
@@ -118,7 +116,9 @@ ttinit() {
  * Re-initialize the terminal when the editor is resumed.
  * The keypad_xmit doesn't really belong here but...
  */
-ttreinit() {
+VOID
+ttreinit()
+{
 	if (enter_ca_mode)
 		putpad(enter_ca_mode, 1);	/* enter application mode */
 	if (keypad_xmit)
@@ -135,14 +135,16 @@ ttreinit() {
  * query the display for the increment, and put it
  * back to what it was.
  */
-tttidy() {
+VOID
+tttidy()
+{
 
-	/* set the term back to normal mode */
-	if (exit_ca_mode)
-		putpad(exit_ca_mode, 1);
 #ifdef	XKEYS
 	ttykeymaptidy();
 #endif
+	/* set the term back to normal mode */
+	if (exit_ca_mode)
+		putpad(exit_ca_mode, 1);
 }
 
 /*
@@ -152,25 +154,29 @@ tttidy() {
  * have left the cursor in the right
  * location last time!
  */
-ttmove(row, col) {
-    char	*tgoto();
+VOID
+ttmove(row, col)
+{
+	char           *tgoto();
 
-    if (ttrow != row || ttcol !=col) {
-	    putpad(tgoto(cursor_address, col, row), 1);
-	    ttrow = row;
-	    ttcol = col;
-    }
+	if (ttrow != row || ttcol != col) {
+		putpad(tgoto(cursor_address, col, row), 1);
+		ttrow = row;
+		ttcol = col;
+	}
 }
 
 /*
  * Erase to end of line.
  */
-tteeol() {
+VOID
+tteeol()
+{
 
 	if (clr_eol)
 		putpad(clr_eol, 1);
 	else {
-		int i = ncol - ttcol;
+		int             i = ncol - ttcol;
 		while (i--)
 			ttputc(' ');
 		ttrow = ttcol = HUGE;
@@ -180,8 +186,10 @@ tteeol() {
 /*
  * Erase to end of page.
  */
-tteeop() {
-	int line;
+VOID
+tteeop()
+{
+	int             line;
 
 	if (clr_eos)
 		putpad(clr_eos, nrow - ttrow);
@@ -202,7 +210,9 @@ tteeop() {
 /*
  * Make a noise.
  */
-ttbeep() {
+VOID
+ttbeep()
+{
 	putpad(bell, 1);
 	ttflush();
 }
@@ -215,31 +225,33 @@ ttbeep() {
  * If no scrolling region, use a set
  * of insert and delete line sequences
  */
-ttinsl(row, bot, nchunk) {
-	int	i, nl;
+VOID
+ttinsl(row, bot, nchunk)
+{
+	int             i, nl;
 
-	if (row == bot) {		/* Case of one line insert is	*/
-		ttmove(row, 0);		/*	special			*/
+	if (row == bot) {	/* Case of one line insert is	 */
+		ttmove(row, 0);	/* special			 */
 		tteeol();
 		return;
 	}
 	if (change_scroll_region && scroll_reverse) {
-		/* Use scroll region and back index	*/
+		/* Use scroll region and back index	 */
 		nl = bot - row;
-		ttwindow(row,bot);
+		ttwindow(row, bot);
 		ttmove(row, 0);
 		while (nchunk--)
 			putpad(scroll_reverse, nl);
 		ttnowindow();
 		return;
 	} else if (insdel) {
-		ttmove(1+bot-nchunk, 0);
+		ttmove(1 + bot - nchunk, 0);
 		nl = nrow - ttrow;
 		if (parm_delete_line)
 			putpad(tgoto(parm_delete_line, 0, nchunk), nl);
 		else
-			/* For all lines in the chunk	*/
-			for (i=0; i<nchunk; i++)
+			/* For all lines in the chunk	 */
+			for (i = 0; i < nchunk; i++)
 				putpad(delete_line, nl);
 		ttmove(row, 0);
 		nl = nrow - ttrow;	/* ttmove() changes ttrow */
@@ -247,7 +259,7 @@ ttinsl(row, bot, nchunk) {
 			putpad(tgoto(parm_insert_line, 0, nchunk), nl);
 		else
 			/* For all lines in the chunk */
-			for (i=0; i<nchunk; i++)
+			for (i = 0; i < nchunk; i++)
 				putpad(insert_line, nl);
 		ttrow = HUGE;
 		ttcol = HUGE;
@@ -263,39 +275,39 @@ ttinsl(row, bot, nchunk) {
  * lines.  The presence of the echo area makes a
  * boundry condition go away.
  */
+VOID
 ttdell(row, bot, nchunk)
 {
-	int	i, nl;
+	int             i, nl;
 
-	if (row == bot) {		/* One line special case	*/
+	if (row == bot) {	/* One line special case	 */
 		ttmove(row, 0);
 		tteeol();
 		return;
 	}
-	if (change_scroll_region) {	/* scrolling region		*/
+	if (change_scroll_region) {	/* scrolling region		 */
 		nl = bot - row;
 		ttwindow(row, bot);
 		ttmove(bot, 0);
 		while (nchunk--)
 			putpad(scroll_fwd, nl);
 		ttnowindow();
-	}
-	else if (insdel) {
-		ttmove(row, 0);		/* Else use insert/delete line	*/
+	} else if (insdel) {
+		ttmove(row, 0);	/* Else use insert/delete line	 */
 		nl = nrow - ttrow;
 		if (parm_delete_line)
 			putpad(tgoto(parm_delete_line, 0, nchunk), nl);
 		else
-			/* For all lines in the chunk	*/
-			for (i=0; i<nchunk; i++)
+			/* For all lines in the chunk	 */
+			for (i = 0; i < nchunk; i++)
 				putpad(delete_line, nl);
-		ttmove(1+bot-nchunk,0);
+		ttmove(1 + bot - nchunk, 0);
 		nl = nrow - ttrow;	/* ttmove() changes ttrow */
 		if (parm_insert_line)
 			putpad(tgoto(parm_insert_line, 0, nchunk), nl);
 		else
 			/* For all lines in the chunk */
-			for (i=0; i<nchunk; i++)
+			for (i = 0; i < nchunk; i++)
 				putpad(insert_line, nl);
 		ttrow = HUGE;
 		ttcol = HUGE;
@@ -315,13 +327,14 @@ ttdell(row, bot, nchunk)
  * moves the cursor).
  *
  */
+VOID
 ttwindow(top, bot)
 {
 	if (change_scroll_region && (tttop != top || ttbot != bot)) {
 		putpad(tgoto(change_scroll_region, bot, top), nrow - ttrow);
-		ttrow = HUGE;			/* Unknown.		*/
+		ttrow = HUGE;	/* Unknown.		 */
 		ttcol = HUGE;
-		tttop = top;			/* Remember region.	*/
+		tttop = top;	/* Remember region.	 */
 		ttbot = bot;
 	}
 }
@@ -336,14 +349,15 @@ ttwindow(top, bot)
  * This behavior seems to work right on systems
  * where you can set your terminal size.
  */
+VOID
 ttnowindow()
 {
 	if (change_scroll_region) {
 		putpad(tgoto(change_scroll_region,
-		    (nrow > lines ? nrow : lines) - 1, 0), nrow - ttrow);
-		ttrow = HUGE;			/* Unknown.		*/
+		       (nrow > lines ? nrow : lines) - 1, 0), nrow - ttrow);
+		ttrow = HUGE;	/* Unknown.		 */
 		ttcol = HUGE;
-		tttop = HUGE;			/* No scroll region.	*/
+		tttop = HUGE;	/* No scroll region.	 */
 		ttbot = HUGE;
 	}
 }
@@ -357,16 +371,17 @@ ttnowindow()
  * line by line basis, so don't bother sending
  * out the color shift.
  */
+VOID
 ttcolor(color)
-	int color;
+	int             color;
 {
 
 	if (color != tthue) {
-	    if (color == CTEXT)			/* Normal video.	*/
-		    putpad(exit_standout_mode, 1);
-	    else if (color == CMODE)		/* Reverse video.	*/
-		    putpad(enter_standout_mode, 1);
-	    tthue = color;			/* Save the color.	*/
+		if (color == CTEXT)	/* Normal video.	 */
+			putpad(exit_standout_mode, 1);
+		else if (color == CMODE)	/* Reverse video.	 */
+			putpad(enter_standout_mode, 1);
+		tthue = color;	/* Save the color.	 */
 	}
 }
 
@@ -379,11 +394,13 @@ ttcolor(color)
  * with a screen NROW by NCOL. Look in "window.c" to
  * see how the caller deals with a change.
  */
-ttresize() {
+VOID
+ttresize()
+{
 
-	setttysize();			/* found in "ttyio.c",	*/
-					/* ask OS for tty size	*/
-	if (nrow < 1)			/* Check limits.	*/
+	setttysize();		/* found in "ttyio.c",	 */
+	/* ask OS for tty size	 */
+	if (nrow < 1)		/* Check limits.	 */
 		nrow = 1;
 	else if (nrow > NROW)
 		nrow = NROW;
@@ -394,24 +411,28 @@ ttresize() {
 }
 
 #ifdef NO_RESIZE
-static setttysize() {
+static
+setttysize()
+{
 	nrow = lines;
 	ncol = columns;
 }
 #endif
 
-static int cci;
+static int      cci;
 
-/*ARGSUSED*/
-static int		/* fake char output for charcost() */
+/* ARGSUSED */
+static int			/* fake char output for charcost() */
 fakec(c)
-char c;
+	char            c;
 {
 	cci++;
 }
 
 /* calculate the cost of doing string s */
-charcost (s) char *s; {
+charcost(s)
+	char           *s;
+{
 	cci = 0;
 
 	tputs(s, nrow, fakec);

@@ -6,6 +6,7 @@
 
 #include	<signal.h>
 #include	<termios.h>
+#include	<term.h>
 
 /*
  * This causes mg to send itself a stop signal.
