@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.13 1998/03/30 06:59:31 deraadt Exp $	*/
+/*	$OpenBSD: edit.c,v 1.14 1998/05/28 10:17:49 deraadt Exp $	*/
 /*	$NetBSD: edit.c,v 1.6 1996/05/15 21:50:45 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: edit.c,v 1.13 1998/03/30 06:59:31 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: edit.c,v 1.14 1998/05/28 10:17:49 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -202,6 +202,15 @@ bad:					(void)fclose(fp);
 		}
 	}
 	(void)fclose(fp);
+
+	if (list[E_NAME].save == NULL)
+		list[E_NAME].save = "";
+	if (list[E_BPHONE].save == NULL)
+		list[E_BPHONE].save = "";
+	if (list[E_HPHONE].save == NULL)
+		list[E_HPHONE].save = "";
+	if (list[E_LOCATE].save == NULL)
+		list[E_LOCATE].save = "";
 
 	/* Build the gecos field. */
 	len = strlen(list[E_NAME].save) + strlen(list[E_BPHONE].save) +
