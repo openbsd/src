@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_split.c,v 1.6 1999/02/15 05:11:23 millert Exp $	*/
+/*	$OpenBSD: bt_split.c,v 1.7 2002/02/01 18:10:39 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char rcsid[] = "$OpenBSD: bt_split.c,v 1.6 1999/02/15 05:11:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: bt_split.c,v 1.7 2002/02/01 18:10:39 millert Exp $";
 #else
 static char sccsid[] = "@(#)bt_split.c	8.10 (Berkeley) 1/9/95";
 #endif
@@ -731,7 +731,7 @@ bt_psplit(t, h, l, r, pskip, ilen)
 	 * the right page.
 	 */
 	if (skip <= off) {
-		skip = 0;
+		skip = MAX_PAGE_OFFSET;
 		rval = l;
 	} else {
 		rval = r;
@@ -741,7 +741,7 @@ bt_psplit(t, h, l, r, pskip, ilen)
 	for (off = 0; nxt < top; ++off) {
 		if (skip == nxt) {
 			++off;
-			skip = 0;
+			skip = MAX_PAGE_OFFSET;
 		}
 		switch (h->flags & P_TYPE) {
 		case P_BINTERNAL:
