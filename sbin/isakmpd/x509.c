@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.50 2001/05/12 06:46:58 angelos Exp $	*/
+/*	$OpenBSD: x509.c,v 1.51 2001/05/31 20:20:59 angelos Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -66,6 +66,7 @@
 #include "math_mp.h"
 #include "policy.h"
 #include "sa.h"
+#include "util.h"
 #include "x509.h"
 
 /*
@@ -1121,7 +1122,6 @@ x509_cert_obtain (u_int8_t *id, size_t id_len, void *data, u_int8_t **cert,
 {
   struct x509_aca *aca = data;
   X509 *scert;
-  u_char *p;
 
   if (aca)
     LOG_DBG ((LOG_CRYPTO, 60,
@@ -1138,15 +1138,9 @@ x509_cert_obtain (u_int8_t *id, size_t id_len, void *data, u_int8_t **cert,
   if (!scert)
     return 0;
 
-  *certlen = LC (i2d_X509, (scert, NULL));
-  p = *cert = malloc (*certlen);
-  if (!p)
-    {
-      log_error ("x509_cert_obtain: malloc (%d) failed", *certlen);
-      return 0;
-    }
-  *certlen = LC (i2d_X509, (scert, &p));
-
+  x509_serialize (scert, cert, certlen);
+  if (*cert == NULL)
+    return 0;
   return 1;
 }
 
@@ -1347,4 +1341,83 @@ x509_cert_get_key (void *scert, void *keyp)
   return *(RSA **)keyp == NULL ? 0 : 1;
 }
 
+void *
+x509_cert_dup (void *scert)
+{
+  return LC (X509_dup, (scert));
+}
+
+void
+x509_serialize (void *scert, u_int8_t **data, u_int32_t *datalen)
+{
+  u_int8_t *p;
+
+  *datalen = LC (i2d_X509, ((X509 *) scert, NULL));
+  *data = p = malloc (*datalen);
+  if (!p)
+    {
+      log_error ("x509_serialize: malloc (%d) failed", *datalen);
+      return;
+    }
+
+  *datalen = LC (i2d_X509, ((X509 *)scert, &p));
+}
+
+/* From cert to printable */
+char *
+x509_printable (void *cert)
+{
+  char *s;
+  u_int8_t *data;
+  u_int32_t datalen;
+  int i;
+
+  x509_serialize (cert, &data, &datalen);
+  if (data == NULL)
+    return NULL;
+
+  s = malloc (datalen * 2);
+  if (s == NULL)
+    {
+      free (data);
+      log_error ("x509_printable: malloc (%d) failed", datalen * 2);
+      return NULL;
+    }
+
+  for (i = 0; i < datalen; i++)
+    sprintf (s + (2 * i), "%02x", data[i]);
+  free (data);
+  return s;
+}
+
+/* From printable to cert */
+void *
+x509_from_printable (char *cert)
+{
+  u_int8_t *buf;
+  int plen, ret;
+  void *foo;
+
+  plen = (strlen (cert) + 1) / 2;
+  buf = malloc (plen);
+  if (buf == NULL)
+    {
+      log_error ("x509_from_printable: malloc (%d) failed", plen);
+      return NULL;
+    }
+
+  ret = hex2raw (cert, buf, plen);
+  if (ret == -1)
+    {
+      free (buf);
+      log_error ("x509_from_printable: badly formatted cert");
+      return NULL;
+    }
+
+  foo = x509_cert_get (buf, plen);
+  free (buf);
+  if (foo == NULL)
+    log_error ("x509_from_printable: could not retrieve certificate");
+  return foo;
+}
 #endif /* USE_X509 */

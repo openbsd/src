@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.h,v 1.10 2001/01/27 12:03:36 niklas Exp $	*/
+/*	$OpenBSD: x509.h,v 1.11 2001/05/31 20:20:59 angelos Exp $	*/
 /*	$EOM: x509.h,v 1.11 2000/09/28 12:53:27 niklas Exp $	*/
 
 /*
@@ -74,6 +74,10 @@ int x509_cert_init (void);
 int x509_cert_obtain (u_int8_t *, size_t, void *, u_int8_t **, u_int32_t *);
 int x509_cert_validate (void *);
 void x509_free_aca (void *);
+void *x509_cert_dup (void *);
+void x509_serialize (void *, u_int8_t **, u_int32_t *);
+char *x509_printable (void *);
+void *x509_from_printable (char *);
 
 /* Misc. X509 certificate functions.  */
 
