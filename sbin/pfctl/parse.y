@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.157 2002/10/06 16:22:10 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.158 2002/10/07 12:39:29 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -250,7 +250,7 @@ typedef struct {
 %token	PASS BLOCK SCRUB RETURN IN OUT LOG LOGALL QUICK ON FROM TO FLAGS
 %token	RETURNRST RETURNICMP RETURNICMP6 PROTO INET INET6 ALL ANY ICMPTYPE
 %token	ICMP6TYPE CODE KEEP MODULATE STATE PORT RDR NAT BINAT ARROW NODF
-%token	MINTTL ERROR ALLOWOPTS FASTROUTE ROUTETO DUPTO NO LABEL
+%token	MINTTL ERROR ALLOWOPTS FASTROUTE ROUTETO DUPTO REPLYTO NO LABEL
 %token	NOROUTE FRAGMENT USER GROUP MAXMSS MAXIMUM TTL TOS
 %token	FRAGNORM FRAGDROP FRAGCROP
 %token	SET OPTIMIZATION TIMEOUT LIMIT LOGINTERFACE
@@ -1644,6 +1644,32 @@ route		: /* empty */			{
 			$$.rt = PF_ROUTETO;
 			$$.addr = NULL;
 		}
+		| REPLYTO '(' STRING address ')' {
+			if (($$.string = strdup($3)) == NULL) {
+				yyerror("reply-to: strdup");
+				YYERROR;
+			}
+			$$.rt = PF_REPLYTO;
+			if ($4->addr.addr_dyn != NULL) {
+				yyerror("reply-to does not support"
+				    " dynamic addresses");
+				YYERROR;
+			}
+			if ($4->next) {
+				yyerror("multiple reply-to ip addresses");
+				YYERROR;
+			}
+			$$.addr = &$4->addr.addr;
+			$$.af = $4->af;
+		}
+		| REPLYTO STRING {
+			if (($$.string = strdup($2)) == NULL) {
+				yyerror("reply-to: strdup");
+				YYERROR;
+			}
+			$$.rt = PF_REPLYTO;
+			$$.addr = NULL;
+		}
 		| DUPTO '(' STRING address ')' {
 			if (($$.string = strdup($3)) == NULL) {
 				yyerror("dupto: strdup");
@@ -2319,6 +2345,7 @@ lookup(char *s)
 		{ "quick",	QUICK},
 		{ "rdr",	RDR},
 		{ "reassemble",	FRAGNORM},
+		{ "reply-to",	REPLYTO},
 		{ "return",	RETURN},
 		{ "return-icmp",RETURNICMP},
 		{ "return-icmp6",RETURNICMP6},

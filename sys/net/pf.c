@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.247 2002/10/05 21:17:57 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.248 2002/10/07 12:39:29 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3631,7 +3631,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp)
 		if (m0 == NULL)
 			return;
 	} else {
-		if (r->direction != dir)
+		if ((r->rt == PF_REPLYTO) == (r->direction == dir))
 			return;
 		m0 = *m;
 	}
@@ -3770,7 +3770,7 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp)
 		if (m0 == NULL)
 			return;
 	} else {
-		if (r->direction != dir)
+		if ((r->rt == PF_REPLYTO) == (r->direction == dir))
 			return;
 		m0 = *m;
 	}

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.91 2002/10/05 21:17:57 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.92 2002/10/07 12:39:29 dhartmei Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -514,6 +514,8 @@ This option causes matching packets to remain untranslated.
 .Sh ROUTING
 If a packet matches a rule with a route option set, the packet filter will
 route the packet according to the type of route option.
+When such a rule creates state, the route option is also applied to all
+packets matching the same connection.
 .Ss fastroute
 The
 .Em fastroute
@@ -523,6 +525,25 @@ The
 .Em route-to
 option routes the packet to the specified interface with an optional address
 for the next hop.
+When a
+.Em route-to
+rule creates state, only packets that pass in the same direction as the
+filter rule specifies will be routed in this way.
+Packets passing in the opposite direction (replies) are not affected
+and routed normally.
+.Ss reply-to
+The
+.Em reply-to
+option is similar to
+.Em route-to
+but routes packets that pass in the opposite direction (replies) to the
+specified interface.
+Opposite direction is only defined in context of a state entry, and
+.Em route-to
+is useful only in rules that create state.
+It can be used on systems with multiple external connections to
+route all outgoing packets of a connection through the interface
+the incoming connection arrived through (symmetric routing enforcement).
 .Ss dup-to
 The
 .Em dup-to
@@ -1039,6 +1060,8 @@ interface-list = [ "!" ] interface-name [ [ "," ] interface-list ] .
 route          = "fastroute" |
                  "route-to" "(" interface-name address ")" |
                  "route-to" interface-name |
+                 "reply-to" "(" interface-name address ")" |
+                 "reply-to" interface-name |
                  "dup-to" "(" interface-name address ")" |
                  "dup-to" interface-name
 af	       = "inet" | "inet6" .
