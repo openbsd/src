@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.4,v 1.19 2001/03/01 16:11:16 aaron Exp $
+.\"	$OpenBSD: audio.4,v 1.20 2001/03/07 23:58:49 todd Exp $
 .\"	$NetBSD: audio.4,v 1.20 1998/05/28 17:27:15 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -330,7 +330,7 @@ when the encoding parameter changes, but if the
 .Va blocksize
 is set explicitly this value becomes sticky, i.e., it is remains
 even when the encoding is changed.
-The stickyness can be cleared by reopening the device or setting the
+The stickiness can be cleared by reopening the device or setting the
 .Va blocksize
 to 0.
 .Bd -literal
