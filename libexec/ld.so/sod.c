@@ -1,4 +1,4 @@
-/*	$OpenBSD: sod.c,v 1.10 2002/05/24 04:17:00 deraadt Exp $	*/
+/*	$OpenBSD: sod.c,v 1.11 2002/05/25 02:34:45 drahn Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -72,14 +72,14 @@ _dl_build_sod(name, sodp)
 		return;
 
 	/* is this a filename? */
-	if (strchr((char *)sodp->sod_name, '/'))
+	if (_dl_strchr((char *)sodp->sod_name, '/'))
 		return;
 
 	/* skip over 'lib' */
 	cp = (char *)sodp->sod_name + 3;
 
 	/* dot guardian */
-	if ((strchr(cp, '.') == NULL) || (*(cp+_dl_strlen(cp)-1) == '.'))
+	if ((_dl_strchr(cp, '.') == NULL) || (*(cp+_dl_strlen(cp)-1) == '.'))
 		return;
 
 	/* default */
@@ -94,7 +94,7 @@ _dl_build_sod(name, sodp)
 			break;
 		case 1:
 			/* 'so' extension */
-			if (strcmp(tok, "so") != 0)
+			if (_dl_strcmp(tok, "so") != 0)
 				goto backout;
 			break;
 		case 2:
@@ -225,7 +225,7 @@ _dl_findhint(name, major, minor, prefered_path)
 			break;
 		}
 
-		if (strcmp(name, hstrtab + bp->hi_namex) == 0) {
+		if (_dl_strcmp(name, hstrtab + bp->hi_namex) == 0) {
 			/* It's `name', check version numbers */
 			if (bp->hi_major == major &&
 				(bp->hi_ndewey < 2 || bp->hi_minor >= minor)) {

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2002/02/21 23:17:53 drahn Exp $
+#	$OpenBSD: Makefile,v 1.13 2002/05/25 02:34:45 drahn Exp $
 
 SUBDIR=ldconfig ldd
 VPATH=${.CURDIR}/../../lib/libc/string:${.CURDIR}/../../sys/lib/libsa
@@ -6,8 +6,7 @@ VPATH=${.CURDIR}/../../lib/libc/string:${.CURDIR}/../../sys/lib/libsa
 NOMAN=
 SRCS=	ldasm.S loader.c library.c resolve.c dlfcn.c dl_printf.c rtld_machine.c
 SRCS+=	util.c
-SRCS+=  sod.c strcmp.c strncmp.c strsep.c strtol.c
-OBJS+=  strchr.o
+SRCS+=  sod.c strncmp.c strsep.c strtol.c
 PROG=	ld.so
 MAN=	ld.so.8
 .if (${MACHINE_ARCH} == "sparc64")
