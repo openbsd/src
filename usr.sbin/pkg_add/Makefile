@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.18 2004/11/21 15:36:17 espie Exp $
+# $OpenBSD: Makefile,v 1.19 2005/02/15 09:13:05 espie Exp $
 
-MAN=pkg_add.1 pkg_info.1 pkg_create.1 pkg_delete.1 pkg.1
+MAN=pkg_add.1 pkg_info.1 pkg_create.1 pkg_delete.1 pkg.1 pkg_mklocatedb.1
 
 PACKAGES= \
     OpenBSD/Add.pm \
@@ -34,6 +34,7 @@ SCRIPTS= \
     pkg_info \
     pkg_create \
     pkg_delete \
+    pkg_mklocatedb \
     pkg
 
 LIBBASE=/usr/libdata/perl5

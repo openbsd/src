@@ -1,5 +1,3 @@
-- smart handling of .libs-*: pkg_add correctly discards potential conflicts.
-It doesn't handle yet actual conflicts with .libs-*.
 - handle n-to-1 updates: mostly need to allow for a list of replaced packages.
 The tricky part is that the replaced packages will often have 
 inter-dependencies, and we must ignore those inter-dependencies.

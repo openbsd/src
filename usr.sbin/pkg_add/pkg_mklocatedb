@@ -1,0 +1,72 @@
+#! /usr/bin/perl
+# Copyright (c) 2005 Marc Espie <espie@openbsd.org>
+# 
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+use strict;
+use OpenBSD::PackageLocator;
+use OpenBSD::PackageInfo;
+use OpenBSD::PackingList;
+use OpenBSD::Getopt;
+use OpenBSD::Error;
+use File::Path;
+
+package OpenBSD::PackingElement;
+sub print_name {}
+
+package OpenBSD::PackingElement::FileObject;
+sub print_name
+{
+	my ($self, $fh, $pkgname) = @_;
+	print $fh $pkgname, ":", $self->fullname(), "\n";
+}
+
+package main;
+
+set_usage('pkg_mklocatedb -nq [pkgname ...]');
+
+our ($opt_n, $opt_q);
+
+try {
+	getopts('nq');
+} catchall {
+	Usage($_);
+};
+
+my $fh;
+my $MKLOCATEDB="/usr/libexec/locate.mklocatedb";
+
+if ($opt_n or -t STDOUT) {
+	$fh = \*STDOUT;
+} else {
+	open $fh, "|-", $MKLOCATEDB, $MKLOCATEDB or die "couldn't open pipe: $!";
+}
+
+if (@ARGV==0) {
+	for my $pkgname (installed_packages()) {
+		print STDERR "$pkgname\n" unless $opt_q;
+		my $plist = OpenBSD::PackingList->from_installation($pkgname);
+		$plist->visit('print_name', $fh, $plist->pkgname());
+	}
+} else {
+	for my $pkgname (@ARGV) {
+		print STDERR "$pkgname\n" unless $opt_q;
+		my $true_package = OpenBSD::PackageLocator->find($pkgname);
+		next unless $true_package;
+		my $dir = $true_package->info();
+		$true_package->close();
+		my $plist = OpenBSD::PackingList->fromfile($dir.CONTENTS);
+		$plist->visit('print_name', $fh, $plist->pkgname());
+		rmtree($dir);
+	}
+}

@@ -1,0 +1,62 @@
+.\"	$OpenBSD: pkg_mklocatedb.1,v 1.1 2005/02/15 09:13:05 espie Exp $
+.\" Copyright (c) 2005 Marc Espie <espie@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd February 17, 2005
+.Dt PKG_MKLOCATEDB 1
+.Os
+.Sh NAME
+.Nm pkg_mklocatedb
+.Nd create a locate database for packages
+.Sh SYNOPSIS
+.Nm pkg_mklocatedb
+.Op Fl nq
+.Op Ar pkg-name Op Ar ...
+.Sh DESCRIPTION
+The
+.Nm
+command is used to create
+.Xr locate 1 Ns -style
+databases adapted for packages.
+.Pp
+Entries created for each package will have the package name prepended:
+.Li kdelibs-3.3.2p2:/usr/local/bin/meinproc .
+.Pp
+.Nm
+will build database entries for every file object for each
+.Ar pkg-name
+given on the command line.
+If no package name is given,
+.Nm
+will build database entries for all currently installed packages.
+.Pp
+By default (unless standard output is a terminal),
+the list of names is fed to
+.Pa /usr/libexec/locate.mklocatedb
+and the end result should be redirected to a file.
+.Pp
+The options are as follows:
+.Bl -tag -width opt
+.It Fl n
+Do not pipe output to
+.Pa /usr/libexec/locate.mklocatedb
+(default if standard output is a terminal).
+.It Fl q
+Be quiet: do not report every package processed to standard error.
+.El
+.Sh SEE ALSO
+.Xr locate 1 ,
+.Xr pkg_info 1
+.Sh AUTHORS
+.An Marc Espie
