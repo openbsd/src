@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.7 2000/08/02 04:10:49 millert Exp $	*/
+/*	$OpenBSD: expand.c,v 1.8 2001/04/29 18:16:19 millert Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -169,7 +169,7 @@ static void glob(as)
 		return;
 	}
 	/* this should not be an lstat */
-	if (stat(fixit(path), &stb) >= 0 && (stb.st_mode&S_IFMT) == S_IFDIR)
+	if (stat(fixit(path), &stb) >= 0 && S_ISDIR(stb.st_mode))
 		matchdir(cs);
 endit:
 	pathp = spathp;
@@ -340,12 +340,13 @@ slash:
 				if (addpath(*s++)) goto pathovfl;
 			if (addpath('/')) goto pathovfl;
 			if (stat(fixit(path), &stb) >= 0 &&
-			    (stb.st_mode&S_IFMT) == S_IFDIR)
+			    S_ISDIR(stb.st_mode)) {
 				if (*p == 0)
 					addone(path, "");
 				else
 					glob(p);
 pathovfl:
+			}
 			pathp = spathp;
 			*pathp = 0;
 			return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcmeat.c,v 1.9 1998/05/18 19:13:37 deraadt Exp $	*/
+/*	$OpenBSD: supcmeat.c,v 1.10 2001/04/29 18:16:19 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -497,7 +497,7 @@ void *dummy;
 	if ((thisC->Cflags&CFALL) == 0) {
 		if ((t->Tflags&FNEW) == 0 && (thisC->Cflags&CFOLD) == 0)
 			return (SCMOK);
-		if ((t->Tmode&S_IFMT) == S_IFLNK)
+		if (S_ISLNK(t->Tmode))
 			exists = (lstat (t->Tname,&sbuf) == 0);
 		else
 			exists = (stat (t->Tname,&sbuf) == 0);
@@ -512,22 +512,24 @@ void *dummy;
 		   changed on the server but the timestamp is right, we do an
 		   update.  (Update refers to updating stat information, i.e.
 		   timestamp, owner, mode bits, etc.) */
-		if (exists && (sbuf.st_mode&S_IFMT) == (t->Tmode&S_IFMT))
-			if ((t->Tmode&S_IFMT) != S_IFREG)
+		if (exists && (sbuf.st_mode&S_IFMT) == (t->Tmode&S_IFMT)) {
+			if (!S_ISREG(t->Tmode)) {
 				if (t->Tflags&FNEW)
 					fetch = FALSE;
 				else return (SCMOK);
-			else if ((thisC->Cflags&CFKEEP) &&
-				 sbuf.st_mtime > t->Tmtime)
+			} else if ((thisC->Cflags&CFKEEP) &&
+				 sbuf.st_mtime > t->Tmtime) {
 				return (SCMOK);
-			else if (sbuf.st_mtime == t->Tmtime)
+			} else if (sbuf.st_mtime == t->Tmtime) {
 				if (t->Tflags&FNEW)
 					fetch = FALSE;
 				else return (SCMOK);
+			}
+		}
 	}
 	/* If we get this far, we're either doing an update or a full fetch. */
 	newt = Tinsert (&needT,t->Tname,TRUE);
-	if (!fetch && (t->Tmode&S_IFMT) == S_IFREG)
+	if (!fetch && S_ISREG(t->Tmode))
 		newt->Tflags |= FUPDATE;
 	return (SCMOK);
 }
@@ -553,7 +555,7 @@ void *v;
 	if (lstat(name,&sbuf) < 0)	/* doesn't exist */
 		return (SCMOK);
 	/* is it a symbolic link ? */
-	if ((sbuf.st_mode & S_IFMT) == S_IFLNK) {
+	if (S_ISLNK(sbuf.st_mode)) {
 		if (Tlookup (refuseT,name)) {
 			vnotify ("SUP Would not delete symbolic link %s\n",
 				name);
@@ -579,7 +581,7 @@ void *v;
 		return (SCMOK);
 	}
 	/* is it a directory ? */
-	if ((sbuf.st_mode & S_IFMT) == S_IFDIR) {
+	if (S_ISDIR(sbuf.st_mode)) {
 		if (Tlookup (refuseT,name)) {
 			vnotify ("SUP Would not delete directory %s\n",name);
 			return (SCMOK);
@@ -707,7 +709,7 @@ struct stat *statp;
 		vnotify ("SUP Would remove %s %s\n",type,name);
 		return (FALSE);
 	}
-	if ((statp->st_mode&S_IFMT) == S_IFDIR) {
+	if (S_ISDIR(statp->st_mode)) {
 		if (rmdir (name) < 0)
 			runp ("rm","rm","-rf",name,0);
 	} else
@@ -746,7 +748,7 @@ va_list ap;
 	}
 	if (prepare (t->Tname,t->Tmode&S_IFMT,&new,&sbuf)) {
 		notify ("SUP: Can't prepare path for %s\n",t->Tname);
-		if ((t->Tmode&S_IFMT) == S_IFREG) {
+		if (S_ISREG(t->Tmode)) {
 			x = readskip ();	/* skip over file */
 			if (x != SCMOK)
 				goaway ("Can't skip file transfer");
@@ -772,7 +774,7 @@ va_list ap;
 		thisC->Cnogood = TRUE;
 		return (SCMOK);
 	}
-	if ((t->Tmode&S_IFMT) == S_IFREG)
+	if (S_ISREG(t->Tmode))
 		(void) Tprocess (t->Tlink,linkone,t->Tname);
 	(void) Tprocess (t->Texec,execone, NULL);
 	return (SCMOK);
@@ -908,7 +910,7 @@ register struct stat *statp;
 		return (FALSE);
 	}
 	vnotify ("SUP Receiving file %s\n",t->Tname);
-	if (!new && (t->Tmode&S_IFMT) == S_IFREG &&
+	if (!new && S_ISREG(t->Tmode) &&
 	    (t->Tflags&FBACKUP) && (thisC->Cflags&CFBACKUP)) {
 		fin = fopen (t->Tname,"r");	/* create backup */
 		if (fin == NULL) {
