@@ -1,7 +1,7 @@
-/*	$OpenBSD: clock.c,v 1.3 1999/06/12 17:47:08 mickey Exp $	*/
+/*	$OpenBSD: clock.c,v 1.4 1999/06/24 00:10:56 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998 Michael Shalayeff
+ * Copyright (c) 1998,1999 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -81,7 +81,8 @@ inittodr(t)
 	pdc_call((iodcio_t)PAGE0->mem_pdc, 1, PDC_TOD, PDC_TOD_READ,
 		&tod, 0, 0, 0, 0, 0);
 
-	time = *(struct timeval *)&tod;
+	time.tv_sec = tod.sec;
+	time.tv_usec = tod.usec;
 
 	if ((long)time.tv_sec < 0) {
 		time.tv_sec = SECYR * (1990 - 1970);
