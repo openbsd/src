@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: dot.profile,v 1.4 2001/06/23 19:44:49 deraadt Exp $
+#	$OpenBSD: dot.profile,v 1.5 2002/04/05 03:13:18 deraadt Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -39,8 +39,8 @@ umask 022
 set -o emacs # emacs-style command line editing
 
 # set up some sane defaults
-echo 'erase ^?, werase ^H, kill ^U, intr ^C, status ^T'
-stty newcrt werase ^H intr ^C kill ^U erase ^? status ^T 9600
+echo 'erase ^?, werase ^?, kill ^U, intr ^C, status ^T'
+stty newcrt werase ^? intr ^C kill ^U erase ^? status ^T 9600
 echo ''
 
 # pull in the function definitions that people will use from the shell prompt.

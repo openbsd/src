@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.10 2002/04/01 01:31:39 deraadt Exp $
+#	$OpenBSD: dot.profile,v 1.11 2002/04/05 03:13:18 deraadt Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
@@ -48,8 +48,8 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	mount -u /dev/rd0a /
 
 	# set up some sane defaults
-	echo 'erase ^H, werase ^W, kill ^U, intr ^C, status ^T'
-	stty newcrt werase ^W intr ^C kill ^U erase ^H status ^T 9600
+	echo 'erase ^?, werase ^W, kill ^U, intr ^C, status ^T'
+	stty newcrt werase ^W intr ^C kill ^U erase ^? status ^T 9600
 
 	# get the terminal type
 	_forceloop=""
