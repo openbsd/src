@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.119 2001/11/26 16:38:37 mickey Exp $
+#	$OpenBSD: files.pci,v 1.120 2001/11/29 21:55:31 nate Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -421,3 +421,8 @@ file	dev/pci/if_lge.c		lge
 device	bge: ether, ifnet, mii, ifmedia, mii_phy
 attach	bge at pci
 file	dev/pci/if_bge.c		bge
+
+# Sundance Tech./Tamarack TC9021 Gigabit Ethernet
+device	stge: ether, ifnet, mii, ifmedia, mii_phy, mii_bitbang
+attach	stge at pci
+file	dev/pci/if_stge.c		stge
