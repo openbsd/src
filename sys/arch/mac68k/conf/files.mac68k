@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mac68k,v 1.14 1997/03/12 13:24:16 briggs Exp $
+#	$OpenBSD: files.mac68k,v 1.15 1997/03/28 12:38:57 briggs Exp $
 #	$NetBSD: files.mac68k,v 1.61 1997/03/01 20:22:16 scottr Exp $
 
 # mac68k-specific configuration info
@@ -97,7 +97,6 @@ device	fpu
 attach	fpu at mainbus
 file	arch/mac68k/mac68k/fpu.c	fpu
 
-file	arch/m68k/m68k/copy.s
 file	arch/m68k/m68k/db_memrw.c	ddb
 include "../../../arch/m68k/fpe/files.fpe"
 
