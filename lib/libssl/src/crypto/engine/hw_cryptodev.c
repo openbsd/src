@@ -120,7 +120,6 @@ static struct {
 	{ CRYPTO_BLF_CBC,		NID_bf_cbc,		8,	16, },
 	{ CRYPTO_CAST_CBC,		NID_cast5_cbc,		8,	16, },
 	{ CRYPTO_SKIPJACK_CBC,		NID_undef,		0,	 0, },
-	{ CRYPTO_ARC4,			NID_rc4,		8,	16, },
 	{ 0,				NID_undef,		0,	 0, },
 };
 
@@ -481,20 +480,6 @@ cryptodev_cleanup(EVP_CIPHER_CTX *ctx)
  * gets called when libcrypto requests a cipher NID.
  */
 
-/* ARC4 (16 byte key) */
-const EVP_CIPHER cryptodev_arc4_cipher = {
-	NID_rc4,
-	1, 16, 0,
-	EVP_CIPH_VARIABLE_LENGTH,
-	cryptodev_init_key,
-	cryptodev_cipher,
-	cryptodev_cleanup,
-	sizeof(struct dev_crypto_state),
-	NULL,
-	NULL,
-	NULL
-};
-
 /* DES CBC EVP */
 const EVP_CIPHER cryptodev_des_cbc = {
 	NID_des_cbc,
@@ -575,9 +560,6 @@ cryptodev_engine_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
 		return (cryptodev_usable_ciphers(nids));
 
 	switch (nid) {
-	case NID_rc4:
-		*cipher = &cryptodev_arc4_cipher;
-		break;
 	case NID_des_ede3_cbc:
 		*cipher = &cryptodev_3des_cbc;
 		break;
