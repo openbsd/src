@@ -1,4 +1,4 @@
-/*	$OpenBSD: find.c,v 1.10 2003/06/26 07:27:29 deraadt Exp $	*/
+/*	$OpenBSD: find.c,v 1.11 2004/07/20 03:50:25 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)find.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: find.c,v 1.10 2003/06/26 07:27:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: find.c,v 1.11 2004/07/20 03:50:25 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -56,8 +56,7 @@ static char rcsid[] = "$OpenBSD: find.c,v 1.10 2003/06/26 07:27:29 deraadt Exp $
  *	command arguments.
  */
 PLAN *
-find_formplan(argv)
-	char **argv;
+find_formplan(char **argv)
 {
 	PLAN *plan, *tail, *new;
 
@@ -150,9 +149,8 @@ FTS *tree;			/* pointer to top of FTS hierarchy */
 FTSENT *entry;			/* shared with SIGINFO handler */
 
 void
-find_execute(plan, paths)
-	PLAN *plan;		/* search plan */
-	char **paths;		/* array of pathnames to traverse */
+find_execute(PLAN *plan,	/* search plan */
+    char **paths)		/* array of pathnames to traverse */
 {
 	sigset_t fullset, oset;
 	PLAN *p;

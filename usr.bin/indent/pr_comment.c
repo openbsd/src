@@ -1,4 +1,4 @@
-/*	$OpenBSD: pr_comment.c,v 1.5 2003/06/12 01:07:27 deraadt Exp $	*/
+/*	$OpenBSD: pr_comment.c,v 1.6 2004/07/20 03:50:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: pr_comment.c,v 1.5 2003/06/12 01:07:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: pr_comment.c,v 1.6 2004/07/20 03:50:26 deraadt Exp $";
 #endif /* not lint */
 
 #include <err.h>
@@ -74,7 +74,7 @@ static char rcsid[] = "$OpenBSD: pr_comment.c,v 1.5 2003/06/12 01:07:27 deraadt 
  */
 
 void
-pr_comment()
+pr_comment(void)
 {
     int         now_col;	/* column we are in now */
     int         adj_max_col;	/* Adjusted max_col for when we decide to

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.7 2003/06/26 21:43:07 deraadt Exp $	*/
+/*	$OpenBSD: parse.c,v 1.8 2004/07/20 03:50:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: parse.c,v 1.7 2003/06/26 21:43:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.8 2004/07/20 03:50:26 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -44,8 +44,7 @@ static char rcsid[] = "$OpenBSD: parse.c,v 1.7 2003/06/26 21:43:07 deraadt Exp $
 void reduce(void);
 
 void
-parse(tk)
-    int         tk;		/* the code for the construct scanned */
+parse(int tk)			/* the code for the construct scanned */
 {
     int         i;
 

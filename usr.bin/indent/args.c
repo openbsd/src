@@ -1,4 +1,4 @@
-/*	$OpenBSD: args.c,v 1.13 2003/06/12 01:07:27 deraadt Exp $	*/
+/*	$OpenBSD: args.c,v 1.14 2004/07/20 03:50:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: args.c,v 1.13 2003/06/12 01:07:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: args.c,v 1.14 2004/07/20 03:50:26 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -161,7 +161,7 @@ void set_option(char *);
  * given in these files.
  */
 void
-set_profile()
+set_profile(void)
 {
     FILE *f;
     char        fname[BUFSIZ];
@@ -187,8 +187,7 @@ set_profile()
 }
 
 void
-scan_profile(f)
-    FILE *f;
+scan_profile(FILE *f)
 {
     int i;
     char *p;
@@ -213,9 +212,7 @@ scan_profile(f)
 char       *param_start;
 
 int
-eqin(s1, s2)
-    char *s1;
-    char *s2;
+eqin(char *s1, char *s2)
 {
     while (*s1) {
 	if (*s1++ != *s2++)
@@ -229,7 +226,7 @@ eqin(s1, s2)
  * Set the defaults.
  */
 void
-set_defaults()
+set_defaults(void)
 {
     struct pro *p;
 
@@ -244,8 +241,7 @@ set_defaults()
 }
 
 void
-set_option(arg)
-    char *arg;
+set_option(char *arg)
 {
     struct pro *p;
 

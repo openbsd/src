@@ -1,4 +1,4 @@
-/*	$OpenBSD: fields.c,v 1.9 2003/09/25 02:06:40 tedu Exp $	*/
+/*	$OpenBSD: fields.c,v 1.10 2004/07/20 03:50:27 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)fields.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: fields.c,v 1.9 2003/09/25 02:06:40 tedu Exp $";
+static char rcsid[] = "$OpenBSD: fields.c,v 1.10 2004/07/20 03:50:27 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -75,11 +75,8 @@ u_char fnum[NBINS], rnum[NBINS];
  * followed by the original line.
  */
 length_t
-enterkey(keybuf, line, size, fieldtable)
-	RECHEADER *keybuf;	/* pointer to start of key */
-	DBT *line;
-	int size;
-	struct field fieldtable[];
+enterkey(RECHEADER *keybuf,	/* pointer to start of key */
+    DBT *line, int size, struct field fieldtable[])
 {
 	int i;
 	u_char *l_d_mask;
@@ -135,10 +132,7 @@ enterkey(keybuf, line, size, fieldtable)
  * constructs a field (as defined by -k) within a key
  */
 u_char *
-enterfield(tablepos, endkey, cur_fld, gflags)
-	struct field *cur_fld;
-	u_char *tablepos, *endkey;
-	int gflags;
+enterfield(u_char *tablepos, u_char *endkey, struct field *cur_fld, int gflags)
 {
 	u_char *start, *end, *lineend, *mask, *lweight;
 	struct column icol, tcol;
@@ -206,9 +200,7 @@ enterfield(tablepos, endkey, cur_fld, gflags)
  */
 
 u_char *
-number(pos, bufend, line, lineend, Rflag)
-	u_char *line, *pos, *bufend, *lineend;
-	int Rflag;
+number(u_char *pos, u_char *bufend, u_char *line, u_char *lineend, int Rflag)
 {
 	int or_sign, parity = 0;
 	int expincr = 1, exponent = -1;

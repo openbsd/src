@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.49 2004/02/28 20:08:38 krw Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.50 2004/07/20 03:50:25 deraadt Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.49 2004/02/28 20:08:38 krw Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.50 2004/07/20 03:50:25 deraadt Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -96,10 +96,7 @@ jmp_buf	httpabort;
  * Returns -1 on failure, 0 on success
  */
 static int
-url_get(origline, proxyenv, outfile)
-	const char *origline;
-	const char *proxyenv;
-	const char *outfile;
+url_get(const char *origline, const char *proxyenv, const char *outfile)
 {
 	struct addrinfo hints, *res0, *res;
 	int error;
@@ -566,8 +563,7 @@ cleanup_url_get:
  * Abort a http retrieval
  */
 void
-aborthttp(notused)
-	int notused;
+aborthttp(int notused)
 {
 
 	alarmtimer(0);
@@ -580,8 +576,7 @@ aborthttp(notused)
  * Abort a http retrieval
  */
 void
-abortfile(notused)
-	int notused;
+abortfile(int notused)
 {
 
 	alarmtimer(0);
@@ -605,10 +600,7 @@ abortfile(notused)
  * Otherwise, 0 is returned if all files retrieved successfully.
  */
 int
-auto_fetch(argc, argv, outfile)
-	int argc;
-	char *argv[];
-	char *outfile;
+auto_fetch(int argc, char *argv[], char *outfile)
 {
 	char *xargv[5];
 	char *cp, *line, *host, *dir, *file, *portnum;
@@ -871,8 +863,7 @@ bad_ftp_url:
 }
 
 char *
-urldecode(str)
-        const char *str;
+urldecode(const char *str)
 {
         char *ret;
         char c;
@@ -903,8 +894,7 @@ urldecode(str)
 }
 
 char
-hextochar(str)
-        const char *str;
+hextochar(const char *str)
 {
         char c, ret;
 
@@ -926,8 +916,7 @@ hextochar(str)
 }
 
 int
-isurl(p)
-	const char *p;
+isurl(const char *p)
 {
 
 	if (strncasecmp(p, FTP_URL, sizeof(FTP_URL) - 1) == 0 ||

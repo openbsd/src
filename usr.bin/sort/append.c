@@ -1,4 +1,4 @@
-/*	$OpenBSD: append.c,v 1.8 2003/06/03 02:56:16 millert Exp $	*/
+/*	$OpenBSD: append.c,v 1.9 2004/07/20 03:50:27 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)append.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: append.c,v 1.8 2003/06/03 02:56:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: append.c,v 1.9 2004/07/20 03:50:27 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,13 +63,8 @@ static char rcsid[] = "$OpenBSD: append.c,v 1.8 2003/06/03 02:56:16 millert Exp 
  * copy sorted lines to output; check for uniqueness
  */
 void
-append(keylist, nelem, depth, fp, put, ftbl)
-	u_char **keylist;
-	int nelem;
-	int depth;
-	FILE *fp;
-	void (*put)(RECHEADER *, FILE *);
-	struct field *ftbl;
+append(u_char **keylist, int nelem, int depth, FILE *fp,
+    void (*put)(RECHEADER *, FILE *), struct field *ftbl)
 {
 	u_char *wts, *wts1;
 	int n, odepth;
@@ -166,11 +161,8 @@ append(keylist, nelem, depth, fp, put, ftbl)
  * output the already sorted eol bin.
  */
 void
-rd_append(binno, infl0, nfiles, outfp, buffer, bufend)
-	u_char *buffer, *bufend;
-	int binno, nfiles;
-	union f_handle infl0;
-	FILE *outfp;
+rd_append(int binno, union f_handle infl0, int nfiles, FILE *outfp,
+    u_char *buffer, u_char *bufend)
 {
 	RECHEADER *rec;
 
@@ -189,8 +181,7 @@ rd_append(binno, infl0, nfiles, outfp, buffer, bufend)
  * append plain text--used after sorting the biggest bin.
  */
 void
-concat(a, b)
-	FILE *a, *b;
+concat(FILE *a, FILE *b)
 {
         int nread;
         char buffer[4096];

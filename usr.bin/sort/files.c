@@ -1,4 +1,4 @@
-/*	$OpenBSD: files.c,v 1.10 2003/11/15 05:56:28 tedu Exp $	*/
+/*	$OpenBSD: files.c,v 1.11 2004/07/20 03:50:27 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)files.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: files.c,v 1.10 2003/11/15 05:56:28 tedu Exp $";
+static char rcsid[] = "$OpenBSD: files.c,v 1.11 2004/07/20 03:50:27 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,13 +52,8 @@ static int	seq(FILE *, DBT *, DBT *);
  * It keeps the buffers for all temporary files.
  */
 int
-getnext(binno, infl0, nfiles, pos, end, dummy)
-	int binno;
-	union f_handle infl0;
-	int nfiles;
-	RECHEADER *pos;
-	u_char *end;
-	struct field *dummy;
+getnext(int binno, union f_handle infl0, int nfiles, RECHEADER *pos, u_char *end,
+    struct field *dummy)
 {
 	int i;
 	u_char *hp;
@@ -124,13 +119,8 @@ getnext(binno, infl0, nfiles, pos, end, dummy)
  * in the first fsort pass.
  */
 int
-makeline(flno, filelist, nfiles, buffer, bufend, dummy2)
-	int flno;
-	union f_handle filelist;
-	int nfiles;
-	RECHEADER *buffer;
-	u_char *bufend;
-	struct field *dummy2;
+makeline(int flno, union f_handle filelist, int nfiles, RECHEADER *buffer,
+    u_char *bufend, struct field *dummy2)
 {
 	static u_char *obufend;
 	static size_t osz;
@@ -209,12 +199,8 @@ makeline(flno, filelist, nfiles, buffer, bufend, dummy2)
  * This generates keys. It's only called in the first fsort pass
  */
 int
-makekey(flno, filelist, nfiles, buffer, bufend, ftbl)
-	int flno, nfiles;
-	union f_handle filelist;
-	RECHEADER *buffer;
-	u_char *bufend;
-	struct field *ftbl;
+makekey(int flno, union f_handle filelist, int nfiles, RECHEADER *buffer,
+    u_char *bufend, struct field *ftbl)
 {
 	static int fileno = 0;
 	static FILE *dbdesc = 0;
@@ -272,10 +258,7 @@ makekey(flno, filelist, nfiles, buffer, bufend, ftbl)
  * get a key/line pair from fp
  */
 static int
-seq(fp, line, key)
-	FILE *fp;
-	DBT *line;
-	DBT *key;
+seq(FILE *fp, DBT *line, DBT *key)
 {
 	static char *buf, flag = 1;
 	char *end, *pos;
@@ -317,9 +300,7 @@ seq(fp, line, key)
  * write a key/line pair to a temporary file
  */
 void
-putrec(rec, fp)
-	RECHEADER *rec;
-	FILE *fp;
+putrec(RECHEADER *rec, FILE *fp)
 {
 	EWRITE(rec, 1, rec->length + sizeof(TRECHEADER), fp);
 }
@@ -328,9 +309,7 @@ putrec(rec, fp)
  * write a line to output
  */
 void
-putline(rec, fp)
-	RECHEADER *rec;
-	FILE *fp;
+putline(RECHEADER *rec, FILE *fp)
 {
 	EWRITE(rec->data+rec->offset, 1, rec->length - rec->offset, fp);
 }
@@ -339,12 +318,8 @@ putline(rec, fp)
  * get a record from a temporary file. (Used by merge sort.)
  */
 int
-geteasy(flno, filelist, nfiles, rec, end, dummy2)
-	int flno, nfiles;
-	union f_handle filelist;
-	RECHEADER *rec;
-	u_char *end;
-	struct field *dummy2;
+geteasy(int flno, union f_handle filelist, int nfiles, RECHEADER *rec,
+    u_char *end, struct field *dummy2)
 {
 	int i;
 	FILE *fp;

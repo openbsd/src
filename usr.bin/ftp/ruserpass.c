@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruserpass.c,v 1.17 2003/12/16 21:46:22 deraadt Exp $	*/
+/*	$OpenBSD: ruserpass.c,v 1.18 2004/07/20 03:50:26 deraadt Exp $	*/
 /*	$NetBSD: ruserpass.c,v 1.14 1997/07/20 09:46:01 lukem Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 static char sccsid[] = "@(#)ruserpass.c	8.4 (Berkeley) 4/27/95";
 #else
 #ifndef SMALL
-static char rcsid[] = "$OpenBSD: ruserpass.c,v 1.17 2003/12/16 21:46:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ruserpass.c,v 1.18 2004/07/20 03:50:26 deraadt Exp $";
 #endif /* SMALL */
 #endif
 #endif /* not lint */
@@ -81,9 +81,7 @@ static struct toktab {
 };
 
 int
-ruserpass(host, aname, apass, aacct)
-	const char *host;
-	char **aname, **apass, **aacct;
+ruserpass(const char *host, char **aname, char **apass, char **aacct)
 {
 	char *hdir, buf[BUFSIZ], *tmp;
 	char myname[MAXHOSTNAMELEN], *mydomain;
@@ -258,7 +256,7 @@ bad:
 }
 
 static int
-token()
+token(void)
 {
 	char *cp;
 	int c;

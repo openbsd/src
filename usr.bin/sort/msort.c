@@ -1,4 +1,4 @@
-/*	$OpenBSD: msort.c,v 1.13 2003/06/26 00:12:39 deraadt Exp $	*/
+/*	$OpenBSD: msort.c,v 1.14 2004/07/20 03:50:27 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)msort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: msort.c,v 1.13 2003/06/26 00:12:39 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: msort.c,v 1.14 2004/07/20 03:50:27 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,13 +68,9 @@ static int cmp(RECHEADER *, RECHEADER *);
 static int insert(struct mfile **, struct mfile **, int, int);
 
 void
-fmerge(binno, files, nfiles, get, outfp, fput, ftbl)
-	union f_handle files;
-	int binno, nfiles;
-	int (*get)(int, union f_handle, int, RECHEADER *, u_char *, struct field *);
-	FILE *outfp;
-	void (*fput)(RECHEADER *, FILE *);
-	struct field *ftbl;
+fmerge(int binno, union f_handle files, int nfiles,
+    int (*get)(int, union f_handle, int, RECHEADER *, u_char *, struct field *),
+    FILE *outfp, void (*fput)(RECHEADER *, FILE *), struct field *ftbl)
 {
 	FILE *tout;
 	int i, j, last;
@@ -142,12 +138,9 @@ fmerge(binno, files, nfiles, get, outfp, fput, ftbl)
 }
 
 void
-merge(infl0, nfiles, get, outfp, put, ftbl)
-	int infl0, nfiles;
-	int (*get)(int, union f_handle, int, RECHEADER *, u_char *, struct field *);
-	void (*put)(RECHEADER *, FILE *);
-	FILE *outfp;
-	struct field *ftbl;
+merge(int infl0, int nfiles,
+    int (*get)(int, union f_handle, int, RECHEADER *, u_char *, struct field *),
+    FILE *outfp, void (*put)(RECHEADER *, FILE *), struct field *ftbl)
 {
 	int c, i, j;
 	union f_handle dummy = {0};
@@ -198,9 +191,8 @@ merge(infl0, nfiles, get, outfp, put, ftbl)
  * otherwise just inserts *rec in flist.
  */
 static int
-insert(flist, rec, ttop, delete)
-	struct mfile **flist, **rec;
-	int delete, ttop;			/* delete = 0 or 1 */
+insert(struct mfile **flist, struct mfile **rec, int ttop,
+    int delete)			/* delete = 0 or 1 */
 {
 	struct mfile *tmprec;
 	int top, mid, bot = 0, cmpv = 1;
@@ -253,10 +245,9 @@ insert(flist, rec, ttop, delete)
  * check order on one file
  */
 void
-order(infile, get, ftbl)
-	union f_handle infile;
-	int (*get)(int, union f_handle, int, RECHEADER *, u_char *, struct field *);
-	struct field *ftbl;
+order(union f_handle infile,
+    int (*get)(int, union f_handle, int, RECHEADER *, u_char *, struct field *),
+    struct field *ftbl)
 {
 	u_char *crec_end, *prec_end, *trec_end;
 	int c;
@@ -306,8 +297,7 @@ order(infile, get, ftbl)
 }
 
 static int
-cmp(rec1, rec2)
-	RECHEADER *rec1, *rec2;
+cmp(RECHEADER *rec1, RECHEADER *rec2)
 {
 	int r;
 	u_char *pos1, *pos2, *end;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.6 2003/06/26 00:12:39 deraadt Exp $	*/
+/*	$OpenBSD: init.c,v 1.7 2004/07/20 03:50:27 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.6 2003/06/26 00:12:39 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.7 2004/07/20 03:50:27 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,8 +62,7 @@ char *setcolumn(char *, struct field *, int);
  * keep clist in order--inserts a column in a sorted array
  */
 static void
-insertcol(field)
-	struct field *field;
+insertcol(struct field *field)
 {
 	int i;
 	for (i = 0; i < ncols; i++)
@@ -90,8 +89,7 @@ insertcol(field)
  * matches fields with the appropriate columns--n^2 but who cares?
  */
 void
-fldreset(fldtab)
-	struct field *fldtab;
+fldreset(struct field *fldtab)
 {
 	int i;
 	fldtab[0].tcol.p = clist+ncols-1;
@@ -111,10 +109,7 @@ fldreset(fldtab)
  * interprets a column in a -k field
  */
 char *
-setcolumn(pos, cur_fld, gflag)
-	char *pos;
-	struct field *cur_fld;
-	int gflag;
+setcolumn(char *pos, struct field *cur_fld, int gflag)
 {
 	struct column *col;
 	int tmp;
@@ -147,10 +142,7 @@ setcolumn(pos, cur_fld, gflag)
 }
 
 int
-setfield(pos, cur_fld, gflag)
-	char *pos;
-	struct field *cur_fld;
-	int gflag;
+setfield(char *pos, struct field *cur_fld, int gflag)
 {
 	int tmp;
 	cur_fld->weights = ascii;
@@ -194,8 +186,7 @@ setfield(pos, cur_fld, gflag)
 }
 
 int
-optval(desc, tcolflag)
-	int desc, tcolflag;
+optval(int desc, int tcolflag)
 {
 	switch(desc) {
 		case 'b':
@@ -217,9 +208,7 @@ optval(desc, tcolflag)
  * Note that the conversion is tricky, see the manual for details.
  */
 void
-fixit(argc, argv)
-	int *argc;
-	char **argv;
+fixit(int *argc, char **argv)
 {
 	int i, j;
 	long v, w, x;
@@ -301,8 +290,7 @@ fixit(argc, argv)
  * all bets are off.  See also num_init in number.c
  */
 void
-settables(gflags)
-	int gflags;
+settables(int gflags)
 {
 	u_char *wts;
 	int i, incr;

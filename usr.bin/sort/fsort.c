@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsort.c,v 1.10 2004/03/15 13:35:36 sturm Exp $	*/
+/*	$OpenBSD: fsort.c,v 1.11 2004/07/20 03:50:27 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)fsort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: fsort.c,v 1.10 2004/03/15 13:35:36 sturm Exp $";
+static char rcsid[] = "$OpenBSD: fsort.c,v 1.11 2004/07/20 03:50:27 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,12 +61,8 @@ extern char *toutpath;
 int PANIC = FSORTMAX;
 
 void
-fsort(binno, depth, infiles, nfiles, outfp, ftbl)
-	int binno, depth;
-	union f_handle infiles;
-	int nfiles;
-	FILE *outfp;
-	struct field *ftbl;
+fsort(int binno, int depth, union f_handle infiles, int nfiles, FILE *outfp,
+    struct field *ftbl)
 {
 	u_char *bufend, **keypos, *tmpbuf;
 	u_char *weights;
@@ -278,13 +274,7 @@ fsort(binno, depth, infiles, nfiles, outfp, ftbl)
  */
 #define swap(a, b, t) t = a, a = b, b = t
 void
-onepass(a, depth, n, sizes, tr, fp)
-	u_char **a;
-	int depth;
-	long n;
-	long sizes[];
-	u_char *tr;
-	FILE *fp;
+onepass(u_char **a, int depth, long n, long sizes[], u_char *tr, FILE *fp)
 {
 	size_t tsizes[NBINS+1];
 	u_char **bin[257], **top[256], ***bp, ***bpmax, ***tp;

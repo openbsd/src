@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.55 2003/12/16 21:46:22 deraadt Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.56 2004/07/20 03:50:25 deraadt Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static char rcsid[] = "$OpenBSD: ftp.c,v 1.55 2003/12/16 21:46:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ftp.c,v 1.56 2004/07/20 03:50:25 deraadt Exp $";
 #endif /* not lint and not SMALL */
 
 #include <sys/types.h>
@@ -117,9 +117,7 @@ off_t	restart_point = 0;
 FILE	*cin, *cout;
 
 char *
-hookup(host, port)
-	char *host;
-	char *port;
+hookup(char *host, char *port)
 {
 	int s, len, tos, error;
 	static char hostnamebuf[MAXHOSTNAMELEN];
@@ -270,8 +268,7 @@ bad:
 }
 
 void
-cmdabort(notused)
-	int notused;
+cmdabort(int notused)
 {
 
 	alarmtimer(0);
@@ -326,8 +323,7 @@ command(const char *fmt, ...)
 char reply_string[BUFSIZ];		/* first line of previous reply */
 
 int
-getreply(expecteof)
-	int expecteof;
+getreply(int expecteof)
 {
 	char current_line[BUFSIZ];	/* last line of previous reply */
 	int c, n, line;
@@ -449,8 +445,7 @@ getreply(expecteof)
 jmp_buf	sendabort;
 
 void
-abortsend(notused)
-	int notused;
+abortsend(int notused)
 {
 
 	alarmtimer(0);
@@ -462,9 +457,8 @@ abortsend(notused)
 }
 
 void
-sendrequest(cmd, local, remote, printnames)
-	const char *cmd, *local, *remote;
-	int printnames;
+sendrequest(const char *cmd, const char *local, const char *remote,
+    int printnames)
 {
 	struct stat st;
 	int c, d;
@@ -744,8 +738,7 @@ abort:
 jmp_buf	recvabort;
 
 void
-abortrecv(notused)
-	int notused;
+abortrecv(int notused)
 {
 
 	alarmtimer(0);
@@ -757,9 +750,8 @@ abortrecv(notused)
 }
 
 void
-recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
-	const char *cmd, * volatile local, *remote, *lmode;
-	int printnames, ignorespecial;
+recvrequest(const char *cmd, const char * volatile local, const char *remote,
+    const char *lmode, int printnames, int ignorespecial)
 {
 	FILE * volatile fout, * volatile din;
 	int (* volatile closefunc)(FILE *);
@@ -1135,7 +1127,7 @@ abort:
  * otherwise the server's connect may fail.
  */
 int
-initconn()
+initconn(void)
 {
 	char *p, *a;
 	int result = ERROR, len, tmpno = 0;
@@ -1523,8 +1515,7 @@ bad:
 }
 
 FILE *
-dataconn(lmode)
-	const char *lmode;
+dataconn(const char *lmode)
 {
 	union sockunion from;
 	int s, fromlen = myctladdr.su_len;
@@ -1553,8 +1544,7 @@ dataconn(lmode)
 }
 
 void
-psummary(notused)
-	int notused;
+psummary(int notused)
 {
 	int save_errno = errno;
 
@@ -1564,8 +1554,7 @@ psummary(notused)
 }
 
 void
-psabort(notused)
-	int notused;
+psabort(int notused)
 {
 
 	alarmtimer(0);
@@ -1573,8 +1562,7 @@ psabort(notused)
 }
 
 void
-pswitch(flag)
-	int flag;
+pswitch(int flag)
 {
 	sig_t oldintr;
 	static struct comvars {
@@ -1661,8 +1649,7 @@ pswitch(flag)
 }
 
 void
-abortpt(notused)
-	int notused;
+abortpt(int notused)
 {
 
 	alarmtimer(0);
@@ -1675,8 +1662,7 @@ abortpt(notused)
 }
 
 void
-proxtrans(cmd, local, remote)
-	const char *cmd, *local, *remote;
+proxtrans(const char *cmd, const char *local, const char *remote)
 {
 	volatile sig_t oldintr;
 	int prox_type, nfnd;
@@ -1797,9 +1783,7 @@ abort:
 }
 
 void
-reset(argc, argv)
-	int argc;
-	char *argv[];
+reset(int argc, char *argv[])
 {
 	struct pollfd pfd[1];
 	int nfnd = 1;
@@ -1818,8 +1802,7 @@ reset(argc, argv)
 }
 
 char *
-gunique(local)
-	const char *local;
+gunique(const char *local)
 {
 	static char new[MAXPATHLEN];
 	char *cp = strrchr(local, '/');
@@ -1864,8 +1847,7 @@ gunique(local)
 }
 
 void
-abort_remote(din)
-	FILE *din;
+abort_remote(FILE *din)
 {
 	char buf[BUFSIZ];
 	int nfnd;

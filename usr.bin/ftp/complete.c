@@ -1,4 +1,4 @@
-/*	$OpenBSD: complete.c,v 1.15 2004/07/09 17:11:22 millert Exp $	*/
+/*	$OpenBSD: complete.c,v 1.16 2004/07/20 03:50:25 deraadt Exp $	*/
 /*	$NetBSD: complete.c,v 1.10 1997/08/18 10:20:18 lukem Exp $	*/
 
 /*-
@@ -39,7 +39,7 @@
 
 #ifndef SMALL
 #ifndef lint
-static char rcsid[] = "$OpenBSD: complete.c,v 1.15 2004/07/09 17:11:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: complete.c,v 1.16 2004/07/20 03:50:25 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -62,8 +62,7 @@ static unsigned char complete_local(char *, int);
 static unsigned char complete_remote(char *, int);
 
 static int
-comparstr(a, b)
-	const void *a, *b;
+comparstr(const void *a, const void *b)
 {
 	return (strcmp(*(char **)a, *(char **)b));
 }
@@ -79,10 +78,7 @@ comparstr(a, b)
  *	words	stringlist containing possible matches
  */
 static unsigned char
-complete_ambiguous(word, list, words)
-	char *word;
-	int list;
-	StringList *words;
+complete_ambiguous(char *word, int list, StringList *words)
 {
 	char insertstr[MAXPATHLEN];
 	char *lastmatch;
@@ -134,9 +130,7 @@ complete_ambiguous(word, list, words)
  * Complete a command
  */
 static unsigned char
-complete_command(word, list)
-	char *word;
-	int list;
+complete_command(char *word, int list)
 {
 	struct cmd *c;
 	StringList *words;
@@ -162,9 +156,7 @@ complete_command(word, list)
  * Complete a local file
  */
 static unsigned char
-complete_local(word, list)
-	char *word;
-	int list;
+complete_local(char *word, int list)
 {
 	StringList *words;
 	char dir[MAXPATHLEN];
@@ -217,9 +209,7 @@ complete_local(word, list)
  * Complete a remote file
  */
 static unsigned char
-complete_remote(word, list)
-	char *word;
-	int list;
+complete_remote(char *word, int list)
 {
 	static StringList *dirlist;
 	static char	 lastdir[MAXPATHLEN];
@@ -298,9 +288,7 @@ complete_remote(word, list)
  * Generic complete routine
  */
 unsigned char
-complete(el, ch)
-	EditLine *el;
-	int ch;
+complete(EditLine *el, int ch)
 {
 	static char word[FTPBUFLEN];
 	static int lastc_argc, lastc_argo;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lexi.c,v 1.10 2003/09/26 22:23:28 tedu Exp $	*/
+/*	$OpenBSD: lexi.c,v 1.11 2004/07/20 03:50:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: lexi.c,v 1.10 2003/09/26 22:23:28 tedu Exp $";
+static char rcsid[] = "$OpenBSD: lexi.c,v 1.11 2004/07/20 03:50:26 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -120,7 +120,7 @@ char        chartype[128] =
 
 
 int
-lexi()
+lexi(void)
 {
     int         unary_delim;	/* this is set to 1 if the current token
 				 * forces a following operator to be unary */
@@ -562,9 +562,7 @@ stop_lit:
  * Add the given keyword to the keyword table, using val as the keyword type
  */
 void
-addkey(key, val)
-    char       *key;
-    int		val;
+addkey(char *key, int val)
 {
     struct templ *p;
     int i = 0;
