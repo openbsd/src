@@ -1,10 +1,10 @@
-#	$OpenBSD: files.atapi,v 1.2 1996/06/09 08:59:52 downsj Exp $
+#	$OpenBSD: files.atapi,v 1.3 1996/06/16 10:34:59 deraadt Exp $
 #
 # Config.new file and device description for machine-independent ATAPI code.
 # Included by ports that need it.  Ports that use it must provide
 # their own "major" declarations for the appropriate devices.
 
-define	atapi {}
+define	atapi {[drive = -1]}
 file	dev/atapi/atapiconf.c			atapi
 
 device	atapibus {drive = -1}
