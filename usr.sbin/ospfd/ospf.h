@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf.h,v 1.6 2005/02/08 12:56:48 claudio Exp $ */
+/*	$OpenBSD: ospf.h,v 1.7 2005/02/08 21:52:48 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -32,7 +32,7 @@
 
 #define PACKET_HDR		100 /* XXX used to calculate the IP payload */
 
-#define DEFAULT_METRIC		1
+#define DEFAULT_METRIC		10
 #define MIN_METRIC		1
 #define MAX_METRIC		65535	/* sum & as-ext lsa use 24bit metrics */
 
