@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.2 1998/09/11 13:46:59 fgsch Exp $
+	$OpenBSD: pcmciadevs,v 1.3 1998/09/14 19:21:15 deraadt Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -36,20 +36,20 @@
  * List of known PCMCIA vendors
  */
 
-vendor NEWMEDIA			0x0057	NewMedia Corporation
-vendor IBM			0x00a4	IBM Corporation
-vendor 3COM			0x0101	3Com Corporation
-vendor MEGAHERTZ		0x0102	Megahertz Corporation
+vendor NEWMEDIA			0x0057	NewMedia
+vendor IBM			0x00a4	IBM
+vendor 3COM			0x0101	3Com
+vendor MEGAHERTZ		0x0102	Megahertz
 vendor SOCKET			0x0104	Socket Communications
-vendor TDK			0x0105	TDK Corporation
-vendor SMC			0x0108	Standard Microsystems Corporation
-vendor MOTOROLA			0x0109	Motorola Corporation
-vendor USROBOTICS		0x0115	US Robotics Corporation
-vendor MEGAHERTZ2		0x0128	Megahertz Corporation
-vendor ADAPTEC			0x012f	Adaptec Corporation
-vendor LINKSYS			0x0149	Linksys Corporation
+vendor TDK			0x0105	TDK
+vendor SMC			0x0108	SMC
+vendor MOTOROLA			0x0109	Motorola
+vendor USROBOTICS		0x0115	US Robotics
+vendor MEGAHERTZ2		0x0128	Megahertz
+vendor ADAPTEC			0x012f	Adaptec
+vendor LINKSYS			0x0149	Linksys
 vendor SIMPLETECH		0x014d	Simple Technology
-vendor DAYNA			0x0194	Dayna Corporation
+vendor DAYNA			0x0194	Dayna
 vendor IODATA			0x01bf	I-O DATA
 
 /*
@@ -116,7 +116,7 @@ vendor DLINK			-1 	D-Link
 vendor RPTI			-1 	RPTI
 vendor ACCTON			-1 	ACCTON
 vendor YEDATA			-1 	Y-E DATA
-vendor DIGITAL			-1 	Digital Equipment Corporation
+vendor DIGITAL			-1 	Digital
 
 product MEGAHERTZ XJ2288 	{ "MEGAHERTZ", "MODEM&spXJ2288", NULL, NULL } Megahertz XJ2288 Modem
 product PREMAX PE200		{ "PMX&sp&sp&sp", "PE-200", NULL, NULL } PreMax PE-200
