@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.30 1998/03/27 18:40:54 millert Exp $	*/
+/*	$OpenBSD: cd.c,v 1.31 1998/07/12 01:20:18 deraadt Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -70,6 +70,8 @@
 #include <scsi/scsi_cd.h>
 #include <scsi/scsi_disk.h>	/* rw_big and start_stop come from there */
 #include <scsi/scsiconf.h>
+
+#include <ufs/ffs/fs.h>			/* for BBSIZE and SBSIZE */
 
 #define	CDOUTSTANDING	4
 #define	CDRETRIES	1
@@ -1069,6 +1071,10 @@ cdgetdisklabel(dev, cd)
 	lp->d_rpm = 300;
 	lp->d_interleave = 1;
 	lp->d_flags = D_REMOVABLE;
+
+	/* XXX - these values for BBSIZE and SBSIZE assume ffs */
+	lp->d_bbsize = BBSIZE;
+	lp->d_sbsize = SBSIZE;
 
 	lp->d_partitions[RAW_PART].p_offset = 0;
 	lp->d_partitions[RAW_PART].p_size =

@@ -1,4 +1,4 @@
-/*	$OpenBSD: acd.c,v 1.31 1998/07/11 03:48:24 deraadt Exp $	*/
+/*	$OpenBSD: acd.c,v 1.32 1998/07/12 01:20:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -50,6 +50,8 @@
 
 #include <dev/atapi/atapilink.h>
 #include <dev/atapi/atapi.h>
+
+#include <ufs/ffs/fs.h>			/* for BBSIZE and SBSIZE */
 
 #define	CDUNIT(z)			DISKUNIT(z)
 #define	CDPART(z)			DISKPART(z)
@@ -1012,6 +1014,10 @@ acdgetdisklabel(acd)
 	MALLOC(toc, u_int8_t *, len, M_TEMP, M_WAITOK);
 	if (acd_read_toc (acd, CD_LBA_FORMAT, 0, toc, len))
 		goto done;
+
+	/* XXX - these values for BBSIZE and SBSIZE assume ffs */
+	lp->d_bbsize = BBSIZE;
+	lp->d_sbsize = SBSIZE;
 
 	/* The raw partition is special.  */
 	lp->d_partitions[RAW_PART].p_offset = 0;
