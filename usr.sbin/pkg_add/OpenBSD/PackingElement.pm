@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.43 2004/10/05 20:04:56 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.44 2004/10/05 20:20:59 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -584,10 +584,9 @@ sub new
 }
 
 package OpenBSD::PackingElement::NoDefaultConflict;
-our @ISA=qw(OpenBSD::PackingElement::Unique);
+our @ISA=qw(OpenBSD::PackingElement::Unique OpenBSD::PackingElement::Option);
 
 sub category() { 'no-default-conflict' }
-sub keyword() { 'option' }
 
 sub stringize() 
 {
@@ -601,10 +600,9 @@ sub new
 }
 
 package OpenBSD::PackingElement::ManualInstallation;
-our @ISA=qw(OpenBSD::PackingElement::Unique);
+our @ISA=qw(OpenBSD::PackingElement::Unique OpenBSD::PackingElement::Option);
 
 sub category() { 'manual-installation' }
-sub keyword() { 'option' }
 
 sub stringize() 
 {
@@ -619,9 +617,8 @@ sub new
 
 # The special elements that don't end in the right place
 package OpenBSD::PackingElement::ExtraInfo;
-our @ISA=qw(OpenBSD::PackingElement::Unique);
+our @ISA=qw(OpenBSD::PackingElement::Unique OpenBSD::PackingElement::Comment);
 
-sub keyword() { 'comment' }
 sub category() { 'extrainfo' }
 
 sub new
@@ -637,12 +634,20 @@ sub stringize($)
 	    " ftp=".$self->{ftp};
 }
 
-package OpenBSD::PackingElement::PkgDep;
-our @ISA=qw(OpenBSD::PackingElement::Depend);
+package OpenBSD::PackingElement::Name;
+use File::Spec;
+our @ISA=qw(OpenBSD::PackingElement::Unique);
 
-__PACKAGE__->setKeyword('pkgdep');
-sub keyword() { "pkgdep" }
-sub category() { "pkgdep" }
+__PACKAGE__->setKeyword('name');
+sub keyword() { "name" }
+sub category() { "name" }
+
+package OpenBSD::PackingElement::LocalBase;
+our @ISA=qw(OpenBSD::PackingElement::Unique);
+
+__PACKAGE__->setKeyword('localbase');
+sub keyword() { "localbase" }
+sub category() { "localbase" }
 
 package OpenBSD::PackingElement::Conflict;
 our @ISA=qw(OpenBSD::PackingElement::Meta);
@@ -657,6 +662,13 @@ our @ISA=qw(OpenBSD::PackingElement::Conflict);
 __PACKAGE__->setKeyword('pkgcfl');
 sub keyword() { "pkgcfl" }
 sub category() { "pkgcfl" }
+
+package OpenBSD::PackingElement::PkgDep;
+our @ISA=qw(OpenBSD::PackingElement::Depend);
+
+__PACKAGE__->setKeyword('pkgdep');
+sub keyword() { "pkgdep" }
+sub category() { "pkgdep" }
 
 package OpenBSD::PackingElement::NewDepend;
 our @ISA=qw(OpenBSD::PackingElement::Depend);
@@ -684,6 +696,35 @@ sub stringize($)
 	my $self = $_[0];
 	return (defined $self->{name} ? $self->{name} : $self->{pkgpath}).
 	    ':'.$self->{pattern}.':'.$self->{def};
+}
+
+package OpenBSD::PackingElement::LibDepend;
+our @ISA=qw(OpenBSD::PackingElement::Depend);
+
+__PACKAGE__->setKeyword('libdepend');
+sub category() { "libdepend" }
+sub keyword() { "libdepend" }
+
+sub new
+{
+	my ($class, $args) = @_;
+	my ($name, $libspec, $pattern, $def)  = split /\:/, $args;
+	my $self = bless { libspec => $libspec, pattern => $pattern, 
+	    def => $def }, $class;
+	# very old packages still work
+	if ($name =~ m|/|) {
+		$self->{pkgpath} = $name;
+	} else {
+		$self->{name} = $name;
+	}
+	return $self;
+}
+
+sub stringize($)
+{
+	my $self = $_[0];
+	return (defined $self->{name} ? $self->{name} : $self->{pkgpath}).
+	    ':'.$self->{libspec}.':'.$self->{pattern}.':'.$self->{def};
 }
 
 package OpenBSD::PackingElement::NewUser;
@@ -774,50 +815,6 @@ sub stringize($)
 	my $self = $_[0];
 	return $self->{name}.':'.$self->{gid};
 }
-
-package OpenBSD::PackingElement::LibDepend;
-our @ISA=qw(OpenBSD::PackingElement::Depend);
-
-__PACKAGE__->setKeyword('libdepend');
-sub category() { "libdepend" }
-sub keyword() { "libdepend" }
-
-sub new
-{
-	my ($class, $args) = @_;
-	my ($name, $libspec, $pattern, $def)  = split /\:/, $args;
-	my $self = bless { libspec => $libspec, pattern => $pattern, 
-	    def => $def }, $class;
-	# very old packages still work
-	if ($name =~ m|/|) {
-		$self->{pkgpath} = $name;
-	} else {
-		$self->{name} = $name;
-	}
-	return $self;
-}
-
-sub stringize($)
-{
-	my $self = $_[0];
-	return (defined $self->{name} ? $self->{name} : $self->{pkgpath}).
-	    ':'.$self->{libspec}.':'.$self->{pattern}.':'.$self->{def};
-}
-
-package OpenBSD::PackingElement::Name;
-use File::Spec;
-our @ISA=qw(OpenBSD::PackingElement::Unique);
-
-__PACKAGE__->setKeyword('name');
-sub keyword() { "name" }
-sub category() { "name" }
-
-package OpenBSD::PackingElement::LocalBase;
-our @ISA=qw(OpenBSD::PackingElement::Unique);
-
-__PACKAGE__->setKeyword('localbase');
-sub keyword() { "localbase" }
-sub category() { "localbase" }
 
 package OpenBSD::PackingElement::Cwd;
 use File::Spec;
