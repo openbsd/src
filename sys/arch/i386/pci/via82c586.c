@@ -1,4 +1,4 @@
-/*	$OpenBSD: via82c586.c,v 1.7 2001/04/23 02:40:51 deraadt Exp $	*/
+/*	$OpenBSD: via82c586.c,v 1.8 2001/06/08 03:18:04 mickey Exp $	*/
 /*	$NetBSD: via82c586.c,v 1.2 2000/07/18 11:24:09 soda Exp $	*/
 
 /*-
@@ -111,6 +111,9 @@ const int vp3_cfg_intr_shift[] = {
 	VP3_CFG_INTR_SHIFT_PIRQB,
 	VP3_CFG_INTR_SHIFT_PIRQC,
 	VP3_CFG_INTR_SHIFT_PIRQD,
+	VP3_CFG_INTR_SHIFT_PIRQ0,
+	VP3_CFG_INTR_SHIFT_PIRQ1,
+	VP3_CFG_INTR_SHIFT_PIRQ2,
 };
 
 #define	VP3_PIRQ(reg, pirq)	(((reg) >> vp3_cfg_intr_shift[(pirq)]) & \
