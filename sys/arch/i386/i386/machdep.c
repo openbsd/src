@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.246 2003/10/15 22:33:34 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.247 2003/10/29 19:47:59 jason Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1130,8 +1130,7 @@ struct viac3_crypto_op {
 	u_int32_t		op_cw[4];
 	u_int8_t		op_iv[16];
 	u_int8_t		op_key[32];
-	void			*op_src;
-	void			*op_dst;
+	void			*op_buf;
 	u_int32_t		pad[2];
 };
 
@@ -1282,14 +1281,8 @@ viac3_crypto_process(struct cryptop *crp)
 		goto out;
 	}
 
-	op->op_src = (char *)malloc(crd->crd_len, M_DEVBUF, M_NOWAIT);
-	if (op->op_src == NULL) {
-		err = ENOMEM;
-		goto out;
-	}
-
-	op->op_dst = (char *)malloc(crd->crd_len, M_DEVBUF, M_NOWAIT);
-	if (op->op_dst == NULL) {
+	op->op_buf = (char *)malloc(crd->crd_len, M_DEVBUF, M_NOWAIT);
+	if (op->op_buf == NULL) {
 		err = ENOMEM;
 		goto out;
 	}
@@ -1334,24 +1327,24 @@ viac3_crypto_process(struct cryptop *crp)
 
 	if (crp->crp_flags & CRYPTO_F_IMBUF)
 		m_copydata((struct mbuf *)crp->crp_buf,
-		    crd->crd_skip, crd->crd_len, op->op_src);
+		    crd->crd_skip, crd->crd_len, op->op_buf);
 	else if (crp->crp_flags & CRYPTO_F_IOV)
 		cuio_copydata((struct uio *)crp->crp_buf,
-		    crd->crd_skip, crd->crd_len, op->op_src);
+		    crd->crd_skip, crd->crd_len, op->op_buf);
 	else
-		bcopy(crp->crp_buf + crd->crd_skip, op->op_src, crd->crd_len);
+		bcopy(crp->crp_buf + crd->crd_skip, op->op_buf, crd->crd_len);
 
-	viac3_crypto(&op->op_cw, op->op_src, op->op_dst, op->op_key,
+	viac3_crypto(&op->op_cw, op->op_buf, op->op_buf, op->op_key,
 	    crd->crd_len / 16, op->op_iv, VIAC3_CRYPTOP_CBC);
 
 	if (crp->crp_flags & CRYPTO_F_IMBUF)
 		m_copyback((struct mbuf *)crp->crp_buf,
-		    crd->crd_skip, crd->crd_len, op->op_dst);
+		    crd->crd_skip, crd->crd_len, op->op_buf);
 	else if (crp->crp_flags & CRYPTO_F_IOV)
 		cuio_copyback((struct uio *)crp->crp_buf,
-		    crd->crd_skip, crd->crd_len, op->op_dst);
+		    crd->crd_skip, crd->crd_len, op->op_buf);
 	else
-		bcopy(op->op_dst, crp->crp_buf + crd->crd_skip, crd->crd_len);
+		bcopy(op->op_buf, crp->crp_buf + crd->crd_skip, crd->crd_len);
 
 	/* copy out last block for use as next session IV */
 	if (crd->crd_flags & CRD_F_ENCRYPT) {
@@ -1368,10 +1361,8 @@ viac3_crypto_process(struct cryptop *crp)
 
 out:
 	if (op != NULL) {
-		if (op->op_src != NULL)
-			free(op->op_src, M_DEVBUF);
-		if (op->op_dst != NULL)
-			free(op->op_dst, M_DEVBUF);
+		if (op->op_buf != NULL)
+			free(op->op_buf, M_DEVBUF);
 		free(op, M_DEVBUF);
 	}
 	crp->crp_etype = err;
