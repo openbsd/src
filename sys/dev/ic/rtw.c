@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.1 2004/12/29 01:02:31 jsg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.2 2004/12/31 00:16:15 jsg Exp $	*/
 /* $NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -191,6 +191,10 @@ void rtw_print_txdesc(struct rtw_softc *, const char *,
     struct rtw_txctl *, struct rtw_txdesc_blk *, int);
 void rtw_print_regs(struct rtw_regs *, const char *, const char *);
 #endif
+
+struct cfdriver rtw_cd = {
+    NULL, "rtw", DV_IFNET
+};
 
 #ifdef RTW_DEBUG
 void

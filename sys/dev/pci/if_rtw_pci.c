@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtw_pci.c,v 1.1 2004/12/29 01:02:30 jsg Exp $	*/
+/*	$OpenBSD: if_rtw_pci.c,v 1.2 2004/12/31 00:16:15 jsg Exp $	*/
 /*	$NetBSD: if_rtw_pci.c,v 1.1 2004/09/26 02:33:36 dyoung Exp $	*/
 
 /*-
@@ -107,9 +107,6 @@ void	rtw_pci_attach(struct device *, struct device *, void *);
 
 struct cfattach rtw_pci_ca = {
 	sizeof (struct rtw_pci_softc), rtw_pci_match, rtw_pci_attach
-};
-struct cfdriver rtw_cd = {
-    0, "rtw", DV_IFNET
 };
 
 const struct rtw_pci_product {
