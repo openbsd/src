@@ -1,5 +1,5 @@
 /*	$NetBSD: db_disasm.c,v 1.8 2001/06/12 05:31:44 simonb Exp $	*/
-/*	$OpenBSD: db_disasm.c,v 1.6 2003/03/27 17:40:19 drahn Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.7 2003/05/08 16:05:32 drahn Exp $	*/
 /*
  * Copyright (c) 1996 Dale Rahn. All rights reserved.
  *
@@ -1112,7 +1112,7 @@ dis_ppc(u_int32_t addr, const struct opcode *opcodeset, instr_t instr)
 		if ((instr & op->mask) == op->code) {
 			found = 1;
 			disasm_fields(addr, op, instr, disasm_str);
-			db_printf("%s%s",op->name, disasm_str);
+			db_printf("%s%s\n",op->name, disasm_str);
 			return;
 		}
 	}
