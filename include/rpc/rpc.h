@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc.h,v 1.7 1998/12/20 23:43:18 millert Exp $	*/
+/*	$OpenBSD: rpc.h,v 1.8 2000/10/12 09:44:26 deraadt Exp $	*/
 /*	$NetBSD: rpc.h,v 1.5 1994/12/04 01:15:30 cgd Exp $	*/
 
 /*
@@ -100,6 +100,9 @@ extern int callrpc __P((char *, int, int, int, xdrproc_t, char *,
 extern int getrpcport __P((char *, int, int, int));
 
 extern bool_t xdr_opaque_auth __P((XDR *, struct opaque_auth *));
+
+extern int _rpc_dtablesize __P((void));
+
 __END_DECLS
 
 #endif /* !_RPC_RPC_H */
