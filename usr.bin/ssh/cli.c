@@ -1,5 +1,5 @@
 #include "includes.h"
-RCSID("$OpenBSD: cli.c,v 1.2 2000/10/16 09:38:44 djm Exp $");
+RCSID("$OpenBSD: cli.c,v 1.3 2001/01/07 19:04:47 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -146,9 +146,12 @@ cli_write(char* buf, int size)
 
 	for (pos = 0; pos < len; pos += ret) {
 		ret = write(cli_output, output + pos, len - pos);
-		if (ret == -1)
+		if (ret == -1) {
+			xfree(output)
 			return -1;
+		}
 	}
+	xfree(output)
 	return 0;
 }
 
