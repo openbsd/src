@@ -348,7 +348,7 @@ stop(int all)
 	signal(SIGCHLD, catch_child);
 	mode(1);
 #ifdef SIGWINCH
-	kill(SIGWINCH, getpid()); /* check for size changes, if caught */
+	kill(getpid(), SIGWINCH); /* check for size changes, if caught */
 #endif
 }
 
