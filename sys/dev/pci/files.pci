@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.84 2000/09/15 13:44:23 mickey Exp $
+#	$OpenBSD: files.pci,v 1.85 2000/10/17 15:47:12 jason Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -211,7 +211,7 @@ attach	dc at pci with dc_pci
 file	dev/pci/if_dc_pci.c		dc_pci
 
 # SMC EPIC, 83c170
-device	tx: ether, ifnet, ifmedia
+device	tx: ether, ifnet, mii, ifmedia
 attach	tx at pci
 file	dev/pci/if_tx.c			tx
 
