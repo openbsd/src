@@ -1,4 +1,4 @@
-/*	$OpenBSD: growfs.c,v 1.7 2003/10/14 05:23:30 drahn Exp $	*/
+/*	$OpenBSD: growfs.c,v 1.8 2003/10/26 21:39:21 tedu Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -46,7 +46,7 @@ static const char copyright[] =
 Copyright (c) 1980, 1989, 1993 The Regents of the University of California.\n\
 All rights reserved.\n";
 
-static const char rcsid[] = "$OpenBSD: growfs.c,v 1.7 2003/10/14 05:23:30 drahn Exp $";
+static const char rcsid[] = "$OpenBSD: growfs.c,v 1.8 2003/10/26 21:39:21 tedu Exp $";
 #endif /* not lint */
 
 /* ********************************************************** INCLUDES ***** */
@@ -63,6 +63,8 @@ static const char rcsid[] = "$OpenBSD: growfs.c,v 1.7 2003/10/14 05:23:30 drahn 
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
+
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
 
@@ -1940,8 +1942,8 @@ main(int argc, char **argv)
 	cp = device + strlen(device)-1;
 	lp = get_disklabel(fsi);
 	if (isdigit(*cp))
-		pp = &lp->d_partitions[2];
-	else if (*cp>='a' && *cp<='h')
+		pp = &lp->d_partitions[0];
+	else if (*cp >= 'a' && *cp < 'a' + getmaxpartitions())
 		pp = &lp->d_partitions[*cp - 'a'];
 	else
 		errx(1, "unknown device");
