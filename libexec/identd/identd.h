@@ -1,5 +1,5 @@
 /*
-**	$Id: identd.h,v 1.3 1998/09/16 20:22:15 deraadt Exp $
+**	$Id: identd.h,v 1.4 1999/08/06 17:35:02 deraadt Exp $
 **
 ** identd.h		    Common variables for the Pidentd daemon
 **
@@ -36,11 +36,8 @@ extern char *indirect_password;
 extern int lport;
 extern int fport;
 
-extern char *gethost();
-
-extern int k_open();
-extern int k_getuid();
-extern int parse();
-extern int parse_config();
+int	parse __P((int, struct in_addr *, struct in_addr *));
+char	*gethost __P((struct in_addr *));
+int	k_getuid __P((struct in_addr *, int, struct in_addr *, int, uid_t *));
 
 #endif

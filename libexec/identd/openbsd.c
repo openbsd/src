@@ -4,7 +4,7 @@
  *
  * Please send bug fixes/bug reports to: Peter Eriksson <pen@lysator.liu.se>
  *
- * $Id: openbsd.c,v 1.12 1998/06/23 11:38:41 deraadt Exp $ 
+ * $Id: openbsd.c,v 1.13 1999/08/06 17:35:02 deraadt Exp $ 
  * This version elminates the kmem search in favour of a kernel sysctl to
  * get the user id associated with a connection - Bob Beck <beck@obtuse.com>
  */
@@ -40,7 +40,7 @@ k_getuid(faddr, fport, laddr, lport, uid)
 	int     fport;
 	struct in_addr *laddr;
 	int     lport;
-	int    *uid;
+	uid_t	*uid;
 {
 	struct tcp_ident_mapping tir;
 	struct sockaddr_in *fin, *lin;

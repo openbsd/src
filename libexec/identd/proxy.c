@@ -7,16 +7,12 @@
 
 #include <stdio.h>
 #include <errno.h>
-
-#include "identd.h"
-
-#ifdef INCLUDE_PROXY
 #include <sys/types.h>
 #include <sys/time.h>
+#include <sys/socket.h>
 #include <netinet/in.h>
 
-#include <ident.h>
-#endif
+#include "identd.h"
 
 /*
  * This function should establish a connection to a remote IDENT
