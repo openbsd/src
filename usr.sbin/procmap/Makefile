@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.2 2004/02/23 21:06:26 tedu Exp $
+#	$OpenBSD: Makefile,v 1.3 2004/02/23 21:07:32 tedu Exp $
 
 PROG=		procmap
 SRCS=		main.c 
 SRCS=		procmap.c
 BINGRP=		kmem
 BINMODE=	2555
-COPTS=		-Wall
+CFLAGS+=	-Wall
 LDADD=		-lkvm
 DPADD=		${LIBKVM}
 
