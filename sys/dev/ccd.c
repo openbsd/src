@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.29 1998/01/24 21:38:56 niklas Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.30 1998/01/24 22:53:49 niklas Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -928,10 +928,8 @@ ccdbuffer(cs, bp, bn, addr, bcount, cbpp, old_io)
 		else {
 			do {
 				s = splbio();
-				vm_map_lock(ccdmap);
 				nbp->b_data = (caddr_t)kmem_alloc_pageable(
 				    ccdmap, bp->b_bcount);
-				vm_map_unlock(ccdmap);
 				splx(s);
 
 				/*
