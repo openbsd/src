@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.66 1995/10/22 00:45:56 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -110,21 +110,21 @@ OBJS+=	${SRCS:N*.h:R:S/$/.o/g}
 lib${LIB}.a:: ${OBJS}
 	@echo building standard ${LIB} library
 	@rm -f lib${LIB}.a
-	@${AR} cq lib${LIB}.a `lorder ${OBJS} | tsort`
+	@${AR} cq lib${LIB}.a `lorder ${OBJS} | tsort -q`
 	${RANLIB} lib${LIB}.a
 
 POBJS+=	${OBJS:.o=.po}
 lib${LIB}_p.a:: ${POBJS}
 	@echo building profiled ${LIB} library
 	@rm -f lib${LIB}_p.a
-	@${AR} cq lib${LIB}_p.a `lorder ${POBJS} | tsort`
+	@${AR} cq lib${LIB}_p.a `lorder ${POBJS} | tsort -q`
 	${RANLIB} lib${LIB}_p.a
 
 SOBJS+=	${OBJS:.o=.so}
 lib${LIB}_pic.a:: ${SOBJS}
 	@echo building shared object ${LIB} library
 	@rm -f lib${LIB}_pic.a
-	@${AR} cq lib${LIB}_pic.a `lorder ${SOBJS} | tsort`
+	@${AR} cq lib${LIB}_pic.a `lorder ${SOBJS} | tsort -q`
 	${RANLIB} lib${LIB}_pic.a
 
 lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}_pic.a ${DPADD}
