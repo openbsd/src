@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcd.c,v 1.7 2002/02/16 21:27:09 millert Exp $	*/
+/*	$OpenBSD: bcd.c,v 1.8 2002/05/31 03:40:00 pjanzen Exp $	*/
 /*	$NetBSD: bcd.c,v 1.6 1995/04/24 12:22:23 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)bcd.c	8.2 (Berkeley) 3/20/94";
 #else
-static char rcsid[] = "$OpenBSD: bcd.c,v 1.7 2002/02/16 21:27:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: bcd.c,v 1.8 2002/05/31 03:40:00 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -140,10 +140,6 @@ main(argc, argv)
 	 * The original bcd prompts with a "%" when reading from stdin,
 	 * but this seems kind of silly.  So this one doesn't.
 	 */
-
-	/* revoke privs */
-	setegid(getgid());
-	setgid(getgid());
 
 	if (argc > 1) {
 		while (--argc)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: quiz.c,v 1.10 2002/02/16 21:27:11 millert Exp $	*/
+/*	$OpenBSD: quiz.c,v 1.11 2002/05/31 03:40:01 pjanzen Exp $	*/
 /*	$NetBSD: quiz.c,v 1.9 1995/04/22 10:16:58 cgd Exp $	*/
 
 /*-
@@ -48,7 +48,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)quiz.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: quiz.c,v 1.10 2002/02/16 21:27:11 millert Exp $";
+static char rcsid[] = "$OpenBSD: quiz.c,v 1.11 2002/05/31 03:40:01 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,10 +85,6 @@ main(argc, argv)
 {
 	int ch;
 	const char *indexfile;
-
-	/* revoke */
-	setegid(getgid());
-	setgid(getgid());
 
 	indexfile = _PATH_QUIZIDX;
 	while ((ch = getopt(argc, argv, "i:t")) != -1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: worms.c,v 1.11 2002/02/16 21:27:12 millert Exp $	*/
+/*	$OpenBSD: worms.c,v 1.12 2002/05/31 03:40:01 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)worms.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: worms.c,v 1.11 2002/02/16 21:27:12 millert Exp $";
+static char rcsid[] = "$OpenBSD: worms.c,v 1.12 2002/05/31 03:40:01 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -198,10 +198,6 @@ main(argc, argv)
 	short **ref;
 	const char *field;
 	u_int delay = 0;
-
-	/* revoke */
-	setegid(getgid());
-	setgid(getgid());
 
 	length = 16;
 	number = 3;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bog.c,v 1.8 2002/02/16 21:27:09 millert Exp $	*/
+/*	$OpenBSD: bog.c,v 1.9 2002/05/31 03:40:00 pjanzen Exp $	*/
 /*	$NetBSD: bog.c,v 1.5 1995/04/24 12:22:32 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)bog.c	8.1 (Berkeley) 6/11/93";
 #else
-static char rcsid[] = "$OpenBSD: bog.c,v 1.8 2002/02/16 21:27:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: bog.c,v 1.9 2002/05/31 03:40:00 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -132,10 +132,6 @@ main(argc, argv)
 	time_t seed;
 	int ch, done, i, sflag;
 	char *bspec, *p;
-
-	/* revoke */
-	setegid(getgid());
-	setgid(getgid());
 
 	seed = 0;
 	batch = debug = reuse = selfuse = sflag = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: arithmetic.c,v 1.9 2002/02/16 21:27:08 millert Exp $	*/
+/*	$OpenBSD: arithmetic.c,v 1.10 2002/05/31 03:40:00 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)arithmetic.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: arithmetic.c,v 1.9 2002/02/16 21:27:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: arithmetic.c,v 1.10 2002/05/31 03:40:00 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -120,10 +120,6 @@ main(argc, argv)
 	extern char *optarg;
 	extern int optind;
 	int ch, cnt;
-
-	/* revoke privs */
-	setegid(getgid());
-	setgid(getgid());
 
 	while ((ch = getopt(argc, argv, "hr:o:")) != -1)
 		switch(ch) {

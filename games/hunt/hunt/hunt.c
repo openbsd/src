@@ -1,4 +1,4 @@
-/*	$OpenBSD: hunt.c,v 1.9 2002/02/16 21:27:10 millert Exp $	*/
+/*	$OpenBSD: hunt.c,v 1.10 2002/05/31 03:40:00 pjanzen Exp $	*/
 /*	$NetBSD: hunt.c,v 1.8 1998/09/13 15:27:28 hubertf Exp $	*/
 /*
  *  Hunt
@@ -77,10 +77,6 @@ main(ac, av)
 	long		enter_status;
 	int		option;
 	struct servent	*se;
-
-	/* Revoke privs: */
-	setegid(getgid());
-	setgid(getgid());
 
 	enter_status = env_init((long) Q_CLOAK);
 	while ((c = getopt(ac, av, "Sbcfh:l:mn:op:qst:w:")) != -1) {

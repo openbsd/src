@@ -1,4 +1,4 @@
-/*	$OpenBSD: rain.c,v 1.10 2002/02/16 21:27:11 millert Exp $	*/
+/*	$OpenBSD: rain.c,v 1.11 2002/05/31 03:40:01 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rain.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: rain.c,v 1.10 2002/02/16 21:27:11 millert Exp $";
+static char rcsid[] = "$OpenBSD: rain.c,v 1.11 2002/05/31 03:40:01 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -75,10 +75,6 @@ main(argc, argv)
 	u_int delay = 0;
 	int ch;
 	int xpos[5], ypos[5];
-
-	/* revoke */
-	setegid(getgid());
-	setgid(getgid());
 
 	while ((ch = getopt(argc, argv, "d:h")) != -1)
 		switch(ch) {

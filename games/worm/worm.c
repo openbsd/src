@@ -1,4 +1,4 @@
-/*	$OpenBSD: worm.c,v 1.15 2002/02/16 21:27:12 millert Exp $	*/
+/*	$OpenBSD: worm.c,v 1.16 2002/05/31 03:40:01 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)worm.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: worm.c,v 1.15 2002/02/16 21:27:12 millert Exp $";
+static char rcsid[] = "$OpenBSD: worm.c,v 1.16 2002/05/31 03:40:01 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -109,10 +109,6 @@ main(argc, argv)
 	struct timeval t, tod;
 	struct timezone tz;
 	fd_set rset;
-
-	/* revoke */
-	setegid(getgid());
-	setgid(getgid());
 
 	FD_ZERO(&rset);
 	setbuf(stdout, outbuf);

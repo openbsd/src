@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.11 2001/02/04 06:07:20 pjanzen Exp $	*/
+/*	$OpenBSD: main.c,v 1.12 2002/05/31 03:39:55 pjanzen Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/05/21 21:53:09 mrg Exp $	*/
 
 /*-
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/2/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.11 2001/02/04 06:07:20 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.12 2002/05/31 03:39:55 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,10 +71,6 @@ main(argc, argv)
 	int     i;
 	int     rval, ll;
 	struct text *kk;
-
-	/* revoke privs */
-	setegid(getgid());
-	setgid(getgid());
 
 	init();		/* Initialize everything */
 	signal(SIGINT, trapdel);

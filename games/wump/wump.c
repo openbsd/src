@@ -1,4 +1,4 @@
-/*	$OpenBSD: wump.c,v 1.17 2002/02/16 21:27:12 millert Exp $	*/
+/*	$OpenBSD: wump.c,v 1.18 2002/05/31 03:40:01 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)wump.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: wump.c,v 1.17 2002/02/16 21:27:12 millert Exp $";
+static char rcsid[] = "$OpenBSD: wump.c,v 1.18 2002/05/31 03:40:01 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -154,10 +154,6 @@ main(argc, argv)
 	char **argv;
 {
 	int c;
-
-	/* revoke */
-	setegid(getgid());
-	setgid(getgid());
 
 #ifdef DEBUG
 	while ((c = getopt(argc, argv, "a:b:hop:r:t:d")) != -1)

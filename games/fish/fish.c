@@ -1,4 +1,4 @@
-/*	$OpenBSD: fish.c,v 1.10 2002/02/16 21:27:09 millert Exp $	*/
+/*	$OpenBSD: fish.c,v 1.11 2002/05/31 03:40:00 pjanzen Exp $	*/
 /*	$NetBSD: fish.c,v 1.3 1995/03/23 08:28:18 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)fish.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: fish.c,v 1.10 2002/02/16 21:27:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: fish.c,v 1.11 2002/05/31 03:40:00 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -106,10 +106,6 @@ main(argc, argv)
 	char **argv;
 {
 	int ch, move;
-
-	/* revoke privs */
-	setegid(getgid());
-	setgid(getgid());
 
 	while ((ch = getopt(argc, argv, "ph")) != -1)
 		switch(ch) {

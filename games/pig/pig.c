@@ -1,4 +1,4 @@
-/*	$OpenBSD: pig.c,v 1.7 2002/02/16 21:27:11 millert Exp $	*/
+/*	$OpenBSD: pig.c,v 1.8 2002/05/31 03:40:01 pjanzen Exp $	*/
 /*	$NetBSD: pig.c,v 1.2 1995/03/23 08:41:40 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)pig.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: pig.c,v 1.7 2002/02/16 21:27:11 millert Exp $";
+static char rcsid[] = "$OpenBSD: pig.c,v 1.8 2002/05/31 03:40:01 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,10 +68,6 @@ main(argc, argv)
 	int len;
 	int ch;
 	char buf[1024];
-
-	/* revoke */
-	setegid(getgid());
-	setgid(getgid());
 
 	while ((ch = getopt(argc, argv, "")) != -1)
 		switch(ch) {

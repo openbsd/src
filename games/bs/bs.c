@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs.c,v 1.12 2002/02/18 06:45:26 deraadt Exp $	*/
+/*	$OpenBSD: bs.c,v 1.13 2002/05/31 03:40:00 pjanzen Exp $	*/
 /*
  * bs.c - original author: Bruce Holloway
  *		salvo option by: Chuck A DeGaul
@@ -11,10 +11,10 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: bs.c,v 1.12 2002/02/18 06:45:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: bs.c,v 1.13 2002/05/31 03:40:00 pjanzen Exp $";
 #endif
 
-/* #define _POSIX_SOURCE  */  /* (setegid, random) */
+/* #define _POSIX_SOURCE  */  /* ( random() ) */
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1347,10 +1347,6 @@ static int scount(int who)
 
 int main(int argc, char *argv[])
 {
-    /* revoke privs */
-    setegid(getgid());
-    setgid(getgid());
-
     do_options(argc, argv);
 
     intro();

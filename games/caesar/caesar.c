@@ -1,4 +1,4 @@
-/*	$OpenBSD: caesar.c,v 1.9 2002/02/16 21:27:09 millert Exp $	*/
+/*	$OpenBSD: caesar.c,v 1.10 2002/05/31 03:40:00 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)caesar.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: caesar.c,v 1.9 2002/02/16 21:27:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: caesar.c,v 1.10 2002/05/31 03:40:00 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -88,13 +88,9 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	register int ch, dot, i, nread, winnerdot;
-	register char *inbuf, *p, **av;
+	int ch, dot, i, nread, winnerdot;
+	char *inbuf, *p, **av;
 	int obs[26], try, winner;
-
-	/* revoke privs */
-	setegid(getgid());
-	setgid(getgid());
 
 	/* check to see if we were called as rot13 */
 	av = argv;

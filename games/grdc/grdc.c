@@ -1,4 +1,4 @@
-/*	$OpenBSD: grdc.c,v 1.10 2002/02/16 21:27:10 millert Exp $	*/
+/*	$OpenBSD: grdc.c,v 1.11 2002/05/31 03:40:00 pjanzen Exp $	*/
 /*
  * Grand digital clock for curses compatible terminals
  * Usage: grdc [-s] [n]   -- run for n seconds (default infinity)
@@ -59,10 +59,6 @@ main(argc, argv)
 	struct timeval nowtv;
 	struct timespec delay;
 	char *ep;
-
-	/* revoke privs */
-	setegid(getgid());
-	setgid(getgid());
 
 	scrol = 0;
 	while ((i = getopt(argc, argv, "sh")) != -1)
