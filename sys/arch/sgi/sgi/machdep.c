@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.17 2004/10/20 12:49:15 pefo Exp $ */
+/*	$OpenBSD: machdep.c,v 1.18 2004/10/22 10:15:42 pefo Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -84,7 +84,9 @@
 #include <machine/bus.h>
 
 #include <sgi/localbus/macebus.h>
+#if defined(TGT_ORIGIN200) | defined(TGT_ORIGIN2000)
 #include <sgi/localbus/xbowmux.h>
+#endif
 
 extern struct consdev *cn_tab;
 extern char kernel_text[];
@@ -205,7 +207,7 @@ mips_init(int argc, void *argv)
 	 */
 	bios_ident();
 
-bios_printf("SR=%08x\n", getsr());
+bios_printf("SR=%08x\n", getsr()); /* leave this in for now. need to see sr */
 
 	/*
 	 * Determine system type and set up configuration record data.
