@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.290 2004/04/19 22:26:22 tom Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.291 2004/05/04 17:06:33 grange Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3254,6 +3254,47 @@ ok:
 		printf("bus_space_unmap: %s 0x%lx, size 0x%lx\n",
 		    (t == I386_BUS_SPACE_IO) ? "port" : "pa", bpa, size);
 		printf("bus_space_unmap: can't free region\n");
+	}
+}
+
+void
+_bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size,
+    bus_addr_t *adrp)
+{
+	u_long va, endva;
+	bus_addr_t bpa;
+
+	/*
+	 * Find the correct bus physical address.
+	 */
+	if (t == I386_BUS_SPACE_IO) {
+		bpa = bsh;
+	} else if (t == I386_BUS_SPACE_MEM) {
+		bpa = (bus_addr_t)ISA_PHYSADDR(bsh);
+		if (IOM_BEGIN <= bpa && bpa <= IOM_END)
+			goto ok;
+
+		va = i386_trunc_page(bsh);
+		endva = i386_round_page(bsh + size);
+
+#ifdef DIAGNOSTIC
+		if (endva <= va)
+			panic("_bus_space_unmap: overflow");
+#endif
+
+		(void) pmap_extract(pmap_kernel(), va, &bpa);
+		bpa += (bsh & PGOFSET);
+
+		/*
+		 * Free the kernel virtual mapping.
+		 */
+		uvm_km_free(kernel_map, va, endva - va);
+	} else
+		panic("bus_space_unmap: bad bus space tag");
+
+ok:
+	if (adrp != NULL) {
+		*adrp = bpa;
 	}
 }
 
