@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_diskqueue.c,v 1.5 2000/01/11 18:02:21 peter Exp $	*/
-/*	$NetBSD: rf_diskqueue.c,v 1.8 2000/01/07 03:43:39 oster Exp $	*/
+/*	$OpenBSD: rf_diskqueue.c,v 1.6 2000/08/08 16:07:40 peter Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.13 2000/03/04 04:22:34 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,7 +27,7 @@
  * rights to redistribute these changes.
  */
 
-/****************************************************************************************
+/****************************************************************************
  *
  * rf_diskqueue.c -- higher-level disk queue code
  *
@@ -35,32 +35,36 @@
  * routines.  The code here implements thread scheduling, synchronization,
  * and locking ops (see below) on top of the lower-level queueing code.
  *
- * to support atomic RMW, we implement "locking operations".  When a locking op
- * is dispatched to the lower levels of the driver, the queue is locked, and no further
- * I/Os are dispatched until the queue receives & completes a corresponding "unlocking
- * operation".  This code relies on the higher layers to guarantee that a locking
- * op will always be eventually followed by an unlocking op.  The model is that
- * the higher layers are structured so locking and unlocking ops occur in pairs, i.e.
- * an unlocking op cannot be generated until after a locking op reports completion.
- * There is no good way to check to see that an unlocking op "corresponds" to the
- * op that currently has the queue locked, so we make no such attempt.  Since by
- * definition there can be only one locking op outstanding on a disk, this should
- * not be a problem.
+ * to support atomic RMW, we implement "locking operations".  When a
+ * locking op is dispatched to the lower levels of the driver, the
+ * queue is locked, and no further I/Os are dispatched until the queue
+ * receives & completes a corresponding "unlocking operation".  This
+ * code relies on the higher layers to guarantee that a locking op
+ * will always be eventually followed by an unlocking op.  The model
+ * is that the higher layers are structured so locking and unlocking
+ * ops occur in pairs, i.e.  an unlocking op cannot be generated until
+ * after a locking op reports completion.  There is no good way to
+ * check to see that an unlocking op "corresponds" to the op that
+ * currently has the queue locked, so we make no such attempt.  Since
+ * by definition there can be only one locking op outstanding on a
+ * disk, this should not be a problem.
  *
- * In the kernel, we allow multiple I/Os to be concurrently dispatched to the disk
- * driver.  In order to support locking ops in this environment, when we decide to
- * do a locking op, we stop dispatching new I/Os and wait until all dispatched I/Os
- * have completed before dispatching the locking op.
+ * In the kernel, we allow multiple I/Os to be concurrently dispatched
+ * to the disk driver.  In order to support locking ops in this
+ * environment, when we decide to do a locking op, we stop dispatching
+ * new I/Os and wait until all dispatched I/Os have completed before
+ * dispatching the locking op.
  *
- * Unfortunately, the code is different in the 3 different operating states
- * (user level, kernel, simulator).  In the kernel, I/O is non-blocking, and
- * we have no disk threads to dispatch for us.  Therefore, we have to dispatch
- * new I/Os to the scsi driver at the time of enqueue, and also at the time
- * of completion.  At user level, I/O is blocking, and so only the disk threads
- * may dispatch I/Os.  Thus at user level, all we can do at enqueue time is
- * enqueue and wake up the disk thread to do the dispatch.
+ * Unfortunately, the code is different in the 3 different operating
+ * states (user level, kernel, simulator).  In the kernel, I/O is
+ * non-blocking, and we have no disk threads to dispatch for us.
+ * Therefore, we have to dispatch new I/Os to the scsi driver at the
+ * time of enqueue, and also at the time of completion.  At user
+ * level, I/O is blocking, and so only the disk threads may dispatch
+ * I/Os.  Thus at user level, all we can do at enqueue time is enqueue
+ * and wake up the disk thread to do the dispatch.
  *
- ***************************************************************************************/
+ ****************************************************************************/
 
 #include "rf_types.h"
 #include "rf_threadstuff.h"
@@ -77,31 +81,23 @@
 #include "rf_cvscan.h"
 #include "rf_sstf.h"
 #include "rf_fifo.h"
+#include "rf_kintf.h"
 
 static int init_dqd(RF_DiskQueueData_t *);
 static void clean_dqd(RF_DiskQueueData_t *);
 static void rf_ShutdownDiskQueueSystem(void *);
-/* From rf_kintf.c */
-int     rf_DispatchKernelIO(RF_DiskQueue_t *, RF_DiskQueueData_t *);
-
 
 #define Dprintf1(s,a)         if (rf_queueDebug) rf_debug_printf(s,(void *)((unsigned long)a),NULL,NULL,NULL,NULL,NULL,NULL,NULL)
 #define Dprintf2(s,a,b)       if (rf_queueDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),NULL,NULL,NULL,NULL,NULL,NULL)
 #define Dprintf3(s,a,b,c)     if (rf_queueDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),NULL,NULL,NULL,NULL,NULL)
-#define Dprintf4(s,a,b,c,d)   if (rf_queueDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),(void *)((unsigned long)d),NULL,NULL,NULL,NULL)
-#define Dprintf5(s,a,b,c,d,e) if (rf_queueDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),(void *)((unsigned long)d),(void *)((unsigned long)e),NULL,NULL,NULL)
 
-
-#define SIGNAL_DISK_QUEUE(_q_,_wh_)
-#define WAIT_DISK_QUEUE(_q_,_wh_)
-
-/*****************************************************************************************
+/*****************************************************************************
  *
- * the disk queue switch defines all the functions used in the different queueing
- * disciplines
- *    queue ID, init routine, enqueue routine, dequeue routine
+ * the disk queue switch defines all the functions used in the
+ * different queueing disciplines queue ID, init routine, enqueue
+ * routine, dequeue routine
  *
- ****************************************************************************************/
+ ****************************************************************************/
 
 static RF_DiskQueueSW_t diskqueuesw[] = {
 	{"fifo",		/* FIFO */
@@ -139,15 +135,6 @@ static RF_DiskQueueSW_t diskqueuesw[] = {
 		rf_CscanPeek,
 	rf_SstfPromote},
 
-#if !defined(_KERNEL) && RF_INCLUDE_QUEUE_RANDOM > 0
-	/* to make a point to Chris :-> */
-	{"random",		/* random */
-		rf_FifoCreate,
-		rf_FifoEnqueue,
-		rf_RandomDequeue,
-		rf_RandomPeek,
-	rf_FifoPromote},
-#endif				/* !_KERNEL && RF_INCLUDE_QUEUE_RANDOM > 0 */
 };
 #define NUM_DISK_QUEUE_TYPES (sizeof(diskqueuesw)/sizeof(RF_DiskQueueSW_t))
 
@@ -163,9 +150,9 @@ static int
 init_dqd(dqd)
 	RF_DiskQueueData_t *dqd;
 {
-	/* XXX not sure if the following malloc is appropriate... probably not
-	 * quite... */
-	dqd->bp = (struct buf *) malloc(sizeof(struct buf), M_RAIDFRAME, M_NOWAIT);
+
+	dqd->bp = (struct buf *) malloc(sizeof(struct buf), 
+					M_RAIDFRAME, M_NOWAIT);
 	if (dqd->bp == NULL) {
 		return (ENOMEM);
 	}
@@ -181,24 +168,20 @@ clean_dqd(dqd)
 	free(dqd->bp, M_RAIDFRAME);
 }
 /* configures a single disk queue */
-int config_disk_queue(RF_Raid_t *, RF_DiskQueue_t *, RF_RowCol_t, 
-		      RF_RowCol_t, RF_DiskQueueSW_t *,
-		      RF_SectorCount_t, dev_t, int, 
-		      RF_ShutdownList_t **,
-		      RF_AllocListElem_t *);
+
 int 
-config_disk_queue(
-    RF_Raid_t * raidPtr,
-    RF_DiskQueue_t * diskqueue,
-    RF_RowCol_t r,		/* row & col -- debug only.  BZZT not any
+rf_ConfigureDiskQueue(
+      RF_Raid_t * raidPtr,
+      RF_DiskQueue_t * diskqueue,
+      RF_RowCol_t r,		/* row & col -- debug only.  BZZT not any
 				 * more... */
-    RF_RowCol_t c,
-    RF_DiskQueueSW_t * p,
-    RF_SectorCount_t sectPerDisk,
-    dev_t dev,
-    int maxOutstanding,
-    RF_ShutdownList_t ** listp,
-    RF_AllocListElem_t * clList)
+      RF_RowCol_t c,
+      RF_DiskQueueSW_t * p,
+      RF_SectorCount_t sectPerDisk,
+      dev_t dev,
+      int maxOutstanding,
+      RF_ShutdownList_t ** listp,
+      RF_AllocListElem_t * clList)
 {
 	int     rc;
 
@@ -284,6 +267,7 @@ rf_ConfigureDiskQueues(
 		RF_ERRORMSG2("Unknown queue type \"%s\".  Using %s\n", cfgPtr->diskQueueType, diskqueuesw[0].queueType);
 		p = &diskqueuesw[0];
 	}
+	raidPtr->qType = p;
 	RF_CallocAndAdd(diskQueues, raidPtr->numRow, sizeof(RF_DiskQueue_t *), (RF_DiskQueue_t **), raidPtr->cleanupList);
 	if (diskQueues == NULL) {
 		return (ENOMEM);
@@ -297,9 +281,12 @@ rf_ConfigureDiskQueues(
 		if (diskQueues[r] == NULL)
 			return (ENOMEM);
 		for (c = 0; c < raidPtr->numCol; c++) {
-			rc = config_disk_queue(raidPtr, &diskQueues[r][c], r, c, p,
-			    raidPtr->sectorsPerDisk, raidPtr->Disks[r][c].dev,
-			    cfgPtr->maxOutstandingDiskReqs, listp, raidPtr->cleanupList);
+			rc = rf_ConfigureDiskQueue(raidPtr, &diskQueues[r][c],
+						   r, c, p,
+						   raidPtr->sectorsPerDisk, 
+						   raidPtr->Disks[r][c].dev,
+						   cfgPtr->maxOutstandingDiskReqs, 
+						   listp, raidPtr->cleanupList);
 			if (rc)
 				return (rc);
 		}
@@ -307,7 +294,7 @@ rf_ConfigureDiskQueues(
 
 	spareQueues = &raidPtr->Queues[0][raidPtr->numCol];
 	for (r = 0; r < raidPtr->numSpare; r++) {
-		rc = config_disk_queue(raidPtr, &spareQueues[r],
+		rc = rf_ConfigureDiskQueue(raidPtr, &spareQueues[r],
 		    0, raidPtr->numCol + r, p,
 		    raidPtr->sectorsPerDisk,
 		    raidPtr->Disks[0][raidPtr->numCol + r].dev,

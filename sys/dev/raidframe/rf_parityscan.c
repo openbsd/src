@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_parityscan.c,v 1.5 2000/01/07 14:50:22 peter Exp $	*/
-/*	$NetBSD: rf_parityscan.c,v 1.8 2000/01/05 02:57:28 oster Exp $	*/
+/*	$OpenBSD: rf_parityscan.c,v 1.6 2000/08/08 16:07:44 peter Exp $	*/
+/*	$NetBSD: rf_parityscan.c,v 1.9 2000/05/28 03:00:31 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -90,6 +90,11 @@ rf_RewriteParity(raidPtr)
 	for (i = 0; i < raidPtr->totalSectors && 
 		     rc <= RF_PARITY_CORRECTED; 
 	     i += layoutPtr->dataSectorsPerStripe) {
+		if (raidPtr->waitShutdown) {
+			/* Someone is pulling the plug on this set...
+			   abort the re-write */
+			return (1);
+		}
 		asm_h = rf_MapAccess(raidPtr, i, 
 				     layoutPtr->dataSectorsPerStripe, 
 				     NULL, RF_DONT_REMAP);

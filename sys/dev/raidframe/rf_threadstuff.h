@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_threadstuff.h,v 1.5 2000/01/11 18:02:23 peter Exp $	*/
-/*	$NetBSD: rf_threadstuff.h,v 1.7 2000/01/09 01:34:29 oster Exp $	*/
+/*	$OpenBSD: rf_threadstuff.h,v 1.6 2000/08/08 16:07:45 peter Exp $	*/
+/*	$NetBSD: rf_threadstuff.h,v 1.8 2000/06/11 03:35:38 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -86,9 +86,6 @@ typedef void *RF_ThreadArg_t;
 /*
  * In Net- and OpenBSD, kernel threads are simply processes which share several
  * substructures and never run in userspace.
- *
- * XXX Note, Net- and OpenBSD does not yet have a wakeup_one(), so we always
- * XXX get Thundering Herd when a condition occurs.
  */
 #define RF_WAIT_COND(_c_,_m_)           { \
 	RF_UNLOCK_MUTEX(_m_); \

@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_diskqueue.h,v 1.3 2000/01/11 18:02:21 peter Exp $	*/
-/*	$NetBSD: rf_diskqueue.h,v 1.4 2000/01/08 23:02:16 oster Exp $	*/
+/*	$OpenBSD: rf_diskqueue.h,v 1.4 2000/08/08 16:07:40 peter Exp $	*/
+/*	$NetBSD: rf_diskqueue.h,v 1.5 2000/02/13 04:53:57 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -178,21 +178,36 @@ rf_DiskIOPromote(RF_DiskQueue_t * queue, RF_StripeNum_t parityStripeID,
     RF_ReconUnitNum_t which_ru);
 
 RF_DiskQueueData_t *
-rf_CreateDiskQueueData(RF_IoType_t typ,
-    RF_SectorNum_t ssect, RF_SectorCount_t nsect, caddr_t buf,
-    RF_StripeNum_t parityStripeID, RF_ReconUnitNum_t which_ru,
-    int (*wakeF) (void *, int),
-    void *arg, RF_DiskQueueData_t * next, RF_AccTraceEntry_t * tracerec,
-    void *raidPtr, RF_DiskQueueDataFlags_t flags, void *kb_proc);
+rf_CreateDiskQueueData(RF_IoType_t typ, RF_SectorNum_t ssect, 
+		       RF_SectorCount_t nsect, caddr_t buf,
+		       RF_StripeNum_t parityStripeID, 
+		       RF_ReconUnitNum_t which_ru,
+		       int (*wakeF) (void *, int),
+		       void *arg, RF_DiskQueueData_t * next, 
+		       RF_AccTraceEntry_t * tracerec,
+		       void *raidPtr, RF_DiskQueueDataFlags_t flags, 
+		       void *kb_proc);
 
-	RF_DiskQueueData_t *rf_CreateDiskQueueDataFull(RF_IoType_t typ,
-            RF_SectorNum_t ssect, RF_SectorCount_t nsect, caddr_t buf,
-            RF_StripeNum_t parityStripeID, RF_ReconUnitNum_t which_ru,
-            int (*wakeF) (void *, int),
-            void *arg, RF_DiskQueueData_t * next, RF_AccTraceEntry_t * tracerec,
-            int priority, int (*AuxFunc) (void *,...), caddr_t buf2,
-            void *raidPtr, RF_DiskQueueDataFlags_t flags, void *kb_proc);
+RF_DiskQueueData_t *
+rf_CreateDiskQueueDataFull(RF_IoType_t typ, RF_SectorNum_t ssect, 
+			   RF_SectorCount_t nsect, caddr_t buf,
+			   RF_StripeNum_t parityStripeID, 
+			   RF_ReconUnitNum_t which_ru,
+			   int (*wakeF) (void *, int),
+			   void *arg, RF_DiskQueueData_t * next, 
+			   RF_AccTraceEntry_t * tracerec,
+			   int priority, int (*AuxFunc) (void *,...), 
+			   caddr_t buf2, void *raidPtr, 
+			   RF_DiskQueueDataFlags_t flags, void *kb_proc);
 
-	void    rf_FreeDiskQueueData(RF_DiskQueueData_t * p);
+void    
+rf_FreeDiskQueueData(RF_DiskQueueData_t * p);
+
+int 
+rf_ConfigureDiskQueue(RF_Raid_t *, RF_DiskQueue_t *, RF_RowCol_t, 
+		      RF_RowCol_t, RF_DiskQueueSW_t *,
+		      RF_SectorCount_t, dev_t, int, 
+		      RF_ShutdownList_t **,
+		      RF_AllocListElem_t *);
 
 #endif				/* !_RF__RF_DISKQUEUE_H_ */

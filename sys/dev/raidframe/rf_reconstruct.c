@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_reconstruct.c,v 1.8 2000/01/11 18:02:23 peter Exp $	*/
-/*	$NetBSD: rf_reconstruct.c,v 1.14 2000/01/09 03:14:33 oster Exp $	*/
+/*	$OpenBSD: rf_reconstruct.c,v 1.9 2000/08/08 16:07:45 peter Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.26 2000/06/04 02:05:13 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -345,15 +345,13 @@ rf_ReconstructFailedDiskBasic(raidPtr, row, col)
 			raidPtr->raid_cinfo[srow][scol].ci_vp,
 			&c_label);
 		
-		c_label.version = RF_COMPONENT_LABEL_VERSION; 
-		c_label.mod_counter = raidPtr->mod_counter;
-		c_label.serial_number = raidPtr->serial_number;
+		raid_init_component_label( raidPtr, &c_label);
 		c_label.row = row;
 		c_label.column = col;
-		c_label.num_rows = raidPtr->numRow;
-		c_label.num_columns = raidPtr->numCol;
 		c_label.clean = RF_RAID_DIRTY;
 		c_label.status = rf_ds_optimal;
+
+		/* XXXX MORE NEEDED HERE */
 		
 		raidwrite_component_label(
                         raidPtr->raid_cinfo[srow][scol].ci_dev,
@@ -391,6 +389,7 @@ rf_ReconstructInPlace(raidPtr, row, col)
 	struct vattr va;
 	struct proc *proc;
 	int retcode;
+	int ac;
 
 	lp = raidPtr->Layout.map;
 	if (lp->SubmitReconBuffer) {
@@ -425,6 +424,8 @@ rf_ReconstructInPlace(raidPtr, row, col)
 			raidPtr->numFailures++;
 			raidPtr->Disks[row][col].status = rf_ds_failed;
 			raidPtr->status[row] = rf_rs_degraded;
+			rf_update_component_labels(raidPtr, 
+						   RF_NORMAL_COMPONENT_UPDATE);
 		}
 
 		while (raidPtr->reconInProgress) {
@@ -467,11 +468,14 @@ rf_ReconstructInPlace(raidPtr, row, col)
 		if (raidPtr->raid_cinfo[row][col].ci_vp != NULL) {
 			printf("Closing the open device: %s\n",
 			       raidPtr->Disks[row][col].devname);
-			VOP_UNLOCK(raidPtr->raid_cinfo[row][col].ci_vp, 0, proc);
-			(void) vn_close(raidPtr->raid_cinfo[row][col].ci_vp,
-					FREAD | FWRITE, proc->p_ucred, proc);
+			vp = raidPtr->raid_cinfo[row][col].ci_vp;
+			ac = raidPtr->Disks[row][col].auto_configured;
+			rf_close_component(raidPtr, vp, ac);
 			raidPtr->raid_cinfo[row][col].ci_vp = NULL;
 		}
+		/* note that this disk was *not* auto_configured (any longer)*/
+		raidPtr->Disks[row][col].auto_configured = 0;
+
 		printf("About to (re-)open the device for rebuilding: %s\n",
 		       raidPtr->Disks[row][col].devname);
 		
@@ -575,16 +579,11 @@ rf_ReconstructInPlace(raidPtr, row, col)
 		raidread_component_label(raidPtr->raid_cinfo[row][col].ci_dev,
 					 raidPtr->raid_cinfo[row][col].ci_vp,
 					 &c_label);
-		
-		c_label.version = RF_COMPONENT_LABEL_VERSION; 
-		c_label.mod_counter = raidPtr->mod_counter;
-		c_label.serial_number = raidPtr->serial_number;
+
+		raid_init_component_label(raidPtr, &c_label);
+
 		c_label.row = row;
 		c_label.column = col;
-		c_label.num_rows = raidPtr->numRow;
-		c_label.num_columns = raidPtr->numCol;
-		c_label.clean = RF_RAID_DIRTY;
-		c_label.status = rf_ds_optimal;
 		
 		raidwrite_component_label(raidPtr->raid_cinfo[row][col].ci_dev,
 					  raidPtr->raid_cinfo[row][col].ci_vp,
@@ -685,7 +684,14 @@ rf_ContinueReconstructFailedDisk(reconDesc)
 
 			if (rf_ProcessReconEvent(raidPtr, row, event))
 				reconDesc->numDisksDone++;
-			raidPtr->reconControl[row]->percentComplete = 100 - (rf_UnitsLeftToReconstruct(mapPtr) * 100 / mapPtr->totalRUs);
+			raidPtr->reconControl[row]->numRUsTotal = 
+				mapPtr->totalRUs;
+			raidPtr->reconControl[row]->numRUsComplete = 
+				mapPtr->totalRUs - 
+				rf_UnitsLeftToReconstruct(mapPtr);
+
+			raidPtr->reconControl[row]->percentComplete = 
+				(raidPtr->reconControl[row]->numRUsComplete * 100 / raidPtr->reconControl[row]->numRUsTotal);
 			if (rf_prReconSched) {
 				rf_PrintReconSchedule(raidPtr->reconControl[row]->reconMap, &(raidPtr->reconControl[row]->starttime));
 			}
@@ -748,7 +754,8 @@ rf_ContinueReconstructFailedDisk(reconDesc)
 
 		rf_ResumeNewRequests(raidPtr);
 
-		printf("Reconstruction of disk at row %d col %d completed and spare disk reassigned\n", row, col);
+		printf("Reconstruction of disk at row %d col %d completed\n", 
+		       row, col);
 		xor_s = raidPtr->accumXorTimeUs / 1000000;
 		xor_resid_us = raidPtr->accumXorTimeUs % 1000000;
 		printf("Recon time was %d.%06d seconds, accumulated XOR time was %ld us (%ld.%06ld)\n",
@@ -897,7 +904,7 @@ rf_ProcessReconEvent(raidPtr, frow, event)
  * head-separation wait request and return.
  *
  * ctrl->{ru_count, curPSID, diskOffset} and
- * rbuf->failedDiskSectorOffset are maintained to point the the unit
+ * rbuf->failedDiskSectorOffset are maintained to point to the unit
  * we're currently accessing.  Note that this deviates from the
  * standard C idiom of having counters point to the next thing to be
  * accessed.  This allows us to easily retry when we're blocked by

@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_decluster.c,v 1.3 2000/01/07 14:50:21 peter Exp $	*/
-/*	$NetBSD: rf_decluster.c,v 1.4 1999/08/13 03:41:56 oster Exp $	*/
+/*	$OpenBSD: rf_decluster.c,v 1.4 2000/08/08 16:07:40 peter Exp $	*/
+/*	$NetBSD: rf_decluster.c,v 1.5 2000/03/07 01:54:29 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -556,11 +556,6 @@ rf_decluster_adjust_params(
     RF_StripeNum_t * base_suid)
 {
 	RF_DeclusteredConfigInfo_t *info = (RF_DeclusteredConfigInfo_t *) layoutPtr->layoutSpecificInfo;
-#if (defined(__NetBSD__) || defined (__OpenBSD__)) && defined(_KERNEL)
-	/* Nothing! */
-#else
-	char    pc = layoutPtr->map->parityConfig;
-#endif
 
 	if (*SUID >= info->FullTableLimitSUID) {
 		/* new full table size is size of last full table on disk */

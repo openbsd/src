@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_reconstruct.h,v 1.3 1999/07/30 14:45:33 peter Exp $	*/
-/*	$NetBSD: rf_reconstruct.h,v 1.4 1999/03/02 03:18:48 oster Exp $	*/
+/*	$OpenBSD: rf_reconstruct.h,v 1.4 2000/08/08 16:07:45 peter Exp $	*/
+/*	$NetBSD: rf_reconstruct.h,v 1.5 2000/05/28 00:48:30 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -128,6 +128,8 @@ struct RF_ReconCtrl_s {
 	RF_StripeNum_t lastPSID;/* the ID of the last parity stripe we want
 				 * reconstructed */
 	int     percentComplete;/* percentage completion of reconstruction */
+	int     numRUsComplete; /* number of Reconstruction Units done */
+	int     numRUsTotal;    /* total number of Reconstruction Units */
 
 	/* reconstruction event queue */
 	RF_ReconEvent_t *eventQueue;	/* queue of pending reconstruction

@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_revent.c,v 1.8 2000/01/11 14:38:59 peter Exp $	*/
-/*	$NetBSD: rf_revent.c,v 1.6 2000/01/07 03:56:14 oster Exp $	*/
+/*	$OpenBSD: rf_revent.c,v 1.9 2000/08/08 16:07:45 peter Exp $	*/
+/*	$NetBSD: rf_revent.c,v 1.7 2000/05/30 02:04:29 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,10 +48,10 @@ static RF_FreeList_t *rf_revent_freelist;
 
 
 #include <sys/proc.h>
+#include <sys/kernel.h>
 
-extern int hz;
-
-#define DO_WAIT(_rc)   tsleep(&(_rc)->eventQueue, PRIBIO, "raidframe eventq", 0)
+#define DO_WAIT(_rc)  \
+	tsleep(&(_rc)->eventQueue, PRIBIO,  "raidframe eventq", 0)
 
 #define DO_SIGNAL(_rc)     wakeup(&(_rc)->eventQueue)
 
@@ -90,11 +90,10 @@ rf_ConfigureReconEvent(listp)
 	    (RF_ReconEvent_t *));
 	return (0);
 }
-/* returns the next reconstruction event, blocking the calling thread until
- * one becomes available
- */
 
-/* will now return null if it is blocked or will return an event if it is not */
+/* returns the next reconstruction event, blocking the calling thread
+ * until one becomes available.  will now return null if it is blocked
+ * or will return an event if it is not */
 
 RF_ReconEvent_t *
 rf_GetNextReconEvent(reconDesc, row, continueFunc, continueArg)
@@ -109,13 +108,14 @@ rf_GetNextReconEvent(reconDesc, row, continueFunc, continueArg)
 
 	RF_ASSERT(row >= 0 && row <= raidPtr->numRow);
 	RF_LOCK_MUTEX(rctrl->eq_mutex);
-	RF_ASSERT((rctrl->eventQueue == NULL) == (rctrl->eq_count == 0));	/* q null and count==0
-										 * must be equivalent
-										 * conditions */
+	/* q null and count==0 must be equivalent conditions */
+	RF_ASSERT((rctrl->eventQueue == NULL) == (rctrl->eq_count == 0));
 
 	rctrl->continueFunc = continueFunc;
 	rctrl->continueArg = continueArg;
 
+	/* mpsleep timeout value: secs = timo_val/hz.  'ticks' here is
+	   defined as cycle-counter ticks, not softclock ticks */
 
 #define MAX_RECON_EXEC_USECS		(100 * 1000)	/* 100 ms */
 #define RECON_DELAY_MS			25
@@ -131,15 +131,18 @@ rf_GetNextReconEvent(reconDesc, row, continueFunc, continueArg)
 
 		RF_ETIMER_STOP(reconDesc->recon_exec_timer);
 		RF_ETIMER_EVAL(reconDesc->recon_exec_timer);
-		reconDesc->reconExecTicks += RF_ETIMER_VAL_US(reconDesc->recon_exec_timer);
+		reconDesc->reconExecTicks += 
+			RF_ETIMER_VAL_US(reconDesc->recon_exec_timer);
 		if (reconDesc->reconExecTicks > reconDesc->maxReconExecTicks)
-			reconDesc->maxReconExecTicks = reconDesc->reconExecTicks;
+			reconDesc->maxReconExecTicks = 
+				reconDesc->reconExecTicks;
 		if (reconDesc->reconExecTicks >= MAX_RECON_EXEC_USECS) {
 			/* we've been running too long - sleep */
 #if RF_RECON_STATS > 0
 			reconDesc->numReconExecDelays++;
 #endif /* RF_RECON_STATS > 0 */
-			status = tsleep(&reconDesc->reconExecTicks, PRIBIO, "recon delay", RECON_TIMO);
+			status = tsleep(&reconDesc->reconExecTicks, 
+					PRIBIO, "recon delay", RECON_TIMO);
 			RF_ASSERT(status == EWOULDBLOCK);
 			reconDesc->reconExecTicks = 0;
 		}
@@ -159,9 +162,9 @@ rf_GetNextReconEvent(reconDesc, row, continueFunc, continueArg)
 	rctrl->eventQueue = event->next;
 	event->next = NULL;
 	rctrl->eq_count--;
-	RF_ASSERT((rctrl->eventQueue == NULL) == (rctrl->eq_count == 0));	/* q null and count==0
-										 * must be equivalent
-										 * conditions */
+
+	/* q null and count==0 must be equivalent conditions */
+	RF_ASSERT((rctrl->eventQueue == NULL) == (rctrl->eq_count == 0));
 	RF_UNLOCK_MUTEX(rctrl->eq_mutex);
 	return (event);
 }
@@ -182,9 +185,8 @@ rf_CauseReconEvent(raidPtr, row, col, arg, type)
 	}
 	RF_ASSERT(row >= 0 && row <= raidPtr->numRow && col >= 0 && col <= raidPtr->numCol);
 	RF_LOCK_MUTEX(rctrl->eq_mutex);
-	RF_ASSERT((rctrl->eventQueue == NULL) == (rctrl->eq_count == 0));	/* q null and count==0
-										 * must be equivalent
-										 * conditions */
+	/* q null and count==0 must be equivalent conditions */
+	RF_ASSERT((rctrl->eventQueue == NULL) == (rctrl->eq_count == 0));
 	event->next = rctrl->eventQueue;
 	rctrl->eventQueue = event;
 	rctrl->eq_count++;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_raidframe.h,v 1.4 2000/01/07 14:50:22 peter Exp $	*/
-/*	$NetBSD: rf_raidframe.h,v 1.8 2000/01/05 02:57:29 oster Exp $	*/
+/*	$OpenBSD: rf_raidframe.h,v 1.5 2000/08/08 16:07:44 peter Exp $	*/
+/*	$NetBSD: rf_raidframe.h,v 1.11 2000/05/28 00:48:31 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -81,6 +81,12 @@ typedef struct RF_DeviceConfig_s {
 }       RF_DeviceConfig_t;
 
 
+typedef struct RF_ProgressInfo_s {
+	RF_uint64 remaining;
+	RF_uint64 completed;
+	RF_uint64 total;
+} RF_ProgressInfo_t;
+
 /* flags that can be put in the rf_recon_req structure */
 #define RF_FDFLAGS_NONE   0x0	/* just fail the disk */
 #define RF_FDFLAGS_RECON  0x1	/* fail and initiate recon */
@@ -135,4 +141,13 @@ typedef struct RF_DeviceConfig_s {
 #define RAIDFRAME_CHECK_PARITY      _IOWR ('r', 25, int)
 #define RAIDFRAME_CHECK_PARITYREWRITE_STATUS _IOWR ('r', 26, int)
 #define RAIDFRAME_CHECK_COPYBACK_STATUS _IOWR ('r', 27, int)
+#define RAIDFRAME_SET_AUTOCONFIG _IOWR ('r', 28, int)
+#define RAIDFRAME_SET_ROOT _IOWR ('r', 29, int)
+#define RAIDFRAME_DELETE_COMPONENT _IOW ('r', 30, RF_SingleComponent_t)
+#define RAIDFRAME_INCORPORATE_HOT_SPARE _IOW ('r', 31, RF_SingleComponent_t)
+/* 'Extended' status versions */
+#define RAIDFRAME_CHECK_RECON_STATUS_EXT _IOWR('r',  32, RF_ProgressInfo_t *)
+#define RAIDFRAME_CHECK_PARITYREWRITE_STATUS_EXT _IOWR ('r', 33, RF_ProgressInfo_t *)
+#define RAIDFRAME_CHECK_COPYBACK_STATUS_EXT _IOWR ('r', 34, RF_ProgressInfo_t *)
+
 #endif				/* !_RF__RF_RAIDFRAME_H_ */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_nwayxor.c,v 1.2 1999/02/16 00:03:00 niklas Exp $	*/
-/*	$NetBSD: rf_nwayxor.c,v 1.3 1999/02/05 00:06:13 oster Exp $	*/
+/*	$OpenBSD: rf_nwayxor.c,v 1.3 2000/08/08 16:07:43 peter Exp $	*/
+/*	$NetBSD: rf_nwayxor.c,v 1.4 2000/03/30 12:45:41 augustss Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -74,10 +74,10 @@ rf_nWayXor1(src_rbs, dest_rb, len)
 	RF_ReconBuffer_t *dest_rb;
 	int     len;
 {
-	register unsigned long *src = (unsigned long *) src_rbs[0]->buffer;
-	register unsigned long *dest = (unsigned long *) dest_rb->buffer;
-	register unsigned long *end = src + len;
-	register unsigned long d0, d1, d2, d3, s0, s1, s2, s3;
+	unsigned long *src = (unsigned long *) src_rbs[0]->buffer;
+	unsigned long *dest = (unsigned long *) dest_rb->buffer;
+	unsigned long *end = src + len;
+	unsigned long d0, d1, d2, d3, s0, s1, s2, s3;
 
 	callcount[1]++;
 	while (len >= 4) {
@@ -108,10 +108,10 @@ rf_nWayXor2(src_rbs, dest_rb, len)
 	RF_ReconBuffer_t *dest_rb;
 	int     len;
 {
-	register unsigned long *dst = (unsigned long *) dest_rb->buffer;
-	register unsigned long *a = dst;
-	register unsigned long *b = (unsigned long *) src_rbs[0]->buffer;
-	register unsigned long *c = (unsigned long *) src_rbs[1]->buffer;
+	unsigned long *dst = (unsigned long *) dest_rb->buffer;
+	unsigned long *a = dst;
+	unsigned long *b = (unsigned long *) src_rbs[0]->buffer;
+	unsigned long *c = (unsigned long *) src_rbs[1]->buffer;
 	unsigned long a0, a1, a2, a3, b0, b1, b2, b3;
 
 	callcount[2]++;
@@ -201,10 +201,10 @@ rf_nWayXor3(src_rbs, dest_rb, len)
 	RF_ReconBuffer_t *dest_rb;
 	int     len;
 {
-	register unsigned long *dst = (unsigned long *) dest_rb->buffer;
-	register unsigned long *b = (unsigned long *) src_rbs[0]->buffer;
-	register unsigned long *c = (unsigned long *) src_rbs[1]->buffer;
-	register unsigned long *d = (unsigned long *) src_rbs[2]->buffer;
+	unsigned long *dst = (unsigned long *) dest_rb->buffer;
+	unsigned long *b = (unsigned long *) src_rbs[0]->buffer;
+	unsigned long *c = (unsigned long *) src_rbs[1]->buffer;
+	unsigned long *d = (unsigned long *) src_rbs[2]->buffer;
 	unsigned long a0, a1, a2, a3, b0, b1, b2, b3;
 
 	callcount[3]++;
@@ -231,11 +231,11 @@ rf_nWayXor4(src_rbs, dest_rb, len)
 	RF_ReconBuffer_t *dest_rb;
 	int     len;
 {
-	register unsigned long *dst = (unsigned long *) dest_rb->buffer;
-	register unsigned long *b = (unsigned long *) src_rbs[0]->buffer;
-	register unsigned long *c = (unsigned long *) src_rbs[1]->buffer;
-	register unsigned long *d = (unsigned long *) src_rbs[2]->buffer;
-	register unsigned long *e = (unsigned long *) src_rbs[3]->buffer;
+	unsigned long *dst = (unsigned long *) dest_rb->buffer;
+	unsigned long *b = (unsigned long *) src_rbs[0]->buffer;
+	unsigned long *c = (unsigned long *) src_rbs[1]->buffer;
+	unsigned long *d = (unsigned long *) src_rbs[2]->buffer;
+	unsigned long *e = (unsigned long *) src_rbs[3]->buffer;
 	unsigned long a0, a1, a2, a3, b0, b1, b2, b3;
 
 	callcount[4]++;
@@ -263,12 +263,12 @@ rf_nWayXor5(src_rbs, dest_rb, len)
 	RF_ReconBuffer_t *dest_rb;
 	int     len;
 {
-	register unsigned long *dst = (unsigned long *) dest_rb->buffer;
-	register unsigned long *b = (unsigned long *) src_rbs[0]->buffer;
-	register unsigned long *c = (unsigned long *) src_rbs[1]->buffer;
-	register unsigned long *d = (unsigned long *) src_rbs[2]->buffer;
-	register unsigned long *e = (unsigned long *) src_rbs[3]->buffer;
-	register unsigned long *f = (unsigned long *) src_rbs[4]->buffer;
+	unsigned long *dst = (unsigned long *) dest_rb->buffer;
+	unsigned long *b = (unsigned long *) src_rbs[0]->buffer;
+	unsigned long *c = (unsigned long *) src_rbs[1]->buffer;
+	unsigned long *d = (unsigned long *) src_rbs[2]->buffer;
+	unsigned long *e = (unsigned long *) src_rbs[3]->buffer;
+	unsigned long *f = (unsigned long *) src_rbs[4]->buffer;
 	unsigned long a0, a1, a2, a3, b0, b1, b2, b3;
 
 	callcount[5]++;
@@ -297,13 +297,13 @@ rf_nWayXor6(src_rbs, dest_rb, len)
 	RF_ReconBuffer_t *dest_rb;
 	int     len;
 {
-	register unsigned long *dst = (unsigned long *) dest_rb->buffer;
-	register unsigned long *b = (unsigned long *) src_rbs[0]->buffer;
-	register unsigned long *c = (unsigned long *) src_rbs[1]->buffer;
-	register unsigned long *d = (unsigned long *) src_rbs[2]->buffer;
-	register unsigned long *e = (unsigned long *) src_rbs[3]->buffer;
-	register unsigned long *f = (unsigned long *) src_rbs[4]->buffer;
-	register unsigned long *g = (unsigned long *) src_rbs[5]->buffer;
+	unsigned long *dst = (unsigned long *) dest_rb->buffer;
+	unsigned long *b = (unsigned long *) src_rbs[0]->buffer;
+	unsigned long *c = (unsigned long *) src_rbs[1]->buffer;
+	unsigned long *d = (unsigned long *) src_rbs[2]->buffer;
+	unsigned long *e = (unsigned long *) src_rbs[3]->buffer;
+	unsigned long *f = (unsigned long *) src_rbs[4]->buffer;
+	unsigned long *g = (unsigned long *) src_rbs[5]->buffer;
 	unsigned long a0, a1, a2, a3, b0, b1, b2, b3;
 
 	callcount[6]++;
@@ -333,14 +333,14 @@ rf_nWayXor7(src_rbs, dest_rb, len)
 	RF_ReconBuffer_t *dest_rb;
 	int     len;
 {
-	register unsigned long *dst = (unsigned long *) dest_rb->buffer;
-	register unsigned long *b = (unsigned long *) src_rbs[0]->buffer;
-	register unsigned long *c = (unsigned long *) src_rbs[1]->buffer;
-	register unsigned long *d = (unsigned long *) src_rbs[2]->buffer;
-	register unsigned long *e = (unsigned long *) src_rbs[3]->buffer;
-	register unsigned long *f = (unsigned long *) src_rbs[4]->buffer;
-	register unsigned long *g = (unsigned long *) src_rbs[5]->buffer;
-	register unsigned long *h = (unsigned long *) src_rbs[6]->buffer;
+	unsigned long *dst = (unsigned long *) dest_rb->buffer;
+	unsigned long *b = (unsigned long *) src_rbs[0]->buffer;
+	unsigned long *c = (unsigned long *) src_rbs[1]->buffer;
+	unsigned long *d = (unsigned long *) src_rbs[2]->buffer;
+	unsigned long *e = (unsigned long *) src_rbs[3]->buffer;
+	unsigned long *f = (unsigned long *) src_rbs[4]->buffer;
+	unsigned long *g = (unsigned long *) src_rbs[5]->buffer;
+	unsigned long *h = (unsigned long *) src_rbs[6]->buffer;
 	unsigned long a0, a1, a2, a3, b0, b1, b2, b3;
 
 	callcount[7]++;
@@ -371,15 +371,15 @@ rf_nWayXor8(src_rbs, dest_rb, len)
 	RF_ReconBuffer_t *dest_rb;
 	int     len;
 {
-	register unsigned long *dst = (unsigned long *) dest_rb->buffer;
-	register unsigned long *b = (unsigned long *) src_rbs[0]->buffer;
-	register unsigned long *c = (unsigned long *) src_rbs[1]->buffer;
-	register unsigned long *d = (unsigned long *) src_rbs[2]->buffer;
-	register unsigned long *e = (unsigned long *) src_rbs[3]->buffer;
-	register unsigned long *f = (unsigned long *) src_rbs[4]->buffer;
-	register unsigned long *g = (unsigned long *) src_rbs[5]->buffer;
-	register unsigned long *h = (unsigned long *) src_rbs[6]->buffer;
-	register unsigned long *i = (unsigned long *) src_rbs[7]->buffer;
+	unsigned long *dst = (unsigned long *) dest_rb->buffer;
+	unsigned long *b = (unsigned long *) src_rbs[0]->buffer;
+	unsigned long *c = (unsigned long *) src_rbs[1]->buffer;
+	unsigned long *d = (unsigned long *) src_rbs[2]->buffer;
+	unsigned long *e = (unsigned long *) src_rbs[3]->buffer;
+	unsigned long *f = (unsigned long *) src_rbs[4]->buffer;
+	unsigned long *g = (unsigned long *) src_rbs[5]->buffer;
+	unsigned long *h = (unsigned long *) src_rbs[6]->buffer;
+	unsigned long *i = (unsigned long *) src_rbs[7]->buffer;
 	unsigned long a0, a1, a2, a3, b0, b1, b2, b3;
 
 	callcount[8]++;
@@ -412,16 +412,16 @@ rf_nWayXor9(src_rbs, dest_rb, len)
 	RF_ReconBuffer_t *dest_rb;
 	int     len;
 {
-	register unsigned long *dst = (unsigned long *) dest_rb->buffer;
-	register unsigned long *b = (unsigned long *) src_rbs[0]->buffer;
-	register unsigned long *c = (unsigned long *) src_rbs[1]->buffer;
-	register unsigned long *d = (unsigned long *) src_rbs[2]->buffer;
-	register unsigned long *e = (unsigned long *) src_rbs[3]->buffer;
-	register unsigned long *f = (unsigned long *) src_rbs[4]->buffer;
-	register unsigned long *g = (unsigned long *) src_rbs[5]->buffer;
-	register unsigned long *h = (unsigned long *) src_rbs[6]->buffer;
-	register unsigned long *i = (unsigned long *) src_rbs[7]->buffer;
-	register unsigned long *j = (unsigned long *) src_rbs[8]->buffer;
+	unsigned long *dst = (unsigned long *) dest_rb->buffer;
+	unsigned long *b = (unsigned long *) src_rbs[0]->buffer;
+	unsigned long *c = (unsigned long *) src_rbs[1]->buffer;
+	unsigned long *d = (unsigned long *) src_rbs[2]->buffer;
+	unsigned long *e = (unsigned long *) src_rbs[3]->buffer;
+	unsigned long *f = (unsigned long *) src_rbs[4]->buffer;
+	unsigned long *g = (unsigned long *) src_rbs[5]->buffer;
+	unsigned long *h = (unsigned long *) src_rbs[6]->buffer;
+	unsigned long *i = (unsigned long *) src_rbs[7]->buffer;
+	unsigned long *j = (unsigned long *) src_rbs[8]->buffer;
 	unsigned long a0, a1, a2, a3, b0, b1, b2, b3;
 
 	callcount[9]++;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_dagfuncs.c,v 1.4 2000/01/07 14:50:20 peter Exp $	*/
-/*	$NetBSD: rf_dagfuncs.c,v 1.5 1999/08/26 02:40:28 oster Exp $	*/
+/*	$OpenBSD: rf_dagfuncs.c,v 1.5 2000/08/08 16:07:39 peter Exp $	*/
+/*	$NetBSD: rf_dagfuncs.c,v 1.6 2000/03/30 12:45:40 augustss Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -637,14 +637,14 @@ rf_bxor(src, dest, len, bp)
  */
 int 
 rf_longword_bxor(src, dest, len, bp)
-	register unsigned long *src;
-	register unsigned long *dest;
+	unsigned long *src;
+	unsigned long *dest;
 	int     len;		/* longwords */
 	void   *bp;
 {
-	register unsigned long *end = src + len;
-	register unsigned long d0, d1, d2, d3, s0, s1, s2, s3;	/* temps */
-	register unsigned long *pg_src, *pg_dest;	/* per-page source/dest
+	unsigned long *end = src + len;
+	unsigned long d0, d1, d2, d3, s0, s1, s2, s3;	/* temps */
+	unsigned long *pg_src, *pg_dest;	/* per-page source/dest
 							 * pointers */
 	int     longs_this_time;/* # longwords to xor in the current iteration */
 
@@ -714,15 +714,15 @@ rf_longword_bxor(src, dest, len, bp)
 */
 int 
 rf_longword_bxor3(dst, a, b, c, len, bp)
-	register unsigned long *dst;
-	register unsigned long *a;
-	register unsigned long *b;
-	register unsigned long *c;
+	unsigned long *dst;
+	unsigned long *a;
+	unsigned long *b;
+	unsigned long *c;
 	int     len;		/* length in longwords */
 	void   *bp;
 {
 	unsigned long a0, a1, a2, a3, b0, b1, b2, b3;
-	register unsigned long *pg_a, *pg_b, *pg_c, *pg_dst;	/* per-page source/dest
+	unsigned long *pg_a, *pg_b, *pg_c, *pg_dst;	/* per-page source/dest
 								 * pointers */
 	int     longs_this_time;/* # longs to xor in the current iteration */
 	char    dst_is_a = 0;
@@ -879,10 +879,10 @@ rf_longword_bxor3(dst, a, b, c, len, bp)
 
 int 
 rf_bxor3(dst, a, b, c, len, bp)
-	register unsigned char *dst;
-	register unsigned char *a;
-	register unsigned char *b;
-	register unsigned char *c;
+	unsigned char *dst;
+	unsigned char *a;
+	unsigned char *b;
+	unsigned char *c;
 	unsigned long len;
 	void   *bp;
 {

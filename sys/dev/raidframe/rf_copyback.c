@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_copyback.c,v 1.5 2000/01/11 18:02:20 peter Exp $	*/
-/*	$NetBSD: rf_copyback.c,v 1.12 2000/01/09 01:29:28 oster Exp $	*/
+/*	$OpenBSD: rf_copyback.c,v 1.6 2000/08/08 16:07:39 peter Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.14 2000/03/07 02:59:50 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -101,6 +101,8 @@ rf_CopybackReconstructedData(raidPtr)
 	struct vattr va;
 	struct proc *proc;
 
+	int ac;
+
 	done = 0;
 	fcol = 0;
 	for (frow = 0; frow < raidPtr->numRow; frow++) {
@@ -129,11 +131,15 @@ rf_CopybackReconstructedData(raidPtr)
 	if (raidPtr->raid_cinfo[frow][fcol].ci_vp != NULL) {
 		printf("Closed the open device: %s\n",
 		    raidPtr->Disks[frow][fcol].devname);
-		VOP_UNLOCK(raidPtr->raid_cinfo[frow][fcol].ci_vp, 0, proc);
-		(void) vn_close(raidPtr->raid_cinfo[frow][fcol].ci_vp,
-		    FREAD | FWRITE, proc->p_ucred, proc);
+ 		vp = raidPtr->raid_cinfo[frow][fcol].ci_vp;
+ 		ac = raidPtr->Disks[frow][fcol].auto_configured;
+ 		rf_close_component(raidPtr, vp, ac);
 		raidPtr->raid_cinfo[frow][fcol].ci_vp = NULL;
+
 	}
+ 	/* note that this disk was *not* auto_configured (any longer) */
+ 	raidPtr->Disks[frow][fcol].auto_configured = 0;
+ 
 	printf("About to (re-)open the device: %s\n",
 	    raidPtr->Disks[frow][fcol].devname);
 
@@ -234,17 +240,12 @@ rf_CopybackReconstructedData(raidPtr)
 	raidread_component_label( raidPtr->raid_cinfo[frow][fcol].ci_dev,
 				  raidPtr->raid_cinfo[frow][fcol].ci_vp,
 				  &c_label);
-		
-	c_label.version = RF_COMPONENT_LABEL_VERSION; 
-	c_label.mod_counter = raidPtr->mod_counter;
-	c_label.serial_number = raidPtr->serial_number;
+	
+	raid_init_component_label( raidPtr, &c_label );
+
 	c_label.row = frow;
 	c_label.column = fcol;
-	c_label.num_rows = raidPtr->numRow;
-	c_label.num_columns = raidPtr->numCol;
-	c_label.clean = RF_RAID_DIRTY;
-	c_label.status = rf_ds_optimal;
-	
+
 	raidwrite_component_label( raidPtr->raid_cinfo[frow][fcol].ci_dev,
 				   raidPtr->raid_cinfo[frow][fcol].ci_vp,
 				   &c_label);

@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_general.h,v 1.3 2000/01/07 14:50:21 peter Exp $	*/
-/*	$NetBSD: rf_general.h,v 1.4 1999/12/07 02:40:28 oster Exp $	*/
+/*	$OpenBSD: rf_general.h,v 1.4 2000/08/08 16:07:41 peter Exp $	*/
+/*	$NetBSD: rf_general.h,v 1.5 2000/03/03 02:04:48 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -46,9 +46,7 @@
 #define RF_ERRORMSG1(s,a)         printf((s),(a))
 #define RF_ERRORMSG2(s,a,b)       printf((s),(a),(b))
 #define RF_ERRORMSG3(s,a,b,c)     printf((s),(a),(b),(c))
-#define RF_ERRORMSG4(s,a,b,c,d)   printf((s),(a),(b),(c),(d))
-#define RF_ERRORMSG5(s,a,b,c,d,e) printf((s),(a),(b),(c),(d),(e))
-#define perror(x)
+
 extern char rf_panicbuf[];
 #define RF_PANIC() {sprintf(rf_panicbuf,"raidframe error at line %d file %s",__LINE__,__FILE__); panic(rf_panicbuf);}
 

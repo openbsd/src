@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_dagfuncs.h,v 1.2 1999/02/16 00:02:32 niklas Exp $	*/
-/*	$NetBSD: rf_dagfuncs.h,v 1.3 1999/02/05 00:06:08 oster Exp $	*/
+/*	$OpenBSD: rf_dagfuncs.h,v 1.3 2000/08/08 16:07:39 peter Exp $	*/
+/*	$NetBSD: rf_dagfuncs.h,v 1.4 2000/03/30 13:39:07 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -61,11 +61,10 @@ rf_XorIntoBuffer(RF_Raid_t * raidPtr, RF_PhysDiskAddr_t * pda, char *srcbuf,
     char *targbuf, void *bp);
 int     rf_bxor(char *src, char *dest, int len, void *bp);
 int 
-rf_longword_bxor(register unsigned long *src, register unsigned long *dest,
-    int len, void *bp);
+rf_longword_bxor(unsigned long *src, unsigned long *dest, int len, void *bp);
 int 
-rf_longword_bxor3(register unsigned long *dest, register unsigned long *a,
-    register unsigned long *b, register unsigned long *c, int len, void *bp);
+rf_longword_bxor3(unsigned long *dest, unsigned long *a, unsigned long *b, 
+		  unsigned long *c, int len, void *bp);
 int 
 rf_bxor3(unsigned char *dst, unsigned char *a, unsigned char *b,
     unsigned char *c, unsigned long len, void *bp);

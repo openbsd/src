@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_reconbuffer.c,v 1.2 1999/02/16 00:03:20 niklas Exp $	*/
-/*	$NetBSD: rf_reconbuffer.c,v 1.3 1999/02/05 00:06:16 oster Exp $	*/
+/*	$OpenBSD: rf_reconbuffer.c,v 1.3 2000/08/08 16:07:44 peter Exp $	*/
+/*	$NetBSD: rf_reconbuffer.c,v 1.4 2000/03/13 23:52:36 soren Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -298,8 +298,7 @@ rf_MultiWayReconXor(raidPtr, pssPtr)
 	nWayXorFuncs[numBufs] (pssPtr->rbufsForXor, targetRbuf, numBytes / sizeof(long));
 
 	/* release all the reconstruction buffers except the last one, which
-	 * belongs to the the disk who's submission caused this XOR to take
-	 * place */
+	 * belongs to the disk whose submission caused this XOR to take place */
 	for (i = 0; i < numBufs - 1; i++) {
 		if (rbufs[i]->type == RF_RBUF_TYPE_FLOATING)
 			rf_ReleaseFloatingReconBuffer(raidPtr, rbufs[i]->row, rbufs[i]);
