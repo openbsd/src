@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ktrace.9,v 1.1 2003/07/24 20:15:45 mickey Exp $
+.\"	$OpenBSD: ktrace.9,v 1.2 2003/07/24 22:08:56 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Michael Shalayeff
 .\"
@@ -54,15 +54,16 @@
 .Ft void
 .Fn ktrsysret "struct proc *p" "register_t code" "int error" "register_t retval"
 .Sh DESCRIPTION
-This interface is ment for kernel subsystems and machine dependent code
+This interface is meant for kernel subsystems and machine dependent code
 to inform the user about the events occuring to the process should
 tracing of such be enabled using the
 .Xr ktrace 2
 system call.
 Each of the functions (except for
 .Nm KTRPOINT )
-is ment for a particular type of events and is described below.
+is meant for a particular type of event and is described below.
 .Pp
+The
 .Fn KTRPOINT
 macro should be used before calling any of the other tracing functions
 to verify that tracing for that particular type of events has been enabled.
@@ -75,7 +76,7 @@ argument are a mask of the KTRFAC_ values described in
 is called during the context switching.
 The
 .Fa user
-argument is a boolean value specifing whether process has
+argument is a boolean value specifying whether the process has
 been put into a waiting state (true) or placed onto a running queue (false).
 Furthemore the
 .Fa user
@@ -89,7 +90,7 @@ is changed and thus the name of which is given in the
 argument.
 .Pp
 .Fn ktrgenio
-should be called for each generic input/output transactions that is
+should be called for each generic input/output transaction that is
 described by the
 .Fa fd
 file descriptor,
@@ -105,7 +106,7 @@ input/output data vector,
 size of the
 .Fa iov
 vector,
-and, at last,
+and, lastly,
 .Fa error
 status of the transaction.
 .Pp
@@ -122,9 +123,10 @@ should be called for each signal
 posted for the traced process.
 The
 .Fa action
-taken is one of the
+taken is one of
 .Nm SIG_DFL ,
 .Nm SIG_IGN ,
+or
 .Nm SIG_ERR
 as described in the
 .Xr sigaction 2
@@ -133,7 +135,7 @@ document.
 is the current traced process' signal mask.
 Signal-specific code and
 .Em siginfo_t
-structure as descibed in the
+structure as described in
 .Aq Pa sys/siginfo.h
 are given in the
 .Fa code
@@ -154,12 +156,13 @@ should be called for a return from each system call number
 .Fa code
 and error number of
 .Fa error
-as described in the
+as described in
 .Xr errno 2
 and a return value in
-.Fa retval that is syscall dependent.
+.Fa retval
+that is syscall dependent.
 .Sh CODE REFERENCES
-These process tracing facility is implemented in
+The process tracing facility is implemented in
 .Pa sys/kern/kern_ktrace.c .
 .Sh SEE ALSO
 .Xr errno 2 ,

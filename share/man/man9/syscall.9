@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syscall.9,v 1.1 2003/07/24 20:15:45 mickey Exp $
+.\"	$OpenBSD: syscall.9,v 1.2 2003/07/24 22:08:56 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Michael Shalayeff
 .\"
@@ -34,19 +34,19 @@ System calls in the kernel are implemented through a set of
 switch tables for each emulation type.
 Each table is generated from the
 .Dq master
-file by the
+file by
 .Pa sys/kern/makesyscalls.sh
 through the appropriate rules in the
 .Pa Makefile .
 .Pp
 The
 .Dq master
-file is a text file sonsisting of a list of lines for each
-system call. Lines may be split by the means of back slashing the end
-of the line.
-Each line is a set of fields seprated by whitespaces:
+file is a text file consisting of a list of lines for each
+system call.
+Lines may be split by the means of back slashing the end of the line.
+Each line is a set of fields separated by whitespace:
 .Pp
-.Cd number type ...
+.D1 Cd number type ...
 .Pp
 Where:
 .Bl -tag -width number -compact
@@ -69,20 +69,19 @@ included, but don't define the syscall args structure;
 included, but don't define the syscall args structure,
 and allow it to be "really" varargs;
 .It COMPAT_XX
-a compatibility systen call, only included if the corresponding
+a compatibility system call, only included if the corresponding
 option is configured for the kernel (see
-.Xr options 4 ).
+.Xr options 4 ) .
 .El
 .El
 .Pp
 The rest of the line for the STD, NODEF, NOARGS, and COMPAT_XX
 types is:
 .Pp
-.Cd { pseudo-proto } [alias]
+.D1 Cd { pseudo-proto } [alias]
 .Pp
-The
 .Nm pseudo-proto
-is a C-like prototype used to generate the system call argument list
+is a C-like prototype used to generate the system call argument list,
 and alias is an optional name alias for the call.
 The function in the prototype has to be defined somewhere in
 the kernel sources as it will be used as an entry point for
@@ -94,10 +93,9 @@ To generate the header and code files from the
 .Dq master
 file a
 .Xr make 1
-command has to be ran from the directory containing the
+command has to be run from the directory containing the
 .Dq master
 file.
-.Pp
 .Ss Usage
 Entry from the user space for the system call is machine dependant.
 Typical code to invoke a system call from the machine dependant
@@ -167,7 +165,7 @@ else
 	}
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(p, code, orig_error, rval);
-#endif  
+#endif
 	userret(p, frame.tf_eip, sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
@@ -179,33 +177,33 @@ else
 The
 .Dq SYSCALL_DEBUG
 parts of the code are explained in the section
-.Dq Debugging
+.Sx Debugging
 later in the document.
 For the
 .Dq KTRACE
-portitions of the code refer to the
+portions of the code refer to the
 .Xr ktrace 9
-document for futher exlanations.
-The
+document for futher explanations.
 .Dq NSYSTRACE
 is a system call tracing facility and is explained in the
 .Xr systrace 9
 and
-.Xr systrcae 4
+.Xr systrace 4
 documents.
 .Ss Debugging
-For debugging purposes a line
+For debugging purposes the line
 .Pp
-.Cd option SYSCALL_DEBUG
+.D1 Cd option SYSCALL_DEBUG
 .Pp
-should be inluded into the kernel configuration file (see
-.Xr options 4 ).
+should be included in the kernel configuration file (see
+.Xr options 4 ) .
 This allows tracing for calls, returns, and arguments for both
-implemented and not system calls.
+implemented and non-implemented system calls.
 A global integer variable
 .Dr scdebug
 contains a mask for for the desired logging events:
-.Bl -tag -width SCDEBUG_SHOWARGS__ -compat
+.Pp
+.Bl -tag -width SCDEBUG_SHOWARGS__ -compact
 .It SCDEBUG_CALLS
 (0x0001) show calls;
 .It SCDEBUG_RETURNS

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.9,v 1.1 2003/07/24 20:15:45 mickey Exp $
+.\"	$OpenBSD: systrace.9,v 1.2 2003/07/24 22:08:56 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Michael Shalayeff
 .\"
@@ -50,10 +50,10 @@ with arguments
 .Fa args
 for the process
 .Fa p .
-Result is then put into the
+The result is then put into the
 .Fa retval
 pointer.
-Typycal code sequence would be:
+A typical code sequence would be:
 .Bd -literal -offset indent
 #include "systrace.h"
 
@@ -73,7 +73,7 @@ is called from the
 function to inherit policy for the child process.
 .Pp
 .Fn systrace_exit
-is called during the death cycle of the prcess to
+is called during the death cycle of the process to
 detach the policy from the exiting process.
 .Sh CODE REFERENCES
 A subsystem for enforcing system call policies is implemented in
