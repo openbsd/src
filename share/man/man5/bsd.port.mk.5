@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.135 2004/05/16 23:14:55 pvalchev Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.136 2004/05/26 11:22:25 msf Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -677,6 +677,12 @@ If
 assume
 .Xr perl 1
 .Xr ExtUtils::MakeMaker 3p
+style.
+Add
+.Sq modbuild ,
+to enable 
+.Xr perl 1
+.Xr Module::Build 3p
 style.
 If
 .Sq gnu ,
