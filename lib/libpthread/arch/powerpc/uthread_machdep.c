@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_machdep.c,v 1.3 2000/10/05 04:59:34 rahnds Exp $	*/
+/*	$OpenBSD: uthread_machdep.c,v 1.4 2003/01/27 21:45:24 drahn Exp $	*/
 /* David Leonard, <d@csee.uq.edu.au>. Public domain */
 
 #include <pthread.h>
@@ -12,8 +12,8 @@ struct frame {
 	int     reserved;
 	int     gp[32-14];
 	int     lr, cr, ctr, xer;
-	long    fp[32-14];
-	long    fs;
+	double    fp[32];
+	double    fs;
 	/* The rest are only valid in the initial frame */
 	int     next_r1;
 	int     next_lr;
@@ -52,11 +52,15 @@ _thread_machdep_init(statep, base, len, entry)
 #define copysreg(nm) __asm__ volatile ("mf" #nm " %0" : "=r"(f->nm))
 	copysreg(cr); copysreg(ctr); copysreg(xer);
 
-#define copyfreg(x) __asm__ volatile ("stfd " #x ", %0" : "=m"(f->fp[x-14]))
-	copyfreg(14); copyfreg(15); copyfreg(16); copyfreg(17); copyfreg(18);
-	copyfreg(19); copyfreg(20); copyfreg(21); copyfreg(22); copyfreg(23);
-	copyfreg(24); copyfreg(25); copyfreg(26); copyfreg(27); copyfreg(28);
-	copyfreg(29); copyfreg(30); copyfreg(31);
+#define copyfreg(x) __asm__ volatile ("stfd " #x ", %0" : "=m"(f->fp[x]))
+	copyfreg(0);  copyfreg(1);  copyfreg(2);  copyfreg(3);
+	copyfreg(4);  copyfreg(5);  copyfreg(6);  copyfreg(7);
+	copyfreg(8);  copyfreg(9);  copyfreg(10); copyfreg(11);
+	copyfreg(12); copyfreg(13); copyfreg(14); copyfreg(15);
+	copyfreg(16); copyfreg(17); copyfreg(18); copyfreg(19);
+	copyfreg(20); copyfreg(21); copyfreg(22); copyfreg(23);
+	copyfreg(24); copyfreg(25); copyfreg(26); copyfreg(27);
+	copyfreg(28); copyfreg(29); copyfreg(30); copyfreg(31);
 
 	__asm__ volatile ("mffs 0; stfd 0, %0" : "=m"(f->fs));
 

@@ -1,11 +1,11 @@
-/*	$OpenBSD: uthread_machdep_asm.S,v 1.1 2000/09/25 01:16:40 d Exp $	*/
+/*	$OpenBSD: uthread_machdep_asm.S,v 1.2 2003/01/27 21:45:24 drahn Exp $	*/
 /* David Leonard, <d@csee.uq.edu.au>. Public domain. */
 
 #include <machine/asm.h>
 
 /* These need to be kept in sync with uthread_machdep.c */
 #define REGOFF(n)	(2*4 + (n-14)*4)
-#define FPOFF(n)	(REGOFF(36) + (n-14)*4)
+#define FPOFF(n)	(REGOFF(36) + (n)*8)
 #define FRAMESIZE	FPOFF(33)
 
 #define SA(x)		(((x)+0xf)&~0xf)
@@ -36,6 +36,20 @@ ENTRY(_thread_machdep_switch)
 	mfcr	0;		stw	0,  REGOFF(33)(1)
 	mfctr	0;		stw	0,  REGOFF(34)(1)
 	mfxer	0;		stw	0,  REGOFF(35)(1)
+	stfd	 0, FPOFF(0)(1)
+	stfd	 1, FPOFF(1)(1)
+	stfd	 2, FPOFF(2)(1)
+	stfd	 3, FPOFF(3)(1)
+	stfd	 4, FPOFF(4)(1)
+	stfd	 5, FPOFF(5)(1)
+	stfd	 6, FPOFF(6)(1)
+	stfd	 7, FPOFF(7)(1)
+	stfd	 8, FPOFF(8)(1)
+	stfd	 9, FPOFF(9)(1)
+	stfd	10, FPOFF(10)(1)
+	stfd	11, FPOFF(11)(1)
+	stfd	12, FPOFF(12)(1)
+	stfd	13, FPOFF(13)(1)
 	stfd	14, FPOFF(14)(1)
 	stfd	15, FPOFF(15)(1)
 	stfd	16, FPOFF(16)(1)
@@ -80,6 +94,21 @@ ENTRY(_thread_machdep_switch)
 	lfd	16, FPOFF(16)(1)
 	lfd	15, FPOFF(15)(1)
 	lfd	14, FPOFF(14)(1)
+	lfd	13, FPOFF(13)(1)
+	lfd	12, FPOFF(12)(1)
+	lfd	11, FPOFF(11)(1)
+	lfd	10, FPOFF(10)(1)
+	lfd	 9, FPOFF(9)(1)
+	lfd	 8, FPOFF(8)(1)
+	lfd	 7, FPOFF(7)(1)
+	lfd	 6, FPOFF(6)(1)
+	lfd	 5, FPOFF(5)(1)
+	lfd	 4, FPOFF(4)(1)
+	lfd	 3, FPOFF(3)(1)
+	lfd	 2, FPOFF(2)(1)
+	lfd	 1, FPOFF(1)(1)
+	lfd	 0, FPOFF(0)(1)
+
 	lwz	0,  REGOFF(35)(1);	mtxer	0
 	lwz	0,  REGOFF(34)(1);	mtctr	0
 	lwz	0,  REGOFF(33)(1);	mtcr	0
