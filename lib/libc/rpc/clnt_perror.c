@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_perror.c,v 1.7 1997/02/09 03:35:23 deraadt Exp $";
+static char *rcsid = "$OpenBSD: clnt_perror.c,v 1.8 1997/02/10 00:51:39 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -104,7 +104,7 @@ clnt_sperror(rpch, s)
 
 	case RPC_VERSMISMATCH:
 		(void) snprintf(str, CLNT_PERROR_BUFLEN - (str - strstart),
-			"; low version = %lu, high version = %lu\n",
+			"; low version = %u, high version = %u\n",
 			e.re_vers.low, e.re_vers.high);
 		break;
 
@@ -126,13 +126,13 @@ clnt_sperror(rpch, s)
 
 	case RPC_PROGVERSMISMATCH:
 		(void) snprintf(str, CLNT_PERROR_BUFLEN - (str - strstart),
-			"; low version = %lu, high version = %lu\n",
+			"; low version = %u, high version = %u\n",
 			e.re_vers.low, e.re_vers.high);
 		break;
 
 	default:	/* unknown */
 		(void) snprintf(str, CLNT_PERROR_BUFLEN - (str - strstart),
-			"; s1 = %lu, s2 = %lu\n",
+			"; s1 = %u, s2 = %u\n",
 			e.re_lb.s1, e.re_lb.s2);
 		break;
 	}
