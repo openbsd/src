@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.23 2001/06/27 06:07:42 kjc Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.24 2001/07/20 22:47:15 mickey Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -186,6 +186,7 @@ struct compressor *ppp_compressors[8] = {
 void
 pppattach()
 {
+    extern int ifqmaxlen;
     register struct ppp_softc *sc;
     register int i = 0;
 
@@ -199,10 +200,10 @@ pppattach()
 	sc->sc_if.if_hdrlen = PPP_HDRLEN;
 	sc->sc_if.if_ioctl = pppsioctl;
 	sc->sc_if.if_output = pppoutput;
-	IFQ_SET_MAXLEN(&sc->sc_if.if_snd, IFQ_MAXLEN);
-	sc->sc_inq.ifq_maxlen = IFQ_MAXLEN;
-	sc->sc_fastq.ifq_maxlen = IFQ_MAXLEN;
-	sc->sc_rawq.ifq_maxlen = IFQ_MAXLEN;
+	IFQ_SET_MAXLEN(&sc->sc_if.if_snd, ifqmaxlen);
+	sc->sc_inq.ifq_maxlen = ifqmaxlen;
+	sc->sc_fastq.ifq_maxlen = ifqmaxlen;
+	sc->sc_rawq.ifq_maxlen = ifqmaxlen;
 	IFQ_SET_READY(&sc->sc_if.if_snd);
 	if_attach(&sc->sc_if);
 #if NBPFILTER > 0
