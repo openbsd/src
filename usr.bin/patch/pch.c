@@ -1,7 +1,7 @@
-/*	$OpenBSD: pch.c,v 1.14 2003/07/16 18:09:20 otto Exp $	*/
+/*	$OpenBSD: pch.c,v 1.15 2003/07/17 19:16:31 otto Exp $	*/
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: pch.c,v 1.14 2003/07/16 18:09:20 otto Exp $";
+static char rcsid[] = "$OpenBSD: pch.c,v 1.15 2003/07/17 19:16:31 otto Exp $";
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -920,8 +920,8 @@ another_hunk()
 		p_len[filldst++] = strlen(s);
 		if (fillsrc > p_ptrn_lines) {
 			if (remove_special_line()) {
-				p_len[fillsrc - 1] -= 1;
-				s[p_len[fillsrc - 1]] = 0;
+				p_len[filldst - 1] -= 1;
+				s[p_len[filldst - 1]] = 0;
 			}
 		}
 		break;
