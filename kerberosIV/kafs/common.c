@@ -1,3 +1,4 @@
+/*	$OpenBSD: common.c,v 1.3 1997/12/12 11:46:32 art Exp $	*/
 /* $KTH: common.c,v 1.3 1997/11/03 20:35:24 bg Exp $ */
 
 /*
@@ -218,9 +219,12 @@ _kafs_afslog_all_local_cells(kafs_data *data, uid_t uid)
     find_cells(_PATH_THISCELL, &cells, &index);
     
     ret = afslog_cells(data, cells, index, uid);
-    while(index > 0)
+    while(index > 0) {
 	free(cells[--index]);
+	cells[index] = NULL;
+    }
     free(cells);
+    cells = NULL;
     return ret;
 }
 
@@ -282,10 +286,10 @@ realm_of_cell(kafs_data *data, const char *cell, char **realm)
 
 int
 _kafs_get_cred(kafs_data *data,
-	      const char *cell, 
-	      const char *krealm, 
-	      const char *lrealm,
-	      CREDENTIALS *c)
+	       const char *cell, 
+	       const char *krealm, 
+	       const char *lrealm,
+	       CREDENTIALS *c)
 {
     int ret = -1;
     char *vl_realm;
@@ -316,7 +320,7 @@ _kafs_get_cred(kafs_data *data,
      * blondino and she might as well have it.)
      */
   
-    if (krealm) {
+    if (krealm != NULL) {
 	ret = (*data->get_cred)(data, AUTH_SUPERUSER, cell, krealm, c);
 	if (ret == 0) return 0;
 	ret = (*data->get_cred)(data, AUTH_SUPERUSER, "", krealm, c);
@@ -337,10 +341,11 @@ _kafs_get_cred(kafs_data *data,
 	if (ret)
 	    ret = (*data->get_cred)(data, AUTH_SUPERUSER, "", vl_realm, c);
 	free(vl_realm);
+	vl_realm = NULL;
 	if (ret == 0) return 0;
     }
     
-    if (lrealm)
+    if (lrealm != NULL)
 	ret = (*data->get_cred)(data, AUTH_SUPERUSER, cell, lrealm, c);
     return ret;
 }

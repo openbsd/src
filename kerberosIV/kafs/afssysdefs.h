@@ -1,3 +1,4 @@
+/*	$OpenBSD: afssysdefs.h,v 1.3 1997/12/12 11:46:32 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -36,7 +37,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: afssysdefs.h,v 1.2 1997/11/28 12:48:43 art Exp $ */
+/* $Id: afssysdefs.h,v 1.3 1997/12/12 11:46:32 art Exp $ */
 
 /*
  * This section is for machines using single entry point AFS syscalls!
