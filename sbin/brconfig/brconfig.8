@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.9 2000/03/26 17:36:33 jason Exp $
+.\"	$OpenBSD: brconfig.8,v 1.10 2000/05/02 18:43:09 jason Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -216,10 +216,100 @@ through fxp0 only to 5:4:3:2:1, and 5:4:3:2:1:0 can return frames through
 fxp0 to 0:1:2:3:4:5.
 All other traffic trying to go into and be sent from fxp0 will be blocked.
 .El
+.Sh "IPSEC BRIDGE"
+The bridge can also be used to tunnel ethernet frames through
+.Xr ipsec 4
+encapsulated interface.  In addition to adding Ethernet interfaces,
+one or more
+.Xr enc 4 ,
+interfaces are added as members of the bridge.  Ethernet frames sent
+through the
+.Xr enc 4
+interfaces are encrypted and/or authenticated and encapsulated in
+.Xr ip 4
+datagrams and sent across the network to another bridge, which
+decapsulates the datagram, decrypts and verifies the payload, and
+then processes the resulting Ethernet frame as if it had originated
+on a normal Ethernet interface.  This effectively allows a layer-2 network
+to be extended from one point to another, possibly through the Internet,
+without the traffic passing through in the clear.
+.Pp
+For example, given two physically seperate Ethernet networks, the bridge can
+be used as follows to make them appear as the same local area network.
+If bridge1 on network1 has the external IP address 1.2.3.4 on fxp0,
+bridge2 on network2 has the external IP address 4.3.2.1 on fxp0, and
+both bridges have fxp1 on their internal network (network1 and network2,
+respectively), the following configuration can be used to bridge
+network1 and network2.
+.Pp
+Add the encapsulation interface and internal ethernet interface to bridge
+interface:
+.Bd -literal
+# brconfig bridge0 add enc1 add fxp1
+.Ed
+.Pp
+Create Security Associations (SAs) between the external IP address of each
+bridge:
+.Bd -literal
+# ipsecadm new esp -spi 4242 -dst 4.3.2.1 -src 1.2.3.4 \e\ 
+	-enc 3des -auth md5 -keyfile keyfile -authkey authkeyfile
+.Ed
+.Pp
+.Bd -literal
+# ipsecadm new esp -spi 4243 -dst 1.2.3.4 -src 4.3.2.1 \e\ 
+	-enc 3des -auth md5 -keyfile keyfile -authkey authkeyfile
+.Ed
+.Pp
+Setup ingress flows so that traffic is allowed between the two bridges
+for the above associations:
+.Bd -literal
+(on bridge1) # ipsecadm flow -dst 1.2.3.4 -spi 4243 -ingress \e\ 
+	-transport etherip \e\ 
+	-addr 4.3.2.1 255.255.255.255 1.2.3.4 255.255.255.255
+(on bridge2) # ipsecadm flow -dst 4.3.2.1 -spi 4242 -ingress \e\ 
+	-transport etherip \e\ 
+	-addr 1.2.3.4 255.255.255.255 4.3.2.1 255.255.255.255
+.Ed
+.Pp
+Add the source and destination SAs to the encapsulation interface, and
+start allowing traffic on the interface:
+.Bd -literal
+(on bridge1) # ifconfig enc1 dstsa 4.3.2.1/4242/esp
+(on bridge1) # ifconfig enc1 srcsa 1.2.3.4/4243/esp
+(on bridge2) # ifconfig enc1 dstsa 1.2.3.4/4243/esp
+(on bridge2) # ifconfig enc1 srcsa 4.3.2.1/4242/esp
+.Ed
+.Pp
+Bring up the internal interface (if not already up) and encapsulation
+interface:
+.Bd -literal
+# ifconfig fxp0 up
+# ifconfig enc1 up
+.Ed
+.Pp
+Finally, bring the bridge interface up and allow it to start processing
+frames:
+.Bd -literal
+# brconfig bridge0 up
+.Ed
+.Pp
+The internal interface, ie. fxp0, on each bridge need not have an IP
+address; the bridge can function without it.
+.Pp
+Note:  It is possible to put all the following commands the
+.Xr hostname.if 8
+and
+.Xr bridgename.if 8
+files, using the ! operator.
+.Pp
 .Sh SEE ALSO
 .Xr bridge 4 ,
+.Xr enc 4 ,
+.Xr ip 4 ,
+.Xr ipsec 4 ,
 .Xr bridgename.if 5 ,
-.Xr ifconfig 8
+.Xr ifconfig 8 ,
+.Xr ipsecadm 4
 .Sh AUTHOR
 The
 .Xr brconfig 8
