@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.3 1998/07/29 00:37:52 mickey Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.4 1998/08/27 20:38:15 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -96,16 +96,21 @@ elf_load(fd, xp)
 			       ph->p_offset, ph->p_vaddr, ph->p_filesz,
 			       ph->p_memsz, ph->p_flags);
 #endif
-		if (ntohl(ph->p_filesz) && ntohl(ph->p_flags) & PF_X) {
+		if (ph->p_filesz && ph->p_flags & PF_X) {
 			pa = ph->p_vaddr;
 			xp->text.addr = 0;
 			xp->text.size = ph->p_filesz;
 			xp->text.foff = ph->p_offset;
-		} else if (ntohl(ph->p_filesz) && ntohl(ph->p_flags) & PF_W) {
+		} else if (ph->p_filesz && ph->p_flags & PF_W) {
 			xp->data.addr = ph->p_vaddr - pa;
 			xp->data.size = ph->p_filesz;
 			xp->data.foff = ph->p_offset;
-		} else if (!ntohl(ph->p_filesz)) {
+			if (ph->p_filesz < ph->p_memsz) {
+				xp->bss.addr = ph->p_vaddr + ph->p_filesz - pa;
+				xp->bss.size = ph->p_memsz - ph->p_filesz;
+				xp->bss.foff = 0;
+			}
+		} else if (!ph->p_filesz) {
 			xp->bss.addr = ph->p_vaddr - pa;
 			xp->bss.size = ph->p_memsz;
 			xp->bss.foff = 0;
