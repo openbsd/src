@@ -1,4 +1,4 @@
-/*	$OpenBSD: touch.c,v 1.3 1996/06/26 05:32:46 deraadt Exp $	*/
+/*	$OpenBSD: touch.c,v 1.4 1996/09/16 01:47:06 deraadt Exp $	*/
 /*	$NetBSD: touch.c,v 1.3 1995/09/02 06:15:54 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)touch.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: touch.c,v 1.3 1996/06/26 05:32:46 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: touch.c,v 1.4 1996/09/16 01:47:06 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -521,7 +521,6 @@ FILE	*o_touchedfile;	/* the old file */
 FILE	*n_touchedfile;	/* the new file */
 char	*o_name;
 char	n_name[64];
-char	*canon_name = _PATH_TMP;
 int	o_lineno;
 int	n_lineno;
 boolean	tempfileopen = FALSE;
@@ -540,7 +539,7 @@ boolean edit(name)
 			processname, name);
 		return(TRUE);
 	}
-	(void)strcpy(n_name, canon_name);
+	snprintf(n_name, sizeof n_name, "%s/error.XXXXXXXX", _PATH_TMP);
 	if ((fd = mkstemp(n_name)) == -1 ||
 	    (n_touchedfile = fdopen(fd, "w")) == NULL) {
 		if (fd != -1)
@@ -639,8 +638,9 @@ writetouched(overwrite)
 			fclose(tmpfile);
 	}
 	if (oktorm == 0){
-		fprintf(stderr, "%s: Catastrophe: A copy of \"%s\": was saved in \"%s\"\n",
-			processname, o_name, n_name);
+		fprintf(stderr,
+		    "%s: Catastrophe: A copy of \"%s\": was saved in \"%s\"\n",
+		    processname, o_name, n_name);
 		exit(1);
 	}
 	/*
