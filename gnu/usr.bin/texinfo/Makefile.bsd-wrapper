@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.22 1997/08/18 00:22:57 kstailey Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.23 1997/08/18 14:35:49 kstailey Exp $
 
 INFODIR=	infodir=${DESTDIR}/usr/share/info
 INFOPATH=	DEFAULT_INFOPATH=/usr/local/info:/usr/share/info:.
@@ -51,8 +51,7 @@ clean cleandir:
 	-@if [ -e Makefile ]; then ${FSFMAKE} distclean; fi
 
 depend:
-	-@if [ ! -x missing ]; then chmod +x missing; fi # XXX ctm loses x bits
-	-@if [ ! -x mkinstalldirs ]; then chmod +x mkinstalldirs; fi # XXX
+	# Nothing here so far...
 
 lint:
 	# Nothing here so far...
