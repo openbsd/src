@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.243 2002/12/07 21:20:23 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.244 2002/12/07 23:15:53 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -465,29 +465,68 @@ varset		: STRING PORTUNARY string		{
 		}
 		;
 
-anchorrule	: ANCHOR string				{
+anchorrule	: ANCHOR string	dir interface af proto fromto {
 			struct pf_rule r;
 
+			if (check_rulestate(PFCTL_STATE_FILTER))
+				YYERROR;
+
 			PREPARE_ANCHOR_RULE(r, $2);
-			r.nr = pf->rule_nr++;
-			pfctl_add_rule(pf, &r);
+
+			r.direction = $3;
+			r.af = $5;
+
+			decide_address_family($7.src.host, &r.af);
+			decide_address_family($7.dst.host, &r.af);
+
+			expand_rule(&r, $4, NULL, $6,
+			    $7.src.host, $7.src.port, $7.dst.host, $7.dst.port,
+			    0, 0, 0);
 		}
-		| NATANCHOR string			{
+		| NATANCHOR string interface af proto fromto {
 			struct pf_nat r;
 
+			if (check_rulestate(PFCTL_STATE_NAT))
+				YYERROR;
+
 			PREPARE_ANCHOR_RULE(r, $2);
-			pfctl_add_nat(pf, &r);
+
+			r.af = $4;
+
+			decide_address_family($6.src.host, &r.af);
+			decide_address_family($6.dst.host, &r.af);
+
+			expand_nat(&r, $3, $5, $6.src.host, $6.src.port,
+			    $6.dst.host, $6.dst.port, NULL);
 		}
-		| RDRANCHOR string			{
+		| RDRANCHOR string interface af proto fromto {
 			struct pf_rdr r;
 
-			PREPARE_ANCHOR_RULE(r, $2);
-			pfctl_add_rdr(pf, &r);
-		}
-		| BINATANCHOR string			{
-			struct pf_binat r;
+			if (check_rulestate(PFCTL_STATE_NAT))
+				YYERROR;
 
 			PREPARE_ANCHOR_RULE(r, $2);
+
+			r.af = $4;
+
+			decide_address_family($6.src.host, &r.af);
+			decide_address_family($6.dst.host, &r.af);
+
+			expand_rdr(&r, $3, $5, $6.src.host, $6.dst.host, NULL);
+		}
+		| BINATANCHOR string interface af proto fromto {
+			struct pf_binat r;
+
+			if (check_rulestate(PFCTL_STATE_NAT))
+				YYERROR;
+
+			PREPARE_ANCHOR_RULE(r, $2);
+
+			r.af = $4;
+
+			decide_address_family($6.src.host, &r.af);
+			decide_address_family($6.dst.host, &r.af);
+
 			pfctl_add_binat(pf, &r);
 		}
 		;
@@ -1133,7 +1172,13 @@ proto_item	: STRING			{
 		}
 		;
 
-fromto		: ALL				{
+fromto		: /* empty */			{
+			$$.src.host = NULL;
+			$$.src.port = NULL;
+			$$.dst.host = NULL;
+			$$.dst.port = NULL;
+		}
+		| ALL				{
 			$$.src.host = NULL;
 			$$.src.port = NULL;
 			$$.dst.host = NULL;

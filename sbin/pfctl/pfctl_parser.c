@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.119 2002/12/07 20:25:40 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.120 2002/12/07 23:15:53 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -471,13 +471,13 @@ print_pool(struct pf_pool *pool, u_int16_t p1, u_int16_t p2,
 void
 print_nat(struct pf_nat *n)
 {
-	if (n->anchorname[0]) {
-		printf("nat-anchor %s\n", n->anchorname);
-		return;
+	if (n->anchorname[0])
+		printf("nat-anchor %s ", n->anchorname);
+	else {
+		if (n->no)
+			printf("no ");
+		printf("nat ");
 	}
-	if (n->no)
-		printf("no ");
-	printf("nat ");
 	if (n->ifname[0]) {
 		printf("on ");
 		if (n->ifnot)
@@ -499,7 +499,7 @@ print_nat(struct pf_nat *n)
 			printf("proto %u ", n->proto);
 	}
 	print_fromto(&n->src, &n->dst, n->af, n->proto);
-	if (!n->no) {
+	if (!n->anchorname[0] && !n->no) {
 		printf("-> ");
 		print_pool(&n->rpool, n->proxy_port[0], n->proxy_port[1],
 		    n->af, PF_POOL_NAT_R);
@@ -510,13 +510,13 @@ print_nat(struct pf_nat *n)
 void
 print_binat(struct pf_binat *b)
 {
-	if (b->anchorname[0]) {
-		printf("binat-anchor %s\n", b->anchorname);
-		return;
+	if (b->anchorname[0])
+		printf("binat-anchor %s ", b->anchorname);
+	else {
+		if (b->no)
+			printf("no ");
+		printf("binat ");
 	}
-	if (b->no)
-		printf("no ");
-	printf("binat ");
 	if (b->ifname[0]) {
 		printf("on ");
 		printf("%s ", b->ifname);
@@ -536,8 +536,12 @@ print_binat(struct pf_binat *b)
 			printf("proto %u ", b->proto);
 	}
 	printf("from ");
-	print_addr(&b->saddr, b->af);
-	printf(" ");
+	if (!PF_AZERO(&b->saddr.addr, b->af) ||
+	    !PF_AZERO(&b->saddr.mask, b->af)) {
+		print_addr(&b->saddr, b->af);
+		printf(" ");
+	} else
+		printf("any ");
 	printf("to ");
 	if (!PF_AZERO(&b->daddr.addr, b->af) ||
 	    !PF_AZERO(&b->daddr.mask, b->af)) {
@@ -547,7 +551,7 @@ print_binat(struct pf_binat *b)
 		printf(" ");
 	} else
 		printf("any ");
-	if (!b->no) {
+	if (!b->anchorname[0] && !b->no) {
 		printf("-> ");
 		print_addr(&b->raddr, b->af);
 	}
@@ -557,13 +561,13 @@ print_binat(struct pf_binat *b)
 void
 print_rdr(struct pf_rdr *r)
 {
-	if (r->anchorname[0]) {
-		printf("rdr-anchor %s\n", r->anchorname);
-		return;
+	if (r->anchorname[0])
+		printf("rdr-anchor %s ", r->anchorname);
+	else {
+		if (r->no)
+			printf("no ");
+		printf("rdr ");
 	}
-	if (r->no)
-		printf("no ");
-	printf("rdr ");
 	if (r->ifname[0]) {
 		printf("on ");
 		if (r->ifnot)
@@ -608,7 +612,7 @@ print_rdr(struct pf_rdr *r)
 			printf(":%u", ntohs(r->dport2));
 		printf(" ");
 	}
-	if (!r->no) {
+	if (!r->anchorname[0] && !r->no) {
 		printf("-> ");
 		print_pool(&r->rpool, r->rport, r->opts, r->af, PF_POOL_RDR_R);
 	}
@@ -705,11 +709,9 @@ print_rule(struct pf_rule *r, int verbose)
 
 	if (verbose)
 		printf("@%d ", r->nr);
-	if (r->anchorname[0]) {
-		printf("anchor %s\n", r->anchorname);
-		return;
-	}
-	if (r->action == PF_PASS)
+	if (r->anchorname[0])
+		printf("anchor %s ", r->anchorname);
+	else if (r->action == PF_PASS)
 		printf("pass ");
 	else if (r->action == PF_DROP) {
 		printf("block ");
@@ -757,9 +759,8 @@ print_rule(struct pf_rule *r, int verbose)
 			}
 		} else
 			printf("drop ");
-	} else {
+	} else
 		printf("scrub ");
-	}
 	if (r->direction == PF_IN)
 		printf("in ");
 	else if (r->direction == PF_OUT)

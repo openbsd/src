@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.139 2002/12/07 22:58:40 deraadt Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.140 2002/12/07 23:15:53 dhartmei Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1344,10 +1344,40 @@ incoming connections to port 25.
 Then
 .Bd -literal
     # echo "block in quick from 1.2.3.4 to any" | pfctl -a spews:manual -f -
+.Ed
 .Pp
 loads a single rule set containing a single rule into the
 .Pa anchor ,
 which blocks all packets from a specific address.
+.Pp
+Optionally,
+.Pa anchor
+rules can specify the parameters
+direction, interface, address family, protocol and source/destination
+address/port
+using the same syntax as filter rules.
+When parameters are used, the
+.Pa anchor
+rule is only evaluated for matching packets.
+This allows conditional evaluation of named rule sets, like:
+.Bd -literal
+    block on $ext_if all
+    anchor spews proto tcp from any to any port smtp
+    pass out on $ext_if all keep state
+    pass in  on $ext_if proto tcp from any to $ext_if port smtp keep state
+.Ed
+.Pp
+The rules inside
+.Pa anchor
+spews are only evaluated for
+.Pa tcp
+packets with destination port 25.
+Hence,
+.Bd -literal
+    # echo "block in quick from 1.2.3.4 to any" | pfctl -a spews:manual -f -
+.Ed
+.Pp
+will only block connections from 1.2.3.4 to port 25.
 .Sh TRANSLATION EXAMPLES
 This example maps incoming requests on port 80 to port 8080, on
 which Apache Tomcat is running (say Tomcat is not run as root,
