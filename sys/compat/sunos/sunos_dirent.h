@@ -43,4 +43,4 @@ struct sunos_dirent {
 #define SUNOS_NAMEOFF(dp)       ((char *)&(dp)->d_name - (char *)dp)
 #define SUNOS_RECLEN(de,namlen) ALIGN((SUNOS_NAMEOFF(de) + (namlen) + 1))
 
-#endif /* !_SVR4_DIRENT_H_ */
+#endif /* !_SUNOS_DIRENT_H_ */
