@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.61 1999/03/10 22:14:16 deraadt Exp $
+#	$OpenBSD: pnpdevs,v 1.62 1999/03/11 19:58:09 deraadt Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -287,8 +287,8 @@ le		PNP8231	# Advanced Micro Devices AM2100/AM1500T
 #		PNP8277	# Exos 105
 #		PNP828A	# Intel '595 based Ethernet
 #		PNP828B	# TI2000-style Token Ring
-le		PNP828C		# AMD PCNet Family cards
-le		PNP828D		# AMD PCNet32 (VL version)
+le		PNP828C	# AMD PCNet Family cards
+le		PNP828D	# AMD PCNet32 (VL version)
 #		PNP8294	# IrDA Infrared NDIS driver (Microsoft-supplied)
 #		PNP82BD	# IBM PCMCIA-NIC
 #		PNP82C2	# Xircom CE10
