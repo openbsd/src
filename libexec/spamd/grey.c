@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.8 2004/03/05 00:31:05 beck Exp $	*/
+/*	$OpenBSD: grey.c,v 1.9 2004/03/10 00:33:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -113,7 +113,7 @@ configure_pf(char **addrs, int count)
 	return(0);
 }
 
-void 
+void
 freewhiteaddr(void)
 {
 	int i;
@@ -423,7 +423,7 @@ greywatcher(void)
 		/* if we are dropping privs, chown to that user */
 		if (pw && (fchown(i, pw->pw_uid, pw->pw_gid) == -1))
 			err(1, "can't chown %s", PATH_SPAMD_DB);
-	} 
+	}
 	if (i != -1)
 		close(i);
 

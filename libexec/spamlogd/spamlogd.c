@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamlogd.c,v 1.5 2004/03/07 20:20:07 otto Exp $	*/
+/*	$OpenBSD: spamlogd.c,v 1.6 2004/03/10 00:35:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -45,9 +45,9 @@ dbupdate(char *dbname, char *ip)
 	BTREEINFO	btreeinfo;
 	DBT		dbk, dbd;
 	DB		*db;
-	struct gdata 	gd;
-	time_t 		now;
-	int 		r;
+	struct gdata	gd;
+	time_t		now;
+	int		r;
 	struct in_addr	ia;
 
 	now = time(NULL);
@@ -188,7 +188,7 @@ main(int argc, char **argv)
 		err(1, "fdopen");
 	tzset();
 	openlog_r("spamlogd", LOG_PID | LOG_NDELAY, LOG_DAEMON, &sdata);
-	
+
 	lbuf = NULL;
 	while ((buf = fgetln(f, &len))) {
 		char *cp = NULL;
@@ -207,7 +207,7 @@ main(int argc, char **argv)
 		}
 
 		if (!inbound && strstr(buf, "pass out") != NULL) {
-			/* 
+			/*
 			 * this is outbound traffic - we whitelist
 			 * the destination address, because we assume
 			 * that a reply may come to this outgoing mail
@@ -219,18 +219,17 @@ main(int argc, char **argv)
 					if (cp != NULL) {
 						*cp = '\0';
 						cp = buf2;
-						syslog_r(LOG_DEBUG, &sdata, 
-							 "outbound %s\n", cp);
+						syslog_r(LOG_DEBUG, &sdata,
+						    "outbound %s\n", cp);
 					}
-				}
-				else
+				} else
 					cp = NULL;
 			}
 
 		} else {
-			/* 
+			/*
 			 * this is inbound traffic - we whitelist
-			 * the source address, because this is 
+			 * the source address, because this is
 			 * traffic presumably to our real MTA
 			 */
 			if ((cp = (strchr(buf, '>'))) != NULL) {
@@ -242,9 +241,8 @@ main(int argc, char **argv)
 				while (*cp != ' ' && cp >= buf)
 					cp--;
 				cp++;
-				syslog_r(LOG_DEBUG, &sdata, 
-					 "inbound %s\n", cp);
-				
+				syslog_r(LOG_DEBUG, &sdata,
+				    "inbound %s\n", cp);
 			}
 		}
 		if (cp != NULL)
