@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$Id: ypinit.sh,v 1.6 1997/10/09 23:41:57 deraadt Exp $
+#	$Id: ypinit.sh,v 1.7 1998/01/18 20:48:48 maja Exp $
 #
 # ypinit.sh - setup an master or slave server.
 #
@@ -108,7 +108,7 @@ fi
 # Check if we have contact with master.
 if [ "${SERVERTYPE}" = "SLAVE" ];
 then
-	COUNT=`${YPWHICH} -d ${DOMAIN} -m 2>/dev/null | grep -i ${MASTER} | wc -l | tr -d " "`
+	COUNT=`${YPWHICH} -d ${DOMAIN} -h ${MASTER} -m 2>/dev/null | grep -i ${MASTER} | wc -l | tr -d " "`
 	if [ "$COUNT" = "0" ]
 	then
 		echo "Can't enumerate maps from ${MASTER}. Please check that it is running." 1>&2
@@ -248,7 +248,7 @@ then
 	echo "There will be no further questions. The remainder of the procedure"
 	echo "should take a few minutes, to copy the databases from ${MASTER}."
 
-	for MAP in `${YPWHICH} -d ${DOMAIN} -m | cut -d\  -f1`
+	for MAP in `${YPWHICH} -d ${DOMAIN} -h ${MASTER} -m | cut -d\  -f1`
 	do
 		echo "Transfering ${MAP}..."
 		if ! ${YPXFR} -h ${MASTER} -c -d ${DOMAIN} ${MAP}; then
