@@ -1,8 +1,5 @@
-/*	$OpenBSD: route6d.c,v 1.3 2000/01/02 04:57:27 itojun Exp $	*/
-
-/*
- * KAME Header: /cvsroot/kame/kame/kame/kame/route6d/route6d.c,v 1.8 1999/12/30 08:48:24 itojun Exp
- */
+/*	$OpenBSD: route6d.c,v 1.4 2000/02/25 10:28:25 itojun Exp $	*/
+/*	$KAME: route6d.c,v 1.14 2000/02/25 06:15:57 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -34,7 +31,7 @@
  */
 
 #ifndef	lint
-static char _rcsid[] = "KAME Id: route6d.c,v 1.8 1999/12/30 08:48:24 itojun Exp";
+static char _rcsid[] = "$KAME: route6d.c,v 1.14 2000/02/25 06:15:57 itojun Exp $";
 #endif
 
 #include <stdio.h>
@@ -51,6 +48,7 @@ static char _rcsid[] = "KAME Id: route6d.c,v 1.8 1999/12/30 08:48:24 itojun Exp"
 #endif
 #include <syslog.h>
 #include <stddef.h>
+#include <errno.h>
 #include <err.h>
 
 #include <sys/types.h>
@@ -59,7 +57,6 @@ static char _rcsid[] = "KAME Id: route6d.c,v 1.8 1999/12/30 08:48:24 itojun Exp"
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/sysctl.h>
-#include <sys/errno.h>
 #ifdef ADVAPI
 #include <sys/uio.h>
 #endif
@@ -68,13 +65,18 @@ static char _rcsid[] = "KAME Id: route6d.c,v 1.8 1999/12/30 08:48:24 itojun Exp"
 #include <net/if_var.h>
 #endif /* __FreeBSD__ >= 3 */
 #define	KERNEL	1
+#define	_KERNEL	1
 #include <net/route.h>
 #undef KERNEL
+#undef _KERNEL
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet/ip6.h>
 #include <netinet/udp.h>
 #include <netdb.h>
+#ifdef HAVE_GETIFADDRS
+#include <ifaddrs.h>
+#endif
 
 #include <arpa/inet.h>
 
@@ -207,8 +209,6 @@ static	u_long	seq = 0;
 #define	RTF_CHANGED		0x80000000
 #define	RTF_ROUTE_H		0xffff
 
-extern int errno;
-
 int main __P((int, char **));
 void ripalarm __P((int));
 void riprecv __P((void));
@@ -216,7 +216,7 @@ void ripsend __P((struct ifc *, struct sockaddr_in6 *, int));
 void init __P((void));
 void sockopt __P((struct ifc *));
 void ifconfig __P((void));
-void ifconfig1 __P((struct ifreq *, struct ifc *, int));
+void ifconfig1 __P((const char *, const struct sockaddr *, struct ifc *, int));
 void rtrecv __P((void));
 int rt_del __P((const struct sockaddr_in6 *, const struct sockaddr_in6 *,
 	const struct sockaddr_in6 *));
@@ -1212,6 +1212,65 @@ riprequest(ifcp, np, nn, sin)
 void
 ifconfig()
 {
+#ifdef HAVE_GETIFADDRS
+	struct ifaddrs *ifap, *ifa;
+	struct ifc *ifcp;
+	struct ipv6_mreq mreq;
+	int s;
+
+	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
+		fatal("socket");
+
+	if (getifaddrs(&ifap) != 0)
+		fatal("getifaddrs");
+
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		if (ifa->ifa_addr->sa_family != AF_INET6)
+			continue;
+		ifcp = ifc_find(ifa->ifa_name);
+		/* we are interested in multicast-capable interfaces */
+		if ((ifa->ifa_flags & IFF_MULTICAST) == 0)
+			continue;
+		if (!ifcp) {
+			/* new interface */
+			ifcp = (struct ifc *)malloc(sizeof(*ifcp));
+			memset(ifcp, 0, sizeof(*ifcp));
+			ifcp->ifc_index = -1;
+			ifcp->ifc_next = ifc;
+			ifc = ifcp;
+			nifc++;
+			ifcp->ifc_name = allocopy(ifa->ifa_name);
+			ifcp->ifc_addr = 0;
+			ifcp->ifc_filter = 0;
+			ifcp->ifc_flags = ifa->ifa_flags;
+			trace(1, "newif %s <%s>\n", ifcp->ifc_name,
+				ifflags(ifcp->ifc_flags));
+			if (!strcmp(ifcp->ifc_name, LOOPBACK_IF))
+				loopifcp = ifcp;
+		} else {
+			/* update flag, this may be up again */
+			if (ifcp->ifc_flags != ifa->ifa_flags) {
+				trace(1, "%s: <%s> -> ", ifcp->ifc_name,
+					ifflags(ifcp->ifc_flags));
+				trace(1, "<%s>\n", ifflags(ifa->ifa_flags));
+			}
+			ifcp->ifc_flags = ifa->ifa_flags;
+		}
+		ifconfig1(ifa->ifa_name, ifa->ifa_addr, ifcp, s);
+		if ((ifcp->ifc_flags & (IFF_LOOPBACK | IFF_UP)) == IFF_UP
+		 && 0 < ifcp->ifc_index && !ifcp->ifc_joined) {
+			mreq.ipv6mr_multiaddr = ifcp->ifc_ripsin.sin6_addr;
+			mreq.ipv6mr_interface = ifcp->ifc_index;
+			if (setsockopt(ripsock, IPPROTO_IPV6,
+				IPV6_JOIN_GROUP, &mreq, sizeof(mreq)) < 0)
+				fatal("IPV6_JOIN_GROUP");
+			trace(1, "join %s %s\n", ifcp->ifc_name, RIP6_DEST);
+			ifcp->ifc_joined++;
+		}
+	}
+	close(s);
+	freeifaddrs(ifap);
+#else
 	int	s, i;
 	char	*buf;
 	struct	ifconf ifconf;
@@ -1291,7 +1350,7 @@ ifconfig()
 			}
 			ifcp->ifc_flags = ifr.ifr_flags;
 		}
-		ifconfig1(ifrp, ifcp, s);
+		ifconfig1(ifrp->ifr_name, &ifrp->ifr_addr, ifcp, s);
 		if ((ifcp->ifc_flags & (IFF_LOOPBACK | IFF_UP)) == IFF_UP
 		 && 0 < ifcp->ifc_index && !ifcp->ifc_joined) {
 			mreq.ipv6mr_multiaddr = ifcp->ifc_ripsin.sin6_addr;
@@ -1311,11 +1370,13 @@ skip:
 	}
 	close(s);
 	free(buf);
+#endif
 }
 
 void
-ifconfig1(ifrp, ifcp, s)
-	struct	ifreq *ifrp;
+ifconfig1(name, sa, ifcp, s)
+	const char *name;
+	const struct sockaddr *sa;
 	struct	ifc *ifcp;
 	int	s;
 {
@@ -1325,9 +1386,9 @@ ifconfig1(ifrp, ifcp, s)
 	int	plen;
 	char	buf[BUFSIZ];
 
-	sin = (struct sockaddr_in6 *)&ifrp->ifr_addr;
+	sin = (struct sockaddr_in6 *)sa;
 	ifr.ifr_addr = *sin;
-	strcpy(ifr.ifr_name, ifrp->ifr_name);
+	strcpy(ifr.ifr_name, name);
 	if (ioctl(s, SIOCGIFNETMASK_IN6, (char *)&ifr) < 0)
 		fatal("ioctl: SIOCGIFNETMASK_IN6");
 	plen = mask2len(&ifr.ifr_addr.sin6_addr, 16);
