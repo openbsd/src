@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.97 2004/01/14 23:26:24 brad Exp $
+#	$OpenBSD: Makefile,v 1.98 2004/01/28 02:24:28 mickey Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -128,7 +128,7 @@ cross-env:	.PHONY
 ${CROSSDIRS}:
 	@-mkdir -p ${CROSSDIR}
 	@case ${TARGET} in \
-		sparc|i386|m68k|alpha|hppa|powerpc|sparc64|m88k|vax) \
+		alpha|i386|m68k|hppa|powerpc|sparc|sparc64|m88k|vax) \
 			echo ${TARGET} ;;\
 		amiga|sun3|mac68k|hp300|mvme68k) \
 			echo m68k ;;\
@@ -138,6 +138,8 @@ ${CROSSDIRS}:
 			echo powerpc ;;\
 		sgi) \
 			echo mips ;;\
+		amd64) \
+			echo x86_64 ;;\
 		*) \
 			(echo Unknown arch ${TARGET} >&2) ; exit 1;; \
 	esac > ${CROSSDIR}/TARGET_ARCH
@@ -176,7 +178,7 @@ ${CROSSINCLUDES}:	${CROSSOBJ}
 
 .if ${TARGET} == "alpha" || ${TARGET} == "hppa" || ${TARGET} == "i386" || \
     ${TARGET} == "macppc" || ${TARGET} == "mvmeppc" || ${TARGET} == "sgi" || \
-    ${TARGET} == "sparc" || ${TARGET} == "sparc64"
+    ${TARGET} == "sparc" || ${TARGET} == "sparc64" || ${TARGET} == "amd64"
 BINUTILS=	ar as gasp ld nm objcopy objdump ranlib readelf size \
 		strings strip
 NEW_BINUTILS?=	Yes
