@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.20 1999/10/26 15:43:22 art Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.21 2000/02/22 21:24:02 deraadt Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.20 1999/10/26 15:43:22 art Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.21 2000/02/22 21:24:02 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -159,20 +159,18 @@ static struct nlist namelist[] = {
 #define X_CNT		1
 	{ "_cnt" },
 #endif
-#define X_TOTAL		2
-	{ "_total" },
-#define	X_NCHSTATS	3
+#define	X_NCHSTATS	2
 	{ "_nchstats" },
-#define	X_INTRNAMES	4
+#define	X_INTRNAMES	3
 	{ "_intrnames" },
-#define	X_EINTRNAMES	5
+#define	X_EINTRNAMES	4
 	{ "_eintrnames" },
-#define	X_INTRCNT	6
+#define	X_INTRCNT	5
 	{ "_intrcnt" },
-#define	X_EINTRCNT	7
+#define	X_EINTRCNT	6
 	{ "_eintrcnt" },
 #if defined(__i386__)
-#define	X_INTRHAND	8
+#define	X_INTRHAND	7
 	{ "_intrhand" },
 #endif
 	{ "" },
