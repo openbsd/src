@@ -1,0 +1,14 @@
+; $OpenBSD: db.loopback,v 1.1 2003/01/20 22:30:13 jakob Exp $
+
+$ORIGIN 127.in-addr.arpa.
+$TTL 6h
+
+@	IN	SOA	localhost. root.localhost. (	
+			1	; serial
+			1h	; refresh
+			30m	; retry
+			7d	; expiration
+			1h )	; minimum
+
+		NS	localhost.
+1.0.0		PTR	localhost.
