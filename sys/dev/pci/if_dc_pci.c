@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.1 2000/04/18 19:35:31 jason Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.2 2000/04/26 03:28:57 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -199,8 +199,6 @@ void dc_pci_attach(parent, self, aux)
 	    PCI_COMMAND_MASTER_ENABLE;
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
 	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-
-	sc->dc_csid = pci_conf_read(pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 
 #ifdef DC_USEIOSPACE
 	if (!(command & PCI_COMMAND_IO_ENABLE)) {

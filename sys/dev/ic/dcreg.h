@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcreg.h,v 1.1 2000/04/18 19:35:30 jason Exp $ */
+/*	$OpenBSD: dcreg.h,v 1.2 2000/04/26 03:28:56 mickey Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -657,7 +657,6 @@ struct dc_softc {
 	struct dc_list_data	*dc_ldata;
 	caddr_t			dc_ldata_ptr;
 	struct dc_chain_data	dc_cdata;
-	u_int32_t		dc_csid;
 	u_int			dc_revision;
 };
 
