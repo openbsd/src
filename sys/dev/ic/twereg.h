@@ -1,4 +1,4 @@
-/*	$OpenBSD: twereg.h,v 1.2 2000/09/15 21:51:50 mickey Exp $	*/
+/*	$OpenBSD: twereg.h,v 1.3 2000/11/06 23:56:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -131,6 +131,7 @@ struct twe_cmd {
 #define	TWE_UNITHOST(u, h)	(((u) & 0xf) | ((h) << 4))
 	u_int8_t	cmd_status;
 	u_int8_t	cmd_flags;
+#define	TWE_FLAGS_CACHEDISABLE		0x01
 	u_int16_t	cmd_count;
 	union {
 		struct {
