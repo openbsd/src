@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypxfr.c,v 1.7 1996/08/15 22:16:31 chuck Exp $ */
+/*	$OpenBSD: ypxfr.c,v 1.8 1996/09/30 20:50:25 maja Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypxfr.c,v 1.7 1996/08/15 22:16:31 chuck Exp $";
+static char rcsid[] = "$OpenBSD: ypxfr.c,v 1.8 1996/09/30 20:50:25 maja Exp $";
 #endif
 
 #include <stdio.h>
@@ -457,6 +457,7 @@ char *argv[];
 	CLIENT   *client;
 	char	 mapname[] = "ypdbXXXXXX";
 	int	 status,xfr_status;
+	int	 srvport;
 	
 	status = YPPUSH_SUCC;
 	client = NULL;
@@ -547,6 +548,18 @@ char *argv[];
 			}
 		}
 	};
+
+	if (status > 0) {
+		
+	        yplog("Check for reserved port on host: %s", host); 
+
+		srvport = getrpcport(host,YPPROG,YPVERS,IPPROTO_TCP);
+		if (srvport >= IPPORT_RESERVED ||
+		    srvport < IPPORT_RESERVED/2) {
+			status = YPPUSH_REFUSED;
+		}
+		
+	}
 
 	if (status > 0) {
 	  	

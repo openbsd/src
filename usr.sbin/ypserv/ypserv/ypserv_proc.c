@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv_proc.c,v 1.5 1996/08/15 21:47:30 chuck Exp $ */
+/*	$OpenBSD: ypserv_proc.c,v 1.6 1996/09/30 20:50:24 maja Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypserv_proc.c,v 1.5 1996/08/15 21:47:30 chuck Exp $";
+static char rcsid[] = "$OpenBSD: ypserv_proc.c,v 1.6 1996/09/30 20:50:24 maja Exp $";
 #endif
 
 #include <rpc/rpc.h>
@@ -258,6 +258,14 @@ ypproc_xfr_2_svc(argp, rqstp)
 	YPLOG("       ipadd=%s, port=%d, map=%s", inet_ntoa(caller->sin_addr),
 	  argp->port, argp->map_parms.map);
 
+	if (ok) {
+		if (caller->sin_family != AF_INET ||
+		    caller->sin_port >= IPPORT_RESERVED ||
+		    caller->sin_port < IPPORT_RESERVED/2) {
+			ok = FALSE;
+		}
+	}
+
 	if (!ok) {
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
 		return(NULL);
@@ -307,6 +315,14 @@ ypproc_clear_2_svc(argp, rqstp)
 		False
 #endif
 	);
+
+	if (ok) {
+		if (caller->sin_family != AF_INET ||
+		    caller->sin_port >= IPPORT_RESERVED ||
+		    caller->sin_port < IPPORT_RESERVED/2) {
+			ok = FALSE;
+		}
+	}
 
 	if (!ok) {
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
