@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.28 2004/01/17 18:27:37 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.29 2004/01/19 10:41:34 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -20,6 +20,8 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <net/if.h>
+#include <net/if_media.h>
+#include <net/if_types.h>
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -103,6 +105,9 @@ int		 show_fib_msg(struct imsg *);
 void		 show_nexthop_head(void);
 int		 show_nexthop_msg(struct imsg *);
 void		 show_interface_head(void);
+const char *	 get_media_descr(int);
+const char *	 get_linkstate(int, int);
+void		 print_baudrate(u_long);
 int		 show_interface_msg(struct imsg *);
 
 struct imsgbuf	ibuf;
@@ -569,7 +574,7 @@ show_fib_msg(struct imsg *imsg)
 
 		printf("   ");
 		if (asprintf(&p, "%s/%u", log_ntoa(k->prefix), k->prefixlen) ==
-		   -1)
+		    -1)
 			err(1, NULL);
 		printf("%-20s ", p);
 		free(p);
@@ -622,27 +627,105 @@ show_nexthop_msg(struct imsg *imsg)
 void
 show_interface_head(void)
 {
-	printf("%-20s%s\n", "Interface", "Flags");
+	printf("%-20s%-20s%-20s\n", "Interface", "Flags", "Link state");
 }
+
+const int	ifm_status_valid_list[] = IFM_STATUS_VALID_LIST;
+const struct ifmedia_status_description
+		ifm_status_descriptions[] = IFM_STATUS_DESCRIPTIONS;
+const struct ifmedia_description
+		ifm_type_descriptions[] = IFM_TYPE_DESCRIPTIONS;
+
+const char *
+get_media_descr(int media_type)
+{
+	const struct ifmedia_description	*p;
+
+	for (p = ifm_type_descriptions; p->ifmt_string != NULL; p++)
+		if (media_type == p->ifmt_word)
+			return (p->ifmt_string);
+
+	return ("unknown media");
+}
+
+const char *
+get_linkstate(int media_type, int link_state)
+{
+	const struct ifmedia_status_description	*p;
+	int					 i;
+
+	if (link_state == LINK_STATE_UNKNOWN)
+		return ("unknown");
+
+	for (i = 0; ifm_status_valid_list[i] != 0; i++)
+		for (p = ifm_status_descriptions; p->ifms_valid != 0; p++) {
+			if (p->ifms_type != media_type ||
+			    p->ifms_valid != ifm_status_valid_list[i])
+				continue;
+			return (p->ifms_string[link_state == LINK_STATE_UP]);
+		}
+
+	return ("unknown link state");
+}
+
+void
+print_baudrate(u_long baudrate)
+{
+	if (baudrate > IF_Gbps(1))
+		printf("%lu GBit/s", baudrate / IF_Gbps(1));
+	else if (baudrate > IF_Mbps(1))
+		printf("%lu MBit/s", baudrate / IF_Mbps(1));
+	else if (baudrate > IF_Kbps(1))
+		printf("%lu KBit/s", baudrate / IF_Kbps(1));
+	else
+		printf("%lu Bit/s", baudrate);
+}
+
 
 int
 show_interface_msg(struct imsg *imsg)
 {
 	struct kif	*k;
+	int		 ifms_type;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_INTERFACE:
 		k = imsg->data;
 		printf("%-20s", k->ifname);
-		if (k->flags & IFF_UP)
-			printf("UP ");
+		printf("%-20s", k->flags & IFF_UP ? "UP" : "");
+		switch (k->media_type) {
+		case IFT_ETHER:
+			ifms_type = IFM_ETHER;
+			break;
+		case IFT_FDDI:
+			ifms_type = IFM_FDDI;
+			break;
+		case IFT_ISO88025:
+			ifms_type = IFM_TOKEN;
+			break;
+		default:
+			ifms_type = 0;
+			break;
+		}
+
+		if (ifms_type)
+			printf("%s, %s", get_media_descr(ifms_type),
+			    get_linkstate(ifms_type, k->link_state));
+		else if (k->link_state == LINK_STATE_UNKNOWN)
+			printf("unknown");
+		else
+			printf("link state %u", k->link_state);
+
+		if (k->link_state != LINK_STATE_DOWN && k->baudrate > 0) {
+			printf(", ");
+			print_baudrate(k->baudrate);
+		}
 		printf("\n");
 		break;
 	case IMSG_CTL_END:
 		return (1);
 		break;
 	default:
-printf("beep");
 		break;
 	}
 
