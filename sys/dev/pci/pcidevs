@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.49 1998/04/27 02:26:06 deraadt Exp $
+$OpenBSD: pcidevs,v 1.50 1998/04/27 03:01:30 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -43,7 +43,7 @@ $OpenBSD: pcidevs,v 1.49 1998/04/27 02:26:06 deraadt Exp $
  * List of known PCI vendors
  */
 
-vendor MARTINMARIETTA	0x003d	Martin-Marietta Corporation 
+vendor MARTINMARIETTA	0x003d	Martin-Marietta 
 vendor COMPAQ		0x0e11	Compaq
 vendor SYMBIOS		0x1000	Symbios Logic
 vendor ATI		0x1002	ATI Technologies
@@ -157,7 +157,7 @@ vendor NEXGEN		0x1074	NexGen Microsystems
 vendor AIR		0x1075	Advanced Integration Research
 vendor CHAINTECH	0x1076	Chaintech Computer
 vendor QLOGIC		0x1077	QLogic
-vendor CYRIX		0x1078	Cyrix Corporation
+vendor CYRIX		0x1078	Cyrix
 vendor IBUS		0x1079	I-Bus
 vendor NETWORTH		0x107a	NetWorth
 vendor GATEWAY		0x107b	Gateway 2000
@@ -167,14 +167,14 @@ vendor INTERPHASE	0x107e	Interphase
 vendor DATATECH		0x107f	Data Technology Corporation
 vendor CONTAQ		0x1080	Contaq Microsystems
 vendor SUPERMAC		0x1081	Supermac Technology
-vendor EFA		0x1082	EFA Corporation of America
+vendor EFA		0x1082	EFA
 vendor FOREX		0x1083	Forex Computer
 vendor PARADOR		0x1084	Parador
 vendor TULIP		0x1085	Tulip Computers
 vendor JBOND		0x1086	J. Bond Computer Systems
 vendor CACHECOMP	0x1087	Cache Computer
 vendor MICROCOMP	0x1088	Microcomputer Systems
-vendor DG		0x1089	Data General Corporation
+vendor DG		0x1089	Data General
 vendor BIT3		0x108a	Bit3 Computer Corp.
 vendor ELONEX		0x108c	Elonex PLC c/o Oakleigh Systems
 vendor OLICOM		0x108d	Olicom
@@ -258,11 +258,11 @@ vendor THOMASCONRAD	0x10da	Thomas-Conrad
 vendor ROHM		0x10db	Rohm Research
 vendor CERN		0x10dc	CERN/ECP/EDU
 vendor ES		0x10dd	Evans & Sutherland
-vendor NVIDIA		0x10de	Nvidia Corporation
+vendor NVIDIA		0x10de	Nvidia
 vendor EMULEX		0x10df	Emulex
 vendor IMS		0x10e0	Integrated Micro Solutions
 vendor TEKRAM		0x10e1	Tekram Technology (1st PCI Vendor ID)
-vendor APTIX		0x10e2	Aptix Corporation
+vendor APTIX		0x10e2	Aptix
 vendor NEWBRIDGE	0x10e3	Newbridge Microsystems
 vendor TANDEM		0x10e4	Tandem Computers
 vendor MICROINDUSTRIES	0x10e5	Micro Industries
@@ -281,7 +281,7 @@ vendor TYAN		0x10f1	Tyan Computer
 vendor ACHME		0x10f2	Achme Computer
 vendor ALARIS		0x10f3	Alaris
 vendor SMOS		0x10f4	S-MOS Systems
-vendor NKK		0x10f5	NKK Corporation
+vendor NKK		0x10f5	NKK
 vendor CREATIVE		0x10f6	Creative Electronic Systems
 vendor MATSUSHITA	0x10f7	Matsushita
 vendor ALTOS		0x10f8	Altos India
@@ -386,7 +386,7 @@ vendor MAXTOR		0x115f	Maxtor
 vendor MEGASOFT		0x1160	Megasoft
 vendor PFU		0x1161	PFU Limited
 vendor OALAB		0x1162	OA Laboratory
-vendor SYNEMA		0x1163	Synema Corporation
+vendor SYNEMA		0x1163	Synema
 vendor APT		0x1164	Advanced Peripherals Technologies
 vendor IMAGRAPH		0x1165	Imagraph
 vendor PEQUR		0x1166	Pequr Technology
@@ -449,8 +449,8 @@ vendor ACTEL		0x11aa	Actel
 vendor GALILEO		0x11ab	Galileo Technology
 vendor CANNON		0x11ac	Cannon IS
 vendor LITEON		0x11ad	Lite-On Communications
-vendor SCITEX		0x11ae	Scitex Corporation
-vendor PROLOG		0x11af	Pro-Log Corporation
+vendor SCITEX		0x11ae	Scitex
+vendor PROLOG		0x11af	Pro-Log
 vendor V3		0x11b0	V3 Semiconductor
 vendor APRICOT		0x11b1	Apricot Computer
 vendor KODAK		0x11b2	Eastman Kodak
@@ -476,7 +476,7 @@ vendor LSISYS		0x11ca	LSI Systems
 vendor SPECIALIX	0x11cb	Specialix Research
 vendor MKC		0x11cc	Michels & Kleberhoff Computer
 vendor HAL		0x11cd 	HAL Computer Systems
-vendor ZORAN		0x11de	Zoran Corporation
+vendor ZORAN		0x11de	Zoran
 vendor COMPEX		0x11f6	Compex
 vendor PMCSIERRA	0x11f8	PMC-Sierra
 vendor CYCLADES		0x120e	Cyclades
@@ -948,7 +948,7 @@ product SIS 6205		0x6205	6205
 /* SMC products */
 product SMC 37C665		0x1000	FDC 37C665
 product SMC 37C922		0x1001	FDC 37C922
-product SMC 83C170		0x0005	83C170 (\"EPIC/100\") Fast Ethernet
+product SMC 83C170		0x0005	83C170 (EPIC/100) Fast Ethernet
 
 /* STB products */
 product STB2 RIVA128		0x0018 Velocity128
