@@ -1,4 +1,4 @@
-/*	$OpenBSD: fish.c,v 1.6 1999/09/25 15:52:19 pjanzen Exp $	*/
+/*	$OpenBSD: fish.c,v 1.7 2000/04/08 12:18:25 pjanzen Exp $	*/
 /*	$NetBSD: fish.c,v 1.3 1995/03/23 08:28:18 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)fish.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: fish.c,v 1.6 1999/09/25 15:52:19 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: fish.c,v 1.7 2000/04/08 12:18:25 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -66,6 +66,7 @@ static char rcsid[] = "$OpenBSD: fish.c,v 1.6 1999/09/25 15:52:19 pjanzen Exp $"
 #define	RANKS		13
 #define	HANDSIZE	7
 #define	CARDS		4
+#define	TOTCARDS	RANKS * CARDS
 
 #define	USER		1
 #define	COMPUTER	0
@@ -78,7 +79,8 @@ const char *const cards[] = {
 #define	PRC(card)	(void)printf(" %s", cards[card])
 
 int promode;
-int asked[RANKS], comphand[RANKS], deck[RANKS];
+int curcard;
+int asked[RANKS], comphand[RANKS], deck[TOTCARDS];
 int userasked[RANKS], userhand[RANKS];
 
 void	chkwinner __P((int, const int *));
@@ -173,7 +175,7 @@ usermove()
 			continue;
 		if (buf[0] == '\n') {
 			(void)printf("%d cards in my hand, %d in the pool.\n",
-			    countcards(comphand), countcards(deck));
+			    countcards(comphand), curcard);
 			(void)printf("My books:");
 			(void)countbooks(comphand);
 			continue;
@@ -273,9 +275,7 @@ drawcard(player, hand)
 {
 	int card;
 
-	while (deck[card = nrandom(RANKS)] == 0);
-	++hand[card];
-	--deck[card];
+	++hand[card = deck[--curcard]];
 	if (player == USER || hand[card] == CARDS) {
 		printplayer(player);
 		(void)printf("drew %s", cards[card]);
@@ -426,19 +426,22 @@ countbooks(hand)
 void
 init()
 {
-	int i, rank;
+	int i, j, temp;
 
-	for (i = 0; i < RANKS; ++i)
-		deck[i] = CARDS;
-	for (i = 0; i < HANDSIZE; ++i) {
-		while (!deck[rank = nrandom(RANKS)]);
-		++userhand[rank];
-		--deck[rank];
+	curcard = TOTCARDS;
+	for (i = 0; i < TOTCARDS; ++i)
+		deck[i] = i % RANKS;
+	for (i = 0; i < TOTCARDS - 1; ++i) {
+		j = nrandom(TOTCARDS-i);
+		if (j == 0)
+			continue;
+		temp = deck[i];
+		deck[i] = deck[i+j];
+		deck[i+j] = temp;
 	}
 	for (i = 0; i < HANDSIZE; ++i) {
-		while (!deck[rank = nrandom(RANKS)]);
-		++comphand[rank];
-		--deck[rank];
+		++userhand[deck[--curcard]];
+		++comphand[deck[--curcard]];
 	}
 }
 
