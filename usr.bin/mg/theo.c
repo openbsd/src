@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.67 2004/08/04 18:41:13 art Exp $	*/
+/*	$OpenBSD: theo.c,v 1.68 2004/08/06 02:33:34 art Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -149,7 +149,7 @@ static const char *talk[] = {
 	"Many well known people become net-kooks in their later life, because they lose touch with reality.",
 	"You're not allowed to have an opinion.",
 	"tweep tweep tweep",
-	"Quite frankly, SSE's alignment requirement is the most utterly retarded idea since eating your own shit."
+	"Quite frankly, SSE's alignment requirement is the most utterly retarded idea since eating your own shit.",
 	"Holy verbose prom startup Batman."
 };
 
