@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.64 2004/09/18 06:51:49 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.65 2004/09/18 16:15:53 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -749,6 +749,7 @@ int
 carp_prepare_ad(struct mbuf *m, struct carp_softc *sc, struct carp_header *ch)
 {
 	struct m_tag *mtag;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
 
 	if (sc->sc_init_counter) {
 		/* this could also be seconds since unix epoch */
@@ -770,7 +771,7 @@ carp_prepare_ad(struct mbuf *m, struct carp_softc *sc, struct carp_header *ch)
 		sc->sc_ac.ac_if.if_oerrors++;
 		return (ENOMEM);
 	}
-	bcopy(&sc->sc_ac.ac_if, (caddr_t)(mtag + 1), sizeof(struct ifnet *));
+	bcopy(&ifp, (caddr_t)(mtag + 1), sizeof(struct ifnet *));
 	m_tag_prepend(m, mtag);
 
 	return (0);
@@ -1140,14 +1141,16 @@ carp_macmatch6(void *v, struct mbuf *m, struct in6_addr *taddr)
 			    &ifatoia6(ifa)->ia_addr.sin6_addr) &&
 			    ((sc->sc_ac.ac_if.if_flags &
 			    (IFF_UP|IFF_RUNNING)) == (IFF_UP|IFF_RUNNING))) {
+				struct ifnet *ifp = &sc->sc_ac.ac_if;
+
 				mtag = m_tag_get(PACKET_TAG_CARP,
-				    sizeof(struct carp_softc *), M_NOWAIT);
+				    sizeof(struct ifnet *), M_NOWAIT);
 				if (mtag == NULL) {
 					/* better a bit than nothing */
 					return (sc->sc_ac.ac_enaddr);
 				}
-				bcopy(&sc, (caddr_t)(mtag + 1),
-				    sizeof(struct carp_softc *));
+				bcopy(&ifp, (caddr_t)(mtag + 1),
+				    sizeof(struct ifnet *));
 				m_tag_prepend(m, mtag);
 
 				return (sc->sc_ac.ac_enaddr);
