@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.55 2004/01/08 16:52:05 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.56 2004/01/08 16:55:25 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -556,11 +556,11 @@ knexthop_validate(struct knexthop_node *kn)
 
 	bzero(&n, sizeof(n));
 	n.nexthop = kn->nexthop;
+	kroute_detach_nexthop(kn);
 
 	if ((kr = kroute_match(kn->nexthop)) == NULL) {	/* no match */
 		if (was_valid)
 			send_nexthop_update(&n);
-		kroute_detach_nexthop(kn);
 	} else {					/* found match */
 		if (kr->flags & F_DOWN) {		/* but is down */
 			if (was_valid)
