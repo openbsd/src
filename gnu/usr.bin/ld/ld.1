@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: ld.1,v 1.5 1997/04/09 01:32:38 deraadt Exp $
+.\"	$Id: ld.1,v 1.6 1997/04/09 02:08:26 deraadt Exp $
 .\"
 .Dd October 14, 1993
 .Dt LD 1
@@ -37,7 +37,7 @@
 .Nd link editor
 .Sh SYNOPSIS
 .Nm ld
-.Op Fl MNnrSstXxz
+.Op Fl MNnprSstXxz
 .Bk -words
 .Op Fl A Ar symbol-file
 .Op Fl assert Ar keyword
@@ -178,6 +178,8 @@ specified libraries.
 .It Fl o Ar filename
 Specifies the name of the output file. Defaults to
 .Dq a.out .
+.It Fl p
+Make the data segment start on a page boundary.
 .It Fl Q
 Produce a
 .Dv QMAGIC
