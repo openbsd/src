@@ -78,7 +78,7 @@ static pid_t pid;
 static int s = -1;
 
 void
-getsocket()
+getsocket(void)
 {
 	s = socket(PF_ROUTE, SOCK_RAW, 0);
 	if (s < 0) {
@@ -103,9 +103,7 @@ int	rtmsg(int);
  * Set an individual arp entry
  */
 int
-arptab_set(eaddr, host)
-	u_char *eaddr;
-	u_int32_t host;
+arptab_set(u_char *eaddr, u_int32_t host)
 {
 	struct sockaddr_inarp *sin = &sin_m;
 	struct sockaddr_dl *sdl;
@@ -178,8 +176,7 @@ overwrite:
 }
 
 int
-rtmsg(cmd)
-	int cmd;
+rtmsg(int cmd)
 {
 	static int seq;
 	int rlen;

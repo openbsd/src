@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.53 2002/06/14 21:35:01 todd Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.54 2002/07/20 18:02:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static char rcsid[] = "$OpenBSD: syslogd.c,v 1.53 2002/06/14 21:35:01 todd Exp $";
+static char rcsid[] = "$OpenBSD: syslogd.c,v 1.54 2002/07/20 18:02:03 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -227,9 +227,7 @@ char *funixn[MAXFUNIX] = { _PATH_LOG };
 int funix[MAXFUNIX];
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch, i, fklog, len, linesize, fdsrmax = 0;
 	struct sockaddr_un sunx, fromunix;
@@ -447,7 +445,8 @@ main(argc, argv)
 				} else if (i < 0 && errno != EINTR)
 					logerror("recvfrom inet");
 			}
-		} 
+		}
+
 		for (i = 0; i < nfunix; i++) {
 			if (funix[i] != -1 && FD_ISSET(funix[i], fdsr)) {
 				len = sizeof(fromunix);
@@ -466,7 +465,7 @@ main(argc, argv)
 }
 
 void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr,
@@ -480,9 +479,7 @@ usage()
  * on the appropriate log files.
  */
 void
-printline(hname, msg)
-	char *hname;
-	char *msg;
+printline(char *hname, char *msg)
 {
 	int pri;
 	char *p, *q, line[MAXLINE + 1];
@@ -519,8 +516,7 @@ printline(hname, msg)
  * Take a raw input line from /dev/klog, split and format similar to syslog().
  */
 void
-printsys(msg)
-	char *msg;
+printsys(char *msg)
 {
 	int c, pri, flags;
 	char *lp, *p, *q, line[MAXLINE + 1];
@@ -558,16 +554,13 @@ time_t	now;
  * the priority.
  */
 void
-logmsg(pri, msg, from, flags)
-	int pri;
-	char *msg, *from;
-	int flags;
+logmsg(int pri, char *msg, char *from, int flags)
 {
 	struct filed *f;
 	int fac, msglen, prilev, i;
 	sigset_t mask, omask;
 	char *timestamp;
- 	char prog[NAME_MAX+1];
+	char prog[NAME_MAX+1];
 
 	dprintf("logmsg: pri 0%o, flags 0x%x, from %s, msg %s\n",
 	    pri, flags, from, msg);
@@ -685,10 +678,7 @@ logmsg(pri, msg, from, flags)
 }
 
 void
-fprintlog(f, flags, msg)
-	struct filed *f;
-	int flags;
-	char *msg;
+fprintlog(struct filed *f, int flags, char *msg)
 {
 	struct iovec iov[6];
 	struct iovec *v;
@@ -824,16 +814,13 @@ fprintlog(f, flags, msg)
  *	world, or a list of approved users.
  */
 void
-wallmsg(f, iov)
-	struct filed *f;
-	struct iovec *iov;
+wallmsg(struct filed *f, struct iovec *iov)
 {
+	struct utmp ut;
+	char line[sizeof(ut.ut_line) + 1], *p;
 	static int reenter;			/* avoid calling ourselves */
 	FILE *uf;
-	struct utmp ut;
 	int i;
-	char *p;
-	char line[sizeof(ut.ut_line) + 1];
 
 	if (reenter++)
 		return;
@@ -874,8 +861,7 @@ wallmsg(f, iov)
 }
 
 void
-reapchild(signo)
-	int signo;
+reapchild(int signo)
 {
 	int save_errno = errno;
 	int status;
@@ -889,8 +875,7 @@ reapchild(signo)
  * Return a printable representation of a host address.
  */
 char *
-cvthname(f)
-	struct sockaddr_in *f;
+cvthname(struct sockaddr_in *f)
 {
 	struct hostent *hp;
 	sigset_t omask, nmask;
@@ -919,22 +904,19 @@ cvthname(f)
 }
 
 void
-dodie(signo)
-	int signo;
+dodie(int signo)
 {
 	WantDie = signo;
 }
 
 void
-domark(signo)
-	int signo;
+domark(int signo)
 {
 	MarkSet = 1;
 }
 
 void
-doinit(signo)
-	int signo;
+doinit(int signo)
 {
 	DoInit = 1;
 }
@@ -943,8 +925,7 @@ doinit(signo)
  * Print syslogd errors some place.
  */
 void
-logerror(type)
-	char *type;
+logerror(char *type)
 {
 	char buf[100];
 
@@ -959,8 +940,7 @@ logerror(type)
 }
 
 void
-die(signo)
-	int signo;
+die(int signo)
 {
 	struct filed *f;
 	int was_initialized = Initialized;
@@ -991,14 +971,12 @@ die(signo)
  *  INIT -- Initialize syslogd from configuration table
  */
 void
-init()
+init(void)
 {
-	int i;
-	FILE *cf;
+	char cline[LINE_MAX], prog[NAME_MAX+1], *p;
 	struct filed *f, *next, **nextp;
-	char *p;
-	char cline[LINE_MAX];
- 	char prog[NAME_MAX+1];
+	FILE *cf;
+	int i;
 
 	dprintf("init\n");
 
@@ -1127,10 +1105,7 @@ init()
  * Crack a configuration file line
  */
 void
-cfline(line, f, prog)
-	char *line;
-	struct filed *f;
-	char *prog;
+cfline(char *line, struct filed *f, char *prog)
 {
 	struct hostent *hp;
 	int i, pri;
@@ -1293,7 +1268,7 @@ cfline(line, f, prog)
  * Retrieve the size of the kernel message buffer, via sysctl.
  */
 int
-getmsgbufsize()
+getmsgbufsize(void)
 {
 	int msgbufsize, mib[2];
 	size_t size;
@@ -1312,9 +1287,7 @@ getmsgbufsize()
  *  Decode a symbolic name to a numeric value
  */
 int
-decode(name, codetab)
-	const char *name;
-	CODE *codetab;
+decode(const char *name, CODE *codetab)
 {
 	CODE *c;
 	char *p, buf[40];

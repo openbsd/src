@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.36 2002/05/26 09:25:21 deraadt Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.37 2002/07/20 17:58:16 deraadt Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -28,7 +28,7 @@ char    copyright[] =
 #endif				/* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rarpd.c,v 1.36 2002/05/26 09:25:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rarpd.c,v 1.37 2002/07/20 17:58:16 deraadt Exp $";
 #endif
 
 
@@ -78,9 +78,9 @@ struct if_addr {
 };
 
 struct if_info {
-	int     ii_fd;			/* BPF file descriptor */
+	int	ii_fd;			/* BPF file descriptor */
 	char	ii_name[IFNAMSIZ];	/* if name, e.g. "en0" */
-	u_char  ii_eaddr[6];		/* Ethernet address of this iface */
+	u_char	ii_eaddr[6];		/* Ethernet address of this iface */
 	struct if_addr *ii_addrs;	/* Networks this interface is on */
 	struct if_info *ii_next;
 };
@@ -108,17 +108,15 @@ u_int32_t ipaddrtonetmask(u_int32_t);
 int    rarp_bootable(u_int32_t);
 #endif
 
-int     aflag = 0;		/* listen on "all" interfaces  */
+int	aflag = 0;		/* listen on "all" interfaces  */
 int     dflag = 0;		/* print debugging messages */
 int     fflag = 0;		/* don't fork */
 int     lflag = 0;		/* log all replies */
 
 int
-main(argc, argv)
-	int     argc;
-	char  **argv;
+main(int argc, char *argv[])
 {
-	int     op, devnull, f;
+	int op, devnull, f;
 	char   *ifname, *hostname;
 	extern char *__progname;
 	extern char *optarg;
@@ -163,8 +161,6 @@ main(argc, argv)
 		init_one(ifname);
 
 	if ((!fflag) && (!dflag)) {
-		FILE *fp;
-
 		pid = fork();
 		if (pid > 0)
 			/* Parent exits, leaving child in background. */
@@ -207,8 +203,7 @@ main(argc, argv)
  * mask and Ethernet address, and open a BPF file for it.
  */
 void
-init_one(ifname)
-	char   *ifname;
+init_one(char *ifname)
 {
 	struct if_info *p;
 	int fd;
@@ -242,7 +237,7 @@ init_one(ifname)
  * point to point.
  */
 void
-init_all()
+init_all(void)
 {
 #ifdef HAVE_IFADDRS_H
 	struct ifaddrs *ifap, *ifa;
@@ -302,10 +297,10 @@ init_all()
 
 	ifr = ifc.ifc_req;
 	for (i = 0; i < ifc.ifc_len;
-	     i += len, ifr = (struct ifreq *)((caddr_t)ifr + len)) {
+	    i += len, ifr = (struct ifreq *)((caddr_t)ifr + len)) {
 		len = sizeof(ifr->ifr_name) +
-		      (ifr->ifr_addr.sa_len > sizeof(struct sockaddr) ?
-		       ifr->ifr_addr.sa_len : sizeof(struct sockaddr));
+		    (ifr->ifr_addr.sa_len > sizeof(struct sockaddr) ?
+		    ifr->ifr_addr.sa_len : sizeof(struct sockaddr));
 
 		sdl = (struct sockaddr_dl *)&ifr->ifr_addr;
 		if (sdl->sdl_family != AF_LINK || sdl->sdl_type != IFT_ETHER ||
@@ -329,7 +324,7 @@ init_all()
 }
 
 void
-usage()
+usage(void)
 {
 	(void) fprintf(stderr, "usage: rarpd -a [-dfl]\n");
 	(void) fprintf(stderr, "       rarpd [-dfl] interface\n");
@@ -337,10 +332,9 @@ usage()
 }
 
 static int
-bpf_open()
+bpf_open(void)
 {
-	int     fd;
-	int     n = 0;
+	int	fd, n = 0;
 	char    device[sizeof "/dev/bpf0000000000"];
 
 	/* Go through all the minors and find one that isn't in use. */
@@ -360,8 +354,7 @@ bpf_open()
  * Set immediate mode, and set a filter that accepts only RARP requests.
  */
 int
-rarp_open(device)
-	char   *device;
+rarp_open(char *device)
 {
 	int     fd;
 	struct ifreq ifr;
@@ -425,9 +418,7 @@ rarp_open(device)
  * false on failure and log the reason.
  */
 static int
-rarp_check(p, len)
-	u_char *p;
-	int     len;
+rarp_check(u_char *p, int len)
 {
 	struct ether_header *ep = (struct ether_header *) p;
 	struct ether_arp *ap = (struct ether_arp *) (p + sizeof(*ep));
@@ -463,7 +454,7 @@ rarp_check(p, len)
  * interfaces in 'iflist'.
  */
 void
-rarp_loop()
+rarp_loop(void)
 {
 	u_char *buf, *bp, *ep;
 	int     cc, fd;
@@ -486,9 +477,9 @@ rarp_loop()
 		/* NOTREACHED */
 	}
 	/*
-         * Find the highest numbered file descriptor for select().
-         * Initialize the set of descriptors to listen to.
-         */
+	 * Find the highest numbered file descriptor for select().
+	 * Initialize the set of descriptors to listen to.
+	 */
 	for (ii = iflist; ii; ii = ii->ii_next)
 		if (ii->ii_fd > maxfd)
 			maxfd = ii->ii_fd;
@@ -562,8 +553,7 @@ rarp_loop()
  * configuration file.
  */
 int
-rarp_bootable(addr)
-	u_int32_t  addr;
+rarp_bootable(u_int32_t addr)
 {
 	struct dirent *dent;
 	DIR *d;
@@ -599,10 +589,7 @@ rarp_bootable(addr)
  * of the address.
  */
 u_int32_t
-choose_ipaddr(alist, net, netmask)
-	u_int32_t **alist;
-	u_int32_t  net;
-	u_int32_t  netmask;
+choose_ipaddr(u_int32_t **alist, u_int32_t net, u_int32_t netmask)
 {
 	for (; *alist; ++alist) {
 		if ((**alist & netmask) == net)
@@ -615,9 +602,7 @@ choose_ipaddr(alist, net, netmask)
  * already been checked for validity.  The reply is overlaid on the request.
  */
 void
-rarp_process(ii, pkt)
-	struct if_info *ii;
-	u_char *pkt;
+rarp_process(struct if_info *ii, u_char *pkt)
 {
 	struct ether_header *ep;
 	struct ether_addr *ea;
@@ -672,9 +657,7 @@ rarp_process(ii, pkt)
  * file descriptor 'fd'; return it in 'eaddr'.
  */
 void
-lookup_addrs(ifname, p)
-	char *ifname;
-	struct if_info *p;
+lookup_addrs(char *ifname, struct if_info *p)
 {
 #ifdef HAVE_IFADDRS_H
 	struct ifaddrs *ifap, *ifa;
@@ -780,16 +763,15 @@ lookup_addrs(ifname, p)
 
 	ifr = ifc.ifc_req;
 	for (i = 0; i < ifc.ifc_len;
-	     i += len, ifr = (struct ifreq *)((caddr_t)ifr + len)) {
+	    i += len, ifr = (struct ifreq *)((caddr_t)ifr + len)) {
 		len = sizeof(ifr->ifr_name) +
-		      (ifr->ifr_addr.sa_len > sizeof(struct sockaddr) ?
-		       ifr->ifr_addr.sa_len : sizeof(struct sockaddr));
+		    (ifr->ifr_addr.sa_len > sizeof(struct sockaddr) ?
+		    ifr->ifr_addr.sa_len : sizeof(struct sockaddr));
 		if (!strncmp(ifr->ifr_name, ifname, sizeof(ifr->ifr_name))) {
 			sdl = (struct sockaddr_dl *) & ifr->ifr_addr;
 			if (sdl->sdl_family == AF_LINK &&
 			    sdl->sdl_type == IFT_ETHER && sdl->sdl_alen == 6) {
-				memcpy((caddr_t)eaddr, (caddr_t)LLADDR(sdl),
-				    6);
+				memcpy((caddr_t)eaddr, (caddr_t)LLADDR(sdl), 6);
 				if (dflag)
 					fprintf(stderr,
 					    "%s: %x:%x:%x:%x:%x:%x\n",
@@ -846,9 +828,7 @@ int arptab_set(u_char *eaddr, u_int32_t host);
  * address of the guy being booted (he cannot answer the ARP).
  */
 void
-update_arptab(ep, ipaddr)
-	u_char *ep;
-	u_int32_t  ipaddr;
+update_arptab(u_char *ep, u_int32_t ipaddr)
 {
 #ifdef SIOCSARP
 	int     s;
@@ -917,12 +897,8 @@ update_arptab(ep, ipaddr)
  * ARP request.
  */
 void
-rarp_reply(ii, ia, ep, ipaddr, hp)
-	struct if_info *ii;
-	struct if_addr *ia;
-	struct ether_header *ep;
-	u_int32_t  ipaddr;
-	struct hostent *hp;
+rarp_reply(struct if_info *ii, struct if_addr *ia, struct ether_header *ep,
+    u_int32_t ipaddr, struct hostent *hp)
 {
 	int     n;
 	struct ether_arp *ap = (struct ether_arp *) (ep + 1);
@@ -945,10 +921,10 @@ rarp_reply(ii, ia, ep, ipaddr, hp)
 	memcpy((char *) ap->arp_spa, (char *) &ia->ia_ipaddr, 4);
 
 	if (lflag) {
-		struct ether_addr ea;		
+		struct ether_addr ea;
 
 		memcpy(&ea.ether_addr_octet, &ap->arp_sha, 6);
-		syslog(LOG_INFO, "%s asked; %s replied", hp->h_name, 
+		syslog(LOG_INFO, "%s asked; %s replied", hp->h_name,
 		    ether_ntoa(&ea));
 	}
 
@@ -963,8 +939,7 @@ rarp_reply(ii, ia, ep, ipaddr, hp)
  * SIOCGIFNETMASK doesn't work.
  */
 u_int32_t
-ipaddrtonetmask(addr)
-	u_int32_t  addr;
+ipaddrtonetmask(u_int32_t addr)
 {
 	if (IN_CLASSA(addr))
 		return IN_CLASSA_NET;
