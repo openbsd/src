@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.3 2001/09/16 03:19:30 drahn Exp $
+#	$OpenBSD: files.macppc,v 1.4 2001/10/03 14:45:37 drahn Exp $
 
 #
 # macppc-specific configuration info
@@ -157,6 +157,10 @@ attach	adb at macobio
 file	arch/macppc/dev/adb.c				adb needs-flag
 file	arch/macppc/dev/adb_direct.c			adb
 file	arch/macppc/dev/pm_direct.c			adb
+
+device	apm
+attach	apm at adb
+file	arch/macppc/dev/apm.c				apm needs-count
 
 device	aed
 attach	aed at adb

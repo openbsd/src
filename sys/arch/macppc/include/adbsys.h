@@ -1,4 +1,4 @@
-/*	$OpenBSD: adbsys.h,v 1.1 2001/09/01 15:49:06 drahn Exp $	*/
+/*	$OpenBSD: adbsys.h,v 1.2 2001/10/03 14:45:37 drahn Exp $	*/
 /*	$NetBSD: adbsys.h,v 1.4 2000/12/19 02:59:24 tsubai Exp $	*/
 
 /*-
@@ -100,6 +100,8 @@ typedef struct adb_dev_s{
 #define ADBADDR_TABLET	ADBADDR_ABS
 #define ADBADDR_MODEM	ADBADDR_DATATX
 
+#define ADBADDR_APM	0xac0ff		/* A faux-addr for the APM driver to
+					   latch onto */
 
 	/* Interesting keyboard handler IDs */
 #define ADB_STDKBD	1

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.2 2001/09/01 17:43:08 drahn Exp $	*/
+/*	$OpenBSD: adb.c,v 1.3 2001/10/03 14:45:37 drahn Exp $	*/
 /*	$NetBSD: adb.c,v 1.6 1999/08/16 06:28:09 tsubai Exp $	*/
 
 /*-
@@ -47,6 +47,7 @@
 #include <macppc/dev/viareg.h>
 
 #include "aed.h"
+#include "apm.h"
 
 /*
  * Function declarations.
@@ -73,8 +74,6 @@ struct cfattach adb_ca = {
 struct cfdriver adb_cd = {
 	NULL, "adb", DV_DULL
 };
-
-extern int adbHardware;
 
 static int
 adbmatch(parent, cf, aux)
@@ -156,7 +155,18 @@ adbattach(parent, self, aux)
 	totaladbs = CountADBs();
 
 	printf(" irq %d", ca->ca_intr[0]);
-	printf(": %d targets\n", totaladbs);
+
+	switch (adbHardware) {
+		case ADB_HW_CUDA:
+			printf(": via-cuda ");
+			break;
+		case ADB_HW_PB:
+			printf(": via-pmu ");
+			break;
+	}
+ 
+	printf("%d targets\n", totaladbs);
+	
 
 #if NAED > 0
 	/* ADB event device for compatibility */
@@ -177,6 +187,15 @@ adbattach(parent, self, aux)
 
 		(void)config_found(self, &aa_args, adbprint);
 	}
+
+#if NAPM > 0
+	/* Magic for signalling the apm driver to match. */
+	aa_args.origaddr = ADBADDR_APM;
+	aa_args.adbaddr = ADBADDR_APM;
+	aa_args.handler_id = ADBADDR_APM;
+
+	(void)config_found(self, &aa_args, NULL);
+#endif
 
 	if (adbHardware == ADB_HW_CUDA)
 		adb_cuda_autopoll();

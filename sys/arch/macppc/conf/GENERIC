@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.4 2001/09/28 04:41:50 drahn Exp $
+#	$OpenBSD: GENERIC,v 1.5 2001/10/03 14:45:37 drahn Exp $
 #
 # PPC GENERIC config file
 #
@@ -83,6 +83,7 @@ bm*		at macobio?			# BMAC ethernet
 #mesh*		at macobio? flags 0xffff	# MESH SCSI
 #nvram*		at macobio?			# nvram
 adb*		at macobio?			# Apple Desktop Bus
+apm0		at adb?				# APM emulation
 wi*		at macobio?			# airport
 gpio*		at macobio?			# GPIO, PMU interrupt router.
 gpio*		at gpio?			# GPIO, PMU interrupt router.

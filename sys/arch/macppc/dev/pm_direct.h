@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.h,v 1.1 2001/09/01 15:50:00 drahn Exp $	*/
+/*	$OpenBSD: pm_direct.h,v 1.2 2001/10/03 14:45:37 drahn Exp $	*/
 /*	$NetBSD: pm_direct.h,v 1.5 1999/07/12 15:54:55 tsubai Exp $	*/
 
 /*
@@ -31,6 +31,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /* From: pm_direct.h 1.0 01/02/97 Takashi Hamada */
+#ifndef _PM_DIRECT_H_
+#define _PM_DIRECT_H_
 
 /*
  * Public declarations that other routines may need.
@@ -50,6 +52,18 @@ void pm_adb_restart __P((void));
 void pm_adb_poweroff __P((void));
 void pm_read_date_time __P((u_long *));
 void pm_set_date_time __P((u_long));
+
+struct pmu_battery_info
+{
+	unsigned int flags;
+	unsigned int cur_charge;
+	unsigned int max_charge;
+	signed   int draw;
+	unsigned int voltage;
+};
+
+int pm_battery_info __P((int, struct pmu_battery_info *));
+
 int pm_read_nvram __P((int));
 void pm_write_nvram __P((int, int));
 int pm_read_brightness __P((void));
@@ -77,6 +91,8 @@ void pm_eject_pcmcia __P((int));
 
 #define PMU_POWER_EVENTS        0x8f    /* Send power-event commands to PMU */
 #define PMU_SYSTEM_READY        0xdf    /* tell PMU we are awake */
+
+#define PMU_SMART_BATTERY_STATE	0x6f	/* Read battery state */
 
 /* Bits in PMU interrupt and interrupt mask bytes */
 #define PMU_INT_ADB_AUTO	0x04	/* ADB autopoll, when PMU_INT_ADB */
@@ -109,3 +125,9 @@ enum {
 	PMU_PWR_CLR_WAKEUP_EVENTS       = 0x05,
 };
 
+/* PMU Power Information */
+
+#define PMU_PWR_AC_PRESENT	(1 << 0)
+#define PMU_PWR_BATT_PRESENT	(1 << 2)
+
+#endif 

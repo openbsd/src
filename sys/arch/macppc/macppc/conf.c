@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.4 2001/09/28 03:14:20 mickey Exp $ */
+/*	$OpenBSD: conf.c,v 1.5 2001/10/03 14:45:37 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -133,6 +133,9 @@ cdev_decl(urio);
 #include "ucom.h"
 cdev_decl(ucom);
 
+#include "apm.h"
+cdev_decl(apm);
+
 #include "wsmux.h"
 
 #ifdef USER_PCICONF
@@ -172,7 +175,7 @@ struct cdevsw cdevsw[] = {
 	cdev_bpftun_init(NBPFILTER,bpf),/* 22: berkeley packet filter */
 	cdev_bpftun_init(NTUN,tun),	/* 23: network tunnel */
 	cdev_lkm_init(NLKM,lkm),	/* 24: loadable module driver */
-	cdev_notdef(),			/* 25 */
+        cdev_apm_init(NAPM,apm),	/* 25: APM interface */
 	cdev_notdef(),			/* 26 */
 	cdev_notdef(),			/* 27 */
 	cdev_notdef(),			/* 28 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adbvar.h,v 1.1 2001/09/01 15:50:00 drahn Exp $	*/
+/*	$OpenBSD: adbvar.h,v 1.2 2001/10/03 14:45:37 drahn Exp $	*/
 /*	$NetBSD: adbvar.h,v 1.3 2000/06/08 22:10:46 tsubai Exp $	*/
 
 /*-
@@ -112,6 +112,8 @@ void	extdms_complete __P((caddr_t, caddr_t, int));
 #define ADB_HW_IISI		0x03	/* Mac IIsi series */
 #define ADB_HW_PB		0x04	/* PowerBook series */
 #define ADB_HW_CUDA		0x05	/* Machines with a Cuda chip */
+
+extern int adbHardware;                 /* in adb_direct.c */
 
 #define ADB_CMDADDR(cmd)	((u_int8_t)((cmd) & 0xf0) >> 4)
 #define ADBFLUSH(dev)		((((u_int8_t)(dev) & 0x0f) << 4) | 0x01)
