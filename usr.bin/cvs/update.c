@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.6 2004/08/12 17:48:18 jfb Exp $	*/
+/*	$OpenBSD: update.c,v 1.7 2004/08/12 18:02:18 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -57,10 +57,8 @@ int  cvs_update_prune (CVSFILE *, void *);
 int
 cvs_update(int argc, char **argv)
 {
-	int ch, i, flags;
-	struct cvs_file *cf;
+	int ch, flags;
 
-	cf = NULL;
 	flags = CF_SORT|CF_RECURSE|CF_IGNORE|CF_KNOWN;
 
 	while ((ch = getopt(argc, argv, "ACD:dflPpQqRr:")) != -1) {
@@ -93,21 +91,20 @@ cvs_update(int argc, char **argv)
 	argv += optind;
 
 	if (argc == 0) {
-		cf = cvs_file_get(".", flags);
+		cvs_files = cvs_file_get(".", flags);
 	}
 	else {
 		/* don't perform ignore on explicitly listed files */
-		flags &= ~CF_IGNORE;
-
-		for (i = 0; i < argc; i++) {
-			cf = cvs_file_get(argv[i], flags);
-		}
+		flags &= ~(CF_IGNORE | CF_RECURSE | CF_SORT);
+		cvs_files = cvs_file_getspec(argv, argc, flags);
 	}
+	if (cvs_files == NULL)
+		return (EX_DATAERR);
 
-	cvs_file_examine(cf, cvs_update_file, NULL);
+	cvs_file_examine(cvs_files, cvs_update_file, NULL);
 
-	cvs_senddir(cf->cf_ddat->cd_root, cf);
-	cvs_sendreq(cf->cf_ddat->cd_root, CVS_REQ_UPDATE, NULL);
+	cvs_senddir(cvs_files->cf_ddat->cd_root, cvs_files);
+	cvs_sendreq(cvs_files->cf_ddat->cd_root, CVS_REQ_UPDATE, NULL);
 
 	return (0);
 }
