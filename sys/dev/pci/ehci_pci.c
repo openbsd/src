@@ -110,13 +110,14 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t csr;
 	const char *vendor;
 	char *devname = sc->sc.sc_bus.bdev.dv_xname;
-	char devinfo[256];
 	usbd_status r;
 	int ncomp;
 	struct usb_pci *up;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 #if defined(__NetBSD__)
+	char devinfo[256];
+
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
 #endif
@@ -145,6 +146,7 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
+		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
@@ -154,6 +156,7 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
+		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
 		return;
 	}
 	printf(": %s\n", intrstr);
@@ -164,6 +167,7 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_USBREV_1_1:
 		sc->sc.sc_bus.usbrev = USBREV_UNKNOWN;
 		printf("%s: pre-2.0 USB rev\n", devname);
+		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
 		return;
 	case PCI_USBREV_2_0:
 		sc->sc.sc_bus.usbrev = USBREV_2_0;
@@ -201,6 +205,7 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	r = ehci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
 		printf("%s: init failed, error=%d\n", devname, r);
+		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
 		return;
 	}
 

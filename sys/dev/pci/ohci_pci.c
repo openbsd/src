@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_pci.c,v 1.20 2004/05/23 03:23:00 deraadt Exp $	*/
+/*	$OpenBSD: ohci_pci.c,v 1.21 2004/05/24 22:52:52 mickey Exp $	*/
 /*	$NetBSD: ohci_pci.c,v 1.23 2002/10/02 16:51:47 thorpej Exp $	*/
 
 /*
@@ -143,6 +143,7 @@ ohci_pci_attach(struct device *parent, struct device *self, void *aux)
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
+		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
 		splx(s);
 		return;
 	}
@@ -154,6 +155,7 @@ ohci_pci_attach(struct device *parent, struct device *self, void *aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
+		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
 		splx(s);
 		return;
 	}
@@ -173,6 +175,7 @@ ohci_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (r != USBD_NORMAL_COMPLETION) {
 		printf("%s: init failed, error=%d\n",
 		    sc->sc.sc_bus.bdev.dv_xname, r);
+		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
 		splx(s);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.166 2004/05/06 17:28:18 peter Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.167 2004/05/24 22:52:52 mickey Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -803,14 +803,10 @@ pciide_attach(parent, self, aux)
 	pcitag_t tag = pa->pa_tag;
 	struct pciide_softc *sc = (struct pciide_softc *)self;
 	pcireg_t csr;
-	char devinfo[256];
 
 	sc->sc_pp = pciide_lookup_product(pa->pa_id);
-	if (sc->sc_pp == NULL) {
+	if (sc->sc_pp == NULL)
 		sc->sc_pp = &default_product_desc;
-		pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo,
-		    sizeof devinfo);
-	}
 	sc->sc_rev = PCI_REVISION(pa->pa_class);
 
 	sc->sc_pc = pa->pa_pc;

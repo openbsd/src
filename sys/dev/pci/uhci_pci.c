@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci_pci.c,v 1.16 2004/05/23 03:23:00 deraadt Exp $	*/
+/*	$OpenBSD: uhci_pci.c,v 1.17 2004/05/24 22:52:52 mickey Exp $	*/
 /*	$NetBSD: uhci_pci.c,v 1.24 2002/10/02 16:51:58 thorpej Exp $	*/
 
 /*
@@ -131,6 +131,7 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
+		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
@@ -141,6 +142,7 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
+		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
 		return;
 	}
 	printf(": %s\n", intrstr);
@@ -182,6 +184,7 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 	r = uhci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
 		printf("%s: init failed, error=%d\n", devname, r);
+		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
 		return;
 	}
 

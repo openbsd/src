@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.22 2004/02/19 20:11:33 markus Exp $	*/
+/*	$OpenBSD: yds.c,v 1.23 2004/05/24 22:52:52 mickey Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -666,17 +666,15 @@ yds_attach(parent, self, aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	char const *intrstr;
 	pci_intr_handle_t ih;
+	bus_size_t size;
 	pcireg_t reg;
 	struct yds_codec_softc *codec;
-	char devinfo[256];
 	mixer_ctrl_t ctl;
 	int i, r;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof devinfo);
-
 	/* Map register to memory */
 	if (pci_mapreg_map(pa, YDS_PCI_MBA, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->memt, &sc->memh, NULL, NULL, 0)) {
+	    &sc->memt, &sc->memh, NULL, &size, 0)) {
 		printf("%s: can't map memory space\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -684,6 +682,7 @@ yds_attach(parent, self, aux)
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
 		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		bus_space_unmap(sc->memt, sc->memh, size);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
@@ -695,6 +694,7 @@ yds_attach(parent, self, aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
+		bus_space_unmap(sc->memt, sc->memh, size);
 		return;
 	}
 	printf(": %s\n", intrstr);
