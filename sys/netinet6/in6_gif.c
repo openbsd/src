@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_gif.c,v 1.6 2000/02/07 06:09:10 itojun Exp $	*/
+/*	$OpenBSD: in6_gif.c,v 1.7 2000/02/07 06:18:44 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -136,7 +136,7 @@ in6_gif_output(ifp, family, m, rt)
 	    }
 #endif
 	default:
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 		printf("in6_gif_output: warning: unknown family %d passed\n",
 			family);
 #endif
