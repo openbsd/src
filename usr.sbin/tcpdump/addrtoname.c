@@ -1,4 +1,4 @@
-/*	$OpenBSD: addrtoname.c,v 1.23 2004/02/04 08:35:12 otto Exp $	*/
+/*	$OpenBSD: addrtoname.c,v 1.24 2004/02/13 17:56:29 canacar Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,7 +25,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/addrtoname.c,v 1.23 2004/02/04 08:35:12 otto Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/addrtoname.c,v 1.24 2004/02/13 17:56:29 canacar Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -864,6 +864,10 @@ init_addrtoname(u_int32_t localnet, u_int32_t mask)
 		f_localnet = localnet;
 		f_netmask = mask;
 	}
+
+	init_servarray();
+	init_ipprotoarray();
+
 	if (nflag)
 		/*
 		 * Simplest way to suppress names.
@@ -871,11 +875,9 @@ init_addrtoname(u_int32_t localnet, u_int32_t mask)
 		return;
 
 	init_etherarray();
-	init_servarray();
 	init_eprotoarray();
 	init_llcsaparray();
 	init_protoidarray();
-	init_ipprotoarray();
 }
 
 char *
