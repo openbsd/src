@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.44 1999/12/08 12:57:06 itojun Exp $	*/
+/*	$OpenBSD: main.c,v 1.45 2000/03/22 15:38:23 markus Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.44 1999/12/08 12:57:06 itojun Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.45 2000/03/22 15:38:23 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -450,7 +450,8 @@ cmdscanner(top)
 			 * XXX - bogus commands with a colon in
 			 *       them will not elicit an error.
 			 */
-			if (el_parse(el, margc, margv) != 0)
+			if (editing &&
+			    el_parse(el, margc, margv) != 0)
 #endif /* !SMALL */
 				fputs("?Invalid command.\n", ttyout);
 			continue;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ul.c,v 1.4 1997/01/15 23:43:27 millert Exp $	*/
+/*	$OpenBSD: ul.c,v 1.5 2000/03/22 15:38:23 markus Exp $	*/
 /*	$NetBSD: ul.c,v 1.3 1994/12/07 00:28:24 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ul.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: ul.c,v 1.4 1997/01/15 23:43:27 millert Exp $";
+static char rcsid[] = "$OpenBSD: ul.c,v 1.5 2000/03/22 15:38:23 markus Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -157,7 +157,7 @@ filter(f)
 {
 	register c;
 
-	while ((c = getc(f)) != EOF) switch(c) {
+	while ((c = getc(f)) != EOF && col < MAXBUF) switch(c) {
 
 	case '\b':
 		if (col > 0)
