@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.9 2001/09/20 20:52:10 millert Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.10 2001/09/20 21:13:27 drahn Exp $	*/
 /*-
  * Copyright (c) 1994
  *	Andrew Cagney.  All rights reserved.
@@ -61,6 +61,7 @@
 				beqlr+ ; \
 				b PIC_PLT(_ASM_LABEL(cerror))
 
+#define PSEUDO_NOERROR_SUFFIX	blr
 
 #define SUFFIX			PSEUDO_SUFFIX
 
@@ -70,11 +71,10 @@
 				PSEUDO_PREFIX(_thread_sys_,x,x)
 #define PREFIX2(x,y)		ALIAS(_thread_sys_,x) \
 				PSEUDO_PREFIX(_thread_sys_,x,y)
-/* XXX - actually sets errno */
 #define	PSEUDO_NOERROR(x,y)	ALIAS(_thread_sys_,x) \
 				PSEUDO_PREFIX(_thread_sys_,x,y) ; \
 				sc ; \
-				PSEUDO_SUFFIX
+				PSEUDO_NOERROR_SUFFIX
 
 #define	PSEUDO(x,y)		ALIAS(_thread_sys_,x) \
 				PSEUDO_PREFIX(_thread_sys_,x,y) ; \
