@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_entry.c,v 1.4 2003/07/30 21:30:31 jason Exp $	*/
+/*	$OpenBSD: fpu_entry.c,v 1.5 2003/07/31 17:41:56 jason Exp $	*/
 /*
  *  fpu_entry.c
  *
@@ -192,10 +192,6 @@ FPU_REG *FPU_st0_ptr;
 char    emulating = 0;
 #endif				/* PARANOID */
 
-#define bswapw(x) __asm__("xchgb %%al,%%ah":"=a" (x):"0" ((short)x))
-#define math_abort(signo) \
-    FPU_EIP = FPU_ORIG_EIP;REENTRANT_CHECK(OFF);return(signo);
-
 int
 math_emulate(struct trapframe * tframe)
 {
@@ -233,7 +229,7 @@ math_emulate(struct trapframe * tframe)
 do_another_FPU_instruction:
 
 	REENTRANT_CHECK(OFF);
-	copyin((u_int *)FPU_EIP, &code, sizeof(u_int));
+	copyin((u_short *)FPU_EIP, &code, sizeof(code));
 	REENTRANT_CHECK(ON);
 	if ((code & 0xff) == 0x9b) {	/* fwait */
 		if (status_word & SW_Summary)
@@ -277,8 +273,9 @@ do_another_FPU_instruction:
 					regs[r].tag = TW_Empty;
 				}
 			}
+			FPU_EIP = FPU_ORIG_EIP;
 			REENTRANT_CHECK(OFF);
-			math_abort(SIGFPE);
+			return (SIGFPE);
 		}
 	}
 	FPU_entry_eip = FPU_ORIG_EIP = FPU_EIP;
@@ -286,7 +283,7 @@ do_another_FPU_instruction:
 	if ((code & 0xff) == 0x66) {	/* size prefix */
 		FPU_EIP++;
 		REENTRANT_CHECK(OFF);
-		copyin((u_int *)FPU_EIP, &code, sizeof(u_int));
+		copyin((u_short *)FPU_EIP, &code, sizeof(code));
 		REENTRANT_CHECK(ON);
 	}
 	FPU_EIP += 2;
@@ -442,7 +439,7 @@ reg_mem_instr_done:
 FPU_instruction_done:
 
 	ip_offset = FPU_entry_eip;
-	bswapw(code);
+	code = swap16(code);
 	*(1 + (unsigned short *) &cs_selector) = code & 0x7ff;
 
 #ifdef DEBUG
