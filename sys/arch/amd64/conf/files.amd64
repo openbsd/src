@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.3 2004/06/25 11:03:28 art Exp $
+#	$OpenBSD: files.amd64,v 1.4 2004/07/20 20:17:16 art Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -21,6 +21,7 @@ file	arch/amd64/amd64/Locore.c
 file	arch/amd64/amd64/softintr.c
 file	arch/amd64/amd64/i8259.c
 file	arch/amd64/amd64/cacheinfo.c
+file	arch/amd64/amd64/mutex.S
 
 file	arch/amd64/amd64/intr.c
 file	arch/amd64/amd64/bus_space.c

@@ -1,5 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.7 2004/06/28 01:52:24 deraadt Exp $
-
+#	$OpenBSD: genassym.cf,v 1.8 2004/07/20 20:17:16 art Exp $
 #	Written by Artur Grabowski art@openbsd.org, Public Domain
 
 include <sys/param.h>
@@ -17,6 +16,7 @@ include <machine/vmparam.h>
 include <machine/intr.h>
 include <machine/pic.h>
 include <machine/i82093var.h>
+include <machine/mutex.h>
 
 export	SRUN
 export	SONPROC
@@ -130,6 +130,11 @@ member	IH_COUNT	ih_count.ec_count
 struct	ioapic_softc
 member	IOAPIC_SC_REG	sc_reg
 member	IOAPIC_SC_DATA	sc_data
+
+struct	mutex
+member	mtx_wantipl
+member	mtx_oldipl
+member	mtx_owner
 
 # pte fields
 export	PG_V
