@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.S,v 1.4 1997/08/08 16:42:13 weingart Exp $	*/
+/*	$OpenBSD: mbr.S,v 1.5 1997/08/08 16:50:19 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff and Tobias Weingartner
@@ -69,9 +69,9 @@ start:
 	movl	$BOOTRELOC, %eax
 	movl	%ax, %es
 	data32
-	xorl	%si, %si
+	xorl	%esi, %esi
 	data32
-	xorl	%di, %di
+	xorl	%edi, %edi
 	data32
 	movl	$0x200, %ecx
 	cld
@@ -180,7 +180,7 @@ sigok:
 	data32
 	movl	$pt, %esi
 	data32
-	movl	$NUMPART, %cx
+	movl	$NUMPART, %ecx
 1:
 	DBGMSG(CHAR_L)
 	# movb	(%si), %al
@@ -217,7 +217,6 @@ found:
 	call	message
 
 	movl	%dx, %ax
-	xor		$0x03, %ax
 	andl	$0x0F, %ax
 	orl		$0x30, %ax
 	data32
@@ -229,6 +228,7 @@ found:
 	call	message
 
 	popl	%eax
+	xor		$0x03, %ax
 	andl	$0x0F, %ax
 	orl		$0x30, %ax
 	data32
@@ -269,7 +269,7 @@ found:
 	int	$0x13
 	jnc		1f
 	data32
-	movl    $eread, %si
+	movl    $eread, %esi
 	data32
 	call	message
 	jmp		err_stop
