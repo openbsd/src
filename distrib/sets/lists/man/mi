@@ -15,7 +15,10 @@
 ./usr/share/info/cvs.info-6
 ./usr/share/info/cvs.info-7
 ./usr/share/info/cvs.info-8
+./usr/share/info/cvs.info-9
 ./usr/share/info/cvsclient.info
+./usr/share/info/cvsclient.info-1
+./usr/share/info/cvsclient.info-2
 ./usr/share/info/dir
 ./usr/share/info/g77.info
 ./usr/share/info/g77.info-1
@@ -501,6 +504,7 @@
 ./usr/share/man/cat4/fpa.0
 ./usr/share/man/cat4/fxp.0
 ./usr/share/man/cat4/i386/pccom.0
+./usr/share/man/cat4/i386/xf86.0
 ./usr/share/man/cat4/icmp.0
 ./usr/share/man/cat4/idp.0
 ./usr/share/man/cat4/imp.0
