@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.365 2005/03/26 03:54:40 krw Exp $
+#	$OpenBSD: install.sub,v 1.366 2005/03/26 05:08:26 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2005 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1262,9 +1262,9 @@ install_sets() {
 
 	cat << __EOT
 
-You will now specify the location and names of the ${MODE} sets you want to
+You will now specify the location and names of the $MODE sets you want to
 load. You will be able to repeat this step until all of your sets have been
-successfully loaded. If you are not sure what sets to ${MODE}, refer to the
+successfully loaded. If you are not sure what sets to $MODE, refer to the
 installation notes for details on the contents of each.
 __EOT
 
@@ -1335,7 +1335,7 @@ munge_fstab() {
 
 	done < /tmp/fstab > /etc/fstab
 
-	# If no /etc/fstab was created, we have nowhere to ${MODE} to.
+	# If no /etc/fstab was created, we have nowhere to $MODE to.
 	if [ ! -s /etc/fstab ]; then
 		echo "Unable to create valid /etc/fstab."
 		exit
@@ -1358,7 +1358,7 @@ mount_fs() {
 			cat << __EOT
 
 FATAL ERROR:	Cannot mount filesystems. Double-check your configuration
-		and restart the ${MODE}.
+		and restart the $MODE.
 
 __EOT
 			exit
@@ -1532,12 +1532,12 @@ finish_up() {
 
 	populateusrlocal
 
-	[ -x /mnt/${MODE}.site ] && /mnt/usr/sbin/chroot /mnt /${MODE}.site
+	[ -x /mnt/$MODE.site ] && /mnt/usr/sbin/chroot /mnt /$MODE.site
 
 	# Pat on the back.
 	cat << __EOT
 
-CONGRATULATIONS! Your OpenBSD ${MODE} has been successfully completed!
+CONGRATULATIONS! Your OpenBSD $MODE has been successfully completed!
 To boot the new system, enter halt at the command prompt. Once the
 system has halted, reset the machine and boot from the disk.
 __EOT

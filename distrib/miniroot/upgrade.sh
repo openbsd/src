@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: upgrade.sh,v 1.59 2004/10/02 18:45:08 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.60 2005/03/26 05:08:26 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2004 Todd Miller, Theo de Raadt, Ken Westerback
@@ -97,7 +97,7 @@ The fstab is configured as follows:
 
 $(< /tmp/fstab)
 
-For the ${MODE}, filesystems in the fstab will be automatically mounted if the
+For the $MODE, filesystems in the fstab will be automatically mounted if the
 'noauto' option is absent, and /sbin/mount_<fstype> is found, and the fstype is
 not nfs. Non-ffs filesystems will be mounted read-only.
 
