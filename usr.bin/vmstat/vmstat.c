@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.48 2001/03/21 23:51:47 art Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.49 2001/04/30 09:39:27 art Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -598,16 +598,16 @@ dosum()
 	(void)printf("%11u total faults taken\n", sum.v_faults);
 	(void)printf("%11u swap ins\n", sum.v_swpin);
 	(void)printf("%11u swap outs\n", sum.v_swpout);
-	(void)printf("%11u pages swapped in\n", sum.v_pswpin / CLSIZE);
-	(void)printf("%11u pages swapped out\n", sum.v_pswpout / CLSIZE);
+	(void)printf("%11u pages swapped in\n", sum.v_pswpin);
+	(void)printf("%11u pages swapped out\n", sum.v_pswpout);
 	(void)printf("%11u page ins\n", sum.v_pageins);
 	(void)printf("%11u page outs\n", sum.v_pageouts);
 	(void)printf("%11u pages paged in\n", sum.v_pgpgin);
 	(void)printf("%11u pages paged out\n", sum.v_pgpgout);
 	(void)printf("%11u pages reactivated\n", sum.v_reactivated);
 	(void)printf("%11u intransit blocking page faults\n", sum.v_intrans);
-	(void)printf("%11u zero fill pages created\n", sum.v_nzfod / CLSIZE);
-	(void)printf("%11u zero fill page faults\n", sum.v_zfod / CLSIZE);
+	(void)printf("%11u zero fill pages created\n", sum.v_nzfod);
+	(void)printf("%11u zero fill page faults\n", sum.v_zfod);
 	(void)printf("%11u pages examined by the clock daemon\n", sum.v_scan);
 	(void)printf("%11u revolutions of the clock hand\n", sum.v_rev);
 	(void)printf("%11u VM object cache lookups\n", sum.v_lookups);
