@@ -60,6 +60,14 @@ expansions, e.g.,
 if `john' sends to `group',
 and `group' includes `john' in the expansion,
 then the letter will also be delivered to `john'.
+.Pp
+.Nm
+can be made to conduct ESMTP transactions over TLS circuits
+to increase the security of mail server transactions
+if TLS/SSL is enabled.
+See
+.Xr starttls 8
+for more information.
 .Ss Parameters
 .Bl -tag -width Fl
 .\" XXX - how to prevent Ac from being interpreted as angle close quote?
