@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc_bus_mem.c,v 1.8 1997/04/10 03:01:05 millert Exp $	*/
+/*	$OpenBSD: tc_bus_mem.c,v 1.9 1997/04/10 15:45:25 millert Exp $	*/
 /*	$NetBSD: tc_bus_mem.c,v 1.13 1996/12/02 22:19:34 cgd Exp $	*/
 
 /*
@@ -41,8 +41,6 @@
 
 #include <machine/bus.h>
 #include <dev/tc/tcvar.h>
-
-#define __C(A,B)	__CONCAT(A,B)                              
 
 /* mapping/unmapping */
 int		tc_mem_map __P((void *, bus_addr_t, bus_size_t, int,
@@ -643,7 +641,7 @@ tc_mem_copy_N(8)
 
 #define tc_mem_read_raw_multi_N(BYTES,TYPE)				\
 void									\
-__C(tc_mem_read_raw_multi_,BYTES)(v, h, o, a, c)			\
+__abs_c(tc_mem_read_raw_multi_,BYTES)(v, h, o, a, c)			\
 	void *v;							\
 	bus_space_handle_t h;						\
 	bus_size_t o, c;						\
@@ -654,7 +652,7 @@ __C(tc_mem_read_raw_multi_,BYTES)(v, h, o, a, c)			\
 									\
 	while (c > 0) {							\
 		tc_mem_barrier(v, h, o, BYTES, BUS_BARRIER_READ);	\
-		temp = __C(tc_mem_read_,BYTES)(v, h, o);		\
+		temp = __abs_c(tc_mem_read_,BYTES)(v, h, o);		\
 		for (i = 0; i < BYTES; i++) {				\
 			*a++ = temp & 0xff;				\
 			temp >>= 8;					\
@@ -668,7 +666,7 @@ tc_mem_read_raw_multi_N(8,u_int64_t)
 
 #define tc_mem_write_raw_multi_N(BYTES,TYPE)				\
 void									\
-__C(tc_mem_write_raw_multi_,BYTES)(v, h, o, a, c)		\
+__abs_c(tc_mem_write_raw_multi_,BYTES)(v, h, o, a, c)			\
 	void *v;							\
 	bus_space_handle_t h;						\
 	bus_size_t o, c;						\
@@ -683,7 +681,7 @@ __C(tc_mem_write_raw_multi_,BYTES)(v, h, o, a, c)		\
 			temp <<= 8;					\
 			temp |= *(a + i);				\
 		}							\
-		__C(tc_mem_write_,BYTES)(v, h, o, temp);		\
+		__abs_c(tc_mem_write_,BYTES)(v, h, o, temp);		\
 		tc_mem_barrier(v, h, o, BYTES, BUS_BARRIER_WRITE);	\
 		c -= BYTES;						\
 		a += BYTES;						\
