@@ -1,4 +1,4 @@
-/*	$OpenBSD: raidctl.c,v 1.10 2002/02/17 20:23:37 tdeval Exp $	*/
+/*	$OpenBSD: raidctl.c,v 1.11 2002/02/18 03:45:27 deraadt Exp $	*/
 /*      $NetBSD: raidctl.c,v 1.27 2001/07/10 01:30:52 lukem Exp $   */
 
 /*-
@@ -1252,31 +1252,10 @@ get_all_devices(diskarray, genericname)
 static void
 usage()
 {
-	fprintf(stderr, "usage: %s [-v] -a component dev\n", __progname);
-	fprintf(stderr, "       %s [-v] -A [yes | no | root] dev\n", __progname);
-	fprintf(stderr, "       %s [-v] -B dev\n", __progname);
-	fprintf(stderr, "       %s [-v] -c config_file dev\n", __progname);
-	fprintf(stderr, "       %s [-v] -C config_file dev\n", __progname);
-	fprintf(stderr, "       %s [-v] -f component dev\n", __progname);
-	fprintf(stderr, "       %s [-v] -F component dev\n", __progname);
-	fprintf(stderr, "       %s [-v] -g component dev\n", __progname);
-	fprintf(stderr, "       %s [-v] -G dev\n", __progname);
-	fprintf(stderr, "       %s [-v] -i dev\n", __progname);
-	fprintf(stderr, "       %s [-v] -I serial_number dev\n", __progname);
-	fprintf(stderr, "       %s [-v] -p dev\n", __progname);
-	fprintf(stderr, "       %s [-v] -P dev\n", __progname);
-	fprintf(stderr, "       %s [-v] -r component dev\n", __progname); 
-	fprintf(stderr, "       %s [-v] -R component dev\n", __progname);
-	fprintf(stderr, "       %s [-v] -s dev\n", __progname);
-	fprintf(stderr, "       %s [-v] -S dev\n", __progname);
-	fprintf(stderr, "       %s [-v] -u dev\n", __progname);
-#if 0
-	fprintf(stderr, "usage: %s %s\n", __progname, 
-		"-a | -f | -F | -g | -r | -R component dev");
-	fprintf(stderr, "       %s -B | -i | -s | -S -u dev\n", __progname);
-	fprintf(stderr, "       %s -c | -C config_file dev\n", __progname);
-	fprintf(stderr, "       %s -I serial_number dev\n", __progname);
-#endif
+	fprintf(stderr,
+	    "usage: raidctl [-v] [-afFgrR component] [-BGipPsSu] [-cC config_file]\n");
+	fprintf(stderr,
+	    "               [-A [yes | no | root]] [-I serial_number] dev\n");
 	exit(1);
 	/* NOTREACHED */
 }
