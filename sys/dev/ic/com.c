@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.68 2001/09/29 23:26:07 art Exp $	*/
+/*	$OpenBSD: com.c,v 1.69 2001/09/30 00:11:57 art Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -103,10 +103,6 @@
 
 #include "com.h"
 
-#if NCOM_ISAPNP
-#include <dev/isa/isavar.h>	/* XXX */
-#endif
-
 /* XXX: These belong elsewhere */
 cdev_decl(com);
 bdev_decl(com);
@@ -121,12 +117,6 @@ int	comprobe __P((struct device *, void *, void *));
 void	comattach __P((struct device *, struct device *, void *));
 void	compwroff __P((struct com_softc *));
 void	com_raisedtr __P((void *));
-
-#if NCOM_ISAPNP
-struct cfattach com_isapnp_ca = {
-	sizeof(struct com_softc), comprobe, comattach
-};
-#endif
 
 #if NCOM_COMMULTI
 struct cfattach com_commulti_ca = {
@@ -172,14 +162,6 @@ void   com_kgdb_putc __P((void *, int));
 #define	SET(t, f)	(t) |= (f)
 #define	CLR(t, f)	(t) &= ~(f)
 #define	ISSET(t, f)	((t) & (f))
-
-/* Macros for determining bus type. */
-#if NCOM_ISAPNP
-#define IS_ISAPNP(parent) \
-    (strcmp((parent)->dv_cfdata->cf_driver->cd_name, "isapnp") == 0)
-#else
-#define IS_ISAPNP(parent) 0
-#endif
 
 int
 comspeed(freq, speed)
@@ -305,20 +287,6 @@ comprobe(parent, match, aux)
 	int iobase;
 	int rv = 1;
 
-	/*
-	 * XXX should be broken out into functions for isa probe and
-	 * XXX for commulti probe, with a helper function that contains
-	 * XXX most of the interesting stuff.
-	 */
-#if NCOM_ISAPNP
-	if (IS_ISAPNP(parent)) {
-		struct isa_attach_args *ia = aux;
-
-		iot = ia->ia_iot;
-		iobase = ia->ia_iobase;
-		ioh = ia->ia_ioh;
-	} else
-#endif
 #if NCOM_COMMULTI
 	if (1) {
 		struct cfdata *cf = match;
@@ -354,11 +322,9 @@ comattach(parent, self, aux)
 {
 	struct com_softc *sc = (void *)self;
 	int iobase;
-#if NCOM_ISAPNP || NCOM_COMMULTI
-	int irq;
-#endif
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
+	struct commulti_attach_args *ca = aux;
 #ifdef COM_HAYESP
 	int	hayesp_ports[] = { 0x140, 0x180, 0x280, 0x300, 0 };
 	int	*hayespp;
@@ -371,63 +337,12 @@ comattach(parent, self, aux)
 	 */
 	sc->sc_hwflags = 0;
 	sc->sc_swflags = 0;
-#if NCOM_ISAPNP
-	if (IS_ISAPNP(parent)) {
-		struct isa_attach_args *ia = aux;
+	iobase = ca->ca_iobase;
+	iot = ca->ca_iot;
+	ioh = ca->ca_ioh;
 
-		/*
-		 * We're living on an isa.
-		 */
-		iobase = ia->ia_iobase;
-		iot = ia->ia_iot;
-		/* No console support! */
-		ioh = ia->ia_ioh;
-		irq = ia->ia_irq;
-	} else
-#endif
-#if NCOM_COMMULTI
-	if (1) {
-		struct commulti_attach_args *ca = aux;
-
-		/*
-		 * We're living on a commulti.
-		 */
-		iobase = ca->ca_iobase;
-		iot = ca->ca_iot;
-		ioh = ca->ca_ioh;
-		irq = IRQUNK;
-
-		if (ca->ca_noien)
-			SET(sc->sc_hwflags, COM_HW_NOIEN);
-	} else
-#endif
-		panic("comattach: impossible");
-#if NCOM_ISAPNP || NCOM_COMMULTI
-        if (irq != IRQUNK) {
-#if NCOM_ISAPNP
-	if (IS_ISAPNP(parent)) {
-		struct isa_attach_args *ia = aux;
-
-#ifdef KGDB     
-		if (iobase == com_kgdb_addr) {
-			sc->sc_ih = isa_intr_establish(ia->ia_ic, irq,
-				IST_EDGE, IPL_HIGH, kgdbintr, sc,
-				sc->sc_dev.dv_xname);
-		} else {
-			sc->sc_ih = isa_intr_establish(ia->ia_ic, irq,
-				IST_EDGE, IPL_TTY, comintr, sc,
-				sc->sc_dev.dv_xname);
-		}
-#else   
-		sc->sc_ih = isa_intr_establish(ia->ia_ic, irq,
-			IST_EDGE, IPL_TTY, comintr, sc,
-			sc->sc_dev.dv_xname);
-#endif /* KGDB */
-	} else
-#endif          
-		panic("comattach: IRQ but can't have one");
-	}       
-#endif          
+	if (ca->ca_noien)
+		SET(sc->sc_hwflags, COM_HW_NOIEN);
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
