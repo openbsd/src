@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.31 2004/01/20 14:35:54 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.32 2004/05/07 18:06:35 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -138,6 +138,7 @@ void m8820x_cmmu_flush_cache(int, paddr_t, psize_t);
 void m8820x_cmmu_flush_inst_cache(int, paddr_t, psize_t);
 void m8820x_cmmu_flush_data_cache(int, paddr_t, psize_t);
 void m8820x_dma_cachectl(vaddr_t, vsize_t, int);
+void m8820x_dma_cachectl_pa(paddr_t, psize_t, int);
 void m8820x_cmmu_dump_config(void);
 void m8820x_cmmu_show_translation(unsigned, unsigned, unsigned, int);
 void m8820x_show_apr(unsigned);
@@ -159,6 +160,7 @@ struct cmmu_p cmmu8820x = {
 	m8820x_cmmu_flush_inst_cache,
 	m8820x_cmmu_flush_data_cache,
 	m8820x_dma_cachectl,
+	m8820x_dma_cachectl_pa,
 #ifdef DDB
 	m8820x_cmmu_dump_config,
 	m8820x_cmmu_show_translation,
@@ -1498,6 +1500,48 @@ m8820x_dma_cachectl(vaddr_t va, vsize_t size, int op)
 			m8820x_cmmu_inval_cache(pa, size);
 			break;
 		}
+	}
+#endif /* !BROKEN_MMU_MASK */
+}
+
+void
+m8820x_dma_cachectl_pa(paddr_t pa, psize_t size, int op)
+{
+#if !defined(BROKEN_MMU_MASK)
+	psize_t count;
+
+	while (size != 0) {
+		count = NBPG - (va & PGOFSET);
+
+		if (size < count)
+			count = size;
+
+		switch (op) {
+		case DMA_CACHE_SYNC:
+			m8820x_cmmu_sync_cache(pa, count);
+			break;
+		case DMA_CACHE_SYNC_INVAL:
+			m8820x_cmmu_sync_inval_cache(pa, count);
+			break;
+		default:
+			m8820x_cmmu_inval_cache(pa, count);
+			break;
+		}
+
+		pa += count;
+		size -= count;
+	}
+#else
+	switch (op) {
+	case DMA_CACHE_SYNC:
+		m8820x_cmmu_sync_cache(pa, size);
+		break;
+	case DMA_CACHE_SYNC_INVAL:
+		m8820x_cmmu_sync_inval_cache(pa, size);
+		break;
+	default:
+		m8820x_cmmu_inval_cache(pa, size);
+		break;
 	}
 #endif /* !BROKEN_MMU_MASK */
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.13 2004/01/02 17:08:57 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.14 2004/05/07 18:06:34 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -105,6 +105,7 @@ void m88110_cmmu_flush_cache(int, paddr_t, psize_t);
 void m88110_cmmu_flush_inst_cache(int, paddr_t, psize_t);
 void m88110_cmmu_flush_data_cache(int, paddr_t, psize_t);
 void m88110_dma_cachectl(vaddr_t, vsize_t, int);
+void m88110_dma_cachectl_pa(paddr_t, psize_t, int);
 void m88110_cmmu_dump_config(void);
 void m88110_cmmu_show_translation(unsigned, unsigned, unsigned, int);
 void m88110_show_apr(unsigned);
@@ -126,6 +127,7 @@ struct cmmu_p cmmu88110 = {
 	m88110_cmmu_flush_inst_cache,
 	m88110_cmmu_flush_data_cache,
 	m88110_dma_cachectl,
+	m88110_dma_cachectl_pa,
 #ifdef DDB
 	m88110_cmmu_dump_config,
 	m88110_cmmu_show_translation,
@@ -540,6 +542,22 @@ m88110_dma_cachectl(vaddr_t va, vsize_t size, int op)
 	if (pmap_extract(pmap_kernel(), va, &pa) == FALSE)
 		return;	/* XXX */
 
+	switch (op) {
+	case DMA_CACHE_SYNC:
+		m88110_cmmu_sync_cache(pa, size);
+		break;
+	case DMA_CACHE_SYNC_INVAL:
+		m88110_cmmu_sync_inval_cache(pa, size);
+		break;
+	default:
+		m88110_cmmu_inval_cache(pa, size);
+		break;
+	}
+}
+
+void
+m88110_dma_cachectl_pa(paddr_t pa, psize_t size, int op)
+{
 	switch (op) {
 	case DMA_CACHE_SYNC:
 		m88110_cmmu_sync_cache(pa, size);
