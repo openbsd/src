@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.36 2002/03/14 01:26:34 millert Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.37 2002/05/03 13:59:08 espie Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -105,7 +105,8 @@ main(argc, argv)
 	struct dos_mbr mbr;
 	struct dos_partition *dp;
 	off_t startoff = 0;
-	int mib[4], size;
+	int mib[4];
+	size_t size;
 	dev_t devno;
 	bios_diskinfo_t di;
 
@@ -224,9 +225,9 @@ main(argc, argv)
 		for (dp = mbr.dmbr_parts; dp < &mbr.dmbr_parts[NDOSPART]; dp++) {
 			if (dp->dp_size && dp->dp_typ == DOSPTYP_OPENBSD) {
 				startoff = (off_t)dp->dp_start * dl.d_secsize;
-				fprintf(stderr, "using MBR partition %d: "
+				fprintf(stderr, "using MBR partition %ld: "
 					"type %d (0x%02x) offset %d (0x%x)\n",
-					dp - mbr.dmbr_parts,
+					(long)(dp - mbr.dmbr_parts),
 					dp->dp_typ, dp->dp_typ,
 					dp->dp_start, dp->dp_start);
 				break;
@@ -368,7 +369,8 @@ loadblocknums(boot, devfd, dl)
 	int		ndb;
 	u_int8_t	*bt;
 	struct exec	eh;
-	int mib[4], size;
+	int mib[4];
+	size_t		size;
 	dev_t dev;
 
 	/*
