@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.33 2003/07/11 02:31:18 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.34 2003/07/14 18:42:20 mickey Exp $	*/
 
 static const char copyright[] =
 "@(#) Copyright (c) 1992, 1993\n\
@@ -35,7 +35,7 @@ static const char license[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.33 2003/07/11 02:31:18 millert Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.34 2003/07/14 18:42:20 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -294,7 +294,7 @@ main(int argc, char *argv[])
 	if (oflag && (recurse || argc > 1))
 		errx(1, "-o option may only be used with a single input file");
 
-	if (cat + testmode + oflag > 1)
+	if ((cat && argc) + testmode + oflag > 1)
 		errx(1, "may not mix -o, -c, or -t options");
 
 	if ((ftsp = fts_open(argv, FTS_PHYSICAL|FTS_NOCHDIR, 0)) == NULL)
