@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.289 2000/07/25 16:47:11 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.290 2000/07/26 04:13:15 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -3267,10 +3267,10 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "PC87550",
 	},
 	{
-	    PCI_VENDOR_PICOPOWER, PCI_PRODUCT_PICOPOWER_PT86C523,
+	    PCI_VENDOR_PICOPOWER, PCI_PRODUCT_PICOPOWER_PT86C523_2,
 	    0,
 	    "Picopower Technology",
-	    "PT86C523",
+	    "PT86C523_2",
 	},
 	{
 	    PCI_VENDOR_PIJNENBURG, PCI_PRODUCT_PIJNENBURG_PCC_ISES,
