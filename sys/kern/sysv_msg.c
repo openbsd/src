@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_msg.c,v 1.5 1998/06/11 18:32:14 deraadt Exp $	*/
+/*	$OpenBSD: sysv_msg.c,v 1.6 1999/02/04 18:48:25 deraadt Exp $	*/
 /*	$NetBSD: sysv_msg.c,v 1.19 1996/02/09 19:00:18 christos Exp $	*/
 
 /*
@@ -53,16 +53,11 @@ msginit()
 	i = 8;
 	while (i < 1024 && i != msginfo.msgssz)
 		i <<= 1;
-    	if (i != msginfo.msgssz) {
-		printf("msginfo.msgssz=%d (0x%x)\n", msginfo.msgssz,
-		    msginfo.msgssz);
-		panic("msginfo.msgssz not a small power of 2");
-	}
 
-	if (msginfo.msgseg > 32767) {
-		printf("msginfo.msgseg=%d\n", msginfo.msgseg);
-		panic("msginfo.msgseg > 32767");
-	}
+    	if (i != msginfo.msgssz)
+		panic("msginfo.msgssz %d not a small power of 2", msginfo.msgssz);
+	if (msginfo.msgseg > 32767)
+		panic("msginfo.msgseg %d > 32767", msginfo.msgseg);
 
 	if (msgmaps == NULL)
 		panic("msgmaps is NULL");
@@ -101,8 +96,11 @@ msg_freehdr(msghdr)
 {
 	while (msghdr->msg_ts > 0) {
 		short next;
+
+#ifdef DIAGNOSTIC
 		if (msghdr->msg_spot < 0 || msghdr->msg_spot >= msginfo.msgseg)
 			panic("msghdr->msg_spot out of range");
+#endif
 		next = msgmaps[msghdr->msg_spot].next;
 		msgmaps[msghdr->msg_spot].next = free_msgmaps;
 		free_msgmaps = msghdr->msg_spot;
@@ -113,8 +111,10 @@ msg_freehdr(msghdr)
 		else
 			msghdr->msg_ts = 0;
 	}
+#ifdef DIAGNOSTIC
 	if (msghdr->msg_spot != -1)
 		panic("msghdr->msg_spot != -1");
+#endif
 	msghdr->msg_next = free_msghdrs;
 	free_msghdrs = msghdr;
 }
@@ -212,10 +212,12 @@ sys_omsgctl(p, v, retval)
 			msg_freehdr(msghdr_tmp);
 		}
 
+#ifdef DIAGNOSTIC
 		if (msqptr->msg_cbytes != 0)
 			panic("msg_cbytes is screwed up");
 		if (msqptr->msg_qnum != 0)
 			panic("msg_qnum is screwed up");
+#endif
 
 		msqptr->msg_qbytes = 0;	/* Mark it as free */
 
@@ -346,10 +348,12 @@ sys_msgctl(p, v, retval)
 			msg_freehdr(msghdr_tmp);
 		}
 
+#ifdef DIAGNOSTIC
 		if (msqptr->msg_cbytes != 0)
 			panic("msg_cbytes is screwed up");
 		if (msqptr->msg_qnum != 0)
 			panic("msg_qnum is screwed up");
+#endif
 
 		msqptr->msg_qbytes = 0;	/* Mark it as free */
 
@@ -688,6 +692,7 @@ sys_msgsnd(p, v, retval)
 	 * Make sure!
 	 */
 
+#ifdef DIAGNOSTIC
 	if (msqptr->msg_perm.mode & MSG_LOCKED)
 		panic("msg_perm.mode & MSG_LOCKED");
 	if (segs_needed > nfree_msgmaps)
@@ -696,14 +701,17 @@ sys_msgsnd(p, v, retval)
 		panic("msgsz + msg_cbytes > msg_qbytes");
 	if (free_msghdrs == NULL)
 		panic("no more msghdrs");
+#endif
 
 	/*
 	 * Re-lock the msqid_ds in case we page-fault when copying in the
 	 * message
 	 */
 
+#ifdef DIAGNOSTIC
 	if ((msqptr->msg_perm.mode & MSG_LOCKED) != 0)
 		panic("msqid_ds is already locked");
+#endif
 	msqptr->msg_perm.mode |= MSG_LOCKED;
 
 	/*
@@ -720,15 +728,19 @@ sys_msgsnd(p, v, retval)
 	 */
 
 	while (segs_needed > 0) {
+#ifdef DIAGNOSTIC
 		if (nfree_msgmaps <= 0)
 			panic("not enough msgmaps");
 		if (free_msgmaps == -1)
 			panic("nil free_msgmaps");
+#endif
 		next = free_msgmaps;
+#ifdef DIAGNOSTIC
 		if (next <= -1)
 			panic("next too low #1");
 		if (next >= msginfo.msgseg)
 			panic("next out of range #1");
+#endif
 #ifdef MSG_DEBUG_OK
 		printf("allocating segment %d to message\n", next);
 #endif
@@ -780,10 +792,12 @@ sys_msgsnd(p, v, retval)
 			tlen = msginfo.msgssz;
 		else
 			tlen = msgsz;
+#ifdef DIAGNOSTIC
 		if (next <= -1)
 			panic("next too low #2");
 		if (next >= msginfo.msgseg)
 			panic("next out of range #2");
+#endif
 		if ((eval = copyin(user_msgp, &msgpool[next * msginfo.msgssz],
 		    tlen)) != 0) {
 #ifdef MSG_DEBUG_OK
@@ -798,9 +812,10 @@ sys_msgsnd(p, v, retval)
 		user_msgp += tlen;
 		next = msgmaps[next].next;
 	}
+#ifdef DIAGNOSTIC
 	if (next != -1)
 		panic("didn't use all the msg segments");
-
+#endif
 	/*
 	 * We've got the message.  Unlock the msqid_ds.
 	 */
@@ -935,8 +950,10 @@ sys_msgrcv(p, v, retval)
 					msqptr->msg_last = NULL;
 				} else {
 					msqptr->msg_first = msghdr->msg_next;
+#ifdef DIAGNOSTIC
 					if (msqptr->msg_first == NULL)
 						panic("msg_first/last screwed up #1");
+#endif
 				}
 			}
 		} else {
@@ -972,17 +989,21 @@ sys_msgrcv(p, v, retval)
 					*prev = msghdr->msg_next;
 					if (msghdr == msqptr->msg_last) {
 						if (previous == NULL) {
+#ifdef DIAGNOSTIC
 							if (prev !=
 							    &msqptr->msg_first)
 								panic("msg_first/last screwed up #2");
+#endif
 							msqptr->msg_first =
 							    NULL;
 							msqptr->msg_last =
 							    NULL;
 						} else {
+#ifdef DIAGNOSTIC
 							if (prev ==
 							    &msqptr->msg_first)
 								panic("msg_first/last screwed up #3");
+#endif
 							msqptr->msg_last =
 							    previous;
 						}
@@ -1110,10 +1131,12 @@ sys_msgrcv(p, v, retval)
 			tlen = msginfo.msgssz;
 		else
 			tlen = msgsz;
+#ifdef DIAGNOSTIC
 		if (next <= -1)
 			panic("next too low #3");
 		if (next >= msginfo.msgseg)
 			panic("next out of range #3");
+#endif
 		eval = copyout((caddr_t)&msgpool[next * msginfo.msgssz],
 		    user_msgp, tlen);
 		if (eval != 0) {
