@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.26 1998/02/05 04:56:47 millert Exp $	*/
+/*	$OpenBSD: ping.c,v 1.27 1998/03/03 19:06:11 provos Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.26 1998/02/05 04:56:47 millert Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.27 1998/03/03 19:06:11 provos Exp $";
 #endif
 #endif /* not lint */
 
@@ -438,9 +438,7 @@ main(argc, argv)
 	 * ethernet, or just want to fill the arp cache to get some stuff for
 	 * /etc/ethers.
 	 */
-	hold = 48 * 1024;
-	(void)setsockopt(s, SOL_SOCKET, SO_RCVBUF, (char *)&hold,
-	    sizeof(hold));
+	(void)setsockopt(s, SOL_SOCKET, SO_RCVBUF, &packlen, sizeof(packlen));
 
 	if (to->sin_family == AF_INET)
 		(void)printf("PING %s (%s): %d data bytes\n", hostname,
@@ -619,7 +617,7 @@ pr_pack(buf, cc, from)
 {
 	register struct icmp *icp;
 	register in_addr_t l;
-	register int i, j;
+	register u_int i, j;
 	register u_char *cp,*dp;
 	static int old_rrlen;
 	static char old_rr[MAX_IPOPTLEN];
