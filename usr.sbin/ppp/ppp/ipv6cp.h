@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD$
+ * $OpenBSD: ipv6cp.h,v 1.2 2002/07/01 11:14:36 brian Exp $
  */
 
 #ifndef NOINET6
