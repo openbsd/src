@@ -1,4 +1,4 @@
-/*	$OpenBSD: yptest.c,v 1.8 2001/11/19 09:02:18 deraadt Exp $ */
+/*	$OpenBSD: yptest.c,v 1.9 2002/01/20 23:37:27 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: yptest.c,v 1.8 2001/11/19 09:02:18 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: yptest.c,v 1.9 2002/01/20 23:37:27 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -74,33 +74,52 @@ main(argc, argv)
 	struct ypall_callback Callback;
 	struct ypmaplist *ypml, *y;
 
-	yp_get_default_domain(&Domain);
+	Status = yp_get_default_domain(&Domain);
+printf("Status %d\n", Status);
+printf("dom %s\n", Domain);
+printf("dom %d\n", Domain[0]);
+	if (Status)
+		printf("yp error: %s\n", yperr_string(Status));
 	
 	printf("Test 1: yp_match\n");
 	KeyLen = strlen(Key);
 	Status = yp_match(Domain, Map, Key, KeyLen, &Value, &ValLen);
-	printf("%*.*s\n", ValLen, ValLen, Value);
+	if (Status)
+		printf("yp error: %s\n", yperr_string(Status));
+	else
+		printf("%*.*s\n", ValLen, ValLen, Value);
 	
 	printf("\nTest 2: yp_first\n");
 	Status = yp_first(Domain, Map, &Key2, &KeyLen, &Value, &ValLen);
-	printf("%*.*s %*.*s\n", KeyLen, KeyLen, Key2, ValLen, ValLen, Value);
+	if (Status)
+		printf("yp error: %s\n", yperr_string(Status));
+	else
+		printf("%*.*s %*.*s\n", KeyLen, KeyLen, Key2, ValLen, ValLen, Value);
 
 	printf("\nTest 3: yp_next\n");
 	while (Status == 0) {
 		Status = yp_next(Domain, Map, Key2, KeyLen, &Key2,
 		    &KeyLen, &Value, &ValLen);
-		if (Status == 0)
+		if (Status)
+			printf("yp error: %s\n", yperr_string(Status));
+		else
 			printf("%*.*s %*.*s\n", KeyLen, KeyLen, Key2,
 			    ValLen, ValLen, Value);
 	}
 
 	printf("\nTest 4: yp_master\n");
 	Status = yp_master(Domain, Map, &Key2);
-	printf("%s\n", Key2);
+	if (Status)
+		printf("yp error: %s\n", yperr_string(Status));
+	else
+		printf("%s\n", Key2);
 
 	printf("\nTest 5: yp_order\n");
 	Status = yp_order(Domain, Map, &Order);
-	printf("%d\n", Order);
+	if (Status)
+		printf("yp error: %s\n", yperr_string(Status));
+	else
+		printf("%d\n", Order);
 
 	printf("\nTest 6: yp_maplist\n");
 	ypml = NULL;
@@ -111,9 +130,15 @@ main(argc, argv)
 			printf("%s\n", ypml->map);
 			y = ypml->next;
 		}
+		break;
+	default:
+		printf("yp error: %s\n", yperr_string(Status));
+		break;
 	}
 
 	printf("\nTest 7: yp_all\n");
 	Callback.foreach = yptest_foreach;
 	Status = yp_all(Domain, Map, &Callback);
+	if (Status)
+		printf("yp error: %s\n", yperr_string(Status));
 }
