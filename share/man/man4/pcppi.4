@@ -1,0 +1,52 @@
+.\" $OpenBSD: pcppi.4,v 1.1 2002/04/01 07:56:08 mpech Exp $
+.\" $NetBSD: pcppi.4,v 1.5 2001/10/02 20:37:00 augustss Exp $
+.Dd April 1, 2002
+.Dt PCPPI 4
+.Os
+.Sh NAME
+.Nm pcppi
+.Nd PC (ISA) control and timer port driver
+.Sh SYNOPSIS
+.Cd "pcppi*   at isa?"
+.Cd "isabeep* at pcppi?"
+(alpha only)
+.Cd "sysbeep* at pcppi?"
+(i386 only)
+.Cd "spkr0    at pcppi?"
+.Cd "midi*    at pcppi?"
+.Sh DESCRIPTION
+The
+.Nm
+driver handles resource allocation and device attachment for the
+ports related to the ISA speaker in the traditional PC/AT
+.Dq design .
+These are the
+.Dq system control port
+(which was implemented by the 8255
+.Dq PPI
+in the XT, hence the name of this driver)
+at IO address 0x61 and the first 8253 timer at 0x40-0x43.
+.Pp
+The
+.Nm
+driver provides its child devices with the ability to output simple
+tones through the PC speaker.
+The
+.Xr speaker 4
+and
+.Xr midi 4
+devices use this to synthesize sounds.
+The
+.Xr isabeep 4
+and
+.Xr sysbeep 4
+devices are helpers which the
+.Xr pckbd 4
+driver uses as a substitute for a
+.Dq keyboard beep ,
+because the PC keyboard hardware doesn't provide this.
+.Sh SEE ALSO
+.Xr isa 4 ,
+.Xr midi 4 ,
+.Xr pckbd 4 ,
+.Xr speaker 4
