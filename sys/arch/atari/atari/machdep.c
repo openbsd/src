@@ -763,6 +763,10 @@ void
 bootsync(void)
 {
 	if (waittime < 0) {
+		extern struct proc proc0;
+		/* defeat against panic in boot */
+		if (curproc == NULL)
+			curproc = &proc0;
 		waittime = 0;
 
 		vfs_shutdown();
