@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.31 2001/05/20 08:31:46 angelos Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.32 2001/05/24 10:59:23 angelos Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -666,6 +666,8 @@ m_pullup2(n, len)
 		if (n->m_flags & M_PKTHDR) {
 			/* M_COPY_PKTHDR(m, n);*//* Too many adverse side effects. */
 			m->m_pkthdr = n->m_pkthdr;
+			if (TAILQ_EMPTY(&n->m_pkthdr.tags))
+				TAILQ_INIT(&m->m_pkthdr.tags);
 			m->m_flags = (n->m_flags & M_COPYFLAGS) | M_EXT;
 			n->m_flags &= ~M_PKTHDR;
 			TAILQ_INIT(&n->m_pkthdr.tags);
