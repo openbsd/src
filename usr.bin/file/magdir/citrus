@@ -1,0 +1,8 @@
+#	$OpenBSD: citrus,v 1.1 2004/06/03 03:14:19 tedu Exp $
+
+#------------------------------------------------------------------------------
+# citrus locale declaration
+#
+
+0	string		RuneCT		Citrus locale declaration for LC_CTYPE
+

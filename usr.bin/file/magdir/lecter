@@ -1,0 +1,6 @@
+#	$OpenBSD: lecter,v 1.1 2004/06/03 03:14:20 tedu Exp $
+
+#------------------------------------------------------------------------------
+# DEC SRC Virtual Paper: Lectern files
+# Karl M. Hegbloom <karlheg@inetarena.com>
+0	string	lect	DEC SRC Virtual Paper Lectern file

@@ -1,7 +1,8 @@
+#	$OpenBSD: lif,v 1.3 2004/06/03 03:14:20 tedu Exp $
 
 #------------------------------------------------------------------------------
 # lif:  file(1) magic for lif
 #
-# XXX - byte order?  (Probably beshort, Daniel Quinlan <quinlan@yggdrasil.com>)
+# (Daniel Quinlan <quinlan@yggdrasil.com>)
 #
 0	beshort		0x8000		lif file

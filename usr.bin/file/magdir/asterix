@@ -1,3 +1,4 @@
+#	$OpenBSD: asterix,v 1.2 2004/06/03 03:14:19 tedu Exp $
 
 #------------------------------------------------------------------------------
 # asterix:  file(1) magic for Aster*x; SunOS 5.5.1 gave the 4-character

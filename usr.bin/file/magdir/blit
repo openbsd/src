@@ -1,3 +1,4 @@
+#	$OpenBSD: blit,v 1.2 2004/06/03 03:14:19 tedu Exp $
 
 #------------------------------------------------------------------------------
 # blit:  file(1) magic for 68K Blit stuff as seen from 680x0 machine

@@ -1,3 +1,4 @@
+#	$OpenBSD: att3b,v 1.2 2004/06/03 03:14:19 tedu Exp $
 
 #------------------------------------------------------------------------------
 # att3b:  file(1) magic for AT&T 3B machines
@@ -7,11 +8,12 @@
 #
 # 3B20
 #
-0	beshort		0550		3b20 COFF executable
->12	belong		>0		not stripped
+# The 3B20 conflicts with SCCS.
+#0	beshort		0550		3b20 COFF executable
+#>12	belong		>0		not stripped
 #>22	beshort		>0		- version %ld
-0	beshort		0551		3b20 COFF executable (TV)
->12	belong		>0		not stripped
+#0	beshort		0551		3b20 COFF executable (TV)
+#>12	belong		>0		not stripped
 #>22	beshort		>0		- version %ld
 #
 # WE32K

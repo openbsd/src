@@ -1,3 +1,4 @@
+#	$OpenBSD: clipper,v 1.2 2004/06/03 03:14:19 tedu Exp $
 
 #------------------------------------------------------------------------------
 # clipper:  file(1) magic for Intergraph (formerly Fairchild) Clipper.

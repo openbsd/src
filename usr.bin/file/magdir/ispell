@@ -1,3 +1,4 @@
+#	$OpenBSD: ispell,v 1.2 2004/06/03 03:14:20 tedu Exp $
 
 #------------------------------------------------------------------------------
 # ispell:  file(1) magic for ispell
@@ -52,3 +53,11 @@
 >2	beshort		0x0E		8-bit, capitalization, 256 flags
 >2	beshort		0x0F		7-bit, capitalization, 256 flags
 >4	beshort		>0		and %d string characters
+# ispell 4.0 hash files  kromJx <kromJx@crosswinds.net>
+# Ispell 4.0
+0       string          ISPL            ispell
+>4      long            x               hash file version %d,
+>8      long            x               lexletters %d,
+>12     long            x               lexsize %d,
+>16     long            x               hashsize %d,
+>20     long            x               stblsize %d

@@ -1,20 +1,23 @@
-#	$OpenBSD: mach,v 1.2 2001/01/29 01:57:57 niklas Exp $
+#	$OpenBSD: mach,v 1.3 2004/06/03 03:14:20 tedu Exp $
 
 #------------------------------------------------------------------------------
 # mach file description
 #
-0	belong		0xcafebabe	mach-o fat file
+0	belong		0xcafebabe	Mach-O fat file
 >4	belong		1		with 1 architecture
 >4	belong		>1
 >>4	belong		x		with %ld architectures		
 #
-0	belong		0xfeedface	mach-o
+0	belong		0xfeedface	Mach-O
 >12	belong		1		object
 >12	belong		2		executable
 >12	belong		3		shared library
 >12	belong		4		core
 >12	belong		5		preload executable
->12	belong		>5
+>12	belong		6               dynamically linked shared library
+>12	belong		7               dynamic linker
+>12	belong		8		bundle
+>12	belong		>8
 >>12	belong		x		filetype=%ld
 >4	belong		<0
 >>4	belong		x		architecture=%ld
@@ -24,6 +27,11 @@
 >4	belong		4		ns32032
 >4	belong		5		ns32332
 >4	belong		6		for m68k architecture
+# from NeXTstep 3.0 <mach/machine.h>
+# i.e. mc680x0_all, ignore
+# >>8	belong		1		(mc68030)
+>>8	belong		2		(mc68040)
+>>8	belong		3		(mc68030 only)
 >4	belong		7		i386
 >4	belong		8		mips
 >4	belong		9		ns32532
@@ -35,6 +43,6 @@
 >4	belong		15		i860-big
 >4	belong		16		i860
 >4	belong		17		rs6000
->4	belong		18		powerPC
+>4	belong		18		ppc
 >4	belong		>18
 >>4	belong		x		architecture=%ld

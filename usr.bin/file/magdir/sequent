@@ -1,3 +1,4 @@
+#	$OpenBSD: sequent,v 1.2 2004/06/03 03:14:20 tedu Exp $
 
 #------------------------------------------------------------------------------
 # sequent:  file(1) magic for Sequent machines

@@ -1,3 +1,4 @@
+#	$OpenBSD: karma,v 1.4 2004/06/03 03:14:20 tedu Exp $
 
 #------------------------------------------------------------------------------
 # karma:  file(1) magic for Karma data files
@@ -5,4 +6,4 @@
 # From <rgooch@atnf.csiro.au>
 
 0	string		KarmaRHD Version	Karma Data Structure Version
->16	long		x		%lu
+>16	belong		x		%lu

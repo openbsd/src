@@ -1,3 +1,4 @@
+#	$OpenBSD: audio,v 1.7 2004/06/03 03:14:19 tedu Exp $
 
 #------------------------------------------------------------------------------
 # audio:  file(1) magic for sound formats (see also "iff")
@@ -225,7 +226,3 @@
 >3	byte&0xc0	0x40		joint-stereo
 >3	byte&0xc0	0x80		dual-channel
 >3	byte&0xc0	0xc0		mono
-
-# Ogg Vorbis
-0	string		Ogg		Ogg Vorbis Audio
-

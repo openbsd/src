@@ -1,0 +1,6 @@
+#	$OpenBSD: sketch,v 1.1 2004/06/03 03:14:20 tedu Exp $
+
+#------------------------------------------------------------------------------
+# Sketch Drawings: http://sketch.sourceforge.net/ 
+# From: Edwin Mons <e@ik.nu>
+0	string	##Sketch	Sketch document text

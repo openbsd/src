@@ -1,3 +1,4 @@
+#	$OpenBSD: iff,v 1.2 2004/06/03 03:14:20 tedu Exp $
 
 #------------------------------------------------------------------------------
 # iff:	file(1) magic for Interchange File Format (see also "audio" & "images")
@@ -16,6 +17,8 @@
 >8	string		AIFC		\b, AIFF-C compressed audio
 >8	string		8SVX		\b, 8SVX 8-bit sampled sound voice
 >8	string		SAMP		\b, SAMP sampled audio
+>8	string		DTYP		\b, DTYP datatype description
+>8	string		PTCH		\b, PTCH binary patch
 # image formats
 >8	string		ILBMBMHD	\b, ILBM interleaved image
 >>20	beshort		x		\b, %d x

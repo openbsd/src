@@ -1,0 +1,6 @@
+#	$OpenBSD: octave,v 1.1 2004/06/03 03:14:20 tedu Exp $
+
+#------------------------------------------------------------------------------
+# octave binary data file(1) magic, from Dirk Eddelbuettel <edd@debian.org>
+0	string		Octave-1-L	Octave binary data (little endian)
+0	string		Octave-1-B	Octave binary data (big endian)

@@ -1,3 +1,4 @@
+#	$OpenBSD: ibm6000,v 1.4 2004/06/03 03:14:20 tedu Exp $
 
 #------------------------------------------------------------------------------
 # ibm6000:  file(1) magic for RS/6000 and the RT PC.
@@ -15,3 +16,5 @@
 0	string		0xabcdef	AIX message catalog
 0	belong		0x000001f9	AIX compiled message catalog
 0	string		\<aiaff>	archive
+0	string		\<bigaf>	archive (big format)
+

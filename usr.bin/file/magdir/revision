@@ -1,0 +1,6 @@
+#	$OpenBSD: revision,v 1.1 2004/06/03 03:14:20 tedu Exp $
+
+#------------------------------------------------------------------------------
+# file(1) magic for revision control files
+# From Hendrik Scholz <hendrik@scholz.net>
+0   string /1\ :pserver:    cvs password text file

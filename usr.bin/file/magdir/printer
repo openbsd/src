@@ -1,3 +1,4 @@
+#	$OpenBSD: printer,v 1.5 2004/06/03 03:14:20 tedu Exp $
 
 #------------------------------------------------------------------------------
 # printer:  file(1) magic for printer-formatted files

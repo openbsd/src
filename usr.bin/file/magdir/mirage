@@ -1,3 +1,4 @@
+#	$OpenBSD: mirage,v 1.2 2004/06/03 03:14:20 tedu Exp $
 
 #------------------------------------------------------------------------------
 # mirage:  file(1) magic for Mirage executables

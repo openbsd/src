@@ -1,3 +1,4 @@
+#	$OpenBSD: pdp,v 1.2 2004/06/03 03:14:20 tedu Exp $
 
 #------------------------------------------------------------------------------
 # pdp:  file(1) magic for PDP-11 executable/object and APL workspace
@@ -23,3 +24,13 @@
 >15	byte		>0		- version %ld
 
 0	leshort		0437		PDP-11 kernel overlay
+
+# These last three are derived from 2.11BSD file(1)
+0	leshort		0413		PDP-11 demand-paged pure executable
+>8	leshort		>0		not stripped
+
+0	leshort		0430		PDP-11 overlaid pure executable
+>8	leshort		>0		not stripped
+
+0	leshort		0431		PDP-11 overlaid separate executable
+>8	leshort		>0		not stripped

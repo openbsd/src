@@ -1,3 +1,5 @@
+#	$OpenBSD: bout,v 1.2 2004/06/03 03:14:19 tedu Exp $
+
 #
 # i80960 b.out objects and archives
 #

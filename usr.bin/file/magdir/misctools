@@ -1,0 +1,7 @@
+#	$OpenBSD: misctools,v 1.1 2004/06/03 03:14:20 tedu Exp $
+
+#-----------------------------------------------------------------------------
+# misctools:  file(1) magic for miscelanous UNIX tools.
+#
+0	string		%%!!		X-Post-It-Note text
+0	string          BEGIN:VCALENDAR         vCalendar calendar file

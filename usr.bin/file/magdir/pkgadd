@@ -1,3 +1,4 @@
+#	$OpenBSD: pkgadd,v 1.2 2004/06/03 03:14:20 tedu Exp $
 
 #------------------------------------------------------------------------------
 # pkgadd:  file(1) magic for SysV R4 PKG Datastreams
