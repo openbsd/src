@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: getopt.3,v 1.20 2002/12/08 18:12:50 millert Exp $
+.\"	$OpenBSD: getopt.3,v 1.21 2003/04/10 17:05:08 jsyn Exp $
 .\"
 .Dd December 8, 2002
 .Dt GETOPT 3
@@ -270,11 +270,12 @@ It is provided for backward compatibility
 .Em only .
 The following code fragment works in most cases.
 .Bd -literal -offset indent
+int ch;
 long length;
 char *p;
 
-while ((c = getopt(argc, argv, "0123456789")) != -1) {
-	switch (c) {
+while ((ch = getopt(argc, argv, "0123456789")) != -1) {
+	switch (ch) {
 	case '0': case '1': case '2': case '3': case '4':
 	case '5': case '6': case '7': case '8': case '9':
 		p = argv[optind - 1];
