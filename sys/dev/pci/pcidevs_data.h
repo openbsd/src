@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.513 2002/05/29 05:34:40 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.514 2002/06/02 10:07:54 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -7269,10 +7269,6 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_COMPAL,
 	    "COMPAL",
-	},
-	{
-	    PCI_VENDOR_TITAN,
-	    "Titan",
 	},
 	{
 	    PCI_VENDOR_INVERTEX,

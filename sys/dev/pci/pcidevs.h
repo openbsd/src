@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.513 2002/05/29 05:34:40 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.514 2002/06/02 10:07:54 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -545,7 +545,6 @@
 #define	PCI_VENDOR_OXFORD	0x14d2		/* Oxford */
 #define	PCI_VENDOR_AIRONET	0x14b9		/* Aironet */
 #define	PCI_VENDOR_COMPAL	0x14c0		/* COMPAL */
-#define	PCI_VENDOR_TITAN	0x14d2		/* Titan */
 #define	PCI_VENDOR_INVERTEX	0x14e1		/* Invertex */
 #define	PCI_VENDOR_BROADCOM	0x14e4		/* Broadcom */
 #define	PCI_VENDOR_CONEXANT	0x14f1		/* Conexant */
