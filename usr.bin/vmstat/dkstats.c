@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkstats.c,v 1.21 2002/09/17 19:37:40 deraadt Exp $	*/
+/*	$OpenBSD: dkstats.c,v 1.22 2002/12/16 01:57:04 tdeval Exp $	*/
 /*	$NetBSD: dkstats.c,v 1.1 1996/05/10 23:19:27 thorpej Exp $	*/
 
 /*
@@ -122,7 +122,7 @@ dkswap(void)
 	u_int64_t tmp;
 	int	i;
 
-	for (i = 0; i < dk_ndrive; i++) {
+	for (i = 0; i < cur.dk_ndrive; i++) {
 		struct timeval	tmp_timer;
 
 		if (!cur.dk_select[i])
@@ -159,23 +159,159 @@ dkreadstats(void)
 #if !defined(NOKVM)
 	struct disk	cur_disk, *p;
 #endif
-	int		i, mib[3];
+	int		i, j, mib[3];
 	size_t		size;
+	char		*disknames, *name, *bufpp, **dk_name;
 	struct diskstats *q;
 
+	last.dk_ndrive = cur.dk_ndrive;
+
 	if (nlistf == NULL && memf == NULL) {
-		size = dk_ndrive * sizeof(struct diskstats);
+		/* Get the number of attached drives. */
+		mib[0] = CTL_HW;
+		mib[1] = HW_DISKCOUNT;
+		size = sizeof(dk_ndrive);
+		if (sysctl(mib, 2, &dk_ndrive, &size, NULL, 0) < 0 ) {
+			warn("could not read hw.diskcount");
+			dk_ndrive = 0;
+		}
+
+		if (cur.dk_ndrive != dk_ndrive) {
+			/* Re-read the disk names. */
+			dk_name = calloc(dk_ndrive, sizeof(char *));
+			if (dk_name == NULL)
+				err(1, NULL);
+			mib[0] = CTL_HW;
+			mib[1] = HW_DISKNAMES;
+			size = 0;
+			if (sysctl(mib, 2, NULL, &size, NULL, 0) < 0)
+				err(1, "can't get hw.disknames");
+			disknames = malloc(size);
+			if (disknames == NULL)
+				err(1, NULL);
+			if (sysctl(mib, 2, disknames, &size, NULL, 0) < 0)
+				err(1, "can't get hw.disknames");
+			bufpp = disknames;
+			i = 0;
+			while ((name = strsep(&bufpp, ",")) != NULL) {
+			    dk_name[i++] = name;
+			}
+			disknames = cur.dk_name[0];	/* To free old names. */
+
+			if (dk_ndrive < cur.dk_ndrive) {
+				for (i = 0, j = 0; i < dk_ndrive; i++, j++) {
+					while (j < cur.dk_ndrive &&
+					    strcmp(cur.dk_name[j], dk_name[i]))
+						j++;
+					if (i == j) continue;
+
+					if (j >= cur.dk_ndrive) {
+						cur.dk_select[i] = 1;
+						last.dk_xfer[i] = 0;
+						last.dk_seek[i] = 0;
+						last.dk_bytes[i] = 0;
+						bzero(&last.dk_time[i],
+						    sizeof(struct timeval));
+						continue;
+					}
+
+					cur.dk_select[i] = cur.dk_select[j];
+					last.dk_xfer[i] = last.dk_xfer[j];
+					last.dk_seek[i] = last.dk_seek[j];
+					last.dk_bytes[i] = last.dk_bytes[j];
+					last.dk_time[i] = last.dk_time[j];
+				}
+
+				cur.dk_select = realloc(cur.dk_select,
+				    dk_ndrive * sizeof(*cur.dk_select));
+				cur.dk_xfer = realloc(cur.dk_xfer,
+				    dk_ndrive * sizeof(*cur.dk_xfer));
+				cur.dk_seek = realloc(cur.dk_seek,
+				    dk_ndrive * sizeof(*cur.dk_seek));
+				cur.dk_bytes = realloc(cur.dk_bytes,
+				    dk_ndrive * sizeof(*cur.dk_bytes));
+				cur.dk_time = realloc(cur.dk_time,
+				    dk_ndrive * sizeof(*cur.dk_time));
+				last.dk_xfer = realloc(last.dk_xfer,
+				    dk_ndrive * sizeof(*last.dk_xfer));
+				last.dk_seek = realloc(last.dk_seek,
+				    dk_ndrive * sizeof(*last.dk_seek));
+				last.dk_bytes = realloc(last.dk_bytes,
+				    dk_ndrive * sizeof(*last.dk_bytes));
+				last.dk_time = realloc(last.dk_time,
+				    dk_ndrive * sizeof(*last.dk_time));
+			} else {
+				cur.dk_select = realloc(cur.dk_select,
+				    dk_ndrive * sizeof(*cur.dk_select));
+				cur.dk_xfer = realloc(cur.dk_xfer,
+				    dk_ndrive * sizeof(*cur.dk_xfer));
+				cur.dk_seek = realloc(cur.dk_seek,
+				    dk_ndrive * sizeof(*cur.dk_seek));
+				cur.dk_bytes = realloc(cur.dk_bytes,
+				    dk_ndrive * sizeof(*cur.dk_bytes));
+				cur.dk_time = realloc(cur.dk_time,
+				    dk_ndrive * sizeof(*cur.dk_time));
+				last.dk_xfer = realloc(last.dk_xfer,
+				    dk_ndrive * sizeof(*last.dk_xfer));
+				last.dk_seek = realloc(last.dk_seek,
+				    dk_ndrive * sizeof(*last.dk_seek));
+				last.dk_bytes = realloc(last.dk_bytes,
+				    dk_ndrive * sizeof(*last.dk_bytes));
+				last.dk_time = realloc(last.dk_time,
+				    dk_ndrive * sizeof(*last.dk_time));
+
+				for (i = dk_ndrive - 1, j = cur.dk_ndrive - 1;
+				     i >= 0; i--) {
+
+					if (j < 0 ||
+					    strcmp(cur.dk_name[j], dk_name[i]))
+					{
+						cur.dk_select[i] = 1;
+						last.dk_xfer[i] = 0;
+						last.dk_seek[i] = 0;
+						last.dk_bytes[i] = 0;
+						bzero(&last.dk_time[i],
+						    sizeof(struct timeval));
+						continue;
+					}
+
+					if (i > j) {
+						cur.dk_select[i] =
+						    cur.dk_select[j];
+						last.dk_xfer[i] =
+						    last.dk_xfer[j];
+						last.dk_seek[i] =
+						    last.dk_seek[j];
+						last.dk_bytes[i] =
+						    last.dk_bytes[j];
+						last.dk_time[i] =
+						    last.dk_time[j];
+					}
+					j--;
+				}
+			}
+
+			cur.dk_ndrive = dk_ndrive;
+			free(disknames);
+			cur.dk_name = dk_name;
+			dr_name = cur.dk_name;
+			dk_select = cur.dk_select;
+		}
+
+		size = cur.dk_ndrive * sizeof(struct diskstats);
 		mib[0] = CTL_HW;
 		mib[1] = HW_DISKSTATS;
 		q = malloc(size);
 		if (q == NULL)
 			err(1, NULL);
 		if (sysctl(mib, 2, q, &size, NULL, 0) < 0) {
+#ifdef	DEBUG
 			warn("could not read hw.diskstats");
-			bzero(q, dk_ndrive * sizeof(struct diskstats));
+#endif	/* DEBUG */
+			bzero(q, cur.dk_ndrive * sizeof(struct diskstats));
 		}
 
-		for (i = 0; i < dk_ndrive; i++)	{
+		for (i = 0; i < cur.dk_ndrive; i++)	{
 			cur.dk_xfer[i] = q[i].ds_xfer;
 			cur.dk_seek[i] = q[i].ds_seek;
 			cur.dk_bytes[i] = q[i].ds_bytes;
@@ -210,7 +346,7 @@ dkreadstats(void)
 #if !defined(NOKVM)
 		p = dk_drivehead;
 
-		for (i = 0; i < dk_ndrive; i++) {
+		for (i = 0; i < cur.dk_ndrive; i++) {
 			deref_kptr(p, &cur_disk, sizeof(cur_disk));
 			cur.dk_xfer[i] = cur_disk.dk_xfer;
 			cur.dk_seek[i] = cur_disk.dk_seek;
@@ -268,10 +404,10 @@ dkinit(int select)
 			KVM_ERROR("kvm_nlist failed to read symbols.");
 
 		/* Get the number of attached drives. */
-		deref_nl(X_DISK_COUNT, &dk_ndrive, sizeof(dk_ndrive));
+		deref_nl(X_DISK_COUNT, &cur.dk_ndrive, sizeof(cur.dk_ndrive));
 
-		if (dk_ndrive < 0)
-			errx(1, "invalid _disk_count %d.", dk_ndrive);
+		if (cur.dk_ndrive < 0)
+			errx(1, "invalid _disk_count %d.", cur.dk_ndrive);
 
 		/* Get a pointer to the first disk. */
 		deref_nl(X_DISKLIST, &disk_head, sizeof(disk_head));
@@ -286,10 +422,10 @@ dkinit(int select)
 		/* Get the number of attached drives. */
 		mib[0] = CTL_HW;
 		mib[1] = HW_DISKCOUNT;
-		size = sizeof(dk_ndrive);
-		if (sysctl(mib, 2, &dk_ndrive, &size, NULL, 0) < 0 ) {
+		size = sizeof(cur.dk_ndrive);
+		if (sysctl(mib, 2, &cur.dk_ndrive, &size, NULL, 0) < 0 ) {
 			warn("could not read hw.diskcount");
-			dk_ndrive = 0;
+			cur.dk_ndrive = 0;
 		}
 
 		/* Get ticks per second. */
@@ -304,16 +440,16 @@ dkinit(int select)
 	}
 
 	/* allocate space for the statistics */
-	cur.dk_time = calloc(dk_ndrive, sizeof(struct timeval));
-	cur.dk_xfer = calloc(dk_ndrive, sizeof(u_int64_t));
-	cur.dk_seek = calloc(dk_ndrive, sizeof(u_int64_t));
-	cur.dk_bytes = calloc(dk_ndrive, sizeof(u_int64_t));
-	last.dk_time = calloc(dk_ndrive, sizeof(struct timeval));
-	last.dk_xfer = calloc(dk_ndrive, sizeof(u_int64_t));
-	last.dk_seek = calloc(dk_ndrive, sizeof(u_int64_t));
-	last.dk_bytes = calloc(dk_ndrive, sizeof(u_int64_t));
-	cur.dk_select = calloc(dk_ndrive, sizeof(int));
-	cur.dk_name = calloc(dk_ndrive, sizeof(char *));
+	cur.dk_time = calloc(cur.dk_ndrive, sizeof(struct timeval));
+	cur.dk_xfer = calloc(cur.dk_ndrive, sizeof(u_int64_t));
+	cur.dk_seek = calloc(cur.dk_ndrive, sizeof(u_int64_t));
+	cur.dk_bytes = calloc(cur.dk_ndrive, sizeof(u_int64_t));
+	last.dk_time = calloc(cur.dk_ndrive, sizeof(struct timeval));
+	last.dk_xfer = calloc(cur.dk_ndrive, sizeof(u_int64_t));
+	last.dk_seek = calloc(cur.dk_ndrive, sizeof(u_int64_t));
+	last.dk_bytes = calloc(cur.dk_ndrive, sizeof(u_int64_t));
+	cur.dk_select = calloc(cur.dk_ndrive, sizeof(int));
+	cur.dk_name = calloc(cur.dk_ndrive, sizeof(char *));
 	
 	if (!cur.dk_time || !cur.dk_xfer || !cur.dk_seek || !cur.dk_bytes ||
 	    !last.dk_time || !last.dk_xfer || !last.dk_seek ||
@@ -321,10 +457,11 @@ dkinit(int select)
 		errx(1, "Memory allocation failure.");
 
 	/* Set up the compatibility interfaces. */
+	dk_ndrive = cur.dk_ndrive;
 	dk_select = cur.dk_select;
 	dr_name = cur.dk_name;
 
-	/* Read the disk names and set intial selection. */
+	/* Read the disk names and set initial selection. */
 	if (nlistf == NULL && memf == NULL) {
 		mib[0] = CTL_HW;
 		mib[1] = HW_DISKNAMES;
@@ -345,7 +482,7 @@ dkinit(int select)
 	} else {
 #if !defined(NOKVM)
 		p = dk_drivehead;
-		for (i = 0; i < dk_ndrive; i++) {
+		for (i = 0; i < cur.dk_ndrive; i++) {
 			char	buf[10];
 
 			deref_kptr(p, &cur_disk, sizeof(cur_disk));

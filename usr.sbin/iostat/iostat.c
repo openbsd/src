@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.15 2002/08/04 00:51:01 deraadt Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.16 2002/12/16 01:57:05 tdeval Exp $	*/
 /*	$NetBSD: iostat.c,v 1.10 1996/10/25 18:21:58 scottr Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ static char *rcsid = "$NetBSD: iostat.c,v 1.10 1996/10/25 18:21:58 scottr Exp $"
 #include "dkstats.h"
 
 /* Defined in dkstats.c */
-extern struct _disk cur;
+extern struct _disk cur, last;
 extern int	dk_ndrive;
 
 /* Namelist and memory files. */
@@ -202,6 +202,7 @@ main(argc, argv)
 			break;
 		select(0, NULL, NULL, NULL, &tv);
 		dkreadstats();
+		if (last.dk_ndrive != cur.dk_ndrive) wantheader = 1;
 	}
 	exit(0);
 }

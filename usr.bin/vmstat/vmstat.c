@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.72 2002/09/17 19:37:40 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.73 2002/12/16 01:57:04 tdeval Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -117,7 +117,7 @@ struct nlist namelist[] = {
 };
 
 /* Objects defined in dkstats.c */
-extern struct _disk	cur;
+extern struct _disk	cur, last;
 extern char	**dr_name;
 extern int	*dk_select, dk_ndrive;
 
@@ -386,10 +386,10 @@ dovmstat(u_int interval, int reps)
 	hz = clkinfo.stathz;
 
 	for (hdrcnt = 1;;) {
-		if (!--hdrcnt)
-			printhdr();
 		/* Read new disk statistics */
 		dkreadstats();
+		if (!--hdrcnt || last.dk_ndrive != cur.dk_ndrive)
+			printhdr();
 		if (nlistf == NULL && memf == NULL) {
 			size = sizeof(struct uvmexp);
 			mib[0] = CTL_VM;

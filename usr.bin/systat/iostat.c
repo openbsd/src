@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.18 2002/06/18 00:46:47 deraadt Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.19 2002/12/16 01:57:04 tdeval Exp $	*/
 /*	$NetBSD: iostat.c,v 1.5 1996/05/10 23:16:35 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: iostat.c,v 1.18 2002/06/18 00:46:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: iostat.c,v 1.19 2002/12/16 01:57:04 tdeval Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -53,7 +53,7 @@ static char rcsid[] = "$OpenBSD: iostat.c,v 1.18 2002/06/18 00:46:47 deraadt Exp
 #include "extern.h"
 
 #include "dkstats.h"
-extern struct _disk	cur;
+extern struct _disk	cur, last;
 
 static  int linesperregion;
 static  double etime;
@@ -94,7 +94,7 @@ initiostat(void)
 void
 fetchiostat(void)
 {
-	if (dk_ndrive == 0)
+	if (cur.dk_ndrive == 0)
 		return;
 	dkreadstats();
 }
@@ -126,13 +126,13 @@ numlabels(int row)
 {
 	int i, col, regions, ndrives;
 
-	if (dk_ndrive == 0) {
+	if (cur.dk_ndrive == 0) {
 		mvwaddstr(wnd, row++, INSET, "No drives attached.");
 		return (row);
 	}
 #define COLWIDTH	17
 #define DRIVESPERLINE	((wnd->_maxx - INSET) / COLWIDTH)
-	for (ndrives = 0, i = 0; i < dk_ndrive; i++)
+	for (ndrives = 0, i = 0; i < cur.dk_ndrive; i++)
 		if (cur.dk_select[i])
 			ndrives++;
 	regions = howmany(ndrives, DRIVESPERLINE);
@@ -147,7 +147,7 @@ numlabels(int row)
 	if (linesperregion < 3)
 		linesperregion = 3;
 	col = INSET;
-	for (i = 0; i < dk_ndrive; i++)
+	for (i = 0; i < cur.dk_ndrive; i++)
 		if (cur.dk_select[i] /*&& cur.dk_bytes[i] != 0.0*/) {
 			if (col + COLWIDTH >= wnd->_maxx) {
 				col = INSET, row += linesperregion + 1;
@@ -168,7 +168,7 @@ barlabels(int row)
 {
 	int i;
 
-	if (dk_ndrive == 0) {
+	if (cur.dk_ndrive == 0) {
 		mvwaddstr(wnd, row++, INSET, "No drives attached.");
 		return (row);
 	}
@@ -210,12 +210,15 @@ showiostat(void)
 	for (i = 0; i < CPUSTATES; i++)
 		stat1(row++, i);
 
-	if (dk_ndrive == 0)
+	if (last.dk_ndrive != cur.dk_ndrive)
+		labeliostat();
+
+	if (cur.dk_ndrive == 0)
 		return;
 
 	if (!numbers) {
 		row += 2;
-		for (i = 0; i < dk_ndrive; i++)
+		for (i = 0; i < cur.dk_ndrive; i++)
 			if (cur.dk_select[i] /*&& cur.dk_bytes[i] != 0.0*/) {
 				if (row > wnd->_maxy - linesperregion)
 					break;
@@ -228,7 +231,7 @@ showiostat(void)
 	wdeleteln(wnd);
 	wmove(wnd, row + 3, 0);
 	winsertln(wnd);
-	for (i = 0; i < dk_ndrive; i++)
+	for (i = 0; i < cur.dk_ndrive; i++)
 		if (cur.dk_select[i] /*&& cur.dk_bytes[i] != 0.0*/) {
 			if (col + COLWIDTH >= wnd->_maxx) {
 				col = INSET, row += linesperregion + 1;

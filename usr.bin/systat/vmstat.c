@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.36 2002/06/19 08:45:52 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.37 2002/12/16 01:57:04 tdeval Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.36 2002/06/19 08:45:52 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.37 2002/12/16 01:57:04 tdeval Exp $";
 #endif /* not lint */
 
 /*
@@ -333,8 +333,8 @@ labelkre(void)
 	mvprintw(DISKROW + 2, DISKCOL, "xfers");
 	mvprintw(DISKROW + 3, DISKCOL, "Kbyte");
 	mvprintw(DISKROW + 4, DISKCOL, "  sec");
-	for (i = 0, j = 0; i < dk_ndrive && j < DRIVESPACE; i++)
-		if (dk_select[i] && (j + strlen(dr_name[i])) < DRIVESPACE) {
+	for (i = 0, j = 0; i < cur.dk_ndrive && j < DRIVESPACE; i++)
+		if (cur.dk_select[i] && (j + strlen(dr_name[i])) < DRIVESPACE) {
 			l = MAX(4, strlen(dr_name[i]));
 			mvprintw(DISKROW, DISKCOL + 5 + j,
 			    " %*s", l, dr_name[i]);
@@ -499,8 +499,8 @@ showkre(void)
 	PUTRATE(uvmexp.softs, GENSTATROW + 1, GENSTATCOL + 24, 6);
 	PUTRATE(uvmexp.faults, GENSTATROW + 1, GENSTATCOL + 30, 5);
 	mvprintw(DISKROW, DISKCOL + 5, "                              ");
-	for (i = 0, c = 0; i < dk_ndrive && c < DRIVESPACE; i++)
-		if (dk_select[i] && (c + strlen(dr_name[i])) < DRIVESPACE) {
+	for (i = 0, c = 0; i < cur.dk_ndrive && c < DRIVESPACE; i++)
+		if (cur.dk_select[i] && (c + strlen(dr_name[i])) < DRIVESPACE) {
 			l = MAX(4, strlen(dr_name[i]));
 			mvprintw(DISKROW, DISKCOL + 5 + c,
 			    " %*s", l, dr_name[i]);
