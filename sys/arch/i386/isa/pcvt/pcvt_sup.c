@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_sup.c,v 1.5 1996/05/25 22:18:00 deraadt Exp $	*/
+/*	$OpenBSD: pcvt_sup.c,v 1.6 1998/06/25 00:40:31 millert Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -254,26 +254,14 @@ vgapcvtid(struct pcvtid *data)
 static void
 vgapcvtinfo(struct pcvtinfo *data)
 {
-#if PCVT_NETBSD
 	data->opsys	= CONF_NETBSD;
-	data->opsysrel	= PCVT_NETBSD;
-#elif PCVT_FREEBSD
-	data->opsys	= CONF_FREEBSD;
-	data->opsysrel	= PCVT_FREEBSD;
-#else
-	data->opsys	= CONF_UNKNOWNOPSYS;
-	data->opsysrel	= 0;
-#endif
+	data->opsysrel	= OpenBSD;
 
 	data->nscreens	= PCVT_NSCREENS;
 	data->scanset	= PCVT_SCANSET;
 	data->sysbeepf	= PCVT_SYSBEEPF;
 
-#if PCVT_NETBSD || PCVT_FREEBSD >= 200
 	data->pcburst	= PCVT_PCBURST;
-#else
-	data->pcburst	= 1;
-#endif
 
 #if PCVT_KBD_FIFO
 	data->kbd_fifo_sz = PCVT_KBD_FIFO_SZ;
@@ -1771,9 +1759,8 @@ set_2ndcharset(void)
 static u_short
 getrand(void)
 {
-#if !PCVT_FREEBSD
 	extern struct timeval time; /* time-of-day register */
-#endif
+
 	static unsigned long seed = 1;
 	register u_short res = (u_short)seed;
 	seed = seed * 1103515245L + time.tv_sec;

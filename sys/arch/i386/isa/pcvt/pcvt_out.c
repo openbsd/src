@@ -982,31 +982,17 @@ vt_coldinit(void)
 	extern u_short csd_ascii[];		/* pcvt_tbl.h */
 	extern u_short csd_supplemental[];
 
-#if PCVT_NETBSD <= 101
-	u_short volatile *cp = Crtat + (CGA_BUF-MONO_BUF)/CHR;
-#endif
-
 	u_short was;
 	int nscr, charset;
 	int equipment;
-
-#if PCVT_NETBSD <= 101
-	u_short *SaveCrtat = Crtat;
-#endif
-
 	struct video_state *svsp;
 
 	do_initialization = 0;		/* reset init necessary flag */
 
 	/* get the equipment byte from the RTC chip */
 
-#if PCVT_NETBSD > 101
 	equipment = mc146818_read(NULL, NVRAM_EQUIPMENT);
 	switch(equipment & NVRAM_EQUIPMENT_MONITOR)
-#else
-	equipment = ((rtcin(RTC_EQUIPMENT)) >> 4) & 0x03;
-	switch(equipment)
-#endif
 	{
 		default:
 			panic("vt_coldinit: impossible equipment");
@@ -1014,7 +1000,6 @@ vt_coldinit(void)
   		case EQ_EGAVGA:
 			/* set memory start to CGA == B8000 */
 
-#if PCVT_NETBSD > 101
 			Crtat = ISA_HOLE_VADDR(CGA_BUF);
 
 			/* find out, what monitor is connected */
@@ -1034,28 +1019,6 @@ vt_coldinit(void)
 				color = 1;
 			}
 
-#else /* ! PCVT_NETBSD > 101 */
-
-			Crtat = Crtat + (CGA_BUF-MONO_BUF)/CHR;
-
-			/* find out, what monitor is connected */
-
-			was = *cp;
-			*cp = (u_short) 0xA55A;
-			if (*cp != 0xA55A)
-			{
-				addr_6845 = MONO_BASE;
-				color = 0;
-			}
-			else
-			{
-				*cp = was;
-				addr_6845 = CGA_BASE;
-				color = 1;
-			}
-
-#endif  /* PCVT_NETBSD > 101 */
-
 			if(vga_test())		/* EGA or VGA ? */
 			{
 				adaptor_type = VGA_ADAPTOR;
@@ -1064,9 +1027,6 @@ vt_coldinit(void)
 				if(color == 0)
 				{
 					mda2egaorvga();
-#if PCVT_NETBSD <= 101
-					Crtat = SaveCrtat; /* mono start */
-#endif
 				}
 
 				/* find out which chipset we are running on */
@@ -1080,9 +1040,6 @@ vt_coldinit(void)
 				if(color == 0)
 				{
 					mda2egaorvga();
-#if PCVT_NETBSD <= 101
-					Crtat = SaveCrtat; /* mono start */
-#endif
 				}
 			}
 
@@ -1094,11 +1051,7 @@ vt_coldinit(void)
 		case EQ_40COLOR:	/* XXX should panic in 40 col mode ! */
 		case EQ_80COLOR:
 
-#if PCVT_NETBSD > 101
 			Crtat = ISA_HOLE_VADDR (CGA_BUF);
-#else
-			Crtat = Crtat + (CGA_BUF-MONO_BUF)/CHR;
-#endif
 
 			addr_6845 = CGA_BASE;
 			adaptor_type = CGA_ADAPTOR;
@@ -1108,9 +1061,7 @@ vt_coldinit(void)
 
 		case EQ_80MONO:
 
-#if PCVT_NETBSD > 101
 			Crtat = ISA_HOLE_VADDR (MONO_BUF);
-#endif
 
 			addr_6845 = MONO_BASE;
 			adaptor_type = MDA_ADAPTOR;

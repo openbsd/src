@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_kbd.c,v 1.14 1998/02/22 22:06:14 niklas Exp $	*/
+/*	$OpenBSD: pcvt_kbd.c,v 1.15 1998/06/25 00:40:29 millert Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -1272,11 +1272,7 @@ loop:
 					 */
 					now = time;
 
-#if PCVT_NETBSD > 100
 					timersub(&now,&mouse.lastmove,&now);
-#else
-					timevalsub(&now, &mouse.lastmove);
-#endif
 
 					mouse.lastmove = time;
 					accel = (now.tv_sec == 0
@@ -1420,10 +1416,6 @@ regular:
 		cpu_reset();
 #endif /* PCVT_CTRL_ALT_DEL */
 
-#if !(PCVT_NETBSD || PCVT_FREEBSD >= 200)
-#include "ddb.h"
-#endif /* !(PCVT_NETBSD || PCVT_FREEBSD >= 200) */
-
 #if NDDB > 0 || defined(DDB)		 /*   Check for cntl-alt-esc	*/
 
   	if((key == 110) && ctrl_down && (meta_down || altgr_down))
@@ -1433,13 +1425,8 @@ regular:
  		if(!in_Debugger)
  		{
  			in_Debugger = 1;
-#if PCVT_FREEBSD
-			/* the string is actually not used... */
-			Debugger("kbd");
-#else
 			if (db_console)
 	 			Debugger();
-#endif
  			in_Debugger = 0;
  			if(noblock)
  				return NULL;

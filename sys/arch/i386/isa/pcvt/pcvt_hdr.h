@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_hdr.h,v 1.18 1998/02/05 16:48:32 deraadt Exp $	*/
+/*	$OpenBSD: pcvt_hdr.h,v 1.19 1998/06/25 00:40:28 millert Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -94,88 +94,27 @@
 
 #include "pcvt_conf.h"
 
-#if PCVT_NETBSD > 9
 #include <sys/device.h>
-#endif
 
-#if PCVT_NETBSD > 9
-#if PCVT_NETBSD > 101
 #include <i386/isa/isa_machdep.h>
 #include <dev/isa/isavar.h>
-#else
-#include <i386/isa/isavar.h>
-#endif
 #include <machine/cpufunc.h>
 #include <machine/intr.h>
-#else
-#include <i386/isa/isa_device.h>
-#endif
 
 #include <i386/isa/icu.h>
 
-#if PCVT_NETBSD > 100
-#if PCVT_NETBSD > 101
 #include <dev/isa/isareg.h>
-#else
-#include <i386/isa/isareg.h>
-#endif
-#else
-#include <i386/isa/isa.h>
-#endif
 
-#if PCVT_NETBSD > 9
 #include <dev/cons.h>
-#if PCVT_NETBSD > 100
 #include <dev/ic/mc146818reg.h>
 #include <i386/isa/nvram.h>
-#endif
-#else
-#include <i386/i386/cons.h>
-#endif
-
-#if PCVT_NETBSD <= 9
-#include <machine/psl.h>
-#include <machine/frame.h>
-#endif /* PCVT_NETBSD <= 9 */
 
 #include <machine/stdarg.h>
 
-#if PCVT_NETBSD > 9
 #include "pcvt_ioctl.h"
-#else
-#include <machine/pcvt_ioctl.h>
-#endif
 
 #include <machine/pc/display.h>
-#if PCVT_FREEBSD > 200
-#include <machine/clock.h>
-#include <machine/md_var.h>
-#endif
 #include <vm/vm_kern.h>
-
-#if PCVT_FREEBSD > 205
-#include <sys/devconf.h>
-#endif
-
-/* perform option consistency checks */
-
-#if defined PCVT_FREEBSD && PCVT_FREEBSD == 1
-# undef PCVT_FREEBSD
-# define PCVT_FREEBSD 102	/* assume 1.0 release */
-#endif
-
-#if defined PCVT_NETBSD && PCVT_NETBSD == 1
-#undef PCVT_NETBSD
-#define PCVT_NETBSD 9		/* assume 0.9 release for now */
-#endif
-
-#if PCVT_FREEBSD + PCVT_NETBSD == 0
-# error "pcvt_hdr.h: You MUST define one of PCVT_{NET,FREE}BSD \
-in the config file"
-#elif (PCVT_FREEBSD && PCVT_NETBSD)
-# error "pcvt_hdr.h: You CAN only define *one* of PCVT_{NET,FREE}BSD \
-in the config file"
-#endif
 
 #ifdef XSERVER
 
@@ -197,18 +136,8 @@ in the config file"
 
 /* get the inline inb/outb back again ... */
 
-#if PCVT_NETBSD
-#if PCVT_NETBSD == 9
-#include <machine/cpufunc.h>	/* NetBSD 0.9 [...and earlier -currents] */
-#else
 #include <machine/pio.h>	/* recent NetBSD -currents */
 #define NEW_AVERUNNABLE		/* averunnable changes for younger currents */
-#endif /* PCVT_NETBSD == 9 */
-#endif /* PCVT_NETBSD */
-
-#if PCVT_FREEBSD >= 200
-#define NEW_AVERUNNABLE		/* new averunnable changes for FreeBSD 2.0 */
-#endif
 
 #if PCVT_SCANSET !=1 && PCVT_SCANSET !=2
 #error "Supported keyboard scancode sets are 1 and 2 only (for now)!!!"
@@ -296,18 +225,10 @@ in the config file"
  *	CMOS ram access to get the "Equipment Byte"
  *---------------------------------------------------------------------------*/
 
-#if PCVT_NETBSD > 100
 #define EQ_EGAVGA	NVRAM_EQUIPMENT_EGAVGA
 #define EQ_40COLOR	NVRAM_EQUIPMENT_COLOR40
 #define EQ_80COLOR	NVRAM_EQUIPMENT_COLOR80
 #define EQ_80MONO	NVRAM_EQUIPMENT_MONO80
-#else
-#define RTC_EQUIPMENT	0x14	/* equipment byte in cmos ram	*/
-#define EQ_EGAVGA	0	/* reserved (= ega/vga)		*/
-#define EQ_40COLOR	1	/* display = 40 col color	*/
-#define EQ_80COLOR	2	/* display = 80 col color	*/
-#define EQ_80MONO	3	/* display = 80 col mono	*/
-#endif
 
 /*---------------------------------------------------------------------------*
  *	VT220 -> internal color conversion table fields
@@ -646,21 +567,13 @@ in the config file"
 /* screen memory start, monochrome */
 
 #ifndef	MONO_BUF
-# if PCVT_FREEBSD && (PCVT_FREEBSD > 102)
-#  define MONO_BUF	(KERNBASE+0xB0000)
-# else
 #  define MONO_BUF	0xfe0B0000		 /* NetBSD-current: isa.h */
-# endif
 #endif
 
 /* screen memory start, color */
 
 #ifndef	CGA_BUF
-# if PCVT_FREEBSD && (PCVT_FREEBSD > 102)
-#  define CGA_BUF	(KERNBASE+0xB8000)
-# else
 #  define CGA_BUF	0xfe0B8000		 /* NetBSD-current: isa.h */
-# endif
 #endif
 
 #define	CHR		2		/* bytes per word in screen mem */
@@ -707,23 +620,11 @@ EXTERN	u_short	user_attr;		/* character attributes */
 
 #if !PCVT_EMU_MOUSE
 
-#if PCVT_NETBSD
 EXTERN struct tty *pc_tty[PCVT_NSCREENS];
-#elif !(PCVT_FREEBSD > 110 && PCVT_FREEBSD < 200)
-EXTERN struct tty pccons[PCVT_NSCREENS];
-#else
-EXTERN struct tty *pccons[PCVT_NSCREENS];
-#endif /* PCVT_NETBSD */
 
 #else /* PCVT_EMU_MOUSE */
 
-#if PCVT_NETBSD
 EXTERN struct tty *pc_tty[PCVT_NSCREENS + 1];
-#elif !(PCVT_FREEBSD > 110 && PCVT_FREEBSD < 200)
-EXTERN struct tty pccons[PCVT_NSCREENS + 1];
-#else
-EXTERN struct tty *pccons[PCVT_NSCREENS + 1];
-#endif
 
 #endif /* PCVT_EMU_MOUSE */
 
@@ -890,23 +791,14 @@ struct mousestat {
 
 #ifdef WAS_EXTERN
 
-#if PCVT_NETBSD > 9
-
-#if PCVT_NETBSD > 101
 struct vt_softc {
 	struct	device sc_dev;
 	void	*sc_ih;
 };
-#endif /* PCVT_NETBSD > 101 */
 
-#if PCVT_NETBSD > 100
 int pcprobe(struct device *, void *, void *);
-#endif
-#if PCVT_NETBSD > 9
 void pcattach(struct device *, struct device *, void *);
-#endif
 
-#if PCVT_NETBSD > 110
 struct cfattach vt_ca = {
 	sizeof(struct vt_softc), pcprobe, pcattach
 };
@@ -914,28 +806,6 @@ struct cfattach vt_ca = {
 struct cfdriver vt_cd = {
 	NULL, "vt", DV_TTY
 };
-#else /* !PCVT_NETBSD > 110 */
-#if PCVT_NETBSD > 101
-struct cfdriver vtcd = {
-	NULL, "vt", pcprobe, pcattach, DV_TTY, sizeof(struct vt_softc)
-};
-#else /* !PCVT_NETBSD > 101 */
-struct cfdriver vtcd = {
-	NULL, "vt", pcprobe, pcattach, DV_TTY, sizeof(struct device)
-};
-#endif /* PCVT_NETBSD > 101 */
-#endif /* PCVT_NETBSD > 110 */
-
-#else /* !PCVT_NETBSD > 9 */
-
-int pcprobe ( struct isa_device *dev );
-int pcattach ( struct isa_device *dev );
-
-struct	isa_driver vtdriver = {		/* driver routines */
-	pcprobe, pcattach, "vt",
-};
-
-#endif /* PCVT_NETBSD > 9 */
 
 u_char fgansitopc[] = {			/* foreground ANSI color -> pc */
 	FG_BLACK, FG_RED, FG_GREEN, FG_BROWN, FG_BLUE,
@@ -947,21 +817,9 @@ u_char bgansitopc[] = {			/* background ANSI color -> pc */
 	BG_MAGENTA, BG_CYAN, BG_LIGHTGREY
 };
 
-#if !PCVT_NETBSD
-u_short *Crtat	=	(u_short *)MONO_BUF;	/* screen start address */
-#if !(PCVT_FREEBSD > 110 && PCVT_FREEBSD < 200)
-struct tty *pcconsp =	&pccons[0];		/* ptr to current device */
-#else /* PCVT_FREEBSD > 110 */
-struct tty *pcconsp;
-#endif /* !(PCVT_FREEBSD > 110) */
-#else
 struct tty *pcconsp;		/* ptr to current device, see pcattach() */
 
-#if PCVT_NETBSD > 101
 u_short *Crtat;			/* screen start address */
-#endif /* PCVT_NETBSD > 101 */
-
-#endif /* PCVT_NETBSD */
 
 #if PCVT_EMU_MOUSE
 struct mousestat	mouse = {{0}};
@@ -1151,47 +1009,13 @@ extern u_char		*saved_charsets[NVGAFONTS];
 
 #endif	/* WAS_EXTERN */
 
-/*
- * FreeBSD > 1.0.2 cleaned up the kernel definitions (with the aim of
- * getting ANSI-clean). Since there has been a mixed usage of types like
- * "dev_t" (actually some short) in prototyped and non-prototyped fasion,
- * each of those types is declared as "int" within function prototypes
- * (which is what the compiler would actually promote it to).
- *
- * The macros below are used to clarify which type a parameter ought to
- * be, regardless of its actual promotion to "int".
- */
-
-
-#define Dev_t	int
 #define U_short	int
 #define U_char	int
-
-/*
- * In FreeBSD >= 2.0, dev_t has type `unsigned long', so promoting it
- * doesn't cause any problems in prototypes.
- */
-
-#if PCVT_FREEBSD >= 200
-#undef Dev_t
 #define Dev_t	dev_t
-#endif
 
-/* in FreeBSD > 102 arguments for timeout()/untimeout() are a special type */
-
-#if PCVT_FREEBSD > 102
-#define	TIMEOUT_FUNC_T	timeout_func_t
-#else
 #define	TIMEOUT_FUNC_T	void *
-#endif
 
-#if !PCVT_FREEBSD || (PCVT_FREEBSD < 210)
 extern void bcopyb(void *from, void *to, u_int length);
-#endif
-
-#if (PCVT_FREEBSD > 0 && PCVT_FREEBSD < 200) || (PCVT_NETBSD > 0 && PCVT_NETBSD <= 110)
-extern void fillw(U_short value, void *addr, u_int length);
-#endif
 
 int	pcopen ( Dev_t dev, int flag, int mode, struct proc *p );
 int	pcclose ( Dev_t dev, int flag, int mode, struct proc *p );
@@ -1199,48 +1023,18 @@ int	pcread ( Dev_t dev, struct uio *uio, int flag );
 int	pcwrite ( Dev_t dev, struct uio *uio, int flag );
 int	pcioctl ( Dev_t dev, int cmd, caddr_t data, int flag, struct proc *p );
 int	pcmmap ( Dev_t dev, int offset, int nprot );
-#if PCVT_FREEBSD > 205
-struct tty *pcdevtotty ( Dev_t dev );
-#endif /* PCVT_FREEBSD > 205 */
 
-#if PCVT_NETBSD
-#if PCVT_NETBSD > 101
 struct tty *
 	pctty ( Dev_t dev );
 int	pcintr ( void *arg);
 void	pccnprobe ( struct consdev *cp );
 void	pccninit ( struct consdev *cp );
 void	pccnputc ( Dev_t dev, U_char c );
-#else
-int	pcrint ( void );
-int	pccnprobe ( struct consdev *cp );
-int	pccninit ( struct consdev *cp );
-int	pccnputc ( Dev_t dev, U_char c );
-#endif
 int	pccngetc ( Dev_t dev );
-#endif /* PCVT_NETBSD */
 
 int	pcparam ( struct tty *tp, struct termios *t );
 void	pcstart ( struct tty *tp );
 void	pcstop ( struct tty *tp, int flag );
-
-#if PCVT_FREEBSD
-/*
- * In FreeBSD > 2.0.6, driver console functions are declared in i386/cons.h
- * and some return void, so don't declare them here.
- */
-#if PCVT_FREEBSD <= 205
-int	pccnprobe ( struct consdev *cp );
-int	pccninit ( struct consdev *cp );
-int	pccngetc ( Dev_t dev );
-int	pccncheckc ( Dev_t dev );
-int	pccnputc ( Dev_t dev, U_char c );
-#endif
-
-# if PCVT_FREEBSD < 200
-void	consinit ( void );
-# endif
-#endif /* PCVT_FREEBSD */
 
 void	switch_screen ( int n, int oldgrafx, int newgrafx );
 int	usl_vt_ioctl (Dev_t dev,int cmd,caddr_t data,int flag,struct proc *);
@@ -1255,9 +1049,6 @@ int	mouse_ioctl ( Dev_t dev, int cmd, caddr_t data );
 
 #if PCVT_SCREENSAVER
 void 	pcvt_scrnsv_reset ( void );
-#endif /* PCVT_SCREENSAVER */
-
-#if PCVT_SCREENSAVER
 void 	pcvt_set_scrnsv_tmo ( int );
 #endif /* PCVT_SCREENSAVER */
 
@@ -1412,11 +1203,7 @@ static __inline void vt_selattr(struct video_state *svsp)
 				/* use system supplied delay function for */
 				/* producing delays for accesssing the    */
 				/* keyboard controller                    */
-#if PCVT_NETBSD > 9
 #define PCVT_KBD_DELAY()	delay(11)
-#elif PCVT_FREEBSD || (PCVT_NETBSD <= 9)
-#define PCVT_KBD_DELAY()	DELAY(11)
-#endif
 #endif /* PCVT_PORTIO_DELAY */
 
 /*---------------------------------- E O F ----------------------------------*/

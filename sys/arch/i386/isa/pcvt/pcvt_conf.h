@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_conf.h,v 1.11 1998/03/08 00:47:43 deraadt Exp $	*/
+/*	$OpenBSD: pcvt_conf.h,v 1.12 1998/06/25 00:40:24 millert Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -53,70 +53,6 @@
  *---------------------------------------------------------------------------*/
 
 /*---------------------------------------------------------------------------
- *
- * from: Onno van der Linden    c/o   frank@fwi.uva.nl
- *
- * Here's an idea how to automatically detect the version of NetBSD pcvt is
- * being compiled on:
- *
- * NetBSD 1.0 : NetBSD1_0 defined as 1 in <sys/param.h>
- * NetBSD 1.0A: NetBSD1_0 defined as 2 in <sys/param.h>
- *
- * The NetBSDx_y defines are mutual exclusive.
- *
- * This leads to something like this in pcvt_hdr.h (#elif is possible too):
- *
- *---------------------------------------------------------------------------*/
- 
-#ifndef PCVT_NETBSD			/* let user force it if needed...  */
-#ifdef NetBSD0_8
-#error "NetBSD version 0.8 no longer supported, sorry!"
-#endif
-
-#ifdef NetBSD0_9
-#error "NetBSD version 0.9 no longer supported, sorry!"
-#endif
-
-#ifdef NetBSD1_0
-#if NetBSD1_0 > 1
-#define PCVT_NETBSD 102
-#else
-#define PCVT_NETBSD 100
-#endif
-#endif
-
-#ifdef NetBSD1_1
-#define PCVT_NETBSD (110 + (NetBSD1_1 - 1))
-#endif
-
-#ifdef NetBSD1_2
-#define PCVT_NETBSD (120 + (NetBSD1_2 - 1))
-#endif
-
-#ifdef OpenBSD2_0
-#define PCVT_OPENBSD (200 + (OpenBSD2_0 - 1))
-#endif
-
-#ifdef OpenBSD2_1
-#define PCVT_OPENBSD (210 + (OpenBSD2_1 - 1))
-#endif
-
-#ifdef OpenBSD2_2
-#define PCVT_OPENBSD (220 + (OpenBSD2_2 - 1))
-#endif
-
-#ifdef OpenBSD2_3
-#define PCVT_OPENBSD (230 + (OpenBSD2_3 - 1))
-#endif
-
-#ifndef PCVT_NETBSD
-#define PCVT_NETBSD PCVT_OPENBSD
-#endif
-
-#endif
-
-
-/*---------------------------------------------------------------------------
  * Note that each of the options below should rather be overriden by the
  * kernel config file instead of this .h file - this allows for different
  * definitions in different kernels compiled at the same machine
@@ -137,39 +73,6 @@
  *
  * which are always numeric!
  *---------------------------------------------------------------------------*/
-
-/* -------------------------------------------------------------------- */
-/* -------------------- OPERATING SYSTEM ------------------------------ */
-/* -------------------------------------------------------------------- */
-
-/*
- *  one of the following options must be set in the kernel config file:
- *
- *======================================================================*
- *			N e t B S D					*
- *======================================================================*
- *
- *	options "PCVT_NETBSD=xxx" enables support for NetBSD
- *
- *	select:
- *		PCVT_NETBSD = 100	for NetBSD 1.0
- *		PCVT_NETBSD = 101	for NetBSD-current before Apr. 21 '95
- *		PCVT_NETBSD = 102	for NetBSD-current after Apr. 21 '95
- *
- *
- *======================================================================*
- *			F r e e B S D					*
- *======================================================================*
- *
- *	options "PCVT_FREEBSD=xxx" enables support for FreeBSD
- *
- *	select:
- *		PCVT_FREEBSD = 200	for FreeBSD 2.0-Release
- *		PCVT_FREEBSD = 210	for FreeBSD 2.0.5-Release
- *					(yes, its 210 for 2.0.5 !!!)
- *					(aaand yes, its 210 for 2.1 !!!)
- *
- */
 
 /* -------------------------------------------------------------------- */
 /* ---------------- USER PREFERENCE DRIVER OPTIONS -------------------- */

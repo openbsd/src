@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_ext.c,v 1.13 1998/03/28 19:16:04 deraadt Exp $	*/
+/*	$OpenBSD: pcvt_ext.c,v 1.14 1998/06/25 00:40:26 millert Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -2283,15 +2283,7 @@ switch_screen(int n, int oldgrafx, int newgrafx)
 	/* update global screen pointers/variables */
 	current_video_screen = n;	/* current screen no */
 
-#if !PCVT_NETBSD && !(PCVT_FREEBSD > 110 && PCVT_FREEBSD < 200)
-	pcconsp = &pccons[n];		/* current tty */
-#elif PCVT_FREEBSD > 110 && PCVT_FREEBSD < 200
-	pcconsp = pccons[n];		/* current tty */
-#elif PCVT_NETBSD > 100
 	pcconsp = vs[n].vs_tty;		/* current tty */
-#else
-	pcconsp = pc_tty[n];		/* current tty */
-#endif
 
 	vsp = &vs[n];			/* current video state ptr */
 
@@ -2555,16 +2547,6 @@ vgapage(int new_screen)
 		{
 			/* we are committed */
 			vt_switch_pending = 0;
-
-#if PCVT_FREEBSD > 206
-			/*
-			 * XXX: If pcvt is acting as the systems console,
-			 * avoid panics going to the debugger while we are in
-			 * process mode.
-			 */
-			if(pcvt_is_console)
-				cons_unavail = 0;
-#endif
 		}
 	}
 	return 0;
@@ -2641,16 +2623,6 @@ usl_vt_ioctl(Dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 		vsp->proc = p;
 		vsp->pid = p->p_pid;
 
-#if PCVT_FREEBSD > 206
-		/*
-		 * XXX: If pcvt is acting as the systems console,
-		 * avoid panics going to the debugger while we are in
-		 * process mode.
-		 */
-		if(pcvt_is_console)
-			cons_unavail = (newmode.mode == VT_PROCESS);
-#endif
-
 		splx(opri);
 		return 0;
 
@@ -2724,12 +2696,6 @@ usl_vt_ioctl(Dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 				{
 					/* we are committed */
 					vt_switch_pending = 0;
-
-#if PCVT_FREEBSD > 206
-					/* XXX */
-					if(pcvt_is_console)
-						cons_unavail = 0;
-#endif
 				}
 				return 0;
 			}
@@ -2742,11 +2708,6 @@ usl_vt_ioctl(Dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 				vt_switch_pending = 0;
 				vsp->vt_status &= ~VT_WAIT_ACK;
 
-#if PCVT_FREEBSD > 206
-				/* XXX */
-				if(pcvt_is_console)
-					cons_unavail = 1;
-#endif
 				return 0;
 			}
 			break;
@@ -2815,26 +2776,16 @@ usl_vt_ioctl(Dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 		/* grant the process IO access; only allowed if euid == 0 */
 	{
 
-#if (PCVT_NETBSD <= 100) || defined(COMPAT_10) || defined(COMPAT_11)
-#if PCVT_NETBSD > 9 || PCVT_FREEBSD >= 200
+#if defined(COMPAT_10) || defined(COMPAT_11)
 		struct trapframe *fp = (struct trapframe *)p->p_md.md_regs;
-#elif PCVT_NETBSD || (PCVT_FREEBSD && PCVT_FREEBSD > 102)
-		struct trapframe *fp = (struct trapframe *)p->p_regs;
-#else
-		struct syscframe *fp = (struct syscframe *)p->p_regs;
-#endif
 #endif
 
-		if(suser(p->p_ucred, &p->p_acflag) != 0)
+		if (suser(p->p_ucred, &p->p_acflag) != 0)
 			return (EPERM);
 
-#if (PCVT_NETBSD <= 100) || defined(COMPAT_10) || defined(COMPAT_11)
+#if defined(COMPAT_10) || defined(COMPAT_11)
 		/* This is done by i386_iopl(3) now. */
-#if PCVT_NETBSD || (PCVT_FREEBSD && PCVT_FREEBSD > 102)
 		fp->tf_eflags |= PSL_IOPL;
-#else
-		fp->sf_eflags |= PSL_IOPL;
-#endif
 #endif
 
 		return 0;
@@ -2844,18 +2795,10 @@ usl_vt_ioctl(Dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 		/* abandon IO access permission */
 	{
 
-#if (PCVT_NETBSD <= 100) || defined(COMPAT_10) || defined(COMPAT_11)
+#if defined(COMPAT_10) || defined(COMPAT_11)
 		/* This is done by i386_iopl(3) now. */
-#if PCVT_NETBSD > 9 || PCVT_FREEBSD >= 200
 		struct trapframe *fp = (struct trapframe *)p->p_md.md_regs;
 		fp->tf_eflags &= ~PSL_IOPL;
-#elif PCVT_NETBSD || (PCVT_FREEBSD && PCVT_FREEBSD > 102)
-		struct trapframe *fp = (struct trapframe *)p->p_regs;
-		fp->tf_eflags &= ~PSL_IOPL;
-#else
-		struct syscframe *fp = (struct syscframe *)p->p_regs;
-		fp->sf_eflags &= ~PSL_IOPL;
-#endif
 #endif
 		return 0;
 	}
@@ -2924,16 +2867,11 @@ usl_vt_ioctl(Dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 			int duration = *(int *)data >> 16;
 			int pitch = *(int *)data & 0xffff;
 
-#if PCVT_NETBSD
 			if(pitch != 0)
 			{
 			    sysbeep(PCVT_SYSBEEPF / pitch,
 				    duration * hz / 1000);
 			}
-#else /* PCVT_NETBSD */
-			sysbeep(pitch, duration * hz / 3000);
-#endif /* PCVT_NETBSD */
-
 		}
 		else
 		{
