@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.3 1998/11/16 18:33:32 jason Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.4 1998/11/23 21:55:56 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1932,15 +1932,19 @@ static int tl_newbuf(sc, c)
 
 	MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 	if (m_new == NULL) {
+#if defined(__FreeBSD__)
 		printf("tl%d: no memory for rx list -- packet dropped!",
 				sc->tl_unit);
+#endif
 		return(ENOBUFS);
 	}
 
 	MCLGET(m_new, M_DONTWAIT);
 	if (!(m_new->m_flags & M_EXT)) {
+#if defined(__FreeBSD__)
 		printf("tl%d: no memory for rx list -- packet dropped!",
 				 sc->tl_unit);
+#endif
 		m_freem(m_new);
 		return(ENOBUFS);
 	}
@@ -2426,15 +2430,19 @@ static int tl_encap(sc, c, m_head)
 
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL) {
+#if defined(__FreeBSD__)
 			printf("tl%d: no memory for tx list", sc->tl_unit);
+#endif
 			return(1);
 		}
 		if (m_head->m_pkthdr.len > MHLEN) {
 			MCLGET(m_new, M_DONTWAIT);
 			if (!(m_new->m_flags & M_EXT)) {
 				m_freem(m_new);
+#if defined(__FreeBSD__)
 				printf("tl%d: no memory for tx list",
 				sc->tl_unit);
+#endif
 				return(1);
 			}
 		}
@@ -2454,9 +2462,11 @@ static int tl_encap(sc, c, m_head)
 	 * frame size. We have to pad it to make the chip happy.
 	 */
 	if (total_len < TL_MIN_FRAMELEN) {
+#if defined(__FreeBSD__)
 		if (frag == TL_MAXFRAGS)
 			printf("tl%d: all frags filled but "
 				"frame still to small!\n", sc->tl_unit);
+#endif
 		f = &c->tl_ptr->tl_frag[frag];
 		f->tlist_dcnt = TL_MIN_FRAMELEN - total_len;
 		f->tlist_dadr = vtophys(&sc->tl_ldata->tl_pad);
