@@ -1,4 +1,4 @@
-.\"	$OpenBSD: creator.4,v 1.2 2002/05/21 19:10:54 jason Exp $
+.\"	$OpenBSD: creator.4,v 1.3 2002/05/22 03:18:40 jason Exp $
 .\"
 .\" Copyright (c) 2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -50,10 +50,8 @@ but makes its functions available via the internal
 .Xr wsdisplay 4
 interface.
 .Sh SEE ALSO
-.Xr sbus 4 ,
 .Xr wscons 4 ,
 .Xr wsdisplay 4
 .Sh BUGS
-This driver only supports console (text mode) access; there is currently
-no support for the X Windows System.
-Console operations are unaccelerated and quite slow.
+There is no support for the acceleration this hardware provides, so
+some operations are quite slow.
