@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.65 2004/07/15 15:27:22 markus Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.66 2004/09/16 13:14:28 markus Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -83,6 +83,7 @@ struct tcpcb {
 #define TF_DISABLE_ECN	0x00040000	/* disable ECN for this connection */
 #endif
 #define TF_REASSLOCK	0x00080000	/* reassembling or draining */
+#define TF_LASTIDLE	0x00100000	/* no outstanding ACK on last send */
 
 	struct	mbuf *t_template;	/* skeletal packet for transmit */
 	struct	inpcb *t_inpcb;		/* back pointer to internet pcb */
