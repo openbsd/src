@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.57 2002/03/02 00:44:52 provos Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.58 2002/03/08 03:49:58 provos Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -81,6 +81,7 @@
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/domain.h>
+#include <sys/kernel.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -479,15 +480,6 @@ tcp_usrreq(so, req, m, nam, control)
 		else
 #endif
 			in_setpeeraddr(inp, nam);
-		break;
-
-	/*
-	 * TCP slow timer went off; going through this
-	 * routine for tracing's sake.
-	 */
-	case PRU_SLOWTIMO:
-		tp = tcp_timers(tp, (long)nam);
-		req |= (long)nam << 8;		/* for debug's sake */
 		break;
 
 	default:

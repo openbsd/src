@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.40 2002/03/02 00:44:52 provos Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.41 2002/03/08 03:49:58 provos Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -61,8 +61,8 @@ struct sackhole {
  */
 struct tcpcb {
 	struct ipqehead segq;		/* sequencing queue */
+	struct timeout t_timer[TCPT_NTIMERS];	/* tcp timers */
 	short	t_state;		/* state of this connection */
-	short	t_timer[TCPT_NTIMERS];	/* tcp timers */
 	short	t_rxtshift;		/* log(2) of rexmt exp. backoff */
 	short	t_rxtcur;		/* current retransmit value */
 	short	t_dupacks;		/* consecutive dup acks recd */
@@ -145,8 +145,8 @@ struct tcpcb {
  * transmit timing stuff.  See below for scale of srtt and rttvar.
  * "Variance" is actually smoothed difference.
  */
-	short	t_idle;			/* inactivity time */
-	short	t_rtt;			/* round trip time */
+	uint32_t t_rcvtime;		/* time last segment received */
+	uint32_t t_rtttime;		/* time we started measuring rtt */
 	tcp_seq	t_rtseq;		/* sequence number being timed */
 	short	t_srtt;			/* smoothed round-trip time */
 	short	t_rttvar;		/* variance in round-trip time */
@@ -403,8 +403,6 @@ void	 tcp_setpersist __P((struct tcpcb *));
 void	 tcp_slowtimo __P((void));
 struct mbuf *
 	 tcp_template __P((struct tcpcb *));
-struct tcpcb *
-	 tcp_timers __P((struct tcpcb *, int));
 void	 tcp_trace __P((int, int, struct tcpcb *, caddr_t, int, int));
 struct tcpcb *
 	 tcp_usrclosed __P((struct tcpcb *));

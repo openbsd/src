@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.59 2002/03/02 00:44:52 provos Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.60 2002/03/08 03:49:58 provos Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -670,6 +670,7 @@ tcp_close(struct tcpcb *tp)
 	/* free the reassembly queue, if any */
 	tcp_freeq(tp);
 
+	tcp_canceltimers(tp);
 	TCP_CLEAR_DELACK(tp);
 
 #ifdef TCP_SACK

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.106 2002/03/02 00:44:52 provos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.107 2002/03/08 03:49:58 provos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -79,6 +79,7 @@
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
+#include <sys/kernel.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -877,7 +878,7 @@ findpcb:
 	 * Segment received on connection.
 	 * Reset idle time and keep-alive timer.
 	 */
-	tp->t_idle = 0;
+	tp->t_rcvtime = tcp_now;
 	if (tp->t_state != TCPS_SYN_RECEIVED)
 		TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepidle);
 
@@ -942,9 +943,10 @@ findpcb:
 				++tcpstat.tcps_predack;
 				if (ts_present)
 					tcp_xmit_timer(tp, tcp_now-ts_ecr+1);
-				else if (tp->t_rtt &&
+				else if (tp->t_rtttime &&
 					    SEQ_GT(th->th_ack, tp->t_rtseq))
-					tcp_xmit_timer(tp, tp->t_rtt);
+					tcp_xmit_timer(tp,
+					    tcp_now - tp->t_rtttime);
 				acked = th->th_ack - tp->snd_una;
 				tcpstat.tcps_rcvackpack++;
 				tcpstat.tcps_rcvackbyte += acked;
@@ -1287,8 +1289,8 @@ findpcb:
 			 * if we didn't have to retransmit the SYN,
 			 * use its rtt as our initial srtt & rtt var.
 			 */
-			if (tp->t_rtt)
-				tcp_xmit_timer(tp, tp->t_rtt);
+			if (tp->t_rtttime)
+				tcp_xmit_timer(tp, tcp_now - tp->t_rtttime);
 			/*
 			 * Since new data was acked (the SYN), open the
 			 * congestion window by one MSS.  We do this
@@ -1645,7 +1647,7 @@ trimthenstep6:
 #ifdef TCP_SACK
                     			if (!tp->sack_disable) {
 						TCP_TIMER_DISARM(tp, TCPT_REXMT);
-						tp->t_rtt = 0;
+						tp->t_rtttime = 0;
 						tcpstat.tcps_sndrexmitfast++;
 #if defined(TCP_SACK) && defined(TCP_FACK) 
 						tp->t_dupacks = tcprexmtthresh;
@@ -1668,7 +1670,7 @@ trimthenstep6:
 					}
 #endif /* TCP_SACK */
 					TCP_TIMER_DISARM(tp, TCPT_REXMT);
-					tp->t_rtt = 0;
+					tp->t_rtttime = 0;
 					tp->snd_nxt = th->th_ack;
 					tp->snd_cwnd = tp->t_maxseg;
 					tcpstat.tcps_sndrexmitfast++;
@@ -1778,8 +1780,8 @@ trimthenstep6:
 		 */
 		if (ts_present)
 			tcp_xmit_timer(tp, tcp_now-ts_ecr+1);
-		else if (tp->t_rtt && SEQ_GT(th->th_ack, tp->t_rtseq))
-			tcp_xmit_timer(tp,tp->t_rtt);
+		else if (tp->t_rtttime && SEQ_GT(th->th_ack, tp->t_rtseq))
+			tcp_xmit_timer(tp, tcp_now - tp->t_rtttime);
 
 		/*
 		 * If all outstanding data is acked, stop retransmit
@@ -2664,7 +2666,7 @@ tcp_sack_partialack(tp, th)
 	if (SEQ_LT(th->th_ack, tp->snd_last)) {
 		/* Turn off retx. timer (will start again next segment) */
 		TCP_TIMER_DISARM(tp, TCPT_REXMT);
-		tp->t_rtt = 0;
+		tp->t_rtttime = 0;
 #ifndef TCP_FACK
 		/* 
 		 * Partial window deflation.  This statement relies on the 
@@ -2766,7 +2768,7 @@ tcp_xmit_timer(tp, rtt)
 		tp->t_srtt = rtt << (TCP_RTT_SHIFT + 2);
 		tp->t_rttvar = rtt << (TCP_RTTVAR_SHIFT + 2 - 1);
 	}
-	tp->t_rtt = 0;
+	tp->t_rtttime = 0;
 	tp->t_rxtshift = 0;
 
 	/*
@@ -3085,7 +3087,7 @@ tcp_newreno(tp, th)
 		tcp_seq onxt = tp->snd_nxt;
 		u_long  ocwnd = tp->snd_cwnd;
 		TCP_TIMER_DISARM(tp, TCPT_REXMT);
-		tp->t_rtt = 0;
+		tp->t_rtttime = 0;
 		tp->snd_nxt = th->th_ack;
 		/* 
 		 * Set snd_cwnd to one segment beyond acknowledged offset
