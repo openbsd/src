@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.98 2004/12/08 06:57:55 mcbride Exp $	*/
+/*	$OpenBSD: if.c,v 1.99 2004/12/08 07:02:16 mcbride Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -681,6 +681,7 @@ if_clone_destroy(name)
 {
 	struct if_clone *ifc;
 	struct ifnet *ifp;
+	int s;
 
 	ifc = if_clone_lookup(name, NULL);
 	if (ifc == NULL)
@@ -692,6 +693,12 @@ if_clone_destroy(name)
 
 	if (ifc->ifc_destroy == NULL)
 		return (EOPNOTSUPP);
+
+	if (ifp->if_flags & IFF_UP) {
+		s = splimp();
+		if_down(ifp);
+		splx(s);
+	}
 
 	return ((*ifc->ifc_destroy)(ifp));
 }
