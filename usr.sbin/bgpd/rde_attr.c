@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.34 2004/06/24 22:01:54 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.35 2004/06/24 23:15:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -44,6 +44,8 @@
 #define F_ATTR_NEXTHOP		0x04
 #define F_ATTR_LOCALPREF	0x08
 #define F_ATTR_MED		0x10
+#define F_ATTR_MP_REACH		0x20
+#define F_ATTR_MP_UNREACH	0x40
 
 #define WFLAG(s, t)			\
 	do {				\
@@ -178,14 +180,30 @@ attr_parse(u_char *p, u_int16_t len, struct attr_flags *a, int ebgp,
 	case ATTR_ORIGINATOR_ID:
 		if (attr_len != 4)
 			return (-1);
-		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL, ATTR_PARTIAL))
+		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL, 0))
 			return (-1);
 		goto optattr;
 	case ATTR_CLUSTER_LIST:
 		if ((attr_len & 0x3) != 0)
 			return (-1);
-		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL, ATTR_PARTIAL))
+		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL, 0))
 			return (-1);
+		goto optattr;
+	case ATTR_MP_REACH_NLRI:
+		if (attr_len < 4)
+			return (-1);
+		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL, 0))
+			return (-1);
+		/* the actually validity is checked in rde_update_dispatch() */
+		WFLAG(a->wflags, F_ATTR_MP_REACH);
+		goto optattr;
+	case ATTR_MP_UNREACH_NLRI:
+		if (attr_len < 3)
+			return (-1);
+		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL, 0))
+			return (-1);
+		/* the actually validity is checked in rde_update_dispatch() */
+		WFLAG(a->wflags, F_ATTR_MP_UNREACH);
 		goto optattr;
 	default:
 optattr:
@@ -203,6 +221,7 @@ attr_error(u_char *p, u_int16_t len, struct attr_flags *attr,
     u_int8_t *suberr, u_int16_t *size)
 {
 	struct attr	*a;
+	u_char		*op;
 	u_int16_t	 attr_len;
 	u_int16_t	 plen = 0;
 	u_int8_t	 flags;
@@ -211,15 +230,16 @@ attr_error(u_char *p, u_int16_t len, struct attr_flags *attr,
 
 	*suberr = ERR_UPD_ATTRLEN;
 	*size = len;
+	op = p;
 	if (len < 3)
-		return (p);
+		return (op);
 
 	UPD_READ(&flags, p, plen, 1);
 	UPD_READ(&type, p, plen, 1);
 
 	if (flags & ATTR_EXTLEN) {
 		if (len - plen < 2)
-			return (p);
+			return (op);
 		UPD_READ(&attr_len, p, plen, 2);
 	} else {
 		UPD_READ(&tmp8, p, plen, 1);
@@ -227,7 +247,7 @@ attr_error(u_char *p, u_int16_t len, struct attr_flags *attr,
 	}
 
 	if (len - plen < attr_len)
-		return (p);
+		return (op);
 	*size = attr_len;
 
 	switch (type) {
@@ -238,7 +258,7 @@ attr_error(u_char *p, u_int16_t len, struct attr_flags *attr,
 		return (NULL);
 	case ATTR_ORIGIN:
 		if (attr_len != 1)
-			return (p);
+			return (op);
 		if (attr->wflags & F_ATTR_ORIGIN) {
 			*suberr = ERR_UPD_ATTRLIST;
 			*size = 0;
@@ -247,7 +267,7 @@ attr_error(u_char *p, u_int16_t len, struct attr_flags *attr,
 		UPD_READ(&tmp8, p, plen, 1);
 		if (tmp8 > ORIGIN_INCOMPLETE) {
 			*suberr = ERR_UPD_ORIGIN;
-			return (p);
+			return (op);
 		}
 		break;
 	case ATTR_ASPATH:
@@ -265,7 +285,7 @@ attr_error(u_char *p, u_int16_t len, struct attr_flags *attr,
 		break;
 	case ATTR_NEXTHOP:
 		if (attr_len != 4)
-			return (p);
+			return (op);
 		if (attr->wflags & F_ATTR_NEXTHOP) {
 			*suberr = ERR_UPD_ATTRLIST;
 			*size = 0;
@@ -274,12 +294,12 @@ attr_error(u_char *p, u_int16_t len, struct attr_flags *attr,
 		if (CHECK_FLAGS(flags, ATTR_WELL_KNOWN, 0)) {
 			/* malformed nexthop detected by exclusion method */
 			*suberr = ERR_UPD_NETWORK;
-			return (p);
+			return (op);
 		}
 		break;
 	case ATTR_MED:
 		if (attr_len != 4)
-			return (p);
+			return (op);
 		if (attr->wflags & F_ATTR_MED) {
 			*suberr = ERR_UPD_ATTRLIST;
 			*size = 0;
@@ -288,7 +308,7 @@ attr_error(u_char *p, u_int16_t len, struct attr_flags *attr,
 		break;
 	case ATTR_LOCALPREF:
 		if (attr_len != 4)
-			return (p);
+			return (op);
 		if (attr->wflags & F_ATTR_LOCALPREF) {
 			*suberr = ERR_UPD_ATTRLIST;
 			*size = 0;
@@ -297,29 +317,37 @@ attr_error(u_char *p, u_int16_t len, struct attr_flags *attr,
 		break;
 	case ATTR_ATOMIC_AGGREGATE:
 		if (attr_len != 0)
-			return (p);
+			return (op);
 		break;
 	case ATTR_AGGREGATOR:
 		if (attr_len != 6)
-			return (p);
+			return (op);
 		break;
 	case ATTR_COMMUNITIES:
 		if ((attr_len & 0x3) != 0)
-			return (p);
+			return (op);
 		goto optattr;
 	case ATTR_ORIGINATOR_ID:
 		if (attr_len != 4)
-			return (p);
+			return (op);
 		goto optattr;
 	case ATTR_CLUSTER_LIST:
 		if ((attr_len & 0x3) != 0)
-			return (p);
+			return (op);
+		goto optattr;
+	case ATTR_MP_REACH_NLRI:
+		if (attr_len < 4)
+			return (op);
+		goto optattr;
+	case ATTR_MP_UNREACH_NLRI:
+		if (attr_len < 3)
+			return (op);
 		goto optattr;
 	default:
 optattr:
 		if ((flags & ATTR_OPTIONAL) == 0) {
 			*suberr = ERR_UPD_UNKNWN_WK_ATTR;
-			return (p);
+			return (op);
 		}
 		TAILQ_FOREACH(a, &attr->others, entry)
 			if (type == a->type) {
@@ -328,11 +356,11 @@ optattr:
 				return (NULL);
 			}
 		*suberr = ERR_UPD_OPTATTR;
-		return (p);
+		return (op);
 	}
 	/* can only be a attribute flag error */
 	*suberr = ERR_UPD_ATTRFLAGS;
-	return (p);
+	return (op);
 }
 #undef UPD_READ
 #undef WFLAG
@@ -344,7 +372,8 @@ attr_missing(struct attr_flags *a, int ebgp)
 		return (ATTR_ORIGIN);
 	if ((a->wflags & F_ATTR_ASPATH) == 0)
 		return (ATTR_ASPATH);
-	if ((a->wflags & F_ATTR_NEXTHOP) == 0)
+	if ((a->wflags & F_ATTR_MP_REACH) == 0 &&
+	    (a->wflags & F_ATTR_NEXTHOP) == 0)
 		return (ATTR_NEXTHOP);
 	if (!ebgp)
 		if ((a->wflags & F_ATTR_LOCALPREF) == 0)
@@ -361,6 +390,10 @@ attr_compare(struct attr_flags *a, struct attr_flags *b)
 	if (a->origin > b->origin)
 		return (1);
 	if (a->origin < b->origin)
+		return (-1);
+	if ((a->wflags & F_ATTR_NEXTHOP) && (b->wflags & F_ATTR_NEXTHOP) == 0)
+		return (1);
+	if ((b->wflags & F_ATTR_NEXTHOP) && (a->wflags & F_ATTR_NEXTHOP) == 0)
 		return (-1);
 	if (a->nexthop.s_addr > b->nexthop.s_addr)
 		return (1);
@@ -518,7 +551,7 @@ attr_optadd(struct attr_flags *attr, u_int8_t flags, u_int8_t type,
 }
 
 struct attr *
-attr_optget(struct attr_flags *attr, u_int8_t type)
+attr_optget(const struct attr_flags *attr, u_int8_t type)
 {
 	struct attr	*a;
 
@@ -542,6 +575,94 @@ attr_optfree(struct attr_flags *attr)
 		free(a->data);
 		free(a);
 	}
+}
+
+int
+attr_ismp(const struct attr_flags *attr)
+{
+	return (attr->wflags & F_ATTR_MP_REACH);
+}
+
+int
+attr_mp_nexthop_check(u_char *data, u_int16_t len, u_int16_t afi)
+{
+	u_int8_t	nh_len;
+
+	if (len == 0)
+		return (-1);
+
+	nh_len = *data++;
+	len--;
+	
+	if (nh_len > len)
+		return (-1);
+	
+	switch (afi) {
+	case AFI_IPv6:
+		if (nh_len != 16 && nh_len != 32) {
+			log_warnx("bad multiprotocol nexthop, bad size");
+			return (-1);
+		}
+		return (nh_len + 1);
+	default:
+		log_warnx("bad multiprotocol nexthop, bad AF");
+		break;
+	}
+
+	return (-1);
+}
+
+/*
+ * this function may only be called after attr_mp_nexthop_check()
+ */
+struct bgpd_addr *
+attr_mp_nexthop(const struct attr_flags *attrs)
+{
+	static struct bgpd_addr	 address;
+	struct attr		*mpattr;
+	u_int8_t		*p;
+	u_int16_t		 afi;
+	u_int8_t		 nhlen;
+
+	if ((mpattr = attr_optget(attrs, ATTR_MP_REACH_NLRI)) == NULL) {
+		log_warnx("attr_mp_nexthop: no MP_REACH_NLRI available");
+		return (NULL);
+	}
+	p = mpattr->data;
+	if (mpattr->len < 4)
+		fatalx("Who fucked up the code? King Bula?");
+
+	memcpy(&afi, p, 2);
+	afi = ntohs(afi);
+	p += 3;
+
+	nhlen = *p++;
+	if (nhlen > mpattr->len)
+		fatalx("Who fucked up the code? King Bula?");
+
+	bzero(&address, sizeof(address));
+	switch (afi) {
+	case AFI_IPv6:
+		address.af = AF_INET6;
+		if (nhlen == 16)  {
+			memcpy(&address.v6.s6_addr, p, 16);
+			return (&address);
+		}
+		if (nhlen == 32) {
+			/*
+			 * XXX acctually the link lokal address should be used
+			 * for kroute and the global one updates.
+			 */
+			memcpy(&address.v6.s6_addr, p, 16);
+			return (&address);
+		}
+		fatalx("Who fucked up the code? King Bula?");
+	default:
+		fatalx("attr_mp_nexthop: unsupported AF");
+	}
+
+	/* NOTREACHED */
+	return (NULL);
 }
 
 /* aspath specific functions */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.120 2004/06/23 07:10:05 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.121 2004/06/24 23:15:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -41,6 +41,8 @@ void		 rde_dispatch_imsg_session(struct imsgbuf *);
 void		 rde_dispatch_imsg_parent(struct imsgbuf *);
 int		 rde_update_dispatch(struct imsg *);
 int		 rde_update_get_prefix(u_char *, u_int16_t, struct bgpd_addr *,
+		     u_int8_t *);
+int		 rde_update_get_prefix6(u_char *, u_int16_t, struct bgpd_addr *,
 		     u_int8_t *);
 void		 rde_update_err(struct rde_peer *, u_int8_t , u_int8_t,
 		     void *, u_int16_t);
@@ -424,15 +426,16 @@ int
 rde_update_dispatch(struct imsg *imsg)
 {
 	struct rde_peer		*peer;
-	u_char			*p, *emsg;
+	u_char			*p, *emsg, *mpp;
 	int			 pos;
-	u_int16_t		 len;
+	u_int16_t		 afi, len, mplen;
 	u_int16_t		 withdrawn_len;
 	u_int16_t		 attrpath_len;
 	u_int16_t		 nlri_len, size;
-	u_int8_t		 prefixlen, subtype;
+	u_int8_t		 prefixlen, safi, subtype;
 	struct bgpd_addr	 prefix;
 	struct attr_flags	 attrs, fattrs;
+	struct attr		*mpattr;
 
 	peer = peer_get(imsg->hdr.peerid);
 	if (peer == NULL)	/* unknown peer, cannot happen */
@@ -530,6 +533,57 @@ rde_update_dispatch(struct imsg *imsg)
 		prefix_remove(peer, &prefix, prefixlen);
 	}
 
+	/* withdraw MP_UNREACH_NRLI if available */
+	if (attrpath_len != 0 &&
+	    (mpattr = attr_optget(&attrs, ATTR_MP_UNREACH_NLRI)) != NULL) {
+		mpp = mpattr->data;
+		mplen = mpattr->len;
+		memcpy(&afi, mpp, 2);
+		mpp += 2;
+		mplen -= 2;
+		afi = ntohs(afi);
+		safi = *mpp++;
+		mplen--;
+		switch (afi) {
+		case AFI_IPv6:
+			while (mplen > 0) {
+				if ((pos = rde_update_get_prefix6(mpp, mplen,
+				    &prefix, &prefixlen)) == -1) {
+					log_peer_warnx(&peer->conf,
+					    "bad IPv6 withdraw prefix");
+					rde_update_err(peer, ERR_UPDATE,
+					    ERR_UPD_OPTATTR,
+					    mpattr->data, mpattr->len);
+					attr_free(&attrs);
+					return (-1);
+				}
+				if (prefixlen > 128) {
+					log_peer_warnx(&peer->conf,
+					    "bad IPv6 withdraw prefix");
+					rde_update_err(peer, ERR_UPDATE,
+					    ERR_UPD_OPTATTR,
+					    mpattr->data, mpattr->len);
+					attr_free(&attrs);
+					return (-1);
+				}
+
+				mpp += pos;
+				mplen -= pos;
+
+				/* input filter */
+				if (rde_filter(peer, NULL, &prefix, prefixlen,
+				    DIR_IN) == ACTION_DENY)
+					continue;
+
+				rde_update_log("withdraw", peer, NULL,
+				    &prefix, prefixlen);
+				prefix_remove(peer, &prefix, prefixlen);
+			}
+		default:
+			fatalx("unsupported multipath AF");
+		}
+	}
+
 	if (attrpath_len == 0) /* 0 = no NLRI information in this message */
 		return (0);
 
@@ -599,6 +653,90 @@ rde_update_dispatch(struct imsg *imsg)
 		path_update(peer, &fattrs, &prefix, prefixlen);
 	}
 
+	/* add MP_REACH_NLRI if available */
+	if ((mpattr = attr_optget(&attrs, ATTR_MP_REACH_NLRI)) != NULL) {
+		mpp = mpattr->data;
+		mplen = mpattr->len;
+		memcpy(&afi, mpp, 2);
+		mpp += 2;
+		mplen -= 2;
+		afi = ntohs(afi);
+		safi = *mpp++;
+		mplen--;
+
+		if ((pos = attr_mp_nexthop_check(mpp, mplen, afi)) == -1) {
+			log_peer_warnx(&peer->conf, "bad IPv6 nlri prefix");
+			rde_update_err(peer, ERR_UPDATE, ERR_UPD_OPTATTR,
+			    mpattr->data, mpattr->len);
+			attr_free(&attrs);
+			return (-1);
+		}
+
+		mpp += pos;
+		mplen -= pos;
+
+		if (*p++ != NULL) {
+			/* XXX this is ugly */
+			log_peer_warnx(&peer->conf, "SNPA are not supported");
+			rde_update_err(peer, ERR_UPDATE, ERR_UPD_OPTATTR,
+			    mpattr->data, mpattr->len);
+			attr_free(&attrs);
+			return (-1);
+		}
+		switch (afi) {
+		case AFI_IPv6:
+			while (mplen > 0) {
+				if ((pos = rde_update_get_prefix6(mpp, mplen,
+				    &prefix, &prefixlen)) == -1) {
+					log_peer_warnx(&peer->conf,
+					    "bad IPv6 nlri prefix");
+					rde_update_err(peer, ERR_UPDATE,
+					    ERR_UPD_OPTATTR,
+					    mpattr->data, mpattr->len);
+					attr_free(&attrs);
+					return (-1);
+				}
+				if (prefixlen > 128) {
+					rde_update_err(peer, ERR_UPDATE,
+					    ERR_UPD_OPTATTR,
+					    mpattr->data, mpattr->len);
+					attr_free(&attrs);
+					return (-1);
+				}
+
+				mpp += pos;
+				mplen -= pos;
+
+				attr_copy(&fattrs, &attrs);
+				/* input filter */
+				if (rde_filter(peer, &fattrs, &prefix,
+				    prefixlen, DIR_IN) == ACTION_DENY) {
+					attr_free(&fattrs);
+					continue;
+				}
+
+				/* XXX IPv4 and IPv6 together */
+				/* max prefix checker */
+				if (peer->conf.max_prefix &&
+				    peer->prefix_cnt >= peer->conf.max_prefix) {
+					log_peer_warnx(&peer->conf,
+					    "prefix limit reached");
+					rde_update_err(peer, ERR_CEASE,
+					    ERR_CEASE_MAX_PREFIX, NULL, 0);
+					attr_free(&attrs);
+					attr_free(&fattrs);
+					return (-1);
+				}
+
+				rde_update_log("update", peer, &fattrs,
+				    &prefix, prefixlen);
+				path_update(peer, &fattrs, &prefix, prefixlen);
+			}
+		default:
+			fatalx("unsupported AF");
+		}
+	}
+
 	/* need to free allocated attribute memory that is no longer used */
 	attr_free(&attrs);
 
@@ -624,7 +762,7 @@ rde_update_get_prefix(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
 	p += 1;
 	plen = 1;
 
-	addr.a32.s_addr = 0;
+	bzero(prefix, sizeof(struct bgpd_addr));
 	for (i = 0; i <= 3; i++) {
 		if (pfxlen > i * 8) {
 			if (len - plen < 1)
@@ -635,6 +773,36 @@ rde_update_get_prefix(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
 	}
 	prefix->af = AF_INET;
 	prefix->v4.s_addr = addr.a32.s_addr;
+	*prefixlen = pfxlen;
+
+	return (plen);
+}
+
+int
+rde_update_get_prefix6(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
+    u_int8_t *prefixlen)
+{
+	int		i;
+	u_int8_t	pfxlen;
+	u_int16_t	plen;
+
+	if (len < 1)
+		return (-1);
+
+	memcpy(&pfxlen, p, 1);
+	p += 1;
+	plen = 1;
+
+	bzero(prefix, sizeof(struct bgpd_addr));
+	for (i = 0; i <= 15; i++) {
+		if (pfxlen > i * 8) {
+			if (len - plen < 1)
+				return (-1);
+			memcpy(&prefix->v6.s6_addr[i], p++, 1);
+			plen++;
+		}
+	}
+	prefix->af = AF_INET6;
 	*prefixlen = pfxlen;
 
 	return (plen);
@@ -664,19 +832,30 @@ rde_update_log(const char *message,
     const struct bgpd_addr *prefix, u_int8_t prefixlen)
 {
 	char		*nexthop = NULL;
+	char		*p = NULL;
 
-	if (! (conf->log & BGPD_LOG_UPDATES))
+	if (!(conf->log & BGPD_LOG_UPDATES))
 		return;
 
 	if (attr != NULL)
-		asprintf(&nexthop, " via %s", inet_ntoa(attr->nexthop));
+		if (attr_ismp(attr)) {
+			if (asprintf(&nexthop, " via %s",
+			    log_addr(attr_mp_nexthop(attr))) == -1)
+				nexthop = NULL;
+		else
+			if (asprintf(&nexthop, " via %s",
+			    inet_ntoa(attr->nexthop)) == -1)
+				nexthop = NULL;
+		}
 
+	if (asprintf(&p, "%s/%u", log_addr(prefix), prefixlen) == -1)
+		p = NULL;
 	log_debug("neighbor %s (AS%u) %s %s/%u %s",
 	    log_addr(&peer->conf.remote_addr), peer->conf.remote_as, message,
-	    inet_ntoa(prefix->v4), prefixlen,
-	    nexthop ? nexthop : "");
+	    p ? p : "out of memory", nexthop ? nexthop : "");
 
 	free(nexthop);
+	free(p);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.10 2004/06/20 18:35:12 henning Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.11 2004/06/24 23:15:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -95,7 +95,6 @@ int
 rde_filter_match(struct filter_rule *f, struct attr_flags *attrs,
     struct bgpd_addr *prefix, u_int8_t plen)
 {
-	in_addr_t	mask;
 
 	if (attrs != NULL && f->match.as.type != AS_NONE)
 		if (aspath_match(attrs->aspath, f->match.as.type,
@@ -109,16 +108,9 @@ rde_filter_match(struct filter_rule *f, struct attr_flags *attrs,
 
 	if (f->match.prefix.addr.af != 0 &&
 	    f->match.prefix.addr.af == prefix->af) {
-		switch (f->match.prefix.addr.af) {
-		case AF_INET:
-			mask = htonl(0xffffffff << (32 - f->match.prefix.len));
-			if ((prefix->v4.s_addr & mask) !=
-			    (f->match.prefix.addr.v4.s_addr & mask))
-				return (0);
-			break;
-		default:
-			fatalx("rde_filter_match: unsupported address family");
-		}
+		if (prefix_equal(prefix, &f->match.prefix.addr,
+		    f->match.prefix.len) != 0)
+			return (0);
 
 		/* test prefixlen stuff too */
 		switch (f->match.prefixlen.op) {

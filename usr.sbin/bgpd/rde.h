@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.42 2004/06/22 20:28:58 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.43 2004/06/24 23:15:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -99,7 +99,9 @@ enum attrtypes {
 	ATTR_AGGREGATOR,
 	ATTR_COMMUNITIES,
 	ATTR_ORIGINATOR_ID,
-	ATTR_CLUSTER_LIST
+	ATTR_CLUSTER_LIST,
+	ATTR_MP_REACH_NLRI=14,
+	ATTR_MP_UNREACH_NLRI=15
 };
 
 /* attribute flags. 4 low order bits reserved */
@@ -148,7 +150,7 @@ struct nexthop {
 #if 0
 	/*
 	 * currently we use the boolean nexthop state, this could be exchanged
-	 * with a variable coast with a max for unreachable.
+	 * with a variable cost with a max for unreachable.
 	 */
 	u_int32_t		costs;
 #endif
@@ -248,8 +250,11 @@ int		 attr_write(void *, u_int16_t, u_int8_t, u_int8_t, void *,
 		     u_int16_t);
 int		 attr_optadd(struct attr_flags *, u_int8_t, u_int8_t,
 		     void *, u_int16_t);
-struct attr	*attr_optget(struct attr_flags *, u_int8_t);
+struct attr	*attr_optget(const struct attr_flags *, u_int8_t);
 void		 attr_optfree(struct attr_flags *);
+int		 attr_ismp(const struct attr_flags *);
+int		 attr_mp_nexthop_check(u_char *, u_int16_t, u_int16_t);
+struct bgpd_addr	*attr_mp_nexthop(const struct attr_flags *);
 
 int		 aspath_verify(void *, u_int16_t);
 #define		 AS_ERR_LEN	-1
