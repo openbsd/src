@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.8 1998/10/05 09:58:21 niklas Exp $	*/
+/*	$OpenBSD: bus.h,v 1.9 1999/01/20 17:46:20 niklas Exp $	*/
 
 /*
  * Copyright (c) 1996 Niklas Hallqvist.
@@ -314,5 +314,20 @@ bus_space_write_raw_region_4(bus_space_tag_t bst, bus_space_handle_t bsh,
 
 #define	bus_space_write_raw_region_8 \
     !!! bus_space_write_raw_region_8 not implemented !!!
+
+static __inline int
+bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
+		bus_size_t size, bus_size_t alignment, bus_size_t boundary,
+		int cacheable, bus_addr_t *bpap, bus_space_handle_t *bshp)
+{
+	/* XXX Always fail for now.  */
+	return (1);
+}
+
+static __inline void
+bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
+{
+	/* XXX Nothing here yet.  */
+}
 
 #endif /* _AMIGA_BUS_H_ */
