@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecreg.h,v 1.9 2001/01/29 04:01:44 jason Exp $	*/
+/*	$OpenBSD: ubsecreg.h,v 1.10 2001/02/02 01:00:07 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -67,7 +67,8 @@
 #define	BS_STAT_MCR2_DONE	0x04000000	/* MCR2 is done */
 
 /* BS_ERR - DMA Error Address */
-#define	BS_ERR_READ		0x00000001	/* fault was on read */
+#define	BS_ERR_ADDR		0xfffffffc	/* error address mask */
+#define	BS_ERR_READ		0x00000002	/* fault was on read */
 
 #define	UBSEC_CARD(sid)		(((sid) & 0xf0000000) >> 28)
 #define	UBSEC_SESSION(sid)	( (sid) & 0x0fffffff)

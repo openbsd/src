@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.39 2001/01/31 05:14:02 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.40 2001/02/02 01:00:07 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -292,7 +292,7 @@ ubsec_intr(arg)
 		a = READ_REG(sc, BS_ERR);
 		printf("%s: dmaerr %s@%08x\n", sc->sc_dv.dv_xname,
 		    (a & BS_ERR_READ) ? "read" : "write",
-		    a & ~BS_ERR_READ);
+		    a & BS_ERR_ADDR);
 	}
 
 	return (1);
