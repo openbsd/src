@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.10 2001/02/18 21:45:09 espie Exp $	*/
+/*	$OpenBSD: nm.c,v 1.11 2001/05/31 16:28:51 smart Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)nm.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: nm.c,v 1.10 2001/02/18 21:45:09 espie Exp $";
+static char rcsid[] = "$OpenBSD: nm.c,v 1.11 2001/05/31 16:28:51 smart Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -84,9 +84,9 @@ int (*sfunc)() = fname;
 #define	IS_EXTERNAL(x)		((x) & N_EXT)
 #define	SYMBOL_TYPE(x)		((x) & (N_TYPE | N_STAB))
 
-void *emalloc(), *erealloc();
-
-void pipe2cppfilt();
+void	*emalloc __P((size_t));
+void	 pipe2cppfilt __P((void));
+void	 usage __P((void));
 
 /*
  * main()
@@ -262,7 +262,8 @@ show_archive(fname, fp)
 			int len = atoi(&ar_head.ar_name[3]);
 			if (len > namelen) {
 				p -= (long)name;
-				name = (char *)erealloc(name, baselen+len);
+				if ((name = realloc(name, baselen+len)) == NULL)
+					err(1, NULL);
 				namelen = len;
 				p += (long)name;
 			}
@@ -626,19 +627,6 @@ emalloc(size)
 	if (p = malloc(size))
 		return(p);
 	err(1, NULL);
-	exit(1);
-}
-
-void *
-erealloc(p, size)
-	void   *p;
-	size_t size;
-{
-	/* NOSTRICT */
-	if (p = realloc(p, size))
-		return(p);
-	err(1, NULL);
-	exit(1);
 }
 
 #define CPPFILT	"/usr/bin/c++filt"
@@ -670,6 +658,7 @@ pipe2cppfilt()
 	}
 }
 
+void
 usage()
 {
 	(void)fprintf(stderr, "usage: nm [-aCgnopruw] [file ...]\n");
