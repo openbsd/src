@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.13 2003/08/19 22:19:07 itojun Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.14 2003/08/19 22:20:10 itojun Exp $	*/
 /*	$NetBSD: bpf.c,v 1.5.2.1 1995/11/14 08:45:42 thorpej Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)bpf.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: bpf.c,v 1.13 2003/08/19 22:19:07 itojun Exp $";
+static char rcsid[] = "$OpenBSD: bpf.c,v 1.14 2003/08/19 22:20:10 itojun Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -259,6 +259,7 @@ BpfGetIntfName(char **errmsg)
 	if (mp == 0) {
 		(void) strlcpy(errbuf, "bpf: no interfaces found",
 		    sizeof(errbuf));
+		freeifaddrs(ifap);
 		return(NULL);
 	}
 
