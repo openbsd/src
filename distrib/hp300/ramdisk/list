@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.21 2001/09/17 18:21:30 deraadt Exp $
+#	$OpenBSD: list,v 1.22 2001/09/17 19:10:40 deraadt Exp $
 
 COPY	${OBJDIR}/raminst		raminst
 LINK	raminst				bin/cat
@@ -20,6 +20,7 @@ LINK	raminst				bin/stty
 LINK	raminst				bin/sync
 LINK	raminst				sbin/disklabel
 LINK	raminst				sbin/fsck
+LINK	raminst				sbin/dmesg
 LINK	raminst				sbin/halt
 LINK	raminst				sbin/ifconfig
 LINK	raminst				sbin/init

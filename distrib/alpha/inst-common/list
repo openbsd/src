@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: list,v 1.16 2001/09/17 18:21:30 deraadt Exp $
+#	$OpenBSD: list,v 1.17 2001/09/17 19:10:40 deraadt Exp $
 #
 
 # copy the crunched binary, link to it, and kill it
@@ -23,6 +23,7 @@ LINK	raminst			bin/stty
 LINK	raminst			bin/sleep
 LINK	raminst			bin/tar
 LINK	raminst			sbin/disklabel
+LINK	raminst			sbin/dmesg
 LINK	raminst			sbin/fsck
 LINK	raminst			sbin/halt
 #LINK	raminst			sbin/dhclient
