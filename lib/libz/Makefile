@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2003/12/16 22:33:02 henning Exp $
+#	$OpenBSD: Makefile,v 1.11 2003/12/17 01:15:25 millert Exp $
 
 LIB=	z
 HDRS=	zconf.h zlib.h
@@ -24,8 +24,7 @@ MLINKS=	compress.3 zlibVersion.3 compress.3 deflateInit.3 \
 	compress.3 gztell.3 compress.3 gzeof.3 \
 	compress.3 gzclose.3 compress.3 gzerror.3 \
 	compress.3 adler32.3 compress.3 crc32.3 
-CFLAGS+=-DHAVE_UNISTD_H -DHAVE_STRERROR -DHAVE_MEMCPY -DHAS_vsnprintf \
-	-DHAS_snprintf
+CFLAGS+=-DHAVE_STRERROR -DHAVE_MEMCPY -DHAS_vsnprintf -DHAS_snprintf
 
 includes:
 	@cd ${.CURDIR}; for i in $(HDRS); do \
