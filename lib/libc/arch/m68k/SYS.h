@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: SYS.h,v 1.2 1996/08/19 08:13:51 tholo Exp $
+ *	$OpenBSD: SYS.h,v 1.3 1997/04/17 14:57:31 gvf Exp $
  */
 
 #include <sys/syscall.h>
@@ -42,11 +42,14 @@
 
 #ifdef __STDC__
 
-#define	SYSCALL(x)	.even; err: jra cerror; ENTRY(x); \
-			movl \#SYS_ ## x,d0; trap \#0; jcs err
-#define	RSYSCALL(x)	SYSCALL(x); rts
-#define	PSEUDO(x,y)	ENTRY(x); movl \#SYS_ ## y,d0; trap \#0; rts
+#define _IMMEDIATE_	#
 
+#define	SYSCALL(x)	.even; err: jra cerror; ENTRY(x); \
+			movl _IMMEDIATE_ SYS_ ## x,d0; trap _IMMEDIATE_ 0; jcs err
+#define	RSYSCALL(x)	SYSCALL(x); rts
+#define	PSEUDO(x,y)	ENTRY(x); movl _IMMEDIATE_ SYS_ ## y,d0; trap _IMMEDIATE_ 0; rts
+
+#undef _IMMEDIATE_
 #else /* !__STDC__ */
 
 #define	SYSCALL(x)	.even; err: jra cerror; ENTRY(x); \
