@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.6 2001/01/07 20:27:46 mickey Exp $	*/
+/*	$OpenBSD: twe.c,v 1.7 2001/02/19 20:47:02 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff.  All rights reserved.
@@ -43,10 +43,6 @@
 #include <sys/malloc.h>
 
 #include <machine/bus.h>
-
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <uvm/uvm_extern.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_disk.h>
@@ -118,14 +114,13 @@ twe_dispose(sc)
 	struct twe_softc *sc;
 {
 	register struct twe_ccb *ccb;
-	if (sc->sc_cmdmap != NULL)
-		bus_dmamap_destroy(sc->dmat, sc->sc_cmdmap);
 	/* TODO: traverse the ccbs and destroy the maps */
 	for (ccb = &sc->sc_ccbs[TWE_MAXCMDS - 1]; ccb >= sc->sc_ccbs; ccb--)
 		if (ccb->ccb_dmamap)
 			bus_dmamap_destroy(sc->dmat, ccb->ccb_dmamap);
-	uvm_km_free(kmem_map, (vaddr_t)sc->sc_cmds,
-	    sizeof(struct twe_cmd) * TWE_MAXCMDS);
+	if (sc->sc_cmdmap != NULL)
+		bus_dmamap_destroy(sc->dmat, sc->sc_cmdmap);
+	bus_dmamem_free(sc->dmat, &sc->sc_cmdseg, 1);
 }
 
 int
@@ -140,18 +135,24 @@ twe_attach(sc)
 	struct twe_ccb	*ccb;
 	struct twe_cmd	*cmd;
 	u_int32_t	status;
-	int		error, i, retry, nunits;
+	int		error, i, retry, nunits, nseg;
 	const char	*errstr;
 
-	TAILQ_INIT(&sc->sc_ccb2q);
-	TAILQ_INIT(&sc->sc_ccbq);
-	TAILQ_INIT(&sc->sc_free_ccb);
-	sc->sc_cmds = (void *)uvm_km_kmemalloc(kmem_map, uvmexp.kmem_object,
-	    sizeof(struct twe_cmd) * TWE_MAXCMDS, UVM_KMF_NOWAIT);
-	if (sc->sc_cmds == NULL) {
-		printf(": cannot allocate commands\n");
+	error = bus_dmamem_alloc(sc->dmat, sizeof(struct twe_cmd) * TWE_MAXCMDS,
+	    PAGE_SIZE, 0, &sc->sc_cmdseg, 1, &nseg, BUS_DMA_NOWAIT);
+	if (error) {
+		printf(": cannot allocate commands (%d)\n", error);
 		return (1);
 	}
+
+	error = bus_dmamem_map(sc->dmat, &sc->sc_cmdseg, nseg,
+	    sizeof(struct twe_cmd) * TWE_MAXCMDS,
+	    (caddr_t *)&sc->sc_cmds, BUS_DMA_NOWAIT);
+	if (error) {
+		printf(": cannot map commands (%d)\n", error);
+		return (1);
+	}
+
 	error = bus_dmamap_create(sc->dmat,
 	    sizeof(struct twe_cmd) * TWE_MAXCMDS, TWE_MAXCMDS,
 	    sizeof(struct twe_cmd) * TWE_MAXCMDS, 0,
@@ -168,6 +169,11 @@ twe_attach(sc)
 		twe_dispose(sc);
 		return (1);
 	}
+
+	TAILQ_INIT(&sc->sc_ccb2q);
+	TAILQ_INIT(&sc->sc_ccbq);
+	TAILQ_INIT(&sc->sc_free_ccb);
+
 	for (cmd = sc->sc_cmds + sizeof(struct twe_cmd) * (TWE_MAXCMDS - 1);
 	     cmd >= (struct twe_cmd *)sc->sc_cmds; cmd--) {
 
@@ -396,14 +402,23 @@ twe_cmd(ccb, flags, wait)
 	bus_dmamap_t dmap;
 	struct twe_cmd *cmd;
 	struct twe_segs *sgp;
-	int error, i;
+	int error, i, nseg;
 
 	if (ccb->ccb_data && ((u_long)ccb->ccb_data & (TWE_ALIGN - 1))) {
 		TWE_DPRINTF(TWE_D_DMA, ("data=%p is unaligned ",ccb->ccb_data));
 		ccb->ccb_realdata = ccb->ccb_data;
-		ccb->ccb_data = (void *)uvm_km_kmemalloc(kmem_map,
-		    uvmexp.kmem_object, ccb->ccb_length, UVM_KMF_NOWAIT);
-		if (!ccb->ccb_data) {
+
+		error = bus_dmamem_alloc(sc->dmat, ccb->ccb_length,
+		    PAGE_SIZE, 0, &ccb->ccb_2bseg, 1, &nseg, BUS_DMA_NOWAIT);
+		if (error) {
+			TWE_DPRINTF(TWE_D_DMA, ("2buf alloc failed "));
+			twe_put_ccb(ccb);
+			return (ENOMEM);
+		}
+
+		error = bus_dmamem_map(sc->dmat, &ccb->ccb_2bseg, nseg,
+		    ccb->ccb_length, (caddr_t *)&ccb->ccb_data, BUS_DMA_NOWAIT);
+		if (error) {
 			TWE_DPRINTF(TWE_D_DMA, ("2buf alloc failed "));
 			twe_put_ccb(ccb);
 			return (ENOMEM);
@@ -608,7 +623,7 @@ twe_done(sc, idx)
 
 	if (ccb->ccb_realdata) {
 		bcopy(ccb->ccb_data, ccb->ccb_realdata, ccb->ccb_length);
-		uvm_km_free(kmem_map, (vaddr_t)ccb->ccb_data, ccb->ccb_length);
+		bus_dmamem_free(sc->dmat, &ccb->ccb_2bseg, 1);
 		ccb->ccb_data = ccb->ccb_realdata;
 		ccb->ccb_realdata = NULL;
 	}
@@ -851,11 +866,10 @@ twe_scsi_cmd(xs)
 
 		TWE_UNLOCK_TWE(sc, lock);
 
-		if (xs->flags & SCSI_POLL) {
-			scsi_done(xs);
+		if (xs->flags & SCSI_POLL)
 			return (COMPLETE);
-		}
-		return (SUCCESSFULLY_QUEUED);
+		else
+			return (SUCCESSFULLY_QUEUED);
 
 	default:
 		TWE_DPRINTF(TWE_D_CMD, ("unknown opc %d ", xs->cmd->opcode));
