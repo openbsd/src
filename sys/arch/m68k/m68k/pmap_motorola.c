@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.22 2003/01/27 19:37:30 miod Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.23 2003/02/25 16:57:24 miod Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -2145,8 +2145,8 @@ pmap_remove_mapping(pmap, va, pte, flags)
 			paddr_t pa;
 
 			pa = pmap_pte_pa(pmap_pte(pmap_kernel(), ptpva));
-#ifdef DIAGNOSTIC
 			pg = PHYS_TO_VM_PAGE(pa);
+#ifdef DIAGNOSTIC
 			if (pg == NULL)
 				panic("pmap_remove_mapping: unmanaged PT page");
 			pv = pg_to_pvh(pg);
