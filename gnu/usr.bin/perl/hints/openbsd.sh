@@ -75,8 +75,6 @@ case "$openbsd_distribution" in
 	libpth='/usr/lib'
 	locincpth=''
 	loclibpth=''
-	ccflags=''
-	cppflags=''
 	;;
 esac
 
