@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.6 2004/05/04 19:56:18 henning Exp $ */
+/*	$OpenBSD: privsep.c,v 1.7 2004/05/10 18:34:42 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -62,8 +62,8 @@ buf_close(int sock, struct buf *buf)
 	} while (n == -1 && (errno == EAGAIN || errno == EINTR));
 
 	if (buf->rpos < buf->size)
-		error("short write: wanted %u got %d bytes", buf->size,
-		    buf->rpos);
+		error("short write: wanted %lu got %ld bytes",
+		    (unsigned long)buf->size, (long)buf->rpos);
 
 	free(buf->buf);
 	free(buf);
@@ -91,7 +91,8 @@ buf_read(int sock, void *buf, size_t nbytes)
 		error("buf_read: %m");
 
 	if (r < nbytes)
-		error("short read: wanted %u got %d bytes", nbytes, r);
+		error("short read: wanted %lu got %ld bytes",
+		    (unsigned long)nbytes, (long)r);
 
 	return (r);
 }
