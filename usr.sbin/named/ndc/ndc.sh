@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: ndc.sh,v 1.9 1998/06/03 17:15:59 millert Exp $
+#	$OpenBSD: ndc.sh,v 1.10 1998/06/20 01:49:03 downsj Exp $
 
 USAGE='echo \
 	"usage: $0 \
@@ -11,6 +11,10 @@ PATH=%DESTSBIN%:/bin:/usr/bin:/usr/ucb:$PATH
 
 if [ -r /etc/rc.conf ]; then
 	CHROOTDIR=`. /etc/rc.conf ; echo "$named_chroot"`
+	# In case rc.conf exists but does not specify $named_chroot.
+	if [ "X${CHROOTDIR}" == "X" ]; then
+		CHROOTDIR=/var/named
+	fi
 else
 	CHROOTDIR=%CHROOTDIR%
 fi
