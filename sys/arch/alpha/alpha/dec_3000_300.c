@@ -1,3 +1,4 @@
+/* $OpenBSD: dec_3000_300.c,v 1.7 2000/11/08 19:16:58 ericj Exp $ */
 /* $NetBSD: dec_3000_300.c,v 1.30 2000/05/22 20:13:32 thorpej Exp $ */
 
 /*

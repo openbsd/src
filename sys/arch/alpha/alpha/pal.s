@@ -1,3 +1,4 @@
+/* $OpenBSD: pal.s,v 1.6 2000/11/08 19:16:59 ericj Exp $ */
 /* $NetBSD: pal.s,v 1.14 1999/12/02 22:08:04 thorpej Exp $ */
 
 /*

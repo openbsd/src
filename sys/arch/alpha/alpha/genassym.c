@@ -1,3 +1,4 @@
+/* $OpenBSD: genassym.c,v 1.8 2000/11/08 19:16:58 ericj Exp $ */
 /* $NetBSD: genassym.c,v 1.27 2000/05/26 00:36:42 thorpej Exp $ */
 
 /*

@@ -1,3 +1,4 @@
+/* $OpenBSD: trap.c,v 1.21 2000/11/08 19:16:59 ericj Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-

@@ -1,3 +1,4 @@
+/* $OpenBSD: cpu.c,v 1.8 2000/11/08 19:16:58 ericj Exp $ */
 /* $NetBSD: cpu.c,v 1.44 2000/05/23 05:12:53 thorpej Exp $ */
 
 /*-

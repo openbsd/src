@@ -1,3 +1,4 @@
+/* $OpenBSD: debug.s,v 1.2 2000/11/08 19:16:58 ericj Exp $ */
 /* $NetBSD: debug.s,v 1.5 1999/06/18 18:11:56 thorpej Exp $ */
 
 /*-

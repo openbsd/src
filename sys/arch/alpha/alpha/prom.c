@@ -1,3 +1,4 @@
+/* $OpenBSD: prom.c,v 1.8 2000/11/08 19:16:59 ericj Exp $ */
 /* $NetBSD: prom.c,v 1.39 2000/03/06 21:36:05 thorpej Exp $ */
 
 /* 
