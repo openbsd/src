@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.28 2001/12/07 00:59:13 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.29 2001/12/07 15:29:44 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/05/19 10:14:50 veego Exp $	*/
 
 /*
@@ -158,11 +158,8 @@ pagemove(from, to, size)
 			panic("pagemove 3");
 #endif
 #endif
-		pmap_remove(pmap_kernel(), (vm_offset_t)from,
-		    (vm_offset_t)from + PAGE_SIZE);
-		pmap_enter(pmap_kernel(),  (vm_offset_t)to, pa,
-		    VM_PROT_READ|VM_PROT_WRITE,
-		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		pmap_kremove((vaddr_t)from, PAGE_SIZE);
+		pmap_kenter_pa((vaddr_t)to, pa, VM_PROT_READ|VM_PROT_WRITE);
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
