@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_yield.3,v 1.1 2004/01/15 23:17:19 marc Exp $
+.\" $OpenBSD: pthread_yield.3,v 1.2 2004/01/16 05:33:16 jmc Exp $
 .\"
 .\" PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org>
 .\"
@@ -16,9 +16,9 @@
 The
 .Fn pthread_yield
 function resets the accumulated time slice of the current thread and then
-enters the thread scheduler which resumes execution of the next thread ready
+enters the thread scheduler, which resumes execution of the next thread ready
 to run.
-If no other thread is ready to run control returns to the current thread.
+If no other thread is ready to run, control returns to the current thread.
 .Sh SEE ALSO
 .Xr pthreads 3
 .Sh STANDARDS
