@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: loadalias.c,v 1.4 1998/01/19 22:59:14 brian Exp $
+ *	$Id: loadalias.c,v 1.5 1998/04/25 05:06:21 todd Exp $
  */
 
 #include <sys/param.h>
@@ -49,7 +49,11 @@
 #define _PATH_ALIAS_PREFIX "/usr/lib/libalias.so.2."
 
 #define off(item) ((int)&(((struct aliasHandlers *)0)->item))
+#if !(defined(__mips) || defined(__powerpc)) /* Any arch that is elf */
+#define entry(a) { off(a), #a }
+#else
 #define entry(a) { off(a), "_" #a }
+#endif
 
 #ifndef RTLD_NOW
 #define RTLD_NOW 1		/* really RTLD_LAZY */
