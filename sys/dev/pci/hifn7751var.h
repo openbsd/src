@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751var.h,v 1.26 2001/06/26 03:43:26 jason Exp $	*/
+/*	$OpenBSD: hifn7751var.h,v 1.27 2001/06/27 03:33:53 angelos Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -184,14 +184,14 @@ struct hifn_softc {
  *  ---------------
  *  The number of bytes of the source_buf that are skipped over before
  *  authentication begins.  This must be a number between 0 and 2^16-1
- *  and can be used by IPSec implementers to skip over IP headers.
+ *  and can be used by IPsec implementers to skip over IP headers.
  *  *** Value ignored if authentication not used ***
  *
  *  crypt_header_skip
  *  -----------------
  *  The number of bytes of the source_buf that are skipped over before
  *  the cryptographic operation begins.  This must be a number between 0
- *  and 2^16-1.  For IPSec, this number will always be 8 bytes larger
+ *  and 2^16-1.  For IPsec, this number will always be 8 bytes larger
  *  than the auth_header_skip (to skip over the ESP header).
  *  *** Value ignored if cryptography not used ***
  *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751reg.h,v 1.26 2001/06/26 03:43:25 jason Exp $	*/
+/*	$OpenBSD: hifn7751reg.h,v 1.27 2001/06/27 03:33:53 angelos Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -394,7 +394,7 @@ typedef struct hifn_mac_command {
 #define	HIFN_MAC_CMD_SRCLEN_S		14
 
 /*
- * MAC POS IPSec initiates authentication after encryption on encodes
+ * MAC POS IPsec initiates authentication after encryption on encodes
  * and before decryption on decodes.
  */
 #define	HIFN_MAC_CMD_POS_IPSEC		0x0200
