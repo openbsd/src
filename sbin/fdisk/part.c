@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.19 2001/03/16 19:02:14 markus Exp $	*/
+/*	$OpenBSD: part.c,v 1.20 2001/05/18 07:15:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -44,9 +44,10 @@
 #include "mbr.h"
 
 
-static struct part_type {
+static const struct part_type {
 	int	type;
-	char	*sname;
+	char	sname[14];
+	char	osname[8];
 	char	*lname;
 } part_types[] = {
 	{ 0x00, "unused      ", "unused"},
@@ -129,7 +130,7 @@ PRT_printall()
 	}
 }
 
-char *
+const char *
 PRT_ascii_id(id)
 	int id;
 {
@@ -262,11 +263,11 @@ PRT_print(num, partn)
 {
 
 	if (partn == NULL) {
-		printf("         Starting        Ending\n");
-		printf(" #: id  cyl  hd sec -   cyl  hd sec [     start -       size]\n");
-		printf("-------------------------------------------------------------------------\n");
+		printf("         Starting       Ending\n");
+		printf(" #: id  cyl  hd sec -  cyl  hd sec [     start -       size]\n");
+		printf("------------------------------------------------------------------------\n");
 	} else {
-		printf("%c%1d: %.2X %4d %3d %3d - %5d %3d %3d [%10d - %10d] %s\n",
+		printf("%c%1d: %.2X %4d %3d %3d - %4d %3d %3d [%10d - %10d] %s\n",
 			(partn->flag == 0x80)?'*':' ',
 			num, partn->id,
 			partn->scyl, partn->shead, partn->ssect,
