@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.c,v 1.11 2000/04/20 06:19:33 deraadt Exp $	*/
+/*	$OpenBSD: tip.c,v 1.12 2001/04/12 19:21:43 millert Exp $	*/
 /*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: tip.c,v 1.11 2000/04/20 06:19:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tip.c,v 1.12 2001/04/12 19:21:43 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -179,7 +179,7 @@ notnumber:
 	if ((PH = getenv("PHONES")) == NOSTR)
 		PH = _PATH_PHONES;
 	vinit();				/* init variables */
-	setparity("even");			/* set the parity table */
+	setparity("none");			/* set the parity table */
 	if ((i = speed(number(value(BAUDRATE)))) == 0) {
 		printf("tip: bad baud rate %ld\n", number(value(BAUDRATE)));
 		daemon_uid();
