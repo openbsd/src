@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.54 1999/12/09 16:11:48 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.55 1999/12/09 21:35:28 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -461,6 +461,7 @@ vaddr_t	virtual_avail;			/* first free virtual page number */
 vaddr_t	virtual_end;			/* last free virtual page number */
 paddr_t phys_avail;			/* first free physical page
 					   XXX - pmap_pa_exists needs this */
+vaddr_t pagetables_start, pagetables_end;
 
 /*
  * XXX - these have to be global for dumpsys()
@@ -3085,7 +3086,6 @@ pmap_bootstrap4m(void)
 	union ctxinfo *ci;
 	int reg, seg;
 	unsigned int ctxtblsize;
-	caddr_t pagetables_start, pagetables_end;
 	paddr_t avail_start;
 	extern char end[];
 	extern char etext[];
@@ -3170,7 +3170,7 @@ pmap_bootstrap4m(void)
 	 * Reserve memory for MMU pagetables. Some of these have severe
 	 * alignment restrictions.
 	 */
-	pagetables_start = p;
+	pagetables_start = (vaddr_t)p;
 	/*
 	 * Allocate context table.
 	 * To keep supersparc happy, minimum aligment is on a 4K boundary.
@@ -3211,7 +3211,7 @@ pmap_bootstrap4m(void)
 
 	/* Round to next page and mark end of stolen pages */
 	p = (caddr_t)(((u_int)p + NBPG - 1) & ~PGOFSET);
-	pagetables_end = p;
+	pagetables_end = (vaddr_t)p;
 
 	avail_start = (paddr_t)p - KERNBASE;
 
@@ -3362,11 +3362,6 @@ pmap_bootstrap4m(void)
 	 */
 	mmu_install_tables(&cpuinfo);
 
-	/* Mark all MMU tables uncacheable, if required */
-	if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0)
-		kvm_uncache(pagetables_start,
-			    (pagetables_end - pagetables_start) >> PGSHIFT);
-
 	pmap_page_upload(avail_start);
 }
 
@@ -3514,6 +3509,30 @@ pmap_init()
                 pool_init(&L23_pool, n, n, 0, 0, "L2/L3 pagetable", 0,
                           pgt_page_alloc, pgt_page_free, 0);
         }
+#endif
+}
+
+/*
+ * Called just after enabling cache (so that we CPUFLG_CACHEPAGETABLES is
+ * set correctly).
+ */
+void
+pmap_cache_enable()
+{
+#ifdef SUN4M
+	if (CPU_ISSUN4M) {
+		/*
+		 * Mark all pagetables uncacheable, if required
+		 *
+		 * We assume that we have not allocated any tables except
+		 * the kernel pagetables. It's safe to assume because
+		 * only userland can alloc extra pagetables and we're
+		 * still in autoconfiguration.
+		 */
+		if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0)
+			kvm_uncache((caddr_t)pagetables_start,
+				    atop(pagetables_end - pagetables_start));
+	}
 #endif
 }
 
@@ -5779,7 +5798,7 @@ pmap_kenter_pgs4m(va, pgs, npgs)
 		int pnum;
 		paddr_t pa;
 
-		pa = atop(VM_PAGE_TO_PHYS(pgs[i]));
+		pa = VM_PAGE_TO_PHYS(pgs[i]);
 		pnum = atop(pa);
 
 		pte = pteproto | (pnum << SRMMU_PPNSHIFT) |

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.14 1999/12/09 16:11:48 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.15 1999/12/09 21:35:28 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.30 1997/08/04 20:00:47 pk Exp $ */
 
 /*
@@ -308,6 +308,7 @@ void		pmap_redzone __P((void));
 void		kvm_setcache __P((caddr_t, int, int));
 #define		kvm_uncache(addr, npages) kvm_setcache(addr, npages, 0)
 #define		kvm_recache(addr, npages) kvm_setcache(addr, npages, 1)
+void		pmap_cache_enable __P((void));
 struct user;
 void		switchexit __P((vm_map_t, struct user *, int));
 int		mmu_pagein __P((struct pmap *pm, vaddr_t, int));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.19 1999/12/08 23:49:07 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.20 1999/12/09 21:35:29 art Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 1997/09/15 20:52:36 pk Exp $ */
 
 /*
@@ -237,9 +237,20 @@ cpu_attach(parent, self, aux)
 		cache_print(sc);
 
 	if (sc->master) {
+		int s;
+
 		bcopy(sc, &cpuinfo, sizeof(cpuinfo));
-		/* Enable the cache */
+		/*
+		 * Enable the cache
+		 *
+		 * Disable all interrupts because we don't want anything
+		 * nasty to happen to the pagetables while the cache is
+		 * enabled and we haven't uncached them yet.
+		 */
+		s = splhigh();
 		sc->cache_enable();
+		pmap_cache_enable();
+		splx(s);
 		return;
 	}
 
