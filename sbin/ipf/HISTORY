@@ -1,4 +1,4 @@
-# $OpenBSD: HISTORY,v 1.1 1999/12/28 07:46:01 kjell Exp $
+# $OpenBSD: HISTORY,v 1.2 1999/12/28 08:20:40 kjell Exp $
 #
 # NOTE: Quite a few patches and suggestions come from other sources, to whom
 #       I'm greatly indebted, even if no names are mentioned.
@@ -21,6 +21,17 @@
 # and especially those who have found the time to port IP Filter to new
 # platforms.
 #
+3.3.6	28/12/1999 - Released
+
+add in missing rwlock release in fr_checkicmpmatchingstate() and fix check
+for ICMP_ECHO to only be for packet, not state entry which we don't have yet.
+
+handle SIOCIPFFB in nat_ioctl() and fr_state_ioctl()
+
+fix size of friostat for SunOS4
+
+fix bug in running off the end of a buffer in real audio proxy
+
 3.3.5	11/12/1999 - Released
 
 fix parsing of "log level" and printing it back out too

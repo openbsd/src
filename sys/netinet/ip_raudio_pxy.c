@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_raudio_pxy.c,v 1.2 1999/12/17 06:17:08 kjell Exp $ */
+/* $OpenBSD: ip_raudio_pxy.c,v 1.3 1999/12/28 08:20:40 kjell Exp $ */
 #if SOLARIS && defined(_KERNEL)
 extern	kmutex_t	ipf_rw;
 #endif
@@ -234,7 +234,7 @@ nat_t *nat;
 	} else
 		return 0;
 
-	for (a3 = a1, a4 = a2; a4 > 0; a4--, a3++) {
+	for (a3 = a1, a4 = a2; (a4 > 0) && (a3 < 19) && (a3 >= 0); a4--,a3++) {
 		rap->rap_sbf |= (1 << a3);
 		rap->rap_svr[a3] = *s++;
 	}

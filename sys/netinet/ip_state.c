@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_state.c,v 1.15 1999/12/17 07:50:06 kjell Exp $ */
+/* $OpenBSD: ip_state.c,v 1.16 1999/12/28 08:20:40 kjell Exp $ */
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
  *
@@ -8,7 +8,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ip_state.c,v 1.15 1999/12/17 07:50:06 kjell Exp $";
+static const char rcsid[] = "@(#)$Id: ip_state.c,v 1.16 1999/12/28 08:20:40 kjell Exp $";
 #endif
 
 #include <sys/errno.h>
@@ -665,12 +665,12 @@ fr_info_t *fin;
 	struct icmp *ic;
 	u_short savelen;
 	fr_info_t ofin;
-	u_int hv, dest;
 	tcphdr_t *tcp;
 	icmphdr_t *icmp;
 	frentry_t *fr;
 	ip_t *oip;
 	int type;
+	u_int hv;
 
 	/* 
 	 * Does it at least have the return (basic) IP header ? 
@@ -704,8 +704,10 @@ fr_info_t *fin;
 		 * XXX theoretically ICMP_ECHOREP and the other reply's are
 		 * ICMP query's as well, but adding them here seems strange XXX
 		 */
-		 if ((icmp->icmp_type != ICMP_ECHO) && (icmp->icmp_type != ICMP_TSTAMP) &&
-		     (icmp->icmp_type != ICMP_IREQ) && (icmp->icmp_type != ICMP_MASKREQ))  
+		 if ((icmp->icmp_type != ICMP_ECHO) &&
+		     (icmp->icmp_type != ICMP_TSTAMP) &&
+		     (icmp->icmp_type != ICMP_IREQ) &&
+		     (icmp->icmp_type != ICMP_MASKREQ))  
 		    	return NULL;
 
 		/* 
@@ -715,8 +717,10 @@ fr_info_t *fin;
 		hv = (pr = oip->ip_p);
 		hv += (src.s_addr = oip->ip_src.s_addr);
 		hv += (dst.s_addr = oip->ip_dst.s_addr);
-		hv += icmp->icmp_id;
-		hv += icmp->icmp_seq;
+		if (icmp->icmp_type == ICMP_ECHO) {
+			hv += icmp->icmp_id;
+			hv += icmp->icmp_seq;
+		}
 		hv %= fr_statesize;
 
 		oip->ip_len = ntohs(oip->ip_len);
@@ -725,30 +729,30 @@ fr_info_t *fin;
 		ofin.fin_ifp = fin->fin_ifp;
 		ofin.fin_out = !fin->fin_out;
 		ofin.fin_mp = NULL; /* if dereferenced, panic XXX */
-		
+
 		READ_ENTER(&ipf_state);
 		for (isp = &ips_table[hv]; (is = *isp); isp = &is->is_next)
 			if ((is->is_p == pr) &&
-			    (icmp->icmp_id == is->is_icmp.ics_id) &&
-			    (icmp->icmp_seq == is->is_icmp.ics_seq) &&
 			    fr_matchsrcdst(is, src, dst, &ofin, NULL)) {
-			    
 			    	/* 
 			    	 * in the state table ICMP query's are stored
 			    	 * with the type of the corresponding ICMP 
 			    	 * response. Correct here
 			    	 */
 				if (((is->is_type == ICMP_ECHOREPLY) &&
+				     (icmp->icmp_id == is->is_icmp.ics_id) &&
+				     (icmp->icmp_seq == is->is_icmp.ics_seq) &&
 				     (icmp->icmp_type == ICMP_ECHO)) ||
-				     (is->is_type - 1 == ic->icmp_type )) {
+				    (is->is_type - 1 == ic->icmp_type)) {
 				    	ips_stats.iss_hits++;
     		                        is->is_pkts++;
                 	                is->is_bytes += ip->ip_len;     
-					return is->is_rule;
+					fr = is->is_rule;
+					RWLOCK_EXIT(&ipf_state);
+					return fr;
 				}
 			}
 		RWLOCK_EXIT(&ipf_state);
-
 		return NULL;
 	};
 
@@ -799,7 +803,6 @@ fr_info_t *fin;
 			 * we must swap src and dst here because the icmp
 			 * comes the other way around
 			 */
-			dest = (is->is_dst.s_addr != src.s_addr);
 			is->is_pkts++;
 			is->is_bytes += ip->ip_len;     
 			/*
@@ -847,17 +850,20 @@ fr_info_t *fin;
 	switch (ip->ip_p)
 	{
 	case IPPROTO_ICMP :
-		hv += ic->icmp_id;
-		hv += ic->icmp_seq;
+		if ((ic->icmp_type == ICMP_ECHO) ||
+		    (ic->icmp_type == ICMP_ECHOREPLY)) {
+			hv += ic->icmp_id;
+			hv += ic->icmp_seq;
+		}
 		hv %= fr_statesize;
 		READ_ENTER(&ipf_state);
 		for (isp = &ips_table[hv]; (is = *isp); isp = &is->is_next)
 			if ((is->is_p == pr) &&
-			    (ic->icmp_id == is->is_icmp.ics_id) &&
-			    (ic->icmp_seq == is->is_icmp.ics_seq) &&
 			    fr_matchsrcdst(is, src, dst, fin, NULL)) {
 				if ((is->is_type == ICMP_ECHOREPLY) &&
-				    (ic->icmp_type == ICMP_ECHO))
+				    (ic->icmp_type == ICMP_ECHO) &&
+				    (ic->icmp_id == is->is_icmp.ics_id) &&
+				    (ic->icmp_seq == is->is_icmp.ics_seq))
 					;
 				else if (is->is_type != ic->icmp_type)
 					continue;
