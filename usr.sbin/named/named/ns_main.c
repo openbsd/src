@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_main.c,v 1.16 1998/08/16 21:20:07 millert Exp $	*/
+/*	$OpenBSD: ns_main.c,v 1.17 2001/11/29 01:10:31 millert Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_main.c	4.55 (Berkeley) 7/1/91";
 static char rcsid[] = "$From: ns_main.c,v 8.26 1998/05/11 04:19:45 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_main.c,v 1.16 1998/08/16 21:20:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: ns_main.c,v 1.17 2001/11/29 01:10:31 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -118,6 +118,7 @@ char copyright[] =
 #if defined(SVR4)
 # include <sys/sockio.h>
 #endif
+#include <ifaddrs.h>
 
 #define MAIN_PROGRAM
 #include "named.h"
@@ -1150,66 +1151,29 @@ getnetconf()
 {
 	register struct netinfo *ntp;
 	struct netinfo *ontp;
-	struct ifconf ifc;
-	struct ifreq ifreq, *ifr;
+	struct ifaddrs *ifap, *ifa;
+	struct in_addr ina;
 	struct qdatagram *dqp;
 	static int first = 1;
-	char *buf = NULL, *cp, *cplim;
-	int len = 8192;
 	u_int32_t nm;
 	time_t my_generation = time(NULL);
 
-	while (1) {
-		ifc.ifc_len = len;
-		ifc.ifc_buf = buf = realloc(buf, len);
-		if (buf == NULL) {
-			syslog(LOG_ERR,
-				"get interface config, malloc: %m - exiting");
-			exit(1);
-		}
-		if (ioctl(vs, SIOCGIFCONF, &ifc) < 0) {
-			syslog(LOG_ERR,
-				"get interface configuration: %m - exiting");
-			exit(1);
-		}
-		if (ifc.ifc_len + sizeof(ifreq) < len)
-			break;
-		len *= 2;
-	}
+	
+	if (getifaddrs(&ifap) != 0)
+		panic(errno, "getifaddrs()");
+
 	ntp = NULL;
-#if defined(AF_LINK) && \
-	!defined(RISCOS_BSD) && !defined(M_UNIX) && \
-	!defined(sgi) && !defined(sun) && !defined(NO_SA_LEN)
-#define my_max(a, b) (a > b ? a : b)
-#define my_size(p)	my_max((p).sa_len, sizeof(p))
-#else
-#define my_size(p) (sizeof (p))
-#endif
-	cplim = buf + ifc.ifc_len;    /* skip over if's with big ifr_addr's */
-	for (cp = buf;
-	     cp < cplim;
-	     cp += sizeof (ifr->ifr_name) + my_size(ifr->ifr_addr)) {
-#undef my_size
-		ifr = (struct ifreq *)cp;
-		if (ifr->ifr_addr.sa_family != AF_INET ||
-		   ((struct sockaddr_in *)
-		    &ifr->ifr_addr)->sin_addr.s_addr == 0) {
-			continue;
-		}
-		ifreq = *ifr;
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
 		/*
 		 * Don't test IFF_UP, packets may still be received at this
 		 * address if any other interface is up.
 		 */
-#if !defined(BSD) || (BSD < 199103)
-		if (ioctl(vs, SIOCGIFADDR, (char *)&ifreq) < 0) {
-			syslog(LOG_NOTICE, "get interface addr: %m");
+		if (ifa->ifa_addr->sa_family != AF_INET)
 			continue;
-		}
-#endif
+		ina = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
+
 		dprintf(1, (ddt, "considering [%s]\n",
-			    inet_ntoa(((struct sockaddr_in *)
-				       &ifreq.ifr_addr)->sin_addr)));
+			    inet_ntoa(ina)));
 		/* build datagram queue */
 		/* 
 		 * look for an already existing source interface address.
@@ -1217,13 +1181,11 @@ getnetconf()
 		 * the machine has multiple point to point interfaces, then 
 		 * the local address may appear more than once.
 		 */
-		if (dqp = aIsUs(((struct sockaddr_in *)&ifreq.ifr_addr)
-				->sin_addr)) {
+		if (dqp = aIsUs(ina)) {
 			dprintf(1, (ddt,
 				    "dup interface address %s on %s\n",
-				    inet_ntoa(((struct sockaddr_in *)
-					       &ifreq.ifr_addr)->sin_addr),
-				    ifreq.ifr_name));
+				    inet_ntoa(ina),
+				    ifa->ifa_name));
 			dqp->dq_gen = my_generation;
 			continue;
 		}
@@ -1233,10 +1195,9 @@ getnetconf()
 		 * with binding to wildcard address later.  Interfaces
 		 * which are not completely configured can have this addr.
 		 */
-		if (((struct sockaddr_in *)&ifreq.ifr_addr)->sin_addr.s_addr
-		    == 0x00000000) {	/* XXX */
+		if (ina.s_addr == 0x00000000) {	/* XXX */
 			dprintf(1, (ddt, "skipping address 0.0.0.0 on %s\n",
-				    ifreq.ifr_name));
+				    ifa->ifa_name));
 			continue;
 		}
 		if ((dqp = (struct qdatagram *)
@@ -1247,14 +1208,12 @@ getnetconf()
 		}
 		dqp->dq_next = datagramq;
 		datagramq = dqp;
-		dqp->dq_addr = ((struct sockaddr_in *)
-				&ifreq.ifr_addr)->sin_addr;
+		dqp->dq_addr = ina;
 		dqp->dq_gen = my_generation;
 		/* XXX - this will fail on reload if we run as non-root */
 		opensocket(dqp);
 		dprintf(1, (ddt, "listening [%s]\n",
-			    inet_ntoa(((struct sockaddr_in *)
-				       &ifreq.ifr_addr)->sin_addr)));
+			    inet_ntoa(ina)));
 
 		/*
 		 * Add interface to list of directly-attached (sub)nets
@@ -1265,30 +1224,11 @@ getnetconf()
 			if (!ntp)
 				panic(errno, "malloc(netinfo)");
 		}
-		ntp->my_addr = ((struct sockaddr_in *)
-				&ifreq.ifr_addr)->sin_addr;
-#ifdef SIOCGIFNETMASK
-		if (ioctl(vs, SIOCGIFNETMASK, (char *)&ifreq) < 0) {
-			syslog(LOG_NOTICE, "get netmask: %m");
-			ntp->mask = net_mask(ntp->my_addr);
-		} else
-			ntp->mask = ((struct sockaddr_in *)
-			    &ifreq.ifr_addr)->sin_addr.s_addr;
-#else
-		/* 4.2 does not support subnets */
-		ntp->mask = net_mask(ntp->my_addr);
-#endif
-		if (ioctl(vs, SIOCGIFFLAGS, (char *)&ifreq) < 0) {
-			syslog(LOG_NOTICE, "get interface flags: %m");
-			continue;
-		}
-#ifdef IFF_LOOPBACK
-		if (ifreq.ifr_flags & IFF_LOOPBACK)
-#else
-		/* test against 127.0.0.1 (yuck!!) */
-		if (ntp->my_addr.s_addr == inet_addr("127.0.0.1"))  /* XXX */
-#endif
-		{
+		ntp->my_addr = ina;
+		ntp->mask = ((struct sockaddr_in *)
+		    ifa->ifa_netmask)->sin_addr.s_addr;
+
+		if (ifa->ifa_flags & IFF_LOOPBACK) {
 			if (netloop.my_addr.s_addr == 0) {
 				netloop.my_addr = ntp->my_addr;
 				netloop.mask = 0xffffffff;
@@ -1297,16 +1237,10 @@ getnetconf()
 					    (u_long)netloop.my_addr.s_addr));
 			}
 			continue;
-		} else if ((ifreq.ifr_flags & IFF_POINTOPOINT)) {
-			((struct sockaddr_in *)&ifreq.ifr_addr)->sin_addr =
-				ntp->my_addr;
-			if (ioctl(vs, SIOCGIFDSTADDR, (char *)&ifreq) < 0) {
-				syslog(LOG_NOTICE, "get dst addr: %m");
-				continue;
-			}
+		} else if ((ifa->ifa_flags & IFF_POINTOPOINT)) {
 			ntp->mask = 0xffffffff;
 			ntp->addr = ((struct sockaddr_in *)
-				     &ifreq.ifr_addr)->sin_addr.s_addr;
+				     &ifa->ifa_dstaddr)->sin_addr.s_addr;
 		} else {
 			ntp->addr = ntp->mask & ntp->my_addr.s_addr;
 		}
@@ -1323,7 +1257,7 @@ getnetconf()
 	}
 	if (ntp)
 		free((char *)ntp);
-	free(buf);
+	freeifaddrs(ifap);
 
 	/*
 	 * now go through the datagramq and delete anything that
