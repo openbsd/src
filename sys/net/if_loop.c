@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.24 2002/06/30 13:04:36 itojun Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.25 2002/09/11 05:38:47 itojun Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -278,7 +278,7 @@ looutput(ifp, m, dst, rt)
 
 		M_PREPEND(m, sizeof(int32_t), M_DONTWAIT);
 		if (m == 0)
-			return(ENOBUFS);
+			return (ENOBUFS);
 		afp = mtod(m, int32_t *);
 		*afp = (int32_t)dst->sa_family;
 

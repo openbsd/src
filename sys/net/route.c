@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.33 2002/07/11 12:29:03 art Exp $	*/
+/*	$OpenBSD: route.c,v 1.34 2002/09/11 05:38:47 itojun Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -789,7 +789,7 @@ rtinit(ifa, cmd, flags)
 		if ((flags & RTF_HOST) == 0 && ifa->ifa_netmask) {
 			m = m_get(M_DONTWAIT, MT_SONAME);
 			if (m == NULL)
-				return(ENOBUFS);
+				return (ENOBUFS);
 			deldst = mtod(m, struct sockaddr *);
 			rt_maskedcopy(dst, deldst, ifa->ifa_netmask);
 			dst = deldst;

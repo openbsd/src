@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.65 2002/06/30 13:04:36 itojun Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.66 2002/09/11 05:38:47 itojun Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -302,7 +302,7 @@ ether_output(ifp, m0, dst, rt0)
 #ifdef INET6
 	case AF_INET6:
 		if (!nd6_storelladdr(ifp, rt, m, dst, (u_char *)edst))
-			return(0); /* it must be impossible, but... */
+			return (0); /* it must be impossible, but... */
 		etype = htons(ETHERTYPE_IPV6);
 		break;
 #endif
@@ -1260,7 +1260,7 @@ ether_addmulti(ifr, ac)
 	error = ether_multiaddr(&ifr->ifr_addr, addrlo, addrhi);
 	if (error != 0) {
 		splx(s);
-		return(error);
+		return (error);
 	}
 
 	/*

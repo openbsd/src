@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.63 2002/07/03 21:19:08 miod Exp $	*/
+/*	$OpenBSD: if.c,v 1.64 2002/09/11 05:38:47 itojun Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1035,7 +1035,7 @@ ifconf(cmd, data)
 				}
 		}
 		ifc->ifc_len = space;
-		return(0);
+		return (0);
 	}
 
 	ifrp = ifc->ifc_req;

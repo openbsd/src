@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_arcsubr.c,v 1.11 2002/06/30 13:04:35 itojun Exp $	*/
+/*	$OpenBSD: if_arcsubr.c,v 1.12 2002/09/11 05:38:47 itojun Exp $	*/
 /*	$NetBSD: if_arcsubr.c,v 1.8 1996/05/07 02:40:29 thorpej Exp $	*/
 
 /*
@@ -107,7 +107,7 @@ arc_output(ifp, m0, dst, rt0)
 	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING)) 
-		return(ENETDOWN); /* m, m1 aren't initialized yet */
+		return (ENETDOWN); /* m, m1 aren't initialized yet */
 
 	error = newencoding = 0;
 	ac = (struct arccom *)ifp;
@@ -427,7 +427,7 @@ arc_defrag(ifp, m)
 			/* is it the last one? */
 			if (af->af_lastseen > af->af_maxflag) {
 				af->af_packet = NULL;
-				return(m1);
+				return (m1);
 			} else
 				return NULL;
 		}
