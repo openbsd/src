@@ -1,4 +1,4 @@
-/*	$OpenBSD: rgephy.c,v 1.8 2005/02/19 06:00:04 brad Exp $	*/
+/*	$OpenBSD: rgephy.c,v 1.9 2005/03/26 04:40:09 krw Exp $	*/
 /*
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -128,8 +128,7 @@ rgephyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_rev = MII_REV(ma->mii_id2);
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
-	sc->mii_ticks = 0; /* XXX */
-	sc->mii_anegticks = 5;
+	sc->mii_anegticks = MII_ANEGTICKS;
 
 	sc->mii_flags |= MIIF_NOISOLATE;
 
@@ -273,9 +272,9 @@ setit:
 			break;
 
 		/*
-		 * Only retry autonegotiation every 5 seconds.
+	 	 * Only retry autonegotiation every mii_anegticks seconds.
 		 */
-		if (++sc->mii_ticks <= sc->mii_anegticks /*10*/)
+		if (++sc->mii_ticks <= sc->mii_anegticks)
 			break;
 		
 		sc->mii_ticks = 0;

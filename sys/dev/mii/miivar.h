@@ -1,4 +1,4 @@
-/*	$OpenBSD: miivar.h,v 1.22 2004/12/16 03:41:58 brad Exp $	*/
+/*	$OpenBSD: miivar.h,v 1.23 2005/03/26 04:40:09 krw Exp $	*/
 /*	$NetBSD: miivar.h,v 1.17 2000/03/06 20:56:57 thorpej Exp $	*/
 
 /*-
@@ -142,6 +142,10 @@ struct mii_softc {
 };
 typedef struct mii_softc mii_softc_t;
 
+/* Default mii_anegticks values. */
+#define MII_ANEGTICKS		5
+#define MII_ANEGTICKS_GIGE	10
+
 /* mii_flags */
 #define	MIIF_INITDONE	0x0001		/* has been initialized (mii_data) */
 #define	MIIF_NOISOLATE	0x0002		/* do not isolate the PHY */
@@ -251,6 +255,7 @@ void	mii_phy_delete_media(struct mii_softc *);
 
 void	mii_phy_setmedia(struct mii_softc *);
 int	mii_phy_auto(struct mii_softc *, int);
+void	mii_phy_auto_timeout(void *);
 void	mii_phy_reset(struct mii_softc *);
 void	mii_phy_down(struct mii_softc *);
 int	mii_phy_tick(struct mii_softc *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: urlphy.c,v 1.9 2005/02/05 04:56:27 brad Exp $ */
+/*	$OpenBSD: urlphy.c,v 1.10 2005/03/26 04:40:09 krw Exp $ */
 /*	$NetBSD: urlphy.c,v 1.1 2002/03/28 21:07:53 ichiro Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -114,7 +114,7 @@ urlphy_attach(struct device *parent, struct device *self, void *aux)
 	sc->mii_funcs = &urlphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
-	sc->mii_anegticks = 10;
+	sc->mii_anegticks = MII_ANEGTICKS_GIGE;
 
 	/* Don't do loopback on this PHY. */
 	sc->mii_flags |= MIIF_NOLOOP;
@@ -193,10 +193,9 @@ urlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			return (0);
 
 		/*
-		 * Only retry autonegotiation every N seconds.
+	 	 * Only retry autonegotiation every mii_anegticks seconds.
 		 */
-		KASSERT(sc->mii_anegticks != 0);
-		if (++sc->mii_ticks != sc->mii_anegticks)
+		if (++sc->mii_ticks <= sc->mii_anegticks)
 			return (0);
 
 		sc->mii_ticks = 0;

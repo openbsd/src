@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii_physubr.c,v 1.25 2005/02/07 15:01:24 mcbride Exp $	*/
+/*	$OpenBSD: mii_physubr.c,v 1.26 2005/03/26 04:40:09 krw Exp $	*/
 /*	$NetBSD: mii_physubr.c,v 1.20 2001/04/13 23:30:09 thorpej Exp $	*/
 
 /*-
@@ -82,8 +82,6 @@ const struct mii_media mii_media_table[] = {
 	/* 1000baseT-FDX */
 	{ BMCR_S1000|BMCR_FDX,	ANAR_CSMA,		GTCR_ADV_1000TFDX },
 };
-
-void	mii_phy_auto_timeout(void *);
 
 void
 mii_phy_setmedia(struct mii_softc *sc)
@@ -251,10 +249,10 @@ mii_phy_tick(struct mii_softc *sc)
 	}
 
 	/*
-	 * Only retry autonegotiation every N seconds.
+	 * Only retry autonegotiation every mii_anegticks seconds.
 	 */
 	if (!sc->mii_anegticks)
-		sc->mii_anegticks = 5;
+		sc->mii_anegticks = MII_ANEGTICKS;
 
 	if (++sc->mii_ticks != sc->mii_anegticks)
 		return (EJUSTRETURN);
@@ -418,16 +416,16 @@ mii_phy_add_media(struct mii_softc *sc)
 	if (sc->mii_extcapabilities & EXTSR_MEDIAMASK) {
 		/*
 		 * XXX Right now only handle 1000SX and 1000TX.  Need
-		 * XXX to hnalde 1000LX and 1000CX some how.
+		 * XXX to handle 1000LX and 1000CX some how.
 		 */
 		if (sc->mii_extcapabilities & EXTSR_1000XHDX) {
-			sc->mii_anegticks = 10;
+			sc->mii_anegticks = MII_ANEGTICKS_GIGE;
 			sc->mii_flags |= MIIF_IS_1000X;
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_SX, 0,
 			    sc->mii_inst), MII_MEDIA_1000_X);
 		}
 		if (sc->mii_extcapabilities & EXTSR_1000XFDX) {
-			sc->mii_anegticks = 10;
+			sc->mii_anegticks = MII_ANEGTICKS_GIGE;
 			sc->mii_flags |= MIIF_IS_1000X;
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_SX, IFM_FDX,
 			    sc->mii_inst), MII_MEDIA_1000_X_FDX);
@@ -442,14 +440,14 @@ mii_phy_add_media(struct mii_softc *sc)
 		 * All 1000baseT PHYs have a 1000baseT control register.
 		 */
 		if (sc->mii_extcapabilities & EXTSR_1000THDX) {
-			sc->mii_anegticks = 10;
+			sc->mii_anegticks = MII_ANEGTICKS_GIGE;
 			sc->mii_flags |= MIIF_HAVE_GTCR;
 			mii->mii_media.ifm_mask |= IFM_ETH_MASTER;
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_T, 0,
 			    sc->mii_inst), MII_MEDIA_1000_T);
 		}
 		if (sc->mii_extcapabilities & EXTSR_1000TFDX) {
-			sc->mii_anegticks = 10;
+			sc->mii_anegticks = MII_ANEGTICKS_GIGE;
 			sc->mii_flags |= MIIF_HAVE_GTCR;
 			mii->mii_media.ifm_mask |= IFM_ETH_MASTER;
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_T, IFM_FDX,

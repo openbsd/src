@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcphy.c,v 1.13 2005/01/28 18:27:55 brad Exp $	*/
+/*	$OpenBSD: dcphy.c,v 1.14 2005/03/26 04:40:09 krw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -99,7 +99,7 @@ struct cfdriver dcphy_cd = {
 
 int	dcphy_service(struct mii_softc *, struct mii_data *, int);
 void	dcphy_status(struct mii_softc *);
-int	dcphy_auto(struct mii_softc *, int);
+int	dcphy_mii_phy_auto(struct mii_softc *, int);
 void	dcphy_reset(struct mii_softc *);
 
 const struct mii_phy_funcs dcphy_funcs = {
@@ -136,6 +136,7 @@ dcphy_attach(struct device *parent, struct device *self, void *aux)
 	sc->mii_funcs = &dcphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
+	sc->mii_anegticks = 50;
 
 	sc->mii_flags |= MIIF_NOISOLATE;
 
@@ -224,7 +225,7 @@ dcphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		case IFM_AUTO:
 			/*PHY_RESET(sc);*/
 			sc->mii_flags &= ~MIIF_DOINGAUTO;
-			(void) dcphy_auto(sc, 0);
+			(void) dcphy_mii_phy_auto(sc, 0);
 			break;
 		case IFM_100_T4:
 			/*
@@ -288,7 +289,7 @@ dcphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			break;
 
 		/*
-		 * Only retry autonegotiation every 5 seconds.
+		 * Only retry autonegotiation every mii_anegticks seconds.
 		 *
 		 * Otherwise, fall through to calling dcphy_status()
 		 * since real Intel 21143 chips don't show valid link
@@ -297,12 +298,12 @@ dcphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * successful autonegotation is never recognised on
 		 * these chips.
 		 */
-		if (++sc->mii_ticks != 50)
+		if (++sc->mii_ticks <= sc->mii_anegticks)
 			break;
 
 		sc->mii_ticks = 0;
 		sc->mii_flags &= ~MIIF_DOINGAUTO;
-		dcphy_auto(sc, 0);
+		dcphy_mii_phy_auto(sc, 0);
 
 		break;
 	}
@@ -399,7 +400,7 @@ skip:
 }
 
 int
-dcphy_auto(struct mii_softc *mii, int waitfor)
+dcphy_mii_phy_auto(struct mii_softc *mii, int waitfor)
 {
 	int			i;
 	struct dc_softc		*sc;

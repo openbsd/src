@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsgphy.c,v 1.14 2005/02/19 06:00:04 brad Exp $	*/
+/*	$OpenBSD: nsgphy.c,v 1.15 2005/03/26 04:40:09 krw Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 2001
@@ -77,8 +77,7 @@ struct cfdriver nsgphy_cd = {
 int	nsgphy_service(struct mii_softc *, struct mii_data *, int);
 void	nsgphy_status(struct mii_softc *);
 
-static int	nsgphy_mii_phy_auto(struct mii_softc *, int);
-extern void	mii_phy_auto_timeout(void *);
+int	nsgphy_mii_phy_auto(struct mii_softc *, int);
 
 const struct mii_phy_funcs nsgphy_funcs = {
 	nsgphy_service, nsgphy_status, mii_phy_reset,
@@ -121,7 +120,7 @@ nsgphyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_funcs = &nsgphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
-	sc->mii_anegticks = 10;
+	sc->mii_anegticks = MII_ANEGTICKS_GIGE;
 
 	PHY_RESET(sc);
 
@@ -247,9 +246,9 @@ nsgphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			return (0);
 
 		/*
-		 * Only retry autonegotiation if we've hit the timeout.
+	 	 * Only retry autonegotiation every mii_anegticks seconds.
 		 */
-		if (++sc->mii_ticks != sc->mii_anegticks)
+		if (++sc->mii_ticks <= sc->mii_anegticks)
 			return (0);
 
 		sc->mii_ticks = 0;
@@ -347,7 +346,7 @@ nsgphy_status(struct mii_softc *sc)
 }
 
 
-static int
+int
 nsgphy_mii_phy_auto(struct mii_softc *sc, int waitfor)
 {
 	int bmsr, ktcr = 0, i;

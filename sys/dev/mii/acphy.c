@@ -1,4 +1,4 @@
-/*	$OpenBSD: acphy.c,v 1.4 2005/02/05 04:28:23 brad Exp $	*/
+/*	$OpenBSD: acphy.c,v 1.5 2005/03/26 04:40:09 krw Exp $	*/
 /*	$NetBSD: acphy.c,v 1.13 2003/04/29 01:49:33 thorpej Exp $	*/
 
 /*
@@ -114,7 +114,7 @@ acphyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_funcs = &acphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
-	sc->mii_anegticks = 5;
+	sc->mii_anegticks = MII_ANEGTICKS;
 
 	PHY_RESET(sc);
 

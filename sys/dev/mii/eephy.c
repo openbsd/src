@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephy.c,v 1.16 2005/02/05 22:30:52 brad Exp $	*/
+/*	$OpenBSD: eephy.c,v 1.17 2005/03/26 04:40:09 krw Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -72,8 +72,6 @@ struct cfdriver eephy_cd = {
 int	eephy_mii_phy_auto(struct mii_softc *, int);
 void	eephy_reset(struct mii_softc *);
 
-extern void	mii_phy_auto_timeout(void *);
-
 const struct mii_phy_funcs eephy_funcs = {
 	eephy_service, eephy_status, eephy_reset,
 };
@@ -129,7 +127,7 @@ eephyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_funcs = &eephy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
-	sc->mii_anegticks = 10;
+	sc->mii_anegticks = MII_ANEGTICKS_GIGE;
 
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_MARVELL &&
 	    MII_MODEL(ma->mii_id2) == MII_MODEL_MARVELL_E1011 && 
@@ -330,9 +328,9 @@ eephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		}
 
 		/*
-		 * Only retry autonegotiation every 5 seconds.
+		 * Only retry autonegotiation every mii_anegticks seconds.
 		 */
-		if (++(sc->mii_ticks) != sc->mii_anegticks) {
+		if (++sc->mii_ticks <= sc->mii_anegticks) {
 			return (0);
 		}
 		sc->mii_ticks = 0;

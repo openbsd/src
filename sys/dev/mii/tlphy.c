@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlphy.c,v 1.16 2005/02/19 06:00:04 brad Exp $	*/
+/*	$OpenBSD: tlphy.c,v 1.17 2005/03/26 04:40:09 krw Exp $	*/
 /*	$NetBSD: tlphy.c,v 1.26 2000/07/04 03:29:00 thorpej Exp $	*/
 
 /*-
@@ -115,7 +115,7 @@ struct cfattach tlphy_ca = {
 };
 
 int	tlphy_service(struct mii_softc *, struct mii_data *, int);
-int	tlphy_auto(struct tlphy_softc *, int);
+int	tlphy_mii_phy_auto(struct tlphy_softc *, int);
 void	tlphy_acomp(struct tlphy_softc *);
 void	tlphy_status(struct mii_softc *);
 
@@ -235,7 +235,7 @@ tlphy_service(struct mii_softc *self, struct mii_data *mii, int cmd)
 			 * an autonegotiation cycle, so there's no such
 			 * thing as "already in auto mode".
 			 */
-			(void) tlphy_auto(sc, 1);
+			(void) tlphy_mii_phy_auto(sc, 1);
 			break;
 		case IFM_10_2:
 		case IFM_10_5:
@@ -322,7 +322,7 @@ tlphy_status(struct mii_softc *physc)
 }
 
 int
-tlphy_auto(struct tlphy_softc *sc, int waitfor)
+tlphy_mii_phy_auto(struct tlphy_softc *sc, int waitfor)
 {
 	int error;
 

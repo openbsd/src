@@ -1,4 +1,4 @@
-/*	$OpenBSD: bmtphy.c,v 1.12 2005/02/04 23:23:56 brad Exp $	*/
+/*	$OpenBSD: bmtphy.c,v 1.13 2005/03/26 04:40:09 krw Exp $	*/
 /*	$NetBSD: bmtphy.c,v 1.17 2005/01/17 13:17:45 scw Exp $	*/
 
 /*-
@@ -114,7 +114,7 @@ bmtphyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_funcs = &bmtphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
-	sc->mii_anegticks = 5;
+	sc->mii_anegticks = MII_ANEGTICKS;
 
 	PHY_RESET(sc);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gentbi.c,v 1.2 2004/10/08 00:37:55 brad Exp $	*/
+/*	$OpenBSD: gentbi.c,v 1.3 2005/03/26 04:40:09 krw Exp $	*/
 /*	$NetBSD: gentbi.c,v 1.12 2004/04/11 15:40:56 thorpej Exp $	*/
 
 /*-
@@ -160,7 +160,7 @@ gentbiattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_funcs = &gentbi_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
-	sc->mii_anegticks = 5;
+	sc->mii_anegticks = MII_ANEGTICKS;
 
 	PHY_RESET(sc);
 

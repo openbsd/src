@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsphy.c,v 1.18 2005/02/19 06:00:04 brad Exp $	*/
+/*	$OpenBSD: nsphy.c,v 1.19 2005/03/26 04:40:09 krw Exp $	*/
 /*	$NetBSD: nsphy.c,v 1.25 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -143,7 +143,7 @@ nsphyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_funcs = &nsphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
-	sc->mii_anegticks = 5;
+	sc->mii_anegticks = MII_ANEGTICKS;
 
 	PHY_RESET(sc);
 

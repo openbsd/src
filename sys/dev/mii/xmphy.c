@@ -1,4 +1,4 @@
-/*	$OpenBSD: xmphy.c,v 1.11 2005/02/19 06:00:04 brad Exp $	*/
+/*	$OpenBSD: xmphy.c,v 1.12 2005/03/26 04:40:09 krw Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -72,7 +72,6 @@ int	xmphy_service(struct mii_softc *, struct mii_data *, int);
 void	xmphy_status(struct mii_softc *);
 
 int	xmphy_mii_phy_auto(struct mii_softc *, int);
-extern void	mii_phy_auto_timeout(void *);
 
 const struct mii_phy_funcs xmphy_funcs = {
 	xmphy_service, xmphy_status, mii_phy_reset,
@@ -112,7 +111,7 @@ xmphy_attach(struct device *parent, struct device *self, void *aux)
 	sc->mii_funcs = &xmphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
-	sc->mii_anegticks = 5;
+	sc->mii_anegticks = MII_ANEGTICKS;
 
 	sc->mii_flags |= MIIF_NOISOLATE;
 
@@ -213,9 +212,9 @@ xmphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			return (0);
 
 		/*
-		 * Only retry autonegotiation every 5 seconds.
+	 	 * Only retry autonegotiation every mii_anegticks seconds.
 		 */
-		if (++sc->mii_ticks != sc->mii_anegticks)
+		if (++sc->mii_ticks <= sc->mii_anegticks)
 			return (0);
 
 		sc->mii_ticks = 0;

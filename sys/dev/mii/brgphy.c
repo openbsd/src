@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.22 2005/02/05 22:30:52 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.23 2005/03/26 04:40:09 krw Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -142,8 +142,7 @@ brgphy_attach(struct device *parent, struct device *self, void *aux)
 	sc->mii_rev = MII_REV(ma->mii_id2);
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags | MIIF_NOISOLATE;
-	sc->mii_ticks = 0; /* XXX Should be zero. Should 0 in brgphy_reset?*/
-	sc->mii_anegticks = 5;
+	sc->mii_anegticks = MII_ANEGTICKS;
 
 	PHY_RESET(sc);
 
@@ -274,7 +273,7 @@ setit:
 		/*
 		 * Only retry autonegotiation every mii_anegticks seconds.
 		 */
-		if (++sc->mii_ticks < sc->mii_anegticks)
+		if (++sc->mii_ticks <= sc->mii_anegticks)
 			return (0);
 
 		sc->mii_ticks = 0;
