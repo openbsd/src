@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysdep.c,v 1.16 2001/08/22 06:58:00 niklas Exp $	*/
+/*	$OpenBSD: sysdep.c,v 1.17 2001/08/22 13:06:09 niklas Exp $	*/
 /*	$EOM: sysdep.c,v 1.9 2000/12/04 04:46:35 angelos Exp $	*/
 
 /*
@@ -34,6 +34,7 @@
  * This code was written under funding by Ericsson Radio Systems.
  */
 
+#include <sys/errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -191,10 +192,11 @@ sysdep_cleartext (int fd, int af)
       return -1;
     }
   if (setsockopt (fd, optsw[sw].ip_proto, optsw[sw].ipcomp_level,
-		  (char *)&level, sizeof level) == -1)
+		  (char *)&level, sizeof level) == -1
+      && errno != ENOPROTOOPT)
     {
       log_error("sysdep_cleartext: "
-		"setsockopt (%d, %d, IP_IPCOMP_LEVEL, ...) failed", fd,
+		"setsockopt (%d, %d, IP_IPCOMP_LEVEL, ...) failed,", fd,
 		optsw[sw].ip_proto);
       return -1;
     }
