@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.301 2003/01/27 19:08:27 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.302 2003/02/02 23:22:07 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3873,7 +3873,7 @@ top:
 }
 
 int
-parse_rules(FILE *input, struct pfctl *xpf, int opts)
+parse_rules(FILE *input, struct pfctl *xpf)
 {
 	struct sym	*sym;
 
@@ -3885,7 +3885,7 @@ parse_rules(FILE *input, struct pfctl *xpf, int opts)
 	yyparse();
 
 	/* Check which macros have not been used. */
-	if (opts & PF_OPT_VERBOSE2) {
+	if (pf->opts & PF_OPT_VERBOSE2) {
 		for (sym = symhead; sym; sym = sym->next)
 			if (!sym->used)
 				fprintf(stderr, "warning: macro '%s' not "

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.44 2003/02/02 18:32:35 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.45 2003/02/02 23:22:07 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -101,7 +101,7 @@ int	pfctl_set_optimization(struct pfctl *, const char *);
 int	pfctl_set_limit(struct pfctl *, const char *, unsigned int);
 int	pfctl_set_logif(struct pfctl *, char *);
 
-int	parse_rules(FILE *, struct pfctl *, int);
+int	parse_rules(FILE *, struct pfctl *);
 int	parse_flags(char *);
 
 void	print_filter(struct pf_rule *, int);
