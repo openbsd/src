@@ -1,4 +1,4 @@
-/*	$OpenBSD: it.c,v 1.10 2004/08/23 18:06:02 millert Exp $	*/
+/*	$OpenBSD: it.c,v 1.11 2004/10/05 18:36:04 grange Exp $	*/
 
 /*
  * Copyright (c) 2003 Julien Bordet <zejames@greyhats.org>
@@ -144,9 +144,6 @@ it_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->numsensors = IT_NUM_SENSORS;
-
-	/* Reset chip */
-	it_writereg(sc, ITD_CONFIG, 0x80);
 
 	it_setup_fan(sc, 0, 3);
 	it_setup_volt(sc, 3, 9);
