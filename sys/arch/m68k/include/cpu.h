@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.2 1997/02/10 11:11:48 downsj Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.3 1997/04/20 06:59:58 downsj Exp $	*/
 /*	$NetBSD: cpu.h,v 1.3 1997/02/02 06:56:57 thorpej Exp $	*/
 
 /*
@@ -196,6 +196,10 @@ int	mappedcopyin __P((void *fromp, void *top, size_t count));
 int	mappedcopyout __P((void *fromp, void *top, size_t count));
 extern	u_int mappedcopysize;
 #endif /* MAPPEDCOPY */
+
+/* copy.s */
+int	susword __P((caddr_t, u_short));
+
 #endif /* _KERNEL */
 
 #endif /* _M68K_CPU_H_ */
