@@ -1,4 +1,4 @@
-/*	$OpenBSD: wall.c,v 1.21 2004/02/20 12:49:34 henning Exp $	*/
+/*	$OpenBSD: wall.c,v 1.22 2004/02/21 00:45:34 tom Exp $	*/
 /*	$NetBSD: wall.c,v 1.6 1994/11/17 07:17:58 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)wall.c	8.2 (Berkeley) 11/16/93";
 #endif
-static const char rcsid[] = "$OpenBSD: wall.c,v 1.21 2004/02/20 12:49:34 henning Exp $";
+static const char rcsid[] = "$OpenBSD: wall.c,v 1.22 2004/02/21 00:45:34 tom Exp $";
 #endif /* not lint */
 
 /*
@@ -232,8 +232,9 @@ makemsg(char *fname)
 	if (fstat(fd, &sbuf))
 		err(1, "can't stat temporary file");
 	mbufsize = sbuf.st_size;
-	if (!(mbuf = malloc((u_int)mbufsize)))
-		err(1, "out of memory");
+	mbuf = malloc((u_int)mbufsize);
+	if (mbuf == NULL)
+		err(1, NULL);
 	if (fread(mbuf, sizeof(*mbuf), mbufsize, fp) != mbufsize)
 		err(1, "can't read temporary file");
 	(void)close(fd);
@@ -250,16 +251,16 @@ addgroup(struct group *grp, char *name)
 
 	g = (struct wallgroup *)malloc(sizeof *g);
 	if (g == NULL)
-		err(1, "out of memory");
+		err(1, NULL);
 	g->gid = grp->gr_gid;
 	g->name = name;
 	g->mem = (char **)malloc(i + 1);
 	if (g->mem == NULL)
-		err(1, "out of memory");
+		err(1, NULL);
 	for (i = 0; grp->gr_mem[i] != NULL; i++) {
 		g->mem[i] = strdup(grp->gr_mem[i]);
 		if (g->mem[i] == NULL)
-			err(1, "out of memory");
+			err(1, NULL);
 	}
 	g->mem[i] = NULL;
 	g->next = grouplist;
