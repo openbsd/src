@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.2 1999/05/28 16:17:34 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.3 1999/06/01 09:15:13 espie Exp $
 
 LIB=		iberty
 CPPFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../include -I$(.OBJDIR)
@@ -20,7 +20,7 @@ SRCS=		argv.c choose-temp.c concat.c cplus-dem.c \
 		fdmatch.c getopt.c getopt1.c getruntime.c hex.c \
 		floatformat.c obstack.c pexecute.c spaces.c splay-tree.c \
 		strerror.c strsignal.c xatexit.c xexit.c xmalloc.c \
-		xstrerror.c \
+		xstrerror.c xstrdup.c \
 		$(HOST_FILES)
 
 #		choose-temp.c fnmatch.c objalloc.c pexecute.c xstrdup.c \
