@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.69 2000/04/10 13:55:01 millert Exp $
+#	$OpenBSD: files.pci,v 1.70 2000/04/13 00:10:52 csapuntz Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -102,6 +102,11 @@ file	dev/pci/if_le_pci.c		le_pci
 device	ncr: scsi
 attach	ncr at pci
 file	dev/pci/ncr.c			ncr
+
+# NeoMagic 256AV and 256ZX
+device	neo: audio, auconv, mulaw, ac97
+attach	neo at pci
+file	dev/pci/neo.c		        neo
 
 # PCI IDE controllers
 device	pciide {[channel = -1]}: wdc_base, ata, atapi
