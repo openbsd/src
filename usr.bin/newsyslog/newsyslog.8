@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newsyslog.8,v 1.25 2002/09/13 19:00:08 millert Exp $
+.\"	$OpenBSD: newsyslog.8,v 1.26 2002/09/17 20:03:40 millert Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -57,6 +57,7 @@
 .Sh SYNOPSIS
 .Nm newsyslog
 .Op Fl mnrv
+.Op Fl a Ar directory
 .Op Fl f Ar config_file
 .Sh DESCRIPTION
 .Nm
@@ -103,6 +104,22 @@ so this option should only be used in debugging.
 Be verbose.
 In this mode it will print out each log and its
 reasons for either trimming that log or skipping it.
+.It Fl a Ar directory
+Specify a
+.Ar directory
+into which archived log files will be written.
+If
+.Ar directory
+is a relative path, it is it is appended to the parent directory
+of each log and the archived log is stored in the result.
+If an absolute path is given, all archived logs are stored in the given
+.Ar directory .
+If
+.Ar directory
+does not exist for a specified log, it is ignored for that entry and
+the log is rotated as if the
+.Fl a
+option was not specified.
 .It Fl f Ar config_file
 Use
 .Ar config_file

@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.50 2002/09/16 01:41:54 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.51 2002/09/17 20:03:40 millert Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -86,7 +86,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.50 2002/09/16 01:41:54 millert Exp $";
+static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.51 2002/09/17 20:03:40 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -140,6 +140,8 @@ static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.50 2002/09/16 01:41:54 mi
 
 struct conf_entry {
 	char    *log;		/* Name of the log */
+	char    *logbase;	/* Basename of the log */
+	char    *backdir;	/* Directory in which to store backups */
 	uid_t   uid;		/* Owner of log */
 	gid_t   gid;		/* Group of log */
 	int     numlogs;	/* Number of logs to keep */
@@ -167,17 +169,18 @@ char    *conf = CONF;		/* Configuration file to use */
 time_t  timenow;
 char    hostname[MAXHOSTNAMELEN]; /* hostname */
 char    *daytime;		/* timenow in human readable form */
+char    *arcdir;		/* dir to put archives in (if it exists) */
 
 void do_entry(struct conf_entry *);
 void parse_args(int, char **);
 void usage(void);
 struct conf_entry *parse_file(int *);
 char *missing_field(char *, char *);
-void dotrim(char *, int, int, int, uid_t, gid_t);
+void dotrim(struct conf_entry *);
 int log_trim(char *);
-void compress_log(char *);
+void compress_log(struct conf_entry *);
 int sizefile(char *);
-int age_old_log(char *);
+int age_old_log(struct conf_entry *);
 char *sob(char *);
 char *son(char *);
 int isnumberstr(char *);
@@ -248,7 +251,7 @@ main(int argc, char **argv)
 	/* Step 4, compress the log.0 file if configured to do so and free */
 	while (p) {
 		if ((p->flags & CE_COMPACT) && (p->flags & CE_ROTATED))
-			compress_log(p->log);
+			compress_log(p);
 		q = p;
 		p = p->next;
 		free(q);
@@ -266,7 +269,7 @@ do_entry(struct conf_entry *ent)
 	int modtime, size;
 	struct stat sb;
 
-	if (lstat(ent->log, &sb) != 0)  
+	if (lstat(ent->log, &sb) != 0)
 		return;
 	if (!S_ISREG(sb.st_mode) &&
 	    (!S_ISLNK(sb.st_mode) || !(ent->flags & CE_FOLLOW))) {
@@ -275,12 +278,12 @@ do_entry(struct conf_entry *ent)
 	}
 
 	DPRINTF(("%s <%d%s%s%s>: ", ent->log, ent->numlogs,
-		(ent->flags & CE_COMPACT) ? "Z" : "",
-		(ent->flags & CE_BINARY) ? "B" : "",
-		(ent->flags & CE_FOLLOW) ? "F" : ""));
+	    (ent->flags & CE_COMPACT) ? "Z" : "",
+	    (ent->flags & CE_BINARY) ? "B" : "",
+	    (ent->flags & CE_FOLLOW) ? "F" : ""));
 
 	size = sizefile(ent->log);
-	modtime = age_old_log(ent->log);
+	modtime = age_old_log(ent);
 	if (size < 0) {
 		DPRINTF(("does not exist.\n"));
 	} else {
@@ -300,8 +303,7 @@ do_entry(struct conf_entry *ent)
 				    (ent->flags & CE_COMPACT) ? "Z" : "",
 				    (ent->flags & CE_BINARY) ? "B" : "",
 				    (ent->flags & CE_FOLLOW) ? "F" : "");
-			dotrim(ent->log, ent->numlogs, ent->flags,
-			    ent->permissions, ent->uid, ent->gid);
+			dotrim(ent);
 			ent->flags |= CE_ROTATED;
 		} else
 			DPRINTF(("--> skipping\n"));
@@ -381,8 +383,11 @@ parse_args(int argc, char **argv)
 	if ((p = strchr(hostname, '.')) != NULL)
 		*p = '\0';
 
-	while ((ch = getopt(argc, argv, "nrvmf:")) != -1) {
+	while ((ch = getopt(argc, argv, "nrvma:f:")) != -1) {
 		switch (ch) {
+		case 'a':
+			arcdir = optarg;
+			break;
 		case 'n':
 			noaction++; /* This implies needroot as off */
 			/* fall through */
@@ -409,8 +414,8 @@ usage(void)
 {
 	extern const char *__progname;
 
-	(void)fprintf(stderr, "usage: %s [-mnrv] [-f config_file]\n",
-	    __progname);
+	(void)fprintf(stderr, "usage: %s [-mnrv] [-a directory] "
+	    "[-f config_file]\n", __progname);
 	exit(1);
 }
 
@@ -426,6 +431,7 @@ parse_file(int *nentries)
 	struct conf_entry *working = NULL;
 	struct passwd *pwd;
 	struct group *grp;
+	struct stat sb;
 
 	if (strcmp(conf, "-") == 0)
 		f = stdin;
@@ -458,6 +464,9 @@ parse_file(int *nentries)
 		working->log = strdup(q);
 		if (working->log == NULL)
 			err(1, "strdup");
+
+		if ((working->logbase = strrchr(working->log, '/')) != NULL)
+			working->logbase++;
 
 		q = parse = missing_field(sob(++parse), errline);
 		*(parse = son(parse)) = '\0';
@@ -589,15 +598,43 @@ parse_file(int *nentries)
 			} else
 				errx(1, "unrecognized field: %s", q);
 		}
+		free(errline);
+
+		/* If there is an arcdir, set working->backdir. */
+		if (arcdir != NULL && working->logbase != NULL) {
+			if (*arcdir == '/') {
+				/* Fully qualified arcdir */
+				working->backdir = arcdir;
+			} else {
+				/* arcdir is relative to log's parent dir */
+				*(working->logbase - 1) = '\0';
+				if ((asprintf(&working->backdir, "%s/%s",
+				    working->log, arcdir)) == -1)
+					err(1, "malloc");
+				*(working->logbase - 1) = '/';
+			}
+			/* Ignore arcdir if it doesn't exist. */
+			if (stat(working->backdir, &sb) != 0 ||
+			    !S_ISDIR(sb.st_mode)) {
+				if (working->backdir != arcdir)
+					free(working->backdir);
+				working->backdir = NULL;
+			}
+		} else
+			working->backdir = NULL;
 
 		/* Make sure we can't oflow MAXPATHLEN */
-		if (asprintf(&tmp, "%s.%d%s", working->log, working->numlogs,
-		    COMPRESS_POSTFIX) >= MAXPATHLEN)
-			errx(1, "%s: pathname too long", working->log);
-
-		if (tmp)
-			free(tmp);
-		free(errline);
+		if (working->backdir != NULL) {
+			if (snprintf(line, sizeof(line), "%s/%s.%d%s",
+			    working->backdir, working->logbase,
+			    working->numlogs, COMPRESS_POSTFIX) >= MAXPATHLEN)
+				errx(1, "%s: pathname too long", working->log);
+		} else {
+			if (snprintf(line, sizeof(line), "%s.%d%s",
+			    working->log, working->numlogs, COMPRESS_POSTFIX)
+			    >= MAXPATHLEN)
+				errx(1, "%s: pathname too long", working->log);
+		}
 	}
 	if (working)
 		working->next = NULL;
@@ -617,18 +654,25 @@ missing_field(char *p, char *errline)
 }
 
 void
-dotrim(char *log, int numdays, int flags, int perm, uid_t owner_uid,
-    gid_t group_gid)
+dotrim(struct conf_entry *ent)
 {
 	char    file1[MAXPATHLEN], file2[MAXPATHLEN];
 	char    zfile1[MAXPATHLEN], zfile2[MAXPATHLEN];
+	char    oldlog[MAXPATHLEN];
 	int     fd;
 	struct  stat sb;
-	int	days = numdays;
+	int	numdays = ent->numlogs;
+
+	/* Is there a separate backup dir? */
+	if (ent->backdir != NULL)
+		snprintf(oldlog, sizeof(oldlog), "%s/%s", ent->backdir,
+		    ent->logbase);
+	else
+		strlcpy(oldlog, ent->log, sizeof(oldlog));
 
 	/* Remove oldest log (may not exist) */
-	(void)snprintf(file1, sizeof(file1), "%s.%d", log, numdays);
-	(void)snprintf(zfile1, sizeof(zfile1), "%s.%d%s", log, numdays,
+	(void)snprintf(file1, sizeof(file1), "%s.%d", oldlog, numdays);
+	(void)snprintf(zfile1, sizeof(zfile1), "%s.%d%s", oldlog, numdays,
 	    COMPRESS_POSTFIX);
 
 	if (noaction) {
@@ -641,7 +685,7 @@ dotrim(char *log, int numdays, int flags, int perm, uid_t owner_uid,
 	/* Move down log files */
 	while (numdays--) {
 		(void)strlcpy(file2, file1, sizeof(file2));
-		(void)snprintf(file1, sizeof(file1), "%s.%d", log, numdays);
+		(void)snprintf(file1, sizeof(file1), "%s.%d", oldlog, numdays);
 		(void)strlcpy(zfile1, file1, sizeof(zfile1));
 		(void)strlcpy(zfile2, file2, sizeof(zfile2));
 		if (lstat(file1, &sb)) {
@@ -652,57 +696,57 @@ dotrim(char *log, int numdays, int flags, int perm, uid_t owner_uid,
 		}
 		if (noaction) {
 			printf("\tmv %s %s\n", zfile1, zfile2);
-			printf("\tchmod %o %s\n", perm, zfile2);
-			if (owner_uid != (uid_t)-1 || group_gid != (gid_t)-1)
+			printf("\tchmod %o %s\n", ent->permissions, zfile2);
+			if (ent->uid != (uid_t)-1 || ent->gid != (gid_t)-1)
 				printf("\tchown %u:%u %s\n",
-				    owner_uid, group_gid, zfile2);
+				    ent->uid, ent->gid, zfile2);
 		} else {
 			if (rename(zfile1, zfile2))
 				warn("can't mv %s to %s", zfile1, zfile2);
-			if (chmod(zfile2, perm))
+			if (chmod(zfile2, ent->permissions))
 				warn("can't chmod %s", zfile2);
-			if (owner_uid != (uid_t)-1 || group_gid != (gid_t)-1)
-				if (chown(zfile2, owner_uid, group_gid))
+			if (ent->uid != (uid_t)-1 || ent->gid != (gid_t)-1)
+				if (chown(zfile2, ent->uid, ent->gid))
 					warn("can't chown %s", zfile2);
 		}
 	}
-	if (!noaction && !(flags & CE_BINARY))
-		(void)log_trim(log);  /* Report the trimming to the old log */
+	if (!noaction && !(ent->flags & CE_BINARY))
+		(void)log_trim(ent->log);  /* Report the trimming to the old log */
 
-	(void)snprintf(file2, sizeof(file2), "%s.XXXXXXXXXX", log);
+	(void)snprintf(file2, sizeof(file2), "%s.XXXXXXXXXX", ent->log);
 	if (noaction)  {
 		printf("\tmktemp %s\n", file2);
 	} else {
 		if ((fd = mkstemp(file2)) < 0)
 			err(1, "can't start '%s' log", file2);
-		if (owner_uid != (uid_t)-1 || group_gid != (gid_t)-1)
-			if (fchown(fd, owner_uid, group_gid))
-				err(1, "can't chown '%s' log file", file2);
-		if (fchmod(fd, perm))
+		if (ent->uid != (uid_t)-1 || ent->gid != (gid_t)-1)
+			if (fchown(fd, ent->uid, ent->gid))
+			    err(1, "can't chown '%s' log file", file2);
+		if (fchmod(fd, ent->permissions))
 			err(1, "can't chmod '%s' log file", file2);
 		(void)close(fd);
 		/* Add status message */
-		if (!(flags & CE_BINARY) && log_trim(file2))
+		if (!(ent->flags & CE_BINARY) && log_trim(file2))
 			err(1, "can't add status message to log '%s'", file2);
 	}
 
-	if (days == 0) {
+	if (ent->numlogs == 0) {
 		if (noaction)
-			printf("\trm %s\n", log);
-		else if (unlink(log))
-			warn("can't rm %s", log);
+			printf("\trm %s\n", ent->log);
+		else if (unlink(ent->log))
+			warn("can't rm %s", ent->log);
 	} else {
-		if (noaction) 
-			printf("\tmv %s to %s\n", log, file1);
-		else if (rename(log, file1))
-			warn("can't to mv %s to %s", log, file1);
+		if (noaction)
+			printf("\tmv %s to %s\n", ent->log, file1);
+		else if (rename(ent->log, file1))
+			warn("can't to mv %s to %s", ent->log, file1);
 	}
 
 	/* Now move the new log file into place */
 	if (noaction)
-		printf("\tmv %s to %s\n", file2, log);
-	else if (rename(file2, log))
-		warn("can't to mv %s to %s", file2, log);
+		printf("\tmv %s to %s\n", file2, ent->log);
+	else if (rename(file2, ent->log))
+		warn("can't to mv %s to %s", file2, ent->log);
 }
 
 /* Log the fact that the logs were turned over */
@@ -722,21 +766,26 @@ log_trim(char *log)
 
 /* Fork off compress or gzip to compress the old log file */
 void
-compress_log(char *log)
+compress_log(struct conf_entry *ent)
 {
 	pid_t pid;
 	char *base, tmp[MAXPATHLEN];
-	
+
+	if (ent->backdir != NULL)
+		snprintf(tmp, sizeof(tmp), "%s/%s.0", ent->backdir,
+		    ent->logbase);
+	else
+		snprintf(tmp, sizeof(tmp), "%s.0", ent->log);
+
 	if ((base = strrchr(COMPRESS, '/')) == NULL)
 		base = COMPRESS;
 	else
 		base++;
 	if (noaction) {
-		printf("%s %s.0\n", base, log);
+		printf("%s %s\n", base, tmp);
 		return;
 	}
 	pid = fork();
-	(void)snprintf(tmp, sizeof(tmp), "%s.0", log);
 	if (pid < 0) {
 		err(1, "fork");
 	} else if (pid == 0) {
@@ -759,18 +808,21 @@ sizefile(char *file)
 
 /* Return the age (in hours) of old log file (file.0), or -1 if none */
 int
-age_old_log(char *file)
+age_old_log(struct conf_entry *ent)
 {
 	struct stat sb;
 	char tmp[MAXPATHLEN];
 
-	(void)strlcpy(tmp, file, sizeof(tmp));
-	strlcat(tmp, ".0", sizeof(tmp));
-	if (stat(tmp, &sb) < 0) {
-		strlcat(tmp, COMPRESS_POSTFIX, sizeof(tmp));
-		if (stat(tmp, &sb) < 0)
-			return (-1);
+	if (ent->backdir != NULL)
+		snprintf(tmp, sizeof(tmp), "%s/%s.0", ent->backdir, ent->logbase);
+	else {
+		strlcpy(tmp, ent->log, sizeof(tmp));
+		strlcat(tmp, ".0", sizeof(tmp));
 	}
+	if (ent->flags & CE_COMPACT)
+		strlcat(tmp, COMPRESS_POSTFIX, sizeof(tmp));
+	if (stat(tmp, &sb) < 0)
+		return (-1);
 	return ((int)(timenow - sb.st_mtime + 1800) / 3600);
 }
 
