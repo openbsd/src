@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.174 2003/05/19 00:54:19 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.175 2003/05/19 02:32:47 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -201,16 +201,9 @@ pfctl_enable(int dev, int opts)
 	if ((opts & PF_OPT_QUIET) == 0)
 		fprintf(stderr, "pf enabled\n");
 
-	if (altqsupport) {
-		if (ioctl(dev, DIOCSTARTALTQ)) {
-			if (errno == EEXIST)
-				errx(1, "altq already enabled");
-			else
-				err(1, "DIOCSTARTALTQ");
-		}
-		if ((opts & PF_OPT_QUIET) == 0)
-			fprintf(stderr, "altq enabled\n");
-	}
+	if (altqsupport && ioctl(dev, DIOCSTARTALTQ))
+		if (errno != EEXIST)
+			err(1, "DIOCSTARTALTQ");
 
 	return (0);
 }
@@ -227,16 +220,9 @@ pfctl_disable(int dev, int opts)
 	if ((opts & PF_OPT_QUIET) == 0)
 		fprintf(stderr, "pf disabled\n");
 
-	if (altqsupport) {
-		if (ioctl(dev, DIOCSTOPALTQ)) {
-			if (errno == ENOENT)
-				errx(1, "altq not enabled");
-			else
+	if (altqsupport && ioctl(dev, DIOCSTOPALTQ))
+			if (errno != ENOENT)
 				err(1, "DIOCSTOPALTQ");
-		}
-		if ((opts & PF_OPT_QUIET) == 0)
-			fprintf(stderr, "altq disabled\n");
-	}
 
 	return (0);
 }
