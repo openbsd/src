@@ -1,4 +1,4 @@
-/*	$OpenBSD: stp_sbus.c,v 1.1 2003/06/23 09:27:55 miod Exp $	*/
+/*	$OpenBSD: stp_sbus.c,v 1.2 2003/06/25 17:39:00 miod Exp $	*/
 /*	$NetBSD: stp4020.c,v 1.23 2002/06/01 23:51:03 lukem Exp $	*/
 
 /*-
@@ -65,6 +65,7 @@ struct stp4020_sbus_softc {
 	struct stp4020_softc stp;
 	struct sbusdev	sc_sd;		/* SBus device */
 	struct rom_reg	sc_reg;
+	struct rom_reg	sc_reg_le;  /* rev. copy for pcmcia bus_space access */
 	struct intrhand	sc_ih[2];
 };
 
@@ -105,6 +106,8 @@ stpattach(parent, self, aux)
 
 	/* Transfer bus tags */
 	ssc->sc_reg = ca->ca_ra.ra_reg[0];
+	ssc->sc_reg_le = ca->ca_ra.ra_reg[0];
+	SET_TAG_LITTLE_ENDIAN(&ssc->sc_reg_le);
 	sc->sc_bustag = &ssc->sc_reg;
 
 	/* Set up per-socket static initialization */
@@ -153,9 +156,11 @@ stpattach(parent, self, aux)
 		} else if (i < STP4020_BANK_CTRL) {
 			/* banks 1-3 */
 			sc->sc_socks[0].windows[i-1].winaddr = bh;
+			sc->sc_socks[0].wintag = &ssc->sc_reg_le;
 		} else {
 			/* banks 5-7 */
 			sc->sc_socks[1].windows[i-5].winaddr = bh;
+			sc->sc_socks[1].wintag = &ssc->sc_reg_le;
 		}
 	}
 

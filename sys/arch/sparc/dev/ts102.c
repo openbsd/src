@@ -1,4 +1,4 @@
-/*	$OpenBSD: ts102.c,v 1.3 2003/06/24 22:55:43 miod Exp $	*/
+/*	$OpenBSD: ts102.c,v 1.4 2003/06/25 17:39:00 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  *
@@ -123,6 +123,7 @@ struct	tslot_data {
 	struct device		*td_pcmcia;
 
 	volatile u_int8_t	*td_regs;
+	struct rom_reg		td_rr;
 	vaddr_t			td_space[TS102_RANGE_CNT];
 
 	/* Interrupt handler */
@@ -230,7 +231,6 @@ tslot_attach(struct device *parent, struct device *self, void *args)
 	struct confargs *ca = args;
 	struct tslot_softc *sc = (struct tslot_softc *)self;
 	struct romaux *ra;
-	struct rom_reg reg;
 	struct rom_range ranges[TS102_NUM_RANGES], *range;
 	struct tslot_data *td;
 	volatile u_int8_t *regs;
@@ -283,17 +283,18 @@ tslot_attach(struct device *parent, struct device *self, void *args)
 		td = &sc->sc_slot[slot];
 		for (rnum = 0; rnum < TS102_RANGE_CNT; rnum++) {
 			range = ranges + (slot * TS102_RANGE_CNT + rnum);
-			reg = ra->ra_reg[0];
-			reg.rr_iospace = range->pspace;
-			reg.rr_paddr = (void *)
-			   ((u_int32_t)reg.rr_paddr + range->poffset);
-			td->td_space[rnum] = (vaddr_t)mapiodev(&reg, 0,
+			td->td_rr = ra->ra_reg[0];
+			td->td_rr.rr_iospace = range->pspace;
+			td->td_rr.rr_paddr = (void *)
+			   ((u_int32_t)td->td_rr.rr_paddr + range->poffset);
+			td->td_space[rnum] = (vaddr_t)mapiodev(&td->td_rr, 0,
 			    TS102_ARBITRARY_MAP_SIZE);
 		}
 		td->td_parent = sc;
 		td->td_regs = regs +
 		    slot * (TS102_REG_CARD_B_INT - TS102_REG_CARD_A_INT);
 		td->td_slot = slot;
+		SET_TAG_LITTLE_ENDIAN(&td->td_rr);
 		tslot_reset(td, TS102_ARBITRARY_MAP_SIZE);
 	}
 }
@@ -407,7 +408,7 @@ tslot_io_map(pcmcia_chipset_handle_t pch, int width, bus_addr_t offset,
 	printf("[io map %x-%x", offset, size);
 #endif
 
-	pih->iot = 0;
+	pih->iot = &td->td_rr;
 	pih->ioh = (bus_space_handle_t)(td->td_space[TS102_RANGE_IO]);
 	*windowp = TS102_RANGE_IO;
 
@@ -465,7 +466,7 @@ tslot_mem_map(pcmcia_chipset_handle_t pch, int kind, bus_addr_t addr,
 
 	addr += pmh->addr;
 
-	pmh->memt = 0;
+	pmh->memt = &td->td_rr;
 	pmh->memh = (bus_space_handle_t)(td->td_space[slot] + addr);
 	pmh->realsize = TS102_ARBITRARY_MAP_SIZE - addr;
 	*offsetp = 0;

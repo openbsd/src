@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.3 2003/06/25 00:02:56 mickey Exp $	*/
+/*	$OpenBSD: bus.h,v 1.4 2003/06/25 17:39:00 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  *
@@ -47,7 +47,19 @@
 #include <machine/pmap.h>
 
 typedef	u_int32_t	bus_space_handle_t;
+
+/*
+ * bus_space_tag_t are pointer to *modified* rom_reg structures.
+ * rr_iospace is used to also carry bus endianness information.
+ */
 typedef	struct rom_reg 	*bus_space_tag_t;
+
+#define	TAG_LITTLE_ENDIAN		0x80000000
+
+#define	SET_TAG_BIG_ENDIAN(t)		((t))->rr_iospace &= ~TAG_LITTLE_ENDIAN
+#define	SET_TAG_LITTLE_ENDIAN(t)	((t))->rr_iospace |= TAG_LITTLE_ENDIAN
+
+#define	IS_TAG_LITTLE_ENDIAN(t)		((t)->rr_iospace & TAG_LITTLE_ENDIAN)
 
 typedef	u_int32_t	bus_addr_t;
 typedef	u_int32_t	bus_size_t;
@@ -71,7 +83,7 @@ static __inline__ int
 bus_space_map(bus_space_tag_t tag, bus_addr_t addr, bus_size_t size, int flags,
     bus_space_handle_t *handle)
 {
-	if ((*handle = (bus_space_handle_t)mapiodev((struct rom_reg *)tag,
+	if ((*handle = (bus_space_handle_t)mapiodev(tag,
 	    addr, size)) != NULL)
 		return (0);
 
@@ -101,7 +113,13 @@ bus_space_barrier(bus_space_tag_t tag, bus_space_handle_t handle,
 static __inline__ void *
 bus_space_vaddr(bus_space_tag_t tag, bus_space_handle_t handle)
 {
-	return (void *)(REG2PHYS((struct rom_reg *)tag, 0) | PMAP_NC);
+	u_int32_t iospace = tag->rr_iospace;
+	void *rc;
+
+	tag->rr_iospace &= ~TAG_LITTLE_ENDIAN;
+	rc = (void *)(REG2PHYS(tag, 0) | PMAP_NC);
+	tag->rr_iospace = iospace;
+	return (rc);
 }
 
 static __inline__ int
@@ -120,12 +138,18 @@ bus_space_subregion(bus_space_tag_t tag, bus_space_handle_t handle,
 
 #define	bus_space_read_1(tag, handle, offset) \
 	((void)(tag), *(volatile u_int8_t *)((handle) + (offset)))
-
+#define	__bus_space_read_2(tag, handle, offset) \
+	*(volatile u_int16_t *)((handle) + (offset))
+#define	__bus_space_read_4(tag, handle, offset) \
+	*(volatile u_int32_t *)((handle) + (offset))
 #define	bus_space_read_2(tag, handle, offset) \
-	((void)(tag), *(volatile u_int16_t *)((handle) + (offset)))
-
+	((IS_TAG_LITTLE_ENDIAN(tag)) ? \
+		letoh16(__bus_space_read_2(tag, handle, offset)) : \
+		__bus_space_read_2(tag, handle, offset))
 #define	bus_space_read_4(tag, handle, offset) \
-	((void)(tag), *(volatile u_int32_t *)((handle) + (offset)))
+	((IS_TAG_LITTLE_ENDIAN(tag)) ? \
+		letoh32(__bus_space_read_4(tag, handle, offset)) : \
+		__bus_space_read_4(tag, handle, offset))
 
 static void bus_space_read_multi_1(bus_space_tag_t, bus_space_handle_t,
     bus_addr_t, u_int8_t *, size_t);
@@ -169,7 +193,8 @@ bus_space_read_raw_multi_2(bus_space_tag_t tag, bus_space_handle_t handle,
 {
 	size >>= 1;
 	while ((int)--size >= 0) {
-		*(u_int16_t *)dest = bus_space_read_2(tag, handle, offset);
+		*(u_int16_t *)dest =
+		    __bus_space_read_2(tag, handle, offset);
 		dest += 2;
 	}
 }
@@ -183,19 +208,24 @@ bus_space_read_raw_multi_4(bus_space_tag_t tag, bus_space_handle_t handle,
 {
 	size >>= 2;
 	while ((int)--size >= 0) {
-		*(u_int32_t *)dest = bus_space_read_4(tag, handle, offset);
+		*(u_int32_t *)dest =
+		    __bus_space_read_4(tag, handle, offset);
 		dest += 4;
 	}
 }
 
 #define	bus_space_write_1(tag, handle, offset, value) \
 	((void)(tag), *(volatile u_int8_t *)((handle) + (offset)) = (value))
-
+#define	__bus_space_write_2(tag, handle, offset, value) \
+	*(volatile u_int16_t *)((handle) + (offset)) = (value)
+#define	__bus_space_write_4(tag, handle, offset, value) \
+	*(volatile u_int32_t *)((handle) + (offset)) = (value)
 #define	bus_space_write_2(tag, handle, offset, value) \
-	((void)(tag), *(volatile u_int16_t *)((handle) + (offset)) = (value))
-
+	__bus_space_write_2(tag, handle, offset, \
+	    (IS_TAG_LITTLE_ENDIAN(tag)) ? htole16(value) : (value))
 #define	bus_space_write_4(tag, handle, offset, value) \
-	((void)(tag), *(volatile u_int32_t *)((handle) + (offset)) = (value))
+	__bus_space_write_4(tag, handle, offset, \
+	    (IS_TAG_LITTLE_ENDIAN(tag)) ? htole32(value) : (value))
 
 static void bus_space_write_multi_1(bus_space_tag_t, bus_space_handle_t,
     bus_addr_t, u_int8_t *, size_t);
@@ -239,7 +269,8 @@ bus_space_write_raw_multi_2(bus_space_tag_t tag, bus_space_handle_t handle,
 {
 	size >>= 1;
 	while ((int)--size >= 0) {
-		bus_space_write_2(tag, handle, offset, *(u_int16_t *)dest);
+		__bus_space_write_2(tag, handle, offset,
+		    *(u_int16_t *)dest);
 		dest += 2;
 	}
 }
@@ -253,7 +284,8 @@ bus_space_write_raw_multi_4(bus_space_tag_t tag, bus_space_handle_t handle,
 {
 	size >>= 2;
 	while ((int)--size >= 0) {
-		bus_space_write_4(tag, handle, offset, *(u_int32_t *)dest);
+		__bus_space_write_4(tag, handle, offset,
+		    *(u_int32_t *)dest);
 		dest += 4;
 	}
 }
@@ -263,10 +295,10 @@ static void bus_space_set_multi_1(bus_space_tag_t, bus_space_handle_t,
 
 static __inline__ void
 bus_space_set_multi_1(bus_space_tag_t tag, bus_space_handle_t handle,
-    bus_addr_t offset, u_int8_t dest, size_t count)
+    bus_addr_t offset, u_int8_t value, size_t count)
 {
 	while ((int)--count >= 0)
-		bus_space_write_1(tag, handle, offset, dest);
+		bus_space_write_1(tag, handle, offset, value);
 }
 
 static void bus_space_set_multi_2(bus_space_tag_t, bus_space_handle_t,
@@ -274,10 +306,10 @@ static void bus_space_set_multi_2(bus_space_tag_t, bus_space_handle_t,
 
 static __inline__ void
 bus_space_set_multi_2(bus_space_tag_t tag, bus_space_handle_t handle,
-    bus_addr_t offset, u_int16_t dest, size_t count)
+    bus_addr_t offset, u_int16_t value, size_t count)
 {
 	while ((int)--count >= 0)
-		bus_space_write_2(tag, handle, offset, dest);
+		bus_space_write_2(tag, handle, offset, value);
 }
 
 static void bus_space_set_multi_4(bus_space_tag_t, bus_space_handle_t,
@@ -285,10 +317,10 @@ static void bus_space_set_multi_4(bus_space_tag_t, bus_space_handle_t,
 
 static __inline__ void
 bus_space_set_multi_4(bus_space_tag_t tag, bus_space_handle_t handle,
-    bus_addr_t offset, u_int32_t dest, size_t count)
+    bus_addr_t offset, u_int32_t value, size_t count)
 {
 	while ((int)--count >= 0)
-		bus_space_write_4(tag, handle, offset, dest);
+		bus_space_write_4(tag, handle, offset, value);
 }
 
 static void bus_space_write_region_1(bus_space_tag_t, bus_space_handle_t,
@@ -337,7 +369,7 @@ bus_space_write_raw_region_2(bus_space_tag_t tag, bus_space_handle_t handle,
 {
 	size >>= 1;
 	while ((int)--size >= 0) {
-		bus_space_write_2(tag, handle, offset, *(u_int16_t *)dest);
+		__bus_space_write_2(tag, handle, offset, *(u_int16_t *)dest);
 		offset += 2;
 		dest += 2;
 	}
@@ -352,7 +384,7 @@ bus_space_write_raw_region_4(bus_space_tag_t tag, bus_space_handle_t handle,
 {
 	size >>= 2;
 	while ((int)--size >= 0) {
-		bus_space_write_4(tag, handle, offset, *(u_int32_t *)dest);
+		__bus_space_write_4(tag, handle, offset, *(u_int32_t *)dest);
 		offset += 4;
 		dest += 4;
 	}
@@ -400,10 +432,10 @@ static void bus_space_set_region_1(bus_space_tag_t, bus_space_handle_t,
 
 static __inline__ void
 bus_space_set_region_1(bus_space_tag_t tag, bus_space_handle_t handle,
-    bus_addr_t offset, u_int8_t dest, size_t count)
+    bus_addr_t offset, u_int8_t value, size_t count)
 {
 	while ((int)--count >= 0)
-		bus_space_write_1(tag, handle, offset++, dest);
+		bus_space_write_1(tag, handle, offset++, value);
 }
 
 static void bus_space_set_region_2(bus_space_tag_t, bus_space_handle_t,
@@ -411,10 +443,10 @@ static void bus_space_set_region_2(bus_space_tag_t, bus_space_handle_t,
 
 static __inline__ void
 bus_space_set_region_2(bus_space_tag_t tag, bus_space_handle_t handle,
-    bus_addr_t offset, u_int16_t dest, size_t count)
+    bus_addr_t offset, u_int16_t value, size_t count)
 {
 	while ((int)--count >= 0) {
-		bus_space_write_2(tag, handle, offset, dest);
+		bus_space_write_2(tag, handle, offset, value);
 		offset += 2;
 	}
 }
@@ -424,10 +456,10 @@ static void bus_space_set_region_4(bus_space_tag_t, bus_space_handle_t,
 
 static __inline__ void
 bus_space_set_region_4(bus_space_tag_t tag, bus_space_handle_t handle,
-    bus_addr_t offset, u_int32_t dest, size_t count)
+    bus_addr_t offset, u_int32_t value, size_t count)
 {
 	while ((int)--count >= 0) {
-		bus_space_write_4(tag, handle, offset, dest);
+		bus_space_write_4(tag, handle, offset, value);
 		offset += 4;
 	}
 }
@@ -441,7 +473,7 @@ bus_space_read_raw_region_2(bus_space_tag_t tag, bus_space_handle_t handle,
 {
 	size >>= 1;
 	while ((int)--size >= 0) {
-		*(u_int16_t *)dest = bus_space_read_2(tag, handle, offset);
+		*(u_int16_t *)dest = __bus_space_read_2(tag, handle, offset);
 		offset += 2;
 		dest += 2;
 	}
@@ -456,7 +488,7 @@ bus_space_read_raw_region_4(bus_space_tag_t tag, bus_space_handle_t handle,
 {
 	size >>= 2;
 	while ((int)--size >= 0) {
-		*(u_int32_t *)dest = bus_space_read_4(tag, handle, offset);
+		*(u_int32_t *)dest = __bus_space_read_4(tag, handle, offset);
 		offset += 4;
 		dest += 4;
 	}
