@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: gzexe,v 1.1 2003/07/31 07:33:55 otto Exp $
+# $OpenBSD: gzexe,v 1.2 2003/07/31 08:10:35 otto Exp $
 #
 #  Copyright (c) 2003 Otto Moerbeek <otto@drijf.net>
 # 
@@ -18,7 +18,7 @@
 #
 
 # The number of lines plus one in the on-the-fly decompression script
-lines=18
+lines=19
 
 # A simple string to recognize already compressed files
 magic="# compressed by gzexe"
@@ -38,7 +38,8 @@ header () {
 			/bin/echo "$prog: cannot create tmp dir"; exit 1
 		}
 		trap '/bin/rm -rf "$tmp"' 0
-		if /usr/bin/tail +$lines "$0" | /usr/bin/gzip -dc > "$tmp/$prog" 2> /dev/null; then
+		if /usr/bin/tail +$lines "$0" |
+		    /usr/bin/gzip -dc > "$tmp/$prog" 2> /dev/null; then
 			/bin/chmod u+x "$tmp/$prog"
 			"$tmp/$prog" ${1+"$@"}
 			ret=$?
