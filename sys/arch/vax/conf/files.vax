@@ -351,11 +351,6 @@ include "compat/ultrix/files.ultrix"
 #arch/vax/if/if_vv.c          optional vv device-driver
 #arch/vax/if/raw_hy.c         optional hy device-driver
 
-define  wsdisplaydev { }
-define  wsemuldisplaydev {[console = -1]}
-define  wskbddev {[console = -1], [mux = -1]}
-define  wsmousedev {[mux = -1]}
-
 # wscons files.
 include "dev/wscons/files.wscons"
 
