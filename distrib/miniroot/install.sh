@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.67 1999/10/15 15:16:01 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.68 1999/10/15 16:55:00 millert Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -559,28 +559,19 @@ if [ X"$ssl" != X1 ]; then
 		echo ""
 		echo "If you do not install the ssl package now, it is easily installed at"
 		echo "a later time (see the afterboot(8) and ssl(8) manual pages)."
+		echo -n "Install (U)SA, (I)nternational, or (N)one? [none] "
 
-		echo -n "Install SSL+RSA libraries now via (f)tp, (h)ttp, or (n)ot? [$resp] "
-		getresp "$resp"
+		getresp none
 		case "$resp" in
-		f*|F*)
-			# configure network if necessary
-			test -n "$_ifs" && configurenetwork
-
-			THESETS=ssl
-			install_url -ftp -reuse
-			resp=f
+		u*|U*)
+			THESETS=sslUSA
 			;;
-		h*|H*)
-			# configure network if necessary
-			test -n "$_ifs" && configurenetwork
-
+		i*|I*)
 			THESETS=ssl
-			install_url -http -reuse
-			resp=h
 			;;
 		n*|N*)
 			echo "Not installing SSL+RSA shared libraries."
+			THESETS=
 			;;
 		*)
 			echo "Invalid response: $resp"
@@ -588,6 +579,36 @@ if [ X"$ssl" != X1 ]; then
 			;;
 		esac
 	done
+	if [ X"$THESETS" != X ]; then
+		resp=
+		while [ X"${resp}" = X ]; do
+			echo -n "Install SSL+RSA libraries via (f)tp, (h)ttp, or (c)ancel? [ftp] "
+			getresp ftp
+			case "$resp" in
+			f*|F*)
+				# configure network if necessary
+				test -n "$_ifs" && configurenetwork
+
+				install_url -ftp -reuse -minpat ${THESETS}'[0-9]*'
+				resp=f
+				;;
+			h*|H*)
+				# configure network if necessary
+				test -n "$_ifs" && configurenetwork
+
+				install_url -http -reuse -minpat ${THESETS}'[0-9]*'
+				resp=h
+				;;
+			c*|C*)
+				echo "Not installing SSL+RSA shared libraries."
+				;;
+			*)
+				echo "Invalid response: $resp"
+				resp=
+				;;
+			esac
+		done
+	fi
 	echo
 fi
 
