@@ -1,10 +1,10 @@
-/*	$OpenBSD: icmp6.c,v 1.11 2000/04/13 14:08:50 itojun Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.12 2000/05/15 11:34:46 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.75 2000/03/11 09:32:17 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -16,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -128,7 +128,7 @@ static void icmp6_mtudisc_timeout __P((struct rtentry *, struct rttimer *));
 
 #ifdef COMPAT_RFC1885
 static struct route_in6 icmp6_reflect_rt;
-#endif 
+#endif
 static struct timeval icmp6_nextsend = {0, 0};
 
 void
@@ -379,7 +379,7 @@ icmp6_input(mp, offp, proto)
 			/* I mean "source address was incorrect." */
 			code = PRC_PARAMPROB;
 			break;
-#endif 
+#endif
 		case ICMP6_DST_UNREACH_NOPORT:
 			code = PRC_UNREACH_PORT;
 			break;
@@ -972,7 +972,7 @@ icmp6_mtudisc_update(dst, icmp6, m)
  */
 #ifndef offsetof		/* XXX */
 #define	offsetof(type, member)	((size_t)(&((type *)0)->member))
-#endif 
+#endif
 
 static struct mbuf *
 ni6_input(m, off)
@@ -1012,7 +1012,7 @@ ni6_input(m, off)
 		 addrs = ni6_addrs(ni6, m, &ifp);
 		 if ((replylen += addrs * sizeof(struct in6_addr)) > MCLBYTES)
 			 replylen = MCLBYTES; /* XXX: we'll truncate later */
-		 
+		
 		 break;
 	 default:
 		 /*
@@ -1041,7 +1041,7 @@ ni6_input(m, off)
 		if (replylen > MCLBYTES)
 			 /*
 			  * XXX: should we try to allocate more? But MCLBYTES is
-			  * probably much larger than IPV6_MMTU... 
+			  * probably much larger than IPV6_MMTU...
 			  */
 			goto bad;
 		MCLGET(n, M_DONTWAIT);
@@ -1053,7 +1053,7 @@ ni6_input(m, off)
 
 	/* copy mbuf header and IPv6 + Node Information base headers */
 	bcopy(mtod(m, caddr_t), mtod(n, caddr_t), sizeof(struct ip6_hdr));
-	nni6 = (struct icmp6_nodeinfo *)(mtod(n, struct ip6_hdr *) + 1); 
+	nni6 = (struct icmp6_nodeinfo *)(mtod(n, struct ip6_hdr *) + 1);
 	bcopy((caddr_t)ni6, (caddr_t)nni6, sizeof(struct icmp6_nodeinfo));
 
 	/* qtype dependent procedure */
@@ -1297,7 +1297,7 @@ icmp6_reflect(m, off)
 #ifdef COMPAT_RFC1885
 	int mtu = IPV6_MMTU;
 	struct sockaddr_in6 *sin6 = &icmp6_reflect_rt.ro_dst;
-#endif 
+#endif
 
 	/* too short to reflect */
 	if (off < sizeof(struct ip6_hdr)) {
@@ -1384,7 +1384,7 @@ icmp6_reflect(m, off)
 		plen -= (m->m_pkthdr.len - mtu);
 		m_adj(m, mtu - m->m_pkthdr.len);
 	}
-#endif 
+#endif
 	/*
 	 * If the incoming packet was addressed directly to us(i.e. unicast),
 	 * use dst as the src for the reply.
@@ -1417,7 +1417,7 @@ icmp6_reflect(m, off)
 		if ((ia = in6_ifawithscope(m->m_pkthdr.rcvif, &t)) != 0)
 			src = &IA6_SIN6(ia)->sin6_addr;
 
-	if (src == 0) 
+	if (src == 0)
 		goto bad;
 
 	ip6->ip6_src = *src;
@@ -2000,14 +2000,14 @@ icmp6_mtudisc_clone(dst)
 	rt = rtalloc1(dst, 1);
 	if (rt == 0)
 		return NULL;
-    
+
 	/* If we didn't get a host route, allocate one */
 	if ((rt->rt_flags & RTF_HOST) == 0) {
 		struct rtentry *nrt;
 
-		error = rtrequest((int) RTM_ADD, dst, 
+		error = rtrequest((int) RTM_ADD, dst,
 		    (struct sockaddr *) rt->rt_gateway,
-		    (struct sockaddr *) 0, 
+		    (struct sockaddr *) 0,
 		    RTF_GATEWAY | RTF_HOST | RTF_DYNAMIC, &nrt);
 		if (error) {
 			rtfree(rt);
@@ -2035,7 +2035,7 @@ icmp6_mtudisc_timeout(rt, r)
 {
 	if (rt == NULL)
 		panic("icmp6_mtudisc_timeout: bad route to timeout");
-	if ((rt->rt_flags & (RTF_DYNAMIC | RTF_HOST)) == 
+	if ((rt->rt_flags & (RTF_DYNAMIC | RTF_HOST)) ==
 	    (RTF_DYNAMIC | RTF_HOST)) {
 		rtrequest((int) RTM_DELETE, (struct sockaddr *)rt_key(rt),
 		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0);
