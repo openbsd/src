@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.11 2000/11/16 16:27:38 jason Exp $	*/
+/*	$OpenBSD: qe.c,v 1.12 2000/11/16 19:31:10 jason Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 Jason L. Wright.
@@ -170,11 +170,7 @@ qeattach(parent, self, aux)
 	    qe_ifmedia_upd, qe_ifmedia_sts);
 	ifmedia_add(&sc->sc_ifmedia,
 	    IFM_MAKEWORD(IFM_ETHER, IFM_10_T, 0, 0), 0, NULL);
-	ifmedia_add(&sc->sc_ifmedia,
-	    IFM_MAKEWORD(IFM_ETHER, IFM_10_5, 0, 0), 0, NULL);
-	ifmedia_add(&sc->sc_ifmedia,
-	    IFM_MAKEWORD(IFM_ETHER, IFM_AUTO, 0, 0), 0, NULL);
-	ifmedia_set(&sc->sc_ifmedia, IFM_ETHER | IFM_AUTO);
+	ifmedia_set(&sc->sc_ifmedia, IFM_ETHER | IFM_10_T);
 
 	/* Attach the interface. */
 	if_attach(ifp);
@@ -732,7 +728,7 @@ qeinit(sc)
 	cr->rimask = 0;
 	cr->timask = 0;
 	cr->qmask = 0;
-	cr->mmask = QE_CR_MMASK_RXCOLL;
+	cr->mmask = QE_CR_MMASK_RXCOLL | QE_CR_MMASK_CLOSS;
 	cr->ccnt = 0;
 	cr->pipg = 0;
 	cr->rxwbufptr = cr->rxrbufptr = sc->sc_channel * qec->sc_msize;
@@ -750,6 +746,8 @@ qeinit(sc)
 	mr->xmtfc = QE_MR_XMTFC_APADXMT;
 	mr->rcvfc = 0;
 	mr->imr = QE_MR_IMR_CERRM | QE_MR_IMR_RCVINTM;
+	mr->phycc = QE_MR_PHYCC_ASEL;
+	mr->plscc = QE_MR_PLSCC_TP;
 
 	qe_ifmedia_upd(ifp);
 
@@ -768,10 +766,6 @@ qeinit(sc)
 	qe_mcreset(sc);
 	mr->iac = 0;
 
-	DELAY(50000);
-	i = mr->phycc;
-	i = sc->sc_qr->stat;
-	i = cr->stat;
 	i = mr->mpc;
 
 	ifp->if_flags |= IFF_RUNNING;
@@ -1004,29 +998,10 @@ qe_ifmedia_sts(ifp, ifmr)
 	struct ifmediareq *ifmr;
 {
 	struct qesoftc *sc = (struct qesoftc *)ifp->if_softc;
-	struct qe_mregs *mr = sc->sc_mr;
-	u_int8_t plscc, phycc;
+	u_int8_t phycc;
 
-	plscc = mr->plscc;
-	phycc = mr->phycc;
-
-	if (phycc & QE_MR_PHYCC_ASEL)
-		ifmr->ifm_active = IFM_ETHER | IFM_AUTO;
-	else {
-		switch (plscc & QE_MR_PLSCC_PORTMASK) {
-		case QE_MR_PLSCC_TP:
-			ifmr->ifm_active = IFM_ETHER | IFM_10_T;
-			break;
-		case QE_MR_PLSCC_AUI:
-			ifmr->ifm_active = IFM_ETHER | IFM_10_5;
-			break;
-		case QE_MR_PLSCC_DAI:
-		case QE_MR_PLSCC_GPSI:
-			/* ... */
-			break;
-		}
-	}
-
+	ifmr->ifm_active = IFM_ETHER | IFM_10_T;
+	phycc = sc->sc_mr->phycc;
 	if ((phycc & QE_MR_PHYCC_DLNKTST) == 0) {
 		ifmr->ifm_status |= IFM_AVALID;
 		if (phycc & QE_MR_PHYCC_LNKFL)
@@ -1041,27 +1016,13 @@ qe_ifmedia_upd(ifp)
 	struct ifnet *ifp;
 {
 	struct qesoftc *sc = (struct qesoftc *)ifp->if_softc;
-	struct qe_mregs *mr = sc->sc_mr;
 	int media = sc->sc_ifmedia.ifm_media;
-	u_int8_t plscc, phycc;
 
 	if (IFM_TYPE(media) != IFM_ETHER)
 		return (EINVAL);
 
-	plscc = mr->plscc & (~QE_MR_PLSCC_PORTMASK);
-	phycc = mr->phycc & (~QE_MR_PHYCC_ASEL);
-
-	if (IFM_SUBTYPE(media) == IFM_AUTO)
-		phycc |= QE_MR_PHYCC_ASEL;
-	else if (IFM_SUBTYPE(media) == IFM_10_T)
-		plscc |= QE_MR_PLSCC_TP;
-	else if (IFM_SUBTYPE(media) == IFM_10_5)
-		plscc |= QE_MR_PLSCC_AUI;
-	else
+	if (IFM_SUBTYPE(media) != IFM_10_T)
 		return (EINVAL);
-
-	mr->plscc = plscc;
-	mr->phycc = phycc;
 
 	return (0);
 }
