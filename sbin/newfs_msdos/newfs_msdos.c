@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs_msdos.c,v 1.4 1997/01/15 23:41:32 millert Exp $ */
+/*	$OpenBSD: newfs_msdos.c,v 1.5 1997/03/22 02:51:06 kstailey Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Joerg Wunsch
@@ -225,13 +225,8 @@ main(argc, argv)
 	if (argc != 1)
 		usage();
 
-#if 0
-	if ((fd = open(argv[0], O_RDWR | O_EXCL, 0)) == -1)
-		err(1, "open(%s)", argv[0]);
-#else
 	if ((fd = opendev(argv[0], O_RDWR | O_EXCL, OPENDEV_PART, &rdev)) < 0)
 		err(1, "%s", rdev);
-#endif
 
 	if (format == 0) {
 		/*
