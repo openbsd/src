@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.93 2001/07/01 23:31:31 dugsong Exp $ */
+/*	$OpenBSD: pf.c,v 1.94 2001/07/02 19:18:40 provos Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -1221,8 +1221,10 @@ pf_send_reset(struct ip *h, int off, struct tcphdr *th)
 	if (mtag == NULL)
 		return;
 	m = m_gethdr(M_DONTWAIT, MT_HEADER);
-	if (m == NULL)
+	if (m == NULL) {
+		m_tag_free(mtag);
 		return;
+	}
 	m_tag_prepend(m, mtag);
 	m->m_data += max_linkhdr;
 	m->m_pkthdr.len = m->m_len = len;
