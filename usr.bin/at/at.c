@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.10 1997/03/03 03:31:10 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.11 1997/03/03 03:34:34 millert Exp $	*/
 /*	$NetBSD: at.c,v 1.4 1995/03/25 18:13:31 glass Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ enum { ATQ, ATRM, AT, BATCH, CAT };	/* what program we want to run */
 
 /* File scope variables */
 #ifndef lint
-static char rcsid[] = "$OpenBSD: at.c,v 1.10 1997/03/03 03:31:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: at.c,v 1.11 1997/03/03 03:34:34 millert Exp $";
 #endif
 
 char *no_export[] =
@@ -678,15 +678,10 @@ main(argc, argv)
 		break;
 
 	case ATRM:
-		if (optind == argc)
-			usage();
-		process_jobs(argc, argv, ATRM);
-		break;
-
 	case CAT:
 		if (optind == argc)
 			usage();
-		process_jobs(argc, argv, CAT);
+		process_jobs(argc, argv, program);
 		break;
 
 	case AT:
