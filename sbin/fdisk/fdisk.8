@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.41 2003/06/03 13:16:08 jmc Exp $
+.\"	$OpenBSD: fdisk.8,v 1.42 2004/06/22 23:01:55 tom Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\" All rights reserved.
@@ -229,8 +229,8 @@ If you wish to boot from an extended
 partition, you will need to mark the partition table entry for the
 extended partition as bootable.
 .It Em update
-Update the machine code in the memory copy of the currently selected
-boot block.
+Update the machine code and 0xAA55 signature in the memory copy
+of the currently selected boot block.
 Note that this option will overwrite the NT disk
 signature, if present.
 .It Em select

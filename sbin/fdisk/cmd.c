@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.33 2003/06/11 06:22:12 deraadt Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.34 2004/06/22 23:01:55 tom Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -325,6 +325,7 @@ Xupdate(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 
 	/* Update code */
 	memcpy(mbr->code, tt->code, MBR_CODE_SIZE);
+	mbr->signature = DOSMBR_SIGNATURE;
 	printf("Machine code updated.\n");
 	return (CMD_DIRTY);
 }
