@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsirand.c,v 1.10 1997/08/11 02:52:31 millert Exp $	*/
+/*	$OpenBSD: fsirand.c,v 1.11 1998/01/22 05:13:18 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint                                                              
-static char rcsid[] = "$OpenBSD: fsirand.c,v 1.10 1997/08/11 02:52:31 millert Exp $";
+static char rcsid[] = "$OpenBSD: fsirand.c,v 1.11 1998/01/22 05:13:18 millert Exp $";
 #endif /* not lint */                                                        
 
 #include <sys/types.h>
@@ -175,9 +175,9 @@ fsirand(device)
 		if (lseek(devfd, (off_t)dblk * (off_t)bsize, SEEK_SET) < 0) {
 			warn("Can't seek to %qd", (off_t)dblk * bsize);
 			return (1);
-		} else if ((n = write(devfd, (void *)sblock, SBSIZE)) != SBSIZE) {
+		} else if ((n = read(devfd, (void *)sblock, SBSIZE)) != SBSIZE) {
 			warn("Can't read backup superblock %d on %s: %s",
-			    cg + 1, devpath, (n < SBSIZE) ? "short write"
+			    cg + 1, devpath, (n < SBSIZE) ? "short read"
 			    : strerror(errno));
 			return (1);
 		}
@@ -222,7 +222,7 @@ fsirand(device)
 			return (1);
 		}
 		if ((n = write(devfd, (void *)sblock, SBSIZE)) != SBSIZE) {
-			warn("Can't read superblock on %s: %s", devpath,
+			warn("Can't write superblock on %s: %s", devpath,
 			    (n < SBSIZE) ? "short write" : strerror(errno));
 			return (1);
 		}
