@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.59 2003/05/13 22:45:06 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.60 2004/07/07 01:29:14 deraadt Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 
 machine	alpha			# architecture, used by config; REQUIRED
@@ -121,9 +121,9 @@ vga*	at isa?					# ISA (EISA: XXX) VGA
 
 # IDE
 pciide* at pci ? dev ? function ? flags 0x0000
-wdc0	at isa? port 0x1f0 irq 14 flags 0x00
-wdc1	at isa? port 0x170 irq 15 flags 0x00
-wd*	at wdc? channel ? drive ? flags 0x0000
+#wdc0	at isa? port 0x1f0 irq 14 flags 0x00
+#wdc1	at isa? port 0x170 irq 15 flags 0x00
+#wd*	at wdc? channel ? drive ? flags 0x0000
 wd*	at pciide? channel ? drive ? flags 0x0000
 
 #atapiscsi* at wdc? channel ?
