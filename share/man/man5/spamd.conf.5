@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.conf.5,v 1.8 2003/03/12 04:08:32 david Exp $
+.\"	$OpenBSD: spamd.conf.5,v 1.9 2003/03/18 17:18:38 henning Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" Copyright (c) 2003 Bob Beck
@@ -58,7 +58,7 @@ all:\e
 	:spews1:white:myblack:\e
 
 spews1:\e
-	:black\e
+	:black:\e
 	:msg="SPAM. Your address \&%A is in the spews\e
 	level 1 database\ensee http://www.spews.org/ask.cgi?x=\&%A\en":\e
 	:method=http:\e	
