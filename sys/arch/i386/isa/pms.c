@@ -1,4 +1,4 @@
-/*	$OpenBSD: pms.c,v 1.18 1998/04/01 20:21:00 matthieu Exp $	*/
+/*	$OpenBSD: pms.c,v 1.19 1998/06/27 22:42:47 deraadt Exp $	*/
 /*	$NetBSD: pms.c,v 1.29 1996/05/12 23:12:42 mycroft Exp $	*/
 
 /*-
@@ -186,6 +186,7 @@ pmsprobe(parent, match, aux)
 	void *match, *aux;
 {
 	struct cfdata *cf = match;
+	void *ih;
 	u_char x;
 
 	/*
@@ -210,6 +211,12 @@ pmsprobe(parent, match, aux)
 	if (x & 0x04)
 		return 0;
 
+	ih = isa_intr_establish(aux, cf->cf_loc[0],
+	    IST_EDGE, IPL_TTY, pmsintr, NULL, pms_cd.cd_name);
+	if (ih == NULL)
+		return 0;
+
+	isa_intr_disestablish(aux, ih);
 	return 1;
 }
 
