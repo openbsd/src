@@ -1,4 +1,4 @@
-/* $OpenBSD: if_wi_pcmcia.c,v 1.36 2002/06/25 15:13:09 millert Exp $ */
+/* $OpenBSD: if_wi_pcmcia.c,v 1.37 2002/07/01 13:31:06 fgsch Exp $ */
 /* $NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $ */
 
 /*
@@ -363,7 +363,7 @@ wi_pcmcia_attach(parent, self, aux)
 	}
 	state++;
 
-	printf(" port 0x%lx/%d", psc->sc_pcioh.addr, cfe->iospace[0].length);
+	printf(" port 0x%lx/%d", psc->sc_pcioh.addr, psc->sc_pcioh.size);
 
 	sc->wi_ltag = sc->wi_btag = psc->sc_pcioh.iot;
 	sc->wi_lhandle = sc->wi_bhandle = psc->sc_pcioh.ioh;
