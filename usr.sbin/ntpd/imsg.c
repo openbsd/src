@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.3 2004/09/15 19:22:55 henning Exp $ */
+/*	$OpenBSD: imsg.c,v 1.4 2004/09/16 01:02:37 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -98,7 +98,7 @@ imsg_compose(struct imsgbuf *ibuf, int type, u_int32_t peerid, pid_t pid,
 	struct buf	*wbuf;
 	int		 n;
 
-	if ((wbuf = imsg_create(ibuf, type, peerid, datalen, pid)) == NULL)
+	if ((wbuf = imsg_create(ibuf, type, peerid, pid, datalen)) == NULL)
 		return (-1);
 
 	if (imsg_add(wbuf, data, datalen) == -1) {
