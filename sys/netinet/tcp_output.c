@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.14 1998/11/25 05:20:51 millert Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.15 1998/11/25 05:44:37 millert Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -202,7 +202,7 @@ again:
 		tcp_sack_adjust(tp);
 #endif
 	off = tp->snd_nxt - tp->snd_una;
-	win = min(tp->snd_wnd, tp->snd_cwnd);
+	win = ulmin(tp->snd_wnd, tp->snd_cwnd);
 
 	flags = tcp_outflags[tp->t_state];
 	/*
@@ -267,7 +267,7 @@ again:
 #ifdef TCP_SACK
 	if (!sack_rxmit) {
 #endif
-	len = lmin(so->so_snd.sb_cc, win) - off;
+	len = ulmin(so->so_snd.sb_cc, win) - off;
 
 #if defined(TCP_SACK) && defined(TCP_FACK)
 	/* 
@@ -350,7 +350,7 @@ again:
 		 * taking into account that we are limited by
 		 * TCP_MAXWIN << tp->rcv_scale.
 		 */
-		long adv = min(win, (long)TCP_MAXWIN << tp->rcv_scale) -
+		long adv = lmin(win, (long)TCP_MAXWIN << tp->rcv_scale) -
 			(tp->rcv_adv - tp->rcv_nxt);
 
 		if (adv >= (long) (2 * tp->t_maxseg))

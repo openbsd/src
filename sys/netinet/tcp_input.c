@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.21 1998/11/17 19:23:01 provos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.22 1998/11/25 05:44:36 millert Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -1292,9 +1292,9 @@ trimthenstep6:
 				else if (++tp->t_dupacks == tcprexmtthresh) {
 #endif /* TCP_FACK */
 					tcp_seq onxt = tp->snd_nxt;
-					u_int win =
-					    min(tp->snd_wnd, tp->snd_cwnd) / 2 /
-						tp->t_maxseg;
+					u_long win =
+					    ulmin(tp->snd_wnd, tp->snd_cwnd) /
+						2 / tp->t_maxseg;
 
 #if defined(TCP_SACK) || defined(TCP_NEWRENO) 
 					if (SEQ_LT(ti->ti_ack, tp->snd_last)){
