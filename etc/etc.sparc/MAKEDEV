@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc/MAKEDEV.md,v 1.13 2002/07/31 16:47:50 jason Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.49 2002/06/18 00:53:45 fgsch Exp 
+#	OpenBSD: etc.sparc/MAKEDEV.md,v 1.14 2002/08/12 10:45:06 miod Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.50 2002/08/12 10:45:04 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
 #
@@ -53,20 +53,19 @@
 #	tty*	set of 16 slave psuedo terminals
 #	pty*	set of 16 master pseudo terminals
 # Printers:
+# Console ports:
+#	ttyC0	wscons screen 0
+#	ttyC-F*	wscons virtual consoles
+#	wskbd*	wscons keyboards
+#	wsmux	wscons keyboard/mouse mux devices
+# Pointing devices:
+#	wsmouse*	wscons mice
 # Terminal ports:
 #	tty[a-z]*	Zilog 8530 Serial Port
 #	cua[a-z]*	Zilog 8530 Serial Port
 # Special purpose devices:
 #	audio*	audio device
 #	openprom	
-#	bwtwo*	
-#	cgtwo*	
-#	cgthree*	
-#	cgfour*	
-#	cgsix*	
-#	cgeight*	
-#	cgfourteen*	
-#	tcx*	
 #	bpf*	Berkeley Packet Filter
 #	pf*	Packet Filter
 #	altq/	ALTQ control interface
@@ -216,9 +215,6 @@ std)
 	M klog		c 16 0 600
 	M eeprom	c 3 11	640 kmem
 	M openprom	c 70 0	640 kmem
-	M fb		c 22 0
-	M mouse		c 13 0
-	M kbd		c 29 0
 	;;
 
 systrace)
@@ -309,38 +305,6 @@ bpf*)
 	M bpf$U c 105 $U 600
 	;;
 
-tcx*)
-	M tcx$U c 109 $U
-	;;
-
-cgfourteen*)
-	M cgfourteen$U c 99 $U
-	;;
-
-cgeight*)
-	M cgeight$U c 64 $U 666
-	;;
-
-cgsix*)
-	M cgsix$U c 67 $U 666
-	;;
-
-cgfour*)
-	M cgfour$U c 39 $U 666
-	;;
-
-cgthree*)
-	M cgthree$U c 55 $U 666
-	;;
-
-cgtwo*)
-	M cgtwo$U c 31 $U 666
-	;;
-
-bwtwo*)
-	M bwtwo$U c 27 $U 666
-	;;
-
 openprom)
 	M openprom c 70 0  
 	;;
@@ -361,8 +325,10 @@ cua[a-z])
 	case $u in
 	a) n=0 ;;
 	b) n=1 ;;
-	c) n=4 ;;
-	d) n=5 ;;
+	c) n=2 ;;
+	d) n=3 ;;
+	e) n=4;;
+	f) n=5;;
 	*) echo unknown cua device $i ;;
 	esac
 	M cua$u c 12 $(($n+128)) 660 dialer uucp
@@ -373,11 +339,48 @@ tty[a-z])
 	case $u in
 	a) n=0 ;;
 	b) n=1 ;;
-	c) n=4 ;;
-	d) n=5 ;;
+	c) n=2 ;;
+	d) n=3 ;;
+	e) n=4;;
+	f) n=5;;
 	*) echo unknown tty device $i ;;
 	esac
 	M tty$u c 12 $n 660 dialer uucp
+	;;
+
+wsmouse*)
+	M wsmouse$U c 80 $U 600
+	;;
+
+wsmux|wsmouse|wskbd)
+	M wsmouse c 81 0 600
+	M wskbd c 81 1 600
+	;;
+
+wskbd*)
+	M wskbd$U c 79 $U 600
+	;;
+
+tty[C-F]*)
+	U=${i##tty[C-F]}
+	case $i in
+	ttyC*) n=C m=0;;
+	ttyD*) n=D m=256;;
+	ttyE*) n=E m=512;;
+	ttyF*) n=F m=768;;
+	esac
+	case $U in
+	[0-9a-f]) M tty$n$U c 78 $(( 16#$U + $m )) 600;;
+	cfg) M tty${n}cfg c 78 $((255+$m)) 600;;
+	*) echo bad unit $U for $i; exit 1;;
+	esac
+	;;
+
+wscons)
+	R wsmouse0 wsmouse1 wsmouse2 wsmouse3 wskbd0 wskbd1 wskbd2
+	R wskbd3 wsmux ttyCcfg ttyC0 ttyC1 ttyC2 ttyC3 ttyC4 ttyC5
+	R ttyC6 ttyC7 ttyC8 ttyC9 ttyCa ttyCb ttyDcfg ttyD0 ttyD1
+	R ttyD2 ttyD3 ttyD4 ttyD5 ttyD6 ttyD7 ttyD8 ttyD9 ttyDa ttyDb
 	;;
 
 pty*)
@@ -470,13 +473,12 @@ local)
 	;;
 
 all)
-	R ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4
-	R cd0 cd1 rd0 xy0 xy1 xy2 xy3 tun0 tun1 tun2 tun3 bpf0 bpf1
-	R bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 fd1
-	R fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E
-	R fd0F fd0G fd0H xfs0 ss0 ss1 ch0 ses0 tcx0 cgfourteen0
-	R cgeight0 cgsix0 cgfour0 cgthree0 cgtwo0 bwtwo0 audio0 uk0
-	R random lkm cuaa cuab cuac cuad ttya ttyb ttyc ttyd pf altq
+	R cuaa cuab cuac cuad ttya ttyb ttyc ttyd ccd0 ccd1 ccd2 ccd3
+	R vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 cd0 cd1 rd0 xy0 xy1
+	R xy2 xy3 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5
+	R bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 fd1 fd1B fd1C fd1D fd1E
+	R fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H xfs0
+	R ss0 ss1 ch0 ses0 wscons audio0 uk0 random lkm pf altq
 	R systrace xd0 xd1 xd2 xd3 raid0 raid1 raid2 raid3 std st0 st1
 	R fd
 	;;
