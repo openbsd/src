@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.26 2004/12/18 21:25:44 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.27 2004/12/19 04:14:20 deraadt Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -126,7 +126,7 @@ yylex(cf)
 		state = SWORD;
 	else if (cf&LETEXPR) {
 		*wp++ = OQUOTE;	 /* enclose arguments in (double) quotes */
-		state = SLETPAREN;	
+		state = SLETPAREN;
 		statep->ls_sletparen.nparen = 0;
 	} else {		/* normal lexing */
 		state = (cf & HEREDELIM) ? SHEREDELIM : SBASE;
@@ -517,7 +517,6 @@ yylex(cf)
 						statep->ls_scsparen.csstate = 0;
 						state = statep->ls_state
 							= SCSPAREN;
-						
 					}
 				}
 			}
@@ -1214,7 +1213,7 @@ dopprompt(sp, ntruncate, spp, doprint)
 				strbuf[0] = '\007';
 				strbuf[1] = '\0';
 				break;
-			case 'd':	/* '\' 'd' Dow Mon DD */ 
+			case 'd':	/* '\' 'd' Dow Mon DD */
 				time(&t);
 				tm = localtime(&t);
 				strftime(strbuf, sizeof strbuf, "%a %b %d", tm);
@@ -1539,7 +1538,7 @@ arraysub(strp)
 	XString ws;
 	char	*wp;
 	char	c;
-	int 	depth = 1;	/* we are just past the initial [ */
+	int	depth = 1;	/* we are just past the initial [ */
 
 	Xinit(ws, wp, 32, ATEMP);
 

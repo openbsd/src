@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.30 2004/12/18 21:25:44 millert Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.31 2004/12/19 04:14:20 deraadt Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -518,7 +518,7 @@ x_delete(nc, push)
 {
 	int	i,j;
 	char	*cp;
-	
+
 	if (nc == 0)
 		return;
 	if (xmp != NULL && xmp > xcp) {
@@ -565,7 +565,7 @@ x_delete(nc, push)
 	for (cp = x_lastcp(); cp > xcp; )
 		x_bs(*--cp);
 
-	return;	
+	return;
 }
 
 static int
@@ -1048,7 +1048,7 @@ x_redraw(limit)
 {
 	int	i, j;
 	char	*cp;
-	
+
 	x_adj_ok = 0;
 	if (limit == -1)
 		x_e_putc('\n');
@@ -1476,7 +1476,7 @@ x_init_emacs()
 		for (j = 0; j < X_TABSZ; j++)
 			x_atab[i][j] = NULL;
 
-	/* Determine if we can translate meta key or use 8-bit AscII 
+	/* Determine if we can translate meta key or use 8-bit AscII
 	 * XXX - It would be nice if there was a locale attribute to
 	 * determine if the locale is 7-bit or not.
 	 */
@@ -1792,8 +1792,8 @@ do_complete(flags, type)
 		completed = 1;
 	}
 
-	if (completed)	
-		x_redraw(0);	
+	if (completed)
+		x_redraw(0);
 
 	x_free_words(nwords, words);
 }
@@ -1839,7 +1839,7 @@ static int
 x_e_getc()
 {
 	int c;
-	
+
 	if (unget_char >= 0) {
 		c = unget_char;
 		unget_char = -1;
@@ -2001,11 +2001,11 @@ x_prev_histword(c)
 		   * ignore white-space after the last word
 		   */
 		  while (rcp > cp && is_cfs(*rcp))
-		  	rcp--;
+			rcp--;
 		  while (rcp > cp && !is_cfs(*rcp))
-		  	rcp--;
+			rcp--;
 		  if (is_cfs(*rcp))
-		  	rcp++;
+			rcp++;
 		  x_ins(rcp);
 	} else {
 		  int c;
@@ -2015,16 +2015,16 @@ x_prev_histword(c)
 		   * ignore white-space at start of line
 		   */
 		  while (*rcp && is_cfs(*rcp))
-		  	rcp++;
+			rcp++;
 		  while (x_arg-- > 1) {
-		  	while (*rcp && !is_cfs(*rcp))
-		  		rcp++;
-		  	while (*rcp && is_cfs(*rcp))
-		  		rcp++;
+			while (*rcp && !is_cfs(*rcp))
+				rcp++;
+			while (*rcp && is_cfs(*rcp))
+				rcp++;
 		  }
 		  cp = rcp;
 		  while (*rcp && !is_cfs(*rcp))
-		  	rcp++;
+			rcp++;
 		  c = *rcp;
 		  *rcp = '\0';
 		  x_ins(cp);
@@ -2073,7 +2073,7 @@ x_fold_case(c)
 	int c;
 {
 	char *cp = xcp;
-	
+
 	if (cp == xep) {
 		x_e_putc(BEL);
 		return KSTD;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.7 2004/12/18 21:25:44 millert Exp $	*/
+/*	$OpenBSD: table.c,v 1.8 2004/12/19 04:14:20 deraadt Exp $	*/
 
 /*
  * dynamic hashed associative table for commands and variables
@@ -109,7 +109,7 @@ tenter(tp, n, h)
 	/* search for name in hashed table */
 	for (pp = &tp->tbls[h & (tp->size-1)]; (p = *pp) != NULL; pp--) {
 		if (*p->name == *n && strcmp(p->name, n) == 0)
-			return p; 	/* found */
+			return p;	/* found */
 		if (pp == tp->tbls) /* wrap */
 			pp += tp->size;
 	}

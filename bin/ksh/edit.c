@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.23 2004/12/18 22:12:23 millert Exp $	*/
+/*	$OpenBSD: edit.c,v 1.24 2004/12/19 04:14:20 deraadt Exp $	*/
 
 /*
  * Command line editing - common code
@@ -53,7 +53,7 @@ x_init()
 
 static void
 x_sigwinch(sig)
-    	int sig;
+	int sig;
 {
 	got_sigwinch = 1;
 }
@@ -77,7 +77,7 @@ check_sigwinch(void)
 			if (ws.ws_col) {
 				x_cols = ws.ws_col < MIN_COLS ? MIN_COLS
 						: ws.ws_col;
-				
+
 				if ((vp = typeset("COLUMNS", 0, 0, 0, 0)))
 					setint(vp, (long) ws.ws_col);
 			}
@@ -172,7 +172,7 @@ x_mode(onoff)
 	if (onoff) {
 		struct termios	cb;
 		X_chars		oldchars;
-		
+
 		oldchars = edchars;
 		cb = tty_state;
 

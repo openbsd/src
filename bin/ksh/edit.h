@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.h,v 1.4 2004/12/18 20:55:52 millert Exp $	*/
+/*	$OpenBSD: edit.h,v 1.5 2004/12/19 04:14:20 deraadt Exp $	*/
 
 /* NAME:
  *      edit.h - globals for edit modes
@@ -7,7 +7,7 @@
  *      This header defines various global edit objects.
  *
  * SEE ALSO:
- *      
+ *
  *
  * RCSid:
  *      $From: edit.h,v 1.2 1994/05/19 18:32:40 michael Exp michael $

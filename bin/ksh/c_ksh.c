@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.21 2004/12/18 21:25:44 millert Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.22 2004/12/19 04:14:20 deraadt Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -540,21 +540,21 @@ c_typeset(wp)
 	int pflag = 0;
 
 	switch (**wp) {
- 	  case 'e':		/* export */
- 		fset |= EXPORT;
+	  case 'e':		/* export */
+		fset |= EXPORT;
 		options = "p";
- 		break;
- 	  case 'r':		/* readonly */
- 		fset |= RDONLY;
+		break;
+	  case 'r':		/* readonly */
+		fset |= RDONLY;
 		options = "p";
- 		break;
+		break;
 	  case 's':		/* set */
 		/* called with 'typeset -' */
 		break;
- 	  case 't':		/* typeset */
- 		local = 1;
- 		break;
- 	}
+	  case 't':		/* typeset */
+		local = 1;
+		break;
+	}
 
 	fieldstr = basestr = (char *) 0;
 	builtin_opt.flags |= GF_PLUSOPT;
@@ -820,7 +820,7 @@ c_typeset(wp)
 	}
 	return 0;
 }
-	
+
 int
 c_alias(wp)
 	char **wp;
@@ -885,7 +885,6 @@ c_alias(wp)
 		return c_unalias((char **) args);
 	}
 
-	
 	if (*wp == NULL) {
 		struct tbl *ap, **p;
 
@@ -1392,7 +1391,7 @@ const struct builtin kshbuiltins [] = {
 	{"+cd", c_cd},
 	{"+command", c_command},
 	{"echo", c_print},
- 	{"*=export", c_typeset},
+	{"*=export", c_typeset},
 #ifdef HISTORY
 	{"+fc", c_fc},
 #endif /* HISTORY */
@@ -1402,7 +1401,7 @@ const struct builtin kshbuiltins [] = {
 	{"let", c_let},
 	{"print", c_print},
 	{"pwd", c_pwd},
- 	{"*=readonly", c_typeset},
+	{"*=readonly", c_typeset},
 	{"=typeset", c_typeset},
 	{"+unalias", c_unalias},
 	{"whence", c_whence},

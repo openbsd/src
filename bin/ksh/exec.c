@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.35 2004/12/18 22:35:41 millert Exp $	*/
+/*	$OpenBSD: exec.c,v 1.36 2004/12/19 04:14:20 deraadt Exp $	*/
 
 /*
  * execute command tree
@@ -110,7 +110,7 @@ execute(t, flags)
 				goto Break;
 			}
 		}
-	
+
 	switch(t->type) {
 	  case TCOM:
 		rv = comexec(t, tp, ap, flags);
@@ -1007,7 +1007,7 @@ search(name, path, mode, errnop)
 		sp = p;
 		XcheckN(xs, xp, namelen);
 		memcpy(xp, name, namelen);
- 		if (search_access(Xstring(xs, xp), mode, errnop) == 0)
+		if (search_access(Xstring(xs, xp), mode, errnop) == 0)
 			return Xclose(xs, xp + namelen);
 		if (*sp++ == '\0')
 			sp = NULL;

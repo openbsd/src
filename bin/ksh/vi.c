@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.15 2004/12/18 21:25:44 millert Exp $	*/
+/*	$OpenBSD: vi.c,v 1.16 2004/12/19 04:14:20 deraadt Exp $	*/
 
 /*
  *	vi command editing
@@ -1109,7 +1109,7 @@ vi_cmd(argcnt, cmd)
 			return ret;
 		    }
 
-		case '=': 			/* at&t ksh */
+		case '=':			/* at&t ksh */
 		case Ctrl('e'):			/* Nonstandard vi/ksh */
 			print_expansions(es, 1);
 			break;
