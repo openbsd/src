@@ -1,4 +1,4 @@
-/*	$OpenBSD: siopvar_common.h,v 1.18 2003/11/16 20:30:06 avsm Exp $ */
+/*	$OpenBSD: siopvar_common.h,v 1.19 2004/06/12 22:22:26 krw Exp $ */
 /*	$NetBSD: siopvar_common.h,v 1.22 2002/10/23 02:32:36 christos Exp $ */
 
 /*
@@ -46,6 +46,7 @@ typedef struct scr_table {
 /* Number of scatter/gather entries */
 /* XXX Ensure alignment of siop_xfer's. */
 #define SIOP_NSG	17	/* XXX (MAXPHYS/NBPG + 1) */
+#define SIOP_MAXFER	((SIOP_NSG - 1) * PAGE_SIZE)
 
 /*
  * This structure interfaces the SCRIPT with the driver; it describes a full
