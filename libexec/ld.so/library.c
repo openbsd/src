@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.1.1.1 2000/06/13 03:34:00 rahnds Exp $ */
+/*	$OpenBSD: library.c,v 1.1.1.2 2000/06/13 03:40:02 rahnds Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -37,18 +37,21 @@
 #include <sys/types.h>
 #include <sys/syslimits.h>
 #include <fcntl.h>
+#include <nlist.h>
 #include <link.h>
 #include <sys/mman.h>
 
-#include "resolve.h"
 #include "syscall.h"
 #include "archdep.h"
+#include "resolve.h"
 
 #define PFLAGS(X) ((((X) & PF_R) ? PROT_READ : 0) | \
 		   (((X) & PF_W) ? PROT_WRITE : 0) | \
 		   (((X) & PF_X) ? PROT_EXEC : 0))
 
 elf_object_t * _dl_tryload_shlib(const char *libname, int type);
+void _dl_build_sod(const char *name, struct sod *sodp);
+char * _dl_findhint(char *name, int major, int minor, char *prefered_path);
 
 /*
  *  Load a shared object. Search order is:
@@ -65,6 +68,17 @@ _dl_load_shlib(const char *libname, elf_object_t *parent, int type)
 	char	*path = lp;
 	const char *pp;
 	elf_object_t *object;
+	struct sod sodp;
+	char *hint;
+
+	_dl_build_sod(libname, &sodp);
+	if ((hint = _dl_findhint((char *)sodp.sod_name, sodp.sod_major,
+		sodp.sod_minor, NULL)) != NULL)
+	{
+		object = _dl_tryload_shlib(hint, type);
+		return(object);
+		
+	}
 
 	if(_dl_strchr(libname, '/')) {
 		object = _dl_tryload_shlib(libname, type);
@@ -260,6 +274,7 @@ _dl_tryload_shlib(const char *libname, int type)
 				_dl_memset(start + size, 0,
 					_dl_pagesz - (size & align));
 				start = start + ((size + align) & ~align);
+				size  = size - (phdp->p_vaddr & align);
 				size  = phdp->p_memsz - size;
 				res = _dl_mmap(start, size,
 					       PFLAGS(phdp->p_flags),

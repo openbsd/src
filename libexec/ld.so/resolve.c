@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.1.1.1 2000/06/13 03:34:07 rahnds Exp $ */
+/*	$OpenBSD: resolve.c,v 1.1.1.2 2000/06/13 03:40:07 rahnds Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -36,14 +36,16 @@
 
 #include <sys/types.h>
 
+#include <nlist.h>
 #include <link.h>
-#include "resolve.h"
 #include "syscall.h"
 #include "archdep.h"
+#include "resolve.h"
 
 elf_object_t *_dl_objects;
 elf_object_t *_dl_last_object;
 
+void * _dl_malloc(int);
 
 /*
  *	Initialize and add a new dynamic object to the object list.
@@ -56,6 +58,10 @@ _dl_add_object(const char *objname, Elf32_Dyn *dynp,
 			     const int laddr, const int loff)
 {
 	elf_object_t *object;
+#if 0
+	_dl_printf("objname [%s], dynp %x, dl_data %x, objtype %x laddr %x, loff %x\n",
+		objname, dynp, dl_data, objtype, laddr, loff);
+#endif
 
 	object = (elf_object_t *)_dl_malloc(sizeof(elf_object_t));
 
@@ -70,10 +76,10 @@ _dl_add_object(const char *objname, Elf32_Dyn *dynp,
 
 	object->load_dyn = dynp;
 	while(dynp->d_tag != DT_NULL) {
-		if(dynp->d_tag < DT_PROCNUM) {
+		if(dynp->d_tag < DT_NUM) {
 			object->Dyn.info[dynp->d_tag] = dynp->d_un.d_val;
 		}
-		else if(dynp->d_tag >= DT_LOPROC && dynp->d_tag < DT_LOPROC + DT_PROCNUM) {
+		else if(dynp->d_tag >= DT_LOPROC && dynp->d_tag < DT_LOPROC + DT_NUM) {
 			object->Dyn.info[dynp->d_tag + DT_NUM - DT_LOPROC] = dynp->
 d_un.d_val;
 		}
@@ -103,13 +109,15 @@ d_un.d_val;
 	if(object->Dyn.info[DT_SONAME])
 		object->Dyn.info[DT_SONAME] += loff;
 	if(object->Dyn.info[DT_RPATH])
-		object->Dyn.info[DT_RPATH] += loff;
+		object->Dyn.info[DT_RPATH] += object->Dyn.info[DT_STRTAB];
 	if(object->Dyn.info[DT_REL])
 		object->Dyn.info[DT_REL] += loff;
 	if(object->Dyn.info[DT_INIT])
 		object->Dyn.info[DT_INIT] += loff;
 	if(object->Dyn.info[DT_FINI])
 		object->Dyn.info[DT_FINI] += loff;
+	if(object->Dyn.info[DT_JMPREL])
+		object->Dyn.info[DT_JMPREL] += loff;
 
 	object->buckets = object->dyn.hash;
 	if(object->buckets != 0) {
@@ -171,7 +179,7 @@ _dl_lookup_object(const char *name)
 
 Elf32_Addr
 _dl_find_symbol(const char *name, elf_object_t *startlook,
-			const Elf32_Sym **ref, int myself)
+			const Elf32_Sym **ref, int myself, int warnnotfound)
 {
 	u_int32_t h = 0;
 	const char *p = name;
@@ -227,8 +235,13 @@ _dl_find_symbol(const char *name, elf_object_t *startlook,
 			}
 		}
 	}
-	if(!weak_sym && *ref && ELF32_ST_BIND((*ref)->st_info) != STB_WEAK) {
-		_dl_printf("%s: undefined symbol '%s'\n", _dl_progname, name);
+	if (warnnotfound) {
+		if(!weak_sym &&
+			*ref && ELF32_ST_BIND((*ref)->st_info) != STB_WEAK)
+		{
+			_dl_printf("%s: undefined symbol '%s'\n",
+				_dl_progname, name);
+		}
 	}
 	*ref = weak_sym;
 	return(weak_offs);

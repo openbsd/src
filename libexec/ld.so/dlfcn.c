@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.1.1.1 2000/06/13 03:33:58 rahnds Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.1.1.2 2000/06/13 03:39:56 rahnds Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -35,6 +35,7 @@
 #define _DYN_LOADER
 
 #include <sys/types.h>
+#include <nlist.h>
 #include <link.h>
 #include <dlfcn.h>
 
@@ -48,6 +49,7 @@ void _dl_show_objects(void);
 
 static int _dl_real_close(void *handle);
 static void _dl_unload_deps(elf_object_t *object);
+extern char *_dl_debug;
 
 void *
 dlopen(const char *libname, int how)
@@ -56,6 +58,9 @@ dlopen(const char *libname, int how)
 	elf_object_t	*dynobj;
 	Elf32_Dyn	*dynp;
 
+	if (_dl_debug) {
+		_dl_printf("loading: %s\n", libname);
+	}
 	object = _dl_load_shlib(libname, _dl_objects, OBJTYPE_DLO);
 	if(object == 0) {
 		return((void *)0);
@@ -97,12 +102,14 @@ dlopen(const char *libname, int how)
 	_dl_rtld(object);
 	_dl_call_init(object);
 
+#ifdef __mips__
 	if(_dl_debug_map->r_brk) {
 		_dl_debug_map->r_state = RT_ADD;
 		(*((void (*)())_dl_debug_map->r_brk))();
 		_dl_debug_map->r_state = RT_CONSISTENT;
 		(*((void (*)())_dl_debug_map->r_brk))();
 	}
+#endif /* __mips__ */
 
 	return((void *)object);
 }
@@ -113,7 +120,7 @@ dlsym(void *handle, const char *name)
 	elf_object_t	*object;
 	elf_object_t	*dynobj;
 	void		*retval;
-	Elf32_Sym	*sym = 0;
+	const Elf32_Sym	*sym = 0;
 
 	object = (elf_object_t *)handle;
 	dynobj = _dl_objects;
@@ -125,7 +132,7 @@ dlsym(void *handle, const char *name)
 		return(0);
 	}
 
-	retval = (void *)_dl_find_symbol(name, object, &sym, 1);
+	retval = (void *)_dl_find_symbol(name, object, &sym, 1, 1);
 	if(retval) {
 		retval += sym->st_value;
 	}
@@ -139,9 +146,12 @@ int
 dlctl(void *handle, int command, void *data)
 {
 	switch(command) {
+
+#ifdef __mips__
 	case DL_DUMP_MAP:
 		_dl_show_objects();
 		return(0);
+#endif /* __mips__ */
 
 	default:
 		_dl_errno = DL_INVALID_CTL;
@@ -157,12 +167,14 @@ dlclose(void *handle)
 
 	retval = _dl_real_close(handle);
 
+#ifdef __mips__
 	if(_dl_debug_map->r_brk) {
 		_dl_debug_map->r_state = RT_DELETE;
 		(*((void (*)())_dl_debug_map->r_brk))();
 		_dl_debug_map->r_state = RT_CONSISTENT;
 		(*((void (*)())_dl_debug_map->r_brk))();
 	}
+#endif /* __mips__ */
 	return(retval);
 }
 
@@ -248,8 +260,6 @@ void
 _dl_show_objects()
 {
 	elf_object_t *object;
-	elf_object_t *depobj;
-	elf_object_t *tmpobj;
 static char *otyp[] = {
 	"none", "rtld", "exe ", "rlib", "dlib"
 };

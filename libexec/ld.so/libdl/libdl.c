@@ -1,4 +1,4 @@
-/*	$OpenBSD: libdl.c,v 1.1.1.1 2000/06/13 03:34:09 rahnds Exp $ */
+/*	$OpenBSD: libdl.c,v 1.1.1.2 2000/06/13 03:40:24 rahnds Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -45,33 +45,39 @@ void *dlsym(void *handle, const char *name) __attribute__((weak));
 int dlctl(void *handle, int command, void *data) __attribute__((weak));
 int dlclose(void *handle)__attribute__((weak));
 const char * dlerror() __attribute__((weak));
+#include <stdio.h>
 
 void *
 dlopen(const char *libname, int how)
 {
 	printf("ERROR! libdl incorrectly linked!\n");
+	return NULL;
 }
 
 void *
 dlsym(void *handle, const char *name)
 {
 	printf("ERROR! libdl incorrectly linked!\n");
+	return NULL;
 }
 
 int
 dlctl(void *handle, int command, void *data)
 {
 	printf("ERROR! libdl incorrectly linked!\n");
+	return 0;
 }
 
 int
 dlclose(void *handle)
 {
 	printf("ERROR! libdl incorrectly linked!\n");
+	return 0;
 }
 
 const char *
 dlerror()
 {
 	printf("ERROR! libdl incorrectly linked!\n");
+	return "ERROR! libdl incorrectly linked!\n";
 }

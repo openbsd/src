@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.1.1.1 2000/06/13 03:34:15 rahnds Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.1.1.2 2000/06/13 03:40:27 rahnds Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -78,7 +78,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 		   !(ELF32_ST_BIND(sym->st_info) == STB_LOCAL &&
 		     ELF32_ST_TYPE (sym->st_info) == STT_NOTYPE)) {
 			
-			ooff = _dl_find_symbol(symn, _dl_objects, &this, 0);
+			ooff = _dl_find_symbol(symn, _dl_objects, &this, 0, 1);
 			if(!this && ELF32_ST_BIND(sym->st_info) == STB_GLOBAL) {
 				_dl_printf("%s: can't resolve reference '%s'\n",
 						_dl_progname, symn);
@@ -175,7 +175,7 @@ _dl_printf("undef: %s = %X\n", strt + symp->st_name, symp->st_value);
 			if(symp->st_value == 0 || !lazy) {
 				this = 0;
 				ooff = _dl_find_symbol(strt + symp->st_name,
-							_dl_objects, &this, 0);
+						_dl_objects, &this, 0, 1);
 				if(this) {
 					*gotp = this->st_value + ooff;
 				}
@@ -188,7 +188,7 @@ _dl_printf("undef: %s = %X\n", strt + symp->st_name, symp->st_value);
 			symp->st_shndx == SHN_UNDEF) {
 			this = 0;
 			ooff = _dl_find_symbol(strt + symp->st_name,
-						_dl_objects, &this, 0);
+						_dl_objects, &this, 0, 1);
 			if(this) {
 				*gotp = this->st_value + ooff;
 			}
