@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.28 2002/05/18 09:58:12 deraadt Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.29 2002/05/18 17:00:33 deraadt Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -282,29 +282,6 @@ struct crypt_op {
 #define CRSFEAT_DH	0x00000004	/* supports all basic DH ops */
 
 #ifdef _KERNEL
-struct csession {
-	TAILQ_ENTRY(csession) next;
-	u_int64_t	sid;
-	u_int32_t	ses;
-
-	u_int32_t	cipher;
-	struct enc_xform *txform;
-	u_int32_t	mac;
-	struct auth_hash *thash;
-
-	caddr_t		key;
-	int		keylen;
-	u_char		tmp_iv[EALG_MAX_BLOCK_LEN];
-
-	caddr_t		mackey;
-	int		mackeylen;
-	u_char		tmp_mac[CRYPTO_MAX_MAC_LEN];
-
-	struct iovec	iovec[IOV_MAX];
-	struct uio	uio;
-	int		error;
-};
-
 int	crypto_newsession(u_int64_t *, struct cryptoini *, int);
 int	crypto_freesession(u_int64_t);
 int	crypto_dispatch(struct cryptop *);
@@ -332,11 +309,4 @@ int	cuio_apply(struct uio *, int, int,
 struct	cryptop *crypto_getreq(int);
 void	crypto_freereq(struct cryptop *);
 #endif /* _KERNEL */
-
-struct csession;
-struct fcrypt {
-	TAILQ_HEAD(csessionlist, csession) csessions;
-	int		sesn;
-};
-
 #endif /* _CRYPTO_CRYPTO_H_ */
