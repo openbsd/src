@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.22 2001/06/25 05:28:03 kjell Exp $ */
+/*	$OpenBSD: pf.c,v 1.23 2001/06/25 08:39:48 art Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -322,7 +322,7 @@ tree_remove(struct tree_node **p, struct tree_key *key)
 struct state *
 find_state(struct tree_node *p, struct tree_key *key)
 {
-	signed char c;
+	int c;
 
 	while (p && (c = tree_key_compare(&p->key, key)))
 		p = (c > 0) ? p->left : p->right;
