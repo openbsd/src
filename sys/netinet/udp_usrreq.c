@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.12 1997/08/09 23:36:28 millert Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.13 1997/09/07 02:19:24 deraadt Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -199,8 +199,10 @@ udp_input(m, va_alist)
 		 */
 		udp_in.sin_port = uh->uh_sport;
 		udp_in.sin_addr = ip->ip_src;
-		m->m_len -= sizeof (struct udpiphdr);
-		m->m_data += sizeof (struct udpiphdr);
+		iphlen += sizeof(struct udphdr);
+		m->m_len -= iphlen;
+		m->m_pkthdr.len -= iphlen;
+		m->m_data += iphlen;
 		/*
 		 * Locate pcb(s) for datagram.
 		 * (Algorithm copied from raw_intr().)
