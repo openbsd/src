@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.18 1997/03/26 19:04:25 niklas Exp $	*/
+/*	$OpenBSD: locore.s,v 1.19 1997/03/26 21:51:31 niklas Exp $	*/
 /*	$NetBSD: locore.s,v 1.72 1996/12/17 11:09:10 is Exp $	*/
 
 /*
@@ -1216,15 +1216,6 @@ Lauexit:
 	rts
 
 #include <m68k/m68k/support.s>
-
-ENTRY(qsetjmp)
-	movl	sp@(4),a0	| savearea pointer
-	lea	a0@(40),a0	| skip regs we do not save
-	movl	a6,a0@+		| save FP
-	movl	sp,a0@+		| save SP
-	movl	sp@,a0@		| and return address
-	moveq	#0,d0		| return 0
-	rts
 
 /*
  * The following primitives manipulate the run queues.
