@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.21 1998/11/12 04:30:03 csapuntz Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.22 1998/12/05 16:58:26 csapuntz Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1980,6 +1980,9 @@ ufs_vinit(mntp, specops, fifoops, vpp)
 			nvp->v_data = vp->v_data;
 			vp->v_data = NULL;
 			vp->v_op = spec_vnodeop_p;
+#ifdef DIAGNOSTIC
+			vp->v_flag &= ~VLOCKSWORK;
+#endif
 			vrele(vp);
 			vgone(vp);
 			/*
