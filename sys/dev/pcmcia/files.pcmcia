@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pcmcia,v 1.26 2000/03/22 04:40:57 mickey Exp $
+#	$OpenBSD: files.pcmcia,v 1.27 2000/03/29 20:23:21 mickey Exp $
 #	$NetBSD: files.pcmcia,v 1.9 1998/06/21 18:45:41 christos Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
@@ -79,6 +79,6 @@ file    dev/ic/awi.c                            awi
 file    dev/ic/am79c930.c                       awi
 
 # Raytheon(Raylink)/WebGear IEEE 802.11 FH WLAN
-device	ray: ether, ifnet
+device	ray: ether, ifnet, ifmedia
 attach	ray at pcmcia
 file	dev/pcmcia/if_ray.c			ray
