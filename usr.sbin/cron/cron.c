@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.21 2002/05/20 23:33:31 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.22 2002/05/21 20:57:32 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: cron.c,v 1.21 2002/05/20 23:33:31 millert Exp $";
+static char rcsid[] = "$OpenBSD: cron.c,v 1.22 2002/05/21 20:57:32 millert Exp $";
 #endif
 
 #define	MAIN_PROGRAM
@@ -362,7 +362,7 @@ cron_sleep(int target) {
 		    sizeof(fd_mask));
 	}
 
-	while ((tv.tv_sec > 0 || tv.tv_usec > 0) && tv.tv_sec < 65) {
+	while (timerisset(&tv) && tv.tv_sec < 65) {
 		if (fdsr)
 			FD_SET(cronSock, fdsr);
 		/* Sleep until we time out, get a crontab poke, or signal. */
@@ -393,6 +393,10 @@ cron_sleep(int target) {
 		timersub(&t2, &t1, &t1);
 		timersub(&tv, &t1, &tv);
 		memcpy(&t1, &t2, sizeof(t1));
+		if (tv.tv_sec < 0)
+			tv.tv_sec = 0;
+		if (tv.tv_usec < 0)
+			tv.tv_usec = 0;
 	}
 }
 
