@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: CollisionReport.pm,v 1.5 2004/12/16 11:07:33 espie Exp $
+# $OpenBSD: CollisionReport.pm,v 1.6 2004/12/16 11:18:44 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -52,7 +52,7 @@ sub collision_report($$)
 	    for my $item (sort @{$bypkg->{$pkg}}) {
 	    	print "\t$item ($pkg)\n";
 	    }
-	    if ($pkg =~ m/^partial\-/) {
+	    if ($pkg =~ m/^(?:partial\-|borked\.\d+$)/) {
 	    	$clueless_bat = $pkg;
 	    }
 	}
@@ -76,7 +76,7 @@ sub collision_report($$)
 	if ($clueless_bat) {
 		print "The package name $clueless_bat suggests that a former installation\n";
 		print "of a similar package got interrupted.  It is likely that\n";
-		print "\tpkg_delete borked.*\n";
+		print "\tpkg_delete $clueless_bat\n";
 		print "will solve the problem\n";
 	}
 }
