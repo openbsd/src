@@ -878,8 +878,6 @@
 ./usr/include/miscfs/fdesc/fdesc.h
 ./usr/include/miscfs/fifofs
 ./usr/include/miscfs/fifofs/fifo.h
-./usr/include/miscfs/genfs
-./usr/include/miscfs/genfs/genfs.h
 ./usr/include/miscfs/kernfs
 ./usr/include/miscfs/kernfs/kernfs.h
 ./usr/include/miscfs/nullfs

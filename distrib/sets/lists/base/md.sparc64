@@ -855,8 +855,6 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/miscfs/fdesc/fdesc.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/miscfs/fifofs
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/miscfs/fifofs/fifo.ph
-./usr/libdata/perl5/site_perl/sparc64-openbsd/miscfs/genfs
-./usr/libdata/perl5/site_perl/sparc64-openbsd/miscfs/genfs/genfs.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/miscfs/kernfs
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/miscfs/kernfs/kernfs.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/miscfs/nullfs

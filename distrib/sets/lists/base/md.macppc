@@ -1259,8 +1259,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/fdesc/fdesc.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/fifofs
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/fifofs/fifo.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/genfs
-./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/genfs/genfs.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/kernfs
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/kernfs/kernfs.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/nullfs
