@@ -1,12 +1,9 @@
-dnl	$OpenBSD: contents,v 1.35 2004/10/01 20:25:56 miod Exp $
+dnl	$OpenBSD: contents,v 1.36 2005/03/08 20:03:01 miod Exp $
 TopPart
 
 OpenBSDdistsets
 
 OpenBSDbsd
-
-	bsd.dl		A GENERIC kernel without any support for disk
-			devices.
 
 OpenBSDrd
 
