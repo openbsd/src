@@ -1,4 +1,4 @@
-/*	$OpenBSD: pas.c,v 1.20 1999/01/24 15:58:54 mickey Exp $	*/
+/*	$OpenBSD: pas.c,v 1.21 2001/06/06 10:18:57 d Exp $	*/
 /*	$NetBSD: pas.c,v 1.37 1998/01/12 09:43:43 thorpej Exp $	*/
 
 /*
@@ -380,6 +380,7 @@ pasprobe(parent, match, aux)
 	sc->sc_sbdsp.sc_irq = ia->ia_irq;
 	sc->sc_sbdsp.sc_drq8 = ia->ia_drq;
 	sc->sc_sbdsp.sc_drq16 = -1; /* XXX */
+	sc->sc_sbdsp.sc_ic = ia->ia_ic;
 	
 	if (sbdsp_probe(&sc->sc_sbdsp) == 0) {
 		DPRINTF(("pas: sbdsp probe failed\n"));
@@ -407,6 +408,7 @@ pasattach(parent, self, aux)
 	struct isa_attach_args *ia = (struct isa_attach_args *)aux;
 	int iobase = ia->ia_iobase;
 	
+	sc->sc_sbdsp.sc_isa = parent;
 	sc->sc_sbdsp.sc_iobase = iobase;
 	sc->sc_sbdsp.sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_AUDIO, sbdsp_intr, &sc->sc_sbdsp, sc->sc_sbdsp.sc_dev.dv_xname);
