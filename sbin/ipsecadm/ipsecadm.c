@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.10 1999/02/26 02:04:52 angelos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.11 1999/02/26 10:04:05 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -159,7 +159,12 @@ isvalid(char *option, int type, int mode)
       if (!strcmp(option, xf[i].name) &&
 	  (xf[i].flags & CMD_MASK) == type && 
 	  (xf[i].flags & mode))
-        return xf[i].id;
+      {
+	  if (!strcmp(option, "des") || !strcmp(option, "skipjack"))
+	    fprintf(stderr, "Warning: use of %s is strongly discouraged due to cryptographic weaknesses\n", option);
+
+          return xf[i].id;
+      }
 
     return 0;
 }
