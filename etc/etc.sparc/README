@@ -1,13 +1,14 @@
-# $Id: README,v 1.2 1995/11/08 07:12:52 deraadt Exp $
+# $Id: README,v 1.3 1995/11/26 18:19:15 deraadt Exp $
 
 Initial test versions of a OpenBSD/sparc binaries install are available
 at
 	ftp.openbsd.org:/pub/OpenBSD/snapshots/sparc
 Some mirror sites may take a day or two to catch up.
 
-The OpenBSD/sparc port runs on sun4c class machines, ie. the
-SS 1, 1+, 2, IPC, IPX, SLC, and ELC. it does not run on the
-server-series machines, or the SS10-series machines.
+The OpenBSD/sparc port runs on sun4c class machines, ie. the SS 1, 1+,
+2, IPC, IPX, SLC, and ELC. It also runs on most models of the sun4
+line. it does not run on the 4/400, 4/600, or any sun4m machines (SS5,
+SS4, SS10, SS20).
 
 The ftp directory contains a number of very large .tar.gz files in there,
 as well as this document and a helper install script.
