@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.58 2002/03/16 17:13:22 csapuntz Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.59 2002/05/08 21:50:48 csapuntz Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -1355,6 +1355,12 @@ wdc_atapi_ctrl(chp, xfer, timeout, ret)
 
 			break;
 
+		case ATAPI_PIOMODE_STATE:
+			errstring = "Post-Identify";
+			if (!(chp->ch_status & (WDCS_BSY | WDCS_DRQ)))
+				trigger_timeout = 0;
+			break;
+
 		case ATAPI_PIOMODE_WAIT_STATE:
 			errstring = "PIOMODE";
 			if (chp->ch_status & (WDCS_BSY | WDCS_DRQ))
@@ -1431,8 +1437,13 @@ wdc_atapi_ctrl(chp, xfer, timeout, ret)
 		}
 
 		drvp->state = ATAPI_PIOMODE_STATE;
+		/* 
+		 * Note, we can't go directly to set PIO mode
+		 * because the drive is free to assert BSY
+		 * after the transfer
+		 */
+		break;
 	}
-		/* fall through */
 
 	case ATAPI_PIOMODE_STATE:
 piomode:
