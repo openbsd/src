@@ -1,5 +1,5 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.22 2000/04/27 05:30:23 itojun Exp $	*/
-/*	$KAME: getaddrinfo.c,v 1.16 2000/04/27 03:37:43 itojun Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.23 2000/05/15 10:49:55 itojun Exp $	*/
+/*	$KAME: getaddrinfo.c,v 1.21 2000/05/05 07:40:51 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -558,6 +558,31 @@ explore_fqdn(pai, hostname, servname, res)
 		}
 		*res = result;
 		return 0;
+	} else {
+		/* translate error code */
+		switch (h_errno) {
+		case NETDB_SUCCESS:
+			error = EAI_FAIL;	/*XXX strange */
+			break;
+		case HOST_NOT_FOUND:
+			error = EAI_NODATA;
+			break;
+		case TRY_AGAIN:
+			error = EAI_AGAIN;
+			break;
+		case NO_RECOVERY:
+			error = EAI_FAIL;
+			break;
+		case NO_DATA:
+#if NO_ADDRESS != NO_DATA
+		case NO_ADDRESS:
+#endif
+			error = EAI_NODATA;
+			break;
+		default:			/* unknown ones */
+			error = EAI_FAIL;
+			break;
+		}
 	}
 
 free:
