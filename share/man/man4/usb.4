@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.36 2004/10/08 13:30:28 jaredy Exp $
+.\"	$OpenBSD: usb.4,v 1.37 2004/11/08 21:39:54 deraadt Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -122,8 +122,10 @@ drivers, sorted by device type and driver name:
 .Tn USB
 Mass Storage Devices, e.g., external disk drives.
 .El
-.Ss Ethernet adapters
+.Ss Network adapters
 .Bl -tag -width 12n -offset ind -compact
+.It Xr atu 4
+Atmel at76c503a 802.11DS wireless network interfaces.
 .It Xr aue 4
 ADMtek AN986 / ADM8511 Pegasus family USB Ethernet interfaces.
 .It Xr axe 4
@@ -504,6 +506,7 @@ Human Interface Devices
 .Xr usbhidctl 1 ,
 .Xr ioctl 2 ,
 .Xr usbhid 3 ,
+.Xr atu 4 ,
 .Xr aue 4 ,
 .Xr axe 4 ,
 .Xr cardbus 4 ,

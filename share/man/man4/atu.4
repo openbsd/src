@@ -1,0 +1,175 @@
+.\"	$OpenBSD: atu.4,v 1.1 2004/11/08 21:39:54 deraadt Exp $
+.\"
+.\" Copyright (c) 1997, 1998, 1999
+.\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by Bill Paul.
+.\" 4. Neither the name of the author nor the names of any co-contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"   without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY Bill Paul AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL Bill Paul OR THE VOICES IN HIS HEAD
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+.\" THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd March 23, 2004
+.Dt ATU 4
+.Os
+.Sh NAME
+.Nm atu
+.Nd Atmel at76c503a 802.11DS wireless network interfaces
+.Sh SYNOPSIS
+.Cd "# all architectures"
+.Cd "atu* at uhub? port ?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for wireless network adapters based around
+the Atmel at76c503a USB chipset.
+.Pp
+Supported features include 802.11 and 802.3 frames, power management, BSS,
+IBSS, ad-hoc, and host-based access point mode.
+.Pp
+The
+.Nm
+driver encapsulates all IP and ARP traffic as 802.11 frames, however
+it can receive either 802.11 or 802.3 frames.
+Transmit speed is selectable between 1Mbps fixed, 2Mbps fixed, 2Mbps
+with auto fallback, 5.5Mbps, 8Mbps, or 11Mbps depending on your hardware.
+.Pp
+Three different radio chipsets are used along with the device, each
+requiring a different firmware.
+These firmwares are currently compiled into the driver.
+.Pp
+By default, the
+.Nm
+driver configures the card for BSS operation (aka infrastructure
+mode).
+This mode requires the use of an access point (base station).
+.Pp
+The
+.Nm
+driver also supports an ad-hoc (point-to-point) mode where
+the nwid is ignored and stations can communicate amongst
+themselves without the aid of an access point.
+Note that there are two possible ad-hoc modes.
+One mode, referred to as
+.Dq ad-hoc demo mode ,
+predates the IEEE 802.11 specification and so may not interoperate
+with cards from other vendors.
+The standardized ad-hoc mode, also known as IBSS mode, is not
+supported by cards with very old firmware revisions.
+.Pp
+For more information on configuring this device, see
+.Xr ifconfig 8 .
+.Pp
+.Pp
+The following devices are among those supported by the
+.Nm
+driver:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It Tn Atmel BW002
+.It Tn Ovislink AirLive
+.It Tn Geowave GW-US11S
+.It Tn SMC 2662W-AR
+.It Tn Linksys WUSB11
+.It Tn Acer Peripherals AWL400
+.It Tn Atmel WL-1330
+.It Tn Linksys WUSB11-V28
+.It Tn Aincomm AWU2000B
+.It Tn Atmel 2662W-V4
+.It Tn Atmel DWL-120
+.It Tn AcerP AWL-300
+.El
+.Pp
+.Sh EXAMPLES
+.Pp
+Join an existing BSS network (ie: connect to an access point):
+.Dl # ifconfig atu0 inet 192.168.0.20 netmask 0xffffff00
+.Pp
+Join a specific BSS network with network name
+.Dq my_net :
+.Dl # ifconfig atu0 inet 192.168.0.20 netmask 0xffffff00 nwid my_net
+.Pp
+Join a specific BSS network with WEP encryption:
+.Bd -literal -compact -offset indent
+# ifconfig atu0 inet 192.168.0.20 netmask 0xffffff00 nwid my_net \e
+	nwkey 0x8736639624
+.Ed
+.Pp
+Join an ad-hoc network with network name
+.Dq my_net :
+.Bd -literal -compact -offset indent
+# ifconfig atu0 inet 192.168.0.20 netmask 0xffffff00 nwid my_net \e
+	mediaopt adhoc
+.Ed
+.Pp
+Create an IBBS network with network name
+.Dq my_net :
+.Bd -literal -compact -offset indent
+# ifconfig atu0 inet 192.168.0.20 netmask 0xffffff00 nwid my_net \e
+	mediaopt ibss-master
+.Ed
+.Pp
+Join an IBBS network with network name
+.Dq my_net :
+.Bd -literal -compact -offset indent
+# ifconfig atu0 inet 192.168.0.22 netmask 0xffffff00 nwid my_net \e
+	mediaopt ibss
+.Ed
+.Pp
+Create a host-based access point
+.Bd -literal -compact -offset indent
+# ifconfig atu0 inet 192.168.0.10 netmask 0xffffff00 nwid my_ap \e
+	mediaopt hostap
+.Ed
+.Pp
+Create a host-based access point with WEP enabled
+.Bd -literal -compact -offset indent
+# ifconfig atu0 inet 192.168.0.10 netmask 0xffffff00 nwid my_ap \e
+	nwkey 0x1234567890 mediaopt hostap
+.Ed
+.Pp
+Create a host-based wireless bridge to fxp0
+.Bd -literal -compact -offset indent
+# ifconfig atu0 inet up nwid my_ap mediaopt hostap
+# brconfig bridge0 add fxp0 add atu0 up
+.Ed
+.Pp
+.Sh SEE ALSO
+.Xr arp 4 ,
+.Xr ifmedia 4 ,
+.Xr intro 4 ,
+.Xr netintro 4 ,
+.Xr usb 4 ,
+.Xr hostname.if 5 ,
+.Xr ifconfig 8 ,
+.Xr wicontrol 8
+.Sh AUTHORS
+The
+.Nm
+driver was written by
+.An Daan Vreeken
+and ported to
+.Ox
+by
+.An Theo de Raadt and David Gwynne
