@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.28 1996/11/05 00:54:17 downsj Exp $
+#	$OpenBSD: Makefile,v 1.29 1996/11/11 04:55:01 downsj Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -33,10 +33,10 @@ DIRS=	arpa protocols rpc rpcsvc
 LDIRS=	dev net netinet netccitt netiso netns netipx nfs sys ufs vm ddb \
 	scsi gnu/ext2fs
 
-RDIRS=	../lib/libcompat ../lib/libcurses ../lib/libform ../lib/libmenu \
-	../lib/libocurses ../lib/libpanel ../lib/librpcsvc ../lib/libskey \
-	../lib/libtermlib ../lib/libedit ../lib/libpcap ../lib/libutil \
-	../lib/libz ../sys/arch/${MACHINE}
+RDIRS=	../lib/libcom_err ../lib/libcompat ../lib/libcurses ../lib/libform \
+	../lib/libmenu ../lib/libocurses ../lib/libpanel ../lib/librpcsvc \
+	../lib/libskey ../lib/libtermlib ../lib/libedit ../lib/libpcap \
+	../lib/libutil ../lib/libz ../sys/arch/${MACHINE}
 
 NOOBJ=	noobj
 
