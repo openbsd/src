@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.11 2001/08/24 00:05:19 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.12 2001/08/30 15:26:57 jason Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -479,6 +479,7 @@ setregs(p, pack, stack, retval)
 	tf->tf_global[4] = 0; 
 	tf->tf_pc = pack->ep_entry & ~3;
 	tf->tf_npc = tf->tf_pc + 4;
+	tf->tf_global[2] = tf->tf_global[7] = tf->tf_pc;
 	stack -= sizeof(struct rwindow);
 	tf->tf_out[6] = stack - STACK_OFFSET;
 	tf->tf_out[7] = NULL;
