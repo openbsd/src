@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdsetroot.c,v 1.6 2001/05/11 15:15:00 deraadt Exp $	*/
+/*	$OpenBSD: rdsetroot.c,v 1.7 2001/05/11 15:21:35 deraadt Exp $	*/
 /*	$NetBSD: rdsetroot.c,v 1.2 1995/10/13 16:38:39 gwr Exp $	*/
 
 /*
@@ -62,6 +62,8 @@ char *dataseg;
 int data_len;
 int data_off;
 int data_pgoff;
+
+void	find_rd_root_image(char *);
 
 int
 main(argc,argv)
