@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.16 2001/05/24 09:47:33 art Exp $	*/
+/*	$OpenBSD: extend.c,v 1.17 2001/05/24 10:43:17 art Exp $	*/
 
 /*
  *	Extended (M-X) commands, rebinding, and	startup file processing.
@@ -263,6 +263,7 @@ static KEYMAP *
 realocmap(curmap)
 	KEYMAP *curmap;
 {
+	MAPS *mps;
 	KEYMAP	*mp;
 	int	 i;
 
@@ -281,11 +282,11 @@ realocmap(curmap)
 		mp->map_element[i].k_funcp = curmap->map_element[i].k_funcp;
 		mp->map_element[i].k_prefmap = curmap->map_element[i].k_prefmap;
 	}
-	for (i = nmaps; i--;) {
-		if (map_table[i].p_map == curmap)
-			map_table[i].p_map = mp;
+	for (mps = maps; mps != NULL; mps = mps->p_next) {
+		if (mps->p_map == curmap)
+			mps->p_map = mp;
 		else
-			fixmap(curmap, mp, map_table[i].p_map);
+			fixmap(curmap, mp, mps->p_map);
 	}
 	ele = &mp->map_element[ele - &curmap->map_element[0]];
 	return mp;

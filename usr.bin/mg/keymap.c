@@ -1,4 +1,4 @@
-/*	$OpenBSD: keymap.c,v 1.12 2001/05/24 09:47:34 art Exp $	*/
+/*	$OpenBSD: keymap.c,v 1.13 2001/05/24 10:43:18 art Exp $	*/
 
 /*
  * Keyboard maps.  This is character set dependent.  The terminal specific
@@ -575,6 +575,8 @@ static struct KEYMAPE (6 + NDIRED_XMAPS + IMAPEXT) diredmap = {
 };
 #endif /* !NO_DIRED */
 
+MAPS	fundamental_mode = { (KEYMAP *)&fundmap, "fundamental", };
+
 /*
  * give names to the maps, for use by help etc. If the map is to be bindable,
  * it must also be listed in the function name table below with the same
@@ -584,66 +586,87 @@ static struct KEYMAPE (6 + NDIRED_XMAPS + IMAPEXT) diredmap = {
  * modes.c also.
  */
 
-MAPS map_table[] = {
-	/* fundamental map MUST be first entry */
-	{(KEYMAP *) & fundmap, "fundamental"},
-	{(KEYMAP *) & fillmap, "fill"},
-	{(KEYMAP *) & indntmap, "indent"},
-	{(KEYMAP *) & blinkmap, "blink"},
+static MAPS map_table[] = {
+	{(KEYMAP *) &fillmap, "fill",},
+	{(KEYMAP *) &indntmap, "indent",},
+	{(KEYMAP *) &blinkmap, "blink",},
 #ifdef NOTAB
-	{(KEYMAP *) & notabmap, "notab"},
+	{(KEYMAP *) &notabmap, "notab",},
 #endif /* NOTAB */
-	{(KEYMAP *) & overwmap, "overwrite"},
-	{(KEYMAP *) & metamap, "esc prefix"},
-	{(KEYMAP *) & cXmap, "c-x prefix"},
-	{(KEYMAP *) & cX4map, "c-x 4 prefix"},
-	{(KEYMAP *) & extramap1, "extra prefix 1"},
-	{(KEYMAP *) & extramap2, "extra prefix 2"},
-	{(KEYMAP *) & extramap3, "extra prefix 3"},
-	{(KEYMAP *) & extramap4, "extra prefix 4"},
-	{(KEYMAP *) & extramap5, "extra prefix 5"},
+	{(KEYMAP *) &overwmap, "overwrite",},
+	{(KEYMAP *) &metamap, "esc prefix",},
+	{(KEYMAP *) &cXmap, "c-x prefix",},
+	{(KEYMAP *) &cX4map, "c-x 4 prefix",},
+	{(KEYMAP *) &extramap1, "extra prefix 1",},
+	{(KEYMAP *) &extramap2, "extra prefix 2",},
+	{(KEYMAP *) &extramap3, "extra prefix 3",},
+	{(KEYMAP *) &extramap4, "extra prefix 4",},
+	{(KEYMAP *) &extramap5, "extra prefix 5",},
 #ifndef NO_HELP
-	{(KEYMAP *) & helpmap, "help"},
+	{(KEYMAP *) &helpmap, "help",},
 #endif
 #ifndef NO_DIRED
-	{(KEYMAP *) & diredmap, "dired"},
+	{(KEYMAP *) &diredmap, "dired",},
 #endif
+	{NULL, NULL},
 };
 
-#define NMAPS	(sizeof map_table/sizeof(MAPS))
-int	 nmaps = NMAPS;		/* for use by rebind in extend.c */
+MAPS *maps;
 
-KEYMAP *fundamental_map = (KEYMAP *)&fundmap;
+void
+maps_init(void)
+{
+	int i;
+	MAPS *mp;
+
+	maps = &fundamental_mode;
+	for (i = 0; map_table[i].p_name != NULL; i++) {
+		mp = &map_table[i];
+		mp->p_next = maps;
+		maps = mp;
+	}
+}
+
+int
+maps_add(KEYMAP *map, char *name)
+{
+	MAPS *mp;
+
+	if ((mp = malloc(sizeof(*mp))) == NULL)
+		return FALSE;
+
+	mp->p_name = name;
+	mp->p_map = map;
+	mp->p_next = maps;
+	maps = mp;
+
+	return TRUE;
+}
 
 char *
-map_name(map)
-	KEYMAP *map;
+map_name(KEYMAP *map)
 {
-	MAPS	*mp = &map_table[0];
+	MAPS *mp;
 
-	do {
+	for (mp = maps; mp != NULL; mp = mp->p_next)
 		if (mp->p_map == map)
 			return mp->p_name;
-	} while (++mp < &map_table[NMAPS]);
 	return NULL;
 }
 
 MAPS *
-name_mode(name)
-	char *name;
+name_mode(char *name)
 {
-	MAPS	*mp = &map_table[0];
+	MAPS *mp;
 
-	do {
+	for (mp = maps; mp != NULL; mp = mp->p_next)
 		if (strcmp(mp->p_name, name) == 0)
 			return mp;
-	} while (++mp < &map_table[NMAPS]);
 	return NULL;
 }
 
 KEYMAP *
-name_map(name)
-	char *name;
+name_map(char *name)
 {
 	MAPS	*mp;
 	return (mp = name_mode(name)) == NULL ? NULL : mp->p_map;
