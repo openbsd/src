@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.32 2002/10/06 23:12:31 art Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.33 2003/03/30 20:52:43 krw Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -87,7 +87,6 @@ static struct cftable staticcftable = {
 #endif /* AUTOCONF_VERBOSE */
 int autoconf_verbose = AUTOCONF_VERBOSE;	/* trace probe calls */
 
-static char *number(char *, int);
 static void mapply(struct matchinfo *, struct cfdata *);
 
 struct deferred_config {
@@ -339,22 +338,6 @@ config_rootfound(rootname, aux)
 	return (NULL);
 }
 
-/* just like sprintf(buf, "%d") except that it works from the end */
-char *
-number(ep, n)
-	register char *ep;
-	register int n;
-{
-
-	*--ep = 0;
-	while (n >= 10) {
-		*--ep = (n % 10) + '0';
-		n /= 10;
-	}
-	*--ep = n + '0';
-	return (ep);
-}
-
 /*
  * Attach a found device.  Allocates memory for device variables.
  */
@@ -436,9 +419,7 @@ config_make_softc(parent, cf)
 	register struct device *dev;
 	register struct cfdriver *cd;
 	register struct cfattach *ca;
-	register size_t lname, lunit;
-	register char *xunit;
-	char num[10];
+	register size_t lname;
 
 	cd = cf->cf_driver;
 	ca = cf->cf_attach;
@@ -465,14 +446,11 @@ config_make_softc(parent, cf)
 		dev->dv_unit = cf->cf_unit;
 
 	/* compute length of name and decimal expansion of unit number */
-	lname = strlen(cd->cd_name);
-	xunit = number(&num[sizeof num], dev->dv_unit);
-	lunit = &num[sizeof num] - xunit;
-	if (lname + lunit >= sizeof(dev->dv_xname))
-		panic("config_make_softc: device name too long");
 
-	bcopy(cd->cd_name, dev->dv_xname, lname);
-	bcopy(xunit, dev->dv_xname + lname, lunit);
+	lname = snprintf(dev->dv_xname, sizeof(dev->dv_xname), "%s%d",
+		    cd->cd_name, dev->dv_unit);
+	if (lname >= sizeof(dev->dv_xname))
+		panic("config_make_softc: device name too long");
 	dev->dv_parent = parent;
 
 	/* put this device in the devices array */
