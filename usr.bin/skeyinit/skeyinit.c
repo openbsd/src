@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.12 1996/10/02 03:49:34 millert Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.13 1996/10/02 18:11:30 millert Exp $	*/
 /*	$NetBSD: skeyinit.c,v 1.6 1995/06/05 19:50:48 pk Exp $	*/
 
 /* S/KEY v1.1b (skeyinit.c)
@@ -172,8 +172,11 @@ main(argc, argv)
 	n = 99;
 
 	/* Set hash type if asked to */
-	if (ht)
-		skey_set_algorithm(ht);
+	if (ht) {
+		/* Need to zero out old key when changing algorithm */
+		if (strcmp(ht, skey_get_algorithm()) && skey_set_algorithm(ht))
+			zerokey = 1;
+	}
 
 	if (!defaultsetup) {
 		(void)printf("You need the 6 english words generated from the \"skey\" command.\n");
@@ -283,11 +286,19 @@ main(argc, argv)
 	if ((skey.val = (char *)malloc(16 + 1)) == NULL)
 		err(1, "Can't allocate memory");
 
+	/* Zero out old key if necesary (entry would change size) */
+	if (zerokey) {
+		(void)skeyzero(&skey, pp->pw_name);
+		/* Re-open keys file and seek to the end */
+		if (skeylookup(&skey, pp->pw_name) == -1)
+			err(1, "cannot open database");
+	}
+
 	btoa8(skey.val, key);
 
 	/* Don't save algorithm type for md4 (keep record length same) */
 	if (strcmp(skey_get_algorithm(), "md4") == 0)
-		(void)fprintf(skey.keyfile, "%s s %04d %-16s %s %-21s\n",
+		(void)fprintf(skey.keyfile, "%s %04d %-16s %s %-21s\n",
 		    pp->pw_name, n, seed, skey.val, tbuf);
 	else
 		(void)fprintf(skey.keyfile, "%s %s %04d %-16s %s %-21s\n",
