@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.13 1998/06/29 23:23:29 angelos Exp $ */
+/*	$OpenBSD: kvm.c,v 1.14 1998/07/11 05:57:16 deraadt Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-static char *rcsid = "$OpenBSD: kvm.c,v 1.13 1998/06/29 23:23:29 angelos Exp $";
+static char *rcsid = "$OpenBSD: kvm.c,v 1.14 1998/07/11 05:57:16 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -718,28 +718,22 @@ kvm_dbopen(kd)
 	char kversion[_POSIX2_LINE_MAX];
 
 	kd->db = dbopen(_PATH_KVMDB, O_RDONLY, 0, DB_HASH, NULL);
-	if (kd->db == 0)
-        {
-                switch (errno)
-                {
-                        case EFTYPE:
-                                _kvm_err(kd, kd->program,
-					 "file %s is incorrectly formatted",
-					 _PATH_KVMDB);
-                                break;
-                        case EINVAL:
-                                _kvm_err(kd, kd->program,
-					 "invalid argument to dbopen()");
-                                break;
- 
-                        default:
-                                _kvm_err(kd, kd->program,
-					 "unknown dbopen() error");
-                                break;
-                }
-   
-                return (-1);
-        }
+	if (kd->db == NULL) {
+		switch (errno) {
+		case EFTYPE:
+			_kvm_err(kd, kd->program,
+			    "file %s is incorrectly formatted", _PATH_KVMDB);
+			break;
+		case EINVAL:
+			_kvm_err(kd, kd->program,
+			    "invalid argument to dbopen()");
+			break;
+		default:
+			_kvm_err(kd, kd->program, "unknown dbopen() error");
+			break;
+		}
+		return (-1);
+	}
 
 	/*
 	 * read version out of database
@@ -915,7 +909,7 @@ kvm_read(kd, kva, buf, len)
 			u_long	pa;
 			off_t	foff;
 		
-                        /* In case of error, _kvm_kvatop sets the err string */
+			/* In case of error, _kvm_kvatop sets the err string */
 			cc = _kvm_kvatop(kd, kva, &pa);
 			if (cc == 0)
 				return (-1);
