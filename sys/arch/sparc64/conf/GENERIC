@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.62 2002/05/21 19:10:38 jason Exp $
+#	$OpenBSD: GENERIC,v 1.63 2002/06/04 19:44:20 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -184,10 +184,14 @@ dcphy*	at mii? phy ?				# Digital clone PHYs
 amphy*	at mii? phy ?				# AMD AM79c873 PHYs
 ukphy*	at mii? phy ?				# Unknown PHYs
 
-cgsix*		at sbus? slot ? offset ?
+# Untested
+#bwtwo*		at sbus? slot ? offset ?	# bw2, sbus mono framebuffer
+#wsdisplay*	at bwtwo?
+
+cgsix*		at sbus? slot ? offset ?	# cg6, sbus color framebuffer
 wsdisplay*	at cgsix?
 
-cgthree*	at sbus? slot ? offset ?
+cgthree*	at sbus? slot ? offset ?	# cg3, sbus color framebuffer
 wsdisplay*	at cgthree?
 
 audiocs*	at sbus? slot ? offset ?
