@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.3 1996/11/14 15:04:50 mickey Exp $
+#	$OpenBSD: Makefile,v 1.4 1996/11/24 23:09:38 etheisen Exp $
 
 PROG=	elf2olf
 CPPFLAGS+= -DOS_ID=OOS_OPENBSD
 LINKS=	${BINDIR}/elf2olf ${BINDIR}/olf2olf
-NOMAN=
+MLINKS=	elf2olf.1 olf2elf.1
 
 .include <bsd.prog.mk>
