@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.11 1998/06/29 22:27:05 angelos Exp $ */
+/*	$OpenBSD: kvm.c,v 1.12 1998/06/29 22:39:12 angelos Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-static char *rcsid = "$OpenBSD: kvm.c,v 1.11 1998/06/29 22:27:05 angelos Exp $";
+static char *rcsid = "$OpenBSD: kvm.c,v 1.12 1998/06/29 22:39:12 angelos Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -896,7 +896,7 @@ kvm_read(kd, kva, buf, len)
 		
 			cc = _kvm_kvatop(kd, kva, &pa);
 			if (cc == 0)
-				return (0);
+				return (-1);
 			if (cc > len)
 				cc = len;
 			foff = _kvm_pa2off(kd, pa);
