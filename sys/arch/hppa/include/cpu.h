@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.16 2000/07/02 02:41:56 mickey Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.17 2000/07/02 04:11:31 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -133,7 +133,7 @@ kvtop (const caddr_t va)
 {
 	long ret;
 	/* XXX will it keep page offset ok? */
-	__asm __volatile ("lpa %%r0(%0), %1" : "=r" (ret) : "r" (va));
+	__asm __volatile ("lpa %%r0(%1), %0" : "=r" (ret) : "r" (va));
 	return ret;
 }
 
