@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2003/06/22 23:57:07 maja Exp $
+#	$OpenBSD: Makefile,v 1.11 2004/01/20 21:06:02 matthieu Exp $
 
 PROG=	ypserv
 MAN=	ypserv.acl.5 securenet.5 ypserv.8
@@ -22,12 +22,11 @@ all:	ypserv
 beforedepend:	${HDRS}
 ypv1.c: ypv1.h
 
+
+ypv1.c: ypv1.x
+	rpcgen -C -c ${.CURDIR}/ypv1.x -o ypv1.c
+
+ypv1.h: ypv1.x
+	rpcgen -C -h ${.CURDIR}/ypv1.x -o ypv1.h
+
 .include <bsd.prog.mk>
-
-.SUFFIXES: .x .c .h
-
-.x.c:
-	rpcgen -C -c ${.IMPSRC} -o ${.TARGET}
-
-.x.h:
-	rpcgen -C -h ${.IMPSRC} -o ${.TARGET}
