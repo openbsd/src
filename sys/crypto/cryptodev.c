@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.23 2001/08/28 12:20:43 ben Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.24 2001/09/03 10:13:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -108,7 +108,7 @@ struct	csession *cseadd(struct fcrypt *, struct csession *);
 struct	csession *csecreate(struct fcrypt *, u_int64_t, caddr_t, u_int64_t,
     caddr_t, u_int64_t, u_int32_t, u_int32_t, struct enc_xform *,
     struct auth_hash *);
-void	csefree(struct csession *);
+int	csefree(struct csession *);
 
 int	crypto_op(struct csession *, struct crypt_op *, struct proc *);
 
@@ -263,9 +263,8 @@ bail:
 		cse = csefind(fcr, ses);
 		if (cse == NULL)
 			return (EINVAL);
-		error = crypto_freesession(cse->sid);
 		csedelete(fcr, cse);
-		csefree(cse);
+		error = csefree(cse);
 		break;
 	case CIOCCRYPT:
 		cop = (struct crypt_op *)data;
@@ -472,7 +471,7 @@ cryptof_close(fp, p)
 
 	while ((cse = TAILQ_FIRST(&fcr->csessions))) {
 		TAILQ_REMOVE(&fcr->csessions, cse, next);
-		csefree(cse);
+		(void)csefree(cse);
 	}
 	FREE(fcr, M_XDATA);
 	fp->f_data = NULL;
@@ -624,13 +623,16 @@ csecreate(struct fcrypt *fcr, u_int64_t sid, caddr_t key, u_int64_t keylen,
 	return (cse);
 }
 
-void
+int
 csefree(struct csession *cse)
 {
+	int error;
+
+	error = crypto_freesession(cse->sid);
 	if (cse->key)
 		FREE(cse->key, M_XDATA);
 	if (cse->mackey)
 		FREE(cse->mackey, M_XDATA);
-	(void) crypto_freesession(cse->sid);
 	FREE(cse, M_XDATA);
+	return (error);
 }
