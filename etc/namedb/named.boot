@@ -12,7 +12,8 @@ directory	/namedb
 
 cache     .							root.cache
 primary   0.0.127.IN-ADDR.ARPA	localhost.rev
-primary   0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.int localhost.rev
+primary   1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.int localhost.v6.rev
+primary   localhost		localhost.zone
 
 ; example secondary server config:
 ; secondary Berkeley.EDU	128.32.130.11 128.32.133.1	ucbhosts.bak

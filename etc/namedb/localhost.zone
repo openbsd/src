@@ -7,4 +7,6 @@
 				3600000	; Expire
 				3600 )	; Minimum
 	IN	NS	ucbvax.Berkeley.EDU.
-1	IN	PTR	localhost.
+localhost.	IN	NS	localhost.
+		IN	A	127.0.0.1
+		IN	AAAA	::1
