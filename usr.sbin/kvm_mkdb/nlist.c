@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.6 1997/01/15 22:08:16 millert Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.7 1997/12/15 10:15:39 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)nlist.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: nlist.c,v 1.6 1997/01/15 22:08:16 millert Exp $";
+static char *rcsid = "$OpenBSD: nlist.c,v 1.7 1997/12/15 10:15:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -309,7 +309,8 @@ __elf_knlist(name, db)
 	 * making the memory allocation permanent as with malloc/free
 	 * (i.e., munmap will return it to the system).
 	 */
-	strtab = mmap(NULL, (size_t)symstrsize, PROT_READ, 0, fileno(fp), symstroff);
+	strtab = mmap(NULL, (size_t)symstrsize, PROT_READ,
+	    MAP_PRIVATE|MAP_FILE, fileno(fp), symstroff);
 	if (strtab == (char *)-1)
 		badfmt("corrupt file");
 
