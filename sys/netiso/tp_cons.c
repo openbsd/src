@@ -1,4 +1,5 @@
-/*	$NetBSD: tp_cons.c,v 1.6 1994/06/29 06:39:59 cgd Exp $	*/
+/*	$OpenBSD: tp_cons.c,v 1.2 1996/03/04 10:35:51 mickey Exp $	*/
+/*	$NetBSD: tp_cons.c,v 1.8 1996/02/14 21:32:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,13 +41,13 @@
 
                       All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the name of IBM not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 IBM DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -61,22 +62,21 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
-/* 
- * Here is where you find the iso- and cons-dependent code.  We've tried
- * keep all net-level and (primarily) address-family-dependent stuff
- * out of the tp source, and everthing here is reached indirectly
- * through a switch table (struct nl_protosw *) tpcb->tp_nlproto 
- * (see tp_pcb.c). 
- * The routines here are:
- *	tpcons_input: pullup and call tp_input w/ correct arguments
- *	tpcons_output: package a pkt for cons given an isopcb & some data
- *	cons_chan_to_tpcb: find a tpcb based on the channel #
+/*
+ * Here is where you find the iso- and cons-dependent code.  We've tried keep
+ * all net-level and (primarily) address-family-dependent stuff out of the tp
+ * source, and everthing here is reached indirectly through a switch table
+ * (struct nl_protosw *) tpcb->tp_nlproto (see tp_pcb.c). The routines here
+ * are: tpcons_input: pullup and call tp_input w/ correct arguments
+ * tpcons_output: package a pkt for cons given an isopcb & some data
+ * cons_chan_to_tpcb: find a tpcb based on the channel #
  */
 
 #ifdef ISO
 #ifdef TPCONS
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/socket.h>
 #include <sys/domain.h>
 #include <sys/mbuf.h>
@@ -96,17 +96,23 @@ SOFTWARE.
 #include <netiso/iso.h>
 #include <netiso/iso_errno.h>
 #include <netiso/iso_pcb.h>
+#include <netiso/iso_var.h>
 #include <netiso/cons.h>
 #include <netiso/tp_seq.h>
+#include <netiso/tp_var.h>
+#include <netiso/clnp.h>
 
 #undef FALSE
 #undef TRUE
 #include <netccitt/x25.h>
 #include <netccitt/pk.h>
 #include <netccitt/pk_var.h>
+#include <netccitt/pk_extern.h>
+
+#include <machine/stdarg.h>
 
 #include <netiso/if_cons.c>
-int tpcons_output();
+
 
 /*
  * CALLED FROM:
@@ -115,24 +121,28 @@ int tpcons_output();
  *  version of the previous procedure for X.25
  */
 
-tpcons_pcbconnect(isop, nam)
-struct isopcb *isop;
-register struct mbuf *nam;
+int
+tpcons_pcbconnect(v, nam)
+	void *v;
+	register struct mbuf *nam;
 {
-	int error;
-	if (error = iso_pcbconnect(isop, nam))
+	struct isopcb  *isop = v;
+	int             error;
+	if ((error = iso_pcbconnect(isop, nam)) != 0)
 		return error;
-	if ((isop->isop_chan = (caddr_t) pk_attach((struct socket *)0)) == 0) {
-		IFDEBUG(D_CCONS)
+	if ((isop->isop_chan = (caddr_t) pk_attach((struct socket *) 0)) == 0) {
+#ifdef ARGO_DEBUG
+		if (argo_debug[D_CCONS]) {
 			printf("tpcons_pcbconnect: no pklcd; returns 0x%x\n", error);
-		ENDDEBUG
+		}
+#endif
 		return ENOBUFS;
 	}
-	if (error = cons_connect(isop)) { /* if it doesn't work */
+	if ((error = cons_connect(isop)) != 0) {	/* if it doesn't work */
 		/* oh, dear, throw packet away */
-		pk_disconnect((struct pklcd *)isop->isop_chan);
+		pk_disconnect((struct pklcd *) isop->isop_chan);
 		isop->isop_chan = 0;
-	} else 
+	} else
 		isop->isop_refcnt = 1;
 	return error;
 }
@@ -144,57 +154,63 @@ register struct mbuf *nam;
  * FUNCTION and ARGUMENTS:
  * THIS MAYBE BELONGS IN SOME OTHER PLACE??? but i think not -
  */
-void
-tpcons_ctlinput(cmd, siso, isop)
-	int cmd; 
-	struct sockaddr_iso *siso;
-	struct isopcb *isop;
+void *
+tpcons_ctlinput(cmd, siso, v)
+	int             cmd;
+	struct sockaddr *siso;
+	void *v;
 {
+	struct isopcb  *isop = v;
 	register struct tp_pcb *tpcb = 0;
 
 	if (isop->isop_socket)
-		tpcb = (struct tp_pcb *)isop->isop_socket->so_pcb;
+		tpcb = (struct tp_pcb *) isop->isop_socket->so_pcb;
 	switch (cmd) {
 
 	case PRC_CONS_SEND_DONE:
 		if (tpcb) {
-			struct 	tp_event 		E;
-			int 					error = 0;
+			struct tp_event E;
+			int             error = 0;
 
 			if (tpcb->tp_class == TP_CLASS_0) {
-				/* only if class is exactly class zero, not
+				/*
+				 * only if class is exactly class zero, not
 				 * still in class negotiation
 				 */
 				/* fake an ack */
-				register SeqNum	seq =  SEQ_ADD(tpcb, tpcb->tp_snduna, 1);
+				register SeqNum seq = SEQ_ADD(tpcb, tpcb->tp_snduna, 1);
 
-				IFTRACE(D_DATA)
-					tptrace(TPPTmisc, "FAKE ACK seq cdt 1", 
-						seq, 0,0,0);
-				ENDTRACE
-				IFDEBUG(D_DATA)
-					printf("FAKE ACK seq 0x%x cdt 1\n", seq );
-				ENDDEBUG
-				E.ATTR(AK_TPDU).e_cdt = 1;
-				E.ATTR(AK_TPDU).e_seq = seq;
-				E.ATTR(AK_TPDU).e_subseq = 0;
-				E.ATTR(AK_TPDU).e_fcc_present = 0;
-				error =  DoEvent(AK_TPDU);
-				if( error ) {
+#ifdef TPPT
+				if(tp_traceflags[D_DATA])
+					tptrace(TPPTmisc, "FAKE ACK seq cdt 1",
+						seq, 0, 0, 0);
+#endif
+#ifdef ARGO_DEBUG
+					if (argo_debug[D_DATA]) {
+					printf("FAKE ACK seq 0x%x cdt 1\n", seq);
+				}
+#endif
+				E.TP_ATTR(AK_TPDU).e_cdt = 1;
+				E.TP_ATTR(AK_TPDU).e_seq = seq;
+				E.TP_ATTR(AK_TPDU).e_subseq = 0;
+				E.TP_ATTR(AK_TPDU).e_fcc_present = 0;
+				error = DoEvent(AK_TPDU);
+				if (error) {
 					tpcb->tp_sock->so_error = error;
 				}
-			} /* else ignore it */
+			}	/* else ignore it */
 		}
 		break;
 	case PRC_ROUTEDEAD:
 		if (tpcb && tpcb->tp_class == TP_CLASS_0) {
 			tpiso_reset(isop);
 			break;
-		} /* else drop through */
+		}		/* else drop through */
 	default:
-		tpclnp_ctlinput(cmd, siso);
+		tpclnp_ctlinput(cmd, siso, NULL);
 		break;
 	}
+	return NULL;
 }
 
 /*
@@ -202,24 +218,37 @@ tpcons_ctlinput(cmd, siso, isop)
  * 	cons's intr routine
  * FUNCTION and ARGUMENTS:
  * Take a packet (m) from cons, pullup m as required by tp,
- *  ignore the socket argument, and call tp_input. 
- * No return value.  
+ *  ignore the socket argument, and call tp_input.
+ * No return value.
  */
 void
-tpcons_input(m, faddr, laddr, channel)
-	struct mbuf 		*m;
-	struct sockaddr_iso	*faddr, *laddr;
-	caddr_t				channel;
+#if __STDC__
+tpcons_input(struct mbuf *m, ...)
+#else
+tpcons_input(m, va_alist)
+	struct mbuf    *m;
+	va_dcl
+#endif
 {
-	if( m == MNULL)
+	struct sockaddr *faddr, *laddr;
+	caddr_t         channel;
+	va_list ap;
+	if (m == NULL)
 		return;
+	va_start(ap, m);
+	faddr = va_arg(ap, struct sockaddr *);
+	laddr = va_arg(ap, struct sockaddr *);
+	channel = va_arg(ap, caddr_t);
 
-	m = (struct mbuf *)tp_inputprep(m);
 
-	IFDEBUG(D_TPINPUT)
+	m = (struct mbuf *) tp_inputprep(m);
+
+#ifdef ARGO_DEBUG
+	if (argo_debug[D_TPINPUT]) {
 		printf("tpcons_input before tp_input(m 0x%x)\n", m);
-		dump_buf( m, 12+ m->m_len);
-	ENDDEBUG
+		dump_buf(m, 12 + m->m_len);
+	}
+#endif
 	tp_input(m, faddr, laddr, channel, tpcons_output, 0);
 }
 
@@ -237,21 +266,35 @@ tpcons_input(m, faddr, laddr, channel)
  */
 
 int
-tpcons_output(isop, m0, datalen, nochksum)
-	struct isopcb		*isop;
-	struct mbuf 		*m0;
-	int 				datalen;
-	int					nochksum;
+#if __STDC__
+tpcons_output(struct mbuf *m0, ...)
+#else
+tpcons_output(m0, va_alist)
+	struct mbuf    *m0;
+	va_dcl
+#endif
 {
-	register	struct mbuf *m = m0;
-	int					error;
+	struct isopcb  *isop;
+	int             datalen;
+	int             nochksum;
+	register struct mbuf *m = m0;
+	int             error;
+	va_list		ap;
 
-	IFDEBUG(D_EMIT)
+	va_start(ap, m0);
+	datalen = va_arg(ap, int);
+	isop = va_arg(ap, struct isopcb *);
+	nochksum = va_arg(ap, int);
+	va_end(ap);
+
+#ifdef ARGO_DEBUG
+	if (argo_debug[D_EMIT]) {
 		printf(
-		"tpcons_output(isop 0x%x, m 0x%x, len 0x%x socket 0x%x\n",
-			isop, m0, datalen, isop->isop_socket);
-	ENDDEBUG
-	if (m == MNULL)
+		  "tpcons_output(isop 0x%x, m 0x%x, len 0x%x socket 0x%x\n",
+		       isop, m0, datalen, isop->isop_socket);
+	}
+#endif
+	if (m == NULL)
 		return 0;
 	if ((m->m_flags & M_PKTHDR) == 0) {
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
@@ -262,21 +305,25 @@ tpcons_output(isop, m0, datalen, nochksum)
 	m->m_pkthdr.len = datalen;
 	if (isop->isop_chan == 0) {
 		/* got a restart maybe? */
-		if ((isop->isop_chan = (caddr_t) pk_attach((struct socket *)0)) == 0) {
-			IFDEBUG(D_CCONS)
+		if ((isop->isop_chan = (caddr_t) pk_attach((struct socket *) 0)) == 0) {
+#ifdef ARGO_DEBUG
+			if (argo_debug[D_CCONS]) {
 				printf("tpcons_output: no pklcd\n");
-			ENDDEBUG
+			}
+#endif
 			error = ENOBUFS;
 		}
-		if (error = cons_connect(isop)) {
-			pk_disconnect((struct pklcd *)isop->isop_chan);
+		if ((error = cons_connect(isop)) != 0) {
+			pk_disconnect((struct pklcd *) isop->isop_chan);
 			isop->isop_chan = 0;
-			IFDEBUG(D_CCONS)
+#ifdef ARGO_DEBUG
+			if (argo_debug[D_CCONS]) {
 				printf("tpcons_output: can't reconnect\n");
-			ENDDEBUG
+			}
+#endif
 		}
 	} else {
-		error = pk_send(isop->isop_chan, m);
+		error = pk_send(m, isop->isop_chan);
 		IncStat(ts_tpdu_sent);
 	}
 	return error;
@@ -293,12 +340,45 @@ tpcons_output(isop, m0, datalen, nochksum)
  */
 
 int
-tpcons_dg_output(chan, m0, datalen)
-	caddr_t				chan;
-	struct mbuf 		*m0;
-	int 				datalen;
+#if __STDC__
+tpcons_output_dg(struct mbuf *m0, ...)
+#else
+tpcons_output_dg(m0, va_alist)
+	struct mbuf    *m0;
+	va_dcl
+#endif
 {
-	return tpcons_output(((struct pklcd *)chan)->lcd_upnext, m0, datalen, 0);
+	int             datalen;
+	caddr_t         chan;
+	va_list		ap;
+
+	va_start(ap, m0);
+	datalen = va_arg(ap, int);
+	chan = va_arg(ap, caddr_t);
+	va_end(ap);
+
+	return tpcons_output(m0, datalen,
+			     ((struct pklcd *) chan)->lcd_upnext, 
+			     0);
+}
+#else
+
+#include <sys/param.h>
+
+struct mbuf;
+
+int tpcons_output __P((struct mbuf *m0, ...));
+
+int
+#if __STDC__
+tpcons_output(struct mbuf *m0, ...)
+#else
+tpcons_output(m0, va_alist)
+	struct mbuf    *m0;
+	va_dcl
+#endif
+{
+	return 0;
 }
 #endif /* TPCONS */
 #endif /* ISO */

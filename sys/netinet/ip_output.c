@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.4 1996/03/03 22:30:41 niklas Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.5 1996/03/04 10:34:33 mickey Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ static struct mbuf *ip_insertoptions __P((struct mbuf *, struct mbuf *, int *));
 static void ip_mloopback
 	__P((struct ifnet *, struct mbuf *, struct sockaddr_in *));
 #if defined(IPFILTER) || defined(IPFILTER_LKM)
-extern int (*fr_checkp) __P((struct ip *, int, struct ifnet *, int, struct mbuf **));
+int (*fr_checkp) __P((struct ip *, int, struct ifnet *, int, struct mbuf **));
 #endif
 
 /*

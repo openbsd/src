@@ -1,4 +1,5 @@
-/*	$NetBSD: cltp_usrreq.c,v 1.8 1995/08/12 23:59:46 mycroft Exp $	*/
+/*	$OpenBSD: cltp_usrreq.c,v 1.2 1996/03/04 10:35:06 mickey Exp $	*/
+/*	$NetBSD: cltp_usrreq.c,v 1.9 1996/02/13 22:08:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +36,7 @@
  *	@(#)cltp_usrreq.c	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef CLTPOVAL_SRC /* XXX -- till files gets changed */
+#ifndef CLTPOVAL_SRC		/* XXX -- till files gets changed */
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
@@ -44,6 +45,7 @@
 #include <sys/socketvar.h>
 #include <sys/errno.h>
 #include <sys/stat.h>
+#include <sys/systm.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -54,7 +56,12 @@
 #include <netiso/iso_var.h>
 #include <netiso/clnp.h>
 #include <netiso/cltp_var.h>
+#include <netiso/tp_param.h>
+#include <netiso/tp_var.h>
+
+#include <machine/stdarg.h>
 #endif
+
 
 /*
  * CLTP protocol implementation.
@@ -67,65 +74,78 @@ cltp_init()
 	cltb.isop_next = cltb.isop_prev = &cltb;
 }
 
-int cltp_cksum = 1;
+int             cltp_cksum = 1;
 
 
 /* ARGUSED */
 void
-cltp_input(m0, srcsa, dstsa, cons_channel, output)
-	struct mbuf *m0;
-	struct sockaddr *srcsa, *dstsa;
-	u_int cons_channel;
-	int (*output)();
+#if __STDC__
+cltp_input(struct mbuf *m0, ...)
+#else
+cltp_input(m0, va_alist)
+	struct mbuf    *m0;
+	va_dcl
+#endif
 {
+	struct sockaddr *srcsa, *dstsa;
+	u_int           cons_channel;
 	register struct isopcb *isop;
 	register struct mbuf *m = m0;
 	register u_char *up = mtod(m, u_char *);
-	register struct sockaddr_iso *src = satosiso(srcsa);
-	int len, hdrlen = *up + 1, dlen = 0;
-	u_char *uplim = up + hdrlen;
-	caddr_t dtsap;
+	register struct sockaddr_iso *src;
+	int             len, hdrlen = *up + 1, dlen = 0;
+	u_char         *uplim = up + hdrlen;
+	caddr_t         dtsap = NULL;
+	va_list ap;
+
+	va_start(ap, m0);
+	srcsa = va_arg(ap, struct sockaddr *);
+	dstsa = va_arg(ap, struct sockaddr *);
+	cons_channel = va_arg(ap, int);
+	va_end(ap);
+	src = satosiso(srcsa);
 
 	for (len = 0; m; m = m->m_next)
 		len += m->m_len;
-	up += 2; /* skip header */
-	while (up < uplim) switch (*up) { /* process options */
-	case CLTPOVAL_SRC:
-		src->siso_tlen = up[1];
-		src->siso_len = up[1] + TSEL(src) - (caddr_t)src;
-		if (src->siso_len < sizeof(*src))
-			src->siso_len = sizeof(*src);
-		else if (src->siso_len > sizeof(*src)) {
-			MGET(m, M_DONTWAIT, MT_SONAME);
-			if (m == 0)
-				goto bad;
-			m->m_len = src->siso_len;
-			src = mtod(m, struct sockaddr_iso *);
-			bcopy((caddr_t)srcsa, (caddr_t)src, srcsa->sa_len);
-		}
-		bcopy((caddr_t)up + 2, TSEL(src), up[1]);
-		up += 2 + src->siso_tlen;
-		continue;
-	
-	case CLTPOVAL_DST:
-		dtsap = 2 + (caddr_t)up;
-		dlen = up[1];
-		up += 2 + dlen;
-		continue;
+	up += 2;		/* skip header */
+	while (up < uplim)
+		switch (*up) {	/* process options */
+		case CLTPOVAL_SRC:
+			src->siso_tlen = up[1];
+			src->siso_len = up[1] + TSEL(src) - (caddr_t) src;
+			if (src->siso_len < sizeof(*src))
+				src->siso_len = sizeof(*src);
+			else if (src->siso_len > sizeof(*src)) {
+				MGET(m, M_DONTWAIT, MT_SONAME);
+				if (m == 0)
+					goto bad;
+				m->m_len = src->siso_len;
+				src = mtod(m, struct sockaddr_iso *);
+				bcopy((caddr_t) srcsa, (caddr_t) src, srcsa->sa_len);
+			}
+			bcopy((caddr_t) up + 2, TSEL(src), up[1]);
+			up += 2 + src->siso_tlen;
+			continue;
 
-	case CLTPOVAL_CSM:
-		if (iso_check_csum(m0, len)) {
-			cltpstat.cltps_badsum++;
+		case CLTPOVAL_DST:
+			dtsap = 2 + (caddr_t) up;
+			dlen = up[1];
+			up += 2 + dlen;
+			continue;
+
+		case CLTPOVAL_CSM:
+			if (iso_check_csum(m0, len)) {
+				cltpstat.cltps_badsum++;
+				goto bad;
+			}
+			up += 4;
+			continue;
+
+		default:
+			printf("clts: unknown option (%x)\n", up[0]);
+			cltpstat.cltps_hdrops++;
 			goto bad;
 		}
-		up += 4;
-		continue;
-
-	default:
-		printf("clts: unknown option (%x)\n", up[0]);
-		cltpstat.cltps_hdrops++;
-		goto bad;
-	}
 	if (dlen == 0 || src->siso_tlen == 0)
 		goto bad;
 	for (isop = cltb.isop_next;; isop = isop->isop_next) {
@@ -141,7 +161,7 @@ cltp_input(m0, srcsa, dstsa, cons_channel, output)
 	m->m_len -= hdrlen;
 	m->m_data += hdrlen;
 	if (sbappendaddr(&isop->isop_socket->so_rcv, sisotosa(src), m,
-	    (struct mbuf *)0) == 0)
+			 (struct mbuf *) 0) == 0)
 		goto bad;
 	cltpstat.cltps_ipackets++;
 	sorwakeup(isop->isop_socket);
@@ -157,6 +177,7 @@ bad:
  * Notify a cltp user of an asynchronous error;
  * just wake up so that he can collect error status.
  */
+void
 cltp_notify(isop)
 	register struct isopcb *isop;
 {
@@ -166,15 +187,15 @@ cltp_notify(isop)
 }
 
 void
-cltp_ctlinput(cmd, sa)
-	int cmd;
+cltp_ctlinput(cmd, sa, dummy)
+	int             cmd;
 	struct sockaddr *sa;
+	void *dummy;
 {
-	extern u_char inetctlerrmap[];
+	extern u_char   inetctlerrmap[];
 	struct sockaddr_iso *siso;
-	int iso_rtchange();
 
-	if ((unsigned)cmd > PRC_NCMDS)
+	if ((unsigned) cmd > PRC_NCMDS)
 		return;
 	if (sa->sa_family != AF_ISO && sa->sa_family != AF_CCITT)
 		return;
@@ -189,25 +210,36 @@ cltp_ctlinput(cmd, sa)
 	case PRC_REDIRECT_TOSNET:
 	case PRC_REDIRECT_TOSHOST:
 		iso_pcbnotify(&cltb, siso,
-				(int)inetctlerrmap[cmd], iso_rtchange);
+			      (int) inetctlerrmap[cmd], iso_rtchange);
 		break;
 
 	default:
 		if (inetctlerrmap[cmd] == 0)
-			return;		/* XXX */
-		iso_pcbnotify(&cltb, siso, (int)inetctlerrmap[cmd],
-			cltp_notify);
+			return;	/* XXX */
+		iso_pcbnotify(&cltb, siso, (int) inetctlerrmap[cmd],
+			      cltp_notify);
 	}
 }
 
-cltp_output(isop, m)
-	register struct isopcb *isop;
-	register struct mbuf *m;
+int
+#if __STDC__
+cltp_output(struct mbuf *m, ...)
+#else
+cltp_output(m, va_alist)
+	struct mbuf *m;
+	va_dcl
+#endif
 {
-	register int len;
+	register struct isopcb *isop;
+	register int    len;
 	register struct sockaddr_iso *siso;
-	int hdrlen, error = 0, docsum;
+	int             hdrlen, error = 0, docsum;
 	register u_char *up;
+	va_list ap;
+
+	va_start(ap, m);
+	isop = va_arg(ap, struct isopcb *);
+	va_end(ap);
 
 	if (isop->isop_laddr == 0 || isop->isop_faddr == 0) {
 		error = ENOTCONN;
@@ -217,8 +249,9 @@ cltp_output(isop, m)
 	 * Calculate data length and get a mbuf for CLTP header.
 	 */
 	hdrlen = 2 + 2 + isop->isop_laddr->siso_tlen
-		   + 2 + isop->isop_faddr->siso_tlen;
-	if (docsum = /*isop->isop_flags & CLNP_NO_CKSUM*/ cltp_cksum)
+		+ 2 + isop->isop_faddr->siso_tlen;
+	docsum = /* isop->isop_flags & CLNP_NO_CKSUM */ cltp_cksum;
+	if (docsum)
 		hdrlen += 4;
 	M_PREPEND(m, hdrlen, M_WAIT);
 	len = m->m_pkthdr.len;
@@ -231,12 +264,12 @@ cltp_output(isop, m)
 	up[2] = CLTPOVAL_SRC;
 	up[3] = (siso = isop->isop_laddr)->siso_tlen;
 	up += 4;
-	bcopy(TSEL(siso), (caddr_t)up, siso->siso_tlen);
+	bcopy(TSEL(siso), (caddr_t) up, siso->siso_tlen);
 	up += siso->siso_tlen;
 	up[0] = CLTPOVAL_DST;
 	up[1] = (siso = isop->isop_faddr)->siso_tlen;
 	up += 2;
-	bcopy(TSEL(siso), (caddr_t)up, siso->siso_tlen);
+	bcopy(TSEL(siso), (caddr_t) up, siso->siso_tlen);
 	/*
 	 * Stuff checksum and output datagram.
 	 */
@@ -247,29 +280,30 @@ cltp_output(isop, m)
 		iso_gen_csum(m, 2 + up - mtod(m, u_char *), len);
 	}
 	cltpstat.cltps_opackets++;
-	return (tpclnp_output(isop, m, len, !docsum));
+	return (tpclnp_output(m, len, isop, !docsum));
 bad:
 	m_freem(m);
 	return (error);
 }
 
-u_long	cltp_sendspace = 9216;		/* really max datagram size */
-u_long	cltp_recvspace = 40 * (1024 + sizeof(struct sockaddr_iso));
-					/* 40 1K datagrams */
+u_long          cltp_sendspace = 9216;	/* really max datagram size */
+u_long          cltp_recvspace = 40 * (1024 + sizeof(struct sockaddr_iso));
+/* 40 1K datagrams */
 
 
-/*ARGSUSED*/
+/* ARGSUSED */
+int
 cltp_usrreq(so, req, m, nam, control)
-	struct socket *so;
-	int req;
-	struct mbuf *m, *nam, *control;
+	struct socket  *so;
+	int             req;
+	struct mbuf    *m, *nam, *control;
 {
 	register struct isopcb *isop = sotoisopcb(so);
-	int s, error = 0;
+	int             s = 0, error = 0;
 
 	if (req == PRU_CONTROL)
-		return (iso_control(so, (long)m, (caddr_t)nam,
-			(struct ifnet *)control));
+		return (iso_control(so, (long) m, (caddr_t) nam,
+				    (struct ifnet *) control));
 	if ((isop == NULL && req != PRU_ATTACH) ||
 	    (control && control->m_len)) {
 		error = EINVAL;
@@ -326,7 +360,7 @@ cltp_usrreq(so, req, m, nam, control)
 			break;
 		}
 		iso_pcbdisconnect(isop);
-		so->so_state &= ~SS_ISCONNECTED;		/* XXX */
+		so->so_state &= ~SS_ISCONNECTED;	/* XXX */
 		break;
 
 	case PRU_SHUTDOWN:
@@ -354,7 +388,7 @@ cltp_usrreq(so, req, m, nam, control)
 				break;
 			}
 		}
-		error = cltp_output(isop, m);
+		error = cltp_output(m, isop);
 		m = 0;
 		if (nam) {
 			iso_pcbdisconnect(isop);
@@ -369,14 +403,14 @@ cltp_usrreq(so, req, m, nam, control)
 
 	case PRU_SOCKADDR:
 		if (isop->isop_laddr)
-			bcopy((caddr_t)isop->isop_laddr, mtod(m, caddr_t),
-				nam->m_len = isop->isop_laddr->siso_len);
+			bcopy((caddr_t) isop->isop_laddr, mtod(m, caddr_t),
+			      nam->m_len = isop->isop_laddr->siso_len);
 		break;
 
 	case PRU_PEERADDR:
 		if (isop->isop_faddr)
-			bcopy((caddr_t)isop->isop_faddr, mtod(m, caddr_t),
-				nam->m_len = isop->isop_faddr->siso_len);
+			bcopy((caddr_t) isop->isop_faddr, mtod(m, caddr_t),
+			      nam->m_len = isop->isop_faddr->siso_len);
 		break;
 
 	case PRU_SENSE:
@@ -390,7 +424,7 @@ cltp_usrreq(so, req, m, nam, control)
 	case PRU_SLOWTIMO:
 	case PRU_PROTORCV:
 	case PRU_PROTOSEND:
-		error =  EOPNOTSUPP;
+		error = EOPNOTSUPP;
 		break;
 
 	case PRU_RCVD:

@@ -1,4 +1,5 @@
-/*	$NetBSD: tp_timer.c,v 1.6 1995/08/12 23:59:51 mycroft Exp $	*/
+/*	$OpenBSD: tp_timer.c,v 1.2 1996/03/04 10:36:34 mickey Exp $	*/
+/*	$NetBSD: tp_timer.c,v 1.7 1996/02/13 22:12:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,13 +41,13 @@
 
                       All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the name of IBM not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 IBM DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -78,15 +79,16 @@ SOFTWARE.
 #include <netiso/tp_tpdu.h>
 #include <netiso/tp_trace.h>
 #include <netiso/tp_seq.h>
+#include <netiso/tp_var.h>
 
-struct	tp_ref *tp_ref;
-int	tp_rttdiv, tp_rttadd, N_TPREF = 127;
-struct	tp_refinfo tp_refinfo;
-struct	tp_pcb *tp_ftimeolist = (struct tp_pcb *)&tp_ftimeolist;
+struct tp_ref  *tp_ref;
+int             tp_rttdiv, tp_rttadd, N_TPREF = 127;
+struct tp_refinfo tp_refinfo;
+struct tp_pcb  *tp_ftimeolist = (struct tp_pcb *) & tp_ftimeolist;
 
 /*
  * CALLED FROM:
- *  at autoconfig time from tp_init() 
+ *  at autoconfig time from tp_init()
  * 	a combo of event, state, predicate
  * FUNCTION and ARGUMENTS:
  *  initialize data structures for the timers
@@ -94,17 +96,17 @@ struct	tp_pcb *tp_ftimeolist = (struct tp_pcb *)&tp_ftimeolist;
 void
 tp_timerinit()
 {
-	register int s;
+	register int    s;
 	/*
 	 * Initialize storage
 	 */
 	if (tp_refinfo.tpr_base)
 		return;
-	tp_refinfo.tpr_size = N_TPREF + 1;  /* Need to start somewhere */
+	tp_refinfo.tpr_size = N_TPREF + 1;	/* Need to start somewhere */
 	s = sizeof(*tp_ref) * tp_refinfo.tpr_size;
 	if ((tp_ref = (struct tp_ref *) malloc(s, M_PCB, M_NOWAIT)) == 0)
 		panic("tp_timerinit");
-	bzero((caddr_t)tp_ref, (unsigned) s);
+	bzero((caddr_t) tp_ref, (unsigned) s);
 	tp_refinfo.tpr_base = tp_ref;
 	tp_rttdiv = hz / PR_SLOWHZ;
 	tp_rttadd = (2 * tp_rttdiv) - 1;
@@ -120,19 +122,23 @@ tp_timerinit()
  */
 void
 tp_etimeout(tpcb, fun, ticks)
-	register struct tp_pcb	*tpcb;
-	int 					fun; 	/* function to be called */
-	int						ticks;
+	register struct tp_pcb *tpcb;
+	int             fun;	/* function to be called */
+	int             ticks;
 {
 
 	register u_int *callp;
-	IFDEBUG(D_TIMER)
+#ifdef ARGO_DEBUG
+	if (argo_debug[D_TIMER]) {
 		printf("etimeout pcb 0x%x state 0x%x\n", tpcb, tpcb->tp_state);
-	ENDDEBUG
-	IFTRACE(D_TIMER)
+	}
+#endif
+#ifdef TPPT
+	if (tp_traceflags[D_TIMER]) {
 		tptrace(TPPTmisc, "tp_etimeout ref refstate tks Etick", tpcb->tp_lref,
-		tpcb->tp_state, ticks, tp_stat.ts_Eticks);
-	ENDTRACE
+			tpcb->tp_state, ticks, tp_stat.ts_Eticks);
+	}
+#endif
 	if (tpcb == 0)
 		return;
 	IncStat(ts_Eset);
@@ -151,12 +157,14 @@ tp_etimeout(tpcb, fun, ticks)
  */
 void
 tp_euntimeout(tpcb, fun)
-	register struct tp_pcb	*tpcb;
-	int			  fun;
+	register struct tp_pcb *tpcb;
+	int             fun;
 {
-	IFTRACE(D_TIMER)
+#ifdef TPPT
+	if (tp_traceflags[D_TIMER]) {
 		tptrace(TPPTmisc, "tp_euntimeout ref", tpcb->tp_lref, 0, 0, 0);
-	ENDTRACE
+	}
+#endif
 
 	if (tpcb)
 		tpcb->tp_timer[fun] = 0;
@@ -181,39 +189,43 @@ tp_euntimeout(tpcb, fun)
 void
 tp_slowtimo()
 {
-	register u_int 	*cp;
-	register struct tp_ref		*rp;
-	struct tp_pcb		*tpcb;
-	struct tp_event		E;
-	int 				s = splsoftnet(), t;
+	register u_int *cp;
+	register struct tp_ref *rp;
+	struct tp_pcb  *tpcb;
+	struct tp_event E;
+	int             s = splsoftnet(), t;
 
 	/* check only open reference structures */
 	IncStat(ts_Cticks);
 	/* tp_ref[0] is never used */
 	for (rp = tp_ref + tp_refinfo.tpr_maxopen; rp > tp_ref; rp--) {
-		if ((tpcb = rp->tpr_pcb) == 0 || tpcb->tp_refstate < REF_OPEN) 
+		if ((tpcb = rp->tpr_pcb) == 0 || tpcb->tp_refstate < REF_OPEN)
 			continue;
 		/* check the timers */
 		for (t = 0; t < TM_NTIMERS; t++) {
 			cp = tpcb->tp_timer + t;
-			if (*cp && --(*cp) <= 0 ) {
+			if (*cp && --(*cp) <= 0) {
 				*cp = 0;
 				E.ev_number = t;
-				IFDEBUG(D_TIMER)
+#ifdef ARGO_DEBUG
+				if (argo_debug[D_TIMER]) {
 					printf("tp_slowtimo: pcb 0x%x t %d\n",
-							tpcb, t);
-				ENDDEBUG
+					       tpcb, t);
+				}
+#endif
 				IncStat(ts_Cexpired);
 				tp_driver(tpcb, &E);
 				if (t == TM_reference && tpcb->tp_state == TP_CLOSED) {
 					if (tpcb->tp_notdetached) {
-						IFDEBUG(D_CONN)
+#ifdef ARGO_DEBUG
+						if (argo_debug[D_CONN]) {
 							printf("PRU_DETACH: not detached\n");
-						ENDDEBUG
+						}
+#endif
 						tp_detach(tpcb);
 					}
 					/* XXX wart; where else to do it? */
-					free((caddr_t)tpcb, M_PCB);
+					free((caddr_t) tpcb, M_PCB);
 				}
 			}
 		}
@@ -224,10 +236,11 @@ tp_slowtimo()
 /*
  * Called From: tp.trans from tp_slowtimo() -- retransmission timer went off.
  */
+void
 tp_data_retrans(tpcb)
-register struct tp_pcb *tpcb;
+	register struct tp_pcb *tpcb;
 {
-	int rexmt, win;
+	int             rexmt, win;
 	tpcb->tp_rttemit = 0;	/* cancel current round trip time */
 	tpcb->tp_dupacks = 0;
 	tpcb->tp_sndnxt = tpcb->tp_snduna;
@@ -239,10 +252,12 @@ register struct tp_pcb *tpcb;
 		 * bother shrinking the congestion windows, et. al.
 		 * The retransmission timer should have been reset in goodack()
 		 */
-		IFDEBUG(D_ACKRECV)
+#ifdef ARGO_DEBUG
+		if (argo_debug[D_ACKRECV]) {
 			printf("tp_data_retrans: 0 window tpcb 0x%x una 0x%x\n",
-				tpcb, tpcb->tp_snduna);
-		ENDDEBUG
+			       tpcb, tpcb->tp_snduna);
+		}
+#endif
 		tpcb->tp_rxtshift = 0;
 		tpcb->tp_timer[TM_data_retrans] = 0;
 		tpcb->tp_timer[TM_sendack] = tpcb->tp_dt_ticks;
@@ -253,9 +268,10 @@ register struct tp_pcb *tpcb;
 	win = max(win, 2);
 	tpcb->tp_cong_win = tpcb->tp_l_tpdusize;	/* slow start again. */
 	tpcb->tp_ssthresh = win * tpcb->tp_l_tpdusize;
-	/* We're losing; our srtt estimate is probably bogus.
-	 * Clobber it so we'll take the next rtt measurement as our srtt;
-	 * Maintain current rxt times until then.
+	/*
+	 * We're losing; our srtt estimate is probably bogus. Clobber it so
+	 * we'll take the next rtt measurement as our srtt; Maintain current
+	 * rxt times until then.
 	 */
 	if (++tpcb->tp_rxtshift > TP_NRETRANS / 4) {
 		/* tpcb->tp_nlprotosw->nlp_losing(tpcb->tp_npcb) someday */
@@ -270,14 +286,14 @@ void
 tp_fasttimo()
 {
 	register struct tp_pcb *t;
-	int s = splsoftnet();
-	struct tp_event		E;
+	int             s = splsoftnet();
+	struct tp_event E;
 
 	E.ev_number = TM_sendack;
-	while ((t = tp_ftimeolist) != (struct tp_pcb *)&tp_ftimeolist) {
+	while ((t = tp_ftimeolist) != (struct tp_pcb *) & tp_ftimeolist) {
 		if (t == 0) {
 			printf("tp_fasttimeo: should panic");
-			tp_ftimeolist = (struct tp_pcb *)&tp_ftimeolist;
+			tp_ftimeolist = (struct tp_pcb *) & tp_ftimeolist;
 		} else {
 			if (t->tp_flags & TPF_DELACK) {
 				IncStat(ts_Fdelack);
@@ -301,15 +317,17 @@ tp_fasttimo()
  */
 void
 tp_ctimeout(tpcb, which, ticks)
-	register struct tp_pcb	*tpcb;
-	int 					which, ticks; 
+	register struct tp_pcb *tpcb;
+	int             which, ticks;
 {
 
-	IFTRACE(D_TIMER)
-		tptrace(TPPTmisc, "tp_ctimeout ref which tpcb active", 
+#ifdef TPPT
+	if (tp_traceflags[D_TIMER]) {
+		tptrace(TPPTmisc, "tp_ctimeout ref which tpcb active",
 			tpcb->tp_lref, which, tpcb, tpcb->tp_timer[which]);
-	ENDTRACE
-	if(tpcb->tp_timer[which])
+	}
+#endif
+	if (tpcb->tp_timer[which])
 		IncStat(ts_Ccan_act);
 	IncStat(ts_Cset);
 	if (ticks <= 0)
@@ -319,22 +337,24 @@ tp_ctimeout(tpcb, which, ticks)
 
 /*
  * CALLED FROM:
- *  tp.trans 
+ *  tp.trans
  * FUNCTION and ARGUMENTS:
- * 	Version of tp_ctimeout that resets the C-type time if the 
+ * 	Version of tp_ctimeout that resets the C-type time if the
  * 	parameter (ticks) is > the current value of the timer.
  */
 void
 tp_ctimeout_MIN(tpcb, which, ticks)
-	register struct tp_pcb	*tpcb;
-	int						which, ticks; 
+	register struct tp_pcb *tpcb;
+	int             which, ticks;
 {
-	IFTRACE(D_TIMER)
-		tptrace(TPPTmisc, "tp_ctimeout_MIN ref which tpcb active", 
+#ifdef TPPT
+	if (tp_traceflags[D_TIMER]) {
+		tptrace(TPPTmisc, "tp_ctimeout_MIN ref which tpcb active",
 			tpcb->tp_lref, which, tpcb, tpcb->tp_timer[which]);
-	ENDTRACE
-	IncStat(ts_Cset);
-	if (tpcb->tp_timer[which])  {
+	}
+#endif
+		IncStat(ts_Cset);
+	if (tpcb->tp_timer[which]) {
 		tpcb->tp_timer[which] = min(ticks, tpcb->tp_timer[which]);
 		IncStat(ts_Ccan_act);
 	} else
@@ -349,18 +369,22 @@ tp_ctimeout_MIN(tpcb, which, ticks)
  */
 void
 tp_cuntimeout(tpcb, which)
-	register struct tp_pcb	*tpcb;
-	int						which;
+	register struct tp_pcb *tpcb;
+	int             which;
 {
-	IFDEBUG(D_TIMER)
+#ifdef ARGO_DEBUG
+	if (argo_debug[D_TIMER]) {
 		printf("tp_cuntimeout(0x%x, %d) active %d\n",
-				tpcb, which, tpcb->tp_timer[which]);
-	ENDDEBUG
+		       tpcb, which, tpcb->tp_timer[which]);
+	}
+#endif
 
-	IFTRACE(D_TIMER)
-		tptrace(TPPTmisc, "tp_cuntimeout ref which, active", refp-tp_ref, 
+#ifdef TPPT
+	if (tp_traceflags[D_TIMER]) {
+		tptrace(TPPTmisc, "tp_cuntimeout ref which, active", refp - tp_ref,
 			which, tpcb->tp_timer[which], 0);
-	ENDTRACE
+	}
+#endif
 
 	if (tpcb->tp_timer[which])
 		IncStat(ts_Ccan_act);

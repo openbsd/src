@@ -1,4 +1,5 @@
-/*	$NetBSD: tp_iso.c,v 1.6 1994/09/20 06:41:35 cgd Exp $	*/
+/*	$OpenBSD: tp_iso.c,v 1.2 1996/03/04 10:36:07 mickey Exp $	*/
+/*	$NetBSD: tp_iso.c,v 1.7 1996/02/13 22:11:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,13 +41,13 @@
 
                       All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the name of IBM not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 IBM DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -61,25 +62,21 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
-/* 
- * Here is where you find the iso-dependent code.  We've tried
- * keep all net-level and (primarily) address-family-dependent stuff
- * out of the tp source, and everthing here is reached indirectly
- * through a switch table (struct nl_protosw *) tpcb->tp_nlproto 
- * (see tp_pcb.c). 
- * The routines here are:
- * 		iso_getsufx: gets transport suffix out of an isopcb structure.
- * 		iso_putsufx: put transport suffix into an isopcb structure.
- *		iso_putnetaddr: put a whole net addr into an isopcb.
- *		iso_getnetaddr: get a whole net addr from an isopcb.
- *		iso_cmpnetaddr: compare a whole net addr from an isopcb.
- *		iso_recycle_suffix: clear suffix for reuse in isopcb
- * 		tpclnp_ctlinput: handle ER CNLPdu : icmp-like stuff
- * 		tpclnp_mtu: figure out what size tpdu to use
- *		tpclnp_input: take a pkt from clnp, strip off its clnp header, 
- *				give to tp
- *		tpclnp_output_dg: package a pkt for clnp given 2 addresses & some data
- *		tpclnp_output: package a pkt for clnp given an isopcb & some data
+/*
+ * Here is where you find the iso-dependent code.  We've tried keep all
+ * net-level and (primarily) address-family-dependent stuff out of the tp
+ * source, and everthing here is reached indirectly through a switch table
+ * (struct nl_protosw *) tpcb->tp_nlproto (see tp_pcb.c). The routines here
+ * are: iso_getsufx: gets transport suffix out of an isopcb structure.
+ * iso_putsufx: put transport suffix into an isopcb structure.
+ * iso_putnetaddr: put a whole net addr into an isopcb. iso_getnetaddr: get a
+ * whole net addr from an isopcb. iso_cmpnetaddr: compare a whole net addr
+ * from an isopcb. iso_recycle_suffix: clear suffix for reuse in isopcb
+ * tpclnp_ctlinput: handle ER CNLPdu : icmp-like stuff tpclnp_mtu: figure out
+ * what size tpdu to use tpclnp_input: take a pkt from clnp, strip off its
+ * clnp header, give to tp tpclnp_output_dg: package a pkt for clnp given 2
+ * addresses & some data tpclnp_output: package a pkt for clnp given an
+ * isopcb & some data
  */
 
 #ifdef ISO
@@ -93,6 +90,7 @@ SOFTWARE.
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/protosw.h>
+#include <sys/systm.h>
 #include <sys/kernel.h>
 
 #include <net/if.h>
@@ -106,9 +104,15 @@ SOFTWARE.
 #include <netiso/tp_stat.h>
 #include <netiso/tp_tpdu.h>
 #include <netiso/tp_clnp.h>
+#include <netiso/tp_var.h>
 #include <netiso/cltp_var.h>
+#include <netiso/idrp_var.h>
 
-void	tpclnp_ctlinput();
+#ifdef TUBA
+#include <netiso/tuba_table.h>
+#endif
+
+#include <machine/stdarg.h>
 
 /*
  * CALLED FROM:
@@ -117,12 +121,14 @@ void	tpclnp_ctlinput();
  * 	The argument (which) takes the value TP_LOCAL or TP_FOREIGN.
  */
 
-iso_getsufx(isop, lenp, data_out, which)
-	struct isopcb *isop;
-	u_short *lenp;
-	caddr_t data_out;
-	int which;
+void
+iso_getsufx(v, lenp, data_out, which)
+	void	       *v;
+	u_short        *lenp;
+	caddr_t         data_out;
+	int             which;
 {
+	struct isopcb  *isop = v;
 	register struct sockaddr_iso *addr = 0;
 
 	switch (which) {
@@ -137,24 +143,25 @@ iso_getsufx(isop, lenp, data_out, which)
 		bcopy(TSEL(addr), data_out, (*lenp = addr->siso_tlen));
 }
 
-/* CALLED FROM:
- * 	tp_newsocket(); i.e., when a connection is being established by an
- * 	incoming CR_TPDU.
+/*
+ * CALLED FROM: tp_newsocket(); i.e., when a connection is being established
+ * by an incoming CR_TPDU.
  *
- * FUNCTION, ARGUMENTS:
- * 	Put a transport suffix (found in name) into an isopcb structure (isop).
- * 	The argument (which) takes the value TP_LOCAL or TP_FOREIGN.
+ * FUNCTION, ARGUMENTS: Put a transport suffix (found in name) into an isopcb
+ * structure (isop). The argument (which) takes the value TP_LOCAL or
+ * TP_FOREIGN.
  */
 void
-iso_putsufx(isop, sufxloc, sufxlen, which)
-	struct isopcb *isop;
-	caddr_t sufxloc;
-	int sufxlen, which;
+iso_putsufx(v, sufxloc, sufxlen, which)
+	void	       *v;
+	caddr_t         sufxloc;
+	int             sufxlen, which;
 {
+	struct isopcb  *isop = v;
 	struct sockaddr_iso **dst, *backup;
 	register struct sockaddr_iso *addr;
-	struct mbuf *m;
-	int len;
+	struct mbuf    *m;
+	int             len;
 
 	switch (which) {
 	default:
@@ -177,15 +184,15 @@ iso_putsufx(isop, sufxloc, sufxlen, which)
 		printf("iso_putsufx on un-initialized isopcb\n");
 	}
 	len = sufxlen + addr->siso_nlen +
-			(sizeof(*addr) - sizeof(addr->siso_data));
+		(sizeof(*addr) - sizeof(addr->siso_data));
 	if (addr == backup) {
 		if (len > sizeof(*addr)) {
-				m = m_getclr(M_DONTWAIT, MT_SONAME);
-				if (m == 0)
-					return;
-				addr = *dst = mtod(m, struct sockaddr_iso *);
-				*addr = *backup;
-				m->m_len = len;
+			m = m_getclr(M_DONTWAIT, MT_SONAME);
+			if (m == 0)
+				return;
+			addr = *dst = mtod(m, struct sockaddr_iso *);
+			*addr = *backup;
+			m->m_len = len;
 		}
 	}
 	bcopy(sufxloc, TSEL(addr), sufxlen);
@@ -197,7 +204,7 @@ iso_putsufx(isop, sufxloc, sufxlen, which)
  * CALLED FROM:
  * 	tp.trans whenever we go into REFWAIT state.
  * FUNCTION and ARGUMENT:
- *	 Called when a ref is frozen, to allow the suffix to be reused. 
+ *	 Called when a ref is frozen, to allow the suffix to be reused.
  * 	(isop) is the net level pcb.  This really shouldn't have to be
  * 	done in a NET level pcb but... for the internet world that just
  * 	the way it is done in BSD...
@@ -205,9 +212,10 @@ iso_putsufx(isop, sufxloc, sufxlen, which)
  * 	timer goes off.
  */
 void
-iso_recycle_tsuffix(isop)
-	struct isopcb	*isop;
+iso_recycle_tsuffix(v)
+	void *v;
 {
+	struct isopcb *isop = v;
 	isop->isop_laddr->siso_tlen = isop->isop_faddr->siso_tlen = 0;
 }
 
@@ -220,13 +228,15 @@ iso_recycle_tsuffix(isop)
  * 	Copy a whole net addr from a struct sockaddr (name).
  * 	into an isopcb (isop).
  * 	The argument (which) takes values TP_LOCAL or TP_FOREIGN
- */ 
+ */
 void
-iso_putnetaddr(isop, name, which)
-	register struct isopcb	*isop;
-	struct sockaddr_iso	*name;
-	int which;
+iso_putnetaddr(v, nm, which)
+	register void *v;
+	struct sockaddr *nm;
+	int             which;
 {
+	register struct isopcb *isop = v;
+	struct sockaddr_iso *name = (struct sockaddr_iso *) nm;
 	struct sockaddr_iso **sisop, *backup;
 	register struct sockaddr_iso *siso;
 
@@ -243,10 +253,12 @@ iso_putnetaddr(isop, name, which)
 		backup = &isop->isop_sfaddr;
 	}
 	siso = ((*sisop == 0) ? (*sisop = backup) : *sisop);
-	IFDEBUG(D_TPISO)
+#ifdef ARGO_DEBUG
+	if (argo_debug[D_TPISO]) {
 		printf("ISO_PUTNETADDR\n");
 		dump_isoaddr(isop->isop_faddr);
-	ENDDEBUG
+	}
+#endif
 	siso->siso_addr = name->siso_addr;
 }
 
@@ -259,12 +271,15 @@ iso_putnetaddr(isop, name, which)
  * 	compare a whole net addr from a struct sockaddr (name),
  * 	with that implicitly stored in an isopcb (isop).
  * 	The argument (which) takes values TP_LOCAL or TP_FOREIGN.
- */ 
-iso_cmpnetaddr(isop, name, which)
-	register struct isopcb	*isop;
-	register struct sockaddr_iso	*name;
-	int which;
+ */
+int
+iso_cmpnetaddr(v, nm, which)
+	register void *v;
+	struct sockaddr *nm;
+	int             which;
 {
+	register struct isopcb *isop = v;
+	struct sockaddr_iso *name = (struct sockaddr_iso *) nm;
 	struct sockaddr_iso **sisop, *backup;
 	register struct sockaddr_iso *siso;
 
@@ -281,14 +296,16 @@ iso_cmpnetaddr(isop, name, which)
 		backup = &isop->isop_sfaddr;
 	}
 	siso = ((*sisop == 0) ? (*sisop = backup) : *sisop);
-	IFDEBUG(D_TPISO)
+#ifdef ARGO_DEBUG
+	if (argo_debug[D_TPISO]) {
 		printf("ISO_CMPNETADDR\n");
 		dump_isoaddr(siso);
-	ENDDEBUG
+	}
+#endif
 	if (name->siso_tlen && bcmp(TSEL(name), TSEL(siso), name->siso_tlen))
 		return (0);
-	return (bcmp((caddr_t)name->siso_data,
-			 (caddr_t)siso->siso_data, name->siso_nlen) == 0);
+	return (bcmp((caddr_t) name->siso_data,
+		     (caddr_t) siso->siso_data, name->siso_nlen) == 0);
 }
 
 /*
@@ -298,19 +315,21 @@ iso_cmpnetaddr(isop, name, which)
  * 	Copy a whole net addr from an isopcb (isop) into
  * 	a struct sockaddr (name).
  * 	The argument (which) takes values TP_LOCAL or TP_FOREIGN.
- */ 
+ */
 
 void
-iso_getnetaddr( isop, name, which)
-	struct isopcb *isop;
-	struct mbuf *name;
-	int which;
+iso_getnetaddr(v, name, which)
+	register void *v;
+	struct mbuf    *name;
+	int             which;
 {
+	register struct inpcb *inp = v;
+	register struct isopcb *isop = (struct isopcb *) inp;
 	struct sockaddr_iso *siso =
-		(which == TP_LOCAL ? isop->isop_laddr : isop->isop_faddr);
+	(which == TP_LOCAL ? isop->isop_laddr : isop->isop_faddr);
 	if (siso)
-		bcopy((caddr_t)siso, mtod(name, caddr_t),
-				(unsigned)(name->m_len = siso->siso_len));
+		bcopy((caddr_t) siso, mtod(name, caddr_t),
+		      (unsigned) (name->m_len = siso->siso_len));
 	else
 		name->m_len = 0;
 }
@@ -326,20 +345,24 @@ iso_getnetaddr( isop, name, which)
  * It appears that setting a double pointer to the rtentry associated with
  * the destination, and returning the header size for the network protocol
  * suffices.
- * 
+ *
  * SIDE EFFECTS:
  * Sets tp_routep pointer in pcb.
  *
  * NOTES:
  */
-tpclnp_mtu(tpcb)
-register struct tp_pcb *tpcb;
+int
+tpclnp_mtu(v)
+	void *v;
 {
-	struct isopcb			*isop = (struct isopcb *)tpcb->tp_npcb;
+	register struct tp_pcb *tpcb = v;
+	struct isopcb  *isop = (struct isopcb *) tpcb->tp_npcb;
 
-	IFDEBUG(D_CONN)
+#ifdef ARGO_DEBUG
+	if (argo_debug[D_CONN]) {
 		printf("tpclnp_mtu(tpcb)\n", tpcb);
-	ENDDEBUG
+	}
+#endif
 	tpcb->tp_routep = &(isop->isop_route.ro_rt);
 	if (tpcb->tp_netservice == ISO_CONS)
 		return 0;
@@ -363,30 +386,44 @@ register struct tp_pcb *tpcb;
  */
 
 int
-tpclnp_output(isop, m0, datalen, nochksum)
-	struct isopcb		*isop;
-	struct mbuf 		*m0;
-	int 				datalen;
-	int					nochksum;
+#if __STDC__
+tpclnp_output(struct mbuf *m0, ...)
+#else
+tpclnp_output(m0, va_alist)
+	struct mbuf    *m0;
+	va_dcl
+#endif
 {
-	register struct mbuf *m = m0;
+	int             datalen;
+	struct isopcb  *isop;
+	int             nochksum;
+	va_list ap;
+
+	va_start(ap, m0);
+	datalen = va_arg(ap, int);
+	isop = va_arg(ap, struct isopcb *);
+	nochksum = va_arg(ap, int);
+	va_end(ap);
+
 	IncStat(ts_tpdu_sent);
 
-	IFDEBUG(D_TPISO)
-		struct tpdu *hdr = mtod(m0, struct tpdu *);
+#ifdef ARGO_DEBUG
+	if (argo_debug[D_TPISO]) {
+		struct tpdu    *hdr = mtod(m0, struct tpdu *);
 
 		printf(
-"abt to call clnp_output: datalen 0x%x, hdr.li 0x%x, hdr.dutype 0x%x nocsum x%x dst addr:\n",
-			datalen,
-			(int)hdr->tpdu_li, (int)hdr->tpdu_type, nochksum);
+		       "abt to call clnp_output: datalen 0x%x, hdr.li 0x%x, hdr.dutype 0x%x nocsum x%x dst addr:\n",
+		       datalen,
+		       (int) hdr->tpdu_li, (int) hdr->tpdu_type, nochksum);
 		dump_isoaddr(isop->isop_faddr);
 		printf("\nsrc addr:\n");
 		dump_isoaddr(isop->isop_laddr);
 		dump_mbuf(m0, "at tpclnp_output");
-	ENDDEBUG
+	}
+#endif
 
-	return 
-		clnp_output(m0, isop, datalen,  /* flags */nochksum ? CLNP_NO_CKSUM : 0);
+	return
+		clnp_output(m0, isop, datalen, /* flags */ nochksum ? CLNP_NO_CKSUM : 0);
 }
 
 /*
@@ -402,79 +439,110 @@ tpclnp_output(isop, m0, datalen, nochksum)
  */
 
 int
-tpclnp_output_dg(laddr, faddr, m0, datalen, ro, nochksum)
-	struct iso_addr		*laddr, *faddr;
-	struct mbuf 		*m0;
-	int 				datalen;
-	struct route 		*ro;
-	int					nochksum;
+#if __STDC__
+tpclnp_output_dg(struct mbuf *m0, ...)
+#else
+tpclnp_output_dg(m0, va_alist)
+	struct mbuf    *m0;
+	va_dcl
+#endif
 {
-	struct isopcb		tmppcb;
-	int					err;
-	int					flags;
-	register struct mbuf *m = m0;
+	struct isopcb   tmppcb;
+	int             err;
+	int             flags;
+	int             datalen;
+	struct iso_addr *laddr, *faddr;
+	struct route   *ro;
+	int             nochksum;
+	va_list		ap;
 
-	IFDEBUG(D_TPISO)
+	va_start(ap, m0);
+	datalen = va_arg(ap, int);
+	laddr = va_arg(ap, struct iso_addr *);
+	faddr = va_arg(ap, struct iso_addr *);
+	ro = va_arg(ap, struct route *);
+	nochksum = va_arg(ap, int);
+	va_end(ap);
+
+#ifdef ARGO_DEBUG
+	if (argo_debug[D_TPISO]) {
 		printf("tpclnp_output_dg  datalen 0x%x m0 0x%x\n", datalen, m0);
-	ENDDEBUG
+	}
+#endif
 
 	/*
 	 *	Fill in minimal portion of isopcb so that clnp can send the
 	 *	packet.
 	 */
-	bzero((caddr_t)&tmppcb, sizeof(tmppcb));
+	bzero((caddr_t) & tmppcb, sizeof(tmppcb));
 	tmppcb.isop_laddr = &tmppcb.isop_sladdr;
 	tmppcb.isop_laddr->siso_addr = *laddr;
 	tmppcb.isop_faddr = &tmppcb.isop_sfaddr;
 	tmppcb.isop_faddr->siso_addr = *faddr;
 
-	IFDEBUG(D_TPISO)
+#ifdef ARGO_DEBUG
+	if (argo_debug[D_TPISO]) {
 		printf("tpclnp_output_dg  faddr: \n");
 		dump_isoaddr(&tmppcb.isop_sfaddr);
 		printf("\ntpclnp_output_dg  laddr: \n");
 		dump_isoaddr(&tmppcb.isop_sladdr);
 		printf("\n");
-	ENDDEBUG
+	}
+#endif
 
 	/*
 	 *	Do not use packet cache since this is a one shot error packet
 	 */
-	flags = (CLNP_NOCACHE|(nochksum?CLNP_NO_CKSUM:0));
+	flags = (CLNP_NOCACHE | (nochksum ? CLNP_NO_CKSUM : 0));
 
 	IncStat(ts_tpdu_sent);
 
-	err = clnp_output(m0, &tmppcb, datalen,  flags);
-	
+	err = clnp_output(m0, &tmppcb, datalen, flags);
+
 	/*
 	 *	Free route allocated by clnp (if the route was indeed allocated)
 	 */
 	if (tmppcb.isop_route.ro_rt)
 		RTFREE(tmppcb.isop_route.ro_rt);
-	
-	return(err);
+
+	return (err);
 }
 /*
  * CALLED FROM:
  * 	clnp's input routine, indirectly through the protosw.
  * FUNCTION and ARGUMENTS:
  * Take a packet (m) from clnp, strip off the clnp header and give it to tp
- * No return value.  
+ * No return value.
  */
 void
-tpclnp_input(m, src, dst, clnp_len, ce_bit)
-	register struct mbuf *m;
-	struct sockaddr_iso *src, *dst;
-	int clnp_len, ce_bit;
+#if __STDC__
+tpclnp_input(struct mbuf *m, ...)
+#else
+tpclnp_input(m, va_alist)
+	struct mbuf *m;
+	va_dcl
+#endif
 {
-	struct mbuf *tp_inputprep();
-	void tp_input(), cltp_input(), (*input)() = tp_input;
+	struct sockaddr_iso *src, *dst;
+	int             clnp_len, ce_bit;
+	void            (*input) __P((struct mbuf *, ...)) = tp_input;
+	va_list		ap;
+
+	va_start(ap, m);
+	src = va_arg(ap, struct sockaddr_iso *);
+	dst = va_arg(ap, struct sockaddr_iso *);
+	clnp_len = va_arg(ap, int);
+	ce_bit = va_arg(ap, int);
+	va_end(ap);
 
 	IncStat(ts_pkt_rcvd);
 
-	IFDEBUG(D_TPINPUT)
+#ifdef ARGO_DEBUG
+	if (argo_debug[D_TPINPUT]) {
 		printf("tpclnp_input: m 0x%x clnp_len 0x%x\n", m, clnp_len);
 		dump_mbuf(m, "at tpclnp_input");
-	ENDDEBUG
+	}
+#endif
 	/*
 	 * CLNP gives us an mbuf chain WITH the clnp header pulled up,
 	 * and the length of the clnp header.
@@ -505,37 +573,48 @@ tpclnp_input(m, src, dst, clnp_len, ce_bit)
 	if (mtod(m, u_char *)[1] == UD_TPDU_type)
 		input = cltp_input;
 
-	IFDEBUG(D_TPINPUT)
+#ifdef ARGO_DEBUG
+	if (argo_debug[D_TPINPUT]) {
 		dump_mbuf(m, "after tpclnp_input both pullups");
-	ENDDEBUG
+	}
+#endif
 
-	IFDEBUG(D_TPISO)
-		printf("calling %sinput : src 0x%x, dst 0x%x, src addr:\n", 
-			(input == tp_input ? "tp_" : "clts_"), src, dst);
+#ifdef ARGO_DEBUG
+	if (argo_debug[D_TPISO]) {
+		printf("calling %sinput : src 0x%x, dst 0x%x, src addr:\n",
+		       (input == tp_input ? "tp_" : "clts_"), src, dst);
 		dump_isoaddr(src);
 		printf(" dst addr:\n");
 		dump_isoaddr(dst);
-	ENDDEBUG
+	}
+#endif
 
-	(*input)(m, (struct sockaddr *)src, (struct sockaddr *)dst, 0,
-	    tpclnp_output_dg, ce_bit);
+	(*input) (m, (struct sockaddr *) src, (struct sockaddr *) dst, 0,
+		  tpclnp_output_dg, ce_bit);
 
-	IFDEBUG(D_QUENCH)
-		{ 
-			if(time.tv_usec & 0x4 && time.tv_usec & 0x40) {
-				printf("tpclnp_input: FAKING %s\n", 
-					tp_stat.ts_pkt_rcvd & 0x1?"QUENCH":"QUENCH2");
+#ifdef ARGO_DEBUG
+	if (argo_debug[D_QUENCH]) {{
+			if (time.tv_usec & 0x4 && time.tv_usec & 0x40) {
+				printf("tpclnp_input: FAKING %s\n",
+				       tp_stat.ts_pkt_rcvd & 0x1 ? "QUENCH" : "QUENCH2");
 				if (tp_stat.ts_pkt_rcvd & 0x1)
-					tpclnp_ctlinput(PRC_QUENCH, &src);
+					tpclnp_ctlinput(PRC_QUENCH, 
+							(struct sockaddr *)
+							&src, NULL);
 				else
-					tpclnp_ctlinput(PRC_QUENCH2, &src);
+					tpclnp_ctlinput(PRC_QUENCH2,
+							(struct sockaddr *)
+							&src, NULL);
 			}
-		}
-	ENDDEBUG
+	}
+	}
+#endif
 }
 
+/*ARGSUSED*/
 void
-iso_rtchange()
+iso_rtchange(pcb)
+	struct isopcb *pcb;
 {
 
 }
@@ -548,9 +627,9 @@ iso_rtchange()
  */
 void
 tpiso_decbit(isop)
-	struct isopcb *isop;
+	struct isopcb  *isop;
 {
-	tp_quench((struct tp_pcb *)isop->isop_socket->so_pcb, PRC_QUENCH2);
+	tp_quench((struct inpcb *) isop->isop_socket->so_pcb, PRC_QUENCH2);
 }
 /*
  * CALLED FROM:
@@ -560,9 +639,9 @@ tpiso_decbit(isop)
  */
 void
 tpiso_quench(isop)
-	struct isopcb *isop;
+	struct isopcb  *isop;
 {
-	tp_quench((struct tp_pcb *)isop->isop_socket->so_pcb, PRC_QUENCH);
+	tp_quench((struct inpcb *) isop->isop_socket->so_pcb, PRC_QUENCH);
 }
 
 /*
@@ -573,50 +652,53 @@ tpiso_quench(isop)
  *	It either returns an error status to the user or
  *	it causes all connections on this address to be aborted
  *	by calling the appropriate xx_notify() routine.
- *	(cmd) is the type of ICMP error.   
+ *	(cmd) is the type of ICMP error.
  * 	(siso) is the address of the guy who sent the ER CLNPDU
  */
-void
-tpclnp_ctlinput(cmd, siso)
-	int cmd;
-	struct sockaddr_iso *siso;
+void *
+tpclnp_ctlinput(cmd, saddr, dummy)
+	int             cmd;
+	struct sockaddr *saddr;
+	void *dummy;
 {
-	extern u_char inetctlerrmap[];
-	void tpiso_abort(), iso_rtchange(), tpiso_reset(), iso_pcbnotify();
+	struct sockaddr_iso *siso = (struct sockaddr_iso *) saddr;
+	extern u_char   inetctlerrmap[];
 
-	IFDEBUG(D_TPINPUT)
+#ifdef ARGO_DEBUG
+	if (argo_debug[D_TPINPUT]) {
 		printf("tpclnp_ctlinput1: cmd 0x%x addr: \n", cmd);
 		dump_isoaddr(siso);
-	ENDDEBUG
+	}
+#endif
 
 	if (cmd < 0 || cmd > PRC_NCMDS)
-		return;
+		return NULL;
 	if (siso->siso_family != AF_ISO)
-		return;
+		return NULL;
 	switch (cmd) {
 
-		case	PRC_QUENCH2:
-			iso_pcbnotify(&tp_isopcb, siso, 0, (int (*)())tpiso_decbit);
-			break;
+	case PRC_QUENCH2:
+		iso_pcbnotify(&tp_isopcb, siso, 0, tpiso_decbit);
+		break;
 
-		case	PRC_QUENCH:
-			iso_pcbnotify(&tp_isopcb, siso, 0, (int (*)())tpiso_quench);
-			break;
+	case PRC_QUENCH:
+		iso_pcbnotify(&tp_isopcb, siso, 0, tpiso_quench);
+		break;
 
-		case	PRC_TIMXCEED_REASS:
-		case	PRC_ROUTEDEAD:
-			iso_pcbnotify(&tp_isopcb, siso, 0, tpiso_reset);
-			break;
+	case PRC_TIMXCEED_REASS:
+	case PRC_ROUTEDEAD:
+		iso_pcbnotify(&tp_isopcb, siso, 0, tpiso_reset);
+		break;
 
-		case	PRC_HOSTUNREACH:
-		case	PRC_UNREACH_NET:
-		case	PRC_IFDOWN:
-		case	PRC_HOSTDEAD:
-			iso_pcbnotify(&tp_isopcb, siso,
-					(int)inetctlerrmap[cmd], iso_rtchange);
-			break;
+	case PRC_HOSTUNREACH:
+	case PRC_UNREACH_NET:
+	case PRC_IFDOWN:
+	case PRC_HOSTDEAD:
+		iso_pcbnotify(&tp_isopcb, siso,
+			      (int) inetctlerrmap[cmd], iso_rtchange);
+		break;
 
-		default:
+	default:
 		/*
 		case	PRC_MSGSIZE:
 		case	PRC_UNREACH_HOST:
@@ -631,9 +713,10 @@ tpclnp_ctlinput(cmd, siso)
 		case	PRC_TIMXCEED_INTRANS:
 		case	PRC_PARAMPROB:
 		*/
-		iso_pcbnotify(&tp_isopcb, siso, (int)inetctlerrmap[cmd], tpiso_abort);
+		iso_pcbnotify(&tp_isopcb, siso, (int) inetctlerrmap[cmd], tpiso_abort);
 		break;
 	}
+	return NULL;
 }
 /*
  * XXX - Variant which is called by clnp_er.c with an isoaddr rather
@@ -641,13 +724,14 @@ tpclnp_ctlinput(cmd, siso)
  */
 
 static struct sockaddr_iso siso = {sizeof(siso), AF_ISO};
+void
 tpclnp_ctlinput1(cmd, isoa)
-	int cmd;
+	int             cmd;
 	struct iso_addr *isoa;
 {
-	bzero((caddr_t)&siso.siso_addr, sizeof(siso.siso_addr));
-	bcopy((caddr_t)isoa, (caddr_t)&siso.siso_addr, isoa->isoa_len);
-	tpclnp_ctlinput(cmd, &siso);
+	bzero((caddr_t) & siso.siso_addr, sizeof(siso.siso_addr));
+	bcopy((caddr_t) isoa, (caddr_t) & siso.siso_addr, isoa->isoa_len);
+	tpclnp_ctlinput(cmd, (struct sockaddr *) &siso, NULL);
 }
 
 /*
@@ -664,27 +748,29 @@ tpclnp_ctlinput1(cmd, isoa)
  */
 void
 tpiso_abort(isop)
-	struct isopcb *isop;
+	struct isopcb  *isop;
 {
 	struct tp_event e;
 
-	IFDEBUG(D_CONN)
+#ifdef ARGO_DEBUG
+	if (argo_debug[D_CONN]) {
 		printf("tpiso_abort 0x%x\n", isop);
-	ENDDEBUG
+	}
+#endif
 	e.ev_number = ER_TPDU;
-	e.ATTR(ER_TPDU).e_reason = ECONNABORTED;
-	tp_driver((struct tp_pcb *)isop->isop_socket->so_pcb, &e);
+	e.TPDU_ATTR(ER).e_reason = ECONNABORTED;
+	tp_driver((struct tp_pcb *) isop->isop_socket->so_pcb, &e);
 }
 
 void
 tpiso_reset(isop)
-	struct isopcb *isop;
+	struct isopcb  *isop;
 {
 	struct tp_event e;
 
 	e.ev_number = T_NETRESET;
-	tp_driver((struct tp_pcb *)isop->isop_socket->so_pcb, &e);
+	tp_driver((struct tp_pcb *) isop->isop_socket->so_pcb, &e);
 
 }
 
-#endif /* ISO */
+#endif				/* ISO */

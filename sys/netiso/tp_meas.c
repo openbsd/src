@@ -1,4 +1,5 @@
-/*	$NetBSD: tp_meas.c,v 1.6 1994/06/29 06:40:19 cgd Exp $	*/
+/*	$OpenBSD: tp_meas.c,v 1.2 1996/03/04 10:36:09 mickey Exp $	*/
+/*	$NetBSD: tp_meas.c,v 1.7 1996/02/13 22:11:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,13 +41,13 @@
 
                       All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the name of IBM not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 IBM DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -75,8 +76,8 @@ SOFTWARE.
 extern struct timeval time;
 
 #ifdef TP_PERF_MEAS
-int		tp_Measn = 0;
-struct tp_Meas tp_Meas[TPMEASN];
+int             tp_Measn = 0;
+struct tp_Meas  tp_Meas[TPMEASN];
 
 /*
  * NAME:	 tpmeas()
@@ -88,24 +89,24 @@ struct tp_Meas tp_Meas[TPMEASN];
  *  stashes a performance-measurement event for the given reference (ref)
  *  (kind) tells which kind of event, timev is the time to be stored
  *  with this event, (seq), (win), and (size) are integers that usually
- *  refer to the sequence number, window number (on send) and 
+ *  refer to the sequence number, window number (on send) and
  *  size of tpdu or window.
  *
  * RETURNS:		Nada
  *
- * SIDE EFFECTS:	
+ * SIDE EFFECTS:
  *
- * NOTES:			
+ * NOTES:
  */
 void
 Tpmeas(ref, kind, timev, seq, win, size)
-	u_int 	ref;
-	u_int	kind;
-	struct 	timeval *timev;
-	u_int	seq, win, size;
+	u_int           ref;
+	u_int           kind;
+	struct timeval *timev;
+	u_int           seq, win, size;
 {
 	register struct tp_Meas *tpm;
-	static int mseq;
+	static int      mseq;
 
 	tpm = &tp_Meas[tp_Measn++];
 	tp_Measn %= TPMEASN;
@@ -113,14 +114,14 @@ Tpmeas(ref, kind, timev, seq, win, size)
 	tpm->tpm_kind = kind;
 	tpm->tpm_tseq = mseq++;
 	tpm->tpm_ref = ref;
-	if(kind == TPtime_from_ll)
-		bcopy((caddr_t)timev, (caddr_t)&tpm->tpm_time, sizeof(struct timeval));
+	if (kind == TPtime_from_ll)
+		bcopy((caddr_t) timev, (caddr_t) & tpm->tpm_time, sizeof(struct timeval));
 	else
-		bcopy( (caddr_t)&time, 
-			(caddr_t)&tpm->tpm_time, sizeof(struct timeval) );
+		bcopy((caddr_t) & time,
+		      (caddr_t) & tpm->tpm_time, sizeof(struct timeval));
 	tpm->tpm_seq = seq;
 	tpm->tpm_window = win;
 	tpm->tpm_size = size;
 }
 
-#endif /* TP_PERF_MEAS */
+#endif				/* TP_PERF_MEAS */

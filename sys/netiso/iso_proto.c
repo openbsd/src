@@ -1,4 +1,5 @@
-/*	$NetBSD: iso_proto.c,v 1.5 1994/06/29 06:39:49 cgd Exp $	*/
+/*	$OpenBSD: iso_proto.c,v 1.2 1996/03/04 10:35:38 mickey Exp $	*/
+/*	$NetBSD: iso_proto.c,v 1.6 1996/02/13 22:10:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,13 +41,13 @@
 
                       All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the name of IBM not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 IBM DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -79,118 +80,111 @@ SOFTWARE.
 
 #include <netiso/iso.h>
 
-int	clnp_output(), rclnp_output(), rclnp_ctloutput();
-int	raw_usrreq(), clnp_usrreq();
-void	clnp_init(), clnp_slowtimo(), clnp_drain(), rclnp_input();
-
-int	tp_ctloutput(), tp_usrreq(), tpcons_input();
-void	tp_init(), tp_fasttimo(), tp_slowtimo(), tp_drain(), cons_init();
-void	tpclnp_input(), tpclnp_ctlinput();
-
-int	esis_usrreq(), idrp_usrreq(), cltp_usrreq(), cltp_output();
-void	esis_init(), idrp_init(), cltp_init(), isis_input(), esis_input();
-void	idrp_input(), cltp_input(), esis_ctlinput(), cltp_ctlinput();
-
+#include <netiso/clnp.h>
+#include <netiso/tp_param.h>
+#include <netiso/tp_var.h>
+#include <netiso/esis.h>
 #ifdef TUBA
-int	tuba_usrreq(), tuba_ctloutput(), tuba_tcpinput(); 
-void	tuba_init(), tuba_slowtimo(), tuba_fasttimo();
+#include <netiso/tuba_table.h>
 #endif
+#include <netiso/idrp_var.h>
+#include <netiso/iso_pcb.h>
+#include <netiso/cltp_var.h>
 
-struct protosw isosw[] = {
-/*
- *  We need a datagram entry through which net mgmt programs can get
- *	to the iso_control procedure (iso ioctls). Thus, a minimal
- *	SOCK_DGRAM interface is provided here.
- *  THIS ONE MUST BE FIRST: Kludge city : socket() says if(!proto) call
- *  pffindtype, which gets the first entry that matches the type.
- *  sigh.
- */
-{ SOCK_DGRAM,	&isodomain,		ISOPROTO_CLTP,		PR_ATOMIC|PR_ADDR,
-	0,			cltp_output,	0,					0,
-	cltp_usrreq,
-	cltp_init,	0, 				0,					0
-},
+struct protosw  isosw[] = {
+	/*
+	 *  We need a datagram entry through which net mgmt programs can get
+	 *	to the iso_control procedure (iso ioctls). Thus, a minimal
+	 *	SOCK_DGRAM interface is provided here.
+	 *  THIS ONE MUST BE FIRST: Kludge city : socket() says if(!proto) call
+	 *  pffindtype, which gets the first entry that matches the type.
+	 *  sigh.
+	 */
+	{SOCK_DGRAM, &isodomain, ISOPROTO_CLTP, PR_ATOMIC | PR_ADDR,
+		0, cltp_output, 0, 0,
+		cltp_usrreq,
+		cltp_init, 0, 0, 0
+	},
 
-/*
- *	A datagram interface for clnp cannot co-exist with TP/CLNP
- *  because CLNP has no way to discriminate incoming TP packets from
- *  packets coming in for any other higher layer protocol.
- *  Old way: set it up so that pffindproto(... dgm, clnp) fails.
- *  New way: let pffindproto work (for x.25, thank you) but create
- *  	a clnp_usrreq() that returns error on PRU_ATTACH.
- */
-{SOCK_DGRAM,	&isodomain,		ISOPROTO_CLNP,		0,
- 0,				clnp_output,	0,					0,
- clnp_usrreq,
- clnp_init,		0,				clnp_slowtimo, 		clnp_drain,
-},
+	/*
+	 *	A datagram interface for clnp cannot co-exist with TP/CLNP
+	 *  because CLNP has no way to discriminate incoming TP packets from
+	 *  packets coming in for any other higher layer protocol.
+	 *  Old way: set it up so that pffindproto(... dgm, clnp) fails.
+	 *  New way: let pffindproto work (for x.25, thank you) but create
+	 *  	a clnp_usrreq() that returns error on PRU_ATTACH.
+	 */
+	{SOCK_DGRAM, &isodomain, ISOPROTO_CLNP, 0,
+		0, clnp_output, 0, 0,
+		clnp_usrreq,
+		clnp_init, 0, clnp_slowtimo, clnp_drain,
+	},
 
-/* raw clnp */
-{ SOCK_RAW,		&isodomain,		ISOPROTO_RAW,		PR_ATOMIC|PR_ADDR,
-  rclnp_input,	rclnp_output,	0,					rclnp_ctloutput,
-  clnp_usrreq,
-  0,			0,				0,					0
-},
+	/* raw clnp */
+	{SOCK_RAW, &isodomain, ISOPROTO_RAW, PR_ATOMIC | PR_ADDR,
+		rclnp_input, rclnp_output, 0, rclnp_ctloutput,
+		clnp_usrreq,
+		0, 0, 0, 0
+	},
 
-/* ES-IS protocol */
-{ SOCK_DGRAM,	&isodomain,		ISOPROTO_ESIS,		PR_ATOMIC|PR_ADDR,
-  esis_input,	0,				esis_ctlinput,		0,
-  esis_usrreq,
-  esis_init,	0,				0,					0
-},
+	/* ES-IS protocol */
+	{SOCK_DGRAM, &isodomain, ISOPROTO_ESIS, PR_ATOMIC | PR_ADDR,
+		esis_input, 0, esis_ctlinput, 0,
+		esis_usrreq,
+		esis_init, 0, 0, 0
+	},
 
-/* ISOPROTO_INTRAISIS */
-{ SOCK_DGRAM,	&isodomain,		ISOPROTO_INTRAISIS,	PR_ATOMIC|PR_ADDR,
-  isis_input,	0,				0,					0,
-  esis_usrreq,
-  0,			0,				0,					0
-},
+	/* ISOPROTO_INTRAISIS */
+	{SOCK_DGRAM, &isodomain, ISOPROTO_INTRAISIS, PR_ATOMIC | PR_ADDR,
+		isis_input, 0, 0, 0,
+		esis_usrreq,
+		0, 0, 0, 0
+	},
 
-/* ISOPROTO_IDRP */
-{ SOCK_DGRAM,	&isodomain,		ISOPROTO_IDRP,		PR_ATOMIC|PR_ADDR,
-  idrp_input,	0,				0,					0,
-  idrp_usrreq,
-  idrp_init,	0,				0,					0
-},
+	/* ISOPROTO_IDRP */
+	{SOCK_DGRAM, &isodomain, ISOPROTO_IDRP, PR_ATOMIC | PR_ADDR,
+		idrp_input, 0, 0, 0,
+		idrp_usrreq,
+		idrp_init, 0, 0, 0
+	},
 
-/* ISOPROTO_TP */
-{ SOCK_SEQPACKET,	&isodomain,	ISOPROTO_TP,		PR_CONNREQUIRED|PR_WANTRCVD,
-  tpclnp_input,	0,				tpclnp_ctlinput,	tp_ctloutput,
-  tp_usrreq,
-  tp_init,		tp_fasttimo,	tp_slowtimo,		tp_drain,
-},
+	/* ISOPROTO_TP */
+	{SOCK_SEQPACKET, &isodomain, ISOPROTO_TP, PR_CONNREQUIRED | PR_WANTRCVD,
+		tpclnp_input, 0, tpclnp_ctlinput, tp_ctloutput,
+		tp_usrreq,
+		tp_init, tp_fasttimo, tp_slowtimo, tp_drain,
+	},
 
 #ifdef TUBA
-{ SOCK_STREAM,	&isodomain,		ISOPROTO_TCP,		PR_CONNREQUIRED|PR_WANTRCVD,
-  tuba_tcpinput,	0,			0,					tuba_ctloutput,
-  tuba_usrreq,
-  tuba_init,	tuba_fasttimo,	tuba_fasttimo,		0
-},
+	{SOCK_STREAM, &isodomain, ISOPROTO_TCP, PR_CONNREQUIRED | PR_WANTRCVD,
+		tuba_tcpinput, 0, 0, tuba_ctloutput,
+		tuba_usrreq,
+		tuba_init, tuba_fasttimo, tuba_fasttimo, 0
+	},
 #endif
 
 #ifdef TPCONS
-/* ISOPROTO_TP */
-{ SOCK_SEQPACKET,	&isodomain,	ISOPROTO_TP0,		PR_CONNREQUIRED|PR_WANTRCVD,
-  tpcons_input,		0,			0,					tp_ctloutput,
-  tp_usrreq,
-  cons_init,		0,			0,					0,
-},
+	/* ISOPROTO_TP */
+	{SOCK_SEQPACKET, &isodomain, ISOPROTO_TP0, PR_CONNREQUIRED | PR_WANTRCVD,
+		tpcons_input, 0, 0, tp_ctloutput,
+		tp_usrreq,
+		cons_init, 0, 0, 0,
+	},
 #endif
-
 };
 
 
-struct domain isodomain = {
-    AF_ISO, 			/* family */
-	"iso-domain", 		/* name */
-	0,					/* initialize routine */
-	0,					/* externalize access rights */
-	0,					/* dispose of internalized rights */
-	isosw,				/* protosw */
-	&isosw[sizeof(isosw)/sizeof(isosw[0])], /* NPROTOSW */
-	0,					/* next */
+struct domain   isodomain = {
+	AF_ISO,			/* family */
+	"iso-domain",		/* name */
+	0,			/* initialize routine */
+	0,			/* externalize access rights */
+	0,			/* dispose of internalized rights */
+	isosw,			/* protosw */
+	&isosw[sizeof(isosw) / sizeof(isosw[0])],	/* NPROTOSW */
+	0,			/* next */
 	rn_inithead,		/* rtattach */
-	48,					/* rtoffset */
-	sizeof(struct sockaddr_iso) /* maxkeylen */
+	48,			/* rtoffset */
+	sizeof(struct sockaddr_iso)	/* maxkeylen */
 };
-#endif	/* ISO */
+#endif				/* ISO */

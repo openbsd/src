@@ -1,4 +1,5 @@
-/*	$NetBSD: iso_pcb.h,v 1.6 1995/03/26 20:35:23 jtc Exp $	*/
+/*	$OpenBSD: iso_pcb.h,v 1.2 1996/03/04 10:35:36 mickey Exp $	*/
+/*	$NetBSD: iso_pcb.h,v 1.7 1996/02/13 22:10:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,13 +41,13 @@
 
                       All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the name of IBM not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 IBM DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -68,28 +69,28 @@ SOFTWARE.
  * Common structure pcb for argo protocol implementation.
  */
 struct isopcb {
-	struct	isopcb			*isop_next,*isop_prev; /* pointers to other pcb's */
-	struct	isopcb			*isop_head;	/* pointer back to chain of pcbs for 
-								this protocol */
-	struct	socket			*isop_socket;	/* back pointer to socket */
-	struct	sockaddr_iso	*isop_laddr;
-	struct	sockaddr_iso	*isop_faddr;
-	struct	route_iso {
-		struct	rtentry 	*ro_rt;
-		struct	sockaddr_iso ro_dst;
-	}						isop_route;			/* CLNP routing entry */
-	struct	mbuf			*isop_options;		/* CLNP options */
-	struct	mbuf			*isop_optindex;		/* CLNP options index */
-	struct	mbuf			*isop_clnpcache;	/* CLNP cached hdr */
-	caddr_t					isop_chan;		/* actually struct pklcb * */
-	u_short					isop_refcnt;		/* mult TP4 tpcb's -> here */
-	u_short					isop_lport;			/* MISLEADLING work var */
-	u_short					isop_tuba_cached;	/* for tuba address ref cnts */
-	int						isop_x25crud_len;	/* x25 call request ud */
-	char					isop_x25crud[MAXX25CRUDLEN];
-	struct ifaddr			*isop_ifa;		/* ESIS interface assoc w/sock */
-	struct	sockaddr_iso	isop_sladdr,		/* preallocated laddr */
-							isop_sfaddr;		/* preallocated faddr */
+	struct isopcb  *isop_next, *isop_prev;	/* pointers to other pcb's */
+	struct isopcb  *isop_head;	/* pointer back to chain of pcbs for
+					 * this protocol */
+	struct socket  *isop_socket;	/* back pointer to socket */
+	struct sockaddr_iso *isop_laddr;
+	struct sockaddr_iso *isop_faddr;
+	struct route_iso {
+		struct rtentry *ro_rt;
+		struct sockaddr_iso ro_dst;
+	}               isop_route;	/* CLNP routing entry */
+	struct mbuf    *isop_options;	/* CLNP options */
+	struct mbuf    *isop_optindex;	/* CLNP options index */
+	struct mbuf    *isop_clnpcache;	/* CLNP cached hdr */
+	caddr_t         isop_chan;	/* actually struct pklcb * */
+	u_short         isop_refcnt;	/* mult TP4 tpcb's -> here */
+	u_short         isop_lport;	/* MISLEADLING work var */
+	u_short         isop_tuba_cached;	/* for tuba address ref cnts */
+	int             isop_x25crud_len;	/* x25 call request ud */
+	char            isop_x25crud[MAXX25CRUDLEN];
+	struct ifaddr  *isop_ifa;	/* ESIS interface assoc w/sock */
+	struct sockaddr_iso isop_sladdr,	/* preallocated laddr */
+	                isop_sfaddr;	/* preallocated faddr */
 };
 
 #ifdef sotorawcb
@@ -99,9 +100,10 @@ struct isopcb {
  * and space is allocated to the necessary sockaddrs.
  */
 struct rawisopcb {
-	struct	rawcb risop_rcb;		/* common control block prefix */
-	int		risop_flags;			/* flags, e.g. raw sockopts */
-	struct	isopcb risop_isop;		/* space for bound addresses, routes etc.*/
+	struct rawcb    risop_rcb;	/* common control block prefix */
+	int             risop_flags;	/* flags, e.g. raw sockopts */
+	struct isopcb   risop_isop;	/* space for bound addresses, routes
+					 * etc. */
 };
 #endif
 
@@ -109,5 +111,19 @@ struct rawisopcb {
 #define	sotorawisopcb(so)	((struct rawisopcb *)(so)->so_pcb)
 
 #ifdef _KERNEL
-struct	isopcb *iso_pcblookup();
+struct socket;
+struct isopcb;
+struct inpcb;
+struct mbuf;
+struct sockaddr_iso;
+
+int iso_pcballoc __P((struct socket *, void *));
+int iso_pcbbind __P((void *, struct mbuf *));
+int iso_pcbconnect __P((void *, struct mbuf *));
+void iso_pcbdisconnect __P((void *));
+void iso_pcbdetach __P((void *));
+void iso_pcbnotify __P((struct isopcb *, struct sockaddr_iso *, int,
+			void (*) (struct isopcb *)));
+struct isopcb  *iso_pcblookup __P((struct isopcb *, int, caddr_t,
+				   struct sockaddr_iso *));
 #endif

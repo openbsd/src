@@ -1,4 +1,5 @@
-/*	$NetBSD: clnp.h,v 1.9 1995/06/13 07:13:14 mycroft Exp $	*/
+/*	$OpenBSD: clnp.h,v 1.2 1996/03/04 10:34:44 mickey Exp $	*/
+/*	$NetBSD: clnp.h,v 1.10 1996/02/13 22:08:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -40,13 +41,13 @@
 
                       All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the name of IBM not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 IBM DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -93,16 +94,19 @@ SOFTWARE.
  *	Fixed part of clnp header
  */
 struct clnp_fixed {
-	u_char	cnf_proto_id;		/* network layer protocol identifier */
-	u_char	cnf_hdr_len;		/* length indicator (octets) */
-	u_char	cnf_vers;			/* version/protocol identifier extension */
-	u_char	cnf_ttl;			/* lifetime (500 milliseconds) */
-	u_char	cnf_type;			/* type code */
-								/* Includes err_ok, more_segs, and seg_ok */
-	u_char	cnf_seglen_msb;		/* pdu segment length (octets) high byte */
-	u_char	cnf_seglen_lsb;		/* pdu segment length (octets) low byte */
-	u_char	cnf_cksum_msb;		/* checksum high byte */
-	u_char	cnf_cksum_lsb;		/* checksum low byte */
+	u_char          cnf_proto_id;	/* network layer protocol identifier */
+	u_char          cnf_hdr_len;	/* length indicator (octets) */
+	u_char          cnf_vers;	/* version/protocol identifier
+					 * extension */
+	u_char          cnf_ttl;/* lifetime (500 milliseconds) */
+	u_char          cnf_type;	/* type code */
+	/* Includes err_ok, more_segs, and seg_ok */
+	u_char          cnf_seglen_msb;	/* pdu segment length (octets) high
+					 * byte */
+	u_char          cnf_seglen_lsb;	/* pdu segment length (octets) low
+					 * byte */
+	u_char          cnf_cksum_msb;	/* checksum high byte */
+	u_char          cnf_cksum_lsb;	/* checksum low byte */
 };
 #define CNF_TYPE	0x1f
 #define CNF_ERR_OK	0x20
@@ -117,17 +121,17 @@ struct clnp_fixed {
  *	Segmentation part of clnp header
  */
 struct clnp_segment {
-	u_short	cng_id;				/* data unit identifier */
-	u_short	cng_off;			/* segment offset */
-	u_short	cng_tot_len;		/* total length */
+	u_short         cng_id;	/* data unit identifier */
+	u_short         cng_off;/* segment offset */
+	u_short         cng_tot_len;	/* total length */
 };
 
 /*
  *	Clnp fragment reassembly structures:
  *
- *	All packets undergoing reassembly are linked together in 
+ *	All packets undergoing reassembly are linked together in
  *	clnp_fragl structures. Each clnp_fragl structure contains a
- *	pointer to the original clnp packet header, as well as a 
+ *	pointer to the original clnp packet header, as well as a
  *	list of packet fragments. Each packet fragment
  *	is headed by a clnp_frag structure. This structure contains the
  *	offset of the first and last byte of the fragment, as well as
@@ -136,31 +140,31 @@ struct clnp_segment {
 
 /*
  *	NOTE:
- *		The clnp_frag structure is stored in an mbuf immedately preceeding
- *	the fragment data. Since there are words in this struct,
- *	it must be word aligned. 
+ *		The clnp_frag structure is stored in an mbuf immedately
+ *		preceeding the fragment data. Since there are words in
+ *		this struct, it must be word aligned.
  *
  *	NOTE:
- *		All the fragment code assumes that the entire clnp header is 
- *	contained in the first mbuf.
+ *		All the fragment code assumes that the entire clnp header is
+ *		contained in the first mbuf.
  */
 struct clnp_frag {
-	u_int				cfr_first;		/* offset of first byte of this frag */
-	u_int				cfr_last;		/* offset of last byte of this frag */
-	u_int				cfr_bytes;		/* bytes to shave to get to data */
-	struct mbuf			*cfr_data;		/* ptr to data for this frag */
-	struct clnp_frag	*cfr_next;		/* next fragment in list */
+	u_int           cfr_first;	/* offset of first byte of this frag */
+	u_int           cfr_last;	/* offset of last byte of this frag */
+	u_int           cfr_bytes;	/* bytes to shave to get to data */
+	struct mbuf    *cfr_data;	/* ptr to data for this frag */
+	struct clnp_frag *cfr_next;	/* next fragment in list */
 };
 
 struct clnp_fragl {
-	struct iso_addr		cfl_src;		/* source of the pkt */
-	struct iso_addr		cfl_dst;		/* destination of the pkt */
-	u_short				cfl_id;			/* id of the pkt */
-	u_char				cfl_ttl;		/* current ttl of pkt */
-	u_short				cfl_last;		/* offset of last byte of packet */
-	struct mbuf 		*cfl_orighdr;	/* ptr to original header */
-	struct clnp_frag	*cfl_frags;		/* linked list of fragments for pkt */
-	struct clnp_fragl	*cfl_next;		/* next pkt being reassembled */
+	struct iso_addr cfl_src;/* source of the pkt */
+	struct iso_addr cfl_dst;/* destination of the pkt */
+	u_short         cfl_id;	/* id of the pkt */
+	u_char          cfl_ttl;/* current ttl of pkt */
+	u_short         cfl_last;	/* offset of last byte of packet */
+	struct mbuf    *cfl_orighdr;	/* ptr to original header */
+	struct clnp_frag *cfl_frags;	/* linked list of fragments for pkt */
+	struct clnp_fragl *cfl_next;	/* next pkt being reassembled */
 };
 
 /*
@@ -175,53 +179,53 @@ struct clnp_fragl {
  *	does not include the option code or option length fields.
  */
 struct clnp_optidx {
-	u_short	cni_securep;		/* ptr to beginning of security option */
-	char	cni_secure_len;		/* length of entire security option */
+	u_short         cni_securep;	/* ptr to start of security option */
+	char            cni_secure_len;	/* length of entire security option */
 
-	u_short	cni_srcrt_s;		/* offset of start of src rt option */
-	u_short	cni_srcrt_len;		/* length of entire src rt option */
+	u_short         cni_srcrt_s;	/* offset of start of src rt option */
+	u_short         cni_srcrt_len;	/* length of entire src rt option */
 
-	u_short	cni_recrtp;			/* ptr to beginning of recrt option */
-	char	cni_recrt_len;		/* length of entire recrt option */
+	u_short         cni_recrtp;	/* ptr to beginning of recrt option */
+	char            cni_recrt_len;	/* length of entire recrt option */
 
-	char	cni_priorp;			/* ptr to priority option */
+	char            cni_priorp;	/* ptr to priority option */
 
-	u_short	cni_qos_formatp;	/* ptr to format of qos option */
-	char	cni_qos_len;		/* length of entire qos option */
+	u_short         cni_qos_formatp;	/* ptr to format of qos
+						 * option */
+	char            cni_qos_len;	/* length of entire qos option */
 
-	u_char	cni_er_reason;		/* reason from ER pdu option */
+	u_char          cni_er_reason;	/* reason from ER pdu option */
 
-								/* ESIS options */
+	/* ESIS options */
 
-	u_short	cni_esct;			/* value from ISH ESCT option */
+	u_short         cni_esct;	/* value from ISH ESCT option */
 
-	u_short	cni_netmaskp;		/* ptr to beginning of netmask option */
-	char	cni_netmask_len;		/* length of entire netmask option */
+	u_short         cni_netmaskp;	/* ptr to beginning of netmask option */
+	char            cni_netmask_len;	/* length of entire netmask
+						 * option */
 
-	u_short	cni_snpamaskp;		/* ptr to beginning of snpamask option */
-	char	cni_snpamask_len;		/* length of entire snpamask option */
+	u_short         cni_snpamaskp;	/* ptr to start of snpamask option */
+	char            cni_snpamask_len;	/* length of entire snpamask
+						 * option */
 
 };
 
 #define	ER_INVALREAS	0xff	/* code for invalid ER pdu discard reason */
 
 /* given an mbuf and addr of option, return offset from data of mbuf */
-#define CLNP_OPTTOOFF(m, opt)\
-	((u_short) (opt - mtod(m, caddr_t)))
+#define CLNP_OPTTOOFF(m, opt) ((u_short) (opt - mtod(m, caddr_t)))
 
 /* given an mbuf and offset of option, return address of option */
-#define CLNP_OFFTOOPT(m, off)\
-	((caddr_t) (mtod(m, caddr_t) + off))
+#define CLNP_OFFTOOPT(m, off) ((caddr_t) (mtod(m, caddr_t) + off))
 
-/*	return true iff src route is valid */
-#define	CLNPSRCRT_VALID(oidx)\
-	((oidx) && (oidx->cni_srcrt_s))
+/* return true iff src route is valid */
+#define	CLNPSRCRT_VALID(oidx) ((oidx) && (oidx->cni_srcrt_s))
 
-/*	return the offset field of the src rt */
+/* return the offset field of the src rt */
 #define CLNPSRCRT_OFF(oidx, options)\
 	(*((u_char *)(CLNP_OFFTOOPT(options, oidx->cni_srcrt_s) + 1)))
 
-/*	return the type field of the src rt */
+/* return the type field of the src rt */
 #define CLNPSRCRT_TYPE(oidx, options)\
 	((u_char)(*(CLNP_OFFTOOPT(options, oidx->cni_srcrt_s))))
 
@@ -233,9 +237,9 @@ struct clnp_optidx {
 #define CLNPSRCRT_CADDR(oidx, options)\
 	((caddr_t)(CLNP_OFFTOOPT(options, oidx->cni_srcrt_s) + CLNPSRCRT_OFF(oidx, options)))
 
-/* 
- *	return true if the src route has run out of routes
- *	this is true if the offset of next route is greater than the end of the rt 
+/*
+ * return true if the src route has run out of routes this is true if the
+ * offset of next route is greater than the end of the rt
  */
 #define	CLNPSRCRT_TERM(oidx, options)\
 	(CLNPSRCRT_OFF(oidx, options) > oidx->cni_srcrt_len)
@@ -270,37 +274,38 @@ struct clnp_optidx {
 #define CLNPOVAL_COMPRT		0x01	/* complete source routing */
 
 /*
- *	Clnp flags used in a control block flags field. 
+ *	Clnp flags used in a control block flags field.
  *	NOTE: these must be out of the range of bits defined in ../net/raw_cb.h
  */
 #define	CLNP_NO_SEG		0x010	/* segmentation not permitted */
 #define	CLNP_NO_ER		0x020	/* do not generate ERs */
-#define CLNP_SEND_RAW	0x080	/* send pkt as RAW DT rather than TP DT */
-#define	CLNP_NO_CKSUM	0x100	/* don't use clnp checksum */
+#define CLNP_SEND_RAW		0x080	/* send pkt as RAW DT not TP DT */
+#define	CLNP_NO_CKSUM		0x100	/* don't use clnp checksum */
 #define CLNP_ECHO		0x200	/* send echo request */
-#define	CLNP_NOCACHE	0x400	/* don't store cache information */
+#define	CLNP_NOCACHE		0x400	/* don't store cache information */
 #define CLNP_ECHOR		0x800	/* send echo reply */
 
 /* valid clnp flags */
-#define CLNP_VFLAGS		(CLNP_SEND_RAW|CLNP_NO_SEG|CLNP_NO_ER|CLNP_NO_CKSUM\
-	|CLNP_ECHO|CLNP_NOCACHE|CLNP_ECHOR)
+#define CLNP_VFLAGS \
+	(CLNP_SEND_RAW|CLNP_NO_SEG|CLNP_NO_ER|CLNP_NO_CKSUM|\
+	 CLNP_ECHO|CLNP_NOCACHE|CLNP_ECHOR)
 
-/* 
- *	Constants used by clnp
+/*
+ * Constants used by clnp
  */
 #define	CLNP_HDR_MIN	(sizeof (struct clnp_fixed))
 #define	CLNP_HDR_MAX	(254)
-#define	CLNP_TTL_UNITS	2					/* 500 milliseconds */
-#define CLNP_TTL		15*CLNP_TTL_UNITS	/* time to live (seconds) */
-#define	ISO8473_V1		0x01
+#define	CLNP_TTL_UNITS	2	/* 500 milliseconds */
+#define CLNP_TTL	15*CLNP_TTL_UNITS	/* time to live (seconds) */
+#define	ISO8473_V1	0x01
 
 /*
  *	Clnp packet types
  *	In order to test raw clnp and tp/clnp simultaneously, a third type of
  *	packet has been defined: CLNP_RAW. This is done so that the input
  *	routine can switch to the correct input routine (rclnp_input or
- *	tpclnp_input) based on the type field. If clnp had a higher level protocol
- *	field, this would not be necessary.
+ *	tpclnp_input) based on the type field. If clnp had a higher level
+ *	protocol field, this would not be necessary.
  */
 #define	CLNP_DT			0x1C	/* normal data */
 #define	CLNP_ER			0x01	/* error report */
@@ -311,14 +316,14 @@ struct clnp_optidx {
 /*
  *	ER pdu error codes
  */
-#define GEN_NOREAS			0x00	/* reason not specified */
+#define GEN_NOREAS		0x00	/* reason not specified */
 #define GEN_PROTOERR		0x01	/* protocol procedure error */
-#define GEN_BADCSUM			0x02	/* incorrect checksum */
-#define GEN_CONGEST			0x03	/* pdu discarded due to congestion */
+#define GEN_BADCSUM		0x02	/* incorrect checksum */
+#define GEN_CONGEST		0x03	/* pdu discarded due to congestion */
 #define GEN_HDRSYNTAX		0x04	/* header syntax error */
-#define GEN_SEGNEEDED		0x05	/* segmentation needed, but not permitted */
+#define GEN_SEGNEEDED		0x05	/* need segmentation but not allowed */
 #define GEN_INCOMPLETE		0x06	/* incomplete pdu received */
-#define GEN_DUPOPT			0x07	/* duplicate option */
+#define GEN_DUPOPT		0x07	/* duplicate option */
 
 /* address errors */
 #define ADDR_DESTUNREACH	0x80	/* destination address unreachable */
@@ -346,19 +351,16 @@ struct clnp_optidx {
 #define CLNP_ERRORS		22
 
 
-#ifdef _KERNEL
-int clnp_er_index();
-#endif
-
 #ifdef CLNP_ER_CODES
-u_char clnp_er_codes[CLNP_ERRORS] =  {
-GEN_NOREAS, GEN_PROTOERR, GEN_BADCSUM, GEN_CONGEST,
-GEN_HDRSYNTAX, GEN_SEGNEEDED, GEN_INCOMPLETE, GEN_DUPOPT,
-ADDR_DESTUNREACH, ADDR_DESTUNKNOWN,
-SRCRT_UNSPECERR, SRCRT_SYNTAX, SRCRT_UNKNOWNADDR, SRCRT_BADPATH,
-TTL_EXPTRANSIT, TTL_EXPREASS,
-DISC_UNSUPPOPT, DISC_UNSUPPVERS, DISC_UNSUPPSECURE,
-DISC_UNSUPPSRCRT, DISC_UNSUPPRECRT, REASS_INTERFERE };
+u_char          clnp_er_codes[CLNP_ERRORS] = {
+	GEN_NOREAS, GEN_PROTOERR, GEN_BADCSUM, GEN_CONGEST,
+	GEN_HDRSYNTAX, GEN_SEGNEEDED, GEN_INCOMPLETE, GEN_DUPOPT,
+	ADDR_DESTUNREACH, ADDR_DESTUNKNOWN,
+	SRCRT_UNSPECERR, SRCRT_SYNTAX, SRCRT_UNKNOWNADDR, SRCRT_BADPATH,
+	TTL_EXPTRANSIT, TTL_EXPREASS,
+	DISC_UNSUPPOPT, DISC_UNSUPPVERS, DISC_UNSUPPSECURE,
+	DISC_UNSUPPSRCRT, DISC_UNSUPPRECRT, REASS_INTERFERE
+};
 #endif
 
 #ifdef	TROLL
@@ -370,15 +372,17 @@ DISC_UNSUPPSRCRT, DISC_UNSUPPRECRT, REASS_INTERFERE };
 #define TR_CHANGE		0x10	/* change bytes in packet */
 #define TR_MTU			0x20	/* delta to change device mtu */
 #define	TR_CHUCK		0x40	/* drop packet in rclnp_input */
-#define	TR_BLAST		0x80	/* force rclnp_output to blast many packet */
-#define	TR_RAWLOOP		0x100	/* make if_loop call clnpintr directly */
+#define	TR_BLAST		0x80	/* force rclnp_output to blast many
+					 * packet */
+#define	TR_RAWLOOP		0x100	/* make if_loop call clnpintr
+					 * directly */
 struct troll {
-	int		tr_ops;				/* operations to perform */
-	float	tr_dup_size;		/* % to duplicate */
-	float	tr_dup_freq;		/* frequency to duplicate packets */
-	float	tr_drop_freq;		/* frequence to drop packets */
-	int		tr_mtu_adj;			/* delta to adjust if mtu */
-	int		tr_blast_cnt;		/* # of pkts to blast out */
+	int             tr_ops;	/* operations to perform */
+	float           tr_dup_size;	/* % to duplicate */
+	float           tr_dup_freq;	/* frequency to duplicate packets */
+	float           tr_drop_freq;	/* frequence to drop packets */
+	int             tr_mtu_adj;	/* delta to adjust if mtu */
+	int             tr_blast_cnt;	/* # of pkts to blast out */
 };
 
 #define	SN_OUTPUT(clcp, m)\
@@ -389,18 +393,19 @@ struct troll {
 		- trollctl.tr_mtu_adj)
 
 #ifdef _KERNEL
-extern float troll_random;
+extern float    troll_random;
 #endif
 
-#else	/* NO TROLL */
+#else				/* NO TROLL */
 
 #define	SN_OUTPUT(clcp, m)\
-	(*clcp->clc_ifp->if_output)(clcp->clc_ifp, m, clcp->clc_firsthop, clcp->clc_rt)
+	(*clcp->clc_ifp->if_output)(clcp->clc_ifp, m, clcp->clc_firsthop, \
+				    clcp->clc_rt)
 
 #define	SN_MTU(ifp, rt) (((rt && rt->rt_rmx.rmx_mtu) ?\
 	rt->rt_rmx.rmx_mtu : clnp_badmtu(ifp, rt, __LINE__, __FILE__)))
 
-#endif	/* TROLL */
+#endif				/* TROLL */
 
 /*
  *	Macro to remove an address from a clnp header
@@ -412,7 +417,8 @@ extern float troll_random;
 			(isoa.isoa_len > 20) || (isoa.isoa_len == 0)) {\
 			hoff = (caddr_t)0;\
 		} else {\
-			(void) bcopy(hoff, (caddr_t)isoa.isoa_genaddr, isoa.isoa_len);\
+			(void) bcopy(hoff, (caddr_t)isoa.isoa_genaddr, \
+				     isoa.isoa_len);\
 			hoff += isoa.isoa_len;\
 		}\
 	}
@@ -434,25 +440,109 @@ extern float troll_random;
  */
 struct clnp_cache {
 	/* these fields are used to check the validity of the cache */
-	struct iso_addr		clc_dst;		/* destination of packet */
-	struct mbuf 		*clc_options;	/* ptr to options mbuf */
-	int					clc_flags;		/* flags passed to clnp_output */
+	struct iso_addr clc_dst;/* destination of packet */
+	struct mbuf    *clc_options;	/* ptr to options mbuf */
+	int             clc_flags;	/* flags passed to clnp_output */
 
 	/* these fields are state that clnp_output requires to finish the pkt */
-	int					clc_segoff;		/* offset of seg part of header */
-	struct rtentry		*clc_rt;		/* ptr to rtentry (points into
-											the route structure) */
-	struct sockaddr		*clc_firsthop;	/* first hop of packet */
-	struct ifnet		*clc_ifp;		/* ptr to interface structure */
-	struct iso_ifaddr	*clc_ifa;		/* ptr to interface address */
-	struct mbuf 		*clc_hdr;		/* cached pkt hdr (finally)! */
+	int             clc_segoff;	/* offset of seg part of header */
+	struct rtentry *clc_rt;	/* ptr to rtentry (points into the route
+				 * structure) */
+	struct sockaddr *clc_firsthop;	/* first hop of packet */
+	struct ifnet   *clc_ifp;/* ptr to interface structure */
+	struct iso_ifaddr
+	               *clc_ifa;/* ptr to interface address */
+	struct mbuf    *clc_hdr;/* cached pkt hdr (finally)! */
 };
 
 #ifdef	_KERNEL
-caddr_t			clnp_insert_addr();
-struct iso_addr	*clnp_srcaddr();
-struct mbuf		*clnp_reass();
+struct iso_addr;
+struct sockaddr_iso;
+struct mbuf;
+struct clnp_segment;
+struct sockaddr;
+struct rt_entry;
+struct clnp_fragl;
+struct clnp_optidx;
+struct isopcb;
+struct snpa_hdr;
+struct iso_ifaddr;
+struct route_iso;
+
+/* clnp_debug.c */
+char *clnp_hexp __P((char *, int, char *));
+char *clnp_iso_addrp __P((struct iso_addr *));
+char *clnp_saddr_isop __P((struct sockaddr_iso *));
+
+/* clnp_er.c */
+void clnp_er_input __P((struct mbuf *, struct iso_addr *, u_int));
+void clnp_discard __P((struct mbuf *, u_int));
+void clnp_emit_er __P((struct mbuf *, u_int));
+int clnp_er_index __P((u_int));
+
+int clnp_fragment __P((struct ifnet *, struct mbuf *, struct sockaddr *,
+		       int, int, int, struct rtentry *));
+struct mbuf *clnp_reass __P((struct mbuf *, struct iso_addr *,
+			     struct iso_addr *, struct clnp_segment *));
+int clnp_newpkt __P((struct mbuf *, struct iso_addr *, struct iso_addr *,
+		     struct clnp_segment *));
+void clnp_insert_frag __P((struct clnp_fragl *, struct mbuf *,
+			   struct clnp_segment *));
+struct mbuf    *clnp_comp_pdu __P((struct clnp_fragl *));
+#ifdef TROLL
+float troll_random __P((void));
+int troll_output __P((struct ifnet *, struct mbuf *, struct sockaddr *,
+		      struct rtentry *));
+#endif
+
+/* clnp_input.c */
+void clnp_init  __P((void));
+void clnlintr    __P((void));
+void clnp_input __P((struct mbuf *, ...));
+
+/* clnp_options.c */
+void clnp_update_srcrt __P((struct mbuf *, struct clnp_optidx *));
+void clnp_dooptions __P((struct mbuf *, struct clnp_optidx *, struct ifnet *,
+			 struct iso_addr *));
+int clnp_set_opts __P((struct mbuf **, struct mbuf **));
+int clnp_opt_sanity __P((struct mbuf *, caddr_t, int, struct clnp_optidx *));
+
+/* clnp_output.c */
+int clnp_output __P((struct mbuf *, ...));
+void clnp_ctloutput __P((void));
+
+/* clnp_raw.c */
+void rclnp_input __P((struct mbuf *, ...));
+int rclnp_output __P((struct mbuf *, ...));
+int rclnp_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
+int clnp_usrreq __P((struct socket *, int, struct mbuf *, struct mbuf *,
+		     struct mbuf *));
+
+/* clnp_subr.c */
+struct mbuf    *clnp_data_ck __P((struct mbuf *, int));
+caddr_t clnp_extract_addr __P((caddr_t, int, struct iso_addr *,
+			       struct iso_addr *));
+int clnp_ours   __P((struct iso_addr *));
+void clnp_forward __P((struct mbuf *, int, struct iso_addr *,
+		       struct clnp_optidx *, int, struct snpa_hdr *));
+caddr_t clnp_insert_addr __P((caddr_t, struct iso_addr *, struct iso_addr *));
+int clnp_route  __P((struct iso_addr *, struct route_iso *, int,
+		     struct sockaddr **, struct iso_ifaddr **));
+int clnp_srcroute __P((struct mbuf *, struct clnp_optidx *, struct route_iso *,
+		       struct sockaddr **, struct iso_ifaddr **,
+		       struct iso_addr *));
+int clnp_echoreply __P((struct mbuf *, int, struct sockaddr_iso *,
+		        struct sockaddr_iso *, struct clnp_optidx *));
+int clnp_badmtu __P((struct ifnet *, struct rtentry *, int, char *));
+void clnp_ypocb  __P((caddr_t, caddr_t, u_int));
+
+/* clnp_timer.c */
+struct clnp_fragl *clnp_freefrags __P((struct clnp_fragl *));
+void clnp_slowtimo __P((void));
+void clnp_drain __P((void));
+
 #ifdef	TROLL
-struct troll	trollctl;
-#endif	/* TROLL */
-#endif	/* _KERNEL */
+struct troll    trollctl;
+#endif /* TROLL */
+
+#endif /* _KERNEL */

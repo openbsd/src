@@ -1,4 +1,5 @@
-/*	$NetBSD: tp_timer.h,v 1.5 1994/06/29 06:40:40 cgd Exp $	*/
+/*	$OpenBSD: tp_timer.h,v 1.2 1996/03/04 10:36:36 mickey Exp $	*/
+/*	$NetBSD: tp_timer.h,v 1.6 1996/02/13 22:12:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,13 +41,13 @@
 
                       All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the name of IBM not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 IBM DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -61,7 +62,7 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
-/* 
+/*
  * The callout structures used by the tp timers.
  */
 
@@ -84,6 +85,6 @@ SOFTWARE.
 #define tp_euntimeout tp_cuntimeout
 #define tp_ctimeout_MIN(p, w, t) \
     { if((p)->tp_timer[w] > (t)) (p)->tp_timer[w] = (t);}
-#endif /* TP_DEBUG_TIMERS */
+#endif				/* TP_DEBUG_TIMERS */
 
-#endif /* _NETISO_TP_TIMER_H_ */
+#endif				/* _NETISO_TP_TIMER_H_ */

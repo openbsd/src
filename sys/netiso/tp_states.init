@@ -1,3 +1,4 @@
+/*	$OpenBSD: tp_states.init,v 1.2 1996/03/04 10:36:27 mickey Exp $	*/
 /*	$NetBSD: tp_states.init,v 1.4 1994/06/29 06:40:33 cgd Exp $	*/
 
 {0x3,0x0},

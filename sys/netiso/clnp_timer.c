@@ -1,4 +1,5 @@
-/*	$NetBSD: clnp_timer.c,v 1.6 1995/08/12 23:59:44 mycroft Exp $	*/
+/*	$OpenBSD: clnp_timer.c,v 1.2 1996/03/04 10:35:04 mickey Exp $	*/
+/*	$NetBSD: clnp_timer.c,v 1.7 1996/02/13 22:08:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,13 +41,13 @@
 
                       All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the name of IBM not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 IBM DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -87,22 +88,22 @@ extern struct clnp_fragl *clnp_frags;
  *
  * RETURNS:			pointer to next fragment in list of fragments
  *
- * SIDE EFFECTS:	
+ * SIDE EFFECTS:
  *
- * NOTES:			
+ * NOTES:
  *			TODO: send ER back to source
  */
 struct clnp_fragl *
 clnp_freefrags(cfh)
-register struct clnp_fragl	*cfh;	/* fragment header to delete */
+	register struct clnp_fragl *cfh;	/* fragment header to delete */
 {
-	struct clnp_fragl	*next = cfh->cfl_next;
-	struct clnp_frag	*cf;
+	struct clnp_fragl *next = cfh->cfl_next;
+	struct clnp_frag *cf;
 
 	/* free any frags hanging around */
 	cf = cfh->cfl_frags;
 	while (cf != NULL) {
-		struct clnp_frag	*cf_next = cf->cfr_next;
+		struct clnp_frag *cf_next = cf->cfr_next;
 		INCSTAT(cns_fragdropped);
 		m_freem(cf->cfr_data);
 		cf = cf_next;
@@ -115,7 +116,7 @@ register struct clnp_fragl	*cfh;	/* fragment header to delete */
 	if (clnp_frags == cfh) {
 		clnp_frags = cfh->cfl_next;
 	} else {
-		struct clnp_fragl	*scan;
+		struct clnp_fragl *scan;
 
 		for (scan = clnp_frags; scan != NULL; scan = scan->cfl_next) {
 			if (scan->cfl_next == cfh) {
@@ -128,26 +129,26 @@ register struct clnp_fragl	*cfh;	/* fragment header to delete */
 	/* free the fragment header */
 	m_freem(dtom(cfh));
 
-	return(next);
+	return (next);
 }
 
 /*
  * FUNCTION:		clnp_slowtimo
  *
- * PURPOSE:			clnp timer processing; if the ttl expires on a 
+ * PURPOSE:			clnp timer processing; if the ttl expires on a
  *					packet on the reassembly queue, discard it.
  *
  * RETURNS:			none
  *
- * SIDE EFFECTS:	
+ * SIDE EFFECTS:
  *
- * NOTES:			
+ * NOTES:
  */
 void
 clnp_slowtimo()
 {
-	register struct clnp_fragl	*cfh = clnp_frags;
-	int s = splsoftnet();
+	register struct clnp_fragl *cfh = clnp_frags;
+	int             s = splsoftnet();
 
 	while (cfh != NULL) {
 		if (--cfh->cfl_ttl == 0) {
@@ -167,15 +168,15 @@ clnp_slowtimo()
  *
  * RETURNS:			none
  *
- * SIDE EFFECTS:	
+ * SIDE EFFECTS:
  *
- * NOTES:			
+ * NOTES:
  *	TODO: should send back ER
  */
 void
 clnp_drain()
 {
-	register struct clnp_fragl	*cfh = clnp_frags;
+	register struct clnp_fragl *cfh = clnp_frags;
 
 	while (cfh != NULL)
 		cfh = clnp_freefrags(cfh);

@@ -1,4 +1,5 @@
-/*	$NetBSD: tuba_table.h,v 1.3 1995/03/26 20:35:36 jtc Exp $	*/
+/*	$OpenBSD: tuba_table.h,v 1.2 1996/03/04 10:36:52 mickey Exp $	*/
+/*	$NetBSD: tuba_table.h,v 1.4 1996/02/13 22:12:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,15 +37,15 @@
  */
 
 struct tuba_cache {
-	struct	radix_node tc_nodes[2];		/* convenient lookup */
-	int	tc_refcnt;
-	int	tc_time;			/* last looked up */
-	int	tc_flags;
+	struct radix_node tc_nodes[2];	/* convenient lookup */
+	int             tc_refcnt;
+	int             tc_time;/* last looked up */
+	int             tc_flags;
 #define TCF_PERM	1
-	int	tc_index;
-	u_short	tc_sum;				/* cksum of nsap inc. length */
-	u_short	tc_ssum;			/* swab(tc_sum) */
-	struct	sockaddr_iso tc_siso;		/* for responding */
+	int             tc_index;
+	u_short         tc_sum;	/* cksum of nsap inc. length */
+	u_short         tc_ssum;/* swab(tc_sum) */
+	struct sockaddr_iso tc_siso;	/* for responding */
 };
 
 #define ADDCARRY(x)  (x >= 65535 ? x -= 65535 : x)
@@ -55,7 +56,35 @@ struct tuba_cache {
 	s.s = (b); t = s.c[0]; s.c[0] = s.c[1]; s.c[1] = t; a = s.s;}
 
 #ifdef _KERNEL
-extern	int	tuba_table_size;
-extern	struct	tuba_cache **tuba_table;
-extern	struct	radix_node_head *tuba_tree;
+extern int      tuba_table_size;
+extern struct tuba_cache **tuba_table;
+extern struct radix_node_head *tuba_tree;
+
+struct mbuf;
+struct tcpcb;
+struct isopcb;
+struct inpcb;
+struct sockaddr_iso;
+struct socket;
+
+/* tuba_subr.c */
+void tuba_init __P((void));
+int tuba_output __P((struct mbuf *, struct tcpcb *));
+void tuba_refcnt __P((struct isopcb *, int ));
+void tuba_pcbdetach __P((void *));
+int tuba_pcbconnect __P((void *, struct mbuf *));
+void tuba_tcpinput __P((struct mbuf *, ...));
+int tuba_pcbconnect __P((void *, struct mbuf *));
+void tuba_slowtimo __P((void));
+void tuba_fasttimo __P((void));
+
+/* tuba_table.c */
+void tuba_timer __P((void *));
+void tuba_table_init __P((void));
+int tuba_lookup __P((struct sockaddr_iso *, int ));
+
+/* tuba_usrreq.c */
+int tuba_usrreq __P((struct socket *, int, struct mbuf *, struct mbuf *,
+		     struct mbuf *));
+int tuba_ctloutput __P((int, struct socket *, int, int , struct mbuf **));
 #endif

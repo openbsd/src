@@ -1,4 +1,5 @@
-/*	$NetBSD: if_eon.c,v 1.11 1995/06/13 07:13:28 mycroft Exp $	*/
+/*	$OpenBSD: if_eon.c,v 1.2 1996/03/04 10:35:24 mickey Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.12 1996/02/13 22:09:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,13 +41,13 @@
 
                       All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the name of IBM not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 IBM DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -62,7 +63,7 @@ SOFTWARE.
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
 /*
- *	EON rfc 
+ *	EON rfc
  *  Layer between IP and CLNL
  *
  * TODO:
@@ -104,19 +105,18 @@ SOFTWARE.
 #include <netiso/iso_errno.h>
 #include <netiso/eonvar.h>
 
+#include <machine/stdarg.h>
+
 extern struct timeval time;
 extern struct ifnet loif;
 
 #define EOK 0
 
-int						eoninput();
-int						eonoutput();
-int						eonioctl();
-int						eonattach();
-void						eonrtrequest();
-struct ifnet			eonif[1];
+struct ifnet    eonif[1];
 
-eonprotoinit() {
+void
+eonprotoinit()
+{
 	(void) eonattach();
 }
 
@@ -132,17 +132,20 @@ struct eon_llinfo eon_llinfo;
  * RETURNS:			void
  */
 
+void
 eonattach()
 {
 	register struct ifnet *ifp = eonif;
 
-	IFDEBUG(D_EON)
+#ifdef ARGO_DEBUG
+	if (argo_debug[D_EON]) {
 		printf("eonattach()\n");
-	ENDDEBUG
+	}
+#endif
 	ifp->if_unit = 0;
 	ifp->if_name = "eon";
-	ifp->if_mtu = ETHERMTU; 
-		/* since everything will go out over ether or token ring */
+	ifp->if_mtu = ETHERMTU;
+	/* since everything will go out over ether or token ring */
 
 	ifp->if_ioctl = eonioctl;
 	ifp->if_output = eonoutput;
@@ -151,13 +154,15 @@ eonattach()
 	ifp->if_hdrlen = EONIPLEN;
 	ifp->if_flags = IFF_BROADCAST;
 	if_attach(ifp);
-	eonioctl(ifp, SIOCSIFADDR, (caddr_t)ifp->if_addrlist.tqh_first);
-	eon_llinfo.el_qhdr.link = 
+	eonioctl(ifp, SIOCSIFADDR, (caddr_t) ifp->if_addrlist.tqh_first);
+	eon_llinfo.el_qhdr.link =
 		eon_llinfo.el_qhdr.rlink = &(eon_llinfo.el_qhdr);
 
-	IFDEBUG(D_EON)
+#ifdef ARGO_DEBUG
+	if (argo_debug[D_EON]) {
 		printf("eonattach()\n");
-	ENDDEBUG
+	}
+#endif
 }
 
 
@@ -165,30 +170,33 @@ eonattach()
  * FUNCTION:		eonioctl
  *
  * PURPOSE:			io controls - ifconfig
- *				need commands to 
+ *				need commands to
  *					link-UP (core addr) (flags: ES, IS)
  *					link-DOWN (core addr) (flags: ES, IS)
  *				must be callable from kernel or user
  *
  * RETURNS:			nothing
  */
+int
 eonioctl(ifp, cmd, data)
 	register struct ifnet *ifp;
-	u_long cmd;
+	u_long          cmd;
 	register caddr_t data;
 {
-	int s = splimp();
-	register int error = 0;
+	int             s = splimp();
+	register int    error = 0;
 
-	IFDEBUG(D_EON)
+#ifdef ARGO_DEBUG
+	if (argo_debug[D_EON]) {
 		printf("eonioctl (cmd 0x%lx) \n", cmd);
-	ENDDEBUG
+	}
+#endif
 
 	switch (cmd) {
 		register struct ifaddr *ifa;
 
 	case SIOCSIFADDR:
-		if (ifa = (struct ifaddr *)data) {
+		if ((ifa = (struct ifaddr *) data) != NULL) {
 			ifp->if_flags |= IFF_UP;
 			if (ifa->ifa_addr->sa_family != AF_LINK)
 				ifa->ifa_rtrequest = eonrtrequest;
@@ -196,24 +204,26 @@ eonioctl(ifp, cmd, data)
 		break;
 	}
 	splx(s);
-	return(error);
+	return (error);
 }
 
 
+void
 eoniphdr(hdr, loc, ro, class, zero)
-struct route *ro;
-register struct eon_iphdr *hdr;
-caddr_t loc;
+	struct route   *ro;
+	register struct eon_iphdr *hdr;
+	caddr_t         loc;
+	int		class, zero;
 {
-	struct mbuf mhead;
+	struct mbuf     mhead;
 	register struct sockaddr_in *sin = satosin(&ro->ro_dst);
 	if (zero) {
-		bzero((caddr_t)hdr, sizeof (*hdr));
-		bzero((caddr_t)ro, sizeof (*ro));
+		bzero((caddr_t) hdr, sizeof(*hdr));
+		bzero((caddr_t) ro, sizeof(*ro));
 	}
 	sin->sin_family = AF_INET;
-	sin->sin_len = sizeof (*sin);
-	bcopy(loc, (caddr_t)&sin->sin_addr, sizeof(struct in_addr));
+	sin->sin_len = sizeof(*sin);
+	bcopy(loc, (caddr_t) & sin->sin_addr, sizeof(struct in_addr));
 	/*
 	 * If there is a cached route,
 	 * check that it is to the same destination
@@ -222,9 +232,9 @@ caddr_t loc;
 	if (ro->ro_rt) {
 		struct sockaddr_in *dst = satosin(rt_key(ro->ro_rt));
 		if ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
-		   sin->sin_addr.s_addr != dst->sin_addr.s_addr) {
+		    sin->sin_addr.s_addr != dst->sin_addr.s_addr) {
 			RTFREE(ro->ro_rt);
-			ro->ro_rt = (struct rtentry *)0;
+			ro->ro_rt = (struct rtentry *) 0;
 		}
 	}
 	rtalloc(ro);
@@ -232,20 +242,22 @@ caddr_t loc;
 		ro->ro_rt->rt_use++;
 	hdr->ei_ip.ip_dst = sin->sin_addr;
 	hdr->ei_ip.ip_p = IPPROTO_EON;
-	hdr->ei_ip.ip_ttl = MAXTTL;	
+	hdr->ei_ip.ip_ttl = MAXTTL;
 	hdr->ei_eh.eonh_class = class;
 	hdr->ei_eh.eonh_vers = EON_VERSION;
 	hdr->ei_eh.eonh_csum = 0;
-	mhead.m_data = (caddr_t) &hdr->ei_eh;
+	mhead.m_data = (caddr_t) & hdr->ei_eh;
 	mhead.m_len = sizeof(struct eon_hdr);
 	mhead.m_next = 0;
-	IFDEBUG(D_EON)
-		printf("eonoutput : gen csum (0x%x, offset %d, datalen %d)\n", 
-			&mhead,
-			_offsetof(struct eon_hdr, eonh_csum), sizeof(struct eon_hdr)); 
-	ENDDEBUG
-	iso_gen_csum(&mhead, 
-		_offsetof(struct eon_hdr, eonh_csum), sizeof(struct eon_hdr)); 
+#ifdef ARGO_DEBUG
+	if (argo_debug[D_EON]) {
+		printf("eonoutput : gen csum (0x%x, offset %d, datalen %d)\n",
+		       (unsigned int) &mhead,
+		       _offsetof(struct eon_hdr, eonh_csum), sizeof(struct eon_hdr));
+	}
+#endif
+	iso_gen_csum(&mhead,
+	      _offsetof(struct eon_hdr, eonh_csum), sizeof(struct eon_hdr));
 }
 /*
  * FUNCTION:		eonrtrequest
@@ -257,12 +269,13 @@ caddr_t loc;
  */
 void
 eonrtrequest(cmd, rt, gate)
-register struct rtentry *rt;
-register struct sockaddr *gate;
+	int cmd;
+	register struct rtentry *rt;
+	register struct sockaddr *gate;
 {
-	unsigned long zerodst = 0;
-	caddr_t	ipaddrloc = (caddr_t) &zerodst;
-	register struct eon_llinfo *el = (struct eon_llinfo *)rt->rt_llinfo;
+	unsigned long   zerodst = 0;
+	caddr_t         ipaddrloc = (caddr_t) & zerodst;
+	register struct eon_llinfo *el = (struct eon_llinfo *) rt->rt_llinfo;
 
 	/*
 	 * Common Housekeeping
@@ -280,9 +293,9 @@ register struct sockaddr *gate;
 
 	case RTM_ADD:
 	case RTM_RESOLVE:
-		rt->rt_rmx.rmx_mtu = loif.if_mtu; /* unless better below */
+		rt->rt_rmx.rmx_mtu = loif.if_mtu;	/* unless better below */
 		R_Malloc(el, struct eon_llinfo *, sizeof(*el));
-		rt->rt_llinfo = (caddr_t)el;
+		rt->rt_llinfo = (caddr_t) el;
 		if (el == 0)
 			return;
 		Bzero(el, sizeof(*el));
@@ -290,76 +303,82 @@ register struct sockaddr *gate;
 		el->el_rt = rt;
 		break;
 	}
-	if (gate || (gate = rt->rt_gateway)) switch (gate->sa_family) {
+	if (gate || (gate = rt->rt_gateway))
+		switch (gate->sa_family) {
 		case AF_LINK:
 #define SDL(x) ((struct sockaddr_dl *)x)
 			if (SDL(gate)->sdl_alen == 1)
-				el->el_snpaoffset = *(u_char *)LLADDR(SDL(gate));
+				el->el_snpaoffset = *(u_char *) LLADDR(SDL(gate));
 			else
 				ipaddrloc = LLADDR(SDL(gate));
 			break;
 		case AF_INET:
-			ipaddrloc = (caddr_t) &satosin(gate)->sin_addr;
+			ipaddrloc = (caddr_t) & satosin(gate)->sin_addr;
 			break;
 		default:
 			return;
-	}
+		}
 	el->el_flags |= RTF_UP;
 	eoniphdr(&el->el_ei, ipaddrloc, &el->el_iproute, EON_NORMAL_ADDR, 0);
 	if (el->el_iproute.ro_rt)
 		rt->rt_rmx.rmx_mtu = el->el_iproute.ro_rt->rt_rmx.rmx_mtu
-							- sizeof(el->el_ei);
+			- sizeof(el->el_ei);
 }
 
 /*
  * FUNCTION:		eonoutput
  *
- * PURPOSE:			prepend an eon header and hand to IP
- * ARGUMENTS:	 	(ifp) is points to the ifnet structure for this unit/device
- *					(m)  is an mbuf *, *m is a CLNL packet
- *					(dst) is a destination address - have to interp. as
- *					multicast or broadcast or real address.
+ * PURPOSE:		prepend an eon header and hand to IP
+ * ARGUMENTS:	 	(ifp) is points to the ifnet structure for this
+ *			unit/device (m)  is an mbuf *, *m is a CLNL packet
+ *			(dst) is a destination address - have to interp. as
+ *			multicast or broadcast or real address.
  *
- * RETURNS:			unix error code
+ * RETURNS:		unix error code
  *
- * NOTES:			
+ * NOTES:
  *
  */
-eonoutput(ifp, m, dst, rt)
-	struct ifnet 	*ifp;
-	register struct mbuf	*m;		/* packet */
-	struct sockaddr_iso		*dst;		/* destination addr */
+int
+eonoutput(ifp, m, sdst, rt)
+	struct ifnet   *ifp;
+	register struct mbuf *m;	/* packet */
+	struct sockaddr *sdst;		/* destination addr */
 	struct rtentry *rt;
 {
+	struct sockaddr_iso *dst = (struct sockaddr_iso *) sdst;
 	register struct eon_llinfo *el;
 	register struct eon_iphdr *ei;
-	struct route *ro;
-	int	datalen;
-	struct mbuf *mh;
-	int	error = 0, class = 0, alen = 0;
-	caddr_t ipaddrloc;
+	struct route   *ro;
+	int             datalen;
+	struct mbuf    *mh;
+	int             error = 0, class = 0, alen = 0;
+	caddr_t         ipaddrloc = NULL;
 	static struct eon_iphdr eon_iphdr;
 	static struct route route;
 
-	IFDEBUG(D_EON)
-		printf("eonoutput \n" );
-	ENDDEBUG
+#ifdef ARGO_DEBUG
+	if (argo_debug[D_EON]) {
+		printf("eonoutput \n");
+	}
+#endif
 
 	ifp->if_lastchange = time;
 	ifp->if_opackets++;
-	if (rt == 0 || (el = (struct eon_llinfo *)rt->rt_llinfo) == 0) {
+	if (rt == 0 || (el = (struct eon_llinfo *) rt->rt_llinfo) == 0) {
 		if (dst->siso_family == AF_LINK) {
-			register struct sockaddr_dl *sdl = (struct sockaddr_dl *)dst;
+			register struct sockaddr_dl *sdl = (struct sockaddr_dl *) dst;
 
 			ipaddrloc = LLADDR(sdl);
 			alen = sdl->sdl_alen;
-		} else if (dst->siso_family == AF_ISO && dst->siso_data[0] == AFI_SNA) {
+		} else if (dst->siso_family == AF_ISO &&
+			   dst->siso_data[0] == AFI_SNA) {
 			alen = dst->siso_nlen - 1;
 			ipaddrloc = (caddr_t) dst->siso_data + 1;
 		}
 		switch (alen) {
 		case 5:
-			class =  4[(u_char *)ipaddrloc];
+			class = 4[(u_char *) ipaddrloc];
 		case 4:
 			ro = &route;
 			ei = &eon_iphdr;
@@ -367,11 +386,11 @@ eonoutput(ifp, m, dst, rt)
 			goto send;
 		}
 einval:
-		error =  EINVAL;
+		error = EINVAL;
 		goto flush;
 	}
 	if ((el->el_flags & RTF_UP) == 0) {
-		eonrtrequest(RTM_CHANGE, rt, (struct sockaddr *)0);
+		eonrtrequest(RTM_CHANGE, rt, (struct sockaddr *) 0);
 		if ((el->el_flags & RTF_UP) == 0) {
 			error = EHOSTUNREACH;
 			goto flush;
@@ -385,8 +404,8 @@ einval:
 	ro = &el->el_iproute;
 	if (el->el_snpaoffset) {
 		if (dst->siso_family == AF_ISO) {
-			bcopy((caddr_t) &dst->siso_data[el->el_snpaoffset],
-					(caddr_t) &ei->ei_ip.ip_dst, sizeof(ei->ei_ip.ip_dst));
+			bcopy((caddr_t) & dst->siso_data[el->el_snpaoffset],
+			      (caddr_t) & ei->ei_ip.ip_dst, sizeof(ei->ei_ip.ip_dst));
 		} else
 			goto einval;
 	}
@@ -394,23 +413,25 @@ send:
 	/* put an eon_hdr in the buffer, prepended by an ip header */
 	datalen = m->m_pkthdr.len + EONIPLEN;
 	MGETHDR(mh, M_DONTWAIT, MT_HEADER);
-	if(mh == (struct mbuf *)0)
+	if (mh == (struct mbuf *) 0)
 		goto flush;
 	mh->m_next = m;
 	m = mh;
 	MH_ALIGN(m, sizeof(struct eon_iphdr));
 	m->m_len = sizeof(struct eon_iphdr);
 	ifp->if_obytes +=
-		(ei->ei_ip.ip_len = (u_short)(m->m_pkthdr.len = datalen));
+		(ei->ei_ip.ip_len = (u_short) (m->m_pkthdr.len = datalen));
 	*mtod(m, struct eon_iphdr *) = *ei;
 
-	IFDEBUG(D_EON)
-		printf("eonoutput dst ip addr : %x\n",  ei->ei_ip.ip_dst.s_addr);
+#ifdef ARGO_DEBUG
+	if (argo_debug[D_EON]) {
+		printf("eonoutput dst ip addr : %x\n", ei->ei_ip.ip_dst.s_addr);
 		printf("eonoutput ip_output : eonip header:\n");
 		dump_buf(ei, sizeof(struct eon_iphdr));
-	ENDDEBUG
+	}
+#endif
 
-	error = ip_output(m, (struct mbuf *)0, ro, 0, NULL);
+	error = ip_output(m, (struct mbuf *) 0, ro, 0, NULL);
 	m = 0;
 	if (error) {
 		ifp->if_oerrors++;
@@ -423,36 +444,51 @@ flush:
 	return error;
 }
 
-eoninput(m, iphlen)
-	register struct mbuf	*m;
-	int iphlen;
+void
+#if __STDC__
+eoninput(struct mbuf *m, ...)
+#else
+eoninput(m, va_alist)
+	struct mbuf *m;
+	va_dcl
+#endif
 {
-	register struct eon_hdr	*eonhdr;
-	register struct ip		*iphdr;
-	struct ifnet 			*eonifp;
-	int						s;
+	int             iphlen;
+	register struct eon_hdr *eonhdr;
+	register struct ip *iphdr;
+	struct ifnet   *eonifp;
+	int             s;
+	va_list ap;
 
-	eonifp = &eonif[0]; /* kludge - really want to give CLNP
-						* the ifp for eon, not for the real device
-						*/
+	va_start(ap, m);
+	iphlen = va_arg(ap, int);
+	va_end(ap);
 
-	IFDEBUG(D_EON)
+	eonifp = &eonif[0];	/* kludge - really want to give CLNP the ifp
+				 * for eon, not for the real device */
+
+#ifdef ARGO_DEBUG
+	if (argo_debug[D_EON]) {
 		printf("eoninput() 0x%x m_data 0x%x m_len 0x%x dequeued\n",
-			m, m?m->m_data:0, m?m->m_len:0);
-	ENDDEBUG
+		       (unsigned int) m, 
+		       (unsigned int) (m ? m->m_data : 0), m ? m->m_len : 0);
+	}
+#endif
 
 	if (m == 0)
 		return;
-	if (iphlen > sizeof (struct ip))
-		ip_stripoptions(m, (struct mbuf *)0);
+	if (iphlen > sizeof(struct ip))
+		ip_stripoptions(m, (struct mbuf *) 0);
 	if (m->m_len < EONIPLEN) {
 		if ((m = m_pullup(m, EONIPLEN)) == 0) {
 			IncStat(es_badhdr);
-drop:
-			IFDEBUG(D_EON)
-				printf("eoninput: DROP \n" );
-			ENDDEBUG
-			eonifp->if_ierrors ++;
+	drop:
+#ifdef ARGO_DEBUG
+			if (argo_debug[D_EON]) {
+				printf("eoninput: DROP \n");
+			}
+#endif
+			eonifp->if_ierrors++;
 			m_freem(m);
 			return;
 		}
@@ -461,59 +497,63 @@ drop:
 	eonif->if_lastchange = time;
 	iphdr = mtod(m, struct ip *);
 	/* do a few checks for debugging */
-	if( iphdr->ip_p != IPPROTO_EON ) {
+	if (iphdr->ip_p != IPPROTO_EON) {
 		IncStat(es_badhdr);
 		goto drop;
 	}
 	/* temporarily drop ip header from the mbuf */
 	m->m_data += sizeof(struct ip);
 	eonhdr = mtod(m, struct eon_hdr *);
-	if( iso_check_csum( m, sizeof(struct eon_hdr) )   != EOK ) {
+	if (iso_check_csum(m, sizeof(struct eon_hdr)) != EOK) {
 		IncStat(es_badcsum);
 		goto drop;
 	}
 	m->m_data -= sizeof(struct ip);
-		
-	IFDEBUG(D_EON)
-		printf("eoninput csum ok class 0x%x\n", eonhdr->eonh_class );
+
+#ifdef ARGO_DEBUG
+	if (argo_debug[D_EON]) {
+		printf("eoninput csum ok class 0x%x\n", eonhdr->eonh_class);
 		printf("eoninput: eon header:\n");
 		dump_buf(eonhdr, sizeof(struct eon_hdr));
-	ENDDEBUG
+	}
+#endif
 
 	/* checks for debugging */
-	if( eonhdr->eonh_vers != EON_VERSION) {
+	if (eonhdr->eonh_vers != EON_VERSION) {
 		IncStat(es_badhdr);
 		goto drop;
 	}
-	m->m_flags &= ~(M_BCAST|M_MCAST);
-	switch( eonhdr->eonh_class) {
-		case EON_BROADCAST:
-			IncStat(es_in_broad);
-			m->m_flags |= M_BCAST;
-			break;
-		case EON_NORMAL_ADDR:
-			IncStat(es_in_normal);
-			break;
-		case EON_MULTICAST_ES:
-			IncStat(es_in_multi_es);
-			m->m_flags |= M_MCAST;
-			break;
-		case EON_MULTICAST_IS:
-			IncStat(es_in_multi_is);
-			m->m_flags |= M_MCAST;
-			break;
+	m->m_flags &= ~(M_BCAST | M_MCAST);
+	switch (eonhdr->eonh_class) {
+	case EON_BROADCAST:
+		IncStat(es_in_broad);
+		m->m_flags |= M_BCAST;
+		break;
+	case EON_NORMAL_ADDR:
+		IncStat(es_in_normal);
+		break;
+	case EON_MULTICAST_ES:
+		IncStat(es_in_multi_es);
+		m->m_flags |= M_MCAST;
+		break;
+	case EON_MULTICAST_IS:
+		IncStat(es_in_multi_is);
+		m->m_flags |= M_MCAST;
+		break;
 	}
 	eonifp->if_ipackets++;
 
 	{
 		/* put it on the CLNP queue and set soft interrupt */
-		struct ifqueue 			*ifq;
-		extern struct ifqueue 	clnlintrq;
+		struct ifqueue *ifq;
+		extern struct ifqueue clnlintrq;
 
-		m->m_pkthdr.rcvif = eonifp; /* KLUDGE */
-		IFDEBUG(D_EON)
+		m->m_pkthdr.rcvif = eonifp;	/* KLUDGE */
+#ifdef ARGO_DEBUG
+		if (argo_debug[D_EON]) {
 			printf("eoninput to clnl IFQ\n");
-		ENDDEBUG
+		}
+#endif
 		ifq = &clnlintrq;
 		s = splimp();
 		if (IF_QFULL(ifq)) {
@@ -525,64 +565,69 @@ drop:
 			return;
 		}
 		IF_ENQUEUE(ifq, m);
-		IFDEBUG(D_EON) 
+#ifdef ARGO_DEBUG
+		if (argo_debug[D_EON]) {
 			printf(
-	"0x%x enqueued on clnp Q: m_len 0x%x m_type 0x%x m_data 0x%x\n", 
-				m, m->m_len, m->m_type, m->m_data);
+			       "0x%x enqueued on clnp Q: m_len 0x%x m_type 0x%x m_data 0x%x\n",
+			       (unsigned int) m, m->m_len, m->m_type,
+			       (unsigned int) m->m_data);
 			dump_buf(mtod(m, caddr_t), m->m_len);
-		ENDDEBUG
+		}
+#endif
 		schednetisr(NETISR_ISO);
 		splx(s);
 	}
 }
 
-int
-eonctlinput(cmd, sin)
-	int cmd;
-	struct sockaddr_in *sin;
+void *
+eonctlinput(cmd, sa, dummy)
+	int             cmd;
+	struct sockaddr *sa;
+	void *dummy;
 {
-	extern u_char inetctlerrmap[];
-
-	IFDEBUG(D_EON)
+	struct sockaddr_in *sin = (struct sockaddr_in *) sa;
+#ifdef ARGO_DEBUG
+	if (argo_debug[D_EON]) {
 		printf("eonctlinput: cmd 0x%x addr: ", cmd);
-		dump_isoaddr(sin);
+		dump_isoaddr((struct sockaddr_iso *) sin);
 		printf("\n");
-	ENDDEBUG
+	}
+#endif
 
 	if (cmd < 0 || cmd > PRC_NCMDS)
-		return 0;
+		return NULL;
 
 	IncStat(es_icmp[cmd]);
 	switch (cmd) {
 
-		case	PRC_QUENCH:
-		case	PRC_QUENCH2:
-			/* TODO: set the dec bit */
-			break;
-		case	PRC_TIMXCEED_REASS:
-		case	PRC_ROUTEDEAD:
-		case	PRC_HOSTUNREACH:
-		case	PRC_UNREACH_NET:
-		case	PRC_IFDOWN:
-		case	PRC_UNREACH_HOST:
-		case	PRC_HOSTDEAD:
-		case	PRC_TIMXCEED_INTRANS:
-			/* TODO: mark the link down */
-			break;
+	case PRC_QUENCH:
+	case PRC_QUENCH2:
+		/* TODO: set the dec bit */
+		break;
+	case PRC_TIMXCEED_REASS:
+	case PRC_ROUTEDEAD:
+	case PRC_HOSTUNREACH:
+	case PRC_UNREACH_NET:
+	case PRC_IFDOWN:
+	case PRC_UNREACH_HOST:
+	case PRC_HOSTDEAD:
+	case PRC_TIMXCEED_INTRANS:
+		/* TODO: mark the link down */
+		break;
 
-		case	PRC_UNREACH_PROTOCOL:
-		case	PRC_UNREACH_PORT:
-		case	PRC_UNREACH_SRCFAIL:
-		case	PRC_REDIRECT_NET:
-		case	PRC_REDIRECT_HOST:
-		case	PRC_REDIRECT_TOSNET:
-		case	PRC_REDIRECT_TOSHOST:
-		case	PRC_MSGSIZE:
-		case	PRC_PARAMPROB:
-			/* printf("eonctlinput: ICMP cmd 0x%x\n", cmd );*/
+	case PRC_UNREACH_PROTOCOL:
+	case PRC_UNREACH_PORT:
+	case PRC_UNREACH_SRCFAIL:
+	case PRC_REDIRECT_NET:
+	case PRC_REDIRECT_HOST:
+	case PRC_REDIRECT_TOSNET:
+	case PRC_REDIRECT_TOSHOST:
+	case PRC_MSGSIZE:
+	case PRC_PARAMPROB:
+		/* printf("eonctlinput: ICMP cmd 0x%x\n", cmd ); */
 		break;
 	}
-	return 0;
+	return NULL;
 }
 
 #endif

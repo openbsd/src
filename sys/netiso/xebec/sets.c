@@ -1,3 +1,4 @@
+/*	$OpenBSD: sets.c,v 1.2 1996/03/04 10:37:22 mickey Exp $	*/
 /*	$NetBSD: sets.c,v 1.4 1994/06/29 06:41:16 cgd Exp $	*/
 
 /*

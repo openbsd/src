@@ -1,3 +1,4 @@
+/*	$OpenBSD: debug.h,v 1.2 1996/03/04 10:37:01 mickey Exp $	*/
 /*	$NetBSD: debug.h,v 1.4 1994/06/29 06:41:00 cgd Exp $	*/
 
 #define OUT stdout

@@ -1,4 +1,5 @@
-/*	$NetBSD: cltp_var.h,v 1.6 1995/03/26 20:35:15 jtc Exp $	*/
+/*	$OpenBSD: cltp_var.h,v 1.2 1996/03/04 10:35:08 mickey Exp $	*/
+/*	$NetBSD: cltp_var.h,v 1.7 1996/02/13 22:09:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,16 +42,25 @@
 #define CLTPOVAL_DST	0xc2	/* Destination TSAP -- required */
 #define CLTPOVAL_CSM	0xc3	/* Checksum parameter -- optional */
 
-struct	cltpstat {
-	int	cltps_hdrops;
-	int	cltps_badsum;
-	int	cltps_badlen;
-	int	cltps_noport;
-	int	cltps_ipackets;
-	int	cltps_opackets;
+struct cltpstat {
+	int             cltps_hdrops;
+	int             cltps_badsum;
+	int             cltps_badlen;
+	int             cltps_noport;
+	int             cltps_ipackets;
+	int             cltps_opackets;
 };
 
 #ifdef _KERNEL
-struct	isopcb cltb;
-struct	cltpstat cltpstat;
+struct isopcb   cltb;
+struct cltpstat cltpstat;
+
+/* cltp_usrreq.c */
+void cltp_init __P((void));
+void cltp_input __P((struct mbuf *, ...));
+void cltp_notify __P((struct isopcb *));
+void cltp_ctlinput __P((int, struct sockaddr *, void *));
+int cltp_output __P((struct mbuf *, ...));
+int cltp_usrreq __P((struct socket *, int, struct mbuf *, struct mbuf *,
+		     struct mbuf *));
 #endif

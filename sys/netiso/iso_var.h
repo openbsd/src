@@ -1,4 +1,5 @@
-/*	$NetBSD: iso_var.h,v 1.7 1995/06/13 07:13:35 mycroft Exp $	*/
+/*	$OpenBSD: iso_var.h,v 1.2 1996/03/04 10:35:43 mickey Exp $	*/
+/*	$NetBSD: iso_var.h,v 1.8 1996/02/13 22:10:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1991, 1993
@@ -40,13 +41,13 @@
 
                       All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the name of IBM not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 IBM DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -57,40 +58,42 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-
+#ifndef _NETISO_ISO_VAR_H_
+#define _NETISO_ISO_VAR_H_
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
 
 /*
- *	Interface address, iso version. One of these structures is 
+ *	Interface address, iso version. One of these structures is
  *	allocated for each interface with an osi address. The ifaddr
  *	structure conatins the protocol-independent part
  *	of the structure, and is assumed to be first.
  */
 struct iso_ifaddr {
-	struct ifaddr		ia_ifa;		/* protocol-independent info */
+	struct ifaddr   ia_ifa;	/* protocol-independent info */
 #define ia_ifp		ia_ifa.ifa_ifp
 #define	ia_flags	ia_ifa.ifa_flags
-	int					ia_snpaoffset;
-	TAILQ_ENTRY(iso_ifaddr) ia_list;	/* list of iso addresses */
-	struct	sockaddr_iso ia_addr;	/* reserve space for interface name */
-	struct	sockaddr_iso ia_dstaddr; /* reserve space for broadcast addr */
+	int             ia_snpaoffset;
+	                TAILQ_ENTRY(iso_ifaddr) ia_list;	/* list of iso addresses */
+	struct sockaddr_iso ia_addr;	/* reserve space for interface name */
+	struct sockaddr_iso ia_dstaddr;	/* reserve space for broadcast addr */
 #define	ia_broadaddr	ia_dstaddr
-	struct	sockaddr_iso ia_sockmask; /* reserve space for general netmask */
+	struct sockaddr_iso ia_sockmask;	/* reserve space for general
+						 * netmask */
 };
 
-struct	iso_aliasreq {
-	char	ifra_name[IFNAMSIZ];		/* if name, e.g. "en0" */
-	struct	sockaddr_iso ifra_addr;
-	struct	sockaddr_iso ifra_dstaddr;
-	struct	sockaddr_iso ifra_mask;
-	int	ifra_snpaoffset;
+struct iso_aliasreq {
+	char            ifra_name[IFNAMSIZ];	/* if name, e.g. "en0" */
+	struct sockaddr_iso ifra_addr;
+	struct sockaddr_iso ifra_dstaddr;
+	struct sockaddr_iso ifra_mask;
+	int             ifra_snpaoffset;
 };
 
-struct	iso_ifreq {
-	char	ifr_name[IFNAMSIZ];		/* if name, e.g. "en0" */
-	struct	sockaddr_iso ifr_Addr;
+struct iso_ifreq {
+	char            ifr_name[IFNAMSIZ];	/* if name, e.g. "en0" */
+	struct sockaddr_iso ifr_Addr;
 };
 
 /*
@@ -100,10 +103,10 @@ struct	iso_ifreq {
 #define	IA_SIS(ia) (&(((struct iso_ifaddr *)(ia))->ia_addr))
 
 #define	SIOCDIFADDR_ISO	_IOW('i',25, struct iso_ifreq)	/* delete IF addr */
-#define	SIOCAIFADDR_ISO	_IOW('i',26, struct iso_aliasreq)/* add/chg IFalias */
+#define	SIOCAIFADDR_ISO	_IOW('i',26, struct iso_aliasreq)	/* add/chg IFalias */
 #define	SIOCGIFADDR_ISO	_IOWR('i',33, struct iso_ifreq)	/* get ifnet address */
-#define	SIOCGIFDSTADDR_ISO _IOWR('i',34, struct iso_ifreq) /* get dst address */
-#define	SIOCGIFNETMASK_ISO _IOWR('i',37, struct iso_ifreq) /* get dst address */
+#define	SIOCGIFDSTADDR_ISO _IOWR('i',34, struct iso_ifreq)	/* get dst address */
+#define	SIOCGIFNETMASK_ISO _IOWR('i',37, struct iso_ifreq)	/* get dst address */
 
 /*
  * This stuff should go in if.h or if_llc.h or someplace else,
@@ -111,23 +114,67 @@ struct	iso_ifreq {
  */
 
 struct llc_etherhdr {
-	char dst[6];
-	char src[6];
-	char len[2];
-	char llc_dsap;
-	char llc_ssap;
-	char llc_ui_byte;
+	char            dst[6];
+	char            src[6];
+	char            len[2];
+	char            llc_dsap;
+	char            llc_ssap;
+	char            llc_ui_byte;
 };
 
 struct snpa_hdr {
-	struct	ifnet *snh_ifp;
-	char	snh_dhost[6];
-	char	snh_shost[6];
-	short	snh_flags;
+	struct ifnet   *snh_ifp;
+	char            snh_dhost[6];
+	char            snh_shost[6];
+	short           snh_flags;
 };
 #ifdef _KERNEL
 TAILQ_HEAD(iso_ifaddrhead, iso_ifaddr);
-struct iso_ifaddrhead	iso_ifaddr;	/* linked list of iso address ifaces */
-struct iso_ifaddr	*iso_localifa();	/* linked list of iso address ifaces */
-struct ifqueue 		clnlintrq;		/* clnl packet input queue */
+struct iso_ifaddrhead iso_ifaddr;	/* linked list of iso address ifaces */
+struct ifqueue  clnlintrq;	/* clnl packet input queue */
+struct afhash;
+struct llinfo_llc;
+
+/* iso.c */
+int iso_addrmatch1 __P((struct iso_addr *, struct iso_addr *));
+int iso_addrmatch __P((struct sockaddr_iso *, struct sockaddr_iso *));
+int iso_netmatch __P((struct sockaddr_iso *, struct sockaddr_iso *));
+u_long iso_hashchar __P((caddr_t, int));
+int iso_hash __P((struct sockaddr_iso *, struct afhash *));
+int iso_netof __P((struct iso_addr *, caddr_t));
+int iso_control __P((struct socket *, u_long, caddr_t, struct ifnet *));
+void iso_ifscrub __P((struct ifnet *, struct iso_ifaddr *));
+int iso_ifinit __P((struct ifnet *, struct iso_ifaddr *, struct sockaddr_iso *,
+		    int ));
+struct ifaddr *iso_ifwithidi __P((struct sockaddr *));
+int iso_ck_addr __P((struct iso_addr *));
+int iso_eqtype __P((struct iso_addr *, struct iso_addr *));
+struct iso_ifaddr *iso_localifa __P((struct sockaddr_iso *));
+int iso_nlctloutput __P((int, int, caddr_t, struct mbuf *));
+void dump_isoaddr __P((struct sockaddr_iso *));
+
+/* iso_chksum.c */
+int iso_check_csum __P((struct mbuf *, int));
+void iso_gen_csum __P((struct mbuf *, int, int));
+int m_datalen __P((struct mbuf *));
+int m_compress __P((struct mbuf *, struct mbuf **));
+
+/* iso_snpac.c */
+void llc_rtrequest __P((int, struct rtentry *, struct sockaddr *));
+void iso_setmcasts __P((struct ifnet *, int));
+int iso_snparesolve __P((struct ifnet *, struct sockaddr_iso *,
+			 caddr_t, int *));
+void snpac_free __P((struct llinfo_llc *));
+int snpac_add __P((struct ifnet *, struct iso_addr *, caddr_t, int,
+		   u_short, int));
+int snpac_ioctl __P((struct socket *, u_long, caddr_t));
+void snpac_logdefis __P((struct rtentry *));
+void snpac_age __P((void *));
+int snpac_ownmulti __P((caddr_t, u_int));
+void snpac_flushifp __P((struct ifnet *));
+void snpac_rtrequest __P((int, struct iso_addr *, struct iso_addr *,
+			 struct iso_addr *, int, struct rtentry **));
+void snpac_addrt __P((struct ifnet *, struct iso_addr *, struct iso_addr *,
+	             struct iso_addr *));
 #endif /* _KERNEL */
+#endif /* _NETISO_ISO_VAR_H_ */

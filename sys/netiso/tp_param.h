@@ -1,4 +1,5 @@
-/*	$NetBSD: tp_param.h,v 1.8 1995/06/13 07:13:44 mycroft Exp $	*/
+/*	$OpenBSD: tp_param.h,v 1.2 1996/03/04 10:36:16 mickey Exp $	*/
+/*	$NetBSD: tp_param.h,v 1.9 1996/02/13 22:11:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,13 +41,13 @@
 
                       All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the name of IBM not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 IBM DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -69,13 +70,13 @@ SOFTWARE.
  * compile time parameters that can be changed
  *****************************************************/
 
-#define 	TP_CLASSES_IMPLEMENTED 0x11 /* zero and 4 */
+#define 	TP_CLASSES_IMPLEMENTED 0x11	/* zero and 4 */
 
 #define		TP_DECBIT_CLEAR_COUNT	3
 
-/*#define 	N_TPREF				100 */
+/* #define 	N_TPREF				100 */
 #ifdef _KERNEL
-extern int N_TPREF;
+extern int      N_TPREF;
 #endif
 
 #define 	TP_SOCKBUFSIZE		((u_long)4096)
@@ -83,29 +84,31 @@ extern int N_TPREF;
 #define		MAX_TSAP_SEL_LEN	64
 
 /* maximum tpdu size we'll accept: */
-#define 	TP_TPDUSIZE			0xc		/* 4096 octets for classes 1-4*/
-#define 	TP0_TPDUSIZE		0xb		/* 2048 octets for class 0 */
-#define 	TP_DFL_TPDUSIZE		0x7		/* 128 octets default */
-	/* NOTE: don't ever negotiate 8192 because could get 
-	 * wraparound in checksumming
-	 * (No mtu is likely to be larger than 4K anyway...)
-	 */
-#define		TP_NRETRANS			12		/* TCP_MAXRXTSHIFT + 1 */
-#define		TP_MAXRXTSHIFT		6		/* factor of 64 */
+#define 	TP_TPDUSIZE			0xc	/* 4096 octets for
+							 * classes 1-4 */
+#define 	TP0_TPDUSIZE		0xb	/* 2048 octets for class 0 */
+#define 	TP_DFL_TPDUSIZE		0x7	/* 128 octets default */
+/*
+ * NOTE: don't ever negotiate 8192 because could get wraparound in
+ * checksumming (No mtu is likely to be larger than 4K anyway...)
+ */
+#define		TP_NRETRANS			12	/* TCP_MAXRXTSHIFT + 1 */
+#define		TP_MAXRXTSHIFT		6	/* factor of 64 */
 #define		TP_MAXPORT			0xefff
 
-/* ALPHA: to be used in the context: gain= 1/(2**alpha), or 
- * put another way, gaintimes(x) (x)>>alpha (forgetting the case alpha==0) 
+/*
+ * ALPHA: to be used in the context: gain= 1/(2**alpha), or put another way,
+ * gaintimes(x) (x)>>alpha (forgetting the case alpha==0)
  */
-#define 	TP_RTT_ALPHA		3 
+#define 	TP_RTT_ALPHA		3
 #define 	TP_RTV_ALPHA		2
 #define		TP_REXMTVAL(tpcb)\
-	((tp_rttadd + (tpcb)->tp_rtt + ((tpcb)->tp_rtv) << 2) / tp_rttdiv)
+	(((tp_rttadd + (tpcb)->tp_rtt + ((tpcb)->tp_rtv)) << 2) / tp_rttdiv)
 #define		TP_RANGESET(tv, value, min, max) \
 	((tv = value) > (max) ? (tv = max) : (tv < min ? tv = min : tv))
 
 /*
- * not sure how to treat data on disconnect 
+ * not sure how to treat data on disconnect
  */
 #define 	T_CONN_DATA			0x1
 #define 	T_DISCONNECT		0x2
@@ -138,15 +141,15 @@ extern int N_TPREF;
 #define ACK_REORDER			(1<< _ACK_REORDER_)
 
 /******************************************************
- * constants used in the protocol 
+ * constants used in the protocol
  *****************************************************/
 
 #define		TP_VERSION 			0x1
 
 #define 	TP_MAX_HEADER_LEN	256
 
-#define 	TP_MIN_TPDUSIZE		0x7		/* 128 octets */
-#define 	TP_MAX_TPDUSIZE		0xd		/* 8192 octets */
+#define 	TP_MIN_TPDUSIZE		0x7	/* 128 octets */
+#define 	TP_MAX_TPDUSIZE		0xd	/* 8192 octets */
 
 #define		TP_MAX_XPD_DATA		0x10	/* 16 octets */
 #define		TP_MAX_CC_DATA		0x20	/* 32 octets */
@@ -158,15 +161,15 @@ extern int N_TPREF;
 #define		TP_NML_FMT_BIT 	0x80
 #define		TP_NML_FMT_MASK	0x7f
 
-/*  
- * values for the tpdu_type field, 2nd byte in a tpdu 
+/*
+ * values for the tpdu_type field, 2nd byte in a tpdu
  */
 
 #define TP_MIN_TPDUTYPE 0x1
 
 #define XPD_TPDU_type	0x1
 #define XAK_TPDU_type	0x2
-#define GR_TPDU_type	0x3	
+#define GR_TPDU_type	0x3
 #define AK_TPDU_type	0x6
 #define ER_TPDU_type	0x7
 #define DR_TPDU_type	0x8
@@ -178,7 +181,7 @@ extern int N_TPREF;
 #define TP_MAX_TPDUTYPE 0xf
 
 /*
- * identifiers for the variable-length options in tpdus 
+ * identifiers for the variable-length options in tpdus
  */
 
 #define		TPP_acktime			0x85
@@ -191,14 +194,16 @@ extern int N_TPREF;
 #define		TPP_addl_info		0xe0
 #define		TPP_tpdu_size		0xc0
 #define		TPP_calling_sufx	0xc1
-#define		TPP_invalid_tpdu	0xc1	/* the bozos used a value twice */
+#define		TPP_invalid_tpdu	0xc1	/* the bozos used a value
+						 * twice */
 #define		TPP_called_sufx		0xc2
 #define		TPP_checksum		0xc3
 #define		TPP_vers			0xc4
 #define		TPP_security		0xc5
 #define		TPP_addl_opt		0xc6
 #define		TPP_alt_class		0xc7
-#define		TPP_perf_meas		0xc8	/* local item : perf meas on, svp */
+#define		TPP_perf_meas		0xc8	/* local item : perf meas on,
+						 * svp */
 #define		TPP_ptpdu_size		0xf0	/* preferred TPDU size */
 #define		TPP_inact_time		0xf2	/* inactivity time exchanged */
 
@@ -208,18 +213,18 @@ extern int N_TPREF;
  *****************************************************/
 #ifndef		TRUE
 #define		TRUE				1
-#endif		/* TRUE */
+#endif				/* TRUE */
 
 #ifndef		FALSE
 #define		FALSE				0
-#endif		/* FALSE */
+#endif				/* FALSE */
 
 #define		TP_LOCAL				22
 #define		TP_FOREIGN				33
 
 #ifndef 	EOK
 #define 	EOK 	0
-#endif  	/* EOK */
+#endif				/* EOK */
 
 #define 	TP_CLASS_0 	(1<<0)
 #define 	TP_CLASS_1 	(1<<1)
@@ -232,17 +237,17 @@ extern int N_TPREF;
 
 #ifndef 	MNULL
 #define 	MNULL				(struct mbuf *)0
-#endif 	/* MNULL */
-	/* if ../sys/mbuf.h gets MT_types up to 0x40, these will 
-	 * have to be changed:
-	 */
-#define 	MT_XPD 				0x44	
+#endif				/* MNULL */
+/*
+ * if ../sys/mbuf.h gets MT_types up to 0x40, these will have to be changed:
+ */
+#define 	MT_XPD 				0x44
 #define 	MT_EOT 				0x40
 
 #define		TP_ENOREF			0x80000000
 
-typedef 	unsigned int	SeqNum;
-typedef		unsigned short	RefNum;
+typedef unsigned int SeqNum;
+typedef unsigned short RefNum;
 
 /******************************************************
  * Macro used all over, for driver
@@ -265,7 +270,7 @@ typedef		unsigned short	RefNum;
 		(diffp)->tv_usec = 1000000 - (diffp)->tv_usec;\
 	}\
 }
-			
+
 /******************************************************
  * Macro used for changing types of mbufs
  *****************************************************/
@@ -285,9 +290,9 @@ typedef		unsigned short	RefNum;
  *****************************************************/
 
 struct tp_vbp {
-	u_char	tpv_code;
-	char 	tpv_len;
-	char	tpv_val;
+	u_char          tpv_code;
+	char            tpv_len;
+	char            tpv_val;
 };
 #define vbptr(x) ((struct tp_vbp *)(x))
 #define vbval(x,type) (*((type *)&(((struct tp_vbp *)(x))->tpv_val)))
@@ -312,7 +317,7 @@ bcopy((caddr_t)&(((struct tp_vbp *)(src))->tpv_val),(caddr_t)&(dst),sizeof(type)
 /******************************************************
  * Macro for the local credit:
  * uses max transmission unit for the ll
- * (as modified by the max TPDU size negotiated) 
+ * (as modified by the max TPDU size negotiated)
  *****************************************************/
 
 #if defined(ARGO_DEBUG)&&!defined(LOCAL_CREDIT_EXPAND)
@@ -331,23 +336,29 @@ bcopy((caddr_t)&(((struct tp_vbp *)(src))->tpv_val),(caddr_t)&(dst),sizeof(type)
     } else \
         (tpcb)->tp_lcredit = xxi; \
 } }
-#endif /* ARGO_DEBUG */
+#endif				/* ARGO_DEBUG */
 
 #ifdef _KERNEL
-extern int tp_rttadd, tp_rttdiv;
+extern int      tp_rttadd, tp_rttdiv;
 #include <sys/syslog.h>
 #define printf logpri(LOG_DEBUG),addlog
 
-#ifndef  tp_NSTATES 
+#ifndef  tp_NSTATES
 
 #include <netiso/tp_states.h>
 #include <netiso/tp_events.h>
-#if defined(__STDC__) || defined(__cplusplus)
-#undef ATTR
-#define ATTR(X) ev_union.EV_ ## X
-#endif /* defined(__STDC__) || defined(__cplusplus) */
 
-#endif  /* tp_NSTATES  */
+#ifndef __CONCAT3
+# if __STDC__
+#  define __CONCAT3(a,b,c) a ## b ## c
+# else
+#  define __CONCAT3(a,b,c) a/**/b/**/c
+# endif /* __STDC__ */
+#endif
+
+#define TPDU_ATTR(X)	__CONCAT3(ev_union.EV_,X,_TPDU)
+
+#endif /* tp_NSTATES  */
 #endif /* _KERNEL */
 
 #endif /* _NETISO_TP_PARAM_H_ */

@@ -1,4 +1,5 @@
-/*	$NetBSD: tp_clnp.h,v 1.5 1994/06/29 06:39:58 cgd Exp $	*/
+/*	$OpenBSD: tp_clnp.h,v 1.2 1996/03/04 10:35:50 mickey Exp $	*/
+/*	$NetBSD: tp_clnp.h,v 1.6 1996/02/13 22:10:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,13 +41,13 @@
 
                       All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the name of IBM not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 IBM DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -61,7 +62,7 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
-/* 
+/*
  * AF_ISO net-dependent structures and include files
  */
 
@@ -70,7 +71,7 @@ SOFTWARE.
 
 #ifndef SOCK_STREAM
 #include <sys/socket.h>
-#endif /* SOCK_STREAM */
+#endif				/* SOCK_STREAM */
 
 #ifndef RTFREE
 #include <net/route.h>
@@ -83,7 +84,7 @@ SOFTWARE.
 #endif
 #include <netiso/iso_var.h>
 
-struct isopcb tp_isopcb;	
-	/* queue of active inpcbs for tp ; for tp with dod ip */
+struct isopcb   tp_isopcb;
+/* queue of active inpcbs for tp ; for tp with dod ip */
 
-#endif /* _NETISO_TP_CLNP_H_ */
+#endif				/* _NETISO_TP_CLNP_H_ */

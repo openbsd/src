@@ -1,4 +1,5 @@
-/*	$NetBSD: tp_trace.h,v 1.6 1995/03/26 20:35:33 jtc Exp $	*/
+/*	$OpenBSD: tp_trace.h,v 1.2 1996/03/04 10:36:41 mickey Exp $	*/
+/*	$NetBSD: tp_trace.h,v 1.7 1996/02/13 22:12:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,13 +41,13 @@
 
                       All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the name of IBM not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 IBM DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -61,7 +62,7 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
-/* 
+/*
  * Definitions needed for the protocol trace mechanism.
  */
 
@@ -98,34 +99,35 @@ SOFTWARE.
 
 /* for packet tracing */
 struct tp_timeval {
-	SeqNum	tptv_seq;
-	u_int tptv_kind;
-	u_int tptv_window;
-	u_int tptv_size;
+	SeqNum          tptv_seq;
+	u_int           tptv_kind;
+	u_int           tptv_window;
+	u_int           tptv_size;
 };
 
-struct	tp_Trace {
-	u_int	tpt_event;
-	u_int	tpt_arg;
-	u_int 	tpt_arg2;
-	int	tpt_tseq;
-	struct timeval	tpt_time;
+struct tp_Trace {
+	u_int           tpt_event;
+	u_int           tpt_arg;
+	u_int           tpt_arg2;
+	int             tpt_tseq;
+	struct timeval  tpt_time;
 	union {
-		struct inpcb	tpt_Inpcb; /* protocol control block */
-		struct tp_ref 	tpt_Ref; /* ref part of pcb */
-		struct tpdu 	tpt_Tpdu; /* header*/
-		struct tp_refinfo tpt_Param; /* ?? bytes, make sure < 128??*/
+		struct inpcb    tpt_Inpcb;	/* protocol control block */
+		struct tp_ref   tpt_Ref;	/* ref part of pcb */
+		struct tpdu     tpt_Tpdu;	/* header */
+		struct tp_refinfo tpt_Param;	/* ?? bytes, make sure <
+						 * 128?? */
 		struct tp_timeval tpt_Time;
 		struct {
-			u_int tptm_2;
-			u_int tptm_3;
-			u_int tptm_4;
-			u_int tptm_5;
-			char tpt_Str[TPTRACE_STRLEN];
-			u_int tptm_1;
-		} tptmisc;
-		u_char 			tpt_Ertpdu; /* use rest of structure */
-	} tpt_stuff;
+			u_int           tptm_2;
+			u_int           tptm_3;
+			u_int           tptm_4;
+			u_int           tptm_5;
+			char            tpt_Str[TPTRACE_STRLEN];
+			u_int           tptm_1;
+		}               tptmisc;
+		u_char          tpt_Ertpdu;	/* use rest of structure */
+	}               tpt_stuff;
 };
 #define tpt_inpcb tpt_stuff.tpt_Inpcb
 #define tpt_pcb tpt_stuff.tpt_Pcb
@@ -145,7 +147,7 @@ struct	tp_Trace {
 #define tpt_window tpt_stuff.tpt_Time.tptv_window
 #define tpt_size tpt_stuff.tpt_Time.tptv_size
 
-#endif /* defined(TP_TRACEFILE)||!defined(_KERNEL) */
+#endif				/* defined(TP_TRACEFILE)||!defined(_KERNEL) */
 
 
 #ifdef TPPT
@@ -160,20 +162,12 @@ struct	tp_Trace {
 	tpTrace(tpcb,\
 	(u_int)(A),(u_int)(B),(u_int)(C),(u_int)(D),(u_int)(E),(u_int)(F))
 
-extern void tpTrace();
+extern void     tpTrace();
 extern struct tp_Trace tp_Trace[];
-extern u_char	tp_traceflags[];
-int tp_Tracen = 0;
+extern u_char   tp_traceflags[];
+int             tp_Tracen = 0;
 
-#define IFTRACE(ascii)\
-	if(tp_traceflags[ascii]) {
-/* 
- * for some reason lint complains about tp_param being undefined no
- * matter where or how many times I define it.
- */
-#define ENDTRACE  }
-
-#else  /* TPPT */
+#else				/* TPPT */
 
 /***********************************************
  * NO TPPT TRACE STUFF
@@ -183,9 +177,6 @@ int tp_Tracen = 0;
 #define tptrace(A,B,C,D,E,F) 0
 #define tptraceTPCB(A,B,C,D,E,F) 0
 
-#define IFTRACE(ascii)	 if (0) {
-#define ENDTRACE	 }
+#endif				/* TPPT */
 
-#endif /* TPPT */
-
-#endif /* _NETISO_TP_TRACE_H_ */
+#endif				/* _NETISO_TP_TRACE_H_ */

@@ -1,4 +1,5 @@
-/*	$NetBSD: tuba_table.c,v 1.5 1995/10/16 05:28:58 mycroft Exp $	*/
+/*	$OpenBSD: tuba_table.c,v 1.3 1996/03/04 10:36:50 mickey Exp $	*/
+/*	$NetBSD: tuba_table.c,v 1.6 1996/02/13 22:12:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,68 +53,71 @@
 #include <netiso/iso.h>
 #include <netiso/tuba_table.h>
 
-int	tuba_table_size;
-struct	tuba_cache **tuba_table;
-struct	radix_node_head *tuba_tree;
-extern	int arpt_keep, arpt_prune;	/* use same values as arp cache */
+int             tuba_table_size;
+struct tuba_cache **tuba_table;
+struct radix_node_head *tuba_tree;
+extern int      arpt_keep, arpt_prune;	/* use same values as arp cache */
 
 void
-tuba_timer()
+tuba_timer(v)
+	void *v;
 {
-	int s = splsoftnet();
-	int	i;
-	register struct	tuba_cache *tc;
-	long	timelimit = time.tv_sec - arpt_keep;
+	int             s = splsoftnet();
+	int             i;
+	register struct tuba_cache *tc;
+	long            timelimit = time.tv_sec - arpt_keep;
 
-	timeout(tuba_timer, (caddr_t)0, arpt_prune * hz);
+	timeout(tuba_timer, (caddr_t) 0, arpt_prune * hz);
 	for (i = tuba_table_size; i > 0; i--)
 		if ((tc = tuba_table[i]) && (tc->tc_refcnt == 0) &&
 		    (tc->tc_time < timelimit)) {
 			tuba_table[i] = 0;
 			rn_delete(&tc->tc_siso.siso_addr, NULL, tuba_tree);
-			free((caddr_t)tc, M_RTABLE);
+			free((caddr_t) tc, M_RTABLE);
 		}
 	splx(s);
 }
 
+void
 tuba_table_init()
 {
-	rn_inithead((void **)&tuba_tree, 40);
-	timeout(tuba_timer, (caddr_t)0, arpt_prune * hz);
+	rn_inithead((void **) &tuba_tree, 40);
+	timeout(tuba_timer, (caddr_t) 0, arpt_prune * hz);
 }
 
 int
 tuba_lookup(siso, wait)
 	register struct sockaddr_iso *siso;
+	int wait;
 {
-	struct radix_node *rn, *rn_match();
+	struct radix_node *rn;
 	register struct tuba_cache *tc;
 	struct tuba_cache **new;
-	int dupentry = 0, sum_a = 0, sum_b = 0, old_size, i;
+	int             dupentry = 0, sum_a = 0, sum_b = 0, old_size, i;
 
-	if ((rn = rn_match((caddr_t)&siso->siso_addr, tuba_tree))
-	     && ((rn->rn_flags & RNF_ROOT) == 0)) {
-		tc = (struct tuba_cache *)rn;
+	if ((rn = rn_match((caddr_t) &siso->siso_addr, tuba_tree)) != NULL
+	    && ((rn->rn_flags & RNF_ROOT) == 0)) {
+		tc = (struct tuba_cache *) rn;
 		tc->tc_time = time.tv_sec;
 		return (tc->tc_index);
 	}
-	if ((tc = (struct tuba_cache *)malloc(sizeof(*tc), M_RTABLE, wait))
-		== NULL)
+	if ((tc = (struct tuba_cache *) malloc(sizeof(*tc), M_RTABLE, wait))
+	    == NULL)
 		return (0);
-	bzero((caddr_t)tc, sizeof (*tc));
+	bzero((caddr_t) tc, sizeof(*tc));
 	bcopy(siso->siso_data, tc->tc_siso.siso_data,
-		tc->tc_siso.siso_nlen =  siso->siso_nlen);
+	      tc->tc_siso.siso_nlen = siso->siso_nlen);
 	rn_insert(&tc->tc_siso.siso_addr, tuba_tree, &dupentry, tc->tc_nodes);
 	if (dupentry)
 		panic("tuba_lookup 1");
 	tc->tc_siso.siso_family = AF_ISO;
 	tc->tc_siso.siso_len = sizeof(tc->tc_siso);
 	tc->tc_time = time.tv_sec;
-	for (i = sum_a = tc->tc_siso.siso_nlen; --i >= 0; )
+	for (i = sum_a = tc->tc_siso.siso_nlen; --i >= 0;)
 		if (i & 1)
-			sum_a += (u_char)tc->tc_siso.siso_data[i];
+			sum_a += (u_char) tc->tc_siso.siso_data[i];
 		else
-			sum_b += (u_char)tc->tc_siso.siso_data[i];
+			sum_b += (u_char) tc->tc_siso.siso_data[i];
 	REDUCE(tc->tc_sum, (sum_a << 8) + sum_b);
 	HTONS(tc->tc_sum);
 	SWAB(tc->tc_ssum, tc->tc_sum);
@@ -127,17 +131,17 @@ tuba_lookup(siso, wait)
 		return (0);
 	tuba_table_size = 1 + 2 * tuba_table_size;
 	i = (tuba_table_size + 1) * sizeof(tc);
-	new = (struct tuba_cache **)malloc((unsigned)i, M_RTABLE, wait);
+	new = (struct tuba_cache **) malloc((unsigned) i, M_RTABLE, wait);
 	if (new == 0) {
 		tuba_table_size = old_size;
 		rn_delete(&tc->tc_siso.siso_addr, NULL, tuba_tree);
-		free((caddr_t)tc, M_RTABLE);
+		free((caddr_t) tc, M_RTABLE);
 		return (0);
 	}
-	bzero((caddr_t)new, (unsigned)i);
+	bzero((caddr_t) new, (unsigned) i);
 	if (tuba_table) {
-		bcopy((caddr_t)tuba_table, (caddr_t)new, i >> 1);
-		free((caddr_t)tuba_table, M_RTABLE);
+		bcopy((caddr_t) tuba_table, (caddr_t) new, i >> 1);
+		free((caddr_t) tuba_table, M_RTABLE);
 	}
 	tuba_table = new;
 	i = tuba_table_size;
