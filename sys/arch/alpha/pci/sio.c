@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.29 2004/06/28 02:28:43 aaron Exp $	*/
+/*	$OpenBSD: sio.c,v 1.30 2004/12/06 19:51:41 brad Exp $	*/
 /*	$NetBSD: sio.c,v 1.15 1996/12/05 01:39:36 cgd Exp $	*/
 
 /*
@@ -100,7 +100,7 @@ void	sio_eisa_attach_hook(struct device *, struct device *,
 	    struct eisabus_attach_args *);
 int	sio_eisa_maxslots(void *);
 int	sio_eisa_intr_map(void *, u_int, eisa_intr_handle_t *);
-void	sio_bridge_callback(void *);
+void	sio_bridge_callback(struct device *);
 
 int
 siomatch(parent, match, aux)
@@ -170,14 +170,14 @@ sioattach(parent, self, aux)
 
 	evcount_attach(&sio_intr_count, self->dv_xname, NULL, &evcount_intr);
 
-	set_pci_isa_bridge_callback(sio_bridge_callback, sc);
+	config_defer(self, sio_bridge_callback);
 }
 
 void
-sio_bridge_callback(v)
-	void *v;
+sio_bridge_callback(self)
+	struct device *self;
 {
-	struct sio_softc *sc = v;
+	struct sio_softc *sc = (struct sio_softc *)self;
 	struct alpha_eisa_chipset ec;
 	struct alpha_isa_chipset ic;
 	union sio_attach_args sa;
