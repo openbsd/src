@@ -1,13 +1,10 @@
-#	$OpenBSD: Makefile,v 1.6 1999/04/20 20:05:22 mickey Exp $
+#	$OpenBSD: Makefile,v 1.7 1999/04/20 20:08:27 mickey Exp $
 
 PROG=	boot
 SRCS=	srt0.S boot.c cmd.c vars.c bootarg.c conf.c
-#AFLAGS+=-Wa,-R
-# AFLAGS+=-Wa,-a
 LD?=	ld
 LDFLAGS+=-Bstatic -nostartfiles -nostdlib -N -Ttext $(LINKADDR)
 LDFLAGS+=-T ${.CURDIR}/ld.script -Map boot.map
-#LDFLAGS+=-O -N -S -H -R$(LINKADDR) -e begin -t
 SIZE?=	size
 MAN=	boot.8
 MLINKS=	boot.8 boot.conf.8
