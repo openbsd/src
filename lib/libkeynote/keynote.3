@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.3,v 1.29 2001/08/16 17:58:06 mpech Exp $
+.\" $OpenBSD: keynote.3,v 1.30 2001/09/03 16:47:51 deraadt Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -33,33 +33,29 @@
 .Fd #include <keynote.h>
 .Pp
 .Bd -literal
-struct environment
-{
-    char               *env_name;
-    char               *env_value;
-    int                 env_flags;
-    regex_t             env_regex;
-    struct environment *env_next;
+struct environment {
+	char               *env_name;
+	char               *env_value;
+	int                 env_flags;
+	regex_t             env_regex;
+	struct environment *env_next;
 };
 
-struct keynote_deckey
-{
-    int   dec_algorithm;
-    void *dec_key;
+struct keynote_deckey {
+	int   dec_algorithm;
+	void *dec_key;
 };
 
-struct keynote_binary
-{
-    int   bn_len;
-    char *bn_key;
+struct keynote_binary {
+	int   bn_len;
+	char *bn_key;
 };
 
-struct keynote_keylist
-{
-    int                     key_alg;
-    void                   *key_key;
-    char                   *key_stringkey;
-    struct keynote_keylist *key_next;
+struct keynote_keylist {
+	int                     key_alg;
+	void                   *key_key;
+	char                   *key_stringkey;
+	struct keynote_keylist *key_next;
 };
 .Ed
 .Vt extern int keynote_errno;
