@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.32 2004/08/09 10:13:23 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.33 2004/12/06 20:12:25 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -887,11 +887,9 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 	 * error.
 	 */
 	if ((caddr_t)va >= vm->vm_maxsaddr) {
-		if (rv == 0) {
-			segsz_t nss = btoc(USRSTACK - va);
-			if (nss > vm->vm_ssize)
-				vm->vm_ssize = nss;
-		} else if (rv == EACCES)
+		if (rv == 0)
+			uvm_grow(p, va);
+		else if (rv == EACCES)
 			rv = EFAULT;
 	}
 	if (rv != 0) {
@@ -1066,11 +1064,9 @@ text_access_fault(tf, type, pc, sfsr)
 	 * error.
 	 */
 	if ((caddr_t)va >= vm->vm_maxsaddr) {
-		if (rv == 0) {
-			segsz_t nss = btoc(USRSTACK - va);
-			if (nss > vm->vm_ssize)
-				vm->vm_ssize = nss;
-		} else if (rv == EACCES)
+		if (rv == 0)
+			uvm_grow(p, va);
+		else if (rv == EACCES)
 			rv = EFAULT;
 	}
 	if (rv != 0) {
@@ -1173,11 +1169,9 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 	 * error.
 	 */
 	if ((caddr_t)va >= vm->vm_maxsaddr) {
-		if (rv == 0) {
-			segsz_t nss = btoc(USRSTACK - va);
-			if (nss > vm->vm_ssize)
-				vm->vm_ssize = nss;
-		} else if (rv == EACCES)
+		if (rv == 0)
+			uvm_grow(p, va);
+		else if (rv == EACCES)
 			rv = EFAULT;
 	}
 	if (rv != 0) {

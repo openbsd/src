@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.41 2003/06/02 23:27:49 millert Exp $	*/
+/*	$OpenBSD: trap.c,v 1.42 2004/12/06 20:12:24 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.68 1998/12/22 08:47:07 scottr Exp $	*/
 
 /*
@@ -596,13 +596,9 @@ copyfault:
 		 */
 		if ((vm != NULL && (caddr_t)va >= vm->vm_maxsaddr)
 		    && map != kernel_map) {
-			if (rv == 0) {
-				u_int nss;
-
-				nss = btoc(USRSTACK-(unsigned)va);
-				if (nss > vm->vm_ssize)
-					vm->vm_ssize = nss;
-			} else if (rv == EACCES)
+			if (rv == 0)
+				uvm_grow(p, va);
+			else if (rv == EACCES)
 				rv = EFAULT;
 		}
 		if (rv == 0) {
@@ -633,9 +629,9 @@ copyfault:
 	}
 	sv.sival_ptr = (void *)v;
 	trapsignal(p, i, ucode, typ, sv);
+out:
 	if ((type & T_USER) == 0)
 		return;
-out:
 	userret(p, &frame, sticks, v, 1); 
 }
 

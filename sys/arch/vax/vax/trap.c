@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.28 2004/03/09 22:29:01 miod Exp $     */
+/*	$OpenBSD: trap.c,v 1.29 2004/12/06 20:12:25 miod Exp $     */
 /*	$NetBSD: trap.c,v 1.47 1999/08/21 19:26:20 matt Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -255,8 +255,11 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 				sig = SIGSEGV;
 				typ = SEGV_MAPERR;
 			}
-		} else
+		} else {
 			trapsig = 0;
+			if (umode != 0)
+				uvm_grow(p, addr);
+		}
 		break;
 
 	case T_PTELEN:

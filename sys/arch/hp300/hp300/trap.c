@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.44 2004/01/15 17:22:25 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.45 2004/12/06 20:12:23 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.57 1998/02/16 20:58:31 thorpej Exp $	*/
 
 /*
@@ -653,11 +653,7 @@ dopanic:
 		if ((vm != NULL && (caddr_t)va >= vm->vm_maxsaddr)
 		    && map != kernel_map) {
 			if (rv == 0) {
-				unsigned nss;
-
-				nss = btoc(USRSTACK-(unsigned)va);
-				if (nss > vm->vm_ssize)
-					vm->vm_ssize = nss;
+				uvm_grow(p, va);
 			} else if (rv == EACCES)
 				rv = EFAULT;
 		}

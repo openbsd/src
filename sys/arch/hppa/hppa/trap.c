@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.81 2004/09/14 22:44:58 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.82 2004/12/06 20:12:24 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -421,13 +421,10 @@ trap(type, frame)
 		 * error.
 		 */
 		if (space != HPPA_SID_KERNEL &&
-		    va < (vaddr_t)vm->vm_minsaddr &&
-		    va >= (vaddr_t)vm->vm_maxsaddr + ctob(vm->vm_ssize)) {
-			if (ret == 0) {
-				vsize_t nss = btoc(va - USRSTACK + NBPG - 1);
-				if (nss > vm->vm_ssize)
-					vm->vm_ssize = nss;
-			} else if (ret == EACCES)
+		    va < (vaddr_t)vm->vm_minsaddr) {
+			if (ret == 0)
+				uvm_grow(p, va);
+			else if (ret == EACCES)
 				ret = EFAULT;
 		}
 

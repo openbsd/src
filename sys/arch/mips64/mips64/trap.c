@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.18 2004/11/11 19:00:37 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.19 2004/12/06 20:12:24 miod Exp $	*/
 /* tracked to 1.23 */
 
 /*
@@ -273,7 +273,7 @@ trap(trapframe)
 		kernel_fault:
 			va = trunc_page((vaddr_t)trapframe->badvaddr);
 			rv = uvm_fault(kernel_map, trunc_page(va), 0, ftype);
-			if (rv == KERN_SUCCESS)
+			if (rv == 0)
 				return (trapframe->pc);
 			if ((i = p->p_addr->u_pcb.pcb_onfault) != 0) {
 				p->p_addr->u_pcb.pcb_onfault = 0;
@@ -327,16 +327,12 @@ printf("sp %p\n", trapframe->sp);
 		 * error.
 		 */
 		if ((caddr_t)va >= vm->vm_maxsaddr) {
-			if (rv == KERN_SUCCESS) {
-				unsigned nss;
-
-				nss = btoc(USRSTACK-(unsigned)va);
-				if (nss > vm->vm_ssize)
-					vm->vm_ssize = nss;
-			} else if (rv == KERN_PROTECTION_FAILURE)
-				rv = KERN_INVALID_ADDRESS;
+			if (rv == 0)
+				uvm_grow(p, va);
+			else if (rv == EACCES)
+				rv = EFAULT;
 		}
-		if (rv == KERN_SUCCESS) {
+		if (rv == 0) {
 			if (!USERMODE(trapframe->sr))
 				return (trapframe->pc);
 			goto out;

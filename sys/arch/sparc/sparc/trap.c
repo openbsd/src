@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.41 2004/08/06 22:39:14 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.42 2004/12/06 20:12:25 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.58 1997/09/12 08:55:01 pk Exp $ */
 
 /*
@@ -736,11 +736,9 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 	 * error.
 	 */
 	if ((caddr_t)va >= vm->vm_maxsaddr) {
-		if (rv == 0) {
-			unsigned nss = btoc(USRSTACK - va);
-			if (nss > vm->vm_ssize)
-				vm->vm_ssize = nss;
-		} else if (rv == EACCES)
+		if (rv == 0)
+			uvm_grow(p, va);
+		else if (rv == EACCES)
 			rv = EFAULT;
 	}
 	if (rv == 0) {
@@ -972,11 +970,9 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 	 * error.
 	 */
 	if ((caddr_t)va >= vm->vm_maxsaddr) {
-		if (rv == 0) {
-			unsigned nss = btoc(USRSTACK - va);
-			if (nss > vm->vm_ssize)
-				vm->vm_ssize = nss;
-		} else if (rv == EACCES)
+		if (rv == 0)
+			uvm_grow(p, va);
+		else if (rv == EACCES)
 			rv = EFAULT;
 	}
 	if (rv != 0) {

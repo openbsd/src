@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.43 2003/11/13 08:19:20 miod Exp $ */
+/* $OpenBSD: trap.c,v 1.44 2004/12/06 20:12:21 miod Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -481,15 +481,10 @@ do_fault:
 			 * we need to reflect that as an access error.
 			 */
 			if (map != kernel_map &&
-			    (caddr_t)va >= vm->vm_maxsaddr &&
-			    va < USRSTACK) {
+			    (caddr_t)va >= vm->vm_maxsaddr) {
 				if (rv == 0) {
-					unsigned nss;
-	
-					nss = btoc(USRSTACK -
-					    (unsigned long)va);
-					if (nss > vm->vm_ssize)
-						vm->vm_ssize = nss;
+					if (p != NULL)
+					    uvm_grow(p, va);
 				} else if (rv == EACCES)
 					rv = EFAULT;
 			}

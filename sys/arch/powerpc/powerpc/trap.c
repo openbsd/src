@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.64 2004/08/05 20:56:24 pefo Exp $	*/
+/*	$OpenBSD: trap.c,v 1.65 2004/12/06 20:12:25 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -364,8 +364,10 @@ printf("kern dsi on addr %x iar %x\n", frame->dar, frame->srr0);
 			} else
 				vftype = ftype = VM_PROT_READ;
 			if (uvm_fault(&p->p_vmspace->vm_map,
-				     trunc_page(frame->dar), 0, ftype) == 0)
+				     trunc_page(frame->dar), 0, ftype) == 0) {
+				uvm_grow(p, trunc_page(frame->dar));
 				break;
+			}
 
 #if 0
 printf("dsi on addr %x iar %x lr %x\n", frame->dar, frame->srr0,frame->lr);
@@ -388,12 +390,15 @@ printf("dsi on addr %x iar %x lr %x\n", frame->dar, frame->srr0,frame->lr);
 
 			ftype = VM_PROT_READ | VM_PROT_EXECUTE;
 			if (uvm_fault(&p->p_vmspace->vm_map,
-			    trunc_page(frame->srr0), 0, ftype) == 0)
+			    trunc_page(frame->srr0), 0, ftype) == 0) {
+				uvm_grow(p, trunc_page(frame->srr0));
 				break;
+			}
 		}
 #if 0
 printf("isi iar %x lr %x\n", frame->srr0, frame->lr);
 #endif
+		/* FALLTHROUGH */
 	case EXC_MCHK|EXC_USER:
 /* XXX Likely that returning from this trap is bogus... */
 /* XXX Have to make sure that sigreturn does the right thing. */

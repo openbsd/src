@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.14 2004/11/09 21:49:56 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.15 2004/12/06 20:12:24 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -203,7 +203,7 @@ m88100_trap(unsigned type, struct trapframe *frame)
 	vm_prot_t ftype;
 	int fault_type, pbus_type;
 	u_long fault_code;
-	unsigned nss, fault_addr;
+	unsigned fault_addr;
 	struct vmspace *vm;
 	union sigval sv;
 	int result;
@@ -397,19 +397,16 @@ user_fault:
 			break;
 		default:
 			result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
-			if (result == EACCES)
-				result = EFAULT;
 			break;
 		}
 
 		p->p_addr->u_pcb.pcb_onfault = pcb_onfault;
 
 		if ((caddr_t)va >= vm->vm_maxsaddr) {
-			if (result == 0) {
-				nss = btoc(USRSTACK - va);/* XXX check this */
-				if (nss > vm->vm_ssize)
-					vm->vm_ssize = nss;
-			}
+			if (result == 0)
+				uvm_grow(p, va);
+			else if (result == EACCES)
+				result = EFAULT;
 		}
 
 		/*
@@ -610,7 +607,7 @@ m88110_trap(unsigned type, struct trapframe *frame)
 	vm_prot_t ftype;
 	int fault_type;
 	u_long fault_code;
-	unsigned nss, fault_addr;
+	unsigned fault_addr;
 	struct vmspace *vm;
 	union sigval sv;
 	int result;
@@ -863,8 +860,6 @@ m88110_user_fault:
 				/* segment or page fault */
 				result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
 				p->p_addr->u_pcb.pcb_onfault = pcb_onfault;
-				if (result == EACCES)
-					result = EFAULT;
 			} else
 			if (frame->tf_dsr & (CMMU_DSR_CP | CMMU_DSR_WA)) {
 				/* copyback or write allocate error */
@@ -911,8 +906,6 @@ m88110_user_fault:
 #endif
 					result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
 					p->p_addr->u_pcb.pcb_onfault = pcb_onfault;
-					if (result == EACCES)
-						result = EFAULT;
 				}
 			} else {
 #ifdef TRAPDEBUG
@@ -932,8 +925,6 @@ m88110_user_fault:
 				/* segment or page fault */
 				result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
 				p->p_addr->u_pcb.pcb_onfault = pcb_onfault;
-				if (result == EACCES)
-					result = EFAULT;
 			} else {
 #ifdef TRAPDEBUG
 				printf("Unexpected Instruction fault isr %x\n",
@@ -944,11 +935,10 @@ m88110_user_fault:
 		}
 
 		if ((caddr_t)va >= vm->vm_maxsaddr) {
-			if (result == 0) {
-				nss = btoc(USRSTACK - va);/* XXX check this */
-				if (nss > vm->vm_ssize)
-					vm->vm_ssize = nss;
-			}
+			if (result == 0)
+				uvm_grow(p, va);
+			else if (result == EACCES)
+				result = EFAULT;
 		}
 
 		/*
