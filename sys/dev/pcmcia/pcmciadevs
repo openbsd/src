@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.3 1998/09/14 19:21:15 deraadt Exp $
+	$OpenBSD: pcmciadevs,v 1.4 1998/10/14 07:34:43 fgsch Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -36,6 +36,7 @@
  * List of known PCMCIA vendors
  */
 
+vendor SANDISK			0x0045	Sandisk
 vendor NEWMEDIA			0x0057	NewMedia
 vendor IBM			0x00a4	IBM
 vendor 3COM			0x0101	3Com
@@ -51,6 +52,7 @@ vendor LINKSYS			0x0149	Linksys
 vendor SIMPLETECH		0x014d	Simple Technology
 vendor DAYNA			0x0194	Dayna
 vendor IODATA			0x01bf	I-O DATA
+vendor HAGIWARASYSCOM		0xc012	Hagiwara SYS-COM
 
 /*
  * List of known products.  Grouped by vendor.
@@ -65,7 +67,11 @@ product 3COM 3C589		0x0589 3Com 3c589 10Mbps Ethernet
 product 3COM 3C574		0x0574 3Com 3c574-TX 10/100Mbps Ethernet
 
 /* Dayna Products */
-product DAYNA COMMUNICARD_E	0x002d Dayna CommuniCard E
+product DAYNA COMMUNICARD_E_1	0x002d Dayna CommuniCard E
+product DAYNA COMMUNICARD_E_2	0x002f Dayna CommuniCard E
+
+/* DIGITAL Products */
+product DIGITAL MOBILE_MEDIA_CDROM 0x0d00 Digital Mobile Media CD-ROM
 
 /* Motorola Products */
 product MOTOROLA POWER144	0x0105 Motorola Power 14.4 Modem
@@ -80,24 +86,28 @@ product IBM HOME_AND_AWAY	0x002e IBM Home and Away Modem
 product IODATA PCLAT		0x2216 I-O DATA PCLA/T
 
 /* Linksys corporation */
-product LINKSYS ECARD		0x0265 Linksys EthernetCard
+product LINKSYS ECARD_1		0x0265 Linksys EthernetCard
 product LINKSYS COMBO_ECARD	0xc1ab Linksys Combo EthernetCard
 product LINKSYS TRUST_COMBO_ECARD 0x021b Trust (Linksys) Combo EthernetCard
 
 /* Megahertz Products */
 product MEGAHERTZ XJ4288	0x0023 Megahertz XJ4288 Modem
+product MEGAHERTZ XJ5560	0x0034 Megahertz X-JACK 56kbps Modem
 product MEGAHERTZ2 XJEM1144	0x0101 Megahertz XJEM1144 Ethernet
 product MEGAHERTZ2 XJACK	0x0103 Megahertz X-JACK Ethernet
 
 /* US Robotics Products */
 product USROBOTICS WORLDPORT144	0x3330 US Robotics WorldPort 14.4 Modem
 
+/* Sandisk Products */
+product SANDISK SDCFB		0x0401 Sandisk CompactFlash Card
+
 /* Simple Technology Products */
 product SIMPLETECH COMMUNICATOR288 0x0100 Simple Technology 28.8 Communicator
 
 /* Socket Communications Products */
 product SOCKET PAGECARD		0x0003 Socket Communications PageCard
-product SOCKET DUAL_RS232	0x0012 Socket Communications Dual RS232
+product SOCKET DUAL_RS232	0x0006 Socket Communications Dual RS232
 
 /* TDK Products */
 product TDK LAK_CD021BX		0x0200 TDK LAK-CD021BX Ethernet
@@ -117,6 +127,7 @@ vendor RPTI			-1 	RPTI
 vendor ACCTON			-1 	ACCTON
 vendor YEDATA			-1 	Y-E DATA
 vendor DIGITAL			-1 	Digital
+vendor TEAC			-1	TEAC
 
 product MEGAHERTZ XJ2288 	{ "MEGAHERTZ", "MODEM&spXJ2288", NULL, NULL } Megahertz XJ2288 Modem
 product PREMAX PE200		{ "PMX&sp&sp&sp", "PE-200", NULL, NULL } PreMax PE-200
@@ -127,3 +138,5 @@ product RPTI EP401		{ "RPTI", "EP401&spEthernet&spNE2000&spCompatible", NULL, NU
 product ACCTON EN2212		{ "ACCTON", "EN2212", NULL, NULL } Accton EN2212
 product YEDATA EXTERNAL_FDD	{ "Y-E&spDATA", "External&spFDD", NULL, NULL } Y-E DATA External FDD
 product DIGITAL DEPCMXX		{ "DIGITAL", "DEPCM-XX", NULL, NULL } DEC DEPCM-BA
+product TEAC IDECARDII		{ NULL, "NinjaATA-", NULL, NULL } TEAC IDE Card/II
+product LINKSYS ECARD_2		{ "LINKSYS", "E-CARD", NULL, NULL } Linksys E-Card

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmciadevs_data.h,v 1.4 1998/09/24 11:40:33 deraadt Exp $	*/
+/*	$OpenBSD: pcmciadevs_data.h,v 1.5 1998/10/14 07:34:43 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -76,11 +76,25 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "3Com 3c574-TX 10/100Mbps Ethernet"	},
 	},
 	{
-	    PCMCIA_VENDOR_DAYNA, PCMCIA_PRODUCT_DAYNA_COMMUNICARD_E,
-	    PCMCIA_CIS_DAYNA_COMMUNICARD_E,
+	    PCMCIA_VENDOR_DAYNA, PCMCIA_PRODUCT_DAYNA_COMMUNICARD_E_1,
+	    PCMCIA_CIS_DAYNA_COMMUNICARD_E_1,
 	    0,
 	    "Dayna",
 	    "Dayna CommuniCard E"	},
+	},
+	{
+	    PCMCIA_VENDOR_DAYNA, PCMCIA_PRODUCT_DAYNA_COMMUNICARD_E_2,
+	    PCMCIA_CIS_DAYNA_COMMUNICARD_E_2,
+	    0,
+	    "Dayna",
+	    "Dayna CommuniCard E"	},
+	},
+	{
+	    PCMCIA_VENDOR_DIGITAL, PCMCIA_PRODUCT_DIGITAL_MOBILE_MEDIA_CDROM,
+	    PCMCIA_CIS_DIGITAL_MOBILE_MEDIA_CDROM,
+	    0,
+	    "Digital",
+	    "Digital Mobile Media CD-ROM"	},
 	},
 	{
 	    PCMCIA_VENDOR_MOTOROLA, PCMCIA_PRODUCT_MOTOROLA_POWER144,
@@ -125,8 +139,8 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "I-O DATA PCLA/T"	},
 	},
 	{
-	    PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ECARD,
-	    PCMCIA_CIS_LINKSYS_ECARD,
+	    PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ECARD_1,
+	    PCMCIA_CIS_LINKSYS_ECARD_1,
 	    0,
 	    "Linksys",
 	    "Linksys EthernetCard"	},
@@ -153,6 +167,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Megahertz XJ4288 Modem"	},
 	},
 	{
+	    PCMCIA_VENDOR_MEGAHERTZ, PCMCIA_PRODUCT_MEGAHERTZ_XJ5560,
+	    PCMCIA_CIS_MEGAHERTZ_XJ5560,
+	    0,
+	    "Megahertz",
+	    "Megahertz X-JACK 56kbps Modem"	},
+	},
+	{
 	    PCMCIA_VENDOR_MEGAHERTZ2, PCMCIA_PRODUCT_MEGAHERTZ2_XJEM1144,
 	    PCMCIA_CIS_MEGAHERTZ2_XJEM1144,
 	    0,
@@ -172,6 +193,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "US Robotics",
 	    "US Robotics WorldPort 14.4 Modem"	},
+	},
+	{
+	    PCMCIA_VENDOR_SANDISK, PCMCIA_PRODUCT_SANDISK_SDCFB,
+	    PCMCIA_CIS_SANDISK_SDCFB,
+	    0,
+	    "Sandisk",
+	    "Sandisk CompactFlash Card"	},
 	},
 	{
 	    PCMCIA_VENDOR_SIMPLETECH, PCMCIA_PRODUCT_SIMPLETECH_COMMUNICATOR288,
@@ -286,6 +314,27 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "DEC DEPCM-BA"	},
 	},
 	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_TEAC_IDECARDII,
+	    PCMCIA_CIS_TEAC_IDECARDII,
+	    0,
+	    "TEAC",
+	    "TEAC IDE Card/II"	},
+	},
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_LINKSYS_ECARD_2,
+	    PCMCIA_CIS_LINKSYS_ECARD_2,
+	    0,
+	    "Linksys",
+	    "Linksys E-Card"	},
+	},
+	{
+	    PCMCIA_VENDOR_SANDISK, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Sandisk",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_NEWMEDIA, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -391,6 +440,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCMCIA_VENDOR_HAGIWARASYSCOM, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Hagiwara SYS-COM",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_PREMAX, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -437,6 +493,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Digital",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_TEAC, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "TEAC",
 	    NULL,
 	},
 	{ 0, 0, { NULL, NULL, NULL, NULL }, 0, NULL, NULL, }

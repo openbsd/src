@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_pcmcia.c,v 1.4 1998/09/11 10:47:14 fgsch Exp $	*/
+/*	$OpenBSD: com_pcmcia.c,v 1.5 1998/10/14 07:34:43 fgsch Exp $	*/
 /*	$NetBSD: com_pcmcia.c,v 1.15 1998/08/22 17:47:58 msaitoh Exp $	*/
 
 /*-
@@ -294,11 +294,9 @@ found:
 
 	sc->enable = com_pcmcia_enable;
 	sc->disable = com_pcmcia_disable;
-#endif
 	
 	printf(": serial device");
 
-#ifdef notyet
 	com_attach_subr(sc);
 #endif
 	com_attach(sc);

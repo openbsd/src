@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.1 1998/09/22 09:16:36 fgsch Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.2 1998/10/14 07:34:43 fgsch Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -94,30 +94,10 @@ struct ne2000dev {
       PCMCIA_CIS_PREMAX_PE200,
       0, 0x07f0, { 0x00, 0x20, 0xe0 } },
 
-    { PCMCIA_STR_IBM_INFOMOVER,
-      PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_INFOMOVER,
-      PCMCIA_CIS_IBM_INFOMOVER,
-      0, 0x0ff0, { 0x08, 0x00, 0x5a } },
-
     { PCMCIA_STR_DIGITAL_DEPCMXX,
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_DIGITAL_DEPCMXX,
       0, 0x0ff0, { 0x00, 0x00, 0xe8 } },
-
-    { PCMCIA_STR_LINKSYS_ECARD, 
-      PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ECARD,
-      PCMCIA_CIS_LINKSYS_ECARD, 
-      0, -1, { 0x00, 0x80, 0xc8 } },
-
-    { PCMCIA_STR_LINKSYS_COMBO_ECARD, 
-      PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD,
-      PCMCIA_CIS_LINKSYS_COMBO_ECARD, 
-      0, -1, { 0x00, 0x80, 0xc8 } },
-
-    { PCMCIA_STR_LINKSYS_TRUST_COMBO_ECARD,
-      PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_TRUST_COMBO_ECARD,
-      PCMCIA_CIS_LINKSYS_TRUST_COMBO_ECARD,
-      0, 0x0120, { 0x20, 0x04, 0x49 } },
 
     { PCMCIA_STR_PLANET_SMARTCOM2000,
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
@@ -134,17 +114,6 @@ struct ne2000dev {
       PCMCIA_CIS_DLINK_DE660,
       0, -1, { 0x00, 0x80, 0xc8 } },
 
-    { PCMCIA_STR_IODATA_PCLAT,
-      PCMCIA_VENDOR_IODATA, PCMCIA_PRODUCT_IODATA_PCLAT,
-      PCMCIA_CIS_IODATA_PCLAT,
-      /* two possible location, 0x01c0 or 0x0ff0 */
-      0, -1, { 0x00, 0xa0, 0xb0 } },
-
-    { PCMCIA_STR_DAYNA_COMMUNICARD_E,
-      PCMCIA_VENDOR_DAYNA, PCMCIA_PRODUCT_DAYNA_COMMUNICARD_E,
-      PCMCIA_CIS_DAYNA_COMMUNICARD_E,
-      0, 0x0110, { 0x00, 0x80, 0x19 } },
-
     { PCMCIA_STR_RPTI_EP401,
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_RPTI_EP401,
@@ -154,6 +123,62 @@ struct ne2000dev {
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_ACCTON_EN2212,
       0, 0x0ff0, { 0x00, 0x00, 0xe8 } },
+
+    /*
+     * You have to add new entries which contains
+     * PCMCIA_VENDOR_INVALID and/or PCMCIA_PRODUCT_INVALID 
+     * in front of this comment.
+     *
+     * There are cards which use a generic vendor and product id but needs
+     * a different handling depending on the cis_info, so ne2000_match
+     * needs a table where the exceptions comes first and then the normal
+     * product and vendor entries.
+     */
+
+    { PCMCIA_STR_IBM_INFOMOVER,
+      PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_INFOMOVER,
+      PCMCIA_CIS_IBM_INFOMOVER,
+      0, 0x0ff0, { 0x08, 0x00, 0x5a } },
+
+    { PCMCIA_STR_LINKSYS_ECARD_1, 
+      PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ECARD_1,
+      PCMCIA_CIS_LINKSYS_ECARD_1, 
+      0, -1, { 0x00, 0x80, 0xc8 } },
+
+    { PCMCIA_STR_LINKSYS_COMBO_ECARD, 
+      PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD,
+      PCMCIA_CIS_LINKSYS_COMBO_ECARD, 
+      0, -1, { 0x00, 0x80, 0xc8 } },
+
+    { PCMCIA_STR_LINKSYS_TRUST_COMBO_ECARD,
+      PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_TRUST_COMBO_ECARD,
+      PCMCIA_CIS_LINKSYS_TRUST_COMBO_ECARD,
+      0, 0x0120, { 0x20, 0x04, 0x49 } },
+
+    /* Although the comments above say to put VENDOR/PRODUCT INVALID IDs
+       above this list, we need to keep this one below the ECARD_1, or else
+       both will match the same more-generic entry rather than the more
+       specific one above with proper vendor and product IDs. */
+    { PCMCIA_STR_LINKSYS_ECARD_2, 
+      PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+      PCMCIA_CIS_LINKSYS_ECARD_2,
+      0, -1, { 0x00, 0x80, 0xc8 } },
+
+    { PCMCIA_STR_IODATA_PCLAT,
+      PCMCIA_VENDOR_IODATA, PCMCIA_PRODUCT_IODATA_PCLAT,
+      PCMCIA_CIS_IODATA_PCLAT,
+      /* two possible location, 0x01c0 or 0x0ff0 */
+      0, -1, { 0x00, 0xa0, 0xb0 } },
+
+    { PCMCIA_STR_DAYNA_COMMUNICARD_E_1,
+      PCMCIA_VENDOR_DAYNA, PCMCIA_PRODUCT_DAYNA_COMMUNICARD_E_1,
+      PCMCIA_CIS_DAYNA_COMMUNICARD_E_1,
+      0, 0x0110, { 0x00, 0x80, 0x19 } },
+
+    { PCMCIA_STR_DAYNA_COMMUNICARD_E_2,
+      PCMCIA_VENDOR_DAYNA, PCMCIA_PRODUCT_DAYNA_COMMUNICARD_E_2,
+      PCMCIA_CIS_DAYNA_COMMUNICARD_E_2,
+      0, -1, { 0x00, 0x80, 0x19 } },
 #if 0
     /* the rest of these are stolen from the linux pcnet pcmcia device
        driver.  Since I don't know the manfid or cis info strings for

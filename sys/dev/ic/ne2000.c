@@ -1,4 +1,4 @@
-/*	$OpenBSD: ne2000.c,v 1.4 1998/10/05 10:06:16 niklas Exp $	*/
+/*	$OpenBSD: ne2000.c,v 1.5 1998/10/14 07:34:42 fgsch Exp $	*/
 /*	$NetBSD: ne2000.c,v 1.12 1998/06/10 01:15:50 thorpej Exp $	*/
 
 /*-
@@ -211,7 +211,7 @@ ne2000_attach(nsc, myea)
 				    pbuf, x << ED_PAGE_SHIFT, ED_PAGE_SIZE,
 				    useword);
 				ne2000_readmem(nict, nich, asict, asich,
-				    x << ED_PAGE_SHIFT, tbuf, ED_PAGE_SIZE
+				    x << ED_PAGE_SHIFT, tbuf, ED_PAGE_SIZE,
 				    useword);
 				if (bcmp(pbuf, tbuf, ED_PAGE_SIZE) == 0)
 					memsize += ED_PAGE_SIZE;
@@ -222,7 +222,7 @@ ne2000_attach(nsc, myea)
 		}
 
 		printf("%s: RAM start 0x%x, size %d\n",
-		    dsc->sc_dev.dv_xname, mstart, msize);
+		    dsc->sc_dev.dv_xname, mstart, memsize);
 
 		dsc->mem_start = mstart;
 	}

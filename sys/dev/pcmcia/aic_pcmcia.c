@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic_pcmcia.c,v 1.1 1998/09/11 10:47:14 fgsch Exp $	*/
+/*	$OpenBSD: aic_pcmcia.c,v 1.2 1998/10/14 07:34:43 fgsch Exp $	*/
 /*	$NetBSD: aic_pcmcia.c,v 1.6 1998/07/19 17:28:15 christos Exp $	*/
 
 /*
@@ -67,6 +67,37 @@ struct cfattach aic_pcmcia_ca = {
 	sizeof(struct aic_pcmcia_softc), aic_pcmcia_match, aic_pcmcia_attach
 };
 
+struct aic_pcmcia_product {
+	u_int32_t	app_vendor;		/* PCMCIA vendor ID */
+	u_int32_t	app_product;		/* PCMCIA product ID */
+	int		app_expfunc;		/* expected function number */
+	const char	*app_name;		/* device name */
+} aic_pcmcia_products[] = {
+	{ PCMCIA_VENDOR_ADAPTEC,	PCMCIA_PRODUCT_ADAPTEC_APA1460_1,
+	  0,				PCMCIA_STR_ADAPTEC_APA1460_1 },
+	{ PCMCIA_VENDOR_ADAPTEC,	PCMCIA_PRODUCT_ADAPTEC_APA1460_2,
+	  0,				PCMCIA_STR_ADAPTEC_APA1460_2 },
+	{ 0,				0,
+	  0,				NULL },
+};
+
+struct aic_pcmcia_product *aic_pcmcia_lookup __P((struct pcmcia_attach_args *));
+
+struct aic_pcmcia_product *
+aic_pcmcia_lookup(pa)
+	struct pcmcia_attach_args *pa;
+{
+	struct aic_pcmcia_product *app;
+
+	for (app = aic_pcmcia_products; app->app_name != NULL; app++) {
+		if (pa->manufacturer == app->app_vendor &&
+		    pa->product == app->app_product &&
+		    pa->pf->number == app->app_expfunc)
+			return (app);
+	}
+	return (NULL);
+}
+
 int
 aic_pcmcia_match(parent, match, aux)
 	struct device *parent;
@@ -74,15 +105,8 @@ aic_pcmcia_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	if (pa->manufacturer == PCMCIA_VENDOR_ADAPTEC) {
-		switch (pa->product) {
-		case PCMCIA_PRODUCT_ADAPTEC_APA1460_1:
-		case PCMCIA_PRODUCT_ADAPTEC_APA1460_2:
-			if (pa->pf->number == 0)
-				return (1);
-		}
-	}
-
+	if (aic_pcmcia_lookup(pa) != NULL)
+		return (1);
 	return (0);
 }
 
@@ -96,7 +120,9 @@ aic_pcmcia_attach(parent, self, aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	struct pcmcia_function *pf = pa->pf;
-	const char *s;
+#if 0
+	struct aic_pcmcia_product *app;
+#endif
 
 	psc->sc_pf = pf;
 
@@ -133,22 +159,22 @@ aic_pcmcia_attach(parent, self, aux)
 		return;
 	}
 
-	if (!aic_find(sc->sc_iot, sc->sc_ioh))
-		printf(": coundn't find aic\n%s", sc->sc_dev.dv_xname);
-
-	switch (pa->product) {
-	case PCMCIA_PRODUCT_ADAPTEC_APA1460_1:
-		s = PCMCIA_STR_ADAPTEC_APA1460_1;
-		break;
-	case PCMCIA_PRODUCT_ADAPTEC_APA1460_2:
-		s = PCMCIA_STR_ADAPTEC_APA1460_2;
-		break;
-	default:
-		s = "Unknown APA1460";
-		break;
+	if (!aic_find(sc->sc_iot, sc->sc_ioh)) {
+		printf(": unable to detect chip!\n");
+		return;
 	}
 
-	printf(": %s\n", s);
+#if 0
+	app = aic_pcmcia_lookup(pa);
+	if (app == NULL) {
+		printf("\n");
+		panic("aic_pcmcia_attach: impossible");
+	}
+
+	printf(": %s\n", app->app_name);
+#else
+	printf("\n");
+#endif
 
 	aicattach(sc);
 
