@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.27 2004/03/03 22:00:06 millert Exp $	*/
+/*	$OpenBSD: md5.c,v 1.28 2004/04/28 23:58:41 millert Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -38,8 +38,8 @@
 
 union ANY_CTX {
 	MD5_CTX md5;
-	SHA1_CTX sha1;
 	RMD160_CTX rmd160;
+	SHA1_CTX sha1;
 };
 
 struct hash_functions {
@@ -55,28 +55,28 @@ struct hash_functions {
 struct hash_functions functions[] = {
 	{
 		"MD5",
-		32,
+		MD5_DIGEST_LENGTH * 2,
 		(void (*)(void *))MD5Init,
 		(void (*)(void *, const unsigned char *, unsigned int))MD5Update,
 		(char *(*)(void *, char *))MD5End,
 		(char *(*)(char *, char *))MD5File,
 		(char *(*)(const unsigned char *, unsigned int, char *))MD5Data
 	}, {
-		"SHA1",
-		40,
-		(void (*)(void *))SHA1Init,
-		(void (*)(void *, const unsigned char *, unsigned int))SHA1Update,
-		(char *(*)(void *, char *))SHA1End,
-		(char *(*)(char *, char *))SHA1File,
-		(char *(*)(const unsigned char *, unsigned int, char *))SHA1Data
-	}, {
 		"RMD160",
-		40,
+		RMD160_DIGEST_LENGTH * 2,
 		(void (*)(void *))RMD160Init,
 		(void (*)(void *, const unsigned char *, unsigned int))RMD160Update,
 		(char *(*)(void *, char *))RMD160End,
 		(char *(*)(char *, char *))RMD160File,
 		(char *(*)(const unsigned char *, unsigned int, char *))RMD160Data
+	}, {
+		"SHA1",
+		SHA1_DIGEST_LENGTH * 2,
+		(void (*)(void *))SHA1Init,
+		(void (*)(void *, const unsigned char *, unsigned int))SHA1Update,
+		(char *(*)(void *, char *))SHA1End,
+		(char *(*)(char *, char *))SHA1File,
+		(char *(*)(const unsigned char *, unsigned int, char *))SHA1Data
 	}, {
 		NULL,
 	},
@@ -195,7 +195,7 @@ digest_file(char *file, struct hash_functions *hf, int echo)
 	}
 	if (nread == -1) {
 		warn("%s: read error", file);
-		if (fd != STDIN_FILENO)  
+		if (fd != STDIN_FILENO)
 			close(fd);
 		return;
 	}
