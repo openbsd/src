@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.9,v 1.5 2000/10/12 18:05:58 aaron Exp $
+.\"	$OpenBSD: boot.9,v 1.6 2004/03/11 14:43:44 tom Exp $
 .\"	$NetBSD: boot.9,v 1.1 1995/11/25 21:24:48 perry Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
@@ -99,8 +99,16 @@ If the system has not finished autoconfiguration,
 .Fn boot
 runs any shutdown hooks by calling
 .Xr doshutdownhooks 9 ,
-prints a message, and halts the system.
+prints a message, and halts the system
+(unless
+.Dv RB_USERREQ
+is specified, in which case the system will be halted if
+.Dv RB_HALT
+is given, and rebooted otherwise; see
+.Xr reboot 2
+for more details).
 .Sh SEE ALSO
+.Xr reboot 2 ,
 .Xr doshutdownhooks 9 ,
 .Xr resettodr 9 ,
 .Xr vfs_shutdown 9
