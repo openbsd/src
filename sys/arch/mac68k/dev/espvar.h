@@ -354,7 +354,8 @@ ESP_READ_REG(sc, reg)
 
 /* DMA macros for ESP */
 #define DMA_ISINTR(sc)		(ESP_READ_REG((sc)->sc_esp, ESP_STAT) & 0x80)
-#define DMA_RESET(sc)		do { (sc)->sc_active = 0; } while(0)
+#define DMA_RESET(sc)		do { (sc)->sc_active = 0; \
+				     (sc)->sc_tc = 0;} while(0)
 #define DMA_INTR(sc)		dma_intr(sc)
 #define DMA_SETUP(sc, paddr, plen, datain, pdmasize)	\
 	do { \
@@ -362,6 +363,7 @@ ESP_READ_REG(sc, reg)
 		(sc)->sc_pdmalen = plen; \
 		(sc)->sc_datain = datain; \
 		(sc)->sc_dmasize = *pdmasize; \
+		(sc)->sc_tc = 0; \
 	} while (0)
 
 #define DMA_GO(sc) \
@@ -370,6 +372,7 @@ ESP_READ_REG(sc, reg)
 			ESP_WRITE_REG((sc)->sc_esp, \
 					ESP_FIFO, **(sc)->sc_dmaaddr); \
 			(*(sc)->sc_pdmalen)--; \
+			(*(sc)->sc_dmaaddr)++; \
 		} \
 		(sc)->sc_active = 1; \
 	} while (0)

@@ -105,6 +105,7 @@
 struct dma_softc {
 	struct esp_softc	*sc_esp;
 	int		sc_active;
+	int		sc_tc;
 	int		sc_datain;
 	size_t		sc_dmasize;
 	size_t		sc_dmatrans;
@@ -125,49 +126,49 @@ static __inline__ void
 dma_intr(sc)
 	struct dma_softc *sc;
 {
-	u_char	*p;
+	register u_char	*p;
+	register int	cnt;
 
 	if (sc->sc_active == 0) {
 		printf("dma_intr--inactive\n");
 		return;
 	}
 
+	if ((sc->sc_esp->sc_espintr & ESPINTR_BS) == 0) {
+		sc->sc_active = 0;
+		return;
+	}
+
 	p = *sc->sc_dmaaddr;
+	cnt = *sc->sc_pdmalen;
 	if (sc->sc_datain) {
-		if (ESP_READ_REG(sc->sc_esp, ESP_FFLAG) & ESPFIFO_FF) {
+		if (cnt) {
 			*p++ = ESP_READ_REG(sc->sc_esp, ESP_FIFO);
-			(*sc->sc_pdmalen)--;
+			*sc->sc_dmaaddr = p;
+			--(*sc->sc_pdmalen);
 		} else {
-			printf("DMA, Data in, no data, pdmalen is %d\n",
-				*sc->sc_pdmalen);
+			printf("data in, but no count!\n");
 		}
-		*sc->sc_dmaaddr = p;
-		if (sc->sc_esp->sc_phase != DATA_IN_PHASE) {
-			if (*sc->sc_pdmalen == 0) {
-				/*
-				 * Fake terminal count since this isn't
-				 * a real DMA transaction and the chip
-				 * will therefore not trip TC itself.
-				 */
-				sc->sc_esp->sc_espstat |= ESPSTAT_TC;
-			}
-			sc->sc_active = 0;
-			return;
-		}
+	}
+	if (sc->sc_esp->sc_phase == DATA_IN_PHASE) {
 		ESPCMD(sc->sc_esp, ESPCMD_TRANS);
-	} else if (sc->sc_esp->sc_phase == DATA_OUT_PHASE) {
-		p++;
-		ESP_WRITE_REG(sc->sc_esp, ESP_FIFO, *p);
-		*sc->sc_dmaaddr = p;
-		(*sc->sc_pdmalen)--;
+	} else if (   (sc->sc_esp->sc_phase == DATA_OUT_PHASE)
+		   || (sc->sc_esp->sc_phase == MESSAGE_OUT_PHASE)) {
+		if (cnt) {
+			ESP_WRITE_REG(sc->sc_esp, ESP_FIFO, *p++);
+			*sc->sc_dmaaddr = p;
+			--(*sc->sc_pdmalen);
+		} else {
+			printf("data out, but no count!\n");
+		}
 		ESPCMD(sc->sc_esp, ESPCMD_TRANS);
 	} else {
-		if (   (sc->sc_esp->sc_prevphase == DATA_OUT_PHASE)
-		    && (*sc->sc_pdmalen == 0)) {
-			sc->sc_esp->sc_espstat |= ESPSTAT_TC;
-		}
 		sc->sc_active = 0;
 	}
+	if (*sc->sc_pdmalen == 0) {
+		sc->sc_tc = ESPSTAT_TC;
+	}
+	sc->sc_esp->sc_espstat |= sc->sc_tc;
 }
 #else
 #include <dev/tc/tcvar.h>
@@ -447,7 +448,7 @@ espattach(parent, self, aux)
 #else
 #ifdef MAC68K_DRIVER
 	sc->sc_cfg2 = ESPCFG2_SCSI2;
-	sc->sc_cfg3 = 0x4;
+	sc->sc_cfg3 = 0;
 	printf(": NCR53C96");
 	sc->sc_rev = NCR53C96;
 #else
@@ -1116,7 +1117,7 @@ esp_done(sc, ecb)
 
 	xs->flags |= ITSDONE;
 
-#ifdef ESP_DEBUG
+#if ESP_DEBUG > 0
 	if (esp_debug & ESP_SHOWMISC) {
 		if (xs->resid != 0)
 			printf("resid=%d ", xs->resid);
@@ -1593,6 +1594,7 @@ esp_msgout(sc)
 	/* (re)send the message */
 	size = min(sc->sc_omlen, sc->sc_maxxfer);
 	DMA_SETUP(sc->sc_dma, &sc->sc_omp, &sc->sc_omlen, 0, &size);
+#ifndef MAC68K_DRIVER
 	/* Program the SCSI counter */
 	ESP_WRITE_REG(sc, ESP_TCL, size);
 	ESP_WRITE_REG(sc, ESP_TCM, size >> 8);
@@ -1601,6 +1603,7 @@ esp_msgout(sc)
 	}
 	/* load the count in */
 	ESPCMD(sc, ESPCMD_NOP|ESPCMD_DMA);
+#endif
 	ESPCMD(sc, ESPCMD_TRANS|ESPCMD_DMA);
 	DMA_GO(sc->sc_dma);
 #else
@@ -2152,6 +2155,9 @@ if (sc->sc_flags & ESP_ICCS) printf("[[esp: BUMMER]]");
 				  1, &size);
 			sc->sc_prevphase = DATA_IN_PHASE;
 		setup_xfer:
+#ifdef MAC68K_DRIVER
+			if (!size) {
+#endif
 			/* Program the SCSI counter */
 			ESP_WRITE_REG(sc, ESP_TCL, size);
 			ESP_WRITE_REG(sc, ESP_TCM, size >> 8);
@@ -2160,6 +2166,9 @@ if (sc->sc_flags & ESP_ICCS) printf("[[esp: BUMMER]]");
 			}
 			/* load the count in */
 			ESPCMD(sc, ESPCMD_NOP|ESPCMD_DMA);
+#ifdef MAC68K_DRIVER
+			}
+#endif
 
 			/*
 			 * Note that if `size' is 0, we've already transceived
