@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.65 2003/10/16 11:30:00 grange Exp $     */
+/*      $OpenBSD: wdc.c,v 1.66 2003/10/16 11:58:16 grange Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -1242,7 +1242,7 @@ wdc_probe_caps(drvp, params)
 	if (drvp->drive_flags & DRIVE_ATAPI)
 		drvp->PIO_mode = 3;
 
-	WDCDEBUG_PRINT(("wdc_probe_caps: wdc_cap %d cf_flags %d\n",
+	WDCDEBUG_PRINT(("wdc_probe_caps: wdc_cap 0x%x cf_flags 0x%x\n",
 		    wdc->cap, cf_flags), DEBUG_PROBE);
 
 	valid_mode_found = 0;
@@ -1621,7 +1621,7 @@ wdc_exec_command(drvp, wdc_c)
 	    WDC_NOSLEEP);
 	if (xfer == NULL) {
 		return WDC_TRY_AGAIN;
-	 }
+	}
 
 	if (wdc_c->flags & AT_POLL)
 		xfer->c_flags |= C_POLL;

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata.c,v 1.20 2003/09/28 21:01:42 grange Exp $      */
+/*      $OpenBSD: ata.c,v 1.21 2003/10/16 11:58:15 grange Exp $      */
 /*      $NetBSD: ata.c,v 1.9 1999/04/15 09:41:09 bouyer Exp $      */
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -68,9 +68,9 @@ ata_get_params(drvp, flags, prms)
 {
 	char tb[ATAPARAMS_SIZE];
 	struct wdc_command wdc_c;
-
 	int i;
 	u_int16_t *p;
+	int ret;
 
 	WDCDEBUG_PRINT(("ata_get_parms\n"), DEBUG_FUNCS);
 
@@ -95,17 +95,14 @@ ata_get_params(drvp, flags, prms)
 	wdc_c.data = tb;
 	wdc_c.bcount = ATAPARAMS_SIZE;
 
-	{
-		int ret;
-		if ((ret = wdc_exec_command(drvp, &wdc_c)) != WDC_COMPLETE) {
-			printf ("WDC_EXEC_COMMAND: %d\n", ret);
-			return CMD_AGAIN;
-		}
+	if ((ret = wdc_exec_command(drvp, &wdc_c)) != WDC_COMPLETE) {
+		printf ("WDC_EXEC_COMMAND: %d\n", ret);
+		return CMD_AGAIN;
 	}
 
 	if (wdc_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
-		WDCDEBUG_PRINT(("IDENTIFY failed: 0x%x\n", wdc_c.flags)
-		    , DEBUG_PROBE);
+		WDCDEBUG_PRINT(("%s: IDENTIFY failed: 0x%x\n", __func__,
+		    wdc_c.flags), DEBUG_PROBE);
 
 		return CMD_ERR;
 	} else {
