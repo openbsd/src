@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.43 2004/02/08 07:09:56 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.44 2004/02/09 19:59:15 canacar Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -46,7 +46,7 @@
 #if 0
 static char rcsid[] = "Id: main.c,v 1.49 1998/05/05 05:24:17 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.43 2004/02/08 07:09:56 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.44 2004/02/09 19:59:15 canacar Exp $";
 #endif
 #endif
 
@@ -1398,7 +1398,7 @@ novm(msg)
 /*
  * fmtmsg - format a message into a buffer.  Like snprintf except we
  * also specify the length of the output buffer, and we handle
- * %r (recursive format), %m (error message) and %I (IP address) formats.
+ * %m (error message) and %I (IP address) formats.
  * Doesn't do floating-point formats.
  * Returns the number of chars put into buf.
  */
@@ -1521,17 +1521,6 @@ vfmtmsg(buf, buflen, fmt, args)
 	case 'I':
 	    str = ip_ntoa(va_arg(args, u_int32_t));
 	    break;
-	case 'r':
-	    f = va_arg(args, char *);
-#if !defined(__powerpc__) && !defined(__x86_64__)
-	    n = vfmtmsg(buf, buflen + 1, f, va_arg(args, va_list));
-#else
-	    /* On the powerpc, a va_list is an array of 1 structure */
-	    n = vfmtmsg(buf, buflen + 1, f, va_arg(args, void *));
-#endif
-	    buf += n;
-	    buflen -= n;
-	    continue;
 	case 't':
 	    time(&t);
 	    str = ctime(&t);
