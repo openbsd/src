@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.36 2004/10/31 00:37:40 jsg Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.37 2004/11/10 10:14:48 grange Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -829,7 +829,7 @@ USB_ATTACH(aue)
 	ifp->if_ioctl = aue_ioctl;
 	ifp->if_start = aue_start;
 	ifp->if_watchdog = aue_watchdog;
-	strncpy(ifp->if_xname, USBDEVNAME(sc->aue_dev), IFNAMSIZ);
+	strlcpy(ifp->if_xname, USBDEVNAME(sc->aue_dev), IFNAMSIZ);
 
 	IFQ_SET_READY(&ifp->if_snd);
 

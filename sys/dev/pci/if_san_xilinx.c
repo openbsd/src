@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_xilinx.c,v 1.4 2004/07/16 15:11:45 alex Exp $	*/
+/*	$OpenBSD: if_san_xilinx.c,v 1.5 2004/11/10 10:14:47 grange Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -345,7 +345,7 @@ wan_xilinx_init(sdla_t *card)
 	}
 
 
-	strncpy(sc->if_name, ifp->if_xname, IFNAMSIZ);
+	strlcpy(sc->if_name, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	sc->common.card	= card;
 	sc->first_time_slot=-1;

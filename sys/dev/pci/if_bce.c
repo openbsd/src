@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.2 2004/09/01 21:11:50 millert Exp $ */
+/* $OpenBSD: if_bce.c,v 1.3 2004/11/10 10:14:47 grange Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -399,7 +399,7 @@ bce_attach(parent, self, aux)
 
 	/* Set up ifnet structure */
 	ifp = &sc->bce_ac.ac_if;
-	strncpy(ifp->if_xname, sc->bce_dev.dv_xname, IF_NAMESIZE);
+	strlcpy(ifp->if_xname, sc->bce_dev.dv_xname, IF_NAMESIZE);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = bce_ioctl;

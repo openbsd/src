@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.5 2004/09/23 17:45:17 brad Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.6 2004/11/10 10:14:48 grange Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -232,7 +232,7 @@ USB_ATTACH(cdce)
 	ifp->if_ioctl = cdce_ioctl;
 	ifp->if_start = cdce_start;
 	ifp->if_watchdog = cdce_watchdog;
-	strncpy(ifp->if_xname, USBDEVNAME(sc->cdce_dev), IFNAMSIZ);
+	strlcpy(ifp->if_xname, USBDEVNAME(sc->cdce_dev), IFNAMSIZ);
 
 	IFQ_SET_READY(&ifp->if_snd);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.12 2004/10/04 13:01:29 deraadt Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.13 2004/11/10 10:14:48 grange Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -517,7 +517,7 @@ USB_ATTACH(axe)
 	/* Initialize interface info.*/
 	ifp = &sc->arpcom.ac_if;
 	ifp->if_softc = sc;
-	strncpy(ifp->if_xname, devname, IFNAMSIZ);
+	strlcpy(ifp->if_xname, devname, IFNAMSIZ);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = axe_ioctl;
 	ifp->if_start = axe_start;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.22 2004/09/23 17:45:17 brad Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.23 2004/11/10 10:14:48 grange Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -556,7 +556,7 @@ USB_ATTACH(cue)
 	ifp->if_ioctl = cue_ioctl;
 	ifp->if_start = cue_start;
 	ifp->if_watchdog = cue_watchdog;
-	strncpy(ifp->if_xname, USBDEVNAME(sc->cue_dev), IFNAMSIZ);
+	strlcpy(ifp->if_xname, USBDEVNAME(sc->cue_dev), IFNAMSIZ);
 
 	IFQ_SET_READY(&ifp->if_snd);
 

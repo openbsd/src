@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.16 2004/07/08 22:18:44 deraadt Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.17 2004/11/10 10:14:48 grange Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -319,7 +319,7 @@ USB_ATTACH(upl)
 	ifp->if_ioctl = upl_ioctl;
 	ifp->if_start = upl_start;
 	ifp->if_watchdog = upl_watchdog;
-	strncpy(ifp->if_xname, USBDEVNAME(sc->sc_dev), IFNAMSIZ);
+	strlcpy(ifp->if_xname, USBDEVNAME(sc->sc_dev), IFNAMSIZ);
 
 	ifp->if_type = IFT_OTHER;
 	ifp->if_addrlen = 0;
