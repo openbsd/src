@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.33 2001/09/20 13:46:04 drahn Exp $	*/
+/*	$OpenBSD: trap.c,v 1.34 2001/11/05 22:26:57 drahn Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -413,6 +413,14 @@ for (i = 0; i < errnum; i++) {
 		break;
 
 	}
+	/* This is not really a perf exception, but is an ALTIVEC unavail
+	 * which we do not handle, kill the process with illegal instruction.
+	 */
+	case EXC_PERF|EXC_USER:
+		sv.sival_int = frame->srr0;
+		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
+		break;
+
 	case EXC_AST|EXC_USER:
 		/* This is just here that we trap */
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.9 2001/09/28 04:13:12 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.10 2001/11/05 22:26:57 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -264,7 +264,7 @@ where = 3;
 	/*
 	 * Set up trap vectors
 	 */
-	for (exc = EXC_RSVD; exc <= EXC_LAST; exc += 0x100)
+	for (exc = EXC_RSVD; exc <= EXC_LAST; exc += 0x100) {
 		switch (exc) {
 		default:
 			bcopy(&trapcode, (void *)exc, (size_t)&trapsize);
@@ -309,6 +309,17 @@ where = 3;
 #endif
 			break;
 		}
+	}
+
+	/* Grr, ALTIVEC_UNAVAIL is a vector not ~0xff aligned: 0x0f20 */
+	bcopy(&trapcode, (void *)0xf20, (size_t)&trapsize);
+	/*
+	 * since trapsize is > 0x20, we just overwrote the EXC_PERF handler
+	 * since we do not use it, we will "share" it with the EXC_VEC,
+	 * we dont support EXC_VEC either.
+	 * should be a 'ba 0xf20 written' at address 0xf00, but we
+	 * do not generate EXC_PERF exceptions...
+	 */
 
 	syncicache((void *)EXC_RST, EXC_LAST - EXC_RST + 0x100);
 
