@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.17 1999/02/06 03:42:57 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.18 1999/02/23 23:44:48 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -417,7 +417,6 @@ hmeioctl(ifp, cmd, data)
 		break;
 
 	case SIOCSIFFLAGS:
-		sc->sc_promisc = ifp->if_flags & IFF_PROMISC;
 		if ((ifp->if_flags & IFF_UP) == 0 &&
 		    (ifp->if_flags & IFF_RUNNING) != 0) {
 			/*
@@ -554,11 +553,6 @@ hmeinit(sc)
 	cr->ipkt_gap1 = HME_DEFAULT_IPKT_GAP1;
 	cr->ipkt_gap2 = HME_DEFAULT_IPKT_GAP2;
 
-	cr->htable3 = 0;
-	cr->htable2 = 0;
-	cr->htable1 = 0;
-	cr->htable0 = 0;
-
 	rxr->rx_ring = (u_int32_t)&sc->sc_desc_dva->hme_rxd[0];
 	txr->tx_ring = (u_int32_t)&sc->sc_desc_dva->hme_txd[0];
 
@@ -596,7 +590,8 @@ hmeinit(sc)
 	if (c != rxr->cfg)	/* the receiver sometimes misses bits */
 	    printf("%s: setting rxreg->cfg failed.\n", sc->sc_dev.dv_xname);
 
-	cr->rx_cfg = CR_RXCFG_HENABLE;
+	cr->rx_cfg = 0;
+	hme_mcreset(sc);
 	DELAY(10);
 
 	cr->tx_cfg |= CR_TXCFG_DGIVEUP;
@@ -940,16 +935,19 @@ hme_mcreset(sc)
 	struct ether_multi *enm;
 	struct ether_multistep step;
 
+	if (ifp->if_flags & IFF_PROMISC) {
+		cr->rx_cfg |= CR_RXCFG_PMISC;
+		return;
+	}
+	else
+		cr->rx_cfg &= ~CR_RXCFG_PMISC;
+
 	if (ifp->if_flags & IFF_ALLMULTI) {
 		cr->htable3 = 0xffff;
 		cr->htable2 = 0xffff;
 		cr->htable1 = 0xffff;
 		cr->htable0 = 0xffff;
-		return;
-	}
-
-	if (ifp->if_flags & IFF_PROMISC) {
-		cr->rx_cfg |= CR_RXCFG_PMISC;
+		cr->rx_cfg |= CR_RXCFG_HENABLE;
 		return;
 	}
 
@@ -972,6 +970,7 @@ hme_mcreset(sc)
 			cr->htable2 = 0xffff;
 			cr->htable1 = 0xffff;
 			cr->htable0 = 0xffff;
+			cr->rx_cfg |= CR_RXCFG_HENABLE;
 			ifp->if_flags |= IFF_ALLMULTI;
 			return;
 		}
@@ -1000,6 +999,7 @@ hme_mcreset(sc)
 	cr->htable2 = hash[2];
 	cr->htable1 = hash[1];
 	cr->htable0 = hash[0];
+	cr->rx_cfg |= CR_RXCFG_HENABLE;
 	ifp->if_flags &= ~IFF_ALLMULTI;
 }
 
