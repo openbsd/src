@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.22 2001/06/07 16:19:47 angelos Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.23 2001/06/08 03:13:14 angelos Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -23,14 +23,9 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
-#include <sys/errno.h>
 #include <sys/kernel.h>
-#include <sys/queue.h>
-
-#include <machine/cpu.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -51,9 +46,8 @@
 #include <netinet6/in6_var.h>
 #endif /* INET6 */
 
-#include <net/pfkeyv2.h>
-
 #include <netinet/ip_ipsp.h>
+#include <net/pfkeyv2.h>
 
 #ifdef ENCDEBUG
 #define DPRINTF(x)	if (encdebug) printf x

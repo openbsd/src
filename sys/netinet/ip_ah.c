@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.58 2001/06/01 00:09:23 angelos Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.59 2001/06/08 03:13:14 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -38,29 +38,22 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/domain.h>
-#include <sys/protosw.h>
 #include <sys/socket.h>
-#include <sys/errno.h>
-#include <sys/time.h>
-#include <sys/kernel.h>
-#include <sys/socketvar.h>
-#include <machine/cpu.h>
-#include <machine/endian.h>
 
 #include <net/if.h>
-#include <net/route.h>
-#include <net/netisr.h>
-#include <net/raw_cb.h>
 #include <net/bpf.h>
 
+#ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
+#endif /* INET */
 
 #ifdef INET6
+#ifndef INET
+#include <netinet/in.h>
+#endif /* INET */
 #include <netinet/ip6.h>
 #endif /* INET6 */
 
@@ -69,9 +62,6 @@
 #include <net/pfkeyv2.h>
 #include <net/if_enc.h>
 
-#include <sys/md5k.h>
-#include <crypto/sha1.h>
-#include <crypto/rmd160.h>
 #include <crypto/crypto.h>
 #include <crypto/xform.h>
 

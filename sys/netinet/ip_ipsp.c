@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.129 2001/06/07 16:19:47 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.130 2001/06/08 03:13:14 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -38,13 +38,9 @@
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
-#include <sys/errno.h>
 #include <sys/kernel.h>
-#include <sys/queue.h>
 #include <sys/sysctl.h>
 
 #include <net/if.h>
@@ -53,7 +49,6 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/ip_var.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
 #endif /* INET */
@@ -65,12 +60,9 @@
 #include <netinet6/in6_var.h>
 #endif /* INET6 */
 
-#include <net/pfkeyv2.h>
-
 #include <netinet/ip_ipsp.h>
-
+#include <net/pfkeyv2.h>
 #include <crypto/xform.h>
-
 #include <dev/rndvar.h>
 
 #ifdef DDB

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.42 2001/06/05 11:10:12 angelos Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.43 2001/06/08 03:13:15 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -36,20 +36,12 @@
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/domain.h>
-#include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
-#include <sys/errno.h>
 #include <sys/kernel.h>
 
-#include <machine/cpu.h>
-
 #include <net/if.h>
-#include <net/route.h>
 #include <net/netisr.h>
 #include <net/bpf.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.64 2001/06/05 11:10:10 angelos Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.65 2001/06/08 03:13:14 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -37,23 +37,13 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/domain.h>
-#include <sys/protosw.h>
 #include <sys/socket.h>
-#include <sys/errno.h>
-#include <sys/time.h>
-#include <sys/kernel.h>
-#include <machine/cpu.h>
 
 #include <net/if.h>
-#include <net/route.h>
-#include <net/netisr.h>
 #include <net/bpf.h>
 
-#include <sys/socketvar.h>
-#include <net/raw_cb.h>
+#include <dev/rndvar.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -73,9 +63,6 @@
 #include <net/pfkeyv2.h>
 #include <net/if_enc.h>
 
-#include <sys/md5k.h>
-#include <crypto/sha1.h>
-#include <crypto/rmd160.h>
 #include <crypto/crypto.h>
 #include <crypto/xform.h>
 
