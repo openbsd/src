@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.19 2001/07/03 12:11:25 ho Exp $
+.\" $OpenBSD: pfctl.8,v 1.20 2001/07/03 12:16:13 ho Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -93,7 +93,7 @@ Flush the filter information (statistics and counters).
 Flush all of the above.
 .El
 .It Fl h
-Help
+Help.
 .It Fl l Ar interface
 Enable collection of packet and byte count statistics for interface named
 .Ar interface .
@@ -128,9 +128,9 @@ Show rules as they are parsed.
 .Sh FILES
 .Bl -tag -width "/etc/nat.conf" -compact
 .It Pa /etc/pf.conf
-packet filter rules file
+Packet filter rules file.
 .It Pa /etc/nat.conf
-rules for Network Address Translation
+Rules for Network Address Translation.
 .Sh SEE ALSO
 .Xr pf 4 , 
 .Xr pf.conf 5 ,
