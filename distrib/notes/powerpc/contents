@@ -12,7 +12,7 @@ out as follows:
 		floppy.fs	The powerpc boot and installation
 				floppy; see below.
 
-		*.gz		powerpc binary distribution sets;
+		*.tar.gz	powerpc binary distribution sets;
 				see below.
 
 		bsd		A stock GENERIC powerpc kernel which
