@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: tar.1,v 1.10 1997/04/06 06:26:25 millert Exp $
+.\"	$OpenBSD: tar.1,v 1.11 1997/04/09 17:48:25 millert Exp $
 .\"
 .Dd June 11, 1996
 .Dt TAR 1
@@ -103,10 +103,10 @@ Do not preserve modification time.
 .It Fl o
 Don't write directory information that the older (V7) style
 .Nm
-is enable to decode.
+is unable to decode.
 .It Fl p
 Preserve user id, group id, file mode, access and modification
-times if possible.  The user id and group id will only bet set
+times if possible.  The user id and group id will only be set
 if the user is the superuser (unless these values correspond
 to the user's user and group ids).
 .It Fl s Ar replstr
@@ -183,7 +183,7 @@ Compress archive using compress.
 .Pp
 The options
 .Op Fl 014578
-can be use to select one of the compiled-in backup devices,
+can be used to select one of the compiled-in backup devices,
 .Pa /dev/rmtN .
 .Sh FILES
 .Bl -tag -width "/dev/rmt8"
