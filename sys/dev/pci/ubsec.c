@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.60 2001/06/23 18:30:37 deraadt Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.61 2001/06/23 20:59:42 angelos Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -192,11 +192,11 @@ ubsec_attach(parent, self, aux)
 		return;
 	}
 
-	crypto_register(sc->sc_cid, CRYPTO_3DES_CBC,
+	crypto_register(sc->sc_cid, CRYPTO_3DES_CBC, 0, 0,
 	    ubsec_newsession, ubsec_freesession, ubsec_process);
-	crypto_register(sc->sc_cid, CRYPTO_DES_CBC, NULL, NULL, NULL);
-	crypto_register(sc->sc_cid, CRYPTO_MD5_HMAC, NULL, NULL, NULL);
-	crypto_register(sc->sc_cid, CRYPTO_SHA1_HMAC, NULL, NULL, NULL);
+	crypto_register(sc->sc_cid, CRYPTO_DES_CBC, 0, 0, NULL, NULL, NULL);
+	crypto_register(sc->sc_cid, CRYPTO_MD5_HMAC, 0, 0, NULL, NULL, NULL);
+	crypto_register(sc->sc_cid, CRYPTO_SHA1_HMAC, 0, 0, NULL, NULL, NULL);
 
 	if (sc->sc_flags & UBS_FLAGS_KEY) {
 		sc->sc_statmask |= BS_STAT_MCR2_DONE;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.74 2001/06/23 20:20:32 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.75 2001/06/23 20:59:41 angelos Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -289,15 +289,15 @@ hifn_attach(parent, self, aux)
 
 	switch (ena) {
 	case HIFN_PUSTAT_ENA_2:
-		crypto_register(sc->sc_cid, CRYPTO_3DES_CBC,
+		crypto_register(sc->sc_cid, CRYPTO_3DES_CBC, 0, 0,
 		    hifn_newsession, hifn_freesession, hifn_process);
 		/*FALLTHROUGH*/
 	case HIFN_PUSTAT_ENA_1:
-		crypto_register(sc->sc_cid, CRYPTO_MD5_HMAC,
+		crypto_register(sc->sc_cid, CRYPTO_MD5_HMAC, 0, 0,
 		    hifn_newsession, hifn_freesession, hifn_process);
-		crypto_register(sc->sc_cid, CRYPTO_SHA1_HMAC,
+		crypto_register(sc->sc_cid, CRYPTO_SHA1_HMAC, 0, 0,
 		    NULL, NULL, NULL);
-		crypto_register(sc->sc_cid, CRYPTO_DES_CBC,
+		crypto_register(sc->sc_cid, CRYPTO_DES_CBC, 0, 0,
 		    NULL, NULL, NULL);
 	}
 
