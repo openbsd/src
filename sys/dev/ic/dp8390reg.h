@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390reg.h,v 1.7 1998/11/06 06:32:14 fgsch Exp $	*/
+/*	$OpenBSD: dp8390reg.h,v 1.8 2000/05/29 17:08:51 fgsch Exp $	*/
 /*	$NetBSD: dp8390reg.h,v 1.3 1997/04/29 04:32:08 scottr Exp $	*/
 
 /*
@@ -461,7 +461,12 @@
 #define ED_RCR_MON	0x20
 
 /*
- * Bits 6 and 7 are unused/reserved.
+ * INTT: Interrupt Trigger Mode.  Must be set if AX88190.
+ */
+#define ED_RCR_INTT	0x40
+
+/*
+ * Bit 7 is unused/reserved.
  */
 
 /*

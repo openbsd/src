@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390var.h,v 1.2 2000/04/19 21:52:38 fgsch Exp $	*/
+/*	$OpenBSD: dp8390var.h,v 1.3 2000/05/29 17:08:51 fgsch Exp $	*/
 /*	$NetBSD: dp8390var.h,v 1.8 1998/08/12 07:19:09 scottr Exp $	*/
 
 /*
@@ -37,6 +37,7 @@ struct dp8390_softc {
 	int	is790;		/* NIC is a 790 */
 
 	u_int8_t cr_proto;	/* values always set in CR */
+	u_int8_t rcr_proto;	/* values always set in RCR */
 	u_int8_t dcr_reg;	/* override DCR iff LS is set */
 
 	int	mem_start;	/* offset of NIC memory */
@@ -115,6 +116,12 @@ struct dp8390_softc {
  * not via shared memory).
  */
 #define DP8390_FORCE_PIO		0x0010
+
+/*
+ * The chip is ASIX AX88190 and needs work around.
+ */
+#define DP8390_DO_AX88190_WORKAROUND	0x0020
+
 
 /*
  * NIC register access macros

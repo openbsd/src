@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.7 2000/04/19 21:40:45 fgsch Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.8 2000/05/29 17:08:51 fgsch Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -349,7 +349,7 @@ dp8390_init(sc)
 	    sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STP);
 
 	/* Accept broadcast and multicast packets by default. */
-	i = ED_RCR_AB | ED_RCR_AM;
+	i = ED_RCR_AB | ED_RCR_AM | sc->rcr_proto;
 	if (ifp->if_flags & IFF_PROMISC) {
 		/*
 		 * Set promiscuous mode.  Multicast filter was set earlier so
@@ -639,6 +639,13 @@ dp8390_intr(arg)
 		 * (Writing a '1' *clears* the bit.)
 		 */
 		NIC_PUT(regt, regh, ED_P0_ISR, isr);
+
+		/* Work around for AX88190 bug */
+		if ((sc->sc_flags & DP8390_DO_AX88190_WORKAROUND) != 0)
+			while ((NIC_GET(regt, regh, ED_P0_ISR) & isr) != 0) {
+				NIC_PUT(regt, regh, ED_P0_ISR, 0);
+				NIC_PUT(regt, regh, ED_P0_ISR, isr);
+			}
 
 		/*
 		 * Handle transmitter interrupts.  Handle these first because
