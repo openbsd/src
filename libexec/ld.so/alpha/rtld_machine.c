@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.19 2003/01/16 19:56:37 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.20 2003/01/17 20:41:07 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -296,4 +296,33 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	if (object->plt_addr != NULL && object->got_size != 0)
 		_dl_mprotect((void*)object->plt_addr, object->plt_size,
 		    PROT_READ|PROT_EXEC);
+}
+
+/* relocate the GOT early */
+
+void
+_reloc_alpha_got(dynp, relocbase)
+	Elf_Dyn *dynp;
+	Elf_Addr relocbase;
+{
+	const Elf_RelA *rela = 0, *relalim;
+	Elf_Addr relasz = 0;
+	Elf_Addr *where;
+
+	for (; dynp->d_tag != DT_NULL; dynp++) {
+		switch (dynp->d_tag) {
+		case DT_RELA:
+			rela = (const Elf_RelA *)(relocbase + dynp->d_un.d_ptr);
+			break;
+		case DT_RELASZ:
+			relasz = dynp->d_un.d_val;
+			break;
+		}
+	}
+	relalim = (const Elf_RelA *)((caddr_t)rela + relasz);
+	for (; rela < relalim; rela++) {
+		where = (Elf_Addr *)(relocbase + rela->r_offset);
+		/* XXX For some reason I see a few GLOB_DAT relocs here. */
+		*where += (Elf_Addr)relocbase;
+	}
 }

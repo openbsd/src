@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.11 2002/12/18 19:20:01 drahn Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.12 2003/01/17 20:41:07 drahn Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -69,26 +69,28 @@
 /* Not really a leaf... but we are special.  */
 LEAF_NOPROFILE(_dl_start, 0)
 	.set	noreorder
-	lda	sp, (-8 - ((AUX_entry) * 8))(sp)
 	br	pv, L1
 L1:
 	LDGP(pv)
-	ldiq	t2, L1
-	subq	pv, t2, t2
-	lda	t0, _GLOBAL_OFFSET_TABLE_
-	addq	t0, t2, t0
-	lda	t1, _DYNAMIC
-	addq	t1, t2, t1
-L2:	cmpult	t0, t1, t3
-	beq	t3, L3
-	ldq	t3, 0(t0)
-	addq	t3, t2, t3
-	stq	t3, 0(t0)
-	lda	t0, 8(t0)
-	br	L2
-L3:
-	mov	a0, s0
-	mov	t2, s1		/* relocation displacement */
+
+	mov	a0, s0		/* save arg */
+
+	/* relocate ourself. */
+	br	s2, L2		/* get our PC */
+L2:	ldiq	s3, L2		/* get where the linker thought we were */
+
+	subq	s2, s3, s2
+	mov	s2, a1
+	lda	t5, _DYNAMIC
+	addq	s2, t5, a0
+
+	bsr	ra, _reloc_alpha_got
+
+	/* allocate stack */
+	lda	sp, (-8 - ((AUX_entry) * 8))(sp)
+
+	mov	s0, a0
+	mov	s2, s1		/* relocation displacement */
 	ldq	a2, 0(a0)	/* argc */
 	lda	a3, 8(a0)	/* argv */
 	mov	a3, s3
