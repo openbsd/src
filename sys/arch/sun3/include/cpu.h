@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.9 1997/02/14 18:30:42 kstailey Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.10 1997/11/04 12:32:03 kstailey Exp $	*/
 /*	$NetBSD: cpu.h,v 1.20 1995/12/21 05:02:10 mycroft Exp $	*/
 
 /*
@@ -166,9 +166,6 @@ long	dvma_kvtopa __P((long, int));
 
 /* machdep.c */
 void	dumpconf __P((void));
-
-/* locore.s */
-short	fusword __P((void *));
 
 struct pcb;
 void	savectx __P((struct pcb *));
