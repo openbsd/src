@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.1 1999/05/26 15:47:00 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.2 1999/05/28 16:17:34 espie Exp $
 
 LIB=		iberty
 CPPFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../include -I$(.OBJDIR)
@@ -31,5 +31,8 @@ CLEANFILES+=	config.h config.status needed-list
 
 # XXX -- Why are these not removed by the generated Makefile?
 CLEANFILES+=	insque.o  insque.po insque.so 
+
+# and more
+CLEANFILES+=Makefile config.cache config.log stamp-h xhost-mkfrag testsuite/Makefile
 
 .include <bsd.lib.mk>
