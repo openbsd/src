@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.103 2001/09/21 18:21:12 brad Exp $
+#	$OpenBSD: MAKEDEV,v 1.104 2001/10/04 22:38:13 gluk Exp $
 #	$NetBSD: MAKEDEV,v 1.40 1996/03/31 00:50:47 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -86,6 +86,7 @@
 #	speaker	pc speaker				(XXX - installed)
 #	lkm	loadable kernel modules interface
 #	audio*	audio device
+#	radio*	FM tuner device
 #	apm	power management device
 #	tun*	network tunnel driver
 #	joy*	joystick driver
@@ -194,7 +195,7 @@ all)
 	sh $this wscons
 	sh $this pf tun0 tun1 tun2
 	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
-	sh $this speaker lkm audio0 joy0 joy1 apm local
+	sh $this speaker lkm audio0 radio0 joy0 joy1 apm local
 	sh $this random ses0 uk0 uk1 ss0 ss1 pctr bktr0 tuner0 wdt0
 	sh $this fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H 
 	sh $this fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H
@@ -618,6 +619,16 @@ audio*)
 	[ -e mixer ] || ln -s $mixer mixer
 	[ -e sound ] || ln -s $sound sound
 	[ -e audioctl ] || ln -s $audioctl audioctl
+	;;
+
+radio*)
+	major=76
+	radio=radio$unit
+	rm -f $radio
+	mknod $radio c $major $unit
+	chown root.wheel $radio
+	chmod 644 $radio
+	[ -e radio ] || ln -s $radio radio
 	;;
 
 joy*)
