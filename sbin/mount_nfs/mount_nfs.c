@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_nfs.c,v 1.18 2000/06/30 16:00:08 millert Exp $	*/
+/*	$OpenBSD: mount_nfs.c,v 1.19 2001/05/11 18:09:08 mickey Exp $	*/
 /*	$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl Exp $	*/
 
 /*
@@ -305,8 +305,7 @@ main(argc, argv)
 			break;
 #ifdef NFSKERB
 		case 'm':
-			(void)strncpy(realm, optarg, REALM_SZ - 1);
-			realm[REALM_SZ - 1] = '\0';
+			strlcpy(realm, optarg, sizeof(realm));
 			break;
 #endif
 		case 'o':
@@ -564,8 +563,7 @@ getnfsargs(spec, nfsargsp)
 	static struct nfhret nfhret;
 	static char nam[MNAMELEN + 1];
 
-	strncpy(nam, spec, MNAMELEN);
-	nam[MNAMELEN] = '\0';
+	strlcpy(nam, spec, sizeof(nam));
 	if ((delimp = strchr(spec, '@')) != NULL) {
 		hostp = delimp + 1;
 	} else if ((delimp = strchr(spec, ':')) != NULL) {
@@ -629,8 +627,7 @@ getnfsargs(spec, nfsargsp)
 	}
 #ifdef NFSKERB
 	if (nfsargsp->flags & NFSMNT_KERB) {
-		strncpy(inst, hp->h_name, INST_SZ);
-		inst[INST_SZ - 1] = '\0';
+		strlcpy(inst, hp->h_name, sizeof(inst));
 		if (cp = strchr(inst, '.'))
 			*cp = '\0';
 	}
