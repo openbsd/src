@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.26 2002/05/11 00:06:33 deraadt Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.27 2002/06/11 05:07:43 art Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -154,12 +154,12 @@ soisdisconnected(so)
  * Must be called at splsoftnet()
  */
 struct socket *
-sonewconn(head, connstatus)
-	struct socket *head;
-	int connstatus;
+sonewconn(struct socket *head, int connstatus)
 {
 	struct socket *so;
 	int soqueue = connstatus ? 1 : 0;
+
+	splassert(IPL_SOFTNET);
 
 	if (head->so_qlen + head->so_q0len > head->so_qlimit * 3)
 		return ((struct socket *)0);

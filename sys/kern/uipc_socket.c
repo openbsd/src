@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.42 2002/05/11 00:06:33 deraadt Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.43 2002/06/11 05:07:43 art Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -184,9 +184,9 @@ solisten(so, backlog)
  */
 
 void
-sofree(so)
-	register struct socket *so;
+sofree(struct socket *so)
 {
+	splassert(IPL_SOFTNET);
 
 	if (so->so_pcb || (so->so_state & SS_NOFDREF) == 0)
 		return;
@@ -265,12 +265,12 @@ discard:
 }
 
 /*
- * Must be called at splsoftnet...
+ * Must be called at splsoftnet.
  */
 int
-soabort(so)
-	struct socket *so;
+soabort(struct socket *so)
 {
+	splassert(IPL_SOFTNET);
 
 	return (*so->so_proto->pr_usrreq)(so, PRU_ABORT, NULL, NULL, NULL);
 }
