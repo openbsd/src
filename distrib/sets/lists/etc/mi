@@ -67,6 +67,10 @@
 ./etc/ppp/options.leaf
 ./etc/ppp/options.sample
 ./etc/ppp/pap-secrets
+./etc/ppp/ppp.conf.sample
+./etc/ppp/ppp.linkdown.sample
+./etc/ppp/ppp.linkup.sample
+./etc/ppp/ppp.secret.sample
 ./etc/printcap
 ./etc/protocols
 ./etc/pwd.db

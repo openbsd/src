@@ -782,6 +782,7 @@
 ./usr/share/man/cat8/ping.0
 ./usr/share/man/cat8/portmap.0
 ./usr/share/man/cat8/ppp.0
+./usr/share/man/cat8/pppctl.0
 ./usr/share/man/cat8/pppd.0
 ./usr/share/man/cat8/pppstats.0
 ./usr/share/man/cat8/pstat.0

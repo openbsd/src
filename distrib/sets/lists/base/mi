@@ -1,4 +1,3 @@
-./usr/lib/perl5/Pod/Html.pm
 .
 ./altroot
 ./bin
@@ -536,6 +535,7 @@
 ./usr/lib/perl5/Net/servent.pm
 ./usr/lib/perl5/Pod
 ./usr/lib/perl5/Pod/Functions.pm
+./usr/lib/perl5/Pod/Html.pm
 ./usr/lib/perl5/Pod/Text.pm
 ./usr/lib/perl5/Search
 ./usr/lib/perl5/Search/Dict.pm
@@ -830,6 +830,8 @@
 ./usr/sbin/pkg_delete
 ./usr/sbin/pkg_info
 ./usr/sbin/portmap
+./usr/sbin/ppp
+./usr/sbin/pppctl
 ./usr/sbin/pppd
 ./usr/sbin/pppstats
 ./usr/sbin/praliases
