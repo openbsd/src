@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.68 2002/09/04 23:07:28 tdeval Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.69 2002/09/04 23:11:10 tdeval Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -806,8 +806,8 @@ scsi_probedev(scsi, target, lun)
 	    scsi_autoconf | SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY | SCSI_IGNORE_MEDIA_CHANGE);
 
 #ifdef SCSI_2_DEF
-	/* some devices need to be told to go to SCSI2 */
-	/* However some just explode if you tell them this.. leave it out */
+	/* Some devices need to be told to go to SCSI2. */
+	/* However some just explode if you tell them this... leave it out. */
 	scsi_change_def(sc_link, scsi_autoconf | SCSI_SILENT);
 #endif /* SCSI_2_DEF */
 
