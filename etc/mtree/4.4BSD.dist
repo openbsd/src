@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.163 2004/04/21 15:58:24 miod Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.164 2004/04/28 00:39:32 henning Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -69,6 +69,32 @@ keynote
 # ./etc/isakmpd/private
 private		uname=root mode=0700
 # ./etc/isakmpd/private
+..
+
+# ./etc/isakmpd/pubkeys
+pubkeys		uname=root mode=0755
+
+# ./etc/isakmpd/pubkeys/fqdn
+fqdn		uname=root mode=0755
+# ./etc/isakmpd/pubkeys/fqdn
+..
+
+# ./etc/isakmpd/pubkeys/ipv4
+ipv4		uname=root mode=0755
+# ./etc/isakmpd/pubkeys/ipv4
+..
+
+# ./etc/isakmpd/pubkeys/ipv6
+ipv6		uname=root mode=0755
+# ./etc/isakmpd/pubkeys/ipv6
+..
+
+# ./etc/isakmpd/pubkeys/ufqdn
+ufqdn		uname=root mode=0755
+# ./etc/isakmpd/pubkeys/ufqdn
+..
+
+# ./etc/isakmpd/pubkeys
 ..
 
 # ./etc/isakmpd
