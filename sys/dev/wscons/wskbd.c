@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.4 2000/11/24 14:05:25 aaron Exp $ */
+/* $OpenBSD: wskbd.c,v 1.5 2001/01/30 04:54:50 aaron Exp $ */
 /* $NetBSD: wskbd.c,v 1.38 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -528,7 +528,7 @@ wskbd_detach(self, flags)
 	}
 
 	mux = sc->sc_dv.dv_cfdata->wskbddevcf_mux;
-	if (mux != WSMOUSEDEVCF_MUX_DEFAULT)
+	if (mux != WSKBDDEVCF_MUX_DEFAULT)
 		wsmux_detach(mux, &sc->sc_dv);
 #endif
 
