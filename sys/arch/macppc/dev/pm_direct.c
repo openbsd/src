@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.c,v 1.5 2002/03/14 01:26:36 millert Exp $	*/
+/*	$OpenBSD: pm_direct.c,v 1.6 2002/04/10 17:35:14 drahn Exp $	*/
 /*	$NetBSD: pm_direct.c,v 1.9 2000/06/08 22:10:46 tsubai Exp $	*/
 
 /*
@@ -1044,7 +1044,7 @@ pm_adb_op(buffer, compRout, data, command)
 		return 1;
 	}
 
-	delay(10000);
+	delay (1000);
 
 	adbWaiting = 1;
 	adbWaitingCmd = command;
@@ -1052,9 +1052,9 @@ pm_adb_op(buffer, compRout, data, command)
 	PM_VIA_INTR_ENABLE();
 
 	/* wait until the PM interrupt is occurred */
-	ndelay = 0x80000;
+	ndelay = 0x8000;
 	while (adbWaiting == 1) {
-		if (read_via_reg(VIA1, vIFR) & 0x14)
+		if (read_via_reg(VIA1, vIFR) != 0)
 			pm_intr();
 #ifdef PM_GRAB_SI
 #if 0
@@ -1067,6 +1067,7 @@ pm_adb_op(buffer, compRout, data, command)
 			splx(s);
 			return 1;
 		}
+		delay(10);
 	}
 
 	/* this command enables the interrupt by operating ADB devices */
