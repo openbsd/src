@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.17 2004/11/26 21:21:24 miod Exp $	*/
+/*	$OpenBSD: zs.c,v 1.18 2004/12/08 20:24:23 miod Exp $	*/
 /*	$NetBSD: zs.c,v 1.19 1998/01/12 19:22:18 thorpej Exp $	*/
 
 /*
@@ -415,8 +415,8 @@ zsc_attach(parent, self, aux)
 	}
 
 	if (current_mac_model->class == MACH_CLASSAV) {
-		add_psc_lev4_intr(2, zshard, zsc);
-		add_psc_lev4_intr(3, zshard, zsc);
+		add_psc_lev4_intr(PSCINTR_SCCA, zshard, zsc);
+		add_psc_lev4_intr(PSCINTR_SCCB, zshard, zsc);
 	} else {
 		intr_establish(zshard, zsc, ZSHARD_PRI, self->dv_xname);
 	}
