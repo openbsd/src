@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.113 2002/03/30 20:11:03 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.114 2002/07/03 05:24:56 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -135,8 +135,8 @@ scsibus* at aic?
 #scsibus* at ncr?
 siop*	at pci? dev ? function ?	# NCR 538XX SCSI controllers(new)
 scsibus* at siop?
-adv*	at pci? dev ? function ?	# AdvanSys 1200A/B and ULTRA SCSI
-scsibus* at adv?
+#adv*	at pci? dev ? function ?	# AdvanSys 1200A/B and ULTRA SCSI
+#scsibus* at adv?
 #adw*	at pci? dev ? function ?	# AdvanSys ULTRA WIDE SCSI
 #scsibus* at adw?
 #sea0	at isa? iomem 0xc8000 irq 5	# Seagate ST0[12] SCSI controllers
