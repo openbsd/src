@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.83 2003/10/10 14:25:42 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.84 2003/10/11 22:08:35 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -310,10 +310,9 @@ flush_atc_entry(long users, vaddr_t va, boolean_t kernel)
 	int cpu;
 	long tusers = users;
 
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 	if ((tusers != 0) && (ff1(tusers) >= MAX_CPUS)) {
-		printf("ff1 users = %d!\n", ff1(tusers));
-		panic("bogus amount of users!!!");
+		panic("flush_atc_entry: invalid ff1 users = %d", ff1(tusers));
 	}
 #endif
 
@@ -1195,7 +1194,7 @@ pmap_create(void)
 
 	/* memory for page tables should be CACHE DISABLED */
 	pmap_cache_ctrl(kernel_pmap,
-	    (vaddr_t)segdt, (vaddr_t)segdt + s, CACHE_INH);
+	    (vaddr_t)segdt, (vaddr_t)segdt + s, CACHE_WT | CACHE_GLOBAL);
 
 	/*
 	 * Initialize SDT_ENTRIES.
@@ -1493,9 +1492,8 @@ pmap_remove_range(pmap_t pmap, vaddr_t s, vaddr_t e)
 					prev = cur;
 				}
 				if (cur == PV_ENTRY_NULL) {
-					printf("pmap_remove_range: looking for VA "
-					       "0x%x (pa 0x%x) PV list at 0x%p\n", va, pa, pvl);
-					panic("pmap_remove_range: mapping not in pv_list");
+					panic("pmap_remove_range: mapping for va "
+					       "0x%x (pa 0x%x) not in pv list at 0x%p\n", va, pa, pvl);
 				}
 
 				prev->pv_next = cur->pv_next;
@@ -1611,9 +1609,6 @@ pmap_remove_all(struct vm_page *pg)
 	vaddr_t va;
 	pmap_t pmap;
 	int spl;
-#ifdef DEBUG
-	int dbgcnt = 0;
-#endif
 
 	if (pg == NULL) {
 		/* not a managed page. */
@@ -1650,11 +1645,8 @@ remove_all_Retry:
 		 */
 #ifdef DIAGNOSTIC
 		if (pte == PT_ENTRY_NULL) {
-#ifdef DEBUG
-			printf("(pmap_remove_all: %p) vm page %p pmap %x va %x dbgcnt %x\n",
-			       curproc, pg, pmap, va, dbgcnt);
-#endif
-			panic("pmap_remove_all: pte NULL");
+			panic("pmap_remove_all: null pte for vm page %p pmap %x va %x",
+			       curproc, pg, pmap, va);
 		}
 #endif	/* DIAGNOSTIC */
 		if (!PDT_VALID(pte)) {
@@ -1673,9 +1665,6 @@ remove_all_Retry:
 
 		pmap_remove_range(pmap, va, va + PAGE_SIZE);
 
-#ifdef DEBUG
-		dbgcnt++;
-#endif
 		/*
 		 * Do not free any page tables,
 		 * leaves that for when VM calls pmap_collect().
@@ -1702,7 +1691,6 @@ next:
  *	Calls:
  *		PMAP_LOCK, PMAP_UNLOCK
  *		CHECK_PAGE_ALIGN
- *		panic
  *		pmap_pte
  *		SDT_NEXT
  *		PDT_VALID
@@ -1845,7 +1833,7 @@ pmap_expand(pmap_t pmap, vaddr_t v)
 
 	/* memory for page tables should be CACHE DISABLED */
 	pmap_cache_ctrl(kernel_pmap,
-	    pdt_vaddr, pdt_vaddr + PAGE_SIZE, CACHE_INH);
+	    pdt_vaddr, pdt_vaddr + PAGE_SIZE, CACHE_WT | CACHE_GLOBAL);
 
 	PMAP_LOCK(pmap, spl);
 
@@ -2628,7 +2616,8 @@ changebit_Retry:
 		 */
 #ifdef DIAGNOSTIC
 		if (pte == PT_ENTRY_NULL)
-			panic("pmap_changebit: bad pv list entry.");
+			panic("pmap_changebit: null pte for va %x pmap %x",
+			    va, pmap);
 #endif
 		if (!PDT_VALID(pte)) {
 			goto next;	 /*  no page mapping */
@@ -2859,7 +2848,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	 * Expand pmap to include this pte.
 	 */
 	while ((pte = pmap_pte(kernel_pmap, va)) == PT_ENTRY_NULL)
-		pmap_expand_kmap(va, VM_PROT_READ|VM_PROT_WRITE);
+		pmap_expand_kmap(va, VM_PROT_READ | VM_PROT_WRITE);
 
 	/*
 	 * And count the mapping.
