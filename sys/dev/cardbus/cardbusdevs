@@ -1,4 +1,4 @@
-$OpenBSD: cardbusdevs,v 1.13 2003/06/26 00:50:42 mickey Exp $
+$OpenBSD: cardbusdevs,v 1.14 2003/09/27 19:38:10 fgsch Exp $
 /*	$NetBSD: cardbusdevs,v 1.7 1999/12/11 22:22:34 explorer Exp $	*/
 
 /*
@@ -43,6 +43,7 @@ $OpenBSD: cardbusdevs,v 1.13 2003/06/26 00:50:42 mickey Exp $
 
 vendor DEC			0x1011	DEC
 vendor OPTI			0x1045	Opti
+vendor DLINK			0x1186  D-Link
 vendor 3COM			0x10B7	3Com
 vendor REALTEK			0x10ec	Realtek Semiconductor
 vendor ACCTON			0x1113	Accton
@@ -89,6 +90,9 @@ product COREGA CB_TXD		0xa117	FEther CB-TXD 10/100 Ethernet
 
 /* DEC products */
 product DEC 21142		0x0019	21142/3
+
+/* D-Link products */
+product DLINK DFE_690TXD	0x1340	DFE-690TXD
 
 /* Intel products */
 product INTEL 82557		0x1229	82557
