@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.482 2002/01/09 19:40:15 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.483 2002/01/19 02:32:36 nate Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1249,6 +1249,7 @@
 #define	PCI_PRODUCT_INTEL_82452_SC	0x1001		/* PRO 1000SC */
 #define	PCI_PRODUCT_INTEL_82453	0x1001		/* PRO 1000F */
 #define	PCI_PRODUCT_INTEL_82453_CU	0x1004		/* PRO 1000T */
+#define	PCI_PRODUCT_INTEL_82544	0x1008		/* PRO 1000XT */
 #define	PCI_PRODUCT_INTEL_PRO_100_VE_0	0x1031		/* PRO/100 VE */
 #define	PCI_PRODUCT_INTEL_PRO_100_VE_1	0x1032		/* PRO/100 VE */
 #define	PCI_PRODUCT_INTEL_PRO_100_VM_0	0x1033		/* PRO/100 VM */
