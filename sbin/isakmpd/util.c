@@ -1,9 +1,9 @@
-/*	$OpenBSD: util.c,v 1.12 2001/04/05 23:02:02 ho Exp $	*/
+/*	$OpenBSD: util.c,v 1.13 2001/06/27 00:10:35 ho Exp $	*/
 /*	$EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	*/
 
 /*
- * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
- * Copyright (c) 2000 Håkan Olsson.  All rights reserved.
+ * Copyright (c) 1998, 1999, 2001 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 2000, 2001 Håkan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,7 +36,10 @@
  */
 
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <sys/stat.h>
+#include <netinet/in.h>
+#include <netdb.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -49,6 +52,12 @@
 #include "sysdep.h"
 #include "transport.h"
 #include "util.h"
+
+/*
+ * Set if -N is given, allowing name lookups to be done, possibly stalling
+ * the daemon for quite a while.
+ */
+int allow_name_lookups = 0;
 
 /*
  * This is set to true in case of regression-test mode, when it will
@@ -231,6 +240,89 @@ hex2raw (char *s, u_int8_t *buf, size_t sz)
   return 0;
 }
 
+int
+text2sockaddr (char *address, char *port, struct sockaddr **sa)
+{
+#ifdef HAVE_GETNAMEINFO
+  struct addrinfo *ai, hints;
+
+  memset (&hints, 0, sizeof hints);
+  if (!allow_name_lookups)
+    hints.ai_flags = AI_NUMERICHOST;
+  hints.ai_family = PF_UNSPEC;
+  hints.ai_socktype = SOCK_DGRAM;
+  hints.ai_protocol = IPPROTO_UDP;
+
+  if (getaddrinfo (address, port, &hints, &ai))
+    return -1;
+
+  *sa = malloc (ai->ai_addr->sa_len);
+  if (!sa)
+    return -1;
+
+  memcpy (*sa, ai->ai_addr, ai->ai_addr->sa_len);
+  freeaddrinfo (ai);
+  return 0;
+#else
+  return -1;
+#endif
+}
+
+int
+sockaddr2text (struct sockaddr *sa, char **address)
+{
+#ifdef HAVE_GETNAMEINFO
+  char buf[NI_MAXHOST];
+
+  if (getnameinfo (sa, sa->sa_len, buf, sizeof buf, 0, 0,
+		   allow_name_lookups ? 0 : NI_NUMERICHOST))
+    return -1;
+
+  *address = malloc (strlen (buf) + 1);
+  if (!address)
+    return -1;
+  
+  strcpy (*address, buf);
+  return 0;
+#else
+  return -1;
+#endif
+}
+
+/*
+ * sockaddr_len and sockaddr_data return the relevant sockaddr info depending
+ * on address family. Useful to keep other code shorter(/clearer?).
+ */
+int
+sockaddr_len (struct sockaddr *sa)
+{
+  switch (sa->sa_family)
+    {
+    case AF_INET6:
+      return sizeof ((struct sockaddr_in6 *)sa)->sin6_addr.s6_addr;
+    case AF_INET:
+      return sizeof ((struct sockaddr_in *)sa)->sin_addr.s_addr;
+    default: 
+      log_print ("sockaddr_len: unsupported protocol family %d", 
+		 sa->sa_family);
+      return 0;
+    }
+}
+
+u_int8_t *
+sockaddr_data (struct sockaddr *sa)
+{
+  switch (sa->sa_family)
+    {
+    case AF_INET6:
+      return (u_int8_t *)&((struct sockaddr_in6 *)sa)->sin6_addr.s6_addr;
+    case AF_INET:
+      return (u_int8_t *)&((struct sockaddr_in *)sa)->sin_addr.s_addr;
+    default:
+      return 0; /* XXX */
+    }
+}
+     
 /*
  * Perform sanity check on files containing secret information.
  * Returns -1 on failure, 0 otherwise.
