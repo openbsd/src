@@ -2,7 +2,7 @@
  * The code in this file was written by Eivind Eklund <perhaps@yes.no>,
  * who places it in the public domain without restriction.
  *
- *	$OpenBSD: nat_cmd.c,v 1.8 2000/03/29 09:32:37 brian Exp $
+ *	$OpenBSD: nat_cmd.c,v 1.9 2000/03/31 14:32:51 brian Exp $
  */
 
 #include <sys/param.h>
@@ -336,6 +336,30 @@ nat_Pptp(struct cmdargs const *arg)
   }
 
   PacketAliasPptp(addr);
+  return 0;
+}
+
+int
+nat_SetTarget(struct cmdargs const *arg)
+{
+  struct in_addr addr;
+
+  if (arg->argc == arg->argn) {
+    addr.s_addr = INADDR_ANY;
+    PacketAliasSetTarget(addr);
+    return 0;
+  }
+
+  if (arg->argc != arg->argn + 1)
+    return -1;
+
+  addr = GetIpAddr(arg->argv[arg->argn]);
+  if (addr.s_addr == INADDR_NONE) {
+    log_Printf(LogWARN, "%s: invalid address\n", arg->argv[arg->argn]);
+    return 1;
+  }
+
+  PacketAliasSetTarget(addr);
   return 0;
 }
 
