@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.14 2001/02/07 11:43:50 itojun Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.15 2001/06/13 02:29:15 itojun Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-/*__RCSID("$OpenBSD: inet6.c,v 1.14 2001/02/07 11:43:50 itojun Exp $");*/
+/*__RCSID("$OpenBSD: inet6.c,v 1.15 2001/06/13 02:29:15 itojun Exp $");*/
 /*__RCSID("KAME Id: inet6.c,v 1.10 2000/02/09 10:49:31 itojun Exp");*/
 #endif
 #endif /* not lint */
@@ -698,9 +698,9 @@ static	char *icmp6names[] = {
 	"multicast listener report",
 	"multicast listener done",
 	"router solicitation",
-	"router advertisment",
+	"router advertisement",
 	"neighbor solicitation",
-	"neighbor advertisment",
+	"neighbor advertisement",
 	"redirect",
 	"router renumbering",
 	"node information request",
