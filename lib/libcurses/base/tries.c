@@ -1,4 +1,4 @@
-/*	$OpenBSD: tries.c,v 1.1 1999/01/18 19:10:07 millert Exp $	*/
+/*	$OpenBSD: tries.c,v 1.2 1999/02/24 06:31:08 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -41,25 +41,28 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: tries.c,v 1.8 1998/11/07 22:54:48 tom Exp $")
+MODULE_ID("$From: tries.c,v 1.10 1999/02/19 11:52:11 tom Exp $")
 
 /*
  * Expand a keycode into the string that it corresponds to, returning null if
  * no match was found, otherwise allocating a string of the result.
  */
-char *_nc_expand_try(struct tries *tree, unsigned short code, size_t len)
+char *_nc_expand_try(struct tries *tree, unsigned short code, int *count, size_t len)
 {
 	struct tries *ptr = tree;
 	char *result = 0;
 
 	if (code != 0) {
 		while (ptr != 0) {
-			if ((result = _nc_expand_try(ptr->child, code, len + 1)) != 0) {
+			if ((result = _nc_expand_try(ptr->child, code, count, len + 1)) != 0) {
 				break;
 			}
 			if (ptr->value == code) {
-				result = typeCalloc(char, len+2);
-				break;
+				*count -= 1;
+				if (*count == -1) {
+					result = typeCalloc(char, len+2);
+					break;
+				}
 			}
 			ptr = ptr->sibling;
 		}
@@ -89,6 +92,35 @@ int _nc_remove_key(struct tries **tree, unsigned short code)
 			return TRUE;
 		}
 		if ((*tree)->value == code) {
+			if((*tree)->child) {
+				/* don't cut the whole sub-tree */
+				(*tree)->value = 0;
+			} else {
+				struct tries *to_free = *tree;
+				*tree = (*tree)->sibling;
+				free(to_free);
+			}
+			return TRUE;
+		}
+		tree = &(*tree)->sibling;
+	}
+	return FALSE;
+}
+
+/*
+ * Remove a string from the specified tree, freeing the unused nodes.  Returns
+ * true if the string was found/removed.
+ */
+int _nc_remove_string(struct tries **tree, char *string)
+{
+	if (string == 0 || *string == 0)
+		return FALSE;
+		
+	while (*tree != 0) {
+		if (_nc_remove_string(&(*tree)->child, string+1)) {
+			return TRUE;
+		}
+		if ((unsigned char)(*tree)->ch == (unsigned char)*string) {
 			if((*tree)->child) {
 				/* don't cut the whole sub-tree */
 				(*tree)->value = 0;

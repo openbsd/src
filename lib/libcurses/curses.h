@@ -1,4 +1,4 @@
-/*	$OpenBSD: curses.h,v 1.19 1999/02/24 05:36:09 millert Exp $	*/
+/*	$OpenBSD: curses.h,v 1.20 1999/02/24 06:31:06 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -33,7 +33,7 @@
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
  ****************************************************************************/
 
-/* $From: curses.h.in,v 1.78 1999/01/10 03:21:11 tom Exp $ */
+/* $From: curses.h.in,v 1.79 1999/02/19 12:03:06 tom Exp $ */
 
 #ifndef __NCURSES_H
 #define __NCURSES_H
@@ -50,7 +50,7 @@
 /* These are defined only in curses.h, and are used for conditional compiles */
 #define NCURSES_VERSION_MAJOR 4
 #define NCURSES_VERSION_MINOR 2
-#define NCURSES_VERSION_PATCH 990213
+#define NCURSES_VERSION_PATCH 990220
 
 /* This is defined in more than one ncurses header, for identification */
 #undef  NCURSES_VERSION
@@ -320,6 +320,7 @@ extern int	TABSIZE;
  */
 extern int ESCDELAY;	/* ESC expire time in milliseconds */
 
+extern char *keybound (int, int);
 extern int define_key (char *, int);
 extern int keyok (int, bool);
 extern int resizeterm (int, int);

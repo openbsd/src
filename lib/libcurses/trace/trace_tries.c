@@ -1,7 +1,7 @@
-/*	$OpenBSD: keyok.c,v 1.2 1999/02/24 06:31:08 millert Exp $	*/
+/*	$OpenBSD: trace_tries.c,v 1.1 1999/02/24 06:31:11 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1999 Free Software Foundation, Inc.                        *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,46 +29,48 @@
  ****************************************************************************/
 
 /****************************************************************************
- *  Author: Thomas E. Dickey <dickey@clark.net> 1997                        *
+ *  Author: Thomas E. Dickey <dickey@clark.net> 1999                        *
  ****************************************************************************/
+/*
+ *	trace_tries.c - Tracing/Debugging buffers (keycode tries-trees)
+ */
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: keyok.c,v 1.3 1999/02/19 11:29:48 tom Exp $")
+MODULE_ID("$From: trace_tries.c,v 1.3 1999/02/19 04:05:26 tom Exp $")
 
-/*
- * Enable (or disable) ncurses' interpretation of a keycode by adding (or
- * removing) the corresponding 'tries' entry.
- *
- * Do this by storing a second tree of tries, which records the disabled keys. 
- * The simplest way to copy is to make a function that returns the string (with
- * nulls set to 0200), then use that to reinsert the string into the
- * corresponding tree.
- */
+#ifdef TRACE
+static char *buffer;
+static unsigned len;
 
-int keyok(int c, bool flag)
+static void recur_tries(struct tries *tree, unsigned level)
 {
-	int code = ERR;
-	int count = 0;
-	char *s;
+	if (level > len)
+		buffer = realloc(buffer, len = (level + 1) * 4);
 
-	T((T_CALLED("keyok(%d,%d)"), c, flag));
-	if (flag) {
-		while ((s = _nc_expand_try(SP->_key_ok, c, &count, 0)) != 0
-		 && _nc_remove_key(&(SP->_key_ok), c)) {
-			_nc_add_to_try(&(SP->_keytry), s, c);
-			free(s);
-			code = OK;
-			count = 0;
+	while (tree != 0) {
+		if ((buffer[level] = tree->ch) == 0)
+			buffer[level] = 128;
+		buffer[level+1] = 0;
+		if (tree->value != 0) {
+			_tracef("%5d: %s (%s)", tree->value, _nc_visbuf(buffer), keyname(tree->value));
 		}
-	} else {
-		while ((s = _nc_expand_try(SP->_keytry, c, &count, 0)) != 0
-		 && _nc_remove_key(&(SP->_keytry), c)) {
-			_nc_add_to_try(&(SP->_key_ok), s, c);
-			free(s);
-			code = OK;
-			count = 0;
-		}
+		if (tree->child)
+			recur_tries(tree->child, level+1);
+		tree = tree->sibling;
 	}
-	returnCode(code);
 }
+
+void _nc_trace_tries(struct tries *tree)
+{
+	buffer = malloc(len = 80);
+	_tracef("BEGIN tries %p", tree);
+	recur_tries(tree, 0);
+	_tracef(". . . tries %p", tree);
+	free(buffer);
+}
+#else
+void _nc_trace_tries(struct tries *tree GCC_UNUSED)
+{
+}
+#endif

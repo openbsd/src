@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.35 1999/01/18 19:30:36 millert Exp $
+#	$OpenBSD: Makefile,v 1.36 1999/02/24 06:31:06 millert Exp $
 
 # Uncomment this to enable tracing in libcurses
 #CURSESTRACE=-DTRACE
@@ -16,7 +16,7 @@ LIB=    curses
 SRCS=	codes.c comp_captab.c expanded.c fallback.c lib_gen.c lib_keyname.c \
 	names.c unctrl.c
 # base
-SRCS+=	define_key.c keyok.c lib_adabind.c lib_addch.c lib_addstr.c \
+SRCS+=	define_key.c keybound.c keyok.c lib_adabind.c lib_addch.c lib_addstr.c \
 	lib_beep.c lib_bkgd.c lib_box.c lib_chgat.c lib_clear.c \
 	lib_clearok.c lib_clrbot.c lib_clreol.c lib_color.c \
 	lib_colorset.c lib_delch.c lib_delwin.c lib_dft_fgbg.c \
@@ -37,7 +37,7 @@ SRCS+=	define_key.c keyok.c lib_adabind.c lib_addch.c lib_addstr.c \
 # tinfo
 SRCS+=	access.c add_tries.c alloc_entry.c captoinfo.c comp_error.c \
 	comp_expand.c comp_hash.c comp_parse.c comp_scan.c doalloc.c \
-	getenv_num.c home_terminfo.c lib_acs.c lib_baudrate.c \
+	getenv_num.c home_terminfo.c init_keytry.c lib_acs.c lib_baudrate.c \
 	lib_cur_term.c lib_data.c lib_has_cap.c lib_kernel.c \
 	lib_longname.c lib_napms.c lib_options.c lib_print.c lib_raw.c \
 	lib_setup.c lib_termcap.c lib_termname.c lib_ti.c lib_tparm.c \
@@ -46,7 +46,7 @@ SRCS+=	access.c add_tries.c alloc_entry.c captoinfo.c comp_error.c \
 	setbuf.c write_entry.c
 # trace
 SRCS+=	lib_trace.c lib_traceatr.c lib_tracebits.c lib_tracechr.c \
-	lib_tracedmp.c lib_tracemse.c trace_buf.c
+	lib_tracedmp.c lib_tracemse.c trace_buf.c trace_tries.c
 # tty
 SRCS+=	hardscroll.c hashmap.c lib_mvcur.c lib_tstp.c lib_twait.c \
 	lib_vidattr.c tty_update.c
@@ -60,8 +60,8 @@ MAN=	curs_addch.3 curs_addchstr.3 curs_addstr.3 curs_attr.3 curs_beep.3 \
 	curs_overlay.3 curs_pad.3 curs_print.3 curs_printw.3 curs_refresh.3 \
 	curs_scanw.3 curs_scr_dump.3 curs_scroll.3 curs_slk.3 curs_termattrs.3 \
 	curs_touch.3 curs_util.3 curs_window.3 curses.3 define_key.3 \
-	dft_fgbg.3 keyok.3 resizeterm.3 wresize.3 termcap.3 terminfo.3 \
-	terminfo.5 term.5 term.7
+	dft_fgbg.3 keybound.3 keyok.3 resizeterm.3 wresize.3 termcap.3 \
+	terminfo.3 terminfo.5 term.5 term.7
 MLINKS+=curses.3 ncurses.3
 MLINKS+=curs_addch.3 addch.3 curs_addch.3 waddch.3 curs_addch.3 mvaddch.3 \
 	curs_addch.3 mvwaddch.3 curs_addch.3 echochar.3 curs_addch.3 \
@@ -162,15 +162,15 @@ MLINKS+= terminfo.3 setupterm.3 terminfo.3 setterm.3 terminfo.3 set_curterm.3 \
 MLINKS+= termcap.3 tgetent.3 termcap.3 tgetflag.3 termcap.3 tgetnum.3 \
 	termcap.3 tgetstr.3 termcap.3 tgoto.3 termcap.3 tputs.3
 
-CLEANFILES+= nomacros.h codes.c comp_captab.c expanded.c fallback.c lib_gen.c \
-	lib_keyname.c names.c unctrl.c keys.tries make_hash make_keys
+CLEANFILES+= init_keytry.h nomacros.h codes.c comp_captab.c expanded.c \
+	fallback.c lib_gen.c lib_keyname.c names.c unctrl.c make_hash make_keys
 
 .if make(install)
 SUBDIR+= doc
 .endif
 
-beforedepend: nomacros.h codes.c comp_captab.c expanded.c fallback.c lib_gen.c \
-	lib_keyname.c names.c unctrl.c keys.tries make_hash make_keys
+beforedepend: init_keytry.h nomacros.h codes.c comp_captab.c expanded.c \
+	fallback.c lib_gen.c lib_keyname.c names.c unctrl.c make_hash make_keys
 
 includes:
 	@cmp -s ${DESTDIR}/usr/include/ncurses.h ${.CURDIR}/curses.h || \
@@ -190,7 +190,7 @@ lib_gen.c: ${.CURDIR}/curses.h ${.CURDIR}/base/MKlib_gen.sh
 nomacros.h: ${.CURDIR}/base/MKlib_gen.sh lib_gen.c
 	fgrep undef lib_gen.c > ${.TARGET}
 
-keys.tries: make_keys ${.CURDIR}/tinfo/keys.list
+init_keytry.h: make_keys ${.CURDIR}/tinfo/keys.list
 	./make_keys ${.CURDIR}/tinfo/keys.list > ${.TARGET}
 
 make_keys: ${.CURDIR}/tinfo/make_keys.c names.c
@@ -227,4 +227,4 @@ afterinstall:
 
 .include <bsd.lib.mk>
 
-lib_options.o lib_options.so lib_options.po lib_options.ln: keys.tries
+lib_options.o lib_options.so lib_options.po lib_options.ln: init_keytry.h

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_acs.c,v 1.1 1999/01/18 19:10:16 millert Exp $	*/
+/*	$OpenBSD: lib_acs.c,v 1.2 1999/02/24 06:31:11 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -38,11 +38,11 @@
 #include <curses.priv.h>
 #include <term.h>	/* ena_acs, acs_chars */
 
-MODULE_ID("$From: lib_acs.c,v 1.14 1999/01/02 22:37:49 tom Exp $")
+MODULE_ID("$From: lib_acs.c,v 1.15 1999/02/18 11:31:43 tom Exp $")
 
 chtype acs_map[ACS_LEN];
 
-void init_acs(void)
+void _nc_init_acs(void)
 {
 	T(("initializing ACS map"));
 

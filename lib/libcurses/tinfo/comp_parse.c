@@ -1,4 +1,4 @@
-/*	$OpenBSD: comp_parse.c,v 1.1 1999/01/18 19:10:14 millert Exp $	*/
+/*	$OpenBSD: comp_parse.c,v 1.2 1999/02/24 06:31:10 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -57,9 +57,10 @@
 #include <term.h>
 #include <term_entry.h>
 
-MODULE_ID("$From: comp_parse.c,v 1.23 1998/05/30 23:38:15 Todd.Miller Exp $")
+MODULE_ID("$From: comp_parse.c,v 1.26 1999/02/19 10:38:13 tom Exp $")
 
 static void sanity_check(TERMTYPE *);
+void (*_nc_check_termtype)(TERMTYPE *) = sanity_check;
 
 /****************************************************************************
  *
@@ -418,15 +419,17 @@ int _nc_resolve_uses(void)
 
     DEBUG(2, ("RESOLUTION FINISHED"));
 
-    _nc_curr_col = -1;
-    for_entry_list(qp)
+    if (_nc_check_termtype != 0)
     {
-	_nc_curr_line = qp->startline;
-	_nc_set_type(_nc_first_name(qp->tterm.term_names));
-	sanity_check(&qp->tterm);
+	_nc_curr_col = -1;
+	for_entry_list(qp)
+	{
+	    _nc_curr_line = qp->startline;
+	    _nc_set_type(_nc_first_name(qp->tterm.term_names));
+	    _nc_check_termtype(&qp->tterm);
+	}
+	DEBUG(2, ("SANITY CHECK FINISHED"));
     }
-
-    DEBUG(2, ("SANITY CHECK FINISHED"));
 
     return(TRUE);
 }
@@ -440,33 +443,12 @@ int _nc_resolve_uses(void)
 #undef CUR
 #define CUR tp->
 
-/*
- * Note that WANTED and PRESENT are not simple inverses!  If a capability
- * has been explicitly cancelled, it's not considered WANTED.
- */
-#define WANTED(s)	((s) == ABSENT_STRING)
-#define PRESENT(s)	(((s) != ABSENT_STRING) && ((s) != CANCELLED_STRING))
-
-#define ANDMISSING(p,q) \
-		{if (PRESENT(p) && !PRESENT(q)) _nc_warning(#p " but no " #q);}
-
-#define PAIRED(p,q) \
-		{ \
-		if (PRESENT(q) && !PRESENT(p)) \
-			_nc_warning(#q " but no " #p); \
-		if (PRESENT(p) && !PRESENT(q)) \
-			_nc_warning(#p " but no " #q); \
-		}
-
 static void sanity_check(TERMTYPE *tp)
 {
-#ifdef __UNUSED__	/* this casts too wide a net */
-    bool       terminal_entry = !strchr(tp->term_names, '+');
-#endif
-
     if (!PRESENT(exit_attribute_mode))
     {
 #ifdef __UNUSED__	/* this casts too wide a net */
+        bool       terminal_entry = !strchr(tp->term_names, '+');
 	if (terminal_entry &&
 		(PRESENT(set_attributes)
 		|| PRESENT(enter_standout_mode)
@@ -484,10 +466,6 @@ static void sanity_check(TERMTYPE *tp)
     }
 
      /* listed in structure-member order of first argument */
-#ifdef __UNUSED__
-     ANDMISSING(cursor_invisible,            cursor_normal)
-     ANDMISSING(cursor_visible,              cursor_normal)
-#endif /* __UNUSED__ */
      PAIRED(enter_alt_charset_mode,          exit_alt_charset_mode)
      ANDMISSING(enter_alt_charset_mode,      acs_chars)
      ANDMISSING(exit_alt_charset_mode,       acs_chars)
@@ -510,30 +488,4 @@ static void sanity_check(TERMTYPE *tp)
      ANDMISSING(label_off,                   label_on)
      PAIRED(display_clock,                   remove_clock)
      ANDMISSING(set_color_pair,              initialize_pair)
-
-     /* Some checks that we should make, but don't want to confuse people
-      * with.  Put those under the tic -v option so we can still get them.
-      */
-     if (_nc_tracing) {
-
-	/*
-	 * From XSI & O'Reilly, we gather that sc/rc are required if csr is
-	 * given, because the cursor position after the scrolling operation is
-	 * performed is undefined.
-	 */
-         ANDMISSING(change_scroll_region,        save_cursor)
-         ANDMISSING(change_scroll_region,        restore_cursor)
-
-         /*
-	  * Some non-curses applications (e.g., jove) get confused if we have
-	  * both ich/ich1 and smir/rmir.  Let's be nice and warn about that,
-	  * too, even though ncurses handles it.
-          */
-         if ((PRESENT(enter_insert_mode) || PRESENT(exit_insert_mode))
-          && (PRESENT(insert_character)  || PRESENT(parm_ich))) {
-	    _nc_warning("non-curses applications may be confused by ich/ich1 with smir/rmir");
-         }
-     }
-#undef PAIRED
-#undef ANDMISSING
 }

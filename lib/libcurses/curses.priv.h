@@ -1,4 +1,4 @@
-/*	$OpenBSD: curses.priv.h,v 1.12 1999/02/24 05:36:10 millert Exp $	*/
+/*	$OpenBSD: curses.priv.h,v 1.13 1999/02/24 06:31:07 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -35,7 +35,7 @@
 
 
 /*
- * $From: curses.priv.h,v 1.127 1999/02/09 23:24:52 tom Exp $
+ * $From: curses.priv.h,v 1.131 1999/02/19 11:38:48 tom Exp $
  *
  *	curses.priv.h
  *
@@ -641,7 +641,7 @@ extern void _nc_linedump(void);
 #endif
 
 /* lib_acs.c */
-extern void init_acs(void);	/* no prefix, this name is traditional */
+extern void _nc_init_acs(void);	/* corresponds to traditional 'init_acs()' */
 extern int _nc_msec_cost(const char *const, int);  /* used by 'tack' program */
 
 /* lib_mvcur.c */
@@ -665,8 +665,9 @@ extern char * _nc_printf_string(const char *fmt, va_list ap);
 
 /* tries.c */
 extern void _nc_add_to_try(struct tries **tree, char *str, unsigned short code);
-extern char *_nc_expand_try(struct tries *tree, unsigned short code, size_t len);
+extern char *_nc_expand_try(struct tries *tree, unsigned short code, int *count, size_t len);
 extern int _nc_remove_key(struct tries **tree, unsigned short code);
+extern int _nc_remove_string(struct tries **tree, char *string);
 
 /* elsewhere ... */
 extern WINDOW *_nc_makenew(int, int, int, int, int);
@@ -687,6 +688,7 @@ extern void _nc_do_color(int, bool, int (*)(int));
 extern void _nc_freeall(void);
 extern void _nc_freewin(WINDOW *win);
 extern void _nc_hash_map(void);
+extern void _nc_init_keytry(void);
 extern void _nc_keep_tic_dir(const char *);
 extern void _nc_make_oldhash(int i);
 extern void _nc_outstr(const char *str);
@@ -696,6 +698,7 @@ extern void _nc_scroll_window(WINDOW *, int const, short const, short const, cht
 extern void _nc_set_buffer(FILE *ofp, bool buffered);
 extern void _nc_signal_handler(bool);
 extern void _nc_synchook(WINDOW *win);
+extern void _nc_trace_tries(struct tries *tree);
 
 #if USE_SIZECHANGE
 extern void _nc_update_screensize(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_set_term.c,v 1.1 1999/01/18 19:09:59 millert Exp $	*/
+/*	$OpenBSD: lib_set_term.c,v 1.2 1999/02/24 06:31:08 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -46,7 +46,7 @@
 
 #include <term.h>	/* cur_term */
 
-MODULE_ID("$From: lib_set_term.c,v 1.43 1998/11/08 00:58:25 tom Exp $")
+MODULE_ID("$From: lib_set_term.c,v 1.44 1999/02/18 11:31:47 tom Exp $")
 
 SCREEN * set_term(SCREEN *screen)
 {
@@ -216,7 +216,7 @@ size_t	i;
 		acs_chars = 0;
 #endif
 	}
-	init_acs();
+	_nc_init_acs();
 	memcpy(SP->_acs_map, acs_map, sizeof(chtype)*ACS_LEN);
 
 	_nc_idcok = TRUE;

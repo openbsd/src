@@ -1,7 +1,7 @@
-/*	$OpenBSD: keyok.c,v 1.2 1999/02/24 06:31:08 millert Exp $	*/
+/*	$OpenBSD: init_keytry.c,v 1.1 1999/02/24 06:31:10 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1999 Free Software Foundation, Inc.                        *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -28,47 +28,42 @@
  * authorization.                                                           *
  ****************************************************************************/
 
-/****************************************************************************
- *  Author: Thomas E. Dickey <dickey@clark.net> 1997                        *
- ****************************************************************************/
-
 #include <curses.priv.h>
 
-MODULE_ID("$From: keyok.c,v 1.3 1999/02/19 11:29:48 tom Exp $")
+#include <term.h>	/* keypad_xmit, keypad_local, meta_on, meta_off */
+			/* cursor_visible,cursor_normal,cursor_invisible */
+#include <tic.h>	/* struct tinfo_fkeys */
+
+MODULE_ID("$From: init_keytry.c,v 1.1 1999/02/18 22:39:11 tom Exp $")
 
 /*
- * Enable (or disable) ncurses' interpretation of a keycode by adding (or
- * removing) the corresponding 'tries' entry.
- *
- * Do this by storing a second tree of tries, which records the disabled keys. 
- * The simplest way to copy is to make a function that returns the string (with
- * nulls set to 0200), then use that to reinsert the string into the
- * corresponding tree.
- */
+**      _nc_init_keytry()
+**
+**      Construct the try for the current terminal's keypad keys.
+**
+*/
 
-int keyok(int c, bool flag)
+/* LINT_PREPRO
+#if 0*/
+#include <init_keytry.h>
+/* LINT_PREPRO
+#endif*/
+
+void _nc_init_keytry(void)
 {
-	int code = ERR;
-	int count = 0;
-	char *s;
+	size_t n;
 
-	T((T_CALLED("keyok(%d,%d)"), c, flag));
-	if (flag) {
-		while ((s = _nc_expand_try(SP->_key_ok, c, &count, 0)) != 0
-		 && _nc_remove_key(&(SP->_key_ok), c)) {
-			_nc_add_to_try(&(SP->_keytry), s, c);
-			free(s);
-			code = OK;
-			count = 0;
-		}
-	} else {
-		while ((s = _nc_expand_try(SP->_keytry, c, &count, 0)) != 0
-		 && _nc_remove_key(&(SP->_keytry), c)) {
-			_nc_add_to_try(&(SP->_key_ok), s, c);
-			free(s);
-			code = OK;
-			count = 0;
-		}
-	}
-	returnCode(code);
+	/* The SP->_keytry value is initialized in newterm(), where the SP
+	 * structure is created, because we can not tell where keypad() or
+	 * mouse_activate() (which will call keyok()) are first called.
+	 */
+
+	for (n = 0; _nc_tinfo_fkeys[n].code; n++)
+		if (_nc_tinfo_fkeys[n].offset < STRCOUNT)
+		_nc_add_to_try(&(SP->_keytry),
+			CUR Strings[_nc_tinfo_fkeys[n].offset],
+			_nc_tinfo_fkeys[n].code);
+#ifdef TRACE
+	_nc_trace_tries(SP->_keytry);
+#endif
 }

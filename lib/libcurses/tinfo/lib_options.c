@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_options.c,v 1.1 1999/01/18 19:10:18 millert Exp $	*/
+/*	$OpenBSD: lib_options.c,v 1.2 1999/02/24 06:31:11 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -46,7 +46,7 @@
 #include <term.h>	/* keypad_xmit, keypad_local, meta_on, meta_off */
 			/* cursor_visible,cursor_normal,cursor_invisible */
 
-MODULE_ID("$From: lib_options.c,v 1.32 1998/12/19 23:09:50 tom Exp $")
+MODULE_ID("$From: lib_options.c,v 1.34 1999/02/18 11:56:16 tom Exp $")
 
 int idlok(WINDOW *win,  bool flag)
 {
@@ -233,34 +233,6 @@ int has_key(int keycode)
 }
 #endif /* NCURSES_EXT_FUNCS */
 
-/*
-**      init_keytry()
-**
-**      Construct the try for the current terminal's keypad keys.
-**
-*/
-
-static void init_keytry(void)
-{
-/* LINT_PREPRO
-#if 0*/
-#include <keys.tries>
-/* LINT_PREPRO
-#endif*/
-	size_t n;
-
-	/* The SP->_keytry value is initialized in newterm(), where the SP
-	 * structure is created, because we can not tell where keypad() or
-	 * mouse_activate() (which will call keyok()) are first called.
-	 */
-
-	for (n = 0; n < SIZEOF(table); n++)
-		if (table[n].offset < STRCOUNT)
-		_nc_add_to_try(&(SP->_keytry),
-			CUR Strings[table[n].offset],
-			table[n].code);
-}
-
 /* Turn the keypad on/off
  *
  * Note:  we flush the output because changing this mode causes some terminals
@@ -284,7 +256,7 @@ int _nc_keypad(bool flag)
 	}
 
 	if (!SP->_tried) {
-	    init_keytry();
+	    _nc_init_keytry();
 	    SP->_tried = TRUE;
 	}
 	return(OK);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: term_entry.h,v 1.5 1999/02/01 20:55:40 millert Exp $	*/
+/*	$OpenBSD: term_entry.h,v 1.6 1999/02/24 06:31:07 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -70,6 +70,24 @@ extern ENTRY	*_nc_head, *_nc_tail;
 
 #define NULLHOOK        (bool(*)(ENTRY *))0
 
+/*
+ * Note that WANTED and PRESENT are not simple inverses!  If a capability
+ * has been explicitly cancelled, it's not considered WANTED.
+ */
+#define WANTED(s)	((s) == ABSENT_STRING)
+#define PRESENT(s)	(((s) != ABSENT_STRING) && ((s) != CANCELLED_STRING))
+
+#define ANDMISSING(p,q) \
+		{if (PRESENT(p) && !PRESENT(q)) _nc_warning(#p " but no " #q);}
+
+#define PAIRED(p,q) \
+		{ \
+		if (PRESENT(q) && !PRESENT(p)) \
+			_nc_warning(#q " but no " #p); \
+		if (PRESENT(p) && !PRESENT(q)) \
+			_nc_warning(#p " but no " #q); \
+		}
+
 /* alloc_entry.c: elementary allocation code */
 extern void _nc_init_entry(TERMTYPE *const);
 extern char *_nc_save_str(const char *const);
@@ -89,6 +107,8 @@ extern void _nc_read_entry_source(FILE*, char*, int, bool, bool (*)(ENTRY*));
 extern bool _nc_entry_match(char *, char *);
 extern int _nc_resolve_uses(void);
 extern void _nc_free_entries(ENTRY *);
+extern void (*_nc_check_termtype)(TERMTYPE *);
+
 
 #ifdef __OpenBSD__
 /* read_bsd_terminfo.c: terminfo.db reading */
