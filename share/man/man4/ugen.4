@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ugen.4,v 1.8 2004/03/22 23:41:22 millert Exp $
+.\"	$OpenBSD: ugen.4,v 1.9 2004/03/23 01:16:57 millert Exp $
 .\"	$NetBSD: ugen.4,v 1.7 1999/07/30 01:32:05 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@ struct usb_endpoint_desc {
 Return all the descriptors for the given configuration.
 .Bd -literal
 struct usb_full_desc {
-	int	ucd_config_index;
+	int	ufd_config_index;
 	u_int	ufd_size;
 	u_char	*ufd_data;
 };
