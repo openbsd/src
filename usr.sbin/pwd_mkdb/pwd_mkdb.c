@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.12 1997/12/08 07:34:29 deraadt Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.13 1998/04/26 10:08:42 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.12 1997/12/08 07:34:29 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.13 1998/04/26 10:08:42 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -219,7 +219,7 @@ main(argc, argv)
 #define	COMPACT(e)	t = e; while (*p++ = *t++);
 
 		/* look like YP? */
-		if((pwd.pw_name[0] == '+') || (pwd.pw_name[0] == '-'))
+		if ((pwd.pw_name[0] == '+') || (pwd.pw_name[0] == '-'))
 			hasyp++;
 
 		/* Warn about potentially unsafe uid/gid overrides. */
@@ -281,7 +281,7 @@ main(argc, argv)
 	}
 
 	/* Store YP token, if needed. */
-	if(hasyp) {
+	if (hasyp) {
 		ypkey.data = (u_char *)_PW_YPTOKEN;
 		ypkey.size = strlen(_PW_YPTOKEN);
 		ypdata.data = (u_char *)NULL;
@@ -355,13 +355,13 @@ main(argc, argv)
 	}
 
 	/* Store YP token, if needed. */
-	if(hasyp) {
+	if (hasyp) {
 		ypkey.data = (u_char *)_PW_YPTOKEN;
 		ypkey.size = strlen(_PW_YPTOKEN);
 		ypdata.data = (u_char *)NULL;
 		ypdata.size = 0;
 
-		if((dp->put)(edp, &ypkey, &ypdata, R_NOOVERWRITE) == -1)
+		if ((dp->put)(edp, &ypkey, &ypdata, R_NOOVERWRITE) == -1)
 			error("put");
 	}
 
