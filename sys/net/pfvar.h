@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.193 2004/05/05 23:16:03 frantzen Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.194 2004/05/11 07:34:11 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1345,6 +1345,8 @@ extern struct pf_ruleset	*pf_find_or_create_ruleset(
 				    char[PF_RULESET_NAME_SIZE]);
 extern void			 pf_remove_if_empty_ruleset(
 				    struct pf_ruleset *);
+extern u_int16_t		 pf_cksum_fixup(u_int16_t, u_int16_t, u_int16_t,
+				    u_int8_t);
 
 extern struct ifnet		*sync_ifp;
 extern struct pf_rule		 pf_default_rule;

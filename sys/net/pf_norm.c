@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.86 2004/05/09 00:16:38 dhartmei Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.87 2004/05/11 07:34:11 dhartmei Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -114,7 +114,6 @@ struct mbuf		*pf_reassemble(struct mbuf **, struct pf_fragment **,
 			    struct pf_frent *, int);
 struct mbuf		*pf_fragcache(struct mbuf **, struct ip*,
 			    struct pf_fragment **, int, int, int *);
-u_int16_t		 pf_cksum_fixup(u_int16_t, u_int16_t, u_int16_t);
 int			 pf_normalize_tcpopt(struct pf_rule *, struct mbuf *,
 			    struct tcphdr *, int);
 
@@ -981,8 +980,12 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct pfi_kif *kif, u_short *reason,
 	if (r->min_ttl && h->ip_ttl < r->min_ttl)
 		h->ip_ttl = r->min_ttl;
 
-	if (r->rule_flag & PFRULE_RANDOMID)
+	if (r->rule_flag & PFRULE_RANDOMID) {
+		u_int16_t ip_id = h->ip_id;
+
 		h->ip_id = ip_randomid();
+		h->ip_sum = pf_cksum_fixup(h->ip_sum, ip_id, h->ip_id, 0);
+	}
 	if ((r->rule_flag & (PFRULE_FRAGCROP|PFRULE_FRAGDROP)) == 0)
 		pd->flags |= PFDESC_IP_REAS;
 
@@ -1282,13 +1285,13 @@ pf_normalize_tcp(int dir, struct pfi_kif *kif, struct mbuf *m, int ipoff,
 		th->th_x2 = 0;
 		nv = *(u_int16_t *)(&th->th_ack + 1);
 
-		th->th_sum = pf_cksum_fixup(th->th_sum, ov, nv);
+		th->th_sum = pf_cksum_fixup(th->th_sum, ov, nv, 0);
 		rewrite = 1;
 	}
 
 	/* Remove urgent pointer, if TH_URG is not set */
 	if (!(flags & TH_URG) && th->th_urp) {
-		th->th_sum = pf_cksum_fixup(th->th_sum, th->th_urp, 0);
+		th->th_sum = pf_cksum_fixup(th->th_sum, th->th_urp, 0, 0);
 		th->th_urp = 0;
 		rewrite = 1;
 	}
@@ -1820,7 +1823,7 @@ pf_normalize_tcpopt(struct pf_rule *r, struct mbuf *m, struct tcphdr *th,
 			mss = (u_int16_t *)(optp + 2);
 			if ((ntohs(*mss)) > r->max_mss) {
 				th->th_sum = pf_cksum_fixup(th->th_sum,
-				    *mss, htons(r->max_mss));
+				    *mss, htons(r->max_mss), 0);
 				*mss = htons(r->max_mss);
 				rewrite = 1;
 			}

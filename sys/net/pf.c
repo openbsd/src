@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.447 2004/05/11 07:06:52 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.448 2004/05/11 07:34:11 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -112,8 +112,6 @@ struct pool		 pf_state_pl, pf_altq_pl, pf_pooladdr_pl;
 
 void			 pf_print_host(struct pf_addr *, u_int16_t, u_int8_t);
 
-u_int16_t		 pf_cksum_fixup(u_int16_t, u_int16_t, u_int16_t,
-			    u_int8_t);
 void			 pf_change_ap(struct pf_addr *, u_int16_t *,
 			    u_int16_t *, u_int16_t *, struct pf_addr *,
 			    u_int16_t, u_int8_t, sa_family_t);
