@@ -1,9 +1,9 @@
-/*	$OpenBSD: mroute6.c,v 1.2 2001/11/19 19:02:15 mpech Exp $	*/
+/*	$OpenBSD: mroute6.c,v 1.3 2002/01/17 21:34:58 mickey Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +15,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -182,7 +182,7 @@ mroute6pr(mrpaddr, mfcaddr, mifaddr)
 				       "  Packets Waits In-Mif  Out-Mifs\n");
 				banner_printed = 1;
 			}
-			
+
 			printf(" %-*.*s", WID_ORG, WID_ORG,
 			       routename6(&mfc.mf6c_origin));
 			printf(" %-*.*s", WID_GRP, WID_GRP,

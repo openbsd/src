@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx.c,v 1.8 2001/11/19 19:02:15 mpech Exp $	*/
+/*	$OpenBSD: ipx.c,v 1.9 2002/01/17 21:34:58 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)ns.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: ipx.c,v 1.8 2001/11/19 19:02:15 mpech Exp $";
+static char *rcsid = "$OpenBSD: ipx.c,v 1.9 2002/01/17 21:34:58 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -122,14 +122,14 @@ ipxprotopr(off, name)
 				(char *)&sockb, sizeof (sockb));
 		if (isspx) {
 			kread((u_long)ipxpcb.ipxp_ppcb,
-			      (char *)&spxpcb, sizeof (spxpcb));
+			    (char *)&spxpcb, sizeof (spxpcb));
 		}
 		if (first) {
 			printf("Active Internetwork Packet Exchange connections");
 			if (aflag)
 				printf(" (including servers)");
 			putchar('\n');
-                        if (Aflag)
+			if (Aflag)
 				printf("%-*.*s %-5.5s %-6.6s %-6.6s  %-*.*s %-*.*s %s\n",
 				    PLEN, PLEN, "PCB", "Proto", "Recv-Q",
 				    "Send-Q", PLEN, PLEN, "Local Address",
