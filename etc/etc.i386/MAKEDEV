@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.64 1998/09/15 10:15:31 pattonme Exp $
+#	$OpenBSD: MAKEDEV,v 1.65 1998/09/15 21:54:53 deraadt Exp $
 #	$NetBSD: MAKEDEV,v 1.40 1996/03/31 00:50:47 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -131,7 +131,7 @@ floppy)
 
 ramdisk)
 	sh MAKEDEV std lkm tty00 tty01 tty02 tty03 ttyC0 random
-	sh MAKEDEV wt0 fd0 rd0 wd0 wd1 wd2 wd3
+	sh MAKEDEV wt0 fd0 rd0 wd0 wd1 wd2 wd3 bpf0
 	sh MAKEDEV sd0 sd1 sd2 sd3 st0 st1 cd0 cd1 acd0 mcd0
 	;;
 
