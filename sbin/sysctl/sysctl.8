@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.42 2000/01/17 00:28:26 fgsch Exp $
+.\"	$OpenBSD: sysctl.8,v 1.43 2000/01/21 02:53:06 angelos Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -173,7 +173,7 @@ privilege can change the value.
 .It net.inet.ip.ipsec-invalid-life	integer	yes
 .It net.inet.icmp.maskrepl	integer	yes
 .It net.inet.icmp.bmcastecho	integer	yes
-.It net.inet.ip4.allow	integer	yes
+.It net.inet.ipip.allow	integer	yes
 .It net.inet.etherip.allow	integer	yes
 .It net.inet.tcp.rfc1323	integer	yes
 .It net.inet.tcp.keepinittime	integer	yes
@@ -189,6 +189,7 @@ privilege can change the value.
 .It net.inet.ah.enable	integer	yes
 .It net.inet.gre.allow	integer	yes
 .It net.inet.mobileip.allow	integer	yes
+.It net.inet6.ipip.allow	integer	yes
 .It net.inet6.ip6.forwarding	integer	yes
 .It net.inet6.ip6.redirect	integer	yes
 .It net.inet6.ip6.hlim	integer	yes
