@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp-proxy.8,v 1.11 2001/12/06 00:22:45 beck Exp $
+.\"	$OpenBSD: ftp-proxy.8,v 1.12 2001/12/06 00:26:32 beck Exp $
 .\"
 .\" Copyright (c) 1996-2001
 .\"	Obtuse Systems Corporation, All rights reserved.
@@ -154,12 +154,11 @@ A typical way to do this would be to use a rule such as
 .Pp
 rdr on xl0 from any to any port 21 -> 127.0.0.1 port 8081
 .Pp
-In
+in
 .Xr nat.conf 5
-(this assumes you are on a gateway where xl0 would be your inside interface).
-You would then need to configure
+(this example assumes xl0 is the interface facing an internal network).
 .Xr inetd 8
-to run ftp-proxy on the port from above
+must then be configured to run ftp-proxy on the port from above
 using
 .Pp
 8081 stream tcp nowait root /usr/libexec/ftp-proxy ftp-proxy
