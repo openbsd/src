@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.65 2004/09/23 02:05:29 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.66 2004/10/26 11:44:06 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -328,7 +328,7 @@ show_summary_msg(struct imsg *imsg)
 		if (p->state == STATE_ESTABLISHED) {
 			printf("%6u", p->stats.prefix_cnt);
 			if (p->conf.max_prefix != 0)
-				printf("/%6u", p->conf.max_prefix);
+				printf("/%u", p->conf.max_prefix);
 		} else
 			printf("%s", statenames[p->state]);
 		printf("\n");
