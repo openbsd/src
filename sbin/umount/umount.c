@@ -1,4 +1,4 @@
-/*	$OpenBSD: umount.c,v 1.11 2000/07/27 20:06:00 millert Exp $	*/
+/*	$OpenBSD: umount.c,v 1.12 2001/05/18 08:07:51 mickey Exp $	*/
 /*	$NetBSD: umount.c,v 1.16 1996/05/11 14:13:55 mycroft Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)umount.c	8.3 (Berkeley) 2/20/94";
 #else
-static char rcsid[] = "$OpenBSD: umount.c,v 1.11 2000/07/27 20:06:00 millert Exp $";
+static char rcsid[] = "$OpenBSD: umount.c,v 1.12 2001/05/18 08:07:51 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -137,7 +137,7 @@ main(argc, argv)
 		for (errs = 0; *argv != NULL; ++argv)
 			if (umountfs(*argv) != 0)
 				errs = 1;
-	exit(errs);
+	return (errs);
 }
 
 int
