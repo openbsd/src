@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.53 2004/08/05 18:44:19 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.54 2004/08/05 19:23:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -33,35 +33,6 @@
  * Therefor one thing needs to be absolutely avoided, long table walks.
  * This is achieved by heavily linking the different parts together.
  */
-
-struct rib_stats {
-	u_int64_t	path_update;
-	u_int64_t	path_get;
-	u_int64_t	path_add;
-	u_int64_t	path_remove;
-	u_int64_t	path_updateall;
-	u_int64_t	path_destroy;
-	u_int64_t	path_link;
-	u_int64_t	path_unlink;
-	u_int64_t	path_alloc;
-	u_int64_t	path_free;
-	u_int64_t	prefix_get;
-	u_int64_t	prefix_add;
-	u_int64_t	prefix_move;
-	u_int64_t	prefix_remove;
-	u_int64_t	prefix_updateall;
-	u_int64_t	prefix_link;
-	u_int64_t	prefix_unlink;
-	u_int64_t	prefix_alloc;
-	u_int64_t	prefix_free;
-	u_int64_t	nexthop_add;
-	u_int64_t	nexthop_remove;
-	u_int64_t	nexthop_update;
-	u_int64_t	nexthop_get;
-	u_int64_t	nexthop_alloc;
-	u_int64_t	nexthop_free;
-} ribstats;
-#define RIB_STAT(x)	(ribstats.x++)
 
 /* path specific functions */
 
@@ -113,8 +84,6 @@ path_update(struct rde_peer *peer, struct attr_flags *attrs,
 	struct prefix		*p;
 	struct pt_entry		*pte;
 
-	RIB_STAT(path_update);
-
 	rde_send_pftable(attrs->pftable, prefix, prefixlen, 0);
 	rde_send_pftable_commit();
 
@@ -146,8 +115,6 @@ path_get(struct aspath *aspath, struct rde_peer *peer)
 	struct aspath_head	*head;
 	struct rde_aspath	*asp;
 
-	RIB_STAT(path_get);
-
 	head = PATH_HASH(aspath);
 
 	LIST_FOREACH(asp, head, path_l) {
@@ -163,8 +130,6 @@ path_add(struct rde_peer *peer, struct attr_flags *attr)
 {
 	struct rde_aspath	*asp;
 
-	RIB_STAT(path_add);
-
 	asp = path_alloc();
 
 	attr_move(&asp->flags, attr);
@@ -178,8 +143,6 @@ path_remove(struct rde_aspath *asp)
 {
 	struct prefix	*p;
 	struct bgpd_addr addr;
-
-	RIB_STAT(path_remove);
 
 	while ((p = LIST_FIRST(&asp->prefix_h)) != NULL) {
 		/* Commit is done in peer_down() */
@@ -195,8 +158,6 @@ path_remove(struct rde_aspath *asp)
 void
 path_updateall(struct rde_aspath *asp, enum nexthop_state state)
 {
-	RIB_STAT(path_updateall);
-
 	if (rde_noevaluate())
 		/* if the decision process is turned off this is a no-op */
 		return;
@@ -208,7 +169,6 @@ path_updateall(struct rde_aspath *asp, enum nexthop_state state)
 void
 path_destroy(struct rde_aspath *asp)
 {
-	RIB_STAT(path_destroy);
 	/* path_destroy can only unlink and free empty rde_aspath */
 	ENSURE(path_empty(asp));
 
@@ -234,8 +194,6 @@ path_link(struct rde_aspath *asp, struct rde_peer *peer)
 {
 	struct aspath_head	*head;
 
-	RIB_STAT(path_link);
-
 	head = PATH_HASH(asp->flags.aspath);
 
 	LIST_INSERT_HEAD(head, asp, path_l);
@@ -248,7 +206,6 @@ path_link(struct rde_aspath *asp, struct rde_peer *peer)
 static void
 path_unlink(struct rde_aspath *asp)
 {
-	RIB_STAT(path_unlink);
 	ENSURE(path_empty(asp));
 	ENSURE(asp->prefix_cnt == 0 && asp->active_cnt == 0);
 
@@ -267,8 +224,6 @@ path_alloc(void)
 {
 	struct rde_aspath *asp;
 
-	RIB_STAT(path_alloc);
-
 	asp = calloc(1, sizeof(*asp));
 	if (asp == NULL)
 		fatal("path_alloc");
@@ -280,7 +235,6 @@ path_alloc(void)
 static void
 path_free(struct rde_aspath *asp)
 {
-	RIB_STAT(path_free);
 	ENSURE(asp->peer == NULL &&
 	    asp->flags.aspath == NULL &&
 	    TAILQ_EMPTY(&asp->flags.others));
@@ -344,8 +298,6 @@ prefix_get(struct rde_aspath *asp, struct bgpd_addr *prefix, int prefixlen)
 	struct prefix	*p;
 	struct bgpd_addr addr;
 
-	RIB_STAT(prefix_get);
-
 	LIST_FOREACH(p, &asp->prefix_h, path_l) {
 		ENSURE(p->prefix != NULL);
 		if (p->prefix->prefixlen != prefixlen)
@@ -370,8 +322,6 @@ prefix_add(struct rde_aspath *asp, struct bgpd_addr *prefix, int prefixlen)
 	struct prefix	*p;
 	struct pt_entry	*pte;
 	int		 needlink = 0;
-
-	RIB_STAT(prefix_add);
 
 	pte = pt_get(prefix, prefixlen);
 	if (pte == NULL) {
@@ -404,7 +354,6 @@ prefix_move(struct rde_aspath *asp, struct prefix *p)
 	struct prefix		*np;
 	struct rde_aspath	*oasp;
 
-	RIB_STAT(prefix_move);
 	ENSURE(asp->peer == p->peer);
 
 	/* create new prefix node */
@@ -463,8 +412,6 @@ prefix_remove(struct rde_peer *peer, struct bgpd_addr *prefix, int prefixlen)
 	struct pt_entry		*pte;
 	struct rde_aspath	*asp;
 
-	RIB_STAT(prefix_remove);
-
 	pte = pt_get(prefix, prefixlen);
 	if (pte == NULL)	/* Got a dummy withdrawn request */
 		return;
@@ -507,8 +454,6 @@ void
 prefix_updateall(struct rde_aspath *asp, enum nexthop_state state)
 {
 	struct prefix	*p;
-
-	RIB_STAT(prefix_updateall);
 
 	if (rde_noevaluate())
 		/* if the decision process is turned off this is a no-op */
@@ -579,7 +524,6 @@ prefix_network_clean(struct rde_peer *peer, time_t reloadtime)
 static void
 prefix_link(struct prefix *pref, struct pt_entry *pte, struct rde_aspath *asp)
 {
-	RIB_STAT(prefix_link);
 	ENSURE(pref->aspath == NULL &&
 	    pref->prefix == NULL);
 	ENSURE(prefix_bypeer(pte, asp->peer) == NULL);
@@ -603,8 +547,6 @@ prefix_link(struct prefix *pref, struct pt_entry *pte, struct rde_aspath *asp)
 static void
 prefix_unlink(struct prefix *pref)
 {
-	RIB_STAT(prefix_unlink);
-
 	/* make route decision */
 	LIST_REMOVE(pref, prefix_l);
 	prefix_evaluate(NULL, pref->prefix);
@@ -629,8 +571,6 @@ prefix_alloc(void)
 {
 	struct prefix *p;
 
-	RIB_STAT(prefix_alloc);
-
 	p = calloc(1, sizeof(*p));
 	if (p == NULL)
 		fatal("prefix_alloc");
@@ -641,7 +581,6 @@ prefix_alloc(void)
 static void
 prefix_free(struct prefix *pref)
 {
-	RIB_STAT(prefix_free);
 	ENSURE(pref->aspath == NULL &&
 	    pref->prefix == NULL);
 	free(pref);
@@ -745,8 +684,6 @@ nexthop_add(struct rde_aspath *asp)
 {
 	struct nexthop	*nh;
 
-	RIB_STAT(nexthop_add);
-
 	if ((nh = asp->nexthop) == NULL)
 		nh = nexthop_get(asp->flags.nexthop);
 	if (nh == NULL) {
@@ -766,8 +703,6 @@ void
 nexthop_remove(struct rde_aspath *asp)
 {
 	struct nexthop	*nh;
-
-	RIB_STAT(nexthop_remove);
 
 	LIST_REMOVE(asp, nexthop_l);
 
@@ -790,8 +725,6 @@ nexthop_get(struct in_addr nexthop)
 {
 	struct nexthop	*nh;
 
-	RIB_STAT(nexthop_get);
-
 	LIST_FOREACH(nh, NEXTHOP_HASH(nexthop), nexthop_l) {
 		if (nh->exit_nexthop.v4.s_addr == nexthop.s_addr)
 			return nh;
@@ -804,8 +737,6 @@ nexthop_update(struct kroute_nexthop *msg)
 {
 	struct nexthop		*nh;
 	struct rde_aspath	*asp;
-
-	RIB_STAT(nexthop_update);
 
 	nh = nexthop_get(msg->nexthop.v4);
 	if (nh == NULL) {
@@ -856,8 +787,6 @@ nexthop_alloc(void)
 {
 	struct nexthop *nh;
 
-	RIB_STAT(nexthop_alloc);
-
 	nh = calloc(1, sizeof(*nh));
 	if (nh == NULL)
 		fatal("nexthop_alloc");
@@ -868,7 +797,6 @@ nexthop_alloc(void)
 static void
 nexthop_free(struct nexthop *nh)
 {
-	RIB_STAT(nexthop_free);
 	ENSURE(LIST_EMPTY(&nh->path_h));
 
 	free(nh);

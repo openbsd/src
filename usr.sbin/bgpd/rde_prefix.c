@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.18 2004/08/05 18:44:19 claudio Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.19 2004/08/05 19:23:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -58,24 +58,6 @@ RB_GENERATE(pt_tree, pt_entry, pt_e, pt_prefix_cmp);
 struct pt_tree	pttable4;
 struct pt_tree	pttable6;
 
-/*
- * Statistics collector.
- * Collected to tune the prefix table. Currently only a few counters were
- * added. More to come as soon as we see where we are going.
- * TODO: add a function that dumps the stats after a specified period of time.
- */
-struct pt_stats {
-	u_int64_t		 pt_alloc;
-	u_int64_t		 pt_free;
-	u_int64_t		 pt_add;
-	u_int64_t		 pt_get;
-	u_int64_t		 pt_remove;
-	u_int64_t		 pt_lookup;
-	u_int64_t		 pt_dump;
-} ptstats;
-/* simple macros to update statistics */
-#define PT_STAT(x)	(ptstats.x++)
-
 void
 pt_init(void)
 {
@@ -125,8 +107,6 @@ pt_get(struct bgpd_addr *prefix, int prefixlen)
 	struct pt_entry6	pte6;
 	in_addr_t		addr_hbo;
 
-	PT_STAT(pt_get);
-
 	switch (prefix->af) {
 	case AF_INET:
 		if (prefixlen > 32)
@@ -158,8 +138,6 @@ pt_add(struct bgpd_addr *prefix, int prefixlen)
 	struct pt_entry4	*p4;
 	struct pt_entry6	*p6;
 	in_addr_t		 addr_hbo;
-
-	PT_STAT(pt_add);
 
 	switch (prefix->af) {
 	case AF_INET:
@@ -200,8 +178,6 @@ pt_add(struct bgpd_addr *prefix, int prefixlen)
 void
 pt_remove(struct pt_entry *pte)
 {
-	PT_STAT(pt_remove);
-
 	if (!pt_empty(pte))
 		fatalx("pt_remove: entry not empty");
 
@@ -227,7 +203,6 @@ pt_lookup(struct bgpd_addr *prefix)
 	struct pt_entry	*p;
 	int		 i;
 
-	PT_STAT(pt_lookup);
 	switch (prefix->af) {
 	case AF_INET:
 		for (i = 32; i >= 0; i--) {
@@ -311,7 +286,6 @@ pt_alloc4(void)
 {
 	struct pt_entry4	*p;
 
-	PT_STAT(pt_alloc);
 	p = calloc(1, sizeof(*p));
 	if (p == NULL)
 		fatal("pt_alloc");
@@ -323,7 +297,6 @@ pt_alloc6(void)
 {
 	struct pt_entry6	*p;
 
-	PT_STAT(pt_alloc);
 	p = calloc(1, sizeof(*p));
 	if (p == NULL)
 		fatal("pt_alloc");
@@ -333,7 +306,6 @@ pt_alloc6(void)
 static void
 pt_free(struct pt_entry *pte)
 {
-	PT_STAT(pt_free);
 	free(pte);
 }
 
