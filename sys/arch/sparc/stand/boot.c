@@ -39,6 +39,7 @@
 #include <sys/reboot.h>
 #include <a.out.h>
 #include <stand.h>
+#include <paths.h>
 
 #include "promdev.h"
 
@@ -50,7 +51,6 @@ int netif_debug;
 /*
  * Boot device is derived from ROM provided information.
  */
-#define DEFAULT_KERNEL	"netbsd"
 
 extern char		*version;
 unsigned long		esym;
@@ -73,7 +73,7 @@ main()
 
 	file = prom_bootfile;
 	if (file == 0 || *file == 0)
-		file = DEFAULT_KERNEL;
+		file = _PATH_UNIX;
 
 	for (;;) {
 		if (prom_boothow & RB_ASKNAME) {
