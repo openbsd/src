@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.31 2001/09/19 21:32:56 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.32 2001/12/06 19:27:44 millert Exp $	*/
 /*	$NetBSD: locore.s,v 1.91 1998/11/11 06:41:25 thorpej Exp $	*/
 
 /*
@@ -380,7 +380,7 @@ Lstart2:
 	movl	d1,a0@			| and physmem
 
 /* configure kernel and proc0 VA space so we can get going */
-#if defined(DDB) || NSYMS > 0
+#if defined(DDB) || NKSYMS > 0
 	RELOC(esym,a0)			| end of static kernel test/data/syms
 	movl	a0@,d5
 	jne	Lstart3
