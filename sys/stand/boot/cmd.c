@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.52 2003/11/08 19:17:28 jmc Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.53 2004/06/24 16:38:59 tom Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -94,7 +94,7 @@ read_conf(void)
 #ifndef INSECURE
 	struct stat sb;
 #endif
-	int fd, eof = 0;
+	int fd, rc = 0;
 
 	if ((fd = open(qualify(cmd.conf), 0)) < 0) {
 		if (errno != ENOENT && errno != ENXIO) {
@@ -119,18 +119,29 @@ read_conf(void)
 		cmd.cmd = NULL;
 
 		do {
-			eof = read(fd, p, 1);
-		} while (eof > 0 && *p++ != '\n');
+			rc = read(fd, p, 1);
+		} while (rc > 0 && *p++ != '\n' &&
+		    (p-cmd_buf) < sizeof(cmd_buf));
 
-		if (eof < 0)
+		if (rc < 0)
 			printf("%s: %s\n", cmd.path, strerror(errno));
-		else
-			*--p = '\0';
+		else {
+			p--;			/* Get back to last character */
 
-	} while (eof > 0 && !(eof = docmd()));
+			if (*p != '\n') {	/* Line was too long */
+				printf("%s: line too long\n", cmd.path);
+
+				/* Don't want to run the truncated command */
+				rc = -1;
+			}
+
+			*p = '\0';
+		}
+
+	} while (rc > 0 && !(rc = docmd()));
 
 	close(fd);
-	return eof;
+	return rc;
 }
 
 static int
