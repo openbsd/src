@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.21 2003/12/27 14:28:41 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.22 2003/12/27 14:42:59 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Henning Brauer <henning@openbsd.org>
@@ -89,7 +89,7 @@ typedef struct {
 %token	MRTDUMP
 %token	LOG UPDATES
 %token	<v.string>	STRING
-%type	<v.number>	number
+%type	<v.number>	number yesno
 %type	<v.string>	string
 %type	<v.addr>	address
 %%
@@ -121,6 +121,16 @@ string		: string STRING				{
 			free($2);
 		}
 		| STRING
+		;
+
+yesno		:  STRING		{
+			if (!strcmp($1, "yes"))
+				$$ = 1;
+			else if (!strcmp($1, "no"))
+				$$ = 0;
+			else
+				YYERROR;
+		}
 		;
 
 varset		: STRING '=' string		{
@@ -156,8 +166,11 @@ conf_main	: AS number		{
 		| LISTEN ON address	{
 			conf->listen_addr.sin_addr.s_addr = $3.s_addr;
 		}
-		| NO FIBUPDATE		{
-			conf->flags |= BGPD_FLAG_NO_FIB_UPDATE;
+		| FIBUPDATE yesno		{
+			if ($2 == 1)
+				conf->flags |= BGPD_FLAG_NO_FIB_UPDATE;
+			else
+				conf->flags &= ~BGPD_FLAG_NO_FIB_UPDATE;
 		}
 		| LOG UPDATES		{
 			conf->log |= BGPD_LOG_UPDATES;
@@ -322,7 +335,6 @@ lookup(char *s)
 		{ "mrtdump",		MRTDUMP},
 		{ "multihop",		MULTIHOP},
 		{ "neighbor",		NEIGHBOR},
-		{ "no",			NO},
 		{ "on",			ON},
 		{ "passive",		PASSIVE},
 		{ "remote-as",		REMOTEAS},
