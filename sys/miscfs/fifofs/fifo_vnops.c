@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.16 2003/09/23 16:51:13 millert Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.17 2004/01/28 23:53:57 millert Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -439,7 +439,7 @@ fifo_close(v)
 		if (--fip->fi_writers == 0)
 			socantrcvmore(fip->fi_readsock);
 	}
-	if (vp->v_usecount > 1)
+	if (fip->fi_readers != 0 || fip->fi_writers != 0)
 		return (0);
 	error1 = soclose(fip->fi_readsock);
 	error2 = soclose(fip->fi_writesock);
