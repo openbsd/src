@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsstat.c,v 1.14 2003/01/15 21:20:03 deraadt Exp $	*/
+/*	$OpenBSD: nfsstat.c,v 1.15 2003/01/15 21:25:44 millert Exp $	*/
 /*	$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $	*/
 
 /*
@@ -48,7 +48,7 @@ static char copyright[] =
 static char sccsid[] = "from: @(#)nfsstat.c	8.1 (Berkeley) 6/6/93";
 static char *rcsid = "$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $";
 #else
-static char *rcsid = "$OpenBSD: nfsstat.c,v 1.14 2003/01/15 21:20:03 deraadt Exp $";
+static char *rcsid = "$OpenBSD: nfsstat.c,v 1.15 2003/01/15 21:25:44 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -334,13 +334,6 @@ intpr(display)
 		       nfsstats.srvcache_idemdonehits,
 		       nfsstats.srvcache_nonidemdonehits,
 		       nfsstats.srvcache_misses);
-		printf("Server Lease Stats:\n");
-		printf("%9.9s %9.9s %9.9s\n",
-		       "Leases", "PeakL", "GLeases");
-		printf("%9d %9d %9d\n",
-		       nfsstats.srvnqnfs_leases,
-		       nfsstats.srvnqnfs_maxleases,
-		       nfsstats.srvnqnfs_getleases);
 		printf("Server Write Gathering:\n");
 		printf("%9.9s %9.9s %9.9s\n",
 		       "WriteOps", "WriteRPC", "Opsaved");
