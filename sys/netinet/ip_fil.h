@@ -6,7 +6,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * $Id: ip_fil.h,v 1.4 1996/07/18 05:00:59 dm Exp $
+ * $Id: ip_fil.h,v 1.5 1996/09/30 14:06:38 deraadt Exp $
  */
 
 #ifndef	__IP_FIL_H__
@@ -259,7 +259,8 @@ typedef	struct ipl_ci	{
 	u_char	plen;
 	u_short	rule;
 	u_long	flags:24;			/* XXX FIXME do we care about the extra bytes? */
-#if (defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199606))
+#if (defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199606)) || \
+    (defined(OpenBSD) && (OpenBSD >= 199606))
 	u_long	filler:8;			/* XXX FIXME do we care? */
 	u_char	ifname[IFNAMSIZ];
 #else
