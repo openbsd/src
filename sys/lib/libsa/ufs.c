@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs.c,v 1.6 1996/09/23 14:19:06 mickey Exp $	*/
+/*	$OpenBSD: ufs.c,v 1.7 1996/10/16 14:02:55 mickey Exp $	*/
 /*	$NetBSD: ufs.c,v 1.14.4.1 1996/06/02 12:08:45 ragge Exp $	*/
 
 /*-
@@ -69,6 +69,7 @@
 
 #include <sys/param.h>
 #include <sys/time.h>
+#include <sys/stat.h>
 #include <ufs/ffs/fs.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
