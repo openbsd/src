@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.20 2001/04/19 16:54:05 espie Exp $	*/
+/*	$OpenBSD: perform.c,v 1.21 2001/11/17 10:40:05 espie Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.20 2001/04/19 16:54:05 espie Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.21 2001/11/17 10:40:05 espie Exp $";
 #endif
 
 /*
@@ -94,6 +94,10 @@ pkg_do(char *pkg)
 
     snprintf(solve_deps, sizeof solve_deps, "pkg%s dependencies solve %s",
 	Verbose ? " -v": "", CONTENTS_FNAME);
+    if (Prefix)
+    	setenv("PKG_PREFIX", Prefix, 1);
+    else
+    	unsetenv("PKG_PREFIX");
     /* Are we coming in for a second pass, everything already extracted? */
     /* (Slave mode) */
     if (!pkg) {
