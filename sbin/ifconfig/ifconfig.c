@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.110 2004/07/03 20:24:48 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.111 2004/08/03 05:36:32 mcbride Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.110 2004/07/03 20:24:48 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.111 2004/08/03 05:36:32 mcbride Exp $";
 #endif
 #endif /* not lint */
 
@@ -201,6 +201,8 @@ void	setcarp_state(const char *, int);
 void	setpfsync_syncif(const char *, int);
 void	setpfsync_maxupd(const char *, int);
 void	unsetpfsync_syncif(const char *, int);
+void	setpfsync_syncpeer(const char *, int);
+void	unsetpfsync_syncpeer(const char *, int);
 void	pfsync_status(void);
 int	main(int, char *[]);
 int	prefix(void *val, int);
@@ -289,8 +291,10 @@ const struct	cmd {
 	{ "vhid",	NEXTARG,	0,		setcarp_vhid },
 	{ "state",	NEXTARG,	0,		setcarp_state },
 	{ "syncif",	NEXTARG,	0,		setpfsync_syncif },
-	{ "maxupd",	NEXTARG,	0,		setpfsync_maxupd },
 	{ "-syncif",	1,		0,		unsetpfsync_syncif },
+	{ "syncpeer",	NEXTARG,	0,		setpfsync_syncpeer },
+	{ "-syncpeer",	1,		0,		unsetpfsync_syncpeer },
+	{ "maxupd",	NEXTARG,	0,		setpfsync_maxupd },
 	/* giftunnel is for backward compat */
 	{ "giftunnel",  NEXTARG2,	0,		NULL, settunnel } ,
 	{ "tunnel",	NEXTARG2,	0,		NULL, settunnel } ,
@@ -2542,7 +2546,8 @@ usage(void)
 #endif
 	    "\t[vlan vlan_tag vlandev parent_iface] [-vlandev] [vhid n]\n"
 	    "\t[advbase n] [advskew n] [maxupd n] [pass passphrase]\n"
-	    "\t[state init | backup | master] [syncif iface] [-syncif]\n"
+	    "\t[state init | backup | master]\n"
+	    "\t[syncif iface] [-syncif] [syncpeer peer_address] [-syncpeer]\n"
 	    "\t[phase n] [range netrange] [timeslot timeslot_range]\n"
 	    "\t[802.2] [802.2tr] [802.3] [snap] [EtherII]\n"
 	    "       ifconfig -A | -Am | -a | -am [address_family]\n"
@@ -2848,6 +2853,56 @@ unsetpfsync_syncif(const char *val, int d)
 		err(1, "SIOCSETPFSYNC");
 }
 
+
+void
+setpfsync_syncpeer(const char *val, int d)
+{
+	struct pfsyncreq preq;
+	struct addrinfo hints, *peerres;
+	int ecode;
+	struct if_laddrreq req;
+
+	bzero((char *)&preq, sizeof(struct pfsyncreq));
+	ifr.ifr_data = (caddr_t)&preq;
+
+	if (ioctl(s, SIOCGETPFSYNC, (caddr_t)&ifr) == -1)
+		err(1, "SIOCGETPFSYNC");
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
+
+	if ((ecode = getaddrinfo(val, NULL, &hints, &peerres)) != 0)
+		errx(1, "error in parsing address string: %s",
+		    gai_strerror(ecode));
+
+	if (peerres->ai_addr->sa_family != AF_INET)
+		errx(1, "only IPv4 addresses supported for the syncpeer");
+
+	preq.pfsyncr_syncpeer.s_addr = ((struct sockaddr_in *)
+	    peerres->ai_addr)->sin_addr.s_addr;
+		
+	if (ioctl(s, SIOCSETPFSYNC, (caddr_t)&ifr) == -1)
+		err(1, "SIOCSETPFSYNC");
+}
+
+void
+unsetpfsync_syncpeer(const char *val, int d)
+{
+	struct pfsyncreq preq;
+
+	bzero((char *)&preq, sizeof(struct pfsyncreq));
+	ifr.ifr_data = (caddr_t)&preq;
+
+	if (ioctl(s, SIOCGETPFSYNC, (caddr_t)&ifr) == -1)
+		err(1, "SIOCGETPFSYNC");
+
+	preq.pfsyncr_syncpeer.s_addr = 0;
+
+	if (ioctl(s, SIOCSETPFSYNC, (caddr_t)&ifr) == -1)
+		err(1, "SIOCSETPFSYNC");
+}
+
 void
 setpfsync_maxupd(const char *val, int d)
 {
@@ -2882,9 +2937,13 @@ pfsync_status(void)
 	if (ioctl(s, SIOCGETPFSYNC, (caddr_t)&ifr) == -1)
 		return;
 
-	if (preq.pfsyncr_syncif[0] != '\0')
-		printf("\tpfsync: syncif: %s maxupd: %d\n",
-		    preq.pfsyncr_syncif, preq.pfsyncr_maxupdates);
+	if (preq.pfsyncr_syncif[0] != '\0') {
+		printf("\tpfsync: syncif: %s ", preq.pfsyncr_syncif);
+		if (preq.pfsyncr_syncpeer.s_addr != INADDR_PFSYNC_GROUP)
+			printf("syncpeer: %s ",
+			    inet_ntoa(preq.pfsyncr_syncpeer));
+		printf("maxupd: %d\n", preq.pfsyncr_maxupdates);
+	}
 }
 
 #ifdef INET6

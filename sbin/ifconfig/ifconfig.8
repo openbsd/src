@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.87 2004/07/21 14:20:57 jaredy Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.88 2004/08/03 05:36:32 mcbride Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -67,6 +67,8 @@
 .Ar host-id
 .Nm ifconfig
 .Ar pfsync-interface
+.Cm syncpeer
+.Ar peer_address
 .Cm syncif
 .Ar iface
 .Nm ifconfig
@@ -544,6 +546,21 @@ Valid states are
 .Ar backup ,
 and
 .Ar master .
+.It Cm syncpeer Ar peer_address
+If the driver is a
+.Xr pfsync 4
+pseudo-device, make the pfsync link point-to-point rather than using
+multicast to broadcast the state synchronisation messages.
+The peer_address is the IP address of the other host taking part in
+the pfsync cluster.
+With this option,
+.Xr pfsync 4
+traffic can be protected using
+.Xr ipsec 4 .
+.It Fl syncpeer
+If the driver is a
+.Xr pfsync 4
+pseudo-device, broadcast the packets using multicast.
 .It Cm syncif Ar iface
 If the driver is a
 .Xr pfsync 4
