@@ -1,4 +1,4 @@
-/*	$OpenBSD: dnssec.c,v 1.8 2001/08/16 07:04:28 jakob Exp $	*/
+/*	$OpenBSD: dnssec.c,v 1.9 2001/08/17 10:35:51 ho Exp $	*/
 
 /*
  * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
@@ -64,12 +64,15 @@ struct dns_rdata_key {
 void *
 dns_get_key (int type, struct message *msg, int *keylen)
 {
+  struct exchange *exchange = msg->exchange;
   struct rrsetinfo *rr;
-  struct hostent *hostent;
-  struct sockaddr *dst;
-  int ret, i;
   struct dns_rdata_key key_rr;
+  char name[MAXHOSTNAMELEN];
+  in_addr_t ip4;
   u_int8_t algorithm;
+  u_int8_t *id;
+  size_t id_len;
+  int ret, i;
 
   switch (type)
     {
@@ -93,62 +96,52 @@ dns_get_key (int type, struct message *msg, int *keylen)
       return 0;
     }
 
-  /* Get peer IP address */
-  msg->transport->vtbl->get_dst (msg->transport, &dst);
-  /* Get peer name and aliases */
-  switch (dst->sa_family)
+  id = exchange->initiator ? exchange->id_r : exchange->id_i;
+  id_len = exchange->initiator ? exchange->id_r_len : exchange->id_i_len;
+  memset (name, 0, MAXHOSTNAMELEN);
+
+  if (!id || id_len == 0)
     {
-    case AF_INET:
-      hostent =
-	gethostbyaddr ((char *)&((struct sockaddr_in *)dst)->sin_addr,
-		       sizeof (struct in_addr), PF_INET);
+      log_print ("dns_get_key: ID is missing");
+      return 0;
+    }
+
+  /* Exchanges (and SAs) don't carry the ID in ISAKMP form */
+  id -= ISAKMP_ID_TYPE_OFF;
+  id_len += ISAKMP_ID_TYPE_OFF - ISAKMP_ID_DATA_OFF;
+
+  switch (GET_ISAKMP_ID_TYPE (id))
+    {
+    case IPSEC_ID_IPV4_ADDR:
+      /* We want to lookup a KEY RR in the reverse zone.  */
+      if (id_len < sizeof ip4)
+	return 0;
+      memcpy (&ip4, id + ISAKMP_ID_DATA_OFF, sizeof ip4);
+      sprintf (name, "%d.%d.%d.%d.in-addr.arpa.", ip4 >> 24, 
+	       (ip4 >> 16) & 0xFF, (ip4 >> 8) & 0xFF, ip4 & 0xFF);
       break;
-    case AF_INET6:
-      hostent =
-	gethostbyaddr ((char *)&((struct sockaddr_in6 *)dst)->sin6_addr,
-		       sizeof (struct in6_addr), PF_INET6);
+
+    case IPSEC_ID_FQDN:
+      if ((id_len + 1) >= MAXHOSTNAMELEN)
+	return 0;
+      /* ID is not NULL-terminated. Add trailing dot and terminate.  */
+      memcpy (name, id + ISAKMP_ID_DATA_OFF, id_len);
+      *(name + id_len) = '.';
+      *(name + id_len + 1) = '\0';
       break;
+
+    case IPSEC_ID_USER_FQDN:
+      /* Some special handling here. */
+      break;
+
+    case IPSEC_ID_IPV6_ADDR:
     default:
-      log_print ("dns_get_key: unsupported protocol family %d",
-		 dst->sa_family);
+      /* XXX not yet */
       return 0;
     }
 
-  if (!hostent)
-    {
-#ifdef USE_DEBUG
-      char *dst_str;
-
-      if (sockaddr2text (dst, &dst_str, 0))
-	dst_str = 0;
-
-      LOG_DBG ((LOG_MISC, 30, 
-		"dns_get_key: gethostbyaddr (%s) failed: %s", 
-		dst_str ? dst_str : "<???>", hstrerror (h_errno)));
-
-      if (dst_str)
-	free (dst_str);
-#endif
-      return 0;
-    }
-
-  /* Try host official name */
-  LOG_DBG ((LOG_MISC, 50, "dns_get_key: trying KEY RR for %s", 
-	    hostent->h_name));
-  ret = getrrsetbyname (hostent->h_name, C_IN, T_KEY, 0, &rr);
-  if (ret)
-    {
-      /* Try host aliases */
-      i = 0;
-      while (hostent->h_aliases[i] && ret)
-	{
-	  LOG_DBG ((LOG_MISC, 50, "dns_get_key: trying KEY RR for alias %s", 
-		    hostent->h_aliases[i]));
-	  ret = getrrsetbyname (hostent->h_aliases[i], C_IN, T_KEY, 0,
-				      &rr);
-	  i++;
-	}
-    }
+  LOG_DBG ((LOG_MISC, 50, "dns_get_key: trying KEY RR for %s", name));
+  ret = getrrsetbyname (name, C_IN, T_KEY, 0, &rr);
 
   if (ret)
     {
