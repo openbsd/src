@@ -1,4 +1,4 @@
-.\" $OpenBSD: ifstated.8,v 1.4 2004/04/27 11:55:27 jmc Exp $
+.\" $OpenBSD: ifstated.8,v 1.5 2004/09/27 22:26:26 jaredy Exp $
 .\"
 .\" Copyright (c) 2004 Ryan McBride <mcbride@openbsd.org>
 .\"
@@ -72,6 +72,11 @@ Check config validity, then exit.
 Verbose mode.
 Use twice to further increase verbosity.
 .El
+.Pp
+Upon receiving
+.Dv SIGHUP ,
+.Nm
+reloads the configuration file.
 .Sh FILES
 .Bl -tag -width "/etc/ifstated.conf" -compact
 .It Pa /etc/ifstated.conf
