@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.81 1999/09/22 18:38:25 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.82 1999/09/29 04:45:25 beck Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -216,6 +216,23 @@ ssl		gname=bin uname=root mode=0755
 
 # ./usr/lib
 lib
+
+# ./usr/lib/apache
+apache		gname=bin uname=root mode=0755
+
+# ./usr/lib/apache/modules
+modules		gname=bin uname=root mode=0755
+# ./usr/lib/apache/modules
+..
+
+# ./usr/lib/apache/include
+include		gname=bin uname=root mode=0755
+# ./usr/lib/apache/include
+..
+
+# ./usr/lib/apache
+..
+
 # ./usr/lib
 ..
 
@@ -1895,6 +1912,11 @@ vhosts  type=dir uname=root gname=daemon mode=755
 #./www/htdocs/manual/misc
 misc  type=dir uname=root gname=daemon mode=755
 #./www/htdocs/manual/misc
+..
+
+#./www/htdocs/manual/search
+search  type=dir uname=root gname=daemon mode=755
+#./www/htdocs/manual/search
 ..
 
 #./www/htdocs/manual
