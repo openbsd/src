@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.69 2004/01/06 20:41:55 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.70 2004/01/06 20:44:15 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1046,8 +1046,14 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *peer)
 			av = peer->rbuf->wpos + n;
 			peer->stats.last_read = time(NULL);
 
+			/*
+			 * session might drop to IDLE -> buffers deallocated
+			 * we MUST check rbuf != NULL before use
+			 */
 			for (;;) {
 				if (rpos + MSGSIZE_HEADER > av)
+					break;
+				if (peer->rbuf == NULL)
 					break;
 				if (parse_header(peer, peer->rbuf->buf + rpos,
 				    &msglen, &msgtype) == -1)
@@ -1082,6 +1088,9 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *peer)
 				}
 				rpos += msglen;
 			}
+			if (peer->rbuf == NULL)
+				return (1);
+
 			if (rpos < av) {
 				left = av - rpos;
 				memcpy(&peer->rbuf->buf, peer->rbuf->buf + rpos,
