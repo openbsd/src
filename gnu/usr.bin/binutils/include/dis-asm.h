@@ -284,42 +284,17 @@ extern void generic_print_address
 extern int generic_symbol_at_address
   PARAMS ((bfd_vma, struct disassemble_info *));
 
-/* Macro to initialize a disassemble_info struct.  This should be called
-   by all applications creating such a struct.  */
+/* Method to initialize a disassemble_info struct.  This should be
+   called by all applications creating such a struct.  */
+extern void init_disassemble_info
+  PARAMS ((struct disassemble_info *, void *, fprintf_ftype));
+
+/* For compatibility with existing code.  */
 #define INIT_DISASSEMBLE_INFO(INFO, STREAM, FPRINTF_FUNC) \
-  (INFO).flavour = bfd_target_unknown_flavour, \
-  (INFO).arch = bfd_arch_unknown, \
-  (INFO).mach = 0, \
-  (INFO).insn_sets = 0, \
-  (INFO).endian = BFD_ENDIAN_UNKNOWN, \
-  (INFO).octets_per_byte = 1, \
-  INIT_DISASSEMBLE_INFO_NO_ARCH(INFO, STREAM, FPRINTF_FUNC)
-
-/* Call this macro to initialize only the internal variables for the
-   disassembler.  Architecture dependent things such as byte order, or machine
-   variant are not touched by this macro.  This makes things much easier for
-   GDB which must initialize these things separately.  */
-
+  init_disassemble_info (&(INFO), (STREAM), (fprintf_ftype) (FPRINTF_FUNC))
 #define INIT_DISASSEMBLE_INFO_NO_ARCH(INFO, STREAM, FPRINTF_FUNC) \
-  (INFO).fprintf_func = (fprintf_ftype)(FPRINTF_FUNC), \
-  (INFO).stream = (PTR)(STREAM), \
-  (INFO).section = NULL, \
-  (INFO).symbols = NULL, \
-  (INFO).num_symbols = 0, \
-  (INFO).private_data = NULL, \
-  (INFO).buffer = NULL, \
-  (INFO).buffer_vma = 0, \
-  (INFO).buffer_length = 0, \
-  (INFO).read_memory_func = buffer_read_memory, \
-  (INFO).memory_error_func = perror_memory, \
-  (INFO).print_address_func = generic_print_address, \
-  (INFO).symbol_at_address_func = generic_symbol_at_address, \
-  (INFO).flags = 0, \
-  (INFO).bytes_per_line = 0, \
-  (INFO).bytes_per_chunk = 0, \
-  (INFO).display_endian = BFD_ENDIAN_UNKNOWN, \
-  (INFO).disassembler_options = NULL, \
-  (INFO).insn_info_valid = 0
+  init_disassemble_info (&(INFO), (STREAM), (fprintf_ftype) (FPRINTF_FUNC))
+
 
 #ifdef __cplusplus
 }

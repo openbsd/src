@@ -137,7 +137,7 @@ HFILES =  	arm-opc.h 	fr30-desc.h fr30-opc.h 	frv-desc.h frv-opc.h 	h8500-opc.h 
 
 
 # C source files that correspond to .o's.
-CFILES =  	a29k-dis.c 	alpha-dis.c 	alpha-opc.c 	arc-dis.c 	arc-opc.c 	arc-ext.c 	arm-dis.c 	avr-dis.c 	cgen-asm.c 	cgen-dis.c 	cgen-opc.c 	cris-dis.c 	cris-opc.c 	d10v-dis.c 	d10v-opc.c 	d30v-dis.c 	d30v-opc.c 	dlx-dis.c 	dis-buf.c 	disassemble.c 	fr30-asm.c 	fr30-desc.c 	fr30-dis.c 	fr30-ibld.c 	fr30-opc.c 	frv-asm.c 	frv-desc.c 	frv-dis.c 	frv-ibld.c 	frv-opc.c 	h8300-dis.c 	h8500-dis.c 	hppa-dis.c 	i370-dis.c 	i370-opc.c 	i386-dis.c 	i860-dis.c 	i960-dis.c 	ia64-dis.c 	ia64-opc-a.c 	ia64-opc-b.c 	ia64-opc-f.c 	ia64-opc-i.c 	ia64-opc-m.c 	ia64-opc-d.c 	ia64-opc.c 	ia64-gen.c 	ia64-asmtab.c 	ip2k-asm.c 	ip2k-desc.c 	ip2k-dis.c 	ip2k-ibld.c 	ip2k-opc.c 	iq2000-asm.c 	iq2000-desc.c 	iq2000-dis.c 	iq2000-ibld.c 	iq2000-opc.c 	m32r-asm.c 	m32r-desc.c 	m32r-dis.c 	m32r-ibld.c 	m32r-opc.c 	m32r-opinst.c 	m68hc11-dis.c 	m68hc11-opc.c 	m68k-dis.c 	m68k-opc.c 	m88k-dis.c 	mcore-dis.c 	mips-dis.c 	mips-opc.c 	mips16-opc.c 	m10200-dis.c 	m10200-opc.c 	m10300-dis.c 	m10300-opc.c 	mmix-dis.c 	mmix-opc.c 	ns32k-dis.c 	openrisc-asm.c 	openrisc-desc.c 	openrisc-dis.c 	openrisc-ibld.c 	openrisc-opc.c 	or32-dis.c 	or32-opc.c 	pdp11-dis.c 	pdp11-opc.c 	pj-dis.c 	pj-opc.c 	ppc-dis.c 	ppc-opc.c 	s390-mkopc.c 	s390-opc.c 	s390-dis.c 	sh-dis.c 	sh64-dis.c 	sh64-opc.c 	sparc-dis.c 	sparc-opc.c 	tic30-dis.c 	tic4x-dis.c 	tic54x-dis.c 	tic54x-opc.c 	tic80-dis.c 	tic80-opc.c 	v850-dis.c 	v850-opc.c 	vax-dis.c 	w65-dis.c 	xstormy16-asm.c 	xstormy16-desc.c 	xstormy16-dis.c 	xstormy16-ibld.c 	xstormy16-opc.c 	xtensa-dis.c 	z8k-dis.c 	z8kgen.c
+CFILES =  	a29k-dis.c 	alpha-dis.c 	alpha-opc.c 	arc-dis.c 	arc-opc.c 	arc-ext.c 	arm-dis.c 	avr-dis.c 	cgen-asm.c 	cgen-dis.c 	cgen-opc.c 	cris-dis.c 	cris-opc.c 	d10v-dis.c 	d10v-opc.c 	d30v-dis.c 	d30v-opc.c 	dlx-dis.c 	dis-buf.c 	dis-init.c 	disassemble.c 	fr30-asm.c 	fr30-desc.c 	fr30-dis.c 	fr30-ibld.c 	fr30-opc.c 	frv-asm.c 	frv-desc.c 	frv-dis.c 	frv-ibld.c 	frv-opc.c 	h8300-dis.c 	h8500-dis.c 	hppa-dis.c 	i370-dis.c 	i370-opc.c 	i386-dis.c 	i860-dis.c 	i960-dis.c 	ia64-dis.c 	ia64-opc-a.c 	ia64-opc-b.c 	ia64-opc-f.c 	ia64-opc-i.c 	ia64-opc-m.c 	ia64-opc-d.c 	ia64-opc.c 	ia64-gen.c 	ia64-asmtab.c 	ip2k-asm.c 	ip2k-desc.c 	ip2k-dis.c 	ip2k-ibld.c 	ip2k-opc.c 	iq2000-asm.c 	iq2000-desc.c 	iq2000-dis.c 	iq2000-ibld.c 	iq2000-opc.c 	m32r-asm.c 	m32r-desc.c 	m32r-dis.c 	m32r-ibld.c 	m32r-opc.c 	m32r-opinst.c 	m68hc11-dis.c 	m68hc11-opc.c 	m68k-dis.c 	m68k-opc.c 	m88k-dis.c 	mcore-dis.c 	mips-dis.c 	mips-opc.c 	mips16-opc.c 	m10200-dis.c 	m10200-opc.c 	m10300-dis.c 	m10300-opc.c 	mmix-dis.c 	mmix-opc.c 	ns32k-dis.c 	openrisc-asm.c 	openrisc-desc.c 	openrisc-dis.c 	openrisc-ibld.c 	openrisc-opc.c 	or32-dis.c 	or32-opc.c 	pdp11-dis.c 	pdp11-opc.c 	pj-dis.c 	pj-opc.c 	ppc-dis.c 	ppc-opc.c 	s390-mkopc.c 	s390-opc.c 	s390-dis.c 	sh-dis.c 	sh64-dis.c 	sh64-opc.c 	sparc-dis.c 	sparc-opc.c 	tic30-dis.c 	tic4x-dis.c 	tic54x-dis.c 	tic54x-opc.c 	tic80-dis.c 	tic80-opc.c 	v850-dis.c 	v850-opc.c 	vax-dis.c 	w65-dis.c 	xstormy16-asm.c 	xstormy16-desc.c 	xstormy16-dis.c 	xstormy16-ibld.c 	xstormy16-opc.c 	xtensa-dis.c 	z8k-dis.c 	z8kgen.c
 
 
 ALL_MACHINES =  	a29k-dis.lo 	alpha-dis.lo 	alpha-opc.lo 	arc-dis.lo 	arc-opc.lo 	arc-ext.lo 	arm-dis.lo 	avr-dis.lo 	cgen-asm.lo 	cgen-dis.lo 	cgen-opc.lo 	cris-dis.lo 	cris-opc.lo 	d10v-dis.lo 	d10v-opc.lo 	d30v-dis.lo 	d30v-opc.lo 	dlx-dis.lo 	fr30-asm.lo 	fr30-desc.lo 	fr30-dis.lo 	fr30-ibld.lo 	fr30-opc.lo 	frv-asm.lo 	frv-desc.lo 	frv-dis.lo 	frv-ibld.lo 	frv-opc.lo 	h8300-dis.lo 	h8500-dis.lo 	hppa-dis.lo 	i386-dis.lo 	i370-dis.lo 	i370-opc.lo 	i860-dis.lo 	i960-dis.lo 	ia64-dis.lo 	ia64-opc.lo 	ip2k-asm.lo 	ip2k-desc.lo 	ip2k-dis.lo 	ip2k-ibld.lo 	ip2k-opc.lo 	iq2000-asm.lo 	iq2000-desc.lo 	iq2000-dis.lo 	iq2000-ibld.lo 	iq2000-opc.lo 	m32r-asm.lo 	m32r-desc.lo 	m32r-dis.lo 	m32r-ibld.lo 	m32r-opc.lo 	m32r-opinst.lo 	m68hc11-dis.lo 	m68hc11-opc.lo 	m68k-dis.lo 	m68k-opc.lo 	m88k-dis.lo 	m10200-dis.lo 	m10200-opc.lo 	m10300-dis.lo 	m10300-opc.lo 	mcore-dis.lo 	mips-dis.lo 	mips-opc.lo 	mips16-opc.lo 	mmix-dis.lo 	mmix-opc.lo 	msp430-dis.lo 	ns32k-dis.lo 	openrisc-asm.lo 	openrisc-desc.lo 	openrisc-dis.lo 	openrisc-ibld.lo 	openrisc-opc.lo 	or32-dis.lo 	or32-opc.lo 	pdp11-dis.lo 	pdp11-opc.lo 	pj-dis.lo 	pj-opc.lo 	ppc-dis.lo 	ppc-opc.lo 	s390-dis.lo 	s390-opc.lo 	sh-dis.lo 	sh64-dis.lo 	sh64-opc.lo 	sparc-dis.lo 	sparc-opc.lo 	tic30-dis.lo 	tic4x-dis.lo 	tic54x-dis.lo 	tic54x-opc.lo 	tic80-dis.lo 	tic80-opc.lo 	v850-dis.lo 	v850-opc.lo 	vax-dis.lo 	w65-dis.lo 	xstormy16-asm.lo 	xstormy16-desc.lo 	xstormy16-dis.lo 	xstormy16-ibld.lo 	xstormy16-opc.lo 	xtensa-dis.lo 	z8k-dis.lo
@@ -147,7 +147,7 @@ OFILES = @BFD_MACHINES@
 
 INCLUDES = -D_GNU_SOURCE -I. -I$(srcdir) -I../bfd -I$(INCDIR) -I$(BFDDIR) @HDEFINES@ -I$(srcdir)/../intl -I../intl
 
-libopcodes_la_SOURCES = dis-buf.c disassemble.c
+libopcodes_la_SOURCES = dis-buf.c dis-init.c disassemble.c
 libopcodes_la_DEPENDENCIES = $(OFILES)
 libopcodes_la_LIBADD = $(OFILES) @WIN32LIBADD@
 libopcodes_la_LDFLAGS = -release $(VERSION) @WIN32LDFLAGS@
@@ -203,7 +203,7 @@ libopcodes_a_SOURCES = libopcodes.a.c
 libopcodes_a_OBJECTS =  libopcodes.a.$(OBJEXT)
 LTLIBRARIES =  $(bfdlib_LTLIBRARIES)
 
-libopcodes_la_OBJECTS =  dis-buf.lo disassemble.lo
+libopcodes_la_OBJECTS =  dis-buf.lo dis-init.lo disassemble.lo
 CFLAGS = @CFLAGS@
 COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -792,6 +792,8 @@ dlx-dis.lo: dlx-dis.c sysdep.h config.h $(INCDIR)/ansidecl.h \
   $(INCDIR)/dis-asm.h $(BFD_H) $(INCDIR)/symcat.h $(INCDIR)/opcode/dlx.h
 dis-buf.lo: dis-buf.c sysdep.h config.h $(INCDIR)/ansidecl.h \
   $(INCDIR)/dis-asm.h $(BFD_H) $(INCDIR)/symcat.h opintl.h
+dis-init.lo: dis-buf.c sysdep.h config.h $(INCDIR)/ansidecl.h \
+  $(INCDIR)/dis-asm.h $(BFD_H) $(INCDIR)/symcat.h
 disassemble.lo: disassemble.c sysdep.h config.h $(INCDIR)/ansidecl.h \
   $(INCDIR)/dis-asm.h $(BFD_H) $(INCDIR)/symcat.h
 fr30-asm.lo: fr30-asm.c sysdep.h config.h $(INCDIR)/ansidecl.h \
