@@ -1,4 +1,4 @@
-/*	$OpenBSD: hppa.c,v 1.7 2003/03/14 22:18:24 mickey Exp $	*/
+/*	$OpenBSD: hppa.c,v 1.8 2003/05/30 20:53:29 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Michael Shalayeff
@@ -93,7 +93,6 @@ int
 md_getregs(struct pstate *ps, reg *regs)
 {
 	struct reg r;
-	int i;
 
 	if (process_getregs(ps, &r))
 		return (-1);
