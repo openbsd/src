@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.15 2003/04/27 11:22:52 ho Exp $	*/
+/*	$OpenBSD: aac.c,v 1.16 2003/09/02 21:20:40 fgsch Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -241,7 +241,12 @@ aac_attach(sc)
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter = &aac_switch;
 	sc->sc_link.device = &aac_dev;
-	sc->sc_link.openings = AAC_ADAP_NORM_CMD_ENTRIES; /* XXX optimal? */
+	/*
+	 * XXX Theoretically this should be AAC_ADAP_NORM_CMD_ENTRIES but
+	 * XXX in some configurations this can cause "not queued" errors.
+	 * XXX A quarter of that number has been reported to be safe.
+	 */
+	sc->sc_link.openings = AAC_ADAP_NORM_CMD_ENTRIES / 4;
 	sc->sc_link.adapter_buswidth = AAC_MAX_CONTAINERS;
 	sc->sc_link.adapter_target = AAC_MAX_CONTAINERS;
 
@@ -1570,11 +1575,12 @@ aac_exec_ccb(ccb)
 		    sizeof(struct aac_sg_entry);
 	}
 
-	aac_start(ccb);
-
-	xs->error = XS_NOERROR;
-	xs->resid = 0;
-	return (1);
+	if (aac_start(ccb) == 0) {
+		xs->error = XS_NOERROR;
+		xs->resid = 0;
+		return (1);
+	}
+	return (0);
 }
 
 /********************************************************************************
