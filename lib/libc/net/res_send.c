@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send.c,v 1.15 2003/06/02 20:18:36 millert Exp $	*/
+/*	$OpenBSD: res_send.c,v 1.16 2004/11/17 01:42:26 itojun Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_send.c,v 8.12 1996/10/08 04:51:06 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_send.c,v 1.15 2003/06/02 20:18:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: res_send.c,v 1.16 2004/11/17 01:42:26 itojun Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -139,8 +139,7 @@ static void Perror(FILE *, char *, int);
 
 	if (_resp->options & RES_DEBUG) {
 		if (getnameinfo(address, address->sa_len, abuf, sizeof(abuf),
-		    pbuf, sizeof(pbuf),
-		    NI_NUMERICHOST|NI_NUMERICSERV|NI_WITHSCOPEID) != 0) {
+		    pbuf, sizeof(pbuf), NI_NUMERICHOST | NI_NUMERICSERV) != 0) {
 			strlcpy(abuf, "?", sizeof(abuf));
 			strlcpy(pbuf, "?", sizeof(pbuf));
 		}
@@ -432,7 +431,7 @@ res_send(buf, buflen, ans, anssiz)
 
 		Dprint((_resp->options & RES_DEBUG) &&
 		       getnameinfo(nsap, salen, abuf, sizeof(abuf),
-			   NULL, 0, NI_NUMERICHOST | NI_WITHSCOPEID) == 0,
+			   NULL, 0, NI_NUMERICHOST) == 0,
 		       (stdout, ";; Querying server (# %d) address = %s\n",
 			ns + 1, abuf));
 

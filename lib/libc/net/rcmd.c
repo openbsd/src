@@ -29,7 +29,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: rcmd.c,v 1.48 2003/09/25 21:14:46 millert Exp $";
+static char *rcsid = "$OpenBSD: rcmd.c,v 1.49 2004/11/17 01:42:26 itojun Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -161,11 +161,7 @@ rcmd_af(ahost, rport, locuser, remuser, cmd, fd2p, af)
 		if (r->ai_next) {
 			int oerrno = errno;
 			char hbuf[NI_MAXHOST];
-#ifdef NI_WITHSCOPEID
-			const int niflags = NI_NUMERICHOST | NI_WITHSCOPEID;
-#else
 			const int niflags = NI_NUMERICHOST;
-#endif
 
 			hbuf[0] = '\0';
 			if (getnameinfo(r->ai_addr, r->ai_addrlen,
@@ -610,9 +606,6 @@ bail:
 /*
  * Returns "true" if match, 0 if no match.  If we do not find any
  * semblance of an A->PTR->A loop, allow a simple #.#.#.# match to work.
- *
- * NI_WITHSCOPEID is useful for comparing sin6_scope_id portion
- * if af == AF_INET6.
  */
 static int
 __icheckhost(raddr, salen, lhost)
@@ -623,11 +616,7 @@ __icheckhost(raddr, salen, lhost)
 	struct addrinfo hints, *res, *r;
 	char h1[NI_MAXHOST], h2[NI_MAXHOST];
 	int error;
-#ifdef NI_WITHSCOPEID
-	const int niflags = NI_NUMERICHOST | NI_WITHSCOPEID;
-#else
 	const int niflags = NI_NUMERICHOST;
-#endif
 
 	h1[0] = '\0';
 	if (getnameinfo(raddr, salen, h1, sizeof(h1), NULL, 0,
@@ -666,9 +655,6 @@ __icheckhost(raddr, salen, lhost)
  * Return the hostname associated with the supplied address.
  * Do a reverse lookup as well for security. If a loop cannot
  * be found, pack the result of inet_ntoa() into the string.
- *
- * NI_WITHSCOPEID is useful for comparing sin6_scope_id portion
- * if af == AF_INET6.
  */
 static char *
 __gethostloop(raddr, salen)
@@ -679,11 +665,7 @@ __gethostloop(raddr, salen)
 	char h1[NI_MAXHOST], h2[NI_MAXHOST];
 	struct addrinfo hints, *res, *r;
 	int error;
-#ifdef NI_WITHSCOPEID
-	const int niflags = NI_NUMERICHOST | NI_WITHSCOPEID;
-#else
 	const int niflags = NI_NUMERICHOST;
-#endif
 
 	h1[0] = remotehost[0] = '\0';
 	if (getnameinfo(raddr, salen, remotehost, sizeof(remotehost),

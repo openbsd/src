@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.38 2004/10/14 15:20:56 jaredy Exp $	*/
+/*	$OpenBSD: show.c,v 1.39 2004/11/17 01:47:20 itojun Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static const char rcsid[] = "$OpenBSD: show.c,v 1.38 2004/10/14 15:20:56 jaredy Exp $";
+static const char rcsid[] = "$OpenBSD: show.c,v 1.39 2004/11/17 01:47:20 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -452,11 +452,7 @@ routename6(struct sockaddr_in6 *sin6)
 {
 	int	 niflags;
 
-#ifdef NI_WITHSCOPEID
-	niflags = NI_WITHSCOPEID;
-#else
 	niflags = 0;
-#endif
 	if (nflag)
 		niflags |= NI_NUMERICHOST;
 	else
@@ -519,11 +515,7 @@ netname6(struct sockaddr_in6 *sa6, struct sockaddr_in6 *mask)
 	int i, lim, flag, error;
 	char hbuf[NI_MAXHOST];
 
-#ifdef NI_WITHSCOPEID
-	flag = NI_WITHSCOPEID;
-#else
 	flag = 0;
-#endif
 
 	sin6 = *sa6;
 

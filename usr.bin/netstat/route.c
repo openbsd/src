@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.65 2004/10/15 20:16:12 henning Exp $	*/
+/*	$OpenBSD: route.c,v 1.66 2004/11/17 01:47:20 itojun Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.65 2004/10/15 20:16:12 henning Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.66 2004/11/17 01:47:20 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -747,11 +747,7 @@ netname6(struct sockaddr_in6 *sa6, struct in6_addr *mask)
 	int masklen, final = 0, illegal = 0;
 	int i;
 	char hbuf[NI_MAXHOST];
-#ifdef NI_WITHSCOPEID
-	int flag = NI_WITHSCOPEID;
-#else
 	int flag = 0;
-#endif
 	int error;
 
 	sin6 = *sa6;
@@ -837,11 +833,8 @@ char *
 routename6(struct sockaddr_in6 *sa6)
 {
 	static char line[NI_MAXHOST];
-#ifdef NI_WITHSCOPEID
-	const int niflag = NI_NUMERICHOST | NI_WITHSCOPEID;
-#else
 	const int niflag = NI_NUMERICHOST;
-#endif
+
 	if (getnameinfo((struct sockaddr *)sa6, sa6->sin6_len,
 	    line, sizeof(line), NULL, 0, niflag) != 0)
 		strlcpy(line, "", sizeof line);

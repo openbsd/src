@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.46 2003/12/28 21:53:01 otto Exp $	*/
+/*	$OpenBSD: commands.c,v 1.47 2004/11/17 01:47:20 itojun Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -2274,11 +2274,7 @@ tn(argc, argv)
 #endif
     char *cmd, *hostp = 0, *portp = 0, *user = 0, *aliasp = 0;
     int retry;
-#ifdef NI_WITHSCOPEID
-    const int niflags = NI_NUMERICHOST | NI_WITHSCOPEID;
-#else
     const int niflags = NI_NUMERICHOST;
-#endif
 
     /* clear the socket address prior to use */
     memset((char *)&sin, 0, sizeof(sin));

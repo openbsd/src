@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.118 2004/11/06 00:54:19 reyk Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.119 2004/11/17 01:47:20 itojun Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.118 2004/11/06 00:54:19 reyk Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.119 2004/11/17 01:47:20 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -1867,11 +1867,7 @@ phys_status(int force)
 	char psrcaddr[NI_MAXHOST];
 	char pdstaddr[NI_MAXHOST];
 	const char *ver = "";
-#ifdef NI_WITHSCOPEID
-	const int niflag = NI_NUMERICHOST | NI_WITHSCOPEID;
-#else /* NI_WITHSCOPEID */
 	const int niflag = NI_NUMERICHOST;
-#endif /* NI_WITHSCOPEID */
 	struct if_laddrreq req;
 
 	psrcaddr[0] = pdstaddr[0] = '\0';
@@ -2132,11 +2128,7 @@ in6_alias(struct in6_ifreq *creq)
 	struct	in6_ifreq ifr6;		/* shadows file static variable */
 	u_int32_t scopeid;
 	char hbuf[NI_MAXHOST];
-#ifdef NI_WITHSCOPEID
-	const int niflag = NI_NUMERICHOST | NI_WITHSCOPEID;
-#else /* NI_WITHSCOPEID */
 	const int niflag = NI_NUMERICHOST;
-#endif /* NI_WITHSCOPEID */
 
 	/* Get the non-alias address for this interface. */
 	getsock(AF_INET6);
