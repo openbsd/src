@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.11 1997/03/02 09:46:43 tholo Exp $	*/
+/*	$OpenBSD: extern.h,v 1.12 1997/04/05 22:36:12 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1996/03/26 23:54:16 mrg Exp $	*/
 
 /*-
@@ -232,6 +232,7 @@ extern int pmtime;
 extern int nodirs;
 extern int pmode;
 extern int pids;
+extern int rmleadslash;
 extern int exit_val;
 extern int docrc;
 extern char *dirptr;

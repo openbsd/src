@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.8 1997/04/02 00:31:58 millert Exp $	*/
+/*	$OpenBSD: tar.c,v 1.9 1997/04/05 22:36:19 millert Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: tar.c,v 1.8 1997/04/02 00:31:58 millert Exp $";
+static char rcsid[] = "$OpenBSD: tar.c,v 1.9 1997/04/05 22:36:19 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -636,7 +636,7 @@ tar_wr(arcn)
 	 */
 	hd = (HD_TAR *)hdblk;
 	zf_strncpy(hd->name, arcn->name, sizeof(hd->name) - 1);
-	arcn->name[sizeof(hd->name) - 1] = '\0';
+	hd->name[sizeof(hd->name) - 1] = '\0';
 	arcn->pad = 0;
 
 	if (arcn->type == PAX_DIR) {

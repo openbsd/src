@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: tar.1,v 1.7 1997/04/04 20:54:52 millert Exp $
+.\"	$OpenBSD: tar.1,v 1.8 1997/04/05 22:36:18 millert Exp $
 .\"
 .Dd June 11, 1996
 .Dt TAR 1
@@ -36,8 +36,8 @@
 .Nm tar
 .Nd tape archiver
 .Sh SYNOPSIS
-.Nm tar
-.No [-]{crtux}[befhmopvwzHLPXZ014578]
+.Nm
+.No [-]{crtux}[befhmopvwzHLPSXZ014578]
 .Op Ar archive
 .Op Ar blocksize
 .\" XXX how to do this right?
@@ -51,7 +51,7 @@
 .Op Ar file2...
 .Sh DESCRIPTION
 The
-.Nm tar
+.Nm
 command creates, adds files to, or extracts files from an
 archive file in \*Qtar\*U format.  A tar archive is often
 stored on a magnetic tape, but can be a floppy or a regular
@@ -85,7 +85,7 @@ flags may be used:
 .Bl -tag -width Ar
 .It Fl b Ar "blocking factor"
 Set blocking factor to use for the archive,
-.Nm tar
+.Nm
 uses 512 byte blocks.  The default is 20, the maximum is 63.
 .It Fl e
 Stop after first error.
@@ -99,7 +99,7 @@ or directories.
 Do not preserve modification time.
 .It Fl o
 Don't write directory information that the older (V7) style
-.Nm tar
+.Nm
 is enable to decode.
 .It Fl p
 Preserve user id, group id, file mode, access and modification
@@ -155,7 +155,7 @@ are not selected and will be skipped.
 Verbose operation mode.
 .It Fl w
 Interactively rename files.  This option causes
-.Nm tar
+.Nm
 to prompt the user for the filename to use when storing or
 extracting files in an archive.
 .It Fl z
@@ -171,6 +171,9 @@ Follow symlinks given on command line only.
 Follow all symlinks.
 .It Fl P
 Do not follow any symlinks.
+.It Fl S
+Do not strip leading slashes (``/'') from pathnames.
+The default is to strip leading slashes.
 .It Fl X
 Do not cross mount points in the file system.
 .It Fl Z
@@ -192,7 +195,7 @@ The default archive name
 .Sh AUTHOR
 Keith Muller at the University of California, San Diego
 .Sh ERRORS
-.Nm tar
+.Nm
 will exit with one of the following values:
 .Bl -tag -width 2n
 .It 0
@@ -202,7 +205,7 @@ An error occured.
 .El
 .Pp
 Whenever
-.Nm tar
+.Nm
 cannot create a file or a link when extracting an archive or cannot
 find a file while writing an archive, or cannot preserve the user
 ID, group ID, file mode or access and modification times when the
@@ -210,14 +213,14 @@ ID, group ID, file mode or access and modification times when the
 options is specified, a diagnostic message is written to standard
 error and a non-zero exit value will be returned, but processing
 will continue.  In the case where
-.Nm tar
+.Nm
 cannot create a link to a file,
-.Nm tar
+.Nm
 will not create a second copy of the file.
 .Pp
 If the extraction of a file from an archive is prematurely terminated
 by a signal or error,
-.Nm tar
+.Nm
 may have only partially extracted the file the user wanted.
 Additionally, the file modes of extracted files and directories may
 have incorrect file bits, and the modification and access times may
@@ -225,6 +228,6 @@ be wrong.
 .Pp
 If the creation of an archive is prematurely terminated by a signal
 or error,
-.Nm tar
+.Nm
 may have only partially created the archive which may violate the
 specific archive format specification.

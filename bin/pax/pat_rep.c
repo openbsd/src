@@ -1,4 +1,4 @@
-/*	$OpenBSD: pat_rep.c,v 1.7 1997/03/30 08:28:10 millert Exp $	*/
+/*	$OpenBSD: pat_rep.c,v 1.8 1997/04/05 22:36:15 millert Exp $	*/
 /*	$NetBSD: pat_rep.c,v 1.4 1995/03/21 09:07:33 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)pat_rep.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: pat_rep.c,v 1.7 1997/03/30 08:28:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: pat_rep.c,v 1.8 1997/04/05 22:36:15 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -670,6 +670,38 @@ mod_name(arcn)
 #endif
 {
 	register int res = 0;
+
+	/*
+	 * Strip off leading '/' if appropriate.
+	 * Currently, this option is only set for the tar format.
+	 */
+	if (rmleadslash && arcn->name[0] == '/') {
+		if (arcn->name[1] == '\0') {
+			arcn->name[0] = '.';
+		} else {
+			(void)memmove(arcn->name, &arcn->name[1],
+			    strlen(arcn->name));
+			arcn->nlen--;
+		}
+		if (rmleadslash < 2) {
+			rmleadslash = 2;
+			paxwarn(0, "Removing leading / from absolute path names in the archive");
+		}
+	}
+	if (rmleadslash && arcn->ln_name[0] == '/' &&
+	    (arcn->type == PAX_HLK || arcn->type == PAX_HRG)) {
+		if (arcn->ln_name[1] == '\0') {
+			arcn->ln_name[0] = '.';
+		} else {
+			(void)memmove(arcn->ln_name, &arcn->ln_name[1],
+			    strlen(arcn->ln_name));
+			arcn->ln_nlen--;
+		}
+		if (rmleadslash < 2) {
+			rmleadslash = 2;
+			paxwarn(0, "Removing leading / from absolute path names in the archive");
+		}
+	}
 
 	/*
 	 * IMPORTANT: We have a problem. what do we do with symlinks?
