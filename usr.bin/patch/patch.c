@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.31 2003/07/29 20:10:17 millert Exp $	*/
+/*	$OpenBSD: patch.c,v 1.32 2003/07/30 16:45:44 millert Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: patch.c,v 1.31 2003/07/29 20:10:17 millert Exp $";
+static const char rcsid[] = "$OpenBSD: patch.c,v 1.32 2003/07/30 16:45:44 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -436,7 +436,7 @@ reinitialize_almost_everything(void)
 static void
 get_some_switches(void)
 {
-	const char *options = "b::B:cCd:D:eEfF:lnNo:p::r:RstuvV:x:z:";
+	const char *options = "b::B:cCd:D:eEfF:i:lnNo:p::r:RstuvV:x:z:";
 	static struct option longopts[] = {
 		{"backup",		no_argument,		0,	'b'},
 		{"batch",		no_argument,		0,	't'},
@@ -449,6 +449,7 @@ get_some_switches(void)
 		{"forward",		no_argument,		0,	'N'},
 		{"fuzz",		required_argument,	0,	'F'},
 		{"ifdef",		required_argument,	0,	'D'},
+		{"input",		required_argument,	0,	'i'},
 		{"ignore-whitespace",	no_argument,		0,	'l'},
 		{"normal",		no_argument,		0,	'n'},
 		{"output",		required_argument,	0,	'o'},
@@ -526,6 +527,11 @@ get_some_switches(void)
 		case 'F':
 			maxfuzz = atoi(optarg);
 			break;
+		case 'i':
+			if (++filec == MAXFILEC)
+				fatal("too many file arguments\n");
+			filearg[filec] = savestr(optarg);
+			break;
 		case 'l':
 			canonicalize = TRUE;
 			break;
@@ -578,11 +584,15 @@ get_some_switches(void)
 	Argc -= optind;
 	Argv += optind;
 
-	while (Argc > 0) {
-		if (filec == MAXFILEC)
-			fatal("too many file arguments\n");
-		filearg[filec++] = savestr(*Argv++);
+	if (Argc > 0) {
+		filearg[0] = savestr(*Argv++);
 		Argc--;
+		while (Argc > 0) {
+			if (++filec == MAXFILEC)
+				fatal("too many file arguments\n");
+			filearg[filec] = savestr(*Argv++);
+			Argc--;
+		}
 	}
 }
 
@@ -591,8 +601,8 @@ usage(void)
 {
 	fprintf(stderr,
 "usage: patch [-bcCeEflnNRstuv] [-B backup-prefix] [-d directory] [-D symbol]\n"
-"             [-Fmax-fuzz] [-o out-file] [-p[strip-count]] [-r rej-name]\n"
-"             [-V {numbered,existing,simple}] [-z backup-ext]\n"
+"             [-Fmax-fuzz] [-i patchfile] [-o out-file] [-p[strip-count]]\n"
+"             [-r rej-name] [-V {numbered,existing,simple}] [-z backup-ext]\n"
 "             [origfile [patchfile]]\n");
 	my_exit(EXIT_SUCCESS);
 }

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: patch.1,v 1.14 2003/07/28 18:34:36 otto Exp $
+.\"	$OpenBSD: patch.1,v 1.15 2003/07/30 16:45:44 millert Exp $
 .\" Copyright 1986, Larry Wall
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -274,6 +274,10 @@ to ignore up to that many lines in looking for places to install a hunk.
 Note that a larger fuzz factor increases the odds of a faulty patch.
 The default fuzz factor is 2, and it may not be set to more than
 the number of lines of context in the context diff, ordinarily 3.
+.It Fl i , Fl Fl input
+Causes the next argument to be interpreted as the input file name
+(i.e. a patchfile).
+This option may be specified multiple times.
 .It Fl l , Fl Fl ignore-whitespace
 Causes the pattern matching to be done loosely, in case the tabs and
 spaces have been munged in your input file.
