@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_obio.c,v 1.13 2003/06/11 22:16:34 drahn Exp $	*/
+/*	$OpenBSD: wdc_obio.c,v 1.14 2003/07/19 14:45:41 drahn Exp $	*/
 /*	$NetBSD: wdc_obio.c,v 1.15 2001/07/25 20:26:33 bouyer Exp $	*/
 
 /*-
@@ -538,11 +538,11 @@ wdc_obio_ata6_adjust_timing(struct channel_softc *chp)
 }
 
 int
-wdc_obio_dma_init(v, channel, drive, databuf, datalen, read)
+wdc_obio_dma_init(v, channel, drive, databuf, datalen, flags)
 	void *v;
 	void *databuf;
 	size_t datalen;
-	int read;
+	int flags;
 {
 	struct wdc_obio_softc *sc = v;
 	dbdma_command_t *cmdp;
@@ -554,11 +554,12 @@ wdc_obio_dma_init(v, channel, drive, databuf, datalen, read)
 		return (error);
 
 	cmdp = sc->sc_dmacmd;
-	cmd = read ? DBDMA_CMD_IN_MORE : DBDMA_CMD_OUT_MORE;
+	cmd = (flags & WDC_DMA_READ) ? DBDMA_CMD_IN_MORE : DBDMA_CMD_OUT_MORE;
 
 	for (i = 0; i < sc->sc_dmamap->dm_nsegs; i++, cmdp++) {
 		if (i + 1 == sc->sc_dmamap->dm_nsegs)
-			cmd = read ? DBDMA_CMD_IN_LAST : DBDMA_CMD_OUT_LAST;
+			cmd = (flags & WDC_DMA_READ) ? DBDMA_CMD_IN_LAST :
+			    DBDMA_CMD_OUT_LAST;
 		DBDMA_BUILD(cmdp, cmd, 0, sc->sc_dmamap->dm_segs[i].ds_len,
 		    sc->sc_dmamap->dm_segs[i].ds_addr,
 		    DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
