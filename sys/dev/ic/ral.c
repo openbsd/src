@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.24 2005/03/11 20:14:59 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.25 2005/03/11 20:19:11 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -2188,7 +2188,8 @@ ral_set_chan(struct ral_softc *sc, struct ieee80211_channel *c)
 		break;
 	}
 
-	if (ic->ic_state != IEEE80211_S_SCAN) {
+	if (ic->ic_opmode != IEEE80211_M_MONITOR &&
+	    ic->ic_state != IEEE80211_S_SCAN) {
 		/* set Japan filter bit for channel 14 */
 		tmp = ral_bbp_read(sc, 70);
 
