@@ -23,7 +23,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/addrtoname.c,v 1.11 2000/02/07 13:35:53 itojun Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/addrtoname.c,v 1.12 2000/04/26 21:35:37 jakob Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -49,9 +49,6 @@ struct rtentry;
 #include <netdb.h>
 #include <pcap.h>
 #include <pcap-namedb.h>
-#ifdef HAVE_MALLOC_H
-#include <malloc.h>
-#endif
 #ifdef HAVE_MEMORY_H
 #include <memory.h>
 #endif
@@ -105,11 +102,13 @@ struct enamemem {
 	u_short e_addr2;
 	char *e_name;
 	u_char *e_nsap;			/* used only for nsaptable[] */
+#define e_bs e_nsap			/* for bytestringtable */
 	struct enamemem *e_nxt;
 };
 
 struct enamemem enametable[HASHNAMESIZE];
 struct enamemem nsaptable[HASHNAMESIZE];
+struct enamemem bytestringtable[HASHNAMESIZE];
 
 struct protoidmem {
 	u_int32_t p_oui;
@@ -195,7 +194,7 @@ getname(const u_char *ap)
 		break;
 
 	case 2:
-#if BYTE_ORDER == BIG_ENDIAN
+#ifdef WORDS_BIGENDIAN
 		addr = ((u_int32_t)*(u_short *)ap << 16) |
 			(u_int32_t)*(u_short *)(ap + 2);
 #else
@@ -205,7 +204,7 @@ getname(const u_char *ap)
 		break;
 
 	default:
-#if BYTE_ORDER == BIG_ENDIAN
+#ifdef WORDS_BIGENDIAN
 		addr = ((u_int32_t)ap[0] << 24) |
 			((u_int32_t)ap[1] << 16) |
 			((u_int32_t)ap[2] << 8) |
@@ -361,6 +360,51 @@ lookup_emem(const u_char *ep)
 	return tp;
 }
 
+/*
+ * Find the hash node that corresponds to the bytestring 'bs' 
+ * with length 'nlen'
+ */
+
+static inline struct enamemem *
+lookup_bytestring(register const u_char *bs, const int nlen)
+{
+	struct enamemem *tp;
+	register u_int i, j, k;
+
+	if (nlen >= 6) {
+		k = (bs[0] << 8) | bs[1];
+		j = (bs[2] << 8) | bs[3];
+		i = (bs[4] << 8) | bs[5];
+	} else if (nlen >= 4) {
+		k = (bs[0] << 8) | bs[1];
+		j = (bs[2] << 8) | bs[3];
+		i = 0;
+	} else
+		i = j = k = 0;
+
+	tp = &bytestringtable[(i ^ j) & (HASHNAMESIZE-1)];
+	while (tp->e_nxt)
+		if (tp->e_addr0 == i &&
+		    tp->e_addr1 == j &&
+		    tp->e_addr2 == k &&
+		    bcmp((char *)bs, (char *)(tp->e_bs), nlen) == 0)
+			return tp;
+		else
+			tp = tp->e_nxt;
+
+	tp->e_addr0 = i;
+	tp->e_addr1 = j;
+	tp->e_addr2 = k;
+
+	tp->e_bs = (u_char *) calloc(1, nlen + 1);
+	bcopy(bs, tp->e_bs, nlen);
+	tp->e_nxt = (struct enamemem *)calloc(1, sizeof(*tp));
+	if (tp->e_nxt == NULL)
+		error("lookup_bytestring: calloc");
+
+	return tp;
+}
+
 /* Find the hash node that corresponds the NSAP 'nsap' */
 
 static inline struct enamemem *
@@ -445,7 +489,7 @@ etheraddr_string(register const u_char *ep)
 		return (tp->e_name);
 #ifdef HAVE_ETHER_NTOHOST
 	if (!nflag) {
-		char buf[128];
+		char buf[MAXHOSTNAMELEN + 1];
 		if (ether_ntohost(buf, (struct ether_addr *)ep) == 0) {
 			tp->e_name = savestr(buf);
 			return (tp->e_name);
@@ -464,6 +508,36 @@ etheraddr_string(register const u_char *ep)
 	}
 	*cp = '\0';
 	tp->e_name = savestr(buf);
+	return (tp->e_name);
+}
+
+char *
+linkaddr_string(const u_char *ep, const int len)
+{
+	register u_int i, j;
+	register char *cp;
+	register struct enamemem *tp;
+
+	if (len == 6)	/* XXX not totally correct... */
+		return etheraddr_string(ep);
+	
+	tp = lookup_bytestring(ep, len);
+	if (tp->e_name)
+		return (tp->e_name);
+
+	tp->e_name = cp = (char *)malloc(len*3);
+	if (tp->e_name == NULL)
+		error("linkaddr_string: malloc");
+	if ((j = *ep >> 4) != 0)
+		*cp++ = hex[j];
+	*cp++ = hex[*ep++ & 0xf];
+	for (i = len-1; i > 0 ; --i) {
+		*cp++ = ':';
+		if ((j = *ep >> 4) != 0)
+			*cp++ = hex[j];
+		*cp++ = hex[*ep++ & 0xf];
+	}
+	*cp = '\0';
 	return (tp->e_name);
 }
 
@@ -713,7 +787,7 @@ init_etherarray(void)
 	register struct etherlist *el;
 	register struct enamemem *tp;
 #ifdef HAVE_ETHER_NTOHOST
-	char name[256];
+	char name[MAXHOSTNAMELEN + 1];
 #else
 	register struct pcap_etherent *ep;
 	register FILE *fp;

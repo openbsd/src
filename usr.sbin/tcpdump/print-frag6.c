@@ -1,5 +1,7 @@
+/*	$OpenBSD: print-frag6.c,v 1.1 2000/04/26 21:35:40 jakob Exp $	*/
+
 /*
- * Copyright (c) 1994, 1995, 1996
+ * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,82 +19,84 @@
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- *
- * Format and print NETBIOS packets.
- * Contributed by Brad Parker (brad@fcr.com).
  */
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-netbios.c,v 1.3 2000/04/26 21:35:41 jakob Exp $";
+    "@(#) /master/usr.sbin/tcpdump/tcpdump/print-icmp.c,v 2.1 1995/02/03 18:14:42 polk Exp (LBL)";
 #endif
 
+#ifdef INET6
+
 #include <sys/param.h>
+#include <sys/time.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 
+#include <net/if.h>
+
 #include <netinet/in.h>
+#include <netinet/if_ether.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
+#include <netinet/ip_icmp.h>
 #include <netinet/ip_var.h>
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
 #include <netinet/tcp.h>
 
-#ifdef __STDC__
-#include <stdlib.h>
-#endif
 #include <stdio.h>
-#include <string.h>
+
+#include <netinet/ip6.h>
 
 #include "interface.h"
 #include "addrtoname.h"
-#include "netbios.h"
-#include "extract.h"
 
-/*
- * Print NETBIOS packets.
- */
-void
-netbios_print(struct p8022Hdr *nb, u_int length)
+int
+frag6_print(register const u_char *bp, register const u_char *bp2)
 {
-	if (length < p8022Size) {
-		(void)printf(" truncated-netbios %d", length);
-		return;
-	}
+	register const struct ip6_frag *dp;
+	register const struct ip6_hdr *ip6;
+	register const u_char *ep;
 
-	if (nb->flags == UI) {
-	    (void)printf("802.1 UI ");
-	} else {
-	    (void)printf("802.1 CONN ");
-	}
-
-	if ((u_char *)(nb + 1) > snapend) {
-		printf(" [|netbios]");
-		return;
-	}
-
-/*
-	netbios_decode(nb, (u_char *)nb + p8022Size, length - p8022Size);
-*/
-}
-
-#ifdef never
-	(void)printf("%s.%d > ",
-		     ipxaddr_string(EXTRACT_32BITS(ipx->srcNet), ipx->srcNode),
-		     EXTRACT_16BITS(ipx->srcSkt));
-
-	(void)printf("%s.%d:",
-		     ipxaddr_string(EXTRACT_32BITS(ipx->dstNet), ipx->dstNode),
-		     EXTRACT_16BITS(ipx->dstSkt));
-
-	if ((u_char *)(ipx + 1) > snapend) {
-		printf(" [|ipx]");
-		return;
-	}
-
-	/* take length from ipx header */
-	length = EXTRACT_16BITS(&ipx->length);
-
-	ipx_decode(ipx, (u_char *)ipx + ipxSize, length - ipxSize);
+#if 0
+#define TCHECK(var) if ((u_char *)&(var) >= ep - sizeof(var)) goto trunc
 #endif
 
+	dp = (struct ip6_frag *)bp;
+	ip6 = (struct ip6_hdr *)bp2;
+
+	/* 'ep' points to the end of avaible data. */
+	ep = snapend;
+
+	TCHECK(dp->ip6f_offlg);
+
+	if (vflag) {
+		printf("frag (0x%08x:%d|%ld)",
+		       ntohl(dp->ip6f_ident),
+		       ntohs(dp->ip6f_offlg & IP6F_OFF_MASK),
+		       sizeof(struct ip6_hdr) + ntohs(ip6->ip6_plen) -
+			       (long)(bp - bp2) - sizeof(struct ip6_frag));
+	} else {
+		printf("frag (%d|%ld)",
+		       ntohs(dp->ip6f_offlg & IP6F_OFF_MASK),
+		       sizeof(struct ip6_hdr) + ntohs(ip6->ip6_plen) -
+			       (long)(bp - bp2) - sizeof(struct ip6_frag));
+	}
+
+#if 0
+	/* it is meaningless to decode non-first fragment */
+	if (ntohs(dp->ip6f_offlg & IP6F_OFF_MASK) != 0)
+		return 65535;
+	else
+#endif
+	{
+		fputs(" ", stdout);
+		return sizeof(struct ip6_frag);
+	}
+trunc:
+	fputs("[|frag]", stdout);
+	return 65535;
+#undef TCHECK
+}
+#endif /* INET6 */

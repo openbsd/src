@@ -24,7 +24,7 @@ static const char copyright[] =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.16 2000/03/26 05:24:25 ericj Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.17 2000/04/26 21:35:44 jakob Exp $ (LBL)";
 #endif
 
 /*
@@ -282,6 +282,9 @@ main(int argc, char **argv)
 			usage();
 			/* NOTREACHED */
 		}
+
+	if (aflag && nflag)
+		error("-a and -n options are incompatible");
 
 	if (tflag > 0)
 		thiszone = gmt2local(0);

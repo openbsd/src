@@ -21,7 +21,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-udp.c,v 1.11 2000/01/16 10:54:58 jakob Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-udp.c,v 1.12 2000/04/26 21:35:43 jakob Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -50,6 +50,10 @@ static const char rcsid[] =
 #include <rpc/rpc.h>
 
 #include <stdio.h>
+
+#ifdef INET6
+#include <netinet/ip6.h>
+#endif
 
 #include "interface.h"
 #include "addrtoname.h"
@@ -284,6 +288,53 @@ rtcp_print(const u_char *hdr, const u_char *ep)
 	return (hdr + len);
 }
 
+static int udp_cksum(register const struct ip *ip,
+		     register const struct udphdr *up,
+		     register int len)
+{
+	int i, tlen;
+	union phu {
+		struct phdr {
+			u_int32_t src;
+			u_int32_t dst;
+			u_char mbz;
+			u_char proto;
+			u_int16_t len;
+		} ph;
+		u_int16_t pa[6];
+	} phu;
+	register const u_int16_t *sp;
+	u_int32_t sum;
+	tlen = ntohs(ip->ip_len) - ((const char *)up-(const char*)ip);
+
+	/* pseudo-header.. */
+	phu.ph.len = htons(tlen);
+	phu.ph.mbz = 0;
+	phu.ph.proto = ip->ip_p;
+	memcpy(&phu.ph.src, &ip->ip_src.s_addr, sizeof(u_int32_t));
+	memcpy(&phu.ph.dst, &ip->ip_dst.s_addr, sizeof(u_int32_t));
+
+	sp = &phu.pa[0];
+	sum = sp[0]+sp[1]+sp[2]+sp[3]+sp[4]+sp[5];
+
+	sp = (const u_int16_t *)up;
+
+	for (i=0; i<(tlen&~1); i+= 2)
+		sum += *sp++;
+
+	if (tlen & 1) {
+		sum += htons( (*(const char *)sp) << 8);
+	}
+
+	while (sum > 0xffff)
+		sum = (sum & 0xffff) + (sum >> 16);
+	sum = ~sum & 0xffff;
+
+	return (sum);
+}
+
+
+
 /* XXX probably should use getservbyname() and cache answers */
 #define TFTP_PORT 69		/*XXX*/
 #define KERBEROS_PORT 88	/*XXX*/
@@ -295,15 +346,18 @@ rtcp_print(const u_char *hdr, const u_char *ep)
 #define KERBEROS_SEC_PORT 750	/*XXX*/
 #define L2TP_PORT 1701		/*XXX*/
 #define ISAKMP_PORT   500	/*XXX*/
-#define ISAKMP_UPORT1 7500	/*XXX*/
-#define ISAKMP_UPORT2 8500	/*XXX*/
 #define NETBIOS_NS_PORT    137	/*XXX*/
 #define NETBIOS_DGRAM_PORT 138	/*XXX*/
 #define OLD_RADIUS_AUTH_PORT 1645
 #define OLD_RADIUS_ACCT_PORT 1646
 #define RADIUS_AUTH_PORT     1812
 #define RADIUS_ACCT_PORT     1813
-                                             
+
+#ifdef INET6
+#define RIPNG_PORT 521		/*XXX*/
+#define DHCP6_PORT1 546		/*XXX*/
+#define DHCP6_PORT2 547		/*XXX*/
+#endif
 
 void
 udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
@@ -312,12 +366,21 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
 	register const struct ip *ip;
 	register const u_char *cp;
 	register const u_char *ep = bp + length;
-	u_short sport, dport, ulen;
+	u_int16_t sport, dport, ulen;
+#ifdef INET6
+	register const struct ip6_hdr *ip6;
+#endif
 
 	if (ep > snapend)
 		ep = snapend;
 	up = (struct udphdr *)bp;
 	ip = (struct ip *)bp2;
+#ifdef INET6
+	if (ip->ip_v == 6)
+		ip6 = (struct ip6_hdr *)bp2;
+	else
+		ip6 = NULL;
+#endif /*INET6*/
 	cp = (u_char *)(up + 1);
 	if (cp > snapend) {
 		printf("[|udp]");
@@ -425,9 +488,51 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
 			return;
 		}
 	}
+#if 0
 	(void)printf("%s.%s > %s.%s:",
 		ipaddr_string(&ip->ip_src), udpport_string(sport),
 		ipaddr_string(&ip->ip_dst), udpport_string(dport));
+#else
+#ifdef INET6
+	if (ip6) {
+		if (ip6->ip6_nxt == IPPROTO_UDP) {
+			(void)printf("%s.%s > %s.%s: ",
+				ip6addr_string(&ip6->ip6_src),
+				udpport_string(sport),
+				ip6addr_string(&ip6->ip6_dst),
+				udpport_string(dport));
+		} else {
+			(void)printf("%s > %s: ",
+				udpport_string(sport), udpport_string(dport));
+		}
+	} else
+#endif /*INET6*/
+	{
+		if (ip->ip_p == IPPROTO_UDP) {
+			(void)printf("%s.%s > %s.%s: ",
+				ipaddr_string(&ip->ip_src),
+				udpport_string(sport),
+				ipaddr_string(&ip->ip_dst),
+				udpport_string(dport));
+		} else {
+			(void)printf("%s > %s: ",
+				udpport_string(sport), udpport_string(dport));
+		}
+	}
+#endif
+
+	if (ip->ip_v == 4 && vflag) {
+		int sum = up->uh_sum;
+		if (sum == 0) {
+			(void)printf(" [no cksum]");
+		} else if (TTEST2(cp[0], length)) {
+			sum = udp_cksum(ip, up, length);
+			if (sum != 0)
+				(void)printf(" [bad udp cksum %x!]", sum);
+			else
+				(void)printf(" [udp sum ok]");
+		}
+	}
 
 	if (!qflag) {
 #define ISPORT(p) (dport == (p) || sport == (p))
@@ -448,9 +553,7 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
 			krb_print((const void *)(up + 1), length);
 		else if (ISPORT(L2TP_PORT))
 			l2tp_print((const u_char *)(up + 1), length);
-		else if (ISPORT(ISAKMP_PORT) ||
-			ISPORT(ISAKMP_UPORT1) ||
-			ISPORT(ISAKMP_UPORT2))
+		else if (ISPORT(ISAKMP_PORT))
 			isakmp_print((const u_char *)(up + 1), length);
                 else if (ISPORT(OLD_RADIUS_AUTH_PORT) ||
                          ISPORT(OLD_RADIUS_ACCT_PORT) ||
@@ -459,6 +562,14 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
                         radius_print((const u_char *)(up + 1), length);
 		else if (dport == 3456)
 			vat_print((const void *)(up + 1), length, up);
+#ifdef INET6
+		else if (ISPORT(RIPNG_PORT))
+			ripng_print((const u_char *)(up + 1), length);
+		else if (ISPORT(DHCP6_PORT1) || ISPORT(DHCP6_PORT2)) {
+			dhcp6_print((const u_char *)(up + 1), length,
+				sport, dport);
+		}
+#endif /*INET6*/
 		/*
 		 * Kludge in test for whiteboard packets.
 		 */

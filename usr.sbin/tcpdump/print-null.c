@@ -21,7 +21,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-null.c,v 1.10 1999/09/16 20:58:47 brad Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-null.c,v 1.11 2000/04/26 21:35:42 jakob Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -44,11 +44,14 @@ struct rtentry;
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
 #include <netinet/tcp.h>
-#include <netinet/tcpip.h>
 
 #include <pcap.h>
 #include <stdio.h>
 #include <string.h>
+
+#ifdef INET6
+#include <netinet/ip6.h>
+#endif
 
 #include "interface.h"
 #include "addrtoname.h"
@@ -64,8 +67,12 @@ struct rtentry;
 #define	NULL_HDRLEN 4
 
 static void
-null_print(const u_char *p, u_int length, u_int family)
+null_print(const u_char *p, const struct ip *ip, u_int length)
 {
+	u_int family;
+
+	memcpy((char *)&family, (char *)p, sizeof(family));
+
 	if (nflag) {
 		/* XXX just dump the header */
 		return;
@@ -75,6 +82,12 @@ null_print(const u_char *p, u_int length, u_int family)
 	case AF_INET:
 		printf("ip: ");
 		break;
+
+#ifdef INET6
+	case AF_INET6:
+		printf("ip6: ");
+		break;
+#endif
 
 	case AF_NS:
 		printf("ns: ");
@@ -91,8 +104,7 @@ null_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 {
 	u_int length = h->len;
 	u_int caplen = h->caplen;
-	u_int family;
-	const u_char *pkt;
+	const struct ip *ip;
 
 	ts_print(&h->ts);
 
@@ -104,25 +116,24 @@ null_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 	packetp = p;
 	snapend = p + caplen;
 
-	pkt = p + NULL_HDRLEN;
 	length -= NULL_HDRLEN;
 
-	memcpy((char *)&family, (char *)p, sizeof(family));
+	ip = (struct ip *)(p + NULL_HDRLEN);
 
 	if (eflag)
-		null_print(p, length, family);
+		null_print(p, ip, length);
 
-	switch (ntohl(family)) {
-	case AF_INET:
-		ip_print(pkt, length);
-		break;
-	case AF_APPLETALK:
-		atalk_print(pkt, length);
-		break;
-	}
+#ifndef INET6
+	ip_print((const u_char *)ip, length);
+#else
+	if (ip->ip_v == IPVERSION)
+		ip_print((const u_char *)ip, length);
+	else if (ip->ip_v == 6)
+		ip6_print((const u_char *)ip, length);
+#endif /*INET6*/
 
 	if (xflag)
-		default_print(pkt, caplen - NULL_HDRLEN);
+		default_print((const u_char *)ip, caplen - NULL_HDRLEN);
 	putchar('\n');
 }
 

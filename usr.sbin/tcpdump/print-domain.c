@@ -21,7 +21,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-domain.c,v 1.9 2000/01/16 12:43:58 jakob Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-domain.c,v 1.10 2000/04/26 21:35:40 jakob Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -42,7 +42,6 @@ struct rtentry;
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
 #include <netinet/tcp.h>
-#include <netinet/tcpip.h>
 
 #ifdef NOERROR
 #undef NOERROR					/* Solaris sucks */
@@ -53,6 +52,7 @@ struct rtentry;
 #include <arpa/nameser.h>
 
 #include <stdio.h>
+#include <string.h>
 
 #include "interface.h"
 #include "addrtoname.h"
@@ -172,8 +172,11 @@ ns_nprint(register const u_char *cp, register const u_char *bp)
 	register u_int i;
 	register const u_char *rp;
 	register int compress;
+	int chars_processed;
+	int data_size = snapend - bp;
 
 	i = *cp++;
+	chars_processed = 1;
 	rp = cp + i;
 	if ((i & INDIR_MASK) == INDIR_MASK) {
 		rp = cp + 1;
@@ -185,13 +188,29 @@ ns_nprint(register const u_char *cp, register const u_char *bp)
 			if ((i & INDIR_MASK) == INDIR_MASK) {
 				cp = bp + (((i << 8) | *cp) & 0x3fff);
 				i = *cp++;
+				chars_processed++;
+
+				/*
+				 * If we've looked at every character in
+				 * the message, this pointer will make
+				 * us look at some character again,
+				 * which means we're looping.
+				 */
+				if (chars_processed >= data_size) {
+					fn_printn(cp, 6, "<LOOP>");
+					if (!compress)
+						rp += i + 1;
+					return (rp);
+				}
 				continue;
 			}
 			if (fn_printn(cp, i, snapend))
 				break;
 			cp += i;
+			chars_processed += i;
 			putchar('.');
 			i = *cp++;
+			chars_processed++;
 			if (!compress)
 				rp += i + 1;
 		}

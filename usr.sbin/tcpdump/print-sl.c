@@ -21,7 +21,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-sl.c,v 1.8 1999/09/16 20:58:47 brad Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-sl.c,v 1.9 2000/04/26 21:35:43 jakob Exp $ (LBL)";
 #endif
 
 #ifdef HAVE_NET_SLIP_H
@@ -42,11 +42,8 @@ struct rtentry;
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#include <netinet/ip_var.h>
 #include <netinet/udp.h>
-#include <netinet/udp_var.h>
 #include <netinet/tcp.h>
-#include <netinet/tcpip.h>
 
 #include <net/slcompress.h>
 #include <net/slip.h>
@@ -54,7 +51,6 @@ struct rtentry;
 #include <ctype.h>
 #include <netdb.h>
 #include <pcap.h>
-#include <signal.h>
 #include <stdio.h>
 
 #include "interface.h"
@@ -105,7 +101,18 @@ sl_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 	if (eflag)
 		sliplink_print(p, ip, length);
 
-	ip_print((u_char *)ip, length);
+	switch (ip->ip_v) {
+	case 4:
+		ip_print((u_char *)ip, length);
+		break;
+#ifdef INET6
+	case 6:
+		ip6_print((u_char *)ip, length);
+		break;
+#endif
+	default:
+		printf ("ip v%d", ip->ip_v);
+	}
 
 	if (xflag)
 		default_print((u_char *)ip, caplen - SLIP_HDRLEN);

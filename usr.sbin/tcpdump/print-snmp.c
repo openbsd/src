@@ -42,13 +42,16 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-snmp.c,v 1.6 1999/09/16 20:58:47 brad Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-snmp.c,v 1.7 2000/04/26 21:35:43 jakob Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
 #include <sys/time.h>
 
 #include <ctype.h>
+#ifdef HAVE_MEMORY_H
+#include <memory.h>
+#endif
 #include <stdio.h>
 #include <string.h>
 

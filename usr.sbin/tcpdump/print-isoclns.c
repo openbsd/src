@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-isoclns.c,v 1.7 1999/07/28 20:41:36 jakob Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-isoclns.c,v 1.8 2000/04/26 21:35:41 jakob Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -160,7 +160,7 @@ esis_print(const u_char *p, u_int length)
 			printf(" bad pkt!");
 		else {
 			printf(" too short for esis header %d:", li);
-			while (--length >= 0)
+			while (--length != 0)
 				printf("%02X", *p++);
 		}
 		return;
@@ -220,11 +220,27 @@ esis_print(const u_char *p, u_int length)
 		li = ep - p;
 		break;
 	}
-#if 0
-	case ESIS_ESH:
-		printf(" esh");
+	case ESIS_ESH: {
+		const u_char *nsap;
+		int i, nnsaps;
+
+		nnsaps = *p++;
+
+		/* print NSAPs */
+		for (i = 0; i < nnsaps; i++) {
+			nsap = p;
+			p += *p + 1;
+			if (p > ep) {
+				printf(" [bad li]");
+				return;
+			}
+			if (p > snapend)
+				return;
+			printf(" nsap %s", isonsap_string(nsap));
+		}
+		li = ep - p;
 		break;
-#endif
+	}
 	case ESIS_ISH: {
 		const u_char *is;
 
@@ -235,7 +251,7 @@ esis_print(const u_char *p, u_int length)
 		}
 		if (p > snapend)
 			return;
-		printf(" %s", isonsap_string(is));
+		printf(" net %s", isonsap_string(is));
 		li = ep - p;
 		break;
 	}
@@ -286,32 +302,34 @@ static int
 osi_cksum(register const u_char *p, register u_int len,
 	  const u_char *toff, u_char *cksum, u_char *off)
 {
-	int x, y, f = (len - ((toff - p) + 1));
-	int32_t c0 = 0, c1 = 0;
+	const u_char *ep;
+	int c0, c1;
+	int n;
 
 	if ((cksum[0] = off[0]) == 0 && (cksum[1] = off[1]) == 0)
 		return 0;
 
-	off[0] = off[1] = 0;
-	while ((int)--len >= 0) {
-		c0 += *p++;
+	n = toff - p + 1;
+	c0 = c1 = 0;
+	ep = p + len;
+	for (; p < toff; p++) {
+		c0 = (c0 + *p);
 		c1 += c0;
-		c0 %= 255;
-		c1 %= 255;
 	}
-	x = (c0 * f - c1);
-	if (x < 0)
-		x = 255 - (-x % 255);
-	else
-		x %= 255;
-	y = -1 * (x + c0);
-	if (y < 0)
-		y = 255 - (-y % 255);
-	else
-		y %= 255;
 
-	off[0] = x;
-	off[1] = y;
+	/* skip cksum bytes */
+	p += 2;		
+	c1 += c0; c1 += c0;
+
+	for (; p < ep; p++) {
+		c0 = (c0 + *p);
+		c1 += c0;
+	}
+
+	c1 = (((c0 * (len - n)) - c1) % 255);
+	cksum[0] = (u_char) ((c1 < 0) ? c1 + 255 : c1);
+	c1 = (-(int) (c1 + c0)) % 255;
+	cksum[1] = (u_char) (c1 < 0 ? c1 + 255 : c1);
 
 	return (off[0] != cksum[0] || off[1] != cksum[1]);
 }

@@ -21,7 +21,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/Attic/machdep.c,v 1.3 1999/09/16 20:58:45 brad Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/Attic/machdep.c,v 1.4 2000/04/26 21:35:38 jakob Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -39,7 +39,7 @@ abort_on_misalignment(char *ebuf)
 	static int buf[2] = { SSIN_UACPROC, UAC_SIGBUS };
 
 	if (setsysinfo(SSI_NVPAIRS, (caddr_t)buf, 1, 0, 0) < 0) {
-		(void)sprintf(ebuf, "setsysinfo: errno %d", errno);
+		(void)sprintf(ebuf, "setsysinfo: %s", pcap_strerror(errno));
 		return (-1);
 	}
 #endif

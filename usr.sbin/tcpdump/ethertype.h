@@ -18,7 +18,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/ethertype.h,v 1.7 2000/01/16 12:32:16 jakob Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/ethertype.h,v 1.8 2000/04/26 21:35:38 jakob Exp $ (LBL)
  */
 
 /* Types missing from some systems */
@@ -70,9 +70,6 @@
 #endif
 #ifndef ETHERTYPE_AARP
 #define ETHERTYPE_AARP		0x80f3
-#endif
-#ifndef ETHERTYPE_VLAN
-#define ETHERTYPE_VLAN		0x8100
 #endif
 #ifndef	ETHERTYPE_LOOPBACK
 #define	ETHERTYPE_LOOPBACK	0x9000

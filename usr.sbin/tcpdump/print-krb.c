@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-krb.c,v 1.4 1999/09/16 18:03:14 brad Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-krb.c,v 1.5 2000/04/26 21:35:41 jakob Exp $";
 #endif
 
 #include <sys/param.h>
@@ -206,14 +206,14 @@ krb4_print(const u_char *cp)
 	case AUTH_MSG_KDC_REQUEST:
 		if ((cp = krb4_print_hdr(cp)) == NULL)
 			return;
-		 cp += 4; 	  /* ctime */
-		 TCHECK2(cp, 0);
-		 printf(" %dmin ", *cp++ * 5);
-		 TCHECK2(cp, 0);
-		 PRINT;
-		 TCHECK2(cp, 0);
-		 putchar('.');  PRINT;
-		 break;
+		cp += 4; 	  /* ctime */
+		TCHECK2(cp, 0);
+		printf(" %dmin ", *cp++ * 5);
+		TCHECK2(cp, 0);
+		PRINT;
+		TCHECK2(cp, 0);
+		putchar('.');  PRINT;
+		break;
 
 	case AUTH_MSG_APPL_REQUEST:
 		cp += 2;

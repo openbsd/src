@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-bgp.c,v 1.1 2000/01/16 11:43:57 jakob Exp $	*/
+/*	$OpenBSD: print-bgp.c,v 1.2 2000/04/26 21:35:39 jakob Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -380,7 +380,7 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 			printf(" invalid len");
 			break;
 		}
-		for (i = 0; i < len; i++) {
+		for (i = 0; i < len; i += 4) {
 			u_int32_t comm;
 			comm = (u_int32_t)ntohl(*(u_int32_t *)&p[i]);
 			switch (comm) {
@@ -395,7 +395,7 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 				break;
 			default:
 				printf(" (AS #%d value 0x%04x)",
-					(comm >> 16) & 0xffff, comm & 0xfffff);
+					(comm >> 16) & 0xffff, comm & 0xffff);
 				break;
 			}
 		}

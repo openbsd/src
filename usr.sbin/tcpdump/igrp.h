@@ -3,7 +3,7 @@
 /* IGRP Header */
 
 struct igrphdr {
-#if BYTE_ORDER == BIG_ENDIAN
+#ifdef WORDS_BIGENDIAN
 	u_char ig_v:4;		/* protocol version number */
 	u_char ig_op:4;		/* opcode */
 #else

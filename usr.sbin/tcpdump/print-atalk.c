@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-atalk.c,v 1.13 2000/04/03 05:43:42 itojun Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-atalk.c,v 1.14 2000/04/26 21:35:39 jakob Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -194,7 +194,7 @@ aarp_print(register const u_char *bp, u_int length)
 	printf("aarp ");
 	ap = (const struct aarp *)bp;
 	if (ntohs(ap->htype) == 1 && ntohs(ap->ptype) == ETHERTYPE_ATALK &&
-	    ap->halen == 6 && ap->palen == 4)
+	    ap->halen == 6 && ap->palen == 4 )
 		switch (ntohs(ap->op)) {
 
 		case 1:				/* request */
@@ -214,7 +214,7 @@ aarp_print(register const u_char *bp, u_int length)
 		}
 	(void)printf("len %u op %u htype %u ptype %#x halen %u palen %u",
 	    length, ntohs(ap->op), ntohs(ap->htype), ntohs(ap->ptype),
-	    ap->halen, ap->palen );
+	    ap->halen, ap->palen);
 }
 
 static void

@@ -21,7 +21,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-fddi.c,v 1.9 2000/03/07 16:50:42 chris Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-fddi.c,v 1.10 2000/04/26 21:35:40 jakob Exp $ (LBL)";
 #endif
 
 #ifdef HAVE_FDDI
@@ -45,7 +45,6 @@ struct rtentry;
 #include <ctype.h>
 #include <netdb.h>
 #include <pcap.h>
-#include <signal.h>
 #include <stdio.h>
 #include <string.h>
 
