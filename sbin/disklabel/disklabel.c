@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.46 1997/10/24 00:18:55 millert Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.47 1997/11/25 00:36:22 millert Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.46 1997/10/24 00:18:55 millert Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.47 1997/11/25 00:36:22 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -108,6 +108,7 @@ enum {
 } op = UNSPEC;
 
 int	rflag;
+int	tflag;
 int	nwflag;
 int	verbose;
 int	donothing;
@@ -117,6 +118,7 @@ struct dos_partition *dosdp;	/* DOS partition, if found */
 struct dos_partition *readmbr __P((int));
 #endif
 
+void	makedisktab __P((FILE *, struct disklabel *));
 void	makelabel __P((char *, char *, struct disklabel *));
 int	writelabel __P((int, char *, struct disklabel *));
 void	l_perror __P((char *));
@@ -145,7 +147,7 @@ main(argc, argv)
 	struct disklabel *lp;
 	FILE *t;
 
-	while ((ch = getopt(argc, argv, "BENRWb:ers:wnv")) != -1)
+	while ((ch = getopt(argc, argv, "BENRWb:enrs:tvw")) != -1)
 		switch (ch) {
 #if NUMBOOT > 0
 		case 'B':
@@ -189,6 +191,9 @@ main(argc, argv)
 			break;
 		case 'r':
 			++rflag;
+			break;
+		case 't':
+			++tflag;
 			break;
 		case 'w':
 			if (op != UNSPEC)
@@ -263,7 +268,10 @@ main(argc, argv)
 			usage();
 		if ((lp = readlabel(f)) == NULL)
 			exit(1);
-		display(stdout, lp);
+		if (tflag)
+			makedisktab(stdout, lp);
+		else
+			display(stdout, lp);
 		error = checklabel(lp);
 		break;
 	case RESTORE:
@@ -831,6 +839,96 @@ makebootarea(boot, dp, f)
 		if (*p)
 			errx(2, "Bootstrap doesn't leave room for disk label");
 	return (lp);
+}
+
+void
+makedisktab(f, lp)
+	FILE *f;
+	struct disklabel *lp;
+{
+	int i, j;
+	char *did = "\\\n\t:";
+	struct partition *pp;
+
+	if (lp->d_packname[0])
+		(void)fprintf(f, "%.*s|", sizeof(lp->d_packname),
+		    lp->d_packname);
+	if (lp->d_typename[0])
+		(void)fprintf(f, "%.*s|", sizeof(lp->d_typename),
+		    lp->d_typename);
+	(void)fputs("Automatically generated label:\\\n\t:dt=", f);
+	if ((unsigned) lp->d_type < DKMAXTYPES)
+		(void)fprintf(f, "%s:", dktypenames[lp->d_type]);
+	else
+		(void)fprintf(f, "unknown%d:", lp->d_type);
+
+	(void)fprintf(f, "se#%d:", lp->d_secsize);
+	(void)fprintf(f, "ns#%d:", lp->d_nsectors);
+	(void)fprintf(f, "nt#%d:", lp->d_ntracks);
+	(void)fprintf(f, "sc#%d:", lp->d_secpercyl);
+	(void)fprintf(f, "nc#%d:", lp->d_ncylinders);
+
+	if (lp->d_rpm != 3600) {
+		(void)fprintf(f, "%srm#%d:", did, lp->d_rpm);
+		did = "";
+	}
+	if (lp->d_interleave != 1) {
+		(void)fprintf(f, "%sil#%d:", did, lp->d_interleave);
+		did = "";
+	}
+	if (lp->d_trackskew != 0) {
+		(void)fprintf(f, "%ssk#%d:", did, lp->d_trackskew);
+		did = "";
+	}
+	if (lp->d_cylskew != 0) {
+		(void)fprintf(f, "%scs#%d:", did, lp->d_cylskew);
+		did = "";
+	}
+	if (lp->d_headswitch != 0) {
+		(void)fprintf(f, "%shs#%d:", did, lp->d_headswitch);
+		did = "";
+	}
+	if (lp->d_trkseek != 0) {
+		(void)fprintf(f, "%sts#%d:", did, lp->d_trkseek);
+		did = "";
+	}
+	for (i = 0; i < NDDATA; i++)
+		if (lp->d_drivedata[i])
+			(void)fprintf(f, "d%d#%d", lp->d_drivedata[i]);
+	pp = lp->d_partitions;
+	for (i = 0; i < lp->d_npartitions; i++, pp++) {
+		if (pp->p_size) {
+			char c = 'a' + i;
+
+			(void)fprintf(f, "\\\n\t:");
+			(void)fprintf(f, "p%c#%d:", c, pp->p_size);
+			(void)fprintf(f, "o%c#%d:", c, pp->p_offset);
+			if (pp->p_fstype != FS_UNUSED) {
+				if ((unsigned) pp->p_fstype < FSMAXTYPES)
+					(void)fprintf(f, "t%c=%s:", c, 
+					    fstypenames[pp->p_fstype]);
+				else
+					(void)fprintf(f, "t%c=unknown%d:",
+					    c, pp->p_fstype);
+			}
+			switch (pp->p_fstype) {
+
+			case FS_UNUSED:
+				break;
+
+			case FS_BSDFFS:
+				(void)fprintf(f, "b%c#%d:", c,
+				    pp->p_fsize * pp->p_frag);
+				(void)fprintf(f, "f%c#%d:", c, pp->p_fsize);
+				break;
+
+			default:
+				break;
+			}
+		}
+	}
+	(void)fputc('\n', f);
+	(void)fflush(f);
 }
 
 int
@@ -1574,7 +1672,7 @@ usage()
 
 	fprintf(stderr, "usage:\n");
 	fprintf(stderr,
-	    "  disklabel [-nv] [-r] disk%s              (read)\n",
+	    "  disklabel [-nv] [-r] [-t] disk%s         (read)\n",
 	    blank);
 	fprintf(stderr,
 	    "  disklabel [-nv] [-r] -e disk%s           (edit)\n",

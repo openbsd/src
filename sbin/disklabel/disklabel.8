@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.10 1997/10/28 06:01:09 millert Exp $
+.\"	$OpenBSD: disklabel.8,v 1.11 1997/11/25 00:36:23 millert Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -47,6 +47,7 @@
 .Nm disklabel
 .Op Fl r
 .Op Fl n
+.Op Fl t
 .Ar disk
 .Nm disklabel
 .Fl w
@@ -148,6 +149,11 @@ If the
 .Fl r
 flag is given, the label from the raw disk will be displayed rather
 than the in-core label.
+If the
+.Fl t
+flag is given, then the label will be formatted as a
+.Xr disktab 5
+entry.
 .Pp
 The second form of the command, with the
 .Fl w
