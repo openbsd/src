@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.22 1999/12/08 22:50:13 jason Exp $	*/
+/*	$OpenBSD: be.c,v 1.23 2000/06/18 17:37:02 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -581,12 +581,6 @@ beioctl(ifp, cmd, data)
 			bestop(sc);
 			beinit(sc);
 		}
-#ifdef IEDEBUG   
-		if (ifp->if_flags & IFF_DEBUG)
-			sc->sc_debug = IED_ALL;
-		else
-			sc->sc_debug = 0;
-#endif
 		break;
 
 	case SIOCADDMULTI:
