@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.47 2001/06/26 19:02:55 hin Exp $
+#	$OpenBSD: bsd.own.mk,v 1.48 2001/06/26 21:37:48 miod Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -9,7 +9,7 @@
 .endif
 
 # XXX - This is temporary until everyone uses UVM
-.if (${MACHINE} == "sun3") || (${MACHINE} == "pmax") || (${MACHINE} == "mvme68k")
+.if (${MACHINE} == "sun3")
 UVM?=		no
 .else
 UVM?=		yes
