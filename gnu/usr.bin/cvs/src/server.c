@@ -5352,7 +5352,10 @@ error 0 %s: no such user\n", username);
     /* Set LOGNAME, USER and CVS_USER in the environment, in case they
        are already set to something else.  */
     {
-	char *env, *cvs_user;
+	char *env;
+#ifdef AUTH_SERVER_SUPPORT
+	char *cvs_user;
+#endif
 
 	env = xmalloc (sizeof "LOGNAME=" + strlen (username));
 	(void) sprintf (env, "LOGNAME=%s", username);
@@ -5362,10 +5365,12 @@ error 0 %s: no such user\n", username);
 	(void) sprintf (env, "USER=%s", username);
 	(void) putenv (env);
 
+#ifdef AUTH_SERVER_SUPPORT
         cvs_user = NULL != CVS_Username ? CVS_Username : "";
         env = xmalloc (sizeof "CVS_USER=" + strlen (cvs_user));
         (void) sprintf (env, "CVS_USER=%s", cvs_user);
         (void) putenv (env);
+#endif
     }
 #endif /* HAVE_PUTENV */
 }

@@ -180,7 +180,7 @@ cvs_SOURCES = \
 cvs_LDADD = \
 	../diff/libdiff.a \
 	../lib/libcvs.a \
-	../zlib/libz.a \
+	@ZLIB@ \
 	version.o
 
 cvs_EXTRA_DIST = version.c
@@ -229,7 +229,7 @@ am_cvs_OBJECTS = add.$(OBJEXT) admin.$(OBJEXT) annotate.$(OBJEXT) \
 	update.$(OBJEXT) vers_ts.$(OBJEXT) watch.$(OBJEXT) \
 	wrapper.$(OBJEXT) zlib.$(OBJEXT)
 cvs_OBJECTS = $(am_cvs_OBJECTS)
-cvs_DEPENDENCIES = ../diff/libdiff.a ../lib/libcvs.a ../zlib/libz.a \
+cvs_DEPENDENCIES = ../diff/libdiff.a ../lib/libcvs.a @ZLIB_DEPEND@ \
 	version.o
 cvs_LDFLAGS =
 SCRIPTS = $(bin_SCRIPTS)

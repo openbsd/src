@@ -4107,7 +4107,7 @@ start_tcp_server (tofdp, fromfdp)
     const char *portenv;
     int port;
     struct hostent *hp;
-    struct sockaddr_in sin;
+    struct sockaddr_in client_sai;
     char *hname;
 
     s = socket (AF_INET, SOCK_STREAM, 0);
@@ -4116,7 +4116,7 @@ start_tcp_server (tofdp, fromfdp)
 
     port = get_cvs_port_number (current_parsed_root);
 
-    hp = init_sockaddr (&sin, current_parsed_root->hostname, port);
+    hp = init_sockaddr (&client_sai, current_parsed_root->hostname, port);
 
     hname = xmalloc (strlen (hp->h_name) + 1);
     strcpy (hname, hp->h_name);
@@ -4128,7 +4128,7 @@ start_tcp_server (tofdp, fromfdp)
 		 inet_ntoa (client_sai.sin_addr), port);
     }
 
-    if (connect (s, (struct sockaddr *) &sin, sizeof sin) < 0)
+    if (connect (s, (struct sockaddr *) &client_sai, sizeof client_sai) < 0)
 	error (1, 0, "connect to %s(%s):%d failed: %s",
 	       current_parsed_root->hostname,
 	       inet_ntoa (client_sai.sin_addr),
@@ -4152,7 +4152,7 @@ start_tcp_server (tofdp, fromfdp)
 	/* We don't care about the checksum, and pass it as zero.  */
 	status = krb_sendauth (KOPT_DO_MUTUAL, s, &ticket, "rcmd",
 			       hname, realm, (unsigned long) 0, &msg_data,
-			       &cred, sched, &laddr, &sin, "KCVSV1.0");
+			       &cred, sched, &laddr, &client_sai, "KCVSV1.0");
 	if (status != KSUCCESS)
 	    error (1, 0, "kerberos authentication failed: %s",
 		   krb_get_err_text (status));

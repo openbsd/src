@@ -41,19 +41,19 @@ Index
 * &, in modules file:                    Ampersand modules.
 * -a, in modules file:                   Alias modules.
 * -d, in modules file:                   Module options.
-* -e, in modules file <1>:               Module program options.
-* -e, in modules file:                   Module options.
+* -e, in modules file <1>:               Module options.
+* -e, in modules file:                   Module program options.
 * -i, in modules file <1>:               Module program options.
 * -i, in modules file:                   Module options.
 * -j (merging branches):                 Merging a branch.
 * -j (merging branches), and keyword substitution: Merging and keywords.
 * -k (keyword substitution):             Substitution modes.
 * -kk, to avoid conflicts during a merge: Merging and keywords.
-* -o, in modules file <1>:               Module program options.
-* -o, in modules file:                   Module options.
+* -o, in modules file <1>:               Module options.
+* -o, in modules file:                   Module program options.
 * -s, in modules file:                   Module options.
-* -t, in modules file <1>:               Module program options.
-* -t, in modules file:                   Module options.
+* -t, in modules file <1>:               Module options.
+* -t, in modules file:                   Module program options.
 * -u, in modules file <1>:               Module program options.
 * -u, in modules file:                   Module options.
 * .# files:                              update output.
@@ -139,8 +139,8 @@ Index
 * Choosing, reserved or unreserved checkouts: Choosing a model.
 * Cleaning up:                           Cleaning up.
 * Client/Server Operation:               Remote repositories.
-* Client/Server Operation, port specification <1>: Password authentication server.
-* Client/Server Operation, port specification: Remote repositories.
+* Client/Server Operation, port specification <1>: Remote repositories.
+* Client/Server Operation, port specification: Password authentication server.
 * co (subcommand):                       checkout.
 * Command reference:                     Invoking CVS.
 * Command structure:                     Structure.
@@ -153,8 +153,8 @@ Index
 * Common options:                        Common options.
 * Common syntax of info files:           syntax.
 * Compatibility, between CVS versions:   Compatibility.
-* Compression <1>:                       Invoking CVS.
-* Compression:                           Global options.
+* Compression <1>:                       Global options.
+* Compression:                           Invoking CVS.
 * COMSPEC, environment variable:         Environment variables.
 * config, in CVSROOT:                    config.
 * Conflict markers:                      Conflicts example.
@@ -295,11 +295,11 @@ Index
 * Global cvsignore:                      cvsignore.
 * Global options:                        Global options.
 * Group:                                 File permissions.
-* gserver (client/server connection method), port specification <1>: Password authentication server.
-* gserver (client/server connection method), port specification: Remote repositories.
+* gserver (client/server connection method), port specification <1>: Remote repositories.
+* gserver (client/server connection method), port specification: Password authentication server.
 * GSSAPI:                                GSSAPI authenticated.
-* Gzip <1>:                              Invoking CVS.
-* Gzip:                                  Global options.
+* Gzip <1>:                              Global options.
+* Gzip:                                  Invoking CVS.
 * Hard links:                            Special Files.
 * HEAD, as reserved tag name:            Tags.
 * HEAD, special tag:                     Common options.
@@ -414,8 +414,8 @@ Index
 * notify (admin file):                   Getting Notified.
 * Notify file, in CVS directory:         Working directory storage.
 * Notify.tmp file, in CVS directory:     Working directory storage.
-* Number, branch <1>:                    Branches and revisions.
-* Number, branch:                        Revision numbers.
+* Number, branch <1>:                    Revision numbers.
+* Number, branch:                        Branches and revisions.
 * Number, revision-:                     Revision numbers.
 * Option defaults:                       ~/.cvsrc.
 * Options, global:                       Global options.
@@ -440,11 +440,11 @@ Index
 * Permissions, saving in CVS:            Special Files.
 * Permissions, Windows-specific:         Windows permissions.
 * Policy:                                When to commit.
-* port, specifying for remote repositories <1>: Password authentication server.
-* port, specifying for remote repositories: Remote repositories.
+* port, specifying for remote repositories <1>: Remote repositories.
+* port, specifying for remote repositories: Password authentication server.
 * Precommit checking:                    commitinfo.
-* pserver (client/server connection method), port specification <1>: Password authentication server.
-* pserver (client/server connection method), port specification: Remote repositories.
+* pserver (client/server connection method), port specification <1>: Remote repositories.
+* pserver (client/server connection method), port specification: Password authentication server.
 * pserver (subcommand):                  Password authentication server.
 * PVCS, importing files from:            From other version control systems.
 * RCS history files:                     Repository files.
@@ -474,8 +474,8 @@ Index
 * Releases, revisions and versions:      Versions revisions releases.
 * Releasing your working copy:           Cleaning up.
 * Remote repositories:                   Remote repositories.
-* Remote repositories, port specification <1>: Password authentication server.
-* Remote repositories, port specification: Remote repositories.
+* Remote repositories, port specification <1>: Remote repositories.
+* Remote repositories, port specification: Password authentication server.
 * Remove (subcommand):                   Removing files.
 * Removing a change:                     Merging two revisions.
 * Removing directories:                  Removing directories.
@@ -489,8 +489,8 @@ Index
 * Reporting bugs:                        BUGS.
 * Repositories, multiple:                Multiple repositories.
 * Repositories, remote:                  Remote repositories.
-* Repositories, remote, port specification <1>: Password authentication server.
-* Repositories, remote, port specification: Remote repositories.
+* Repositories, remote, port specification <1>: Remote repositories.
+* Repositories, remote, port specification: Password authentication server.
 * Repository (intro):                    Repository.
 * Repository file, in CVS directory:     Working directory storage.
 * Repository, backing up:                Backing up.

@@ -169,10 +169,11 @@ AC_SEARCH_LIBS(getspnam, sec gen, AC_DEFINE(HAVE_GETSPNAM))
 dnl
 dnl Check for a system libz.
 dnl
-AC_CHECK_LIB(z, zlibVersion, ZLIB=-lz , ZLIBSUBDIRS=zlib ZLIB=$srcdir/zlib/libz.a ZLIB_INCLUDES=-I$srcdir/zlib)
+AC_CHECK_LIB(z, zlibVersion, ZLIB=-lz ZLIB_DEPEND=/usr/lib/libz.a, ZLIBSUBDIRS=zlib ZLIB=$srcdir/zlib/libz.a ZLIB_DEPEND=$srcdir/zlib/libz.a ZLIB_INCLUDES=-I$srcdir/zlib)
 AC_SUBST(ZLIB)
 AC_SUBST(ZLIBSUBDIRS)
 AC_SUBST(ZLIB_INCLUDES)
+AC_SUBST(ZLIB_DEPEND)
 
 dnl We always use CVS's regular expression matcher.
 dnl This is because:
@@ -267,23 +268,7 @@ if test -n "$krb_h"; then
   else
        AC_CHECK_LIB(krb,printf,[krb_lib=yes krb_libdir=])
   fi
-  if test -n "$krb_lib"; then
-    AC_DEFINE(HAVE_KERBEROS)
-    test -n "${krb_libdir}" && LIBS="${LIBS} -L${krb_libdir}"
-    LIBS="${LIBS} -lkrb"
-    # Put -L${krb_libdir} in LDFLAGS temporarily so that it appears before
-    # -ldes in the command line.  Don't do it permanently so that we honor
-    # the user's setting for LDFLAGS
-    hold_ldflags=$LDFLAGS
-    test -n "${krb_libdir}" && LDFLAGS="$LDFLAGS -L${krb_libdir}"
-    AC_CHECK_LIB(des,printf,[LIBS="${LIBS} -ldes"])
-    LDFLAGS=$hold_ldflags
-    if test -n "$krb_incdir"; then
-      includeopt="${includeopt} -I$krb_incdir"
-    fi
-  fi
 fi
-AC_CHECK_FUNCS(krb_get_err_text)
 
 dnl
 dnl Use --with-gssapi=DIR to enable GSSAPI support.
@@ -310,7 +295,7 @@ if test "$ac_cv_header_krb5_h" = "yes" &&
   includeopt="${includeopt} -I$GSSAPI/include/kerberosV"
   # FIXME: This is ugly, but these things don't seem to be standardized.
   if test "$ac_cv_header_gssapi_h" = "yes"; then
-    LIBS="$LIBS -L$GSSAPI/lib -lgssapi -lkrb lkrb5 -lasn1 -lcrypto -lcom_err -lkafs"
+    LIBS="$LIBS -L$GSSAPI/lib -lgssapi -lkrb -lkrb5 -lasn1 -lcrypto -lcom_err -lkafs"
   else
     LIBS="$LIBS -L$GSSAPI/lib -lgssapi_krb5 -lkrb -lkrb5 -lcrypto -lcom_err -lkafs"
   fi
@@ -326,6 +311,25 @@ if test "$ac_cv_header_krb5_h" = "yes" &&
   # there, an_to_ln.o refers to things defined only in -lgen.
   AC_CHECK_LIB(gen, compile)
 fi
+
+if test -n "$krb_h"; then
+  if test -n "$krb_lib"; then
+    AC_DEFINE(HAVE_KERBEROS)
+    test -n "${krb_libdir}" && LIBS="${LIBS} -L${krb_libdir}"
+    LIBS="${LIBS} -lkrb"
+    # Put -L${krb_libdir} in LDFLAGS temporarily so that it appears before
+    # -ldes in the command line.  Don't do it permanently so that we honor
+    # the user's setting for LDFLAGS
+    hold_ldflags=$LDFLAGS
+    test -n "${krb_libdir}" && LDFLAGS="$LDFLAGS -L${krb_libdir}"
+    AC_CHECK_LIB(des,printf,[LIBS="${LIBS} -ldes"])
+    LDFLAGS=$hold_ldflags
+    if test -n "$krb_incdir"; then
+      includeopt="${includeopt} -I$krb_incdir"
+    fi
+  fi
+fi
+AC_CHECK_FUNCS(krb_get_err_text)
 
 dnl
 dnl Use --with-encryption to turn on encryption support
