@@ -1,4 +1,4 @@
-.\"     $OpenBSD: spif.4,v 1.1 2002/01/13 02:15:01 jason Exp $
+.\"     $OpenBSD: spif.4,v 1.2 2002/01/18 21:57:27 jason Exp $
 .\"
 .\" Copyright (c) 1999-2002 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -75,9 +75,6 @@ well as automatic hardware (RTS/CTS) flow control.
 .Bl -diag
 .It "spif%d: ccr timeout"
 A timeout occurred while writing to one of the CD180 registers.
-.It "stty%d-%d: fifo overflow"
-Incoming characters were discarded because the driver's interrupt
-routine could not read them fast enough from the card.
 .It "stty%d-%d: ring overflow"
 Incoming characters were discarded because the application
 in control of the device did not read the input fast enough.
