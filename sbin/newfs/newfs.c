@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.45 2003/10/07 20:14:54 tedu Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.46 2003/11/03 05:36:27 tedu Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.45 2003/10/07 20:14:54 tedu Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.46 2003/11/03 05:36:27 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -612,8 +612,7 @@ havelabel:
 
 		switch (pid = fork()) {
 		case -1:
-			perror("mfs");
-			exit(10);
+			err(10, "mfs");
 		case 0:
 			snprintf(mountfromname, sizeof(mountfromname),
 			    "mfs:%d", getpid());

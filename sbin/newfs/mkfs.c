@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.33 2003/08/25 23:28:15 tedu Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.34 2003/11/03 05:36:27 tedu Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$OpenBSD: mkfs.c,v 1.33 2003/08/25 23:28:15 tedu Exp $";
+static char rcsid[] = "$OpenBSD: mkfs.c,v 1.34 2003/11/03 05:36:27 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -155,8 +155,7 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo)
 	    (cgun = (union cg_u *)calloc(1, sizeof (union cg_u))) == 0 ||
 	    (zino = (struct ufs1_dinode *)calloc(1, MAXBSIZE)) == 0 ||
 	    (buf = (char *)calloc(1, MAXBSIZE)) == 0) {
-		printf("buffer malloc failed\n");
-		exit(1);
+		err(1, "calloc");
 	}
 
 #ifndef STANDALONE
@@ -166,7 +165,7 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo)
 		membase = mmap(NULL, fssize * sectorsize, PROT_READ|PROT_WRITE,
 		    MAP_ANON|MAP_PRIVATE, -1, 0);
 		if (membase == MAP_FAILED)
-			exit(12);
+			err(12, "mmap");
 	}
 	fsi = fi;
 	fso = fo;
@@ -182,7 +181,7 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo)
 	 * Verify that its last block can actually be accessed.
 	 */
 	if (fssize <= 0)
-		printf("preposterous size %d\n", fssize), exit(13);
+		errx(13, "preposterous size %d", fssize);
 	wtfs(fssize - 1, sectorsize, (char *)&sblock);
 recalc:
 	/*
@@ -191,49 +190,44 @@ recalc:
 	sblock.fs_nsect = nsectors;
 	sblock.fs_ntrak = ntracks;
 	if (sblock.fs_ntrak <= 0)
-		printf("preposterous ntrak %d\n", sblock.fs_ntrak), exit(14);
+		errx(14, "preposterous ntrak %d", sblock.fs_ntrak);
 	if (sblock.fs_nsect <= 0)
-		printf("preposterous nsect %d\n", sblock.fs_nsect), exit(15);
+		errx(15, "preposterous nsect %d", sblock.fs_nsect);
 	/*
 	 * collect and verify the filesystem density info
 	 */
 	sblock.fs_avgfilesize = avgfilesize;
 	sblock.fs_avgfpdir = avgfilesperdir;
 	if (sblock.fs_avgfilesize <= 0)
-		printf("illegal expected average file size %d\n",
-		    sblock.fs_avgfilesize), exit(14);
+		errx(14, "illegal expected average file size %d",
+		    sblock.fs_avgfilesize);
 	if (sblock.fs_avgfpdir <= 0)
-		printf("illegal expected number of files per directory %d\n",
-		    sblock.fs_avgfpdir), exit(15);
+		errx(15, "illegal expected number of files per directory %d",
+		    sblock.fs_avgfpdir);
 	/*
 	 * collect and verify the block and fragment sizes
 	 */
 	sblock.fs_bsize = bsize;
 	sblock.fs_fsize = fsize;
 	if (!POWEROF2(sblock.fs_bsize)) {
-		printf("block size must be a power of 2, not %d\n",
-		    sblock.fs_bsize);
-		exit(16);
+		errx(16, "block size must be a power of 2, not %d",
+		     sblock.fs_bsize);
 	}
 	if (!POWEROF2(sblock.fs_fsize)) {
-		printf("fragment size must be a power of 2, not %d\n",
-		    sblock.fs_fsize);
-		exit(17);
+		errx(17, "fragment size must be a power of 2, not %d",
+		     sblock.fs_fsize);
 	}
 	if (sblock.fs_fsize < sectorsize) {
-		printf("fragment size %d is too small, minimum is %d\n",
-		    sblock.fs_fsize, sectorsize);
-		exit(18);
+		errx(18, "fragment size %d is too small, minimum is %d",
+		     sblock.fs_fsize, sectorsize);
 	}
 	if (sblock.fs_bsize < MINBSIZE) {
-		printf("block size %d is too small, minimum is %d\n",
-		    sblock.fs_bsize, MINBSIZE);
-		exit(19);
+		errx(19, "block size %d is too small, minimum is %d",
+		     sblock.fs_bsize, MINBSIZE);
 	}
 	if (sblock.fs_bsize < sblock.fs_fsize) {
-		printf("block size (%d) cannot be smaller than fragment size (%d)\n",
-		    sblock.fs_bsize, sblock.fs_fsize);
-		exit(20);
+		errx(20, "block size (%d) cannot be smaller than fragment size (%d)",
+		     sblock.fs_bsize, sblock.fs_fsize);
 	}
 	sblock.fs_bmask = ~(sblock.fs_bsize - 1);
 	sblock.fs_fmask = ~(sblock.fs_fsize - 1);
@@ -247,10 +241,9 @@ recalc:
 	for (sblock.fs_fragshift = 0, i = sblock.fs_frag; i > 1; i >>= 1)
 		sblock.fs_fragshift++;
 	if (sblock.fs_frag > MAXFRAG) {
-		printf("fragment size %d is too small, minimum with block size %d is %d\n",
+		errx(21, "fragment size %d is too small, minimum with block size %d is %d",
 		    sblock.fs_fsize, sblock.fs_bsize,
 		    sblock.fs_bsize / MAXFRAG);
-		exit(21);
 	}
 	sblock.fs_nrpos = nrpos;
 	sblock.fs_nindir = sblock.fs_bsize / sizeof(daddr_t);
@@ -325,9 +318,7 @@ recalc:
 				continue;
 		}
 		if (sblock.fs_fsize == sblock.fs_bsize) {
-			printf("There is no block size that");
-			printf(" can support this disk\n");
-			exit(22);
+			errx(22, "no block size to support this disk");
 		}
 		sblock.fs_frag >>= 1;
 		sblock.fs_fragshift -= 1;
@@ -425,16 +416,14 @@ recalc:
 	}
 	sblock.fs_fpg = (sblock.fs_cpg * sblock.fs_spc) / NSPF(&sblock);
 	if ((sblock.fs_cpg * sblock.fs_spc) % NSPB(&sblock) != 0) {
-		printf("panic (fs_cpg * fs_spc) %% NSPF != 0");
-		exit(24);
+		errx(24, "panic (fs_cpg * fs_spc) %% NSPF != 0");
 	}
 	if (sblock.fs_cpg < mincpg) {
-		printf("cylinder groups must have at least %ld cylinders\n",
+		errx(25, "cylinder groups must have at least %ld cylinders",
 			mincpg);
-		exit(25);
 	} else if (cpgflg && sblock.fs_cpg != cpg) {
 		if (!mapcramped && !inodecramped)
-			exit(26);
+			errx(26, "!mapcramped && !inodecramped");
 		if (mapcramped && inodecramped)
 			printf("Block size and bytes per inode restrict");
 		else if (mapcramped)
@@ -457,8 +446,9 @@ recalc:
 		warn = 1;
 	}
 	if (sblock.fs_ncyl < 1) {
-		printf("file systems must have at least one cylinder\n");
-		exit(28);
+		errx(28,
+		    "file systems must have at least one cylinder (not %d)",
+		     sblock.fs_ncyl);
 	}
 	/*
 	 * Determine feasability/values of rotational layout tables.
@@ -546,10 +536,9 @@ next:
 	if ((i = sblock.fs_size - j * sblock.fs_fpg) < sblock.fs_fpg &&
 	    cgdmin(&sblock, j) - cgbase(&sblock, j) > i) {
 		if (j == 0) {
-			printf("Filesystem must have at least %d sectors\n",
-			    NSPF(&sblock) *
+			errx(30, "filesystem must have at least %d sectors",
+			     NSPF(&sblock) *
 			    (cgdmin(&sblock, 0) + 3 * sblock.fs_frag));
-			exit(30);
 		}
 		printf("Warning: inode blocks/cyl group (%ld) >= data blocks (%ld) in last\n",
 		    (cgdmin(&sblock, j) - cgbase(&sblock, j)) / sblock.fs_frag,
@@ -585,8 +574,7 @@ next:
 	for (sblock.fs_csshift = 0; i > 1; i >>= 1)
 		sblock.fs_csshift++;
 	if ((fscs = (struct csum *)calloc(1, sblock.fs_cssize)) == 0) {
-		printf("cg summary malloc failed\n");
-		exit(1);
+		err(1, "cg summary");
 	}
 	sblock.fs_magic = FS_MAGIC;
 	sblock.fs_rotdelay = rotdelay;
@@ -731,8 +719,7 @@ initcg(int cylno, time_t utime)
 		    (sblock.fs_cpg * sblock.fs_spc / NSPB(&sblock), NBBY);
 	}
 	if (acg.cg_nextfreeoff - (long)(&acg.cg_firstfield) > sblock.fs_cgsize) {
-		printf("Panic: cylinder group too big\n");
-		exit(37);
+		errx(37, "panic: cylinder group too big");
 	}
 	acg.cg_cs.cs_nifree += sblock.fs_ipg;
 	if (cylno == 0)
@@ -1014,8 +1001,8 @@ iput(struct ufs1_dinode *ip, ino_t ino)
 	rdfs(fsbtodb(&sblock, cgtod(&sblock, 0)), sblock.fs_cgsize,
 	    (char *)&acg);
 	if (acg.cg_magic != CG_MAGIC) {
-		printf("cg 0: bad magic number\n");
-		exit(31);
+		errx(41, "cg 0: bad magic number (0x%06x != 0x%06x)",
+		     acg.cg_magic, CG_MAGIC);
 	}
 	acg.cg_cs.cs_nifree--;
 	setbit(cg_inosused(&acg), ino);
@@ -1024,8 +1011,7 @@ iput(struct ufs1_dinode *ip, ino_t ino)
 	sblock.fs_cstotal.cs_nifree--;
 	fscs[0].cs_nifree--;
 	if (ino >= sblock.fs_ipg * sblock.fs_ncg) {
-		printf("fsinit: inode value out of range (%d).\n", ino);
-		exit(32);
+		errx(32, "fsinit: inode value %d out of range", ino);
 	}
 	d = fsbtodb(&sblock, ino_to_fsba(&sblock, ino));
 	rdfs(d, sblock.fs_bsize, buf);
@@ -1047,9 +1033,7 @@ rdfs(daddr_t bno, int size, void *bf)
 	}
 	n = pread(fsi, bf, size, (off_t)bno * sectorsize);
 	if (n != size) {
-		printf("read error: %d\n", bno);
-		perror("rdfs");
-		exit(34);
+		err(34, "rdfs: read error on block %d", bno);
 	}
 }
 
@@ -1069,9 +1053,7 @@ wtfs(daddr_t bno, int size, void *bf)
 		return;
 	n = pwrite(fso, bf, size, (off_t)bno * sectorsize);
 	if (n != size) {
-		printf("write error: %d\n", bno);
-		perror("wtfs");
-		exit(36);
+		err(36, "wtfs: write error on block %d", bno);
 	}
 }
 
