@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.42 2001/08/03 19:09:26 deraadt Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.43 2001/08/03 20:24:16 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static char rcsid[] = "$OpenBSD: syslogd.c,v 1.42 2001/08/03 19:09:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: syslogd.c,v 1.43 2001/08/03 20:24:16 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -589,7 +589,7 @@ logmsg(pri, msg, from, flags)
 	/* log the message to the particular outputs */
 	if (!Initialized) {
 		f = &consfile;
-		f->f_file = open(ctty, O_WRONLY, 0);
+		f->f_file = open(ctty, O_WRONLY|O_NONBLOCK, 0);
 
 		if (f->f_file >= 0) {
 			fprintlog(f, flags, msg);
@@ -758,9 +758,16 @@ fprintlog(f, flags, msg)
 			/*
 			 * Check for errors on TTY's due to loss of tty
 			 */
-			if ((e == EIO || e == EBADF) && f->f_type != F_FILE) {
+			if (e == EAGAIN) {
+				/*
+				 * Silently drop messages on blocked write.
+				 * This can happen when logging to a locked tty.
+				 */
+				break;
+			} else if ((e == EIO || e == EBADF) &&
+			    f->f_type != F_FILE) {
 				f->f_file = open(f->f_un.f_fname,
-				    O_WRONLY|O_APPEND, 0);
+				    O_WRONLY|O_APPEND|O_NONBLOCK, 0);
 				if (f->f_file < 0) {
 					f->f_type = F_UNUSED;
 					logerror(f->f_un.f_fname);
@@ -1213,17 +1220,25 @@ cfline(line, f, prog)
 
 	case '/':
 		(void)strlcpy(f->f_un.f_fname, p, sizeof(f->f_un.f_fname));
-		if ((f->f_file = open(p, O_WRONLY|O_APPEND, 0)) < 0) {
+		f->f_file = open(p, O_WRONLY|O_APPEND|O_NONBLOCK, 0);
+		if (f->f_file < 0) {
 			f->f_type = F_UNUSED;
 			logerror(p);
 			break;
 		}
-		if (isatty(f->f_file))
-			f->f_type = F_TTY;
-		else
+		if (isatty(f->f_file)) {
+			if (strcmp(p, ctty) == 0)
+				f->f_type = F_CONSOLE;
+			else
+				f->f_type = F_TTY;
+		} else {
 			f->f_type = F_FILE;
-		if (strcmp(p, ctty) == 0)
-			f->f_type = F_CONSOLE;
+			/* Clear O_NONBLOCK flag on f->f_file */
+			if ((i = fcntl(f->f_file, F_GETFL, 0)) != -1) {
+				i &= ~O_NONBLOCK;
+				fcntl(f->f_file, F_SETFL, i);
+			}
+		}
 		break;
 
 	case '*':
