@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pmdb.1,v 1.7 2002/06/05 18:30:59 fgsch Exp $
+.\"	$OpenBSD: pmdb.1,v 1.8 2002/06/09 02:44:34 todd Exp $
 .\"
 .\" Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved. 
@@ -32,6 +32,7 @@
 .Sh SYNOPSIS
 .Nm pmdb
 .Op Fl c Ar core
+.Op Fl p Ar pid
 .Ar program Op Ar ...
 .Sh DESCRIPTION
 The
@@ -45,6 +46,11 @@ its arguments on the command line.
 Optionally, 
 .Fl c
 can be used to specify a core file to examine.
+It is also possible to debug a process that is already running by specifying
+the process's PID to the
+.Fl p
+flag.  This causes the process to be put in STOPPED state until execution
+is resumed either by an explicit command to pmdb or by exiting pmdb.
 The program is controlled from a command line which usually gives the
 prompt "pmdb>".
 .Sh PROCESS STATES
