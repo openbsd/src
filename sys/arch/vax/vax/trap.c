@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.26 2003/04/16 16:54:17 miod Exp $     */
+/*	$OpenBSD: trap.c,v 1.27 2003/05/27 23:05:41 miod Exp $     */
 /*	$NetBSD: trap.c,v 1.47 1999/08/21 19:26:20 matt Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -224,8 +224,7 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 		 * because we must check for PTE pages anyway we don't
 		 * bother doing it here.
 		 */
-		addr = trunc_page((vaddr_t)frame->code);
-		sv.sival_int = addr;
+		sv.sival_int = frame->code;
 		if ((umode == 0) && (frame->code < 0))
 			map = kernel_map;
 		else
@@ -236,6 +235,7 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 		else
 			ftype = VM_PROT_READ;
 
+		addr = trunc_page((vaddr_t)frame->code);
 		rv = uvm_fault(map, addr, 0, ftype);
 		if (rv) {
 			if (umode == 0) {
