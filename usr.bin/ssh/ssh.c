@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.67 2000/10/03 18:16:47 markus Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.68 2000/10/11 20:27:24 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/dsa.h>
@@ -404,11 +404,12 @@ main(int ac, char **av)
 				options.cipher = SSH_CIPHER_ILLEGAL;
 			} else {
 				/* SSH1 only */
-				options.cipher = cipher_number(optarg);
-				if (options.cipher == -1) {
+				Cipher *c = cipher_by_name(optarg);
+				if (c == NULL || c->number < 0) {
 					fprintf(stderr, "Unknown cipher type '%s'\n", optarg);
 					exit(1);
 				}
+				options.cipher = c->number;
 			}
 			break;
 		case 'p':

@@ -59,22 +59,20 @@ typedef struct Comp Comp;
 typedef struct Enc Enc;
 
 struct Enc {
+	char		*name;
 	int		type;
+	Cipher		*cipher;
 	int		enabled;
-	int		block_size;
 	unsigned char	*key;
 	unsigned char	*iv;
-	int		key_len;
-	int		iv_len;
-	char		*name;
 };
 struct Mac {
-	EVP_MD		*md;
+	char		*name;
 	int		enabled;
+	EVP_MD		*md;
 	int		mac_len;
 	unsigned char	*key;
 	int		key_len;
-	char		*name;
 };
 struct Comp {
 	int		type;

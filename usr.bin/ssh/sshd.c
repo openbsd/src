@@ -40,14 +40,13 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.129 2000/10/11 04:02:17 provos Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.130 2000/10/11 20:27:24 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
 #include "ssh.h"
 #include "pty.h"
 #include "packet.h"
-#include "cipher.h"
 #include "mpaux.h"
 #include "servconf.h"
 #include "uidswap.h"
@@ -1177,7 +1176,7 @@ do_ssh1_kex()
 	/* Get cipher type and check whether we accept this. */
 	cipher_type = packet_get_char();
 
-	if (!(cipher_mask() & (1 << cipher_type)))
+	if (!(cipher_mask1() & (1 << cipher_type)))
 		packet_disconnect("Warning: client selects unsupported cipher.");
 
 	/* Get check bytes from the packet.  These must match those we
@@ -1343,6 +1342,9 @@ do_ssh2_kex()
 void
 ssh_dh1_server(Kex *kex, Buffer *client_kexinit, Buffer *server_kexinit)
 {
+#ifdef DEBUG_KEXDH
+	int i;
+#endif
 	int payload_len, dlen;
 	int slen;
 	unsigned char *signature = NULL;
@@ -1464,6 +1466,9 @@ ssh_dh1_server(Kex *kex, Buffer *client_kexinit, Buffer *server_kexinit)
 void
 ssh_dhgex_server(Kex *kex, Buffer *client_kexinit, Buffer *server_kexinit)
 {
+#ifdef DEBUG_KEXDH
+	int i;
+#endif
 	int payload_len, dlen;
 	int slen, nbits;
 	unsigned char *signature = NULL;

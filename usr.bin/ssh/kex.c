@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: kex.c,v 1.11 2000/10/11 04:02:17 provos Exp $");
+RCSID("$OpenBSD: kex.c,v 1.12 2000/10/11 20:27:23 markus Exp $");
 
 #include "ssh.h"
 #include "ssh2.h"
@@ -31,7 +31,6 @@ RCSID("$OpenBSD: kex.c,v 1.11 2000/10/11 04:02:17 provos Exp $");
 #include "buffer.h"
 #include "bufaux.h"
 #include "packet.h"
-#include "cipher.h"
 #include "compat.h"
 
 #include <openssl/bn.h>
@@ -395,28 +394,9 @@ choose_enc(Enc *enc, char *client, char *server)
 	char *name = get_match(client, server);
 	if (name == NULL)
 		fatal("no matching cipher found: client %s server %s", client, server);
-	enc->type = cipher_number(name);
-
-	switch (enc->type) {
-	case SSH_CIPHER_3DES_CBC:
-		enc->key_len = 24;
-		enc->iv_len = 8;
-		enc->block_size = 8;
-		break;
-	case SSH_CIPHER_BLOWFISH_CBC:
-	case SSH_CIPHER_CAST128_CBC:
-		enc->key_len = 16;
-		enc->iv_len = 8;
-		enc->block_size = 8;
-		break;
-	case SSH_CIPHER_ARCFOUR:
-		enc->key_len = 16;
-		enc->iv_len = 0;
-		enc->block_size = 8;
-		break;
-	default:
-		fatal("unsupported cipher %s", name);
-	}
+	enc->cipher = cipher_by_name(name);
+	if (enc->cipher == NULL)
+		fatal("matching cipher is not supported: %s", name);
 	enc->name = name;
 	enc->enabled = 0;
 	enc->iv = NULL;
@@ -513,10 +493,10 @@ kex_choose_conf(char *cprop[PROPOSAL_MAX], char *sprop[PROPOSAL_MAX], int server
 	    sprop[PROPOSAL_SERVER_HOST_KEY_ALGS]);
 	need = 0;
 	for (mode = 0; mode < MODE_MAX; mode++) {
-	    if (need < k->enc[mode].key_len)
-		    need = k->enc[mode].key_len;
-	    if (need < k->enc[mode].iv_len)
-		    need = k->enc[mode].iv_len;
+	    if (need < k->enc[mode].cipher->key_len)
+		    need = k->enc[mode].cipher->key_len;
+	    if (need < k->enc[mode].cipher->block_size)
+		    need = k->enc[mode].cipher->block_size;
 	    if (need < k->mac[mode].key_len)
 		    need = k->mac[mode].key_len;
 	}

@@ -12,21 +12,13 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* RCSID("$OpenBSD: ssh.h,v 1.53 2000/10/11 20:14:39 markus Exp $"); */
+/* RCSID("$OpenBSD: ssh.h,v 1.54 2000/10/11 20:27:24 markus Exp $"); */
 
 #ifndef SSH_H
 #define SSH_H
 
 #include "rsa.h"
 #include "cipher.h"
-
-/*
- * XXX
- * The default cipher used if IDEA is not supported by the remote host. It is
- * recommended that this be one of the mandatory ciphers (DES, 3DES), though
- * that is not required.
- */
-#define SSH_FALLBACK_CIPHER	SSH_CIPHER_3DES
 
 /* Cipher used for encrypting authentication files. */
 #define SSH_AUTHFILE_CIPHER	SSH_CIPHER_3DES

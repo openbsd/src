@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect2.c,v 1.23 2000/10/11 20:14:39 markus Exp $");
+RCSID("$OpenBSD: sshconnect2.c,v 1.24 2000/10/11 20:27:24 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
@@ -37,7 +37,6 @@ RCSID("$OpenBSD: sshconnect2.c,v 1.23 2000/10/11 20:14:39 markus Exp $");
 #include "rsa.h"
 #include "buffer.h"
 #include "packet.h"
-#include "cipher.h"
 #include "uidswap.h"
 #include "compat.h"
 #include "readconf.h"
@@ -76,17 +75,16 @@ ssh_kex2(char *host, struct sockaddr *hostaddr)
 	Buffer *client_kexinit, *server_kexinit;
 	char *sprop[PROPOSAL_MAX];
 
+	if (options.ciphers == NULL) {
+		if (options.cipher == SSH_CIPHER_3DES) {
+			options.ciphers = "3des-cbc";
+		} else if (options.cipher == SSH_CIPHER_BLOWFISH) {
+			options.ciphers = "blowfish-cbc";
+		}
+	}
 	if (options.ciphers != NULL) {
 		myproposal[PROPOSAL_ENC_ALGS_CTOS] =
 		myproposal[PROPOSAL_ENC_ALGS_STOC] = options.ciphers;
-	} else if (options.cipher == SSH_CIPHER_3DES) {
-		myproposal[PROPOSAL_ENC_ALGS_CTOS] =
-		myproposal[PROPOSAL_ENC_ALGS_STOC] =
-		    (char *) cipher_name(SSH_CIPHER_3DES_CBC);
-	} else if (options.cipher == SSH_CIPHER_BLOWFISH) {
-		myproposal[PROPOSAL_ENC_ALGS_CTOS] =
-		myproposal[PROPOSAL_ENC_ALGS_STOC] =
-		    (char *) cipher_name(SSH_CIPHER_BLOWFISH_CBC);
 	}
 	if (options.compression) {
 		myproposal[PROPOSAL_COMP_ALGS_CTOS] = "zlib";
@@ -313,7 +311,7 @@ ssh_dhgex_client(Kex *kex, char *host, struct sockaddr *hostaddr,
 	unsigned char *kbuf;
 	unsigned char *hash;
 
-	nbits = dh_estimate(kex->enc[MODE_OUT].key_len * 8);
+	nbits = dh_estimate(kex->enc[MODE_OUT].cipher->key_len * 8);
 
 	debug("Sending SSH2_MSG_KEX_DH_GEX_REQUEST.");
 	packet_start(SSH2_MSG_KEX_DH_GEX_REQUEST);
