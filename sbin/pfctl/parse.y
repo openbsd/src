@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.175 2002/10/27 13:53:59 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.176 2002/10/29 15:23:38 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -61,6 +61,7 @@ static u_int16_t returnicmpdefault =  (ICMP_UNREACH << 8) | ICMP_UNREACH_PORT;
 static u_int16_t returnicmp6default = (ICMP6_DST_UNREACH << 8) |
     ICMP6_DST_UNREACH_NOPORT;
 static int blockpolicy = PFRULE_DROP;
+static int require_order = 1;
 
 enum {
 	PFCTL_STATE_NONE = 0,
@@ -261,6 +262,7 @@ typedef struct {
 %token	NOROUTE FRAGMENT USER GROUP MAXMSS MAXIMUM TTL TOS DROP
 %token	FRAGNORM FRAGDROP FRAGCROP
 %token	SET OPTIMIZATION TIMEOUT LIMIT LOGINTERFACE BLOCKPOLICY
+%token	REQUIREORDER YES
 %token	ANTISPOOF FOR
 %token	<v.string> STRING
 %token	<v.i>	PORTUNARY PORTBINARY
@@ -337,6 +339,16 @@ option		: SET OPTIMIZATION STRING		{
 			if (check_rulestate(PFCTL_STATE_OPTION))
 				YYERROR;
 			blockpolicy = PFRULE_RETURN;
+		}
+		| SET REQUIREORDER YES {
+			if (pf->opts & PF_OPT_VERBOSE)
+				printf("set require-order yes\n");
+			require_order = 1;
+		}
+		| SET REQUIREORDER NO {
+			if (pf->opts & PF_OPT_VERBOSE)
+				printf("set require-order no\n");
+			require_order = 0;
 		}
 		;
 
@@ -2308,7 +2320,7 @@ expand_rdr(struct pf_rdr *r, struct node_if *interfaces,
 int
 check_rulestate(int desired_state)
 {
-	if (rulestate > desired_state) {
+	if (require_order && (rulestate > desired_state)) {
 		yyerror("Rules must be in order: options, normalization, "
 		    "translation, filter");
 		return (1);
@@ -2375,6 +2387,7 @@ lookup(char *s)
 		{ "rdr",	RDR},
 		{ "reassemble",	FRAGNORM},
 		{ "reply-to",	REPLYTO},
+		{ "require-order", REQUIREORDER},
 		{ "return",	RETURN},
 		{ "return-icmp",RETURNICMP},
 		{ "return-icmp6",RETURNICMP6},
@@ -2388,6 +2401,7 @@ lookup(char *s)
 		{ "tos",	TOS},
 		{ "ttl",	TTL},
 		{ "user",	USER},
+		{ "yes",	YES},
 	};
 	const struct keywords *p;
 
