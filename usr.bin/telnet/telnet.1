@@ -1,4 +1,4 @@
-.\"	$OpenBSD: telnet.1,v 1.8 1997/11/11 18:15:28 deraadt Exp $
+.\"	$OpenBSD: telnet.1,v 1.9 1997/12/25 00:29:26 deraadt Exp $
 .\"	$NetBSD: telnet.1,v 1.5 1996/02/28 21:04:12 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -64,7 +64,7 @@ protocol
 .Op Fl x
 .Oo
 .Ar host
-.Op port
+.Op Ar port
 .Oc
 .Sh DESCRIPTION
 The
@@ -154,7 +154,7 @@ toggle to
 Sets the initial
 .Nm
 escape character to
-.Ar escapechar.
+.Ar escapechar Ns .
 If
 .Ar escapechar
 is omitted, then
