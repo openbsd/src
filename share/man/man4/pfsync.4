@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pfsync.4,v 1.9 2003/12/16 03:27:36 mcbride Exp $
+.\"	$OpenBSD: pfsync.4,v 1.10 2003/12/16 04:33:30 mcbride Exp $
 .\"
 .\" Copyright (c) 2002 Michael Shalayeff
 .\" All rights reserved.
@@ -30,19 +30,29 @@
 .Nm pfsync
 .Nd packet filter states table logging interface
 .Sh SYNOPSIS
-.Sy pseudo-device Nm pfsync
+.Sy pseudo-device Nm pfsync 1
 .Sh DESCRIPTION
 The
 .Nm
-interface is the interface to the packet filter,
-.Xr pf 4 ,
-exposing all the changes to the state table.
-This allows for both debugging of rulesets and monitoring
-for changes in the table by invoking
+interface is a pseudo-device which exposes certain changes to the state
+table used by
+.Xr pf 4 .
+State changes can be viewed by invoking
 .Xr tcpdump 8
 on the
 .Nm
-interface.
+interface. 
+If configured with a physical synchronisation interface,
+.Nm
+will also send state changes out on that interface using IP multicast,
+and insert state changes recieved on that interface from other systems
+into the state table.
+.Pp
+By default, all local changes to the state table are exposed via
+.Nm .
+However, state changes from packets recieved by
+.Nm
+over the network are not rebroadcast.
 States created by a rule marked with the
 .Ar no-sync
 keyword are omitted from the
@@ -50,6 +60,36 @@ keyword are omitted from the
 interface (see
 .Xr pf.conf 5
 for details).
+.Pp
+The
+.Nm
+interface will attempt to collapse multiple updates of the same
+state into one message where possible. The maximum number of times 
+this can be done before the update is sent out is controlled by the
+.Ar maxupd
+to ifconfig.
+(see
+.Xr ifconfig 8
+and the example below for more details)
+.Pp
+Each packet retrieved on this interface has a header associated
+with it of length
+.Dv PFSYNC_HDRLEN .
+The header indicates the version of the protocol, address family,
+action taken on the following states and the number of state
+table entries attached in this packet.
+This structure, defined in
+.Aq Pa net/if_pfsync.h
+looks like:
+.Bd -literal -offset indent
+struct pfsync_header {
+	u_int8_t version;
+	u_int8_t af;
+	u_int8_t action;
+	u_int8_t count;
+};
+.Ed
+.Sh NETWORK SYNCHRONISATION
 .Pp
 States can be synchronised between two or more firewalls using this
 interface, by specifying a synchronisation interface using
@@ -83,35 +123,6 @@ interface.
 However, the actual packet contents may differ as the messages
 sent over the network are "compressed" where possible, containing
 only the necessary information.
-.Pp
-The
-.Nm
-interface will also attempt to collapse multiple updates of the same
-state into one message where possible. The maximum number of times 
-this can be done before the update is sent out is controlled by the
-.Ar maxupd
-to ifconfig.
-(see
-.Xr ifconfig 8
-and the example below for more details)
-.Pp
-Each packet retrieved on this interface has a header associated
-with it of length
-.Dv PFSYNC_HDRLEN .
-The header indicates the version of the protocol, address family,
-action taken on the following states and the number of state
-table entries attached in this packet.
-This structure, defined in
-.Aq Pa net/if_pfsync.h
-looks like:
-.Bd -literal -offset indent
-struct pfsync_header {
-	u_int8_t version;
-	u_int8_t af;
-	u_int8_t action;
-	u_int8_t count;
-};
-.Ed
 .Sh EXAMPLES
 .Bd -literal -offset indent
 # ifconfig pfsync0 up syncif fxp0 maxupd 64
