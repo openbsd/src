@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.8 2000/07/02 00:27:23 jason Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.9 2001/02/09 04:08:11 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1592,7 +1592,12 @@ vr_start(ifp)
 		sc->vr_cdata.vr_tx_free = cur_tx->vr_nextdesc;
 
 		/* Pack the data into the descriptor. */
-		vr_encap(sc, cur_tx, m_head);
+		if (vr_encap(sc, cur_tx, m_head)) {
+			IF_PREPEND(&ifp->if_snd, m_head);
+			ifp->if_flags |= IFF_OACTIVE;
+			cur_tx = NULL;
+			break;
+		}
 
 		if (cur_tx != start_tx)
 			VR_TXOWN(cur_tx) = VR_TXSTAT_OWN;
