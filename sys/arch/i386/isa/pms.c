@@ -1,4 +1,4 @@
-/*	$OpenBSD: pms.c,v 1.14 1997/05/30 19:31:26 deraadt Exp $	*/
+/*	$OpenBSD: pms.c,v 1.15 1997/05/30 19:51:27 deraadt Exp $	*/
 /*	$NetBSD: pms.c,v 1.29 1996/05/12 23:12:42 mycroft Exp $	*/
 
 /*-
@@ -434,16 +434,6 @@ pmsintr(arg)
 		switch (state) {
 		case 0:
 			buttons = inb(PMS_DATA);
-			/* Re-enable if mouse is disconnected and reconnected. */
-			if (buttons == 0xaa) {
-				pms_dev_cmd(PMS_DEV_ENABLE);
-				break;
-			}
-
-			/* For GlidePoint tapping feature. treat as LBUTTON */
-			if ((buttons & (PS2LBUTMASK|PS2RBUTMASK|PS2MBUTMASK)) == 0)
-				buttons |= PS2LBUTMASK;
-
 			if ((buttons & 0xc0) == 0)
 				++state;
 			break;
