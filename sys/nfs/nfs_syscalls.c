@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.34 2002/08/23 22:21:44 art Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.35 2002/10/29 12:47:06 art Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -97,6 +97,12 @@ int nfsd_waiting = 0;
 static int nfs_numnfsd = 0;
 static struct nfsdrt nfsdrt;
 #endif
+
+struct nfssvc_sockhead nfssvc_sockhead;
+struct nfsdhead nfsd_head;
+
+int nfssvc_sockhead_flag;
+int nfsd_head_flag;
 
 #define	TRUE	1
 #define	FALSE	0
