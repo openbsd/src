@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atapiscsi.4,v 1.3 1999/11/14 20:23:27 deraadt Exp $
+.\"	$OpenBSD: atapiscsi.4,v 1.4 1999/12/11 10:23:41 csapuntz Exp $
 .\"
 .\" Copyright (c) 1999 Constantine Sapuntzakis.
 .\"
@@ -40,19 +40,21 @@
 .Sh DESCRIPTION
 The 
 .Nm
-driver supports ATAPI (also called IDE) devices such as CD-ROMs, ZIP drives,
-floppy drives, and (eventually) tape drives.  All ATAPI devices talk some
-subset of the SCSI protocol. For example, the SCSI 
-.Xr cd 4 ,
-.Xr sd 4 ,
-and
-.Xr st 4
-drivers are able to sucessfully control the corresponding ATAPI devices.
+driver supports ATAPI (also called IDE) devices such as CD-ROMs, ZIP
+drives, LS-120 floppy drives, and tape drives.  All ATAPI devices talk
+a subset of the SCSI protocol. 
 .Pp
 The
 .Nm
 driver acts like a SCSI adapter.  Thus, the ATAPI devices connected to
-the system will appear as SCSI devices.
+the system will appear as SCSI devices.  ATAPI CD-ROMs will appear 
+as
+.Xr cd 4
+devices, ATAPI tape drives as 
+.Xr st 4
+devices, and ATAPI floppies as
+.Xr sd 4
+devices.
 .Pp
 For performance reasons, one should avoid putting an ATAPI device and
 a hard disk on the same cable.  The driver does not support bus release
@@ -61,7 +63,8 @@ only one command outstanding on a cable at a time. For example, if a
 hard disk and a CD drive are placed on the same cable, the hard disk
 requests may get queued behind slower CD operations.
 .Sh BUGS
-Tape devices don't work yet.
+Slow devices, like tape drives, could do a better job of sharing the channel.
+For now, we recommend you put the tape device on its own channel.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr pciide 4 ,
