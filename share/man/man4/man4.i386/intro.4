@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.4,v 1.26 2001/10/05 14:45:54 mpech Exp $
+.\"	$OpenBSD: intro.4,v 1.27 2001/10/06 21:44:32 miod Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -99,16 +99,18 @@ Not all supported devices are listed.
 .Bl -tag -width speaker -compact -offset indent
 .It aac
 Adaptec "FSA" family (Adaptec AAC, Dell PERC, HP NetRaid) RAID controllers.
+.It addcom
+Addonics FlexPort serial boards.
+.It adv
+AdvanSys PCI narrow SCSI Host Adapters.
+.It adw
+AdvanSys PCI wide SCSI Host Adapters.
 .It aha
 Adaptec 154x ISA SCSI adapter boards.
 .It ahb
 Adaptec 1742 EISA SCSI adapter boards.
 .It ahc
 Adaptec 2xxx and 3xxx series PCI/VLB/EISA SCSI adapter boards.
-.It adv
-AdvanSys PCI narrow SCSI Host Adapters.
-.It adw
-AdvanSys PCI wide SCSI Host Adapters.
 .It aic
 Adaptec AIC-6260, Adaptec AIC-6360, Adaptec 152x, and SoundBlaster SCSI boards.
 .It ami
@@ -117,17 +119,25 @@ MegaRAID Controllers.
 .It an
 Aironet Communications 4500/4800 IEEE 802.11DS wireless network adapter.
 .It apm
-advanced power management.
+Advanced Power Management.
 .It aria
 Sierra Semiconductor Aria 16 sound cards.
 .It ast
-multiplexing serial communications card first made by AST.
+Multiplexing serial communications card first made by AST.
+.It aue
+ADMtek AN986-based USB Ethernet adapters.
 .It auich
 Intel 82801AA/AB/BA and 440MX PCI audio.
 .It auvia
 VIA VT82C686A integrated AC'97 audio device.
+.It awi
+BayStack 650 PCMCIA wireless network adapter.
 .It ax
 ASIX AX88104A and AX88141 based PCI Ethernet adapters.
+.It az
+Aztech/PackardBell FM Radio card.
+.It bge
+Broadcom BCM570x (Tigon3) Gigabit Ethernet boards.
 .It bktr
 Brooktree video capture.
 .It boca
@@ -136,17 +146,29 @@ BOCA serial cards.
 Buslogic BT-445, BT-74x, and BT-9xx SCSI boards.
 .It cac
 Compaq Smart ARRAY RAID controllers.
+.It clcs
+Cirrus Logic CS4280 audio.
+.It clct
+Cirrus Logic CS4281 audio.
+.It cmpci
+C-Media CMI8x38 audio.
 .It com
-NS8250-, NS16450-, and NS16550-based asynchronous serial
-communications.
+NS8250-, NS16450-, NS16550-, ST16550- and TI16750-based asynchronous
+serial communications.
+.It cue
+CATC USB-EL1201A based USB Ethernet adapters.
 .It cy
-Cyclades Cyclom-4Y, -8Y, and -16Y asynchronous serial communications.
+Cyclades Cyclom-4Y, -8Y, and -16Y asynchronous serial adapters.
+.It cz
+Cyclades Cyclades-Z asynchronous serial adapters.
 .It dc
 DEC tulip clone ethernet cards (Macronix, Lite-On, Davicom, ADMtek).
 .It de
 DEC tulip-based ethernet cards.
 .It dpt
 DPT SmartCache/SmartRAID III and IV SCSI controllers.
+.It eap
+Ensoniq AudioPCI (ES137x) audio.
 .It ec
 3Com Etherlink II Ethernet (3C503).
 .It ef
@@ -157,12 +179,33 @@ DPT SmartCache/SmartRAID III and IV SCSI controllers.
 3Com EtherLink Ethernet (3C501).
 .It ep
 3Com Etherlink III Ethernet (3C5x9, 3C59x).
+.It eso
+ESS Technology Solo-1 PCI AudioDrive (ES1938/ES1946) audio.
+.It ess
+ESS Technology AudioDrive (ESS 1788, 1888, 1887 and 888) audio.
 .It ex
 Intel EtherExpress PRO/10 ethernet cards.
+.It fdc
+Floppy disk controllers.
+.It fea
+.Tn DEC
+DEFEA PCI FDDI controller.
+.It fms
+Forte Media FM801 audio.
+.It fpa
+.Tn DEC
+DEFPA PCI FDDI controller.
+.It fxp
+.Tn Intel
+EtherExpress PRO/100 Ethernet.
 .It gdt
 ICP-Vortex GDT RAID controllers.
+.It gus
+Gravis UltraSound and UltraSound/MAX audio.
 .It hifn
 Hi/Fn 7751 Encryption Accelerator.
+.It hsq
+Hostess multiplexing serial communications boards.
 .It ie
 .At StarLAN 10 ,
 EN100, StarLan Fiber, and 3Com 3c507 Ethernet.
@@ -171,19 +214,28 @@ Initio INIC-940 and INIC-950 based SCSI interfaces.
 .It iop
 I2O adapter.
 .It ises
-Pijnenburg PCC-ISES hardware crypto accelerator.
+Securealink PCC-ISES hardware crypto accelerator.
 .It isp
 QLogic PCI SCSI controllers.
 .It iy
 Ether-Express PRO/10.
 .It joy
 Joystick.
+.It kue
+Kawasaki LSI KL5KUSB101B-based USB Ethernet.
+.It lc
+.Tn DEC
+EtherWORKS III Ethernet.
 .It le
 BICC Isolan, Novell NE2100, and Digital DEPCA Ethernet.
+.It lmc
+Lan Media Corporation SS1/DS1/HSSI/DS3 PCI WAN adapters.
 .It lms
 Logitech-style bus mouse.
 .It lpt
 Parallel port.
+.It maestro
+ESS Maestro 1, 2 and 2E audio.
 .It mcd
 Mitsumi CD-ROM drives.
 .It mms
@@ -192,46 +244,97 @@ Microsoft-style bus mouse.
 NCR PCI SCSI adapter boards.
 .It ne
 Novell NE1000 and 2000 Ethernet interface.
+.It neo
+NeoMagic 256AV/ZX audio.
+.It nge
+National Semiconductor PCI Gigabit Ethernet.
 .It npx
 Numeric Processing Extension coprocessor and emulator.
+.It pas
+ProAudio spectrum audio.
+.It pccom
+NS8250-, NS16450-, NS16550-, ST16550-, TI16750- and XR16850-based asynchronous
+serial communications.
+.It pcdisplay
+PC display adapter driver for MDA or CGA compatible adapters.
+.It pckbc
+Traditional PC (ISA) keyboard.
 .It pctr
 CPU performance counter registers.
 .It pms
-PS/2 auxiliary port mouse.
+PS/2 auxiliary port mouse, for generic mice.
+.It pmsi
+PS/2 auxiliary port mouse, for wheel mice.
 .It pn
 Lite-On 82c168/82c169 PNIC ethernet.
-.It rtfps
-Another multiplexing serial communications card.
+.It pss
+Personal Sound System audio.
+.It ray
+Raytheon Raylink/WebGear Aviator wireless network adapter.
 .It rl
 RealTek 8129/8139 Ethernet.
+.It rtfps
+Another multiplexing serial communications card.
 .It sb
 Sound Blaster card.
 .It sea
 Seagate/Future Domain SCSI cards.
 ST01/02, Future Domain TMC-885, and Future Domain TMC-950.
+.It sf
+Adaptec AIC-6915 Starfire PCI Fast Ethernet.
+.It sf2r
+SoundForte RadioLink SF16-FMR2 FM radio adapter.
+.It sf4r
+SoundForte RadioLink SF64-PCR FM radio adapter.
+.It siop
+LSI/Symbios Logic/NCR 53c8xx SCSI adapter boards.
+.It sis
+SiS 900, Sis 7016 and NS DP83815 Fast Ethernet.
 .It sk
 SysKonnect 984x Gigabit Ethernet (9841/9842/9843/9844).
+.It sm
+SMC91C9x Ethernet.
 .It speaker
-console speaker.
+Console speaker.
+.It tcic
+Databook PCMCIA controllers.
 .It ti
 Alteon Tigon I & II Gigabit ethernet (3COM 3C985, Netgear GA620, etc).
 .It tl
-Texas Instruments ThunderLAN ethernet
+Texas Instruments ThunderLAN ethernet.
+.It tr
+IBM TROPIC Token-Ring adapters.
 .It twe
 3ware Escalade RAID controller.
 .It tx
 SMC 9432 10/100 Mbps Ethernet cards.
+.It txp
+3Com 3XP Typhoon/Sidewinder (3CR990) Ethernet.
 .It ubsec
 Broadcom Bluesteelnet uBsec 5501, 5601, 5805, and 5820.
+.It uftdi
+FTDI FT8U100AX-based USB serial adapters.
 .It uha
 Ultrastor ISA and EISA SCSI adapter cards.
 Ultrastor 14f, Ultrastor 34f, and Ultrastor 24f.
+.It upl
+Prolific PL2301/PL2302-based host-to-host USB connectors.
+.It uplcom
+I/O Data USB-RSAQ2 USB serial adapters.
+.It urio
+Diamond Multimedia Rio MP3 device interface.
+.It uvisor
+Handspring Visor device interface.
+.It uyap
+YAP phone firmware interface.
+.It vga
+PC display adapter driver for VGA compatible adapters.
 .It vr
 VIA Rhine Ethernet.
 .It wb
 Winbond W89C840F fast ethernet.
 .It wdc
-Standard ISA Western Digital type hard drives.
+Standard ISA Western Digital type hard drive controllers.
 MFM, RLL, ESDI, and IDE.
 .It wds
 WD-7000 SCSI host adapters.
@@ -239,13 +342,23 @@ WD-7000 SCSI host adapters.
 Industrial Computer Source PCI-WDT50x watchdog timer cards.
 .It we
 Western Digital/SMC WD 80x3, SMC Elite Ultra and SMC EtherEZ Ethernet cards.
+.It wi
+WaveLAN/IEEE and PRISM-II 802.11DS wireless network adapters.
+.It wss
+Windows Sound System audio.
 .It wt
 Wangtek and compatible tape drives.
 QIC-02 and QIC-36.
 .It wx
 Intel 82452 Pro/1000 Gigabit Ethernet.
+.It xe
+Xircom PCMCIA Ethernet.
 .It xl
 3COM Etherlink XL and Fast Etherlink XL (3c9xx).
+.It yds
+Yamaha DS-XG audio.
+.It ym
+Yamaha OPL3-SAx audio.
 .El
 .Sh SEE ALSO
 .Xr autoconf 4 ,
