@@ -1,4 +1,4 @@
-.\"	$OpenBSD: passwd.1,v 1.5 1998/01/20 15:32:20 art Exp $
+.\"	$OpenBSD: passwd.1,v 1.6 1998/01/20 19:51:58 art Exp $
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -70,6 +70,11 @@ This option causes the password to be updated only in the local
 password file.  When changing only the local password,
 .Xr pwd_mkdb  8
 is used to update the password databases.
+.It Fl y
+This forces the YP password database entry to be changed, even if
+the user has an entry in the local database.  The
+.Xr rpc.yppasswdd 8
+daemon should be running on the YP master server.
 .It Fl k
 This option forces the change to affect the Kerberos database, even
 if the user has a password in the local database.
@@ -77,11 +82,30 @@ Once the password has been verified,
 .Nm passwd
 communicates the new password information to
 the Kerberos authenticating host.
-.It Fl y
-This forces the YP password database entry to be changed, even if
-the user has an entry in the local database.  The
-.Xr rpc.yppasswdd 8
-daemon should be running on the YP master server.
+.El
+.Pp
+The following flags are only used when the 
+.Fl k
+flag is specified.
+.Bl -tag -width flag
+.It Fl n
+This option lets you specify a 
+.Nm name
+that will be used as the principal name rather  than  the  username
+of the user running
+.Nm passwd.
+(This is determined from the ticket file  if  it exists;  otherwise,  
+it is determined from the unix user id.)
+.It Fl i
+This option lets you specify an 
+.Nm instance 
+to use rather than a null instance.
+.It Fl r
+This option lets you use
+.Nm realm
+instead of the local realm.
+.It Fl u
+This option lets you specify a fully qualified kerberos principal.
 .El
 .Pp
 This is the behavior if no flags are specified:
