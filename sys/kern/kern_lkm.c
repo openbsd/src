@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lkm.c,v 1.26 2000/01/02 06:28:06 assar Exp $	*/
+/*	$OpenBSD: kern_lkm.c,v 1.27 2001/02/06 16:38:13 fgsch Exp $	*/
 /*	$NetBSD: kern_lkm.c,v 1.31 1996/03/31 21:40:27 christos Exp $	*/
 
 /*
@@ -501,7 +501,8 @@ lkmioctl(dev, cmd, data, flag, p)
 		}
 
 #ifdef LKM_DEBUG
-		printf("LKM: LMREADY, id=%d, dev=%d\n", curp->id, curp->private.lkm_any->lkm_offset);
+		printf("LKM: LMREADY, id=%d, dev=%d\n", curp->id,
+		    curp->private.lkm_any->lkm_offset);
 #endif	/* LKM_DEBUG */
 #ifdef DDB
 		if (curp->syms && curp->sym_offset >= curp->sym_size) {
@@ -526,7 +527,8 @@ lkmioctl(dev, cmd, data, flag, p)
 
 		unloadp = (struct lmc_unload *)data;
 
-		if ((curp = lkmlookup(unloadp->id, unloadp->name, &error)) == NULL)
+		if ((curp =
+		    lkmlookup(unloadp->id, unloadp->name, &error)) == NULL)
 			break; /* error set in lkmlookup */
 
 		/* call entry(unload) */
@@ -603,7 +605,7 @@ lkmenodev()
 
 /*
  * A placeholder function for load/unload/stat calls; simply returns zero.
- * Used where people don't wnat tp specify a special function.
+ * Used where people don't want to specify a special function.
  */
 int
 lkm_nofunc(lkmtp, cmd)
@@ -770,10 +772,12 @@ _lkm_dev(lkmtp, cmd)
 			}
 
 			/* save old */
-			bcopy(&bdevsw[i], &args->lkm_olddev.bdev, sizeof(struct bdevsw));
+			bcopy(&bdevsw[i], &args->lkm_olddev.bdev,
+			    sizeof(struct bdevsw));
 
 			/* replace with new */
-			bcopy(args->lkm_dev.bdev, &bdevsw[i], sizeof(struct bdevsw));
+			bcopy(args->lkm_dev.bdev, &bdevsw[i],
+			    sizeof(struct bdevsw));
 
 			/* done! */
 			args->lkm_offset = i;	/* slot in bdevsw[] */
@@ -801,10 +805,12 @@ _lkm_dev(lkmtp, cmd)
 			}
 
 			/* save old */
-			bcopy(&cdevsw[i], &args->lkm_olddev.cdev, sizeof(struct cdevsw));
+			bcopy(&cdevsw[i], &args->lkm_olddev.cdev,
+			    sizeof(struct cdevsw));
 
 			/* replace with new */
-			bcopy(args->lkm_dev.cdev, &cdevsw[i], sizeof(struct cdevsw));
+			bcopy(args->lkm_dev.cdev, &cdevsw[i],
+			    sizeof(struct cdevsw));
 
 			/* done! */
 			args->lkm_offset = i;	/* slot in cdevsw[] */
@@ -824,12 +830,14 @@ _lkm_dev(lkmtp, cmd)
 		switch(args->lkm_devtype) {
 		case LM_DT_BLOCK:
 			/* replace current slot contents with old contents */
-			bcopy(&args->lkm_olddev.bdev, &bdevsw[i], sizeof(struct bdevsw));
+			bcopy(&args->lkm_olddev.bdev, &bdevsw[i],
+			    sizeof(struct bdevsw));
 			break;
 
 		case LM_DT_CHAR:
 			/* replace current slot contents with old contents */
-			bcopy(&args->lkm_olddev.cdev, &cdevsw[i], sizeof(struct cdevsw));
+			bcopy(&args->lkm_olddev.cdev, &cdevsw[i],
+			    sizeof(struct cdevsw));
 			break;
 
 		default:
