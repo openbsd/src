@@ -56,7 +56,7 @@ of data from the object referenced by the descriptor
 .Fa d
 into the buffer pointed to by
 .Fa buf .
-.Fn Readv
+.Fn \ Readv
 performs the same action, but scatters the input data
 into the 
 .Fa iovcnt
@@ -109,6 +109,13 @@ The system guarantees to read the number of bytes requested if
 the descriptor references a normal file that has that many bytes left
 before the end-of-file, but in no other case.
 .Pp
+Note that
+.Fn readv
+will fail if the value of 
+.Fa iovcnt
+exceedes the constant
+.Fa UIO_MAXIOV .
+.Pp
 .Sh RETURN VALUES
 If successful, the
 number of bytes actually read is returned. Upon reading end-of-file,
@@ -149,7 +156,8 @@ may return one of the following errors:
 .It Bq Er EINVAL
 .Fa Iovcnt
 was less than or equal to 0, or greater than
-.Dv {UIO_MAXIOV} .
+.\".Dv {UIO_MAXIOV} .
+.Fa UIO_MAXIOV
 .It Bq Er EINVAL
 One of the
 .Fa iov_len
