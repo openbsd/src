@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.66 2002/06/14 01:07:45 itojun Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.67 2002/06/14 09:12:43 itojun Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.66 2002/06/14 01:07:45 itojun Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.67 2002/06/14 09:12:43 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -189,6 +189,7 @@ void	setia6flags(char *, int);
 void	setia6pltime(char *, int);
 void	setia6vltime(char *, int);
 void	setia6lifetime(char *, char *);
+void	setia6eui64(const char *, int);
 #endif
 void    checkatrange(struct sockaddr_at *);
 void	setmedia(char *, int);
@@ -266,6 +267,7 @@ const struct	cmd {
 	{ "-tentative",	-IN6_IFF_TENTATIVE,	0,	setia6flags },
 	{ "pltime",	NEXTARG,	0,		setia6pltime },
 	{ "vltime",	NEXTARG,	0,		setia6vltime },
+	{ "eui64",	0,		0,		setia6eui64 },
 #endif /*INET6*/
 #ifndef INET_ONLY
 	{ "range",	NEXTARG,	0,		setatrange },
@@ -965,6 +967,41 @@ setia6lifetime(cmd, val)
 		in6_addreq.ifra_lifetime.ia6t_preferred = t + newval;
 		in6_addreq.ifra_lifetime.ia6t_pltime = newval;
 	}
+}
+
+void
+setia6eui64(cmd, val)
+	const char *cmd;
+	int val;
+{
+	struct ifaddrs *ifap, *ifa;
+	const struct sockaddr_in6 *sin6 = NULL;
+	const struct in6_addr *lladdr = NULL;
+	struct in6_addr *in6;
+
+	if (afp->af_af != AF_INET6)
+		errx(1, "%s not allowed for the AF", cmd);
+ 	in6 = (struct in6_addr *)&in6_addreq.ifra_addr.sin6_addr;
+	if (memcmp(&in6addr_any.s6_addr[8], &in6->s6_addr[8], 8) != 0)
+		errx(1, "interface index is already filled");
+	if (getifaddrs(&ifap) != 0)
+		err(1, "getifaddrs");
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		if (ifa->ifa_addr->sa_family == AF_INET6 &&
+		    strcmp(ifa->ifa_name, name) == 0) {
+			sin6 = (const struct sockaddr_in6 *)ifa->ifa_addr;
+			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)) {
+				lladdr = &sin6->sin6_addr;
+				break;
+			}
+		}
+	}
+	if (!lladdr)
+		errx(1, "could not determine link local address"); 
+
+ 	memcpy(&in6->s6_addr[8], &lladdr->s6_addr[8], 8);
+
+	freeifaddrs(ifap);
 }
 #endif
 
@@ -2554,14 +2591,16 @@ usage()
 	fprintf(stderr, "usage: ifconfig [ -m ] [ -a ] [ -A ] [ interface ]\n"
 		"\t[ [af] [ address [ dest_addr ] ] [ up ] [ down ] "
 		"[ netmask mask ] ]\n"
-		"\t[media media_type] [mediaopt media_option]\n"
+		"\t[ media media_type ] [ mediaopt media_option ]\n"
 		"\t[ metric n ]\n"
 		"\t[ mtu n ]\n"
-		"\t[ nwid netword_id ]\n"
-		"\t[ tunnel srcaddress dstaddress ]\n"
-		"\t[ deletetunnel ]\n"
+		"\t[ nwid network_id ] [ nwkey network_key | -nwkey ]\n"
+		"\t[ powersave | -powersave ] [ powersavesleep duration ]\n"
+		"\t[ [af] tunnel srcaddress dstaddress ] [ deletetunnel ]\n"
 		"\t[ vlan n vlandev interface ]\n"
 		"\t[ arp | -arp ]\n"
+		"\t[ anycast | -anycast ] [ deprecated | -deprecated ]\n"
+		"\t[ tentative | -tentative ] [ pltime n ] [ vltime n ] [ eui64 ]\n"
 		"\t[ -802.2 | -802.3 | -802.2tr | -snap | -EtherII ]\n"
 		"\t[ link0 | -link0 ] [ link1 | -link1 ] [ link2 | -link2 ]\n"
 		"       ifconfig [-a | -A | -am | -Am] [ af ]\n"
