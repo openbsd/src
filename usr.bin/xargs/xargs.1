@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xargs.1,v 1.12 2003/06/12 01:09:23 millert Exp $
+.\"	$OpenBSD: xargs.1,v 1.13 2003/06/12 17:55:01 jmc Exp $
 .\"	$FreeBSD: xargs.1,v 1.30 2003/05/21 21:07:28 ru Exp $$
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -41,7 +41,8 @@
 .Nm xargs
 .Nd "construct argument list(s) and execute utility"
 .Sh SYNOPSIS
-.Nm
+.Nm xargs
+.Bk -words
 .Op Fl 0opt
 .Op Fl E Ar eofstr
 .Oo
@@ -57,6 +58,7 @@
 .Op Fl P Ar maxjobs
 .Op Fl s Ar size
 .Op Ar utility Op Ar argument ...
+.Ek
 .Sh DESCRIPTION
 The
 .Nm
@@ -160,7 +162,7 @@ directories which start with an uppercase letter in the current
 directory to
 .Pa destdir :
 .Pp
-.Dl /bin/ls -1d [A-Z]* | xargs -J % cp -rp % destdir
+.Dl "/bin/ls -1d [A-Z]* | xargs -J % cp -rp % destdir"
 .It Fl L Ar number
 Call
 .Ar utility
