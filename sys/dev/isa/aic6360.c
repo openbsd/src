@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360.c,v 1.12 1997/07/07 16:19:37 niklas Exp $ */
+/*	$OpenBSD: aic6360.c,v 1.13 1997/07/07 17:02:06 niklas Exp $ */
 /*	$NetBSD: aic6360.c,v 1.46 1996/05/12 23:51:37 mycroft Exp $	*/
 
 #define	integrate	static inline
@@ -665,11 +665,11 @@ aicprobe(parent, match, aux)
 
 #ifdef NEWCONFIG
 	if (ia->ia_iobase == IOBASEUNK)
-		return 0;
+		return (0);
 #endif
 
 	if (aic_find(sc, ia) != 0)
-		return 0;
+		return (0);
 
 #ifdef NEWCONFIG
 	if (ia->ia_irq != IRQUNK) {
@@ -677,7 +677,7 @@ aicprobe(parent, match, aux)
 			printf("%s: irq mismatch; ", sc->sc_dev.dv_xname);
 			printf("kernel configured %d != board configured %d\n",
 			    ia->ia_irq, sc->sc_irq);
-			return 0;
+			return (0);
 		}
 	} else
 		ia->ia_irq = sc->sc_irq;
@@ -687,7 +687,7 @@ aicprobe(parent, match, aux)
 			printf("%s: drq mismatch; ", sc->sc_dev.dv_xname);
 			printf("kernel configured %d != board configured %d\n",
 			    ia->ia_drq, sc->sc_drq);
-			return 0;
+			return (0);
 		}
 	} else
 		ia->ia_drq = sc->sc_drq;
@@ -695,7 +695,7 @@ aicprobe(parent, match, aux)
 
 	ia->ia_msize = 0;
 	ia->ia_iosize = AIC_NPORTS;
-	return 1;
+	return (1);
 }
 
 /*
@@ -712,7 +712,7 @@ aic_find(sc, ia)
 	int i;
 
 	if (bus_space_map(iot, ia->ia_iobase, AIC_NPORTS, 0, &ioh))
-		return (0);
+		return (1);
 
 	/* Remove aic6360 from possible powerdown mode */
 	bus_space_write_1(iot, ioh, DMACNTRL0, 0);
@@ -739,7 +739,7 @@ aic_find(sc, ia)
 	if (i != STSIZE) {
 		AIC_START(("STACK futzed at %d.\n", i));
 		bus_space_unmap(iot, ioh, AIC_NPORTS);
-		return ENXIO;
+		return (1);
 	}
 
 	/* See if we can pull the id string out of the ID register,
@@ -767,7 +767,7 @@ aic_find(sc, ia)
 	sc->sc_maxsync = (9 * 250) / sc->sc_freq;
 
 	bus_space_unmap(iot, ioh, AIC_NPORTS);
-	return 0;
+	return (0);
 }
 
 /*
@@ -786,7 +786,8 @@ aicattach(parent, self, aux)
 	AIC_TRACE(("aicattach  "));
 	sc->sc_state = AIC_INIT;
 
-	bus_space_map(iot, ia->ia_iobase, AIC_NPORTS, 0, &ioh);
+	if (bus_space_map(iot, ia->ia_iobase, AIC_NPORTS, 0, &ioh))
+		panic("%s: could not map I/O-ports", sc->sc_dev.dv_xname);
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
 

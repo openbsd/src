@@ -1,4 +1,4 @@
-/*	$OpenBSD: wds.c,v 1.11 1996/11/29 22:55:10 niklas Exp $	*/
+/*	$OpenBSD: wds.c,v 1.12 1997/07/07 17:02:07 niklas Exp $	*/
 /*	$NetBSD: wds.c,v 1.13 1996/11/03 16:20:31 mycroft Exp $	*/
 
 #undef	WDSDIAG
@@ -853,7 +853,7 @@ wds_find(ia, sc)
 	/* XXXXX */
 
 	if (bus_space_map(iot, ia->ia_iobase, WDS_IO_PORTS, 0, &ioh))
-		return (0);
+		return (1);
 
 	/*
 	 * Sending a command causes the CMDRDY bit to clear.
@@ -864,7 +864,7 @@ wds_find(ia, sc)
 			goto ready;
 		delay(10);
 	}
-	return 1;
+	return (1);
 
 ready:
 	bus_space_write_1(iot, ioh, WDS_CMD, WDSC_NOOP);
@@ -895,7 +895,7 @@ ready:
 		if ((bus_space_read_1(iot, ioh, WDS_STAT) & (WDSS_RDY)) !=
 		    WDSS_RDY) {
 			printf(" failed\n");
-			return 1;
+			return (1);
 		}
 		printf("\n");
 	}
@@ -912,7 +912,7 @@ ready:
 	} else
 		bus_space_unmap(iot, ioh, WDS_IO_PORTS);
 
-	return 0;
+	return (0);
 }
 
 /*
