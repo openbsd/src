@@ -1,4 +1,3 @@
-#	$Id: Makefile.inc,v 1.1 1995/10/27 22:27:49 deraadt Exp $
+#	$Id: Makefile.inc,v 1.2 1996/10/08 19:39:49 deraadt Exp $
 
-# Revision is 1.0A
-REV=	10A
+REV=	20
