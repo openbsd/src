@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.18 2004/05/25 21:42:47 mickey Exp $	*/
+/*	$OpenBSD: util.h,v 1.19 2004/10/17 03:56:49 drahn Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -151,6 +151,19 @@ _dl_strchr(const char *p, const int ch)
 			return((char *)NULL);
 	}
 	/* NOTREACHED */
+}
+
+static inline char *
+_dl_strrchr(const char *str, const int ch)
+{
+	const char *p;
+	char *retval = NULL;
+
+	for (p = str; *p != '\0'; ++p)
+		if (*p == ch)
+			retval = (char *)p;
+
+	return retval;
 }
 
 static inline char *

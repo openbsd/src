@@ -1,4 +1,4 @@
-/*	$OpenBSD: sod.c,v 1.21 2004/05/18 16:50:31 mickey Exp $	*/
+/*	$OpenBSD: sod.c,v 1.22 2004/10/17 03:56:49 drahn Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -186,7 +186,7 @@ bad_hints:
 }
 
 char *
-_dl_findhint(char *name, int major, int minor, char *prefered_path)
+_dl_findhint(char *name, int major, int minor, char *preferred_path)
 {
 	struct hints_bucket	*bp;
 
@@ -221,11 +221,17 @@ _dl_findhint(char *name, int major, int minor, char *prefered_path)
 			/* It's `name', check version numbers */
 			if (bp->hi_major == major &&
 			    (bp->hi_ndewey < 2 || bp->hi_minor >= minor)) {
-				if (prefered_path == NULL ||
-				    _dl_strncmp(prefered_path,
-				    hstrtab + bp->hi_pathx,
-				    _dl_strlen(prefered_path)) == 0)
+				if (preferred_path == NULL) {
 					return hstrtab + bp->hi_pathx;
+				} else {
+					char *path = hstrtab + bp->hi_pathx;
+					char *edir = _dl_strrchr(path, '/');
+
+					if ((_dl_strncmp(preferred_path, path,
+					    (edir - path)) == 0) &&
+					    (preferred_path[edir - path] == '\0'))
+						return path;
+				}
 			}
 		}
 

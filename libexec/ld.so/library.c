@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.34 2004/07/05 00:47:40 kjell Exp $ */
+/*	$OpenBSD: library.c,v 1.35 2004/10/17 03:56:49 drahn Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -134,6 +134,12 @@ _dl_find_shlib(struct sod *sodp, const char *searchpath, int nohints)
 				*path++ = *pp++;
 			*path = 0;
 
+			/* interpret "" as curdir "." */
+			if (lp[0] == '\0') {
+				lp[0] = '.';
+				lp[1] = '\0';
+			}
+
 			hint = _dl_findhint((char *)sodp->sod_name,
 			    sodp->sod_major, sodp->sod_minor, lp);
 			if (hint != NULL)
@@ -164,6 +170,12 @@ nohints:
 		while (path < lp + PATH_MAX && *pp && *pp != ':' && *pp != ';')
 			*path++ = *pp++;
 		*path = 0;
+
+		/* interpret "" as curdir "." */
+		if (lp[0] == '\0') {
+			lp[0] = '.';
+			lp[1] = '\0';
+		}
 
 		if ((dd = _dl_opendir(lp)) != NULL) {
 			match = 0;
