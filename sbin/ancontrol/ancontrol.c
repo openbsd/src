@@ -1,4 +1,4 @@
-/*	$OpenBSD: ancontrol.c,v 1.7 2000/08/17 21:57:38 deraadt Exp $	*/
+/*	$OpenBSD: ancontrol.c,v 1.8 2000/10/13 18:58:09 chris Exp $	*/
 /*
  * Copyright 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -1120,7 +1120,7 @@ main(argc, argv)
 	char			*argv[];
 {
 	int			ch;
-	int			act = 0;
+	int			act = 0, ifspecified = 0;
 	char			*iface = "an0";
 	int			modifier = 0;
 	void			*arg = NULL;
@@ -1130,6 +1130,7 @@ main(argc, argv)
 		iface = argv[1];
 		memcpy(&argv[1], &argv[2], argc * sizeof(char *));
 		argc--;
+		ifspecified = 1;
 	}
 
 	while ((ch = getopt(argc, argv,
@@ -1150,7 +1151,7 @@ main(argc, argv)
 #endif
 			break;
 		case 'i':
-			if (iface == NULL)
+			if (!ifspecified)
 				iface = optarg;
 			break;
 		case 'A':

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.11 2000/08/17 21:57:40 deraadt Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.12 2000/10/13 18:58:10 chris Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -66,7 +66,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $Id: wicontrol.c,v 1.11 2000/08/17 21:57:40 deraadt Exp $";
+	"@(#) $Id: wicontrol.c,v 1.12 2000/10/13 18:58:10 chris Exp $";
 #endif
 
 static void wi_getval		__P((char *, struct wi_req *));
@@ -641,12 +641,13 @@ int main(argc, argv)
 	char			*argv[];
 {
 	char			*iface = "wi0";
-	int                     ch, p, dumpstats = 0, dumpinfo = 1;
+	int                     ch, p, dumpstats = 0, dumpinfo = 1, ifspecified = 0;
 
 	if (argc > 1 && argv[1][0] != '-') {
 		iface = argv[1];
 		memcpy(&argv[1], &argv[2], argc * sizeof(char *));
 		argc--;
+		ifspecified = 1;
 	}
 
 	while((ch = getopt(argc, argv,
@@ -665,7 +666,7 @@ int main(argc, argv)
 			dumpstats ++;
 			break;
 		case 'i':
-		        if (iface == NULL)
+		        if (!ifspecified)
 			        iface = optarg;
 			break;
 		case 'v':
