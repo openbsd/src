@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_ze.c,v 1.3 2002/03/31 01:10:36 hugh Exp $	*/
-/*	$NetBSD: if_ze.c,v 1.5 1999/08/23 19:09:27 ragge Exp $	*/
+/*	$OpenBSD: if_ze.c,v 1.4 2002/06/11 09:36:23 hugh Exp $ */
+/*	$NetBSD: if_ze.c,v 1.12 2002/05/27 16:54:18 ragge Exp $	*/
 /*
  * Copyright (c) 1998 James R. Maynard III.  All rights reserved.
  *
@@ -42,39 +42,33 @@
 #include <netinet/in_systm.h>
 #include <netinet/if_ether.h>
 
-#include <lib/libkern/libkern.h>
 #include <lib/libsa/netif.h>
 #include <lib/libsa/stand.h>
+#include <lib/libsa/net.h>
 
 #include <arch/vax/if/sgecreg.h>
 
 #include "arch/vax/include/sid.h"
+#include "arch/vax/include/rpb.h"
 
-int ze_probe(), ze_match(), ze_get(), ze_put();
-void ze_init(), ze_end();
+#include "vaxstand.h"
 
-struct netif_stats ze_stats;
-
-struct netif_dif ze_ifs[] = {
-/*	dif_unit	dif_nsel	dif_stats	dif_private	*/
-{	0,		1,		&ze_stats,	},
-};
-
-struct netif_stats ze_stats;
+static int ze_get(struct iodesc *, void *, size_t, time_t);
+static int ze_put(struct iodesc *, void *, size_t);
 
 #define ETHER_MIN_LEN 64
 #define ETHER_MAX_LEN 1518
 
 struct netif_driver ze_driver = {
-	"ze", ze_match, ze_probe, ze_init, ze_get, ze_put, ze_end, ze_ifs, 1,
+	0, 0, 0, 0, ze_get, ze_put,
 };
 
 #define NRCV 8				/* allocate 8 receive descriptors */
-#define NXMT 5				/* and 5 transmit - must be >1 */
+#define NXMT 4				/* and 4 transmit - must be >1 */
 #define SETUP_FRAME_LEN 128		/* length of the setup frame */
 
 /* allocate a buffer on an octaword boundary */
-#define OW_ALLOC(x) ((void *)((int)(alloc((x) + 15) + 15) & ~15))
+#define OW_ALLOC(x) ((void *)((int)((int)alloc((x) + 15) + 15) & ~15))
 
 static	volatile struct zedevice *addr;
 
@@ -83,33 +77,17 @@ struct ze_rdes *ze_rdes_list;	/* and receive desc list */
 u_char ze_myaddr[ETHER_ADDR_LEN];	/* my Ethernet address */
 
 int
-ze_match(nif, machdep_hint)
-	struct netif *nif;
-	void *machdep_hint;
-{
-	return strcmp(machdep_hint, "ze") == 0;
-}
-
-int
-ze_probe(nif, machdep_hint)
-	struct netif *nif;
-	void *machdep_hint;
-{
-	return 0;
-}
-
-void
-ze_init(desc, machdep_hint)
-	struct iodesc *desc;
-	void *machdep_hint;
+zeopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 {
 	u_long nicsr0_work, *nisa_rom;
-	int i;
-	u_char *saved_buf;
 	struct ze_tdes *ze_setup_tdes_list;
+	int i;
 
 	/* point to the device in memory */
-	addr = (struct zedevice *)0x20008000;
+	if (askname == 0) /* Override if autoboot */
+		addr = (struct zedevice *)bootrpb.csrphy;
+	else
+		addr = (struct zedevice *)0x20008000;
 
 	/* reset the device and wait for completion */
 	addr->ze_nicsr6 = ZE_NICSR6_MBO | ZE_NICSR6_RE;
@@ -117,6 +95,7 @@ ze_init(desc, machdep_hint)
 		;
 	if (addr->ze_nicsr5 & ZE_NICSR5_SF) {
 		printf("SGEC self-test failed...\n");
+		return 1;
 	}
 
 	/* Get our Ethernet address */
@@ -124,6 +103,10 @@ ze_init(desc, machdep_hint)
 		nisa_rom = (u_long *)0x27800000;
 		for (i=0; i<ETHER_ADDR_LEN; i++)
 			ze_myaddr[i] = nisa_rom[i] & 0377;
+	} else if (vax_boardtype == VAX_BTYP_VXT) {
+		nisa_rom = (u_long *)0x200c4000;
+		for (i=0; i<ETHER_ADDR_LEN; i++)
+			ze_myaddr[i] = nisa_rom[i] & 0xff;
 	} else {
 		nisa_rom = (u_long *)0x20084000;
 		for (i=0; i<ETHER_ADDR_LEN; i++)
@@ -132,7 +115,7 @@ ze_init(desc, machdep_hint)
 			else
 				ze_myaddr[i] = (nisa_rom[i] & 0x0000ff00) >> 8;
 	}
-	bcopy(ze_myaddr,desc->myea,ETHER_ADDR_LEN);
+	printf("SGEC: Ethernet address %s\n", ether_sprintf(ze_myaddr));
 
 	/* initialize SGEC operating mode */
 	/* disable interrupts here */
@@ -198,13 +181,16 @@ ze_init(desc, machdep_hint)
 	addr->ze_nicsr6 |= ZE_NICSR6_SR;
 
 	/* And away-y-y we go! */
+
+	net_devinit(f, &ze_driver, ze_myaddr);
+	return 0;
 }
 
 int
 ze_get(desc, pkt, maxlen, timeout)
 	struct iodesc *desc;
 	void *pkt;
-	int maxlen;
+	size_t maxlen;
 	time_t timeout;
 {
 	int timeout_ctr=100000*timeout, len, rdes;
@@ -260,7 +246,7 @@ int
 ze_put(desc, pkt, len)
 	struct iodesc *desc;
 	void *pkt;
-	int len;
+	size_t len;
 {
 	int timeout=100000;
 
@@ -289,7 +275,7 @@ ze_put(desc, pkt, len)
 
 	/* Wait for the frame to be sent, but not too long. */
 	timeout = 100000;
-	while ((addr->ze_nicsr5 & ZE_NICSR5_TI == 0) && (--timeout>0))
+	while (((addr->ze_nicsr5 & ZE_NICSR5_TI) == 0) && (--timeout>0))
 		;
 
 	/* Reset the transmitter interrupt pending flag. */
@@ -300,8 +286,10 @@ ze_put(desc, pkt, len)
 	return -1;
 }
 
-void
-ze_end()
+int
+zeclose(struct open_file *f)
 {
 	addr->ze_nicsr6 = ZE_NICSR6_RE;
+
+	return 0;
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ra.c,v 1.2 2002/03/14 03:16:02 millert Exp $ */
-/*	$NetBSD: ra.c,v 1.4 1999/08/07 11:19:04 ragge Exp $ */
+/*	$OpenBSD: ra.c,v 1.3 2002/06/11 09:36:23 hugh Exp $ */
+/*	$NetBSD: ra.c,v 1.11 2002/06/04 15:13:55 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,7 +41,7 @@
 #include "lib/libsa/stand.h"
 
 #include "../include/pte.h"
-#include "../include/sid.h"
+#include "../include/rpb.h"
 
 #include "arch/vax/mscp/mscp.h"
 #include "arch/vax/mscp/mscpreg.h"
@@ -51,9 +51,7 @@
 
 #include "vaxstand.h"
 
-static command(int);
-
-
+static void command(int, int);
 
 /*
  * These routines for RA disk standalone boot is wery simple,
@@ -63,70 +61,80 @@ static command(int);
  * But it works :)
  */
 
-struct ra_softc {
-	int udaddr;
-	int ubaddr;
-	int part;
-	int unit;
-	unsigned short *ra_ip;
-	unsigned short *ra_sa;
-	unsigned short *ra_sw;
-};
-
-volatile struct uda {
-        struct  mscp_1ca uda_ca;           /* communications area */
-        struct  mscp uda_rsp;     /* response packets */
-        struct  mscp uda_cmd;     /* command packets */
+static volatile struct uda {
+	struct	mscp_1ca uda_ca;  /* communications area */
+	struct	mscp uda_rsp;	  /* response packets */
+	struct	mscp uda_cmd;	  /* command packets */
 } uda;
 
-volatile struct uda *ubauda;
-struct	disklabel ralabel;
-struct ra_softc ra_softc;
-char io_buf[DEV_BSIZE];
+static struct disklabel ralabel;
+static char io_buf[DEV_BSIZE];
+static int dpart, dunit, remap, is_tmscp, curblock;
+static volatile u_short *ra_ip, *ra_sa, *ra_sw;
+static volatile u_int *mapregs;
 
-raopen(f, adapt, ctlr, unit, part)
-	struct open_file *f;
-        int ctlr, unit, part;
+int
+raopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 {
-	char *msg;
-	struct disklabel *lp = &ralabel;
-	volatile struct ra_softc *ra = &ra_softc;
-	volatile u_int *nisse;
+	static volatile struct uda *ubauda;
 	unsigned short johan, johan2;
-	int i,err, udacsr;
+	size_t i;
+	int err;
+	char *msg;
 
 #ifdef DEV_DEBUG
 	printf("raopen: adapter %d ctlr %d unit %d part %d\n", 
 	    adapt, ctlr, unit, part);
+	printf("raopen: csrbase %x nexaddr %x\n", csrbase, nexaddr);
 #endif
-	bzero(lp, sizeof(struct disklabel));
-	ra->unit = unit;
-	ra->part = part;
-	if (vax_cputype != VAX_8200) {
-		if (adapt > nuba)
-			return(EADAPT);
-		if (ctlr > nuda)
-			return(ECTLR);
-		nisse = ((u_int *)ubaaddr[adapt]) + 512;
-		nisse[494] = PG_V | (((u_int)&uda) >> 9);
-		nisse[495] = nisse[494] + 1;
-		udacsr = (int)uioaddr[adapt] + udaaddr[ctlr];
-		ubauda = (void *)0x3dc00 + (((u_int)(&uda))&0x1ff);
+	bzero(&ralabel, sizeof(struct disklabel));
+	bzero((void *)&uda, sizeof(struct uda));
+	if (bootrpb.devtyp == BDEV_TK)
+		is_tmscp = 1;
+	dunit = unit;
+	dpart = part;
+	if (ctlr < 0)
+		ctlr = 0;
+	remap = csrbase && nexaddr;
+	curblock = 0;
+	if (csrbase) { /* On a uda-alike adapter */
+		if (askname == 0) {
+			csrbase = bootrpb.csrphy;
+			dunit = bootrpb.unit;
+			nexaddr = bootrpb.adpphy;
+		} else
+			csrbase += (ctlr ? 000334 : 012150);
+		ra_ip = (short *)csrbase;
+		ra_sa = ra_sw = (short *)csrbase + 1;
+		if (nexaddr) { /* have map registers */
+			mapregs = (int *)nexaddr + 512;
+			mapregs[494] = PG_V | (((u_int)&uda) >> 9);
+			mapregs[495] = mapregs[494] + 1;
+			(char *)ubauda = (char *)0x3dc00 +
+			    (((u_int)(&uda))&0x1ff);
+		} else
+			ubauda = &uda;
 		johan = (((u_int)ubauda) & 0xffff) + 8;
-		johan2 = 3;
-		ra->ra_ip = (short *)udacsr;
-		ra->ra_sa = ra->ra_sw = (short *)udacsr + 1;
-		ra->udaddr = uioaddr[adapt] + udaaddr[ctlr];
-		ra->ubaddr = (int)ubaaddr[adapt];
-		*ra->ra_ip = 0; /* Start init */
+		johan2 = (((u_int)ubauda) >> 16) & 077;
+		*ra_ip = 0; /* Start init */
+		bootrpb.csrphy = csrbase;
 	} else {
-		paddr_t kdaddr = (paddr_t)biaddr[adapt] + BI_NODE(ctlr);
+		paddr_t kdaddr;
 		volatile int *w;
 		volatile int i = 10000;
 
-		ra->ra_ip = (short *)(kdaddr + KDB_IP);
-		ra->ra_sa = (short *)(kdaddr + KDB_SA);
-		ra->ra_sw = (short *)(kdaddr + KDB_SW);
+		if (askname == 0) {
+			nexaddr = bootrpb.csrphy;
+			dunit = bootrpb.unit;
+		} else {
+			nexaddr = (bootrpb.csrphy & ~(BI_NODESIZE - 1)) + KDB_IP;
+			bootrpb.csrphy = nexaddr;
+		}
+
+		kdaddr = nexaddr & ~(BI_NODESIZE - 1);
+		ra_ip = (short *)(kdaddr + KDB_IP);
+		ra_sa = (short *)(kdaddr + KDB_SA);
+		ra_sw = (short *)(kdaddr + KDB_SW);
 		johan = ((u_int)&uda.uda_ca.ca_rspdsc) & 0xffff;
 		johan2 = (((u_int)&uda.uda_ca.ca_rspdsc) & 0xffff0000) >> 16;
 		w = (int *)(kdaddr + BIREG_VAXBICSR);
@@ -138,45 +146,70 @@ raopen(f, adapt, ctlr, unit, part)
 		ubauda = &uda;
 	}
 
+#ifdef DEV_DEBUG
+	printf("start init\n");
+#endif
 	/* Init of this uda */
-	while ((*ra->ra_sa & MP_STEP1) == 0)
+	while ((*ra_sa & MP_STEP1) == 0)
 		;
 #ifdef DEV_DEBUG
 	printf("MP_STEP1...");
 #endif
-	*ra->ra_sw = 0x8000;
-	while ((*ra->ra_sa & MP_STEP2) == 0)
+	*ra_sw = 0x8000;
+	while ((*ra_sa & MP_STEP2) == 0)
 		;
 #ifdef DEV_DEBUG
 	printf("MP_STEP2...");
 #endif
 
-	*ra->ra_sw = johan;
-	while ((*ra->ra_sa & MP_STEP3) == 0)
+	*ra_sw = johan;
+	while ((*ra_sa & MP_STEP3) == 0)
 		;
 #ifdef DEV_DEBUG
 	printf("MP_STEP3...");
 #endif
 
-	*ra->ra_sw = johan2;
-	while ((*ra->ra_sa & MP_STEP4) == 0)
+	*ra_sw = johan2;
+	while ((*ra_sa & MP_STEP4) == 0)
 		;
 #ifdef DEV_DEBUG
 	printf("MP_STEP4\n");
 #endif
 
-	*ra->ra_sw = 0x0001;
+	*ra_sw = 0x0001;
 	uda.uda_ca.ca_rspdsc = (int)&ubauda->uda_rsp.mscp_cmdref;
 	uda.uda_ca.ca_cmddsc = (int)&ubauda->uda_cmd.mscp_cmdref;
+	if (is_tmscp) {
+		uda.uda_cmd.mscp_un.un_seq.seq_addr =
+		    (long *)&uda.uda_ca.ca_cmddsc;
+		uda.uda_rsp.mscp_un.un_seq.seq_addr =
+		    (long *)&uda.uda_ca.ca_rspdsc;
+		uda.uda_cmd.mscp_vcid = 1;
+		uda.uda_cmd.mscp_un.un_sccc.sccc_ctlrflags = 0;
+	}
 
-	command(M_OP_SETCTLRC);
-	uda.uda_cmd.mscp_unit = ra->unit;
-	command(M_OP_ONLINE);
+	command(M_OP_SETCTLRC, 0);
+	uda.uda_cmd.mscp_unit = dunit;
+	command(M_OP_ONLINE, 0);
 
+	if (is_tmscp) {
+		if (part) {
+#ifdef DEV_DEBUG
+			printf("Repos of tape...");
+#endif
+			uda.uda_cmd.mscp_un.un_seq.seq_buffer = part;
+			command(M_OP_POS, 0);
+			uda.uda_cmd.mscp_un.un_seq.seq_buffer = 0;
+#ifdef DEV_DEBUG
+			printf("Done!\n");
+#endif
+		}
+		return 0;
+	}
 #ifdef DEV_DEBUG
 	printf("reading disklabel\n");
 #endif
-	err = rastrategy(ra,F_READ, LABELSECTOR, DEV_BSIZE, io_buf, &i);
+	err = rastrategy(0, F_READ, LABELSECTOR, DEV_BSIZE, io_buf, &i);
 	if(err){
 		printf("reading disklabel: %s\n",strerror(err));
 		return 0;
@@ -185,19 +218,21 @@ raopen(f, adapt, ctlr, unit, part)
 #ifdef DEV_DEBUG
 	printf("getting disklabel\n");
 #endif
-	msg = getdisklabel(io_buf+LABELOFFSET, lp);
+	msg = getdisklabel(io_buf+LABELOFFSET, &ralabel);
 	if (msg)
 		printf("getdisklabel: %s\n", msg);
-	f->f_devdata = (void *)ra;
 	return(0);
 }
 
-static
-command(cmd)
+static void
+command(int cmd, int arg)
 {
-	volatile int hej;
+	volatile short hej;
+	int to;
 
-	uda.uda_cmd.mscp_opcode = cmd;
+igen:	uda.uda_cmd.mscp_opcode = cmd;
+	uda.uda_cmd.mscp_modifier = arg;
+
 	uda.uda_cmd.mscp_msglen = MSCP_MSGLEN;
 	uda.uda_rsp.mscp_msglen = MSCP_MSGLEN;
 	uda.uda_ca.ca_rspdsc |= MSCP_OWN|MSCP_INT;
@@ -205,51 +240,87 @@ command(cmd)
 #ifdef DEV_DEBUG
 	printf("sending cmd %x...", cmd);
 #endif
-	hej = *ra_softc.ra_ip;
-	while(uda.uda_ca.ca_rspdsc<0)
-		;
+	hej = *ra_ip;
+	to = 10000000;
+	while (uda.uda_ca.ca_rspdsc < 0) {
+//		if (uda.uda_ca.ca_cmdint)
+//			uda.uda_ca.ca_cmdint = 0;
+		if (--to < 0) {
+#ifdef DEV_DEBUG
+			printf("timing out, retry\n");
+#endif
+			goto igen;
+		}
+	}
 #ifdef DEV_DEBUG
 	printf("sent.\n");
 #endif
 }
 
-rastrategy(ra, func, dblk, size, buf, rsize)
-	struct	ra_softc *ra;
-	int	func;
-	daddr_t	dblk;
-	char	*buf;
-	u_int	size, *rsize;
+int
+rastrategy(void *f, int func, daddr_t dblk,
+    size_t size, void *buf, size_t *rsize)
 {
-	volatile u_int *ptmapp;
-	struct	disklabel *lp;
-	u_int	i, j, pfnum, mapnr, nsize;
-	volatile int hej;
+	u_int	pfnum, mapnr, nsize;
 
-	if (vax_cputype != VAX_8200) {
-		ptmapp = ((u_int *)ra->ubaddr) + 512;
-
+#ifdef DEV_DEBUG
+	printf("rastrategy: buf %p remap %d is_tmscp %d\n",
+	    buf, remap, is_tmscp);
+#endif
+	if (remap) {
 		pfnum = (u_int)buf >> VAX_PGSHIFT;
 
 		for(mapnr = 0, nsize = size; (nsize + VAX_NBPG) > 0;
 		    nsize -= VAX_NBPG)
-			ptmapp[mapnr++] = PG_V | pfnum++;
+			mapregs[mapnr++] = PG_V | pfnum++;
 		uda.uda_cmd.mscp_seq.seq_buffer = ((u_int)buf) & 0x1ff;
 	} else
 		uda.uda_cmd.mscp_seq.seq_buffer = ((u_int)buf);
 
-	lp = &ralabel;
-	uda.uda_cmd.mscp_seq.seq_lbn =
-	    dblk + lp->d_partitions[ra->part].p_offset;
-	uda.uda_cmd.mscp_seq.seq_bytecount = size;
-	uda.uda_cmd.mscp_unit = ra->unit;
+	if (is_tmscp) {
+		int i;
+
+		/*
+		 * First position tape. Remember where we are.
+		 */
+		if (dblk < curblock) {
+			uda.uda_cmd.mscp_seq.seq_bytecount = curblock - dblk;
+			command(M_OP_POS, 12); /* 12 == step block backward */
+		} else {
+			uda.uda_cmd.mscp_seq.seq_bytecount = dblk - curblock;
+			command(M_OP_POS, 4); /* 4 == step block forward */
+		}
+		curblock = size/512 + dblk;
+
+		/*
+		 * Read in the number of blocks we need.
+		 * Why doesn't read of multiple blocks work?????
+		 */
+		for (i = 0 ; i < size/512 ; i++) {
+			uda.uda_cmd.mscp_seq.seq_lbn = 1;
+			uda.uda_cmd.mscp_seq.seq_bytecount = 512;
+			uda.uda_cmd.mscp_seq.seq_buffer =
+			    (((u_int)buf) & 0x1ff) + i * 512;
+			uda.uda_cmd.mscp_unit = dunit;
+			command(M_OP_READ, 0);
+		}
+	} else {
+
+		uda.uda_cmd.mscp_seq.seq_lbn =
+		    dblk + ralabel.d_partitions[dpart].p_offset;
+		uda.uda_cmd.mscp_seq.seq_bytecount = size;
+		uda.uda_cmd.mscp_unit = dunit;
 #ifdef DEV_DEBUG
-	printf("rastrategy: blk 0x%lx count %lx unit %lx\n", 
-	    uda.uda_cmd.mscp_seq.seq_lbn, size, ra->unit);
+		printf("rastrategy: blk 0x%lx count %lx unit %x\n", 
+		    uda.uda_cmd.mscp_seq.seq_lbn, size, dunit);
 #endif
-	if (func == F_WRITE)
-		command(M_OP_WRITE);
-	else
-		command(M_OP_READ);
+#ifdef notdef
+		if (func == F_WRITE)
+			command(M_OP_WRITE, 0);
+		else
+#endif
+			command(M_OP_READ, 0);
+	}
 
 	*rsize = size;
 	return 0;

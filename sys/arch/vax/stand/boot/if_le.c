@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_le.c,v 1.1 2000/04/27 02:26:25 bjc Exp $ */
-/*	$NetBSD: if_le.c,v 1.4 1999/08/14 19:41:14 ragge Exp $ */
+/*	$OpenBSD: if_le.c,v 1.2 2002/06/11 09:36:23 hugh Exp $ */
+/*	$NetBSD: if_le.c,v 1.6 2000/05/20 13:30:03 ragge Exp $ */
 /*
  * Copyright (c) 1997, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -47,13 +47,17 @@
 #include <netinet/if_ether.h>
 
 #include <../include/sid.h>
+#include <../include/rpb.h>
 
 #include <lib/libsa/netif.h>
+#include <lib/libsa/stand.h>
 
 #include <dev/ic/am7990reg.h>
 
+#include "vaxstand.h"
+
 /*
- * The following are incorrect. Why doesn't DEC follow its own specs???
+ * Buffer sizes.
  */
 #define TLEN    1
 #define NTBUF   (1 << TLEN)
@@ -62,23 +66,16 @@
 #define BUFSIZE 1518
 
 #define ETHER_MIN_LEN   64      /* minimum frame length, including CRC */
-#define	QW_ALLOC(x)	((alloc((x) + 7) + 7) & ~7)
 
-int le_probe(), le_match(), le_get(), le_put();
-void le_init(), le_end();
-static void copyin(), copyout();
+#define	QW_ALLOC(x)	(((int)alloc((x) + 7) + 7) & ~7)
 
-struct netif_stats le_stats;
-
-struct netif_dif le_ifs[] = {
-/*	dif_unit	dif_nsel	dif_stats	dif_private	*/
-{	0,		1,		&le_stats,	},
-};
-
-struct netif_stats le_stats;
+static int le_get(struct iodesc *, void *, size_t, time_t);
+static int le_put(struct iodesc *, void *, size_t);
+static void copyout(void *from, int dest, int len);
+static void copyin(int src, void *to, int len);
 
 struct netif_driver le_driver = {
-	"le", le_match, le_probe, le_init, le_get, le_put, le_end, le_ifs, 1,
+	0, 0, 0, 0, le_get, le_put,
 };
 
 /*
@@ -98,7 +95,7 @@ struct nireg {
 	volatile u_short ni_rdp;       /* data port */
 	volatile short ni_pad0;
 	volatile short ni_rap;       /* register select port */
-} *nireg = (struct nireg *)0x200e0000;
+} *nireg;
 
 
 volatile struct	buffdesc {
@@ -138,27 +135,11 @@ int	next_rdesc, next_tdesc;
 	(nireg->ni_rap = port, nireg->ni_rdp)
  
 int
-le_match(nif, machdep_hint)
-	struct netif *nif;
-	void *machdep_hint;
+leopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 {
-	return strcmp(machdep_hint, "le") == 0;
-}
-
-le_probe(nif, machdep_hint)
-	struct netif *nif;
-	void *machdep_hint;
-{
-	return 0;
-}
-
-void
-le_init(desc, machdep_hint)
-	struct iodesc *desc;
-	void *machdep_hint;
-{
-	int stat, i, *ea;
+	int i, *ea;
 	volatile int to = 100000;
+	u_char eaddr[6];
 
 	next_rdesc = next_tdesc = 0;
 
@@ -170,7 +151,12 @@ le_init(desc, machdep_hint)
 	} else {
 		*(int *)0x20080014 = 0; /* Be sure we do DMA in low 16MB */
 		ea = (void *)0x20090000; /* XXX ethernetadressen */
+		nireg = (void *)0x200e0000;
 	}
+	if (askname == 0) /* Override if autoboot */
+		nireg = (void *)bootrpb.csrphy;
+	else /* Tell kernel from where we booted */
+		bootrpb.csrphy = (int)nireg;
 
 	if (vax_boardtype == VAX_BTYP_43)
 		addoff = 0x28000000;
@@ -182,12 +168,13 @@ igen:
 		;
 
 	for (i = 0; i < 6; i++)
-		desc->myea[i] = ea[i] & 0377;
+		eaddr[i] = ea[i] & 0377;
 
 	if (initblock == NULL) {
-		initblock = (void *)QW_ALLOC(sizeof(struct initblock)) + addoff;
+		(void *)initblock =
+		    (char *)QW_ALLOC(sizeof(struct initblock)) + addoff;
 		initblock->ib_mode = LE_MODE_NORMAL;
-		bcopy(desc->myea, initblock->ib_padr, 6);
+		bcopy(eaddr, initblock->ib_padr, 6);
 		initblock->ib_ladrf1 = 0;
 		initblock->ib_ladrf2 = 0;
 
@@ -210,7 +197,7 @@ igen:
 			rdesc[i].bd_mcnt = 0;
 		}
 		if (kopiera)
-			copyout(rdesc, (int)rdesc - (int)initblock,
+			copyout((void *)rdesc, (int)rdesc - (int)initblock,
 			    sizeof(struct buffdesc) * NRBUF);
 
 		for (i = 0; i < NTBUF; i++) {
@@ -221,7 +208,7 @@ igen:
 			tdesc[i].bd_mcnt = 0;
 		}
 		if (kopiera)
-			copyout(tdesc, (int)tdesc - (int)initblock,
+			copyout((void *)tdesc, (int)tdesc - (int)initblock,
 			    sizeof(struct buffdesc) * NTBUF);
 	}
 
@@ -246,14 +233,13 @@ igen:
 	}
 
 	LEWRCSR(LE_CSR0, LE_C0_INEA | LE_C0_STRT | LE_C0_IDON);
+
+	net_devinit(f, &le_driver, eaddr);
+	return 0;
 }
 
 int
-le_get(desc, pkt, maxlen, timeout)
-	struct iodesc *desc;
-	void *pkt;
-	int maxlen;
-	time_t timeout;
+le_get(struct iodesc *desc, void *pkt, size_t maxlen, time_t timeout)
 {
 	int csr, len;
 	volatile int to = 100000 * timeout;
@@ -267,7 +253,7 @@ retry:
 
 	if (kopiera)
 		copyin((int)&rdesc[next_rdesc] - (int)initblock,
-		    &rdesc[next_rdesc], sizeof(struct buffdesc));
+		    (void *)&rdesc[next_rdesc], sizeof(struct buffdesc));
 	if (rdesc[next_rdesc].bd_adrflg & BR_OWN)
 		goto retry;
 
@@ -281,14 +267,14 @@ retry:
 			copyin((rdesc[next_rdesc].bd_adrflg&0xffffff),
 			    pkt, len);
 		else
-			bcopy((void *)(rdesc[next_rdesc].bd_adrflg&0xffffff) +
+			bcopy((char *)(rdesc[next_rdesc].bd_adrflg&0xffffff) +
 			    addoff, pkt, len);
 	}
 
 	rdesc[next_rdesc].bd_mcnt = 0;
 	rdesc[next_rdesc].bd_adrflg |= BR_OWN;
 	if (kopiera)
-		copyout(&rdesc[next_rdesc], (int)&rdesc[next_rdesc] - 
+		copyout((void *)&rdesc[next_rdesc], (int)&rdesc[next_rdesc] -
 		    (int)initblock, sizeof(struct buffdesc));
 	if (++next_rdesc >= NRBUF)
 		next_rdesc = 0;
@@ -300,10 +286,7 @@ retry:
 }
 
 int
-le_put(desc, pkt, len)
-	struct iodesc *desc;
-	void *pkt;
-	int len;
+le_put(struct iodesc *desc, void *pkt, size_t len)
 {
 	volatile int to = 100000;
 	int csr;
@@ -317,21 +300,21 @@ retry:
 
 	if (kopiera)
 		copyin((int)&tdesc[next_tdesc] - (int)initblock,
-		    &tdesc[next_tdesc], sizeof(struct buffdesc));
+		    (void *)&tdesc[next_tdesc], sizeof(struct buffdesc));
 	if (tdesc[next_tdesc].bd_adrflg & BT_OWN)
 		goto retry;
 
 	if (kopiera)
 		copyout(pkt, (tdesc[next_tdesc].bd_adrflg & 0xffffff), len);
 	else
-		bcopy(pkt, (void *)(tdesc[next_tdesc].bd_adrflg & 0xffffff) +
+		bcopy(pkt, (char *)(tdesc[next_tdesc].bd_adrflg & 0xffffff) +
 		    addoff, len);
 	tdesc[next_tdesc].bd_bcnt =
 	    (len < ETHER_MIN_LEN ? -ETHER_MIN_LEN : -len);
 	tdesc[next_tdesc].bd_mcnt = 0;
 	tdesc[next_tdesc].bd_adrflg |= BT_OWN | BT_STP | BT_ENP;
 	if (kopiera)
-		copyout(&tdesc[next_tdesc], (int)&tdesc[next_tdesc] - 
+		copyout((void *)&tdesc[next_tdesc], (int)&tdesc[next_tdesc] -
 		    (int)initblock, sizeof(struct buffdesc));
 
 	LEWRCSR(LE_CSR0, LE_C0_TDMD);
@@ -350,17 +333,18 @@ retry:
 	return -1;
 }
 
-void
-le_end()
+int
+leclose(struct open_file *f)
 {
 	LEWRCSR(LE_CSR0, LE_C0_STOP);
+
+	return 0;
 }
 
 void
-copyout(from, dest, len)
-	short *from;
-	int dest, len;
+copyout(void *f, int dest, int len)
 {
+	short *from = f;
 	short *toaddr;
 
 	toaddr = (short *)0x20120000 + dest;
@@ -373,10 +357,9 @@ copyout(from, dest, len)
 }
 
 void
-copyin(src, to, len)
-	short *to;
-	int src, len;
+copyin(int src, void *f, int len)
 {
+	short *to = f;
 	short *fromaddr;
 
 	fromaddr = (short *)0x20120000 + src;

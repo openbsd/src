@@ -1,5 +1,5 @@
-/*	$OpenBSD: srt0.s,v 1.2 2000/10/04 04:09:01 bjc Exp $ */
-/*	$NetBSD: srt0.s,v 1.2 1999/05/23 21:58:19 ragge Exp $ */
+/*	$OpenBSD: srt0.S,v 1.1 2002/06/11 09:36:24 hugh Exp $ */
+/*	$NetBSD: srt0.S,v 1.2 2002/03/31 00:11:14 matt Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,6 +33,7 @@
  /* All bugs are subject to removal without further notice */
 
 #include "../include/asm.h"
+
 /*
  * Auto-moving startup code for standalone programs. Can be loaded
  * (almost) anywhere in memory but moves itself to the position
@@ -41,45 +42,44 @@
  * position set in a.out header.
  */
 
-nisse:	.set	nisse,0		# pass -e nisse to ld gives OK start addr
-	.globl	nisse
+	.globl	nisse		# pass -e nisse to ld gives OK start addr
+	.set	nisse,0
 
-_start:	.globl	_start
-	nop;nop;		# If we get called by calls, or something
+ALTENTRY(start)
+	nop;nop;
+	movl	$_C_LABEL(start), sp	# Probably safe place for stack
+	pushr	$0x1fff		# save for later usage
 
-	movl	r8, _memsz	# If we come from disk, save memsize
-	ashl	$9,76(r11),_memsz # got memsize from rpb
-	movzwl	48(r11), r10	# Get howto
+	subl3	$_C_LABEL(start), $_C_LABEL(edata), r0
+	movab	_C_LABEL(start), r1 # get where we are
+	movl	$_C_LABEL(start), r3 # get where we want to be
+	cmpl	r1,r3		# are we where we want to be?
+	beql	relocated	# already relocated, skip copy
+	movc3	r0,(r1),(r3)	# copy
+	subl3	$_C_LABEL(edata), $_C_LABEL(end), r2
+	movc5	$0,(r3),$0,r2,(r3) # Zero bss
 
-2:	movl	$_start, sp	# Probably safe place for stack
-	pushr	$0x1fff
-
-	subl3	$_start, $_edata, r0
-	movab	_start, r1
-	movl	$_start, r3
-	movc3	r0,(r1),(r3)	# Kopiera text + data
-	subl3	$_edata, $_end, r2
-	movc5	$0,(r3),$0,r2,(r3) # Nolla bss också.
-
-	jsb	1f
-1:	movl    $relocated, (sp)   # return-address on top of stack
-	rsb                        # can be replaced with new address
-relocated:	                   # now relocation is done !!!
-	movl	r10,_howto	# howto also...
-	movl	sp, _bootregs
-	calls	$0, _Xmain	# Were here!
+	movpsl	-(sp)
+	pushl	$relocated
+	rei
+relocated:	                # now relocation is done !!!
+	movl	sp,_C_LABEL(bootregs)	# *bootregs
+	calls	$0, _C_LABEL(Xmain)	# Were here!
 	halt			# no return
 
 ENTRY(machdep_start, 0)
+	calls	$0,_C_LABEL(niclose)	# Evil hack to shutdown DEBNA.
 	mtpr	$0x1f,$0x12	# Block all interrupts
 	mtpr	$0,$0x18	# stop real time interrupt clock
 	movl	4(ap), r6
-	movl	_howto, r11
-	movl	_opendev, r10
-	movl	20(ap), r9
-	movl	_memsz, r8
-	calls	$0,(r6)
-	ret
+	movl	20(ap), r9	# end of symbol table
+	pushl	8(ap)		# number of symbols
+	pushl	16(ap)		# start of symbols
+	movab	_C_LABEL(bootrpb),r10	# get RPB address
+	pushl	r10		# argument for new boot
+	ashl	$9,76(r10),r8	# memory size (COMPAT)
+	movl	$3,r11		# ask boot (COMPAT)
+	clrl	r10		# no boot dev (COMPAT)
 
-	.globl	_memsz
-_memsz:	.long	0x0
+	calls	$3,(r6)
+	halt

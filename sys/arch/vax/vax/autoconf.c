@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.17 2002/04/04 23:47:33 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.18 2002/06/11 09:36:24 hugh Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.45 1999/10/23 14:56:05 ragge Exp $	*/
 
 /*
@@ -64,8 +64,10 @@ void	gencnslask(void);
 void	setroot(void);		/* rootfil.c */
 
 struct cpu_dep *dep_call;
+extern struct device *bootdv;
+
 int	mastercpu;	/* chief of the system */
-struct device *booted_from;
+
 
 #define MAINBUS	0
 
@@ -88,15 +90,6 @@ cpu_configure()
 	 */
 
 	cold = 0;
-
-	if (mountroot == NULL) {
-		if (B_TYPE(bootdev) >= BDEV_NET) {
-#ifdef NFSCLIENT
-			mountroot = nfs_mountroot;
-#endif
-		} else
-			mountroot = dk_mountroot;
-	}
 
 	if (dep_call->cpu_clrf) 
 		(*dep_call->cpu_clrf)();
@@ -150,6 +143,12 @@ mainbus_attach(parent, self, hej)
 
 	if (dep_call->cpu_subconf)
 		(*dep_call->cpu_subconf)(self);
+
+#if 1 /* boot blocks too old */
+        if (rpb.rpb_base == (void *)-1)
+                printf("\nWARNING: you must update your boot blocks.\n\n");
+#endif
+
 }
 
 struct	cfattach mainbus_ca = {
@@ -160,4 +159,278 @@ struct  cfdriver mainbus_cd = {
 	NULL, "mainbus", DV_DULL
 };
 
+#include "sd.h"
+#include "cd.h"
+#if NRL > 0
+#include "rl.h"
+#endif
+#include "ra.h"
+#include "hp.h"
+#if NRY > 0
+#include "ry.h"
+#endif
 
+static int ubtest(void *);
+static int jmfr(char *, struct device *, int);
+static int booted_qe(struct device *, void *);
+static int booted_le(struct device *, void *);
+static int booted_ze(struct device *, void *);
+static int booted_de(struct device *, void *);
+static int booted_ni(struct device *, void *);
+#if NSD > 0 || NCD > 0
+static int booted_sd(struct device *, void *);
+#endif
+#if NRL > 0
+static int booted_rl(struct device *, void *);
+#endif
+#if NRA
+static int booted_ra(struct device *, void *);
+#endif
+#if NHP
+static int booted_hp(struct device *, void *);
+#endif
+#if NRD
+static int booted_rd(struct device *, void *);
+#endif
+
+int (*devreg[])(struct device *, void *) = {
+	booted_qe,
+	booted_le,
+	booted_ze,
+	booted_de,
+	booted_ni,
+#if NSD > 0 || NCD > 0
+	booted_sd,
+#endif
+#if NRL > 0
+	booted_rl,
+#endif
+#if NRA
+	booted_ra,
+#endif
+#if NHP
+	booted_hp,
+#endif
+#if NRD
+	booted_hd,
+#endif
+	0,
+};
+
+#define	ubreg(x) ((x) & 017777)
+
+void
+device_register(struct device *dev, void *aux)
+{
+	int (**dp)(struct device *, void *) = devreg;
+
+	/* If there's a synthetic RPB, we can't trust it */
+	if (rpb.rpb_base == (void *)-1)
+		return;
+
+	while (*dp) {
+		if ((*dp)(dev, aux)) {
+			bootdv = dev;
+			break;
+		}
+		dp++;
+	}
+}
+
+/*
+ * Simple checks. Return 1 on fail.
+ */
+int
+jmfr(char *n, struct device *dev, int nr)
+{
+	if (rpb.devtyp != nr)
+		return 1;
+	return strcmp(n, dev->dv_cfdata->cf_driver->cd_name);
+}
+
+#include <arch/vax/qbus/ubavar.h>
+int
+ubtest(void *aux)
+{
+	paddr_t p;
+
+	p = kvtophys(((struct uba_attach_args *)aux)->ua_ioh);
+	if (rpb.csrphy != p)
+		return 1;
+	return 0;
+}
+
+#if 1 /* NNI */
+#include <arch/vax/bi/bivar.h>
+int
+booted_ni(struct device *dev, void *aux)
+{
+	struct bi_attach_args *ba = aux;
+
+	if (jmfr("ni", dev, BDEV_NI) || (kvtophys(ba->ba_ioh) != rpb.csrphy))
+		return 0;
+
+	return 1;
+}
+#endif /* NNI */
+
+#if 1 /* NDE */
+int
+booted_de(struct device *dev, void *aux)
+{
+
+	if (jmfr("de", dev, BDEV_DE) || ubtest(aux))
+		return 0;
+
+	return 1;
+}
+#endif /* NDE */
+
+int
+booted_le(struct device *dev, void *aux)
+{
+	if (jmfr("le", dev, BDEV_LE))
+		return 0;
+	return 1;
+}
+
+int
+booted_ze(struct device *dev, void *aux)
+{
+	if (jmfr("ze", dev, BDEV_ZE))
+		return 0;
+	return 1;
+}
+
+#if 1 /* NQE */
+int
+booted_qe(struct device *dev, void *aux)
+{
+	if (jmfr("qe", dev, BDEV_QE) || ubtest(aux))
+		return 0;
+
+	return 1;
+}
+#endif /* NQE */
+
+#if NSD > 0 || NCD > 0
+#include <scsi/scsi_all.h>
+#include <scsi/scsiconf.h>
+int
+booted_sd(struct device *dev, void *aux)
+{
+	struct scsibus_attach_args *sa = aux;
+	struct device *ppdev;
+
+	/* Is this a SCSI device? */
+	if (jmfr("sd", dev, BDEV_SD) && jmfr("cd", dev, BDEV_SD) &&
+	    jmfr("sd", dev, BDEV_SDN) && jmfr("cd", dev, BDEV_SDN))
+		return 0;
+
+#ifdef __NetBSD__
+	if (sa->sa_periph->periph_channel->chan_bustype->bustype_type !=
+	    SCSIPI_BUSTYPE_SCSI)
+		return 0; /* ``Cannot happen'' */
+#endif
+
+	if (sa->sa_sc_link->target != rpb.unit)
+		return 0; /* Wrong unit */
+
+	ppdev = dev->dv_parent->dv_parent;
+
+	/* VS3100 NCR 53C80 (si) & VS4000 NCR 53C94 (asc) */
+	if (((jmfr("ncr",  ppdev, BDEV_SD) == 0) ||	/* old name */
+	    (jmfr("asc", ppdev, BDEV_SD) == 0) ||
+	    (jmfr("asc", ppdev, BDEV_SDN) == 0)) &&
+	    (ppdev->dv_cfdata->cf_loc[0] == rpb.csrphy))
+			return 1;
+
+	return 0; /* Where did we come from??? */
+}
+#endif
+#if NRL > 0
+#include <dev/qbus/rlvar.h>
+int
+booted_rl(struct device *dev, void *aux)
+{
+	struct rlc_attach_args *raa = aux;
+	static int ub;
+
+	if (jmfr("rlc", dev, BDEV_RL) == 0)
+		ub = ubtest(aux);
+	if (ub)
+		return 0;
+	if (jmfr("rl", dev, BDEV_RL))
+		return 0;
+	if (raa->hwid != rpb.unit)
+		return 0; /* Wrong unit number */
+	return 1;
+}
+#endif
+
+#if NRA
+#include <arch/vax/mscp/mscp.h>
+#include <arch/vax/mscp/mscpreg.h>
+#include <arch/vax/mscp/mscpvar.h>
+int
+booted_ra(struct device *dev, void *aux)
+{
+	struct drive_attach_args *da = aux;
+	struct mscp_softc *pdev = (void *)dev->dv_parent;
+	paddr_t ioaddr;
+
+	if (jmfr("ra", dev, BDEV_UDA))
+		return 0;
+
+	if (da->da_mp->mscp_unit != rpb.unit)
+		return 0; /* Wrong unit number */
+
+	ioaddr = kvtophys(pdev->mi_iph); /* Get phys addr of CSR */
+	if (rpb.devtyp == BDEV_UDA && rpb.csrphy == ioaddr)
+		return 1; /* Did match CSR */
+
+	return 0;
+}
+#endif
+#if NHP
+#include <vax/mba/mbavar.h>
+int
+booted_hp(struct device *dev, void *aux)
+{
+	static int mbaaddr;
+
+	/* Save last adapter address */
+	if (jmfr("mba", dev, BDEV_HP) == 0) {
+		struct sbi_attach_args *sa = aux;
+
+		mbaaddr = kvtophys(sa->sa_ioh);
+		return 0;
+	}
+
+	if (jmfr("hp", dev, BDEV_HP))
+		return 0;
+
+	if (((struct mba_attach_args *)aux)->ma_unit != rpb.unit)
+		return 0;
+
+	if (mbaaddr != rpb.adpphy)
+		return 0;
+
+	return 1;
+}
+#endif
+#if NHD
+int     
+booted_hd(struct device *dev, void *aux)
+{
+	int *nr = aux; /* XXX - use the correct attach struct */
+
+	if (jmfr("hd", dev, BDEV_RD))
+		return 0;
+
+	if (*nr != rpb.unit)
+		return 0;
+
+	return 1;
+}
+#endif

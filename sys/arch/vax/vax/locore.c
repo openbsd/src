@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.c,v 1.23 2002/03/14 01:26:48 millert Exp $	*/
+/*	$OpenBSD: locore.c,v 1.24 2002/06/11 09:36:24 hugh Exp $	*/
 /*	$NetBSD: locore.c,v 1.43 2000/03/26 11:39:45 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -49,8 +49,9 @@
 #include <machine/pte.h>
 #include <machine/pmap.h>
 #include <machine/nexus.h>
+#include <machine/rpb.h>
 
-void	start(void);
+void	start(struct rpb *);
 void	main(void);
 
 extern	paddr_t avail_end;
@@ -84,7 +85,7 @@ extern struct cpu_dep ka680_calls;
  * management is disabled, and no interrupt system is active.
  */
 void
-start()
+start(struct rpb *prpb)
 {
 	extern char cpu_model[];
 	extern void *scratch;
@@ -287,16 +288,30 @@ start()
 		asm("halt");
 	}
 
-        /*
-         * Machines older than MicroVAX II have their boot blocks
-         * loaded directly or the boot program loaded from console
-         * media, so we need to figure out their memory size.
-         * This is not easily done on MicroVAXen, so we get it from
-         * VMB instead.
-         */
-        if (avail_end == 0)
-                while (badaddr((caddr_t)avail_end, 4) == 0)
-                        avail_end += VAX_NBPG * 128;
+	/*
+	 * Machines older than MicroVAX II have their boot blocks
+	 * loaded directly or the boot program loaded from console
+	 * media, so we need to figure out their memory size.
+	 * This is not easily done on MicroVAXen, so we get it from
+	 * VMB instead.
+	 *
+	 * In post-1.4 a RPB is always provided from the boot blocks.
+	 */
+#if 1 /* compat with old bootblocks */
+	if (prpb == 0) {
+		bzero((caddr_t)proc0paddr + REDZONEADDR, sizeof(struct rpb));
+		prpb = (struct rpb *)(proc0paddr + REDZONEADDR);
+		prpb->pfncnt = avail_end >> VAX_PGSHIFT;
+		prpb->rpb_base = (void *)-1;    /* RPB is fake */
+	} else
+#endif
+	bcopy(prpb, (caddr_t)proc0paddr + REDZONEADDR, sizeof(struct rpb));
+	if (prpb->pfncnt)
+		avail_end = prpb->pfncnt << VAX_PGSHIFT;
+	else
+		while (badaddr((caddr_t)avail_end, 4) == 0)
+			avail_end += VAX_NBPG * 128;
+	boothowto = prpb->rpb_bootr5;
 
         avail_end = TRUNC_PAGE(avail_end); /* be sure */
 

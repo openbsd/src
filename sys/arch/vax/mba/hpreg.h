@@ -1,5 +1,5 @@
-/*	$OpenBSD: hpreg.h,v 1.4 1997/05/29 00:04:59 niklas Exp $ */
-/*	$NetBSD: hpreg.h,v 1.4 1996/02/11 13:19:35 ragge Exp $ */
+/*	$OpenBSD: hpreg.h,v 1.5 2002/06/11 09:36:24 hugh Exp $	*/
+/*	$NetBSD: hpreg.h,v 1.5 2000/06/04 18:04:39 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,6 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef notdef
 struct hp_regs {
         int     hp_cs1;
         int     hp_ds;
@@ -49,8 +50,24 @@ struct hp_regs {
         int     hp_ec2;
         int     utrymme[16];
 };
+#endif
 
-#define	hp_drv	hp_regs
+#define	HP_CS1	0
+#define HP_DS	4
+#define HP_ER1	8
+#define HP_MR1	12
+#define HP_AS	16
+#define HP_DA	20
+#define HP_DT	24
+#define HP_LA	28
+#define HP_SN	32
+#define HP_OF	36
+#define HP_DC	40
+#define HP_HR	44
+#define HP_MR2	48
+#define HP_ER2	52
+#define HP_EC1	56
+#define HP_EC2	60
 
 #define HPCS_DVA	4000	/* Drive avail, in dual-port config */
 #define HPCS_WRITE	061	/* Write data */

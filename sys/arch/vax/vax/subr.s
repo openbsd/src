@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.s,v 1.16 2002/01/23 23:24:40 miod Exp $     */
+/*	$OpenBSD: subr.s,v 1.17 2002/06/11 09:36:24 hugh Exp $     */
 /*	$NetBSD: subr.s,v 1.32 1999/03/25 00:41:48 mrg Exp $	   */
 
 /*
@@ -46,10 +46,7 @@
  * First entry routine from boot. This should be in a file called locore.
  */
 ASENTRY(start, 0)
-	movl	r11,_boothowto			# Howto boot (single etc...)
-	movl	r10,_bootdev			# From where? (see rpb.h)
 	bisl3	$0x80000000,r9,_esym		# End of loaded code
-	movl	r8,_avail_end			# Usable memory (from VMB)
 	pushl	$0x1f0000			# Push a nice PSL
 	pushl	$to				# Address to jump to
 	rei					# change to kernel stack
@@ -81,7 +78,19 @@ eskip:
 	clrl	IFTRAP(r0)
 	mtpr	$0,$PR_SCBB
 
-	calls	$0,_start			# Jump away.
+# Copy the RPB to its new position
+#if 1 /* compat with old bootblocks */
+	tstl	(ap)				# Any arguments?
+	bneq	1f				# Yes, called from new boot
+	movl	r11,_boothowto			# Howto boot (single etc...)
+#	movl	r10,_bootdev			# uninteresting, will complain
+	movl	r8,_avail_end			# Usable memory (from VMB)
+	clrl	-(sp)				# Have no RPB
+	brb	2f
+#endif
+
+1:	pushl	4(ap)				# Address of old rpb
+2:	calls	$1,_start			# Jump away.
 	/* NOTREACHED */
 
 

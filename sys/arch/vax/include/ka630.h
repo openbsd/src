@@ -1,5 +1,5 @@
-/*	$OpenBSD: ka630.h,v 1.4 2000/04/26 03:08:41 bjc Exp $ */
-/*	$NetBSD: ka630.h,v 1.4 2000/01/24 02:40:32 matt Exp $ */
+/*	$OpenBSD: ka630.h,v 1.5 2002/06/11 09:36:24 hugh Exp $ */
+/*	$NetBSD: ka630.h,v 1.5 2000/07/19 01:01:58 matt Exp $ */
 /*-
  * Copyright (c) 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -41,6 +41,7 @@
 #define UVAXIISID	((u_long *)0x20040004)
 #define UVAXIICPU	((struct uvaxIIcpu *)0x20080000)
 
+#ifndef _LOCORE
 struct uvaxIIcpu {
 	u_short uvaxII_bdr;
 	u_short uvaxII_xxx;
@@ -48,6 +49,7 @@ struct uvaxIIcpu {
 	u_long  uvaxII_cear;
 	u_long  uvaxII_dear;
 };
+#endif
 
 /* Memory system err reg. */
 #define	UVAXIIMSER_CD	0x00000300
@@ -120,6 +122,18 @@ struct ka630clock {
 	u_short	cpmbx;	/* CPMBX is used by the boot rom. see ka630-ug-3.3.3 */
 };
 #endif
+
+#define KA630_NVR_ADRS	0x200B8024
+/* Definitions for various locations in the KA630 console page */
+#define KA630_PUTC_POLL 0x20
+#define KA630_PUTC	0x24
+#define KA630_GETC	0x1C
+#define KA630_ROW	0x4C
+#define KA630_MINROW	0x4D
+#define KA630_MAXROW	0x4E
+#define KA630_COL	0x50
+#define KA630_MINCOL	0x51
+#define KA630_MAXCOL	0x52
 
 #endif /* _VAX_INCLUDE_KA630_H_ */
 

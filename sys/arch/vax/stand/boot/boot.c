@@ -1,5 +1,5 @@
-/*	$OpenBSD: boot.c,v 1.9 2002/02/13 02:42:20 deraadt Exp $ */
-/*	$NetBSD: boot.c,v 1.4 1999/10/23 14:42:22 ragge Exp $ */
+/*	$OpenBSD: boot.c,v 1.10 2002/06/11 09:36:23 hugh Exp $ */
+/*	$NetBSD: boot.c,v 1.18 2002/05/31 15:58:26 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -35,12 +35,17 @@
  *	@(#)boot.c	7.15 (Berkeley) 5/4/91
  */
 
-#include "sys/param.h"
-#include "sys/reboot.h"
-#include "rpb.h"
+#include <sys/param.h>
+#include <sys/reboot.h>
 #include "lib/libsa/stand.h"
+#ifdef notyet
+#include "lib/libsa/loadfile.h"
+#include "lib/libkern/libkern.h"
+#endif
 
 #define V750UCODE(x)    ((x>>8)&255)
+
+#include "machine/rpb.h"
 
 #include "vaxstand.h"
 
@@ -51,16 +56,20 @@
  */
 
 char line[100];
-int	devtype, bootdev, howto, debug;
+int	bootdev, debug;
 extern	unsigned opendev;
-extern  unsigned *bootregs;
-struct	rpb *rpb;
 
-void	usage(), boot(), halt();
+void	usage(char *), boot(char *), halt(char *);
+void	Xmain(void);
+void	autoconf(void);
+int	getsecs(void);
+int	setjmp(int *);
+int	testkey(void);
+void	loadpcs(void);
 
-struct vals {
+const struct vals {
 	char	*namn;
-	void	(*func)();
+	void	(*func)(char *);
 	char	*info;
 } val[] = {
 	{"?", usage, "Show this help menu"},
@@ -70,34 +79,37 @@ struct vals {
 	{0, 0},
 };
 
-char *filer[] = {
-	"bsd",
-	"bsd.gz",
-	"bsd.old",
-	0,
+static struct {
+	char name[12];
+	int quiet;
+} filelist[] = {
+	{ "bsd", 0 },
+	{ "bsd.old", 0 },
+	{ "bsd.vax", 1 },
+	{ "bsd.gz", 0 },
+	{ "", 0 },
 };
 
 int jbuf[10];
-int sluttid, senast, skip;
+int sluttid, senast, skip, askname;
+struct rpb bootrpb;
 
-Xmain()
+void
+Xmain(void)
 {
-	int io, type, filindex = 0;
+	int io;
 	int j, nu;
-	volatile int askname;
+#ifdef noyet
+	u_long marks[MARK_MAX];
+#endif
+	extern const char bootprog_rev[], bootprog_date[];
 
-	/* make sure the rpb is out of the way so it does not get trampled;
-	 * this will be the case if booting from net
-	 */
-
-	rpb = (struct rpb *)bootregs[11];
-	bootdev = rpb->devtyp;
-	io=0;
+	io = 0;
 	skip = 1;
 	autoconf();
 
-	askname = howto & RB_ASKNAME;
-	printf("\n\r>> OpenBSD/vax boot [%s %s] <<\n", __DATE__, __TIME__);
+	askname = bootrpb.rpb_bootr5 & RB_ASKNAME;
+	printf("\n\r>> OpenBSD/vax boot [%s] [%s] <<\n", "1.9", __DATE__);
 	printf(">> Press enter to autoboot now, or any other key to abort:  ");
 	sluttid = getsecs() + 5;
 	senast = 0;
@@ -122,25 +134,46 @@ Xmain()
 	skip = 1;
 	printf("\n");
 
+	if (setjmp(jbuf))
+		askname = 1;
+
 	/* First try to autoboot */
 	if (askname == 0) {
-		type = (devtype >> B_TYPESHIFT) & B_TYPEMASK;
-		if ((unsigned)type < ndevs && devsw[type].dv_name)
-			while (filer[filindex]) {
-				errno = 0;
-				printf("> boot %s\n", filer[filindex]);
-				exec(filer[filindex++], 0, 0);
-				printf("boot failed: %s\n", strerror(errno));
-#if 0
-				if (testkey())
-					break;
+		int fileindex;
+		for (fileindex = 0; filelist[fileindex].name[0] != '\0';
+		    fileindex++) {
+#ifdef notyet
+			int err;
 #endif
+			errno = 0;
+			if (!filelist[fileindex].quiet)
+				printf("> boot %s\n", filelist[fileindex].name);
+			exec(filelist[fileindex].name, 0, 0);
+#ifdef notyet
+			marks[MARK_START] = 0;
+			err = loadfile(filelist[fileindex].name, marks,
+			    LOAD_KERNEL|COUNT_KERNEL);
+			if (err == 0) {
+				machdep_start((char *)marks[MARK_ENTRY],
+						      marks[MARK_NSYM],
+					      (void *)marks[MARK_START],
+					      (void *)marks[MARK_SYM],
+					      (void *)marks[MARK_END]);
 			}
+#endif
+			if (!filelist[fileindex].quiet)
+				printf("%s: boot failed: %s\n", 
+				    filelist[fileindex].name, strerror(errno));
+#if 0 /* Will hang VAX 4000 machines */
+			if (testkey())
+				break;
+#endif
+		}
 	}
 
 	/* If any key pressed, go to conversational boot */
 	for (;;) {
-		struct vals *v = &val[0];
+		const struct vals *v = &val[0];
 		char *c, *d;
 
 		printf("> ");
@@ -165,21 +198,23 @@ Xmain()
 			(*v->func)(d);
 		else
 			printf("Unknown command: %s\n", c);
-			
 	}
 }
 
 void
-halt()
+halt(char *hej)
 {
 	asm("halt");
 }
 
 void
-boot(arg)
-	char *arg;
+boot(char *arg)
 {
 	char *fn = "bsd";
+	int howto, fl, err;
+#ifdef notyet
+	u_long marks[MARK_MAX];
+#endif
 
 	if (arg) {
 		while (*arg == ' ')
@@ -195,9 +230,11 @@ boot(arg)
 				goto load;
 		}
 		if (*arg != '-') {
-fail:			printf("usage: boot [filename] [-asd]\n");
+fail:			printf("usage: boot [filename] [-acsd]\n");
 			return;
 		}
+
+		howto = 0;
 
 		while (*++arg) {
 			if (*arg == 'a')
@@ -211,8 +248,21 @@ fail:			printf("usage: boot [filename] [-asd]\n");
 			else
 				goto fail;
 		}
+		bootrpb.rpb_bootr5 = howto;
 	}
-load:	exec(fn, 0, 0);
+load:  
+	exec(fn, 0, 0);
+#ifdef notyet
+	marks[MARK_START] = 0;
+	err = loadfile(fn, marks, LOAD_KERNEL|COUNT_KERNEL);
+	if (err == 0) {
+		machdep_start((char *)marks[MARK_ENTRY],
+				       marks[MARK_NSYM],
+			      (void *)marks[MARK_START],
+				(void *)marks[MARK_SYM],
+				(void *)marks[MARK_END]);
+	}
+#endif
 	printf("Boot failed: %s\n", strerror(errno));
 }
 
@@ -230,12 +280,13 @@ load:	exec(fn, 0, 0);
 
 #define	extzv(one, two, three,four)	\
 ({			\
-	asm __volatile (" extzv %0,%3,%1,(%2)+"	\
+	asm __volatile (" extzv %0,%3,(%1),(%2)+"	\
 			:			\
-			: "g"(one),"g"(two),"r"(three),"g"(four));	\
+			: "g"(one),"g"(two),"g"(three),"g"(four));	\
 })
 
 
+void
 loadpcs()
 {
 	static int pcsdone = 0;
@@ -310,9 +361,9 @@ loadpcs()
 }
 
 void
-usage()
+usage(char *hej)
 {
-	struct vals *v = &val[0];
+	const struct vals *v = &val[0];
 
 	printf("Commands:\n");
 	while (v->namn) {

@@ -1,5 +1,5 @@
-/*	$OpenBSD: autoconf.c,v 1.7 2002/03/09 03:36:33 hugh Exp $ */
-/*	$NetBSD: autoconf.c,v 1.5 1999/08/23 19:09:27 ragge Exp $ */
+/*	$OpenBSD: autoconf.c,v 1.8 2002/06/11 09:36:23 hugh Exp $ */
+/*	$NetBSD: autoconf.c,v 1.19 2002/06/01 15:33:22 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -34,112 +34,65 @@
 		
 
 
-#include "sys/param.h"
+#include <sys/param.h>
+
+#include <lib/libsa/stand.h>
+
 #include "../../include/mtpr.h"
 #include "../../include/sid.h"
+#include "../../include/intr.h"
+#include "../../include/rpb.h"
 #include "../../include/scb.h"
 #include "vaxstand.h"
 
-extern  const struct ivec_dsp idsptch;	/* since we are not KERNEL */
+void autoconf(void);
+void findcpu(void);
+void consinit(void);
+void scbinit(void);
+int getsecs(void);
+void scb_stray(void *);
+void longjmp(int *, int);
+void rtimer(void *);
 
-int	nmba=0, nuba=0, nbi=0,nsbi=0,nuda=0;
-int	*mbaaddr, *ubaaddr, *biaddr;
-int	*udaaddr, *uioaddr, tmsaddr, *bioaddr;
-
-static int mba750[]={0xf28000,0xf2a000,0xf2c000};
-static int uba750[]={0xf30000,0xf32000};
-static int uio750[]={0xfc0000,0xf80000};
-static int uda750[]={0772150};
-
-/* 11/780's only have 4, 8600 have 8 of these. */
-/* XXX - all of these should be bound to physical addresses */
-static int mba780[]={0x20010000,0x20012000,0x20014000,0x20016000,
-	0x22010000,0x22012000,0x22014000,0x22016000};
-static int uba780[]={0, 0, 0, 0x20006000,0x20008000,0x2000a000,0x2000c000, 0,
-		0, 0, 0, 0, 0, 0, 0, 0, 
-		0, 0, 0, 0x22006000,0x22008000,0x2200a000,0x2200c000};
-static int uio780[]={0, 0, 0, 0x20100000,0x20140000,0x20180000,0x201c0000, 0,
-		0, 0, 0, 0, 0, 0, 0, 0, 
-		0, 0, 0, 0x22100000,0x22140000,0x22180000,0x221c0000};
-static int bi8200[]={0x20000000, 0x22000000, 0x24000000, 0x26000000,
-	0x28000000, 0x2a000000};
-static int bio8200[]={0x20400000};
-
-static int uba630[]={0x20087800};
-static int uio630[]={0x30000000};
-#define qbdev(csr) (((csr) & 017777)-0x10000000)
-static int uda630[]={qbdev(0772150),qbdev(0760334)};
-
-static int uba670[]={0x20040000};
-static int uio670[]={0x20000000};
-static int uda670[]={0x20004030,0x20004230};
-#define qb670dev(csr) (((csr) & 017777)+0x20000000)
+long *bootregs;
 
 /*
- * Autoconf routine is really stupid; but it actually don't
- * need any intelligence. We just assume that all possible
- * devices exists on each cpu. Fast & easy.
+ * Do some initial setup. Also create a fake RPB for net-booted machines
+ * that don't have an in-prom VMB.
  */
 
+void
 autoconf()
 {
-	extern int memsz;
 	int copyrpb = 1;
+	int fromnet = (bootregs[12] != -1);
 
 	findcpu(); /* Configures CPU variables */
 	consinit(); /* Allow us to print out things */
 	scbinit(); /* Fix interval clock etc */
 
+#ifdef DEV_DEBUG
+	printf("Register contents:\n");
+	for (copyrpb = 0; copyrpb < 13; copyrpb++)
+		printf("r%d: %lx\n", copyrpb, bootregs[copyrpb]);
+#endif
 	switch (vax_boardtype) {
-
-	default:
-		printf("\nCPU type %d not supported by boot\n",vax_cputype);
-		printf("trying anyway...\n");
-		break;
 
 	case VAX_BTYP_780:
 	case VAX_BTYP_790:
-		memsz = 0;
-		nmba = 8;
-		nuba = 32; /* XXX */
-		nuda = 1;
-		mbaaddr = mba780;
-		ubaaddr = uba780;
-		udaaddr = uda750;
-		uioaddr = uio780;
-		tmsaddr = 0774500;
-		break;
-
-	case VAX_BTYP_750:
-		memsz = 0;
-		nmba = 3;
-		nuba = 2;
-		nuda = 1;
-		mbaaddr = mba750;
-		ubaaddr = uba750;
-		udaaddr = uda750;
-		uioaddr = uio750;
-		tmsaddr = 0774500;
-		break;
-
-	case VAX_BTYP_630:	/* the same for uvaxIII */
-	case VAX_BTYP_650:
-	case VAX_BTYP_660:
-	case VAX_BTYP_670:
-		nuba = 1;
-		nuda = 2;
-		ubaaddr = uba630;
-		udaaddr = uda630;
-		uioaddr = uio630;
-		tmsaddr = qbdev(0774500);
-		break;
-
 	case VAX_BTYP_8000:
+	case VAX_BTYP_9CC:
+	case VAX_BTYP_9RR:
+	case VAX_BTYP_1202:
+		if (fromnet == 0)
+			break;
 		copyrpb = 0;
-		memsz = 0;
-		nbi = 1;
-		biaddr = bi8200;
-		bioaddr = bio8200;
+		bootrpb.devtyp = bootregs[0];
+		bootrpb.adpphy = bootregs[1];
+		bootrpb.csrphy = bootregs[2];
+		bootrpb.unit = bootregs[3];
+		bootrpb.rpb_bootr5 = bootregs[5];
+		bootrpb.pfncnt = 0;
 		break;
 
 	case VAX_BTYP_46:
@@ -153,14 +106,17 @@ autoconf()
 			map[i] = 0x80000000 | i;
 		}break;
 
-	case VAX_BTYP_410:
-	case VAX_BTYP_420:
-	case VAX_BTYP_43:
-	case VAX_BTYP_49:
-	case VAX_BTYP_1301:
-	case VAX_BTYP_1303:
-	case VAX_BTYP_1305:
 		break;
+	}
+
+	if (copyrpb) {
+		struct rpb *prpb = (struct rpb *)bootregs[11];
+		bcopy((caddr_t)prpb, &bootrpb, sizeof(struct rpb));
+		if (prpb->iovec) {
+			bootrpb.iovec = (int)alloc(prpb->iovecsz);
+			bcopy((caddr_t)prpb->iovec, (caddr_t)bootrpb.iovec,
+			    prpb->iovecsz);
+		}
 	}
 }
 
@@ -170,25 +126,34 @@ autoconf()
 
 volatile int tickcnt;
 
+int
 getsecs()
 {
-	volatile int loop;
-	int todr;
-
 	return tickcnt/100;
 }
 
-void scb_stray(), rtimer();
 struct ivec_dsp **scb;
 struct ivec_dsp *scb_vec;
+extern struct ivec_dsp idsptch;
+extern int jbuf[10];
+
+static void
+mcheck(void *arg)
+{
+	int off, *mfp = (int *)&arg;
+
+	off = (mfp[7]/4 + 8);
+	printf("Machine check, pc=%x, psl=%x\n", mfp[off], mfp[off+1]);
+	longjmp(jbuf, 1);
+}
 
 /*
  * Init the SCB and set up a handler for all vectors in the lower space,
  * to detect unwanted interrupts.
  */
+void
 scbinit()
 {
-	extern int timer;
 	int i;
 
 	/*
@@ -211,18 +176,19 @@ scbinit()
 		scb_vec[i].ev = NULL;
 	}
 	scb_vec[0xc0/4].hoppaddr = rtimer;
+	scb_vec[4/4].hoppaddr = mcheck;
 
-	mtpr(-10000, PR_NICR);		/* Load in count register */
+	if (vax_boardtype != VAX_BTYP_VXT)
+		mtpr(-10000, PR_NICR);		/* Load in count register */
 	mtpr(0x800000d1, PR_ICCS);	/* Start clock and enable interrupt */
 
 	mtpr(20, PR_IPL);
 }
 
-extern int jbuf[10];
 extern int sluttid, senast, skip;
 
 void
-rtimer()
+rtimer(void *arg)
 {
 	mtpr(31, PR_IPL);
 	tickcnt++;
@@ -230,29 +196,40 @@ rtimer()
 	if (skip)
 		return;
 	if ((vax_boardtype == VAX_BTYP_46) ||
-		(vax_boardtype == VAX_BTYP_48) ||
-		(vax_boardtype == VAX_BTYP_49)) {
+	    (vax_boardtype == VAX_BTYP_48) ||
+	    (vax_boardtype == VAX_BTYP_49)) {
 		int nu = sluttid - getsecs();
 		if (senast != nu) {
 			mtpr(20, PR_IPL);
-			longjmp(jbuf);
+			longjmp(jbuf, 1);
 		}
 	}
 }
 
+#ifdef __ELF__
+#define	IDSPTCH "idsptch"
+#define	EIDSPTCH "eidsptch"
+#define	CMN_IDSPTCH "cmn_idsptch"
+#else
+#define	IDSPTCH "_idsptch"
+#define	EIDSPTCH "_eidsptch"
+#define	CMN_IDSPTCH "_cmn_idsptch"
+#endif
+
 asm("
+	.text
 	.align	2
-	.globl  _idsptch, _eidsptch
-_idsptch:
+	.globl	" IDSPTCH ", " EIDSPTCH "
+" IDSPTCH ":
 	pushr	$0x3f
 	.word	0x9f16
-	.long	_cmn_idsptch
+	.long	" CMN_IDSPTCH "
 	.long	0
 	.long	0
 	.long	0
-_eidsptch:
+" EIDSPTCH ":
 
-_cmn_idsptch:
+" CMN_IDSPTCH ":
 	movl	(sp)+,r0
 	pushl	4(r0)
 	calls	$1,*(r0)
@@ -265,8 +242,7 @@ _cmn_idsptch:
  * This function must _not_ save any registers (in the reg save mask).
  */
 void
-scb_stray(arg)
-	int arg;
+scb_stray(void *arg)
 {
 	static int vector, ipl;
 
@@ -274,4 +250,3 @@ scb_stray(arg)
 	vector = (int) arg;
 	printf("stray interrupt: vector 0x%x, ipl %d\n", vector, ipl);
 }
-

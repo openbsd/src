@@ -1,5 +1,5 @@
-/*	$OpenBSD: mbareg.h,v 1.4 1997/05/29 00:05:00 niklas Exp $ */
-/*	$NetBSD: mbareg.h,v 1.3 1996/02/11 13:19:38 ragge Exp $ */
+/*	$OpenBSD: mbareg.h,v 1.5 2002/06/11 09:36:24 hugh Exp $	*/
+/*	$NetBSD: mbareg.h,v 1.4 2000/06/04 18:04:39 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
  * All rights reserved.
@@ -30,6 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef notdef
 struct mba_hack {
 	u_int	pad1;
 	u_int	md_ds;		/* unit status */
@@ -53,6 +54,23 @@ struct mba_regs {
 	struct	mba_hack mba_md[8];	/* unit specific regs */
 	struct	pte mba_map[256];
 };
+#endif
+
+#define	MBA_CSR	0
+#define	MBA_CR	4
+#define	MBA_SR	8
+#define	MBA_VAR	12
+#define	MBA_BC	16
+#define	MBA_DR	20
+#define	MBA_SMR	24
+#define	MBA_CAR	28
+
+#define	MUREG(dev,reg)	(1024+(dev)*128+(reg))
+#define MAPREG(nr)	(2048+(nr)*4)
+
+#define	MU_DS	4	/* unit status */
+#define	MU_AS	16	/* attention summary */
+#define	MU_DT	24	/* drive type */
 
 /*
  * Different states which can be on massbus.

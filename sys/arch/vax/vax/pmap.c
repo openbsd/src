@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.30 2002/03/14 01:26:49 millert Exp $ */
+/*	$OpenBSD: pmap.c,v 1.31 2002/06/11 09:36:24 hugh Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
@@ -54,6 +54,7 @@
 #include <machine/sid.h>
 #include <machine/cpu.h>
 #include <machine/scb.h>
+#include <machine/rpb.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -224,7 +225,7 @@ pmap_bootstrap()
 
 	/* Init SCB and set up stray vectors. */
 	avail_start = scb_init(avail_start);
-	bzero(0, VAX_NBPG >> 1);
+	bcopy((caddr_t)proc0paddr + REDZONEADDR, 0, sizeof(struct rpb));
 
 	if (dep_call->cpu_steal_pages)
 		(*dep_call->cpu_steal_pages)();
@@ -271,6 +272,8 @@ pmap_bootstrap()
 	    avail_start >> PGSHIFT, avail_end >> PGSHIFT,
 	    VM_FREELIST_DEFAULT);
 	mtpr(sysptsize, PR_SLR);
+	rpb.sbr = mfpr(PR_SBR);
+	rpb.slr = mfpr(PR_SLR);
 	mtpr(1, PR_MAPEN);
 }
 

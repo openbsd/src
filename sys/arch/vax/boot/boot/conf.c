@@ -1,5 +1,5 @@
-/*	$OpenBSD: conf.c,v 1.2 2000/10/04 04:36:29 bjc Exp $ */
-/*	$NetBSD: conf.c,v 1.3 1999/10/23 14:42:21 ragge Exp $ */
+/*	$OpenBSD: conf.c,v 1.3 2002/06/11 09:36:23 hugh Exp $ */
+/*	$NetBSD: conf.c,v 1.10 2000/06/15 19:53:23 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -38,34 +38,33 @@
 
 #include "../../include/rpb.h"
 
+#include "lib/libkern/libkern.h"
+
 #include "lib/libsa/stand.h"
 #include "lib/libsa/ufs.h"
 #include "lib/libsa/nfs.h"
+#include "lib/libsa/cd9660.h"
 
 #include "vaxstand.h"
 
-int	raopen(),  rastrategy();
-int	hpopen(),  hpstrategy();
-int	ctuopen(),  ctustrategy();
-int     tmscpopen(), tmscpstrategy();
-int     romopen(), romstrategy();
-int     mfmopen(), mfmstrategy();
-int     sdopen(), sdstrategy();
-int	netopen(), netstrategy(), netclose();
+static int nostrategy(void *, int, daddr_t, size_t, void *, size_t *);
 
 struct	devsw devsw[]={
 	SADEV("hp",hpstrategy, hpopen, nullsys, noioctl),
-	SADEV("qe",netstrategy, netopen, netclose, noioctl), /* DEQNA */
+	SADEV("qe",nostrategy, qeopen, qeclose, noioctl), /* DEQNA */
 	SADEV("ctu",ctustrategy, ctuopen, nullsys, noioctl),
 	SADEV("ra",rastrategy, raopen, nullsys, noioctl),
-	SADEV("mt",tmscpstrategy, tmscpopen, nullsys, noioctl),
+	SADEV("mt",rastrategy, raopen, nullsys, noioctl),
         SADEV("rom",romstrategy, romopen, nullsys, noioctl),
-        SADEV("rd",mfmstrategy, mfmopen, nullsys, noioctl),
+        SADEV("hd",mfmstrategy, mfmopen, nullsys, noioctl),
         SADEV("sd",romstrategy, romopen, nullsys, noioctl),
-        SADEV("sd",romstrategy, romopen, nullsys, noioctl),	/* SDN */
+	SADEV("sd",romstrategy, romopen, nullsys, noioctl),	/* SDN */
 	SADEV("st",nullsys, nullsys, nullsys, noioctl),
-	SADEV("le",netstrategy, netopen, netclose, noioctl), /* LANCE */
-        SADEV("ze",netstrategy, netopen, netclose, noioctl), /* SGEC */
+	SADEV("le",nostrategy, leopen, leclose, noioctl), /* LANCE */
+	SADEV("ze",nostrategy, zeopen, zeclose, noioctl), /* SGEC */
+	SADEV("rl",romstrategy, romopen, nullsys, noioctl),
+	SADEV("de",nostrategy, deopen, declose, noioctl), /* DEUNA */
+	SADEV("ni",nostrategy, niopen, nullsys, noioctl), /* DEBNA */
 };
 
 int	cnvtab[] = {
@@ -81,6 +80,9 @@ int	cnvtab[] = {
 	BDEV_ST,
 	BDEV_LE,
 	BDEV_ZE,
+	BDEV_RL,
+	BDEV_DE,
+	BDEV_NI,
 };
 
 int     ndevs = (sizeof(devsw)/sizeof(devsw[0]));
@@ -88,18 +90,17 @@ int     ndevs = (sizeof(devsw)/sizeof(devsw[0]));
 struct fs_ops file_system[] = {
 	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat },
 	{ nfs_open, nfs_close, nfs_read, nfs_write, nfs_seek, nfs_stat },
+	{ cd9660_open, cd9660_close, cd9660_read, cd9660_write,
+	    cd9660_seek, cd9660_stat },
 };
 
 int nfsys = (sizeof(file_system) / sizeof(struct fs_ops));
 
-extern struct netif_driver qe_driver;
-extern struct netif_driver le_driver;
-extern struct netif_driver ze_driver;
- 
-struct netif_driver *netif_drivers[] = {
-	&qe_driver,
-	&le_driver,
-	&ze_driver,
-}; 
-int     n_netif_drivers = (sizeof(netif_drivers) / sizeof(netif_drivers[0]));
-
+int
+nostrategy(void *f, int func, daddr_t dblk,
+    size_t size, void *buf, size_t *rsize)
+{
+	*rsize = size;
+	bzero(buf, size);
+	return 0;
+}

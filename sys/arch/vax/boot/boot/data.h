@@ -1,5 +1,5 @@
-/*	$OpenBSD: data.h,v 1.1 2000/04/27 02:26:25 bjc Exp $ */
-/*	$NetBSD: data.h,v 1.4 1995/09/16 15:58:57 ragge Exp $ */
+/*	$OpenBSD: data.h,v 1.2 2002/06/11 09:36:23 hugh Exp $ */
+/*	$NetBSD: data.h,v 1.3 2001/07/26 15:05:09 wiz Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -38,8 +38,6 @@
 		
 
 
-extern unsigned *bootregs;
-
 /*
  * rpb->iovec gives pointer to this structure.
  *
@@ -67,7 +65,7 @@ struct bqo {
 	long  umr_tmpl;       /*  4  UNIBUS map register template */
 	/* offset: 60 */
 	/*
-	 * the rest is unknown / unneccessary ...
+	 * the rest is unknown / unnecessary ...
 	 */
 	long  xxx[6];		/* 24 --	total: 84 bytes */
 };

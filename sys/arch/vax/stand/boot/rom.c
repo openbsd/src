@@ -1,5 +1,5 @@
-/*	$OpenBSD: rom.c,v 1.3 2002/03/14 03:16:02 millert Exp $ */
-/*	$NetBSD: rom.c,v 1.1 1996/08/02 11:22:21 ragge Exp $ */
+/*	$OpenBSD: rom.c,v 1.4 2002/06/11 09:36:23 hugh Exp $ */
+/*	$NetBSD: rom.c,v 1.3 2000/07/19 00:58:25 matt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -50,42 +50,32 @@
 #include "data.h"
 #include "vaxstand.h"
 
-extern unsigned *bootregs;
-extern struct rpb *rpb;
+static struct disklabel romlabel;
+static char io_buf[DEV_BSIZE];
+static struct bqo *bqo;
+static int dpart, dunit;
 
-struct rom_softc {
-	int part;
-	int unit;
-};
-
-int	romstrategy(), romopen();
-struct	disklabel romlabel;
-struct  rom_softc rom_softc;
-char	io_buf[DEV_BSIZE];
-
-romopen(f, adapt, ctlr, unit, part)
-	struct open_file *f;
-        int ctlr, unit, part;
+int
+romopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 {
 	char *msg;
 	struct disklabel *lp = &romlabel;
-	volatile struct rom_softc *rsc = &rom_softc;
-	int i,err;
+	size_t i;
+	int err;
 
-	bootregs[11] = XXRPB;
-	bqo = (void *)rpb->iovec;
+	bqo = (void *)bootrpb.iovec;
 
-	if (rpb->unit > 0 && (rpb->unit % 100) == 0) {
-		printf ("changing rpb->unit from %d ", rpb->unit);
-		rpb->unit /= 100;
-		printf ("to %d\n", rpb->unit);
+	if (bootrpb.unit > 0 && (bootrpb.unit % 100) == 0) {
+		printf ("changing bootrpb.unit from %d ", bootrpb.unit);
+		bootrpb.unit /= 100;
+		printf ("to %d\n", bootrpb.unit);
 	}
 
 	bzero(lp, sizeof(struct disklabel));
-	rsc->unit = unit;
-	rsc->part = part;
+	dunit = unit;
+	dpart = part;
 
-	err = romstrategy(rsc, F_READ, LABELSECTOR, DEV_BSIZE, io_buf, &i);
+	err = romstrategy(0, F_READ, LABELSECTOR, DEV_BSIZE, io_buf, &i);
 	if (err) {
 		printf("reading disklabel: %s\n",strerror(err));
 		return 0;
@@ -93,29 +83,33 @@ romopen(f, adapt, ctlr, unit, part)
 	msg = getdisklabel(io_buf+LABELOFFSET, lp);
 	if (msg)
 		printf("getdisklabel: %s\n",msg);
-	f->f_devdata = (void *)rsc;
 	return(0);
 }
 
-romstrategy (rsc, func, dblk, size, buf, rsize)
-	struct  rom_softc *rsc;
-	int     func;
+int	romwrite_uvax(int, int, void *, struct rpb *);
+int	romread_uvax(int, int, void *, struct rpb *);
+
+int
+romstrategy (f, func, dblk, size, buf, rsize)
+	void *f;
+	int func;
 	daddr_t dblk;
-	char    *buf;
-	int     size, *rsize;
+	size_t size;
+	void *buf;
+	size_t *rsize;
 {
 	struct	disklabel *lp;
 	int	block;
 
 	lp = &romlabel;
-	block = dblk + lp->d_partitions[rsc->part].p_offset;
-	if (rsc->unit >= 0 && rsc->unit < 10)
-		rpb->unit = rsc->unit;
+	block = dblk + lp->d_partitions[dpart].p_offset;
+	if (dunit >= 0 && dunit < 10)
+		bootrpb.unit = dunit;
 
 	if (func == F_WRITE)
-		romwrite_uvax(block, size, buf, bootregs);
+		romwrite_uvax(block, size, buf, &bootrpb);
 	else
-		romread_uvax(block, size, buf, bootregs);
+		romread_uvax(block, size, buf, &bootrpb);
 
 	*rsize = size;
 	return 0;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: romread.s,v 1.1 2000/04/27 02:26:26 bjc Exp $ */
-/*	$NetBSD: romread.s,v 1.4 1996/08/02 11:22:24 ragge Exp $ */
+/*	$OpenBSD: romread.S,v 1.1 2002/06/11 09:36:23 hugh Exp $ */
+/*	$NetBSD: romread.S,v 1.1 2002/02/24 01:04:25 matt Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -59,36 +59,34 @@ ENTRY(read750, 0xFFE)
 	ret
 
 /*
- * romread_uvax (int lbn, int size, void *buf, int *regs)
+ * romread_uvax (int lbn, int size, void *buf, struct rpb *rpb)
  */
 ENTRY(romread_uvax, 0xFFE)
-	movl	16(ap), r11	# array of bootregs
-	movl	44(r11), r11	# restore boot-contents of r11 (rpb)
-	movl    52(r11), r7     # load iovec/bqo into r7
-	addl3   (r7), r7, r6	# load qio into r6
-	pushl	r11			# base of rpb
-	pushl	$0			# virtual-flag 
-	pushl	$33			# read-logical-block
-	pushl	4(ap)			# lbn to start reading
-	pushl	8(ap)			# number of bytes to read
-	pushl	12(ap)			# buffer-address 
+	movl	16(ap),r11	# restore boot-contents of %r11 (rpb)
+	movl    52(r11), r7     # load iovec/bqo into %r7
+	addl3   (r7), r7, r6	# load qio into %r6
+	pushl	r11		# base of rpb
+	pushl	$0		# virtual-flag 
+	pushl	$33		# read-logical-block
+	pushl	4(ap)		# lbn to start reading
+	pushl	8(ap)		# number of bytes to read
+	pushl	12(ap)		# buffer-address 
 	calls	$6, (r6)	# call the qio-routine
-	ret			# r0 holds the result
+	ret			# %r0 holds the result
 
 /*
- * romwrite_uvax (int lbn, int size, void *buf, int *regs)
+ * romwrite_uvax (int lbn, int size, void *buf, struct rpb *rpb)
  */
 ENTRY(romwrite_uvax, 0xFFE)
-	movl    16(ap), r11     # array of bootregs
-	movl    44(r11), r11    # restore boot-contents of r11 (rpb)
-	movl    52(r11), r7     # load iovec/bqo into r7
-	addl3   (r7), r7, r6    # load qio into r6
-	pushl   r11                     # base of rpb
-	pushl   $0                      # virtual-flag 
-	pushl   $32                     # write-logical-block
-	pushl   4(ap)                   # lbn to start reading
-	pushl   8(ap)                   # number of bytes to read
-	pushl   12(ap)                  # buffer-address 
+	movl    16(ap), r11	# restore boot-contents of %r11 (rpb)
+	movl    52(r11), r7     # load iovec/bqo into %r7
+	addl3   (r7), r7, r6    # load qio into %r6
+	pushl   r11             # base of rpb
+	pushl   $0              # virtual-flag 
+	pushl   $32             # write-logical-block
+	pushl   4(ap)           # lbn to start reading
+	pushl   8(ap)           # number of bytes to read
+	pushl   12(ap)          # buffer-address 
 	calls   $6, (r6)        # call the qio-routine
-	ret                     # r0 holds the result
+	ret                     # %r0 holds the result
 

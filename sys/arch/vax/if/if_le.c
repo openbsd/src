@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.9 2002/03/14 01:26:48 millert Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.10 2002/06/11 09:36:24 hugh Exp $	*/
 /*	$NetBSD: if_le.c,v 1.14 1999/08/14 18:40:23 ragge Exp $	*/
 
 /*-
@@ -225,14 +225,6 @@ le_ibus_attach(parent, self, aux)
 	bcopy(self->dv_xname, sc->sc_am7990.sc_arpcom.ac_if.if_xname,
 	    IFNAMSIZ);
 	am7990_config(&sc->sc_am7990);
-
-	/*
-	 * Register this device as boot device if we booted from it.
-	 * This will fail if there are more than one le in a machine,
-	 * fortunately there may be only one.
-	 */
-	if (B_TYPE(bootdev) == BDEV_LE)
-		booted_from = self;
 }
 
 /*

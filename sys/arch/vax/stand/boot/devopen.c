@@ -1,5 +1,5 @@
-/*  $OpenBSD: devopen.c,v 1.2 2000/10/04 04:09:01 bjc Exp $ */
-/*	$NetBSD: devopen.c,v 1.2 1999/06/30 18:30:42 ragge Exp $ */
+/*	$OpenBSD: devopen.c,v 1.3 2002/06/11 09:36:23 hugh Exp $ */
+/*	$NetBSD: devopen.c,v 1.10 2002/05/24 21:40:59 ragge Exp $ */
 /*
  * Copyright (c) 1997 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,14 +31,20 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/reboot.h>
-
 #include "lib/libsa/stand.h"
-#include "vaxstand.h"
-#include "rpb.h"
 
-unsigned int opendev;
-extern struct rpb *rpb;
+#include "machine/rpb.h"
+#include "machine/sid.h"
+#include "machine/pte.h"
+#define	VAX780 1
+#include "machine/ka750.h"
+
+#include "arch/vax/bi/bireg.h"
+
+#include "vaxstand.h"
+
+int	atoi(char *);
+int nexaddr, csrbase;
 
 int
 devopen(f, fname, file)
@@ -46,21 +52,33 @@ devopen(f, fname, file)
 	const char *fname;
 	char **file;
 {
-	int dev, ctlr, unit, part, adapt, i, a[4], x;
+	int dev, unit, ctlr, part, adapt, i, a[4], x;
+	int *mapregs;
 	struct devsw *dp;
 	extern int cnvtab[];
-	char *s, *c, *u;
+	char *s, *c;
 
-	dev		= rpb->devtyp;
-	unit	= rpb->unit;
-	adapt = ctlr = part = 0;
+	part = 0;
+
+	/*
+	 * Adaptor and controller are normally zero (or uninteresting),
+	 * but we need to do some conversion here anyway (if it's a 
+	 * manual boot, but that's checked by the device driver).
+	 * Set them to -1 to tell if it's a set number or default.
+	 */
+	dev = bootrpb.devtyp;
+	unit = bootrpb.unit;
+	adapt = ctlr = -1;
+
+	if (dev == BDEV_KDB)
+		dev = BDEV_UDA; /* use the same driver */
 
 	for (i = 0, dp = 0; i < ndevs; i++)
 		if (cnvtab[i] == dev)
 			dp = devsw + i;
 
 	x = 0;
-	if ((s = index(fname, '('))) {
+	if ((s = index((char *)fname, '('))) {
 		*s++ = 0;
 
 		for (i = 0, dp = devsw; i < ndevs; i++, dp++)
@@ -99,29 +117,87 @@ devopen(f, fname, file)
 		if (x > 3)
 			adapt = a[0];
 		*file = c;
-
-		x = 1;
 	} else {
 		*file = (char *)fname;
 		c = (char *)fname;
 	}
 
-	if (!dp->dv_open)
+	if (!dp->dv_open) {
+		printf("Can't open device type %d\n", dev);
 		return(ENODEV);
-	f->f_dev = dp;
-
-	if (dev > 95) { /* MOP boot over network, root & swap over NFS */
-		i = (*dp->dv_open)(f, dp->dv_name);
-	} else
-		i = (*dp->dv_open)(f, adapt, ctlr, unit, part);
-
-	if(x == 0) {
-		dev = rpb->devtyp;		/* dv_open may have modified rpb */
-		unit = rpb->unit;	
 	}
-	opendev = MAKEBOOTDEV(dev, adapt, ctlr, unit, part);
+	f->f_dev = dp;
+	bootrpb.unit = unit;
+	bootrpb.devtyp = dev;
 
-	return i;
+	nexaddr = bootrpb.adpphy;
+	switch (vax_boardtype) {
+	case VAX_BTYP_750:
+		csrbase = (nexaddr == 0xf30000 ? 0xffe000 : 0xfbe000);
+		if (adapt < 0)
+			break;
+		nexaddr = (NEX750 + NEXSIZE * adapt);
+		csrbase = (adapt == 8 ? 0xffe000 : 0xfbe000);
+		break;
+	case VAX_BTYP_780:
+	case VAX_BTYP_790:
+		csrbase = 0x2007e000 + 0x40000 * ((nexaddr & 0x1e000) >> 13);
+		if (adapt < 0)
+			break;
+		nexaddr = ((int)NEX780 + NEXSIZE * adapt);
+		csrbase = 0x2007e000 + 0x40000 * adapt;
+		break;
+	case VAX_BTYP_9CC: /* 6000/200 */
+	case VAX_BTYP_9RR: /* 6000/400 */
+	case VAX_BTYP_1202: /* 6000/500 */
+		csrbase = 0;
+		if (ctlr < 0)
+			ctlr = bootrpb.adpphy & 15;
+		if (adapt < 0)
+			adapt = (bootrpb.adpphy >> 4) & 15;
+		nexaddr = BI_BASE(adapt, ctlr);
+		break;
+
+	case VAX_BTYP_8000:
+	case VAX_BTYP_8800:
+	case VAX_BTYP_8PS:
+		csrbase = 0; /* _may_ be a KDB */
+		nexaddr = bootrpb.csrphy;
+		if (ctlr < 0)
+			break;
+		if (adapt < 0)
+			nexaddr = (nexaddr & 0xff000000) + BI_NODE(ctlr);
+		else
+			nexaddr = BI_BASE(adapt, ctlr);
+		break;
+	case VAX_BTYP_610:
+		nexaddr = 0; /* No map regs */
+		csrbase = 0x20000000;
+		break;
+
+	case VAX_BTYP_VXT:
+		nexaddr = 0;
+		csrbase = bootrpb.csrphy;
+		break;
+	default:
+		nexaddr = 0; /* No map regs */
+		csrbase = 0x20000000;
+		/* Always map in the lowest 4M on qbus-based machines */
+		mapregs = (void *)0x20088000;
+		if (bootrpb.adpphy == 0x20087800)
+			for (i = 0; i < 8192; i++)
+				mapregs[i] = PG_V | i;
+		break;
+	}
+
+#ifdef DEV_DEBUG
+	printf("rpb.type %d rpb.unit %d rpb.csr %lx rpb.adp %lx\n",
+	    bootrpb.devtyp, bootrpb.unit, bootrpb.csrphy, bootrpb.adpphy);
+	printf("adapter %d ctlr %d unit %d part %d\n", adapt, ctlr, unit, part);
+	printf("nexaddr %x csrbase %x\n", nexaddr, csrbase);
+#endif
+
+	return (*dp->dv_open)(f, adapt, ctlr, unit, part);
 
 usage:
 	printf("usage: dev(adapter,controller,unit,partition)file -asd\n");

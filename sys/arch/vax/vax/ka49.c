@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka49.c,v 1.4 2002/03/14 01:26:48 millert Exp $	*/
+/*	$OpenBSD: ka49.c,v 1.5 2002/06/11 09:36:24 hugh Exp $	*/
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -148,7 +148,6 @@ ka49_cache_enable()
 	mtpr(mfpr(PR_BCETSTS), PR_BCETSTS);	/* Clear error bits */
 	mtpr(mfpr(PR_BCEDSTS), PR_BCEDSTS);	/* Clear error bits */
 	mtpr(mfpr(PR_NESTS), PR_NESTS);		/* Clear error bits */
-
 
 	start = 0x01400000;
 	slut  = 0x01440000;

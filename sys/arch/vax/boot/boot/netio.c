@@ -1,5 +1,5 @@
-/*	$OpenBSD: netio.c,v 1.3 2002/03/14 01:26:47 millert Exp $ */
-/*	$NetBSD: netio.c,v 1.4 1999/06/30 18:38:03 ragge Exp $	*/
+/*	$OpenBSD: netio.c,v 1.4 2002/06/11 09:36:23 hugh Exp $	*/
+/*	$NetBSD: netio.c,v 1.6 2000/05/26 20:16:46 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  *    derived from this software without specific prior written permission.
  * 4. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Gordon W. Ross
+ *	This product includes software developed by Gordon W. Ross
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -69,7 +69,7 @@
 
 /*
  * This module implements a "raw device" interface suitable for
- * use by the stand-alone I/O library NFS code.  This interface
+ * use by the stand-alone I/O library NFS code.	 This interface
  * does not support any "block" access, and exists only for the
  * purpose of initializing the network interface, getting boot
  * parameters, and performing the NFS mount.
@@ -79,7 +79,7 @@
  * find interface      - netif_open()
  * RARP for IP address - rarp_getipaddress()
  * RPC/bootparams      - callrpc(d, RPC_BOOTPARAMS, ...)
- * RPC/mountd          - nfs_mount(sock, ip, path)
+ * RPC/mountd	       - nfs_mount(sock, ip, path)
  *
  * the root file handle from mountd is saved in a global
  * for use by the NFS open code (NFS/lookup).
@@ -97,133 +97,34 @@
 #include "lib/libsa/netif.h"
 #include "lib/libsa/bootparam.h"
 #include "lib/libsa/nfs.h"
+#include "lib/libsa/bootp.h"
 
-extern int nfs_root_node[];	/* XXX - get from nfs_mount() */
+#include "vaxstand.h"
 
-struct	in_addr myip, rootip, gateip;
-n_long	netmask;
-char rootpath[FNAME_SIZE];
+static struct iodesc desc;
+static int inited = 0;
 
-int netdev_sock = -1;
-static int open_count;
-
-int netio_ask = 0;		/* default to bootparam, can override */
-
-static	char input_line[100];
-
-int netmountroot(struct open_file *, char *);
-
-/*
- * Called by devopen after it sets f->f_dev to our devsw entry.
- * This opens the low-level device and sets f->f_devdata.
- */
-int
-netopen(f, devname)
-	struct open_file *f;
-	char *devname;		/* Device part of file name (or NULL). */
+struct iodesc *
+socktodesc(sock)
 {
-	int error = 0;
-
-	/* On first open, do netif open, mount, etc. */
-	if (open_count == 0) {
-		/* Find network interface. */
-		if ((netdev_sock = netif_open(devname)) < 0)
-			return (error=ENXIO);
-		if ((error = netmountroot(f, devname)) != 0)
-			return (error);
-	}
-	open_count++;
-	f->f_devdata = nfs_root_node;
-	return (error);
+	return &desc;
 }
 
 int
-netclose(f)
-	struct open_file *f;
-{
-	if(--open_count == 0)
-		netif_close(netdev_sock);
-	f->f_devdata = NULL;
-	return 0;
-}
+net_devinit(struct open_file *f, struct netif_driver *drv, u_char *eaddr) {
+	static struct netif best_if;
+	struct iodesc *s;
+	int r;
 
-int
-netstrategy(devdata, func, dblk, size, v_buf, rsize)
-	void *devdata;
-	int func;
-	daddr_t dblk;
-	size_t size;
-	void *v_buf;
-	size_t *rsize;
-{
+	if (inited)
+		return 0;
+	/* find a free socket */
+	s = &desc;
 
-	*rsize = size;
-	return EIO;
-}
-
-int
-netmountroot(f, devname)
-	struct open_file *f;
-	char *devname;		/* Device part of file name (or NULL). */
-{
-	int error;
-	struct iodesc *d;
-
-	if (netio_ask) {
- get_my_ip:
-		printf("My IP address? ");
-		bzero(input_line, sizeof(input_line));
-		gets(input_line);
-		if ((myip.s_addr = inet_addr(input_line)) ==
-		    htonl(INADDR_NONE)) {
-			printf("invalid IP address: %s\n", input_line);
-			goto get_my_ip;
-		}
-
- get_my_netmask:
-		printf("My netmask? ");
-		bzero(input_line, sizeof(input_line)); 
-		gets(input_line);
-		if ((netmask = inet_addr(input_line)) ==
-		    htonl(INADDR_NONE)) {
-			printf("invalid netmask: %s\n", input_line);
-			goto get_my_netmask;
-		}
-
- get_my_gateway:
-		printf("My gateway? ");
-		bzero(input_line, sizeof(input_line)); 
-		gets(input_line);
-		if ((gateip.s_addr = inet_addr(input_line)) ==
-		    htonl(INADDR_NONE)) {
-			printf("invalid IP address: %s\n", input_line);
-			goto get_my_gateway;
-		}
-
- get_server_ip:
-		printf("Server IP address? ");
-		bzero(input_line, sizeof(input_line)); 
-		gets(input_line);
-		if ((rootip.s_addr = inet_addr(input_line)) ==
-		    htonl(INADDR_NONE)) {
-			printf("invalid IP address: %s\n", input_line);
-			goto get_server_ip;
-		}
-
- get_server_path:
-		printf("Server path? ");
-		bzero(rootpath, sizeof(rootpath)); 
-		gets(rootpath);
-		if (rootpath[0] == '\0' || rootpath[0] == '\n')
-			goto get_server_path;
-
-		if ((d = socktodesc(netdev_sock)) == NULL)
-			return (EMFILE);
-
-		d->myip = myip;
-
-		goto do_nfs_mount;
-	}
+	bzero(s, sizeof(*s));
+	best_if.nif_driver = drv;
+	s->io_netif = &best_if;
+	bcopy(eaddr, s->myea, 6);
 
 	/*
 	 * Get info for NFS boot: our IP address, our hostname,
@@ -236,17 +137,12 @@ netmountroot(f, devname)
 
 	/* Get boot info using BOOTP way. (RFC951, RFC1048) */
 	printf("Trying BOOTP\n");
-	bootp(netdev_sock);
+	bootp(0);
 
 	if (myip.s_addr) {
 		printf("Using IP address: %s\n", inet_ntoa(myip));
 
-		printf("myip: %s (%s)", hostname, inet_ntoa(myip));
-		if (gateip.s_addr)
-			printf(", gateip: %s", inet_ntoa(gateip));
-		if (netmask)
-			printf(", mask: %s", intoa(netmask));
-		printf("\n");
+		printf("myip: %s (%s)\n", hostname, inet_ntoa(myip));
 	} else
 
 #endif /* SUPPORT_BOOTP */
@@ -255,28 +151,43 @@ netmountroot(f, devname)
 		/* Get boot info using RARP and Sun bootparams. */
 
 		printf("Trying BOOTPARAMS\n");
-		/* Get our IP address.  (rarp.c) */
-		if (rarp_getipaddress(netdev_sock) == -1)
+		/* Get our IP address.	(rarp.c) */
+		if (rarp_getipaddress(0) == -1)
 			return (errno);
 
 		printf("boot: client IP address: %s\n", inet_ntoa(myip));
 
 		/* Get our hostname, server IP address. */
-		if (bp_whoami(netdev_sock))
+		if (bp_whoami(0))
 			return (errno);
 
 		printf("boot: client name: %s\n", hostname);
 
 		/* Get the root pathname. */
-		if (bp_getfile(netdev_sock, "root", &rootip, rootpath))
+		if (bp_getfile(0, "root", &rootip, rootpath))
 			return (errno);
 #endif
 	}
 	printf("root addr=%s path=%s\n", inet_ntoa(rootip), rootpath);
+	f->f_devdata = s;
 
- do_nfs_mount:
 	/* Get the NFS file handle (mount). */
-	error = nfs_mount(netdev_sock, rootip, rootpath);
+	r = nfs_mount(0, rootip, rootpath);
+	if (r)
+		return r;
 
-	return (error);
+	inited = 1;
+	return 0;
+}
+
+ssize_t
+netif_put(struct iodesc *desc, void *pkt, size_t len)
+{
+	return (*desc->io_netif->nif_driver->netif_put)(desc, pkt, len);
+}
+
+ssize_t
+netif_get(struct iodesc *desc, void *pkt, size_t len, time_t timo)
+{
+	return (*desc->io_netif->nif_driver->netif_get)(desc, pkt, len, timo);
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: mfm.c,v 1.2 2002/03/14 03:16:02 millert Exp $	*/
-/*	$NetBSD: mfm.c,v 1.2 1997/03/15 13:04:28 ragge Exp $	*/
+/*	$OpenBSD: mfm.c,v 1.3 2002/06/11 09:36:23 hugh Exp $	*/
+/*	$NetBSD: mfm.c,v 1.4 2001/07/26 22:55:13 wiz Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -69,29 +69,36 @@ struct mfm_softc {
 	int		unit;
 };
 
-int	mfmstrategy(), mfmopen();
-struct disklabel mfmlabel;
-struct mfm_softc mfm_softc;
-char		io_buf[DEV_BSIZE];
+static struct disklabel mfmlabel;
+static struct mfm_softc mfm_softc;
+static char io_buf[DEV_BSIZE];
 
 /*
  * These should probably be somewhere else, but ka410 is the only
  * one with mfm disks anyway...
  */
-volatile unsigned char *ka410_intreq = (void *)0x2008000f;
-volatile unsigned char *ka410_intclr = (void *)0x2008000f;
-volatile unsigned char *ka410_intmsk = (void *)0x2008000c;
+volatile unsigned char *ka410_intreq = (void*)0x2008000f;
+volatile unsigned char *ka410_intclr = (void*)0x2008000f;
+volatile unsigned char *ka410_intmsk = (void*)0x2008000c;
 
 static volatile struct hdc9224_DKCreg *dkc = (void *) 0x200c0000;
 static volatile struct hdc9224_UDCreg sreg;	/* input */
 static volatile struct hdc9224_UDCreg creg;	/* output */
 
+static void sreg_read(void);
+static void creg_write(void);
+static int mfm_rxprepare(void);
+static int mfm_command(int cmd);
+static int mfm_rxselect(int unit);
+static int mfm_rdselect(int unit);
+static int mfm_rxstrategy(void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *rsize);
+static int mfm_rdstrategy(void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *rsize);
 /*
  * we have to wait 0.7 usec between two accesses to any of the
  * dkc-registers, on a VS2000 with 1 MIPS, this is roughly one
  * instruction. Thus the loop-overhead will be enough...
  */
-static int
+static void
 sreg_read()
 {
 	int	i;
@@ -103,7 +110,7 @@ sreg_read()
 		*p++ = dkc->dkc_reg;	/* dkc_reg auto-increments */
 }
 
-static int
+static void
 creg_write()
 {
 	int	i;
@@ -120,7 +127,7 @@ creg_write()
  *
  * before reading/writing a sector from/to floppy, we use the SEEK/READ_ID
  * command to place the head at the desired location. Then we wait some
- * time before issueing the real command in order to let the drive become
+ * time before issuing the real command in order to let the drive become
  * ready...
  */
 int
@@ -138,8 +145,7 @@ mfm_rxprepare()
 }
 
 int
-mfm_rxselect(unit)
-	int	unit;
+mfm_rxselect(int unit)
 {
 	int	error;
 
@@ -164,12 +170,12 @@ mfm_rxselect(unit)
 	 */
 	error = mfm_command(DKC_CMD_DRSEL_RX33 | unit);
 
-	if ((error != 0) || (sreg.udc_dstat & UDC_DS_READY == 0)) {
+	if ((error != 0) || ((sreg.udc_dstat & UDC_DS_READY) == 0)) {
 		printf("\nfloppy-drive not ready (new floppy inserted?)\n\n");
 
 		creg.udc_rtcnt &= ~UDC_RC_INVRDY;	/* clear INVRDY-flag */
 		error = mfm_command(DKC_CMD_DRSEL_RX33 | unit);
-		if ((error != 0) || (sreg.udc_dstat & UDC_DS_READY == 0)) {
+		if ((error != 0) || ((sreg.udc_dstat & UDC_DS_READY) == 0)) {
 			printf("diskette not ready(1): %x/%x\n",
 			       error, sreg.udc_dstat);
 			printf("floppy-drive offline?\n");
@@ -184,14 +190,14 @@ mfm_rxselect(unit)
 		 * now ready should be 0, cause INVRDY is not set
 		 * (retrying a command makes this fail...)
 		 */
-		if ((error != 0) || (sreg.udc_dstat & UDC_DS_READY == 1)) {
+		if ((error != 0) || ((sreg.udc_dstat & UDC_DS_READY) == 1)) {
 			printf("diskette not ready(2): %x/%x\n",
 			       error, sreg.udc_dstat);
 		}
 		creg.udc_rtcnt |= UDC_RC_INVRDY;
 		error = mfm_command(DKC_CMD_DRSEL_RX33 | unit);
 
-		if ((error != 0) || (sreg.udc_dstat & UDC_DS_READY == 0)) {
+		if ((error != 0) || ((sreg.udc_dstat & UDC_DS_READY) == 0)) {
 			printf("diskette not ready(3): %x/%x\n",
 			       error, sreg.udc_dstat);
 			printf("no floppy inserted or floppy-door open\n");
@@ -203,8 +209,7 @@ mfm_rxselect(unit)
 }
 
 int
-mfm_rdselect(unit)
-	int	unit;
+mfm_rdselect(int unit)
 {
 	int	error;
 
@@ -232,8 +237,7 @@ mfm_rdselect(unit)
 static int	mfm_retry = 0;
 
 int
-mfm_command(cmd)
-	int	cmd;
+mfm_command(int	cmd)
 {
 	int	termcode, ready, i;
 
@@ -354,14 +358,16 @@ display_xbn(p)
 }
 #endif
 
+int
 mfmopen(f, adapt, ctlr, unit, part)
 	struct open_file *f;
 	int    ctlr, unit, part;
 {
 	char *msg;
 	struct disklabel *lp = &mfmlabel;
-	volatile struct mfm_softc *msc = &mfm_softc;
-	int  i, err;
+	struct mfm_softc *msc = &mfm_softc;
+	int err;
+	size_t i;
 
 	bzero(lp, sizeof(struct disklabel));
 	msc->unit = unit;
@@ -379,12 +385,14 @@ mfmopen(f, adapt, ctlr, unit, part)
 	f->f_devdata = (void *) msc;
 
 	{
+#ifdef verbose
 		int		k;
 		unsigned char  *ucp;
 		struct mfm_xbn *xp;
+#endif
 
 		/* mfmstrategy(msc, F_READ, -16, 8192, io_buf, &i); */
-		mfmstrategy(msc, F_READ, -16, DEV_BSIZE, io_buf, &i);
+		mfmstrategy(msc, F_READ, -16, 512, io_buf, &i);
 #ifdef verbose
 		printf("dumping raw disk-block #0:\n");
 		ucp = io_buf;
@@ -446,15 +454,11 @@ mfmopen(f, adapt, ctlr, unit, part)
 	return (0);
 }
 
-mfm_rxstrategy(msc, func, dblk, size, buf, rsize)
-	struct mfm_softc *msc;
-	int	func;
-	daddr_t	dblk;
-	char    *buf;
-	int	size, *rsize;
-{
+int
+mfm_rxstrategy(void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *rsize) {
+	struct mfm_softc *msc = f;
 	struct disklabel *lp;
-	int	block, sect, head, cyl, scount, i, cmd, res, sval;
+	int	block, sect, head, cyl, scount, res;
 
 	lp = &mfmlabel;
 	block = (dblk < 0 ? 0 : dblk + lp->d_partitions[msc->part].p_offset);
@@ -484,7 +488,7 @@ mfm_rxstrategy(msc, func, dblk, size, buf, rsize)
 		sect = sect % lp->d_nsectors;
 
 		/*
-		 * *rsize = 512;		/* one sector after the other
+		 * *rsize = 512;		one sector after the other
 		 * ...
 		 */
 		*rsize = 512 * min(scount, lp->d_nsectors - sect);
@@ -528,22 +532,18 @@ mfm_rxstrategy(msc, func, dblk, size, buf, rsize)
 
 		scount -= *rsize / 512;
 		block += *rsize / 512;
-		buf += *rsize;
+		(char *)buf += *rsize;
 	}
 
 	*rsize = size;
 	return 0;
 }
 
-mfm_rdstrategy(msc, func, dblk, size, buf, rsize)
-	struct mfm_softc *msc;
-	int	func;
-	daddr_t	dblk;
-	char    *buf;
-	int	size, *rsize;
-{
+int
+mfm_rdstrategy(void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *rsize) {
+	struct mfm_softc *msc = f;
 	struct disklabel *lp;
-	int	block, sect, head, cyl, scount, i, cmd, res, sval;
+	int	block, sect, head, cyl, scount, cmd, res;
 
 	lp = &mfmlabel;
 	block = (dblk < 0 ? 0 : dblk + lp->d_partitions[msc->part].p_offset);
@@ -618,7 +618,7 @@ mfm_rdstrategy(msc, func, dblk, size, buf, rsize)
 
 		scount -= *rsize / 512;
 		block += *rsize / 512;
-		buf += *rsize;
+		(char *)buf += *rsize;
 	}
 
 	/*
@@ -631,25 +631,26 @@ mfm_rdstrategy(msc, func, dblk, size, buf, rsize)
 }
 
 int
-mfmstrategy(msc, func, dblk, size, buf, rsize)
-	struct mfm_softc *msc;
+mfmstrategy(f, func, dblk, size, buf, rsize)
+	void *f;
 	int	func;
 	daddr_t	dblk;
-	char    *buf;
-	int	size, *rsize;
+	void    *buf;
+	size_t	size, *rsize;
 {
+	struct mfm_softc *msc = f;
 	int	res = -1;
 
 	switch (msc->unit) {
 	case 0:
 	case 1:
-		res = mfm_rdstrategy(msc, func, dblk, size, buf, rsize);
+		res = mfm_rdstrategy(f, func, dblk, size, buf, rsize);
 		break;
 	case 2:
-		res = mfm_rxstrategy(msc, func, dblk, size, buf, rsize);
+		res = mfm_rxstrategy(f, func, dblk, size, buf, rsize);
 		break;
 	default:
-		printf("invalid unit %d in mfmstrategy()\n");
+		printf("invalid unit %d in mfmstrategy()\n", msc->unit);
 	}
 	return (res);
 }

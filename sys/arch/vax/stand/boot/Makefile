@@ -1,23 +1,27 @@
-#	$OpenBSD: Makefile,v 1.3 2002/02/14 20:45:31 deraadt Exp $
-#	$NetBSD: Makefile,v 1.4 1999/05/23 21:58:19 ragge Exp $
+#	$OpenBSD: Makefile,v 1.4 2002/06/11 09:36:23 hugh Exp $
+#	$NetBSD: Makefile,v 1.27 2002/04/07 07:00:25 matt Exp $
 
 S!=	cd ${.CURDIR}/../../../../; pwd
+NOMAN=	# defined
 
-NOMAN=	1
+.include <bsd.own.mk>
+
 PROG=	boot
-DEVS=	hp.c ctu.c ra.c tmscp.c mfm.c if_qe.c if_le.c if_ze.c
-SRCS=	srt0.s boot.c devopen.c conf.c autoconf.c netio.c rom.c romread.s \
-	urem.s udiv.s consio.c str.s ${DEVS} findcpu.c
-#OBJS=	autoconf.o boot.o conf.o consio.o ctu.o devopen.o findcpu.o hp.o \
-#	if_le.o if_qe.o if_ze.o mfm.o netio.o ra.o rom.o romread.o srt0.o \
-#	str.o tmscp.o udiv.o urem.o
+WARNS?=	1
+DEVS=	hp.c ctu.c ra.c mfm.c if_qe.c if_le.c if_ze.c if_de.c if_ni.c
+SRCS=	srt0.S boot.c devopen.c conf.c autoconf.c netio.c rom.c romread.S \
+	urem.s udiv.s consio.c consio2.S str.S ${DEVS} findcpu.c
 
-CLEANFILES+=${PROG}.mop
-CPPFLAGS+=-DSUPPORT_BOOTPARAMS -DSUPPORT_DHCP -D_STANDALONE 
+CLEANFILES+=${PROG} ${PROG}.sym
+CPPFLAGS+=-DSUPPORT_BOOTPARAMS -DSUPPORT_DHCP -D_STANDALONE \
+	-DNO_MID_CHECK
 #CPPFLAGS+=-DBOOTP_DEBUG -DNETIF_DEBUG -DETHER_DEBUG -DNFS_DEBUG -DDEV_DEBUG \
-#	-DRPC_DEBUG -DRARP_DEBUG -DPARANOID -DSUPPORT_BOOTP
-BINDIR=	/usr/mdec
+#	-DRPC_DEBUG -DRARP_DEBUG -DPARANOID
 
+BINDIR=/usr/mdec
+
+#SA_AS= library
+#SAMISCMAKEFLAGS=SA_USE_CREAD=yes SA_INCLUDE_NET=yes SA_USE_LOADFILE=yes
 SA_ZLIB=	yes
 SAREL=
 .include "${S}/lib/libsa/Makefile.inc"
@@ -32,15 +36,36 @@ LIBZ=	${ZLIB}
 #.include "${S}/lib/libkern/Makefile.inc"
 #LIBKERN=${KERNLIB}
 
-boot: ${OBJS} ${SALIB} ${LIBZ} ${LIBKERN}
-	ld -N -Ttext ${RELOC} -e nisse -o ${PROG} -Llib/sa -L. ${OBJS} \
-    ${LIBSA} ${LIBZ} -lsa ${LIBKERN}
-	/usr/sbin/mopa.out ${PROG} ${PROG}.mop
-	strip ${PROG}
-	size ${PROG}
+.if ${MACHINE} == "vax"
+.PHONY: machine-links
+beforedepend: machine-links
+machine-links:
+	@rm -f machine && ln -s ${S}/arch/${MACHINE}/include machine
+	@rm -f ${MACHINE_ARCH} && ln -s ${S}/arch/${MACHINE_ARCH}/include ${MACHINE_ARCH}
+.NOPATH: machine ${MACHINE_ARCH}
+CLEANFILES+= machine ${MACHINE_ARCH}
+.endif
+
+#.if ${OBJECT_FMT} == "ELF"
+#START=start
+#.else
+START=nisse
+#.endif
+
+${PROG}: machine-links ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+	${LD} -N -Ttext ${RELOC} -e ${START} -o ${PROG}.sym -Llib/sa -L. ${OBJS} \
+	    ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
+	/usr/sbin/mopa.out ${PROG}.sym ${PROG}.mop
+	/bin/cp ${PROG}.sym ${PROG}
+	/usr/bin/strip ${PROG}
+	/usr/bin/size ${PROG}
 
 clean::	
 	rm -f a.out [Ee]rrs mklog core *.core ${PROG} ${OBJS} ${LOBJS} \
 		${CLEANFILES}
+
+#install:
+#	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \
+#	    ${PROG} ${DESTDIR}${MDEC_DIR}/${PROG}
 
 .include <bsd.prog.mk>

@@ -1,5 +1,5 @@
-/*	$OpenBSD: bireg.h,v 1.3 2000/04/28 03:42:39 bjc Exp $	*/
-/*	$NetBSD: bireg.h,v 1.6 1999/08/04 19:12:22 ragge Exp $	*/
+/*	$OpenBSD: bireg.h,v 1.4 2002/06/11 09:36:23 hugh Exp $	*/
+/*	$NetBSD: bireg.h,v 1.7 2000/07/06 17:47:02 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -45,8 +45,8 @@
 /*
  * BI node addresses
  */
-#define	NODESIZE	0x2000	/* Size of one BI node */
-#define	BI_NODE(node)	(NODESIZE * (node))
+#define	BI_NODESIZE	0x2000	/* Size of one BI node */
+#define	BI_NODE(node)	(BI_NODESIZE * (node))
 #define	BI_BASE(bi,nod)	((0x20000000 + (bi) * 0x2000000) + BI_NODE(nod))
 #define	MAXNBI		16	/* Spec says there can be 16 anyway */
 #define	NNODEBI		16	/* 16 nodes per BI */
@@ -60,6 +60,7 @@
  *
  * 990712: The structs not used anymore due to conversion to bus.h.
  */
+#ifdef notdef
 struct biiregs {
 	u_short	bi_dtype;	/* device type */
 	u_short	bi_revs;	/* revisions */
@@ -101,6 +102,7 @@ struct bi_cpu {
 	u_long	bi_xxx[63];	/* pad */
 	u_long	bi_rxcd;	/* receive console data register */
 };
+#endif
 
 #define	BIREG_DTYPE		0x00
 #define	BIREG_VAXBICSR		0x04
