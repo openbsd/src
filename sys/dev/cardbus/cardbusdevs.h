@@ -1,10 +1,10 @@
-/*	$OpenBSD: cardbusdevs.h,v 1.12 2001/08/22 16:34:31 aaron Exp $	*/
+/*	$OpenBSD: cardbusdevs.h,v 1.13 2002/06/08 00:08:17 aaron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: cardbusdevs,v 1.10 2001/07/09 23:09:29 niklas Exp 
+ *	OpenBSD: cardbusdevs,v 1.11 2001/08/22 16:33:57 aaron Exp 
  */
 /*	$NetBSD: cardbusdevs,v 1.7 1999/12/11 22:22:34 explorer Exp $	*/
 
@@ -51,7 +51,10 @@
 #define	CARDBUS_VENDOR_DEC	0x1011		/* DEC */
 #define	CARDBUS_VENDOR_OPTI	0x1045		/* Opti */
 #define	CARDBUS_VENDOR_3COM	0x10B7		/* 3Com */
+#define	CARDBUS_VENDOR_REALTEK	0x10ec		/* Realtek Semiconductor */
+#define	CARDBUS_VENDOR_ACCTON	0x1113		/* Accton */
 #define	CARDBUS_VENDOR_XIRCOM	0x115d		/* Xircom */
+#define	CARDBUS_VENDOR_COREGA	0x1259		/* Corega */
 #define	CARDBUS_VENDOR_ADMTEK	0x1317		/* ADMtek */
 #define	CARDBUS_VENDOR_ABOCOM	0x13d1		/* Abocom */
 #define	CARDBUS_VENDOR_INTEL	0x8086		/* Intel */
@@ -77,11 +80,18 @@
 #define	CARDBUS_PRODUCT_ABOCOM_FE2500	0xab02		/* FE2500 */
 #define	CARDBUS_PRODUCT_ABOCOM_PCM200	0xab03		/* PCM200 */
 
+/* Accton products */
+#define	CARDBUS_PRODUCT_ACCTON_MPX5030	0x1211		/* MPX503x */
+#define	CARDBUS_PRODUCT_ACCTON_EN2242	0x1216		/* EN2242 */
+
 /* ADMtek products */
 #define	CARDBUS_PRODUCT_ADMTEK_AN985	0x1985		/* AN985 */
 
 /* Adaptec products */
 #define	CARDBUS_PRODUCT_ADP_1480	0x6075		/* APA-1480 */
+
+/* Corega products */
+#define	CARDBUS_PRODUCT_COREGA_CB_TXD	0xa117		/* FEther CB-TXD 10/100 Ethernet */
 
 /* DEC products */
 #define	CARDBUS_PRODUCT_DEC_21142	0x0019		/* 21142/3 */
@@ -94,6 +104,10 @@
 
 /* Opti products */
 #define	CARDBUS_PRODUCT_OPTI_82C861	0xc861		/* 82C861 */
+
+/* Realtek (Creative Labs?) products */
+#define	CARDBUS_PRODUCT_REALTEK_RT8138	0x8138		/* 8138 Ethernet */
+#define	CARDBUS_PRODUCT_REALTEK_RT8139	0x8139		/* 8139 Ethernet */
 
 /* Xircom products */
 /* is the `-3' here just indicating revision 3, or is it really part

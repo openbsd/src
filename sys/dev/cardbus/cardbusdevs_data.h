@@ -1,10 +1,10 @@
-/*	$OpenBSD: cardbusdevs_data.h,v 1.12 2001/08/22 16:34:31 aaron Exp $	*/
+/*	$OpenBSD: cardbusdevs_data.h,v 1.13 2002/06/08 00:08:17 aaron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: cardbusdevs,v 1.10 2001/07/09 23:09:29 niklas Exp 
+ *	OpenBSD: cardbusdevs,v 1.11 2001/08/22 16:33:57 aaron Exp 
  */
 /*	$NetBSD: cardbusdevs,v 1.7 1999/12/11 22:22:34 explorer Exp $	*/
 
@@ -81,12 +81,24 @@ struct cardbus_known_product cardbus_known_product[] = {
 	    "PCM200",
 	},
 	{
+	    CARDBUS_VENDOR_ACCTON, CARDBUS_PRODUCT_ACCTON_MPX5030,
+	    "MPX503x",
+	},
+	{
+	    CARDBUS_VENDOR_ACCTON, CARDBUS_PRODUCT_ACCTON_EN2242,
+	    "EN2242",
+	},
+	{
 	    CARDBUS_VENDOR_ADMTEK, CARDBUS_PRODUCT_ADMTEK_AN985,
 	    "AN985",
 	},
 	{
 	    CARDBUS_VENDOR_ADP, CARDBUS_PRODUCT_ADP_1480,
 	    "APA-1480",
+	},
+	{
+	    CARDBUS_VENDOR_COREGA, CARDBUS_PRODUCT_COREGA_CB_TXD,
+	    "FEther CB-TXD 10/100 Ethernet",
 	},
 	{
 	    CARDBUS_VENDOR_DEC, CARDBUS_PRODUCT_DEC_21142,
@@ -107,6 +119,14 @@ struct cardbus_known_product cardbus_known_product[] = {
 	{
 	    CARDBUS_VENDOR_OPTI, CARDBUS_PRODUCT_OPTI_82C861,
 	    "82C861",
+	},
+	{
+	    CARDBUS_VENDOR_REALTEK, CARDBUS_PRODUCT_REALTEK_RT8138,
+	    "8138 Ethernet",
+	},
+	{
+	    CARDBUS_VENDOR_REALTEK, CARDBUS_PRODUCT_REALTEK_RT8139,
+	    "8139 Ethernet",
 	},
 	{
 	    CARDBUS_VENDOR_XIRCOM, CARDBUS_PRODUCT_XIRCOM_X3201_3,
@@ -141,8 +161,20 @@ struct cardbus_known_vendor cardbus_known_vendors[] = {
 	    "3Com",
 	},
 	{
+	    CARDBUS_VENDOR_REALTEK, 0,
+	    "Realtek Semiconductor",
+	},
+	{
+	    CARDBUS_VENDOR_ACCTON, 0,
+	    "Accton",
+	},
+	{
 	    CARDBUS_VENDOR_XIRCOM, 0,
 	    "Xircom",
+	},
+	{
+	    CARDBUS_VENDOR_COREGA, 0,
+	    "Corega",
 	},
 	{
 	    CARDBUS_VENDOR_ADMTEK, 0,
