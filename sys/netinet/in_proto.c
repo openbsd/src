@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.20 2000/01/02 09:06:11 angelos Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.21 2000/01/07 21:38:01 angelos Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -115,14 +115,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
  * TCP/IP protocol family: IP, ICMP, UDP, TCP.
  */
 
-#if 0 /*KAME IPSEC*/
-#include <netinet6/ah.h>
-#ifdef IPSEC_ESP
-#include <netinet6/esp.h>
-#endif
-#include <netinet6/ipcomp.h>
-#endif /* IPSEC */
-
 #include "gif.h"
 #if NGIF > 0
 #include <netinet/in_gif.h>
@@ -168,6 +160,12 @@ void	iplinit __P((void));
 #endif
 
 #include <netinet/ip_ip4.h>
+
+#include "gre.h"
+#if NGRE > 0
+#include <netinet/ip_gre.h>
+#include <net/if_gre.h>
+#endif
 
 extern	struct domain inetdomain;
 
@@ -276,23 +274,19 @@ struct protosw inetsw[] = {
   rip_usrreq,
   0,          0,              0,              0,		etherip_sysctl
 },
-#endif
-#if 0 /*NRL IPv6*/
-/* IPv6 in IPv4 tunneled packets... */
-{ SOCK_RAW,   &inetdomain,    IPPROTO_IPV6,   PR_ATOMIC|PR_ADDR,
-  ip6_input,  rip_output,     ipv6_trans_ctlinput, rip_ctloutput,
+#endif /* IPSEC */
+#if NGRE > 0
+{ SOCK_RAW,     &inetdomain,    IPPROTO_GRE,    PR_ATOMIC|PR_ADDR,
+  gre_input,    rip_output,     0,              rip_ctloutput,
   rip_usrreq,
-  0,          0,              0,              0
+  0,            0,              0,             0,		gre_sysctl
 },
-#if 0
-/* IPv4 in IPv4 tunneled packets... */
-{ SOCK_RAW,   &inetdomain,    IPPROTO_IPV4,   PR_ATOMIC|PR_ADDR,
-  ipv4_input, 0,              0,              0,
-  0,
-  0,          0,              0,              0
+{ SOCK_RAW,     &inetdomain,    IPPROTO_MOBILE, PR_ATOMIC|PR_ADDR,
+  gre_mobile_input,     rip_output,     0,              rip_ctloutput,
+  rip_usrreq,
+  0,            0,              0,              0,		ipmobile_sysctl
 },
-#endif /* 0 */
-#endif /* defined(INET6) */
+#endif /* NGRE > 0 */
 /* raw wildcard */
 { SOCK_RAW,	&inetdomain,	0,		PR_ATOMIC|PR_ADDR,
   rip_input,	rip_output,	0,		rip_ctloutput,
@@ -307,24 +301,6 @@ struct domain inetdomain =
       rn_inithead, 32, sizeof(struct sockaddr_in) };
 
 #ifdef notyet /* XXXX */
-#include "imp.h"
-#if NIMP > 0
-extern	struct domain impdomain;
-int	rimp_output(), hostslowtimo();
-
-struct protosw impsw[] = {
-{ SOCK_RAW,	&impdomain,	0,		PR_ATOMIC|PR_ADDR,
-  0,		rimp_output,	0,		0,
-  rip_usrreq,
-  0,		0,		hostslowtimo,	0,
-},
-};
-
-struct domain impdomain =
-    { AF_IMPLINK, "imp", 0, 0, 0,
-      impsw, &impsw[sizeof (impsw)/sizeof(impsw[0])] };
-#endif
-
 #include "hy.h"
 #if NHY > 0
 /*
