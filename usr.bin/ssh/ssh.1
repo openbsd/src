@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: ssh.1,v 1.22 1999/10/17 16:58:39 provos Exp $
+.\" $Id: ssh.1,v 1.23 1999/11/09 23:09:58 markus Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSH 1
@@ -93,6 +93,8 @@ or
 and if additionally the server can verify the client's
 host key (see 
 .Pa /etc/ssh_known_hosts
+and
+.Pa $HOME/.ssh/known_hosts
 in the
 .Sx FILES
 section), only then login is
