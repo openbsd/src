@@ -1,4 +1,4 @@
-/*	$OpenBSD: pr.c,v 1.11 2001/11/02 16:25:02 deraadt Exp $	*/
+/*	$OpenBSD: pr.c,v 1.12 2001/11/19 03:37:33 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -45,7 +45,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)pr.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$OpenBSD: pr.c,v 1.11 2001/11/02 16:25:02 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pr.c,v 1.12 2001/11/19 03:37:33 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -56,6 +56,7 @@ static char *rcsid = "$OpenBSD: pr.c,v 1.11 2001/11/02 16:25:02 deraadt Exp $";
 #include <errno.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -82,7 +83,7 @@ static char *rcsid = "$OpenBSD: pr.c,v 1.11 2001/11/02 16:25:02 deraadt Exp $";
  * bugs were noted and fixed in the processs.  Some implementations have this
  * as the as -f, some as -F so we accept either.
  *
- * The impelmentation of form feeds on top of the existing I/O structure is
+ * The implementation of form feeds on top of the existing I/O structure is
  * a bit ideosyncratic.  Basically they are treated as temporary end-of-file
  * conditions and an additional level of "loop on form feed" is added to each
  * of the output modes to continue after such a transient end-of-file's. This
@@ -142,7 +143,7 @@ char	*timefrmt;	/* time conversion string */
 /*
  * misc globals
  */
-FILE	*ferr;		/* error message file pointer */
+int	ferr;		/* error message delayed */
 int	addone = 0;	/* page length is odd with double space */
 int	errcnt = 0;	/* error count on file processing */
 int	beheaded = 0;	/* header / trailer link */
@@ -823,6 +824,56 @@ horzcol(argc, argv)
     return(0);
 }
 
+struct ferrlist {
+	struct ferrlist *next;
+	char *buf;
+};
+struct ferrlist *ferrhead, *ferrtail;
+
+/*
+ * flsh_errs():    output saved up diagnostic messages after all normal
+ *        processing has completed
+ */
+void
+flsh_errs()
+{
+    struct ferrlist *f;
+
+    if (ferr) {
+	for (f = ferrhead; f; f = f->next)
+	    (void)write(STDERR_FILENO, f->buf, strlen(f->buf));
+    }
+}
+
+void
+ferrout(char *fmt, ...)
+{
+    sigset_t block, oblock;
+    struct ferrlist *f;
+    va_list ap;
+    char *p;
+
+    va_start(ap, fmt);
+    if (ferr == NULL)
+        vfprintf(stderr, fmt, ap);
+    else {
+	sigemptyset(&block);
+	sigaddset(&block, SIGINT);
+	sigprocmask(SIG_BLOCK, &block, &oblock);
+
+        vasprintf(&p, fmt, ap);
+	f = (struct ferrlist *)malloc(sizeof(*f));
+	f->next = NULL;
+	f->buf = p;
+	if (ferrhead == NULL)
+	    ferrhead = f;
+	if (ferrtail)
+		ferrtail->next = f;
+	ferrtail = f;
+	sigprocmask(SIG_SETMASK, &oblock, NULL);
+    }
+}
+
 /*
  * mulfile:    print files with more than one column of output and
  *        more than one file concurrently
@@ -918,8 +969,7 @@ mulfile(argc, argv)
 	pgwd = ((colwd + 1) * clcnt) - 1;
     }
     if (colwd < 1) {
-	(void)fprintf(ferr,
-	  "pr: page width too small for %d columns\n", clcnt);
+	ferrout("pr: page width too small for %d columns\n", clcnt);
 	return(1);
     }
     col = colwd + 1;
@@ -1414,7 +1464,7 @@ nxtfile(argc, argv, fname, buf, dt)
 	    return(inf);
 	if (gettimeofday(&tv, &tz) < 0) {
 	    ++errcnt;
-	    (void)fprintf(ferr, "pr: cannot get time of day, %s\n",
+	    ferrout("pr: cannot get time of day, %s\n",
 		strerror(errno));
 	    eoptind = argc - 1;
 	    return(NULL);
@@ -1438,8 +1488,7 @@ nxtfile(argc, argv, fname, buf, dt)
 		return(inf);
 	    if (gettimeofday(&tv, &tz) < 0) {
 		++errcnt;
-		(void)fprintf(ferr,
-		    "pr: cannot get time of day, %s\n",
+		ferrout("pr: cannot get time of day, %s\n",
 		    strerror(errno));
 		return(NULL);
 	    }
@@ -1453,7 +1502,7 @@ nxtfile(argc, argv, fname, buf, dt)
 		++errcnt;
 		if (nodiag)
 		    continue;
-		(void)fprintf(ferr, "pr: Cannot open %s, %s\n",
+		ferrout("pr: Cannot open %s, %s\n",
 		    argv[eoptind], strerror(errno));
 		continue;
 	    }
@@ -1470,8 +1519,7 @@ nxtfile(argc, argv, fname, buf, dt)
 	    if (dt) {
 		if (gettimeofday(&tv, &tz) < 0) {
 		    ++errcnt;
-		    (void)fprintf(ferr,
-			 "pr: cannot get time of day, %s\n",
+		    ferrout("pr: cannot get time of day, %s\n",
 			 strerror(errno));
 		    return(NULL);
 		}
@@ -1481,8 +1529,7 @@ nxtfile(argc, argv, fname, buf, dt)
 		if (fstat(fileno(inf), &statbuf) < 0) {
 		    ++errcnt;
 		    (void)fclose(inf);
-		    (void)fprintf(ferr, 
-			"pr: Cannot stat %s, %s\n",
+		    ferrout("pr: Cannot stat %s, %s\n",
 			argv[eoptind], strerror(errno));
 		    return(NULL);
 		}
@@ -1501,7 +1548,7 @@ nxtfile(argc, argv, fname, buf, dt)
 	++errcnt;
 	if (inf != stdin)
 	    (void)fclose(inf);
-	(void)fputs("pr: time conversion failed\n", ferr);
+	ferrout("pr: time conversion failed\n");
 	return(NULL);
     }
     return(inf);
@@ -1701,49 +1748,30 @@ void
 terminate(which_sig)
     int which_sig;
 {
-    flsh_errs();	/* XXX signal race */
+    flsh_errs();
     _exit(1);
-}
-
-
-/*
- * flsh_errs():    output saved up diagnostic messages after all normal
- *        processing has completed
- */
-void
-flsh_errs()
-{
-    char buf[BUFSIZ];
-
-    (void)fflush(stdout);
-    (void)fflush(ferr);
-    if (ferr == stderr)
-	return;
-    rewind(ferr);
-    while (fgets(buf, BUFSIZ, ferr) != NULL)
-	(void)fputs(buf, stderr);
 }
 
 void
 mfail()
 {
-    (void)fputs("pr: memory allocation failed\n", ferr);
+    ferrout("pr: memory allocation failed\n");
 }
 
 void
 pfail()
 {
-    (void)fprintf(ferr, "pr: write failure, %s\n", strerror(errno));
+    ferrout("pr: write failure, %s\n", strerror(errno));
 }
 
 void
 usage()
 {
-    (void)fputs(
-     "usage: pr [+page] [-col] [-adfFmrt] [-e[ch][gap]] [-h header]\n", ferr);
-    (void)fputs(
-     "          [-i[ch][gap]] [-l line] [-n[ch][width]] [-o offset]\n", ferr);
-    (void)fputs(
+    ferrout(
+     "usage: pr [+page] [-col] [-adfFmrt] [-e[ch][gap]] [-h header]\n");
+    ferrout(
+     "          [-i[ch][gap]] [-l line] [-n[ch][width]] [-o offset]\n");
+    ferrout(
      "          [-s[ch]] [-w width] [-] [file ...]\n", ferr);
 }
 
@@ -1762,29 +1790,21 @@ setup(argc, argv)
     int wflag = 0;
     int cflag = 0;
 
-    if (isatty(fileno(stdout))) {
-	/*
-	 * defer diagnostics until processing is done
-	 */
-	if ((ferr = tmpfile()) == NULL) {
-	       (void)fputs("Cannot defer diagnostic messages\n",stderr);
-	       return(1);
-	}
-    } else
-	ferr = stderr;
+    if (isatty(fileno(stdout)))
+	ferr = 1;
+
     while ((c = egetopt(argc, argv, "#adfFmrte?h:i?l:n?o:s?w:")) != -1) {
 	switch (c) {
 	case '+':
 	    if ((pgnm = atoi(eoptarg)) < 1) {
-		(void)fputs("pr: +page number must be 1 or more\n",
-		    ferr);
+		ferrout("pr: +page number must be 1 or more\n");
 		return(1);
 	    }
 	    ++skipping;
 	    break;
 	case '-':
 	    if ((clcnt = atoi(eoptarg)) < 1) {
-		(void)fputs("pr: -columns must be 1 or more\n",ferr);
+		ferrout("pr: -columns must be 1 or more\n");
 		return(1);
 	    }
 	    if (clcnt > 1)
@@ -1804,15 +1824,13 @@ setup(argc, argv)
 		inchar = INCHAR;
 	    if ((eoptarg != NULL) && isdigit(*eoptarg)) {
 		if ((ingap = atoi(eoptarg)) < 0) {
-		    (void)fputs(
-		    "pr: -e gap must be 0 or more\n", ferr);
+		    ferrout("pr: -e gap must be 0 or more\n");
 		    return(1);
 		}
 		if (ingap == 0)
 		    ingap = INGAP;
 	    } else if ((eoptarg != NULL) && (*eoptarg != '\0')) {
-		(void)fprintf(ferr,
-		      "pr: invalid value for -e %s\n", eoptarg);
+		ferrout("pr: invalid value for -e %s\n", eoptarg);
 		return(1);
 	    } else
 		ingap = INGAP;
@@ -1832,23 +1850,20 @@ setup(argc, argv)
 		ochar = OCHAR;
 	    if ((eoptarg != NULL) && isdigit(*eoptarg)) {
 		if ((ogap = atoi(eoptarg)) < 0) {
-		    (void)fputs(
-		    "pr: -i gap must be 0 or more\n", ferr);
+		    ferrout("pr: -i gap must be 0 or more\n");
 		    return(1);
 		}
 		if (ogap == 0)
 		    ogap = OGAP;
 	    } else if ((eoptarg != NULL) && (*eoptarg != '\0')) {
-		(void)fprintf(ferr,
-		      "pr: invalid value for -i %s\n", eoptarg);
+		ferrout("pr: invalid value for -i %s\n", eoptarg);
 		return(1);
 	    } else
 		ogap = OGAP;
 	    break;
 	case 'l':
 	    if (!isdigit(*eoptarg) || ((lines=atoi(eoptarg)) < 1)) {
-		(void)fputs(
-		 "pr: Number of lines must be 1 or more\n",ferr);
+		ferrout("pr: Number of lines must be 1 or more\n");
 		return(1);
 	    }
 	    break;
@@ -1862,21 +1877,18 @@ setup(argc, argv)
 		nmchar = NMCHAR;
 	    if ((eoptarg != NULL) && isdigit(*eoptarg)) {
 		if ((nmwd = atoi(eoptarg)) < 1) {
-		    (void)fputs(
-		    "pr: -n width must be 1 or more\n",ferr);
+		    ferrout("pr: -n width must be 1 or more\n");
 		    return(1);
 		}
 	    } else if ((eoptarg != NULL) && (*eoptarg != '\0')) {
-		(void)fprintf(ferr,
-		      "pr: invalid value for -n %s\n", eoptarg);
+		ferrout("pr: invalid value for -n %s\n", eoptarg);
 		return(1);
 	    } else
 		nmwd = NMWD;
 	    break;
 	case 'o':
 	    if (!isdigit(*eoptarg) || ((offst = atoi(eoptarg))< 1)){
-		(void)fputs("pr: -o offset must be 1 or more\n",
-		    ferr);
+		ferrout("pr: -o offset must be 1 or more\n");
 		return(1);
 	    }
 	    break;
@@ -1890,8 +1902,7 @@ setup(argc, argv)
 	    else {
 		schar = *eoptarg++;
 		if (*eoptarg != '\0') {
-		    (void)fprintf(ferr,
-		        "pr: invalid value for -s %s\n", eoptarg);
+		    ferrout("pr: invalid value for -s %s\n", eoptarg);
 		    return(1);
 		}
 	    }
@@ -1902,8 +1913,7 @@ setup(argc, argv)
 	case 'w':
 	    ++wflag;
 	    if (!isdigit(*eoptarg) || ((pgwd = atoi(eoptarg)) < 1)){
-		(void)fputs(
-		   "pr: -w width must be 1 or more \n",ferr);
+		ferrout("pr: -w width must be 1 or more \n");
 		return(1);
 	    }
 	    break;
@@ -1931,12 +1941,11 @@ setup(argc, argv)
     }
     if (across) {
 	if (clcnt == 1) {
-	    (void)fputs("pr: -a flag requires multiple columns\n",
-		ferr);
+	    ferrout("pr: -a flag requires multiple columns\n");
 	    return(1);
 	}
 	if (merge) {
-	    (void)fputs("pr: -m cannot be used with -a\n", ferr);
+	    ferrout("pr: -m cannot be used with -a\n");
 	    return(1);
 	}
     }
@@ -1958,8 +1967,7 @@ setup(argc, argv)
     }
     if (cflag) {
 	if (merge) {
-	    (void)fputs(
-	      "pr: -m cannot be used with multiple columns\n", ferr);
+	    ferrout("pr: -m cannot be used with multiple columns\n");
 	    return(1);
 	}
 	if (nmwd) {
@@ -1970,8 +1978,7 @@ setup(argc, argv)
 	    pgwd = ((colwd + 1) * clcnt) - 1;
 	}
 	if (colwd < 1) {
-	    (void)fprintf(ferr,
-	      "pr: page width is too small for %d columns\n",clcnt);
+	    ferrout("pr: page width is too small for %d columns\n",clcnt);
 	    return(1);
 	}
     }
