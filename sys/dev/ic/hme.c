@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.1 2001/08/21 16:16:50 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.2 2001/08/23 05:12:59 jason Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -41,6 +41,7 @@
  * HME Ethernet module driver.
  */
 
+#include "bpfilter.h"
 #include "vlan.h"
 
 #define HMEDEBUG
