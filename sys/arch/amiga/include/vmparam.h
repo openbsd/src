@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.6 1998/03/26 14:20:11 niklas Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.7 2000/05/27 19:42:49 art Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.16 1997/07/12 16:18:36 perry Exp $	*/
 
 /*
@@ -164,6 +164,20 @@
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
 #define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
+
+#define MACHINE_NEW_NONCONTIG
+
+#define VM_PHYSSEG_MAX		(16)
+#define VM_PHYSSEG_STRAT	VM_PSTRAT_RANDOM
+#define VM_PHYSSEG_NOADD	/* XXX this should be done right later */
+
+/* 
+ * pmap-specific data stored in the vm_physmem[] array.
+ */   
+struct pmap_physseg { 
+	struct pv_entry *pvent;         /* pv table for this seg */
+	char *attrs;                    /* page attributes for this seg */
+}; 
 
 /*
  * number of kernel PT pages (initial only, can grow dynamically)

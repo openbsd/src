@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.3 1997/09/18 13:40:03 niklas Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.4 2000/05/27 19:42:49 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.17 1997/06/10 18:34:52 veego Exp $	*/
 
 /* 
@@ -131,12 +131,6 @@ u_int		*Sysmap;
 char		*vmmap;		/* map for mem, dumps, etc. */
 struct pmap	kernel_pmap_store;
 
-#ifdef MACHINE_NONCONTIG
-#define pa_index(pa)		pmap_page_index(pa)
-#else
-#define pa_index(pa)		atop(pa - vm_first_phys)
-#endif
-#define pa_to_pvh(pa)		(&pv_table[pa_index(pa)])
 #define	pmap_kernel()		(&kernel_pmap_store)
 #define	active_pmap(pm) \
 	((pm) == pmap_kernel() || (pm) == curproc->p_vmspace->vm_map.pmap)
