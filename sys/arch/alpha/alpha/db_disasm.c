@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.5 1997/07/09 02:57:28 deraadt Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.6 1997/07/09 08:11:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserverd.
@@ -35,6 +35,7 @@
 #include <machine/db_machdep.h>
 
 #include <ddb/db_interface.h>
+#include <ddb/db_variables.h>
 #include <ddb/db_output.h>
 
 static struct opcode {
@@ -108,7 +109,23 @@ static struct opcode {
 	{ OPC_BR, "bgt", 1 },		/* 3F */
 };
 
-char *jsr_names[] = { "jmp", "jsr", "ret", "jsr_coroutine" };
+char *jsrnam[] = {
+	"jmp",
+	"jsr",
+	"ret",
+	"jsr_coroutine"
+};
+
+char *regnam __P((int));
+
+char *
+regnam(r)
+	int r;
+{
+	extern struct db_variable db_regs[];
+
+	return (db_regs[r].name);
+}
 
 vm_offset_t 
 db_disasm(loc, flag)
@@ -157,19 +174,19 @@ db_disasm(loc, flag)
 				db_printf("mb");
 				break;
 			case 0x8000:
-				db_printf("fetch\t0($%d)", rb);
+				db_printf("fetch\t0(%s)", regnam(rb));
 				break;
 			case 0xa000:
-				db_printf("fetch_m\t0($%d)", rb);
+				db_printf("fetch_m\t0($s)", regnam(rb));
 				break;
 			case 0xc000:
-				db_printf("rpcc\t$%d", ra);
+				db_printf("rpcc\t%s", regnam(ra));
 				break;
 			case 0xe000:
-				db_printf("rc\t$%d", ra);
+				db_printf("rc\t%s", regnam(ra));
 				break;
 			case 0xf000:
-				db_printf("rs\t$%d", ra);
+				db_printf("rs\t%s", regnam(ra));
 				break;
 			default:
 				db_printf("%08x", ins);
@@ -177,11 +194,12 @@ db_disasm(loc, flag)
 			}
 			break;
 		case 0x1a:
-			db_printf("%s\t$%d,($%d),0x%x", jsr_names[disp >> 14],
-			    ra, rb, disp & 0x3fff);
+			db_printf("%s\t\t%s,(%s),0x%x", jsrnam[disp >> 14],
+			    regnam(ra), regnam(rb), disp & 0x3fff);
 			break;
 		default:
-			db_printf("\t$%d,0x%x($%d)", ra, disp, rb);
+			db_printf("\t%s,0x%x(%s)", regnam(ra), disp,
+			    regnam(rb));
 			break;
 		}
 		break;
@@ -190,12 +208,13 @@ db_disasm(loc, flag)
 		rb = (arg >> 16) & 0x1f;
 		func = (arg >> 5) & 0x7ff;
 		rc = arg & 0x1f;
-		db_printf("\t%03x,$%d,$%d,$%d", func, ra, rb, rc);
+		db_printf("\t%02x,%s,%s,%s", func, regnam(ra), regnam(rb),
+		    regnam(rc));
 		break;
 	case OPC_BR:
 		ra = arg >> 21;
 		disp = arg & 0x1fffff;
-		db_printf("\t$%d,0x%x", ra, disp);
+		db_printf("\t%s,0x%x", regnam(ra), disp);
 		break;
 	}
 	db_printf("\n");
