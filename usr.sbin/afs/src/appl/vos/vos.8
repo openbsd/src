@@ -1,7 +1,7 @@
-.\"     $OpenBSD: vos.8,v 1.2 2002/06/07 04:28:42 hin Exp $
+.\"     $OpenBSD: vos.8,v 1.3 2002/06/07 15:53:02 hin Exp $
 .\"	$KTH: vos.8,v 1.1 2000/08/07 12:10:49 lha Exp $
 .Dd March 26, 2000
-.Dt VOS 1
+.Dt VOS 8
 .Os
 .Sh NAME
 .Nm vos
@@ -158,6 +158,7 @@ on server
 .Ar fileserver
 partition
 .Ar partition .
+Note that a volume name can be no longer than 22 characters.
 .Ed
 .Pp
 .Ic vos createentry
@@ -308,6 +309,11 @@ not yet implemented
 .Op Fl verbose
 .Bd -filled -offset indent -compact
 Print the total and remaining diskspace on a fileserver.
+Unless a
+.Ar partition
+is specified, information about all the partitions on the
+.Ar server
+will be printed.
 .Ed
 .Pp
 .Ic vos release
@@ -380,9 +386,9 @@ not yet implemented
 Exit interactive mode.
 .Ed
 .Sh SEE ALSO
-.Xr afsd 8 ,
+.Xr fs 1 ,
 .Xr pts 1 ,
-.Xr fs 1
+.Xr afsd 8
 .Sh STANDARDS
 The Arla authors are trying to mimic the behaviour of the original AFS
 utilities.
