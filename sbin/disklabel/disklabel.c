@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.52 1998/05/07 16:39:35 millert Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.53 1998/06/07 05:00:23 deraadt Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.52 1998/05/07 16:39:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.53 1998/06/07 05:00:23 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -413,7 +413,8 @@ writelabel(f, boot, lp)
 		    (dosdp->dp_typ == DOSPTYP_OPENBSD ||
 		    dosdp->dp_typ == DOSPTYP_FREEBSD ||
 		    dosdp->dp_typ == DOSPTYP_NETBSD)) {
-		        sectoffset = get_le(&dosdp->dp_start) * lp->d_secsize;
+		        sectoffset = (off_t)get_le(&dosdp->dp_start) *
+			    lp->d_secsize;
 		} else {
 			if (dosdp) {
 				int first, ch;
@@ -468,9 +469,9 @@ writelabel(f, boot, lp)
 			}
 		}
 		if (verbose)
-			printf("writing label to block %d (0x%x)\n",
-			    (int)sectoffset/DEV_BSIZE,
-			    (int)sectoffset/DEV_BSIZE);
+			printf("writing label to block %qd (0x%qx)\n",
+			    sectoffset/DEV_BSIZE,
+			    sectoffset/DEV_BSIZE);
 		if (!donothing) {
 			if (lseek(f, sectoffset, SEEK_SET) < 0) {
 				perror("lseek");
@@ -667,12 +668,13 @@ readlabel(f)
 		    (dosdp->dp_typ == DOSPTYP_OPENBSD ||
 		    dosdp->dp_typ == DOSPTYP_FREEBSD ||
 		    dosdp->dp_typ == DOSPTYP_NETBSD))
-			sectoffset = get_le(&dosdp->dp_start) * DEV_BSIZE;
+			sectoffset = (off_t)get_le(&dosdp->dp_start) *
+			    DEV_BSIZE;
 #endif
 		if (verbose)
-			printf("reading label from block %d, offset %d\n",
-			    (int)sectoffset/DEV_BSIZE,
-			    (int)sectoffset/DEV_BSIZE +
+			printf("reading label from block %qd, offset %qd\n",
+			    sectoffset/DEV_BSIZE,
+			    sectoffset/DEV_BSIZE +
 			    (LABELSECTOR * DEV_BSIZE) + LABELOFFSET);
 		if (lseek(f, sectoffset, SEEK_SET) < 0 ||
 		    read(f, bootarea, BBSIZE) < BBSIZE)
