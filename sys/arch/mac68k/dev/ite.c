@@ -1,5 +1,5 @@
-/*	$OpenBSD: ite.c,v 1.6 1996/10/28 14:46:23 briggs Exp $	*/
-/*	$NetBSD: ite.c,v 1.24 1996/08/05 01:26:35 scottr Exp $	*/
+/*	$OpenBSD: ite.c,v 1.7 1996/11/10 14:29:41 briggs Exp $	*/
+/*	$NetBSD: ite.c,v 1.27 1996/11/10 09:35:04 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -371,7 +371,7 @@ scrollup()
 	unsigned short i;
 
 	linebytes = videorowbytes * CHARHEIGHT;
-	to = (unsigned char *) videoaddr + ((scrreg_top - 1) * linebytes);
+	to = (unsigned char *) videoaddr + (scrreg_top * linebytes);
 	from = to + linebytes;
 
 	for (i = (scrreg_bottom - scrreg_top) * CHARHEIGHT; i > 0; i--) {
@@ -393,7 +393,7 @@ scrolldown()
 	unsigned short i;
 
 	linebytes = videorowbytes * CHARHEIGHT;
-	to = (unsigned char *) videoaddr + (scrreg_bottom * linebytes);
+	to = (unsigned char *) videoaddr + ((scrreg_bottom + 1) * linebytes);
 	from = to - linebytes;
 
 	for (i = (scrreg_bottom - scrreg_top) * CHARHEIGHT; i > 0; i--) {
@@ -451,7 +451,10 @@ static void
 clear_line(which)
 	int which;
 {
+	unsigned char *to;
+	unsigned int linebytes;
 	int start, end, i;
+
 
 	/*
 	 * This routine runs extremely slowly.  I don't think it's
@@ -471,9 +474,14 @@ clear_line(which)
 		end = x;
 		break;
 	case 2:		/* Whole line		 */
-		start = 0;
-		end = scrcols;
-		break;
+		linebytes = videorowbytes * CHARHEIGHT;
+		to = (unsigned char *) videoaddr + (y * linebytes);
+
+		for (i = CHARHEIGHT; i > 0; i--) {
+			bzero(to, screenrowbytes);
+			to += videorowbytes;
+		}
+		return;
 	}
 
 	for (i = start; i < end; i++)
@@ -493,8 +501,8 @@ static void
 vt100_reset()
 {
 	reset_tabs();
-	scrreg_top    = 1;
-	scrreg_bottom = scrrows;
+	scrreg_top    = 0;
+	scrreg_bottom = scrrows - 1;
 	attr = ATTR_NONE;
 }
 
@@ -520,7 +528,7 @@ putc_normal(ch)
 		} while ((tab_stops[x] == 0) && (x < scrcols));
 		break;
 	case '\n':		/* Line feed		 */
-		if (y == scrreg_bottom - 1)
+		if (y == scrreg_bottom)
 			scrollup();
 		else
 			y++;
@@ -537,7 +545,7 @@ putc_normal(ch)
 		if (ch >= ' ') {
 			if (hanging_cursor) {
 				x = 0;
-				if (y == scrreg_bottom - 1)
+				if (y == scrreg_bottom)
 					scrollup();
 				else
 					y++;
@@ -569,8 +577,14 @@ putc_esc(ch)
 	case '[':
 		vt100state = ESsquare;
 		break;
+	case '(':
+		vt100state = ESsetG0;
+		break;
+	case ')':
+		vt100state = ESsetG1;
+		break;
 	case 'D':		/* Line feed		 */
-		if (y == scrreg_bottom - 1)
+		if (y == scrreg_bottom)
 			scrollup();
 		else
 			y++;
@@ -579,7 +593,7 @@ putc_esc(ch)
 		tab_stops[x] = 1;
 		break;
 	case 'M':		/* Cursor up		 */
-		if (y == scrreg_top - 1)
+		if (y == scrreg_top)
 			scrolldown();
 		else
 			y--;
@@ -612,7 +626,7 @@ putc_gotpars(ch)
 	case 'A':		/* Up			 */
 		i = par[0];
 		do {
-			if (y == scrreg_top - 1)
+			if (y == scrreg_top)
 				scrolldown();
 			else
 				y--;
@@ -622,7 +636,7 @@ putc_gotpars(ch)
 	case 'B':		/* Down			 */
 		i = par[0];
 		do {
-			if (y == scrreg_bottom - 1)
+			if (y == scrreg_bottom)
 				scrollup();
 			else
 				y++;
@@ -646,6 +660,24 @@ putc_gotpars(ch)
 	case 'K':		/* Clear part of line	 */
 		clear_line(par[0]);
 		break;
+	case 'L':		/* Add line		*/
+		if (scrreg_top < scrreg_bottom) {
+			i = scrreg_top;
+			scrreg_top = y;
+			scrolldown();
+			scrreg_top = i;
+		} else
+			clear_line(0);
+		break;
+	case 'M':		/* Delete line		*/
+		if (scrreg_top < scrreg_bottom) {
+			i = scrreg_top;
+			scrreg_top = y;
+			scrollup();
+			scrreg_top = i;
+		} else
+			clear_line(0);
+		break;
 	case 'g':		/* Clear tab stops	 */
 		if (numpars >= 1 && par[0] == 3)
 			reset_tabs();
@@ -665,19 +697,28 @@ putc_gotpars(ch)
 			case 7:
 				attr |= ATTR_REVERSE;
 				break;
+			case 21:
+				attr &= ~ATTR_BOLD;
+				break;
+			case 24:
+				attr &= ~ATTR_UNDER;
+				break;
+			case 27:
+				attr &= ~ATTR_REVERSE;
+				break;
 			}
 		}
 		break;
 	case 'r':		/* Set scroll region	 */
 		/* ensure top < bottom, and both within limits */
 		if ((numpars > 0) && (par[0] < scrrows))
-			scrreg_top = par[0];
+			scrreg_top = par[0] - 1;
 		else
-			scrreg_top = 1;
+			scrreg_top = 0;
 		if ((numpars > 1) && (par[1] <= scrrows) && (par[1] > par[0]))
-			scrreg_bottom = par[1];
+			scrreg_bottom = par[1] - 1;
 		else
-			scrreg_bottom = scrrows;
+			scrreg_bottom = scrrows - 1;
 		break;
 	}
 }
@@ -686,24 +727,25 @@ static void
 putc_getpars(ch)
 	char ch;
 {
-	if (ch == '?') {
+	switch (ch) {
+	case '?':
 		/* Not supported */
 		return;
-	}
-	if (ch == '[') {
+	case '[':
 		vt100state = ESnormal;
 		/* Not supported */
 		return;
-	}
-	if (ch == ';' && numpars < MAXPARS - 1)
-		numpars++;
-	else if (ch >= '0' && ch <= '9') {
-		par[numpars] *= 10;
-		par[numpars] += ch - '0';
-	} else {
-		numpars++;
-		vt100state = ESgotpars;
-		putc_gotpars(ch);
+	default:
+		if (ch == ';' && numpars < MAXPARS - 1)
+			numpars++;
+		else if (ch >= '0' && ch <= '9') {
+			par[numpars] *= 10;
+			par[numpars] += ch - '0';
+		} else {
+			numpars++;
+			vt100state = ESgotpars;
+			putc_gotpars(ch);
+		}
 	}
 }
 
