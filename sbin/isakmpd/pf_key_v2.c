@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.153 2005/02/27 13:12:12 hshoexer Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.154 2005/02/27 14:26:00 pat Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -176,10 +176,11 @@ pf_key_v2_register_sa_seq(u_int8_t *spi, size_t sz, u_int8_t proto,
 	return 1;
 
 cleanup:
-	if (node->dst)
-		free(node->dst);
-	if (node)
+	if (node) {
+		if (node->spi)
+			free(node->spi);
 		free(node);
+	}
 	return 0;
 }
 
