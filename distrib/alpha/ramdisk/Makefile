@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1997/05/08 05:44:58 millert Exp $
+#	$OpenBSD: Makefile,v 1.5 1997/05/08 16:30:45 millert Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -48,17 +48,19 @@ ${FLOPPY}:	bsd.gz
 	newfs ${NEWFSARGS} ${NEWFSARGS_FD} -s ${FLOPPYBLKS} ${VND_RDEV} \
 	    ${FLOPPYTYPE}
 	mount ${VND_DEV} ${MOUNT_POINT}
-	cp bsd.gz ${MOUNT_POINT}/bsd
 	cp ${BOOT} ${MOUNT_POINT}
+	cp bsd.gz ${MOUNT_POINT}/bsd
+	cat /*bin/* > /dev/null
 	${INSTALLBOOT} ${MOUNT_POINT}/boot ${BOOTXX} ${VND_CRDEV}
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	@echo ""
+	cat /*bin/* > /dev/null
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND}
-	cat /*bin/* > /dev/null
 	# some bug can put an extra 8k at the end it seems
 	dd if=${REALIMAGE} of=${FLOPPY} count=${FLOPPYBLKS}
+	rm -f ${REALIMAGE}
 
 bsd.gz: ${KERNEL} ${IMAGE} ecoffrdsetroot
 	cp ${KERNEL} bsd
@@ -88,10 +90,12 @@ do_umount:
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	@echo ""
+	cat /*bin/* > /dev/null
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND}
 	cat /*bin/* > /dev/null
 
 unconfig:
+	-cat /*bin/* > /dev/null
 	-umount ${MOUNT_POINT}
 	-vnconfig -u ${VND} && cat /*bin/* > /dev/null
