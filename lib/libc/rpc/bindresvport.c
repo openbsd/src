@@ -1,4 +1,4 @@
-/*	$OpenBSD: bindresvport.c,v 1.3 1996/07/29 06:11:57 downsj Exp $	*/
+/*	$OpenBSD: bindresvport.c,v 1.4 1996/07/29 06:51:25 downsj Exp $	*/
 /*	$NetBSD: bindresvport.c,v 1.5 1995/06/03 22:37:19 mycroft Exp $	*/
 
 /*
@@ -33,11 +33,13 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)bindresvport.c 1.8 88/02/08 SMI";*/
 /*static char *sccsid = "from: @(#)bindresvport.c	2.2 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$OpenBSD: bindresvport.c,v 1.3 1996/07/29 06:11:57 downsj Exp $";
+static char *rcsid = "$OpenBSD: bindresvport.c,v 1.4 1996/07/29 06:51:25 downsj Exp $";
 #endif
 
 /*
  * Copyright (c) 1987 by Sun Microsystems, Inc.
+ *
+ * Portions Copyright(C) 1996, Jason Downs.  All rights reserved.
  */
 
 #include <string.h>
@@ -54,7 +56,7 @@ bindresvport(sd, sin)
 	int sd;
 	struct sockaddr_in *sin;
 {
-	int on, error;
+	int on, old, error;
 	struct sockaddr_in myaddr;
 
 	if (sin == (struct sockaddr_in *)0) {
@@ -68,13 +70,27 @@ bindresvport(sd, sin)
 	}
 
 	if (sin->sin_port == 0) {
+		int oldlen = sizeof(old);
+		error = getsockopt(sd, IPPROTO_IP, IP_PORTRANGE,
+				   &old, &oldlen);
+		if (error < 0)
+			return(error);
+
 		on = IP_PORTRANGE_LOW;
 		error = setsockopt(sd, IPPROTO_IP, IP_PORTRANGE,
-		           	   (char *)&on, sizeof(on));
+		           	   &on, sizeof(on));
 		if (error < 0)
 			return(error);
 	}
 
 	error = bind(sd, (struct sockaddr *)sin, sizeof(struct sockaddr_in));
+	if (error < 0) {
+		/* Don't change error or errno. */
+		int saved_errno = errno;
+
+		if (setsockopt(sd, IPPROTO_IP, IP_PORTRANGE,
+			       &old, sizeof(old)) < 0)
+			errno = saved_errno;
+	}
 	return(error);
 }
