@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: monitor.c,v 1.31 2003/02/04 09:33:22 markus Exp $");
+RCSID("$OpenBSD: monitor.c,v 1.32 2003/02/16 17:30:33 markus Exp $");
 
 #include <openssl/dh.h>
 
@@ -791,6 +791,7 @@ mm_answer_keyallowed(int socket, Buffer *m)
 
 	buffer_clear(m);
 	buffer_put_int(m, allowed);
+	buffer_put_int(m, forced_command != NULL);
 
 	mm_append_debug(m);
 
@@ -1153,6 +1154,7 @@ mm_answer_rsa_keyallowed(int socket, Buffer *m)
 	}
 	buffer_clear(m);
 	buffer_put_int(m, allowed);
+	buffer_put_int(m, forced_command != NULL);
 
 	/* clear temporarily storage (used by generate challenge) */
 	monitor_reset_key_state();
