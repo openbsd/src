@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmpd.c,v 1.58 2004/03/19 14:04:43 hshoexer Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.59 2004/03/31 10:47:16 ho Exp $	*/
 /*	$EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	*/
 
 /*
@@ -363,7 +363,13 @@ main (int argc, char *argv[])
   size_t mask_size;
   struct timeval tv, *timeout;
 
+#if defined (HAVE_CLOSEFROM) && (!defined (OpenBSD) || (OpenBSD >= 200405))
   closefrom (STDERR_FILENO + 1);
+#else
+  m = getdtablesize ();
+  for (n = STDERR_FILENO + 1; n < m; n++)
+    (void)close (n);
+#endif
 
   /* Make sure init() won't alloc fd 0, 1 or 2, as daemon() will close them. */
   for (n = 0; n <= 2; n++)

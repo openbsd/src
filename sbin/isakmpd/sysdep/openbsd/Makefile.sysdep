@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sysdep,v 1.22 2003/06/03 14:53:11 ho Exp $
+#	$OpenBSD: Makefile.sysdep,v 1.23 2004/03/31 10:47:16 ho Exp $
 #	$EOM: Makefile.sysdep,v 1.18 2001/01/26 10:55:22 niklas Exp $
 
 #
@@ -33,6 +33,7 @@ IPSEC_SRCS=	pf_key_v2.c
 IPSEC_CFLAGS=	-DUSE_PF_KEY_V2
 
 CFLAGS+=	-DHAVE_GETNAMEINFO -DHAVE_GETIFADDRS -DHAVE_PCAP
+CFLAGS+=	-DHAVE_CLOSEFROM
 
 USE_LIBCRYPTO=	defined
 
