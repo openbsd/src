@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)rshd.8	8.1 (Berkeley) 6/4/93
-.\"	$Id: rshd.8,v 1.2 1996/07/13 11:23:17 deraadt Exp $
+.\"	$Id: rshd.8,v 1.3 1997/06/15 05:10:39 millert Exp $
 .\"
 .Dd June 4, 1993
 .Dt RSHD 8
@@ -188,14 +188,13 @@ longer than 16 characters.
 .It Sy Command too long  .
 The command line passed exceeds the size of the argument
 list (as configured into the system).
-.It Sy Login incorrect.
-No password file entry for the user name existed.
 .It Sy Remote directory.
 The 
 .Xr chdir
 command to the home directory failed.
 .It Sy Permission denied.
-The authentication procedure described above failed.
+The authentication procedure described above failed or
+there is no password file entry for the specified user.
 .It Sy Can't make pipe.
 The pipe needed for the 
 .Em stderr ,

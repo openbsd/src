@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94"; */
-static char *rcsid = "$Id: rshd.c,v 1.16 1997/02/13 22:32:46 deraadt Exp $";
+static char *rcsid = "$Id: rshd.c,v 1.17 1997/06/15 05:10:39 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -426,7 +426,7 @@ doit(fromp)
 		    "%s@%s as %s: unknown login. cmd='%.80s'",
 		    remuser, hostname, locuser, cmdbuf);
 		if (errorstr == NULL)
-			errorstr = "Login incorrect.\n";
+			errorstr = "Permission denied.\n";
 		goto fail;
 	}
 
