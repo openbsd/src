@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.29 2003/08/13 08:52:44 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.30 2003/08/20 20:33:47 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -212,7 +212,16 @@ GLOBAL(start_text)
 	set	r11, r0,  1<PSR_SUPERVISOR_MODE_BIT>
 	set	r11, r11, 1<PSR_INTERRUPT_DISABLE_BIT>
 	set	r11, r11, 1<PSR_GRAPHICS_DISABLE_BIT>
-/*	set	r11, r11, 1<PSR_SERIAL_MODE_BIT> */
+	/*
+	 * XXX On 88110 processors, force serial instruction execution for now.
+	 * Situation where OoO would break will be hopefully taken care of in
+	 * the near future -- miod
+	 */
+#if 0
+	clr	r11, r11, 1<PSR_SERIAL_MODE_BIT>
+#else
+	set	r11, r11, 1<PSR_SERIAL_MODE_BIT>
+#endif
 	set	r11, r11, 1<PSR_SERIALIZE_BIT>
 	stcr	r11, PSR
 	FLUSH_PIPELINE

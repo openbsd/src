@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.h,v 1.12 2002/03/14 01:26:39 millert Exp $ */
+/*	$OpenBSD: m88110.h,v 1.13 2003/08/20 20:33:44 miod Exp $ */
 
 #ifndef	__MACHINE_M88110_H__
 #define	__MACHINE_M88110_H__
@@ -179,7 +179,6 @@ void m88110_show_cmmu_info(unsigned);
 #endif
 
 void m88110_cmmu_init(void);
-int m88110_table_search(pmap_t, vm_offset_t, int, int, int);
 
 void set_icmd(unsigned value);
 void set_ictl(unsigned value);

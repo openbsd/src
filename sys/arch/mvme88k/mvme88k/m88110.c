@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.6 2002/03/14 01:26:40 millert Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.7 2003/08/20 20:33:47 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -56,7 +56,6 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
-#ifdef M88110
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -66,8 +65,7 @@
 #include <machine/cpu_number.h>
 #include <machine/cmmu.h>
 #include <machine/locore.h>
-
-#define CMMU_DEBUG 1
+#include <machine/trap.h>
 
 #ifdef DEBUG
 #define DB_CMMU		0x4000	/* MMU debug */
@@ -99,7 +97,6 @@ unsigned patc_inst_l[32];
 #define USER	0
 
 /* FORWARDS */
-unsigned batc_val(unsigned phys, unsigned virt, unsigned prot);
 void patc_insert(unsigned upper, unsigned lower, int which);
 void patc_clear(void);
 void patc_sync(int which);
@@ -107,7 +104,6 @@ void patc_load(int index, unsigned upper, unsigned lower, int which);
 void m88110_cmmu_sync_cache(vm_offset_t physaddr, int size);
 void m88110_cmmu_sync_inval_cache(vm_offset_t physaddr, int size);
 void m88110_cmmu_inval_cache(vm_offset_t physaddr, int size);
-int probe_mmu(vm_offset_t va, int data);
 
 /* This is the function table for the mc88110 built-in CMMUs */
 struct cmmu_p cmmu88110 = {
@@ -141,16 +137,17 @@ struct cmmu_p cmmu88110 = {
 	m88110_cmmu_show_translation,
 	m88110_cmmu_cache_state,
 	m88110_show_cmmu_info,
-#endif /* end if DDB */
+#endif
 };
 
 void
 patc_load(int index, unsigned upper, unsigned lower, int which)
 {
-	/* sanity check!!! */
-	if (index > 31) {
+#ifdef DEBUG
+	if (index > 31)
 		panic("invalid PATC index %d!", index);
-	}
+#endif
+
 	index = index << 5;
 	switch (which) {
 	case INST:
@@ -163,8 +160,10 @@ patc_load(int index, unsigned upper, unsigned lower, int which)
 		set_dppu(upper);
 		set_dppl(lower);
 		break;
+#ifdef DEBUG
 	default:
 		panic("invalid PATC! Choose DATA or INST...");
+#endif
 	}
 }
 
@@ -172,20 +171,21 @@ void
 patc_sync(int which)
 {
 	int i;
+
 	switch (which) {
 	case BOTH:
-		for (i=0; i<32; i++) {
+		for (i = 0; i < 32; i++) {
 			patc_load(i, patc_data_u[i], patc_data_l[i], DATA);
 			patc_load(i, patc_inst_u[i], patc_inst_l[i], INST);
 		}
 		break;
 	case INST:
-		for (i=0; i<32; i++) {
+		for (i = 0; i < 32; i++) {
 			patc_load(i, patc_inst_u[i], patc_inst_l[i], INST);
 		}
 		break;
 	case DATA:
-		for (i=0; i<32; i++) {
+		for (i = 0; i < 32; i++) {
 			patc_load(i, patc_data_u[i], patc_data_l[i], DATA);
 		}
 		break;
@@ -196,7 +196,8 @@ void
 patc_clear(void)
 {
 	int i;
-	for (i=0; i<32; i++) {
+
+	for (i = 0; i < 32; i++) {
 		patc_data_u[i] = 0;
 		patc_data_l[i] = 0;
 		patc_inst_u[i] = 0;
@@ -210,55 +211,51 @@ void
 patc_insert(unsigned upper, unsigned lower, int which)
 {
 	int i;
-	switch(which){
+
+	switch(which) {
 	case INST:
-		for (i=31; i>0; i--) {
-			patc_inst_u[i] = patc_inst_u[i-1];
-			patc_inst_l[i] = patc_inst_l[i-1];
+		for (i = 31; i > 0; i--) {
+			patc_inst_u[i] = patc_inst_u[i - 1];
+			patc_inst_l[i] = patc_inst_l[i - 1];
 		}
 		patc_inst_u[0] = upper;
 		patc_inst_l[0] = lower;
 		patc_sync(INST);
 		break;
 	case DATA:
-		for (i=31; i>0; i--) {
-			patc_data_u[i] = patc_data_u[i-1];
-			patc_data_l[i] = patc_data_l[i-1];
+		for (i = 31; i > 0; i--) {
+			patc_data_u[i] = patc_data_u[i - 1];
+			patc_data_l[i] = patc_data_l[i - 1];
 		}
 		patc_data_u[0] = upper;
 		patc_data_l[0] = lower;
 		patc_sync(DATA);
 		break;
+#ifdef DEBUG
 	case BOTH:
 		panic("patc_insert(): can't insert both INST and DATA.");
+#endif
 	}
 }
-
-unsigned 
-batc_val(unsigned phys, unsigned virt, unsigned prot)
-{
-	unsigned val = 0;
-	virt = (virt >> BATC_ADDR_SHIFT);
-	val |= (virt << BATC_LBA_SHIFT);
-	phys = (phys >> BATC_ADDR_SHIFT);
-	val |= (phys << BATC_PBA_SHIFT);
-	val |= prot;
-	return(val);
-}
-
 
 void
 m88110_show_apr(unsigned value)
 {
 	union apr_template apr_template;
+
 	apr_template.bits = value;
 
 	printf("table @ 0x%x000", apr_template.field.st_base);
-	if (apr_template.field.wt) printf(", writethrough");
-	if (apr_template.field.g)  printf(", global");
-	if (apr_template.field.ci) printf(", cache inhibit");
-	if (apr_template.field.te) printf(", valid");
-	else			   printf(", not valid");
+	if (apr_template.field.wt)
+		printf(", writethrough");
+	if (apr_template.field.g)
+		printf(", global");
+	if (apr_template.field.ci)
+		printf(", cache inhibit");
+	if (apr_template.field.te)
+		printf(", valid");
+	else
+		printf(", not valid");
 	printf("\n");
 }
 
@@ -267,7 +264,6 @@ m88110_setup_board_config(void)
 {
 	/* dummy routine */
 	m88110_setup_cmmu_config();
-	return;
 }
 
 void 
@@ -275,13 +271,11 @@ m88110_setup_cmmu_config(void)
 {
 	/* we can print something here... */
 	cpu_sets[0] = 1;   /* This cpu installed... */
-	return;
 }
 
 void m88110_cmmu_dump_config(void)
 {
 	/* dummy routine */
-   return;
 }
 
 #ifdef DDB
@@ -291,8 +285,8 @@ void m88110_cmmu_dump_config(void)
 unsigned m88110_cmmu_get_by_mode(int cpu, int mode)
 {
 	CMMU_LOCK;
-	return 0;
 	CMMU_UNLOCK;
+	return 0;
 }
 #endif
 
@@ -325,26 +319,25 @@ m88110_cpu_configuration_print(int master)
 
 	simple_unlock(&print_lock);
         CMMU_UNLOCK;
-	return;
 }
 
 /*
  * CMMU initialization routine
  */
-void m88110_load_patc(int entry, vm_offset_t vaddr, vm_offset_t paddr, int kernel);
-
 void
 m88110_cmmu_init(void)
 {
 	int i;
 
 	/* clear BATCs */
-	for (i=0; i<8; i++) {
+	for (i = 0; i < 8; i++) {
 		m88110_cmmu_set_pair_batc_entry(0, i, 0);
 	}
+
 	/* clear PATCs */
 	patc_clear();
 	
+	/* Do NOT enable ICTL_PREN (branch prediction) */
 	set_ictl(BATC_32M 
 		 | CMMU_ICTL_DID	/* Double instruction disable */
 		 | CMMU_ICTL_MEN
@@ -353,16 +346,17 @@ m88110_cmmu_init(void)
 		 | CMMU_ICTL_HTEN);
 
 	set_dctl(BATC_32M 
+                 | CMMU_DCTL_RSVD1	/* Data Matching Disable */
                  | CMMU_DCTL_MEN
 		 | CMMU_DCTL_CEN 
 		 | CMMU_DCTL_SEN
 		 | CMMU_DCTL_ADS
 		 | CMMU_DCTL_HTEN);      
 
-
 	mc88110_inval_inst();		/* clear instruction cache & TIC */
 	mc88110_inval_data();		/* clear data cache */
-	mc88410_inval();		/* clear external data cache */
+	if (mc88410_present())
+		mc88410_inval();	/* clear external data cache */
 
 	set_dcmd(CMMU_DCMD_INV_SATC);	/* invalidate ATCs */
 
@@ -401,7 +395,6 @@ m88110_cmmu_parity_enable(void)
  * Better be at splhigh, or even better, with interrupts
  * disabled.
  */
-#define ILLADDRESS	U(0x0F000000) 	/* any faulty address */
 
 unsigned 
 m88110_cmmu_cpu_number(void)
@@ -416,44 +409,9 @@ m88110_cmmu_get_idr(unsigned data)
 	return 0; /* todo */
 }
 
-int 
-probe_mmu(vm_offset_t va, int data)
-{
-	unsigned result;
-	if (data) {
-		CMMU_LOCK;
-		set_dsar((unsigned)va);
-		set_dcmd(CMMU_DCMD_PRB_SUPR);
-		result = get_dsr();
-		CMMU_UNLOCK;
-		if (result & CMMU_DSR_BH)
-			return 2;
-		else if (result & CMMU_DSR_PH)
-			return 1;
-		else
-			return 0;
-	} else {
-		CMMU_LOCK;
-		set_isar((unsigned)va);
-		set_icmd(CMMU_ICMD_PRB_SUPR);
-		result = get_isr();
-		CMMU_UNLOCK;
-		if (result & CMMU_ISR_BH)
-			return 2;
-		else if (result & CMMU_ISR_PH)
-			return 1;
-		else
-			return 0;
-	}
-	return 0;
-}
-
 void
 m88110_cmmu_set_sapr(unsigned ap)
 {
-#if 0
-	int result;
-#endif 
 	unsigned ictl, dctl;
 	CMMU_LOCK;
 
@@ -462,9 +420,10 @@ m88110_cmmu_set_sapr(unsigned ap)
 
 	ictl = get_ictl();
 	dctl = get_dctl();
-	/* disabel translation */
-	set_ictl((ictl &~ CMMU_ICTL_MEN));
-	set_dctl((dctl &~ CMMU_DCTL_MEN));
+
+	/* disable translation */
+	set_ictl((ictl & ~CMMU_ICTL_MEN));
+	set_dctl((dctl & ~CMMU_DCTL_MEN));
 
 	set_isap(ap);
 	set_dsap(ap);
@@ -481,7 +440,6 @@ m88110_cmmu_set_sapr(unsigned ap)
 	set_dctl(dctl);
 	
 	CMMU_UNLOCK;
-	return;
 }
 
 void
@@ -511,11 +469,8 @@ m88110_cmmu_set_uapr(unsigned ap)
  * batc values.
  */
 void
-m88110_cmmu_set_batc_entry(
-			unsigned cpu,
-			unsigned entry_no,
-			unsigned data,	 /* 1 = data, 0 = instruction */
-			unsigned value)	 /* the value to stuff */
+m88110_cmmu_set_batc_entry(unsigned cpu, unsigned entry_no, unsigned data,
+    unsigned value)
 {
 	CMMU_LOCK;
 	if (data) {
@@ -534,7 +489,6 @@ m88110_cmmu_set_batc_entry(
  */
 void
 m88110_cmmu_set_pair_batc_entry(unsigned cpu, unsigned entry_no, unsigned value)
-/* the value to stuff into the batc */
 {
 	m88110_cmmu_set_batc_entry(cpu, entry_no, 1, value);
 	m88110_cmmu_set_batc_entry(cpu, entry_no, 0, value);
@@ -549,9 +503,10 @@ m88110_cmmu_set_pair_batc_entry(unsigned cpu, unsigned entry_no, unsigned value)
  *	Some functionality mimiced in m88110_cmmu_pmap_activate.
  */
 void
-m88110_cmmu_flush_remote_tlb(unsigned cpu, unsigned kernel, vm_offset_t vaddr, int size)
+m88110_cmmu_flush_remote_tlb(unsigned cpu, unsigned kernel, vm_offset_t vaddr,
+    int size)
 {
-	register int s = splhigh();
+	int s = splhigh();	/* XXX really disable interrupts? */
 	
 	CMMU_LOCK;
 	if (kernel) {
@@ -572,22 +527,19 @@ m88110_cmmu_flush_remote_tlb(unsigned cpu, unsigned kernel, vm_offset_t vaddr, i
 void
 m88110_cmmu_flush_tlb(unsigned kernel, vm_offset_t vaddr, int size)
 {
-	int cpu;
-	cpu = cpu_number();
+	int cpu = cpu_number();
+
 	m88110_cmmu_flush_remote_tlb(cpu, kernel, vaddr, size);
 }
 
 /*
  * New fast stuff for pmap_activate.
  * Does what a few calls used to do.
- * Only called from pmap.c's _pmap_activate().
+ * Only called from pmap.c's pmap_activate().
  */
 void
-m88110_cmmu_pmap_activate(
-		       unsigned cpu,
-		       unsigned uapr,
-		       batc_template_t i_batc[BATC_MAX],
-		       batc_template_t d_batc[BATC_MAX])
+m88110_cmmu_pmap_activate(unsigned cpu, unsigned uapr,
+    batc_template_t i_batc[BATC_MAX], batc_template_t d_batc[BATC_MAX])
 {
 	m88110_cmmu_set_uapr(uapr);
 
@@ -600,7 +552,7 @@ m88110_cmmu_pmap_activate(
 	/*
 	 * Flush the user TLB.
 	 * IF THE KERNEL WILL EVER CARE ABOUT THE BATC ENTRIES,
-	 * THE SUPERVISOR TLBs SHOULB EE FLUSHED AS WELL.
+	 * THE SUPERVISOR TLBs SHOULD BE FLUSHED AS WELL.
 	 */
 	set_icmd(CMMU_ICMD_INV_UATC);
 	set_dcmd(CMMU_DCMD_INV_UATC);
@@ -632,11 +584,12 @@ m88110_cmmu_pmap_activate(
 void
 m88110_cmmu_flush_remote_cache(int cpu, vm_offset_t physaddr, int size)
 {
-	register int s = splhigh();
+	int s = splhigh();	/* XXX really disable interrupts? */
 	
 	mc88110_inval_inst();
 	mc88110_flush_data();
-	mc88410_flush();
+	if (mc88410_present())
+		mc88410_flush();
 	splx(s);
 }
 
@@ -657,21 +610,17 @@ m88110_cmmu_flush_cache(vm_offset_t physaddr, int size)
 void
 m88110_cmmu_flush_remote_inst_cache(int cpu, vm_offset_t physaddr, int size)
 {
-	register int s = splhigh();
+	int s = splhigh();	/* XXX really disable interrupts? */
 
 	mc88110_inval_inst();
 	splx(s);
 }
 
-/*
- *	flush Instruction caches
- */
 void
 m88110_cmmu_flush_inst_cache(vm_offset_t physaddr, int size)
 {
-	int cpu;
-	
-	cpu = cpu_number();
+	int cpu = cpu_number();
+
 	m88110_cmmu_flush_remote_inst_cache(cpu, physaddr, size);
 }
 
@@ -681,22 +630,19 @@ m88110_cmmu_flush_inst_cache(vm_offset_t physaddr, int size)
 void
 m88110_cmmu_flush_remote_data_cache(int cpu, vm_offset_t physaddr, int size)
 { 
-	register int s = splhigh();
+	int s = splhigh();	/* XXX really disable interrupts? */
 
 	mc88110_flush_data();
-	mc88410_flush();
+	if (mc88410_present())
+		mc88410_flush();
 	splx(s);
 }
 
-/*
- * flush data cache
- */ 
 void
 m88110_cmmu_flush_data_cache(vm_offset_t physaddr, int size)
 { 
-	int cpu;
-	
-	cpu = cpu_number();
+	int cpu = cpu_number();
+
 	m88110_cmmu_flush_remote_data_cache(cpu, physaddr, size);
 }
 
@@ -706,44 +652,52 @@ m88110_cmmu_flush_data_cache(vm_offset_t physaddr, int size)
 void
 m88110_cmmu_sync_cache(vm_offset_t physaddr, int size)
 {
-	register int s = splhigh();
+	int s = splhigh();	/* XXX really disable interrupts? */
 
 	mc88110_inval_inst();
 	mc88110_flush_data();
-	mc88410_flush();
+	if (mc88410_present())
+		mc88410_flush();
 	splx(s);
 }
 
 void
 m88110_cmmu_sync_inval_cache(vm_offset_t physaddr, int size)
 {
-	register int s = splhigh();
+	int s = splhigh();	/* XXX really disable interrupts? */
 
 	mc88110_sync_data();
-	mc88410_sync();
+	if (mc88410_present())
+		mc88410_sync();
 	splx(s);
 }
 
 void
 m88110_cmmu_inval_cache(vm_offset_t physaddr, int size)
 {
-	register int s = splhigh();
+	int s = splhigh();	/* XXX really disable interrupts? */
 	
 	mc88110_inval_inst();
 	mc88110_inval_data();
-	mc88410_inval();
+	if (mc88410_present())
+		mc88410_inval();
 	splx(s);
 }
 
 void
 m88110_dma_cachectl(vm_offset_t va, int size, int op)
 {
-	if (op == DMA_CACHE_SYNC)
+	switch (op) {
+	case DMA_CACHE_SYNC:
 		m88110_cmmu_sync_cache(kvtop(va), size);
-	else if (op == DMA_CACHE_SYNC_INVAL)
+		break;
+	case DMA_CACHE_SYNC_INVAL:
 		m88110_cmmu_sync_inval_cache(kvtop(va), size);
-	else
+		break;
+	default:
 		m88110_cmmu_inval_cache(kvtop(va), size);
+		break;
+	}
 }
 
 #ifdef DDB
@@ -993,87 +947,4 @@ m88110_show_cmmu_info(unsigned addr)
 {
 	m88110_cmmu_cache_state(addr, 1);
 }
-#endif /* end if DDB */
-
-#define MSDTENT(addr, va)	((sdt_entry_t *)(addr + SDTIDX(va)))
-#define MPDTENT(addr, va)	((sdt_entry_t *)(addr + PDTIDX(va)))
-void
-m88110_load_patc(int entry, vm_offset_t vaddr, vm_offset_t paddr, int kernel)
-{
-	unsigned long lpa, pfa, i;
-
-	lpa = (unsigned)vaddr & 0xFFFFF000;
-	if (kernel) {
-		lpa |= 0x01;
-	}
-	pfa = (unsigned)paddr & 0xFFFFF000;
-	pfa |= 0x01;
-	i = entry << 5;
-	set_iir(i);
-	set_ippu(lpa);
-	set_ippl(pfa);
-	set_dir(i);
-	set_dppu(lpa);
-	set_dppl(lpa);
-}
-
-int 
-m88110_table_search(pmap_t map, vm_offset_t virt, int write, int kernel, int data)
-{
-	sdt_entry_t *sdt;
-	pt_entry_t  *pte;
-	unsigned long lpa, i;
-	static unsigned int entry_num = 0;
-
-	if (map == (pmap_t)0)
-		panic("m88110_table_search: pmap is NULL");
-
-	sdt = SDTENT(map, virt);
-
-	/*
-	 * Check whether page table exist or not.
-	 */
-	if (!SDT_VALID(sdt))
-		return (4); /* seg fault */
-
-	/* OK, it's valid.  Now check permissions. */
-	if (!kernel && SDT_SUP(sdt))
-			return (6); /* Supervisor Violation */
-	if (write && SDT_WP(sdt))
-			return (7); /* Write Violation */
-
-	pte = (pt_entry_t *)(PG_PFNUM(*(sdt_entry_t *)(sdt + SDT_ENTRIES))<<PDT_SHIFT) + PDTIDX(virt);
-	/*
-	 * Check whether page frame exist or not.
-	 */
-	if (!PDT_VALID(pte))
-		return (5); /* Page Fault */
-
-	/* OK, it's valid.  Now check permissions. */
-	if (!kernel && PDT_SUP(pte))
-			return (6); /* Supervisor Violation */
-	if (write && PDT_WP(pte))
-			return (7); /* Write Violation */
-	/* If we get here, load the PATC. */
-	entry_num++;
-	if (entry_num > 32)
-		entry_num = 0;
-	lpa = (unsigned)virt & 0xFFFFF000;
-	if (kernel)
-		lpa |= 0x01;
-	i = entry_num << 5;
-	if (data) {
-		set_dir(i); /* set PATC index */
-		set_dppu(lpa); /* set logical address */
-		set_dppl((unsigned)pte); /* set page fram address */
-	} else {
-		set_iir(i);
-		set_ippu(lpa);
-		set_ippl((unsigned)pte);
-	}
-	return 0;
-}
-
-#endif /* M88110 */
-
-
+#endif /* DDB */
