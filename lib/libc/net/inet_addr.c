@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet_addr.c,v 1.5 1997/04/05 21:13:10 millert Exp $	*/
+/*	$OpenBSD: inet_addr.c,v 1.6 1999/05/03 22:31:14 yanick Exp $	*/
 
 /*
  * ++Copyright++ 1983, 1990, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)inet_addr.c	8.1 (Berkeley) 6/17/93";
 static char rcsid[] = "$From: inet_addr.c,v 8.5 1996/08/05 08:31:35 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: inet_addr.c,v 1.5 1997/04/05 21:13:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: inet_addr.c,v 1.6 1999/05/03 22:31:14 yanick Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -164,19 +164,19 @@ inet_aton(cp, addr)
 		break;
 
 	case 2:				/* a.b -- 8.24 bits */
-		if (val > 0xffffff)
+		if ((val > 0xffffff) || (parts[0] > 0xff))
 			return (0);
 		val |= parts[0] << 24;
 		break;
 
 	case 3:				/* a.b.c -- 8.8.16 bits */
-		if (val > 0xffff)
+		if ((val > 0xffff) || (parts[0] > 0xff) || (parts[1] > 0xff))
 			return (0);
 		val |= (parts[0] << 24) | (parts[1] << 16);
 		break;
 
 	case 4:				/* a.b.c.d -- 8.8.8.8 bits */
-		if (val > 0xff)
+		if ((val > 0xff) || (parts[0] > 0xff) || (parts[1] > 0xff) || (parts[2] > 0xff))
 			return (0);
 		val |= (parts[0] << 24) | (parts[1] << 16) | (parts[2] << 8);
 		break;
