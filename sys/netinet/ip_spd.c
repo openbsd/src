@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.7 2000/11/17 04:16:19 angelos Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.8 2000/12/14 05:13:10 angelos Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -409,13 +409,40 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 	}
 
 	/*
-	 * If no SA has been added since the last time we did a lookup,
-	 * there's no point searching for one.
+	 * If no SA has been added since the last time we did a
+	 * lookup, there's no point searching for one. However, if the
+	 * destination gateway is left unspecified (or is all-1's),
+	 * always lookup since this is a generic-match rule
+	 * (otherwise, we can have situations where SAs to some
+	 * destinations exist but are not used, possibly leading to an
+	 * explosion in the number of acquired SAs).
 	 */
-	if (ipo->ipo_last_searched <= ipsec_last_added)
+	if (((ipo->ipo_dst.sa.sa_family == AF_INET) &&
+	     (ipo->ipo_dst.sin.sin_addr.s_addr != INADDR_ANY) &&
+	     (ipo->ipo_dst.sin.sin_addr.s_addr != INADDR_BROADCAST)) ||
+	    ((ipo->ipo_dst.sa.sa_family == AF_INET6) &&
+	     !IN6_IS_ADDR_UNSPECIFIED(&ipo->ipo_dst.sin6.sin6_addr) &&
+	     bcmp(&ipo->ipo_dst.sin6.sin6_addr, &in6mask128,
+		  sizeof(in6mask128))))
 	{
-	    ipo->ipo_last_searched = time.tv_sec; /* "touch" the entry */
+	    if (ipo->ipo_last_searched <= ipsec_last_added)
+	    {
+		ipo->ipo_last_searched = time.tv_sec; /* "touch" the entry */
 
+		/* Find an appropriate SA from among the existing SAs */
+		ipo->ipo_tdb = gettdbbyaddr(&sdst, ipo->ipo_sproto, m, af);
+		if (ipo->ipo_tdb)
+		{
+		    TAILQ_INSERT_TAIL(&ipo->ipo_tdb->tdb_policy_head, ipo,
+				      ipo_tdb_next);
+		    *error = 0;
+		    ipo->ipo_last_searched = 0;
+		    return ipo->ipo_tdb;
+		}
+	    }
+	}
+	else
+	{
 	    /* Find an appropriate SA from among the existing SAs */
 	    ipo->ipo_tdb = gettdbbyaddr(&sdst, ipo->ipo_sproto, m, af);
 	    if (ipo->ipo_tdb)
