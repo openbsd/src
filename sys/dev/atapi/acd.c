@@ -1,4 +1,4 @@
-/*	$OpenBSD: acd.c,v 1.21 1997/02/23 13:08:49 niklas Exp $	*/
+/*	$OpenBSD: acd.c,v 1.22 1997/02/23 18:48:13 niklas Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -1156,19 +1156,22 @@ acd_get_mode(acd, data, page, len, flags)
 	_lto2b(len, atapi_cmd.length);
 
 	error = atapi_exec_cmd(acd->ad_link, &atapi_cmd, sizeof(atapi_cmd),
-			       data, len, B_READ, flags);
+	    data, len, B_READ, flags);
 	if (!error) {
 		switch(page) {
 		case ATAPI_CAP_PAGE: {
 			struct atapi_cappage *fix = &data->page_cap;
+
         		/*
 	         	 * Fix cappage entries in place.
 			 */
 			fix->max_speed = _2btos((u_int8_t *)&fix->max_speed);
-			fix->max_vol_levels = _2btos((u_int8_t *)&fix->max_vol_levels);
+			fix->max_vol_levels =
+			    _2btos((u_int8_t *)&fix->max_vol_levels);
 			fix->buf_size = _2btos((u_int8_t *)&fix->buf_size);
 			fix->cur_speed = _2btos((u_int8_t *)&fix->cur_speed);
-			} break;
+			break;
+		      }
 		}
 	}
 
@@ -1195,7 +1198,7 @@ acd_set_mode(acd, data, len)
 	_lto2b(len, atapi_cmd.length);
 
 	return atapi_exec_cmd(acd->ad_link, &atapi_cmd, sizeof(atapi_cmd),
-			      data, len, B_WRITE, 0);
+	    data, len, B_WRITE, 0);
 }
 
 int
@@ -1234,7 +1237,7 @@ acd_play(acd, blkno, nblks)
 	_lto2b(nblks, atapi_cmd.length);
 
 	return atapi_exec_cmd(acd->ad_link, &atapi_cmd, sizeof(atapi_cmd),
-			      NULL, 0, 0, 0);
+	    NULL, 0, 0, 0);
 }
 
 /*
@@ -1253,7 +1256,7 @@ acd_play_big(acd, blkno, nblks)
 	_lto4b(nblks, atapi_cmd.length);
 
 	return atapi_exec_cmd(acd->ad_link, &atapi_cmd, sizeof(atapi_cmd),
-			      NULL, 0, 0, 0);
+	    NULL, 0, 0, 0);
 }
 
 int
@@ -1276,8 +1279,7 @@ acd_load_toc(acd, toc)
 	for (i = 0; i <= ntracks; i++) {
 		lba = (u_int32_t*)toc->tab[i].addr.addr;
 		*lba = msf2lba(toc->tab[i].addr.addr[1],
-			       toc->tab[i].addr.addr[2],
-			       toc->tab[i].addr.addr[3]);
+		    toc->tab[i].addr.addr[2], toc->tab[i].addr.addr[3]);
 	}
 	return 0;
 }
@@ -1338,7 +1340,7 @@ acd_play_msf(acd, startm, starts, startf, endm, ends, endf)
 	atapi_cmd.end_f = endf;
 
 	return atapi_exec_cmd(acd->ad_link, (struct atapi_generic *)&atapi_cmd,
-			      sizeof(atapi_cmd), NULL, 0, 0, 0);
+	    sizeof(atapi_cmd), NULL, 0, 0, 0);
 }
 
 /*
@@ -1395,8 +1397,8 @@ acd_read_subchannel(acd, mode, format, track, data, len)
 	_lto2b(len, atapi_cmd.length);
 
 	return atapi_exec_cmd(acd->ad_link, (struct atapi_generic *)&atapi_cmd,
-			      sizeof(struct atapi_read_subchannel),
-			      (u_char *)data, len, B_READ, 0);
+	    sizeof(struct atapi_read_subchannel), (u_char *)data, len, B_READ,
+	    0);
 }
 
 /*
@@ -1419,8 +1421,7 @@ acd_read_toc(acd, mode, start, data, len)
 	_lto2b(len, atapi_cmd.length);
 
 	return atapi_exec_cmd(acd->ad_link, (struct atapi_generic *)&atapi_cmd,
-			      sizeof(struct atapi_read_toc), data,
-			      len, B_READ, 0);
+	    sizeof(struct atapi_read_toc), data, len, B_READ, 0);
 }
 
 /*
@@ -1432,7 +1433,6 @@ acd_get_parms(acd, flags)
 	struct acd_softc *acd;
 	int flags;
 {
-
 	/*
 	 * give a number of sectors so that sec * trks * cyls
 	 * is <= disk_size
@@ -1447,7 +1447,6 @@ int
 acdsize(dev)
 	dev_t dev;
 {
-
 	/* CD-ROMs are read-only. */
 	return -1;
 }
@@ -1455,7 +1454,6 @@ acdsize(dev)
 void acdminphys(bp)
 	struct buf *bp;
 {
-
 	minphys(bp);
 }
 
@@ -1466,7 +1464,6 @@ acddump(dev, blkno, va, size)
 	caddr_t va;
 	size_t size;
 {
-
 	/* Not implemented. */
 	return ENXIO;
 }
