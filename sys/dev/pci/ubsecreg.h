@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecreg.h,v 1.8 2001/01/29 00:39:20 jason Exp $	*/
+/*	$OpenBSD: ubsecreg.h,v 1.9 2001/01/29 04:01:44 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -126,7 +126,20 @@ struct ubsec_keyctx {
 	volatile u_int16_t	ctx_op;		/* operation code */
 	volatile u_int8_t	ctx_pad[60];	/* padding */
 };
-#define	UBS_CTXOP_RNGBYPASS	0x41
+#define	UBS_CTXOP_DHPKGEN	0x01		/* dh public key generation */
+#define	UBS_CTXOP_DHSSGEN	0x02		/* dh shared secret gen. */
+#define	UBS_CTXOP_RSAPUB	0x03		/* rsa public key op */
+#define	UBS_CTXOP_RSAPRIV	0x04		/* rsa private key op */
+#define	UBS_CTXOP_DSASIGN	0x05		/* dsa signing op */
+#define	UBS_CTXOP_DSAVRFY	0x06		/* dsa verification */
+#define	UBS_CTXOP_RNGBYPASS	0x41		/* rng direct test mode */
+#define	UBS_CTXOP_RNGSHA1	0x42		/* rng sha1 test mode */
+#define	UBS_CTXOP_MODADD	0x43		/* modular addition */
+#define	UBS_CTXOP_MODSUB	0x44		/* modular subtraction */
+#define	UBS_CTXOP_MODMUL	0x45		/* modular multiplication */
+#define	UBS_CTXOP_MODRED	0x46		/* modular reduction */
+#define	UBS_CTXOP_MODEXP	0x47		/* modular exponentiation */
+#define	UBS_CTXOP_MODINV	0x48		/* modular inverse */
 
 struct ubsec_rngbypass_ctx {
 	volatile u_int16_t	rbp_len;	/* command length, 64 */

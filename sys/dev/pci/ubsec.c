@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.37 2001/01/29 00:39:20 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.38 2001/01/29 04:01:44 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -200,7 +200,7 @@ ubsec_attach(parent, self, aux)
 
 	if (sc->sc_5601) {
 		timeout_set(&sc->sc_rngto, ubsec_rng, sc);
-		timeout_add(&sc->sc_rngto, hz);
+		timeout_add(&sc->sc_rngto, 1);
 	}
 
 	printf(": %s\n", intrstr);
@@ -1070,6 +1070,7 @@ void
 ubsec_callback2(q)
 	struct ubsec_q2 *q;
 {
+	struct ubsec_softc *sc = q->q_sc;
 	struct ubsec_keyctx *ctx = q->q_ctx;
 
 	switch (ctx->ctx_op) {
@@ -1083,10 +1084,12 @@ ubsec_callback2(q)
 			add_true_randomness(*dat);
 		free(rng, M_DEVBUF);
 		free(q, M_DEVBUF);
+		timeout_add(&sc->sc_rngto, 1);
 		break;
 	}
 	default:
-		printf("%s: unknown ctx op: %x\n", ctx->ctx_op);
+		printf("%s: unknown ctx op: %x\n", sc->sc_dv.dv_xname,
+		    ctx->ctx_op);
 		break;
 	}
 }
@@ -1139,6 +1142,11 @@ ubsec_rng(vsc)
 	ubsec_feed2(sc);
 	splx(s);
 
+	return;
+
 out:
-	timeout_add(&sc->sc_rngto, hz);
+	/*
+	 * Something weird happened, generate our own call back.
+	 */
+	timeout_add(&sc->sc_rngto, 1);
 }
