@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.219 2003/03/22 00:10:17 david Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.220 2003/04/01 12:23:44 pb Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1913,7 +1913,8 @@ Syntax for
 in BNF:
 .Bd -literal
 line           = ( option | pf-rule | nat-rule | binat-rule | rdr-rule
-                 | antispoof-rule | altq-rule | queue-rule )
+                 | antispoof-rule | altq-rule | queue-rule | anchor-rule
+                 | trans-anchors )
 
 option         = set ( [ timeout ( timeout | { timeout-list } ) ] |
                  [ optimization [ default | normal
@@ -1964,8 +1965,14 @@ altq-rule      = altq on interface-name queueopts-list
                  queue queue-list
 queue-rule     = queue string queueopts-list queue-list
 
+anchor-rule    = anchor string [ ( in | out ) ] [ on ifspec ] [ af ] [ proto ]
+                 [ protospec ] [ hosts ]
+
+trans-anchors  = ( nat-anchor | rdr-anchor | binat-anchor ) string
+                 [ on ifspec ] [ af ] [ proto ] [ protospec ] [ hosts ]
+
 queueopts-list = queueopts-list queueopts | queueopts
-queueopts      = [ bandwidth number ( b | Kb | Mb | Gb | %) ] |
+queueopts      = [ bandwidth number ( b | Kb | Mb | Gb | % ) ] |
                  [ qlimit number ] | [ tbrsize number ] |
                  [ priority number ] | [ schedulers ] |
                  [ qlimit number ]
