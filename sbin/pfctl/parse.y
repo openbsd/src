@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.438 2004/02/04 17:35:40 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.439 2004/02/10 17:48:08 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -528,7 +528,7 @@ option		: SET OPTIMIZATION STRING		{
 		}
 		| SET STATEPOLICY statelock {
 			if (pf->opts & PF_OPT_VERBOSE)
-				switch($3) {
+				switch ($3) {
 				case 0:
 					printf("set state-policy floating\n");
 					break;
@@ -945,7 +945,7 @@ tabledef	: TABLE '<' STRING '>' table_opts {
 					free(h);
 				}
 				nti = SIMPLEQ_NEXT(ti, entries);
-				free (ti);
+				free(ti);
 			}
 		}
 		;
@@ -982,7 +982,7 @@ table_opt	: STRING		{
 			struct node_tinit	*ti;
 
 			for (n = $2; n != NULL; n = n->next) {
-				switch(n->addr.type) {
+				switch (n->addr.type) {
 				case PF_ADDR_ADDRMASK:
 					continue; /* ok */
 				case PF_ADDR_DYNIFTL:
@@ -1516,13 +1516,13 @@ pfrule		: action dir logquick interface route af proto fromto
 					r.rule_flag |= PFRULE_SRCTRACK;
 					break;
 				case PF_STATE_OPT_STATELOCK:
-                                        if (statelock) {
-                                                yyerror("state locking option: "
-                                                    "multiple definitons");
-                                                YYERROR;
-                                        }
-                                        statelock = 1;
-                                        r.rule_flag |= o->data.statelock;
+					if (statelock) {
+						yyerror("state locking option: "
+						    "multiple definitons");
+						YYERROR;
+					}
+					statelock = 1;
+					r.rule_flag |= o->data.statelock;
 					break;
 				case PF_STATE_OPT_TIMEOUT:
 					if (r.timeout[o->data.timeout.number]) {
@@ -4038,9 +4038,9 @@ expand_rule(struct pf_rule *r,
 
 		if ((keep_state == PF_STATE_MODULATE ||
 		    keep_state == PF_STATE_SYNPROXY) &&
-		    r->proto && r->proto != IPPROTO_TCP) 
+		    r->proto && r->proto != IPPROTO_TCP)
 			r->keep_state = PF_STATE_NORMAL;
-		else 
+		else
 			r->keep_state = keep_state;
 
 		if (r->proto && r->proto != IPPROTO_TCP) {

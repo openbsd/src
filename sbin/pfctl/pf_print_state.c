@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.38 2004/01/26 23:11:36 henning Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.39 2004/02/10 17:48:08 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -50,7 +50,7 @@ void	print_name(struct pf_addr *, sa_family_t);
 void
 print_addr(struct pf_addr_wrap *addr, sa_family_t af, int verbose)
 {
-	switch(addr->type) {
+	switch (addr->type) {
 	case PF_ADDR_DYNIFTL:
 		printf("(%s", addr->v.ifname);
 		if (addr->iflags & PFI_AFLAG_NETWORK)
