@@ -1,4 +1,4 @@
-/* $OpenBSD: mount_ntfs.c,v 1.3 2003/05/20 03:38:04 tedu Exp $ */
+/* $OpenBSD: mount_ntfs.c,v 1.4 2003/05/24 21:48:06 tedu Exp $ */
 /* $NetBSD: mount_ntfs.c,v 1.9 2003/05/03 15:37:08 christos Exp $ */
 
 /*
@@ -144,11 +144,11 @@ mount_ntfs(argc, argv)
 	}
 
 	args.fspec = dev;
-	args.export.ex_root = 65534;	/* unchecked anyway on DOS fs */
+	args.export_info.ex_root = 65534;	/* unchecked anyway on DOS fs */
 	if (mntflags & MNT_RDONLY)
-		args.export.ex_flags = MNT_EXRDONLY;
+		args.export_info.ex_flags = MNT_EXRDONLY;
 	else
-		args.export.ex_flags = 0;
+		args.export_info.ex_flags = 0;
 	if (!set_gid || !set_uid || !set_mask) {
 		if (stat(dir, &sb) == -1)
 			err(EX_OSERR, "stat %s", dir);

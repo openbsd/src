@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.52 2003/05/20 03:05:42 tedu Exp $	*/
+/*	$OpenBSD: mount.h,v 1.53 2003/05/24 21:48:05 tedu Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -243,7 +243,7 @@ struct adosfs_args {
 
 struct ntfs_args {
         char    *fspec;                 /* block special device to mount */
-        struct  export_args export;     /* network export information */
+        struct  export_args export_info;/* network export information */
         uid_t   uid;                    /* uid that owns ntfs files */
         gid_t   gid;                    /* gid that owns ntfs files */
         mode_t  mode;                   /* mask to be applied for ntfs perms */

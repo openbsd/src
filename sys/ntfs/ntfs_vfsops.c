@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.3 2003/05/20 03:36:42 tedu Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.4 2003/05/24 21:48:05 tedu Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -371,7 +371,7 @@ ntfs_mount (
 			 * will return the vfs_export() error code.
 			 */
 			struct ntfsmount *ntm = VFSTONTFS(mp);
-			err = vfs_export(mp, &ntm->ntm_export, &args.export);
+			err = vfs_export(mp, &ntm->ntm_export, &args.export_info);
 			goto success;
 		}
 
