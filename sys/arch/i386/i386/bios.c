@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.20 1997/11/10 16:09:55 flipk Exp $	*/
+/*	$OpenBSD: bios.c,v 1.21 1998/01/09 12:14:42 niklas Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -79,7 +79,6 @@ struct cfdriver bios_cd = {
 	NULL, "bios", DV_DULL
 };
 
-extern u_int bootapiver; /* locore.s */
 extern dev_t bootdev;
 
 bios_diskinfo_t *bios_diskinfo = NULL;

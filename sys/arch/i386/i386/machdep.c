@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.70 1998/01/04 11:34:49 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.71 1998/01/09 12:14:41 niklas Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -90,6 +90,7 @@
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/specialreg.h>
+#include <machine/biosvar.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -97,11 +98,6 @@
 #include <dev/ic/mc146818reg.h>
 #include <i386/isa/isa_machdep.h>
 #include <i386/isa/nvram.h>
-
-#include "bios.h"
-#if NBIOS > 0
-#include <machine/biosvar.h>
-#endif
 
 #include "apm.h"
 #if NAPM > 0
@@ -235,7 +231,7 @@ cpu_startup()
 	msgbufmapped = 1;
 
 	/* Boot arguments are in page 1 */
-	if (bootargv != NULL) {
+	if (bootapiver >= BOOT_APIVER) {
 		pa = NBPG;
 		for (i = 0; i < btoc(bootargc); i++, pa += NBPG)
 			pmap_enter(pmap_kernel(),
@@ -1528,7 +1524,8 @@ init386(first_avail)
 	 * BIOS leaves data in low memory and VM system doesn't work with
 	 * phys 0,  /boot leaves arguments at page 1.
 	 */
-	avail_next = avail_start = NBPG + i386_round_page(bootargc);
+	avail_next = avail_start =
+	    bootapiver >= BOOT_APIVER ? NBPG + i386_round_page(bootargc) : NBPG;
 	avail_end = extmem ? IOM_END + extmem * 1024
 		: cnvmem * 1024;	/* just temporary use */
 
