@@ -21,10 +21,10 @@ SyslogFacility AUTH
 RhostsAuthentication no
 #
 # For this to work you will also need host keys in /etc/ssh_known_hosts
-RhostsRSAAuthentication yes
+RhostsRSAAuthentication no
 #
 # Changed RSAAuthentication to no/bg
-RSAAuthentication no
+RSAAuthentication yes
 
 # To disable tunneled clear text passwords, change to no here!
 PasswordAuthentication yes
