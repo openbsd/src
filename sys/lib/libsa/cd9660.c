@@ -1,3 +1,4 @@
+/*	$OpenBSD: cd9660.c,v 1.2 1996/12/12 08:19:25 mickey Exp $	*/
 /*	$NetBSD: cd9660.c,v 1.1 1996/09/30 16:01:19 ws Exp $	*/
 
 /*
@@ -38,6 +39,7 @@
  * blocksizes other than 2048 bytes, multi-extent files, etc.
  */
 #include <sys/param.h>
+#include <sys/stat.h>
 
 #include <lib/libkern/libkern.h>
 
@@ -85,13 +87,6 @@ struct ptable_ent {
 #define	PTSIZE(pp)	roundup(PTFIXSZ + isonum_711((pp)->namlen), 2)
 
 #define	cdb2devb(bno)	((bno) * ISO_DEFAULT_BLOCK_SIZE / DEV_BSIZE)
-
-static int
-toupper(c)
-	int c;
-{
-	return c >= 'a' && c <= 'z' ? c - 'a' + 'A' : c;
-}
 
 static int
 pnmatch(path, pp)
