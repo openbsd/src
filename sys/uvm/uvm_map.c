@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.65 2004/02/23 06:19:32 drahn Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.66 2004/05/03 07:14:53 tedu Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -2219,6 +2219,9 @@ uvm_map_protect(map, start, end, new_prot, set_max)
 
 		if (current->protection != old_prot) {
 			/* update pmap! */
+			if ((current->protection & MASK(entry)) == PROT_NONE &&
+			    VM_MAPENT_ISWIRED(entry))
+				current->wired_count--;
 			pmap_protect(map->pmap, current->start, current->end,
 			    current->protection & MASK(entry));
 		}
