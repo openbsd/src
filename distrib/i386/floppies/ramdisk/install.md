@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.20 1997/10/17 08:57:43 deraadt Exp $
+#	$OpenBSD: install.md,v 1.21 1997/10/17 12:04:31 deraadt Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -122,17 +122,16 @@ md_prep_fdisk()
 	_done=0
 	echo
 	cat << \__md_prep_fdisk_1
-A single OpenBSD partition with id "A6" should exist in the MBR.  All the
-of your OpenBSD partitions will be contained _within_ this partition,
-including your swap space.  In the normal case it should be the only
-partition marked as active.  (Unless you are using a multiple-OS booter, but
-you can adjust that later.)  Furthermore, the MBR partitions must NOT overlap
-each others.
+A single OpenBSD partition with id 'A6' should exist in the MBR.  All of your
+OpenBSD partitions will be contained _within_ this partition, including your
+swap space.  In the normal case it should be the only partition marked as
+active.  (Unless you are using a multiple-OS booter, but you can adjust that
+later.)  Furthermore, the MBR partitions must NOT overlap each other.
+The current partition information is:
 
 __md_prep_fdisk_1
-	echo "Current partition information is:"
 	fdisk ${_disk}
-
+	echo
 	fdisk -e ${_disk}
 
 	echo "Here is the partition information you chose:"
@@ -140,9 +139,7 @@ __md_prep_fdisk_1
 	fdisk ${_disk}
 	echo
 	echo "Please take note of the offset and size of the BIOS OpenBSD partition"
-	echo "of the disk, as you will may need that for the OpenBSD disk label."
-	echo -n "Press [Enter] to continue "
-	getresp ""
+	echo "of the disk, as you will may that for the OpenBSD disk label later."
 	echo
 }
 
@@ -153,55 +150,41 @@ md_prep_disklabel()
 	_disk=$1
 	md_prep_fdisk ${_disk}
 
+	echo "Inside the BIOS 'A6' partition you just created, there resides an OpenBSD"
+	echo "partition table which defines how this BIOS partition is to be split up."
+	echo "This table declares the offsets and sizes of your / partition, your swap"
+	echo "space, and any other partitions you might create.  (NOTE: The OpenBSD"
+	echo "disk label offsets are absolute, ie. relative to the start of the disk..."
+	echo "NOT relative to the start of the BIOS 'A6' partition)."
+	echo
+
 	md_checkfordisklabel $_disk
 	case $? in
 	0)
-		echo -n "Do you wish to edit the OpenBSD disklabel on $_disk? [y]"
 		;;
 	1)
-		md_prep_fdisk ${_disk}
-		echo "WARNING: Disk $_disk has no label"
-		echo -n "Do you want to create one with the disklabel editor? [y]"
+		echo "WARNING: Disk $_disk has no label. You will be creating a new one."
+		echo
 		;;
 	2)
-		echo "WARNING: Label on disk $_disk is corrupted"
-		echo -n "Do you want to try and repair the damage using the disklabel editor? [y]"
+		echo "WARNING: Label on disk $_disk is corrupted. You will be repairing."
+		echo
 		;;
-	esac
-
-	getresp "y"
-	case "$resp" in
-	y*|Y*) ;;
-	*)	return ;;
 	esac
 
 	# display example
 	cat << \__md_prep_disklabel_1
+If this disk is shared with other operating systems, ensure those operating
+systems have a BIOS partition table entry that spans the space they occupy
+completely.  For safetyp, also make sure all OpenBSD file systems within the
+offset and size specified in the 'A6' BIOS partition table.  (By default, the
+disklabel editor will try to enforce this).
 
-Here is an example of what the partition information will look like once
-you have entered the disklabel editor. Disk partition sizes and offsets
-are in sector (most likely 512 bytes) units. Make sure these size/offset
-pairs are on cylinder boundaries (the number of sector per cylinder is
-given in the `sectors/cylinder' entry, which is not shown here).
-
-Also, if this disk is shared with other operating systems and have a BIOS
-partition table, make sure all file systems reserved for OpenBSD are within
-the offset and size specified in the BIOS partition table.
-
-Do not change any parameters except the partition layout and the label name.
-
-[Example]
-16 partitions:
-#        size   offset    fstype   [fsize bsize   cpg]
-  a:    50176        0    4.2BSD     1024  8192    16   # (Cyl.    0 - 111)
-  b:    64512    50176      swap                        # (Cyl.  112 - 255)
-  c:   640192        0   unknown                        # (Cyl.    0 - 1428)
-  d:   525504   114688    4.2BSD     1024  8192    16   # (Cyl.  256 - 1428)
-[End of example]
+If you are unsure of how to use multiple partitions properly (ie. seperating
+/,  /usr, /tmp, /var, /usr/local, and other things) just split the disk into
+an root and swap partition for now.
 
 __md_prep_disklabel_1
-	echo -n "Press [Enter] to continue "
-	getresp ""
 	disklabel -E ${_disk}
 }
 
@@ -215,41 +198,39 @@ md_welcome_banner() {
 {
 	if [ "$MODE" = "install" ]; then
 		echo ""
-		echo "Welcome to the OpenBSD/i386 ${VERSION} installation program."
+		echo "Welcome to the OpenBSD/i386 ${VERSION_MAJOR}.${VERSION_MINOR} installation program."
 		cat << \__welcome_banner_1
 
-This program is designed to help you put OpenBSD on your disk,
-in a simple and rational way.  You'll be asked several questions,
-and it would probably be useful to have your disk's hardware
-manual, the installation notes, and a calculator handy.
+This program is designed to help you put OpenBSD on your disk, in a simple
+and rational way.  You'll be asked several questions, and it would probably
+be useful to have your disk's hardware manual, the installation notes, and a
+calculator handy.
 __welcome_banner_1
 
 	else
 		echo ""
-		echo "Welcome to the OpenBSD/i386 ${VERSION} upgrade program."
+		echo "Welcome to the OpenBSD/i386 ${VERSION_MAJOR}.${VERSION_MINOR} upgrade program."
 		cat << \__welcome_banner_2
 
-This program is designed to help you upgrade your OpenBSD system in a
-simple and rational way.
-
-As a reminder, installing the `etc' binary set is NOT recommended.
-Once the rest of your system has been upgraded, you should manually
-merge any changes to files in the `etc' set into those files which
+This program is designed to help you upgrade your OpenBSD system in a simple
+and rational way.  As a reminder, installing the `etc' binary set is NOT
+recommended.  Once the rest of your system has been upgraded, you should
+manually merge any changes to files in the `etc' set into those files which
 already exist on your system.
 __welcome_banner_2
 	fi
 
 cat << \__welcome_banner_3
 
-As with anything which modifies your disk's contents, this
-program can cause SIGNIFICANT data loss, and you are advised
-to make sure your data is backed up before beginning the
-installation process.
+As with anything which modifies your disk's contents, this program can cause
+SIGNIFICANT data loss, and you are advised to make sure your data is backed
+up before beginning the installation process.
 
-Default answers are displayed in brackets after the questions.
-You can hit Control-C at any time to quit, but if you do so at a
-prompt, you may have to hit return.  Also, quitting in the middle of
-installation may leave your system in an inconsistent state.
+Default answers are displayed in brackets after the questions.  You can hit
+Control-C at any time to quit, but if you do so at a prompt, you may have
+to hit return.  Also, quitting in the middle of installation may leave your
+system in an inconsistent state.  If you hit Control-C and restart the
+install, the install program will remember many of your old answers.
 
 __welcome_banner_3
 } | more
@@ -258,8 +239,8 @@ __welcome_banner_3
 md_not_going_to_install() {
 	cat << \__not_going_to_install_1
 
-OK, then.  Enter `halt' at the prompt to halt the machine.  Once the
-machine has halted, power-cycle the system to load new boot code.
+OK, then.  Enter `halt' at the prompt to halt the machine.  Once the machine
+has halted, power-cycle the system to load new boot code.
 
 __not_going_to_install_1
 }
@@ -273,9 +254,9 @@ md_congrats() {
 	fi
 	cat << __congratulations_1
 
-CONGRATULATIONS!  You have successfully $what OpenBSD!
-To boot the installed system, enter halt at the command prompt. Once the
-system has halted, reset the machine and boot from the disk.
+CONGRATULATIONS!  You have successfully $what OpenBSD!  To boot the installed
+system, enter halt at the command prompt. Once the system has halted, reset
+the machine and boot from the disk.
 
 __congratulations_1
 }
