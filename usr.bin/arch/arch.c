@@ -29,15 +29,15 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: arch.c,v 1.3 1999/08/19 22:17:38 niklas Exp $";
+static char rcsid[] = "$OpenBSD: arch.c,v 1.4 1999/08/20 09:20:39 millert Exp $";
 #endif /* not lint */
 
-#include <stdio.h>
-#include <locale.h>
-#include <unistd.h>
 #include <sys/param.h>
-#include <sys/utsname.h>
+
 #include <err.h>
+#include <locale.h>
+#include <stdio.h>
+#include <unistd.h>
 
 static void usage __P((void));
 
@@ -53,10 +53,11 @@ main(argc, argv)
 	char *opts;
 	int c;
 	int short_form = 0;
+	extern char *__progname;
 
 	setlocale(LC_ALL, "");
 
-	machine = strcmp (argv[0], "machine") == 0;
+	machine = strcmp(__progname, "machine") == 0;
 	if (machine) {
 		arch = MACHINE;
 		opts = "a";
@@ -78,7 +79,7 @@ main(argc, argv)
 				break;
 			default:
 				usage();
-				/* NOTREASCHED */
+				/* NOTREACHED */
 		}
 	if (optind != argc) {
 		usage();
