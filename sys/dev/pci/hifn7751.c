@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.113 2002/01/23 15:59:12 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.114 2002/01/31 21:17:37 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -120,6 +120,7 @@ hifn_probe(parent, match, aux)
 		return (1);
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_HIFN &&
 	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7751 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7951 ||
 	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7811))
 		return (1);
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_NETSEC &&
