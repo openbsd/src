@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2001/12/26 19:44:39 miod Exp $
+#	$OpenBSD: Makefile,v 1.10 2002/03/07 09:41:50 fgsch Exp $
 #	$NetBSD: Makefile,v 1.13 1995/04/23 07:58:46 cgd Exp $
 
 TARGET_MACHINE_ARCH?=	$(MACHINE_ARCH)
@@ -6,6 +6,11 @@ TARGET_MACHINE_ARCH?=	$(MACHINE_ARCH)
 PROG=	ld
 SRCS=	ld.c symbol.c lib.c shlib.c warnings.c etc.c rrs.c xbits.c md.c
 CPPFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/$(TARGET_MACHINE_ARCH)
+
+.if (${MACHINE_ARCH} == "vax")
+ld.o:
+	${CC} ${CFLAGS} ${CPPFLAGS} -O0 -c $<
+.endif
 
 .if ($(TARGET_MACHINE_ARCH) != $(MACHINE_ARCH))
 CPPFLAGS+=	-DCROSS_LINKER -DXHOST=$(MACHINE_ARCH) \
