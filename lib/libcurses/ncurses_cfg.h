@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncurses_cfg.h,v 1.5 1998/09/12 04:38:02 millert Exp $	*/
+/*	$OpenBSD: ncurses_cfg.h,v 1.6 1998/09/12 05:47:14 millert Exp $	*/
 
 /* include/ncurses_cfg.h.  Generated automatically by configure.  */
 /****************************************************************************
@@ -99,6 +99,7 @@
 #define HAVE_USLEEP 1
 #define HAVE_VSNPRINTF 1
 #define HAVE_VSSCANF 1
+#define HAVE_BSD_CGETENT 1
 #define NCURSES_EXT_FUNCS 1
 #define NDEBUG 1
 /* #define PURE_TERMINFO 1 */
@@ -109,6 +110,7 @@
 #define USE_DATABASE 1
 #define USE_HASHMAP 1
 #define USE_SCROLL_HINTS 1
+#define USE_GETCAP 1
 
 	/* The C compiler may not treat these properly but C++ has to */
 #ifdef __cplusplus
