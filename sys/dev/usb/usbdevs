@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.116 2004/10/24 05:35:45 dlg Exp $
+$OpenBSD: usbdevs,v 1.117 2004/10/26 00:25:51 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1351,6 +1351,7 @@ product PROLIFIC PL2303		0x2303	PL2303 Serial
 product PROLIFIC PL2305		0x2305	Parallel printer
 product PROLIFIC ATAPI4		0x2307	ATAPI-4 Bridge Controller
 product PROLIFIC PL2501		0x2501	PL2501 Host-Host interface
+product PROLIFIC PL2303X	0xaaa0	PL2303 Serial
 
 /* Putercom products */
 product PUTERCOM UPA100		0x047e	USB-1284 BRIDGE
