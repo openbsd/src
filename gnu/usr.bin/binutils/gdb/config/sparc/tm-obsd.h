@@ -20,7 +20,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #ifndef TM_OBSD_H
 #define TM_OBSD_H
 
+#ifdef __arch64__
+#include "sparc/tm-sp64.h"
+#else
 #include "sparc/tm-sparc.h"
+#endif
 
 #include "tm-obsd.h"
 
