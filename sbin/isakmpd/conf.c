@@ -1,5 +1,5 @@
-/*	$OpenBSD: conf.c,v 1.5 1998/12/21 21:52:56 niklas Exp $	*/
-/*	$EOM: conf.c,v 1.11 1998/12/21 21:28:55 niklas Exp $	*/
+/*	$OpenBSD: conf.c,v 1.6 1999/02/26 03:34:26 niklas Exp $	*/
+/*	$EOM: conf.c,v 1.14 1999/02/25 11:38:47 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -46,6 +46,9 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "sysdep.h"
+
+#include "app.h"
 #include "conf.h"
 #include "log.h"
 
@@ -246,17 +249,25 @@ conf_init (void)
 
   LIST_INIT (&conf_bindings);
   conf_parse ();
+
+#ifdef NEED_SYSDEP_APP
+  /* Let the application layer record on-demand keyed connections.  */
+  app_conf_init_hook ();
+#endif
 }
 
-/* Return the numeric value denoted by TAG in section SECTION.  */
+/*
+ * Return the numeric value denoted by TAG in section SECTION or DEF
+ * if that tag does not exist.
+ */
 int
-conf_get_num (char *section, char *tag)
+conf_get_num (char *section, char *tag, int def)
 {
   char *value = conf_get_str (section, tag);
 
   if (value)
       return atoi (value);
-  return 0;
+  return def;
 }
 
 /* Validate X according to the range denoted by TAG in section SECTION.  */
