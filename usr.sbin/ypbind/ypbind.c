@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.9 1996/07/01 00:49:56 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.10 1996/07/05 21:14:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Theo de Raadt <deraadt@theos.com>
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.9 1996/07/01 00:49:56 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.10 1996/07/05 21:14:29 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -545,8 +545,6 @@ checkwork()
 	struct _dom_binding *ypdb;
 	time_t t;
 
-	check = 0;
-
 	time(&t);
 	for (ypdb = ypbindlist; ypdb; ypdb = ypdb->dom_pnext) {
 		if (ypdb->dom_check_t < t) {
@@ -558,6 +556,7 @@ checkwork()
 			ypdb->dom_check_t = t + 5;
 		}
 	}
+	check = 0;
 }
 
 ping(ypdb)
