@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.37 2001/11/19 03:03:33 deraadt Exp $
+#	$OpenBSD: services,v 1.38 2001/12/11 20:58:53 deraadt Exp $
 #
 # Network services, Internet style
 #
@@ -193,6 +193,7 @@ kx		2111/tcp		# X over kerberos
 kip		2112/tcp		# IP over kerberos
 kauth		2120/tcp		# Remote kauth
 krb524		4444/udp		# Kerberos 5->4
+krb524		4444/tcp		# Kerberos 5->4
 iprop		2121/tcp		# Kerberos incremental propagation
 rfe		5002/tcp		# Radio Free Ethernet
 rfe		5002/udp		# Actually uses UDP only
