@@ -1,4 +1,4 @@
-/*	$OpenBSD: home_terminfo.c,v 1.5 2000/10/08 22:47:01 millert Exp $	*/
+/*	$OpenBSD: home_terminfo.c,v 1.6 2000/10/09 14:39:50 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -53,7 +53,7 @@ _nc_home_terminfo(void)
 
     if (use_terminfo_vars()) {
 	if (temp == 0) {
-	    if ((home = getenv("HOME")) != 0
+	    if ((home = getenv("HOME")) != 0 && *home != '\0'
 		&& my_length <= PATH_MAX) {
 		temp = typeMalloc(char, my_length);
 		if (temp == 0)
