@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.13 1995/12/25 14:16:50 leo Exp $	*/
+/*	$NetBSD: zs.c,v 1.14 1996/01/23 09:35:15 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman (Atari modifications)
@@ -419,7 +419,9 @@ struct proc	*p;
 	/*
 	 * Drop all lines and cancel interrupts
 	 */
-	zs_loadchannelregs(&zi->zi_zs->zs_chan[unit & 1], zs_init_regs);
+	s = splzs();
+	zs_loadchannelregs(cs->cs_zc, zs_init_regs);
+	splx(s);
 	return (0);
 }
 

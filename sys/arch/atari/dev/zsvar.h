@@ -1,4 +1,4 @@
-/*	$NetBSD: zsvar.h,v 1.4 1995/12/25 14:16:51 leo Exp $	*/
+/*	$NetBSD: zsvar.h,v 1.5 1996/01/24 19:26:40 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman (Atari modifications)
@@ -44,6 +44,21 @@
  *
  *	@(#)zsvar.h	8.1 (Berkeley) 6/11/93
  */
+
+/*
+ * Register layout is machine-dependent...
+ */
+
+struct zschan {
+	u_char		zc_xxx0;
+	volatile u_char	zc_csr;		/* ctrl,status, and indirect access */
+	u_char		zc_xxx1;
+	volatile u_char	zc_data;	/* data */
+};
+
+struct zsdevice {
+	struct	zschan zs_chan[2];
+};
 
 /*
  * Software state, per zs channel.
