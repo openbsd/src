@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.2 2000/06/02 22:42:08 deraadt Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.3 2000/06/03 13:14:39 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -56,120 +56,8 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-/*
- * Register definitions for 5601 BlueSteel Networks Ubiquitous Broadband
- * Security "uBSec" chip.  Definitions from revision 2.8 of the product
- * datasheet.
- */
-
-#define BS_BAR		0x10	/* DMA and status base address register */
-
-/*
- * DMA Control & Status Registers (offset from BS_BAR)
- */
-#define	BS_MCR1		0x00	/* DMA Master Command Record 1 */
-#define	BS_CTRL		0x04	/* DMA Control */
-#define	BS_STAT		0x08	/* DMA Status */
-#define	BS_ERR		0x0c	/* DMA Error Address */
-#define	BS_MCR2		0x10	/* DMA Master Command Record 2 */
-
-/* BS_CTRL - DMA Control */
-#define	BS_CTRL_MCR2INT		0x40000000	/* enable intr MCR for MCR2 */
-#define	BS_CTRL_MCR1INT		0x20000000	/* enable intr MCR for MCR1 */
-#define	BS_CTRL_OFM		0x10000000	/* Output fragment mode */
-#define	BS_CTRL_BE32		0x08000000	/* big-endian, 32bit bytes */
-#define	BS_CTRL_BE64		0x04000000	/* big-endian, 64bit bytes */
-#define	BS_CTRL_DMAERR		0x02000000	/* enable intr DMA error */
-#define	BS_CTRL_RNG_M		0x01800000	/* RND mode */
-#define	BS_CTRL_RNG_1		0x00000000	/* 1bit rn/one slow clock */
-#define	BS_CTRL_RNG_4		0x00800000	/* 1bit rn/four slow clocks */
-#define	BS_CTRL_RNG_8		0x01000000	/* 1bit rn/eight slow clocks */
-#define	BS_CTRL_RNG_16		0x01800000	/* 1bit rn/16 slow clocks */
-#define	BS_CTRL_FRAG_M		0x0000ffff	/* output fragment size mask */
-
-/* BS_STAT - DMA Status */
-#define	BS_STAT_MCR1_BUSY	0x80000000	/* MCR1 is busy */
-#define	BS_STAT_MCR1_FULL	0x40000000	/* MCR1 is full */
-#define	BS_STAT_MCR1_DONE	0x20000000	/* MCR1 is done */
-#define	BS_STAT_DMAERR		0x10000000	/* DMA error */
-#define	BS_STAT_MCR2_FULL	0x08000000	/* MCR2 is full */
-#define	BS_STAT_MCR2_DONE	0x04000000	/* MCR2 is done */
-
-/* BS_ERR - DMA Error Address */
-#define	BS_ERR_READ		0x00000001	/* fault was on read */
-
-#define UBSEC_CARD(sid)		(((sid) & 0xf0000000) >> 28)
-#define UBSEC_SID(crd,ses)	(((crd) << 28) | ((ses) & 0x7ff))
-#define	MAX_SCATTER		10
-
-struct ubsec_pktctx {
-	u_int8_t	pc_deskey[24];		/* 3DES key */
-	u_int8_t	pc_hminner[20];		/* hmac inner state */
-	u_int8_t	pc_hmouter[20];		/* hmac outer state */
-	u_int8_t	pc_iv[8];		/* 3DES iv */
-	u_int32_t	pc_flags;
-};
-#define	UBS_PKTCTX_COFFSET	0xffff0000	/* cryto to mac offset */
-#define	UBS_PKTCTX_ENC_3DES	0x00008000	/* use 3des */
-#define	UBS_PKTCTX_ENC_NONE	0x00000000	/* no encryption */
-#define	UBS_PKTCTX_INBOUND	0x00004000	/* inbound packet */
-#define	UBS_PKTCTX_AUTH		0x00003000	/* authentication mask */
-#define	UBS_PKTCTX_AUTH_NONE	0x00000000	/* no authentication */
-#define	UBS_PKTCTX_AUTH_MD5	0x00001000	/* use hmac-md5 */
-#define	UBS_PKTCTX_AUTH_SHA1	0x00002000	/* use hmac-sha1 */
-
-struct ubsec_pktbuf {
-	u_int32_t	pb_addr;		/* address of buffer start */
-	u_int32_t	pb_next;		/* pointer to next pktbuf */
-	u_int32_t	pb_len;
-};
-#define	UBS_PKTBUF_LEN		0x0000ffff	/* length mask */
-
-struct ubsec_mcr {
-	u_int32_t		mcr_flags;	/* flags/packet count */
-
-	u_int32_t		mcr_cmdctxp;	/* command ctx pointer */
-	struct ubsec_pktbuf	mcr_ipktbuf;	/* input chain header */
-	struct ubsec_pktbuf	mcr_opktbuf;	/* output chain header */
-};
-#define	UBS_MCR_PACKETS		0x0000ffff	/* packets in this mcr */
-#define	UBS_MCR_DONE		0x00010000	/* mcr has been processed */
-#define	UBS_MCR_ERROR		0x00020000	/* error in processing */
-#define	UBS_MCR_ERRORCODE	0xff000000	/* error type */
-
-struct ubsec_q {
-	SIMPLEQ_ENTRY(ubsec_q)		q_next;
-	struct ubsec_softc		*q_sc;
-	struct cryptop			*q_crp;
-	struct ubsec_mcr		q_mcr;
-	struct ubsec_pktctx		q_ctx;
-
-	struct mbuf *		      	q_src_m;
-	long				q_src_packp[MAX_SCATTER];
-	int				q_src_packl[MAX_SCATTER];
-	int				q_src_npa, q_src_l;
-	struct ubsec_pktbuf		q_srcpkt[MAX_SCATTER-1];
-
-	struct mbuf *			q_dst_m;
-	long				q_dst_packp[MAX_SCATTER];
-	int				q_dst_packl[MAX_SCATTER];
-	int				q_dst_npa, q_dst_l;
-	struct ubsec_pktbuf		q_dstpkt[MAX_SCATTER-1];
-};
-
-struct ubsec_softc {
-	struct	device		sc_dv;		/* generic device */
-	void			*sc_ih;		/* interrupt handler cookie */
-	bus_space_handle_t	sc_sh;		/* memory handle */
-	bus_space_tag_t		sc_st;		/* memory tag */
-	bus_dma_tag_t		sc_dmat;	/* dma tag */
-	int			sc_5601;	/* device is 5601 */
-	int32_t			sc_cid;		/* crypto tag */
-	u_int32_t		sc_intrmask;	/* interrupt mask */
-	SIMPLEQ_HEAD(,ubsec_q)	sc_queue;	/* packet queue */
-	int			sc_nqueue;	/* count enqueued */
-	SIMPLEQ_HEAD(,ubsec_q)	sc_qchip;	/* on chip */
-};
+#include <dev/pci/ubsecreg.h>
+#include <dev/pci/ubsecvar.h>
 
 /*
  * Prototypes and count for the pci_device structure
@@ -191,6 +79,12 @@ int	ubsec_freesession __P((u_int64_t));
 int	ubsec_process __P((struct cryptop *));
 void	ubsec_callback __P((struct ubsec_softc *, struct ubsec_q *, u_int8_t *));
 int	ubsec_crypto __P((struct ubsec_softc *, struct ubsec_q *q));
+
+#define	READ_REG(sc,r) \
+	bus_space_read_4((sc)->sc_st, (sc)->sc_sh, (r))
+
+#define WRITE_REG(sc,reg,val) \
+	bus_space_write_4((sc)->sc_st, (sc)->sc_sh, reg, val)
 
 int
 ubsec_probe(parent, match, aux)
@@ -281,14 +175,10 @@ ubsec_attach(parent, self, aux)
 	crypto_register(sc->sc_cid, CRYPTO_MD5_HMAC96, NULL, NULL, NULL);
 	crypto_register(sc->sc_cid, CRYPTO_SHA1_HMAC96, NULL, NULL, NULL);
 
+	WRITE_REG(sc, BS_CTRL, BS_CTRL_MCR1INT | BS_CTRL_DMAERR);
+
 	printf(": %s\n", intrstr);
 }
-
-#define	READ_REG(sc,r) \
-	bus_space_read_4((sc)->sc_st, (sc)->sc_sh, (r))
-
-#define WRITE_REG(sc,reg,val) \
-	bus_space_write_4((sc)->sc_st, (sc)->sc_sh, reg, val)
 
 int 
 ubsec_intr(arg)
@@ -411,9 +301,11 @@ ubsec_process(crp)
 	struct cryptop *crp;
 {
 	struct ubsec_q *q;
-	int card, err, i;
+	int card, err, i, j;
 	struct ubsec_softc *sc;
 	struct cryptodesc *crd1, *crd2, *maccrd, *enccrd;
+	int encoffset = 0, macoffset = 0, sskip, dskip;
+	int16_t coffset;
 
 	if (crp == NULL || crp->crp_callback == NULL)
 		return (EINVAL);
@@ -492,6 +384,7 @@ ubsec_process(crp)
 	}
 
 	if (enccrd) {
+		encoffset = enccrd->crd_skip;
 		q->q_ctx.pc_flags |= UBS_PKTCTX_ENC_3DES;
 
 		if (enccrd->crd_flags & CRD_F_ENCRYPT) {
@@ -527,6 +420,7 @@ ubsec_process(crp)
 	}
 
 	if (maccrd) {
+		macoffset = maccrd->crd_skip;
 		if (maccrd->crd_alg == CRYPTO_MD5_HMAC96)
 			q->q_ctx.pc_flags |= UBS_PKTCTX_AUTH_MD5;
 		else
@@ -537,6 +431,18 @@ ubsec_process(crp)
 		    maccrd->crd_klen >> 3);
 
 	}
+
+	if (enccrd && maccrd) {
+		dskip = sskip = (macoffset > encoffset) ? encoffset : macoffset;
+		coffset = macoffset - encoffset;
+		if (coffset < 0)
+			coffset = -coffset;
+	}
+	else {
+		dskip = sskip = macoffset + encoffset;
+		coffset = 0;
+	}
+	q->q_ctx.pc_flags |= (coffset << 16);
 
 	q->q_src_l = mbuf2pages(q->q_src_m, &q->q_src_npa, q->q_src_packp,
 	    q->q_src_packl, MAX_SCATTER, &err);
@@ -592,21 +498,24 @@ ubsec_process(crp)
 	q->q_dst_l = mbuf2pages(q->q_dst_m, &q->q_dst_npa, q->q_dst_packp,
 	    q->q_dst_packl, MAX_SCATTER, NULL);
 
-#if 0
-	/* XXX time to incorporate the information in crd_skip... */
-
-	cmd->crypt_header_skip = enccrd->crd_skip;
-	cmd->crypt_process_len = enccrd->crd_len;
-	cmd->mac_header_skip = maccrd->crd_skip;
-	cmd->mac_process_len = maccrd->crd_len;
-#endif
+	j = 0;
 	for (i = 0; i < q->q_src_npa; i++) {
 		struct ubsec_pktbuf *pb;
 
-		if (i == 0)
+		if (sskip) {
+			if (sskip >= q->q_src_packl[i]) {
+				sskip -= q->q_src_packl[i];
+				continue;
+			}
+			q->q_src_packp[i] += sskip;
+			q->q_src_packl[i] -= sskip;
+			sskip = 0;
+		}
+
+		if (j == 0)
 			pb = &q->q_mcr.mcr_ipktbuf;
 		else
-			pb = &q->q_srcpkt[i - 1];
+			pb = &q->q_srcpkt[j - 1];
 
 		pb->pb_addr = q->q_src_packp[i];
 		pb->pb_len = q->q_src_packl[i];
@@ -614,16 +523,28 @@ ubsec_process(crp)
 		if ((i + 1) == q->q_src_npa)
 			pb->pb_next = 0;
 		else
-			pb->pb_next = vtophys(&q->q_srcpkt[i]);
+			pb->pb_next = vtophys(&q->q_srcpkt[j]);
+		j++;
 	}
 
+	j = 0;
 	for (i = 0; i < q->q_dst_npa; i++) {
 		struct ubsec_pktbuf *pb;
 
-		if (i == 0)
+		if (dskip) {
+			if (dskip >= q->q_dst_packl[i]) {
+				dskip -= q->q_dst_packl[i];
+				continue;
+			}
+			q->q_dst_packp[i] += dskip;
+			q->q_dst_packl[i] -= dskip;
+			dskip = 0;
+		}
+
+		if (j == 0)
 			pb = &q->q_mcr.mcr_opktbuf;
 		else
-			pb = &q->q_dstpkt[i - 1];
+			pb = &q->q_dstpkt[j - 1];
 
 		pb->pb_addr = q->q_dst_packp[i];
 		pb->pb_len = q->q_dst_packl[i];
@@ -631,7 +552,8 @@ ubsec_process(crp)
 		if ((i + 1) == q->q_dst_npa)
 			pb->pb_next = 0;
 		else
-			pb->pb_next = vtophys(&q->q_dstpkt[i]);
+			pb->pb_next = vtophys(&q->q_dstpkt[j]);
+		j++;
 	}
 
 	/* queues it, or sends it to the chip */
