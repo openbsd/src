@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.7 1996/07/31 18:29:38 deraadt Exp $	*/
+/*	$OpenBSD: init.c,v 1.8 1997/02/22 08:38:10 millert Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -45,9 +45,9 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 7/15/93";
+static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.7 1996/07/31 18:29:38 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.8 1997/02/22 08:38:10 millert Exp $";
 #endif
 #endif /* not lint */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.2 1996/06/23 14:30:51 deraadt Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.3 1997/02/22 08:38:10 millert Exp $	*/
 /*	$NetBSD: pathnames.h,v 1.5 1995/03/18 14:56:35 cgd Exp $	*/
 
 /*-
@@ -41,5 +41,4 @@
 
 #include <paths.h>
 
-#define	_PATH_SLOGGER	"/sbin/session_logger"
 #define	_PATH_RUNCOM	"/etc/rc"
