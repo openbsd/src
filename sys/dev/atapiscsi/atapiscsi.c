@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.57 2002/03/14 01:26:52 millert Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.58 2002/03/16 17:13:22 csapuntz Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -66,6 +66,7 @@
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
+#include <dev/ic/wdcevent.h>
 
 /* drive states stored in ata_drive_datas */
 enum atapi_drive_states {
@@ -505,6 +506,8 @@ wdc_atapi_drive_selected(chp, drive)
 {
 	u_int8_t reg = CHP_READ_REG(chp, wdr_sdh);
 
+	WDC_LOG_REG(chp, wdr_sdh, reg);
+
 	return ((reg & 0x10) == (drive << 4));
 }
 
@@ -697,14 +700,19 @@ wdc_atapi_update_status(chp)
 {
 	chp->ch_status = CHP_READ_REG(chp, wdr_status);
 
+	WDC_LOG_STATUS(chp, chp->ch_status);
+
 	if (chp->ch_status == 0xff && (chp->ch_flags & WDCF_ONESLAVE)) {
-		CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | 0x10);
+		wdc_set_drive(chp, 1);
 
 		chp->ch_status = CHP_READ_REG(chp, wdr_status);
+		WDC_LOG_STATUS(chp, chp->ch_status);
 	}
 
-	if ((chp->ch_status & (WDCS_BSY | WDCS_ERR)) == WDCS_ERR)
+	if ((chp->ch_status & (WDCS_BSY | WDCS_ERR)) == WDCS_ERR) {
 		chp->ch_error = CHP_READ_REG(chp, wdr_error);
+		WDC_LOG_ERROR(chp, chp->ch_error);
+	}
 }
 
 void
@@ -734,7 +742,7 @@ wdc_atapi_real_start(chp, xfer, timeout, ret)
 		xfer->c_flags &= ~C_DMA;
 
 
-	CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (xfer->drive << 4));
+	wdc_set_drive(chp, xfer->drive);
 
 	DELAY(1);
 
@@ -866,6 +874,9 @@ wdc_atapi_intr_command(chp, xfer, timeout, ret)
 	} else 
 		bcopy(sc_xfer->cmd, cmd, sc_xfer->cmdlen);
 
+	WDC_LOG_ATAPI_CMD(chp, xfer->drive, xfer->c_flags,
+	    sc_xfer->cmdlen, sc_xfer->cmd);
+
 	for (i = 0; i < 12; i++)
 		WDCDEBUG_PRINT(("%02x ", cmd[i]), DEBUG_INTR);
 	WDCDEBUG_PRINT((": PHASE_CMDOUT\n"), DEBUG_INTR);
@@ -996,7 +1007,10 @@ wdc_atapi_intr_data(chp, xfer, timeout, ret)
 
 	len = (CHP_READ_REG(chp, wdr_cyl_hi) << 8) |
 	    CHP_READ_REG(chp, wdr_cyl_lo);
+	WDC_LOG_REG(chp, wdr_cyl_lo, len);
+
 	ire = CHP_READ_REG(chp, wdr_ireason);
+	WDC_LOG_REG(chp, wdr_ireason, ire);
 
 	if ((message = wdc_atapi_in_data_phase(xfer, len, ire))) {
 		/* The drive has dropped BSY before setting up the
@@ -1218,10 +1232,9 @@ wdc_atapi_pio_intr(chp, xfer, timeout, ret)
 		return;
 	}
 
-	if (!wdc_atapi_drive_selected(chp, xfer->drive))
-	{
+	if (!wdc_atapi_drive_selected(chp, xfer->drive)) {
 		WDCDEBUG_PRINT(("wdc_atapi_intr_for_us: wrong drive selected\n"), DEBUG_INTR);
-		CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (xfer->drive << 4));
+		wdc_set_drive(chp, xfer->drive);
 		delay (1);
 
 		if (!timeout)
@@ -1241,6 +1254,8 @@ wdc_atapi_pio_intr(chp, xfer, timeout, ret)
 		chp->wdc->irqack(chp);
 
 	ireason = CHP_READ_REG(chp, wdr_ireason);
+	WDC_LOG_REG(chp, wdr_ireason, ireason);
+
 	WDCDEBUG_PRINT(("Phase %d, (%x, %x) ", as->protocol_phase, chp->ch_status, ireason), DEBUG_INTR );
 
 	switch (as->protocol_phase) {
@@ -1277,6 +1292,7 @@ wdc_atapi_pio_intr(chp, xfer, timeout, ret)
 	return;
 timeout:
 	ireason = CHP_READ_REG(chp, wdr_ireason);
+	WDC_LOG_REG(chp, wdr_ireason, ireason);
 
 	printf("%s:%d:%d: device timeout, c_bcount=%d, c_skip=%d, "
 	    "status=%02x, ireason=%02x\n",
@@ -1318,7 +1334,7 @@ wdc_atapi_ctrl(chp, xfer, timeout, ret)
 
 	if (!wdc_atapi_drive_selected(chp, xfer->drive))
 	{
-		CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (xfer->drive << 4));
+		wdc_set_drive(chp, xfer->drive);
 		delay (1);
 	}
 
@@ -1528,6 +1544,7 @@ wdc_atapi_done(chp, xfer, timeout, ret)
 	WDCDEBUG_PRINT(("wdc_atapi_done %s:%d:%d: flags 0x%x error 0x%x\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
 	    (u_int)xfer->c_flags, sc_xfer->error), DEBUG_XFERS);
+	WDC_LOG_ATAPI_DONE(chp, xfer->drive, xfer->c_flags, sc_xfer->error);
 
 	sc_xfer->flags |= ITSDONE;
 
@@ -1599,5 +1616,3 @@ wdc_atapi_reset_2(chp, xfer, timeout, ret)
 	xfer->next = wdc_atapi_done;
 	return;
 }
-
-
