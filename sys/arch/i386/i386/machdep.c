@@ -1,5 +1,5 @@
-/*	$OpenBSD: machdep.c,v 1.17 1996/05/07 15:27:51 mickey Exp $	*/
-/*	$NetBSD: machdep.c,v 1.200 1996/05/03 19:42:15 christos Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.18 1996/05/23 08:38:54 deraadt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -1261,7 +1261,6 @@ _remque(v)
 	elem->q_prev = 0;
 }
 
-
 #ifdef COMPAT_NOMID
 static int
 exec_nomid(p, epp)
@@ -1291,7 +1290,7 @@ exec_nomid(p, epp)
 		/*
 		 * 386BSD's ZMAGIC format:
 		 */
-		error = cpu_exec_aout_prep_oldzmagic(p, epp);
+		error = exec_aout_prep_oldzmagic(p, epp);
 		break;
 
 	case (MID_ZERO << 16) | QMAGIC:
@@ -1300,6 +1299,24 @@ exec_nomid(p, epp)
 		 * same as new ZMAGIC format, but with different magic number
 		 */
 		error = exec_aout_prep_zmagic(p, epp);
+		break;
+
+	case (MID_ZERO << 16) | NMAGIC:
+		/*
+		 * BSDI's NMAGIC format:
+		 * same as NMAGIC format, but with different magic number
+		 * and with text starting at 0.
+		 */
+		error = exec_aout_prep_oldnmagic(p, epp);
+		break;
+
+	case (MID_ZERO << 16) | OMAGIC:
+		/*
+		 * BSDI's OMAGIC format:
+		 * same as OMAGIC format, but with different magic number
+		 * and with text starting at 0.
+		 */
+		error = exec_aout_prep_oldomagic(p, epp);
 		break;
 
 	default:
@@ -1334,63 +1351,6 @@ cpu_exec_aout_makecmds(p, epp)
 
 	return error;
 }
-
-#if defined(COMPAT_NOMID) || defined(COMPAT_FREEBSD)
-/*
- * cpu_exec_aout_prep_oldzmagic():
- *	Prepare the vmcmds to build a vmspace for an old (386BSD) ZMAGIC
- *	binary.
- *
- * Cloned from exec_aout_prep_zmagic() in kern/exec_aout.c; a more verbose
- * description of operation is there.
- */
-int
-cpu_exec_aout_prep_oldzmagic(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
-{
-	struct exec *execp = epp->ep_hdr;
-
-	epp->ep_taddr = 0;
-	epp->ep_tsize = execp->a_text;
-	epp->ep_daddr = epp->ep_taddr + execp->a_text;
-	epp->ep_dsize = execp->a_data + execp->a_bss;
-	epp->ep_entry = execp->a_entry;
-
-	/*
-	 * check if vnode is in open for writing, because we want to
-	 * demand-page out of it.  if it is, don't do it, for various
-	 * reasons
-	 */
-	if ((execp->a_text != 0 || execp->a_data != 0) &&
-	    epp->ep_vp->v_writecount != 0) {
-#ifdef DIAGNOSTIC
-		if (epp->ep_vp->v_flag & VTEXT)
-			panic("exec: a VTEXT vnode has writecount != 0\n");
-#endif
-		return ETXTBSY;
-	}
-	epp->ep_vp->v_flag |= VTEXT;
-
-	/* set up command for text segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_text,
-	    epp->ep_taddr, epp->ep_vp, NBPG, /* XXX should NBPG be CLBYTES? */
-	    VM_PROT_READ|VM_PROT_EXECUTE);
-
-	/* set up command for data segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_data,
-	    epp->ep_daddr, epp->ep_vp,
-	    execp->a_text + NBPG, /* XXX should NBPG be CLBYTES? */
-	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-
-	/* set up command for bss segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, execp->a_bss,
-	    epp->ep_daddr + execp->a_data, NULLVP, 0,
-	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-
-	return exec_aout_setup_stack(p, epp);
-}
-#endif /* COMPAT_NOMID || COMPAT_FREEBSD */
 
 u_int
 pmap_free_pages()
@@ -1488,7 +1448,12 @@ bus_mem_map(t, bpa, size, cacheable, mhp)
 	vm_offset_t va;
 
 	pa = i386_trunc_page(bpa);
-	endpa = i386_round_page(bpa + size);
+	endpa = i386_round_page((bpa + size) - 1);
+
+#ifdef DIAGNOSTIC
+	if (endpa <= pa)
+		panic("bus_mem_map: overflow");
+#endif
 
 	va = kmem_alloc_pageable(kernel_map, endpa - pa);
 	if (va == 0)
@@ -1516,6 +1481,12 @@ bus_mem_unmap(t, memh, size)
 	vm_offset_t va, endva;
 
 	va = i386_trunc_page(memh);
-	endva = i386_round_page(memh);
-	kmem_free(kmem_map, va, endva - va);
+	endva = i386_round_page((memh + size) - 1);
+
+#ifdef DIAGNOSTIC
+	if (endva <= va)
+		panic("bus_mem_unmap: overflow");
+#endif
+
+	kmem_free(kernel_map, va, endva - va);
 }
