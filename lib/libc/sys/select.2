@@ -140,6 +140,13 @@ An error return from
 .Fn select
 indicates:
 .Bl -tag -width Er
+.It Bq Er EFAULT
+One or more of
+.Fa readfds ,
+.Fa writefds ,
+or
+.Fa exceptfds
+points outside the process's allocated address space.
 .It Bq Er EBADF
 One of the descriptor sets specified an invalid descriptor.
 .It Bq Er EINTR
@@ -154,6 +161,7 @@ negative or too large.
 .Xr connect 2 ,
 .Xr getdtablesize 2 ,
 .Xr gettimeofday 2 ,
+.Xr poll 2 ,
 .Xr read 2 ,
 .Xr recv 2 ,
 .Xr send 2 ,
