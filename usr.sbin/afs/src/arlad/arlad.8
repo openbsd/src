@@ -1,11 +1,11 @@
-.\"     $OpenBSD: arlad.8,v 1.3 2002/06/07 07:25:22 hin Exp $
+.\"     $OpenBSD: arlad.8,v 1.4 2002/06/10 20:09:46 hin Exp $
 .\"	$KTH: arlad.8,v 1.7.2.2 2001/05/06 22:49:03 ahltorp Exp $
 .Dd September 5, 1998
 .Dt AFSD 8
 .Os
 .Sh NAME
 .Nm afsd
-.Nd AFS cache manager for xfs
+.Nd AFS cache manager
 .Sh SYNOPSIS
 .Nm
 .Op Fl t | Fl -test
@@ -133,10 +133,10 @@ default configuration for afsd
 .It Pa CellServDB
 database with all known AFS servers
 .It Pa ThisCell
-our default cell (where we get the root directory)
+default cell (where we get the root directory)
 .El
 .Pp
-It is highly recommended that the default cache directory be a separate
+It is highly recommended that the cache directory be a separate
 file system.
 If enough memory is available the cache filesystem could be a mfs to
 drastically improve performance.
