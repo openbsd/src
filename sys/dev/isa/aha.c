@@ -1097,7 +1097,8 @@ noinquire:
 		aha->sc_drq = 7;
 		break;
 	default:
-		printf("illegal dma setting %x\n", conf.chan);
+		printf("%s: illegal drq setting %x\n", aha->sc_dev.dv_xname,
+		    conf.chan);
 		return EIO;
 	}
 
@@ -1121,7 +1122,8 @@ noinquire:
 		aha->sc_irq = 15;
 		break;
 	default:
-		printf("illegal int setting %x\n", conf.intr);
+		printf("%s: illegal irq setting %x\n", aha->sc_dev.dv_xname,
+		    conf.intr);
 		return EIO;
 	}
 
