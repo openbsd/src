@@ -4416,7 +4416,7 @@ mips_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 	      bfd_byte *cr;
 
 	      if ((info->shared
-		   || (h != NULL
+		   && (h != NULL
 		       && ((h->elf_link_hash_flags & ELF_LINK_HASH_DEF_REGULAR)
 			   == 0)))
 		  && (input_section->flags & SEC_ALLOC) != 0)

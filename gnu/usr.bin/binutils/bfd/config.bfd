@@ -334,6 +334,10 @@ case "${targ}" in
     targ_defvec=bfd_elf32_littlemips_vec
     targ_selvecs=bfd_elf32_bigmips_vec
     ;;
+  mips-arc-openbsd*)
+    targ_defvec=bfd_elf32_littlemips_vec
+    targ_selvecs=bfd_elf32_bigmips_vec
+    ;;
   mips*-dec-bsd*)
     targ_defvec=aout_mips_little_vec
     targ_underscore=yes
