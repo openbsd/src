@@ -155,7 +155,7 @@ extern long get_run_time PARAMS ((void));
 extern char *make_relative_prefix PARAMS ((const char *, const char *,
 					   const char *));
 
-/* Choose a temporary directory to use for scratch files, DEPRECATED */
+/* Choose a temporary directory to use for scratch files.  */
 
 extern char *choose_temp_base PARAMS ((void)) ATTRIBUTE_MALLOC;
 
