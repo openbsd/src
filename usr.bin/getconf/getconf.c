@@ -1,4 +1,4 @@
-/*	$OpenBSD: getconf.c,v 1.6 2002/02/16 21:27:46 millert Exp $	*/
+/*	$OpenBSD: getconf.c,v 1.7 2003/05/21 00:56:50 pjanzen Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: getconf.c,v 1.6 2002/02/16 21:27:46 millert Exp $";
+static char rcsid[] = "$OpenBSD: getconf.c,v 1.7 2003/05/21 00:56:50 pjanzen Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -85,7 +85,7 @@ const struct conf_variable conf_table[] =
   { "_POSIX_NAME_MAX",		CONSTANT,	_POSIX_NAME_MAX		},
   { "_POSIX_NGROUPS_MAX",	CONSTANT,	_POSIX_NGROUPS_MAX	},
   { "_POSIX_OPEN_MAX",		CONSTANT,	_POSIX_OPEN_MAX		},
-  { "_POSIX_PATH_MAX",		CONSTANT,	_POSIX_PIPE_BUF		},
+  { "_POSIX_PATH_MAX",		CONSTANT,	_POSIX_PATH_MAX		},
   { "_POSIX_PIPE_BUF",		CONSTANT,	_POSIX_PIPE_BUF		},
   { "_POSIX_SSIZE_MAX",		CONSTANT,	_POSIX_SSIZE_MAX	},
   { "_POSIX_STREAM_MAX",	CONSTANT,	_POSIX_STREAM_MAX	},
