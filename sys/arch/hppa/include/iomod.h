@@ -1,4 +1,4 @@
-/*	$OpenBSD: iomod.h,v 1.1 1998/06/23 19:45:23 mickey Exp $	*/
+/*	$OpenBSD: iomod.h,v 1.2 1998/10/30 19:26:02 mickey Exp $	*/
 
 /*
  * Copyright (c) 1990 mt Xinu, Inc.  All rights reserved.
@@ -26,8 +26,8 @@
  *	Utah $Hdr: iomod.h 1.6 94/12/14$
  */
 
-#ifndef	_IOMOD_
-#define	_IOMOD_
+#ifndef	_MACHINE_IOMOD_H_
+#define	_MACHINE_IOMOD_H_
 
 #include <machine/pdc.h>
 
@@ -96,11 +96,15 @@
 
 #define	FLEX_MASK	0xFFFC0000	/* (see below) */
 
-#if !defined(_LOCORE) && !defined(ASSEMBLER)
-/*
- * Simplify typing for all these volatile things.
+/* size of HPA space for any device */
+#define	IOMOD_HPASIZE	0x1000
+
+/* offset to the device-specific registers,
+ * basically sizeof(struct iomod) (see later)
  */
-typedef	volatile char *			v_caddr;
+#define	IOMOD_DEVOFFSET	0x800
+
+#if !defined(_LOCORE)
 
 /*
  * The first 2K of Soft Physical Address space on the Initial Memory Module
@@ -114,11 +118,14 @@ typedef	volatile char *			v_caddr;
 struct pagezero {
 	/* [0x000] Initialize Vectors */
 	int	ivec_special;		/* must be zero */
-	int	(*ivec_mempf)__P((void));	/* powerfail recovery software */
-	int	(*ivec_toc)__P((void));		/* exec'd after Transfer Of Control */
-	int	ivec_toclen;		/* bytes of ivec_toc code */
-	int	(*ivec_rendz)__P((void));	/* exec'd after Rendezvous Signal */
-	int	ivec_mempflen;		/* bytes of ivec_mempf code */
+					/* powerfail recovery software */
+	int	(*ivec_mempf)__P((void));
+					/* exec'd after Transfer Of Control */
+	int	(*ivec_toc)__P((void));
+	u_int	ivec_toclen;		/* bytes of ivec_toc code */
+					/* exec'd after Rendezvous Signal */
+	int	(*ivec_rendz)__P((void));
+	u_int	ivec_mempflen;		/* bytes of ivec_mempf code */
 	int	ivec_resv[10];		/* (reserved) must be zero */
 
 	/* [0x040] Processor Dependent */
@@ -144,7 +151,7 @@ struct pagezero {
 	struct boot_err mem_be[8];	/* boot errors (see above) */
 	int	mem_free;		/* first free phys. memory location */
 	struct iomod *mem_hpa;		/* HPA of CPU */
-	int	(*mem_pdc)__P((void));		/* PDC entry point */
+	int	(*mem_pdc)__P((void));	/* PDC entry point */
 	u_int	mem_10msec;		/* # of Interval Timer ticks in 10msec*/
 
 	/* [0x390] Initial Memory Module */
@@ -265,6 +272,7 @@ struct iomod {
 	caddr_t	io_spa;		/* (WO) SPA space; 0-20:addr, 24-31:iodc_spa */
 	int	resv1[2];	/* (reserved) */
 	u_int	io_command;	/* (WO) module commands (see below) */
+#define	iomod_command	(4*12)
 	u_int	io_status;	/* (RO) error returns (see below) */
 	u_int	io_control;	/* memory err logging (bit-9), bc forwarding */
 	u_int	io_test;	/* (RO) self-test information */
@@ -296,7 +304,7 @@ struct iomod {
 
 /* io_spa */
 #define	IOSPA(spa,iodc_data)	\
-	((v_caddr)		\
+	((volatile caddr_t)		\
 	 (spa | iodc_data.iodc_spa_shift | iodc_data.iodc_spa_enb << 5 | \
 	  iodc_data.iodc_spa_pack << 6 | iodc_data.iodc_spa_io << 7))
 
@@ -355,53 +363,8 @@ struct iomod {
 /* io_spa */
 #define	SPA_ENABLE	0x20	/* io_spa register enable spa bit */
 
-
-/*
- * Before configuring the bus, we build a table which consists of
- * "useful information" on each module.  We then use this table to
- * allocate SPA's and reconfigure the bus.
- */
-
-#define	MODTABSIZ MAXMODBUS	/* size of static I/O module table */
-
-#if !defined(_LOCORE) && !defined(ASSEMBLER)
-struct modtab {
-	struct modtab	*mt_next;	/* pointer to next `modtab' entry */
-	u_int		m_fixed;	/* fixed bus address */
-	struct iodc_data mt_type;	/* type specific info from IODC */
-	volatile struct iomod *m_hpa;	/* ptr to HPA */
-	u_int		m_spa;		/* location of SPA */
-	u_int		m_spasiz;	/* size of SPA */
-	union {
-		struct {		/* Memory module */
-			u_int	M_memsiz;	/* size (m_memsiz) */
-		} m_Mem;
-		struct {		/* I/O module */
-			u_int	M_cioeim;	/* EIM address (m_cioeim) */
-			caddr_t	M_ciochain;	/* CIO chain RAM (m_ciochain) */
-		} m_Io;
-		struct {		/* Viper memory controller module */
-			u_int	M_vi_eim;	/* EIM address (m_vi_eim) */
-			u_int	M_vi_iwd;	/* EIM intr word (m_vi_iwd) */
-		} m_Vi;
-		union {			/* Foriegn I/O module */
-			u_int	M_scsiclk;	/* SCSI: clock frequency */
-			u_int	M_stirom;	/* GRF: location of STI ROM */
-		} m_Fio;
-	} m_Dep;
-};
-
-#define	m_memsiz	m_Dep.m_Mem.M_memsiz
-#define	m_cioeim	m_Dep.m_Io.M_cioeim
-#define	m_ciochain	m_Dep.m_Io.M_ciochain
-#define	m_vi_eim	m_Dep.m_Vi.M_vi_eim
-#define	m_vi_iwd	m_Dep.m_Vi.M_vi_iwd
-#define m_scsiclk	m_Dep.m_Fio.M_scsiclk
-#define m_stirom	m_Dep.m_Fio.M_stirom
-#endif	/* !(_LOCORE || ASSEMBLER) */
-
 #define	EIM_GRPMASK	0x1F	/* EIM register group mask */
 #define	EIEM_MASK(eim)	(0x80000000 >> (eim & EIM_GRPMASK))
 #define	EIEM_BITCNT	32	/* number of bits in EIEM register */
 
-#endif	/* _IOMOD_ */
+#endif	/* _MACHINE_IOMOD_H_ */
