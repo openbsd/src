@@ -1,4 +1,4 @@
-/*	$Id: if_ipw.c,v 1.14 2004/10/27 21:23:01 damien Exp $  */
+/*	$Id: if_ipw.c,v 1.15 2004/10/27 21:23:45 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -951,6 +951,9 @@ ipw_start(struct ifnet *ifp)
 	struct mbuf *m;
 	struct ieee80211_node *ni;
 
+	if (ic->ic_state != IEEE80211_S_RUN)
+		return;
+
 	for (;;) {
 		IF_DEQUEUE(&ifp->if_snd, m);
 		if (m == NULL)
@@ -992,9 +995,7 @@ ipw_watchdog(struct ifnet *ifp)
 	if (sc->sc_tx_timer > 0) {
 		if (--sc->sc_tx_timer == 0) {
 			printf("%s: device timeout\n", sc->sc_dev.dv_xname);
-#ifdef notyet
-			ipw_init(ifp);
-#endif
+			ipw_stop(ifp, 1);
 			return;
 		}
 		ifp->if_timer = 1;
