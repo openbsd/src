@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.60 2003/05/30 16:00:43 deraadt Exp $ */
+/*	$OpenBSD: loader.c,v 1.61 2003/05/30 19:07:34 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -123,25 +123,13 @@ _dl_dopreload(char *paths)
 }
 
 /*
- * This is the dynamic loader entrypoint. When entering here, depending
- * on architecture type, the stack and registers are set up according
- * to the architectures ABI specification. The first thing required
- * to do is to dig out all information we need to accomplish our task.
+ * grab interesting environment variables, zap bad env vars if
+ * issetugid
  */
-unsigned long
-_dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
-{
-	struct elf_object *exe_obj;	/* Pointer to executable object */
-	struct elf_object *dyn_obj;	/* Pointer to executable object */
-	struct r_debug **map_link;	/* Where to put pointer for gdb */
-	struct r_debug *debug_map;
-	Elf_Dyn *dynp;
-	elf_object_t *dynobj;
-	Elf_Phdr *phdp;
-	char *us = "";
-	unsigned int i;
-	int libcnt = 0;
 
+void
+_dl_setup_env(char **envp)
+{
 	/*
 	 * Get paths to various things we are going to use.
 	 */
@@ -173,13 +161,34 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 			_dl_debug = NULL;
 			_dl_unsetenv("LD_DEBUG", envp);
 		}
-#if 0
 		if (_dl_norandom) {
 			_dl_norandom = NULL;
 			_dl_unsetenv("LD_NORANDOM", envp);
 		}
-#endif
 	}
+}
+
+/*
+ * This is the dynamic loader entrypoint. When entering here, depending
+ * on architecture type, the stack and registers are set up according
+ * to the architectures ABI specification. The first thing required
+ * to do is to dig out all information we need to accomplish our task.
+ */
+unsigned long
+_dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
+{
+	struct elf_object *exe_obj;	/* Pointer to executable object */
+	struct elf_object *dyn_obj;	/* Pointer to executable object */
+	struct r_debug **map_link;	/* Where to put pointer for gdb */
+	struct r_debug *debug_map;
+	Elf_Dyn *dynp;
+	elf_object_t *dynobj;
+	Elf_Phdr *phdp;
+	char *us = "";
+	unsigned int i;
+	int libcnt = 0;
+
+	_dl_setup_env(envp);
 
 	_dl_progname = argv[0];
 	if (dl_data[AUX_pagesz] != 0)
