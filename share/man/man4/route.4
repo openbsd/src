@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.4,v 1.8 2001/10/05 14:45:53 mpech Exp $
+.\"	$OpenBSD: route.4,v 1.9 2002/05/06 21:13:18 deraadt Exp $
 .\"	$NetBSD: route.4,v 1.3 1994/11/30 16:22:31 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -94,7 +94,7 @@ A route to a host is regarded as being supplied with a mask of
 as many ones as there are bits in the destination).
 If no entry is found, the destination is declared to be unreachable,
 and a routing\-miss message is generated if there are any
-listers on the routing control socket described below.
+listeners on the routing control socket described below.
 .Pp
 A wildcard routing entry is specified with a zero
 destination address value, and a mask of all zeroes.
