@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.41 2001/05/14 06:56:55 angelos Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.42 2001/05/14 08:02:21 angelos Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -431,6 +431,7 @@ extern struct kmembuckets bucket[];
 
 extern void *malloc __P((unsigned long size, int type, int flags));
 extern void free __P((void *addr, int type));
-extern int sysctl_malloc __P((int *, u_int, void *, size_t *, void *, size_t));
+extern int sysctl_malloc __P((int *, u_int, void *, size_t *, void *, size_t,
+			      struct proc *));
 #endif /* _KERNEL */
 #endif /* !_SYS_MALLOC_H_ */
