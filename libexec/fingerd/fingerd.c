@@ -1,3 +1,5 @@
+/*	$OpenBSD: fingerd.c,v 1.9 1997/08/16 20:34:20 millert Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,8 +40,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)fingerd.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: fingerd.c,v 1.8 1997/07/25 19:41:14 mickey Exp $";
+#if 0
+static char sccsid[] = "from: @(#)fingerd.c	8.1 (Berkeley) 6/4/93";
+#else
+static char rcsid[] = "$OpenBSD: fingerd.c,v 1.9 1997/08/16 20:34:20 millert Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -123,6 +128,10 @@ main(argc, argv)
 	if (!fgets(line, sizeof(line), stdin))
 		exit(1);
 	
+	/*
+	 * Note: we assume that finger(1) will treat "--" as end of
+	 * command args (ie: that it uses getopt(3)).
+	 */
 	av[ac++] = "--";
 	comp = &av[1];
 	for (lp = line, ap = &av[ac]; ac < ENTRIES;) {
