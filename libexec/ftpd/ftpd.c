@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.44 1997/08/06 00:18:00 angelos Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.45 1997/12/12 08:55:09 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -133,6 +133,7 @@ int	multihome = 0;
 int	guest;
 int	stats;
 int	statfd = -1;
+int	portcheck = 1;
 int	dochroot;
 int	type;
 int	form;
@@ -248,7 +249,7 @@ main(argc, argv, envp)
 	int addrlen, ch, on = 1, tos;
 	char *cp, line[LINE_MAX];
 	FILE *fd;
-	char *argstr = "AdDhlMSt:T:u:Uv";
+	char *argstr = "AdDhlMSt:T:u:UvP";
 	struct hostent *hp;
 
 	tzset();	/* in case no timezone database in ~ftp */
@@ -268,6 +269,10 @@ main(argc, argv, envp)
 
 		case 'D':
 			daemon_mode = 1;
+			break;
+
+		case 'P':
+			portcheck = 0;
 			break;
 
 		case 'h':

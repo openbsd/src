@@ -88,6 +88,8 @@ extern	char proctitle[];
 extern	int usedefault;
 extern  int transflag;
 extern  char tmpline[];
+extern	int portcheck;
+extern	struct sockaddr_in his_addr;
 
 off_t	restart_point;
 
@@ -158,12 +160,21 @@ cmd
 	| PORT check_login SP host_port CRLF
 		{
 			if ($2) {
-				usedefault = 0;
-				if (pdata >= 0) {
-					(void) close(pdata);
-					pdata = -1;
+				if (portcheck && (ntohs(data_dest.sin_port) <
+				    IPPORT_RESERVED ||
+				    memcmp(&data_dest.sin_addr,
+				    &his_addr.sin_addr,
+				    sizeof data_dest.sin_addr))) {
+					usedefault = 1;
+					reply(500, "Illegal PORT rejected.");
+				} else {
+					usedefault = 0;
+					if (pdata >= 0) {
+						(void) close(pdata);
+						pdata = -1;
+					}
+					reply(200, "PORT command successful.");
 				}
-				reply(200, "PORT command successful.");
 			}
 		}
 	| PASV check_login CRLF
