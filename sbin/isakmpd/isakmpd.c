@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmpd.c,v 1.46 2002/11/21 12:09:20 ho Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.47 2002/11/27 15:29:20 ho Exp $	*/
 /*	$EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	*/
 
 /*
@@ -45,6 +45,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include "sysdep.h"
 
@@ -348,9 +349,16 @@ main (int argc, char *argv[])
   size_t mask_size;
   struct timeval tv, *timeout;
 
+  /* Make sure init() won't alloc fd 0, 1 or 2, as daemon() will close them. */
+  for (n = 0; n <= 2; n++)
+    if (fcntl (n, F_GETFL, 0) == -1 && errno == EBADF)
+      (void)open ("/dev/null", n ? O_WRONLY : O_RDONLY, 0);
+
+  /* Log cmd line parsing and initialization errors to stderr.  */
   log_to (stderr);
   parse_args (argc, argv);
   init ();
+
   if (!debug)
     {
       if (daemon (0, 0))
