@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lmc.c,v 1.5 2000/02/06 20:56:02 chris Exp $ */
+/*	$OpenBSD: if_lmc.c,v 1.6 2000/04/27 00:32:09 chris Exp $ */
 /*	$NetBSD: if_lmc.c,v 1.1 1999/03/25 03:32:43 explorer Exp $	*/
 
 /*-
@@ -1228,9 +1228,6 @@ lmc_ifioctl(struct ifnet * ifp, ioctl_cmd_t cmd, caddr_t data)
 		break;
 
 #if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
-#if !defined(ifr_mtu)
-#define ifr_mtu ifr_metric
-#endif
 	case SIOCSIFMTU:
 		/*
 		 * Don't allow the MTU to get larger than we can handle
@@ -1238,7 +1235,10 @@ lmc_ifioctl(struct ifnet * ifp, ioctl_cmd_t cmd, caddr_t data)
 		if (ifr->ifr_mtu > LMC_MTU) {
 			error = EINVAL;
 			goto out;
+		} else {
+                        ifp->if_mtu = ifr->ifr_mtu;
 		}
+		break;
 #endif
 	}
 
