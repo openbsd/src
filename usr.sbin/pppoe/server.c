@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.3 2001/01/16 05:01:40 jason Exp $	*/
+/*	$OpenBSD: server.c,v 1.4 2001/01/16 05:34:15 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -103,12 +103,14 @@ reselect:
 		if (n > oldmax) {
 			if (fdsp != NULL)
 				free(fdsp);
-			fdsp = (fd_set *)calloc(howmany(n, NFDBITS),
+			fdsp = (fd_set *)malloc(howmany(n, NFDBITS) *
 			    sizeof(fd_mask));
 			if (fdsp == NULL)
 				break;
 			oldmax = n;
 		}
+		bzero(fdsp, howmany(n, NFDBITS) * sizeof(fd_mask));
+
 		FD_SET(bpffd, fdsp);
 		LIST_FOREACH(ses, &session_master.sm_sessions, s_next) {
 			if (ses->s_fd != -1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.7 2001/01/16 05:01:39 jason Exp $	*/
+/*	$OpenBSD: client.c,v 1.8 2001/01/16 05:34:15 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -116,7 +116,7 @@ client_mode(bfd, sysname, srvname, myea)
 		if (max > oldmax) {
 			if (fdsp != NULL)
 				free(fdsp);
-			fdsp = (fd_set *)calloc(howmany(max, NFDBITS),
+			fdsp = (fd_set *)malloc(howmany(max, NFDBITS) *
 			    sizeof(fd_mask));
 			if (fdsp == NULL) {
 				r = -1;
@@ -124,6 +124,7 @@ client_mode(bfd, sysname, srvname, myea)
 			}
 			max = oldmax;
 		}
+		bzero(fdsp, howmany(max, NFDBITS) * sizeof(fd_mask));
 
 		if (pppfd >= 0)
 			FD_SET(pppfd, fdsp);
