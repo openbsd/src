@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.19 1998/08/01 06:17:15 angelos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.20 1998/08/01 06:19:27 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -359,8 +359,14 @@ main(argc, argv)
 				fprintf(stderr, "%s: unknown security protocol type %s\n", argv[0], argv[i+1]);
 				exit(1);
 			}
-		  } else
+		  } else {
 		  	proto = atoi(argv[i+1]);
+			if (proto != IPPROTO_ESP && proto != IPPROTO_AH &&
+			    proto != IPPROTO_IPIP) {
+				fprintf(stderr, "%s: unknown security protocol %d\n", argv[0], proto);
+				exit(1);
+			}
+		  }
 		  i++;
 	     } else if (!strcmp(argv[i]+1, "proto2") && 
 			iscmd(mode, GRP_SPI) && i+1 < argc) {
@@ -377,6 +383,11 @@ main(argc, argv)
 			}
 		  } else
 		  	proto2 = atoi(argv[i+1]);
+			if (proto2 != IPPROTO_ESP && proto2 != IPPROTO_AH &&
+			    proto2 != IPPROTO_IPIP) {
+				fprintf(stderr, "%s: unknown security protocol %d\n", argv[0], proto);
+				exit(1);
+			}
 		  i++;
 	     } else if (!strcmp(argv[i]+1, "chain") && chain == 0 &&
 			iscmd(mode, DEL_SPI)) {
