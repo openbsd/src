@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.207 1999/12/17 11:42:06 fgsch Exp $
+	$OpenBSD: pcidevs,v 1.208 2000/01/03 23:38:25 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -652,6 +652,7 @@ product ADVSYS 1200A		0x1100	1200A
 product ADVSYS 1200B		0x1200	1200B
 product ADVSYS ULTRA		0x1300	ABP-930/40UA
 product ADVSYS WIDE		0x2300	ABP-940UW
+product ADVSYS U2W		0x2300	ASP-3940U2W
 
 /* Alliance products */
 product ALLIANCE AT22		0x6424	AT22
