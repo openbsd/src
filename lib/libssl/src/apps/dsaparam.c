@@ -69,6 +69,7 @@
 #include <openssl/dsa.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
+#include <openssl/engine.h>
 
 #undef PROG
 #define PROG	dsaparam_main
@@ -90,11 +91,12 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
+	ENGINE *e = NULL;
 	DSA *dsa=NULL;
 	int i,badops=0,text=0;
 	BIO *in=NULL,*out=NULL;
 	int informat,outformat,noout=0,C=0,ret=1;
-	char *infile,*outfile,*prog,*inrand=NULL;
+	char *infile,*outfile,*prog,*inrand=NULL,*engine=NULL;
 	int numbits= -1,num,genkey=0;
 	int need_rand=0;
 
@@ -205,7 +207,15 @@ bad:
 			}
 		}
 	if (outfile == NULL)
+		{
 		BIO_set_fp(out,stdout,BIO_NOCLOSE);
+#ifdef VMS
+		{
+		BIO *tmpbio = BIO_new(BIO_f_linebuffer());
+		out = BIO_push(tmpbio, out);
+		}
+#endif
+		}
 	else
 		{
 		if (BIO_write_filename(out,outfile) <= 0)
@@ -260,10 +270,10 @@ bad:
 		bits_p=BN_num_bits(dsa->p);
 		bits_q=BN_num_bits(dsa->q);
 		bits_g=BN_num_bits(dsa->g);
-		data=(unsigned char *)Malloc(len+20);
+		data=(unsigned char *)OPENSSL_malloc(len+20);
 		if (data == NULL)
 			{
-			perror("Malloc");
+			perror("OPENSSL_malloc");
 			goto end;
 			}
 		l=BN_bn2bin(dsa->p,data);
@@ -347,7 +357,7 @@ bad:
 	ret=0;
 end:
 	if (in != NULL) BIO_free(in);
-	if (out != NULL) BIO_free(out);
+	if (out != NULL) BIO_free_all(out);
 	if (dsa != NULL) DSA_free(dsa);
 	EXIT(ret);
 	}

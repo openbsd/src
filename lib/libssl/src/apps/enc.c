@@ -70,6 +70,7 @@
 #include <openssl/md5.h>
 #endif
 #include <openssl/pem.h>
+#include <openssl/engine.h>
 
 int set_hex(char *in,unsigned char *out,int size);
 #undef SIZE
@@ -84,6 +85,7 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
+	ENGINE *e = NULL;
 	static const char magic[]="Salted__";
 	char mbuf[8];	/* should be 1 smaller than magic */
 	char *strbuf=NULL;
@@ -101,6 +103,7 @@ int MAIN(int argc, char **argv)
 	BIO *in=NULL,*out=NULL,*b64=NULL,*benc=NULL,*rbio=NULL,*wbio=NULL;
 #define PROG_NAME_SIZE  16
 	char pname[PROG_NAME_SIZE];
+	char *engine = NULL;
 
 	apps_startup();
 
@@ -140,6 +143,11 @@ int MAIN(int argc, char **argv)
 			{
 			if (--argc < 1) goto bad;
 			passarg= *(++argv);
+			}
+		else if (strcmp(*argv,"-engine") == 0)
+			{
+			if (--argc < 1) goto bad;
+			engine= *(++argv);
 			}
 		else if	(strcmp(*argv,"-d") == 0)
 			enc=0;
@@ -241,6 +249,7 @@ bad:
 			BIO_printf(bio_err,"%-14s key/iv in hex is the next argument\n","-K/-iv");
 			BIO_printf(bio_err,"%-14s print the iv/key (then exit if -P)\n","-[pP]");
 			BIO_printf(bio_err,"%-14s buffer size\n","-bufsize <n>");
+			BIO_printf(bio_err,"%-14s use engine e, possibly a hardware device.\n","-engine e");
 
 			BIO_printf(bio_err,"Cipher Types\n");
 			BIO_printf(bio_err,"des     : 56 bit key DES encryption\n");
@@ -314,6 +323,24 @@ bad:
 		argv++;
 		}
 
+	if (engine != NULL)
+		{
+		if((e = ENGINE_by_id(engine)) == NULL)
+			{
+			BIO_printf(bio_err,"invalid engine \"%s\"\n",
+				engine);
+			goto end;
+			}
+		if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
+			{
+			BIO_printf(bio_err,"can't use that engine\n");
+			goto end;
+			}
+		BIO_printf(bio_err,"engine \"%s\" set.\n", engine);
+		/* Free our "structural" reference. */
+		ENGINE_free(e);
+		}
+
 	if (bufsize != NULL)
 		{
 		unsigned long n;
@@ -343,11 +370,11 @@ bad:
 		if (verbose) BIO_printf(bio_err,"bufsize=%d\n",bsize);
 		}
 
-	strbuf=Malloc(SIZE);
-	buff=(unsigned char *)Malloc(EVP_ENCODE_LENGTH(bsize));
+	strbuf=OPENSSL_malloc(SIZE);
+	buff=(unsigned char *)OPENSSL_malloc(EVP_ENCODE_LENGTH(bsize));
 	if ((buff == NULL) || (strbuf == NULL))
 		{
-		BIO_printf(bio_err,"Malloc failure %ld\n",(long)EVP_ENCODE_LENGTH(bsize));
+		BIO_printf(bio_err,"OPENSSL_malloc failure %ld\n",(long)EVP_ENCODE_LENGTH(bsize));
 		goto end;
 		}
 
@@ -416,7 +443,15 @@ bad:
 
 
 	if (outf == NULL)
+		{
 		BIO_set_fp(out,stdout,BIO_NOCLOSE);
+#ifdef VMS
+		{
+		BIO *tmpbio = BIO_new(BIO_f_linebuffer());
+		out = BIO_push(tmpbio, out);
+		}
+#endif
+		}
 	else
 		{
 		if (BIO_write_filename(out,outf) <= 0)
@@ -581,13 +616,13 @@ bad:
 		}
 end:
 	ERR_print_errors(bio_err);
-	if (strbuf != NULL) Free(strbuf);
-	if (buff != NULL) Free(buff);
+	if (strbuf != NULL) OPENSSL_free(strbuf);
+	if (buff != NULL) OPENSSL_free(buff);
 	if (in != NULL) BIO_free(in);
-	if (out != NULL) BIO_free(out);
+	if (out != NULL) BIO_free_all(out);
 	if (benc != NULL) BIO_free(benc);
 	if (b64 != NULL) BIO_free(b64);
-	if(pass) Free(pass);
+	if(pass) OPENSSL_free(pass);
 	EXIT(ret);
 	}
 

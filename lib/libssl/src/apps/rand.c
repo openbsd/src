@@ -9,6 +9,7 @@
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
+#include <openssl/engine.h>
 
 #undef PROG
 #define PROG rand_main
@@ -23,6 +24,7 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
+	ENGINE *e = NULL;
 	int i, r, ret = 1;
 	int badopt;
 	char *outfile = NULL;
@@ -30,6 +32,7 @@ int MAIN(int argc, char **argv)
 	int base64 = 0;
 	BIO *out = NULL;
 	int num = -1;
+	char *engine=NULL;
 
 	apps_startup();
 
@@ -48,6 +51,13 @@ int MAIN(int argc, char **argv)
 			else
 				badopt = 1;
 			}
+		if (strcmp(argv[i], "-engine") == 0)
+			{
+			if ((argv[i+1] != NULL) && (engine == NULL))
+				engine = argv[++i];
+			else
+				badopt = 1;
+			}
 		else if (strcmp(argv[i], "-rand") == 0)
 			{
 			if ((argv[i+1] != NULL) && (inrand == NULL))
@@ -62,7 +72,7 @@ int MAIN(int argc, char **argv)
 			else
 				badopt = 1;
 			}
-		else if (isdigit(argv[i][0]))
+		else if (isdigit((unsigned char)argv[i][0]))
 			{
 			if (num < 0)
 				{
@@ -84,10 +94,29 @@ int MAIN(int argc, char **argv)
 		{
 		BIO_printf(bio_err, "Usage: rand [options] num\n");
 		BIO_printf(bio_err, "where options are\n");
-		BIO_printf(bio_err, "-out file            - write to file\n");
-		BIO_printf(bio_err, "-rand file%cfile%c...  - seed PRNG from files\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
-		BIO_printf(bio_err, "-base64              - encode output\n");
+		BIO_printf(bio_err, "-out file             - write to file\n");
+		BIO_printf(bio_err," -engine e             - use engine e, possibly a hardware device.\n");
+		BIO_printf(bio_err, "-rand file%cfile%c... - seed PRNG from files\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
+		BIO_printf(bio_err, "-base64               - encode output\n");
 		goto err;
+		}
+
+	if (engine != NULL)
+		{
+		if((e = ENGINE_by_id(engine)) == NULL)
+			{
+			BIO_printf(bio_err,"invalid engine \"%s\"\n",
+				engine);
+			goto err;
+			}
+		if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
+			{
+			BIO_printf(bio_err,"can't use that engine\n");
+			goto err;
+			}
+		BIO_printf(bio_err,"engine \"%s\" set.\n", engine);
+		/* Free our "structural" reference. */
+		ENGINE_free(e);
 		}
 
 	app_RAND_load_file(NULL, bio_err, (inrand != NULL));
@@ -101,7 +130,15 @@ int MAIN(int argc, char **argv)
 	if (outfile != NULL)
 		r = BIO_write_filename(out, outfile);
 	else
+		{
 		r = BIO_set_fp(out, stdout, BIO_NOCLOSE | BIO_FP_TEXT);
+#ifdef VMS
+		{
+		BIO *tmpbio = BIO_new(BIO_f_linebuffer());
+		out = BIO_push(tmpbio, out);
+		}
+#endif
+		}
 	if (r <= 0)
 		goto err;
 

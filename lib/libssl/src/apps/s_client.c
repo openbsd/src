@@ -79,6 +79,7 @@ typedef unsigned int u_int;
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/pem.h>
+#include <openssl/engine.h>
 #include "s_apps.h"
 
 #ifdef WINDOWS
@@ -152,6 +153,7 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -bugs         - Switch on all SSL implementation bug workarounds\n");
 	BIO_printf(bio_err," -cipher       - preferred cipher to use, use the 'openssl ciphers'\n");
 	BIO_printf(bio_err,"                 command to see what is available\n");
+	BIO_printf(bio_err," -engine id    - Initialise and use the specified engine\n");
 
 	}
 
@@ -179,6 +181,8 @@ int MAIN(int argc, char **argv)
 	int prexit = 0;
 	SSL_METHOD *meth=NULL;
 	BIO *sbio;
+	char *engine_id=NULL;
+	ENGINE *e=NULL;
 #ifdef WINDOWS
 	struct timeval tv;
 #endif
@@ -201,8 +205,8 @@ int MAIN(int argc, char **argv)
 	if (bio_err == NULL)
 		bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
 
-	if (	((cbuf=Malloc(BUFSIZZ)) == NULL) ||
-		((sbuf=Malloc(BUFSIZZ)) == NULL))
+	if (	((cbuf=OPENSSL_malloc(BUFSIZZ)) == NULL) ||
+		((sbuf=OPENSSL_malloc(BUFSIZZ)) == NULL))
 		{
 		BIO_printf(bio_err,"out of memory\n");
 		goto end;
@@ -316,6 +320,11 @@ int MAIN(int argc, char **argv)
 		else if (strcmp(*argv,"-nbio") == 0)
 			{ c_nbio=1; }
 #endif
+		else if	(strcmp(*argv,"-engine") == 0)
+			{
+			if (--argc < 1) goto bad;
+			engine_id = *(++argv);
+			}
 		else
 			{
 			BIO_printf(bio_err,"unknown option %s\n",*argv);
@@ -349,6 +358,30 @@ bad:
 
 	OpenSSL_add_ssl_algorithms();
 	SSL_load_error_strings();
+
+	if (engine_id != NULL)
+		{
+		if((e = ENGINE_by_id(engine_id)) == NULL)
+			{
+			BIO_printf(bio_err,"invalid engine\n");
+			ERR_print_errors(bio_err);
+			goto end;
+			}
+		if (c_debug)
+			{
+			ENGINE_ctrl(e, ENGINE_CTRL_SET_LOGSTREAM,
+				0, bio_err, 0);
+			}
+		if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
+			{
+			BIO_printf(bio_err,"can't use that engine\n");
+			ERR_print_errors(bio_err);
+			goto end;
+			}
+		BIO_printf(bio_err,"engine \"%s\" set.\n", engine_id);
+		ENGINE_free(e);
+		}
+
 	ctx=SSL_CTX_new(meth);
 	if (ctx == NULL)
 		{
@@ -523,7 +556,7 @@ re_start:
 					tv.tv_usec = 0;
 					i=select(width,(void *)&readfds,(void *)&writefds,
 						 NULL,&tv);
-					if(!i && (!_kbhit() || !read_tty) ) continue;
+					if(!i && (!((_kbhit()) || (WAIT_OBJECT_0 == WaitForSingleObject(GetStdHandle(STD_INPUT_HANDLE), 0))) || !read_tty) ) continue;
 				} else 	i=select(width,(void *)&readfds,(void *)&writefds,
 					 NULL,NULL);
 			}
@@ -689,7 +722,7 @@ printf("read=%d pending=%d peek=%d\n",k,SSL_pending(con),SSL_peek(con,zbuf,10240
 			}
 
 #ifdef WINDOWS
-		else if (_kbhit())
+		else if ((_kbhit()) || (WAIT_OBJECT_0 == WaitForSingleObject(GetStdHandle(STD_INPUT_HANDLE), 0)))
 #else
 		else if (FD_ISSET(fileno(stdin),&readfds))
 #endif
@@ -753,8 +786,8 @@ end:
 	if (con != NULL) SSL_free(con);
 	if (con2 != NULL) SSL_free(con2);
 	if (ctx != NULL) SSL_CTX_free(ctx);
-	if (cbuf != NULL) { memset(cbuf,0,BUFSIZZ); Free(cbuf); }
-	if (sbuf != NULL) { memset(sbuf,0,BUFSIZZ); Free(sbuf); }
+	if (cbuf != NULL) { memset(cbuf,0,BUFSIZZ); OPENSSL_free(cbuf); }
+	if (sbuf != NULL) { memset(sbuf,0,BUFSIZZ); OPENSSL_free(sbuf); }
 	if (bio_c_out != NULL)
 		{
 		BIO_free(bio_c_out);

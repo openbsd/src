@@ -94,27 +94,21 @@ SRCS+=	stack.c
 CFLAGS+= -I${LCRYPTO_SRC}/lhash
 SRCS+=	lhash.c lh_stats.c					
 CFLAGS+= -I${LCRYPTO_SRC}/rand
-SRCS+=	md_rand.c randfile.c rand_lib.c	rand_egd.c rand_err.c
+SRCS+=	md_rand.c randfile.c rand_lib.c	rand_egd.c rand_err.c rand_win.c
 CFLAGS+= -I${LCRYPTO_SRC}/err
 SRCS+=	err.c err_all.c err_prn.c				
 CFLAGS+= -I${LCRYPTO_SRC}/objects
 SRCS+=	obj_dat.c obj_lib.c obj_err.c o_names.c
 CFLAGS+= -I${LCRYPTO_SRC}/evp
-SRCS+=	encode.c digest.c evp_enc.c evp_key.c 		
-SRCS+=	e_ecb_d.c e_cbc_d.c e_cfb_d.c e_ofb_d.c		
-SRCS+=	e_ecb_i.c e_cbc_i.c e_cfb_i.c e_ofb_i.c		
-SRCS+=	e_ecb_3d.c e_cbc_3d.c e_rc4.c names.c		
-SRCS+=	e_cfb_3d.c e_ofb_3d.c e_xcbc_d.c e_ecb_r2.c	
-SRCS+=	e_cbc_r2.c e_cfb_r2.c e_ofb_r2.c e_ecb_bf.c	
-SRCS+=	e_cbc_bf.c e_cfb_bf.c e_ofb_bf.c e_ecb_c.c	
-SRCS+=	e_cbc_c.c e_cfb_c.c e_ofb_c.c e_ecb_r5.c	
-SRCS+=	e_cbc_r5.c e_cfb_r5.c e_ofb_r5.c m_null.c	
-SRCS+=	m_md2.c m_md5.c m_sha.c m_sha1.c m_dss.c	
-SRCS+=	m_dss1.c m_mdc2.c m_ripemd.c p_open.c 		
-SRCS+=	p_seal.c p_sign.c p_verify.c p_lib.c p_enc.c
-SRCS+=	p_dec.c bio_md.c bio_b64.c bio_enc.c		
-SRCS+=	evp_err.c e_null.c c_all.c c_allc.c c_alld.c evp_lib.c
-SRCS+=	bio_ok.c evp_pbe.c evp_pkey.c p5_crpt.c p5_crpt2.c
+SRCS+= bio_b64.c bio_enc.c bio_md.c bio_ok.c c_all.c c_allc.c c_alld.c
+SRCS+= digest.c e_bf.c e_cast.c e_des.c e_des3.c
+SRCS+= e_null.c e_rc2.c e_rc4.c e_xcbc_d.c encode.c evp_enc.c
+SRCS+= evp_err.c evp_key.c evp_lib.c evp_pbe.c evp_pkey.c m_dss.c
+SRCS+= m_dss1.c m_md2.c m_md4.c m_md5.c m_mdc2.c m_null.c m_ripemd.c
+SRCS+= m_sha.c m_sha1.c names.c p5_crpt.c p5_crpt2.c p_dec.c p_enc.c
+SRCS+= p_lib.c p_open.c p_seal.c p_sign.c p_verify.c
+CFLAGS+= -I${LCRYPTO_SRC}/md4
+SRCS+= md4_dgst.c md4_one.c
 CFLAGS+= -I${LCRYPTO_SRC}/pem
 SRCS+=	pem_sign.c pem_seal.c pem_info.c pem_lib.c	
 SRCS+=	pem_all.c pem_err.c 
@@ -139,8 +133,7 @@ SRCS+=	asn1_err.c a_meth.c a_bytes.c evp_asn1.c
 SRCS+=	a_enum.c a_gentm.c a_time.c a_utf8.c a_vis.c 
 SRCS+=	asn_pack.c f_enum.c nsseq.c p5_pbe.c p5_pbev2.c 
 SRCS+=	p8_pkey.c t_crl.c a_meth.c a_null.c a_strnid.c a_mbstr.c
-#SRCS+=	p8_key.c t_bitst.c t_spki.c t_x509a.c x_x509a.c
-SRCS+=	t_bitst.c t_spki.c t_x509a.c x_x509a.c
+SRCS+=	t_bitst.c t_spki.c t_x509a.c x_x509a.c a_strex.c
 CFLAGS+= -I${LCRYPTO_SRC}/x509
 SRCS+=	x509_def.c x509_d2.c x509_r2x.c x509_cmp.c	
 SRCS+=	x509_obj.c x509_req.c x509_vfy.c x509_set.c	
@@ -153,7 +146,7 @@ SRCS+=	v3_crld.c v3_enum.c v3_extku.c v3_genn.c v3_ia5.c v3_int.c
 SRCS+=	v3_lib.c v3_pku.c v3_prn.c v3_skey.c v3_sxnet.c v3_utl.c
 SRCS+=	v3err.c v3_info.c v3_purp.c
 CFLAGS+= -I${LCRYPTO_SRC}/conf
-SRCS+=	conf.c conf_err.c					
+SRCS+=	conf_err.c conf_lib.c conf_def.c conf_api.c cnf_save.c
 CFLAGS+= -I${LCRYPTO_SRC}/txt_db
 SRCS+=	txt_db.c							
 CFLAGS+= -I${LCRYPTO_SRC}/pkcs7
@@ -164,14 +157,76 @@ CFLAGS+= -I${LCRYPTO_SRC}/pkcs12
 SRCS+=	p12_add.c p12_attr.c p12_bags.c p12_crpt.c p12_crt.c
 SRCS+=	p12_decr.c p12_init.c p12_key.c p12_kiss.c p12_lib.c p12_mac.c
 SRCS+=	p12_mutl.c p12_sbag.c p12_utl.c pk12err.c p12_npas.c
+CFLAGS+= -I${LCRYPTO_SRC}/engine
+SRCS+= engine_err.c engine_lib.c engine_list.c engine_openssl.c
+SRCS+= hw_ncipher.c hw_atalla.c hw_cswift.c
 
-HDRS= asn1.h dh.h md5.h rc4.h stack.h asn1_mac.h dsa.h mdc2.h rc5.h	\
-      tls1.h bio.h e_os.h objects.h ripemd.h tmdiff.h blowfish.h	\
-      e_os2.h opensslconf.h rsa.h txt_db.h bn.h ebcdic.h opensslv.h	\
-      rsaref.h x509.h buffer.h err.h pem.h safestack.h x509_vfy.h	\
-      cast.h evp.h pem2.h sha.h x509v3.h comp.h hmac.h pkcs12.h ssl.h	\
-      conf.h idea.h pkcs7.h ssl2.h crypto.h lhash.h rand.h ssl23.h	\
-      des.h md2.h rc2.h ssl3.h
+
+#HDRS= asn1.h dh.h md5.h rc4.h stack.h asn1_mac.h dsa.h mdc2.h rc5.h	\
+#      tls1.h bio.h e_os.h objects.h ripemd.h tmdiff.h blowfish.h	\
+#      e_os2.h opensslconf.h rsa.h txt_db.h bn.h ebcdic.h opensslv.h	\
+#      rsaref.h x509.h buffer.h err.h pem.h safestack.h x509_vfy.h	\
+#      cast.h evp.h pem2.h sha.h x509v3.h comp.h hmac.h pkcs12.h ssl.h	\
+#      conf.h idea.h pkcs7.h ssl2.h crypto.h lhash.h rand.h ssl23.h	\
+#      des.h md2.h rc2.h ssl3.h
+
+HDRS= asn1.h \
+asn1_mac.h  \
+bio.h \
+blowfish.h \
+bn.h \
+buffer.h \
+cast.h \
+comp.h \
+conf.h \
+conf_api.h \
+crypto.h \
+des.h \
+dh.h \
+dsa.h \
+dso.h \
+e_os.h \
+e_os2.h \
+ebcdic.h \
+engine.h \
+err.h \
+evp.h \
+hmac.h \
+idea.h \
+lhash.h \
+md2.h \
+md4.h \
+md5.h \
+mdc2.h \
+obj_mac.h \
+objects.h \
+opensslconf.h \
+opensslv.h \
+pem.h \
+pem2.h \
+pkcs12.h \
+pkcs7.h \
+rand.h \
+rc2.h \
+rc4.h \
+rc5.h \
+ripemd.h \
+rsa.h \
+rsaref.h \
+safestack.h \
+sha.h \
+ssl.h \
+ssl2.h \
+ssl23.h \
+ssl3.h \
+stack.h \
+symhacks.h \
+tls1.h \
+tmdiff.h \
+txt_db.h \
+x509.h \
+x509_vfy.h \
+x509v3.h
 
 
 .PATH:	${LCRYPTO_SRC}/md2 ${LCRYPTO_SRC}/md5 ${LCRYPTO_SRC}/sha ${LCRYPTO_SRC}/mdc2	\
@@ -183,7 +238,7 @@ HDRS= asn1.h dh.h md5.h rc4.h stack.h asn1_mac.h dsa.h mdc2.h rc5.h	\
 	${LCRYPTO_SRC}/evp ${LCRYPTO_SRC}/pem ${LCRYPTO_SRC}/asn1  ${LCRYPTO_SRC}/asn1 \
 	${LCRYPTO_SRC}/x509 ${LCRYPTO_SRC}/conf txt_db/txt_db.c ${LCRYPTO_SRC}/pkcs7 \
 	${LCRYPTO_SRC}/x509v3 ${LCRYPTO_SRC}/pkcs12 ${LCRYPTO_SRC}/comp \
-	${LCRYPTO_SRC}/txt_db ${LCRYPTO_SRC}
+	${LCRYPTO_SRC}/txt_db ${LCRYPTO_SRC}/md4 ${LCRYPTO_SRC}/engine ${LCRYPTO_SRC}
 
 includes:
 	@test -d ${DESTDIR}/usr/include/ssl || mkdir ${DESTDIR}/usr/include/ssl

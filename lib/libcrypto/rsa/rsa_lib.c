@@ -62,6 +62,7 @@
 #include <openssl/lhash.h>
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
+#include <openssl/engine.h>
 
 const char *RSA_version="RSA" OPENSSL_VERSION_PTEXT;
 
@@ -74,35 +75,27 @@ RSA *RSA_new(void)
 	return(RSA_new_method(NULL));
 	}
 
-void RSA_set_default_method(RSA_METHOD *meth)
+void RSA_set_default_openssl_method(RSA_METHOD *meth)
 	{
-	default_RSA_meth=meth;
+	ENGINE *e;
+	/* We'll need to notify the "openssl" ENGINE of this
+	 * change too. We won't bother locking things down at
+	 * our end as there was never any locking in these
+	 * functions! */
+	if(default_RSA_meth != meth)
+		{
+		default_RSA_meth = meth;
+		e = ENGINE_by_id("openssl");
+		if(e)
+			{
+			ENGINE_set_RSA(e, meth);
+			ENGINE_free(e);
+			}
+		}
 	}
 
-RSA_METHOD *RSA_get_default_method(void)
+RSA_METHOD *RSA_get_default_openssl_method(void)
 {
-	return default_RSA_meth;
-}
-
-RSA_METHOD *RSA_get_method(RSA *rsa)
-{
-	return rsa->meth;
-}
-
-RSA_METHOD *RSA_set_method(RSA *rsa, RSA_METHOD *meth)
-{
-	RSA_METHOD *mtmp;
-	mtmp = rsa->meth;
-	if (mtmp->finish) mtmp->finish(rsa);
-	rsa->meth = meth;
-	if (meth->init) meth->init(rsa);
-	return mtmp;
-}
-
-RSA *RSA_new_method(RSA_METHOD *meth)
-	{
-	RSA *ret;
-
 	if (default_RSA_meth == NULL)
 		{
 #ifdef RSA_NULL
@@ -115,17 +108,71 @@ RSA *RSA_new_method(RSA_METHOD *meth)
 #endif
 #endif
 		}
-	ret=(RSA *)Malloc(sizeof(RSA));
+
+	return default_RSA_meth;
+}
+
+RSA_METHOD *RSA_get_method(RSA *rsa)
+{
+	return ENGINE_get_RSA(rsa->engine);
+}
+
+#if 0
+RSA_METHOD *RSA_set_method(RSA *rsa, RSA_METHOD *meth)
+{
+	RSA_METHOD *mtmp;
+	mtmp = rsa->meth;
+	if (mtmp->finish) mtmp->finish(rsa);
+	rsa->meth = meth;
+	if (meth->init) meth->init(rsa);
+	return mtmp;
+}
+#else
+int RSA_set_method(RSA *rsa, ENGINE *engine)
+{
+	ENGINE *mtmp;
+	RSA_METHOD *meth;
+	mtmp = rsa->engine;
+	meth = ENGINE_get_RSA(mtmp);
+	if (!ENGINE_init(engine))
+		return 0;
+	if (meth->finish) meth->finish(rsa);
+	rsa->engine = engine;
+	meth = ENGINE_get_RSA(engine);
+	if (meth->init) meth->init(rsa);
+	/* SHOULD ERROR CHECK THIS!!! */
+	ENGINE_finish(mtmp);
+	return 1;
+}
+#endif
+
+#if 0
+RSA *RSA_new_method(RSA_METHOD *meth)
+#else
+RSA *RSA_new_method(ENGINE *engine)
+#endif
+	{
+	RSA_METHOD *meth;
+	RSA *ret;
+
+	ret=(RSA *)OPENSSL_malloc(sizeof(RSA));
 	if (ret == NULL)
 		{
 		RSAerr(RSA_F_RSA_NEW_METHOD,ERR_R_MALLOC_FAILURE);
 		return(NULL);
 		}
 
-	if (meth == NULL)
-		ret->meth=default_RSA_meth;
+	if (engine == NULL)
+		{
+		if((ret->engine=ENGINE_get_default_RSA()) == NULL)
+			{
+			OPENSSL_free(ret);
+			return NULL;
+			}
+		}
 	else
-		ret->meth=meth;
+		ret->engine=engine;
+	meth = ENGINE_get_RSA(ret->engine);
 
 	ret->pad=0;
 	ret->version=0;
@@ -143,10 +190,10 @@ RSA *RSA_new_method(RSA_METHOD *meth)
 	ret->_method_mod_q=NULL;
 	ret->blinding=NULL;
 	ret->bignum_data=NULL;
-	ret->flags=ret->meth->flags;
-	if ((ret->meth->init != NULL) && !ret->meth->init(ret))
+	ret->flags=meth->flags;
+	if ((meth->init != NULL) && !meth->init(ret))
 		{
-		Free(ret);
+		OPENSSL_free(ret);
 		ret=NULL;
 		}
 	else
@@ -156,6 +203,7 @@ RSA *RSA_new_method(RSA_METHOD *meth)
 
 void RSA_free(RSA *r)
 	{
+	RSA_METHOD *meth;
 	int i;
 
 	if (r == NULL) return;
@@ -175,8 +223,10 @@ void RSA_free(RSA *r)
 
 	CRYPTO_free_ex_data(rsa_meth,r,&r->ex_data);
 
-	if (r->meth->finish != NULL)
-		r->meth->finish(r);
+	meth = ENGINE_get_RSA(r->engine);
+	if (meth->finish != NULL)
+		meth->finish(r);
+	ENGINE_finish(r->engine);
 
 	if (r->n != NULL) BN_clear_free(r->n);
 	if (r->e != NULL) BN_clear_free(r->e);
@@ -187,8 +237,8 @@ void RSA_free(RSA *r)
 	if (r->dmq1 != NULL) BN_clear_free(r->dmq1);
 	if (r->iqmp != NULL) BN_clear_free(r->iqmp);
 	if (r->blinding != NULL) BN_BLINDING_free(r->blinding);
-	if (r->bignum_data != NULL) Free_locked(r->bignum_data);
-	Free(r);
+	if (r->bignum_data != NULL) OPENSSL_free_locked(r->bignum_data);
+	OPENSSL_free(r);
 	}
 
 int RSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
@@ -217,30 +267,34 @@ int RSA_size(RSA *r)
 int RSA_public_encrypt(int flen, unsigned char *from, unsigned char *to,
 	     RSA *rsa, int padding)
 	{
-	return(rsa->meth->rsa_pub_enc(flen, from, to, rsa, padding));
+	return(ENGINE_get_RSA(rsa->engine)->rsa_pub_enc(flen,
+		from, to, rsa, padding));
 	}
 
 int RSA_private_encrypt(int flen, unsigned char *from, unsigned char *to,
 	     RSA *rsa, int padding)
 	{
-	return(rsa->meth->rsa_priv_enc(flen, from, to, rsa, padding));
+	return(ENGINE_get_RSA(rsa->engine)->rsa_priv_enc(flen,
+		from, to, rsa, padding));
 	}
 
 int RSA_private_decrypt(int flen, unsigned char *from, unsigned char *to,
 	     RSA *rsa, int padding)
 	{
-	return(rsa->meth->rsa_priv_dec(flen, from, to, rsa, padding));
+	return(ENGINE_get_RSA(rsa->engine)->rsa_priv_dec(flen,
+		from, to, rsa, padding));
 	}
 
 int RSA_public_decrypt(int flen, unsigned char *from, unsigned char *to,
 	     RSA *rsa, int padding)
 	{
-	return(rsa->meth->rsa_pub_dec(flen, from, to, rsa, padding));
+	return(ENGINE_get_RSA(rsa->engine)->rsa_pub_dec(flen,
+		from, to, rsa, padding));
 	}
 
 int RSA_flags(RSA *r)
 	{
-	return((r == NULL)?0:r->meth->flags);
+	return((r == NULL)?0:ENGINE_get_RSA(r->engine)->flags);
 	}
 
 void RSA_blinding_off(RSA *rsa)
@@ -274,7 +328,8 @@ int RSA_blinding_on(RSA *rsa, BN_CTX *p_ctx)
 	if (!BN_rand(A,BN_num_bits(rsa->n)-1,1,0)) goto err;
 	if ((Ai=BN_mod_inverse(NULL,A,rsa->n,ctx)) == NULL) goto err;
 
-	if (!rsa->meth->bn_mod_exp(A,A,rsa->e,rsa->n,ctx,rsa->_method_mod_n))
+	if (!ENGINE_get_RSA(rsa->engine)->bn_mod_exp(A,A,
+		rsa->e,rsa->n,ctx,rsa->_method_mod_n))
 	    goto err;
 	rsa->blinding=BN_BLINDING_new(A,Ai,rsa->n);
 	rsa->flags|=RSA_FLAG_BLINDING;
@@ -305,7 +360,7 @@ int RSA_memory_lock(RSA *r)
 	j=1;
 	for (i=0; i<6; i++)
 		j+= (*t[i])->top;
-	if ((p=Malloc_locked((off+j)*sizeof(BN_ULONG))) == NULL)
+	if ((p=OPENSSL_malloc_locked((off+j)*sizeof(BN_ULONG))) == NULL)
 		{
 		RSAerr(RSA_F_MEMORY_LOCK,ERR_R_MALLOC_FAILURE);
 		return(0);

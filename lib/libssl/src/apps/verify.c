@@ -65,26 +65,29 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <openssl/pem.h>
+#include <openssl/engine.h>
 
 #undef PROG
 #define PROG	verify_main
 
 static int MS_CALLBACK cb(int ok, X509_STORE_CTX *ctx);
-static int check(X509_STORE *ctx,char *file, STACK_OF(X509)*other, int purpose);
+static int check(X509_STORE *ctx, char *file, STACK_OF(X509) *uchain, STACK_OF(X509) *tchain, int purpose);
 static STACK_OF(X509) *load_untrusted(char *file);
-static int v_verbose=0;
+static int v_verbose=0, issuer_checks = 0;
 
 int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
+	ENGINE *e = NULL;
 	int i,ret=1;
 	int purpose = -1;
 	char *CApath=NULL,*CAfile=NULL;
-	char *untfile = NULL;
-	STACK_OF(X509) *untrusted = NULL;
+	char *untfile = NULL, *trustfile = NULL;
+	STACK_OF(X509) *untrusted = NULL, *trusted = NULL;
 	X509_STORE *cert_ctx=NULL;
 	X509_LOOKUP *lookup=NULL;
+	char *engine=NULL;
 
 	cert_ctx=X509_STORE_new();
 	if (cert_ctx == NULL) goto end;
@@ -132,8 +135,20 @@ int MAIN(int argc, char **argv)
 				if (argc-- < 1) goto end;
 				untfile= *(++argv);
 				}
+			else if (strcmp(*argv,"-trusted") == 0)
+				{
+				if (argc-- < 1) goto end;
+				trustfile= *(++argv);
+				}
+			else if (strcmp(*argv,"-engine") == 0)
+				{
+				if (--argc < 1) goto end;
+				engine= *(++argv);
+				}
 			else if (strcmp(*argv,"-help") == 0)
 				goto end;
+			else if (strcmp(*argv,"-issuer_checks") == 0)
+				issuer_checks=1;
 			else if (strcmp(*argv,"-verbose") == 0)
 				v_verbose=1;
 			else if (argv[0][0] == '-')
@@ -145,6 +160,24 @@ int MAIN(int argc, char **argv)
 			}
 		else
 			break;
+		}
+
+	if (engine != NULL)
+		{
+		if((e = ENGINE_by_id(engine)) == NULL)
+			{
+			BIO_printf(bio_err,"invalid engine \"%s\"\n",
+				engine);
+			goto end;
+			}
+		if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
+			{
+			BIO_printf(bio_err,"can't use that engine\n");
+			goto end;
+			}
+		BIO_printf(bio_err,"engine \"%s\" set.\n", engine);
+		/* Free our "structural" reference. */
+		ENGINE_free(e);
 		}
 
 	lookup=X509_STORE_add_lookup(cert_ctx,X509_LOOKUP_file());
@@ -179,14 +212,22 @@ int MAIN(int argc, char **argv)
 		}
 	}
 
-	if (argc < 1) check(cert_ctx, NULL, untrusted, purpose);
+	if(trustfile) {
+		if(!(trusted = load_untrusted(trustfile))) {
+			BIO_printf(bio_err, "Error loading untrusted file %s\n", trustfile);
+			ERR_print_errors(bio_err);
+			goto end;
+		}
+	}
+
+	if (argc < 1) check(cert_ctx, NULL, untrusted, trusted, purpose);
 	else
 		for (i=0; i<argc; i++)
-			check(cert_ctx,argv[i], untrusted, purpose);
+			check(cert_ctx,argv[i], untrusted, trusted, purpose);
 	ret=0;
 end:
 	if (ret == 1) {
-		BIO_printf(bio_err,"usage: verify [-verbose] [-CApath path] [-CAfile file] cert1 cert2 ...\n");
+		BIO_printf(bio_err,"usage: verify [-verbose] [-CApath path] [-CAfile file] [-purpose purpose] [-engine e] cert1 cert2 ...\n");
 		BIO_printf(bio_err,"recognized usages:\n");
 		for(i = 0; i < X509_PURPOSE_get_count(); i++) {
 			X509_PURPOSE *ptmp;
@@ -197,10 +238,11 @@ end:
 	}
 	if (cert_ctx != NULL) X509_STORE_free(cert_ctx);
 	sk_X509_pop_free(untrusted, X509_free);
+	sk_X509_pop_free(trusted, X509_free);
 	EXIT(ret);
 	}
 
-static int check(X509_STORE *ctx, char *file, STACK_OF(X509) *uchain, int purpose)
+static int check(X509_STORE *ctx, char *file, STACK_OF(X509) *uchain, STACK_OF(X509) *tchain, int purpose)
 	{
 	X509 *x=NULL;
 	BIO *in=NULL;
@@ -242,7 +284,10 @@ static int check(X509_STORE *ctx, char *file, STACK_OF(X509) *uchain, int purpos
 		goto end;
 		}
 	X509_STORE_CTX_init(csc,ctx,x,uchain);
+	if(tchain) X509_STORE_CTX_trusted_stack(csc, tchain);
 	if(purpose >= 0) X509_STORE_CTX_set_purpose(csc, purpose);
+	if(issuer_checks)
+		X509_STORE_CTX_set_flags(csc, X509_V_FLAG_CB_ISSUER_CHECK);
 	i=X509_verify_cert(csc);
 	X509_STORE_CTX_free(csc);
 

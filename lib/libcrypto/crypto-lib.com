@@ -86,9 +86,9 @@ $ ENDIF
 $!
 $! Define The Different Encryption Types.
 $!
-$ ENCRYPT_TYPES = "Basic,MD2,MD5,SHA,MDC2,HMAC,RIPEMD,"+ -
+$ ENCRYPT_TYPES = "Basic,MD2,MD4,MD5,SHA,MDC2,HMAC,RIPEMD,"+ -
 		  "DES,RC2,RC4,RC5,IDEA,BF,CAST,"+ -
-		  "BN,RSA,DSA,DH,"+ -
+		  "BN,RSA,DSA,DH,DSO,ENGINE,"+ -
 		  "BUFFER,BIO,STACK,LHASH,RAND,ERR,OBJECTS,"+ -
 		  "EVP,EVP_2,ASN1,ASN1_2,PEM,X509,X509V3,"+ -
 		  "CONF,TXT_DB,PKCS7,PKCS12,COMP"
@@ -176,6 +176,7 @@ $ APPS_PKCS7 = "ENC/ENC;DEC/DEC;SIGN/SIGN;VERIFY/VERIFY,EXAMPLE"
 $
 $ LIB_ = "cryptlib,mem,mem_dbg,cversion,ex_data,tmdiff,cpt_err"
 $ LIB_MD2 = "md2_dgst,md2_one"
+$ LIB_MD4 = "md4_dgst,md4_one"
 $ LIB_MD5 = "md5_dgst,md5_one"
 $ LIB_SHA = "sha_dgst,sha1dgst,sha_one,sha1_one"
 $ LIB_MDC2 = "mdc2dgst,mdc2_one"
@@ -203,35 +204,35 @@ $ LIB_RSA = "rsa_eay,rsa_gen,rsa_lib,rsa_sign,rsa_saos,rsa_err,"+ -
 	"rsa_pk1,rsa_ssl,rsa_none,rsa_oaep,rsa_chk,rsa_null"
 $ LIB_DSA = "dsa_gen,dsa_key,dsa_lib,dsa_asn1,dsa_vrf,dsa_sign,dsa_err,dsa_ossl"
 $ LIB_DH = "dh_gen,dh_key,dh_lib,dh_check,dh_err"
+$ LIB_DSO = "dso_dl,dso_dlfcn,dso_err,dso_lib,dso_null,"+ -
+	"dso_openssl,dso_win32,dso_vms"
+$ LIB_ENGINE = "engine_err,engine_lib,engine_list,engine_openssl,"+ -
+	"hw_atalla,hw_cswift,hw_ncipher"
 $ LIB_BUFFER = "buffer,buf_err"
 $ LIB_BIO = "bio_lib,bio_cb,bio_err,"+ -
 	"bss_mem,bss_null,bss_fd,"+ -
 	"bss_file,bss_sock,bss_conn,"+ -
 	"bf_null,bf_buff,b_print,b_dump,"+ -
-	"b_sock,bss_acpt,bf_nbio,bss_rtcp,bss_bio,bss_log"
+	"b_sock,bss_acpt,bf_nbio,bss_rtcp,bss_bio,bss_log,"+ -
+	"bf_lbuf"
 $ LIB_STACK = "stack"
 $ LIB_LHASH = "lhash,lh_stats"
-$ LIB_RAND = "md_rand,randfile,rand_lib,rand_err,rand_egd"
+$ LIB_RAND = "md_rand,randfile,rand_lib,rand_err,rand_egd,rand_win"
 $ LIB_ERR = "err,err_all,err_prn"
 $ LIB_OBJECTS = "o_names,obj_dat,obj_lib,obj_err"
 $ LIB_EVP = "encode,digest,evp_enc,evp_key,"+ -
-	"e_ecb_d,e_cbc_d,e_cfb_d,e_ofb_d,"+ -
-	"e_ecb_i,e_cbc_i,e_cfb_i,e_ofb_i,"+ -
-	"e_ecb_3d,e_cbc_3d,e_rc4,names,"+ -
-	"e_cfb_3d,e_ofb_3d,e_xcbc_d,"+ -
-	"e_ecb_r2,e_cbc_r2,e_cfb_r2,e_ofb_r2,"+ -
-	"e_ecb_bf,e_cbc_bf,e_cfb_bf,e_ofb_bf"
-$ LIB_EVP_2 = "e_ecb_c,e_cbc_c,e_cfb_c,e_ofb_c,"+ -
-	"e_ecb_r5,e_cbc_r5,e_cfb_r5,e_ofb_r5,"+ -
-	"m_null,m_md2,m_md5,m_sha,m_sha1,m_dss,m_dss1,m_mdc2,"+ -
-	"m_ripemd,"+ -
+	"e_des,e_bf,e_idea,e_des3,"+ -
+	"e_rc4,names,"+ -
+	"e_xcbc_d,e_rc2,e_cast,e_rc5"
+$ LIB_EVP_2 = "m_null,m_md2,m_md4,m_md5,m_sha,m_sha1," + -
+	"m_dss,m_dss1,m_mdc2,m_ripemd,"+ -
 	"p_open,p_seal,p_sign,p_verify,p_lib,p_enc,p_dec,"+ -
 	"bio_md,bio_b64,bio_enc,evp_err,e_null,"+ -
 	"c_all,c_allc,c_alld,evp_lib,bio_ok,"+-
 	"evp_pkey,evp_pbe,p5_crpt,p5_crpt2"
 $ LIB_ASN1 = "a_object,a_bitstr,a_utctm,a_gentm,a_time,a_int,a_octet,"+ -
 	"a_null,a_print,a_type,a_set,a_dup,a_d2i_fp,a_i2d_fp,a_bmp,"+ -
-	"a_enum,a_vis,a_utf8,a_sign,a_digest,a_verify,a_mbstr,"+ -
+	"a_enum,a_vis,a_utf8,a_sign,a_digest,a_verify,a_mbstr,a_strex,"+ -
 	"x_algor,x_val,x_pubkey,x_sig,x_req,x_attrib,"+ -
 	"x_name,x_cinf,x_x509,x_x509a,x_crl,x_info,x_spki,nsseq,"+ -
 	"d2i_r_pr,i2d_r_pr,d2i_r_pu,i2d_r_pu,"+ -
@@ -254,7 +255,7 @@ $ LIB_X509 = "x509_def,x509_d2,x509_r2x,x509_cmp,"+ -
 $ LIB_X509V3 = "v3_bcons,v3_bitst,v3_conf,v3_extku,v3_ia5,v3_lib,"+ -
 	"v3_prn,v3_utl,v3err,v3_genn,v3_alt,v3_skey,v3_akey,v3_pku,"+ -
 	"v3_int,v3_enum,v3_sxnet,v3_cpols,v3_crld,v3_purp,v3_info"
-$ LIB_CONF = "conf,conf_err"
+$ LIB_CONF = "conf_err,conf_lib,conf_api,conf_def"
 $ LIB_TXT_DB = "txt_db"
 $ LIB_PKCS7 = "pk7_lib,pkcs7err,pk7_doit,pk7_smime,pk7_attr,pk7_mime"
 $ LIB_PKCS12 = "p12_add,p12_attr,p12_bags,p12_crpt,p12_crt,p12_decr,"+ -
@@ -267,8 +268,8 @@ $! Setup exceptional compilations
 $!
 $ COMPILEWITH_CC3 = ",bss_rtcp,"
 $ COMPILEWITH_CC4 = ",a_utctm,bss_log,"
-$ COMPILEWITH_CC5 = ",md2_dgst,md5_dgst,mdc2dgst,sha_dgst,sha1dgst," + -
-                    "rmd_dgst,bf_enc,"
+$ COMPILEWITH_CC5 = ",md2_dgst,md4_dgst,md5_dgst,mdc2dgst," + -
+                    "sha_dgst,sha1dgst,rmd_dgst,bf_enc,"
 $!
 $! Check To See If We Are Going To Use RSAREF.
 $!
@@ -281,10 +282,10 @@ $!
 $   IF (F$SEARCH("SYS$DISK:[-.RSAREF]RSAREF.C").EQS."")
 $   THEN
 $!
-$!    Tell The User That The File Dosen't Exist.
+$!    Tell The User That The File Doesn't Exist.
 $!
 $     WRITE SYS$OUTPUT ""
-$     WRITE SYS$OUTPUT "The File [-.RSAREF]RSAREF.C Dosen't Exist."
+$     WRITE SYS$OUTPUT "The File [-.RSAREF]RSAREF.C Doesn't Exist."
 $     WRITE SYS$OUTPUT ""
 $!
 $!    Exit The Build.
@@ -316,10 +317,10 @@ $!
 $   IF (F$SEARCH("SYS$DISK:[-.RSAREF]RSAR_ERR.C").EQS."")
 $   THEN
 $!
-$!    Tell The User That The File Dosen't Exist.
+$!    Tell The User That The File Doesn't Exist.
 $!
 $     WRITE SYS$OUTPUT ""
-$     WRITE SYS$OUTPUT "The File [-.RSAREF]RSAR_ERR.C Dosen't Exist."
+$     WRITE SYS$OUTPUT "The File [-.RSAREF]RSAR_ERR.C Doesn't Exist."
 $     WRITE SYS$OUTPUT ""
 $!
 $!    Exit The Build.
@@ -532,10 +533,10 @@ $!
 $ IF (F$SEARCH(SOURCE_FILE).EQS."")
 $ THEN
 $!
-$!  Tell The User That The File Dosen't Exist.
+$!  Tell The User That The File Doesn't Exist.
 $!
 $   WRITE SYS$OUTPUT ""
-$   WRITE SYS$OUTPUT "The File ",SOURCE_FILE," Dosen't Exist."
+$   WRITE SYS$OUTPUT "The File ",SOURCE_FILE," Doesn't Exist."
 $   WRITE SYS$OUTPUT ""
 $!
 $!  Exit The Build.
@@ -918,7 +919,7 @@ $!
 $       WRITE SYS$OUTPUT ""
 $       WRITE SYS$OUTPUT "It appears that you don't have the RSAREF Souce Code."
 $       WRITE SYS$OUTPUT "You need to go to 'ftp://ftp.rsa.com/rsaref'.  You have to"
-$       WRITE SYS$OUTPUT "get the '.tar-Z' file as the '.zip' file dosen't have the"
+$       WRITE SYS$OUTPUT "get the '.tar-Z' file as the '.zip' file doesn't have the"
 $       WRITE SYS$OUTPUT "directory structure stored.  You have to extract the file"
 $       WRITE SYS$OUTPUT "into the [.RSAREF] directory under the root directory"
 $       WRITE SYS$OUTPUT "as that is where the scripts will look for the files."
@@ -1139,7 +1140,7 @@ $ ENDIF
 $!
 $! Set Up Initial CC Definitions, Possibly With User Ones
 $!
-$ CCDEFS = "VMS=1,TCPIP_TYPE_''P5'"
+$ CCDEFS = "VMS=1,TCPIP_TYPE_''P5',DSO_VMS"
 $ IF F$TRNLNM("OPENSSL_NO_ASM") THEN CCDEFS = CCDEFS + ",NO_ASM"
 $ IF F$TRNLNM("OPENSSL_NO_RSA") THEN CCDEFS = CCDEFS + ",NO_RSA"
 $ IF F$TRNLNM("OPENSSL_NO_DSA") THEN CCDEFS = CCDEFS + ",NO_DSA"
@@ -1195,7 +1196,9 @@ $     CC = "CC"
 $     IF ARCH.EQS."VAX" .AND. F$TRNLNM("DECC$CC_DEFAULT").NES."/DECC" -
 	 THEN CC = "CC/DECC"
 $     CC = CC + "/''CC_OPTIMIZE'/''DEBUGGER'/STANDARD=ANSI89" + -
-           "/NOLIST/PREFIX=ALL/INCLUDE=SYS$DISK:[]" + CCEXTRAFLAGS
+           "/NOLIST/PREFIX=ALL" + -
+	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[.ENGINE.VENDOR_DEFNS])" + -
+	   CCEXTRAFLAGS
 $!
 $!    Define The Linker Options File Name.
 $!
@@ -1227,7 +1230,8 @@ $	WRITE SYS$OUTPUT "There is no VAX C on Alpha!"
 $	EXIT
 $     ENDIF
 $     IF F$TRNLNM("DECC$CC_DEFAULT").EQS."/DECC" THEN CC = "CC/VAXC"
-$     CC = CC + "/''CC_OPTIMIZE'/''DEBUGGER'/NOLIST/INCLUDE=SYS$DISK:[]" + -
+$     CC = CC + "/''CC_OPTIMIZE'/''DEBUGGER'/NOLIST" + -
+	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[.ENGINE.VENDOR_DEFNS])" + -
 	   CCEXTRAFLAGS
 $     CCDEFS = """VAXC""," + CCDEFS
 $!
@@ -1259,7 +1263,8 @@ $!
 $!    Use GNU C...
 $!
 $     CC = "GCC/NOCASE_HACK/''GCC_OPTIMIZE'/''DEBUGGER'/NOLIST" + -
-	   "/INCLUDE=SYS$DISK:[]" + CCEXTRAFLAGS
+	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[.ENGINE.VENDOR_DEFNS])" + -
+	   CCEXTRAFLAGS
 $!
 $!    Define The Linker Options File Name.
 $!

@@ -73,6 +73,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/objects.h>
 #include <openssl/pem.h>
+#include <openssl/engine.h>
 
 #define SECTION		"req"
 
@@ -102,6 +103,7 @@
  * -config file	- Load configuration file.
  * -key file	- make a request using key in file (or use it for verification).
  * -keyform	- key file format.
+ * -rand file(s) - load the file(s) into the PRNG.
  * -newkey	- make a key and a request.
  * -modulus	- print RSA modulus.
  * -x509	- output a self signed X509 structure instead.
@@ -125,7 +127,6 @@ static void MS_CALLBACK req_cb(int p,int n,void *arg);
 #endif
 static int req_check_len(int len,int min,int max);
 static int check_end(char *str, char *end);
-static int add_oid_section(LHASH *conf);
 #ifndef MONOLITH
 static char *default_config_file=NULL;
 static LHASH *config=NULL;
@@ -140,6 +141,7 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
+	ENGINE *e = NULL;
 #ifndef NO_DSA
 	DSA *dsa_params=NULL;
 #endif
@@ -152,10 +154,12 @@ int MAIN(int argc, char **argv)
 	int informat,outformat,verify=0,noout=0,text=0,keyform=FORMAT_PEM;
 	int nodes=0,kludge=0,newhdr=0;
 	char *infile,*outfile,*prog,*keyfile=NULL,*template=NULL,*keyout=NULL;
+	char *engine=NULL;
 	char *extensions = NULL;
 	char *req_exts = NULL;
 	EVP_CIPHER *cipher=NULL;
 	int modulus=0;
+	char *inrand=NULL;
 	char *passargin = NULL, *passargout = NULL;
 	char *passin = NULL, *passout = NULL;
 	char *p;
@@ -193,6 +197,11 @@ int MAIN(int argc, char **argv)
 			{
 			if (--argc < 1) goto bad;
 			outformat=str2fmt(*(++argv));
+			}
+		else if (strcmp(*argv,"-engine") == 0)
+			{
+			if (--argc < 1) goto bad;
+			engine= *(++argv);
 			}
 		else if (strcmp(*argv,"-key") == 0)
 			{
@@ -238,6 +247,11 @@ int MAIN(int argc, char **argv)
 			{
 			if (--argc < 1) goto bad;
 			passargout= *(++argv);
+			}
+		else if (strcmp(*argv,"-rand") == 0)
+			{
+			if (--argc < 1) goto bad;
+			inrand= *(++argv);
 			}
 		else if (strcmp(*argv,"-newkey") == 0)
 			{
@@ -369,9 +383,13 @@ bad:
 		BIO_printf(bio_err," -verify        verify signature on REQ\n");
 		BIO_printf(bio_err," -modulus       RSA modulus\n");
 		BIO_printf(bio_err," -nodes         don't encrypt the output key\n");
+		BIO_printf(bio_err," -engine e      use engine e, possibly a hardware device.\n");
 		BIO_printf(bio_err," -key file	use the private key contained in file\n");
 		BIO_printf(bio_err," -keyform arg   key file format\n");
 		BIO_printf(bio_err," -keyout arg    file to send the key to\n");
+		BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
+		BIO_printf(bio_err,"                load the file (or the files in the directory) into\n");
+		BIO_printf(bio_err,"                the random number generator\n");
 		BIO_printf(bio_err," -newkey rsa:bits generate a new RSA key of 'bits' in size\n");
 		BIO_printf(bio_err," -newkey dsa:file generate a new DSA key, parameters taken from CA in 'file'\n");
 
@@ -457,7 +475,7 @@ bad:
 				}
 			}
 		}
-		if(!add_oid_section(req_conf)) goto end;
+		if(!add_oid_section(bio_err, req_conf)) goto end;
 
 	if ((md_alg == NULL) &&
 		((p=CONF_get_string(req_conf,SECTION,"default_md")) != NULL))
@@ -513,24 +531,55 @@ bad:
 	if ((in == NULL) || (out == NULL))
 		goto end;
 
-	if (keyfile != NULL)
+	if (engine != NULL)
 		{
-		if (BIO_read_filename(in,keyfile) <= 0)
+		if((e = ENGINE_by_id(engine)) == NULL)
 			{
-			perror(keyfile);
+			BIO_printf(bio_err,"invalid engine \"%s\"\n",
+				engine);
 			goto end;
 			}
-
-		if (keyform == FORMAT_ASN1)
-			pkey=d2i_PrivateKey_bio(in,NULL);
-		else if (keyform == FORMAT_PEM)
+		if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
 			{
-			pkey=PEM_read_bio_PrivateKey(in,NULL,NULL,passin);
+			BIO_printf(bio_err,"can't use that engine\n");
+			goto end;
+			}
+		BIO_printf(bio_err,"engine \"%s\" set.\n", engine);
+		/* Free our "structural" reference. */
+		ENGINE_free(e);
+		}
+
+	if (keyfile != NULL)
+		{
+		if (keyform == FORMAT_ENGINE)
+			{
+			if (!e)
+				{
+				BIO_printf(bio_err,"no engine specified\n");
+				goto end;
+				}
+			pkey = ENGINE_load_private_key(e, keyfile, NULL);
 			}
 		else
 			{
-			BIO_printf(bio_err,"bad input format specified for X509 request\n");
-			goto end;
+			if (BIO_read_filename(in,keyfile) <= 0)
+				{
+				perror(keyfile);
+				goto end;
+				}
+
+			if (keyform == FORMAT_ASN1)
+				pkey=d2i_PrivateKey_bio(in,NULL);
+			else if (keyform == FORMAT_PEM)
+				{
+				pkey=PEM_read_bio_PrivateKey(in,NULL,NULL,
+					passin);
+				}
+			else
+				{
+				BIO_printf(bio_err,"bad input format specified for X509 request\n");
+				goto end;
+				}
 			}
 
 		if (pkey == NULL)
@@ -538,12 +587,19 @@ bad:
 			BIO_printf(bio_err,"unable to load Private key\n");
 			goto end;
 			}
+                if (EVP_PKEY_type(pkey->type) == EVP_PKEY_DSA)
+			{
+			char *randfile = CONF_get_string(req_conf,SECTION,"RANDFILE");
+			app_RAND_load_file(randfile, bio_err, 0);
+                	}
 		}
 
 	if (newreq && (pkey == NULL))
 		{
 		char *randfile = CONF_get_string(req_conf,SECTION,"RANDFILE");
 		app_RAND_load_file(randfile, bio_err, 0);
+		if (inrand)
+			app_RAND_load_files(inrand);
 	
 		if (newkey <= 0)
 			{
@@ -593,6 +649,12 @@ bad:
 			{
 			BIO_printf(bio_err,"writing new private key to stdout\n");
 			BIO_set_fp(out,stdout,BIO_NOCLOSE);
+#ifdef VMS
+			{
+			BIO *tmpbio = BIO_new(BIO_f_linebuffer());
+			out = BIO_push(tmpbio, out);
+			}
+#endif
 			}
 		else
 			{
@@ -788,7 +850,15 @@ loop:
 		}
 
 	if (outfile == NULL)
+		{
 		BIO_set_fp(out,stdout,BIO_NOCLOSE);
+#ifdef VMS
+		{
+		BIO *tmpbio = BIO_new(BIO_f_linebuffer());
+		out = BIO_push(tmpbio, out);
+		}
+#endif
+		}
 	else
 		{
 		if ((keyout != NULL) && (strcmp(outfile,keyout) == 0))
@@ -874,12 +944,12 @@ end:
 		}
 	if ((req_conf != NULL) && (req_conf != config)) CONF_free(req_conf);
 	BIO_free(in);
-	BIO_free(out);
+	BIO_free_all(out);
 	EVP_PKEY_free(pkey);
 	X509_REQ_free(req);
 	X509_free(x509ss);
-	if(passargin && passin) Free(passin);
-	if(passargout && passout) Free(passout);
+	if(passargin && passin) OPENSSL_free(passin);
+	if(passargout && passout) OPENSSL_free(passout);
 	OBJ_cleanup();
 #ifndef NO_DSA
 	if (dsa_params != NULL) DSA_free(dsa_params);
@@ -1083,7 +1153,11 @@ static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
 		 * multiple instances 
 		 */
 		for(p = v->name; *p ; p++) 
+#ifndef CHARSET_EBCDIC
 			if ((*p == ':') || (*p == ',') || (*p == '.')) {
+#else
+			if ((*p == os_toascii[':']) || (*p == os_toascii[',']) || (*p == os_toascii['.'])) {
+#endif
 				p++;
 				if(*p) type = p;
 				break;
@@ -1199,6 +1273,9 @@ start:
 		return(0);
 		}
 	buf[--i]='\0';
+#ifdef CHARSET_EBCDIC
+	ebcdic2ascii(buf, buf, i);
+#endif
 	if(!req_check_len(i, min, max)) goto start;
 
 	if(!X509_REQ_add1_attr_by_NID(req, nid, MBSTRING_ASC,
@@ -1255,26 +1332,4 @@ static int check_end(char *str, char *end)
 	if(elen > slen) return 1;
 	tmp = str + slen - elen;
 	return strcmp(tmp, end);
-}
-
-static int add_oid_section(LHASH *conf)
-{	
-	char *p;
-	STACK_OF(CONF_VALUE) *sktmp;
-	CONF_VALUE *cnf;
-	int i;
-	if(!(p=CONF_get_string(conf,NULL,"oid_section"))) return 1;
-	if(!(sktmp = CONF_get_section(conf, p))) {
-		BIO_printf(bio_err, "problem loading oid section %s\n", p);
-		return 0;
-	}
-	for(i = 0; i < sk_CONF_VALUE_num(sktmp); i++) {
-		cnf = sk_CONF_VALUE_value(sktmp, i);
-		if(OBJ_create(cnf->value, cnf->name, cnf->name) == NID_undef) {
-			BIO_printf(bio_err, "problem creating object %s=%s\n",
-							 cnf->name, cnf->value);
-			return 0;
-		}
-	}
-	return 1;
 }

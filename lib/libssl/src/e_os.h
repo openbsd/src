@@ -87,6 +87,7 @@ extern "C" {
 #  ifndef MAC_OS_GUSI_SOURCE
 #    define MAC_OS_pre_X
 #    define NO_SYS_TYPES_H
+     typedef long ssize_t;
 #  endif
 #  define NO_SYS_PARAM_H
 #  define NO_CHMOD
@@ -107,11 +108,11 @@ extern "C" {
 #  define MS_STATIC
 #endif
 
-#if defined(_WIN32) && !defined(WIN32)
+#if defined(_WIN32) && !defined(WIN32) && !defined(__CYGWIN32__)
 #  define WIN32
 #endif
 
-#if defined(WIN32) || defined(WIN16)
+#if (defined(WIN32) || defined(WIN16)) && !defined(__CYGWIN32__)
 #  ifndef WINDOWS
 #    define WINDOWS
 #  endif
@@ -135,7 +136,7 @@ extern "C" {
 #define clear_sys_error()	errno=0
 #endif
 
-#ifdef WINDOWS
+#if defined(WINDOWS) && !defined(__CYGWIN32__)
 #define get_last_socket_error()	WSAGetLastError()
 #define clear_socket_error()	WSASetLastError(0)
 #define readsocket(s,b,n)	recv((s),(b),(n),0)
@@ -169,7 +170,7 @@ extern "C" {
 #  define NO_FP_API
 #endif
 
-#if defined(WINDOWS) || defined(MSDOS)
+#if (defined(WINDOWS) || defined(MSDOS)) && !defined(__CYGWIN32__)
 
 #ifndef S_IFDIR
 #define S_IFDIR	_S_IFDIR
@@ -259,6 +260,9 @@ extern "C" {
 #    define NO_SYS_PARAM_H
 #  else
      /* !defined VMS */
+#    ifdef MPE
+#      define NO_SYS_PARAM_H
+#    endif
 #    ifdef OPENSSL_UNISTD
 #      include OPENSSL_UNISTD
 #    else
@@ -266,6 +270,16 @@ extern "C" {
 #    endif
 #    ifndef NO_SYS_TYPES_H
 #      include <sys/types.h>
+#    endif
+#    if defined(NeXT) || defined(NEWS4)
+#      define pid_t int /* pid_t is missing on NEXTSTEP/OPENSTEP
+                         * (unless when compiling with -D_POSIX_SOURCE,
+                         * which doesn't work for us) */
+#      define ssize_t int /* ditto */
+#    endif
+#    ifdef NEWS4 /* setvbuf is missing on mips-sony-bsd */
+#      define setvbuf(a, b, c, d) setbuffer((a), (b), (d))
+       typedef unsigned long clock_t;
 #    endif
 
 #    define OPENSSL_CONF	"openssl.cnf"
@@ -318,7 +332,9 @@ extern HINSTANCE _hInstance;
 #    ifndef NO_SYS_PARAM_H
 #      include <sys/param.h>
 #    endif
-#    include <sys/time.h> /* Needed under linux for FD_XXX */
+#    ifndef MPE
+#      include <sys/time.h> /* Needed under linux for FD_XXX */
+#    endif
 
 #    include <netdb.h>
 #    if defined(VMS) && !defined(__DECC)
@@ -338,6 +354,10 @@ extern HINSTANCE _hInstance;
 #    endif
 
 #    ifdef AIX
+#      include <sys/select.h>
+#    endif
+
+#    ifdef __QNX__
 #      include <sys/select.h>
 #    endif
 
@@ -373,6 +393,15 @@ extern HINSTANCE _hInstance;
 #ifndef _REENTRANT
 #define _REENTRANT
 #endif
+#endif
+
+#if defined(sun) && !defined(__svr4__) && !defined(__SVR4)
+  /* bcopy can handle overlapping moves according to SunOS 4.1.4 manpage */
+# define memmove(s1,s2,n) bcopy((s2),(s1),(n))
+# define strtoul(s,e,b) ((unsigned long int)strtol((s),(e),(b)))
+extern char *sys_errlist[]; extern int sys_nerr;
+# define strerror(errnum) \
+	(((errnum)<0 || (errnum)>=sys_nerr) ? NULL : sys_errlist[errnum])
 #endif
 
 /***********************************************/

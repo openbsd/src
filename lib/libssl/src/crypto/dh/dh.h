@@ -59,18 +59,21 @@
 #ifndef HEADER_DH_H
 #define HEADER_DH_H
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
 #ifdef NO_DH
 #error DH is disabled.
 #endif
 
+#ifndef NO_BIO
+#include <openssl/bio.h>
+#endif
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
 	
 #define DH_FLAG_CACHE_MONT_P	0x01
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
 typedef struct dh_st DH;
 
@@ -112,7 +115,11 @@ struct dh_st
 
 	int references;
 	CRYPTO_EX_DATA ex_data;
+#if 0
 	DH_METHOD *meth;
+#else
+	struct engine_st *engine;
+#endif
 	};
 
 #define DH_GENERATOR_2		2
@@ -147,10 +154,15 @@ struct dh_st
 
 DH_METHOD *DH_OpenSSL(void);
 
-void DH_set_default_method(DH_METHOD *meth);
-DH_METHOD *DH_get_default_method(void);
+void DH_set_default_openssl_method(DH_METHOD *meth);
+DH_METHOD *DH_get_default_openssl_method(void);
+#if 0
 DH_METHOD *DH_set_method(DH *dh, DH_METHOD *meth);
 DH *DH_new_method(DH_METHOD *meth);
+#else
+int DH_set_method(DH *dh, struct engine_st *engine);
+DH *DH_new_method(struct engine_st *engine);
+#endif
 
 DH *	DH_new(void);
 void	DH_free(DH *dh);
@@ -169,7 +181,7 @@ int	i2d_DHparams(DH *a,unsigned char **pp);
 #ifndef NO_FP_API
 int	DHparams_print_fp(FILE *fp, DH *x);
 #endif
-#ifdef HEADER_BIO_H
+#ifndef NO_BIO
 int	DHparams_print(BIO *bp, DH *x);
 #else
 int	DHparams_print(char *bp, DH *x);
