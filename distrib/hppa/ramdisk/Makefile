@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2003/05/06 20:39:26 mickey Exp $
+#	$OpenBSD: Makefile,v 1.4 2003/07/25 13:44:48 mickey Exp $
 
 CBIN=		instbin
 ARCHDIR=	${.CURDIR}/..
@@ -40,7 +40,7 @@ GZIPFLAGS?=	-9
 
 # old format, minfree, opt, b/i  trks, sects, cpg
 NEWFSOPTS=	-t ffs -m 0 -o space -f 1024 -b 8192
-NEWFSOPTS_RD?=	${NEWFSOPTS} -i 16384 -c 64 -s ${IMAGESIZE}
+NEWFSOPTS_RD?=	${NEWFSOPTS} -i 4096 -c 64 -s ${IMAGESIZE}
 
 all:	bsd.rd ${LIF} ${CDROM}
 
