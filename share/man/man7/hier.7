@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.28 2001/08/20 05:57:55 mpech Exp $
+.\"	$OpenBSD: hier.7,v 1.29 2001/09/05 17:59:24 lebel Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -90,6 +90,9 @@ Backup disklabels (see
 .It Li kerberosIV/
 Configuration files for the Kerberos version IV system (see
 .Xr kerberos 1 ) .
+.It Li kerberosV/
+Configuration files for the Kerberos version V system (see
+.Xr kerberos 1 ) .
 .It Li mail/
 .Xr sendmail 8
 configuration files (including
@@ -170,7 +173,10 @@ Standard C include files.
 .It Li arpa/
 C include files for Internet service protocols.
 .It Li kerberosIV/
-C include files for Kerberos authentication package (see
+C include files for Kerberos IV authentication package (see
+.Xr kerberos 1 ) .
+.It Li kerberosV/
+C include files for Kerberos V authentication package (see
 .Xr kerberos 1 ) .
 .It Li crypto/
 C include files for the cryptographic libraries.
@@ -367,6 +373,8 @@ Source for files in
 .Pa /usr/include .
 .It Li kerberosIV/
 Source for Kerberos version IV.
+.It Li kerberosV/
+Source for Kerberos version V.
 .It Li lib/
 Source for files in
 .Pa /usr/lib .
