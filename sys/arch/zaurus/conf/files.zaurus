@@ -79,3 +79,8 @@ include "dev/wscons/files.wscons"
 include "dev/rasops/files.rasops"
 include "dev/wsfont/files.wsfont"
 include "dev/pckbc/files.pckbc"
+
+
+# kludge, not present on zaurus, but needed for arm/conf.c
+device  fcom: tty, bus_space_generic
+file    arch/arm/footbridge/footbridge_com.c            fcom needs-flag
