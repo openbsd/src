@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_ipc.c,v 1.2 1997/02/24 14:20:00 niklas Exp $	*/
+/*	$OpenBSD: sysv_ipc.c,v 1.3 1998/06/11 18:32:13 deraadt Exp $	*/
 /*	$NetBSD: sysv_ipc.c,v 1.10 1995/06/03 05:53:28 mycroft Exp $	*/
 
 /*
@@ -62,3 +62,32 @@ ipcperm(cred, perm, mode)
 		return (0);
 	return (EACCES);
 }
+
+void
+ipc_n2o(n, o)
+	struct ipc_perm *n;
+	struct oipc_perm *o;
+{
+	o->cuid = n->cuid;		/* XXX */
+	o->cgid = n->cgid;		/* XXX */
+	o->uid = n->uid;		/* XXX */
+	o->gid = n->gid;		/* XXX */
+	o->mode = n->mode;		/* XXX */
+	o->seq = n->seq;
+	o->key = n->key;
+}
+
+void
+ipc_o2n(o, n)
+	struct oipc_perm *o;
+	struct ipc_perm *n;
+{
+	n->cuid = o->cuid;		/* XXX */
+	n->cgid = o->cgid;		/* XXX */
+	n->uid = o->uid;		/* XXX */
+	n->gid = o->gid;		/* XXX */
+	n->mode = o->mode;		/* XXX */
+	n->seq = o->seq;
+	n->key = o->key;
+}
+

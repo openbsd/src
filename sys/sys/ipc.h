@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipc.h,v 1.2 1996/03/03 12:11:52 niklas Exp $	*/
+/*	$OpenBSD: ipc.h,v 1.3 1998/06/11 18:32:19 deraadt Exp $	*/
 /*	$NetBSD: ipc.h,v 1.15 1996/02/09 18:25:12 christos Exp $	*/
 
 /*
@@ -53,6 +53,16 @@
 #define _SYS_IPC_H_
 
 struct ipc_perm {
+	uid_t	cuid;	/* creator user id */
+	gid_t	cgid;	/* creator group id */
+	uid_t	uid;	/* user id */
+	gid_t	gid;	/* group id */
+	mode_t	mode;	/* r/w permission */
+	ushort	seq;	/* sequence # (to generate unique msg/sem/shm id) */
+	key_t	key;	/* user specified msg/sem/shm key */
+};
+
+struct oipc_perm {
 	ushort	cuid;	/* creator user id */
 	ushort	cgid;	/* creator group id */
 	ushort	uid;	/* user id */
@@ -85,6 +95,8 @@ struct ipc_perm {
 #define	IXSEQ_TO_IPCID(ix,perm)	(((perm.seq) << 16) | (ix & 0xffff))
 
 int ipcperm __P((struct ucred *, struct ipc_perm *, int));
+void ipc_n2o __P((struct ipc_perm *, struct oipc_perm *));
+void ipc_o2n __P((struct oipc_perm *, struct ipc_perm *));
 #endif /* _KERNEL */
 
 #ifndef _KERNEL

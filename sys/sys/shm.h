@@ -1,4 +1,4 @@
-/*	$OpenBSD: shm.h,v 1.5 1998/05/11 06:20:14 deraadt Exp $	*/
+/*	$OpenBSD: shm.h,v 1.6 1998/06/11 18:32:24 deraadt Exp $	*/
 /*	$NetBSD: shm.h,v 1.20 1996/04/09 20:55:35 cgd Exp $	*/
 
 /*
@@ -62,6 +62,18 @@ struct shmid_ds {
 	void		*shm_internal;	/* sysv stupidity */
 };
 
+struct oshmid_ds {
+	struct oipc_perm shm_perm;	/* operation permission structure */
+	int		shm_segsz;	/* size of segment in bytes */
+	pid_t		shm_lpid;	/* process ID of last shm op */
+	pid_t		shm_cpid;	/* process ID of creator */
+	short		shm_nattch;	/* number of current attaches */
+	time_t		shm_atime;	/* time of last shmat() */
+	time_t		shm_dtime;	/* time of last shmdt() */
+	time_t		shm_ctime;	/* time of last change by shmctl() */
+	void		*shm_internal;	/* sysv stupidity */
+};
+
 #ifdef _KERNEL
 
 /* Some systems (e.g. HP-UX) take these as the second (cmd) arg to shmctl(). */
@@ -85,6 +97,7 @@ struct shmid_ds *shmsegs;
 void shminit __P((void));
 void shmfork __P((struct proc *, struct proc *));
 void shmexit __P((struct proc *));
+void shmid_n2o __P((struct shmid_ds *, struct oshmid_ds *));
 
 #else /* !_KERNEL */
 

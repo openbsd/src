@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.2 1996/03/03 17:20:06 niklas Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.3 1998/06/11 18:32:16 deraadt Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -275,6 +275,186 @@ semundo_clear(semid, semnum)
 			}
 		}
 	}
+}
+
+void
+semid_n2o(n, o)
+	struct semid_ds *n;
+	struct osemid_ds *o;
+{
+	o->sem_base = n->sem_base;
+	o->sem_nsems = n->sem_nsems;
+	o->sem_otime = n->sem_otime;
+	o->sem_pad1 = n->sem_pad1;
+	o->sem_ctime = n->sem_ctime;
+	o->sem_pad2 = n->sem_pad2;
+	bcopy(n->sem_pad3, o->sem_pad3, sizeof o->sem_pad3);
+	ipc_n2o(&n->sem_perm, &o->sem_perm);
+}
+
+int
+sys___osemctl(p, v, retval)
+	struct proc *p;
+	register void *v;
+	register_t *retval;
+{
+	register struct sys___semctl_args /* {
+		syscallarg(int) semid;
+		syscallarg(int) semnum;
+		syscallarg(int) cmd;
+		syscallarg(union semun *) arg;
+	} */ *uap = v;
+	int semid = SCARG(uap, semid);
+	int semnum = SCARG(uap, semnum);
+	int cmd = SCARG(uap, cmd);
+	union semun *arg = SCARG(uap, arg);
+	union semun real_arg;
+	struct ucred *cred = p->p_ucred;
+	int i, rval, eval;
+	struct semid_ds *semaptr;
+	struct osemid_ds osbuf;
+
+#ifdef SEM_DEBUG
+	printf("call to semctl(%d, %d, %d, %p)\n", semid, semnum, cmd, arg);
+#endif
+
+	semlock(p);
+
+	semid = IPCID_TO_IX(semid);
+	if (semid < 0 || semid >= seminfo.semmsl)
+		return(EINVAL);
+
+	semaptr = &sema[semid];
+	if ((semaptr->sem_perm.mode & SEM_ALLOC) == 0 ||
+	    semaptr->sem_perm.seq != IPCID_TO_SEQ(SCARG(uap, semid)))
+		return(EINVAL);
+
+	eval = 0;
+	rval = 0;
+
+	switch (cmd) {
+	case IPC_RMID:
+		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_M)) != 0)
+			return(eval);
+		semaptr->sem_perm.cuid = cred->cr_uid;
+		semaptr->sem_perm.uid = cred->cr_uid;
+		semtot -= semaptr->sem_nsems;
+		for (i = semaptr->sem_base - sem; i < semtot; i++)
+			sem[i] = sem[i + semaptr->sem_nsems];
+		for (i = 0; i < seminfo.semmni; i++) {
+			if ((sema[i].sem_perm.mode & SEM_ALLOC) &&
+			    sema[i].sem_base > semaptr->sem_base)
+				sema[i].sem_base -= semaptr->sem_nsems;
+		}
+		semaptr->sem_perm.mode = 0;
+		semundo_clear(semid, -1);
+		wakeup((caddr_t)semaptr);
+		break;
+
+	case IPC_SET:
+		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_M)))
+			return(eval);
+		if ((eval = copyin(arg, &real_arg, sizeof(real_arg))) != 0)
+			return(eval);
+		if ((eval = copyin(real_arg.buf, (caddr_t)&osbuf,
+		    sizeof(osbuf))) != 0)
+			return(eval);
+		semaptr->sem_perm.uid = osbuf.sem_perm.uid;
+		semaptr->sem_perm.gid = osbuf.sem_perm.gid;
+		semaptr->sem_perm.mode = (semaptr->sem_perm.mode & ~0777) |
+		    (osbuf.sem_perm.mode & 0777);
+		semaptr->sem_ctime = time.tv_sec;
+		break;
+
+	case IPC_STAT:
+		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_R)))
+			return(eval);
+		if ((eval = copyin(arg, &real_arg, sizeof(real_arg))) != 0)
+			return(eval);
+		semid_n2o(semaptr, &osbuf);
+		eval = copyout((caddr_t)&osbuf, real_arg.buf, sizeof osbuf);
+		break;
+
+	case GETNCNT:
+		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_R)))
+			return(eval);
+		if (semnum < 0 || semnum >= semaptr->sem_nsems)
+			return(EINVAL);
+		rval = semaptr->sem_base[semnum].semncnt;
+		break;
+
+	case GETPID:
+		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_R)))
+			return(eval);
+		if (semnum < 0 || semnum >= semaptr->sem_nsems)
+			return(EINVAL);
+		rval = semaptr->sem_base[semnum].sempid;
+		break;
+
+	case GETVAL:
+		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_R)))
+			return(eval);
+		if (semnum < 0 || semnum >= semaptr->sem_nsems)
+			return(EINVAL);
+		rval = semaptr->sem_base[semnum].semval;
+		break;
+
+	case GETALL:
+		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_R)))
+			return(eval);
+		if ((eval = copyin(arg, &real_arg, sizeof(real_arg))) != 0)
+			return(eval);
+		for (i = 0; i < semaptr->sem_nsems; i++) {
+			eval = copyout((caddr_t)&semaptr->sem_base[i].semval,
+			    &real_arg.array[i], sizeof(real_arg.array[0]));
+			if (eval != 0)
+				break;
+		}
+		break;
+
+	case GETZCNT:
+		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_R)))
+			return(eval);
+		if (semnum < 0 || semnum >= semaptr->sem_nsems)
+			return(EINVAL);
+		rval = semaptr->sem_base[semnum].semzcnt;
+		break;
+
+	case SETVAL:
+		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_W)))
+			return(eval);
+		if (semnum < 0 || semnum >= semaptr->sem_nsems)
+			return(EINVAL);
+		if ((eval = copyin(arg, &real_arg, sizeof(real_arg))) != 0)
+			return(eval);
+		semaptr->sem_base[semnum].semval = real_arg.val;
+		semundo_clear(semid, semnum);
+		wakeup((caddr_t)semaptr);
+		break;
+
+	case SETALL:
+		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_W)))
+			return(eval);
+		if ((eval = copyin(arg, &real_arg, sizeof(real_arg))) != 0)
+			return(eval);
+		for (i = 0; i < semaptr->sem_nsems; i++) {
+			eval = copyin(&real_arg.array[i],
+			    (caddr_t)&semaptr->sem_base[i].semval,
+			    sizeof(real_arg.array[0]));
+			if (eval != 0)
+				break;
+		}
+		semundo_clear(semid, -1);
+		wakeup((caddr_t)semaptr);
+		break;
+
+	default:
+		return(EINVAL);
+	}
+
+	if (eval == 0)
+		*retval = rval;
+	return(eval);
 }
 
 int

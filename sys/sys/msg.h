@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.h,v 1.3 1998/05/11 06:22:19 deraadt Exp $	*/
+/*	$OpenBSD: msg.h,v 1.4 1998/06/11 18:32:21 deraadt Exp $	*/
 /*	$NetBSD: msg.h,v 1.9 1996/02/09 18:25:18 christos Exp $	*/
 
 /*
@@ -34,6 +34,24 @@
 
 struct msqid_ds {
 	struct ipc_perm	msg_perm;	/* msg queue permission bits */
+	struct msg	*msg_first;	/* first message in the queue */
+	struct msg	*msg_last;	/* last message in the queue */
+	unsigned long	msg_cbytes;	/* number of bytes in use on the queue */
+	unsigned long	msg_qnum;	/* number of msgs in the queue */
+	unsigned long	msg_qbytes;	/* max # of bytes on the queue */
+	pid_t		msg_lspid;	/* pid of last msgsnd() */
+	pid_t		msg_lrpid;	/* pid of last msgrcv() */
+	time_t		msg_stime;	/* time of last msgsnd() */
+	long		msg_pad1;
+	time_t		msg_rtime;	/* time of last msgrcv() */
+	long		msg_pad2;
+	time_t		msg_ctime;	/* time of last msgctl() */
+	long		msg_pad3;
+	long		msg_pad4[4];
+};
+
+struct omsqid_ds {
+	struct oipc_perm msg_perm;	/* msg queue permission bits */
 	struct msg	*msg_first;	/* first message in the queue */
 	struct msg	*msg_last;	/* last message in the queue */
 	unsigned long	msg_cbytes;	/* number of bytes in use on the queue */
@@ -158,6 +176,7 @@ int msgrcv __P((int, void *, size_t, long, int));
 __END_DECLS
 #else
 void msginit __P((void));
+void msqid_n2o __P((struct msqid_ds *, struct omsqid_ds *));
 #endif /* !_KERNEL */
 
 #endif /* !_SYS_MSG_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.h,v 1.4 1998/06/10 08:46:18 deraadt Exp $	*/
+/*	$OpenBSD: sem.h,v 1.5 1998/06/11 18:32:22 deraadt Exp $	*/
 /*	$NetBSD: sem.h,v 1.8 1996/02/09 18:25:29 christos Exp $	*/
 
 /*
@@ -21,6 +21,19 @@ struct sem {
 
 struct semid_ds {
 	struct ipc_perm	sem_perm;	/* operation permission struct */
+	struct sem	*sem_base;	/* pointer to first semaphore in set */
+	unsigned short	sem_nsems;	/* number of sems in set */
+	time_t		sem_otime;	/* last operation time */
+	long		sem_pad1;	/* SVABI/386 says I need this here */
+	time_t		sem_ctime;	/* last change time */
+	    				/* Times measured in secs since */
+	    				/* 00:00:00 GMT, Jan. 1, 1970 */
+	long		sem_pad2;	/* SVABI/386 says I need this here */
+	long		sem_pad3[4];	/* SVABI/386 says I need this here */
+};
+
+struct osemid_ds {
+	struct oipc_perm sem_perm;	/* operation permission struct */
 	struct sem	*sem_base;	/* pointer to first semaphore in set */
 	unsigned short	sem_nsems;	/* number of sems in set */
 	time_t		sem_otime;	/* last operation time */
@@ -176,6 +189,7 @@ __END_DECLS
 #else
 void seminit __P((void));
 void semexit __P((struct proc *));
+void semid_n2o __P((struct semid_ds *, struct osemid_ds *));
 #endif /* !_KERNEL */
 
 #endif /* !_SEM_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.7 1998/05/11 06:13:48 deraadt Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.8 1998/06/11 18:32:17 deraadt Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.37 1996/03/16 23:17:13 christos Exp $	*/
 
 /*
@@ -259,6 +259,83 @@ sys_shmat(p, v, retval)
 	shmseg->shm_atime = time.tv_sec;
 	shmseg->shm_nattch++;
 	*retval = attach_va;
+	return 0;
+}
+
+void
+shmid_n2o(n, o)
+	struct shmid_ds *n;
+	struct oshmid_ds *o;
+{
+	o->shm_segsz = n->shm_segsz;
+	o->shm_lpid = n->shm_lpid;
+	o->shm_cpid = n->shm_cpid;
+	o->shm_nattch = n->shm_nattch;
+	o->shm_atime = n->shm_atime;
+	o->shm_dtime = n->shm_dtime;
+	o->shm_ctime = n->shm_ctime;
+	o->shm_internal = n->shm_internal;
+	ipc_n2o(&n->shm_perm, &o->shm_perm);
+}
+
+int
+sys_oshmctl(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sys_shmctl_args /* {
+		syscallarg(int) shmid;
+		syscallarg(int) cmd;
+		syscallarg(struct shmid_ds *) buf;
+	} */ *uap = v;
+	int error;
+	struct ucred *cred = p->p_ucred;
+	struct oshmid_ds oinbuf;
+	struct shmid_ds *shmseg;
+
+	shmseg = shm_find_segment_by_shmid(SCARG(uap, shmid));
+	if (shmseg == NULL)
+		return EINVAL;
+	switch (SCARG(uap, cmd)) {
+	case IPC_STAT:
+		if ((error = ipcperm(cred, &shmseg->shm_perm, IPC_R)) != 0)
+			return error;
+		shmid_n2o(shmseg, &oinbuf);
+		error = copyout((caddr_t)shmseg, SCARG(uap, buf),
+		    sizeof(oinbuf));
+		if (error)
+			return error;
+		break;
+	case IPC_SET:
+		if ((error = ipcperm(cred, &shmseg->shm_perm, IPC_M)) != 0)
+			return error;
+		error = copyin(SCARG(uap, buf), (caddr_t)&oinbuf,
+		    sizeof(oinbuf));
+		if (error)
+			return error;
+		shmseg->shm_perm.uid = oinbuf.shm_perm.uid;
+		shmseg->shm_perm.gid = oinbuf.shm_perm.gid;
+		shmseg->shm_perm.mode =
+		    (shmseg->shm_perm.mode & ~ACCESSPERMS) |
+		    (oinbuf.shm_perm.mode & ACCESSPERMS);
+		shmseg->shm_ctime = time.tv_sec;
+		break;
+	case IPC_RMID:
+		if ((error = ipcperm(cred, &shmseg->shm_perm, IPC_M)) != 0)
+			return error;
+		shmseg->shm_perm.key = IPC_PRIVATE;
+		shmseg->shm_perm.mode |= SHMSEG_REMOVED;
+		if (shmseg->shm_nattch <= 0) {
+			shm_deallocate_segment(shmseg);
+			shm_last_free = IPCID_TO_IX(SCARG(uap, shmid));
+		}
+		break;
+	case SHM_LOCK:
+	case SHM_UNLOCK:
+	default:
+		return EINVAL;
+	}
 	return 0;
 }
 

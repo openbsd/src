@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_msg.c,v 1.4 1998/05/11 16:40:45 deraadt Exp $	*/
+/*	$OpenBSD: sysv_msg.c,v 1.5 1998/06/11 18:32:14 deraadt Exp $	*/
 /*	$NetBSD: sysv_msg.c,v 1.19 1996/02/09 19:00:18 christos Exp $	*/
 
 /*
@@ -117,6 +117,162 @@ msg_freehdr(msghdr)
 		panic("msghdr->msg_spot != -1");
 	msghdr->msg_next = free_msghdrs;
 	free_msghdrs = msghdr;
+}
+
+void
+msqid_n2o(n, o)
+	struct msqid_ds *n;
+	struct omsqid_ds *o;
+{
+	o->msg_first = n->msg_first;
+	o->msg_last = n->msg_last;
+	o->msg_cbytes = n->msg_cbytes;
+	o->msg_qnum = n->msg_qnum;
+	o->msg_qbytes = n->msg_qbytes;
+	o->msg_lspid = n->msg_lspid;
+	o->msg_lrpid = n->msg_lrpid;
+	o->msg_stime = n->msg_stime;
+	o->msg_pad1 = n->msg_pad1;
+	o->msg_rtime = n->msg_rtime;
+	o->msg_pad2 = n->msg_pad2;
+	o->msg_ctime = n->msg_ctime;
+	o->msg_pad3 = n->msg_pad3;
+	bcopy(n->msg_pad4, o->msg_pad4, sizeof o->msg_pad4);
+	ipc_n2o(&n->msg_perm, &o->msg_perm);
+}
+
+int
+sys_omsgctl(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	register struct sys_msgctl_args /* {
+		syscallarg(int) msqid;
+		syscallarg(int) cmd;
+		syscallarg(struct msqid_ds *) buf;
+	} */ *uap = v;
+	int msqid = SCARG(uap, msqid);
+	int cmd = SCARG(uap, cmd);
+	struct msqid_ds *user_msqptr = SCARG(uap, buf);
+	struct ucred *cred = p->p_ucred;
+	int rval, eval;
+	struct omsqid_ds omsqbuf;
+	register struct msqid_ds *msqptr;
+
+#ifdef MSG_DEBUG_OK
+	printf("call to msgctl(%d, %d, %p)\n", msqid, cmd, user_msqptr);
+#endif
+
+	msqid = IPCID_TO_IX(msqid);
+
+	if (msqid < 0 || msqid >= msginfo.msgmni) {
+#ifdef MSG_DEBUG_OK
+		printf("msqid (%d) out of range (0<=msqid<%d)\n", msqid,
+		    msginfo.msgmni);
+#endif
+		return(EINVAL);
+	}
+
+	msqptr = &msqids[msqid];
+
+	if (msqptr->msg_qbytes == 0) {
+#ifdef MSG_DEBUG_OK
+		printf("no such msqid\n");
+#endif
+		return(EINVAL);
+	}
+	if (msqptr->msg_perm.seq != IPCID_TO_SEQ(SCARG(uap, msqid))) {
+#ifdef MSG_DEBUG_OK
+		printf("wrong sequence number\n");
+#endif
+		return(EINVAL);
+	}
+
+	eval = 0;
+	rval = 0;
+
+	switch (cmd) {
+
+	case IPC_RMID:
+	{
+		struct msg *msghdr;
+		if ((eval = ipcperm(cred, &msqptr->msg_perm, IPC_M)) != 0)
+			return(eval);
+		/* Free the message headers */
+		msghdr = msqptr->msg_first;
+		while (msghdr != NULL) {
+			struct msg *msghdr_tmp;
+
+			/* Free the segments of each message */
+			msqptr->msg_cbytes -= msghdr->msg_ts;
+			msqptr->msg_qnum--;
+			msghdr_tmp = msghdr;
+			msghdr = msghdr->msg_next;
+			msg_freehdr(msghdr_tmp);
+		}
+
+		if (msqptr->msg_cbytes != 0)
+			panic("msg_cbytes is screwed up");
+		if (msqptr->msg_qnum != 0)
+			panic("msg_qnum is screwed up");
+
+		msqptr->msg_qbytes = 0;	/* Mark it as free */
+
+		wakeup((caddr_t)msqptr);
+	}
+
+		break;
+
+	case IPC_SET:
+		if ((eval = ipcperm(cred, &msqptr->msg_perm, IPC_M)))
+			return(eval);
+		if ((eval = copyin(user_msqptr, &omsqbuf, sizeof(omsqbuf))) != 0)
+			return(eval);
+		if (omsqbuf.msg_qbytes > msqptr->msg_qbytes && cred->cr_uid != 0)
+			return(EPERM);
+		if (omsqbuf.msg_qbytes > msginfo.msgmnb) {
+#ifdef MSG_DEBUG_OK
+			printf("can't increase msg_qbytes beyond %d (truncating)\n",
+			    msginfo.msgmnb);
+#endif
+			omsqbuf.msg_qbytes = msginfo.msgmnb;	/* silently restrict qbytes to system limit */
+		}
+		if (omsqbuf.msg_qbytes == 0) {
+#ifdef MSG_DEBUG_OK
+			printf("can't reduce msg_qbytes to 0\n");
+#endif
+			return(EINVAL);		/* non-standard errno! */
+		}
+		msqptr->msg_perm.uid = omsqbuf.msg_perm.uid;	/* change the owner */
+		msqptr->msg_perm.gid = omsqbuf.msg_perm.gid;	/* change the owner */
+		msqptr->msg_perm.mode = (msqptr->msg_perm.mode & ~0777) |
+		    (omsqbuf.msg_perm.mode & 0777);
+		msqptr->msg_qbytes = omsqbuf.msg_qbytes;
+		msqptr->msg_ctime = time.tv_sec;
+		break;
+
+	case IPC_STAT:
+		if ((eval = ipcperm(cred, &msqptr->msg_perm, IPC_R))) {
+#ifdef MSG_DEBUG_OK
+			printf("requester doesn't have read access\n");
+#endif
+			return(eval);
+		}
+		msqid_n2o(msqptr, &omsqbuf);
+		eval = copyout((caddr_t)&omsqbuf, user_msqptr, sizeof omsqbuf);
+		break;
+
+	default:
+#ifdef MSG_DEBUG_OK
+		printf("invalid command %d\n", cmd);
+#endif
+		return(EINVAL);
+	}
+
+	if (eval == 0)
+		*retval = rval;
+	return(eval);
 }
 
 int

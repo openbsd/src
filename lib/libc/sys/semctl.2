@@ -1,4 +1,4 @@
-.\"	$OpenBSD: semctl.2,v 1.5 1998/06/10 08:46:20 deraadt Exp $
+.\"	$OpenBSD: semctl.2,v 1.6 1998/06/11 18:32:10 deraadt Exp $
 .\"	$NetBSD: semctl.2,v 1.2 1997/03/27 08:20:40 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -91,12 +91,12 @@ structure is defined in
 and looks like this:
 .Bd -literal
 struct ipc_perm {
-	ushort cuid;		/* creator user id */
-	ushort cgid;		/* creator group id */
-	ushort uid;		/* user id */
-	ushort gid;		/* group id */
-	ushort mode;		/* r/w permission (see chmod(2)) */
-	ushort seq;		/* sequence # (to generate unique msg/sem/shm id) */
+	uid_t	cuid;		/* creator user id */
+	gid_t	cgid;		/* creator group id */
+	uid_t	uid;		/* user id */
+	gid_t	gid;		/* group id */
+	mode_t	mode;		/* r/w permission (see chmod(2)) */
+	u_short seq;		/* sequence # (to generate unique msg/sem/shm id) */
 	key_t key;		/* user specified msg/sem/shm key */
 };
 .Ed
