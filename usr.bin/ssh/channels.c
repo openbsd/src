@@ -17,7 +17,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: channels.c,v 1.49 2000/04/14 10:30:30 markus Exp $");
+RCSID("$Id: channels.c,v 1.50 2000/04/16 16:40:43 markus Exp $");
 
 #include "ssh.h"
 #include "packet.h"
@@ -1465,9 +1465,9 @@ channel_request_remote_forwarding(u_short listen_port, const char *host_to_conne
 		packet_put_int(listen_port);
 	} else {
 		packet_start(SSH_CMSG_PORT_FORWARD_REQUEST);
-		packet_put_int(port_to_connect);
-		packet_put_cstring(host_to_connect);
 		packet_put_int(listen_port);
+		packet_put_cstring(host_to_connect);
+		packet_put_int(port_to_connect);
 		packet_send();
 		packet_write_wait();
 		/*
