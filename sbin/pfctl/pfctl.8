@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.114 2004/07/23 10:20:42 jmc Exp $
+.\" $OpenBSD: pfctl.8,v 1.115 2004/08/26 16:14:58 jaredy Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -34,10 +34,7 @@
 .Nm pfctl
 .Bk -words
 .Op Fl AdeghNnOoqRrvz
-.Xo
-.Oo Fl a Ar anchor
-.Op Ns / Ns Ar ruleset Oc
-.Xc
+.Op Fl a Ar anchor
 .Xo
 .Oo Fl D
 .Ar macro Ns = Ns Ar value Oc
@@ -112,39 +109,46 @@ The options are as follows:
 .It Fl A
 Load only the queue rules present in the rule file.
 Other rules and options are ignored.
-.It Xo
-.Fl a Ar anchor
-.Op Ns / Ns Ar ruleset
-.Xc
+.It Fl a Ar anchor
 Apply flags
 .Fl f ,
 .Fl F ,
 and
 .Fl s
 only to the rules in the specified
-.Ar anchor
-and optional named ruleset
-.Ar ruleset .
+.Ar anchor .
 In addition to the main ruleset,
 .Nm
-can load and manipulate additional rulesets by name.
-Named rulesets are attached at
-.Ar anchor
-points, which are also referenced by name.
+can load and manipulate additional rulesets by name,
+called anchors.
+The main ruleset is the default anchor.
+.Pp
+Anchors are referenced by name and may be nested,
+with the various components of the anchor path separated by
+.Sq /
+characters, similar to how file system hierarchies are laid out.
+The last component of the anchor path is where ruleset operations are
+performed.
+.Pp
 Evaluation of
 .Ar anchor
 rules from the main ruleset is described in
 .Xr pf.conf 5 .
-For example, to show all filter rules inside anchor
-.Li foo :
+.Pp
+For example, the following will show all filter rules (see the
+.Fl s
+flag below) inside the anchor
+.Li authpf/smith ,
+which would have been created for user smith by
+.Xr authpf 8 :
 .Bd -literal -offset indent
-# pfctl -a foo -s rules
+# pfctl -a authpf/smith -s rules
 .Ed
 .Pp
-Private tables can also be put inside subrulesets, either by having table
+Private tables can also be put inside anchors, either by having table
 statements in the
 .Xr pf.conf 5
-file that is loaded in the anchor, or by using regular table commands as in:
+file that is loaded in the anchor, or by using regular table commands, as in:
 .Bd -literal -offset indent
 # pfctl -a foo/bar -t mytable -T add 1.2.3.4 5.6.7.8
 .Ed
@@ -152,7 +156,7 @@ file that is loaded in the anchor, or by using regular table commands as in:
 When a rule referring to a table is loaded in an anchor, the rule will use the
 private table if one is defined, and then fallback to the table defined in the
 main ruleset, if there is one.
-This is similar to C rules for variables.
+This is similar to C rules for variable scope.
 It is possible to create distinct tables with the same name in the global
 ruleset and in an anchor, but this is often bad design and a warning will be
 issued in that case.
@@ -318,11 +322,16 @@ Packets passed statefully are counted in the rule that created the state
 (even though the rule isn't evaluated more than once for the entire
 connection).
 .It Fl s Cm Anchors
-Show the currently loaded anchors.
+Show the currently loaded anchors directly attached to the main ruleset.
 If
 .Fl a Ar anchor
-is specified as well, the named rulesets currently loaded in the specified
-anchor are shown instead.
+is specified as well, the anchors loaded directly below the given
+.Ar anchor
+are shown instead.
+If
+.Fl v
+is specified, all anchors attached under the target anchor will be
+displayed recursively.
 .It Fl s Cm state
 Show the contents of the state table.
 .It Fl s Cm Sources
@@ -538,7 +547,7 @@ This flag can only be witnessed briefly during the loading of
 For tables which are referenced (used) by rules.
 .It h
 This flag is set when a table in the main ruleset is hidden by one or more
-tables of the same name in subrulesets (anchors).
+tables of the same name from anchors attached below it.
 .El
 .It Fl t Ar table
 Specify the name of the table.
@@ -578,6 +587,7 @@ Passive operating system fingerprint database.
 .Xr pf.conf 5 ,
 .Xr pf.os 5 ,
 .Xr sysctl.conf 5 ,
+.Xr authpf 8 ,
 .Xr ftp-proxy 8 ,
 .Xr rc 8 ,
 .Xr rc.conf 8 ,
