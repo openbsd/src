@@ -44,7 +44,7 @@
 #include <sys/malloc.h>
 #if defined(__FreeBSD__)
 #include <sys/devconf.h>
-#elif defined(__bsdi__) || defined(__NetBSD__)
+#elif defined(__bsdi__) || defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
 #endif
 
@@ -89,7 +89,7 @@
 #include <i386/pci/pci.h>
 #include <i386/pci/pdqvar.h>
 #include <i386/pci/pdqreg.h>
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
 #include <dev/ic/pdqvar.h>
@@ -119,7 +119,7 @@ static pdq_softc_t *pdqs_pci[NFPA];
 extern struct cfdriver fpacd;
 #define	PDQ_PCI_UNIT_TO_SOFTC(unit)	((pdq_softc_t *)fpacd.cd_devs[unit])
 
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 extern struct cfattach fpa_ca;
 extern struct cfdriver fpa_cd;
 #define	PDQ_PCI_UNIT_TO_SOFTC(unit)	((pdq_softc_t *)fpa_cd.cd_devs[unit])
@@ -142,7 +142,7 @@ pdq_pci_ifintr(
     pdq_softc_t * const sc = (pdq_softc_t *) arg;
 #ifdef __FreeBSD__
     return pdq_interrupt(sc->sc_pdq);
-#elif defined(__bsdi__) || defined(__NetBSD__)
+#elif defined(__bsdi__) || defined(__NetBSD__) || defined(__OpenBSD__)
     (void) pdq_interrupt(sc->sc_pdq);
     return 1;
 #endif
@@ -357,7 +357,7 @@ struct cfdriver fpacd = {
     sizeof(pdq_softc_t)
 };
 
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 
 static int
 pdq_pci_match(

@@ -19,7 +19,7 @@ struct st_softc {
 	u_int	sc_flags;		/* see below */
 	long	sc_oqlen;		/* previous output queue size */
 	long	sc_otimeout;		/* number of times output's stalled */
-#ifdef NetBSD
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	int	sc_oldbufsize;		/* previous output buffer size */
 	int	sc_oldbufquot;		/* previous output buffer quoting */
 #endif
