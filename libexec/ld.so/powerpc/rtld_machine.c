@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.27 2003/07/06 20:04:00 deraadt Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.28 2003/07/28 03:11:00 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -461,15 +461,13 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	object->got_size = 0;
 	this = NULL;
 	ooff = _dl_find_symbol("__got_start", object, &this,
-	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, SYM_NOTPLT,
-	    NULL);
+	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, 0, NULL);
 	if (this != NULL)
 		object->got_addr = ooff + this->st_value;
 
 	this = NULL;
 	ooff = _dl_find_symbol("__got_end", object, &this,
-	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, SYM_NOTPLT,
-	    NULL);
+	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, 0, NULL);
 	if (this != NULL)
 		object->got_size = ooff + this->st_value  - object->got_addr;
 
@@ -477,15 +475,13 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	object->plt_size = 0;
 	this = NULL;
 	ooff = _dl_find_symbol("__plt_start", object, &this,
-	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, SYM_NOTPLT,
-	    NULL);
+	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, 0, NULL);
 	if (this != NULL)
 		plt_addr = ooff + this->st_value;
 
 	this = NULL;
 	ooff = _dl_find_symbol("__plt_end", object, &this,
-	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, SYM_NOTPLT,
-	    NULL);
+	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, 0, NULL);
 	if (this != NULL)
 		object->plt_size = ooff + this->st_value  - plt_addr;
 
@@ -568,8 +564,7 @@ _dl_bind(elf_object_t *object, int reloff)
 	r_addr = (Elf_Addr *)(object->load_offs + relas->r_offset);
 	this = NULL;
 	ooff = _dl_find_symbol(symn, _dl_objects, &this,
-	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, SYM_NOTPLT,
-	    object->load_name);
+	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, 0, object->load_name);
 	if (this == NULL) {
 		_dl_printf("lazy binding failed!\n");
 		*((int *)0) = 0;	/* XXX */

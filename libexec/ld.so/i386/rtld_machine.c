@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.9 2003/06/03 16:20:41 art Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.10 2003/07/28 03:11:00 drahn Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -417,15 +417,13 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	object->got_size = 0;
 	this = NULL;
 	ooff = _dl_find_symbol("__got_start", object, &this,
-	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, SYM_NOTPLT,
-	    NULL);
+	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, 0, NULL);
 	if (this != NULL)
 		object->got_addr = ooff + this->st_value;
 
 	this = NULL;
 	ooff = _dl_find_symbol("__got_end", object, &this,
-	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, SYM_NOTPLT,
-	    NULL);
+	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, 0, NULL);
 	if (this != NULL)
 		object->got_size = ooff + this->st_value  - object->got_addr;
 

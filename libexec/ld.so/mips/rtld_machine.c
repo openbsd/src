@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.12 2003/06/09 16:10:04 deraadt Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.13 2003/07/28 03:11:00 drahn Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -158,29 +158,25 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 
 	this = NULL;
 	ooff = _dl_find_symbol("__got_start", object, &this,
-	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, SYM_NOTPLT,
-	    NULL);
+	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, 0, NULL);
 	if (this != NULL)
 		object->got_addr = ooff + this->st_value;
 
 	this = NULL;
 	ooff = _dl_find_symbol("__got_end", object, &this,
-	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, SYM_NOTPLT,
-	    NULL);
+	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, 0, NULL);
 	if (this != NULL)
 		object->got_size = ooff + this->st_value  - object->got_addr;
 
 	this = NULL;
 	ooff = _dl_find_symbol("__plt_start", object, &this,
-	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, SYM_NOTPLT,
-	    NULL);
+	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, 0, NULL);
 	if (this != NULL)
 		object->plt_addr = ooff + this->st_value;
 
 	this = NULL;
 	ooff = _dl_find_symbol("__plt_end", object, &this,
-	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, SYM_NOTPLT,
-	    NULL);
+	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, 0, NULL);
 	if (this != NULL)
 		object->plt_size = ooff + this->st_value  - object->plt_addr;
 
