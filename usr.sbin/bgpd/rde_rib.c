@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.50 2004/07/05 02:13:44 henning Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.51 2004/08/05 15:58:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -294,6 +294,46 @@ static void		 prefix_link(struct prefix *, struct pt_entry *,
 			     struct rde_aspath *);
 static void		 prefix_unlink(struct prefix *);
 
+int
+prefix_compare(const struct bgpd_addr *a, const struct bgpd_addr *b,
+    int prefixlen)
+{
+	in_addr_t	mask, aa, ba;
+	int		i;
+	u_int8_t	m;
+
+	if (a->af != b->af)
+		return (a->af - b->af);
+
+	switch (a->af) {
+	case AF_INET:
+		if (prefixlen > 32)
+			fatalx("prefix_cmp: bad IPv4 prefixlen");
+		mask = htonl(prefixlen2mask(prefixlen));
+		aa = ntohl(a->v4.s_addr & mask);
+		ba = ntohl(b->v4.s_addr & mask);
+		if (aa != ba)
+			return (aa - ba);
+		return (0);
+	case AF_INET6:
+		for (i = 0; i < prefixlen / 8; i++)
+			if (a->v6.s6_addr[i] != b->v6.s6_addr[i])
+				return (a->v6.s6_addr[i] - b->v6.s6_addr[i]);
+		i = prefixlen % 8;
+		if (i) {
+			m = 0xff00 >> i;
+			if ((a->v6.s6_addr[prefixlen / 8] & m) !=
+			    (b->v6.s6_addr[prefixlen / 8] & m))
+				return ((a->v6.s6_addr[prefixlen / 8] & m) -
+				    (b->v6.s6_addr[prefixlen / 8] & m));
+		}
+		return (0);
+	default:
+		fatalx("prefix_cmp: unknown af");
+	}
+	return (-1);
+}
+
 /*
  * search in the path list for specified prefix. Returns NULL if not found.
  */
@@ -310,7 +350,7 @@ prefix_get(struct rde_aspath *asp, struct bgpd_addr *prefix, int prefixlen)
 		if (p->prefix->prefixlen != prefixlen)
 			continue;
 		pt_getaddr(p->prefix, &addr);
-		if (prefix_equal(&addr, prefix, prefixlen)) {
+		if (!prefix_compare(&addr, prefix, prefixlen)) {
 			ENSURE(p->aspath == asp);
 			return p;
 		}

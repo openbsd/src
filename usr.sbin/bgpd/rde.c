@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.132 2004/08/05 15:19:50 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.133 2004/08/05 15:58:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1063,7 +1063,7 @@ rde_dump_prefix_upcall(struct pt_entry *pt, void *ptr)
 		return;
 	if (ctl->pref->prefixlen > pt->prefixlen)
 		return;
-	if (prefix_equal(&ctl->pref->prefix, &addr, ctl->pref->prefixlen))
+	if (!prefix_compare(&ctl->pref->prefix, &addr, ctl->pref->prefixlen))
 		LIST_FOREACH(p, &pt->prefix_h, prefix_l)
 			rde_dump_rib_as(p, ctl->pid);
 }

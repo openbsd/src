@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.47 2004/07/30 14:44:30 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.48 2004/08/05 15:58:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -294,6 +294,8 @@ void		 path_updateall(struct rde_aspath *, enum nexthop_state);
 void		 path_destroy(struct rde_aspath *);
 int		 path_empty(struct rde_aspath *);
 
+int		 prefix_compare(const struct bgpd_addr *,
+		    const struct bgpd_addr *, int);
 struct prefix	*prefix_get(struct rde_aspath *, struct bgpd_addr *, int);
 struct pt_entry	*prefix_add(struct rde_aspath *, struct bgpd_addr *, int);
 struct pt_entry	*prefix_move(struct rde_aspath *, struct prefix *);
