@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.73 2000/11/08 19:09:29 todd Exp $
+#	$OpenBSD: netstart,v 1.74 2000/11/27 17:14:00 millert Exp $
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -114,7 +114,7 @@ for hn in /etc/hostname.*; do
 	    set -- $cmd2
 	    af="$1" name="$2" mask="$3" bcaddr="$4" ext1="$5" cmd2=
 	    # make sure and get any remaining args in ext2, like the read below
-	    i=1; while [ i -lt 6 -a "$1" ]; do shift; let i=i+1; done
+	    i=1; while [ i -lt 6 -a -n "$1" ]; do shift; let i=i+1; done
 	    ext2="$@"
 	else
 	    # read the next line or exit the while loop
