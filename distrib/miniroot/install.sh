@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.49 1999/04/07 08:47:34 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.50 1999/04/07 22:59:27 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -252,23 +252,24 @@ __get_filesystems_1
 		done
 	done
 
-	if [ -f /sbin/swapon ]; then
-		echo
-		echo "Do you wish to enable swap for this install (WARNING: Useful for low memory"
-		echo "machines, but only do this if the b partition on the root disk was configured"
-		echo -n "correctly before this kernel boot, or disaster will result)? [n] "
-		getresp "n"
-		case "$resp" in
-			y*|Y*)
-				swapon /dev/${ROOTDISK}b
-				;;
-			reboot)
-				reboot
-				;;
-			*)
-				;;
-		esac
-	fi
+# pax memory leak fixed, this is no longer as neccessary
+#	if [ -f /sbin/swapon ]; then
+#		echo
+#		echo "Do you wish to enable swap for this install (WARNING: Useful for low memory"
+#		echo "machines, but only do this if the b partition on the root disk was configured"
+#		echo -n "correctly before this kernel boot, or disaster will result)? [n] "
+#		getresp "n"
+#		case "$resp" in
+#			y*|Y*)
+#				swapon /dev/${ROOTDISK}b
+#				;;
+#			reboot)
+#				reboot
+#				;;
+#			*)
+#				;;
+#		esac
+#	fi
 
 	echo
 	echo	"You have configured the following devices and mount points:"
