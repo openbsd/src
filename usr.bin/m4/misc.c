@@ -45,6 +45,7 @@ static char rcsid[] = "$NetBSD: misc.c,v 1.6 1995/09/28 05:37:41 tls Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/file.h>
 #include <errno.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -153,15 +154,20 @@ int n;
 {
 	register int c;
 	register FILE *dfil;
+	int fd;
 
 	if (active == outfile[n])
 		oops("%s: diversion still active.", "undivert");
 	(void) fclose(outfile[n]);
 	outfile[n] = NULL;
 	m4temp[UNIQUE] = n + '0';
-	if ((dfil = fopen(m4temp, "r")) == NULL)
+
+	if ((fd = open(m4temp, O_RDWR|O_EXCL|O_CREAT, 0666)) == -1 ||
+	    (dfil = fdopen(fd, "r")) == NULL) {
+		if (fd != -1)
+			close(fd);
 		oops("%s: cannot undivert.", m4temp);
-	else
+	} else
 		while ((c = getc(dfil)) != EOF)
 			putc(c, active);
 	(void) fclose(dfil);

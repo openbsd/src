@@ -336,12 +336,18 @@ register int argc;
 dodiv(n)
 register int n;
 {
+	int fd;
+
         if (n < 0 || n >= MAXOUT)
                 n = 0;                  /* bitbucket */
         if (outfile[n] == NULL) {
                 m4temp[UNIQUE] = n + '0';
-                if ((outfile[n] = fopen(m4temp, "w")) == NULL)
+		if ((fd = open(m4temp, O_RDWR|O_EXECL|O_CREAT, 0666)) == -1 ||
+		    (outfile[n] = fdopen(fd, "w")) == NULL) {
+			if (fd != -1)
+				close(fd);
                         error("m4: cannot divert.");
+		}
         }
         oindex = n;
         active = outfile[n];

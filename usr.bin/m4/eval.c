@@ -51,6 +51,7 @@ static char rcsid[] = "$NetBSD: eval.c,v 1.5 1996/01/13 23:25:23 pk Exp $";
  */
 
 #include <sys/types.h>
+#include <sys/file.h>
 #include <errno.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -663,12 +664,18 @@ void
 dodiv(n)
 register int n;
 {
+	int fd;
+
 	if (n < 0 || n >= MAXOUT)
 		n = 0;		       /* bitbucket */
 	if (outfile[n] == NULL) {
 		m4temp[UNIQUE] = n + '0';
-		if ((outfile[n] = fopen(m4temp, "w")) == NULL)
+		if ((fd = open(m4temp, O_RDWR|O_EXCL|O_CREAT, 0666)) == -1 ||
+		    (outfile[n] = fdopen(fd, "w")) == NULL) {
+			if (fd != -1)
+				close(fd);
 			oops("%s: cannot divert.", m4temp);
+		}
 	}
 	oindex = n;
 	active = outfile[n];
