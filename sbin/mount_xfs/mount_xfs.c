@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_xfs.c,v 1.4 1998/12/21 13:45:33 art Exp $	*/
+/*	$OpenBSD: mount_xfs.c,v 1.5 1998/12/21 14:19:42 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -91,7 +91,7 @@ main(int argc, char **argv)
 	if (argc != 2)
 		usage();
 
-	if (mount("xfs", argv[1], mntflags, argv[0])) {
+	if (mount(MOUNT_XFS, argv[1], mntflags, argv[0])) {
 		if (errno == EOPNOTSUPP)
 			errx(1, "Filesystem not supported by kernel");
 		else
