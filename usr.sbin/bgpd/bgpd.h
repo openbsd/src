@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.60 2004/01/09 14:10:06 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.61 2004/01/09 19:08:50 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -160,7 +160,8 @@ enum imsg_type {
 	IMSG_CTL_FIB_DECOUPLE,
 	IMSG_CTL_NEIGHBOR_UP,
 	IMSG_CTL_NEIGHBOR_DOWN,
-	IMSG_CTL_KROUTE
+	IMSG_CTL_KROUTE,
+	IMSG_CTL_KROUTE_ADDR
 };
 
 struct imsg_hdr {
@@ -256,7 +257,7 @@ void	kr_fib_decouple(void);
 int	kr_dispatch_msg(void);
 int	kr_nexthop_add(in_addr_t);
 void	kr_nexthop_delete(in_addr_t);
-void	kr_show_route(pid_t);
+void	kr_show_route(struct imsg *);
 
 /* control.c */
 int	control_init(void);

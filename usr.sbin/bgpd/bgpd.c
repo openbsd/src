@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.60 2004/01/09 13:47:07 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.61 2004/01/09 19:08:50 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -438,10 +438,11 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_head *mrtc)
 				kr_fib_decouple();
 			break;
 		case IMSG_CTL_KROUTE:
+		case IMSG_CTL_KROUTE_ADDR:
 			if (idx != PFD_PIPE_SESSION)
 				logit(LOG_CRIT, "kroute request not from SE");
 			else
-				kr_show_route(imsg.hdr.pid);
+				kr_show_route(&imsg);
 			break;
 		default:
 			break;
