@@ -59,7 +59,6 @@ static char sccsid[] = "@(#)unstr.c	8.1 (Berkeley) 5/31/93";
  *	Ken Arnold		Aug 13, 1978
  */
 
-# include	<machine/endian.h>
 # include	<sys/param.h>
 # include	"strfile.h"
 # include	<stdio.h>
