@@ -1,3 +1,4 @@
+.\"	$OpenBSD: yp.8,v 1.8 1998/11/20 23:50:24 downsj Exp $
 .\"	$NetBSD: yp.8,v 1.9 1995/08/11 01:16:52 thorpej Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
@@ -124,9 +125,25 @@ of their maps through
 .Nm YP .
 .Pp
 .Nm ypinit
-is used to initialize YP as a server or master.  This creates
+is used to initialize
+.Nm YP
+as a server or master.  This creates
 various files in
 .Pa /var/yp .
+By default the
+.Nm YP
+server will be setup in backwards compatible mode.  To enable
+.Dq secure
+mode, the file
+.Pa /var/yp/Makefile.yp
+must be edited.  This
+.Dq secure
+mode is compatible with
+.Ox
+and
+.Fx
+clients.
+.Pp
 If setup as a client, the required databases are automatically copied
 from the specified server.
 .Pp
@@ -159,6 +176,13 @@ If
 .Nm ypbind
 cannot find a server, the system behaves the same way as Sun's code
 does: it hangs.
+.Sh FILES
+.Bl -tag -width /var/yp/Makefile.main -compact
+.It Pa /var/yp/Makefile.main
+Top level YP Makefile
+.It Pa /var/yp/Makefile.yp
+YP maps Makefile
+.El
 .Sh SEE ALSO
 .Xr domainname 1 ,
 .Xr group 5 ,
@@ -178,11 +202,21 @@ does: it hangs.
 .Sh HISTORY
 This free
 .Nm YP
-subsystem is thought to be compatible with Sun's implementation.
+subsystem is thought to be compatible with Sun's implementation.  It is,
+of course, not compatible with
+.Nm NIS+
+or any other
+.Dq secure
+.Nm YP
+subsystem other than the native one.
+.Pp
 The name
 .Nm YP
 stands for Yellow Pee.
 .Pp
-The ypbind, library components, and userland programs were implemented
+The ypbind, most library components, and userland programs were implemented
 by Theo de Raadt <deraadt@theos.com>.
+The
+.Xr getpwent 3
+implmention was done by Jason Downs <downsj@downsj.com>.
 The server component was implemented by Mats O Jansson <moj@stacken.kth.se>.
