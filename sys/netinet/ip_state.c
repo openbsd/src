@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_state.c,v 1.16 1999/12/28 08:20:40 kjell Exp $ */
+/* $OpenBSD: ip_state.c,v 1.17 1999/12/28 09:43:33 kjell Exp $ */
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
  *
@@ -8,7 +8,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ip_state.c,v 1.16 1999/12/28 08:20:40 kjell Exp $";
+static const char rcsid[] = "@(#)$Id: ip_state.c,v 1.17 1999/12/28 09:43:33 kjell Exp $";
 #endif
 
 #include <sys/errno.h>
@@ -1039,11 +1039,11 @@ void fr_timeoutstate()
 				ips_num--;
 			} else
 				isp = &is->is_next;
+	RWLOCK_EXIT(&ipf_state);
 	if (fr_state_doflush) {
 		(void) fr_state_flush(1);
 		fr_state_doflush = 0;
 	}
-	RWLOCK_EXIT(&ipf_state);
 	SPL_X(s);
 }
 
