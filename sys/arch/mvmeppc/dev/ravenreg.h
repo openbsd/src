@@ -1,4 +1,4 @@
-/*	$OpenBSD: ravenreg.h,v 1.1 2001/06/26 21:57:41 smurph Exp $ */
+/*	$OpenBSD: ravenreg.h,v 1.2 2004/01/27 10:04:18 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
@@ -65,7 +65,7 @@
 #define RAVEN_MSOFF3_PREP	0x800000C0
 
 /* Where we map the PCI memory space - MAP A*/
-#define RAVEN_V_PCI_MEM_SPACE	0xc0000000	/* Viritual */
+#define RAVEN_V_PCI_MEM_SPACE	0xc0000000	/* Virtual */
 #define RAVEN_P_PCI_MEM_SPACE	0xc0000000	/* Physical */
 
 /* Where we map the PCI I/O space - MAP A*/

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpc106reg.h,v 1.1 2003/10/31 03:54:33 drahn Exp $ */
+/*	$OpenBSD: mpc106reg.h,v 1.2 2004/01/27 10:04:18 miod Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -33,7 +33,7 @@
 #define _MACHINE_MPC106REG_H_
 
 /* Where we map the PCI memory space - MAP A*/
-#define MPC106_V_PCI_MEM_SPACE	0xc0000000	/* Viritual */
+#define MPC106_V_PCI_MEM_SPACE	0xc0000000	/* Virtual */
 #define MPC106_P_PCI_MEM_SPACE	0xc0000000	/* Physical */
 
 /* Where we map the PCI I/O space - MAP A*/
