@@ -1,2 +1,5 @@
 pass in inet from any to 127.0.0.1
 pass in inet6 from any to 2000::1
+pass in all probability 50%
+pass in all probability 50%
+pass in inet6 proto tcp from ::1 to any probability 0.8%
