@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.95 2004/03/13 00:59:02 mcbride Exp $
+#	$OpenBSD: netstart,v 1.96 2004/03/22 04:31:42 mcbride Exp $
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -319,7 +319,12 @@ EOF
 	;;
 esac
 
-# Configure all the carp, gif, gre and pfsync interfaces which we know about.
+# The pfsync interface needs to come up before carp.
+if [ -f /etc/hostname.pfsync0 ]; then
+		ifstart pfsync0
+fi
+
+# Configure all the carp, gif and gre interfaces which we know about.
 # They were delayed because they require the routes to be set.
 for hn in /etc/hostname.*; do
 	# Strip off /etc/hostname. prefix
@@ -327,7 +332,7 @@ for hn in /etc/hostname.*; do
 	test "$if" = "*" && continue
 
 	case $if in
-	"carp"*|"gif"*|"gre"*|"pfsync"*)
+	"carp"*|"gif"*|"gre"*)
 		ifstart $if
 		;;
 	*)
