@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1997/04/27 20:56:14 millert Exp $
+#	$OpenBSD: Makefile,v 1.6 2003/06/19 20:30:54 deraadt Exp $
 
 
 RPCSRCS=	bootparam_prot.x klm_prot.x mount.x nfs_prot.x\
@@ -37,7 +37,7 @@ includes:	${HDRS}
 .SUFFIXES: .x .c .h
 
 .x.c:
-	rpcgen -c ${.IMPSRC} -o ${.TARGET}
+	rpcgen -C -c ${.IMPSRC} -o ${.TARGET}
 
 .x.h:
-	rpcgen -h ${.IMPSRC} -o ${.TARGET}
+	rpcgen -C -h ${.IMPSRC} -o ${.TARGET}
