@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.4 2001/06/06 12:26:05 art Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.5 2001/06/06 12:31:52 art Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -57,9 +57,8 @@ dlopen(const char *libname, int how)
 	elf_object_t	*dynobj;
 	Elf_Dyn	*dynp;
 
-	if (_dl_debug) {
-		_dl_printf("loading: %s\n", libname);
-	}
+	DL_DEB(("loading: %s\n", libname));
+
 	object = _dl_load_shlib(libname, _dl_objects, OBJTYPE_DLO);
 	if(object == 0) {
 		return((void *)0);

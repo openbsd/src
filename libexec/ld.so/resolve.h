@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.4 2001/05/16 03:21:23 deraadt Exp $ */
+/*	$OpenBSD: resolve.h,v 1.5 2001/06/06 12:31:52 art Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -157,6 +157,8 @@ extern char *_dl_preload;
 extern char *_dl_bindnow;
 extern char *_dl_traceld;
 extern char *_dl_debug;
+
+#define DL_DEB(P) do { if (_dl_debug) _dl_printf P ; } while (0)
 
 #define	DL_NOT_FOUND		1
 #define	DL_CANT_OPEN		2

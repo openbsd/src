@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.15 2001/06/06 12:23:18 art Exp $ */
+/*	$OpenBSD: loader.c,v 1.16 2001/06/06 12:31:52 art Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -83,8 +83,7 @@ _dl_debug_state(void)
 void
 _dl_run_dtors(elf_object_t *object)
 {
-	if (_dl_debug)
-		_dl_printf("doing dtors: [%s]\n", object->load_name);
+	DL_DEB(("doing dtors: [%s]\n", object->load_name));
 	if (object->dyn.fini) {
 		(*object->dyn.fini)();
 	}
@@ -96,8 +95,7 @@ _dl_run_dtors(elf_object_t *object)
 void
 _dl_dtors(void)
 {
-	if(_dl_debug)
-		_dl_printf("doing dtors\n");
+	DL_DEB(("doing dtors\n"));
 	if (_dl_objects->next) {
 		_dl_run_dtors(_dl_objects->next);
 	}
@@ -141,8 +139,7 @@ _dl_boot(const char **argv, const char **envp, const long loff,
 	} else {
 		_dl_pagesz = 4096;
 	}
-	if (_dl_debug)
-		_dl_printf("rtld loading: '%s'\n", _dl_progname);
+	DL_DEB(("rtld loading: '%s'\n", _dl_progname));
 
 	/*
 	 *  Don't allow someone to change the search paths if he runs
@@ -185,8 +182,7 @@ _dl_boot(const char **argv, const char **envp, const long loff,
 
 	dynobj = _dl_objects;
 	while (dynobj) {
-		if (_dl_debug)
-			_dl_printf("examining: '%s'\n", dynobj->load_name);
+		DL_DEB(("examining: '%s'\n", dynobj->load_name));
 		for (dynp = dynobj->load_dyn; dynp->d_tag; dynp++) {
 			const char *libname;
 
@@ -194,8 +190,7 @@ _dl_boot(const char **argv, const char **envp, const long loff,
 				continue;
 			libname = dynobj->dyn.strtab;
 			libname += dynp->d_un.d_val;
-			if (_dl_debug) 
-				_dl_printf("needs: '%s'\n", libname);
+			DL_DEB(("needs: '%s'\n", libname));
 			if (_dl_load_shlib(libname, dynobj, OBJTYPE_LIB) == 0) {
 				_dl_printf("%s: can't load library '%s'\n",
 					_dl_progname, libname);
@@ -293,8 +288,7 @@ _dl_boot(const char **argv, const char **envp, const long loff,
 	if (_dl_debug || _dl_traceld) {
 		void _dl_show_objects(); /* remove -Wall warning */
 		_dl_show_objects();
-		if (_dl_debug)
-			_dl_printf("dynamic loading done.\n");
+		DL_DEB(("dynamic loading done.\n"));
 	}
 	_dl_unmaphints();
 	if (_dl_traceld) {
@@ -560,8 +554,7 @@ _dl_call_init(elf_object_t *object)
 	sym = 0;
 	ooff = _dl_find_symbol(".init", object, &sym, 1, 1);
 	if (sym) {
-		if (_dl_debug)
-			_dl_printf("calling .init in '%s'\n",object->load_name);
+		DL_DEB(("calling .init in '%s'\n",object->load_name));
 		(*(void(*)(void))(sym->st_value + ooff))();
 	}
 #if 0 /*XXX*/
