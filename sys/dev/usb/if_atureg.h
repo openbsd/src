@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atureg.h,v 1.7 2004/11/21 04:55:36 dlg Exp $ */
+/*	$OpenBSD: if_atureg.h,v 1.8 2004/11/23 02:40:34 dlg Exp $ */
 /*
  * Copyright (c) 2003
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -32,7 +32,7 @@
  *
  */
 
-/* $ATUWI: $Id: if_atureg.h,v 1.7 2004/11/21 04:55:36 dlg Exp $ */
+/* $ATUWI: $Id: if_atureg.h,v 1.8 2004/11/23 02:40:34 dlg Exp $ */
 
 /************ 		driver options 		************/
 
@@ -307,7 +307,6 @@ struct atu_softc {
 	char			atu_dying;
 	struct timeval		atu_rx_notice;
 	
-	u_int8_t		atu_mac_addr[ETHER_ADDR_LEN];
 	u_int8_t		atu_bssid[ETHER_ADDR_LEN];
 	enum atu_radio_type	atu_radio;
 	u_int16_t		atu_quirk;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.25 2004/11/22 22:52:44 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.26 2004/11/23 02:40:34 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -554,6 +554,7 @@ atu_switch_radio(struct atu_softc *sc, int state)
 int
 atu_initial_config(struct atu_softc *sc)
 {
+	struct ieee80211com		*ic = &sc->sc_ic;
 	usbd_status			err;
 /*	u_int8_t			rates[4] = {0x82, 0x84, 0x8B, 0x96};*/
 	u_int8_t			rates[4] = {0x82, 0x04, 0x0B, 0x16};
@@ -561,7 +562,7 @@ atu_initial_config(struct atu_softc *sc)
 	u_int8_t			reg_domain;
 
 	DPRINTFN(10, ("%s: sending mac-addr\n", USBDEVNAME(sc->atu_dev)));
-	err = atu_send_mib(sc, MIB_MAC_ADDR__ADDR, sc->atu_mac_addr);
+	err = atu_send_mib(sc, MIB_MAC_ADDR__ADDR, ic->ic_myaddr);
 	if (err) {
 		DPRINTF(("%s: error setting mac-addr\n",
 		    USBDEVNAME(sc->atu_dev)));
@@ -771,7 +772,8 @@ int
 atu_send_mgmt_packet(struct atu_softc *sc, struct atu_chain *c,
     u_int16_t length)
 {
-	struct atu_mgmt_packet	*packet;
+	struct ieee80211com		*ic = &sc->sc_ic;
+	struct atu_mgmt_packet		*packet;
 
 	packet = (struct atu_mgmt_packet *)c->atu_buf;
 
@@ -782,7 +784,7 @@ atu_send_mgmt_packet(struct atu_softc *sc, struct atu_chain *c,
 
 	packet->mgmt_hdr.duration = 0x8000;
 	memcpy(packet->mgmt_hdr.dst_addr, sc->atu_bssid, ETHER_ADDR_LEN);
-	memcpy(packet->mgmt_hdr.src_addr, sc->atu_mac_addr, ETHER_ADDR_LEN);
+	memcpy(packet->mgmt_hdr.src_addr, ic->ic_myaddr, IEEE80211_ADDR_LEN);
 	memcpy(packet->mgmt_hdr.bssid, sc->atu_bssid, ETHER_ADDR_LEN);
 	packet->mgmt_hdr.seq_ctl = 0;
 
@@ -1220,6 +1222,7 @@ atu_upload_external_firmware(struct atu_softc *sc)
 int
 atu_get_card_config(struct atu_softc *sc)
 {
+	struct ieee80211com		*ic = &sc->sc_ic;
 	struct atu_rfmd_conf		rfmd_conf;
 	struct atu_intersil_conf	intersil_conf;
 	int				err;
@@ -1237,7 +1240,7 @@ atu_get_card_config(struct atu_softc *sc)
 			    USBDEVNAME(sc->atu_dev)));
 			return err;
 		}
-		memcpy(sc->atu_mac_addr, rfmd_conf.MACAddr, ETHER_ADDR_LEN);
+		memcpy(ic->ic_myaddr, rfmd_conf.MACAddr, IEEE80211_ADDR_LEN);
 		break;
 
 	case RadioIntersil:
@@ -1249,8 +1252,8 @@ atu_get_card_config(struct atu_softc *sc)
 			    USBDEVNAME(sc->atu_dev)));
 			return err;
 		}
-		memcpy(sc->atu_mac_addr, intersil_conf.MACAddr,
-		    ETHER_ADDR_LEN);
+		memcpy(ic->ic_myaddr, intersil_conf.MACAddr,
+		    IEEE80211_ADDR_LEN);
 		break;
 	}
 	return 0;
@@ -1687,7 +1690,7 @@ USB_ATTACH(atu)
 
 	/* Show the world our MAC address */
 	printf("%s: address %s\n", USBDEVNAME(sc->atu_dev),
-	    ether_sprintf(sc->atu_mac_addr));
+	    ether_sprintf(ic->ic_myaddr));
 
 	for (i=0; i<ATU_AVG_TIME; i++)
 		sc->atu_signalarr[i] = 0;
@@ -1716,7 +1719,6 @@ USB_ATTACH(atu)
 	ic->ic_opmode = IEEE80211_M_STA;
 	ic->ic_state = IEEE80211_S_INIT;
 	ic->ic_caps = IEEE80211_C_IBSS | IEEE80211_C_PMGT | IEEE80211_C_WEP;
-	bcopy(sc->atu_mac_addr, &ic->ic_myaddr, IEEE80211_ADDR_LEN);
 
 	i = 0;
 	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates[i++] = 2;
@@ -2749,9 +2751,8 @@ atu_init(void *xsc)
 		usbd_transfer(c->atu_xfer);
 	}
 
-	//bcopy(&ic->ic_myaddr, sc->atu_mac_addr, ETHER_ADDR_LEN);
 	DPRINTFN(10, ("%s: starting up using MAC=%s\n",
-	    USBDEVNAME(sc->atu_dev), ether_sprintf(sc->atu_mac_addr)));
+	    USBDEVNAME(sc->atu_dev), ether_sprintf(ic->ic_myaddr)));
 
 	/* Do initial setup */
 	err = atu_initial_config(sc);
