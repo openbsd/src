@@ -1,4 +1,4 @@
-/*	$OpenBSD: cursor.c,v 1.5 1999/01/13 07:26:03 niklas Exp $	*/
+/*	$OpenBSD: cursor.c,v 1.6 1999/05/24 15:15:32 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis
@@ -117,7 +117,7 @@ char *argv[];
 		{
 			char buffer[80];
 			strcpy(buffer,"ERROR opening ");
-			strcat(buffer,device);
+			strncat(buffer,device,sizeof(buffer) - strlen(buffer));
 			perror(buffer);
 			exit(1);
 		}
@@ -131,7 +131,7 @@ char *argv[];
 		{
 			char buffer[80];
 			strcpy(buffer,"ERROR opening ");
-			strcat(buffer,device);
+			strncat(buffer,device,sizeof(buffer) - strlen(buffer));
 			perror(buffer);
 			exit(1);
 		}
