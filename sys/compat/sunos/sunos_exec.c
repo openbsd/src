@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_exec.c,v 1.5 1996/05/10 12:50:23 deraadt Exp $	*/
+/*	$OpenBSD: sunos_exec.c,v 1.6 1996/08/31 09:24:04 pefo Exp $	*/
 /*	$NetBSD: sunos_exec.c,v 1.11 1996/05/05 12:01:47 briggs Exp $	*/
 
 /*
@@ -96,6 +96,7 @@ struct emul emul_sunos = {
 	0,
 	copyargs,
 	setregs,
+	NULL,
 	sigcode,
 	esigcode,
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.6 1996/08/25 09:53:45 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.7 1996/08/31 09:24:09 pefo Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -162,8 +162,9 @@ check_exec(p, epp)
 	}
 	if (!error) {
 		/* check that entry point is sane */
-		if (epp->ep_entry > VM_MAXUSER_ADDRESS)
+		if (epp->ep_entry > VM_MAXUSER_ADDRESS) {
 			error = ENOEXEC;
+		}
 
 		/* check limits */
 		if ((epp->ep_tsize > MAXTSIZ) ||
@@ -262,8 +263,9 @@ sys_execve(p, v, retval)
 	pack.ep_flags = 0;
 
 	/* see if we can run it. */
-	if ((error = check_exec(p, &pack)) != 0)
+	if ((error = check_exec(p, &pack)) != 0) {
 		goto freehdr;
+	}
 
 	/* XXX -- THE FOLLOWING SECTION NEEDS MAJOR CLEANUP */
 
@@ -474,6 +476,10 @@ sys_execve(p, v, retval)
 	vput(pack.ep_vp);
 
 	/* setup new registers and do misc. setup. */
+	if(pack.ep_emul->e_fixup != NULL) {
+		if((*pack.ep_emul->e_fixup)(p, &pack) != 0)
+			goto free_pack_abort;
+	}
 	(*pack.ep_emul->e_setregs)(p, &pack, (u_long) stack, retval);
 
 	if (p->p_flag & P_TRACED)
@@ -520,6 +526,8 @@ exec_abort:
 	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
 	vput(pack.ep_vp);
 	kmem_free_wakeup(exec_map, (vm_offset_t) argp, NCARGS);
+
+free_pack_abort:
 	FREE(pack.ep_hdr, M_EXEC);
 	exit1(p, W_EXITCODE(0, SIGABRT));
 	exit1(p, -1);

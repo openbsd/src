@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_exec.c,v 1.2 1996/04/17 05:23:46 mickey Exp $	*/
+/*	$OpenBSD: linux_exec.c,v 1.3 1996/08/31 09:24:02 pefo Exp $	*/
 /*	$NetBSD: linux_exec.c,v 1.13 1996/04/05 00:01:10 christos Exp $	*/
 
 /*
@@ -89,6 +89,7 @@ struct emul emul_linux_aout = {
 	LINUX_AOUT_AUX_ARGSIZ,
 	linux_aout_copyargs,
 	setregs,
+	NULL,
 	linux_sigcode,
 	linux_esigcode,
 };
@@ -104,6 +105,7 @@ struct emul emul_linux_elf = {
 	LINUX_ELF_AUX_ARGSIZ,
 	elf_copyargs,
 	setregs,
+	exec_elf_fixup,
 	linux_sigcode,
 	linux_esigcode,
 };

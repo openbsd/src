@@ -1,7 +1,9 @@
-/*	$OpenBSD: exec_elf.c,v 1.13 1996/08/05 10:48:18 niklas Exp $	*/
-/*	$NetBSD: exec_elf.c,v 1.6 1996/02/09 18:59:18 christos Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.14 1996/08/31 09:24:07 pefo Exp $	*/
 
 /*
+ * Copyright (c) 1996 Per Fogelstrom
+ * All rights reserved.
+ *
  * Copyright (c) 1994 Christos Zoulas
  * All rights reserved.
  *
@@ -34,12 +36,15 @@
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
+#include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
+#include <sys/file.h>
 #include <sys/syscall.h>
 #include <sys/signalvar.h>
+#include <sys/stat.h>
 
 #if defined(COMPAT_LINUX) || defined(COMPAT_SVR4)	/*XXX should be */
 #undef EXEC_ELF						/*XXX defined in */
@@ -75,14 +80,15 @@ int (*elf_probe_funcs[]) __P((struct proc *, struct exec_package *,
 #endif
 };
 
-int elf_check_header __P((Elf32_Ehdr *, int));
-int elf_load_file __P((struct proc *, char *, struct exec_vmcmd_set *,
-		       u_long *, struct elf_args *, u_long *));
+int elf_load_file __P((struct proc *, char *, struct exec_package *,
+		       struct elf_args *, u_long *));
 
-static int elf_read_from __P((struct proc *, struct vnode *, u_long,
-	caddr_t, int));
+static int elf_check_header __P((Elf32_Ehdr *, int));
+static int elf_read_from __P((struct proc *, struct vnode *, u_long, caddr_t, int));
 static void elf_load_psection __P((struct exec_vmcmd_set *,
 	struct vnode *, Elf32_Phdr *, u_long *, u_long *, int *));
+
+int exec_elf_fixup __P((struct proc *, struct exec_package *));
 
 #define ELF_ALIGN(a, b) ((a) & ~((b) - 1))
 
@@ -110,6 +116,7 @@ struct emul emul_elf = {
 	sizeof(AuxInfo) * ELF_AUX_ENTRIES,
 	elf_copyargs,
 	setregs,
+	exec_elf_fixup,
 	sigcode,
 	esigcode,
 };
@@ -117,7 +124,7 @@ struct emul emul_elf = {
 
 /*
  * Copy arguments onto the stack in the normal way, but add some
- * extra information in case of dynamic binding.
+ * space for extra information in case of dynamic binding.
  */
 void *
 elf_copyargs(pack, arginfo, stack, argp)
@@ -126,58 +133,17 @@ elf_copyargs(pack, arginfo, stack, argp)
 	void *stack;
 	void *argp;
 {
-	size_t len;
-	AuxInfo ai[ELF_AUX_ENTRIES], *a;
-	struct elf_args *ap;
-
 	stack = copyargs(pack, arginfo, stack, argp);
 	if (!stack)
 		return NULL;
 
 	/*
-	 * Push extra arguments on the stack needed by dynamically
-	 * linked binaries
+	 * Push space for extra arguments on the stack needed by
+	 * dynamically linked binaries
 	 */
-	if ((ap = (struct elf_args *) pack->ep_emul_arg)) {
-		a = ai;
-
-		a->au_id = AUX_phdr;
-		a->au_v = ap->arg_phaddr;
-		a++;
-
-		a->au_id = AUX_phent;
-		a->au_v = ap->arg_phentsize;
-		a++;
-
-		a->au_id = AUX_phnum;
-		a->au_v = ap->arg_phnum;
-		a++;
-
-		a->au_id = AUX_pagesz;
-		a->au_v = NBPG;
-		a++;
-
-		a->au_id = AUX_base;
-		a->au_v = ap->arg_interp;
-		a++;
-
-		a->au_id = AUX_flags;
-		a->au_v = 0;
-		a++;
-
-		a->au_id = AUX_entry;
-		a->au_v = ap->arg_entry;
-		a++;
-
-		a->au_id = AUX_null;
-		a->au_v = 0;
-		a++;
-
-		free((char *) ap, M_TEMP);
-		len = ELF_AUX_ENTRIES * sizeof (AuxInfo);
-		if (copyout(ai, stack, len))
-			return NULL;
-		stack += len;
+	if (pack->ep_interp != NULL) {
+		pack->ep_emul_argp = stack;
+		stack += ELF_AUX_ENTRIES * sizeof (AuxInfo);
 	}
 	return stack;
 }
@@ -187,16 +153,15 @@ elf_copyargs(pack, arginfo, stack, argp)
  *
  * Check header for validity; return 0 for ok, ENOEXEC if error
  */
-int
+static int
 elf_check_header(ehdr, type)
 	Elf32_Ehdr *ehdr;
 	int type;
 {
         /*
-	 * We need to check magic, class size, endianess,
-	 * and version before we look at the rest of the
-	 * Elf32_Ehdr structure.  These few elements are
-	 * represented in a machine independant fashion.
+	 * We need to check magic, class size, endianess, and version before
+	 * we look at the rest of the Elf32_Ehdr structure. These few elements
+	 * are represented in a machine independant fashion.
 	 */
 	if (!IS_ELF(*ehdr) ||
 	    ehdr->e_ident[EI_CLASS] != ELF_TARG_CLASS ||
@@ -294,9 +259,9 @@ elf_load_psection(vcset, vp, ph, addr, size, prot)
  */
 static int
 elf_read_from(p, vp, off, buf, size)
+	struct proc *p;
 	struct vnode *vp;
 	u_long off;
-	struct proc *p;
 	caddr_t buf;
 	int size;
 {
@@ -323,11 +288,10 @@ elf_read_from(p, vp, off, buf, size)
  * so it might be used externally.
  */
 int
-elf_load_file(p, path, vcset, entry, ap, last)
+elf_load_file(p, path, epp, ap, last)
 	struct proc *p;
 	char *path;
-	struct exec_vmcmd_set *vcset;
-	u_long *entry;
+	struct exec_package *epp;
 	struct elf_args	*ap;
 	u_long *last;
 {
@@ -338,30 +302,46 @@ elf_load_file(p, path, vcset, entry, ap, last)
 	u_long phsize;
 	char *bp = NULL;
 	u_long addr = *last;
+	struct vnode *vp;
 
 	bp = path;
-	/*
-	 * 1. open file
-	 * 2. read filehdr
-	 * 3. map text, data, and bss out of it using VM_*
-	 */
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, p);
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, path, p);
 	if ((error = namei(&nd)) != 0) {
 		return error;
 	}
-	if ((error = elf_read_from(p, nd.ni_vp, 0, (caddr_t) &eh,
-				    sizeof(eh))) != 0)
+	vp = nd.ni_vp;
+	if (vp->v_type != VREG) {
+		error = EACCES;
+		goto bad;
+	}
+	if ((error = VOP_GETATTR(vp, epp->ep_vap, p->p_ucred, p)) != 0)
+		goto bad;
+	if (vp->v_mount->mnt_flag & MNT_NOEXEC) {
+		error = EACCES;
+		goto bad;
+	}
+	if ((error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p)) != 0)
+		goto bad;
+	if ((epp->ep_vap->va_mode & (S_IXUSR | S_IXGRP | S_IXOTH)) == 0) {
+		error = EACCES;
+		goto bad;
+	}
+	if ((error = VOP_OPEN(vp, FREAD, p->p_ucred, p)) != 0)
 		goto bad;
 
+	if ((error = elf_read_from(p, nd.ni_vp, 0,
+				    (caddr_t) &eh, sizeof(eh))) != 0)
+		goto bad1;
+
 	if ((error = elf_check_header(&eh, ET_DYN)) != 0)
-		goto bad;
+		goto bad1;
 
 	phsize = eh.e_phnum * sizeof(Elf32_Phdr);
 	ph = (Elf32_Phdr *) malloc(phsize, M_TEMP, M_WAITOK);
 
 	if ((error = elf_read_from(p, nd.ni_vp, eh.e_phoff,
 				    (caddr_t) ph, phsize)) != 0)
-		goto bad;
+		goto bad1;
 
 	/*
 	 * Load all the necessary sections
@@ -372,12 +352,12 @@ elf_load_file(p, path, vcset, entry, ap, last)
 
 		switch (ph[i].p_type) {
 		case PT_LOAD:
-			elf_load_psection(vcset, nd.ni_vp, &ph[i], &addr,
-						&size, &prot);
+			elf_load_psection(&epp->ep_vmcmds, nd.ni_vp, &ph[i],
+						&addr, &size, &prot);
 			/* If entry is within this section it must be text */
 			if (eh.e_entry >= ph[i].p_vaddr &&
 			    eh.e_entry < (ph[i].p_vaddr + size)) {
- 				*entry = addr + eh.e_entry -
+ 				epp->ep_entry = addr + eh.e_entry -
                                         ELF_ALIGN(ph[i].p_vaddr,ph[i].p_align);
 				ap->arg_interp = addr;
 			}
@@ -394,12 +374,14 @@ elf_load_file(p, path, vcset, entry, ap, last)
 		}
 	}
 
+bad1:
+	VOP_CLOSE(nd.ni_vp, FREAD, p->p_ucred, p);
 bad:
 	if (ph != NULL)
 		free((char *) ph, M_TEMP);
 
 	*last = addr;
-	vrele(nd.ni_vp);
+	vput(nd.ni_vp);
 	return error;
 }
 
@@ -542,12 +524,11 @@ exec_elf_makecmds(p, epp)
 		case PT_PHDR:
 			/* Note address of program headers (in text segment) */
 			phdr = pp->p_vaddr;
-		break;
+			break;
 
 		default:
 			/*
-			 * Not fatal, we don't need to understand everything
-			 * :-)
+			 * Not fatal, we don't need to understand everything :-)
 			 */
 			break;
 		}
@@ -565,28 +546,32 @@ exec_elf_makecmds(p, epp)
 
 	/*
 	 * Check if we found a dynamically linked binary and arrange to load
-	 * it's interpreter
+	 * it's interpreter when the exec file is released.
 	 */
 	if (interp[0]) {
+		char *ip;
 		struct elf_args *ap;
 
+		ip = (char *) malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
 		ap = (struct elf_args *) malloc(sizeof(struct elf_args),
 						 M_TEMP, M_WAITOK);
-		if ((error = elf_load_file(p, interp, &epp->ep_vmcmds,
-				&epp->ep_entry, ap, &pos)) != 0) {
-			free((char *) ap, M_TEMP);
-			goto bad;
-		}
-		pos += phsize;
-		ap->arg_phaddr = phdr;
 
+		bcopy(interp, ip, MAXPATHLEN);
+		epp->ep_interp = ip;
+		epp->ep_interp_pos = pos;
+
+		ap->arg_phaddr = phdr;
 		ap->arg_phentsize = eh->e_phentsize;
 		ap->arg_phnum = eh->e_phnum;
 		ap->arg_entry = eh->e_entry;
 
 		epp->ep_emul_arg = ap;
-	} else
+		epp->ep_entry = eh->e_entry; /* keep check_exec() happy */
+	}
+	else {
+		epp->ep_interp = NULL;
 		epp->ep_entry = eh->e_entry;
+	}
 
 #ifdef ELF_MAP_PAGE_ZERO
 	/* Dell SVR4 maps page zero, yeuch! */
@@ -602,5 +587,90 @@ bad:
 	free((char *) ph, M_TEMP);
 	kill_vmcmds(&epp->ep_vmcmds);
 	return ENOEXEC;
+}
+
+/*
+ * Phase II of load. It is now safe to load the interpreter. Info collected
+ * when loading the program is available for setup of the interpreter.
+ */
+int
+exec_elf_fixup(p, epp)
+	struct proc *p;
+	struct exec_package *epp;
+{
+	char	*interp;
+	int	error, i;
+	struct	elf_args *ap;
+	AuxInfo ai[ELF_AUX_ENTRIES], *a;
+	u_long	pos = epp->ep_interp_pos;
+
+	if(epp->ep_interp == 0) {
+		return 0;
+	}
+
+	interp = (char *)epp->ep_interp;
+	ap = (struct elf_args *) epp->ep_emul_arg;
+
+	if ((error = elf_load_file(p, interp, epp, ap, &pos)) != 0) {
+		free((char *) ap, M_TEMP);
+		free((char *) interp, M_TEMP);
+		kill_vmcmds(&epp->ep_vmcmds);
+		return error;
+	}
+	/*
+	 * We have to do this ourselfs...
+	 */
+	for (i = 0; i < epp->ep_vmcmds.evs_used && !error; i++) {
+		struct exec_vmcmd *vcp;
+
+		vcp = &epp->ep_vmcmds.evs_cmds[i];
+		error = (*vcp->ev_proc)(p, vcp);
+	}
+	kill_vmcmds(&epp->ep_vmcmds);
+
+	/*
+	 * Push extra arguments on the stack needed by dynamically
+	 * linked binaries
+	 */
+	if(error == 0) {
+		a = ai;
+
+		a->au_id = AUX_phdr;
+		a->au_v = ap->arg_phaddr;
+		a++;
+
+		a->au_id = AUX_phent;
+		a->au_v = ap->arg_phentsize;
+		a++;
+
+		a->au_id = AUX_phnum;
+		a->au_v = ap->arg_phnum;
+		a++;
+
+		a->au_id = AUX_pagesz;
+		a->au_v = NBPG;
+		a++;
+
+		a->au_id = AUX_base;
+		a->au_v = ap->arg_interp;
+		a++;
+
+		a->au_id = AUX_flags;
+		a->au_v = 0;
+		a++;
+
+		a->au_id = AUX_entry;
+		a->au_v = ap->arg_entry;
+		a++;
+
+		a->au_id = AUX_null;
+		a->au_v = 0;
+		a++;
+
+		error = copyout(ai, epp->ep_emul_argp, sizeof ai);
+	}
+	free((char *) ap, M_TEMP);
+	free((char *) interp, M_TEMP);
+	return error;
 }
 #endif /* NATIVE_EXEC_ELF || EXEC_ELF */

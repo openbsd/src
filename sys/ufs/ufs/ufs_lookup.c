@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_lookup.c,v 1.2 1996/02/27 07:21:28 niklas Exp $	*/
+/*	$OpenBSD: ufs_lookup.c,v 1.3 1996/08/31 09:24:10 pefo Exp $	*/
 /*	$NetBSD: ufs_lookup.c,v 1.7 1996/02/09 22:36:06 christos Exp $	*/
 
 /*
@@ -939,17 +939,18 @@ ufs_dirrewrite(dp, ip, cnp)
  */
 int
 ufs_dirempty(ip, parentino, cred)
-	register struct inode *ip;
+	struct inode *ip;
 	ino_t parentino;
 	struct ucred *cred;
 {
-	register off_t off;
+	off_t off, m;
 	struct dirtemplate dbuf;
-	register struct direct *dp = (struct direct *)&dbuf;
+	struct direct *dp = (struct direct *)&dbuf;
 	int error, count, namlen;
 #define	MINDIRSIZ (sizeof (struct dirtemplate) / 2)
 
-	for (off = 0; off < ip->i_size; off += dp->d_reclen) {
+	m = ip->i_size;
+	for (off = 0; off < m; off += dp->d_reclen) {
 		error = vn_rdwr(UIO_READ, ITOV(ip), (caddr_t)dp, MINDIRSIZ, off,
 		   UIO_SYSSPACE, IO_NODELOCKED, cred, &count, (struct proc *)0);
 		/*

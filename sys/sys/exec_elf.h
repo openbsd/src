@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.6 1996/06/12 07:31:37 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.7 1996/08/31 09:19:14 pefo Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen
  * All rights reserved.
@@ -385,10 +385,9 @@ struct elf_args {
 };
 
 int exec_elf_makecmds __P((struct proc *, struct exec_package *));
-void *elf_copyargs __P((struct exec_package *, struct ps_strings *, void *,
-	void *));
 void *elf_copyargs __P((struct exec_package *, struct ps_strings *,
         void *, void *));
+int exec_elf_fixup __P((struct proc *, struct exec_package *));
 
 /*
  * XXX - OpenBSD hack to determine

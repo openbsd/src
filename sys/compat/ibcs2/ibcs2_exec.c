@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_exec.c,v 1.3 1996/08/02 20:35:04 niklas Exp $	*/
+/*	$OpenBSD: ibcs2_exec.c,v 1.4 1996/08/31 09:24:02 pefo Exp $	*/
 /*	$NetBSD: ibcs2_exec.c,v 1.11 1996/05/03 17:05:19 christos Exp $	*/
 
 /*
@@ -92,6 +92,7 @@ struct emul emul_ibcs2 = {
 	0,
 	copyargs,
 	setregs,
+	NULL,
 	sigcode,
 	esigcode,
 };

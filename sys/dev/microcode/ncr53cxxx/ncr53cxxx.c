@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53cxxx.c,v 1.1 1996/08/10 12:23:10 deraadt Exp $	*/
+/*	$OpenBSD: ncr53cxxx.c,v 1.2 1996/08/31 09:24:07 pefo Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -127,7 +127,7 @@ char	*phases[] = {
 	"res4", "res5", "msg_out", "msg_in"
 };
 
-char	*regs[] = {
+char	*regs710[] = {
 	"scntl0",	"scntl1",	"sdid",		"sien",
 	"scid",		"sxfer",	"sodl",		"socl",
 	"sfbr",		"sidl",		"sbdl",		"sbcl",
@@ -146,8 +146,36 @@ char	*regs[] = {
 	"addr0",	"addr1",	"addr2",	"addr3"
 };
 
+char	*regs720[] = {
+	"scntl0",	"scntl1",	"scntl2",	"scntl3",
+	"scid",		"sxfer",	"sdid",		"gpreg",
+	"sfbr",		"socl",		"ssid",		"sbcl",
+	"dstat",	"sstat0",	"sstat1",	"sstat2",
+	"dsa0",		"dsa1",		"dsa2",		"dsa3",
+	"istat",	"",		"",		"",
+	"ctest0",	"ctest1",	"ctest2",	"ctest3",
+	"temp0",	"temp1",	"temp2",	"temp3",
+	"dfifo",	"ctest4",	"ctest5",	"ctest6",
+	"dbc0",		"dbc1",		"dbc2",		"dcmd",
+	"dnad0",	"dnad1",	"dnad2",	"dnad3",
+	"dsp0",		"dsp1",		"dsp2",		"dsp3",
+	"dsps0",	"dsps1",	"dsps2",	"dsps3",
+	"scratcha0",	"scratcha1",	"scratcha2",	"scratcha3",
+	"dmode",	"dien",		"dwt",		"dcntl",
+	"addr0",	"addr1",	"addr2",	"addr3",
+	"sien0",	"sien1",	"sist0",	"sist1",
+	"slpar",	"swide",	"macntl",	"gpcntl",
+	"stime0",	"stime1",	"respid0",	"respid1",
+	"stest0",	"stest1",	"stest2",	"stest3",
+	"sidl0",	"sidl1",	"",		"",
+	"sodl0",	"sodl1",	"",		"",
+	"sbdl0",	"sbdl1",	"",		"",
+	"scratchb0",	"scratchb1",	"scratchb2",	"scratchb3",
+};
+
 int	lineno;
 int	err_listed;
+int	arch = 720;
 
 char	inbuf[128];
 
@@ -516,9 +544,16 @@ int	CheckRegister (int t)
 {
 	int	i;
 
-	for (i = 0; i < 64; ++i)
-		if (reserved (regs[i], t))
-			return i;
+	if(arch == 710) {
+		for (i = 0; i < 64; ++i)
+			if (reserved (regs710[i], t))
+				return i;
+	}
+	else if (arch == 720) {
+		for (i = 0; i < 96; ++i)
+			if (reserved (regs720[i], t))
+				return i;
+	}
 	return (-1);
 }
 
