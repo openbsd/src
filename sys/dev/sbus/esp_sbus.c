@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp_sbus.c,v 1.7 2002/03/14 03:16:07 millert Exp $	*/
+/*	$OpenBSD: esp_sbus.c,v 1.8 2002/04/09 22:33:58 jason Exp $	*/
 /*	$NetBSD: esp_sbus.c,v 1.14 2001/04/25 17:53:37 bouyer Exp $	*/
 
 /*-
@@ -76,6 +76,8 @@ struct scsi_device esp_dev = {
 };
 
 /* #define ESP_SBUS_DEBUG */
+
+static int esp_unit_offset;
 
 struct esp_softc {
 	struct ncr53c9x_softc sc_ncr53c9x;	/* glue to MI code */
@@ -191,6 +193,10 @@ espattach_sbus(parent, self, aux)
 #endif
 
 	if (strcmp("SUNW,fas", sa->sa_name) == 0) {
+		/*
+		 * offset searches for other esp/dma devices.
+		 */
+		esp_unit_offset++;
 
 		/*
 		 * fas has 2 register spaces: dma(lsi64854) and SCSI core (ncr53c9x)
@@ -303,7 +309,7 @@ espattach_sbus(parent, self, aux)
 	 * find the matching esp driver.
 	 */
 	esc->sc_dma = (struct lsi64854_softc *)
-				getdevunit("dma", sc->sc_dev.dv_unit);
+	    getdevunit("dma", sc->sc_dev.dv_unit - esp_unit_offset);
 
 	/*
 	 * and a back pointer to us, for DMA
