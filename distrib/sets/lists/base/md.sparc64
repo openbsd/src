@@ -1468,6 +1468,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/filio.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/gmon.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/hash.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/hotplug.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/ioccom.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/ioctl.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/ioctl_compat.ph
@@ -2167,4 +2168,5 @@
 ./usr/mdec/ofwboot
 ./usr/mdec/ofwboot.net
 ./usr/sbin/eeprom
+./usr/sbin/hotplugd
 ./usr/sbin/wsconscfg

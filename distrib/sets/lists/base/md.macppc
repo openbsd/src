@@ -2006,6 +2006,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/filio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/gmon.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/hash.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/hotplug.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/ioccom.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/ioctl.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/ioctl_compat.ph

@@ -1991,6 +1991,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/filio.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/gmon.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/hash.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/sys/hotplug.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/ioccom.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/ioctl.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/ioctl_compat.ph
@@ -2183,6 +2184,7 @@
 ./usr/mdec/installboot
 ./usr/mdec/mbr
 ./usr/mdec/pxeboot
+./usr/sbin/hotplugd
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload
 ./usr/sbin/wsmoused

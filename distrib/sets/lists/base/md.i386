@@ -1971,6 +1971,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/filio.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/gmon.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/hash.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/sys/hotplug.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/ioccom.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/ioctl.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/ioctl_compat.ph
@@ -2166,6 +2167,7 @@
 ./usr/sbin/apmd
 ./usr/sbin/bad144
 ./usr/sbin/fdformat
+./usr/sbin/hotplugd
 ./usr/sbin/memconfig
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload

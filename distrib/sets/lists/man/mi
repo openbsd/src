@@ -1148,6 +1148,7 @@
 ./usr/share/man/cat4/hilkbd.0
 ./usr/share/man/cat4/hilms.0
 ./usr/share/man/cat4/hme.0
+./usr/share/man/cat4/hotplug.0
 ./usr/share/man/cat4/hp300
 ./usr/share/man/cat4/hp300/apci.0
 ./usr/share/man/cat4/hp300/autoconf.0
@@ -1790,6 +1791,7 @@
 ./usr/share/man/cat8/alpha/MAKEDEV.0
 ./usr/share/man/cat8/alpha/boot_alpha.0
 ./usr/share/man/cat8/alpha/fdisk.0
+./usr/share/man/cat8/alpha/hotplugd.0
 ./usr/share/man/cat8/alpha/installboot.0
 ./usr/share/man/cat8/alpha/kbd.0
 ./usr/share/man/cat8/alpha/setnetbootinfo.0
@@ -1805,6 +1807,7 @@
 ./usr/share/man/cat8/amd64/boot.conf.0
 ./usr/share/man/cat8/amd64/boot_amd64.0
 ./usr/share/man/cat8/amd64/fdisk.0
+./usr/share/man/cat8/amd64/hotplugd.0
 ./usr/share/man/cat8/amd64/installboot.0
 ./usr/share/man/cat8/amd64/kbd.0
 ./usr/share/man/cat8/amd64/pxeboot.0
@@ -1922,6 +1925,7 @@
 ./usr/share/man/cat8/i386/boot.conf.0
 ./usr/share/man/cat8/i386/boot_i386.0
 ./usr/share/man/cat8/i386/fdisk.0
+./usr/share/man/cat8/i386/hotplugd.0
 ./usr/share/man/cat8/i386/installboot.0
 ./usr/share/man/cat8/i386/kbd.0
 ./usr/share/man/cat8/i386/memconfig.0
@@ -1978,6 +1982,7 @@
 ./usr/share/man/cat8/macppc/apmd.0
 ./usr/share/man/cat8/macppc/boot_macppc.0
 ./usr/share/man/cat8/macppc/fdisk.0
+./usr/share/man/cat8/macppc/hotplugd.0
 ./usr/share/man/cat8/macppc/kbd.0
 ./usr/share/man/cat8/macppc/pdisk.0
 ./usr/share/man/cat8/macppc/wsconscfg.0
@@ -2153,6 +2158,7 @@
 ./usr/share/man/cat8/sparc64/MAKEDEV.0
 ./usr/share/man/cat8/sparc64/boot_sparc64.0
 ./usr/share/man/cat8/sparc64/eeprom.0
+./usr/share/man/cat8/sparc64/hotplugd.0
 ./usr/share/man/cat8/sparc64/installboot.0
 ./usr/share/man/cat8/sparc64/kbd.0
 ./usr/share/man/cat8/sparc64/wsconscfg.0

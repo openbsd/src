@@ -1319,6 +1319,7 @@
 ./usr/include/sys/filio.h
 ./usr/include/sys/gmon.h
 ./usr/include/sys/hash.h
+./usr/include/sys/hotplug.h
 ./usr/include/sys/ioccom.h
 ./usr/include/sys/ioctl.h
 ./usr/include/sys/ioctl_compat.h

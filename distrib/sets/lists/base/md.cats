@@ -2027,6 +2027,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/filio.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/gmon.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/hash.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/sys/hotplug.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/ioccom.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/ioctl.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/ioctl_compat.ph
