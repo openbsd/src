@@ -1,6 +1,6 @@
-.\" $OpenBSD: strlcpy.3,v 1.7 2000/04/21 15:24:20 aaron Exp $
+.\" $OpenBSD: strlcpy.3,v 1.8 2000/06/01 04:02:05 millert Exp $
 .\"
-.\" Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
+.\" Copyright (c) 1998, 2000 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -56,9 +56,28 @@ and
 take the full size of the buffer (not just the length) and guarantee to
 NUL-terminate the result (as long as
 .Fa size
-is larger than 0).
+is larger than 0 or, in the case of
+.Fn strlcat ,
+as long as there is at least one byte free in
+.Fa dst ) .
 Note that you should include a byte for the NUL in
 .Fa size .
+Also note that
+.Fn strlcpy  
+and
+.Fn strlcat
+only operate on true
+.Dq C
+strings.  This means that for
+.Fn strlcpy
+.Fa src
+must be NUL-terminated and for
+.Fn strlcat
+both
+.Fa src
+and
+.Fa dst
+must be NUL-terminated.
 .Pp
 The
 .Fn strlcpy
