@@ -1,5 +1,5 @@
-/*	$OpenBSD: ccd.c,v 1.10 1996/04/21 22:19:44 deraadt Exp $	*/
-/*	$NetBSD: ccd.c,v 1.31 1996/03/30 23:05:54 christos Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.11 1996/05/02 13:34:39 deraadt Exp $	*/
+/*	$NetBSD: ccd.c,v 1.32 1996/04/22 01:26:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -108,7 +108,6 @@
 #include <sys/syslog.h>
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
-#include <sys/cpu.h>
 #include <sys/conf.h>
 
 #include <dev/ccdvar.h>
