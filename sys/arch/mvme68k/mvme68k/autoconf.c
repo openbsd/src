@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.15 2001/12/10 00:58:04 miod Exp $ */
+/*	$OpenBSD: autoconf.c,v 1.16 2002/01/16 23:19:31 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -79,15 +79,10 @@
  * and the drivers are initialized.
  */
 
-#undef TRY_EXTENT
-
 #include <sys/param.h>
 #include <sys/systm.h>
-#ifdef TRY_EXTENT
 #include <sys/extent.h>
-#else
-#include <sys/map.h>
-#endif
+#include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/dkstat.h>
 #include <sys/conf.h>
@@ -104,13 +99,13 @@
 struct	device *parsedisk __P((char *, int, int, dev_t *));
 void	setroot __P((void));
 
-/* XXX must be allocated statically because of early console init */
-#ifdef TRY_EXTENT
-static char iomap_space[EXTENT_FIXED_STORAGE_SIZE(EIOMAPSIZE / 16)];
-struct extent *iomap_extent;
-#else
-struct map extiomap[EIOMAPSIZE/16];
-#endif
+/*
+ * XXX some storage space must be allocated statically because of
+ * early console init
+ */
+char	extiospace[EXTENT_FIXED_STORAGE_SIZE(EIOMAPSIZE / 16)];
+
+struct	extent *extio;
 extern	void *extiobase;
 
 void mainbus_attach __P((struct device *, struct device *, void *));
@@ -191,16 +186,9 @@ cpu_configure()
 
 	init_sir();
 
-#ifdef TRY_EXTENT
-	iomap_extent = extent_create("iomap", &iomap_space,
-	    iomap_space  + EXTENT_FIXED_STORAGE_SIZE(EIOMAPSIZE / 16),
-	    M_DEVBUF, &iomap_space, EXTENT_FIXED_STORAGE_SIZE(EIOMAPSIZE / 16),
-	    EX_NOWAIT);
-	if (iomap_extent == NULL)
-		panic("cpu_configure: extent_create failed");
-#else
-	rminit(extiomap, (long)EIOMAPSIZE, (long)1, "extio", EIOMAPSIZE/16);
-#endif
+	extio = extent_create("extio",
+	    (u_long)extiobase, (u_long)extiobase + ctob(EIOMAPSIZE),
+	    M_DEVBUF, extiospace, sizeof(extiospace), EX_NOWAIT);
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("autoconfig failed, no root");
@@ -219,32 +207,25 @@ mapiodev(pa, size)
 	void *pa;
 	int size;
 {
-	int ix, npf, offset;
-	void *kva;
-#ifdef TRY_EXTENT
 	int error;
-#endif
+	void *kva;
 
-	size = roundup(size, NBPG);
-	offset = (int)pa & PGOFSET;
-	pa = (void *)((int)pa & ~PGOFSET);
+	if (size == 0)
+		return NULL;
 
 #ifdef DEBUG
 	if (((int)pa & PGOFSET) || (size & PGOFSET))
-	        panic("mapiodev: unaligned");
+		panic("mapiodev: unaligned");
 #endif
-	npf = btoc(size);
-#ifdef TRY_EXTENT
-	error = extent_alloc(iomap_extent, npf, EX_NOALIGN, 0, EX_NOBOUNDARY,
-	    EX_NOWAIT, &ix);
-#else
-	ix = rmalloc(extiomap, npf);
-#endif
-	if (ix == 0)
-	        return (0);
-	kva = extiobase + ctob(ix-1);
+
+	error = extent_alloc(extio, size, EX_NOALIGN, 0, EX_NOBOUNDARY,
+	    EX_NOWAIT | EX_MALLOCOK, (u_long *)&kva);
+
+	if (error != 0)
+	        return NULL;
+
 	physaccess(kva, pa, size, PG_RW|PG_CI);
-	return (kva + offset);
+	return (kva);
 }
 
 void
@@ -252,7 +233,7 @@ unmapiodev(kva, size)
 	void *kva;
 	int size;
 {
-	int ix;
+	int error;
 
 #ifdef DEBUG
 	if (((int)kva & PGOFSET) || (size & PGOFSET))
@@ -261,8 +242,11 @@ unmapiodev(kva, size)
 	        panic("unmapiodev: bad address");
 #endif
 	physunaccess(kva, size);
-	ix = btoc(kva - extiobase) + 1;
-	rmfree(extiomap, btoc(size), ix);
+
+	error = extent_free(extio, (u_long)kva, size, EX_NOWAIT);
+
+	if (error != 0)
+		printf("unmapiodev: extent_free failed\n");
 }
 
 /*
