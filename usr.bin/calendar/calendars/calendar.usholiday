@@ -1,7 +1,7 @@
 /*
  * USA holiday
  *
- * $OpenBSD: calendar.usholiday,v 1.4 1999/01/14 08:42:37 mickey Exp $
+ * $OpenBSD: calendar.usholiday,v 1.5 2003/03/17 16:58:26 mickey Exp $
  */
 
 #ifndef _calendar_usholiday_
@@ -12,7 +12,6 @@
 02/14	St. Valentine's Day
 02/MonThird	President's Day (3rd Monday of February)
 03/05	Mother-in-Law Day
-03/17	St. Patrick's Day
 03/20*	Vernal Equinox
 04/01	April Fool's Day
 04/15	Income Tax Day
