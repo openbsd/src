@@ -1213,7 +1213,6 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/netinet6/ip6protosw.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/netinet6/mld6_var.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/netinet6/nd6.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/netinet6/osdep.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/netinet6/pim6.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/netinet6/pim6_var.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/netinet6/tcpipv6.ph

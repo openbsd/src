@@ -414,6 +414,7 @@
 ./usr/bin/ssh-add
 ./usr/bin/ssh-agent
 ./usr/bin/ssh-keygen
+./usr/bin/ssh-keyscan
 ./usr/bin/strings
 ./usr/bin/su
 ./usr/bin/sudo

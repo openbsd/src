@@ -879,7 +879,6 @@
 ./usr/include/netinet6/ip6protosw.h
 ./usr/include/netinet6/mld6_var.h
 ./usr/include/netinet6/nd6.h
-./usr/include/netinet6/osdep.h
 ./usr/include/netinet6/pim6.h
 ./usr/include/netinet6/pim6_var.h
 ./usr/include/netinet6/tcpipv6.h
@@ -2330,6 +2329,7 @@
 ./usr/share/man/cat3/cgetset.0
 ./usr/share/man/cat3/cgetstr.0
 ./usr/share/man/cat3/cgetustr.0
+./usr/share/man/cat3/check_expire.0
 ./usr/share/man/cat3/chgat.0
 ./usr/share/man/cat3/clear.0
 ./usr/share/man/cat3/clearerr.0
@@ -3022,6 +3022,7 @@
 ./usr/share/man/cat3/logf.0
 ./usr/share/man/cat3/login.0
 ./usr/share/man/cat3/login_cap.0
+./usr/share/man/cat3/login_check_expire.0
 ./usr/share/man/cat3/login_close.0
 ./usr/share/man/cat3/login_fbtab.0
 ./usr/share/man/cat3/login_getcapbool.0
