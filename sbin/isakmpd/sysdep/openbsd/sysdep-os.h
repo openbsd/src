@@ -1,8 +1,8 @@
-/*	$OpenBSD: sysdep-os.h,v 1.2 1999/03/02 15:27:36 niklas Exp $	*/
-/*	$EOM: sysdep-os.h,v 1.1 1999/02/25 14:18:41 niklas Exp $	*/
+/*	$OpenBSD: sysdep-os.h,v 1.3 1999/04/19 20:54:36 niklas Exp $	*/
+/*	$EOM: sysdep-os.h,v 1.2 1999/04/02 00:58:20 niklas Exp $	*/
 
 /*
- * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,9 +34,9 @@
  * This code was written under funding by Ericsson Radio Systems.
  */
 
-#ifndef _SYSDEP_OPENBSD_H_
-#define _SYSDEP_OPENBSD_H_
+#ifndef _SYSDEP_OS_H_
+#define _SYSDEP_OS_H_
 
 /* Nothing here so far.  */
 
-#endif /* _SYSDEP_OPENBSD_H_ */
+#endif /* _SYSDEP_OS_H_ */
