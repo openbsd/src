@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.42 2004/09/20 17:27:53 grange Exp $	*/
+/*	$OpenBSD: auich.c,v 1.43 2004/11/30 22:30:47 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -412,7 +412,8 @@ auich_attach(parent, self, aux)
 	status = bus_space_read_4(sc->iot, sc->aud_ioh, AUICH_GSTS);
 	if (!(status & AUICH_PCR)) {	/* reset failure */
 		if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
-		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801DB_ACA) {
+		    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801DB_ACA ||
+		     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801EB_ACA)) {
 			/* MSI 845G Max never return AUICH_PCR */
 			sc->sc_ignore_codecready = 1;
 		} else {
