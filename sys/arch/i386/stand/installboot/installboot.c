@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.37 2002/05/03 13:59:08 espie Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.38 2003/04/17 03:43:18 drahn Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -52,6 +52,7 @@
 
 #include <err.h>
 #include <a.out.h>
+#include <sys/exec_elf.h>
 #include <fcntl.h>
 #include <nlist.h>
 #include <stdlib.h>
@@ -170,7 +171,7 @@ main(argc, argv)
 
 	/* XXX - Paranoia: Make sure size is aligned! */
 	if (protosize & (DEV_BSIZE - 1))
-		err(1, "proto bootblock bad size=%ld", protosize);
+		err(1, "proto %s bad size=%ld", proto, protosize);
 
 	/* Write patched proto bootblocks into the superblock */
 	if (protosize > SBSIZE - DEV_BSIZE)
@@ -258,7 +259,9 @@ loadprotoblocks(fname, size)
 	size_t	tdsize;		/* text+data size */
 	char	*bp;
 	struct	nlist *nlp;
-	struct	exec eh;
+	Elf_Ehdr eh;
+	Elf_Word phsize;
+	Elf_Phdr *ph;
 
 	fd = -1;
 	bp = NULL;
@@ -270,8 +273,9 @@ loadprotoblocks(fname, size)
 	}
 	/* Validate symbol types (global data). */
 	for (nlp = nl; nlp->n_un.n_name; nlp++) {
-		if (nlp->n_type != (N_TEXT | N_EXT)) {
-			warnx("nlist: %s: wrong type", nlp->n_un.n_name);
+		if (nlp->n_type != (N_TEXT)) {
+			warnx("nlist: %s: wrong type %x", nlp->n_un.n_name,
+			nlp->n_type);
 			return NULL;
 		}
 	}
@@ -284,16 +288,35 @@ loadprotoblocks(fname, size)
 		warn("read: %s", fname);
 		goto bad;
 	}
-	if (N_GETMAGIC(eh) != OMAGIC) {
-		warn("bad magic: 0x%x", eh.a_midmag);
-		goto bad;
+	if (!IS_ELF(eh)) {
+		errx(1, "%s: bad magic: 0x%02x%02x%02x%02x",
+		boot,
+		eh.e_ident[EI_MAG0], eh.e_ident[EI_MAG1],
+		eh.e_ident[EI_MAG2], eh.e_ident[EI_MAG3]);
 	}
 	/*
 	 * We have to include the exec header in the beginning of
 	 * the buffer, and leave extra space at the end in case
 	 * the actual write to disk wants to skip the header.
 	 */
-	tdsize = eh.a_text + eh.a_data;
+
+	/* program load header */
+	if (eh.e_phnum != 1) {
+		errx(1, "%s: only supports one ELF load section\n", boot);
+	}
+	phsize = eh.e_phnum * sizeof(Elf_Phdr);
+	ph = malloc(phsize);
+	if (ph == NULL) {
+		errx(1, "%s: unable to allocate program header space\n",
+		    boot);
+	}
+	lseek(fd,  eh.e_phoff, SEEK_SET);
+
+	if (read(fd, ph, phsize) != phsize) {
+		errx(1, "%s: unable to read program header space\n", boot);
+	}
+
+	tdsize = ph->p_filesz;
 
 	/*
 	 * Allocate extra space here because the caller may copy
@@ -305,6 +328,7 @@ loadprotoblocks(fname, size)
 		goto bad;
 	}
 	/* Read the rest of the file. */
+	lseek(fd, ph->p_offset, SEEK_SET);
 	if (read(fd, bp, tdsize) != tdsize) {
 		warn("read: %s", fname);
 		goto bad;
@@ -318,7 +342,7 @@ loadprotoblocks(fname, size)
 	maxblocknum = *block_count_p;
 
 	if (verbose) {
-		fprintf(stderr, "%s: entry point %#x\n", fname, eh.a_entry);
+		fprintf(stderr, "%s: entry point %#x\n", fname, eh.e_entry);
 		fprintf(stderr, "proto bootblock size %ld\n", *size);
 		fprintf(stderr, "room for %d filesystem blocks at %#lx\n",
 			maxblocknum, nl[X_BLOCK_TABLE].n_value);
@@ -368,7 +392,6 @@ loadblocknums(boot, devfd, dl)
 	struct dinode	*ip;
 	int		ndb;
 	u_int8_t	*bt;
-	struct exec	eh;
 	int mib[4];
 	size_t		size;
 	dev_t dev;
@@ -392,13 +415,18 @@ loadblocknums(boot, devfd, dl)
 		errx(1, "%s: must be on an FFS filesystem", boot);
 	}
 
+#if 0
 	if (read(fd, &eh, sizeof(eh)) != sizeof(eh)) {
 		errx(1, "read: %s", boot);
 	}
 
-	if (N_GETMAGIC(eh) != ZMAGIC) {
-		errx(1, "%s: bad magic: 0x%x", boot, eh.a_midmag);
+	if (!IS_ELF(eh)) {
+		errx(1, "%s: bad magic: 0x%02x%02x%02x%02x",
+		boot,
+		eh.e_ident[EI_MAG0], eh.e_ident[EI_MAG1],
+		eh.e_ident[EI_MAG2], eh.e_ident[EI_MAG3]);
 	}
+#endif
 
 	if (fsync(fd) != 0)
 		err(1, "fsync: %s", boot);

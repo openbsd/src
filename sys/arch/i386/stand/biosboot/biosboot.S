@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosboot.S,v 1.32 2002/08/28 20:15:34 mickey Exp $	*/
+/*	$OpenBSD: biosboot.S,v 1.33 2003/04/17 03:43:18 drahn Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff, Tobias Weingartner
@@ -36,40 +36,35 @@
 #include <machine/asm.h>
 #include <assym.h>
 
-#define addr32  .byte 0x67
-#define data32  .byte 0x66
-
-#define	BLKCNT	12
+#define	BLKCNT	52
 
 #define BOOTSEG		0x07c0	/* boot loaded here */
 #define BOOTSTACK	0xfffc	/* stack starts here */
-#define ZMAGIC		0x0b01	/* ZMAGIC */
+#define LFMAGIC		0x464c  /* LFMAGIC (only uses two bytes of \7fELF */
 
 
 /* Clobbers %al - maybe more */
 #define putc(c)			\
 	movb	$c, %al;	\
-	.byte	0xe8;		\
-	.word	Lchr - . - 2
+	call	Lchr;
 
 /* Clobbers %esi - maybe more */
 #define	puts(s)			\
-	data32;			\
-	movl	$s, %esi;	\
-	.byte	0xe8;		\
-	.word	Lmessage - . - 2
+	mov	$s, %si;	\
+	call	Lmessage
 
 
 	.text
-	.globl	start
-start:
+	.code16
+	.globl	_start
+_start:
 	jmp	1f
 	nop
 
-	. = start + 3
+	. = _start + 3
 	.asciz	"OpenBSD"
 	/* BPB */
-	. = start + 0x0b
+	. = _start + 0x0b
 bpb:	.word	DEV_BSIZE	/* sector size */
 	.byte	1		/* sectors/cluster */
 	.word	0		/* reserved sectors */
@@ -82,7 +77,7 @@ bpb:	.word	DEV_BSIZE	/* sector size */
 	.word	0		/* # of heads */
 
 	/* EBPB */
-	. = start + 0x1c
+	. = _start + 0x1c
 ebpb:	.long	16		/* hidden sectors */
 	.long	0		/* large sectors */
 	.word	0		/* physical disk */
@@ -92,12 +87,11 @@ ebpb:	.long	16		/* hidden sectors */
 	.asciz	"UFS 4.4"
 
 	/* boot code */
-	. = start + 0x3e
+	. = _start + 0x3e
 
 1:
 	/* Fix up %cs just in case */
-	data32
-	ljmp	$BOOTSEG, $1f
+	data32 ljmp	$BOOTSEG, $1f
 
 load_msg:
 	.asciz	"reading boot"
@@ -105,32 +99,25 @@ load_msg:
 1:
 	/* set up stack (%ss:%esp) */
 	cli			/* disable interrupts w/o stack */
-	xorl	%ax, %ax
-	movl	%ax, %ss
-	data32
+	xor	%ax, %ax
+	mov	%ax, %ss
 	movl	$BOOTSTACK, %esp
 	sti			/* we have stack, do ints */
 
 	/* Set up other segment regs */
-	# movw	$BOOTSEG, %ax
-	.byte	0xb8
-	.word	BOOTSEG
-	movl	%ax, %ds
-	movl	%ax, %es
-	movl	%ax, %fs
-	movl	%ax, %gs
+	mov	$BOOTSEG, %ax
+	mov	%ax, %ds
+	mov	%ax, %es
+	mov	%ax, %fs
+	mov	%ax, %gs
 
 #ifdef SERIAL
 	# Initialize the serial port to 9600 baud, 8N1.
-	pushl	%dx
-	# movw	$0x00e3, %ax
-	.byte	0xb8
-	.word	0x00e3
-	# movw	SERIAL, %dx
-	.byte	0xba
-	.word	SERIAL
+	push	%dx
+	mov	$0x00e3, %ax
+	mov	SERIAL, %dx
 	int	$0x14
-	popl	%dx
+	pop	%dx
 #endif
 
 #ifdef BDEBUG
@@ -141,31 +128,25 @@ load_msg:
 	puts(load_msg)
 
 	/* set up %es, (where we will load /boot to) */
-	# movw	$(LOADADDR >> 4), %ax
-	.byte	0xb8
-	.word	LOADADDR >> 4
-	movl	%ax, %es
+	mov	$(LOADADDR >> 4), %ax
+	mov	%ax, %es
 
-	data32
 	xorl	%ebx, %ebx		/* put it at %es:0 */
-	addr32
-	movb	_block_count, %cl	/* how many to read */
+	movb	block_count, %cl	/* how many to read */
 	movzbl	%cl, %ecx
-	# movw	$_block_table, %si
-	.byte	0xbe
-	.word	_block_table
+	movw	$block_table, %si
 
 1:
-	pushl	%cx
+	push	%cx
 	putc('.')		/* show progress indicator */
 	cld
-	lodsl	/* word */	/* cylinder/sector */
-	movl	%ax, %cx
+	lodsw	/* word */	/* cylinder/sector */
+	mov	%ax, %cx
 	lodsb			/* head */
 	movb	%al, %dh
 	lodsb			/* # of sectors to load */
 	movb	$0x2, %ah
-	pushl	%ax
+	push	%ax
 	int	$0x13
 	jnc	3f
 
@@ -176,29 +157,28 @@ load_msg:
 
 3:	/* read next block */
 
-	popl	%ax
-	data32
+	pop	%ax
 	movzbl	%al, %eax
-	shll	$9, %ax		/* 512 bytes sectors */
-	addl	%ax, %bx
-	popl	%cx
+	shl	$9, %ax		/* 512 bytes sectors */
+	add	%ax, %bx
+	pop	%cx
 	loop	1b
 
 	puts(2f)
 
-	xorl	%si, %si
+	xor	%si, %si
 	cld
 	/* check /boot magic */
-	es;lodsl;es;lodsl	/* no need for high word */
-	# cmpw	$ZMAGIC, %ax
-	.byte	0x3d
-	.word	ZMAGIC
+	es;lodsw;es;lodsw	/* no need for high word */
+	cmp	$LFMAGIC, %ax
 	je	3f
 
 	puts(1f)
 halt:
 	cli
+99:
 	hlt
+	jmp 99b
 1:	.ascii	"Bad magic"
 2:	.asciz	"\r\n"
 
@@ -212,40 +192,6 @@ halt:
 	putc('P')
 #endif
 
-	/* change to protected mode */
-	/* guarantee that interrupts are disabled when in prot mode */
-	cli
-
-	/* load the gdtr */
-	addr32
-	data32
-	lgdt	Gdtr
-
-	/* set the PE bit of CR0 */
-	movl	%cr0, %eax
-	data32
-	orl	$CR0_PE, %eax
-	movl	%eax, %cr0 
-
-	/*
-	 * make intrasegment jump to flush the processor pipeline and
-	 * reload CS register
-	 */
-	data32
-	ljmp	$8, $(BOOTSEG << 4) + 1f
-
-1:	/*
-	 * 32bit mode
-	 * set up %ds, %ss, %es, etc
-	 */
-	movl	$0x10, %eax
-	movl	%ax, %ds
-	movl	%ax, %ss
-	movl	%ax, %es
-	movl	%ax, %fs
-	movl	%ax, %gs
-	movl	$BOOTSTACK, %esp
-
 #ifdef	BDEBUG
 	movl	$0xb8004, %ebx
 	movl	$0x074f0747, (%ebx)
@@ -256,84 +202,59 @@ halt:
 	pushl	$BOOTMAGIC	/* use some magic */
 
 	/* jmp	/boot */
-	ljmp	$8, $(LOADADDR + 0x20)
+	/* data32 */
+	ljmp $(LINKADDR >> 4), $0
 	/* not reached */
 
 /*
  * Display string
  */
 Lmessage:
-	data32
-	pushl	%eax
+	push	%ax
 	cld
 1:
 	lodsb			# load a byte into %al
 	testb	%al, %al
 	jz	1f
-	# call	Lchr
-	.byte	0xe8
-	.word	Lchr - . - 2
+	call	Lchr
 	jmp	1b
 
 #
 #	Lchr: write the character in %al to console
 #
 Lchr:
-	data32
-	pushl	%eax
+	push	%ax
 
 #ifndef SERIAL
-	data32
-	pushl	%ebx
+	push	%bx
 	movb	$0x0e, %ah
-	xorl	%bx, %bx
-	incl	%bx		/* movw $0x01, %bx */
+	xor	%bx, %bx
+	inc	%bx		/* movw $0x01, %bx */
 	int	$0x10
-	data32
-	popl	%ebx
+	pop	%bx
 #else
-	data32
-	pushl	%edx
+	push	%dx
 	movb	$0x01, %ah
-	xorl	%dx, %dx
+	xor	%dx, %dx
 	movb	SERIAL, %dl
 	int	$0x14
-	data32
-	popl	%edx
+	pop	%dx
 #endif
 1:
-	data32
-	popl	%eax
+	pop	%ax
 	ret
 
-	.align	3
-1:		/* 0x00 : null */
-	.long	0, 0
-		/* 0x08 : flat code */
-	.word	0xFFFF			# lolimit
-	.word	0			# lobase
-	.byte	0			# midbase
-	.byte	SDT_MEMERAC | 0 | 0x80	# RWXAC, dpl = 0, present
-	.byte	0xf | 0 | 0x40 | 0x80	# hilimit, xx, 32bit, 4k granularity
-	.byte	0			# hibase
-		/* 0x10 : flat data */
-	.word	0xFFFF			# lolimit
-	.word	0			# lobase
-	.byte	0			# midbase
-	.byte	SDT_MEMRWA | 0 | 0x80	# RWA, dpl = 0, present
-	.byte	0xf | 0 | 0x40 | 0x80	# hilimit, xx, 32bit, 4k granularity
-	.byte	0			# hibase
-Gdtr:	.word	. - 1b
-	.long	(BOOTSEG << 4) + 1b
-
-	.globl	_block_table, _block_count
-_block_count:
-	.byte	BLKCNT	/* entries in _block_table */
-_block_table:
+	#.data
+	.globl	block_table, block_count
+	.type block_count, @function
+	.type block_table, @function
+block_count:
+	.byte	BLKCNT	/* entries in block_table */
+block_table:
 	.word	0	/* cylinder/sector */
 	.byte	0	/* head */
 	.byte	0	/* nsect */
-	. = _block_table + BLKCNT*4
+	. = block_table + BLKCNT*4
 
 	. = 0x200 - 2
 	/* a little signature */

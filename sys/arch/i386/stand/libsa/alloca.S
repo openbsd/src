@@ -38,7 +38,7 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: alloca.S,v 1.2 1998/02/24 22:06:43 weingart Exp $"
+	.asciz "$OpenBSD: alloca.S,v 1.3 2003/04/17 03:43:18 drahn Exp $"
 #endif
 
 /* like alloc, but automatic free in return */
@@ -55,4 +55,4 @@ ENTRY(alloca)
 	pushl	4(%ecx)
 	pushl	0(%ecx)
 	pushl	%eax		/* dummy to pop at callsite */
-	jmp	%edx		/* "return" */
+	jmp	*%edx		/* "return" */

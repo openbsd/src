@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.39 2002/06/20 20:22:58 weingart Exp $
+#	$OpenBSD: Makefile,v 1.40 2003/04/17 03:43:18 drahn Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -10,7 +10,7 @@ DIR_SA=	$S/lib/libsa
 DIR_KERN=$S/lib/libkern
 
 # i386 stuff (so, it will possibly load in the same 64k)
-SRCS+=	machdep.c dev_i386.c exec_i386.c cmd_i386.c
+SRCS+=	machdep.c dev_i386.c exec_i386.c cmd_i386.c loadfile.c
 
 .if defined(DEBUGFLAGS) && !empty(DEBUGFLAGS:M-D_TEST)
 SRCS+=	unixdev.c unixsys.S nullfs.c memprobe.c
@@ -29,7 +29,7 @@ CLEANFILES+=	unixdev.o unixsys.o nullfs.o
 # stand routines
 SRCS+=	alloc.c exit.c getfile.c gets.c globals.c strcmp.c strlen.c \
 	strncmp.c memcmp.c memcpy.c memset.c printf.c strerror.c strncpy.c \
-	strtol.c ctime.c exec.new.c exec_aout.c
+	strtol.c ctime.c
 
 # io routines
 SRCS+=	close.c closeall.c dev.c disklabel.c dkcksum.c fstat.c ioctl.c lseek.c \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.31 2001/08/18 15:34:17 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.32 2003/04/17 03:43:19 drahn Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -37,7 +37,7 @@
 #include "debug.h"
 #include "ps2probe.h"
 
-struct BIOS_regs	BIOS_regs;
+volatile struct BIOS_regs	BIOS_regs;
 
 #if defined(DEBUG) && !defined(_TEST)
 #define CKPT(c)	(*(u_int16_t*)0xb8148 = 0x4700 + (c))

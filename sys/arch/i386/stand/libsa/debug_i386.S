@@ -1,4 +1,4 @@
-/*	$OpenBSD: debug_i386.S,v 1.9 1998/04/18 07:39:46 deraadt Exp $	*/
+/*	$OpenBSD: debug_i386.S,v 1.10 2003/04/17 03:43:18 drahn Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -89,9 +89,9 @@ ENTRY(check_regs)
 	movl	$0x47334732, (%edi)
 #endif
 	movl	$0x10, %eax
-	movl	%ax, %ds
-	movl	%ax, %es
-	movl	$_reg, %edi
+	mov	%ax, %ds
+	mov	%ax, %es
+	movl	$reg, %edi
 	cld
 	movl	0x0c*4(%esp), %eax; stosl /* %eax	*/
 	movl	0x0b*4(%esp), %eax; stosl /* %ecx	*/
@@ -104,7 +104,7 @@ ENTRY(check_regs)
 	movl	0x0f*4(%esp), %eax; stosl /* %eip	*/
 	movl	0x11*4(%esp), %eax; stosl /* %eflags	*/
 	movl	0x10*4(%esp), %eax; stosl /* %cs	*/
-	movl		%ss,  %ax ; stosl /* %ss	*/
+	mov		%ss,  %ax ; stosl /* %ss	*/
 	movl	0x04*4(%esp), %eax; stosl /* %ds	*/
 	movl	0x03*4(%esp), %eax; stosl /* %es	*/
 	movl	0x02*4(%esp), %eax; stosl /* %fs	*/

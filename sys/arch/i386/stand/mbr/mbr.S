@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.S,v 1.16 2002/01/08 23:14:51 kjell Exp $	*/
+/*	$OpenBSD: mbr.S,v 1.17 2003/04/17 03:43:19 drahn Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff and Tobias Weingartner
@@ -83,21 +83,21 @@ start:
 	ljmp 	$BOOTBIOS, $1f
 1:
 	/* Set up stack */
-	movl	%cs, %ax
+	movl	%cs, %eax
 	cli
-	movl	%ax, %ss
+	mov	%ax, %ss
 	data32
 	movl	$0xfffc, %esp
 	sti
 
 	/* Set up data segment */
-	movl	%ax, %ds
+	mov	%ax, %ds
 	DBGMSG(CHAR_S)
 
 	/* Relocate 512 bytes so we can load PBS here  */
 	data32
 	movl	$BOOTRELOC, %eax
-	movl	%ax, %es
+	movl	%eax, %es
 	data32
 	xorl	%esi, %esi
 	data32
@@ -133,7 +133,7 @@ reloc:
 	 *
 	 * --Toby.
 	 */
-	xorl	%ax, %ax
+	xorl	%eax, %eax
 	movb	$0xe3, %ax
 	data32
 	movl	$SERIAL, %dx
@@ -185,7 +185,7 @@ reloc:
 	 * can recover anyways.  The message might be nice
 	 * for the (l)user though.
 	 */
-1:	xorl	%bx, %bx
+1:	xor	%bx, %bx
 	# cmpw	$DOSMBR_SIGNATURE, (%bx)
 	.byte	0x81, 0xbf
 	.word	signature
@@ -227,25 +227,25 @@ err_stop:
 	/* Found bootable partition */
 found:
 	DBGMSG(CHAR_B)
-	pushl	%ax
+	pushl	%eax
 	/* Save drive and partition */
-	movl	%dx, %ax
-	andl	$0x0F, %ax
-	orl	$0x30, %ax
+	movl	%edx, %eax
+	andl	$0x0F, %eax
+	orl	$0x30, %eax
 	#movb	%al, adrive
 	.byte	0xA2
 	.word	adrive
 
-	movl	%cx, %ax
-	decl	%ax
-	xor	$0x03, %ax
-	andl	$0x0F, %ax
-	orl	$0x30, %ax
+	movl	%ecx, %eax
+	decl	%eax
+	xorl	$0x03, %eax
+	andl	$0x0F, %eax
+	orl	$0x30, %eax
 	#movb	%al, aprtn
 	.byte	0xA2
 	.word	aprtn
 
-	popl	%ax
+	popl	%eax
 
 	/* Load values from active partition table entry */
 	# movb	1(%si), %dh	# head
@@ -269,7 +269,7 @@ found:
 */
 	data32
 	movl	$0x200 | 1, %eax	/* number of blocks */
-	xorl	%bx, %bx		/* put it at %es:0 */
+	xor	%bx, %bx		/* put it at %es:0 */
 	int	$0x13
 	jnc	1f
 	puts(eread)
@@ -308,8 +308,8 @@ Lchr:
 #ifndef SERIAL
 	pushl	%ebx
 	movb	$0x0e, %ah
-	xorl	%bx, %bx
-	incl	%bx		/* movw $0x01, %bx */
+	xor	%bx, %bx
+	inc	%bx		/* movw $0x01, %bx */
 	int	$0x10
 	popl	%ebx
 #else

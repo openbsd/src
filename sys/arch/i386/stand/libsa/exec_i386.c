@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.26 2000/03/05 18:40:59 niklas Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.27 2003/04/17 03:43:18 drahn Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -41,17 +41,15 @@
 #include <sys/disklabel.h>
 #include "disk.h"
 #include "libsa.h"
-#include <lib/libsa/exec.h>
+#include <lib/libsa/loadfile.h>
 
 typedef void (*startfuncp)(int, int, int, int, int, int, int, int)
 	__attribute__ ((noreturn));
 
 void
-machdep_exec(xp, howto, loadaddr)
-	struct x_param *xp;
-	int howto;
-	void *loadaddr;
+run_loadfile(u_long *marks, int howto)
 {
+	u_long entry;
 #ifndef _TEST
 #ifdef EXEC_DEBUG
 	extern int debug;
@@ -71,25 +69,12 @@ machdep_exec(xp, howto, loadaddr)
 
 	makebootargs(av, &ac);
 
-#ifdef EXEC_DEBUG
-	if (debug) {
-		struct exec *x = (void *)loadaddr;
-		printf("exec {\n\ta_midmag = %x\n\ta_text = %x\n\ta_data = %x\n"
-		       "\ta_bss = %x\n\ta_syms = %x\n\ta_entry = %x\n"
-		       "\ta_trsize = %x\n\ta_drsize = %x\n}\n",
-		       x->a_midmag, x->a_text, x->a_data, x->a_bss, x->a_syms,
-		       x->a_entry, x->a_trsize, x->a_drsize);
+	entry = marks[MARK_ENTRY] & 0x0fffffff;
 
-		printf("/bsd(%x,%u,%p)\n", BOOTARG_APIVER, ac, av);
-		getchar();
-	}
-#endif
-	xp->xp_entry &= 0xffffff;
-
-	printf("entry point at 0x%x\n", xp->xp_entry);
+	printf("entry point at 0x%x\n", (int) entry);
 	/* stack and the gung is ok at this point, so, no need for asm setup */
-	(*(startfuncp)xp->xp_entry)(howto, bootdev, BOOTARG_APIVER,
-		xp->xp_end, extmem, cnvmem, ac, (int)av);
+	(*(startfuncp)entry)(howto, bootdev, BOOTARG_APIVER,
+		marks[MARK_END], extmem, cnvmem, ac, (int)av);
 	/* not reached */
 #endif
 }
