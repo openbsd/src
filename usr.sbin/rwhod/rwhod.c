@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: rwhod.c,v 1.8 1997/04/13 01:53:49 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rwhod.c,v 1.9 1997/04/14 07:01:42 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -257,13 +257,15 @@ verify(p)
 	if (*p == '.' || *p == '-')
 		return 0;
 	while ((c = *p++)) {
-		if (('a' <= c && c >= 'z') ||
-		    ('A' <= c && c >= 'Z') ||
-		    ('0' <= c && c >= '9'))
+		if (('a' <= c && c <= 'z') ||
+		    ('A' <= c && c <= 'Z') ||
+		    ('0' <= c && c <= '9'))
 			continue;
-		if (strchr("-_/[]\\", c) || 
-		    (c == '.' && *p == '.'))
+		if (c == '.' && *p == '.')
 			return 0;
+		if (c == '.' || c == '-')
+			continue;
+		return 0;
 	}
 	return 1;
 }
