@@ -36,7 +36,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: strptime.c,v 1.5 1998/04/25 08:08:25 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: strptime.c,v 1.6 2001/01/08 15:23:20 d Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>
@@ -276,23 +276,25 @@ literal:
 		case 'p':	/* The locale's equivalent of AM/PM. */
 			_LEGAL_ALT(0);
 			/* AM? */
-			if (strcmp(_ctloc(am_pm[0]), bp) == 0) {
+			len = strlen(_ctloc(am_pm[0]));
+			if (strncasecmp(_ctloc(am_pm[0]), bp, len) == 0) {
 				if (tm->tm_hour > 12)	/* i.e., 13:00 AM ?! */
 					return (NULL);
 				else if (tm->tm_hour == 12)
 					tm->tm_hour = 0;
 
-				bp += strlen(_ctloc(am_pm[0]));
+				bp += len;
 				break;
 			}
 			/* PM? */
-			else if (strcmp(_ctloc(am_pm[1]), bp) == 0) {
+			len = strlen(_ctloc(am_pm[1]));
+			if (strncasecmp(_ctloc(am_pm[1]), bp, len) == 0) {
 				if (tm->tm_hour > 12)	/* i.e., 13:00 PM ?! */
 					return (NULL);
 				else if (tm->tm_hour < 12)
 					tm->tm_hour += 12;
 
-				bp += strlen(_ctloc(am_pm[1]));
+				bp += len;
 				break;
 			}
 
