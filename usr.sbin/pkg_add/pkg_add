@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.26 2004/01/28 22:12:01 espie Exp $
+# $OpenBSD: pkg_add,v 1.27 2004/02/20 19:13:51 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -61,16 +61,17 @@ use File::Path;
 
 sub install
 {
-	my ($self, $archive, $verbose, $not) = @_;
+	my ($self, $archive, $destdir, $verbose, $not) = @_;
 
 	my $file=$archive->next();
 	if ($file->{name} ne $self->{name}) {
 		die "Error: archive does not match", $file->{name}, "!=",
 		$self->{name}, "\n";
 	}
-	print "extracting ", $self->fullname(), "\n" if $verbose;
+	print "extracting ", $destdir, $self->fullname(), "\n" if $verbose;
 	$file->{name} = $self->fullname();
 	$file->{cwd} = $self->{cwd};
+	$file->{destdir} = $destdir;
 	return if $not;
 	$file->create();
 	if (defined $self->{owner} && defined $self->{group}) {
@@ -89,7 +90,7 @@ package OpenBSD::PackingElement::Exec;
 
 sub install
 {
-	my ($self, $archive, $verbose, $not) = @_;
+	my ($self, $archive, $destdir, $verbose, $not) = @_;
 
 	print "exec ", $self->{expanded}, "\n" if $verbose or $not;
 	system('/bin/sh', '-c', $self->{expanded}) unless $not;
@@ -120,12 +121,25 @@ package main;
 
 my $errors = 0;
 
-our ($opt_v, $opt_n, $opt_I, $opt_f, $opt_L);
-getopts('vnIL:f:');
+our ($opt_v, $opt_n, $opt_I, $opt_f, $opt_L, $opt_B);
+getopts('vnIL:f:B:');
 if ($opt_f) {
 	%forced = map {($_, 1)} split(/,/, $opt_f);
 }
 $opt_L = '/usr/local' unless defined $opt_L;
+
+my $destdir;
+if (defined $opt_B) {
+	$destdir = $opt_B;
+} elsif (defined $ENV{'PKG_PREFIX'}) {
+	$destdir = $ENV{'PKG_PREFIX'};
+}
+if (defined $destdir) {
+	$destdir.='/';
+	$ENV{'PKG_DESTDIR'} = $destdir;
+} else {
+	$destdir = '';
+}
 
 if ($< && !$forced{nonroot}) {
 	die "$0 must be run as root";
@@ -350,20 +364,21 @@ sub borked_script($)
 	}
 }
 
-sub really_add($)
+sub really_add($$)
 {
-	my $handle = shift;
+	my ($handle, $destdir) = @_;
 	my $plist = $handle->{plist};
 	my $dir = $handle->info();
 	my $pkgname = $plist->pkgname();
 	$ENV{'PKG_PREFIX'} = $plist->pkgbase();
 	# check for collisions with existing stuff
 	my $problems = 0;
+	my $colliding = [];
 	for my $item (@{$plist->{items}}) {
 		next unless $item->IsFile();
-		my $fname = $item->fullname();
+		my $fname = $destdir.$item->fullname();
 		if (OpenBSD::Vstat::vexists($fname)) {
-			print "Collision: $fname already exists\n";
+			push(@$colliding, $fname);
 			$problems++;
 		}
 		my $s = OpenBSD::Vstat::add($fname, $item->{size});
@@ -376,6 +391,10 @@ sub really_add($)
 			print "Error: ", $s->{mnt}, " is not large enough ($fname)\n";
 			$problems++;
 		}
+	}
+	if (@$colliding > 0) {
+		print "Collision: the following files already exists\n\t",
+			join("\n\t", @$colliding), "\n";
 	}
 	die if $problems;
 
@@ -410,7 +429,7 @@ sub really_add($)
 
 	$plist->{done} = [];
 	for my $item (@{$plist->{items}}) {
-		$item->install($handle, $opt_v, $opt_n);
+		$item->install($handle, $destdir, $opt_v, $opt_n);
 		push(@{$plist->{done}}, $item);
 		last if $interrupted;
 	}
@@ -499,7 +518,7 @@ while (my $pkg = shift @todo) {
 	for my $dep (@{$handle->{solved_dependencies}}) {
 		OpenBSD::PackingElement::PkgDep->add($plist, $dep);
 	}
-	really_add($handle);
+	really_add($handle, $destdir);
 	$conflict_list->{$plist->pkgname()} = $handle->{conflicts};
 }
 
