@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.41 2004/02/05 04:39:57 itojun Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.42 2004/02/06 21:05:57 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -130,7 +130,6 @@
 #include <dev/rndvar.h>
 
 extern struct in6_ifaddr *in6_ifaddr;
-extern struct in_ifaddr *in_ifaddr;
 
 /*
  * Globals
@@ -180,7 +179,7 @@ in6_pcbbind(inp, nam)
 	 * REMINDER:  Once up to speed, flow label processing should go here,
 	 * too.  (Same with in6_pcbconnect.)
 	 */
-	if (in6_ifaddr == 0 || in_ifaddr == 0)
+	if (in6_ifaddr == 0)
 		return EADDRNOTAVAIL;
 
 	if (inp->inp_lport != 0 || !IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6))
