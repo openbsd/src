@@ -779,6 +779,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/cardbus/cardbusvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/cardbus/cardslotvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/cardbus/rbus.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/cardbus/usb_cardbus.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ccdvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/clock_subr.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/cons.ph
@@ -1070,6 +1071,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/mii/amphyreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/mii/bmtphyreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/mii/brgphyreg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/mii/ciphyreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/mii/eephyreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/mii/icsphyreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/mii/inphyreg.ph
@@ -1162,6 +1164,8 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_tlreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_txpreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_txvar.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_vgereg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_vgevar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_vrreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_wbreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/isesreg.ph
@@ -2270,6 +2274,3 @@
 ./usr/share/misc/pcvtfonts/vt220l.810
 ./usr/share/misc/pcvtfonts/vt220l.814
 ./usr/share/misc/pcvtfonts/vt220l.816
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/mii/ciphyreg.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_vgereg.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_vgevar.ph
