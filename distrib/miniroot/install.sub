@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.180 2001/12/17 00:41:50 krw Exp $
+#	$OpenBSD: install.sub,v 1.181 2001/12/22 18:53:45 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -148,7 +148,7 @@ getresp() {
 }
 
 isin() {
-# test the first argument against the remaining ones, return succes on a match
+# test the first argument against the remaining ones, return success on a match
 	local	_a=$1
 
 	shift
@@ -2165,32 +2165,30 @@ fi
 }
 
 unmount_fs() {
-# Unmount all filesystems and check their integrity.
-# Usage: [-check] <fstab file>
-local _check _fstab _pid
+	# Unmount all filesystems and check their integrity.
+	# Usage: [-check] <fstab file>
+	local _check _fstab _pid _devs=	_mps=
 
-if [ "$1" = "-check" ]; then
-	_check=1
-	_fstab=$2
-else
-	_check=0
-	_fstab=$1
-fi
+	if [ "$1" = "-check" ]; then
+		_check=1
+		_fstab=$2
+	else
+		_check=0
+		_fstab=$1
+	fi
 
-if [ ! \( -f $_fstab -a -s $_fstab \) ]; then
-	echo "fstab empty" > /dev/tty
-	return
-fi
+	if [ ! \( -f $_fstab -a -s $_fstab \) ]; then
+		echo "fstab empty" > /dev/tty
+		return
+	fi
 
-(
-	_devs=
-	_mps=
 	# maintain reverse order
 	while read line; do
 		set -- $line
 		_devs="$1 ${_devs}"
 		_mps="$2 ${_mps}"
-	done
+	done < $_fstab
+
 	echo -n "Unmounting filesystems... "
 	for _mp in ${_mps}; do
 		echo -n "${_mp} "
@@ -2206,7 +2204,6 @@ fi
 		done
 		echo "... Done."
 	fi
-) < $_fstab
 }
 
 remount_fs() {
@@ -2225,18 +2222,14 @@ done ) < $1
 }
 
 check_fs() {
-# Check filesystem integrity.
-# $1 is a file in fstab format
-local _fstab=$1
+	# Check filesystem integrity.
+	# $1 is a file in fstab format
+	local _fstab=$1 _devs= _dev
 
-(
-	_devs=
-	_mps=
 	while read line; do
 		set -- $line
 		_devs="$1 ${_devs}"
-		_mps="$2 ${_mps}"
-	done
+	done < $_fstab
 
 	echo "Checking filesystem integrity..."
 	for _dev in ${_devs}; do
@@ -2244,7 +2237,6 @@ local _fstab=$1
 		fsck -f ${_dev}
 	done
 	echo "Done."
-) < $_fstab
 }
 
 get_fqdn() {
