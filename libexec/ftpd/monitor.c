@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.1 2004/11/28 18:49:30 henning Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.2 2004/11/28 19:12:31 henning Exp $	*/
 
 /*
  * Copyright (c) 2004 Moritz Jodeit <moritz@jodeit.org>
@@ -50,6 +50,7 @@ enum monitor_state {
 #ifdef HASSETPROCTITLE
 extern char	remotehost[];
 #endif
+extern char	ttyline[20];
 extern int	debug;
 
 extern void	set_slave_signals(void);
@@ -226,6 +227,10 @@ monitor_post_auth()
 	slave_pid = fork();
 	if (slave_pid == -1)
 		fatalx("fork of user-privileged slave failed");
+
+	snprintf(ttyline, sizeof(ttyline), "ftp%ld",
+	    slave_pid == 0 ? (long)getpid() : (long)slave_pid);
+
 	if (slave_pid == 0) {
 		/* User privileged slave */
 		close(fd_slave);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.156 2004/11/28 18:49:29 henning Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.157 2004/11/28 19:12:31 henning Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
 static const char rcsid[] =
-    "$OpenBSD: ftpd.c,v 1.156 2004/11/28 18:49:29 henning Exp $";
+    "$OpenBSD: ftpd.c,v 1.157 2004/11/28 19:12:31 henning Exp $";
 #endif
 #endif /* not lint */
 
@@ -178,7 +178,7 @@ char	hostname[MAXHOSTNAMELEN];
 char	remotehost[MAXHOSTNAMELEN];
 char	dhostname[MAXHOSTNAMELEN];
 char	*guestpw;
-static char ttyline[20];
+char	ttyline[20];
 char	*tty = ttyline;		/* for klogin */
 static struct utmp utmp;	/* for utmp */
 static	login_cap_t *lc;
