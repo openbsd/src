@@ -1731,9 +1731,9 @@ else {init_ctrl_break[0] = 1;}
 	    }
 	    ena_csi((LYlowest_eightbit[current_char_set] > 155));
 	    status = mainloop();
-	    cleanup();
 	}
     }
+    cleanup();
 
     exit(status);
 }
