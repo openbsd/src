@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: realpath.3,v 1.10 2003/06/02 20:18:38 millert Exp $
+.\"	$OpenBSD: realpath.3,v 1.11 2005/03/29 19:34:14 brad Exp $
 .\"
 .Dd February 16, 1994
 .Dt REALPATH 3
@@ -40,7 +40,7 @@
 .Fd #include <sys/param.h>
 .Fd #include <stdlib.h>
 .Ft "char *"
-.Fn realpath "const char *pathname" "char resolvedname[MAXPATHLEN]"
+.Fn realpath "const char *pathname" "char resolved[PATH_MAX]"
 .Sh DESCRIPTION
 The
 .Fn realpath
@@ -53,13 +53,13 @@ and
 in
 .Fa pathname ,
 and copies the resulting absolute pathname into the memory referenced by
-.Fa resolvedname .
+.Fa resolved .
 The
-.Fa resolvedname
+.Fa resolved
 argument
 .Em must
 refer to a buffer capable of storing at least
-.Dv MAXPATHLEN
+.Dv PATH_MAX
 characters.
 .Pp
 The
@@ -76,14 +76,14 @@ is called.
 The
 .Fn realpath
 function returns
-.Fa resolvedname
+.Fa resolved
 on success.
 If an error occurs,
 .Fn realpath
 returns
 .Dv NULL ,
 and
-.Fa resolvedname
+.Fa resolved
 contains the pathname which caused the problem.
 .Sh ERRORS
 The function
@@ -91,11 +91,7 @@ The function
 may fail and set the external variable
 .Va errno
 for any of the errors specified for the library functions
-.Xr chdir 2 ,
-.Xr close 2 ,
-.Xr fchdir 2 ,
 .Xr lstat 2 ,
-.Xr open 2 ,
 .Xr readlink 2 ,
 and
 .Xr getcwd 3 .
@@ -115,6 +111,6 @@ The
 version always returns absolute pathnames,
 whereas the Solaris implementation will,
 under certain circumstances, return a relative
-.Fa resolvedname
+.Fa resolved
 when given a relative
 .Fa pathname .
