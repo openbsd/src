@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.23 1999/07/02 18:01:46 aaron Exp $
+.\"	$OpenBSD: sysctl.3,v 1.24 1999/07/02 18:18:24 aaron Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -196,7 +196,7 @@ The string and integer information available for the
 .Dv CTL_HW
 level is detailed below.
 The changeable column shows whether a process with appropriate
-privilege may change the value.
+privileges may change the value.
 .Bl -column "Second level nameXXXXXX" integerXXX -offset indent
 .It Sy  Second level name	Type	Changeable
 .It Dv HW_MACHINE No "	string	no"
@@ -216,7 +216,7 @@ The machine class.
 .It Dv HW_MODEL
 The machine model
 .It Dv HW_NCPU
-The number of cpus.
+The number of CPUs.
 .It Dv HW_BYTEORDER
 The byteorder (4,321 or 1,234).
 .It Dv HW_PHYSMEM
@@ -233,7 +233,7 @@ The string and integer information available for the
 .Dv CTL_KERN
 level is detailed below.
 The changeable column shows whether a process with appropriate
-privilege may change the value.
+privileges may change the value.
 The types of data currently available are process information,
 system vnodes, the open file entries, routing table entries,
 virtual memory statistics, load average history, and clock rate
@@ -286,11 +286,13 @@ information.
 The maximum bytes of argument to
 .Xr exec 2 .
 .It Dv KERN_ARND
-Returns a random iteger from the kernel arc4random function.
+Returns a random integer from the kernel
+.Fn arc4random
+function.
 This can be useful if
 .Pa /dev/arandom
 is not available (see
-.Xr rnd 4 ) .
+.Xr random 4 ) .
 .It Dv KERN_BOOTTIME
 A
 .Li struct timeval
@@ -387,7 +389,7 @@ values will fail with
 The third level names for the string and integer profiling information 
 is detailed below.
 The changeable column shows whether a process with appropriate
-privilege may change the value.
+privileges may change the value.
 .Bl -column "GPROFXGMONPARAMXXX" "struct gmonparamXXX" -offset indent
 .It Sy Third level name	Type	Changeable
 .It Dv GPROF_STATE No "	integer	yes"
@@ -422,7 +424,7 @@ The raw partition of a disk (a == 0).
 Returns 1 if saved set-group-ID and saved set-user-ID are available.
 .It Dv KERN_SECURELVL
 The system security level.
-This level may be raised by processes with appropriate privilege.
+This level may be raised by processes with appropriate privileges.
 It may only be lowered by process 1.
 .It Dv KERN_SYSVMSG
 Returns 1 if System V style message queue functionality is available on this
@@ -460,7 +462,7 @@ The string and integer information available for the
 .Dv CTL_NET
 level is detailed below.
 The changeable column shows whether a process with appropriate
-privilege may change the value.
+privileges may change the value.
 .Bl -column "Second level nameXXXXXX" "routing messagesXXX" -offset indent
 .It Sy Second level name	Type	Changeable
 .It Dv PF_ROUTE No "	routing messages	no"
@@ -598,7 +600,7 @@ The string and integer information available for the
 .Dv CTL_USER
 level is detailed below.
 The changeable column shows whether a process with appropriate
-privilege may change the value.
+privileges may change the value.
 .Bl -column "USER_COLL_WEIGHTS_MAXXXX" "integerXXX" -offset indent
 .It Sy Second level name	Type	Changeable
 .It Dv USER_BC_BASE_MAX No "	integer	no"
@@ -697,7 +699,7 @@ The string and integer information available for the
 .Dv CTL_VM
 level is detailed below.
 The changeable column shows whether a process with appropriate
-privilege may change the value.
+privileges may change the value.
 .Bl -column "Second level nameXXXXXX" "struct loadavgXXX" -offset indent
 .It Sy Second level name	Type	Changeable
 .It Dv VM_LOADAVG No "	struct loadavg	no"
@@ -757,7 +759,7 @@ array specifies a value that is unknown.
 .It Bq Er EPERM
 An attempt is made to set a read-only value.
 .It Bq Er EPERM
-A process without appropriate privilege attempts to set a value.
+A process without appropriate privileges attempts to set a value.
 .It Bq Er EPERM
 An attempt to change a value protected by the current kernel security
 level is made.
