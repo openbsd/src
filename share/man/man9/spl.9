@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spl.9,v 1.7 2000/11/09 01:23:10 aaron Exp $
+.\"	$OpenBSD: spl.9,v 1.8 2001/06/05 09:45:55 angelos Exp $
 .\"	$NetBSD: spl.9,v 1.1 1997/03/11 06:15:05 mikel Exp $
 .\"
 .\" Copyright (c) 1997 Michael Long.
@@ -109,6 +109,15 @@ Code running at or above this level may not call
 or
 .Fn wakeup ,
 nor may it post signals.
+Note that "running" means invoked by an interrupt handler that
+operates at this level or higher.
+Kernel code that operates in the context of a process and has called
+.Fn splhigh
+for blocking purposes can use
+.Fn sleep ,
+.Fn tsleep ,
+or
+.Fn wakeup .
 .It Fn splclock
 blocks the hardware clock interrupt.
 It is used by
