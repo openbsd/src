@@ -173,7 +173,6 @@ memerr_interrupt(arg)
 	u_char csr, ctx, err;
 	u_int pa, va;
 	int pte;
-	char bits[64];
 
 	csr = me->me_csr;
 	if ((csr & ME_CSR_IPEND) == 0)
@@ -189,8 +188,7 @@ memerr_interrupt(arg)
 		(ctx & 8) ? "DVMA" : "CPU");
 	printf(" ctx=%d, vaddr=0x%x, paddr=0x%x\n",
 		   (ctx & 7), va, pa);
-	printf(" csr=%s\n", bitmask_snprintf(csr, sc->sc_csrbits,
-	    bits, sizeof(bits)));
+	printf(" csr=%x\n", csr);
 
 	/*
 	 * If we have parity-checked memory, there is
