@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.102 2001/06/07 16:19:47 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.103 2001/06/08 19:40:09 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -205,6 +205,7 @@ struct ipsec_policy
 
 #define IPSP_POLICY_NONE    0x0000  /* No flags set */
 #define IPSP_POLICY_SOCKET  0x0001  /* Socket-attached policy */
+#define IPSP_POLICY_STATIC  0x0002  /* Static policy */
 
 #define IPSP_IPSEC_USE      0 /* Use if existing, don't bother establishing */
 #define IPSP_IPSEC_ACQUIRE  1 /* Try to acquire in parallel but let packet */
