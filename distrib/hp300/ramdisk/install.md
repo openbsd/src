@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.37 2003/10/12 13:18:37 krw Exp $
+#	$OpenBSD: install.md,v 1.38 2004/08/06 19:28:41 miod Exp $
 #	$NetBSD: install.md,v 1.1.2.4 1996/08/26 15:45:14 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,8 +40,6 @@
 #
 
 MDTERM=hp300h
-MDDISKDEVS='/^hd[0-9][0-9]*:./s/:.*//p;/^sd[0-9][0-9]*:.*cylinders/s/:.*//p'
-MDCDDEVS='/^sd[0-9][0-9]*:.*CD-ROM/s/:.*//p'
 ARCH=ARCH
 
 md_set_term() {
