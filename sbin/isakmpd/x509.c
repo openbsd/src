@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.31 2000/11/30 06:36:37 angelos Exp $	*/
+/*	$OpenBSD: x509.c,v 1.32 2000/12/02 02:10:58 angelos Exp $	*/
 /*	$EOM: x509.c,v 1.45 2000/11/23 12:51:21 niklas Exp $	*/
 
 /*
@@ -140,6 +140,7 @@ x509_generate_kn (X509 *cert)
   if (!ikey)
     {
       LC (RSA_free, (key));
+      log_print ("x509_generate_kn: cannot get subject key");
       return 0;
     }
   LC (RSA_free, (key));
@@ -155,6 +156,7 @@ x509_generate_kn (X509 *cert)
           X509_LU_X509)
 	{
   	  LC (X509_STORE_CTX_cleanup, (&csc));
+	  log_print ("x509_generate_kn: no certificate found for issuer");
 	  return 0;
 	}
     }
@@ -194,6 +196,7 @@ x509_generate_kn (X509 *cert)
     {
       free (ikey);
       LC (RSA_free, (key));
+      log_print ("x509_generate_kn: cannot get issuer key");
       return 0;
     }
   LC (RSA_free, (key));
