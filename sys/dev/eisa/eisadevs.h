@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: eisadevs,v 1.14 2000/03/13 20:32:15 maja Exp 
+ *	OpenBSD: eisadevs,v 1.15 2001/01/26 22:29:17 mickey Exp 
  */
 
 /*
@@ -56,7 +56,8 @@
 /* BusLogic products */
 #define	EISA_PRODUCT_BUS4201	"BusLogic Bt74xB SCSI"
 #define	EISA_PRODUCT_BUS4202	"BusLogic Bt74xC SCSI"
-#define	EISA_PRODUCT_BUS6301	"BusLogic Bt763E Ethernet"
+#define	EISA_PRODUCT_BUS6001	"BusLogic Bt760 Ethernet"
+#define	EISA_PRODUCT_BUS6301	"BusLogic Bt763E 82596-based Ethernet"
 
 /* Compaq products */
 #define	EISA_PRODUCT_CPQ6101	"Compaq NetFlex-2 ENET-TR"

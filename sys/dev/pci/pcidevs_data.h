@@ -37,7 +37,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-struct pci_knowndev pci_knowndevs[] = {
+static const struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_2MICRO, PCI_PRODUCT_2MICRO_OZ6832,
 	    0,

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: eisadevs,v 1.14 2000/03/13 20:32:15 maja Exp 
+ *	OpenBSD: eisadevs,v 1.15 2001/01/26 22:29:17 mickey Exp 
  */
 
 /*
@@ -36,7 +36,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-struct eisa_knowndev eisa_knowndevs[] = {
+static const struct eisa_knowndev eisa_knowndevs[] = {
 	{
 	    0,
 	    "ADP0000",
@@ -91,6 +91,11 @@ struct eisa_knowndev eisa_knowndevs[] = {
 	    0,
 	    "BUS4202",
 	    EISA_PRODUCT_BUS4202,
+	},
+	{
+	    0,
+	    "BUS6001",
+	    EISA_PRODUCT_BUS6001,
 	},
 	{
 	    0,
