@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.20 1998/01/21 21:59:38 deraadt Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.21 1998/01/24 17:54:07 niklas Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -514,8 +514,8 @@ printf(fmt, va_alist)
 }
 
 /*
- * vprintf: print a message to the console and the log [already have
- *	va_alist]
+ * vprintf: print a message to the console and the log [already have a
+ *	va_list]
  */
 
 void
@@ -557,8 +557,8 @@ sprintf(buf, fmt, va_alist)
 }
 
 /*
- * vprintf: print a message to the console and the log [already have
- *	va_alist]
+ * vsprintf: print a message to the provided buffer [already have a
+ *	va_list]
  */
 
 int
@@ -571,7 +571,7 @@ vsprintf(buf, fmt, ap)
 
 	savintr = consintr;		/* disable interrupts */
 	consintr = 0;
-	kprintf(fmt, TOBUFONLY, NULL, NULL, ap);
+	kprintf(fmt, TOBUFONLY, NULL, buf, ap);
 	if (!panicstr)
 		logwakeup();
 	consintr = savintr;		/* reenable interrupts */
