@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.34 2004/11/26 16:23:50 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.35 2004/12/02 06:54:15 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -257,12 +257,10 @@ cvs_file_create(CVSFILE *parent, const char *path, u_int type, mode_t mode)
 	char fp[MAXPATHLEN];
 	CVSFILE *cfp;
 
-	printf("cvs_file_create(%s)\n", path);
 	cfp = cvs_file_alloc(path, type);
 	if (cfp == NULL)
 		return (NULL);
 
-	cfp->cf_type = type;
 	cfp->cf_mode = mode;
 	cfp->cf_parent = parent;
 
@@ -289,6 +287,43 @@ cvs_file_create(CVSFILE *parent, const char *path, u_int type, mode_t mode)
 			return (NULL);
 		}
 		(void)close(fd);
+	}
+
+	return (cfp);
+}
+
+
+/*
+ * cvs_file_copy()
+ *
+ * Allocate space to create a copy of the file <orig>.  The copy inherits all
+ * of the original's attributes, but does not inherit its children if the
+ * original file is a directory.  Note that files copied using this mechanism
+ * are linked to their parent, but the parent has no link to the file.  This
+ * is so cvs_file_getpath() works.
+ * Returns the copied file on success, or NULL on failure.  The returned
+ * structure should be freed using cvs_file_free().
+ */
+
+CVSFILE*
+cvs_file_copy(CVSFILE *orig)
+{
+	char path[MAXPATHLEN];
+	CVSFILE *cfp;
+
+	cvs_file_getpath(orig, path, sizeof(path));
+
+	cfp = cvs_file_alloc(path, orig->cf_type);
+	if (cfp == NULL)
+		return (NULL);
+
+	cfp->cf_parent = orig->cf_parent;
+	cfp->cf_mode = orig->cf_mode;
+	cfp->cf_mtime = orig->cf_mtime;
+	cfp->cf_cvstat = orig->cf_cvstat;
+
+	if (orig->cf_type == DT_DIR) {
+		/* XXX copy CVS directory attributes */
 	}
 
 	return (cfp);
@@ -792,7 +827,7 @@ cvs_file_alloc(const char *path, u_int type)
 
 	cfp->cf_name = cvs_file_getname(fnp);
 	if (cfp->cf_name == NULL) {
-		cvs_log(LP_ERR, "WTF!?");
+		cvs_log(LP_ERR, "failed to get file name from table");
 		return (NULL);
 	}
 	cfp->cf_type = type;
@@ -863,7 +898,7 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent)
 			cfp->cf_cvstat = CVS_FST_ADDED;
 		else {
 			/* check last modified time */
-			if (ent->ce_mtime == st.st_mtime)
+			if (ent->ce_mtime == (time_t)st.st_mtime)
 				cfp->cf_cvstat = CVS_FST_UPTODATE;
 			else
 				cfp->cf_cvstat = CVS_FST_MODIFIED;
