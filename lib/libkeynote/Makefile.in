@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.in,v 1.9 2000/01/25 09:08:10 angelos Exp $
+# $OpenBSD: Makefile.in,v 1.10 2000/02/12 01:02:02 angelos Exp $
 #
 # The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 #
@@ -176,6 +176,7 @@ distribution: test cleanall manpages
 	${RM} ${RMFLAGS2} ${KNSUBDIR}/CVS ${KNSUBDIR}/testsuite/CVS \
 			  ${KNSUBDIR}/Misc/CVS ${KNSUBDIR}/${KNSUBDIR} \
 			  ${KNSUBDIR}/.cvsignore ${KNSUBDIR}/man/CVS \
-			  ${KNSUBDIR}/man/.cvsignore ${KNSUBDIR}/doc/CVS
+			  ${KNSUBDIR}/man/.cvsignore ${KNSUBDIR}/doc/CVS \
+			  ${KNSUBDIR}/testsuite/.cvsignore
 	$(TAR) $(TARFLAGS) ${KNSUBDIR}
 	${RM} ${RMFLAGS2} ${KNSUBDIR} man/*.0 man/*.cat?
