@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.19 2004/12/09 20:03:27 jfb Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.20 2004/12/13 13:55:10 jmc Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -318,9 +318,7 @@ void
 usage(void)
 {
 	fprintf(stderr,
-	    "Usage: %s [-lQqtvx] [-b bindir] [-d root] [-e editor] [-z level] "
-	    "command [options] ...\n",
-	    __progname);
+	    "Usage: %s [-flQqtv] [-d root] [-e editor] [-z level] command [...]\n", __progname);
 }
 
 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.14 2004/12/08 00:43:44 jfb Exp $
+.\"	$OpenBSD: cvs.1,v 1.15 2004/12/13 13:55:10 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -31,9 +31,10 @@
 .Nd OpenCVS Concurrent Versioning System client
 .Sh SYNOPSIS
 .Nm
-.Op Fl flQqv
+.Op Fl flQqtv
 .Op Fl d Ar root
 .Op Fl e Ar editor
+.Op Fl z Ar level
 .Ar command Op Ar ...
 .Sh DESCRIPTION
 The
@@ -73,7 +74,7 @@ should always run in quiet mode and the
 command should always produce unified output.
 .Pp
 The following options are supported:
-.Bl -tag -width Ds
+.Bl -tag -width "-e editorXX"
 .It Fl d Ar root
 Use
 .Ar root
@@ -93,8 +94,18 @@ Be extra quiet.
 Only error messages will be displayed.
 .It Fl q
 Be quiet about reporting.
+.It Fl t
+Trace program execution.
 .It Fl v
 Display version information and exit.
+.It Fl z Ar level
+Specify the compression level to
+.Xr gzip 1
+when transferring files.
+The compression level ranges from 1 to 9,
+with 1 being the fastest,
+and 9 providing the best level of compression.
+The default is 6.
 .El
 .Sh COMMANDS
 The following commands are supported by
@@ -351,6 +362,7 @@ post-commit logging.
 .El
 .Sh SEE ALSO
 .Xr diff 1 ,
+.Xr gzip 1 ,
 .Xr patch 1 ,
 .Xr rcs 1 ,
 .Xr cvsd 8
