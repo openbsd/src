@@ -1,4 +1,4 @@
-/*	$OpenBSD: stringlist.c,v 1.3 2002/07/12 00:25:30 deraadt Exp $	*/
+/*	$OpenBSD: stringlist.c,v 1.4 2003/12/16 21:46:22 deraadt Exp $	*/
 /*	$NetBSD: stringlist.c,v 1.2 1997/01/17 07:26:20 lukem Exp $	*/
 
 /*
@@ -32,9 +32,9 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: stringlist.c,v 1.3 2002/07/12 00:25:30 deraadt Exp $";
-#endif /* LIBC_SCCS and not lint */
+#if defined(LIBC_SCCS) && !defined(lint) && !defined(SMALL)
+static char *rcsid = "$OpenBSD: stringlist.c,v 1.4 2003/12/16 21:46:22 deraadt Exp $";
+#endif /* LIBC_SCCS and not lint and not SMALL */
 
 #include <stdio.h>
 #include <string.h>

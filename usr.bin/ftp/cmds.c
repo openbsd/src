@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.45 2003/06/03 02:56:08 millert Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.46 2003/12/16 21:46:22 deraadt Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -59,13 +59,9 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
-#else
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.45 2003/06/03 02:56:08 millert Exp $";
-#endif
-#endif /* not lint */
+#if !defined(lint) && !defined(SMALL)
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.46 2003/12/16 21:46:22 deraadt Exp $";
+#endif /* not lint and not SMALL */
 
 /*
  * FTP User Program -- Command Routines.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruserpass.c,v 1.16 2003/06/03 02:56:08 millert Exp $	*/
+/*	$OpenBSD: ruserpass.c,v 1.17 2003/12/16 21:46:22 deraadt Exp $	*/
 /*	$NetBSD: ruserpass.c,v 1.14 1997/07/20 09:46:01 lukem Exp $	*/
 
 /*
@@ -34,7 +34,9 @@
 #if 0
 static char sccsid[] = "@(#)ruserpass.c	8.4 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: ruserpass.c,v 1.16 2003/06/03 02:56:08 millert Exp $";
+#ifndef SMALL
+static char rcsid[] = "$OpenBSD: ruserpass.c,v 1.17 2003/12/16 21:46:22 deraadt Exp $";
+#endif /* SMALL */
 #endif
 #endif /* not lint */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.56 2003/11/20 12:43:55 jmc Exp $	*/
+/*	$OpenBSD: main.c,v 1.57 2003/12/16 21:46:22 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -65,13 +65,9 @@ static char copyright[] =
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
-#else
-static char rcsid[] = "$OpenBSD: main.c,v 1.56 2003/11/20 12:43:55 jmc Exp $";
-#endif
-#endif /* not lint */
+#if !defined(lint) && !defined(SMALL)
+static char rcsid[] = "$OpenBSD: main.c,v 1.57 2003/12/16 21:46:22 deraadt Exp $";
+#endif /* not lint and not SMALL */
 
 /*
  * FTP User Program -- Command Interface.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: domacro.c,v 1.9 2003/06/03 02:56:08 millert Exp $	*/
+/*	$OpenBSD: domacro.c,v 1.10 2003/12/16 21:46:22 deraadt Exp $	*/
 /*	$NetBSD: domacro.c,v 1.10 1997/07/20 09:45:45 lukem Exp $	*/
 
 /*
@@ -30,13 +30,9 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)domacro.c	8.3 (Berkeley) 4/2/94";
-#else
-static char rcsid[] = "$OpenBSD: domacro.c,v 1.9 2003/06/03 02:56:08 millert Exp $";
-#endif
-#endif /* not lint */
+#if !defined(lint) && !defined(SMALL)
+static char rcsid[] = "$OpenBSD: domacro.c,v 1.10 2003/12/16 21:46:22 deraadt Exp $";
+#endif /* not lint and not SMALL */
 
 #include <ctype.h>
 #include <signal.h>

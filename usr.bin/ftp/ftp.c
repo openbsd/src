@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.54 2003/08/11 21:23:58 millert Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.55 2003/12/16 21:46:22 deraadt Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -59,13 +59,9 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
-#else
-static char rcsid[] = "$OpenBSD: ftp.c,v 1.54 2003/08/11 21:23:58 millert Exp $";
-#endif
-#endif /* not lint */
+#if !defined(lint) && !defined(SMALL)
+static char rcsid[] = "$OpenBSD: ftp.c,v 1.55 2003/12/16 21:46:22 deraadt Exp $";
+#endif /* not lint and not SMALL */
 
 #include <sys/types.h>
 #include <sys/stat.h>
