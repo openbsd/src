@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.c,v 1.15 2000/01/03 19:20:30 angelos Exp $	*/
+/*	$OpenBSD: sem.c,v 1.16 2000/01/03 19:27:23 angelos Exp $	*/
 /*	$NetBSD: sem.c,v 1.10 1996/11/11 23:40:11 gwr Exp $	*/
 
 /*
@@ -165,17 +165,14 @@ setmaxusers(n)
 {
 
 	if (maxusers != 0) {
-		error("warning: duplicate maxusers parameter, will use latest definition (%d)", n);
-		errors--;	/* take it away */
+		warnx("warning: duplicate maxusers parameter, will use latest definition (%d)", n);
 	}
 	maxusers = n;
 	if (n < minmaxusers) {
-		error("warning: minimum of %d maxusers assumed\n", minmaxusers);
-		errors--;	/* take it away */
+		warnx("warning: minimum of %d maxusers assumed\n", minmaxusers);
 		maxusers = minmaxusers;
 	} else if (n > maxmaxusers) {
-		error("warning: maxusers (%d) > %d", n, maxmaxusers);
-		errors--;
+		warnx("warning: maxusers (%d) > %d", n, maxmaxusers);
 	}
 }
 
