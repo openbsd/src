@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.14 1995/08/18 15:14:37 chopps Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.14.2.1 1995/11/10 16:05:16 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -165,6 +165,7 @@ adosfs_mountfs(devvp, mp, p)
 
 	parp = &dl.d_partitions[part];
 	amp = malloc(sizeof(struct adosfsmount), M_ADOSFSMNT, M_WAITOK);
+	bzero((char *)amp, (u_long)sizeof(struct adosfsmount));
 	amp->mp = mp;
 	amp->startb = parp->p_offset;
 	amp->endb = parp->p_offset + parp->p_size;
