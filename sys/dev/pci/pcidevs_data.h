@@ -6303,6 +6303,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "VT6105 RhineIII",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8375,
+	    "VT8375 Host-PCI",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_CLE266,
 	    "CLE266",
 	},
