@@ -1,5 +1,5 @@
-/*	$OpenBSD: nd6.h,v 1.6 2000/05/15 11:45:35 itojun Exp $	*/
-/*	$KAME: nd6.h,v 1.20 2000/04/29 04:46:41 jinmei Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.7 2000/05/19 13:55:17 itojun Exp $	*/
+/*	$KAME: nd6.h,v 1.21 2000/05/17 12:35:59 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -291,8 +291,8 @@ int nd6_ioctl __P((u_long, caddr_t, struct ifnet *));
 struct rtentry *nd6_cache_lladdr __P((struct ifnet *, struct in6_addr *,
 	char *, int, int, int));
 /* for test */
-int nd6_output __P((struct ifnet *, struct mbuf *, struct sockaddr_in6 *,
-		    struct rtentry *));
+int nd6_output __P((struct ifnet *, struct ifnet *, struct mbuf *,
+		    struct sockaddr_in6 *, struct rtentry *));
 int nd6_storelladdr __P((struct ifnet *, struct rtentry *, struct mbuf *,
 			 struct sockaddr *, u_char *));
 

@@ -1,9 +1,10 @@
-/*	$OpenBSD: ip6_output.c,v 1.5 2000/05/19 05:14:45 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.6 2000/05/19 13:55:17 itojun Exp $	*/
+/*	$KAME: ip6_output.c,v 1.103 2000/05/19 05:13:21 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -135,7 +136,7 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 	struct ifnet **ifpp;		/* XXX: just for statistics */
 {
 	struct ip6_hdr *ip6, *mhip6;
-	struct ifnet *ifp;
+	struct ifnet *ifp, *origifp;
 	struct mbuf *m = m0;
 	int hlen, tlen, len, off;
 	struct route_in6 ip6route;
@@ -508,7 +509,7 @@ skip_ipsec2:;
 
 		exthdrs.ip6e_ip6 = m;
 	}
-#endif /*IPESC*/
+#endif /*IPSEC*/
 
 	if (!IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) {
 		/* Unicast */
@@ -522,7 +523,7 @@ skip_ipsec2:;
 		 */
 		if (ro->ro_rt == 0) {
 			/*
-			 * NetBSD/OpenBSD always clones routes, if parent is
+			 * non-bsdi always clone routes, if parent is
 			 * PRF_CLONING.
 			 */
 			rtalloc((struct route *)ro);
@@ -543,11 +544,11 @@ skip_ipsec2:;
 		in6_ifstat_inc(ifp, ifs6_out_request);
 
 		/*
-		 * Check if there is the outgoing interface conflicts with
-		 * the interface specified by ifi6_ifindex(if specified).
+		 * Check if the outgoing interface conflicts with
+		 * the interface specified by ifi6_ifindex (if specified).
 		 * Note that loopback interface is always okay.
-		 * (this happens when we are sending packet toward my
-		 * interface)
+		 * (this may happen when we are sending a packet to one of
+		 *  our own addresses.)
 		 */
 		if (opt && opt->ip6po_pktinfo
 		 && opt->ip6po_pktinfo->ipi6_ifindex) {
@@ -740,10 +741,38 @@ skip_ipsec2:;
 		mtu = nd_ifinfo[ifp->if_index].linkmtu;
 	}
 
-	/*
-	 * Fake link-local scope-class addresses
-	 */
-	if ((ifp->if_flags & IFF_LOOPBACK) == 0) {
+	/* Fake scoped addresses */
+	if ((ifp->if_flags & IFF_LOOPBACK) != 0) {
+		/*
+		 * If source or destination address is a scoped address, and
+		 * the packet is going to be sent to a loopback interface,
+		 * we should keep the original interface.
+		 */
+
+		/*
+		 * XXX: this is a very experimental and temporary solution.
+		 * We eventually have sockaddr_in6 and use the sin6_scope_id
+		 * field of the structure here.
+		 * We rely on the consistency between two scope zone ids
+		 * of source add destination, which should already be assured
+		 * Larger scopes than link will be supported in the near
+		 * future.
+		 */
+		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src))
+			origifp = ifindex2ifnet[ntohs(ip6->ip6_src.s6_addr16[1])];
+		else if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst))
+			origifp = ifindex2ifnet[ntohs(ip6->ip6_dst.s6_addr16[1])];
+		else
+			origifp = ifp;
+	}
+	else
+		origifp = ifp;
+#ifndef FAKE_LOOPBACK_IF
+	if ((ifp->if_flags & IFF_LOOPBACK) != 0)
+#else
+	if (1)
+#endif
+	{
 		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src))
 			ip6->ip6_src.s6_addr16[1] = 0;
 		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst))
@@ -756,6 +785,7 @@ skip_ipsec2:;
 	 */
 	if (ip6_fw_chk_ptr) {
 		u_short port = 0;
+		m->m_pkthdr.rcvif = NULL;	/*XXX*/
 		/* If ipfw says divert, we have to just drop packet */
 		if ((*ip6_fw_chk_ptr)(&ip6, ifp, &port, &m)) {
 			m_freem(m);
@@ -802,7 +832,7 @@ skip_ipsec2:;
 
 	/*
 	 * Send the packet to the outgoing interface.
-	 * If necessary, do IPv6 fragmentation before sending. 
+	 * If necessary, do IPv6 fragmentation before sending.
 	 */
 	tlen = m->m_pkthdr.len;
 	if (tlen <= mtu
@@ -816,7 +846,7 @@ skip_ipsec2:;
 	     * larger than the link's MTU.
 	     * XXX: IFF_FRAGMENTABLE (or such) flag has not been defined yet...
 	     */
-	    
+	
 	    || ifp->if_flags & IFF_FRAGMENTABLE
 #endif
 	    )
@@ -825,7 +855,7 @@ skip_ipsec2:;
 		error = (*ifp->if_output)(ifp, m, (struct sockaddr *)dst,
 					  ro->ro_rt);
 #else
-		error = nd6_output(ifp, m, dst, ro->ro_rt);
+		error = nd6_output(ifp, origifp, m, dst, ro->ro_rt);
 #endif
 		goto done;
 	} else if (mtu < IPV6_MMTU) {
@@ -870,16 +900,13 @@ skip_ipsec2:;
 		if (exthdrs.ip6e_rthdr) {
 			nextproto = *mtod(exthdrs.ip6e_rthdr, u_char *);
 			*mtod(exthdrs.ip6e_rthdr, u_char *) = IPPROTO_FRAGMENT;
-		}
-		else if (exthdrs.ip6e_dest1) {
+		} else if (exthdrs.ip6e_dest1) {
 			nextproto = *mtod(exthdrs.ip6e_dest1, u_char *);
 			*mtod(exthdrs.ip6e_dest1, u_char *) = IPPROTO_FRAGMENT;
-		}
-		else if (exthdrs.ip6e_hbh) {
+		} else if (exthdrs.ip6e_hbh) {
 			nextproto = *mtod(exthdrs.ip6e_hbh, u_char *);
 			*mtod(exthdrs.ip6e_hbh, u_char *) = IPPROTO_FRAGMENT;
-		}
-		else {
+		} else {
 			nextproto = ip6->ip6_nxt;
 			ip6->ip6_nxt = IPPROTO_FRAGMENT;
 		}
@@ -950,10 +977,9 @@ sendorfree:
 						  (struct sockaddr *)dst,
 						  ro->ro_rt);
 #else
-			error = nd6_output(ifp, m, dst, ro->ro_rt);
+			error = nd6_output(ifp, origifp, m, dst, ro->ro_rt);
 #endif
-		}
-		else
+		} else
 			m_freem(m);
 	}
 
@@ -1016,7 +1042,7 @@ ip6_copyexthdr(mp, hdr, hlen)
 }
 
 /*
- * Insert jumbo payload option. 
+ * Insert jumbo payload option.
  */
 static int
 ip6_insert_jumboopt(exthdrs, plen)
@@ -1042,8 +1068,7 @@ ip6_insert_jumboopt(exthdrs, plen)
 		optbuf = mtod(mopt, u_char *);
 		optbuf[1] = 0;	/* = ((JUMBOOPTLEN) >> 3) - 1 */
 		exthdrs->ip6e_hbh = mopt;
-	}
-	else {
+	} else {
 		struct ip6_hbh *hbh;
 
 		mopt = exthdrs->ip6e_hbh;
@@ -1060,8 +1085,7 @@ ip6_insert_jumboopt(exthdrs, plen)
 			bcopy(oldoptp, mtod(mopt, caddr_t), oldoptlen);
 			optbuf = mtod(mopt, caddr_t) + oldoptlen;
 			mopt->m_len = oldoptlen + JUMBOOPTLEN;
-		}
-		else {
+		} else {
 			optbuf = mtod(mopt, u_char *) + mopt->m_len;
 			mopt->m_len += JUMBOOPTLEN;
 		}
@@ -1105,8 +1129,7 @@ ip6_insertfraghdr(m0, m, hlen, frghdrp)
 		if (n == 0)
 			return(ENOBUFS);
 		m->m_next = n;
-	}
-	else
+	} else
 		n = m;
 
 	/* Search for the last mbuf of unfragmentable part. */
@@ -1120,8 +1143,7 @@ ip6_insertfraghdr(m0, m, hlen, frghdrp)
 			(struct ip6_frag *)(mtod(mlast, caddr_t) + mlast->m_len);
 		mlast->m_len += sizeof(struct ip6_frag);
 		m->m_pkthdr.len += sizeof(struct ip6_frag);
-	}
-	else {
+	} else {
 		/* allocate a new mbuf for the fragment header */
 		struct mbuf *mfrg;
 
@@ -1931,6 +1953,10 @@ ip6_setpktoptions(control, opt, priv)
 				return(ENXIO);
 			}
 
+			/*
+			 * Check if the requested source address is indeed a
+			 * unicast address assigned to the node.
+			 */
 			if (!IN6_IS_ADDR_UNSPECIFIED(&opt->ip6po_pktinfo->ipi6_addr)) {
 				struct ifaddr *ia;
 				struct sockaddr_in6 sin6;
@@ -1969,7 +1995,9 @@ ip6_setpktoptions(control, opt, priv)
 		case IPV6_NEXTHOP:
 			if (!priv)
 				return(EPERM);
+			
 			if (cm->cmsg_len < sizeof(u_char) ||
+			    /* check if cmsg_len is large enough for sa_len */
 			    cm->cmsg_len < CMSG_LEN(*CMSG_DATA(cm)))
 				return(EINVAL);
 

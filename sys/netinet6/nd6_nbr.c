@@ -1,10 +1,10 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.9 2000/02/28 11:55:23 itojun Exp $	*/
-/*	$KAME: nd6_nbr.c,v 1.29 2000/02/26 08:20:58 itojun Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.10 2000/05/19 13:55:17 itojun Exp $	*/
+/*	$KAME: nd6_nbr.c,v 1.36 2000/05/17 12:35:59 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -16,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -750,9 +750,13 @@ nd6_na_input(m, off, icmp6len)
 #ifdef OLDIP6OUTPUT
 		(*ifp->if_output)(ifp, ln->ln_hold, rt_key(rt), rt);
 #else
-		nd6_output(ifp, ln->ln_hold,
+		/*
+		 * we assume ifp is not a p2p here, so just set the 2nd
+		 * argument as the 1st one.
+		 */
+		nd6_output(ifp, ifp, ln->ln_hold,
 			   (struct sockaddr_in6 *)rt_key(rt), rt);
-#endif 
+#endif
 		ln->ln_hold = 0;
 	}
 
