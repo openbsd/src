@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.13 1997/09/17 14:19:33 deraadt Exp $
+#	$OpenBSD: list,v 1.14 1997/10/02 01:11:07 deraadt Exp $
 #	$NetBSD: list,v 1.4.4.1 1996/06/20 20:30:26 pk Exp $
 
 SRCDIRS distrib/special
@@ -52,7 +52,7 @@ SYMLINK	../../instbin		usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
 SYMLINK	../../instbin		usr/bin/sed
 SYMLINK	../../instbin		usr/bin/sort
 SYMLINK	../../instbin		usr/bin/tip
-SYMLINK	../../instbin		usr/bin/build
+SYMLINK	../../instbin		usr/bin/build usr/bin/vi
 
 # `internal' crunchgen links
 ARGVLINK mount_ffs	ffs
@@ -75,4 +75,3 @@ COPY	${CURDIR}/install.sh		install
 COPY	${CURDIR}/upgrade.sh		upgrade
 SPECIAL sed "/^VERSION=/s/=.*/=${REV}/" < ${CURDIR}/install.sub > install.sub
 SPECIAL	chmod 755 install upgrade
-SPECIAL	ln -s instbin		usr/bin/vi
