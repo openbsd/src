@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.20 1998/10/03 21:18:57 millert Exp $	*/
+/*	$OpenBSD: sd.c,v 1.21 1998/10/04 01:02:25 millert Exp $	*/
 /*	$NetBSD: sd.c,v 1.34 1997/07/10 18:14:10 kleink Exp $	*/
 
 /*
@@ -386,12 +386,12 @@ sdgetcapacity(sc, dev)
  * Read or constuct a disklabel
  */
 int
-sdgetinfo(dev)
+sdgetinfo(dev, sc, lp, spoofonly)
 	dev_t dev;
+	struct sd_softc *sc;
+	struct disklabel *lp;
+	int spoofonly;
 {
-	int unit = sdunit(dev);
-	struct sd_softc *sc = sd_cd.cd_devs[unit];
-	struct disklabel *lp = sc->sc_dkdev.dk_label;
 	char *errstring;
 
 	bzero((caddr_t)lp, sizeof *lp);
@@ -499,7 +499,8 @@ sdgetinfo(dev)
 		lp->d_magic2 = DISKMAGIC;
 		lp->d_checksum = dkcksum(lp);
 
-		errstring = readdisklabel(sdlabdev(dev), sdstrategy, lp, NULL, 0);
+		errstring = readdisklabel(sdlabdev(dev), sdstrategy, lp, NULL,
+		    spoofonly);
 	}
 
 	if (errstring) {
@@ -546,7 +547,7 @@ sdopen(dev, flags, mode, p)
 	 */
 	if (sc->sc_dkdev.dk_openmask == 0) {
 		sc->sc_flags |= SDF_OPENING;
-		error = sdgetinfo(dev);
+		error = sdgetinfo(dev, sc, sc->sc_dkdev.dk_label, 0);
 		sc->sc_flags &= ~SDF_OPENING;
 		wakeup((caddr_t)sc);
 		if (error)
@@ -1075,6 +1076,10 @@ sdioctl(dev, cmd, data, flag, p)
 	int error, flags;
 
 	switch (cmd) {
+	case DIOCGPDINFO:
+		error = sdgetinfo(dev, sc, (struct disklabel *)data, 1);
+		return (error);
+
 	case DIOCGDINFO:
 		*(struct disklabel *)data = *lp;
 		return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.10 1998/10/03 21:18:57 millert Exp $	*/
+/*	$OpenBSD: hd.c,v 1.11 1998/10/04 01:02:26 millert Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -223,7 +223,7 @@ int	hdident __P((struct device *, struct hd_softc *,
 	    struct hpibbus_attach_args *));
 void	hdreset __P((struct hd_softc *));
 void	hdustart __P((struct hd_softc *));
-int	hdgetinfo __P((dev_t));
+int	hdgetinfo __P((dev_t, struct hd_softc *, struct disklabel *, int));
 void	hdrestart __P((void *));
 struct buf *hdfinish __P((struct hd_softc *, struct buf *));
 
@@ -472,12 +472,12 @@ hdreset(rs)
  * Read or constuct a disklabel
  */
 int
-hdgetinfo(dev)
+hdgetinfo(dev, rs, lp, spoofonly)
 	dev_t dev;
+	struct hd_softc *rs;
+	struct disklabel *lp;
+	int spoofonly;
 {
-	int unit = hdunit(dev);
-	struct hd_softc *rs = hd_cd.cd_devs[unit];
-	struct disklabel *lp = rs->sc_dkdev.dk_label;
 	char *errstring;
 
 	/*
@@ -522,7 +522,8 @@ hdgetinfo(dev)
 	/*
 	 * Now try to read the disklabel
 	 */
-	errstring = readdisklabel(hdlabdev(dev), hdstrategy, lp, NULL, 0);
+	errstring = readdisklabel(hdlabdev(dev), hdstrategy, lp, NULL,
+	    spoofonly);
 	if (errstring) {
 		printf("%s: WARNING: %s, defining `c' partition as entire disk\n",
 		    rs->sc_dev.dv_xname, errstring);
@@ -567,7 +568,7 @@ hdopen(dev, flags, mode, p)
 	 */
 	if (rs->sc_dkdev.dk_openmask == 0) {
 		rs->sc_flags |= HDF_OPENING;
-		error = hdgetinfo(dev);
+		error = hdgetinfo(dev, rs, rs->sc_dkdev.dk_label, 0);
 		rs->sc_flags &= ~HDF_OPENING;
 		wakeup((caddr_t)rs);
 		if (error)
@@ -1121,6 +1122,10 @@ hdioctl(dev, cmd, data, flag, p)
 	int error, flags;
 
 	switch (cmd) {
+	case DIOCGPDINFO:
+		error = hdgetinfo(dev, sc, (struct disklabel *)data, 1);
+		return (error);
+
 	case DIOCGDINFO:
 		*(struct disklabel *)data = *lp;
 		return (0);

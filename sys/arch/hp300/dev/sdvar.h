@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdvar.h,v 1.8 1997/04/16 11:56:16 downsj Exp $	*/
+/*	$OpenBSD: sdvar.h,v 1.9 1998/10/04 01:02:25 millert Exp $	*/
 /*	$NetBSD: sdvar.h,v 1.7 1997/03/31 07:40:07 scottr Exp $	*/
 
 /*
@@ -91,7 +91,7 @@ void	sdgo __P((void *));
 void	sdintr __P((void *, int));
 
 int	sdgetcapacity __P((struct sd_softc *, dev_t));
-int	sdgetinfo __P((dev_t));
+int	sdgetinfo __P((dev_t, struct sd_softc *, struct disklabel *, int));
 
 /* sd_compat.c */
 void	sdmakedisklabel __P((int, struct disklabel *));
