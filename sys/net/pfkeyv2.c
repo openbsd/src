@@ -1144,7 +1144,9 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	  sproto = 0;
 
 	/* Generic netmask handling, works for IPv4 and IPv6 */
-	for (lp = 0; lp < src->sa.sa_len; lp++)
+	for (lp = 0;
+	     lp < src->sa.sa_len - (sizeof(u_int8_t) + sizeof(sa_family_t);
+	     lp++)
 	{
 	    src->sa.sa_data[lp] &= srcmask->sa.sa_data[lp];
 	    dst->sa.sa_data[lp] &= dstmask->sa.sa_data[lp];
