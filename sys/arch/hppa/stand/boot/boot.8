@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.8,v 1.8 2003/07/11 13:58:57 jmc Exp $
+.\"	$OpenBSD: boot.8,v 1.9 2003/10/04 10:33:04 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Miodrag Vallat
 .\" Copyright (c) 1997-2002 Michael Shalayeff
@@ -114,8 +114,8 @@ Boots the kernel image specified by
 .Ar image
 with any options given.
 Image specification consists of a pair
-.Em device : filename ,
-either or both can be omitted (':' is not needed if both are omitted),
+.Ar device : Ns Ar filename ;
+either or both can be omitted (`:' is not needed if both are omitted),
 in which case values from
 .Nm
 variables will be used.
