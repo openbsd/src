@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_ioctl.c,v 1.1 1995/12/26 04:44:39 jonathan Exp $ */
+/*	$NetBSD: ultrix_ioctl.c,v 1.2 1996/01/04 19:03:32 jonathan Exp $ */
 /*	from : NetBSD: sunos_ioctl.c,v 1.21 1995/10/07 06:27:31 mycroft Exp */
 
 /*
@@ -48,6 +48,8 @@
 
 #include "ultrix_tty.h"
 
+#define emul_termio	ultrix_termio
+#define emul_termios	ultrix_termios
 
 /*
  * SunOS ioctl calls.
@@ -95,6 +97,20 @@ static u_long s2btab[] = {
 	38400,
 };
 
+
+/*
+ * Translate a single tty control char from the emulation value
+ * to native termios, and vice-versa. Special-case
+ * the value of POSIX_VDISABLE, mapping it to and from 0.
+ */
+#define NATIVE_TO_EMUL_CC(bsd_cc) \
+ (((bsd_cc)   != _POSIX_VDISABLE) ? (bsd_cc) : 0)
+
+#define EMUL_TO_NATIVE_CC(emul_cc) \
+ (emul_cc) ? (emul_cc) : _POSIX_VDISABLE;
+
+
+
 /*
  * these two conversion functions have mostly been done
  * with some perl cut&paste, then handedited to comment
@@ -110,9 +126,10 @@ static u_long s2btab[] = {
  * code with ?:.
  */
 
+
 static void
 stios2btios(st, bt)
-	struct sunos_termios *st;
+	struct emul_termios *st;
 	struct termios *bt;
 {
 	register u_long l, r;
@@ -208,34 +225,44 @@ stios2btios(st, bt)
 	r |=	((l & 0x00004000) ? PENDIN	: 0);
 	bt->c_lflag = r;
 
-	bt->c_cc[VINTR]    = st->c_cc[0]  ? st->c_cc[0]  : _POSIX_VDISABLE;
-	bt->c_cc[VQUIT]    = st->c_cc[1]  ? st->c_cc[1]  : _POSIX_VDISABLE;
-	bt->c_cc[VERASE]   = st->c_cc[2]  ? st->c_cc[2]  : _POSIX_VDISABLE;
-	bt->c_cc[VKILL]    = st->c_cc[3]  ? st->c_cc[3]  : _POSIX_VDISABLE;
-	bt->c_cc[VEOF]     = st->c_cc[4]  ? st->c_cc[4]  : _POSIX_VDISABLE;
-	bt->c_cc[VEOL]     = st->c_cc[5]  ? st->c_cc[5]  : _POSIX_VDISABLE;
-	bt->c_cc[VEOL2]    = st->c_cc[6]  ? st->c_cc[6]  : _POSIX_VDISABLE;
-    /*	bt->c_cc[VSWTCH]   = st->c_cc[7]  ? st->c_cc[7]  : _POSIX_VDISABLE; */
-	bt->c_cc[VSTART]   = st->c_cc[8]  ? st->c_cc[8]  : _POSIX_VDISABLE;
-	bt->c_cc[VSTOP]    = st->c_cc[9]  ? st->c_cc[9]  : _POSIX_VDISABLE;
-	bt->c_cc[VSUSP]    = st->c_cc[10] ? st->c_cc[10] : _POSIX_VDISABLE;
-	bt->c_cc[VDSUSP]   = st->c_cc[11] ? st->c_cc[11] : _POSIX_VDISABLE;
-	bt->c_cc[VREPRINT] = st->c_cc[12] ? st->c_cc[12] : _POSIX_VDISABLE;
-	bt->c_cc[VDISCARD] = st->c_cc[13] ? st->c_cc[13] : _POSIX_VDISABLE;
-	bt->c_cc[VWERASE]  = st->c_cc[14] ? st->c_cc[14] : _POSIX_VDISABLE;
-	bt->c_cc[VLNEXT]   = st->c_cc[15] ? st->c_cc[15] : _POSIX_VDISABLE;
-	bt->c_cc[VSTATUS]  = st->c_cc[16] ? st->c_cc[16] : _POSIX_VDISABLE;
+	bt->c_cc[VINTR]    = EMUL_TO_NATIVE_CC(st->c_cc[0]);
+	bt->c_cc[VQUIT]    = EMUL_TO_NATIVE_CC(st->c_cc[1]);
+	bt->c_cc[VERASE]   = EMUL_TO_NATIVE_CC(st->c_cc[2]);
+	bt->c_cc[VKILL]    = EMUL_TO_NATIVE_CC(st->c_cc[3]);
+	bt->c_cc[VEOF]     = EMUL_TO_NATIVE_CC(st->c_cc[4]);
+	bt->c_cc[VEOL]     = EMUL_TO_NATIVE_CC(st->c_cc[5]);
+	bt->c_cc[VEOL2]    = EMUL_TO_NATIVE_CC(st->c_cc[6]);
+	/* not present on NetBSD */
+	/* bt->c_cc[VSWTCH]   = EMUL_TO_NATIVE_CC(st->c_cc[7]); */
+	bt->c_cc[VSTART]   = EMUL_TO_NATIVE_CC(st->c_cc[10]);
+	bt->c_cc[VSTOP]    = EMUL_TO_NATIVE_CC(st->c_cc[11]);
+	bt->c_cc[VSUSP]    = EMUL_TO_NATIVE_CC(st->c_cc[112]);
+	bt->c_cc[VDSUSP]   = EMUL_TO_NATIVE_CC(st->c_cc[113]);
+	bt->c_cc[VREPRINT] = EMUL_TO_NATIVE_CC(st->c_cc[14]);
+	bt->c_cc[VDISCARD] = EMUL_TO_NATIVE_CC(st->c_cc[15]);
+	bt->c_cc[VWERASE]  = EMUL_TO_NATIVE_CC(st->c_cc[16]);
+	bt->c_cc[VLNEXT]   = EMUL_TO_NATIVE_CC(st->c_cc[17]);
+	bt->c_cc[VSTATUS]  = EMUL_TO_NATIVE_CC(st->c_cc[18]);
 
+#ifdef COMPAT_ULTRIX
+	/* Ultrix termio/termios has real vmin/vtime */
+	bt->c_cc[VMIN]	   = EMUL_TO_NATIVE_CC(st->c_cc[8]);
+	bt->c_cc[VTIME]	   = EMUL_TO_NATIVE_CC(st->c_cc[9]);
+#else
 	/* if `raw mode', create native VMIN/VTIME from SunOS VEOF/VEOL */
 	bt->c_cc[VMIN]	   = (bt->c_lflag & ICANON) ? 1 : bt->c_cc[VEOF];
 	bt->c_cc[VTIME]	   = (bt->c_lflag & ICANON) ? 1 : bt->c_cc[VEOL];
+#endif
+
 }
 
-
+/*
+ * Convert bsd termios to "sunos" emulated termios
+ */
 static void
 btios2stios(bt, st)
 	struct termios *bt;
-	struct sunos_termios *st;
+	struct emul_termios *st;
 {
 	register u_long l, r;
 
@@ -332,58 +359,78 @@ btios2stios(bt, st)
 	if (l >= 0)
 		st->c_cflag |= l;
 
-	st->c_cc[0] = bt->c_cc[VINTR]   != _POSIX_VDISABLE? bt->c_cc[VINTR]:0;
-	st->c_cc[1] = bt->c_cc[VQUIT]   != _POSIX_VDISABLE? bt->c_cc[VQUIT]:0;
-	st->c_cc[2] = bt->c_cc[VERASE]  != _POSIX_VDISABLE? bt->c_cc[VERASE]:0;
-	st->c_cc[3] = bt->c_cc[VKILL]   != _POSIX_VDISABLE? bt->c_cc[VKILL]:0;
-	st->c_cc[4] = bt->c_cc[VEOF]    != _POSIX_VDISABLE? bt->c_cc[VEOF]:0;
-	st->c_cc[5] = bt->c_cc[VEOL]    != _POSIX_VDISABLE? bt->c_cc[VEOL]:0;
-	st->c_cc[6] = bt->c_cc[VEOL2]   != _POSIX_VDISABLE? bt->c_cc[VEOL2]:0;
+	st->c_cc[0] = NATIVE_TO_EMUL_CC(bt->c_cc[VINTR]);
+	st->c_cc[1] = NATIVE_TO_EMUL_CC(bt->c_cc[VQUIT]);
+	st->c_cc[2] = NATIVE_TO_EMUL_CC(bt->c_cc[VERASE]);
+	st->c_cc[3] = NATIVE_TO_EMUL_CC(bt->c_cc[VKILL]);
+	st->c_cc[4] = NATIVE_TO_EMUL_CC(bt->c_cc[VEOF]);
+	st->c_cc[5] = NATIVE_TO_EMUL_CC(bt->c_cc[VEOL]);
+	st->c_cc[6] = NATIVE_TO_EMUL_CC(bt->c_cc[VEOL2]);
+#ifdef CMOPAT_ULTRIX
+	st->c_cc[7] = NATIVE_TO_EMUL_CC(bt->c_cc[VSWTCH]);
+#else
 	st->c_cc[7] = 0;
-		/*    bt->c_cc[VSWTCH]  != _POSIX_VDISABLE? bt->c_cc[VSWTCH]: */
-	st->c_cc[8] = bt->c_cc[VSTART]  != _POSIX_VDISABLE? bt->c_cc[VSTART]:0;
-	st->c_cc[9] = bt->c_cc[VSTOP]   != _POSIX_VDISABLE? bt->c_cc[VSTOP]:0;
-	st->c_cc[10]= bt->c_cc[VSUSP]   != _POSIX_VDISABLE? bt->c_cc[VSUSP]:0;
-	st->c_cc[11]= bt->c_cc[VDSUSP]  != _POSIX_VDISABLE? bt->c_cc[VDSUSP]:0;
-	st->c_cc[12]= bt->c_cc[VREPRINT]!= _POSIX_VDISABLE? bt->c_cc[VREPRINT]:0;
-	st->c_cc[13]= bt->c_cc[VDISCARD]!= _POSIX_VDISABLE? bt->c_cc[VDISCARD]:0;
-	st->c_cc[14]= bt->c_cc[VWERASE] != _POSIX_VDISABLE? bt->c_cc[VWERASE]:0;
-	st->c_cc[15]= bt->c_cc[VLNEXT]  != _POSIX_VDISABLE? bt->c_cc[VLNEXT]:0;
-	st->c_cc[16]= bt->c_cc[VSTATUS] != _POSIX_VDISABLE? bt->c_cc[VSTATUS]:0;
+#endif
+	st->c_cc[10] = NATIVE_TO_EMUL_CC(bt->c_cc[VSTART]);
+	st->c_cc[11] = NATIVE_TO_EMUL_CC(bt->c_cc[VSTOP]);
+	st->c_cc[12]= NATIVE_TO_EMUL_CC(bt->c_cc[VSUSP]);
+	st->c_cc[13]= NATIVE_TO_EMUL_CC(bt->c_cc[VDSUSP]);
+	st->c_cc[14]= NATIVE_TO_EMUL_CC(bt->c_cc[VREPRINT]);
+	st->c_cc[15]= NATIVE_TO_EMUL_CC(bt->c_cc[VDISCARD]);
+	st->c_cc[16]= NATIVE_TO_EMUL_CC(bt->c_cc[VWERASE]);
+	st->c_cc[17]= NATIVE_TO_EMUL_CC(bt->c_cc[VLNEXT]);
+	st->c_cc[18]= NATIVE_TO_EMUL_CC(bt->c_cc[VSTATUS]);
 
+#ifdef COMPAT_ULTRIX
+	st->c_cc[8]= NATIVE_TO_EMUL_CC(bt->c_cc[VMIN]);
+	st->c_cc[9]= NATIVE_TO_EMUL_CC(bt->c_cc[VTIME]);
+#else
 	if (!(bt->c_lflag & ICANON)) {
 		/* SunOS stores VMIN/VTIME in VEOF/VEOL (if ICANON is off) */
 		st->c_cc[4] = bt->c_cc[VMIN];
 		st->c_cc[5] = bt->c_cc[VTIME];
 	}
+#endif
 
-	st->c_line = 0;
+#ifdef COMPAT_SUNOS
+	st->c_line = 0;	/* 4.3bsd "old" line discipline */
+#else
+	st->c_line = 2;	/* 4.3bsd "new" line discipline */
+#endif
 }
 
+#define TERMIO_NCC 10	/* ultrix termio NCC is 10 */
+
+/*
+ * Convert emulated struct termios to termio(?)
+ */
 static void
 stios2stio(ts, t)
-	struct sunos_termios *ts;
-	struct sunos_termio *t;
+	struct emul_termios *ts;
+	struct emul_termio *t;
 {
 	t->c_iflag = ts->c_iflag;
 	t->c_oflag = ts->c_oflag;
 	t->c_cflag = ts->c_cflag;
 	t->c_lflag = ts->c_lflag;
 	t->c_line  = ts->c_line;
-	bcopy(ts->c_cc, t->c_cc, 8);
+	bcopy(ts->c_cc, t->c_cc, TERMIO_NCC);
 }
 
+/*
+ * Convert the other way
+ */
 static void
 stio2stios(t, ts)
-	struct sunos_termio *t;
-	struct sunos_termios *ts;
+	struct emul_termio *t;
+	struct emul_termios *ts;
 {
 	ts->c_iflag = t->c_iflag;
 	ts->c_oflag = t->c_oflag;
 	ts->c_cflag = t->c_cflag;
 	ts->c_lflag = t->c_lflag;
 	ts->c_line  = t->c_line;
-	bcopy(t->c_cc, ts->c_cc, 8); /* don't touch the upper fields! */
+	bcopy(t->c_cc, ts->c_cc, TERMIO_NCC); /* don't touch the upper fields! */
 }
 
 int
@@ -483,6 +530,7 @@ ultrix_sys_ioctl(p, v, retval)
 	case _IO('t', 132):
 		SCARG(uap, com) = TIOCSCTTY;
 		break;
+	/* Emulate termio or termios tcget() */	
 	case ULTRIX_TCGETA:
 	case ULTRIX_TCGETS: 
 	    {
@@ -503,6 +551,7 @@ ultrix_sys_ioctl(p, v, retval)
 			    sizeof (sts));
 		/*NOTREACHED*/
 	    }
+	/* Emulate termio tcset() */
 	case ULTRIX_TCSETA:
 	case ULTRIX_TCSETAW:
 	case ULTRIX_TCSETAF:
@@ -543,6 +592,7 @@ ultrix_sys_ioctl(p, v, retval)
 #endif
 
 	    }
+	/* Emulate termios tcset() */
 	case ULTRIX_TCSETS:
 	case ULTRIX_TCSETSW:
 	case ULTRIX_TCSETSF:
@@ -555,16 +605,8 @@ ultrix_sys_ioctl(p, v, retval)
 		    sizeof (sts))) != 0)
 			return error;
 		stios2btios (&sts, &bts);
-#ifndef DEBUG
 		return (*ctl)(fp, ULTRIX_TCSETS - SCARG(uap, com) + TIOCSETA,
 		    (caddr_t)&bts, p);
-#else
-		result = (*ctl)(fp, ULTRIX_TCSETS - SCARG(uap, com) + TIOCSETA,
-		    (caddr_t)&bts, p);
-	printf("ultrix TCSETS %x returns %d\n",
-	       ULTRIX_TCSETS - SCARG(uap, com), result);
-		return result;
-#endif
 	    }
 /*
  * Pseudo-tty ioctl translations.
