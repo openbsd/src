@@ -1,4 +1,4 @@
-.\"	$OpenBSD: faithd.8,v 1.3 2000/02/25 10:25:46 itojun Exp $
+.\"	$OpenBSD: faithd.8,v 1.4 2000/03/12 16:50:26 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	KAME Id: faithd.8,v 1.4 2000/01/22 07:56:48 itojun Exp
+.\"	KAME Id: faithd.8,v 1.6 2000/03/12 16:49:34 itojun Exp
 .\"
 .Dd May 17, 1998
 .Dt FAITHD 8
@@ -250,6 +250,20 @@ and other IP-address based authentication, for connections relayed by
 .Po
 and any other TCP relaying services
 .Pc .
+.Pp
+.Nm
+itself does not implement access controls, as 
+it intends to implement transparent TCP relay services.
+Administrators are advised to filter packets based on IPv6 address.
+IPv6 destination address can be limited by
+carefully configuring routing entries that points to
+.Xr faith 4 ,
+using
+.Xr route 8 .
+IPv6 source address needs to be filtered by using packet filters.
+Documents listed in
+.Sx SEE ALSO
+have more discussions on this topic.
 .\"
 .Sh HISTORY
 The
