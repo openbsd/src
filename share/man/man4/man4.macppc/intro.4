@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.4,v 1.8 2002/06/15 19:37:24 pvalchev Exp $
+.\"	$OpenBSD: intro.4,v 1.9 2002/10/01 20:59:48 miod Exp $
 .\"
 .\" Copyright (c) 2001 Peter Valchev.
 .\" All rights reserved.
@@ -114,39 +114,77 @@ ADMtek AN986-based USB Ethernet adapters.
 Apple audio device.
 .It Xr bm 4
 BMAC ethernet.
+.It Xr de 4
+DEC tulip-based ethernet cards.
+.It Xr em 4
+Intel i82542, i82543, and i82544 Pro/1000 Gigabit ethernet.
 .It Xr gem 4
 GMAC ethernet.
 .It Xr gpio 4
 PMU interrupt router.
+.It Xr hifn 4
+Hifn 7751 crypto accelerator.
+.It Xr hme 4
+National DP83840 ethernet cards.
 .It Xr iop 4
-I2O processor, arrays, SCSI pass-through.
+I2O adapter.
 .It Xr kue 4
-Kawasaki KL5KUSB101B.
-.It Xr ohci 4
-Open Host Controller, Opti RM861HA.
-.It Xr ugen 4
-USB Generic Driver.
-.It Xr uhid 4
-USB Generic HID devices.
+Kawasaki LSI KL5KUSB101B-based USB ethernet.
+.It Xr siop 4
+LSI/Symbios Logic/NCR 53c8xx SCSI adapter boards.
+.It Xr uaudio 4
+USB audio devices.
 .It Xr ukbd 4
-USB HID Keyboard devices.
+USB keyboard.
 .It Xr ulpt 4
-USB Printer.
+USB printers.
 .It Xr umass 4
-USB Mass Storage Device.
+USB mass storage.
 .It Xr ums 4
-USB Mice.
+USB mouse.
+.It Xr uplcom 4
+I/O Data USB-RSAQ2 USB serial adapters.
 .It Xr uscanner 4
-USB Scanner.
+USB scanners
 .It Xr usscanner 4
-USB SCSI Scanner.
+SCSI-over-USB scanners.
 .It Xr vgafb 4
 PCI VGA graphics.
 .It Xr wi 4
 WaveLAN/IEEE and PRISM-II 802.11DS wireless network adapters.
+.It Xr zs 4
+Zilog 8530 serial controller.
 .El
 .Sh SEE ALSO
+.Xr abtn 4 ,
+.Xr aed 4 ,
+.Xr akbd 4 ,
+.Xr ams 4 ,
+.Xr an 4 ,
+.Xr aue 4 ,
 .Xr autoconf 4 ,
+.Xr awacs 4 ,
+.Xr bm 4 ,
+.Xr de 4 ,
+.Xr em 4 ,
+.Xr gem 4 ,
+.Xr gpio 4 ,
+.Xr hifn 4 ,
+.Xr hme 4 ,
+.Xr iop 4 ,
+.Xr kue 4 ,
+.Xr siop 4 ,
+.Xr uaudio 4 ,
+.Xr ukbd 4 ,
+.Xr ulpt 4 ,
+.Xr umass 4 ,
+.Xr ums 4 ,
+.Xr uplcom 4 ,
+.Xr uscanner 4 ,
+.Xr usscanner 4 ,
+.Xr vgafb 4 ,
+.Xr wi 4 ,
+.Xr zs 4 ,
 .Xr config 8
 .Sh HISTORY
 The

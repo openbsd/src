@@ -1,4 +1,4 @@
-.\" $OpenBSD: adb.4,v 1.4 2001/10/05 14:45:54 mpech Exp $
+.\" $OpenBSD: adb.4,v 1.5 2002/10/01 20:59:48 miod Exp $
 .\"
 .\" Copyright (c) 2001 Peter Philipp
 .\" Copyright (c) 1997 Colin Wood
@@ -38,6 +38,11 @@
 .Nd Apple Desktop Bus driver
 .Sh SYNOPSIS
 .Cd "adb at macobio?"
+.Cd "abtn* at adb?"
+.Cd "aed* at adb?"
+.Cd "akbd* at adb ?"
+.Cd "ams* at adb?"
+.Cd "apm0 at adb?"
 .Sh DESCRIPTION
 The Apple Desktop Bus
 .Pq Tn ADB
@@ -56,25 +61,29 @@ event device was split into many smaller subsystems, namely:
 .Bl -enum -compact
 .It
 Apple Event Device driver
-.Xr aed 4 .
+.Pq Xr aed 4 .
 .It
 Apple Keyboard driver
-.Xr akbd 4 .
+.Pq Xr akbd 4 .
 .It 
 Apple Mouse Support driver
-.Xr ams 4 .
+.Pq Xr ams 4 .
 .El
 .Pp
 New
 .Nm
 devices such as the Apple Brightness / Volume Control Button
-.Xr abtn 4 
+.Pq Xr abtn 4 
+and some energy control
+.Pq Xr apm 4
 were added to the PowerPC port later to complement the ADB system.
 .Sh SEE ALSO
 .Xr abtn 4 ,
 .Xr aed 4 ,
 .Xr akbd 4 ,
-.Xr ams 4 
+.Xr ams 4 ,
+.Xr apm 4 ,
+.Xr intro 4
 .Sh HISTORY
 The
 .Nm

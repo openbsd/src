@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apm.4,v 1.3 2001/11/14 22:54:27 miod Exp $
+.\"	$OpenBSD: apm.4,v 1.4 2002/10/01 20:59:48 miod Exp $
 .\"
 .\"	Copyright (c) 1998 Marco S. Hyman
 .\"
@@ -16,7 +16,7 @@
 .Nm apm
 .Nd advanced power management device interface
 .Sh SYNOPSIS
-.Cd apm0 at adb0
+.Cd apm0 at adb?
 .Sh DESCRIPTION
 The
 .Nm
@@ -271,6 +271,8 @@ An attempt to open the file when in use will fail, returning
 .Er EBUSY .
 .El
 .Sh SEE ALSO
+.Xr adb 4 ,
+.Xr intro 4 ,
 .Xr sysctl.conf 5 ,
 .Xr apm 8 ,
 .Xr apmd 8 ,

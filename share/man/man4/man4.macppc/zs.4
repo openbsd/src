@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zs.4,v 1.2 2001/10/05 14:45:54 mpech Exp $
+.\"	$OpenBSD: zs.4,v 1.3 2002/10/01 20:59:48 miod Exp $
 .\"
 .\" Copyright (c) 1998 The OpenBSD Project
 .\" All rights reserved.
@@ -11,19 +11,21 @@
 .Nm zs
 .Nd Zilog 8530 (ZSCC) serial communications driver
 .Sh SYNOPSIS
-.Cd "zsc0 at macobio0 irq X,Y"
-.Cd "zstty0 at zsc0 channel 0"
-.Cd "zstty1 at zsc0 channel 1"
+.Cd "zsc* at macobio?"
+.Cd "zstty* at zsc? channel ?"
 .Sh DESCRIPTION
 The
 .Nm
-is a Zilog 8530 serial interface chip used in Sun workstations and
-Apple Macintosh systems.
-Most newer Macintosh systems the first port
+is a Zilog 8530 serial interface chip used in
+.Tn Sun
+workstations and
+.Tn Apple
+Macintosh systems.
+On most newer Macintosh systems, the first port
 tty00
 is connected to the internal modem.
 The second port is either not connected, or may be connected to
-a IRDA device (untested).
+an IRDA device (untested).
 It is possible to replace the internal modem on some system with
 a real serial port using third party hardware adapters.
 .Pp
@@ -55,6 +57,7 @@ The hung getty apparently prevents the cua device from being re-opened.
 .El
 .Sh SEE ALSO
 .Xr ioctl 2 ,
+.Xr intro 4 ,
 .Xr tty 4
 .Sh HISTORY
 The

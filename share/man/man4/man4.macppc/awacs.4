@@ -1,4 +1,4 @@
-.\" $OpenBSD: awacs.4,v 1.1 2001/10/03 04:32:37 drahn Exp $
+.\" $OpenBSD: awacs.4,v 1.2 2002/10/01 20:59:48 miod Exp $
 .\" $NetBSD: awacs.4,v 1.2 2001/05/09 22:16:12 he Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 .Nm awacs
 .Nd Apple audio device driver
 .Sh SYNOPSIS
-.Cd "awacs* at obio?"
+.Cd "awacs* at macobio?"
 .Cd "audio* at awacs?"
 .Sh DESCRIPTION
 The
@@ -47,18 +47,19 @@ The
 (audio waveform amplifier and converter for sound)
 driver provides support for the audio hardware found in many Apple
 PowerMacs.
-.Sh BUGS
-This driver needs more testing.
-.Pp
-This manual page needs more precision and detail.
-.Sh AUTHORS
-The
-.Nm
-driver was written by Tsubai Masanari.
 .Sh SEE ALSO
-.Xr audio 4
+.Xr audio 4 ,
+.Xr intro 4
 .Sh HISTORY
 The
 .Nm
 device driver appeared in
 .Nx 1.5.1 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by Tsubai Masanari.
+.Sh BUGS
+This driver needs more testing.
+.Pp
+This manual page needs more precision and detail.
