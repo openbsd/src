@@ -1,4 +1,4 @@
-/*	$OpenBSD: raddauth.c,v 1.13 2002/09/29 03:23:01 millert Exp $	*/
+/*	$OpenBSD: raddauth.c,v 1.14 2003/07/06 21:54:38 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -85,6 +85,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <md5.h>
+#include "login_radius.h"
 
 
 #define	MAXPWNETNAM		64	/* longest username */
