@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.14 2000/08/08 01:07:51 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.15 2000/08/08 01:45:08 deraadt Exp $
 #
 # PPC GENERIC config file
 #
@@ -13,13 +13,11 @@ option		SYS_TYPE=APPL
 
 option		FIREPOWERBUGS
 options		PPC_MPC106_BUG
-option		IPX		# IPX+SPX
-option		IPXIP		# IPX tunneling over IP
+option		PCIVERBOSE
 
 include "../../../conf/GENERIC"
 
 config		bsd	swap generic
-
 
 #
 #  Now the Machine specification
@@ -40,6 +38,7 @@ ppb*		at pci? dev ? function ?	# PCI-PCI bridges
 pci*		at ppb? bus ?
 
 ncr*		at pci? dev ? function ?
+fxp*		at pci? dev ? function ?
 de*		at pci? dev ? function ?
 #vme*		at pci? dev ? function ?
 #vga*		at pci? dev ? function ?	# PCI VGA graphics 

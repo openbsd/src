@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.5 2000/08/08 01:07:52 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.6 2000/08/08 01:45:09 deraadt Exp $
 #
 # PPC GENERIC config file
 #
@@ -13,6 +13,7 @@ option		SYS_TYPE=APPL
 
 option		FIREPOWERBUGS
 options		PPC_MPC106_BUG
+option		PCIVERBOSE
 
 # include "../../../conf/GENERIC"
 option		TIMEZONE=0	# time zone to adjust RTC time by
