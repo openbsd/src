@@ -935,6 +935,20 @@ get_aligned_mem (ref, paligned_mem, pbitnum)
   rtx base;
   HOST_WIDE_INT offset = 0;
 
+  if (reload_in_progress)
+    {
+      rtx tmp = ref;
+      if (GET_CODE (tmp) == SUBREG)
+	tmp = SUBREG_REG (tmp);
+      if (GET_CODE (tmp) == REG
+	  && REGNO (tmp) >= FIRST_PSEUDO_REGISTER)
+	{
+	  ref = reg_equiv_memory_loc[REGNO (tmp)];
+	  if (ref == 0)
+	    abort ();
+	}
+    }
+
   if (GET_CODE (ref) != MEM)
     abort ();
 
