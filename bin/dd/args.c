@@ -1,4 +1,4 @@
-/*	$OpenBSD: args.c,v 1.7 1997/11/15 22:10:22 todd Exp $	*/
+/*	$OpenBSD: args.c,v 1.8 1998/07/09 18:39:23 deraadt Exp $	*/
 /*	$NetBSD: args.c,v 1.7 1996/03/01 01:18:58 jtc Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: args.c,v 1.7 1997/11/15 22:10:22 todd Exp $";
+static char rcsid[] = "$OpenBSD: args.c,v 1.8 1998/07/09 18:39:23 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -74,7 +74,7 @@ static void	f_skip __P((char *));
 static size_t	get_bsz __P((char *));
 static off_t	get_off __P((char *));
 
-const static struct arg {
+static const struct arg {
 	char *name;
 	void (*f) __P((char *));
 	u_int set, noset;
@@ -283,7 +283,7 @@ f_conv(arg)
 }
 #else	/* NO_CONV */
 
-const static struct conv {
+static const struct conv {
 	char *name;
 	u_int set, noset;
 	const u_char *ctab;
