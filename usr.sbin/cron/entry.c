@@ -1,4 +1,4 @@
-/*	$OpenBSD: entry.c,v 1.16 2003/02/20 20:38:08 millert Exp $	*/
+/*	$OpenBSD: entry.c,v 1.17 2003/02/27 15:02:44 millert Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -23,7 +23,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: entry.c,v 1.16 2003/02/20 20:38:08 millert Exp $";
+static char const rcsid[] = "$OpenBSD: entry.c,v 1.17 2003/02/27 15:02:44 millert Exp $";
 #endif
 
 /* vix 26jan87 [RCS'd; rest of log is in RCS file]
@@ -492,7 +492,7 @@ get_range(bitstr_t *bits, int low, int high, const char *names[],
 		 * sent as a 0 since there is no offset either.
 		 */
 		ch = get_number(&num3, 0, PPC_NULL, ch, file);
-		if (ch == EOF)
+		if (ch == EOF || num3 == 0)
 			return (EOF);
 	} else {
 		/* no step.  default==1.
@@ -534,6 +534,8 @@ get_number(int *numptr, int low, const char *names[], char ch, FILE *file) {
 		ch = get_char(file);
 	}
 	*pc = '\0';
+	if (len == 0)
+		return (EOF);
 
 	/* try to find the name in the name list
 	 */
