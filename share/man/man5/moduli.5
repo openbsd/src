@@ -1,4 +1,4 @@
-.\" $OpenBSD: primes.5,v 1.2 2001/06/14 20:00:46 deraadt Exp $
+.\" $OpenBSD: moduli.5,v 1.1 2001/06/22 21:36:52 provos Exp $
 .\"
 .\" Copyright 1997, 2000 William Allen Simpson <wsimpson@greendragon.com>
 .\" All rights reserved.
@@ -31,14 +31,14 @@
 .\" Manual page, using -mandoc macros
 .\"
 .Dd July 28, 1997
-.Dt PRIMES 5
+.Dt MODULI 5
 .Os
 .Sh NAME
-.Nm primes
+.Nm moduli
 .Nd system moduli file
 .Sh DESCRIPTION
 The
-.Pa /etc/primes
+.Pa /etc/moduli
 file contains the system-wide Diffie-Hellman prime moduli for the
 .Xr photurisd 8
 and
@@ -148,8 +148,8 @@ When more than one meet the criteria,
 the selection should be weighted toward newer moduli,
 without completely disqualifying older moduli.
 .Sh FILES
-.Bl -tag -width /etc/primes -compact
-.It Pa /etc/primes
+.Bl -tag -width /etc/moduli -compact
+.It Pa /etc/moduli
 .El
 .Sh SEE ALSO
 .Xr photurisd 8 ,
