@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.24 2001/05/14 02:43:12 jason Exp $
+.\"	$OpenBSD: brconfig.8,v 1.25 2001/07/18 22:52:07 kjell Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -123,9 +123,9 @@ Remove all dynamically learned addresses from the cache.
 .It Cm flushall
 Remove all addresses from the cache including static addresses.
 .It Cm blocknonip Ar interface
-Mark an interface so that no packets that are not IPv4, IPv6, ARP, or Reverse
-ARP are accepted from it or are forwarded to it from other bridge member
-interfaces.
+Mark an interface so that no non-IPv4, IPv6, ARP, or Reverse
+ARP packets are accepted from it or forwarded to it from other
+bridge member interfaces.
 .It Cm -blocknonip Ar interface
 Allow non-IPv4, IPv6, ARP, or Reverse ARP packets through the
 .Ar interface .
