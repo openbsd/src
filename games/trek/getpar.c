@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpar.c,v 1.6 2002/02/24 09:07:46 pvalchev Exp $	*/
+/*	$OpenBSD: getpar.c,v 1.7 2002/02/25 00:15:19 pvalchev Exp $	*/
 /*	$NetBSD: getpar.c,v 1.4 1995/04/24 12:25:57 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getpar.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: getpar.c,v 1.6 2002/02/24 09:07:46 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: getpar.c,v 1.7 2002/02/25 00:15:19 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
@@ -246,7 +246,7 @@ testnl()
 	while ((c = getchar()) != '\n')
 		if ((c >= '0' && c <= '9') || c == '.' || c == '!' ||
 				(c >= 'A' && c <= 'Z') ||
-				(c >= 'a' && c <= 'z') || c == '-')
+				(c >= 'a' && c <= 'z') || c == '-' || c == EOF)
 		{
 			ungetc(c, stdin);
 			return(0);
