@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.20 2004/05/18 02:05:52 jfb Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.21 2004/08/07 17:33:58 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -477,6 +477,9 @@ static struct {
 	{ RLIMIT_NPROC,		CNUMB, "maxproc", },
 	{ RLIMIT_NOFILE,	CNUMB, "openfiles", },
 	{ RLIMIT_CORE,		CSIZE, "coredumpsize", },
+#ifdef RLIMIT_VMEM
+	{ RLIMIT_VMEM,		CSIZE, "vmemoryuse", },
+#endif
 	{ -1, 0, 0 }
 };
 
