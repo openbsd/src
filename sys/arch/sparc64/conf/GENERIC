@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.25 2001/10/15 18:33:16 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.26 2001/10/15 18:44:56 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -68,7 +68,7 @@ be*		at qec?
 hme*		at sbus? slot ? offset ?
 
 pciide*	at pci? dev ? function ? flags 0x0000
-wd*	at pciide? channel ? drive ? flags 0x0000
+wd*	at pciide? channel ? drive ? flags 0x0a00
 atapiscsi* at pciide? channel ?
 scsibus* at atapiscsi?
 
