@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy.c,v 1.5 1996/11/28 23:27:48 niklas Exp $	*/
+/*	$OpenBSD: cy.c,v 1.6 1996/12/03 05:28:21 kstailey Exp $	*/
 
 /*
  * cy.c
@@ -310,7 +310,7 @@ int cyread __P((dev_t, struct uio *, int));
 int cywrite __P((dev_t, struct uio *, int));
 struct tty *cytty __P((dev_t));
 int cyioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-void cystop __P((struct tty *, int flag));
+int cystop __P((struct tty *, int flag));
 
 int
 cyopen(dev, flag, mode, p)
@@ -696,7 +696,7 @@ out:
 /*
  * stop output
  */
-void
+int
 cystop(tp, flag)
      struct tty *tp;
      int flag;
@@ -725,6 +725,7 @@ cystop(tp, flag)
 	SET(cy->cy_flags, CYF_STOP);
     }
     splx(s);
+    return(0);
 }
 
 /*
