@@ -10,7 +10,7 @@
  *
  * S/KEY misc routines.
  *
- * $Id: skeysubr.c,v 1.2 1996/09/27 15:39:00 millert Exp $
+ * $Id: skeysubr.c,v 1.3 1996/09/27 20:40:17 millert Exp $
  */
 
 #include <stdio.h>
@@ -31,11 +31,11 @@
 static void trapped __ARGS((int sig));
 static void f_MD4 __ARGS ((char *x));
 static void f_MD5 __ARGS ((char *x));
+static void skey_echo __ARGS ((int));
 static int keycrunch_MD4 __ARGS ((char *result, char *seed, char *passwd));
 static int keycrunch_MD5 __ARGS ((char *result, char *seed, char *passwd));
 
 static int skey_MDX = 0;
-static int skey_echo;
 
 /*
  * Crunch a key:
@@ -188,23 +188,19 @@ rip(buf)
 		*buf = '\0';
 }
 
+/* Read in secret password (turns off echo) */
 char *
 readpass(buf, n)
 	char *buf;
 	int n;
 {
-	struct termios term;
 	void (*old_handler) __P(());
+
+	/* Turn off echoing */
+	skey_echo(0);
 
 	/* Catch SIGINT and save old signal handler */
 	old_handler = signal(SIGINT, trapped);
-
-	/* Turn off echoing */
-	(void) tcgetattr(fileno(stdin), &term);
-	if ((skey_echo = (term.c_lflag & ECHO))) {
-		term.c_lflag &= ~ECHO;
-		(void)tcsetattr(fileno(stdin), TCSAFLUSH|TCSASOFT, &term);
-	}
 
 	(void)fgets(buf, n, stdin);
 	rip(buf);
@@ -212,19 +208,17 @@ readpass(buf, n)
 	(void)putc('\n', stderr);
 	(void)fflush(stderr);
 
-	/* Restore echo and signal handler */
-	if (skey_echo) {
-		term.c_lflag |= ECHO;
-		(void)tcsetattr(fileno(stdin), TCSAFLUSH|TCSASOFT, &term);
-	}
+	/* Restore signal handler and turn echo back on */
 	if (old_handler != SIG_ERR)
 		(void)signal(SIGINT, old_handler);
+	skey_echo(1);
 
 	sevenbit(buf);
 
 	return buf;
 }
 
+/* Read in an s/key OTP (does not turn off echo) */
 char *
 readskey(buf, n)
 	char *buf;
@@ -241,6 +235,7 @@ readskey(buf, n)
 	return buf;
 }
 
+/* Signal handler for trapping ^C */
 static void
 trapped(sig)
 	int sig;
@@ -248,14 +243,8 @@ trapped(sig)
 	(void)fputs("^C\n", stderr);
 	(void)fflush(stderr);
 
-	/* Turn on echo if we turned it off */
-	if (skey_echo) {
-		struct termios term;
-
-		(void) tcgetattr(fileno(stdin), &term);
-		term.c_lflag |= ECHO;
-		(void)tcsetattr(fileno(stdin), TCSAFLUSH|TCSASOFT, &term);
-	}
+	/* Turn on echo if necesary */
+	skey_echo(1);
 
 	exit(-1);
 }
@@ -393,4 +382,27 @@ skey_get_MDX()
 		skey_MDX = SKEY_MDX_DEFAULT;
 
 	return skey_MDX;
+}
+
+/* Turn echo on/off */
+static void
+skey_echo(action)
+	int action;
+{
+	static struct termios term;
+	static int echo = 0;
+
+	if (action == 0) {
+		/* Turn echo off */
+		(void) tcgetattr(fileno(stdin), &term);
+		if ((echo = (term.c_lflag & ECHO))) {
+			term.c_lflag &= ~ECHO;
+			(void) tcsetattr(fileno(stdin), TCSAFLUSH|TCSASOFT, &term);
+		}
+	} else if (action && echo) {
+		/* Turn echo on */
+		term.c_lflag |= ECHO;
+		(void) tcsetattr(fileno(stdin), TCSAFLUSH|TCSASOFT, &term);
+		echo = 0;
+	}
 }
