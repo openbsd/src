@@ -21,7 +21,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-udp.c,v 1.10 1999/09/16 20:58:48 brad Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-udp.c,v 1.11 2000/01/16 10:54:58 jakob Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -293,6 +293,7 @@ rtcp_print(const u_char *hdr, const u_char *ep)
 #define SNMPTRAP_PORT 162	/*XXX*/
 #define RIP_PORT 520		/*XXX*/
 #define KERBEROS_SEC_PORT 750	/*XXX*/
+#define L2TP_PORT 1701		/*XXX*/
 #define ISAKMP_PORT   500	/*XXX*/
 #define ISAKMP_UPORT1 7500	/*XXX*/
 #define ISAKMP_UPORT2 8500	/*XXX*/
@@ -445,6 +446,8 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
 			ntp_print((const u_char *)(up + 1), length);
 		else if (ISPORT(KERBEROS_PORT) || ISPORT(KERBEROS_SEC_PORT))
 			krb_print((const void *)(up + 1), length);
+		else if (ISPORT(L2TP_PORT))
+			l2tp_print((const u_char *)(up + 1), length);
 		else if (ISPORT(ISAKMP_PORT) ||
 			ISPORT(ISAKMP_UPORT1) ||
 			ISPORT(ISAKMP_UPORT2))
