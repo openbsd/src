@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.71 2004/06/13 21:49:26 niklas Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.72 2004/07/04 13:35:01 niklas Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1151,8 +1151,8 @@ issignal(struct proc *p)
 				p->p_xstat = signum;
 				if ((p->p_pptr->p_flag & P_NOCLDSTOP) == 0)
 					psignal(p->p_pptr, SIGCHLD);
-				proc_stop(p);
 				SCHED_LOCK(s);
+				proc_stop(p);
 				mi_switch();
 				SCHED_ASSERT_UNLOCKED();
 				splx(s);
