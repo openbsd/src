@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.10 2004/03/17 09:25:09 jmc Exp $
+dnl	$OpenBSD: prep,v 1.11 2004/03/21 16:58:02 drahn Exp $
 To be able to boot the OpenBSD/MACHINE installation program, you will
 need to acquire some limited knowledge of OpenFirmware, the low-level
 process that controls the microprocessor after hardware initialization
@@ -21,6 +21,16 @@ To shut down, type "shut-down" and press return
  ok
 0 >
 
+If you are installing OpenBSD/macppc on an Xserve, you will need
+to do so in headless mode.  This means you must remove the graphics
+card and use the serial console.  To bring up OpenFirmware via
+the serial console, hold down the System Identifier button while
+pressing the Power button.  When the upper LED bank begins lighting
+up in sequence (similar to KIT from Knight Rider), repeatedly
+press the System Identifier button until the seventh LED from
+the right is highlighted on the lower bank.  Now hold the
+system identified button for two seconds.  For more details, read:
+http://docs.info.apple.com/article.html?artnum=75489
 
 Important Open Firmware command examples:
 
