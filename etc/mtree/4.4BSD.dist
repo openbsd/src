@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.92 2000/05/18 13:44:06 espie Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.93 2000/05/19 06:34:16 angelos Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -55,6 +55,10 @@ ca
 certs
 # ./etc/isakmpd/certs
 ..
+
+# ./etc/isakmpd/keynote
+keynote
+# ./etc/isakmpd/keynote
 
 # ./etc/isakmpd/private
 private		uname=root mode=0700
