@@ -45,6 +45,9 @@ all:
 	sed "/^VERSION=/s/=.*/=${REV}/" < ${.CURDIR}/install.sub \
 	  > ${MOUNT_POINT}/install.sub
 	cp ${.CURDIR}/../${MACHINE}/install.md ${MOUNT_POINT}/install.md
+.if exists(/sbin/ldconfig)
+	/usr/sbin/chroot ${MOUNT_POINT} /sbin/ldconfig
+.endif
 	( cd ${MOUNT_POINT} && \
 	tar cf - .??* * | ${GZIP} ${GZIPFLAGS} \
 	  > ${IMAGEDIR}/simpleroot${REV}.tar${GZIPEXT} )
