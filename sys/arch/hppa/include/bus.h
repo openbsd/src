@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.23 2004/04/07 18:24:19 mickey Exp $	*/
+/*	$OpenBSD: bus.h,v 1.24 2005/01/09 06:58:51 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -177,7 +177,7 @@ extern const struct hppa_bus_space_tag hppa_bustag;
 #define	bus_space_subregion(t,h,o,c,hp) \
 	(((t)->hbt_subregion)((t)->hbt_cookie,(h),(o),(c),(hp)))
 #define	bus_space_alloc(t,b,e,c,al,bn,ca,ap,hp) \
-	(((t)->hbt_alloc)((t)->hbt_alloc,(b),(e),(c),(al),(bn),(ca),(ap),(hp)))
+	(((t)->hbt_alloc)((t)->hbt_cookie,(b),(e),(c),(al),(bn),(ca),(ap),(hp)))
 #define	bus_space_free(t,h,c) \
 	(((t)->hbt_free)((t)->hbt_cookie,(h),(c)))
 
