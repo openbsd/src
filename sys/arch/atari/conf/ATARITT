@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ATARITT,v 1.7 1995/11/30 00:57:44 jtc Exp $
+#	$NetBSD: ATARITT,v 1.8 1996/01/06 20:10:59 leo Exp $
 #
 # ATARI-TT
 #
@@ -101,3 +101,4 @@ pseudo-device	vnd	3	# 3 pseudo disks (see vnconfig)
 zs0	at mainbus0		# Serial support through 8530
 grf1	at grfbus0		# second graphics driver
 ite1	at grf1			# second tty
+nvr0	at mainbus0		# nvram driver

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.9 1995/11/30 21:53:07 leo Exp $
+#	$NetBSD: GENERIC,v 1.10 1996/01/06 20:11:01 leo Exp $
 #
 # Generic atari
 #
@@ -112,3 +112,4 @@ pseudo-device	ccd	 4	# concatenating disk driver
 #The following sections describe various hardware options.
 #
 zs0	at mainbus0		# Serial support through 8530
+nvr0	at mainbus0		# nvram driver

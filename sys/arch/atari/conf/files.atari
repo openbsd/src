@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.13 1995/12/01 19:53:07 leo Exp $
+#	$NetBSD: files.atari,v 1.14 1996/01/06 20:11:02 leo Exp $
 #
 
 maxpartitions 16
@@ -27,6 +27,10 @@ file	arch/atari/dev/zs.c		zs needs-count
 #ramdisk
 device	ramd at mainbus
 file	arch/atari/dev/ramd.c		ramd needs-flag
+
+# nvram
+device	nvr at mainbus
+file	arch/atari/dev/nvram.c		nvr needs-flag
 
 device	fdc at mainbus { unit = -1 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: clockreg.h,v 1.4 1996/01/06 20:11:07 leo Exp $	*/
+/*	$NetBSD: nvramvar.h,v 1.1 1996/01/06 20:11:09 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -30,34 +30,28 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _CLOCKREG_H
-#define _CLOCKREG_H
 /*
- * Atari TT hardware:
- * Motorola MC146818A RealTimeClock
+ * Nvram driver - variable definitions
  */
 
-#define	RTC	((struct rtc *)AD_RTC)
-
-struct rtc {
-	volatile u_char	rtc_dat[4];
+struct	nvr_softc {
+	struct	device		nvr_dev;
+	u_int16_t		nvr_flags;
 };
 
-#define rtc_regno	rtc_dat[1]	/* register nr. select		*/
-#define rtc_data	rtc_dat[3]	/* data register		*/
+/*
+ * nvr_flags
+ */
+#define	NVR_CONFIGURED	1	/* Configured and valid	*/
+
+#ifdef _KERNEL
+/*
+ * Kernel internal interface to read config info from nvram
+ */
+int nvr_get_byte __P((int));
 
 /*
- * Pull in general mc146818 definitions
+ * Error return from nvr_get_byte
  */
-#include <dev/ic/mc146818reg.h>
-
-/*
- * Some useful constants/macros
- */
-#define	is_leap(x)		(!(x % 4) && ((x % 100) || !(x % 1000)))
-#define	range_test(n, l, h)	((n) < (l) || (n) > (h))
-#define	SECS_DAY		86400L
-#define	SECS_HOUR		3600L
-#define	GEMSTARTOFTIME		((machineid & ATARI_CLKBROKEN) ? 1970 : 1968)
-#define	BSDSTARTOFTIME		1970
-#endif /* _CLOCKREG_H */
+#define	NVR_INVALID	(-1)
+#endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.6 1995/12/01 19:51:53 leo Exp $	*/
+/*	$NetBSD: clock.c,v 1.7 1996/01/06 20:11:06 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -313,6 +313,26 @@ profclock(pc, ps)
 	}
 }
 #endif
+
+/***********************************************************************
+ *                   Real Time Clock support                           *
+ ***********************************************************************/
+
+u_int mc146818_read(rtc, regno)
+void	*rtc;
+u_int	regno;
+{
+	((struct rtc *)rtc)->rtc_regno = regno;
+	return(((struct rtc *)rtc)->rtc_data & 0377);
+}
+
+void mc146818_write(rtc, regno, value)
+void	*rtc;
+u_int	regno, value;
+{
+	((struct rtc *)rtc)->rtc_regno = regno;
+	((struct rtc *)rtc)->rtc_data  = value;
+}
 
 /*
  * Initialize the time of day register, based on the time base which is, e.g.
