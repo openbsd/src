@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.72 2001/06/29 19:08:11 ho Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.73 2001/07/01 05:16:03 angelos Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -2349,6 +2349,10 @@ pf_key_v2_delete_spi (struct sa *sa, struct proto *proto, int incoming)
 #ifdef KAME
   struct sadb_x_sa2 ssa2;
 #endif
+
+  /* If it's not an established SA, don't proceed. */
+  if (!(sa->flags & SA_FLAG_READY))
+    return 0;
 
   /*
    * If the SA was not replaced and was not one acquired through the
