@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.24 2004/08/03 11:22:15 henning Exp $	*/
+/*	$OpenBSD: route.h,v 1.25 2004/09/16 00:21:11 henning Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -360,21 +360,6 @@ int	 rtrequest(int, struct sockaddr *,
 			struct sockaddr *, struct sockaddr *, int,
 			struct rtentry **);
 int	 rtrequest1(int, struct rt_addrinfo *, struct rtentry **);
-
-#ifndef SMALL_KERNEL
-void	 sroute_verify_host(struct rt_addrinfo *);
-void	 sroute_clone_route(struct rt_addrinfo *, struct sockaddr *,
-	    struct sockaddr *);
-void	 sroute_compact(struct rt_addrinfo *, int);
-void	 sroute_expand(struct rt_addrinfo *);
-struct sockaddr * 
-	 sroute_clone_mask4(struct sockaddr *, struct sockaddr *);
-#else
-#define	 sroute_compact(ai, int)
-#define	 sroute_expand(ai)
-#define	 sroute_clone_mask4(old, gen) ((gen) != NULL ? (gen) : \
-	    (struct sockaddr *)&rt_defmask4)
-#endif
 
 #endif /* _KERNEL */
 #endif /* _NET_ROUTE_H_ */
