@@ -1,4 +1,4 @@
-/*	$OpenBSD: atareg.h,v 1.6 2002/06/14 21:34:59 todd Exp $	*/
+/*	$OpenBSD: atareg.h,v 1.7 2003/02/25 19:21:14 grange Exp $	*/
 /*	$NetBSD: atareg.h,v 1.5 1999/01/18 20:06:24 bouyer Exp $	*/
 
 #ifndef __DEV_ATA_ATAREG_H__
@@ -211,7 +211,7 @@ struct ataparams {
 #define ATAPI_CFA_MODE1_DIS 0x1000 /* CFA Mode 1 Disabled */
 #define ATAPI_CFA_MODE1_REQ 0x2000 /* CFA Mode 1 Required */
 #define ATAPI_CFA_WORD160   0x8000 /* Word 160 supported */
-    u_int16_t	__reserved9[31];	/* 161-175: reserved for CFA */
+    u_int16_t	__reserved9[15];	/* 161-175: reserved for CFA */
     u_int8_t	atap_media_serial[60];	/* 176-205: media serial number */
     u_int16_t	__reserved10[49];	/* 206-254: reserved */
 #if BYTE_ORDER == LITTLE_ENDIAN
