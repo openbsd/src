@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.27 2001/11/09 03:11:38 deraadt Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.28 2001/11/13 17:45:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -221,10 +221,8 @@ cryptof_ioctl(fp, cmd, data, p)
 			MALLOC(crie.cri_key, u_int8_t *,
 			    crie.cri_klen / 8, M_XDATA, M_WAITOK);
 			if ((error = copyin(sop->key, crie.cri_key,
-			    crie.cri_klen / 8))) {
-				error = EINVAL;
+			    crie.cri_klen / 8)))
 				goto bail;
-			}
 			if (thash)
 				crie.cri_next = &cria;
 		}
@@ -240,10 +238,8 @@ cryptof_ioctl(fp, cmd, data, p)
 			MALLOC(cria.cri_key, u_int8_t *,
 			    cria.cri_klen / 8, M_XDATA, M_WAITOK);
 			if ((error = copyin(sop->mackey, cria.cri_key,
-			    cria.cri_klen / 8))) {
-				error = EINVAL;
+			    cria.cri_klen / 8)))
 				goto bail;
-			}
 		}
 
 		error = crypto_newsession(&sid, (txform ? &crie : &cria), 1);
