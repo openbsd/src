@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.42 1997/07/25 19:41:16 mickey Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.43 1997/08/04 19:25:09 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -2060,7 +2060,11 @@ static void
 reapchild(signo)
 	int signo;
 {
-	while (wait3(NULL, WNOHANG, NULL) > 0);
+	int save_errno = errno;
+
+	while (wait3(NULL, WNOHANG, NULL) > 0)
+		;
+	errno = save_errno;
 }
 
 void

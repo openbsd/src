@@ -37,7 +37,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: logging.c,v 1.2 1996/11/17 16:34:00 millert Exp $";
+static char rcsid[] = "$Id: logging.c,v 1.3 1997/08/04 19:24:52 deraadt Exp $";
 #endif /* lint */
 
 #include "config.h"
@@ -536,10 +536,13 @@ static void send_mail()
 static RETSIGTYPE reapchild(sig)
     int sig;
 {
+    int save_errno = errno;
+
     (void) wait(NULL);
 #ifndef POSIX_SIGNALS
     (void) signal(SIGCHLD, reapchild);
 #endif /* POSIX_SIGNALS */
+    errno = save_errno;
 }
 
 

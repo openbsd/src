@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.36 1997/07/22 21:12:28 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.37 1997/08/04 19:26:10 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.36 1997/07/22 21:12:28 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.37 1997/08/04 19:26:10 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -578,6 +578,7 @@ reapchild(sig)
 {
 	int status;
 	int pid;
+	int save_errno = errno;
 	register struct servtab *sep;
 
 	for (;;) {
@@ -604,6 +605,7 @@ reapchild(sig)
 					    sep->se_service, sep->se_fd);
 			}
 	}
+	errno = save_errno;
 }
 
 int setconfig __P((void));

@@ -3852,9 +3852,12 @@ static void wait_sig (sig)
      int sig;
 {
     int status;
+    int save_errno = errno;
+
     pid_t r = wait (&status);
     if (r == command_pid)
 	command_pid_is_dead++;
+    errno = save_errno;
 }
 #endif
 

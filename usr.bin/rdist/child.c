@@ -1,4 +1,4 @@
-/*	$OpenBSD: child.c,v 1.4 1996/07/25 05:30:59 millert Exp $	*/
+/*	$OpenBSD: child.c,v 1.5 1997/08/04 19:25:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 static char RCSid[] = 
-"$OpenBSD: child.c,v 1.4 1996/07/25 05:30:59 millert Exp $";
+"$OpenBSD: child.c,v 1.5 1997/08/04 19:25:54 deraadt Exp $";
 
 static char sccsid[] = "@(#)docmd.c	5.1 (Berkeley) 6/6/85";
 
@@ -275,6 +275,7 @@ static int waitproc(statval, block)
 static void reap()
 {
 	register CHILD *pc;
+	int save_errno = errno;
 	int status = 0;
 	pid_t pid;
 
@@ -322,6 +323,7 @@ static void reap()
 	(void) signal(SIGCHLD, reap);
 
 	debugmsg(DM_CALL, "reap() done\n");
+	errno = save_errno;
 }
 
 /*

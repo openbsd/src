@@ -1,4 +1,4 @@
-/*	$OpenBSD: system.c,v 1.5 1997/04/19 20:53:46 deraadt Exp $	*/
+/*	$OpenBSD: system.c,v 1.6 1997/08/04 19:25:59 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)system.c	4.5 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: system.c,v 1.5 1997/04/19 20:53:46 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: system.c,v 1.6 1997/08/04 19:25:59 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -592,6 +592,7 @@ shell_continue()
 static void
 child_died(code)
 {
+    int save_errno = errno;
     union wait status;
     register int pid;
 
@@ -616,6 +617,7 @@ child_died(code)
 	}
     }
     signal(SIGCHLD, child_died);
+    errno = save_errno;
 }
 
 

@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: comsat.c,v 1.4 1996/12/22 03:41:12 tholo Exp $";
+static char rcsid[] = "$Id: comsat.c,v 1.5 1997/08/04 19:25:07 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -141,7 +141,10 @@ void
 reapchildren(signo)
 	int signo;
 {
+	int save_errno = errno;
+
 	while (wait3(NULL, WNOHANG, NULL) > 0);
+	errno = save_errno;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_portal.c,v 1.11 1997/06/25 18:25:47 kstailey Exp $	*/
+/*	$OpenBSD: mount_portal.c,v 1.12 1997/08/04 19:25:19 deraadt Exp $	*/
 /*	$NetBSD: mount_portal.c,v 1.8 1996/04/13 01:31:54 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.6 (Berkeley) 4/26/95";
 #else
-static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.11 1997/06/25 18:25:47 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.12 1997/08/04 19:25:19 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -87,12 +87,14 @@ static void
 sigchld(sig)
 	int sig;
 {
+	int save_errno = errno;
 	pid_t pid;
 
 	while ((pid = waitpid((pid_t) -1, NULL, WNOHANG)) > 0)
 		;
 	if (pid < 0 && errno != ECHILD)
 		syslog(LOG_WARNING, "waitpid: %m");
+	errno = save_errno;
 }
 
 static void

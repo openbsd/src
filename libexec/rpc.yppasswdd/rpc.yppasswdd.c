@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: rpc.yppasswdd.c,v 1.6 1997/07/21 19:22:56 deraadt Exp $";
+static char rcsid[] = "$Id: rpc.yppasswdd.c,v 1.7 1997/08/04 19:25:11 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -175,6 +175,9 @@ yppasswddprog_1(rqstp, transp)
 void
 sig_child()
 {
+	int save_errno = errno;
+
 	while (wait3((int *) NULL, WNOHANG, (struct rusage *) NULL) > 0)
 		;
+	errno = save_errno;
 }

@@ -450,10 +450,14 @@ child_death(sig)
 	int sig;
 {
 	int status;
+	int save_errno = errno;
+
 	if (wait(&status) == -1) {
 		syslog(LOG_ERR, "wait error for signaled child: %m");
+		errno = save_errno;
 		return;
 	}
 	if (WEXITSTATUS(status) == 2)
 		speaker_ok = 0;
+	errno = save_errno;
 }

@@ -768,9 +768,11 @@ reapchild(signo)
 	int signo;
 {
 	union wait status;
+	int save_errno = errno;
 
 	while (wait3((int *)&status, WNOHANG, (struct rusage *)NULL) > 0)
 		;
+	errno = save_errno;
 }
 
 /*

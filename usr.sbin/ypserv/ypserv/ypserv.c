@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv.c,v 1.9 1997/04/12 00:14:28 deraadt Exp $ */
+/*	$OpenBSD: ypserv.c,v 1.10 1997/08/04 19:26:25 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypserv.c,v 1.9 1997/04/12 00:14:28 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypserv.c,v 1.10 1997/08/04 19:26:25 deraadt Exp $";
 #endif
 
 #include "yp.h"
@@ -505,7 +505,11 @@ char *argv[];
 void
 sig_child()
 {
-	while (wait3((int *)NULL, WNOHANG, (struct rusage *)NULL) > 0);
+	int save_errno = errno;
+
+	while (wait3((int *)NULL, WNOHANG, (struct rusage *)NULL) > 0)
+		;
+	errno = save_errno;
 }
 
 void

@@ -130,7 +130,8 @@ child()
 {
 	union wait status;
 	int pid;
-
+	int save_errno = errno;
+	
 	(void) signal(SIGCHLD, SIG_IGN);
 	do {
 		pid = wait3((int *)&status, WNOHANG, (struct rusage *)0);
@@ -138,4 +139,5 @@ child()
 			hasdriver = 0;
 	} while (pid > 0);
 	(void) signal(SIGCHLD, child);
+	errno = save_errno;
 }

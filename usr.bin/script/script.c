@@ -1,4 +1,4 @@
-/*	$OpenBSD: script.c,v 1.7 1997/07/25 22:03:08 mickey Exp $	*/
+/*	$OpenBSD: script.c,v 1.8 1997/08/04 19:25:56 deraadt Exp $	*/
 /*	$NetBSD: script.c,v 1.3 1994/12/21 08:55:43 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: script.c,v 1.7 1997/07/25 22:03:08 mickey Exp $";
+static char rcsid[] = "$OpenBSD: script.c,v 1.8 1997/08/04 19:25:56 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -156,6 +156,7 @@ finish(signo)
 	int signo;
 {
 	register int die, pid;
+	int save_errno = errno;
 	union wait status;
 
 	die = 0;
@@ -165,6 +166,7 @@ finish(signo)
 
 	if (die)
 		done();
+	errno = save_errno;
 }
 
 void

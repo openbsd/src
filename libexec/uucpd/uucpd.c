@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)uucpd.c	5.10 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: uucpd.c,v 1.9 1997/06/02 06:28:13 deraadt Exp $";
+static char rcsid[] = "$Id: uucpd.c,v 1.10 1997/08/04 19:25:13 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -246,6 +246,7 @@ void
 dologout()
 {
 	union wait status;
+	int save_errno = errno;
 	int pid, wtmp;
 
 #ifdef BSDINETD
@@ -263,6 +264,7 @@ dologout()
 			(void) close(wtmp);
 		}
 	}
+	errno = save_errno;
 }
 
 /*
