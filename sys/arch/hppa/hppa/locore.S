@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.35 2000/07/02 02:41:57 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.36 2000/08/15 19:56:17 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -44,7 +44,7 @@
  * CSL requests users of this software to return to csl-dist@cs.utah.edu any
  * improvements that they make and grant CSL redistribution rights.
  *
- * 	Utah $Hdr: locore.s 1.62 94/12/15$
+ *	Utah $Hdr: locore.s 1.62 94/12/15$
  */
 /*
  *  (c) Copyright 1988 HEWLETT-PACKARD COMPANY
@@ -145,9 +145,9 @@ ENTRY($start)
 	 * to keep the spl() routines consistent we need to put the correct
 	 * spl level into eiem, and reset any pending interrupts
 	 */
-	ldi    	-1, r1
+	ldi	-1, r1
 	mtctl	r0, eiem	/* IPL_NONE */
-	mtctl   r1, eirr
+	mtctl	r1, eirr
 
 	/*
 	 * set up the dp pointer so that we can do quick references off of it
@@ -192,9 +192,9 @@ $start_zero_tf
 	mtctl	r0, pcsq
 	ldil	L%$qisnowon, t1
 	ldo	R%$qisnowon(t1), t1
-	mtctl	t1, pcoq	
+	mtctl	t1, pcoq
 	ldo	4(t1),t1
-	mtctl	t1, pcoq	
+	mtctl	t1, pcoq
 	ldi	PSW_Q|PSW_I, t1
 	mtctl	t1, ipsw
 	rfi
@@ -265,9 +265,9 @@ $qisnowon
 	mtctl	r0, pcsq
 	ldil	L%$virtual_mode, t1
 	ldo	R%$virtual_mode(t1), t1
-	mtctl	t1, pcoq	
+	mtctl	t1, pcoq
 	ldo	4(t1), t1
-	mtctl	t1, pcoq	
+	mtctl	t1, pcoq
 	ldil	L%kpsw, t1
 	ldw	R%kpsw(t1), t2
 	mtctl	t2, ipsw
@@ -297,7 +297,7 @@ $noddb
 $callmain
 	.call
 	blr	r0, rp
-	bv,n    (r1)
+	bv,n	(r1)
 	nop
 
 	/* should never return... */
@@ -360,7 +360,7 @@ pdc_call_unmapped1
 	mfctl	cr24, t1
 	mfctl	cr25, t2
 	mfctl	cr26, t3
-	mfctl	cr27, t4	
+	mfctl	cr27, t4
 	stw	t1, HPPA_FRAME_ARG(12)(sp)	/* XXX can use ,bc */
 	stw	t2, HPPA_FRAME_ARG(13)(sp)
 	stw	t3, HPPA_FRAME_ARG(14)(sp)
@@ -368,7 +368,7 @@ pdc_call_unmapped1
 	mfctl	cr28, t1
 	mfctl	cr29, t2
 	mfctl	cr30, t3
-	mfctl	cr31, t4	
+	mfctl	cr31, t4
 	stw	t1, HPPA_FRAME_ARG(16)(sp)
 	stw	t2, HPPA_FRAME_ARG(17)(sp)
 	stw	t3, HPPA_FRAME_ARG(18)(sp)
@@ -387,7 +387,7 @@ pdc_call_unmapped1
 pdc_call_unmapped2
 	.call
 	blr	r0, rp
-	bv,n    (r31)
+	bv,n	(r31)
 	nop
 
 	/* load temp control regs */
@@ -428,14 +428,14 @@ EXIT(pdc_call)
 
 /*
  * Kernel Gateway Page (must be at known address)
- *    System Call Gate
- *    Signal Return Gate
+ *	System Call Gate
+ *	Signal Return Gate
  *
  * GATEway instructions have to be at a fixed known locations
  * because their addresses are hard coded in routines such as
  * those in the C library.
  */
-	.align  NBPG
+	.align	NBPG
 	.export	gateway_page, entry
 gateway_page
 	nop				/* @ 0.C0000000 (Nothing)  */
@@ -489,8 +489,8 @@ $bsd_syscall
 	 */
 	.import $syscall,code
 	.call
-	ldil    L%$syscall,r1
-	be,n    R%$syscall(sr7,r1)
+	ldil	L%$syscall,r1
+	be,n	R%$syscall(sr7,r1)
 	nop
 
 	.align	NBPG
@@ -525,7 +525,7 @@ $syscall
 
 	/* calculate kernel sp, load, create kernel stack frame */
 	copy	sp, t4
-	ldo	NBPG+TF_SIZE(t2), t3	
+	ldo	NBPG+TF_SIZE(t2), t3
 	ldo	HPPA_FRAME_SIZE+HPPA_FRAME_MAXARGS(t3), sp
 	stw	t1, TF_R22 -TF_SIZE(sr1, t3)	/* syscall # */
 	stw	t4, TF_R30 -TF_SIZE(sr1, t3)	/* user stack */
@@ -591,7 +591,7 @@ $syscall
 	/*
 	 * Save the rest of the CPU context
 	 */
-	
+
 	ldo	4(r31), arg1
 	stw	r31, TF_IIOQH-TF_SIZE(sr1, t3)
 	stw	arg1, TF_IIOQT-TF_SIZE(sr1, t3)
@@ -606,7 +606,7 @@ $syscall
 	mfsp	sr3, arg0
 	stw	arg0, TF_SR3-TF_SIZE(sr1, t3)
 	stw	r28, TF_CR8-TF_SIZE(sr1, t3)	/* pidr1 */
-	
+
 	mfctl	iir, arg0	/* XXX bogus */
 	ldil	TFF_LAST|TFF_SYS, arg1
 	stw	arg0, TF_CR19-TF_SIZE(sr1, t3)
@@ -785,7 +785,7 @@ $syscall_return_copy_loop
 	rsm	RESET_PSW, r0
 	nop ! nop ! nop ! nop ! nop ! nop ! nop ! nop	/* XXX really? */
 $syscall_return_phys
-	
+
 	ldil	$trap_tmp_save, t3
 
 	/* finally we can restore the space and offset queues and the ipsw */
@@ -858,7 +858,7 @@ $syscall_end
 	bv	0(r1)			! \
 	ldi	num, r1
 
-#define	LDILDO(name) 			! \
+#define	LDILDO(name)			! \
 	.export	name, entry		! \
 	.label	name			! \
 	ldil	L%$name,%r1		! \
@@ -887,7 +887,7 @@ LDILDO(tlbd_l)
 #define	DTLBPRE \
 	mfctl	ior, r9		/* Offset */			! \
 	mfctl	isr, r8		/* Space  */			! \
-	depi    0,31,PGSHIFT,r9	/* align offset to page */
+	depi	0,31,PGSHIFT,r9	/* align offset to page */
 	/* CR28XXX according to a popular belief cr28 should be read here */
 #define	HPMCPRE	nop
 
@@ -1011,7 +1011,7 @@ TLABEL(emu)
 
 	mfctl	ccr, t3
 	mfctl	cr30, t2
-	
+
 	/* enable coprocessor */
 	depi	3, 25, 2, t3
 	mtctl	t3, ccr
@@ -1138,11 +1138,11 @@ TLABEL(excpt)
 	stw	r29, TF_R29(r31)
 	mfctl	sar, r1
 	mfctl	iir, arg0
-	stw	r1,  TF_CR11(r31)
+	stw	r1, TF_CR11(r31)
 
 	extru,<> arg0, 10, 1, r0
 	extru,=  arg0, 11, 1, r0
-	or,tr    r0, r0, r0
+	or,tr	r0, r0, r0
 	bl,n	$sfu_emu, rp
 
 	.import	fpu_emulate, code
@@ -1182,7 +1182,7 @@ TLABEL(excpt)
 	mfctl	tr7, r1
 	rfi
 	nop
-	
+
 	.export	$sfu_emu, entry
 $sfu_emu
 	bv	r0(rp)
@@ -1192,7 +1192,7 @@ $sfu_emu
 
 	/* Compute the hpt entry ptr */
 #define	HPTENT \
-	extru	r9, 23, 24, r16  	/* r17 = (offset >> 8) */	! \
+	extru	r9, 23, 24, r16		/* r17 = (offset >> 8) */	! \
 	zdep	r8, 26, 16, r24		/* r24 = (space << 5) */	! \
 	mfctl	hptmask, r17		/* r17 = sizeof(HPT)-1 */	! \
 	xor	r16, r24, r24		/* r24 ^= r16 */		! \
@@ -1212,7 +1212,7 @@ $tlbd_s
 $tlbd_t
 	HPTENT
 	mtctl	r16, cr28
-	
+
 	/*
 	 * Chase the list of entries for this hash bucket until we find
 	 * the correct mapping or NULL.
@@ -1232,7 +1232,7 @@ $hash_loop_tlbd_t		/* XXX must use ,sl */
 	ldw	pv_tlbprot(r24), r25
 	b	$tlb_inshpt_t
 	depi	1, TLB_DIRTY_POS, 1, r25
-	
+
 	.align	32
 $itlb_x
 $itlb_s
@@ -1337,7 +1337,7 @@ $hash_loop_tlbd_l
 	ldw	pv_tlbprot(r24), r25
 	b	$tlb_inshpt_l
 	depi	1, TLB_DIRTY_POS, 1, r25
-	
+
 	.align	8
 $itlb_l
 	HPTENT
@@ -1561,7 +1561,7 @@ $trap_from_kernel
 	ldo	TF_PHYS-1(sp), t3
 	dep	r0, 31, 6, t3
 
-$trap_make_frame	
+$trap_make_frame
 	/* t3 is va, t1 is pa of (struct trapframe *) */
 	mfctl	tr3, t2
 	mtctl	t3, tr3
@@ -1741,7 +1741,7 @@ $trapnowvirt
 	stw	r27,TF_R27(t3)
 	stw	r28,TF_R28(t3)
 	stw	r29,TF_R29(t3)
- 	/*	r30 already saved (sp) */
+	/*	r30 already saved (sp) */
 	stw	r31,TF_R31(t3)
 
 	/*
@@ -1763,7 +1763,7 @@ $trap_copy_loop
 	mfctl	rctr, t1
 	stw	t1, TF_CR0(t3)
 	/* XXX save ccr here w/ rctr */
-	
+
 #ifdef DDB
 	/*
 	 * Save hpt mask and v2p translation table pointer
@@ -1843,7 +1843,7 @@ ENTRY(fdcache)
 
 	fdc,m	arg3(sr1, arg1)		/* Start flushing first cache line. */
 fdc_long
-        fdc,m	arg3(sr1, arg1)
+	fdc,m	arg3(sr1, arg1)
 	fdc,m	arg3(sr1, arg1)
 	fdc,m	arg3(sr1, arg1)
 	fdc,m	arg3(sr1, arg1)
@@ -1860,7 +1860,7 @@ fdc_long
 	fdc,m	arg3(sr1, arg1)
 	comb,<<,n arg1, t1, fdc_long
 	fdc,m	arg3(sr1, arg1)
-fdc_short                               /* flush one line at a time */
+fdc_short				/* flush one line at a time */
 	comb,<<,n arg1, arg0, fdc_short
 	fdc,m	arg3(sr1, arg1)
 
@@ -1888,7 +1888,7 @@ ENTRY(pdcache)
 
 	pdc,m	arg3(sr1, arg1)		/* Start flushing first cache line. */
 pdc_long
-        pdc,m	arg3(sr1, arg1)
+	pdc,m	arg3(sr1, arg1)
 	pdc,m	arg3(sr1, arg1)
 	pdc,m	arg3(sr1, arg1)
 	pdc,m	arg3(sr1, arg1)
@@ -1905,7 +1905,7 @@ pdc_long
 	pdc,m	arg3(sr1, arg1)
 	comb,<<,n arg1, t1, pdc_long
 	pdc,m	arg3(sr1, arg1)
-pdc_short                               /* flush one line at a time */
+pdc_short				/* flush one line at a time */
 	comb,<<,n arg1, arg0, pdc_short
 	pdc,m	arg3(sr1, arg1)
 
@@ -1933,7 +1933,7 @@ ENTRY(ficache)
 
 	fic,m	arg3(sr1, arg1)		/* Start flushing first cache line. */
 fic_long
-        fic,m	arg3(sr1, arg1)
+	fic,m	arg3(sr1, arg1)
 	fic,m	arg3(sr1, arg1)
 	fic,m	arg3(sr1, arg1)
 	fic,m	arg3(sr1, arg1)
@@ -1950,7 +1950,7 @@ fic_long
 	fic,m	arg3(sr1, arg1)
 	comb,<<,n arg1, t1, fic_long
 	fic,m	arg3(sr1, arg1)
-fic_short                               /* flush one line at a time */
+fic_short				/* flush one line at a time */
 	comb,<<,n arg1, arg0, fic_short
 	fic,m	arg3(sr1, arg1)
 
@@ -2145,7 +2145,7 @@ microtime_no
 	stwm	t1, 4(arg0)
 	bv	(rp)
 	stw	t2, 0(arg0)
-	
+
 EXIT(microtime)
 
 	.import	whichqs, data
@@ -2232,13 +2232,13 @@ ENTRY(remrunqueue)
 Lremrunqueue_panic
 	copy	arg0, arg1
 	copy	t1, arg2
-	ldil    L%panic, r1
+	ldil	L%panic, r1
 	ldil	L%Lrrqpstr, arg0
 	ldo	R%panic(r1), r1
 	ldo	R%Lrrqpstr(arg0), arg0
 	.call
 	blr	%r0, rp
-	bv,n    %r0(r1)
+	bv,n	%r0(r1)
 
 Lrrqpstr
 	.asciz	"remrunqueue(%p), bit=%x"
@@ -2320,13 +2320,13 @@ getbit
 switch_error
 	copy	t4, arg1
 	copy	t2, arg2
-	ldil    L%panic, r1
+	ldil	L%panic, r1
 	ldil	L%Lcspstr, arg0
 	ldo	R%panic(r1), r1
 	ldo	R%Lcspstr(arg0), arg0
 	.call
 	blr	%r0, rp
-	bv,n    %r0(r1)
+	bv,n	%r0(r1)
 	nop
 Lcspstr
 	.asciz	"cpu_switch: bit=%x, q/p=%p"
@@ -2466,11 +2466,11 @@ ENTRY(switch_exit)
 	/* XXX we need to switch to some stupid stack here */
 	/* arg0 -- oldproc */
 	.import exit2, code
-	ldil    L%exit2, t2
-	ldo     R%exit2(t2), t2
+	ldil	L%exit2, t2
+	ldo	R%exit2(t2), t2
 	.call
-	blr     %r0, rp
-	bv,n    %r0(t2)
+	blr	%r0, rp
+	bv,n	%r0(t2)
 	nop
 
 	b	switch_search
@@ -2482,7 +2482,7 @@ ENTRY(switch_trampoline)
 	ldw	HPPA_FRAME_ARG(2)(sp), arg0
 	.call
 	blr	%r0, rp
-	bv,n    %r0(t1)
+	bv,n	%r0(t1)
 	nop
 	ldil	L%curproc, t1
 	ldw	R%curproc(t1), t2
