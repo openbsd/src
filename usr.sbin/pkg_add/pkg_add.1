@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.29 2004/12/18 14:13:33 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.30 2004/12/26 15:01:06 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -447,11 +447,3 @@ scripts.
 The
 .Fl r
 option has not seen wide-testing yet and is almost certainly full of bugs.
-In particular, failure modes are untested, and a large number of code paths
-have not seen actual use yet.
-This option only handles atomic updates of single packages, there is no code
-to replace multiple packages with another set of equivalent multiple packages.
-For instance, since this option will often replace a package with
-a newer package by creating an extra stub package for older shared libraries,
-reversing the effect of pkg_add -r without wiping out most installed packages
-will be impossible.
