@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compress.1,v 1.16 2003/06/03 02:56:07 millert Exp $
+.\"	$OpenBSD: compress.1,v 1.17 2003/06/10 09:12:09 jmc Exp $
 .\"	$NetBSD: compress.1,v 1.5 1995/03/26 09:44:34 glass Exp $
 .\"
 .\" Copyright (c) 1986, 1990, 1993
@@ -64,16 +64,16 @@ reduces the size of the named files using adaptive Lempel-Ziv coding.
 Each
 .Ar file
 is renamed to the same name plus the extension
-.Dq .Z , 
+.Dq .Z ,
 or
-.Dq .gz 
+.Dq .gz
 (in deflate mode).
 As many of the modification time, access time, file flags, file mode,
 user ID, and group ID as allowed by permissions are retained in the
 new file.
 If compression would not reduce the size of a
 .Ar file ,
-the file is ignored (unless 
+the file is ignored (unless
 .Fl f
 is used).
 .Pp
@@ -116,7 +116,7 @@ Specify the
 code limit (see below).
 .It Fl c
 Compressed or uncompressed output is written to the standard output.
-No files are modified (force 
+No files are modified (force
 .Nm zcat
 mode).
 .It Fl d
@@ -130,7 +130,7 @@ even if it is not actually reduced in size.
 Additionally, files are overwritten without prompting for confirmation.
 .It Fl g
 Use deflate scheme which reportedly provides better compression rates (force
-.Nm gzip 
+.Nm gzip
 mode).
 .It Fl 1...9
 Use deflate scheme with compression factor of one to nine.

@@ -1,9 +1,9 @@
-.\" $OpenBSD: x99token.1,v 1.6 2003/02/15 09:44:42 jmc Exp $
+.\" $OpenBSD: x99token.1,v 1.7 2003/06/10 09:12:13 jmc Exp $
 .\"
 .\" X9.9 calculator
 .\" This software is provided AS IS with no express or implied warranty
 .\" October 1995, Paul Borman <prb@krystal.com>
-.\" 
+.\"
 .\" Donated to the Public Domain by Paul Borman
 .\"
 .Dd August 1, 2001
@@ -77,7 +77,8 @@ ADD 0x30 (ASCII value of '0') to each byte
 .El
 .Pp
 The resulting 8 bytes are all ASCII decimal digits and are the
-predicted challenge.  This process may be repeated.
+predicted challenge.
+This process may be repeated.
 .Sh FILES
 .Bl -tag -width $HOME/.keyfile.des -compact
 .It Pa $HOME/.keyfile.des
@@ -87,12 +88,12 @@ default keyfile
 .Xr tokenadm 8 ,
 .Xr tokeninit 8
 .Sh AUTHORS
-Paul Borman <prb@krystal.com>
+.An Paul Borman Aq prb@krystal.com
 .Sh CAVEATS
-This is a very simple-minded program.  
+This is a very simple-minded program.
 The keyfile should be placed on a floppy disk which is kept physically secure.
 .Pp
 Having not read the X9.9 standard, this may not be a complete or accurate
-implementation of the standard.  
+implementation of the standard.
 This software is provided AS IS
 with no express or implied warranty.

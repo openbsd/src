@@ -1,4 +1,4 @@
-.\"	$OpenBSD: indent.1,v 1.11 2001/05/01 17:58:03 aaron Exp $
+.\"	$OpenBSD: indent.1,v 1.12 2003/06/10 09:12:10 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.
@@ -420,7 +420,6 @@ defaults.
 Switches on the command line, though, always override profile
 switches.
 The switches should be separated by spaces, tabs or newlines.
-.Pp
 .Ss Comments
 .Sq Em Box
 .Em comments .
@@ -444,7 +443,6 @@ All other comments are treated as straight text.
 fits as many words (separated by blanks, tabs, or newlines) on a
 line as possible.
 Blank lines break paragraphs.
-.Pp
 .Ss Comment indentation
 If a comment is on a line with code it is started in the
 .Dq comment column ,
@@ -461,7 +459,6 @@ command line parameter.
 If the code on a line extends past the comment
 column, the comment starts further to the right, and the right margin may be
 automatically extended in extreme cases.
-.Pp
 .Ss Preprocessor lines
 In general,
 .Nm
@@ -475,7 +472,6 @@ is recognized and
 .Nm
 attempts to correctly
 compensate for the syntactic peculiarities introduced.
-.Pp
 .Ss C syntax
 .Nm
 understands a substantial amount about the syntax of C, but it

@@ -1,4 +1,4 @@
-.\" $OpenBSD: audioctl.1,v 1.14 2002/12/10 09:01:24 pvalchev Exp $
+.\" $OpenBSD: audioctl.1,v 1.15 2003/06/10 09:12:09 jmc Exp $
 .\" $NetBSD: audioctl.1,v 1.7 1998/04/27 16:55:23 augustss Exp $
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -82,6 +82,16 @@ Specify an alternative audio control device.
 .It Fl n
 Suppress printing of the variable name.
 .El
+.Sh ENVIRONMENT
+.Bl -tag -width AUDIOCTLDEVICE
+.It Ev AUDIOCTLDEVICE
+Audio control device to use.
+.El
+.Sh FILES
+.Bl -tag -width /dev/audioctl
+.It Pa /dev/audioctl
+default audio control device
+.El
 .Sh EXAMPLES
 To set the playing sampling rate to 11025 you can enter
 .Pp
@@ -96,16 +106,6 @@ This can be circumvented like so:
 or
 .Pp
 .Dl $ (audioctl -f /dev/stdout -w blocksize=1024; cat file.au) > /dev/audio
-.Sh ENVIRONMENT
-.Bl -tag -width AUDIOCTLDEVICE
-.It Ev AUDIOCTLDEVICE
-Audio control device to use.
-.El
-.Sh FILES
-.Bl -tag -width /dev/audioctl
-.It Pa /dev/audioctl
-default audio control device
-.El
 .Sh SEE ALSO
 .Xr mixerctl 1 ,
 .Xr audio 4 ,

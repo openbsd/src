@@ -1,4 +1,4 @@
-.\"	$OpenBSD: join.1,v 1.12 2003/06/03 02:56:09 millert Exp $
+.\"	$OpenBSD: join.1,v 1.13 2003/06/10 09:12:10 jmc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -92,7 +92,7 @@ line in file
 (The argument to
 .Fl a
 must not be preceded by a space; see the
-.Sx COMPATIBILITY
+.Sx STANDARDS
 section.)
 .It Fl e Ar string
 Replace empty output fields with
@@ -153,7 +153,7 @@ may not report all field matches.
 When the field delimiter characters are specified by the
 .Fl t
 option, the collating sequence should be the same as
-.Xr sort
+.Xr sort 1
 without the
 .Fl b
 option.
@@ -177,7 +177,7 @@ utility exits 0 on success or >0 if an error occurred.
 .Xr paste 1 ,
 .Xr sort 1 ,
 .Xr uniq 1
-.Sh COMPATIBILITY
+.Sh STANDARDS
 For compatibility with historic versions of
 .Nm join ,
 the following options are available:
@@ -218,7 +218,7 @@ This has obvious difficulties in the presence of files named
 .Pp
 These options are available only so historic shell scripts don't require
 modification and should not be used.
-.Sh STANDARDS
+.Pp
 The
 .Nm
 command is expected to be

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apply.1,v 1.19 2003/06/03 02:56:05 millert Exp $
+.\"	$OpenBSD: apply.1,v 1.20 2003/06/10 09:12:09 jmc Exp $
 .\"	$NetBSD: apply.1,v 1.4 1996/03/18 23:16:57 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -93,6 +93,17 @@ as the magic character instead of the default
 Debug mode.
 Print commands to the standard output but do not actually execute them.
 .El
+.Sh ENVIRONMENT
+.Bl -tag -width SHELL
+.It Ev SHELL
+Pathname of shell to use.
+If this variable is not defined, the Bourne shell is used.
+.El
+.Sh FILES
+.Bl -tag -width /bin/sh -compact
+.It Pa /bin/sh
+default shell
+.El
 .Sh EXAMPLES
 .Li "$ apply echo a*"
 .Pp
@@ -117,26 +128,15 @@ Runs
 .Pp
 Links all files in the current directory to the directory
 .Pa /usr/joe .
-.Sh ENVIRONMENT
-.Bl -tag -width SHELL
-.It Ev SHELL
-Pathname of shell to use.
-If this variable is not defined, the Bourne shell is used.
-.El
-.Sh FILES
-.Bl -tag -width /bin/sh -compact
-.It Pa /bin/sh
-default shell
-.El
 .Sh SEE ALSO
 .Xr xargs 1
-.Sh AUTHORS
-Rob Pike
 .Sh HISTORY
 The
 .Nm
 command appeared in
 .Bx 4.2 .
+.Sh AUTHORS
+Rob Pike
 .Sh BUGS
 Shell metacharacters in
 .Ar command

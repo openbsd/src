@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cksum.1,v 1.15 2003/06/03 02:56:06 millert Exp $
+.\"	$OpenBSD: cksum.1,v 1.16 2003/06/10 09:12:09 jmc Exp $
 .\"	$NetBSD: cksum.1,v 1.8 1995/09/02 05:45:15 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -73,11 +73,11 @@ Use historic algorithms instead of the (superior) default one.
 Algorithm 1 is the algorithm used by historic
 .Bx
 systems as the
-.Xr sum 1
+.Nm sum
 algorithm and by historic
 .At V
 systems as the
-.Xr sum
+.Nm sum
 algorithm when using the
 .Fl r
 option.
@@ -88,7 +88,7 @@ Algorithm 2 is the algorithm used by historic
 .At V
 systems as the
 default
-.Xr sum
+.Nm sum
 algorithm.
 This is a 32-bit checksum, and is defined as follows:
 .Bd -unfilled -offset indent

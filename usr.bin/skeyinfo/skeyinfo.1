@@ -1,4 +1,4 @@
-.\" $OpenBSD: skeyinfo.1,v 1.6 2002/05/16 17:26:58 millert Exp $
+.\" $OpenBSD: skeyinfo.1,v 1.7 2003/06/10 09:12:11 jmc Exp $
 .\"
 .Dd May 16, 2002
 .Dt SKEYINFO 1
@@ -20,6 +20,11 @@ The options are as follows:
 .It Fl v
 Print the hash algorithm as well.
 .El
+.Sh FILES
+.Bl -tag -width /etc/skey
+.It Pa /etc/skey
+directory containing user entries for S/Key
+.El
 .Sh EXAMPLES
 % skey -n <number of passwords to print> `skeyinfo` | lpr
 .Pp
@@ -39,11 +44,6 @@ The S/Key database is enabled but the user does not have an entry in it.
 The
 .Xr skeyinit 1
 program can be used to create an entry for the user.
-.El
-.Sh FILES
-.Bl -tag -width /etc/skey
-.It Pa /etc/skey
-directory containing user entries for S/Key
 .El
 .Sh SEE ALSO
 .Xr skey 1 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.51 2003/06/03 02:56:12 millert Exp $
+.\"	$OpenBSD: make.1,v 1.52 2003/06/10 09:12:11 jmc Exp $
 .\"	$OpenPackages$
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
@@ -470,7 +470,6 @@ building
 .Pa file.o
 will execute
 .Qq cmd1 file.c .
-
 .Pp
 As an extension,
 .Nm
@@ -1265,13 +1264,16 @@ system makefile
 system makefile directory
 .IT Pa /usr/obj
 default
-.Ev MAKEOBJDIRPREFIX directory.
+.Ev MAKEOBJDIRPREFIX
+directory.
 .El
 .Sh SEE ALSO
 .Xr mkdep 1
 .Pp
-.%T "Make \- A Tutorial" .
-.Sh COMPATIBILITY
+.Rs
+.%T Make \- A Tutorial
+.Re
+.Sh STANDARDS
 .Nm
 mostly conforms to the Single Unix Specification, Version 2,
 with some noted extensions and a few problems.

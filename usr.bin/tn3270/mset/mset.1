@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mset.1,v 1.9 2003/06/03 02:56:19 millert Exp $
+.\"	$OpenBSD: mset.1,v 1.10 2003/06/10 09:12:12 jmc Exp $
 .\" Copyright (c) 1986, 1990 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -56,11 +56,11 @@ Normally, these mappings are found
 in
 .Pa /usr/share/misc/map3270
 (see
-.Xr map3270  5  ) .
+.Xr map3270 5 ) .
 This information is used by the
 .Xr tn3270
 command (see
-.Xr tn3270  1  ) .
+.Xr tn3270 1 ) .
 .Pp
 The default
 .Nm mset
@@ -108,7 +108,7 @@ of an alternate mapping file and that file is searched first.
 In any case, if the mapping for the keyboard is not found in
 the environment, nor in an alternate map file, nor in the standard map file,
 then the same search is performed for an entry for a keyboard with the name
-.Ar unknown  .
+.Ar unknown .
 If that search also fails,
 then a default mapping
 is used.
@@ -147,7 +147,7 @@ The
 argument causes
 .Nm mset
 to generate shell commands to set the environment variables
-.Ev MAP3270  ,
+.Ev MAP3270 ,
 .Ev MAP3270A ,
 and so on, breaking up the entry to fit within the shell environment
 variable length limit.

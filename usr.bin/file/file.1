@@ -1,10 +1,10 @@
-.\" $OpenBSD: file.1,v 1.19 2003/03/11 21:26:26 ian Exp $
+.\" $OpenBSD: file.1,v 1.20 2003/06/10 09:12:10 jmc Exp $
 .\" $FreeBSD: src/usr.bin/file/file.1,v 1.16 2000/03/01 12:19:39 sheldonh Exp $
 .\"
 .\" Copyright (c) Ian F. Darwin 1986-1995.
 .\" Software written by Ian F. Darwin and others;
 .\" maintained 1995-present by Christos Zoulas and others.
-.\" 
+.\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -19,7 +19,7 @@
 .\"    This product includes software developed by Ian F. Darwin and others.
 .\" 4. The name of the author may not be used to endorse or promote products
 .\"    derived from this software without specific prior written permission.
-.\"  
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
 .\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 .\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -227,7 +227,7 @@ in an existing magic file would have to be changed to
 0       string          \e\ebegindata   Andrew Toolkit document
 .Pp
 SunOS releases 3.2 and later from Sun Microsystems include a
-.Xr file 1
+.Nm file
 command derived from the System V one, but with some extensions.
 My version differs from Sun's only in minor ways.
 It includes the extension of the
@@ -401,7 +401,7 @@ of
 .Dq how good
 a guess is.
 We end up removing guesses (e.g.,
-.Dq From\ 
+.Dq From\ \&
 as first 5 chars of file) because
 they are not as good as other guesses (e.g.,
 .Dq Newsgroups:
@@ -420,4 +420,4 @@ You can obtain the original author's latest version by anonymous FTP
 on
 .Em ftp.astron.com
 in the directory
-.Pa /pub/file/file-X.YY.tar.gz
+.Pa /pub/file/file-X.YY.tar.gz .

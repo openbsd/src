@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdist.1,v 1.18 2003/06/03 02:56:14 millert Exp $
+.\"	$OpenBSD: rdist.1,v 1.19 2003/06/10 09:12:11 jmc Exp $
 .\"
 .\" Copyright (c) 1983 Regents of the University of California.
 .\" All rights reserved.
@@ -245,7 +245,8 @@ processes to
 .Ar num .
 The default is 4.
 .It Fl m Ar machine
-Limit which machines are to be updated. Multiple
+Limit which machines are to be updated.
+Multiple
 .Fl m
 arguments can be given to limit updates to a subset of the hosts listed in the
 .Pa distfile .
@@ -493,7 +494,7 @@ This is unlike the
 .Xr syslog 3
 system facility which uses an ascending order scheme.
 The following are the valid
-.Em types:
+.Em types :
 .Bl -tag -width Ds
 .It Sy change
 Things that change.
@@ -504,7 +505,7 @@ General information.
 General info about things that change.
 This includes things like making directories which are needed in order
 to install a specific target, but which are not explicitly specified in the
-.Pa distfile.
+.Pa distfile .
 .It Sy nerror
 Normal errors that are not fatal.
 .It Sy ferror
@@ -535,7 +536,8 @@ The
 .Pa distfile
 contains a sequence of entries that specify the files
 to be copied, the destination hosts, and what operations to perform
-to do the updating. Each entry has one of the following formats.
+to do the updating.
+Each entry has one of the following formats.
 .Bd -literal -offset indent
 <variable name> `=' <name list>
 [ label: ] <source list> `\->' <destination list> <command list>
@@ -699,7 +701,7 @@ is omitted then the shell commands will be executed for every file
 updated or installed.
 .Em string
 starts and ends with `"' and can cross multiple lines in
-.Pa distfile.
+.Pa distfile .
 Multiple commands to the shell should be separated by `;'.
 Commands are executed in the user's home directory on the host
 being updated.
@@ -774,11 +776,11 @@ ${FILES} :: stamp.cory
 .It TMPDIR
 Name of temporary directory to use.
 Default is
-.Pa /tmp.
+.Pa /tmp .
 .It RSH
 Name of the default remote shell program to use.
 Default is
-.Pa ssh .
+.Xr ssh 1 .
 .El
 .Sh FILES
 .Bl -tag -width "$TMPDIR/rdist*" -compact
@@ -788,9 +790,9 @@ input command file
 temporary file for update lists
 .El
 .Sh SEE ALSO
-.Xr sh 1 ,
 .Xr csh 1 ,
 .Xr rsh 1 ,
+.Xr sh 1 ,
 .Xr ssh 1 ,
 .Xr stat 2 ,
 .Xr rcmdsh 3
@@ -836,9 +838,9 @@ then
 will report missing links.
 Only one instance of a link should be listed in each target.
 .Pp
-The 
-.Sy defowner,
-.Sy defgroup,
+The
+.Sy defowner ,
+.Sy defgroup ,
 and
 .Sy updateperm
 options are extensions to the 6.1.0 protocol and will not work with earlier

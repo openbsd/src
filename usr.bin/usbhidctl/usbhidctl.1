@@ -1,4 +1,4 @@
-.\" $OpenBSD: usbhidctl.1,v 1.5 2002/11/14 02:57:28 deraadt Exp $
+.\" $OpenBSD: usbhidctl.1,v 1.6 2003/06/10 09:12:12 jmc Exp $
 .\" $NetBSD: usbhidctl.1,v 1.14 2001/12/28 17:49:32 augustss Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -70,10 +70,11 @@
 .Op Ar item=value ...
 .Sh DESCRIPTION
 .Nm
-can be used to output or modify the state of a USB HID (Human Interface
-Device).  If a list of items is present on the command line, then
+can be used to output or modify the state of a USB HID (Human Interface Device).
+If a list of items is present on the command line, then
 .Nm
-prints the current value of those items for the specified device.  If the
+prints the current value of those items for the specified device.
+If the
 .Fl w
 flag is specified
 .Nm
@@ -85,27 +86,29 @@ The options are as follows:
 Show all items and their current values.
 This option fails if the device does not support the GET_REPORT command.
 .It Fl f Ar device
-Specify a path name for the device to operate on.  If
+Specify a path name for the device to operate on.
+If
 .Ar device
-is numeric, it is taken to be the USB HID device number.  If it is a relative
-path, it is taken to be the name of the device under
+is numeric, it is taken to be the USB HID device number.
+If it is a relative path, it is taken to be the name of the device under
 .Pa /dev .
 An absolute path is taken to be the literal device pathname.
 .It Fl l
-Loop and dump the device data every time it changes.  Only 'input' items are
-displayed in this mode.
+Loop and dump the device data every time it changes.
+Only 'input' items are displayed in this mode.
 .It Fl n
-Suppress printing of the item name when querying specific items.  Only output
-the current value.
+Suppress printing of the item name when querying specific items.
+Only output the current value.
 .It Fl r
 Dump the USB HID report descriptor.
 .It Fl t Ar table
 Specify a path name for the HID usage table file.
 .It Fl v
-Be verbose.  Repeating this option increases verbosity.
+Be verbose.
+Repeating this option increases verbosity.
 .It Fl w
-Change item values.  Only 'output' and 'feature' kinds can be set with this
-option.
+Change item values.
+Only 'output' and 'feature' kinds can be set with this option.
 .El
 .Sh FILES
 .Pa /usr/share/misc/usb_hid_usages
@@ -113,9 +116,10 @@ The default HID usage table.
 .Sh SYNTAX
 .Nm
 parses the names of items specified on the command line against the human
-interface items reported by the USB device.  Each human interface item is
-mapped from its native form to a human readable name, using the HID usage
-table file.  Command line items are compared with the generated item names,
+interface items reported by the USB device.
+Each human interface item is mapped from its native form to a human readable
+name, using the HID usage table file.
+Command line items are compared with the generated item names,
 and the USB HID device is operated on when a match is found.
 .Pp
 Each human interface item is named by the
@@ -124,7 +128,8 @@ it appears in, the
 .Qq usage
 within that page, and the list of
 .Qq collections
-containing the item.  Each collection in turn is also identified by page, and
+containing the item.
+Each collection in turn is also identified by page, and
 the usage within that page.
 .Pp
 On the
@@ -136,12 +141,13 @@ The collections are separated by the character
 .Pp
 As an alternative notation in items on the command line, the native numeric
 value for the page name or usage can be used instead of the full human
-readable page name or usage name.  Numeric values can be specified in decimal,
-octal or hexadecimal.
+readable page name or usage name.
+Numeric values can be specified in decimal, octal or hexadecimal.
 .Sh EXAMPLES
 On a standard USB mouse the item
 .Dl Generic_Desktop:Mouse.Generic_Desktop:Pointer.Button:Button_2
-reflects the current status of button 2.  The
+reflects the current status of button 2.
+The
 .Qq button 2
 item is encapsulated within two collections, the
 .Qq Mouse
@@ -151,22 +157,23 @@ page, and the
 .Qq Pointer
 collection in the
 .Qq Generic Desktop
-page.  The item itself is the usage
+page.
+The item itself is the usage
 .Qq Button_2
 in the
 .Qq Button
 page.
 .Pp
-An item can generally be named by omitting one or more of the page names.  For
-example the
+An item can generally be named by omitting one or more of the page names.
+For example the
 .Qq button 2
 item would usually just be referred to on the command line as:
 .Dl $ usbhidctl -f /dev/mouse Mouse.Pointer.Button_2
 .Pp
 Items can also be named by referring to parts of the item name with the
-numeric representation of the native HID usage identifiers.  This is most
-useful when items are missing from the HID usage table.  The page identifier
-for the
+numeric representation of the native HID usage identifiers.
+This is most useful when items are missing from the HID usage table.
+The page identifier for the
 .Qq Generic Desktop
 page is 1, and the usage identifier for the usage
 .Qq Button_2
@@ -177,10 +184,12 @@ item:
 .Pp
 Devices with human interface outputs can be manipulated with the
 .Fl w
-option.  For example, some USB mice have a Light Emitting Diode under software
+option.
+For example, some USB mice have a Light Emitting Diode under software
 control as usage 2 under page 0xffff, in the
 .Qq Mouse
-collection.  The following can be used to switch this LED off:
+collection.
+The following can be used to switch this LED off:
 .Dl $ usbhidctl -f /dev/mouse -w Mouse.0xffff:2=0
 .Sh SEE ALSO
 .Xr usbhidaction 1 ,
@@ -196,5 +205,6 @@ command first appeared in
 .An David Sainty Aq David.Sainty@dtsp.co.nz
 .Sh BUGS
 Some USB HID devices report multiple items with exactly the same usage
-identifiers.  The current naming scheme does not provide the means to specify
+identifiers.
+The current naming scheme does not provide the means to specify
 which of a set of identically named items you are referring to.

@@ -1,4 +1,4 @@
-.\"  $OpenBSD: od.1,v 1.11 2003/01/06 09:04:30 deraadt Exp $
+.\"  $OpenBSD: od.1,v 1.12 2003/06/10 09:12:10 jmc Exp $
 .\"  $NetBSD: od.1,v 1.16 2001/12/07 01:23:42 bjh21 Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -89,8 +89,8 @@ The options are as follows:
 .Em One-byte character display .
 Display the input offset in octal, followed by sixteen
 space-separated, three column, space-filled, characters of input data
-per line.  Control characters are printed as their names instead of as
-C-style escapes.
+per line.
+Control characters are printed as their names instead of as C-style escapes.
 .It Fl B
 Same as
 .Fl o .
@@ -98,14 +98,15 @@ Same as
 .Em One-byte octal display .
 Display the input offset in octal, followed by sixteen
 space-separated, three column, zero-filled, bytes of input data, in
-octal, per line.  This is the default output style if no other is
-selected.
+octal, per line.
+This is the default output style if no other is selected.
 .It Fl c
 .Em One-byte character display .
 Display the input offset in octal, followed by sixteen
 space-separated, three column, space-filled, characters of input data
-per line.  Control characters are printed as c style escapes, or as
-three octal digits, if no c escape exists for the character.
+per line.
+Control characters are printed as c style escapes, or as three octal digits,
+if no c escape exists for the character.
 .It Fl d
 .Em Two-byte decimal display .
 Display the input offset in octal, followed by eight
@@ -195,26 +196,31 @@ Display the input offset in octal, followed by eight
 space-separated, six column, zero-filled, two-byte units
 of input data, in octal, per line.
 .It Fl t Ar type_string
-Specify one or more output types.  The
+Specify one or more output types.
+The
 .Em type_string
 option-argument must be a string specifying the types to be used when
-writing the input data.  The string must consist of the type
-specification characters:
+writing the input data.
+The string must consist of the type specification characters:
 .Pp
 .Cm a
 selects US-ASCII output, with control characters replaced with their
-names instead of as c escape sequences.  See also the
+names instead of as c escape sequences.
+See also the
 .Cm _u
-conversion provided by hexdump(1).
+conversion provided by
+.Xr hexdump 1 .
 .Pp
 .Cm c
-selects a standard character based conversion.  See also the
+selects a standard character based conversion.
+See also the
 .Cm _c
-conversion provided by hexdump(1).
+conversion provided by
+.Xr hexdump 1 .
 .Pp
 .Cm f
-selects the floating point output format.  This type character can be
-optionally followed by the characters
+selects the floating point output format.
+This type character can be optionally followed by the characters
 .Cm 4
 or
 .Cm F
@@ -222,10 +228,12 @@ to specify four byte floating point output, or
 .Cm 8
 or
 .Cm L
-to specify eight byte floating point output.  The default output
-format is eight byte floats.  See also the
+to specify eight byte floating point output.
+The default output format is eight byte floats.
+See also the
 .Cm e
-conversion provided by hexdump(1).
+conversion provided by
+.Xr hexdump 1 .
 .Pp
 .Cm d ,
 .Cm o ,
@@ -257,14 +265,16 @@ to specify two-byte output,
 .Cm 4
 to specify four-byte output, or
 .Cm 8
-to specify eight-byte output.  The default output format is in
-four-byte quantities.  See also the
+to specify eight-byte output.
+The default output format is in four-byte quantities.
+See also the
 .Cm d ,
 .Cm o ,
 .Cm u ,
 and
 .Cm x
-conversions provided by hexdump(1).
+conversions provided by
+.Xr hexdump 1 .
 .\"(a|c|f[FLD]?|[doux][C1S2I4L8]?)*
 .It Fl v
 The
@@ -289,8 +299,9 @@ Same as
 For each input file,
 .Nm
 sequentially copies the input to standard output, transforming the
-data according to the options given.  If no options are specified, the
-default display is equivalent to specifying the
+data according to the options given.
+If no options are specified, the default display is equivalent to
+specifying the
 .Fl o
 option.
 .Pp

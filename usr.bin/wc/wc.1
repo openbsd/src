@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wc.1,v 1.12 2003/06/03 02:56:22 millert Exp $
+.\"	$OpenBSD: wc.1,v 1.13 2003/06/10 09:12:12 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -113,11 +113,16 @@ The
 utility exits 0 on success or >0 if an error occurred.
 .Sh SEE ALSO
 .Xr isspace 3
-.Sh COMPATIBILITY
+.Sh STANDARDS
 Historically, the
 .Nm
 utility was documented to define a word as a ``maximal string of
-characters delimited by <space>, <tab> or <newline> characters''.
+characters delimited by
+.Aq space ,
+.Aq tab
+or
+.Aq newline
+characters''.
 The implementation, however, didn't handle non-printing characters
 correctly so that ``  ^D^E  '' counted as 6 spaces, while ``foo^D^Ebar''
 counted as 8 characters.
@@ -129,7 +134,7 @@ in terms of the
 .Xr isspace 3
 function, as required by
 .St -p1003.2-92 .
-.Sh STANDARDS
+.Pp
 The
 .Nm
 utility conforms to

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: install.1,v 1.18 2003/06/03 02:56:24 millert Exp $
+.\"	$OpenBSD: install.1,v 1.19 2003/06/10 09:12:13 jmc Exp $
 .\"	$NetBSD: install.1,v 1.4 1994/11/14 04:57:17 jtc Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
@@ -172,6 +172,15 @@ creates an empty file.
 .Pp
 Upon successful completion a value of 0 is returned.
 Otherwise, a value >0 is returned.
+.Sh ENVIRONMENT
+.Bl -tag -width "STRIP"
+.It Ev STRIP
+For an alternate
+.Xr strip 1
+program to run.
+Default is
+.Pa /usr/bin/strip .
+.El
 .Sh FILES
 .Bl -tag -width INS@XXXXXX -compact
 .It Pa INS@XXXXXX
@@ -187,15 +196,6 @@ option, temporary files named INS@XXXXXX,
 where XXXXXX is decided by
 .Xr mkstemp 3 ,
 are created in the target directory.
-.El
-.Sh ENVIRONMENT
-.Bl -tag -width "STRIP"
-.It Ev STRIP
-For an alternate
-.Xr strip 1
-program to run.
-Default is
-.Pa /usr/bin/strip .
 .El
 .Sh SEE ALSO
 .Xr chflags 1 ,

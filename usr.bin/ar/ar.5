@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ar.5,v 1.6 2003/06/03 02:56:05 millert Exp $
+.\"	$OpenBSD: ar.5,v 1.7 2003/06/10 09:12:09 jmc Exp $
 .\"	$NetBSD: ar.5,v 1.2 1995/03/25 06:39:38 glass Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -104,6 +104,11 @@ character, although the size in the header does not reflect this.
 .Sh SEE ALSO
 .Xr ar 1 ,
 .Xr stat 2
+.Sh STANDARDS
+No archive format is currently specified by any standard.
+.At V
+has historically distributed archives in a different format from
+all of the above.
 .Sh HISTORY
 There have been at least four
 .Nm ar
@@ -138,8 +143,3 @@ It has been extended for these reasons,
 as described above.
 This format first appeared in
 .Bx 4.4 .
-.Sh COMPATIBILITY
-No archive format is currently specified by any standard.
-.At V
-has historically distributed archives in a different format from
-all of the above.

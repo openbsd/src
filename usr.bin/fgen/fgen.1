@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fgen.1,v 1.1 2001/08/17 21:31:02 jason Exp $
+.\"	$OpenBSD: fgen.1,v 1.2 2003/06/10 09:12:10 jmc Exp $
 .\"	$NetBSD: fgen.1,v 1.6 2001/06/13 10:46:05 wiz Exp $
 .\"
 .\" Copyright (c) 1998 Eduardo Horvath, All Rights Reserved.
@@ -56,9 +56,10 @@ Reads Forth source and generates tokenized FCode object file.
 .\" .Sh STANDARDS
 .\" .Sh HISTORY
 .Sh AUTHORS
-Written by Eduardo E. Horvath <eeh@one-o.com>
+Written by
+.An Eduardo E. Horvath Aq eeh@one-o.com
 .Sh BUGS
-String escape sequences are not recognized so things such as 
+String escape sequences are not recognized so things such as
 .Pp
 .Li \&" foo \&"\&(01 02\&) \&"n \&"
 .Pp
@@ -66,8 +67,8 @@ will result in the string
 .Pp
 .Dq  foo \&"\&(01 02\&) \&"n .
 .Pp
-Hexadecimal numbers with dots in them such as 
-.Li 100.0000 
+Hexadecimal numbers with dots in them such as
+.Li 100.0000
 are not parsed.
 .Pp
 Permissions on the output file are often incorrect.

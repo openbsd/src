@@ -1,4 +1,4 @@
-.\" $OpenBSD: at.1,v 1.30 2003/02/19 22:11:42 millert Exp $
+.\" $OpenBSD: at.1,v 1.31 2003/06/10 09:12:09 jmc Exp $
 .\"
 .\" Copyright (C) 1993, 1994  Thomas Koenig
 .\" Copyright (C) 1993  David Parsons
@@ -59,7 +59,7 @@ specified by the
 .Ev SHELL
 environment variable.
 If
-.Ev SHELL   
+.Ev SHELL
 is not set, the shell in the user's password database entry is used
 instead.
 If all else fails,
@@ -318,8 +318,10 @@ deny permission control
 .Xr sendmail 8
 .Sh AUTHORS
 .Nm at
-was mostly written by Thomas Koenig <ig25@rz.uni-karlsruhe.de>.
-The time parsing routines are by David Parsons <orc@pell.chi.il.us>.
+was mostly written by
+.An Thomas Koenig Aq ig25@rz.uni-karlsruhe.de .
+The time parsing routines are by
+.An David Parsons Aq orc@pell.chi.il.us .
 .Sh BUGS
 .Nm at
 and

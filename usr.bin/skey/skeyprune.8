@@ -1,4 +1,4 @@
-.\" $OpenBSD: skeyprune.8,v 1.7 2002/05/16 18:27:34 millert Exp $
+.\" $OpenBSD: skeyprune.8,v 1.8 2003/06/10 09:12:11 jmc Exp $
 .\"
 .\"
 .Dd May 16, 2002
@@ -25,6 +25,11 @@ is not specified, only invalid entries are pruned.
 .Pp
 If a malformed entry is encountered, or if the file mode/type is incorrect,
 an error is printed to the standard error.
+.Sh FILES
+.Bl -tag -width /etc/skey
+.It Pa /etc/skey
+directory containing S/Key user entries
+.El
 .Sh ERRORS
 The following errors are cause for concern.
 .Bl -tag -width Ds
@@ -47,11 +52,6 @@ The user's entry had a bad link count (should be 1).
 .It Invalid entry for user
 The user's entry was not of the correct format, as specified by
 .Xr skey 5 .
-.El
-.Sh FILES
-.Bl -tag -width /etc/skey
-.It Pa /etc/skey
-directory containing S/Key user entries
 .El
 .Sh SEE ALSO
 .Xr skey 1 ,

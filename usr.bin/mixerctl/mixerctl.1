@@ -1,4 +1,4 @@
-.\" $OpenBSD: mixerctl.1,v 1.17 2003/05/15 00:57:50 jfb Exp $
+.\" $OpenBSD: mixerctl.1,v 1.18 2003/06/10 09:12:11 jmc Exp $
 .\" $NetBSD: mixerctl.1,v 1.8 1998/05/09 12:41:16 augustss Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -125,6 +125,16 @@ Discrete mixer values, e.g.,
 the recording source, have symbolic names.
 Depending on the mixer it
 may either be an enumeration or a set.
+.Sh ENVIRONMENT
+.Bl -tag -width MIXERDEVICE
+.It Ev MIXERDEVICE
+The audio mixer device to use.
+.El
+.Sh FILES
+.Bl -tag -width /dev/mixer
+.It Pa /dev/mixer
+default mixer audio device
+.El
 .Sh EXAMPLES
 The command
 .Pp
@@ -142,16 +152,6 @@ record.record=220,220 volume
 record.record.source=mic  [ mic cd dac ]
 monitor.monitor=0 volume
 .Ed
-.Sh ENVIRONMENT
-.Bl -tag -width MIXERDEVICE
-.It Ev MIXERDEVICE
-The audio mixer device to use.
-.El
-.Sh FILES
-.Bl -tag -width /dev/mixer
-.It Pa /dev/mixer
-default mixer audio device
-.El
 .Sh SEE ALSO
 .Xr audioctl 1 ,
 .Xr audio 4 ,

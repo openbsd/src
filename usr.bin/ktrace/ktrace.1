@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ktrace.1,v 1.12 2003/06/03 02:56:09 millert Exp $
+.\"	$OpenBSD: ktrace.1,v 1.13 2003/06/10 09:12:10 jmc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -104,12 +104,12 @@ flag is permitted).
 .It Fl t Ar trstr
 The string argument represents the kernel trace points, one per letter.
 The default flags are
-.Cm c Ns ,
-.Cm e Ns ,
-.Cm i Ns ,
-.Cm n Ns ,
+.Cm c ,
+.Cm e ,
+.Cm i ,
+.Cm n ,
 and
-.Cm s Ns .
+.Cm s .
 The following table equates the letters with the tracepoints:
 .Pp
 .Bl -tag -width flag -compact
@@ -124,7 +124,7 @@ trace
 trace namei translations
 .It Cm s
 trace signal processing
-.It Cm w 
+.It Cm w
 trace context switch points
 .El
 .It Ar command
@@ -139,6 +139,11 @@ The
 and
 .Ar command
 options are mutually exclusive.
+.Sh FILES
+.Bl -tag -width ktrace.out -compact
+.It Pa ktrace.out
+default ktrace dump file
+.El
 .Sh EXAMPLES
 # trace all kernel operations of process id 34
 .Dl $ ktrace -p 34
@@ -168,11 +173,6 @@ on process 67
 .Pp
 # disable tracing of all processes owned by the user
 .Dl $ ktrace -C
-.Sh FILES
-.Bl -tag -width ktrace.out -compact
-.It Pa ktrace.out
-default ktrace dump file
-.El
 .Sh SEE ALSO
 .Xr kdump 1
 .Sh HISTORY

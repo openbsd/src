@@ -1,5 +1,5 @@
-.\"	@(#) $OpenBSD: m4.1,v 1.31 2003/06/03 02:56:10 millert Exp $
-.\" 
+.\"	@(#) $OpenBSD: m4.1,v 1.32 2003/06/10 09:12:10 jmc Exp $
+.\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -29,7 +29,7 @@
 .\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
-.\" 
+.\"
 .Dd January 26, 1993
 .Dt M4 1
 .Os
@@ -101,7 +101,7 @@ Add directory
 to the include path.
 .It Fl d Ar "flags"
 Set trace flags.
-.Ar flags 
+.Ar flags
 may hold the following:
 .Bl -tag -width Ds
 .It Ar a
@@ -124,13 +124,13 @@ number macro expansions.
 turn on all options.
 .El
 .Pp
-By default, trace is set to 
+By default, trace is set to
 .Qq eq .
 .It Fl o Ar filename
 Send trace output to
 .Ar filename .
 .It Fl t Ar macro
-Turn tracing on for 
+Turn tracing on for
 .Ar macro .
 .It Fl g
 Activate GNU-m4 compatibility mode.
@@ -364,10 +364,10 @@ Returns the current file's line number.
 .It Ic __file__
 Returns the current file's name.
 .El
-.Sh COMPATIBILITY
+.Sh STANDARDS
 .Nm
 follows the Single Unix 2 specification, along with a few extensions taken
-from 
+from
 .Nm gnu-m4 .
 .Pp
 The
@@ -384,14 +384,14 @@ Flags
 .Fl t
 are non-standard.
 .Pp
-The output format of tracing and of 
-.Ic dumpdef 
-are not specified in any standard, 
+The output format of tracing and of
+.Ic dumpdef
+are not specified in any standard,
 are likely to change and should not be relied upon.
-The current format of tracing is closely modelled on 
-.Nm gnu-m4 , 
+The current format of tracing is closely modelled on
+.Nm gnu-m4 ,
 to allow
-.Nm autoconf 
+.Nm autoconf
 to work.
 .Pp
 For portability, one should not use the macros
@@ -407,12 +407,16 @@ For portability, one should not use the macros
 .Ic __line__ ,
 .Ic __file__ .
 .Pp
-All built-ins do expand without arguments in many other 
+All built-ins do expand without arguments in many other
 .Nm m4 .
 .Pp
 Many other
 .Nm
 have dire size limitations with respect to buffer sizes.
 .Sh AUTHORS
-Ozan Yigit <oz@sis.yorku.ca> and Richard A. O'Keefe (ok@goanna.cs.rmit.OZ.AU).
-GNU-m4 compatibility extensions by Marc Espie <espie@cvs.openbsd.org>.
+.An Ozan Yigit Aq oz@sis.yorku.ca
+and
+.An Richard A. O'Keefe Aq ok@goanna.cs.rmit.OZ.AU .
+.Pp
+GNU-m4 compatibility extensions by
+.An Marc Espie Aq espie@cvs.openbsd.org .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tr.1,v 1.8 2003/06/03 02:56:20 millert Exp $
+.\"	$OpenBSD: tr.1,v 1.9 2003/06/10 09:12:12 jmc Exp $
 .\"	$NetBSD: tr.1,v 1.5 1994/12/07 08:35:13 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -261,7 +261,7 @@ Strip out non-printable characters from file1.
 .D1 Li "$ tr -cd \*q[:print:]\*q < file1"
 .Sh SEE ALSO
 .Xr sed 1
-.Sh COMPATIBILITY
+.Sh STANDARDS
 System V has historically implemented character ranges using the syntax
 .Dq [c-c]
 instead of the
@@ -314,7 +314,7 @@ and
 .Fl s
 options were ignored unless two strings were specified.
 This implementation will not permit illegal syntax.
-.Sh STANDARDS
+.Pp
 The
 .Nm
 utility is expected to be

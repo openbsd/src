@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mg.1,v 1.17 2003/05/05 22:05:57 vincent Exp $
+.\"	$OpenBSD: mg.1,v 1.18 2003/06/10 09:12:11 jmc Exp $
 .\"
 .Dd February 25, 2000
 .Dt MG 1
@@ -152,9 +152,9 @@ set-default-mode blink
 .Ed
 .Pp
 More complicated key mappings are also possible, though there are some
-internal limitations compared to regular emacs.  An example of how to map
-control characters and sequences follows, illustrating the Gosling-like
-line scrolling characters.
+internal limitations compared to regular emacs.
+An example of how to map control characters and sequences follows,
+illustrating the Gosling-like line scrolling characters.
 .Bd -literal -offset indent
 global-set-key "\\^Z" scroll-one-line-up
 global-set-key "\\ez" scroll-one-line-down
@@ -181,7 +181,7 @@ In
 you must use "^X-1" to get rid of it.
 .Pp
 The undo feature has a minor difference compared to the same feature in
-Gnu Emacs.  When the end of the undo records list is reached,
+Gnu Emacs.
+When the end of the undo records list is reached,
 .Nm mg
 will not stop and inform the user for one undo keystroke before continuing.
-

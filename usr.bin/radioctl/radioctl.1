@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radioctl.1,v 1.6 2003/01/15 15:05:36 deraadt Exp $
+.\"	$OpenBSD: radioctl.1,v 1.7 2003/06/10 09:12:11 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Vladimir Popov
 .\" All rights reserved.
@@ -125,6 +125,18 @@ cards allow the station locking sensitivity to be changed.
 All the remaining controls (signal, stereo and card capabilities) are read-only
 and can be viewed using option
 .Fl a .
+.Sh ENVIRONMENT
+The following environment variable affects the execution of
+.Nm radioctl :
+.Bl -tag -width RADIODEVICE
+.It Ev RADIODEVICE
+The radio tuner device to use.
+.El
+.Sh FILES
+.Bl -tag -width /dev/radio
+.It Pa /dev/radio
+radio tuner device
+.El
 .Sh EXAMPLES
 The command
 .Pp
@@ -141,18 +153,6 @@ stereo=on
 card capabilities:
         manageable mono/stereo
 .Ed
-.Sh ENVIRONMENT
-The following environment variable affects the execution of
-.Nm radioctl :
-.Bl -tag -width RADIODEVICE
-.It Ev RADIODEVICE
-The radio tuner device to use.
-.El
-.Sh FILES
-.Bl -tag -width /dev/radio
-.It Pa /dev/radio
-radio tuner device
-.El
 .Sh SEE ALSO
 .Xr radio 4
 .Sh HISTORY

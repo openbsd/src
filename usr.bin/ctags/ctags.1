@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ctags.1,v 1.12 2003/06/03 02:56:07 millert Exp $
+.\"	$OpenBSD: ctags.1,v 1.13 2003/06/10 09:12:10 jmc Exp $
 .\"	$NetBSD: ctags.1,v 1.4 1995/03/26 20:14:04 glass Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
@@ -170,15 +170,15 @@ of the second section of the yacc file, and
 .Ar yylex
 is the start of
 the second section of the lex file.
-.Sh DIAGNOSTICS
-.Nm
-exits with a value of 1 if an error occurred, 0 otherwise.
-Duplicate objects are not considered errors.
 .Sh FILES
 .Bl -tag -width tags -compact
 .It Pa tags
 default output tags file
 .El
+.Sh DIAGNOSTICS
+.Nm
+exits with a value of 1 if an error occurred, 0 otherwise.
+Duplicate objects are not considered errors.
 .Sh SEE ALSO
 .Xr ex 1 ,
 .Xr vi 1

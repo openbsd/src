@@ -1,4 +1,4 @@
-.\"	$OpenBSD: skeyinit.1,v 1.25 2002/12/09 21:41:38 cloder Exp $
+.\"	$OpenBSD: skeyinit.1,v 1.26 2003/06/10 09:12:11 jmc Exp $
 .\"	$NetBSD: skeyinit.1,v 1.4 1995/07/07 22:24:09 jtc Exp $
 .\"	@(#)skeyinit.1	1.1 	10/28/93
 .\"
@@ -139,6 +139,13 @@ Selects RMD-160 (160 bit Ripe Message Digest) as the hash algorithm.
 The username to be changed/added.
 By default the current user is operated on.
 .El
+.Sh FILES
+.Bl -tag -width /etc/login.conf -compact
+.It Pa /etc/login.conf
+file containing authentication types
+.It Pa /etc/skey
+directory containing user entries for S/Key
+.El
 .Sh ERRORS
 .Bl -tag -compact -width "skey disabled"
 .It "skey disabled"
@@ -149,13 +156,6 @@ The superuser may enable
 via the
 .Fl E
 flag.
-.El
-.Sh FILES
-.Bl -tag -width /etc/login.conf -compact
-.It Pa /etc/login.conf
-file containing authentication types
-.It Pa /etc/skey
-directory containing user entries for S/Key
 .El
 .Sh SEE ALSO
 .Xr skey 1 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: su.1,v 1.18 2003/06/03 02:56:17 millert Exp $
+.\"	$OpenBSD: su.1,v 1.19 2003/06/10 09:12:12 jmc Exp $
 .\"
 .\" Copyright (c) 1988, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -90,7 +90,7 @@ If not using
 and the target login has a user ID of 0 then the
 .Ev PATH
 variable and umask value
-(see 
+(see
 .Xr umask 2 )
 are always set according to the
 .Pa /etc/login.conf
@@ -212,6 +212,24 @@ By default (unless the prompt is reset by a startup file) the superuser
 prompt is set to
 .Dq Sy \&#
 to remind one of its awesome power.
+.Sh ENVIRONMENT
+.Bl -tag -width LOGNAME
+.It Ev HOME
+Default home directory of real user ID unless modified as
+specified above.
+.It Ev LOGNAME
+The user ID is always the effective ID (the target user ID) after an
+.Nm
+unless the user ID is 0 (root).
+.It Ev PATH
+Default search path of real user ID unless modified as specified above.
+.It Ev TERM
+Provides terminal type which may be retained for the substituted
+user ID.
+.It Ev USER
+Same as
+.Ev LOGNAME .
+.El
 .Sh EXAMPLES
 .Bl -tag -width 5n -compact
 .It Li "$ su bin -c makewhatis"
@@ -231,24 +249,6 @@ Pretend a login for user
 .Pp
 .It Li "$ su -a skey -l foo"
 Same as above, but use S/Key for authentication.
-.El
-.Sh ENVIRONMENT
-.Bl -tag -width LOGNAME
-.It Ev HOME
-Default home directory of real user ID unless modified as
-specified above.
-.It Ev LOGNAME
-The user ID is always the effective ID (the target user ID) after an
-.Nm
-unless the user ID is 0 (root).
-.It Ev PATH
-Default search path of real user ID unless modified as specified above.
-.It Ev TERM
-Provides terminal type which may be retained for the substituted
-user ID.
-.It Ev USER
-Same as
-.Ev LOGNAME .
 .El
 .Sh SEE ALSO
 .Xr csh 1 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.conf.5,v 1.9 2003/06/03 02:56:12 millert Exp $
+.\"	$OpenBSD: man.conf.5,v 1.10 2003/06/10 09:12:11 jmc Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -135,6 +135,11 @@ be listed per line, as well.
 .Pp
 Empty lines or lines whose first non-whitespace character is a hash
 mark (``#'') are ignored.
+.Sh FILES
+.Bl -tag -width /etc/man.conf -compact
+.It Pa /etc/man.conf
+standard manual directory search path
+.El
 .Sh EXAMPLES
 Given the following
 .Nm man.conf
@@ -179,11 +184,6 @@ manual page.
 If a subdirectory with the same name as the current machine type
 existed in any of them, it would be searched as well, before each
 of them were searched.
-.Sh FILES
-.Bl -tag -width /etc/man.conf -compact
-.It Pa /etc/man.conf
-standard manual directory search path
-.El
 .Sh SEE ALSO
 .Xr apropos 1 ,
 .Xr machine 1 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mail.1,v 1.37 2003/06/03 02:56:11 millert Exp $
+.\"	$OpenBSD: mail.1,v 1.38 2003/06/10 09:12:11 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -147,7 +147,6 @@ The section below,
 describes some features of
 .Nm mail
 available to help you compose your letter.
-.Pp
 .Ss Reading mail
 In normal usage,
 .Nm mail
@@ -167,7 +166,6 @@ and
 .Ic \&-
 to shift forwards and backwards, or simply enter a message number to move
 directly.
-.Pp
 .Ss Disposing of mail
 After examining a message you can
 .Ic delete
@@ -189,7 +187,6 @@ session can be aborted by giving the
 .Pq Ic x
 command.
 Deleted messages, however, will usually disappear, never to be seen again.
-.Pp
 .Ss Specifying messages
 Commands such as
 .Ic print
@@ -212,7 +209,6 @@ the last message; thus the command
 which prints the first few lines of a message could be used in
 .Ic top \&*
 to print the first few lines of all messages.
-.Pp
 .Ss Replying to or originating mail
 You can use the
 .Ic reply
@@ -238,7 +234,6 @@ to the message and allow you to escape to an editor to revise the
 message or to a shell to run some commands.
 (These options
 are given in the summary below.)
-.Pp
 .Ss Ending a mail processing session
 You can end a
 .Nm mail
@@ -252,7 +247,6 @@ file unless they have been deleted in which case they are discarded.
 Unexamined messages go back to the post office (see the
 .Fl f
 option above).
-.Pp
 .Ss Personal and system wide distribution lists
 It is also possible to create personal distribution lists so that,
 for instance, you can send mail to
@@ -286,7 +280,6 @@ are not expanded when the mail is sent,
 but any reply returned to the machine will have the system wide
 alias expanded as all mail goes through
 .Xr sendmail .
-.Pp
 .Ss Network mail (ARPA, UUCP, Berknet)
 See
 .Xr mailaddr 7

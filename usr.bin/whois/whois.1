@@ -1,4 +1,4 @@
-.\"	$OpenBSD: whois.1,v 1.20 2003/06/03 02:56:23 millert Exp $
+.\"	$OpenBSD: whois.1,v 1.21 2003/06/10 09:12:13 jmc Exp $
 .\"	$NetBSD: whois.1,v 1.5 1995/08/31 21:51:32 jtc Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -49,7 +49,7 @@ The
 .Nm
 utility looks up records in the databases maintained by several
 Network Information Centers
-.Pq Tn NICs Ns .
+.Pq Tn NICs .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -81,11 +81,11 @@ option with an argument of
 .It Fl d
 Use the US Department of Defense database.
 It contains points of contact for subdomains of
-.Tn \&.MIL Ns .
+.Tn \&.MIL .
 .It Fl g
 Use the US non-military federal government database, which contains points of
 contact for subdomains of
-.Tn \&.GOV Ns .
+.Tn \&.GOV .
 .It Fl h Ar host
 Use the specified host instead of the default NIC
 (whois.crsnic.net).
@@ -102,7 +102,7 @@ automatically for a large number of
 .Tn TLDs .
 .Pp
 In the event that an IP
-address is specified, the whois server will default to the American   
+address is specified, the whois server will default to the American
 Registry for Internet Numbers
 .Pq Tn ARIN .
 If a query to
@@ -139,7 +139,7 @@ Also, note that the
 database
 .Pq Pa whois.internic.net
 is no longer handled by Network Solutions, Inc.
-For details, see 
+For details, see
 .Pa http://www.internic.net/ .
 .Pp
 (Hint: Contact information, identified by the term
@@ -156,7 +156,7 @@ Use the Latin American and Caribbean IP address Regional Registry
 .Pq Tn LACNIC
 database.
 It contains network numbers used in much of Latin America and the
-Caribbean. 
+Caribbean.
 .It Fl m
 Use the Route Arbiter Database
 .Pq Tn RADB
@@ -192,9 +192,9 @@ Use the Russia Network Information Center
 database.
 It contains network numbers and domain contact information
 for subdomains of
-.Tn \&.RU Ns .
+.Tn \&.RU .
 This option is deprecated; use the
-.Fl c   
+.Fl c
 option with an argument of
 .Qq Li RU
 instead.
@@ -284,7 +284,7 @@ a whois server using a non-standard port, where
 .Dq Li query-data
 is the query to be sent to
 .Dq Li whois.example.com
-on port    
+on port
 .Dq Li rwhois
 (written numerically as 4321).
 .Pp

@@ -1,4 +1,4 @@
-.\" $OpenBSD: units.1,v 1.14 2003/02/18 07:57:49 jmc Exp $
+.\" $OpenBSD: units.1,v 1.15 2003/06/10 09:12:12 jmc Exp $
 .\" converted to new format by deraadt@openbsd.org
 .\"
 .\" Copyright (c) 1993 by Adrian Mariano (adrian@cam.cornell.edu)
@@ -15,7 +15,7 @@
 .\"
 .\" I would appreciate (though I do not require) receiving a copy of any
 .\" improvements you might make to this program.
-.\" 
+.\"
 .Dd July 14, 1993
 .Dt UNITS 1
 .Os
@@ -42,33 +42,33 @@ to Fahrenheit, for example.
 It also does not handle logarithmic units such as bels.
 It works interactively by prompting the user for input:
 .Pp
-.nf
-    You have: meters
-    You want: feet
-            * 3.2808399
-            / 0.3048
+.Bd -literal -offset indent
+You have: meters
+You want: feet
+        * 3.2808399
+        / 0.3048
 
-    You have: cm^3
-    You want: gallons
-            * 0.00026417205
-            / 3785.4118
-.fi
+You have: cm^3
+You want: gallons
+        * 0.00026417205
+        / 3785.4118
+.Ed
 .Pp
 The
 .Nm
 program can handle numbers as well:
 .Pp
-.nf
-    You have: 60 miles/hr
-    You want: km/hr
-            * 96.56064
-            / 0.010356187
+.Bd -literal -offset indent
+You have: 60 miles/hr
+You want: km/hr
+        * 96.56064
+        / 0.010356187
 
-    You have: 5 austriaschilling
-    You want: 100 italylira
-            * 7.0357114
-            / 0.14213204
-.fi
+You have: 5 austriaschilling
+You want: 100 italylira
+        * 7.0357114
+        / 0.14213204
+.Ed
 .Pp
 In other words, 60 miles per hour is about 96.6 km/hr, and 5 Austrian
 Schillings will get you seven 100-Lira coins.
@@ -110,13 +110,13 @@ If the user enters incompatible unit types, the units program will
 print a message indicating that the units are not conformable and
 it will display the reduced form for each unit:
 .Pp
-.nf
-    You have: ergs/hour
-    You want: fathoms kg^2 / day
-    conformability error
-            2.7777778e-11 kg m^2 / sec^3
-            2.1166667e-05 kg^2 m / sec
-.fi
+.Bd -literal -offset indent
+You have: ergs/hour
+You want: fathoms kg^2 / day
+conformability error
+        2.7777778e-11 kg m^2 / sec^3
+        2.1166667e-05 kg^2 m / sec
+.Ed
 .Pp
 The conversion information is read from a units data file.
 The default file includes definitions for most familiar units,

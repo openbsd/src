@@ -1,4 +1,4 @@
-.\"	$OpenBSD: passwd.1,v 1.24 2003/06/03 02:56:14 millert Exp $
+.\"	$OpenBSD: passwd.1,v 1.25 2003/06/10 09:12:11 jmc Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -37,6 +37,7 @@
 .Nd modify a user's password
 .Sh SYNOPSIS
 .Nm passwd
+.Bk -words
 .Op Fl l
 .Op Fl y
 .Op Fl k
@@ -46,6 +47,7 @@
 .Op Fl r Ar realm
 .Op Fl u Ar username[.instance][@realm]
 .Op Ar user
+.Ek
 .\" This should really be: passwd [-l] [-y] [-k [-n name] [-i instance] [-r realm] [-u username[.instance][@realm]]] [user]
 .Sh DESCRIPTION
 .Nm
@@ -126,7 +128,7 @@ an attempt is made to use the YP database.
 To change another user's KerberosIV password, one must first run
 .Xr kinit 1
 followed by
-.Xr passwd 1 .
+.Nm passwd .
 The superuser is not required to provide a user's current password
 if only the local password is modified.
 .Pp
@@ -138,6 +140,19 @@ It can be different for local
 and YP
 .Po Do ypcipher Dc Pc
 passwords.
+.Sh FILES
+.Bl -tag -width /etc/master.passwd -compact
+.It /etc/login.conf
+configuration options
+.It Pa /etc/master.passwd
+user database
+.It Pa /etc/passwd
+a Version 7 format password file
+.It Pa /etc/passwd.XXXXXX
+temporary copy of the password file
+.It /etc/ptmp
+lock file for the passwd database
+.El
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "Attempting lock password file, please wait or press ^C to abort"
@@ -164,19 +179,6 @@ $ fstat /etc/ptmp
 If no process is listed, it is safe to remove the
 .Pa /etc/ptmp
 file to clear the error.
-.El
-.Sh FILES
-.Bl -tag -width /etc/master.passwd -compact
-.It /etc/login.conf
-configuration options
-.It Pa /etc/master.passwd
-user database
-.It Pa /etc/passwd
-a Version 7 format password file
-.It Pa /etc/passwd.XXXXXX
-temporary copy of the password file
-.It /etc/ptmp
-lock file for the passwd database
 .El
 .Sh SEE ALSO
 .Xr chpass 1 ,

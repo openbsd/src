@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sectok.1,v 1.10 2003/03/31 19:40:44 jmc Exp $
+.\"	$OpenBSD: sectok.1,v 1.11 2003/06/10 09:12:11 jmc Exp $
 .\"
 .\" Copyright (C) 2001, Jakob Schlyter. All rights reserved.
 .\"
@@ -60,7 +60,6 @@ Set sleep (in milliseconds) between commands in the script.
 .El
 .Sh COMMANDS
 .Ss Non-card commands
-.Pp
 .Bl -tag -width Ds
 .It Xo
 .Cm help
@@ -109,7 +108,6 @@ Quit
 .Nm Li .
 .El
 .Ss ISO 7816-4 commands
-.Pp
 .Bl -tag -width Ds
 .It Xo
 .Cm apdu
@@ -168,7 +166,6 @@ Verify CHV (PIN).
 Change CHV (PIN).
 .El
 .Ss Cyberflex commands
-.Pp
 .Bl -tag -width Ds
 .It Xo
 .Cm ls
@@ -266,12 +263,12 @@ use manufacturer's default AUT0 key
 .El
 .El
 .\"
+.Sh HISTORY
+.Nm
+first appeared in
+.Ox 3.0 .
 .Sh AUTHORS
 .Nm
 was written by Jim Rees and others at University of Michigan
 Center for Information Technology Integration (CITI).
 .\"
-.Sh HISTORY
-.Nm
-first appeared in
-.Ox 3.0 .

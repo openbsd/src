@@ -1,4 +1,4 @@
-.\" $OpenBSD: spell.1,v 1.5 2003/06/04 21:48:02 deraadt Exp $
+.\" $OpenBSD: spell.1,v 1.6 2003/06/10 09:12:11 jmc Exp $
 .\"
 .\" Copyright (C) 1985, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -120,7 +120,7 @@ option is specified.
 .Pp
 Site administrators may add words to the local word list,
 .Pa /usr/local/share/dict/words
-or the local stop list, 
+or the local stop list,
 .Pa /usr/local/share/dict/stop .
 .Pp
 All word (and stop) lists must be sorted in lexigraphical order
@@ -182,23 +182,23 @@ The
 option takes the following arguments:
 .Bl -tag -width Ds
 .It a
-recognize 
+recognize
 .Xr man 7
 macros.
 .It e
-recognize 
+recognize
 .Xr me 7
 macros.
 .It m
-recognize 
+recognize
 .Xr me 7
 macros.
 .It s
-recognize 
+recognize
 .Xr me 7
 macros.
 .It l
-recognize 
+recognize
 .Xr mm 7
 macros and delete
 .Xr mm 7
@@ -211,7 +211,7 @@ The stop list must be sorted as specified above.
 Use
 .Ar extra_list
 in addition to the default word list.
-The extra word list must be sorted as specified above. 
+The extra word list must be sorted as specified above.
 .El
 .Sh FILES
 .Bl -tag -width /usr/local/share/dict/wordsxx -compact
@@ -238,16 +238,6 @@ Binary executed by the shell script
 .Xr sort 1 ,
 .Xr tee 1 ,
 .Xr troff 1
-.Sh BUGS
-The spelling list lacks many technical terms; new installations will
-probably wish to monitor the output for several months to gather local
-additions.
-.Pp
-British spelling was done by an American.
-.Pp
-In
-.Fl x
-mode it would be nicer if the stems were grouped with the appropriate word.
 .Sh HISTORY
 The
 .Nm spell
@@ -260,3 +250,13 @@ Unlike historic versions, the
 command does not use hashed word files.
 Instead, it uses lexigraphically sorted files and the same technique as
 .Xr look 1 .
+.Sh BUGS
+The spelling list lacks many technical terms; new installations will
+probably wish to monitor the output for several months to gather local
+additions.
+.Pp
+British spelling was done by an American.
+.Pp
+In
+.Fl x
+mode it would be nicer if the stems were grouped with the appropriate word.
