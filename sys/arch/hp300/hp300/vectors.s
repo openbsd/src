@@ -1,4 +1,4 @@
-|	$OpenBSD: vectors.s,v 1.6 1997/09/23 07:09:54 downsj Exp $
+|	$OpenBSD: vectors.s,v 1.7 2002/04/16 23:42:20 miod Exp $
 |	$NetBSD: vectors.s,v 1.12 1997/07/14 19:18:32 thorpej Exp $
 
 | Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -52,7 +52,7 @@
 	 * in locore.s once we know our CPU type.
 	 */
 
-	.text
+	.data
 GLOBAL(vectab)
 	VECTOR_UNUSED		/* 0: NOT USED (reset SSP) */
 	VECTOR_UNUSED		/* 1: NOT USED (reset PC) */
