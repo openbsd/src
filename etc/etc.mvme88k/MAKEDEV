@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.mvme88k/MAKEDEV.md,v 1.10 2004/01/05 20:11:56 miod Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.67 2004/02/05 22:22:15 todd Exp 
+#	OpenBSD: etc.mvme88k/MAKEDEV.md,v 1.11 2004/02/10 01:31:20 millert Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.68 2004/02/10 01:31:20 millert Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.9 2004/01/12 22:18:24 todd Exp 
 #
 #
