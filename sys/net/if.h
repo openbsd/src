@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.2 1996/03/03 21:07:06 niklas Exp $	*/
+/*	$OpenBSD: if.h,v 1.3 1996/03/05 15:44:23 mickey Exp $	*/
 /*	$NetBSD: if.h,v 1.20 1996/02/13 22:00:12 christos Exp $	*/
 
 /*
@@ -291,7 +291,8 @@ struct	ifreq {
 struct ifaliasreq {
 	char	ifra_name[IFNAMSIZ];		/* if name, e.g. "en0" */
 	struct	sockaddr ifra_addr;
-	struct	sockaddr ifra_broadaddr;
+	struct	sockaddr ifra_dstaddr;
+#define	ifra_broadaddr	ifra_dstaddr
 	struct	sockaddr ifra_mask;
 };
 
