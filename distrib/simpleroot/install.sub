@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.7 1998/12/19 18:32:57 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.8 1999/03/23 07:58:51 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -316,7 +316,7 @@ addhostent() {
 	sed "/^$1 /d" < /tmp/hosts > /tmp/hosts.new
 	mv /tmp/hosts.new /tmp/hosts
 
-	echo "$1 $2 $2.$FQDN" >> /tmp/hosts
+	echo "$1 $2.$FQDN $2" >> /tmp/hosts
 }
 
 addifconfig() {

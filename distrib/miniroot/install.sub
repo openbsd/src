@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.114 1999/03/23 02:30:31 millert Exp $
+#	$OpenBSD: install.sub,v 1.115 1999/03/23 07:58:08 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -434,10 +434,10 @@ addhostent() {
 		echo "127.0.0.1 localhost" > /tmp/hosts
 	fi
 
-	sed "/ $2 $2.$FQDN\$/d" < /tmp/hosts > /tmp/hosts.new
+	sed "/ $2.$FQDN $2\$/d" < /tmp/hosts > /tmp/hosts.new
 	mv /tmp/hosts.new /tmp/hosts
 
-	echo "$1 $2 $2.$FQDN" >> /tmp/hosts
+	echo "$1 $2.$FQDN $2" >> /tmp/hosts
 }
 
 addifconfig() {
