@@ -293,14 +293,7 @@ lmc_pci_attach(struct device * const parent,
 		bus_space_handle_t ioh, memh;
 		int ioh_valid, memh_valid;
 
-#if defined(__OpenBSD__)
-                pci_chipset_tag_t pc = pa->pa_pc;
-		bus_addr_t lmcbase;
-		bus_size_t lmcsize;
-		int retval;
-#endif
-
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 
 		ioh_valid = (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO,
 					    0, &iot, &ioh, NULL, NULL) == 0);
@@ -309,26 +302,6 @@ lmc_pci_attach(struct device * const parent,
 					     PCI_MAPREG_MEM_TYPE_32BIT,
 					     0, &memt, &memh, NULL,
 					     NULL) == 0);
-#elif defined(__OpenBSD__)
-		ioh_valid = 0;
-		memh_valid = 0;
-		csr_base = 0;
-
-	        iot = pa->pa_iot;
-		retval = pci_io_find(pc, pa->pa_tag, PCI_CBIO, &lmcbase, &lmcsize);
-
-		if(!retval)
-			retval = bus_space_map(pa->pa_iot, lmcbase, lmcsize, 0, &ioh);
-		ioh_valid = (retval == 0);
-
-		if(!ioh_valid) {	/* Can this if just be removed? */
-			memt = pa->pa_memt;
-			retval = pci_mem_find(pc, pa->pa_tag, PCI_CBMA, &lmcbase, &lmcsize, NULL);
-			if(!retval)
-				retval = bus_space_map(pa->pa_memt, lmcbase, lmcsize, 0, &memh);
-
-			memh_valid = (retval == 0);
-		}
 #endif
 
 
