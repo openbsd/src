@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.2 2004/10/31 12:40:01 espie Exp $
+# $OpenBSD: Update.pm,v 1.3 2004/11/01 11:48:03 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -32,6 +32,61 @@ sub validate_depend
 {
 }
 sub updatable() { 1 }
+
+sub extract
+{
+}
+
+package OpenBSD::PackingElement::FileBase;
+use File::Temp qw/tempfile/;
+
+sub extract
+{
+	my ($self, $state) = @_;
+	my $fullname = $self->fullname();
+
+	my $file=$state->{archive}->next();
+	if ($file->{name} ne $self->{name}) {
+		Fatal "Error: archive does not match", $file->{name}, "!=",
+		$self->{name}, "\n";
+	}
+	my $destdir = $state->{destdir};
+
+	my ($fh, $tempname) = tempfile(DIR => dirname($destdir.$fullname));
+
+	print "extracting $tempname\n";
+	$file->{name} = $tempname;
+	$file->{cwd} = $self->{cwd};
+	$file->{destdir} = $destdir;
+	# faked installation are VERY weird
+	if (defined $self->{symlink} && $state->{do_faked}) {
+		$file->{linkname} = $destdir.$file->{linkname};
+	}
+	$file->create();
+	$self->{tempname} = $tempname;
+}
+
+package OpenBSD::PackingElement::Dir;
+sub extract
+{
+	my ($self, $state) = @_;
+	my $fullname = $self->fullname();
+	my $destdir = $state->{destdir};
+
+	print "new directory ", $destdir, $fullname, "\n" if $state->{very_verbose};
+	return if $state->{not};
+	File::Path::mkpath($destdir.$fullname);
+}
+
+package OpenBSD::PackingElement::Sample;
+sub extract
+{
+}
+
+package OpenBSD::PackingElement::Sampledir;
+sub extract
+{
+}
 
 package OpenBSD::PackingElement::ScriptFile;
 sub updatable() { 0 }

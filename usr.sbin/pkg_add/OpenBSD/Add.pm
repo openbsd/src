@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.1 2004/11/01 11:27:50 espie Exp $
+# $OpenBSD: Add.pm,v 1.2 2004/11/01 11:48:03 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -160,24 +160,28 @@ sub install
 {
 	my ($self, $state) = @_;
 	my $fullname = $self->fullname();
-
-	my $file=$state->{archive}->next();
-	if ($file->{name} ne $self->{name}) {
-		Fatal "Error: archive does not match", $file->{name}, "!=",
-		$self->{name}, "\n";
-	}
 	my $destdir = $state->{destdir};
 
-	print "extracting $destdir$fullname\n" if $state->{very_verbose};
-	return if $state->{not};
-	$file->{name} = $fullname;
-	$file->{cwd} = $self->{cwd};
-	$file->{destdir} = $destdir;
-	# faked installation are VERY weird
-	if (defined $self->{symlink} && $state->{do_faked}) {
-		$file->{linkname} = $destdir.$file->{linkname};
+	if (defined $self->{tempname}) {
+		rename($self->{tempname}, $destdir.$fullname);
+	} else {
+		my $file=$state->{archive}->next();
+		if ($file->{name} ne $self->{name}) {
+			Fatal "Error: archive does not match", $file->{name}, "!=",
+			$self->{name}, "\n";
+		}
+
+		print "extracting $destdir$fullname\n" if $state->{very_verbose};
+		return if $state->{not};
+		$file->{name} = $fullname;
+		$file->{cwd} = $self->{cwd};
+		$file->{destdir} = $destdir;
+		# faked installation are VERY weird
+		if (defined $self->{symlink} && $state->{do_faked}) {
+			$file->{linkname} = $destdir.$file->{linkname};
+		}
+		$file->create();
 	}
-	$file->create();
 	$self->set_modes($destdir.$fullname);
 }
 
