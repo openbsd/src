@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.80 1998/08/17 17:43:09 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.81 1998/08/30 04:41:48 downsj Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -722,6 +722,10 @@
 #define	PCI_PRODUCT_CYCLADES_CYCLOMY_2	0x0101		/* Cyclom-Y above 1M */
 #define	PCI_PRODUCT_CYCLADES_CYCLOMZ_1	0x0200		/* Cyclom-Z below 1M */
 #define	PCI_PRODUCT_CYCLADES_CYCLOMZ_2	0x0201		/* Cyclom-Z above 1M */
+
+/* Cyrix/National Semiconductor products */
+#define	PCI_PRODUCT_CYRIX_GXMPCI	0x0001		/* GXm Host-PCI Bridge */
+#define	PCI_PRODUCT_CYRIX_GXMISA	0x0002		/* GXm PCI-ISA Bridge */
 
 /* DEC products */
 #define	PCI_PRODUCT_DEC_21050	0x0001		/* DECchip 21050 PCI-PCI Bridge */

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.80 1998/08/17 17:43:09 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.81 1998/08/30 04:41:48 downsj Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -817,6 +817,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Cyclades",
 	    "Cyclom-Z above 1M",
+	},
+	{
+	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_GXMPCI,
+	    0,
+	    "Cyrix",
+	    "GXm Host-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_GXMISA,
+	    0,
+	    "Cyrix",
+	    "GXm PCI-ISA Bridge",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21050,
