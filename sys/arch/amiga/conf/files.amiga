@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amiga,v 1.43 2001/08/25 11:37:26 espie Exp $
+#	$OpenBSD: files.amiga,v 1.44 2001/11/21 00:29:56 miod Exp $
 #	$NetBSD: files.amiga,v 1.62 1997/08/27 19:32:47 is Exp $
 
 
@@ -374,12 +374,6 @@ major	{vnd = 6}
 major	{cd = 7}
 major	{ccd = 8}
 major	{rd = 16}
-
-# Compatibility modules
-
-# SunOS Binary Compatibility (COMPAT_SUNOS)
-include "../../../compat/sunos/files.sunos"
-file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
 
 # PCIC pcmcia controller
 # XXX this needs to be done very late, so it's done here.  This feels

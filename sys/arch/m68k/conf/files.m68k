@@ -1,4 +1,4 @@
-#       $OpenBSD: files.m68k,v 1.9 2001/08/25 11:37:26 espie Exp $
+#       $OpenBSD: files.m68k,v 1.10 2001/11/21 00:29:58 miod Exp $
 #       $NetBSD: files.m68k,v 1.18 1997/06/06 23:15:28 veego Exp $
 #
 file	arch/m68k/m68k/db_disasm.c		ddb
@@ -18,5 +18,13 @@ file	arch/m68k/m68k/bcopy.s
 file	arch/m68k/m68k/copypage.s
 file	arch/m68k/m68k/regdump.c
 
+#
+# Older m68k4k executables binary compatibility
+#
+include "compat/m68k4k/files.m68k4k"
 
-include "../../../compat/m68k4k/files.m68k4k"
+#
+# SunOS binary compatibility
+#
+include "compat/sunos/files.sunos"
+file	arch/m68k/m68k/sunos_machdep.c		compat_sunos

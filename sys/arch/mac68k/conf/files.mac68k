@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mac68k,v 1.23 2001/05/11 07:13:15 deraadt Exp $
+#	$OpenBSD: files.mac68k,v 1.24 2001/11/21 00:29:58 miod Exp $
 #	$NetBSD: files.mac68k,v 1.61 1997/03/01 20:22:16 scottr Exp $
 
 # mac68k-specific configuration info
@@ -132,9 +132,3 @@ major	{st = 5}
 major	{cd = 6}
 major	{vnd = 8}
 major	{rd = 13}
-
-# Compatibility modules
-
-# SunOS Binary Compatibility (COMPAT_SUNOS)
-include "compat/sunos/files.sunos"
-file	arch/m68k/m68k/sunos_machdep.c	compat_sunos

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hp300,v 1.15 2001/08/26 00:15:33 miod Exp $
+#	$OpenBSD: files.hp300,v 1.16 2001/11/21 00:29:58 miod Exp $
 #	$NetBSD: files.hp300,v 1.28 1997/05/12 08:23:28 thorpej Exp $
 #
 # hp300-specific configuration info
@@ -207,9 +207,3 @@ major	{vnd = 6}
 #
 include "compat/hpux/files.hpux"
 file	arch/hp300/hp300/hpux_machdep.c		compat_hpux
-
-#
-# SunOS binary compatibility
-#
-include "compat/sunos/files.sunos"
-file	arch/m68k/m68k/sunos_machdep.c		compat_sunos
