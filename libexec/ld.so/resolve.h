@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.11 2002/06/05 19:34:44 art Exp $ */
+/*	$OpenBSD: resolve.h,v 1.12 2002/06/07 03:00:56 art Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -51,12 +51,12 @@ struct load_list {
  */
 typedef struct elf_object {
 	Elf_Addr load_addr;		/* Real load address */
-	Elf_Addr load_offs;		/* Load offset from link address */
 	char	*load_name;		/* Pointer to object name */
 	Elf_Dyn *load_dyn;		/* Pointer to object dynamic data */
 	struct elf_object *next;
 	struct elf_object *prev;
 /* End struct link_map compatible */
+	Elf_Addr load_offs;		/* Load offset from link address */
 
 	struct load_list *load_list;
 
