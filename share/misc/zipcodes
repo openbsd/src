@@ -1,4 +1,4 @@
-#	$OpenBSD: zipcodes,v 1.9 2002/09/05 19:16:35 mickey Exp $
+#	$OpenBSD: zipcodes,v 1.10 2003/01/05 10:01:43 mickey Exp $
 
 # Zip Code : Location
 #	@(#)zipcodes	5.1 (Berkeley) 2/8/91
@@ -35621,6 +35621,7 @@
 80498:Dillon, CO
 80501:Longmont, CO
 80502:Longmont, CO
+80503:Longmont, CO
 80510:Allenspark, CO
 80511:Estes Park, CO
 80512:Bellvue, CO
