@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.11 1997/10/22 23:37:11 mickey Exp $	*/
+/*	$OpenBSD: bios.c,v 1.12 1997/10/24 06:49:20 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -178,19 +178,20 @@ biosattach(parent, self, aux)
 	}
 	printf("\n");
 
+#if NAPM > 0
+	{
+		struct bios_attach_args ba;
 #ifdef DEBUG
 	printf("apminfo: %x, code %x/%x[%x], data %x[%x], entry %x\n",
 	       apm->apm_detail, apm->apm_code32_base,
 	       apm->apm_code16_base, apm->apm_code_len,
 	       apm->apm_data_base, apm->apm_data_len, apm->apm_entry);
 #endif
-#if NAPM > 0
-	{
-		struct bios_attach_args ba;
-
-		ba.bios_apmp = apm;
 		ba.bios_dev = "apm";
 		ba.bios_func = 0x15;
+		ba.bios_memt = bia->bios_memt;
+		ba.bios_iot = bia->bios_iot;
+		ba.bios_apmp = apm;
 		config_found(self, &ba, bios_print);
 	}
 #endif

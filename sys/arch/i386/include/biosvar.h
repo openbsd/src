@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.21 1997/10/22 23:37:13 mickey Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.22 1997/10/24 06:49:19 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -145,17 +145,14 @@ extern struct BIOS_regs {
 struct bios_attach_args {
 	char *bios_dev;
 	u_int bios_func;
+	bus_space_tag_t bios_iot;
+	bus_space_tag_t bios_memt;
 	union {
-		struct {
-			bus_space_tag_t _bios_iot;
-			bus_space_tag_t _bios_memt;
-		} bios;
+		void *_p;
 		bios_apminfo_t *_bios_apmp;
 	} _;
 };
 
-#define	bios_iot	_.bios._bios_iot
-#define	bios_memt	_.bios._bios_memt
 #define	bios_apmp	_._bios_apmp
 
 struct consdev;
