@@ -1,4 +1,4 @@
-/*	$OpenBSD: entry.c,v 1.23 2003/03/11 17:54:06 millert Exp $	*/
+/*	$OpenBSD: entry.c,v 1.24 2003/03/12 18:15:55 millert Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -23,7 +23,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: entry.c,v 1.23 2003/03/11 17:54:06 millert Exp $";
+static char const rcsid[] = "$OpenBSD: entry.c,v 1.24 2003/03/12 18:15:55 millert Exp $";
 #endif
 
 /* vix 26jan87 [RCS'd; rest of log is in RCS file]
@@ -482,8 +482,8 @@ get_range(bitstr_t *bits, int low, int high, const char *names[],
 
 			/* get the number following the dash
 			 */
-			ch = get_number(&num2, num1, names, ch, file, "/, \t\n");
-			if (ch == EOF)
+			ch = get_number(&num2, low, names, ch, file, "/, \t\n");
+			if (ch == EOF || num1 > num2)
 				return (EOF);
 		}
 	}
@@ -502,7 +502,7 @@ get_range(bitstr_t *bits, int low, int high, const char *names[],
 		 * element id, it's a step size.  'low' is
 		 * sent as a 0 since there is no offset either.
 		 */
-		ch = get_number(&num3, 0, PPC_NULL, ch, file, " \t\n");
+		ch = get_number(&num3, 0, PPC_NULL, ch, file, ", \t\n");
 		if (ch == EOF || num3 == 0)
 			return (EOF);
 	} else {
@@ -547,8 +547,6 @@ get_number(int *numptr, int low, const char *names[], char ch, FILE *file,
 		if (!strchr(terms, ch))
 			goto bad;
 		*numptr = atoi(temp);
-		if (*numptr < low)
-			goto bad;
 		return (ch);
 	}
 
