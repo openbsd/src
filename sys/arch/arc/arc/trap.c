@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.8 1997/02/02 00:47:43 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.9 1997/02/04 17:26:14 deraadt Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  * from: Utah Hdr: trap.c 1.32 91/04/06
  *
  *	from: @(#)trap.c	8.5 (Berkeley) 1/11/94
- *      $Id: trap.c,v 1.8 1997/02/02 00:47:43 deraadt Exp $
+ *      $Id: trap.c,v 1.9 1997/02/04 17:26:14 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -432,7 +432,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 			}
 			goto err;
 		}
-		ucode = vadr;
+		ucode = ftype;
 		i = SIGSEGV;
 		typ = SEGV_MAPERR;
 		break;
@@ -440,11 +440,13 @@ trap(statusReg, causeReg, vadr, pc, args)
 
 	case T_ADDR_ERR_LD+T_USER:	/* misaligned or kseg access */
 	case T_ADDR_ERR_ST+T_USER:	/* misaligned or kseg access */
+		ucode = 0;		/* XXX should be VM_PROT_something */
 		i = SIGBUS;
 		typ = BUS_ADRALN;
 		break;
 	case T_BUS_ERR_IFETCH+T_USER:	/* BERR asserted to cpu */
 	case T_BUS_ERR_LD_ST+T_USER:	/* BERR asserted to cpu */
+		ucode = 0;		/* XXX should be VM_PROT_something */
 		i = SIGBUS;
 		typ = BUS_OBJERR;
 		break;
