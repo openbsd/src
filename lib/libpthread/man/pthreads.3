@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthreads.3,v 1.9 2000/04/12 21:48:03 aaron Exp $
+.\" $OpenBSD: pthreads.3,v 1.10 2000/04/28 21:42:44 deraadt Exp $
 .\" David Leonard <d@openbsd.org>, 1998. Public domain.
 .Dd August 17, 1998
 .Dt PTHREADS 3
@@ -163,9 +163,9 @@ thread.
 Hence, if you want to handle the
 .Dv SIGSEGV
 signal, you should make use of
-.Xr sigaltstack 3
+.Xr sigaltstack 2
 or
-.Xr sigprocmask 3 .
+.Xr sigprocmask 2 .
 .Sh SEE ALSO
 .Xr pthread_cleanup_pop 3 ,
 .Xr pthread_cleanup_push 3 ,
