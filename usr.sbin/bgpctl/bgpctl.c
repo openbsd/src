@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.56 2004/05/01 17:08:04 deraadt Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.57 2004/05/06 14:29:12 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -340,11 +340,11 @@ show_neighbor_msg(struct imsg *imsg, enum neighbor_views nv)
 		if (p->capa.mp_v4 || p->capa.mp_v6 || p->capa.refresh) {
 			printf("  Neighbor capabilities:\n");
 			if (p->capa.mp_v4) {
-				printf("    Multiprotocol extensions: IPv4:");
+				printf("    Multiprotocol extensions: IPv4");
 				print_neighbor_capa_mp_safi(p->capa.mp_v4);
 			}
 			if (p->capa.mp_v6) {
-				printf("    Multiprotocol extensions: IPv6:");
+				printf("    Multiprotocol extensions: IPv6");
 				print_neighbor_capa_mp_safi(p->capa.mp_v6);
 			}
 			if (p->capa.refresh)
@@ -400,7 +400,7 @@ print_neighbor_capa_mp_safi(u_int8_t safi)
 		printf(" Multicast");
 		break;
 	case SAFI_BOTH:
-		printf(" Unicast Multicast");
+		printf(" Unicast and Multicast");
 		break;
 	default:
 		printf(" unknown (%u)", safi);
