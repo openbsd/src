@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shutdown.8,v 1.23 2001/01/26 20:20:28 marc Exp $
+.\"	$OpenBSD: shutdown.8,v 1.24 2001/01/28 19:20:12 marc Exp $
 .\"	$NetBSD: shutdown.8,v 1.6 1995/03/18 15:01:07 cgd Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -115,13 +115,6 @@ flag is passed on to
 .Xr halt 8 ,
 causing machines which support automatic power down to do so after halting.
 (Currently supported on some i386, sparc, and mac68k platforms.)
-.Sy Note :
-If this option does not work on your i386 machine try setting
-.Li machdep.apmhalt
-to the value 1 using
-.Xr sysctl 8 .
-This can be set at boot time in
-.Pa sysctl.conf .
 .It Ar time
 .Ar time
 is the time at which
