@@ -233,6 +233,11 @@ main(argc, argv)
 		usage();
 
 	dkname = argv[0];
+	f = open(dkname, op == READ ? O_RDONLY : O_RDWR);
+	if (f != -1) {
+		specname = dkname;
+		goto ok;
+	}
 	if (dkname[0] != '/') {
 		(void)sprintf(np, "%sr%s%c", _PATH_DEV, dkname, RAWPARTITION);
 		specname = np;
@@ -240,6 +245,7 @@ main(argc, argv)
 	} else
 		specname = dkname;
 	f = open(specname, op == READ ? O_RDONLY : O_RDWR);
+ok:
 	if (f < 0 && errno == ENOENT && dkname[0] != '/') {
 		(void)sprintf(specname, "%sr%s", _PATH_DEV, dkname);
 		np = namebuf + strlen(specname) + 1;
