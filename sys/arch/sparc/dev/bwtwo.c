@@ -155,9 +155,11 @@ bwtwomatch(parent, vcf, aux)
 	if (ca->ca_bustype == BUS_SBUS)
 		return(1);
 #if NPFOUR > 0
-	if (ca->ca_bustype == BUS_PFOUR &&
-	    PFOUR_ID(ra->ra_pfour) == PFOUR_ID_BW)
-		return (1);
+	if (ca->ca_bustype == BUS_PFOUR) {
+		if (PFOUR_ID(ra->ra_pfour) == PFOUR_ID_BW)
+			return (1);
+		return (0);
+	}
 #endif
 	return (probeget(ra->ra_vaddr, 4) != -1);
 }
