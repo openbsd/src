@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530tty.c,v 1.9 1997/03/12 22:51:42 briggs Exp $	*/
+/*	$OpenBSD: z8530tty.c,v 1.10 1998/03/03 04:54:47 ryker Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.10 1996/12/18 05:17:44 scottr Exp $	*/
 
 /*
@@ -1017,12 +1017,12 @@ zshwiflow(tp, stop)
 	 * This loop checks to see that we can in fact control input.
 	 * If not, then do little except tell the upper layer the truth.
 	 */
-	if (zst->zst_hwimask == 0) 
+	if (zst->zst_hwimask == 0) {
 		if (stop)
 			return 0;
 		else
 			return 1; /* yes, w/o hwi we can unblock input. ;-) */
-
+	}
 	s = splzs();
 	if (stop) {
 		/*

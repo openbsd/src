@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.48 1998/03/03 04:30:09 ryker Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.49 1998/03/03 04:54:22 ryker Exp $	*/
 /*	$NetBSD: machdep.c,v 1.134 1997/02/14 06:15:30 scottr Exp $	*/
 
 /*
@@ -371,12 +371,12 @@ again:
 	 * memory. Insure a minimum of 16 buffers.
 	 * We allocate 1/2 as many swap buffer headers as file i/o buffers.
 	 */
-	if (bufpages == 0)
+	if (bufpages == 0) {
 		if (physmem < btoc(2 * 1024 * 1024))
 			bufpages = physmem / 10 / CLSIZE;
 		else
 			bufpages = (btoc(2 * 1024 * 1024) + physmem) / 20 / CLSIZE;
-
+	}
 	bufpages = min(NKMEMCLUSTERS * 2 / 5, bufpages);
 
 	if (nbuf == 0) {
