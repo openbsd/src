@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.19 2000/07/03 22:18:37 smurph Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.20 2000/12/29 03:51:41 smurph Exp $	*/
 /*	$NetBSD: ahc_pci.c,v 1.9 1996/10/21 22:56:24 thorpej Exp $	*/
 
 /*
@@ -58,10 +58,15 @@
 
 /* 
  * XXX memory-mapped is busted on some i386 on-board chips.
- * for i386, we don't even try it.
+ * for i386, we don't even try it.  Also, suppress the damn 
+ * PCI bus errors messages on i386.  They are not fatal, and are 
+ * usually caused by some other device on the PCI bus.  But some 
+ * ahc cards won't work without ACKing them.  So just ACK and go!  
+ * XXX- smurph
  */
 #ifndef i386
 #define AHC_ALLOW_MEMIO
+#define AHC_SHOW_PCI_ERRORS
 #endif
 
 /*
@@ -1352,10 +1357,13 @@ struct ahc_softc *ahc;
 
 	status1 = pci_conf_read(pd->pc, pd->tag, PCI_COMMAND_STATUS_REG);
 
+/* define AHC_SHOW_PCI_ERRORS to get painful errors on your i386 console */
+#ifdef AHC_SHOW_PCI_ERRORS	
 	if (status1 & DPE) {
 		printf("%s: Data Parity Error Detected during address "
 				 "or write data phase\n", ahc_name(ahc));
 	}
+#endif
 	if (status1 & SSE) {
 		printf("%s: Signal System Error Detected\n", ahc_name(ahc));
 	}
