@@ -1648,3 +1648,7 @@
 ./usr/share/man/cat8/crash.0
 ./usr/share/man/cat4/hifn.0
 ./usr/share/man/cat9/ratecheck.0
+./usr/share/man/cat9/timeout_add.0
+./usr/share/man/cat9/timeout_del.0
+./usr/share/man/cat9/timeout_set.0
+./usr/share/man/cat4/ray.0

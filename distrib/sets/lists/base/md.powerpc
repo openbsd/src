@@ -233,7 +233,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/acct.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/audioio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/buf.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/callout.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/cdefs.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/cdio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/chio.ph
@@ -692,3 +691,5 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/net/if_gre.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ifaddrs.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/skipjack.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/net/if_ieee80211.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/timeout.ph

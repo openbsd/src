@@ -1035,7 +1035,6 @@
 ./usr/include/sys/ataio.h
 ./usr/include/sys/audioio.h
 ./usr/include/sys/buf.h
-./usr/include/sys/callout.h
 ./usr/include/sys/cdefs.h
 ./usr/include/sys/cdio.h
 ./usr/include/sys/chio.h
@@ -3344,3 +3343,5 @@
 ./usr/share/mk/bsd.subdir.mk
 ./usr/share/mk/bsd.sys.mk
 ./var/db/libc.tags
+./usr/include/net/if_ieee80211.h
+./usr/include/sys/timeout.h

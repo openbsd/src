@@ -496,7 +496,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/acct.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/audioio.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/buf.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/sys/callout.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/cdefs.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/cdio.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/chio.ph
@@ -665,3 +664,5 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/skipjack.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/if_gif.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/net_osdep.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/net/if_ieee80211.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/sys/timeout.ph

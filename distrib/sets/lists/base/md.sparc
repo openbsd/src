@@ -238,7 +238,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/acct.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/audioio.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/buf.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/sys/callout.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/cdefs.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/cdio.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/chio.ph
@@ -713,3 +712,5 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net/if_gre.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/ifaddrs.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/skipjack.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/net/if_ieee80211.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/sys/timeout.ph

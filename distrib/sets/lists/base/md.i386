@@ -560,7 +560,6 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/ataio.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/audioio.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/buf.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/sys/callout.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/cdefs.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/cdio.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/chio.ph
@@ -737,3 +736,5 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/net/if_gre.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/ifaddrs.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/skipjack.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/net/if_ieee80211.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/sys/timeout.ph

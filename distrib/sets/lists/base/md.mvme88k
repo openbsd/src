@@ -247,7 +247,6 @@
 ./usr/lib/perl5/site_perl/m88k-openbsd/sys/acct.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/sys/audioio.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/sys/buf.ph
-./usr/lib/perl5/site_perl/m88k-openbsd/sys/callout.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/sys/cdefs.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/sys/cdio.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/sys/chio.ph
@@ -401,3 +400,5 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/if_gre.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/ifaddrs.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/skipjack.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/net/if_ieee80211.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/sys/timeout.ph

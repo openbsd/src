@@ -276,7 +276,6 @@
 ./usr/lib/perl5/site_perl/mips-openbsd/sys/acct.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/sys/audioio.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/sys/buf.ph
-./usr/lib/perl5/site_perl/mips-openbsd/sys/callout.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/sys/cdefs.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/sys/cdio.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/sys/chio.ph
@@ -446,3 +445,5 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/net/if_token.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/net/if_gre.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/ifaddrs.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/net/if_ieee80211.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/sys/timeout.ph
