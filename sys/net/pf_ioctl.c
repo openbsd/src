@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.129 2004/07/22 23:21:10 msf Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.130 2004/09/09 22:08:42 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -512,11 +512,13 @@ pf_anchor_copyout(const struct pf_ruleset *rs, const struct pf_rule *r,
 			printf("pf_anchor_copyout: '%s' '%s'\n", a, b);
 			return (1);
 		}
-		strlcat(pr->anchor_call, b + (a[0] ? strlen(a) + 1 : 0),
-		    sizeof(pr->anchor_call));
+		if (strlen(b) > strlen(a))
+			strlcat(pr->anchor_call, b + (a[0] ? strlen(a) + 1 : 0),
+			    sizeof(pr->anchor_call));
 	}
 	if (r->anchor_wildcard)
-		strlcat(pr->anchor_call, "/*", sizeof(pr->anchor_call));
+		strlcat(pr->anchor_call, pr->anchor_call[0] ? "/*" : "*",
+		    sizeof(pr->anchor_call));
 	return (0);
 }
 
