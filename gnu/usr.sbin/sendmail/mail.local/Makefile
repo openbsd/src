@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.3 2000/05/15 03:37:32 millert Exp $
+#	$OpenBSD: Makefile,v 1.4 2000/06/15 12:31:59 millert Exp $
 
 PROG=	mail.local
 MAN=	mail.local.8
 
 WANT_LIBSMUTIL=1
 
-../../../libexec/Makefile.inc
+.include "../../../libexec/Makefile.inc"
 .include <bsd.prog.mk>
