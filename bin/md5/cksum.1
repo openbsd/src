@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cksum.1,v 1.2 2004/05/04 18:32:51 jmc Exp $
+.\"	$OpenBSD: cksum.1,v 1.3 2004/12/29 17:32:44 millert Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,7 +48,7 @@
 .Fl s Ar string |
 .Ar file ...
 .Oc
-.Op Fl a Ar algorithm
+.Op Fl a Ar algorithms
 .Op Fl o Ar 1 | 2
 .Ek
 .Nm sum
@@ -98,8 +98,8 @@ It is provided for compatibility only.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl a Ar algorithm
-Use the specified algorithm instead of the default (cksum).
+.It Fl a Ar algorithms
+Use the specified algorithm(s) instead of the default (cksum).
 Supported algorithms include
 .Ar cksum ,
 .Ar md4 ,
@@ -112,9 +112,12 @@ Supported algorithms include
 .Ar sum ,
 and
 .Ar sysvsum .
-Algorithms specified by the
+Multiple algorithms may be specified, separated by a comma or whitespace.
+Additionally, multiple
 .Fl a
-option are case-insensitive.
+options may be specified on the command line.
+If an algorithm is repeated, only the first instance is used.
+Case is ignored when matching algorithms.
 .It Xo
 .Fl c
 .Oo Ar checklist ... Oc
@@ -126,6 +129,11 @@ Output consists of the digest used, the file name,
 and an OK or FAILED for the result of the comparison.
 This will validate any of the supported checksums.
 If no file is given, stdin is used.
+The
+.Fl c
+option may not be used in conjunction with more than a single
+.Fl a
+option.
 .It Fl o Ar 1 | 2
 Use historic algorithms instead of the (superior) default one
 (see below).

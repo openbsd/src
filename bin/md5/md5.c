@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.31 2004/12/10 19:35:53 millert Exp $	*/
+/*	$OpenBSD: md5.c,v 1.32 2004/12/29 17:32:44 millert Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -56,84 +56,30 @@ void digest_print(const char *, const char *, const char *);
 void digest_print_short(const char *, const char *, const char *);
 void digest_print_string(const char *, const char *, const char *);
 
+#define NHASHES	10
 struct hash_functions {
 	char *name;
 	int digestlen;
+	void *ctx;	/* XXX - only used by digest_file() */
 	void (*init)(void *);
 	void (*update)(void *, const unsigned char *, unsigned int);
 	char * (*end)(void *, char *);
 	void (*print)(const char *, const char *, const char *);
 	void (*printstr)(const char *, const char *, const char *);
-};
-
-struct hash_functions functions[] = {
+} functions[NHASHES + 1] = {
 	{
 		"CKSUM",
 		CKSUM_DIGEST_LENGTH * 2,
+		NULL,
 		(void (*)(void *))CKSUM_Init,
 		(void (*)(void *, const unsigned char *, unsigned int))CKSUM_Update,
 		(char *(*)(void *, char *))CKSUM_End,
 		digest_print_short,
 		digest_print_short
 	}, {
-		"MD4",
-		MD5_DIGEST_LENGTH * 2,
-		(void (*)(void *))MD4Init,
-		(void (*)(void *, const unsigned char *, unsigned int))MD4Update,
-		(char *(*)(void *, char *))MD4End,
-		digest_print,
-		digest_print_string
-	}, {
-		"MD5",
-		MD5_DIGEST_LENGTH * 2,
-		(void (*)(void *))MD5Init,
-		(void (*)(void *, const unsigned char *, unsigned int))MD5Update,
-		(char *(*)(void *, char *))MD5End,
-		digest_print,
-		digest_print_string
-	}, {
-		"RMD160",
-		RMD160_DIGEST_LENGTH * 2,
-		(void (*)(void *))RMD160Init,
-		(void (*)(void *, const unsigned char *, unsigned int))RMD160Update,
-		(char *(*)(void *, char *))RMD160End,
-		digest_print,
-		digest_print_string
-	}, {
-		"SHA1",
-		SHA1_DIGEST_LENGTH * 2,
-		(void (*)(void *))SHA1Init,
-		(void (*)(void *, const unsigned char *, unsigned int))SHA1Update,
-		(char *(*)(void *, char *))SHA1End,
-		digest_print,
-		digest_print_string
-	}, {
-		"SHA256",
-		SHA256_DIGEST_LENGTH * 2,
-		(void (*)(void *))SHA256_Init,
-		(void (*)(void *, const unsigned char *, unsigned int))SHA256_Update,
-		(char *(*)(void *, char *))SHA256_End,
-		digest_print,
-		digest_print_string
-	}, {
-		"SHA384",
-		SHA384_DIGEST_LENGTH * 2,
-		(void (*)(void *))SHA384_Init,
-		(void (*)(void *, const unsigned char *, unsigned int))SHA384_Update,
-		(char *(*)(void *, char *))SHA384_End,
-		digest_print,
-		digest_print_string
-	}, {
-		"SHA512",
-		SHA512_DIGEST_LENGTH * 2,
-		(void (*)(void *))SHA512_Init,
-		(void (*)(void *, const unsigned char *, unsigned int))SHA512_Update,
-		(char *(*)(void *, char *))SHA512_End,
-		digest_print,
-		digest_print_string
-	}, {
 		"SUM",
 		SUM_DIGEST_LENGTH * 2,
+		NULL,
 		(void (*)(void *))SUM_Init,
 		(void (*)(void *, const unsigned char *, unsigned int))SUM_Update,
 		(char *(*)(void *, char *))SUM_End,
@@ -142,51 +88,137 @@ struct hash_functions functions[] = {
 	}, {
 		"SYSVSUM",
 		SYSVSUM_DIGEST_LENGTH * 2,
+		NULL,
 		(void (*)(void *))SYSVSUM_Init,
 		(void (*)(void *, const unsigned char *, unsigned int))SYSVSUM_Update,
 		(char *(*)(void *, char *))SYSVSUM_End,
 		digest_print_short,
 		digest_print_short
 	}, {
+		"MD4",
+		MD5_DIGEST_LENGTH * 2,
+		NULL,
+		(void (*)(void *))MD4Init,
+		(void (*)(void *, const unsigned char *, unsigned int))MD4Update,
+		(char *(*)(void *, char *))MD4End,
+		digest_print,
+		digest_print_string
+	}, {
+		"MD5",
+		MD5_DIGEST_LENGTH * 2,
+		NULL,
+		(void (*)(void *))MD5Init,
+		(void (*)(void *, const unsigned char *, unsigned int))MD5Update,
+		(char *(*)(void *, char *))MD5End,
+		digest_print,
+		digest_print_string
+	}, {
+		"RMD160",
+		RMD160_DIGEST_LENGTH * 2,
+		NULL,
+		(void (*)(void *))RMD160Init,
+		(void (*)(void *, const unsigned char *, unsigned int))RMD160Update,
+		(char *(*)(void *, char *))RMD160End,
+		digest_print,
+		digest_print_string
+	}, {
+		"SHA1",
+		SHA1_DIGEST_LENGTH * 2,
+		NULL,
+		(void (*)(void *))SHA1Init,
+		(void (*)(void *, const unsigned char *, unsigned int))SHA1Update,
+		(char *(*)(void *, char *))SHA1End,
+		digest_print,
+		digest_print_string
+	}, {
+		"SHA256",
+		SHA256_DIGEST_LENGTH * 2,
+		NULL,
+		(void (*)(void *))SHA256_Init,
+		(void (*)(void *, const unsigned char *, unsigned int))SHA256_Update,
+		(char *(*)(void *, char *))SHA256_End,
+		digest_print,
+		digest_print_string
+	}, {
+		"SHA384",
+		SHA384_DIGEST_LENGTH * 2,
+		NULL,
+		(void (*)(void *))SHA384_Init,
+		(void (*)(void *, const unsigned char *, unsigned int))SHA384_Update,
+		(char *(*)(void *, char *))SHA384_End,
+		digest_print,
+		digest_print_string
+	}, {
+		"SHA512",
+		SHA512_DIGEST_LENGTH * 2,
+		NULL,
+		(void (*)(void *))SHA512_Init,
+		(void (*)(void *, const unsigned char *, unsigned int))SHA512_Update,
+		(char *(*)(void *, char *))SHA512_End,
+		digest_print,
+		digest_print_string
+	}, {
 		NULL,
 	},
 };
 
-__dead void usage(void);
-void digest_file(char *, struct hash_functions *, int);
-int digest_filelist(int, char *);
-void digest_string(char *, struct hash_functions *);
-void digest_test(struct hash_functions *);
-void digest_time(struct hash_functions *);
+void usage(void) __attribute__((__noreturn__));
+void digest_file(const char *, struct hash_functions **, int);
+int digest_filelist(const char *, struct hash_functions *);
+void digest_string(char *, struct hash_functions **);
+void digest_test(struct hash_functions **);
+void digest_time(struct hash_functions **);
 
 extern char *__progname;
 
 int
 main(int argc, char **argv)
 {
-	int fl, digest_type, error;
+	struct hash_functions *hf, *hashes[NHASHES + 1];
+	int fl, i, error;
 	int cflag, pflag, tflag, xflag;
-	char *digest_name, *input_string;
+	char *cp, *input_string;
 
 	input_string = NULL;
-	digest_name = __progname;
 	error = cflag = pflag = tflag = xflag = 0;
+	memset(hashes, 0, sizeof(hashes));
 	while ((fl = getopt(argc, argv, "a:co:ps:tx")) != -1) {
 		switch (fl) {
 		case 'a':
-			digest_name = optarg;
+			while ((cp = strsep(&optarg, " \t,")) != NULL) {
+				if (*cp == '\0')
+					continue;
+				for (hf = functions; hf->name != NULL; hf++)
+					if (strcasecmp(hf->name, cp) == 0)
+						break;
+				if (hf->name == NULL) {
+					warnx("unknown algorithm \"%s\"", cp);
+					usage();
+				}
+				for (i = 0; i < NHASHES && hashes[i] != hf; i++)
+					if (hashes[i] == NULL) {
+						hashes[i] = hf;
+						break;
+					}
+			}
 			break;
 		case 'c':
 			cflag = 1;
 			break;
 		case 'o':
 			if (strcmp(optarg, "1") == 0)
-				digest_name = "sum";
+				hf = &functions[1];
 			else if (strcmp(optarg, "2") == 0)
-				digest_name = "sysvsum";
+				hf = &functions[2];
 			else {
 				warnx("illegal argument to -o option");
 				usage();
+			}
+			for (i = 0; i < NHASHES && hashes[i] != hf; i++) {
+				if (hashes[i] == NULL) {
+					hashes[i] = hf;
+					break;
+				}
 			}
 			break;
 		case 'p':
@@ -208,56 +240,60 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	for (digest_type = 0; functions[digest_type].name != NULL;
-	    digest_type++) {
-		if (strcasecmp(functions[digest_type].name, digest_name) == 0)
-			break;
-	}
-	if (functions[digest_type].name == NULL) {
-		if (digest_name != __progname) {
-			/* Unsupported algorithm specified, exit */
-			warnx("unknown algorithm \"%s\"", digest_name);
-			usage();
-		}
-		digest_type = 0;	/* default to cksum */
-	}
-
 	/* Most arguments are mutually exclusive */
 	fl = pflag + tflag + xflag + cflag + (input_string != NULL);
 	if (fl > 1 || (fl && argc && cflag == 0))
 		usage();
+	if (cflag != 0 && hashes[1] != NULL)
+		errx(1, "only a single algorithm may be specified in -c mode");
+
+	/* No algorithm specified, check the name we were called as. */
+	if (hashes[0] == NULL) {
+		for (hf = functions; hf->name != NULL; hf++) {
+			if (strcasecmp(hf->name, __progname) == 0) {
+				hashes[0] = hf;
+				break;
+			}
+		}
+		if (hashes[0] == NULL)
+			hashes[0] = &functions[0];	/* default to cksum */
+	}
 
 	if (tflag)
-		digest_time(&functions[digest_type]);
+		digest_time(hashes);
 	else if (xflag)
-		digest_test(&functions[digest_type]);
+		digest_test(hashes);
 	else if (input_string)
-		digest_string(input_string, &functions[digest_type]);
-	else if (cflag)
+		digest_string(input_string, hashes);
+	else if (cflag) {
 		if (argc == 0)
-			error = digest_filelist(digest_type, "-");
+			error = digest_filelist("-", hashes[0]);
 		else
 			while (argc--)
-				error += digest_filelist(digest_type, *argv++);
-	else if (pflag || argc == 0)
-		digest_file("-", &functions[digest_type], pflag);
+				error += digest_filelist(*argv++, hashes[0]);
+	} else if (pflag || argc == 0)
+		digest_file("-", hashes, pflag);
 	else
 		while (argc--)
-			digest_file(*argv++, &functions[digest_type], 0);
+			digest_file(*argv++, hashes, 0);
 
 	return(error ? EXIT_FAILURE : EXIT_SUCCESS);
 }
 
 void
-digest_string(char *string, struct hash_functions *hf)
+digest_string(char *string, struct hash_functions **hashes)
 {
+	struct hash_functions *hf;
 	char digest[MAX_DIGEST_LEN + 1];
 	union ANY_CTX context;
 
-	hf->init(&context);
-	hf->update(&context, string, (unsigned int)strlen(string));
-	(void)hf->end(&context, digest);
-	hf->printstr(hf->name, string, digest);
+	while (*hashes != NULL) {
+		hf = *hashes++;
+		hf->init(&context);
+		hf->update(&context, string, (unsigned int)strlen(string));
+		(void)hf->end(&context, digest);
+		hf->printstr(hf->name, string, digest);
+	}
 }
 
 void
@@ -279,13 +315,13 @@ digest_print_short(const char *name, const char *what, const char *digest)
 }
 
 void
-digest_file(char *file, struct hash_functions *hf, int echo)
+digest_file(const char *file, struct hash_functions **hashes, int echo)
 {
+	struct hash_functions **hfp;
 	int fd;
 	ssize_t nread;
 	u_char data[BUFSIZ];
 	char digest[MAX_DIGEST_LEN + 1];
-	union ANY_CTX context;
 
 	if (strcmp(file, "-") == 0)
 		fd = STDIN_FILENO;
@@ -297,11 +333,16 @@ digest_file(char *file, struct hash_functions *hf, int echo)
 	if (echo)
 		fflush(stdout);
 
-	hf->init(&context);
+	for (hfp = hashes; *hfp != NULL; hfp++) {
+		if (((*hfp)->ctx = malloc(sizeof(union ANY_CTX))) == NULL)
+			err(1, NULL);
+		(*hfp)->init((*hfp)->ctx);
+	}
 	while ((nread = read(fd, data, sizeof(data))) > 0) {
 		if (echo)
 			write(STDOUT_FILENO, data, (size_t)nread);
-		hf->update(&context, data, (unsigned int)nread);
+		for (hfp = hashes; *hfp != NULL; hfp++)
+			(*hfp)->update((*hfp)->ctx, data, (unsigned int)nread);
 	}
 	if (nread == -1) {
 		warn("%s: read error", file);
@@ -309,13 +350,15 @@ digest_file(char *file, struct hash_functions *hf, int echo)
 			close(fd);
 		return;
 	}
-	(void)hf->end(&context, digest);
-
-	if (fd == STDIN_FILENO) {
-		(void)puts(digest);
-	} else {
+	if (fd != STDIN_FILENO)
 		close(fd);
-		hf->print(hf->name, file, digest);
+	for (hfp = hashes; *hfp != NULL; hfp++) {
+		(void)(*hfp)->end((*hfp)->ctx, digest);
+		free((*hfp)->ctx);
+		if (fd == STDIN_FILENO)
+			(void)puts(digest);
+		else
+			(*hfp)->print((*hfp)->name, file, digest);
 	}
 }
 
@@ -326,7 +369,7 @@ digest_file(char *file, struct hash_functions *hf, int echo)
  * Print out the result of each comparison.
  */
 int
-digest_filelist(int algorithm_def, char *file)
+digest_filelist(const char *file, struct hash_functions *defhash)
 {
 	int fd, found, error;
 	int algorithm_max, algorithm_min;
@@ -346,6 +389,9 @@ digest_filelist(int algorithm_def, char *file)
 		warn("cannot open %s", file);
 		return(1);
 	}
+
+	if (defhash < &functions[3])
+		defhash = NULL;	/* No GNU format for sum, cksum, sysvsum */
 
 	algorithm_max = algorithm_min = strlen(functions[0].name);
 	for (hf = &functions[1]; hf->name != NULL; hf++) {
@@ -409,7 +455,8 @@ digest_filelist(int algorithm_def, char *file)
 				continue;
 		} else {
 			/* could be GNU form */
-			hf = &functions[algorithm_def];
+			if ((hf = defhash) == NULL)
+				continue;
 			algorithm = hf->name;
 			checksum = buf;
 			if ((p = strchr(checksum, ' ')) == NULL)
@@ -463,8 +510,9 @@ digest_filelist(int algorithm_def, char *file)
 #define TEST_BLOCK_COUNT 10000
 
 void
-digest_time(struct hash_functions *hf)
+digest_time(struct hash_functions **hashes)
 {
+	struct hash_functions *hf;
 	struct timeval start, stop, res;
 	union ANY_CTX context;
 	u_int i;
@@ -472,37 +520,41 @@ digest_time(struct hash_functions *hf)
 	char digest[MAX_DIGEST_LEN + 1];
 	double elapsed;
 
-	(void)printf("%s time trial.  Processing %d %d-byte blocks...",
-	    hf->name, TEST_BLOCK_COUNT, TEST_BLOCK_LEN);
-	fflush(stdout);
+	while (*hashes != NULL) {
+		hf = *hashes++;
+		(void)printf("%s time trial.  Processing %d %d-byte blocks...",
+		    hf->name, TEST_BLOCK_COUNT, TEST_BLOCK_LEN);
+		fflush(stdout);
 
-	/* Initialize data based on block number. */
-	for (i = 0; i < TEST_BLOCK_LEN; i++)
-		data[i] = (u_char)(i & 0xff);
+		/* Initialize data based on block number. */
+		for (i = 0; i < TEST_BLOCK_LEN; i++)
+			data[i] = (u_char)(i & 0xff);
 
-	gettimeofday(&start, NULL);
-	hf->init(&context);
-	for (i = 0; i < TEST_BLOCK_COUNT; i++)
-		hf->update(&context, data, TEST_BLOCK_LEN);
-	(void)hf->end(&context, digest);
-	gettimeofday(&stop, NULL);
-	timersub(&stop, &start, &res);
-	elapsed = res.tv_sec + res.tv_usec / 1000000.0;
+		gettimeofday(&start, NULL);
+		hf->init(&context);
+		for (i = 0; i < TEST_BLOCK_COUNT; i++)
+			hf->update(&context, data, TEST_BLOCK_LEN);
+		(void)hf->end(&context, digest);
+		gettimeofday(&stop, NULL);
+		timersub(&stop, &start, &res);
+		elapsed = res.tv_sec + res.tv_usec / 1000000.0;
 
-	(void)printf("\nDigest = %s\n", digest);
-	(void)printf("Time   = %f seconds\n", elapsed);
-	(void)printf("Speed  = %f bytes/second\n",
-	    TEST_BLOCK_LEN * TEST_BLOCK_COUNT / elapsed);
+		(void)printf("\nDigest = %s\n", digest);
+		(void)printf("Time   = %f seconds\n", elapsed);
+		(void)printf("Speed  = %f bytes/second\n",
+		    TEST_BLOCK_LEN * TEST_BLOCK_COUNT / elapsed);
+	}
 }
 
 void
-digest_test(struct hash_functions *hf)
+digest_test(struct hash_functions **hashes)
 {
+	struct hash_functions *hf;
 	union ANY_CTX context;
 	int i;
 	char digest[MAX_DIGEST_LEN + 1];
 	unsigned char buf[1000];
-	char *test_strings[] = {
+	unsigned char *test_strings[] = {
 		"",
 		"a",
 		"abc",
@@ -515,33 +567,37 @@ digest_test(struct hash_functions *hf)
 		    "012345678901234567890",
 	};
 
-	(void)printf("%s test suite:\n", hf->name);
+	while (*hashes != NULL) {
+		hf = *hashes++;
+		(void)printf("%s test suite:\n", hf->name);
 
-	for (i = 0; i < 8; i++) {
+		for (i = 0; i < 8; i++) {
+			hf->init(&context);
+			hf->update((void *)&context, test_strings[i],
+			    (unsigned int)strlen(test_strings[i]));
+			(void)hf->end(&context, digest);
+			hf->printstr(hf->name, test_strings[i], digest);
+		}
+
+		/* Now simulate a string of a million 'a' characters. */
+		memset(buf, 'a', sizeof(buf));
 		hf->init(&context);
-		hf->update((void *)&context, (unsigned char *)test_strings[i],
-		    (unsigned int)strlen(test_strings[i]));
+		for (i = 0; i < 1000; i++)
+			hf->update(&context, buf,
+			    (unsigned int)sizeof(buf));
 		(void)hf->end(&context, digest);
-		hf->printstr(hf->name, test_strings[i], digest);
+		hf->print(hf->name, "one million 'a' characters",
+		    digest);
 	}
-
-	/* Now simulate a string of a million 'a' characters. */
-	memset(buf, 'a', sizeof(buf));
-	hf->init(&context);
-	for (i = 0; i < 1000; i++)
-		hf->update(&context, (unsigned char *)buf,
-		    (unsigned int)sizeof(buf));
-	(void)hf->end(&context, digest);
-	hf->print(hf->name, "one million 'a' characters", digest);
 }
 
-__dead void
+void
 usage(void)
 {
 	fprintf(stderr, "usage: %s [-p | -t | -x | -c [checklist ...] | "
 	    "-s string | file ...]\n", __progname);
 	if (strcmp(__progname, "cksum") == 0)
-		fprintf(stderr, "             [-a algorithm] [-o 1 | 2]\n");
+		fprintf(stderr, "             [-a algorithms]] [-o 1 | 2]\n");
 
 	exit(EXIT_FAILURE);
 }
