@@ -1,4 +1,4 @@
-.\"	$OpenBSD: as.1,v 1.4 1998/02/15 18:48:41 niklas Exp $
+.\"	$OpenBSD: as.1,v 1.5 2000/05/27 14:15:06 espie Exp $
 .\"
 .\" Copyright (c) 1991, 1992 Free Software Foundation
 .\" See section COPYING for conditions for redistribution
@@ -41,7 +41,7 @@ as \- the portable GNU assembler.
 .I m680x0-only options:
 .br
 .RB "[\|" \-l "\|]"
-.RB "[\|" \-mc68000 "\||\|" \-mc68010 "\||\|" \-mc68020 "\|]"
+.RB "[\|" \-mc68000 "\||\|" \-mc68010 "\||\|" \-mc68020 "\||\|" \-mc68030 "\||\|" \-mc68040 "\||\|" \-mc68060 "\|]"
 .ad b
 
 .SH DESCRIPTION
@@ -204,7 +204,7 @@ error if necessary.
 .br
 Shorten references to undefined symbols, to one word instead of two.
 .TP
-.BR "\-mc68000" "\||\|" "\-mc68010" "\||\|" "\-mc68020"
+.BR "\-mc68000" "\||\|" "\-mc68010" "\||\|" "\-mc68020" "\||\|" "\-mc68030" "\||\|" "\-mc68040" "\||\|" "\-mc68060"
 .I
 (When configured for Motorola 68000).  
 .br
