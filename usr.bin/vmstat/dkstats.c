@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkstats.c,v 1.10 2001/05/14 07:20:50 angelos Exp $	*/
+/*	$OpenBSD: dkstats.c,v 1.11 2001/05/14 07:24:12 angelos Exp $	*/
 /*	$NetBSD: dkstats.c,v 1.1 1996/05/10 23:19:27 thorpej Exp $	*/
 
 /*
@@ -177,7 +177,7 @@ dkreadstats()
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_CPTIME;
 		if (sysctl(mib, 2, cur.cp_time, &size, NULL, 0) < 0) {
-			warnx("could not read kern.cp_time");
+			warn("could not read kern.cp_time");
 			bzero(cur.cp_time, sizeof(cur.cp_time));
 		}
 		size = sizeof(cur.tk_nin);
@@ -185,7 +185,7 @@ dkreadstats()
 		mib[1] = KERN_TTY;
 		mib[2] = KERN_TTY_TKNIN;
 		if (sysctl(mib, 3, &cur.tk_nin, &size, NULL, 0) < 0) {
-			warnx("could not read kern.tty.tk_nin");
+			warn("could not read kern.tty.tk_nin");
 			cur.tk_nin = 0;
 		}
 		size = sizeof(cur.tk_nin);
@@ -193,7 +193,7 @@ dkreadstats()
 		mib[1] = KERN_TTY;
 		mib[2] = KERN_TTY_TKNOUT;
 		if (sysctl(mib, 3, &cur.tk_nout, &size, NULL, 0) < 0) {
-			warnx("could not read kern.tty.tk_nout");
+			warn("could not read kern.tty.tk_nout");
 			cur.tk_nout = 0;
 		}
 	} else {
@@ -265,7 +265,7 @@ int	select;
 		mib[1] = HW_DISKCOUNT;
 		size = sizeof(dk_ndrive);
 		if (sysctl(mib, 2, &dk_ndrive, &size, NULL, 0) < 0 ) {
-			warnx("could not read hw.diskcount");
+			warn("could not read hw.diskcount");
 			dk_ndrive = 0;
 		}
 
@@ -274,7 +274,7 @@ int	select;
 		mib[1] = KERN_CLOCKRATE;
 		size = sizeof(clkinfo);
 		if (sysctl(mib, 2, &clkinfo, &size, NULL, 0) < 0) {
-			warnx("could not read kern.clockrate");
+			warn("could not read kern.clockrate");
 			hz = 0;
 		} else
 			hz = clkinfo.stathz;
