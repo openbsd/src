@@ -172,7 +172,6 @@
 ./usr/share/man/cat1/afslog.0
 ./usr/share/man/cat1/alias.0
 ./usr/share/man/cat1/alpha
-./usr/share/man/cat1/altqstat.0
 ./usr/share/man/cat1/amiga
 ./usr/share/man/cat1/apply.0
 ./usr/share/man/cat1/apropos.0
@@ -1523,7 +1522,6 @@
 ./usr/share/man/cat5/afsd.conf.0
 ./usr/share/man/cat5/aliases.0
 ./usr/share/man/cat5/alpha
-./usr/share/man/cat5/altq.conf.0
 ./usr/share/man/cat5/amiga
 ./usr/share/man/cat5/bootparams.0
 ./usr/share/man/cat5/bootptab.0
@@ -1694,7 +1692,6 @@
 ./usr/share/man/cat8/alpha/wsconscfg.0
 ./usr/share/man/cat8/alpha/wsconsctl.0
 ./usr/share/man/cat8/alpha/wsfontload.0
-./usr/share/man/cat8/altqd.0
 ./usr/share/man/cat8/amd.0
 ./usr/share/man/cat8/amiga
 ./usr/share/man/cat8/amiga/MAKEDEV.0
@@ -2063,7 +2060,6 @@
 ./usr/share/man/cat8/sysctl.0
 ./usr/share/man/cat8/syslogd.0
 ./usr/share/man/cat8/talkd.0
-./usr/share/man/cat8/tbrconfig.0
 ./usr/share/man/cat8/tcpd.0
 ./usr/share/man/cat8/tcpdchk.0
 ./usr/share/man/cat8/tcpdmatch.0

@@ -143,7 +143,6 @@
 ./sbin/swapctl
 ./sbin/swapon
 ./sbin/sysctl
-./sbin/tbrconfig
 ./sbin/ttyflags
 ./sbin/tunefs
 ./sbin/umount
@@ -156,7 +155,6 @@
 ./usr/bin/addftinfo
 ./usr/bin/afmtodit
 ./usr/bin/afslog
-./usr/bin/altqstat
 ./usr/bin/apply
 ./usr/bin/apropos
 ./usr/bin/arch
@@ -1536,7 +1534,6 @@
 ./usr/sbin/activadm
 ./usr/sbin/activinit
 ./usr/sbin/adduser
-./usr/sbin/altqd
 ./usr/sbin/amd
 ./usr/sbin/amq
 ./usr/sbin/apachectl
@@ -1707,23 +1704,6 @@
 ./usr/sbin/zdump
 ./usr/sbin/zic
 ./usr/share
-./usr/share/altq
-./usr/share/altq/cbq.bandwidthtest
-./usr/share/altq/cbq.diffedge
-./usr/share/altq/cbq.lo0
-./usr/share/altq/cbq.sample0
-./usr/share/altq/cbq.sample1
-./usr/share/altq/cbq.sample2
-./usr/share/altq/cbq.sharing
-./usr/share/altq/cbq.ssh_tos
-./usr/share/altq/cbq.v6
-./usr/share/altq/cbq.widecamp
-./usr/share/altq/cdnr.sample
-./usr/share/altq/hfsc.diffedge
-./usr/share/altq/hfsc.grate
-./usr/share/altq/hfsc.lo0
-./usr/share/altq/hfsc.pvc0
-./usr/share/altq/hfsc.share
 ./usr/share/calendar
 ./usr/share/calendar/calendar.all
 ./usr/share/calendar/calendar.birthday
