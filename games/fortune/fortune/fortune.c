@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.9 2001/01/28 23:41:40 niklas Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.10 2001/03/22 22:29:40 pjanzen Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: fortune.c,v 1.9 2001/01/28 23:41:40 niklas Exp $";
+static char rcsid[] = "$OpenBSD: fortune.c,v 1.10 2001/03/22 22:29:40 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -481,12 +481,12 @@ FILEDESC	*parent;
 	if (!isdir && parent == NULL && (All_forts || Offend) &&
 	    !is_off_name(path)) {
 		offensive = off_name(path);
-		was_malloc = TRUE;
 		if (Offend) {
 			if (was_malloc)
 				free(path);
 			path = offensive;
 			file = off_name(file);
+			was_malloc = TRUE;
 		}
 	}
 
