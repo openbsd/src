@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.18 1997/01/15 23:43:16 millert Exp $	*/
+/*	$OpenBSD: su.c,v 1.19 1997/02/11 05:00:55 tholo Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";*/
-static char rcsid[] = "$OpenBSD: su.c,v 1.18 1997/01/15 23:43:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: su.c,v 1.19 1997/02/11 05:00:55 tholo Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -67,16 +67,46 @@ static char rcsid[] = "$OpenBSD: su.c,v 1.18 1997/01/15 23:43:16 millert Exp $";
 #include <kerberosIV/des.h>
 #include <kerberosIV/krb.h>
 #include <netdb.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 
 #define	ARGSTR	"-Kflm"
 
+void	 kdestroy __P((void));
+void	 dofork __P((void));
+
 int use_kerberos = 1;
+char krbtkfile[MAXPATHLEN];
 #else
 #define	ARGSTR	"-flm"
 #endif
 
 char   *ontty __P((void));
 int	chshell __P((char *));
+
+#ifdef KERBEROS
+void
+dofork()
+{
+    pid_t child;
+
+    if (!(child = fork()))
+	    return; /* Child process */
+
+    /* Setup stuff?  This would be things we could do in parallel with login */
+    (void) chdir("/");	/* Let's not keep the fs busy... */
+    
+    /* If we're the parent, watch the child until it dies */
+    while (wait(0) != child)
+	    ;
+
+    /* Run kdestroy to destroy tickets */
+    kdestroy();
+
+    /* Leave */
+    exit(0);
+}
+#endif
 
 int
 main(argc, argv)
@@ -162,6 +192,7 @@ main(argc, argv)
 	    if (!use_kerberos || kerberos(username, user, pwd->pw_uid))
 #endif
 	    {
+		use_kerberos = 0;
 		/* only allow those in group zero to su to root. */
 		if (pwd->pw_uid == 0 && (gr = getgrgid((gid_t)0))
 		    && gr->gr_mem && *(gr->gr_mem))
@@ -218,6 +249,12 @@ badlogin:
 	/* if we're forking a csh, we want to slightly muck the args */
 	if (iscsh == UNSET)
 		iscsh = strcmp(avshell, "csh") ? NO : YES;
+
+#if defined(KERBEROS) || defined(KERBEROS5)
+	/* Fork so that we can call kdestroy */
+	if (use_kerberos)
+	    dofork();
+#endif
 
 	/* set permissions */
 	if (setegid(pwd->pw_gid) < 0)
@@ -322,7 +359,7 @@ kerberos(username, user, uid)
 	register char *p;
 	int kerno;
 	u_long faddr;
-	char lrealm[REALM_SZ], krbtkfile[MAXPATHLEN];
+	char lrealm[REALM_SZ];
 	char hostname[MAXHOSTNAMELEN], savehost[MAXHOSTNAMELEN];
 	char *ontty(), *krb_get_phost();
 
@@ -447,5 +484,62 @@ koktologin(name, realm, toname)
 	kdata->prealm[sizeof(kdata->prealm) -1] = '\0';
 
 	return (kuserok(kdata, toname));
+}
+
+void
+kdestroy()
+{
+        char *file = krbtkfile;
+	int i, fd;
+	extern int errno;
+	struct stat statb;
+	char buf[BUFSIZ];
+#ifdef TKT_SHMEM
+	char shmidname[MAXPATHLEN];
+#endif /* TKT_SHMEM */
+
+	if (use_kerberos == 0)
+	    return;
+
+	errno = 0;
+	if (lstat(file, &statb) < 0)
+	    goto out;
+
+	if (!(statb.st_mode & S_IFREG)
+#ifdef notdef
+	    || statb.st_mode & 077
+#endif
+	    )
+		goto out;
+
+	if ((fd = open(file, O_RDWR, 0)) < 0)
+	    goto out;
+
+	bzero(buf, BUFSIZ);
+
+	for (i = 0; i < statb.st_size; i += BUFSIZ)
+	    if (write(fd, buf, BUFSIZ) != BUFSIZ) {
+		(void) fsync(fd);
+		(void) close(fd);
+		goto out;
+	    }
+
+	(void) fsync(fd);
+	(void) close(fd);
+
+	(void) unlink(file);
+
+out:
+	if (errno != 0) return;
+#ifdef TKT_SHMEM
+	/* 
+	 * handle the shared memory case 
+	 */
+	(void) strcpy(shmidname, file);
+	(void) strcat(shmidname, ".shm");
+	if (krb_shm_dest(shmidname) != KSUCCESS)
+	    return;
+#endif /* TKT_SHMEM */
+	return;
 }
 #endif
