@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.648 2003/07/08 19:55:15 couderc Exp 
+ *		OpenBSD: pcidevs,v 1.649 2003/07/09 19:53:05 otto Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -6179,6 +6179,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "WL11000P",
 	},
 	{
+	    PCI_VENDOR_V3, PCI_PRODUCT_V3_V961PBC,
+	    "V961PBC i960 Host-PCI",
+	},
+	{
 	    PCI_VENDOR_V3, PCI_PRODUCT_V3_V292PBC,
 	    "V292PBC AMD290x0 Host-PCI",
 	},
@@ -6353,6 +6357,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8233_ISA,
 	    "VT8233 PCI-ISA",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8751,
+	    "VT8751 Host-PCI",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8235_ISA,
