@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.10 2004/05/04 22:23:01 mickey Exp $	*/
+/*	$OpenBSD: options.c,v 1.11 2004/05/06 22:29:15 deraadt Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -376,10 +376,6 @@ store_options(unsigned char *buffer, int buflen, struct tree_cache **options,
 		if (option_stored[code])
 			continue;
 		option_stored[code] = 1;
-
-		/* Find the value of the option... */
-		if (!tree_evaluate(options[code]))
-			continue;
 
 		/* We should now have a constant length for the option. */
 		length = options[code]->len;

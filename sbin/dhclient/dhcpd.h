@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.32 2004/05/04 22:23:01 mickey Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.33 2004/05/06 22:29:15 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -106,7 +106,6 @@ struct packet {
 	struct interface_info	*interface;
 	struct hardware		*haddr;
 	struct option_data	 options[256];
-	int			 got_requested_address;
 };
 
 struct hardware {
@@ -284,7 +283,6 @@ void convert_num(unsigned char *, char *, int, int);
 time_t parse_date(FILE *);
 
 /* tree.c */
-int tree_evaluate(struct tree_cache *);
 pair cons(caddr_t, pair);
 
 /* alloc.c */

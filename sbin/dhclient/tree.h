@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.h,v 1.4 2004/02/23 20:09:02 deraadt Exp $	*/
+/*	$OpenBSD: tree.h,v 1.5 2004/05/06 22:29:15 deraadt Exp $	*/
 
 /* Definitions for address trees... */
 
@@ -45,52 +45,11 @@ typedef struct _pair {
 	struct _pair *cdr;
 } *pair;
 
-/* Tree node types... */
-#define TREE_CONCAT		1
-#define TREE_HOST_LOOKUP	2
-#define TREE_CONST		3
-#define TREE_LIMIT		4
-
-/* Tree structure for deferred evaluation of changing values. */
-struct tree {
-	int op;
-	union {
-		struct concat {
-			struct tree *left;
-			struct tree *right;
-		} concat;
-		struct host_lookup {
-			struct dns_host_entry *host;
-		} host_lookup;
-		struct const_val {
-			unsigned char *data;
-			int len;
-		} const_val;
-		struct limit {
-			struct tree *tree;
-			int limit;
-		} limit;
-	} data;
-};
-
-/* DNS host entry structure... */
-struct dns_host_entry {
-	char *hostname;
-	unsigned char *data;
-	int data_len;
-	int buf_len;
-	time_t timeout;
-};
-
 struct tree_cache {
 	unsigned char *value;
 	int len;
 	int buf_size;
 	time_t timeout;
-	struct tree *tree;
-	int flags;
-#define	TC_AWAITING_RESOLUTION	1
-#define TC_TEMPORARY		2
 };
 
 struct universe {
