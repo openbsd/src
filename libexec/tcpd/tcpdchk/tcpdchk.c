@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdchk.c,v 1.5 2001/07/08 21:18:13 deraadt Exp $	*/
+/*	$OpenBSD: tcpdchk.c,v 1.6 2002/06/07 03:32:04 itojun Exp $	*/
 
  /*
   * tcpdchk - examine all tcpd access control rules and inetd.conf entries
@@ -20,7 +20,7 @@
 #if 0
 static char sccsid[] = "@(#) tcpdchk.c 1.8 97/02/12 02:13:25";
 #else
-static char rcsid[] = "$OpenBSD: tcpdchk.c,v 1.5 2001/07/08 21:18:13 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tcpdchk.c,v 1.6 2002/06/07 03:32:04 itojun Exp $";
 #endif
 #endif
 
@@ -28,9 +28,6 @@ static char rcsid[] = "$OpenBSD: tcpdchk.c,v 1.5 2001/07/08 21:18:13 deraadt Exp
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#ifdef INET6
-#include <sys/socket.h>
-#endif
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <stdio.h>
@@ -76,15 +73,18 @@ extern jmp_buf tcpd_buf;
  /*
   * Local stuff.
   */
-static void usage();
-static void parse_table();
-static void print_list();
-static void check_daemon_list();
-static void check_client_list();
-static void check_daemon();
-static void check_user();
-static int check_host();
-static int reserved_name();
+static void usage(void);
+static void parse_table(char *, struct request_info *);
+static void print_list(char *, char *);
+static void check_daemon_list(char *);
+static void check_client_list(char *);
+static void check_daemon(char *);
+static void check_user(char *);
+#ifdef INET6
+static int check_inet_addr(char *);
+#endif
+static int check_host(char *);
+static int reserved_name(char *);
 
 #define PERMIT	1
 #define DENY	0
@@ -419,8 +419,22 @@ char   *pat;
     }
 }
 
-/* check_host - criticize host pattern */
+#ifdef INET6
+static int check_inet_addr(pat)
+char	*pat;
+{
+	struct addrinfo *res;
 
+	res = find_inet_addr(pat, AI_NUMERICHOST);
+	if (res) {
+		freeaddrinfo(res);
+		return 1;
+	} else
+		return 0;
+}
+#endif
+
+/* check_host - criticize host pattern */
 static int check_host(pat)
 char   *pat;
 {
@@ -446,18 +460,15 @@ char   *pat;
 #endif
     } else if ((mask = split_at(pat, '/')) != NULL) {	/* network/netmask */
 #ifdef INET6
-	struct in6_addr in6;
+	char *ep;
 #endif
-	if (dot_quad_addr_new(pat, NULL)
-	    && dot_quad_addr_new(mask, NULL))
+	if (dot_quad_addr_new(pat, NULL) && dot_quad_addr_new(mask, NULL))
 	    ; /*okay*/
 #ifdef INET6
-	else if (inet_pton(AF_INET6, pat, &in6) == 1
-	      && inet_pton(AF_INET6, mask, &in6) == 1)
+	else if (check_inet_addr(pat) && check_inet_addr(mask))
 	    ; /*okay*/
-	else if (inet_pton(AF_INET6, pat, &in6) == 1
-	      && strchr(mask, ':') == NULL
-	      && 0 <= atoi(mask) && atoi(mask) <= 128)
+	else if (check_inet_addr(pat) &&
+	    (ep = NULL, strtoul(mask, &ep, 10), ep && !*ep))
 	    ; /*okay*/
 #endif
 	else

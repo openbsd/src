@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.4 2000/10/14 00:56:15 itojun Exp $	*/
+/*	$OpenBSD: misc.c,v 1.5 2002/06/07 03:32:04 itojun Exp $	*/
 
  /*
   * Misc routines that are used by tcpd and by tcpdchk.
@@ -10,7 +10,7 @@
 #if 0
 static char sccsic[] = "@(#) misc.c 1.2 96/02/11 17:01:29";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.4 2000/10/14 00:56:15 itojun Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.5 2002/06/07 03:32:04 itojun Exp $";
 #endif
 #endif
 
@@ -22,10 +22,6 @@ static char rcsid[] = "$OpenBSD: misc.c,v 1.4 2000/10/14 00:56:15 itojun Exp $";
 #include <string.h>
 
 #include "tcpd.h"
-
-#ifndef	INADDR_NONE
-#define	INADDR_NONE	(-1)		/* XXX should be 0xffffffff */
-#endif
 
 /* xgets - fgets() with backslash-newline stripping */
 
@@ -60,13 +56,6 @@ char   *split_at(string, delimiter)
 char   *string;
 int     delimiter;
 {
-#if 0
-    char   *cp;
-
-    if ((cp = strchr(string, delimiter)) != 0)
-	*cp++ = 0;
-    return (cp);
-#else
     char *cp;
     int bracket;
 
@@ -88,7 +77,6 @@ int     delimiter;
 	}
     }
     return NULL;
-#endif
 }
 
 /* dot_quad_addr_new - convert dotted quad to internal form */

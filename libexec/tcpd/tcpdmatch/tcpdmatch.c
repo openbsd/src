@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdmatch.c,v 1.5 2000/10/14 00:56:15 itojun Exp $	*/
+/*	$OpenBSD: tcpdmatch.c,v 1.6 2002/06/07 03:32:04 itojun Exp $	*/
 
  /*
   * tcpdmatch - explain what tcpd would do in a specific case
@@ -19,7 +19,7 @@
 #if 0
 static char sccsid[] = "@(#) tcpdmatch.c 1.5 96/02/11 17:01:36";
 #else
-static char rcsid[] = "$OpenBSD: tcpdmatch.c,v 1.5 2000/10/14 00:56:15 itojun Exp $";
+static char rcsid[] = "$OpenBSD: tcpdmatch.c,v 1.6 2002/06/07 03:32:04 itojun Exp $";
 #endif
 #endif
 
@@ -53,8 +53,9 @@ static char rcsid[] = "$OpenBSD: tcpdmatch.c,v 1.5 2000/10/14 00:56:15 itojun Ex
 #include "inetcf.h"
 #include "scaffold.h"
 
-static void usage();
-static void tcpdmatch();
+static void usage(char *);
+static void expand(char *, char *, struct request_info *);
+static void tcpdmatch(struct request_info *);
 
 /* The main program */
 
@@ -62,25 +63,19 @@ int     main(argc, argv)
 int     argc;
 char  **argv;
 {
-    struct hostent *hp;
+    struct addrinfo *res, *res0;
     char   *myname = argv[0];
     char   *client;
     char   *server;
-    char   *addr;
     char   *user;
     char   *daemon;
     struct request_info request;
     int     ch;
     char   *inetcf = 0;
     int     count;
-    struct sockaddr_storage server_sin;
-    struct sockaddr_storage client_sin;
+    struct sockaddr_storage server_ss;
+    struct sockaddr_storage client_ss;
     struct stat st;
-    char *ap;
-    int alen;
-#ifdef INET6
-    struct sockaddr_in6 in6;
-#endif
 
     /*
      * Show what rule actually matched.
@@ -180,28 +175,17 @@ char  **argv;
      * address and name conversion results.
      */
     if (NOT_INADDR(server) == 0 || HOSTNAME_KNOWN(server)) {
-	if ((hp = find_inet_addr(server)) == 0)
+	if ((res0 = find_inet_addr(server, 0)) == NULL)
 	    exit(1);
-	memset((char *) &server_sin, 0, sizeof(server_sin));
-	server_sin.ss_family = hp->h_addrtype;
-	switch (hp->h_addrtype) {
-	case AF_INET:
-	    ap = (char *)&((struct sockaddr_in *)&server_sin)->sin_addr;
-	    alen = sizeof(struct in_addr);
-	    break;
-#ifdef INET6
-	case AF_INET6:
-	    ap = (char *)&((struct sockaddr_in6 *)&server_sin)->sin6_addr;
-	    alen = sizeof(struct in6_addr);
-	    break;
-#endif
-	default:
-	    exit(1);
-	}
-	request_set(&request, RQ_SERVER_SIN, &server_sin, 0);
+	memset((char *) &server_ss, 0, sizeof(server_ss));
+	request_set(&request, RQ_SERVER_SIN, &server_ss, 0);
 
-	for (count = 0; (addr = hp->h_addr_list[count]) != 0; count++) {
-	    memcpy(ap, addr, alen);
+	count = 0;
+	for (res = res0; res; res = res->ai_next) {
+	    count++;
+	    if (res->ai_addrlen > sizeof(server_ss))
+		continue;
+	    memcpy(&server_ss, res->ai_addr, res->ai_addrlen);
 
 	    /*
 	     * Force evaluation of server host name and address. Host name
@@ -217,7 +201,7 @@ char  **argv;
 	    fprintf(stderr, "Please specify an address instead\n");
 	    exit(1);
 	}
-	free((char *) hp);
+	freeaddrinfo(res0);
     } else {
 	request_set(&request, RQ_SERVER_NAME, server, 0);
     }
@@ -226,18 +210,15 @@ char  **argv;
      * If a client address is specified, we simulate the effect of client
      * hostname lookup failure.
      */
-    if (dot_quad_addr_new(client, NULL)) {
-	request_set(&request, RQ_CLIENT_ADDR, client, 0);
+    res0 = find_inet_addr(client, AI_NUMERICHOST);
+    if (res0 && !res0->ai_next) {
+	request_set(&request, RQ_CLIENT_SIN, res0->ai_addr);
 	tcpdmatch(&request);
+	freeaddrinfo(res0);
 	exit(0);
     }
-#ifdef INET6
-    if (inet_pton(AF_INET6, client, &in6) == 1) {
-	request_set(&request, RQ_CLIENT_ADDR, client, 0);
-	tcpdmatch(&request);
-	exit(0);
-    }
-#endif
+    if (res0)
+	freeaddrinfo(res0);
 
     /*
      * Perhaps they are testing special client hostname patterns that aren't
@@ -257,28 +238,17 @@ char  **argv;
      * using the request.client structure as a cache for host name and
      * address conversion results.
      */
-    if ((hp = find_inet_addr(client)) == 0)
+    if ((res0 = find_inet_addr(client, 0)) == NULL)
 	exit(1);
-    memset((char *) &client_sin, 0, sizeof(client_sin));
-    client_sin.ss_family = hp->h_addrtype;
-    switch (hp->h_addrtype) {
-    case AF_INET:
-	ap = (char *)&((struct sockaddr_in *)&client_sin)->sin_addr;
-	alen = sizeof(struct in_addr);
-	break;
-#ifdef INET6
-    case AF_INET6:
-	ap = (char *)&((struct sockaddr_in6 *)&client_sin)->sin6_addr;
-	alen = sizeof(struct in6_addr);
-	break;
-#endif
-    default:
-	exit(1);
-    }
-    request_set(&request, RQ_CLIENT_SIN, &client_sin, 0);
+    memset((char *) &client_ss, 0, sizeof(client_ss));
+    request_set(&request, RQ_CLIENT_SIN, &client_ss, 0);
 
-    for (count = 0; (addr = hp->h_addr_list[count]) != 0; count++) {
-	memcpy(ap, addr, alen);
+    count = 0;
+    for (res = res0; res; res = res->ai_next) {
+	count++;
+	if (res->ai_addrlen > sizeof(client_ss))
+	    continue;
+	memcpy(&client_ss, res->ai_addr, res->ai_addrlen);
 
 	/*
 	 * Force evaluation of client host name and address. Host name
@@ -289,10 +259,10 @@ char  **argv;
 	    tcpd_warn("host address %s->name lookup failed",
 		      eval_hostaddr(request.client));
 	tcpdmatch(&request);
-	if (hp->h_addr_list[count + 1])
+	if (res->ai_next)
 	    printf("\n");
     }
-    free((char *) hp);
+    freeaddrinfo(res0);
     exit(0);
 }
 
