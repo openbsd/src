@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.8 2003/06/02 23:27:48 millert Exp $	*/
+/*	$OpenBSD: param.h,v 1.9 2004/04/19 23:29:03 deraadt Exp $	*/
 /*	$NetBSD: param.h,v 1.2 1997/06/10 18:21:23 veego Exp $	*/
 
 /*
@@ -108,13 +108,7 @@
 
 #define	MCLBYTES	(1 << MCLSHIFT)
 #define	MCLOFSET	(MCLBYTES - 1)
-#ifndef NMBCLUSTERS
-#ifdef GATEWAY
-# define	NMBCLUSTERS	1024	/* map size, max cluster allocation */
-#else
-# define	NMBCLUSTERS	512	/* map size, max cluster allocation */
-#endif
-#endif
+#define	NMBCLUSTERS	1024		/* map size, max cluster allocation */
 
 /* pages ("clicks") to disk blocks */
 #define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
