@@ -1,4 +1,4 @@
-/*	CVSKEYWORD	*/
+/*	$OpenBSD: sgmap.h,v 1.2 2000/04/27 00:54:02 bjc Exp $	*/
 /* $NetBSD: sgmap.h,v 1.1 1999/06/06 18:58:50 ragge Exp $ */
 
 /*-
