@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sectok.1,v 1.5 2001/07/27 07:33:31 jakob Exp $
+.\"	$OpenBSD: sectok.1,v 1.6 2001/08/02 18:37:35 mpech Exp $
 .\"
 .\" Copyright (C) 2001, Jakob Schlyter. All rights reserved.
 .\"
@@ -46,7 +46,8 @@ is a command-line-like interface for communicating with smartcards.
 APDUs can be sent to the card, and results are displayed. Some
 commands are card-specific, and focus on the Schlumberger Cyberflex
 Access Javacards.
-.Sh OPTIONS
+.Pp
+The options are as follows:
 .Bl -tag -width Ds
 .It Fl 0123
 Select port.
@@ -57,7 +58,6 @@ Run commands from scriptfile.
 .It Fl s Ar sleeptime
 Set sleep (in milliseconds) between commands in the script.
 .El
-.\"
 .Sh COMMANDS
 .Ss Non-card commands
 .Pp
