@@ -1538,9 +1538,11 @@
 ./usr/share/man/cat4/sparc64/schizo.0
 ./usr/share/man/cat4/sparc64/spif.0
 ./usr/share/man/cat4/sparc64/timer.0
+./usr/share/man/cat4/sparc64/tvtwo.0
 ./usr/share/man/cat4/sparc64/upa.0
 ./usr/share/man/cat4/sparc64/uperf.0
 ./usr/share/man/cat4/sparc64/vgafb.0
+./usr/share/man/cat4/sparc64/vigra.0
 ./usr/share/man/cat4/sparc64/zs.0
 ./usr/share/man/cat4/sparc64/zskbd.0
 ./usr/share/man/cat4/sparc64/zstty.0

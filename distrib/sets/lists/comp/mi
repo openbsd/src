@@ -937,7 +937,6 @@
 ./usr/include/net/if_fddi.h
 ./usr/include/net/if_gif.h
 ./usr/include/net/if_gre.h
-./usr/include/net/if_ieee80211.h
 ./usr/include/net/if_llc.h
 ./usr/include/net/if_media.h
 ./usr/include/net/if_pflog.h

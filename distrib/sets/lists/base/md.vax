@@ -975,7 +975,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/if_fddi.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/if_gif.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/if_gre.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/net/if_ieee80211.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/if_llc.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/if_media.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/if_pflog.ph
