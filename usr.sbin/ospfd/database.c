@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.3 2005/02/02 19:15:07 henning Exp $ */
+/*	$OpenBSD: database.c,v 1.4 2005/02/09 15:39:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -251,7 +251,7 @@ recv_db_description(struct nbr *nbr, char *buf, u_int16_t len)
 				/* event negotiation done */
 				nbr_fsm(nbr, NBR_EVT_NEG_DONE);
 			}
-		} else if (dd_hdr.bits == OSPF_DBD_M) {
+		} else if (!(dd_hdr.bits & (OSPF_DBD_I | OSPF_DBD_MS))) {
 			/* master */
 			if (ntohl(dd_hdr.dd_seq_num) != nbr->dd_seq_num) {
 				log_warnx("recv_db_description: invalid "
@@ -347,7 +347,8 @@ recv_db_description(struct nbr *nbr, char *buf, u_int16_t len)
 
 		if (!(dd_hdr.bits & OSPF_DBD_M) &&
 		    TAILQ_EMPTY(&nbr->db_sum_list))
-			nbr_fsm(nbr, NBR_EVT_XCHNG_DONE);
+			if (!nbr->master || !(nbr->options & OSPF_DBD_M))
+				nbr_fsm(nbr, NBR_EVT_XCHNG_DONE);
 		break;
 	default:
 		fatalx("recv_db_description: unknown neighbor state");
@@ -404,10 +405,10 @@ db_tx_timer(int fd, short event, void *arg)
 	case NBR_STA_INIT:
 	case NBR_STA_2_WAY:
 	case NBR_STA_SNAP:
-	case NBR_STA_LOAD:
 		return ;
 	case NBR_STA_XSTRT:
 	case NBR_STA_XCHNG:
+	case NBR_STA_LOAD:
 	case NBR_STA_FULL:
 		send_db_description(nbr);
 		break;
