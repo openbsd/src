@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.120 2000/06/26 21:59:18 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.121 2000/07/05 21:35:56 provos Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -345,7 +345,7 @@ sshd_exchange_identification(int sock_in, int sock_out)
 			break;
 		}
 		if (remote_minor < 3) {
-			packet_disconnect("Your ssh version is too old and"
+			packet_disconnect("Your ssh version is too old and "
 			    "is no longer supported.  Please install a newer version.");
 		} else if (remote_minor == 3) {
 			/* note that this disables agent-forwarding */
