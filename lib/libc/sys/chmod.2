@@ -164,6 +164,9 @@ The descriptor is not valid.
 .It Bq Er EINVAL
 .Fa Fd
 refers to a socket, not to a file.
+.It Bq Er EINVAL
+.Fa mode
+is not valid, ie. contains extra bits.
 .It Bq Er EROFS
 The file resides on a read-only file system.
 .It Bq Er EIO

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.28 1997/11/06 05:58:29 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.29 1997/11/17 06:00:52 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1529,6 +1529,9 @@ sys_chmod(p, v, retval)
 	int error;
 	struct nameidata nd;
 
+	if (SCARG(uap, mode) & ~ALLPERMS)
+		return (EINVAL);
+
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
@@ -1564,6 +1567,9 @@ sys_fchmod(p, v, retval)
 	struct vnode *vp;
 	struct file *fp;
 	int error;
+
+	if (SCARG(uap, mode) & ~ALLPERMS)
+		return (EINVAL);
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
