@@ -29,7 +29,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: rcmd.c,v 1.50 2005/03/07 20:00:15 deraadt Exp $";
+static char *rcsid = "$OpenBSD: rcmd.c,v 1.51 2005/03/08 18:34:42 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -244,6 +244,14 @@ again:
 			goto bad;
 		}
 		s3 = accept(s2, (struct sockaddr *)&from, &len);
+		if (s3 < 0) {
+			(void)fprintf(stderr,
+			    "rcmd: accept: %s\n", strerror(errno));
+			lport = 0;
+			close(s2);
+			goto bad;
+		}
+
 		/*
 		 * XXX careful for ftp bounce attacks. If discovered, shut them
 		 * down and check for the real auxiliary channel to connect.
@@ -262,12 +270,7 @@ again:
 			break;
 		}
 		(void)close(s2);
-		if (s3 < 0) {
-			(void)fprintf(stderr,
-			    "rcmd: accept: %s\n", strerror(errno));
-			lport = 0;
-			goto bad;
-		}
+
 		*fd2p = s3;
 		switch (from.ss_family) {
 		case AF_INET:
