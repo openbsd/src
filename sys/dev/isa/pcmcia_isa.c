@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia_isa.c,v 1.6 1996/10/17 21:45:28 niklas Exp $	*/
+/*	$OpenBSD: pcmcia_isa.c,v 1.7 1996/10/18 15:43:06 deraadt Exp $	*/
 /*
  * Copyright (c) 1995,1996 John T. Kohl.  All rights reserved.
  * Copyright (c) 1994 Stefan Grefen.  All rights reserved.
@@ -158,6 +158,8 @@ pcmcia_isa_probe(parent, match, aux, pc_link)
 #endif
 	if ((probe == NULL ? (*cf->cf_attach->ca_match)(parent, dev, &ia) :
 	    (*probe)(parent, dev, &ia, pc_link)) > 0) {
+		extern int isaprint __P((void *, char *));
+
 		config_attach(parent, dev, &ia, isaprint);
 #ifdef PCMCIA_ISA_DEBUG
 		printf("biomask %x netmask %x ttymask %x\n",
