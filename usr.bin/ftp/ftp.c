@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.48 2002/06/09 02:36:03 itojun Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.49 2002/07/04 10:08:00 jakob Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: ftp.c,v 1.48 2002/06/09 02:36:03 itojun Exp $";
+static char rcsid[] = "$OpenBSD: ftp.c,v 1.49 2002/07/04 10:08:00 jakob Exp $";
 #endif
 #endif /* not lint */
 
@@ -1415,6 +1415,20 @@ noport:
 			warn("setsockopt (reuse address)");
 			goto bad;
 		}
+	switch (data_addr.su_family) {
+	case AF_INET:
+		on = IP_PORTRANGE_HIGH;
+		if (setsockopt(data, IPPROTO_IP, IP_PORTRANGE,
+		    (char *)&on, sizeof(on)) < 0)
+			warn("setsockopt IP_PORTRANGE (ignored)");
+		break;
+	case AF_INET6:
+		on = IPV6_PORTRANGE_HIGH;
+		if (setsockopt(data, IPPROTO_IPV6, IPV6_PORTRANGE,
+		    (char *)&on, sizeof(on)) < 0)
+			warn("setsockopt IPV6_PORTRANGE (ignored)");
+		break;
+	}
 	if (bind(data, (struct sockaddr *)&data_addr, data_addr.su_len) < 0) {
 		warn("bind");
 		goto bad;
