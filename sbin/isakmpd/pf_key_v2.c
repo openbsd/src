@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.118 2002/12/04 15:06:33 markus Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.119 2002/12/04 18:08:40 ho Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -1659,7 +1659,7 @@ pf_key_v2_mask6_to_bits (u_int8_t *mask)
 {
   int n;
   bit_ffc (mask, 128, &n);
-  return n;
+  return n == -1 ? 128 : n;
 }
 
 /*
