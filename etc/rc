@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.23 1996/09/04 10:25:53 deraadt Exp $
+#	$OpenBSD: rc,v 1.24 1996/09/07 20:45:24 millert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -87,7 +87,10 @@ rm -f /var/spool/uucp/STST/*
 (cd /var/run && { rm -rf -- *; install -c -m 664 -g utmp /dev/null utmp; })
 
 echo -n 'starting rpc daemons:'
-if [ X"${portmap}" == X"YES" ]; then
+
+# $portmap is imported from /etc/netstart;
+# if $portmap == YES, the portmapper is started.
+if [ X"${portmap}" = X"YES" ]; then
 	echo -n ' portmap';		portmap
 fi
 
