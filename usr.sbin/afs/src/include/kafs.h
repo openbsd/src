@@ -92,14 +92,11 @@
 
 #endif /* NEED_VICEIOCTL32 */
 
+#include <xfs/xfs_pioctl.h>
 
 /*
  * ioctls
  */
-
-#define VIOCCLOSEWAIT		_VICEIOCTL(1)
-#define VIOCABORT		_VICEIOCTL(2)
-#define VIOIGETCELL		_VICEIOCTL(3)
 
 #define VIOCCLOSEWAIT_32	_VICEIOCTL32(1)
 #define VIOCABORT_32		_VICEIOCTL32(2)
@@ -108,79 +105,6 @@
 /*
  * pioctls
  */
-
-#define VIOCSETAL		_VICEIOCTL(1)
-#define VIOCGETAL		_VICEIOCTL(2)
-#define VIOCSETTOK		_VICEIOCTL(3)
-#define VIOCGETVOLSTAT		_VICEIOCTL(4)
-#define VIOCSETVOLSTAT		_VICEIOCTL(5)
-#define VIOCFLUSH		_VICEIOCTL(6)
-#define VIOCSTAT		_VICEIOCTL(7)
-#define VIOCGETTOK		_VICEIOCTL(8)
-#define VIOCUNLOG		_VICEIOCTL(9)
-#define VIOCCKSERV		_VICEIOCTL(10)
-#define VIOCCKBACK		_VICEIOCTL(11)
-#define VIOCCKCONN		_VICEIOCTL(12)
-#define VIOCGETTIME		_VICEIOCTL(13)
-#define VIOCWHEREIS		_VICEIOCTL(14)
-#define VIOCPREFETCH		_VICEIOCTL(15)
-#define VIOCNOP			_VICEIOCTL(16)
-#define VIOCENGROUP		_VICEIOCTL(17)
-#define VIOCDISGROUP		_VICEIOCTL(18)
-#define VIOCLISTGROUPS		_VICEIOCTL(19)
-#define VIOCACCESS		_VICEIOCTL(20)
-#define VIOCUNPAG		_VICEIOCTL(21)
-#define VIOCGETFID		_VICEIOCTL(22)
-#define VIOCWAITFOREVER		_VICEIOCTL(23)
-#define VIOCSETCACHESIZE	_VICEIOCTL(24)
-#define VIOCFLUSHCB		_VICEIOCTL(25)
-#define VIOCNEWCELL		_VICEIOCTL(26)
-#define VIOCGETCELL		_VICEIOCTL(27)
-#define VIOC_AFS_DELETE_MT_PT	_VICEIOCTL(28)
-#define VIOC_AFS_STAT_MT_PT	_VICEIOCTL(29)
-#define VIOC_FILE_CELL_NAME	_VICEIOCTL(30)
-#define VIOC_GET_WS_CELL	_VICEIOCTL(31)
-#define VIOC_AFS_MARINER_HOST	_VICEIOCTL(32)
-#define VIOC_GET_PRIMARY_CELL	_VICEIOCTL(33)
-#define VIOC_VENUSLOG		_VICEIOCTL(34)
-#define VIOC_GETCELLSTATUS	_VICEIOCTL(35)
-#define VIOC_SETCELLSTATUS	_VICEIOCTL(36)
-#define VIOC_FLUSHVOLUME	_VICEIOCTL(37)
-#define VIOC_AFS_SYSNAME	_VICEIOCTL(38)
-#define VIOC_EXPORTAFS		_VICEIOCTL(39)
-#define VIOCGETCACHEPARAMS	_VICEIOCTL(40)
-#define VIOCCONNECTMODE	        _VICEIOCTL(41)
-#define VIOCGETVCXSTATUS	_VICEIOCTL(41)
-#define VIOC_SETSPREFS33	_VICEIOCTL(42)
-#define VIOC_GETSPREFS		_VICEIOCTL(43)
-#define VIOC_GAG		_VICEIOCTL(44)
-#define VIOC_TWIDDLE		_VICEIOCTL(45)
-#define VIOC_SETSPREFS		_VICEIOCTL(46)
-#define VIOC_STORBEHIND		_VICEIOCTL(47)
-#define VIOC_GCPAGS             _VICEIOCTL(48)
-#define VIOC_GETINITPARAMS      _VICEIOCTL(49)
-#define VIOC_GETCPREFS          _VICEIOCTL(50)
-#define VIOC_SETCPREFS          _VICEIOCTL(51)
-#define VIOC_FLUSHMOUNT         _VICEIOCTL(52)
-#define VIOC_RXSTATPROC         _VICEIOCTL(53)
-#define VIOC_RXSTATPEER         _VICEIOCTL(54)
-
-#define VIOC_GETRXKCRYPT	_VICEIOCTL(55) /* 48 in some implementations */
-#define VIOC_SETRXKCRYPT	_VICEIOCTL(56) /* with cryptosupport in afs */
-
-/* arla specific */
-
-#define VIOC_FPRIOSTATUS	_VICEIOCTL(57) /* arla: set file prio */
-#define VIOC_FHGET		_VICEIOCTL(58) /* arla: fallback getfh */
-#define VIOC_FHOPEN		_VICEIOCTL(59) /* arla: fallback fhopen */
-#define VIOC_NNPFSDEBUG           _VICEIOCTL(60) /* arla: controls nnpfsdebug */
-#define VIOC_ARLADEBUG		_VICEIOCTL(61) /* arla: controls arla debug */
-#define VIOC_AVIATOR            _VICEIOCTL(62) /* arla: debug interface */
-#define VIOC_NNPFSDEBUG_PRINT	_VICEIOCTL(63) /* arla: print nnpfs status */
-#define VIOC_CALCULATE_CACHE	_VICEIOCTL(64) /* arla: force cache check */
-#define VIOC_BREAKCALLBACK	_VICEIOCTL(65) /* arla: break callback */
-#define VIOC_PREFETCHTAPE       _VICEIOCTL(66) /* MR-AFS prefetch from tape */
-#define VIOC_RESIDENCY_CMD      _VICEIOCTL(67) /* generic MR-AFS cmds */
 
 #define AIOC_STATISTICS         _ARLAIOCTL(1)   /* arla: fetch statistics */
 #define AIOC_PTSNAMETOID        _ARLAIOCTL(2)   /* arla: pts name to id */
@@ -401,16 +325,6 @@
 #define FPRIO_GETMAX 2
 #define FPRIO_SETMAX 3
 
-struct vioc_fprio {
-    int16_t cmd;
-    int16_t prio;
-    int32_t Cell;
-    int32_t Volume;
-    int32_t Vnode;
-    int32_t Unique;
-};
-
-
 /*
  * Flags for VIOCCKSERV
  */
@@ -445,13 +359,6 @@ struct vioc_fprio {
 #define GETCACHEPARAMS_OPCODE_USEDVNODES	5
 #define GETCACHEPARAMS_OPCODE_LOWVNODES		6
 
-#if !defined(HAVE_STRUCT_VICEIOCTL_IN) || !defined(__KERNEL__)
-struct ViceIoctl {
-  caddr_t in, out;
-  short in_size;
-  short out_size;
-};
-#endif
 
 struct ViceIoctl32 {
   uint32_t in, out;		/* really caddr_t in 32 bits */
@@ -470,14 +377,6 @@ struct ViceIoctl64 {
   short out_size;
 };
 #endif /* NEED_VICEIOCTL32 */
-
-struct ClearToken {
-  int32_t AuthHandle;
-  char HandShakeKey[8];
-  int32_t ViceId;
-  int32_t BeginTimestamp;
-  int32_t EndTimestamp;
-};
 
 #ifndef __P
 #define __P(x) x
