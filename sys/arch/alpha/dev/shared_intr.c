@@ -1,4 +1,4 @@
-/*	$OpenBSD: shared_intr.c,v 1.6 1999/02/08 00:05:09 millert Exp $	*/
+/*	$OpenBSD: shared_intr.c,v 1.7 1999/02/08 18:14:11 millert Exp $	*/
 /*	$NetBSD: shared_intr.c,v 1.1 1996/11/17 02:03:08 cgd Exp $	*/
 
 /*
@@ -267,6 +267,10 @@ alpha_shared_intr_stray(intr, num, basename)
 {
 
 	intr[num].intr_nstrays++;
+
+	if (intr[num].intr_maxstrays == 0)
+		return;
+
 	if (intr[num].intr_nstrays <= intr[num].intr_maxstrays)
 		log(LOG_ERR, "stray %s %d%s\n", basename, num,
 		    intr[num].intr_nstrays >= intr[num].intr_maxstrays ?
