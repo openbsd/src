@@ -342,36 +342,6 @@ espflush(sc)
 }
 
 /*
- * Read the ESP registers, and save their contents for later use.
- * ESP_STAT, ESP_STEP & ESP_INTR are mostly zeroed out when reading
- * ESP_INTR - so make sure it is the last read.
- *
- * XXX: TDR: this logic seems unsound
- * I think that (from reading the docs) most bits in these registers
- * only make sense when the DMA CSR has an interrupt showing. So I have
- * coded this to not do anything if there is no interrupt or error
- * pending.
- */
-void
-espreadregs(sc)
-	struct esp_softc *sc;
-{
-	struct espregs *espr = sc->sc_regs;
-
-	/* they mean nothing if the is no pending interrupt ??? */
-	if (!(dmapending(sc->sc_dma)))
-		return;
-
-	/* Only the stepo bits are of interest */
-	sc->sc_espstep = espr->espr_step & ESPSTEP_MASK;
-	sc->sc_espstat = espr->espr_stat;
-	sc->sc_espintr = espr->espr_intr;
-
-	ESP_MISC(("regs[intr=%02x,stat=%02x,step=%02x] ", sc->sc_espintr,
-	    sc->sc_espstat, sc->sc_espstep));
-}
-
-/*
  * returns -1 if no byte is available because fifo is empty.
  */
 int
@@ -1260,6 +1230,36 @@ esp_timeout(arg)
 	esp_reset(sc);
 	esp_done(ecb);
 	printf("new ecb %08x\n", sc->sc_nexus);
+}
+
+/*
+ * Read the ESP registers, and save their contents for later use.
+ * ESP_STAT, ESP_STEP & ESP_INTR are mostly zeroed out when reading
+ * ESP_INTR - so make sure it is the last read.
+ *
+ * XXX: TDR: this logic seems unsound
+ * I think that (from reading the docs) most bits in these registers
+ * only make sense when the DMA CSR has an interrupt showing. So I have
+ * coded this to not do anything if there is no interrupt or error
+ * pending.
+ */
+void
+espreadregs(sc)
+	struct esp_softc *sc;
+{
+	struct espregs *espr = sc->sc_regs;
+
+	/* they mean nothing if the is no pending interrupt ??? */
+	if (!(dmapending(sc->sc_dma)))
+		return;
+
+	/* Only the stepo bits are of interest */
+	sc->sc_espstep = espr->espr_step & ESPSTEP_MASK;
+	sc->sc_espstat = espr->espr_stat;
+	sc->sc_espintr = espr->espr_intr;
+
+	ESP_MISC(("regs[intr=%02x,stat=%02x,step=%02x] ", sc->sc_espintr,
+	    sc->sc_espstat, sc->sc_espstep));
 }
 
 /*
