@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.69 2004/01/17 18:05:46 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.70 2004/01/17 18:27:19 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -19,9 +19,11 @@
 #define	__BGPD_H__
 
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <sys/queue.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <net/if.h>
 
 #include <poll.h>
 #include <stdarg.h>
@@ -230,6 +232,7 @@ struct kroute_nexthop {
 struct kif {
 	u_short			 ifindex;
 	int			 flags;
+	char			 ifname[IFNAMSIZ];
 };
 
 struct session_up {

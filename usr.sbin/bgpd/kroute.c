@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.71 2004/01/17 18:05:46 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.72 2004/01/17 18:27:19 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -24,6 +24,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <net/if.h>
+#include <net/if_dl.h>
 #include <net/route.h>
 #include <err.h>
 #include <errno.h>
@@ -852,6 +853,7 @@ if_announce(void *msg)
 		}
 
 		kif->k.ifindex = ifan->ifan_index;
+		strlcpy(kif->k.ifname, ifan->ifan_name, sizeof(kif->k.ifname));
 		kif_insert(kif);
 		break;
 	case IFAN_DEPARTURE:
@@ -1028,6 +1030,8 @@ fetchifs(int ifindex)
 	char			*buf, *next, *lim;
 	struct if_msghdr	*ifm;
 	struct kif_node		*kif;
+	struct sockaddr		*sa, *rti_info[RTAX_MAX];
+	struct sockaddr_dl	*sdl;
 
 	mib[0] = CTL_NET;
 	mib[1] = AF_ROUTE;
@@ -1052,6 +1056,9 @@ fetchifs(int ifindex)
 	lim = buf + len;
 	for (next = buf; next < lim; next += ifm->ifm_msglen) {
 		ifm = (struct if_msghdr *)next;
+		sa = (struct sockaddr *)(ifm + 1);
+		get_rtaddrs(ifm->ifm_addrs, sa, rti_info);
+
 		if (ifm->ifm_type != RTM_IFINFO)
 			continue;
 
@@ -1062,6 +1069,15 @@ fetchifs(int ifindex)
 
 		kif->k.ifindex = ifm->ifm_index;
 		kif->k.flags = ifm->ifm_flags;
+
+		if ((sa = rti_info[RTAX_IFP]) != NULL)
+			if (sa->sa_family == AF_LINK) {
+				sdl = (struct sockaddr_dl *)sa;
+				if (sdl->sdl_nlen > 0)
+					strlcpy(kif->k.ifname, sdl->sdl_data,
+					    sizeof(kif->k.ifname));
+			}
+
 		kif_insert(kif);
 	}
 	return (0);
