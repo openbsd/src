@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.40 2002/04/02 06:01:44 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.41 2002/04/02 08:44:57 markus Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.40 2002/04/02 06:01:44 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.41 2002/04/02 08:44:57 markus Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -1628,7 +1628,7 @@ wi_do_hostencrypt(struct wi_softc *sc, caddr_t buf, int len)
 	dat[0] = key[0];
 	dat[1] = key[1];
 	dat[2] = key[2];
-	dat[3] = sc->wi_tx_key % 4;
+	dat[3] = sc->wi_tx_key << 6;		/* pad and keyid */
 	dat += 4;
 
 	/* compute rc4 over data, crc32 over data */
