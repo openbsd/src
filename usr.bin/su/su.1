@@ -1,4 +1,4 @@
-.\"	$OpenBSD: su.1,v 1.20 2003/07/25 09:37:45 jmc Exp $
+.\"	$OpenBSD: su.1,v 1.21 2005/01/22 16:29:40 jmc Exp $
 .\"
 .\" Copyright (c) 1988, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -103,13 +103,13 @@ The options are as follows:
 Same as the
 .Fl l
 option (deprecated).
-.It Fl a
+.It Fl a Ar auth-type
 Specify an authentication type such as
 .Dq skey ,
 .Dq securid ,
 or
 .Dq krb5 .
-.It Fl c
+.It Fl c Ar login-class
 Specify a login class.
 You may only override the default class if you're already root.
 .It Fl f
@@ -118,6 +118,8 @@ If the invoked shell is
 this option prevents it from reading the
 .Dq Pa .cshrc
 file.
+.It Fl K
+Do not attempt to use Kerberos to authenticate the user.
 .It Fl L
 Loop until a correct username and password combination is entered,
 similar to
@@ -128,8 +130,6 @@ must be specified explicitly, either on the command line or interactively.
 Additionally,
 .Nm
 will prompt for the password even when invoked by root.
-.It Fl K
-Do not attempt to use Kerberos to authenticate the user.
 .It Fl l
 Simulate a full login.
 The environment is discarded except for
