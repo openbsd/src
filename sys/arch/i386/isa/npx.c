@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.51 1995/10/10 04:46:09 mycroft Exp $	*/
+/*	$NetBSD: npx.c,v 1.53 1996/01/07 02:00:31 mycroft Exp $	*/
 
 #if 0
 #define iprintf(x)	printf x
@@ -59,9 +59,9 @@
 #include <machine/trap.h>
 #include <machine/specialreg.h>
 
-#include <i386/isa/icu.h>
-#include <dev/isa/isavar.h>
 #include <dev/isa/isareg.h>
+#include <dev/isa/isavar.h>
+#include <i386/isa/icu.h>
 
 /*
  * 387 and 287 Numeric Coprocessor Extension (NPX) Driver.
