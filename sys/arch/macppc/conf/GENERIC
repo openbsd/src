@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.27 2002/06/23 23:19:46 itojun Exp $g
+#	$OpenBSD: GENERIC,v 1.28 2002/06/25 17:11:49 itojun Exp $g
 #
 # PPC GENERIC config file
 #
@@ -103,6 +103,11 @@ gpio*		at gpio?			# GPIO, PMU interrupt router.
 aed*		at adb?				# ADB Event Device
 akbd*		at adb?				# ADB keyboard
 
+fwohci*		at pci? dev ? function ?	# FireWire on ohci
+#fw*		at fwbus?			# IPv4/v6 over FireWire
+fwnode*		at fwbus? idhi ? idlo ?
+#fwscsi*	at fwnode?
+
 wskbd*		at akbd? console ? mux 1
 ams*		at adb?				# ADB mouse
 wsmouse*	at ams?	mux 0
@@ -127,6 +132,7 @@ scsibus*	at ioprbs?
 scsibus*	at iopsp?
 #scsibus*	at pcscp?
 scsibus*	at siop?
+#scsibus*	at fwscsi?
 
 wdc*		at macobio? flags 0x1
 wd*		at wdc? drive ? flags 0x0000

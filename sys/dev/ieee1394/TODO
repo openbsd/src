@@ -1,0 +1,41 @@
+Rewrite handler_set to allow sub regions, minimums, etc without having to
+register 100 callbacks for 100 quad reads.
+
+Use handler set (with NULL cb) to create a higher level <bus>_unreg
+
+Move all mbuf code to if_fw.c. Make if_fw use the generic read/write/inreg and
+then it can translate the packets into the appropriate mbuf's.
+
+Need a tlabel alloc routine within fwohci and a way to use 64 tlabel's per
+node (rather than a global set of 64 as it's used now).
+
+Flesh out the documentation of the high level API in fwohci.c (fwlynx will need
+to implement the same thing so this should be more than just comments in 
+fwohci.c)
+
+Move SBP2 routines into their own file.
+
+done - Rewrite ROM parsing/validation. Unroll all recursion, add ref counting, 
+       path elimination, etc. 
+
+done - Move rom routines into their own files to allow easier cross usage.
+
+done - Write sub match setup for fwnode/fwscsi so matching devices listed in 
+       the ROM can be done via autoconf.
+
+done - Remove all of the devcap stuff.
+
+SBP2 needs a complete API written up: logins, ORB management/allocation, etc.
+
+done - Add locator detection/usage into fwohci code.
+
+Should do topology maps, speed maps, the various bus managers, etc.
+
+done - change all FW_DEBUG wrapped printf's to DPRINTF macro's
+
+done - ack errors from a TX complete should get passed up to any registered callbacks
+
+Track down issues where multiple hosts plugged into a firewire hub don't 
+init/see all devices on resets sometimes.
+
+done - Make fwohci detach correctly (for cardbus/etc type interfaces)

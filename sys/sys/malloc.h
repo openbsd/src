@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.58 2002/06/21 12:14:21 itojun Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.59 2002/06/25 17:11:49 itojun Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -155,7 +155,9 @@
 /* 109 - free */
 #define M_CREDENTIALS	110	/* IPsec-related credentials and ID info */
 #define M_PACKET_TAGS	111	/* Packet-attached information */
-/* 112-122 - free */
+#define M_1394CTL	112	/* IEEE 1394 control structures */
+#define M_1394DATA	113	/* IEEE 1394 data buffers */
+/* 114-122 - free */
 
 /* KAME IPv6 */
 #define	M_IP6OPT	123	/* IPv6 options */
@@ -270,9 +272,10 @@
 	NULL, \
 	"IPsec creds",	/* 110 M_CREDENTIALS */ \
 	"packet tags",	/* 111 M_PACKET_TAGS */ \
+	"1394ctl",	/* 112 M_1394CTL */ \
+	"1394data",	/* 113 M_1394DATA */ \
 	NULL, NULL, NULL, NULL, NULL, \
-	NULL, NULL, NULL, NULL, NULL, \
-	NULL, \
+	NULL, NULL, NULL, NULL, \
 	"ip6_options",	/* 123 M_IP6OPT */ \
 	"NDP",		/* 124 M_IP6NDP */ \
 	"ip6rr",	/* 125 M_IP6RR */ \
