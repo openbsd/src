@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.2 1996/07/15 07:33:16 mickey Exp $	*/
+/*	$OpenBSD: apm.c,v 1.3 1996/10/21 11:37:53 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1995 John T. Kohl.  All rights reserved.
@@ -44,6 +44,7 @@
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
+#include <sys/conf.h>
 #include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/user.h>
@@ -103,6 +104,8 @@ struct cfdriver apm_cd = {
 	NULL, "apm", DV_DULL
 };
 
+cdev_decl(apm);	/* XXX should it be int <sys/conf.h> ? */
+
 struct apm_connect_info apminfo = { 0 };
 u_char apm_majver;
 u_char apm_minver;
@@ -123,6 +126,8 @@ STATIC void apm_devpowmgt_enable __P((int onoff, u_int devid));
 STATIC void apm_suspend __P((void));
 STATIC void apm_standby __P((void));
 STATIC int apm_record_event __P((struct apm_softc *sc, u_int event_type));
+STATIC const char *apm_err_translate __P((int code));
+STATIC void apm_get_powstate __P((u_int dev));
 
 STATIC const char *
 apm_err_translate(code)
