@@ -1,5 +1,41 @@
-/* $OpenBSD: interrupt.c,v 1.11 2001/01/20 20:29:53 art Exp $ */
-/* $NetBSD: interrupt.c,v 1.44 2000/05/23 05:12:53 thorpej Exp $ */
+/* $OpenBSD: interrupt.c,v 1.12 2001/09/30 13:08:45 art Exp $ */
+/* $NetBSD: interrupt.c,v 1.46 2000/06/03 20:47:36 thorpej Exp $ */
+
+/*-
+ * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -41,6 +77,8 @@
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/mbuf.h>
+#include <sys/socket.h>
 
 #include <vm/vm.h>
 
@@ -59,24 +97,42 @@
 #include <sys/device.h>
 #endif
 
+#include <net/netisr.h>
+#include <net/if.h>
+
+#ifdef INET
+#include <netinet/in.h>
+#include <netinet/if_ether.h>
+#include <netinet/ip_var.h>
+#endif
+
+#ifdef INET6
+#ifndef INET
+#include <netinet/in.h>
+#endif
+#include <netinet/ip6.h>
+#include <netinet6/ip6_var.h>
+#endif
+
+#include "ppp.h"
+#include "bridge.h"
+
 static u_int schedclk2;
 
+void netintr(void);
+
 void
-interrupt(a0, a1, a2, framep)
-	unsigned long a0, a1, a2;
-	struct trapframe *framep;
+interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
+    struct trapframe *framep)
 {
 	struct proc *p;
-#if defined(MULTIPROCESSOR)
-	u_long cpu_id = alpha_pal_whami();
-#endif
+	struct cpu_info *ci = curcpu();
 	extern int schedhz;
 
 	switch (a0) {
 	case ALPHA_INTR_XPROC:	/* interprocessor interrupt */
 #if defined(MULTIPROCESSOR)
 	    {
-		struct cpu_info *ci = &cpu_info[cpu_id];
 		u_long pending_ipis, bit;
 
 #if 0
@@ -86,7 +142,7 @@ interrupt(a0, a1, a2, framep)
 #ifdef DIAGNOSTIC
 		if (ci->ci_dev == NULL) {
 			/* XXX panic? */
-			printf("WARNING: no device for ID %lu\n", cpu_id);
+			printf("WARNING: no device for ID %lu\n", ci->ci_cpuid);
 			return;
 		}
 #endif
@@ -100,7 +156,7 @@ interrupt(a0, a1, a2, framep)
 		 * Handle inter-console messages if we're the primary
 		 * CPU.
 		 */
-		if (cpu_id == hwrpb->rpb_primary_cpu_id &&
+		if (ci->ci_cpuid == hwrpb->rpb_primary_cpu_id &&
 		    hwrpb->rpb_txrdy != 0)
 			cpu_iccb_receive();
 	    }
@@ -112,16 +168,25 @@ interrupt(a0, a1, a2, framep)
 	case ALPHA_INTR_CLOCK:	/* clock interrupt */
 #if defined(MULTIPROCESSOR)
 		/* XXX XXX XXX */
-		if (cpu_id != hwrpb->rpb_primary_cpu_id)
+		if (CPU_IS_PRIMARY(ci) == 0)
 			return;
 #endif
 		uvmexp.intrs++;
 		intrcnt[INTRCNT_CLOCK]++;
 		if (platform.clockintr) {
+			/*
+			 * Call hardclock().  This will also call
+			 * statclock(). On the primary CPU, it
+			 * will also deal with time-of-day stuff.
+			 */
 			(*platform.clockintr)((struct clockframe *)framep);
-			if((++schedclk2 & 0x3f) == 0
-			&& (p = curproc) != NULL
-			&& schedhz)
+
+			/*
+			 * If it's time to call the scheduler clock,
+			 * do so.
+			 */
+			if ((++schedclk2 & 0x3f) == 0 &&
+			    (p = ci->ci_curproc) != NULL && schedhz != 0)
 				schedclock(p);
 		}
 		break;
@@ -137,7 +202,7 @@ interrupt(a0, a1, a2, framep)
 	case ALPHA_INTR_DEVICE:	/* I/O device interrupt */
 #if defined(MULTIPROCESSOR)
 		/* XXX XXX XXX */
-		if (cpu_id != hwrpb->rpb_primary_cpu_id)
+		if (CPU_IS_PRIMARY(ci) == 0)
 			return;
 #endif
 		uvmexp.intrs++;
@@ -164,7 +229,7 @@ interrupt(a0, a1, a2, framep)
 #endif
 		    "\n", a0, a1, a2
 #if defined(MULTIPROCESSOR)
-		    , cpu_id
+		    , ci->ci_cpuid
 #endif
 		    );
 		panic("interrupt");
@@ -173,9 +238,9 @@ interrupt(a0, a1, a2, framep)
 }
 
 void
-set_iointr(niointr)
-	void (*niointr) __P((void *, unsigned long));
+set_iointr(void (*niointr)(void *, unsigned long))
 {
+
 	if (platform.iointr)
 		panic("set iointr twice");
 	platform.iointr = niointr;
@@ -183,10 +248,8 @@ set_iointr(niointr)
 
 
 void
-machine_check(mces, framep, vector, param)
-	unsigned long mces;
-	struct trapframe *framep;
-	unsigned long vector, param;
+machine_check(unsigned long mces, struct trapframe *framep,
+    unsigned long vector, unsigned long param)
 {
 	const char *type;
 	struct mchkinfo *mcp;
@@ -242,18 +305,13 @@ fatal:
 }
 
 int
-badaddr(addr, size)
-	void *addr;
-	size_t size;
+badaddr(void *addr, size_t size)
 {
 	return(badaddr_read(addr, size, NULL));
 }
 
 int
-badaddr_read(addr, size, rptr)
-	void *addr;
-	size_t size;
-	void *rptr;
+badaddr_read(void *addr, size_t size, void *rptr)
 {
 	struct mchkinfo *mcp = &curcpu()->ci_mcinfo;
 	long rcpt;
@@ -324,4 +382,149 @@ badaddr_read(addr, size, rptr)
 	}
 	/* Return non-zero (i.e. true) if it's a bad address. */
 	return (rv);
+}
+
+void
+netintr()
+{
+	int n, s;
+
+	s = splhigh();
+	n = netisr;
+	netisr = 0;
+	splx(s);
+
+#define	DONETISR(bit, fn)						\
+	do {								\
+		if (n & (1 << (bit)))					\
+			fn();						\
+	} while (0)
+
+#include <net/netisr_dispatch.h>
+
+#undef DONETISR
+}
+
+struct alpha_soft_intr alpha_soft_intrs[IPL_NSOFT];
+
+/* XXX For legacy software interrupts. */
+struct alpha_soft_intrhand *softnet_intrhand, *softclock_intrhand;
+
+/*
+ * softintr_init:
+ *
+ *	Initialize the software interrupt system.
+ */
+void
+softintr_init()
+{
+	struct alpha_soft_intr *asi;
+	int i;
+
+	for (i = 0; i < IPL_NSOFT; i++) {
+		asi = &alpha_soft_intrs[i];
+		LIST_INIT(&asi->softintr_q);
+		simple_lock_init(&asi->softintr_slock);
+		asi->softintr_ipl = i;
+	}
+
+	/* XXX Establish legacy software interrupt handlers. */
+	softnet_intrhand = softintr_establish(IPL_SOFTNET,
+	    (void (*)(void *))netintr, NULL);
+	softclock_intrhand = softintr_establish(IPL_SOFTCLOCK,
+	    (void (*)(void *))softclock, NULL);
+
+	assert(softnet_intrhand != NULL);
+	assert(softclock_intrhand != NULL);
+}
+
+/*
+ * softintr_dispatch:
+ *
+ *	Process pending software interrupts.
+ */
+void
+softintr_dispatch()
+{
+	struct alpha_soft_intr *asi;
+	struct alpha_soft_intrhand *sih;
+	u_int64_t n, i;
+
+	while ((n = atomic_loadlatch_ulong(&ssir, 0)) != 0) {
+		for (i = 0; i < IPL_NSOFT; i++) {
+			if ((n & (1 << i)) == 0)
+				continue;
+			asi = &alpha_soft_intrs[i];
+
+			/* Already at splsoft() */
+			simple_lock(&asi->softintr_slock);
+
+			for (sih = LIST_FIRST(&asi->softintr_q);
+			     sih != NULL;
+			     sih = LIST_NEXT(sih, sih_q)) {
+				if (sih->sih_pending) {
+					uvmexp.softs++;
+					sih->sih_pending = 0;
+					(*sih->sih_fn)(sih->sih_arg);
+				}
+			}
+
+			simple_unlock(&asi->softintr_slock);
+		}
+	}
+}
+
+/*
+ * softintr_establish:		[interface]
+ *
+ *	Register a software interrupt handler.
+ */
+void *
+softintr_establish(int ipl, void (*func)(void *), void *arg)
+{
+	struct alpha_soft_intr *asi;
+	struct alpha_soft_intrhand *sih;
+	int s;
+
+	if (__predict_false(ipl >= IPL_NSOFT || ipl < 0))
+		panic("softintr_establish");
+
+	asi = &alpha_soft_intrs[ipl];
+
+	sih = malloc(sizeof(*sih), M_DEVBUF, M_NOWAIT);
+	if (__predict_true(sih != NULL)) {
+		sih->sih_intrhead = asi;
+		sih->sih_fn = func;
+		sih->sih_arg = arg;
+		sih->sih_pending = 0;
+		s = splsoft();
+		simple_lock(&asi->softintr_slock);
+		LIST_INSERT_HEAD(&asi->softintr_q, sih, sih_q);
+		simple_unlock(&asi->softintr_slock);
+		splx(s);
+	}
+	return (sih);
+}
+
+/*
+ * softintr_disestablish:	[interface]
+ *
+ *	Unregister a software interrupt handler.
+ */
+void
+softintr_disestablish(void *arg)
+{
+	struct alpha_soft_intrhand *sih = arg;
+	struct alpha_soft_intr *asi = sih->sih_intrhead;
+	int s;
+
+	(void) asi;	/* XXX Unused if simple locks are noops. */
+
+	s = splsoft();
+	simple_lock(&asi->softintr_slock);
+	LIST_REMOVE(sih, sih_q);
+	simple_unlock(&asi->softintr_slock);
+	splx(s);
+
+	free(sih, M_DEVBUF);
 }

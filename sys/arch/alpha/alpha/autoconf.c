@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.13 2001/09/19 21:32:13 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.14 2001/09/30 13:08:45 art Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.16 1996/11/13 21:13:04 cgd Exp $	*/
 
 /*
@@ -57,6 +57,7 @@
 #include <machine/rpb.h>
 #include <machine/prom.h>
 #include <machine/cpuconf.h>
+#include <machine/intr.h>
 
 #include <dev/cons.h>
 
@@ -88,6 +89,7 @@ void
 cpu_configure()
 {
 	parse_prom_bootdev();
+	softintr_init();
 
         /*
          * Disable interrupts during autoconfiguration.  splhigh() won't
