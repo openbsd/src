@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdlink.h,v 1.8 1997/07/06 18:10:19 niklas Exp $	*/
+/*	$OpenBSD: wdlink.h,v 1.9 1997/12/10 23:11:13 rees Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -63,7 +63,6 @@ struct wdc_softc {
 #define	WDCF_IRQ_WAIT		0x10	/* controller is waiting for irq */
 #define	WDCF_ONESLAVE		0x20	/* ctrl. has one ATAPI slave attached */
 #define WDCF_BROKENPOLL		0x40	/* or, generally fucked up */
-	int sc_errors;			/* errors during current transfer */
 	u_char sc_status;		/* copy of status register */
 	u_char sc_error;		/* copy of error register */
 };
@@ -129,6 +128,7 @@ struct wdc_xfer {
 	int c_nblks;		/* number of blocks currently transferring */
 	int c_nbytes;		/* number of bytes currently transferring */
 	u_int32_t c_p_offset;	/* offset of the partition */
+	int c_errors;		/* errors during current transfer */
 	TAILQ_ENTRY(wdc_xfer) c_xferchain;
 	LIST_ENTRY(wdc_xfer) free_list;
 };
