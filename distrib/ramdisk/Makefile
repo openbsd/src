@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1997/05/15 08:46:10 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 1997/05/24 23:16:48 deraadt Exp $
 #	$NetBSD: Makefile,v 1.2.4.3 1996/07/04 07:05:32 leo Exp $
 
 # Revision is 2.1
@@ -107,11 +107,6 @@ ${IMAGE}: ${CBIN}
 	cp ${REALIMAGE} ${IMAGE}
 	rm ${REALIMAGE}
 
-unconfig:
-	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND}
-	-/bin/rm -f ${REALIMAGE}
-
 ${CBIN}.conf: ${LISTS}
 	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
 
@@ -133,5 +128,11 @@ beforeinstall:
 .endif
 
 .endif	# DESTDIR check
+
+unconfig:
+	-umount -f ${MOUNT_POINT}
+	-vnconfig -u ${VND}
+	-/bin/rm -f ${REALIMAGE}
+
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
