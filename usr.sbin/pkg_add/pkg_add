@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.14 2003/11/10 13:25:50 espie Exp $
+# $OpenBSD: pkg_add,v 1.15 2003/12/09 19:08:44 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -266,7 +266,6 @@ sub borked_installation
 	register_installation($dir, $dest, $plist);
 	print "Installation of $pkgname failed.\n";
 	print "Partial installation recorded as $borked\n";
-	exit 1;
 }
 
 sub check_lib_specs
@@ -345,6 +344,13 @@ sub really_add($)
 	}
 	my $archive=$handle->{archive};
 
+	if (!defined $archive) {
+		print STDERR "Archive in $pkgname broken\n";
+		$errors++;
+		return;
+	}
+
+
 	$plist->{done} = [];
 	for my $item (@{$plist->{items}}) {
 		$item->install($archive, $opt_v, $opt_n);
@@ -362,11 +368,12 @@ sub really_add($)
 
 	unlink($dir.CONTENTS);
 	if ($interrupted) {
-		borked_installation($plist, $dir);
+		borked_installation($plist, $dir) unless $opt_n;
+		exit 1;
 	}
 	my $dest = installed_info($pkgname);
-	register_installation($dir, $dest, $plist);
-	if (defined $handle->{solved_dependencies}) {
+	register_installation($dir, $dest, $plist) unless $opt_n;
+	if (defined $handle->{solved_dependencies} && !$opt_n) {
 		for my $dep (@{$handle->{solved_dependencies}}) {
 			OpenBSD::RequiredBy->new($dep)->add($pkgname);
 		}
@@ -411,6 +418,8 @@ while (my $pkg = shift @todo) {
 		next MAINLOOP;
 	}
 	for my $dep (@{$plist->{libdepend}}) {
+		# can't check libspecs yet
+		next if $opt_n;
 		next if $dep->{name} ne $plist->pkgname();
 		if (!check_lib_specs('/usr/local', $dep->{libspec})) {
 			print "Can't install $pkg: incorrect libspec: ",
