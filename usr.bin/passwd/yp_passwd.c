@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_passwd.c,v 1.24 2003/06/03 02:56:14 millert Exp $	*/
+/*	$OpenBSD: yp_passwd.c,v 1.25 2004/02/20 21:24:57 maja Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)yp_passwd.c	1.0 2/2/93";*/
-static const char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.24 2003/06/03 02:56:14 millert Exp $";
+static const char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.25 2004/02/20 21:24:57 maja Exp $";
 #endif /* not lint */
 
 #ifdef	YP
@@ -63,7 +63,7 @@ extern int	pwd_gettries(struct passwd *, login_cap_t *);
 extern void	kbintr(int);
 
 char		*ypgetnewpasswd(struct passwd *, login_cap_t *, char **);
-struct passwd	*ypgetpwnam(char *);
+struct passwd	*ypgetpwnam(char *, int);
 
 char *domain;
 
@@ -85,7 +85,7 @@ int
 yp_passwd(char *username)
 {
 	struct yppasswd yppasswd;
-	int r, rpcport, status;
+	int r, rpcport, status, secure=0;
 	struct passwd *pw;
 	struct timeval tv;
 	login_cap_t *lc;
@@ -106,7 +106,9 @@ yp_passwd(char *username)
 	 * Find the host for the passwd map; it should be running
 	 * the daemon.
 	 */
-	if ((r = yp_master(domain, "passwd.byname", &master)) != 0) {
+	if ((r = yp_master(domain, "master.passwd.byname", &master)) == 0) {
+		secure=1;
+	} else if ((r = yp_master(domain, "passwd.byname", &master)) != 0) {
 		warnx("can't find the master YP server. Reason: %s",
 		    yperr_string(r));
 		return (1);
@@ -131,7 +133,7 @@ yp_passwd(char *username)
 	}
 
 	/* Get user's login identity */
-	if (!(pw = ypgetpwnam(username))) {
+	if (!(pw = ypgetpwnam(username, secure))) {
 		warnx("unknown user %s.", username);
 		return (1);
 	}
@@ -257,7 +259,7 @@ pwskip(char *p)
 }
 
 struct passwd *
-interpret(struct passwd *pwent, char *line)
+interpret(struct passwd *pwent, char *line, int secure)
 {
 	char	*p = line;
 
@@ -283,6 +285,14 @@ interpret(struct passwd *pwent, char *line)
 	p = pwskip(p);
 	pwent->pw_gid = (gid_t)strtoul(p, NULL, 10);
 	p = pwskip(p);
+	if ( secure == 1 ) {
+		pwent->pw_class = p;
+		p = pwskip(p);
+		pwent->pw_change = (time_t)strtoul(p, NULL, 10);
+		p = pwskip(p);
+		pwent->pw_expire = (time_t)strtoul(p, NULL, 10);
+		p = pwskip(p);
+	}
 	pwent->pw_gecos = p;
 	p = pwskip(p);
 	pwent->pw_dir = p;
@@ -297,14 +307,15 @@ interpret(struct passwd *pwent, char *line)
 static char *__yplin;
 
 struct passwd *
-ypgetpwnam(char *nam)
+ypgetpwnam(char *nam, int secure)
 {
 	static struct passwd pwent;
 	int reason, vallen;
 	char *val;
 
-	reason = yp_match(domain, "passwd.byname", nam, strlen(nam),
-	    &val, &vallen);
+	reason = yp_match(domain,
+			  secure ? "master.passwd.byname" : "passwd.byname",
+			  nam, strlen(nam), &val, &vallen);
 	switch (reason) {
 	case 0:
 		break;
@@ -321,7 +332,7 @@ ypgetpwnam(char *nam)
 	strlcpy(__yplin, val, vallen + 1);
 	free(val);
 
-	return (interpret(&pwent, __yplin));
+	return (interpret(&pwent, __yplin, secure));
 }
 
 #endif	/* YP */
