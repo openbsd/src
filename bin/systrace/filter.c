@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.21 2002/10/16 15:01:08 itojun Exp $	*/
+/*	$OpenBSD: filter.c,v 1.22 2002/11/15 22:33:27 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -678,9 +678,6 @@ filter_fnmatch(struct intercept_translate *tl, struct logic *logic)
 {
 	int res;
 	char *line;
-
-	if (tl->trans_size == 0)
-		return (0);
 
 	if ((line = intercept_translate_print(tl)) == NULL)
 		return (0);
