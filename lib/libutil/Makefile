@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 1996/07/31 17:44:20 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.8 1996/07/31 17:46:51 deraadt Exp $
 #	$NetBSD: Makefile,v 1.8 1996/05/16 07:03:28 thorpej Exp $
 
 LIB=	util
@@ -8,6 +8,7 @@ HDRS=	util.h scsi.h
 SRCS=	getmaxpartitions.c getrawpartition.c login.c login_tty.c logout.c \
 	logwtmp.c opendev.c passwd.c pty.c scsi.c login_fbtab.c
 
+# XXX need login_fbtab.3
 MAN=	getmaxpartitions.3 getrawpartition.3 login.3 opendev.3 openpty.3 \
 	pw_init.3 pw_lock.3 scsi.3
 
