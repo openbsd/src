@@ -1,1 +1,1 @@
-/dev/ttyE0      0600    /dev/mouse:/dev/kbd:/dev/ttyE0
+/dev/ttyE0      0600    /dev/wsmouse:/dev/wskbd:/dev/ttyE0
