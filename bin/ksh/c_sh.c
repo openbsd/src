@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_sh.c,v 1.21 2004/12/18 22:35:41 millert Exp $	*/
+/*	$OpenBSD: c_sh.c,v 1.22 2004/12/19 01:58:04 millert Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -58,7 +58,7 @@ c_umask(wp)
 	int i;
 	char *cp;
 	int symbolic = 0;
-	int old_umask;
+	mode_t old_umask;
 	int optc;
 
 	while ((optc = ksh_getopt(wp, &builtin_opt, "S")) != EOF)
@@ -92,7 +92,7 @@ c_umask(wp)
 		} else
 			shprintf("%#3.3o\n", old_umask);
 	} else {
-		int new_umask;
+		mode_t new_umask;
 
 		if (digit(*cp)) {
 			for (new_umask = 0; *cp >= '0' && *cp <= '7'; cp++)
