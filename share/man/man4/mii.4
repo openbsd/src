@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mii.4,v 1.9 2001/03/12 07:45:47 aaron Exp $
+.\"	$OpenBSD: mii.4,v 1.10 2002/04/05 23:34:09 deraadt Exp $
 .\"	$NetBSD: mii.4,v 1.1 1998/11/04 05:21:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,13 +44,16 @@
 .Nd IEEE 802.3 Media Independent Interface
 .Sh SYNOPSIS
 .Cd "amphy* at mii? phy ?"
+.Cd "bmtphy* at mii? phy ?"
 .Cd "brgphy* at mii? phy ?"
+.Cd "eephy* at mii? phy ?"
 .Cd "exphy* at mii? phy ?"
 .Cd "icsphy* at mii? phy ?"
 .Cd "inphy* at mii? phy ?"
 .Cd "iophy* at mii? phy ?"
 .Cd "lxtphy* at mii? phy ?"
 .Cd "mtdphy* at mii? phy ?"
+.Cd "nsgphy* at mii? phy ?"
 .Cd "nsphy* at mii? phy ?"
 .Cd "nsphyter* at mii? phy ?"
 .Cd "qsphy* at mii? phy ?"
@@ -93,7 +96,9 @@ These media types are valid media keywords for use with the
 program.
 .Sh SEE ALSO
 .Xr amphy 4 ,
+.Xr bmtphy 4 ,
 .Xr brgphy 4 ,
+.Xr eephy 4 ,
 .Xr exphy 4 ,
 .Xr icsphy 4 ,
 .Xr ifmedia 4 ,
@@ -102,6 +107,7 @@ program.
 .Xr lxtphy 4 ,
 .Xr mtdphy 4 ,
 .Xr netintro 4 ,
+.Xr nsgphy 4 ,
 .Xr nsphy 4 ,
 .Xr nsphyter 4 ,
 .Xr qsphy 4 ,
