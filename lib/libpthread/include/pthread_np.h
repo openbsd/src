@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_np.h,v 1.7 2004/01/26 20:50:02 marc Exp $	*/
+/*	$OpenBSD: pthread_np.h,v 1.8 2004/05/01 22:15:10 marc Exp $	*/
 /*
  * Copyright (c) 1996-98 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -46,8 +46,10 @@ __BEGIN_DECLS
 int pthread_attr_setcreatesuspend_np(pthread_attr_t *);
 int pthread_multi_np(void);
 int pthread_resume_np(pthread_t);
+void pthread_resume_all_np(void);
 int pthread_single_np(void);
 int pthread_suspend_np(pthread_t);
+void pthread_suspend_all_np(void);
 int pthread_mutexattr_getkind_np(pthread_mutexattr_t);
 int pthread_mutexattr_setkind_np(pthread_mutexattr_t *, int);
 void pthread_set_name_np(pthread_t, char *);

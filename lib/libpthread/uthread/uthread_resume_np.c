@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_resume_np.c,v 1.5 2001/12/19 02:02:52 fgsch Exp $	*/
+/*	$OpenBSD: uthread_resume_np.c,v 1.6 2004/05/01 22:15:10 marc Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -37,6 +37,8 @@
 #include <pthread.h>
 #include "pthread_private.h"
 
+static void	resume_common(struct pthread *, enum pthread_susp);
+
 /* Resume a thread: */
 int
 pthread_resume_np(pthread_t thread)
@@ -58,32 +60,7 @@ pthread_resume_np(pthread_t thread)
 			 */
 			_thread_kern_sig_defer();
 
-			switch (old_suspended) {
-			case SUSP_MUTEX_WAIT:
-				/* Set the thread's state back. */
-				PTHREAD_SET_STATE(thread,PS_MUTEX_WAIT);
-				break;
-			case SUSP_COND_WAIT:
-				/* Set the thread's state back. */
-				PTHREAD_SET_STATE(thread,PS_COND_WAIT);
-				break;
-			case SUSP_JOIN:
-				/* Set the thread's state back. */
-				PTHREAD_SET_STATE(thread,PS_JOIN);
-				break;
-			case SUSP_NOWAIT:
-				/* Allow the thread to run. */
-				PTHREAD_SET_STATE(thread,PS_RUNNING);
-				PTHREAD_WAITQ_REMOVE(thread);
-				PTHREAD_PRIOQ_INSERT_TAIL(thread);
-				break;
-			case SUSP_NO:
-			case SUSP_YES:
-				/* Allow the thread to run. */
-				PTHREAD_SET_STATE(thread,PS_RUNNING);
-				PTHREAD_PRIOQ_INSERT_TAIL(thread);
-				break;
-			}
+			resume_common(thread, old_suspended);
 
 			/*
 			 * Undefer and handle pending signals, yielding if
@@ -93,5 +70,68 @@ pthread_resume_np(pthread_t thread)
 		}
 	}
 	return(ret);
+}
+
+void
+pthread_resume_all_np(void)
+{
+	struct pthread		*curthread = _get_curthread();
+	struct pthread		*thread;
+	enum pthread_susp 	old_suspended;
+
+	/*
+	 * Defer signals to protect the scheduling queues from access
+	 * by the signal handler:
+	 */
+	_thread_kern_sig_defer();
+
+	TAILQ_FOREACH(thread, &_thread_list, tle) {
+		if (thread != curthread) {
+			/* Cancel any pending suspensions: */
+                	old_suspended = thread->suspended;
+                	thread->suspended = SUSP_NO;
+
+                	/* Is it currently suspended? */
+                	if (thread->state == PS_SUSPENDED)
+				resume_common(thread, old_suspended);
+		}
+	}
+
+	/*
+	 * Undefer and handle pending signals, yielding if necessary:
+	 */
+	_thread_kern_sig_undefer();
+}
+
+static void
+resume_common(struct pthread *thread, enum pthread_susp old_suspended)
+{
+	switch (old_suspended) {
+	case SUSP_MUTEX_WAIT:
+		/* Set the thread's state back. */
+		PTHREAD_SET_STATE(thread,PS_MUTEX_WAIT);
+		break;
+	case SUSP_COND_WAIT:
+		/* Set the thread's state back. */
+		PTHREAD_SET_STATE(thread,PS_COND_WAIT);
+		break;
+	case SUSP_JOIN:
+		/* Set the thread's state back. */
+		PTHREAD_SET_STATE(thread,PS_JOIN);
+		break;
+	case SUSP_NOWAIT:
+		/* Allow the thread to run. */
+		PTHREAD_SET_STATE(thread,PS_RUNNING);
+		PTHREAD_WAITQ_REMOVE(thread);
+		PTHREAD_PRIOQ_INSERT_TAIL(thread);
+		break;
+	case SUSP_NO:
+	case SUSP_YES:
+		/* Allow the thread to run. */
+		PTHREAD_SET_STATE(thread,PS_RUNNING);
+		PTHREAD_PRIOQ_INSERT_TAIL(thread);
+		break;
+	}
+
 }
 #endif

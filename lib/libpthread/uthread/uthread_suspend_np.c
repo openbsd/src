@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_suspend_np.c,v 1.7 2001/09/04 22:17:45 fgsch Exp $	*/
+/*	$OpenBSD: uthread_suspend_np.c,v 1.8 2004/05/01 22:15:10 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -37,6 +37,7 @@
 #include <pthread.h>
 #include "pthread_private.h"
 
+static void	suspend_common(struct pthread *thread);
 static void	finish_suspension(void *arg);
 
 /* Suspend a thread: */
@@ -45,100 +46,19 @@ pthread_suspend_np(pthread_t thread)
 {
 	int ret;
 
+	/* Suspending the current thread doesn't make sense. */
+	if (thread == _get_curthread())
+		ret = EDEADLK;
+
 	/* Find the thread in the list of active threads: */
-	if ((ret = _find_thread(thread)) == 0) {
+	else if ((ret = _find_thread(thread)) == 0) {
 		/*
 		 * Defer signals to protect the scheduling queues from
 		 * access by the signal handler:
 		 */
 		_thread_kern_sig_defer();
 
-		switch (thread->state) {
-		case PS_RUNNING:
-			/*
-			 * Remove the thread from the priority queue and
-			 * set the state to suspended:
-			 */
-			PTHREAD_PRIOQ_REMOVE(thread);
-			PTHREAD_SET_STATE(thread, PS_SUSPENDED);
-			break;
-
-		case PS_SPINBLOCK:
-		case PS_FDR_WAIT:
-		case PS_FDW_WAIT:
-		case PS_POLL_WAIT:
-		case PS_SELECT_WAIT:
-			/*
-			 * Remove these threads from the work queue
-			 * and mark the operation as interrupted:
-			 */
-			if ((thread->flags & PTHREAD_FLAGS_IN_WORKQ) != 0)
-				PTHREAD_WORKQ_REMOVE(thread);
-			_thread_seterrno(thread, EINTR);
-
-			/* FALLTHROUGH */
-		case PS_SLEEP_WAIT:
-			thread->interrupted = 1;
-
-			/* FALLTHROUGH */
-		case PS_SIGTHREAD:
-		case PS_WAIT_WAIT:
-		case PS_SIGSUSPEND:
-		case PS_SIGWAIT:
-			/*
-			 * Remove these threads from the waiting queue and
-			 * set their state to suspended:
-			 */
-			PTHREAD_WAITQ_REMOVE(thread);
-			PTHREAD_SET_STATE(thread, PS_SUSPENDED);
-			break;
-
-		case PS_MUTEX_WAIT:
-			/* Mark the thread as suspended and still in a queue. */
-			thread->suspended = SUSP_MUTEX_WAIT;
-
-			PTHREAD_SET_STATE(thread, PS_SUSPENDED);
-			break;
-		case PS_COND_WAIT:
-			/* Mark the thread as suspended and still in a queue. */
-			thread->suspended = SUSP_COND_WAIT;
-
-			PTHREAD_SET_STATE(thread, PS_SUSPENDED);
-			break;
-		case PS_JOIN:
-			/* Mark the thread as suspended and joining: */
-			thread->suspended = SUSP_JOIN;
-
-			PTHREAD_NEW_STATE(thread, PS_SUSPENDED);
-			break;
-		case PS_FDLR_WAIT:
-		case PS_FDLW_WAIT:
-		case PS_FILE_WAIT:
-			/* Mark the thread as suspended: */
-			thread->suspended = SUSP_YES;
-
-			/*
-			 * Threads in these states may be in queues.
-			 * In order to preserve queue integrity, the
-			 * cancelled thread must remove itself from the
-			 * queue.  Mark the thread as interrupted and
-			 * set the state to running.  When the thread
-			 * resumes, it will remove itself from the queue
-			 * and call the suspension completion routine.
-			 */
-			thread->interrupted = 1;
-			_thread_seterrno(thread, EINTR);
-			PTHREAD_NEW_STATE(thread, PS_RUNNING);
-			thread->continuation = finish_suspension;
-			break;
-
-		case PS_DEAD:
-		case PS_DEADLOCK:
-		case PS_STATE_MAX:
-		case PS_SUSPENDED:
-			/* Nothing needs to be done: */
-			break;
-		}
+		suspend_common(thread);
 
 		/*
 		 * Undefer and handle pending signals, yielding if
@@ -147,6 +67,121 @@ pthread_suspend_np(pthread_t thread)
 		_thread_kern_sig_undefer();
 	}
 	return(ret);
+}
+
+void
+pthread_suspend_all_np(void)
+{
+	struct pthread	*curthread = _get_curthread();
+	struct pthread	*thread;
+
+	/*
+	 * Defer signals to protect the scheduling queues from
+	 * access by the signal handler:
+	 */
+	_thread_kern_sig_defer();
+
+	TAILQ_FOREACH(thread, &_thread_list, tle) {
+		if (thread != curthread)
+			suspend_common(thread);
+	}
+
+	/*
+	 * Undefer and handle pending signals, yielding if
+	 * necessary:
+	 */
+	_thread_kern_sig_undefer();
+}
+
+static void
+suspend_common(struct pthread *thread)
+{
+	switch (thread->state) {
+	case PS_RUNNING:
+		/*
+		 * Remove the thread from the priority queue and
+		 * set the state to suspended:
+		 */
+		PTHREAD_PRIOQ_REMOVE(thread);
+		PTHREAD_SET_STATE(thread, PS_SUSPENDED);
+		break;
+
+	case PS_SPINBLOCK:
+	case PS_FDR_WAIT:
+	case PS_FDW_WAIT:
+	case PS_POLL_WAIT:
+	case PS_SELECT_WAIT:
+		/*
+		 * Remove these threads from the work queue
+		 * and mark the operation as interrupted:
+		 */
+		if ((thread->flags & PTHREAD_FLAGS_IN_WORKQ) != 0)
+			PTHREAD_WORKQ_REMOVE(thread);
+		_thread_seterrno(thread, EINTR);
+
+		/* FALLTHROUGH */
+	case PS_SLEEP_WAIT:
+		thread->interrupted = 1;
+
+		/* FALLTHROUGH */
+	case PS_SIGTHREAD:
+	case PS_WAIT_WAIT:
+	case PS_SIGSUSPEND:
+	case PS_SIGWAIT:
+		/*
+		 * Remove these threads from the waiting queue and
+		 * set their state to suspended:
+		 */
+		PTHREAD_WAITQ_REMOVE(thread);
+		PTHREAD_SET_STATE(thread, PS_SUSPENDED);
+		break;
+
+	case PS_MUTEX_WAIT:
+		/* Mark the thread as suspended and still in a queue. */
+		thread->suspended = SUSP_MUTEX_WAIT;
+
+		PTHREAD_SET_STATE(thread, PS_SUSPENDED);
+		break;
+	case PS_COND_WAIT:
+		/* Mark the thread as suspended and still in a queue. */
+		thread->suspended = SUSP_COND_WAIT;
+
+		PTHREAD_SET_STATE(thread, PS_SUSPENDED);
+		break;
+	case PS_JOIN:
+		/* Mark the thread as suspended and joining: */
+		thread->suspended = SUSP_JOIN;
+
+		PTHREAD_NEW_STATE(thread, PS_SUSPENDED);
+		break;
+	case PS_FDLR_WAIT:
+	case PS_FDLW_WAIT:
+	case PS_FILE_WAIT:
+		/* Mark the thread as suspended: */
+		thread->suspended = SUSP_YES;
+
+		/*
+		 * Threads in these states may be in queues.
+		 * In order to preserve queue integrity, the
+		 * cancelled thread must remove itself from the
+		 * queue.  Mark the thread as interrupted and
+		 * set the state to running.  When the thread
+		 * resumes, it will remove itself from the queue
+		 * and call the suspension completion routine.
+		 */
+		thread->interrupted = 1;
+		_thread_seterrno(thread, EINTR);
+		PTHREAD_NEW_STATE(thread, PS_RUNNING);
+		thread->continuation = finish_suspension;
+		break;
+
+	case PS_DEAD:
+	case PS_DEADLOCK:
+	case PS_STATE_MAX:
+	case PS_SUSPENDED:
+		/* Nothing needs to be done: */
+		break;
+	}
 }
 
 static void

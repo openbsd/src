@@ -1,29 +1,53 @@
-.\" $OpenBSD: pthread_suspend_np.3,v 1.2 1999/07/07 10:50:05 aaron Exp $
+.\" $OpenBSD: pthread_suspend_np.3,v 1.3 2004/05/01 22:15:10 marc Exp $
 .\" David Leonard <d@openbsd.org>, 1999. Public domain.
 .Dd March 21, 1999
 .Dt PTHREAD_SUSPEND_NP 3
 .Os
 .Sh NAME
 .Nm pthread_suspend_np ,
-.Nm pthread_resume_np
-.Nd suspend and resume a thread
+.Nm pthread_suspend_all_np ,
+.Nm pthread_resume_np ,
+.Nm pthread_resume_all_np
+.Nd suspend and resume thread(s)
 .Sh SYNOPSIS
 .Fd #include <pthread.h>
 .Fd #include <pthread_np.h>
 .Ft int
 .Fn pthread_suspend_np "pthread_t thread"
+.Ft void
+.Fn pthread_suspend_all_np void
 .Ft int
 .Fn pthread_resume_np "pthread_t thread"
+.Ft void
+.Fn pthread_resume_all_np void
 .Sh DESCRIPTION
 The
 .Fn pthread_suspend_np
 function interrupts the given thread and places it in a suspended state.
 .Pp
 The
+.Fn pthread_suspend_all_np
+function interrupts all threads except the current thread and places them in a suspended state.
+.Pp
+The
 .Fn pthread_resume_np
 function resumes a thread suspended with
-.Fn pthread_suspend_np .
-It has no effect on threads that have not been suspended.
+.Fn pthread_suspend_np
+or
+.Fn pthread_suspend_all_np .
+.Pp
+The
+.Fn pthread_resume_all_np
+function resumes all threads suspended with
+.Fn pthread_suspend_np
+or
+.Fn pthread_suspend_all_np .
+.Pp
+The
+.Fn pthread_resume_np
+and
+.Fn pthread_resume_all_np
+functions have no effect on threads that have not been suspended.
 .Pp
 Suspending and resuming a thread has an effect similar to that of
 receiving a signal,
@@ -40,13 +64,23 @@ functions fail if:
 No thread could be found corresponding to that specified by the given
 thread ID.
 .El
+.Pp
+The
+.Fn pthread_suspend_np
+function fails if:
+.Bl -tag -width Er
+.It Bq Er EDEADLK
+Attempt to suspend the current thread.
+.El
 .Sh SEE ALSO
 .Xr pthread_cancel 3 ,
 .Xr pthreads 3
 .Sh STANDARDS
 The
-.Fn pthread_suspend_np
-and
+.Fn pthread_suspend_np ,
+.Fn pthread_suspend_all_np ,
 .Fn pthread_resume_np
+and
+.Fn pthread_resume_all_np
 functions are non-portable and may not be supported with the above
 semantics on other POSIX systems.

@@ -1,4 +1,4 @@
-/* $OpenBSD: uthread_stackseg_np.c,v 1.3 2004/01/26 20:50:02 marc Exp $ */
+/* $OpenBSD: uthread_stackseg_np.c,v 1.4 2004/05/01 22:15:10 marc Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 
@@ -16,7 +16,7 @@
 #include "pthread_private.h"
 
 /*
- * Return stack info from the current thread.  Based upon the solaris
+ * Return stack info from the given thread.  Based upon the solaris
  * thr_stksegment function.
  */
 
