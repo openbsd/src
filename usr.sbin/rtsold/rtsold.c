@@ -1,5 +1,5 @@
-/*	$OpenBSD: rtsold.c,v 1.33 2004/01/02 23:52:17 itojun Exp $	*/
-/*	$KAME: rtsold.c,v 1.57 2002/09/20 21:59:55 itojun Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.34 2004/01/03 06:20:17 itojun Exp $	*/
+/*	$KAME: rtsold.c,v 1.75 2004/01/03 00:00:07 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -58,32 +58,24 @@
 
 struct ifinfo *iflist;
 struct timeval tm_max =	{0x7fffffff, 0x7fffffff};
-int aflag = 0;
-int dflag = 0;
 static int log_upto = 999;
 static int fflag = 0;
+
+int aflag = 0;
+int dflag = 0;
 
 /* protocol constatns */
 #define MAX_RTR_SOLICITATION_DELAY	1 /* second */
 #define RTR_SOLICITATION_INTERVAL	4 /* seconds */
 #define MAX_RTR_SOLICITATIONS		3 /* times */
 
-/* implementation dependent constants */
-#define PROBE_INTERVAL 60	/* secondes XXX: should be configurable */
+/* 
+ * implementation dependent constants in seconds
+ * XXX: should be configurable 
+ */
+#define PROBE_INTERVAL 60
 
-/* utility macros */
-/* a < b */
-#define TIMEVAL_LT(a, b) (((a).tv_sec < (b).tv_sec) ||\
-			  (((a).tv_sec == (b).tv_sec) && \
-			    ((a).tv_usec < (b).tv_usec)))
-
-/* a <= b */
-#define TIMEVAL_LEQ(a, b) (((a).tv_sec < (b).tv_sec) ||\
-			   (((a).tv_sec == (b).tv_sec) &&\
-			    ((a).tv_usec <= (b).tv_usec)))
-
-/* a == b */
-#define TIMEVAL_EQ(a, b) (((a).tv_sec==(b).tv_sec) && ((a).tv_usec==(b).tv_usec))
+int main(int, char **);
 
 /* static variables and functions */
 static int mobile_node = 0;
@@ -245,15 +237,6 @@ main(int argc, char *argv[])
 		    "failed to setup for probing routers");
 		exit(1);
 		/*NOTREACHED*/
-	}
-
-	/* dump the current pid */
-	if (!once) {
-		if (pidfile(NULL) < 0) {
-			warnmsg(LOG_ERR, __func__,
-			    "failed to open a pid log file: %s",
-			    strerror(errno));
-		}
 	}
 
 	while (1) {		/* main loop */
@@ -490,7 +473,7 @@ rtsol_check_timer(void)
 	rtsol_timer = tm_max;
 
 	for (ifinfo = iflist; ifinfo; ifinfo = ifinfo->next) {
-		if (TIMEVAL_LEQ(ifinfo->expire, now)) {
+		if (timercmp(&ifinfo->expire, &now, <=)) {
 			if (dflag > 1)
 				warnmsg(LOG_DEBUG, __func__,
 				    "timer expiration on %s, "
@@ -557,18 +540,18 @@ rtsol_check_timer(void)
 			rtsol_timer_update(ifinfo);
 		}
 
-		if (TIMEVAL_LT(ifinfo->expire, rtsol_timer))
+		if (timercmp(&ifinfo->expire, &rtsol_timer, <))
 			rtsol_timer = ifinfo->expire;
 	}
 
-	if (TIMEVAL_EQ(rtsol_timer, tm_max)) {
+	if (timercmp(&rtsol_timer, &tm_max, ==)) {
 		warnmsg(LOG_DEBUG, __func__, "there is no timer");
 		return(NULL);
-	} else if (TIMEVAL_LT(rtsol_timer, now))
+	} else if (timercmp(&rtsol_timer, &now, <))
 		/* this may occur when the interval is too small */
 		returnval.tv_sec = returnval.tv_usec = 0;
 	else
-		TIMEVAL_SUB(&rtsol_timer, &now, &returnval);
+		timersub(&rtsol_timer, &now, &returnval);
 
 	if (dflag > 1)
 		warnmsg(LOG_DEBUG, __func__, "New timer is %ld:%08ld",
@@ -630,13 +613,13 @@ rtsol_timer_update(struct ifinfo *ifinfo)
 	}
 
 	/* reset the timer */
-	if (TIMEVAL_EQ(ifinfo->timer, tm_max)) {
+	if (timercmp(&ifinfo->timer, &tm_max, ==)) {
 		ifinfo->expire = tm_max;
 		warnmsg(LOG_DEBUG, __func__,
 		    "stop timer for %s", ifinfo->ifname);
 	} else {
 		gettimeofday(&now, NULL);
-		TIMEVAL_ADD(&now, &ifinfo->timer, &ifinfo->expire);
+		timeradd(&now, &ifinfo->timer, &ifinfo->expire);
 
 		if (dflag > 1)
 			warnmsg(LOG_DEBUG, __func__,
@@ -650,39 +633,6 @@ rtsol_timer_update(struct ifinfo *ifinfo)
 
 /* timer related utility functions */
 #define MILLION 1000000
-
-/* result = a + b */
-static void
-TIMEVAL_ADD(struct timeval *a, struct timeval *b, struct timeval *result)
-{
-	long l;
-
-	if ((l = a->tv_usec + b->tv_usec) < MILLION) {
-		result->tv_usec = l;
-		result->tv_sec = a->tv_sec + b->tv_sec;
-	} else {
-		result->tv_usec = l - MILLION;
-		result->tv_sec = a->tv_sec + b->tv_sec + 1;
-	}
-}
-
-/*
- * result = a - b
- * XXX: this function assumes that a >= b.
- */
-void
-TIMEVAL_SUB(struct timeval *a, struct timeval *b, struct timeval *result)
-{
-	long l;
-
-	if ((l = a->tv_usec - b->tv_usec) >= 0) {
-		result->tv_usec = l;
-		result->tv_sec = a->tv_sec - b->tv_sec;
-	} else {
-		result->tv_usec = MILLION + l;
-		result->tv_sec = a->tv_sec - b->tv_sec - 1;
-	}
-}
 
 #ifndef SMALL
 static void
