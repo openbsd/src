@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.7 1996/12/24 20:30:40 deraadt Exp $ */
+/*	$OpenBSD: vme.c,v 1.8 1997/02/05 15:50:55 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -316,12 +316,9 @@ vmescan(parent, child, args, bustype)
 		oca.ca_len = 4096;
 
 	oca.ca_offset = (u_int)oca.ca_paddr;
-printf("pa=%8x len=%8x vec=%d ipl=%d\n", oca.ca_paddr, oca.ca_len,
-oca.ca_vec, oca.ca_ipl);
 	oca.ca_vaddr = vmemap(sc, oca.ca_paddr, oca.ca_len, oca.ca_bustype);
 	if (!oca.ca_vaddr)
 		oca.ca_vaddr = (void *)-1;
-printf("va=%8x\n", oca.ca_vaddr);
 	oca.ca_master = (void *)sc;
 	oca.ca_name = cf->cf_driver->cd_name;
 	if ((*cf->cf_attach->ca_match)(parent, cf, &oca) == 0) {
@@ -520,7 +517,8 @@ vme2chip_init(sc)
 	    (6 << VME2_IRQL4_VME6SHIFT) | (5 << VME2_IRQL4_VME5SHIFT) |
 	    (4 << VME2_IRQL4_VME4SHIFT) | (3 << VME2_IRQL4_VME3SHIFT) |
 	    (2 << VME2_IRQL4_VME2SHIFT) | (1 << VME2_IRQL4_VME1SHIFT);
-	printf("vme2_irql4 = 0x%08x\n", vme2->vme2_irql4);
+	printf("%s: vme2_irql4 = 0x%08x\n",	sc->sc_dev.dv_xname,
+	    vme2->vme2_irql4);
 
 #if NPCCTWO > 0
 	if (vmebustype == BUS_PCCTWO) {
