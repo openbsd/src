@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_start.c	8.1 (Berkeley) 6/6/93
- *	$Id: nfs_start.c,v 1.5 2001/09/04 23:35:59 millert Exp $
+ *	$Id: nfs_start.c,v 1.6 2001/09/05 23:24:21 millert Exp $
  */
 
 #include "am.h"
@@ -289,7 +289,7 @@ static serv_state run_rpc(P_void)
 			dlog("Select waits for Godot");
 #endif /* DEBUG */
 
-		nsel = do_select(mask, omask, fdsn + 1, fdsp, &tvv);
+		nsel = do_select(&mask, &omask, fdsn + 1, fdsp, &tvv);
 
 
 		switch (nsel) {
