@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace-translate.c,v 1.14 2002/12/09 07:24:56 itojun Exp $	*/
+/*	$OpenBSD: systrace-translate.c,v 1.15 2003/04/06 23:57:51 deraadt Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -50,7 +50,7 @@
 #include "systrace.h"
 
 #define FL(w,c)	do { \
-	if (flags & (w)) \
+	if (flags & (w) && p < str + sizeof str) \
 		*p++ = (c); \
 } while (0)
 
@@ -74,17 +74,17 @@ print_oflags(char *buf, size_t buflen, struct intercept_translate *tl)
 	p = str;
 	switch (flags & O_ACCMODE) {
 	case O_RDONLY:
-		strcpy(p, "ro");
+		strlcpy(p, "ro", str + sizeof str - p);
 		isread = 1;
 		break;
 	case O_WRONLY:
-		strcpy(p, "wo");
+		strlcpy(p, "wo", str + sizeof str - p);
 		break;
 	case O_RDWR:
-		strcpy(p, "rw");
+		strlcpy(p, "rw", str + sizeof str - p);
 		break;
 	default:
-		strcpy(p, "--");
+		strlcpy(p, "--", str + sizeof str - p);
 		break;
 	}
 
@@ -118,17 +118,17 @@ linux_print_oflags(char *buf, size_t buflen, struct intercept_translate *tl)
 	p = str;
 	switch (flags & LINUX_O_ACCMODE) {
 	case LINUX_O_RDONLY:
-		strcpy(p, "ro");
+		strlcpy(p, "ro", str + sizeof str - p);
 		isread = 1;
 		break;
 	case LINUX_O_WRONLY:
-		strcpy(p, "wo");
+		strlcpy(p, "wo", str + sizeof str - p);
 		break;
 	case LINUX_O_RDWR:
-		strcpy(p, "rw");
+		strlcpy(p, "rw", str + sizeof str - p);
 		break;
 	default:
-		strcpy(p, "--");
+		strlcpy(p, "--", str + sizeof str - p);
 		break;
 	}
 
