@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.109 2001/06/23 06:42:37 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.110 2001/06/23 07:03:27 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -340,7 +340,7 @@ ip_output(m0, va_alist)
 		if (m->m_pkthdr.csum & M_TCPV4_CSUM_OUT &&
 		    !(ifp->if_capabilities & IFCAP_CSUM_TCPv4)) {
 			csums = in4_cksum(m, IPPROTO_TCP, 0, m->m_pkthdr.len);
-			m_copydata(m, hlen + offsetof(struct tcphdr, th_sum),
+			m_copyback(m, hlen + offsetof(struct tcphdr, th_sum),
 			    sizeof(short), (caddr_t)&csums);
 			m->m_pkthdr.csum &= ~M_TCPV4_CSUM_OUT; /* Clear */
 		}
@@ -348,7 +348,7 @@ ip_output(m0, va_alist)
 		if (m->m_pkthdr.csum & M_UDPV4_CSUM_OUT &&
 		    !(ifp->if_capabilities & IFCAP_CSUM_UDPv4)) {
 			csums = in4_cksum(m, IPPROTO_UDP, 0, m->m_pkthdr.len);
-			m_copydata(m, hlen + offsetof(struct udphdr, uh_sum),
+			m_copyback(m, hlen + offsetof(struct udphdr, uh_sum),
 			    sizeof(short), (caddr_t)&csums);
 			m->m_pkthdr.csum &= ~M_UDPV4_CSUM_OUT; /* Clear */
 		}
@@ -613,7 +613,7 @@ sendit:
 	if (m->m_pkthdr.csum & M_TCPV4_CSUM_OUT &&
 	    !(ifp->if_capabilities & IFCAP_CSUM_TCPv4)) {
 		csums = in4_cksum(m, IPPROTO_TCP, 0, m->m_pkthdr.len);
-		m_copydata(m, hlen + offsetof(struct tcphdr, th_sum),
+		m_copyback(m, hlen + offsetof(struct tcphdr, th_sum),
 		    sizeof(short), (caddr_t)&csums);
 		m->m_pkthdr.csum &= ~M_TCPV4_CSUM_OUT; /* Clear */
 	}
@@ -621,7 +621,7 @@ sendit:
 	if (m->m_pkthdr.csum & M_UDPV4_CSUM_OUT &&
 	    !(ifp->if_capabilities & IFCAP_CSUM_UDPv4)) {
 		csums = in4_cksum(m, IPPROTO_UDP, 0, m->m_pkthdr.len);
-		m_copydata(m, hlen + offsetof(struct udphdr, uh_sum),
+		m_copyback(m, hlen + offsetof(struct udphdr, uh_sum),
 		    sizeof(short), (caddr_t)&csums);
 		m->m_pkthdr.csum &= ~M_UDPV4_CSUM_OUT; /* Clear */
 	}
