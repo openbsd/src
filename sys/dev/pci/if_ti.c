@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.50 2004/05/31 16:58:19 mcbride Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.51 2004/06/18 20:33:56 mcbride Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -683,7 +683,7 @@ void *ti_jalloc(sc)
 		return(NULL);
 	}
 
-	SLIST_REMOVE_HEAD(&sc->ti_jinuse_listhead, jpool_entries);
+	SLIST_REMOVE_HEAD(&sc->ti_jfree_listhead, jpool_entries);
 	SLIST_INSERT_HEAD(&sc->ti_jinuse_listhead, entry, jpool_entries);
 	sc->ti_cdata.ti_jslots[entry->slot].ti_inuse = 1;
 	return(sc->ti_cdata.ti_jslots[entry->slot].ti_buf);
@@ -1060,8 +1060,8 @@ int ti_init_tx_ring(sc)
 
 	SLIST_INIT(&sc->ti_tx_map_listhead);
 	for (i = 0; i < TI_TX_RING_CNT; i++) {
-		if (bus_dmamap_create(sc->sc_dmatag, MCLBYTES, TI_NTXSEG,
-		    MCLBYTES, 0, BUS_DMA_NOWAIT, &dmamap))
+		if (bus_dmamap_create(sc->sc_dmatag, TI_JUMBO_FRAMELEN,
+		    TI_NTXSEG, MCLBYTES, 0, BUS_DMA_NOWAIT, &dmamap))
 			return(ENOBUFS);
 
 		entry = malloc(sizeof(*entry), M_DEVBUF, M_NOWAIT);
@@ -2580,6 +2580,14 @@ int ti_ioctl(ifp, command, data)
 		default:
 			ti_init(sc);
 			break;
+		}
+		break;
+	case SIOCSIFMTU:
+		if (ifr->ifr_mtu > TI_JUMBO_FRAMELEN - ETHER_HDR_LEN) {
+			error = EINVAL;
+		} else {
+			ifp->if_mtu = ifr->ifr_mtu;
+			ti_init(sc);
 		}
 		break;
 	case SIOCSIFFLAGS:
