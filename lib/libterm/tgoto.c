@@ -210,6 +210,6 @@ setwhich:
 			goto toohard;
 		}
 	}
-	strcpy(dp, added);
+	strncpy(dp, added, sizeof (result) - (dp - result) - 1);
 	return (result);
 }
