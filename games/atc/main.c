@@ -178,6 +178,7 @@ main(ac, av)
 	tty_new.c_cc[VTIME] = 0;
 	tcsetattr(fileno(stdin), TCSADRAIN, &tty_new);
 
+	memset(&sa, 0, sizeof sa);
 	sa.sa_handler = update;
 	sigemptyset(&sa.sa_mask);
 	sigaddset(&sa.sa_mask, SIGALRM);
