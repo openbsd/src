@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ps.1,v 1.10 1997/09/03 13:53:07 kstailey Exp $
+.\"	$OpenBSD: ps.1,v 1.11 1998/04/28 18:58:49 deraadt Exp $
 .\"	$NetBSD: ps.1,v 1.16 1996/03/21 01:36:28 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
@@ -268,9 +268,9 @@ currently exceeding that limit; such a process is (necessarily) not
 swapped.
 .It A
 the process has asked for random page replacement
-.Pf ( Dv VA_ANOM ,
+.Pf ( Dv MADV_RANDOM ,
 from
-.Xr vadvise 2 ,
+.Xr madvise 2 ,
 for example,
 .Xr lisp 1
 in a garbage collect).
@@ -288,9 +288,9 @@ scheduling priority (see
 The process has asked for
 .Tn FIFO
 page replacement
-.Pf ( Dv VA_SEQL ,
+.Pf ( Dv MADV_SEQUENTIAL ,
 from
-.Xr vadvise 2 ,
+.Xr madvise 2 ,
 for example, a large image processing program using virtual memory to
 sequentially address voluminous data).
 .It s
