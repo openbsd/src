@@ -1,0 +1,17 @@
+$OpenBSD: IAFA-PACKAGE,v 1.1.1.1 1996/08/14 06:19:10 downsj Exp $
+
+Title:		pdksh
+Version:	5.2.7
+Description:	A public domain implementation of the Korn shell (ksh88),
+		a UNIX command line interpreter / scripting language; the few
+		missing ksh features are being added and the shell is being
+		POSIXized.
+Author:		(Eric Gisin), (Charles Forsyth), (John R MacMillan),
+		sjg@zen.void.oz.au (Simon J. Gerraty),
+		michael@cs.mun.ca (Michael Rendell), (plus many others)
+Maintained-by:	michael@cs.mun.ca (Michael Rendell)
+Maintained-at:	ftp://ftp.cs.mun.ca:/pub/pdksh/
+Platforms:	Written in C, runs on most UNIX boxes (uses GNU autoconf;
+		works best in a POSIX or BSD environment).  Also runs on OS/2.
+Copying-Policy:	Freely Redistributable (mostly public domain, some copyrighted)
+Keywords:	pdksh, ksh, Korn, shell, command line interpreter

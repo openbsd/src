@@ -1,0 +1,164 @@
+$OpenBSD: README,v 1.1.1.1 1996/08/14 06:19:10 downsj Exp $
+
+Last updated June '96 for pdksh-5.2.6.
+	(check ftp://ftp.cs.mun.ca:/pub/pdksh/ or
+	 http://www.cs.mun.ca/~michael/pdksh/ for new versions/patches)
+
+PD-ksh is a mostly complete AT&T ksh look-alike (see NOTES file for a list
+of things not supported).  Work is currently underway to make it fully
+compatible with both POSIX and AT&T ksh (when the two don't conflict).
+
+Since pdksh is free and compiles and runs on most common unix systems, it
+is very useful in creating a consistent user interface across multiple
+machines.  For example, in the CS dept. of MUN, pdksh is installed on a
+variety of machines including Suns, HPs, DecStations, pcs running Linux,
+etc., and is the login shell of ~5200 users.
+
+PDksh is currently being maintained by Michael Rendell (michael@cs.mun.ca),
+who took over from Simon J. Gerraty (sjg@zen.void.oz.au) at the later's
+suggestion.  A short list of things that have been added since the last
+public pdksh release (4.9) are auto-configuration, arrays, $(( .. )),
+[[ .. ]], variable attributes, co-processes, extended file globbing,
+many POSIXisms and many bug fixes.  See the NEWS and ChangeLog files for
+other features added and bugs fixed.
+
+Note that pdksh is provided AS IS, with NO WARRANTY, either expressed or
+implied.  Also note that although the bulk of the code in pdksh is in the
+public domain, some files are copyrighten (but freely distributable) and
+subject to certain conditions (eg, don't remove copyright, document any
+changes, etc.).  See the LEGAL file for details.
+
+If you would like to be notified via email of new releases as they become
+available, send mail to pdksh-request@cs.mun.ca with subject
+"send release notifications" (or "don't send release notifications" to stop
+them).
+
+
+Files of interest:
+	NEWS		short list of noticeable changes in various versions.
+	CONTRIBUTORS	short history of pdksh, people who contributed, etc.
+	NOTES		lists of known bugs in pdksh, at&t ksh, and posix.
+	PROJECTS	list of things that need to be done in pdksh.
+	BUG-REPORTS	list of recently reported bugs that have been fixed
+			and all reported bugs that haven't been fixed.
+	LEGAL		A file detailing legal issues concerning pdksh.
+	etc/*		system profile and kshrc files used by Simon J. Gerraty.
+	misc/README*	readme files from previous versions.
+	misc/Changes*	changelog files from previous versions.
+	os2/*		files and info needed to compile ksh on os/2.
+	tests/*		pdksh's regression testing system.
+
+
+Compiling/Installing:
+
+  The quick way:
+	./configure
+	make
+	make check	# optional
+	make install	# will install /usr/local/bin/ksh
+			#  and /usr/local/man/man1/ksh.1
+
+  The more detailed description:
+    * run "configure --help | your-favorite-pager" and look at the
+      --enable-* and --disable-* options (they are at the end).
+      Select any you options you wish to enable/disable
+      (most people can skip this step).
+    * run configure: this is a GNU autoconf configure script that will generate
+      a Makefile and a config.h.  Some of the useful options to configure are:
+	--prefix=PATH	    indicates the directory tree under which the binary
+			    and man page are installed (ie, PATH/bin/ksh and
+			    PATH/man/man1/ksh.1).
+			    The default prefix is /usr/local.
+	--exec-prefix=PATH  overrides --prefix for machine dependent files
+			    (ie, the ksh binary)
+	--program-prefix=pd install binary and man page as pdksh and pdksh.1
+	--verbose	    show what is being defined as script runs
+      Note that you don't have to build in the source directory.  To build
+      in a separate directory, do something like:
+		$ mkdir objs
+		$ cd objs
+		$ ../configure --verbose
+		....
+		$ make
+      See the file INSTALL for a more complete description of configure and its
+      generic options (ksh specific options are documented in the --help output)
+    * miscellaneous configuration notes:
+	* If your make doesn't understand VPATH, you must compile in
+	  the source directory.
+	* On DecStations, MIPS and SONY machines with older C compilers that
+	  can't handle "int * volatile x", you should use gcc or turn off
+	  optimization.  The problem is configure defines volatile to nothing
+	  since the compiler can't handle it properly, but the compiler does
+	  optimizations that the volatile is meant to prevent.   So.  Use gcc.
+	* On MIPS RISC/os 5.0 systems, sysv environment, <signal.h> is
+	  messed up - it defines sigset_t, but not any of the rest of
+	  the posix signals (the sigset_t typedef should be in the
+	  ifdef KERNEL section) - also doesn't have waitpid() or wait3().
+	  Things compile up ok in the svr4 environment, but it dumps core
+	  in __start (perhaps our system doesn't have the full svr4
+	  environ?).  Try compiling in the bsd43 environ instead (still not
+	  perfect - see BUG-REPORTS file), using gcc - cc has problems with
+	  macro expansions in the argument of a macro (in this case, the ARGS
+	  macro).
+	* On TitanOS (Stardent/Titan), use `CC="cc -43" configure ...'.
+	  When configure finishes, edit config.h, undef HAVE_DIRENT_H and
+	  define HAVE_SYS_DIR_H (the dirent.h header file is broken).
+	* On Linux (red hat distribution), check that /dev/tty has mode 0666
+	  (not mode 0644).  If it has the wrong permissions, ksh will print
+	  warnings about not being able to do job control.
+    * run make: everything should compile and link without problems.
+    * run make check: this fires up a perl script that checks for some
+      known and some fixed bugs.  The script prints pass/fail for tests
+      it expected to pass/fail, and PASS/FAIL for tests it expected to
+      fail/pass.
+    * run make install: this installs ksh (in /usr/local/bin/ksh by default,
+      or where ever you told configure to put things).
+
+The following is a list of machines that pdksh is reported to work on:
+    -/PC Linux 1.x
+    -/PC NetBSD 0.9a
+    -/PC BSDI 1.1
+    -/PC FreeBSD 2.0, 2.1
+    -/PC Interactive/Sunsoft 3.0.1 and 4.1 (note that problems have been
+	    reported with isc3.2 - see the BUG-REPORTS file)
+    -/PC OS/2
+    Commadore/Amiga NetBSD 1.0
+    Dec/alpha OSF/1 v2.x, v3.x
+    Dec/alpha NetBSD 1.1B
+    Dec/pmax Ultrix 4.2
+    Dec/vax Ultrix 2.2
+    Dec/vax 4.3BSD+NFS (MtXinu)
+    HP/pa HP-UX 9.01
+    IBM/RS/6000 AIX 3.2.5
+    MIPS/m120 RISC/os 5.0 (bsd43 environ)
+    NeXT NeXTStep 3.2(?)
+    Sun/sun4 SunOS 4.1.3, 4.1.4
+    Sun/sun4 Solaris 2.x
+    Sun/sun386i SunOS 4.0.2
+    Sun/sun3 SunOS 4.0.3, 4.1.1_U1
+    Stardent/TitanOS 4.2
+
+
+Newer versions of pdksh may be available from
+	ftp://ftp.cs.mun.ca:/pub/pdksh/
+you may want to check for one if you run into any problems, as the problem may
+already be fixed (you can get new release notifications automatically - see
+above).
+
+You can send bug reports, fixes, and enchancements to pdksh@cs.mun.ca (please
+don't assume I will see bug reports that are posted to some newsgroup or
+mailing list - I probably won't).
+If you are reporting a bug (with or without a fix), please include
+	* the version of pdksh you are using (see version.c, or, if you are
+	  running pdksh, try echo $KSH_VERSION),
+	* the machine, operating system and compiler you are using,
+	* and a description of how to repeat the bug (a small shell
+	  script that demonstrates the bug is best).
+as well as the following, if relevant (if you aren't sure, include them)
+	* what options you are using (both options.h options and set -o options)
+	* the output of configure, with the verbose flag
+	  (eg, ./configure --verbose)
+	* the contents of config.log (this is created by the configure script)
+	* if you are using gcc (the GNU C compiler), which version it is.
+
+Michael Rendell, michael@cs.mun.ca.
