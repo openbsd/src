@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.36 2001/09/02 19:07:17 jakob Exp $ */
+/* $OpenBSD: netcat.c,v 1.37 2001/09/02 19:11:46 jakob Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -79,9 +79,7 @@ int	udptest __P((int));
 void	usage __P((int));
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch, s, ret;
 	char *host, *uport, *endp;
@@ -236,19 +234,18 @@ main(argc, argv)
 
 				len = sizeof(z);
 				rv = recvfrom(s, buf, sizeof(buf), MSG_PEEK,
-					(struct sockaddr *)&z, &len);
+				    (struct sockaddr *)&z, &len);
 				if (rv < 0)
 					errx(1, "%s", strerror(errno));
 
-				rv = connect(s, (struct sockaddr *)&z,
-					len);
+				rv = connect(s, (struct sockaddr *)&z, len);
 				if (rv < 0)
 					errx(1, "%s", strerror(errno));
 
 				connfd = s;
 			} else {
 				connfd = accept(s, (struct sockaddr *)&cliaddr,
-									&len);
+				    &len);
 			}
 
 			readwrite(connfd);
@@ -294,13 +291,13 @@ main(argc, argv)
 					sv = NULL;
 				else {
 					sv = getservbyport(
-						ntohs(atoi(portlist[i])),
-						uflag ? "udp" : "tcp");
+					    ntohs(atoi(portlist[i])),
+					    uflag ? "udp" : "tcp");
 				}
 				
 				printf("Connection to %s %s port [%s/%s] succeeded!\n",
-					host, portlist[i], uflag ? "udp" : "tcp",
-					sv ? sv->s_name : "*");
+				    host, portlist[i], uflag ? "udp" : "tcp",
+				    sv ? sv->s_name : "*");
 			}
 			if (!zflag)
 				readwrite(s);
@@ -319,9 +316,7 @@ main(argc, argv)
  * port or source address if needed. Return's -1 on failure.
  */
 int
-remote_connect(host, port, hints)
-	char *host, *port;
-	struct addrinfo hints;
+remote_connect(char *host, char *port, struct addrinfo hints)
 {
 	struct addrinfo *res, *res0;
 	int s, error;
@@ -332,7 +327,7 @@ remote_connect(host, port, hints)
 	res0 = res;
 	do {
 		if ((s = socket(res0->ai_family, res0->ai_socktype,
-				res0->ai_protocol)) < 0)
+		    res0->ai_protocol)) < 0)
 			continue;
 
 		/* Bind to a local port or source address if specified */
@@ -355,7 +350,7 @@ remote_connect(host, port, hints)
 				errx(1, "%s", gai_strerror(error));
 
 			if (bind(s, (struct sockaddr *)ares->ai_addr,
-							ares->ai_addrlen) < 0) {
+			     ares->ai_addrlen) < 0) {
 				errx(1, "bind failed: %s", strerror(errno));
 				freeaddrinfo(ares);
 				continue;
@@ -384,9 +379,7 @@ remote_connect(host, port, hints)
  * address. Return's -1 on failure.
  */
 int
-local_listen(host, port, hints)
-	char *host, *port;
-	struct addrinfo hints;
+local_listen(char *host, char *port, struct addrinfo hints)
 {
 	struct addrinfo *res, *res0;
 	int s, ret, x = 1;
@@ -408,7 +401,7 @@ local_listen(host, port, hints)
 	res0 = res;
 	do {
 		if ((s = socket(res0->ai_family, res0->ai_socktype,
-				res0->ai_protocol)) == 0)
+		    res0->ai_protocol)) == 0)
 			continue;
 
 		ret = setsockopt(s, SOL_SOCKET, SO_REUSEPORT, &x, sizeof(x));
@@ -416,7 +409,7 @@ local_listen(host, port, hints)
 			err(1, NULL);
 
 		if (bind(s, (struct sockaddr *)res0->ai_addr,
-						res0->ai_addrlen) == 0)
+		    res0->ai_addrlen) == 0)
 			break;
 
 		close(s);
@@ -438,8 +431,7 @@ local_listen(host, port, hints)
  * Loop that polls on the network file descriptor and stdin.
  */
 void
-readwrite(nfd)
-	int nfd;
+readwrite(int nfd)
 {
 	struct pollfd *pfd;
 	char buf[BUFSIZ];
@@ -489,10 +481,7 @@ readwrite(nfd)
 }
 /* Deal with RFC854 WILL/WONT DO/DONT negotiation */
 void
-atelnet(nfd, buf, size)
-	int nfd;
-	unsigned char *buf;
-	unsigned int size;
+atelnet(int nfd, unsigned char *buf, unsigned int size)
 {
 	int ret;
 	unsigned char *p, *end;
@@ -530,8 +519,7 @@ atelnet(nfd, buf, size)
  * that we should try to connect too.
  */
 void
-build_ports(p)
-	char *p;
+build_ports(char *p)
 {
 	char *n, *endp;
 	int hi, lo, cp;
@@ -593,8 +581,7 @@ build_ports(p)
  * Also fails after around 100 ports checked.
  */
 int
-udptest(s)
-        int s;
+udptest(int s)
 {
 	int i, rv, ret;
 
@@ -633,8 +620,7 @@ help()
 }
 
 void
-usage(ret)
-	int ret;
+usage(int ret)
 {
 	fprintf(stderr, "usage: nc [-46hklnrtuvz] [-i interval] [-p source port]\n");
 	fprintf(stderr, "\t  [-s ip address] [-w timeout] [-x proxy address [:port]]\n");
