@@ -66,5 +66,7 @@ This is a list of things that still need to be done:
 		- lang/python
 		- databases/mysql
 		- net/mrtd
+		- devel/glib
+		- www/squid
 
-$OpenBSD: TODO,v 1.8 1999/11/29 22:28:20 d Exp $
+$OpenBSD: TODO,v 1.9 1999/11/29 23:26:24 brad Exp $
