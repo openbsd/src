@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.169 2005/02/07 15:35:23 espie Exp $
+# $OpenBSD: pkg_add,v 1.170 2005/03/09 11:22:27 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -580,6 +580,7 @@ sub lookup_library
 		}
 	}
 	print "\n" if $state->{very_verbose};
+	return;
 }
 
 sub clue
