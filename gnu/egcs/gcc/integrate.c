@@ -151,10 +151,6 @@ function_cannot_inline_p (fndecl)
   if (current_function_contains_functions)
     return N_("function with nested functions cannot be inline");
 
-  if (forced_labels)
-    return
-      N_("function with label addresses used in initializers cannot inline");
-
   if (current_function_cannot_inline)
     return current_function_cannot_inline;
 
@@ -429,8 +425,7 @@ initialize_for_inline (fndecl, min_labelno, max_labelno, max_reg, copy)
 				arg_vector, (rtx) DECL_INITIAL (fndecl),
 				(rtvec) regno_reg_rtx, regno_pointer_flag,
 				regno_pointer_align,
-				(rtvec) parm_reg_stack_loc,
-				nonlocal_goto_handler_labels);
+				(rtvec) parm_reg_stack_loc);
 }
 
 /* Subroutine for `save_for_inline{copying,nocopy}'.  Finishes up the
@@ -750,15 +745,6 @@ save_for_inline_copying (fndecl)
 	&& insn_map[INSN_UID(insn)])
       REG_NOTES (insn_map[INSN_UID (insn)])
 	= copy_for_inline (REG_NOTES (insn));
-
-  /* Now adjust nonlocal_goto_handler_labels list */
-  copy = NULL_RTX;
-  for (insn = nonlocal_goto_handler_labels; insn ; insn = XEXP (insn, 1))
-     if (label_map[CODE_LABEL_NUMBER (XEXP (insn,0))] != NULL_RTX)  
-	copy = gen_rtx_EXPR_LIST (VOIDmode,
-		label_map[CODE_LABEL_NUMBER (XEXP (insn,0))],
-		copy);
-  NONLOCAL_GOTO_LABELS_TRAN(head) = copy;
 
   NEXT_INSN (last_insn) = NULL;
 
@@ -2144,14 +2130,6 @@ expand_inline_function (fndecl, parms, target, ignore, type,
 	REG_NOTES (map->insn_map[INSN_UID (insn)]) = tem;
       }
 
-  /* Now copy nonlocal_goto_handler_list from the function being
-     inlined into the current list. */
-  for (insn = NONLOCAL_GOTO_LABELS_TRAN(header); insn ; insn = XEXP (insn, 1))
-     if ( map->label_map[CODE_LABEL_NUMBER (XEXP (insn,0))] != NULL_RTX)
-	nonlocal_goto_handler_labels  = gen_rtx_EXPR_LIST (VOIDmode,
-		map->label_map[CODE_LABEL_NUMBER (XEXP (insn,0))],   
-		nonlocal_goto_handler_labels);
-
   if (local_return_label)
     emit_label (local_return_label);
 
@@ -3424,10 +3402,9 @@ output_inline_function (fndecl)
   regno_pointer_align = INLINE_REGNO_POINTER_ALIGN (head);
   max_parm_reg = MAX_PARMREG (head);
   parm_reg_stack_loc = (rtx *) PARMREG_STACK_LOC (head);
- 
+  
   stack_slot_list = STACK_SLOT_LIST (head);
   forced_labels = FORCED_LABELS (head);
-  nonlocal_goto_handler_labels = NONLOCAL_GOTO_LABELS (head);
 
   if (FUNCTION_FLAGS (head) & FUNCTION_FLAGS_HAS_COMPUTED_JUMP)
     current_function_has_computed_jump = 1;
