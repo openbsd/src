@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc90cx6.c,v 1.7 2004/05/12 06:35:10 tedu Exp $ */
+/*	$OpenBSD: smc90cx6.c,v 1.8 2004/05/26 19:56:31 brad Exp $ */
 /*	$NetBSD: smc90cx6.c,v 1.17 1996/05/07 01:43:18 thorpej Exp $ */
 
 /*
@@ -595,7 +595,7 @@ bah_start(ifp)
 	 * bah_ram_ptr[0*2] = mtod(m, u_char *)[0];
 	 */
 	bah_ram_ptr[1 * 2] = mtod(m, u_char *)[1];
-	m_adj(m, 2);
+	m_adj(m, ETHER_ALIGN);
 		
 	/* get total length left at this point */
 	tlen = m->m_pkthdr.len;
