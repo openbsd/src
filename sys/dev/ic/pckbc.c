@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbc.c,v 1.8 2004/04/02 04:39:50 deraadt Exp $ */
+/* $OpenBSD: pckbc.c,v 1.9 2004/11/02 21:21:00 miod Exp $ */
 /* $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -42,11 +42,7 @@
 #include <dev/ic/i8042reg.h>
 #include <dev/ic/pckbcvar.h>
 
-#ifdef __HAVE_NWSCONS /* XXX: this port uses sys/dev/pckbc */
 #include "pckbd.h"
-#else /* ie: only md drivers attach to pckbc */
-#define NPCKBD 0
-#endif
 
 #if (NPCKBD > 0)
 #include <dev/pckbc/pckbdvar.h>
@@ -977,18 +973,7 @@ pckbc_cnattach(iot, addr, cmd_offset, slot)
 #if (NPCKBD > 0)
 		res = pckbd_cnattach(&pckbc_consdata, slot);
 #else
-		/*
-		 * XXX This should be replaced with the `notyet' case
-		 * XXX when all of the old PC-style console drivers
-		 * XXX have gone away.  When that happens, all of
-		 * XXX the pckbc_machdep_cnattach() should be purged,
-		 * XXX as well.
-		 */
-#ifdef notyet
 		res = ENXIO;
-#else
-		res = pckbc_machdep_cnattach(&pckbc_consdata, slot);
-#endif
 #endif /* NPCKBD > 0 */
 	}
 

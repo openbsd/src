@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.5 2004/07/20 20:17:16 art Exp $	*/
+/*	$OpenBSD: types.h,v 1.6 2004/11/02 21:20:59 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -67,7 +67,6 @@ typedef	unsigned long long	uint64_t;
 
 typedef long			register_t;
 
-#define	__HAVE_NWSCONS
 #define __HAVE_GENERIC_SOFT_INTERRUPTS
 #define __HAVE_CPUINFO
 #define	__HAVE_EVCOUNT

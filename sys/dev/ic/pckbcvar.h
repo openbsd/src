@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbcvar.h,v 1.3 2004/04/02 04:39:50 deraadt Exp $ */
+/* $OpenBSD: pckbcvar.h,v 1.4 2004/11/02 21:21:00 miod Exp $ */
 /* $NetBSD: pckbcvar.h,v 1.4 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -105,8 +105,5 @@ int pckbc_cnattach(bus_space_tag_t, bus_addr_t, bus_size_t,
 			pckbc_slot_t);
 int pckbc_is_console(bus_space_tag_t, bus_addr_t);
 int pckbcintr(void *);
-
-/* md hook for use without mi wscons */
-int pckbc_machdep_cnattach(pckbc_tag_t, pckbc_slot_t);
 
 #endif /* _DEV_IC_PCKBCVAR_H_ */

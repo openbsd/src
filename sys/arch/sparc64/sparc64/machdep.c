@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.73 2004/10/01 18:18:49 jason Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.74 2004/11/02 21:20:59 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -223,21 +223,6 @@ void blink_led_timeout(void *);
 caddr_t	allocsys(caddr_t);
 void	dumpsys(void);
 void	stackdump(void);
-
-#if (NPCKBC > 0) && (NPCKBD == 0)
-/*
- * This is called by the pckbc driver if no pckbd is configured.
- * On the i386, it is used to glue in the old, deprecated console
- * code.  On the sparc64, it does nothing.
- */
-int
-pckbc_machdep_cnattach(kbctag, kbcslot)
-	pckbc_tag_t kbctag;
-	pckbc_slot_t kbcslot;
-{
-	return (ENXIO);
-}
-#endif
 
 /*
  * Machine-dependent startup code

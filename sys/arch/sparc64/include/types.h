@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.7 2004/06/28 01:47:41 aaron Exp $	*/
+/*	$OpenBSD: types.h,v 1.8 2004/11/02 21:20:59 miod Exp $	*/
 /*	$NetBSD: types.h,v 1.17 2001/05/12 22:42:07 kleink Exp $ */
 
 /*
@@ -65,7 +65,6 @@ typedef unsigned long int	paddr_t;
 typedef paddr_t			psize_t;
 #endif
 
-#define	__HAVE_NWSCONS
 #define	__HAVE_DEVICE_REGISTER
 #define	__HAVE_GENERIC_SOFT_INTERRUPTS
 #define	__HAVE_EVCOUNT

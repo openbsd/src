@@ -1,4 +1,4 @@
-/*	$OpenBSD: consinit.c,v 1.2 2004/02/03 12:09:47 mickey Exp $	*/
+/*	$OpenBSD: consinit.c,v 1.3 2004/11/02 21:20:58 miod Exp $	*/
 /*	$NetBSD: consinit.c,v 1.2 2003/03/02 18:27:14 fvdl Exp $	*/
 
 /*
@@ -44,17 +44,3 @@ consinit()
 	initted = 1;
 	cninit();
 }
-
-#if (NPCKBC > 0) && (NPCKBD == 0)
-/*
- * glue code to support old console code with the
- * mi keyboard controller driver
- */
-int
-pckbc_machdep_cnattach(kbctag, kbcslot)
-	pckbc_tag_t kbctag;
-	pckbc_slot_t kbcslot;
-{
-	return (ENXIO);
-}
-#endif

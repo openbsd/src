@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.89 2004/07/06 21:53:59 deraadt Exp $ */
+/* $OpenBSD: machdep.c,v 1.90 2004/11/02 21:20:56 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -845,26 +845,6 @@ consinit()
 	    pmap_uses_prom_console() ? "" : "not ");
 #endif
 }
-
-#include "pckbc.h"
-#include "pckbd.h"
-#if (NPCKBC > 0) && (NPCKBD == 0)
-
-#include <dev/ic/pckbcvar.h>
-
-/*
- * This is called by the pckbc driver if no pckbd is configured.
- * On the i386, it is used to glue in the old, deprecated console
- * code.  On the Alpha, it does nothing.
- */
-int
-pckbc_machdep_cnattach(kbctag, kbcslot)
-	pckbc_tag_t kbctag;
-	pckbc_slot_t kbcslot;
-{
-	return (ENXIO);
-}
-#endif /* NPCKBC > 0 && NPCKBD == 0 */
 
 void
 cpu_startup()

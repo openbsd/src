@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.13 2004/06/28 02:28:42 aaron Exp $	*/
+/*	$OpenBSD: types.h,v 1.14 2004/11/02 21:20:58 miod Exp $	*/
 /*	$NetBSD: types.h,v 1.6 1996/12/05 00:13:47 cgd Exp $	*/
 
 /*-
@@ -73,7 +73,6 @@ typedef long			register_t;
 
 #define	__BROKEN_INDIRECT_CONFIG
 #define	__HAVE_DEVICE_REGISTER
-#define	__HAVE_NWSCONS
 #define	__HAVE_EVCOUNT
 
 #endif	/* _MACHTYPES_H_ */
