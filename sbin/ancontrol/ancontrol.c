@@ -1,4 +1,4 @@
-/*	$OpenBSD: ancontrol.c,v 1.26 2004/08/17 19:26:01 mickey Exp $	*/
+/*	$OpenBSD: ancontrol.c,v 1.27 2004/08/19 18:26:52 jmc Exp $	*/
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -781,15 +781,15 @@ static void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: ancontrol interface [-ACINSTh] [-t 0|1|2|3|4]\n"
-	    "       [-s 0|1|2|3] [-v 1|2|3|4] [-a AP] [-b beacon period] [-v 0|1]\n"
-	    "       [-d 1|2|3|4] [-e 0|1|2|3] [-j netjoin timeout] [-v 0|1|2|3|4|5|6|7[\n"
-	    "       [-k key] [-K 0|1|2] [-l station name] [-m macaddress] [-v 1|2|3]\n"
-	    "       [-n SSID] [-o 0|1] [-p tx power] [-c channel number]\n"
-	    "       [-f fragmentation threshold] [-r RTS threshold] [-W 0|1|2]\n");
+	    "usage: ancontrol [interface] [-AChINST] [[-v 1|2|3|4] -a AP]\n"
+	    "       [-b beacon_period] [-c channel] [-v 0|1 -d 0|1|2|3]\n"
+	    "       [-e 0|1|2|3] [-f fragmentation_threshold] [-j netjoin_timeout]\n"
+	    "       [-K 0|1|2] [-v 0|1|2|3|4|5|6|7 -k key] [-l station_name]\n"
+	    "       [-m macaddress] [[-v 1|2|3] -n SSID] [-o 0|1] [-p tx_power]\n"
+	    "       [-r RTS_threshold] [-s 0|1|2|3] [-t 0|1|2|3|4] [-W 0|1|2]\n");
 #ifdef ANCACHE
 	fprintf(stderr,
-	    "       [-Q] [-Z]\n");
+	    "       [-QZ]\n");
 #endif
 	exit(1);
 }

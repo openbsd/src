@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ancontrol.8,v 1.21 2004/08/19 01:20:07 mickey Exp $
+.\"	$OpenBSD: ancontrol.8,v 1.22 2004/08/19 18:26:52 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ee.columbia.edu> All rights reserved.
@@ -42,33 +42,28 @@
 .Nm ancontrol
 .Bk -words
 .Op Ar interface
-.Op Fl A
-.Op Fl C
-.Op Fl I
-.Op Fl N
-.Op Fl Q
-.Op Fl S
-.Op Fl T
-.Op Fl Z
-.Op Fl v Ar 1|2|3|4
-.Op Fl a Ar AP
-.Op Fl b Ar beacon period
-.Op Fl c Ar channel number
-.Op Fl v Ar 0|1
-.Op Fl d Ar 0|1|2|3
+.Op Fl AChINQSTZ
+.Oo Xo
+.Oo Fl v Ar 1|2|3|4 Oc
+.Fl a Ar AP Oc
+.Xc
+.Op Fl b Ar beacon_period
+.Op Fl c Ar channel
+.Op Fl v Ar 0|1 Fl d Ar 0|1|2|3
 .Op Fl e Ar 0|1|2|3
-.Op Fl f Ar fragmentation threshold
-.Op Fl j Ar netjoin timeout
-.Op Fl v Ar 0|1|2|3|4|5|6|7
-.Op Fl k Ar key
+.Op Fl f Ar fragmentation_threshold
+.Op Fl j Ar netjoin_timeout
 .Op Fl K Ar 0|1|2
-.Op Fl l Ar station name
+.Op Fl v Ar 0|1|2|3|4|5|6|7 Fl k Ar key
+.Op Fl l Ar station_name
 .Op Fl m Ar macaddress
-.Op Fl v Ar 1|2|3
-.Op Fl n Ar SSID
+.Oo Xo
+.Oo Fl v Ar 1|2|3 Oc
+.Fl n Ar SSID Oc
+.Xc
 .Op Fl o Ar 0|1
-.Op Fl p Ar tx power
-.Op Fl r Ar RTS threshold
+.Op Fl p Ar tx_power
+.Op Fl r Ar RTS_threshold
 .Op Fl s Ar 0|1|2|3
 .Op Fl t Ar 0|1|2|3|4
 .Op Fl W Ar 0|1|2
@@ -87,7 +82,7 @@ the station name, whether the station is operating in ad-hoc (point
 to point) or infrastructure mode, and the network name of a service
 set to join.
 .Nm
-can also be used to view the current NIC status, configuration
+can also be used to view the current NIC status, configuration,
 and to dump the values of the card's statistics counters.
 .Pp
 The
@@ -96,6 +91,11 @@ argument given to
 .Nm
 should be the logical interface name associated with the Aironet
 device (e.g., an0, an1, etc...).
+If no
+.Ar interface
+is specified,
+.Sq an0
+is used.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -111,58 +111,10 @@ The AP list can
 be modified with the
 .Fl a
 option.
-.It Fl C
-Display current NIC configuration.
-This shows the current operation mode,
-receive mode, MAC address, power save settings, various timing settings,
-channel selection, diversity, transmit power, and transmit speed.
-.It Fl I
-Display NIC capability information.
-This shows the device type,
-frequency, speed, and power level capabilities and firmware revision levels.
-.It Fl K Ar "0|1|2"
-Set authorization type.
-Use 0 for none, 1 for "Open", 2 for "Shared Key".
-.It Fl N
-Display the SSID list.
-This is a list of service set IDs (i.e., network names)
-with which the station wishes to associate.
-There may be up to three SSIDs
-in the list: the station will go through the list in ascending order and
-associate with the first matching SSID that it finds.
-.It Fl S
-Display NIC status information.
-This includes the current operating
-status, current BSSID, SSID, channel, beacon period, and currently
-associated access point.
-The operating mode indicates the state of
-the NIC, MAC status and receiver status.
-When the
-.Dq synced
-keyword appears, it means the NIC has successfully associated with an access
-point, associated with an ad-hoc
-.Dq master
-station, or become a
-.Dq master
-itself.
-The beacon period can be anything between 20 and 976 milliseconds.
-The default is 100.
-.It Fl T
-Display the NIC's internal statistics counters.
-.It Fl Q
-If driver was compiled with option
-.Nm ANCACHE
-(default) then display the signal cache contents.
-A maximum of 16 station addresses are collected on the list
-with LRU expiration policy.
-Information such as MAC address, IP address and signal strength
-is collected from the most recent matching packet received.
-.It Fl Z
-Purge the signal cache contents (see above).
-.It Fl W Ar "0|1|2"
-Enable WEP.
-Use 0 for no WEP, 1 to enable full WEP, 2 for mixed cell.
-.It Fl v Ar "1|2|3|4" Fl a Ar AP
+.It Xo
+.Op Fl v Ar 1|2|3|4
+.Fl a Ar AP
+.Xc
 Set preferred access point.
 The
 .Ar AP
@@ -183,11 +135,16 @@ If the
 flag is not used, the first
 .Ar AP
 list entry will be changed.
-.It Fl b Ar beacon period
+.It Fl b Ar beacon_period
 Set the ad-hoc mode beacon period.
 The beacon period is specified in
 milliseconds.
 The default is 100ms.
+.It Fl C
+Display current NIC configuration.
+This shows the current operation mode,
+receive mode, MAC address, power save settings, various timing settings,
+channel selection, diversity, transmit power, and transmit speed.
 .It Fl c Ar channel
 Set the radio frequency of a given interface.
 The frequency
@@ -257,10 +214,10 @@ Set the transmit WEP key to use.
 Note that until this command is issued, the device will use the
 last key programmed.
 The transmit key is stored in NVRAM.
-Currently set transmit key can be checked via
+The currently set transmit key can be checked via
 .Fl C
 option.
-.It Fl f Ar fragmentation threshold
+.It Fl f Ar fragmentation_threshold
 Set the fragmentation threshold in bytes.
 This threshold controls the
 point at which outgoing packets will be split into multiple fragments.
@@ -271,18 +228,26 @@ threshold can be anything from 64 to 2312 bytes.
 The default is 2312.
 .It Fl h
 Prints a list of available options and sample usage.
-.It Fl j Ar netjoin timeout
+.It Fl I
+Display NIC capability information.
+This shows the device type,
+frequency, speed, power level capabilities, and firmware revision levels.
+.It Fl j Ar netjoin_timeout
 Set the ad-hoc network join timeout.
 When a station is first activated
-in ad-hoc mode, it will search out a 'master' station with the desired
-SSID and associate with it.
+in ad-hoc mode, it will search out a
+.Dq master
+station with the desired SSID and associate with it.
 If the station is unable to locate another
 station with the same SSID after a suitable timeout, it sets itself up
-as the 'master' so that other stations may associate with it.
+as the master so that other stations may associate with it.
 This
 timeout defaults to 10000 milliseconds (10 seconds) but may be changed
 with this option.
 The timeout should be specified in milliseconds.
+.It Fl K Ar "0|1|2"
+Set authorization type.
+Use 0 for none, 1 for "Open", 2 for "Shared Key".
 .It Fl v Ar "0|1|2|3|4|5|6|7" Fl k Ar key
 Set a WEP key.
 For 40 bits, prefix 10 hex digits with 0x.
@@ -294,13 +259,12 @@ For example, "-v 1" sets the first temporary key.
 (A "permanent" key is stored in NVRAM; a "temporary" key is not.)
 Note that the device will use the most recently-programmed key
 by default.
-Currently set keys can be checked via
+Currently set keys can be checked via the
 .Fl C
-option, only the sizes of the keys are returned.
-.It Fl l Ar station name
+option; only the sizes of the keys are returned.
+.It Fl l Ar station_name
 Set the station name used internally by the NIC.
-The
-.Ar station name
+.Ar station_name
 can be any text string up to 16 characters in length.
 The default name
 is set by the driver to
@@ -310,10 +274,20 @@ Set the station address for the specified interface.
 The
 .Ar macaddress
 is specified as a series of six hexadecimal values separated by colons,
-e.g.: 00:60:1d:12:34:56.
+e.g. 00:60:1d:12:34:56.
 This programs the new address into the card
 and updates the interface as well.
-.It Fl v Ar "1|2|3" Fl n Ar SSID
+.It Fl N
+Display the SSID list.
+This is a list of service set IDs (i.e., network names)
+with which the station wishes to associate.
+There may be up to three SSIDs
+in the list: the station will go through the list in ascending order and
+associate with the first matching SSID that it finds.
+.It Xo
+.Op Fl v Ar 1|2|3
+.Fl n Ar SSID
+.Xc
 Set the desired SSID (network name).
 There are three SSIDs which allows
 the NIC to work with access points at several locations without needing
@@ -334,7 +308,7 @@ for ad-hoc mode and
 .Ar 1
 for infrastructure mode.
 The default driver setting is for infrastructure mode.
-.It Fl p Ar tx power
+.It Fl p Ar tx_power
 Set the transmit power level in milliwatts.
 Valid power settings
 vary depending on the actual NIC and can be viewed by dumping the
@@ -344,21 +318,46 @@ flag.
 Typical values are 1, 5, 20, 50, and 100mW.
 Selecting 0 sets
 the factory default.
-.It Fl r Ar RTS threshold
+.It Fl Q
+If driver was compiled with option
+.Nm ANCACHE
+(default) then display the signal cache contents.
+A maximum of 16 station addresses are collected on the list
+with LRU expiration policy.
+Information such as MAC address, IP address, and signal strength
+is collected from the most recent matching packet received.
+.It Fl r Ar RTS_threshold
 Set the RTS/CTS threshold for a given interface.
 This controls the
 number of bytes used for the RTS/CTS handshake boundary.
 The
-.Ar RTS threshold
+.Ar RTS_threshold
 can be any value between 0 and 2312.
 The default is 2312.
+.It Fl S
+Display NIC status information.
+This includes the current operating
+status, current BSSID, SSID, channel, beacon period, and currently
+associated access point.
+The operating mode indicates the state of
+the NIC, MAC status, and receiver status.
+When the
+.Dq synced
+keyword appears, it means the NIC has successfully associated with an access
+point, associated with an ad-hoc
+.Dq master
+station, or become a
+.Dq master
+itself.
+The beacon period can be anything between 20 and 976 milliseconds.
+The default is 100.
 .It Fl s Ar 0|1|2|3
 Set power save mode.
 Valid selections are as follows:
 .Bd -filled -offset indent
 .Bl -column "Selection " "Power save mode "
 .Em "Selection	Power save mode"
-0	None - power save disabled
+0	None \- power save disabled
 1	Constantly awake mode (CAM)
 2	Power Save Polling (PSP)
 3	Fast Power Save Polling (PSP-CAM)
@@ -367,6 +366,8 @@ Valid selections are as follows:
 .Pp
 Note that for IBSS (ad-hoc) mode, only PSP mode is supported, and only
 if the ATIM window is non-zero.
+.It Fl T
+Display the NIC's internal statistics counters.
 .It Fl t Ar 0|1|2|3|4
 Select transmit speed.
 The available settings are as follows:
@@ -383,13 +384,18 @@ The available settings are as follows:
 .Pp
 Note that the 5.5 and 11Mbps settings are only supported on the 4800
 series adapters: the 4500 series adapters have a maximum speed of 2Mbps.
+.It Fl W Ar "0|1|2"
+Enable WEP.
+Use 0 for no WEP, 1 to enable full WEP, 2 for mixed cell.
+.It Fl Z
+Purge the signal cache contents (see above).
 .El
 .Sh SECURITY NOTES
 WEP ("wired equivalent privacy") is based on the RC4 algorithm,
-using a 24 bit initialization vector.
+using a 24-bit initialization vector.
 .Pp
 RC4 is supposedly vulnerable to certain known plaintext attacks,
-especially with 40 bit keys.
+especially with 40-bit keys.
 So the security of WEP in part depends on how much known plaintext
 is transmitted.
 .Pp
