@@ -1,4 +1,4 @@
-#	$OpenBSD: inter.phone,v 1.6 1999/04/01 03:33:44 d Exp $
+#	$OpenBSD: inter.phone,v 1.7 2000/12/11 17:47:02 deraadt Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 #	$FreeBSD-Id: inter.phone,v 1.15 1997/02/22 13:56:06 peter Exp $
 #
@@ -364,7 +364,6 @@
 357:21:Nicosia:Cyprus
 358:9:Helsinki:Finland
 358:28::Aaland Islands
-358:3:Tampere:Finland
 359:2:Sofia:Bulgaria
 370:2:Vilnius:Lithuania
 371:2:Riga:Latvia
@@ -486,3 +485,15 @@
 994:::Azerbaijan
 995:::Georgia
 5399:::Guantanamo Bay (U.S. Naval Base)
+358:2:Turku & Pori:Finland
+358:3:H\344me:Finland
+358:5:Kymi:Finland
+358:6:Vaasa:Finland
+358:8:Oulu:Finland
+358:13:Pohjois-Karjala:Finland
+358:14:Keski-Suomi:Finland
+358:15:Mikkeli:Finland
+358:16:Lappi:Finland
+358:17:Kuopio:Finland
+358:18:Ahvenanmaa:Finland
+358:19:Uusimaa:Finland
