@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.24 2001/07/02 13:51:18 millert Exp $	*/
+/*	$OpenBSD: part.c,v 1.25 2001/11/07 01:27:33 miod Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -120,7 +120,9 @@ static const struct part_type {
 	{ 0xA5, "FreeBSD     ",	"FreeBSD"},
 	{ 0xA6, "OpenBSD     ", "OpenBSD"},
 	{ 0xA7, "NEXTSTEP    ", "NEXTSTEP"},
+	{ 0xA8, "MacOS X     ",	"MacOS X main partition"},
 	{ 0xA9, "NetBSD      ",	"NetBSD"},
+	{ 0xAB, "MacOS X boot",	"MacOS X boot partition"},
 	{ 0xB7, "BSDI filesy*", "BSDI BSD/386 filesystem"},
 	{ 0xB8, "BSDI swap   ", "BSDI BSD/386 swap"},
 	{ 0xC0, "CTOS        ", "CTOS"},
