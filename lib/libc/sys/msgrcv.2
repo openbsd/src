@@ -1,5 +1,5 @@
-.\"	$OpenBSD: msgrcv.2,v 1.3 1996/12/11 17:39:19 deraadt Exp $
-.\"	$NetBSD: msgrcv.2,v 1.1 1995/10/16 23:49:20 jtc Exp $	
+.\"	$OpenBSD: msgrcv.2,v 1.4 1997/03/30 18:49:47 millert Exp $
+.\"	$NetBSD: msgrcv.2,v 1.2 1997/03/27 08:20:37 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -170,11 +170,11 @@ There is no message of the requested type available on the message queue,
 and IPC_NOWAIT is set in
 .Fa msgflg .
 .Sh SEE ALSO
-.Xr msgsnd 2 ,
 .Xr msgctl 2 ,
-.Xr msgget 2
+.Xr msgget 2 ,
+.Xr msgsnd 2
 .Sh BUGS
-NetBSD does not define the EIDRM error value, which should be used in
+OpenBSD does not define the EIDRM error value, which should be used in
 the case of a removed message queue, nor the ENOMSG value, which
 should be used when no suitable message is available and IPC_NOWAIT
 is set.

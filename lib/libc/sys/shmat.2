@@ -1,5 +1,5 @@
-.\"   $OpenBSD: shmat.2,v 1.2 1996/10/08 01:20:15 michaels Exp $
-.\"	$NetBSD: shmat.2,v 1.1 1995/10/16 23:49:29 jtc Exp $	
+.\"	$OpenBSD: shmat.2,v 1.3 1997/03/30 18:49:51 millert Exp $
+.\"	$NetBSD: shmat.2,v 1.2 1997/03/27 08:20:38 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -113,6 +113,6 @@ will fail if:
 .Fa shmaddr
 is not the start address of a mapped shared memory segment.
 .Sh SEE ALSO
+.Xr mmap 2 ,
 .Xr shmctl 2 ,
-.Xr shmget 2 ,
-.Xr mmap 2
+.Xr shmget 2

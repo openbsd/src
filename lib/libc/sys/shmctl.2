@@ -1,5 +1,5 @@
-.\"   $OpenBSD: shmctl.2,v 1.2 1996/10/08 01:20:15 michaels Exp $
-.\"	$NetBSD: shmctl.2,v 1.1 1995/10/16 23:49:30 jtc Exp $	
+.\"	$OpenBSD: shmctl.2,v 1.3 1997/03/30 18:49:52 millert Exp $
+.\"	$NetBSD: shmctl.2,v 1.3 1997/03/27 08:20:39 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -39,7 +39,7 @@
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
 .Fd #include <sys/ipc.h>
-.Fd #include <sys/msg.h>
+.Fd #include <sys/shm.h>
 .Ft int
 .Fn shmctl "int shmid" "int cmd" "struct shmid_ds *buf"
 .Sh DESCRIPTION
@@ -184,5 +184,4 @@ specifies an invalid address.
 .El
 .Sh SEE ALSO
 .Xr shmat 2 ,
-.Xr shmdt 2 ,
 .Xr shmget 2
