@@ -1,5 +1,5 @@
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
-/*	$OpenBSD: rcp.c,v 1.17 1997/11/05 00:09:36 deraadt Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.18 1997/12/08 05:15:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -344,7 +344,7 @@ tolocal(argc, argv)
 			if (!(bp = malloc(len)))
 				err(1, NULL);
 			(void)snprintf(bp, len, "exec %s%s%s %s %s", _PATH_CP,
-			    iamrecursive ? " -r" : "", pflag ? " -p" : "",
+			    iamrecursive ? " -R" : "", pflag ? " -p" : "",
 			    argv[i], argv[argc - 1]);
 			if (susystem(bp, userid))
 				++errs;
