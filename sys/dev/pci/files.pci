@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.126 2002/02/14 18:13:58 mickey Exp $
+#	$OpenBSD: files.pci,v 1.127 2002/02/18 01:55:30 krw Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -385,6 +385,10 @@ file	dev/pci/cmpci.c			cmpci
 # Initio ULTRA WIDE/ULTRA2 WIDE SCSI Controllers
 attach	iha at pci with iha_pci
 file	dev/pci/iha_pci.c		iha_pci
+
+# Tekram TRM-S1040 SCSI Cards (DC395U/UW/F,DC315/U)
+attach	trm at pci with trm_pci
+file	dev/pci/trm_pci.c		trm_pci
 
 # AMD Am53c974 PCscsi-PCI SCSI controllers
 device	pcscp: scsi, ncr53c9x

@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.238 2002/02/16 04:36:33 smurph Exp $
+#	$OpenBSD: files,v 1.239 2002/02/18 01:55:30 krw Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -266,6 +266,10 @@ file	dev/ic/sti.c		sti & (sti_pci | sti_sgc)	needs-flag
 # Initio ULTRA WIDE/ULTRA2 WIDE SCSI Controllers
 device	iha: scsi
 file	dev/ic/iha.c		iha
+
+# Tekram TRM-S1040 SCSI Cards (DC395U/UW/F,DC315/U)
+device	trm: scsi
+file	dev/ic/trm.c		trm
 
 # Attributes which machine-independent bus support can be attached to.
 # These should be defined here, because some of these busses can have

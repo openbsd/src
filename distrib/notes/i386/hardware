@@ -117,6 +117,8 @@ Supported hardware {:-include-:}:
 			name cards, old ASUS cards, the DTC-3130 series,
 			Diamond Fireport series, etc.)
 		Tekram DC-300B and DC-320E (Adaptec AHA-154x clones)
+		Tekram DC-3x5U (DC-315U, DC-395U/UW/F) TRM-S1040 based
+			PCI SCSI host adapters
 		Ultrastor 14f, 24f, and 34f
 		WD-7000 SCSI host adapters
 	RAID and Cache Controllers
