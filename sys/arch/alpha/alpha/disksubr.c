@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.17 1998/01/11 20:42:03 provos Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.18 1998/02/19 20:36:39 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -374,7 +374,12 @@ readdoslabel(bp, strat, lp, osdep, partoffp, cylp)
 				for (dp2=dp, i=0;
 				    i < NDOSPART && ourpart == -1; i++, dp2++)
 					if (dp2->dp_size &&
-					    dp2->dp_typ == DOSPTYP_386BSD)
+					    dp2->dp_typ == DOSPTYP_FREEBSD)
+						ourpart = i;
+				for (dp2=dp, i=0;
+				    i < NDOSPART && ourpart == -1; i++, dp2++)
+					if (dp2->dp_size &&
+					    dp2->dp_typ == DOSPTYP_NETBSD)
 						ourpart = i;
 				if (ourpart == -1)
 					goto donot;
