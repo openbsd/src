@@ -1,5 +1,5 @@
-/*	$OpenBSD: exchange.h,v 1.5 1999/02/26 03:38:22 niklas Exp $	*/
-/*	$EOM: exchange.h,v 1.18 1999/02/06 14:57:52 niklas Exp $	*/
+/*	$OpenBSD: exchange.h,v 1.6 1999/03/31 01:51:05 niklas Exp $	*/
+/*	$EOM: exchange.h,v 1.19 1999/03/31 01:29:53 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -160,8 +160,9 @@ extern void exchange_finalize (struct message *);
 extern void exchange_free (struct exchange *);
 extern void exchange_establish (char *name, void (*) (void *), void *);
 extern void exchange_establish_p1 (struct transport *, u_int8_t, u_int32_t,
-				   void *, void (*) (void *), void *);
-extern void exchange_establish_p2 (struct sa *, u_int8_t, void *);
+				   char *, void *, void (*) (void *), void *);
+extern void exchange_establish_p2 (struct sa *, u_int8_t, char *, void *,
+				   void (*) (void *), void *);
 extern int exchange_gen_nonce (struct message *, size_t);
 extern void exchange_init (void);
 extern struct exchange *exchange_lookup (u_int8_t *, int);
