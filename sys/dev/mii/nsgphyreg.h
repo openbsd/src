@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsgphyreg.h,v 1.1 2001/06/08 02:19:30 nate Exp $	*/
+/*	$OpenBSD: nsgphyreg.h,v 1.2 2001/06/17 22:06:05 pvalchev Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 2001
@@ -77,7 +77,7 @@
 #define NSGPHY_MII_ANAR		0x04
 #define NSGPHY_ANAR_NP		0x8000	/* Next page */
 #define NSGPHY_ANAR_RF		0x2000	/* Remote fault */
-#define NSGPHY_ANAR_ASP		0x0800	/* Asymetric Pause */
+#define NSGPHY_ANAR_ASP		0x0800	/* Asymmetric Pause */
 #define NSGPHY_ANAR_PC		0x0400	/* Pause capable */
 #define NSGPHY_ANAR_100T4	0x0200	/* 100baseT4 support */
 #define NSGPHY_ANAR_100FDX	0x0100	/* 100baseTX full duplex support */
@@ -89,7 +89,7 @@
 #define NSGPHY_MII_ANLPAR	0x05
 #define NSGPHY_ANLPAR_NP	0x8000	/* Next page */
 #define NSGPHY_ANLPAR_RF	0x2000	/* Remote fault */
-#define NSGPHY_ANLPAR_ASP	0x0800	/* Asymetric Pause */
+#define NSGPHY_ANLPAR_ASP	0x0800	/* Asymmetric Pause */
 #define NSGPHY_ANLPAR_PC	0x0400	/* Pause capable */
 #define NSGPHY_ANLPAR_100T4	0x0200	/* 100baseT4 support */
 #define NSGPHY_ANLPAR_100FDX	0x0100	/* 100baseTX full duplex support */
@@ -136,7 +136,7 @@
 #define NSGPHY_1000STS_RRS	0x1000	/* Remote receiver status */
 #define NSGPHY_1000STS_LPFD	0x0800	/* Link partner can FD */
 #define NSGPHY_1000STS_LPHD	0x0400	/* Link partner can HD */
-#define NSGPHY_1000STS_ASM_DIR	0x0200	/* Asymetric pause capable */
+#define NSGPHY_1000STS_ASM_DIR	0x0200	/* Asymmetric pause capable */
 #define NSGPHY_1000STS_IEC	0x00FF	/* Idle error count */
 
 #define NSGPHY_MII_EXTSTS	0x0F	/* Extended status */

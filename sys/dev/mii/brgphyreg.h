@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphyreg.h,v 1.2 2001/04/11 05:47:52 deraadt Exp $	*/
+/*	$OpenBSD: brgphyreg.h,v 1.3 2001/06/17 22:06:05 pvalchev Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -70,14 +70,14 @@
 #define BRGPHY_MII_ANAR		0x04
 #define BRGPHY_ANAR_NP		0x8000	/* Next page */
 #define BRGPHY_ANAR_RF		0x2000	/* Remote fault */
-#define BRGPHY_ANAR_ASP		0x0800	/* Asymetric Pause */
+#define BRGPHY_ANAR_ASP		0x0800	/* Asymmetric Pause */
 #define BRGPHY_ANAR_PC		0x0400	/* Pause capable */
 #define BRGPHY_ANAR_SEL		0x001F	/* selector field, 00001=Ethernet */
 
 #define BRGPHY_MII_ANLPAR	0x05
 #define BRGPHY_ANLPAR_NP	0x8000	/* Next page */
 #define BRGPHY_ANLPAR_RF	0x2000	/* Remote fault */
-#define BRGPHY_ANLPAR_ASP	0x0800	/* Asymetric Pause */
+#define BRGPHY_ANLPAR_ASP	0x0800	/* Asymmetric Pause */
 #define BRGPHY_ANLPAR_PC	0x0400	/* Pause capable */
 #define BRGPHY_ANLPAR_SEL	0x001F	/* selector field, 00001=Ethernet */
 

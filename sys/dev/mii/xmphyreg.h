@@ -77,7 +77,7 @@
 #define XMPHY_RF_ANEGFAIL	0x3000	/* Autonegotiation error */
 
 #define XMPHY_PAUSE_NOPAUSE	0x0000	/* No pause possible */
-#define XMPHY_PAUSE_ASYMETRIC	0x0080	/* Asymetric pause toward LP */
+#define XMPHY_PAUSE_ASYMETRIC	0x0080	/* Asymmetric pause toward LP */
 #define XMPHY_PAUSE_SYMETRIC	0x0100	/* Symetric pause */
 #define XMPHY_PAUSE_BOTH	0x0180	/* Both sym and asym pause */
 
