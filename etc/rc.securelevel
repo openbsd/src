@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.securelevel,v 1.15 2004/07/06 04:03:41 henning Exp $
+#	$OpenBSD: rc.securelevel,v 1.16 2004/07/06 04:05:03 deraadt Exp $
 #
 # site-specific startup actions, daemons, and other things which
 # can be done BEFORE your system goes into securemode.  For actions
@@ -14,4 +14,9 @@
 securelevel=1
 
 echo -n 'starting pre-securelevel daemons:'
+
+#
+# Place local actions here.
+#
+
 echo '.'
