@@ -31,8 +31,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/*$FreeBSD: if_em.c,v 1.26 2003/06/05 17:51:37 pdeuskar Exp $*/
-/* $OpenBSD: if_em.c,v 1.18 2004/04/03 18:51:01 grange Exp $ */
+/*$FreeBSD: if_em.c,v 1.38 2004/03/17 17:50:31 njl Exp $*/
+/* $OpenBSD: if_em.c,v 1.19 2004/04/18 04:15:00 henric Exp $ */
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -75,12 +75,6 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <dev/pci/if_em.h>
 
-#ifdef DEBUG
-#define EM_KASSERT(exp,msg)        do { if (!(exp)) panic msg; } while (0)
-#else
-#define EM_KASSERT(exp,msg)
-#endif
-
 /*********************************************************************
  *  Set this to one to display debug statistics
  *********************************************************************/
@@ -97,9 +91,68 @@ struct em_softc *em_adapter_list = NULL;
  *  Driver version
  *********************************************************************/
 
-char em_driver_version[] = "1.6.6";
+char em_driver_version[] = "1.7.25";
 
+#ifdef __FreeBSD__
+/*********************************************************************
+ *  PCI Device ID Table
+ *
+ *  Used by probe to select devices to load on
+ *  Last field stores an index into em_strings
+ *  Last entry must be all 0s
+ *
+ *  { Vendor ID, Device ID, SubVendor ID, SubDevice ID, String Index }
+ *********************************************************************/
 
+em_vendor_info_t em_vendor_info_array[] =
+{
+        /* Intel(R) PRO/1000 Network Connection */
+        { 0x8086, 0x1000, PCI_ANY_ID, PCI_ANY_ID, 0},
+        { 0x8086, 0x1001, PCI_ANY_ID, PCI_ANY_ID, 0},
+        { 0x8086, 0x1004, PCI_ANY_ID, PCI_ANY_ID, 0},
+        { 0x8086, 0x1008, PCI_ANY_ID, PCI_ANY_ID, 0},
+        { 0x8086, 0x1009, PCI_ANY_ID, PCI_ANY_ID, 0},
+        { 0x8086, 0x100C, PCI_ANY_ID, PCI_ANY_ID, 0},
+        { 0x8086, 0x100D, PCI_ANY_ID, PCI_ANY_ID, 0},
+        { 0x8086, 0x100E, PCI_ANY_ID, PCI_ANY_ID, 0},
+        { 0x8086, 0x100F, PCI_ANY_ID, PCI_ANY_ID, 0},
+        { 0x8086, 0x1010, PCI_ANY_ID, PCI_ANY_ID, 0},
+        { 0x8086, 0x1011, PCI_ANY_ID, PCI_ANY_ID, 0},
+        { 0x8086, 0x1012, PCI_ANY_ID, PCI_ANY_ID, 0},
+        { 0x8086, 0x1013, PCI_ANY_ID, PCI_ANY_ID, 0},
+        { 0x8086, 0x1014, PCI_ANY_ID, PCI_ANY_ID, 0},
+        { 0x8086, 0x1015, PCI_ANY_ID, PCI_ANY_ID, 0},
+        { 0x8086, 0x1016, PCI_ANY_ID, PCI_ANY_ID, 0},
+        { 0x8086, 0x1017, PCI_ANY_ID, PCI_ANY_ID, 0},
+        { 0x8086, 0x1018, PCI_ANY_ID, PCI_ANY_ID, 0},
+        { 0x8086, 0x1019, PCI_ANY_ID, PCI_ANY_ID, 0},
+        { 0x8086, 0x101A, PCI_ANY_ID, PCI_ANY_ID, 0},
+        { 0x8086, 0x101D, PCI_ANY_ID, PCI_ANY_ID, 0},
+        { 0x8086, 0x101E, PCI_ANY_ID, PCI_ANY_ID, 0},
+        { 0x8086, 0x1026, PCI_ANY_ID, PCI_ANY_ID, 0},
+        { 0x8086, 0x1027, PCI_ANY_ID, PCI_ANY_ID, 0},
+        { 0x8086, 0x1028, PCI_ANY_ID, PCI_ANY_ID, 0},
+        { 0x8086, 0x1075, PCI_ANY_ID, PCI_ANY_ID, 0},
+        { 0x8086, 0x1076, PCI_ANY_ID, PCI_ANY_ID, 0},
+        { 0x8086, 0x1077, PCI_ANY_ID, PCI_ANY_ID, 0},
+        { 0x8086, 0x1078, PCI_ANY_ID, PCI_ANY_ID, 0},
+        { 0x8086, 0x1079, PCI_ANY_ID, PCI_ANY_ID, 0},
+        { 0x8086, 0x107A, PCI_ANY_ID, PCI_ANY_ID, 0},
+        { 0x8086, 0x107B, PCI_ANY_ID, PCI_ANY_ID, 0},
+        /* required last entry */
+        { 0, 0, 0, 0, 0}
+};
+
+/*********************************************************************
+ *  Table of branding strings for all supported NICs.
+ *********************************************************************/
+
+char *em_strings[] = {
+        "Intel(R) PRO/1000 Network Connection"
+};
+#endif /* __FreeBSD__ */
+
+#ifdef __OpenBSD__
 /*********************************************************************
  *  PCI Device ID Table
  *********************************************************************/
@@ -117,40 +170,49 @@ const struct pci_matchid em_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82545EM_SC },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546EB_SC },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82541EI },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82541ER2 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82540EM_LOM },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82540EP_LOM },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82540EP },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82541EP },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82547EI },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82547EI_LOM },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546EB_QUAD },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82540EP_LP },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_COPPER },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_FIBER },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_SERDES },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82545GM_COPPER },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82545GM_FIBER },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82545GM_SERDES },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82547GI },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82541GI },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82541GI_MOBILE },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82541ER }
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82541ER },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_COPPER },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_FIBER },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_SERDES }
 };
+#endif /* __OpenBSD__ */
 
 /*********************************************************************
  *  Function prototypes
  *********************************************************************/
+#ifdef __FreeBSD__
+int  em_probe(device_t);
+int  em_attach(device_t);
+int  em_detach(device_t);
+int  em_shutdown(device_t);
+void em_intr(void *);
+#endif /* __FreeBSD__ */
+#ifdef __OpenBSD__
 int  em_probe(struct device *, void *, void *);
 void em_attach(struct device *, struct device *, void *);
-
-#if 0
-int  em_detach(void *);
-int  em_shutdown(void *);
-#endif
 int  em_intr(void *);
+#endif /* __OpenBSD__ */
 void em_start(struct ifnet *);
+void em_start_locked(struct ifnet *);
 int  em_ioctl(struct ifnet *, u_long, caddr_t);
 void em_watchdog(struct ifnet *);
 void em_init(void *);
+void em_init_locked(struct em_softc *);
 void em_stop(void *);
 void em_media_status(struct ifnet *, struct ifmediareq *);
 int  em_media_change(struct ifnet *);
@@ -159,7 +221,12 @@ int  em_allocate_pci_resources(struct em_softc *);
 void em_free_pci_resources(struct em_softc *);
 void em_local_timer(void *);
 int  em_hardware_init(struct em_softc *);
+#ifdef __FreeBSD__
+void em_setup_interface(device_t, struct em_softc *);
+#endif
+#ifdef __OpenBSD__
 void em_setup_interface(struct em_softc *);
+#endif
 int  em_setup_transmit_structures(struct em_softc *);
 void em_initialize_transmit_unit(struct em_softc *);
 int  em_setup_receive_structures(struct em_softc *);
@@ -185,6 +252,7 @@ void em_disable_promisc(struct em_softc *);
 void em_set_multi(struct em_softc *);
 void em_print_hw_stats(struct em_softc *);
 void em_print_link_status(struct em_softc *);
+void em_update_link_status(struct em_softc *);
 int  em_get_buf(int i, struct em_softc *,
 			    struct mbuf *);
 void em_enable_vlans(struct em_softc *);
@@ -193,17 +261,52 @@ void em_smartspeed(struct em_softc *);
 int  em_82547_fifo_workaround(struct em_softc *, int);
 void em_82547_update_fifo_head(struct em_softc *, int);
 int  em_82547_tx_fifo_reset(struct em_softc *);
-void em_82547_move_tail(void *);
+void em_82547_move_tail(void *arg);
+void em_82547_move_tail_locked(struct em_softc *);
 int  em_dma_malloc(struct em_softc *, bus_size_t,
     struct em_dma_alloc *, int);
 void em_dma_free(struct em_softc *, struct em_dma_alloc *);
 void em_print_debug_info(struct em_softc *);
 int  em_is_valid_ether_addr(u_int8_t *);
+#ifdef __FreeBSD__
+int  em_sysctl_stats(SYSCTL_HANDLER_ARGS);
+int  em_sysctl_debug_info(SYSCTL_HANDLER_ARGS);
+#endif /* __FreeBSD__ */
+u_int32_t em_fill_descriptors (u_int64_t address,
+                                      u_int32_t length,
+                                      PDESC_ARRAY desc_array);
+#ifdef __FreeBSD__
+int  em_sysctl_int_delay(SYSCTL_HANDLER_ARGS);
+void em_add_int_delay_sysctl(struct em_softc *, const char *,
+                                    const char *, struct em_int_delay_info *,
+                                    int, int);
+#endif /* __FreeBSD__ */
 
 /*********************************************************************
  *  FreeBSD Device Interface Entry Points		     
  *********************************************************************/
 
+#ifdef __FreeBSD__
+device_method_t em_methods[] = {
+        /* Device interface */
+        DEVMETHOD(device_probe, em_probe),
+        DEVMETHOD(device_attach, em_attach),
+        DEVMETHOD(device_detach, em_detach),
+        DEVMETHOD(device_shutdown, em_shutdown),
+        {0, 0}
+};
+
+driver_t em_driver = {
+        "em", em_methods, sizeof(struct em_softc ),
+};
+
+devclass_t em_devclass;
+DRIVER_MODULE(em, pci, em_driver, em_devclass, 0, 0);
+MODULE_DEPEND(em, pci, 1, 1, 1);
+MODULE_DEPEND(em, ether, 1, 1, 1);
+#endif /* __FreeBSD__ */
+
+#ifdef __OpenBSD__
 struct cfattach em_ca = {
 	sizeof(struct em_softc), em_probe, em_attach
 };
@@ -211,6 +314,26 @@ struct cfattach em_ca = {
 struct cfdriver em_cd = {
 	0, "em", DV_IFNET
 };
+#endif /* __OpenBSD__ */
+
+/*********************************************************************
+ *  Tunable default values.
+ *********************************************************************/
+
+#define E1000_TICKS_TO_USECS(ticks)     ((1024 * (ticks) + 500) / 1000)
+#define E1000_USECS_TO_TICKS(usecs)     ((1000 * (usecs) + 512) / 1024)
+
+int em_tx_int_delay_dflt = E1000_TICKS_TO_USECS(EM_TIDV);
+int em_rx_int_delay_dflt = E1000_TICKS_TO_USECS(EM_RDTR);
+int em_tx_abs_int_delay_dflt = E1000_TICKS_TO_USECS(EM_TADV);
+int em_rx_abs_int_delay_dflt = E1000_TICKS_TO_USECS(EM_RADV);
+
+#ifdef __FreeBSD__
+TUNABLE_INT("hw.em.tx_int_delay", &em_tx_int_delay_dflt);
+TUNABLE_INT("hw.em.rx_int_delay", &em_rx_int_delay_dflt);
+TUNABLE_INT("hw.em.tx_abs_int_delay", &em_tx_abs_int_delay_dflt);
+TUNABLE_INT("hw.em.rx_abs_int_delay", &em_rx_abs_int_delay_dflt);
+#endif /* __FreeBSD__ */
 
 /*********************************************************************
  *  Device identification routine
@@ -221,6 +344,52 @@ struct cfdriver em_cd = {
  *  return 0 on success, positive on failure
  *********************************************************************/
 
+#ifdef __FreeBSD__
+int
+em_probe(device_t dev)
+{
+        em_vendor_info_t *ent;
+
+        u_int16_t       pci_vendor_id = 0;
+        u_int16_t       pci_device_id = 0;
+        u_int16_t       pci_subvendor_id = 0;
+        u_int16_t       pci_subdevice_id = 0;
+        char            adapter_name[60];
+
+        INIT_DEBUGOUT("em_probe: begin");
+
+        pci_vendor_id = pci_get_vendor(dev);
+        if (pci_vendor_id != EM_VENDOR_ID)
+                return(ENXIO);
+
+        pci_device_id = pci_get_device(dev);
+        pci_subvendor_id = pci_get_subvendor(dev);
+        pci_subdevice_id = pci_get_subdevice(dev);
+
+        ent = em_vendor_info_array;
+        while (ent->vendor_id != 0) {
+                if ((pci_vendor_id == ent->vendor_id) &&
+                    (pci_device_id == ent->device_id) &&
+
+                    ((pci_subvendor_id == ent->subvendor_id) ||
+                     (ent->subvendor_id == PCI_ANY_ID)) &&
+
+                    ((pci_subdevice_id == ent->subdevice_id) ||
+                     (ent->subdevice_id == PCI_ANY_ID))) {
+                        sprintf(adapter_name, "%s, Version - %s",
+                                em_strings[ent->index],
+                                em_driver_version);
+                        device_set_desc_copy(dev, adapter_name);
+                        return(0);
+                }
+                ent++;
+        }
+
+        return(ENXIO);
+}
+#endif /* __FreeBSD__ */
+
+#ifdef __OpenBSD__
 int
 em_probe(struct device *parent, void *match, void *aux)
 {
@@ -229,6 +398,7 @@ em_probe(struct device *parent, void *match, void *aux)
 	return (pci_matchbyid((struct pci_attach_args *)aux, em_devices,
 	    sizeof(em_devices)/sizeof(em_devices[0])));
 }
+#endif /* __OpenBSD__ */
 
 /*********************************************************************
  *  Device initialization routine
@@ -240,35 +410,42 @@ em_probe(struct device *parent, void *match, void *aux)
  *  return 0 on success, positive on failure
  *********************************************************************/
 
+#ifdef __FreeBSD__
+int
+em_attach(device_t dev)
+{
+	pci_chipset_tag_t pc = pa->pa_pc;
+#endif /* __FreeBSD__ */
+#ifdef __OpenBSD__
 void 
 em_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-#if 0
-	pci_chipset_tag_t pc = pa->pa_pc;
-#endif
-	struct em_softc *sc = (struct em_softc *)self;
-	int		s;
+#endif /* __OpenBSD__ */
+	struct em_softc *sc;
 	int		tsize, rsize;
 	int		error = 0;
 
 	INIT_DEBUGOUT("em_attach: begin");
-	s = splimp();
 
 #ifdef __FreeBSD__
 	/* Allocate, clear, and link in our sc structure */
 	if (!(sc = device_get_softc(dev))) {
 		printf("em: sc structure allocation failed\n");
-		splx(s);
 		return(ENOMEM);
 	}
 	bzero(sc, sizeof(struct em_softc ));
 	sc->dev = dev;
 	sc->osdep.dev = dev;
 	sc->sc_dv.dv_xname = device_get_unit(dev);
+	EM_LOCK_INIT(sc, device_get_nameunit(dev));
 #endif /* __FreeBSD__ */
 
+
+#ifdef __OpenBSD__
+	sc = (struct em_softc *)self;
 	sc->osdep.em_pa = *pa;
+#endif
 
 	if (em_adapter_list != NULL)
 		em_adapter_list->prev = sc;
@@ -301,23 +478,43 @@ em_attach(struct device *parent, struct device *self, void *aux)
 			(void *)sc, 0,
 			em_sysctl_stats, "I", "Statistics");
 
-	callout_handle_init(&sc->timer_handle);
-	callout_handle_init(&sc->tx_fifo_timer_handle);
+	callout_init(&sc->timer, CALLOUT_MPSAFE);
+	callout_init(&sc->tx_fifo_timer, CALLOUT_MPSAFE);
 #endif /* __FreeBSD__ */
 
+#ifdef __OpenBSD__
 	timeout_set(&sc->timer_handle, em_local_timer, sc);
 	timeout_set(&sc->tx_fifo_timer_handle, em_82547_move_tail, sc);
+#endif /* __OpenBSD__ */
 
 	/* Determine hardware revision */
 	em_identify_hardware(sc);
 
+#ifdef __FreeBSD__
+        /* Set up some sysctls for the tunable interrupt delays */
+        em_add_int_delay_sysctl(sc, "rx_int_delay",
+            "receive interrupt delay in usecs", &sc->rx_int_delay,
+            E1000_REG_OFFSET(&sc->hw, RDTR), em_rx_int_delay_dflt);
+        em_add_int_delay_sysctl(sc, "tx_int_delay",
+            "transmit interrupt delay in usecs", &sc->tx_int_delay,
+            E1000_REG_OFFSET(&sc->hw, TIDV), em_tx_int_delay_dflt);
+        if (sc->hw.mac_type >= em_82540) {
+                em_add_int_delay_sysctl(sc, "rx_abs_int_delay",
+                    "receive interrupt delay limit in usecs",
+                    &sc->rx_abs_int_delay,
+                    E1000_REG_OFFSET(&sc->hw, RADV),
+                    em_rx_abs_int_delay_dflt);
+                em_add_int_delay_sysctl(sc, "tx_abs_int_delay",
+                    "transmit interrupt delay limit in usecs",
+                    &sc->tx_abs_int_delay,
+                    E1000_REG_OFFSET(&sc->hw, TADV),
+                    em_tx_abs_int_delay_dflt);
+        }
+#endif /* __FreeBSD__ */
+
 	/* Parameters (to be read from user) */
 	sc->num_tx_desc = EM_MAX_TXD;
 	sc->num_rx_desc = EM_MAX_RXD;
-	sc->tx_int_delay = EM_TIDV;
-	sc->tx_abs_int_delay = EM_TADV;
-	sc->rx_int_delay = EM_RDTR;
-	sc->rx_abs_int_delay = EM_RADV;
 	sc->hw.autoneg = DO_AUTO_NEG;
 	sc->hw.wait_autoneg_complete = WAIT_FOR_AUTO_NEG_DEFAULT;
 	sc->hw.autoneg_advertised = AUTONEG_ADV_DEFAULT;
@@ -335,7 +532,13 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	sc->hw.fc = em_fc_full;
 
 	sc->hw.phy_init_script = 1;
+        sc->hw.phy_reset_disable = FALSE;
 
+#ifndef EM_MASTER_SLAVE
+        sc->hw.master_slave = em_ms_hw_default;
+#else
+        sc->hw.master_slave = EM_MASTER_SLAVE;
+#endif
 	/*
 	 * Set the max frame size assuming standard ethernet
 	 * sized frames
@@ -413,8 +616,6 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	bcopy(sc->hw.mac_addr, sc->interface_data.ac_enaddr,
 	      ETHER_ADDR_LEN);
 
-	printf(", address: %s\n", ether_sprintf(sc->interface_data.ac_enaddr));
-
 	/* Setup OS specific network interface */
 	em_setup_interface(sc);
 
@@ -425,14 +626,39 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	em_check_for_link(&sc->hw);
 
 	/* Print the link status */
-	if (sc->link_active == 1) {
-		em_get_speed_and_duplex(&sc->hw, &sc->link_speed, 
-					&sc->link_duplex);
+        if (sc->link_active == 1) {
+                em_get_speed_and_duplex(&sc->hw, &sc->link_speed,
+                                        &sc->link_duplex);
+#ifdef __FreeBSD__
+                printf("%s:  Speed:%d Mbps  Duplex:%s\n",
+                       sc->sc_dv.dv_xname,
+                       sc->link_speed,
+                       sc->link_duplex == FULL_DUPLEX ? "Full" : "Half");
+        } else
+                printf("%s:  Speed:N/A  Duplex:N/A\n", sc->sc_dv.dv_xname);
+#endif /* __FreeBSD__ */
+#ifdef __OpenBSD__
 	}
 
+	printf(", address: %s\n", ether_sprintf(sc->interface_data.ac_enaddr));
+#endif /* __OpenBSD__ */
+
+        /* Identify 82544 on PCIX */
+        em_get_bus_info(&sc->hw);
+        if(sc->hw.bus_type == em_bus_type_pcix &&
+           sc->hw.mac_type == em_82544) {
+                sc->pcix_82544 = TRUE;
+        }
+        else {
+                sc->pcix_82544 = FALSE;
+        }
 	INIT_DEBUGOUT("em_attach: end");
-	splx(s);
+#ifdef __FreeBSD__
+	return(0);
+#endif
+#ifdef __OpenBSD__
 	return;
+#endif
 
 err_mac_addr:
 err_hw_init:
@@ -444,10 +670,9 @@ err_pci:
 	em_free_pci_resources(sc);
 #ifdef __FreeBSD__
 	sysctl_ctx_free(&sc->sysctl_ctx);
+err_sysctl:
+	return(error);
 #endif /* __FreeBSD__ */
-/*err_sysctl:*/
-	splx(s);
-	return;
 
 }
 
@@ -460,52 +685,61 @@ err_pci:
  *  
  *  return 0 on success, positive on failure
  *********************************************************************/
+
 #ifdef __FreeBSD__
 int
-em_detach(void* arg)
+em_detach(device_t dev)
 {
-	struct em_softc *sc = arg;
-	struct ifnet   *ifp = &sc->interface_data.ac_if;
-	int		s;
+        struct em_softc * sc = device_get_softc(dev);
+        struct ifnet   *ifp = &sc->interface_data.ac_if;
+	EM_LOCK_STATE();
 
-	INIT_DEBUGOUT("em_detach: begin");
-	s = splimp();
+        INIT_DEBUGOUT("em_detach: begin");
 
-	em_stop(sc);
-	em_phy_hw_reset(&sc->hw);
-#if __FreeBSD_version < 500000
-	ether_ifdetach(&sc->interface_data.ac_if, ETHER_BPF_SUPPORTED);
+        EM_LOCK(sc);
+        sc->in_detach = 1;
+        em_stop(sc);
+        em_phy_hw_reset(&sc->hw);
+        EM_UNLOCK(sc);
+#if  __FreeBSD_version < 500000
+        ether_ifdetach(&sc->interface_data.ac_if, ETHER_BPF_SUPPORTED);
 #else
-	ether_ifdetach(&sc->interface_data.ac_if);
+        ether_ifdetach(&sc->interface_data.ac_if);
 #endif
-	em_free_pci_resources(sc);
+        em_free_pci_resources(sc);
+        bus_generic_detach(dev);
 
-	/* Free Transmit Descriptor ring */
-	if (sc->tx_desc_base) {
-		em_dma_free(sc, &sc->txdma);
-		sc->tx_desc_base = NULL;
-	}
+        /* Free Transmit Descriptor ring */
+        if (sc->tx_desc_base) {
+                em_dma_free(sc, &sc->txdma);
+                sc->tx_desc_base = NULL;
+        }
 
-	/* Free Receive Descriptor ring */
-	if (sc->rx_desc_base) {
-		em_dma_free(sc, &sc->rxdma);
-		sc->rx_desc_base = NULL;
-	}
+        /* Free Receive Descriptor ring */
+        if (sc->rx_desc_base) {
+                em_dma_free(sc, &sc->rxdma);
+                sc->rx_desc_base = NULL;
+        }
 
-	/* Remove from the adapter list */
-	if (em_adapter_list == sc)
-		em_adapter_list = sc->next;
-	if (sc->next != NULL)
-		sc->next->prev = sc->prev;
-	if (sc->prev != NULL)
-		sc->prev->next = sc->next;
+        /* Free the sysctl tree */
+        sysctl_ctx_free(&sc->sysctl_ctx);
 
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
-	ifp->if_timer = 0;
+        /* Remove from the sc list */
+        if (em_adapter_list == sc)
+                em_adapter_list = sc->next;
+        if (sc->next != NULL)
+                sc->next->prev = sc->prev;
+        if (sc->prev != NULL)
+                sc->prev->next = sc->next;
 
-	splx(s);
-	return(0);
+        EM_LOCK_DESTROY(sc);
+
+        ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+        ifp->if_timer = 0;
+
+        return(0);
 }
+#endif /* __FreeBSD__ */
 
 /*********************************************************************
  *
@@ -513,15 +747,20 @@ em_detach(void* arg)
  *
  **********************************************************************/
 
+#ifdef __FreeBSD__
 int
-em_shutdown(void* arg)
+em_shutdown(device_t dev)
 {
-	struct em_softc *sc = arg;
-	em_stop(sc);
-	return(0);
-}
+        struct em_softc *sc = device_get_softc(dev);
+	EM_LOCK_STATE();
 
+        EM_LOCK(sc);
+        em_stop(sc);
+        EM_UNLOCK(sc);
+        return(0);
+}
 #endif /* __FreeBSD__ */
+
 
 /*********************************************************************
  *  Transmit entry point
@@ -534,16 +773,15 @@ em_shutdown(void* arg)
  **********************************************************************/
 
 void
-em_start(struct ifnet *ifp)
+em_start_locked(struct ifnet *ifp)
 {
-	int		s;
 	struct mbuf    *m_head;
 	struct em_softc *sc = ifp->if_softc;
 
+	mtx_assert(&sc->mtx, MA_OWNED);
+	
 	if (!sc->link_active)
 		return;
-
-	s = splimp();	   
 
 	for (;;) {
 		IFQ_POLL(&ifp->if_snd, m_head);
@@ -567,7 +805,18 @@ em_start(struct ifnet *ifp)
 		ifp->if_timer = EM_TX_TIMEOUT;
 
 	}	
-	splx(s);
+	return;
+}
+
+void
+em_start(struct ifnet *ifp)
+{
+	struct em_softc *sc = ifp->if_softc;
+	EM_LOCK_STATE();
+
+        EM_LOCK(sc);
+        em_start_locked(ifp);
+        EM_UNLOCK(sc);
 	return;
 }
 
@@ -583,17 +832,21 @@ em_start(struct ifnet *ifp)
 int
 em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
-	int		s, error = 0;
+	int		error = 0;
 	struct ifreq   *ifr = (struct ifreq *) data;
-	struct ifaddr  *ifa = (struct ifaddr *)data;
 	struct em_softc * sc = ifp->if_softc;
+	EM_LOCK_STATE();
 
-	s = splimp();
+#ifdef __OpenBSD__
+	struct ifaddr  *ifa = (struct ifaddr *)data;
+	EM_LOCK(sc);
+	error = ether_ioctl(ifp, &sc->interface_data, command, data);
+	EM_UNLOCK(sc);
 
-	if ((error = ether_ioctl(ifp, &sc->interface_data, command, data)) > 0) {
-		splx(s);
+	if (error > 0)
 		return (error);
-	}
+#endif /* __OpenBSD__ */
+        if (sc->in_detach) return(error);
 
 	switch (command) {
 	case SIOCSIFADDR:
@@ -603,6 +856,7 @@ em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		ether_ioctl(ifp, command, data);
 		break;
 #endif /* __FreeBSD__ */
+#ifdef __OpenBSD__
 		IOCTL_DEBUGOUT("ioctl rcv'd: SIOCSIFADDR (Set Interface "
 			       "Addr)");
 		ifp->if_flags |= IFF_UP;
@@ -617,22 +871,27 @@ em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			break;
 		}
 		break;
+#endif /* __OpenBSD__ */
 	case SIOCSIFMTU:
 		IOCTL_DEBUGOUT("ioctl rcv'd: SIOCSIFMTU (Set Interface MTU)");
 		if (ifr->ifr_mtu > MAX_JUMBO_FRAME_SIZE - ETHER_HDR_LEN) {
 			error = EINVAL;
 		} else {
+                        EM_LOCK(sc);
 			ifp->if_mtu = ifr->ifr_mtu;
 			sc->hw.max_frame_size = 
 			ifp->if_mtu + ETHER_HDR_LEN + ETHER_CRC_LEN;
-			em_init(sc);
+			em_init_locked(sc);
+                        EM_UNLOCK(sc);
 		}
 		break;
 	case SIOCSIFFLAGS:
 		IOCTL_DEBUGOUT("ioctl rcv'd: SIOCSIFFLAGS (Set Interface Flags)");
+                EM_LOCK(sc);
 		if (ifp->if_flags & IFF_UP) {
-			if (!(ifp->if_flags & IFF_RUNNING))
-				em_init(sc);
+			if (!(ifp->if_flags & IFF_RUNNING)) {
+				em_init_locked(sc);
+                        }
 
 			em_disable_promisc(sc);
 			em_set_promisc(sc);
@@ -641,28 +900,35 @@ em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 				em_stop(sc);
 			}
 		}
+                EM_UNLOCK(sc);
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		IOCTL_DEBUGOUT("ioctl rcv'd: SIOC(ADD|DEL)MULTI");
+#ifdef __OpenBSD__
 		error = (command == SIOCADDMULTI)
 			? ether_addmulti(ifr, &sc->interface_data)
 			: ether_delmulti(ifr, &sc->interface_data);
 
 		if (error == ENETRESET) {
+#endif /* __OpenBSD__ */
 			if (ifp->if_flags & IFF_RUNNING) {
+                                EM_LOCK(sc);
 				em_disable_intr(sc);
 				em_set_multi(sc);
 				if (sc->hw.mac_type == em_82542_rev2_0) {
 					em_initialize_receive_unit(sc);
 				}
 #ifdef DEVICE_POLLING
-				if (!(ifp->if_ipending & IFF_POLLING))
+				if (!(ifp->if_flags & IFF_POLLING))
 #endif
 					em_enable_intr(sc);
+                                EM_UNLOCK(sc);
 			}
+#ifdef __OpenBSD__
 			error = 0;
 		}
+#endif /* __OpenBSD__ */
 		break;
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
@@ -684,11 +950,10 @@ em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		break;
 #endif /* __FreeBSD__ */
 	default:
-		IOCTL_DEBUGOUT1("ioctl received: UNKNOWN (0x%d)\n", (int)command);
+		IOCTL_DEBUGOUT1("ioctl received: UNKNOWN (0x%x)\n", (int)command);
 		error = EINVAL;
 	}
 
-	splx(s);
 	return(error);
 }
 
@@ -713,11 +978,11 @@ em_watchdog(struct ifnet *ifp)
 		return;
 	}
 
-	printf("%s: watchdog timeout -- resetting\n", sc->sc_dv.dv_xname);
+	if (em_check_for_link(&sc->hw))
+	        printf("%s: watchdog timeout -- resetting\n", sc->sc_dv.dv_xname);
 
 	ifp->if_flags &= ~IFF_RUNNING;
 
-	em_stop(sc);
 	em_init(sc);
 
 	ifp->if_oerrors++;
@@ -736,23 +1001,26 @@ em_watchdog(struct ifnet *ifp)
  **********************************************************************/
 
 void
-em_init(void *arg)
+em_init_locked(struct em_softc *sc)
 {
-	int		s;
 	struct ifnet   *ifp;
-	struct em_softc * sc = arg;
 
 	INIT_DEBUGOUT("em_init: begin");
 
-	s = splimp();
+        mtx_assert(&sc->mtx, MA_OWNED);
 
 	em_stop(sc);
+
+#ifdef __FreeBSD__
+        /* Get the latest mac address, User can use a LAA */
+        bcopy(sc->interface_data.ac_enaddr, sc->hw.mac_addr,
+              ETHER_ADDR_LEN);
+#endif /* __FreeBSD__ */
 
 	/* Initialize the hardware */
 	if (em_hardware_init(sc)) {
 		printf("%s: Unable to initialize the hardware\n", 
 		       sc->sc_dv.dv_xname);
-		splx(s);
 		return;
 	}
 
@@ -763,7 +1031,6 @@ em_init(void *arg)
 		printf("%s: Could not setup transmit structures\n", 
 		       sc->sc_dv.dv_xname);
 		em_stop(sc); 
-		splx(s);
 		return;
 	}
 	em_initialize_transmit_unit(sc);
@@ -776,10 +1043,12 @@ em_init(void *arg)
 		printf("%s: Could not setup receive structures\n", 
 		       sc->sc_dv.dv_xname);
 		em_stop(sc);
-		splx(s);
 		return;
 	}
 	em_initialize_receive_unit(sc);
+
+        /* Don't loose promiscuous settings */
+        em_set_promisc(sc);
 
 	ifp = &sc->interface_data.ac_if;
 	ifp->if_flags |= IFF_RUNNING;
@@ -792,59 +1061,86 @@ em_init(void *arg)
 		else
 			ifp->if_hwassist = 0;
 	}
-#endif /* __FreeBSD__ */
 
+	callout_reset(&sc->timer, 2*hz, em_local_timer, sc);
+#endif /* __FreeBSD__ */
+#ifdef __OpenBSD__
 	timeout_add(&sc->timer_handle, 2*hz);
+#endif
 	em_clear_hw_cntrs(&sc->hw);
 #ifdef DEVICE_POLLING
         /*
          * Only enable interrupts if we are not polling, make sure
          * they are off otherwise.
          */
-        if (ifp->if_ipending & IFF_POLLING)
+        if (ifp->if_flags & IFF_POLLING)
                 em_disable_intr(sc);
         else
 #endif /* DEVICE_POLLING */
 		em_enable_intr(sc);
 
-	/* Don't reset the phy next time init gets called */
-	sc->hw.phy_reset_disable = TRUE;
+        /* Don't reset the phy next time init gets called */
+        sc->hw.phy_reset_disable = TRUE;
 
-	splx(s);
 	return;
+}
+
+void
+em_init(void *arg)
+{
+        struct em_softc * sc = arg;
+	EM_LOCK_STATE();
+
+        EM_LOCK(sc);
+        em_init_locked(sc);
+        EM_UNLOCK(sc);
+        return;
 }
 
 
 #ifdef DEVICE_POLLING
-static poll_handler_t em_poll;
+poll_handler_t em_poll;
 
-static void
+void
+em_poll_locked(struct ifnet *ifp, enum poll_cmd cmd, int count)
+{
+        struct em_softc *sc = ifp->if_softc;
+        u_int32_t reg_icr;
+
+        mtx_assert(&sc->mtx, MA_OWNED);
+
+        if (cmd == POLL_DEREGISTER) {       /* final call, enable interrupts */
+                em_enable_intr(sc);
+                return;
+        }
+        if (cmd == POLL_AND_CHECK_STATUS) {
+                reg_icr = E1000_READ_REG(&sc->hw, ICR);
+                if (reg_icr & (E1000_ICR_RXSEQ | E1000_ICR_LSC)) {
+                        callout_stop(&sc->timer);
+                        sc->hw.get_link_status = 1;
+                        em_check_for_link(&sc->hw);
+                        em_update_link_status(sc);
+                        callout_reset(&sc->timer, 2*hz, em_local_timer, sc);
+                }
+        }
+        if (ifp->if_flags & IFF_RUNNING) {
+                em_process_receive_interrupts(sc, count);
+                em_clean_transmit_interrupts(sc);
+        }
+
+        if (ifp->if_flags & IFF_RUNNING && ifp->if_snd.ifq_head != NULL)
+                em_start_locked(ifp);
+}
+
+void
 em_poll(struct ifnet *ifp, enum poll_cmd cmd, int count)
 {
-	struct em_softc *sc = ifp->if_softc;
-	u_int32_t reg_icr;
+        struct em_softc *sc = ifp->if_softc;
+	EM_LOCK_STATE();
 
-	if (cmd == POLL_DEREGISTER) {	    /* final call, enable interrupts */
-		em_enable_intr(sc);
-		return;
-	}
-	if (cmd == POLL_AND_CHECK_STATUS) {
-		reg_icr = E1000_READ_REG(&sc->hw, ICR);
-		if (reg_icr & (E1000_ICR_RXSEQ | E1000_ICR_LSC)) {
-			untimeout(em_local_timer, sc, sc->timer_handle);
-			sc->hw.get_link_status = 1;
-			em_check_for_link(&sc->hw);
-			em_print_link_status(sc);
-			sc->timer_handle = timeout(em_local_timer, sc, 2*hz);
-		}
-	}
-	if (ifp->if_flags & IFF_RUNNING) {
-		em_process_receive_interrupts(sc, count);
-		em_clean_transmit_interrupts(sc);
-	}
-
-	if (ifp->if_flags & IFF_RUNNING && ifp->if_snd.ifq_head != NULL)
-		em_start(ifp);
+        EM_LOCK(sc);
+        em_poll_locked(ifp, cmd, count);
+        EM_UNLOCK(sc);
 }
 #endif /* DEVICE_POLLING */
 
@@ -853,38 +1149,66 @@ em_poll(struct ifnet *ifp, enum poll_cmd cmd, int count)
  *  Interrupt Service routine
  *
  **********************************************************************/
+#ifdef __FreeBSD__
+void
+#endif
+#ifdef __OpenBSD__
 int 
+#endif
 em_intr(void *arg)
 {
 	u_int32_t	loop_cnt = EM_MAX_INTR;
 	u_int32_t	reg_icr;
 	struct ifnet	*ifp;
-	struct em_softc *sc = arg;
+	struct em_softc  *sc = arg;
+	EM_LOCK_STATE();
+
+        EM_LOCK(sc);
 
 	ifp = &sc->interface_data.ac_if;
 
 #ifdef DEVICE_POLLING
-	if (ifp->if_ipending & IFF_POLLING)
-		return;
+        if (ifp->if_flags & IFF_POLLING) {
+                EM_UNLOCK(sc);
+                return;
+        }
 
-	if (ether_poll_register(em_poll, ifp)) {
-		em_disable_intr(sc);
-		em_poll(ifp, 0, 1);
-		return;
-	}
+        if (ether_poll_register(em_poll, ifp)) {
+                em_disable_intr(sc);
+                em_poll_locked(ifp, 0, 1);
+                EM_UNLOCK(sc);
+                return;
+        }
 #endif /* DEVICE_POLLING */
+
 	reg_icr = E1000_READ_REG(&sc->hw, ICR);
 	if (!reg_icr) {
+                EM_UNLOCK(sc);
+#ifdef __FreeBSD__
+		return;
+#endif
+#ifdef __OpenBSD__
 		return (0);
+#endif
 	}
 
 	/* Link status change */
 	if (reg_icr & (E1000_ICR_RXSEQ | E1000_ICR_LSC)) {
+#ifdef __FreeBSD__
+                callout_stop(&sc->timer);
+#endif
+#ifdef __OpenBSD__
 		timeout_del(&sc->timer_handle);
+#endif
 		sc->hw.get_link_status = 1;
 		em_check_for_link(&sc->hw);
-		em_print_link_status(sc);
+		em_update_link_status(sc);
+#ifdef __FreeBSD__
+                callout_reset(&sc->timer, 2*hz, em_local_timer, sc);
+#endif
+#ifdef __OpenBSD__
 		timeout_add(&sc->timer_handle, 2*hz); 
+#endif
 	}
 
 	while (loop_cnt > 0) {
@@ -895,10 +1219,21 @@ em_intr(void *arg)
 		loop_cnt--;
 	}
 
+#ifdef __FreeBSD__
+        if (ifp->if_flags & IFF_RUNNING && ifp->if_snd.ifq_head != NULL)
+#endif
+#ifdef __OpenBSD__
 	if (ifp->if_flags & IFF_RUNNING && IFQ_IS_EMPTY(&ifp->if_snd) == 0)
-		em_start(ifp);
+#endif
+                em_start_locked(ifp);
 
+        EM_UNLOCK(sc);
+#ifdef __FreeBSD__
+	return;
+#endif
+#ifdef __OpenBSD__
 	return (1);
+#endif
 }
 
 
@@ -953,7 +1288,11 @@ em_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 			ifmr->ifm_active |= IFM_100_TX;
 			break;
 		case 1000:
+#if defined(__FreeBSD__) && __FreeBSD_version < 500000
+			ifmr->ifm_active |= IFM_1000_TX;
+#else
 			ifmr->ifm_active |= IFM_1000_T;
+#endif
 			break;
 		}
 		if (sc->link_duplex == FULL_DUPLEX)
@@ -989,7 +1328,11 @@ em_media_change(struct ifnet *ifp)
 		sc->hw.autoneg_advertised = AUTONEG_ADV_DEFAULT;
 		break;
 	case IFM_1000_SX:
-	case IFM_1000_T:
+#if defined(__FreeBSD__) && __FreeBSD_version < 500000
+        case IFM_1000_TX:
+#else
+        case IFM_1000_T:
+#endif
 		sc->hw.autoneg = DO_AUTO_NEG;
 		sc->hw.autoneg_advertised = ADVERTISE_1000_FULL;
 		break;
@@ -1013,10 +1356,10 @@ em_media_change(struct ifnet *ifp)
 		printf("%s: Unsupported media type\n", sc->sc_dv.dv_xname);
 	}
 
-	/* As the speed/duplex settings my have changed we need to
-	 * reset the PHY.
-	 */
-	sc->hw.phy_reset_disable = FALSE;
+        /* As the speed/duplex settings my have changed we need to
+         * reset the PHY.
+         */
+        sc->hw.phy_reset_disable = FALSE;
 
 	em_init(sc);
 
@@ -1031,7 +1374,7 @@ em_tx_cb(void *arg, bus_dma_segment_t *seg, int nsegs, bus_size_t mapsize, int e
 
 	if (error)
 		return;
-	EM_KASSERT(nsegs <= EM_MAX_SCATTER,
+	KASSERT(nsegs <= EM_MAX_SCATTER,
 		("Too many DMA segments returned when mapping tx packet"));
 	q->nsegs = nsegs;
 	bcopy(seg, q->segs, nsegs * sizeof(seg[0]));
@@ -1052,8 +1395,14 @@ int
 em_encap(struct em_softc *sc, struct mbuf *m_head)
 {
 	u_int32_t	txd_upper;
-	u_int32_t	txd_lower;
+	u_int32_t	txd_lower, txd_used = 0, txd_saved = 0;
 	int		i, j, error;
+	u_int64_t       address;
+
+        /* For 82544 Workaround */
+        DESC_ARRAY              desc_array;
+        u_int32_t               array_elements;
+        u_int32_t               counter;
 #if NVLAN > 0
 	struct ifvlan *ifv = NULL;
 #endif
@@ -1079,7 +1428,7 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 	 * Map the packet for DMA.
 	 */
 	if (bus_dmamap_create(sc->txtag, MCLBYTES, 32, 0, 0, BUS_DMA_NOWAIT,
-	    &q.map)) {
+            &q.map)) {
 		sc->no_tx_map_avail++;
 		return (ENOMEM);
 	}
@@ -1117,23 +1466,66 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 #endif
 
 	i = sc->next_avail_tx_desc;
+        if (sc->pcix_82544) {
+                txd_saved = i;
+                txd_used = 0;
+        }
 	for (j = 0; j < q.map->dm_nsegs; j++) {
-		tx_buffer = &sc->tx_buffer_area[i];
-		current_tx_desc = &sc->tx_desc_base[i];
+                /* If sc is 82544 and on PCIX bus */
+                if(sc->pcix_82544) {
+                        array_elements = 0;
+                        address = htole64(q.map->dm_segs[j].ds_addr);
+                        /*
+                         * Check the Address and Length combination and
+                         * split the data accordingly
+                         */
+                        array_elements = em_fill_descriptors(address,
+                                                             htole32(q.map->dm_segs[j].ds_len),
+                                                             &desc_array);
+                        for (counter = 0; counter < array_elements; counter++) {
+                                if (txd_used == sc->num_tx_desc_avail) {
+                                          sc->next_avail_tx_desc = txd_saved;
+                                          sc->no_tx_desc_avail2++;
+                                          bus_dmamap_destroy(sc->txtag, q.map);
+                                          return (ENOBUFS);
+                                }
+                                tx_buffer = &sc->tx_buffer_area[i];
+                                current_tx_desc = &sc->tx_desc_base[i];
+                                current_tx_desc->buffer_addr = htole64(
+                                        desc_array.descriptor[counter].address);
+                                current_tx_desc->lower.data = htole32(
+                                        (sc->txd_cmd | txd_lower |
+                                         (u_int16_t)desc_array.descriptor[counter].length));
+                                current_tx_desc->upper.data = htole32((txd_upper));
+                                if (++i == sc->num_tx_desc)
+                                         i = 0;
 
-		current_tx_desc->buffer_addr = htole64(q.map->dm_segs[j].ds_addr);
-		current_tx_desc->lower.data = htole32(
-		    sc->txd_cmd | txd_lower | q.map->dm_segs[j].ds_len);
-		current_tx_desc->upper.data = htole32(txd_upper);
+                                tx_buffer->m_head = NULL;
+                                txd_used++;
+                        }
+                } else {
+		        tx_buffer = &sc->tx_buffer_area[i];
+		        current_tx_desc = &sc->tx_desc_base[i];
 
-		if (++i == sc->num_tx_desc)
-			i = 0;
+		        current_tx_desc->buffer_addr = htole64(q.map->dm_segs[j].ds_addr);
+		        current_tx_desc->lower.data = htole32(
+		            sc->txd_cmd | txd_lower | q.map->dm_segs[j].ds_len);
+		        current_tx_desc->upper.data = htole32(txd_upper);
+
+		        if (++i == sc->num_tx_desc)
+	        		i = 0;
 		
-		tx_buffer->m_head = NULL;
+		        tx_buffer->m_head = NULL;
+                }
 	}
 
-	sc->num_tx_desc_avail -= q.map->dm_nsegs;
 	sc->next_avail_tx_desc = i;
+        if (sc->pcix_82544) {
+                sc->num_tx_desc_avail -= txd_used;
+        }
+        else {
+                sc->num_tx_desc_avail -= q.map->dm_nsegs;
+        }
 
 #if NVLAN > 0
 	if (ifv != NULL) {
@@ -1161,7 +1553,7 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 	 */
 	if (sc->hw.mac_type == em_82547 &&
 	    sc->link_duplex == HALF_DUPLEX) {
-		em_82547_move_tail(sc);
+		em_82547_move_tail_locked(sc);
 	} else {
 		E1000_WRITE_REG(&sc->hw, TDT, i);
 		if (sc->hw.mac_type == em_82547) {
@@ -1177,21 +1569,20 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
  * 82547 workaround to avoid controller hang in half-duplex environment.
  * The workaround is to avoid queuing a large packet that would span
  * the internal Tx FIFO ring boundary. We need to reset the FIFO pointers
- * in this case. We do that only when FIFO is queiced.
+ * in this case. We do that only when FIFO is quiescent.
  *
  **********************************************************************/
 void
-em_82547_move_tail(void *arg)
+em_82547_move_tail_locked(struct em_softc *sc)
 {
-	int s;
-	struct em_softc *sc = arg;
 	uint16_t hw_tdt;
 	uint16_t sw_tdt;
 	struct em_tx_desc *tx_desc;
 	uint16_t length = 0;
 	boolean_t eop = 0;
 
-	s = splimp();
+        EM_LOCK_ASSERT(sc);
+
 	hw_tdt = E1000_READ_REG(&sc->hw, TDT);
 	sw_tdt = sc->next_avail_tx_desc;
 
@@ -1205,19 +1596,32 @@ em_82547_move_tail(void *arg)
 		if(eop) {
 			if (em_82547_fifo_workaround(sc, length)) {
 				sc->tx_fifo_wrk++;
+#ifdef __FreeBSD__
+                                callout_reset(&sc->tx_fifo_timer, 1,
+                                        em_82547_move_tail, sc);
+#endif
+#ifdef __OpenBSD__
 				timeout_add(&sc->tx_fifo_timer_handle, 1);
-				splx(s);
-				return;
+#endif
+				break;
 			}
-			else {
-				E1000_WRITE_REG(&sc->hw, TDT, hw_tdt);
-				em_82547_update_fifo_head(sc, length);
-				length = 0;
-			}
+			E1000_WRITE_REG(&sc->hw, TDT, hw_tdt);
+			em_82547_update_fifo_head(sc, length);
+			length = 0;
 		}
 	}
-	splx(s);
 	return;
+}
+
+void
+em_82547_move_tail(void *arg)
+{
+        struct em_softc *sc = arg;
+	EM_LOCK_STATE();
+
+        EM_LOCK(sc);
+        em_82547_move_tail_locked(sc);
+        EM_UNLOCK(sc);
 }
 
 int
@@ -1343,11 +1747,16 @@ em_set_multi(struct em_softc * sc)
 {
 	u_int32_t reg_rctl = 0;
 	u_int8_t  mta[MAX_NUM_MULTICAST_ADDRESSES * ETH_LENGTH_OF_ADDRESS];
+#ifdef __FreeBSD__
+	struct ifmultiaddr  *ifma;
+#endif
+	int mcnt = 0;
+	struct ifnet *ifp = &sc->interface_data.ac_if;
+#ifdef __OpenBSD__
 	struct arpcom *ac = &sc->interface_data;
 	struct ether_multi *enm;
 	struct ether_multistep step;
-	int mcnt = 0;
-	struct ifnet *ifp = &sc->interface_data.ac_if;
+#endif /* __OpenBSD__ */
 
 	IOCTL_DEBUGOUT("em_set_multi: begin");
 
@@ -1361,6 +1770,23 @@ em_set_multi(struct em_softc * sc)
 		msec_delay(5);
 	}
 
+#ifdef __FreeBSD__
+#if __FreeBSD_version < 500000
+        LIST_FOREACH(ifma, &ifp->if_multiaddrs, ifma_link) {
+#else
+        TAILQ_FOREACH(ifma, &ifp->if_multiaddrs, ifma_link) {
+#endif
+                if (ifma->ifma_addr->sa_family != AF_LINK)
+                        continue;
+
+                if (mcnt == MAX_NUM_MULTICAST_ADDRESSES) break;
+
+                bcopy(LLADDR((struct sockaddr_dl *)ifma->ifma_addr),
+                      &mta[mcnt*ETH_LENGTH_OF_ADDRESS], ETH_LENGTH_OF_ADDRESS);
+                mcnt++;
+        }
+#endif /* __FreeBSD__ */
+#ifdef __OpenBSD__
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
 		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
@@ -1374,13 +1800,14 @@ em_set_multi(struct em_softc * sc)
 		mcnt++;
 		ETHER_NEXT_MULTI(step, enm);
 	}
+#endif /* __OpenBSD__ */
 
 	if (mcnt >= MAX_NUM_MULTICAST_ADDRESSES) {
 		reg_rctl = E1000_READ_REG(&sc->hw, RCTL);
 		reg_rctl |= E1000_RCTL_MPE;
 		E1000_WRITE_REG(&sc->hw, RCTL, reg_rctl);
 	} else
-		em_mc_addr_list_update(&sc->hw, mta, mcnt, 0);
+		em_mc_addr_list_update(&sc->hw, mta, mcnt, 0, 1);
 
 	if (sc->hw.mac_type == em_82542_rev2_0) {
 		reg_rctl = E1000_READ_REG(&sc->hw, RCTL);
@@ -1406,47 +1833,82 @@ em_set_multi(struct em_softc * sc)
 void
 em_local_timer(void *arg)
 {
-	int s;
 	struct ifnet   *ifp;
 	struct em_softc * sc = arg;
+	EM_LOCK_STATE();
+
 	ifp = &sc->interface_data.ac_if;
 
-	s = splimp();
+	EM_LOCK(sc);
 
 	em_check_for_link(&sc->hw);
-	em_print_link_status(sc);
+	em_update_link_status(sc);
 	em_update_stats_counters(sc);	
 	if (em_display_debug_stats && ifp->if_flags & IFF_RUNNING) {
 		em_print_hw_stats(sc);
 	}
 	em_smartspeed(sc);
 
+#ifdef __FreeBSD__
+        callout_reset(&sc->timer, 2*hz, em_local_timer, sc);
+#endif /* __FreeBSD__ */
+#ifdef __OpenBSD__
 	timeout_add(&sc->timer_handle, 2*hz);
+#endif /* __OpenBSD__ */
 
-	splx(s);
+        EM_UNLOCK(sc);
 	return;
 }
 
 void
 em_print_link_status(struct em_softc * sc)
 {
-	if (E1000_READ_REG(&sc->hw, STATUS) & E1000_STATUS_LU) {
-		if (sc->link_active == 0) {
-			em_get_speed_and_duplex(&sc->hw, 
-						&sc->link_speed, 
-						&sc->link_duplex);
-			sc->link_active = 1;
-			sc->smartspeed = 0;
-		}
-	} else {
-		if (sc->link_active == 1) {
-			sc->link_speed = 0;
-			sc->link_duplex = 0;
-			sc->link_active = 0;
-		}
-	}
+        if (E1000_READ_REG(&sc->hw, STATUS) & E1000_STATUS_LU) {
+                if (sc->link_active == 0) {
+                        em_get_speed_and_duplex(&sc->hw,
+                                                &sc->link_speed,
+                                                &sc->link_duplex);
+                        printf("%s: Link is up %d Mbps %s\n",
+                               sc->sc_dv.dv_xname,
+                               sc->link_speed,
+                               ((sc->link_duplex == FULL_DUPLEX) ?
+                                "Full Duplex" : "Half Duplex"));
+                        sc->link_active = 1;
+                        sc->smartspeed = 0;
+                }
+        } else {
+                if (sc->link_active == 1) {
+                        sc->link_speed = 0;
+                        sc->link_duplex = 0;
+                        printf("%s: Link is Down\n", sc->sc_dv.dv_xname);
+                        sc->link_active = 0;
+                }
+        }
 
-	return;
+        return;
+}
+
+void
+em_update_link_status(struct em_softc * sc)
+{
+        if (E1000_READ_REG(&sc->hw, STATUS) & E1000_STATUS_LU) {
+                if (sc->link_active == 0) {
+                        em_get_speed_and_duplex(&sc->hw,
+                                                &sc->link_speed,
+                                                &sc->link_duplex);
+                        sc->link_active = 1;
+                        sc->smartspeed = 0;
+                }
+        } else {
+                if (sc->link_active == 1) {
+                        sc->link_speed = 0;
+                        sc->link_duplex = 0;
+                        sc->link_active = 0;
+                }
+        }
+
+        return;
+
 }
 
 /*********************************************************************
@@ -1463,11 +1925,19 @@ em_stop(void *arg)
 	struct em_softc * sc = arg;
 	ifp = &sc->interface_data.ac_if;
 
-	INIT_DEBUGOUT("em_stop: begin\n");
+	mtx_assert(&sc->mtx, MA_OWNED);
+
+	INIT_DEBUGOUT("em_stop: begin");
 	em_disable_intr(sc);
 	em_reset_hw(&sc->hw);
+#ifdef __FreeBSD__
+        callout_stop(&sc->timer);
+        callout_stop(&sc->tx_fifo_timer);
+#endif /* __FreeBSD__ */
+#ifdef __OpenBSD__
 	timeout_del(&sc->timer_handle);
 	timeout_del(&sc->tx_fifo_timer_handle);
+#endif /* __OpenBSD__ */
 	em_free_transmit_structures(sc);
 	em_free_receive_structures(sc);
 
@@ -1519,6 +1989,12 @@ em_identify_hardware(struct em_softc * sc)
 	if (em_set_mac_type(&sc->hw))
 		printf("%s: Unknown MAC Type\n", sc->sc_dv.dv_xname);
 
+	if(sc->hw.mac_type == em_82541 ||
+	   sc->hw.mac_type == em_82541_rev_2 ||
+	   sc->hw.mac_type == em_82547 ||
+	   sc->hw.mac_type == em_82547_rev_2)
+		sc->hw.phy_init_script = TRUE;
+
 	return;
 }
 
@@ -1533,7 +2009,7 @@ em_allocate_pci_resources(struct em_softc * sc)
 
 	val = pci_conf_read(pa->pa_pc, pa->pa_tag, EM_MMBA);
 	if (PCI_MAPREG_TYPE(val) != PCI_MAPREG_TYPE_MEM) {
-		printf(": mmba isn't memory\n");
+		printf(": mmba isn't memory");
 		return (ENXIO);
 	}
 	if (pci_mapreg_map(pa, EM_MMBA, PCI_MAPREG_MEM_TYPE(val), 0,
@@ -1562,6 +2038,14 @@ em_allocate_pci_resources(struct em_softc * sc)
 			printf(": can't find io space\n");
 			return (ENXIO);
 		}
+
+#ifdef __FreeBSD__
+                sc->hw.io_base =
+                rman_get_start(sc->res_ioport);
+#endif
+#ifdef __OpenBSD__
+		sc->hw.io_base = 0;
+#endif
 	}
 
 	if (pci_intr_map(pa, &ih)) {
@@ -1619,6 +2103,7 @@ em_free_pci_resources(struct em_softc* sc)
 int
 em_hardware_init(struct em_softc * sc)
 {
+	INIT_DEBUGOUT("em_hardware_init: begin");
 	/* Issue a global reset */
 	em_reset_hw(&sc->hw);
 
@@ -1668,12 +2153,24 @@ em_hardware_init(struct em_softc * sc)
  *
  **********************************************************************/
 void
+#ifdef __FreeBSD__
+em_setup_interface(device_t dev, struct em_softc * sc)
+#endif
+#ifdef __OpenBSD__
 em_setup_interface(struct em_softc * sc)
+#endif
 {
 	struct ifnet   *ifp;
 	INIT_DEBUGOUT("em_setup_interface: begin");
 
 	ifp = &sc->interface_data.ac_if;
+#ifdef __FreeBSD__
+        if_initname(ifp, device_get_name(dev), device_get_unit(dev));
+#endif
+#ifdef __OpenBSD__
+	strlcpy(ifp->if_xname, sc->sc_dv.dv_xname, IFNAMSIZ);
+#endif
+
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_output = ether_output;
 	ifp->if_baudrate = 1000000000;
@@ -1685,11 +2182,14 @@ em_setup_interface(struct em_softc * sc)
 	ifp->if_ioctl = em_ioctl;
 	ifp->if_start = em_start;
 	ifp->if_watchdog = em_watchdog;
+#ifdef __FreeBSD__
+	ifp->if_snd.ifq_maxlen = sc->num_tx_desc - 1;
+#endif
+#ifdef __OpenBSD__
 	IFQ_SET_MAXLEN(&ifp->if_snd, sc->num_tx_desc - 1);
 	IFQ_SET_READY(&ifp->if_snd);
+#endif
 
-	strlcpy(ifp->if_xname, sc->sc_dv.dv_xname, IFNAMSIZ);
-	
 #ifdef __FreeBSD__
 	if (sc->hw.mac_type >= em_82543) {
 		ifp->if_capabilities = IFCAP_HWCSUM;
@@ -1699,7 +2199,7 @@ em_setup_interface(struct em_softc * sc)
 	/*
 	 * Tell the upper layer(s) we support long frames.
 	 */
-	ifp->if_data.ifi_hdrlen = sizeof(struct ehter_vlan_header);
+	ifp->if_data.ifi_hdrlen = sizeof(struct ether_vlan_header);
 #if __FreeBSD_version >= 500000
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING | IFCAP_VLAN_MTU;
 #endif
@@ -1735,9 +2235,10 @@ em_setup_interface(struct em_softc * sc)
 	ifmedia_add(&sc->media, IFM_ETHER | IFM_AUTO, 0, NULL);
 	ifmedia_set(&sc->media, IFM_ETHER | IFM_AUTO);
 
+#ifdef __OpenBSD__
 	if_attach(ifp);
 	ether_ifattach(ifp);
-
+#endif
 	return;
 }
 
@@ -1806,7 +2307,6 @@ em_smartspeed(struct em_softc *sc)
 /*
  * Manage DMA'able memory.
  */
-
 #ifdef __FreeBSD__
 void
 em_dmamap_cb(void *arg, bus_dma_segment_t *segs, int nseg, int error)
@@ -1834,6 +2334,8 @@ em_dma_malloc(struct em_softc *sc, bus_size_t size,
 			       1,			/* nsegments */
 			       size,			/* maxsegsize */
 			       BUS_DMA_ALLOCNOW,	/* flags */
+			       NULL,			/* lockfunc */
+			       NULL,			/* lockarg */
 			       &dma->dma_tag);
 	if (r != 0) {
 		printf("%s: em_dma_malloc: bus_dma_tag_create failed; "
@@ -1843,10 +2345,11 @@ em_dma_malloc(struct em_softc *sc, bus_size_t size,
 
 	r = bus_dmamap_create(dma->dma_tag, BUS_DMA_NOWAIT, &dma->dma_map);
 #endif /* __FreeBSD__ */
+#ifdef __OpenBSD__
 	dma->dma_tag = sc->osdep.em_pa.pa_dmat;
 	r = bus_dmamap_create(dma->dma_tag, size, 1,
 	    size, 0, BUS_DMA_NOWAIT, &dma->dma_map);
-
+#endif /* __OpenBSD__ */
 	if (r != 0) {
 		printf("%s: em_dma_malloc: bus_dmamap_create failed; "
 			"error %u\n", sc->sc_dv.dv_xname, r);
@@ -1893,7 +2396,7 @@ fail_2:
 	bus_dmamem_free(dma->dma_tag, &dma->dma_seg, dma->dma_nseg);
 fail_1:
 	bus_dmamap_destroy(dma->dma_tag, dma->dma_map);
-	/* bus_dma_tag_destroy(dma->dma_tag); */
+	bus_dma_tag_destroy(dma->dma_tag);
 fail_0:
 	dma->dma_map = NULL;
 	/* dma->dma_tag = NULL; */
@@ -1907,7 +2410,7 @@ em_dma_free(struct em_softc *sc, struct em_dma_alloc *dma)
 	bus_dmamem_unmap(dma->dma_tag, dma->dma_vaddr, dma->dma_size);
 	bus_dmamem_free(dma->dma_tag, &dma->dma_seg, dma->dma_nseg);
 	bus_dmamap_destroy(dma->dma_tag, dma->dma_map);
-	/* bus_dma_tag_destroy(dma->dma_tag); */
+	bus_dma_tag_destroy(dma->dma_tag);
 }
 
 
@@ -1956,13 +2459,17 @@ em_setup_transmit_structures(struct em_softc* sc)
 		    EM_MAX_SCATTER,          /* nsegments */
 		    MCLBYTES * 8,            /* maxsegsize */
 		    BUS_DMA_ALLOCNOW,        /* flags */
+		    NULL,                    /* lockfunc */
+		    NULL,                    /* lockarg */
 		    &sc->txtag)) {
 		printf("%s: Unable to allocate TX DMA tag\n", sc->sc_dv.dv_xname);
 		return (ENOMEM);
 	}
 
 #endif /* __FreeBSD__ */
+#ifdef __OpenBSD__
 	sc->txtag = sc->osdep.em_pa.pa_dmat;
+#endif
 
 	if (em_allocate_transmit_structures(sc))
 		return (ENOMEM);
@@ -1994,6 +2501,7 @@ em_initialize_transmit_unit(struct em_softc * sc)
 	u_int32_t	reg_tipg = 0;
 	u_int64_t	bus_addr;
 
+	INIT_DEBUGOUT("em_initialize_transmit_unit: begin");
 	/* Setup the Base and Length of the Tx Descriptor Ring */
 	bus_addr = sc->txdma.dma_map->dm_segs[0].ds_addr;
 	E1000_WRITE_REG(&sc->hw, TDBAL, (u_int32_t)bus_addr);
@@ -2029,9 +2537,10 @@ em_initialize_transmit_unit(struct em_softc * sc)
 	}
 
 	E1000_WRITE_REG(&sc->hw, TIPG, reg_tipg);
-	E1000_WRITE_REG(&sc->hw, TIDV, sc->tx_int_delay);
+	E1000_WRITE_REG(&sc->hw, TIDV, sc->tx_int_delay.value);
 	if(sc->hw.mac_type >= em_82540)
-		E1000_WRITE_REG(&sc->hw, TADV, sc->tx_abs_int_delay);
+		E1000_WRITE_REG(&sc->hw, TADV,
+		    sc->tx_abs_int_delay.value);
 
 	/* Program the Transmit Control Register */
 	reg_tctl = E1000_TCTL_PSP | E1000_TCTL_EN |
@@ -2046,7 +2555,7 @@ em_initialize_transmit_unit(struct em_softc * sc)
 	/* Setup Transmit Descriptor Settings for this adapter */   
 	sc->txd_cmd = E1000_TXD_CMD_IFCS | E1000_TXD_CMD_RS;
 
-	if (sc->tx_int_delay > 0)
+	if (sc->tx_int_delay.value > 0)
 		sc->txd_cmd |= E1000_TXD_CMD_IDE;
 
 	return;
@@ -2081,9 +2590,7 @@ em_free_transmit_structures(struct em_softc* sc)
 		sc->tx_buffer_area = NULL;
 	}
 	if (sc->txtag != NULL) {
-#ifdef __FreeBSD__
 		bus_dma_tag_destroy(sc->txtag);
-#endif
 		sc->txtag = NULL;
 	}
 	return;
@@ -2187,16 +2694,16 @@ em_transmit_checksum_setup(struct em_softc * sc,
 void
 em_clean_transmit_interrupts(struct em_softc* sc)
 {
-	int s;
 	int i, num_avail;
 	struct em_buffer *tx_buffer;
 	struct em_tx_desc   *tx_desc;
 	struct ifnet   *ifp = &sc->interface_data.ac_if;
 
+	mtx_assert(&sc->mtx, MA_OWNED);
+
 	if (sc->num_tx_desc_avail == sc->num_tx_desc)
 		return;
 
-	s = splimp();
 #ifdef DBG_STATS
 	sc->clean_tx_interrupts++;
 #endif
@@ -2246,7 +2753,6 @@ em_clean_transmit_interrupts(struct em_softc* sc)
 			ifp->if_timer = EM_TX_TIMEOUT;
 	}
 	sc->num_tx_desc_avail = num_avail;
-	splx(s);
 	return;
 }
 
@@ -2354,7 +2860,9 @@ em_allocate_receive_structures(struct em_softc* sc)
 		goto fail_0;
 	}
 #endif /* __FreeBSD__ */
+#ifdef __OpenBSD__
 	sc->rxtag = sc->osdep.em_pa.pa_dmat;
+#endif
 
 	rx_buffer = sc->rx_buffer_area;
 	for (i = 0; i < sc->num_rx_desc; i++, rx_buffer++) {
@@ -2381,7 +2889,7 @@ em_allocate_receive_structures(struct em_softc* sc)
         return(0);
 
 fail_1:
-	/* bus_dma_tag_destroy(sc->rxtag); */
+	bus_dma_tag_destroy(sc->rxtag);
 /* fail_0: */
 	sc->rxtag = NULL;
 	free(sc->rx_buffer_area, M_DEVBUF);
@@ -2423,6 +2931,7 @@ em_initialize_receive_unit(struct em_softc * sc)
 	struct ifnet	*ifp;
 	u_int64_t	bus_addr;
 
+	INIT_DEBUGOUT("em_initialize_receive_unit: begin");
 	ifp = &sc->interface_data.ac_if;
 
 	/* Make sure receives are disabled while setting up the descriptor ring */
@@ -2430,10 +2939,11 @@ em_initialize_receive_unit(struct em_softc * sc)
 
 	/* Set the Receive Delay Timer Register */
 	E1000_WRITE_REG(&sc->hw, RDTR, 
-			sc->rx_int_delay | E1000_RDT_FPDB);
+			sc->rx_int_delay.value | E1000_RDT_FPDB);
 
 	if(sc->hw.mac_type >= em_82540) {
-		E1000_WRITE_REG(&sc->hw, RADV, sc->rx_abs_int_delay);
+		E1000_WRITE_REG(&sc->hw, RADV,
+		    sc->rx_abs_int_delay.value);
 
 		/* Set the interrupt throttling rate.  Value is calculated
 		 * as DEFAULT_ITR = 1/(MAX_INTS_PER_SEC * 256ns) */
@@ -2443,7 +2953,12 @@ em_initialize_receive_unit(struct em_softc * sc)
 	}
 
 	/* Setup the Base and Length of the Rx Descriptor Ring */
+#ifdef __FreeBSD__
+	bus_addr = sc->rxdma.dma_paddr;
+#endif
+#ifdef __OpenBSD__
 	bus_addr = sc->rxdma.dma_map->dm_segs[0].ds_addr;
+#endif
 	E1000_WRITE_REG(&sc->hw, RDBAL, (u_int32_t)bus_addr);
 	E1000_WRITE_REG(&sc->hw, RDBAH, (u_int32_t)(bus_addr >> 32));
 	E1000_WRITE_REG(&sc->hw, RDLEN, sc->num_rx_desc *
@@ -2527,7 +3042,7 @@ em_free_receive_structures(struct em_softc * sc)
 		sc->rx_buffer_area = NULL;
 	}
 	if (sc->rxtag != NULL) {
-		/* bus_dma_tag_destroy(sc->rxtag); */
+		bus_dma_tag_destroy(sc->rxtag);
 		sc->rxtag = NULL;
 	}
 	return;
@@ -2549,15 +3064,19 @@ em_process_receive_interrupts(struct em_softc* sc, int count)
 	struct ifnet	    *ifp;
 	struct mbuf	    *mp;
 #ifdef __FreeBSD__
+#if __FreeBSD_version < 500000
 	struct ether_header *eh;
 #endif
+#endif /* __FreeBSD__ */
 	u_int8_t	    accept_frame = 0;
 	u_int8_t	    eop = 0;
-	u_int16_t	    len, desc_len;
+	u_int16_t	    len, desc_len, prev_len_adj;
 	int		    i;
 
 	/* Pointer to the receive descriptor being examined. */
 	struct em_rx_desc   *current_desc;
+
+	mtx_assert(&sc->mtx, MA_OWNED);
 
 	ifp = &sc->interface_data.ac_if;
 	i = sc->next_rx_desc_to_check;
@@ -2579,11 +3098,18 @@ em_process_receive_interrupts(struct em_softc* sc, int count)
 		bus_dmamap_unload(sc->rxtag, sc->rx_buffer_area[i].map);
 
 		accept_frame = 1;
+		prev_len_adj = 0;
 		desc_len = letoh16(current_desc->length);
 		if (current_desc->status & E1000_RXD_STAT_EOP) {
 			count--;
 			eop = 1;
-			len = desc_len - ETHER_CRC_LEN;
+			if (desc_len < ETHER_CRC_LEN) {
+				len = 0;
+				prev_len_adj = ETHER_CRC_LEN - desc_len;
+			}
+			else {
+				len = desc_len - ETHER_CRC_LEN;
+			}
 		} else {
 			eop = 0;
 			len = desc_len;
@@ -2605,7 +3131,7 @@ em_process_receive_interrupts(struct em_softc* sc, int count)
 						    &sc->stats, 
 						    pkt_len, 
 						    sc->hw.mac_addr);
-				len--;
+				if (len > 0) len--;
 			}
 			else {
 				accept_frame = 0;
@@ -2634,15 +3160,24 @@ em_process_receive_interrupts(struct em_softc* sc, int count)
 			} else {
 				/* Chain mbuf's together */
 				mp->m_flags &= ~M_PKTHDR;
-				sc->lmp->m_next = mp;
-				sc->lmp = sc->lmp->m_next;
-				sc->fmp->m_pkthdr.len += len;
+                                /*
+                                 * Adjust length of previous mbuf in chain if we
+                                 * received less than 4 bytes in the last descriptor.
+                                 */
+                                if (prev_len_adj > 0) {
+                                        sc->lmp->m_len -= prev_len_adj;
+                                        sc->fmp->m_pkthdr.len -= prev_len_adj;
+                                }
+                                sc->lmp->m_next = mp;
+                                sc->lmp = sc->lmp->m_next;
+                                sc->fmp->m_pkthdr.len += len;
 			}
 
 			if (eop) {
 				sc->fmp->m_pkthdr.rcvif = ifp;
 				ifp->if_ipackets++;
 
+#ifdef __OpenBSD__
 #if NBPFILTER > 0
 				/*
 				 * Handle BPF listeners. Let the BPF
@@ -2651,26 +3186,40 @@ em_process_receive_interrupts(struct em_softc* sc, int count)
 				if (ifp->if_bpf)
 					bpf_mtap(ifp->if_bpf, sc->fmp);
 #endif
-
+				em_receive_checksum(sc, current_desc,
+					    sc->fmp);
+				ether_input_mbuf(ifp, sc->fmp);
+#endif /* __OpenBSD__ */
 #ifdef __FreeBSD__
+#if __FreeBSD_version < 500000
 				eh = mtod(sc->fmp, struct ether_header *);
 				/* Remove ethernet header from mbuf */
 				m_adj(sc->fmp, sizeof(struct ether_header));
+                                em_receive_checksum(sc, current_desc,
+                                                    sc->fmp);
+                                if (current_desc->status & E1000_RXD_STAT_VP)
+                                        VLAN_INPUT_TAG(eh, sc->fmp,
+                                                       (current_desc->special &
+                                                        E1000_RXD_SPC_VLAN_MASK));
+                                else
+                                        ether_input(ifp, eh, sc->fmp);
+#else
+
+                                em_receive_checksum(sc, current_desc,
+                                                    sc->fmp);
+                                if (current_desc->status & E1000_RXD_STAT_VP)
+                                        VLAN_INPUT_TAG(ifp, sc->fmp,
+                                                       (current_desc->special &
+                                                        E1000_RXD_SPC_VLAN_MASK),
+                                                       sc->fmp = NULL);
+
+                                if (sc->fmp != NULL) {
+                                        EM_UNLOCK(sc);
+                                        (*ifp->if_input)(ifp, sc->fmp);
+                                        EM_LOCK(sc);
+                                }
 #endif
-				em_receive_checksum(sc, current_desc,
-						sc->fmp);
-
-#ifdef __FreeBSD__
-				if (current_desc->status & E1000_RXD_STAT_VP)
-					VLAN_INPUT_TAG(eh, sc->fmp, 
-					    (letoh16(current_desc->special) &
-					    E1000_RXD_SPC_VLAN_MASK));
-				else
-					ether_input(ifp, eh, sc->fmp);
-#else /* __FreeBSD__ */
-				ether_input_mbuf(ifp, sc->fmp);
-#endif /* !__FreeBSD__ */
-
+#endif /* __FreeBSD__ */
 				sc->fmp = NULL;
 				sc->lmp = NULL;
 			}
@@ -2743,7 +3292,8 @@ em_receive_checksum(struct em_softc *sc,
 	}
 
 	return;
-#else /* __FreeBSD__ */
+#endif /* __FreeBSD__ */
+#ifdef __OpenBSD__
 	/* 82543 or newer only */
 	if ((sc->hw.mac_type < em_82543) ||
 	    /* Ignore Checksum bit is set */
@@ -2758,11 +3308,12 @@ em_receive_checksum(struct em_softc *sc,
 	    E1000_RXD_STAT_TCPCS|E1000_RXD_ERR_TCPE)) ==
 	    (E1000_RXD_STAT_TCPCS | E1000_RXD_STAT_IPCS))
 		mp->m_pkthdr.csum |= M_TCP_CSUM_IN_OK | M_UDP_CSUM_IN_OK;
-#endif /* __FreeBSD__ */
+#endif /* __OpenBSD__ */
 }
 
 
-void em_enable_vlans(struct em_softc * sc)
+void
+em_enable_vlans(struct em_softc * sc)
 {
 	uint32_t ctrl;
 
@@ -2845,20 +3396,72 @@ em_pci_clear_mwi(struct em_hw *hw)
 
 }
 
-uint32_t
-em_io_read(struct em_hw *hw, uint32_t port)
+#ifdef __FreeBSD__
+int32_t
+em_io_read(struct em_hw *hw, unsigned long port)
 {
-	return bus_space_read_4(((struct em_osdep *)(hw)->back)->em_iobtag,
-		((struct em_osdep *)(hw)->back)->em_iobhandle, port);
+        return(inl(port));
 }
 
 void
-em_io_write(struct em_hw *hw, uint32_t port, uint32_t value)
+em_io_write(struct em_hw *hw, unsigned long port, uint32_t value)
 {
-	bus_space_write_4(((struct em_osdep *)(hw)->back)->em_iobtag,
-			((struct em_osdep *)(hw)->back)->em_iobhandle, port,
-			value);
-	return;
+        outl(port, value);
+        return;
+}
+#endif /* __FreeBSD__ */
+
+/*********************************************************************
+* 82544 Coexistence issue workaround.
+*    There are 2 issues.
+*       1. Transmit Hang issue.
+*    To detect this issue, following equation can be used...
+*          SIZE[3:0] + ADDR[2:0] = SUM[3:0].
+*          If SUM[3:0] is in between 1 to 4, we will have this issue.
+*
+*       2. DAC issue.
+*    To detect this issue, following equation can be used...
+*          SIZE[3:0] + ADDR[2:0] = SUM[3:0].
+*          If SUM[3:0] is in between 9 to c, we will have this issue.
+*
+*
+*    WORKAROUND:
+*          Make sure we do not have ending address as 1,2,3,4(Hang) or 9,a,b,c (DAC)
+*
+*** *********************************************************************/
+u_int32_t
+em_fill_descriptors (u_int64_t address,
+                              u_int32_t length,
+                              PDESC_ARRAY desc_array)
+{
+        /* Since issue is sensitive to length and address.*/
+        /* Let us first check the address...*/
+        u_int32_t safe_terminator;
+        if (length <= 4) {
+                desc_array->descriptor[0].address = address;
+                desc_array->descriptor[0].length = length;
+                desc_array->elements = 1;
+                return desc_array->elements;
+        }
+        safe_terminator = (u_int32_t)((((u_int32_t)address & 0x7) + (length & 0xF)) & 0xF);
+        /* if it does not fall between 0x1 to 0x4 and 0x9 to 0xC then return */
+        if (safe_terminator == 0   ||
+        (safe_terminator > 4   &&
+        safe_terminator < 9)   ||
+        (safe_terminator > 0xC &&
+        safe_terminator <= 0xF)) {
+                desc_array->descriptor[0].address = address;
+                desc_array->descriptor[0].length = length;
+                desc_array->elements = 1;
+                return desc_array->elements;
+        }
+
+        desc_array->descriptor[0].address = address;
+        desc_array->descriptor[0].length = length - 4;
+        desc_array->descriptor[1].address = address + (length - 4);
+        desc_array->descriptor[1].length = 4;
+        desc_array->elements = 2;
+        return desc_array->elements;
 }
 
 /**********************************************************************
@@ -2871,8 +3474,12 @@ em_update_stats_counters(struct em_softc *sc)
 {
 	struct ifnet   *ifp;
 
+	if(sc->hw.media_type == em_media_type_copper ||
+	    (E1000_READ_REG(&sc->hw, STATUS) & E1000_STATUS_LU)) {
+		sc->stats.symerrs += E1000_READ_REG(&sc->hw, SYMERRS);
+ 		sc->stats.sec += E1000_READ_REG(&sc->hw, SEC);
+	}
 	sc->stats.crcerrs += E1000_READ_REG(&sc->hw, CRCERRS);
-	sc->stats.symerrs += E1000_READ_REG(&sc->hw, SYMERRS);
 	sc->stats.mpc += E1000_READ_REG(&sc->hw, MPC);
 	sc->stats.scc += E1000_READ_REG(&sc->hw, SCC);
 	sc->stats.ecol += E1000_READ_REG(&sc->hw, ECOL);
@@ -2881,7 +3488,6 @@ em_update_stats_counters(struct em_softc *sc)
 	sc->stats.latecol += E1000_READ_REG(&sc->hw, LATECOL);
 	sc->stats.colc += E1000_READ_REG(&sc->hw, COLC);
 	sc->stats.dc += E1000_READ_REG(&sc->hw, DC);
-	sc->stats.sec += E1000_READ_REG(&sc->hw, SEC);
 	sc->stats.rlec += E1000_READ_REG(&sc->hw, RLEC);
 	sc->stats.xonrxc += E1000_READ_REG(&sc->hw, XONRXC);
 	sc->stats.xontxc += E1000_READ_REG(&sc->hw, XONTXC);
@@ -2977,6 +3583,15 @@ void
 em_print_debug_info(struct em_softc *sc)
 {
 	const char * const unit = sc->sc_dv.dv_xname;
+	uint8_t *hw_addr = sc->hw.hw_addr;
+
+        printf("%s: Adapter hardware address = %p \n", unit, hw_addr);
+        printf("%s:tx_int_delay = %d, tx_abs_int_delay = %d\n", unit,
+              E1000_READ_REG(&sc->hw, TIDV),
+              E1000_READ_REG(&sc->hw, TADV));
+        printf("%s:rx_int_delay = %d, rx_abs_int_delay = %d\n", unit,
+              E1000_READ_REG(&sc->hw, RDTR),
+              E1000_READ_REG(&sc->hw, RADV));
 
 #ifdef DBG_STATS
 	printf("%s: Packets not Avail = %ld\n", unit, 
@@ -2990,7 +3605,7 @@ em_print_debug_info(struct em_softc *sc)
 	printf("%s: hw tdh = %d, hw tdt = %d\n", unit,
 		E1000_READ_REG(&sc->hw, TDH),
 		E1000_READ_REG(&sc->hw, TDT));
-	printf("%s: Num Tx Descriptors avail = %ld\n", unit,
+	printf("%s: Num Tx descriptors avail = %d\n", unit,
 	       sc->num_tx_desc_avail);
 	printf("%s: Tx Descriptors not avail1 = %ld\n", unit,
 	       sc->no_tx_desc_avail1);
@@ -3094,6 +3709,66 @@ em_sysctl_stats(SYSCTL_HANDLER_ARGS)
 	}
 
 	return error;
+}
+
+int
+em_sysctl_int_delay(SYSCTL_HANDLER_ARGS)
+{
+	struct em_int_delay_info *info;
+	struct em_softc *sc;
+	u_int32_t regval;
+	int error;
+	int usecs;
+	int ticks;
+	int s;
+
+	info = (struct em_int_delay_info *)arg1;
+	sc = info->sc;
+	usecs = info->value;
+	error = sysctl_handle_int(oidp, &usecs, 0, req);
+	if (error != 0 || req->newptr == NULL)
+		return error;
+	if (usecs < 0 || usecs > E1000_TICKS_TO_USECS(65535))
+		return EINVAL;
+	info->value = usecs;
+	ticks = E1000_USECS_TO_TICKS(usecs);
+
+	s = splimp();
+	regval = E1000_READ_OFFSET(&sc->hw, info->offset);
+	regval = (regval & ~0xffff) | (ticks & 0xffff);
+	/* Handle a few special cases. */
+	switch (info->offset) {
+	case E1000_RDTR:
+	case E1000_82542_RDTR:
+		regval |= E1000_RDT_FPDB;
+		break;
+	case E1000_TIDV:
+	case E1000_82542_TIDV:
+		if (ticks == 0) {
+			sc->txd_cmd &= ~E1000_TXD_CMD_IDE;
+			/* Don't write 0 into the TIDV register. */
+			regval++;
+		} else
+			sc->txd_cmd |= E1000_TXD_CMD_IDE;
+		break;
+	}
+	E1000_WRITE_OFFSET(&sc->hw, info->offset, regval);
+	splx(s);
+	return 0;
+}
+
+void
+em_add_int_delay_sysctl(struct em_softc *sc, const char *name,
+    const char *description, struct em_int_delay_info *info,
+    int offset, int value)
+{
+	info->sc = sc;
+	info->offset = offset;
+	info->value = value;
+	SYSCTL_ADD_PROC(&sc->sysctl_ctx,
+	    SYSCTL_CHILDREN(sc->sysctl_tree),
+	    OID_AUTO, name, CTLTYPE_INT|CTLFLAG_RW,
+	    info, 0, em_sysctl_int_delay, "I", description);
 }
 #endif /* __FreeBSD__ */
 

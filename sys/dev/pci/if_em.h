@@ -31,8 +31,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/*$FreeBSD: if_em.h,v 1.16 2003/06/05 17:51:38 pdeuskar Exp $*/
-/* $OpenBSD: if_em.h,v 1.2 2003/06/13 19:21:21 henric Exp $ */
+/*$FreeBSD: if_em.h,v 1.24 2003/11/14 18:02:24 pdeuskar Exp $*/
+/* $OpenBSD: if_em.h,v 1.3 2004/04/18 04:15:00 henric Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -42,7 +42,7 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Tunables */
 
 /*
- * TxDescriptors
+ * EM_MAX_TXD: Maximum number of Transmit Descriptors
  * Valid Range: 80-256 for 82542 and 82543-based adapters
  *              80-4096 for others
  * Default Value: 256
@@ -53,7 +53,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define EM_MAX_TXD                      256
 
 /*
- * RxDescriptors
+ * EM_MAX_RXD - Maximum number of receive Descriptors
  * Valid Range: 80-256 for 82542 and 82543-based adapters
  *              80-4096 for others
  * Default Value: 256
@@ -66,7 +66,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define EM_MAX_RXD                      256
 
 /*
- * TxIntDelay
+ * EM_TIDV - Transmit Interrupt Delay Value
  * Valid Range: 0-65535 (0=off)
  * Default Value: 64
  *   This value delays the generation of transmit interrupts in units of
@@ -78,20 +78,20 @@ POSSIBILITY OF SUCH DAMAGE.
 #define EM_TIDV                         64
 
 /*
- * TxAbsIntDelay (Not valid for 82542 and 82543)
+ * EM_TADV - Transmit Absolute Interrupt Delay Value (Not valid for 82542/82543/82544)
  * Valid Range: 0-65535 (0=off)
  * Default Value: 64
  *   This value, in units of 1.024 microseconds, limits the delay in which a
- *   transmit interrupt is generated. Useful only if TxIntDelay is non-zero,
+ *   transmit interrupt is generated. Useful only if EM_TIDV is non-zero,
  *   this value ensures that an interrupt is generated after the initial
  *   packet is sent on the wire within the set amount of time.  Proper tuning,
- *   along with TxIntDelay, may improve traffic throughput in specific
+ *   along with EM_TIDV, may improve traffic throughput in specific
  *   network conditions.
  */
 #define EM_TADV                         64
 
 /*
- * RxIntDelay
+ * EM_RDTR - Receive Interrupt Delay Timer (Packet Timer)
  * Valid Range: 0-65535 (0=off)
  * Default Value: 0
  *   This value delays the generation of receive interrupts in units of 1.024
@@ -102,24 +102,24 @@ POSSIBILITY OF SUCH DAMAGE.
  *   may be set too high, causing the driver to run out of available receive
  *   descriptors.
  *
- *   CAUTION: When setting RxIntDelay to a value other than 0, adapters
+ *   CAUTION: When setting EM_RDTR to a value other than 0, adapters
  *            may hang (stop transmitting) under certain network conditions.
  *            If this occurs a WATCHDOG message is logged in the system event log.
  *            In addition, the controller is automatically reset, restoring the
  *            network connection. To eliminate the potential for the hang
- *            ensure that RxIntDelay is set to 0.
+ *            ensure that EM_RDTR is set to 0.
  */
 #define EM_RDTR                         0
 
 /*
- * RxAbsIntDelay (Not valid for 82542 and 82543)
+ * Receive Interrupt Absolute Delay Timer (Not valid for 82542/82543/82544)
  * Valid Range: 0-65535 (0=off)
  * Default Value: 64
  *   This value, in units of 1.024 microseconds, limits the delay in which a
- *   receive interrupt is generated. Useful only if RxIntDelay is non-zero,
+ *   receive interrupt is generated. Useful only if EM_RDTR is non-zero,
  *   this value ensures that an interrupt is generated after the initial
  *   packet is received within the set amount of time.  Proper tuning,
- *   along with RxIntDelay, may improve traffic throughput in specific network
+ *   along with EM_RDTR, may improve traffic throughput in specific network
  *   conditions.
  */
 #define EM_RADV                         64
@@ -163,12 +163,23 @@ POSSIBILITY OF SUCH DAMAGE.
  */
 #define WAIT_FOR_AUTO_NEG_DEFAULT       0
 
+/*
+ * EM_MASTER_SLAVE is only defined to enable a workaround for a known compatibility issue
+ * with 82541/82547 devices and some switches.  See the "Known Limitations" section of
+ * the README file for a complete description and a list of affected switches.
+ *
+ *              0 = Hardware default
+ *              1 = Master mode
+ *              2 = Slave mode
+ *              3 = Auto master/slave
+ */
+/* #define EM_MASTER_SLAVE      2 */
 
 /* Tunables -- End */
 
-#define AUTONEG_ADV_DEFAULT      (ADVERTISE_10_HALF | ADVERTISE_10_FULL | \
-                                  ADVERTISE_100_HALF | ADVERTISE_100_FULL | \
-                                  ADVERTISE_1000_FULL)
+#define AUTONEG_ADV_DEFAULT             (ADVERTISE_10_HALF | ADVERTISE_10_FULL | \
+                                         ADVERTISE_100_HALF | ADVERTISE_100_FULL | \
+                                         ADVERTISE_1000_FULL)
 
 #define EM_VENDOR_ID                    0x8086
 #define EM_MMBA                         0x0010 /* Mem base address */
@@ -207,13 +218,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #define EM_RXBUFFER_16384      16384
 
 #define EM_MAX_SCATTER            64
-
-#ifdef __FreeBSD__
-#ifdef __alpha__
-       #undef vtophys
-       #define vtophys(va)     alpha_XXX_dmamap((vm_offset_t)(va))
-#endif /* __alpha__ */
-#endif /* __FreeBSD__ */
 
 /* ******************************************************************************
  * vendor_info_array
@@ -266,9 +270,31 @@ typedef enum _XSUM_CONTEXT_T {
 	OFFLOAD_UDP_IP
 } XSUM_CONTEXT_T;
 
+struct em_softc;
+struct em_int_delay_info {
+        struct em_softc *sc;    /* Back-pointer to the sc struct */
+        int offset;                     /* Register offset to read/write */
+        int value;                      /* Current value in usecs */
+};
+
+/* For 82544 PCIX  Workaround */
+typedef struct _ADDRESS_LENGTH_PAIR
+{
+    u_int64_t   address;
+    u_int32_t   length;
+} ADDRESS_LENGTH_PAIR, *PADDRESS_LENGTH_PAIR;
+
+typedef struct _DESCRIPTOR_PAIR
+{
+    ADDRESS_LENGTH_PAIR descriptor[4];
+    u_int32_t   elements;
+} DESC_ARRAY, *PDESC_ARRAY;
+
 /* Our adapter structure */
 struct em_softc {
+#ifdef __OpenBSD__
 	struct device	sc_dv;
+#endif
 	struct arpcom	interface_data;
 	struct em_softc *next;
 	struct em_softc *prev;
@@ -276,14 +302,30 @@ struct em_softc {
 
 	/* FreeBSD operating-system-specific structures */
 	struct em_osdep osdep;
-
-	int             io_rid;
-	void           *sc_intrhand;
+#ifdef __FreeBSD__
+        struct device   *dev;
+        struct resource *res_memory;
+        struct resource *res_ioport;
+        struct resource *res_interrupt;
+        void            *int_handler_tag;
+#endif /* __FreeBSD__ */
 	struct ifmedia  media;
+#ifdef __FreeBSD__
+        struct callout  timer;
+        struct callout  tx_fifo_timer;
+#endif /* __FreeBSD__ */
+	int             io_rid;
+#ifdef __FreeBSD__
+        u_int8_t        unit;
+        struct mtx      mtx;
+#endif /* __FreeBSD__ */
 
+#ifdef __OpenBSD__
+	void           *sc_intrhand;
 	struct timeout	em_intr_enable;
 	struct timeout	timer_handle;
 	struct timeout	tx_fifo_timer_handle;
+#endif /* __OpenBSD__ */
 
 	/* Info about the board itself */
 	u_int32_t       part_num;
@@ -291,10 +333,10 @@ struct em_softc {
 	u_int16_t       link_speed;
 	u_int16_t       link_duplex;
 	u_int32_t       smartspeed;
-	u_int32_t       tx_int_delay;
-	u_int32_t	tx_abs_int_delay;
-	u_int32_t       rx_int_delay;
-	u_int32_t	rx_abs_int_delay;
+	struct em_int_delay_info tx_int_delay;
+	struct em_int_delay_info tx_abs_int_delay;
+	struct em_int_delay_info rx_int_delay;
+	struct em_int_delay_info rx_abs_int_delay;
 
 	XSUM_CONTEXT_T  active_checksum_context;
 
@@ -339,6 +381,11 @@ struct em_softc {
 
 	u_int16_t          tx_fifo_head;
 
+#ifdef __FreeBSD__
+        struct sysctl_ctx_list sysctl_ctx;
+        struct sysctl_oid *sysctl_tree;
+#endif /* __FreeBSD__ */
+
 	/* Misc stats maintained by the driver */
 	unsigned long   dropped_pkts;
 	unsigned long   mbuf_alloc_failed;
@@ -350,6 +397,10 @@ struct em_softc {
 	u_int64_t       tx_fifo_reset;
 	u_int64_t       tx_fifo_wrk;
 
+        /* For 82544 PCIX Workaround */
+        boolean_t       pcix_82544;
+        boolean_t       in_detach;
+
 #ifdef DBG_STATS
 	unsigned long   no_pkts_avail;
 	unsigned long   clean_tx_interrupts;
@@ -357,5 +408,25 @@ struct em_softc {
 #endif
 	struct em_hw_stats stats;
 };
+
+#ifdef __FreeBSD__
+#define EM_LOCK_INIT(_sc, _name) \
+        mtx_init(&(_sc)->mtx, _name, MTX_NETWORK_LOCK, MTX_DEF)
+#define EM_LOCK_DESTROY(_sc)    mtx_destroy(&(_sc)->mtx)
+#define EM_LOCK(_sc)            mtx_lock(&(_sc)->mtx)
+#define EM_UNLOCK(_sc)          mtx_unlock(&(_sc)->mtx)
+#define EM_LOCK_ASSERT(_sc)     mtx_assert(&(_sc)->mtx, MA_OWNED)
+#endif /* __FreeBSD__ */
+
+#ifdef __OpenBSD__
+static inline int spl_use_arg(void *);
+static inline int spl_use_arg(void *v) { return splnet(); }
+#define EM_LOCK_INIT(_sc, _name)
+#define EM_LOCK_DESTROY(_sc)
+#define EM_LOCK_STATE()		int em_hidden_splnet_s
+#define EM_LOCK(_sc)		em_hidden_splnet_s = spl_use_arg(_sc)
+#define EM_UNLOCK(_sc)		splx(em_hidden_splnet_s)
+#define EM_LOCK_ASSERT(_sc)	splassert(IPL_NET)
+#endif /* __OpenBSD__ */
 
 #endif                                                  /* _EM_H_DEFINED_ */
