@@ -1,4 +1,4 @@
-#	$OpenBSD: keycap.src,v 1.9 2000/12/10 02:52:58 deraadt Exp $
+#	$OpenBSD: keycap.src,v 1.10 2000/12/10 03:01:49 deraadt Exp $
 
 # Copyright (c) 1992, 1993, 1994 Hellmuth Michaelis, Joerg Wunsch and
 #                                Holger Veit.
@@ -115,30 +115,72 @@ ca|canadafr|Canadian French mapping:\
 	:K54=\351:S54=\311:A54=':\
 	:l1#62:a0:
 
-# from codrv, untested
+# contributed by Mathias Schmocker, smat@acm.org
+# to be used with a pc105 or a pc102 keys keyboard and an iso8859-1
+# console font
+# similar key binding as with XFree86 with fr_CH or de_CH, and
+# CTRL+1       vulgar fraction 1/4
+# CTRL+2       vulgar fraction 1/2
+# CTRL+3       vulgar fraction 3/4
+# CTRL+4       capital letter A with grave accent
+# CTRL+5       capital letter U with diaeresis
+# CTRL+6       capital letter Y with acute accent
+# CTRL+7       capital icelandic letter THORN
+# CTRL+8       small letter u with circumflex accent
+# CTRL+9       small letter y with acute accent
+# CTRL+0               NULL <000> (CONTROL-@ on us-keyboard)
+# CTRL+<key with [>    ESC  <033>
+# CTRL+<key with \>    FS   <034>
+# CTRL+<key with ]>    GS   <035>
+# CTRL+<key with ^>    RS   <036>
+# CTRL+<key with _>    US   <037>
+# ALTGR+e      currency symbol (that could be the Euro symbol)
+# see also keycap(5)
 c1|swissde|Swiss German mapping:\
-	:K1=\247:S1=\260:p1#1:\
-	:S2=+:A2=|:S3=":A3=@:S4=*:A4=#:S5=\347:S7=&:A7=\254:\
-	:S8=/:A8=\246:S9=(:A9=\242:S10=):S11==:\
-	:K12=`:S12=\077:A12=':p2#12:\
-	:K13=^:S13=\\:A13=~:p3#13:\
-	:K22=z:S22=Z:C22=\032:\
-	:S27=\350:K27=\374:A27=[:\
-	:K28=\250:S28=!:A28=]:\
-	:S40=\351:K40=\366:\
-	:S41=\340:K41=\344:A41={:\
-	:K42=$:S42=\243:A42=}:\
-	:K45=<:S45=>:A45=\\:\
-	:K46=y:S46=Y:C46=\031:
-	:S53=;:S54=\072:K55=-:S55=_:\
-	:l1#62:a0:
+	:K1=\247:S1=\260:C1=\247:A1=\254:\
+	:K2=1:S2=+:C2=\274:A2=|:\
+	:K3=2:S3=":C3=\275:A3=@:\
+	:K4=3:S4=*:C4=\276:A4=#:\
+	:K5=4:S5=\347:C5=\300:\
+	:K6=5:S6=%:C6=\334:\
+	:K7=6:S7=&:C7=\335:A7=\254:\
+	:K8=7:S8=/:C8=\336:A8=\246:\
+	:K9=8:S9=(:C9=\373:A9=\242:\
+	:K10=9:S10=):C10=\375:A10=]:\
+	:K11=0:S11==:C11=\000:A11=}:\
+	:K12=':S12=?:C12=':A12=\264:\
+	:K13=\^:S13=`:C13=\036:A13=~:\
+	:A17=@:\
+	:A19=\244:\
+	:A20=\266:\
+	:K22=z:S22=Z:C22=\032:A22=z:\
+	:A25=\370:\
+	:A26=\376:\
+	:K27=\374:S27=\350:C27=\033:A27=[:\
+	:K28=\250:S28=!:C28=\035:A28=]:\
+	:K29=$:S29=\243:C29=$:A29=}:\
+	:A31=\346:\
+	:A32=\337:\
+	:A33=\360:\
+	:K40=\366:S40=\351:C40=\366:A40=\264:\
+	:K41=\344:S41=\340:C41=\344:A41={:\
+	:K45=<:S45=>:C45=\034:A45=\\:\
+	:K46=y:S46=Y:C46=\031:A46=\253:\
+	:A47=\273:\
+	:A48=\242:\
+	:A52:\265:\
+	:K53=,:S53=\073:C53=,:A53=,:\
+	:K54=.:S54=\072:C54=.:A54=\267:\
+	:K55=-:S55=_:C55=\037:A55=-:\
+	:K61=\040:S61=\040:C61=\040:A61=\040:l1#62:a0:
+# l1 is right AltGr 
 
-# from codrv, untested
+# contributed by Mathias Schmocker, smat@acm.org
 c2|swissfr|Swiss French mapping:\
-	:K27=\350:S27=\374:A27=[:\
-	:K40=\351:S40=\366:\
-	:K41=\340:S41=\344:A41={:\
 	:tc=swissde:
+	:K27=\350:S27=\374:C27=\033:\
+	:K40=\351:S40=\366:C40=\351:\
+	:K41=\340:S41=\344:C41=\340:tc=swissde:
 
 # more programmer-like than an original German kbd, you needn't
 # have gum-fingers to get `{}' and the like:-)
