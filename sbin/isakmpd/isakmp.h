@@ -1,5 +1,5 @@
-/*	$OpenBSD: isakmp.h,v 1.3 1998/11/17 11:10:14 niklas Exp $	*/
-/*	$EOM: isakmp.h,v 1.10 1998/07/31 11:36:26 niklas Exp $	*/
+/*	$OpenBSD: isakmp.h,v 1.4 2000/08/03 07:24:05 niklas Exp $	*/
+/*	$EOM: isakmp.h,v 1.11 2000/07/05 10:48:43 ho Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -39,6 +39,9 @@
 
 #include "isakmp_fld.h"
 #include "isakmp_num.h"
+
+/* ISAKMP default transport */
+#define ISAKMP_DEFAULT_TRANSPORT "udp"
 
 /* IANA assigned port */
 #define UDP_DEFAULT_PORT 500
