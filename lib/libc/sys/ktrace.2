@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ktrace.2,v 1.8 2000/04/15 11:46:03 aaron Exp $
+.\"	$OpenBSD: ktrace.2,v 1.9 2000/04/25 16:40:37 millert Exp $
 .\"	$NetBSD: ktrace.2,v 1.2 1995/02/27 12:33:58 cgd Exp $
 .\"
 .\" Copyright (c) 1993
@@ -56,7 +56,8 @@ Only the superuser can trace setuid or setgid programs.
 .Pp
 .Fa tracefile
 gives the pathname of the file to be used for tracing.
-The file must exist and be writable by the calling process.
+The file must exist, be writable by the calling process, and
+not be a symbolic link.
 All trace records are always appended to the file,
 so the file must be truncated to zero length to discard
 previous trace data.
@@ -153,7 +154,8 @@ or an entire path name exceeded 1023 characters.
 .It Bq Er ENOENT
 The named tracefile does not exist.
 .It Bq Er EACCES
-Search permission is denied for a component of the path prefix.
+Search permission is denied for a component of the path prefix or the
+path refers to a symbolic link.
 .It Bq Er ELOOP
 Too many symbolic links were encountered in translating the pathname.
 .It Bq Er EIO
