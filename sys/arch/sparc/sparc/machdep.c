@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.24 1997/06/22 23:54:24 downsj Exp $ */
+/*	$OpenBSD: machdep.c,v 1.25 1997/06/25 13:22:25 downsj Exp $ */
 /*	$NetBSD: machdep.c,v 1.64 1996/05/19 04:12:56 mrg Exp $ */
 
 /*
@@ -90,6 +90,10 @@
 #include <sparc/sparc/asm.h>
 #include <sparc/sparc/cache.h>
 #include <sparc/sparc/vaddrs.h>
+
+#ifdef SUN4M
+#include <sparc/dev/power.h>
+#endif
 
 vm_map_t buffer_map;
 extern vm_offset_t avail_end;
