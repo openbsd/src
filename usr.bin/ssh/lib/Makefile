@@ -6,7 +6,6 @@ SRCS=   authfd.c authfile.c bufaux.c buffer.c canohost.c channels.c \
 	match.c mpaux.c nchan.c packet.c readpass.c rsa.c tildexpand.c \
 	ttymodes.c uidswap.c xmalloc.c
 
-CFLAGS+= ${DEBUG}
 NOPROFILE= yes
 NOPIC=	yes
 
