@@ -1,4 +1,4 @@
-#	$Id: Makefile.inc,v 1.6 1996/06/16 11:02:25 deraadt Exp $
+#	$Id: Makefile.inc,v 1.7 1996/09/14 03:42:59 deraadt Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -51,6 +51,9 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk all
+
+install:
+	cp ${IMAGE} ${DESTDIR}/snapshot/
 
 clean cleandir:
 	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk \

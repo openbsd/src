@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.7 1996/07/01 18:09:16 deraadt Exp $
+#	$Id: Makefile,v 1.8 1996/09/14 03:43:02 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -24,20 +24,20 @@ bsd:
 	    make clean && make depend && make
 	cp ${.CURDIR}/../../../../sys/arch/i386/compile/INST/bsd bsd
 
-all: ${CBIN} bsd
+all: bsd ${CBIN}
 .ifndef FLOPPY3
 .else
 .endif
 .ifndef FLOPPY3
 	dd if=/dev/zero of=${REALIMAGE} bs=10k count=120
+	disklabel -w -B -b /usr/mdec/fdboot -s /usr/mdec/bootfd ${REALIMAGE} floppy5
 	vnconfig -v -c ${VND_DEV} ${REALIMAGE}
-	disklabel -w -B -b /usr/mdec/fdboot -s /usr/mdec/bootfd ${VND} floppy5
 	newfs -O -m 0 -o space -i 8192 -c 80 ${VND_RDEV} floppy5
 .else
 	dd if=/dev/zero of=${REALIMAGE} bs=10k count=144
+	disklabel -w -B -b /usr/mdec/fdboot -s /usr/mdec/bootfd ${REALIMAGE} floppy3
 	vnconfig -v -c ${VND_DEV} ${REALIMAGE}
-	disklabel -w -B -b /usr/mdec/fdboot -s /usr/mdec/bootfd ${VND} floppy3
-	newfs -O -m 0 -o space -i 8192 -c 80 ${VND_RDEV} floppy3
+	newfs -O -m 0 -o space -i 6500 -c 80 ${VND_RDEV} floppy3
 .endif
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
@@ -65,6 +65,9 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 
 clean cleandir:
 	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
+
+install:
+	cp ${IMAGE} ${DESTDIR}/snapshot
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
