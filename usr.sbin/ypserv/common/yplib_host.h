@@ -1,7 +1,7 @@
-/*	$NetBSD: yplib_host.h,v 1.6 1994/10/26 00:57:11 cgd Exp $	*/
+/*	$OpenBSD: yplib_host.h,v 1.3 1996/05/30 09:53:03 deraadt Exp $ */
 
 /*
- * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
+ * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

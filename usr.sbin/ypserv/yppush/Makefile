@@ -1,5 +1,4 @@
-#	from: @(#)Makefile	5.8 (Berkeley) 7/28/90
-#	$Id: Makefile,v 1.1 1996/03/02 03:01:42 dm Exp $
+#	$OpenBSD: Makefile,v 1.2 1996/05/30 09:53:18 deraadt Exp $
 
 PROG=	yppush
 SRCS=	yppush.c yplib_host.c yppush_svc.c yppush_xdr.c yppush_proc.c ypdb.c yppush_err.c

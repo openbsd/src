@@ -1,3 +1,5 @@
+/*	$OpenBSD: ypserv_db.c,v 1.4 1996/05/30 09:53:29 deraadt Exp $ */
+
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
  * Copyright (c) 1996 Charles D. Cranor
@@ -29,7 +31,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypserv_db.c,v 1.3 1996/05/30 01:36:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypserv_db.c,v 1.4 1996/05/30 09:53:29 deraadt Exp $";
 #endif
 
 /*

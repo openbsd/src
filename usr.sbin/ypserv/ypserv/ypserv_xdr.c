@@ -5,8 +5,7 @@
 
 #include "yp.h"
 #ifndef lint
-/*static char sccsid[] = "from: @(#)yp.x	2.1 88/08/01 4.0 RPCSRC";*/
-static char rcsid[] = "$Id: ypserv_xdr.c,v 1.2 1996/01/20 02:53:22 chuck Exp $";
+static char rcsid[] = "$OpenBSD: ypserv_xdr.c,v 1.3 1996/05/30 09:53:31 deraadt Exp $";
 #endif /* not lint */
 
 bool_t

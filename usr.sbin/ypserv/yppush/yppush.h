@@ -1,3 +1,5 @@
+/*	$OpenBSD: yppush.h,v 1.2 1996/05/30 09:53:20 deraadt Exp $ */
+
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
  * All rights reserved.
@@ -27,9 +29,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id: yppush.h,v 1.1 1996/03/02 03:01:44 dm Exp $
- *
  */
 
 #ifndef _YPPUSH_H_RPCGEN

@@ -1,3 +1,5 @@
+/*	$OpenBSD: yplog.h,v 1.3 1996/05/30 09:53:04 deraadt Exp $ */
+
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
  * All rights reserved.
@@ -25,8 +27,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: yplog.h,v 1.2 1996/01/20 00:30:35 chuck Exp $
  */
 
 #ifndef _YPLOG_H_

@@ -1,5 +1,4 @@
-#	from: @(#)Makefile	5.6.1.2 (Berkeley) 5/8/91
-#	$Id: Makefile.yp,v 1.4 1996/03/02 03:01:40 dm Exp $
+#	$OpenBSD: Makefile.yp,v 1.5 1996/05/30 09:53:17 deraadt Exp $
 
 YPDBDIR=/var/yp
 DIR=/etc

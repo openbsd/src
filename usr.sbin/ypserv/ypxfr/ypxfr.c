@@ -1,3 +1,5 @@
+/*	$OpenBSD: ypxfr.c,v 1.6 1996/05/30 09:53:35 deraadt Exp $ */
+
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
  * All rights reserved.
@@ -30,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypxfr.c,v 1.5 1996/03/02 04:55:02 dm Exp $";
+static char rcsid[] = "$OpenBSD: ypxfr.c,v 1.6 1996/05/30 09:53:35 deraadt Exp $";
 #endif
 
 #include <stdio.h>

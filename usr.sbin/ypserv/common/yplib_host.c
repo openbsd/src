@@ -1,5 +1,7 @@
+/*	$OpenBSD: yplib_host.c,v 1.5 1996/05/30 09:53:02 deraadt Exp $ */
+
 /*
- * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
+ * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,7 +32,7 @@
  */
 
 #ifndef LINT
-static char *rcsid = "$Id: yplib_host.c,v 1.4 1996/05/30 01:34:10 deraadt Exp $";
+static char *rcsid = "$OpenBSD: yplib_host.c,v 1.5 1996/05/30 09:53:02 deraadt Exp $";
 #endif
 
 #include <sys/param.h>

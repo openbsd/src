@@ -1,7 +1,6 @@
-/* $Id: yplog.c,v 1.2 1996/01/20 00:30:42 chuck Exp $ */
+/*	$OpenBSD: yplog.c,v 1.3 1996/05/30 09:53:03 deraadt Exp $ */
 
 /*
- *
  * Copyright (c) 1996 Charles D. Cranor
  * All rights reserved.
  *

@@ -1,3 +1,5 @@
+/*	$OpenBSD: stdhosts.c,v 1.2 1996/05/30 09:53:14 deraadt Exp $ */
+
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
  * All rights reserved.
@@ -28,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: stdhosts.c,v 1.1 1995/11/01 16:56:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: stdhosts.c,v 1.2 1996/05/30 09:53:14 deraadt Exp $";
 #endif
 
 #include <sys/types.h>

@@ -1,3 +1,5 @@
+/*	$OpenBSD: ypserv_proc.c,v 1.3 1996/05/30 09:53:30 deraadt Exp $ */
+
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
  * All rights reserved.
@@ -28,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypserv_proc.c,v 1.2 1996/01/20 02:42:19 chuck Exp $";
+static char rcsid[] = "$OpenBSD: ypserv_proc.c,v 1.3 1996/05/30 09:53:30 deraadt Exp $";
 #endif
 
 #include <rpc/rpc.h>
@@ -389,11 +391,11 @@ ypproc_master_2_svc(argp, rqstp)
 	/* This code was added because a yppoll <unknown-domain> */
 	/* from a sun crashed the server in xdr_string, trying   */
 	/* to access the peer through a NULL-pointer. yppoll in  */
-	/* NetBSD start asking for order. If order is ok then it */
-	/* will ask for master. SunOS 4 asks for both always.    */
-	/* I'm not sure this is the best place for the fix, but  */
-	/* for now it will do. xdr_peername or xdr_string in     */
-	/* ypserv_xdr.c may be a better place?                   */
+	/* this server start asking for order. If order is ok    */
+	/* then it will ask for master. SunOS 4 asks for both    */
+	/* always. I'm not sure this is the best place for the   */
+	/* fix, but for now it will do. xdr_peername or          */
+	/* xdr_string in ypserv_xdr.c may be a better place?     */
 	
 	if (res.peer == NULL) {
 	  res.peer = nopeer;

@@ -1,5 +1,4 @@
-#	from: @(#)Makefile	5.3 (Berkeley) 6/22/90
-#	$Id: Makefile,v 1.7 1996/05/01 02:04:06 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.8 1996/05/30 09:53:15 deraadt Exp $
 
 NOOBJ=	noobj
 
