@@ -1,3 +1,4 @@
+/*	$OpenBSD: wizard.c,v 1.7 1998/08/31 02:29:47 pjanzen Exp $	*/
 /*	$NetBSD: wizard.c,v 1.3 1995/04/24 12:21:41 cgd Exp $	*/
 
 /*-
@@ -42,98 +43,114 @@
 #if 0
 static char sccsid[] = "@(#)wizard.c	8.1 (Berkeley) 6/2/93";
 #else
-static char rcsid[] = "$NetBSD: wizard.c,v 1.3 1995/04/24 12:21:41 cgd Exp $";
+static char rcsid[] = "$OpenBSD: wizard.c,v 1.7 1998/08/31 02:29:47 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
 /*	Re-coding of advent in C: privileged operations			*/
 
-# include "hdr.h"
+#include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <time.h>
+#include "hdr.h"
+#include "extern.h"
 
-datime(d,t)
-int *d,*t;
-{       struct tm *tptr;
-	time_t tvec;
+#if 0
+void
+datime(d, t)
+	int    *d, *t;
+{
+	time_t  tvec;
+	struct tm *tptr;
 
 	time(&tvec);
-	tptr=localtime(&tvec);
-	*d=tptr->tm_yday+365*(tptr->tm_year-77); /* day since 1977  (mod leap)   */
-	*t=tptr->tm_hour*60+tptr->tm_min; /* and minutes since midnite    */
-}					/* pretty painless		*/
+	tptr = localtime(&tvec);
+	/* day since 1977  (mod leap)   */
+	*d = tptr->tm_yday + 365 * (tptr->tm_year - 77);
+	/* bug: this will overflow in the year 2066 AD                  */
+	/* it will be attributed to Wm the C's millenial celebration    */
+	/* and minutes since midnite */
+	*t = tptr->tm_hour * 60 + tptr->tm_min;
+}				/* pretty painless              */
+#endif
 
+char    magic[6];
 
-char magic[6];
-
+void
 poof()
 {
 	strcpy(magic, DECR(d,w,a,r,f));
 	latncy = 45;
 }
 
-Start(n)
-{       int d,t,delay;
+int
+Start()
+{
+	time_t  t, delay;
 
-	datime(&d,&t);
-	delay=(d-saved)*1440+(t-savet); /* good for about a month     */
+	time(&t);
+	delay = (t - savet) / 60;	/* Minutes	*/
+	saved = -1;
 
 	if (delay >= latncy)
-	{       saved = -1;
-		return(FALSE);
-	}
+		return (FALSE);
 	printf("This adventure was suspended a mere %d minute%s ago.",
-		delay, delay == 1? "" : "s");
-	if (delay <= latncy/3)
-	{       mspeak(2);
+		delay, delay == 1 ? "" : "s");
+	if (delay <= latncy / 3) {
+		mspeak(2);
 		exit(0);
 	}
 	mspeak(8);
-	if (!wizard())
-	{       mspeak(9);
+	if (!wizard()) {
+		mspeak(9);
 		exit(0);
 	}
-	saved = -1;
-	return(FALSE);
+	return (FALSE);
 }
 
+int
 wizard()		/* not as complex as advent/10 (for now)	*/
-{       register int wiz;
-	char *word,*x;
-	if (!yesm(16,0,7)) return(FALSE);
+{
+	char   *word, *x;
+
+	if (!yesm(16, 0, 7))
+		return (FALSE);
 	mspeak(17);
-	getin(&word,&x);
-	if (!weq(word,magic))
-	{       mspeak(20);
-		return(FALSE);
+	getin(&word, &x);
+	if (!weq(word, magic)) {
+		mspeak(20);
+		return (FALSE);
 	}
 	mspeak(19);
-	return(TRUE);
+	return (TRUE);
 }
 
-ciao(cmdfile)
-char *cmdfile;
-{       register char *c;
-	register int outfd, size;
-	char fname[80], buf[512];
-	extern unsigned filesize;
+void
+ciao()
+{
+	char   *c;
+	char    fname[80];
 
 	printf("What would you like to call the saved version?\n");
-	for (c=fname;; c++)
-		if ((*c=getchar())=='\n' || *c == EOF) break;
-	*c=0;
-	if (save(fname) != 0) return;		/* Save failed */
+	for (c = fname;; c++)
+		if ((*c = getchar()) == '\n' || *c == EOF)
+			break;
+	*c = 0;
+	if (save(fname) != 0)
+		return;		/* Save failed */
 	printf("To resume, say \"adventure %s\".\n", fname);
 	printf("\"With these rooms I might now have been familiarly acquainted.\"\n");
 	exit(0);
 }
 
 
+int
 ran(range)
-int range;
+	int     range;
 {
-	long rand(), i;
+	long    i;
 
-	i = rand() % range;
-	return(i);
+	i = random() % range;
+	return (i);
 }

@@ -1,3 +1,4 @@
+/*	$OpenBSD: hdr.h,v 1.6 1998/08/31 02:29:38 pjanzen Exp $	*/
 /*	$NetBSD: hdr.h,v 1.2 1995/03/21 12:05:02 cgd Exp $	*/
 
 /*-
@@ -54,116 +55,112 @@
  */
 
 /* hdr.h: included by c advent files */
-#include <sys/types.h>
-#include <stdio.h>
 
-int datfd;				/* message file descriptor	*/
-int delhit;
-int yea;
-extern char data_file[];		/* Virtual data file		*/
+#include <sys/types.h>
+#include <signal.h>
+
+int     datfd;			/* message file descriptor	*/
+volatile sig_atomic_t delhit;
+int     yea;
+extern char data_file[];	/* Virtual data file		*/
 
 #define TAB     011
 #define LF      012
 #define FLUSHLINE do { int c; while ((c = getchar()) != EOF && c != '\n'); } while (0)
 #define FLUSHLF   while (next()!=LF)
 
-int loc,newloc,oldloc,oldlc2,wzdark,gaveup,kq,k,k2;
-char *wd1,*wd2;				/* the complete words		*/
-int verb,obj,spk;
+int     loc, newloc, oldloc, oldlc2, wzdark, gaveup, kq, k, k2;
+char   *wd1,*wd2;		/* the complete words		*/
+int     verb, obj, spk;
 extern int blklin;
-int saved,savet,mxscor,latncy;
+time_t  savet;
+int     mxscor, latncy;
 
-#define SHORT 50			/* How short is a demo game?	*/
+#define SHORT 50		/* How short is a demo game?	*/
 
-#define MAXSTR	20			/* max length of user's words	*/
+#define MAXSTR  20		/* max length of user's words	*/
 
-#define HTSIZE	512			/* max number of vocab words	*/
-struct hashtab				/* hash table for vocabulary	*/
-{	int val;			/* word type &index (ktab)	*/
-	char *atab;			/* pointer to actual string	*/
+#define HTSIZE  512		/* max number of vocab words	*/
+struct hashtab	{		/* hash table for vocabulary	*/
+	int     val;		/* word type &index (ktab)	*/
+	char  *atab;		/* pointer to actual string	*/
 } voc[HTSIZE];
 
-#define SEED 1815622			/* "Encryption" seed		*/
+#define SEED 1815622		/* "Encryption" seed		*/
 
-struct text
+struct text {
 #ifdef OLDSTUFF
-{	int seekadr;			/* DATFILE must be < 2**16	*/
+	int seekadr;		/* DATFILE must be < 2**16	*/
 #endif OLDSTUFF
-{	char *seekadr;			/* Msg start in virtual disk	*/
-	int txtlen;			/* length of msg starting here	*/
+	char *seekadr;		/* Msg start in virtual disk	*/
+	int txtlen;		/* length of msg starting here	*/
 };
 
 #define RTXSIZ  205
-struct text rtext[RTXSIZ];		/* random text messages		*/
+struct text rtext[RTXSIZ];	/* random text messages		*/
 
 #define MAGSIZ  35
-struct text mtext[MAGSIZ];		/* magic messages		*/
+struct text mtext[MAGSIZ];	/* magic messages		*/
 
 int clsses;
 #define CLSMAX  12
-struct text ctext[CLSMAX];		/* classes of adventurer	*/
+struct text ctext[CLSMAX];	/* classes of adventurer	*/
 int cval[CLSMAX];
 
-struct text ptext[101];			/* object descriptions		*/
+struct text ptext[101];		/* object descriptions		*/
 
-#define LOCSIZ	141			/* number of locations		*/
-struct text ltext[LOCSIZ];		/* long loc description		*/
-struct text stext[LOCSIZ];		/* short loc descriptions	*/
+#define LOCSIZ	141		/* number of locations		*/
+struct text ltext[LOCSIZ];	/* long loc description		*/
+struct text stext[LOCSIZ];	/* short loc descriptions	*/
 
-struct travlist				/* direcs & conditions of travel*/
-{	struct travlist *next;		/* ptr to next list entry	*/
-	int conditions;			/* m in writeup (newloc / 1000) */
-	int tloc;			/* n in writeup (newloc % 1000) */
-	int tverb;			/* the verb that takes you there*/
-} *travel[LOCSIZ],*tkk;			/* travel is closer to keys(...)*/
+struct travlist			/* direcs & conditions of travel*/
+{	struct travlist *next;	/* ptr to next list entry	*/
+	int conditions;		/* m in writeup (newloc / 1000) */
+	int tloc;		/* n in writeup (newloc % 1000) */
+	int tverb;		/* the verb that takes you there*/
+} *travel[LOCSIZ],*tkk;		/* travel is closer to keys(...)*/
 
 int atloc[LOCSIZ];
 
-int  plac[101];				/* initial object placement	*/
-int  fixd[101],fixed[101];		/* location fixed?		*/
+int	plac[101];		/* initial object placement	*/
+int	fixd[101], fixed[101];	/* location fixed?		*/
 
-int actspk[35];				/* rtext msg for verb <n>	*/
+int	actspk[35];		/* rtext msg for verb <n>	*/
 
-int cond[LOCSIZ];			/* various condition bits	*/
+int	cond[LOCSIZ];		/* various condition bits	*/
 
-extern int setbit[16];			/* bit defn masks 1,2,4,...	*/
+extern int setbit[16];		/* bit defn masks 1,2,4,...	*/
 
-int hntmax;
-int hints[20][5];			/* info on hints		*/
-int hinted[20],hintlc[20];
+int	hntmax;
+int	hints[20][5];		/* info on hints		*/
+int	hinted[20], hintlc[20];
 
-int place[101], prop[101],linkx[201];
-int abb[LOCSIZ];
+int	place[101], prop[101], linkx[201];
+int	abb[LOCSIZ];
 
-int maxtrs,tally,tally2;		/* treasure values		*/
+int	maxtrs, tally, tally2;	/* treasure values		*/
 
 #define FALSE   0
 #define TRUE    1
 
-int keys,lamp,grate,cage,rod,rod2,steps,/* mnemonics			*/
-	bird,door,pillow,snake,fissur,tablet,clam,oyster,magzin,
-	dwarf,knife,food,bottle,water,oil,plant,plant2,axe,mirror,dragon,
-	chasm,troll,troll2,bear,messag,vend,batter,
-	nugget,coins,chest,eggs,tridnt,vase,emrald,pyram,pearl,rug,chain,
-	spices,
-	back,look,cave,null,entrnc,dprssn,
-	enter, stream, pour,
-	say,lock,throw,find,invent;
+int	keys, lamp, grate, cage, rod, rod2, steps,	/* mnemonics */
+	bird, door, pillow, snake, fissur, tablet, clam, oyster,
+	magzin, dwarf, knife, food, bottle, water, oil, plant, plant2,
+	axe, mirror, dragon, chasm, troll, troll2, bear, messag,
+	vend, batter, nugget, coins, chest, eggs, tridnt, vase,
+	emrald, pyram, pearl, rug, chain, spices, back, look, cave,
+	null, entrnc, dprssn, enter, stream, pour, say, lock, throw,
+	find, invent;
 
-int chloc,chloc2,dseen[7],dloc[7],	/* dwarf stuff			*/
-	odloc[7],dflag,daltlc;
+int	chloc, chloc2, dseen[7], dloc[7],	/* dwarf stuff	*/
+	odloc[7], dflag, daltlc;
 
-int tk[21],stick,dtotal,attack;
-int turns,lmwarn,iwest,knfloc,detail,   /* various flags & counters     */
-	abbnum,maxdie,numdie,holdng,dkill,foobar,bonus,clock1,clock2,
-	saved,closng,panic,closed,scorng;
+int	tk[21], stick, dtotal, attack;
+int	turns, lmwarn, iwest, knfloc, detail,   /* various flags & counters */
+	abbnum, maxdie, numdie, holdng, dkill, foobar, bonus, clock1,
+	clock2, saved, closng, panic, closed, scorng;
 
-int demo,newloc,limit;
-
-char *decr();
-unsigned long crc();
+int	demo, newloc, limit;
 
 /* We need to get a little tricky to avoid strings */
 #define DECR(a,b,c,d,e) decr('a'+'+','b'+'-','c'+'#','d'+'&','e'+'%')
-
-gid_t	egid;

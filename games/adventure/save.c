@@ -1,3 +1,4 @@
+/*	$OpenBSD: save.c,v 1.5 1998/08/31 02:29:43 pjanzen Exp $	*/
 /*	$NetBSD: save.c,v 1.2 1995/03/21 12:05:08 cgd Exp $	*/
 
 /*-
@@ -42,14 +43,14 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: save.c,v 1.2 1995/03/21 12:05:08 cgd Exp $";
+static char rcsid[] = "$OpenBSD: save.c,v 1.5 1998/08/31 02:29:43 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-#include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "hdr.h"
+#include "extern.h"
 
 struct savestruct
 {
@@ -59,141 +60,132 @@ struct savestruct
 
 struct savestruct save_array[] =
 {
-	&abbnum,	sizeof(abbnum),
-	&attack,	sizeof(attack),
-	&blklin,	sizeof(blklin),
-	&bonus,		sizeof(bonus),
-	&chloc,		sizeof(chloc),
-	&chloc2,	sizeof(chloc2),
-	&clock1,	sizeof(clock1),
-	&clock2,	sizeof(clock2),
-	&closed,	sizeof(closed),
-	&closng,	sizeof(closng),
-	&daltlc,	sizeof(daltlc),
-	&demo,		sizeof(demo),
-	&detail,	sizeof(detail),
-	&dflag,		sizeof(dflag),
-	&dkill,		sizeof(dkill),
-	&dtotal,	sizeof(dtotal),
-	&foobar,	sizeof(foobar),
-	&gaveup,	sizeof(gaveup),
-	&holdng,	sizeof(holdng),
-	&iwest,		sizeof(iwest),
-	&k,		sizeof(k),
-	&k2,		sizeof(k2),
-	&knfloc,	sizeof(knfloc),
-	&kq,		sizeof(kq),
-	&latncy,	sizeof(latncy),
-	&limit,		sizeof(limit),
-	&lmwarn,	sizeof(lmwarn),
-	&loc,		sizeof(loc),
-	&maxdie,	sizeof(maxdie),
-	&mxscor,	sizeof(mxscor),
-	&newloc,	sizeof(newloc),
-	&numdie,	sizeof(numdie),
-	&obj,		sizeof(obj),
-	&oldlc2,	sizeof(oldlc2),
-	&oldloc,	sizeof(oldloc),
-	&panic,		sizeof(panic),
-	&saved,		sizeof(saved),
-	&savet,		sizeof(savet),
-	&scorng,	sizeof(scorng),
-	&spk,		sizeof(spk),
-	&stick,		sizeof(stick),
-	&tally,		sizeof(tally),
-	&tally2,	sizeof(tally2),
-	&tkk,		sizeof(tkk),
-	&turns,		sizeof(turns),
-	&verb,		sizeof(verb),
-	&wd1,		sizeof(wd1),
-	&wd2,		sizeof(wd2),
-	&wzdark,	sizeof(wzdark),
-	&yea,		sizeof(yea),
-	atloc,		sizeof(atloc),
-	dloc,		sizeof(dloc),
-	dseen,		sizeof(dseen),
-	fixed,		sizeof(fixed),
-	hinted,		sizeof(hinted),
-	linkx,		 sizeof(linkx),
-	odloc,		sizeof(odloc),
-	place,		sizeof(place),
-	prop,		sizeof(prop),
-	tk,		sizeof(tk),
+	{&abbnum, sizeof(abbnum)},
+	{&attack, sizeof(attack)},
+	{&blklin, sizeof(blklin)},
+	{&bonus,  sizeof(bonus)},
+	{&chloc,  sizeof(chloc)},
+	{&chloc2, sizeof(chloc2)},
+	{&clock1, sizeof(clock1)},
+	{&clock2, sizeof(clock2)},
+	{&closed, sizeof(closed)},
+	{&closng, sizeof(closng)},
+	{&daltlc, sizeof(daltlc)},
+	{&demo,   sizeof(demo)},
+	{&detail, sizeof(detail)},
+	{&dflag,  sizeof(dflag)},
+	{&dkill,  sizeof(dkill)},
+	{&dtotal, sizeof(dtotal)},
+	{&foobar, sizeof(foobar)},
+	{&gaveup, sizeof(gaveup)},
+	{&holdng, sizeof(holdng)},
+	{&iwest,  sizeof(iwest)},
+	{&k,      sizeof(k)},
+	{&k2,     sizeof(k2)},
+	{&knfloc, sizeof(knfloc)},
+	{&kq,     sizeof(kq)},
+	{&latncy, sizeof(latncy)},
+	{&limit,  sizeof(limit)},
+	{&lmwarn, sizeof(lmwarn)},
+	{&loc,    sizeof(loc)},
+	{&maxdie, sizeof(maxdie)},
+	{&mxscor, sizeof(mxscor)},
+	{&newloc, sizeof(newloc)},
+	{&numdie, sizeof(numdie)},
+	{&obj,    sizeof(obj)},
+	{&oldlc2, sizeof(oldlc2)},
+	{&oldloc, sizeof(oldloc)},
+	{&panic,  sizeof(panic)},
+	{&savet,  sizeof(savet)},
+	{&scorng, sizeof(scorng)},
+	{&spk,    sizeof(spk)},
+	{&stick,  sizeof(stick)},
+	{&tally,  sizeof(tally)},
+	{&tally2, sizeof(tally2)},
+	{&tkk,    sizeof(tkk)},
+	{&turns,  sizeof(turns)},
+	{&verb,   sizeof(verb)},
+	{&wd1,    sizeof(wd1)},
+	{&wd2,    sizeof(wd2)},
+	{&wzdark, sizeof(wzdark)},
+	{&yea,    sizeof(yea)},
+	{atloc,   sizeof(atloc)},
+	{dloc,    sizeof(dloc)},
+	{dseen,   sizeof(dseen)},
+	{fixed,   sizeof(fixed)},
+	{hinted,  sizeof(hinted)},
+	{linkx,   sizeof(linkx)},
+	{odloc,   sizeof(odloc)},
+	{place,   sizeof(place)},
+	{prop,    sizeof(prop)},
+	{tk,      sizeof(tk)},
 
-	NULL,   0
+	{NULL,    0}
 };
 
-save(outfile)   /* Two passes on data: first to get checksum, second */
-char *outfile;  /* to output the data using checksum to start random #s */
+int
+save(outfile)	/* Two passes on data: first to get checksum, second */
+	const char *outfile;  /* to output the data using checksum to start random #s */
 {
-	FILE *out;
+	FILE   *out;
 	struct savestruct *p;
-	char *s;
-	long sum;
-	int i;
+	char   *s;
+	long    sum;
+	int     i;
 
 	crc_start();
 	for (p = save_array; p->address != NULL; p++)
 		sum = crc(p->address, p->width);
 	srandom((int) sum);
 
-	setegid(egid);
-	if ((out = fopen(outfile, "wb")) == NULL)
-	{
-	    fprintf(stderr,
-		"Hmm.  The name \"%s\" appears to be magically blocked.\n",
-		outfile);
-	    setegid(getgid());
-	    return 1;
+	if ((out = fopen(outfile, "wb")) == NULL) {
+		fprintf(stderr,
+		   "Hmm.  The name \"%s\" appears to be magically blocked.\n",
+		   outfile);
+		return 1;
 	}
-	setegid(getgid());
 
-	fwrite(&sum, sizeof(sum), 1, out);      /* Here's the random() key */
-	for (p = save_array; p->address != NULL; p++)
-	{
+	fwrite(&sum, sizeof(sum), 1, out);	/* Here's the random() key */
+	for (p = save_array; p->address != NULL; p++) {
 		for (s = p->address, i = 0; i < p->width; i++, s++)
-			*s = (*s ^ random()) & 0xFF;      /* Lightly encrypt */
+			*s = (*s ^ random()) & 0xFF;	/* Lightly encrypt */
 		fwrite(p->address, p->width, 1, out);
 	}
 	fclose(out);
 	return 0;
 }
 
+int
 restore(infile)
-char *infile;
+	const char *infile;
 {
-	FILE *in;
+	FILE   *in;
 	struct savestruct *p;
-	char *s;
-	long sum, cksum;
-	int i;
+	char   *s;
+	long    sum, cksum;
+	int     i;
 
-	setegid(egid);
-	if ((in = fopen(infile, "rb")) == NULL)
-	{
-	    fprintf(stderr,
-		"Hmm.  The file \"%s\" appears to be magically blocked.\n",
-		infile);
-	    setegid(getgid());
-	    return 1;
+	if ((in = fopen(infile, "rb")) == NULL) {
+		fprintf(stderr,
+		   "Hmm.  The file \"%s\" appears to be magically blocked.\n",
+		   infile);
+		return 1;
 	}
-	setegid(getgid());
 
 	fread(&sum, sizeof(sum), 1, in);	/* Get the seed */
-	srandom((int) sum);
-	for (p = save_array; p->address != NULL; p++)
-	{
+	srandom((unsigned int) sum);
+	for (p = save_array; p->address != NULL; p++) {
 		fread(p->address, p->width, 1, in);
 		for (s = p->address, i = 0; i < p->width; i++, s++)
-			*s = (*s ^ random()) & 0xFF;  /* Lightly decrypt */
+			*s = (*s ^ random()) & 0xFF;	/* Lightly decrypt */
 	}
 	fclose(in);
 
-	crc_start();				/* See if she cheated */
+	crc_start();			/* See if she cheated */
 	for (p = save_array; p->address != NULL; p++)
 		cksum = crc(p->address, p->width);
-	if (sum != cksum)			/* Tsk tsk */
-	    return 2;				/* Altered the file */
+	if (sum != cksum)		/* Tsk tsk */
+		return 2;		/* Altered the file */
 	/* We successfully restored, so this really was a save file */
 	/* Get rid of the file, but don't bother checking that we did */
 	return 0;
