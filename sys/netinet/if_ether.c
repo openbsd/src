@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.39 2002/03/14 03:16:11 millert Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.40 2002/03/27 17:13:47 ian Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -532,7 +532,7 @@ in_arpinput(m)
 			inet_ntoa(isaddr));
 		goto out;
 	}
-	if (isaddr.s_addr == myaddr.s_addr) {
+	if (myaddr.s_addr && isaddr.s_addr == myaddr.s_addr) {
 		log(LOG_ERR,
 		   "duplicate IP address %s sent from ethernet address %s\n",
 		   inet_ntoa(isaddr), ether_sprintf(ea->arp_sha));
