@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.67 2000/02/21 14:28:02 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.68 2000/03/23 01:24:28 millert Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.67 2000/02/21 14:28:02 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.68 2000/03/23 01:24:28 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1727,23 +1727,6 @@ find_bounds(lp, bios_lp)
 			}
 			if (new_end > ending_sector)
 				ending_sector = new_end;
-
-			/*
-			 * If we are honoring the fdisk partitions, we should
-			 * use the BIOS geometry unless ending_sector is beyond
-			 * the end of the BIOS geometry, in which case we know
-			 * the BIOS geometry is bogus.
-			 */
-			if (bios_lp != NULL && ending_sector <= bios_lp->d_secperunit) {
-				lp->d_secsize = bios_lp->d_secsize;
-				lp->d_nsectors = bios_lp->d_nsectors;
-				lp->d_ntracks = bios_lp->d_ntracks;
-				lp->d_ncylinders = bios_lp->d_ncylinders;
-				lp->d_secpercyl = bios_lp->d_secpercyl;
-				lp->d_secperunit = bios_lp->d_secperunit;
-				puts("Using BIOS geometry...\nYou can use the "
-				    "'g' command to change this.");
-			}
 		} else {
 			/* Don't trounce the MBR */
 			starting_sector = 63;
