@@ -2669,3 +2669,4 @@
 ./usr/sbin/ifmcstat
 ./usr/sbin/rtsold
 ./sbin/rtsol
+./usr.sbin/ndp

@@ -1,3 +1,5 @@
+/*	$OpenBSD: ndp.c,v 1.2 1999/12/10 07:26:56 itojun Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
  * All rights reserved.
