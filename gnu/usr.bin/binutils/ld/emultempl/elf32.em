@@ -1459,6 +1459,8 @@ echo '  ; else if (link_info.shared) return'		   >> e${EMULATION_NAME}.c
 sed $sc ldscripts/${EMULATION_NAME}.xs                     >> e${EMULATION_NAME}.c
 fi
 
+echo '  ; else if (config.data_bss_contig == true) return'   >> e${EMULATION_NAME}.c
+sed $sc ldscripts/${EMULATION_NAME}.xz                     >> e${EMULATION_NAME}.c
 echo '  ; else return'                                     >> e${EMULATION_NAME}.c
 sed $sc ldscripts/${EMULATION_NAME}.x                      >> e${EMULATION_NAME}.c
 echo '; }'                                                 >> e${EMULATION_NAME}.c
@@ -1480,6 +1482,8 @@ cat >>e${EMULATION_NAME}.c <<EOF
     return "ldscripts/${EMULATION_NAME}.xn";
   else if (link_info.shared)
     return "ldscripts/${EMULATION_NAME}.xs";
+  else if (config.data_bss_contig == true)
+    return "ldscripts/${EMULATION_NAME}.xz";
   else
     return "ldscripts/${EMULATION_NAME}.x";
 }
