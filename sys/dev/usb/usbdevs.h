@@ -1,10 +1,10 @@
-/*	$OpenBSD: usbdevs.h,v 1.6 1999/09/27 17:52:51 fgsch Exp $	*/
+/*	$OpenBSD: usbdevs.h,v 1.7 1999/10/06 12:53:05 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: usbdevs,v 1.6 1999/09/27 17:52:03 fgsch Exp 	
+ *		OpenBSD: usbdevs,v 1.7 1999/10/06 12:52:18 fgsch Exp 	
  */
 
 /* $NetBSD: usbdevs,v 1.45 1999/09/15 13:57:09 augustss Exp $ */
@@ -101,6 +101,7 @@
 #define	USB_VENDOR_MACALLY	0x0618		/* Macally */
 #define	USB_VENDOR_MULTITECH	0x06e0		/* MultiTech */
 #define	USB_VENDOR_ADS	0x06e1		/* ADS Technologies */
+#define	USB_VENDOR_ACTIVEWIRE	0x0854		/* ActiveWire Inc. */
 #define	USB_VENDOR_PLX	0x10b5		/* PLX */
 #define	USB_VENDOR_INSIDEOUT	0x1608		/* Inside Out Networks */
 #define	USB_VENDOR_ENTREGA	0x1645		/* Entrega */
@@ -278,6 +279,10 @@
 #define	USB_PRODUCT_ENTREGA_CENTRONICS	0x0006		/* Centronics connector */
 #define	USB_PRODUCT_ENTREGA_1S9	0x0093		/* 1S9 serial connector */
 #define	USB_PRODUCT_ENTREGA_SERIAL	0x8001		/* DB25 Serial connector */
+
+/* ActiveWire Inc. products */
+#define	USB_PRODUCT_ACTIVEWIRE_IOBOARD	0x0100		/* I/O Board */
+#define	USB_PRODUCT_ACTIVEWIRE_IOBOARD_FW1	0x0101		/* I/O Board, rev. 1 firmware */
 
 /* PLX products */
 #define	USB_PRODUCT_PLX_TESTBOARD	0x9060		/* test board */
