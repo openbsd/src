@@ -1,7 +1,8 @@
-/*	$NetBSD: dma.c,v 1.7 1996/02/14 02:44:17 thorpej Exp $	*/
+/*	$OpenBSD: dma.c,v 1.4 1997/01/12 15:12:28 downsj Exp $	*/
+/*	$NetBSD: dma.c,v 1.10 1996/12/09 03:09:51 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1995 Jason R. Thorpe.
+ * Copyright (c) 1995, 1996 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1982, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -54,7 +55,6 @@
 
 #include <hp300/hp300/isr.h>
 
-extern void isrlink();
 extern void _insque();
 extern void _remque();
 extern u_int kvtop();
@@ -89,6 +89,8 @@ struct	dma_softc {
 	struct	dmareg *sc_dmareg;		/* pointer to our hardware */
 	struct	dma_channel sc_chan[NDMACHAN];	/* 2 channels */
 	char	sc_type;			/* A, B, or C */
+	int	sc_ipl;				/* our interrupt level */
+	void	*sc_ih;				/* interrupt cookie */
 } Dma_softc;
 
 /* types */
@@ -140,7 +142,7 @@ dmainit()
 	 *
 	 * XXX Don't know how to easily differentiate the A and B cards,
 	 * so we just hope nobody has an A card (A cards will work if
-	 * DMAINTLVL is set to 3).
+	 * splbio works out to ipl 3).
 	 */
 	if (badbaddr((char *)&dma->dma_id[2])) {
 		rev = 'B';
@@ -181,8 +183,31 @@ dmainit()
 	printf("%s: 98620%c, 2 channels, %d bit\n", sc->sc_xname,
 	       rev, (rev == 'B') ? 16 : 32);
 
-	/* Establish the interrupt handler */
-	isrlink(dmaintr, sc, DMAINTLVL, ISRPRI_BIO);
+	/*
+	 * Defer hooking up our interrupt until the first
+	 * DMA-using controller has hooked up theirs.
+	 */
+	sc->sc_ih = NULL;
+}
+
+/*
+ * Compute the ipl and (re)establish the interrupt handler
+ * for the DMA controller.
+ */
+void
+dmacomputeipl()
+{
+	struct dma_softc *sc = &Dma_softc;
+
+	if (sc->sc_ih != NULL)
+		isrunlink(sc->sc_ih);
+
+	/*
+	 * Our interrupt level must be as high as the highest
+	 * device using DMA (i.e. splbio).
+	 */
+	sc->sc_ipl = PSLTOIPL(hp300_bioipl);
+	sc->sc_ih = isrlink(dmaintr, sc, sc->sc_ipl, ISRPRI_BIO);
 }
 
 int
@@ -342,7 +367,7 @@ dmago(unit, addr, count, flags)
 	/*
 	 * Set up the command word based on flags
 	 */
-	dc->dm_cmd = DMA_ENAB | DMA_IPL(DMAINTLVL) | DMA_START;
+	dc->dm_cmd = DMA_ENAB | DMA_IPL(sc->sc_ipl) | DMA_START;
 	if ((flags & DMAGO_READ) == 0)
 		dc->dm_cmd |= DMA_WRT;
 	if (flags & DMAGO_LWORD)

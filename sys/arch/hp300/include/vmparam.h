@@ -1,4 +1,5 @@
-/*	$NetBSD: vmparam.h,v 1.7 1994/10/26 07:26:52 cgd Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.2 1997/01/12 15:13:46 downsj Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.9 1996/10/20 23:23:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.

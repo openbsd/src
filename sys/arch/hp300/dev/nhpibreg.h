@@ -1,3 +1,4 @@
+/*	$OpenBSD: nhpibreg.h,v 1.2 1997/01/12 15:12:56 downsj Exp $	*/
 /*	$NetBSD: nhpibreg.h,v 1.5 1995/01/07 10:30:15 mycroft Exp $	*/
 
 /*

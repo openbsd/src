@@ -1,4 +1,5 @@
-/*	$NetBSD: grf_hy.c,v 1.5 1996/03/03 16:49:00 thorpej Exp $	*/
+/*	$OpenBSD: grf_hy.c,v 1.3 1997/01/12 15:12:35 downsj Exp $	*/
+/*	$NetBSD: grf_hy.c,v 1.7 1996/12/17 08:41:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -44,9 +45,6 @@
  *	@(#)grf_hy.c	8.4 (Berkeley) 1/12/94
  */
 
-#include "grf.h"
-#if NGRF > 0
-
 /*
  * Graphics routines for HYPERION frame buffer
  */
@@ -58,11 +56,16 @@
 #include <sys/tty.h>
 #include <sys/systm.h>
 #include <sys/uio.h>
+#include <sys/device.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 
 #include <dev/cons.h>
+
+#include <hp300/dev/diovar.h>
+#include <hp300/dev/diodevs.h>
+#include <hp300/dev/intiovar.h>
 
 #include <hp300/dev/grfioctl.h>
 #include <hp300/dev/grfvar.h>
@@ -79,6 +82,19 @@ caddr_t badhyaddr = (caddr_t) -1;
 int	hy_init __P((struct grf_data *gp, int, caddr_t));
 int	hy_mode __P((struct grf_data *gp, int, caddr_t));
 void	hyper_ite_fontinit __P((struct ite_data *));
+
+#ifdef NEWCONFIG
+int	hyper_dio_match __P((struct device *, struct cfdata *, void *));
+void	hyper_dio_attach __P((struct device *, struct device *, void *));
+
+struct cfattach hyper_dio_ca = {
+	sizeof(struct grfdev_softc), hyper_dio_match, hyper_dio_attach
+};
+
+struct cfdriver hyper_cd = {
+	NULL, "hyper", DV_DULL
+};
+#endif /* NEWCONFIG */
 
 /* Hyperion grf switch */
 struct grfsw hyper_grfsw = {
@@ -103,6 +119,47 @@ struct itesw hyper_itesw = {
 };
 #endif /* NITE > 0 */
 
+#ifdef NEWCONFIG
+int
+hyper_dio_match(parent, match, aux)
+	struct device *parent;
+	struct cfdata *match;
+	void *aux;
+{
+	struct dio_attach_args *da = aux;
+
+	if (da->da_id == DIO_DEVICE_ID_FRAMEBUFFER &&
+	    da->da_secid == DIO_DEVICE_SECID_HYPERION)
+		return (1);
+
+	return (0);
+}
+
+void
+hyper_dio_attach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct grfdev_softc *sc = (struct grfdev_softc *)self;
+	struct dio_attach_args *da = aux;
+	caddr_t grf;
+
+	sc->sc_scode = da->da_scode;
+	if (sc->sc_scode == conscode)
+		grf = conaddr;
+	else {
+		grf = iomap(dio_scodetopa(sc->sc_scode), da->da_size);
+		if (grf == 0) {
+			printf("%s: can't map framebuffer\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
+	}
+
+	grfdev_attach(sc, hy_init, grf, &hyper_grfsw);
+}
+#endif /* NEWCONFIG */
+
 /*
  * Initialize hardware.
  * Must fill in the grfinfo structure in g_softc.
@@ -117,7 +174,7 @@ hy_init(gp, scode, addr)
 	register struct hyboxfb *hy = (struct hyboxfb *) addr;
 	struct grfinfo *gi = &gp->g_display;
 	int fboff;
-	extern caddr_t sctopa(), iomap();
+	extern caddr_t iomap();
 
 	/*
 	 * If the console has been initialized, and it was us, there's
@@ -127,7 +184,7 @@ hy_init(gp, scode, addr)
 		if (ISIIOVA(addr))
 			gi->gd_regaddr = (caddr_t) IIOP(addr);
 		else
-			gi->gd_regaddr = sctopa(scode);
+			gi->gd_regaddr = dio_scodetopa(scode);
 		gi->gd_regsize = 0x20000;
 		gi->gd_fbwidth = (hy->fbwmsb << 8) | hy->fbwlsb;
 		gi->gd_fbheight = (hy->fbhmsb << 8) | hy->fbhlsb;
@@ -764,7 +821,6 @@ void
 hypercninit(cp)
 	struct consdev *cp;
 {
-	struct ite_data *ip = &ite_cn;
 	struct grf_data *gp = &grf_cn;
 
 	/*
@@ -780,16 +836,9 @@ hypercninit(cp)
 	gp->g_flags = GF_ALIVE;
 
 	/*
-	 * Set up required ite data and initialize ite.
+	 * Initialize the terminal emulator.
 	 */
-	ip->isw = &hyper_itesw;
-	ip->grf = gp;
-	ip->flags = ITE_ALIVE|ITE_CONSOLE|ITE_ACTIVE|ITE_ISCONS;
-	ip->attrbuf = console_attributes;
-	iteinit(ip);
-
-	kbd_ite = ip;		/* XXX */
+	itecninit(gp, &hyper_itesw);
 }
 
 #endif /* NITE > 0 */
-#endif /* NGRF > 0 */

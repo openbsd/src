@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile.hp300,v 1.39 1996/05/11 16:12:02 mycroft Exp $
+#	$OpenBSD: Makefile.hp300,v 1.10 1997/01/12 15:12:14 downsj Exp $
+#	$NetBSD: Makefile.hp300,v 1.45 1996/12/01 06:12:30 jonathan Exp $
 
-# Makefile for NetBSD
+# Makefile for OpenBSD
 #
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -21,22 +22,28 @@
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
 
-AS?=	as
 CC?=	cc
-CPP?=	cpp
 LD?=	ld
-STRIP?=	strip -d
-TOUCH?=	touch -f -c
+MKDEP?=	mkdep
+STRIP?=	strip
+COPTS?=		-O2
 
 # source tree is located via $S relative to the compilation directory
 S=	../../../..
 HP300=	../..
 
-INCLUDES=	-I. -I$S/arch -I$S
-CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dmc68020 -Dhp300 -DFPCOPROC
-CFLAGS=		${DEBUG} -O2 -Werror -msoft-float
+INCLUDES=	-I. -I$S/arch -I$S -nostdinc
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
+		-Dmc68020 -Dhp300 -DFPCOPROC
+CWARNFLAGS=	-Werror
+CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 0 -e start
+STRIPFLAGS=	-d
+
+HOSTED_CC=	${CC}
+HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
+HOSTED_CFLAGS=	${CFLAGS}
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
@@ -57,19 +64,13 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 ### for the Motorola 68040 Floating Point Software Product
 .include "$S/arch/m68k/fpsp/Makefile.inc"
 
-# compile rules: rules are named ${TYPE}_${SUFFIX}${CONFIG_DEP}
-# where TYPE is NORMAL, DRIVER, or PROFILE}; SUFFIX is the file suffix,
-# capitalized (e.g. C for a .c file), and CONFIG_DEP is _C if the file
-# is marked as config-dependent.
+# compile rules: rules are named ${TYPE}_${SUFFIX} where TYPE is NORMAL or
+# HOSTED}, and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).
 
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
-NORMAL_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
-
-DRIVER_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
-DRIVER_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
-
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
-NORMAL_S_C=	${CC} ${AFLAGS} ${CPPFLAGS} ${PARAM} -c $<
+
+HOSTED_C=	${HOSTED_CC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 
 %OBJS
 
@@ -95,9 +96,9 @@ DEBUG?=
 LINKFLAGS+=	-X
 SYSTEM_LD_TAIL+=; \
 		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
-		echo ${STRIP} $@; ${STRIP} $@
+		echo ${STRIP} ${STRIPFLAGS} $@; ${STRIP} ${STRIPFLAGS} $@
 .else
-LINKFLAGS+=	-x
+LINKFLAGS+=	-S
 .endif
 
 %LOAD
@@ -109,14 +110,14 @@ genassym: genassym.o
 	${CC} -o $@ genassym.o
 
 genassym.o: ${HP300}/hp300/genassym.c
-	${NORMAL_C_C}
+	${HOSTED_C}
 
 param.c: $S/conf/param.c
 	rm -f param.c
 	cp $S/conf/param.c .
 
 param.o: param.c Makefile
-	${NORMAL_C_C}
+	${NORMAL_C}
 
 ioconf.o: ioconf.c
 	${NORMAL_C}
@@ -131,7 +132,7 @@ clean::
 	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
 
 lint:
-	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} ${PARAM} -UKGDB \
+	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} -UKGDB \
 	    ${HP300}/hp300/Locore.c ${CFILES} ${HP300}/hp300/swapgeneric.c \
 	    ioconf.c param.c | \
 	    grep -v 'static function .* unused'
@@ -151,12 +152,13 @@ SRCS=	${HP300}/hp300/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
 .depend: ${SRCS} assym.h param.c
-	mkdep ${AFLAGS} ${CPPFLAGS} ${HP300}/hp300/locore.s
-	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${HP300}/hp300/locore.s
+	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	-if test -n "${SFILES}"; then \
-		mkdep -a ${AFLAGS} ${CPPFLAGS} ${SFILES}; \
+		${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}; \
 	fi
-	mkdep -a ${CFLAGS} ${CPPFLAGS} ${PARAM} ${HP300}/hp300/genassym.c
+	${MKDEP} -a ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} \
+	    ${HP300}/hp300/genassym.c
 
 
 # depend on root or device configuration

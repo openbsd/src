@@ -1,3 +1,4 @@
+/*	$OpenBSD: dkbad.c,v 1.2 1997/01/12 15:13:15 downsj Exp $	*/
 /*	$NetBSD: dkbad.c,v 1.4 1994/10/26 07:25:33 cgd Exp $	*/
 
 /*

@@ -1,4 +1,5 @@
-/*	$NetBSD: scsi.c,v 1.10 1996/05/18 23:57:03 thorpej Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.5 1997/01/12 15:13:01 downsj Exp $	*/
+/*	$NetBSD: scsi.c,v 1.13 1996/12/09 03:16:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -68,7 +69,6 @@
 #define	SCSI_DATA_WAIT	10000	/* wait per data in/out step */
 #define	SCSI_INIT_WAIT	50000	/* wait per step (both) during init */
 
-extern void isrlink();
 extern void _insque();
 extern void _remque();
 
@@ -262,7 +262,8 @@ scsiattach(hc)
 	hs->sc_sq.dq_forw = hs->sc_sq.dq_back = &hs->sc_sq;
 
 	/* Establish the interrupt handler. */
-	isrlink(scsiintr, hs, hc->hp_ipl, ISRPRI_BIO);
+	(void) isrlink(scsiintr, hs, hc->hp_ipl, ISRPRI_BIO);
+	dmacomputeipl();
 
 	/* Reset the controller. */
 	scsireset(hc->hp_unit);

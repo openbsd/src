@@ -1,4 +1,5 @@
-/*	$NetBSD: cpu.h,v 1.19 1996/05/17 15:37:07 thorpej Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.5 1997/01/12 15:13:33 downsj Exp $	*/
+/*	$NetBSD: cpu.h,v 1.21 1996/10/07 06:29:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,6 +49,11 @@
 /*
  * Exported definitions unique to hp300/68k cpu support.
  */
+
+/*
+ * Get common m68k CPU definitions.
+ */
+#include <m68k/cpu.h>
 
 /*
  * definitions of cpu-dependent requirements
@@ -196,28 +202,25 @@ extern unsigned char ssir;
 #define	HP_380		7	/* 25Mhz 68040 */
 #define HP_433		8	/* 33Mhz 68040 */
 
-/* values for mmutype (assigned for quick testing) */
-#define	MMU_68040	-2	/* 68040 on-chip MMU */
-#define	MMU_68030	-1	/* 68030 on-chip subset of 68851 */
-#define	MMU_HP		0	/* HP proprietary */
-#define	MMU_68851	1	/* Motorola 68851 */
-
-/* values for ectype */
-#define	EC_PHYS		-1	/* external physical address cache */
-#define	EC_NONE		0	/* no external cache */
-#define	EC_VIRT		1	/* external virtual address cache */
-
 #ifdef _KERNEL
 extern	int machineid;		/* CPU model */
-extern	int mmutype;		/* MMU on this host */
-extern	int ectype;		/* External cache type */
 extern	int cpuspeed;		/* CPU speed, in MHz */
 
 extern	char *intiobase, *intiolimit;
 extern	void (*vectab[]) __P((void));
 
+struct	frame;
+
+/* locore.s functions */
 void	doboot __P((void))
 	__attribute__((__noreturn__));
+void	ecacheon __P((void));
+void	ecacheoff __P((void));
+
+/* machdep.c functions */
+int	badaddr __P((caddr_t));
+int	badbaddr __P((caddr_t));
+void	regdump __P((struct frame *, int));
 
 /* what is this supposed to do? i.e. how is it different than startrtclock? */
 #define	enablertclock()
@@ -295,67 +298,5 @@ void	doboot __P((void))
 
 #define	MMU_FAULT	(MMU_PTF|MMU_PF|MMU_WPF|MMU_BERR)
 #define	MMU_ENAB	(MMU_UMEN|MMU_SMEN|MMU_IEN|MMU_FPE)
-
-/*
- * 68851 and 68030 MMU
- */
-#define	PMMU_LVLMASK	0x0007
-#define	PMMU_INV	0x0400
-#define	PMMU_WP		0x0800
-#define	PMMU_ALV	0x1000
-#define	PMMU_SO		0x2000
-#define	PMMU_LV		0x4000
-#define	PMMU_BE		0x8000
-#define	PMMU_FAULT	(PMMU_WP|PMMU_INV)
-
-/*
- * 68040 MMU
- */
-#define	MMU4_RES	0x001
-#define	MMU4_TTR	0x002
-#define	MMU4_WP		0x004
-#define	MMU4_MOD	0x010
-#define	MMU4_CMMASK	0x060
-#define	MMU4_SUP	0x080
-#define	MMU4_U0		0x100
-#define	MMU4_U1		0x200
-#define	MMU4_GLB	0x400
-#define	MMU4_BE		0x800
-
-/* 680X0 function codes */
-#define	FC_USERD	1	/* user data space */
-#define	FC_USERP	2	/* user program space */
-#define	FC_PURGE	3	/* HPMMU: clear TLB entries */
-#define	FC_SUPERD	5	/* supervisor data space */
-#define	FC_SUPERP	6	/* supervisor program space */
-#define	FC_CPU		7	/* CPU space */
-
-/* fields in the 68020 cache control register */
-#define	IC_ENABLE	0x0001	/* enable instruction cache */
-#define	IC_FREEZE	0x0002	/* freeze instruction cache */
-#define	IC_CE		0x0004	/* clear instruction cache entry */
-#define	IC_CLR		0x0008	/* clear entire instruction cache */
-
-/* additional fields in the 68030 cache control register */
-#define	IC_BE		0x0010	/* instruction burst enable */
-#define	DC_ENABLE	0x0100	/* data cache enable */
-#define	DC_FREEZE	0x0200	/* data cache freeze */
-#define	DC_CE		0x0400	/* clear data cache entry */
-#define	DC_CLR		0x0800	/* clear entire data cache */
-#define	DC_BE		0x1000	/* data burst enable */
-#define	DC_WA		0x2000	/* write allocate */
-
-#define	CACHE_ON	(DC_WA|DC_BE|DC_CLR|DC_ENABLE|IC_BE|IC_CLR|IC_ENABLE)
-#define	CACHE_OFF	(DC_CLR|IC_CLR)
-#define	CACHE_CLR	(CACHE_ON)
-#define	IC_CLEAR	(DC_WA|DC_BE|DC_ENABLE|IC_BE|IC_CLR|IC_ENABLE)
-#define	DC_CLEAR	(DC_WA|DC_BE|DC_CLR|DC_ENABLE|IC_BE|IC_ENABLE)
-
-/* 68040 cache control register */
-#define	IC4_ENABLE	0x8000		/* instruction cache enable bit */
-#define	DC4_ENABLE	0x80000000	/* data cache enable bit */
-
-#define	CACHE4_ON	(IC4_ENABLE|DC4_ENABLE)
-#define	CACHE4_OFF	(0)
 
 #endif /* _HP300_CPU_H_ */

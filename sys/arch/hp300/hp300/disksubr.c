@@ -1,3 +1,4 @@
+/*	$OpenBSD: disksubr.c,v 1.3 1997/01/12 15:13:14 downsj Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.8 1996/02/02 19:50:26 scottr Exp $	*/
 
 /*
@@ -47,6 +48,13 @@
 #include <sys/syslog.h>
 
 #define	b_cylinder	b_resid
+
+void
+dk_establish(dk, dev)
+	struct disk *dk;
+	struct device *dev;
+{
+}
 
 /*
  * Attempt to read a disk label from a device using the indicated stategy

@@ -1,3 +1,4 @@
+/*	$OpenBSD: scsivar.h,v 1.3 1997/01/12 15:13:02 downsj Exp $	*/
 /*	$NetBSD: scsivar.h,v 1.5 1995/12/02 18:22:14 thorpej Exp $	*/
 
 /*

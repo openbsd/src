@@ -1,4 +1,5 @@
-/*	$NetBSD: grf_gb.c,v 1.7 1996/03/03 16:48:58 thorpej Exp $	*/
+/*	$OpenBSD: grf_gb.c,v 1.3 1997/01/12 15:12:33 downsj Exp $	*/
+/*	$NetBSD: grf_gb.c,v 1.9 1996/12/17 08:41:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -43,9 +44,6 @@
  *	@(#)grf_gb.c	8.4 (Berkeley) 1/12/94
  */
 
-#include "grf.h"
-#if NGRF > 0
-
 /*
  * Graphics routines for the Gatorbox.
  *
@@ -60,11 +58,16 @@
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
  
 #include <dev/cons.h>
+
+#include <hp300/dev/diovar.h>
+#include <hp300/dev/diodevs.h>
+#include <hp300/dev/intiovar.h>
 
 #include <hp300/dev/grfioctl.h>
 #include <hp300/dev/grfvar.h>
@@ -85,6 +88,26 @@ u_char crtc_init_data[CRTC_DATA_LENGTH] = {
 int	gb_init __P((struct grf_data *gp, int, caddr_t));
 int	gb_mode __P((struct grf_data *gp, int, caddr_t));
 void	gb_microcode __P((struct gboxfb *));
+
+#ifdef NEWCONFIG
+int	gbox_intio_match __P((struct device *, struct cfdata *, void *));
+void	gbox_intio_attach __P((struct device *, struct device *, void *));
+
+int	gbox_dio_match __P((struct device *, struct cfdata *, void *));
+void	gbox_dio_attach __P((struct device *, struct device *, void *));
+
+struct cfattach gbox_intio_ca = {
+	sizeof(struct grfdev_softc), gbox_intio_match, gbox_intio_attach
+};
+
+struct cfattach gbox_dio_ca = {
+	sizeof(struct grfdev_softc), gbox_dio_match, gbox_dio_attach
+};
+
+struct cfdriver gbox_cd = {
+	NULL, "gbox", DV_DULL
+};
+#endif /* NEWCONFIG */
 
 /* Gatorbox grf switch */
 struct grfsw gbox_grfsw = {
@@ -108,6 +131,83 @@ struct itesw gbox_itesw = {
 };
 #endif /* NITE > 0 */
 
+#ifdef NEWCONFIG
+int
+gbox_intio_match(parent, match, aux)
+	struct device *parent;
+	struct cfdata *match;
+	void *aux;
+{
+	struct intio_attach_args *ia = aux;
+	struct grfreg *grf;
+
+	grf = (struct grfreg *)IIOV(GRFIADDR);
+	if (badaddr((caddr_t)grf))
+		return (0);
+
+	if (grf->gr_id == DIO_DEVICE_ID_FRAMEBUFFER &&
+	    grf->gr_id2 == DIO_DEVICE_SECID_GATORBOX) {
+		ia->ia_addr = (caddr_t)GRFIADDR;
+		return (1);
+	}
+
+	return (0);
+}
+
+void
+gbox_intio_attach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct grfdev_softc *sc = (struct grfdev_softc *)self;
+	caddr_t grf;
+
+	grf = (caddr_t)IIOV(GRFIADDR);
+	sc->sc_scode = -1;	/* XXX internal i/o */
+
+	grfdev_attach(sc, gb_init, grf, &gbox_grfsw);
+}
+
+int
+gbox_dio_match(parent, match, aux)
+	struct device *parent;
+	struct cfdata *match;
+	void *aux;
+{
+	struct dio_attach_args *da = aux;
+
+	if (da->da_id == DIO_DEVICE_ID_FRAMEBUFFER &&
+	    da->da_secid == DIO_DEVICE_SECID_GATORBOX)
+		return (1);
+
+	return (0);
+}
+
+void
+gbox_dio_attach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct grfdev_softc *sc = (struct grfdev_softc *)self;
+	struct dio_attach_args *da = aux;
+	caddr_t grf;
+
+	sc->sc_scode = da->da_scode;
+	if (sc->sc_scode == conscode)
+		grf = conaddr;
+	else {
+		grf = iomap(dio_scodetopa(sc->sc_scode), da->da_size);
+		if (grf == 0) {
+			printf("%s: can't map framebuffer\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
+	}
+
+	grfdev_attach(sc, gb_init, grf, &gbox_grfsw);
+}
+#endif /* NEWCONFIG */
+
 /*
  * Initialize hardware.
  * Must point g_display at a grfinfo structure describing the hardware.
@@ -123,7 +223,7 @@ gb_init(gp, scode, addr)
 	struct grfinfo *gi = &gp->g_display;
 	u_char *fbp, save;
 	int fboff;
-	extern caddr_t sctopa(), iomap();
+	extern caddr_t iomap();
 
 	/*
 	 * If the console has been initialized, and it was us, there's
@@ -134,7 +234,7 @@ gb_init(gp, scode, addr)
 		if (ISIIOVA(addr))
 			gi->gd_regaddr = (caddr_t) IIOP(addr);
 		else
-			gi->gd_regaddr = sctopa(scode);
+			gi->gd_regaddr = dio_scodetopa(scode);
 		gi->gd_regsize = 0x10000;
 		gi->gd_fbwidth = 1024;		/* XXX */
 		gi->gd_fbheight = 1024;		/* XXX */
@@ -568,7 +668,6 @@ void
 gboxcninit(cp)
 	struct consdev *cp;
 {
-	struct ite_data *ip = &ite_cn;
 	struct grf_data *gp = &grf_cn;
 
 	/*
@@ -584,16 +683,9 @@ gboxcninit(cp)
 	gp->g_flags = GF_ALIVE;
 
 	/*
-	 * Set up required ite data and initialize ite.
+	 * Initialize the terminal emulator.
 	 */
-	ip->isw = &gbox_itesw;
-	ip->grf = gp;
-	ip->flags = ITE_ALIVE|ITE_CONSOLE|ITE_ACTIVE|ITE_ISCONS;
-	ip->attrbuf = console_attributes;
-	iteinit(ip);
-
-	kbd_ite = ip;		/* XXX */
+	itecninit(gp, &gbox_itesw);
 }
 
 #endif /* NITE > 0 */
-#endif /* NGRF > 0 */

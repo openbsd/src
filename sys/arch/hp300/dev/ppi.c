@@ -1,4 +1,5 @@
-/*	$NetBSD: ppi.c,v 1.8 1996/02/14 02:44:49 thorpej Exp $	*/
+/*	$OpenBSD: ppi.c,v 1.4 1997/01/12 15:12:57 downsj Exp $	*/
+/*	$NetBSD: ppi.c,v 1.10 1996/10/13 03:14:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993

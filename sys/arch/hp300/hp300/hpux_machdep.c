@@ -1,4 +1,5 @@
-/*	$NetBSD: hpux_machdep.c,v 1.2 1996/02/14 02:56:45 thorpej Exp $	*/
+/*	$OpenBSD: hpux_machdep.c,v 1.3 1997/01/12 15:13:16 downsj Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.5 1996/10/14 06:51:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Jason R. Thorpe.  All rights reserved.
@@ -51,6 +52,7 @@
 #include <sys/buf.h>
 #include <sys/wait.h> 
 #include <sys/file.h>
+#include <sys/exec.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/ioctl.h>

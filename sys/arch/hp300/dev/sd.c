@@ -1,4 +1,5 @@
-/*	$NetBSD: sd.c,v 1.22.4.1 1996/06/06 16:22:04 thorpej Exp $	*/
+/*	$OpenBSD: sd.c,v 1.6 1997/01/12 15:13:03 downsj Exp $	*/
+/*	$NetBSD: sd.c,v 1.28 1997/01/07 09:29:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -366,6 +367,9 @@ sdattach(hd)
 	disk_attach(&sc->sc_dkdev);
 
 	sc->sc_flags |= SDF_ALIVE;
+
+	/* XXX Set device class. */
+	hd->hp_dev.dv_class = DV_DISK;
 }
 
 void
@@ -579,7 +583,7 @@ sdopen(dev, flags, mode, p)
 {
 	register int unit = sdunit(dev);
 	register struct sd_softc *sc = &sd_softc[unit];
-	int error, mask;
+	int error, mask, part;
 
 	if (unit >= NSD || (sc->sc_flags & SDF_ALIVE) == 0)
 		return(ENXIO);
@@ -604,12 +608,27 @@ sdopen(dev, flags, mode, p)
 			return(error);
 	}
 
-	mask = 1 << sdpart(dev);
-	if (mode == S_IFCHR)
+	part = sdpart(dev);
+	mask = 1 << part;
+
+	/* Check that the partition exists. */
+	if (part != RAW_PART &&
+	    (part >= sc->sc_dkdev.dk_label->d_npartitions ||
+	     sc->sc_dkdev.dk_label->d_partitions[part].p_fstype == FS_UNUSED))
+		return (ENXIO);
+
+	/* Ensure only one open at a time. */
+	switch (mode) {
+	case S_IFCHR:
 		sc->sc_dkdev.dk_copenmask |= mask;
-	else
+		break;
+	case S_IFBLK:
 		sc->sc_dkdev.dk_bopenmask |= mask;
-	sc->sc_dkdev.dk_openmask |= mask;
+		break;
+	}
+	sc->sc_dkdev.dk_openmask =
+	    sc->sc_dkdev.dk_copenmask | sc->sc_dkdev.dk_bopenmask;
+
 	return(0);
 }
 
@@ -760,6 +779,7 @@ sdstrategy(bp)
 	register struct partition *pinfo;
 	register daddr_t bn;
 	register int sz, s;
+	int offset;
 
 	if (sc->sc_format_pid >= 0) {
 		if (sc->sc_format_pid != curproc->p_pid) {	/* XXX */
@@ -775,28 +795,40 @@ sdstrategy(bp)
 		bn = bp->b_blkno;
 		sz = howmany(bp->b_bcount, DEV_BSIZE);
 		pinfo = &sc->sc_dkdev.dk_label->d_partitions[sdpart(bp->b_dev)];
-		if (bn < 0 || bn + sz > pinfo->p_size) {
-			sz = pinfo->p_size - bn;
-			if (sz == 0) {
-				bp->b_resid = bp->b_bcount;
-				goto done;
+
+		/* Don't perform partition translation on RAW_PART. */
+		offset = (sdpart(bp->b_dev) == RAW_PART) ? 0 : pinfo->p_offset;
+
+		if (sdpart(bp->b_dev) != RAW_PART) {
+			/*
+			 * XXX This block of code belongs in
+			 * XXX bounds_check_with_label()
+			 */
+
+			if (bn < 0 || bn + sz > pinfo->p_size) {
+				sz = pinfo->p_size - bn;
+				if (sz == 0) {
+					bp->b_resid = bp->b_bcount;
+					goto done;
+				}
+				if (sz < 0) {
+					bp->b_error = EINVAL;
+					goto bad;
+				}
+				bp->b_bcount = dbtob(sz);
 			}
-			if (sz < 0) {
-				bp->b_error = EINVAL;
+			/*
+			 * Check for write to write protected label
+			 */
+			if (bn + offset <= LABELSECTOR &&
+#if LABELSECTOR != 0
+			    bn + offset + sz > LABELSECTOR &&
+#endif
+			    !(bp->b_flags & B_READ) &&
+			    !(sc->sc_flags & SDF_WLABEL)) {
+				bp->b_error = EROFS;
 				goto bad;
 			}
-			bp->b_bcount = dbtob(sz);
-		}
-		/*
-		 * Check for write to write protected label
-		 */
-		if (bn + pinfo->p_offset <= LABELSECTOR &&
-#if LABELSECTOR != 0
-		    bn + pinfo->p_offset + sz > LABELSECTOR &&
-#endif
-		    !(bp->b_flags & B_READ) && !(sc->sc_flags & SDF_WLABEL)) {
-			bp->b_error = EROFS;
-			goto bad;
 		}
 		/*
 		 * Non-aligned or partial-block transfers handled specially.
@@ -806,7 +838,7 @@ sdstrategy(bp)
 			sdlblkstrat(bp, sc->sc_blksize);
 			goto done;
 		}
-		bp->b_cylin = (bn + pinfo->p_offset) >> sc->sc_bshift;
+		bp->b_cylin = (bn + offset) >> sc->sc_bshift;
 	}
 	s = splbio();
 	disksort(dp, bp);
@@ -1216,60 +1248,93 @@ sdsize(dev)
 	return (psize);
 }
 
+static int sddoingadump;	/* simple mutex */
+
 /*
  * Non-interrupt driven, non-dma dump routine.
  */
 int
-sddump(dev)
+sddump(dev, blkno, va, size)
 	dev_t dev;
+	daddr_t blkno;
+	caddr_t va;
+	size_t size;
 {
-	int part = sdpart(dev);
-	int unit = sdunit(dev);
-	register struct sd_softc *sc = &sd_softc[unit];
-	register struct hp_device *hp = sc->sc_hd;
-	register struct partition *pinfo;
-	register daddr_t baddr;
-	register int maddr;
-	register int pages, i;
-	int stat;
-	extern int lowram, dumpsize;
+	int sectorsize;		/* size of a disk sector */
+	int nsects;		/* number of sectors in partition */
+	int sectoff;		/* sector offset of partition */
+	int totwrt;		/* total number of sectors left to write */
+	int nwrt;		/* current number of sectors to write */
+	int unit, part;
+	struct sd_softc *sc;
+	struct hp_device *hp;
+	struct disklabel *lp;
+	daddr_t baddr;
+	char stat;
 
-	/* is drive ok? */
-	if (unit >= NSD || (sc->sc_flags & SDF_ALIVE) == 0)
+	/* Check for recursive dump; if so, punt. */
+	if (sddoingadump)
+		return (EFAULT);
+	sddoingadump = 1;
+
+	/* Decompose unit and partition. */
+	unit = sdunit(dev);
+	part = sdpart(dev);
+
+	/* Make sure device is ok. */
+	if (unit >= NSD)
 		return (ENXIO);
-	pinfo = &sc->sc_dkdev.dk_label->d_partitions[part];
-	/* dump parameters in range? */
-	if (dumplo < 0 || dumplo >= pinfo->p_size ||
-	    pinfo->p_fstype != FS_SWAP)
+	sc = &sd_softc[unit];
+	if ((sc->sc_flags & SDF_ALIVE) == 0)
+		return (ENXIO);
+	hp = sc->sc_hd;
+
+	/*
+	 * Convert to disk sectors.  Request must be a multiple of size.
+	 */
+	lp = sc->sc_dkdev.dk_label;
+	sectorsize = lp->d_secsize;
+	if ((size % sectorsize) != 0)
+		return (EFAULT);
+	totwrt = size / sectorsize;
+	blkno = dbtob(blkno) / sectorsize;	/* blkno in DEV_BSIZE units */
+
+	nsects = lp->d_partitions[part].p_size;
+	sectoff = lp->d_partitions[part].p_offset;
+
+	/* Check transfer bounds against partition size. */
+	if ((blkno < 0) || (blkno + totwrt) > nsects)
 		return (EINVAL);
-	pages = dumpsize;
-	if (dumplo + ctod(pages) > pinfo->p_size)
-		pages = dtoc(pinfo->p_size - dumplo);
-	maddr = lowram;
-	baddr = dumplo + pinfo->p_offset;
-	/* scsi bus idle? */
-	if (!scsireq(&sc->sc_dq)) {
-		scsireset(hp->hp_ctlr);
-		sdreset(sc, sc->sc_hd);
-		printf("[ drive %d reset ] ", unit);
-	}
-	for (i = 0; i < pages; i++) {
-#define NPGMB	(1024*1024/NBPG)
-		/* print out how many Mbs we have dumped */
-		if (i && (i % NPGMB) == 0)
-			printf("%d ", i / NPGMB);
-#undef NPBMG
-		pmap_enter(pmap_kernel(), (vm_offset_t)vmmap, maddr,
-		    VM_PROT_READ, TRUE);
+
+	/* Offset block number to start of partition. */
+	blkno += sectoff;
+
+	while (totwrt > 0) {
+		nwrt = totwrt;		/* XXX */
+#ifndef SD_DUMP_NOT_TRUSTED
+		/*
+		 * Send the data.  Note the `0' argument for bshift;
+		 * we've done the necessary conversion above.
+		 */
 		stat = scsi_tt_write(hp->hp_ctlr, hp->hp_slave, sc->sc_punit,
-				     vmmap, NBPG, baddr, sc->sc_bshift);
+		    va, nwrt * sectorsize, blkno, 0);
 		if (stat) {
-			printf("sddump: scsi write error 0x%x\n", stat);
+			printf("\nsddump: scsi write error 0x%x\n", stat);
 			return (EIO);
 		}
-		maddr += NBPG;
-		baddr += ctod(1);
+#else /* SD_DUMP_NOT_TRUSTED */
+		/* Lets just talk about it first. */
+		printf("%s: dump addr %p, blk %d\n", hp->hp_xname,
+		    va, blkno);
+		delay(500 * 1000);	/* half a second */
+#endif /* SD_DUMP_NOT_TRUSTED */
+
+		/* update block count */
+		totwrt -= nwrt;
+		blkno += nwrt;
+		va += sectorsize * nwrt;
 	}
+	sddoingadump = 0;
 	return (0);
 }
 #endif

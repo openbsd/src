@@ -1,4 +1,5 @@
-/*	$NetBSD: param.h,v 1.26 1996/05/17 15:38:08 thorpej Exp $	*/
+/*	$OpenBSD: param.h,v 1.5 1997/01/12 15:13:38 downsj Exp $	*/
+/*	$NetBSD: param.h,v 1.27 1996/12/09 03:04:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -163,12 +164,23 @@
 #define spl6()  _spl(PSL_S|PSL_IPL6)
 #define spl7()  _spl(PSL_S|PSL_IPL7)
 
+#if defined(_KERNEL) && !defined(_LOCORE)
+/*
+ * These four globals contain the appropriate PSL_S|PSL_IPL? values
+ * to raise interrupt priority to the requested level.
+ */
+extern	unsigned short hp300_bioipl;
+extern	unsigned short hp300_netipl;
+extern	unsigned short hp300_ttyipl;
+extern	unsigned short hp300_impipl;
+#endif /* _KERNEL && !_LOCORE */
+
 #define splsoftclock()	spl1()
 #define splsoftnet()	spl1()
-#define splbio()	spl5()
-#define splnet()	spl5()
-#define spltty()	spl5()
-#define splimp()	spl5()
+#define splbio()	_spl(hp300_bioipl)
+#define splnet()	_spl(hp300_netipl)
+#define spltty()	_spl(hp300_ttyipl)
+#define splimp()	_spl(hp300_impipl)
 #define splclock()	spl6()
 #define splstatclock()	spl6()
 #define splvm()		spl6()

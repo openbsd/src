@@ -1,4 +1,5 @@
-|	$NetBSD: vectors.s,v 1.9 1996/05/18 00:52:53 thorpej Exp $
+|	$OpenBSD: vectors.s,v 1.4 1997/01/12 15:13:29 downsj Exp $
+|	$NetBSD: vectors.s,v 1.10 1996/10/14 22:11:18 thorpej Exp $
 
 | Copyright (c) 1988 University of Utah
 | Copyright (c) 1990, 1993
@@ -47,7 +48,7 @@
 
 	.globl	_vectab
 _vectab:
-	.long	0x4ef80400	/* 0: jmp 0x400:w (unused reset SSP) */
+	.long	0		/* 0: NOT USED (reset SSP) */
 	.long	0		/* 1: NOT USED (reset PC) */
 	.long	_buserr		/* 2: bus error */
 	.long	_addrerr	/* 3: address error */

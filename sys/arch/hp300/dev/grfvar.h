@@ -1,4 +1,5 @@
-/*	$NetBSD: grfvar.h,v 1.7 1996/02/24 00:55:18 thorpej Exp $	*/
+/*	$OpenBSD: grfvar.h,v 1.3 1997/01/12 15:12:41 downsj Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.8 1996/12/17 08:41:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,8 +78,26 @@ struct	grfsw {
 };
 
 struct	grf_softc {
+	struct	device sc_dev;		/* generic device info */
+	int	sc_scode;		/* select code; for grfdevno() */
 	struct	grf_data *sc_data;	/* display state information */
 	struct	ite_softc *sc_ite;	/* pointer to ite; may be NULL */
+};
+
+struct	grfdev_softc {
+	struct	device sc_dev;		/* generic device info */
+	struct	grf_data *sc_data;	/* generic grf data */
+	int	sc_scode;		/* select code, -1 for intio */
+};
+
+/*
+ * Set up by the hardware driver, and passed all the way down to
+ * the ITE, if appropriate.
+ */
+struct	grfdev_attach_args {
+	int	ga_scode;		/* XXX select code, -1 for intio */
+	int	ga_isconsole;		/* from hardware; is console? */
+	void	*ga_data;		/* hardware-dependent data */
 };
 
 /* flags */
@@ -105,7 +124,15 @@ struct	grf_softc {
 
 #ifdef _KERNEL
 extern	struct grf_data grf_cn;		/* grf_data for console device */
+#ifndef NEWCONFIG
 extern	struct grf_softc grf_softc[];
 extern	struct grfsw *grfsw[];
 extern	int ngrfsw;
-#endif
+#endif /* ! NEWCONFIG */
+
+#ifdef NEWCONFIG
+void	grfdev_attach __P((struct grfdev_softc *,
+	    int (*init)(struct grf_data *, int, caddr_t),
+	    caddr_t, struct grfsw *));
+#endif /* NEWCONFIG */
+#endif /* _KERNEL */

@@ -1,4 +1,5 @@
-/*	$NetBSD: itevar.h,v 1.9 1996/02/24 00:55:31 thorpej Exp $	*/
+/*	$OpenBSD: itevar.h,v 1.5 1997/01/12 15:12:52 downsj Exp $	*/
+/*	$NetBSD: itevar.h,v 1.12 1997/01/09 01:07:59 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,6 +43,7 @@
  *	@(#)itevar.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifdef _KERNEL
 #define ITEUNIT(dev)       minor(dev)
 
 #define getbyte(ip, offset) \
@@ -88,9 +90,11 @@ struct itesw {
 };
 
 struct ite_softc {
+	struct	device sc_dev;		/* generic device info */
 	struct	ite_data *sc_data;	/* terminal state info */
 	struct	grf_softc *sc_grf;	/* pointer to framebuffer */
 };
+#endif
 
 /* Flags */
 #define ITE_ALIVE	0x01	/* hardware exists */
@@ -192,7 +196,6 @@ extern	struct ite_data ite_cn;		/* ite_data for console device */
 extern	struct ite_data *kbd_ite;	/* XXX */
 extern	struct ite_softc ite_softc[];
 extern	struct itesw itesw[];
-extern	u_char console_attributes[];
 extern	int nitesw;
 
 /* ite.c prototypes */
@@ -200,6 +203,7 @@ void	ite_attach_grf __P((int, int));
 int	iteon __P((struct ite_data *, int));
 void	iteoff __P((struct ite_data *, int));
 void	itefilter __P((char, char));
+void	itecninit __P((struct grf_data *, struct itesw *));
 int	ite_major __P((void));
 
 /* ite_subr.c prototypes */

@@ -1,3 +1,4 @@
+/*	$OpenBSD: hpux_machdep.h,v 1.3 1997/01/12 15:13:36 downsj Exp $	*/
 /*	$NetBSD: hpux_machdep.h,v 1.3 1996/02/28 01:05:57 thorpej Exp $	*/
 
 /*-

@@ -1,4 +1,5 @@
-/*	$NetBSD: kbdmap.h,v 1.6 1995/12/06 22:13:26 thorpej Exp $	*/
+/*	$OpenBSD: kbdmap.h,v 1.3 1997/01/12 15:12:53 downsj Exp $	*/
+/*	$NetBSD: kbdmap.h,v 1.7 1996/10/05 05:22:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -58,11 +59,16 @@ struct kbdmap {
 
 #ifdef _KERNEL
 /* XXX: ITE interface */
-char	*kbd_keymap;
-char	*kbd_shiftmap;
-char	*kbd_ctrlmap;
-char	*kbd_ctrlshiftmap;
-char	**kbd_stringmap;
+extern	char *kbd_keymap;
+extern	char *kbd_shiftmap;
+extern	char *kbd_ctrlmap;
+extern	char *kbd_ctrlshiftmap;
+extern	char **kbd_stringmap;
+
+/* XXX: itecngetc() interface */
+extern	char *kbd_cn_keymap;
+extern	char *kbd_cn_shiftmap;
+extern	char *kbd_cn_ctrlmap;
 
 extern struct kbdmap kbd_map[];
 #endif

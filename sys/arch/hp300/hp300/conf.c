@@ -1,4 +1,5 @@
-/*	$NetBSD: conf.c,v 1.31 1996/03/14 21:26:28 christos Exp $	*/
+/*	$OpenBSD: conf.c,v 1.9 1997/01/12 15:13:13 downsj Exp $	*/
+/*	$NetBSD: conf.c,v 1.34 1996/12/17 08:41:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -42,14 +43,6 @@
 #include <sys/tty.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
-
-int	ttselect	__P((dev_t, int, struct proc *));
-
-#ifndef LKM
-#define	lkmenodev	enodev
-#else
-int	lkmenodev();
-#endif
 
 #include "ct.h"
 bdev_decl(ct);
@@ -145,12 +138,6 @@ dev_decl(filedesc,open);
 cdev_decl(bpf);
 #include "tun.h"
 cdev_decl(tun);
-#ifdef LKM
-#define	NLKM	1
-#else
-#define	NLKM	0
-#endif
-cdev_decl(lkm);
 cdev_decl(random);
 
 struct cdevsw	cdevsw[] =
@@ -276,6 +263,24 @@ chrtoblk(dev)
 }
 
 /*
+ * Convert a character device number to a block device number.
+ */
+dev_t
+blktochr(dev)
+	dev_t dev;
+{
+	int blkmaj = major(dev);
+	int i;
+
+	if (blkmaj >= nblkdev)
+		return (NODEV);
+	for (i = 0; i < sizeof(chrtoblktbl)/sizeof(chrtoblktbl[0]); i++)
+		if (blkmaj == chrtoblktbl[i])
+			return (makedev(i, minor(dev)));
+	return (NODEV);
+}
+
+/*
  * This entire table could be autoconfig()ed but that would mean that
  * the kernel's idea of the console would be out of sync with that of
  * the standalone boot.  I think it best that they both use the same
@@ -308,22 +313,46 @@ cons_decl(rbox);
 #define topcatcnpollc		nullcnpollc
 cons_decl(topcat);
 
-#define	dcacnpollc		nullcnpollc
+#define dcacnpollc		nullcnpollc
 cons_decl(dca);
 
-#define	dcmcnpollc		nullcnpollc
+#define dcmcnpollc		nullcnpollc
 cons_decl(dcm);
+
+#ifdef NEWCONFIG
+#include "dvbox.h"
+#include "gbox.h"
+#include "hyper.h"
+#include "rbox.h"
+#include "topcat.h"
+#else /* ! NEWCONFIG */
+#if NGRF > 0
+#define	NDVBOX	1
+#define	NGBOX	1
+#define	NHYPER	1
+#define	NRBOX	1
+#define	NTOPCAT	1
+#endif /* NGRF > 0 */
+#endif /* NEWCONFIG */
 
 struct	consdev constab[] = {
 #if NITE > 0
-#if NGRF > 0			/* XXX */
+#if NDVBOX > 0
 	cons_init(dvbox),
+#endif
+#if NGBOX > 0
 	cons_init(gbox),
+#endif
+#if NHYPER > 0
 	cons_init(hyper),
+#endif
+#if NRBOX > 0
 	cons_init(rbox),
+#endif
+#if NTOPCAT > 0
 	cons_init(topcat),
 #endif
-#endif
+#endif /* NITE > 0 */
 #if NDCA > 0
 	cons_init(dca),
 #endif

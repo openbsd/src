@@ -1,4 +1,5 @@
-/*	$NetBSD: grf.c,v 1.17 1996/02/24 00:55:07 thorpej Exp $	*/
+/*	$OpenBSD: grf.c,v 1.4 1997/01/12 15:12:31 downsj Exp $	*/
+/*	$NetBSD: grf.c,v 1.22 1997/01/10 00:07:27 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,9 +49,6 @@
  * Hardware access is through the machine dependent grf switch routines.
  */
 
-#include "grf.h"
-#if NGRF > 0
-
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/ioctl.h>
@@ -58,6 +56,8 @@
 #include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/mman.h>
+#include <sys/conf.h>
+#include <sys/device.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -82,11 +82,30 @@ extern struct emul emul_hpux;
 #if NITE > 0
 #include <hp300/dev/itevar.h>
 #else
-#define	iteon(u,f)
+#define	iteon(u,f)	0	/* normally returns int */
 #define	iteoff(u,f)
 #endif /* NITE > 0 */
 
+/* prototypes for the devsw entry points */
+cdev_decl(grf);
+
+#ifdef NEWCONFIG
+int	grfmatch __P((struct device *, struct cfdata *, void *));
+void	grfattach __P((struct device *, struct device *, void *));
+
+struct cfattach grf_ca = {
+	sizeof(struct grf_softc), grfmatch, grfattach
+};
+
+struct cfdriver grf_cd = {
+	NULL, "grf", DV_DULL
+};
+
+int	grfprint __P((void *, const char *));
+#else /* ! NEWCONFIG */
+#include "grf.h"
 struct	grf_softc grf_softc[NGRF];
+#endif /* NEWCONFIG */
 
 /*
  * Frambuffer state information, statically allocated for benefit
@@ -102,7 +121,50 @@ int grfdebug = 0;
 #define GDB_LOCK	0x08
 #endif
 
+#ifdef NEWCONFIG
+int
+grfmatch(parent, match, aux)
+	struct device *parent;
+	struct cfdata *match;
+	void *aux;
+{
+
+	return (1);
+}
+
+void
+grfattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct grf_softc *sc = (struct grf_softc *)self;
+	struct grfdev_attach_args *ga = aux;
+
+	printf("\n");
+
+	sc->sc_data = ga->ga_data;
+	sc->sc_scode = ga->ga_scode;	/* XXX */
+
+	/* Attach an ITE. */
+	(void)config_found(self, aux, grfprint);
+}
+
+int
+grfprint(aux, pnp)
+	void *aux;
+	const char *pnp;
+{
+
+	/* Only ITEs can attach to GRFs, easy... */
+	if (pnp)
+		printf("ite at %s", pnp);
+
+	return (UNCONF);
+}
+#endif /* NEWCONFIG */
+
 /*ARGSUSED*/
+int
 grfopen(dev, flags, mode, p)
 	dev_t dev;
 	int flags, mode;
@@ -113,10 +175,16 @@ grfopen(dev, flags, mode, p)
 	struct grf_data *gp;
 	int error = 0;
 
+#ifdef NEWCONFIG
+	if (unit >= grf_cd.cd_ndevs ||
+	    (sc = grf_cd.cd_devs[unit]) == NULL)
+		return (ENXIO);
+#else
 	if (unit >= NGRF)
 		return(ENXIO);
-
 	sc = &grf_softc[unit];
+#endif
+
 	gp = sc->sc_data;
 
 	if ((gp->g_flags & GF_ALIVE) == 0)
@@ -152,6 +220,7 @@ grfopen(dev, flags, mode, p)
 }
 
 /*ARGSUSED*/
+int
 grfclose(dev, flags, mode, p)
 	dev_t dev;
 	int flags, mode;
@@ -161,10 +230,12 @@ grfclose(dev, flags, mode, p)
 	struct grf_softc *sc;
 	struct grf_data *gp;
 
-	if (unit >= NGRF)
-		return(ENXIO);
-
+#ifdef NEWCONFIG
+	sc = grf_cd.cd_devs[unit];
+#else
 	sc = &grf_softc[unit];
+#endif
+
 	gp = sc->sc_data;
 
 	if ((gp->g_flags & GF_ALIVE) == 0)
@@ -179,9 +250,11 @@ grfclose(dev, flags, mode, p)
 }
 
 /*ARGSUSED*/
+int
 grfioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd, flag;
+	u_long cmd;
+	int flag;
 	caddr_t data;
 	struct proc *p;
 {
@@ -189,10 +262,12 @@ grfioctl(dev, cmd, data, flag, p)
 	struct grf_data *gp;
 	int error, unit = GRFUNIT(dev);
 
-	if (unit >= NGRF)
-		return(ENXIO);
-
+#ifdef NEWCONFIG
+	sc = grf_cd.cd_devs[unit];
+#else
 	sc = &grf_softc[unit];
+#endif
+
 	gp = sc->sc_data;
 
 	if ((gp->g_flags & GF_ALIVE) == 0)
@@ -234,9 +309,11 @@ grfioctl(dev, cmd, data, flag, p)
 }
 
 /*ARGSUSED*/
-grfselect(dev, rw)
+int
+grfselect(dev, rw, p)
 	dev_t dev;
 	int rw;
+	struct proc *p;
 {
 	if (rw == FREAD)
 		return(0);
@@ -244,11 +321,18 @@ grfselect(dev, rw)
 }
 
 /*ARGSUSED*/
+int
 grfmmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
-	return(grfaddr(&grf_softc[GRFUNIT(dev)], off));
+#ifdef NEWCONFIG
+	struct grf_softc *sc = grf_cd.cd_devs[GRFUNIT(dev)];
+#else
+	struct grf_softc *sc = &grf_softc[GRFUNIT(dev)];
+#endif
+
+	return (grfaddr(sc, off));
 }
 
 int
@@ -259,7 +343,11 @@ grfon(dev)
 	struct grf_softc *sc;
 	struct grf_data *gp;
 
+#ifdef NEWCONFIG
+	sc = grf_cd.cd_devs[unit];
+#else
 	sc = &grf_softc[unit];
+#endif
 	gp = sc->sc_data;
 
 	/*
@@ -282,7 +370,11 @@ grfoff(dev)
 	struct grf_data *gp;
 	int error;
 
+#ifdef NEWCONFIG
+	sc = grf_cd.cd_devs[unit];
+#else
 	sc = &grf_softc[unit];
+#endif
 	gp = sc->sc_data;
 
 	(void) grfunmap(dev, (caddr_t)0, curproc);
@@ -290,7 +382,7 @@ grfoff(dev)
 				     (dev&GRFOVDEV) ? GM_GRFOVOFF : GM_GRFOFF,
 				     (caddr_t)0);
 	/* XXX: see comment for iteoff above */
-	(void) iteon(sc->sc_ite->sc_data, 2);
+	iteon(sc->sc_ite->sc_data, 2);
 	return(error);
 }
 
@@ -321,13 +413,18 @@ grfaddr(sc, off)
 #ifdef COMPAT_HPUX
 
 /*ARGSUSED*/
+int
 hpuxgrfioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	int cmd, flag;
 	caddr_t data;
 	struct proc *p;
 {
+#ifdef NEWCONFIG
+	struct grf_softc *sc = grf_cd.cd_devs[GRFUNIT(dev)];
+#else
 	struct grf_softc *sc = &grf_softc[GRFUNIT(dev)];
+#endif
 	struct grf_data *gp = sc->sc_data;
 	int error;
 
@@ -479,6 +576,7 @@ grflock(gp, block)
 	return(0);
 }
 
+int
 grfunlock(gp)
 	struct grf_data *gp;
 {
@@ -515,23 +613,34 @@ grfunlock(gp)
  * XXX: This may give the wrong result for remote stats of other
  * machines where device 10 exists.
  */
+int
 grfdevno(dev)
 	dev_t dev;
 {
 	int unit = GRFUNIT(dev);
-	struct grf_softc *sc = &grf_softc[unit];
-	struct grf_data *gp = sc->sc_data;
+	struct grf_softc *sc;
+	struct grf_data *gp;
 	int newdev;
 
-	if (unit >= NGRF || (gp->g_flags&GF_ALIVE) == 0)
-		return(bsdtohpuxdev(dev));
+#ifdef NEWCONFIG
+	if (unit >= grf_cd.cd_ndevs ||
+	    (sc = grf_cd.cd_devs[unit]) == NULL)
+		return (bsdtohpuxdev(dev));
+#else
+	if (unit >= NGRF)
+		return (bsdtohpuxdev(dev));
+	sc = &grf_softc[unit];
+#endif
+
+	gp = sc->sc_data;
+	if ((gp->g_flags & GF_ALIVE) == 0)
+		return (bsdtohpuxdev(dev));
+
 	/* magic major number */
 	newdev = 12 << 24;
 	/* now construct minor number */
-	if (gp->g_display.gd_regaddr != (caddr_t)GRFIADDR) {
-		int sc = patosc(gp->g_display.gd_regaddr);
-		newdev |= (sc << 16) | 0x200;
-	}
+	if (gp->g_display.gd_regaddr != (caddr_t)GRFIADDR)
+		newdev |= (sc->sc_scode << 16) | 0x200;
 	if (dev & GRFIMDEV)
 		newdev |= 0x02;
 	else if (dev & GRFOVDEV)
@@ -545,12 +654,17 @@ grfdevno(dev)
 
 #endif	/* COMPAT_HPUX */
 
+int
 grfmap(dev, addrp, p)
 	dev_t dev;
 	caddr_t *addrp;
 	struct proc *p;
 {
+#ifdef NEWCONFIG
+	struct grf_softc *sc = grf_cd.cd_devs[GRFUNIT(dev)];
+#else
 	struct grf_softc *sc = &grf_softc[GRFUNIT(dev)];
+#endif
 	struct grf_data *gp = sc->sc_data;
 	int len, error;
 	struct vnode vn;
@@ -583,7 +697,11 @@ grfunmap(dev, addr, p)
 	caddr_t addr;
 	struct proc *p;
 {
+#ifdef NEWCONFIG
+	struct grf_softc *sc = grf_cd.cd_devs[GRFUNIT(dev)];
+#else
 	struct grf_softc *sc = &grf_softc[GRFUNIT(dev)];
+#endif
 	struct grf_data *gp = sc->sc_data;
 	vm_size_t size;
 	int rv;
@@ -601,6 +719,7 @@ grfunmap(dev, addr, p)
 }
 
 #ifdef COMPAT_HPUX
+int
 iommap(dev, addrp)
 	dev_t dev;
 	caddr_t *addrp;
@@ -613,6 +732,7 @@ iommap(dev, addrp)
 	return(EINVAL);
 }
 
+int
 iounmmap(dev, addr)
 	dev_t dev;
 	caddr_t addr;
@@ -728,5 +848,3 @@ grflckunmmap(dev, addr)
 	return(EINVAL);
 }
 #endif	/* COMPAT_HPUX */
-
-#endif	/* NGRF > 0 */

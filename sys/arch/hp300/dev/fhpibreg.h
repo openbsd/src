@@ -1,3 +1,4 @@
+/*	$OpenBSD: fhpibreg.h,v 1.2 1997/01/12 15:12:30 downsj Exp $	*/
 /*	$NetBSD: fhpibreg.h,v 1.4 1994/10/26 07:23:45 cgd Exp $	*/
 
 /*

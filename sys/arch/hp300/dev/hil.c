@@ -1,4 +1,5 @@
-/*	$NetBSD: hil.c,v 1.22 1996/02/14 02:44:24 thorpej Exp $	*/
+/*	$OpenBSD: hil.c,v 1.8 1997/01/12 15:12:41 downsj Exp $	*/
+/*	$NetBSD: hil.c,v 1.29 1996/10/14 07:09:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -93,6 +94,13 @@ int 	hildebug = 0;
 extern struct emul emul_hpux;
 #endif
 
+/* XXX ITE interface */
+char *kbd_keymap; 
+char *kbd_shiftmap;
+char *kbd_ctrlmap; 
+char *kbd_ctrlshiftmap;
+char **kbd_stringmap;
+
 /* symbolic sleep message strings */
 char hilin[] = "hilin";
 
@@ -102,6 +110,10 @@ hilsoftinit(unit, hilbase)
 {
   	register struct hil_softc *hilp = &hil_softc[unit];
 	register int i;
+
+	/* XXX ITE interface */
+	extern char *us_keymap, *us_shiftmap, *us_ctrlmap,
+		    *us_ctrlshiftmap, **us_stringmap;
 
 #ifdef DEBUG
 	if (hildebug & HDB_FOLLOW)
@@ -117,7 +129,6 @@ hilsoftinit(unit, hilbase)
 	hilp->hl_cmdbp = hilp->hl_cmdbuf;
 	hilp->hl_pollbp = hilp->hl_pollbuf;
 	hilp->hl_kbddev = 0;
-	hilp->hl_kbdlang = KBD_DEFAULT;
 	hilp->hl_kbdflags = 0;
 	/*
 	 * Clear all queues and device associations with queues
@@ -130,6 +141,18 @@ hilsoftinit(unit, hilbase)
 	for (i = 0; i < NHILD; i++)
 		hilp->hl_device[i].hd_qmask = 0;
 	hilp->hl_device[HILLOOPDEV].hd_flags = (HIL_ALIVE|HIL_PSEUDO);
+
+	/*
+	 * Set up default keyboard language.  We always default
+	 * to US ASCII - it seems to work OK for non-recognized
+	 * keyboards.
+	 */
+	hilp->hl_kbdlang = KBD_DEFAULT;
+	kbd_keymap = us_keymap;			/* XXX */
+	kbd_shiftmap = us_shiftmap;		/* XXX */
+	kbd_ctrlmap = us_ctrlmap;		/* XXX */
+	kbd_ctrlshiftmap = us_ctrlshiftmap;	/* XXX */
+	kbd_stringmap = us_stringmap;		/* XXX */
 }
 
 hilinit(unit, hilbase)
@@ -681,6 +704,7 @@ hilmmap(dev, off, prot)
 }
 
 /*ARGSUSED*/
+int
 hilselect(dev, rw, p)
 	dev_t dev;
 	int rw;
@@ -691,7 +715,7 @@ hilselect(dev, rw, p)
 	register struct hiliqueue *qp;
 	register int mask;
 	int s, device;
-	
+
 	if (rw == FWRITE)
 		return (1);
 	device = HILUNIT(dev);
@@ -831,10 +855,6 @@ hil_process_int(hilp, stat, c)
 	}
 }
 
-#if (defined(DDB) || defined(DEBUG)) && !defined(PANICBUTTON)
-#define PANICBUTTON
-#endif
-
 /*
  * Optimized macro to compute:
  *	eq->head == (eq->tail + 1) % eq->size
@@ -857,20 +877,6 @@ hilevent(hilp)
 	int s, len0;
 	long tenths;
 
-#ifdef PANICBUTTON
-	static int first;
-	extern int panicbutton;
-
-	cp = hilp->hl_pollbuf;
-	if (panicbutton && (*cp & HIL_KBDDATA)) {
-		if (*++cp == 0x4E)
-			first = 1;
-		else if (first && *cp == 0x46 && !panicstr)
-			panic("are we having fun yet?");
-		else
-			first = 0;
-	}
-#endif
 #ifdef DEBUG
 	if (hildebug & HDB_EVENTS) {
 		printf("hilevent: dev %d pollbuf: ", hilp->hl_actdev);
@@ -1128,26 +1134,84 @@ kbddisable(unit)
 }
 
 /*
+ * The following chunk of code implements HIL console keyboard
+ * support.
+ */
+
+struct	hil_dev *hilkbd_cn_device;
+char	*kbd_cn_keymap;
+char	*kbd_cn_shiftmap;
+char	*kbd_cn_ctrlmap;
+
+/*
  * XXX: read keyboard directly and return code.
  * Used by console getchar routine.  Could really screw up anybody
  * reading from the keyboard in the normal, interrupt driven fashion.
  */
-kbdgetc(unit, statp)
-	int unit, *statp;
+int
+kbdgetc(statp)
+	int *statp;
 {
-	struct hil_softc *hilp = &hil_softc[unit];
-	register struct hil_dev *hildevice = hilp->hl_addr;
 	register int c, stat;
 	int s;
 
+	if (hilkbd_cn_device == NULL)
+		return (0);
+
+	/*
+	 * XXX needs to be splraise because we could be called
+	 * XXX at splhigh, e.g. in DDB.
+	 */
 	s = splhil();
-	while (((stat = READHILSTAT(hildevice)) & HIL_DATA_RDY) == 0)
+	while (((stat = READHILSTAT(hilkbd_cn_device)) & HIL_DATA_RDY) == 0)
 		;
-	c = READHILDATA(hildevice);
+	c = READHILDATA(hilkbd_cn_device);
 	splx(s);
 	*statp = stat;
-	return(c);
+	return (c);
 }
+
+/*
+ * Perform basic initialization of the HIL keyboard, suitable
+ * for early console use.
+ */
+void
+kbdcninit()
+{
+	struct hil_dev *h = HILADDR;	/* == VA (see hilreg.h) */
+	struct kbdmap *km;
+	u_char lang;
+
+	/* XXX from hil_keymaps.c */
+	extern char *us_keymap, *us_shiftmap, *us_ctrlmap;
+
+	hilkbd_cn_device = h;
+
+	/* Default to US-ASCII keyboard. */
+	kbd_cn_keymap = us_keymap;
+	kbd_cn_shiftmap = us_shiftmap;
+	kbd_cn_ctrlmap = us_ctrlmap;
+
+	HILWAIT(h);
+	WRITEHILCMD(h, HIL_SETARR);
+	HILWAIT(h);
+	WRITEHILDATA(h, ar_format(KBD_ARR));
+	HILWAIT(h);
+	WRITEHILCMD(h, HIL_READKBDLANG);
+	HILDATAWAIT(h);
+	lang = READHILDATA(h);
+	for (km = kbd_map; km->kbd_code; km++) {
+		if (km->kbd_code == lang) {
+			kbd_cn_keymap = km->kbd_keymap;
+			kbd_cn_shiftmap = km->kbd_shiftmap;
+			kbd_cn_ctrlmap = km->kbd_ctrlmap;
+		}
+	}
+	HILWAIT(h);
+	WRITEHILCMD(h, HIL_INTON);
+}
+
+/* End of HIL console keyboard code. */
 
 /*
  * Recoginize and clear keyboard generated NMIs.
@@ -1335,7 +1399,7 @@ hilconfig(hilp)
 	if (hilp->hl_kbdlang != KBD_SPECIAL) {
 		struct kbdmap *km;
 
-		for (km = kbd_map; km->kbd_code; km++)
+		for (km = kbd_map; km->kbd_code; km++) {
 			if (km->kbd_code == db) {
 				hilp->hl_kbdlang = db;
 				/* XXX */
@@ -1344,7 +1408,14 @@ hilconfig(hilp)
 				kbd_ctrlmap = km->kbd_ctrlmap;
 				kbd_ctrlshiftmap = km->kbd_ctrlshiftmap;
 				kbd_stringmap = km->kbd_stringmap;
+				break;
 			}
+		}
+		if (km->kbd_code == 0) {
+		    printf(
+		     "hilconfig: unknown keyboard type 0x%x, using default\n",
+		     db);
+		}
 	}
 	splx(s);
 }

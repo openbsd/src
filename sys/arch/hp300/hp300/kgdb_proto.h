@@ -1,3 +1,4 @@
+/*	$OpenBSD: kgdb_proto.h,v 1.2 1997/01/12 15:13:19 downsj Exp $	*/
 /*	$NetBSD: kgdb_proto.h,v 1.2 1994/10/26 07:25:40 cgd Exp $	*/
 
 /*-

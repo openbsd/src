@@ -1,4 +1,5 @@
-/*	$NetBSD: ite_subr.c,v 1.6 1996/02/24 00:55:29 thorpej Exp $	*/
+/*	$OpenBSD: ite_subr.c,v 1.3 1997/01/12 15:12:51 downsj Exp $	*/
+/*	$NetBSD: ite_subr.c,v 1.7 1996/12/17 08:41:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,15 +43,13 @@
  *	@(#)ite_subr.c	8.2 (Berkeley) 1/12/94
  */
 
-#include "ite.h"
-#if NITE > 0
-
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/proc.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 
 #include <hp300/dev/itevar.h>
 #include <hp300/dev/itereg.h>
@@ -152,4 +151,3 @@ ite_writeglyph(ip, fbmem, glyphp)
 		fbmem += ip->fbwidth;
 	}
 }
-#endif

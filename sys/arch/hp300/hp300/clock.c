@@ -1,4 +1,5 @@
-/*	$NetBSD: clock.c,v 1.14 1996/05/18 23:30:12 thorpej Exp $	*/
+/*	$OpenBSD: clock.c,v 1.3 1997/01/12 15:13:11 downsj Exp $	*/
+/*	$NetBSD: clock.c,v 1.18 1996/10/13 03:14:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -163,6 +164,14 @@ hp300_calibrate_delay()
 
 		asm volatile(" movpw %0@(5),%1" : : "a" (clk), "d" (intvl));
 	}
+
+	/*
+	 * Make sure the clock interrupt is disabled.  Otherwise,
+	 * we can end up calling hardclock() before proc0 is set up,
+	 * causing a bad pointer deref.
+	 */
+	clk->clk_cr2 = CLK_CR1;
+	clk->clk_cr1 = CLK_RESET;
 
 	/*
 	 * Sanity check the delay_divisor value.  If we totally lost,
@@ -344,7 +353,7 @@ inittodr(base)
 
 	/* XXX */
 	if (!bbcinited) {
-		if (badbaddr(&BBCADDR->hil_stat))
+		if (badbaddr((caddr_t)&BBCADDR->hil_stat))
 			printf("WARNING: no battery clock\n");
 		else
 			bbcaddr = BBCADDR;

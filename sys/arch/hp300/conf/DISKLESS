@@ -1,4 +1,5 @@
-#	$NetBSD: DISKLESS,v 1.5 1995/12/29 17:12:50 thorpej Exp $
+#	$OpenBSD: DISKLESS,v 1.8 1997/01/12 15:12:13 downsj Exp $
+#	$NetBSD: DISKLESS,v 1.11 1996/12/11 09:10:38 thorpej Exp $
 #
 # Diskless HP 9000/300-series workstation.
 #
@@ -50,12 +51,16 @@ options		NMBCLUSTERS="512"	# Just a little extra
 options		FPSP		# floating point interface for 68040
 options		USELEDS		# make the lights twinkle
 #options	PANICBUTTON	# two fast <reset>s on HIL dump kernel
+options		UK_KEYBOARD	# include United Kingdom HIL keymap
+options		SE_KEYBOARD	# include Swedish HIL keymap
 
 #
 # HP-UX binary compatibility.
 # NOTE: THIS IS STILL VERY EXPERIMENTAL.  YOUR MILEAGE MAY VARY.
 #
 options	COMPAT_HPUX		# HP-UX binary compatibility
+
+#options 	"COMPAT_M68K4K"	# compat. with NetBSD/m68k4k binaries
 
 # Debugging options
 options		DDB		# Kernel Dynamic Debugger

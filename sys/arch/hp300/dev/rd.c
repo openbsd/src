@@ -1,4 +1,5 @@
-/*	$NetBSD: rd.c,v 1.20.4.1 1996/06/06 16:22:01 thorpej Exp $	*/
+/*	$OpenBSD: rd.c,v 1.7 1997/01/12 15:12:58 downsj Exp $	*/
+/*	$NetBSD: rd.c,v 1.26 1997/01/07 09:29:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -274,6 +275,9 @@ rdattach(hd)
 	if (rddebug & RDB_ERROR)
 		rderrthresh = 0;
 #endif
+
+	/* XXX Set device class. */
+	hd->hp_dev.dv_class = DV_DISK;
 }
 
 int
@@ -486,7 +490,7 @@ rdopen(dev, flags, mode, p)
 {
 	register int unit = rdunit(dev);
 	register struct rd_softc *rs = &rd_softc[unit];
-	int error, mask;
+	int error, mask, part;
 
 	if (unit >= NRD || (rs->sc_flags & RDF_ALIVE) == 0)
 		return(ENXIO);
@@ -511,12 +515,27 @@ rdopen(dev, flags, mode, p)
 			return(error);
 	}
 
-	mask = 1 << rdpart(dev);
-	if (mode == S_IFCHR)
+	part = rdpart(dev);
+	mask = 1 << part;
+
+	/* Check that the partition exists. */
+	if (part != RAW_PART &&
+	    (part > rs->sc_dkdev.dk_label->d_npartitions ||
+	     rs->sc_dkdev.dk_label->d_partitions[part].p_fstype == FS_UNUSED))
+		return (ENXIO);
+
+	/* Ensure only one open at a time. */
+	switch (mode) {
+	case S_IFCHR:
 		rs->sc_dkdev.dk_copenmask |= mask;
-	else
+		break;
+	case S_IFBLK:
 		rs->sc_dkdev.dk_bopenmask |= mask;
-	rs->sc_dkdev.dk_openmask |= mask;
+		break;
+	}
+	rs->sc_dkdev.dk_openmask =
+	    rs->sc_dkdev.dk_copenmask | rs->sc_dkdev.dk_bopenmask;
+
 	return(0);
 }
 
@@ -568,6 +587,7 @@ rdstrategy(bp)
 	register struct partition *pinfo;
 	register daddr_t bn;
 	register int sz, s;
+	int offset;
 
 #ifdef DEBUG
 	if (rddebug & RDB_FOLLOW)
@@ -578,30 +598,41 @@ rdstrategy(bp)
 	bn = bp->b_blkno;
 	sz = howmany(bp->b_bcount, DEV_BSIZE);
 	pinfo = &rs->sc_dkdev.dk_label->d_partitions[rdpart(bp->b_dev)];
-	if (bn < 0 || bn + sz > pinfo->p_size) {
-		sz = pinfo->p_size - bn;
-		if (sz == 0) {
-			bp->b_resid = bp->b_bcount;
-			goto done;
+
+	/* Don't perform partition translation on RAW_PART. */
+	offset = (rdpart(bp->b_dev) == RAW_PART) ? 0 : pinfo->p_offset;
+
+	if (rdpart(bp->b_dev) != RAW_PART) {
+		/*
+		 * XXX This block of code belongs in
+		 * XXX bounds_check_with_label()
+		 */
+
+		if (bn < 0 || bn + sz > pinfo->p_size) {
+			sz = pinfo->p_size - bn;
+			if (sz == 0) {
+				bp->b_resid = bp->b_bcount;
+				goto done;
+			}
+			if (sz < 0) {
+				bp->b_error = EINVAL;
+				goto bad;
+			}
+			bp->b_bcount = dbtob(sz);
 		}
-		if (sz < 0) {
-			bp->b_error = EINVAL;
+		/*
+		 * Check for write to write protected label
+		 */
+		if (bn + offset <= LABELSECTOR &&
+#if LABELSECTOR != 0
+		    bn + offset + sz > LABELSECTOR &&
+#endif
+		    !(bp->b_flags & B_READ) && !(rs->sc_flags & RDF_WLABEL)) {
+			bp->b_error = EROFS;
 			goto bad;
 		}
-		bp->b_bcount = dbtob(sz);
 	}
-	/*
-	 * Check for write to write protected label
-	 */
-	if (bn + pinfo->p_offset <= LABELSECTOR &&
-#if LABELSECTOR != 0
-	    bn + pinfo->p_offset + sz > LABELSECTOR &&
-#endif
-	    !(bp->b_flags & B_READ) && !(rs->sc_flags & RDF_WLABEL)) {
-		bp->b_error = EROFS;
-		goto bad;
-	}
-	bp->b_cylin = bn + pinfo->p_offset;
+	bp->b_cylin = bn + offset;
 	s = splbio();
 	disksort(dp, bp);
 	if (dp->b_active == 0) {
@@ -1115,75 +1146,108 @@ rdprinterr(str, err, tab)
 }
 #endif
 
+static int rddoingadump;	/* simple mutex */
+
 /*
  * Non-interrupt driven, non-dma dump routine.
  */
 int
-rddump(dev)
+rddump(dev, blkno, va, size)
 	dev_t dev;
+	daddr_t blkno;
+	caddr_t va;
+	size_t size;
 {
-	int part = rdpart(dev);
-	int unit = rdunit(dev);
-	register struct rd_softc *rs = &rd_softc[unit];
-	register struct hp_device *hp = rs->sc_hd;
-	register struct partition *pinfo;
-	register daddr_t baddr;
-	register int maddr, pages, i;
+	int sectorsize;		/* size of a disk sector */
+	int nsects;		/* number of sectors in partition */
+	int sectoff;		/* sector offset of partition */
+	int totwrt;		/* total number of sectors left to write */
+	int nwrt;		/* current number of sectors to write */
+	int unit, part;
+	struct rd_softc *rs;
+	struct hp_device *hp;
+	struct disklabel *lp;
 	char stat;
-	extern int lowram, dumpsize;
-#ifdef DEBUG
-	extern int pmapdebug;
-	pmapdebug = 0;
-#endif
 
-	/* is drive ok? */
-	if (unit >= NRD || (rs->sc_flags & RDF_ALIVE) == 0)
+	/* Check for recursive dump; if so, punt. */
+	if (rddoingadump)
+		return (EFAULT);
+	rddoingadump = 1;
+
+	/* Decompose unit and partition. */
+	unit = rdunit(dev);
+	part = rdpart(dev);
+
+	/* Make sure dump device is ok. */
+	if (unit >= NRD)
 		return (ENXIO);
-	pinfo = &rs->sc_dkdev.dk_label->d_partitions[part];
-	/* dump parameters in range? */
-	if (dumplo < 0 || dumplo >= pinfo->p_size ||
-	    pinfo->p_fstype != FS_SWAP)
+	rs = &rd_softc[unit];
+	if ((rs->sc_flags & RDF_ALIVE) == 0)
+		return (ENXIO);
+	hp = rs->sc_hd;
+
+	/*
+	 * Convert to disk sectors.  Request must be a multiple of size.
+	 */
+	lp = rs->sc_dkdev.dk_label;
+	sectorsize = lp->d_secsize;
+	if ((size % sectorsize) != 0)
+		return (EFAULT);
+	totwrt = size / sectorsize;
+	blkno = dbtob(blkno) / sectorsize;	/* blkno in DEV_BSIZE units */
+
+	nsects = lp->d_partitions[part].p_size;
+	sectoff = lp->d_partitions[part].p_offset;
+
+	/* Check transfer bounds against partition size. */
+	if ((blkno < 0) || (blkno + totwrt) > nsects)
 		return (EINVAL);
-	pages = dumpsize;
-	if (dumplo + ctod(pages) > pinfo->p_size)
-		pages = dtoc(pinfo->p_size - dumplo);
-	maddr = lowram;
-	baddr = dumplo + pinfo->p_offset;
-	/* HPIB idle? */
-	if (!hpibreq(&rs->sc_dq)) {
-		hpibreset(hp->hp_ctlr);
-		rdreset(rs, rs->sc_hd);
-		printf("[ drive %d reset ] ", unit);
-	}
-	for (i = 0; i < pages; i++) {
-#define NPGMB	(1024*1024/NBPG)
-		/* print out how many Mbs we have dumped */
-		if (i && (i % NPGMB) == 0)
-			printf("%d ", i / NPGMB);
-#undef NPBMG
+
+	/* Offset block number to start of partition. */
+	blkno += sectoff;
+
+	while (totwrt > 0) {
+		nwrt = totwrt;		/* XXX */
+#ifndef RD_DUMP_NOT_TRUSTED
+		/*
+		 * Fill out and send HPIB command.
+		 */
 		rs->sc_ioc.c_unit = C_SUNIT(rs->sc_punit);
 		rs->sc_ioc.c_volume = C_SVOL(0);
 		rs->sc_ioc.c_saddr = C_SADDR;
 		rs->sc_ioc.c_hiaddr = 0;
-		rs->sc_ioc.c_addr = RDBTOS(baddr);
+		rs->sc_ioc.c_addr = RDBTOS(blkno);
 		rs->sc_ioc.c_nop2 = C_NOP;
 		rs->sc_ioc.c_slen = C_SLEN;
-		rs->sc_ioc.c_len = NBPG;
+		rs->sc_ioc.c_len = nwrt * sectorsize;
 		rs->sc_ioc.c_cmd = C_WRITE;
 		hpibsend(hp->hp_ctlr, hp->hp_slave, C_CMD,
 			 &rs->sc_ioc.c_unit, sizeof(rs->sc_ioc)-2);
 		if (hpibswait(hp->hp_ctlr, hp->hp_slave))
 			return (EIO);
-		pmap_enter(pmap_kernel(), (vm_offset_t)vmmap, maddr,
-		    VM_PROT_READ, TRUE);
-		hpibsend(hp->hp_ctlr, hp->hp_slave, C_EXEC, vmmap, NBPG);
+
+		/*
+		 * Send the data.
+		 */
+		hpibsend(hp->hp_ctlr, hp->hp_slave, C_EXEC, va,
+		    nwrt * sectorsize);
 		(void) hpibswait(hp->hp_ctlr, hp->hp_slave);
 		hpibrecv(hp->hp_ctlr, hp->hp_slave, C_QSTAT, &stat, 1);
 		if (stat)
 			return (EIO);
-		maddr += NBPG;
-		baddr += ctod(1);
+#else /* RD_DUMP_NOT_TRUSTED */
+		/* Let's just talk about this first... */
+		printf("%s: dump addr %p, blk %d\n", hp->hp_xname,
+		    va, blkno);
+		delay(500 * 1000);	/* half a second */
+#endif /* RD_DUMP_NOT_TRUSTED */
+
+		/* update block count */
+		totwrt -= nwrt;
+		blkno += nwrt;
+		va += sectorsize * nwrt;
 	}
+	rddoingadump = 0;
 	return (0);
 }
 #endif

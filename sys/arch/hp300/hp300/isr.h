@@ -1,4 +1,5 @@
-/*	$NetBSD: isr.h,v 1.6 1996/02/28 01:03:53 thorpej Exp $	*/
+/*	$OpenBSD: isr.h,v 1.3 1997/01/12 15:13:18 downsj Exp $	*/
+/*	$NetBSD: isr.h,v 1.7 1996/12/09 03:04:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -55,12 +56,23 @@ struct isr {
 
 /*
  * ISR priorities.  These are not the same as interrupt levels.
+ * These serve 2 purposes:
+ *	- properly order ISRs in the list
+ *	- compute levels for spl*() calls.
  */
 #define ISRPRI_BIO		0
 #define ISRPRI_NET		1
 #define ISRPRI_TTY		2
 #define ISRPRI_TTYNOBUF		3
 
+/*
+ * Convert PSL values to IPLs and vice-versa.
+ */
+#define	PSLTOIPL(x)	(((x) >> 8) & 0xf)
+#define	IPLTOPSL(x)	((((x) & 0xf) << 8) | PSL_S)
+
 void	isrinit __P((void));
-void	isrlink __P((int (*)(void *), void *, int, int));
+void	*isrlink __P((int (*)(void *), void *, int, int));
+void	isrunlink __P((void *));
 void	isrdispatch __P((int));
+void	isrprintlevels __P((void));

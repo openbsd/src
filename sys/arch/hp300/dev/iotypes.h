@@ -1,3 +1,4 @@
+/*	$OpenBSD: iotypes.h,v 1.2 1997/01/12 15:12:48 downsj Exp $	*/
 /*	$NetBSD: iotypes.h,v 1.2 1994/10/26 07:24:24 cgd Exp $	*/
 
 /*

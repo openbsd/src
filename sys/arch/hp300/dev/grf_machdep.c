@@ -1,4 +1,9 @@
-/*	$NetBSD: grf_machdep.c,v 1.4 1996/02/24 00:55:13 thorpej Exp $	*/
+/*	$OpenBSD: grf_machdep.c,v 1.4 1997/01/12 15:12:36 downsj Exp $	*/
+/*	$NetBSD: grf_machdep.c,v 1.7 1996/12/17 08:41:09 thorpej Exp $	*/
+
+/*
+ * XXX This file is old config only!
+ */
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -124,6 +129,8 @@ grfattach(hd)
 		isconsole = 1;
 	else
 		isconsole = 0;
+
+	sc->sc_scode = scode;
 
 	printf(": %d x %d ", gp->g_display.gd_dwidth,
 	    gp->g_display.gd_dheight);

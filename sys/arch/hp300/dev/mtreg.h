@@ -1,3 +1,4 @@
+/*	$OpenBSD: mtreg.h,v 1.2 1997/01/12 15:12:55 downsj Exp $	*/
 /*	$NetBSD: mtreg.h,v 1.1 1995/10/02 00:28:22 thorpej Exp $	*/
 
 /* 

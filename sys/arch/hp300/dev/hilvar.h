@@ -1,3 +1,4 @@
+/*	$OpenBSD: hilvar.h,v 1.3 1997/01/12 15:12:44 downsj Exp $	*/
 /*	$NetBSD: hilvar.h,v 1.11 1995/12/11 19:41:47 thorpej Exp $	*/
 
 /*

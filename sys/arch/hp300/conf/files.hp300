@@ -1,0 +1,186 @@
+#	$OpenBSD: files.hp300,v 1.1 1997/01/12 15:12:15 downsj Exp $
+#	$NetBSD: files.hp300,v 1.20 1996/12/17 08:40:57 thorpej Exp $
+#
+# hp300-specific configuration info
+
+# maxpartitions must be the first item in files.${ARCH}
+maxpartitions 8
+
+maxusers 2 8 64
+
+# NOTE!  The order of these lines is significant!  Don't change them
+# unless you absolutely know what you're doing!
+
+# Frame buffer attribute
+define	grfdev { }
+
+# Frame buffer devices
+device	dvbox: grfdev
+file	arch/hp300/dev/grf_dv.c		dvbox needs-flag
+
+device	gbox: grfdev
+file	arch/hp300/dev/grf_gb.c		gbox needs-flag
+
+device	hyper: grfdev
+file	arch/hp300/dev/grf_hy.c		hyper needs-flag
+
+device	rbox: grfdev
+file	arch/hp300/dev/grf_rb.c		rbox needs-flag
+
+device	topcat: grfdev
+file	arch/hp300/dev/grf_tc.c		topcat needs-flag
+
+# `grf' framebuffer abstraction
+device	grf { }
+attach	grf at grfdev
+file	arch/hp300/dev/grf.c		grf needs-flag
+file	arch/hp300/dev/grf_subr.c	grf
+
+# Internal Terminal Emulator
+device	ite
+attach	ite at grf
+file	arch/hp300/dev/ite.c		ite needs-flag
+file	arch/hp300/dev/ite_subr.c	ite
+
+#
+# Mainbus
+#
+
+device	mainbus { }
+attach	mainbus at root
+
+#
+# Internal i/o space
+#
+
+device	intio { }
+attach	intio at mainbus
+file	arch/hp300/dev/intio.c		intio
+
+# Internal i/o framebuffer attachments
+attach	dvbox at intio with dvbox_intio
+attach	gbox at intio with gbox_intio
+attach	rbox at intio with rbox_intio
+attach	topcat at intio with topcat_intio
+
+#
+# DIO bus
+#
+
+device	dio { scode = -1 }
+attach	dio at mainbus
+file	arch/hp300/dev/dio.c		dio
+
+# DIO framebuffer attachments
+attach	dvbox at dio with dvbox_dio
+attach	gbox at dio with gbox_dio
+attach	hyper at dio with hyper_dio
+attach	rbox at dio with rbox_dio
+attach	topcat at dio with topcat_dio
+
+# DCA serial interface
+device	dca: tty
+attach	dca at dio
+file	arch/hp300/dev/dca.c		dca needs-flag
+
+# DCM serial interface
+device	dcm: tty
+attach	dcm at dio
+file	arch/hp300/dev/dcm.c		dcm needs-flag
+
+# LANCE ethernet
+attach	le at dio
+file	arch/hp300/dev/if_le.c		le
+
+# HP-IB interfaces
+define	hpibdev { }
+
+device	nhpib: hpibdev
+attach	nhpib at dio
+file	arch/hp300/dev/nhpib.c		nhpib
+
+device	fhpib: hpibdev
+attach	fhpib at dio
+file	arch/hp300/dev/fhpib.c		fhpib
+
+# HP-IB bus layer
+device	hpibbus { slave = -1, punit = -1 }
+attach	hpibbus at hpibdev
+file	arch/hp300/dev/hpib.c		hpibbus
+
+# HP-IB devices
+device	ct: tape
+attach	ct at hpibbus
+file	arch/hp300/dev/ct.c		ct needs-flag
+
+device	mt: tape
+attach	mt at hpibbus
+file	arch/hp300/dev/mt.c		mt needs-flag
+
+device	rd: disk
+attach	rd at hpibbus
+file	arch/hp300/dev/rd.c		rd needs-flag
+file	arch/hp300/dev/rd_compat.c	rd		# XXX
+
+device	ppi
+attach	ppi at hpibbus
+file	arch/hp300/dev/ppi.c		ppi needs-flag
+
+# Old HP SCSI layer
+device	oscsi { target = -1, lun = -1 }
+attach	oscsi at dio
+file	arch/hp300/dev/scsi.c		scsi
+
+# Old HP SCSI devices
+device	sd: disk
+attach	sd at oscsi
+file	arch/hp300/dev/sd.c		sd needs-flag
+file	arch/hp300/dev/sd_compat.c	sd		# XXX
+
+device	st: tape
+attach	st at oscsi
+file	arch/hp300/dev/st.c		st needs-flag
+
+device	ac
+attach	ac at oscsi
+file	arch/hp300/dev/ac.c		ac needs-flag
+
+# Human (Hilarious) Interface Loop
+# XXX should be a real device
+file	arch/hp300/dev/hil.c
+file	arch/hp300/dev/hil_keymaps.c
+
+#
+# Non-device files
+#
+
+file	arch/hp300/hp300/autoconf.c
+file	arch/hp300/hp300/clock.c
+file	arch/hp300/hp300/conf.c
+file	arch/hp300/hp300/db_memrw.c		ddb | kgdb
+file	arch/hp300/hp300/dkbad.c
+file	arch/hp300/hp300/kgdb_glue.c		kgdb compile-with "${NORMAL_C} -fno-defer-pop"
+file	arch/hp300/hp300/kgdb_stub.c		kgdb
+file	arch/hp300/hp300/machdep.c
+file	arch/hp300/hp300/isr.c
+file	arch/hp300/hp300/mem.c
+file	arch/hp300/hp300/pmap.c
+file	arch/hp300/hp300/pmap_bootstrap.c
+file	arch/hp300/hp300/sys_machdep.c
+file	arch/hp300/hp300/trap.c
+file	arch/hp300/hp300/vm_machdep.c
+file	arch/hp300/hp300/disksubr.c
+file	arch/hp300/dev/dma.c
+
+file	arch/m68k/m68k/copy.s
+
+file	dev/cons.c
+file	dev/cninit.c
+
+file	kludge_for_in_proto.c			hy needs-flag
+
+#
+# HP-UX binary compatibility
+#
+include "compat/hpux/files.hpux"
+file	arch/hp300/hp300/hpux_machdep.c		compat_hpux

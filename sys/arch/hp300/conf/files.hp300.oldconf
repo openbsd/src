@@ -1,12 +1,14 @@
-#	$NetBSD: files.hp300.oldconf,v 1.26.4.1 1996/06/10 06:51:58 thorpej Exp $
+#	$OpenBSD: files.hp300.oldconf,v 1.6 1997/01/12 15:12:15 downsj Exp $
+#	$NetBSD: files.hp300.oldconf,v 1.30 1997/01/05 04:41:48 thorpej Exp $
 #
 arch/hp300/hp300/autoconf.c		standard
 arch/hp300/hp300/clock.c		standard
 arch/hp300/hp300/conf.c			standard
+arch/hp300/hp300/db_memrw.c		optional ddb
 arch/hp300/hp300/dkbad.c		standard
 arch/hp300/hp300/kgdb_glue.c		optional kgdb compile-with "${NORMAL_C} -fno-defer-pop"
 arch/hp300/hp300/kgdb_stub.c		optional kgdb
-arch/hp300/hp300/machdep.c		standard config-dependent
+arch/hp300/hp300/machdep.c		standard
 arch/hp300/hp300/isr.c			standard
 arch/hp300/hp300/mem.c			standard
 arch/hp300/hp300/pmap.c			standard
@@ -15,6 +17,7 @@ arch/hp300/hp300/sys_machdep.c		standard
 arch/hp300/hp300/trap.c			standard
 arch/hp300/hp300/vm_machdep.c		standard
 arch/hp300/hp300/disksubr.c		standard
+arch/hp300/dev/dio.c			standard
 arch/hp300/dev/grf_conf.c		optional grf
 arch/hp300/dev/grf_dv.c			optional grf needs-count # XXX? d-d?
 arch/hp300/dev/grf_gb.c			optional grf needs-count # XXX? d-d?
@@ -46,7 +49,6 @@ arch/hp300/dev/hil_keymaps.c		standard
 arch/hp300/dev/ite.c			optional ite needs-count # XXX? d-d?
 arch/hp300/dev/ite_subr.c		optional ite needs-count # XXX? d-d?
 arch/m68k/m68k/copy.s			standard
-arch/m68k/m68k/db_memrw.c		optional ddb
 dev/cons.c				standard
 dev/cninit.c				standard
 thisisfor_in_proto.c			optional hy

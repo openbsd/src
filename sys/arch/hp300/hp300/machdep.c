@@ -1,4 +1,5 @@
-/*	$NetBSD: machdep.c,v 1.66 1996/05/18 23:30:09 thorpej Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.9 1997/01/12 15:13:23 downsj Exp $	*/
+/*	$NetBSD: machdep.c,v 1.77 1996/12/11 16:49:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -123,6 +124,22 @@ extern	short exframesize[];
 extern struct emul emul_hpux;
 #endif
 
+/* prototypes for local functions */
+caddr_t	allocsys __P((caddr_t));
+void	parityenable __P((void));
+int	parityerror __P((struct frame *));
+int	parityerrorfind __P((void));
+void    identifycpu __P((void));
+void    initcpu __P((void));
+void    ledinit __P((void));
+void	dumpmem __P((int *, int, int));
+char	*hexstr __P((int, int));
+
+/* functions called from locore.s */
+void    dumpsys __P((void));
+void    straytrap __P((int, u_short));
+void	nmihand __P((struct frame));
+
 /*
  * Select code of console.  Set to -1 if console is on
  * "internal" framebuffer.
@@ -186,16 +203,12 @@ consinit()
 void
 cpu_startup()
 {
+	extern char *etext;
 	register unsigned i;
-	register caddr_t v, firstaddr;
-	int base, residual;
+	register caddr_t v;
+	int base, residual, sz;
 	vm_offset_t minaddr, maxaddr;
 	vm_size_t size;
-#ifdef BUFFERS_UNMANAGED
-	vm_offset_t bufmemp;
-	caddr_t buffermem;
-	int ix;
-#endif
 #ifdef DEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
@@ -217,94 +230,18 @@ cpu_startup()
 	 */
 	printf(version);
 	identifycpu();
-	printf("real mem = %d\n", ctob(physmem));
+	printf("real mem  = %d\n", ctob(physmem));
 
 	/*
-	 * Allocate space for system data structures.
-	 * The first available real memory address is in "firstaddr".
-	 * The first available kernel virtual address is in "v".
-	 * As pages of kernel virtual memory are allocated, "v" is incremented.
-	 * As pages of memory are allocated and cleared,
-	 * "firstaddr" is incremented.
-	 * An index into the kernel page table corresponding to the
-	 * virtual memory address maintained in "v" is kept in "mapaddr".
+	 * Find out how much space we need, allocate it,
+	 * and the give everything true virtual addresses.
 	 */
-	/*
-	 * Make two passes.  The first pass calculates how much memory is
-	 * needed and allocates it.  The second pass assigns virtual
-	 * addresses to the various data structures.
-	 */
-	firstaddr = 0;
-again:
-	v = (caddr_t)firstaddr;
+	size = (vm_size_t)allocsys((caddr_t)0);
+	if ((v = (caddr_t)kmem_alloc(kernel_map, round_page(size))) == 0)
+		panic("startup: no room for tables");
+	if ((allocsys(v) - v) != size)
+		panic("startup: talbe size inconsistency");
 
-#define	valloc(name, type, num) \
-	    (name) = (type *)v; v = (caddr_t)((name)+(num))
-#define	valloclim(name, type, num, lim) \
-	    (name) = (type *)v; v = (caddr_t)((lim) = ((name)+(num)))
-#ifdef REAL_CLISTS
-	valloc(cfree, struct cblock, nclist);
-#endif
-	valloc(callout, struct callout, ncallout);
-	valloc(swapmap, struct map, nswapmap = maxproc * 2);
-#ifdef SYSVSHM
-	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
-#endif
-#ifdef SYSVSEM
-	valloc(sema, struct semid_ds, seminfo.semmni);
-	valloc(sem, struct sem, seminfo.semmns);
-	/* This is pretty disgusting! */
-	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
-#endif
-#ifdef SYSVMSG
-	valloc(msgpool, char, msginfo.msgmax);
-	valloc(msgmaps, struct msgmap, msginfo.msgseg);
-	valloc(msghdrs, struct msg, msginfo.msgtql);
-	valloc(msqids, struct msqid_ds, msginfo.msgmni);
-#endif
-	
-	/*
-	 * Determine how many buffers to allocate.
-	 * Since HPs tend to be long on memory and short on disk speed,
-	 * we allocate more buffer space than the BSD standard of
-	 * use 10% of memory for the first 2 Meg, 5% of remaining.
-	 * We just allocate a flat 10%.  Insure a minimum of 16 buffers.
-	 * We allocate 1/2 as many swap buffer headers as file i/o buffers.
-	 */
-	if (bufpages == 0)
-		bufpages = physmem / 10 / CLSIZE;
-	if (nbuf == 0) {
-		nbuf = bufpages;
-		if (nbuf < 16)
-			nbuf = 16;
-	}
-	if (nswbuf == 0) {
-		nswbuf = (nbuf / 2) &~ 1;	/* force even */
-		if (nswbuf > 256)
-			nswbuf = 256;		/* sanity */
-	}
-	valloc(swbuf, struct buf, nswbuf);
-	valloc(buf, struct buf, nbuf);
-	/*
-	 * End of first pass, size has been calculated so allocate memory
-	 */
-	if (firstaddr == 0) {
-		size = (vm_size_t)(v - firstaddr);
-		firstaddr = (caddr_t) kmem_alloc(kernel_map, round_page(size));
-		if (firstaddr == 0)
-			panic("startup: no room for tables");
-#ifdef BUFFERS_UNMANAGED
-		buffermem = (caddr_t) kmem_alloc(kernel_map, bufpages*CLBYTES);
-		if (buffermem == 0)
-			panic("startup: no room for buffers");
-#endif
-		goto again;
-	}
-	/*
-	 * End of second pass, addresses have been assigned
-	 */
-	if ((vm_size_t)(v - firstaddr) != size)
-		panic("startup: table size inconsistency");
 	/*
 	 * Now allocate buffers proper.  They are different than the above
 	 * in that they usually occupy more virtual memory than physical.
@@ -318,9 +255,6 @@ again:
 		panic("startup: cannot allocate buffers");
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
-#ifdef BUFFERS_UNMANAGED
-	bufmemp = (vm_offset_t) buffermem;
-#endif
 	for (i = 0; i < nbuf; i++) {
 		vm_size_t curbufsize;
 		vm_offset_t curbuf;
@@ -334,36 +268,9 @@ again:
 		 */
 		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
 		curbufsize = CLBYTES * (i < residual ? base+1 : base);
-#ifdef BUFFERS_UNMANAGED
-		/*
-		 * Move the physical pages over from buffermem.
-		 */
-		for (ix = 0; ix < curbufsize/CLBYTES; ix++) {
-			vm_offset_t pa;
-
-			pa = pmap_extract(pmap_kernel(), bufmemp);
-			if (pa == 0)
-				panic("startup: unmapped buffer");
-			pmap_remove(pmap_kernel(), bufmemp, bufmemp+CLBYTES);
-			pmap_enter(pmap_kernel(),
-				   (vm_offset_t)(curbuf + ix * CLBYTES),
-				   pa, VM_PROT_READ|VM_PROT_WRITE, TRUE);
-			bufmemp += CLBYTES;
-		}
-#else
 		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
 		vm_map_simplify(buffer_map, curbuf);
-#endif
 	}
-#ifdef BUFFERS_UNMANAGED
-#if 0
-	/*
-	 * We would like to free the (now empty) original address range
-	 * but too many bad things will happen if we try.
-	 */
-	kmem_free(kernel_map, (vm_offset_t)buffermem, bufpages*CLBYTES);
-#endif
-#endif
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
@@ -399,6 +306,28 @@ again:
 	printf("avail mem = %d\n", ptoa(cnt.v_free_count));
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
+
+	/*
+	 * Tell the VM system that page 0 isn't mapped.
+	 *
+	 * XXX This is bogus; should just fix KERNBASE and
+	 * XXX VM_MIN_KERNEL_ADDRESS, but not right now.
+	 */
+	if (vm_map_protect(kernel_map, 0, NBPG, VM_PROT_NONE, TRUE)
+	    != KERN_SUCCESS)
+		panic("can't mark page 0 off-limits");
+
+	/*
+	 * Tell the VM system that writing to kernel text isn't allowed.
+	 * If we don't, we might end up COW'ing the text segment!
+	 *
+	 * XXX Should be hp300_trunc_page(&kernel_text) instead
+	 * XXX of NBPG.
+	 */
+	if (vm_map_protect(kernel_map, NBPG, hp300_round_page(&etext),
+	    VM_PROT_READ|VM_PROT_EXECUTE, TRUE) != KERN_SUCCESS)
+		panic("can't protect kernel text");
+
 	/*
 	 * Set up CPU-specific registers, cache, etc.
 	 */
@@ -413,6 +342,71 @@ again:
 	 * Configure the system.
 	 */
 	configure();
+}
+
+/*
+ * Allocate space for system data structures.  We are given
+ * a starting virtual address and we return a final virtual
+ * address; along the way we set each data structure pointer.
+ *
+ * We call allocsys() with 0 to find out how much space we want,
+ * allocate that much and fill it with zeroes, and the call
+ * allocsys() again with the correct base virtual address.
+ */
+caddr_t
+allocsys(v)
+	register caddr_t v;
+{
+
+#define	valloc(name, type, num)	\
+	    (name) = (type *)v; v = (caddr_t)((name)+(num))
+#define	valloclim(name, type, num, lim) \
+	    (name) = (type *)v; v = (caddr_t)((lim) = ((name)+(num)))
+
+#ifdef REAL_CLISTS
+	valloc(cfree, struct cblock, nclist);
+#endif
+	valloc(callout, struct callout, ncallout);
+	valloc(swapmap, struct map, nswapmap = maxproc * 2);
+#ifdef SYSVSHM
+	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
+#endif
+#ifdef SYSVSEM 
+	valloc(sema, struct semid_ds, seminfo.semmni);
+	valloc(sem, struct sem, seminfo.semmns); 
+	/* This is pretty disgusting! */
+	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
+#endif
+#ifdef SYSVMSG
+	valloc(msgpool, char, msginfo.msgmax);
+	valloc(msgmaps, struct msgmap, msginfo.msgseg);
+	valloc(msghdrs, struct msg, msginfo.msgtql);
+	valloc(msqids, struct msqid_ds, msginfo.msgmni);
+#endif
+
+	/*
+	 * Determine how many buffers to allocate.  Since HPs tend
+	 * to be long on memory and short on disk speed, we allocate
+	 * more buffer space than the BSD standard of 10% of memory
+	 * for the first 2 Meg, 5% of the remaining.  We just allocate
+	 * a flag 10%.  Insure a minimum of 16 buffers.  We allocate
+	 * 1/2 as many swap buffer headers as file i/o buffers.
+	 */
+	if (bufpages == 0)
+		bufpages = physmem / 10 / CLSIZE;
+	if (nbuf == 0) {
+		nbuf = bufpages;
+		if (nbuf < 16)
+			nbuf = 16;
+	}
+	if (nswbuf == 0) {
+		nswbuf = (nbuf / 2) &~ 1;	/* force even */
+		if (nswbuf > 256)
+			nswbuf = 256;		/* sanity */
+	}
+	valloc(swbuf, struct buf, nswbuf);
+	valloc(buf, struct buf, nbuf);
+	return (v);
 }
 
 /*
@@ -492,6 +486,7 @@ setregs(p, pack, stack, retval)
 char	cpu_model[120];
 extern	char version[];
 
+void
 identifycpu()
 {
 	char *t, *mc;
@@ -603,6 +598,7 @@ identifycpu()
 /*
  * machine dependent system variables.
  */
+int
 cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int namelen;
@@ -641,6 +637,7 @@ char *ledaddr;
 /*
  * Map the LED page and setup the KVA to access it.
  */
+void
 ledinit()
 {
 	extern caddr_t ledbase;
@@ -659,6 +656,7 @@ ledinit()
  * They are expensive and we really don't need to be that precise.
  * Besides we would like to be able to profile this routine.
  */
+void
 ledcontrol(ons, offs, togs)
 	register int ons, offs, togs;
 {
@@ -1209,14 +1207,23 @@ dumpconf()
 }
 
 /*
- * Doadump comes here after turning off memory management and
- * getting on the dump stack, either when called above, or by
- * the auto-restart code.
+ * Dump physical memory onto the dump device.  Called by doadump()
+ * in locore.s or by boot() here in machdep.c
  */
+void
 dumpsys()
 {
+	daddr_t blkno;		/* current block to write */
+				/* dump routine */
+	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int pg;			/* page being dumped */
+	vm_offset_t maddr;	/* PA being dumped */
+	int error;		/* error code from (*dump)() */
 
+	/* Don't put dump messages in msgbuf. */
 	msgbufmapped = 0;
+
+	/* Make sure dump device is valid. */
 	if (dumpdev == NODEV)
 		return;
 	if (dumpsize == 0) {
@@ -1224,37 +1231,60 @@ dumpsys()
 		if (dumpsize == 0)
 			return;
 	}
-	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
+	if (dumplo < 0)
+		return;
+	dump = bdevsw[major(dumpdev)].d_dump;
+	blkno = dumplo;
+
+	printf("\ndumping to dev 0x%x, offset %d\n", dumpdev, dumplo);
 
 	printf("dump ");
-	switch ((*bdevsw[major(dumpdev)].d_dump)(dumpdev)) {
+	maddr = lowram;
+	for (pg = 0; pg < dumpsize; pg++) {
+#define NPGMB	(1024*1024/NBPG)
+		/* print out how many MBs we have dumped */
+		if (pg && (pg % NPGMB) == 0)
+			printf("%d ", pg / NPGMB);
+#undef NPGMB
+		pmap_enter(pmap_kernel(), (vm_offset_t)vmmap, maddr,
+		    VM_PROT_READ, TRUE);
 
-	case ENXIO:
-		printf("device bad\n");
-		break;
+		error = (*dump)(dumpdev, blkno, vmmap, NBPG);
+		switch (error) {
+		case 0:
+			maddr += NBPG;
+			blkno += btodb(NBPG);
+			break;
 
-	case EFAULT:
-		printf("device not ready\n");
-		break;
+		case ENXIO:
+			printf("device bad\n");
+			return;
 
-	case EINVAL:
-		printf("area improper\n");
-		break;
+		case EFAULT:
+			printf("device not ready\n");
+			return;
 
-	case EIO:
-		printf("i/o error\n");
-		break;
+		case EINVAL:
+			printf("area improper\n");
+			return;
 
-	case EINTR:
-		printf("aborted from console\n");
-		break;
+		case EIO:
+			printf("i/o error\n");
+			return;
 
-	default:
-		printf("succeeded\n");
-		break;
+		case EINTR:
+			printf("aborted from console\n");
+			return;
+
+		default:
+			printf("error %d\n", error);
+			return;
+		}
 	}
+	printf("succeeded\n");
 }
 
+void
 initcpu()
 {
 #ifdef MAPPEDCOPY
@@ -1278,6 +1308,7 @@ initcpu()
 #endif
 }
 
+void
 straytrap(pc, evec)
 	int pc;
 	u_short evec;
@@ -1286,17 +1317,17 @@ straytrap(pc, evec)
 	       evec & 0xFFF, pc);
 }
 
+/* XXX should change the interface, and make one badaddr() function */
+
 int	*nofault;
 
+int
 badaddr(addr)
 	register caddr_t addr;
 {
 	register int i;
 	label_t	faultbuf;
 
-#ifdef lint
-	i = *addr; if (i) return(0);
-#endif
 	nofault = (int *) &faultbuf;
 	if (setjmp((label_t *)nofault)) {
 		nofault = (int *) 0;
@@ -1307,15 +1338,13 @@ badaddr(addr)
 	return(0);
 }
 
+int
 badbaddr(addr)
 	register caddr_t addr;
 {
 	register int i;
 	label_t	faultbuf;
 
-#ifdef lint
-	i = *addr; if (i) return(0);
-#endif
 	nofault = (int *) &faultbuf;
 	if (setjmp((label_t *)nofault)) {
 		nofault = (int *) 0;
@@ -1326,14 +1355,16 @@ badbaddr(addr)
 	return(0);
 }
 
-#if (defined(DDB) || defined(DEBUG)) && !defined(PANICBUTTON)
-#define PANICBUTTON
-#endif
-
 #ifdef PANICBUTTON
+/*
+ * Declare these so they can be patched.
+ */
 int panicbutton = 1;	/* non-zero if panic buttons are enabled */
-int crashandburn = 0;
-int candbdelay = 50;	/* give em half a second */
+int candbdiv = 2;	/* give em half a second (hz / candbdiv) */
+
+void	candbtimer __P((void *));
+
+int crashandburn;
 
 void
 candbtimer(arg)
@@ -1342,47 +1373,67 @@ candbtimer(arg)
 
 	crashandburn = 0;
 }
-#endif
+#endif /* PANICBUTTON */
+
+static int innmihand;	/* simple mutex */
 
 /*
  * Level 7 interrupts can be caused by the keyboard or parity errors.
  */
+void
 nmihand(frame)
 	struct frame frame;
 {
+
+	/* Prevent unwanted recursion. */
+	if (innmihand)
+		return;
+	innmihand = 1;
+
+	/* Check for keyboard <CRTL>+<SHIFT>+<RESET>. */
 	if (kbdnmi()) {
-#ifdef PANICBUTTON
-		static int innmihand = 0;
+		printf("Got a keyboard NMI");
 
 		/*
-		 * Attempt to reduce the window of vulnerability for recursive
-		 * NMIs (e.g. someone holding down the keyboard reset button).
+		 * We can:
+		 *
+		 *	- enter DDB
+		 *
+		 *	- Start the crashandburn sequence
+		 *
+		 *	- Ignore it.
 		 */
-		if (innmihand == 0) {
-			innmihand = 1;
-			printf("Got a keyboard NMI\n");
-			innmihand = 0;
-		}
 #ifdef DDB
+		printf(": entering debugger\n");
 		Debugger();
 #else
+#ifdef PANICBUTTON
 		if (panicbutton) {
 			if (crashandburn) {
 				crashandburn = 0;
-				panic(panicstr ?
-				      "forced crash, nosync" : "forced crash");
+				printf(": CRASH AND BURN!\n");
+				panic("forced crash");
+			} else {
+				/* Start the crashandburn sequence */
+				printf("\n");
+				crashandburn = 1;
+				timeout(candbtimer, NULL, hz / candbdiv);
 			}
-			crashandburn++;
-			timeout(candbtimer, (void *)0, candbdelay);
-		}
-#endif /* DDB */
+		} else
 #endif /* PANICBUTTON */
-		return;
+			printf(": ignoring\n");
+#endif /* DDB */
+
+		goto nmihand_out;	/* no more work to do */
 	}
+
 	if (parityerror(&frame))
 		return;
 	/* panic?? */
 	printf("unexpected level 7 interrupt ignored\n");
+
+ nmihand_out:
+	innmihand = 0;
 }
 
 /*
@@ -1397,6 +1448,7 @@ int ignorekperr = 0;	/* ignore kernel parity errors */
 /*
  * Enable parity detection
  */
+void
 parityenable()
 {
 	label_t	faultbuf;
@@ -1404,23 +1456,20 @@ parityenable()
 	nofault = (int *) &faultbuf;
 	if (setjmp((label_t *)nofault)) {
 		nofault = (int *) 0;
-#ifdef DEBUG
 		printf("No parity memory\n");
-#endif
 		return;
 	}
 	*PARREG = 1;
 	nofault = (int *) 0;
 	gotparmem = 1;
-#ifdef DEBUG
 	printf("Parity detection enabled\n");
-#endif
 }
 
 /*
  * Determine if level 7 interrupt was caused by a parity error
  * and deal with it if it was.  Returns 1 if it was a parity error.
  */
+int
 parityerror(fp)
 	struct frame *fp;
 {
@@ -1433,7 +1482,7 @@ parityerror(fp)
 		printf("parity error after panic ignored\n");
 		return(1);
 	}
-	if (!findparerror())
+	if (!parityerrorfind())
 		printf("WARNING: transient parity error ignored\n");
 	else if (USERMODE(fp->f_sr)) {
 		printf("pid %d: parity error\n", curproc->p_pid);
@@ -1455,7 +1504,8 @@ parityerror(fp)
  * Yuk!  There has got to be a better way to do this!
  * Searching all of memory with interrupts blocked can lead to disaster.
  */
-findparerror()
+int
+parityerrorfind()
 {
 	static label_t parcatch;
 	static int looking = 0;
@@ -1513,6 +1563,7 @@ done:
 	return(found);
 }
 
+void
 regdump(fp, sbytes)
 	struct frame *fp; /* must not be register */
 	int sbytes;
@@ -1520,7 +1571,6 @@ regdump(fp, sbytes)
 	static int doingdump = 0;
 	register int i;
 	int s;
-	extern char *hexstr();
 
 	if (doingdump)
 		return;
@@ -1556,12 +1606,12 @@ regdump(fp, sbytes)
 
 #define KSADDR	((int *)((u_int)curproc->p_addr + USPACE - NBPG))
 
+void
 dumpmem(ptr, sz, ustack)
 	register int *ptr;
 	int sz, ustack;
 {
 	register int i, val;
-	extern char *hexstr();
 
 	for (i = 0; i < sz; i++) {
 		if ((i & 7) == 0)
@@ -1702,6 +1752,6 @@ cpu_exec_aout_prep_m68k4k(p, epp)
 	    epp->ep_daddr + execp->a_data, NULLVP, 0,
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return exec_aout_setup_stack(p, epp);
+	return exec_setup_stack(p, epp);
 }
 #endif /* COMPAT_M68K4K */

@@ -1,4 +1,5 @@
-/*	$NetBSD: grf_tc.c,v 1.7 1996/03/03 16:49:04 thorpej Exp $	*/
+/*	$OpenBSD: grf_tc.c,v 1.3 1997/01/12 15:12:38 downsj Exp $	*/
+/*	$NetBSD: grf_tc.c,v 1.9 1996/12/17 08:41:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -43,9 +44,6 @@
  *	@(#)grf_tc.c	8.4 (Berkeley) 1/12/94
  */
 
-#include "grf.h"
-#if NGRF > 0
-
 /*
  * Graphics routines for TOPCAT and CATSEYE frame buffers
  */
@@ -56,11 +54,16 @@
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/systm.h>
+#include <sys/device.h>
  
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
   
 #include <dev/cons.h>
+
+#include <hp300/dev/diovar.h>
+#include <hp300/dev/diodevs.h>
+#include <hp300/dev/intiovar.h>
 
 #include <hp300/dev/grfioctl.h>
 #include <hp300/dev/grfvar.h>
@@ -74,6 +77,28 @@
 
 int	tc_init __P((struct grf_data *, int, caddr_t));
 int	tc_mode __P((struct grf_data *, int, caddr_t));
+
+#ifdef NEWCONFIG
+void	topcat_common_attach __P((struct grfdev_softc *, caddr_t, u_int8_t));
+
+int	topcat_intio_match __P((struct device *, struct cfdata *, void *));
+void	topcat_intio_attach __P((struct device *, struct device *, void *));
+
+int	topcat_dio_match __P((struct device *, struct cfdata *, void *));
+void	topcat_dio_attach __P((struct device *, struct device *, void *));
+
+struct cfattach topcat_intio_ca = {
+	sizeof(struct grfdev_softc), topcat_intio_match, topcat_intio_attach
+};
+
+struct cfattach topcat_dio_ca = {
+	sizeof(struct grfdev_softc), topcat_dio_match, topcat_dio_attach
+};
+
+struct cfdriver topcat_cd = {
+	NULL, "topcat", DV_DULL
+};
+#endif /* NEWCONFIG */
 
 /* Topcat (bobcat) grf switch */
 struct grfsw topcat_grfsw = {
@@ -112,6 +137,139 @@ struct itesw topcat_itesw = {
 };
 #endif /* NITE > 0 */
 
+#ifdef NEWCONFIG
+int
+topcat_intio_match(parent, match, aux)
+	struct device *parent;
+	struct cfdata *match;
+	void *aux;
+{
+	struct intio_attach_args *ia = aux;
+	struct grfreg *grf;
+
+	grf = (struct grfreg *)IIOV(GRFIADDR);
+
+	if (badaddr((caddr_t)grf))
+		return (0);
+
+	if (grf->gr_id == DIO_DEVICE_ID_FRAMEBUFFER) {
+		switch (grf->gr_id2) {
+		case DIO_DEVICE_SECID_TOPCAT:
+		case DIO_DEVICE_SECID_LRCATSEYE:
+		case DIO_DEVICE_SECID_HRCCATSEYE:
+		case DIO_DEVICE_SECID_HRMCATSEYE:
+#if 0
+		case DIO_DEVICE_SECID_XXXCATSEYE:
+#endif
+			ia->ia_addr = (caddr_t)GRFIADDR;
+			return (1);
+		}
+	}
+
+	return (0);
+}
+
+void
+topcat_intio_attach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct grfdev_softc *sc = (struct grfdev_softc *)self;
+	struct grfreg *grf;
+
+	grf = (struct grfreg *)IIOV(GRFIADDR);
+	sc->sc_scode = -1;	/* XXX internal i/o */
+
+	topcat_common_attach(sc, (caddr_t)grf, grf->gr_id2);
+}
+
+int
+topcat_dio_match(parent, match, aux)
+	struct device *parent;
+	struct cfdata *match;
+	void *aux;
+{
+	struct dio_attach_args *da = aux;
+
+	if (da->da_id == DIO_DEVICE_ID_FRAMEBUFFER) {
+		switch (da->da_secid) {
+		case DIO_DEVICE_SECID_TOPCAT:
+		case DIO_DEVICE_SECID_LRCATSEYE:
+		case DIO_DEVICE_SECID_HRCCATSEYE:
+		case DIO_DEVICE_SECID_HRMCATSEYE:
+#if 0
+		case DIO_DEVICE_SECID_XXXCATSEYE:
+#endif
+			return (1);
+		}
+	}
+
+	return (0);
+}
+
+void
+topcat_dio_attach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct grfdev_softc *sc = (struct grfdev_softc *)self;
+	struct dio_attach_args *da = aux;
+	caddr_t grf;
+
+	sc->sc_scode = da->da_scode;
+	if (sc->sc_scode == conscode)
+		grf = conaddr;
+	else {
+		grf = iomap(dio_scodetopa(sc->sc_scode), da->da_size);
+		if (grf == 0) {
+			printf("%s: can't map framebuffer\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
+	}
+
+	topcat_common_attach(sc, grf, da->da_secid);
+}
+
+void
+topcat_common_attach(sc, grf, secid)
+	struct grfdev_softc *sc;
+	caddr_t grf;
+	u_int8_t secid;
+{
+	struct grfsw *sw;
+
+	switch (secid) {
+	case DIO_DEVICE_SECID_TOPCAT:
+		sw = &topcat_grfsw;
+		break;
+
+	case DIO_DEVICE_SECID_LRCATSEYE:
+		sw = &lrcatseye_grfsw;
+		break;
+
+	case DIO_DEVICE_SECID_HRCCATSEYE:
+		sw = &hrcatseye_grfsw;
+		break;
+
+	case DIO_DEVICE_SECID_HRMCATSEYE:
+		sw = &hrmcatseye_grfsw;
+		break;
+#if 0
+	case DIO_DEVICE_SECID_XXXCATSEYE:
+		sw = XXX?
+		break;
+#endif
+	default:
+		printf("%s: unkown device 0x%x\n",
+		    sc->sc_dev.dv_xname, secid);
+		panic("topcat_common_attach");
+	}
+
+	grfdev_attach(sc, tc_init, grf, sw);
+}
+#endif /* NEWCONFIG */
+
 /*
  * Initialize hardware.
  * Must fill in the grfinfo structure in g_softc.
@@ -128,7 +286,6 @@ tc_init(gp, scode, addr)
 	volatile u_char *fbp;
 	u_char save;
 	int fboff;
-	extern caddr_t sctopa();
 
 	/*
 	 * If the console has been initialized, and it was us, there's
@@ -138,7 +295,7 @@ tc_init(gp, scode, addr)
 		if (ISIIOVA(addr))
 			gi->gd_regaddr = (caddr_t) IIOP(addr);
 		else
-			gi->gd_regaddr = sctopa(scode);
+			gi->gd_regaddr = dio_scodetopa(scode);
 		gi->gd_regsize = 0x10000;
 		gi->gd_fbwidth = (tp->fbwmsb << 8) | tp->fbwlsb;
 		gi->gd_fbheight = (tp->fbhmsb << 8) | tp->fbhlsb;
@@ -626,7 +783,6 @@ void
 topcatcninit(cp)
 	struct consdev *cp;
 {
-	struct ite_data *ip = &ite_cn;
 	struct grf_data *gp = &grf_cn;
 	struct grfreg *grf = (struct grfreg *)conaddr;
 
@@ -663,16 +819,9 @@ topcatcninit(cp)
 	gp->g_flags = GF_ALIVE;
 
 	/*
-	 * Set up required ite data and initialize ite.
+	 * Initialize the terminal emulator.
 	 */
-	ip->isw = &topcat_itesw;
-	ip->grf = gp;
-	ip->flags = ITE_ALIVE|ITE_CONSOLE|ITE_ACTIVE|ITE_ISCONS;
-	ip->attrbuf = console_attributes;
-	iteinit(ip);
-
-	kbd_ite = ip;		/* XXX */
+	itecninit(gp, &topcat_itesw);
 }
 
 #endif /* NITE > 0 */
-#endif /* NGRF > 0 */

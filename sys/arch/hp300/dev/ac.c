@@ -1,4 +1,5 @@
-/*	$NetBSD: ac.c,v 1.4 1996/02/14 02:43:54 thorpej Exp $	*/
+/*	$OpenBSD: ac.c,v 1.4 1997/01/12 15:12:17 downsj Exp $
+/*	$NetBSD: ac.c,v 1.6 1996/10/13 03:14:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1991 University of Utah.

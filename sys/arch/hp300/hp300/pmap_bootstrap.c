@@ -1,4 +1,5 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.9 1995/12/11 17:09:16 thorpej Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.3 1997/01/12 15:13:26 downsj Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.10 1996/10/14 08:05:37 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -56,6 +57,7 @@ extern char *extiobase, *proc0paddr;
 extern st_entry_t *Sysseg;
 extern pt_entry_t *Sysptmap, *Sysmap;
 extern vm_offset_t CLKbase, MMUbase;
+extern vm_offset_t pagezero;
 
 extern int maxmem, physmem;
 extern vm_offset_t avail_start, avail_end, virtual_avail, virtual_end;
@@ -247,8 +249,8 @@ pmap_bootstrap(nextpa, firstpa)
 		while (pte < epte) {
 			*pte++ = PG_NV;
 		}
-                /*
-		 * Initialize the last to point to point to the page
+		/*
+		 * Initialize the last to point to the page
 		 * table page allocated earlier.
 		 */
 		*pte = lkptpa | PG_RW | PG_CI | PG_V;
@@ -302,16 +304,22 @@ pmap_bootstrap(nextpa, firstpa)
 	epte = &pte[nptpages * NPTEPG];
 	while (pte < epte)
 		*pte++ = PG_NV;
+
 	/*
-	 * Validate PTEs for kernel text (RO)
+	 * Save the physical address of `page zero'.  This is
+	 * a page of memory at the beginning of kernel text
+	 * not mapped at VA 0.  But, we might want to use it
+	 * for something later.
 	 */
-	pte = &((u_int *)kptpa)[hp300_btop(KERNBASE)];
+	RELOC(pagezero, vm_offset_t) = firstpa;
+
+	/*
+	 * Validate PTEs for kernel text (RO).  The first page
+	 * of kernel text remains invalid; see locore.s
+	 */
+	pte = &((u_int *)kptpa)[hp300_btop(KERNBASE + NBPG)];
 	epte = &pte[hp300_btop(hp300_trunc_page(&etext))];
-#if defined(KGDB) || defined(DDB)
-	protopte = firstpa | PG_RW | PG_V;	/* XXX RW for now */
-#else
-	protopte = firstpa | PG_RO | PG_V;
-#endif
+	protopte = (firstpa + NBPG) | PG_RO | PG_V;
 	while (pte < epte) {
 		*pte++ = protopte;
 		protopte += NBPG;

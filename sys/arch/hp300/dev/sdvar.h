@@ -1,4 +1,5 @@
-/*	$NetBSD: sdvar.h,v 1.4.4.1 1996/06/06 16:22:06 thorpej Exp $	*/
+/*	$OpenBSD: sdvar.h,v 1.5 1997/01/12 15:13:04 downsj Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.5 1996/06/06 16:17:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993

@@ -1,4 +1,5 @@
-/*	$NetBSD: Locore.c,v 1.12 1996/02/02 18:05:55 mycroft Exp $	*/
+/*	$OpenBSD: Locore.c,v 1.4 1997/01/12 15:13:09 downsj Exp $	*/
+/*	$NetBSD: Locore.c,v 1.16 1996/11/06 20:19:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -326,9 +327,6 @@ scanc(size, cp, table, mask)
 
 /*ARGSUSED*/
 skpc(mask, size, cp) int mask; int size; char *cp; { return (0); }
-
-/*ARGSUSED*/
-locc(mask, size, cp) int mask; char *cp; unsigned size; { return (0); }
 
 /*ARGSUSED*/
 ffs(v) long v; { return (0); }

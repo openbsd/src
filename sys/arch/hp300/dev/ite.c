@@ -1,4 +1,5 @@
-/*	$NetBSD: ite.c,v 1.29.4.1 1996/06/06 15:39:12 thorpej Exp $	*/
+/*	$OpenBSD: ite.c,v 1.6 1997/01/12 15:12:49 downsj Exp $	*/
+/*	$NetBSD: ite.c,v 1.34 1996/12/17 08:41:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -48,12 +49,6 @@
  * This is a very rudimentary.  Much more can be abstracted out of
  * the hardware dependent routines.
  */
-#include "ite.h"
-#if NITE > 0
-
-#include "grf.h"
-#undef NITE
-#define NITE	NGRF
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -62,6 +57,7 @@
 #include <sys/tty.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+#include <sys/device.h>
 
 #include <machine/autoconf.h>
 
@@ -90,9 +86,23 @@
  */
 int	iteburst = 64;
 
-int	nite = NITE;
 struct  ite_data *kbd_ite = NULL;
-struct  ite_softc ite_softc[NITE];
+
+#ifdef NEWCONFIG
+int	itematch __P((struct device *, struct cfdata *, void *));
+void	iteattach __P((struct device *, struct device *, void *));
+
+struct cfattach ite_ca = {
+	sizeof(struct ite_softc), itematch, iteattach
+};
+
+struct cfdriver ite_cd = {
+	NULL, "ite", DV_TTY
+};
+#else /* ! NEWCONFIG */
+#include "grf.h"
+struct  ite_softc ite_softc[NGRF];
+#endif /* NEWCONFIG */
 
 /*
  * Terminal emulator state information, statically allocated
@@ -116,7 +126,7 @@ void	itestart __P((struct tty *));
  * found. Secondary displays alloc the attribute buffer as needed.
  * Size is based on a 68x128 display, which is currently our largest.
  */
-u_char  console_attributes[0x2200];
+u_char  ite_console_attributes[0x2200];
 
 #define ite_erasecursor(ip, sp)	{ \
 	if ((ip)->flags & ITE_CURSORON) \
@@ -131,6 +141,57 @@ u_char  console_attributes[0x2200];
 		(*(sp)->ite_cursor)((ip), MOVE_CURSOR); \
 }
 
+#ifdef NEWCONFIG
+int
+itematch(parent, match, aux)
+	struct device *parent;
+	struct cfdata *match;
+	void *aux;
+{
+
+	return (1);
+}
+
+void
+iteattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct ite_softc *ite = (struct ite_softc *)self;
+	struct grf_softc *grf = (struct grf_softc *)parent;
+	struct grfdev_attach_args *ga = aux;
+
+	/* Allocate the ite_data. */
+	if (ga->ga_isconsole) {
+		ite->sc_data = &ite_cn;
+		printf(": console");
+
+		/*
+		 * We didn't know which unit this would be during
+		 * the console probe, so we have to fixup cn_dev here.
+		 */
+		cn_tab->cn_dev = makedev(ite_major(), self->dv_unit);
+	} else {
+		ite->sc_data =
+		    (struct ite_data *)malloc(sizeof(struct ite_data),
+		    M_DEVBUF, M_NOWAIT);
+		if (ite->sc_data == NULL) {
+			printf("\n%s: malloc for ite_data failed\n",
+			    ite->sc_dev.dv_xname);
+			return;
+		}
+		bzero(ite->sc_data, sizeof(struct ite_data));
+	}
+
+	/*
+	 * Cross-reference the ite and the grf.
+	 */
+	ite->sc_grf = grf;
+	grf->sc_ite = ite;
+
+	printf("\n");
+}
+#else /* ! NEWCONFIG */
 /*
  * Dummy for pseudo-device config.
  */
@@ -182,6 +243,7 @@ ite_attach_grf(unit, isconsole)
 
 	printf("ite%d at grf%d: attached\n", unit, unit);
 }
+#endif /* NEWCONFIG */
 
 /*
  * Perform functions necessary to setup device as a terminal emulator.
@@ -290,10 +352,21 @@ iteopen(dev, mode, devtype, p)
 {
 	int unit = ITEUNIT(dev);
 	struct tty *tp;
-	struct ite_softc *sc = &ite_softc[unit];
-	struct ite_data *ip = sc->sc_data;
+	struct ite_softc *sc;
+	struct ite_data *ip;
 	int error;
 	int first = 0;
+
+#ifdef NEWCONFIG
+	if (unit >= ite_cd.cd_ndevs ||
+	    (sc = ite_cd.cd_devs[unit]) == NULL)
+		return (ENXIO);
+#else
+	if (unit >= NGRF)
+		return (ENXIO);
+	sc = &ite_softc[unit];
+#endif
+	ip = sc->sc_data;
 
 	if (ip->tty == NULL) {
 	 	tp = ip->tty = ttymalloc();
@@ -338,7 +411,11 @@ iteclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
+#ifdef NEWCONFIG
+	struct ite_softc *sc = ite_cd.cd_devs[ITEUNIT(dev)];
+#else
 	struct ite_softc *sc = &ite_softc[ITEUNIT(dev)];
+#endif
 	struct ite_data *ip = sc->sc_data;
 	struct tty *tp = ip->tty;
 
@@ -359,7 +436,11 @@ iteread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
+#ifdef NEWCONFIG
+	struct ite_softc *sc = ite_cd.cd_devs[ITEUNIT(dev)];
+#else
 	struct ite_softc *sc = &ite_softc[ITEUNIT(dev)];
+#endif
 	struct tty *tp = sc->sc_data->tty;
 
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
@@ -371,7 +452,11 @@ itewrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
+#ifdef NEWCONFIG
+	struct ite_softc *sc = ite_cd.cd_devs[ITEUNIT(dev)];
+#else
 	struct ite_softc *sc = &ite_softc[ITEUNIT(dev)];
+#endif
 	struct tty *tp = sc->sc_data->tty;
 
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
@@ -381,7 +466,11 @@ struct tty *
 itetty(dev)
 	dev_t dev;
 {
+#ifdef NEWCONFIG
+	struct ite_softc *sc = ite_cd.cd_devs[ITEUNIT(dev)];
+#else
 	struct ite_softc *sc = &ite_softc[ITEUNIT(dev)];
+#endif
 
 	return (sc->sc_data->tty);
 }
@@ -394,7 +483,11 @@ iteioctl(dev, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
+#ifdef NEWCONFIG
+	struct ite_softc *sc = ite_cd.cd_devs[ITEUNIT(dev)];
+#else
 	struct ite_softc *sc = &ite_softc[ITEUNIT(dev)];
+#endif
 	struct ite_data *ip = sc->sc_data;
 	struct tty *tp = ip->tty;
 	int error;
@@ -417,7 +510,11 @@ itestart(tp)
 	struct ite_softc *sc;
 	struct ite_data *ip;
 
+#ifdef NEWCONFIG
+	sc = ite_cd.cd_devs[ITEUNIT(tp->t_dev)];
+#else
 	sc = &ite_softc[ITEUNIT(tp->t_dev)];
+#endif
 	ip = sc->sc_data;
 
 	/*
@@ -937,6 +1034,31 @@ ite_major()
  * framebuffer drivers.
  */
 
+void
+itecninit(gp, isw)
+	struct grf_data *gp;
+	struct itesw *isw;
+{
+	extern void kbdcninit __P((void));	/* XXX */
+	struct ite_data *ip = &ite_cn;
+
+	/*
+	 * Set up required ite data and initialize ite.
+	 */
+	ip->isw = isw;
+	ip->grf = gp;
+	ip->flags = ITE_ALIVE|ITE_CONSOLE|ITE_ACTIVE|ITE_ISCONS;
+	ip->attrbuf = ite_console_attributes;
+	iteinit(ip);
+
+	/*
+	 * Initialize the console keyboard.
+	 */
+	kbdcninit();
+
+	kbd_ite = ip;		/* XXX */
+}
+
 /*ARGSUSED*/
 int
 itecngetc(dev)
@@ -945,16 +1067,16 @@ itecngetc(dev)
 	register int c;
 	int stat;
 
-	c = kbdgetc(0, &stat);	/* XXX always read from keyboard 0 for now */
+	c = kbdgetc(&stat);
 	switch ((stat >> KBD_SSHIFT) & KBD_SMASK) {
 	case KBD_SHIFT:
-		c = kbd_shiftmap[c & KBD_CHARMASK];
+		c = kbd_cn_shiftmap[c & KBD_CHARMASK];
 		break;
 	case KBD_CTRL:
-		c = kbd_ctrlmap[c & KBD_CHARMASK];
+		c = kbd_cn_ctrlmap[c & KBD_CHARMASK];
 		break;
 	case KBD_KEY:
-		c = kbd_keymap[c & KBD_CHARMASK];
+		c = kbd_cn_keymap[c & KBD_CHARMASK];
 		break;
 	default:
 		c = 0;
@@ -979,4 +1101,3 @@ itecnputc(dev, c)
 	}
 	iteputchar(c, ip);
 }
-#endif

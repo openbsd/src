@@ -1,4 +1,5 @@
-/*	$NetBSD: hpib.c,v 1.9 1996/05/17 15:09:39 thorpej Exp $	*/
+/*	$OpenBSD: hpib.c,v 1.5 1997/01/12 15:12:45 downsj Exp $	*/
+/*	$NetBSD: hpib.c,v 1.12 1996/12/09 03:16:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -135,7 +136,8 @@ hpibattach(hc)
 	hs->sc_sq.dq_forw = hs->sc_sq.dq_back = &hs->sc_sq;
 
 	/* Establish the interrupt handler. */
-	isrlink(hpibintr, hs, hc->hp_ipl, ISRPRI_BIO);
+	(void) isrlink(hpibintr, hs, hc->hp_ipl, ISRPRI_BIO);
+	dmacomputeipl();
 
 	/* Reset the controller, display what we've seen, and we're done. */
 	hpibreset(hc->hp_unit);

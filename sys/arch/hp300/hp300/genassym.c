@@ -1,4 +1,5 @@
-/*	$NetBSD: genassym.c,v 1.19 1996/05/17 15:20:55 thorpej Exp $	*/
+/*	$OpenBSD: genassym.c,v 1.5 1997/01/12 15:13:16 downsj Exp $	*/
+/*	$NetBSD: genassym.c,v 1.21 1996/10/05 07:11:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -96,7 +97,7 @@ flush()
 
 main()
 {
-	/* CPU types */
+	/* CPU options */
 #ifdef M68020
 	def("M68020", 1);
 #endif
@@ -107,17 +108,24 @@ main()
 	def("M68040", 1);
 #endif
 
-	/* MMU types */
+	/* MMU options */
 #ifdef M68K_MMU_MOTOROLA
 	def("M68K_MMU_MOTOROLA", 1);
 #endif
 #ifdef M68K_MMU_HP
 	def("M68K_MMU_HP", 1);
 #endif
+
+	/* MMU types */
 	def("MMU_68040", MMU_68040);
 	def("MMU_68030", MMU_68030);
 	def("MMU_HP", MMU_HP);
 	def("MMU_68851", MMU_68851);
+
+	/* CPU types */
+	def("CPU_68020", CPU_68020);
+	def("CPU_68030", CPU_68030);
+	def("CPU_68040", CPU_68040);
 
 	/* values for machineid */
 	def("HP_320", HP_320);
@@ -245,6 +253,7 @@ main()
 	off("FR_SP", struct frame, f_regs[15]);
 	off("FR_HW", struct frame, f_sr);
 	off("FR_ADJ", struct frame, f_stackadj);
+	def("FR_SIZE", sizeof(struct trapframe));
 
 	/* system calls */
 	def("SYS_exit", SYS_exit);

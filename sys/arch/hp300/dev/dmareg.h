@@ -1,4 +1,5 @@
-/*	$NetBSD: dmareg.h,v 1.6 1995/12/02 02:46:49 thorpej Exp $	*/
+/*	$OpenBSD: dmareg.h,v 1.3 1997/01/12 15:12:28 downsj Exp $	*/
+/*	$NetBSD: dmareg.h,v 1.7 1996/12/09 06:18:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -72,9 +73,6 @@ struct	dmareg {
 
 /* The hp300 has 2 DMA channels. */
 #define	NDMACHAN	2
-
-/* intr level must be >= level of any device using dma.  i.e., splbio */
-#define	DMAINTLVL	5
 
 /* addresses */
 #define	DMA_BASE	IIOV(0x500000)

@@ -1,4 +1,5 @@
-/*	$NetBSD: pmap.c,v 1.24 1995/12/11 17:09:14 thorpej Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.3 1997/01/12 15:13:25 downsj Exp $	*/
+/*	$NetBSD: pmap.c,v 1.27 1996/10/13 03:14:32 christos Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -44,7 +45,7 @@
  *
  * Supports:
  *	68020 with HP MMU	models 320, 350
- *	68020 with 68551 MMU	models 318, 319, 330 (all untested)
+ *	68020 with 68551 MMU	models 318, 319, 330
  *	68030 with on-chip MMU	models 340, 360, 370, 345, 375, 400
  *	68040 with on-chip MMU	models 380, 425, 433
  *

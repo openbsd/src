@@ -1,4 +1,5 @@
-/*	$NetBSD: grf_dv.c,v 1.7 1996/03/03 16:48:56 thorpej Exp $	*/
+/*	$OpenBSD: grf_dv.c,v 1.3 1997/01/12 15:12:32 downsj Exp $	*/
+/*	$NetBSD: grf_dv.c,v 1.9 1996/12/17 08:41:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -43,9 +44,6 @@
  *	@(#)grf_dv.c	8.4 (Berkeley) 1/12/94
  */
 
-#include "grf.h"
-#if NGRF > 0
-
 /*
  * Graphics routines for the DaVinci, HP98730/98731 Graphics system.
  */
@@ -56,11 +54,16 @@
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 
 #include <dev/cons.h>
+
+#include <hp300/dev/diovar.h>
+#include <hp300/dev/diodevs.h>
+#include <hp300/dev/intiovar.h>
 
 #include <hp300/dev/grfioctl.h>
 #include <hp300/dev/grfvar.h>
@@ -76,9 +79,29 @@ int	dv_init __P((struct grf_data *, int, caddr_t));
 int	dv_mode __P((struct grf_data *, int, caddr_t));
 void	dv_reset __P((struct dvboxfb *));
 
+#ifdef NEWCONFIG
+int	dvbox_intio_match __P((struct device *, struct cfdata *, void *));
+void	dvbox_intio_attach __P((struct device *, struct device *, void *));
+
+int	dvbox_dio_match __P((struct device *, struct cfdata *, void *));
+void	dvbox_dio_attach __P((struct device *, struct device *, void *));
+
+struct cfattach dvbox_intio_ca = {
+	sizeof(struct grfdev_softc), dvbox_intio_match, dvbox_intio_attach
+};
+
+struct cfattach dvbox_dio_ca = {
+	sizeof(struct grfdev_softc), dvbox_dio_match, dvbox_dio_attach
+};
+
+struct cfdriver dvbox_cd = {
+	NULL, "dvbox", DV_DULL
+};
+#endif /* NEWCONFIG */
+
 /* DaVinci grf switch */
 struct grfsw dvbox_grfsw = {
-	GID_DAVINCI, GRFDAVINCI, "davinci", dv_init, dv_mode
+	GID_DAVINCI, GRFDAVINCI, "dvbox", dv_init, dv_mode
 };
 
 #if NITE > 0
@@ -98,6 +121,83 @@ struct itesw dvbox_itesw = {
 };
 #endif /* NITE > 0 */
 
+#ifdef NEWCONFIG
+int
+dvbox_intio_match(parent, match, aux)
+	struct device *parent;
+	struct cfdata *match;
+	void *aux;
+{
+	struct intio_attach_args *ia = aux;
+	struct grfreg *grf;
+
+	grf = (struct grfreg *)IIOV(GRFIADDR);
+	if (badaddr((caddr_t)grf))
+		return (0);
+
+	if (grf->gr_id == DIO_DEVICE_ID_FRAMEBUFFER &&
+	    grf->gr_id2 == DIO_DEVICE_SECID_DAVINCI) {
+		ia->ia_addr = (caddr_t)GRFIADDR;
+		return (1);
+	}
+
+	return (0);
+}
+
+void
+dvbox_intio_attach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct grfdev_softc *sc = (struct grfdev_softc *)self;
+	caddr_t grf;
+
+	grf = (caddr_t)IIOV(GRFIADDR);
+	sc->sc_scode = -1;	/* XXX internal i/o */
+
+	grfdev_attach(sc, dv_init, grf, &dvbox_grfsw);
+}
+
+int
+dvbox_dio_match(parent, match, aux)
+	struct device *parent;
+	struct cfdata *match;
+	void *aux;
+{
+	struct dio_attach_args *da = aux;
+
+	if (da->da_id == DIO_DEVICE_ID_FRAMEBUFFER &&
+	    da->da_secid == DIO_DEVICE_SECID_DAVINCI)
+		return (1);
+
+	return (0);
+}
+
+void
+dvbox_dio_attach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct grfdev_softc *sc = (struct grfdev_softc *)self;
+	struct dio_attach_args *da = aux;
+	caddr_t grf;
+
+	sc->sc_scode = da->da_scode;
+	if (sc->sc_scode == conscode)
+		grf = conaddr;
+	else {
+		grf = iomap(dio_scodetopa(sc->sc_scode), da->da_size);
+		if (grf == 0) {
+			printf("%s: can't map framebuffer\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
+	}
+
+	grfdev_attach(sc, dv_init, grf, &dvbox_grfsw);
+}
+#endif /* NEWCONFIG */
+
 /*
  * Initialize hardware.
  * Must point g_display at a grfinfo structure describing the hardware.
@@ -112,7 +212,7 @@ dv_init(gp, scode, addr)
 	register struct dvboxfb *dbp;
 	struct grfinfo *gi = &gp->g_display;
 	int fboff;
-	extern caddr_t sctopa(), iomap();
+	extern caddr_t iomap();
 
 	/*
 	 * If the console has been initialized, and it was us, there's
@@ -123,7 +223,7 @@ dv_init(gp, scode, addr)
 		if (ISIIOVA(addr))
 			gi->gd_regaddr = (caddr_t) IIOP(addr);
 		else
-			gi->gd_regaddr = sctopa(scode);
+			gi->gd_regaddr = dio_scodetopa(scode);
 		gi->gd_regsize = 0x20000;
 		gi->gd_fbwidth = (dbp->fbwmsb << 8) | dbp->fbwlsb;
 		gi->gd_fbheight = (dbp->fbhmsb << 8) | dbp->fbhlsb;
@@ -618,7 +718,6 @@ void
 dvboxcninit(cp)
 	struct consdev *cp;
 {
-	struct ite_data *ip = &ite_cn;
 	struct grf_data *gp = &grf_cn;
 
 	/*
@@ -634,16 +733,9 @@ dvboxcninit(cp)
 	gp->g_flags = GF_ALIVE;
 
 	/*
-	 * Set up required ite data and initialize ite.
+	 * Initialize the terminal emulator.
 	 */
-	ip->isw = &dvbox_itesw;
-	ip->grf = gp;
-	ip->flags = ITE_ALIVE|ITE_CONSOLE|ITE_ACTIVE|ITE_ISCONS;
-	ip->attrbuf = console_attributes;
-	iteinit(ip);
-
-	kbd_ite = ip;		/* XXX */
+	itecninit(gp, &dvbox_itesw);
 }
 
 #endif /* NITE > 0 */
-#endif /* NGRF > 0 */
