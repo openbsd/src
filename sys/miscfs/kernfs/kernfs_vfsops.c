@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs_vfsops.c,v 1.18 2002/03/14 01:27:08 millert Exp $	*/
+/*	$OpenBSD: kernfs_vfsops.c,v 1.19 2002/10/12 02:03:46 krw Exp $	*/
 /*	$NetBSD: kernfs_vfsops.c,v 1.26 1996/04/22 01:42:27 christos Exp $	*/
 
 /*
@@ -178,12 +178,12 @@ kernfs_root(mp, vpp)
 	kt = kernfs_findtarget(".", 1);
 	/* this should never happen */
 	if (kt == NULL) 
-		panic("kernfs_root: findtarget returned NULL\n");
+		panic("kernfs_root: findtarget returned NULL");
 	
 	error = kernfs_allocvp(kt, mp, vpp);
 	/* this should never happen */
 	if (error) 
-		panic("kernfs_root: couldn't find root\n");
+		panic("kernfs_root: couldn't find root");
 
 	return(0);
 	

@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.95 2002/07/20 19:24:56 art Exp $	*/
+/* $OpenBSD: machdep.c,v 1.96 2002/10/12 02:03:45 krw Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1678,7 +1678,7 @@ m188_ext_int(u_int v, struct m88100_saved_state *eframe)
 			    level, intbit, 1 << intbit, IST_STRING);
 		}
 		if (vec > 0xFF) {
-			panic("interrupt vector 0x%x greater than 255!\n"
+			panic("interrupt vector 0x%x greater than 255!"
 			    "level = %d iack = 0x%x", 
 			    vec, level, ivec[level]);
 		}
@@ -1767,7 +1767,7 @@ m187_ext_int(u_int v, struct m88100_saved_state *eframe)
 	 */
 
 	if ((mask == level) && level) {
-		panic("mask == level, %d\n", level);
+		panic("mask == level, %d", level);
 	}
 
 	/*
@@ -1776,7 +1776,7 @@ m187_ext_int(u_int v, struct m88100_saved_state *eframe)
 	 */
 
 	if (level == 0) {
-		panic("Bogons... level %x and mask %x\n", level, mask);
+		panic("Bogons... level %x and mask %x", level, mask);
 	}
 
 	/* and block interrupts at level or lower */
@@ -1793,7 +1793,7 @@ m187_ext_int(u_int v, struct m88100_saved_state *eframe)
 	/* generate IACK and get the vector */
 	flush_pipeline();
 	if (guarded_access(ivec[level], 1, &vec) == EFAULT) {
-		panic("Unable to get vector for this interrupt (level %x)\n", level);
+		panic("Unable to get vector for this interrupt (level %x)", level);
 	}
 	flush_pipeline();
 	flush_pipeline();
@@ -1890,7 +1890,7 @@ m197_ext_int(u_int v, struct m88100_saved_state *eframe)
 	 */
 
 	if (level == 0) {
-		panic("Bogons... level %x and mask %x\n", level, mask);
+		panic("Bogons... level %x and mask %x", level, mask);
 	}
 
 	/* and block interrupts at level or lower */
@@ -1908,7 +1908,7 @@ m197_ext_int(u_int v, struct m88100_saved_state *eframe)
 		/* generate IACK and get the vector */
 		flush_pipeline();
 		if (guarded_access(ivec[level], 1, &vec) == EFAULT) {
-			panic("Unable to get vector for this interrupt (level %x)\n", level);
+			panic("Unable to get vector for this interrupt (level %x)", level);
 		}
 		flush_pipeline();
 		flush_pipeline();

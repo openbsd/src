@@ -1,4 +1,4 @@
-/*	$OpenBSD: fwohci.c,v 1.3 2002/07/07 13:41:27 tdeval Exp $	*/
+/*	$OpenBSD: fwohci.c,v 1.4 2002/10/12 02:03:46 krw Exp $	*/
 /*	$NetBSD: fwohci.c,v 1.54 2002/03/29 05:06:42 jmc Exp $	*/
 
 /*-
@@ -3307,9 +3307,9 @@ fwohci_write(struct ieee1394_abuf *ab)
 	}
 
 	if (ab->ab_data && ab->ab_uio) 
-		panic("Can't call with uio and data set\n");
+		panic("Can't call with uio and data set");
 	if ((ab->ab_data == NULL) && (ab->ab_uio == NULL))
-		panic("One of either ab_data or ab_uio must be set\n");
+		panic("One of either ab_data or ab_uio must be set");
 
 	memset(&pkt, 0, sizeof(pkt));
 
@@ -3774,12 +3774,12 @@ fwohci_parse_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 			}
 			if (ab->ab_retlen != count)
 				panic("Packet claims %d length "
-				    "but only %d bytes returned\n",
+				    "but only %d bytes returned",
 				    ab->ab_retlen, count);
 		}
 		break;
 	default:
-		panic("Got a callback for a tcode that wasn't requested: %d\n",
+		panic("Got a callback for a tcode that wasn't requested: %d",
 		    ab->ab_tcode);
 		break;
 	}

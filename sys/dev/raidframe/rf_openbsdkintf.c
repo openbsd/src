@@ -1,4 +1,4 @@
-/* $OpenBSD: rf_openbsdkintf.c,v 1.19 2002/08/09 15:10:20 tdeval Exp $	*/
+/* $OpenBSD: rf_openbsdkintf.c,v 1.20 2002/10/12 02:03:46 krw Exp $	*/
 /* $NetBSD: rf_netbsdkintf.c,v 1.109 2001/07/27 03:30:07 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -391,7 +391,7 @@ raidattach(num)
 	/* Make some space for requested number of units... */
 	RF_Calloc(raidPtrs, num, sizeof(RF_Raid_t *), (RF_Raid_t **));
 	if (raidPtrs == NULL) {
-		panic("raidPtrs is NULL!!\n");
+		panic("raidPtrs is NULL!!");
 	}
 
 	rc = rf_mutex_init(&rf_sparet_wait_mutex);
@@ -407,7 +407,7 @@ raidattach(num)
 	if (rc == 0)
 	        printf("Kernelized RAIDframe activated\n");
 	else
-	        panic("Serious error booting RAID!!\n");
+	        panic("Serious error booting RAID!!");
 	
 	/*
 	 * Put together some datastructures like the CCD device does..
@@ -437,7 +437,7 @@ raidattach(num)
 	raidrootdev = (struct device *)malloc(num * sizeof(struct device),
 					      M_RAIDFRAME, M_NOWAIT);
 	if (raidrootdev == NULL) {
-		panic("No memory for RAIDframe driver!!?!?!\n");
+		panic("No memory for RAIDframe driver!!?!?!");
 	}
 
 	for (raidID = 0; raidID < num; raidID++) {
@@ -1897,7 +1897,7 @@ rf_DispatchKernelIO(queue, req)
 
 	if (unit >= numraid) {
 		printf("Invalid unit number: %d %d\n", unit, numraid);
-		panic("Invalid Unit number in rf_DispatchKernelIO\n");
+		panic("Invalid Unit number in rf_DispatchKernelIO");
 	}
 
 	rs = &raid_softc[unit];
@@ -2110,7 +2110,7 @@ rf_InitBP(bp, b_vp, rw_flag, dev, startSect, numSect, buf, cbFunc, cbArg,
 	bp->b_blkno = startSect;
 	bp->b_resid = bp->b_bcount; /* XXX is this right!??!?!! */
 	if (bp->b_bcount == 0) {
-		panic("bp->b_bcount is zero in rf_InitBP!!\n");
+		panic("bp->b_bcount is zero in rf_InitBP!!");
 	}
 	bp->b_proc = b_proc;
 	bp->b_iodone = cbFunc;
@@ -3008,7 +3008,7 @@ rf_create_auto_sets(ac_list)
 				malloc(sizeof(RF_ConfigSet_t), 
 				       M_RAIDFRAME, M_NOWAIT);
 			if (config_sets == NULL) {
-				panic("rf_create_auto_sets: No memory!\n");
+				panic("rf_create_auto_sets: No memory!");
 			}
 			/* this one is easy :) */
 			config_sets->ac = ac;
@@ -3033,7 +3033,7 @@ rf_create_auto_sets(ac_list)
 					malloc(sizeof(RF_ConfigSet_t), 
 					       M_RAIDFRAME, M_NOWAIT);
 				if (cset == NULL) {
-					panic("rf_create_auto_sets: No memory!\n");
+					panic("rf_create_auto_sets: No memory!");
 				}
 				cset->ac = ac;
 				ac->next = NULL;

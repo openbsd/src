@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs_vnops.c,v 1.27 2002/03/14 20:31:31 mickey Exp $	*/
+/*	$OpenBSD: kernfs_vnops.c,v 1.28 2002/10/12 02:03:46 krw Exp $	*/
 /*	$NetBSD: kernfs_vnops.c,v 1.43 1996/03/16 23:52:47 christos Exp $	*/
 
 /*
@@ -232,7 +232,7 @@ kernfs_allocvp(kt, mp, vpp)
 #ifdef KERNFS_DIAGNOSTIC
 	/* this should never happen */
 	if (kt == NULL) 
-		panic("kernfs_allocvp passed NULL kt, mp %p, vpp %p!\n", mp, vpp);
+		panic("kernfs_allocvp passed NULL kt, mp %p, vpp %p!", mp, vpp);
 
 	printf("kernfs_allocvp: looking for %s\n", kt->kt_name);
 #endif
