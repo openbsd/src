@@ -1,7 +1,8 @@
 /*	$NetBSD: esp.c,v 1.59 1996/10/13 02:59:48 christos Exp $	*/
 
 /*
- * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1997 Jason R. Thorpe.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -13,7 +14,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Charles M. Hannum.
+ *	This product includes software developed for the NetBSD Project
+ *	by Jason R. Thorpe.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -67,6 +69,12 @@
  * Acknowledgements: Many of the algorithms used in this driver are
  * inspired by the work of Julian Elischer (julian@tfs.com) and
  * Charles Hannum (mycroft@duality.gnu.ai.mit.edu).  Thanks a million!
+ */
+
+/*
+ * Initial m68k mac support from Allen Briggs <briggs@macbsd.com>
+ * (basically consisting of the match, a bit of the attach, and the
+ *  "DMA" glue functions).
  */
 
 #include <sys/types.h>
