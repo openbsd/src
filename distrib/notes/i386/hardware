@@ -84,7 +84,7 @@ Supported devices include:
 		"Logitech"-style bus mice [*] [+]
 		"Microsoft"-style bus mice [*] [+]
 		"PS/2"-style mice [*] [+]
-		Serial mice (no kernel support necessary)
+		Serial mice (uses serial port driver)
 	Sound Cards:
 		SoundBlaster [*] [+]
 		Gravis Ulrasound and Ultrasound Max [*] [+]
