@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.82 1996/01/07 22:02:28 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.84 1996/02/10 18:31:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -1109,8 +1109,7 @@ fdcretry(fdc)
 	switch (fdc->sc_errors) {
 	case 0:
 		/* try again */
-		fdc->sc_state = SEEKCOMPLETE;
-		disk_busy(&fd->sc_dk);
+		fdc->sc_state = DOSEEK;
 		break;
 
 	case 1: case 2: case 3:
