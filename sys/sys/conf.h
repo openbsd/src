@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.69 2003/06/02 23:28:21 millert Exp $	*/
+/*	$OpenBSD: conf.h,v 1.70 2003/06/14 23:14:30 mickey Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -273,7 +273,7 @@ extern struct cdevsw cdevsw[];
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) nullop, \
 	dev_init(c,n,tty), dev_init(c,n,select), (dev_type_mmap((*))) enodev, \
-	D_TTY | D_KQFILTER, ttkqfilter }
+	D_TTY | D_KQFILTER, dev_init(c,n,kqfilter) }
 
 /* open, close, read, ioctl, select, kqfilter -- XXX should be a generic device */
 #define cdev_log_init(c,n) { \

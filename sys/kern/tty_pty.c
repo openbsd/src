@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.11 2003/06/02 23:28:06 millert Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.12 2003/06/14 23:14:30 mickey Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -76,6 +76,11 @@ void	ptyattach(int);
 void	ptcwakeup(struct tty *, int);
 struct tty *ptytty(dev_t);
 void	ptsstart(struct tty *);
+
+void	filt_ptcrdetach(struct knote *);
+int	filt_ptcread(struct knote *, long);
+void	filt_ptcwdetach(struct knote *);
+int	filt_ptcwrite(struct knote *, long);
 
 /*
  * Establish n (or default if n is 1) ptys in the system.
@@ -280,10 +285,12 @@ ptcwakeup(tp, flag)
 	if (flag & FREAD) {
 		selwakeup(&pti->pt_selr);
 		wakeup((caddr_t)&tp->t_outq.c_cf);
+		KNOTE(&pti->pt_selr.si_note, 0);
 	}
 	if (flag & FWRITE) {
 		selwakeup(&pti->pt_selw);
 		wakeup((caddr_t)&tp->t_rawq.c_cf);
+		KNOTE(&pti->pt_selw.si_note, 0);
 	}
 }
 
@@ -549,6 +556,101 @@ ptcselect(dev, rw, p)
 	return (0);
 }
 
+void
+filt_ptcrdetach(struct knote *kn)
+{
+	struct pt_softc *pti = (struct pt_softc *)kn->kn_hook;
+	int s;
+
+	s = spltty();
+	SLIST_REMOVE(&pti->pt_selr.si_note, kn, knote, kn_selnext);
+	splx(s);
+}
+
+int
+filt_ptcread(struct knote *kn, long hint)
+{
+	struct pt_softc *pti = (struct pt_softc *)kn->kn_hook;
+	struct tty *tp;
+
+	tp = pti->pt_tty;
+	kn->kn_data = 0;
+
+	if (ISSET(tp->t_state, TS_ISOPEN)) {
+		if (!ISSET(tp->t_state, TS_TTSTOP))
+			kn->kn_data = tp->t_outq.c_cc;
+		if (((pti->pt_flags & PF_PKT) && pti->pt_send) ||
+		    ((pti->pt_flags & PF_UCNTL) && pti->pt_ucntl))
+			kn->kn_data++;
+	}
+	return (kn->kn_data > 0);
+}
+
+void
+filt_ptcwdetach(struct knote *kn)
+{
+	struct pt_softc *pti = (struct pt_softc *)kn->kn_hook;
+	int s;
+
+	s = spltty();
+	SLIST_REMOVE(&pti->pt_selw.si_note, kn, knote, kn_selnext);
+	splx(s);
+}
+
+int
+filt_ptcwrite(struct knote *kn, long hint)
+{
+	struct pt_softc *pti = (struct pt_softc *)kn->kn_hook;
+	struct tty *tp;
+
+	tp = pti->pt_tty;
+	kn->kn_data = 0;
+
+	if (ISSET(tp->t_state, TS_ISOPEN)) {
+		if (ISSET(pti->pt_flags, PF_REMOTE)) {
+			if (tp->t_canq.c_cc == 0)
+				kn->kn_data = tp->t_canq.c_cn;
+		} else if (tp->t_rawq.c_cc + tp->t_canq.c_cc < TTYHOG-2)
+			kn->kn_data = tp->t_canq.c_cn -
+			    (tp->t_rawq.c_cc + tp->t_canq.c_cc);
+	}
+
+	return (kn->kn_data > 0);
+}
+
+struct filterops ptcread_filtops =
+	{ 1, NULL, filt_ptcrdetach, filt_ptcread };
+struct filterops ptcwrite_filtops =
+	{ 1, NULL, filt_ptcwdetach, filt_ptcwrite };
+
+int
+ptckqfilter(dev_t dev, struct knote *kn)
+{
+	struct pt_softc *pti = &pt_softc[minor(dev)];
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &pti->pt_selr.si_note;
+		kn->kn_fop = &ptcread_filtops;
+		break;
+	case EVFILT_WRITE:
+		klist = &pti->pt_selw.si_note;
+		kn->kn_fop = &ptcwrite_filtops;
+		break;
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = (caddr_t)pti;
+
+	s = spltty();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
+}
 
 struct tty *
 ptytty(dev)
