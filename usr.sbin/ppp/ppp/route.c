@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: route.c,v 1.19 2001/11/23 15:46:10 brian Exp $
+ * $OpenBSD: route.c,v 1.20 2001/11/23 17:12:10 brian Exp $
  */
 
 #include <sys/param.h>
@@ -317,6 +317,8 @@ route_ParseHdr(struct rt_msghdr *rtm, struct sockaddr *sa[RTAX_MAX])
     if (rtm->rtm_addrs & (1 << rtax)) {
       sa[rtax] = (struct sockaddr *)wp;
       wp += ROUNDUP(sa[rtax]->sa_len);
+      if (sa[rtax]->sa_family == 0)
+        sa[rtax] = NULL;	/* ??? */
     } else
       sa[rtax] = NULL;
 }
