@@ -1,4 +1,4 @@
-/*	$OpenBSD: modload.c,v 1.20 1999/08/17 09:13:14 millert Exp $	*/
+/*	$OpenBSD: modload.c,v 1.21 2001/02/10 20:42:09 millert Exp $	*/
 /*	$NetBSD: modload.c,v 1.13 1995/05/28 05:21:58 jtc Exp $	*/
 
 /*
@@ -195,7 +195,6 @@ main(argc, argv)
 	struct lmc_loadbuf ldbuf;
 	int sz, bytesleft, old = 0;
 	char buf[MODIOBUF];
-	char *symbuf;
 
 	while ((c = getopt(argc, argv, "dvsuqA:e:p:o:")) != -1) {
 		switch (c) {
@@ -397,7 +396,8 @@ main(argc, argv)
 	    bytesleft > 0;
 	    bytesleft -= sz) {
 		sz = min(bytesleft, MODIOBUF);
-		read(modfd, buf, sz);
+		if (read(modfd, buf, sz) != sz)
+			err(14, "read");
 		ldbuf.cnt = sz;
 		ldbuf.data = buf;
 		if (ioctl(devfd, LMLOADBUF, &ldbuf) == -1)
@@ -412,54 +412,29 @@ main(argc, argv)
 		err(12, "lseek");
 
 	    /*
-	     * Transfer the symbol table entries.  First, read them all in,
-	     * then adjust their string table pointers, then
-	     * copy in bulk.  Then copy the string table itself.
-	     */
-
-	    symbuf = malloc(info_buf.a_syms);
-	    if (symbuf == 0)
-		err(13, "malloc");
-
-	    if (read(modfd, symbuf, info_buf.a_syms) != info_buf.a_syms)
-		err(14, "read");
-	    numsyms = info_buf.a_syms / sizeof(struct nlist);
-	    for (nlp = (struct nlist *)symbuf; 
-		 (char *)nlp < symbuf + info_buf.a_syms;
-		 nlp++) {
-		register int strx;
-		strx = nlp->n_un.n_strx;
-		if (strx != 0) {
-		    /* If a valid name, set the name ptr to point at the
-		     * loaded address for the string in the string table.
-		     */
-		    if (strx > strtablen)
-			nlp->n_un.n_name = 0;
-		    else
-			nlp->n_un.n_name =
-			    (char *)(strx + resrv.sym_addr + info_buf.a_syms);
-		}
-	    }
-	    /*
-	     * we've fixed the symbol table entries, now load them
+	     * Read and load the symbol table entries.
 	     */
 	    for (bytesleft = info_buf.a_syms;
 		 bytesleft > 0;
 		 bytesleft -= sz) {
 		sz = min(bytesleft, MODIOBUF);
+		if (read(modfd, buf, sz) != sz)
+			err(14, "read");
 		ldbuf.cnt = sz;
-		ldbuf.data = symbuf;
+		ldbuf.data = buf;
 		if (ioctl(devfd, LMLOADSYMS, &ldbuf) == -1)
 		    err(11, "error transferring sym buffer");
-		symbuf += sz;
 	    }
-	    free(symbuf - info_buf.a_syms);
-	    /* and now read the string table and load it. */
+
+	    /*
+	     * Read the string table and load it.
+	     */
 	    for (bytesleft = strtablen;
 		 bytesleft > 0;
 		 bytesleft -= sz) {
 		sz = min(bytesleft, MODIOBUF);
-		read(modfd, buf, sz);
+		if (read(modfd, buf, sz) != sz)
+			err(14, "read");
 		ldbuf.cnt = sz;
 		ldbuf.data = buf;
 		if (ioctl(devfd, LMLOADSYMS, &ldbuf) == -1)
