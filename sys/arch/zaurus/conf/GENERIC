@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.15 2005/01/14 18:18:19 drahn Exp $
+#	$OpenBSD: GENERIC,v 1.16 2005/01/16 18:12:46 deraadt Exp $
 #
 # GENERIC machine description file
 #
@@ -167,7 +167,6 @@ ukphy*	at mii?			# "unknown" PHYs
 # LCD
 lcd0		at pxaip?
 wsdisplay*	at lcd? console ?
-options 	WSEMUL_VT100		# VT100 / VT220 emulation
 
 # Pseudo-Devices
 pseudo-device	wsmux		2	# mouse & keyboard multiplexor

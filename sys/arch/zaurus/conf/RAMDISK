@@ -1,5 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.13 2005/01/14 18:18:19 drahn Exp $
-# $NetBSD: GENERIC,v 1.27.4.1 2002/08/01 04:18:06 lukem Exp $
+#	$OpenBSD: RAMDISK,v 1.14 2005/01/16 18:12:46 deraadt Exp $
 #
 # GENERIC machine description file
 #
@@ -21,11 +20,9 @@
 
 machine	zaurus	arm
 
-# include "../../../conf/GENERIC"
 options	TIMEZONE=0	# time zone to adjust RTC time by
 options	DST=0		# daylight saving time used by RTC
 options	FFS		# UFS
-#options	NFSCLIENT	# Network File System client
 options	CD9660		# ISO 9660 + Rock Ridge file system
 options	MSDOSFS		# MS-DOS file system
 options	INET		# IP + ICMP + TCP + UDP
@@ -131,7 +128,7 @@ ne* 		at pcmcia?
 wdc*		at pcmcia?
 
 # IDE hard drives
-wd*	at wdc? flags 0x0000
+wd*		at wdc? flags 0x0000
 
 # PHY
 exphy*	at mii?			# 3Com internal PHYs
@@ -159,11 +156,9 @@ urlphy*	at mii?			# Realtek RTL8150L internal PHY
 #ciphy* at mii?			# Cicada CS8201 10/100/1000 copper PHY
 ukphy*	at mii?			# "unknown" PHYs
 
-
 # LCD
 lcd0		at pxaip?
 wsdisplay*	at lcd? console ?
-options 	WSEMUL_VT100		# VT100 / VT220 emulation
 
 # Pseudo-Devices
 pseudo-device	wsmux		2	# mouse & keyboard multiplexor
