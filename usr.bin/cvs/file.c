@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.37 2004/12/06 07:28:15 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.38 2004/12/06 21:03:12 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -154,8 +154,7 @@ cvs_file_init(void)
 			if (errno != ENOENT)
 				cvs_log(LP_ERRNO,
 				    "failed to open user's cvsignore", path);
-		}
-		else {
+		} else {
 			while (fgets(buf, sizeof(buf), ifp) != NULL) {
 				len = strlen(buf);
 				if (len == 0)
@@ -232,8 +231,7 @@ cvs_file_chkign(const char *file)
 		if (ip->ip_flags & CVS_IGN_STATIC) {
 			if (cvs_file_cmpname(file, ip->ip_pat) == 0)
 				return (1);
-		}
-		else if (fnmatch(ip->ip_pat, file, flags) == 0)
+		} else if (fnmatch(ip->ip_pat, file, flags) == 0)
 			return (1);
 	}
 
@@ -279,8 +277,7 @@ cvs_file_create(CVSFILE *parent, const char *path, u_int type, mode_t mode)
 		}
 
 		cfp->cf_ddat->cd_ent = cvs_ent_open(path, O_RDWR);
-	}
-	else {
+	} else {
 		fd = open(path, O_WRONLY|O_CREAT|O_EXCL, mode);
 		if (fd == -1) {
 			cvs_file_free(cfp);
@@ -440,8 +437,7 @@ cvs_file_find(CVSFILE *hier, const char *path)
 				}
 				cf = cf->cf_parent;
 				continue;
-			}
-			else if (*(pp + 1) == '\0')
+			} else if (*(pp + 1) == '\0')
 				continue;
 		}
 
@@ -622,8 +618,7 @@ cvs_file_getdir(CVSFILE *cf, int flags)
 				if (cfp->cf_type == DT_DIR) {
 					TAILQ_INSERT_TAIL(&dirs, cfp, cf_list);
 					ndirs++;
-				}
-				else {
+				} else {
 					TAILQ_INSERT_TAIL(&(cdp->cd_files), cfp,
 					    cf_list);
 					cdp->cd_nfiles++;
@@ -691,8 +686,7 @@ cvs_file_examine(CVSFILE *cf, int (*exam)(CVSFILE *, void *), void *arg)
 			if (ret == -1)
 				break;
 		}
-	}
-	else
+	} else
 		ret = (*exam)(cf, arg);
 
 	return (ret);
@@ -889,8 +883,7 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent)
 	if (ent == NULL) {
 		cfp->cf_cvstat = (cwd == 1) ?
 		    CVS_FST_UPTODATE : CVS_FST_UNKNOWN;
-	}
-	else {
+	} else {
 		/* always show directories as up-to-date */
 		if (ent->ce_type == CVS_ENT_DIR)
 			cfp->cf_cvstat = CVS_FST_UPTODATE;

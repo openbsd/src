@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.29 2004/12/02 19:23:44 jfb Exp $	*/
+/*	$OpenBSD: proto.c,v 1.30 2004/12/06 21:03:12 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -227,8 +227,7 @@ cvs_connect(struct cvsroot *root)
 	if (cvs_subproc_pid == -1) {
 		cvs_log(LP_ERRNO, "failed to fork for cvs server connection");
 		return (-1);
-	}
-	else if (cvs_subproc_pid == 0) {
+	} else if (cvs_subproc_pid == 0) {
 		if ((dup2(infd[0], STDIN_FILENO) == -1) ||
 		    (dup2(outfd[1], STDOUT_FILENO) == -1)) {
 			cvs_log(LP_ERRNO,
@@ -735,8 +734,7 @@ cvs_getresp(struct cvsroot *root)
 		if ((len = strlen(cvs_proto_buf)) != 0) {
 			if (cvs_proto_buf[len - 1] != '\n') {
 				/* truncated line */
-			}
-			else
+			} else
 				cvs_proto_buf[--len] = '\0';
 		}
 
@@ -812,8 +810,7 @@ cvs_sendresp(u_int rid, const char *arg)
 	ret = fputs(resp->resp_str, stdout);
 	if (ret == EOF) {
 		cvs_log(LP_ERRNO, "failed to send response to client");
-	}
-	else {
+	} else {
 		if (arg != NULL) {
 			putc(' ', stdout);
 			fputs(arg, stdout);
@@ -852,8 +849,7 @@ cvs_getreq(void)
 		if ((len = strlen(cvs_proto_buf)) != 0) {
 			if (cvs_proto_buf[len - 1] != '\n') {
 				/* truncated line */
-			}
-			else
+			} else
 				cvs_proto_buf[--len] = '\0';
 		}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.2 2004/11/26 16:23:50 jfb Exp $	*/
+/*	$OpenBSD: status.c,v 1.3 2004/12/06 21:03:13 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -89,8 +89,7 @@ cvs_status(int argc, char **argv)
 		}
 
 		cvs_file_examine(cf, cvs_status_file, NULL);
-	}
-	else {
+	} else {
 		for (i = 0; i < argc; i++) {
 			cf = cvs_file_get(argv[i], flags);
 		}
@@ -126,15 +125,13 @@ cvs_status_file(CVSFILE *cfp, void *arg)
 
 		cvs_senddir(root, cfp);
 		return (0);
-	}
-	else
+	} else
 		root = cfp->cf_parent->cf_ddat->cd_root;
 
 	rf = NULL;
 	if (cfp->cf_parent != NULL) {
 		repo = cfp->cf_parent->cf_ddat->cd_repo;
-	}
-	else {
+	} else {
 		repo = NULL;
 	}
 
@@ -170,8 +167,7 @@ cvs_status_file(CVSFILE *cfp, void *arg)
 	if (root->cr_method != CVS_METHOD_LOCAL) {
 		cvs_sendreq(root, CVS_REQ_MODIFIED, CVS_FILE_NAME(cfp));
 		cvs_sendfile(root, fpath);
-	}
-	else {
+	} else {
 		snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
 		    root->cr_dir, repo, CVS_FILE_NAME(cfp), RCS_FILE_EXT);
 

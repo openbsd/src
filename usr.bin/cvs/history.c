@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.3 2004/07/30 01:49:23 jfb Exp $	*/
+/*	$OpenBSD: history.c,v 1.4 2004/12/06 21:03:12 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -143,8 +143,7 @@ cvs_history(int argc, char **argv)
 		cvs_log(LP_ERR,
 		    "Only one report type allowed from: \"-Tcomxe\"");
 		return (EX_USAGE);
-	}
-	else if (rep == 0)
+	} else if (rep == 0)
 		flags |= CVS_HF_O;    /* use -o as default */
 
 	root = cvsroot_get(".");
@@ -160,8 +159,7 @@ cvs_history(int argc, char **argv)
 			cvs_history_print(hent);
 		}
 		cvs_hist_close(hp);
-	}
-	else {
+	} else {
 		if (flags & CVS_HF_C)
 			cvs_sendarg(root, "-c", 0);
 

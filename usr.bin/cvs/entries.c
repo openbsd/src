@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.18 2004/11/09 20:49:17 krapht Exp $	*/
+/*	$OpenBSD: entries.c,v 1.19 2004/12/06 21:03:12 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -456,8 +456,7 @@ cvs_ent_write(CVSENTRIES *ef)
 			putc('D', ef->cef_file);
 			timebuf[0] = '\0';
 			revbuf[0] = '\0';
-		}
-		else {
+		} else {
 			rcsnum_tostr(ent->ce_rev, revbuf, sizeof(revbuf));
 			if (ent->ce_mtime == CVS_DATE_DMSEC)
 				strlcpy(timebuf, CVS_DATE_DUMMY,

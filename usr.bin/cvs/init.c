@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.6 2004/08/12 20:09:58 jfb Exp $	*/
+/*	$OpenBSD: init.c,v 1.7 2004/12/06 21:03:12 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -110,8 +110,7 @@ cvs_init(int argc, char **argv)
 				    path);
 				return (EX_CANTCREAT);
 			}
-		}
-		else if (cvsroot_files[i].cf_type == CFT_FILE) {
+		} else if (cvsroot_files[i].cf_type == CFT_FILE) {
 			fd = open(path, O_WRONLY|O_CREAT|O_EXCL,
 			    cvsroot_files[i].cf_mode);
 			if (fd == -1) {

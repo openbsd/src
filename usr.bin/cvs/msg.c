@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.c,v 1.4 2004/09/27 17:11:07 jfb Exp $	*/
+/*	$OpenBSD: msg.c,v 1.5 2004/12/06 21:03:12 deraadt Exp $	*/
 /*
  * Copyright (c) 2002 Matthieu Herrb
  * Copyright (c) 2001 Niels Provos <provos@citi.umich.edu>
@@ -154,8 +154,7 @@ cvsd_sendmsg(int fd, u_int type, const void *data, size_t len)
 		iov[1].iov_base = (void *)data;
 		iov[1].iov_len = len;
 		cnt = 2;
-	}
-	else
+	} else
 		msg.cm_len = sizeof(int);	/* dummy */
 
 	if (writev(fd, iov, cnt) == -1) {
@@ -193,8 +192,7 @@ cvsd_recvmsg(int fd, u_int *type, void *dst, size_t *len)
 	if ((ret = read(fd, &msg, sizeof(msg))) == -1) {
 		cvs_log(LP_ERRNO, "failed to read message header");
 		return (-1);
-	}
-	else if (ret == 0)
+	} else if (ret == 0)
 		return (0);
 
 	if (*len < msg.cm_len) {
@@ -209,14 +207,12 @@ cvsd_recvmsg(int fd, u_int *type, void *dst, size_t *len)
 
 		*(int *)dst = sfd;
 		*len = sizeof(sfd);
-	}
-	else {
+	} else {
 		ret = read(fd, dst, msg.cm_len);
 		if (ret == -1) {
 			cvs_log(LP_ERRNO, "failed to read message");
 			return (-1);
-		}
-		else if (ret == 0) {
+		} else if (ret == 0) {
 		}
 
 		*len = (size_t)ret;

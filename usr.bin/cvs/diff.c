@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.9 2004/12/06 02:46:47 jfb Exp $	*/
+/*	$OpenBSD: diff.c,v 1.10 2004/12/06 21:03:12 deraadt Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -418,8 +418,7 @@ cvs_diff(int argc, char **argv)
 
 	if (argc == 0) {
 		cvs_files = cvs_file_get(".", flags);
-	}
-	else
+	} else
 		cvs_files = cvs_file_getspec(argv, argc, 0);
 	if (cvs_files == NULL)
 		return (EX_DATAERR);
@@ -453,16 +452,14 @@ cvs_diff_sendflags(struct cvsroot *root, struct diff_arg *dap)
 	if (dap->rev1 != NULL) {
 		cvs_sendarg(root, "-r", 0);
 		cvs_sendarg(root, dap->rev1, 1);
-	}
-	else if (dap->date1 != NULL) {
+	} else if (dap->date1 != NULL) {
 		cvs_sendarg(root, "-D", 0);
 		cvs_sendarg(root, dap->date1, 1);
 	}
 	if (dap->rev2 != NULL) {
 		cvs_sendarg(root, "-r", 0);
 		cvs_sendarg(root, dap->rev2, 1);
-	}
-	else if (dap->date2 != NULL) {
+	} else if (dap->date2 != NULL) {
 		cvs_sendarg(root, "-D", 0);
 		cvs_sendarg(root, dap->date2, 1);
 	}
@@ -496,8 +493,7 @@ cvs_diff_file(struct cvs_file *cfp, void *arg)
 			root = cfp->cf_parent->cf_ddat->cd_root;
 			cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
 			    CVS_FILE_NAME(cfp));
-		}
-		else {
+		} else {
 			root = cfp->cf_ddat->cd_root;
 			if ((cfp->cf_parent == NULL) ||
 			    (root != cfp->cf_parent->cf_ddat->cd_root)) {
@@ -518,8 +514,7 @@ cvs_diff_file(struct cvs_file *cfp, void *arg)
 		dir = cvs_file_getpath(cfp->cf_parent, dfpath, sizeof(dfpath));
 		root = cfp->cf_parent->cf_ddat->cd_root;
 		repo = cfp->cf_parent->cf_ddat->cd_repo;
-	}
-	else {
+	} else {
 		dir = ".";
 		root = NULL;
 		repo = NULL;
@@ -557,8 +552,7 @@ cvs_diff_file(struct cvs_file *cfp, void *arg)
 	if (root->cr_method != CVS_METHOD_LOCAL) {
 		cvs_sendreq(root, CVS_REQ_MODIFIED, CVS_FILE_NAME(cfp));
 		cvs_sendfile(root, diff_file);
-	}
-	else {
+	} else {
 		snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
 		    root->cr_dir, repo, diff_file, RCS_FILE_EXT);
 
@@ -587,8 +581,7 @@ cvs_diff_file(struct cvs_file *cfp, void *arg)
 			r2 = rcsnum_alloc();
 			rcsnum_aton(dap->rev2, NULL, r2);
 			b2 = rcs_getrev(rf, r2);
-		}
-		else {
+		} else {
 			b2 = cvs_buf_load(diff_file, BUF_AUTOEXT);
 		}
 

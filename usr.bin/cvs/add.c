@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.6 2004/12/06 02:19:54 jfb Exp $	*/
+/*	$OpenBSD: add.c,v 1.7 2004/12/06 21:03:12 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -105,8 +105,7 @@ cvs_add_file(CVSFILE *cf, void *arg)
 
 	if (cf->cf_type == DT_DIR) {
 		if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
-		}
-		else {
+		} else {
 			root = cf->cf_ddat->cd_root;
 			if ((cf->cf_parent == NULL) ||
 			    (root != cf->cf_parent->cf_ddat->cd_root)) {
@@ -123,8 +122,7 @@ cvs_add_file(CVSFILE *cf, void *arg)
 
 	if (root->cr_method != CVS_METHOD_LOCAL) {
 		cvs_sendreq(root, CVS_REQ_ISMODIFIED, CVS_FILE_NAME(cf));
-	}
-	else {
+	} else {
 		cvs_log(LP_INFO, "scheduling file `%s' for addition",
 		    cf->cf_name);
 		cvs_log(LP_INFO, "use `%s commit' to add this file permanently",

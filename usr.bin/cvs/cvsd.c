@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvsd.c,v 1.12 2004/11/28 15:12:17 pat Exp $	*/
+/*	$OpenBSD: cvsd.c,v 1.13 2004/12/06 21:03:12 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -511,13 +511,11 @@ cvsd_child_reap(void)
 				cvs_log(LP_WARN,
 				    "child %d exited with status %d",
 				    pid, WEXITSTATUS(status));
-			}
-			else if (WIFSIGNALED(status)) {
+			} else if (WIFSIGNALED(status)) {
 				cvs_log(LP_WARN,
 				    "child %d terminated with signal %d",
 				    pid, WTERMSIG(status));
-			}
-			else {
+			} else {
 				cvs_log(LP_ERR, "HOLY SHIT!");
 			}
 
@@ -634,10 +632,10 @@ cvsd_parent_loop(void)
 
 		if (pfd[0].revents & (POLLERR|POLLNVAL)) {
 			cvs_log(LP_ERR, "poll error on request socket");
-		}
-		else if (pfd[0].revents & POLLIN) {
+		} else if (pfd[0].revents & POLLIN) {
 			uid_t uid;
 			gid_t gid;
+
 			cfd = cvsd_sock_accept(pfd[0].fd);
 			if (cfd == -1)
 			chp = cvsd_child_get();
@@ -663,8 +661,7 @@ cvsd_parent_loop(void)
 				cvs_log(LP_ERR,
 				    "poll error on child socket (PID %d)",
 				    chp->ch_pid);
-			}
-			else if (pfd[i].revents & POLLIN)
+			} else if (pfd[i].revents & POLLIN)
 				cvsd_msghdlr(chp, pfd[i].fd);
 
 			chp = TAILQ_NEXT(chp, ch_list);
@@ -718,8 +715,7 @@ cvsd_child_main(void)
 				continue;
 			cvs_log(LP_ERRNO, "poll error");
 			break;
-		}
-		else if (ret == 0)
+		} else if (ret == 0)
 			continue;
 
 		if (pfd[0].revents & (POLLERR|POLLNVAL)) {
@@ -731,8 +727,7 @@ cvsd_child_main(void)
 		ret = cvsd_recvmsg(pfd[0].fd, &mtype, mbuf, &mlen);
 		if (ret == -1) {
 			continue;
-		}
-		else if (ret == 0)
+		} else if (ret == 0)
 			break;
 
 		switch (mtype) {
@@ -776,8 +771,7 @@ cvsd_msghdlr(struct cvsd_child *child, int fd)
 	if (ret == -1) {
 		cvs_log(LP_ERRNO, "failed to read CVS message");
 		return (-1);
-	}
-	else if (ret == 0) {
+	} else if (ret == 0) {
 		cvs_log(LP_WARN, "child closed socket pair");
 		return (0);
 	}

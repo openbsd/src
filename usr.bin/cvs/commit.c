@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.7 2004/12/02 19:23:44 jfb Exp $	*/
+/*	$OpenBSD: commit.c,v 1.8 2004/12/06 21:03:12 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -103,8 +103,7 @@ cvs_commit(int argc, char **argv)
 
 	if (argc == 0) {
 		cvs_files = cvs_file_get(".", flags);
-	}
-	else {
+	} else {
 		cvs_files = cvs_file_getspec(argv, argc, flags);
 	}
 	if (cvs_files == NULL)

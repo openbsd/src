@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.4 2004/11/28 15:12:17 pat Exp $	*/
+/*	$OpenBSD: buf.c,v 1.5 2004/12/06 21:03:12 deraadt Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -143,8 +143,7 @@ cvs_buf_load(const char *path, u_int flags)
 			(void)close(fd);
 			cvs_buf_free(bp);
 			return (NULL);
-		}
-		else if (ret == 0)
+		} else if (ret == 0)
 			break;
 
 		buf->cb_len += (size_t)ret;
@@ -244,9 +243,7 @@ cvs_buf_set(BUF *b, const void *src, size_t len, size_t off)
 			return (-1);
 		else
 			rlen = b->cb_size - off;
-
-	}
-	else
+	} else
 		rlen = len;
 
 	memcpy((b->cb_buf + off), src, rlen);
@@ -316,8 +313,7 @@ cvs_buf_append(BUF *b, const void *data, size_t len)
 			if (cvs_buf_grow(b, len - left) < 0)
 				return (-1);
 			bp = b->cb_cur + b->cb_len;
-		}
-		else
+		} else
 			rlen = bep - bp;
 	}
 

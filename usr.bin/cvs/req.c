@@ -1,4 +1,4 @@
-/*	$OpenBSD: req.c,v 1.5 2004/08/06 14:49:03 jfb Exp $	*/
+/*	$OpenBSD: req.c,v 1.6 2004/12/06 21:03:12 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -271,8 +271,7 @@ cvs_req_argument(int reqid, char *line)
 			return (-1);
 		}
 		cvs_req_nargs++;
-	}
-	else if (reqid == CVS_REQ_ARGUMENTX) {
+	} else if (reqid == CVS_REQ_ARGUMENTX) {
 		if (cvs_req_nargs == 0)
 			cvs_log(LP_WARN, "no argument to append to");
 		else {

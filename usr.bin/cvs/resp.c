@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.10 2004/12/06 04:10:06 jfb Exp $	*/
+/*	$OpenBSD: resp.c,v 1.11 2004/12/06 21:03:12 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -159,8 +159,7 @@ cvs_resp_handle(struct cvsroot *root, char *line)
 	resp = cvs_resp_getbyname(cmd);
 	if (resp == NULL) {
 		return (-1);
-	}
-	else if (cvs_resp_swtab[resp->resp_id].hdlr == NULL) {
+	} else if (cvs_resp_swtab[resp->resp_id].hdlr == NULL) {
 		cvs_log(LP_ERRNO, "handler for `%s' not implemented", cmd);
 		return (-1);
 	}
@@ -247,20 +246,17 @@ cvs_resp_m(struct cvsroot *root, int type, char *line)
 			if (cvs_mt_stack[cvs_mtstk_depth] == NULL)
 				return (-1);
 			cvs_mtstk_depth++;
-		}
-		else if (*line == '-') {
+		} else if (*line == '-') {
 			if (cvs_mtstk_depth == 0) {
 				cvs_log(LP_ERR, "MT scope stack underflow");
 				return (-1);
-			}
-			else if (strcmp(line + 1,
+			} else if (strcmp(line + 1,
 			    cvs_mt_stack[cvs_mtstk_depth - 1]) != 0) {
 				cvs_log(LP_ERR, "mismatch in MT scope stack");
 				return (-1);
 			}
 			free(cvs_mt_stack[cvs_mtstk_depth--]);
-		}
-		else {
+		} else {
 			if (strcmp(line, "newline") == 0)
 				putc('\n', stdout);
 			else if (strncmp(line, "fname ", 6) == 0)
@@ -338,8 +334,7 @@ cvs_resp_statdir(struct cvsroot *root, int type, char *line)
 		cvs_log(LP_ERRNO, "failed to unlink %s file",
 		    CVS_PATH_STATICENTRIES);
 		return (-1);
-	}
-	else if (type == CVS_RESP_SETSTATDIR) {
+	} else if (type == CVS_RESP_SETSTATDIR) {
 		fd = open(statpath, O_CREAT|O_TRUNC|O_WRONLY, 0400);
 		if (fd == -1) {
 			cvs_log(LP_ERRNO,
@@ -441,8 +436,7 @@ cvs_resp_newentry(struct cvsroot *root, int type, char *line)
 		return (-1);
 	if (type == CVS_RESP_NEWENTRY) {
 		cvs_ent_addln(entfile, entbuf);
-	}
-	else if (type == CVS_RESP_CHECKEDIN) {
+	} else if (type == CVS_RESP_CHECKEDIN) {
 		ent = cvs_ent_parse(entbuf);
 		if (ent == NULL) {
 			cvs_log(LP_ERR, "failed to parse entry");
@@ -553,10 +547,8 @@ cvs_resp_updated(struct cvsroot *root, int type, char *line)
 		/* set the timestamp as the last one received from Mod-time */
 		ep->ce_mtime = cvs_modtime;
 		cvs_ent_add(cf->cf_ddat->cd_ent, ep);
-	}
-	else if (type == CVS_RESP_UPDEXIST) {
-	}
-	else if (type == CVS_RESP_UPDATED) {
+	} else if (type == CVS_RESP_UPDEXIST) {
+	} else if (type == CVS_RESP_UPDATED) {
 	}
 
 	fbuf = cvs_recvfile(root, &fmode);

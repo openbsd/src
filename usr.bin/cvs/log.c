@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.5 2004/11/28 15:12:17 pat Exp $	*/
+/*	$OpenBSD: log.c,v 1.6 2004/12/06 21:03:12 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -235,8 +235,7 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 		else
 			snprintf(prefix, sizeof(prefix), "%s %s", __progname,
 			    cvs_command);
-	}
-	else /* just use the standard strlcpy */
+	} else /* just use the standard strlcpy */
 #endif
 		strlcpy(prefix, __progname, sizeof(prefix));
 

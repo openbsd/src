@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.9 2004/11/26 16:23:50 jfb Exp $	*/
+/*	$OpenBSD: update.c,v 1.10 2004/12/06 21:03:13 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -92,8 +92,7 @@ cvs_update(int argc, char **argv)
 
 	if (argc == 0) {
 		cvs_files = cvs_file_get(".", flags);
-	}
-	else {
+	} else {
 		/* don't perform ignore on explicitly listed files */
 		flags &= ~(CF_IGNORE | CF_RECURSE | CF_SORT);
 		cvs_files = cvs_file_getspec(argv, argc, flags);
@@ -131,8 +130,7 @@ cvs_update_file(CVSFILE *cf, void *arg)
 			root = cf->cf_parent->cf_ddat->cd_root;
 			cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
 			    CVS_FILE_NAME(cf));
-		}
-		else {
+		} else {
 			root = cf->cf_ddat->cd_root;
 			if ((cf->cf_parent == NULL) ||
 			    (root != cf->cf_parent->cf_ddat->cd_root)) {
@@ -143,15 +141,13 @@ cvs_update_file(CVSFILE *cf, void *arg)
 		}
 
 		return (0);
-	}
-	else
+	} else
 		root = cf->cf_parent->cf_ddat->cd_root;
 
 	rf = NULL;
 	if (cf->cf_parent != NULL) {
 		repo = cf->cf_parent->cf_ddat->cd_repo;
-	}
-	else {
+	} else {
 		repo = NULL;
 	}
 

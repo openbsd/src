@@ -1,4 +1,4 @@
-/*	$OpenBSD: hist.c,v 1.1.1.1 2004/07/13 22:02:40 jfb Exp $	*/
+/*	$OpenBSD: hist.c,v 1.2 2004/12/06 21:03:12 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -187,8 +187,7 @@ cvs_hist_fillbuf(CVSHIST *histp)
 	if (ret == -1) {
 		cvs_log(LP_ERRNO, "failed to buffer CVS history file");
 		return (-1);
-	}
-	else {
+	} else {
 		histp->chf_bused = (size_t)ret;
 	}
 
@@ -222,8 +221,7 @@ cvs_hist_parse(CVSHIST *histp)
 			 */
 			histp->chf_off += (off_t)(sp - histp->chf_buf);
 			break;
-		}
-		else if (ep == bep) {
+		} else if (ep == bep) {
 			histp->chf_off += (off_t)histp->chf_bused;
 		}
 		*(ep++) = '\0';

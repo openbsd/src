@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.13 2004/09/27 15:33:44 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.14 2004/12/06 21:03:12 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -506,8 +506,7 @@ rcs_patch_lines(struct rcs_foo *dlines, struct rcs_foo *plines)
 				break;
 			if (dlp->rl_lineno > lineno) {
 				dlp = TAILQ_PREV(dlp, rcs_tqh, rl_list);
-			}
-			else if (dlp->rl_lineno < lineno) {
+			} else if (dlp->rl_lineno < lineno) {
 				ndlp = TAILQ_NEXT(dlp, rl_list);
 				if (ndlp->rl_lineno > lineno)
 					break;
@@ -526,8 +525,7 @@ rcs_patch_lines(struct rcs_foo *dlines, struct rcs_foo *plines)
 				TAILQ_REMOVE(&(dlines->rl_lines), dlp, rl_list);
 				dlp = ndlp;
 			}
-		}
-		else if (op == 'a') {
+		} else if (op == 'a') {
 			for (i = 0; i < nbln; i++) {
 				ndlp = lp;
 				lp = TAILQ_NEXT(lp, rl_list);
@@ -545,8 +543,7 @@ rcs_patch_lines(struct rcs_foo *dlines, struct rcs_foo *plines)
 
 				lp = ndlp;
 			}
-		}
-		else {
+		} else {
 			cvs_log(LP_ERR, "unknown RCS patch operation `%c'", op);
 			return (-1);
 		}
@@ -588,8 +585,7 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *rev)
 	if (res == 1) {
 		cvs_log(LP_ERR, "sorry, can't travel in the future yet");
 		return (NULL);
-	}
-	else {
+	} else {
 		rdp = rcs_findrev(rfp, rfp->rf_head);
 		if (rdp == NULL) {
 			cvs_log(LP_ERR, "failed to get RCS HEAD revision");
@@ -809,8 +805,7 @@ rcs_parse_admin(RCSFILE *rfp)
 		if (tok == RCS_TOK_ERR) {
 			cvs_log(LP_ERR, "parse error in RCS admin section");
 			return (-1);
-		}
-		else if (tok == RCS_TOK_NUM) {
+		} else if (tok == RCS_TOK_NUM) {
 			/* assume this is the start of the first delta */
 			rcs_pushtok(rfp, RCS_TOKSTR(rfp), tok);
 			return (0);
@@ -844,20 +839,17 @@ rcs_parse_admin(RCSFILE *rfp)
 			if (tok == RCS_TOK_HEAD) {
 				rcsnum_aton(RCS_TOKSTR(rfp), NULL,
 				    rfp->rf_head);
-			}
-			else if (tok == RCS_TOK_BRANCH) {
+			} else if (tok == RCS_TOK_BRANCH) {
 				rcsnum_aton(RCS_TOKSTR(rfp), NULL,
 				    rfp->rf_branch);
-			}
-			else if (tok == RCS_TOK_COMMENT) {
+			} else if (tok == RCS_TOK_COMMENT) {
 				rfp->rf_comment = strdup(RCS_TOKSTR(rfp));
 				if (rfp->rf_comment == NULL) {
 					cvs_log(LP_ERRNO,
 					    "failed to duplicate rcs token");
 					return (-1);
 				}
-			}
-			else if (tok == RCS_TOK_EXPAND) {
+			} else if (tok == RCS_TOK_EXPAND) {
 				rfp->rf_expand = strdup(RCS_TOKSTR(rfp));
 				if (rfp->rf_expand == NULL) {
 					cvs_log(LP_ERRNO,
@@ -954,8 +946,7 @@ rcs_parse_delta(RCSFILE *rfp)
 			cvs_log(LP_ERR, "parse error in RCS delta section");
 			rcs_freedelta(rdp);
 			return (-1);
-		}
-		else if (tok == RCS_TOK_NUM || tok == RCS_TOK_DESC) {
+		} else if (tok == RCS_TOK_NUM || tok == RCS_TOK_DESC) {
 			rcs_pushtok(rfp, RCS_TOKSTR(rfp), tok); 
 			ret = (tok == RCS_TOK_NUM ? 1 : 0);
 			break;
@@ -1041,16 +1032,13 @@ rcs_parse_delta(RCSFILE *rfp)
 				rdp->rd_date.tm_min = datenum->rn_id[4];
 				rdp->rd_date.tm_sec = datenum->rn_id[5];
 				rcsnum_free(datenum);
-			}
-			else if (tok == RCS_TOK_AUTHOR) {
+			} else if (tok == RCS_TOK_AUTHOR) {
 				rdp->rd_author = tokstr;
 				tokstr = NULL;
-			}
-			else if (tok == RCS_TOK_STATE) {
+			} else if (tok == RCS_TOK_STATE) {
 				rdp->rd_state = tokstr;
 				tokstr = NULL;
-			}
-			else if (tok == RCS_TOK_NEXT) {
+			} else if (tok == RCS_TOK_NEXT) {
 				rcsnum_aton(tokstr, NULL, rdp->rd_next);
 			}
 			break;
@@ -1330,8 +1318,7 @@ rcs_parse_locks(RCSFILE *rfp)
 	type = rcs_gettok(rfp);
 	if (type != RCS_TOK_STRICT) {
 		rcs_pushtok(rfp, RCS_TOKSTR(rfp), type);
-	}
-	else {
+	} else {
 		rfp->rf_flags |= RCS_RF_SLOCK;
 
 		type = rcs_gettok(rfp);
@@ -1484,14 +1471,11 @@ rcs_gettok(RCSFILE *rfp)
 
 	if (ch == EOF) {
 		type = RCS_TOK_EOF;
-	}
-	else if (ch == ';') {
+	} else if (ch == ';') {
 		type = RCS_TOK_SCOLON;
-	}
-	else if (ch == ':') {
+	} else if (ch == ':') {
 		type = RCS_TOK_COLON;
-	}
-	else if (isalpha(ch)) {
+	} else if (isalpha(ch)) {
 		*(bp++) = ch;
 		while (bp <= bep - 1) {
 			ch = getc(pdp->rp_file);
@@ -1514,8 +1498,7 @@ rcs_gettok(RCSFILE *rfp)
 		if (type == RCS_TOK_ERR)
 			type = RCS_TOK_STRING;
 
-	}
-	else if (ch == '@') {
+	} else if (ch == '@') {
 		/* we have a string */
 		for (;;) {
 			ch = getc(pdp->rp_file);
@@ -1525,8 +1508,7 @@ rcs_gettok(RCSFILE *rfp)
 					ungetc(ch, pdp->rp_file);
 					break;
 				}
-			}
-			else if (ch == '\n')
+			} else if (ch == '\n')
 				pdp->rp_line++;
 
 			*(bp++) = ch;
@@ -1536,8 +1518,7 @@ rcs_gettok(RCSFILE *rfp)
 
 		*bp = '\0';
 		type = RCS_TOK_STRING;
-	}
-	else if (isdigit(ch)) {
+	} else if (isdigit(ch)) {
 		*(bp++) = ch;
 		last = ch;
 		type = RCS_TOK_NUM;
@@ -1614,8 +1595,7 @@ rcs_stresc(int esc, const char *str, char *buf, size_t *blen)
 				if (bp > (bep - 2))
 					break;
 				*(bp++) = '@';
-			}
-			else {
+			} else {
 				sp++;
 				if (*sp != '@') {
 					cvs_log(LP_WARN,

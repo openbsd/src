@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.14 2004/12/03 20:24:37 weingart Exp $	*/
+/*	$OpenBSD: util.c,v 1.15 2004/12/06 21:03:13 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -160,8 +160,7 @@ cvs_datesec(const char *date, int type, int adj)
 				cvs_log(LP_ERR,
 				    "parse error in GMT hours specification `%s'", hr);
 				cvs_tm.tm_gmtoff = 0;
-			}
-			else {
+			} else {
 				/* get seconds */
 				cvs_tm.tm_gmtoff *= 3600;
 
@@ -173,15 +172,13 @@ cvs_datesec(const char *date, int type, int adj)
 					cvs_log(LP_ERR,
 					    "parse error in GMT minutes "
 					    "specification `%s'", min);
-				}
-				else
+				} else
 					cvs_tm.tm_gmtoff += off * 60;
 			}
 		}
 		if (sign == '-')
 			cvs_tm.tm_gmtoff = -cvs_tm.tm_gmtoff;
-	}
-	else if (type == CVS_DATE_CTIME) {
+	} else if (type == CVS_DATE_CTIME) {
 		/* gmt is used for the weekday */
 		sscanf(date, "%3s %3s %d %2d:%2d:%2d %d", gmt, mon,
 		    &cvs_tm.tm_mday, &cvs_tm.tm_hour, &cvs_tm.tm_min,
@@ -252,8 +249,7 @@ cvs_strtomode(const char *str, mode_t *mode)
 			    (cvs_modes[(int)type][*sp - 'a'] == 0)) {
 				cvs_log(LP_WARN,
 				    "invalid permission bit `%c'", *sp);
-			}
-			else
+			} else
 				m |= cvs_modes[(int)type][*sp - 'a'];
 		}
 	}
@@ -401,8 +397,7 @@ cvs_getargv(const char *line, char **argv, int argvlen)
 					cvs_log(LP_ERR, "no terminating quote");
 					err++;
 					break;
-				}
-				else if (*lp == '\\')
+				} else if (*lp == '\\')
 					lp++;
 
 				qbuf[i++] = *lp++;
@@ -413,8 +408,7 @@ cvs_getargv(const char *line, char **argv, int argvlen)
 			}
 
 			arg = qbuf;
-		}
-		else {
+		} else {
 			cp = strsep(&lp, " \t");
 			if (cp == NULL)
 				break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: root.c,v 1.11 2004/08/31 11:54:35 jfb Exp $	*/
+/*	$OpenBSD: root.c,v 1.12 2004/12/06 21:03:13 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -183,8 +183,7 @@ cvsroot_parse(const char *str)
 		}
 
 		root->cr_user = cp;
-	}
-	else
+	} else
 		sp = cp;
 
 	pp = strchr(sp, ':');
@@ -215,8 +214,7 @@ cvsroot_parse(const char *str)
 	if (tmp == NULL) {
 		/* just forget about the cache and return anyways */
 		root->cr_ref--;
-	}
-	else {
+	} else {
 		cvs_rcache = (struct cvsroot **)tmp;
 		cvs_rcache[cvs_rcsz++] = root;
 	}
@@ -278,8 +276,7 @@ cvsroot_get(const char *dir)
 				return cvsroot_parse(rootstr);
 			else
 				return (NULL);
-		}
-		else {
+		} else {
 			cvs_log(LP_ERRNO, "failed to open CVS/Root");
 			return (NULL);
 		}
@@ -295,8 +292,7 @@ cvsroot_get(const char *dir)
 	len = strlen(line);
 	if (len == 0) {
 		cvs_log(LP_WARN, "empty CVS/Root file");
-	}
-	else if (line[len - 1] == '\n')
+	} else if (line[len - 1] == '\n')
 		line[--len] = '\0';
 
 	return cvsroot_parse(line);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.5 2004/12/03 19:01:02 jfb Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.6 2004/12/06 21:03:12 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -92,8 +92,7 @@ cvs_logmsg_open(const char *path)
 			    ((lbuf[0] != 'y') && (lbuf[0] != 'n'))) {
 				fprintf(stderr, "invalid input\n");
 				continue;
-			}
-			else if (lbuf[0] == 'y') 
+			} else if (lbuf[0] == 'y') 
 				break;
 			else if (lbuf[0] == 'n') {
 				cvs_log(LP_ERR, "aborted by user");
@@ -253,8 +252,7 @@ cvs_logmsg_get(const char *dir, struct cvs_flist *files)
 		if ((len == 0) || (len > 2)) {
 			fprintf(stderr, "invalid input\n");
 			continue;
-		}
-		else if (buf[0] == 'a') { 
+		} else if (buf[0] == 'a') { 
 			cvs_log(LP_ERR, "aborted by user");
 			break;
 		} else if ((buf[0] == '\n') || (buf[0] == 'c')) {
