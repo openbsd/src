@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.37 1998/06/21 22:13:52 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.38 1998/07/23 05:21:23 csapuntz Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.37 1998/06/21 22:13:52 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.38 1998/07/23 05:21:23 csapuntz Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1719,11 +1719,11 @@ free_chunks(lp)
 			}
 		} else {
 			/* Last partition */
-			if (spp[i]->p_offset + spp[i]->p_size < lp->d_secperunit) {
-
+			if (spp[i]->p_offset + spp[i]->p_size < ending_sector) {
+				
 				chunks[numchunks].start =
 				    spp[i]->p_offset + spp[i]->p_size;
-				chunks[numchunks].stop = lp->d_secperunit;
+				chunks[numchunks].stop = ending_sector;
 				numchunks++;
 			}
 		}
