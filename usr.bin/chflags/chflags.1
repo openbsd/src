@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chflags.1,v 1.10 2000/03/05 20:09:20 aaron Exp $
+.\"	$OpenBSD: chflags.1,v 1.11 2000/04/15 11:45:54 aaron Exp $
 .\"	$NetBSD: chflags.1,v 1.4 1995/08/31 22:50:22 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -88,12 +88,12 @@ Flags are a comma separated list of keywords.
 The following keywords are currently defined:
 .Bd -literal -offset indent compact
 arch	set the archived flag
-opaque	set the opaque flag (owner or super-user only)
-nodump	set the nodump flag (owner or super-user only)
-sappnd	set the system append-only flag (super-user only)
-schg	set the system immutable flag (super-user only)
-uappnd	set the user append-only flag (owner or super-user only)
-uchg	set the user immutable flag (owner or super-user only)
+opaque	set the opaque flag (owner or superuser only)
+nodump	set the nodump flag (owner or superuser only)
+sappnd	set the system append-only flag (superuser only)
+schg	set the system immutable flag (superuser only)
+uappnd	set the user append-only flag (owner or superuser only)
+uchg	set the user immutable flag (owner or superuser only)
 .Ed
 .Pp
 An immutable file may not be changed, moved, or deleted.
@@ -136,7 +136,7 @@ option is specified.
 In addition, these options override each other and the
 command's actions are determined by the last one specified.
 .Pp
-Only the super-user can change the user flags on block and
+Only the superuser can change the user flags on block and
 character devices.
 .Pp
 You can use

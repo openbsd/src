@@ -1,4 +1,4 @@
-.\"	$OpenBSD: quotactl.2,v 1.6 1999/07/05 06:08:05 aaron Exp $
+.\"	$OpenBSD: quotactl.2,v 1.7 2000/04/15 11:46:04 aaron Exp $
 .\"	$NetBSD: quotactl.2,v 1.8 1995/02/27 12:35:43 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -92,7 +92,7 @@ program.
 The
 .Fa id
 argument is unused.
-Only the super-user may turn quotas on.
+Only the superuser may turn quotas on.
 .It Dv Q_QUOTAOFF
 Disable disk quotas for the filesystem specified by
 .Fa path .
@@ -102,7 +102,7 @@ The
 and
 .Fa id
 arguments are unused.
-Only the super-user may turn quotas off.
+Only the superuser may turn quotas off.
 .It Dv Q_GETQUOTA
 Get disk quota limits and current usage for the user or group
 (as determined by the command type) with identifier
@@ -122,7 +122,7 @@ structure.
 The usage fields of
 .Li struct dqblk
 structure are ignored.
-This call is restricted to the super-user.
+This call is restricted to the superuser.
 .It Dv Q_SETUSE
 Set disk usage limits for the user or group
 (as determined by the command type) with identifier
@@ -132,7 +132,7 @@ is a pointer to a
 .Li struct dqblk
 structure.
 Only the usage fields are used.
-This call is restricted to the super-user.
+This call is restricted to the superuser.
 .It Dv Q_SYNC
 Update the on-disk copy of quota usages.
 The command type specifies which type of quotas are to be updated.
@@ -197,7 +197,7 @@ of the kernel.
 .Fa path
 points outside the process's allocated address space.
 .It Bq Er EPERM
-The call was privileged and the caller was not the super-user.
+The call was privileged and the caller was not the superuser.
 .El
 .Sh SEE ALSO
 .Xr quota 1 ,

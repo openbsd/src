@@ -1,4 +1,4 @@
-.\"	$OpenBSD: utimes.2,v 1.6 1999/06/29 14:10:28 aaron Exp $
+.\"	$OpenBSD: utimes.2,v 1.7 2000/04/15 11:46:04 aaron Exp $
 .\"	$NetBSD: utimes.2,v 1.9 1996/04/23 10:34:16 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -60,7 +60,7 @@ is
 .Dv NULL ,
 the access and modification times are set to the current time.
 The caller must be the owner of the file, have permission to
-write the file, or be the super-user.
+write the file, or be the superuser.
 .Pp
 If
 .Fa times
@@ -68,7 +68,7 @@ is non-null,
 it is assumed to point to an array of two timeval structures.
 The access time is set to the value of the first element, and the
 modification time is set to the value of the second element.
-The caller must be the owner of the file or be the super-user.
+The caller must be the owner of the file or be the superuser.
 .Pp
 In either case, the inode-change-time of the file is set to the current
 time.
@@ -88,7 +88,7 @@ or the
 argument is
 .Dv NULL
 and the effective user ID of the process does not
-match the owner of the file, and is not the super-user, and write
+match the owner of the file, and is not the superuser, and write
 access is denied.
 .It Bq Er EFAULT
 .Pa File
@@ -115,7 +115,7 @@ The
 argument is not
 .Dv NULL
 and the calling process's effective user ID
-does not match the owner of the file and is not the super-user.
+does not match the owner of the file and is not the superuser.
 .It Bq Er EROFS
 The file system containing the file is mounted read-only.
 .El
@@ -131,7 +131,7 @@ The
 argument is
 .Dv NULL
 and the effective user ID of the process does not
-match the owner of the file, and is not the super-user, and write
+match the owner of the file, and is not the superuser, and write
 access is denied.
 .It Bq Er EFAULT
 .Fa times
@@ -144,7 +144,7 @@ The
 argument is not
 .Dv NULL
 and the calling process's effective user ID
-does not match the owner of the file and is not the super-user.
+does not match the owner of the file and is not the superuser.
 .It Bq Er EROFS
 The file system containing the file is mounted read-only.
 .El

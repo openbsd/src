@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chflags.2,v 1.13 1999/07/31 03:55:28 deraadt Exp $
+.\"	$OpenBSD: chflags.2,v 1.14 2000/04/15 11:46:02 aaron Exp $
 .\"	$NetBSD: chflags.2,v 1.6 1995/02/27 12:32:03 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1993
@@ -80,13 +80,13 @@ The
 .Dq UF_IMMUTABLE
 and
 .Dq UF_APPEND
-flags may be set or unset by either the owner of a file or the super-user.
+flags may be set or unset by either the owner of a file or the superuser.
 .Pp
 The
 .Dq SF_IMMUTABLE
 and
 .Dq SF_APPEND
-flags may only be set or unset by the super-user.
+flags may only be set or unset by the superuser.
 They may be set at any time, but normally may only be unset when
 the system is in single-user mode.
 (See
@@ -117,7 +117,7 @@ Search permission is denied for a component of the path prefix.
 Too many symbolic links were encountered in translating the pathname.
 .It Bq Er EPERM
 The effective user ID does not match the owner of the file and
-the effective user ID is not the super-user.
+the effective user ID is not the superuser.
 .It Bq Er EOPNOTSUPP
 The named file resides on a file system that does not support file
 flags.
@@ -141,12 +141,12 @@ The descriptor is not valid.
 .Fa fd
 refers to a socket, not to a file.
 .It Bq Er EINVAL
-Only the super-user can change flags on block and character devices.
+Only the superuser can change flags on block and character devices.
 .It Bq Er EINVAL
 The flags value is invalid.
 .It Bq Er EPERM
 The effective user ID does not match the owner of the file and
-the effective user ID is not the super-user.
+the effective user ID is not the superuser.
 .It Bq Er EOPNOTSUPP
 The named file resides on a file system that does not support file
 flags.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.2,v 1.15 1999/07/04 18:59:43 aaron Exp $
+.\"	$OpenBSD: intro.2,v 1.16 2000/04/15 11:46:03 aaron Exp $
 .\"	$NetBSD: intro.2,v 1.6 1995/02/27 12:33:41 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1983, 1986, 1991, 1993
@@ -525,10 +525,10 @@ or group ID after reverting to the real ID (see
 .Xr setuid 2 ) .
 (In POSIX.1, the saved set-user-ID and saved set-group-ID are optional,
 and are used in setuid and setgid, but this does not work as desired
-for the super-user.)
+for the superuser.)
 .It Super-user
 A process is recognized as a
-.Em super-user
+.Em superuser
 process and is granted special privileges if its effective user ID is 0.
 .It Special Processes
 The processes with process IDs of 0, 1, and 2 are special.
@@ -651,8 +651,8 @@ information applicable to the caller.
 Read, write, and execute/search permissions on
 a file are granted to a process if:
 .Pp
-The process's effective user ID is that of the super-user. (Note:
-even the super-user cannot execute a non-executable file.)
+The process's effective user ID is that of the superuser. (Note:
+even the superuser cannot execute a non-executable file.)
 .Pp
 The process's effective user ID matches the user ID of the owner
 of the file and the owner permissions allow the access.

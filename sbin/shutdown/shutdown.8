@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shutdown.8,v 1.18 2000/04/12 21:48:00 aaron Exp $
+.\"	$OpenBSD: shutdown.8,v 1.19 2000/04/15 11:45:58 aaron Exp $
 .\"	$NetBSD: shutdown.8,v 1.6 1995/03/18 15:01:07 cgd Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -48,7 +48,7 @@
 .Op Ar warning-message ...
 .Sh DESCRIPTION
 .Nm
-provides an automated shutdown procedure for super-users
+provides an automated shutdown procedure for superusers
 to nicely notify users when the system is shutting down,
 saving them from system administrators, hackers, and gurus, who
 would otherwise not bother with such niceties.
@@ -78,7 +78,7 @@ The
 .Fl k
 option
 does not actually halt the system, but leaves the
-system multi-user with logins disabled (for all but super-user).
+system multi-user with logins disabled (for all but superuser).
 .It Fl n
 Prevent the normal
 .Xr sync 2

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcmd.3,v 1.18 2000/02/23 17:28:25 aaron Exp $
+.\"	$OpenBSD: rcmd.3,v 1.19 2000/04/15 11:46:02 aaron Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -63,7 +63,7 @@
 The
 .Fn rcmd
 function
-is used by the super-user to execute a command on a remote
+is used by the superuser to execute a command on a remote
 machine using an authentication scheme based on reserved
 port numbers.  If the calling process is not setuid, the
 .Ev RSH
@@ -74,7 +74,7 @@ is
 .Xr rcmdsh 3
 is called instead with the value of
 .Ev RSH .
-Alternately, if the user is not the super-user,
+Alternately, if the user is not the superuser,
 .Fn rcmd
 will invoke
 .Xr rcmdsh 3
@@ -123,7 +123,7 @@ is set to the standard name of the host
 and a connection is established to a server
 residing at the well-known Internet port
 .Fa inport .
-If the user is not the super-user, the only valid port is
+If the user is not the superuser, the only valid port is
 .Dq shell/tcp
 (usually port 514).
 .Pp
@@ -150,7 +150,7 @@ is 0, then the standard error (unit 2 of the remote command) will be made the
 same as the standard output and no
 provision is made for sending arbitrary signals to the remote process,
 although you may be able to get its attention by using out-of-band data.
-Note that if the user is not the super-user,
+Note that if the user is not the superuser,
 .Fa fd2p
 must be 0.
 .Pp
@@ -174,7 +174,7 @@ address bound to it.  This socket is suitable for use
 by
 .Fn rcmd
 and several other functions.  Privileged Internet ports are those
-in the range 0 to 1023.  Only the super-user
+in the range 0 to 1023.  Only the superuser
 is allowed to bind an address of this sort to a socket.
 .Fn rresvport
 and
@@ -188,10 +188,10 @@ and
 .Fn ruserok
 functions take a remote host's IP address or name, respectively,
 two user names and a flag indicating whether the local user's
-name is that of the super-user.
+name is that of the superuser.
 Then, if the user is
 .Em not
-the super-user, it checks the
+the superuser, it checks the
 .Pa /etc/hosts.equiv
 file.
 If that lookup is not done, or is unsuccessful, the
@@ -200,7 +200,7 @@ in the local user's home directory is checked to see if the request for
 service is allowed.
 .Pp
 If this file does not exist, is not a regular file, is owned by anyone
-other than the user or the super-user, or is writeable by anyone other
+other than the user or the superuser, or is writeable by anyone other
 than the owner, the check automatically fails.
 Zero is returned if the machine name is listed in the
 .Pa hosts.equiv

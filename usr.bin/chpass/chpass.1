@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chpass.1,v 1.17 2000/03/23 21:10:13 aaron Exp $
+.\"	$OpenBSD: chpass.1,v 1.18 2000/04/15 11:45:55 aaron Exp $
 .\"	$NetBSD: chpass.1,v 1.7 1996/05/15 21:50:40 jtc Exp $
 .\"
 .\" Copyright (c) 1988, 1990, 1993
@@ -70,7 +70,7 @@ are synonyms for
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl a Ar list
-The super-user is allowed to directly supply a user database
+The superuser is allowed to directly supply a user database
 entry, in the format specified by
 .Xr passwd 5 ,
 as an argument.
@@ -194,7 +194,7 @@ If the
 field is empty, the Bourne shell
 .Pq Pa /bin/sh
 is assumed.
-When altering a login shell, and not the super-user, the user
+When altering a login shell, and not the superuser, the user
 may not change from a non-standard shell or to a non-standard
 shell.
 Non-standard is defined as a shell not found in
@@ -222,7 +222,7 @@ is set to
 an alternate editor.
 When the editor terminates, the information is re-read and used to
 update the user database itself.
-Only the user, or the super-user, may edit the information associated
+Only the user, or the superuser, may edit the information associated
 with the user.
 .Sh FILES
 .Bl -tag -width /var/tmp/pw.XXXXXXXX -compact

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tun.4,v 1.12 1999/12/16 06:45:31 deraadt Exp $
+.\"	$OpenBSD: tun.4,v 1.13 2000/04/15 11:45:51 aaron Exp $
 .Dd March 10, 1996
 .Dt TUN 4
 .Os
@@ -63,7 +63,7 @@ There are two control interfaces.  The
 interface, normally
 .Pa /dev/tun Ns Sy N ,
 is exclusive-open (it cannot be opened if it is already open), is
-normally restricted to the super-user, and can
+normally restricted to the superuser, and can
 .Dq transmit
 and
 .Dq receive
@@ -94,7 +94,7 @@ packets, and perform control functions.  As mentioned above, this
 interface is exclusive-open; if the
 .Dv SUONLY
 bit is set (which it is by default), it cannot be opened at all except
-by the super-user.  By default, a
+by the superuser.  By default, a
 .Fn read
 call will return an error
 .Pf ( Er EHOSTDOWN )
@@ -199,7 +199,7 @@ error occurs.
 .\" X .It Dv TUN_BRDADDR Ta RO Ta "Broadcast address has been set."
 .\" X .It Dv TUN_PREPADDR Ta RW Ta "Prepend sent-to address for reads."
 .\" X .It Dv TUN_STAYUP Ta RW Ta "Don't take interface down on close."
-.\" X .It Dv TUN_SUONLY Ta RW Ta "Data control device is super-user only."
+.\" X .It Dv TUN_SUONLY Ta RW Ta "Data control device is superuser only."
 .\" X .It Dv TUN_RRWAIT Ta RW Ta "Wait for ready when reading."
 .\" X .El
 .\" X .It Dv TUNGFLAG

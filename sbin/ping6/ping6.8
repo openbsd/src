@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping6.8,v 1.8 2000/04/12 21:47:59 aaron Exp $
+.\"	$OpenBSD: ping6.8,v 1.9 2000/04/15 11:45:58 aaron Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -129,7 +129,7 @@ is printed, while for every
 .Tn ECHO_REPLY
 received a backspace is printed.
 This provides a rapid display of how many packets are being dropped.
-Only the super-user may use this option.
+Only the superuser may use this option.
 .Bf -emphasis
 This can be very hard on a network and should be used with caution.
 .Ef
@@ -144,7 +144,7 @@ Wait
 .Ar wait
 seconds between sending each packet.
 The default is to wait for one second between each packet.
-The wait time may be fractional, but only the super-user may specify
+The wait time may be fractional, but only the superuser may specify
 a value less than one second.
 This option is incompatible with the
 .Fl f
@@ -156,7 +156,7 @@ is specified,
 .Nm ping
 sends that many packets as fast as possible before falling into its normal
 mode of behavior.
-Only the super-user may use this option.
+Only the superuser may use this option.
 .It Fl n
 Numeric output only.
 No attempt will be made to lookup symbolic names for host addresses.

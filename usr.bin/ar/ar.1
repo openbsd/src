@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ar.1,v 1.8 2000/04/15 02:15:11 aaron Exp $
+.\"	$OpenBSD: ar.1,v 1.9 2000/04/15 11:45:54 aaron Exp $
 .\"	$NetBSD: ar.1,v 1.7 1995/08/18 15:05:11 pk Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -168,7 +168,7 @@ to the end of the archive.
 Set the access and modification times of extracted files to the
 modification time of the file when it was entered into the archive.
 This will fail if the user is not the owner of the extracted file
-or the super-user.
+or the superuser.
 .It Fl p
 Write the contents of the specified archive files to the standard output.
 If no files are specified, the contents of all the files in the archive
@@ -292,7 +292,7 @@ The file access and modification times are the time of the extraction
 option).
 The file permissions will be set to those of the file when it was entered
 into the archive; this will fail if the user is not the owner of the
-extracted file or the super-user.
+extracted file or the superuser.
 .El
 .Pp
 The

@@ -1,4 +1,4 @@
-.\" $OpenBSD: pppd.8,v 1.20 2000/03/14 21:31:38 aaron Exp $
+.\" $OpenBSD: pppd.8,v 1.21 2000/04/15 11:46:00 aaron Exp $
 .\" manual page [] for pppd 2.3
 .\" Id: pppd.8,v 1.27 1998/03/31 04:31:08 paulus Exp $
 .\" SH section heading
@@ -964,7 +964,7 @@ Pppd invokes scripts at various stages in its processing which can be
 used to perform site-specific ancillary processing.  These scripts are
 usually shell scripts, but could be executable code files instead.
 Pppd does not wait for the scripts to finish.  The scripts are
-executed as root (with the real and effective user-id set to 0), so
+executed as root (with the real and effective user ID set to 0), so
 that they can do things such as update routing tables or run
 privileged daemons.  Be careful that the contents of these scripts do
 not compromise your system's security.  Pppd runs the scripts with
@@ -995,7 +995,7 @@ authenticates itself.
 The baud rate of the tty device.
 .TP
 .B UID
-The real user-id of the user who invoked pppd.
+The real user ID of the user who invoked pppd.
 .P
 Pppd invokes the following scripts, if they exist.  It is not an error
 if they don't exist.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getlogin.2,v 1.7 1999/06/29 14:09:59 aaron Exp $
+.\"	$OpenBSD: getlogin.2,v 1.8 2000/04/15 11:46:03 aaron Exp $
 .\"	$NetBSD: getlogin.2,v 1.4 1995/02/27 12:33:03 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -65,7 +65,7 @@ is used.)
 .Fn setlogin
 sets the login name of the user associated with the current session to
 .Fa name .
-This call is restricted to the super-user, and
+This call is restricted to the superuser, and
 is normally used only when a new session is being created on behalf
 of the named user
 (for example, at login time, or when a remote shell is invoked).
@@ -101,7 +101,7 @@ Login names are limited to
 .Ao Pa sys/param.h Ac )
 characters, currently 12.
 .It Bq Er EPERM
-The caller tried to set the login name and was not the super-user.
+The caller tried to set the login name and was not the superuser.
 .El
 .Sh SEE ALSO
 .Xr setsid 2

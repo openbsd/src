@@ -1,4 +1,4 @@
-.\"	$OpenBSD: msgctl.2,v 1.9 1999/06/29 14:10:08 aaron Exp $
+.\"	$OpenBSD: msgctl.2,v 1.10 2000/04/15 11:46:03 aaron Exp $
 .\"	$NetBSD: msgctl.2,v 1.2 1997/03/27 08:20:35 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -116,7 +116,7 @@ fields in the structure associated with
 The values are taken from the corresponding fields in the structure
 pointed to by
 .Fa buf .
-This operation can only be executed by the super-user, or a process that
+This operation can only be executed by the superuser, or a process that
 has an effective user ID equal to either
 .Va msg_perm.cuid
 or
@@ -124,7 +124,7 @@ or
 in the data structure associated with the message queue.
 The value of
 .Va msg_qbytes
-can only be increased by the super-user. Values for
+can only be increased by the superuser. Values for
 .Va msg_qbytes
 that exceed the system limit
 .Pf ( Dv MSGMNB
@@ -135,7 +135,7 @@ are silently truncated to that limit.
 .It Dv IPC_RMID
 Remove the message queue specified by
 .Fa msqid
-and destroy the data associated with it. Only the super-user or a process
+and destroy the data associated with it. Only the superuser or a process
 with an effective UID equal to the
 .Va msg_perm.cuid
 or
@@ -176,7 +176,7 @@ is equal to
 .Dv IPC_SET
 or
 .Dv IPC_RMID
-and the caller is not the super-user, nor does
+and the caller is not the superuser, nor does
 the effective UID match either the
 .Va msg_perm.uid
 or
@@ -187,7 +187,7 @@ An attempt is made to increase the value of
 .Va msg_qbytes
 through
 .Dv IPC_SET
-but the caller is not the super-user.
+but the caller is not the superuser.
 .It Bq Er EACCES
 The command is
 .Dv IPC_STAT

@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: setreuid.3,v 1.6 1999/07/09 13:35:14 aaron Exp $
+.\"	$OpenBSD: setreuid.3,v 1.7 2000/04/15 11:46:01 aaron Exp $
 .\"
 .Dd March 10, 1991
 .Dt SETREUID 3
@@ -50,7 +50,7 @@ or
 .Fa euid
 is \-1, the current UID is filled in by the system.
 Unprivileged users may change the real user
-ID to the effective user ID and vice-versa; only the super-user may
+ID to the effective user ID and vice-versa; only the superuser may
 make other changes.
 .Pp
 The
@@ -73,8 +73,8 @@ is set to indicate the error.
 .Sh ERRORS
 .Bl -tag -width Er
 .It Bq Er EPERM
-The current process is not the super-user and a change
-other than changing the effective user-id to the real user-id
+The current process is not the superuser and a change
+other than changing the effective user ID to the real user ID
 was specified.
 .El
 .Sh SEE ALSO

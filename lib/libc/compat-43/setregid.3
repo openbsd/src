@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: setregid.3,v 1.6 1999/07/09 13:35:14 aaron Exp $
+.\"	$OpenBSD: setregid.3,v 1.7 2000/04/15 11:46:01 aaron Exp $
 .\"
 .Dd March 10, 1991
 .Dt SETREGID 3
@@ -45,7 +45,7 @@
 The real and effective group IDs of the current process
 are set to the arguments.
 Unprivileged users may change the real group
-ID to the effective group ID and vice-versa; only the super-user may
+ID to the effective group ID and vice-versa; only the superuser may
 make other changes.
 .Pp
 Supplying a value of \-1 for either the real or effective
@@ -74,8 +74,8 @@ is set to indicate the error.
 .Sh ERRORS
 .Bl -tag -width Er
 .It Bq Er EPERM
-The current process is not the super-user and a change
-other than changing the effective group-id to the real group-id
+The current process is not the superuser and a change
+other than changing the effective group ID to the real group ID
 was specified.
 .El
 .Sh SEE ALSO

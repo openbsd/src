@@ -68,7 +68,7 @@ options of
 the loader
 .Xr ld 1 .
 .Pp
-Only the super-user can set the sticky bit
+Only the superuser can set the sticky bit
 on a sharable executable file.
 .Sh STICKY DIRECTORIES
 A directory whose `sticky bit' is set
@@ -77,7 +77,7 @@ a directory in which the deletion of files is restricted.
 A file in a sticky directory may only be removed or renamed
 by a user if the user has write permission for the directory and
 the user is the owner of the file, the owner of the directory,
-or the super-user.
+or the superuser.
 This feature is usefully applied to directories such as
 .Pa /tmp
 which must be publicly writable but

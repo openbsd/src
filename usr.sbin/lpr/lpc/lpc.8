@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lpc.8,v 1.8 2000/03/19 17:57:06 aaron Exp $
+.\"	$OpenBSD: lpc.8,v 1.9 2000/04/15 11:45:59 aaron Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -130,7 +130,7 @@ This is useful when some abnormal condition causes the daemon to
 die unexpectedly, leaving jobs in the queue.
 .Xr Lpq
 will report that there is no daemon present when this condition occurs.
-If the user is the super-user,
+If the user is the superuser,
 try to abort the current daemon first (i.e., kill and restart a stuck daemon).
 .Pp
 .It Ic start  No {\ all\ |\ printer\ }

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acct.5,v 1.6 2000/03/19 19:25:26 aaron Exp $
+.\"	$OpenBSD: acct.5,v 1.7 2000/04/15 11:45:52 aaron Exp $
 .\"	$NetBSD: acct.5,v 1.4 1995/10/22 01:40:10 ghudson Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -71,7 +71,7 @@ struct acct {
 	comp_t	ac_io;		/* count of IO blocks */
 	dev_t	ac_tty;		/* controlling tty */
 #define	AFORK	0x01		/* forked but not exec'ed */
-#define	ASU	0x02		/* used super-user permissions */
+#define	ASU	0x02		/* used superuser permissions */
 #define	ACOMPAT	0x04		/* used compatibility mode */
 #define	ACORE	0x08		/* dumped core */
 #define	AXSIG	0x10		/* killed by a signal */

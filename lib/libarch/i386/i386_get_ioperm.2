@@ -1,4 +1,4 @@
-.\"	$OpenBSD: i386_get_ioperm.2,v 1.7 1999/07/09 13:35:14 aaron Exp $
+.\"	$OpenBSD: i386_get_ioperm.2,v 1.8 2000/04/15 11:46:01 aaron Exp $
 .\"	$NetBSD: i386_get_ioperm.2,v 1.3 1996/02/27 22:57:17 jtc Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@ copies the current I/O permission bitmap into the memory referenced by
 .Fn i386_set_ioperm
 sets the I/O permission bitmap from the data pointed to by
 .Ar iomap .
-This call is restricted to the super-user.
+This call is restricted to the superuser.
 .Pp
 The permission bitmap contains
 1024
@@ -92,7 +92,7 @@ will fail if:
 .Ar Iomap
 points outside the process's allocated address space.
 .It Bq Er EPERM
-The caller was not the super-user.
+The caller was not the superuser.
 .El
 .Sh BUGS
 The bitmap should really cover 65536 bits, but that's just too big for

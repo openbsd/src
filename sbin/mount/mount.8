@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount.8,v 1.20 2000/03/18 22:56:00 aaron Exp $
+.\"	$OpenBSD: mount.8,v 1.21 2000/04/15 11:45:57 aaron Exp $
 .\"	$NetBSD: mount.8,v 1.11 1995/07/12 06:23:21 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -155,7 +155,7 @@ Do not allow set-user-identifier or set-group-identifier bits to take effect.
 .It rdonly
 The same as
 .Fl r ;
-mount the file system read-only (even the super-user may not write it).
+mount the file system read-only (even the superuser may not write it).
 .It sync
 All
 .Tn I/O
@@ -195,7 +195,7 @@ to execute the equivalent of:
 .Ed
 .It Fl r
 The file system is to be mounted read-only.
-Mount the file system read-only (even the super-user may not write it).
+Mount the file system read-only (even the superuser may not write it).
 The same as the
 .Dq rdonly
 argument to the

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: reboot.2,v 1.6 1999/07/06 08:21:17 downsj Exp $
+.\"	$OpenBSD: reboot.2,v 1.7 2000/04/15 11:46:04 aaron Exp $
 .\"	$NetBSD: reboot.2,v 1.5 1995/02/27 12:36:02 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -48,7 +48,7 @@
 .Sh DESCRIPTION
 .Fn reboot
 reboots the system.
-Only the super-user may reboot a machine on demand.
+Only the superuser may reboot a machine on demand.
 However, a reboot is invoked
 automatically in the event of unrecoverable system failures.
 .Pp
@@ -144,7 +144,7 @@ variable
 .Sh ERRORS
 .Bl -tag -width Er
 .It Bq Er EPERM
-The caller is not the super-user.
+The caller is not the superuser.
 .El
 .Sh SEE ALSO
 .Xr kadb 4 ,

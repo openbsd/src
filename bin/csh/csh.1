@@ -1,4 +1,4 @@
-.\"	$OpenBSD: csh.1,v 1.34 2000/04/15 02:15:09 aaron Exp $
+.\"	$OpenBSD: csh.1,v 1.35 2000/04/15 11:45:53 aaron Exp $
 .\"	$NetBSD: csh.1,v 1.10 1995/03/21 09:02:35 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -1827,7 +1827,7 @@ If the
 .Fl h
 flag is given, the hard limits are used instead of the current limits.
 The hard limits impose a ceiling on the values of the current limits.
-Only the super-user may raise the hard limits,
+Only the superuser may raise the hard limits,
 but a user may lower or raise the current limits within the legal range.
 .Pp
 Resources controllable currently include
@@ -1910,7 +1910,7 @@ respectively.
 The greater the number, the less
 .Tn CPU
 the process will get.
-The super-user may specify negative priority by using
+The superuser may specify negative priority by using
 .Dq nice \-number ... .
 .Ar command
 is always executed in a sub-shell, and the restrictions
@@ -2485,7 +2485,7 @@ and
 .Dq /usr/sbin ,
 but this
 may vary from system to system.
-For the super-user the default search path is
+For the superuser the default search path is
 .Dq /bin ,
 .Dq /usr/bin ,
 .Dq /sbin ,
@@ -2519,7 +2519,7 @@ Default is
 .Dq % ,
 or
 .Dq #
-for the super-user.
+for the superuser.
 .It Ic savehist
 Is given a numeric value to control the number of entries of the
 history list that are saved in

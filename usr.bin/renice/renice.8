@@ -1,4 +1,4 @@
-.\"	$OpenBSD: renice.8,v 1.10 2000/03/10 20:17:50 aaron Exp $
+.\"	$OpenBSD: renice.8,v 1.11 2000/04/15 11:45:55 aaron Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -56,8 +56,7 @@
 .Oc
 .Sh DESCRIPTION
 .Nm
-alters the
-scheduling
+alters the scheduling
 .Ar priority
 (an integer) of one or more running processes.
 The following
@@ -97,7 +96,7 @@ renice +1 987 -u daemon root -p 32
 would change the priority of process IDs 987 and 32, and
 all processes owned by users daemon and root.
 .Pp
-Users other than the super-user may only alter the priority of
+Users other than the superuser may only alter the priority of
 processes they own,
 and can only monotonically increase their
 .Dq nice value
@@ -105,7 +104,7 @@ within the range 0 to
 .Dv PRIO_MAX
 (20).
 (This prevents overriding administrative fiats.)
-The super-user
+The superuser
 may alter the priority of any process
 and set the priority to any value in the range
 .Dv PRIO_MIN
@@ -129,7 +128,7 @@ for mapping user names to user IDs
 .Xr getpriority 2 ,
 .Xr setpriority 2
 .Sh BUGS
-Non-super-users cannot increase scheduling priorities of their own processes,
+Non-superusers cannot increase scheduling priorities of their own processes,
 even if they were the ones that decreased the priorities in the first place.
 .Sh HISTORY
 The

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shmctl.2,v 1.10 1999/06/29 14:10:20 aaron Exp $
+.\"	$OpenBSD: shmctl.2,v 1.11 2000/04/15 11:46:04 aaron Exp $
 .\"	$NetBSD: shmctl.2,v 1.3 1997/03/27 08:20:39 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -115,7 +115,7 @@ fields in the structure associated with
 The values are taken from the corresponding fields in the structure
 pointed to by
 .Fa buf .
-This operation can only be executed by the super-user, or a process that
+This operation can only be executed by the superuser, or a process that
 has an effective user ID equal to either
 .Va shm_perm.cuid
 or
@@ -125,7 +125,7 @@ in the data structure associated with the shared memory segment.
 .It Dv IPC_RMID
 Remove the shared memory segment specified by
 .Fa shmid
-and destroy the data associated with it. Only the super-user or a process
+and destroy the data associated with it. Only the superuser or a process
 with an effective UID equal to the
 .Va shm_perm.cuid
 or
@@ -163,7 +163,7 @@ is equal to
 .Dv IPC_SET
 or
 .Dv IPC_RMID
-and the caller is not the super-user, nor does
+and the caller is not the superuser, nor does
 the effective UID match either the
 .Va shm_perm.uid
 or
@@ -174,7 +174,7 @@ An attempt is made to increase the value of
 .Va shm_qbytes
 through
 .Dv IPC_SET
-but the caller is not the super-user.
+but the caller is not the superuser.
 .It Bq Er EACCES
 The command is
 .Dv IPC_STAT

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.28 2000/04/15 02:15:29 aaron Exp $
+.\"	$OpenBSD: ftpd.8,v 1.29 2000/04/15 11:46:05 aaron Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -435,10 +435,10 @@ Log file for anonymous downloads.
 .Xr getusershell 3 ,
 .Xr syslogd 8
 .Sh BUGS
-The server must run as the super-user
+The server must run as the superuser
 to create sockets with privileged port numbers.  It maintains
 an effective user ID of the logged in user, reverting to
-the super-user only when binding addresses to sockets.  The
+the superuser only when binding addresses to sockets.  The
 possible security holes have been extensively
 scrutinized, but are possibly incomplete.
 .Sh HISTORY

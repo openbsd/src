@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: killpg.3,v 1.6 1999/07/07 14:22:24 aaron Exp $
+.\"	$OpenBSD: killpg.3,v 1.7 2000/04/15 11:46:01 aaron Exp $
 .\"
 .Dd March 10, 1991
 .Dt KILLPG 3
@@ -58,7 +58,7 @@ sends the signal to the sending process's process group.
 .Pp
 The sending process and members of the process group must
 have the same effective user ID, or
-the sender must be the super-user.
+the sender must be the superuser.
 As a single special case the continue signal SIGCONT may be sent
 to any process that is a descendant of the current process.
 .Sh RETURN VALUES
@@ -80,7 +80,7 @@ No process can be found in the process group specified by
 The process group was given as 0
 but the sending process does not have a process group.
 .It Bq Er EPERM
-The sending process is not the super-user and one or more
+The sending process is not the superuser and one or more
 of the target processes has an effective user ID different from that
 of the sending process.
 .El
