@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.6 2005/03/17 21:17:12 claudio Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.7 2005/03/22 22:13:48 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -338,7 +338,7 @@ ls_retrans_list_clr(struct nbr *nbr)
 		ls_retrans_list_free(nbr, le);
 }
 
-bool
+int
 ls_retrans_list_empty(struct nbr *nbr)
 {
 	return (TAILQ_EMPTY(&nbr->ls_retrans_list));
@@ -351,7 +351,7 @@ ls_retrans_timer(int fd, short event, void *bula)
 	struct in_addr		 addr;
 	struct nbr		*nbr = bula;
 	struct lsa_entry	*le;
-	
+
 	if (nbr->iface->self == nbr) {
 		if (!(nbr->iface->state & IF_STA_DROTHER)) {
 			/*
@@ -373,7 +373,7 @@ ls_retrans_timer(int fd, short event, void *bula)
 	} else
 		memcpy(&addr, &nbr->addr, sizeof(addr));
 
-		
+
 	if ((le = TAILQ_FIRST(&nbr->ls_retrans_list)) != NULL) {
 		send_ls_update(nbr->iface, addr, le->le_ref->data,
 		    le->le_ref->len);

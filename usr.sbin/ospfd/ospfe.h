@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.h,v 1.8 2005/03/17 21:17:12 claudio Exp $ */
+/*	$OpenBSD: ospfe.h,v 1.9 2005/03/22 22:13:48 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -140,8 +140,7 @@ struct nbr {
 	u_int8_t		 options;
 	u_int8_t		 last_rx_options;
 	u_int8_t		 last_rx_bits;
-
-	bool			 master;
+	u_int8_t		 master;
 };
 
 /* auth.c */
@@ -208,7 +207,7 @@ int	 lsa_hdr_check(struct nbr *, struct lsa_hdr *);
 void	 ls_ack_list_add(struct iface *, struct lsa_hdr *);
 void	 ls_ack_list_free(struct iface *, struct lsa_entry *);
 void	 ls_ack_list_clr(struct iface *);
-bool	 ls_ack_list_empty(struct iface *);
+int	 ls_ack_list_empty(struct iface *);
 void	 ls_ack_tx_timer(int, short, void *);
 int	 start_ls_ack_tx_timer(struct iface *);
 int	 stop_ls_ack_tx_timer(struct iface *);
@@ -221,7 +220,7 @@ int	 ls_req_list_del(struct nbr *, struct lsa_hdr *);
 struct lsa_entry	*ls_req_list_get(struct nbr *, struct lsa_hdr *);
 void	 ls_req_list_free(struct nbr *, struct lsa_entry *);
 void	 ls_req_list_clr(struct nbr *);
-bool	 ls_req_list_empty(struct nbr *);
+int	 ls_req_list_empty(struct nbr *);
 void	 ls_req_tx_timer(int, short, void *);
 int	 start_ls_req_tx_timer(struct nbr *);
 int	 stop_ls_req_tx_timer(struct nbr *);
@@ -237,7 +236,7 @@ int		 ls_retrans_list_del(struct nbr *, struct lsa_hdr *);
 struct lsa_entry	*ls_retrans_list_get(struct nbr *, struct lsa_hdr *);
 void		 ls_retrans_list_free(struct nbr *, struct lsa_entry *);
 void		 ls_retrans_list_clr(struct nbr *);
-bool		 ls_retrans_list_empty(struct nbr *);
+int		 ls_retrans_list_empty(struct nbr *);
 void		 ls_retrans_timer(int, short, void *);
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsreq.c,v 1.4 2005/02/10 14:05:48 claudio Exp $ */
+/*	$OpenBSD: lsreq.c,v 1.5 2005/03/22 22:13:48 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -188,7 +188,7 @@ ls_req_list_clr(struct nbr *nbr)
 	nbr->ls_req = NULL;
 }
 
-bool
+int
 ls_req_list_empty(struct nbr *nbr)
 {
 	return (TAILQ_EMPTY(&nbr->ls_req_list));

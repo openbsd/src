@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.11 2005/03/11 12:26:50 henning Exp $ */
+/*	$OpenBSD: interface.c,v 1.12 2005/03/22 22:13:48 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -161,7 +161,7 @@ if_new(struct kif *kif)
 		err(1, "if_new: calloc");
 
 	iface->state = IF_STA_DOWN;
-	iface->passive = true;
+	iface->passive = 1;
 
 	LIST_INIT(&iface->nbr_list);
 	TAILQ_INIT(&iface->ls_ack_list);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.7 2005/03/17 16:46:15 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.8 2005/03/22 22:13:48 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -42,7 +42,7 @@ void		 calc_next_hop(struct vertex *, struct vertex *);
 void		 rt_update(struct in_addr, u_int8_t, struct in_addr, u_int32_t,
 		     struct in_addr, struct in_addr, u_int8_t, u_int8_t);
 void		 rt_invalidate(void);
-bool		 linked(struct vertex *, struct vertex *);
+int		 linked(struct vertex *, struct vertex *);
 u_int8_t	 mask2prefixlen(in_addr_t);
 
 void
@@ -118,7 +118,7 @@ spf_calc(struct area *area)
 	if ((v = spf_root = lsa_find(area, LSA_TYPE_ROUTER, rde_router_id(),
 	    rde_router_id())) == NULL)
 		fatalx("spf_calc: cannot find self originated router LSA");
-	area->transit = false;
+	area->transit = 0;
 	spf_root->cost = 0;
 	w = NULL;
 
@@ -436,17 +436,17 @@ cand_list_pop(void)
 	return (c);
 }
 
-bool
+int
 cand_list_present(struct vertex *v)
 {
 	struct vertex	*c;
 
 	TAILQ_FOREACH(c, &cand_list, cand) {
 		if (c == v)
-			return (true);
+			return (1);
 	}
 
-	return (false);
+	return (0);
 }
 
 void
@@ -459,7 +459,7 @@ cand_list_clr(void)
 	}
 }
 
-bool
+int
 cand_list_empty(void)
 {
 	return (TAILQ_EMPTY(&cand_list));
@@ -636,7 +636,7 @@ rt_invalidate(void)
 		if (r->invalid)
 			rt_remove(r);
 		else
-			r->invalid = true;
+			r->invalid = 1;
 	}
 }
 
@@ -715,7 +715,7 @@ rt_update(struct in_addr prefix, u_int8_t prefixlen, struct in_addr nexthop,
 		rte->area = area;
 		rte->p_type = p_type;
 		rte->d_type = d_type;
-		rte->invalid = false;
+		rte->invalid = 0;
 
 		rt_insert(rte);
 	} else {
@@ -729,7 +729,7 @@ rt_update(struct in_addr prefix, u_int8_t prefixlen, struct in_addr nexthop,
 			rte->cost = cost;
 			rte->area = area;
 			rte->p_type = p_type;
-			rte->invalid = false;
+			rte->invalid = 0;
 		} else {
 			/* XXX better route ? */
 			/* consider intra vs. inter */
@@ -739,7 +739,7 @@ rt_update(struct in_addr prefix, u_int8_t prefixlen, struct in_addr nexthop,
 				rte->cost = cost;
 				rte->area = area;
 				rte->p_type = p_type;
-				rte->invalid = false;
+				rte->invalid = 0;
 			}
 		}
 	}
@@ -799,7 +799,7 @@ get_net_link(struct vertex *v, int idx)
 }
 
 /* misc */
-bool
+int
 linked(struct vertex *w, struct vertex *v)
 {
 	struct lsa_rtr_link	*rtr_link = NULL;
@@ -814,33 +814,33 @@ linked(struct vertex *w, struct vertex *v)
 			case LSA_TYPE_ROUTER:
 				if (rtr_link->type == LINK_TYPE_POINTTOPOINT &&
 				    rtr_link->id == htonl(v->ls_id))
-					return (true);
+					return (1);
 				break;
 			case LSA_TYPE_NETWORK:
 				if (rtr_link->id == htonl(v->ls_id))
-					return (true);
+					return (1);
 				break;
 			default:
 				fatalx("spf_calc: invalid type");
 			}
 		}
-		return (false);
+		return (0);
 	case LSA_TYPE_NETWORK:
 		for (i = 0; i < lsa_num_links(w); i++) {
 			net_link = get_net_link(w, i);
 			switch (v->type) {
 			case LSA_TYPE_ROUTER:
 				if (net_link->att_rtr == htonl(v->ls_id))
-					return (true);
+					return (1);
 				break;
 			default:
 				fatalx("spf_calc: invalid type");
 			}
 		}
-		return (false);
+		return (0);
 	default:
 		fatalx("spf_calc: invalid LSA type");
 	}
 
-	return (false);
+	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf.h,v 1.8 2005/02/27 08:21:15 norby Exp $ */
+/*	$OpenBSD: ospf.h,v 1.9 2005/03/22 22:13:48 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -22,7 +22,6 @@
 #define _OSPF_H_
 
 #include <netinet/in.h>
-#include <stdbool.h>
 
 /* misc */
 #define OSPF_VERSION		2

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.8 2005/03/12 11:03:05 norby Exp $ */
+/*	$OpenBSD: parse.y,v 1.9 2005/03/22 22:13:48 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -375,7 +375,7 @@ interface	: INTERFACE STRING {
 			LIST_INSERT_HEAD(&area->iface_list,
 			    iface, entry);
 			iface->rtr_id = conf->rtr_id;
-			iface->passive = false;
+			iface->passive = 0;
 		} optnl '{' optnl {
 
 		} interfaceopts_l '}' {
@@ -389,7 +389,7 @@ interfaceopts_l	: interfaceopts_l interfaceoptsl
 
 interfaceoptsl	: authkey nl
 		| authtype nl
-		| PASSIVE nl		{ iface->passive = true; }
+		| PASSIVE nl		{ iface->passive = 1; }
 		| METRIC number nl {
 			if ($2 < MIN_METRIC || $2 > MAX_METRIC) {
 				yyerror("metric out of range (%d-%d)",

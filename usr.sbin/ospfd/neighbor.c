@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.12 2005/03/17 21:17:12 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.13 2005/03/22 22:13:48 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -255,7 +255,7 @@ nbr_new(u_int32_t nbr_id, struct iface *iface, int self)
 		fatal("nbr_new");
 
 	nbr->state = NBR_STA_DOWN;
-	nbr->master = true;
+	nbr->master = 1;
 	nbr->dd_seq_num = arc4random();	/* RFC: some unique value */
 	nbr->id.s_addr = nbr_id;
 
@@ -496,7 +496,7 @@ nbr_act_eval(struct nbr *nbr)
 	}
 
 	nbr->state = NBR_STA_XSTRT;
-	nbr->master = true;
+	nbr->master = 1;
 	nbr->dd_seq_num++;	/* as per RFC */
 	nbr->dd_pending = 0;
 	/* initial db negotiation */
@@ -569,7 +569,7 @@ nbr_act_restart_dd(struct nbr *nbr)
 	}
 
 	nbr->state = NBR_STA_XSTRT;
-	nbr->master = true;
+	nbr->master = 1;
 	nbr->dd_seq_num += arc4random() & 0xffff;
 	nbr->dd_pending = 0;
 

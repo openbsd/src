@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.5 2005/02/10 14:05:48 claudio Exp $ */
+/*	$OpenBSD: database.c,v 1.6 2005/03/22 22:13:48 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -245,7 +245,7 @@ recv_db_description(struct nbr *nbr, char *buf, u_int16_t len)
 				/* slave */
 				log_debug("recv_db_description: slave, "
 				    "neighbor ID %s", inet_ntoa(nbr->id));
-				nbr->master = false;
+				nbr->master = 0;
 				nbr->dd_seq_num = ntohl(dd_hdr.dd_seq_num);
 
 				/* event negotiation done */

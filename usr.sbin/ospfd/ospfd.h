@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.16 2005/03/15 22:03:56 claudio Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.17 2005/03/22 22:13:48 norby Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -27,7 +27,6 @@
 #include <net/if.h>
 #include <netinet/in.h>
 #include <event.h>
-#include <stdbool.h>
 
 #define CONF_FILE		"/etc/ospfd.conf"
 #define	OSPFD_SOCKET		"/var/run/ospfd.sock"
@@ -157,9 +156,8 @@ struct area {
 	u_int16_t		 rxmt_interval;
 	u_int16_t		 metric;
 	u_int8_t		 priority;
-
-	bool			 transit;
-	bool			 stub;
+	u_int8_t		 transit;
+	u_int8_t		 stub;
 };
 
 /* interface states */
@@ -298,8 +296,7 @@ struct iface {
 	enum auth_type		 auth_type;
 	u_int8_t		 linkstate;
 	u_int8_t		 priority;
-
-	bool			 passive;
+	u_int8_t		 passive;
 };
 
 /* ospf_conf */
@@ -377,7 +374,7 @@ struct ctl_iface {
 	enum iface_type		 type;
 	u_int8_t		 linkstate;
 	u_int8_t		 priority;
-	bool			 passive;
+	u_int8_t		 passive;
 };
 
 struct ctl_nbr {

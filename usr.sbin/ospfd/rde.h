@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.7 2005/03/12 11:03:05 norby Exp $ */
+/*	$OpenBSD: rde.h,v 1.8 2005/03/22 22:13:48 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -65,7 +65,7 @@ struct rt_node {
 	enum path_type		 p_type;
 	enum dst_type		 d_type;
 	u_int8_t		 prefixlen;
-	bool			 invalid;
+	u_int8_t		 invalid;
 };
 
 /* rde.c */
@@ -103,9 +103,9 @@ void		 spf_tree_clr(struct area *);
 void		 cand_list_init(void);
 void		 cand_list_add(struct vertex *);
 struct vertex	*cand_list_pop(void);
-bool		 cand_list_present(struct vertex *);
+int		 cand_list_present(struct vertex *);
 void		 cand_list_clr(void);
-bool		 cand_list_empty(void);
+int		 cand_list_empty(void);
 
 void		 spf_timer(int, short, void *);
 int		 start_spf_timer(struct ospfd_conf *);
