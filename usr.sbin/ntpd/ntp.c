@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.6 2004/06/02 10:08:59 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.7 2004/06/17 19:17:48 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -52,12 +52,15 @@ ntp_sighdlr(int sig)
 pid_t
 ntp_main(int pipe_prnt[2], struct ntpd_conf *conf)
 {
-	int			 nfds, i, j;
+	int			 nfds, i, j, idx_peers, timeout;
 	pid_t			 pid;
 	struct pollfd		 pfd[OPEN_MAX];
 	struct passwd		*pw;
 	struct servent		*se;
 	struct listen_addr	*la;
+	struct ntp_peer		*p;
+	struct ntp_peer		*idx2peer[OPEN_MAX];
+	time_t			 nextaction;
 
 	switch (pid = fork()) {
 	case -1:
@@ -98,10 +101,15 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *conf)
 	close(pipe_prnt[0]);
 	imsg_init(&ibuf_main, pipe_prnt[1]);
 
+	TAILQ_FOREACH(p, &conf->ntp_peers, entry)
+		client_peer_init(p);
+
 	log_info("ntp engine ready");
 
 	while (ntp_quit == 0) {
 		bzero(&pfd, sizeof(pfd));
+		bzero(idx2peer, sizeof(idx2peer));
+		nextaction = time(NULL) + 240;
 		pfd[PFD_PIPE_MAIN].fd = ibuf_main.fd;
 		pfd[PFD_PIPE_MAIN].events = POLLIN;
 		if (ibuf_main.w.queued > 0)
@@ -112,14 +120,38 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *conf)
 			pfd[i].fd = la->fd;
 			pfd[i].events = POLLIN;
 			i++;
+			if (i > OPEN_MAX)
+				fatal("i > OPEN_MAX");
 		}
 
-		if ((nfds = poll(pfd, i, INFTIM)) == -1)
+
+		idx_peers = i;
+		TAILQ_FOREACH(p, &conf->ntp_peers, entry) {
+			if (p->next > 0 && p->next < nextaction)
+				nextaction = p->next;
+			if ((p->next > 0 && p->next <= time(NULL)) ||
+			    (p->deadline > 0 && p->deadline <= time(NULL)))
+				client_query(p);
+
+			if (p->state == STATE_QUERY_SENT) {
+				pfd[i].fd = p->query->fd;
+				pfd[i].events = POLLIN;
+				idx2peer[i - idx_peers] = p;
+				i++;
+				if (i > OPEN_MAX)
+					fatal("i > OPEN_MAX");
+			}
+		}
+
+		timeout = nextaction - time(NULL);
+		if (timeout < 0)
+			timeout = 0;
+
+		if ((nfds = poll(pfd, i, timeout * 1000)) == -1)
 			if (errno != EINTR) {
 				log_warn("poll error");
 				ntp_quit = 1;
 			}
-
 		if (nfds > 0 && (pfd[PFD_PIPE_MAIN].revents & POLLOUT))
 			if (msgbuf_write(&ibuf_main.w) < 0) {
 				log_warn("pipe write error (to parent)");
@@ -132,10 +164,18 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *conf)
 				ntp_quit = 1;
 		}
 
-		for (j = 1; nfds > 0 && j < i; j++)
+		for (j = 1; nfds > 0 && j < idx_peers; j++)
 			if (pfd[j].revents & POLLIN) {
 				nfds--;
 				if (ntp_dispatch(pfd[j].fd) == -1)
+					ntp_quit = 1;
+			}
+
+		for (; nfds > 0 && j < i; j++)
+			if (pfd[j].revents & POLLIN) {
+				nfds--;
+				if (client_dispatch(idx2peer[j - idx_peers]) ==
+				     -1)
 					ntp_quit = 1;
 			}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.h,v 1.4 2004/06/05 12:29:15 alexander Exp $ */
+/*	$OpenBSD: ntp.h,v 1.5 2004/06/17 19:17:48 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -109,6 +109,12 @@ struct ntp_msg {
 	u_int8_t digest[NTP_DIGESTSIZE];
 };
 
+struct ntp_query {
+	int			fd;
+	struct ntp_msg		msg;
+	struct l_fixedpt	xmttime;
+};
+
 /*
  *	Leap Second Codes (high order two bits)
  */
@@ -138,4 +144,8 @@ struct ntp_msg {
 
 #define	JAN_1970	2208988800UL	/* 1970 - 1900 in seconds */
 
-#endif /* _NTP_H_ */
+#define	NTP_VERSION	4
+#define	MAX_QUERYTIME	30	/* max seconds a single query might take */
+#define	QUERY_INTERVAL	60	/* sync with peers every n seconds */
+
+#endif	/* _NTP_H_ */

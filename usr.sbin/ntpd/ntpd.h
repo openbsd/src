@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.5 2004/06/05 12:29:15 alexander Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.6 2004/06/17 19:17:48 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -34,14 +34,30 @@
 #define	NTPD_OPT_VERBOSE		0x0001
 #define	NTPD_OPT_VERBOSE2		0x0002
 
+enum client_state {
+	STATE_NONE,
+	STATE_QUERY_SENT,
+	STATE_REPLY_RECEIVED
+};
+
 struct listen_addr {
 	TAILQ_ENTRY(listen_addr)	 entry;
 	struct sockaddr_storage		 sa;
 	int				 fd;
 };
 
+struct ntp_peer {
+	TAILQ_ENTRY(ntp_peer)		 entry;
+	struct sockaddr_storage		 ss;
+	struct ntp_query		*query;
+	enum client_state		 state;
+	time_t				 next;
+	time_t				 deadline;
+};
+
 struct ntpd_conf {
 	TAILQ_HEAD(listen_addrs, listen_addr)	listen_addrs;
+	TAILQ_HEAD(ntp_peers, ntp_peer)		ntp_peers;
 	u_int8_t				opts;
 };
 
@@ -103,6 +119,7 @@ void		 log_info(const char *, ...);
 void		 log_debug(const char *, ...);
 void		 fatal(const char *);
 void		 fatalx(const char *);
+const char *	 log_sockaddr(struct sockaddr *);
 
 /* buffer.c */
 struct buf	*buf_open(ssize_t);
@@ -144,3 +161,8 @@ int	ntp_sendmsg(int, struct sockaddr *, struct ntp_msg *, ssize_t, int);
 /* server.c */
 int	setup_listeners(struct servent *, struct ntpd_conf *);
 int	ntp_reply(int, struct sockaddr *, struct ntp_msg *, int);
+
+/* client.c */
+int	client_peer_init(struct ntp_peer *);
+int	client_query(struct ntp_peer *);
+int	client_dispatch(struct ntp_peer *);

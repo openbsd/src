@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.1 2004/06/01 21:58:09 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.2 2004/06/17 19:17:48 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -77,6 +77,7 @@ typedef struct {
 %}
 
 %token	LISTEN ON
+%token	SERVER
 %token	ERROR
 %token	<v.string>		STRING
 %type	<v.number>		number
@@ -130,8 +131,22 @@ conf_main	:  LISTEN ON address	{
 			    NULL)
 				fatal("parse conf_main listen on calloc");
 
+			la->fd = -1;
 			memcpy(&la->sa, &$3, sizeof(struct sockaddr_storage));
 			TAILQ_INSERT_TAIL(&conf->listen_addrs, la, entry);
+		}
+		| SERVER address	{
+			struct ntp_peer		*p;
+
+			if (!TAILQ_EMPTY(&conf->ntp_peers)) {
+				yyerror("king bula sez: only on remote server "
+				    "supported for now");
+				YYERROR;
+			}
+			if ((p = calloc(1, sizeof(struct listen_addr))) == NULL)
+				fatal("parse conf_mail server on calloc");
+			memcpy(&p->ss, &$2, sizeof(struct sockaddr_storage));
+			TAILQ_INSERT_TAIL(&conf->ntp_peers, p, entry);
 		}
 		;
 
@@ -192,7 +207,8 @@ lookup(char *s)
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
 		{ "listen",		LISTEN},
-		{ "on",			ON}
+		{ "on",			ON},
+		{ "server",		SERVER}
 	};
 	const struct keywords	*p;
 
@@ -402,12 +418,14 @@ parse_config(char *filename, struct ntpd_conf *xconf)
 {
 	struct sym		*sym, *next;
 	struct listen_addr	*la;
+	struct ntp_peer		*p;
 
 	if ((conf = calloc(1, sizeof(struct ntpd_conf))) == NULL)
 		fatal(NULL);
 	lineno = 1;
 	errors = 0;
 	TAILQ_INIT(&conf->listen_addrs);
+	TAILQ_INIT(&conf->ntp_peers);
 
 	if ((fin = fopen(filename, "r")) == NULL) {
 		log_warn("%s", filename);
@@ -442,6 +460,16 @@ parse_config(char *filename, struct ntpd_conf *xconf)
 	while ((la = TAILQ_FIRST(&conf->listen_addrs)) != NULL) {
 		TAILQ_REMOVE(&conf->listen_addrs, la, entry);
 		TAILQ_INSERT_TAIL(&xconf->listen_addrs, la, entry);
+	}
+
+	while ((p = TAILQ_FIRST(&xconf->ntp_peers)) != NULL) {
+		TAILQ_REMOVE(&xconf->ntp_peers, p, entry);
+		free(p);
+	}
+
+	while ((p = TAILQ_FIRST(&conf->ntp_peers)) != NULL) {
+		TAILQ_REMOVE(&conf->ntp_peers, p, entry);
+		TAILQ_INSERT_TAIL(&xconf->ntp_peers, p, entry);
 	}
 
 	free(conf);
