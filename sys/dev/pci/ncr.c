@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.49 2000/02/07 23:09:53 deraadt Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.50 2000/02/08 01:25:02 millert Exp $	*/
 /*	$NetBSD: ncr.c,v 1.63 1997/09/23 02:39:15 perry Exp $	*/
 
 /**************************************************************************
@@ -1466,7 +1466,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$OpenBSD: ncr.c,v 1.49 2000/02/07 23:09:53 deraadt Exp $\n";
+	"\n$OpenBSD: ncr.c,v 1.50 2000/02/08 01:25:02 millert Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -3441,7 +3441,6 @@ u_int32_t ncr_info (int unit)
 typedef struct {
 	unsigned long	device_id;
 	unsigned short	minrevid;
-	char	       *name;
 	unsigned char	maxburst;
 	unsigned char	maxoffs;
 	unsigned char	clock_divn;
@@ -3449,48 +3448,48 @@ typedef struct {
 } ncr_chip;
 
 static ncr_chip ncr_chip_table[] = {
- {NCR_810_ID, 0x00,	"fast10",			4,  8, 4,
+ {NCR_810_ID, 0x00,	4,  8, 4,
  FE_ERL}
  ,
- {NCR_810_ID, 0x10,	"fast10",			4,  8, 4,
+ {NCR_810_ID, 0x10,	4,  8, 4,
  FE_ERL|FE_LDSTR|FE_PFEN|FE_BOF}
  ,
- {NCR_815_ID, 0x00,	"fast10", 			4,  8, 4,
+ {NCR_815_ID, 0x00,	4,  8, 4,
  FE_ERL|FE_BOF}
  ,
- {NCR_820_ID, 0x00,	"fast10 wide", 		4,  8, 4,
+ {NCR_820_ID, 0x00,	4,  8, 4,
  FE_WIDE|FE_ERL}
  ,
- {NCR_825_ID, 0x00,	"fast10 wide",		4,  8, 4,
+ {NCR_825_ID, 0x00,	4,  8, 4,
  FE_WIDE|FE_ERL|FE_BOF}
  ,
- {NCR_825_ID, 0x10,	"fast10 wide",		7,  8, 4,
+ {NCR_825_ID, 0x10,	7,  8, 4,
  FE_WIDE|FE_CACHE_SET|FE_DFS|FE_LDSTR|FE_PFEN|FE_RAM}
  ,
- {NCR_860_ID, 0x00,	"fast20",			4,  8, 5,
+ {NCR_860_ID, 0x00,	4,  8, 5,
  FE_ULTRA|FE_CLK80|FE_CACHE_SET|FE_LDSTR|FE_PFEN}
  ,
- {NCR_875_ID, 0x00,	"fast20 wide",		7, 16, 5,
+ {NCR_875_ID, 0x00,	7, 16, 5,
  FE_WIDE|FE_ULTRA|FE_CLK80|FE_CACHE_SET|FE_DFS|FE_LDSTR|FE_PFEN|FE_RAM}
  ,
- {NCR_875_ID, 0x02,	"fast20 wide",		7, 16, 5,
+ {NCR_875_ID, 0x02,	7, 16, 5,
  FE_WIDE|FE_ULTRA|FE_DBLR|FE_CACHE_SET|FE_DFS|FE_LDSTR|FE_PFEN|FE_RAM}
  ,
 #ifdef NCR_NARROW_875J
- {NCR_875_ID2, 0x00,	"fast20",			4,  8, 5,
+ {NCR_875_ID2, 0x00,	4,  8, 5,
  FE_ULTRA|FE_DBLR|FE_CACHE_SET|FE_DFS|FE_LDSTR|FE_PFEN|FE_RAM}
 #else
- {NCR_875_ID2, 0x00,	"fast20 wide",		7, 16, 5,
+ {NCR_875_ID2, 0x00,	7, 16, 5,
  FE_WIDE|FE_ULTRA|FE_DBLR|FE_CACHE_SET|FE_DFS|FE_LDSTR|FE_PFEN|FE_RAM}
 #endif
  ,
- {NCR_885_ID, 0x00,	"fast20 wide",		7, 16, 5,
+ {NCR_885_ID, 0x00,	7, 16, 5,
  FE_WIDE|FE_ULTRA|FE_DBLR|FE_CACHE_SET|FE_DFS|FE_LDSTR|FE_PFEN|FE_RAM}
  ,
- {NCR_895_ID, 0x00,	"fast40 wide",		7, 31, 7,
+ {NCR_895_ID, 0x00,	7, 31, 7,
  FE_WIDE|FE_ULTRA2|FE_QUAD|FE_CACHE_SET|FE_DFS|FE_LDSTR|FE_PFEN|FE_RAM}
  ,
- {NCR_896_ID, 0x00,	"fast40 wide",		7, 31, 7,
+ {NCR_896_ID, 0x00,	7, 31, 7,
  FE_WIDE|FE_ULTRA2|FE_QUAD|FE_CACHE_SET|FE_DFS|FE_LDSTR|FE_PFEN|FE_RAM}
 };
 
@@ -3644,6 +3643,7 @@ ncr_attach(parent, self, aux)
 	bus_space_handle_t ioh, memh;
 	bus_addr_t ioaddr, memaddr;
 	int ioh_valid, memh_valid;
+	char *type;
 
 #if defined(__mips__)
 	pci_sync_cache(pc, (vm_offset_t)np, sizeof (struct ncb));
@@ -3722,10 +3722,19 @@ ncr_attach(parent, self, aux)
 	}
 
 	i = ncr_chip_lookup(pa->pa_id, rev);
-	if (intrstr != NULL)
-		printf(": %s, %s\n", ncr_chip_table[i].name, intrstr);
+	if (ncr_chip_table[i].features & FE_ULTRA2)
+		type = "ultra2";
+	else if (ncr_chip_table[i].features & FE_ULTRA)
+		type = "ultra";
 	else
-		printf(": %s\n", ncr_chip_table[i].name);
+		type = "fast";
+	if (intrstr != NULL)
+		printf(": %s%s scsi, %s\n", type,
+		    (ncr_chip_table[i].features & FE_WIDE) ? " wide" : "",
+		    intrstr);
+	else
+		printf(": %s%s scsi\n", type,
+		    (ncr_chip_table[i].features & FE_WIDE) ? " wide" : "");
 
 #else /* !__OpenBSD__ */
 
