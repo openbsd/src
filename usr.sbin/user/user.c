@@ -1,3 +1,4 @@
+/* $OpenBSD: user.c,v 1.2 2000/04/24 22:31:29 jakob Exp $ */
 /* $NetBSD: user.c,v 1.17 2000/04/14 06:26:55 simonb Exp $ */
 
 /*
