@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtsold.8,v 1.5 2000/01/02 04:36:24 itojun Exp $
+.\"	$OpenBSD: rtsold.8,v 1.6 2000/01/02 06:28:16 itojun Exp $
 .\" 
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     KAME Id: rtsold.8,v 1.7 2000/01/02 04:34:11 itojun Exp
+.\"     KAME Id: rtsold.8,v 1.8 2000/01/02 06:25:14 itojun Exp
 .\"
 .Dd May 17, 1998
 .Dt RTSOLD 8
@@ -57,12 +57,12 @@ and to get non link-local addresses.
 .Pp
 If you invoke the program as
 .Nm rtsol ,
-it will transmit probes from specified
+it will transmit probes from the specified
 .Ar interface ,
 without becoming a daemon.
 In other words,
 .Nm rtsol
-behave as
+behaves as
 .Do
 .Nm
 .Fl f1
@@ -73,6 +73,7 @@ Specifically,
 .Nm
 sends at most 3 Router Solicitations on an interface
 after one of the following events:
+.Pp
 .Bl -bullet -compact
 .It
 Just after invocation of
@@ -81,26 +82,26 @@ daemon.
 .It
 The interface is up after a temporary interface failure.
 .Nm Rtsold
-detects it by periodically probing if the status of the
-interface is active or not.
-Note that some network cards and drivers do not allow users
-to extract link state.
+detects such failures by periodically probing to see if the status
+of the interface is active or not.
+Note that some network cards and drivers do not allow the extraction
+of link state.
 In such cases,
 .Nm
 cannot detect the change of the interface status.
 .It
-Every one minute if
+Every 60 seconds if the
 .Fl m
-option is specified and
+option is specified and the
 .Nm
 daemon cannot get the interface status.
 This feature does not conform to IPv6 neighbor discovery
 specification, but is provided for mobile stations.
-Default interval of router advertisements, which is on the order of 10
+Default interval for router advertisements, which is on the order of 10
 minutes, is slightly long for mobile stations.
 This feature is provided
 for such stations so that they can find new routers as soon as possible
-when they attach another link.
+when they attach to another link.
 .El
 .Lp
 Once
