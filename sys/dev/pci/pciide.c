@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.129 2003/06/06 11:28:41 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.130 2003/06/07 19:49:50 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -202,6 +202,8 @@ struct pciide_softc {
 };
 
 void default_chip_map(struct pciide_softc*, struct pci_attach_args*);
+
+void sata_setup_channel(struct channel_softc *);
 
 void piix_chip_map(struct pciide_softc*, struct pci_attach_args*);
 void piix_setup_channel(struct channel_softc*);
@@ -1610,6 +1612,47 @@ next:
 			    idedma_ctl);
 		}
 	}
+}
+
+void
+sata_setup_channel(struct channel_softc *chp)
+{
+	struct ata_drive_datas *drvp;
+	int drive;
+	u_int32_t idedma_ctl;
+	struct pciide_channel *cp = (struct pciide_channel*)chp;
+	struct pciide_softc *sc = (struct pciide_softc*)cp->wdc_channel.wdc;
+
+	/* setup DMA if needed */
+	pciide_channel_dma_setup(cp);
+
+	idedma_ctl = 0;
+
+	for (drive = 0; drive < 2; drive++) {
+		drvp = &chp->ch_drive[drive];
+		/* If no drive, skip */
+		if ((drvp->drive_flags & DRIVE) == 0)
+			continue;
+		if (drvp->drive_flags & DRIVE_UDMA) {
+			/* use Ultra/DMA */
+			drvp->drive_flags &= ~DRIVE_DMA;
+			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
+		} else if (drvp->drive_flags & DRIVE_DMA) {
+			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
+		}
+	}
+
+	/*
+	 * Nothing to do to setup modes; it is meaningless in S-ATA
+	 * (but many S-ATA drives still want to get the SET_FEATURE
+	 * command).
+	 */
+	if (idedma_ctl != 0) {
+		/* Add software bits in status register */
+		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+		    IDEDMA_CTL(chp->channel), idedma_ctl);
+	}
+	pciide_print_modes(cp);
 }
 
 void
