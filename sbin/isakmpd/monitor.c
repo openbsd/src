@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.22 2004/06/14 09:55:41 ho Exp $	 */
+/* $OpenBSD: monitor.c,v 1.23 2004/06/20 15:03:35 ho Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -89,7 +89,7 @@ static void     m_priv_test_state(int);
 
 /* Setup monitor context, fork, drop child privs.  */
 pid_t
-monitor_init(void)
+monitor_init(int debug)
 {
 	struct passwd  *pw;
 	int             p[2];
@@ -128,6 +128,17 @@ monitor_init(void)
 		    "monitor_init: privileges dropped for child process"));
 	} else {
 		setproctitle("monitor [priv]");
+	}
+
+
+	/* With "-dd", stop and wait here. For gdb "attach" etc.  */
+	if (debug > 1) {
+		log_print("monitor_init: stopped %s PID %d fd %d%s",
+		    m_state.pid ? "priv" : "child", getpid(), m_state.s,
+		    m_state.pid ? ", waiting for SIGCONT" : "");
+		kill(getpid(), SIGSTOP); 	/* Wait here for SIGCONT.  */
+		if (m_state.pid)
+			kill(m_state.pid, SIGCONT); /* Continue child.  */
 	}
 
 	return m_state.pid;
@@ -515,14 +526,14 @@ sig_pass_to_chld(int sig)
 
 /* This function is where the privileged process waits(loops) indefinitely.  */
 void
-monitor_loop(int debugging)
+monitor_loop(int debug)
 {
 	pid_t	 pid;
 	fd_set	*fds;
 	size_t	 fdsn;
 	int	 n, maxfd;
 
-	if (!debugging)
+	if (!debug)
 		log_to(0);
 
 	maxfd = m_state.s + 1;

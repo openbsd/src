@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmpd.c,v 1.64 2004/06/14 09:55:41 ho Exp $	 */
+/* $OpenBSD: isakmpd.c,v 1.65 2004/06/20 15:03:35 ho Exp $	 */
 /* $EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	 */
 
 /*
@@ -402,7 +402,7 @@ main(int argc, char *argv[])
 	tzset();
 
 #if defined (USE_PRIVSEP)
-	if (monitor_init()) {
+	if (monitor_init(debug)) {
 		/* The parent, with privileges enters infinite monitor loop. */
 		monitor_loop(debug);
 		exit(0);	/* Never reached.  */
