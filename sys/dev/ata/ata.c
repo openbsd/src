@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata.c,v 1.16 2003/02/28 19:22:37 grange Exp $      */
+/*      $OpenBSD: ata.c,v 1.17 2003/04/09 00:38:07 ho Exp $      */
 /*      $NetBSD: ata.c,v 1.9 1999/04/15 09:41:09 bouyer Exp $      */
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -206,10 +206,7 @@ ata_dmaerr(drvp)
 }
 
 void
-ata_perror(drvp, errno, buf)
-	struct ata_drive_datas *drvp;
-	int errno;
-	char *buf;
+ata_perror(struct ata_drive_datas *drvp, int errno, char *buf, size_t buf_len)
 {
 	static char *errstr0_3[] = {"address mark not found",
 	    "track 0 not found", "aborted command", "media change requested",
@@ -222,6 +219,7 @@ ata_perror(drvp, errno, buf)
 	char **errstr;
 	int i;
 	char *sep = "";
+	size_t len = 0;
 
 	if (drvp->ata_vers >= 4)
 		errstr = errstr4_5;
@@ -229,12 +227,14 @@ ata_perror(drvp, errno, buf)
 		errstr = errstr0_3;
 
 	if (errno == 0) {
-		sprintf(buf, "error not notified");
+		snprintf(buf, buf_len, "error not notified");
 	}
 
 	for (i = 0; i < 8; i++) {
 		if (errno & (1 << i)) {
-			buf += sprintf(buf, "%s %s", sep, errstr[i]);
+			snprintf(buf + len, buf_len - len, "%s %s", sep,
+			    errstr[i]);
+			len = strlen(buf);
 			sep = ",";
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.28 2003/04/06 15:28:25 krw Exp $ */
+/*	$OpenBSD: wd.c,v 1.29 2003/04/09 00:38:08 ho Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -646,7 +646,8 @@ wddone(v)
 		if (wd->sc_wdc_bio.r_error != 0 &&
 		    (wd->sc_wdc_bio.r_error & ~(WDCE_MC | WDCE_MCR)) == 0)
 			goto noerror;
-		ata_perror(wd->drvp, wd->sc_wdc_bio.r_error, errbuf);
+		ata_perror(wd->drvp, wd->sc_wdc_bio.r_error, errbuf,
+		    sizeof buf);
 retry:
 		/* Just reset and retry. Can we do more ? */
 		wdc_reset_channel(wd->drvp);
@@ -1223,7 +1224,8 @@ again:
 			break;
 		case ERROR:
 			errbuf[0] = '\0';
-			ata_perror(wd->drvp, wd->sc_wdc_bio.r_error, errbuf);
+			ata_perror(wd->drvp, wd->sc_wdc_bio.r_error, errbuf,
+			    sizeof errbuf);
 			printf("wddump: %s", errbuf);
 			err = EIO;
 			break;
