@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.53 2004/12/07 04:37:28 tedu Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.54 2004/12/08 16:17:52 millert Exp $	*/
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -4787,11 +4787,11 @@ clear_remove(p)
 				continue;
 			mp = pagedep->pd_mnt;
 			ino = pagedep->pd_ino;
-			FREE_LOCK(&lk);
 #if 0
 			if (vn_start_write(NULL, &mp, V_NOWAIT) != 0)
 				continue;
 #endif
+			FREE_LOCK(&lk);
 			if ((error = VFS_VGET(mp, ino, &vp)) != 0) {
 				softdep_error("clear_remove: vget", error);
 #if 0
