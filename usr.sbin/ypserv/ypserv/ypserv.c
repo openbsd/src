@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv.c,v 1.19 2002/02/16 21:28:11 millert Exp $ */
+/*	$OpenBSD: ypserv.c,v 1.20 2002/02/18 22:20:55 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypserv.c,v 1.19 2002/02/16 21:28:11 millert Exp $";
+static char rcsid[] = "$OpenBSD: ypserv.c,v 1.20 2002/02/18 22:20:55 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -104,6 +104,8 @@ void _msgout(char* msg)
 static void
 closedown(void)
 {
+	int save_errno = errno;
+
 	if (_rpcsvcdirty == 0) {
 		extern fd_set *__svc_fdset;
 		extern int __svc_fdsetsize;
@@ -115,9 +117,10 @@ closedown(void)
 			if (FD_ISSET(i, __svc_fdset))
 				openfd++;
 		if (openfd <= (_rpcpmstart?0:1))
-			exit(0);
+			_exit(0);
 	}
 	(void) alarm(_RPCSVC_CLOSEDOWN);
+	errno = save_errno;
 }
 
 static void
@@ -567,11 +570,6 @@ sig_child(int signo)
 	errno = save_errno;
 }
 
-/*
- * XXX
- * This is calling illegal functions inside a signal routine.
- * It's a massive race.
- */
 void
 sig_hup(int signo)
 {
