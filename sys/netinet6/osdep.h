@@ -145,6 +145,10 @@ static inline uint8_t __osdep_sa_len(struct sockaddr *sockaddr)
 #if __NetBSD__ || __bsdi__ || __OpenBSD__ || __FreeBSD__
 #define OSDEP_BSD 1
 
+#if __OpenBSD__ || __NetBSD__
+#define KERNEL 1
+#endif /* __OpenBSD__ || __NetBSD__ */
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>

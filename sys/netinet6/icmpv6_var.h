@@ -46,7 +46,7 @@ struct icmpv6stat
 	0, \
 }
 
-#if defined(KERNEL) || defined(_KERNEL)
+#if defined(_KERNEL) || defined(KERNEL)
 struct	icmpv6stat icmpv6stat;
-#endif /* defined(KERNEL) || defined(_KERNEL) */
+#endif /* defined(_KERNEL) || defined(KERNEL) */
 #endif /* _NETINET6_ICMPV6_VAR_H */

@@ -34,9 +34,12 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet6/ipv6_icmp.h>
 #include <netinet6/icmpv6_var.h>
 
-#if __OpenBSD__ && defined(NRL_IPSEC)
+#if __OpenBSD__
+#undef IPSEC
+#ifdef NRL_IPSEC
 #define IPSEC 1
-#endif /* __OpenBSD__ && defined(NRL_IPSEC) */
+#endif /* NRL_IPSEC */
+#endif /* __OpenBSD__ */
 
 #ifdef IPSEC
 #include <sys/osdep.h>
@@ -47,16 +50,19 @@ extern struct netproc_security fixedencrypt;
 extern struct netproc_auth fixedauth;
 #endif /* IPSEC */
 
-#ifdef DEBUG_NRL_SYS
-#include <sys/debug.h>
-#endif /* DEBUG_NRL_SYS */
-#ifdef DEBUG_NRL_NETINET6
-#include <netinet6/debug.h>
-#endif /* DEBUG_NRL_NETINET6 */
-
 #if __FreeBSD__
 #include <sys/sysctl.h>
 #endif /* __FreeBSD__ */
+
+#ifdef DEBUG_NRL
+#include <sys/debug.h>
+#else /* DEBUG_NRL */
+#if __OpenBSD__
+#include <netinet6/debug.h>
+#else /* __OpenBSD__ */
+#include <sys/debug.h>
+#endif /* __OpenBSD__ */
+#endif /* DEBUG_NRL */
 
 /*
  * Globals.

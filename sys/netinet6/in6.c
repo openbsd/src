@@ -33,12 +33,15 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet6/ipv6_var.h>
 #include <netinet6/ipv6_icmp.h>
 
-#ifdef DEBUG_NRL_SYS
+#ifdef DEBUG_NRL
 #include <sys/debug.h>
-#endif /* DEBUG_NRL_SYS */
-#ifdef DEBUG_NRL_NETINET6
+#else /* DEBUG_NRL */
+#if __OpenBSD__
 #include <netinet6/debug.h>
-#endif /* DEBUG_NRL_NETINET6 */
+#else /* __OpenBSD__ */
+#include <sys/debug.h>
+#endif /* __OpenBSD__ */
+#endif /* DEBUG_NRL */
 
 /*
  * Globals

@@ -185,8 +185,8 @@ struct route6
 };
 #endif RTM_VERSION 
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(KERNEL)
 /* Function prototypes go here. */
 int in6_cksum __P((struct mbuf *,int, u_int, u_int));
-#endif /* _KERNEL */
+#endif /* defined(_KERNEL) || defined(KERNEL) */
 #endif /* _NETINET6_IN6_H */

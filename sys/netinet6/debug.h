@@ -14,12 +14,15 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #ifndef _SYS_DEBUG_H
 #define _SYS_DEBUG_H 1
 
-#ifdef DEBUG_NRL_SYS
+#ifdef DEBUG_NRL
 #include <sys/osdep.h>
-#endif /* DEBUG_NRL_SYS */
-#ifdef DEBUG_NRL_NETINET6
+#else /* DEBUG_NRL */
+#if __OpenBSD__
 #include <netinet6/osdep.h>
-#endif /* DEBUG_NRL_NETINET6 */
+#else /* __OpenBSD__ */
+#include <sys/osdep.h>
+#endif /* __OpenBSD__ */
+#endif /* DEBUG_NRL */
 
 /* Non-ANSI compilers don't stand a chance. You PROBABLY need GNU C. */
 #ifndef __STDC__

@@ -49,10 +49,17 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet6/ipv6_var.h>
 #include <netinet6/ipv6_icmp.h>
 
-#if defined(IPSEC) || defined(NRL_IPSEC)
+#if __OpenBSD__
+#undef IPSEC
+#ifdef NRL_IPSEC
+#define IPSEC 1
+#endif /* NRL_IPSEC */
+#endif /* __OpenBSD__ */
+
+#ifdef IPSEC
 #include <sys/osdep.h>
 #include <netsec/ipsec.h>
-#endif /* defined(IPSEC) || defined(NRL_IPSEC) */
+#endif /* IPSEC */
 
 #if __FreeBSD__
 #include <sys/sysctl.h>
@@ -155,7 +162,7 @@ struct protosw inet6sw[] = {
 #endif /* defined(_BSDI_VERSION) && _BSDI_VERSION >= 199802 */
   },
 
-#if defined(IPSEC) || defined(NRL_IPSEC)
+#ifdef IPSEC
   /* IPv6 & IPv4 Authentication Header */
   {
     SOCK_RAW, &inet6domain, IPPROTO_AH, PR_ATOMIC|PR_ADDR,
@@ -181,7 +188,7 @@ struct protosw inet6sw[] = {
 #endif /* defined(_BSDI_VERSION) && _BSDI_VERSION >= 199802 */
   },
 #endif /* IPSEC_ESP */
-#endif /* defined(IPSEC) || defined(NRL_IPSEC) */
+#endif /* IPSEC */
 
   /* Unknown header. */
 
@@ -280,7 +287,7 @@ struct protosw inet6sw[] = {
     &tcp_usrreqs,
   },
 
-#if defined(IPSEC) || defined(NRL_IPSEC)
+#ifdef IPSEC
   /* IPv6 & IPv4 Authentication Header */
   {
     SOCK_RAW, &inet6domain, IPPROTO_AH, PR_ATOMIC|PR_ADDR,
@@ -300,7 +307,7 @@ struct protosw inet6sw[] = {
     &nousrreqs
   },
 #endif /* IPSEC_ESP */
-#endif /* defined(IPSEC) || defined(NRL_IPSEC) */
+#endif /* IPSEC */
 
   /* Unknown header. */
 
