@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ex.cmd.roff,v 1.5 2001/01/29 01:58:35 niklas Exp $
+.\"	$OpenBSD: ex.cmd.roff,v 1.6 2004/01/15 11:11:12 jmc Exp $
 .\"
 .\" Copyright (c) 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -105,17 +105,19 @@ subsequent lines are affected by the command, e.g. the command
 prints out lines 3, 4, 5 and 6.
 .pp
 When only a line or range is specified, with no command, the implied
-command is either a
-.CO list ,
-.CO number
-or
-.CO print
-command.
-The command used is the most recent of the three commands to have been
-used (including any use as a flag).
-If none of these commands have been used before, the
-.CO print
-command is the implied command.
+command is
+.CO print .
+.\" either a
+.\" .CO list ,
+.\" .CO number
+.\" or
+.\" .CO print
+.\" command.
+.\" The command used is the most recent of the three commands to have been
+.\" used (including any use as a flag).
+.\" If none of these commands have been used before, the
+.\" .CO print
+.\" command is the implied command.
 When no range or count is specified and the command line is a blank line,
 the current line is incremented by 1 and then the current line is displayed.
 .pp
@@ -389,8 +391,8 @@ Affected by the
 .OP shiftwidth
 option.
 .SE
-.KY abbrev
-.IP "ab[brev] lhs rhs"
+.KY abbreviate
+.IP "ab[breviate] lhs rhs"
 Add an abbreviation to the current abbreviation list.
 When inserting text in
 .CO vi ,
@@ -400,26 +402,28 @@ a match with
 .LI lhs .
 If a match is found, they are replaced with
 .LI rhs .
-The set of characters that are checked for a match are defined as follows,
-for inexplicable historical reasons.
-If only one or two characters were entered before the non-word character
-that triggered the check,
-and after the beginning of the insertion,
-or the beginning of the line or the file,
-or the last
-.LI <blank>
-character that was entered,
-then the one or the both characters are checked for a match.
-Otherwise, the set includes both characters,
-as well as the characters that precede them that are the same word
-class (i.e. word or non-word) as the
-.b second
-to last character entered before the non-word character that triggered
-the check,
-back to the first
-.LI <blank> character,
-the beginning of the insertion,
-or the beginning of the line or the file.
+.\" The set of characters that are checked for a match are defined as follows,
+.\" for inexplicable historical reasons.
+.\" If only one or two characters were entered before the non-word character
+.\" that triggered the check,
+.\" and after the beginning of the insertion,
+.\" or the beginning of the line or the file,
+.\" or the last
+.\" .LI <blank>
+.\" character that was entered,
+.\" then the one or the both characters are checked for a match.
+.\" Otherwise, the set includes both characters,
+.\" as well as the characters that precede them that are the same word
+.\" class (i.e. word or non-word) as the
+.\" .b second
+.\" to last character entered before the non-word character that triggered
+.\" the check,
+.\" back to the first
+.\" .LI <blank> character,
+.\" the beginning of the insertion,
+.\" or the beginning of the line or the file.
+Abbreviations must end with a word character,
+and may not mix word/non-word characters (except at the end).
 .sp
 For example, the abbreviations:
 .sp
@@ -888,7 +892,7 @@ Otherwise, insert a single space.
 Appending a
 .QT !
 character to the command name causes a simpler join with no
-white-space processing.
+whitespace processing.
 .SS
 .SP Line:
 Unchanged.
@@ -1062,28 +1066,28 @@ Affected by the options
 and
 .OP writeany .
 .SE
-.KY open
-.IP "[line] o[pen] /pattern/ [flags]"
-Enter open mode.
-Open mode is the same as being in
-.CO vi ,
-but with a one-line window.
-All the standard
-.CO vi
-commands are available.
-If a match is found for the optional RE argument,
-the cursor is set to the start of the matching pattern.
-.sp
-.i "This command is not yet implemented."
-.SS
-.SP Line:
-Unchanged, unless the optional RE is specified, in which case it is
-set to the line where the matching pattern is found.
-.SP Options:
-Affected by the
-.OP open
-option.
-.SE
+.\" .KY open
+.\" .IP "[line] o[pen] /pattern/ [flags]"
+.\" Enter open mode.
+.\" Open mode is the same as being in
+.\" .CO vi ,
+.\" but with a one-line window.
+.\" All the standard
+.\" .CO vi
+.\" commands are available.
+.\" If a match is found for the optional RE argument,
+.\" the cursor is set to the start of the matching pattern.
+.\" .sp
+.\" .i "This command is not yet implemented."
+.\" .SS
+.\" .SP Line:
+.\" Unchanged, unless the optional RE is specified, in which case it is
+.\" set to the line where the matching pattern is found.
+.\" .SP Options:
+.\" Affected by the
+.\" .OP open
+.\" option.
+.\" .SE
 .KY preserve
 .IP "pre[serve]"
 Save the file in a form that can later be recovered using the
@@ -1173,7 +1177,7 @@ commands (i.e.
 .CO xit
 or
 .CO ZZ )
-in a row) will override this check and the editor will exit.
+in a row will override this check and the editor will exit.
 .SS
 .SP Line:
 Unchanged.
@@ -1371,9 +1375,9 @@ with the string
 .LI replace
 on the specified line(s).
 If the
-.QT /pattern/repl/
+.QT /pattern/replace/
 argument is not specified, the
-.QT /pattern/repl/
+.QT /pattern/replace/
 from the previous
 .CO substitute
 command is used.
@@ -1531,15 +1535,15 @@ character to the command name.
 .sp
 Capitalizing the first letter of the command, i.e.
 .CO Tagnext ,
-while in 
-.CO vi 
+while in
+.CO vi
 mode, will edit the file in a new screen.
 In this case, any modifications to the current file are ignored.
-.SS 
+.SS
 .SP Line:
 Set to the line indicated by the tag.
 .SP Options:
-Affected by the 
+Affected by the
 .OP autowrite
 and
 .OP writeany
@@ -1597,15 +1601,15 @@ character to the command name.
 .sp
 Capitalizing the first letter of the command, i.e.
 .CO Tagprev ,
-while in 
-.CO vi 
+while in
+.CO vi
 mode, will edit the file in a new screen.
 In this case, any modifications to the current file are ignored.
-.SS 
+.SS
 .SP Line:
 Set to the line indicated by the tag.
 .SP Options:
-Affected by the 
+Affected by the
 .OP autowrite
 and
 .OP writeany
@@ -1631,8 +1635,8 @@ and
 .OP writeany
 options.
 .SE
-.KY unabbrev
-.IP "una[bbrev] lhs"
+.KY unabbreviate
+.IP "una[bbreviate] lhs"
 Delete an abbreviation.
 Delete
 .LI lhs
@@ -1801,7 +1805,7 @@ commands (i.e.
 .CO xit
 or
 .CO ZZ )
-in a row) will override this check and the editor will exit,
+in a row will override this check and the editor will exit,
 ignoring any files that have not yet been edited.
 .sp
 The
@@ -1843,7 +1847,7 @@ commands (i.e.
 .CO xit
 or
 .CO ZZ )
-in a row) will override this check and the editor will exit,
+in a row will override this check and the editor will exit,
 ignoring any files that have not yet been edited.
 .SS
 .SP Line:

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.cmd.roff,v 1.3 2001/01/29 01:58:35 niklas Exp $
+.\"	$OpenBSD: vi.cmd.roff,v 1.4 2004/01/15 11:11:12 jmc Exp $
 .\"
 .\" Copyright (c) 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -96,7 +96,7 @@ A major difference between the historical
 .CO vi
 presentation and
 .CO nvi
-is in the scrolling and screen oriented position commands,
+is in the scrolling and screen oriented position commands:
 .CO <control-B> ,
 .CO <control-D> ,
 .CO <control-E> ,
@@ -171,7 +171,7 @@ commands.
 .IP "previous context"
 The position of the cursor before the command which caused the
 last absolute movement was executed.
-Each 
+Each
 .CO vi
 command described in the next section that is considered an
 absolute movement is so noted.
@@ -1068,7 +1068,7 @@ command was ignored.
 Unchanged.
 .SP Column:
 Unchanged if the cursor was on the last character in the line,
-otherwise, set to the first nonblank character in the line.
+otherwise set to the first nonblank character in the line.
 .SP Options:
 Affected by the
 .OP edcompatible ,
@@ -1372,9 +1372,9 @@ If either the
 .CO N
 or
 .CO n
-commands are used as motion components for the 
+commands are used as motion components for the
 .CO !
-command, you will not be prompted for the text of the bang command,
+command, you will not be prompted for the text of the bang command;
 instead the previous bang command will be executed.
 .sp
 Missing RE's (e.g.
@@ -1794,7 +1794,7 @@ line oriented.
 .SP Line:
 Set to
 .LI count ,
-if specified, otherwise, the last line.
+if specified, otherwise the last line.
 .SP Column:
 Set to the first nonblank character in the line.
 .SP Options:
@@ -1977,7 +1977,7 @@ Set to the lowest numbered line insert,
 if the buffer is line oriented, otherwise unchanged.
 .SP Column:
 Set to the first nonblank character of the appended text,
-if the buffer is line oriented, otherwise, the last character
+if the buffer is line oriented, otherwise the last character
 of the appended text.
 .SP Options:
 None.
@@ -2508,7 +2508,7 @@ Set to the first line appended, if the buffer is line oriented,
 otherwise unchanged.
 .SP Column:
 Set to the first nonblank character of the appended text if the buffer
-is line oriented, otherwise, the last character of the appended text.
+is line oriented, otherwise the last character of the appended text.
 .SP Options:
 None.
 .SE
@@ -2722,7 +2722,7 @@ at the bottom of the screen.
 .SP ^
 If
 .LI count1
-is specified, place the line that is at the top of the screen 
+is specified, place the line that is at the top of the screen
 when
 .LI count1
 is at the bottom of the screen, at the bottom of the screen,
@@ -3043,7 +3043,7 @@ The next character will not be mapped (see the
 .CO map
 command for more information)
 or interpreted specially.
-A carat
+A caret
 .PQ ^
 character will be displayed immediately as a placeholder,
 but will be replaced by the next character.

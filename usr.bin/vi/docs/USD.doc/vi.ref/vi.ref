@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.ref,v 1.8 2004/01/12 18:12:30 millert Exp $
+.\"	$OpenBSD: vi.ref,v 1.9 2004/01/15 11:11:12 jmc Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -6,7 +6,7 @@
 .\"	Keith Bostic.  All rights reserved.
 .\"
 .\" This document may not be republished without written permission from
-.\" Keith Bostic. 
+.\" Keith Bostic.
 .\"
 .\" See the LICENSE file for redistribution information.
 .\"
@@ -123,10 +123,10 @@ acknowledged.
 .bp 4
 .SH 1 Description
 .pp
+.CO Ex
+is a line-oriented text editor;
 .CO Vi
 is a screen oriented text editor.
-.CO Ex
-is a line-oriented text editor.
 .CO Ex
 and
 .CO vi
@@ -457,16 +457,16 @@ Edit sessions are backed by files in the directory named by the
 option (the directory
 .LI /var/tmp/vi.recover
 by default), and are named
-.QC vi.XXXXXX ,
+.QC vi.XXXXXXXXXX ,
 where
-.QC XXXXXX
+.QC XXXXXXXXXX
 is a number related to the process ID.
 When a file is first modified,
 a second recovery file containing an email message for the user is created,
 and is named
-.QC recover.XXXXXX ,
+.QC recover.XXXXXXXXXX ,
 where, again,
-.QC XXXXXX
+.QC XXXXXXXXXX
 is associated with the process ID.
 Both files are removed at the end of a normal edit session,
 but will remain if the edit session is abnormally terminated
@@ -511,7 +511,7 @@ In addition, it has all of the necessary email headers for
 When the system is rebooted, all of the files in
 .LI /var/tmp/vi.recover
 named
-.QC recover.XXXXXX
+.QC recover.XXXXXXXXXX
 should be sent to their owners, by email, using the
 .b \-t
 option of
@@ -530,7 +530,7 @@ If your system does not have the
 .CO sendmail
 utility (or a mailer program which supports its interface)
 the source file
-.LI nvi/common/recover.c
+.LI vi/common/recover.c
 will have to be modified to use your local mail delivery programs.
 Note, if
 .EV nex nvi
@@ -548,19 +548,19 @@ that have no associated email recovery file will have this bit set.
 not yet have this bit set.
 This is due to the method in which the files are created.)
 Such files should be deleted when the system reboots.
-.pp
-A simple way to do this cleanup is to run the Bourne shell script
-.CO recover ,
-from your
-.LI /etc/rc.local
-(or other system startup) file.
-The script should work with the historic Bourne shell,
-a POSIX 1003.2 shell or the Korn shell.
-The
-.CO recover
-script is installed as part of the
-.EV nex nvi
-installation process.
+.\" .pp
+.\" A simple way to do this cleanup is to run the Bourne shell script
+.\" .CO recover ,
+.\" from your
+.\" .LI /etc/rc.local
+.\" (or other system startup) file.
+.\" The script should work with the historic Bourne shell,
+.\" a POSIX 1003.2 shell or the Korn shell.
+.\" The
+.\" .CO recover
+.\" script is installed as part of the
+.\" .EV nex nvi
+.\" installation process.
 .pp
 Consult the manual page for details on recovering preserved or
 aborted editing sessions.
@@ -581,11 +581,14 @@ If the environmental variable
 exists,
 it is used to specify the number of columns in the screen.
 .np
-The TIOCGWINSZ
-.XR ioctl 2
+The TIOCGWINSZ ioctl
+see
+.XR tty 4
 is attempted on the standard error file descriptor.
 .np
-The termcap entry (or terminfo entry on System V machines)
+The
+.XR terminfo 5
+entry
 is checked for the
 .QQ li
 entry (rows) and the
@@ -677,7 +680,7 @@ at which time the changes must be saved or discarded.
 The
 .CO resize
 command permits resizing of individual screens.
-Screens may be grown, shrunk or set to an absolute number of rows.
+Screens may be grown, shrunk, or set to an absolute number of rows.
 .pp
 The
 .CO ^W
@@ -863,7 +866,7 @@ has been written to understand the obvious extension to the historic
 tags file format, i.e., more than a single line in the tags file with
 the same initial tag name.
 If you wish to extend your
-.CO ctags 
+.CO ctags
 implementation or other tool with which you build tags files,
 this extension should be simple and will require no changes to
 .CO nvi .
@@ -942,7 +945,7 @@ queries all attached
 databases for the pattern.
 If the pattern is a double-quote character followed by a valid buffer
 name (e.g.,
-.LI """<character>" ), 
+.LI """<character>" ),
 then the contents of the named buffer are used as the pattern.
 Otherwise, the pattern is a Regular Expression.
 .sp
@@ -1015,11 +1018,10 @@ Disconnect from all attached
 .CO cscope
 databases.
 .pp
-Cscope is not freely redistributable software,
-but is fairly inexpensive and easily available.
-To purchase a copy of
-.CO cscope ,
-see http://www.att.com/ssg/products/toolchest.html.
+Cscope was originally part of the official AT&T Unix distribution.
+In April 2000 the code for Cscope was open sourced under the BSD license.
+Information on downloading this code, and on Cscope itself,
+can be obtained from http://cscope.sourceforge.net/.
 .SH 1 "Regular Expressions and Replacement Strings"
 .pp
 Regular expressions are used in line addresses,
@@ -1201,7 +1203,9 @@ editor currently supports two scripting languages, Tcl/Tk and Perl.
 version 5.002 or later.
 See the
 .QB "Building Nvi"
-section for more information.
+section for more information.)
+Note that the Tcl/Tk interface is not supported in the current version
+of OpenBSD.
 .pp
 The scripting language interface is still being worked on,
 therefore the following information is probably incomplete,
@@ -1285,7 +1289,7 @@ as a vi message in the screen
 .IP "viNewScreen screenId [file]"
 Create a new screen.
 .IP "viEndScreen screenId"
-Exit the screen 
+Exit the screen
 .LI screenId .
 .IP "viSwitchScreen screenId screenId"
 Switch from the screen
@@ -1468,12 +1472,12 @@ character can be escaped by preceding it with a backslash.)
 One of a number of named areas for saving copies of text.
 Commands that change or delete text can save the changed or deleted
 text into a specific buffer, for later use, if the command allows
-it (i.e. the
+it (e.g. the
 .CO ex
 .CO change
 command cannot save the changed text in a named buffer).
 Buffers are named with a single character, preceded by a double quote,
-e.g.
+i.e.
 .LI """<character>"
 in
 .CO vi
@@ -1484,7 +1488,7 @@ in
 .CO ex .
 (The double quote isn't necessary for
 .CO ex
-because buffers names are denoted by their position in the command line.)
+because buffer names are denoted by their position in the command line.)
 Historic implementations of
 .EV ex vi
 limited
@@ -1539,6 +1543,7 @@ These commands are:
 .ne 3v
 .ft C
 .TS
+center;
 r r r r.
 <control-A>	%	(	)
 `<character>	/	?	N
@@ -1688,7 +1693,7 @@ The address
 .QT '<character>
 or
 .QT `<character>
-refers to the line marked with the name
+refers to the line marked with the named
 .LI <character> .
 (See the
 .CO k

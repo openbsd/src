@@ -1,4 +1,4 @@
-.\"	$OpenBSD: set.opt.roff,v 1.6 2001/01/29 01:58:35 niklas Exp $
+.\"	$OpenBSD: set.opt.roff,v 1.7 2004/01/15 11:11:12 jmc Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -25,7 +25,7 @@ from all other commands for it to be accepted, in
 Historically, only the full name and the official abbreviations
 were accepted by
 .EV ex vi .
-Using full names in your startup files and environmental variables will
+Using full names in your startup files and environment variables will
 probably make them more portable.)
 The part in square brackets is the default value of the option.
 Most of the options are boolean, i.e. they are either on or off,
@@ -147,7 +147,7 @@ and
 commands change from the first nonblank of the line to the end of the
 line, instead of from the beginning of the line to the end of the line.
 .KY autoprint
-.IP "autoprint, ap [off]"
+.IP "autoprint, ap [on]"
 .CO Ex
 only.
 Cause the current line to be automatically displayed after the
@@ -286,7 +286,7 @@ which are used as path prefixes for any relative path names used as
 arguments for the
 .CO cd
 command.
-The value of this option defaults to the value of the environmental
+The value of this option defaults to the value of the environment
 variable
 .LI CDPATH
 if it is set, otherwise to the current directory.
@@ -350,7 +350,7 @@ will perform file name expansion.
 The number of columns in the screen.
 Setting this option causes
 .EV ex vi
-to set (or reset) the environmental variable
+to set (or reset) the environment variable
 .LI COLUMNS .
 See the section entitled
 .QB "Sizing the Screen"
@@ -371,7 +371,7 @@ terribly boring legal notice) before displaying the file.
 .KY directory
 .IP "directory, dir [environment variable TMPDIR, or /tmp]"
 The directory where temporary files are created.
-The environmental variable
+The environment variable
 .LI TMPDIR
 is used as the default value if it exists, otherwise
 .LI /tmp
@@ -479,7 +479,7 @@ will perform file name expansion.
 This option causes the screen to flash instead of beeping the keyboard,
 on error, if the terminal has the capability.
 .KY hardtabs
-.IP "hardtabs, ht [8]"
+.IP "hardtabs, ht [0]"
 This option defines the spacing between hardware tab settings, i.e.
 the tab expansion done by the operating system and/or the terminal
 itself.
@@ -523,7 +523,7 @@ only.
 The number of lines in the screen.
 Setting this option causes
 .EV ex vi
-to set (or reset) the environmental variable
+to set (or reset) the environment variable
 .LI LINES .
 See the section entitled
 .QB "Sizing the Screen"
@@ -608,7 +608,7 @@ See the
 .XR mesg 1
 utility for more information.
 .KY msgcat
-.IP "msgcat [./]"
+.IP "msgcat [/usr/share/vi/catalog/]"
 This option selects a message catalog to be used to display error and
 informational messages in a specified language.
 If the value of this option ends with a '/', it is treated as the name
@@ -618,10 +618,10 @@ where
 .QT XXXX
 is the value of the
 .LI LANG
-environmental variable, if it's set, or the value of the
+environment variable, if it's set, or the value of the
 .LI LC_MESSAGES
-environmental variable if it's not.
-If neither of those environmental variables are set,
+environment variable if it's not.
+If neither of those environment variables are set,
 or if the option doesn't end in a '/',
 the option is treated as the full path name of the message catalog to use.
 .sp
@@ -703,7 +703,7 @@ only.
 Throughput of text is expedited by setting the terminal not to do automatic
 carriage returns when printing more than one (logical) line of output,
 greatly speeding output on terminals without addressable cursors when text
-with leading white space is printed.
+with leading whitespace is printed.
 .sp
 .i "This option is not yet implemented."
 .KY paragraphs
@@ -1082,7 +1082,7 @@ significant in a tag name.
 Setting the value to 0 makes all of the characters in the tag name
 significant.
 .KY tags
-.IP "tags, tag [tags /var/db/libc.tags /sys/kern/tags]"
+.IP "tags, tag [tags]"
 Sets the list of tags files, in search order,
 which are used when the editor searches for a tag.
 .KY term
@@ -1090,7 +1090,7 @@ which are used when the editor searches for a tag.
 Set the terminal type.
 Setting this option causes
 .EV ex vi
-to set (or reset) the environmental variable
+to set (or reset) the environment variable
 .LI TERM .
 .KY terse
 .IP "terse [off]"
