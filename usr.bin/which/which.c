@@ -1,4 +1,4 @@
-/*	$OpenBSD: which.c,v 1.6 2002/02/16 21:27:59 millert Exp $	*/
+/*	$OpenBSD: which.c,v 1.7 2003/04/04 00:42:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint                                                              
-static char rcsid[] = "$OpenBSD: which.c,v 1.6 2002/02/16 21:27:59 millert Exp $";
+static char rcsid[] = "$OpenBSD: which.c,v 1.7 2003/04/04 00:42:34 deraadt Exp $";
 #endif /* not lint */                                                        
 
 #include <sys/param.h>
@@ -162,9 +162,9 @@ findprog(prog, path, progmode, allmatches)
 			return(0);
 		}
 
-		(void)strcpy(filename, p);
+		(void)strlcpy(filename, p, sizeof filename);
 		filename[plen] = '/';
-		(void)strcpy(filename + plen + 1, prog);
+		(void)strlcpy(filename + plen + 1, prog, sizeof filename - (plen + 1));
 		if ((stat(filename, &sbuf) == 0) && S_ISREG(sbuf.st_mode) &&
 		    access(filename, X_OK) == 0) {
 			(void)puts(filename);

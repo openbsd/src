@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.18 2002/12/19 21:24:28 millert Exp $	*/
+/*	$OpenBSD: run.c,v 1.19 2003/04/04 00:42:34 deraadt Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -1234,7 +1234,7 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 			pfa->initstat = 2;
 			do {
 				n++;
-				sprintf(num, "%d", n);
+				snprintf(num, sizeof num, "%d", n);
 				temp = *patbeg;
 				*patbeg = '\0';
 				if (is_number(s))
@@ -1245,7 +1245,7 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 				s = patbeg + patlen;
 				if (*(patbeg+patlen-1) == 0 || *s == 0) {
 					n++;
-					sprintf(num, "%d", n);
+					snprintf(num, sizeof num, "%d", n);
 					setsymtab(num, "", 0.0, STR, (Array *) ap->sval);
 					pfa->initstat = tempstat;
 					goto spdone;
@@ -1253,7 +1253,7 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 			} while (nematch(pfa,s));
 		}
 		n++;
-		sprintf(num, "%d", n);
+		snprintf(num, sizeof num, "%d", n);
 		if (is_number(s))
 			setsymtab(num, s, atof(s), STR|NUM, (Array *) ap->sval);
 		else
@@ -1273,7 +1273,7 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 			while (*s!=' ' && *s!='\t' && *s!='\n' && *s!='\0');
 			temp = *s;
 			*s = '\0';
-			sprintf(num, "%d", n);
+			snprintf(num, sizeof num, "%d", n);
 			if (is_number(t))
 				setsymtab(num, t, atof(t), STR|NUM, (Array *) ap->sval);
 			else
@@ -1286,7 +1286,7 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 		for (n = 0; *s != 0; s++) {
 			char buf[2];
 			n++;
-			sprintf(num, "%d", n);
+			snprintf(num, sizeof num, "%d", n);
 			buf[0] = *s;
 			buf[1] = 0;
 			if (isdigit((uschar)buf[0]))
@@ -1302,7 +1302,7 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 				s++;
 			temp = *s;
 			*s = '\0';
-			sprintf(num, "%d", n);
+			snprintf(num, sizeof num, "%d", n);
 			if (is_number(t))
 				setsymtab(num, t, atof(t), STR|NUM, (Array *) ap->sval);
 			else

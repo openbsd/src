@@ -1,4 +1,4 @@
-/*	$OpenBSD: tran.c,v 1.8 2002/12/19 21:24:28 millert Exp $	*/
+/*	$OpenBSD: tran.c,v 1.9 2003/04/04 00:42:34 deraadt Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -107,7 +107,7 @@ void arginit(int ac, char **av)	/* set up ARGV and ARGC */
 	ARGVtab = makesymtab(NSYMTAB);	/* could be (int) ARGC as well */
 	cp->sval = (char *) ARGVtab;
 	for (i = 0; i < ac; i++) {
-		sprintf(temp, "%d", i);
+		snprintf(temp, sizeof temp, "%d", i);
 		if (is_number(*av))
 			setsymtab(temp, *av, atof(*av), STR|NUM, ARGVtab);
 		else

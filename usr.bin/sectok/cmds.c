@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.20 2002/06/17 07:10:52 deraadt Exp $ */
+/*	$OpenBSD: cmds.c,v 1.21 2003/04/04 00:42:34 deraadt Exp $ */
 
 /*
  * Smartcard commander.
@@ -580,6 +580,7 @@ chpin(int argc, char *argv[])
 {
 	int     keyno = 1, i, sw;
 	char    pin[255];
+	char	*pass;
 
 	optind = optreset = 1;
 
@@ -591,8 +592,10 @@ chpin(int argc, char *argv[])
 		}
 	}
 
-	strcpy(pin, getpass("Enter Old PIN: "));
-	strcat(pin, getpass("Enter New PIN: "));
+	pass = getpass("Enter Old PIN: ");
+	strlcpy(pin, pass, sizeof pin);
+	pass = getpass("Enter New PIN: ");
+	strlcat(pin, pass, sizeof pin);
 
 	sectok_apdu(fd, cla, 0x24, 0, keyno, strlen(pin), pin, 0, NULL, &sw);
 	bzero(pin, strlen(pin));

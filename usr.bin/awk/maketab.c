@@ -1,4 +1,4 @@
-/*	$OpenBSD: maketab.c,v 1.6 2002/12/19 21:24:28 millert Exp $	*/
+/*	$OpenBSD: maketab.c,v 1.7 2003/04/04 00:42:34 deraadt Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -164,7 +164,7 @@ int main(int argc, char *argv[])
 	printf("{\n");
 	printf("	static char buf[100];\n\n");
 	printf("	if (n < FIRSTTOKEN || n > LASTTOKEN) {\n");
-	printf("		sprintf(buf, \"token %%d\", n);\n");
+	printf("		snprintf(buf, sizeof buf, \"token %%d\", n);\n");
 	printf("		return buf;\n");
 	printf("	}\n");
 	printf("	return printname[n-FIRSTTOKEN];\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: quotacheck.c,v 1.16 2003/03/13 09:09:27 deraadt Exp $	*/
+/*	$OpenBSD: quotacheck.c,v 1.17 2003/04/04 00:42:34 deraadt Exp $	*/
 /*	$NetBSD: quotacheck.c,v 1.12 1996/03/30 22:34:25 mark Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.3 (Berkeley) 1/29/94";
 #else
-static char rcsid[] = "$OpenBSD: quotacheck.c,v 1.16 2003/03/13 09:09:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: quotacheck.c,v 1.17 2003/04/04 00:42:34 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -236,11 +236,11 @@ needchk(struct fstab *fs)
 		err(1, "%s", strerror(errno));
 	qnp->flags = 0;
 	if (gflag && hasquota(fs, GRPQUOTA, &qfnp)) {
-		strcpy(qnp->grpqfname, qfnp);
+		strlcpy(qnp->grpqfname, qfnp, sizeof qnp->grpqfname);
 		qnp->flags |= HASGRP;
 	}
 	if (uflag && hasquota(fs, USRQUOTA, &qfnp)) {
-		strcpy(qnp->usrqfname, qfnp);
+		strlcpy(qnp->usrqfname, qfnp, sizeof qnp->usrqfname);
 		qnp->flags |= HASUSR;
 	}
 	if (qnp->flags)
