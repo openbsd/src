@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.21 2001/03/12 01:30:24 deraadt Exp $	*/
+/*	$OpenBSD: mount.c,v 1.22 2001/06/24 17:03:16 csapuntz Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: mount.c,v 1.21 2001/03/12 01:30:24 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mount.c,v 1.22 2001/06/24 17:03:16 csapuntz Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,6 @@ static char rcsid[] = "$OpenBSD: mount.c,v 1.21 2001/03/12 01:30:24 deraadt Exp 
 #define _KERNEL
 #include <nfs/nfs.h>
 #undef _KERNEL
-#include <nfs/nqnfs.h>
 
 #include <err.h>
 #include <errno.h>
@@ -472,7 +471,6 @@ prmount(sf)
 		struct nfs_args *nfs_args = &sf->mount_info.nfs_args;
 
 		(void)printf("%s%s", !f++ ? " (" : ", ",
-		    (nfs_args->flags & NFSMNT_NQNFS) ? "nqnfs" :
 		    (nfs_args->flags & NFSMNT_NFSV3) ? "v3" : "v2");
 		if (nfs_args->proto && (pr = getprotobynumber(nfs_args->proto)))
 			(void)printf("%s%s", !f++ ? " (" : ", ", pr->p_name);
@@ -508,14 +506,6 @@ prmount(sf)
 		if (verbose || nfs_args->readahead != NFS_DEFRAHEAD)
 			(void)printf("%s%s=%d", !f++ ? " (" : ", ",
 			    "readahead", nfs_args->readahead);
-		if (nfs_args->flags & NFSMNT_NQNFS) {
-			if (verbose || nfs_args->leaseterm != NQ_DEFLEASE)
-				(void)printf("%s%s=%d", !f++ ? " (" : ", ",
-				    "leaseterm", nfs_args->leaseterm);
-			if (verbose || nfs_args->deadthresh != NQ_DEADTHRESH)
-				(void)printf("%s%s=%d", !f++ ? " (" : ", ",
-				    "deadthresh", nfs_args->deadthresh);
-		}
 	} else if (strcmp(sf->f_fstypename, MOUNT_MFS) == 0) {
 		int headerlen;
 		long blocksize;

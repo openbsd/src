@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.25 2001/02/25 05:33:08 csapuntz Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.26 2001/06/24 17:03:19 csapuntz Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.25 2001/02/25 05:33:08 csapuntz Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.26 2001/06/24 17:03:19 csapuntz Exp $";
 #endif
 #endif /* not lint */
 
@@ -488,12 +488,6 @@ nfs_print(vp)
 		*flags++ = 'M';
 	if (flag & NWRITEERR)
 		*flags++ = 'E';
-	if (flag & NQNFSNONCACHE)
-		*flags++ = 'X';
-	if (flag & NQNFSWRITE)
-		*flags++ = 'O';
-	if (flag & NQNFSEVICTED)
-		*flags++ = 'G';
 	if (flag & NACC)
 		*flags++ = 'A';
 	if (flag & NUPD)

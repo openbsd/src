@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_nfs.8,v 1.22 2001/06/08 13:46:50 aaron Exp $
+.\"	$OpenBSD: mount_nfs.8,v 1.23 2001/06/24 17:03:18 csapuntz Exp $
 .\"	$NetBSD: mount_nfs.8,v 1.3 1996/02/18 11:59:10 fvdl Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994, 1995
@@ -79,19 +79,6 @@ Use the NFS Version 2 protocol.
 Use the NFS Version 3 protocol.
 The default is to try version 3 first, and
 fall back to version 2 if the mount fails.
-.It Fl D Ar deadthresh
-Used with NQNFS to set the
-.Dq "dead server threshold"
-to the specified number of round trip timeout intervals.
-After a
-.Dq "dead server threshold"
-of retransmit timeouts,
-cached data for the unresponsive server is assumed to still be valid.
-Values may be set in the range of 1 - 9, with 9 referring to an
-.Dq "infinite dead threshold"
-(i.e., never assume cached data still valid).
-This option is not generally recommended and is really an experimental
-feature.
 .It Fl I Ar readdirsize
 Set the readdir read size to the specified value.
 The value should normally
@@ -103,10 +90,6 @@ This requires that the kernel be built with the NFSKERB option.
 (Refer to the INTERNET-DRAFT titled
 .%T "Authentication Mechanisms for ONC RPC" ,
 for more information.)
-.It Fl L Ar leaseterm
-Used with NQNFS to set the lease term to the specified number of seconds.
-Only use this argument for mounts with a large round trip delay.
-Values are normally in the 10-30 second range.
 .It Fl P
 The kernel always uses a reserved port number to communicate with
 clients.
@@ -159,7 +142,7 @@ Make the mount interruptible, which implies that file system calls that
 are delayed due to an unresponsive server will fail with EINTR when a
 termination signal is posted for the process.
 .It Fl l
-Used with NQNFS and NFSV3 to specify that the \fBReaddirPlus\fR RPC should
+Used with NFSV3 to specify that the \fBReaddirPlus\fR RPC should
 be used.
 This option reduces RPC traffic for cases such as
 .Dq "ls -l" ,
@@ -186,16 +169,6 @@ The following NFS specific option is also available:
 Use specified port number for NFS requests.
 The default is to query the portmapper for the NFS port.
 .El
-.It Fl q
-Use the leasing extensions to the NFS Version 3 protocol
-to maintain cache consistency.
-This protocol version 2 revision to Not Quite Nfs (NQNFS)
-is only supported by this updated release of NFS code.
-It is not backwards compatible with the version 1 NQNFS protocol
-that was part of the first release of 4.4BSD-Lite.
-To interoperate with a first release 4.4BSD-Lite NFS system you will have to
-avoid this option until you have had an opportunity to upgrade the NFS code
-to release 2 of 4.4BSD-Lite on all your systems.
 .It Fl r Ar readsize
 Set the read data size to the specified value.
 It should normally be a power of 2 greater than or equal to 1024.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_nfs.c,v 1.19 2001/05/11 18:09:08 mickey Exp $	*/
+/*	$OpenBSD: mount_nfs.c,v 1.20 2001/06/24 17:03:19 csapuntz Exp $	*/
 /*	$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl Exp $	*/
 
 /*
@@ -76,7 +76,6 @@ static char rcsid[] = "$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl 
 #define _KERNEL
 #include <nfs/nfs.h>
 #undef _KERNEL
-#include <nfs/nqnfs.h>
 
 #include <arpa/inet.h>
 
@@ -103,7 +102,6 @@ static char rcsid[] = "$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl 
 #define	ALTF_MNTUDP	0x80
 #define ALTF_RESVPORT	0x100
 #define ALTF_SEQPACKET	0x200
-#define ALTF_NQNFS	0x400
 #define ALTF_SOFT	0x800
 #define ALTF_TCP	0x1000
 #define ALTF_PORT	0x2000
@@ -127,7 +125,6 @@ const struct mntopt mopts[] = {
 #ifdef ISO
 	{ "seqpacket", 0, ALTF_SEQPACKET, 1 },
 #endif
-	{ "nqnfs", 0, ALTF_NQNFS, 1 },
 	{ "soft", 0, ALTF_SOFT, 1 },
 	{ "tcp", 0, ALTF_TCP, 1 },
 	{ "port", 0, ALTF_PORT, 1 },
@@ -151,8 +148,6 @@ struct nfs_args nfsdefargs = {
 	NFS_RETRANS,
 	NFS_MAXGRPS,
 	NFS_DEFRAHEAD,
-	NQ_DEFLEASE,
-	NQ_DEADTHRESH,
 	(char *)0,
 };
 
@@ -343,12 +338,6 @@ main(argc, argv)
 			if (altflags & ALTF_SEQPACKET)
 				nfsargsp->sotype = SOCK_SEQPACKET;
 #endif
-			if (altflags & ALTF_NQNFS) {
-				if (force2)
-					errx(1,"nqnfs only available with v3");
-				force3 = 1;
-				nfsargsp->flags |= NFSMNT_NQNFS;
-			}
 			if (altflags & ALTF_SOFT)
 				nfsargsp->flags |= NFSMNT_SOFT;
 			if (altflags & ALTF_TCP) {
@@ -367,12 +356,6 @@ main(argc, argv)
 			nfsargsp->sotype = SOCK_SEQPACKET;
 			break;
 #endif
-		case 'q':
-			if (force2)
-				errx(1,"nqnfs only available with v3");
-			force3 = 1;
-			nfsargsp->flags |= NFSMNT_NQNFS;
-			break;
 		case 'R':
 			num = strtol(optarg, &p, 10);
 			if (*p || num <= 0)
@@ -438,11 +421,11 @@ main(argc, argv)
 		else
 			err(1, "%s", name);
 	}
-	if (nfsargsp->flags & (NFSMNT_NQNFS | NFSMNT_KERB)) {
+	if (nfsargsp->flags & NFSMNT_KERB) {
 		if ((opflags & ISBGRND) == 0) {
 			if (i = fork()) {
 				if (i == -1)
-					err(1, "nqnfs 1");
+					err(1, "Couldn't launch NFS kerberos service process");
 				exit(0);
 			}
 			(void) setsid();
