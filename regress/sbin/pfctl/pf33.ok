@@ -1,12 +1,12 @@
 ext_if = lo0
 altq on lo0 scheduler 1 bandwidth 10.00Mb tbrsize 6000 queue { deflt http ssh mail rsets }
-queue deflt bandwidth 1023.99Kb priority 0 cbq( red ecn default )
+queue deflt bandwidth 1000.00Kb priority 0 cbq( red ecn default )
 queue http bandwidth 1.50Mb priority 3 { http_vhosts http_cust1 }
-queue http_vhosts bandwidth 614.38Kb priority 1 cbq( red borrow )
-queue http_cust1 bandwidth 512.00Kb priority 1
-queue mail bandwidth 1023.99Kb priority 1
+queue http_vhosts bandwidth 600.00Kb priority 1 cbq( red borrow )
+queue http_cust1 bandwidth 500.00Kb priority 1
+queue mail bandwidth 1000.00Kb priority 1
 queue ssh bandwidth 100.00Kb priority 7 cbq( borrow )
-queue rsets bandwidth 7.32Kb priority 0 cbq( red )
+queue rsets bandwidth 7.50Kb priority 0 cbq( red )
 @0 block return in on lo0 inet all queue rsets
 @1 pass in on lo0 inet proto tcp from any to any port = www keep state queue http
 @2 pass out on lo0 inet proto tcp from any to any port = ssh keep state queue ssh
