@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.210 2002/05/28 17:28:14 jasoni Exp $ */
+/*	$OpenBSD: pf.c,v 1.211 2002/05/31 19:45:17 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5299,7 +5299,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir)
 		else
 			m_freem(m0);
 	}
-	
+
 	if (error == 0)
 		ipstat.ips_fragmented++;
 
