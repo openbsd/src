@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_df.c,v 1.10 2003/06/02 23:32:07 millert Exp $	*/
+/*	$OpenBSD: ext2fs_df.c,v 1.11 2004/09/14 22:46:04 deraadt Exp $	*/
 
 /*
  * This file is substantially derived from src/sys/ufs/ext2fs/ext2fs_vfsops.c:e2fs_statfs().
@@ -53,7 +53,7 @@ int		e2fs_df(int, char *, struct statfs *);
 extern int	bread(int, off_t, void *, int);
 extern char	*getmntpt(char *);
 
-union {
+static union {
 	struct ext2fs ie_fs;
 	char dummy[SBSIZE];
 } sb;

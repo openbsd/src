@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_df.c,v 1.9 2003/06/02 23:32:07 millert Exp $	*/
+/*	$OpenBSD: ffs_df.c,v 1.10 2004/09/14 22:46:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -55,7 +55,7 @@ int		ffs_df(int, char *, struct statfs *);
 extern int	bread(int, off_t, void *, int);
 extern char	*getmntpt(char *);
 
-union {
+static union {
 	struct fs iu_fs;
 	char dummy[SBSIZE];
 } sb;
