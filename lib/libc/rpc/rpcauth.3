@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpcauth.3,v 1.3 1999/05/25 13:06:46 aaron Exp $
+.\"	$OpenBSD: rpcauth.3,v 1.4 1999/05/25 21:16:25 aaron Exp $
 .\" Mostly converted to mandoc by Theo de Raadt, Tue Feb 24 04:04:46 MST 1998
 .\"
 .Dd February 16, 1988
@@ -53,11 +53,9 @@ The parameter
 is the name of the machine on which the information was
 created;
 .Fa uid
-is the user's user
-.Tn ID ;
+is the user's user ID;
 .Fa gid
-is the user's current group
-.Tn ID ;
+is the user's current group ID;
 .Fa len
 and
 .Fa aup_gids
@@ -71,25 +69,24 @@ with the appropriate parameters.
 .Pp
 .Sh SEE ALSO
 .\"Xr rpc_secure 3 ,
-.Xr rpc 3 ,
-.Xr getrpcport 3 ,
-.Xr portmap 8 ,
-.Xr rpc 5 ,
 .Xr rpcgen 1 ,
 .Xr select 2 ,
-.Xr xdr 3 .
-.br
-The following manuals:
-.RS
-.ft I
-Remote Procedure Calls: Protocol Specification
-.br
-Remote Procedure Call Programming Guide
-.br
-rpcgen Programming Guide
-.br
-.ft R
-.RE
-.Fa "RPC: Remote Procedure Call Protocol Specification" ,
-.Tn RFC1050, Sun Microsystems, Inc.,
-.Tn USC-ISI .
+.Xr getrpcport 3 ,
+.Xr rpc 3 ,
+.Xr xdr 3 ,
+.Xr rpc 5 ,
+.Xr portmap 8
+.Rs
+.%T "Remote Procedure Calls: Protocol Specification"
+.Re
+.Rs
+.%T "Remote Procedure Call Programming Guide"
+.Re
+.Rs
+.%T "rpcgen Programming Guide"
+.Re
+.Rs
+.%A "Sun Microsystems, Inc."
+.%T "RPC: Remote Procedure Call Protocol Specification"
+.%R "RFC1050, USC-ISI"
+.Re

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xdr.3,v 1.9 1999/05/25 13:06:46 aaron Exp $
+.\"	$OpenBSD: xdr.3,v 1.10 1999/05/25 21:16:25 aaron Exp $
 .\" Mostly converted to mandoc by Theo de Raadt, Tue Feb 24 04:04:46 MST 1998
 .\"
 .Dd February 16, 1988
@@ -532,16 +532,15 @@ routines as parameters, and
 one of the most frequently used primitives, requires three.
 Returns one if it succeeds, zero otherwise.
 .Sh SEE ALSO
-.Xr rpc 3 .
-.Pp
-The following manuals:
-.RS
-.ft I
-eXternal Data Representation Standard: Protocol Specification
-.br
-eXternal Data Representation: Sun Technical Notes
-.ft R
-.br
-.Tn "XDR: External Data Representation Standard" ,
-.Tn RFC1014, Sun Microsystems, Inc.,
-.Tn USC-ISI .
+.Xr rpc 3
+.Rs
+.%T eXternal Data Representation Standard: Protocol Specification
+.Re
+.Rs
+.%T eXternal Data Representation: Sun Technical Notes
+.Re
+.Rs
+.%A "Sun Microsystems, Inc."
+.%T "XDR: External Data Representation Standard"
+.%R "RFC1014, USC-ISI"
+.Re
