@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.75 2004/10/17 03:13:55 djm Exp $ */
+/* $OpenBSD: netcat.c,v 1.76 2004/12/10 16:51:31 hshoexer Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -102,7 +102,7 @@ main(int argc, char *argv[])
 	struct addrinfo hints;
 	struct servent *sv;
 	socklen_t len;
-	struct sockaddr *cliaddr;
+	struct sockaddr_storage cliaddr;
 	char *proxy;
 	char *proxyhost = "", *proxyport = NULL;
 	struct addrinfo proxyhints;
