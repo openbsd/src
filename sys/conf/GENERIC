@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.76 2001/05/30 02:12:22 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.77 2001/06/25 04:31:50 kjell Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -79,6 +79,7 @@ option		PPP_BSDCOMP	# PPP BSD compression
 option		PPP_DEFLATE
 #option		MROUTING	# Multicast router
 
+pseudo-device	pf	1	# packet filter
 pseudo-device	loop	2	# network loopback
 pseudo-device	bpfilter 8	# packet filter
 pseudo-device	sl	2	# CSLIP
