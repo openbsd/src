@@ -9,71 +9,48 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: sshd.8,v 1.1 1999/09/26 20:53:38 deraadt Exp $
+.\" $Id: sshd.8,v 1.2 1999/09/26 22:30:06 deraadt Exp $
 .\"
-.TH SSHD 8 "November 8, 1995" "SSH" "SSH"
-
-.SH NAME
-sshd \- secure shell daemon
-
-.SH SYNOPSIS
-.na
-.B sshd
-[\c
-.BI \-b \ bits\fR\c
-]
-[\c
-.B \-d \c
-]
-[\c
-.BI \-f \ config_file\fR\c
-]
-[\c
-.BI \-g \ login_grace_time\fR\c
-]
-[\c
-.BI \-h \ host_key_file\fR\c
-]
-[\c
-.B \-i \c
-]
-[\c
-.BI \-k \ key_gen_time\fR\c
-]
-[\c
-.BI \-p \ port\fR\c
-]
-[\c
-.B \-q \c
-]
-.ad
-
-
-.SH DESCRIPTION 
-.LP
-.B Sshd 
+.Dd September 25, 1999
+.Dt SSHD 8
+.Os
+.Sh NAME
+.Nm sshd
+.Nd secure shell daemon
+.Sh SYNOPSIS
+.Nm sshd
+.Op Fl diq
+.Op Fl b Ar bits
+.Op Fl f Ar config_file
+.Op Fl g Ar login_grace_time
+.Op Fl h Ar host_key_file
+.Op Fl k Ar key_gen_time
+.Op Fl p Ar port
+.Sh DESCRIPTION 
+.Nm
 (Secure Shell Daemon) is the daemon program for 
-.BR ssh ".
+.Xr ssh 1 .
 Together these programs replace rlogin and rsh programs, and
 provide secure encrypted communications between two untrusted hosts
 over an insecure network.  The programs are intended to be as easy to
 install and use as possible.
-.LP
-.B Sshd
+.Pp
+.Nm
 is the daemon that listens for connections from clients.  It is
 normally started at boot from 
-.I /etc/rc.local
-or equivalent.  It forks a new
+.Pa /etc/rc .
+It forks a new
 daemon for each incoming connection.  The forked daemons handle
 key exchange, encryption, authentication, command execution,
 and data exchange.
-.LP
-Sshd works as follows.  Each host has a host-specific RSA key
+.Pp
+.Nm
+works as follows.  Each host has a host-specific RSA key
 (normally 1024 bits) used to identify the host.  Additionally, when
 the daemon starts, it generates a server RSA key (normally 768 bits).
 This key is normally regenerated every hour if it has been used, and
 is never stored on disk.
-.LP
+.Pp
 Whenever a client connects the daemon, the daemon sends its host
 and server public keys to the client.  The client compares the
 host key against its own database to verify that it has not changed.
@@ -83,326 +60,337 @@ the encrypted number to the server.  Both sides then start to use this
 random number as a session key which is used to encrypt all further
 communications in the session.  The rest of the session is encrypted
 using a conventional cipher.  Currently, 
-.BR \s-1Blowfish\s0 ",
-.BR \s-1IDEA\s0 ",
-.BR \s-1DES\s0 ",
-.BR \s-1\&3DES\s0 ",
-.B \s-13DES\s0
+Blowfish, IDEA, DES, and 3DES.
+3DES
 is used by default.  The client selects the encryption algorithm to use
 from those offered by the server.
-.LP
+.Pp
 Next, the server and the client enter an authentication dialog.  The
-client tries to authenticate itself using \|\s+2.\s0rhosts
-authentication, \|\s+2.\s0rhosts authentication combined with RSA host
+client tries to authenticate itself using
+.Pa .rhosts
+authentication,
+.Pa .rhosts
+authentication combined with RSA host
 authentication, RSA challenge-response authentication, or password
 based authentication.
-.LP
+.Pp
 Rhosts authentication is normally disabled
 because it is fundamentally insecure, but can be enabled in the server
 configuration file if desired.  System security is not improved unless
-.BR rshd "(8),
-.BR rlogind "(8),
-.BR rexecd "(8), and
-.B rexd "(8)
-are disabled (thus completely disabling
-.BR rlogin (1)
+.Xr rshd 8 ,
+.Xr rlogind 8 ,
+.Xr rexecd 8 ,
 and
-.BR rsh (1)
+.Xr rexd 8
+are disabled (thus completely disabling
+.Xr rlogin 1
+and
+.Xr rsh 1
 into that machine).
-.LP
+.Pp
 If the client successfully authenticates itself, a dialog for
 preparing the session is entered.  At this time the client may request
 things like allocating a pseudo-tty, forwarding X11 connections,
 forwarding TCP/IP connections, or forwarding the authentication agent
 connection over the secure channel.
-.LP
+.Pp
 Finally, the client either requests a shell or execution of a command.
 The sides then enter session mode.  In this mode, either side may send
 data at any time, and such data is forwarded to/from the shell or
 command on the server side, and the user terminal in the client side.
-.LP
+.Pp
 When the user program terminates and all forwarded X11 and other
 connections have been closed, the server sends command exit status to
 the client, and both sides exit.
-.LP
-.B Sshd 
+.Pp
+.Nm
 can be configured using command-line options or a configuration
 file.  Command-line options override values specified in the
 configuration file.
-
-
-.SH OPTIONS
-.TP
-.BI \-b \ bits
+.Sh OPTIONS
+.Bl -tag -width Ds
+.It Fl b Ar bits
 Specifies the number of bits in the server key (default 768).
-.TP
-.B \-d
+.Pp
+.It Fl d
 Debug mode.  The server sends verbose debug output to the system
 log, and does not put itself in the background.  The server also will
 not fork and will only process one connection.  This option is only
 intended for debugging for the server.
-.TP
-.BI \-f \ configuration_file
+.It Fl f Ar configuration_file
 Specifies the name of the configuration file.  The default is
-.IR /etc/sshd_config ".
-.TP
-.BI \-g \ login_grace_time
+.Pa /etc/sshd_config .
+.It Fl g Ar login_grace_time
 Gives the grace time for clients to authenticate themselves (default
 300 seconds).  If the client fails to authenticate the user within
 this many seconds, the server disconnects and exits.  A value of zero
 indicates no limit.
-.TP
-.BI \-h \ host_key_file
+.It Fl h Ar host_key_file
 Specifies the file from which the host key is read (default
-.IR /etc/ssh_host_key).  
+.Pa /etc/ssh_host_key ) .
 This option must be given if sshd is not run as root (as the normal
 host file is normally not readable by anyone but root).
-.TP
-.B \-i
+.It Fl i
 Specifies that sshd is being run from inetd.  Sshd is normally not run
 from inetd because it needs to generate the server key before it can
 respond to the client, and this may take tens of seconds.  Clients
 would have to wait too long if the key was regenerated every time.
 However, with small key sizes (e.g.  512) using sshd from inetd may
 be feasible.
-.TP
-.BI \-k \ key_gen_time
+.It Fl k Ar key_gen_time
 Specifies how often the server key is regenerated (default 3600
 seconds, or one hour).  The motivation for regenerating the key fairly
 often is that the key is not stored anywhere, and after about an hour,
 it becomes impossible to recover the key for decrypting intercepted
 communications even if the machine is cracked into or physically
 seized.  A value of zero indicates that the key will never be regenerated.
-.TP
-.BI \-p \ port
+.It Fl p Ar port
 Specifies the port on which the server listens for connections
 (default 22).
-.TP
-.B \-q
+.It Fl q
 Quiet mode.  Nothing is sent to the system log.  Normally the beginning,
 authentication, and termination of each connection is logged.
-
-.SH CONFIGURATION FILE
-
-.B Sshd
+.El
+.Sh CONFIGURATION FILE
+.Nm
 reads configuration data from 
-.I /etc/sshd_config
-(or the file specified with -f on the command line).  The file
-contains keyword-value pairs, one per line.  Lines starting with '#'
+.Pa /etc/sshd_config
+(or the file specified with
+.Fl f
+on the command line).  The file
+contains keyword-value pairs, one per line.  Lines starting with
+.Ql #
 and empty lines are interpreted as comments.
-
+.Pp
 The following keywords are possible.
-.TP
-.B AFSTokenPassing
+.Bl -tag -width Ds
+.It Cm AFSTokenPassing
 Specifies whether to accept AFS tokens passed from the client. Default
-is "yes".
-.TP
-.B AllowHosts
+is
+.Dq yes .
+.It Cm AllowHosts
 This keyword can be followed by any number of host name patterns,
 separated by spaces.  If specified, login is allowed only from hosts
-whose name matches one of the patterns.  '*' and '?' can be used as
+whose name matches one of the patterns.
+.Ql \&*
+and
+.Ql ?
+can be used as
 wildcards in the patterns.  Normal name servers are used to map the
 client's host into a canonical host name.  If the name cannot be
 mapped, its IP-address is used as the host name.  By default all hosts
 are allowed to connect.
-
+.Pp
 Note that
-.B sshd
-can also be configured to use tcp_wrappers using the --with-libwrap
+.Nm
+can also be configured to use tcp_wrappers using the
+.Fl -with-libwrap
 compile-time configuration option.
-.TP
-.B DenyHosts
+.It Cm DenyHosts
 This keyword can be followed by any number of host name patterns,
 separated by spaces.  If specified, login is disallowed from the hosts
 whose name matches any of the patterns.
-.TP
-.B FascistLogging
+.It Cm FascistLogging
 Specifies whether to use verbose logging.  Verbose logging violates
 the privacy of users and is not recommended.  The argument must be
-"yes" or "no" (without the quotes).  The default is "no".
-.TP
-.B HostKey
+.Dq yes
+or
+.Dq no .
+The default is
+.Dq no .
+.It Cm HostKey
 Specifies the file containing the private host key (default
-.IR /etc/ssh_host_key ").
-.TP
-.B IgnoreRhosts
+.Pa /etc/ssh_host_key ) .
+.It Cm IgnoreRhosts
 Specifies that rhosts and shosts files will not be used in
 authentication.
-.I /etc/hosts.equiv
+.Pa /etc/hosts.equiv
 and
-.I /etc/shosts.equiv 
-are still used.  The default is "no".
-.TP
-.B KeepAlive
+.Pa /etc/shosts.equiv 
+are still used.  The default is 
+.Dq no .
+.It Cm KeepAlive
 Specifies whether the system should send keepalive messages to the
 other side.  If they are sent, death of the connection or crash of one
 of the machines will be properly noticed.  However, this means that
 connections will die if the route is down temporarily, and some people
 find it annoying.  On the other hand, if keepalives are not send,
-sessions may hang indefinitely on the server, leaving "ghost" users
-and consuming server resources.
-
-The default is "yes" (to send keepalives), and the server will notice
+sessions may hang indefinitely on the server, leaving
+.Dq ghost
+users and consuming server resources.
+.Pp
+The default is
+.Dq yes
+(to send keepalives), and the server will notice
 if the network goes down or the client host reboots.  This avoids
 infinitely hanging sessions.
-
-To disable keepalives, the value should be set to "no" in both the
-server and the client configuration files.
-.TP
-.B KerberosAuthentication
+.Pp
+To disable keepalives, the value should be set to
+.Dq no
+in both the server and the client configuration files.
+.It Cm KerberosAuthentication
 Specifies whether Kerberos authentication is allowed. This can
 be in the form of a Kerberos ticket, or if PasswordAuthentication
 is yes, the password provided by the user will be validated through
 the Kerberos KDC / AFS kaserver / DCE Security Server. Default is yes.
-.TP
-.B KerberosOrLocalPasswd
+.It Cm KerberosOrLocalPasswd
 If set then if password authentication through Kerberos fails then
 the password will be validated via any additional local mechanism
-such as /etc/passwd or SecurID. Default is no.
-.TP
-.B KerberosTgtPassing
+such as
+.Pa /etc/passwd
+or SecurID. Default is
+.Dq no .
+.It Cm KerberosTgtPassing
 Specifies whether a Kerberos TGT may be forwarded to the server.
 Default is no, TGT forwarding does only work with the AFS kaserver.
-.TP
-.B KerberosTicketCleanup
+.It Cm KerberosTicketCleanup
 Specifies whether to automatically destroy the user's
 ticket cache file on logout. Default is yes.
-.TP
-.B KeyRegenerationInterval
+.It Cm KeyRegenerationInterval
 The server key is automatically regenerated after this many seconds
 (if it has been used).  The purpose of regeneration is to prevent
 decrypting captured sessions by later breaking into the machine and
 stealing the keys.  The key is never stored anywhere.  If the value is
 0, the key is never regenerated.  The default is 3600
 (seconds).
-.TP
-.B LoginGraceTime
+.It Cm LoginGraceTime
 The server disconnects after this time if the user has not
 successfully logged in.  If the value is 0, there is no time limit.
 The default is 600 (seconds).
-.TP
-.B PasswordAuthentication
+.It Cm PasswordAuthentication
 Specifies whether password authentication is allowed.
-The default is "yes".
-.TP
-.B PermitEmptyPasswords
+The default is
+.Dq yes .
+.It Cm PermitEmptyPasswords
 When password authentication is allowed, it specifies whether the
 server allows login to accounts with empty password strings.  The default
-is "yes".
-.TP
-.B PermitRootLogin
+is
+.Dq yes .
+.It Cm PermitRootLogin
 Specifies whether the root can log in using
-.BR ssh .
-The default is "yes".
-
-Root login with RSA authentication when the "command" option has been
+.Xr ssh 1 .
+The default is
+.Dq yes .
+.Pp
+Root login with RSA authentication when the
+.Ar command
+option has been
 specified will be allowed regardless of the value of this setting
 (which may be useful for taking remote backups even if root login is
 normally not allowed).
-.TP
-.B Port
+.It Cm Port
 Specifies the port number that
-.B sshd
+.Nm
 listens on.  The default is 22.
-.TP
-.B PrintMotd
+.It Cm PrintMotd
 Specifies whether
-.B sshd
+.Nm
 should print 
-.I /etc/motd
+.Pa /etc/motd
 when a user logs in interactively.  (On some systems it is also
-printed by the shell, /etc/profile, or equivalent.)  The default is
-"yes".
-.TP
-.B QuietMode
+printed by the shell,
+.Pa /etc/profile ,
+or equivalent.)  The default is
+.Dq yes .
+.It Cm QuietMode
 Specifies whether the system runs in quiet mode.  In quiet mode,
 nothing is logged in the system log, except fatal errors.  The default
-is "no".
-.TP
-.B RandomSeed
+is
+.Dq no .
+.It Cm RandomSeed
 Specifies the file containing the random seed for the server; this
 file is created automatically and updated regularly.  The default is
-.IR /etc/ssh_random_seed ".
-.TP
-.B RhostsAuthentication
+.Pa /etc/ssh_random_seed .
+.It Cm RhostsAuthentication
 Specifies whether authentication using rhosts or /etc/hosts.equiv
 files is sufficient.  Normally, this method should not be permitted
 because it is insecure.  RhostsRSAAuthentication should be used
 instead, because it performs RSA-based host authentication in addition
 to normal rhosts or /etc/hosts.equiv authentication.
-The default is "no".
-.TP
-.B RhostsRSAAuthentication
+The default is
+.Dq no .
+.It Cm RhostsRSAAuthentication
 Specifies whether rhosts or /etc/hosts.equiv authentication together
-with successful RSA host authentication is allowed.  The default is "yes".
-.TP
-.B RSAAuthentication
-Specifies whether pure RSA authentication is allowed.  The default is "yes".
-.TP
-.B ServerKeyBits
+with successful RSA host authentication is allowed.  The default is
+.Dq yes .
+.It Cm RSAAuthentication
+Specifies whether pure RSA authentication is allowed.  The default is
+.Dq yes .
+.It Cm ServerKeyBits
 Defines the number of bits in the server key.  The minimum value is
 512, and the default is 768.
-.TP
-.B StrictModes
-Specifies whether ssh should check file modes and ownership of the
+.It Cm StrictModes
+Specifies whether SSH should check file modes and ownership of the
 user's home directory and rhosts files before accepting login.  This
 is normally desirable because novices sometimes accidentally leave their
 directory or files world-writable.  The default is "yes".
-.TP
-.B SyslogFacility
+.It Cm SyslogFacility
 Gives the facility code that is used when logging messages from
-.B sshd.
+.Nm sshd .
 The possible values are: DAEMON, USER, AUTH, LOCAL0, LOCAL1, LOCAL2,
 LOCAL3, LOCAL4, LOCAL5, LOCAL6, LOCAL7.  The default is DAEMON.
-.TP
-.B X11Forwarding
-Specifies whether X11 forwarding is permitted.  The default is "yes".
+.It Cm X11Forwarding
+Specifies whether X11 forwarding is permitted.  The default is
+.Dq yes .
 Note that disabling X11 forwarding does not improve security in any
 way, as users can always install their own forwarders.
-
-.SH LOGIN PROCESS
-
+.El
+.Sh LOGIN PROCESS
 When a user successfully logs in,
-.B sshd
+.Nm
 does the following:
-.IP 1.
+.Bl -enum -offset indent
+.It
 If the login is on a tty, and no command has been specified,
 prints last login time and 
-.B /etc/motd
+.Pa /etc/motd
 (unless prevented in the configuration file or by
-.IR $HOME/\s+2.\s0hushlogin ;
-see the FILES section).
-.IP 2.
+.Pa $HOME/.hushlogin ;
+see the
+.Sx FILES 
+section).
+.It
 If the login is on a tty, records login time.
-.IP 3.
-Checks /etc/nologin; if it exists, prints contents and quits
+.It
+Checks
+.Pa /etc/nologin ;
+if it exists, prints contents and quits
 (unless root).
-.IP 4.
+.It
 Changes to run with normal user privileges.
-.IP 5.
+.It
 Sets up basic environment.
-.IP 6.
-Reads /etc/environment if it exists.
-.IP 7.
-Reads $HOME/.ssh/environment if it exists.
-.IP 8.
+.It
+Reads
+.Pa /etc/environment
+if it exists.
+.It
+Reads
+.Pa $HOME/.ssh/environment
+if it exists.
+.It
 Changes to user's home directory.
-.IP 9.
-If $HOME/.ssh/rc exists, runs it; else if /etc/sshrc exists, runs
-it; otherwise runs xauth.  The "rc" files are given the X11
+.It
+If
+.Pa $HOME/.ssh/rc
+exists, runs it; else if
+.Pa /etc/sshrc
+exists, runs
+it; otherwise runs xauth.  The
+.Dq rc
+files are given the X11
 authentication protocol and cookie in standard input.
-.IP 10.
+.It
 Runs user's shell or command.
-.RT
-
-
-.SH AUTHORIZED_KEYS FILE FORMAT
-.LP
+.El
+.Sh AUTHORIZED_KEYS FILE FORMAT
 The 
-.I \&$HOME/\s+2.\s0ssh/authorized_keys
+.Pa $HOME/.ssh/authorized_keys
 file lists the RSA keys that are
 permitted for RSA authentication.  Each line of the file contains one
-key (empty lines and lines starting with a '#' are ignored as
+key (empty lines and lines starting with a
+.Ql #
+are ignored as
 comments).  Each line consists of the following fields, separated by
 spaces: options, bits, exponent, modulus, comment.  The options field
 is optional; its presence is determined by whether the line starts
@@ -410,20 +398,18 @@ with a number or not (the option field never starts with a number).
 The bits, exponent, modulus and comment fields give the RSA key; the
 comment field is not used for anything (but may be convenient for the
 user to identify the key).
-.LP
+.Pp
 Note that lines in this file are usually several hundred bytes long
 (because of the size of the RSA key modulus).  You don't want to type
 them in; instead, copy the 
-.I identity.pub
+.Pa identity.pub
 file and edit it.
-.LP
+.Pp
 The options (if present) consists of comma-separated option
 specifications.  No spaces are permitted, except within double quotes.
 The following option specifications are supported:
-.IP
-.ti -.5i
-\fBfrom="pattern-list" \fR
-.br
+.Bl -tag -width Ds
+.It Cm from="pattern-list"
 Specifies that in addition to RSA authentication, the canonical name
 of the remote host must be present in the comma-separated list of
 patterns ('*' and '?' serve as wildcards).  The list may also contain
@@ -436,10 +422,7 @@ permits an intruder to log in from anywhere in the world.  This
 additional option makes using a stolen key more difficult (name
 servers and/or routers would have to be compromised in addition to
 just the key).
-.IP
-.ti -.5i
-\fBcommand="command"\fR
-.br
+.It Cm command="command"
 Specifies that the command is executed whenever this key is used for
 authentication.  The command supplied by the user (if any) is ignored.
 The command is run on a pty if the connection requests a pty;
@@ -449,76 +432,68 @@ to restrict certain RSA keys to perform just a specific operation.  An
 example might be a key that permits remote backups but nothing
 else.  Notice that the client may specify TCP/IP and/or X11
 forwardings unless they are explicitly prohibited.
-.IP
-.ti -.5i
-\fBenvironment="NAME=value"\fR
-.br
+.It Cm environment="NAME=value"
 Specifies that the string is to be added to the environment when
 logging in using this key.  Environment variables set this way
 override other default environment values.  Multiple options of this
 type are permitted.
-.TP
-.B no-port-forwarding
+.It Cm no-port-forwarding
 Forbids TCP/IP forwarding when this key is used for authentication.
 Any port forward requests by the client will return an error.  This
-might be used e.g.  in connection with the
-.B command
+might be used, e.g., in connection with the
+.Cm command
 option.
-.TP
-.B no-X11-forwarding
+.It Cm no-X11-forwarding
 Forbids X11 forwarding when this key is used for authentication.
 Any X11 forward requests by the client will return an error.
-.TP
-.B no-agent-forwarding
+.It Cm no-agent-forwarding
 Forbids authentication agent forwarding when this key is used for
 authentication.
-.TP
-.B no-pty
+.It Cm no-pty
 Prevents tty allocation (a request to allocate a pty will fail).
-
-.SS Examples
-.LP
+.El
+.Ss Examples
 1024 33 12121.\|.\|.\|312314325 ylo@foo.bar
-.LP
+.Pp
 from="*.niksula.hut.fi,!pc.niksula.hut.fi" 1024 35 23.\|.\|.\|2334 ylo@niksula
-.LP
+.Pp
 command="dump /home",no-pty,no-port-forwarding 1024 33 23.\|.\|.\|2323 backup.hut.fi
-
-
-
-.SH SSH_KNOWN_HOSTS FILE FORMAT
-.LP
+.Sh SSH_KNOWN_HOSTS FILE FORMAT
 The 
-.I /etc/ssh_known_hosts
+.Pa /etc/ssh_known_hosts
 and 
-.I \&$HOME/\s+2.\s0ssh/known_hosts
+.Pa $HOME/.ssh/known_hosts
 files contain host public keys for all known hosts.  The global file should
 be prepared by the admistrator (optional), and the per-user file is
 maintained automatically: whenever the user connects an unknown host
 its key is added to the per-user file.  The recommended way to create
-.I /etc/ssh_known_hosts
+.Pa /etc/ssh_known_hosts
 is to use the
-.B make-ssh-known-hosts
+.Xr make-ssh-known-hosts 1
 command.
-.LP
+.Pp
 Each line in these files contains the following fields: hostnames,
 bits, exponent, modulus, comment.  The fields are separated by spaces.
-.LP
+.Pp
 Hostnames is a comma-separated list of patterns ('*' and '?' act as
 wildcards); each pattern in turn is matched against the canonical host
 name (when authenticating a client) or against the user-supplied
 name (when authenticating a server).  A pattern may also be preceded
-by '!' to indicate negation: if the host name matches a negated
+by
+.Ql !
+to indicate negation: if the host name matches a negated
 pattern, it is not accepted (by that line) even if it matched another
 pattern on the line.
-.LP
+.Pp
 Bits, exponent, and modulus are taken directly from the host key; they
-can be obtained e.g.  from
-.IR /etc/ssh_host_key.pub ".
+can be obtained, e.g., from
+.Pa /etc/ssh_host_key.pub .
 The optional comment field continues to the end of the line, and is not used.
-.LP
-Lines starting with '#' and empty lines are ignored as comments.
-.LP
+.Pp
+Lines starting with
+.Ql #
+and empty lines are ignored as comments.
+.Pp
 When performing host authentication, authentication is accepted if any
 matching line has the proper key.  It is thus permissible (but not
 recommended) to have several lines or different host keys for the same
@@ -526,209 +501,198 @@ names.  This will inevitably happen when short forms of host names
 from different domains are put in the file.  It is possible
 that the files contain conflicting information; authentication is
 accepted if valid information can be found from either file.
-.LP
+.Pp
 Note that the lines in these files are typically hundreds of characters
 long, and you definitely don't want to type in the host keys by hand.
 Rather, generate them by a script (see 
-.BR make-ssh-known-hosts (1))
+.Xr make-ssh-known-hosts 1 )
 or by taking 
-.I /etc/ssh_host_key.pub
+.Pa /etc/ssh_host_key.pub
 and adding the host names at the front.
-
-.SS Examples
-
+.Ss Examples
 closenet,closenet.hut.fi,.\|.\|.\|,130.233.208.41 1024 37 159.\|.\|.93 closenet.hut.fi
-
-.SH FILES
-.TP
-.I /etc/sshd_config
+.Sh FILES
+.Bl -tag -width Ds
+.It Pa /etc/sshd_config
 Contains configuration data for
-.BR sshd .  
+.Nm sshd .
 This file should be writable by root only, but it is recommended
 (though not necessary) that it be world-readable.
-.TP
-.I /etc/ssh_host_key
+.It Pa /etc/ssh_host_key
 Contains the private part of the host key.  This file is normally
 created automatically by "make install", but can also be created
 manually using
-.BR ssh-keygen (1).
+.Xr ssh-keygen 1 .
 This file should only be owned by root, readable only by root, and not
 accessible to others.
-.TP
-.I /etc/ssh_host_key.pub
+.It Pa /etc/ssh_host_key.pub
 Contains the public part of the host key.  This file is normally
 created automatically by "make install", but can also be created
 manually.  This file should be world-readable but writable only by
 root.  Its contents should match the private part.  This file is not
 really used for anything; it is only provided for the convenience of
 the user so its contents can be copied to known hosts files.
-.TP
-.I /etc/ssh_random_seed
+.It Pa /etc/ssh_random_seed
 This file contains a seed for the random number generator.  This file
 should only be accessible by root.
-.TP
-.I /var/run/sshd.pid
-Contains the process id of the
-.B sshd
+.It Pa /var/run/sshd.pid
+Contains the process ID of the
+.Nm
 listening for connections (if there are several daemons running
 concurrently for different ports, this contains the pid of the one
 started last).  The contents of this file are not sensitive; it can be
 world-readable.
-.TP
-.I \&$HOME/\s+2.\s0ssh/authorized_keys
+.It Pa $HOME/.ssh/authorized_keys
 Lists the RSA keys that can be used to log into the user's account.
 This file must be readable by root (which may on some machines imply
 it being world-readable if the user's home directory resides on an NFS
 volume).  It is recommended that it not be accessible by others.  The
 format of this file is described above.
-.TP
-.I "/etc/ssh_known_hosts\fR and \fI$HOME/\s+2.\s0ssh/known_hosts\fR
+.It Pa "/etc/ssh_known_hosts" and "$HOME/.ssh/known_hosts"
 These files are consulted when using rhosts with RSA host
 authentication to check the public key of the host.  The key must be
 listed in one of these files to be accepted.  (The client uses the
 same files to verify that the remote host is the one we intended to
 connect.)  These files should be writable only by root/the owner.
-.I /etc/ssh_known_hosts
-should be world-readable, and \fI$HOME/\s+2.\s0ssh/known_hosts\fR can
-but need not be world-readable.
-.TP
-.I /etc/nologin
+.Pa /etc/ssh_known_hosts
+should be world-readable, and
+.Pa $HOME/.ssh/known_hosts
+can but need not be world-readable.
+.Pa /etc/nologin
 If this file exists, 
-.B sshd
+.Nm
 refuses to let anyone except root log in.  The contents of the file
 are displayed to anyone trying to log in, and non-root connections are
 refused.  The file should be world-readable.
-.TP
-.I \&$HOME/\s+2.\s0rhosts
+.Pa $HOME/.rhosts
 This file contains host-username pairs, separated by a space, one per
 line.  The given user on the corresponding host is permitted to log in
 without password.  The same file is used by rlogind and rshd.
-.B Ssh 
-differs from rlogind
+Ssh differs from rlogind
 and rshd in that it requires RSA host authentication in addition to
 validating the host name retrieved from domain name servers (unless
-compiled with the \-\-with\-rhosts configuration option).  The file must
+compiled with the
+.Fl -with-rhosts
+configuration option).  The file must
 be writable only by the user; it is recommended that it not be
 accessible by others.
-
+.Pp
 If is also possible to use netgroups in the file.  Either host or user
 name may be of the form +@groupname to specify all hosts or all users
 in the group.
-.TP
-.I \&$HOME/\s+2.\s0shosts
-For
-.B ssh,
-this file is exactly the same as for \s+2.\s0rhosts.  However, this file is
-not used by rlogin and rshd, so using this permits access using
-.B ssh
-only.
-.TP
-.I /etc/hosts.equiv
-This file is used during \s+2.\s0rhosts authentication.  In the
+.It Pa $HOME/.shosts
+For ssh,
+this file is exactly the same as for
+.Pa .rhosts .
+However, this file is
+not used by rlogin and rshd, so using this permits access using SSH only.
+.Pa /etc/hosts.equiv
+This file is used during
+.Pa .rhosts
+authentication.  In the
 simplest form, this file contains host names, one per line.  Users on
 those hosts are permitted to log in without a password, provided they
 have the same user name on both machines.  The host name may also be
 followed by a user name; such users are permitted to log in as
-.B any
-user on this machine (except root).  Additionally, the syntax +@group
-can be used to specify netgroups.  Negated entries start with '-'.
-
+.Em any
+user on this machine (except root).  Additionally, the syntax
+.Dq +@group
+can be used to specify netgroups.  Negated entries start with
+.Ql \&- .
+.Pp
 If the client host/user is successfully matched in this file, login is
 automatically permitted provided the client and server user names are the
 same.  Additionally, successful RSA host authentication is normally
 required.  This file must be writable only by root; it is recommended
 that it be world-readable.
-
-\fBWarning: It is almost never a good idea to use user names in 
-hosts.equiv.\fR
+.Pp
+.Sy Warning: It is almost never a good idea to use user names in 
+.Pa hosts.equiv .
 Beware that it really means that the named user(s) can log in as
-\fBanybody\fR,
+.Em anybody ,
 which includes bin, daemon, adm, and other accounts that own critical
 binaries and directories.  Using a user name practically grants the
 user root access.  The only valid use for user names that I can think
 of is in negative entries.
-\fBNote that this warning also applies to rsh/rlogin.\fR
-.TP
-.I /etc/shosts.equiv
+.Pp
+Note that this warning also applies to rsh/rlogin.
+.It Pa /etc/shosts.equiv
 This is processed exactly as
-.I /etc/hosts.equiv.
+.Pa /etc/hosts.equiv .
 However, this file may be useful in environments that want to run both
-rsh/rlogin and
-.B ssh.
-.TP
-.I /etc/environment
+rsh/rlogin and ssh.
+.It Pa /etc/environment
 This file is read into the environment at login (if it exists).  It
-can only contain empty lines, comment lines (that start with '#'), and
-assignment lines of the form name=value.  This file is processed in
+can only contain empty lines, comment lines (that start with
+.Ql # ) ,
+and assignment lines of the form name=value.  This file is processed in
 all environments (normal rsh/rlogin only process it on AIX and
 potentially some other systems).  The file should be writable only by
 root, and should be world-readable.
-.TP
-.I \&$HOME/\s+2.\s0ssh/environment
+.It Pa $HOME/.ssh/environment
 This file is read into the environment after /etc/environment.  It has
 the same format.  The file should be writable only by the user; it
 need not be readable by anyone else.
-.TP
-.I \&$HOME/\s+2.\s0ssh/rc
+.It Pa $HOME/.ssh/rc
 If this file exists, it is run with /bin/sh after reading the
 environment files but before starting the user's shell or command.  If
 X11 spoofing is in use, this will receive the "proto cookie" pair in
-standard input (and DISPLAY in environment).  This must call xauth in
-that case. 
-
+standard input (and
+.Ev DISPLAY
+in environment).  This must call
+.Xr xauth 1
+in that case.
+.Pp
 The primary purpose of this file is to run any initialization routines
 which may be needed before the user's home directory becomes
 accessible; AFS is a particular example of such an environment.
-
+.Pp
 This file will probably contain some initialization code followed by
 something similar to: "if read proto cookie; then echo add $DISPLAY
 $proto $cookie | xauth -q -; fi".
-
-If this file does not exist, /etc/sshrc is run, and if that
+.Pp
+If this file does not exist,
+.Pa /etc/sshrc
+is run, and if that
 does not exist either, xauth is used to store the cookie.
-
+.Pp
 This file should be writable only by the user, and need not be
 readable by anyone else.
-.TP
-.I /etc/sshrc
-Like $HOME/\s+2.\s0ssh/rc.  This can be used to specify
+.It Pa /etc/sshrc
+Like
+.Pa $HOME/.ssh/rc .
+This can be used to specify
 machine-specific login-time initializations globally.  This file
 should be writable only by root, and should be world-readable.
-
-
-.SH INSTALLATION
-.LP
-.B Sshd 
+.Sh INSTALLATION
+.Nm 
 is normally run as root.  If it is not run as root, it can
 only log in as the user it is running as, and password authentication
 may not work if the system uses shadow passwords.  An alternative
 host key file must also be used.
-.LP
-.B Sshd 
+.Pp
+.Nm 
 is normally started from 
-.I /etc/rc.local
+.Pa /etc/rc
 or equivalent at system boot.
-.LP
+.Pp
 Considerable work has been put to making
-.B sshd
+.Nm
 secure.  However, if you find a security problem, please report it
 immediately to <ssh-bugs@cs.hut.fi>.
-
-.SH AUTHOR
-.LP
+.Sh AUTHOR
 Tatu Ylonen <ylo@cs.hut.fi>
-.LP
+.Pp
 Information about new releases, mailing lists, and other related
-issues can be found from the ssh WWW home page at
-http://www.cs.hut.fi/ssh.
-
-.SH SEE ALSO
-.LP
-.BR ssh (1),
-.BR make-ssh-known-hosts (1),
-.BR ssh-keygen (1),
-.BR ssh-agent (1),
-.BR ssh-add (1),
-.BR scp (1),
-.BR rlogin (1),
-.BR rsh (1)
+issues can be found from the SSH WWW home page:
+.Pp
+.Dl http://www.cs.hut.fi/ssh.
+.Sh SEE ALSO
+.Xr make-ssh-known-hosts 1 ,
+.Xr rlogin 1 ,
+.Xr rsh 1 ,
+.Xr scp 1 ,
+.Xr ssh 1 ,
+.Xr ssh-add x 1 ,
+.Xr ssh-agent 1 ,
+.Xr ssh-keygen 1
