@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.11 2000/08/26 03:01:50 itojun Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.12 2000/12/11 17:40:52 itojun Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-/*__RCSID("$OpenBSD: inet6.c,v 1.11 2000/08/26 03:01:50 itojun Exp $");*/
+/*__RCSID("$OpenBSD: inet6.c,v 1.12 2000/12/11 17:40:52 itojun Exp $");*/
 /*__RCSID("KAME Id: inet6.c,v 1.10 2000/02/09 10:49:31 itojun Exp");*/
 #endif
 #endif /* not lint */
@@ -870,6 +870,7 @@ icmp6_stats(off, name)
 
 	p(icp6s_reflect, "\t%qu message response%s generated\n");
 	p(icp6s_nd_toomanyopt, "\t%qu message%s with too many ND options\n");
+	p(icp6s_pmtuchg, "\t%llu path MTU change%s\n");
 #undef p_5
 #undef p
 }
