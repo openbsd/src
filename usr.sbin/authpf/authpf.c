@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.14 2002/05/16 09:18:55 deraadt Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.15 2002/05/21 19:48:04 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -26,7 +26,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
  */
 
 #include <sys/types.h>
@@ -76,11 +75,9 @@ char luser[MAXLOGNAME] = "";	/* username */
 char ipsrc[256] = "";		/* ip as a string */
 char pidfile[MAXPATHLEN];	/* we save pid in this file. */
 char userfile[MAXPATHLEN];	/* we save username in this file */
-char configfile[] = PATH_CONFFILE;
-char allowfile[] = PATH_ALLOWFILE;
 
 struct timeval Tstart, Tend;		/* start and end times of session */
-static volatile sig_atomic_t hasta_la_vista;
+static volatile sig_atomic_t want_death;
 
 int	pfctl_add_rule(struct pfctl *, struct pf_rule *);
 int	pfctl_add_nat(struct pfctl *, struct pf_nat *);
@@ -93,8 +90,8 @@ static int	allowed_luser(char *);
 static int	check_luser(char *, char *);
 static int	changefilter(int, char *, char *);
 static void	authpf_kill_states(void);
-static void	terminator(int s);
-static __dead void	go_away(void);
+static void	need_death(int s);
+static __dead void	do_death(void);
 
 /*
  * User shell for authenticating gateways. sole purpose is to allow
@@ -123,7 +120,7 @@ main(int argc, char *argv[])
 
 	pwp = getpwuid(getuid());
 	if (pwp == NULL) {
-		syslog (LOG_ERR, "can't find user for uid %d", getuid());
+		syslog(LOG_ERR, "can't find user for uid %d", getuid());
 		exit(1);
 	}
 
@@ -140,7 +137,7 @@ main(int argc, char *argv[])
 				cp++;
 		}
 		if (inet_pton(AF_INET, ipsrc, &jnk) != 1) {
-			syslog (LOG_ERR, "Can't get IP from SSH_CLIENT %s",
+			syslog(LOG_ERR, "Can't get IP from SSH_CLIENT %s",
 			    ipsrc);
 			exit(1);
 		}
@@ -194,7 +191,7 @@ main(int argc, char *argv[])
 
 		lockcnt++;
 		fscanf(fp, "%d", &otherpid);
-		syslog (LOG_DEBUG, "Tried to lock %s, in use by pid %d: %s",
+		syslog(LOG_DEBUG, "Tried to lock %s, in use by pid %d: %s",
 		    pidfile, otherpid, strerror(save_errno));
 		fclose(fp);
 
@@ -202,9 +199,9 @@ main(int argc, char *argv[])
 		if (otherpid > 0) {
 			syslog(LOG_INFO,
 			    "killing prior auth (pid %d) of %s by user %s",
-			    otherpid,  ipsrc, luser);
+			    otherpid, ipsrc, luser);
 			if (kill((pid_t) otherpid, SIGTERM) == -1) {
-				syslog (LOG_INFO,
+				syslog(LOG_INFO,
 				    "Couldn't kill process %d: (%m)",
 				    otherpid);
 			}
@@ -256,21 +253,21 @@ main(int argc, char *argv[])
 		/* XXX */
 	}
 
-	signal(SIGTERM, terminator);
-	signal(SIGINT, terminator);
-	signal(SIGALRM, terminator);
-	signal(SIGPIPE, terminator);
-	signal(SIGHUP, terminator);
-	signal(SIGSTOP, terminator);
-	signal(SIGTSTP, terminator);
-	while(1) {
+	signal(SIGTERM, need_death);
+	signal(SIGINT, need_death);
+	signal(SIGALRM, need_death);
+	signal(SIGPIPE, need_death);
+	signal(SIGHUP, need_death);
+	signal(SIGSTOP, need_death);
+	signal(SIGTSTP, need_death);
+	while (1) {
 		printf("\r\nHello %s, ", luser);
 		printf("You are authenticated from host \"%s\"\r\n", ipsrc);
 		print_message(PATH_MESSAGE);
 		while (1) {
 			sleep(10);
-			if (hasta_la_vista)
-				go_away();
+			if (want_death)
+				do_death();
 		}
 	}
 	/* NOTREACHED */
@@ -298,7 +295,7 @@ read_config(void)
 	int i = 0;
 	FILE *f;
 
-	f = fopen(configfile, "r");
+	f = fopen(PATH_CONFFILE, "r");
 	if (f == NULL) 
 		exit(1); /* exit silently if we have no config file */
 
@@ -316,7 +313,7 @@ read_config(void)
 		len = strlen(buf);
 		if (buf[len - 1] != '\n' && !feof(f)) {
 			syslog(LOG_ERR, "line %d too long in %s", i,
-			    configfile);
+			    PATH_CONFFILE);
 			exit(1);
 		}
 		buf[len - 1] = '\0';
@@ -367,7 +364,7 @@ read_config(void)
 	return;
  parse_error:
 	fclose(f);
-	syslog(LOG_ERR, "parse error, line %d of %s", i, configfile);
+	syslog(LOG_ERR, "parse error, line %d of %s", i, PATH_CONFFILE);
 	exit(1);
 }
 
@@ -417,13 +414,13 @@ allowed_luser(char *luser)
 	FILE *f;
 	int matched;
 
-	if ((f = fopen(allowfile, "r")) == NULL) {
+	if ((f = fopen(PATH_ALLOWFILE, "r")) == NULL) {
 		if (errno == ENOENT) {
 			/*
-			 * allowfile doesn't exist, this this gateway
+			 * PATH_ALLOWFILE doesn't exist, this this gateway
 			 * isn't restricted to certain users...
 			 */
-			return(1);
+			return (1);
 		}
 
 		/*
@@ -432,8 +429,8 @@ allowed_luser(char *luser)
 		 * problem.
 		 */
 		syslog(LOG_ERR, "Can't open allowed users file %s (%s)",
-		    allowfile, strerror(errno));
-		return(0);
+		    PATH_ALLOWFILE, strerror(errno));
+		return (0);
 	} else {
 		/*
 		 * /etc/authpf.allow exists, thus we do a linear
@@ -462,17 +459,17 @@ allowed_luser(char *luser)
 			}
 
 			if (matched)
-				return(1); /* matched an allowed username */
+				return (1); /* matched an allowed username */
 		}
 		syslog(LOG_INFO, "Denied access to %s: not listed in %s",
-		    luser, allowfile);
+		    luser, PATH_ALLOWFILE);
 
 		/* reuse buf */
 		buf = "\n\nSorry, you aren't allowed to use this facility!\n";
 		fputs(buf, stdout);
 	}
 	fflush(stdout);
-	return(0);
+	return (0);
 }
 
 /*
@@ -495,7 +492,7 @@ check_luser(char *luserdir, char *luser)
 	    sizeof(tmp)) {
 		syslog(LOG_ERR, "Provided banned directory line too long (%s)",
 		    luserdir);
-		return(0);
+		return (0);
 	}
 	if ((f = fopen(tmp, "r")) == NULL) {
 		if (errno == ENOENT) {
@@ -503,16 +500,16 @@ check_luser(char *luserdir, char *luser)
 			 * file or dir doesn't exist, so therefore
 			 * this luser isn't banned..  all is well
 			 */
-			return(1);
+			return (1);
 		} else {
 			/*
 			 * luser may in fact be banned, but we can't open the
 			 * file even though it's there. probably a config
 			 * problem.
 			 */
-			syslog (LOG_ERR, "Can't open banned file %s (%s)",
+			syslog(LOG_ERR, "Can't open banned file %s (%s)",
 			    tmp, strerror(errno));
-			return(0);
+			return (0);
 		}
 	} else {
 		/*
@@ -525,15 +522,15 @@ check_luser(char *luserdir, char *luser)
 		/* reuse tmp */
 		strlcpy(tmp, "\n\n-**- Sorry, you have been banned! -**-\n\n",
 		    sizeof(tmp));
-		while((fputs(tmp, stdout) != EOF) && !feof(f)) {
+		while ((fputs(tmp, stdout) != EOF) && !feof(f)) {
 			if (fgets(tmp, sizeof(tmp), f) == NULL) {
 				fflush(stdout);
-				return(0);
+				return (0);
 			}
 		}
 	}
 	fflush(stdout);
-	return(0);
+	return (0);
 }
 
 
@@ -555,10 +552,10 @@ changefilter(int add, char *luser, char *ipsrc)
 	int rcount, wcount;
 	FILE *fin = NULL;
 
-	memset (&pf, 0, sizeof(pf));
-	memset (&pr, 0, sizeof(pr));
+	memset(&pf, 0, sizeof(pf));
+	memset(&pr, 0, sizeof(pr));
 
-	syslog (LOG_DEBUG, "%s filter for ip=%s, user %s",
+	syslog(LOG_DEBUG, "%s filter for ip=%s, user %s",
 	    add ? "Adding" : "Removing", ipsrc, luser);
 
 	/* add filter rules */
@@ -761,13 +758,13 @@ changefilter(int add, char *luser, char *ipsrc)
 		close(from_fd);
 	if (add) {
 		(void)gettimeofday(&Tstart, NULL);
-		syslog (LOG_INFO, "Allowing %s, user %s", ipsrc, luser);
+		syslog(LOG_INFO, "Allowing %s, user %s", ipsrc, luser);
 	} else {
 		(void)gettimeofday(&Tend, NULL);
-		syslog (LOG_INFO, "Removed %s, user %s - duration %ld seconds",
+		syslog(LOG_INFO, "Removed %s, user %s - duration %ld seconds",
 		    ipsrc, luser, Tend.tv_sec - Tstart.tv_sec);
 	}
-	return(ret);
+	return (ret);
 }
 
 /*
@@ -804,16 +801,16 @@ authpf_kill_states()
 
 /* signal handler that makes us go away properly */
 static void
-terminator(int s)
+need_death(int s)
 {
-	hasta_la_vista = 1;
+	want_death = 1;
 }
 
 /*
  * function that removes our stuff when we go away.
  */
 static __dead void
-go_away(void)
+do_death(void)
 {
 	int ret = 0;
 
