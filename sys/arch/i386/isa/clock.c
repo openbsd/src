@@ -178,7 +178,7 @@ clockintr(arg)
 	struct clockframe *frame = arg;		/* not strictly necessary */
 
 	hardclock(frame);
-	return -1;
+	return 1;
 }
 
 int
@@ -191,7 +191,7 @@ rtcintr(arg)
 	stat = mc146818_read(NULL, MC_REGC);
 	if (stat & MC_REGC_PF) {
 		statclock(frame);
-		return -1;
+		return 1;
 	}
 	return 0;
 }
