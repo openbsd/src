@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_ext.c,v 1.5 1996/05/07 13:07:01 mickey Exp $	*/
+/*	$OpenBSD: pcvt_ext.c,v 1.6 1996/07/17 18:11:13 downsj Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -517,6 +517,7 @@ vga_chipset(void)
 				return VGA_CL_GD5428;
 
 			case 0x28:
+			case 0x2a:	/* GD5434 */
 				can_do_132col = 1;
 				return VGA_CL_GD5430;
 
