@@ -1,5 +1,5 @@
-/*	$OpenBSD: psychoreg.h,v 1.4 2001/09/04 15:02:09 jason Exp $	*/
-/*	$NetBSD: psychoreg.h,v 1.7 2001/07/20 00:07:13 eeh Exp $ */
+/*	$OpenBSD: psychoreg.h,v 1.5 2001/09/15 07:08:04 jason Exp $	*/
+/*	$NetBSD: psychoreg.h,v 1.6.4.2 2001/09/13 01:14:40 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Eduardo E. Horvath
@@ -96,7 +96,7 @@ struct psychoreg {
 	u_int64_t	pcib_slot2_int;		/* PCI bus b slot 1 irq map reg */	/* 1fe.0000.0c30 */
 	u_int64_t	pcib_slot3_int;		/* PCI bus b slot 1 irq map reg */	/* 1fe.0000.0c38 */
 
-	u_int64_t	pad5[120];
+	u_int64_t	pad4[120];
 
 	u_int64_t	scsi_int_map;		/* SCSI interrupt map reg */		/* 1fe.0000.1000 */
 	u_int64_t	ether_int_map;		/* ethernet interrupt map reg */	/* 1fe.0000.1008 */
@@ -120,7 +120,7 @@ struct psychoreg {
 	u_int64_t	ffb0_int_map;		/* FFB0 graphics interrupt map reg */	/* 1fe.0000.1098 */
 	u_int64_t	ffb1_int_map;		/* FFB1 graphics interrupt map reg */	/* 1fe.0000.10a0 */
 	
-	u_int64_t	pad6[107];
+	u_int64_t	pad5[107];
 
 	/* Note: clear interrupt 0 registers are not really used */
 	u_int64_t	pcia0_clr_int[4];	/* PCI a slot 0 clear int regs 0..7 */	/* 1fe.0000.1400-1418 */
@@ -132,7 +132,7 @@ struct psychoreg {
 	u_int64_t	pcib2_clr_int[4];	/* PCI b slot 2 clear int regs 0..7 */	/* 1fe.0000.14c0-14d8 */
 	u_int64_t	pcib3_clr_int[4];	/* PCI b slot 3 clear int regs 0..7 */	/* 1fe.0000.14d0-14f8 */
 
-	u_int64_t	pad8[96];
+	u_int64_t	pad6[96];
 
 	u_int64_t	scsi_clr_int;		/* SCSI clear int reg */		/* 1fe.0000.1800 */
 	u_int64_t	ether_clr_int;		/* ethernet clear int reg */		/* 1fe.0000.1808 */
@@ -154,11 +154,11 @@ struct psychoreg {
 	u_int64_t	pciberr_clr_int;	/* PCI bus b error clear int reg */	/* 1fe.0000.1888 */
 	u_int64_t	pwrmgt_clr_int;		/* power mgmt wake clr interrupt reg */	/* 1fe.0000.1890 */
 
-	u_int64_t	pad9[45];
+	u_int64_t	pad7[45];
 
 	u_int64_t	intr_retry_timer;	/* interrupt retry timer */		/* 1fe.0000.1a00 */
 
-	u_int64_t	pad10[63];
+	u_int64_t	pad8[63];
 
 	struct timer_counter {
 		u_int64_t	tc_count;	/* timer/counter 0/1 count register */	/* 1fe.0000.1c00,1c10 */
@@ -167,56 +167,56 @@ struct psychoreg {
 
 	u_int64_t	pci_dma_write_sync;	/* PCI DMA write sync register (IIi) */	/* 1fe.0000.1c20 */
 
-	u_int64_t	pad11[123];
+	u_int64_t	pad9[123];
 
 	struct pci_ctl {
 		u_int64_t	pci_csr;	/* PCI a/b control/status register */	/* 1fe.0000.2000,4000 */
-		u_int64_t	pad1;
+		u_int64_t	pad10;
 		u_int64_t	pci_afsr;	/* PCI a/b AFSR register */		/* 1fe.0000.2010,4010 */
 		u_int64_t	pci_afar;	/* PCI a/b AFAR register */		/* 1fe.0000.2018,4018 */
 		u_int64_t	pci_diag;	/* PCI a/b diagnostic register */	/* 1fe.0000.2020,4020 */
 		u_int64_t	pci_tasr;	/* PCI target address space reg (IIi)*/	/* 1fe.0000.2028,4028 */
 
-		u_int64_t	pad12[250];
+		u_int64_t	pad11[250];
 
 		/* This is really the IOMMU's, not the PCI bus's */
 		struct iommu_strbuf pci_strbuf;						/* 1fe.0000.2800-210 */
 #define psy_iommu_strbuf psy_pcictl[0].pci_strbuf
 		
-		u_int64_t	pad13[765];
+		u_int64_t	pad12[765];
 	} psy_pcictl[2];			/* For PCI a and b */
 
 	/* NB: FFB0 and FFB1 intr map regs also appear at 1fe.0000.6000 and 1fe.0000.8000 respectively */
-	u_int64_t	pad14[2048];
+	u_int64_t	pad13[2048];
 
 	u_int64_t	dma_scb_diag0;		/* DMA scoreboard diag reg 0 */		/* 1fe.0000.a000 */
 	u_int64_t	dma_scb_diag1;		/* DMA scoreboard diag reg 1 */		/* 1fe.0000.a008 */
 
-	u_int64_t	pad15[126];
+	u_int64_t	pad14[126];
 
 	u_int64_t	iommu_svadiag;		/* IOMMU virtual addr diag reg */	/* 1fe.0000.a400 */
 	u_int64_t	iommu_tlb_comp_diag;	/* IOMMU TLB tag compare diag reg */	/* 1fe.0000.a408 */
 	
-	u_int64_t	pad16[30];
+	u_int64_t	pad15[30];
 
 	u_int64_t	iommu_queue_diag[16];	/* IOMMU LRU queue diag */		/* 1fe.0000.a500-a578 */
 	u_int64_t	tlb_tag_diag[16];	/* TLB tag diag */			/* 1fe.0000.a580-a5f8 */
 	u_int64_t	tlb_data_diag[16];	/* TLB data RAM diag */			/* 1fe.0000.a600-a678 */
 
-	u_int64_t	pad17[48];
+	u_int64_t	pad16[48];
 
 	u_int64_t	pci_int_diag;		/* SBUS int state diag reg */		/* 1fe.0000.a800 */
 	u_int64_t	obio_int_diag;		/* OBIO and misc int state diag reg */	/* 1fe.0000.a808 */
 
-	u_int64_t	pad18[254];
+	u_int64_t	pad17[254];
 
 	struct strbuf_diag {
 		u_int64_t	strbuf_data_diag[128];	/* streaming buffer data RAM diag */	/* 1fe.0000.b000-b3f8 */
 		u_int64_t	strbuf_error_diag[128];	/* streaming buffer error status diag *//* 1fe.0000.b400-b7f8 */
 		u_int64_t	strbuf_pg_tag_diag[16];	/* streaming buffer page tag diag */	/* 1fe.0000.b800-b878 */
-		u_int64_t	pad19[16];
+		u_int64_t	pad18[16];
 		u_int64_t	strbuf_ln_tag_diag[16];	/* streaming buffer line tag diag */	/* 1fe.0000.b900-b978 */
-		u_int64_t	pad20[208];
+		u_int64_t	pad19[208];
 	} psy_strbufdiag[2];					/* For PCI a and b */
 
 	/* 
