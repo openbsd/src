@@ -1,4 +1,4 @@
-/* $OpenBSD: bwx.c,v 1.1 2002/07/07 14:24:04 matthieu Exp $ */
+/* $OpenBSD: bwx.c,v 1.2 2002/07/13 20:00:47 deraadt Exp $ */
 /*-
  * Copyright (c) 1998 Doug Rabson
  * All rights reserved.
@@ -85,20 +85,17 @@ bwx_ioperm(u_int32_t from, u_int32_t num, int on)
 	
 	start = trunc_page(from);
 	end = round_page(from + num);
-	if ((bwx_int1_ports = mmap(0, end-start, 
-				   PROT_READ|PROT_WRITE, MAP_SHARED, mem_fd, 
-				   bwx_io_base + BWX_EV56_INT1 + start))
-	     == MAP_FAILED) 
+	if ((bwx_int1_ports = mmap(0, end-start, PROT_READ|PROT_WRITE,
+	    MAP_SHARED, mem_fd, bwx_io_base + BWX_EV56_INT1 + start)) ==
+	    MAP_FAILED) 
 		err(1, "mmap int1");
-	if ((bwx_int2_ports = mmap(0, end-start, 
-				   PROT_READ|PROT_WRITE, MAP_SHARED, mem_fd, 
-				   bwx_io_base + BWX_EV56_INT2 + start))
-	    == MAP_FAILED)
+	if ((bwx_int2_ports = mmap(0, end-start, PROT_READ|PROT_WRITE,
+	    MAP_SHARED, mem_fd, bwx_io_base + BWX_EV56_INT2 + start)) ==
+	    MAP_FAILED)
 		err(1, "mmap int2");
-	if ((bwx_int4_ports = mmap(0, end-start, 
-				   PROT_READ|PROT_WRITE, MAP_SHARED, mem_fd, 
-				   bwx_io_base + BWX_EV56_INT4 + start))
-	    == MAP_FAILED) 
+	if ((bwx_int4_ports = mmap(0, end-start, PROT_READ|PROT_WRITE,
+	    MAP_SHARED, mem_fd, bwx_io_base + BWX_EV56_INT4 + start)) ==
+	    MAP_FAILED) 
 		err(1, "mmap int4");
 	return 0;
 }
@@ -162,20 +159,20 @@ bwx_map_memory(u_int32_t address, u_int32_t size)
 	h = malloc(sizeof(struct bwx_mem_handle));
 	if (!h) return 0;
 	h->virt1 = mmap(0, size << 5, PROT_READ|PROT_WRITE, MAP_SHARED,
-			mem_fd, bwx_mem_base + BWX_EV56_INT1 + address);
+	    mem_fd, bwx_mem_base + BWX_EV56_INT1 + address);
 	if ((long) h->virt1 == -1) {
 		free(h);
 		return 0;
 	}
 	h->virt2 = mmap(0, size << 5, PROT_READ|PROT_WRITE, MAP_SHARED,
-			mem_fd, bwx_mem_base + BWX_EV56_INT2 + address);
+	    mem_fd, bwx_mem_base + BWX_EV56_INT2 + address);
 	if ((long) h->virt2 == -1) {
 		munmap(h->virt1, size);
 		free(h);
 		return 0;
 	}
 	h->virt4 = mmap(0, size << 5, PROT_READ|PROT_WRITE, MAP_SHARED,
-			mem_fd, bwx_mem_base + BWX_EV56_INT4 + address);
+	    mem_fd, bwx_mem_base + BWX_EV56_INT4 + address);
 	if ((long) h->virt4 == -1) {
 		munmap(h->virt1, size);
 		munmap(h->virt2, size);
