@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.801 2004/11/21 09:32:17 grange Exp 
+ *	OpenBSD: pcidevs,v 1.802 2004/11/21 17:56:06 grange Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1950,6 +1950,7 @@
 #define	PCI_PRODUCT_NVIDIA_NFORCE_DDR	0x01ab		/* nForce 420 DDR */
 #define	PCI_PRODUCT_NVIDIA_NFORCE_MEM	0x01ac		/* nForce 220/420 */
 #define	PCI_PRODUCT_NVIDIA_NFORCE_MEM1	0x01ad		/* nForce 220/420 */
+#define	PCI_PRODUCT_NVIDIA_NFORCE_APU	0x01b0		/* nForce APU */
 #define	PCI_PRODUCT_NVIDIA_NFORCE_ACA	0x01b1		/* nForce AC-97 Audio */
 #define	PCI_PRODUCT_NVIDIA_NFORCE_ISA	0x01b2		/* nForce ISA */
 #define	PCI_PRODUCT_NVIDIA_NFORCE_SMB	0x01b4		/* nForce SMBus */
