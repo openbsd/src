@@ -17,8 +17,7 @@ S!=	cd ../../../..; pwd
 SPARC64=	$S/arch/sparc64
 
 INCLUDES=	-nostdinc -I. -I$S/arch -I$S
-# XXX - remove the __OpenBSD__ later!
-CPPFLAGS=	-U__NetBSD__ -D__OpenBSD__ ${INCLUDES} ${IDENT} -D_KERNEL -Dsparc64
+CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL
 
 CDIAGFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.23 2001/10/08 14:16:31 jason Exp $
+#	$OpenBSD: GENERIC,v 1.24 2001/10/08 22:17:14 art Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -8,7 +8,6 @@ include "../../../conf/GENERIC"
 option		SUN4U
 option		_LP64
 
-option		DDB_SAFE_CONSOLE	# XXX - remove later
 option		PCIVERBOSE
 
 maxusers	64
