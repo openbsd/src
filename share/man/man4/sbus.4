@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sbus.4,v 1.20 2003/06/19 20:29:51 deraadt Exp $
+.\"	$OpenBSD: sbus.4,v 1.21 2003/06/19 20:46:12 deraadt Exp $
 .\"	$NetBSD: sbus.4,v 1.5 2002/01/21 17:54:10 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -94,16 +94,16 @@ board.
 .Dq Happy Meal
 .Tn Ethernet
 interfaces.
-.It Xr lebuffer 4 , Xr ledma 4
-.Tn Lance
-7990 series
-.Tn Ethernet
-DMA interfaces.
 .It Xr le 4
 .Tn Lance
 7990 series
 .Tn Ethernet
 interfaces.
+.It Xr lebuffer 4 , Xr ledma 4
+.Tn Lance
+7990 series
+.Tn Ethernet
+DMA interfaces.
 .It Xr qe 4
 Quad Ethernet Controller
 board.
@@ -161,10 +161,10 @@ Sun Serial/Parallel Interface card.
 .Bl -tag -width 12n -offset ind -compact
 .It Xr auxio 4
 What is an auxio Jason?
-.It Xr uperf 4
-Performance counters on the host bridge.
 .It Xr presto 4
 Prestoserve battery-backed memory.
+.It Xr uperf 4
+Performance counters on the host bridge.
 .El
 .Sh SEE ALSO
 .Xr agten 4 ,
