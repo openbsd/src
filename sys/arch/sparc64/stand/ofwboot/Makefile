@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2001/08/22 10:33:01 art Exp $
+#	$OpenBSD: Makefile,v 1.5 2001/08/22 10:41:46 art Exp $
 #	$NetBSD: Makefile,v 1.2 2001/03/04 14:50:05 mrg Exp $
 
 CURDIR=	${.CURDIR}
@@ -17,7 +17,7 @@ SRCS=		srt0.s Locore.c boot.c ofdev.c alloc.c net.c netif_of.c vers.c
 
 CWARNFLAGS+=	-Wno-main
 CFLAGS+=	${COPTS} ${CEXTRAFLAGS}
-CPPFLAGS+=	-D_STANDALONE -DSUN4U
+CPPFLAGS+=	-D_STANDALONE -DSUN4U -nostdinc
 #CPPFLAGS+=	-DNETIF_DEBUG 
 
 MKMAN=		no
