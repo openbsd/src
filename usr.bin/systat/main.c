@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.13 1997/08/25 19:05:26 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.14 1997/11/04 12:20:19 kstailey Exp $	*/
 /*	$NetBSD: main.c,v 1.8 1996/05/10 23:16:36 thorpej Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: main.c,v 1.13 1997/08/25 19:05:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.14 1997/11/04 12:20:19 kstailey Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -191,6 +191,7 @@ main(argc, argv)
 	dellave = 0.0;
 
 	signal(SIGALRM, display);
+	signal(SIGWINCH, resize);
 	display(0);
 	noecho();
 	crmode();
@@ -281,6 +282,21 @@ die(signo)
 	}
 	exit(0);
 }
+
+void
+resize(signo)
+	int signo;
+{
+	int oldmask;
+
+#define mask(s) (1 << ((s) - 1))
+	oldmask = sigblock(mask(SIGALRM));
+	clearok(curscr, TRUE);
+	wrefresh(curscr);
+	sigsetmask(oldmask);
+#undef mask
+}
+
 
 #ifdef __STDC__
 #include <stdarg.h>
