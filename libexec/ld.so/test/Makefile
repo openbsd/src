@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2001/07/11 05:56:02 pvalchev Exp $
+#	$OpenBSD: Makefile,v 1.8 2001/09/25 21:51:16 drahn Exp $
 
 DIR=/usr/src/libexec/ld.so/obj/ld.so
 #necessary to build the shared objects. not necessary for dltest but
@@ -6,7 +6,7 @@ DIR=/usr/src/libexec/ld.so/obj/ld.so
 CFLAGS += -fpic
 CFLAGS += -g
 CFLAGS += -I${.CURDIR}/.. -I${.CURDIR}/../${MACHINE_ARCH}
-LDFLAGS += -Wl,--export-dynamic -Wl,-dynamic-linker -Wl,${DIR}
+LDFLAGS += -Wl,--export-dynamic -Wl,-dynamic-linker,${DIR} -Wl,-rpath,.
 #LDFLAGS += -Wl,--export-dynamic 
 
 SRCS=	ldt.c

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dltest.c,v 1.3 2001/05/14 22:18:23 niklas Exp $	*/
+/*	$OpenBSD: dltest.c,v 1.4 2001/09/25 21:51:16 drahn Exp $	*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -6,7 +6,6 @@
 #include <dlfcn.h>
 #include <ctype.h>
 #include <elf_abi.h>
-#include <machine/reloc.h>
 #include <nlist.h>
 #include "archdep.h"
 #include "resolve.h"
