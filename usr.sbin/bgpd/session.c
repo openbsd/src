@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.126 2004/03/05 20:25:30 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.127 2004/03/05 21:48:28 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1587,8 +1587,6 @@ parse_capabilities(struct peer *peer, u_char *d, u_int16_t dlen)
 
 		switch (capa_code) {
 		default:
-			log_peer_warnx(&peer->conf, "got capability %u len %u",
-			    capa_code, capa_len);
 			break;
 		}
 	}
