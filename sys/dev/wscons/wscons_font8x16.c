@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_font8x16.c,v 1.2 2001/02/11 23:23:14 fgsch Exp $	*/
+/*	$OpenBSD: wscons_font8x16.c,v 1.3 2004/06/05 22:54:40 miod Exp $	*/
 
 /*
  *  Copyright (c) 1992, 1993, 1994 Hellmuth Michaelis and Joerg Wunsch
@@ -46,7 +46,6 @@
 #include <sys/types.h>
 
 #include <dev/rcons/raster.h>
-#include "dev/wscons/wscons_raster.h"
 
 static u_int32_t fontdata16_0_pixels[] = {
 /* 0x00 */ 0x00000000, 0x00000000, 0x00000000, 0x00000000,
