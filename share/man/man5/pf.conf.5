@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.16 2001/09/25 19:55:25 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.17 2001/09/28 14:12:15 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -244,10 +244,13 @@ must match.
 .Em pfctl
 supports macro definition and expansion like:
 .Bd -literal
-    if="kue0"
-    pass out on $if from any to any           keep state
-    pass in  on $if from any to any port = 25 keep state
+    ext_if = "kue0"
+    pass out on $ext_if from any to any           keep state
+    pass in  on $ext_if from any to any port = 25 keep state
 .Ed
+.Pp
+Macro names must start with a letter and may contain letters, digits
+and underscores.
 .Sh STATEFUL INSPECTION
 .Em pf
 is a stateful packet filter, which means it can track the state of

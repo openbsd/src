@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.36 2001/09/20 18:31:44 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.37 2001/09/28 14:12:15 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1272,7 +1272,7 @@ top:
 				yyerror("string too long");
 				return (findeol());
 			}
-			if (isalnum(c)) {
+			if (isalnum(c) || c == '_') {
 				*p++ = (char)c;
 				continue;
 			}
