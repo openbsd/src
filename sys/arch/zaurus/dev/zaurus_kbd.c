@@ -1,4 +1,4 @@
-/* $OpenBSD: zaurus_kbd.c,v 1.19 2005/03/15 23:48:40 uwe Exp $ */
+/* $OpenBSD: zaurus_kbd.c,v 1.20 2005/03/16 21:26:49 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -100,9 +100,9 @@ struct zkbd_softc {
 
 	/* wskbd bits */
 	struct device   *sc_wskbddev;
+	int sc_rawkbd;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	const char *sc_xt_keymap;
-	int sc_rawkbd;
 	struct timeout sc_rawrepeat_ch;
 #define MAXKEYS 20
 	char sc_rep[MAXKEYS];
