@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ptrace.2,v 1.9 2002/03/11 14:36:27 art Exp $
+.\"	$OpenBSD: ptrace.2,v 1.10 2002/03/12 14:38:12 art Exp $
 .\"	$NetBSD: ptrace.2,v 1.3 1996/02/23 01:39:41 jtc Exp $
 .\"
 .\" This file is in the public domain.
@@ -206,14 +206,27 @@ The
 member specifies what operation that needs to be done.
 Possible values are:
 .Bl -tag -width 18n
-.It PIOD_OP_READ_DATA
-.It PIOD_OP_WRITE_DATA
-.It PIOD_OP_READ_TEXT
-.It PIOD_OP_WRITE_TEXT
+.It PIOD_READ_D
+.It PIOD_WRITE_D
+.It PIOD_READ_I
+.It PIOD_WRITE_I
 .El
+.Pp
 See also the description of
 .Dv PT_READ_I
-for the difference between DATA and TEXT spaces.
+for the difference between D and I spaces.
+A pointer to the descriptor is passed in
+.Fa addr .
+On return the
+.Fa piod_len
+field in the descriptor will be updated with the actual number of bytes
+transferred.
+If the requested I/O couldn't be successfully performed
+.Fn ptrace
+will return
+.Li -1
+and set
+.Va errno .
 .El
 .Pp
 Additionally, machine-specific requests can exist.
