@@ -1,4 +1,4 @@
-.\"      $OpenBSD: ipnat.4,v 1.8 1998/09/15 09:57:29 pattonme Exp $
+.\"      $OpenBSD: ipnat.4,v 1.9 1998/09/26 06:53:05 deraadt Exp $
 .TH IPNAT 4
 .SH NAME
 ipnat \- Network Address Translation kernel interface
@@ -59,8 +59,8 @@ typedef struct  ipnat   {
 Recognised values for in_redir:
 .LP
 .nf
-#define NAT_MAP         0
-#define NAT_REDIRECT    1
+#define NAT_MAP         0x01
+#define NAT_REDIRECT    0x02
 .fi
 .PP
 .LP
