@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.20 1998/09/08 15:24:38 millert Exp $	*/
+/*	$OpenBSD: popen.c,v 1.21 1998/09/10 16:06:40 millert Exp $	*/
 /*	$NetBSD: popen.c,v 1.6 1997/05/13 06:48:42 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: popen.c,v 1.20 1998/09/08 15:24:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: popen.c,v 1.21 1998/09/10 16:06:40 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -383,20 +383,28 @@ wait_child(pid)
 {
 	struct child *cp;
 	sigset_t nset, oset;
+	int rv = 0;
 
 	sigemptyset(&nset);
 	sigaddset(&nset, SIGCHLD);
 	sigprocmask(SIG_BLOCK, &nset, &oset);
-
-	if ((cp = findchild(pid, 0)) == NULL)
-		return(-1);
-
-	while (!cp->done)
-		sigsuspend(&oset);
-	wait_status = cp->status;
-	delchild(cp);
+	/*
+	 * If we have not already waited on the pid (via sigchild)
+	 * wait on it now.  Otherwise, use the wait status stashed
+	 * by sigchild.
+	 */
+	cp = findchild(pid, 1);
+	if (cp == NULL || !cp->done)
+		rv = waitpid(pid, &wait_status, 0);
+	else
+		wait_status = cp->status;
+	if (cp != NULL)
+		delchild(cp);
 	sigprocmask(SIG_SETMASK, &oset, NULL);
-	return((WIFEXITED(wait_status) && WEXITSTATUS(wait_status)) ? -1 : 0);
+	if (rv == -1 || (WIFEXITED(wait_status) && WEXITSTATUS(wait_status)))
+		return(-1);
+	else
+		return(0);
 }
 
 /*
@@ -412,14 +420,12 @@ free_child(pid)
 	sigemptyset(&nset);
 	sigaddset(&nset, SIGCHLD);
 	sigprocmask(SIG_BLOCK, &nset, &oset);
-
-	if ((cp = findchild(pid, 0)) == NULL)
-		return;
-
-	if (cp->done)
-		delchild(cp);
-	else
-		cp->free = 1;
+	if ((cp = findchild(pid, 0)) != NULL) {
+		if (cp->done)
+			delchild(cp);
+		else
+			cp->free = 1;
+	}
 	sigprocmask(SIG_SETMASK, &oset, NULL);
 }
 
