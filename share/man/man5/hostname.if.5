@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.15 2000/01/10 03:06:45 deraadt Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.16 2000/01/10 03:10:50 deraadt Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -77,7 +77,8 @@ Other network setup:
 .Va addr_family Va options
 .Ed
 .Pp
-For example,
+A typical file contains only one line, but more extensive files are possible,
+for example:
 .Bd -literal -offset xxxx
 inet 10.0.1.12 255.255.255.0 10.0.1.255 media 100baseTX
 inet alias 10.0.1.13 255.255.255.255 10.0.1.13
