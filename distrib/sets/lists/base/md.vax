@@ -3,8 +3,9 @@
 ./usr/include/cast.h
 ./usr/include/vax
 ./usr/lib/gcc-lib/vax-unknown-openbsd2.7
-./usr/lib/gcc-lib/vax-unknown-openbsd2.7/2.95.2
-./usr/lib/gcc-lib/vax-unknown-openbsd2.7/2.95.2/include
+./usr/lib/gcc-lib/vax-unknown-openbsd2.7/2.95.3
+./usr/lib/gcc-lib/vax-unknown-openbsd2.7/2.95.3
+./usr/lib/gcc-lib/vax-unknown-openbsd2.7/2.95.3/include
 ./usr/lib/libstdc++.a.2.10.0
 ./usr/lib/scrt0.o
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/stireg.ph

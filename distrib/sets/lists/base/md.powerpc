@@ -3,6 +3,9 @@
 ./sbin/fdisk
 ./usr/include/powerpc
 ./usr/include/readline
+./usr/lib/gcc-lib/powerpc-unknown-openbsd2.7
+./usr/lib/gcc-lib/powerpc-unknown-openbsd2.7/2.95.3
+./usr/lib/gcc-lib/powerpc-unknown-openbsd2.7/2.95.3/include
 ./usr/libdata/perl5/powerpc-openbsd
 ./usr/libdata/perl5/powerpc-openbsd/5.6.0
 ./usr/libdata/perl5/powerpc-openbsd/5.6.0/.packlist

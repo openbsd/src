@@ -25,8 +25,8 @@
 ./usr/lib/apache/modules/mod_usertrack.so
 ./usr/lib/apache/modules/mod_vhost_alias.so
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.7
-./usr/lib/gcc-lib/m68k-unknown-openbsd2.7/2.95.2
-./usr/lib/gcc-lib/m68k-unknown-openbsd2.7/2.95.2/include
+./usr/lib/gcc-lib/m68k-unknown-openbsd2.7/2.95.3
+./usr/lib/gcc-lib/m68k-unknown-openbsd2.7/2.95.3/include
 ./usr/lib/libacl.so.5.0
 ./usr/lib/libc.so.25.0
 ./usr/lib/libc_r.so.3.0

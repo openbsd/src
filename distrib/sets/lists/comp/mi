@@ -588,6 +588,7 @@
 ./usr/include/g++/set.h
 ./usr/include/g++/slist
 ./usr/include/g++/slist.h
+./usr/include/g++/sstream
 ./usr/include/g++/stack
 ./usr/include/g++/stack.h
 ./usr/include/g++/std
