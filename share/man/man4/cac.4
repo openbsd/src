@@ -1,6 +1,6 @@
-.\"	$OpenBSD: cac.4,v 1.4 2000/12/18 15:49:44 mickey Exp $
+.\"	$OpenBSD: cac.4,v 1.5 2001/07/09 07:08:08 mickey Exp $
 .\"
-.\" Copyright (c) 2000 Michael Shalayeff.  All rights reserved.
+.\" Copyright (c) 2000,2001 Michael Shalayeff.  All rights reserved.
 .\"
 .\"
 .Dd December 17, 2000
@@ -36,8 +36,9 @@ driver provides support for the following RAID controllers:
 .Pp
 All the RAID set volume management is done via the card BIOS.
 .Pp
-The driver makes drives and/or RAID sets appear as
-.Xr sd 4 .
+Although the controllers are actual RAID controllers the driver makes them
+look just like SCSI controllers.  All RAID configuration is done through
+the controllers' BIOSes.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr scsi 4 ,
