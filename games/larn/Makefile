@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2002/05/23 18:43:00 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.14 2002/05/31 03:46:35 pjanzen Exp $
 
 # EXTRA
 #	Incorporates code to gather additional performance statistics
@@ -48,6 +48,7 @@ SRCS=	main.c object.c create.c tok.c display.c global.c data.c io.c \
 	signal.c moreobj.c movem.c regen.c fortune.c savelev.c
 DPADD=	${LIBCURSES}
 LDADD=	-lcurses
+BINMODE=2555
 
 beforeinstall:
 	(cd ${.CURDIR}/datfiles; ${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} \
