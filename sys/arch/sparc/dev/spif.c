@@ -1,4 +1,4 @@
-/*	$OpenBSD: spif.c,v 1.2 1999/02/01 13:45:22 jason Exp $	*/
+/*	$OpenBSD: spif.c,v 1.3 1999/02/04 15:43:21 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -91,8 +91,8 @@ int	spifsoftintr	__P((void *));
 int	stty_param	__P((struct tty *, struct termios *));
 struct tty *sttytty	__P((dev_t));
 int	stty_modem_control __P((struct stty_port *, int, int));
-static __inline	void	spif_write_ccr __P((struct stcregs *, u_int8_t));
-int	spif_compute_baud __P((speed_t, int, u_int8_t *, u_int8_t *));
+static __inline	void	stty_write_ccr __P((struct stcregs *, u_int8_t));
+int	stty_compute_baud __P((speed_t, int, u_int8_t *, u_int8_t *));
 void	stty_start	__P((struct tty *));
 
 int	sbppmatch	__P((struct device *, void *, void *));
@@ -190,7 +190,8 @@ spifattach(parent, self, aux)
 	sc->sc_rev2 = sc->sc_regs->stc.gfrcr;
 	sc->sc_regs->stc.gsvr = 0;
 
-	spif_write_ccr(&sc->sc_regs->stc, CD180_CCR_RESET | CD180_CCR_RESETALL);
+	stty_write_ccr(&sc->sc_regs->stc,
+	    CD180_CCR_CMD_RESET | CD180_CCR_RESETALL);
 	while (sc->sc_regs->stc.gsvr != 0xff);
 	while (sc->sc_regs->stc.gfrcr != sc->sc_rev2);
 
@@ -249,6 +250,9 @@ sttyattach(parent, dev, aux)
 	for (port = 0; port < sc->sc_nser; port++) {
 		struct stty_port *sp = &ssc->sc_port[port];
 		struct tty *tp;
+
+		sp->sp_dtr = 0;
+		sc->sc_regs->dtrlatch[port] = 1;
 
 		tp = ttymalloc();
 		if (tp == NULL)
@@ -325,8 +329,8 @@ sttyopen(dev, flags, mode, p)
 		s = spltty();
 
 		csc->sc_regs->stc.car = sp->sp_channel;
-		spif_write_ccr(&csc->sc_regs->stc,
-		    CD180_CCR_RESET | CD180_CCR_RESETCHAN);
+		stty_write_ccr(&csc->sc_regs->stc,
+		    CD180_CCR_CMD_RESET | CD180_CCR_RESETCHAN);
 
 		stty_param(tp, &tp->t_termios);
 
@@ -386,7 +390,8 @@ sttyclose(dev, flags, mode, p)
 	if (ISSET(tp->t_cflag, HUPCL) || !ISSET(tp->t_state, TS_ISOPEN)) {
 		stty_modem_control(sp, 0, DMSET);
 		csc->sc_regs->stc.car = port;
-		csc->sc_regs->stc.ccr = CD180_CCR_RESET | CD180_CCR_RESETCHAN;
+		csc->sc_regs->stc.ccr =
+		    CD180_CCR_CMD_RESET | CD180_CCR_RESETCHAN;
 	}
 
 	splx(s);
@@ -537,11 +542,11 @@ stty_param(tp, t)
 	int s, opt;
 
 	if (t->c_ospeed &&
-	    spif_compute_baud(t->c_ospeed, sc->sc_osc, &tbprl, &tbprh))
+	    stty_compute_baud(t->c_ospeed, sc->sc_osc, &tbprl, &tbprh))
 		return (EINVAL);
 
 	if (t->c_ispeed &&
-	    spif_compute_baud(t->c_ispeed, sc->sc_osc, &rbprl, &rbprh))
+	    stty_compute_baud(t->c_ispeed, sc->sc_osc, &rbprl, &rbprh))
 		return (EINVAL);
 
 	s = spltty();
@@ -591,7 +596,7 @@ stty_param(tp, t)
 
 	sc->sc_regs->stc.cor3 = STTY_RX_FIFO_THRESHOLD;
 
-	spif_write_ccr(&sc->sc_regs->stc, CD180_CCR_CORCHG |
+	stty_write_ccr(&sc->sc_regs->stc, CD180_CCR_CMD_COR |
 	    CD180_CCR_CORCHG1 | CD180_CCR_CORCHG2 | CD180_CCR_CORCHG3);
 
 	sc->sc_regs->stc.schr1 = 0x11;
@@ -613,7 +618,7 @@ stty_param(tp, t)
 		sc->sc_regs->stc.rbprl = rbprl;
 	}
 
-	spif_write_ccr(&sc->sc_regs->stc, CD180_CCR_CHANCTL |
+	stty_write_ccr(&sc->sc_regs->stc, CD180_CCR_CMD_CHAN |
 	    CD180_CCR_CHAN_TXEN | CD180_CCR_CHAN_RXEN);
 
 	sp->sp_carrier = sc->sc_regs->stc.msvr & CD180_MSVR_CD;
@@ -726,7 +731,7 @@ spifstcintr(vsc)
 	switch (ar) {
 	case CD180_GSVR_RXGOOD:
 		r = 1;
-		channel = (sc->sc_regs->stc.gscr1 >> 2) & CD180_GSCR_CMASK;
+		channel = CD180_GSCR_CHANNEL(sc->sc_regs->stc.gscr1);
 		sp = &sc->sc_ttys->sc_port[channel];
 		ptr = sp->sp_rput;
 		for (i = sc->sc_regs->stc.rdcr; i > 0; i--) {
@@ -747,7 +752,7 @@ spifstcintr(vsc)
 		break;
 	case CD180_GSVR_RXEXCEPTION:
 		r = 1;
-		channel = (sc->sc_regs->stc.gscr1 >> 2) & CD180_GSCR_CMASK;
+		channel = CD180_GSCR_CHANNEL(sc->sc_regs->stc.gscr1);
 		sp = &sc->sc_ttys->sc_port[channel];
 		ptr = sp->sp_rput;
 		*ptr++ = sc->sc_regs->stc.rcsr;
@@ -775,7 +780,7 @@ spifstcintr(vsc)
 		int cnt = 0;
 
 		r = 1;
-		channel = (sc->sc_regs->stc.gscr1 >> 2) & CD180_GSCR_CMASK;
+		channel = CD180_GSCR_CHANNEL(sc->sc_regs->stc.gscr1);
 		sp = &sc->sc_ttys->sc_port[channel];
 
 		if (!ISSET(sp->sp_flags, STTYF_STOP)) {
@@ -824,7 +829,7 @@ spifstcintr(vsc)
 	ar = sc->sc_regs->istc.mrar & CD180_GSVR_IMASK;
 	if (ar == CD180_GSVR_STATCHG) {
 		r = 1;
-		channel = (sc->sc_regs->stc.gscr1 >> 2) & CD180_GSCR_CMASK;
+		channel = CD180_GSCR_CHANNEL(sc->sc_regs->stc.gscr1);
 		sp = &sc->sc_ttys->sc_port[channel];
 		ar = sc->sc_regs->stc.mcr;
 		if (ar & CD180_MCR_CD) {
@@ -925,8 +930,21 @@ spifsoftintr(vsc)
 	return (r);
 }
 
+static __inline	void
+stty_write_ccr(stc, val)
+	struct stcregs *stc;
+	u_int8_t val;
+{
+	int tries = 100000;
+
+	while (stc->ccr && tries--);
+	if (tries == 0)
+		printf("CCR: timeout\n");
+	stc->ccr = val;
+}
+
 int
-spif_compute_baud(speed, clock, bprlp, bprhp)
+stty_compute_baud(speed, clock, bprlp, bprhp)
 	speed_t speed;
 	int clock;
 	u_int8_t *bprlp, *bprhp;
@@ -1050,17 +1068,4 @@ sbppioctl(dev, cmd, data, flags, p)
 	error = ENOTTY;
 
 	return (error);
-}
-
-static __inline	void
-spif_write_ccr(stc, val)
-	struct stcregs *stc;
-	u_int8_t val;
-{
-	int tries = 100000;
-
-	while (stc->ccr && tries--);
-	if (tries == 0)
-		printf("CCR: timeout\n");
-	stc->ccr = val;
 }

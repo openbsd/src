@@ -1,4 +1,4 @@
-/*	$OpenBSD: spifreg.h,v 1.2 1999/02/01 13:45:22 jason Exp $	*/
+/*	$OpenBSD: spifreg.h,v 1.3 1999/02/04 15:43:22 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -31,9 +31,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define	SERIAL_INTR	0
-#define	PARALLEL_INTR	1
-
 struct ppcregs {
 	volatile u_int8_t	in_pdata;	/* input data reg */
 	volatile u_int8_t	in_pstat;	/* input status reg */
@@ -49,6 +46,21 @@ struct ppcregs {
 	volatile u_int8_t	iack_pctrl;	/* intr-ack control reg */
 	volatile u_int8_t	iack_pweird;	/* intr-ack weird reg */
 };
+
+/* Parallel Status: read only */
+#define	PPC_PSTAT_ERROR		0x08		/* error */
+#define	PPC_PSTAT_SELECT	0x10		/* select */
+#define	PPC_PSTAT_PAPER		0x20		/* paper out */
+#define	PPC_PSTAT_ACK		0x40		/* ack */
+#define	PPC_PSTAT_BUSY		0x80		/* busy */
+
+/* Parallel Control: read/write */
+#define	PPC_CTRL_STROBE		0x01		/* strobe, 1=drop strobe */
+#define	PPC_CTRL_AFX		0x02		/* auto form-feed */
+#define	PPC_CTRL_INIT		0x04		/* init, 1=enable printer */
+#define	PPC_CTRL_SLCT		0x08		/* SLC, 1=select printer */
+#define	PPC_CTRL_IRQE		0x10		/* IRQ, 1=enable intrs */
+#define	PPC_CTRL_OUTPUT		0x20		/* direction: 1=ppc out */
 
 struct stcregs {
 	volatile u_int8_t	_unused0[1];	/* 0x00 unused */
@@ -121,10 +133,145 @@ struct stcregs {
 	volatile u_int8_t	eosrr;		/* end of service req reg */
 };
 
+/* Service Request Configuration Register */
+#define	CD180_SRCR_PKGTYP		0x80	/* chip package type */
+#define	CD180_SRCR_REGACKEN		0x40	/* register ack enable */
+#define	CD180_SRCR_DAISYEN		0x20	/* daisy chain enable */
+#define	CD180_SRCR_GLOBPRI		0x10	/* global priority */
+#define	CD180_SRCR_UNFAIR		0x08	/* use unfair interrupts */
+#define	CD180_SRCR_AUTOPRI		0x02	/* automatic priority */
+#define	CD180_SRCR_PRISEL		0x01	/* select rx/tx as high pri */
+
+/* Global Service Vector Register */
+#define	CD180_GSVR_IMASK		0x07	/* interrupt type mask */
+#define	CD180_GSVR_NOREQUEST		0x00	/* no request pending */
+#define	CD180_GSVR_STATCHG		0x01	/* modem signal change */
+#define	CD180_GSVR_TXDATA		0x02	/* tx service request */
+#define	CD180_GSVR_RXGOOD		0x03	/* rx service request */
+#define	CD180_GSVR_reserved1		0x04	/* reserved */
+#define	CD180_GSVR_reserved2		0x05	/* reserved */
+#define	CD180_GSVR_reserved3		0x06	/* reserved */
+#define	CD180_GSVR_RXEXCEPTION		0x07	/* rx exception request */
+
+/* Global Service Channel Register (1,2,3) */
+#define	CD180_GSCR_CHANNEL(gscr)	(((gscr) >> 2) & 7)
+
+/* Receive Data Count Register */
+#define	CD180_RDCR_MASK			0x0f	/* mask for fifo length */
+
+/* Receive Character Status Register */
+#define	CD180_RCSR_TO			0x80	/* time out */
+#define	CD180_RCSR_SCD2			0x40	/* special char detect 2 */
+#define	CD180_RCSR_SCD1			0x20	/* special char detect 1 */
+#define	CD180_RCSR_SCD0			0x10	/* special char detect 0 */
+#define	CD180_RCSR_BE			0x08	/* break exception */
+#define	CD180_RCSR_PE			0x04	/* parity exception */
+#define	CD180_RCSR_FE			0x02	/* framing exception */
+#define	CD180_RCSR_OE			0x01	/* overrun exception */
+
+/* Service Request Enable Register */
+#define	CD180_SRER_DSR			0x80	/* DSR service request */
+#define	CD180_SRER_CD			0x40	/* CD service request */
+#define	CD180_SRER_CTS			0x20	/* CTS service request */
+#define	CD180_SRER_RXD			0x10	/* RXD service request */
+#define	CD180_SRER_RXSCD		0x08	/* RX special char request */
+#define	CD180_SRER_TXD			0x04	/* TX ready service request */
+#define	CD180_SRER_TXE			0x02	/* TX empty service request */
+#define	CD180_SRER_NNDT			0x01	/* No new data timeout req */
+
+/* Channel Command Register */
+/* Reset Channel Command */
+#define	CD180_CCR_CMD_RESET		0x80	/* chip/channel reset */
+#define CD180_CCR_RESETALL		0x01	/* global reset */
+#define	CD180_CCR_RESETCHAN		0x00	/* current channel reset */
+/* Channel Option Register Command */
+#define	CD180_CCR_CMD_COR		0x40	/* channel opt reg changed */
+#define	CD180_CCR_CORCHG1		0x02	/* cor1 has changed */
+#define	CD180_CCR_CORCHG2		0x04	/* cor2 has changed */
+#define	CD180_CCR_CORCHG3		0x08	/* cor3 has changed */
+/* Send Special Character Command */
+#define	CD180_CCR_CMD_SPC		0x20	/* send special chars changed */
+#define	CD180_CCR_SSPC0			0x01	/* send special char 0 change */
+#define	CD180_CCR_SSPC1			0x02	/* send special char 1 change */
+#define	CD180_CCR_SSPC2			0x04	/* send special char 2 change */
+/* Channel Control Command */
+#define	CD180_CCR_CMD_CHAN		0x10	/* channel control command */
+#define	CD180_CCR_CHAN_TXEN		0x08	/* enable channel tx */
+#define	CD180_CCR_CHAN_TXDIS		0x04	/* disable channel tx */
+#define	CD180_CCR_CHAN_RXEN		0x02	/* enable channel rx */
+#define	CD180_CCR_CHAN_RXDIS		0x01	/* disable channel rx */
+
+/* Channel Option Register 1 */
+#define	CD180_COR1_EVENPAR		0x00	/* even parity */
+#define	CD180_COR1_ODDPAR		0x80	/* odd parity */
+#define	CD180_COR1_PARMODE_NO		0x00	/* no parity */
+#define	CD180_COR1_PARMODE_FORCE	0x20	/* force (odd=1, even=0) */
+#define CD180_COR1_PARMODE_NORMAL	0x40	/* normal parity mode */
+#define	CD180_COR1_PARMODE_NA		0x60	/* notused */
+#define	CD180_COR1_IGNPAR		0x10	/* ignore parity */
+#define	CD180_COR1_STOP1		0x00	/* 1 stop bit */
+#define	CD180_COR1_STOP15		0x04	/* 1.5 stop bits */
+#define	CD180_COR1_STOP2		0x08	/* 2 stop bits */
+#define	CD180_COR1_STOP25		0x0c	/* 2.5 stop bits */
+#define	CD180_COR1_CS5			0x00	/* 5 bit characters */
+#define	CD180_COR1_CS6			0x01	/* 6 bit characters */
+#define	CD180_COR1_CS7			0x02	/* 7 bit characters */
+#define	CD180_COR1_CS8			0x03	/* 8 bit characters */
+
+/* Channel Option Register 2 */
+#define	CD180_COR2_IXM			0x80	/* implied xon mode */
+#define	CD180_COR2_TXIBE		0x40	/* tx in-band flow control */
+#define	CD180_COR2_ETC			0x20	/* embedded tx command enbl */
+#define	CD180_COR2_LLM			0x10	/* local loopback mode */
+#define	CD180_COR2_RLM			0x08	/* remote loopback mode */
+#define	CD180_COR2_RTSAO		0x04	/* RTS automatic output enbl */
+#define	CD180_COR2_CTSAE		0x02	/* CTS automatic enable */
+#define	CD180_COR2_DSRAE		0x01	/* DSR automatic enable */
+
+/* Channel Option Register 3 */
+#define	CD180_COR3_XON2			0x80	/* XON char in spc1&3 */
+#define	CD180_COR3_XON1			0x00	/* XON char in spc1 */
+#define	CD180_COR3_XOFF2		0x40	/* XOFF char in spc2&4 */
+#define	CD180_COR3_XOFF1		0x00	/* XOFF char in spc2 */
+#define	CD180_COR3_FCT			0x20	/* flow control transparency */
+#define	CD180_COR3_SCDE			0x10	/* special char recognition */
+#define	CD180_COR3_RXFIFO_MASK		0x0f	/* rx fifo threshold */
+
+/* Channel Control Status Register */
+#define	CD180_CCSR_RXEN			0x80	/* rx is enabled */
+#define	CD180_CCSR_RXFLOFF		0x40	/* rx flow-off */
+#define	CD180_CCSR_RXFLON		0x20	/* rx flow-on */
+#define	CD180_CCSR_TXEN			0x08	/* tx is enabled */
+#define	CD180_CCSR_TXFLOFF		0x04	/* tx flow-off */
+#define	CD180_CCSR_TXFLON		0x02	/* tx flow-on */
+
+/* Modem Change Register */
+#define	CD180_MCR_DSR			0x80	/* DSR changed */
+#define	CD180_MCR_CD			0x40	/* CD changed */
+#define	CD180_MCR_CTS			0x20	/* CTS changed */
+
+/* Modem Change Option Register 1 */
+#define	CD180_MCOR1_DSRZD		0x80	/* catch 0->1 DSR changes */
+#define	CD180_MCOR1_CDZD		0x40	/* catch 0->1 CD changes */
+#define	CD180_MCOR1_CTSZD		0x40	/* catch 0->1 CTS changes */
+#define	CD180_MCOR1_DTRTHRESH		0x0f	/* DTR threshold mask */
+
+/* Modem Change Option Register 2 */
+#define	CD180_MCOR2_DSROD		0x80	/* catch 1->0 DSR changes */
+#define	CD180_MCOR2_CDOD		0x40	/* catch 1->0 CD changes */
+#define	CD180_MCOR2_CTSOD		0x20	/* catch 1->0 CTS changes */
+
+/* Modem Signal Value Register */
+#define	CD180_MSVR_DSR			0x80	/* DSR input state */
+#define	CD180_MSVR_CD			0x40	/* CD input state */
+#define	CD180_MSVR_CTS			0x20	/* CTS input state */
+#define	CD180_MSVR_DTR			0x02	/* DTR output state */
+#define	CD180_MSVR_RTS			0x01	/* RTS output state */
+
 /*
- * The register for the SUNW,spif looks something like:
+ * The register map for the SUNW,spif looks something like:
  *    Offset:		Function:
- *	0000 - 03ff	unused
+ *	0000 - 03ff	Boot ROM
  *	0400 - 0408	dtr latches (one per port)
  *	0409 - 07ff	unused
  *	0800 - 087f	CD180 registers (normal mapping)
@@ -132,6 +279,19 @@ struct stcregs {
  *	0c00 - 0c7f	CD180 registers (*iack mapping)
  *	0c80 - 0dff	unused
  *	0e00 - 1fff	PPC registers
+ *
+ * One note about the DTR latches:  The values stored there are reversed.
+ * By writing a 1 to the latch, DTR is lowered, and by writing a 0, DTR
+ * is raised.  The latches cannot be read, and no other value can be written
+ * there or the system will crash due to "excessive bus loading (see
+ * SBus loading and capacitance spec)"
+ *
+ * The *iack registers are read/written with the IACK bit set.  When
+ * the interrupt routine starts, it reads the MRAR, TRAR, and RRAR registers
+ * from this mapping.  This signals an interrupt acknowlegement cycle.
+ * (NOTE: these are not really the MRAR, TRAR, and RRAR... They are copies
+ * of the GSVR, I just mapped them to the same location as the mrar, trar,
+ * and rrar because it seemed appropriate).
  */
 struct spifregs {
 	volatile u_int8_t	_unused1[1024];	/* 0x000-0x3ff unused */
@@ -144,7 +304,8 @@ struct spifregs {
 	struct ppcregs		ppc;		/* parallel port regs */
 };
 
-/*  The mapping of minor device number -> card and port is done as
+/*
+ * The mapping of minor device number -> card and port is done as
  * follows by default:
  *
  *  +---+---+---+---+---+---+---+---+
@@ -162,138 +323,51 @@ struct spifregs {
  *    +---+---------------------------> card number
  *
  */
+#define SPIF_MAX_CARDS		4
+#define SPIF_MAX_TTY		8
+#define SPIF_MAX_BPP		1
 
-#define	CD180_SRCR_PKGTYP	0x80	/* chip package type */
-#define	CD180_SRCR_REGACKEN	0x40
-#define	CD180_SRCR_DAISYEN	0x20
-#define	CD180_SRCR_GLOBPRI	0x10
-#define	CD180_SRCR_UNFAIR	0x08
-#define	CD180_SRCR_AUTOPRI	0x04
-#define	CD180_SRCR_reserved	0x02
-#define	CD180_SRCR_PRISEL	0x01
-
-#define	CD180_CCR_RESET		0x80	/* chip/channel reset */
-#define CD180_CCR_RESETALL	0x01	/* global reset */
-#define	CD180_CCR_RESETCHAN	0x00	/* current channel reset */
-
-#define	CD180_CCR_CORCHG	0x40	/* channel option reg has changed */
-#define	CD180_CCR_CORCHG1	0x02	/* cor1 has changed */
-#define	CD180_CCR_CORCHG2	0x04	/* cor2 has changed */
-#define	CD180_CCR_CORCHG3	0x08	/* cor3 has changed */
-
-#define	CD180_CCR_SENDSPCHG	0x20
-#define	CD180_CCR_SSPC0		0x01
-#define	CD180_CCR_SSPC1		0x02
-#define	CD180_CCR_SSPC2		0x04
-
-#define	CD180_CCR_CHANCTL	0x10	/* channel control command */
-#define	CD180_CCR_CHAN_TXEN	0x08	/* enable channel tx */
-#define	CD180_CCR_CHAN_TXDIS	0x04	/* disable channel tx */
-#define	CD180_CCR_CHAN_RXEN	0x02	/* enable channel rx */
-#define	CD180_CCR_CHAN_RXDIS	0x01	/* disable channel rx */
-
-#define	CD180_COR1_EVENPAR		0x00	/* even parity */
-#define	CD180_COR1_ODDPAR		0x80	/* odd parity */
-#define	CD180_COR1_PARMODE_NO		0x00	/* no parity */
-#define	CD180_COR1_PARMODE_FORCE	0x20	/* force (odd=1, even=0) */
-#define CD180_COR1_PARMODE_NORMAL	0x40	/* normal parity mode */
-#define	CD180_COR1_PARMODE_NA		0x60	/* notused */
-#define	CD180_COR1_IGNPAR		0x10	/* ignore parity */
-#define	CD180_COR1_STOP1		0x00	/* 1 stop bit */
-#define	CD180_COR1_STOP15		0x04	/* 1.5 stop bits */
-#define	CD180_COR1_STOP2		0x08	/* 2 stop bits */
-#define	CD180_COR1_STOP25		0x0c	/* 2.5 stop bits */
-#define	CD180_COR1_CS5			0x00	/* 5 bit characters */
-#define	CD180_COR1_CS6			0x01	/* 6 bit characters */
-#define	CD180_COR1_CS7			0x02	/* 7 bit characters */
-#define	CD180_COR1_CS8			0x03	/* 8 bit characters */
-
-#define	CD180_COR2_IXM			0x80	/* implied xon mode */
-#define	CD180_COR2_TXIBE		0x40	/* tx in-band flow control */
-#define	CD180_COR2_ETC			0x20	/* embedded tx command enbl */
-#define	CD180_COR2_LLM			0x10	/* local loopback mode */
-#define	CD180_COR2_RLM			0x08	/* remote loopback mode */
-#define	CD180_COR2_RTSAO		0x04	/* RTS automatic output enbl */
-#define	CD180_COR2_CTSAE		0x02	/* CTS automatic enable */
-#define	CD180_COR2_DSRAE		0x01	/* DSR automatic enable */
-
-#define	CD180_MCOR1_DSRZD		0x80	/* catch 0->1 DSR changes */
-#define	CD180_MCOR1_CDZD		0x40	/* catch 0->1 CD changes */
-#define	CD180_MCOR1_CTSZD		0x40	/* catch 0->1 CTS changes */
-#define	CD180_MCOR1_DTRTHRESH		0x0f	/* DTR threshold mask */
-
-#define	CD180_MCOR2_DSROD		0x80	/* catch 1->0 DSR changes */
-#define	CD180_MCOR2_CDOD		0x40	/* catch 1->0 CD changes */
-#define	CD180_MCOR2_CTSOD		0x20	/* catch 1->0 CTS changes */
-
-#define	CD180_SRER_DSR			0x80	/* DSR service request */
-#define	CD180_SRER_CD			0x40	/* CD service request */
-#define	CD180_SRER_CTS			0x20	/* CTS service request */
-#define	CD180_SRER_RXD			0x10	/* RXD service request */
-#define	CD180_SRER_RXSCD		0x08	/* RX special char request */
-#define	CD180_SRER_TXD			0x04	/* TX ready service request */
-#define	CD180_SRER_TXE			0x02	/* TX empty service request */
-#define	CD180_SRER_NNDT			0x01	/* No new data timeout req */
-
-#define	CD180_MSVR_DSR			0x80	/* DSR input state */
-#define	CD180_MSVR_CD			0x40	/* CD input state */
-#define	CD180_MSVR_CTS			0x20	/* CTS input state */
-#define	CD180_MSVR_DTR			0x02	/* DTR output state */
-#define	CD180_MSVR_RTS			0x01	/* RTS output state */
-
-#define	CD180_GSCR_CMASK		0x07	/* channel mask */
-
-#define	CD180_GSVR_IMASK		0x07	/* interrupt type mask */
-#define	CD180_GSVR_NOREQUEST		0x00	/* no request pending */
-#define	CD180_GSVR_STATCHG		0x01	/* modem signal change */
-#define	CD180_GSVR_TXDATA		0x02	/* tx service request */
-#define	CD180_GSVR_RXGOOD		0x03	/* rx service request */
-#define	CD180_GSVR_reserved1		0x04
-#define	CD180_GSVR_reserved2		0x05
-#define	CD180_GSVR_reserved3		0x06
-#define	CD180_GSVR_RXEXCEPTION		0x07	/* rx exception request */
+/*
+ * device selectors
+ */
+#define SPIF_CARD(x)	((minor(x) >> 6) & 0x03)
+#define SPIF_PORT(x)	(minor(x) & 0x0f)
+#define STTY_DIALOUT(x) (minor(x) & 0x10)
 
 #define	STTY_RX_FIFO_THRESHOLD	6
 #define	STTY_RX_DTR_THRESHOLD	7
 #define	CD180_TX_FIFO_SIZE	8		/* 8 chars of fifo */
 
-#define	CD180_RCSR_TO			0x80	/* time out */
-#define	CD180_RCSR_SCD2			0x40	/* special char detect 2 */
-#define	CD180_RCSR_SCD1			0x20	/* special char detect 1 */
-#define	CD180_RCSR_SCD0			0x10	/* special char detect 0 */
-#define	CD180_RCSR_BE			0x08	/* break exception */
-#define	CD180_RCSR_PE			0x04	/* parity exception */
-#define	CD180_RCSR_FE			0x02	/* framing exception */
-#define	CD180_RCSR_OE			0x01	/* overrun exception */
-
-#define	CD180_MCR_DSR			0x80	/* DSR changed */
-#define	CD180_MCR_CD			0x40	/* CD changed */
-#define	CD180_MCR_CTS			0x20	/* CTS changed */
-
 /*
- * These are the offsets of the MRAR,TRAR, and RRAR in *IACK space.
+ * These are the offsets of the MRAR, TRAR, and RRAR in *IACK space.
  * The high bit must be set as per specs for the MSMR, TSMR, and RSMR.
  */
 #define	SPIF_MSMR			0xf5	/* offset of MRAR | 0x80 */
 #define	SPIF_TSMR			0xf6	/* offset of TRAR | 0x80 */
 #define	SPIF_RSMR			0xf7	/* offset of RRAR | 0x80 */
 
-#define SPIF_MAX_CARDS		4
-#define SPIF_MAX_TTY		8
-#define SPIF_MAX_BPP		1
-
-#define SPIF_CARD(x)	((minor(x) >> 6) & 0x03)
-#define SPIF_PORT(x)	(minor(x) & 0x0f)
-
-#define STTY_DIALOUT(x) (minor(x) & 0x10)
-
-/* "verosc" node tells which oscillator we have.  */
+/*
+ * "verosc" node tells which oscillator we have.
+ */
 #define	SPIF_OSC9	1		/* 9.8304 Mhz */
 #define	SPIF_OSC10	2		/* 10Mhz */
 
-#define	SPIF_PPRH	0xf0
-#define	SPIF_PPRL	0x00
+/*
+ * There are two interrupts, serial gets interrupt[0], and parallel
+ * gets interrupt[1]
+ */
+#define	SERIAL_INTR	0
+#define	PARALLEL_INTR	1
 
+/*
+ * prescalar values
+ */
+#define	SPIF_PPRH	0xf0		/* high byte */
+#define	SPIF_PPRL	0x00		/* low byte */
+
+/*
+ * spif tty flags
+ */
 #define	STTYF_CDCHG		0x01		/* carrier changed */
 #define	STTYF_RING_OVERFLOW	0x02		/* ring buffer overflowed */
 #define	STTYF_DONE		0x04		/* done... flush buffers */

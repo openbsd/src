@@ -1,4 +1,4 @@
-/*	$OpenBSD: spifvar.h,v 1.1 1999/02/01 00:30:42 jason Exp $	*/
+/*	$OpenBSD: spifvar.h,v 1.2 1999/02/04 15:43:22 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -45,9 +45,9 @@ struct stty_port {
 	u_char *sp_txp;			/* transmit character pointer */
 	int sp_txc;			/* transmit character counter */
 
-	int sp_openflags;
-	int sp_carrier;
-	int sp_flags;
+	int sp_openflags;		/* open flags */
+	int sp_carrier;			/* software carrier status */
+	int sp_flags;			/* software state */
 	char sp_dtr;			/* software dtr status */
 };
 
@@ -69,11 +69,11 @@ struct spif_softc {
 	struct	intrhand sc_ppcih;	/* ppc interrupt vectoring */
 	struct	intrhand sc_softih;	/* hard interrupt vectoring */
 	int	sc_rev;			/* revision level */
-	int	sc_osc;			/* oscillator speed (mhz) */
+	int	sc_osc;			/* oscillator speed (hz) */
 	int	sc_node;		/* which sbus node */
 	int	sc_nser;		/* number of serial ports */
 	int	sc_npar;		/* number of parallel ports */
-	unsigned	sc_rev2;		/* onboard chip revision */
+	int	sc_rev2;		/* cd180 chip revision */
 	struct	spifregs *sc_regs;	/* registers */
 	struct	stty_softc *sc_ttys;	/* our ttys */
 	struct	sbpp_softc *sc_bpps;	/* our ttys */
