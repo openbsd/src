@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.435 2004/01/04 12:30:29 cedric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.436 2004/01/05 22:04:24 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1407,14 +1407,14 @@ pfrule		: action dir logquick interface route af proto fromto
 			r.af = $6;
 			if ($9.tag)
 				if (strlcpy(r.tagname, $9.tag,
-				    PF_TAG_NAME_SIZE) > PF_TAG_NAME_SIZE) {
+				    PF_TAG_NAME_SIZE) >= PF_TAG_NAME_SIZE) {
 					yyerror("tag too long, max %u chars",
 					    PF_TAG_NAME_SIZE - 1);
 					YYERROR;
 				}
 			if ($9.match_tag)
 				if (strlcpy(r.match_tagname, $9.match_tag,
-				    PF_TAG_NAME_SIZE) > PF_TAG_NAME_SIZE) {
+				    PF_TAG_NAME_SIZE) >= PF_TAG_NAME_SIZE) {
 					yyerror("tag too long, max %u chars",
 					    PF_TAG_NAME_SIZE - 1);
 					YYERROR;
@@ -2887,7 +2887,7 @@ natrule		: nataction interface af proto fromto tag redirpool pool_opts
 			}
 
 			if ($6 != NULL)
-				if (strlcpy(r.tagname, $6, PF_TAG_NAME_SIZE) >
+				if (strlcpy(r.tagname, $6, PF_TAG_NAME_SIZE) >=
 				    PF_TAG_NAME_SIZE) {
 					yyerror("tag too long, max %u chars",
 					    PF_TAG_NAME_SIZE - 1);
@@ -3044,7 +3044,7 @@ binatrule	: no BINAT natpass interface af proto FROM host TO ipspec tag
 			}
 			if ($11 != NULL)
 				if (strlcpy(binat.tagname, $11,
-				    PF_TAG_NAME_SIZE) > PF_TAG_NAME_SIZE) {
+				    PF_TAG_NAME_SIZE) >= PF_TAG_NAME_SIZE) {
 					yyerror("tag too long, max %u chars",
 					    PF_TAG_NAME_SIZE - 1);
 					YYERROR;
