@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.25 2002/01/02 22:22:00 miod Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.26 2002/01/28 19:31:56 miod Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -408,6 +408,8 @@ struct db_command db_boot_cmds[] = {
 	{ "crash",	db_boot_crash_cmd,	0,	0 },
 	{ "dump",	db_boot_dump_cmd,	0,	0 },
 	{ "halt",	db_boot_halt_cmd,	0,	0 },
+	{ "reboot",	db_boot_reboot_cmd,	0,	0 },
+	{ "poweroff",	db_boot_poweroff_cmd,	0,	0 },
 	{ NULL, }
 };
 
@@ -616,4 +618,24 @@ db_boot_halt_cmd(addr, haddr, count, modif)
 	char *modif;
 {
 	boot(RB_NOSYNC | RB_HALT | RB_TIMEBAD);
+}
+
+void
+db_boot_reboot_cmd(addr, haddr, count, modif)
+	db_expr_t addr;
+	int haddr;
+	db_expr_t count;
+	char *modif;
+{
+	boot(RB_AUTOBOOT | RB_NOSYNC | RB_TIMEBAD);
+}
+
+void
+db_boot_poweroff_cmd(addr, haddr, count, modif)
+	db_expr_t addr;
+	int haddr;
+	db_expr_t count;
+	char *modif;
+{
+	boot(RB_NOSYNC | RB_HALT | RB_POWERDOWN | RB_TIMEBAD);
 }
