@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart.c,v 1.39 2004/08/02 08:35:00 miod Exp $	*/
+/*	$OpenBSD: dart.c,v 1.40 2004/08/19 17:10:15 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -319,7 +319,7 @@ dartstart(tp)
 {
 	dev_t dev;
 	struct dartsoftc *sc;
-	int s, cc;
+	int s;
 	union dart_pt_io *ptaddr;
 	union dartreg *addr;
 	int port;
@@ -339,7 +339,7 @@ dartstart(tp)
 
 	s = spltty();
 
-	if (tp->t_state & (TS_TIMEOUT |TS_BUSY | TS_TTSTOP))
+	if (tp->t_state & (TS_TIMEOUT | TS_BUSY | TS_TTSTOP))
 		goto bail;
 
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
@@ -352,9 +352,6 @@ dartstart(tp)
 		selwakeup(&tp->t_wsel);
 	}
 
-	if (tp->t_state & (TS_TIMEOUT | TS_BUSY | TS_TTSTOP))
-		goto bail;
-
 	dprintf(("dartstart: dev(%d, %d)\n", major(dev), minor(dev)));
 
 	if (port != CONS_PORT)
@@ -363,35 +360,33 @@ dartstart(tp)
 
 	if (tp->t_outq.c_cc != 0) {
 		tp->t_state |= TS_BUSY;
-		cc = tp->t_outq.c_cc;
+
 		/* load transmitter until it is full */
 		while (ptaddr->read.rd_sr & TXRDY) {
-                        if(cc == 0)
-				 break;
 			c = getc(&tp->t_outq);
-			cc--;
-			if (tp->t_flags & CS8 || c <= 0177) {
-				if (port != CONS_PORT)
-					dprintf(("dartstart: writing char \"%c\" (0x%02x) to port %d\n",
-						 c & 0xff, c & 0xff, port));
-				ptaddr->write.wr_tb = c & 0xff;
 
-				if (port != CONS_PORT)
-					dprintf(("dartstart: enabling Tx int\n"));
-				if (port == A_PORT)
-					dart_sv_reg.sv_imr = dart_sv_reg.sv_imr | ITXRDYA;
-				else
-					dart_sv_reg.sv_imr = dart_sv_reg.sv_imr | ITXRDYB;
-				addr->write.wr_imr = dart_sv_reg.sv_imr;
+			if (port != CONS_PORT)
+				dprintf(("dartstart: writing char \"%c\" (0x%02x) to port %d\n",
+					 c & 0xff, c & 0xff, port));
+			ptaddr->write.wr_tb = c & 0xff;
 
-			} else {
-				tp->t_state &= ~TS_BUSY;
-				if (port != CONS_PORT)
-					dprintf(("dartxint: timing out char \"%c\" (0x%02x)\n",
-					 c & 0xff, c % 0xff));
-				timeout_add(&tp->t_rstrt_to, 1);
-				tp->t_state |= TS_TIMEOUT;
-			}
+			if (port != CONS_PORT)
+				dprintf(("dartstart: enabling Tx int\n"));
+			if (port == A_PORT)
+				dart_sv_reg.sv_imr = dart_sv_reg.sv_imr | ITXRDYA;
+			else
+				dart_sv_reg.sv_imr = dart_sv_reg.sv_imr | ITXRDYB;
+			addr->write.wr_imr = dart_sv_reg.sv_imr;
+
+			if (tp->t_outq.c_cc == 0)
+				break;
+		}
+
+		tp->t_state &= ~TS_BUSY;
+
+		if (tp->t_outq.c_cc != 0) {
+			timeout_add(&tp->t_rstrt_to, 1);
+			tp->t_state |= TS_TIMEOUT;
 		}
 	}
 bail:
@@ -1185,7 +1180,7 @@ dartcninit(cp)
 void
 dartcnputc(dev, c)
 	dev_t dev;
-	char c;
+	int c;
 {
 	union dartreg *addr;
 	union dart_pt_io *ptaddr;
@@ -1254,7 +1249,6 @@ dartcngetc(dev)
 #else
 	m88k_psr_type psr;
 #endif
-	char buf[] = "char x";
 
 	port = DART_PORT(dev);
 #if 1
@@ -1271,7 +1265,7 @@ dartcngetc(dev)
 	/* enable receiver */
 	ptaddr->write.wr_cr = RXEN;
 
-	do {
+	for (;;) {
 		/* read status reg */
 		sr = ptaddr->read.rd_sr;
 
@@ -1286,34 +1280,24 @@ dartcngetc(dev)
 				ptaddr->write.wr_cr = BRKINTRESET;
 				DELAY_CR;
 				ptaddr->write.wr_cr = ERRRESET;
-#if 1
-				splx(s);
-#else
-				set_psr(psr);
-#endif
-				return c;
+				break;
 			}
 
-			if (sr & (FRERR|PERR|ROVRN)) {
+			if (sr & (FRERR | PERR | ROVRN)) {
 				/* clear error state */
 				ptaddr->write.wr_cr = ERRRESET;
 				DELAY_CR;
 				ptaddr->write.wr_cr = BRKINTRESET;
 			} else {
-				buf[5] = (char) c;
-#if 1
-				splx(s);
-#else
-				set_psr(psr);
-#endif
-				return (c & 0x7f);
+				/* c &= 0x7f; */
+				break;
 			}
 		}
-	} while (-1);
+	}
 #if 1
 	splx(s);
 #else
 	set_psr(psr);
 #endif
-	return -1;
+	return c;
 }
