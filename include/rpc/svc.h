@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc.h,v 1.2 1997/09/21 10:46:16 niklas Exp $	*/
+/*	$OpenBSD: svc.h,v 1.3 2000/08/22 18:44:48 deraadt Exp $	*/
 /*	$NetBSD: svc.h,v 1.9 1995/04/29 05:28:01 cgd Exp $	*/
 
 /*
@@ -277,6 +277,7 @@ extern void rpctest_service();				/* XXX relic? */
 __BEGIN_DECLS
 extern void	svc_getreq	__P((int));
 extern void	svc_getreqset	__P((fd_set *));
+extern void	svc_getreqset2	__P((fd_set *, int));
 extern void	svc_run		__P((void));
 __END_DECLS
 
