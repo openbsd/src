@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rayreg.h,v 1.4 2001/06/08 17:48:22 mickey Exp $	*/
+/*	$OpenBSD: if_rayreg.h,v 1.5 2002/03/24 20:53:56 mickey Exp $	*/
 /*	$NetBSD: if_rayreg.h,v 1.3 2000/08/10 11:48:46 ad Exp $	*/
 
 /* 
@@ -37,26 +37,26 @@
 /*
  * CCR registers 
  */
-#define RAY_COR		(0xf00 + 0)	/* config option register */
-#define	RAY_CCSR	(0xf00 + 1)	/* card config and status register */
-#define	RAY_PIN		(0xf00 + 2)	/* not in hw */
-#define	RAY_SOCKETCOPY	(0xf00 + 3)	/* not used by hw */
-#define	RAY_HCSIR	(0xf00 + 5)	/* HCS intr register */
-#define	RAY_ECFIR	(0xf00 + 6)	/* ECF intr register */
-#define	RAY_AR0		(0xf00 + 8)	/* authorization register 0 (unused) */
-#define	RAY_AR1		(0xf00 + 9)	/* authorization register 1 (unused) */
+#define RAY_COR		(0x00)	/* config option register */
+#define	RAY_CCSR	(0x01)	/* card config and status register */
+#define	RAY_PIN		(0x02)	/* not in hw */
+#define	RAY_SOCKETCOPY	(0x03)	/* not used by hw */
+#define	RAY_HCSIR	(0x05)	/* HCS intr register */
+#define	RAY_ECFIR	(0x06)	/* ECF intr register */
+#define	RAY_AR0		(0x08)	/* authorization register 0 (unused) */
+#define	RAY_AR1		(0x09)	/* authorization register 1 (unused) */
 /*
  * XXX these registers cannot be accessed with pcmcia.c's 14 byte mapping
  * of the CCR for us
  */
 #if 0
-#define	RAY_PMR		0xf0a	/* program mode register (unused) */
-#define	RAY_TMR		0xf0b	/* pc test mode register (unused) */
-#define	RAY_FCWR	0xf10	/* frequency control word register */
-#define RAY_TMC1	0xf14	/* test mode control 1 (unused) */
-#define RAY_TMC2	0xf15	/* test mode control 1 (unused) */
-#define RAY_TMC3	0xf16	/* test mode control 1 (unused) */
-#define RAY_TMC4	0xf17	/* test mode control 1 (unused) */
+#define	RAY_PMR		0x0a	/* program mode register (unused) */
+#define	RAY_TMR		0x0b	/* pc test mode register (unused) */
+#define	RAY_FCWR	0x10	/* frequency control word register */
+#define RAY_TMC1	0x14	/* test mode control 1 (unused) */
+#define RAY_TMC2	0x15	/* test mode control 1 (unused) */
+#define RAY_TMC3	0x16	/* test mode control 1 (unused) */
+#define RAY_TMC4	0x17	/* test mode control 1 (unused) */
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ray.c,v 1.18 2002/03/14 01:27:01 millert Exp $	*/
+/*	$OpenBSD: if_ray.c,v 1.19 2002/03/24 20:53:56 mickey Exp $	*/
 /*	$NetBSD: if_ray.c,v 1.21 2000/07/05 02:35:54 onoe Exp $	*/
 
 /*
@@ -112,8 +112,6 @@
 #define	offsetof(type, member)	((size_t)(&((type *)0)->member))
 #endif
 
-#define RAY_USE_AMEM 0
-
 /*#define	RAY_DEBUG*/
 
 #ifndef	RAY_PID_COUNTRY_CODE_DEFAULT
@@ -173,10 +171,6 @@ struct ray_softc {
 	struct pcmcia_function		*sc_pf;
 	struct pcmcia_mem_handle	sc_mem;
 	int				sc_window;
-#if RAY_USE_AMEM
-	struct pcmcia_mem_handle	sc_amem;
-	int				sc_awindow;
-#endif
 	void				*sc_ih;
 	void				*sc_sdhook;
 	void				*sc_pwrhook;
@@ -242,6 +236,7 @@ struct ray_softc {
 #define	sc_memh	sc_mem.memh
 #define	sc_ccrt	sc_pf->pf_ccrt
 #define	sc_ccrh	sc_pf->pf_ccrh
+#define	sc_ccroff	sc_pf->pf_ccr_offset
 #define	sc_startup_4	sc_u.u_params_4
 #define	sc_startup_5	sc_u.u_params_5
 #define	sc_version	sc_ecf_startup.e_fw_build_string
@@ -407,21 +402,14 @@ void ray_dump_mbuf(struct ray_softc *, struct mbuf *);
  * macros for writing to various regions in the mapped memory space
  */
 
-#if RAY_USE_AMEM
-/* read and write the registers in the CCR (attribute) space */
-#define	REG_WRITE(sc, off, val) \
-	bus_space_write_1((sc)->sc_amem.memt, (sc)->sc_amem.memh, (off), (val))
-
-#define	REG_READ(sc, off) \
-	bus_space_read_1((sc)->sc_amem.memt, (sc)->sc_amem.memh, (off))
-#else
 	/* use already mapped ccrt */
 #define	REG_WRITE(sc, off, val) \
-	bus_space_write_1((sc)->sc_ccrt, (sc)->sc_ccrh, (off), (val))
+	bus_space_write_1((sc)->sc_ccrt, (sc)->sc_ccrh, \
+	((sc)->sc_ccroff + (off)), (val))
 
 #define	REG_READ(sc, off) \
-	bus_space_read_1((sc)->sc_ccrt, (sc)->sc_ccrh, (off))
-#endif
+	bus_space_read_1((sc)->sc_ccrt, (sc)->sc_ccrh, \
+	((sc)->sc_ccroff + (off)))
 
 #define	SRAM_READ_1(sc, off) \
 	((u_int8_t)bus_space_read_1((sc)->sc_memt, (sc)->sc_memh, (off)))
@@ -540,9 +528,6 @@ ray_attach(parent, self, aux)
 	sc->sc_pf = pa->pf;
 	ifp = &sc->sc_if;
 	sc->sc_window = -1;
-#if RAY_USE_AMEM
-	sc->sc_awindow = -1;
-#endif
 
 	printf("\n");
 
@@ -569,23 +554,6 @@ ray_attach(parent, self, aux)
 		goto fail;
 	}
 
-#if RAY_USE_AMEM
-	/* use the already mapped ccrt in our pf */
-	/*
-	 * map in the memory
-	 */
-	if (pcmcia_mem_alloc(sc->sc_pf, 0x1000, &sc->sc_amem)) {
-		printf(": can\'t alloc attr memory\n");
-		goto fail;
-	}
-
-	if (pcmcia_mem_map(sc->sc_pf, PCMCIA_MEM_ATTR, 0,
-	    0x1000, &sc->sc_amem, &memoff, &sc->sc_awindow)) {
-		printf(": can\'t map attr memory\n");
-		pcmcia_mem_free(sc->sc_pf, &sc->sc_amem);
-		goto fail;
-	}
-#endif
 	/* get startup results */
 	ep = &sc->sc_ecf_startup;
 	ray_read_region(sc, RAY_ECF_TO_HOST_BASE, ep,
@@ -680,12 +648,6 @@ fail:
 	pcmcia_function_disable(sc->sc_pf);
 
 	/* free the alloc/map */
-#if RAY_USE_AMEM
-	if (sc->sc_awindow != -1) {
-		pcmcia_mem_unmap(sc->sc_pf, sc->sc_awindow);
-		pcmcia_mem_free(sc->sc_pf, &sc->sc_amem);
-	}
-#endif
 	if (sc->sc_window != -1) {
 		pcmcia_mem_unmap(sc->sc_pf, sc->sc_window);
 		pcmcia_mem_free(sc->sc_pf, &sc->sc_mem);
@@ -746,12 +708,6 @@ ray_detach(self, flags)
 		ray_disable(sc);
 
 	/* give back the memory */
-#if RAY_USE_AMEM
-	if (sc->sc_awindow != -1) {
-		pcmcia_mem_unmap(sc->sc_pf, sc->sc_awindow);
-		pcmcia_mem_free(sc->sc_pf, &sc->sc_amem);
-	}
-#endif
 	if (sc->sc_window != -1) {
 		pcmcia_mem_unmap(sc->sc_pf, sc->sc_window);
 		pcmcia_mem_free(sc->sc_pf, &sc->sc_mem);
