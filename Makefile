@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.67 2001/06/24 23:31:07 niklas Exp $
+#	$OpenBSD: Makefile,v 1.68 2001/06/26 15:33:28 hin Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -42,6 +42,10 @@ SUBDIR+= sys lkm
 SUBDIR+= kerberosIV
 .endif
 
+.if (${KERBEROS5:L} == "yes")
+SUBDIR+= kerberosV
+.endif
+
 .if   make(clean) || make(cleandir) || make(obj)
 SUBDIR+= distrib
 .endif
@@ -81,6 +85,10 @@ build:
 	    NOMAN=1 exec ${SUDO} ${MAKE} install
 .if (${KERBEROS:L} == "yes")
 	cd ${.CURDIR}/kerberosIV/lib && ${MAKE} depend && ${MAKE} && \
+	    NOMAN=1 exec ${SUDO} ${MAKE} install
+.endif
+.if (${KERBEROS5:L} == "yes")
+	cd ${.CURDIR}/kerberosV/lib && ${MAKE} depend && ${MAKE} && \
 	    NOMAN=1 exec ${SUDO} ${MAKE} install
 .endif
 	cd ${.CURDIR}/gnu/usr.bin/perl && \
@@ -132,6 +140,7 @@ cross-dirs:	${CROSSDIR}/stamp.dirs
 	@-mkdir -p ${CROSSDIR}/usr/bin
 	@-mkdir -p ${CROSSDIR}/usr/include
 	@-mkdir -p ${CROSSDIR}/usr/include/kerberosIV
+	@-mkdir -p ${CROSSDIR}/usr/include/kerberosV
 	@-mkdir -p ${CROSSDIR}/usr/lib
 	@-mkdir -p ${CROSSDIR}/usr/libexec
 	@-mkdir -p ${CROSSDIR}/var/db
@@ -320,6 +329,18 @@ cross-lib:	cross-dirs
 	MACHINE=${TARGET} MACHINE_ARCH=`cat ${CROSSDIR}/TARGET_ARCH`; \
 	export MACHINE MACHINE_ARCH; \
 	cd kerberosIV/lib; \
+	BSDOBJDIR=${CROSSDIR}/usr/obj BSDSRCDIR=${.CURDIR} \
+	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} ${MAKE} obj; \
+	${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    ${MAKE} NOMAN= depend; \
+	${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} ${MAKE} NOMAN=; \
+	${CROSSENV} DESTDIR=${CROSSDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    ${MAKE} NOMAN= install
+.endif
+.if (${KERBEROS5:L} == "yes")
+	MACHINE=${TARGET} MACHINE_ARCH=`cat ${CROSSDIR}/TARGET_ARCH`; \
+	export MACHINE MACHINE_ARCH; \
+	cd kerberosV/lib; \
 	BSDOBJDIR=${CROSSDIR}/usr/obj BSDSRCDIR=${.CURDIR} \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} ${MAKE} obj; \
 	${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
