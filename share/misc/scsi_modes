@@ -1,5 +1,3 @@
-#	$OpenBSD: scsi_modes,v 1.1 1996/06/12 11:21:47 deraadt Exp $
-
 # SCSI mode page data base.
 
 # Copyright (c) 1995 HD Associates
@@ -79,14 +77,18 @@
 # DIRECT ACCESS DEVICES
 # Caching page:
 0x08 {
-	{Reserved} *t5
+	{IC} t1
+	{ABPF} t1
+	{CAP} t1
+	{DISC} t1
+	{SIZE} t1
 	{WCE} t1
 	{MF} t1
 	{RCD} t1
 	{Demand Retention Priority} t4
 	{Write Retention Priority} t4
 	{Disable Pre-fetch Transfer Length} i2
-	{Minumum Pre-fetch} i2
+	{Minimum Pre-fetch} i2
 	{Maximum Pre-fetch} i2
 	{Maximum Pre-fetch Ceiling} i2
 }
@@ -230,4 +232,30 @@
 	{Reserved} *t4
 	{Output Port 3 Channel Selection} t4
 	{Output Port 3 Volume} i1
+}
+
+0x10 {
+	{Reserved} *t1
+	{Change Active Partition} t1
+	{Change Active Format} t1
+	{Active Format} t5
+	{Active Partition} i1
+	{Write Buffer Full Ratio} i1
+	{Write Buffer Empty Ratio} i1
+	{Write Delay Time} i2
+	{Data Buffer Recovery} t1
+	{Block Identifiers Support} t1
+	{Report Setmarks} t1
+	{AAutomatic Velocity Control} t1
+	{Stop on Consecutive Filemarks} t2
+	{Recover Buffer Order} t1
+	{Report Early-Warning} t1
+	{Gap Size} i1
+	{EOD Defined} t3
+	{Enable EOD Generation} t1
+	{Synchronize at Early-Warning} t1
+	{Reserved} *t3
+	{Buffer Size at Early-Warning} i3
+	{Select Data Compression Algorithm} i1
+	{Reserved} *i1
 }
