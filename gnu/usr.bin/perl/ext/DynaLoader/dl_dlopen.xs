@@ -119,7 +119,7 @@
 #endif
 
 #ifndef HAS_DLERROR
-# ifdef __NetBSD__
+# if defined(__NetBSD__) || defined(__OpenBSD__)
 #  define dlerror() strerror(errno)
 # else
 #  define dlerror() "Unknown error - dlerror() not implemented"
