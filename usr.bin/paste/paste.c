@@ -1,4 +1,4 @@
-/*	$OpenBSD: paste.c,v 1.13 2003/07/10 00:06:51 david Exp $	*/
+/*	$OpenBSD: paste.c,v 1.14 2004/10/10 03:29:29 mickey Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -40,7 +40,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)paste.c	5.7 (Berkeley) 10/30/90";*/
-static char rcsid[] = "$OpenBSD: paste.c,v 1.13 2003/07/10 00:06:51 david Exp $";
+static char rcsid[] = "$OpenBSD: paste.c,v 1.14 2004/10/10 03:29:29 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -114,17 +114,13 @@ parallel(char **argv)
 	size_t len;
 
 	for (cnt = 0, head = NULL; (p = *argv); ++argv, ++cnt) {
-		if (!(lp = (LIST *)malloc((u_int)sizeof(LIST)))) {
-			(void)fprintf(stderr, "paste: %s.\n", strerror(ENOMEM));
-			exit(1);
-		}
+		if (!(lp = (LIST *)malloc((u_int)sizeof(LIST))))
+			err(1, "malloc");
+
 		if (p[0] == '-' && !p[1])
 			lp->fp = stdin;
-		else if (!(lp->fp = fopen(p, "r"))) {
-			(void)fprintf(stderr, "paste: %s: %s.\n", p,
-			    strerror(errno));
-			exit(1);
-		}
+		else if (!(lp->fp = fopen(p, "r")))
+			err(1, "%s", p);
 		lp->next = NULL;
 		lp->cnt = cnt;
 		lp->name = p;
@@ -158,7 +154,7 @@ parallel(char **argv)
 				*(buf + len - 1) = '\0';
 			else {
 				if ((lbuf = malloc(len + 1)) == NULL)
-					err(1, NULL);
+					err(1, "malloc");
 				memcpy(lbuf, buf, len);
 				lbuf[len] = '\0';
 				buf = lbuf;
@@ -197,8 +193,7 @@ sequential(char **argv)
 		if (p[0] == '-' && !p[1])
 			fp = stdin;
 		else if (!(fp = fopen(p, "r"))) {
-			(void)fprintf(stderr, "paste: %s: %s.\n", p,
-			    strerror(errno));
+			warn("%s", p);
 			continue;
 		}
 		if ((buf = fgetln(fp, &len))) {
@@ -207,7 +202,7 @@ sequential(char **argv)
 					*(buf + len - 1) = '\0';
 				else {
 					if ((lbuf = malloc(len + 1)) == NULL)
-						err(1, NULL);
+						err(1, "malloc");
 					memcpy(lbuf, buf, len);
 					lbuf[len] = '\0';
 					buf = lbuf;
@@ -255,16 +250,16 @@ tr(char *arg)
 		} else
 			*arg = ch;
 
-	if (!cnt) {
-		(void)fprintf(stderr, "paste: no delimiters specified.\n");
-		exit(1);
-	}
+	if (!cnt)
+		errx(1, "no delimiters specified");
 	return(cnt);
 }
 
 void
 usage(void)
 {
-	(void)fprintf(stderr, "paste: [-s] [-d delimiters] file ...\n");
+	extern char *__progname;
+	(void)fprintf(stderr, "usage: %s [-s] [-d delimiters] file ...\n",
+		      __progname);
 	exit(1);
 }
