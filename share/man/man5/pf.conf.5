@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.264 2003/08/21 19:12:59 frantzen Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.265 2003/08/22 04:54:13 david Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1740,7 +1740,7 @@ pass in proto tcp from any to any \e
 .Sh OPERATING SYSTEM FINGERPRINTING
 Passive OS Fingerprinting is a mechanism to inspect nuances of a TCP
 connection's initial SYN packet and guess at the host's operating system.
-Unfortunately these nuaces are easily spoofed by an attacker so the
+Unfortunately these nuances are easily spoofed by an attacker so the
 fingerprint is not useful in making security decisions.
 But the fingerprint is typically accurate enough to make policy decisions
 upon.
@@ -1768,7 +1768,7 @@ size and would be specified like
 .Pp
 Fingerprints for most popular operating systems are provided by
 .Xr pf.os 5 .
-Once 
+Once
 .Xr pf 4
 is running, a complete list of known operating system fingerprints may
 be listed by running:
@@ -1798,7 +1798,7 @@ pass on lo0 proto tcp from any os "OpenBSD 3.3 lo0" keep state
 .Pp
 Operating system fingerprinting is limited only to the TCP SYN packet.
 This means that it will not work on other protocols and will not match
-a curretly established connection.
+a currently established connection.
 .Pp
 Caveat: operating system fingerprints are occasionally wrong.
 There are three problems: an attacker can trivially craft his packets to
