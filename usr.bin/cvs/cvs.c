@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.11 2004/08/06 14:49:02 jfb Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.12 2004/08/12 17:51:05 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -421,6 +421,9 @@ main(int argc, char **argv)
 		fprintf(stderr, "Usage: %s %s %s\n", __progname, cvs_command,
 		    cmdp->cmd_synopsis);
 	}
+
+	if (cvs_files != NULL)
+		cvs_file_free(cvs_files);
 
 	return (ret);
 }
