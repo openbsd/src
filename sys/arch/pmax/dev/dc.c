@@ -1060,7 +1060,7 @@ dcscan(arg)
 	dsr = MSR_DSR2;
 #ifdef HW_FLOW_CONTROL
 	/*limit = (pmax_boardtype == DS_PMAX) ? 2 : 3;*/
-	limit =  (sc->dc_rtscts & (1 << 3)) :3  : 2;	/*XXX*/
+	limit =  (sc->dc_rtscts & (1 << 3)) ? 3 : 2;	/*XXX*/
 #else
 	limit = 2;
 #endif
