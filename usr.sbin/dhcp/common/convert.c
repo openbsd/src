@@ -46,36 +46,36 @@
 u_int32_t getULong (buf)
 	unsigned char *buf;
 {
-	unsigned long ibuf;
+	u_int32_t ibuf;
 
-	memcpy (&ibuf, buf, sizeof (u_int32_t));
+	memcpy (&ibuf, buf, sizeof (ibuf));
 	return ntohl (ibuf);
 }
 
 int32_t getLong (buf)
 	unsigned char *buf;
 {
-	long ibuf;
+	int32_t ibuf;
 
-	memcpy (&ibuf, buf, sizeof (int32_t));
+	memcpy (&ibuf, buf, sizeof (ibuf));
 	return ntohl (ibuf);
 }
 
 u_int16_t getUShort (buf)
 	unsigned char *buf;
 {
-	unsigned short ibuf;
+	u_int16_t ibuf;
 
-	memcpy (&ibuf, buf, sizeof (u_int16_t));
+	memcpy (&ibuf, buf, sizeof (ibuf));
 	return ntohs (ibuf);
 }
 
 int16_t getShort (buf)
 	unsigned char *buf;
 {
-	short ibuf;
+	int16_t ibuf;
 
-	memcpy (&ibuf, buf, sizeof (int16_t));
+	memcpy (&ibuf, buf, sizeof (ibuf));
 	return ntohs (ibuf);
 }
 
