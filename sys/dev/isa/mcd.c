@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcd.c,v 1.33 2004/02/15 02:45:47 tedu Exp $ */
+/*	$OpenBSD: mcd.c,v 1.34 2004/05/01 23:23:13 millert Exp $ */
 /*	$NetBSD: mcd.c,v 1.60 1998/01/14 12:14:41 drochner Exp $	*/
 
 /*
@@ -1273,7 +1273,8 @@ changed:
 	/* Invalidate the buffer. */
 	bp->b_flags |= B_ERROR;
 	bp->b_resid = bp->b_bcount - mbx->skip;
-	disk_unbusy(&sc->sc_dk, (bp->b_bcount - bp->b_resid));
+	disk_unbusy(&sc->sc_dk, (bp->b_bcount - bp->b_resid),
+	    (bp->b_flags & B_READ));
 	biodone(bp);
 
 	mcdstart(sc);
