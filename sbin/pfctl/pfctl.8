@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.66 2003/01/19 13:48:06 dhartmei Exp $
+.\" $OpenBSD: pfctl.8,v 1.67 2003/01/22 01:15:32 cedric Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -222,10 +222,12 @@ Kill a table.
 Flush all addresses of a table.
 .It Fl T Ar add
 Add one or more addresses in a table.
+Automatically create a nonexisting table.
 .It Fl T Ar delete
 Delete one or more addresses from a table.
 .It Fl T Ar replace
 Replace the addresses of the table.
+Automatically create a nonexisting table.
 .It Fl T Ar show
 Show the content (addresses) of a table.
 .It Fl T Ar test

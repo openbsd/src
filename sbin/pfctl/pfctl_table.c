@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.24 2003/01/18 22:18:09 cedric Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.25 2003/01/22 01:15:32 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -97,6 +97,17 @@ static char	*stats_text[PFR_DIR_MAX][PFR_OP_TABLE_MAX] = {
 		}					\
 	} while (0)
 
+#define CREATE_TABLE do {						\
+		table.pfrt_flags |= PFR_TFLAG_PERSIST;			\
+		RVTEST(pfr_add_tables(&table, 1, &nadd, flags));	\
+		if (nadd) {						\
+			xprintf(opts, "%d table created", nadd);	\
+			if (opts & PF_OPT_NOACTION)			\
+				return (0);				\
+		}							\
+		table.pfrt_flags &= ~PFR_TFLAG_PERSIST;			\
+	} while(0)
+
 int
 pfctl_clear_tables(int opts)
 {
@@ -186,6 +197,7 @@ pfctl_table(int argc, char *argv[], char *tname, char *command,
 		xprintf(opts, "%d addresses deleted", ndel);
 	} else if (!strcmp(command, "add")) {
 		load_addr(argc, argv, file, 0);
+		CREATE_TABLE;
 		if (opts & PF_OPT_VERBOSE)
 			flags |= PFR_FLAG_FEEDBACK;
 		RVTEST(pfr_add_addrs(&table, buffer.addrs, size, &nadd,
@@ -212,6 +224,7 @@ pfctl_table(int argc, char *argv[], char *tname, char *command,
 					    opts & PF_OPT_USEDNS);
 	} else if (!strcmp(command, "replace")) {
 		load_addr(argc, argv, file, 0);
+		CREATE_TABLE;
 		if (opts & PF_OPT_VERBOSE)
 			flags |= PFR_FLAG_FEEDBACK;
 		for (;;) {
