@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.463 2001/11/16 21:41:12 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.464 2001/11/18 20:43:10 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -3313,6 +3313,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI800H_1,
 	    "VScom PCI 800-H",
+	},
+	{
+	    PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI200H,
+	    "VScom PCI 200-H",
 	},
 	{
 	    PCI_VENDOR_PE, PCI_PRODUCT_PE_GNIC2,

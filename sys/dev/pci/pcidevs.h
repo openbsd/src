@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.463 2001/11/16 21:41:12 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.464 2001/11/18 20:43:10 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1651,6 +1651,7 @@
 #define	PCI_PRODUCT_OXFORD_VSCOM_PCI200L	0x8020		/* VScom PCI 200-L */
 #define	PCI_PRODUCT_OXFORD_VSCOM_PCI800H_0	0xa003		/* VScom PCI 800-H */
 #define	PCI_PRODUCT_OXFORD_VSCOM_PCI800H_1	0xa004		/* VScom PCI 800-H */
+#define	PCI_PRODUCT_OXFORD_VSCOM_PCI200H	0xa005		/* VScom PCI 200-H */
 
 /* Packet Engines Inc. products */
 #define	PCI_PRODUCT_PE_GNIC2	0x0911		/* PMC/GNIC2 */
