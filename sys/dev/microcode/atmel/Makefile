@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2004/11/17 00:52:38 deraadt Exp $
+# $OpenBSD: Makefile,v 1.4 2004/11/17 01:56:11 deraadt Exp $
 
 # USB capable systems only
 .if (${MACHINE} == "i386") || (${MACHINE} == "amd64") || \
@@ -6,8 +6,11 @@
     (${MACHINE_ARCH} == "powerpc") || (${MACHINE} == "cats") || \
     (${MACHINE} == "hppa")
 
-FIRM= 	atu-intersil-int atu-rfmd-int atu-rfmd2958-int \
-	atu-intersil-ext atu-rfmd-ext atu-rfmd2958-ext
+FIRM= 	atu-intersil-int atu-intersil-ext \
+	atu-rfmd-int atu-rfmd-ext \
+	atu-rfmd2958-int atu-rfmd2958-ext \
+	atu-rfmd2958smc-int atu-rfmd2958smc-ext
+
 CLEANFILES+= ${FIRM} build
 
 all:	build
