@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.5 2004/02/23 18:27:37 henning Exp $	*/
+/*	$OpenBSD: packet.c,v 1.6 2004/02/24 00:34:40 henning Exp $	*/
 
 /* Packet assembly code, originally contributed by Archie Cobbs. */
 
@@ -54,17 +54,9 @@ checksum(unsigned char *buf, unsigned nbytes, u_int32_t sum)
 {
 	int i;
 
-#ifdef DEBUG_CHECKSUM
-	debug("checksum (%x %d %x)", buf, nbytes, sum);
-#endif
-
 	/* Checksum all the pairs of bytes first... */
 	for (i = 0; i < (nbytes & ~1U); i += 2) {
-#ifdef DEBUG_CHECKSUM_VERBOSE
-		debug("sum = %x", sum);
-#endif
 		sum += (u_int16_t)ntohs(*((u_int16_t *)(buf + i)));
-		/* Add carry. */
 		if (sum > 0xFFFF)
 			sum -= 0xFFFF;
 	}
@@ -75,11 +67,7 @@ checksum(unsigned char *buf, unsigned nbytes, u_int32_t sum)
 	 * the high byte.
 	 */
 	if (i < nbytes) {
-#ifdef DEBUG_CHECKSUM_VERBOSE
-		debug("sum = %x", sum);
-#endif
 		sum += buf[i] << 8;
-		/* Add carry. */
 		if (sum > 0xFFFF)
 			sum -= 0xFFFF;
 	}
@@ -93,18 +81,7 @@ checksum(unsigned char *buf, unsigned nbytes, u_int32_t sum)
 u_int32_t
 wrapsum(u_int32_t sum)
 {
-#ifdef DEBUG_CHECKSUM
-	debug("wrapsum (%x)", sum);
-#endif
-
 	sum = ~sum & 0xFFFF;
-#ifdef DEBUG_CHECKSUM_VERBOSE
-	debug("sum = %x", sum);
-#endif
-
-#ifdef DEBUG_CHECKSUM
-	debug("wrapsum returns %x", htons(sum));
-#endif
 	return (htons(sum));
 }
 
@@ -144,10 +121,7 @@ assemble_udp_ip_header(struct interface_info *interface, unsigned char *buf,
 	ip.ip_src.s_addr = from;
 	ip.ip_dst.s_addr = to;
 
-	/* Checksum the IP header... */
 	ip.ip_sum = wrapsum(checksum((unsigned char *)&ip, sizeof(ip), 0));
-
-	/* Copy the ip header into the buffer... */
 	memcpy(&buf[*bufix], &ip, sizeof(ip));
 	*bufix += sizeof(ip);
 
@@ -157,16 +131,11 @@ assemble_udp_ip_header(struct interface_info *interface, unsigned char *buf,
 	udp.uh_ulen = htons(sizeof(udp) + len);
 	memset(&udp.uh_sum, 0, sizeof(udp.uh_sum));
 
-	/*
-	 * Compute UDP checksums, including the ``pseudo-header'', the
-	 * UDP header and the data.
-	 */
 	udp.uh_sum = wrapsum(checksum((unsigned char *)&udp, sizeof(udp),
 	    checksum(data, len, checksum((unsigned char *)&ip.ip_src,
-		2 * sizeof(ip.ip_src),
-		IPPROTO_UDP + (u_int32_t)ntohs(udp.uh_ulen)))));
+	    2 * sizeof(ip.ip_src),
+	    IPPROTO_UDP + (u_int32_t)ntohs(udp.uh_ulen)))));
 
-	/* Copy the udp header into the buffer... */
 	memcpy(&buf[*bufix], &udp, sizeof(udp));
 	*bufix += sizeof(udp);
 }
@@ -216,12 +185,10 @@ decode_udp_ip_header(struct interface_info *interface, unsigned char *buf,
 		return (-1);
 	}
 
-	/* Check the IP packet length. */
 	if (ntohs(ip->ip_len) != buflen)
 		debug("ip length %d disagrees with bytes received %d.",
 		    ntohs(ip->ip_len), buflen);
 
-	/* Copy out the IP source address... */
 	memcpy(&from->sin_addr, &ip->ip_src, 4);
 
 	/*
@@ -255,8 +222,8 @@ decode_udp_ip_header(struct interface_info *interface, unsigned char *buf,
 
 	sum = wrapsum(checksum((unsigned char *)udp, sizeof(*udp),
 	    checksum(data, len, checksum((unsigned char *)&ip->ip_src,
-		2 * sizeof(ip->ip_src),
-		IPPROTO_UDP + (u_int32_t)ntohs(udp->uh_ulen)))));
+	    2 * sizeof(ip->ip_src),
+	    IPPROTO_UDP + (u_int32_t)ntohs(udp->uh_ulen)))));
 
 	udp_packets_seen++;
 	if (usum && usum != sum) {
@@ -270,7 +237,6 @@ decode_udp_ip_header(struct interface_info *interface, unsigned char *buf,
 		return (-1);
 	}
 
-	/* Copy out the port... */
 	memcpy(&from->sin_port, &udp->uh_sport, sizeof(udp->uh_sport));
 
 	return (ip_len + sizeof(*udp));
