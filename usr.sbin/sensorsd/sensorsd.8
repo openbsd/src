@@ -1,0 +1,49 @@
+.\"	$OpenBSD: sensorsd.8,v 1.1 2003/09/24 20:32:49 henning Exp $
+.\"
+.\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\" 
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd September 20, 2003
+.Dt SENSORSD 8
+.Os
+.Sh NAME
+.Nm sensorsd
+.Nd monitor hardware sensors
+.Sh SYNOPSIS
+.Nm sensorsd
+.Sh DESCRIPTION
+The
+.Nm
+utility retrieves hardware sensor monitoring data like fan speeds,
+temperatures and voltages, via
+.Xr sysctl 3 .
+It uses
+.Xr syslog 3
+to send an alert if they are out of the given limits.
+.Pp
+Limits for a particular sensor may be specified in the
+.Xr sensorsd.conf 5
+configuration file.
+.Sh SEE ALSO
+.Xr sysctl 3 ,
+.Xr syslog 3 ,
+.Xr lm 4 ,
+.Xr viaenv 4 ,
+.Xr sensorsd.conf 5 ,
+.Xr syslogd 8
+.Sh HISTORY
+The
+.Nm
+program first appeared in
+.Ox 3.5 .
