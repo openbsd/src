@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: monitor.c,v 1.4 2002/03/19 14:27:39 markus Exp $");
+RCSID("$OpenBSD: monitor.c,v 1.5 2002/03/19 21:12:48 markus Exp $");
 
 #include <openssl/dh.h>
 
@@ -1144,7 +1144,6 @@ mm_answer_rsa_challenge(int socket, Buffer *m)
 	debug3("%s sending reply", __FUNCTION__);
 	mm_request_send(socket, MONITOR_ANS_RSACHALLENGE, m);
 
-
 	monitor_permit(mon_dispatch, MONITOR_REQ_RSARESPONSE, 1);
 	return (0);
 }
@@ -1220,7 +1219,9 @@ monitor_apply_keystate(struct monitor *monitor)
 		set_newkeys(MODE_IN);
 		set_newkeys(MODE_OUT);
 	} else {
-		u_char key[256];
+		u_char key[SSH_SESSION_KEY_LENGTH];
+
+		memset(key, 'a', sizeof(key));
 		packet_set_protocol_flags(child_state.ssh1protoflags);
 		packet_set_encryption_key(key, SSH_SESSION_KEY_LENGTH,
 		    child_state.ssh1cipher);
