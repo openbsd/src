@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.13 1997/10/19 23:58:50 deraadt Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.14 1997/10/21 22:49:32 provos Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -56,7 +56,7 @@ Xreinit(cmd, disk, mbr, tt, offset)
 
 	/* Copy template MBR */
 	MBR_make(tt, buf);
-	MBR_parse(buf, mbr);
+	MBR_parse(buf, 0, 0, mbr);
 
 	/* Fix up given mbr for this disk */
 	mbr->part[0].flag = 0;
@@ -203,6 +203,7 @@ Xselect(cmd, disk, mbr, tt, offset)
 	mbr_t *tt;
 	int offset;
 {
+	static firstoff = 0;
 	int off;
 	int pn;
 
@@ -219,6 +220,10 @@ Xselect(cmd, disk, mbr, tt, offset)
 		printf("Partition %d is not an extended partition.\n", pn);
 		return (CMD_CONT);
 	}
+
+	if (firstoff == 0)
+		firstoff = off;
+
 	if (!off) {
 		printf("Loop to offset 0!  Not selected.\n");
 		return (CMD_CONT);
@@ -228,7 +233,7 @@ Xselect(cmd, disk, mbr, tt, offset)
 	}
 
 	/* Recursion is beautifull! */
-	USER_modify(disk, tt, off);
+	USER_modify(disk, tt, off, firstoff);
 	return (CMD_CONT);
 }
 

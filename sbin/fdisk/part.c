@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.6 1997/10/19 23:29:38 deraadt Exp $	*/
+/*	$OpenBSD: part.c,v 1.7 1997/10/21 22:49:34 provos Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -126,14 +126,18 @@ PRT_ascii_id(id)
 }
 
 void
-PRT_parse(prt, partn)
+PRT_parse(prt, offset, reloff, partn)
 	void *prt;
+	off_t offset;
+	off_t reloff;
 	prt_t *partn;
 {
 	unsigned char *p = prt;
+	off_t off;
 
 	partn->flag = *p++;
 	partn->shead = *p++;
+
 	partn->ssect = (*p) & 0x3F;
 	partn->scyl = ((*p << 2) & 0xFF00) | (*(p+1));
 	p += 2;
@@ -144,16 +148,21 @@ PRT_parse(prt, partn)
 	partn->ecyl = ((*p << 2) & 0xFF00) | (*(p+1));
 	p += 2;
 
-	partn->bs = getlong(p);
+	off = partn->id != DOSPTYP_EXTEND ? offset : reloff;
+
+	partn->bs = getlong(p) + off;
 	partn->ns = getlong(p+4);
 }
 
 void
-PRT_make(partn, prt)
+PRT_make(partn, offset, reloff, prt)
 	prt_t *partn;
+	off_t offset;
+	off_t reloff;
 	void *prt;
 {
 	unsigned char *p = prt;
+	off_t off = partn->id != DOSPTYP_EXTEND ? offset : reloff; 
 
 	*p++ = partn->flag & 0xFF;
 	*p++ = partn->shead & 0xFF;
@@ -166,7 +175,7 @@ PRT_make(partn, prt)
 	*p++ = (partn->esect & 0x3F) | ((partn->ecyl & 0x300) >> 2);
 	*p++ = partn->ecyl & 0xFF;
 
-	putlong(p, partn->bs);
+	putlong(p, partn->bs - off);
 	putlong(p+4, partn->ns);
 }
 

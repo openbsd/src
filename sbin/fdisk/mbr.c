@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.4 1997/10/19 23:29:37 deraadt Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.6 1997/10/21 22:49:33 provos Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -47,19 +47,24 @@
 
 
 void
-MBR_parse(mbr_buf, mbr)
+MBR_parse(mbr_buf, offset, reloff, mbr)
 	char *mbr_buf;
+	off_t offset;
+	off_t reloff;
 	mbr_t *mbr;
 {
 	int i;
 
 	memcpy(mbr->code, mbr_buf, MBR_CODE_SIZE);
+	mbr->offset = offset;
+	mbr->reloffset = reloff;
 	mbr->nt_serial = getlong(&mbr_buf[MBR_NTSER_OFF]);
 	mbr->spare = getshort(&mbr_buf[MBR_SPARE_OFF]);
 	mbr->signature = getshort(&mbr_buf[MBR_SIG_OFF]);
 
 	for (i = 0; i < NDOSPART; i++)
-		PRT_parse(&mbr_buf[MBR_PART_OFF + MBR_PART_SIZE * i],
+		PRT_parse(&mbr_buf[MBR_PART_OFF + MBR_PART_SIZE * i], 
+		    offset, reloff,
 		    &mbr->part[i]);
 }
 
@@ -76,8 +81,8 @@ MBR_make(mbr, mbr_buf)
 	putshort(&mbr_buf[MBR_SIG_OFF], mbr->signature);
 
 	for (i = 0; i < NDOSPART; i++)
-		PRT_make(&mbr->part[i], &mbr_buf[MBR_PART_OFF +
-		    MBR_PART_SIZE * i]);
+		PRT_make(&mbr->part[i], mbr->offset, mbr->reloffset, 
+		    &mbr_buf[MBR_PART_OFF + MBR_PART_SIZE * i]);
 }
 
 void
@@ -108,11 +113,11 @@ MBR_read(fd, where, buf)
 	where *= DEV_BSIZE;
 	off = lseek(fd, where, SEEK_SET);
 	if (off != where)
-		return(off);
+		return (off);
 	len = read(fd, buf, DEV_BSIZE);
 	if (len != DEV_BSIZE)
-		return(len);
-	return(0);
+		return (len);
+	return (0);
 }
 
 int
@@ -127,9 +132,9 @@ MBR_write(fd, where, buf)
 	where *= DEV_BSIZE;
 	off = lseek(fd, where, SEEK_SET);
 	if (off != where)
-		return(off);
+		return (off);
 	len = write(fd, buf, DEV_BSIZE);
 	if (len != DEV_BSIZE)
-		return(len);
-	return(0);
+		return (len);
+	return (0);
 }

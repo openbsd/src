@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.10 1997/10/19 23:29:38 deraadt Exp $	*/
+/*	$OpenBSD: user.c,v 1.11 1997/10/21 22:49:35 provos Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -114,10 +114,11 @@ USER_init(disk, tt)
 int modified;
 
 int
-USER_modify(disk, tt, offset)
+USER_modify(disk, tt, offset, reloff)
 	disk_t *disk;
 	mbr_t *tt;
-	int offset;
+	off_t offset;
+	off_t reloff;
 {
 	static int editlevel;
 	char mbr_buf[DEV_BSIZE];
@@ -137,7 +138,7 @@ USER_modify(disk, tt, offset)
 	DISK_close(fd);
 
 	/* Parse the sucker */
-	MBR_parse(mbr_buf, &mbr);
+	MBR_parse(mbr_buf, offset, reloff, &mbr);
 
 	printf("Enter 'help' for information\n");
 
@@ -201,26 +202,29 @@ int
 USER_print_disk(disk)
 	disk_t *disk;
 {
-	int fd, offset, i;
+	int fd, offset, firstoff, i;
 	char mbr_buf[DEV_BSIZE];
 	mbr_t mbr;
 
 	fd = DISK_open(disk->name, O_RDONLY);
-	offset = 0;
+	offset = firstoff = 0;
 
 	DISK_printmetrics(disk);
 
 	do {
 		MBR_read(fd, (off_t)offset, mbr_buf);
-		MBR_parse(mbr_buf, &mbr);
+		MBR_parse(mbr_buf, offset, firstoff, &mbr);
 
 		printf("Offset: %d\t", (int)offset);
 		MBR_print(&mbr);
 
 		/* Print out extended partitions too */
 		for (offset = i = 0; i < 4; i++)
-			if (mbr.part[i].id == DOSPTYP_EXTEND)
+			if (mbr.part[i].id == DOSPTYP_EXTEND) {
 				offset = mbr.part[i].bs;
+				if (firstoff == 0)
+					firstoff = offset;
+			}
 	} while (offset);
 
 	return (DISK_close(fd));
