@@ -1658,9 +1658,11 @@
 ./usr/share/man/cat2/alpha/writew.0
 ./usr/share/man/cat2/amd64/amd64_get_ioperm.0
 ./usr/share/man/cat2/amd64/amd64_get_ldt.0
+./usr/share/man/cat2/amd64/amd64_get_mtrr.0
 ./usr/share/man/cat2/amd64/amd64_iopl.0
 ./usr/share/man/cat2/amd64/amd64_set_ioperm.0
 ./usr/share/man/cat2/amd64/amd64_set_ldt.0
+./usr/share/man/cat2/amd64/amd64_set_mtrr.0
 ./usr/share/man/cat2/bind.0
 ./usr/share/man/cat2/brk.0
 ./usr/share/man/cat2/chdir.0
