@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.161 2004/12/26 14:57:19 espie Exp $
+# $OpenBSD: pkg_add,v 1.162 2004/12/27 23:56:48 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -81,7 +81,7 @@ sub can_install($$$)
 		return undef;
 	}
 
-	if (@conflicts >= 2) {
+	if (@conflicts >  5) {
 		print "Can't install $pkgname because of conflicts (",join(',', @conflicts, @libs), ")\n";
 		$errors++;
 		return undef;
@@ -117,6 +117,7 @@ sub can_install($$$)
 		}
 		$rplist->{dir} = installed_info($toreplace);
 		push(@{$plist->{replacing}}, $rplist);
+		$plist->{skipupdatedeps} = \%conflicts;
 	}
 	return 1;
 }
@@ -453,6 +454,10 @@ sub really_add($$)
 		    if $state->{beverbose};
 		my $d = OpenBSD::RequiredBy->new($pkgname);
 		for my $dep (@{$op->{wantlist}}) {
+			if (defined $plist->{skipupdatedeps}->{$dep}) {
+				print "\tskipping $dep\n" if $state->{beverbose};
+				next;
+			}
 			print "\t$dep\n" if $state->{beverbose};
 			$d->add($dep);
 			OpenBSD::Update::adjust_dependency($dep, $opkgname, $pkgname);
