@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.20 2001/09/24 21:35:09 drahn Exp $ */
+/*	$OpenBSD: loader.c,v 1.21 2001/09/24 23:42:25 art Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -125,7 +125,6 @@ _dl_boot(const char **argv, const char **envp, const long loff,
 	/*
 	 *  Get paths to various things we are going to use.
 	 */
-
 	_dl_libpath = _dl_getenv("LD_LIBRARY_PATH", envp);
 	_dl_preload = _dl_getenv("LD_PRELOAD", envp);
 	_dl_bindnow = _dl_getenv("LD_BIND_NOW", envp);
@@ -300,7 +299,6 @@ _dl_boot(const char **argv, const char **envp, const long loff,
 	return(dl_data[AUX_entry]);
 }
 
-
 void
 _dl_boot_bind(const long sp, const long loff, Elf_Dyn *dynamicp, long *dl_data)
 {
@@ -311,7 +309,6 @@ _dl_boot_bind(const long sp, const long loff, Elf_Dyn *dynamicp, long *dl_data)
 	int argc;
 	char **argv;
 	char **envp;
-	
 	struct elf_object  dynld;	/* Resolver data for the loader */
 
 	/*
@@ -331,13 +328,15 @@ _dl_boot_bind(const long sp, const long loff, Elf_Dyn *dynamicp, long *dl_data)
 	 */
 
 	auxstack = (AuxInfo *)stack;
-
 	while (auxstack->au_id != AUX_null) {
 		if (auxstack->au_id <= AUX_entry) {
 			dl_data[auxstack->au_id] = auxstack->au_v;
 		}
 		auxstack++;
 	}
+#ifdef __sparc64__
+	loff = dl_data[AUX_base];
+#endif
 
 	/*
 	 *  We need to do 'selfreloc' in case the code weren't
@@ -347,7 +346,9 @@ _dl_boot_bind(const long sp, const long loff, Elf_Dyn *dynamicp, long *dl_data)
 	 *  Cache the data for easier access.
 	 */
 
-#if defined(__powerpc__) || defined(__alpha__) || defined(__sparc64__)
+#if defined(__sparc64__)
+	dynp = (Elf_Dyn *)((long)_DYNAMIC + loff);
+#elif defined(__powerpc__) || defined(__alpha__)
 	dynp = dynamicp;
 #else
 	dynp = (Elf_Dyn *)((long)_DYNAMIC + loff);
@@ -432,6 +433,7 @@ _dl_boot_bind(const long sp, const long loff, Elf_Dyn *dynamicp, long *dl_data)
 		}
 
 	}
+
 	for (n = 0; n < 2; n++) {
 		int	  i;
 		unsigned long rs;
@@ -479,7 +481,6 @@ _dl_boot_bind(const long sp, const long loff, Elf_Dyn *dynamicp, long *dl_data)
 	 */
 	return;
 }
-
 
 void
 _dl_rtld(elf_object_t *object)
