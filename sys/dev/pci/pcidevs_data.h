@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.360 2001/01/23 00:05:01 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.361 2001/01/23 22:50:09 chris Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -3396,7 +3396,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MILL_II_G400_AGP,
 	    0,
 	    "Matrox",
-	    "MGA G400 AGP",
+	    "MGA G400/G450 AGP",
 	},
 	{
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_IMPRESSION,
