@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.16 2004/07/04 22:56:52 henning Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.17 2004/07/11 15:22:22 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -220,6 +220,11 @@ pfi_lookup_create(const char *name)
 	p = pfi_lookup_if(name);
 	if (p == NULL) {
 		pfi_copy_group(key.pfik_name, name, sizeof(key.pfik_name));
+		q = pfi_lookup_if(key.pfik_name);
+		if (q == NULL) {
+			pfi_newgroup(key.pfik_name, PFI_IFLAG_DYNAMIC);
+			q = pfi_lookup_if(key.pfik_name);
+		}
 		q = pfi_lookup_if(key.pfik_name);
 		if (q != NULL)
 			p = pfi_if_create(name, q, PFI_IFLAG_INSTANCE);
