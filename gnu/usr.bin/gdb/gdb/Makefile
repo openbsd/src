@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2 1995/12/14 03:42:35 deraadt Exp $
+# $Id: Makefile,v 1.3 1996/01/12 16:55:47 deraadt Exp $
 
 # Paths to libraries
 #
@@ -46,7 +46,7 @@ SRCS=		blockframe.c core.c gdbtypes.c main.c source.c		\
 		copying.c fork-child.c m2-valprint.c serial.c version.c \
 		dis-buf.c solib.c
 
-CLEANFILES+=	y.tab.h c-exp.c ch-exp.c m2-exp.c
+CLEANFILES+=	c-exp.tab.h ch-exp.tab.h m2-exp.tab.h c-exp.c ch-exp.c m2-exp.c
 
 LDADD=		$(LIBBFD) $(LIBREADLINE) $(LIBIBERTY)
 DPADD=		$(LIBBFD) $(LIBREADLINE) $(LIBIBERTY)
