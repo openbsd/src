@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 1997/02/27 20:57:52 briggs Exp $
+#	$OpenBSD: Makefile,v 1.15 1997/02/28 23:22:07 niklas Exp $
 #	$NetBSD: Makefile,v 1.25 1995/10/09 02:11:28 thorpej Exp $
 
 .include <bsd.own.mk>	# for NOMAN, if it's there.
@@ -53,5 +53,57 @@ build:
 	(cd ${.CURDIR}/kerberosIV && ${MAKE} build)
 .endif
 	${MAKE} depend && ${MAKE} && ${MAKE} install
+
+.if !defined(TARGET)
+cross-tools:
+	echo "TARGET must be set"; exit 1
+.else
+cross-tools:	cross-helpers cross-includes cross-binutils cross-gcc
+
+CROSSDIR=	${DESTDIR}/usr/cross/${TARGET}
+
+cross-helpers:
+	-mkdir -p ${CROSSDIR}/usr/include
+	echo _MACHINE_ARCH | \
+	    cat ${.CURDIR}/sys/arch/${TARGET}/include/param.h - | \
+	    ${CPP} -E |sed -n '$$p' >${CROSSDIR}/TARGET_ARCH
+	eval `grep '^osr=' sys/conf/newvers.sh`; \
+	   sed "s/\$$/-unknown-openbsd$$osr/" ${CROSSDIR}/TARGET_ARCH > \
+	   ${CROSSDIR}/TARGET_CANON
+
+cross-includes:
+	${MAKE} MACHINE=${TARGET} MACHINE_ARCH=`cat ${CROSSDIR}/TARGET_ARCH` \
+	    DESTDIR=${CROSSDIR} includes
+
+cross-binutils:
+	-mkdir -p ${CROSSDIR}/usr/obj
+	export BSDSRCDIR=`pwd`; \
+	    (cd ${.CURDIR}/gnu/usr.bin/binutils; \
+	    BSDOBJDIR=${CROSSDIR}/usr/obj \
+	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    ${MAKE} -f Makefile.bsd-wrapper obj); \
+	    (cd ${CROSSDIR}/usr/obj/gnu/usr.bin/binutils; \
+	    ${BSDSRCDIR}/gnu/usr.bin/binutils/configure \
+	    --prefix ${CROSSDIR}/usr \
+	    --target `cat ${CROSSDIR}/TARGET_CANON` && \
+	    ${MAKE} && ${MAKE} install)
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 755 \
+	    ${.CURDIR}/usr.bin/lorder/lorder.sh.gnm \
+	    ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-lorder
+
+cross-gcc:
+	-mkdir -p ${CROSSDIR}/usr/obj
+	(cd gnu/usr.bin/gcc; \
+	    BSDOBJDIR=${CROSSDIR}/usr/obj BSDSRCDIR=${.CURDIR} \
+	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    ${MAKE} -f Makefile.bsd-wrapper obj)
+	(cd ${CROSSDIR}/usr/obj/gnu/usr.bin/gcc; \
+	    ${.CURDIR}/gnu/usr.bin/gcc/configure \
+	    --prefix ${CROSSDIR}/usr \
+	    --target `cat ${CROSSDIR}/TARGET_CANON` && \
+	    ${MAKE} BISON=yacc LANGUAGES=c \
+	    GCC_FOR_TARGET="./xgcc -B./ -I${CROSSDIR}/usr/include" && \
+	    ${MAKE} LANGUAGES=c install)
+.endif
 
 .include <bsd.subdir.mk>
