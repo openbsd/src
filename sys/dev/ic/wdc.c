@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.44 2002/01/07 19:04:46 mickey Exp $     */
+/*      $OpenBSD: wdc.c,v 1.45 2002/01/12 05:36:09 jason Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -1244,6 +1244,10 @@ wdc_probe_caps(drvp, params)
 			    ATA_CONFIG_DMA_OFF;
 			drvp->drive_flags |= DRIVE_DMA | DRIVE_MODE;
 		}
+	}
+	if ((wdc->cap & WDC_CAPABILITY_UDMA) == 0) {
+		/* don't care about UDMA modes */
+		return;
 	}
 	if (cf_flags & ATA_CONFIG_UDMA_SET) {
 		if ((cf_flags & ATA_CONFIG_UDMA_MODES) ==
