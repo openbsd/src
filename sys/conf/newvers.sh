@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: newvers.sh,v 1.39 2002/03/22 23:29:28 deraadt Exp $
+#	$OpenBSD: newvers.sh,v 1.40 2002/04/01 02:13:02 drahn Exp $
 #	$NetBSD: newvers.sh,v 1.17.2.1 1995/10/12 05:17:11 jtc Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
@@ -61,6 +61,8 @@ id=`basename ${d}`
 #		VERSION
 #	src/etc/root/root.mail
 #		VERSION and other bits
+#	src/sys/arch/macppc/stand/tbxidata/bsd.tbxi
+#		change	/X.X/macppc/bsd.rd
 
 ost="OpenBSD"
 osr="3.1"
