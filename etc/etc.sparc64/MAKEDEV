@@ -5,9 +5,9 @@
 #
 #	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.4 2002/01/04 16:59:18 todd Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.3 2002/01/04 16:58:41 todd Exp 
-#	OpenBSD: MAKEDEV.sub,v 1.1 2002/01/04 09:25:35 todd Exp 
+#	OpenBSD: MAKEDEV.sub,v 1.2 2002/01/07 06:06:40 todd Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.30 2002/01/04 16:59:38 todd Exp $
+#	$Open{--}BSD$
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -499,13 +499,14 @@ local)
 all)
 	R std fd sd0 sd1 sd2 sd3 sd4 pty0 pty1 st0 st1 ch0 cd0 cd1
 	R vnd0 vnd1 vnd2 vnd3 ccd0 ccd1 ccd2 ccd3 wd0 wd1 wd2 wd3
-	R raid0 raid1 raid2 raid3
+	R raid0 raid1 raid2 raid3 rd0
+	R fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H
+	R fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H
 	R bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 	R tun0 tun1 tun2 tun3 altq pf crypto ttyh0 ttyh1
-	R fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H
-	R fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H ttya ttyb ttyc ttyd
-	R cuaa cuab cuac cuad lkm random ses0 uk0 uk1 ss0 ss1
-	R tty00 tty01 tty02 tty03 xfs0 audio0 usbs wscons
+	R ttya ttyb ttyc ttyd cuaa cuab cuac cuad lkm random ses0
+	R uk0 uk1 ss0 ss1 tty00 tty01 tty02 tty03 xfs0 audio0 usbs
+	R wscons
 	;;
 
 sd*|ccd*|raid*|wd*)
