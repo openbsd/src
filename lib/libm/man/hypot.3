@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hypot.3,v 1.7 2000/03/02 00:29:49 todd Exp $
+.\"	$OpenBSD: hypot.3,v 1.8 2003/02/27 01:45:03 jason Exp $
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -61,6 +61,15 @@ computes the
 sqrt(x*x+y*y)
 in such a way that underflow will not happen, and overflow
 occurs only if the final result deserves it.
+The
+.Fn hypotf
+and
+.Fn cabsf
+functions are single precision versions of
+.Fn hypot
+and
+.Fn cabs ,
+respectively.
 .Pp
 .Fn hypot "\*(If" "v"
 =

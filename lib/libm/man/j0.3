@@ -1,4 +1,4 @@
-.\"	$OpenBSD: j0.3,v 1.8 2000/03/02 00:29:50 todd Exp $
+.\"	$OpenBSD: j0.3,v 1.9 2003/02/27 01:45:03 jason Exp $
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -77,11 +77,9 @@
 .Fn ynf "int n" "float x"
 .Sh DESCRIPTION
 The functions
-.Fn j0 ,
-.Fn j0f ,
-.Fn j1
+.Fn j0
 and
-.Fn j1f
+.Fn j1
 compute the
 .Em Bessel function of the first kind of the order
 0 and the
@@ -90,22 +88,29 @@ compute the
 for the
 real value
 .Fa x ;
-the functions
+the function
 .Fn jn
-and
-.Fn jnf
-compute the
+computes the
 .Em Bessel function of the first kind of the integer order
 .Fa n
 for the real value
 .Fa x .
+The functions
+.Fn j0f ,
+.Fn j1f ,
+and
+.Fn jnf
+are single precision versions of
+.Fn j0 ,
+.Fn j1 ,
+and
+.Fn jn ,
+respectively.
 .Pp
 The functions
-.Fn y0 ,
-.Fn y0f ,
-.Fn y1
+.Fn y0
 and
-.Fn y1f
+.Fn y1
 compute the linearly independent
 .Em Bessel function of the second kind of the order
 0 and the
@@ -117,11 +122,9 @@ positive
 value
 .Fa x
 (expressed as a double);
-the functions
+the function
 .Fn yn
-and
-.Fn ynf
-compute the
+computes the
 .Em Bessel function of the second kind for the integer order
 .Fa n
 for the positive
@@ -129,6 +132,17 @@ for the positive
 value
 .Fa x
 (expressed as a double).
+The functions
+.Fn y0f ,
+.Fn y1f ,
+and
+.Fn ynf
+are single precision versions of
+.Fn y0 ,
+.Fn y1 ,
+and
+.Fn yn ,
+respectively.
 .Sh RETURN VALUES
 If these functions are successful,
 the computed value is returned, otherwise the global variable
