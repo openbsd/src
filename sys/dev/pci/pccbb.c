@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.14 2001/01/21 02:37:07 mickey Exp $ */
+/*	$OpenBSD: pccbb.c,v 1.15 2001/01/22 18:53:57 deraadt Exp $ */
 /*	$NetBSD: pccbb.c,v 1.42 2000/06/16 23:41:35 cgd Exp $	*/
 
 /*
@@ -502,7 +502,7 @@ pccbbattach(parent, self, aux)
 		printf("\n");
 		return;
 	}
-	printf(" %s\n", intrstr);
+	printf(": %s\n", intrstr);
 
 	shutdownhook_establish(pccbb_shutdown, sc);
 
