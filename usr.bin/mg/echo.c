@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.18 2002/02/14 14:24:21 deraadt Exp $	*/
+/*	$OpenBSD: echo.c,v 1.19 2002/02/14 23:00:56 vincent Exp $	*/
 
 /*
  *	Echo line reading and writing.
@@ -467,9 +467,9 @@ complt_list(flags, c, buf, cpos)
 		 * order.
 		 */
 		lh2 = lh;
-		while (lh2) {
+		while (lh2 != NULL) {
 			lh3 = lh2->l_next;
-			while (lh3) {
+			while (lh3 != NULL) {
 				if (strcmp(lh2->l_name, lh3->l_name) > 0) {
 					cp = lh2->l_name;
 					lh2->l_name = lh3->l_name;
@@ -506,32 +506,35 @@ complt_list(flags, c, buf, cpos)
 		 */
 		if ((linebuf = malloc((nrow + 1) * sizeof(char))) == NULL)
 			return FALSE;
-		cp = linebuf;
 		width = 0;
-		lh2 = lh;
-		while (lh2 != NULL) {
+
+		/* 
+		 * We're going to strlcat() into the buffer, so it has to be
+		 * NUL terminated
+		 */
+		linebuf[0] = '\0';
+		for (lh2 = lh; lh2 != NULL; lh2 = lh2->l_next) {
 			for (i = 0; i < cpos; ++i) {
 				if (buf[i] != lh2->l_name[i])
 					break;
 			}
+			/* if we have a match */
 			if (i == cpos) {
+				/* if it wraps */
 				if ((width + maxwidth) > ncol) {
-					*cp = 0;
 					addline(bp, linebuf);
-					cp = linebuf;
+					linebuf[0] = '\0';
 					width = 0;
-				}
-				strcpy(cp, lh2->l_name + preflen);
-				i = strlen(lh2->l_name + preflen);
-				cp += i;
-				for (; i < maxwidth; i++)
-					*cp++ = ' ';
+		 		}
+				strlcat(linebuf, lh2->l_name + preflen, nrow+1);				i = strlen(lh2->l_name + preflen);
+				/* make all the objects nicely line up */
+				memset(linebuf + strlen(linebuf), ' ',
+					maxwidth - i);
 				width += maxwidth;
+				linebuf[width] = '\0';
 			}
-			lh2 = lh2->l_next;
 		}
 		if (width > 0) {
-			*cp = 0;
 			addline(bp, linebuf);
 		}
 		free(linebuf);
