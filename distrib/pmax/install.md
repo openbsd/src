@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.6 1998/03/27 23:28:15 deraadt Exp $
+#	$OpenBSD: install.md,v 1.7 1998/05/04 00:25:36 millert Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -129,8 +129,10 @@ md_get_partition_range() {
 md_installboot() {
 	echo -n "Installing boot block..."
 	# $1 is the root disk
+	disklabel ${1} > /tmp/tempdisklabel
 	disklabel -W ${1}
-	disklabel -B ${1}
+	# XXX - hack to workaround disklabel problems
+	disklabel -B -R ${1} /tmp/tempdisklabel
 	echo "done."
 	# we also use this chance to do an ldconfig here
 	echo -n "creating runtime link editor directory cache..."
