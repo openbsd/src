@@ -1,5 +1,5 @@
-/*	$OpenBSD: ping6.c,v 1.44 2002/05/26 13:02:17 itojun Exp $	*/
-/*	$KAME: ping6.c,v 1.154 2002/05/26 12:56:34 itojun Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.45 2002/05/26 13:22:40 itojun Exp $	*/
+/*	$KAME: ping6.c,v 1.155 2002/05/26 13:18:25 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -239,7 +239,6 @@ struct msghdr smsghdr;
 struct iovec smsgiov;
 char *scmsg = 0;
 
-volatile int signo;
 volatile sig_atomic_t seenalrm;
 volatile sig_atomic_t seenint;
 #ifdef SIGINFO
@@ -1040,7 +1039,7 @@ main(argc, argv)
 	if ((fdmaskp = malloc(fdmasks)) == NULL)
 		err(1, "malloc");
 
-	signo = seenalrm = seenint = 0;
+	seenalrm = seenint = 0;
 #ifdef SIGINFO
 	seeninfo = 0;
 #endif
@@ -1139,7 +1138,7 @@ void
 onsignal(sig)
 	int sig;
 {
-	signo = sig;
+
 	switch (sig) {
 	case SIGALRM:
 		seenalrm++;
@@ -1598,11 +1597,9 @@ pr_pack(buf, cc, mhdr)
 			} else {
 				i = 0;
 				while (cp < end) {
-					if (dnsdecode((const u_char **)&cp,
-						      end,
-						      (const u_char *)(ni + 1),
-						      dnsname,
-						      sizeof(dnsname)) == NULL) {
+					if (dnsdecode((const u_char **)&cp, end,
+					    (const u_char *)(ni + 1), dnsname,
+					    sizeof(dnsname)) == NULL) {
 						printf("???");
 						break;
 					}
