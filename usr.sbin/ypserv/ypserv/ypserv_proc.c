@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv_proc.c,v 1.21 2003/06/02 21:58:27 maja Exp $ */
+/*	$OpenBSD: ypserv_proc.c,v 1.22 2003/06/22 23:57:07 maja Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef LINT
-static const char rcsid[] = "$OpenBSD: ypserv_proc.c,v 1.21 2003/06/02 21:58:27 maja Exp $";
+static const char rcsid[] = "$OpenBSD: ypserv_proc.c,v 1.22 2003/06/22 23:57:07 maja Exp $";
 #endif
 
 #include <rpc/rpc.h>
@@ -525,7 +525,7 @@ bail:
 }
 
 void *
-ypproc_null_1_svc(void *argp, struct svc_req *rqstp)
+ypoldproc_null_1_svc(void *argp, struct svc_req *rqstp)
 {
 	static char *result;
 	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
@@ -545,7 +545,7 @@ ypproc_null_1_svc(void *argp, struct svc_req *rqstp)
 }
 
 bool_t *
-ypproc_domain_1_svc(domainname *argp, struct svc_req *rqstp)
+ypoldproc_domain_1_svc(domainname *argp, struct svc_req *rqstp)
 {
 	static bool_t result; /* is domain_served? */
 	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
@@ -573,7 +573,7 @@ bail:
 }
 
 bool_t *
-ypproc_domain_nonack_1_svc(domainname *argp, struct svc_req *rqstp)
+ypoldproc_domain_nonack_1_svc(domainname *argp, struct svc_req *rqstp)
 {
 	static bool_t result; /* is domain served? */
 	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
@@ -606,7 +606,7 @@ bail:
 }
 
 ypresponse *
-ypproc_match_1_svc(yprequest *argp, struct svc_req *rqstp)
+ypoldproc_match_1_svc(yprequest *argp, struct svc_req *rqstp)
 {
 	static ypresponse res;
 	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
@@ -657,7 +657,7 @@ bail:
 }
 
 ypresponse *
-ypproc_first_1_svc(yprequest *argp, struct svc_req *rqstp)
+ypoldproc_first_1_svc(yprequest *argp, struct svc_req *rqstp)
 {
 	static ypresponse res;
 	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
@@ -705,7 +705,7 @@ bail:
 }
 
 ypresponse *
-ypproc_next_1_svc(yprequest *argp, struct svc_req *rqstp)
+ypoldproc_next_1_svc(yprequest *argp, struct svc_req *rqstp)
 {
 	static ypresponse res;
 	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
@@ -756,7 +756,7 @@ bail:
 }
 
 ypresponse *
-ypproc_poll_1_svc(yprequest *argp, struct svc_req *rqstp)
+ypoldproc_poll_1_svc(yprequest *argp, struct svc_req *rqstp)
 {
 	static ypresponse res;
 	ypresp_order order;
@@ -807,7 +807,7 @@ bail:
 }
 
 void *
-ypproc_push_1_svc(yprequest *argp, struct svc_req *rqstp)
+ypoldproc_push_1_svc(yprequest *argp, struct svc_req *rqstp)
 {
 	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
 	int ok = acl_check_host(&caller->sin_addr);
@@ -852,7 +852,7 @@ bail:
 }
 
 void *
-ypproc_pull_1_svc(yprequest *argp, struct svc_req *rqstp)
+ypoldproc_pull_1_svc(yprequest *argp, struct svc_req *rqstp)
 {
 	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
 	int ok = acl_check_host(&caller->sin_addr);
@@ -897,7 +897,7 @@ bail:
 }
 
 void *
-ypproc_get_1_svc(yprequest *argp, struct svc_req *rqstp)
+ypoldproc_get_1_svc(yprequest *argp, struct svc_req *rqstp)
 {
 	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
 	int ok = acl_check_host(&caller->sin_addr);

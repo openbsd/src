@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv.c,v 1.29 2003/06/12 21:09:48 deraadt Exp $ */
+/*	$OpenBSD: ypserv.c,v 1.30 2003/06/22 23:57:07 maja Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef LINT
-static const char rcsid[] = "$OpenBSD: ypserv.c,v 1.29 2003/06/12 21:09:48 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ypserv.c,v 1.30 2003/06/22 23:57:07 maja Exp $";
 #endif
 
 #include <sys/types.h>
@@ -115,15 +115,15 @@ static void
 ypprog_1(struct svc_req *rqstp, SVCXPRT *transp)
 {
 	union {
-		domainname ypproc_domain_1_arg;
-		domainname ypproc_domain_nonack_1_arg;
-		yprequest ypproc_match_1_arg;
-		yprequest ypproc_first_1_arg;
-		yprequest ypproc_next_1_arg;
-		yprequest ypproc_poll_1_arg;
-		yprequest ypproc_push_1_arg;
-		yprequest ypproc_pull_1_arg;
-		yprequest ypproc_get_1_arg;
+		domainname ypoldproc_domain_1_arg;
+		domainname ypoldproc_domain_nonack_1_arg;
+		yprequest ypoldproc_match_1_arg;
+		yprequest ypoldproc_first_1_arg;
+		yprequest ypoldproc_next_1_arg;
+		yprequest ypoldproc_poll_1_arg;
+		yprequest ypoldproc_push_1_arg;
+		yprequest ypoldproc_pull_1_arg;
+		yprequest ypoldproc_get_1_arg;
 	} argument;
 	char *result;
 	xdrproc_t xdr_argument, xdr_result;
@@ -134,61 +134,61 @@ ypprog_1(struct svc_req *rqstp, SVCXPRT *transp)
 	case YPOLDPROC_NULL:
 		xdr_argument = (xdrproc_t) xdr_void;
 		xdr_result = (xdrproc_t) xdr_void;
-		local = (char *(*)(char *, struct svc_req *)) ypproc_null_1_svc;
+		local = (char *(*)(char *, struct svc_req *)) ypoldproc_null_1_svc;
 		break;
 
 	case YPOLDPROC_DOMAIN:
 		xdr_argument = (xdrproc_t) xdr_domainname;
 		xdr_result = (xdrproc_t) xdr_bool;
-		local = (char *(*)(char *, struct svc_req *)) ypproc_domain_1_svc;
+		local = (char *(*)(char *, struct svc_req *)) ypoldproc_domain_1_svc;
 		break;
 
 	case YPOLDPROC_DOMAIN_NONACK:
 		xdr_argument = (xdrproc_t) xdr_domainname;
 		xdr_result = (xdrproc_t) xdr_bool;
-		local = (char *(*)(char *, struct svc_req *)) ypproc_domain_nonack_1_svc;
+		local = (char *(*)(char *, struct svc_req *)) ypoldproc_domain_nonack_1_svc;
 		break;
 
 	case YPOLDPROC_MATCH:
 		xdr_argument = (xdrproc_t) xdr_yprequest;
 		xdr_result = (xdrproc_t) xdr_ypresponse;
-		local = (char *(*)(char *, struct svc_req *)) ypproc_match_1_svc;
+		local = (char *(*)(char *, struct svc_req *)) ypoldproc_match_1_svc;
 		break;
 
 	case YPOLDPROC_FIRST:
 		xdr_argument = (xdrproc_t) xdr_yprequest;
 		xdr_result = (xdrproc_t) xdr_ypresponse;
-		local = (char *(*)(char *, struct svc_req *)) ypproc_first_1_svc;
+		local = (char *(*)(char *, struct svc_req *)) ypoldproc_first_1_svc;
 		break;
 
 	case YPOLDPROC_NEXT:
 		xdr_argument = (xdrproc_t) xdr_yprequest;
 		xdr_result = (xdrproc_t) xdr_ypresponse;
-		local = (char *(*)(char *, struct svc_req *)) ypproc_next_1_svc;
+		local = (char *(*)(char *, struct svc_req *)) ypoldproc_next_1_svc;
 		break;
 
 	case YPOLDPROC_POLL:
 		xdr_argument = (xdrproc_t) xdr_yprequest;
 		xdr_result = (xdrproc_t) xdr_ypresponse;
-		local = (char *(*)(char *, struct svc_req *)) ypproc_poll_1_svc;
+		local = (char *(*)(char *, struct svc_req *)) ypoldproc_poll_1_svc;
 		break;
 
 	case YPOLDPROC_PUSH:
 		xdr_argument = (xdrproc_t) xdr_yprequest;
 		xdr_result = (xdrproc_t) xdr_void;
-		local = (char *(*)(char *, struct svc_req *)) ypproc_push_1_svc;
+		local = (char *(*)(char *, struct svc_req *)) ypoldproc_push_1_svc;
 		break;
 
 	case YPOLDPROC_PULL:
 		xdr_argument = (xdrproc_t) xdr_yprequest;
 		xdr_result = (xdrproc_t) xdr_void;
-		local = (char *(*)(char *, struct svc_req *)) ypproc_pull_1_svc;
+		local = (char *(*)(char *, struct svc_req *)) ypoldproc_pull_1_svc;
 		break;
 
 	case YPOLDPROC_GET:
 		xdr_argument = (xdrproc_t) xdr_yprequest;
 		xdr_result = (xdrproc_t) xdr_void;
-		local = (char *(*)(char *, struct svc_req *)) ypproc_get_1_svc;
+		local = (char *(*)(char *, struct svc_req *)) ypoldproc_get_1_svc;
 		break;
 
 	default:
