@@ -21,7 +21,7 @@ SOFTWARE.
 ************************************************************************/
 
 #ifndef lint
-static char rcsid[] = "$Id: bootpd.c,v 1.2 1996/04/21 23:39:59 deraadt Exp $";
+static char rcsid[] = "$Id: bootpd.c,v 1.3 1996/07/11 10:54:50 mickey Exp $";
 #endif
 
 /*
@@ -649,7 +649,7 @@ ignoring request for server %s from client at %s address %s",
 		}
 		hlen = haddrlength(bp->bp_htype);
 		if (hlen != bp->bp_hlen) {
-			report(LOG_NOTICE, "bad addr len from from %s address %s",
+			report(LOG_NOTICE, "bad addr len from %s address %s",
 				   netname(bp->bp_htype),
 				   haddrtoa(bp->bp_chaddr, hlen));
 		}
