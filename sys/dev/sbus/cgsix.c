@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.43 2003/06/24 21:54:38 henric Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.44 2003/07/03 21:02:13 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -117,9 +117,7 @@ struct cfdriver cgsix_cd = {
 };
 
 int
-cgsixmatch(parent, vcf, aux)
-	struct device *parent;
-	void *vcf, *aux;
+cgsixmatch(struct device *parent, void *vcf, void *aux)
 {
 	struct cfdata *cf = vcf;
 	struct sbus_attach_args *sa = aux;
@@ -128,9 +126,7 @@ cgsixmatch(parent, vcf, aux)
 }
 
 void    
-cgsixattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+cgsixattach(struct device *parent, struct device *self, void *aux)
 {
 	struct cgsix_softc *sc = (struct cgsix_softc *)self;
 	struct sbus_attach_args *sa = aux;
@@ -287,12 +283,7 @@ fail:
 }
 
 int
-cgsix_ioctl(v, cmd, data, flags, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flags;
-	struct proc *p;
+cgsix_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	struct cgsix_softc *sc = v;
 	struct wsdisplay_cmap *cm;
@@ -536,12 +527,8 @@ cgsix_updatecursor(struct cgsix_softc *sc, u_int which)
 }
 
 int
-cgsix_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
-	void *v;
-	const struct wsscreen_descr *type;
-	void **cookiep;
-	int *curxp, *curyp;
-	long *attrp;
+cgsix_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
+    int *curxp, int *curyp, long *attrp)
 {
 	struct cgsix_softc *sc = v;
 
@@ -558,9 +545,7 @@ cgsix_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 }
 
 void
-cgsix_free_screen(v, cookie)
-	void *v;
-	void *cookie;
+cgsix_free_screen(void *v, void *cookie)
 {
 	struct cgsix_softc *sc = v;
 
@@ -568,12 +553,8 @@ cgsix_free_screen(v, cookie)
 }
 
 int
-cgsix_show_screen(v, cookie, waitok, cb, cbarg)
-	void *v;
-	void *cookie;
-	int waitok;
-	void (*cb)(void *, int, int);
-	void *cbarg;
+cgsix_show_screen(void *v, void *cookie, int waitok,
+    void (*cb)(void *, int, int), void *cbarg)
 {
 	return (0);
 }
@@ -585,10 +566,7 @@ struct mmo {
 };
 
 paddr_t
-cgsix_mmap(v, off, prot)
-	void *v;
-	off_t off;
-	int prot;
+cgsix_mmap(void *v, off_t off, int prot)
 {
 	struct cgsix_softc *sc = v;
 	struct mmo *mo;
@@ -640,8 +618,7 @@ cgsix_mmap(v, off, prot)
 }
 
 int
-cgsix_is_console(node)
-	int node;
+cgsix_is_console(int node)
 {
 	extern int fbnode;
 
@@ -649,9 +626,7 @@ cgsix_is_console(node)
 }
 
 int
-cg6_bt_getcmap(bcm, rcm)
-	union bt_cmap *bcm;
-	struct wsdisplay_cmap *rcm;
+cg6_bt_getcmap(union bt_cmap *bcm, struct wsdisplay_cmap *rcm)
 {
 	u_int index = rcm->index, count = rcm->count, i;
 	int error;
@@ -673,9 +648,7 @@ cg6_bt_getcmap(bcm, rcm)
 }
 
 int
-cg6_bt_putcmap(bcm, rcm)
-	union bt_cmap *bcm;
-	struct wsdisplay_cmap *rcm;
+cg6_bt_putcmap(union bt_cmap *bcm, struct wsdisplay_cmap *rcm)
 {
 	u_int index = rcm->index, count = rcm->count, i;
 	int error;
@@ -697,9 +670,7 @@ cg6_bt_putcmap(bcm, rcm)
 }
 
 void
-cgsix_loadcmap_deferred(sc, start, ncolors)
-	struct cgsix_softc *sc;
-	u_int start, ncolors;
+cgsix_loadcmap_deferred(struct cgsix_softc *sc, u_int start, u_int ncolors)
 {
 	u_int32_t thcm;
 
@@ -710,9 +681,7 @@ cgsix_loadcmap_deferred(sc, start, ncolors)
 }
 
 void
-cgsix_loadcmap_immediate(sc, start, ncolors)
-	struct cgsix_softc *sc;
-	u_int start, ncolors;
+cgsix_loadcmap_immediate(struct cgsix_softc *sc, u_int start, u_int ncolors)
 {
 	u_int cstart;
 	u_int32_t v;
@@ -744,9 +713,7 @@ cgsix_setcolor(void *v, u_int index, u_int8_t r, u_int8_t g, u_int8_t b)
 }
 
 void
-cgsix_reset(sc, fhcrev)
-	struct cgsix_softc *sc;
-	u_int32_t fhcrev;
+cgsix_reset(struct cgsix_softc *sc, u_int32_t fhcrev)
 {
 	u_int32_t fhc;
 
@@ -779,8 +746,7 @@ cgsix_reset(sc, fhcrev)
 }
 
 void
-cgsix_hardreset(sc)
-	struct cgsix_softc *sc;
+cgsix_hardreset(struct cgsix_softc *sc)
 {
 	u_int32_t fhc, rev;
 
@@ -841,9 +807,7 @@ cgsix_hardreset(sc)
 }
 
 void
-cgsix_burner(vsc, on, flags)
-	void *vsc;
-	u_int on, flags;
+cgsix_burner(void *vsc, u_int on, u_int flags)
 {
 	struct cgsix_softc *sc = vsc;
 	int s;
@@ -863,8 +827,7 @@ cgsix_burner(vsc, on, flags)
 }
 
 int
-cgsix_intr(vsc)
-	void *vsc;
+cgsix_intr(void *vsc)
 {
 	struct cgsix_softc *sc = vsc;
 	u_int32_t thcm;
@@ -885,8 +848,7 @@ cgsix_intr(vsc)
 }
 
 void
-cgsix_ras_init(sc)
-	struct cgsix_softc *sc;
+cgsix_ras_init(struct cgsix_softc *sc)
 {
 	u_int32_t m;
 
@@ -898,9 +860,7 @@ cgsix_ras_init(sc)
 }
 
 void
-cgsix_ras_copyrows(cookie, src, dst, n)
-	void *cookie;
-	int src, dst, n;
+cgsix_ras_copyrows(void *cookie, int src, int dst, int n)
 {
 	struct rasops_info *ri = cookie;
 	struct cgsix_softc *sc = ri->ri_hw;
@@ -947,9 +907,7 @@ cgsix_ras_copyrows(cookie, src, dst, n)
 }
 
 void
-cgsix_ras_copycols(cookie, row, src, dst, n)
-	void *cookie;
-	int row, src, dst, n;
+cgsix_ras_copycols(void *cookie, int row, int src, int dst, int n)
 {
 	struct rasops_info *ri = cookie;
 	struct cgsix_softc *sc = ri->ri_hw;
@@ -1001,10 +959,7 @@ cgsix_ras_copycols(cookie, row, src, dst, n)
 }
 
 void
-cgsix_ras_erasecols(cookie, row, col, n, attr)
-	void *cookie;
-	int row, col, n;
-	long int attr;
+cgsix_ras_erasecols(void *cookie, int row, int col, int n, long int attr)
 {
 	struct rasops_info *ri = cookie;
 	struct cgsix_softc *sc = ri->ri_hw;
@@ -1043,10 +998,7 @@ cgsix_ras_erasecols(cookie, row, col, n, attr)
 }
 
 void
-cgsix_ras_eraserows(cookie, row, n, attr)
-	void *cookie;
-	int row, n;
-	long int attr;
+cgsix_ras_eraserows(void *cookie, int row, int n, long int attr)
 {
 	struct rasops_info *ri = cookie;
 	struct cgsix_softc *sc = ri->ri_hw;
@@ -1089,8 +1041,7 @@ cgsix_ras_eraserows(cookie, row, n, attr)
 }
 
 void
-cgsix_ras_do_cursor(ri)
-	struct rasops_info *ri;
+cgsix_ras_do_cursor(struct rasops_info *ri)
 {
 	struct cgsix_softc *sc = ri->ri_hw;
 	int row, col;
@@ -1117,8 +1068,7 @@ cgsix_ras_do_cursor(ri)
 }
 
 void
-cgsix_ras_updatecursor(ri)
-	struct rasops_info *ri;
+cgsix_ras_updatecursor(struct rasops_info *ri)
 {
 	struct cgsix_softc *sc = ri->ri_hw;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.33 2003/06/27 01:36:53 jason Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.34 2003/07/03 21:02:13 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -211,9 +211,7 @@ struct cg3_videoctrl {
 };
 
 int
-cgthreematch(parent, vcf, aux)
-	struct device *parent;
-	void *vcf, *aux;
+cgthreematch(struct device *parent, void *vcf, void *aux)
 {
 	struct cfdata *cf = vcf;
 	struct sbus_attach_args *sa = aux;
@@ -222,9 +220,7 @@ cgthreematch(parent, vcf, aux)
 }
 
 void    
-cgthreeattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+cgthreeattach(struct device *parent, struct device *self, void *aux)
 {
 	struct cgthree_softc *sc = (struct cgthree_softc *)self;
 	struct sbus_attach_args *sa = aux;
@@ -307,12 +303,7 @@ fail:
 }
 
 int
-cgthree_ioctl(v, cmd, data, flags, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flags;
-	struct proc *p;
+cgthree_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	struct cgthree_softc *sc = v;
 	struct wsdisplay_fbinfo *wdf;
@@ -367,12 +358,8 @@ cgthree_ioctl(v, cmd, data, flags, p)
 }
 
 int
-cgthree_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
-	void *v;
-	const struct wsscreen_descr *type;
-	void **cookiep;
-	int *curxp, *curyp;
-	long *attrp;
+cgthree_alloc_screen(void *v, const struct wsscreen_descr *type,
+    void **cookiep, int *curxp, int *curyp, long *attrp)
 {
 	struct cgthree_softc *sc = v;
 
@@ -389,9 +376,7 @@ cgthree_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 }
 
 void
-cgthree_free_screen(v, cookie)
-	void *v;
-	void *cookie;
+cgthree_free_screen(void *v, void *cookie)
 {
 	struct cgthree_softc *sc = v;
 
@@ -399,12 +384,8 @@ cgthree_free_screen(v, cookie)
 }
 
 int
-cgthree_show_screen(v, cookie, waitok, cb, cbarg)
-	void *v;
-	void *cookie;
-	int waitok;
-	void (*cb)(void *, int, int);
-	void *cbarg;
+cgthree_show_screen(void *v, void *cookie, int waitok,
+    void (*cb)(void *, int, int), void *cbarg)
 {
 	return (0);
 }
@@ -413,10 +394,7 @@ cgthree_show_screen(v, cookie, waitok, cb, cbarg)
 #define	NOOVERLAY	(0x04000000)
 
 paddr_t
-cgthree_mmap(v, offset, prot)
-	void *v;
-	off_t offset;
-	int prot;
+cgthree_mmap(void *v, off_t offset, int prot)
 {
 	struct cgthree_softc *sc = v;
 
@@ -446,8 +424,7 @@ cgthree_mmap(v, offset, prot)
 }
 
 int
-cgthree_is_console(node)
-	int node;
+cgthree_is_console(int node)
 {
 	extern int fbnode;
 
@@ -467,9 +444,7 @@ cgthree_setcolor(void *v, u_int index, u_int8_t r, u_int8_t g, u_int8_t b)
 }
 
 void
-cgthree_loadcmap(sc, start, ncolors)
-	struct cgthree_softc *sc;
-	u_int start, ncolors;
+cgthree_loadcmap(struct cgthree_softc *sc, u_int start, u_int ncolors)
 {
 	u_int cstart;
 	int count;
@@ -484,9 +459,7 @@ cgthree_loadcmap(sc, start, ncolors)
 }
 
 int
-cg3_bt_getcmap(bcm, rcm)
-	union bt_cmap *bcm;
-	struct wsdisplay_cmap *rcm;
+cg3_bt_getcmap(union bt_cmap *bcm, struct wsdisplay_cmap *rcm)
 {
 	u_int index = rcm->index, count = rcm->count, i;
 	int error;
@@ -508,9 +481,7 @@ cg3_bt_getcmap(bcm, rcm)
 }
 
 int
-cg3_bt_putcmap(bcm, rcm)
-	union bt_cmap *bcm;
-	struct wsdisplay_cmap *rcm;
+cg3_bt_putcmap(union bt_cmap *bcm, struct wsdisplay_cmap *rcm)
 {
 	u_int index = rcm->index, count = rcm->count, i;
 	int error;
@@ -532,8 +503,7 @@ cg3_bt_putcmap(bcm, rcm)
 }
 
 void
-cgthree_reset(sc)
-	struct cgthree_softc *sc;
+cgthree_reset(struct cgthree_softc *sc)
 {
 	int i, j;
 	u_int8_t sts, ctrl;
@@ -591,9 +561,7 @@ cgthree_reset(sc)
 }
 
 void
-cgthree_burner(vsc, on, flags)
-	void *vsc;
-	u_int on, flags;
+cgthree_burner(void *vsc, u_int on, u_int flags)
 {
 	struct cgthree_softc *sc = vsc;
 	int s;
@@ -613,8 +581,7 @@ cgthree_burner(vsc, on, flags)
 }
 
 void
-cgthree_updatecursor(ri)
-	struct rasops_info *ri;
+cgthree_updatecursor(struct rasops_info *ri)
 {
 	struct cgthree_softc *sc = ri->ri_hw;
 
