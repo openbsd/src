@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7990.c,v 1.31 2003/06/02 23:28:01 millert Exp $	*/
+/*	$OpenBSD: am7990.c,v 1.32 2003/08/18 17:14:19 jason Exp $	*/
 /*	$NetBSD: am7990.c,v 1.22 1996/10/13 01:37:19 christos Exp $	*/
 
 /*-
@@ -537,8 +537,10 @@ am7990_rint(sc)
 			ifp->if_ierrors++;
 		} else if ((rmd.rmd1_bits & (LE_R1_STP | LE_R1_ENP)) !=
 		    (LE_R1_STP | LE_R1_ENP)) {
+#ifdef LEDEBUG
 			printf("%s: dropping chained buffer\n",
 			    sc->sc_dev.dv_xname);
+#endif
 			ifp->if_ierrors++;
 		} else {
 #ifdef LEDEBUG1
