@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.17 1999/02/26 01:38:22 art Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.18 2000/06/07 09:40:02 art Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -301,6 +301,22 @@ db_map_print_cmd(addr, have_addr, count, modif)
         _vm_map_print((vm_map_t) addr, full, db_printf);
 #endif
 }
+/*ARGSUSED*/
+void
+db_malloc_print_cmd(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
+{
+#if defined(MALLOC_DEBUG)
+	extern void debug_malloc_printit __P((int (*) __P((const char *, ...))));
+
+	debug_malloc_printit(db_printf);
+#else
+	db_printf("Malloc debugging not enabled.\n");
+#endif
+}
 
 /*ARGSUSED*/
 void
@@ -351,6 +367,7 @@ struct db_command db_show_cmds[] = {
 	{ "map",	db_map_print_cmd,	0,	NULL },
 	{ "object",	db_object_print_cmd,	0,	NULL },
 	{ "extents",	db_extent_print_cmd,	0,	NULL },
+	{ "malloc",	db_malloc_print_cmd,	0,	NULL },
 	{ NULL,		NULL,			0,	NULL, }
 };
 
