@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848.c,v 1.6 1996/07/04 21:00:57 deraadt Exp $	*/
+/*	$OpenBSD: ad1848.c,v 1.7 1996/08/23 20:13:13 deraadt Exp $	*/
 /*	$NetBSD: ad1848.c,v 1.10 1996/04/29 20:02:32 christos Exp $	*/
 
 /*
@@ -322,7 +322,9 @@ ad1848_probe(sc)
      * If the I/O address is unused, inb() typically returns 0xff.
      */
     if (((tmp = inb(iobase+AD1848_IADDR)) & SP_IN_INIT) != 0x00) { /* Not a AD1848 */
+#if 0
 	DPRINTF(("ad_detect_A %x\n", tmp));
+#endif
 	return 0;
     }
 
