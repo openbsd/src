@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.3 1998/08/22 18:31:44 rahnds Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.4 1998/08/25 07:42:29 pefo Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -65,7 +65,8 @@ typedef struct bushook {
 
 #define	BUS_MAIN	1		/* mainbus */
 #define	BUS_ISABR	2		/* ISA Bridge Bus */
-#define	BUS_PCIBR	3		/* Algorithmics PCI bridge */
+#define	BUS_PCIBR	3		/* PCI bridge */
+#define	BUS_VMEBR	4		/* VME bridge */
 
 #define	BUS_INTR_ESTABLISH(ca, handler, val)				\
 	    (*(ca)->ca_bus->bh_intr_establish)((ca), (handler), (val))
@@ -83,6 +84,6 @@ struct confargs {
 
 void	set_clockintr __P((void (*)(struct clockframe *)));
 void	set_iointr __P((void (*)(void *, int)));
-int	badaddr			__P((void *, u_int64_t));
+int	badaddr	__P((void *, u_int32_t));
 
 #endif /* _MACHINE_AUTOCONF_H_ */
