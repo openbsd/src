@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_skreg.h,v 1.14 2004/11/16 17:45:54 brad Exp $	*/
+/*	$OpenBSD: if_skreg.h,v 1.15 2005/01/02 00:17:32 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -49,10 +49,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Values to keep the different chip revisions apart */
-#define SK_GENESIS 0
-#define SK_YUKON 1
 
 /*
  * GEnesis registers. The GEnesis chip has a 256-byte I/O window
@@ -310,6 +306,17 @@
 #define SK_BLNKCTL	0x0178
 #define SK_BLNKSTS	0x0179
 #define SK_BLNKTST	0x017A
+
+/* Values for SK_CHIPVER */
+#define SK_GENESIS		0x0A
+#define SK_YUKON		0xB0
+#define SK_YUKON_LITE		0xB1
+#define SK_YUKON_LP		0xB2
+#define SK_YUKON_FAMILY(x) ((x) & 0xB0)
+/* Known revisions in SK_CONFIG */
+#define SK_YUKON_LITE_REV_A0	0x0 /* invented, see test in skc_attach */
+#define SK_YUKON_LITE_REV_A1	0x3
+#define SK_YUKON_LITE_REV_A3	0x7
 
 #define SK_IMCTL_STOP	0x02
 #define SK_IMCTL_START	0x04
@@ -1398,6 +1405,8 @@ struct sk_softc {
 	struct resource		*sk_irq;	/* IRQ resource handle */
 	struct resource		*sk_res;	/* I/O or shared mem handle */
 	u_int8_t		sk_type;
+	u_int8_t		sk_rev;
+	char			*sk_name;
 	char			*sk_vpd_prodname;
 	char			*sk_vpd_readonly;
 	u_int32_t		sk_rboff;	/* RAMbuffer offset */
