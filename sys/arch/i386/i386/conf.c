@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.69 2001/05/13 15:39:26 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.70 2001/06/21 13:21:46 nate Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -210,6 +210,8 @@ cdev_decl(ulpt);
 cdev_decl(urio);
 #include "ucom.h"
 cdev_decl(ucom);
+#include "cz.h"
+cdev_decl(cztty);
 
 #ifdef IPFILTER
 #define NIPF 1
@@ -325,6 +327,7 @@ struct cdevsw	cdevsw[] =
 	    wsmouse),
 	cdev_mouse_init(NWSMUX, wsmux),	/* 69: ws multiplexor */
 	cdev_crypto_init(NCRYPTO,crypto), /* 70: /dev/crypto */
+	cdev_tty_init(NCZ,cztty),	/* 71: Cyclades-Z serial port */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

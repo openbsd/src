@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.107 2001/06/08 02:26:13 nate Exp $
+#	$OpenBSD: files.pci,v 1.108 2001/06/21 13:21:49 nate Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -374,3 +374,8 @@ file	dev/pci/pcscp.c			pcscp
 device	nge: ether, ifnet, mii, ifmedia, mii_phy
 attach	nge at pci
 file	dev/pci/if_nge.c		nge
+ 
+# Cyclades-Z series of intelligent multi-port serial adapters
+device	cz
+attach	cz at pci
+file	dev/pci/cz.c			cz		needs-flag
