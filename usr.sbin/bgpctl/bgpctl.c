@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.22 2004/01/09 13:48:10 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.23 2004/01/09 19:09:45 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -103,6 +103,7 @@ main(int argc, char *argv[])
 {
 	struct sockaddr_un	 sun;
 	int			 fd, n, done;
+	int			 i, flags;
 	struct imsg		 imsg;
 	enum actions		 action = SHOW_SUMMARY;
 	struct bgpd_addr	 addr;
@@ -143,9 +144,26 @@ again:
 		show_summary_head();
 		break;
 	case SHOW_FIB:
-		if (argc >= 4)
-			errx(1, "\"show fib\" does not take arguments");
-		imsg_compose(&ibuf, IMSG_CTL_KROUTE, 0, NULL, 0);
+		flags = 0;
+		bzero(&addr, sizeof(addr));
+		for (i = 3; i < argc; i++)
+			if (!strncmp(argv[i], "connected", strlen(argv[i])))
+				flags |= F_CONNECTED;
+			else if (!strncmp(argv[i], "static", strlen(argv[i])))
+				flags |= F_STATIC;
+			else if (!strncmp(argv[i], "bgp", strlen(argv[i])))
+				flags |= F_BGPD_INSERTED;
+			else if (!strncmp(argv[i], "nexthop", strlen(argv[i])))
+				flags |= F_NEXTHOP;
+			else if (!parse_addr(argv[i], &addr))
+				errx(1, "usage: \"show fib connected|static|"
+				    "bgp|nexthop|[address]");
+		if (!addr.af)
+			imsg_compose(&ibuf, IMSG_CTL_KROUTE, 0, &flags,
+			    sizeof(flags));
+		else
+			imsg_compose(&ibuf, IMSG_CTL_KROUTE_ADDR, 0, &addr,
+			    sizeof(addr));
 		show_fib_head();
 		break;
 	case SHOW_NEIGHBOR:
