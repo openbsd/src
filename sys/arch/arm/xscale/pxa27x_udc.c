@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa27x_udc.c,v 1.3 2005/02/19 00:45:14 dlg Exp $ */
+/*	$OpenBSD: pxa27x_udc.c,v 1.4 2005/02/21 07:46:48 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -20,7 +20,6 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/kthread.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
