@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.22 2000/04/12 04:22:40 jasoni Exp $
+	$OpenBSD: syscalls.master,v 1.23 2000/06/07 13:35:02 niklas Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -130,10 +130,10 @@
 73	STD		{ int linux_sys_sigpending(linux_old_sigset_t *mask); }
 74	NOARGS		{ int compat_43_sys_sethostname(char *hostname, \
 			    u_int len);}
-75	NOARGS		{ int compat_43_sys_setrlimit(u_int which, \
-			    struct ogetrlimit *rlp); }
-76	NOARGS		{ int compat_43_sys_getrlimit(u_int which, \
-			    struct ogetrlimit *rlp); }
+75	STD		{ int linux_sys_setrlimit(u_int which, \
+			    struct linux_rlimit *rlp); }
+76	STD		{ int linux_sys_getrlimit(u_int which, \
+			    struct linux_rlimit *rlp); }
 77	NOARGS		{ int sys_getrusage(int who, struct rusage *rusage); }
 78	NOARGS		{ int sys_gettimeofday(struct timeval *tp, \
 			    struct timezone *tzp); }
@@ -301,3 +301,5 @@
 188	UNIMPL		getpmsg
 189	UNIMPL		putpmsg
 190	STD		{ int sys_vfork(void); }
+191	STD		{ int linux_sys_ugetrlimit(u_int which, \
+			    struct linux_rlimit *rlp); }
