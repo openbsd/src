@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.44 2003/04/10 00:17:52 pvalchev Exp $
+#	$OpenBSD: Makefile,v 1.45 2003/05/17 01:31:21 hin Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -19,7 +19,7 @@ SRCS=	ssh.c readconf.c clientloop.c sshtty.c \
 
 .if (${KERBEROS5:L} == "yes")
 CFLAGS+= -DKRB5 -I${DESTDIR}/usr/include/kerberosV
-LDADD+=  -lkrb5 -lkafs -lkrb -lasn1 -lcom_err
+LDADD+=  -lkrb5 -lasn1 -lcom_err
 DPADD+=  ${LIBKRB5} ${LIBASN1} ${LIBCOM_ERR}
 .endif # KERBEROS5
 

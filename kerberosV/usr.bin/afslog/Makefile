@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2002/06/11 15:26:49 hin Exp $
+# $OpenBSD: Makefile,v 1.2 2003/05/17 01:31:21 hin Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
@@ -9,6 +9,6 @@ PROG	= afslog
 
 CFLAGS	+= -I.
 DPADD	+= ${LIBKAFS} ${LIBKRB5} ${LIBKRB} ${LIBDES} ${LIBCRYPTO} ${LIBASN1}
-LDADD	+= -lkafs -lkrb5 -lkrb -ldes -lcrypto -lasn1 ${LIBROKEN} -lcom_err
+LDADD	+= -lkrb5 -ldes -lcrypto -lasn1 ${LIBROKEN} -lcom_err
 
 .include <bsd.prog.mk>
