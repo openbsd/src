@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.37 2002/06/11 06:53:03 fgsch Exp $
+#	$OpenBSD: files.sparc64,v 1.38 2002/06/11 10:50:10 jason Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -9,6 +9,11 @@ maxusers 2 8 1024
 define mainbus {}
 device mainbus: pcibus, mainbus
 attach mainbus at root
+file	arch/sparc64/dev/upa.c			upa
+
+define upa {}
+device upa
+attach upa at mainbus
 
 device pcons
 attach pcons at mainbus
@@ -44,6 +49,9 @@ file	arch/sparc64/dev/creator.c		creator
 
 attach creator at mainbus with creator_mainbus
 file	arch/sparc64/dev/creator_mainbus.c	creator_mainbus
+
+attach creator at upa with creator_upa
+file	arch/sparc64/dev/creator_upa.c		creator_upa
 
 include "dev/pci/files.pci"
 
