@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.51 1999/03/16 21:26:04 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.52 1999/03/18 01:59:20 millert Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.51 1999/03/16 21:26:04 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.52 1999/03/18 01:59:20 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -63,6 +63,12 @@ struct diskchunk {
 	u_int32_t stop;
 };
 
+/* used when sorting mountpoints in mpsave() */
+struct mountinfo {
+	char *mountpoint;
+	int partno;
+};
+
 void	edit_parms __P((struct disklabel *, u_int32_t *));
 int	editor __P((struct disklabel *, int, char *, char *));
 void	editor_add __P((struct disklabel *, char **, u_int32_t *, char *));
@@ -85,6 +91,7 @@ void	find_bounds __P((struct disklabel *));
 void	set_bounds __P((struct disklabel *, u_int32_t *));
 struct diskchunk *free_chunks __P((struct disklabel *));
 char **	mpcopy __P((char **, char **));
+int	micmp __P((const void *, const void *));
 int	mpequal __P((char **, char **));
 int	mpsave __P((struct disklabel *, char **, char *, char *));
 int	get_bsize __P((struct disklabel *, int));
@@ -1928,16 +1935,21 @@ mpsave(lp, mp, cdev, fstabfile)
 {
 	int i, mpset;
 	char bdev[MAXPATHLEN], *p;
+	struct mountinfo mi[MAXPARTITIONS];
 	FILE *fp;
+
+	memset(&mi, 0, sizeof(mi));
 
 	for (i = 0, mpset = 0; i < MAXPARTITIONS; i++) {
 		if (mp[i] != NULL) {
+			mi[i].mountpoint = mp[i];
+			mi[i].partno = i;
 			mpset = 1;
-			break;
 		}
 	}
+	/* Exit if there is nothing to do... */
 	if (!mpset)
-		return(1);
+		return(0);
 
 	/* Convert cdev to bdev */
 	if (strncmp(_PATH_DEV, cdev, sizeof(_PATH_DEV) - 1) == 0 &&
@@ -1953,13 +1965,15 @@ mpsave(lp, mp, cdev, fstabfile)
 	}
 	bdev[strlen(bdev) - 1] = '\0';
 
+	/* Sort mountpoints so we don't try to mount /usr/local before /usr */ 
+	qsort((void *)mi, MAXPARTITIONS, sizeof(struct mountinfo), micmp);
+
 	if ((fp = fopen(fstabfile, "w")) == NULL)
 		return(1);
 
-	for (i = 0; i < MAXPARTITIONS; i++) {
-		if (mp[i] == NULL)
-			continue;
-		fprintf(fp, "%s%c %s %s rw 1 %d\n", bdev, 'a' + i, mp[i],
+	for (i = 0; i < MAXPARTITIONS && mi[i].mountpoint != NULL; i++) {
+		fprintf(fp, "%s%c %s %s rw 1 %d\n", bdev, 'a' + mi[i].partno,
+		    mi[i].mountpoint,
 		    fstypesnames[lp->d_partitions[i].p_fstype],
 		    i == 0 ? 1 : 2);
 	}
@@ -2237,4 +2251,23 @@ get_mp(lp, mp, partno)
 		}
 	}
 	return(0);
+}
+
+int
+micmp(a1, a2)
+	const void *a1;
+	const void *a2;
+{
+	struct mountinfo *mi1 = (struct mountinfo *)a1;
+	struct mountinfo *mi2 = (struct mountinfo *)a2;
+
+	/* We want all the NULLs at the end... */
+	if (mi1->mountpoint == NULL && mi2->mountpoint == NULL)
+		return(0);
+	else if (mi1->mountpoint == NULL)
+		return(1);
+	else if (mi2->mountpoint == NULL)
+		return(-1);
+	else
+		return(strcmp(mi1->mountpoint, mi2->mountpoint));
 }
