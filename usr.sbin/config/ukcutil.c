@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukcutil.c,v 1.13 2003/06/02 21:19:03 maja Exp $ */
+/*	$OpenBSD: ukcutil.c,v 1.14 2004/01/04 18:30:05 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #ifndef LINT
-static	char rcsid[] = "$OpenBSD: ukcutil.c,v 1.13 2003/06/02 21:19:03 maja Exp $";
+static	char rcsid[] = "$OpenBSD: ukcutil.c,v 1.14 2004/01/04 18:30:05 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -48,28 +48,28 @@ struct	cfdata *
 get_cfdata(int idx)
 {
 	return((struct cfdata *)(adjust((caddr_t)nl[P_CFDATA].n_value) +
-	    idx*sizeof(struct cfdata)));
+	    idx * sizeof(struct cfdata)));
 }
 
 short *
 get_locnamp(int idx)
 {
 	return((short *)(adjust((caddr_t)nl[S_LOCNAMP].n_value) +
-	    idx*sizeof(short)));
+	    idx * sizeof(short)));
 }
 
 caddr_t *
 get_locnames(int idx)
 {
 	return((caddr_t *)(adjust((caddr_t)nl[P_LOCNAMES].n_value) +
-	    idx*sizeof(caddr_t)));
+	    idx * sizeof(caddr_t)));
 }
 
 int *
 get_extraloc(int idx)
 {
 	return((int *)(adjust((caddr_t)nl[IA_EXTRALOC].n_value) +
-	    idx*sizeof(int)));
+	    idx * sizeof(int)));
 }
 
 char *
@@ -78,7 +78,7 @@ get_pdevnames(int idx)
 	caddr_t *p;
 
 	p = (caddr_t *)adjust((caddr_t)nl[P_PDEVNAMES].n_value +
-	    idx*sizeof(caddr_t));
+	    idx * sizeof(caddr_t));
 	return(char *)adjust((caddr_t)*p);
 
 }
@@ -87,7 +87,7 @@ struct pdevinit *
 get_pdevinit(int idx)
 {
 	return((struct pdevinit *)(adjust((caddr_t)nl[S_PDEVINIT].n_value) +
-	    idx*sizeof(struct pdevinit)));
+	    idx * sizeof(struct pdevinit)));
 }
 
 int
@@ -133,7 +133,7 @@ pnum(int val)
 }
 
 void
-pdevnam(short int devno)
+pdevnam(short devno)
 {
 	struct cfdata *cd;
 	struct cfdriver *cdrv;
@@ -167,14 +167,14 @@ pdevnam(short int devno)
 }
 
 void
-pdev(short int devno)
+pdev(short devno)
 {
+	struct pdevinit *pi;
 	struct cfdata *cd;
 	short	*s, *ln;
 	int	*i;
 	caddr_t	*p;
 	char	c;
-	struct pdevinit *pi;
 
 	if (nopdev == 0) {
 		if (devno > maxdev && devno <= totdev) {
@@ -240,9 +240,8 @@ pdev(short int devno)
 int
 number(const char *c, int *val)
 {
+	int neg = 0, base = 10;
 	u_int num = 0;
-	int neg = 0;
-	int base = 10;
 
 	if (*c == '-') {
 		neg = 1;
@@ -281,9 +280,9 @@ number(const char *c, int *val)
 }
 
 int
-device(char *cmd, int *len, short int *unit, short int *state)
+device(char *cmd, int *len, short *unit, short *state)
 {
-	short int u = 0, s = FSTATE_FOUND;
+	short u = 0, s = FSTATE_FOUND;
 	int l = 0;
 	char *c;
 
@@ -292,6 +291,7 @@ device(char *cmd, int *len, short int *unit, short int *state)
 		l++;
 		c++;
 	}
+
 	if (*c == '*') {
 		s = FSTATE_STAR;
 		c++;
@@ -311,16 +311,15 @@ device(char *cmd, int *len, short int *unit, short int *state)
 		*state = s;
 		return(0);
 	}
-
 	return(-1);
 }
 
 int
 attr(char *cmd, int *val)
 {
-	char *c;
+	short attr = -1, i = 0, l = 0;
 	caddr_t *p;
-	short int attr = -1, i = 0, l = 0;
+	char *c;
 
 	c = cmd;
 	while (*c != ' ' && *c != '\t' && *c != '\n' && *c != '\0') {
@@ -377,81 +376,81 @@ modify(char *item, int *val)
 void
 change(int devno)
 {
+	int	i, share = 0, *j = NULL, *k = NULL, *l;
 	struct cfdata *cd, *c;
-	caddr_t	*p;
 	struct pdevinit *pi;
-	int	 i, share = 0, *j = NULL, *k = NULL, *l;
 	short	*ln, *lk;
+	caddr_t	*p;
 
 	ukc_mod_kernel = 1;
 	if (devno <=  maxdev) {
 		pdev(devno);
-		if (ask_yn("change")) {
+		if (!ask_yn("change"))
+			return;
 
-			cd = get_cfdata(devno);
+		cd = get_cfdata(devno);
 
-			/*
-			 * Search for some other driver sharing this
-			 * locator table. if one does, we may need to
-			 * replace the locators with a new copy.
-			 */
-			c = get_cfdata(0);
-			for (i = 0; c->cf_driver; i++) {
-				if (i != devno && c->cf_loc == cd->cf_loc)
-					share = 1;
-				c++;
-			}
-
-			ln = get_locnamp(cd->cf_locnames);
-			l = (int *)adjust((caddr_t)cd->cf_loc);
-
-			if (share) {
-				if (oldkernel) {
-					printf("Can't do that on this kernel\n");
-					return;
-				}
-
-				lk = ln;
-				i = 0;
-				while (*lk != -1) {
-					lk++;
-					i++;
-				}
-				lk = ln;
-
-				j = (int *)adjust((caddr_t)nl[I_NEXTRALOC].n_value);
-				k = (int *)adjust((caddr_t)nl[I_UEXTRALOC].n_value);
-				if ((i + *k) > *j) {
-					printf("Not enough space to change device.\n");
-					return;
-				}
-
-				j = l = get_extraloc(*k);
-				bcopy(adjust((caddr_t)cd->cf_loc),
-				    l, sizeof(int) * i);
-			}
-
-			while (*ln != -1) {
-				p = get_locnames(*ln);
-				modify((char *)adjust(*p), l);
-				ln++;
-				l++;
-			}
-			modify("flags", &cd->cf_flags);
-
-			if (share) {
-				if (bcmp(adjust((caddr_t)cd->cf_loc), j,
-				    sizeof(int) * i)) {
-					cd->cf_loc = (int *)readjust((caddr_t)j);
-					*k = *k + i;
-				}
-			}
-
-			printf("%3d ", devno);
-			pdevnam(devno);
-			printf(" changed\n");
-			pdev(devno);
+		/*
+		 * Search for some other driver sharing this
+		 * locator table. if one does, we may need to
+		 * replace the locators with a new copy.
+		 */
+		c = get_cfdata(0);
+		for (i = 0; c->cf_driver; i++) {
+			if (i != devno && c->cf_loc == cd->cf_loc)
+				share = 1;
+			c++;
 		}
+
+		ln = get_locnamp(cd->cf_locnames);
+		l = (int *)adjust((caddr_t)cd->cf_loc);
+
+		if (share) {
+			if (oldkernel) {
+				printf("Can't do that on this kernel\n");
+				return;
+			}
+
+			lk = ln;
+			i = 0;
+			while (*lk != -1) {
+				lk++;
+				i++;
+			}
+			lk = ln;
+
+			j = (int *)adjust((caddr_t)nl[I_NEXTRALOC].n_value);
+			k = (int *)adjust((caddr_t)nl[I_UEXTRALOC].n_value);
+			if ((i + *k) > *j) {
+				printf("Not enough space to change device.\n");
+				return;
+			}
+
+			j = l = get_extraloc(*k);
+			bcopy(adjust((caddr_t)cd->cf_loc),
+			    l, sizeof(int) * i);
+		}
+
+		while (*ln != -1) {
+			p = get_locnames(*ln);
+			modify((char *)adjust(*p), l);
+			ln++;
+			l++;
+		}
+		modify("flags", &cd->cf_flags);
+
+		if (share) {
+			if (bcmp(adjust((caddr_t)cd->cf_loc), j,
+			    sizeof(int) * i)) {
+				cd->cf_loc = (int *)readjust((caddr_t)j);
+				*k = *k + i;
+			}
+		}
+
+		printf("%3d ", devno);
+		pdevnam(devno);
+		printf(" changed\n");
+		pdev(devno);
 		return;
 	}
 
@@ -480,11 +479,10 @@ change(int devno)
 void
 change_history(int devno, char *str)
 {
-	int	 i, share = 0, *j = NULL, *k = NULL, *l;
+	int	i, share = 0, *j = NULL, *k = NULL, *l;
 	struct cfdata *cd, *c;
 	struct pdevinit *pi;
 	short	*ln, *lk;
-	caddr_t	*p;
 
 	ukc_mod_kernel = 1;
 
@@ -535,7 +533,6 @@ change_history(int devno, char *str)
 		}
 
 		while (*ln != -1) {
-			p = get_locnames(*ln);
 			*l = atoi(str);
 			if (*str == '-')
 				str++;
@@ -727,7 +724,7 @@ show(void)
 }
 
 void
-common_attr_val(short int attr, int *val, char routine)
+common_attr_val(short attr, int *val, char routine)
 {
 	int	i = 0;
 	struct cfdata *cd;
@@ -827,7 +824,7 @@ show_attr(char *cmd)
 }
 
 void
-common_dev(char *dev, int len, short int unit, short int state, char routine)
+common_dev(char *dev, int len, short unit, short state, char routine)
 {
 	struct cfdata *cd;
 	struct cfdriver *cdrv;
@@ -1005,7 +1002,7 @@ add_read(char *prompt, char field, char *dev, int len, int *val)
 }
 
 void
-add(char *dev, int len, short int unit, short int state)
+add(char *dev, int len, short unit, short state)
 {
 	int i = 0, found = 0, *p;
 	short *pv;
@@ -1169,7 +1166,7 @@ add(char *dev, int len, short int unit, short int state)
 }
 
 void
-add_history(int devno, short int unit, short int state, int newno)
+add_history(int devno, short unit, short state, int newno)
 {
 	int i = 0, *p;
 	short *pv;

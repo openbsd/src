@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.c,v 1.29 2003/06/28 04:55:07 deraadt Exp $	*/
+/*	$OpenBSD: sem.c,v 1.30 2004/01/04 18:30:05 deraadt Exp $	*/
 /*	$NetBSD: sem.c,v 1.10 1996/11/11 23:40:11 gwr Exp $	*/
 
 /*
@@ -58,7 +58,6 @@
 
 const char *s_generic;
 const char *s_nfs;
-static const char *s_qmark;
 
 static struct hashtab *attrtab;		/* for attribute lookup */
 static struct hashtab *cfhashtab;	/* for config lookup */
@@ -116,7 +115,6 @@ initsem(void)
 
 	s_generic = intern("generic");
 	s_nfs = intern("nfs");
-	s_qmark = intern("?");
 }
 
 /* Name of include file just ended (set in scan.l) */
@@ -404,7 +402,7 @@ defdevattach(struct deva *deva, struct devbase *dev, struct nvlist *atlist,
 		for (da = dev->d_ahead; da != NULL; da = da->d_bsame)
 			if (onlist(da->d_atlist, a))
 				error("attach at `%s' already done by `%s'",
-				     a ? a->a_name : "root", da->d_name);
+				    a ? a->a_name : "root", da->d_name);
 
 		if (a == NULL)
 			continue;		/* at root; don't add */

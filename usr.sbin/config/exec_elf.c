@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.9 2003/09/26 17:00:27 deraadt Exp $ */
+/*	$OpenBSD: exec_elf.c,v 1.10 2004/01/04 18:30:05 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: exec_elf.c,v 1.9 2003/09/26 17:00:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: exec_elf.c,v 1.10 2004/01/04 18:30:05 deraadt Exp $";
 #endif
 
 #include <err.h>
@@ -124,8 +124,6 @@ void
 elf_loadkernel(char *file)
 {
 	int fd;
-	Elf_Phdr *p;
-	Elf_Shdr *s;
 
 	if ((fd = open(file, O_RDONLY | O_EXLOCK, 0)) < 0)
 		err(1, "%s", file);
@@ -136,18 +134,15 @@ elf_loadkernel(char *file)
 	if (!IS_ELF(elf_ex))
 		errx(1, "bad elf magic");
 
-	elf_size = lseek(fd, 0L, SEEK_END);
-	(void)lseek(fd, 0L, SEEK_SET);
-	elf_total = emalloc(elf_size);
+	elf_size = lseek(fd, (off_t)0, SEEK_END);
+	(void)lseek(fd, (off_t)0, SEEK_SET);
+	elf_total = emalloc((size_t)elf_size);
 
-	if (read(fd, elf_total, elf_size) != elf_size)
+	if (read(fd, elf_total, (size_t)elf_size) != elf_size)
 		errx(1, "can't read elf kernel");
 
 	elf_phdr = (Elf_Phdr *)&elf_total[elf_ex.e_phoff];
 	elf_shdr = (Elf_Shdr *)&elf_total[elf_ex.e_shoff];
-
-	p = elf_phdr;
-	s = elf_shdr;
 
 	elf_shstrtab = &elf_total[elf_shdr[elf_ex.e_shstrndx].sh_offset];
 
@@ -162,7 +157,7 @@ elf_savekernel(char *outfile)
 	if ((fd = open(outfile, O_WRONLY | O_CREAT | O_TRUNC, 0755)) < 0)
 		err(1, "%s", outfile);
 
-	if (write(fd, elf_total, elf_size) != elf_size)
+	if (write(fd, elf_total, (size_t)elf_size) != elf_size)
 		errx(1, "can't write file %s", outfile);
 
 	close(fd);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.13 2003/06/28 04:55:07 deraadt Exp $	*/
+/*	$OpenBSD: hash.c,v 1.14 2004/01/04 18:30:05 deraadt Exp $	*/
 /*	$NetBSD: hash.c,v 1.4 1996/11/07 22:59:43 gwr Exp $	*/
 
 /*
@@ -168,7 +168,7 @@ ht_expand(struct hashtab *ht)
 /*
  * Make a new hash entry, setting its h_next to NULL.
  */
-static inline struct hashent *
+static __inline struct hashent *
 newhashent(const char *name, u_int h)
 {
 	struct	hashent *hp;
@@ -185,7 +185,7 @@ newhashent(const char *name, u_int h)
 /*
  * Hash a string.
  */
-static inline u_int
+static __inline u_int
 hash(const char *str)
 {
 	u_int h;
@@ -252,20 +252,20 @@ ht_remove(struct hashtab *ht, const char *nam)
 	h = hash(nam);
 	hp = ht->ht_tab[h & ht->ht_mask];
 	while (hp && hp->h_name == nam)	{
-	        ht->ht_tab[h & ht->ht_mask] = hp->h_next;
+		ht->ht_tab[h & ht->ht_mask] = hp->h_next;
 		/* XXX free hp ? */
 		hp = ht->ht_tab[h & ht->ht_mask];
 	}
 
 	if ((hp = ht->ht_tab[h & ht->ht_mask]) == NULL)
-	        return (0);
+		return (0);
 
 	for (thp = hp->h_next; thp != NULL; thp = hp->h_next) {
-	        if (thp->h_name == nam) {
-		        hp->h_next = thp->h_next;
+		if (thp->h_name == nam) {
+			hp->h_next = thp->h_next;
 			/* XXX free thp ? */
 		} else
-		        hp = thp;
+			hp = thp;
 	}
 
 	return (0);

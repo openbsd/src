@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.35 2004/01/04 00:47:01 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.36 2004/01/04 18:30:05 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
 
 /*
@@ -658,17 +658,17 @@ setupdirs(void)
 		madedir = 1;
 	} else if (!S_ISDIR(st.st_mode)) {
 		(void)fprintf(stderr, "config: %s is not a directory\n",
-			      builddir);
+		    builddir);
 		exit(2);
 	}
 	if (chdir(builddir) != 0) {
 		(void)fprintf(stderr, "config: cannot change to %s\n",
-			      builddir);
+		    builddir);
 		exit(2);
 	}
 	if (stat(srcdir, &st) != 0 || !S_ISDIR(st.st_mode)) {
 		(void)fprintf(stderr, "config: %s is not a directory\n",
-			      srcdir);
+		    srcdir);
 		exit(2);
 	}
 }

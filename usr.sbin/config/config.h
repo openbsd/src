@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.20 2004/01/04 00:47:01 deraadt Exp $	*/
+/*	$OpenBSD: config.h,v 1.21 2004/01/04 18:30:05 deraadt Exp $	*/
 /*	$NetBSD: config.h,v 1.30 1997/02/02 21:12:30 thorpej Exp $	*/
 
 /*
@@ -240,9 +240,9 @@ struct files {
 struct objects {
 	struct  objects *oi_next;/* linked list */
 	const char *oi_srcfile; /* the name of the "objects" file that got us */
-	u_short oi_srcline;     /* and the line number */
-	u_char  oi_flags;       /* as below */
-	char    oi_lastc;       /* last char from path */
+	u_short oi_srcline;	/* and the line number */
+	u_char  oi_flags;	/* as below */
+	char    oi_lastc;	/* last char from path */
 	const char *oi_path;    /* full object path */
 	struct  nvlist *oi_optx;/* options expression */
 	struct  nvlist *oi_optf;/* flattened version of above, if needed */
@@ -326,7 +326,7 @@ void	addobject(const char *, struct nvlist *, int);
 /* hash.c */
 struct	hashtab *ht_new(void);
 int	ht_insrep(struct hashtab *, const char *, void *, int);
-int     ht_remove(struct hashtab *, const char *);
+int	ht_remove(struct hashtab *, const char *);
 #define	ht_insert(ht, nam, val) ht_insrep(ht, nam, val, 0)
 #define	ht_replace(ht, nam, val) ht_insrep(ht, nam, val, 1)
 void	*ht_lookup(struct hashtab *, const char *);

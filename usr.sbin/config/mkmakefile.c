@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkmakefile.c,v 1.15 2003/06/28 04:55:07 deraadt Exp $	*/
+/*	$OpenBSD: mkmakefile.c,v 1.16 2004/01/04 18:30:05 deraadt Exp $	*/
 /*	$NetBSD: mkmakefile.c,v 1.34 1997/02/02 21:12:36 thorpej Exp $	*/
 
 /*
@@ -244,19 +244,19 @@ emitobjs(FILE *fp)
 		sp = ' ';
 	}
 	for (oi = allobjects; oi != NULL; oi = oi->oi_next) {
-	        if ((oi->oi_flags & OI_SEL) == 0)
-	                continue;
-	        len = strlen(oi->oi_path) + 3;
-	        if (lpos + len > 72) {
-	                if (fputs(" \\\n", fp) < 0)
-	                        return (1);
-	                sp = '\t';
-	                lpos = 7;
-	        }
-	        if (fprintf(fp, "%c$S/%s", sp, oi->oi_path) < 0)
-	                return (1);
-	        lpos += len + 1;
-	        sp = ' ';
+		if ((oi->oi_flags & OI_SEL) == 0)
+			continue;
+		len = strlen(oi->oi_path) + 3;
+		if (lpos + len > 72) {
+			if (fputs(" \\\n", fp) < 0)
+				return (1);
+			sp = '\t';
+			lpos = 7;
+		}
+		if (fprintf(fp, "%c$S/%s", sp, oi->oi_path) < 0)
+			return (1);
+		lpos += len + 1;
+		sp = ' ';
 	}
 	if (putc('\n', fp) < 0)
 		return (1);
@@ -294,7 +294,7 @@ emitfiles(FILE *fp, int suffix)
 		if ((fi->fi_flags & FI_SEL) == 0)
 			continue;
 		if ((fpath = srcpath(fi)) == NULL)
-                        return (1);
+			return (1);
 		len = strlen(fpath);
 		if (fpath[len - 1] != suffix)
 			continue;

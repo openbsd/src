@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkioconf.c,v 1.24 2003/12/06 21:46:53 deraadt Exp $	*/
+/*	$OpenBSD: mkioconf.c,v 1.25 2004/01/04 18:30:05 deraadt Exp $	*/
 /*	$NetBSD: mkioconf.c,v 1.41 1996/11/11 14:18:49 mycroft Exp $	*/
 
 /*
@@ -334,7 +334,7 @@ short pv[%d] = {", parents.used) < 0)
 static int
 emitcfdata(FILE *fp)
 {
-	struct devi **p, *i, **par;
+	struct devi **p, *i;
 	int unit, v;
 	const char *vs, *state, *basename, *attachment;
 	struct nvlist *nv;
@@ -355,7 +355,6 @@ struct cfdata cfdata[] = {\n\
 		/* the description */
 		if (fprintf(fp, "/*%3d: %s at ", i->i_cfindex, i->i_name) < 0)
 			return (1);
-		par = i->i_parents;
 		for (v = 0; v < i->i_pvlen; v++)
 			if (fprintf(fp, "%s%s", v == 0 ? "" : "|",
 			    i->i_parents[v]->i_name) < 0)

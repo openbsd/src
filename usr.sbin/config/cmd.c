@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.11 2004/01/04 00:47:01 deraadt Exp $ */
+/*	$OpenBSD: cmd.c,v 1.12 2004/01/04 18:30:05 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: cmd.c,v 1.11 2004/01/04 00:47:01 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cmd.c,v 1.12 2004/01/04 18:30:05 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -77,7 +77,7 @@ Xhelp(cmd_t *cmd)
 	/* Hmm, print out cmd_table here... */
 	for (i = 0; cmd_table[i].cmd != NULL; i++)
 		printf("\t%-12s%-20s%s\n", cmd_table[i].cmd,
-		       cmd_table[i].opt, cmd_table[i].help);
+		    cmd_table[i].opt, cmd_table[i].help);
 	return (CMD_CONT);
 }
 
