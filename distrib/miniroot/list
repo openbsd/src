@@ -47,9 +47,9 @@ SYMLINK	../../instbin		usr/bin/ftp
 SYMLINK	../../instbin		usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
 SYMLINK	../../instbin		usr/bin/sed
 SYMLINK	../../instbin		usr/bin/sort
-SYMLINK	../../instbin		usr/bin/tar
+SYMLINK	../../instbin		usr/bin/pax
+SYMLINK	usr/bin/pax		usr/bin/tar
 SYMLINK	../../instbin		usr/bin/tip
-SYMLINK	../../instbin		usr/sbin/update
 
 # `internal' crunchgen links
 ARGVLINK mount_ffs	ffs
