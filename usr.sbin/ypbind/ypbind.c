@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.25 1997/05/06 18:41:11 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.26 1997/06/11 23:16:33 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Theo de Raadt <deraadt@theos.com>
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.25 1997/05/06 18:41:11 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.26 1997/06/11 23:16:33 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -155,12 +155,18 @@ ypbindproc_domain_2x(transp, argp, clnt)
 	struct _dom_binding *ypdb;
 	char path[MAXPATHLEN];
 	time_t now;
+	int count = 0;
 
 	if (strchr((char *)argp, '/'))
 		return NULL;
 
-	memset(&res, 0, sizeof res);
+	memset(&res, 0, sizeof(res));
 	res.ypbind_status = YPBIND_FAIL_VAL;
+
+	for (ypdb = ypbindlist; ypdb && count < 100; ypdb = ypdb->dom_pnext)
+		count++;
+	if (count >= 100)
+		return NULL;	/* prevent DOS: sorry, you lose */
 
 	for (ypdb = ypbindlist; ypdb; ypdb = ypdb->dom_pnext)
 		if (!strcmp(ypdb->dom_domain, *argp))
@@ -168,6 +174,8 @@ ypbindproc_domain_2x(transp, argp, clnt)
 
 	if (ypdb == NULL) {
 		ypdb = (struct _dom_binding *)malloc(sizeof *ypdb);
+		if (ypdb == NULL)
+			return NULL;
 		memset(ypdb, 0, sizeof *ypdb);
 		strncpy(ypdb->dom_domain, *argp, sizeof ypdb->dom_domain-1);
 		ypdb->dom_domain[sizeof ypdb->dom_domain-1] = '\0';
@@ -501,6 +509,8 @@ main(argc, argv)
 
 	/* build initial domain binding, make it "unsuccessful" */
 	ypbindlist = (struct _dom_binding *)malloc(sizeof *ypbindlist);
+	if (ypbindlist == NULL)
+		errx(1, "no memory");
 	memset(ypbindlist, 0, sizeof *ypbindlist);
 	strncpy(ypbindlist->dom_domain, domain, sizeof ypbindlist->dom_domain-1);
 	ypbindlist->dom_domain[sizeof (ypbindlist->dom_domain)-1] = '\0';
@@ -1006,6 +1016,8 @@ int force;
 		if (force == 0)
 			return;
 		ypdb = (struct _dom_binding *)malloc(sizeof *ypdb);
+		if (ypdb == NULL)
+			return;
 		memset(ypdb, 0, sizeof *ypdb);
 		strncpy(ypdb->dom_domain, dom, sizeof ypdb->dom_domain-1);
 		ypdb->dom_domain[sizeof (ypdb->dom_domain)-1] = '\0';
