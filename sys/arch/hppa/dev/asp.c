@@ -1,4 +1,4 @@
-/*	$OpenBSD: asp.c,v 1.2 1999/05/05 02:19:02 mickey Exp $	*/
+/*	$OpenBSD: asp.c,v 1.3 1999/07/16 17:53:06 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -28,6 +28,14 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * References:
+ *
+ * 1. Cobra/Coral I/O Subsystem External Reference Specification
+ *    Hewlett-Packard
+ *
  */
 
 #include <sys/param.h>
@@ -165,8 +173,8 @@ aspattach(parent, self, aux)
 	sc->sc_leds = 0;
 
 	/* reset ASP */
-	sc->sc_hw->asp_reset = 1;
-	delay(400000);
+	/* sc->sc_hw->asp_reset = 1; */
+	/* delay(400000); */
 
 	s = splhigh();
 	viper_setintrwnd(1 << ca->ca_irq);
