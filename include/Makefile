@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.59 1999/02/12 04:46:27 millert Exp $
+#	$OpenBSD: Makefile,v 1.60 1999/02/26 00:54:00 deraadt Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -14,9 +14,9 @@ FILES=	a.out.h ar.h assert.h bitstring.h blf.h bm.h cast.h cpio.h ctype.h \
 	langinfo.h libgen.h limits.h locale.h malloc.h math.h md4.h md5.h \
 	memory.h mpool.h ndbm.h netdb.h netgroup.h nlist.h nl_types.h \
 	olf_abi.h paths.h poll.h pwd.h ranlib.h re_comp.h regex.h resolv.h \
-	rmd160.h search.h setjmp.h sgtty.h sha1.h signal.h stab.h stddef.h \
-	stdio.h stdlib.h string.h strings.h struct.h sysexits.h tar.h time.h \
-	ttyent.h tzfile.h unistd.h utime.h utmp.h vis.h
+	rmd160.h search.h setjmp.h sgtty.h sha1.h skipjack.h signal.h stab.h \
+	stddef.h stdio.h stdlib.h string.h strings.h struct.h sysexits.h \
+	tar.h time.h ttyent.h tzfile.h unistd.h utime.h utmp.h vis.h
 
 .if (${MACHINE_ARCH} != "alpha") && (${MACHINE_ARCH} != "mips")
 FILES+=	dlfcn.h link.h
