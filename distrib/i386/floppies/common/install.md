@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.5 1999/09/23 21:33:44 aaron Exp $
+#	$OpenBSD: install.md,v 1.6 1999/09/25 22:21:03 deraadt Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ md_get_partition_range() {
 
 md_questions() {
 	echo
-	echo -n "Do you expect to run the X Window System? [n]"
+	echo -n "Do you expect to run the X Window System? [n] "
 	getresp "n"
 	case "$resp" in
 		y*|Y*)
