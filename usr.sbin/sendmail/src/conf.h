@@ -518,6 +518,7 @@ typedef int		pid_t;
 # define HASFCHMOD	1	/* has fchmod(2) syscall */
 # define HASSNPRINTF	1	/* has snprintf(3) and vsnprintf(3) */
 # include <sys/cdefs.h>
+# include <paths.h>		/* for _PATH_VARTMP */
 # define ERRLIST_PREDEFINED	/* don't declare sys_errlist */
 # define BSD4_4_SOCKADDR	/* has sa_len */
 # define NETLINK	1	/* supports AF_LINK */
