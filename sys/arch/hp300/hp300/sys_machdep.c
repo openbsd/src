@@ -1,5 +1,5 @@
-/*	$OpenBSD: sys_machdep.c,v 1.4 1997/04/16 11:56:31 downsj Exp $	*/
-/*	$NetBSD: sys_machdep.c,v 1.15 1997/04/06 21:40:38 mycroft Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.5 1997/07/06 08:02:08 downsj Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.17 1997/05/19 10:15:00 veego Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -35,6 +35,8 @@
  *
  *	@(#)sys_machdep.c	8.2 (Berkeley) 1/13/94
  */
+
+#include <machine/hp300spu.h>	/* XXX param.h includes cpu.h */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +176,7 @@ cachectl(req, addr, len)
 			 */
 			if (!doall &&
 			    (pa == 0 || ((int)addr & PGOFSET) == 0)) {
-				pa = pmap_extract(&curproc->p_vmspace->vm_pmap,
+				pa = pmap_extract(curproc->p_vmspace->vm_map.pmap,
 						  (vm_offset_t)addr);
 				if (pa == 0)
 					doall = 1;
@@ -229,7 +231,7 @@ cachectl(req, addr, len)
 	switch (req) {
 	case CC_EXTPURGE|CC_PURGE:
 	case CC_EXTPURGE|CC_FLUSH:
-#if defined(HP340) || defined(HP360) || defined(HP370) || defined(HP375)
+#if defined(CACHE_HAVE_PAC)
 		if (ectype == EC_PHYS)
 			PCIA();
 		/* fall into... */
@@ -239,7 +241,7 @@ cachectl(req, addr, len)
 		DCIU();
 		break;
 	case CC_EXTPURGE|CC_IPURGE:
-#if defined(HP340) || defined(HP360) || defined(HP370) || defined(HP375)
+#if defined(CACHE_HAVE_PAC)
 		if (ectype == EC_PHYS)
 			PCIA();
 		else

@@ -1,5 +1,5 @@
-/*	$OpenBSD: hd.c,v 1.4 1997/04/16 11:56:06 downsj Exp $	*/
-/*	$NetBSD: rd.c,v 1.30 1997/04/09 20:01:04 thorpej Exp $	*/
+/*	$OpenBSD: hd.c,v 1.5 1997/07/06 08:01:52 downsj Exp $	*/
+/*	$NetBSD: rd.c,v 1.32 1997/06/24 00:44:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -65,14 +65,16 @@
 #include <hp300/dev/hdreg.h>
 #include <hp300/dev/hdvar.h>
 
-#ifdef USELEDS
-#include <hp300/hp300/led.h>
-#endif
-
 #include <vm/vm_param.h>
 #include <vm/lock.h>
 #include <vm/vm_prot.h>
 #include <vm/pmap.h>
+
+#include "opt_useleds.h"
+
+#ifdef USELEDS
+#include <hp300/hp300/leds.h>
+#endif
 
 int	hderrthresh = HDRETRY-1;	/* when to start reporting errors */
 
@@ -824,8 +826,7 @@ hdgo(arg)
 	disk_busy(&rs->sc_dkdev);
 
 #ifdef USELEDS
-	if (inledcontrol == 0)
-		ledcontrol(0, 0, LED_DISK);
+	ledcontrol(0, 0, LED_DISK);
 #endif
 	hpibgo(ctlr, slave, C_EXEC, rs->sc_addr, rs->sc_resid, rw, rw != 0);
 }
@@ -1166,7 +1167,8 @@ hdsize(dev)
 			return(-1);
 		didopen = 1;
 	}
-	psize = rs->sc_dkdev.dk_label->d_partitions[hdpart(dev)].p_size;
+	psize = rs->sc_dkdev.dk_label->d_partitions[hdpart(dev)].p_size *
+	    (rs->sc_dkdev.dk_label->d_secsize / DEV_BSIZE);
 	if (didopen)
 		(void) hdclose(dev, FREAD|FWRITE, S_IFBLK, NULL);
 	return (psize);

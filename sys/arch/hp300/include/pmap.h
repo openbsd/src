@@ -1,5 +1,5 @@
-/*	$OpenBSD: pmap.h,v 1.4 1997/03/26 08:32:46 downsj Exp $	*/
-/*	$NetBSD: pmap.h,v 1.12 1997/03/18 16:39:30 mycroft Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.5 1997/07/06 08:02:13 downsj Exp $	*/
+/*	$NetBSD: pmap.h,v 1.13 1997/06/10 18:58:19 veego Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -95,7 +95,7 @@ typedef struct pmap	*pmap_t;
  */
 #define PMAP_ACTIVATE(pmapp, pcbp, iscurproc) \
 	if ((pmapp)->pm_stchanged) { \
-		(pcbp)->pcb_ustp = hp300_btop((vm_offset_t)(pmapp)->pm_stpa); \
+		(pcbp)->pcb_ustp = m68k_btop((vm_offset_t)(pmapp)->pm_stpa); \
 		if (iscurproc) \
 			loadustp((pcbp)->pcb_ustp); \
 		(pmapp)->pm_stchanged = FALSE; \

@@ -1,5 +1,5 @@
-/*	$OpenBSD: hpux_machdep.h,v 1.5 1997/04/16 11:56:34 downsj Exp $	*/
-/*	$NetBSD: hpux_machdep.h,v 1.7 1997/04/01 20:05:14 scottr Exp $	*/
+/*	$OpenBSD: hpux_machdep.h,v 1.6 1997/07/06 08:02:12 downsj Exp $	*/
+/*	$NetBSD: hpux_machdep.h,v 1.8 1997/04/27 21:38:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,8 +72,6 @@ struct exec_vmcmd;
 
 int	hpux_cpu_makecmds __P((struct proc *, struct exec_package *));
 int	hpux_cpu_vmcmd __P((struct proc *, struct exec_vmcmd *));
-void	hpux_cpu_bsd_to_hpux_stat __P((struct stat *, struct hpux_stat *));
-void	hpux_cpu_uname __P((struct hpux_utsname *));
 int	hpux_cpu_sysconf_arch __P((void));
 int	hpux_to_bsd_uoff __P((int *, int *, struct proc *));
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: pmap.c,v 1.7 1997/04/16 11:56:30 downsj Exp $	*/
-/*	$NetBSD: pmap.c,v 1.32 1997/04/02 22:41:39 scottr Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.8 1997/07/06 08:02:07 downsj Exp $	*/
+/*	$NetBSD: pmap.c,v 1.36 1997/06/10 18:52:23 veego Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -94,6 +94,8 @@
  *	to which processors are currently using which maps,
  *	and to when physical maps must be made correct.
  */
+
+#include <machine/hp300spu.h>	/* XXX param.h includes cpu.h */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -369,7 +371,7 @@ pmap_init(phys_start, phys_end)
 	 */
 	addr = (vm_offset_t) intiobase;
 	(void) vm_map_find(kernel_map, NULL, (vm_offset_t) 0,
-			   &addr, hp300_ptob(IIOMAPSIZE+EIOMAPSIZE), FALSE);
+			   &addr, m68k_ptob(IIOMAPSIZE+EIOMAPSIZE), FALSE);
 	if (addr != (vm_offset_t)intiobase)
 		goto bogons;
 	addr = (vm_offset_t) Sysmap;
@@ -1169,7 +1171,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 	if (!pmap_ste_v(pmap, va))
 		pmap_enter_ptpage(pmap, va);
 
-	pa = hp300_trunc_page(pa);
+	pa = m68k_trunc_page(pa);
 	pte = pmap_pte(pmap, va);
 	opa = pmap_pte_pa(pte);
 #ifdef DEBUG
@@ -1924,7 +1926,7 @@ vm_offset_t
 pmap_phys_address(ppn)
 	int ppn;
 {
-	return(hp300_ptob(ppn));
+	return(m68k_ptob(ppn));
 }
 
 #ifdef COMPAT_HPUX
@@ -2280,7 +2282,9 @@ pmap_changebit(pa, bit, setem)
 	pt_entry_t *pte, npte;
 	vm_offset_t va;
 	int s;
+#if defined(M68K_MMU_HP) || defined(M68040)
 	boolean_t firstpage = TRUE;
+#endif
 #ifdef PMAPSTATS
 	struct chgstats *chgp;
 #endif

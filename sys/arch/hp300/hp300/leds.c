@@ -1,18 +1,14 @@
-/*	$OpenBSD: kgdb_proto.h,v 1.2 1997/01/12 15:13:19 downsj Exp $	*/
-/*	$NetBSD: kgdb_proto.h,v 1.2 1994/10/26 07:25:40 cgd Exp $	*/
+/*	$OpenBSD: leds.c,v 1.1 1997/07/06 08:02:03 downsj Exp $	*/
+/*	$NetBSD: leds.c,v 1.1 1997/05/05 20:54:35 thorpej Exp $	*/
 
-/*-
- * Copyright (c) 1991, 1993
+/*
+ * Copyright (c) 1988 University of Utah.
+ * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
- * This software was developed by the Computer Systems Engineering group
- * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
- * contributed to Berkeley.
- *
- * All advertising materials mentioning features or use of this software
- * must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Lawrence Berkeley Laboratories.
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,28 +38,61 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)kgdb_proto.h	8.1 (Berkeley) 6/10/93
+ * from: Utah $Hdr: machdep.c 1.74 92/12/20$
+ *
+ *	@(#)machdep.c	8.10 (Berkeley) 4/20/94
  */
+
+#include <sys/param.h>
+
+#include <vm/vm.h>
+
+#include <arch/hp300/hp300/leds.h>
+
+extern caddr_t	ledbase;	/* kva of LED page */
+u_int8_t	*ledaddr;	/* actual address of LEDs */
+static int	inledcontrol;	/* mutex */
 
 /*
- * Message types.
+ * Map the LED page and setup the KVA to access it.
  */
-#define KGDB_MEM_R	0x01
-#define KGDB_MEM_W	0x02
-#define KGDB_REG_R	0x03
-#define KGDB_REG_W	0x04
-#define KGDB_CONT	0x05
-#define KGDB_STEP	0x06
-#define KGDB_KILL	0x07
-#define KGDB_SIGNAL	0x08
-#define KGDB_EXEC	0x09
+void
+ledinit()
+{
 
-#define KGDB_CMD(x) ((x) & 0x0f)
+	pmap_enter(pmap_kernel(), (vm_offset_t)ledbase, (vm_offset_t)LED_ADDR,
+		   VM_PROT_READ|VM_PROT_WRITE, TRUE);
+	ledaddr = (u_int8_t *) ((long)ledbase | (LED_ADDR & PGOFSET));
+}
 
 /*
- * Message flags.
+ * Do lights:
+ *	`ons' is a mask of LEDs to turn on,
+ *	`offs' is a mask of LEDs to turn off,
+ *	`togs' is a mask of LEDs to toggle.
+ * Note we don't use splclock/splx for mutual exclusion.
+ * They are expensive and we really don't need to be that precise.
+ * Besides we would like to be able to profile this routine.
  */
-#define KGDB_ACK	0x80
-#define KGDB_DELTA	0x40
-#define KGDB_MORE	0x20
-#define KGDB_SEQ	0x10
+void
+ledcontrol(ons, offs, togs)
+	int ons, offs, togs;
+{
+	static u_int8_t currentleds;
+	u_int8_t leds;
+
+	if (inledcontrol)
+		return;
+
+	inledcontrol = 1;
+	leds = currentleds;
+	if (ons)
+		leds |= ons;
+	if (offs)
+		leds &= ~offs;
+	if (togs)
+		leds ^= togs;
+	currentleds = leds;
+	*ledaddr = ~leds;
+	inledcontrol = 0;
+}

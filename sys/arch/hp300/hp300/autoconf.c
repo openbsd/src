@@ -1,5 +1,5 @@
-/*	$OpenBSD: autoconf.c,v 1.15 1997/04/16 11:56:20 downsj Exp $	*/
-/*	$NetBSD: autoconf.c,v 1.36 1997/04/14 02:28:43 thorpej Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.16 1997/07/06 08:01:57 downsj Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.38 1997/05/05 21:11:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -83,6 +83,7 @@
 #include <machine/autoconf.h>
 #include <machine/vmparam.h>
 #include <machine/cpu.h>
+#include <machine/hp300spu.h>
 #include <machine/intr.h>
 #include <machine/pte.h>
 
@@ -258,7 +259,6 @@ configure()
 	 */
 	hilsoftinit(0, HILADDR);
 	hilinit(0, HILADDR);
-	dmainit();
 
 	(void)splhigh();
 	if (config_rootfound("mainbus", "mainbus") == NULL)

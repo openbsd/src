@@ -1,5 +1,5 @@
-/*	$OpenBSD: dcm.c,v 1.8 1997/04/16 11:55:59 downsj Exp $	*/
-/*	$NetBSD: dcm.c,v 1.39 1997/04/14 02:33:17 thorpej Exp $	*/
+/*	$OpenBSD: dcm.c,v 1.9 1997/07/06 08:01:47 downsj Exp $	*/
+/*	$NetBSD: dcm.c,v 1.41 1997/05/05 20:59:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -354,7 +354,7 @@ dcmattach(parent, self, aux)
 	sc->sc_flags |= DCM_ACTIVE;
 
 	/* Establish the interrupt handler. */
-	(void) intr_establish(dcmintr, sc, ipl, IPL_TTY);
+	(void) dio_intr_establish(dcmintr, sc, ipl, IPL_TTY);
 
 	if (dcmistype == DIS_TIMER)
 		dcmsetischeme(brd, DIS_RESET|DIS_TIMER);
@@ -776,7 +776,7 @@ dcmreadbuf(sc, port)
 	dsp->rints++;
 #endif
 	tp = sc->sc_tty[port];
-	if (tp == NULL || (tp->t_state & TS_ISOPEN) == 0)
+	if (tp == NULL)
 		return;
 
 	if ((tp->t_state & TS_ISOPEN) == 0) {

@@ -1,5 +1,5 @@
-/*	$OpenBSD: sd.c,v 1.10 1997/04/16 11:56:15 downsj Exp $	*/
-/*	$NetBSD: sd.c,v 1.31 1997/04/02 22:37:36 scottr Exp $	*/
+/*	$OpenBSD: sd.c,v 1.11 1997/07/06 08:01:56 downsj Exp $	*/
+/*	$NetBSD: sd.c,v 1.33 1997/06/24 00:44:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -59,14 +59,17 @@
 #include <hp300/dev/scsireg.h>
 #include <hp300/dev/scsivar.h>
 #include <hp300/dev/sdvar.h>
-#ifdef USELEDS
-#include <hp300/hp300/led.h>
-#endif
 
 #include <vm/vm_param.h>
 #include <vm/lock.h>
 #include <vm/vm_prot.h>
 #include <vm/pmap.h>
+
+#include "opt_useleds.h"
+
+#ifdef USELEDS
+#include <hp300/hp300/leds.h>
+#endif
 
 /*
 extern void disksort();
@@ -899,8 +902,7 @@ sdgo(arg)
 		sc->sc_stats.sdtransfers++;
 	}
 #ifdef USELEDS
-	if (inledcontrol == 0)
-		ledcontrol(0, 0, LED_DISK);
+	ledcontrol(0, 0, LED_DISK);
 #endif
 	if (scsigo(sc->sc_dev.dv_parent->dv_unit, sc->sc_target, sc->sc_lun,
 	    bp, cmd, pad) == 0) {
@@ -1123,7 +1125,8 @@ sdsize(dev)
 			return(-1);
 		didopen = 1;
 	}
-	psize = sc->sc_dkdev.dk_label->d_partitions[sdpart(dev)].p_size;
+	psize = sc->sc_dkdev.dk_label->d_partitions[sdpart(dev)].p_size *
+	    (sc->sc_dkdev.dk_label->d_secsize / DEV_BSIZE);
 	if (didopen)
 		(void) sdclose(dev, FREAD|FWRITE, S_IFBLK, NULL);
 	return (psize);

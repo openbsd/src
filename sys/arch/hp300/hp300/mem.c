@@ -1,5 +1,5 @@
-/*	$OpenBSD: mem.c,v 1.5 1997/04/16 11:56:29 downsj Exp $	*/
-/*	$NetBSD: mem.c,v 1.16 1997/04/01 03:12:25 scottr Exp $	*/
+/*	$OpenBSD: mem.c,v 1.6 1997/07/06 08:02:06 downsj Exp $	*/
+/*	$NetBSD: mem.c,v 1.17 1997/06/10 18:51:31 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -229,5 +229,5 @@ mmmmap(dev, off, prot)
 	 */
 	if ((unsigned)off < lowram || (unsigned)off >= 0xFFFFFFFC)
 		return (-1);
-	return (hp300_btop(off));
+	return (m68k_btop(off));
 }

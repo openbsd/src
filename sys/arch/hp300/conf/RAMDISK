@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.3 1997/04/17 08:21:55 downsj Exp $
+#	$OpenBSD: RAMDISK,v 1.4 1997/07/06 08:01:43 downsj Exp $
 #
 # Ram disk kernel.
 #
@@ -19,7 +19,7 @@ option	 	HP375		# includes 345, 400t, 400s
 option	 	HP380		# includes 425t, 425s, 433s
 
 # Need to set locally
-maxusers	16
+maxusers	8
 
 # Options for HP hardware
 option	 	FPSP		# floating point interface for 68040

@@ -1,5 +1,5 @@
-/*	$OpenBSD: vm_machdep.c,v 1.9 1997/04/16 11:56:32 downsj Exp $	*/
-/*	$NetBSD: vm_machdep.c,v 1.35 1997/04/01 03:12:33 scottr Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.10 1997/07/06 08:02:10 downsj Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.37 1997/05/26 00:27:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,8 +61,6 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-void	setredzone __P((pt_entry_t *, caddr_t));
-
 /*
  * Finish a fork operation, with process p2 nearly set up.
  * Copy and update the kernel stack and pcb, making the child
@@ -88,7 +86,7 @@ cpu_fork(p1, p2)
 	savectx(curpcb);
 	*pcb = p1->p_addr->u_pcb;
 
-	PMAP_ACTIVATE(&p2->p_vmspace->vm_pmap, pcb, 0);
+	PMAP_ACTIVATE(p2->p_vmspace->vm_map.pmap, pcb, 0);
 
 	/*
 	 * Copy the trap frame, and arrange for the child to return directly
@@ -259,25 +257,6 @@ physunaccess(vaddr, size)
 	for (size = btoc(size); size; size--)
 		*pte++ = PG_NV;
 	TBIAS();
-}
-
-/*
- * Set a red zone in the kernel stack after the u. area.
- * We don't support a redzone right now.  It really isn't clear
- * that it is a good idea since, if the kernel stack were to roll
- * into a write protected page, the processor would lock up (since
- * it cannot create an exception frame) and we would get no useful
- * post-mortem info.  Currently, under the DEBUG option, we just
- * check at every clock interrupt to see if the current k-stack has
- * gone too far (i.e. into the "redzone" page) and if so, panic.
- * Look at _lev6intr in locore.s for more details.
- */
-/*ARGSUSED*/
-void
-setredzone(pte, vaddr)
-	pt_entry_t *pte;
-	caddr_t vaddr;
-{
 }
 
 /*

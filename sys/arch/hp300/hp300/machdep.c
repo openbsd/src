@@ -1,5 +1,5 @@
-/*	$OpenBSD: machdep.c,v 1.26 1997/04/20 07:01:13 downsj Exp $	*/
-/*	$NetBSD: machdep.c,v 1.89 1997/04/09 20:05:20 thorpej Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.27 1997/07/06 08:02:05 downsj Exp $	*/
+/*	$NetBSD: machdep.c,v 1.94 1997/06/12 15:46:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -85,6 +85,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
+#include <machine/hp300spu.h>
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
@@ -99,15 +100,17 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_param.h>
 
+#include "opt_useleds.h"
+
 #include <arch/hp300/dev/hilreg.h>
 #include <arch/hp300/dev/hilioctl.h>
 #include <arch/hp300/dev/hilvar.h>
 #ifdef USELEDS
-#include <arch/hp300/hp300/led.h>
-#endif /* USELEDS */
+#include <arch/hp300/hp300/leds.h>
+#endif
 
 /* the following is used externally (sysctl_hw) */
-char machine[] = "hp300";		/* cpu "architecture" */
+char	machine[] = MACHINE;	/* from <machine/param.h> */
 
 vm_map_t buffer_map;
 extern vm_offset_t avail_end;
@@ -152,7 +155,6 @@ int	parityerror __P((struct frame *));
 int	parityerrorfind __P((void));
 void    identifycpu __P((void));
 void    initcpu __P((void));
-void    ledinit __P((void));
 void	dumpmem __P((int *, int, int));
 char	*hexstr __P((int, int));
 
@@ -342,10 +344,10 @@ cpu_startup()
 	 * Tell the VM system that writing to kernel text isn't allowed.
 	 * If we don't, we might end up COW'ing the text segment!
 	 *
-	 * XXX Should be hp300_trunc_page(&kernel_text) instead
+	 * XXX Should be m68k_trunc_page(&kernel_text) instead
 	 * XXX of NBPG.
 	 */
-	if (vm_map_protect(kernel_map, NBPG, hp300_round_page(&etext),
+	if (vm_map_protect(kernel_map, NBPG, m68k_round_page(&etext),
 	    VM_PROT_READ|VM_PROT_EXECUTE, TRUE) != KERN_SUCCESS)
 		panic("can't protect kernel text");
 
@@ -479,58 +481,83 @@ setregs(p, pack, stack, retval)
 char	cpu_model[120];
 extern	char version[];
 
+struct hp300_model {
+	int id;
+	const char *name;
+	const char *designation;
+	const char *speed;
+};
+
+struct hp300_model hp300_models[] = {
+	{ HP_320,	"320",		"        ", "16.67"	},
+	{ HP_330,	"318/319/330",	"        ", "16.67"	},
+	{ HP_340,	"340",		"        ", "16.67"	},
+	{ HP_345,	"345",		"        ", "50"	},
+	{ HP_350,	"350",		"        ", "25"	},
+	{ HP_360,	"360",		"        ", "25"	},
+	{ HP_370,	"370",		"        ", "33.33"	},
+	{ HP_375,	"375",		"	 ", "50"	},
+	{ HP_380,	"380",		"        ", "25"	},
+	{ HP_400,	"400",		"        ", "50"	},
+	{ HP_425,	"425",		"     t s", "25"	},
+	{ HP_433,	"433",		"    t s ", "33"	},
+	{ 0,		NULL,		NULL,	    NULL	},
+};
+
 void
 identifycpu()
 {
-	char *t, *mc;
-	int len;
+	const char *t, *mc, *s;
+	char td;
+	int i, len;
 
-	switch (machineid) {
-	case HP_320:
-		t = "320 (16.67MHz";
-		break;
-	case HP_330:
-		t = "318/319/330 (16.67MHz";
-		break;
-	case HP_340:
-		t = "340 (16.67MHz";
-		break;
-	case HP_350:
-		t = "350 (25MHz";
-		break;
-	case HP_360:
-		t = "360 (25MHz";
-		break;
-	case HP_370:
-		t = "370 (33.33MHz";
-		break;
-	case HP_375:
-		t = "345/375 (50MHz";
-		break;
-	case HP_380:
-		t = "380 (25MHz";
-		break;
-	case HP_425:
-	        if ((mmuid & 0xff) == 5) {
-		    t = "425t (25MHz";
-		} else {	/* == 7 */
-		    t = "425s (25MHz";
+	/*
+	 * Find the model number.
+	 */
+	for (t = s = NULL, i = 0; hp300_models[i].name != NULL; i++) {
+		if (hp300_models[i].id == machineid) {
+			t = hp300_models[i].name;
+			s = hp300_models[i].speed;
+
+			if (mmuid < strlen(hp300_models[i].designation)) {
+				td = (hp300_models[i].designation)[mmuid];
+			} else {
+				td = (hp300_models[i].designation)[0];
+			}
 		}
+	}
+	if (t == NULL) {
+		printf("\nunknown machineid %d\n", machineid);
+		goto lose;
+	}
+
+	/*
+	 * ...and the CPU type.
+	 */
+	switch (cputype) {
+	case CPU_68040:
+		mc = "40";
 		break;
-	case HP_433:
-	        if ((mmuid & 0xff) == 4) {
-		    t = "433t (33MHz";
-		} else {	/* == 6 */
-		    t = "433s (33MHz";
-		}
+	case CPU_68030:
+		mc = "30";
+		break;
+	case CPU_68020:
+		mc = "20";
 		break;
 	default:
-		printf("\nunknown machine type %d\n", machineid);
-		panic("startup");
+		printf("\nunknown cputype %d\n", cputype);
+		goto lose;
 	}
-	mc = (mmutype == MMU_68040 ? "40" :
-	       (mmutype == MMU_68030 ? "30" : "20"));
-	sprintf(cpu_model, "HP9000/%s MC680%s CPU", t, mc);
+
+	if (td != ' ')
+		sprintf(cpu_model, "HP 9000/%s%c (%sMHz MC680%s CPU", t, td,
+		    s, mc);
+	else
+		sprintf(cpu_model, "HP 9000/%s (%sMHz MC680%s CPU", t, s, mc);
+
+	/*
+	 * ...and the MMU type.
+	 */
 	switch (mmutype) {
 	case MMU_68040:
 	case MMU_68030:
@@ -546,60 +573,104 @@ identifycpu()
 		printf("%s\nunknown MMU type %d\n", cpu_model, mmutype);
 		panic("startup");
 	}
+
 	len = strlen(cpu_model);
-	if (mmutype == MMU_68040)
-		len += sprintf(cpu_model + len,
-		    "+FPU, 4k on-chip physical I/D caches");
-	else if (mmutype == MMU_68030)
-		len += sprintf(cpu_model + len, ", %sMHz MC68882 FPU",
-		       machineid == HP_340 ? "16.67" :
-		       (machineid == HP_360 ? "25" :
-			(machineid == HP_370 ? "33.33" : "50")));
-	else
+
+	/*
+	 * ...and the FPU type.
+	 */
+	switch (fputype) {
+	case FPU_68040:
+		len += sprintf(cpu_model + len, "+FPU");
+		break;
+	case FPU_68882:
+		len += sprintf(cpu_model + len, ", %sMHz MC68882 FPU", s);
+		break;
+	case FPU_68881:
 		len += sprintf(cpu_model + len, ", %sMHz MC68881 FPU",
-		       machineid == HP_350 ? "20" : "16.67");
-	switch (ectype) {
-	case EC_VIRT:
-		sprintf(cpu_model + len, ", %dK virtual-address cache",
-		       machineid == HP_320 ? 16 : 32);
+		    machineid == HP_350 ? "20" : "16.67");
 		break;
-	case EC_PHYS:
-		sprintf(cpu_model + len, ", %dK physical-address cache",
-		       machineid == HP_370 ? 64 : 32);
-		break;
+	default:
+		len += sprintf(cpu_model + len, ", unknown FPU");
 	}
+
+	/*
+	 * ...and finally, the cache type.
+	 */
+	if (cputype == CPU_68040)
+		sprintf(cpu_model + len, ", 4k on-chip physical I/D caches");
+	else {
+		switch (ectype) {
+		case EC_VIRT:
+			sprintf(cpu_model + len,
+			    ", %dK virtual-address cache",
+			    machineid == HP_320 ? 16 : 32);
+			break;
+		case EC_PHYS:
+			sprintf(cpu_model + len,
+			    ", %dK physical-address cache",
+			    machineid == HP_370 ? 64 : 32);
+			break;
+		}
+	}
+
 	strcat(cpu_model, ")");
 	printf("%s\n", cpu_model);
-	printf("delay constant for this cpu: %d  MMU ID: %d\n", 
-	       delay_divisor, mmuid & 0xff);
+	printf("cpu: delay divisor %d", delay_divisor);
+	if (mmuid)
+		printf(", mmuid %d", mmuid);
+	printf("\n");
+
 	/*
 	 * Now that we have told the user what they have,
 	 * let them know if that machine type isn't configured.
 	 */
 	switch (machineid) {
 	case -1:		/* keep compilers happy */
-#if !defined(HP320) && !defined(HP350)
+#if !defined(HP320)
 	case HP_320:
-	case HP_350:
 #endif
-#ifndef HP330
+#if !defined(HP330)
 	case HP_330:
 #endif
-#if !defined(HP340) && !defined(HP360) && !defined(HP370) && !defined(HP375)
+#if !defined(HP340)
 	case HP_340:
+#endif
+#if !defined(HP345)
+	case HP_345:
+#endif
+#if !defined(HP350)
+	case HP_350:
+#endif
+#if !defined(HP360)
 	case HP_360:
+#endif
+#if !defined(HP370)
 	case HP_370:
+#endif
+#if !defined(HP375)
 	case HP_375:
 #endif
 #if !defined(HP380)
 	case HP_380:
+#endif
+#if !defined(HP400)
+	case HP_400:
+#endif
+#if !defined(HP425)
 	case HP_425:
+#endif
+#if !defined(HP433)
 	case HP_433:
 #endif
-		panic("CPU type not configured");
+		panic("SPU type not configured");
 	default:
 		break;
 	}
+
+	return;
+lose:
+	panic("startup");
 }
 
 /*
@@ -634,53 +705,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	}
 	/* NOTREACHED */
 }
-
-#ifdef USELEDS
-int inledcontrol = 0;	/* 1 if we are in ledcontrol already, cheap mutex */
-char *ledaddr;
-
-/*
- * Map the LED page and setup the KVA to access it.
- */
-void
-ledinit()
-{
-	extern caddr_t ledbase;
-
-	pmap_enter(pmap_kernel(), (vm_offset_t)ledbase, (vm_offset_t)LED_ADDR,
-		   VM_PROT_READ|VM_PROT_WRITE, TRUE);
-	ledaddr = (char *) ((int)ledbase | (LED_ADDR & PGOFSET));
-}
-
-/*
- * Do lights:
- *	`ons' is a mask of LEDs to turn on,
- *	`offs' is a mask of LEDs to turn off,
- *	`togs' is a mask of LEDs to toggle.
- * Note we don't use splclock/splx for mutual exclusion.
- * They are expensive and we really don't need to be that precise.
- * Besides we would like to be able to profile this routine.
- */
-void
-ledcontrol(ons, offs, togs)
-	int ons, offs, togs;
-{
-	static char currentleds;
-	char leds;
-
-	inledcontrol = 1;
-	leds = currentleds;
-	if (ons)
-		leds |= ons;
-	if (offs)
-		leds &= ~offs;
-	if (togs)
-		leds ^= togs;
-	currentleds = leds;
-	*ledaddr = ~leds;
-	inledcontrol = 0;
-}
-#endif
 
 int	waittime = -1;
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: db_memrw.c,v 1.2 1997/04/16 11:56:22 downsj Exp $	*/
-/*	$NetBSD: db_memrw.c,v 1.3 1997/04/01 03:12:12 scottr Exp $	*/
+/*	$OpenBSD: db_memrw.c,v 1.3 1997/07/06 08:01:58 downsj Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.5 1997/06/10 18:48:47 veego Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -65,6 +65,7 @@
 #include <machine/pte.h>
 #include <machine/db_machdep.h>
 #include <machine/cpu.h>
+#include <machine/hp300spu.h>
 
 #include <ddb/db_access.h>
 
@@ -124,7 +125,7 @@ db_write_text(addr, size, data)
 		/*
 		 * Get the VA for the page.
 		 */
-		pgva = hp300_trunc_page((u_long)dst);
+		pgva = m68k_trunc_page((u_long)dst);
 
 		/*
 		 * Save this destination address, for TLB

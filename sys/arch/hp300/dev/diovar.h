@@ -1,8 +1,8 @@
-/*	$OpenBSD: diovar.h,v 1.2 1997/02/03 04:47:21 downsj Exp $	*/
-/*	$NetBSD: diovar.h,v 1.2 1997/01/30 09:18:41 thorpej Exp $	*/
+/*	$OpenBSD: diovar.h,v 1.3 1997/07/06 08:01:48 downsj Exp $	*/
+/*	$NetBSD: diovar.h,v 1.3 1997/05/05 21:01:33 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -77,4 +77,6 @@ struct dio_devdesc {
 
 #ifdef _KERNEL
 void	*dio_scodetopa __P((int));
+void	*dio_intr_establish __P((int (*)(void *), void *, int, int));
+void	dio_intr_disestablish __P((void *));
 #endif /* _KERNEL */

@@ -1,7 +1,8 @@
-/*	$OpenBSD: apcireg.h,v 1.2 1997/07/06 08:01:45 downsj Exp $	*/
-/*	$NetBSD: apcireg.h,v 1.2 1997/05/12 08:14:01 thorpej Exp $	*/
+/*	$OpenBSD: frodovar.h,v 1.1 1997/07/06 08:01:51 downsj Exp $	*/
+/*	$NetBSD: frodovar.h,v 1.1 1997/05/12 08:03:50 thorpej Exp $	*/
 
 /*
+ * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1997 Michael Smith.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,35 +27,23 @@
  * SUCH DAMAGE.
  */
 
-#include <hp300/dev/iotypes.h>
-
-struct apciregs {
-	vu_char		ap_data;
-	u_char		pad0[3];
-	vu_char		ap_ier;
-	u_char		pad1[3];
-	vu_char		ap_iir;
-#define	ap_fifo	ap_iir
-	u_char		pad2[3];
-	vu_char		ap_cfcr;
-	u_char		pad3[3];
-	vu_char		ap_mcr;
-	u_char		pad4[3];
-	vu_char		ap_lsr;
-	u_char		pad5[3];
-	vu_char		ap_msr;
-	u_char		pad6[3];
-	vu_char		ap_scratch;
-};
-
-/* max number of apci ports */
-#define	APCI_MAXPORT	4
+/*
+ * Autoconfiguration definitions and prototypes for the Frodo ASIC in
+ * the HP9000/4xx series.
+ */
 
 /*
- * baudrate divisor calculations.
- *
- * The input clock frequency appears to be 8.0064MHz, giving a scale
- * factor of 500400.  (Using exactly 8MHz gives framing errors with
- * the Apollo keyboard.)
+ * Arguments used to attach Frodo subdevices.
  */
-#define	APCIBRD(x)	(500000 / (x))
+struct frodo_attach_args {
+	const char *fa_name;	/* device name */
+	int	fa_offset;	/* offset from Frodo base */
+	int	fa_line;	/* Frodo interrupt line */
+};
+
+#define	frodocf_offset	cf_loc[0]
+#define	FRODO_UNKNOWN_OFFSET	-1
+
+void	frodo_intr_establish __P((struct device *, int (*func)(void *),
+	    void *, int, int));
+void	frodo_intr_disestablish __P((struct device *, int));

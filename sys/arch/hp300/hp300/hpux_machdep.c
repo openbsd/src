@@ -1,5 +1,5 @@
-/*	$OpenBSD: hpux_machdep.c,v 1.6 1997/04/17 10:28:36 downsj Exp $	*/
-/*	$NetBSD: hpux_machdep.c,v 1.12 1997/04/02 22:41:34 scottr Exp $	*/
+/*	$OpenBSD: hpux_machdep.c,v 1.7 1997/07/06 08:01:59 downsj Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.13 1997/04/27 21:38:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -58,7 +58,6 @@
 #include <sys/mman.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
-#include <sys/namei.h>
 #include <sys/poll.h> 
 #include <sys/proc.h> 
 #include <sys/ptrace.h>
@@ -79,13 +78,6 @@
 #include <vm/vm_param.h>
 #include <vm/vm_map.h> 
 
-#include <arch/hp300/dev/grfreg.h>
-#include <arch/hp300/dev/grfioctl.h>
-#include <arch/hp300/dev/grfvar.h>
-#include <arch/hp300/dev/hilreg.h>
-#include <arch/hp300/dev/hilioctl.h>
-#include <arch/hp300/dev/hilvar.h>
-
 #include <sys/syscallargs.h>
 
 #include <compat/hpux/hpux.h>
@@ -98,34 +90,9 @@
 
 extern	short exframesize[];
 
-#define NHIL	1	/* XXX */
-#include "grf.h"
-
-#if NGRF > 0
-extern	int grfopen __P((dev_t dev, int oflags, int devtype, struct proc *p));
-#endif
-
-#if NHIL > 0
-extern	int hilopen __P((dev_t dev, int oflags, int devtype, struct proc *p));
-#endif
-
 struct valtostr {
 	int	val;
 	const char *str;
-};
-
-static struct valtostr machine_table[] = {
-	{ HP_320,	"320" },
-	{ HP_330,	"330" },	/* includes 318 and 319 */
-	{ HP_340,	"340" },
-	{ HP_350,	"350" },
-	{ HP_360,	"360" },
-	{ HP_370,	"370" },
-	{ HP_375,	"375" },	/* includes 345 and 400 */
-	{ HP_380,	"380" },
-	{ HP_425,	"425" },
-	{ HP_433,	"433" },
-	{     -1,	"3?0" },	/* unknown system (???) */
 };
 
 /*
@@ -133,16 +100,20 @@ static struct valtostr machine_table[] = {
  * XXX what are the HP-UX "localroot" semantics?  Should we handle
  * XXX diskless systems here?
  */
+static const char context_040[] =
+    "standalone HP-MC68040 HP-MC68881 HP-MC68020 HP-MC68010 localroot default";
+
+static const char context_fpu[] =
+    "standalone HP-MC68881 HP-MC68020 HP-MC68010 localroot default";
+
+static const char context_nofpu[] =
+    "standalone HP-MC68020 HP-MC68010 localroot default";
+
 static struct valtostr context_table[] = {
-	{ FPU_68040,
-    "standalone HP-MC68040 HP-MC68881 HP-MC68020 HP-MC68010 localroot default"
-	},
-	{ FPU_68881,
-    "standalone HP-MC68881 HP-MC68020 HP-MC68010 localroot default"
-	},
-	{ FPU_NONE,
-    "standalone HP-MC68020 HP-MC68010 localroot default"
-	},
+	{ FPU_68060,	&context_040[0] },
+	{ FPU_68040,	&context_040[0] },
+	{ FPU_68882,	&context_fpu[0] },
+	{ FPU_68881,	&context_fpu[0] },
 	{ 0, NULL },
 };
 
@@ -158,7 +129,6 @@ struct bsdfp {
 
 /*
  * m68k-specific setup for HP-UX executables.
- * XXX m68k/m68k/hpux_machdep.c?
  */
 int
 hpux_cpu_makecmds(p, epp)
@@ -206,75 +176,21 @@ hpux_cpu_vmcmd(p, ev)
 }
 
 /*
- * Machine-dependent stat structure conversion.
- */
-void
-hpux_cpu_bsd_to_hpux_stat(sb, hsb)
-	struct stat *sb;
-	struct hpux_stat *hsb;
-{
-
-	/* XXX I don't want to talk about it... */
-	if ((sb->st_mode & S_IFMT) == S_IFCHR) {
-#if NGRF > 0
-		if (cdevsw[major(sb->st_rdev)].d_open == grfopen)
-			hsb->hst_rdev = grfdevno(sb->st_rdev);
-#endif
-#if NHIL > 0
-		if (cdevsw[major(sb->st_rdev)].d_open == hilopen)
-			hsb->hst_rdev = hildevno(sb->st_rdev);
-#endif
-	}
-}
-
-/*
- * Machine-dependent uname information.
- */
-void
-hpux_cpu_uname(ut)
-	struct hpux_utsname *ut;
-{
-	int i;
-
-	bzero(ut->machine, sizeof(ut->machine));
-
-	/*
-	 * Find the current machine-ID in the table and
-	 * copy the string into the uname.
-	 */
-	for (i = 0; machine_table[i].val != -1; ++i)
-		if (machine_table[i].val == machineid)
-			break;
-
-	sprintf(ut->machine, "9000/%s", machine_table[i].str);
-}
-
-/*
  * Return arch-type for hpux_sys_sysconf()
  */
 int
 hpux_cpu_sysconf_arch()
 {
 
-	switch (machineid) {
-	case HP_320:
-	case HP_330:
-	case HP_350:
+	switch (cputype) {
+	case CPU_68020:
 		return (HPUX_SYSCONF_CPUM020);
 
-	case HP_340:
-	case HP_360:
-	case HP_370:
-	case HP_375:
+	case CPU_68030:
 		return (HPUX_SYSCONF_CPUM030);
 
-	case HP_380:
-	case HP_425:
-	case HP_433:
-		return (HPUX_SYSCONF_CPUM040);
-
 	default:
-		return (HPUX_SYSCONF_CPUM020);	/* ??? */
+		return (HPUX_SYSCONF_CPUM040);
 	}
 	/* NOTREACHED */
 }
@@ -323,25 +239,24 @@ hpux_sys_getcontext(p, v, retval)
 	register_t *retval; 
 {
 	struct hpux_sys_getcontext_args *uap = v;
+	const char *str;
 	int l, i, error = 0;
 	int len; 
 
 	for (i = 0; context_table[i].str != NULL; i++)
 		if (context_table[i].val == fputype)
 			break;
-	if (context_table[i].str == NULL) {
-		/*
-		 * XXX What else?  It's not like this can happen...
-		 */
-		return (EINVAL);
-	}
+	if (context_table[i].str == NULL)
+		str = &context_nofpu[0];
+	else
+		str = context_table[i].str;
 
 	/* + 1 ... count the terminating \0. */
-	l = strlen(context_table[i].str) + 1;
+	l = strlen(str) + 1;
 	len = min(SCARG(uap, len), l);
 
 	if (len)
-		error = copyout(context_table[i].str, SCARG(uap, buf), len);
+		error = copyout(str, SCARG(uap, buf), len);
 	if (error == 0)
 		*retval = l;
 	return (0);

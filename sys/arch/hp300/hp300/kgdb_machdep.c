@@ -1,14 +1,18 @@
-/*	$OpenBSD: mtpr.h,v 1.2 1997/01/12 15:13:37 downsj Exp $	*/
-/*	$NetBSD: mtpr.h,v 1.4 1994/10/26 07:26:29 cgd Exp $	*/
+/*	$OpenBSD: kgdb_machdep.c,v 1.1 1997/07/06 08:02:01 downsj Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.1 1997/05/05 20:51:05 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department.
+ * This software was developed by the Computer Systems Engineering group
+ * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
+ * contributed to Berkeley.
+ *
+ * All advertising materials mentioning features or use of this software
+ * must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Lawrence Berkeley Laboratories.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,20 +42,80 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah Hdr: mtpr.h 1.1 90/07/09
- *
- *	@(#)mtpr.h	7.2 (Berkeley) 11/3/90
+ *	@(#)kgdb_stub.c	8.4 (Berkeley) 1/12/94
  */
 
 /*
- * simulated software interrupt register
+ * Machine-dependent part of the KGDB remote "stub"
  */
 
-extern unsigned char ssir;
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kgdb.h>
 
-#define SIR_NET		0x1
-#define SIR_CLOCK	0x2
+#include <machine/db_machdep.h>
+#include <machine/pte.h>
 
-#define siroff(x)	ssir &= ~(x)
-#define setsoftnet()	ssir |= SIR_NET
-#define setsoftclock()	ssir |= SIR_CLOCK
+#define	INVOKE_KGDB()	__asm __volatile("trap	#15")
+
+/*
+ * Determine if the memory at va..(va+len) is valid.
+ */
+int
+kgdb_acc(va, ulen)
+	vm_offset_t va;
+	size_t ulen;
+{
+	int len, pgoff;
+	pt_entry_t *pte;
+
+	len = (int)ulen;
+	pgoff = va & PGOFSET;
+	va  -= pgoff;
+	len += pgoff;
+
+	while (len > 0) {
+		pte = kvtopte(va);
+		if ((*pte & PG_V) == 0)
+			return (0);
+		va  += NBPG;
+		len -= NBPG;
+	}
+
+	return (1);
+}
+
+/*
+ * Trap into kgdb to wait for debugger to connect,
+ * noting on the console why nothing else is going on.
+ */
+void
+kgdb_connect(verbose)
+	int verbose;
+{
+
+	if (kgdb_dev < 0)
+		return;
+
+	if (verbose)
+		printf("kgdb waiting...");
+
+	INVOKE_KGDB();
+
+	if (verbose)
+		printf("connected.\n");
+
+	kgdb_debug_panic = 1;
+}
+
+/*
+ * Decide what to do on panic.
+ */
+void
+kgdb_panic()
+{
+	if (kgdb_dev >= 0 && kgdb_debug_panic) {
+		printf("entering kgdb\n");
+		INVOKE_KGDB();
+	}
+}

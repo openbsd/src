@@ -1,5 +1,5 @@
-/*	$OpenBSD: dca.c,v 1.8 1997/04/16 11:55:58 downsj Exp $	*/
-/*	$NetBSD: dca.c,v 1.34 1997/04/14 02:33:16 thorpej Exp $	*/
+/*	$OpenBSD: dca.c,v 1.9 1997/07/06 08:01:46 downsj Exp $	*/
+/*	$NetBSD: dca.c,v 1.35 1997/05/05 20:58:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -231,7 +231,7 @@ dcaattach(parent, self, aux)
 		sc->sc_flags |= DCA_HASFIFO;
 
 	/* Establish interrupt handler. */
-	(void) intr_establish(dcaintr, sc, ipl,
+	(void) dio_intr_establish(dcaintr, sc, ipl,
 	    (sc->sc_flags & DCA_HASFIFO) ? IPL_TTY : IPL_TTYNOBUF);
 
 	sc->sc_flags |= DCA_ACTIVE;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: clock.c,v 1.4 1997/04/16 11:56:21 downsj Exp $	*/
-/*	$NetBSD: clock.c,v 1.19 1997/04/01 03:12:09 scottr Exp $	*/
+/*	$OpenBSD: clock.c,v 1.5 1997/07/06 08:01:58 downsj Exp $	*/
+/*	$NetBSD: clock.c,v 1.20 1997/04/27 20:43:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,6 +58,7 @@
 
 #include <machine/psl.h>
 #include <machine/cpu.h>
+#include <machine/hp300spu.h>
 
 #include <hp300/dev/hilreg.h>
 #include <hp300/dev/hilioctl.h>

@@ -1,5 +1,5 @@
-/*	$OpenBSD: fhpib.c,v 1.7 1997/04/16 11:56:01 downsj Exp $	*/
-/*	$NetBSD: fhpib.c,v 1.17 1997/04/14 02:33:19 thorpej Exp $	*/
+/*	$OpenBSD: fhpib.c,v 1.8 1997/07/06 08:01:50 downsj Exp $	*/
+/*	$NetBSD: fhpib.c,v 1.18 1997/05/05 21:04:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -158,8 +158,7 @@ fhpibattach(parent, self, aux)
 	printf(" ipl %d: %s\n", ipl, DIO_DEVICE_DESC_FHPIB);
 
 	/* Establish the interrupt handler. */
-	(void) intr_establish(fhpibintr, sc, ipl, IPL_BIO);
-	dmacomputeipl();
+	(void) dio_intr_establish(fhpibintr, sc, ipl, IPL_BIO);
 
 	ha.ha_ops = &fhpib_controller;
 	ha.ha_type = HPIBC;			/* XXX */

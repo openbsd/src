@@ -1,5 +1,5 @@
-/*	$OpenBSD: cpu.h,v 1.7 1997/04/17 10:28:40 downsj Exp $	*/
-/*	$NetBSD: cpu.h,v 1.24 1997/04/14 02:28:50 thorpej Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.8 1997/07/06 08:02:11 downsj Exp $	*/
+/*	$NetBSD: cpu.h,v 1.25 1997/04/27 20:37:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -126,80 +126,12 @@ int	want_resched;		/* resched() was called */
 	{ "console_device", CTLTYPE_STRUCT }, \
 }
 
-#ifdef _KERNEL
 /*
- * Associate HP 9000/300 models with CPU/MMU combinations.
- */
-
-/*
- * HP 68020-based computers.  HP320 and HP350 have an HP MMU.
- * HP330 has a Motorola MMU.
- */
-#if (defined(HP320) || defined(HP330) || defined(HP350))
-#ifndef M68020
-#define	M68020
-#endif /* ! M68020 */
-
-#if defined(HP330) && !defined(M68K_MMU_MOTOROLA)
-#define	M68K_MMU_MOTOROLA
-#endif /* HP330 && ! M68K_MMU_MOTOROLA */
-
-#if (defined(HP320) || defined(HP350)) && !defined(M68K_MMU_HP)
-#define M68K_MMU_HP		/* include cheezy VAC support */
-#endif /* (HP320 || HP350) && ! M68K_MMU_HP */
-#endif /* HP320 || HP330 || HP350 */
-
-/*
- * HP 68030-based computers.  HP375 includes support for the
- * 345, 400t, and 400s.
- */
-#if (defined(HP340) || defined(HP360) || defined(HP370) || defined(HP375))
-#ifndef M68030
-#define	M68030
-#endif /* ! M68030 */
-
-#ifndef M68K_MMU_MOTOROLA
-#define	M68K_MMU_MOTOROLA
-#endif /* ! M68K_MMU_MOTOROLA */
-#endif /* HP340 || HP360 || HP370 || HP375 */
-
-/*
- * HP 68040-based computers.  HP380 includes support for the
- * 425t, 425s, and 433s.
- */
-#if defined(HP380)
-#ifndef M68040
-#define	M68040
-#endif /* ! M68040 */
-
-#ifndef M68K_MMU_MOTOROLA
-#define	M68K_MMU_MOTOROLA
-#endif /* ! M68K_MMU_MOTOROLA */
-#endif /* HP380 */
-#endif /* _KERNEL */
-
-/*
- * The rest of this should probably be moved to ../hp300/hp300cpu.h,
+ * The rest of this should probably be moved to <machine/hp300spu.h>,
  * although some of it could probably be put into generic 68k headers.
  */
 
-/* values for machineid */
-#define	HP_320		0	/* 16Mhz 68020+HP MMU+16K external cache */
-#define	HP_330		1	/* 16Mhz 68020+68851 MMU */
-#define	HP_350		2	/* 25Mhz 68020+HP MMU+32K external cache */
-#define	HP_360		3	/* 25Mhz 68030 */
-#define	HP_370		4	/* 33Mhz 68030+64K external cache */
-#define	HP_340		5	/* 16Mhz 68030 */
-#define	HP_375		6	/* 50Mhz 68030+32K external cache */
-#define	HP_380		7	/* 25Mhz 68040 */
-#define HP_425		8	/* 25/33Mhz 68040 */
-#define HP_433		9	/* 33Mhz 68040 (maybe also 25MHz?) */
-
 #ifdef _KERNEL
-extern	int machineid;		/* CPU model */
-extern	int mmuid;		/* MMU model */
-extern	int cpuspeed;		/* CPU speed, in MHz */
-
 extern	char *intiobase, *intiolimit;
 extern	void (*vectab[]) __P((void));
 

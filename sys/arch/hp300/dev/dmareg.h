@@ -1,5 +1,5 @@
-/*	$OpenBSD: dmareg.h,v 1.5 1997/04/16 11:56:00 downsj Exp $	*/
-/*	$NetBSD: dmareg.h,v 1.10 1997/04/01 03:10:58 scottr Exp $	*/
+/*	$OpenBSD: dmareg.h,v 1.6 1997/07/06 08:01:49 downsj Exp $	*/
+/*	$NetBSD: dmareg.h,v 1.12 1997/05/05 21:02:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -37,6 +37,7 @@
  */
 
 #include <hp300/dev/iotypes.h>		/* XXX */
+#include <machine/hp300spu.h>
 
 /*
  * Hardware layout for the 98620[ABC]:
@@ -116,8 +117,8 @@ struct	dmareg {
 #define	DMA_STAT(dc)	dc->dm_Bhwaddr->dmaB_stat
 
 #if defined(HP320)
-#define	DMA_ARM(dc)	\
-	if (dc->dm_softc->sc_type == DMA_B) { \
+#define	DMA_ARM(sc, dc)	\
+	if (sc->sc_type == DMA_B) { \
 		struct dmaBdevice *dma = dc->dm_Bhwaddr; \
 		dma->dmaB_addr = dc->dm_chain[dc->dm_cur].dc_addr; \
 		dma->dmaB_count = dc->dm_chain[dc->dm_cur].dc_count - 1; \
@@ -129,7 +130,7 @@ struct	dmareg {
 		dma->dma_cmd = dc->dm_cmd; \
 	}
 #else
-#define	DMA_ARM(dc)	\
+#define	DMA_ARM(sc, dc)	\
 	{ \
 		struct dmadevice *dma = dc->dm_hwaddr; \
 		dma->dma_addr = dc->dm_chain[dc->dm_cur].dc_addr; \

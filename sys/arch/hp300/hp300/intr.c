@@ -1,5 +1,5 @@
-/*	$OpenBSD: intr.c,v 1.1 1997/04/16 11:56:24 downsj Exp $	*/
-/*	$NetBSD: intr.c,v 1.1 1997/04/14 02:28:44 thorpej Exp $	*/
+/*	$OpenBSD: intr.c,v 1.2 1997/07/06 08:02:00 downsj Exp $	*/
+/*	$NetBSD: intr.c,v 1.2 1997/05/01 16:24:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -180,18 +180,9 @@ intr_establish(func, arg, ipl, priority)
 	 * Some devices are particularly sensitive to interrupt
 	 * handling latency.  The DCA, for example, can lose many
 	 * characters if its interrupt isn't handled with reasonable
-	 * speed.
-	 *
-	 * To work around this problem, each device can give itself a
-	 * "priority".  An unbuffered DCA would give itself a higher
-	 * priority than a SCSI device, for example.
-	 *
-	 * This is necessary because of the flat spl scheme employed by
-	 * the hp300.  Each device can be set from ipl 3 to ipl 5, which
-	 * in turn means that splbio, splnet, and spltty must all be at
-	 * spl5.
-	 *
-	 * Don't blame me...I just work here.
+	 * speed.  For this reason, we sort ISRs by IPL_* priority,
+	 * inserting higher priority interrupts before lower priority
+	 * interrupts.
 	 */
 
 	/*

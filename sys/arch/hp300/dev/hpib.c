@@ -1,5 +1,5 @@
-/*	$OpenBSD: hpib.c,v 1.7 1997/04/16 11:56:09 downsj Exp $	*/
-/*	$NetBSD: hpib.c,v 1.15 1997/04/14 02:31:33 thorpej Exp $	*/
+/*	$OpenBSD: hpib.c,v 1.8 1997/07/06 08:01:53 downsj Exp $	*/
+/*	$NetBSD: hpib.c,v 1.16 1997/04/27 20:58:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -52,6 +52,7 @@
 #include <hp300/dev/hpibvar.h>
 
 #include <machine/cpu.h>
+#include <machine/hp300spu.h>
 
 int	hpibbusmatch __P((struct device *, void *, void *));
 void	hpibbusattach __P((struct device *, struct device *, void *));

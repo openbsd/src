@@ -1,4 +1,4 @@
-#	$OpenBSD: DISKLESS,v 1.14 1997/02/24 01:16:06 downsj Exp $
+#	$OpenBSD: DISKLESS,v 1.15 1997/07/06 08:01:41 downsj Exp $
 #	$NetBSD: GENERIC,v 1.23 1997/01/31 06:12:57 thorpej Exp $
 #
 # Generic kernel - one size fits all.
@@ -13,11 +13,15 @@ include "../../../conf/GENERIC"
 option	 	HP320
 option	 	HP330		# includes 318, 319
 option	 	HP340
+option		HP345
 option	 	HP350
 option	 	HP360
 option	 	HP370
-option	 	HP375		# includes 345, 400t, 400s
-option	 	HP380		# includes 425t, 425s, 433s
+option	 	HP375
+option	 	HP380
+option		HP400
+option		HP425
+option		HP433
 
 # Need to set locally
 maxusers	8
@@ -53,6 +57,13 @@ mainbus0	at root		# root "bus"
 
 intio0		at mainbus0	# internal i/o space
 dio0		at mainbus0	# DIO/DIO-II bus
+
+# Frodo utility chip found on 4xx's
+frodo0		at intio?
+
+# 8250-like serial ports found on Frodo ASIC
+#dnkbd0		at frodo? offset 0x0	# Domain keyboard flavor
+apci*		at frodo? offset ?	# tty flavor
 
 # Davinci framebuffer
 dvbox*		at intio?

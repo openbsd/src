@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_le.c,v 1.9 1997/04/16 11:56:10 downsj Exp $	*/
-/*	$NetBSD: if_le.c,v 1.41 1997/04/14 02:33:20 thorpej Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.10 1997/07/06 08:01:54 downsj Exp $	*/
+/*	$NetBSD: if_le.c,v 1.43 1997/05/05 21:05:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -60,10 +60,6 @@
 #include <machine/cpu.h>
 #include <machine/intr.h>
 
-#ifdef USELEDS
-#include <hp300/hp300/led.h>
-#endif
-
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
 
@@ -72,6 +68,11 @@
 #include <hp300/dev/diodevs.h>
 #include <hp300/dev/if_lereg.h>
 #include <hp300/dev/if_levar.h>
+
+#include "opt_useleds.h"
+#ifdef USELEDS
+#include <hp300/hp300/leds.h>
+#endif
 
 int	lematch __P((struct device *, void *, void *));
 void	leattach __P((struct device *, struct device *, void *));
@@ -197,7 +198,7 @@ leattach(parent, self, aux)
 	am7990_config(sc);
 
 	/* Establish the interrupt handler. */
-	(void) intr_establish(leintr, sc, ipl, IPL_NET);
+	(void) dio_intr_establish(leintr, sc, ipl, IPL_NET);
 	ler0->ler0_status = LE_IE;
 }
 
@@ -206,21 +207,19 @@ leintr(arg)
 	void *arg;
 {
 	struct am7990_softc *sc = arg;
+#ifdef USELEDS
 	u_int16_t isr;
 
-#ifdef USELEDS
 	isr = lerdcsr(sc, LE_CSR0);
 
 	if ((isr & LE_C0_INTR) == 0)
 		return (0);
 
 	if (isr & LE_C0_RINT)
-		if (inledcontrol == 0)
-			ledcontrol(0, 0, LED_LANRCV);
+		ledcontrol(0, 0, LED_LANRCV);
 
 	if (isr & LE_C0_TINT)
-		if (inledcontrol == 0)
-			ledcontrol(0, 0, LED_LANXMT);
+		ledcontrol(0, 0, LED_LANXMT);
 #endif /* USELEDS */
 
 	return (am7990_intr(sc));

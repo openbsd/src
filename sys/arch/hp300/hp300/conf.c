@@ -1,5 +1,5 @@
-/*	$OpenBSD: conf.c,v 1.15 1997/04/16 11:56:21 downsj Exp $	*/
-/*	$NetBSD: conf.c,v 1.38 1997/04/01 03:12:10 scottr Exp $	*/
+/*	$OpenBSD: conf.c,v 1.16 1997/07/06 08:01:58 downsj Exp $	*/
+/*	$NetBSD: conf.c,v 1.39 1997/05/12 08:17:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -125,6 +125,8 @@ cdev_decl(grf);
 cdev_decl(ppi);
 #include "dca.h"
 cdev_decl(dca);
+#include "apci.h"
+cdev_decl(apci);
 #include "ite.h"
 cdev_decl(ite);
 /* XXX shouldn't this be optional? */
@@ -188,6 +190,7 @@ struct cdevsw	cdevsw[] =
 	cdev_random_init(1,random),	/* 32: random generator */
 	cdev_gen_ipf(NIPF,ipl),		/* 33: ip filtering */
 	cdev_disk_init(NRD,rd),		/* 34: RAM disk */
+	cdev_tty_init(NAPCI,apci),	/* 35: Apollo APCI UARTs */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -337,6 +340,9 @@ cons_decl(topcat);
 #define dcacnpollc		nullcnpollc
 cons_decl(dca);
 
+#define	apcicnpollc		nullcnpollc
+cons_decl(apci);
+
 #define dcmcnpollc		nullcnpollc
 cons_decl(dcm);
 
@@ -366,6 +372,9 @@ struct	consdev constab[] = {
 #endif /* NITE > 0 */
 #if NDCA > 0
 	cons_init(dca),
+#endif
+#if NAPCI > 0
+	cons_init(apci),
 #endif
 #if NDCM > 0
 	cons_init(dcm),

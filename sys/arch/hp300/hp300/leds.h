@@ -1,5 +1,5 @@
-/*	$OpenBSD: led.h,v 1.2 1997/01/12 15:13:20 downsj Exp $	*/
-/*	$NetBSD: led.h,v 1.4 1996/10/05 09:18:22 thorpej Exp $	*/
+/*	$OpenBSD: leds.h,v 1.1 1997/07/06 08:02:03 downsj Exp $	*/
+/*	$NetBSD: leds.h,v 1.1 1997/05/05 20:54:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992 University of Utah.
@@ -50,9 +50,7 @@
 #define	LED_DISK	0x20		/* for disk activity */
 #define	LED_PULSE	0x10		/* heartbeat */
 
-#ifdef _KERNEL
-extern	char *ledaddr;
-extern	int inledcontrol;
-
+#if defined(_KERNEL) && !defined(_LOCORE)
+void	ledinit __P((void));
 void	ledcontrol __P((int, int, int));
 #endif
