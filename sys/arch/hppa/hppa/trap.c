@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.75 2004/05/13 01:22:56 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.76 2004/06/10 21:13:55 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -278,11 +278,9 @@ trap(type, frame)
 		break;
 
 	case T_IBREAK | T_USER:
-		/* XXX */
-		frame->tf_iioq_head = frame->tf_iioq_tail;
-		frame->tf_iioq_tail += 4;
 	case T_DBREAK | T_USER:
 		/* pass to user debugger */
+		trapsignal(p, SIGTRAP, type &~ T_USER, TRAP_BRKPT, sv);
 		break;
 
 	case T_EXCEPTION | T_USER: {
