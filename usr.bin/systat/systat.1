@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.35 2004/11/16 09:52:33 markus Exp $
+.\"	$OpenBSD: systat.1,v 1.36 2004/11/16 14:03:45 jmc Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -329,6 +329,7 @@ Only devices that have interrupted at least once since boot time are shown.
 Below the SWAPPING display and slightly to the left of the Interrupts
 display is a list of virtual memory statistics.
 The abbreviations are:
+.Pp
 .Bl -tag -compact -width XXXXXX -offset indent
 .It forks
 process forks
@@ -372,11 +373,9 @@ value is more interesting when observed over a long
 period, such as from boot time (see the
 .Cm boot
 option below).
-.Pp
 .It Ic ifstat
 Display, in the lower window, interface statistics.
 See below for more options.
-.Pp
 .It Ic netstat
 Display, in the lower window, network connections.
 By default, network servers awaiting requests are not displayed.
