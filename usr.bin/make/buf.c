@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: buf.c,v 1.19 2003/06/03 02:56:11 millert Exp $	*/
+/*	$OpenBSD: buf.c,v 1.20 2004/04/07 13:11:35 espie Exp $	*/
 /*	$NetBSD: buf.c,v 1.9 1996/12/31 17:53:21 christos Exp $ */
 
 /*
@@ -64,7 +64,7 @@
 
 /*-
  * buf.c --
- *	Functions for automatically-expanded buffers.
+ *	Functions for automatically expanded buffers.
  */
 
 #include <ctype.h>
@@ -110,18 +110,14 @@ do {							\
 /* the hard case for Buf_AddChar: buffer must be expanded to accommodate
  * one more char.  */
 void
-BufOverflow(bp)
-    Buffer bp;
+BufOverflow(Buffer bp)
 {
     BufExpand(bp, 1);
 }
 
 
 void
-Buf_AddChars(bp, numBytes, bytesPtr)
-    Buffer	bp;
-    size_t	numBytes;
-    const char	*bytesPtr;
+Buf_AddChars(Buffer bp, size_t numBytes, const char *bytesPtr)
 {
 
     if ((size_t)(bp->endPtr - bp->inPtr) < numBytes+1)
@@ -133,9 +129,7 @@ Buf_AddChars(bp, numBytes, bytesPtr)
 
 
 void
-Buf_Init(bp, size)
-    Buffer bp;
-    size_t    size;
+Buf_Init(Buffer bp, size_t size)
 {
 #ifdef STATS_BUF
     STAT_TOTAL_BUFS++;
@@ -151,8 +145,7 @@ Buf_Init(bp, size)
 }
 
 void
-Buf_KillTrailingSpaces(bp)
-    Buffer bp;
+Buf_KillTrailingSpaces(Buffer bp)
 {
     while (bp->inPtr > bp->buffer + 1 && isspace(bp->inPtr[-1])) {
 	if (bp->inPtr[-2] == '\\')

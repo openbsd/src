@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: for.c,v 1.29 2003/06/03 02:56:11 millert Exp $	*/
+/*	$OpenBSD: for.c,v 1.30 2004/04/07 13:11:36 espie Exp $	*/
 /*	$NetBSD: for.c,v 1.4 1996/11/06 17:59:05 christos Exp $ */
 
 /*
@@ -114,9 +114,7 @@ static void ForExec(void *, void *);
 static unsigned long build_words_list(Lst, const char *);
 
 static unsigned long
-build_words_list(lst, s)
-    Lst lst;
-    const char *s;
+build_words_list(Lst lst, const char *s)
 {
     const char *end, *wrd;
     unsigned long n;
@@ -132,8 +130,7 @@ build_words_list(lst, s)
 }
 
 For *
-For_Eval(line)
-    const char	    *line;    /* Line to parse */
+For_Eval(const char *line)
 {
     const char	*ptr = line;
     const char	*wrd;
@@ -199,9 +196,7 @@ For_Eval(line)
 
 
 bool
-For_Accumulate(arg, line)
-    For 	    *arg;
-    const char	    *line;    /* Line to parse */
+For_Accumulate(For *arg, const char *line)
 {
     const char	    *ptr = line;
 
@@ -235,9 +230,7 @@ For_Accumulate(arg, line)
 
 #define GUESS_EXPANSION 32
 static void
-ForExec(valuep, argp)
-    void *valuep;
-    void *argp;
+ForExec(void *valuep, void *argp)
 {
     char *value = (char *)valuep;
     For *arg = (For *)argp;
@@ -267,8 +260,7 @@ ForExec(valuep, argp)
 
 
 void
-For_Run(arg)
-    For *arg;
+For_Run(For *arg)
 {
     arg->text = Buf_Retrieve(&arg->buf);
     arg->guess = Buf_Size(&arg->buf) + GUESS_EXPANSION;

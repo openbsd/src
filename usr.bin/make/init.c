@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: init.c,v 1.1 2001/05/23 12:34:43 espie Exp $ */
+/*	$OpenBSD: init.c,v 1.2 2004/04/07 13:11:36 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -40,7 +40,7 @@
 #include "job.h"
 
 void
-Init()
+Init(void)
 {
 	Init_Timestamp();
 	Init_Stats();
@@ -56,7 +56,7 @@ Init()
 }
 
 void
-End()
+End(void)
 {
 	Suff_End();
 	Targ_End();

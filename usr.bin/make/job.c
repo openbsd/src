@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.55 2003/06/03 02:56:11 millert Exp $	*/
+/*	$OpenBSD: job.c,v 1.56 2004/04/07 13:11:36 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -457,9 +457,8 @@ static void JobRestartJobs(void);
  *-----------------------------------------------------------------------
  */
 static void
-JobCondPassSig(jobp, signop)
-    void		*jobp;		/* Job to biff */
-    void		*signop;	/* Signal to send it */
+JobCondPassSig(void *jobp,	/* Job to biff */
+    void *signop)		/* Signal to send it */
 {
     Job *job = (Job *)jobp;
     int signo = *(int *)signop;
@@ -483,8 +482,7 @@ JobCondPassSig(jobp, signop)
  *-----------------------------------------------------------------------
  */
 static void
-JobPassSig(signo)
-    int     signo;	/* The signal number we've received */
+JobPassSig(int signo) /* The signal number we've received */
 {
     int save_errno = errno;
     sigset_t nmask, omask;
@@ -561,9 +559,8 @@ JobPassSig(signo)
  *-----------------------------------------------------------------------
  */
 static int
-JobCmpPid(job, pid)
-    void *job;	/* job to examine */
-    void *pid;	/* process id desired */
+JobCmpPid(void *job,	/* job to examine */
+    void *pid)		/* process id desired */
 {
     return *(pid_t *)pid - ((Job *)job)->pid;
 }
@@ -596,9 +593,8 @@ JobCmpPid(job, pid)
  *-----------------------------------------------------------------------
  */
 static int
-JobPrintCommand(cmdp, jobp)
-    void	*cmdp;		    /* command string to print */
-    void	*jobp;		    /* job for which to print it */
+JobPrintCommand(void *cmdp,	    /* command string to print */
+    void *jobp)			    /* job for which to print it */
 {
     bool	  noSpecials;	    /* true if we shouldn't worry about
 				     * inserting special commands into
@@ -750,9 +746,7 @@ JobPrintCommand(cmdp, jobp)
  *-----------------------------------------------------------------------
  */
 static void
-JobSaveCommand(cmd, gn)
-    void	*cmd;
-    void	*gn;
+JobSaveCommand(void *cmd, void *gn)
 {
     GNode	*g = (GNode *)gn;
     char	*result;
@@ -772,8 +766,7 @@ JobSaveCommand(cmd, gn)
  *-----------------------------------------------------------------------
  */
 static void
-JobClose(job)
-    Job *job;
+JobClose(Job *job)
 {
     if (usePipes) {
 	FD_CLR(job->inPipe, outputsp);
@@ -810,9 +803,8 @@ JobClose(job)
  */
 /*ARGSUSED*/
 static void
-JobFinish(job, status)
-    Job 	*job;		  /* job to finish */
-    int 	*status;	  /* sub-why job went away */
+JobFinish(Job *job,		/* job to finish */
+    int *status)		/* sub-why job went away */
 {
     bool	 done;
 
@@ -1053,9 +1045,8 @@ JobFinish(job, status)
  *-----------------------------------------------------------------------
  */
 void
-Job_Touch(gn, silent)
-    GNode	  *gn;		/* the node of the file to touch */
-    bool	  silent;	/* true if should not print messages */
+Job_Touch(GNode *gn,		/* the node of the file to touch */
+    bool silent)		/* true if should not print messages */
 {
     int 	  streamID;	/* ID of stream opened to do the touch */
 
@@ -1122,11 +1113,9 @@ Job_Touch(gn, silent)
  *-----------------------------------------------------------------------
  */
 bool
-Job_CheckCommands(gn, abortProc)
-    GNode	   *gn; 	    /* The target whose commands need
-				     * verifying */
-    void	 (*abortProc)(char *, ...);
-			/* Function to abort with message */
+Job_CheckCommands(GNode *gn, 		/* The target whose commands need
+				     	 * verifying */
+    void (*abortProc)(char *, ...)) 	/* Function to abort with message */
 {
     if (OP_NOP(gn->type) && Lst_IsEmpty(&gn->commands) &&
 	(gn->type & OP_LIB) == 0) {
@@ -1185,9 +1174,7 @@ Job_CheckCommands(gn, abortProc)
  *-----------------------------------------------------------------------
  */
 static void
-JobExec(job, argv)
-    Job 	  *job; 	/* Job to execute */
-    char	  **argv;
+JobExec(Job *job, char **argv)
 {
     pid_t 	  cpid; 	/* ID of new child */
 
@@ -1326,9 +1313,7 @@ JobExec(job, argv)
  *-----------------------------------------------------------------------
  */
 static void
-JobMakeArgv(job, argv)
-    Job 	  *job;
-    char	  **argv;
+JobMakeArgv(Job *job, char **argv)
 {
     int 	  argc;
     static char   args[10];	/* For merged arguments */
@@ -1378,8 +1363,7 @@ JobMakeArgv(job, argv)
  *-----------------------------------------------------------------------
  */
 static void
-JobRestart(job)
-    Job 	  *job; 	/* Job to restart */
+JobRestart(Job *job)
 {
     if (job->flags & JOB_RESTART) {
 	/*
@@ -1506,11 +1490,10 @@ JobRestart(job)
  *-----------------------------------------------------------------------
  */
 static int
-JobStart(gn, flags, previous)
-    GNode	  *gn;	      /* target to create */
-    int 	   flags;      /* flags for the job to override normal ones.
+JobStart(GNode	  *gn,	      /* target to create */
+    int 	   flags,      /* flags for the job to override normal ones.
 			       * e.g. JOB_SPECIAL or JOB_IGNDOTS */
-    Job 	  *previous;  /* The previous Job structure for this node,
+    Job 	  *previous)  /* The previous Job structure for this node,
 			       * if any. */
 {
     Job 	  *job;       /* new job descriptor */
@@ -1776,10 +1759,7 @@ JobStart(gn, flags, previous)
 }
 
 static char *
-JobOutput(job, cp, endp, msg)
-    Job *job;
-    char *cp, *endp;
-    int msg;
+JobOutput(Job *job, char *cp, char *endp, int msg)
 {
     char *ecp;
 
@@ -1846,9 +1826,8 @@ JobOutput(job, cp, endp, msg)
  *-----------------------------------------------------------------------
  */
 static void
-JobDoOutput(job, finish)
-    Job 	  *job;   /* the job whose output needs printing */
-    bool	   finish;	  /* true if this is the last time we'll be
+JobDoOutput(Job 	  *job,   /* the job whose output needs printing */
+    bool	   finish)	  /* true if this is the last time we'll be
 				   * called for this job */
 {
     bool	  gotNL = false;  /* true if got a newline */
@@ -2038,8 +2017,7 @@ end_loop:
  *-----------------------------------------------------------------------
  */
 void
-Job_CatchChildren(block)
-    bool	  block;	/* true if should block on the wait. */
+Job_CatchChildren(bool block)	/* true if should block on the wait. */
 {
     pid_t 	  pid;		/* pid of dead child */
     Job 	  *job; 	/* job descriptor for dead child */
@@ -2107,7 +2085,7 @@ Job_CatchChildren(block)
  * -----------------------------------------------------------------------
  */
 void
-Job_CatchOutput()
+Job_CatchOutput(void)
 {
     int 		  nfds;
     struct timeval	  timeout;
@@ -2153,8 +2131,7 @@ Job_CatchOutput()
  *-----------------------------------------------------------------------
  */
 void
-Job_Make(gn)
-    GNode   *gn;
+Job_Make(GNode *gn)
 {
     (void)JobStart(gn, 0, NULL);
 }
@@ -2169,10 +2146,9 @@ Job_Make(gn)
  *-----------------------------------------------------------------------
  */
 void
-Job_Init(maxproc, maxlocal)
-    int 	  maxproc;  /* the greatest number of jobs which may be
+Job_Init(int 	  maxproc,  /* the greatest number of jobs which may be
 			     * running at one time */
-    int 	  maxlocal; /* the greatest number of local jobs which may
+    int 	  maxlocal) /* the greatest number of local jobs which may
 			     * be running at once. */
 {
     GNode	  *begin;     /* node for commands to do at the very start */
@@ -2288,7 +2264,7 @@ Job_Init(maxproc, maxlocal)
  *-----------------------------------------------------------------------
  */
 bool
-Job_Full()
+Job_Full(void)
 {
     return aborting || jobFull;
 }
@@ -2306,7 +2282,7 @@ Job_Full()
  * -----------------------------------------------------------------------
  */
 bool
-Job_Empty()
+Job_Empty(void)
 {
     if (nJobs == 0) {
 	if (!Lst_IsEmpty(&stoppedJobs) && !aborting) {
@@ -2335,8 +2311,7 @@ Job_Empty()
  *-----------------------------------------------------------------------
  */
 static Shell *
-JobMatchShell(name)
-    char	  *name;      /* Final component of shell path */
+JobMatchShell(char *name)     /* Final component of shell path */
 {
     Shell	  *sh;	      /* Pointer into shells table */
     Shell	  *match;     /* Longest-matching shell */
@@ -2406,8 +2381,7 @@ JobMatchShell(name)
  *-----------------------------------------------------------------------
  */
 bool
-Job_ParseShell(line)
-    char	  *line;  /* The shell spec */
+Job_ParseShell(const char *line)	/* The shell spec */
 {
     char	  **words;
     int 	  wordCount;
@@ -2541,10 +2515,9 @@ Job_ParseShell(line)
  *-----------------------------------------------------------------------
  */
 static void
-JobInterrupt(runINTERRUPT, signo)
-    int     runINTERRUPT;	/* Non-zero if commands for the .INTERRUPT
+JobInterrupt(int runINTERRUPT,	/* Non-zero if commands for the .INTERRUPT
 				 * target should be executed */
-    int     signo;		/* signal received */
+    int     signo)		/* signal received */
 {
     LstNode	  ln;		/* element in job table */
     Job 	  *job; 	/* job descriptor in that element */
@@ -2605,7 +2578,7 @@ JobInterrupt(runINTERRUPT, signo)
  *-----------------------------------------------------------------------
  */
 int
-Job_Finish()
+Job_Finish(void)
 {
     if (postCommands != NULL && !Lst_IsEmpty(&postCommands->commands)) {
 	if (errors) {
@@ -2634,7 +2607,7 @@ Job_Finish()
  */
 #ifdef CLEANUP
 void
-Job_End()
+Job_End(void)
 {
     efree(shellArgv);
 }
@@ -2652,7 +2625,7 @@ Job_End()
  *-----------------------------------------------------------------------
  */
 void
-Job_Wait()
+Job_Wait(void)
 {
     aborting = ABORT_WAIT;
     while (nJobs != 0) {
@@ -2674,7 +2647,7 @@ Job_Wait()
  *-----------------------------------------------------------------------
  */
 void
-Job_AbortAll()
+Job_AbortAll(void)
 {
     LstNode		ln;	/* element in job table */
     Job 		*job;	/* the job descriptor in that element */
@@ -2715,7 +2688,7 @@ Job_AbortAll()
  *-----------------------------------------------------------------------
  */
 static void
-JobRestartJobs()
+JobRestartJobs(void)
 {
     Job *job;
 

@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: timestamp.c,v 1.1 2001/05/23 12:34:50 espie Exp $ */
+/*	$OpenBSD: timestamp.c,v 1.2 2004/04/07 13:11:36 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -34,12 +34,10 @@
 #include <utime.h>
 #endif
 
-TIMESTAMP now;		/* The time at the start of this whole
-			 * process */
+TIMESTAMP now;		/* The time at the start of this whole process */
 
 int
-set_times(f)
-    const char *f;
+set_times(const char *f)
 {
 #ifdef USE_TIMESPEC
     struct timeval tv[2];

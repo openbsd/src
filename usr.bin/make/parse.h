@@ -1,7 +1,7 @@
 #ifndef PARSE_H
 #define PARSE_H
 /*	$OpenPackages$ */
-/*	$OpenBSD: parse.h,v 1.1 2001/05/23 12:34:47 espie Exp $ */
+/*	$OpenBSD: parse.h,v 1.2 2004/04/07 13:11:36 espie Exp $ */
 /*
  * Copyright (c) 2001 Marc Espie.
  *
@@ -45,7 +45,7 @@ extern Lst	parseIncPath;	/* The user   include"" path.  */
  *	Parses stream filehandle, use filename when reporting error
  *	messages.  Builds a graph of GNode and Suffixes. This modules
  *	acquires ownership of the filename and filehandle, and will
- *	close/free them when it sees fit. */
+ *	free/close them when it sees fit. */
 extern void Parse_File(const char *, FILE *);
 
 /* Parse_AddIncludeDir(dir);

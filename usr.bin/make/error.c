@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: error.c,v 1.11 2002/05/17 11:58:56 espie Exp $ */
+/*	$OpenBSD: error.c,v 1.12 2004/04/07 13:11:35 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -113,7 +113,7 @@ Punt(char *fmt, ...)
  *	A big one...
  */
 void
-DieHorribly()
+DieHorribly(void)
 {
 	Job_AbortAll();
 	if (DEBUG(GRAPH2))
@@ -130,8 +130,7 @@ DieHorribly()
  *	The program exits
  */
 void
-Finish(errors)
-	int errors;	/* number of errors encountered in Make_Make */
+Finish(int errors) /* number of errors encountered in Make_Make */
 {
 	Fatal("%d error%s", errors, errors == 1 ? "" : "s");
 }
@@ -174,7 +173,8 @@ Parse_Error(int type, const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	ParseVErrorInternal(Parse_Getfilename(), Parse_Getlineno(), type, fmt, ap);
+	ParseVErrorInternal(Parse_Getfilename(), Parse_Getlineno(), type, 
+	    fmt, ap);
 	va_end(ap);
 }
 

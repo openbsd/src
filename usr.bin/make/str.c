@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: str.c,v 1.20 2003/06/03 02:56:12 millert Exp $	*/
+/*	$OpenBSD: str.c,v 1.21 2004/04/07 13:11:36 espie Exp $	*/
 /*	$NetBSD: str.c,v 1.13 1996/11/06 17:59:23 christos Exp $	*/
 
 /*-
@@ -45,9 +45,8 @@
 #include "buf.h"
 
 char *
-Str_concati(s1, e1, s2, e2, sep)
-    const char *s1, *e1, *s2, *e2;
-    int sep;
+Str_concati(const char *s1, const char *e1, const char *s2, const char *e2, 
+    int sep)
 {
     size_t len1, len2;
     char *result;
@@ -85,10 +84,7 @@ Str_concati(s1, e1, s2, e2, sep)
  *	the first word is always the value of the .MAKE variable.
  */
 char **
-brk_string(str, store_argc, buffer)
-    const char *str;
-    int *store_argc;
-    char **buffer;
+brk_string(const char *str, int *store_argc, char **buffer)
 {
     int argc;
     char ch;
@@ -196,8 +192,7 @@ done:
 
 
 const char *
-iterate_words(end)
-    const char	**end;
+iterate_words(const char **end)
 {
     const char	*start, *p;
     char	state = 0;
@@ -235,13 +230,10 @@ iterate_words(end)
 }
 
 bool
-Str_Matchi(string, estring, pattern, end)
-    const char *string; 		/* String */
-    const char *estring;		/* End of string */
-    const char *pattern;		/* Pattern */
-    const char *end;			/* End of Pattern */
+Str_Matchi(const char *string, const char *estring, 
+    const char *pattern, const char *epattern)
 {
-    while (pattern != end) {
+    while (pattern != epattern) {
 	/* Check for a "*" as the next pattern character.  It matches
 	 * any substring.  We handle this by calling ourselves
 	 * recursively for each postfix of string, until either we
@@ -250,7 +242,8 @@ Str_Matchi(string, estring, pattern, end)
 	    pattern++;
 	    /* Skip over contiguous  sequences of `?*', so that recursive
 	     * calls only occur on `real' characters.  */
-	    while (pattern != end && (*pattern == '?' || *pattern == '*')) {
+	    while (pattern != epattern && 
+	    	(*pattern == '?' || *pattern == '*')) {
 		if (*pattern == '?') {
 		    if (string == estring)
 			return false;
@@ -259,10 +252,10 @@ Str_Matchi(string, estring, pattern, end)
 		}
 		pattern++;
 	    }
-	    if (pattern == end)
+	    if (pattern == epattern)
 		return true;
 	    for (; string != estring; string++)
-		if (Str_Matchi(string, estring, pattern, end))
+		if (Str_Matchi(string, estring, pattern, epattern))
 		    return true;
 	    return false;
 	} else if (string == estring)
@@ -272,22 +265,22 @@ Str_Matchi(string, estring, pattern, end)
 	 * by a range (two characters separated by "-").  */
 	else if (*pattern == '[') {
 	    pattern++;
-	    if (pattern == end)
+	    if (pattern == epattern)
 		return false;
 	    if (*pattern == '!' || *pattern == '^') {
 		pattern++;
-		if (pattern == end)
+		if (pattern == epattern)
 			return false;
 		/* Negative match */
 		for (;;) {
 		    if (*pattern == '\\') {
-			if (++pattern == end)
+			if (++pattern == epattern)
 			    return false;
 		    }
 		    if (*pattern == *string)
 			return false;
 		    if (pattern[1] == '-') {
-			if (pattern + 2 == end)
+			if (pattern + 2 == epattern)
 			    return false;
 			if (*pattern < *string && *string <= pattern[2])
 			    return false;
@@ -296,7 +289,7 @@ Str_Matchi(string, estring, pattern, end)
 			pattern += 3;
 		    } else
 			pattern++;
-		    if (pattern == end)
+		    if (pattern == epattern)
 			return false;
 		    /* The test for ']' is done at the end so that ']'
 		     * can be used at the start of the range without '\' */
@@ -306,13 +299,13 @@ Str_Matchi(string, estring, pattern, end)
 	    } else {
 		for (;;) {
 		    if (*pattern == '\\') {
-			if (++pattern == end)
+			if (++pattern == epattern)
 			    return false;
 		    }
 		    if (*pattern == *string)
 			break;
 		    if (pattern[1] == '-') {
-			if (pattern + 2 == end)
+			if (pattern + 2 == epattern)
 			    return false;
 			if (*pattern < *string && *string <= pattern[2])
 			    break;
@@ -323,7 +316,7 @@ Str_Matchi(string, estring, pattern, end)
 			pattern++;
 		    /* The test for ']' is done at the end so that ']'
 		     * can be used at the start of the range without '\' */
-		    if (pattern == end || *pattern == ']')
+		    if (pattern == epattern || *pattern == ']')
 			return false;
 		}
 		/* Found matching character, skip over rest of class.  */
@@ -331,7 +324,7 @@ Str_Matchi(string, estring, pattern, end)
 		    if (*pattern == '\\')
 			pattern++;
 		    /* A non-terminated character class is ok.	*/
-		    if (pattern == end)
+		    if (pattern == epattern)
 			break;
 		    pattern++;
 		}
@@ -342,7 +335,7 @@ Str_Matchi(string, estring, pattern, end)
 	    /* If the next pattern character is '\', just strip off the
 	     * '\' so we do exact matching on the character that follows.  */
 	    if (*pattern == '\\') {
-		if (++pattern == end)
+		if (++pattern == epattern)
 		    return false;
 	    }
 	    /* There's no special character.  Just make sure that
@@ -371,10 +364,7 @@ Str_Matchi(string, estring, pattern, end)
  *-----------------------------------------------------------------------
  */
 const char *
-Str_SYSVMatch(word, pattern, len)
-    const char	*word;		/* Word to examine */
-    const char	*pattern;	/* Pattern to examine against */
-    size_t	*len;		/* Number of characters to substitute */
+Str_SYSVMatch(const char *word, const char *pattern, size_t *len)	
 {
     const char *p = pattern;
     const char *w = word;
@@ -419,20 +409,16 @@ Str_SYSVMatch(word, pattern, len)
 /*-
  *-----------------------------------------------------------------------
  * Str_SYSVSubst --
- *	Substitute '%' on the pattern with len characters from src.
+ *	Substitute '%' in the pattern with len characters from src.
  *	If the pattern does not contain a '%' prepend len characters
  *	from src.
  *
  * Side Effects:
- *	Places result on buf
+ *	Adds result to buf
  *-----------------------------------------------------------------------
  */
 void
-Str_SYSVSubst(buf, pat, src, len)
-    Buffer buf;
-    const char *pat;
-    const char *src;
-    size_t   len;
+Str_SYSVSubst(Buffer buf, const char *pat, const char *src, size_t len)
 {
     const char *m;
 
@@ -451,9 +437,7 @@ Str_SYSVSubst(buf, pat, src, len)
 }
 
 char *
-Str_dupi(begin, end)
-    const char *begin;
-    const char *end;
+Str_dupi(const char *begin, const char *end)
 {
     char *s;
 
@@ -464,10 +448,7 @@ Str_dupi(begin, end)
 }
 
 char *
-escape_dupi(begin, end, set)
-    const char *begin;
-    const char *end;
-    const char *set;
+escape_dupi(const char *begin, const char *end, const char *set)
 {
     char *s, *t;
 
@@ -489,15 +470,12 @@ escape_dupi(begin, end, set)
 }
 
 char *
-Str_rchri(s, e, c)
-    const char *s;
-    const char *e;
-    int c;
+Str_rchri(const char *begin, const char *end, int c)
 {
-    if (s != e)
+    if (begin != end)
 	do {
-	    if (*--e == c)
-		return (char *)e;
-	} while (e != s);
+	    if (*--end == c)
+		return (char *)end;
+	} while (end != begin);
     return NULL;
 }

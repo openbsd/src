@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: cond.c,v 1.29 2003/06/03 02:56:11 millert Exp $	*/
+/*	$OpenBSD: cond.c,v 1.30 2004/04/07 13:11:35 espie Exp $	*/
 /*	$NetBSD: cond.c,v 1.7 1996/11/06 17:59:02 christos Exp $	*/
 
 /*
@@ -163,8 +163,7 @@ static bool	  skipLine = false;	/* Whether the parse module is skipping
 					 * lines */
 
 static const char *
-find_cond(p)
-    const char *p;
+find_cond(const char *p)
 {
     for (;;p++) {
 	if (strchr(" \t)&|$", *p) != NULL)
@@ -187,11 +186,8 @@ find_cond(p)
  *-----------------------------------------------------------------------
  */
 static bool
-CondGetArg(linePtr, arg, func, parens)
-    const char 		**linePtr;
-    struct Name	  	*arg;
-    const char	  	*func;
-    bool	  	parens;	/* true if arg should be bounded by parens */
+CondGetArg(const char **linePtr, struct Name *arg, const char *func, 
+    bool parens) /* true if arg should be bounded by parens */
 {
     const char	  	*cp;
 
@@ -244,8 +240,7 @@ CondGetArg(linePtr, arg, func, parens)
  *-----------------------------------------------------------------------
  */
 static bool
-CondDoDefined(arg)
-    struct Name	*arg;
+CondDoDefined(struct Name *arg)
 {
     if (Var_Valuei(arg->s, arg->e) != NULL)
 	return true;
@@ -263,8 +258,7 @@ CondDoDefined(arg)
  *-----------------------------------------------------------------------
  */
 static bool
-CondDoMake(arg)
-    struct Name	*arg;
+CondDoMake(struct Name *arg)
 {
     LstNode ln;
 
@@ -287,8 +281,7 @@ CondDoMake(arg)
  *-----------------------------------------------------------------------
  */
 static bool
-CondDoExists(arg)
-    struct Name *arg;
+CondDoExists(struct Name *arg)
 {
     bool result;
     char    *path;
@@ -313,8 +306,7 @@ CondDoExists(arg)
  *-----------------------------------------------------------------------
  */
 static bool
-CondDoTarget(arg)
-    struct Name	*arg;
+CondDoTarget(struct Name *arg)
 {
     GNode   *gn;
 
@@ -343,9 +335,7 @@ CondDoTarget(arg)
  *-----------------------------------------------------------------------
  */
 static bool
-CondCvtArg(str, value)
-    const char		*str;
-    double		*value;
+CondCvtArg(const char *str, double *value)
 {
     if (*str == '0' && str[1] == 'x') {
 	long i;
@@ -372,8 +362,7 @@ CondCvtArg(str, value)
 
 
 static Token
-CondHandleVarSpec(doEval)
-    bool doEval;
+CondHandleVarSpec(bool doEval)
 {
     Token	t;
     char	*lhs;
@@ -591,8 +580,7 @@ static struct operator {
     {NULL, 0, NULL}
 };
 static Token
-CondHandleDefault(doEval)
-    bool	doEval;
+CondHandleDefault(bool doEval)
 {
     bool	t;
     bool	(*evalProc)(struct Name *);
@@ -682,8 +670,7 @@ CondHandleDefault(doEval)
  *-----------------------------------------------------------------------
  */
 static Token
-CondToken(doEval)
-    bool doEval;
+CondToken(bool doEval)
 {
 
     if (condPushBack != None) {
@@ -743,8 +730,7 @@ CondToken(doEval)
  *-----------------------------------------------------------------------
  */
 static Token
-CondT(doEval)
-    bool doEval;
+CondT(bool doEval)
 {
     Token   t;
 
@@ -784,8 +770,7 @@ CondT(doEval)
  *-----------------------------------------------------------------------
  */
 static Token
-CondF(doEval)
-    bool doEval;
+CondF(bool doEval)
 {
     Token   l, o;
 
@@ -824,8 +809,7 @@ CondF(doEval)
  *-----------------------------------------------------------------------
  */
 static Token
-CondE(doEval)
-    bool doEval;
+CondE(bool doEval)
 {
     Token   l, o;
 
@@ -1099,7 +1083,7 @@ Cond_Eval(const char *line)
 }
 
 void
-Cond_End()
+Cond_End(void)
 {
     int i;
 

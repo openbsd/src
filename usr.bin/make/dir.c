@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: dir.c,v 1.40 2003/06/03 02:56:11 millert Exp $ */
+/*	$OpenBSD: dir.c,v 1.41 2004/04/07 13:11:35 espie Exp $ */
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -240,9 +240,7 @@ static void DirPrintWord(void *);
 static void DirPrintDir(void *);
 
 static void
-record_stamp(file, t)
-    const char		*file;
-    TIMESTAMP		t;
+record_stamp(const char *file, TIMESTAMP t)
 {
     unsigned int	slot;
     const char		*end = NULL;
@@ -260,17 +258,13 @@ record_stamp(file, t)
 }
 
 static struct file_stamp *
-find_stampi(file, end)
-    const char	*file;
-    const char	*end;
+find_stampi(const char *file, const char *efile)
 {
-    return ohash_find(&mtimes, ohash_qlookupi(&mtimes, file, &end));
+    return ohash_find(&mtimes, ohash_qlookupi(&mtimes, file, &efile));
 }
 
 static void
-add_file(p, file)
-    Path		*p;
-    const char		*file;
+add_file(Path *p, const char *file)
 {
     unsigned int	slot;
     const char		*end = NULL;
@@ -286,20 +280,15 @@ add_file(p, file)
 }
 
 static char *
-find_file_hashi(p, file, e, hv)
-    Path		*p;
-    const char		*file;
-    const char		*e;
-    u_int32_t		hv;
+find_file_hashi(Path *p, const char *file, const char *efile, u_int32_t hv)
 {
     struct ohash 	*h = &p->files;
 
-    return ohash_find(h, ohash_lookup_interval(h, file, e, hv));
+    return ohash_find(h, ohash_lookup_interval(h, file, efile, hv));
 }
 
 static void
-free_hash(h)
-    struct ohash 	*h;
+free_hash(struct ohash *h)
 {
     void		*e;
     unsigned int	i;
@@ -312,7 +301,7 @@ free_hash(h)
 
 /* Side Effects: cache the current directory */
 void
-Dir_Init()
+Dir_Init(void)
 {
     char *dotname = ".";
 
@@ -333,7 +322,7 @@ Dir_Init()
 
 #ifdef CLEANUP
 void
-Dir_End()
+Dir_End(void)
 {
     struct Path *p;
     unsigned int i;
@@ -352,15 +341,13 @@ Dir_End()
 
 /* XXX: This code is not 100% correct ([^]] fails) */
 bool
-Dir_HasWildcardsi(name, end)
-    const char		*name;
-    const char 		*end;
+Dir_HasWildcardsi(const char *name, const char *ename)
 {
     const char		*cp;
     bool		wild = false;
     unsigned long	brace = 0, bracket = 0;
 
-    for (cp = name; cp != end; cp++) {
+    for (cp = name; cp != ename; cp++) {
 	switch (*cp) {
 	case '{':
 	    brace++;
@@ -402,11 +389,7 @@ Dir_HasWildcardsi(name, end)
  *-----------------------------------------------------------------------
  */
 static void
-DirMatchFilesi(pattern, end, p, expansions)
-    const char		*pattern;	/* Pattern to look for */
-    const char		*end;		/* End of pattern */
-    Path		*p;		/* Directory to search */
-    Lst 		expansions;	/* Place to store the results */
+DirMatchFilesi(const char *word, const char *eword, Path *p, Lst expansions)
 {
     unsigned int	search; 	/* Index into the directory's table */
     const char		*entry; 	/* Current entry in the table */
@@ -420,9 +403,9 @@ DirMatchFilesi(pattern, end, p, expansions)
 	 * convention that dot files will only be found if the pattern
 	 * begins with a dot (the hashing scheme doesn't hash . or ..,
 	 * so they won't match `.*'.  */
-	if (*pattern != '.' && *entry == '.')
+	if (*word != '.' && *entry == '.')
 	    continue;
-	if (Str_Matchi(entry, strchr(entry, '\0'), pattern, end))
+	if (Str_Matchi(entry, strchr(entry, '\0'), word, eword))
 	    Lst_AtEnd(expansions,
 		isDot ? estrdup(entry) : Str_concat(p->name, entry, '/'));
     }
@@ -436,21 +419,16 @@ DirMatchFilesi(pattern, end, p, expansions)
  *-----------------------------------------------------------------------
  */
 static void
-PathMatchFilesi(word, end, path, expansions)
-    const char	*word;		/* Word to expand */
-    const char  *end;		/* End of word */
-    Lst 	path;		/* Path on which to look */
-    Lst 	expansions;	/* Place to store the result */
+PathMatchFilesi(const char *word, const char *eword, Lst path, Lst expansions)
 {
     LstNode	ln;		/* Current node */
 
     for (ln = Lst_First(path); ln != NULL; ln = Lst_Adv(ln))
-	DirMatchFilesi(word, end, (Path *)Lst_Datum(ln), expansions);
+	DirMatchFilesi(word, eword, (Path *)Lst_Datum(ln), expansions);
 }
 
 static void
-DirPrintWord(word)
-    void	*word;
+DirPrintWord(void *word)
 {
     printf("%s ", (char *)word);
 }
@@ -467,29 +445,24 @@ DirPrintWord(word)
  *-----------------------------------------------------------------------
  */
 static void
-DirExpandWildi(word, end, path, expansions)
-    const char	*word;		/* the word to expand */
-    const char  *end;		/* end of word */
-    Lst 	path;		/* the list of directories in which to find
-				 * the resulting files */
-    Lst 	expansions;	/* the list on which to place the results */
+DirExpandWildi(const char *word, const char *eword, Lst path, Lst expansions)
 {
     const char	*cp;
     const char	*slash; 	/* keep track of first slash before wildcard */
 
-    slash = memchr(word, '/', end - word);
+    slash = memchr(word, '/', eword - word);
     if (slash == NULL) {
 	/* First the files in dot.  */
-	DirMatchFilesi(word, end, dot, expansions);
+	DirMatchFilesi(word, eword, dot, expansions);
 
 	/* Then the files in every other directory on the path.  */
-	PathMatchFilesi(word, end, path, expansions);
+	PathMatchFilesi(word, eword, path, expansions);
 	return;
     }
     /* The thing has a directory component -- find the first wildcard
      * in the string.  */
     slash = word;
-    for (cp = word; cp != end; cp++) {
+    for (cp = word; cp != eword; cp++) {
 	if (*cp == '/')
 	    slash = cp;
 	if (*cp == '?' || *cp == '[' || *cp == '*') {
@@ -514,17 +487,17 @@ DirExpandWildi(word, end, path, expansions)
 
 		    Lst_Init(&temp);
 		    Dir_AddDiri(&temp, dirpath, dp);
-		    PathMatchFilesi(slash+1, end, &temp, expansions);
+		    PathMatchFilesi(slash+1, eword, &temp, expansions);
 		    Lst_Destroy(&temp, NOFREE);
 		}
 	    } else
 		/* Start the search from the local directory.  */
-		PathMatchFilesi(word, end, path, expansions);
+		PathMatchFilesi(word, eword, path, expansions);
 	    return;
 	}
     }
     /* Return the file -- this should never happen.  */
-    PathMatchFilesi(word, end, path, expansions);
+    PathMatchFilesi(word, eword, path, expansions);
 }
 
 /*-
@@ -538,11 +511,7 @@ DirExpandWildi(word, end, path, expansions)
  *-----------------------------------------------------------------------
  */
 static void
-DirExpandCurlyi(word, endw, path, expansions)
-    const char	*word;		/* Entire word to expand */
-    const char  *endw;		/* End of word */
-    Lst 	path;		/* Search path to use */
-    Lst 	expansions;	/* Place to store the expansions */
+DirExpandCurlyi(const char *word, const char *eword, Lst path, Lst expansions)
 {
     const char	*cp2;		/* Pointer for checking for wildcards in
 				 * expansion before calling Dir_Expand */
@@ -552,7 +521,7 @@ DirExpandCurlyi(word, endw, path, expansions)
 
     /* Determine once and for all if there is something else going on */
     dowild = false;
-    for (cp2 = word; cp2 != endw; cp2++)
+    for (cp2 = word; cp2 != eword; cp2++)
 	if (*cp2 == '*' || *cp2 == '?' || *cp2 == '[') {
 		dowild = true;
 		break;
@@ -560,7 +529,7 @@ DirExpandCurlyi(word, endw, path, expansions)
 
     /* Prime queue with copy of initial word */
     Lst_Init(&curled);
-    Lst_EnQueue(&curled, Str_dupi(word, endw));
+    Lst_EnQueue(&curled, Str_dupi(word, eword));
     while ((toexpand = (char *)Lst_DeQueue(&curled)) != NULL) {
 	const char	*brace;
 	const char	*start; /* Start of current chunk of brace clause */
@@ -632,26 +601,21 @@ DirExpandCurlyi(word, endw, path, expansions)
 /* Side effects:
  * 	Dir_Expandi will hash directories that were not yet visited */
 void
-Dir_Expandi(word, end, path, expansions)
-    const char	*word;		/* the word to expand */
-    const char  *end;		/* end of word */
-    Lst 	path;		/* the list of directories in which to find
-				 * the resulting files */
-    Lst 	expansions;	/* the list on which to place the results */
+Dir_Expandi(const char *word, const char *eword, Lst path, Lst expansions)
 {
     const char	*cp;
 
     if (DEBUG(DIR)) {
-    	char *s = Str_dupi(word, end);
+    	char *s = Str_dupi(word, eword);
 	printf("expanding \"%s\"...", s);
 	free(s);
     }
 
-    cp = memchr(word, '{', end - word);
+    cp = memchr(word, '{', eword - word);
     if (cp)
-	DirExpandCurlyi(word, end, path, expansions);
+	DirExpandCurlyi(word, eword, path, expansions);
     else
-	DirExpandWildi(word, end, path, expansions);
+	DirExpandWildi(word, eword, path, expansions);
 
     if (DEBUG(DIR)) {
 	Lst_Every(expansions, DirPrintWord);
@@ -670,10 +634,7 @@ Dir_Expandi(word, end, path, expansions)
  *	that directory later on. 
  */
 char *
-Dir_FindFilei(name, end, path)
-    const char		*name;
-    const char		*end;
-    Lst 		path;
+Dir_FindFilei(const char *name, const char *ename, Lst path)
 {
     Path		*p;	/* current path member */
     char		*p1;	/* pointer into p->name */
@@ -686,11 +647,11 @@ Dir_FindFilei(name, end, path)
     struct stat 	stb;	/* Buffer for stat, if necessary */
     struct file_stamp	*entry; /* Entry for mtimes table */
     u_int32_t		hv;	/* hash value for last component in file name */
-    char		*q;	/* Str_dupi(name, end) */
+    char		*q;	/* Str_dupi(name, ename) */
 
     /* Find the final component of the name and note whether name has a
      * slash in it */
-    cp = Str_rchri(name, end, '/');
+    cp = Str_rchri(name, ename, '/');
     if (cp) {
 	hasSlash = true;
 	cp++;
@@ -699,7 +660,7 @@ Dir_FindFilei(name, end, path)
 	cp = name;
     }
 
-    hv = ohash_interval(cp, &end);
+    hv = ohash_interval(cp, &ename);
 
     if (DEBUG(DIR))
 	printf("Searching for %s...", name);
@@ -707,14 +668,14 @@ Dir_FindFilei(name, end, path)
      * before anywhere else and we always return exactly what the caller 
      * specified. */
     if ((!hasSlash || (cp - name == 2 && *name == '.')) &&
-	find_file_hashi(dot, cp, end, hv) != NULL) {
+	find_file_hashi(dot, cp, ename, hv) != NULL) {
 	    if (DEBUG(DIR))
 		printf("in '.'\n");
 #ifdef DEBUG_DIRECTORY_CACHE
 	    hits++;
 	    dot->hits++;
 #endif
-	    return Str_dupi(name, end);
+	    return Str_dupi(name, ename);
     }
 
     /* Then, we look through all the directories on path, seeking one 
@@ -726,7 +687,7 @@ Dir_FindFilei(name, end, path)
 	p = (Path *)Lst_Datum(ln);
 	if (DEBUG(DIR))
 	    printf("%s...", p->name);
-	if (find_file_hashi(p, cp, end, hv) != NULL) {
+	if (find_file_hashi(p, cp, ename, hv) != NULL) {
 	    if (DEBUG(DIR))
 		printf("here...");
 	    if (hasSlash) {
@@ -748,7 +709,7 @@ Dir_FindFilei(name, end, path)
 		    continue;
 		}
 	    }
-	    file = Str_concati(p->name, strchr(p->name, '\0'), cp, end, '/');
+	    file = Str_concati(p->name, strchr(p->name, '\0'), cp, ename, '/');
 	    if (DEBUG(DIR))
 		printf("returning %s\n", file);
 #ifdef DEBUG_DIRECTORY_CACHE
@@ -799,10 +760,10 @@ Dir_FindFilei(name, end, path)
 	for (ln = Lst_First(path); ln != NULL; ln = Lst_Adv(ln)) {
 	    p = (Path *)Lst_Datum(ln);
 	    if (p != dot)
-		file = Str_concati(p->name, strchr(p->name, '\0'), name, end, '/');
+		file = Str_concati(p->name, strchr(p->name, '\0'), name, ename, '/');
 	    else {
 		/* Checking in dot -- DON'T put a leading ./ on the thing.  */
-		file = Str_dupi(name, end);
+		file = Str_dupi(name, ename);
 		checkedDot = true;
 	    }
 	    if (DEBUG(DIR))
@@ -862,14 +823,14 @@ Dir_FindFilei(name, end, path)
      * $(FILE) exists in $(INSTALLDIR) but not in the current one.
      * When searching for $(FILE), we will find it in $(INSTALLDIR)
      * b/c we added it here. This is not good...  */
-    q = Str_dupi(name, end);
+    q = Str_dupi(name, ename);
     if (DEBUG(DIR))
 	printf("Looking for \"%s\"...", q);
 
 #ifdef DEBUG_DIRECTORY_CACHE
     bigmisses++;
 #endif
-    entry = find_stampi(name, end);
+    entry = find_stampi(name, ename);
     if (entry != NULL) {
 	if (DEBUG(DIR))
 	    printf("got it (in mtime cache)\n");
@@ -893,22 +854,20 @@ Dir_FindFilei(name, end, path)
 
 /* Read a directory, either from the disk, or from the cache.  */
 static Path *
-DirReaddiri(name, end)
-    const char		*name;
-    const char		*end;
+DirReaddiri(const char *name, const char *ename)
 {
     Path		*p;	/* pointer to new Path structure */
     DIR 		*d;	/* for reading directory */
     struct dirent	*dp;	/* entry in directory */
     unsigned int	slot;
 
-    slot = ohash_qlookupi(&openDirectories, name, &end);
+    slot = ohash_qlookupi(&openDirectories, name, &ename);
     p = ohash_find(&openDirectories, slot);
 
     if (p != NULL)
 	return p;
 
-    p = ohash_create_entry(&dir_info, name, &end);
+    p = ohash_create_entry(&dir_info, name, &ename);
 #ifdef DEBUG_DIRECTORY_CACHE
     p->hits = 0;
 #endif
@@ -958,14 +917,11 @@ DirReaddiri(name, end)
  */
 
 void
-Dir_AddDiri(path, name, end)
-    Lst 	path;	/* the path to which the directory should be added */
-    const char	*name;	/* the name of the directory to add */
-    const char	*end;
+Dir_AddDiri(Lst path, const char *name, const char *ename)
 {
     Path	*p;	/* pointer to new Path structure */
 
-    p = DirReaddiri(name, end);
+    p = DirReaddiri(name, ename);
     if (p == NULL)
 	return;
     if (p->refCount == 0)
@@ -989,8 +945,7 @@ Dir_AddDiri(path, name, end)
  *-----------------------------------------------------------------------
  */
 void *
-Dir_CopyDir(p)
-    void *p;
+Dir_CopyDir(void *p)
 {
     ((Path *)p)->refCount++;
     return p;
@@ -1011,9 +966,7 @@ Dir_CopyDir(p)
  *-----------------------------------------------------------------------
  */
 char *
-Dir_MakeFlags(flag, path)
-    const char	  *flag;  /* flag which should precede each directory */
-    Lst 	  path;   /* list of directories */
+Dir_MakeFlags(const char *flag, Lst path)
 {
     LstNode	  ln;	  /* the node of the current directory */
     BUFFER	  buf;
@@ -1041,8 +994,7 @@ Dir_MakeFlags(flag, path)
  *-----------------------------------------------------------------------
  */
 void
-Dir_Destroy(pp)
-    void	*pp;		/* The directory descriptor to nuke */
+Dir_Destroy(void *pp)
 {
     Path	*p = (Path *)pp;
 
@@ -1064,9 +1016,7 @@ Dir_Destroy(pp)
  *-----------------------------------------------------------------------
  */
 void
-Dir_Concat(path1, path2)
-    Lst 	path1;		/* Dest */
-    Lst 	path2;		/* Source */
+Dir_Concat(Lst path1, Lst path2)
 {
     LstNode	ln;
     Path	*p;
@@ -1080,7 +1030,7 @@ Dir_Concat(path1, path2)
 
 #ifdef DEBUG_DIRECTORY_CACHE
 void
-Dir_PrintDirectories()
+Dir_PrintDirectories(void)
 {
     Path		*p;
     unsigned int	i;
@@ -1098,23 +1048,19 @@ Dir_PrintDirectories()
 #endif
 
 static void
-DirPrintDir(p)
-    void	*p;
+DirPrintDir(void *p)
 {
     printf("%s ", ((Path *)p)->name);
 }
 
 void
-Dir_PrintPath(path)
-    Lst path;
+Dir_PrintPath(Lst path)
 {
     Lst_Every(path, DirPrintDir);
 }
 
 TIMESTAMP
-Dir_MTime(gn)
-    GNode	  *gn;	      /* the file whose modification time is
-			       * desired */
+Dir_MTime(GNode *gn)
 {
     char	  *fullName;  /* the full pathname of name */
     struct stat   stb;	      /* buffer for finding the mod time */

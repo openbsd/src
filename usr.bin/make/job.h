@@ -2,7 +2,7 @@
 #define _JOB_H_
 
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.h,v 1.14 2003/06/03 02:56:11 millert Exp $	*/
+/*	$OpenBSD: job.h,v 1.15 2004/04/07 13:11:36 espie Exp $	*/
 /*	$NetBSD: job.h,v 1.5 1996/11/06 17:59:10 christos Exp $ */
 
 /*
@@ -55,7 +55,7 @@ extern void Job_Make(GNode *);
 extern void Job_Init(int, int);
 extern bool Job_Full(void);
 extern bool Job_Empty(void);
-extern bool Job_ParseShell(char *);
+extern bool Job_ParseShell(const char *);
 extern int Job_Finish(void);
 #ifdef CLEANUP
 extern void Job_End(void);

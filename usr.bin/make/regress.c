@@ -1,5 +1,5 @@
 /* $OpenPackages$ */
-/* $OpenBSD: regress.c,v 1.4 2001/05/23 12:34:48 espie Exp $ */
+/* $OpenBSD: regress.c,v 1.5 2004/04/07 13:11:36 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie.
@@ -47,7 +47,7 @@ do {				\
 } while (0);
 
 int
-main()
+main(void)
 {
     unsigned int errors = 0;
 

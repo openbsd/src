@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lstInit.c,v 1.14 2003/06/03 02:56:12 millert Exp $	*/
+/*	$OpenBSD: lstInit.c,v 1.15 2004/04/07 13:11:36 espie Exp $	*/
 /*	$NetBSD: lstInit.c,v 1.5 1996/11/06 17:59:43 christos Exp $	*/
 
 /*
@@ -49,8 +49,7 @@
  *-----------------------------------------------------------------------
  */
 void
-Lst_Init(l)
-    Lst l;
+Lst_Init(Lst l)
 {
     l->firstPtr = NULL;
     l->lastPtr = NULL;

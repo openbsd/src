@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: parsevar.c,v 1.1 2001/05/23 12:34:48 espie Exp $	*/
+/*	$OpenBSD: parsevar.c,v 1.2 2004/04/07 13:11:36 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -43,8 +43,7 @@ static const char *find_op1(const char *);
 static const char *find_op2(const char *);
 
 static const char *
-find_op1(p)
-    const char *p;
+find_op1(const char *p)
 {
     for(;; p++) {
     	if (isspace(*p) || *p == '$' || *p == '\0')
@@ -58,8 +57,7 @@ find_op1(p)
 }
 
 static const char *
-find_op2(p)
-    const char *p;
+find_op2(const char *p)
 {
     for(;; p++) {
     	if (isspace(*p) || *p == '$' || *p == '\0')
@@ -71,9 +69,8 @@ find_op2(p)
 }
 
 bool
-Parse_DoVar(line, ctxt)
-    const char	*line;
-    GSymT	*ctxt;    /* Context in which to do the assignment */
+Parse_DoVar(const char *line, 
+    GSymT *ctxt) 		/* Context in which to do the assignment */
 {
     const char	*arg;
     char	*res1 = NULL, *res2 = NULL;

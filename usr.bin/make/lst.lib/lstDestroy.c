@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lstDestroy.c,v 1.15 2003/06/03 02:56:12 millert Exp $	*/
+/*	$OpenBSD: lstDestroy.c,v 1.16 2004/04/07 13:11:36 espie Exp $	*/
 /*	$NetBSD: lstDestroy.c,v 1.6 1996/11/06 17:59:37 christos Exp $	*/
 
 /*
@@ -55,9 +55,7 @@
  *-----------------------------------------------------------------------
  */
 void
-Lst_Destroy(l, freeProc)
-    Lst 		l;
-    SimpleProc		freeProc;
+Lst_Destroy(Lst l, SimpleProc freeProc)
 {
     LstNode	ln;
     LstNode	tln;

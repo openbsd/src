@@ -1,5 +1,5 @@
 /* $OpenPackages$ */
-/* $OpenBSD: stats.c,v 1.6 2002/08/12 00:42:56 aaron Exp $ */
+/* $OpenBSD: stats.c,v 1.7 2004/04/07 13:11:36 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie.
@@ -57,14 +57,13 @@ unsigned long *statarray;
 static bool mmapped = false;
 
 static float
-average_runs(val)
-    unsigned long val;
+average_runs(unsigned long val)
 {
     return (float)val / STAT_INVOCATIONS;
 }
 
 static void
-print_stats()
+print_stats(void)
 {
     struct rusage ru;
 
@@ -132,7 +131,7 @@ print_stats()
 }
 
 void
-Init_Stats()
+Init_Stats(void)
 {
     char *name;
     int fd;

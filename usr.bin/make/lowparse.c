@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lowparse.c,v 1.17 2002/12/29 17:29:35 espie Exp $ */
+/*	$OpenBSD: lowparse.c,v 1.18 2004/04/07 13:11:36 espie Exp $ */
 
 /* low-level parsing functions. */
 
@@ -108,9 +108,7 @@ static void ParseFoldLF(Buffer, int);
 static int ParseSkipEmptyLines(Buffer);
 
 static IFile *
-new_ifile(name, stream)
-    const char *name;
-    FILE *stream;
+new_ifile(const char *name, FILE *stream)
 {
     IFile *ifile;
 #if 0
@@ -128,8 +126,7 @@ new_ifile(name, stream)
 }
 
 static void
-free_ifile(ifile)
-    IFile *ifile;
+free_ifile(IFile *ifile)
 {
     if (ifile->F && fileno(ifile->F) != STDIN_FILENO)
 	(void)fclose(ifile->F);
@@ -140,10 +137,7 @@ free_ifile(ifile)
 }
 
 static IFile *
-new_istring(str, name, lineno)
-    char *str;
-    const char *name;
-    unsigned long lineno;
+new_istring(char *str, const char *name, unsigned long lineno)
 {
     IFile *ifile;
 
@@ -161,9 +155,7 @@ new_istring(str, name, lineno)
 
 
 void
-Parse_FromString(str, lineno)
-    char		*str;
-    unsigned long	lineno;
+Parse_FromString(char *str, unsigned long lineno)
 {
     if (DEBUG(FOR))
 	(void)fprintf(stderr, "%s\n----\n", str);
@@ -175,9 +167,7 @@ Parse_FromString(str, lineno)
 
 
 void
-Parse_FromFile(name, stream)
-    const char		*name;
-    FILE		*stream;
+Parse_FromFile(const char *name, FILE *stream)
 {
     if (current != NULL)
 	Lst_Push(&input_stack, current);
@@ -185,7 +175,7 @@ Parse_FromFile(name, stream)
 }
 
 bool
-Parse_NextFile()
+Parse_NextFile(void)
 {
     if (current != NULL)
 	free_ifile(current);
@@ -194,7 +184,7 @@ Parse_NextFile()
 }
 
 static int
-newline()
+newline(void)
 {
     size_t len;
 
@@ -211,7 +201,7 @@ newline()
 }
 
 static int
-skiptoendofline()
+skiptoendofline(void)
 {
     if (current->F) {
 	if (current->end - current->ptr > 1)
@@ -231,8 +221,7 @@ skiptoendofline()
 
 
 char *
-Parse_ReadNextConditionalLine(linebuf)
-    Buffer linebuf;
+Parse_ReadNextConditionalLine(Buffer linebuf)
 {
     int c;
 
@@ -257,9 +246,7 @@ Parse_ReadNextConditionalLine(linebuf)
 }
 
 static void
-ParseFoldLF(linebuf, c)
-    Buffer linebuf;
-    int c;
+ParseFoldLF(Buffer linebuf, int c)
 {
     for (;;) {
 	if (c == '\n') {
@@ -291,9 +278,7 @@ ParseFoldLF(linebuf, c)
 }
 
 char *
-Parse_ReadUnparsedLine(linebuf, type)
-    Buffer	linebuf;
-    const char	*type;
+Parse_ReadUnparsedLine(Buffer linebuf, const char *type)
 {
     int c;
 
@@ -329,8 +314,7 @@ Parse_ReadUnparsedLine(linebuf, type)
 /* This is a fairly complex function, but without it, we could not skip
  * blocks of comments without reading them. */
 static int
-ParseSkipEmptyLines(linebuf)
-    Buffer	linebuf;
+ParseSkipEmptyLines(Buffer linebuf)
 {
     int 	c;		/* the current character */
 
@@ -401,18 +385,17 @@ ParseSkipEmptyLines(linebuf)
 }
 
 /* Parse_ReadNormalLine removes beginning and trailing blanks (but keeps
- * the first tab), handles escaped newlines, and skip over uninteresting
+ * the first tab), handles escaped newlines, and skips over uninteresting
  * lines.  
  *
- * The line number is advanced, which implies that continuation
- * lines are numbered with the last line no (we could do better, at a
+ * The line number is incremented, which implies that continuation
+ * lines are numbered with the last line number (we could do better, at a
  * price).
  *
  * Trivial comments are also removed, but we can't do more, as
  * we don't know which lines are shell commands or not.  */
 char *
-Parse_ReadNormalLine(linebuf)
-    Buffer	linebuf;
+Parse_ReadNormalLine(Buffer linebuf)
 {
     int 	c;		/* the current character */
 
@@ -428,27 +411,27 @@ Parse_ReadNormalLine(linebuf)
 }
 
 unsigned long
-Parse_Getlineno()
+Parse_Getlineno(void)
 {
     return current ? current->lineno : 0;
 }
 
 const char *
-Parse_Getfilename()
+Parse_Getfilename(void)
 {
     return current ? current->fname : NULL;
 }
 
 #ifdef CLEANUP
 void
-LowParse_Init()
+LowParse_Init(void)
 {
     Static_Lst_Init(&input_stack);
     current = NULL;
 }
 
 void
-LowParse_End()
+LowParse_End(void)
 {
     Lst_Destroy(&input_stack, NOFREE);	/* Should be empty now */
 #if 0
@@ -459,7 +442,7 @@ LowParse_End()
 
 
 void
-Parse_ReportErrors()
+Parse_ReportErrors(void)
 {
     if (fatal_errors) {
 #ifdef CLEANUP

@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: varmodifiers.c,v 1.12 2003/10/07 18:33:08 fgsch Exp $	*/
+/*	$OpenBSD: varmodifiers.c,v 1.13 2004/04/07 13:11:36 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -263,11 +263,7 @@ VarModifiers_Init()
  *-----------------------------------------------------------------------
  */
 static bool
-VarHead(word, addSpace, buf, dummy)
-    struct Name *word;
-    bool	addSpace;
-    Buffer	buf;
-    void	*dummy		UNUSED;
+VarHead(struct Name *word, bool addSpace, Buffer buf, void *dummy UNUSED)
 {
     const char	*slash;
 
@@ -294,11 +290,7 @@ VarHead(word, addSpace, buf, dummy)
  *-----------------------------------------------------------------------
  */
 static bool
-VarTail(word, addSpace, buf, dummy)
-    struct Name *word;
-    bool	addSpace;
-    Buffer	buf;
-    void	*dummy		UNUSED;
+VarTail(struct Name *word, bool addSpace, Buffer buf, void *dummy UNUSED)
 {
     const char	*slash;
 
@@ -319,11 +311,7 @@ VarTail(word, addSpace, buf, dummy)
  *-----------------------------------------------------------------------
  */
 static bool
-VarSuffix(word, addSpace, buf, dummy)
-    struct Name *word;
-    bool	addSpace;
-    Buffer	buf;
-    void	*dummy		UNUSED;
+VarSuffix(struct Name *word, bool addSpace, Buffer buf, void *dummy UNUSED)
 {
     const char	*dot;
 
@@ -345,11 +333,7 @@ VarSuffix(word, addSpace, buf, dummy)
  *-----------------------------------------------------------------------
  */
 static bool
-VarRoot(word, addSpace, buf, dummy)
-    struct Name *word;
-    bool	addSpace;
-    Buffer	buf;
-    void	*dummy		UNUSED;
+VarRoot(struct Name *word, bool addSpace, Buffer buf, void *dummy UNUSED)
 {
     const char	*dot;
 
@@ -370,11 +354,8 @@ VarRoot(word, addSpace, buf, dummy)
  *-----------------------------------------------------------------------
  */
 static bool
-VarMatch(word, addSpace, buf, pattern)
-    struct Name *word;
-    bool	addSpace;
-    Buffer	buf;
-    void	*pattern;	/* Pattern the word must match */
+VarMatch(struct Name *word, bool addSpace, Buffer buf, 
+    void *pattern) /* Pattern the word must match */
 {
     const char *pat = (const char *)pattern;
 
@@ -394,11 +375,8 @@ VarMatch(word, addSpace, buf, pattern)
  *-----------------------------------------------------------------------
  */
 static bool
-VarNoMatch(word, addSpace, buf, pattern)
-    struct Name *word;
-    bool	addSpace;
-    Buffer	buf;
-    void	*pattern;	/* Pattern the word must not match */
+VarNoMatch(struct Name *word, bool addSpace, Buffer buf, 
+    void *pattern) /* Pattern the word must not match */
 {
     const char *pat = (const char *)pattern;
 
@@ -412,11 +390,7 @@ VarNoMatch(word, addSpace, buf, pattern)
 }
 
 static bool
-VarUniq(word, addSpace, buf, lastp)
-    struct Name	*word;
-    bool	addSpace;
-    Buffer	buf;
-    void	*lastp;
+VarUniq(struct Name *word, bool addSpace, Buffer buf, void *lastp)
 {
     struct Name *last = (struct Name *)lastp;
 
@@ -434,11 +408,7 @@ VarUniq(word, addSpace, buf, lastp)
 }
 
 static bool
-VarLoop(word, addSpace, buf, vp)
-    struct Name	*word;
-    bool	addSpace;
-    Buffer	buf;
-    void	*vp;
+VarLoop(struct Name *word, bool addSpace, Buffer buf, void *vp)
 {
     struct LoopStuff *v = (struct LoopStuff *)vp;
 
@@ -449,10 +419,7 @@ VarLoop(word, addSpace, buf, vp)
 }
 
 static char *
-finish_loop(s, n, p)
-	const char *s;
-	const struct Name *n	UNUSED;
-	void *p;
+finish_loop(const char *s, const struct Name *n UNUSED , void *p)
 {
 	struct LoopStuff *l = (struct LoopStuff *)p;
 
@@ -460,9 +427,7 @@ finish_loop(s, n, p)
 }
 
 static int
-NameCompare(ap, bp)
-	const void *ap;
-	const void *bp;
+NameCompare(const void *ap, const void *bp)
 {
 	struct Name *a, *b;
 	size_t n, m;
@@ -489,10 +454,7 @@ NameCompare(ap, bp)
 }
 
 static char *
-do_sort(s, dummy, arg)
-    const char	*s;
-    const struct Name *dummy UNUSED;
-    void	*arg	UNUSED;
+do_sort(const char *s, const struct Name *dummy UNUSED, void *arg UNUSED)
 {
     struct Name *t;
     unsigned long n, i, j;
@@ -533,19 +495,13 @@ do_sort(s, dummy, arg)
 }
 
 static char *
-do_label(s, n, arg)
-    const char *s 	UNUSED;
-    const struct Name *n;
-    void *arg 		UNUSED;
+do_label(const char *s UNUSED, const struct Name *n, void *arg UNUSED)
 {
     return Str_dupi(n->s, n->e);
 }
 
 static char *
-do_path(s, n, arg)
-    const char *s 	UNUSED;
-    const struct Name *n;
-    void *arg 		UNUSED;
+do_path(const char *s UNUSED, const struct Name *n, void *arg UNUSED)
 {
     GNode *gn;
 
@@ -557,10 +513,7 @@ do_path(s, n, arg)
 }
 
 static char *
-do_def(s, n, arg)
-    const char *s;
-    const struct Name *n	UNUSED;
-    void *arg;
+do_def(const char *s, const struct Name *n UNUSED, void *arg)
 {
     VarPattern *v = (VarPattern *)arg;
     if (s == NULL) {
@@ -571,10 +524,7 @@ do_def(s, n, arg)
 }
 
 static char *
-do_undef(s, n, arg)
-    const char *s;
-    const struct Name *n	UNUSED;
-    void *arg;
+do_undef(const char *s, const struct Name *n UNUSED, void *arg)
 {
     VarPattern *v = (VarPattern *)arg;
     if (s != NULL) {
@@ -585,10 +535,7 @@ do_undef(s, n, arg)
 }
 
 static char *
-do_assign(s, n, arg)
-    const char *s;
-    const struct Name *n;
-    void *arg;
+do_assign(const char *s, const struct Name *n, void *arg)
 {
     VarPattern *v = (VarPattern *)arg;
     char *msg;
@@ -622,10 +569,7 @@ do_assign(s, n, arg)
 }
 
 static char *
-do_exec(s, n, arg)
-    const char *s		UNUSED;
-    const struct Name *n	UNUSED;
-    void *arg;
+do_exec(const char *s UNUSED, const struct Name *n UNUSED, void *arg)
 {
     VarPattern *v = (VarPattern *)arg;
     char *msg;
@@ -645,11 +589,8 @@ do_exec(s, n, arg)
  *-----------------------------------------------------------------------
  */
 static bool
-VarSYSVMatch(word, addSpace, buf, patp)
-    struct Name *word;
-    bool	addSpace;
-    Buffer	buf;
-    void	*patp;	/* Pattern the word must match */
+VarSYSVMatch(struct Name *word, bool addSpace, Buffer buf, 
+    void *patp) /* Pattern the word must match */
 {
     size_t	len;
     const char	*ptr;
@@ -668,11 +609,8 @@ VarSYSVMatch(word, addSpace, buf, patp)
 }
 
 void *
-get_sysvpattern(p, ctxt, err, endc)
-    const char		**p;
-    SymTable		*ctxt	UNUSED;
-    bool		err	UNUSED;
-    int			endc;
+get_sysvpattern(const char **p, SymTable *ctxt UNUSED, bool err UNUSED, 
+    int endc)
 {
     VarPattern		*pattern;
     const char		*cp, *cp2;
@@ -723,11 +661,8 @@ get_sysvpattern(p, ctxt, err, endc)
  *-----------------------------------------------------------------------
  */
 static bool
-VarSubstitute(word, addSpace, buf, patternp)
-    struct Name *word;
-    bool	addSpace;
-    Buffer	buf;
-    void	*patternp;	/* Pattern for substitution */
+VarSubstitute(struct Name *word, bool addSpace, Buffer buf, 
+    void *patternp) /* Pattern for substitution */
 {
     size_t	wordLen;    /* Length of word */
     const char	*cp;	    /* General pointer */
@@ -856,10 +791,7 @@ VarSubstitute(word, addSpace, buf, patternp)
  *-----------------------------------------------------------------------
  */
 static void
-VarREError(err, pat, str)
-    int 	err;
-    regex_t	*pat;
-    const char	*str;
+VarREError(int err, regex_t *pat, const char *str)
 {
     char	*errbuf;
     int 	errlen;
@@ -879,11 +811,7 @@ VarREError(err, pat, str)
  *-----------------------------------------------------------------------
  */
 static bool
-VarRESubstitute(word, addSpace, buf, patternp)
-    struct Name		*word;
-    bool		addSpace;
-    Buffer		buf;
-    void		*patternp;
+VarRESubstitute(struct Name *word, bool addSpace, Buffer buf, void *patternp)
 {
     VarREPattern	*pat;
     int 		xrv;
@@ -996,11 +924,10 @@ VarRESubstitute(word, addSpace, buf, patternp)
  *-----------------------------------------------------------------------
  */
 static char *
-VarModify(str, modProc, datum)
-    char	  *str; 	/* String whose words should be trimmed */
+VarModify(char *str, 		/* String whose words should be trimmed */
 				/* Function to use to modify them */
-    bool	  (*modProc)(struct Name *, bool, Buffer, void *);
-    void	  *datum;	/* Datum to pass it */
+    bool (*modProc)(struct Name *, bool, Buffer, void *), 
+    void *datum)		/* Datum to pass it */
 {
     BUFFER	  buf;		/* Buffer for the new string */
     bool	  addSpace;	/* true if need to add a space to the
@@ -1041,14 +968,8 @@ VarModify(str, modProc, datum)
  *-----------------------------------------------------------------------
  */
 static char *
-VarGetPattern(ctxt, err, tstr, delim1, delim2, length, pattern)
-    SymTable	*ctxt;
-    int 	err;
-    const char	**tstr;
-    int 	delim1;
-    int 	delim2;
-    size_t	*length;
-    VarPattern	*pattern;
+VarGetPattern(SymTable *ctxt, int err, const char **tstr, int delim1, 
+    int delim2, size_t *length, VarPattern *pattern)
 {
     const char	*cp;
     char	*result;
@@ -1116,10 +1037,7 @@ VarGetPattern(ctxt, err, tstr, delim1, delim2, length, pattern)
  *-----------------------------------------------------------------------
  */
 static char *
-VarQuote(str, n, dummy)
-    const char	*str;
-    const struct Name *n	UNUSED;
-    void	*dummy		UNUSED;
+VarQuote(const char *str, const struct Name *n UNUSED, void *dummy UNUSED)
 {
 
     BUFFER	  buf;
@@ -1136,11 +1054,7 @@ VarQuote(str, n, dummy)
 }
 
 static void *
-check_empty(p, ctxt, b, endc)
-    const char	**p;
-    SymTable	*ctxt		UNUSED;
-    bool	b		UNUSED;
-    int		endc;
+check_empty(const char **p, SymTable *ctxt UNUSED, bool b UNUSED, int endc)
 {
     dummy_arg->s = NULL;
     if ((*p)[1] == endc || (*p)[1] == ':') {
@@ -1151,11 +1065,7 @@ check_empty(p, ctxt, b, endc)
 }
 
 static void *
-check_shcmd(p, ctxt, b, endc)
-    const char	**p;
-    SymTable	*ctxt		UNUSED;
-    bool	b		UNUSED;
-    int		endc;
+check_shcmd(const char **p, SymTable *ctxt UNUSED, bool b UNUSED, int endc)
 {
     if ((*p)[1] == 'h' && ((*p)[2] == endc || (*p)[2] == ':')) {
 	(*p)+=2;
@@ -1166,10 +1076,7 @@ check_shcmd(p, ctxt, b, endc)
 
 
 static char *
-do_shcmd(s, n, arg)
-    const char	*s;
-    const struct Name *n	UNUSED;
-    void	*arg		UNUSED;
+do_shcmd(const char *s, const struct Name *n UNUSED, void *arg UNUSED)
 {
     char	*err;
     char	*t;
@@ -1181,11 +1088,7 @@ do_shcmd(s, n, arg)
 }
 
 static void *
-get_stringarg(p, ctxt, b, endc)
-    const char	**p;
-    SymTable	*ctxt		UNUSED;
-    bool	b		UNUSED;
-    int		endc;
+get_stringarg(const char **p, SymTable *ctxt UNUSED, bool b UNUSED, int endc)
 {
     const char	*cp;
     char	*s;
@@ -1203,17 +1106,13 @@ get_stringarg(p, ctxt, b, endc)
 }
 
 static void
-free_stringarg(arg)
-    void *arg;
+free_stringarg(void *arg)
 {
     free(arg);
 }
 
 static char *
-do_upper(s, n, arg)
-    const char	*s;
-    const struct Name *n	UNUSED;
-    void	*arg		UNUSED;
+do_upper(const char *s, const struct Name *n UNUSED, void *arg UNUSED)
 {
     size_t	len, i;
     char	*t;
@@ -1227,10 +1126,7 @@ do_upper(s, n, arg)
 }
 
 static char *
-do_lower(s, n, arg)
-    const char	*s;
-    const struct Name *n	UNUSED;
-    void	*arg		UNUSED;
+do_lower(const char *s, const struct Name *n UNUSED, void *arg UNUSED)
 {
     size_t	len, i;
     char	*t;
@@ -1244,22 +1140,14 @@ do_lower(s, n, arg)
 }
 
 static void *
-get_patternarg(p, ctxt, err, endc)
-    const char	**p;
-    SymTable	*ctxt;
-    bool	err;
-    int		endc;
+get_patternarg(const char **p, SymTable *ctxt, bool err, int endc)
 {
     return common_get_patternarg(p, ctxt, err, endc, false);
 }
 
 /* Extract anchors */
 static void *
-get_spatternarg(p, ctxt, err, endc)
-    const char	**p;
-    SymTable	*ctxt;
-    bool	err;
-    int		endc;
+get_spatternarg(const char **p, SymTable *ctxt, bool err, int endc)
 {
     VarPattern *pattern;
 
@@ -1279,8 +1167,7 @@ get_spatternarg(p, ctxt, err, endc)
 }
 
 static void
-free_looparg(arg)
-    void *arg;
+free_looparg(void *arg)
 {
     struct LoopStuff *l = (struct LoopStuff *)arg;
 
@@ -1289,8 +1176,7 @@ free_looparg(arg)
 }
 
 static char *
-LoopGrab(s)
-    const char **s;
+LoopGrab(const char **s)
 {
     const char *p, *start;
 
@@ -1306,11 +1192,7 @@ LoopGrab(s)
 }
 	
 static void *
-get_loop(p, ctxt, err, endc)
-    const char 	**p;
-    SymTable	*ctxt;
-    bool	err;
-    int		endc;
+get_loop(const char **p, SymTable *ctxt, bool err, int endc)
 {
     static struct LoopStuff	loop;
     const char *s;
@@ -1334,12 +1216,8 @@ get_loop(p, ctxt, err, endc)
 }
 
 static void *
-common_get_patternarg(p, ctxt, err, endc, dosubst)
-    const char	**p;
-    SymTable	*ctxt;
-    bool	err;
-    int		endc;
-    bool 	dosubst;
+common_get_patternarg(const char **p, SymTable *ctxt, bool err, int endc, 
+    bool dosubst)
 {
     VarPattern *pattern;
     char	delim;
@@ -1387,11 +1265,7 @@ common_get_patternarg(p, ctxt, err, endc, dosubst)
 }
 
 static void *
-assign_get_value(p, ctxt, err, endc)
-    const char 	**p;
-    SymTable 	*ctxt;
-    bool	err;
-    int		endc;
+assign_get_value(const char **p, SymTable *ctxt, bool err, int endc)
 {
     const char *s;
     int flags;
@@ -1418,11 +1292,7 @@ assign_get_value(p, ctxt, err, endc)
 }
 
 static void *
-get_value(p, ctxt, err, endc)
-    const char 	**p;
-    SymTable 	*ctxt;
-    bool	err;
-    int		endc;
+get_value(const char **p, SymTable *ctxt, bool err, int endc)
 {
     VarPattern *pattern;
     const char *s;
@@ -1441,11 +1311,7 @@ get_value(p, ctxt, err, endc)
 }
 
 static void *
-get_cmd(p, ctxt, err, endc)
-    const char 	**p;
-    SymTable 	*ctxt;
-    bool	err;
-    int		endc	UNUSED;
+get_cmd(const char **p, SymTable *ctxt, bool err, int endc UNUSED)
 {
     VarPattern *pattern;
     const char *s;
@@ -1464,8 +1330,7 @@ get_cmd(p, ctxt, err, endc)
 }
 
 static void
-free_patternarg(p)
-    void *p;
+free_patternarg(void *p)
 {
     VarPattern *vp = (VarPattern *)p;
 
@@ -1476,10 +1341,7 @@ free_patternarg(p)
 
 #ifndef MAKE_BOOTSTRAP
 static char *
-do_regex(s, n, arg)
-    const char	*s;
-    const struct Name *n	UNUSED;
-    void	*arg;
+do_regex(const char *s, const struct Name *n UNUSED, void *arg)
 {
     VarREPattern p2;
     VarPattern	*p = (VarPattern *)arg;
@@ -1507,15 +1369,8 @@ do_regex(s, n, arg)
 #endif
 
 char *
-VarModifiers_Apply(str, name, ctxt, err, freePtr, start, endc, lengthPtr)
-    char	*str;
-    const struct Name *name;
-    SymTable	*ctxt;
-    bool	err;
-    bool	*freePtr;
-    const char	*start;
-    int		endc;
-    size_t	*lengthPtr;
+VarModifiers_Apply(char *str, const struct Name *name, SymTable *ctxt, 
+    bool err, bool *freePtr, const char *start, int endc, size_t *lengthPtr)
 {
     const char	*tstr;
     bool	atstart;    /* Some ODE modifiers only make sense at start */
@@ -1606,15 +1461,13 @@ VarModifiers_Apply(str, name, ctxt, err, freePtr, start, endc, lengthPtr)
 }
 
 char *
-Var_GetHead(s)
-    char *s;
+Var_GetHead(char *s)
 {
     return VarModify(s, VarHead, NULL);
 }
 
 char *
-Var_GetTail(s)
-    char *s;
+Var_GetTail(char *s)
 {
     return VarModify(s, VarTail, NULL);
 }

@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: compat.c,v 1.49 2003/06/03 02:56:11 millert Exp $	*/
+/*	$OpenBSD: compat.c,v 1.50 2004/04/07 13:11:35 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -82,8 +82,7 @@ static int shellneed(char **);
 static volatile sig_atomic_t interrupted;
 
 static void 
-CompatInterrupt(signo)
-    int signo;
+CompatInterrupt(int signo)
 {
     if (interrupted != SIGINT)
 	interrupted = signo;
@@ -104,8 +103,7 @@ CompatInterrupt(signo)
  *-----------------------------------------------------------------------
  */
 static int
-shellneed(av)
-	char **av;
+shellneed(char **av)
 {
 	char *runsh[] = {
 		"alias", "cd", "eval", "exec", "exit", "read", "set", "ulimit",
@@ -156,9 +154,8 @@ shellneed(av)
  *-----------------------------------------------------------------------
  */
 static int
-CompatRunCommand(cmdp, gnp)
-    void *	  cmdp; 	/* Command to execute */
-    void *	  gnp;		/* Node from which the command came */
+CompatRunCommand(void *cmdp,	/* Command to execute */
+    void *gnp)			/* Node from which the command came */
 {
     char	  *cmdStart;	/* Start of expanded command */
     char *cp, *bp = NULL;
@@ -375,9 +372,8 @@ CompatRunCommand(cmdp, gnp)
  *-----------------------------------------------------------------------
  */
 static void
-CompatMake(gnp, pgnp)
-    void *	gnp;	    /* The node to make */
-    void *	pgnp;	    /* Parent to abort if necessary */
+CompatMake(void *gnp,	/* The node to make */
+    void *pgnp)		/* Parent to abort if necessary */
 {
     GNode *gn = (GNode *)gnp;
     GNode *pgn = (GNode *)pgnp;
@@ -557,12 +553,11 @@ CompatMake(gnp, pgnp)
 }
 
 void
-Compat_Run(targs)
-    Lst 	  targs;    /* List of target nodes to re-create */
+Compat_Run(Lst targs)		/* List of target nodes to re-create */
 {
-    char	  *cp;	    /* Pointer to string of shell meta-characters */
-    GNode	  *gn = NULL;/* Current root target */
-    int 	  errors;   /* Number of targets not remade due to errors */
+    char	  *cp;		/* Pointer to string of shell meta-characters */
+    GNode	  *gn = NULL;	/* Current root target */
+    int 	  errors;   	/* Number of targets not remade due to errors */
 
     signal(SIGINT, CompatInterrupt);
     signal(SIGTERM, CompatInterrupt);

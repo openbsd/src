@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: main.c,v 1.63 2004/01/30 17:37:37 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.64 2004/04/07 13:11:36 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -103,7 +103,7 @@ bool 		oldVars;	/* variable substitution style */
 bool 		checkEnvFirst;	/* -e flag */
 
 static void		MainParseArgs(int, char **);
-static char *		chdir_verify_path(char *);
+static char *		chdir_verify_path(const char *);
 static int		ReadMakefile(void *, void *);
 static void		add_dirpath(Lst, const char *);
 static void		usage(void);
@@ -114,9 +114,7 @@ static char *curdir;			/* startup directory */
 static char *objdir;			/* where we chdir'ed to */
 
 
-static void record_option(c, arg)
-    int 	c;
-    const char 	*arg;
+static void record_option(int c, const char *arg)
 {
     char opt[3];
 
@@ -129,8 +127,7 @@ static void record_option(c, arg)
 }
 
 static void
-posixParseOptLetter(c)
-    int c;
+posixParseOptLetter(int c)
 {
 	switch(c) {
 	case 'B':
@@ -186,9 +183,7 @@ posixParseOptLetter(c)
  *	given
  */
 static void
-MainParseArgs(argc, argv)
-	int argc;
-	char **argv;
+MainParseArgs(int argc, char **argv)
 {
 	int c, optend;
 	int forceJobs = 0;
@@ -341,8 +336,7 @@ MainParseArgs(argc, argv)
  *	Only those that come from the various arguments.
  */
 void
-Main_ParseArgLine(line)
-	const char *line;			/* Line to fracture */
+Main_ParseArgLine(const char *line) 	/* Line to fracture */
 {
 	char **argv;			/* Manufactured argument vector */
 	int argc;			/* Number of arguments in argv */
@@ -385,8 +379,7 @@ Main_ParseArgLine(line)
 }
 
 char *
-chdir_verify_path(path)
-    char *path;
+chdir_verify_path(const char *path)
 {
     struct stat sb;
 
@@ -409,9 +402,7 @@ chdir_verify_path(path)
 
 /* Add a :-separated path to a Lst of directories.  */
 static void
-add_dirpath(l, n)
-    Lst 	l;
-    const char	*n;
+add_dirpath(Lst l, const char *n)
 {
     const char *start;
     const char *cp;
@@ -446,9 +437,7 @@ int main(int, char **);
  *	The program exits when done. Targets are created. etc. etc. etc.
  */
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	static LIST targs;	/* target nodes to create */
 	bool outOfDate = true;	/* false if all targets up to date */
@@ -782,11 +771,9 @@ main(argc, argv)
  *	lots
  */
 static bool
-ReadMakefile(p, q)
-	void * p;
-	void * q		UNUSED;
+ReadMakefile(void *p, void *q UNUSED)
 {
-	char *fname = p;		/* makefile to read */
+	char *fname = (char *)p;	/* makefile to read */
 	FILE *stream;
 	char *name;
 

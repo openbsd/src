@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lstRemove.c,v 1.14 2003/06/03 02:56:12 millert Exp $	*/
+/*	$OpenBSD: lstRemove.c,v 1.15 2004/04/07 13:11:36 espie Exp $	*/
 /*	$NetBSD: lstRemove.c,v 1.5 1996/11/06 17:59:50 christos Exp $	*/
 
 /*
@@ -56,9 +56,7 @@
  *-----------------------------------------------------------------------
  */
 void
-Lst_Remove(l, ln)
-    Lst 		l;
-    LstNode		ln;
+Lst_Remove(Lst l, LstNode ln)
 {
     if (ln == NULL)
 	return;

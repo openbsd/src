@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lstForEachFrom.c,v 1.13 2003/06/03 02:56:12 millert Exp $	*/
+/*	$OpenBSD: lstForEachFrom.c,v 1.14 2004/04/07 13:11:36 espie Exp $	*/
 /*	$NetBSD: lstForEachFrom.c,v 1.5 1996/11/06 17:59:42 christos Exp $	*/
 
 /*
@@ -55,10 +55,7 @@
  *-----------------------------------------------------------------------
  */
 void
-Lst_ForEachFrom(ln, proc, d)
-    LstNode		ln;
-    ForEachProc 	proc;
-    void		*d;
+Lst_ForEachFrom(LstNode ln, ForEachProc proc, void *d)
 {
     LstNode	tln;
 
@@ -67,9 +64,7 @@ Lst_ForEachFrom(ln, proc, d)
 }
 
 void
-Lst_Every(l, proc)
-    Lst 	l;
-    SimpleProc	proc;
+Lst_Every(Lst l, SimpleProc proc)
 {
     LstNode tln;
 

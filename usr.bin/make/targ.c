@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: targ.c,v 1.38 2003/06/03 02:56:12 millert Exp $ */
+/*	$OpenBSD: targ.c,v 1.39 2004/04/07 13:11:36 espie Exp $ */
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -142,7 +142,7 @@ static void TargFreeGN(void *);
  *-----------------------------------------------------------------------
  */
 void
-Targ_Init()
+Targ_Init(void)
 {
     /* A small make file already creates 200 targets.  */
     ohash_init(&targets, 10, &gnode_info);
@@ -162,7 +162,7 @@ Targ_Init()
  */
 #ifdef CLEANUP
 void
-Targ_End()
+Targ_End(void)
 {
     Lst_Every(&allTargets, TargFreeGN);
     ohash_delete(&targets);
@@ -183,13 +183,12 @@ Targ_End()
  *-----------------------------------------------------------------------
  */
 GNode *
-Targ_NewGNi(name, end)
-    const char	*name;	/* the name to stick in the new node */
-    const char	*end;
+Targ_NewGNi(const char *name, /* the name to stick in the new node */
+    const char *ename)
 {
     GNode *gn;
 
-    gn = ohash_create_entry(&gnode_info, name, &end);
+    gn = ohash_create_entry(&gnode_info, name, &ename);
     gn->path = NULL;
     if (name[0] == '-' && name[1] == 'l') {
 	gn->type = OP_LIB;
@@ -233,8 +232,7 @@ Targ_NewGNi(name, end)
  *-----------------------------------------------------------------------
  */
 static void
-TargFreeGN(gnp)
-    void *gnp;
+TargFreeGN(void *gnp)
 {
     GNode *gn = (GNode *)gnp;
 
@@ -267,21 +265,19 @@ TargFreeGN(gnp)
  *-----------------------------------------------------------------------
  */
 GNode *
-Targ_FindNodei(name, end, flags)
-    const char		*name;	/* the name to find */
-    const char		*end;
-    int 		flags;	/* flags governing events when target not
+Targ_FindNodei(const char *name, const char *ename, 
+    int flags)			/* flags governing events when target not
 				 * found */
 {
     GNode		*gn;	/* node in that element */
     unsigned int	slot;
 
-    slot = ohash_qlookupi(&targets, name, &end);
+    slot = ohash_qlookupi(&targets, name, &ename);
 
     gn = ohash_find(&targets, slot);
 
     if (gn == NULL && (flags & TARG_CREATE)) {
-	gn = Targ_NewGNi(name, end);
+	gn = Targ_NewGNi(name, ename);
 	ohash_insert(&targets, slot, gn);
     }
 
@@ -302,9 +298,8 @@ Targ_FindNodei(name, end, flags)
  * -----------------------------------------------------------------------
  */
 void
-Targ_FindList(nodes, names)
-    Lst 	   nodes;	/* result list */
-    Lst 	   names;	/* list of names to find */
+Targ_FindList(Lst nodes, 	/* result list */
+    Lst names) 			/* list of names to find */
 {
     LstNode	   ln;		/* name list element */
     GNode	  *gn;		/* node in tLn */
@@ -329,8 +324,7 @@ Targ_FindList(nodes, names)
  *-----------------------------------------------------------------------
  */
 bool
-Targ_Ignore(gn)
-    GNode	   *gn; 	/* node to check for */
+Targ_Ignore(GNode *gn)
 {
     if (ignoreErrors || gn->type & OP_IGNORE)
 	return true;
@@ -345,8 +339,7 @@ Targ_Ignore(gn)
  *-----------------------------------------------------------------------
  */
 bool
-Targ_Silent(gn)
-    GNode	   *gn; 	/* node to check for */
+Targ_Silent(GNode *gn)
 {
     if (beSilent || gn->type & OP_SILENT)
 	return true;
@@ -361,8 +354,7 @@ Targ_Silent(gn)
  *-----------------------------------------------------------------------
  */
 bool
-Targ_Precious(gn)
-    GNode	   *gn; 	/* the node to check */
+Targ_Precious(GNode *gn)
 {
     if (allPrecious || (gn->type & (OP_PRECIOUS|OP_DOUBLEDEP)))
 	return true;
@@ -384,15 +376,13 @@ static GNode	  *mainTarg;	/* the main target, as set by Targ_SetMain */
  *-----------------------------------------------------------------------
  */
 void
-Targ_SetMain(gn)
-    GNode   *gn;	/* The main target we'll create */
+Targ_SetMain(GNode *gn)
 {
     mainTarg = gn;
 }
 
 static void
-TargPrintName(gnp)
-    void *gnp;
+TargPrintName(void *gnp)
 {
     GNode *gn = (GNode *)gnp;
     printf("%s ", gn->name);
@@ -400,8 +390,7 @@ TargPrintName(gnp)
 
 
 void
-Targ_PrintCmd(cmd)
-    void *cmd;
+Targ_PrintCmd(void *cmd)
 {
     printf("\t%s\n", (char *)cmd);
 }
@@ -420,8 +409,7 @@ Targ_PrintCmd(cmd)
  *-----------------------------------------------------------------------
  */
 char *
-Targ_FmtTime(time)
-    TIMESTAMP	 time;
+Targ_FmtTime(TIMESTAMP time)
 {
     struct tm		*parts;
     static char 	buf[128];
@@ -443,8 +431,7 @@ Targ_FmtTime(time)
  *-----------------------------------------------------------------------
  */
 void
-Targ_PrintType(type)
-    int    type;
+Targ_PrintType(int type)
 {
     int    tbit;
 
@@ -483,9 +470,7 @@ Targ_PrintType(type)
  *-----------------------------------------------------------------------
  */
 static void
-TargPrintNode(gn, pass)
-    GNode	  *gn;
-    int 	  pass;
+TargPrintNode(GNode *gn, int pass)
 {
     if (!OP_NOP(gn->type)) {
 	printf("#\n");
@@ -558,8 +543,7 @@ TargPrintNode(gn, pass)
  *-----------------------------------------------------------------------
  */
 static void
-TargPrintOnlySrc(gn)
-    GNode *gn;
+TargPrintOnlySrc(GNode *gn)
 {
     if (OP_NOP(gn->type))
 	printf("#\t%s [%s]\n", gn->name,
@@ -573,8 +557,7 @@ TargPrintOnlySrc(gn)
  *-----------------------------------------------------------------------
  */
 void
-Targ_PrintGraph(pass)
-    int 		pass;	/* Which pass this is. 1 => no processing
+Targ_PrintGraph(int pass)	/* Which pass this is. 1 => no processing
 				 * 2 => processing done */
 {
     GNode		*gn;

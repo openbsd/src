@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: suff.c,v 1.50 2003/06/03 02:56:12 millert Exp $ */
+/*	$OpenBSD: suff.c,v 1.51 2004/04/07 13:11:36 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -198,23 +198,21 @@ static void PrintAddr(void *);
 /*-
  *-----------------------------------------------------------------------
  * SuffStrIsPrefix  --
- *	See if pref is a prefix of str.
+ *	See if prefix is a prefix of str.
  *
  * Results:
  *	NULL if it ain't, pointer to character in str after prefix if so
  *-----------------------------------------------------------------------
  */
 static char    *
-SuffStrIsPrefix(pref, str)
-    const char	*pref;	/* possible prefix */
-    const char	*str;	/* string to check */
+SuffStrIsPrefix(const char *prefix, const char *str)
 {
-    while (*str && *pref == *str) {
-	pref++;
+    while (*str && *prefix == *str) {
+	prefix++;
 	str++;
     }
 
-    return *pref ? NULL : (char *)str;
+    return *prefix ? NULL : (char *)str;
 }
 
 /*-
@@ -229,9 +227,7 @@ SuffStrIsPrefix(pref, str)
  *-----------------------------------------------------------------------
  */
 static char *
-SuffSuffIsSuffix(s, str)
-    Suff	   *s;		/* possible suffix */
-    const char	   *str;	/* string to examine */
+SuffSuffIsSuffix(Suff *s, const char *str)
 {
     const char	   *p1; 	/* Pointer into suffix name */
     const char	   *p2; 	/* Pointer into string being examined */
@@ -260,9 +256,7 @@ SuffSuffIsSuffix(s, str)
  *-----------------------------------------------------------------------
  */
 static int
-SuffSuffIsSuffixP(s, str)
-    void	*s;
-    const void	*str;
+SuffSuffIsSuffixP(void *s, const void *str)
 {
     return !SuffSuffIsSuffix((Suff *)s, (const char *)str);
 }
@@ -278,9 +272,7 @@ SuffSuffIsSuffixP(s, str)
  *-----------------------------------------------------------------------
  */
 static int
-SuffSuffHasNameP(s, sname)
-    void	*s;		    /* Suffix to check */
-    const void	*sname; 	    /* Desired name */
+SuffSuffHasNameP(void *s, const void *sname)
 {
     return strcmp((const char *)sname, ((Suff *)s)->name);
 }
@@ -298,9 +290,7 @@ SuffSuffHasNameP(s, sname)
  *-----------------------------------------------------------------------
  */
 static int
-SuffSuffIsPrefix(s, str)
-    void	*s;		/* suffix to compare */
-    const void	*str;	/* string to examine */
+SuffSuffIsPrefix(void *s, const void *str)
 {
     return SuffStrIsPrefix(((Suff *)s)->name, (const char *)str) == NULL ? 1 : 0;
 }
@@ -315,9 +305,7 @@ SuffSuffIsPrefix(s, str)
  *-----------------------------------------------------------------------
  */
 static int
-SuffGNHasNameP(gn, name)
-    void	*gn;		/* current node we're looking at */
-    const void	*name;		/* name we're looking for */
+SuffGNHasNameP(void *gn, const void *name)
 {
     return strcmp((const char *)name, ((GNode *)gn)->name);
 }
@@ -325,9 +313,7 @@ SuffGNHasNameP(gn, name)
 	    /*********** Maintenance Functions ************/
 
 static void
-SuffUnRef(l, sp)
-    Lst 	l;
-    Suff	*sp;
+SuffUnRef(Lst l, Suff *sp)
 {
     LstNode ln = Lst_Member(l, sp);
     if (ln != NULL)
@@ -345,8 +331,7 @@ SuffUnRef(l, sp)
  *-----------------------------------------------------------------------
  */
 static void
-SuffFree(sp)
-    void	*sp;
+SuffFree(void *sp)
 {
     Suff	*s = (Suff *)sp;
 
@@ -378,9 +363,7 @@ SuffFree(sp)
  *-----------------------------------------------------------------------
  */
 static void
-SuffInsert(l, s)
-    Lst 	  l;		/* the list where in s should be inserted */
-    Suff	  *s;		/* the suffix to insert */
+SuffInsert(Lst l, Suff *s)
 {
     LstNode	  ln;		/* current element in l we're examining */
     Suff	  *s2 = NULL;	/* the suffix descriptor in this element */
@@ -426,7 +409,7 @@ SuffInsert(l, s)
  *-----------------------------------------------------------------------
  */
 void
-Suff_ClearSuffixes()
+Suff_ClearSuffixes(void)
 {
 #ifdef CLEANUP
     Lst_ConcatDestroy(&suffClean, &sufflist);
@@ -449,10 +432,10 @@ Suff_ClearSuffixes()
  *-----------------------------------------------------------------------
  */
 static bool
-SuffParseTransform(str, srcPtr, targPtr)
-    const char		*str;		/* String being parsed */
-    Suff		**srcPtr;	/* Place to store source of trans. */
-    Suff		**targPtr;	/* Place to store target of trans. */
+SuffParseTransform(
+    const char		*str,		/* String being parsed */
+    Suff		**srcPtr,	/* Place to store source of trans. */
+    Suff		**targPtr)	/* Place to store target of trans. */
 {
     LstNode		srcLn;	    /* element in suffix list of trans source*/
     Suff		*src;	    /* Source of transformation */
@@ -524,8 +507,7 @@ SuffParseTransform(str, srcPtr, targPtr)
  *-----------------------------------------------------------------------
  */
 bool
-Suff_IsTransform(str)
-    const char	  *str; 	/* string to check */
+Suff_IsTransform(const char *str)
 {
     Suff	  *src, *targ;
 
@@ -547,8 +529,7 @@ Suff_IsTransform(str)
  *-----------------------------------------------------------------------
  */
 GNode *
-Suff_AddTransform(line)
-    const char	  *line;	/* name of transformation to add */
+Suff_AddTransform(const char *line)
 {
     GNode	  *gn;		/* GNode of transformation rule */
     Suff	  *s,		/* source suffix */
@@ -608,8 +589,7 @@ Suff_AddTransform(line)
  *-----------------------------------------------------------------------
  */
 void
-Suff_EndTransform(gnp)
-    void *gnp;		/* Node for transformation */
+Suff_EndTransform(void *gnp)
 {
     GNode *gn = (GNode *)gnp;
 
@@ -659,9 +639,9 @@ Suff_EndTransform(gnp)
  *-----------------------------------------------------------------------
  */
 static void
-SuffRebuildGraph(transformp, sp)
-    void	*transformp;	/* Transformation to test */
-    void	*sp;		/* Suffix to rebuild */
+SuffRebuildGraph(
+    void	*transformp,	/* Transformation to test */
+    void	*sp)		/* Suffix to rebuild */
 {
     GNode	*transform = (GNode *)transformp;
     Suff	*s = (Suff *)sp;
@@ -712,8 +692,7 @@ SuffRebuildGraph(transformp, sp)
  *-----------------------------------------------------------------------
  */
 void
-Suff_AddSuffix(str)
-    char	  *str;     /* the name of the suffix to add */
+Suff_AddSuffix(char *str)
 {
     Suff	  *s;	    /* new suffix descriptor */
     LstNode	  ln;
@@ -751,8 +730,7 @@ Suff_AddSuffix(str)
  *-----------------------------------------------------------------------
  */
 Lst
-Suff_GetPath(sname)
-    char	  *sname;
+Suff_GetPath(char *sname)
 {
     LstNode	  ln;
     Suff	  *s;
@@ -782,7 +760,7 @@ Suff_GetPath(sname)
  *-----------------------------------------------------------------------
  */
 void
-Suff_DoPaths()
+Suff_DoPaths(void)
 {
     Suff		*s;
     LstNode		ln;
@@ -832,8 +810,7 @@ Suff_DoPaths()
  *-----------------------------------------------------------------------
  */
 void
-Suff_AddInclude(sname)
-    char	  *sname;     /* Name of suffix to mark */
+Suff_AddInclude(char *sname)	/* Name of suffix to mark */
 {
     LstNode	  ln;
     Suff	  *s;
@@ -858,8 +835,7 @@ Suff_AddInclude(sname)
  *-----------------------------------------------------------------------
  */
 void
-Suff_AddLib(sname)
-    char	  *sname;     /* Name of suffix to mark */
+Suff_AddLib(char *sname)	/* Name of suffix to mark */
 {
     LstNode	  ln;
     Suff	  *s;
@@ -885,9 +861,9 @@ Suff_AddLib(sname)
  *-----------------------------------------------------------------------
  */
 static void
-SuffAddSrc(sp, lsp)
-    void *sp;	    /* suffix for which to create a Src structure */
-    void *lsp;	    /* list and parent for the new Src */
+SuffAddSrc(
+    void *sp,	    /* suffix for which to create a Src structure */
+    void *lsp)	    /* list and parent for the new Src */
 {
     Suff	*s = (Suff *)sp;
     LstSrc	*ls = (LstSrc *)lsp;
@@ -948,9 +924,9 @@ SuffAddSrc(sp, lsp)
  *-----------------------------------------------------------------------
  */
 static void
-SuffAddLevel(l, targ)
-    Lst 	   l;		/* list to which to add the new level */
-    Src 	   *targ;	/* Src structure to use as the parent */
+SuffAddLevel(
+    Lst 	   l,		/* list to which to add the new level */
+    Src 	   *targ)	/* Src structure to use as the parent */
 {
     LstSrc	   ls;
 
@@ -973,8 +949,7 @@ SuffAddLevel(l, targ)
  *----------------------------------------------------------------------
  */
 static int
-SuffRemoveSrc(l)
-    Lst l;
+SuffRemoveSrc(Lst l)
 {
     LstNode ln;
     Src *s;
@@ -1032,9 +1007,9 @@ SuffRemoveSrc(l)
  *-----------------------------------------------------------------------
  */
 static Src *
-SuffFindThem(srcs, slst)
-    Lst 	   srcs;	/* list of Src structures to search through */
-    Lst 	   slst;
+SuffFindThem(
+    Lst 	   srcs,	/* list of Src structures to search through */
+    Lst 	   slst)
 {
     Src 	   *s;		/* current Src */
     Src 	   *rs; 	/* returned Src */
@@ -1097,9 +1072,9 @@ SuffFindThem(srcs, slst)
  *-----------------------------------------------------------------------
  */
 static Src *
-SuffFindCmds(targ, slst)
-    Src 	*targ;	/* Src structure to play with */
-    Lst 	slst;
+SuffFindCmds(
+    Src 	*targ,	/* Src structure to play with */
+    Lst 	slst)
 {
     LstNode		ln;	/* General-purpose list node */
     GNode		*t,	/* Target GNode */
@@ -1168,10 +1143,7 @@ SuffFindCmds(targ, slst)
 }
 
 static void
-SuffExpandVarChildren(after, cgn, pgn)
-    LstNode	after;
-    GNode	*cgn;
-    GNode	*pgn;
+SuffExpandVarChildren(LstNode after, GNode *cgn, GNode *pgn)
 {
     GNode	*gn;		/* New source 8) */
     char	*cp;		/* Expanded value */
@@ -1256,10 +1228,7 @@ SuffExpandVarChildren(after, cgn, pgn)
 }
 
 static void
-SuffExpandWildChildren(after, cgn, pgn)
-    LstNode	after;
-    GNode	*cgn;
-    GNode	*pgn;
+SuffExpandWildChildren(LstNode after, GNode *cgn, GNode *pgn)
 {
     LstNode	ln;		/* List element for old source */
     char	*cp;		/* Expanded value */
@@ -1327,9 +1296,9 @@ SuffExpandWildChildren(after, cgn, pgn)
  *-----------------------------------------------------------------------
  */
 static void
-SuffExpandChildren(cgnp, pgnp)
-    void	*cgnp;		/* Child to examine */
-    void	*pgnp;		/* Parent node being processed */
+SuffExpandChildren(
+    void	*cgnp,		/* Child to examine */
+    void	*pgnp)		/* Parent node being processed */
 {
     GNode	*cgn = (GNode *)cgnp;
     GNode	*pgn = (GNode *)pgnp;
@@ -1374,11 +1343,11 @@ SuffExpandChildren(cgnp, pgnp)
  *-----------------------------------------------------------------------
  */
 static bool
-SuffApplyTransform(tGn, sGn, t, s)
-    GNode	*tGn;	/* Target node */
-    GNode	*sGn;	/* Source node */
-    Suff	*t;	/* Target suffix */
-    Suff	*s;	/* Source suffix */
+SuffApplyTransform(
+    GNode	*tGn,	/* Target node */
+    GNode	*sGn,	/* Source node */
+    Suff	*t,	/* Target suffix */
+    Suff	*s)	/* Source suffix */
 {
     LstNode	ln;	/* General node */
     LstNode	np;	    /* Next node for loop */
@@ -1456,9 +1425,9 @@ SuffApplyTransform(tGn, sGn, t, s)
  *-----------------------------------------------------------------------
  */
 static void
-SuffFindArchiveDeps(gn, slst)
-    GNode	*gn;	    /* Node for which to locate dependencies */
-    Lst 	slst;
+SuffFindArchiveDeps(
+    GNode	*gn,	    /* Node for which to locate dependencies */
+    Lst 	slst)
 {
     char	*eoarch;    /* End of archive portion */
     char	*eoname;    /* End of member portion */
@@ -1551,9 +1520,9 @@ SuffFindArchiveDeps(gn, slst)
  *-----------------------------------------------------------------------
  */
 static void
-SuffFindNormalDeps(gn, slst)
-    GNode	*gn;	    /* Node for which to find sources */
-    Lst 	slst;
+SuffFindNormalDeps(
+    GNode	*gn,	    /* Node for which to find sources */
+    Lst 	slst)
 {
     char	*eoname;    /* End of name */
     char	*sopref;    /* Start of prefix */
@@ -1873,8 +1842,7 @@ sfnd_return:
  */
 
 void
-Suff_FindDeps(gn)
-    GNode *gn;
+Suff_FindDeps(GNode *gn)
 {
 
     SuffFindDeps(gn, &srclist);
@@ -1884,9 +1852,7 @@ Suff_FindDeps(gn)
 
 
 static void
-SuffFindDeps(gn, slst)
-    GNode	  *gn;		/* node we're dealing with */
-    Lst 	  slst;
+SuffFindDeps(GNode *gn, Lst slst)
 {
     if (gn->type & OP_DEPS_FOUND) {
 	/*
@@ -1947,8 +1913,7 @@ SuffFindDeps(gn, slst)
  *-----------------------------------------------------------------------
  */
 void
-Suff_SetNull(name)
-    char    *name;	    /* Name of null suffix */
+Suff_SetNull(char *name)
 {
     Suff    *s;
     LstNode ln;
@@ -1980,7 +1945,7 @@ Suff_SetNull(name)
  *-----------------------------------------------------------------------
  */
 void
-Suff_Init()
+Suff_Init(void)
 {
     Static_Lst_Init(&sufflist);
 #ifdef CLEANUP
@@ -2022,7 +1987,7 @@ Suff_Init()
 
 #ifdef CLEANUP
 void
-Suff_End()
+Suff_End(void)
 {
     Lst_Destroy(&sufflist, SuffFree);
     Lst_Destroy(&suffClean, SuffFree);
@@ -2036,15 +2001,13 @@ Suff_End()
 
 /********************* DEBUGGING FUNCTIONS **********************/
 
-static void SuffPrintName(s)
-    void *s;
+static void SuffPrintName(void *s)
 {
     printf("%s ", ((Suff *)s)->name);
 }
 
 static void
-SuffPrintSuff(sp)
-    void *sp;
+SuffPrintSuff(void *sp)
 {
     Suff    *s = (Suff *)sp;
     int     flags;
@@ -2085,8 +2048,7 @@ SuffPrintSuff(sp)
 }
 
 static void
-SuffPrintTrans(tp)
-    void *tp;
+SuffPrintTrans(void *tp)
 {
     GNode   *t = (GNode *)tp;
 
@@ -2098,7 +2060,7 @@ SuffPrintTrans(tp)
 }
 
 void
-Suff_PrintAll()
+Suff_PrintAll(void)
 {
     printf("#*** Suffixes:\n");
     Lst_Every(&sufflist, SuffPrintSuff);
@@ -2109,8 +2071,7 @@ Suff_PrintAll()
 
 #ifdef DEBUG_SRC
 static void
-PrintAddr(a)
-    void *a;
+PrintAddr(void *a)
 {
     printf("%lx ", (unsigned long)a);
 }

@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: cmd_exec.c,v 1.4 2003/10/19 20:23:34 tedu Exp $ */
+/*	$OpenBSD: cmd_exec.c,v 1.5 2004/04/07 13:11:35 espie Exp $ */
 /*
  * Copyright (c) 2001 Marc Espie.
  *
@@ -38,9 +38,7 @@
 #include "pathnames.h"
 
 char *
-Cmd_Exec(cmd, err)
-    const char	*cmd;
-    char	**err;
+Cmd_Exec(const char *cmd, char **err)
 {
     char	*args[4];	/* Args for invoking the shell */
     int 	fds[2]; 	/* Pipe streams */

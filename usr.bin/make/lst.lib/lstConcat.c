@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lstConcat.c,v 1.15 2003/06/03 02:56:12 millert Exp $	*/
+/*	$OpenBSD: lstConcat.c,v 1.16 2004/04/07 13:11:36 espie Exp $	*/
 /*	$NetBSD: lstConcat.c,v 1.6 1996/11/06 17:59:34 christos Exp $	*/
 
 /*
@@ -54,13 +54,11 @@
  *	should be called first.
  *
  * Side Effects:
- *	New elements are created and appended the the first list.
+ *	New elements are created and appended to the first list.
  *-----------------------------------------------------------------------
  */
 void
-Lst_Concat(l1, l2)
-    Lst 		l1;	/* The list to which l2 is to be appended */
-    Lst 		l2;	/* The list to append to l1 */
+Lst_Concat(Lst l1, Lst l2)
 {
     LstNode		ln;	/* original LstNode */
     LstNode		nln;	/* new LstNode */

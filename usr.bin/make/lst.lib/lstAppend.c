@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lstAppend.c,v 1.15 2003/06/03 02:56:12 millert Exp $	*/
+/*	$OpenBSD: lstAppend.c,v 1.16 2004/04/07 13:11:36 espie Exp $	*/
 /*	$NetBSD: lstAppend.c,v 1.5 1996/11/06 17:59:31 christos Exp $	*/
 
 /*
@@ -58,42 +58,37 @@
  *-----------------------------------------------------------------------
  */
 void
-Lst_Append(l, ln, d)
-    Lst 	l;	/* affected list */
-    LstNode	ln;	/* node after which to append the datum */
-    void	*d;	/* said datum */
+Lst_Append(Lst l, LstNode after, void *d)
 {
     LstNode	nLNode;
 
-    if (ln == NULL && !Lst_IsEmpty(l))
+    if (after == NULL && !Lst_IsEmpty(l))
 	return;
 
-    if (ln != NULL && Lst_IsEmpty(l))
+    if (after != NULL && Lst_IsEmpty(l))
 	return;
 
     PAlloc(nLNode, LstNode);
     nLNode->datum = d;
 
-    if (ln == NULL) {
+    if (after == NULL) {
 	nLNode->nextPtr = nLNode->prevPtr = NULL;
 	l->firstPtr = l->lastPtr = nLNode;
     } else {
-	nLNode->prevPtr = ln;
-	nLNode->nextPtr = ln->nextPtr;
+	nLNode->prevPtr = after;
+	nLNode->nextPtr = after->nextPtr;
 
-	ln->nextPtr = nLNode;
+	after->nextPtr = nLNode;
 	if (nLNode->nextPtr != NULL)
 	    nLNode->nextPtr->prevPtr = nLNode;
 
-	if (ln == l->lastPtr)
+	if (after == l->lastPtr)
 	    l->lastPtr = nLNode;
     }
 }
 
 void
-Lst_AtEnd(l, d)
-    Lst 	l;
-    void	*d;
+Lst_AtEnd(Lst l, void *d)
 {
     LstNode	ln;
 

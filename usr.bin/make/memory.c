@@ -1,5 +1,5 @@
 /* $OpenPackages$ */
-/* $OpenBSD: memory.c,v 1.2 2003/06/03 02:56:12 millert Exp $ */
+/* $OpenBSD: memory.c,v 1.3 2004/04/07 13:11:36 espie Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -52,13 +52,12 @@ static void enomem(size_t);
  *	malloc, but die on error.
  */
 void *
-emalloc(len)
-	size_t len;
+emalloc(size_t size)
 {
 	void *p;
 
-	if ((p = malloc(len)) == NULL)
-		enomem(len);
+	if ((p = malloc(size)) == NULL)
+		enomem(size);
 	return p;
 }
 
@@ -67,8 +66,7 @@ emalloc(len)
  *	strdup, but die on error.
  */
 char *
-estrdup(str)
-	const char *str;
+estrdup(const char *str)
 {
 	char *p;
 	size_t size;
@@ -85,9 +83,7 @@ estrdup(str)
  *	realloc, but die on error.
  */
 void *
-erealloc(ptr, size)
-	void *ptr;
-	size_t size;
+erealloc(void *ptr, size_t size)
 {
 	if ((ptr = realloc(ptr, size)) == NULL)
 		enomem(size);
@@ -95,9 +91,7 @@ erealloc(ptr, size)
 }
 
 void *
-ecalloc(s1, s2)
-	size_t s1;
-	size_t s2;
+ecalloc(size_t s1, size_t s2)
 {
 	void *p;
 
@@ -108,26 +102,19 @@ ecalloc(s1, s2)
 
 /* Support routines for hash tables.  */
 void *
-hash_alloc(s, u)
-	size_t s;
-	void *u 	UNUSED;
+hash_alloc(size_t s, void *u UNUSED)
 {
 	return ecalloc(s, 1);
 }
 
 void
-hash_free(p, s, u)
-	void *p;
-	size_t s	UNUSED;
-	void *u 	UNUSED;
+hash_free(void *p, size_t s UNUSED, void *u UNUSED)
 {
 	free(p);
 }
 
 void *
-element_alloc(s, u)
-	size_t s;
-	void *u 	UNUSED;
+element_alloc(size_t s, void *u UNUSED)
 {
 	return emalloc(s);
 }
@@ -139,8 +126,7 @@ element_alloc(s, u)
  *	die when out of memory.
  */
 void
-enomem(size)
-	size_t size;
+enomem(size_t size)
 {
 	fprintf(stderr, "make: %s (%lu)\n", strerror(errno), (u_long)size);
 	exit(2);
@@ -151,9 +137,7 @@ enomem(size)
  *	change environment, die on error.
  */
 void
-esetenv(name, value)
-	const char *name;
-	const char *value;
+esetenv(const char *name, const char *value)
 {
 	if (setenv(name, value, 1) == 0)
 	    return;
@@ -168,8 +152,7 @@ esetenv(name, value)
  *	Remove a file carefully, avoiding directories.
  */
 int
-eunlink(file)
-	const char *file;
+eunlink(const char *file)
 {
 	struct stat st;
 

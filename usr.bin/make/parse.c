@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: parse.c,v 1.68 2003/06/03 02:56:12 millert Exp $	*/
+/*	$OpenBSD: parse.c,v 1.69 2004/04/07 13:11:36 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -233,8 +233,7 @@ static void ParseDoCommands(const char *);
  *----------------------------------------------------------------------
  */
 static int
-ParseFindKeyword(str)
-    const char	    *str;		/* String to find */
+ParseFindKeyword(const char *str)	/* keyword to look up */
 {
     int 	    start,
 		    end,
@@ -272,9 +271,9 @@ ParseFindKeyword(str)
  *---------------------------------------------------------------------
  */
 static void
-ParseLinkSrc(pgn, cgn)
-    GNode		*pgn;	/* The parent node */
-    GNode		*cgn;	/* The child node */
+ParseLinkSrc(
+    GNode		*pgn,	/* The parent node */
+    GNode		*cgn)	/* The child node */
 {
     if (Lst_AddNew(&pgn->children, cgn)) {
 	if (specType == Not)
@@ -297,10 +296,9 @@ ParseLinkSrc(pgn, cgn)
  *---------------------------------------------------------------------
  */
 static int
-ParseDoOp(gn, op)
-    GNode	   *gn;	/* The node to which the operator is to be
-				 * applied */
-    int	   	   op;	/* The operator to apply */
+ParseDoOp(
+    GNode	   *gn,	/* The node to which the operator is to be applied */
+    int	   	   op)	/* The operator to apply */
 {
     /*
      * If the dependency mask of the operator and the node don't match and
@@ -367,9 +365,7 @@ ParseDoOp(gn, op)
  *---------------------------------------------------------------------
  */
 static int
-ParseAddDep(p, s)
-    GNode *p;
-    GNode *s;
+ParseAddDep(GNode *p, GNode *s)
 {
     if (p->order < s->order) {
 	/* XXX: This can cause loops, and loops can cause unmade targets,
@@ -399,10 +395,9 @@ ParseAddDep(p, s)
  *---------------------------------------------------------------------
  */
 static void
-ParseDoSrc(tOp, src)
-    int 	tOp;	/* operator (if any) from special targets */
-    const char	*src;	/* name of the source to handle */
-
+ParseDoSrc(
+    int 	tOp,	/* operator (if any) from special targets */
+    const char	*src)	/* name of the source to handle */
 {
     GNode	*gn = NULL;
 
@@ -511,9 +506,9 @@ ParseDoSrc(tOp, src)
  *-----------------------------------------------------------------------
  */
 static int
-ParseFindMain(gnp, dummy)
-    void *gnp;	    /* Node to examine */
-    void *dummy 	UNUSED;
+ParseFindMain(
+    void *gnp,	    /* Node to examine */
+    void *dummy 	UNUSED)
 {
     GNode	  *gn = (GNode *)gnp;
     if ((gn->type & OP_NOTARGET) == 0) {
@@ -535,9 +530,7 @@ ParseFindMain(gnp, dummy)
  *-----------------------------------------------------------------------
  */
 static void
-ParseAddDir(path, name)
-    void *path;
-    void *name;
+ParseAddDir(void *path, void *name)
 {
     Dir_AddDir((Lst)path, (char *)name);
 }
@@ -549,8 +542,7 @@ ParseAddDir(path, name)
  *-----------------------------------------------------------------------
  */
 static void
-ParseClearPath(p)
-    void	*p;
+ParseClearPath(void *p)
 {
     Lst 	path = (Lst)p;
 
@@ -590,8 +582,7 @@ ParseClearPath(p)
  *---------------------------------------------------------------------
  */
 static void
-ParseDoDependency(line)
-    char	   *line;	/* the line to parse */
+ParseDoDependency(char *line)	/* the line to parse */
 {
     char	   *cp; 	/* our current position */
     GNode	   *gn; 	/* a general purpose temporary node */
@@ -1081,9 +1072,9 @@ ParseDoDependency(line)
  *	A new element is added to the commands list of the node.
  */
 static void
-ParseAddCmd(gnp, cmd)
-    void *gnp;	/* the node to which the command is to be added */
-    void *cmd;	/* the command to add */
+ParseAddCmd(
+    void *gnp,	/* the node to which the command is to be added */
+    void *cmd)	/* the command to add */
 {
     GNode *gn = (GNode *)gnp;
     /* if target already supplied, ignore commands */
@@ -1109,8 +1100,7 @@ ParseAddCmd(gnp, cmd)
  *-----------------------------------------------------------------------
  */
 static void
-ParseHasCommands(gnp)
-    void *gnp;	    /* Node to examine */
+ParseHasCommands(void *gnp)	    /* Node to examine */
 {
     GNode *gn = (GNode *)gnp;
     if (!Lst_IsEmpty(&gn->commands)) {
@@ -1126,8 +1116,7 @@ ParseHasCommands(gnp)
  *-----------------------------------------------------------------------
  */
 void
-Parse_AddIncludeDir(dir)
-    const char	*dir;	/* The name of the directory to add */
+Parse_AddIncludeDir(const char	*dir)	/* The name of the directory to add */
 {
     Dir_AddDir(parseIncPath, dir);
 }
@@ -1148,8 +1137,7 @@ Parse_AddIncludeDir(dir)
  *---------------------------------------------------------------------
  */
 static void
-ParseDoInclude(file)
-    char	  *file;	/* file specification */
+ParseDoInclude(char	  *file)/* file specification */
 {
     char	  endc; 	/* the character which ends the file spec */
     char	  *cp;		/* current position in file spec */
@@ -1204,8 +1192,7 @@ ParseDoInclude(file)
  *---------------------------------------------------------------------
  */
 static void
-ParseTraditionalInclude(file)
-    char	  *file;	/* file specification */
+ParseTraditionalInclude(char *file) 	/* file specification */
 {
     char	  *cp;		/* current position in file spec */
 
@@ -1234,8 +1221,7 @@ ParseTraditionalInclude(file)
  *---------------------------------------------------------------------
  */
 static void
-ParseConditionalInclude(file)
-    char	  *file;	/* file specification */
+ParseConditionalInclude(char *file)/* file specification */
 {
     char	  *cp;		/* current position in file spec */
 
@@ -1256,11 +1242,8 @@ ParseConditionalInclude(file)
 
 /* Common part to lookup and read an include file.  */
 static void
-ParseLookupIncludeFile(spec, endSpec, isSystem, errIfNotFound)
-    char *spec;
-    char *endSpec;
-    bool isSystem;
-    bool errIfNotFound;
+ParseLookupIncludeFile(char *spec, char *endSpec, bool isSystem, 
+    bool errIfNotFound)
 {
     char *file;
     char *fullname;
@@ -1342,9 +1325,7 @@ ParseLookupIncludeFile(spec, endSpec, isSystem, errIfNotFound)
 /* Strip comments from the line. May return either a copy of the line, or
  * the line itself.  */
 static char *
-strip_comments(copy, line)
-    Buffer copy;
-    const char *line;
+strip_comments(Buffer copy, const char *line)
 {
     const char *comment;
     const char *p;
@@ -1375,10 +1356,7 @@ strip_comments(copy, line)
 }
 
 static bool
-ParseIsCond(linebuf, copy, line)
-    Buffer	linebuf;
-    Buffer	copy;
-    char	*line;
+ParseIsCond(Buffer linebuf, Buffer copy, char *line)
 {
 
     char	*stripped;
@@ -1456,7 +1434,7 @@ ParseIsCond(linebuf, copy, line)
  *-----------------------------------------------------------------------
  */
 static void
-ParseFinishDependency()
+ParseFinishDependency(void)
 {
     Array_Every(&gtargets, Suff_EndTransform);
     Array_Every(&gtargets, ParseHasCommands);
@@ -1464,8 +1442,7 @@ ParseFinishDependency()
 }
 
 static void
-ParseDoCommands(line)
-    const char *line;
+ParseDoCommands(const char *line)
 {
     /* add the command to the list of
      * commands of all targets in the dependency spec */
@@ -1478,9 +1455,9 @@ ParseDoCommands(line)
 }
 
 void
-Parse_File(name, stream)
-    const char	  *name;	/* the name of the file being read */
-    FILE	  *stream;	/* Stream open to makefile to parse */
+Parse_File(
+    const char	  *name,	/* the name of the file being read */
+    FILE	  *stream)	/* Stream open to makefile to parse */
 {
     char	  *cp,		/* pointer into the line */
 		  *line;	/* the line we're working on */
@@ -1584,7 +1561,7 @@ Parse_File(name, stream)
 }
 
 void
-Parse_Init()
+Parse_Init(void)
 {
     mainNode = NULL;
     Static_Lst_Init(parseIncPath);
@@ -1600,7 +1577,7 @@ Parse_Init()
 
 #ifdef CLEANUP
 void
-Parse_End()
+Parse_End(void)
 {
     Lst_Destroy(&targCmds, (SimpleProc)free);
     Lst_Destroy(sysIncPath, Dir_Destroy);
@@ -1611,8 +1588,7 @@ Parse_End()
 
 
 void
-Parse_MainName(listmain)
-    Lst 	  listmain;	/* result list */
+Parse_MainName(Lst listmain)	/* result list */
 {
 
     if (mainNode == NULL) {
