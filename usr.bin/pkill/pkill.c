@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkill.c,v 1.4 2004/06/24 18:04:45 millert Exp $	*/
+/*	$OpenBSD: pkill.c,v 1.5 2004/07/15 13:55:10 mpech Exp $	*/
 /*	$NetBSD: pkill.c,v 1.5 2002/10/27 11:49:34 kleink Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: pkill.c,v 1.4 2004/06/24 18:04:45 millert Exp $";
+static const char rcsid[] = "$OpenBSD: pkill.c,v 1.5 2004/07/15 13:55:10 mpech Exp $";
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -291,7 +291,7 @@ main(int argc, char **argv)
 	}
 
 	for (i = 0, kp = plist; i < nproc; i++, kp++) {
-		if ((kp->p_flag & P_SYSTEM) != 0)
+		if ((kp->p_flag & P_SYSTEM) != 0 || kp->p_pid == mypid)
 			continue;
 
 		SLIST_FOREACH(li, &ruidlist, li_chain)
@@ -385,15 +385,12 @@ main(int argc, char **argv)
 	 * Take the appropriate action for each matched process, if any.
 	 */
 	for (i = 0, rv = STATUS_NOMATCH, kp = plist; i < nproc; i++, kp++) {
-		if (kp->p_pid == mypid)
+		if ((kp->p_flag & P_SYSTEM) != 0 || kp->p_pid == mypid)
 			continue;
 		if (selected[i]) {
 			if (inverse)
 				continue;
 		} else if (!inverse)
-			continue;
-
-		if ((kp->p_flag & P_SYSTEM) != 0)
 			continue;
 
 		if ((*action)(kp) == -1)
