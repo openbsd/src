@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.6 1997/07/18 05:46:12 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.7 1997/07/18 05:49:03 millert Exp $	*/
 /*	$NetBSD: misc.c,v 1.4 1995/03/07 21:26:23 cgd Exp $	*/
 
 /*-
@@ -85,7 +85,7 @@ parsekey(name, needvaluep)
 	k = (KEY *)bsearch(&tmp, keylist, sizeof(keylist) / sizeof(KEY),
 	    sizeof(KEY), keycompare);
 	if (k == NULL)
-		err("unknown keyword %s", name);
+		error("unknown keyword %s", name);
 
 	if (needvaluep)
 		*needvaluep = k->flags & NEEDVALUE ? 1 : 0;
@@ -107,9 +107,9 @@ keycompare(a, b)
 
 void
 #if __STDC__
-err(const char *fmt, ...)
+error(const char *fmt, ...)
 #else
-err(fmt, va_alist)
+error(fmt, va_alist)
 	char *fmt;
         va_dcl
 #endif

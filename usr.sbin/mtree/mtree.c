@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtree.c,v 1.6 1997/07/18 05:46:13 millert Exp $	*/
+/*	$OpenBSD: mtree.c,v 1.7 1997/07/18 05:49:03 millert Exp $	*/
 /*	$NetBSD: mtree.c,v 1.7 1996/09/05 23:29:22 thorpej Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: mtree.c,v 1.6 1997/07/18 05:46:13 millert Exp $";
+static char rcsid[] = "$OpenBSD: mtree.c,v 1.7 1997/07/18 05:49:03 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -92,7 +92,7 @@ main(argc, argv)
 			break;
 		case 'f':
 			if (!(freopen(optarg, "r", stdin)))
-				err("%s: %s", optarg, strerror(errno));
+				error("%s: %s", optarg, strerror(errno));
 			break;
 		case 'i':
 			iflag = 1;
@@ -121,7 +121,7 @@ main(argc, argv)
 			sflag = 1;
 			crc_total = ~strtol(optarg, &p, 0);
 			if (*p)
-				err("illegal seed value -- %s", optarg);
+				error("illegal seed value -- %s", optarg);
 		case 't':
 			tflag = 1;
 			break;
@@ -146,10 +146,10 @@ main(argc, argv)
 		usage();
 
 	if (dir && chdir(dir))
-		err("%s: %s", dir, strerror(errno));
+		error("%s: %s", dir, strerror(errno));
 
 	if ((cflag || sflag) && !getwd(fullpath))
-		err("%s", fullpath);
+		error("%s", fullpath);
 
 	if (cflag) {
 		cwalk();
