@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.4 1997/08/26 13:38:09 niklas Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.5 1997/12/10 05:02:02 angelos Exp $	*/
 /*	$FreeBSD: scsi.c,v 1.11 1996/04/06 11:00:28 joerg Exp $	*/
 
 /*
@@ -650,13 +650,16 @@ edit_done(void)
 static void
 edit_init(void)
 {
+	int fd;
+
 	edit_rewind();
-	if (tmpnam(edit_name) == 0) {
-		perror("tmpnam failed");
+	strcpy(edit_name, "/var/tmp/scXXXXXXXX");
+	if ((fd = mkstemp(edit_name)) == -1) {
+		perror("mkstemp failed");
 		exit(errno);
 	}
-	if ( (edit_file = fopen(edit_name, "w")) == 0) {
-		perror(edit_name);
+	if ( (edit_file = fdopen(fd, "w+")) == 0) {
+		perror("fdopen failed");
 		exit(errno);
 	}
 	edit_opened = 1;
