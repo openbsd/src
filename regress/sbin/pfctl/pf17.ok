@@ -28,3 +28,17 @@ binat on lo0 inet6 from ::1 to ! <sometable> -> ::2
 binat on lo0 inet6 from ::1 to (lo1000000:0) -> ::2
 binat on lo0 inet6 from ::1 to ! (lo1000000:0) -> ::2
 binat on lo0 inet6 from (lo0:0) to <sometable> -> ::2
+binat on lo0 inet6 from ::1 to (self) -> ::1
+binat on lo0 inet6 from ::1 to (self:0) -> ::1
+binat on lo0 inet6 from ::1 to (self:peer) -> ::1
+binat on lo0 inet6 from ::1 to (self:peer:0) -> ::1
+binat on lo0 inet6 from ::1 to (self:broadcast) -> ::1
+binat on lo0 inet6 from ::1 to (self:broadcast:0) -> ::1
+binat on lo0 inet6 from ::1 to (self:network) -> ::1
+binat on lo0 inet6 from ::1 to (self:network:0) -> ::1
+binat on lo0 inet6 from ::1 to (self)/100 -> ::2
+binat on lo0 inet6 from ::1 to (self:0)/100 -> ::2
+binat on lo0 inet6 from ::1 to (self:peer)/100 -> ::2
+binat on lo0 inet6 from ::1 to (self:peer:0)/100 -> ::2
+binat on lo inet6 from (lo0:0) to ::1 -> ::2
+binat on tun inet6 from (lo0:0) to ::1 -> ::2
