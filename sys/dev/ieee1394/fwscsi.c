@@ -1,4 +1,4 @@
-/*	$OpenBSD: fwscsi.c,v 1.3 2002/12/13 22:25:31 tdeval Exp $	*/
+/*	$OpenBSD: fwscsi.c,v 1.4 2002/12/13 22:45:37 tdeval Exp $	*/
 
 /*
  * Copyright (c) 2002 Thierry Deval.  All rights reserved.
@@ -724,10 +724,11 @@ fwscsi_scsi_cmd(struct scsi_xfer *xs)
 			data_ab->ab_tcode =
 			    IEEE1394_TCODE_READ_REQUEST_DATABLOCK;
 #if 1
-			options |=
-			    ((sc->sc_fwnode->sc_sc1394.sc1394_max_receive - 1)
-			     & 0xF) << 4;
+			options |= (7 + fwsc->sc_sc1394.sc1394_link_speed) << 4;
 #else
+			options |=
+			    ((fwsc->sc_sc1394.sc1394_max_receive - 1)
+			     & 0xF) << 4;
 			options |= 0x9 << 4;	/* 2048 max payload	*/
 #endif
 			DPRINTFN(1, (" -- OUT(%d/%X)\n", datalen,
@@ -736,10 +737,11 @@ fwscsi_scsi_cmd(struct scsi_xfer *xs)
 			data_ab->ab_tcode =
 			    IEEE1394_TCODE_WRITE_REQUEST_DATABLOCK;
 			options |= 0x0800;
-#if 0
-			options |= (sc->sc_maxpayload & 0xF) << 4;
-			options |= ((sc->sc_fwnode->sc_sc1394.sc1394_max_receive -1) & 0xF) << 4;
+#if 1
+			options |= (7 + fwsc->sc_sc1394.sc1394_link_speed) << 4;
 #else
+			options |= (sc->sc_maxpayload & 0xF) << 4;
+			options |= ((fwsc->sc_sc1394.sc1394_max_receive -1) & 0xF) << 4;
 			options |= 0x9 << 4;	/* 2048 max payload	*/
 #endif
 			DPRINTFN(1, (" -- IN(%d/%X)\n", datalen,
