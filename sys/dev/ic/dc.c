@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.41 2001/12/06 22:19:35 jason Exp $	*/
+/*	$OpenBSD: dc.c,v 1.42 2001/12/08 04:39:09 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -968,13 +968,13 @@ void dc_setfilt_21143(sc)
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
 		h = dc_crc_le(sc, enm->enm_addrlo);
-		sp[h >> 4] |= 1 << (h & 0xF);
+		sp[h >> 4] |= htole32(1 << (h & 0xF));
 		ETHER_NEXT_MULTI(step, enm);
 	}
 
 	if (ifp->if_flags & IFF_BROADCAST) {
 		h = dc_crc_le(sc, (caddr_t)&etherbroadcastaddr);
-		sp[h >> 4] |= 1 << (h & 0xF);
+		sp[h >> 4] |= htole32(1 << (h & 0xF));
 	}
 
 	/* Set our MAC address */
