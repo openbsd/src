@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.64 2002/02/08 13:53:28 art Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.65 2002/02/17 04:31:26 art Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -70,7 +70,7 @@
  * to it. Must be a n^2. If non-zero, the stack gap will be calculated as:
  * (arc4random() * ALIGNBYTES) & (stackgap_random - 1) + STACKGAPLEN.
  */
-int stackgap_random;
+int stackgap_random = 1024;
 
 /*
  * check exec:
