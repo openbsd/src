@@ -15,9 +15,9 @@ install:
 
 .include <bsd.own.mk>
 
-.if (${KERBEROS} == "yes")
+.if (${KERBEROS:L} == "yes")
 CFLAGS+= -DKRB4 -I${DESTDIR}/usr/include/kerberosIV
-.if (${AFS} == "yes")
+.if (${AFS:L} == "yes")
 CFLAGS+= -DAFS
 SRCS+=  radix.c
 .endif # AFS

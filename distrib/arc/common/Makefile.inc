@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.3 1997/09/26 02:20:40 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.4 2000/09/03 18:41:12 espie Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -15,7 +15,7 @@ REALIMAGE=	/tmp/image.${PID}
 MDEC=		${DESTDIR}/usr/mdec
 
 LISTS=		${COMMONDIR}/list ${.CURDIR}/list
-.if (${KERBEROS} == "yes")
+.if (${KERBEROS:L} == "yes")
 CRUNCHCONF=	${COMMONDIR}/${CBIN}-krb.conf
 .else
 CRUNCHCONF=	${COMMONDIR}/${CBIN}.conf
@@ -57,7 +57,7 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk all
-.if (${KERBEROS} == "yes")
+.if (${KERBEROS:L} == "yes")
 	mv ${CBIN}-krb ${CBIN}
 .endif
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1999/06/23 11:47:29 art Exp $
+#	$OpenBSD: Makefile,v 1.5 2000/09/03 18:41:22 espie Exp $
 
 PROG=	pstat
 MAN=	pstat.8
@@ -9,7 +9,7 @@ LDADD=	-lkvm
 
 .include <bsd.prog.mk>
 
-.if (${UVM} == "yes")
+.if (${UVM:L} == "yes")
 CFLAGS+=-DUVM
 .endif
 

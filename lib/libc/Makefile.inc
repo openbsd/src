@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.2 2000/01/06 08:47:07 d Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 2000/09/03 18:41:13 espie Exp $
 #
 # This file contains make rules that are shared by libc and libc_r.
 #
@@ -10,7 +10,7 @@ all:
 
 CFLAGS+=	-DLIBC_SCCS -DSYSLIBC_SCCS -I${LIBCSRCDIR}/include
 
-.if (${YP} == "yes")
+.if (${YP:L} == "yes")
 CFLAGS+=-DYP -I${LIBCSRCDIR}/yp
 .endif
 
@@ -47,7 +47,7 @@ AINC+=  -nostdinc -idirafter ${DESTDIR}/usr/include
 .include "${LIBCSRCDIR}/thread/Makefile.inc"
 .include "${LIBCSRCDIR}/time/Makefile.inc"
 .include "${LIBCSRCDIR}/sys/Makefile.inc"
-.if (${YP} == "yes")
+.if (${YP:L} == "yes")
 .include "${LIBCSRCDIR}/yp/Makefile.inc"
 .endif
 

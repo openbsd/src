@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2000/05/28 04:22:31 art Exp $
+#	$OpenBSD: Makefile,v 1.6 2000/09/03 18:41:11 espie Exp $
 
 PROG=	ps
 SRCS=	fmt.c keyword.c nlist.c print.c ps.c
@@ -8,7 +8,7 @@ BINGRP=	kmem
 BINMODE=2555
 
 .include <bsd.prog.mk>
-.if (${UVM} == "yes")
+.if (${UVM:L} == "yes")
 CFLAGS+=-DUVM
 .endif
 

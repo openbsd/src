@@ -1,16 +1,16 @@
-#	$OpenBSD: Makefile.inc,v 1.4 2000/06/18 00:04:20 itojun Exp $
+#	$OpenBSD: Makefile.inc,v 1.5 2000/09/03 18:41:12 espie Exp $
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
 
 ENVDEF+= -DNEWDB -DMAP_REGEX
 ENVDEF+= -DNETINET6 -DNEEDSGETIPNODE
-.if (${YP} == "yes")
+.if (${YP:L} == "yes")
 ENVDEF+=-DNIS
 .endif
 
 .if defined(WANT_LIBWRAP)
-.if (${TCP_WRAPPERS} == "yes")
+.if (${TCP_WRAPPERS:L} == "yes")
 ENVDEF+=-DTCPWRAPPERS
 DPADD+= ${LIBWRAP}
 LDADD+= -lwrap

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2000/03/02 14:46:40 todd Exp $
+#	$OpenBSD: Makefile,v 1.6 2000/09/03 18:41:17 espie Exp $
 #
 # Makefile for newsyscall
 #
@@ -69,7 +69,7 @@ $(MODOBJ): $(OBJS) $(KOBJS)
 
 .include <bsd.own.mk>
 
-.if (${UVM} == "yes")
+.if (${UVM:L} == "yes")
 CFLAGS+=-DUVM
 .endif
 
