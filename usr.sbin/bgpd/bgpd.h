@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.152 2004/12/23 15:08:43 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.153 2004/12/23 15:39:22 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -207,12 +207,12 @@ struct peer_config {
 	u_int32_t		 id;
 	u_int32_t		 groupid;
 	u_int32_t		 max_prefix;
-	u_int16_t		 remote_as;
-	u_int16_t		 holdtime;
-	u_int16_t		 min_holdtime;
 	enum announce_type	 announce_type;
 	enum enforce_as		 enforce_as;
 	enum reconf_action	 reconf_action;
+	u_int16_t		 remote_as;
+	u_int16_t		 holdtime;
+	u_int16_t		 min_holdtime;
 	u_int8_t		 template;
 	u_int8_t		 remote_masklen;
 	u_int8_t		 cloned;
@@ -357,16 +357,16 @@ struct kroute {
 	struct in_addr	prefix;
 	struct in_addr	nexthop;
 	u_int16_t	flags;
-	u_int8_t	prefixlen;
 	u_short		ifindex;
+	u_int8_t	prefixlen;
 };
 
 struct kroute6 {
 	struct in6_addr	prefix;
 	struct in6_addr	nexthop;
 	u_int16_t	flags;
-	u_int8_t	prefixlen;
 	u_short		ifindex;
+	u_int8_t	prefixlen;
 };
 
 struct kroute_nexthop {
@@ -391,11 +391,11 @@ struct kif {
 };
 
 struct session_up {
-	u_int32_t		remote_bgpid;
 	struct bgpd_addr	local_addr;
 	struct bgpd_addr	remote_addr;
 	struct capabilities	capa_announced;
 	struct capabilities	capa_received;
+	u_int32_t		remote_bgpid;
 };
 
 struct pftable_msg {
@@ -445,8 +445,8 @@ enum as_spec {
 };
 
 struct filter_as {
-	u_int16_t	as;
 	enum as_spec	type;
+	u_int16_t	as;
 };
 
 enum filter_actions {
@@ -456,7 +456,7 @@ enum filter_actions {
 };
 
 enum directions {
-	DIR_IN=1,
+	DIR_IN = 1,
 	DIR_OUT,
 	DIR_DEFAULT_IN,		/* only needed to apply default set */
 	DIR_DEFAULT_OUT
