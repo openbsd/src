@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.11 1997/04/14 04:09:07 downsj Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.12 1997/07/03 17:47:29 deraadt Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -623,7 +623,7 @@ scsi_interpret_sense(xs)
 		    sense->extra_len);
 		printf("extra: ");
 		for (count = 0; count < sense->extra_len; count++)
-			printf("%x ", sense->extra_bytes[count]);
+			printf("%x ", sense->cmd_spec_info[count]);
 		printf("\n");
 	}
 #endif	/*SCSIDEBUG */
