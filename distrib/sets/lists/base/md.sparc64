@@ -1451,6 +1451,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/int_types.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/internal_types.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/intr.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/ioctl_fd.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/kcore.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/limits.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/loadfile_machdep.ph
@@ -2233,5 +2234,6 @@
 ./usr/mdec/ofwboot
 ./usr/mdec/ofwboot.net
 ./usr/sbin/eeprom
+./usr/sbin/fdformat
 ./usr/sbin/hotplugd
 ./usr/sbin/wsconscfg

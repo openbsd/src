@@ -181,6 +181,7 @@
 ./usr/include/sparc64/int_types.h
 ./usr/include/sparc64/internal_types.h
 ./usr/include/sparc64/intr.h
+./usr/include/sparc64/ioctl_fd.h
 ./usr/include/sparc64/kcore.h
 ./usr/include/sparc64/limits.h
 ./usr/include/sparc64/loadfile_machdep.h
