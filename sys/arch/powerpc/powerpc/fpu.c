@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.5 2003/07/02 21:30:12 drahn Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.6 2003/07/02 21:57:52 drahn Exp $	*/
 /*	$NetBSD: fpu.c,v 1.1 1996/09/30 16:34:44 ws Exp $	*/
 
 /*
@@ -96,8 +96,13 @@ void
 save_fpu(p)
 	struct proc *p;
 {
-	int msr;
-	struct pcb *pcb = &p->p_addr->u_pcb;
+	int msr, scratch;
+	struct pcb *pcb;
+
+	if (p == NULL)
+		return;
+
+	pcb = &p->p_addr->u_pcb;
 	
 	msr = ppc_mfmsr();
 	ppc_mtmsr(msr | PSL_FP);
