@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_we.c,v 1.1 1998/09/22 06:33:19 fgsch Exp $	*/
+/*	$OpenBSD: if_we.c,v 1.2 1998/10/04 22:28:14 niklas Exp $	*/
 /*	$NetBSD: if_we.c,v 1.11 1998/07/05 06:49:14 jonathan Exp $	*/
 
 /*-
@@ -784,7 +784,7 @@ we_read_hdr(sc, packet_ptr, packet_hdrp)
 	we_readmem(wsc, packet_ptr, (u_int8_t *)packet_hdrp,
 	    sizeof(struct dp8390_ring));
 #if BYTE_ORDER == BIG_ENDIAN
-	packet_hdrp->count = bswap16(packet_hdrp->count);
+	packet_hdrp->count = swap16(packet_hdrp->count);
 #endif
 }
 
