@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.15 1999/01/03 18:20:35 millert Exp $	*/
+/*	$OpenBSD: in.h,v 1.16 1999/01/07 06:13:34 deraadt Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -52,12 +52,14 @@
 #define	IPPROTO_IGMP		2		/* group mgmt protocol */
 #define	IPPROTO_GGP		3		/* gateway^2 (deprecated) */
 #define	IPPROTO_IPIP		4		/* IP inside IP */
+#define	IPPROTO_IPV4		4		/* IP inside IP */
 #define	IPPROTO_TCP		6		/* tcp */
 #define	IPPROTO_EGP		8		/* exterior gateway protocol */
 #define	IPPROTO_PUP		12		/* pup */
 #define	IPPROTO_UDP		17		/* user datagram protocol */
 #define	IPPROTO_IDP		22		/* xns idp */
 #define	IPPROTO_TP		29 		/* tp-4 w/ class negotiation */
+#define	IPPROTO_IPV6		51 		/* IPv6-in-IPv4 tunnelling */
 #define	IPPROTO_ESP		50		/* Encap. Security Payload */
 #define	IPPROTO_AH		51		/* Authentication header */
 #define	IPPROTO_EON		80		/* ISO cnlp */
