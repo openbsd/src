@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.6 2004/07/26 17:28:59 jfb Exp $	*/
+/*	$OpenBSD: proto.c,v 1.7 2004/07/27 13:55:00 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -88,6 +88,23 @@ static int  cvs_resp_updated   (int, char *);
 static int  cvs_resp_removed   (int, char *);
 static int  cvs_resp_mode      (int, char *);
 static int  cvs_resp_modxpand  (int, char *);
+
+
+static const char *cvs_months[] = {
+	"Jan",
+	"Feb",
+	"Mar",
+	"Apr",
+	"May",
+	"June",
+	"July",
+	"Aug",
+	"Sep",
+	"Oct",
+	"Nov",
+	"Dec"
+};
+
 
 
 
@@ -181,6 +198,8 @@ struct cvs_resp {
 
 static char *cvs_mt_stack[CVS_MTSTK_MAXDEPTH];
 static u_int cvs_mtstk_depth = 0;
+
+static struct tm cvs_modtime;
 
 
 #define CVS_NBREQ   (sizeof(cvs_requests)/sizeof(cvs_requests[0]))
@@ -634,18 +653,27 @@ cvs_resp_sticky(int type, char *line)
 {
 	char rpath[MAXPATHLEN];
 	struct stat st;
+	CVSFILE *cf;
 
 	/* get the remote path */
 	cvs_client_getln(rpath, sizeof(rpath));
 
 	/* if the directory doesn't exist, create it */
 	if (stat(line, &st) == -1) {
+		/* attempt to create it */
 		if (errno != ENOENT) {
 			cvs_log(LP_ERRNO, "failed to stat %s", line);
 		}
-		else if (mkdir(line, 0755) == -1) {
-			cvs_log(LP_ERRNO, "failed to create %s", line);
-			return (-1);
+		else {
+			cf = cvs_file_create(line, DT_DIR, 0755);
+			if (cf == NULL)
+				return (-1);
+			cf->cf_ddat->cd_repo = strdup(line);
+			cf->cf_ddat->cd_root = cvs_root;
+			cvs_mkadmin(cf, 0755);
+
+			cf->cf_ddat->cd_root = NULL;
+			cvs_file_free(cf);
 		}
 	}
 
@@ -729,6 +757,22 @@ cvs_resp_cksum(int type, char *line)
 static int
 cvs_resp_modtime(int type, char *line)
 {
+	u_int i;
+	char mon[8];
+
+	cvs_modtime.tm_yday = 0;
+	cvs_modtime.tm_wday = 0;
+
+	sscanf(line, "%d %8s %d %2d:%2d:%2d", &cvs_modtime.tm_mday, mon,
+	    &cvs_modtime.tm_year, &cvs_modtime.tm_hour, &cvs_modtime.tm_min,
+	    &cvs_modtime.tm_sec);
+	cvs_modtime.tm_year -= 1900;
+
+	for (i = 0; i < sizeof(cvs_months)/sizeof(cvs_months[0]); i++) {
+		if (strcmp(cvs_months[i], mon) == 0)
+			cvs_modtime.tm_mon = (int)i;
+	}
+
 	return (0);
 }
 
@@ -742,7 +786,9 @@ cvs_resp_modtime(int type, char *line)
 static int
 cvs_resp_updated(int type, char *line)
 {
-	char path[MAXPATHLEN], cksum_buf[CVS_CKSUM_LEN];
+	size_t len;
+	char tbuf[32], path[MAXPATHLEN], cksum_buf[CVS_CKSUM_LEN];
+	CVSENTRIES *ef;
 	struct cvs_ent *ep;
 
 	if (type == CVS_RESP_CREATED) {
@@ -754,6 +800,19 @@ cvs_resp_updated(int type, char *line)
 		ep = cvs_ent_parse(path);
 		if (ep == NULL)
 			return (-1);
+
+		/* set the timestamp as the last one received from Mod-time */
+		ep->ce_timestamp = asctime_r(&cvs_modtime, tbuf);
+		len = strlen(tbuf);
+		if ((len > 0) && (tbuf[len - 1] == '\n'))
+			tbuf[--len] = '\0';
+
+		ef = cvs_ent_open(line, O_WRONLY);
+		if (ef == NULL)
+			return (-1);
+
+		cvs_ent_add(ef, ep);
+		cvs_ent_close(ef);
 	}
 	else if (type == CVS_RESP_UPDEXIST) {
 	}
