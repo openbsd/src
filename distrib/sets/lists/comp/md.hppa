@@ -1,5 +1,4 @@
 ./usr/bin/addr2line
-./usr/bin/gasp
 ./usr/bin/objcopy
 ./usr/bin/readelf
 ./usr/include/g++/FlexLexer.h
@@ -236,9 +235,11 @@
 ./usr/libdata/ldscripts
 ./usr/libdata/ldscripts/hppaobsd.x
 ./usr/libdata/ldscripts/hppaobsd.xbn
+./usr/libdata/ldscripts/hppaobsd.xc
 ./usr/libdata/ldscripts/hppaobsd.xn
 ./usr/libdata/ldscripts/hppaobsd.xr
 ./usr/libdata/ldscripts/hppaobsd.xs
+./usr/libdata/ldscripts/hppaobsd.xsc
 ./usr/libdata/ldscripts/hppaobsd.xu
 ./usr/libdata/ldscripts/hppaobsd.xz
 ./usr/share/man/cat1/objcopy.0

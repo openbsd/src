@@ -1,5 +1,4 @@
 ./usr/bin/addr2line
-./usr/bin/gasp
 ./usr/bin/objcopy
 ./usr/bin/readelf
 ./usr/include/alpha
@@ -313,11 +312,13 @@
 ./usr/lib/libwrap_pic.a
 ./usr/lib/libz_pic.a
 ./usr/libdata/ldscripts
-./usr/libdata/ldscripts/elf64alpha.x
-./usr/libdata/ldscripts/elf64alpha.xbn
-./usr/libdata/ldscripts/elf64alpha.xn
-./usr/libdata/ldscripts/elf64alpha.xr
-./usr/libdata/ldscripts/elf64alpha.xs
-./usr/libdata/ldscripts/elf64alpha.xu
-./usr/libdata/ldscripts/elf64alpha.xz
+./usr/libdata/ldscripts/elf64alpha_obsd.x
+./usr/libdata/ldscripts/elf64alpha_obsd.xbn
+./usr/libdata/ldscripts/elf64alpha_obsd.xc
+./usr/libdata/ldscripts/elf64alpha_obsd.xn
+./usr/libdata/ldscripts/elf64alpha_obsd.xr
+./usr/libdata/ldscripts/elf64alpha_obsd.xs
+./usr/libdata/ldscripts/elf64alpha_obsd.xsc
+./usr/libdata/ldscripts/elf64alpha_obsd.xu
+./usr/libdata/ldscripts/elf64alpha_obsd.xz
 ./usr/share/man/cat1/objcopy.0

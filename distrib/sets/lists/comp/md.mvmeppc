@@ -1,4 +1,3 @@
-./usr/bin/gasp
 ./usr/bin/objcopy
 ./usr/include/g++/FlexLexer.h
 ./usr/include/g++/PlotFile.h

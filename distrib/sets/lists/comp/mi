@@ -1547,7 +1547,6 @@
 ./usr/lib/libm_p.a
 ./usr/lib/libmenu.a
 ./usr/lib/libmenu_p.a
-./usr/lib/libmmalloc.a
 ./usr/lib/libncurses.a
 ./usr/lib/libncurses_p.a
 ./usr/lib/libobjc.a

@@ -1,6 +1,4 @@
 ./usr/bin/addr2line
-./usr/bin/gasp
-./usr/bin/objcopy
 ./usr/bin/readelf
 ./usr/include/g++/FlexLexer.h
 ./usr/include/g++/algorithm
@@ -316,11 +314,13 @@
 ./usr/lib/libwrap_pic.a
 ./usr/lib/libz_pic.a
 ./usr/libdata/ldscripts
-./usr/libdata/ldscripts/elf64_sparc.x
-./usr/libdata/ldscripts/elf64_sparc.xbn
-./usr/libdata/ldscripts/elf64_sparc.xn
-./usr/libdata/ldscripts/elf64_sparc.xr
-./usr/libdata/ldscripts/elf64_sparc.xs
-./usr/libdata/ldscripts/elf64_sparc.xu
-./usr/libdata/ldscripts/elf64_sparc.xz
+./usr/libdata/ldscripts/elf64_sparc_obsd.x
+./usr/libdata/ldscripts/elf64_sparc_obsd.xbn
+./usr/libdata/ldscripts/elf64_sparc_obsd.xc
+./usr/libdata/ldscripts/elf64_sparc_obsd.xn
+./usr/libdata/ldscripts/elf64_sparc_obsd.xr
+./usr/libdata/ldscripts/elf64_sparc_obsd.xs
+./usr/libdata/ldscripts/elf64_sparc_obsd.xsc
+./usr/libdata/ldscripts/elf64_sparc_obsd.xu
+./usr/libdata/ldscripts/elf64_sparc_obsd.xz
 ./usr/share/man/cat1/objcopy.0
