@@ -532,7 +532,7 @@ sendsig(catcher, sig, mask, code, type, val)
 
 	if (psp->ps_siginfo & sigmask(sig)) {
 		sf.sf_u.sfu_sip = &fp->sf_si;
-		initsiginfo(sf.sf_u.sfu_sip, sig, code, type, val);
+		initsiginfo(&sf.sf_si, sig, code, type, val);
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.12 1997/02/03 04:47:58 downsj Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.13 1997/02/03 12:48:46 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.77 1996/12/11 16:49:23 thorpej Exp $	*/
 
 /*
@@ -913,8 +913,8 @@ sendsig(catcher, sig, mask, code, type, val)
 	kfp->sf_sc.sc_ps = frame->f_sr;
 
 	if (psp->ps_siginfo & sigmask(sig)) {
-		kfp->sf_sip = &kfp->sf_si;
-		initsiginfo(kfp->sf_sip, sig, code, type, val);
+		kfp->sf_sip = &fp->sf_si;
+		initsiginfo(&kfp->sf_si, sig, code, type, val);
 	}
 
 #ifdef COMPAT_HPUX

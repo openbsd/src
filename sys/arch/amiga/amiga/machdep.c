@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.19 1997/02/03 11:38:08 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.20 1997/02/03 12:48:35 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.82 1996/12/17 07:32:54 is Exp $	*/
 
 /*
@@ -877,8 +877,8 @@ printf("sendsig %d %d %x %x %x\n", p->p_pid, sig, mask, code, catcher);
 	kfp->sf_sc.sc_ps = frame->f_sr;
 
 	if (psp->ps_siginfo & sigmask(sig)) {
-		kfp->sf_sip = &kfp->sf_si;
-		initsiginfo(kfp->sf_sip, sig, code, type, val);
+		kfp->sf_sip = &fp->sf_si;
+		initsiginfo(&kfp->sf_si, sig, code, type, val);
 	}
 
 	(void) copyout((caddr_t)kfp, (caddr_t)fp, sizeof(struct sigframe));

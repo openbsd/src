@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.39 1997/02/01 21:53:23 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.40 1997/02/03 12:48:58 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -673,7 +673,7 @@ sendsig(catcher, sig, mask, code, type, val)
 
 	if (psp->ps_siginfo & sigmask(sig)) {
 		frame.sf_sip = &fp->sf_si;
-		initsiginfo(frame.sf_sip, sig, code, type, val);
+		initsiginfo(&frame.sf_si, sig, code, type, val);
 	}
 
 	/* XXX don't copyout siginfo if not needed? */
