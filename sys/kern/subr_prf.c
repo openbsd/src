@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.7 1996/07/02 06:51:59 niklas Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.8 1996/07/19 23:13:39 dm Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.25 1996/04/22 01:38:46 christos Exp $	*/
 
 /*-
@@ -395,6 +395,12 @@ kprintf(fmt, flags, tp, ap)
 		}
 		lflag = 0;
 reswitch:	switch (ch = *(u_char *)fmt++) {
+		case '\0':
+			while(*--fmt != '%')
+				;
+			fmt++;
+			putchar('%', flags, tp);
+			continue;
 		case '0':
 			padc = '0';
 			goto reswitch;
@@ -554,6 +560,12 @@ vsprintf(buf, cfmt, ap)
 
 		lflag = 0;
 reswitch:	switch (ch = *(u_char *)fmt++) {
+		case '\0':
+			while(*--fmt != '%')
+				;
+			while(*bp++ = *fmt++)
+				;
+			return;
 		case '0':
 			padc = '0';
 			goto reswitch;
