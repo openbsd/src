@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_node.h,v 1.16 2003/09/23 16:51:12 millert Exp $	*/
+/*	$OpenBSD: cd9660_node.h,v 1.17 2004/10/04 23:37:37 millert Exp $	*/
 /*	$NetBSD: cd9660_node.h,v 1.15 1997/04/11 21:52:01 kleink Exp $	*/
 
 /*-
@@ -39,14 +39,7 @@
 
 #include <sys/buf.h>
 
-/*
- * Theoretically, directories can be more than 2Gb in length,
- * however, in practice this seems unlikely. So, we define
- * the type doff_t as a long to keep down the cost of doing
- * lookup on a 32-bit machine. If you are porting to a 64-bit
- * architecture, you should make doff_t the same as off_t.
- */
-#define doff_t	long
+#define doff_t	u_quad_t
 
 typedef	struct	{
 	struct timespec	iso_atime;	/* time of last access */
@@ -75,7 +68,7 @@ struct iso_node {
 	struct	iso_node *i_next, **i_prev;	/* hash chain */
 	struct	vnode *i_vnode;	/* vnode associated with this inode */
 	struct	vnode *i_devvp;	/* vnode for block I/O */
-	u_long	i_flag;		/* see below */
+	u_int	i_flag;		/* see below */
 	dev_t	i_dev;		/* device where inode resides */
 	ino_t	i_number;	/* the identity of the inode */
 				/* we use the actual starting block of the file */
@@ -87,10 +80,14 @@ struct iso_node {
 	ino_t	i_ino;		/* inode number of found directory */
 	struct  lock i_lock;    /* node lock */
 
-	long iso_extent;	/* extent of file */
-	long i_size;
-	long iso_start;		/* actual start of data of file (may be different */
-				/* from iso_extent, if file has extended attributes) */
+	doff_t	iso_extent;	/* extent of file */
+	doff_t	i_size;
+	/*
+	 * Actual start of data file (may be different from iso_extent, if the
+	 * file has extended attributes).
+	 */
+	doff_t	iso_start;
+
 	ISO_RRIP_INODE  inode;
 	struct cluster_info i_ci; 
 };
