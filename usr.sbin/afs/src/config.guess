@@ -247,29 +247,8 @@ EOF
     Amiga*:UNIX_System_V:4.0:*)
 	echo m68k-unknown-sysv4
 	exit 0;;
-    amiga:OpenBSD:*:*)
-	echo m68k-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
     *:[Aa]miga[Oo][Ss]:*:*)
 	echo ${UNAME_MACHINE}-unknown-amigaos
-	exit 0 ;;
-    arc64:OpenBSD:*:*)
-	echo mips64el-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
-    arc:OpenBSD:*:*)
-	echo mipsel-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
-    hkmips:OpenBSD:*:*)
-	echo mips-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
-    pmax:OpenBSD:*:*)
-	echo mipsel-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
-    sgi:OpenBSD:*:*)
-	echo mips-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
-    wgrisc:OpenBSD:*:*)
-	echo mipsel-unknown-openbsd${UNAME_RELEASE}
 	exit 0 ;;
     *:OS/390:*:*)
 	echo i370-ibm-openedition
@@ -336,9 +315,6 @@ EOF
     sparc*:NetBSD:*)
 	echo `uname -p`-unknown-netbsd${UNAME_RELEASE}
 	exit 0 ;;
-    atari*:OpenBSD:*:*)
-	echo m68k-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
     # The situation for MiNT is a little confusing.  The machine name
     # can be virtually everything (everything which is not
     # "atarist" or "atariste" at least should have a processor
@@ -365,21 +341,6 @@ EOF
     *:*MiNT:*:* | *:*mint:*:* | *:*TOS:*:*)
         echo m68k-unknown-mint${UNAME_RELEASE}
         exit 0 ;;
-    sun3*:OpenBSD:*:*)
-	echo m68k-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
-    luna88k:OpenBSD:*:*)
-	echo m88k-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
-    mac68k:OpenBSD:*:*)
-	echo m68k-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
-    mvme68k:OpenBSD:*:*)
-	echo m68k-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
-    mvme88k:OpenBSD:*:*)
-	echo m88k-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
     powerpc:machten:*:*)
 	echo powerpc-apple-machten${UNAME_RELEASE}
 	exit 0 ;;
@@ -667,9 +628,6 @@ EOF
     parisc*:Lites*:*:*)
 	echo hppa1.1-hp-lites
 	exit 0 ;;
-    hppa*:OpenBSD:*:*)
-	echo hppa-unknown-openbsd
-	exit 0 ;;
     C1*:ConvexOS:*:* | convex:ConvexOS:C1*:*)
 	echo c1-convex-bsd
         exit 0 ;;
@@ -721,9 +679,6 @@ EOF
         FUJITSU_REL=`echo ${UNAME_RELEASE} | sed -e 's/ /_/'`
         echo "${FUJITSU_PROC}-fujitsu-${FUJITSU_SYS}${FUJITSU_REL}"
         exit 0 ;;
-    hp300:OpenBSD:*:*)
-	echo m68k-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
     i*86:BSD/386:*:* | i*86:BSD/OS:*:* | *:Ascend\ Embedded/OS:*:*)
 	echo ${UNAME_MACHINE}-pc-bsdi${UNAME_RELEASE}
 	exit 0 ;;
@@ -737,7 +692,8 @@ EOF
 	echo ${UNAME_MACHINE}-unknown-freebsd`echo ${UNAME_RELEASE}|sed -e 's/[-(].*//'`
 	exit 0 ;;
     *:OpenBSD:*:*)
-	echo ${UNAME_MACHINE}-unknown-openbsd`echo ${UNAME_RELEASE}|sed -e 's/[-_].*/\./'`
+	UNAME_MACHINE_ARCH=`arch | sed 's/OpenBSD.//'`
+	echo ${UNAME_MACHINE_ARCH}-unknown-openbsd${UNAME_RELEASE}
 	exit 0 ;;
     i*:CYGWIN*:*)
 	echo ${UNAME_MACHINE}-pc-cygwin

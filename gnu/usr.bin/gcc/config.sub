@@ -371,6 +371,12 @@ case $basic_machine in
 		basic_machine=a29k-none
 		os=-bsd
 		;;
+	amd64)
+		basic_machine=x86_64-pc
+		;;
+	amd64-*)
+		basic_machine=x86_64-`echo $basic_machine | sed 's/^[^-]*-//'`
+		;;
 	amdahl)
 		basic_machine=580-amdahl
 		os=-sysv

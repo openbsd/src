@@ -115,29 +115,8 @@ EOF
     amiga:NetBSD:*:*)
       echo m68k-cbm-netbsd${UNAME_RELEASE}
       exit 0 ;;
-    amiga:OpenBSD:*:*)
-	echo m68k-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
     *:[Aa]miga[Oo][Ss]:*:*)
 	echo ${UNAME_MACHINE}-unknown-amigaos
-	exit 0 ;;
-    arc64:OpenBSD:*:*)
-	echo mips64el-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
-    arc:OpenBSD:*:*)
-	echo mipsel-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
-    hkmips:OpenBSD:*:*)
-	echo mips-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
-    pmax:OpenBSD:*:*)
-	echo mipsel-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
-    sgi:OpenBSD:*:*)
-	echo mips-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
-    wgrisc:OpenBSD:*:*)
-	echo mipsel-unknown-openbsd${UNAME_RELEASE}
 	exit 0 ;;
     arm:RISC*:1.[012]*:*|arm:riscix:1.[012]*:*)
 	echo arm-acorn-riscix${UNAME_RELEASE}
@@ -204,38 +183,11 @@ EOF
     atari*:NetBSD:*:*)
 	echo m68k-atari-netbsd${UNAME_RELEASE}
 	exit 0 ;;
-    atari*:OpenBSD:*:*)
-	echo m68k-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
     sun3*:NetBSD:*:*)
 	echo m68k-sun-netbsd${UNAME_RELEASE}
 	exit 0 ;;
-    sun3*:OpenBSD:*:*)
-	echo m68k-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
-    luna88k:OpenBSD:*:*)
-	echo m88k-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
     mac68k:NetBSD:*:*)
 	echo m68k-apple-netbsd${UNAME_RELEASE}
-	exit 0 ;;
-    mac68k:OpenBSD:*:*)
-	echo m68k-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
-    macppc:OpenBSD:*:*)
-	echo powerpc-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
-    mvme68k:OpenBSD:*:*)
-	echo m68k-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
-    mvme88k:OpenBSD:*:*)
-	echo m88k-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
-    mvmeppc:OpenBSD:*:*)
-	echo powerpc-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
-    pegasos:OpenBSD:*:*)
-	echo powerpc-unknown-openbsd${UNAME_RELEASE}
 	exit 0 ;;
     powerpc:machten:*:*)
 	echo powerpc-apple-machten${UNAME_RELEASE}
@@ -476,9 +428,6 @@ EOF
     parisc*:Lites*:*:*)
 	echo hppa1.1-hp-lites
 	exit 0 ;;
-    hppa*:OpenBSD:*:*)
-	echo ${UNAME_MACHINE}-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
     C1*:ConvexOS:*:* | convex:ConvexOS:C1*:*)
 	echo c1-convex-bsd
         exit 0 ;;
@@ -525,9 +474,6 @@ EOF
     hp3[0-9][05]:NetBSD:*:*)
 	echo m68k-hp-netbsd${UNAME_RELEASE}
 	exit 0 ;;
-    hp300:OpenBSD:*:*)
-	echo m68k-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
     i?86:BSD/386:*:* | *:BSD/OS:*:*)
 	echo ${UNAME_MACHINE}-pc-bsdi${UNAME_RELEASE}
 	exit 0 ;;
@@ -542,7 +488,8 @@ EOF
 	echo ${UNAME_MACHINE}-unknown-netbsd`echo ${UNAME_RELEASE}|sed -e 's/[-_].*/\./'`
 	exit 0 ;;
     *:OpenBSD:*:*)
-	echo ${UNAME_MACHINE}-unknown-openbsd`echo ${UNAME_RELEASE}|sed -e 's/[-_].*/\./'`
+	UNAME_MACHINE_ARCH=`arch | sed 's/OpenBSD.//'`
+	echo ${UNAME_MACHINE_ARCH}-unknown-openbsd${UNAME_RELEASE}
 	exit 0 ;;
     i*:CYGWIN*:*)
 	echo ${UNAME_MACHINE}-pc-cygwin32
