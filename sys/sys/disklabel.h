@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.19 2000/08/08 16:03:16 peter Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.20 2000/11/25 21:32:05 hugh Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -182,7 +182,7 @@ struct disklabel {
 	.set	d_ncylinders,52
 	.set	d_secpercyl,56
 	.set	d_secperunit,60
-	.set	d_end_,276		/* size of disk label */
+	.set	d_end_,404		/* size of disk label */
 #endif /* _LOCORE */
 
 /* d_type values: */
