@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.26 2000/03/24 19:07:49 millert Exp $	*/
+/*	$OpenBSD: df.c,v 1.27 2000/10/18 20:37:42 mickey Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: df.c,v 1.26 2000/03/24 19:07:49 millert Exp $";
+static char rcsid[] = "$OpenBSD: df.c,v 1.27 2000/10/18 20:37:42 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -367,8 +367,7 @@ prthuman(sfsp, used)
 void
 prtstat(sfsp, maxwidth, headerlen, blocksize)
 	struct statfs *sfsp;
-	int maxwidth, headerlen;
-	long blocksize;
+	int maxwidth, headerlen, blocksize;
 {
 	u_int32_t used, inodes;
 	int32_t availblks;
@@ -388,7 +387,7 @@ prtstat(sfsp, maxwidth, headerlen, blocksize)
 	if (iflag) {
 		inodes = sfsp->f_files;
 		used = inodes - sfsp->f_ffree;
-		(void)printf(" %7ld %7ld %5.0f%% ", used, sfsp->f_ffree,
+		(void)printf(" %7u %7u %5.0f%% ", used, sfsp->f_ffree,
 		   inodes == 0 ? 100.0 : (double)used / (double)inodes * 100.0);
 	} else
 		(void)printf("  ");
@@ -446,7 +445,7 @@ posixprint(mntbuf, mntsize, maxwidth)
 {
 	int i;
 	int blocklen;
-	long blocksize;
+	int blocksize;
 	char *blockstr;
 	struct statfs *sfsp;
 	long used, avail;
@@ -475,7 +474,7 @@ posixprint(mntbuf, mntsize, maxwidth)
 			percentused = (used * 100 / avail) +
 			    ((used % avail) ? 1 : 0);
 
-		(void) printf ("%-*.*s %*ld %10ld %11ld %5d%%   %s\n",
+		(void) printf ("%-*.*s %*d %10ld %11d %5d%%   %s\n",
 			maxwidth, maxwidth, sfsp->f_mntfromname,
 			strlen(blockstr),
 			fsbtoblk(sfsp->f_blocks, sfsp->f_bsize, blocksize),

@@ -83,8 +83,8 @@ ffs_df(rfd, file, sfsp)
 	sfsp->f_blocks = sblock.fs_dsize;
 	sfsp->f_bfree = sblock.fs_cstotal.cs_nbfree * sblock.fs_frag +
 		sblock.fs_cstotal.cs_nffree;
-	sfsp->f_bavail = (sblock.fs_dsize * (100 - sblock.fs_minfree) / 100) -
-		(sblock.fs_dsize - sfsp->f_bfree);
+	sfsp->f_bavail = ((int64_t)sblock.fs_dsize * (100 -
+	    sblock.fs_minfree) / 100) - (sblock.fs_dsize - sfsp->f_bfree);
 	sfsp->f_files = sblock.fs_ncg * sblock.fs_ipg - ROOTINO;
 	sfsp->f_ffree = sblock.fs_cstotal.cs_nifree;
 	sfsp->f_fsid.val[0] = 0;
