@@ -1,0 +1,92 @@
+.\"	$Id: smtpfwdd.8,v 1.1 1997/12/12 20:44:39 beck Exp $
+.Dd Dec 10, 1997
+.Dt SMTPFWDD 8
+.Os OpenBSD
+.Sh NAME
+.Nm smtpfwdd
+.Nd
+Obtuse Systems SMTPFWDD message forwarding daemon
+.Sh SYNOPSIS
+.Nm smtpfwdd
+.Op Fl HPDL
+.Op Fl d Ar spooldir
+.Op Fl u Ar user
+.Op Fl g Ar group
+.Op Fl s Ar mailprog
+.Op Fl M Ar maxchildren
+.Op Fl P Ar poll time
+.Sh DESCRIPTION
+The
+.Nm smtpfwdd
+daemon forwards mail messages from a spool directory to
+their eventual destinations. It regularly scans the spool directory in
+which its symboitic companion program 
+.Xr smtpd 8
+stores messages and invokes
+a mail program (such as 
+.Xr sendmail 8 )
+to forward them. It is the forward
+portion of an SMTP store and foward proxy. 
+.Nm smtpfwdd
+is a standalone daemon, usually invoked at system startup.
+.Sh OPTIONS
+.Bl -tag -width Ds
+.It Fl d
+Specify a different spool
+.Ar directory .
+This should be the same directory in which smtpd is spooling files.
+(usually
+.Pa /var/spool/smtpd )
+.It Fl u
+Specify a 
+.Ar user
+to run as. This user must not be root but
+should normally be a user that is able to run 
+.Xr sendmail 8
+and use the -f option to specify the sender of a mail message.
+.It Fl g
+Specify a 
+.Ar group
+to run as. Same as user above.
+.It Fl s
+Specify a different mail program to use to forward
+mail. The default is 
+.Pa /usr/sbin/sendmail
+Any replacement must be able to be invoked in the same manner as sendmail
+with a -f fromaddress, followed by one or more destination addresses
+on the command line.
+.It Fl M
+Specifies 
+.Ar maxchildren
+as the maximum number of children smtpfwdd should be
+allowed to spawn at once when delivering mail. Default is 10
+.It Fl P
+specifies a polling interval of
+.Ar polltime
+seconds indicating how often the master smtpfwdd process
+should wake up and check the spool directory for new mail
+to forward. Default is 10 seconds.
+.Sh SEE ALSO
+.Xr smtpd 8 ,
+.Xr sendmail 8 ,
+.Xr inetd 8
+.Sh BUGS
+Since 
+.Xr sendmail 8
+is not normally running as a daemon when using smtpd and
+smtpfwdd, one must use cron to periodically invoke sendmail -q so that
+queued messages are retried for eventual delivery, alternatively sendmail
+may be run standalone, but not listening to the network if your version
+of sendmail supports doing this correctly.
+.Pp
+There are many different variations of sendmail. smtpfwdd will check
+and pay attention to the exit status of the sendmail processes it
+invokes, possibly retrying an invocation of sendmail. If you aren't
+using real unadulterated Berkeley sendmail of a recent vintage, you may
+need to disable the exit status checking at compile time (See option
+SENDMAIL_RETRY in the makefile).
+.Pp
+sendmail can't handle a . on one line in a message body. This problem
+is bypassed in smtpfwdd by giving sendmail the option -oitrue. Again,
+if you aren't using genuine sendmail, you may need to disable this at
+compile time (see option SENDMAIL_OITRUE in the makefile).

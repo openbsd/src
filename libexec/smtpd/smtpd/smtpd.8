@@ -1,0 +1,116 @@
+.\"	$Id: smtpd.8,v 1.1 1997/12/12 20:44:37 beck Exp $
+.Dd Dec 10, 1997
+.Dt SMTPD 8
+.Os OpenBSD
+.Sh NAME
+.Nm smtpd
+.Nd
+Obtuse Systems SMTPD message storing daemon
+.Sh SYNOPSIS
+.Nm smtpd
+.Op Fl HPDL
+.Op Fl c Ar chrootdir
+.Op Fl d Ar spooldir
+.Op Fl u Ar user
+.Op Fl g Ar group
+.Op Fl m Ar myname
+.Op Fl s Ar maxsize
+.Sh DESCRIPTION
+ The
+.Nmsmtpd
+daemon talks the Simple Mail Transfer Protocol (SMTP) with
+other SMTP daemons to receive mail from them, and saves it into a spool
+directory for later processing. It is the store portion of an SMTP
+store and foward proxy. The symbiotic companion program smtpfwdd is
+used to forward the spooled mail on to its eventual destination.
+smtpd is normally invoked from a super-server such as 
+.Xr inetd 8 . 
+.Sh OPTIONS
+.Bl -tag -width Ds
+.It Fl c
+Specigy a different 
+.Ar chrootdir
+directory to chroot into on startup. The default is 
+.Pa /var/spool/smtpd.  
+This directory should be re
+This directory should be readable and writable only to the user that
+smtpd runs as.
+
+.It Fl d
+Specify a different spool
+.Ar directory
+within the crooted subtree. The default is ".", making smtpd spool
+files to the directory it chroots itself to.
+.It Fl u
+Specify a 
+.Ar user 
+to run as. This user must not be root but
+should be a user that is able to run sendmail and use the
+-f option to specify the sender of a mail message.
+.It Fl g 
+Specify a 
+.Ar group 
+to run as. Same as user above.
+.It Fl H
+Disable host checking against the DNS. By default smtpd checks
+and will complain in the syslogs if the DNS information on a host
+seems to indicate a possible spoof or misconfiguration.
+.It Fl m
+Specify
+.Ar myname,
+the hostname the daemon should announce itself
+as. the default is whatever gethostname() returns.
+.It Fl s
+Specify 
+.Ar maxsize
+the maximum size (in bytes) of mail message the
+daemon should accept. The default is not to have a maximum size.
+.It Fl P
+Enable paranoid mode of operation, in this mode connections are
+dropped from any client feeding smtpd a suspicious hostname,
+FROM:, or RCPT: line containing characters indicative of an
+attempt to do something evil, or any message headers that aren't
+8bit clean. The default is to log such occuurances and substitute
+for the offending characters, but not drop the connection.
+.It Fl D
+Tells smtpd to run as a daemon, listening on port 25. The
+default is not to run as a daemon
+.It Fl L
+Suppress children in daemon mode (above) from doing an
+openlog() call. This means your syslogs won't have pid
+information, but is useful if you don't want to have to set up
+your chroot jail for smtpd in a manner that an openlog() call will
+work in it.
+.Sh FILES
+The address checking file is normally 
+.Pa etc/smtpd_check_rules,
+within the chroot directory unless otherwise configured at compile time.
+.Pp
+The address check file, when enabled is read for each RCPT line in the
+SMTP dialogue. Each rule is checked with the current  source (SMTP
+client machine and possibly user from ident) and the current FROM: and
+RCPT: addresses. 
+.Sh SEE ALSO
+.Xr smtpfwdd 8 ,
+.Xr sendmail 8 ,
+.Xr inetd 8
+.Pa http://www.obtuse.com/smtpd.html
+for examples and rules file details.
+.Sh BUGS
+Mistakes in
+.Pa /etc/smtpd_check_rules 
+can discard legitimate mail and annoy
+your users and other postmasters a very great deal!. When
+combined with custom return codes it is possible to write rules
+that completely break the smtp protocol. It is important to test
+your rules out and be absolutely sure they do exactly what you
+want and no more.
+.Pp
+If 
+.Xr sendmail 8
+is not run as a daemon when using smtpd and
+smtpfwdd, one must use cron to periodically invoke sendmail -q so that
+queued messages are retried for eventual delivery. Alternatively sendmail
+may be run as a daemon but not listening to the network.
+.Pp
+
