@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp.c,v 1.29 2003/02/11 19:20:27 mickey Exp $ */
+/* 	$OpenBSD: isp.c,v 1.30 2003/02/28 20:31:34 mjacob Exp $ */
 /*
  * Machine and OS Independent (well, as best as possible)
  * code for the Qlogic ISP SCSI adapters.
@@ -397,7 +397,7 @@ isp_reset(struct ispsoftc *isp)
 			isp_prt(isp, ISP_LOGCONFIG, "Ultra Mode Capable");
 			sdp->isp_ultramode = 1;
 			/*
-			 * If we're in Ultra Mode, we have to be 60MHz clock-
+			 * If we're in Ultra Mode, we have to be 60Mhz clock-
 			 * even for the SBus version.
 			 */
 			isp->isp_clock = 60;
