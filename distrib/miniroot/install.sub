@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.91 1998/09/19 23:02:16 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.92 1998/09/19 23:02:49 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -1078,12 +1078,13 @@ esac
 # Download the files one at a time and keep track of which ones failed
 while test -n "${_get_files}" ; do
 	_failed_files=""
+	echo ""
 	for _f in $_get_files ; do
-		echo ""
+		echo "Getting ${_f} ..."
 		if [ "X${_f}" = "X${_kernel}" ]; then
-			( cd /mnt ; ftp ${_ftp_active} -V ${_url_base}/${_f} )
+			( cd /mnt ; ftp ${_ftp_active} -V -m ${_url_base}/${_f} )
 		else
-			( cd /mnt ; ftp ${_ftp_active} -o - -V ${_url_base}/${_f} | tar zxvpf - )
+			( cd /mnt ; ftp ${_ftp_active} -o - -V -m ${_url_base}/${_f} | tar zxpf - )
 		fi
 		if [ $? -ne 0 ]; then
 			# Mark xfer as having failed,.
