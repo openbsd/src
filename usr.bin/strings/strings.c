@@ -1,4 +1,4 @@
-/*	$OpenBSD: strings.c,v 1.11 2003/06/10 22:20:52 deraadt Exp $	*/
+/*	$OpenBSD: strings.c,v 1.12 2003/10/02 05:10:03 mickey Exp $	*/
 /*	$NetBSD: strings.c,v 1.7 1995/02/15 15:49:19 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)strings.c	8.2 (Berkeley) 1/28/94";
 #endif
-static char rcsid[] = "$OpenBSD: strings.c,v 1.11 2003/06/10 22:20:52 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: strings.c,v 1.12 2003/10/02 05:10:03 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -54,6 +54,7 @@ static char rcsid[] = "$OpenBSD: strings.c,v 1.11 2003/06/10 22:20:52 deraadt Ex
 #include <string.h>
 #include <locale.h>
 #include <unistd.h>
+#include <err.h>
 
 #define FORMAT_DEC "%07ld "
 #define FORMAT_OCT "%07lo "
@@ -154,28 +155,21 @@ main(int argc, char *argv[])
 
 	if (minlen == -1)
 		minlen = DEF_LEN;
-	else if (minlen < 1) {
-		(void)fprintf(stderr, "strings: length less than 1\n");
-		exit (1);
-	}
-	if (maxlen != -1 && maxlen < minlen) {
-		(void)fprintf(stderr, "strings: max length less than min\n");
-		exit (1);
-	}
+	else if (minlen < 1)
+		errx(1, "length less than 1");
+	if (maxlen != -1 && maxlen < minlen)
+		errx(1, "max length less than min");
 	bfrlen = maxlen == -1 ? minlen : maxlen;
 	bfr = malloc(bfrlen + 1);
-	if (!bfr) {
-		(void)fprintf(stderr, "strings: %s\n", strerror(errno));
-		exit(1);
-	}
+	if (!bfr)
+		err(1, "malloc");
 	bfr[bfrlen] = '\0';
 	file = "stdin";
 	do {
 		if (*argv) {
 			file = *argv++;
 			if (!freopen(file, "r", stdin)) {
-				(void)fprintf(stderr,
-				    "strings: %s: %s\n", file, strerror(errno));
+				warn("%s", file);
 				exitcode = 1;
 				goto nextfile;
 			}
