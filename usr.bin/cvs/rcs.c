@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.2 2004/07/14 02:33:40 vincent Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.3 2004/07/14 05:13:06 vincent Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -822,7 +822,7 @@ rcs_parse_delta(RCSFILE *rfp)
 	int ret, tok, ntok, hmask;
 	u_int i;
 	char *tokstr;
-	RCSNUM datenum;
+	RCSNUM *datenum;
 	struct rcs_delta *rdp;
 	struct rcs_key *rk;
 
@@ -918,21 +918,23 @@ rcs_parse_delta(RCSFILE *rfp)
 			}
 
 			if (tok == RCS_TOK_DATE) {
-				rcsnum_aton(tokstr, NULL, &datenum);
-				if (datenum.rn_len != 6) {
+				datenum = rcsnum_alloc();
+				rcsnum_aton(tokstr, NULL, datenum);
+				if (datenum->rn_len != 6) {
 					cvs_log(LP_ERR,
 					    "RCS date specification has %s "
 					    "fields",
-					    (datenum.rn_len > 6) ? "too many" :
+					    (datenum->rn_len > 6) ? "too many" :
 					    "missing");
 					rcs_freedelta(rdp);
 				}
-				rdp->rd_date.tm_year = datenum.rn_id[0];
-				rdp->rd_date.tm_mon = datenum.rn_id[1] - 1;
-				rdp->rd_date.tm_mday = datenum.rn_id[2];
-				rdp->rd_date.tm_hour = datenum.rn_id[3];
-				rdp->rd_date.tm_min = datenum.rn_id[4];
-				rdp->rd_date.tm_sec = datenum.rn_id[5];
+				rdp->rd_date.tm_year = datenum->rn_id[0];
+				rdp->rd_date.tm_mon = datenum->rn_id[1] - 1;
+				rdp->rd_date.tm_mday = datenum->rn_id[2];
+				rdp->rd_date.tm_hour = datenum->rn_id[3];
+				rdp->rd_date.tm_min = datenum->rn_id[4];
+				rdp->rd_date.tm_sec = datenum->rn_id[5];
+				rcsnum_free(datenum);
 			}
 			else if (tok == RCS_TOK_AUTHOR) {
 				rdp->rd_author = tokstr;
