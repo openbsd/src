@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.7 2004/09/10 10:39:45 miod Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.8 2004/09/27 19:13:25 pefo Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -41,9 +41,6 @@
 #include "assym.h"
 
 	.set	mips3
-
-/* XXX pipeline drainer fix for older RM7000 cpus. */
-#define	ITLBNOPFIX	nop;nop;nop;nop;nop;nop;nop;nop;nop;nop;
 
 	.set	noreorder	/* Default reorder mode */
 
@@ -216,9 +213,9 @@ NLEAF(k_tlb_inv, 0)
 	PTR_SRL	k0, k0, PGSHIFT
 	sltu	k1, k0, k1
 	beq	k1, zero, sys_stk_chk		# No. check for valid stack
-	PTR_L	k1, Sysmap
-
 	PTR_SLL	k0, k0, 2			# compute offset from index
+
+	PTR_L	k1, Sysmap
 	tlbp					# Probe the invalid entry
 	PTR_ADDU k1, k1, k0
 	and	k0, k0, 4			# check even/odd page
@@ -294,8 +291,8 @@ NLEAF(k_tlb_miss, 0)
 	PTR_SRL	k0, k0, PGSHIFT
 	sltu	k1, k0, k1
 	beq	k1, zero, sys_stk_chk		# No. check for valid stack
-	PTR_L	k1, Sysmap
 	PTR_SRL	k0, k0, 1
+	PTR_L	k1, Sysmap
 	PTR_SLL	k0, k0, 3			# compute offset from index
 	PTR_ADDU k1, k1, k0
 	lw	k0, 0(k1)			# get PTE entry
