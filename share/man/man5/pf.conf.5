@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.127 2002/11/26 22:50:54 deraadt Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.128 2002/11/26 23:18:36 deraadt Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -93,6 +93,7 @@ command.
 .Pp
 .Bl -tag -width xxxx
 .It Pa set timeout
+.Pp
 .Bl -tag -width interval -compact
 .It Em interval
 Interval between purging expired states and fragments.
@@ -204,6 +205,7 @@ These can be combined:
 .It Pa set optimization
 Optimize the engine to one of the following network topographies or
 environments:
+.Pp
 .Bl -tag -width "O high-latency " -compact
 .It Pa default
 A normal network environment.
@@ -238,6 +240,7 @@ The
 option sets the default behaviour for the
 .Pa block
 action:
+.Pp
 .Bl -tag -width return -compact
 .It Em drop
 Packet is dropped silently
@@ -404,8 +407,14 @@ Furthermore child queues can be specified like in an
 rule.
 .Pp
 Following the previous example, this would specify the four referenced
-queues, plus a few child queues. The tos field is used to give interactive
-ssh sessions priority over bulk transfers over ssh like scp and sftp.
+queues, plus a few child queues. The
+.Pa tos
+field is used to give interactive
+.Xr ssh 1
+sessions priority over bulk transfers like
+.Xr scp 1
+and
+.Xr sftp 1 Ns .
 .Pp
 .Bd -literal
     queue std bandwidth 10% cbq(default)
@@ -1529,7 +1538,7 @@ Example rulesets
 .Xr ip6 4 ,
 .Xr tcp 4 ,
 .Xr udp 4 ,
-.Xr icmp 4
+.Xr icmp 4 ,
 .Xr icmp6 4
 .Sh HISTORY
 The
