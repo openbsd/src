@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.9 1997/02/05 15:48:24 deraadt Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.10 1997/05/12 18:00:29 deraadt Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -271,8 +271,10 @@ tcpdropoldhalfopen(avoidtp, port)
 	    inp = inp->inp_queue.cqe_prev) {
 		if ((tp = (struct tcpcb *)inp->inp_ppcb) &&
 		    tp != avoidtp &&
-		    tp->t_state == TCPS_SYN_RECEIVED)
-			break;
+		    tp->t_state == TCPS_SYN_RECEIVED) {
+			tcp_close(tp);
+			goto done;
+		}
 	}
 done:
 	splx(s);
