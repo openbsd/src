@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.39 2001/08/30 12:38:52 gluk Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.40 2001/09/10 22:05:38 gluk Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -106,7 +106,6 @@ struct bio_ops bioops;
 
 static __inline struct buf *bio_doread __P((struct vnode *, daddr_t, int,
 					    struct ucred *, int));
-int count_lock_queue __P((void));
 int getnewbuf __P((int slpflag, int slptimeo, struct buf **));
 
 /*
@@ -177,9 +176,6 @@ bufinit()
 	register int i;
 	int base, residual;
 
-	numfreebufs = 0;
-	numcleanbufs = 0;
-	numemptybufs = 0;
 	for (dp = bufqueues; dp < &bufqueues[BQUEUES]; dp++)
 		TAILQ_INIT(dp);
 	bufhashtbl = hashinit(nbuf, M_CACHE, M_WAITOK, &bufhash);
@@ -1032,23 +1028,6 @@ biodone(bp)
 		}
 	}
 }
-
-#ifdef DEBUG
-/*
- * Return a count of buffers on the "locked" queue.
- */
-int
-count_lock_queue()
-{
-	register struct buf *bp;
-	register int n = 0;
-
-	for (bp = bufqueues[BQ_LOCKED].tqh_first; bp;
-	    bp = bp->b_freelist.tqe_next)
-		n++;
-	return (n);
-}
-#endif /* DEBUG */
 
 #ifdef DEBUG
 /*
