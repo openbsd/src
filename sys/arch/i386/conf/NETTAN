@@ -1,20 +1,18 @@
-#	$OpenBSD: NETTAN,v 1.24 1997/10/20 01:40:12 todd Exp $
+#	$OpenBSD: NETTAN,v 1.25 1998/02/22 22:04:20 niklas Exp $
 #
 #	NETTAN -- Applitron Datasystem AB
 #
 
 machine		i386		# architecture, used by config; REQUIRED
 
-#option		I386_CPU	# CPU classes; at least one is REQUIRED
-#option		I486_CPU
-option		I586_CPU
-#option		GPL_MATH_EMULATE	# floating point emulation
+#include "../../../conf/GENERIC"
+#	OpenBSD: GENERIC,v 1.23 1997/07/01 23:13:16 provos Exp $
+#
+#	Machine-independent option; used by all architectures for their
+#	GENERIC kernel
 
-option		VM86
-#option		DUMMY_NOPS	# speed hack; recommanded
-#option		XSERVER
+#option		INSECURE	# default to secure
 
-maxusers	32		# estimated number of users
 option		TIMEZONE=0	# time zone to adjust RTC time by
 option		DST=0		# daylight savings time used by RTC
 
@@ -22,124 +20,195 @@ option		SWAPPAGER	# paging; REQUIRED
 option		DEVPAGER	# mmap() of devices
 
 option		DDB		# in-kernel debugger
-#makeoptions	DEBUG="-g"	# compile full symbol table
-option		DIAGNOSTIC	# internally consistency checks
+#makeoption	DEBUG="-g"	# compile full symbol table
+option		DIAGNOSTIC	# internal consistency checks
 option		KTRACE		# system call tracing, a la ktrace(1)
-option		BOOT_CONFIG
 
 option		SYSVMSG		# System V-like message queues
 option		SYSVSEM		# System V-like semaphores
 option		SYSVSHM		# System V-like memory sharing
 #option		SHMMAXPGS=1024	# 1024 pages is the default
 
-option		COMPAT_09	# Kernel compatibility with NetBSD 0.9,
+option		COMPAT_NOMID	# compatibility with 386BSD, BSDI, NetBSD 0.8,
+option		COMPAT_09	# NetBSD 0.9,
 option		COMPAT_10	# NetBSD 1.0,
+option		COMPAT_11	# NetBSD 1.1,
 option		COMPAT_43	# and 4.3BSD
 #option		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 
-option		COMPAT_SVR4	# binary compatibility with SVR4
-option		ELF_MAP_PAGE_ZERO
-				# Dell SVR4 mapped page zero read-only, if you
-				# have SW doing NULL derefs, add this option
-option		COMPAT_SVR4_NCR # 		"		 (NCR variant)
-option		COMPAT_IBCS2	# binary compatibility with SCO and ISC
-option		COMPAT_LINUX	# binary compatibility with Linux
-option		COMPAT_BSDOS	# binary compatibility with BSD/OS
-
-option		USER_LDT	# user-settable LDT; used by WINE
 option		LKM		# loadable kernel modules
 
 option		FFS		# UFS
-#option		QUOTA		# UFS quotas
+option		QUOTA		# UFS quotas
+#option		LFS		# log-structured file system
+option		EXT2FS		# Second Extended Filesystem
 option		MFS		# memory file system
+
 
 option		NFSCLIENT	# Network File System client
 option		NFSSERVER	# Network File System server
 
 option		CD9660		# ISO 9660 + Rock Ridge file system
 option		MSDOSFS		# MS-DOS file system
-#option		FDESC		# /dev/fd
+option		FDESC		# /dev/fd
 option		FIFO		# FIFOs; RECOMMENDED
 option		KERNFS		# /kern
-#option		NULLFS		# loopback file system
-#option		PORTAL		# dynamically created filesystem objects
+option		NULLFS		# loopback file system
+option		PORTAL		# create sockets with open(2)
 option		PROCFS		# /proc
-#option		UMAPFS		# NULLFS + uid and gid remapping
-#option		UNION		# union file system
+option		UMAPFS		# NULLFS + uid and gid remapping
+option		UNION		# union file system
 
-option		GATEWAY		# packet forwarding
+#option		GATEWAY		# packet forwarding
 option		INET		# IP + ICMP + TCP + UDP
+option		IPSEC		# IPsec
 #option		NS		# XNS
+#option		NSIP		# XNS tunneling over IP
+#option		IPX		# IPX+SPX
+#option		IPXIP		# IPX tunneling over IP
 #option		ISO,TPIP	# OSI
 #option		EON		# OSI tunneling over IP
 #option		CCITT,LLC,HDLC	# X.25
+option		IPFILTER	# IP packet filter for security
+option		IPFILTER_LOG	# use /dev/ipl to log IPF
+option		PPP_BSDCOMP	# PPP BSD compression
+option		PPP_DEFLATE
+
+pseudo-device	loop	1	# network loopback
+pseudo-device	bpfilter 8	# packet filter
+pseudo-device	sl	2	# CSLIP
+#pseudo-device	ppp	2	# PPP
+pseudo-device	ppp	8	# PPP	# NETTAN customization
+pseudo-device	tun	2	# network tunneling over tty
+pseudo-device	enc	1	# encryption device
+pseudo-device	strip	1	# Starmode Radio IP interface
+
+pseudo-device	pty	64	# pseudo-terminals
+pseudo-device	tb	1	# tablet line discipline
+pseudo-device	vnd	4	# paging to files
+pseudo-device	ccd	4	# concatenated disk devices
+#endinclude
+
+option		BOOT_CONFIG	# add support for boot -c
+
+option		I386_CPU	# CPU classes; at least one is REQUIRED
+option		I486_CPU
+option		I586_CPU
+option		GPL_MATH_EMULATE	# floating point emulation
+
+option		VM86		# Virtual 8086 emulation
+option		USER_LDT	# user-settable LDT; used by WINE
+option		XSERVER
+
+# Some BIOSes don't get the size of extended memory right.  If you
+# have a broken BIOS, uncomment the following and set the value
+# properly for your system.
+#option		EXTMEM_SIZE=...	# size of extended memory
+#option		DUMMY_NOPS	# speed hack; recommended
+
+option		COMPAT_SVR4	# binary compatibility with SVR4
+option		COMPAT_SVR4_NCR # 		"		 (NCR variant)
+option		ELF_MAP_PAGE_ZERO
+				# Dell SVR4 mapped page zero read-only, if you
+				# have SW doing NULL derefs, add this option
+option		COMPAT_IBCS2	# binary compatibility with SCO and ISC
+option		COMPAT_LINUX	# binary compatibility with Linux
+option		COMPAT_FREEBSD	# binary compatibility with FreeBSD
+
+maxusers	32		# estimated number of users
 
 config		bsd	swap generic
 
-mainbus0	at root
+mainbus0 at root
 
-bios0	at mainbus0
 isa0	at mainbus0
+eisa0	at mainbus0
 pci0	at mainbus0 bus ?
 
-#ppb*	at pci? dev ? function ?	# PCI-PCI bridges
-#pci*	at ppb? bus ?
+ppb*	at pci? dev ? function ?	# PCI-PCI bridges
+pci*	at ppb? bus ?
+
+pcicmaster0     at isa? port 0x3E0 size 2
+pcic0	at pcicmaster0 irq 11 iomem 0xd4000 iosiz 4096
+pcic1	at pcicmaster0 irq 12 iomem 0xd5000 iosiz 4096
+pcicmaster1 at isa? port 0x3E2 size 2
+pcic2	at pcicmaster1 irq 11 iomem 0xd6000 iosiz 4096
+pcic3	at pcicmaster1 irq 12 iomem 0xd7000 iosiz 4096
+
+pcmcia* at pcic?
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 isadma0	at isa?
+#isapnp0	at isa?
 
 #pc0	at isa? port 0x60 irq 1		# generic PC console device
 vt0	at isa? port 0x60 irq 1
 
 com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
-#com2	at isa? port 0x3e8 irq 5
-#com3	at isa? port 0x2e8 irq 9
-#ast0	at isa? port 0x1a0 irq 5	# AST 4-port serial cards
-#com*	at ast? slave ? flags 1
-boca0	at isa? port 0x180 irq 12	# BOCA 8-port serial cards
-com*	at boca? slave ?
+com2	at isa? port 0x3e8 irq 5
+#com3	at isa? port 0x2e8 irq 9	# (conflicts with some video cards)
+ast0	at isa? port 0x1a0 irq 5	# AST 4-port serial card
+#ast1	at isa? port 0x2a0 irq 6	# 2nd AST 4-port serial card
+com*	at ast? slave ?
+#boca0	at isa? port 0x100 irq 5	# BOCA 8-port serial cards
+#com*	at boca? slave ?
 #rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
 #com*	at rtfps? slave ?
+com3    at pcmcia? port 0x2e8 size 8 irq 3 slot ? # PCMCIA modem cards
 
-#cy0	at isa? ...
+# option for using CD1400 handshaking for incoming data
+# requires a special cable that exchanges the RTS and DTR lines
+# options CY_HW_RTS
+cy0	at isa? iomem 0xd4000 irq 12	# ISA cyclom card
+#cy*	at pci?				# PCI cyclom card
 
 lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
-#lpt1	at isa? port 0x278
-#lpt2	at isa? port 0x3bc
+lpt1	at isa? port 0x278
+lpt2	at isa? port 0x3bc
 
-#lms0	at isa? port 0x23c irq 5	# Logitech bus mouse
-#lms1	at isa? port 0x238 irq 5
-#mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
-#mms1	at isa? port 0x238 irq 5
-#pms0	at isa? port 0x60 irq 12	# PS/2 auxiliary port mouse
+lms0	at isa? port 0x23c irq 5	# Logitech bus mouse
+lms1	at isa? port 0x238 irq 5
+mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
+mms1	at isa? port 0x238 irq 5
+#pms0	at pckbd? irq 12		# PS/2 auxiliary port mouse
 
-#aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
-#aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
-#scsibus* at aha?
+bt0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
+bt1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
+bt2	at isa? port ? irq ?
+scsibus* at bt?
+aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
+aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
+scsibus* at aha?
+ahb*	at eisa? slot ?			# Adaptec 174[024] SCSI controllers
+scsibus* at ahb?
+ahc0	at isa? port ? irq ?		# Adaptec 284x SCSI controllers
+ahc*	at eisa? slot ?			# Adaptec 274x, aic7770 SCSI controllers
 ahc*	at pci? dev ? function ?	# Adaptec 2940 SCSI controllers
 scsibus0 at ahc?
-#aic0	at isa? port 0x340 irq 12	# Adaptec 152[02] SCSI controllers
-#scsibus* at aic?
-#bt0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
-#bt1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
-#bt2	at isa? port ? irq ?
-#scsibus* at bt?
-#sea0	at isa? iomem 0xc8000 irq 5	# Seagate ST0[12] SCSI controllers
-#scsibus* at sea?
-#uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI controllers
-#uha1	at isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI controllers
-#uha*	at eisa? slot ?			# UltraStor 24f SCSI controllers
-#scsibus* at uha?
+scsibus* at ahc?
+aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI controllers
+scsibus* at aic?
+ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
+scsibus* at ncr?
+sea0	at isa? iomem 0xc8000 irq 5
+scsibus* at sea?
+uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI controllers
+uha1	at isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI controllers
+uha*	at eisa? slot ?			# UltraStor 24f SCSI controllers
+scsibus* at uha?
+wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
+wds1	at isa? port 0x358 irq 11 drq 5
+scsibus* at wds?
 
 sd0	at scsibus0 target 0 lun ?	# Conner 2GB
 sd1	at scsibus0 target 2 lun ?	# Quantum Atlas 4GB
-sd2	at scsibus0 target 4 lun ?	# Fujitsu 500MB
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
-#ch*	at scsibus? target ? lun ?	# SCSI autochangers
-#ss*	at scsibus? target ? lun ?	# SCSI Scanners
+ch*	at scsibus? target ? lun ?	# SCSI autochangers
+ss*	at scsibus? target ? lun ?	# SCSI scanners
+uk*	at scsibus? target ? lun ?	# unknown SCSI
 
 fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
 #fdc1	at isa? port 0x370 irq ? drq ?
@@ -147,28 +216,48 @@ fd*	at fdc? drive ?
 
 #mcd0	at isa? port 0x300 irq 10	# Mitsumi CD-ROM drives
 
-#wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
-#wdc1	at isa? port 0x170 irq ?
-#wd*	at wdc? drive ?
+wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
+wdc1	at isa? port 0x170 irq 15
+wd*	at wdc? drive ?
 
-#atapibus* at wdc?
-#acd*	at atapibus? drive?
+atapibus* at wdc?
+acd*	at atapibus? drive?
 
-#ed0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC, 3C503, and NE[12]000
-#ed1	at isa? port 0x250 iomem 0xd8000 irq 9	#   ethernet cards
+wt0	at isa? port 0x300 irq 5 drq 1	# Archive and Wangtek QIC tape drives
+
+ed0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC, 3C503, and NE[12]000
+ed1	at isa? port 0x250 iomem 0xd8000 irq 9	#   ethernet cards
 ed2	at isa? port 0x300 iomem 0xcc000 irq 10
-#eg0	at isa? ...				# 3C505 ethernet cards
+eg0	at isa? port 0x310 irq 5		# 3C505/Etherlink+ ethernet cards
+el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
+ep0	at isa? port ? irq ?			# 3C509 ethernet cards
+ep*	at isa? port ? irq ?			# 3C509 ethernet cards
+ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
+ie1	at isa? port 0x300 irq 10		# EtherExpress
+le0	at isa? port 0x360 irq 15 drq 6		# IsoLan, NE2100, and DEPCA
+ep0	at eisa? slot ?
+ep*	at eisa? slot ?				# 3C579 ethernet cards
+fea*	at eisa? slot ?				# DEC DEFEA FDDI cards
+le*	at pci? dev ? function ?		# PCnet-PCI based ethernet cards
+de*	at pci? dev ? function ?		# DC21X4X-based ethernet cards
+fxp*	at pci? dev ? function ?		# EtherExpress 10/100B ethernet cards
+ed*	at pci? dev ? function ?		# NE2000-compat ethernet cards
 ep0	at pci? dev ? function ?		# 3C590 ethernet cards
 ep*	at pci? dev ? function ?		# 3C590 ethernet cards
+ed*     at pcmcia? port 0x300 size 0x20 irq 10 slot ? # PCMCIA based ed cards
+ep*     at pcmcia? port 0x300 size 0x10 irq 10 slot ? # PCMCIA based ep cards
+fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI cards
 
-#spkr0	at isa? ...
+pss0	at isa? port 0x220 irq 7 drq 6  # Personal Sound System
+sp0	at pss0 port 0x530 irq 10 drq 0	# 	sound port driver
 
-pseudo-device	loop	1		# network loopback
-pseudo-device	bpfilter 8		# packet filter
-pseudo-device	sl	2		# CSLIP
-pseudo-device	ppp	2		# PPP
-pseudo-device	tun	2		# network tunneling over tty
+sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster
+wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
+pas0	at isa? port 0x220 irq 7 drq 1	# ProAudio Spectrum
+gus0	at isa? port 0x220 irq 7 drq 1 flags 6 # Gravis UltraSound (flags is record drq)
+#spkr0	at pckbd? port 0x61
 
-pseudo-device	pty	64		# pseudo-terminals
-#pseudo-device	tb	1		# tablet line discipline
-pseudo-device	vnd	4		# paging to files
+# Joystick driver. Probe is a little strange; add only if you have one.
+#joy0	at isa? port 0x201
+
+pseudo-device pctr	1

@@ -1,4 +1,4 @@
-#	$OpenBSD: PETRA,v 1.8 1997/10/20 01:40:13 todd Exp $
+#	$OpenBSD: PETRA,v 1.9 1998/02/22 22:04:22 niklas Exp $
 #
 #	PETRA -- everything that's currently supported with certain
 #		 changes for Applitron's fileserver petra, a 128 MB
@@ -14,18 +14,17 @@ include "../../../conf/GENERIC"
 option		I386_CPU	# CPU classes; at least one is REQUIRED
 option		I486_CPU
 option		I586_CPU
+option		I686_CPU
 option		GPL_MATH_EMULATE	# floating point emulation
 
 option		VM86		# Virtual 8086 emulation
 option		USER_LDT	# user-settable LDT; used by WINE
-#option		XSERVER
+option		XSERVER
 
 # Some BIOSes don't get the size of extended memory right.  If you
 # have a broken BIOS, uncomment the following and set the value
 # properly for your system.
-#option		EXTMEM_SIZE=131072	# size of extended memory
-#option		EXTMEM_SIZE=131008	# size of extended memory
-option		EXTMEM_SIZE=130000	# size of extended memory
+#option		EXTMEM_SIZE=130000	# size of extended memory
 option		BUFCACHEPERCENT=50	# how much for the buffer cache?
 #option		DUMMY_NOPS	# speed hack; recommended
 
@@ -39,19 +38,28 @@ option		COMPAT_LINUX	# binary compatibility with Linux
 option		COMPAT_FREEBSD	# binary compatibility with FreeBSD
 option		COMPAT_BSDOS	# binary compatibility with BSD/OS
 
+option		COMCONSOLE	# serial console
+
 maxusers	32		# estimated number of users
 
-config		bsd	root on sd0a swap on ccd0b dumps on ccd0b
+config		bsd	root on sd0a swap on ccd0b dumps on sd1a
 
 mainbus0 at root
 
 bios0	at mainbus0
+apm0	at bios0
+option	APM_NOIDLE
 isa0	at mainbus0
 eisa0	at mainbus0
-pci0	at mainbus0 bus ?
+pci*	at mainbus0 bus ?
 
+option		PCIVERBOSE
+option		EISAVERBOSE
+
+pchb*	at pci? dev ? function ?	# PCI-Host bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 pci*	at ppb? bus ?
+pci*	at pchb? bus ?
 
 pcicmaster0	at isa? port 0x3E0 size 2
 pcic0	at pcicmaster0 irq 11 iomem 0xd4000 iosiz 4096
@@ -64,23 +72,24 @@ pcmcia* at pcic?
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 isadma0	at isa?
-#isapnp0	at isa?
+isapnp0	at isa?
 
 #pc0	at isa? port 0x60 irq 1		# generic PC console device
 vt0	at isa? port 0x60 irq 1
 
-com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
-com1	at isa? port 0x2f8 irq 3
-com2	at isa? port 0x3e8 irq 5
-#com3	at isa? port 0x2e8 irq 9	# (conflicts with some video cards)
+pccom0	at isa? port 0x3f8 irq 4	# standard PC serial ports
+pccom1	at isa? port 0x2f8 irq 3
+pccom2	at isa? port 0x3e8 irq 5
+#pccom3	at isa? port 0x2e8 irq 9	# (conflicts with some video cards)
 ast0	at isa? port 0x1a0 irq 5	# AST 4-port serial card
 #ast1	at isa? port 0x2a0 irq 6	# 2nd AST 4-port serial card
-com*	at ast? slave ?
+pccom*	at ast? slave ?
 #boca0	at isa? port 0x100 irq 5	# BOCA 8-port serial cards
-#com*	at boca? slave ?
+#pccom*	at boca? slave ?
 #rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
-#com*	at rtfps? slave ?
-com3	at pcmcia? port 0x2e8 size 8 irq 3 slot ? # PCMCIA modem cards
+#pccom*	at rtfps? slave ?
+pccom3	at pcmcia? port 0x2e8 size 8 irq 3 slot ? # PCMCIA modem cards
+pccom*	at isapnp?
 
 # option for using CD1400 handshaking for incoming data
 # requires a special cable that exchanges the RTS and DTR lines
@@ -96,7 +105,7 @@ lms0	at isa? port 0x23c irq 5	# Logitech bus mouse
 lms1	at isa? port 0x238 irq 5
 mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 mms1	at isa? port 0x238 irq 5
-#pms0	at pckbd? irq 12		# PS/2 auxiliary port mouse
+pms0	at pckbd? irq 12		# PS/2 auxiliary port mouse
 
 bt0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
 bt1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
@@ -110,7 +119,6 @@ scsibus* at ahb?
 ahc0	at isa? port ? irq ?		# Adaptec 284x SCSI controllers
 ahc*	at eisa? slot ?			# Adaptec 274x, aic7770 SCSI controllers
 ahc*	at pci? dev ? function ?	# Adaptec 2940 SCSI controllers
-scsibus* at ahc?
 scsibus* at ahc?
 aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI controllers
 scsibus* at aic?
@@ -140,7 +148,7 @@ fd*	at fdc? drive ?
 #mcd0	at isa? port 0x300 irq 10	# Mitsumi CD-ROM drives
 
 wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
-#wdc1	at isa? port 0x170 irq 15
+wdc1	at isa? port 0x170 irq 15
 wd*	at wdc? drive ?
 
 atapibus* at wdc?
@@ -151,6 +159,7 @@ wt0	at isa? port 0x300 irq 5 drq 1	# Archive and Wangtek QIC tape drives
 ed0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC, 3C503, and NE[12]000
 ed1	at isa? port 0x250 iomem 0xd8000 irq 9	#   ethernet cards
 ed2	at isa? port 0x300 iomem 0xcc000 irq 10
+ed3	at isa? port 0x240 iomem 0xd8000 irq 9
 eg0	at isa? port 0x310 irq 5		# 3C505/Etherlink+ ethernet cards
 el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
 ep0	at isa? port ? irq ?			# 3C509 ethernet cards
@@ -158,10 +167,12 @@ ep*	at isa? port ? irq ?			# 3C509 ethernet cards
 ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
 ie1	at isa? port 0x300 irq 10		# EtherExpress
 le0	at isa? port 0x360 irq 15 drq 6		# IsoLan, NE2100, and DEPCA
+ex0	at isa? port 0x320 irq 5		# Intel EtherExpress PRO/10
 ep0	at eisa? slot ?
 ep*	at eisa? slot ?				# 3C579 ethernet cards
 fea*	at eisa? slot ?				# DEC DEFEA FDDI cards
 le*	at pci? dev ? function ?		# PCnet-PCI based ethernet cards
+le*	at isapnp?
 de*	at pci? dev ? function ?		# DC21X4X-based ethernet cards
 fxp*	at pci? dev ? function ?		# EtherExpress 10/100B ethernet cards
 ed*	at pci? dev ? function ?		# NE2000-compat ethernet cards
@@ -175,6 +186,7 @@ pss0	at isa? port 0x220 irq 7 drq 6		# Personal Sound System
 sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
 
 sb0	at isa? port 0x220 irq 7 drq 1		# SoundBlaster
+sb*	at isapnp?
 wss0	at isa? port 0x530 irq 10 drq 0		# Windows Sound System
 pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
 gus0	at isa? port 0x220 irq 7 drq 1 flags 6	# Gravis UltraSound (flags is record drq)
@@ -182,3 +194,6 @@ gus0	at isa? port 0x220 irq 7 drq 1 flags 6	# Gravis UltraSound (flags is record
 
 # Joystick driver. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
+
+pseudo-device	pctr	1
+#option DEBUG_ISAPNP
