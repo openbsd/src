@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.63 2004/06/01 20:45:02 mickey Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.64 2004/07/11 16:26:27 pvalchev Exp $
 #
 # Build wrapper for Perl 5.8.3
 #
@@ -34,11 +34,6 @@ POD2MAN=	LD_LIBRARY_PATH=${.OBJDIR} ${.OBJDIR}/perl -I ${.OBJDIR}/lib \
 		${.OBJDIR}/pod/pod2man
 .endif
 H2PH=		/usr/bin/h2ph
-
-# Need -fPIC, not -fpic on sparc
-.if ($(TARGET_MACHINE_ARCH) == sparc)
-PICFLAG=-fPIC
-.endif
 
 MANLOCALBUILD=	yes
 
@@ -648,6 +643,12 @@ cleandir:
 .include <bsd.lib.mk>
 
 # These have to come after the inclusion of <bsd.lib.mk>
+
+# Need -fPIC, not -fpic on sparc
+.if ($(TARGET_MACHINE_ARCH) == sparc)
+PICFLAG=-fPIC
+.endif
+
 perl.lib:	${GENERATED} ${_LIBS}
 
 install.lib:
