@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.45 1999/04/05 16:38:04 millert Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.46 1999/06/06 23:17:24 deraadt Exp $	*/
 /*	$NetBSD: ncr.c,v 1.63 1997/09/23 02:39:15 perry Exp $	*/
 
 /**************************************************************************
@@ -1465,7 +1465,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$OpenBSD: ncr.c,v 1.45 1999/04/05 16:38:04 millert Exp $\n";
+	"\n$OpenBSD: ncr.c,v 1.46 1999/06/06 23:17:24 deraadt Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -7566,7 +7566,7 @@ static int ncr_regtest (struct ncb* np)
 
 static int ncr_snooptest (struct ncb* np)
 {
-	u_int32_t ncr_rd, ncr_wr, ncr_bk, host_rd, host_wr, pc;
+	volatile u_int32_t ncr_rd, ncr_wr, ncr_bk, host_rd, host_wr, pc;
 	int	i, err=0;
 #if !defined(NCR_IOMAPPED) || defined(__OpenBSD__)
 #ifdef __OpenBSD__
