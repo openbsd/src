@@ -1,4 +1,4 @@
-/*	$OpenBSD: captoinfo.c,v 1.1.1.1 1996/05/31 05:40:02 tholo Exp $	*/
+/*	$OpenBSD: captoinfo.c,v 1.2 1996/06/02 23:47:01 tholo Exp $	*/
 
 /*
  * Copyright (c) 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: captoinfo.c,v 1.1.1.1 1996/05/31 05:40:02 tholo Exp $";
+static char rcsid[] = "$OpenBSD: captoinfo.c,v 1.2 1996/06/02 23:47:01 tholo Exp $";
 #endif
 
 #include <stdlib.h>
@@ -112,7 +112,7 @@ static int
 cvtchar(p)
     const char *p;
 {
-    char ch = 0;
+    unsigned char ch = 0;
     int len;
 
     switch (*p) {
@@ -146,7 +146,7 @@ cvtchar(p)
 	    }
 	    break;
 	case '^':
-	    ch = (*p++ & 0x1F);
+	    ch = (*++p & 0x1F);
 	    len = 2;
 	    break;
 	default:
