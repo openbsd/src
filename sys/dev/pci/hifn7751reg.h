@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751reg.h,v 1.33 2002/01/09 01:53:39 jason Exp $	*/
+/*	$OpenBSD: hifn7751reg.h,v 1.34 2002/01/23 15:59:12 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -192,6 +192,7 @@ typedef struct hifn_desc {
 #define	HIFN_1_7811_RNGCFG	0x64	/* 7811: rng config */
 #define	HIFN_1_7811_RNGDAT	0x68	/* 7811: rng data */
 #define	HIFN_1_7811_RNGSTS	0x6c	/* 7811: rng status */
+#define	HIFN_1_7811_MIPSRST	0x94	/* 7811: MIPS reset */
 #define	HIFN_1_REVID		0x98	/* Revision ID */
 
 #define	HIFN_1_PUB_RESET	0x204	/* Public/RNG Reset */
@@ -290,6 +291,17 @@ typedef struct hifn_desc {
 /* 7811 RNG Status Register (HIFN_1_7811_RNGSTS) */
 #define	HIFN_7811_RNGSTS_RDY	0x00004000	/* two numbers in FIFO */
 #define	HIFN_7811_RNGSTS_UFL	0x00001000	/* rng underflow */
+
+/* 7811 MIPS Reset Register (HIFN_1_7811_MIPSRST) */
+#define	HIFN_MIPSRST_BAR2SIZE	0xffff0000	/* sdram size */
+#define	HIFN_MIPSRST_GPRAMINIT	0x00008000	/* gpram can be accessed */
+#define	HIFN_MIPSRST_CRAMINIT	0x00004000	/* ctxram can be accessed */
+#define	HIFN_MIPSRST_LED2	0x00000400	/* external LED2 */
+#define	HIFN_MIPSRST_LED1	0x00000200	/* external LED1 */
+#define	HIFN_MIPSRST_LED0	0x00000100	/* external LED0 */
+#define	HIFN_MIPSRST_MIPSDIS	0x00000004	/* disable MIPS */
+#define	HIFN_MIPSRST_MIPSRST	0x00000002	/* warm reset MIPS */
+#define	HIFN_MIPSRST_MIPSCOLD	0x00000001	/* cold reset MIPS */
 
 /* Public key reset register (HIFN_1_PUB_RESET) */
 #define	HIFN_PUBRST_RESET	0x00000001	/* reset public/rng unit */

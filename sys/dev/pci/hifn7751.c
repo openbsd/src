@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.112 2002/01/09 01:53:39 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.113 2002/01/23 15:59:12 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -511,7 +511,8 @@ hifn_reset_board(sc, full)
 
 	if (sc->sc_flags & HIFN_IS_7811) {
 		for (reg = 0; reg < 1000; reg++) {
-			if (READ_REG_1(sc, 0x94) & 0x4000)
+			if (READ_REG_1(sc, HIFN_1_7811_MIPSRST) &
+			    HIFN_MIPSRST_CRAMINIT)
 				break;
 			DELAY(1000);
 		}
