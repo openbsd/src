@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.S,v 1.13 2003/06/27 05:13:19 weingart Exp $	*/
+/*	$OpenBSD: srt0.S,v 1.14 2003/11/22 09:18:25 grange Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -48,7 +48,7 @@ _start:
 	je	1f
 #ifdef DEBUG
 	movl	$0xb80a0, %ebx
-	movl	$0x07420742, (%ebx)
+	addr32 movl $0x07420742, (%ebx)
 #endif
 1:
 	popl %edx
