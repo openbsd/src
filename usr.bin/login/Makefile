@@ -1,10 +1,13 @@
 #	$NetBSD: Makefile,v 1.10 1994/12/23 06:52:56 jtc Exp $
-#	@(#)Makefile	8.1 (Berkeley) 7/19/93
+#	from: @(#)Makefile	8.1 (Berkeley) 7/19/93
+#	$Id: Makefile,v 1.3 1996/02/15 05:02:24 etheisen Exp $
 
 PROG=	login
 SRCS=	login.c
-LDADD=	-lutil -lcrypt
-DPADD=	${LIBUTIL} ${LIBCRYPT}
+#LDADD=	-lutil -lcrypt
+LDADD=	-lutil
+#DPADD=	${LIBUTIL} ${LIBCRYPT}
+DPADD=	${LIBUTIL}
 
 .include <bsd.own.mk>	# For SKEY, KERBEROS and KERBEROS5
 

@@ -1,12 +1,14 @@
 #	from: @(#)Makefile	5.11 (Berkeley) 2/19/91
-#	$Id: Makefile,v 1.4 1996/02/13 07:22:17 dm Exp $
+#	$Id: Makefile,v 1.5 1996/02/15 05:02:25 etheisen Exp $
 
 PROG=	passwd
 SRCS=	local_passwd.c yp_passwd.c passwd.c pw_copy.c pw_util.c getpwent.c
 .PATH:  ${.CURDIR}/../../usr.bin/chpass ${.CURDIR}/../../usr.sbin/vipw \
 	${.CURDIR}/../rlogin ${.CURDIR}/../../lib/libc/gen
-DPADD+= ${LIBRPCSVC} ${LIBCRYPT}
-LDADD+= -lrpcsvc -lcrypt
+#DPADD+= ${LIBRPCSVC} ${LIBCRYPT}
+DPADD+= ${LIBRPCSVC}
+#LDADD+= -lrpcsvc -lcrypt
+LDADD+= -lrpcsvc
 CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../../usr.sbin/vipw -DYP
 
 .if defined(KERBEROS5)

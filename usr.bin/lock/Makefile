@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.7 1994/12/22 01:16:19 jtc Exp $
-#	@(#)Makefile	8.1 (Berkeley) 6/6/93
+#	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
+#	$Id: Makefile,v 1.3 1996/02/15 05:02:23 etheisen Exp $
 
 PROG=	lock
 BINOWN= root
 BINMODE=4555
-LDADD+= -lcrypt
-DPADD+= ${LIBCRYPT}
+#LDADD+= -lcrypt
+#DPADD+= ${LIBCRYPT}
 
 .include <bsd.own.mk>
 
