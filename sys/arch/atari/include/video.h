@@ -1,4 +1,4 @@
-/*	$NetBSD: video.h,v 1.2 1995/08/17 20:34:04 leo Exp $	*/
+/*	$NetBSD: video.h,v 1.2.2.1 1995/11/16 20:30:13 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -196,6 +196,6 @@ struct sound {
 #define	PA_SDTR		0x10	/* Serial DTR				*/
 #define	PA_PSTROBE	0x20	/* Parallel Strobe			*/
 #define	PA_USER		0x40	/* Free Pin on Monitor Connector	*/
-/*			0x80	 reserved	 */
+#define	PA_SER2		0x80	/* Choose between LAN or Ser2 port	*/
 
 #endif /*  _MACHINE_VIDEO_H */
