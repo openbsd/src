@@ -35,7 +35,7 @@
 .\"
 .\"	from: Header: le.4,v 1.2 92/10/13 05:31:33 leres Exp
 .\"	from: @(#)le.4	8.1 (Berkeley) 6/9/93
-.\"	$Id: le.4,v 1.3 1996/07/27 10:50:09 deraadt Exp $
+.\"	$Id: le.4,v 1.4 1998/03/09 09:54:18 deraadt Exp $
 .\"
 .Dd June 9, 1993
 .Dt LE 4 sparc
@@ -44,7 +44,12 @@
 .Nm le
 .Nd SPARC AMD 7990 LANCE ethernet interface
 .Sh SYNOPSIS
-.Cd "le* at sbus? slot ? offset ?"
+.Cd "le* at sbus? slot ? offset ?            " Pq "sun4c onboard"
+.Cd "lebuffer* at sbus? slot ? offset ?      " Pq Sbus
+.Cd "le* at lebuffer?                        " Pq Sbus
+.Cd "ledma0 at sbus0 slot ? offset ?         " Pq "sun4m onboard"
+.Cd "le0 at ledma0                           " Pq "sun4m onboard"
+.Cd "le0 at obio0 addr 0xf9000000 level 6    " Pq sun4/300
 .Sh DESCRIPTION
 The 
 .Nm
