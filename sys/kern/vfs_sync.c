@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.4 1998/08/06 19:34:27 csapuntz Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.5 1998/11/12 04:36:32 csapuntz Exp $  */
 
 
 /*
@@ -59,13 +59,14 @@
 /*
  * The workitem queue.
  */ 
-#define SYNCER_MAXDELAY	32
+#define SYNCER_MAXDELAY	60		/* maximum sync delay time */
+#define SYNCER_DEFAULT 30		/* default sync delay time */
 int syncer_maxdelay = SYNCER_MAXDELAY;	/* maximum delay time */
-time_t syncdelay = 30;			/* time to delay syncing vnodes */
+time_t syncdelay = SYNCER_DEFAULT;	/* time to delay syncing vnodes */
 int rushjob;				/* number of slots to run ASAP */
  
 static int syncer_delayno = 0;
-static long syncer_mask;
+static long syncer_last;
 LIST_HEAD(synclist, vnode);
 static struct synclist *syncer_workitem_pending;
 
@@ -101,9 +102,16 @@ void
 vn_initialize_syncerd()
 
 {
-	syncer_workitem_pending = hashinit(syncer_maxdelay, M_VNODE,
-					   &syncer_mask);
-	syncer_maxdelay = syncer_mask + 1;
+	int i;
+
+	syncer_last = SYNCER_MAXDELAY + 2;
+
+	syncer_workitem_pending =
+		malloc(syncer_last * sizeof(struct synclist), 
+		       M_VNODE, M_WAITOK);
+
+	for (i = 0; i < syncer_last; i++)
+		LIST_INIT(&syncer_workitem_pending[i]);
 }
 
 /*
@@ -117,9 +125,9 @@ vn_syncer_add_to_worklist(vp, delay)
 	int s, slot;
 
 	s = splbio();
-	if (delay > syncer_maxdelay - 2)
-		delay = syncer_maxdelay - 2;
-	slot = (syncer_delayno + delay) & syncer_mask;
+	if (delay > syncer_maxdelay)
+		delay = syncer_maxdelay;
+	slot = (syncer_delayno + delay) % syncer_last;
 	LIST_INSERT_HEAD(&syncer_workitem_pending[slot], vp, v_synclist);
 	splx(s);
 }
@@ -149,7 +157,7 @@ sched_sync(p)
 		s = splbio();
 		slp = &syncer_workitem_pending[syncer_delayno];
 		syncer_delayno += 1;
-		if (syncer_delayno == syncer_maxdelay)
+		if (syncer_delayno >= syncer_last)
 			syncer_delayno = 0;
 		splx(s);
 		while ((vp = LIST_FIRST(slp)) != NULL) {
@@ -157,7 +165,8 @@ sched_sync(p)
 			(void) VOP_FSYNC(vp, p->p_ucred, MNT_LAZY, p);
 			VOP_UNLOCK(vp, 0, p);
 			if (LIST_FIRST(slp) == vp) {
-				if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL)
+				if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL &&
+				    vp->v_type != VBLK)
 					panic("sched_sync: fsync failed");
 				/*
 				 * Move ourselves to the back of the sync list.
