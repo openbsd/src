@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.13 2004/05/04 18:58:50 deraadt Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.14 2004/05/04 22:23:01 mickey Exp $	*/
 
 /* Parser for dhclient config and lease files... */
 
@@ -155,7 +155,7 @@ read_client_leases(void)
 		if (token == EOF)
 			break;
 		if (token != LEASE) {
-			warn("Corrupt lease file - possible data loss!");
+			warning("Corrupt lease file - possible data loss!");
 			skip_to_semi(cfile);
 			break;
 		} else
@@ -837,7 +837,7 @@ bad_flag:
 				dp = buf;
 				goto alloc;
 			default:
-				warn("Bad format %c in parse_option_param.",
+				warning("Bad format %c in parse_option_param.",
 				    *fmt);
 				skip_to_semi(cfile);
 				return (NULL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.31 2004/05/04 20:28:40 deraadt Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.32 2004/05/04 22:23:01 mickey Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -256,7 +256,7 @@ void do_packet(struct interface_info *, struct dhcp_packet *,
 /* errwarn.c */
 extern int warnings_occurred;
 void error(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
-int warn(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
+int warning(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
 int note(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
 int debug(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
 int parse_warn(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));

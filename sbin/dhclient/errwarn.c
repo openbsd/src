@@ -1,4 +1,4 @@
-/*	$OpenBSD: errwarn.c,v 1.6 2004/03/05 23:57:16 deraadt Exp $	*/
+/*	$OpenBSD: errwarn.c,v 1.7 2004/05/04 22:23:01 mickey Exp $	*/
 
 /* Errors and warnings... */
 
@@ -87,7 +87,7 @@ error(char *fmt, ...)
  * Log a warning message...
  */
 int
-warn(char *fmt, ...)
+warning(char *fmt, ...)
 {
 	va_list list;
 

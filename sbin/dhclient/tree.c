@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.11 2004/05/04 20:28:40 deraadt Exp $	*/
+/*	$OpenBSD: tree.c,v 1.12 2004/05/04 22:23:01 mickey Exp $	*/
 
 /* Routines for manipulating parse trees... */
 
@@ -151,7 +151,7 @@ tree_evaluate_recurse(int *bufix, unsigned char **bufp, int *bufcount,
 		return (t1);
 
 	default:
-		warn("Bad node id in tree: %d.", tree->op);
+		warning("Bad node id in tree: %d.", tree->op);
 		t1 = MAX_TIME;
 		return (t1);
 	}
@@ -177,17 +177,17 @@ do_host_lookup(int *bufix, unsigned char **bufp, int *bufcount,
 	if (h == NULL) {
 		switch (h_errno) {
 		case HOST_NOT_FOUND:
-			warn("%s: host unknown.", dns->hostname);
+			warning("%s: host unknown.", dns->hostname);
 			break;
 		case TRY_AGAIN:
-			warn("%s: temporary name server failure",
+			warning("%s: temporary name server failure",
 			    dns->hostname);
 			break;
 		case NO_RECOVERY:
-			warn("%s: name server failed", dns->hostname);
+			warning("%s: name server failed", dns->hostname);
 			break;
 		case NO_DATA:
-			warn("%s: no A record associated with address",
+			warning("%s: no A record associated with address",
 			    dns->hostname);
 		}
 		/* Okay to try again after a minute. */

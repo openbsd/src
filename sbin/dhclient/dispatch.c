@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.26 2004/05/04 21:48:16 deraadt Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.27 2004/05/04 22:23:01 mickey Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -252,13 +252,13 @@ got_one(struct protocol *l)
 
 	if ((result = receive_packet(ip, u.packbuf, sizeof(u), &from,
 	    &hfrom)) == -1) {
-		warn("receive_packet failed on %s: %s", ip->name,
+		warning("receive_packet failed on %s: %s", ip->name,
 		    strerror(errno));
 		ip->errors++;
 		if ((!interface_status(ip)) ||
 		    (ip->noifmedia && ip->errors > 20)) {
 			/* our interface has gone away. */
-			warn("Interface %s no longer appears valid.",
+			warning("Interface %s no longer appears valid.",
 			    ip->name);
 			ip->dead = 1;
 			interfaces_invalidated = 1;

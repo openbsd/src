@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.40 2004/05/04 20:28:40 deraadt Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.41 2004/05/04 22:23:01 mickey Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -852,7 +852,7 @@ packet_to_lease(struct packet *packet)
 	lease = malloc(sizeof(struct client_lease));
 
 	if (!lease) {
-		warn("dhcpoffer: no memory to record lease.");
+		warning("dhcpoffer: no memory to record lease.");
 		return (NULL);
 	}
 
@@ -864,7 +864,7 @@ packet_to_lease(struct packet *packet)
 			lease->options[i].data =
 			    malloc(packet->options[i].len + 1);
 			if (!lease->options[i].data) {
-				warn("dhcpoffer: no memory for option %d", i);
+				warning("dhcpoffer: no memory for option %d", i);
 				free_client_lease(lease);
 				return (NULL);
 			} else {
@@ -878,7 +878,7 @@ packet_to_lease(struct packet *packet)
 			}
 			if (!check_option(lease,i)) {
 				/* ignore a bogus lease offer */
-				warn("Invalid lease option - ignoring offer");
+				warning("Invalid lease option - ignoring offer");
 				free_client_lease(lease);
 				return (NULL);
 			}
@@ -894,14 +894,14 @@ packet_to_lease(struct packet *packet)
 	    packet->raw->sname[0]) {
 		lease->server_name = malloc(DHCP_SNAME_LEN + 1);
 		if (!lease->server_name) {
-			warn("dhcpoffer: no memory for server name.");
+			warning("dhcpoffer: no memory for server name.");
 			free_client_lease(lease);
 			return (NULL);
 		}
 		memcpy(lease->server_name, packet->raw->sname, DHCP_SNAME_LEN);
 		lease->server_name[DHCP_SNAME_LEN]='\0';
 		if (!res_hnok(lease->server_name) ) {
-			warn("Bogus server name %s",  lease->server_name );
+			warning("Bogus server name %s",  lease->server_name );
 			free_client_lease(lease);
 			return (NULL);
 		}
@@ -915,7 +915,7 @@ packet_to_lease(struct packet *packet)
 		/* Don't count on the NUL terminator. */
 		lease->filename = malloc(DHCP_FILE_LEN + 1);
 		if (!lease->filename) {
-			warn("dhcpoffer: no memory for filename.");
+			warning("dhcpoffer: no memory for filename.");
 			free_client_lease(lease);
 			return (NULL);
 		}
@@ -1803,7 +1803,7 @@ supersede:
 					    config->defaults[i].len +
 					    lease->options[i].len;
 					if (len > sizeof(dbuf)) {
-						warn("no space to %s %s",
+						warning("no space to %s %s",
 						    "prepend option",
 						    dhcp_options[i].name);
 						goto supersede;
@@ -1825,7 +1825,7 @@ supersede:
 					    config->defaults[i].len +
 					    lease->options[i].len;
 					if (len > sizeof(dbuf)) {
-						warn("no space to %s %s",
+						warning("no space to %s %s",
 						    "append option",
 						    dhcp_options[i].name);
 						goto supersede;
@@ -2123,7 +2123,7 @@ check_option(struct client_lease *l, int option)
 	case DHO_FONT_SERVERS :
 	case DHO_DHCP_SERVER_IDENTIFIER :
 		if (!ipv4addrs(opbuf)) {
-			warn("Invalid IP address in option: %s", opbuf);
+			warning("Invalid IP address in option: %s", opbuf);
 			return (0);
 		}
 		return (1)  ;
@@ -2131,7 +2131,7 @@ check_option(struct client_lease *l, int option)
 	case DHO_DOMAIN_NAME :
 	case DHO_NIS_DOMAIN :
 		if (!res_hnok(sbuf)) {
-			warn("Bogus Host Name option %d: %s (%s)", option,
+			warning("Bogus Host Name option %d: %s (%s)", option,
 			    sbuf, opbuf);
 			return (0);
 		}
@@ -2181,7 +2181,7 @@ check_option(struct client_lease *l, int option)
 	case DHO_END :
 		return (1);
 	default:
-		warn("unknown dhcp option value 0x%x", option);
+		warning("unknown dhcp option value 0x%x", option);
 		return (unknown_ok);
 	}
 }
@@ -2273,7 +2273,7 @@ option_as_string(unsigned int code, unsigned char *data, int len)
 	*op = 0;
 	return optbuf;
 toobig:
-	warn("dhcp option too large");
+	warning("dhcp option too large");
 	return "<error>";
 }
 
