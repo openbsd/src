@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_delete.1,v 1.6 1999/07/03 02:11:10 aaron Exp $
+.\"	$OpenBSD: pkg_delete.1,v 1.7 1999/10/09 20:35:45 beck Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -35,6 +35,14 @@ command is used to delete packages that have been previously installed
 with the
 .Xr pkg_add 1
 command.
+.Pp
+Package names may be specified either as the package name itself, or as filenames which consist of the package name plus the
+.Dq .tgz
+,
+.Dq .tar.gz
+, or the
+.Dq .tar
+suffix.
 .Sh WARNING
 .Bf -emphasis
 Since the

@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.9 1999/07/07 06:00:24 espie Exp $	*/
+/*	$OpenBSD: perform.c,v 1.10 1999/10/09 20:35:45 beck Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.9 1999/07/07 06:00:24 espie Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.10 1999/10/09 20:35:45 beck Exp $";
 #endif
 
 /*
@@ -97,7 +97,7 @@ pkg_do(char *pkg)
 	fgets(playpen, FILENAME_MAX, stdin);
 	playpen[strlen(playpen) - 1] = '\0'; /* pesky newline! */
 	if (chdir(playpen) == FAIL) {
-	    warnx("add in SLAVE mode can't chdir to %s", playpen);
+	    warnx("add in SLAVE mode can't chdir to `%s'", playpen);
 	    return 1;
 	}
 	read_plist(&Plist, stdin);
@@ -130,7 +130,7 @@ pkg_do(char *pkg)
 	    read_plist(&Plist, cfile);
 	    fclose(cfile);
 	} else {
-	    strcpy(pkg_fullname, pkg);		/* copy for sanity's sake, could remove pkg_fullname */
+	    strlcpy(pkg_fullname, ensure_tgz(pkg), sizeof pkg_fullname);
 	    if (strcmp(pkg, "-")) {
 		if (!ispkgpattern(pkg_fullname)
 		    && stat(pkg_fullname, &sb) == FAIL) {
@@ -138,7 +138,7 @@ pkg_do(char *pkg)
 		    goto bomb;
 		}
 		snprintf(extract_contents, sizeof( extract_contents ),
-			 "-q %s", CONTENTS_FNAME);
+			 "%s", CONTENTS_FNAME);
 		extract = extract_contents;
 	    }
 	    else {
@@ -169,12 +169,12 @@ pkg_do(char *pkg)
 	    /* Extract directly rather than moving?  Oh goodie! */
 	    if (find_plist_option(&Plist, "extract-in-place")) {
 		if (Verbose)
-		    printf("Doing in-place extraction for %s\n", pkg_fullname);
+		    printf("Doing in-place extraction for `%s'\n", pkg_fullname);
 		p = find_plist(&Plist, PLIST_CWD);
 		if (p) {
 		    if (!(isdir(p->name) || islinktodir(p->name)) && !Fake) {
 			if (Verbose)
-			    printf("Desired prefix of %s does not exist, creating.\n", p->name);
+			    printf("Desired prefix of `%s' does not exist, creating\n", p->name);
 			vsystem("mkdir -p %s", p->name);
 		    }
 		    if (chdir(p->name) == -1) {
@@ -201,11 +201,11 @@ pkg_do(char *pkg)
 	     */
 
 	    if (!extract && !inPlace && min_free(playpen) < sb.st_size * 4) {
-		warnx("projected size of %ld exceeds available free space.\n"
+		warnx("projected size of %ld exceeds available free space\n"
 		       "Please set your PKG_TMPDIR variable to point to a"
 		       "location with more\n"
 		       "free space and try again", (long)(sb.st_size * 4));
-		warnx("not extracting %s\ninto %s, sorry!", pkg_fullname,
+		warnx("not extracting `%s'\ninto `%s', sorry!", pkg_fullname,
 		       where_to);
 		goto bomb;
 	    }
@@ -281,7 +281,7 @@ pkg_do(char *pkg)
 	if (p->type != PLIST_PKGCFL)
 	    continue;
 	if (Verbose)
-	    printf("Package `%s' conflicts with `%s'.\n", PkgName, p->name);
+	    printf("Package `%s' conflicts with `%s'\n", PkgName, p->name);
 	
 	/* was: */
         /* if (!vsystem("/usr/sbin/pkg_info -qe '%s'", p->name)) {*/
@@ -298,7 +298,7 @@ pkg_do(char *pkg)
 	if (p->type != PLIST_PKGDEP)
 	    continue;
 	if (Verbose)
-	    printf("Package `%s' depends on `%s'.\n", PkgName, p->name);
+	    printf("Package `%s' depends on `%s'\n", PkgName, p->name);
 	/* if (vsystem("/usr/sbin/pkg_info -qe '%s'", p->name)) { */
 	if (!findmatchingname(dbdir, p->name, check_if_installed, installed)) {
 	    char path[FILENAME_MAX], *cp = NULL;
@@ -307,14 +307,14 @@ pkg_do(char *pkg)
 		if (!isURL(pkg) && !getenv("PKG_ADD_BASE")) {
 		    /* install depending pkg from local disk */
 		    
-		    snprintf(path, FILENAME_MAX, "%s/%s.tgz", Home, p->name);
+		    snprintf(path, FILENAME_MAX, "%s/%s", Home, ensure_tgz(p->name));
 		    if (fexists(path))
 			cp = path;
 		    else
 			cp = fileFindByPath(pkg, p->name);
 		    if (cp) {
 			if (Verbose)
-			    printf("Loading it from %s.\n", cp);
+			    printf("Loading it from `%s'\n", cp);
 		        if (vsystem("/usr/sbin/pkg_add %s%s %s%s",
                                      Prefix ? "-p " : "",
                                      Prefix ? Prefix : "",
@@ -347,9 +347,9 @@ pkg_do(char *pkg)
 		    
 		    if ((cp = fileGetURL(pkg, p->name)) != NULL) {
 			if (Verbose)
-			    printf("Finished loading %s over FTP.\n", p->name);
+			    printf("Finished loading `%s' over FTP\n", p->name);
 			if (!fexists(CONTENTS_FNAME)) {
-			    warnx("autoloaded package %s has no %s file?",
+			    warnx("autoloaded package `%s' has no %s file?",
 				  p->name, CONTENTS_FNAME);
 			    if (!Force)
 				++code;
@@ -365,7 +365,7 @@ pkg_do(char *pkg)
 				++code;
 			}
 			else if (Verbose)
-			    printf("\t`%s' loaded successfully.\n", p->name);
+			    printf("\t`%s' loaded successfully\n", p->name);
 			/* Nuke the temporary playpen */
 			leave_playpen(cp);
 
@@ -375,16 +375,16 @@ pkg_do(char *pkg)
 	    }
 	    } else {
 		if (Verbose)
-		    printf("and was not found%s.\n", Force ? " (proceeding anyway)" : "");
+		    printf("and was not found%s\n", Force ? " (proceeding anyway)" : "");
 		else
-		    printf("Package dependency %s for %s not found%s\n", p->name, pkg,
+		    printf("Package dependency `%s' for `%s' not found%s\n", p->name, pkg,
 			   Force ? " (proceeding anyway)" : "!");
 		if (!Force)
 		    ++code;
 	    }
 	}
 	else if (Verbose)
-	    printf(" - %s already installed.\n", installed);
+	    printf(" - `%s' already installed\n", installed);
     }
 
     if (code != 0)
@@ -394,9 +394,9 @@ pkg_do(char *pkg)
     if (fexists(REQUIRE_FNAME)) {
 	vsystem("chmod +x %s", REQUIRE_FNAME);	/* be sure */
 	if (Verbose)
-	    printf("Running requirements file first for %s.\n", PkgName);
+	    printf("Running requirements file first for `%s'\n", PkgName);
 	if (!Fake && vsystem("./%s %s INSTALL", REQUIRE_FNAME, PkgName)) {
-	    warnx("package %s fails requirements %s", pkg_fullname,
+	    warnx("package `%s' fails requirements %s", pkg_fullname,
 		   Force ? "installing anyway" : "- not installed");
 	    if (!Force) {
 		code = 1;
@@ -409,7 +409,7 @@ pkg_do(char *pkg)
     if (!NoInstall && fexists(INSTALL_FNAME)) {
 	vsystem("chmod +x %s", INSTALL_FNAME);	/* make sure */
 	if (Verbose)
-	    printf("Running install with PRE-INSTALL for %s.\n", PkgName);
+	    printf("Running install with PRE-INSTALL for `%s'\n", PkgName);
 	if (!Fake && vsystem("./%s %s PRE-INSTALL", INSTALL_FNAME, PkgName)) {
 	    warnx("install script returned error status");
 	    unlink(INSTALL_FNAME);
@@ -424,7 +424,7 @@ pkg_do(char *pkg)
 
     if (!Fake && fexists(MTREE_FNAME)) {
 	if (Verbose)
-	    printf("Running mtree for %s.\n", PkgName);
+	    printf("Running mtree for `%s'\n", PkgName);
 	p = find_plist(&Plist, PLIST_CWD);
 	if (Verbose)
 	    printf("mtree -q -U -f %s -d -e -p %s\n", MTREE_FNAME,
@@ -441,7 +441,7 @@ pkg_do(char *pkg)
     /* Run the installation script one last time? */
     if (!NoInstall && fexists(INSTALL_FNAME)) {
 	if (Verbose)
-	    printf("Running install with POST-INSTALL for %s.\n", PkgName);
+	    printf("Running install with POST-INSTALL for `%s'\n", PkgName);
 	if (!Fake && vsystem("./%s %s POST-INSTALL", INSTALL_FNAME, PkgName)) {
 	    warnx("install script returned error status");
 	    unlink(INSTALL_FNAME);
@@ -467,7 +467,7 @@ pkg_do(char *pkg)
 	(void) snprintf(LogDir, sizeof(LogDir), "%s/%s", dbdir, PkgName);
 	zapLogDir = 1;
 	if (Verbose)
-	    printf("Attempting to record package into %s.\n", LogDir);
+	    printf("Attempting to record package into `%s'\n", LogDir);
 	if (make_hierarchy(LogDir)) {
 	    warnx("can't record package into '%s', you're on your own!",
 		   LogDir);
@@ -529,11 +529,11 @@ pkg_do(char *pkg)
 	    else {
 		fprintf(cfile, "%s\n", PkgName);
 		if (fclose(cfile) == EOF)
-		    warnx("cannot properly close file %s", contents);
+		    warnx("cannot properly close file `%s'", contents);
 	    }
 	}
 	if (Verbose)
-	    printf("Package %s registered in %s\n", PkgName, LogDir);
+	    printf("Package `%s' registered in `%s'\n", PkgName, LogDir);
     }
 
     if ((p = find_plist(&Plist, PLIST_DISPLAY)) != NULL) {
@@ -547,7 +547,7 @@ pkg_do(char *pkg)
 
 	snprintf(buf, sizeof buf, "%s/%s", LogDir, p->name);
 	if (!stat(buf,&sbuf) || vsystem("%s %s", Pager, buf)) 
-	    warnx("cannot open %s as display file", buf);
+	    warnx("cannot open `%s' as display file", buf);
     }
 
     goto success;
@@ -574,15 +574,15 @@ sanity_check(char *pkg)
     int code = 0;
 
     if (!fexists(CONTENTS_FNAME)) {
-	warnx("package %s has no CONTENTS file!", pkg);
+	warnx("package `%s' has no CONTENTS file!", pkg);
 	code = 1;
     }
     else if (!fexists(COMMENT_FNAME)) {
-	warnx("package %s has no COMMENT file!", pkg);
+	warnx("package `%s' has no COMMENT file!", pkg);
 	code = 1;
     }
     else if (!fexists(DESC_FNAME)) {
-	warnx("package %s has no DESC file!", pkg);
+	warnx("package `%s' has no DESC file!", pkg);
 	code = 1;
     }
     return code;
@@ -600,7 +600,7 @@ cleanup(int signo)
     if (!alreadyCleaning) {
     	alreadyCleaning = 1;
 	if (signo)
-	    printf("Signal %d received, cleaning up.\n", signo);
+	    printf("Signal %d received, cleaning up\n", signo);
 	if (!Fake && zapLogDir && LogDir[0])
 	    vsystem("%s -rf %s", REMOVE_CMD, LogDir);
 	leave_playpen(Home);

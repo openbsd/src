@@ -1,4 +1,4 @@
-/* $OpenBSD: lib.h,v 1.4 1998/11/19 04:12:55 espie Exp $ */
+/* $OpenBSD: lib.h,v 1.5 1999/10/09 20:35:46 beck Exp $ */
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -168,6 +168,7 @@ Boolean		isemptyfile(char *fname);
 Boolean         isfile(char *);
 Boolean		isempty(char *);
 Boolean		isURL(char *);
+char		*ensure_tgz(char *);
 char		*fileGetURL(char *, char *);
 char		*fileURLFilename(char *, char *, int);
 char		*fileURLHost(char *, char *, int);

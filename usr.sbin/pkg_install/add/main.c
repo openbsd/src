@@ -1,7 +1,7 @@
-/*	$OpenBSD: main.c,v 1.10 1999/02/28 18:55:24 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.11 1999/10/09 20:35:44 beck Exp $	*/
 
 #ifndef lint
-static char *rcsid = "$OpenBSD: main.c,v 1.10 1999/02/28 18:55:24 deraadt Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.11 1999/10/09 20:35:44 beck Exp $";
 #endif
 
 /*
@@ -44,9 +44,8 @@ char	*Directory	= NULL;
 char	FirstPen[FILENAME_MAX];
 add_mode_t AddMode	= NORMAL;
 
-#define MAX_PKGS	20
-char	pkgnames[MAX_PKGS][MAXPATHLEN];
-char	*pkgs[MAX_PKGS];
+char **pkgs;
+int pkg_count = 0;
 
 static void usage __P((void));
 
@@ -107,38 +106,77 @@ main(int argc, char **argv)
     argc -= optind;
     argv += optind;
 
-    if (argc > MAX_PKGS) {
-	warnx("too many packages (max %d)", MAX_PKGS);
-	return(1);
-    }
-
+    pkg_count = argc + 1;
+    pkgs = (char **)calloc(pkg_count,  sizeof(char **));
+    if (pkgs == NULL) {
+    	fprintf(stderr, "malloc failed - abandoning package add.\n");
+    	exit(1);		
+    }      
+    
     if (AddMode != SLAVE) {
-	for (ch = 0; ch < MAX_PKGS; pkgs[ch++] = NULL) ;
 
 	/* Get all the remaining package names, if any */
 	for (ch = 0; *argv; ch++, argv++) {
-	    if (!strcmp(*argv, "-"))	/* stdin? */
-		pkgs[ch] = "-";
-	    else if (isURL(*argv))	/* preserve URLs */
-		pkgs[ch] = strcpy(pkgnames[ch], *argv);
+	    /* Don't mangle stdin ("-") or URL arguments */
+	    if ( (strcmp(*argv, "-") == 0)  
+		 || (isURL(*argv))) {
+	         pkgs[ch] = strdup(*argv);
+		 if (pkgs[ch] == NULL) {
+		     fprintf(stderr, 
+			     "malloc failed - abandoning package add.\n");
+		     exit(1);		
+		 }
+	    }
 	    else {			/* expand all pathnames to fullnames */
-		char *s;
+		char *s, *tmp;
+
+		s=ensure_tgz(*argv);
 		    
-		if (fexists(*argv)) /* refers to a file directly */
-		    pkgs[ch] = realpath(*argv, pkgnames[ch]);
+		if (fexists(s)) { /* refers to a file directly */ 
+		    pkgs[ch] = (char *) malloc(MAXPATHLEN * sizeof(char));
+		    if (pkgs[ch] == NULL) {
+		        fprintf(stderr, 
+				"malloc failed - abandoning package add.\n");
+			exit(1);		
+		    }
+		    tmp = realpath(s, pkgs[ch]);
+		    if (tmp == NULL) {
+		        perror("realpath failed");
+			fprintf(stderr, "failing path was %s", pkgs[ch]);
+			exit(1);
+		    }
+		}
 		else if (ispkgpattern(*argv)
 			 && (s=findbestmatchingname(dirname_of(*argv),
 						    basename_of(*argv))) > 0) {
 		    if (Verbose)
 			printf("Using %s for %s\n",s, *argv);
-		    
-		    pkgs[ch] = realpath(s, pkgnames[ch]);
+		    pkgs[ch] = (char *) malloc(MAXPATHLEN * sizeof(char));
+		    if (pkgs[ch] == NULL) {
+		        fprintf(stderr, 
+				"malloc failed - abandoning package add.\n");
+			exit(1);		
+		    }
+		    tmp = realpath(s, pkgs[ch]);
+		    if (tmp == NULL) {
+		        perror("realpath failed");
+			fprintf(stderr, "failing path was %s", pkgs[ch]);
+			exit(1);
+		    }
 		} else {
 		    /* look for the file(pattern) in the expected places */
-		    if (!(cp = fileFindByPath(NULL, *argv)))
-			warnx("can't find package '%s'", *argv);
-		    else
-			pkgs[ch] = strcpy(pkgnames[ch], cp);
+		    if (!(cp = fileFindByPath(NULL, *argv))) {
+		        fprintf(stderr, "can't find package '%s'", *argv);
+			exit(1);
+		    }
+		    else {
+			pkgs[ch] = strdup(cp);
+			if (pkgs[ch] == NULL) {
+			    fprintf(stderr, 
+				  "malloc failed - abandoning package add.\n");
+			    exit(1);		
+			}
+		    }
 		}
 	    }
 	}

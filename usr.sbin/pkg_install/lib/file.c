@@ -1,7 +1,7 @@
-/*	$OpenBSD: file.c,v 1.8 1999/09/20 16:54:44 espie Exp $	*/
+/*	$OpenBSD: file.c,v 1.9 1999/10/09 20:35:46 beck Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: file.c,v 1.8 1999/09/20 16:54:44 espie Exp $";
+static const char *rcsid = "$OpenBSD: file.c,v 1.9 1999/10/09 20:35:46 beck Exp $";
 #endif
 
 /*
@@ -33,6 +33,31 @@ static const char *rcsid = "$OpenBSD: file.c,v 1.8 1999/09/20 16:54:44 espie Exp
 #include <netdb.h>
 #include <pwd.h>
 #include <time.h>
+
+/* This fixes errant package names so they end up in .tgz.
+   XXX returns static storage, so beware ! Consume the result
+	before reusing the function.
+ */
+#define TGZ	".tgz"
+char *
+ensure_tgz(char *name)
+{
+	static char buffer[FILENAME_MAX];
+	size_t len;
+
+	len = strlen(name);
+	if ( (strcmp (name, "-") == 0 ) 
+	     || (len >= strlen(TGZ) && strcmp(name+len-strlen(TGZ), TGZ) == 0)
+	     || (len >= strlen(".tar.gz") &&  
+		 strcmp(name+len-strlen(".tar.gz"), ".tar.gz") == 0)
+	     || (len >= strlen(".tar") &&  
+		 strcmp(name+len-strlen(".tar"), ".tar") == 0)) 
+	  return name;
+	else {
+		snprintf(buffer, sizeof buffer, "%s%s", name, TGZ);
+		return buffer;
+	}
+}
 
 /* This is as ftpGetURL from FreeBSD's ftpio.c, except that it uses
  * OpenBSD's ftp command to do all FTP.
@@ -264,7 +289,7 @@ fileGetURL(char *base, char *spec)
 	   to construct a composite one out of that and the basename we were
 	   handed as a dependency. */
 	if (base) {
-	    strcpy(fname, base);
+	    strlcpy(fname, base, sizeof fname);
 	    /* OpenBSD packages are currently stored in a flat space, so
 	       we don't yet need to backup the category and switch to all.
 	     */
@@ -280,20 +305,19 @@ fileGetURL(char *base, char *spec)
 #if 0
 		strcat(cp, "All/");
 #endif
-		strcat(cp, spec);
-		strcat(cp, ".tgz");
+		strlcat(cp, ensure_tgz(spec), sizeof fname);
 	    }
 	    else
 		return NULL;
 	}
 	else {
 	    /* Otherwise, we've been given an environment variable hinting at the right location from sysinstall */
-	    strcpy(fname, hint);
-	    strcat(fname, spec);
+	    strlcpy(fname, hint, sizeof fname);
+	    strlcat(fname, spec, sizeof fname);
 	}
     }
     else
-	strcpy(fname, spec);
+	strlcpy(fname, spec, sizeof fname);
     cp = fileURLHost(fname, host, MAXHOSTNAMELEN);
     if (!*cp) {
 	warnx("URL `%s' has bad host part!", fname);
@@ -354,8 +378,8 @@ fileFindByPath(char *base, char *fname)
 			return tmp;
 		}
 	} else {
-		if (fexists(fname) && isfile(fname)) {
-			strcpy(tmp, fname);
+		strlcpy(tmp, ensure_tgz(fname), sizeof tmp);
+		if (fexists(tmp) && isfile(tmp)) {
 			return tmp;
 		}
 	}
@@ -370,9 +394,8 @@ fileFindByPath(char *base, char *fname)
 		}
 		if (cp) {
 			*(cp + 1) = '\0';
-			strcat(cp, "All/");
-			strcat(cp, fname);
-			strcat(cp, ".tgz");
+			strlcat(tmp, "All/", sizeof tmp);
+			strlcat(tmp, ensure_tgz(fname), sizeof tmp);
 			if (ispkgpattern(tmp)) {
 				cp=findbestmatchingname(dirname_of(tmp),
 							basename_of(tmp));
@@ -395,7 +418,8 @@ fileFindByPath(char *base, char *fname)
 	while (cp) {
 		char *cp2 = strsep(&cp, ":");
 
-		snprintf(tmp, FILENAME_MAX, "%s/%s.tgz", cp2 ? cp2 : cp, fname);
+		snprintf(tmp, FILENAME_MAX, "%s/%s", cp2 ? cp2 : cp,
+		    ensure_tgz(fname));
 		if (ispkgpattern(tmp)) {
 			char *s;
 			s = findbestmatchingname(dirname_of(tmp),

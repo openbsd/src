@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.5 1998/10/13 23:09:50 marc Exp $	*/
+/*	$OpenBSD: perform.c,v 1.6 1999/10/09 20:35:45 beck Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.5 1998/10/13 23:09:50 marc Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.6 1999/10/09 20:35:45 beck Exp $";
 #endif
 
 /*
@@ -46,6 +46,29 @@ pkg_perform(char **pkgs)
 
 static package_t Plist;
 
+static int
+trim_end(char *name)
+{
+   size_t n, m;
+   n = strlen(name);
+   m = strlen(".tgz");
+   if (n > m && strcmp(name+n-m, ".tgz") == 0) {
+	name[n-m] = 0;
+	return 1;
+   }
+   m = strlen(".tar.gz");
+   if (n > m && strcmp(name+n-m, ".tar.gz") == 0) {
+	name[n-m] = 0;
+	return 1;
+   }
+   m = strlen(".tar");
+   if (n > m && strcmp(name+n-m, ".tar") == 0) {
+	name[n-m] = 0;
+	return 1;
+   }
+   return 0;
+}
+
 /* This is seriously ugly code following.  Written very fast! */
 static int
 pkg_do(char *pkg)
@@ -59,11 +82,18 @@ pkg_do(char *pkg)
     if (Plist.head)
 	free_plist(&Plist);
 
-    (void) snprintf(LogDir, sizeof(LogDir), "%s/%s", (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR,
-    	    pkg);
+    tmp = getenv(PKG_DBDIR);
+    if (!tmp)
+	tmp = DEF_LOG_DIR;
+try_again:
+    (void) snprintf(LogDir, sizeof(LogDir), "%s/%s", tmp, pkg);
     if (!fexists(LogDir)) {
-	warnx("no such package '%s' installed", pkg);
-	return 1;
+	if (trim_end(pkg))
+	    goto try_again;
+	else {
+	    warnx("no such package '%s' installed", pkg);
+	    return 1;
+	}
     }
     if (!getcwd(home, FILENAME_MAX)) {
 	cleanup(0);
