@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.14 1996/06/11 03:25:10 tholo Exp $
+#	$OpenBSD: rc,v 1.15 1996/06/12 09:02:59 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -103,7 +103,7 @@ if [ -d /var/yp/binding ]; then
 		# if we are the master server, run rpc.yppasswdd
 		_host1=`ypwhich -m passwd 2> /dev/null`
 		_host2=`hostname`
-		if grep '^lookup' /etc/resolv.conf | grep yp | wc; then
+		if [ `grep '^lookup' /etc/resolv.conf | grep yp | wc -c` -ne 0 ]; then
 			_host1=`ypmatch $_host1 hosts | cut -d'	' -f2`
 			_host2=`ypmatch $_host2 hosts | cut -d'	' -f2 | head -1`
 		else
