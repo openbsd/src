@@ -1,10 +1,11 @@
-#	$OpenBSD: bsd.man.mk,v 1.25 2003/08/07 10:52:48 espie Exp $
+#	$OpenBSD: bsd.man.mk,v 1.26 2003/08/07 10:54:39 espie Exp $
 #	$NetBSD: bsd.man.mk,v 1.23 1996/02/10 07:49:33 jtc Exp $
 #	@(#)bsd.man.mk	5.2 (Berkeley) 5/11/90
 
 MANTARGET?=	cat
 NROFF?=		nroff -Tascii
 TBL?=		tbl
+MANLINT?=	\#
 
 .if !target(.MAIN)
 .  if exists(${.CURDIR}/../Makefile.inc)
@@ -20,11 +21,13 @@ TBL?=		tbl
 
 .9.cat9 .8.cat8 .7.cat7 .6.cat6 .5.cat5 .4.cat4 .3p.cat3p .3.cat3 .2.cat2 .1.cat1:
 	@echo "${NROFF} -mandoc ${.IMPSRC} > ${.TARGET}"
+	@${MANLINT} ${.IMPSRC}
 	@${NROFF} -mandoc ${.IMPSRC} > ${.TARGET} || (rm -f ${.TARGET}; false)
 
 .9tbl.cat9 .8tbl.cat8 .7tbl.cat7 .6tbl.cat6 .5tbl.cat5 .4tbl.cat4 .3tbl.cat3 \
 .2tbl.cat2 .1tbl.cat1:
 	@echo "${TBL} ${.IMPSRC} | ${NROFF} -mandoc > ${.TARGET}"
+	@${MANLINT} -tbl ${.IMPSRC}
 	@${TBL} ${.IMPSRC} | ${NROFF} -mandoc > ${.TARGET} || \
 	    (rm -f ${.TARGET}; false)
 
