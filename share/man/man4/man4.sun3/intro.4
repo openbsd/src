@@ -1,4 +1,4 @@
-.\"     $OpenBSD: intro.4,v 1.1 2001/10/06 22:28:18 miod Exp $
+.\"     $OpenBSD: intro.4,v 1.2 2002/03/29 22:20:15 deraadt Exp $
 .\"
 .\" Copyright (c) 2001 The OpenBSD Project
 .\" ALl Rights Reserved.
@@ -72,31 +72,31 @@ Devices are indicated by their functional interface.
 Not all supported devices are listed.
 .Pp
 .Bl -tag -width eeprom -compact -offset indent
-.It bwtwo
+.It Xr bwtwo 4
 Black and white frame buffer.
-.It cgfour
+.It Xr cgfour 4
 8 bit on-board (or on the 3/60 P4 bus) color graphics frame buffer.
-.It cgtwo
+.It Xr cgtwo 4
 8 bit VMEbus color frame buffer.
-.It eeprom
+.It Xr eeprom 4
 Sun non-volatile configuration RAM driver.
-.It ie
+.It Xr ie 4
 Intel 82586 Ethernet controller.
-.It kbd
+.It Xr kbd 4
 Sun type 2, type 3, type 4, and type 5 keyboards (on zs).
-.It le
+.It Xr le 4
 AMD 7990 LANCE ethernet controller.
-.It led
+.It Xr led 4
 Diagnostic LED display.
-.It ms
+.It Xr ms 4
 Sun mouse (on zs).
-.It si
+.It Xr si 4
 NCR5380 "SCSI-2" VMEbus or on-board SCSI controller.
-.It xd
+.It Xr xd 4
 Xylogics 753/7053 VMEbus SMD disk controller.
-.It xy
+.It Xr xy 4
 Xylogics 450/451 VMEbus SMD disk controller.
-.It zs
+.It Xr zs 4
 Zilog 8530 serial controller.
 .El
 .Sh SEE ALSO

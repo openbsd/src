@@ -1,4 +1,4 @@
-.\"     $OpenBSD: intro.4,v 1.21 2002/01/13 02:12:34 jason Exp $
+.\"     $OpenBSD: intro.4,v 1.22 2002/03/29 22:20:14 deraadt Exp $
 .\"	$NetBSD: intro.4,v 1.5 1998/02/06 06:07:00 perry Exp $
 .\"
 .\" Copyright (c) 1996 Jonathan Stone.
@@ -99,29 +99,29 @@ Devices are indicated by their functional interface.
 Not all supported devices are listed.
 .Pp
 .Bl -tag -width le/lebuffer -compact -offset indent
-.It audioamd
+.It Xr audioamd 4
 AMD 79C30 obio (sun4c and SPARC Classic) audio controller.
-.It audiocs
+.It Xr audiocs 4
 CS4231 based audio found in some sun4c and sun4m models.
-.It be
+.It Xr be 4
 10BaseT/100BaseTX SBus Ethernet controller.
-.It bwtwo
+.It Xr bwtwo 4
 black and white obio frame buffer.
-.It cgeight
+.It Xr cgeight 4
 24 bit VMEbus color frame buffer.
-.It cgfour
+.It Xr cgfour 4
 8 bit obio (sun4 P4 bus) color graphics frame buffer.
-.It cgfourteen
+.It Xr cgfourteen 4
 24 bit SBus color frame buffer.
-.It cgsix
+.It Xr cgsix 4
 8 bit obio (sun4c & sun4m), SBus color graphics frame buffer.
-.It cgthree
+.It Xr cgthree 4
 8 bit VMEbus, SBus, and obio (sun4m) color graphics frame buffer.
-.It cgtwo
+.It Xr cgtwo 4
 8 bit VMEbus color frame buffer.
-.It eeprom
+.It Xr eeprom 4
 Sun non-volatile configuration RAM driver.
-.It esp
+.It Xr esp 4
 NCR53C90 ESP100 (Sun 4/300),.
 .br
 ESP100A (sun4c),
@@ -129,58 +129,58 @@ ESP100A (sun4c),
 ESP200 (sun4m) SCSI controller,
 .br
 FSBE/S (X1053A, part # 501-2015) Fast SCSI-2/Buffered Ethernet SBus controller.
-.It fd
+.It Xr fd 4
 Intel 82072 obio (sun4c) or Intel 82077 obio (sun4m)
 floppy disk drive controller.
-.It fga
+.It Xr fga 4
 Force FGA5000 SBus/VME bridge.
-.It hme
+.It Xr hme 4
 SBus HME Ethernet controllers (SunSwift).
-.It ie
+.It Xr ie 4
 Intel 82586 Ethernet controller (Sun 4/100).
-.It isp
+.It Xr isp 4
 Qlogic ISP SBus SCSI controller.
-.It kbd
+.It Xr kbd 4
 Sun type 2, type 3, type 4, and type 5 keyboards (on zs).
-.It le/lebuffer
+.It Xr le/lebuffer 4
 AMD 7990 LANCE ethernet controller (Sun 4/200, 4/300, sun4c, sun4m, SBus).
-.It led
+.It Xr led 4
 diagnostic LED display on sun4 and sun4m (4/600) machines.
-.It magma
+.It Xr magma 4
 Magma serial/parallel communication boards.
-.It ms
+.It Xr ms 4
 Sun mouse (on zs).
-.It openprom
+.It Xr openprom 4
 Sun Open boot PROM (what became IEEE 1275) configuration driver.
-.It pnozz
+.It Xr pnozz 4
 Weitek Power9100 frame buffer found on Tadpole SPARCbook 3GS and 3GX.
-.It qe
+.It Xr qe 4
 Quad 10BaseT SBus Ethernet controller.
-.It qec
+.It Xr qec 4
 Supported as a carrier for the
 .Nm be
 or
 .Nm qe
 Ethernet controllers.
-.It qfe
+.It Xr qfe 4
 SBus QuadFastEthernet controllers.
-.It si
+.It Xr si 4
 NCR5380 "SCSI-2" VMEbus (Sun 4/200, Sun 4/400) SCSI controller.
-.It spif
+.It Xr spif 4
 Sun SUNW,spif serial/parallel communication boards.
-.It sw
+.It Xr sw 4
 NCR5380 obio (Sun 4/100) "SCSI Weird" SCSI controller.
-.It tctrl
+.It Xr tctrl 4
 Tadpole microcontroller interface.
-.It tcx
+.It Xr tcx 4
 8 or 24 bit SBus color graphics frame buffer.
-.It xbox
+.It Xr xbox 4
 SBus Expansion Subsystem.
-.It xd
+.It Xr xd 4
 Xylogics 753/7053 VMEbus SMD disk controller.
-.It xy
+.It Xr xy 4
 Xylogics 450/451 VMEbus SMD disk controller.
-.It zs
+.It Xr zs 4
 Zilog 8530 serial controller.
 .El
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-.\"     $OpenBSD: intro.4,v 1.12 2002/03/14 19:37:07 jason Exp $
+.\"     $OpenBSD: intro.4,v 1.13 2002/03/29 22:20:14 deraadt Exp $
 .\"
 .\" Copyright (c) 2001-2002 The OpenBSD Project
 .\" All Rights Reserved.
@@ -73,65 +73,67 @@ Devices are indicated by their functional interface.
 Not all supported devices are listed.
 .Pp
 .Bl -tag -width zs/zstty/zskbd -compact -offset indent
-.It apio
+.It Xr apio 4
 Aurora SBus pio1 parallel ports.
-.It asio
+.It Xr asio 4
 Aurora SBus sio2 serial ports.
-.It audioce
+.It Xr audioce 4
 EBus CS4231 based audio.
-.It audiocs
+.It Xr audiocs 4
 SBus CS4231 based audio.
-.It autri
+.It Xr autri 4
 PCI Trident 4DWAVE DX/NX, SiS 7018, ALi M5451 audio.
-.It be
+.It Xr eap 4
+Ensoniq AudioPCI based audio.
+.It Xr be 4
 10BaseT/100BaseTX SBus Ethernet controller.
-.It beeper
+.It Xr beeper 4
 simple speaker beeper
-.It cgsix
+.It Xr cgsix 4
 8 bit SBus color graphics frame buffer.
-.It cgthree
+.It Xr cgthree 4
 8 bit SBus color graphics frame buffer.
-.It com
+.It Xr com 4
 EBUS clones of the NS16550 serial UART.
-.It comkbd
+.It Xr comkbd 4
 Sun serial keyboards on
 .Xr com 4
 ports.
-.It dc
+.It Xr dc 4
 Clones of the DEC Tulip ethernet controller.
-.It esp
+.It Xr esp 4
 ESP SCSI controller.
-.It hifn
+.It Xr hifn 4
 Hifn 7751/7811/7951 cryptography acclerators.
-.It hme
+.It Xr hme 4
 SBus HME Ethernet controllers (SunSwift).
-.It isp
+.It Xr isp 4
 Qlogic ISP SBus SCSI controller.
-.It le/lebuffer
+.It Xr le/lebuffer 4
 AMD 7990 LANCE ethernet controller.
-.It magma
+.It Xr magma 4
 MAGMA serial/parallel communication boards.
-.It openprom
+.It Xr openprom 4
 Sun Open boot PROM (what became IEEE 1275) configuration driver.
-.It pcons
+.It Xr pcons 4
 PROM console input/output device.
-.It qe
+.It Xr qe 4
 Quad 10BaseT SBus Ethernet controller.
-.It qec
+.It Xr qec 4
 Supported as carrier for
 .Nm be
 or
 .Nm qe
 Ethernet controllers.
-.It sab
+.It Xr sab 4
 Infineon (formerly Siemens) SAB82532 serial controller.
-.It spif
+.It Xr spif 4
 Sun SUNW,spif serial/parallel communication boards.
-.It ubsec
+.It Xr ubsec 4
 Bluesteelnet 5501/5601, Broadcom 5805/5820/5821 crytography accelerators.
-.It uperf
+.It Xr uperf 4
 Performance counters on SBUS/PCI machines.
-.It zs/zstty/zskbd
+.It Xr zs/zstty/zskbd 4
 Zilog 8530 serial controller (and serial keyboards).
 .El
 .Sh SEE ALSO
