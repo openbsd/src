@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysconf.3,v 1.17 2003/12/23 20:00:21 jmc Exp $
+.\"	$OpenBSD: sysconf.3,v 1.18 2004/05/07 18:45:30 millert Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -140,6 +140,14 @@ otherwise \-1.
 The size of a system page in bytes.
 .It Li _SC_FSYNC
 Return 1 if the system supports the File Synchronisation Option, otherwise \-1.
+.It Li _SC_XOPEN_SHM
+Return 1 if the system supports the Shared Memory Option, otherwise \-1.
+.It Li _SC_SEM_NSEMS_MAX
+The maximum number of semaphores in the system or \-1 if the system
+does not support the Semaphores Option.
+.It Li _SC_SEM_VALUE_MAX
+The maximum value a semaphores may have or \-1 if the system
+does not support the Semaphores Option.
 .El
 .Sh RETURN VALUES
 If the call to
