@@ -2595,6 +2595,14 @@ m88k_function_arg_advance (args_so_far, mode, type, named)
        || ((type != 0) && TYPE_ALIGN (type) > BITS_PER_WORD)))
     (*args_so_far)++;
 
+  /* as soon as we put a structure of 32 bytes or more on stack, everything
+     needs to go on stack, or varargs will lose. */
+  if (bytes >= 8 * UNITS_PER_WORD)
+    {
+      (*args_so_far) += 8;
+      return;
+    }
+
   if (mode == BLKmode
       && (TYPE_ALIGN (type) != BITS_PER_WORD || bytes != UNITS_PER_WORD))
     return;
