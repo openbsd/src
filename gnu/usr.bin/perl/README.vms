@@ -1,317 +1,219 @@
-Last Revised 01-March-1999 by Dan Sugalski <sugalskd@ous.edu>
-Originally by Charles Bailey <bailey@newman.upenn.edu>
+If you read this file _as_is_, just ignore the equal signs on the left.
+This file is written in the POD format (see [.POD]PERLPOD.POD;1) which is
+specially designed to be readable as is.
 
-* Important safety tip
+=head1 NAME
+
+README.vms - Configuring, building, testing, and installing perl on VMS
+
+=head1 SYNOPSIS
+
+To configure, build, test, and install perl on VMS:
+
+    @ Configure
+    mms
+    mms test
+    mms install
+
+mmk may be used in place of mms in the last three steps.
+
+=head1 DESCRIPTION
+
+=head2 Important safety tip
 
 The build and install procedures have changed significantly from the 5.004
-releases! Make sure you read the "Building Perl" and "Installing Perl"
-sections before you build or install.
+releases!  Make sure you read the "Configuring the Perl Build", "Building 
+Perl", and "Installing Perl" sections of this document before you build or 
+install.
 
-Also note that, as of 5.005, an ANSI C compliant compiler is required to
-build Perl. Vax C is *not* ANSI compliant, as it died a natural death some
-time before the standard was set. Therefore Vax C will not compile perl
-5.005. Sorry about that.
+Also note that, as of Perl version 5.005 and later, an ANSI C compliant 
+compiler is required to build Perl.  VAX C is *not* ANSI compliant, as it 
+died a natural death some time before the standard was set.  Therefore 
+VAX C will not compile perl 5.005.  We are sorry about that.
 
-If you're stuck without Dec C (the Vax C license should be good for Dec C,
+If you are stuck without DEC C (the VAX C license should be good for DEC C,
 but the media charges might prohibit an upgrade), consider getting Gnu C
 instead.
 
-* Intro
+
+=head2 Introduction
 
 The VMS port of Perl is as functionally complete as any other Perl port
 (and as complete as the ports on some Unix systems). The Perl binaries
 provide all the Perl system calls that are either available under VMS or
-reasonably emulated. There are some incompatibilites in process handling
-(e.g the fork/exec model for creating subprocesses doesn't do what you
+reasonably emulated. There are some incompatibilities in process handling
+(e.g. the fork/exec model for creating subprocesses doesn't do what you
 might expect under Unix), mainly because VMS and Unix handle processes and
 sub-processes very differently.
 
-There are still some unimplemented system functions, and of coursse we
+There are still some unimplemented system functions, and of course we
 could use modules implementing useful VMS system services, so if you'd like
-to lend a hand we'd love to have you. Join the Perl Porting Team Now!
+to lend a hand we'd love to have you.  Join the Perl Porting Team Now!
 
 The current sources and build procedures have been tested on a VAX using
-Dec C, and on an AXP using Dec C. If you run into problems with
+DEC C, and on an AXP using DEC C. If you run into problems with
 other compilers, please let us know.
 
-There are issues with varions versions of Dec C, so if you're not running a
-relatively modern version, check the Dec C issues section later on in this
+There are issues with various versions of DEC C, so if you're not running a
+relatively modern version, check the "DEC C issues" section later on in this
 document.
 
-* Other required software
+=head2 Other required software
 
-In addition to VMS, you'll need:
-        1) A C compiler. Dec C or gcc for AXP or the VAX.
-        2) A make tool. Dec's MMS (v2.6 or later), or MadGoat's free MMS
-           analog MMK (available from ftp.madgoat.com/madgoat) both work
-           just fine. Gnu Make might work, but it's been so long since
-           anyone's tested it that we're not sure. MMK's free, though, so
-           go ahead and use that.
+In addition to VMS and DCL you will need two things:
+
+=over 4
+
+=item 1  A C compiler. 
+
+DEC C or gcc for VMS (AXP or VAX).
+
+=item 2  A make tool. 
+
+DEC's MMS (v2.6 or later), or MadGoat's free MMS
+analog MMK (available from ftp.madgoat.com/madgoat) both work
+just fine. Gnu Make might work, but it's been so long since
+anyone's tested it that we're not sure.  MMK is free though, so
+go ahead and use that.
+
+=back
+
+=head2 Additional software that is optional
 
 You may also want to have on hand:
-        1) UNZIP.EXE for VMS available from a number of web/ftp sites.
-    http://www.cdrom.com/pub/infozip/UnZip.html
-    http://www.openvms.digital.com/cd/INFO-ZIP/
-    ftp://ftp.digital.com/pub/VMS/
-    ftp://ftp.openvms.digital.com/
-    ftp://ftp.madgoat.com/madgoat/
-    ftp://ftp.wku.edu/vms/
-        2) GUNZIP/GZIP.EXE for VMS available from a number of web/ftp sites.
+
+=over 4
+
+=item 1  GUNZIP/GZIP.EXE for VMS 
+
+A de-compressor for *.gz and *.tgz files available from a number 
+of web/ftp sites.
+
     http://www.fsf.org/order/ftp.html
     ftp://ftp.uu.net/archive/systems/gnu/diffutils*.tar.gz
     ftp://gatekeeper.dec.com/pub/GNU/diffutils*.tar.gz
     ftp://ftp.gnu.org/pub/gnu/diffutils*.tar.gz 
     http://www.openvms.digital.com/cd/GZIP/
     ftp://ftp.digital.com/pub/VMS/
-        3) VMS TAR also available from a number of web/ftp sites.
+
+=item 2  VMS TAR 
+
+For reading and writing unix tape archives (*.tar files).  Vmstar is also 
+available from a number of web/ftp sites.
+
     ftp://ftp.lp.se/vms/
     http://www.openvms.digital.com/cd/VMSTAR/
     ftp://ftp.digital.com/pub/VMS/
+
+=item 3  UNZIP.EXE for VMS
+
+A combination decompressor and archive reader/writer for *.zip files.  
+Unzip is available from a number of web/ftp sites.
+
+    http://www.cdrom.com/pub/infozip/UnZip.html
+    http://www.openvms.digital.com/cd/INFO-ZIP/
+    ftp://ftp.digital.com/pub/VMS/
+    ftp://ftp.openvms.digital.com/
+    ftp://ftp.madgoat.com/madgoat/
+    ftp://ftp.wku.edu/vms/
+
+=item 4  MOST
+
+Most is an optional pager that is convenient to use with perldoc (unlike 
+TYPE/PAGE, MOST can go forward and backwards in a document and supports 
+regular expression searching).  Most builds with the slang 
+library on VMS.  Most and slang are available from:
+
+    ftp://space.mit.edu/pub/davis/
+    ftp://ftp.wku.edu/vms/narnia/most.zip
+
+=back
+
 Please note that UNZIP and GUNZIP are not the same thing (they work with
-different formats).  Most of the useful files from CPAN (the Comprehensive
-Perl Archive Network) are in .tar.gz format (this includes copies of the
+different formats).  Many of the useful files from CPAN (the Comprehensive
+Perl Archive Network) are in *.tar.gz format (this includes copies of the
 source code for perl as well as modules and scripts that you may wish to
 add later) hence you probably want to have GUNZIP.EXE and VMSTAR.EXE on
 your VMS machine.
 
-If you want to include socket support, you'll need a TCP stack and either
-Dec C, or socket libraries. See the Socket Support topic for more details.
+If you want to include socket support, you'll need a TCP/IP stack and either
+DEC C, or socket libraries.  See the "Socket Support (optional)" topic 
+for more details.
 
-* Building Perl
-
-Building perl has two steps, configuration and compilation.
+=head1 Configuring the Perl build
 
 To configure perl (a necessary first step), issue the command
 
-@CONFIGURE
+   @ Configure
 
-from the top of an unpacked perl directory. You'll be asked a series of
-questions, and the answers to them (along with the capabilities of your C
-compiler and network stack) will determine how perl's built.
+from the top of an unpacked perl source directory.  You will be asked a 
+series of questions, and the answers to them (along with the capabilities 
+of your C compiler and network stack) will determine how perl is custom 
+built for your machine.
 
-If you've got multiple C compilers installed, you'll have your choice of
-which one to use. Various older versions of Dec C had some gotchas, so if
-you're using a version older than 5.2, check the Dec C Issues section.
+If you have multiple C compilers installed, you'll have your choice of
+which one to use.  Various older versions of DEC C had some caveats, so if
+you're using a version older than 5.2, check the "DEC C Issues" section.
 
-The configuration script will print out, at the very end, the MMS or MMK
-command you need to compile perl. Issue it (exactly as printed) to start
-the build.
+If you have any symbols or logical names in your environment that may 
+interfere with the build or regression testing of perl then configure.com 
+will try to warn you about them.  If a logical name is causing
+you trouble but is in an LNM table that you do not have write access to
+then try defining your own to a harmless equivalence string in a table 
+such that it is resolved before the other (e.g. if TMP is defined in the
+SYSTEM table then try DEFINE TMP "NL:" or somesuch in your process table) 
+otherwise simply deassign the dangerous logical names.  The potentially 
+troublesome logicals and symbols are:
 
-Once you issue your MMS command, sit back and wait. Perl should build and
-link without a problem. If it doesn't, check the Gotchas to watch out for
-section. If that doesn't help, send some mail to the VMSPERL mailing list.
-Instructions are in the Mailing Lists section.
+    TMP  "LOGICAL"
+    LIB  "LOGICAL"
+    T    "LOGICAL"
+    FOO  "LOGICAL"
+    EXT  "LOGICAL"
+    TEST "SYMBOL"
 
 As a handy shortcut, the command:
 
-@CONFIGURE "-des"
+    @ Configure "-des"
 
-(note the quotation marks and case) will choose reasonable defaults. (It 
-takes Dec C over Gnu C, Dec C sockets over SOCKETSHR sockets, and either 
-over no sockets)
+(note the quotation marks and case) will choose reasonable defaults 
+automatically (it takes DEC C over Gnu C, DEC C sockets over SOCKETSHR 
+sockets, and either over no sockets).  More help with configure.com is 
+available from:
 
-* Testing Perl
+    @ Configure "-h"
 
-Once Perl has built cleanly, you need to test it to make sure things work.
-This step is very important--there are always things that can go wrong
-somehow and get you a dysfunctional Perl.
+See the "Changing compile-time options (optional)" section below to learn
+even more details about how to influence the outcome of the important 
+configuration step.  If you find yourself reconfiguring and rebuilding 
+then be sure to also follow the advice in the "Cleaning up and starting 
+fresh (optional)" and the checklist of items in the "CAVEATS" sections 
+below.
 
-Testing is very easy, though, as there's a full test suite in the perl
-distribution. To run the tests, enter the *exact* MMS line you used to
-compile Perl and add the word "test" to the end, like this:
+=head2 Changing compile-time options (optional)
 
-Compile Command:
-
-$MMS
-
-Test Command:
-
-$MMS test
-
-MMS will run all the tests. This may take some time, as there are a lot of
-tests. If any tests fail, there will be a note made on-screen. At the end
-of all the tests, a summary of the tests, the number passed and failed, and
-the time taken will be displayed.
-
-If any tests fail, it means something's wrong with Perl. If the test suite
-hangs (some tests can take upwards of two or three minutes, or more if
-you're on an especially slow machine, depending on your machine speed, so
-don't be hasty), then the test *after* the last one displayed failed. Don't
-install Perl unless you're confident that you're OK. Regardless of how
-confident you are, make a bug report to the VMSPerl mailing list.
-
-If one or more tests fail, you can get more info on the failure by issuing
-this command sequence:
-
-$ @[.VMS]TEST .typ "-v" [.subdir]test.T
-
-where ".typ" is the file type of the Perl images you just built (if you
-didn't do anything special, use .EXE), and "[.subdir]test.T" is the test
-that failed. For example, with a normal Perl build, if the test indicated
-that [.op]time failed, then you'd do this:
-
-$ @[.VMS]TEST .EXE "-v" [.OP]TIME.T
-
-When you send in a bug report for failed tests, please include the output
-from this command, which is run from the main source directory:
-
-MCR []MINIPERL "-V"
-
-Note that "-V" really is a capital V in double quotes. This will dump out a
-couple of screens worth of config info, and can help us diagnose the problem.
-If (and only if) that did not work then try enclosing the output of:
-
-@[.vms]myconfig
-
-* Cleaning up and starting fresh
-
-If you need to recompile from scratch, you have to make sure you clean up
-first. There's a procedure to do it--enter the *exact* MMS line you used to
-compile and add "realclean" at the end, like this:
-
-Compile Command:
-
-$MMS
-
-Cleanup Command:
-
-$MMS realclean
-
-If you don't do this, things may behave erratically. They might not, too,
-so it's best to be sure and do it.
-
-* Installing Perl
-
-There are several steps you need to take to get Perl installed and
-running.
-
-1) Create a directory somewhere and define the concealed logical PERL_ROOT
-to point to it. For example, DEFINE/TRANS=(CONC,TERM) PERL_ROOT dka200:[perl.]
-
-2) Run the install script via:
-
-MMS install
-
-or
-
-MMK install
-
-If for some reason it complains about target INSTALL being up to date,
-throw a /FORCE switch on the MMS or MMK command.
-
-The script [.VMS]PERL_SETUP.COM that is written by CONFIGURE.COM 
-will take care of most of the following:
-
-3) Either define the symbol PERL somewhere, such as
-SYS$MANAGER:SYLOGIN.COM, to be "PERL :== $PERL_ROOT:[000000]PERL.EXE", or
-install Perl into DCLTABLES.EXE (Check out the section "Installing Perl
-into DCLTABLES" for more info), or put the image in a directory that's in
-your DCL$PATH (if you're using VMS 6.2 or higher).
-
-4) Either define the logical name PERLSHR somewhere 
-(such as in PERL_SETUP.COM) like so:
-DEFINE/NOLOG PERLSHR PERL_ROOT:[000000]PERLSHR.EXE
-or copy perl_root:[000000]perlshr.exe sys$share:.
-
-5) Optionally define the command PERLDOC as 
-PERLDOC == "$PERL_ROOT:[000000]PERL PERL_ROOT:[LIB.POD]PERLDOC.COM -t"
-Note that if you wish to use most as a pager please see
-ftp://space.mit.edu/pub/davis/ for both most and slang (or perhaps
-ftp://ftp.wku.edu/vms/narnia/most.zip ).
-
-6) Optionally define the command PERLBUG (the Perl bug report generator) as
-PERLBUG == "$PERL_ROOT:[000000]PERL PERL_ROOT:[LIB]PERLBUG.COM"
-
-7) Optionally define the command POD2MAN (Converts POD files to nroff
-source suitable for converting to man pages. Also quiets complaints during
-module builds) as
-
-DEFINE/NOLOG POD2MAN PERL_ROOT:[LIB.POD]POD2MAN.COM
-POD2MAN == "$PERL_ROOT:[000000]PERL POD2MAN"
-
-8) Optionally define the command POD2TEXT (Converts POD files to text,
-which is required for perldoc -f to work properly) as
-
-DEFINE/NOLOG POD2TEXT PERL_ROOT:[LIB.POD]POD2TEXT.COM
-POD2TEXT == "$PERL_ROOT:[000000]PERL POD2TEXT"
-
-In all these cases, if you've got PERL defined as a foreign command, you
-can replace $PERL_ROOT:[000000]PERL with ''perl'. If you've installed perl
-into DCLTABLES, replace it with just perl.
-
-* Installing Perl into DCLTABLES
-
-Execute the following command file to define PERL as a DCL command.
-You'll need CMKRNL priv to install the new dcltables.exe.
-
-$ create perl.cld
-!
-! modify to reflect location of your perl.exe
-!
-define verb perl
-  image perl_root:[000000]perl.exe
-  cliflags (foreign)
-$!
-$ set command perl /table=sys$common:[syslib]dcltables.exe -
- /output=sys$common:[syslib]dcltables.exe
-$ install replace sys$common:[syslib]dcltables.exe
-$ exit
-
-* Changing compile-time things
-
-Most of the user-definable features of Perl are enabled or disabled in
-[.VMS]CONFIG.VMS. There's code in there to Do The Right Thing, but that may
-end up being the wrong thing for you. Make sure you understand what you're
-doing, since changes here can get you a busted perl.
+Most of the user definable features of Perl are enabled or disabled in
+[.VMS]CONFIG.VMS. There is code in there to Do The Right Thing, but that 
+may end up being the wrong thing for you.  Make sure you understand what 
+you are doing since inappropriate changes to CONFIG.VMS can render perl 
+unbuildable.
 
 Odds are that there's nothing here to change, unless you're on a version of
-VMS later than 6.2 and Dec C later than 5.6. Even if you are, the correct
-values will still be chosen, most likely. Poking around here should be
+VMS later than 6.2 and DEC C later than 5.6.  Even if you are, the correct
+values will still be chosen, most likely.  Poking around here should be
 unnecessary.
 
 The one exception is the various *DIR install locations. Changing those
-requires changes in genconfig.pl as well. Be really careful if you need to
+requires changes in genconfig.pl as well.  Be really careful if you need to
 change these, as they can cause some fairly subtle problems.
 
-* INSTALLing images
-
-On systems that are using perl quite a bit, and particularly those with 
-minimal RAM, you can boost the performance of perl by INSTALLing it as
-a known image.  PERLSHR.EXE is typically larger than 1500 blocks
-and that is a reasonably large amount of IO to load each time perl is 
-invoked. 
-
-   INSTALL ADD PERLSHR/SHARE
-
-should be enough for PERLSHR.EXE (/share implies /header and /open), 
-while /HEADER should do for PERL.EXE (perl.exe is not a shared image).
-
-If your code 'use's modules, check to see if there's an executable for
-them, too. In the base perl build, POSIX, IO, Fcntl, Opcode, SDBM_File,
-DCLsym, and Stdio all have shared images that can be installed /SHARE.
-
-How much of a win depends on your memory situation, but if you're firing
-off perl with any regularity (like more than once every 20 seconds or so)
-it's probably a win.
-
-While there is code in perl to remove privileges as it runs you are advised
-to NOT INSTALL PERL.EXE with PRIVs!
-
-* Extra things in the Perl distribution
-
-In addition to the standard stuff that gets installed, there are two
-optional extensions, DCLSYM and STDIO, that are handy. Instructions for
-these two modules are in [.VMS.EXT.DCLSYM] and [.VMS.EXT.STDIO],
-respectively.  They are built automatically for versions of perl >= 5.005.
-
-* Socket Support
+=head2 Socket Support (optional)
 
 Perl includes a number of functions for IP sockets, which are available if
-you choose to compile Perl with socket support (see the section Compiling
-Perl for more info on selecting a socket stack).  Since IP networking is an
-optional addition to VMS, there are several different IP stacks
-available. How well integrated they are into the system depends on the
-stack, your version of VMS, and the version of your C compiler.
+you choose to compile Perl with socket support.  Since IP networking is an 
+optional addition to VMS, there are several different IP stacks available.  
+How well integrated they are into the system depends on the stack, your 
+version of VMS, and the version of your C compiler.
 
 The most portable solution uses the SOCKETSHR library. In combination with
 either UCX or NetLib, this supports all the major TCP stacks (Multinet,
@@ -321,14 +223,222 @@ consistent across versions of VMS and C compilers. It has a problem with
 UDP sockets when used with Multinet, though, so you should be aware of
 that.
 
-The other solution available is to use the socket routines built into Dec
+The other solution available is to use the socket routines built into DEC
 C. Which routines are available depend on the version of VMS you're
 running, and require proper UCX emulation by your TCP/IP vendor.
 Relatively current versions of Multinet, TCPWare, Pathway, and UCX all
 provide the required libraries--check your manuals or release notes to see
 if your version is new enough.
 
-* Reporting Bugs
+=head1 Building Perl
+
+The configuration script will print out, at the very end, the MMS or MMK
+command you need to compile perl.  Issue it (exactly as printed) to start
+the build.  
+
+Once you issue your MMS or MMK command, sit back and wait.  Perl should 
+compile and link without a problem.  If a problem does occur check the 
+"CAVEATS" section of this document.  If that does not help send some 
+mail to the VMSPERL mailing list.  Instructions are in the "Mailing Lists" 
+section of this document.
+
+=head1 Testing Perl
+
+Once Perl has built cleanly you need to test it to make sure things work.
+This step is very important since there are always things that can go wrong
+somehow and yield a dysfunctional Perl for you.
+
+Testing is very easy, though, as there's a full test suite in the perl
+distribution.  To run the tests, enter the *exact* MMS line you used to
+compile Perl and add the word "test" to the end, like this:
+
+If the compile command was:
+
+    MMS
+
+then the test command ought to be:
+
+    MMS test
+
+MMS (or MMK) will run all the tests.  This may take some time, as there are 
+a lot of tests.  If any tests fail, there will be a note made on-screen. 
+At the end of all the tests, a summary of the tests, the number passed and 
+failed, and the time taken will be displayed.
+
+If any tests fail, it means something is wrong with Perl. If the test suite
+hangs (some tests can take upwards of two or three minutes, or more if
+you're on an especially slow machine, depending on your machine speed, so
+don't be hasty), then the test *after* the last one displayed failed. Don't
+install Perl unless you're confident that you're OK. Regardless of how
+confident you are, make a bug report to the VMSPerl mailing list.
+
+If one or more tests fail, you can get more information on the failure by 
+issuing this command sequence:
+
+    @ [.VMS]TEST .typ "" "-v" [.subdir]test.T
+
+where ".typ" is the file type of the Perl images you just built (if you
+didn't do anything special, use .EXE), and "[.subdir]test.T" is the test
+that failed. For example, with a normal Perl build, if the test indicated
+that [.op]time failed, then you'd do this:
+
+    @ [.VMS]TEST .EXE "" "-v" [.OP]TIME.T
+
+When you send in a bug report for failed tests, please include the output
+from this command, which is run from the main source directory:
+
+    MCR []MINIPERL "-V"
+
+Note that -"V" really is a capital V in double quotes. This will dump out a
+couple of screens worth of configuration information, and can help us 
+diagnose the problem.  If (and only if) that did not work then try enclosing 
+the output of:
+
+    MMS printconfig
+
+If (and only if) that did not work then try enclosing the output of:
+
+    @ [.vms]myconfig
+
+You may also be asked to provide your C compiler version ("CC/VERSION NL:" 
+with DEC C, "gcc --version" with GNU CC).  To obtain the version of MMS or 
+MMK you are running try "MMS/ident" or "MMK /ident".  The GNU make version 
+can be identified with "make --version".
+
+=head2 Cleaning up and starting fresh (optional)
+
+If you need to recompile from scratch, you have to make sure you clean up
+first.  There is a procedure to do it--enter the *exact* MMS line you used 
+to compile and add "realclean" at the end, like this:
+
+if the compile command was:
+
+    MMS
+
+then the cleanup command ought to be:
+
+    MMS realclean
+
+If you do not do this things may behave erratically during the subsequent 
+rebuild attempt.  They might not, too, so it is best to be sure and do it.
+
+=head1 Installing Perl
+
+There are several steps you need to take to get Perl installed and
+running.
+
+=over 4
+
+=item 1
+
+Check your default file protections with
+
+     SHOW PROTECTION /DEFAULT
+
+and adjust if necessary with SET PROTECTION=(code)/DEFAULT.
+
+=item 2
+
+Create a directory somewhere and either run @perl_setup or 
+define the concealed logical PERL_ROOT to point to it by hand. 
+For example, 
+
+    CREATE/DIRECTORY dka200:[perl]
+    @PERL_SETUP
+    SHOW LOGICAL PERL_ROOT
+
+or,
+
+    CREATE/DIRECTORY dka200:[perl]
+    DEFINE/TRANS=(CONC,TERM) PERL_ROOT dka200:[perl.]
+
+
+=item 3
+
+Run the install script via:
+
+    MMS install
+
+or
+
+    MMK install
+
+If for some reason it complains about target INSTALL being up to date,
+throw a /FORCE switch on the MMS or MMK command.
+
+=back
+
+The DCL script PERL_SETUP.COM that is written by CONFIGURE.COM
+will help you with the definition of PERL_ROOT, PERLSHR and the PERL
+Foreign symbol.  Take a look at PERL_SETUP.COM and modify it if you want 
+to.  Then copy PERL_SETUP.COM to a place accessible to your perl users.  
+For example:
+
+    COPY PERL_SETUP.COM SYS$LIBRARY: 
+
+If you want to have everyone on the system have access to perl
+then add a line that reads
+
+    $ @sys$library:perl_setup
+
+to SYS$MANAGER:SYLOGIN.COM.
+
+Two alternatives to the foreign symbol would be to install PERL into 
+DCLTABLES.EXE (Check out the section "Installing Perl into DCLTABLES 
+(optional)" for more information), or put the image in a 
+directory that's in your DCL$PATH (if you're using VMS V6.2 or higher).
+
+An alternative to having PERL_SETUP.COM define the PERLSHR logical name
+is to simply copy it into the system shareable library directory with:
+
+    copy perl_root:[000000]perlshr.exe sys$share:
+
+See also the "INSTALLing images (optional)" section.
+
+=head2 Installing Perl into DCLTABLES (optional)
+
+Execute the following command file to define PERL as a DCL command.
+You'll need CMKRNL privilege to install the new dcltables.exe.
+
+    $ create perl.cld
+    !
+    ! modify to reflect location of your perl.exe
+    !
+    define verb perl
+      image perl_root:[000000]perl.exe
+      cliflags (foreign)
+    $!
+    $ set command perl /table=sys$common:[syslib]dcltables.exe -
+     /output=sys$common:[syslib]dcltables.exe
+    $ install replace sys$common:[syslib]dcltables.exe
+    $ exit
+
+=head2 INSTALLing images (optional)
+
+On systems that are using perl quite a bit, and particularly those with 
+minimal RAM, you can boost the performance of perl by INSTALLing it as
+a known image.  PERLSHR.EXE is typically larger than 2000 blocks
+and that is a reasonably large amount of IO to load each time perl is 
+invoked. 
+
+   INSTALL ADD PERLSHR/SHARE
+   INSTALL ADD PERL/HEADER
+
+should be enough for PERLSHR.EXE (/share implies /header and /open), 
+while /HEADER should do for PERL.EXE (perl.exe is not a shared image).
+
+If your code 'use's modules, check to see if there is a shareable image for
+them, too.  In the base perl build, POSIX, IO, Fcntl, Opcode, SDBM_File,
+DCLsym, and Stdio all have shared images that can be installed /SHARE.
+
+How much of a win depends on your memory situation, but if you are firing
+off perl with any regularity (like more than once every 20 seconds or so)
+it is probably beneficial to INSTALL at least portions of perl.
+
+While there is code in perl to remove privileges as it runs you are advised
+to NOT INSTALL PERL.EXE with PRIVs!
+
+=head1 Reporting Bugs
 
 If you come across what you think might be a bug in Perl, please report
 it. There's a script in PERL_ROOT:[UTILS], perlbug, that walks you through
@@ -336,94 +446,175 @@ the process of creating a bug report. This script includes details of your
 installation, and is very handy. Completed bug reports should go to
 perlbug@perl.com.
 
-* Gotchas to watch out for
+=head1 CAVEATS
 
 Probably the single biggest gotcha in compiling Perl is giving the wrong
-switches to MMS/MMK when you build. Use *exactly* what the configure script
-prints!
+switches to MMS/MMK when you build. Use *exactly* what the configure.com 
+script prints!
 
-The next big gotcha is directory depth. Perl can create directories four
-and five levels deep during the build, so you don't have to be too deep to
-start to hit the RMS 8 level point. It's best to do a
-$DEFINE/TRANS=(CONC,TERM) PERLSRC disk:[dir.dir.dir.perldir.]"  (note the
-trailing period) and $SET DEFAULT PERLSRC:[000000] before building. Perl
-modules can be just as bad (or worse), so watch out for them, too. The
-configuration script will warn if it thinks you're too deep (at least on 
-versions of VMS prior to 7.2).
+The next big gotcha is directory depth.  Perl can create directories four,
+five, or even six levels deep during the build, so you don't have to be 
+too deep to start to hit the RMS 8 level limit (for versions of VMS prior 
+to V7.2 and even with V7.2 on the VAX).  It is best to do
 
-Finally, the third thing that bites people is leftover pieces from a failed
-build. If things go wrong, make sure you do a "(MMK|MMS|make) realclean"
+    DEFINE/TRANS=(CONC,TERM) PERLSRC "disk:[dir.dir.dir.perldir.]"
+    SET DEFAULT PERLSRC:[000000]
+
+before building in cases where you have to unpack the distribution so deep
+(note the trailing period in the definition of PERLSRC).  Perl modules 
+from CPAN can be just as bad (or worse), so watch out for them, too. Perl's
+configuration script will warn if it thinks you are too deep (at least on 
+a VAX or on Alpha versions of VMS prior to 7.2).  But MakeMaker will not 
+warn you if you start out building a module too deep in a directory.
+
+Be sure that the process that you use to build perl has a PGFLQ greater
+than 100000.  Be sure to have a correct local time zone to UTC offset
+defined (in seconds) in the logical name SYS$TIMEZONE_DIFFERENTIAL before
+running the regression test suite.  The SYS$MANAGER:UTC$CONFIGURE_TDF.COM 
+procedure will help you set that logical for your system but may require 
+system privileges.  For example, a location 5 hours west of UTC (such as 
+the US East coast while not on daylight savings time) would have:
+
+    DEFINE SYS$TIMEZONE_DIFFERENTIAL "-18000"
+
+A final thing that causes trouble is leftover pieces from a failed
+build.  If things go wrong make sure you do a "(MMK|MMS|make) realclean"
 before you rebuild.
 
-* Dec C issues
+=head2 DEC C issues
 
-Note to DECC users: Some early versions (pre-5.2, some pre-4. If you're Dec
-C 5.x or higher, with current patches if anym you're fine) of the DECCRTL
+Note to DEC C users: Some early versions (pre-5.2, some pre-4. If you're DEC
+C 5.x or higher, with current patches if any, you're fine) of the DECCRTL
 contained a few bugs which affect Perl performance:
-    - Newlines are lost on I/O through pipes, causing lines to run together.
-      This shows up as RMS RTB errors when reading from a pipe.  You can
-      work around this by having one process write data to a file, and
-      then having the other read the file, instead of the pipe.  This is
-      fixed in version 4 of DECC.
-    - The modf() routine returns a non-integral value for some values above
-      INT_MAX; the Perl "int" operator will return a non-integral value in
-      these cases.  This is fixed in version 4 of DECC.
-    - On the AXP, if SYSNAM privilege is enabled, the CRTL chdir() routine
-      changes the process default device and directory permanently, even
-      though the call specified that the change should not persist after
-      Perl exited.  This is fixed by DEC CSC patch AXPACRT04_061.
 
-* Mailing Lists
+=over 4
 
-There are several mailing lists available to the Perl porter. For VMS
+=item - pipes
+
+Newlines are lost on I/O through pipes, causing lines to run together.
+This shows up as RMS RTB errors when reading from a pipe.  You can
+work around this by having one process write data to a file, and
+then having the other read the file, instead of the pipe.  This is
+fixed in version 4 of DEC C.
+
+=item - modf()
+
+The modf() routine returns a non-integral value for some values above
+INT_MAX; the Perl "int" operator will return a non-integral value in
+these cases.  This is fixed in version 4 of DEC C.
+
+=item - ALPACRT ECO
+
+On the AXP, if SYSNAM privilege is enabled, the CRTL chdir() routine
+changes the process default device and directory permanently, even
+though the call specified that the change should not persist after
+Perl exited.  This is fixed by DEC CSC patch ALPACRT04_061 or later.
+See also:
+
+    http://ftp.service.digital.com/patches/.new/openvms.html
+
+=back
+
+Please note that in later versions "DEC C" may also be known as 
+"Compaq C".
+
+=head2 GNU issues
+
+It has been a while since the GNU utilities such as GCC or GNU make
+were used to build perl on VMS.  Hence they may require a great deal
+of source code modification to work again.
+
+    http://slacvx.slac.stanford.edu/HELP/GCC
+    http://www.progis.de/
+    http://vms.gnu.org/
+    http://www.lp.se/products/gnu.html
+
+=head1 Mailing Lists
+
+There are several mailing lists available to the Perl porter.  For VMS
 specific issues (including both Perl questions and installation problems)
-there is the VMSPERL mailing list. It's usually a low-volume (10-12
+there is the VMSPERL mailing list.  It is usually a low-volume (10-12
 messages a week) mailing list.
 
-The subscription address is VMSPERL-REQUEST@NEWMAN.UPENN.EDU. Send a mail
-message with just the words SUBSCRIBE VMSPERL in the body of the message.
+The subscription address is MAJORDOMO@PERL.ORG.  Send a mail message with 
+just the words SUBSCRIBE VMSPERL in the body of the message.
+   
+The VMSPERL mailing list address is VMSPERL@PERL.ORG.  Any mail sent there
+gets echoed to all subscribers of the list.  There is a searchable archive of
+the list on the web at:
 
-The VMSPERL mailing list address is VMSPERL@NEWMAN.UPENN.EDU. Any mail
-sent there gets echoed to all subscribers of the list.
-
+    http://www.xray.mpe.mpg.de/mailing-lists/vmsperl/
+   
 To unsubscribe from VMSPERL send the message UNSUBSCRIBE VMSPERL to
-VMSPERL-REQUEST@NEWMAN.UPENN.EDU.  Be sure to do so from the subscribed 
-account that you are cancelling.
+MAJORDOMO@PERL.ORG.  Be sure to do so from the subscribed account that 
+you are canceling.
 
+=head2 Web sites
 
-* Acknowledgements
+Vmsperl pages on the web include:
+
+    http://www.sidhe.org/vmsperl/index.html
+    http://duphy4.physics.drexel.edu/pub/cgi_info.htmlx
+    http://www.xray.mpe.mpg.de/mailing-lists/vmsperl/
+    http://www.cpan.org/modules/by-module/VMS/
+    http://nucwww.chem.sunysb.edu/htbin/software_list.cgi
+    http://www.best.com/~pvhp/vms/
+    http://bkfug.kfunigraz.ac.at/~binder/perl.html
+
+=head1 SEE ALSO
+
+Perl information for users and programmers about the port of perl to VMS is
+available from the [.VMS]PERLVMS.POD file that gets installed as L<perlvms>.
+For administrators the perlvms document also includes a detailed discussion 
+of extending vmsperl with CPAN modules after Perl has been installed.
+
+=head1 AUTHORS
+
+Last revised 25-February-2000 by Peter Prymmer pvhp@best.com.  
+Revised 27-October-1999 by Craig Berry craig.berry@metamorgs.com.  
+Revised 01-March-1999 by Dan Sugalski dan@sidhe.org.  
+Originally by Charles Bailey bailey@newman.upenn.edu.
+
+=head1 ACKNOWLEDGEMENTS
 
 A real big thanks needs to go to Charles Bailey
-<bailey@newman.upenn.edu>, who is ultimately responsible for Perl 5.004
+bailey@newman.upenn.edu, who is ultimately responsible for Perl 5.004
 running on VMS. Without him, nothing the rest of us have done would be at
 all important.
 
 There are, of course, far too many people involved in the porting and testing
 of Perl to mention everyone who deserves it, so please forgive us if we've
 missed someone.  That said, special thanks are due to the following:
-  Tim Adye <T.J.Adye@rl.ac.uk>
+
+  Tim Adye T.J.Adye@rl.ac.uk
      for the VMS emulations of getpw*()
-  David Denholm <denholm@conmat.phys.soton.ac.uk>
+  David Denholm denholm@conmat.phys.soton.ac.uk
      for extensive testing and provision of pipe and SocketShr code,
-  Mark Pizzolato <mark@infocomm.com>
+  Mark Pizzolato mark@infocomm.com
      for the getredirection() code
-  Rich Salz <rsalz@bbn.com>
+  Rich Salz rsalz@bbn.com
      for readdir() and related routines
-  Peter Prymmer <pvhp@forte.com> or <pvhp@lns62.lns.cornell.edu>
+  Peter Prymmer pvhp@best.com 
      for extensive testing, as well as development work on
      configuration and documentation for VMS Perl,
-  Dan Sugalski <sugalskd@ous.edu>
+  Dan Sugalski dan@sidhe.org
      for extensive contributions to recent version support,
      development of VMS-specific extensions, and dissemination
      of information about VMS Perl,
   the Stanford Synchrotron Radiation Laboratory and the
      Laboratory of Nuclear Studies at Cornell University for
      the opportunity to test and develop for the AXP,
+  John Hasstedt John.Hasstedt@sunysb.edu
+     for VAX VMS V7.2 support
+
 and to the entire VMSperl group for useful advice and suggestions.  In
 addition the perl5-porters deserve credit for their creativity and
 willingness to work with the VMS newcomers.  Finally, the greatest debt of
-gratitude is due to Larry Wall <larry@wall.org>, for having the ideas which
+gratitude is due to Larry Wall larry@wall.org, for having the ideas which
 have made our sleepless nights possible.
 
 Thanks,
 The VMSperl group
+
+=cut
+

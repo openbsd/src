@@ -1,5 +1,5 @@
 # Term::ANSIColor -- Color screen output using ANSI escape sequences.
-# $Id: ANSIColor.pm,v 1.1.1.1 2000/04/06 16:09:49 millert Exp $
+# $Id: ANSIColor.pm,v 1.2 2000/04/06 17:06:52 millert Exp $
 #
 # Copyright 1996, 1997 by Russ Allbery <rra@stanford.edu>
 #                     and Zenin <zenin@best.com>
@@ -28,7 +28,7 @@ use Exporter ();
                                  ON_CYAN ON_WHITE)]);
 Exporter::export_ok_tags ('constants');
     
-($VERSION = (split (' ', q$Revision: 1.1.1.1 $ ))[1]) =~ s/\.(\d)$/.0$1/;
+($VERSION = (split (' ', q$Revision: 1.2 $ ))[1]) =~ s/\.(\d)$/.0$1/;
 
 
 ############################################################################

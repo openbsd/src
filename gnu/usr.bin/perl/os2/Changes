@@ -212,6 +212,7 @@ after 5.005_02:
 		extension-full-name and Perl-version mangling work in the 
 		same set ot 576 possible keys, this may lead to clashes).
 	$^E was reset on the second read, and contained ".\r\n" at the end.
+
 after 5.005_53:
 	Would segfault system()ing non-existing program;
 	AOUT build was hosed;
@@ -221,3 +222,103 @@ after 5.005_53:
 
 
 	PrfDB was using a bug in processing XSUBs returning U32.
+
+	Variable $OS2::emx_rev implemented (string and numberic values
+		are the same as C variables _emx_rev and _emx_vprt).
+	Variable $OS2::emx_env implemented (same as C variable _emx_env).
+	Variable $OS2::os_ver implemented (_osmajor + 0.001 * _osminor).
+
+	Improved centralized management of HAB and HMQ.  To get Perl's
+		HAB, call perl_hab_GET().  (After the initial call one
+		can use Perl_hab instead.)  To require Perl's HMQ,
+		call perl_hmq_GET(), to release it call perl_hmq_UNSET(),
+		to obtain it between these calls use Perl_hmq.
+	HMQ management is refcounted, and the program will morph
+		itself into/from PM if required.
+	If perl.h cannot be included, hab may be obtained by Perl_hab_GET().
+
+	New function OS2::Error(do_harderror,do_exception).  Returns
+		undef if it was not called yet, otherwise bit 1 is
+		set if on previous call do_harderror was enabled, bit
+		2 is set if if on previous call do_exception was enabled.
+	This function enables/disables error popups associated with 
+		hardware errors (Disk not ready etc.) and software exceptions.
+
+	New function OS2::Errors2Drive(drive).  Returns undef if it was 
+		not called yet, otherwise return false if Errors were
+		not requested to be written to a hard drive, or the
+		drive letter if this was requested.
+	This function may redirect error popups associated with 
+		hardware errors (Disk not ready etc.) and software exceptions
+		to the file POPUPLOG.OS2 at the root directory of the
+		specified drive.  Overrides OS2::Error() specified by 
+		individual programs.  Given argument undef will
+		disable redirection.  Has global effect, persists
+		after the application exits.
+
+	New function OS2::SysInfo().  Returns a hash with system information.
+		The keys of the hash are
+
+		MAX_PATH_LENGTH, MAX_TEXT_SESSIONS, MAX_PM_SESSIONS,
+		MAX_VDM_SESSIONS, BOOT_DRIVE, DYN_PRI_VARIATION,
+		MAX_WAIT, MIN_SLICE, MAX_SLICE, PAGE_SIZE,
+		VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION,
+		MS_COUNT, TIME_LOW, TIME_HIGH, TOTPHYSMEM, TOTRESMEM,
+		TOTAVAILMEM, MAXPRMEM, MAXSHMEM, TIMER_INTERVAL,
+		MAX_COMP_LENGTH, FOREGROUND_FS_SESSION,
+		FOREGROUND_PROCESS
+
+	New function OS2::BootDrive(force).  Returns a letter without colon.
+
+	New functions OS2::MorphPM(serve)/OS2::UnMorphPM(serve).  Transforms
+		the current application into a PM application and back.
+		The argument true means that a real message loop is
+		going to be performed.
+	OS2::MorphPM() returns the PM message queue handle as an integer.
+
+	New function OS2::Serve_Messages(force).  Fake on-demand
+		retrieval of outstanding PM messages.  If force is false,
+		will not dispatch messages if a real message loop is known to
+		be present.  Returns number of messages retrieved.
+	Dies with "QUITing..." if WM_QUIT message is obtained.
+
+	New function OS2::Process_Messages(force [, cnt]).  Retrieval
+		of PM messages until window creation/destruction.  
+		If force is false, will not dispatch messages 
+		if a real message loop is known to be present.  
+		Returns change in number of windows.  If cnt is given,
+		it is incremented by the number of messages retrieved.
+	Dies with "QUITing..." if WM_QUIT message is obtained.
+
+after 5.005_54:
+ 	Opening pipes from/to processes could fail if (un)appropriate
+ 	combination of STDIN/STDOUT was closed.
+ 
+ 	If the only shell-metachars of a command are ' 2>&1' at the
+ 	end of a command, it is executed without calling the external shell.
+
+after 5.005_57:
+	Make UDP sockets return correct caller address (OS2 API bug);
+	Enable TCPIPV4 defines (works with Warp 3 IAK too?!);
+	Force Unix-domain sockets to start with "/socket", convert
+	  '/' to '\' in the calls;
+	Make C<system 1, $cmd> to treat $cmd as in C<system $cmd>;
+	Autopatch Configure;
+	Find name and location of g[nu]patch.exe;
+	Autocopy perl????.dll to t/ when testing;
+
+after 5.005_62:
+	Extract a lightweight DLL access module OS2::DLL from OS2::REXX
+	   which would not load REXX runtime system;
+	Allow compile with os2.h which loads os2tk.h instead of os2emx.h;
+	Put the version of EMX CRTL into -D define;
+	Use _setsyserror() to store last error of OS/2 API for $^E;
+	New macro PERL_SYS_INIT3(argvp, argcp, envp);
+	Make Dynaloader return info on the failing module after failed dl_open();
+	OS2::REXX test were done for interactive testing (were writing
+	  "ok" to stderr);
+	system() and friends return -1 on failure (was 0xFF00);
+	Put the full name of executable into $^X
+	  (alas, uppercased - but with /);
+	t/io/fs.t was failing on HPFS386;
+	Remove extra ';' from defines for MQ operations.

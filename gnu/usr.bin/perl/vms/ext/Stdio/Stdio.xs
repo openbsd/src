@@ -1,8 +1,8 @@
 /* VMS::Stdio - VMS extensions to stdio routines 
  *
- * Version:  2.1
- * Author:   Charles Bailey  bailey@genetics.upenn.edu
- * Revised:  24-Mar-1998
+ * Version:  2.2
+ * Author:   Charles Bailey  bailey@newman.upenn.edu
+ * Revised:  18-Jul-1998
  *
  */
 
@@ -123,6 +123,57 @@ constant(name)
 	    ST(0) = sv_2mortal(newSViv(i));
 	else
 	    ST(0) = &PL_sv_undef;
+
+void
+binmode(fh)
+	SV *	fh
+	PROTOTYPE: $
+	CODE:
+	    IO *io = sv_2io(fh);
+	    FILE *fp = io ? IoOFP(io) : NULL;
+	    char iotype = io ? IoTYPE(io) : '\0';
+	    char filespec[NAM$C_MAXRSS], *acmode, *s, *colon, *dirend = Nullch;
+	    int ret = 0, saverrno = errno, savevmserrno = vaxc$errno;
+	    fpos_t pos;
+	    if (fp == NULL || strchr(">was+-|",iotype) == Nullch) {
+	      set_errno(EBADF); set_vaxc_errno(SS$_IVCHAN); XSRETURN_UNDEF;
+	    }
+	    if (!fgetname(fp,filespec)) XSRETURN_UNDEF;
+	    for (s = filespec; *s; s++) {
+	      if (*s == ':') colon = s;
+	      else if (*s == ']' || *s == '>') dirend = s;
+	    }
+	    /* Looks like a tmpfile, which will go away if reopened */
+	    if (s == dirend + 3) {
+	      set_errno(EBADF); set_vaxc_errno(RMS$_IOP); XSRETURN_UNDEF;
+	    }
+	    /* If we've got a non-file-structured device, clip off the trailing
+	     * junk, and don't lose sleep if we can't get a stream position.  */
+	    if (dirend == Nullch) *(colon+1) = '\0'; 
+	    if (iotype != '-' && (ret = fgetpos(fp, &pos)) == -1 && dirend)
+	      XSRETURN_UNDEF;
+	    switch (iotype) {
+	      case '<': case 'r':           acmode = "rb";                      break;
+	      case '>': case 'w': case '|':
+	        /* use 'a' instead of 'w' to avoid creating new file;
+	           fsetpos below will take care of restoring file position */
+	      case 'a':                     acmode = "ab";                      break;
+	      case '+':  case 's':          acmode = "rb+";                     break;
+	      case '-':                     acmode = fileno(fp) ? "ab" : "rb";  break;
+	      /* iotype'll be null for the SYS$INPUT:/SYS$OUTPUT:/SYS$ERROR: files */
+	      /* since we didn't really open them and can't really */
+	      /* reopen them */
+	      case 0:                       XSRETURN_UNDEF;
+	      default:
+	        if (PL_dowarn) warn("Unrecognized iotype %c for %s in binmode",
+	                         iotype, filespec);
+	        acmode = "rb+";
+	    }
+	    if (freopen(filespec,acmode,fp) == NULL) XSRETURN_UNDEF;
+	    if (iotype != '-' && ret != -1 && fsetpos(fp,&pos) == -1) XSRETURN_UNDEF;
+	    if (ret == -1) { set_errno(saverrno); set_vaxc_errno(savevmserrno); }
+	    XSRETURN_YES;
+
 
 void
 flush(fp)
@@ -365,8 +416,7 @@ writeof(mysv)
 	    IO *io = sv_2io(mysv);
 	    FILE *fp = io ? IoOFP(io) : NULL;
 	    if (fp == NULL || strchr(">was+-|",IoTYPE(io)) == Nullch) {
-	      set_errno(EBADF); set_vaxc_errno(SS$_IVCHAN);
-	      ST(0) = &PL_sv_undef;  XSRETURN(1);
+	      set_errno(EBADF); set_vaxc_errno(SS$_IVCHAN); XSRETURN_UNDEF;
 	    }
 	    if (fgetname(fp,devnam) == Nullch) { ST(0) = &PL_sv_undef; XSRETURN(1); }
 	    if ((cp = strrchr(devnam,':')) != NULL) *(cp+1) = '\0';

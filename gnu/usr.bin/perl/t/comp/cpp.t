@@ -1,17 +1,17 @@
 #!./perl
 
-# $RCSfile: cpp.t,v $$Revision: 1.3 $$Date: 1999/04/29 22:52:26 $
+# $RCSfile: cpp.t,v $$Revision: 1.4 $$Date: 2000/04/06 17:07:56 $
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
+    unshift @INC, '../lib';
 }
 
 use Config;
 if ( $^O eq 'MSWin32' or
      ($Config{'cppstdin'} =~ /\bcppstdin\b/) and
      ( ! -x $Config{'binexp'} . "/cppstdin") ) {
-    print "1..0\n";
+    print "1..0 # Skip: \$Config{cppstdin} unavailable\n";
     exit; 		# Cannot test till after install, alas.
 }
 

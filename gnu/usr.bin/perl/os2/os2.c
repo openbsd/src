@@ -3,6 +3,10 @@
 #define INCL_DOSFILEMGR
 #define INCL_DOSMEMMGR
 #define INCL_DOSERRORS
+/* These 3 are needed for compile if os2.h includes os2tk.h, not os2emx.h */
+#define INCL_DOSPROCESS
+#define SPU_DISABLESUPPRESSION          0
+#define SPU_ENABLESUPPRESSION           1
 #include <os2.h>
 
 #include <sys/uflags.h>
@@ -181,9 +185,10 @@ static PFN ExtFCN[2];			/* Labeled by ord below. */
 static USHORT loadOrd[2] = { 874, 873 }; /* Query=874, Set=873. */
 #define ORD_QUERY_ELP	0
 #define ORD_SET_ELP	1
+struct PMWIN_entries_t PMWIN_entries;
 
 APIRET
-loadByOrd(ULONG ord)
+loadByOrd(char *modname, ULONG ord)
 {
     if (ExtFCN[ord] == NULL) {
 	static HMODULE hdosc = 0;
@@ -192,14 +197,45 @@ loadByOrd(ULONG ord)
 	APIRET rc;
 
 	if ((!hdosc && CheckOSError(DosLoadModule(buf, sizeof buf, 
-						  "doscalls", &hdosc)))
+						  modname, &hdosc)))
 	    || CheckOSError(DosQueryProcAddr(hdosc, loadOrd[ord], NULL, &fcn)))
-	    die("This version of OS/2 does not support doscalls.%i", 
-		loadOrd[ord]);
+	    croak("This version of OS/2 does not support %s.%i", 
+		  modname, loadOrd[ord]);
 	ExtFCN[ord] = fcn;
     } 
-    if ((long)ExtFCN[ord] == -1) die("panic queryaddr");
+    if ((long)ExtFCN[ord] == -1) 
+	croak("panic queryaddr");
 }
+
+void 
+init_PMWIN_entries(void)
+{
+    static HMODULE hpmwin = 0;
+    static const int ords[] = {
+	763,				/* Initialize */
+	716,				/* CreateMsgQueue */
+	726,				/* DestroyMsgQueue */
+	918,				/* PeekMsg */
+	915,				/* GetMsg */
+	912,				/* DispatchMsg */
+    };
+    BYTE buf[20];
+    int i = 0;
+    unsigned long rc;
+
+    if (hpmwin)
+	return;
+
+    if (CheckOSError(DosLoadModule(buf, sizeof buf, "pmwin", &hpmwin)))
+	croak("This version of OS/2 does not support pmwin: error in %s", buf);
+    while (i <= 5) {
+	if (CheckOSError(DosQueryProcAddr(hpmwin, ords[i], NULL, 
+					  ((PFN*)&PMWIN_entries)+i)))
+	    croak("This version of OS/2 does not support pmwin.%d", ords[i]);
+	i++;
+    }
+}
+
 
 /* priorities */
 static signed char priors[] = {0, 1, 3, 2}; /* Last two interchanged,
@@ -380,6 +416,7 @@ result(int flag, int pid)
 #define EXECF_EXEC 1
 #define EXECF_TRUEEXEC 2
 #define EXECF_SPAWN_NOWAIT 3
+#define EXECF_SPAWN_BYFLAG 4
 
 /* const char* const ptypes[] = { "FS", "DOS", "VIO", "PM", "DETACH" }; */
 
@@ -427,11 +464,12 @@ static ULONG os2_mytype;
 /* global PL_Argv[] contains arguments. */
 
 int
-do_spawn_ve(really, flag, execf, inicmd)
+do_spawn_ve(really, flag, execf, inicmd, addflag)
 SV *really;
 U32 flag;
 U32 execf;
 char *inicmd;
+U32 addflag;
 {
     dTHR;
 	int trueflag = flag;
@@ -444,6 +482,7 @@ char *inicmd;
 	char **argsp = fargs;
 	char nargs = 4;
 	int force_shell;
+ 	int new_stderr = -1, nostderr = 0, fl_stderr;
 	STRLEN n_a;
 	
 	if (flag == P_WAIT)
@@ -526,6 +565,24 @@ char *inicmd;
 	    }
 	}
 
+	if (addflag) {
+	    addflag = 0;
+	    new_stderr = dup(2);		/* Preserve stderr */
+	    if (new_stderr == -1) {
+		if (errno == EBADF)
+		    nostderr = 1;
+		else {
+		    rc = -1;
+		    goto finish;
+		}
+	    } else
+		fl_stderr = fcntl(2, F_GETFD);
+	    rc = dup2(1,2);
+	    if (rc == -1)
+		goto finish;
+	    fcntl(new_stderr, F_SETFD, FD_CLOEXEC);
+	}
+
 #if 0
 	rc = result(trueflag, spawnvp(flag,tmps,PL_Argv));
 #else
@@ -535,7 +592,7 @@ char *inicmd;
 	    rc = spawnvp(trueflag | P_OVERLAY,tmps,PL_Argv);
 	else if (execf == EXECF_SPAWN_NOWAIT)
 	    rc = spawnvp(flag,tmps,PL_Argv);
-        else				/* EXECF_SPAWN */
+        else				/* EXECF_SPAWN, EXECF_SPAWN_BYFLAG */
 	    rc = result(trueflag, 
 			spawnvp(flag,tmps,PL_Argv));
 #endif 
@@ -561,7 +618,9 @@ char *inicmd;
                     if (l >= sizeof scrbuf) {
                        Safefree(scr);
                      longbuf:
-                       croak("Size of scriptname too big: %d", l);
+                       warn("Size of scriptname too big: %d", l);
+		       rc = -1;
+		       goto finish;
                     }
                     strcpy(scrbuf, scr);
                     Safefree(scr);
@@ -718,7 +777,7 @@ char *inicmd;
 						   long enough. */
 			    a--;
 			}
-			while (nargs-- >= 0)
+			while (--nargs >= 0)
 			    PL_Argv[nargs] = argsp[nargs];
 			/* Enable pathless exec if #! (as pdksh). */
 			pass = (buf[0] == '#' ? 2 : 3);
@@ -740,67 +799,34 @@ char *inicmd;
 		goto retry;
 	    }
 	}
-	if (rc < 0 && PL_dowarn)
-	    warn("Can't %s \"%s\": %s\n", 
+	if (rc < 0 && ckWARN(WARN_EXEC))
+	    Perl_warner(aTHX_ WARN_EXEC, "Can't %s \"%s\": %s\n", 
 		 ((execf != EXECF_EXEC && execf != EXECF_TRUEEXEC) 
 		  ? "spawn" : "exec"),
 		 PL_Argv[0], Strerror(errno));
 	if (rc < 0 && (execf != EXECF_SPAWN_NOWAIT) 
 	    && ((trueflag & 0xFF) == P_WAIT)) 
-	    rc = 255 << 8; /* Emulate the fork(). */
+	    rc = -1;
 
-    return rc;
-}
-
-/* Array spawn.  */
-int
-do_aspawn(really,mark,sp)
-SV *really;
-register SV **mark;
-register SV **sp;
-{
-    dTHR;
-    register char **a;
-    char *tmps = NULL;
-    int rc;
-    int flag = P_WAIT, trueflag, err, secondtry = 0;
-    STRLEN n_a;
-
-    if (sp > mark) {
-	New(1301,PL_Argv, sp - mark + 3, char*);
-	a = PL_Argv;
-
-	if (mark < sp && SvNIOKp(*(mark+1)) && !SvPOKp(*(mark+1))) {
-		++mark;
-		flag = SvIVx(*mark);
-	}
-
-	while (++mark <= sp) {
-	    if (*mark)
-		*a++ = SvPVx(*mark, n_a);
-	    else
-		*a++ = "";
-	}
-	*a = Nullch;
-
-	rc = do_spawn_ve(really, flag, EXECF_SPAWN, NULL);
-    } else
-    	rc = -1;
-    do_execfree();
+  finish:
+    if (new_stderr != -1) {	/* How can we use error codes? */
+	dup2(new_stderr, 2);
+	close(new_stderr);
+	fcntl(2, F_SETFD, fl_stderr);
+    } else if (nostderr)
+       close(2);
     return rc;
 }
 
 /* Try converting 1-arg form to (usually shell-less) multi-arg form. */
 int
-do_spawn2(cmd, execf)
-char *cmd;
-int execf;
+do_spawn3(char *cmd, int execf, int flag)
 {
     register char **a;
     register char *s;
     char flags[10];
     char *shell, *copt, *news = NULL;
-    int rc, err, seenspace = 0;
+    int rc, err, seenspace = 0, mergestderr = 0;
     char fullcmd[MAXNAMLEN + 1];
 
 #ifdef TRYSHELL
@@ -853,6 +879,18 @@ int execf;
 		break;
 	    } else if (*s == '\\' && !seenspace) {
 		continue;		/* Allow backslashes in names */
+	    } else if (*s == '>' && s >= cmd + 3
+			&& s[-1] == '2' && s[1] == '&' && s[2] == '1'
+			&& isSPACE(s[-2]) ) {
+		char *t = s + 3;
+
+		while (*t && isSPACE(*t))
+		    t++;
+		if (!*t) {
+		    s[-2] = '\0';
+		    mergestderr = 1;
+		    break;		/* Allow 2>&1 as the last thing */
+		}
 	    }
 	    /* We do not convert this to do_spawn_ve since shell
 	       should be smart enough to start itself gloriously. */
@@ -863,15 +901,18 @@ int execf;
                 rc = spawnl(P_OVERLAY,shell,shell,copt,cmd,(char*)0);
 	    else if (execf == EXECF_SPAWN_NOWAIT)
                 rc = spawnl(P_NOWAIT,shell,shell,copt,cmd,(char*)0);
+	    else if (execf == EXECF_SPAWN_BYFLAG)
+                rc = spawnl(flag,shell,shell,copt,cmd,(char*)0);
 	    else {
 		/* In the ak code internal P_NOWAIT is P_WAIT ??? */
 		rc = result(P_WAIT,
 			    spawnl(P_NOWAIT,shell,shell,copt,cmd,(char*)0));
-		if (rc < 0 && PL_dowarn)
-		    warn("Can't %s \"%s\": %s", 
+		if (rc < 0 && ckWARN(WARN_EXEC))
+		    Perl_warner(aTHX_ WARN_EXEC, "Can't %s \"%s\": %s", 
 			 (execf == EXECF_SPAWN ? "spawn" : "exec"),
 			 shell, Strerror(errno));
-		if (rc < 0) rc = 255 << 8; /* Emulate the fork(). */
+		if (rc < 0)
+		    rc = -1;
 	    }
 	    if (news)
 		Safefree(news);
@@ -895,7 +936,7 @@ int execf;
     }
     *a = Nullch;
     if (PL_Argv[0])
-	rc = do_spawn_ve(NULL, 0, execf, cmd);
+	rc = do_spawn_ve(NULL, flag, execf, cmd, mergestderr);
     else
     	rc = -1;
     if (news)
@@ -904,25 +945,67 @@ int execf;
     return rc;
 }
 
+/* Array spawn.  */
+int
+do_aspawn(really,mark,sp)
+SV *really;
+register SV **mark;
+register SV **sp;
+{
+    dTHR;
+    register char **a;
+    int rc;
+    int flag = P_WAIT, flag_set = 0;
+    STRLEN n_a;
+
+    if (sp > mark) {
+	New(1301,PL_Argv, sp - mark + 3, char*);
+	a = PL_Argv;
+
+	if (mark < sp && SvNIOKp(*(mark+1)) && !SvPOKp(*(mark+1))) {
+		++mark;
+		flag = SvIVx(*mark);
+		flag_set = 1;
+
+	}
+
+	while (++mark <= sp) {
+	    if (*mark)
+		*a++ = SvPVx(*mark, n_a);
+	    else
+		*a++ = "";
+	}
+	*a = Nullch;
+
+	if (flag_set && (a == PL_Argv + 1)) { /* One arg? */
+	    rc = do_spawn3(a[-1], EXECF_SPAWN_BYFLAG, flag);
+	} else
+	    rc = do_spawn_ve(really, flag, EXECF_SPAWN, NULL, 0);
+    } else
+    	rc = -1;
+    do_execfree();
+    return rc;
+}
+
 int
 do_spawn(cmd)
 char *cmd;
 {
-    return do_spawn2(cmd, EXECF_SPAWN);
+    return do_spawn3(cmd, EXECF_SPAWN, 0);
 }
 
 int
 do_spawn_nowait(cmd)
 char *cmd;
 {
-    return do_spawn2(cmd, EXECF_SPAWN_NOWAIT);
+    return do_spawn3(cmd, EXECF_SPAWN_NOWAIT,0);
 }
 
 bool
 do_exec(cmd)
 char *cmd;
 {
-    do_spawn2(cmd, EXECF_EXEC);
+    do_spawn3(cmd, EXECF_EXEC, 0);
     return FALSE;
 }
 
@@ -930,7 +1013,7 @@ bool
 os2exec(cmd)
 char *cmd;
 {
-    return do_spawn2(cmd, EXECF_TRUEEXEC);
+    return do_spawn3(cmd, EXECF_TRUEEXEC, 0);
 }
 
 PerlIO *
@@ -945,6 +1028,7 @@ char	*mode;
     register I32 pid, rc;
     PerlIO *res;
     SV *sv;
+    int fh_fl;
     
     /* `this' is what we use in the parent, `that' in the child. */
     this = (*mode == 'w');
@@ -956,26 +1040,51 @@ char	*mode;
     if (pipe(p) < 0)
 	return Nullfp;
     /* Now we need to spawn the child. */
+    if (p[this] == (*mode == 'r')) {	/* if fh 0/1 was initially closed. */
+	int new = dup(p[this]);
+
+	if (new == -1)
+	    goto closepipes;
+	close(p[this]);
+	p[this] = new;
+    }
     newfd = dup(*mode == 'r');		/* Preserve std* */
-    if (p[that] != (*mode == 'r')) {
+    if (newfd == -1) {		
+	/* This cannot happen due to fh being bad after pipe(), since
+	   pipe() should have created fh 0 and 1 even if they were
+	   initially closed.  But we closed p[this] before.  */
+	if (errno != EBADF) {
+	  closepipes:
+	    close(p[0]);
+	    close(p[1]);
+	    return Nullfp;
+	}
+    } else
+	fh_fl = fcntl(*mode == 'r', F_GETFD);
+    if (p[that] != (*mode == 'r')) {	/* if fh 0/1 was initially closed. */
 	dup2(p[that], *mode == 'r');
 	close(p[that]);
     }
     /* Where is `this' and newfd now? */
     fcntl(p[this], F_SETFD, FD_CLOEXEC);
-    fcntl(newfd, F_SETFD, FD_CLOEXEC);
+    if (newfd != -1)
+	fcntl(newfd, F_SETFD, FD_CLOEXEC);
     pid = do_spawn_nowait(cmd);
-    if (newfd != (*mode == 'r')) {
+    if (newfd == -1)
+	close(*mode == 'r');		/* It was closed initially */
+    else if (newfd != (*mode == 'r')) {	/* Probably this check is not needed */
 	dup2(newfd, *mode == 'r');	/* Return std* back. */
 	close(newfd);
-    }
+	fcntl(*mode == 'r', F_SETFD, fh_fl);
+    } else
+	fcntl(*mode == 'r', F_SETFD, fh_fl);
     if (p[that] == (*mode == 'r'))
 	close(p[that]);
     if (pid == -1) {
 	close(p[this]);
-	return NULL;
+	return Nullfp;
     }
-    if (p[that] < p[this]) {
+    if (p[that] < p[this]) {		/* Make fh as small as possible */
 	dup2(p[this], p[that]);
 	close(p[this]);
 	p[this] = p[that];
@@ -1015,7 +1124,7 @@ char	*mode;
 int
 fork(void)
 {
-    die(PL_no_func, "Unsupported function fork");
+    croak(PL_no_func, "Unsupported function fork");
     errno = EINVAL;
     return -1;
 }
@@ -1120,7 +1229,8 @@ sys_alloc(int size) {
 
     if (rc == ERROR_NOT_ENOUGH_MEMORY) {
 	return (void *) -1;
-    } else if ( rc ) die("Got an error from DosAllocMem: %li", (long)rc);
+    } else if ( rc ) 
+	croak("Got an error from DosAllocMem: %li", (long)rc);
     return got;
 }
 
@@ -1140,10 +1250,12 @@ settmppath()
     if (!p) return;
     len = strlen(p);
     tpath = (char *)malloc(len + strlen(TMPPATH1) + 2);
-    strcpy(tpath, p);
-    tpath[len] = '/';
-    strcpy(tpath + len + 1, TMPPATH1);
-    tmppath = tpath;
+    if (tpath) {
+	strcpy(tpath, p);
+	tpath[len] = '/';
+	strcpy(tpath + len + 1, TMPPATH1);
+	tmppath = tpath;
+    }
 }
 
 #include "XSUB.h"
@@ -1215,7 +1327,7 @@ mod2fname(sv)
 #ifdef USE_THREADS
     sum++;				/* Avoid conflict of DLLs in memory. */
 #endif 
-    sum += PATCHLEVEL * 200 + SUBVERSION * 2;  /*  */
+    sum += PERL_VERSION * 200 + PERL_SUBVERSION * 2;  /*  */
     fname[pos] = 'A' + (sum % 26);
     fname[pos + 1] = 'A' + (sum / 26 % 26);
     fname[pos + 2] = '\0';
@@ -1249,15 +1361,34 @@ os2error(int rc)
 		return NULL;
 	if (DosGetMessage(NULL, 0, buf, sizeof buf - 1, rc, "OSO001.MSG", &len))
 		sprintf(buf, "OS/2 system error code %d=0x%x", rc, rc);
-	else
+	else {
 		buf[len] = '\0';
-	if (len > 0 && buf[len - 1] == '\n')
-	    buf[len - 1] = '\0';
-	if (len > 1 && buf[len - 2] == '\r')
-	    buf[len - 2] = '\0';
-	if (len > 2 && buf[len - 3] == '.')
-	    buf[len - 3] = '\0';
+		if (len && buf[len - 1] == '\n')
+			buf[--len] = 0;
+		if (len && buf[len - 1] == '\r')
+			buf[--len] = 0;
+		if (len && buf[len - 1] == '.')
+			buf[--len] = 0;
+	}
 	return buf;
+}
+
+char *
+os2_execname(void)
+{
+  char buf[300], *p;
+
+  if (_execname(buf, sizeof buf) != 0)
+	return PL_origargv[0];
+  p = buf;
+  while (*p) {
+    if (*p == '\\')
+	*p = '/';
+    p++;
+  }
+  p = savepv(buf);
+  SAVEFREEPV(p);
+  return p;
 }
 
 char *
@@ -1281,7 +1412,7 @@ perllib_mangle(char *s, unsigned int l)
 	    }
 	    newl = strlen(newp);
 	    if (newl == 0 || oldl == 0) {
-		die("Malformed PERLLIB_PREFIX");
+		croak("Malformed PERLLIB_PREFIX");
 	    }
 	    strcpy(ret, newp);
 	    s = ret;
@@ -1303,10 +1434,100 @@ perllib_mangle(char *s, unsigned int l)
 	return s;
     }
     if (l + newl - oldl > STATIC_FILE_LENGTH || newl > STATIC_FILE_LENGTH) {
-	die("Malformed PERLLIB_PREFIX");
+	croak("Malformed PERLLIB_PREFIX");
     }
     strcpy(ret + newl, s + oldl);
     return ret;
+}
+
+unsigned long 
+Perl_hab_GET()			/* Needed if perl.h cannot be included */
+{
+    return perl_hab_GET();
+}
+
+HMQ
+Perl_Register_MQ(int serve)
+{
+    PPIB pib;
+    PTIB tib;
+
+    if (Perl_os2_initial_mode++)
+	return Perl_hmq;
+    DosGetInfoBlocks(&tib, &pib);
+    Perl_os2_initial_mode = pib->pib_ultype;
+    Perl_hmq_refcnt = 1;
+    /* Try morphing into a PM application. */
+    if (pib->pib_ultype != 3)		/* 2 is VIO */
+	pib->pib_ultype = 3;		/* 3 is PM */
+    init_PMWIN_entries();
+    /* 64 messages if before OS/2 3.0, ignored otherwise */
+    Perl_hmq = (*PMWIN_entries.CreateMsgQueue)(perl_hab_GET(), 64); 
+    if (!Perl_hmq) {
+	static int cnt;
+	if (cnt++)
+	    _exit(188);			/* Panic can try to create a window. */
+	croak("Cannot create a message queue, or morph to a PM application");
+    }
+    return Perl_hmq;
+}
+
+int
+Perl_Serve_Messages(int force)
+{
+    int cnt = 0;
+    QMSG msg;
+
+    if (Perl_hmq_servers && !force)
+	return 0;
+    if (!Perl_hmq_refcnt)
+	croak("No message queue");
+    while ((*PMWIN_entries.PeekMsg)(Perl_hab, &msg, NULLHANDLE, 0, 0, PM_REMOVE)) {
+	cnt++;
+	if (msg.msg == WM_QUIT)
+	    croak("QUITing...");
+	(*PMWIN_entries.DispatchMsg)(Perl_hab, &msg);
+    }
+    return cnt;
+}
+
+int
+Perl_Process_Messages(int force, I32 *cntp)
+{
+    QMSG msg;
+
+    if (Perl_hmq_servers && !force)
+	return 0;
+    if (!Perl_hmq_refcnt)
+	croak("No message queue");
+    while ((*PMWIN_entries.GetMsg)(Perl_hab, &msg, NULLHANDLE, 0, 0)) {
+	if (cntp)
+	    (*cntp)++;
+	(*PMWIN_entries.DispatchMsg)(Perl_hab, &msg);
+	if (msg.msg == WM_DESTROY)
+	    return -1;
+	if (msg.msg == WM_CREATE)
+	    return +1;
+    }
+    croak("QUITing...");
+}
+
+void
+Perl_Deregister_MQ(int serve)
+{
+    PPIB pib;
+    PTIB tib;
+
+    if (--Perl_hmq_refcnt == 0) {
+	(*PMWIN_entries.DestroyMsgQueue)(Perl_hmq);
+	Perl_hmq = 0;
+	/* Try morphing back from a PM application. */
+	if (pib->pib_ultype == 3)		/* 3 is PM */
+	    pib->pib_ultype = Perl_os2_initial_mode;
+	else
+	    warn("Unexpected program mode %d when morphing back from PM",
+		 pib->pib_ultype);
+    }
 }
 
 extern void dlopen();
@@ -1321,6 +1542,206 @@ void *fakedl = &dlopen;		/* Pull in dynaloading part. */
 #undef chdir				/* Was _chdir2. */
 #define sys_chdir(p) (chdir(p) == 0)
 #define change_drive(d) (_chdrive(d), (current_drive() == toupper(d)))
+
+static int DOS_harderr_state = -1;    
+
+XS(XS_OS2_Error)
+{
+    dXSARGS;
+    if (items != 2)
+	croak("Usage: OS2::Error(harderr, exception)");
+    {
+	int	arg1 = SvIV(ST(0));
+	int	arg2 = SvIV(ST(1));
+	int	a = ((arg1 ? FERR_ENABLEHARDERR : FERR_DISABLEHARDERR)
+		     | (arg2 ? FERR_ENABLEEXCEPTION : FERR_DISABLEEXCEPTION));
+	int	RETVAL = ((arg1 ? 1 : 0) | (arg2 ? 2 : 0));
+	unsigned long rc;
+
+	if (CheckOSError(DosError(a)))
+	    croak("DosError(%d) failed", a);
+	ST(0) = sv_newmortal();
+	if (DOS_harderr_state >= 0)
+	    sv_setiv(ST(0), DOS_harderr_state);
+	DOS_harderr_state = RETVAL;
+    }
+    XSRETURN(1);
+}
+
+static signed char DOS_suppression_state = -1;    
+
+XS(XS_OS2_Errors2Drive)
+{
+    dXSARGS;
+    if (items != 1)
+	croak("Usage: OS2::Errors2Drive(drive)");
+    {
+	STRLEN n_a;
+	SV  *sv = ST(0);
+	int	suppress = SvOK(sv);
+	char	*s = suppress ? SvPV(sv, n_a) : NULL;
+	char	drive = (s ? *s : 0);
+	unsigned long rc;
+
+	if (suppress && !isALPHA(drive))
+	    croak("Non-char argument '%c' to OS2::Errors2Drive()", drive);
+	if (CheckOSError(DosSuppressPopUps((suppress
+					    ? SPU_ENABLESUPPRESSION 
+					    : SPU_DISABLESUPPRESSION),
+					   drive)))
+	    croak("DosSuppressPopUps(%c) failed", drive);
+	ST(0) = sv_newmortal();
+	if (DOS_suppression_state > 0)
+	    sv_setpvn(ST(0), &DOS_suppression_state, 1);
+	else if (DOS_suppression_state == 0)
+	    sv_setpvn(ST(0), "", 0);
+	DOS_suppression_state = drive;
+    }
+    XSRETURN(1);
+}
+
+static const char * const si_fields[QSV_MAX] = {
+  "MAX_PATH_LENGTH",
+  "MAX_TEXT_SESSIONS",
+  "MAX_PM_SESSIONS",
+  "MAX_VDM_SESSIONS",
+  "BOOT_DRIVE",
+  "DYN_PRI_VARIATION",
+  "MAX_WAIT",
+  "MIN_SLICE",
+  "MAX_SLICE",
+  "PAGE_SIZE",
+  "VERSION_MAJOR",
+  "VERSION_MINOR",
+  "VERSION_REVISION",
+  "MS_COUNT",
+  "TIME_LOW",
+  "TIME_HIGH",
+  "TOTPHYSMEM",
+  "TOTRESMEM",
+  "TOTAVAILMEM",
+  "MAXPRMEM",
+  "MAXSHMEM",
+  "TIMER_INTERVAL",
+  "MAX_COMP_LENGTH",
+  "FOREGROUND_FS_SESSION",
+  "FOREGROUND_PROCESS"
+};
+
+XS(XS_OS2_SysInfo)
+{
+    dXSARGS;
+    if (items != 0)
+	croak("Usage: OS2::SysInfo()");
+    {
+	ULONG   si[QSV_MAX] = {0};	/* System Information Data Buffer */
+	APIRET  rc	= NO_ERROR;	/* Return code            */
+	int i = 0, j = 0;
+
+	if (CheckOSError(DosQuerySysInfo(1L, /* Request all available system */
+					 QSV_MAX, /* information */
+					 (PVOID)si,
+					 sizeof(si))))
+	    croak("DosQuerySysInfo() failed");
+	EXTEND(SP,2*QSV_MAX);
+	while (i < QSV_MAX) {
+	    ST(j) = sv_newmortal();
+	    sv_setpv(ST(j++), si_fields[i]);
+	    ST(j) = sv_newmortal();
+	    sv_setiv(ST(j++), si[i]);
+	    i++;
+	}
+    }
+    XSRETURN(2 * QSV_MAX);
+}
+
+XS(XS_OS2_BootDrive)
+{
+    dXSARGS;
+    if (items != 0)
+	croak("Usage: OS2::BootDrive()");
+    {
+	ULONG   si[1] = {0};	/* System Information Data Buffer */
+	APIRET  rc    = NO_ERROR;	/* Return code            */
+	char c;
+	
+	if (CheckOSError(DosQuerySysInfo(QSV_BOOT_DRIVE, QSV_BOOT_DRIVE,
+					 (PVOID)si, sizeof(si))))
+	    croak("DosQuerySysInfo() failed");
+	ST(0) = sv_newmortal();
+	c = 'a' - 1 + si[0];
+	sv_setpvn(ST(0), &c, 1);
+    }
+    XSRETURN(1);
+}
+
+XS(XS_OS2_MorphPM)
+{
+    dXSARGS;
+    if (items != 1)
+	croak("Usage: OS2::MorphPM(serve)");
+    {
+	bool  serve = SvOK(ST(0));
+	unsigned long   pmq = perl_hmq_GET(serve);
+
+	ST(0) = sv_newmortal();
+	sv_setiv(ST(0), pmq);
+    }
+    XSRETURN(1);
+}
+
+XS(XS_OS2_UnMorphPM)
+{
+    dXSARGS;
+    if (items != 1)
+	croak("Usage: OS2::UnMorphPM(serve)");
+    {
+	bool  serve = SvOK(ST(0));
+
+	perl_hmq_UNSET(serve);
+    }
+    XSRETURN(0);
+}
+
+XS(XS_OS2_Serve_Messages)
+{
+    dXSARGS;
+    if (items != 1)
+	croak("Usage: OS2::Serve_Messages(force)");
+    {
+	bool  force = SvOK(ST(0));
+	unsigned long   cnt = Perl_Serve_Messages(force);
+
+	ST(0) = sv_newmortal();
+	sv_setiv(ST(0), cnt);
+    }
+    XSRETURN(1);
+}
+
+XS(XS_OS2_Process_Messages)
+{
+    dXSARGS;
+    if (items < 1 || items > 2)
+	croak("Usage: OS2::Process_Messages(force [, cnt])");
+    {
+	bool  force = SvOK(ST(0));
+	unsigned long   cnt;
+	I32 *cntp = NULL;
+
+	if (items == 2) {
+	    SV *sv = ST(1);
+	    int fake = SvIV(sv);	/* Force SvIVX */
+	    
+	    if (!SvIOK(sv))
+		croak("Can't upgrade count to IV");
+	    cntp = &SvIVX(sv);
+	}
+	cnt =  Perl_Process_Messages(force, cntp);
+	ST(0) = sv_newmortal();
+	sv_setiv(ST(0), cnt);
+    }
+    XSRETURN(1);
+}
 
 XS(XS_Cwd_current_drive)
 {
@@ -1549,7 +1970,7 @@ typedef APIRET (*PELP)(PSZ path, ULONG type);
 APIRET
 ExtLIBPATH(ULONG ord, PSZ path, ULONG type)
 {
-    loadByOrd(ord);			/* Guarantied to load or die! */
+    loadByOrd("doscalls",ord);		/* Guarantied to load or die! */
     return (*(PELP)ExtFCN[ord])(path, type);
 }
 
@@ -1623,6 +2044,14 @@ Xs_OS2_init()
             newXS("Cwd::extLibpath", XS_Cwd_extLibpath, file);
             newXS("Cwd::extLibpath_set", XS_Cwd_extLibpath_set, file);
 	}
+        newXS("OS2::Error", XS_OS2_Error, file);
+        newXS("OS2::Errors2Drive", XS_OS2_Errors2Drive, file);
+        newXS("OS2::SysInfo", XS_OS2_SysInfo, file);
+        newXS("OS2::BootDrive", XS_OS2_BootDrive, file);
+        newXS("OS2::MorphPM", XS_OS2_MorphPM, file);
+        newXS("OS2::UnMorphPM", XS_OS2_UnMorphPM, file);
+        newXS("OS2::Serve_Messages", XS_OS2_Serve_Messages, file);
+        newXS("OS2::Process_Messages", XS_OS2_Process_Messages, file);
         newXS("DynaLoader::mod2fname", XS_DynaLoader_mod2fname, file);
         newXS("Cwd::current_drive", XS_Cwd_current_drive, file);
         newXS("Cwd::sys_chdir", XS_Cwd_sys_chdir, file);
@@ -1637,6 +2066,17 @@ Xs_OS2_init()
 #ifdef PERL_IS_AOUT
 	sv_setiv(GvSV(gv), 1);
 #endif 
+	gv = gv_fetchpv("OS2::emx_rev", TRUE, SVt_PV);
+	GvMULTI_on(gv);
+	sv_setiv(GvSV(gv), _emx_rev);
+	sv_setpv(GvSV(gv), _emx_vprt);
+	SvIOK_on(GvSV(gv));
+	gv = gv_fetchpv("OS2::emx_env", TRUE, SVt_PV);
+	GvMULTI_on(gv);
+	sv_setiv(GvSV(gv), _emx_env);
+	gv = gv_fetchpv("OS2::os_ver", TRUE, SVt_PV);
+	GvMULTI_on(gv);
+	sv_setnv(GvSV(gv), _osmajor + 0.001 * _osminor);
     }
 }
 
@@ -1651,7 +2091,7 @@ Perl_OS2_init(char **env)
     settmppath();
     OS2_Perl_data.xs_init = &Xs_OS2_init;
     _uflags (_UF_SBRK_MODEL, _UF_SBRK_ARBITRARY);
-    if (environ == NULL) {
+    if (environ == NULL && env) {
 	environ = env;
     }
     if ( (shell = getenv("PERL_SH_DRIVE")) ) {

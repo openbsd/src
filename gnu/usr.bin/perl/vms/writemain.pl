@@ -5,7 +5,7 @@
 # linker options file which causes the bootstrap routines for
 # these extension to be universal symbols in PerlShr.Exe.
 #
-# Last modified 29-Nov-1994 by Charles Bailey  bailey@genetics.upenn.edu
+# Last modified 29-Nov-1994 by Charles Bailey  bailey@newman.upenn.edu
 #
 
 if (-f 'miniperlmain.c') { $dir = ''; }
@@ -34,7 +34,7 @@ if (!$ok) {
 print OUT <<'EOH';
 
 static void
-xs_init()
+xs_init(pTHX)
 {
 EOH
 
@@ -50,7 +50,7 @@ if (@exts) {
   foreach $ext (@exts) {
     my($subname) = $ext;
     $subname =~ s/::/__/g;
-    print OUT "extern void	boot_${subname} _((CV* cv));\n"
+    print OUT "extern void	boot_${subname} (pTHX_ CV* cv);\n"
   }
   # May not actually be a declaration, so put after other declarations
   print OUT "  dXSUB_SYS;\n";

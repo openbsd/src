@@ -2,8 +2,8 @@
  *
  * VMS-specific C header file for perl5.
  *
- * Last revised: 18-Feb-1997 by Charles Bailey  bailey@genetics.upenn.edu
- * Version: 5.3.28
+ * Last revised: 16-Sep-1998 by Charles Bailey  bailey@newman.upenn.edu
+ * Version: 5.5.2
  */
 
 #ifndef __vmsish_h_included
@@ -64,13 +64,21 @@
 #  define DONT_MASK_RTL_CALLS
 #endif
 
-    /* defined for vms.c so we can see CRTL |  defined for a2p */
+/* Note that we do, in fact, have this */
+#define HAS_GETENV_SV
+#define HAS_GETENV_LEN
+
 #ifndef DONT_MASK_RTL_CALLS
 #  ifdef getenv
 #    undef getenv
 #  endif
-#  define getenv(v) my_getenv(v)  /* getenv used for regular logical names */
+  /* getenv used for regular logical names */
+#  define getenv(v) my_getenv(v,TRUE)
 #endif
+#ifdef getenv_len
+#  undef getenv_len
+#endif
+#define getenv_len(v,l) my_getenv_len(v,l,TRUE)
 
 /* DECC introduces this routine in the RTL as of VMS 7.0; for now,
  * we'll use ours, since it gives us the full VMS exit status. */
@@ -83,68 +91,73 @@
 #define DONT_DECLARE_STD 1
 
 /* Our own contribution to PerlShr's global symbols . . . */
-#ifdef EMBED
-#  define my_trnlnm		Perl_my_trnlnm
-#  define my_getenv		Perl_my_getenv
-#  define prime_env_iter	Perl_prime_env_iter
-#  define my_setenv		Perl_my_setenv
-#  define my_crypt		Perl_my_crypt
-#  define my_waitpid		Perl_my_waitpid
-#  define my_gconvert		Perl_my_gconvert
-#  define do_rmdir		Perl_do_rmdir
-#  define kill_file		Perl_kill_file
-#  define my_mkdir		Perl_my_mkdir
-#  define my_utime		Perl_my_utime
-#  define rmsexpand	Perl_rmsexpand
-#  define rmsexpand_ts	Perl_rmsexpand_ts
-#  define fileify_dirspec	Perl_fileify_dirspec
-#  define fileify_dirspec_ts	Perl_fileify_dirspec_ts
-#  define pathify_dirspec	Perl_pathify_dirspec
-#  define pathify_dirspec_ts	Perl_pathify_dirspec_ts
-#  define tounixspec		Perl_tounixspec
-#  define tounixspec_ts		Perl_tounixspec_ts
-#  define tovmsspec		Perl_tovmsspec
-#  define tovmsspec_ts		Perl_tovmsspec_ts
-#  define tounixpath		Perl_tounixpath
-#  define tounixpath_ts		Perl_tounixpath_ts
-#  define tovmspath		Perl_tovmspath
-#  define tovmspath_ts		Perl_tovmspath_ts
-#  define vms_image_init	Perl_vms_image_init
-#  define opendir		Perl_opendir
-#  define readdir		Perl_readdir
-#  define telldir		Perl_telldir
-#  define seekdir		Perl_seekdir
-#  define closedir		Perl_closedir
-#  define vmsreaddirversions	Perl_vmsreaddirversions
-#  define my_gmtime		Perl_my_gmtime
-#  define my_localtime		Perl_my_localtime
-#  define my_time		Perl_my_time
-#  define my_sigemptyset        Perl_my_sigemptyset
-#  define my_sigfillset         Perl_my_sigfillset
-#  define my_sigaddset          Perl_my_sigaddset
-#  define my_sigdelset          Perl_my_sigdelset
-#  define my_sigismember        Perl_my_sigismember
-#  define my_sigprocmask        Perl_my_sigprocmask
-#  define cando_by_name		Perl_cando_by_name
-#  define flex_fstat		Perl_flex_fstat
-#  define flex_stat		Perl_flex_stat
-#  define trim_unixpath		Perl_trim_unixpath
-#  define my_vfork		Perl_my_vfork
-#  define vms_do_aexec		Perl_vms_do_aexec
-#  define vms_do_exec		Perl_vms_do_exec
-#  define do_aspawn		Perl_do_aspawn
-#  define do_spawn		Perl_do_spawn
-#  define my_fwrite		Perl_my_fwrite
-#  define my_flush		Perl_my_flush
-#  define my_binmode		Perl_my_binmode
-#  define my_getpwnam		Perl_my_getpwnam
-#  define my_getpwuid		Perl_my_getpwuid
-#  define my_getpwent		Perl_my_getpwent
-#  define my_endpwent		Perl_my_endpwent
-#  define my_getlogin		Perl_my_getlogin
-#  define rmscopy		Perl_rmscopy
-#  define init_os_extras	Perl_init_os_extras
+#define vmstrnenv		Perl_vmstrnenv
+#define my_trnlnm		Perl_my_trnlnm
+#define my_getenv_len		Perl_my_getenv_len
+#define prime_env_iter	Perl_prime_env_iter
+#define vmssetenv		Perl_vmssetenv
+#if !defined(PERL_IMPLICIT_CONTEXT)
+#define my_setenv		Perl_my_setenv
+#define my_getenv		Perl_my_getenv
+#else
+#define my_setenv(a,b)		Perl_my_setenv(aTHX_ a,b)
+#define my_getenv(a,b)		Perl_my_getenv(aTHX_ a,b)
 #endif
+#define my_crypt		Perl_my_crypt
+#define my_waitpid		Perl_my_waitpid
+#define my_gconvert		Perl_my_gconvert
+#define do_rmdir		Perl_do_rmdir
+#define kill_file		Perl_kill_file
+#define my_mkdir		Perl_my_mkdir
+#define my_utime		Perl_my_utime
+#define rmsexpand	Perl_rmsexpand
+#define rmsexpand_ts	Perl_rmsexpand_ts
+#define fileify_dirspec	Perl_fileify_dirspec
+#define fileify_dirspec_ts	Perl_fileify_dirspec_ts
+#define pathify_dirspec	Perl_pathify_dirspec
+#define pathify_dirspec_ts	Perl_pathify_dirspec_ts
+#define tounixspec		Perl_tounixspec
+#define tounixspec_ts		Perl_tounixspec_ts
+#define tovmsspec		Perl_tovmsspec
+#define tovmsspec_ts		Perl_tovmsspec_ts
+#define tounixpath		Perl_tounixpath
+#define tounixpath_ts		Perl_tounixpath_ts
+#define tovmspath		Perl_tovmspath
+#define tovmspath_ts		Perl_tovmspath_ts
+#define vms_image_init	Perl_vms_image_init
+#define opendir		Perl_opendir
+#define readdir		Perl_readdir
+#define telldir		Perl_telldir
+#define seekdir		Perl_seekdir
+#define closedir		Perl_closedir
+#define vmsreaddirversions	Perl_vmsreaddirversions
+#define my_gmtime		Perl_my_gmtime
+#define my_localtime		Perl_my_localtime
+#define my_time		Perl_my_time
+#define my_sigemptyset        Perl_my_sigemptyset
+#define my_sigfillset         Perl_my_sigfillset
+#define my_sigaddset          Perl_my_sigaddset
+#define my_sigdelset          Perl_my_sigdelset
+#define my_sigismember        Perl_my_sigismember
+#define my_sigprocmask        Perl_my_sigprocmask
+#define cando_by_name		Perl_cando_by_name
+#define flex_fstat		Perl_flex_fstat
+#define flex_stat		Perl_flex_stat
+#define trim_unixpath		Perl_trim_unixpath
+#define my_vfork		Perl_my_vfork
+#define vms_do_aexec		Perl_vms_do_aexec
+#define vms_do_exec		Perl_vms_do_exec
+#define do_aspawn		Perl_do_aspawn
+#define do_spawn		Perl_do_spawn
+#define my_fwrite		Perl_my_fwrite
+#define my_flush		Perl_my_flush
+#define my_getpwnam		Perl_my_getpwnam
+#define my_getpwuid		Perl_my_getpwuid
+#define my_getpwent		Perl_my_getpwent
+#define my_endpwent		Perl_my_endpwent
+#define my_getlogin		Perl_my_getlogin
+#define rmscopy		Perl_rmscopy
+#define init_os_extras	Perl_init_os_extras
 
 /* Delete if at all possible, changing protections if necessary. */
 #define unlink kill_file
@@ -185,6 +198,16 @@
  */
 #define ALTERNATE_SHEBANG "$"
 
+/* Lower case entry points for these are missing in some earlier RTLs 
+ * so we borrow the defines and declares from errno.h and upcase them.
+ */
+#if defined(VMS_WE_ARE_CASE_SENSITIVE) && (__DECC_VER < 50500000)
+#  define errno      (*CMA$TIS_ERRNO_GET_ADDR())
+#  define vaxc$errno (*CMA$TIS_VMSERRNO_GET_ADDR())
+   int *CMA$TIS_ERRNO_GET_ADDR     (void);   /* UNIX style error code        */
+   int *CMA$TIS_VMSERRNO_GET_ADDR  (void);   /* VMS error (errno == EVMSERR) */
+#endif
+
 /* Macros to set errno using the VAX thread-safe calls, if present */
 #if (defined(__DECC) || defined(__DECCXX)) && !defined(__ALPHA)
 #  define set_errno(v)      (cma$tis_errno_set_value(v))
@@ -200,21 +223,24 @@
 #define COMPLEX_STATUS	1	/* We track both "POSIX" and VMS values */
 
 #define HINT_V_VMSISH		24
-#define HINT_M_VMSISH_STATUS	0x01000000 /* system, $? return VMS status */
-#define HINT_M_VMSISH_EXIT	0x02000000 /* exit(1) ==> SS$_NORMAL */
-#define HINT_M_VMSISH_TIME	0x04000000 /* times are local, not UTC */
+#define HINT_M_VMSISH_HUSHED	0x20000000 /* stifle error msgs on exit */
+#define HINT_M_VMSISH_STATUS	0x40000000 /* system, $? return VMS status */
+#define HINT_M_VMSISH_TIME	0x80000000 /* times are local, not UTC */
 #define NATIVE_HINTS		(PL_hints >> HINT_V_VMSISH)  /* used in op.c */
 
 #define TEST_VMSISH(h)	(PL_curcop->op_private & ((h) >> HINT_V_VMSISH))
+#define VMSISH_HUSHED	TEST_VMSISH(HINT_M_VMSISH_HUSHED)
 #define VMSISH_STATUS	TEST_VMSISH(HINT_M_VMSISH_STATUS)
-#define VMSISH_EXIT	TEST_VMSISH(HINT_M_VMSISH_EXIT)
 #define VMSISH_TIME	TEST_VMSISH(HINT_M_VMSISH_TIME)
+
+/* Flags for vmstrnenv() */
+#define PERL__TRNENV_SECURE 0x01
 
 /* Handy way to vet calls to VMS system services and RTL routines. */
 #define _ckvmssts(call) STMT_START { register unsigned long int __ckvms_sts; \
   if (!((__ckvms_sts=(call))&1)) { \
   set_errno(EVMSERR); set_vaxc_errno(__ckvms_sts); \
-  croak("Fatal VMS error (status=%d) at %s, line %d", \
+  Perl_croak(aTHX_ "Fatal VMS error (status=%d) at %s, line %d", \
   __ckvms_sts,__FILE__,__LINE__); } } STMT_END
 
 /* Same thing, but don't call back to Perl's croak(); useful for errors
@@ -231,10 +257,16 @@
 
 #define BIT_BUCKET "_NLA0:"
 #define PERL_SYS_INIT(c,v)	vms_image_init((c),(v)); MALLOC_INIT
-#define PERL_SYS_TERM()		MALLOC_TERM
+#define PERL_SYS_TERM()		OP_REFCNT_TERM; MALLOC_TERM
 #define dXSUB_SYS
 #define HAS_KILL
 #define HAS_WAIT
+
+#define PERL_FS_VER_FMT		"%d_%d_%d"
+/* Temporary; we need to add support for this to Configure.Com */
+#ifdef PERL_INC_VERSION_LIST
+#  undef PERL_INC_VERSION_LIST
+#endif
 
 /* VMS:
  *	This symbol, if defined, indicates that the program is running under
@@ -275,11 +307,11 @@
   
 /* USEMYBINMODE
  *	This symbol, if defined, indicates that the program should
- *	use the routine my_binmode(FILE *fp, char iotype) to insure
+ *	use the routine my_binmode(FILE *fp, char iotype, int mode) to insure
  *	that a file is in "binary" mode -- that is, that no translation
  *	of bytes occurs on read or write operations.
  */
-#define USEMYBINMODE
+#undef USEMYBINMODE
 
 /* Stat_t:
  *	This symbol holds the type used to declare buffers for information
@@ -405,7 +437,8 @@ struct utimbuf {
 #define DYNAMIC_ENV_FETCH 1
 #define ENV_HV_NAME "%EnV%VmS%"
   /* Special getenv function for retrieving %ENV elements. */
-#define ENV_getenv(v) my_getenv(v)
+#define ENVgetenv(v) my_getenv(v,FALSE)
+#define ENVgetenv_len(v,l) my_getenv_len(v,l,FALSE)
 
 
 /* Thin jacket around cuserid() tomatch Unix' calling sequence */
@@ -518,6 +551,25 @@ struct mystat
 };
 typedef unsigned mydev_t;
 typedef unsigned myino_t;
+
+/*
+ * DEC C previous to 6.0 corrupts the behavior of the /prefix
+ * qualifier with the extern prefix pragma.  This provisional
+ * hack circumvents this prefix pragma problem in previous 
+ * precompilers.
+ */
+#if defined(__VMS_VER) && __VMS_VER >= 70000000
+#  if defined(VMS_WE_ARE_CASE_SENSITIVE) && (__DECC_VER < 60000000)
+#    pragma __extern_prefix save
+#    pragma __extern_prefix ""  /* set to empty to prevent prefixing */
+#    define geteuid decc$__unix_geteuid
+#    define getuid decc$__unix_getuid
+#    define stat(__p1,__p2)   decc$__utc_stat(__p1,__p2)
+#    define fstat(__p1,__p2)  decc$__utc_fstat(__p1,__p2)
+#    pragma __extern_prefix restore
+#  endif
+#endif
+
 #ifndef DONT_MASK_RTL_CALLS  /* defined for vms.c so we can see RTL calls */
 #  ifdef stat
 #    undef stat
@@ -537,6 +589,7 @@ typedef unsigned myino_t;
 #define S_IDGRP (S_IWGRP | S_IXGRP)
 #define S_IDOTH (S_IWOTH | S_IXOTH)
 
+
 /* Prototypes for functions unique to vms.c.  Don't include replacements
  * for routines in the mainline source files excluded by #ifndef VMS;
  * their prototypes are already in proto.h.
@@ -544,7 +597,7 @@ typedef unsigned myino_t;
  * In order to keep Gen_ShrFls.Pl happy, functions which are to be made
  * available to images linked to PerlShr.Exe must be declared between the
  * __VMS_PROTOTYPES__ and __VMS_SEPYTOTORP__ lines, and must be in the form
- *    <data type><TAB>name<WHITESPACE>_((<prototype args>));
+ *    <data type><TAB>name<WHITESPACE>(<prototype args>);
  */
 
 #ifdef NO_PERL_TYPEDEFS
@@ -566,69 +619,75 @@ typedef unsigned myino_t;
 #  endif
 #endif
 
-void	prime_env_iter _((void));
-void	init_os_extras _(());
+void	prime_env_iter (void);
+void	init_os_extras ();
 /* prototype section start marker; `typedef' passes through cpp */
 typedef char  __VMS_PROTOTYPES__;
-int	my_trnlnm _((char *, char *, unsigned long int));
-char *	my_getenv _((char *));
-char *	my_crypt _((const char *, const char *));
-Pid_t	my_waitpid _((Pid_t, int *, int));
-char *	my_gconvert _((double, int, int, char *));
-int	do_rmdir _((char *));
-int	kill_file _((char *));
-int	my_mkdir _((char *, Mode_t));
-int	my_utime _((char *, struct utimbuf *));
-char *	rmsexpand _((char *, char *, char *, unsigned));
-char *	rmsexpand_ts _((char *, char *, char *, unsigned));
-char *	fileify_dirspec _((char *, char *));
-char *	fileify_dirspec_ts _((char *, char *));
-char *	pathify_dirspec _((char *, char *));
-char *	pathify_dirspec_ts _((char *, char *));
-char *	tounixspec _((char *, char *));
-char *	tounixspec_ts _((char *, char *));
-char *	tovmsspec _((char *, char *));
-char *	tovmsspec_ts _((char *, char *));
-char *	tounixpath _((char *, char *));
-char *	tounixpath_ts _((char *, char *));
-char *	tovmspath _((char *, char *));
-char *	tovmspath_ts _((char *, char *));
-void	vms_image_init _((int *, char ***));
-DIR *	opendir _((char *));
-struct dirent *	readdir _((DIR *));
-long	telldir _((DIR *));
-void	seekdir _((DIR *, long));
-void	closedir _((DIR *));
-void	vmsreaddirversions _((DIR *, int));
-struct tm *	my_gmtime _((const time_t *));
-struct tm *	my_localtime _((const time_t *));
-time_t	my_time _((time_t *));
-#ifdef HOMEGROWN_POSIX_SIGNALS
-int     my_sigemptyset _((sigset_t *));
-int     my_sigfillset  _((sigset_t *));
-int     my_sigaddset   _((sigset_t *, int));
-int     my_sigdelset   _((sigset_t *, int));
-int     my_sigismember _((sigset_t *, int));
-int     my_sigprocmask _((int, sigset_t *, sigset_t *));
+int	vmstrnenv (const char *, char *, unsigned long int, struct dsc$descriptor_s **, unsigned long int);
+int	my_trnlnm (const char *, char *, unsigned long int);
+#if !defined(PERL_IMPLICIT_CONTEXT)
+char *	Perl_my_getenv (const char *, bool);
+#else
+char *	Perl_my_getenv (pTHX_ const char *, bool);
 #endif
-I32	cando_by_name _((I32, I32, char *));
-int	flex_fstat _((int, Stat_t *));
-int	flex_stat _((char *, Stat_t *));
-int	trim_unixpath _((char *, char*, int));
-int	my_vfork _(());
-bool	vms_do_aexec _((SV *, SV **, SV **));
-bool	vms_do_exec _((char *));
-unsigned long int	do_aspawn _((void *, void **, void **));
-unsigned long int	do_spawn _((char *));
-int	my_fwrite _((void *, size_t, size_t, FILE *));
-int	my_flush _((FILE *));
-FILE *	my_binmode _((FILE *, char));
-struct passwd *	my_getpwnam _((char *name));
-struct passwd *	my_getpwuid _((Uid_t uid));
-struct passwd *	my_getpwent _(());
-void	my_endpwent _(());
-char *	my_getlogin _(());
-int	rmscopy _((char *, char *, int));
+char *	my_getenv_len (const char *, unsigned long *, bool);
+int	vmssetenv (char *, char *, struct dsc$descriptor_s **);
+char *	my_crypt (const char *, const char *);
+Pid_t	my_waitpid (Pid_t, int *, int);
+char *	my_gconvert (double, int, int, char *);
+int	do_rmdir (char *);
+int	kill_file (char *);
+int	my_mkdir (char *, Mode_t);
+int	my_utime (char *, struct utimbuf *);
+char *	rmsexpand (char *, char *, char *, unsigned);
+char *	rmsexpand_ts (char *, char *, char *, unsigned);
+char *	fileify_dirspec (char *, char *);
+char *	fileify_dirspec_ts (char *, char *);
+char *	pathify_dirspec (char *, char *);
+char *	pathify_dirspec_ts (char *, char *);
+char *	tounixspec (char *, char *);
+char *	tounixspec_ts (char *, char *);
+char *	tovmsspec (char *, char *);
+char *	tovmsspec_ts (char *, char *);
+char *	tounixpath (char *, char *);
+char *	tounixpath_ts (char *, char *);
+char *	tovmspath (char *, char *);
+char *	tovmspath_ts (char *, char *);
+void	vms_image_init (int *, char ***);
+DIR *	opendir (char *);
+struct dirent *	readdir (DIR *);
+long	telldir (DIR *);
+void	seekdir (DIR *, long);
+void	closedir (DIR *);
+void	vmsreaddirversions (DIR *, int);
+struct tm *	my_gmtime (const time_t *);
+struct tm *	my_localtime (const time_t *);
+time_t	my_time (time_t *);
+#ifdef HOMEGROWN_POSIX_SIGNALS
+int     my_sigemptyset (sigset_t *);
+int     my_sigfillset  (sigset_t *);
+int     my_sigaddset   (sigset_t *, int);
+int     my_sigdelset   (sigset_t *, int);
+int     my_sigismember (sigset_t *, int);
+int     my_sigprocmask (int, sigset_t *, sigset_t *);
+#endif
+I32	cando_by_name (I32, Uid_t, char *);
+int	flex_fstat (int, Stat_t *);
+int	flex_stat (const char *, Stat_t *);
+int	trim_unixpath (char *, char*, int);
+int	my_vfork ();
+bool	vms_do_aexec (SV *, SV **, SV **);
+bool	vms_do_exec (char *);
+unsigned long int	do_aspawn (void *, void **, void **);
+unsigned long int	do_spawn (char *);
+int	my_fwrite (void *, size_t, size_t, FILE *);
+int	my_flush (FILE *);
+struct passwd *	my_getpwnam (char *name);
+struct passwd *	my_getpwuid (Uid_t uid);
+struct passwd *	my_getpwent ();
+void	my_endpwent ();
+char *	my_getlogin ();
+int	rmscopy (char *, char *, int);
 typedef char __VMS_SEPYTOTORP__;
 /* prototype section end marker; `typedef' passes through cpp */
 
@@ -658,6 +717,9 @@ typedef char __VMS_SEPYTOTORP__;
 #undef HAS_NTOHL
 #endif
 
-#define TMPPATH "sys$scratch:perl-eXXXXXX"
+/* The C RTL manual says to undef the macro for DEC C 5.2 and lower. */
+#if defined(fileno) && defined(__DECC_VER) && __DECC_VER < 50300000
+#  undef fileno 
+#endif 
 
 #endif  /* __vmsish_h_included */

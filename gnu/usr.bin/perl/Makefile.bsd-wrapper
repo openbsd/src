@@ -1,7 +1,10 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.32 2000/04/05 22:03:33 millert Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.33 2000/04/06 17:03:36 millert Exp $
 #
-# Build wrapper for Perl 5.005_03.
+# Build wrapper for Perl 5.6.0
 #
+
+# To build a threaded perl, uncomment this.  Currently, there are bugs...
+#THREADED=-Dusethreads
 
 # For ``NOMAN''
 .include <bsd.own.mk>
@@ -10,70 +13,98 @@
 # with the one installed with X11.
 LNDIR=		/usr/bin/lndir
 
-# Note: using the in-tree version means you must already have a perl installed
-H2PH=		/usr/bin/h2ph
+# We use the pod2man we just built since we don't know what's in the tree.
+# This will be wrong for cross builds.  In that case, just use in-tree one.
+TARGET_MACHINE_ARCH?=	$(MACHINE_ARCH)
+.if ($(TARGET_MACHINE_ARCH) != $(MACHINE_ARCH))
 POD2MAN=	/usr/bin/pod2man
+.else
+POD2MAN=	./perl -I ./lib ./pod/pod2man
+.endif
+H2PH=		/usr/bin/h2ph
 
 .ifndef NOMAN
-MANALL=	perl.cat1 perlapio.cat1 perlbook.cat1 perlbot.cat1 perlcall.cat1 \
-	perldata.cat1 perldebug.cat1 perldelta.cat1 perldiag.cat1 \
-	perldsc.cat1 perlembed.cat1 perlfaq.cat1 perlfaq1.cat1 perlfaq2.cat1 \
-	perlfaq3.cat1 perlfaq4.cat1 perlfaq5.cat1 perlipc.cat1 perlfaq6.cat1 \
-	perlfaq7.cat1 perlfaq8.cat1 perlfaq9.cat1 perlform.cat1 perlfunc.cat1 \
-	perlguts.cat1 perllocale.cat1 perllol.cat1 perlmod.cat1 \
-	perlmodlib.cat1 perlobj.cat1 perlop.cat1 perlpod.cat1 perlre.cat1 \
-	perlref.cat1 perlrun.cat1 perlsec.cat1 perlstyle.cat1 perlsub.cat1 \
-	perlsyn.cat1 perltie.cat1 perltoc.cat1 perltoot.cat1 perltrap.cat1 \
-	perlvar.cat1 perlxs.cat1 perlxstut.cat1 perl5004delta.cat1 \
-	perlhist.cat1 perlmodinstall.cat1 perlopentut.cat1 perlport.cat1 \
-	perlreftut.cat1 perlthrtut.cat1 CGI.cat3p CGI::Apache.cat3p \
-	CGI::Carp.cat3p CGI::Fast.cat3p CGI::Push.cat3p CGI::Switch.cat3p \
-	CGI::Cookie.cat3p CPAN::FirstTime.cat3p CPAN::Nox.cat3p \
-	Class::Struct.cat3p Devel::SelfStubber.cat3p ExtUtils::Command.cat3p \
-	ExtUtils::Embed.cat3p ExtUtils::Install.cat3p ExtUtils::Liblist.cat3p \
-	ExtUtils::MM_OS2.cat3p ExtUtils::MM_Unix.cat3p ExtUtils::MM_VMS.cat3p \
-	ExtUtils::MM_Win32.cat3p ExtUtils::MakeMaker.cat3p \
-	ExtUtils::Manifest.cat3p ExtUtils::Mkbootstrap.cat3p \
-	ExtUtils::Mksymlists.cat3p ExtUtils::testlib.cat3p \
-	ExtUtils::Installed.cat3p ExtUtils::Packlist.cat3p \
-	ExtUtils::Miniperl.cat3p IPC::Open2.cat3p IPC::Open3.cat3p \
-	IPC::SysV.cat3p IPC::Msg.cat3p IPC::Semaphore.cat3p \
-	File::Basename.cat3p File::CheckTree.cat3p File::Compare.cat3p \
-	File::Copy.cat3p File::DosGlob.cat3p File::Find.cat3p \
-	File::Path.cat3p File::stat.cat3p File::Spec::Unix.cat3p \
-	File::Spec::Mac.cat3p File::Spec::OS2.cat3p File::Spec::Win32.cat3p \
-	File::Spec::VMS.cat3p File::Spec.cat3p Getopt::Long.cat3p \
-	Getopt::Std.cat3p I18N::Collate.cat3p Math::BigFloat.cat3p \
-	Math::BigInt.cat3p Math::Complex.cat3p Math::Trig.cat3p \
-	Net::Ping.cat3p Net::hostent.cat3p Net::netent.cat3p \
-	Net::protoent.cat3p Net::servent.cat3p Pod::Html.cat3p \
-	Pod::Text.cat3p Search::Dict.cat3p Sys::Hostname.cat3p \
-	Sys::Syslog.cat3p Term::Cap.cat3p Term::Complete.cat3p \
-	Term::ReadLine.cat3p Test::Harness.cat3p Text::Abbrev.cat3p \
-	Text::ParseWords.cat3p Text::Soundex.cat3p Text::Tabs.cat3p \
-	Text::Wrap.cat3p Tie::Hash.cat3p Tie::RefHash.cat3p Tie::Scalar.cat3p \
-	Tie::SubstrHash.cat3p Tie::Array.cat3p Tie::Handle.cat3p \
-	Time::Local.cat3p Time::gmtime.cat3p Time::localtime.cat3p \
-	Time::tm.cat3p User::grent.cat3p User::pwent.cat3p AnyDBM_File.cat3p \
-	AutoLoader.cat3p AutoSplit.cat3p Benchmark.cat3p CPAN.cat3p \
-	Carp.cat3p Cwd.cat3p Env.cat3p B::Deparse.cat3p B::CC.cat3p \
-	B::Debug.cat3p B::Showlex.cat3p B::Bblock.cat3p B::Bytecode.cat3p \
-	B::Stackobj.cat3p B::Xref.cat3p B::Lint.cat3p B::Asmdata.cat3p \
-	B::Assembler.cat3p B::Disassembler.cat3p B::Terse.cat3p B::C.cat3p \
-	DirHandle.cat3p English.cat3p base.cat3p Exporter.cat3p \
-	FileCache.cat3p FileHandle.cat3p FindBin.cat3p SelectSaver.cat3p \
-	SelfLoader.cat3p Shell.cat3p Symbol.cat3p UNIVERSAL.cat3p blib.cat3p \
-	autouse.cat3p constant.cat3p diagnostics.cat3p lib.cat3p \
-	integer.cat3p less.cat3p locale.cat3p overload.cat3p subs.cat3p \
-	sigtrap.cat3p strict.cat3p vars.cat3p Dumpvalue.cat3p Fatal.cat3p \
-	Test.cat3p fields.cat3p Config.cat3p re.cat3p DynaLoader.cat3p \
-	B.cat3p O.cat3p DB_File.cat3p Data::Dumper.cat3p Fcntl.cat3p \
-	IO::File.cat3p IO::Select.cat3p IO::Socket.cat3p IO::Handle.cat3p \
-	IO::Seekable.cat3p IO::Pipe.cat3p IO.cat3p NDBM_File.cat3p Safe.cat3p \
-	ODBM_File.cat3p Opcode.cat3p ops.cat3p POSIX.cat3p SDBM_File.cat3p \
-	Socket.cat3p attrs.cat3p Errno.cat3p c2ph.cat1 h2ph.cat1 h2xs.cat1 \
-	perldoc.cat1 perlbug.cat1 pl2pm.cat1 splain.cat1 s2p.cat1 a2p.cat1 \
-	pod2man.cat1 pod2html.cat1 xsubpp.cat1
+MANALL=	Win32.cat1 a2p.cat1 c2ph.cat1 dprofpp.cat1 find2perl.cat1 \
+        h2ph.cat1 h2xs.cat1 perl.cat1 perl5004delta.cat1 \
+        perl5005delta.cat1 perlamiga.cat1 perlapi.cat1 perlapio.cat1 \
+        perlbook.cat1 perlboot.cat1 perlbot.cat1 perlbug.cat1 \
+        perlcall.cat1 perlcc.cat1 perlcompile.cat1 perlcygwin.cat1 \
+        perldata.cat1 perldbmfilter.cat1 perldebguts.cat1 perldebug.cat1 \
+        perldelta.cat1 perldiag.cat1 perldoc.cat1 perldos.cat1 \
+        perldsc.cat1 perlembed.cat1 perlfaq.cat1 perlfaq1.cat1 \
+        perlfaq2.cat1 perlfaq3.cat1 perlfaq4.cat1 perlfaq5.cat1 \
+        perlfaq6.cat1 perlfaq7.cat1 perlfaq8.cat1 perlfaq9.cat1 \
+        perlfilter.cat1 perlfork.cat1 perlform.cat1 perlfunc.cat1 \
+        perlguts.cat1 perlhack.cat1 perlhist.cat1 perlhpux.cat1 \
+        perlintern.cat1 perlipc.cat1 perllexwarn.cat1 perllocale.cat1 \
+        perllol.cat1 perlmachten.cat1 perlmod.cat1 perlmodinstall.cat1 \
+        perlmodlib.cat1 perlnumber.cat1 perlobj.cat1 perlop.cat1 \
+        perlopentut.cat1 perlos2.cat1 perlos390.cat1 perlpod.cat1 \
+        perlport.cat1 perlre.cat1 perlref.cat1 perlreftut.cat1 \
+        perlrun.cat1 perlsec.cat1 perlstyle.cat1 perlsub.cat1 \
+        perlsyn.cat1 perlthrtut.cat1 perltie.cat1 perltoc.cat1 \
+        perltodo.cat1 perltoot.cat1 perltootc.cat1 perltrap.cat1 \
+        perlunicode.cat1 perlvar.cat1 perlvms.cat1 perlwin32.cat1 \
+        perlxs.cat1 perlxstut.cat1 pl2pm.cat1 pod2html.cat1 \
+        pod2man.cat1 pod2text.cat1 pod2usage.cat1 podchecker.cat1 \
+        podselect.cat1 pstruct.cat1 s2p.cat1 splain.cat1 xsubpp.cat1 \
+        AnyDBM_File.cat3p AutoLoader.cat3p AutoSplit.cat3p B.cat3p \
+        B::Asmdata.cat3p B::Assembler.cat3p B::Bblock.cat3p B::Bytecode.cat3p \
+        B::C.cat3p B::CC.cat3p B::Debug.cat3p B::Deparse.cat3p \
+        B::Disassembler.cat3p B::Lint.cat3p B::Showlex.cat3p \
+        B::Stackobj.cat3p B::Terse.cat3p B::Xref.cat3p \
+        Benchmark.cat3p ByteLoader.cat3p CGI.cat3p CGI::Apache.cat3p \
+        CGI::Carp.cat3p CGI::Cookie.cat3p CGI::Fast.cat3p CGI::Pretty.cat3p \
+        CGI::Push.cat3p CGI::Switch.cat3p CPAN.cat3p CPAN::FirstTime.cat3p \
+        CPAN::Nox.cat3p Carp.cat3p Carp::Heavy.cat3p Class::Struct.cat3p \
+        Config.cat3p Cwd.cat3p DB.cat3p DB_File.cat3p Data::Dumper.cat3p \
+        Devel::DProf.cat3p Devel::Peek.cat3p Devel::SelfStubber.cat3p \
+        DirHandle.cat3p Dumpvalue.cat3p DynaLoader.cat3p English.cat3p \
+        Env.cat3p Errno.cat3p Exporter.cat3p Exporter::Heavy.cat3p \
+        ExtUtils::Command.cat3p ExtUtils::Embed.cat3p ExtUtils::Install.cat3p \
+        ExtUtils::Installed.cat3p ExtUtils::Liblist.cat3p \
+        ExtUtils::MM_Cygwin.cat3p ExtUtils::MM_OS2.cat3p \
+        ExtUtils::MM_Unix.cat3p ExtUtils::MM_VMS.cat3p \
+        ExtUtils::MM_Win32.cat3p ExtUtils::MakeMaker.cat3p \
+        ExtUtils::Manifest.cat3p ExtUtils::Miniperl.cat3p \
+        ExtUtils::Mkbootstrap.cat3p ExtUtils::Mksymlists.cat3p \
+        ExtUtils::Packlist.cat3p ExtUtils::testlib.cat3p Fatal.cat3p \
+        Fcntl.cat3p File::Basename.cat3p File::CheckTree.cat3p \
+        File::Compare.cat3p File::Copy.cat3p File::DosGlob.cat3p \
+        File::Find.cat3p File::Glob.cat3p File::Path.cat3p File::Spec.cat3p \
+        File::Spec::Functions.cat3p File::Spec::Mac.cat3p \
+        File::Spec::OS2.cat3p File::Spec::Unix.cat3p File::Spec::VMS.cat3p \
+        File::Spec::Win32.cat3p File::stat.cat3p FileCache.cat3p \
+        FileHandle.cat3p FindBin.cat3p Getopt::Long.cat3p \
+        Getopt::Std.cat3p I18N::Collate.cat3p IO.cat3p IO::Dir.cat3p \
+        IO::File.cat3p IO::Handle.cat3p IO::Pipe.cat3p IO::Poll.cat3p \
+        IO::Seekable.cat3p IO::Select.cat3p IO::Socket.cat3p \
+        IO::Socket::INET.cat3p IO::Socket::UNIX.cat3p IPC::Msg.cat3p \
+        IPC::Open2.cat3p IPC::Open3.cat3p IPC::Semaphore.cat3p \
+        IPC::SysV.cat3p Math::BigFloat.cat3p Math::BigInt.cat3p \
+        Math::Complex.cat3p Math::Trig.cat3p NDBM_File.cat3p Net::Ping.cat3p \
+        Net::hostent.cat3p Net::netent.cat3p Net::protoent.cat3p \
+        Net::servent.cat3p O.cat3p ODBM_File.cat3p Opcode.cat3p POSIX.cat3p \
+        Pod::Checker.cat3p Pod::Find.cat3p Pod::Html.cat3p \
+        Pod::InputObjects.cat3p Pod::Man.cat3p Pod::ParseUtils.cat3p \
+        Pod::Parser.cat3p Pod::Plainer.cat3p Pod::Select.cat3p \
+        Pod::Text.cat3p Pod::Text::Color.cat3p Pod::Text::Termcap.cat3p \
+        Pod::Usage.cat3p SDBM_File.cat3p Safe.cat3p Search::Dict.cat3p \
+        SelectSaver.cat3p SelfLoader.cat3p Shell.cat3p Socket.cat3p \
+        Symbol.cat3p Sys::Hostname.cat3p Sys::Syslog.cat3p \
+        Term::ANSIColor.cat3p Term::Cap.cat3p Term::Complete.cat3p \
+        Term::ReadLine.cat3p Test.cat3p Test::Harness.cat3p Text::Abbrev.cat3p \
+        Text::ParseWords.cat3p Text::Soundex.cat3p Text::Tabs.cat3p \
+        Text::Wrap.cat3p Tie::Array.cat3p Tie::Handle.cat3p Tie::Hash.cat3p \
+        Tie::RefHash.cat3p Tie::Scalar.cat3p Tie::SubstrHash.cat3p \
+        Time::Local.cat3p Time::gmtime.cat3p Time::localtime.cat3p \
+        Time::tm.cat3p UNIVERSAL.cat3p User::grent.cat3p User::pwent.cat3p \
+        XSLoader.cat3p attributes.cat3p attrs.cat3p autouse.cat3p \
+        base.cat3p blib.cat3p bytes.cat3p charnames.cat3p constant.cat3p \
+        diagnostics.cat3p fields.cat3p filetest.cat3p integer.cat3p \
+        less.cat3p lib.cat3p locale.cat3p open.cat3p ops.cat3p overload.cat3p \
+        re.cat3p sigtrap.cat3p strict.cat3p subs.cat3p utf8.cat3p vars.cat3p \
+        warnings.cat3p
 .else
 MANALL=
 .endif
@@ -82,9 +113,10 @@ MANLOCALBUILD=	yes
 
 LIB=	perl
 
-SRCS=	gv.c toke.c perly.c op.c regcomp.c dump.c util.c mg.c byterun.c hv.c \
-	av.c run.c pp_hot.c sv.c pp.c scope.c pp_ctl.c pp_sys.c doop.c doio.c \
-	regexec.c taint.c deb.c universal.c globals.c perl.c perlio.c
+SRCS=	gv.c toke.c perly.c op.c regcomp.c dump.c util.c mg.c hv.c av.c run.c \
+	pp_hot.c sv.c pp.c scope.c pp_ctl.c pp_sys.c doop.c doio.c regexec.c \
+	utf8.c taint.c deb.c universal.c xsutils.c globals.c perl.c perlio.c \
+	perlapi.c
 
 CFLAGS+= -DPERL_CORE -DPERL_RANDOM_DEVICE=\"/dev/arandom\" -I.
 
@@ -96,8 +128,8 @@ INST_PROG='/usr/bin/install -c'
 
 MLINKS=		c2ph.1 pstruct.1
 
-GENERATED=	config.sh Makefile cflags config.h makeaperl makedepend \
-		makedir perl.exp writemain x2p/Makefile x2p/cflags
+GENERATED=	cflags config.h config.sh makeaperl makedepend makedir \
+		myconfig writemain Makefile Policy.sh x2p/Makefile x2p/cflags
 
 CLEANFILES=	config.sh Policy.sh ${MANALL}
 
@@ -115,7 +147,10 @@ perl.build:	perl.lib
 
 config.sh:
 	(cd ${.OBJDIR}; /usr/bin/env PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
-	 /bin/sh Configure -Dopenbsd_distribution=defined -dsE)
+	 /bin/sh Configure -Dopenbsd_distribution=defined ${THREADED} -dsE)
+
+Policy.sh:
+	(cd ${.OBJDIR}; /bin/sh Policy_sh.SH)
 
 Makefile:
 	(cd ${.OBJDIR}; /bin/sh Makefile.SH)
@@ -135,8 +170,8 @@ makedepend:
 makedir:
 	(cd ${.OBJDIR}; /bin/sh makedir.SH)
 
-perl.exp:
-	(cd ${.OBJDIR}; /bin/sh perl_exp.SH)
+myconfig:
+	(cd ${.OBJDIR}; /bin/sh myconfig.SH)
 
 writemain:
 	(cd ${.OBJDIR}; /bin/sh writemain.SH)
@@ -147,18 +182,37 @@ x2p/Makefile:
 x2p/cflags:
 	(cd ${.OBJDIR}/x2p; /bin/sh cflags.SH)
 
-# Dependecies generated by the ``gen_openbsd_mandep'' script
+# Never try to regenerate perly.c or perly.h
+perly.c perly.h: perly.y
+	-@true
+
+Win32.cat1: pod/Win32.pod
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 perl.cat1: pod/perl.pod
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+perl5004delta.cat1: pod/perl5004delta.pod
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+perl5005delta.cat1: pod/perl5005delta.pod
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+perlapi.cat1: pod/perlapi.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 perlapio.cat1: pod/perlapio.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 perlbook.cat1: pod/perlbook.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+perlboot.cat1: pod/perlboot.pod
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 perlbot.cat1: pod/perlbot.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 perlcall.cat1: pod/perlcall.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+perlcompile.cat1: pod/perlcompile.pod
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 perldata.cat1: pod/perldata.pod
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+perldbmfilter.cat1: pod/perldbmfilter.pod
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+perldebguts.cat1: pod/perldebguts.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 perldebug.cat1: pod/perldebug.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
@@ -182,8 +236,6 @@ perlfaq4.cat1: pod/perlfaq4.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 perlfaq5.cat1: pod/perlfaq5.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-perlipc.cat1: pod/perlipc.pod
-	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 perlfaq6.cat1: pod/perlfaq6.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 perlfaq7.cat1: pod/perlfaq7.pod
@@ -192,11 +244,25 @@ perlfaq8.cat1: pod/perlfaq8.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 perlfaq9.cat1: pod/perlfaq9.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+perlfilter.cat1: pod/perlfilter.pod
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+perlfork.cat1: pod/perlfork.pod
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 perlform.cat1: pod/perlform.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 perlfunc.cat1: pod/perlfunc.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 perlguts.cat1: pod/perlguts.pod
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+perlhack.cat1: pod/perlhack.pod
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+perlhist.cat1: pod/perlhist.pod
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+perlintern.cat1: pod/perlintern.pod
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+perlipc.cat1: pod/perlipc.pod
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+perllexwarn.cat1: pod/perllexwarn.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 perllocale.cat1: pod/perllocale.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
@@ -204,17 +270,27 @@ perllol.cat1: pod/perllol.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 perlmod.cat1: pod/perlmod.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+perlmodinstall.cat1: pod/perlmodinstall.pod
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 perlmodlib.cat1: pod/perlmodlib.pod
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+perlnumber.cat1: pod/perlnumber.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 perlobj.cat1: pod/perlobj.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 perlop.cat1: pod/perlop.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+perlopentut.cat1: pod/perlopentut.pod
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 perlpod.cat1: pod/perlpod.pod
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+perlport.cat1: pod/perlport.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 perlre.cat1: pod/perlre.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 perlref.cat1: pod/perlref.pod
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+perlreftut.cat1: pod/perlreftut.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 perlrun.cat1: pod/perlrun.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
@@ -226,13 +302,21 @@ perlsub.cat1: pod/perlsub.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 perlsyn.cat1: pod/perlsyn.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+perlthrtut.cat1: pod/perlthrtut.pod
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 perltie.cat1: pod/perltie.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 perltoc.cat1: pod/perltoc.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+perltodo.cat1: pod/perltodo.pod
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 perltoot.cat1: pod/perltoot.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+perltootc.cat1: pod/perltootc.pod
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 perltrap.cat1: pod/perltrap.pod
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+perlunicode.cat1: pod/perlunicode.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 perlvar.cat1: pod/perlvar.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
@@ -240,41 +324,164 @@ perlxs.cat1: pod/perlxs.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 perlxstut.cat1: pod/perlxstut.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-perl5004delta.cat1: pod/perl5004delta.pod
+perlamiga.cat1: pod/perlamiga.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-perlhist.cat1: pod/perlhist.pod
+perlcygwin.cat1: pod/perlcygwin.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-perlmodinstall.cat1: pod/perlmodinstall.pod
+perldos.cat1: pod/perldos.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-perlopentut.cat1: pod/perlopentut.pod
+perlhpux.cat1: pod/perlhpux.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-perlport.cat1: pod/perlport.pod
+perlos2.cat1: pod/perlos2.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-perlreftut.cat1: pod/perlreftut.pod
+perlmachten.cat1: pod/perlmachten.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-perlthrtut.cat1: pod/perlthrtut.pod
+perlos390.cat1: pod/perlos390.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+perlwin32.cat1: pod/perlwin32.pod
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+perlvms.cat1: vms/perlvms.pod
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+c2ph.cat1: utils/c2ph
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+h2ph.cat1: utils/h2ph
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+h2xs.cat1: utils/h2xs
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+perlcc.cat1: utils/perlcc
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+perldoc.cat1: utils/perldoc
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+perlbug.cat1: utils/perlbug
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+pl2pm.cat1: utils/pl2pm
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+splain.cat1: utils/splain
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+dprofpp.cat1: utils/dprofpp
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+s2p.cat1: x2p/s2p
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+a2p.cat1: x2p/a2p.pod
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+find2perl.cat1: x2p/find2perl
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+pod2man.cat1: pod/pod2man
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+pod2html.cat1: pod/pod2html
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+pod2text.cat1: pod/pod2text
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+pod2usage.cat1: pod/pod2usage
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+podchecker.cat1: pod/podchecker
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+podselect.cat1: pod/podselect
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+pstruct.cat1: utils/pstruct
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+xsubpp.cat1: lib/ExtUtils/xsubpp
+	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+
+AnyDBM_File.cat3p: lib/AnyDBM_File.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+AutoLoader.cat3p: lib/AutoLoader.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+AutoSplit.cat3p: lib/AutoSplit.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+B.cat3p: lib/B.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+B::Asmdata.cat3p: lib/B/Asmdata.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+B::Assembler.cat3p: lib/B/Assembler.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+B::Bblock.cat3p: lib/B/Bblock.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+B::Bytecode.cat3p: lib/B/Bytecode.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+B::C.cat3p: lib/B/C.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+B::CC.cat3p: lib/B/CC.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+B::Debug.cat3p: lib/B/Debug.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+B::Deparse.cat3p: lib/B/Deparse.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+B::Disassembler.cat3p: lib/B/Disassembler.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+B::Lint.cat3p: lib/B/Lint.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+B::Showlex.cat3p: lib/B/Showlex.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+B::Stackobj.cat3p: lib/B/Stackobj.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+B::Terse.cat3p: lib/B/Terse.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+B::Xref.cat3p: lib/B/Xref.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+Benchmark.cat3p: lib/Benchmark.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+ByteLoader.cat3p: lib/ByteLoader.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 CGI.cat3p: lib/CGI.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 CGI::Apache.cat3p: lib/CGI/Apache.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 CGI::Carp.cat3p: lib/CGI/Carp.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+CGI::Cookie.cat3p: lib/CGI/Cookie.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 CGI::Fast.cat3p: lib/CGI/Fast.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+CGI::Pretty.cat3p: lib/CGI/Pretty.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 CGI::Push.cat3p: lib/CGI/Push.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 CGI::Switch.cat3p: lib/CGI/Switch.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-CGI::Cookie.cat3p: lib/CGI/Cookie.pm
+CPAN.cat3p: lib/CPAN.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 CPAN::FirstTime.cat3p: lib/CPAN/FirstTime.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 CPAN::Nox.cat3p: lib/CPAN/Nox.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+Carp.cat3p: lib/Carp.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+Carp::Heavy.cat3p: lib/Carp/Heavy.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 Class::Struct.cat3p: lib/Class/Struct.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+Config.cat3p: lib/Config.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+Cwd.cat3p: lib/Cwd.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+DB.cat3p: lib/DB.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+DB_File.cat3p: lib/DB_File.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+Data::Dumper.cat3p: lib/Data/Dumper.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+Devel::DProf.cat3p: lib/Devel/DProf.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+Devel::Peek.cat3p: lib/Devel/Peek.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 Devel::SelfStubber.cat3p: lib/Devel/SelfStubber.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+DirHandle.cat3p: lib/DirHandle.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+Dumpvalue.cat3p: lib/Dumpvalue.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+DynaLoader.cat3p: lib/DynaLoader.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+English.cat3p: lib/English.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+Env.cat3p: lib/Env.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+Errno.cat3p: lib/Errno.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+Exporter.cat3p: lib/Exporter.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+Exporter::Heavy.cat3p: lib/Exporter/Heavy.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 ExtUtils::Command.cat3p: lib/ExtUtils/Command.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
@@ -282,7 +489,11 @@ ExtUtils::Embed.cat3p: lib/ExtUtils/Embed.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 ExtUtils::Install.cat3p: lib/ExtUtils/Install.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+ExtUtils::Installed.cat3p: lib/ExtUtils/Installed.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 ExtUtils::Liblist.cat3p: lib/ExtUtils/Liblist.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+ExtUtils::MM_Cygwin.cat3p: lib/ExtUtils/MM_Cygwin.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 ExtUtils::MM_OS2.cat3p: lib/ExtUtils/MM_OS2.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
@@ -296,27 +507,19 @@ ExtUtils::MakeMaker.cat3p: lib/ExtUtils/MakeMaker.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 ExtUtils::Manifest.cat3p: lib/ExtUtils/Manifest.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+ExtUtils::Miniperl.cat3p: lib/ExtUtils/Miniperl.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 ExtUtils::Mkbootstrap.cat3p: lib/ExtUtils/Mkbootstrap.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 ExtUtils::Mksymlists.cat3p: lib/ExtUtils/Mksymlists.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-ExtUtils::testlib.cat3p: lib/ExtUtils/testlib.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-ExtUtils::Installed.cat3p: lib/ExtUtils/Installed.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 ExtUtils::Packlist.cat3p: lib/ExtUtils/Packlist.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-ExtUtils::Miniperl.cat3p: lib/ExtUtils/Miniperl.pm
+ExtUtils::testlib.cat3p: lib/ExtUtils/testlib.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-IPC::Open2.cat3p: lib/IPC/Open2.pm
+Fatal.cat3p: lib/Fatal.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-IPC::Open3.cat3p: lib/IPC/Open3.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-IPC::SysV.cat3p: lib/IPC/SysV.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-IPC::Msg.cat3p: lib/IPC/Msg.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-IPC::Semaphore.cat3p: lib/IPC/Semaphore.pm
+Fcntl.cat3p: lib/Fcntl.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 File::Basename.cat3p: lib/File/Basename.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
@@ -330,27 +533,69 @@ File::DosGlob.cat3p: lib/File/DosGlob.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 File::Find.cat3p: lib/File/Find.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+File::Glob.cat3p: lib/File/Glob.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 File::Path.cat3p: lib/File/Path.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-File::stat.cat3p: lib/File/stat.pm
+File::Spec.cat3p: lib/File/Spec.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-File::Spec::Unix.cat3p: lib/File/Spec/Unix.pm
+File::Spec::Functions.cat3p: lib/File/Spec/Functions.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 File::Spec::Mac.cat3p: lib/File/Spec/Mac.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 File::Spec::OS2.cat3p: lib/File/Spec/OS2.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-File::Spec::Win32.cat3p: lib/File/Spec/Win32.pm
+File::Spec::Unix.cat3p: lib/File/Spec/Unix.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 File::Spec::VMS.cat3p: lib/File/Spec/VMS.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-File::Spec.cat3p: lib/File/Spec.pm
+File::Spec::Win32.cat3p: lib/File/Spec/Win32.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+File::stat.cat3p: lib/File/stat.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+FileCache.cat3p: lib/FileCache.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+FileHandle.cat3p: lib/FileHandle.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+FindBin.cat3p: lib/FindBin.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 Getopt::Long.cat3p: lib/Getopt/Long.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 Getopt::Std.cat3p: lib/Getopt/Std.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 I18N::Collate.cat3p: lib/I18N/Collate.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+IO.cat3p: lib/IO.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+IO::Dir.cat3p: lib/IO/Dir.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+IO::File.cat3p: lib/IO/File.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+IO::Handle.cat3p: lib/IO/Handle.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+IO::Pipe.cat3p: lib/IO/Pipe.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+IO::Poll.cat3p: lib/IO/Poll.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+IO::Seekable.cat3p: lib/IO/Seekable.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+IO::Select.cat3p: lib/IO/Select.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+IO::Socket.cat3p: lib/IO/Socket.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+IO::Socket::INET.cat3p: lib/IO/Socket/INET.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+IO::Socket::UNIX.cat3p: lib/IO/Socket/UNIX.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+IPC::Msg.cat3p: lib/IPC/Msg.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+IPC::Open2.cat3p: lib/IPC/Open2.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+IPC::Open3.cat3p: lib/IPC/Open3.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+IPC::Semaphore.cat3p: lib/IPC/Semaphore.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+IPC::SysV.cat3p: lib/IPC/SysV.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 Math::BigFloat.cat3p: lib/Math/BigFloat.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
@@ -359,6 +604,8 @@ Math::BigInt.cat3p: lib/Math/BigInt.pm
 Math::Complex.cat3p: lib/Math/Complex.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 Math::Trig.cat3p: lib/Math/Trig.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+NDBM_File.cat3p: lib/NDBM_File.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 Net::Ping.cat3p: lib/Net/Ping.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
@@ -370,21 +617,69 @@ Net::protoent.cat3p: lib/Net/protoent.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 Net::servent.cat3p: lib/Net/servent.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+O.cat3p: lib/O.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+ODBM_File.cat3p: lib/ODBM_File.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+Opcode.cat3p: lib/Opcode.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+POSIX.cat3p: lib/POSIX.pod
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+Pod::Checker.cat3p: lib/Pod/Checker.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+Pod::Find.cat3p: lib/Pod/Find.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 Pod::Html.cat3p: lib/Pod/Html.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+Pod::InputObjects.cat3p: lib/Pod/InputObjects.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+Pod::Man.cat3p: lib/Pod/Man.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+Pod::ParseUtils.cat3p: lib/Pod/ParseUtils.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+Pod::Parser.cat3p: lib/Pod/Parser.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+Pod::Plainer.cat3p: lib/Pod/Plainer.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+Pod::Select.cat3p: lib/Pod/Select.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 Pod::Text.cat3p: lib/Pod/Text.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+Pod::Text::Color.cat3p: lib/Pod/Text/Color.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+Pod::Text::Termcap.cat3p: lib/Pod/Text/Termcap.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+Pod::Usage.cat3p: lib/Pod/Usage.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+SDBM_File.cat3p: lib/SDBM_File.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+Safe.cat3p: lib/Safe.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 Search::Dict.cat3p: lib/Search/Dict.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+SelectSaver.cat3p: lib/SelectSaver.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+SelfLoader.cat3p: lib/SelfLoader.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+Shell.cat3p: lib/Shell.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+Socket.cat3p: lib/Socket.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+Symbol.cat3p: lib/Symbol.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 Sys::Hostname.cat3p: lib/Sys/Hostname.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 Sys::Syslog.cat3p: lib/Sys/Syslog.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+Term::ANSIColor.cat3p: lib/Term/ANSIColor.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 Term::Cap.cat3p: lib/Term/Cap.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 Term::Complete.cat3p: lib/Term/Complete.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 Term::ReadLine.cat3p: lib/Term/ReadLine.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+Test.cat3p: lib/Test.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 Test::Harness.cat3p: lib/Test/Harness.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
@@ -398,6 +693,10 @@ Text::Tabs.cat3p: lib/Text/Tabs.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 Text::Wrap.cat3p: lib/Text/Wrap.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+Tie::Array.cat3p: lib/Tie/Array.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+Tie::Handle.cat3p: lib/Tie/Handle.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 Tie::Hash.cat3p: lib/Tie/Hash.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 Tie::RefHash.cat3p: lib/Tie/RefHash.pm
@@ -405,10 +704,6 @@ Tie::RefHash.cat3p: lib/Tie/RefHash.pm
 Tie::Scalar.cat3p: lib/Tie/Scalar.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 Tie::SubstrHash.cat3p: lib/Tie/SubstrHash.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-Tie::Array.cat3p: lib/Tie/Array.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-Tie::Handle.cat3p: lib/Tie/Handle.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 Time::Local.cat3p: lib/Time/Local.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
@@ -418,186 +713,64 @@ Time::localtime.cat3p: lib/Time/localtime.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 Time::tm.cat3p: lib/Time/tm.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+UNIVERSAL.cat3p: lib/UNIVERSAL.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 User::grent.cat3p: lib/User/grent.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 User::pwent.cat3p: lib/User/pwent.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-AnyDBM_File.cat3p: lib/AnyDBM_File.pm
+XSLoader.cat3p: lib/XSLoader.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-AutoLoader.cat3p: lib/AutoLoader.pm
+attributes.cat3p: lib/attributes.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-AutoSplit.cat3p: lib/AutoSplit.pm
+attrs.cat3p: lib/attrs.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-Benchmark.cat3p: lib/Benchmark.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-CPAN.cat3p: lib/CPAN.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-Carp.cat3p: lib/Carp.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-Cwd.cat3p: lib/Cwd.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-Env.cat3p: lib/Env.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-B::Deparse.cat3p: lib/B/Deparse.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-B::CC.cat3p: lib/B/CC.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-B::Debug.cat3p: lib/B/Debug.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-B::Showlex.cat3p: lib/B/Showlex.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-B::Bblock.cat3p: lib/B/Bblock.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-B::Bytecode.cat3p: lib/B/Bytecode.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-B::Stackobj.cat3p: lib/B/Stackobj.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-B::Xref.cat3p: lib/B/Xref.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-B::Lint.cat3p: lib/B/Lint.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-B::Asmdata.cat3p: lib/B/Asmdata.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-B::Assembler.cat3p: lib/B/Assembler.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-B::Disassembler.cat3p: lib/B/Disassembler.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-B::Terse.cat3p: lib/B/Terse.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-B::C.cat3p: lib/B/C.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-DirHandle.cat3p: lib/DirHandle.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-English.cat3p: lib/English.pm
+autouse.cat3p: lib/autouse.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 base.cat3p: lib/base.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-Exporter.cat3p: lib/Exporter.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-FileCache.cat3p: lib/FileCache.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-FileHandle.cat3p: lib/FileHandle.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-FindBin.cat3p: lib/FindBin.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-SelectSaver.cat3p: lib/SelectSaver.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-SelfLoader.cat3p: lib/SelfLoader.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-Shell.cat3p: lib/Shell.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-Symbol.cat3p: lib/Symbol.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-UNIVERSAL.cat3p: lib/UNIVERSAL.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 blib.cat3p: lib/blib.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-autouse.cat3p: lib/autouse.pm
+bytes.cat3p: lib/bytes.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+charnames.cat3p: lib/charnames.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 constant.cat3p: lib/constant.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 diagnostics.cat3p: lib/diagnostics.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-lib.cat3p: lib/lib.pm
+fields.cat3p: lib/fields.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+filetest.cat3p: lib/filetest.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 integer.cat3p: lib/integer.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 less.cat3p: lib/less.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+lib.cat3p: lib/lib.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 locale.cat3p: lib/locale.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+open.cat3p: lib/open.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+ops.cat3p: lib/ops.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 overload.cat3p: lib/overload.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-subs.cat3p: lib/subs.pm
+re.cat3p: lib/re.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 sigtrap.cat3p: lib/sigtrap.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 strict.cat3p: lib/strict.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+subs.cat3p: lib/subs.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+utf8.cat3p: lib/utf8.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 vars.cat3p: lib/vars.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-Dumpvalue.cat3p: lib/Dumpvalue.pm
+warnings.cat3p: lib/warnings.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-Fatal.cat3p: lib/Fatal.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-Test.cat3p: lib/Test.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-fields.cat3p: lib/fields.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-Config.cat3p: lib/Config.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-re.cat3p: lib/re.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-DynaLoader.cat3p: lib/DynaLoader.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-B.cat3p: lib/B.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-O.cat3p: lib/O.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-DB_File.cat3p: lib/DB_File.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-Data::Dumper.cat3p: lib/Data/Dumper.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-Fcntl.cat3p: lib/Fcntl.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-IO::File.cat3p: lib/IO/File.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-IO::Select.cat3p: lib/IO/Select.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-IO::Socket.cat3p: lib/IO/Socket.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-IO::Handle.cat3p: lib/IO/Handle.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-IO::Seekable.cat3p: lib/IO/Seekable.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-IO::Pipe.cat3p: lib/IO/Pipe.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-IO.cat3p: lib/IO.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-NDBM_File.cat3p: lib/NDBM_File.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-Safe.cat3p: lib/Safe.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-ODBM_File.cat3p: lib/ODBM_File.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-Opcode.cat3p: lib/Opcode.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-ops.cat3p: lib/ops.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-POSIX.cat3p: lib/POSIX.pod
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-SDBM_File.cat3p: lib/SDBM_File.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-Socket.cat3p: lib/Socket.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-attrs.cat3p: lib/attrs.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-Errno.cat3p: lib/Errno.pm
-	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-c2ph.cat1: utils/c2ph
-	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-h2ph.cat1: utils/h2ph
-	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-h2xs.cat1: utils/h2xs
-	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-perldoc.cat1: utils/perldoc
-	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-perlbug.cat1: utils/perlbug
-	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-pl2pm.cat1: utils/pl2pm
-	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-splain.cat1: utils/splain
-	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-s2p.cat1: x2p/s2p
-	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-a2p.cat1: x2p/a2p.pod
-	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-pod2man.cat1: pod/pod2man
-	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-pod2html.cat1: pod/pod2html
-	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
-xsubpp.cat1: lib/ExtUtils/xsubpp
-	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 
 .ifdef NOMAN
 maninstall:

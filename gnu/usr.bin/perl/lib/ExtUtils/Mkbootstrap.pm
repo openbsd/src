@@ -1,7 +1,7 @@
 package ExtUtils::Mkbootstrap;
 
-$VERSION = substr q$Revision: 1.3 $, 10;
-# $Date: 1999/04/29 22:51:53 $
+$VERSION = substr q$Revision: 1.4 $, 10;
+# $Date: 2000/04/06 17:06:31 $
 
 use Config;
 use Exporter;
@@ -81,8 +81,8 @@ C<mkbootstrap>
 
 Mkbootstrap typically gets called from an extension Makefile.
 
-There is no C<*.bs> file supplied with the extension. Instead a
-C<*_BS> file which has code for the special cases, like posix for
+There is no C<*.bs> file supplied with the extension. Instead, there may
+be a C<*_BS> file which has code for the special cases, like posix for
 berkeley db on the NeXT.
 
 This file will get parsed, and produce a maybe empty

@@ -1,14 +1,23 @@
 #-*-perl-*-
+#
+# This library is no longer being maintained, and is included for backward
+# compatibility with Perl 4 programs which may require it.
+#
+# In particular, this should not be used as an example of modern Perl
+# programming techniques.
+#
+# Suggested alternative: Net::FTP
+#
 # This is a wrapper to the chat2.pl routines that make life easier
 # to do ftp type work.
 # Mostly by Lee McLoughlin <lmjm@doc.ic.ac.uk>
 # based on original version by Alan R. Martello <al@ee.pitt.edu>
 # And by A.Macpherson@bnr.co.uk for multi-homed hosts
 #
-# $Header: /home/cvs/src/gnu/usr.bin/perl/lib/Attic/ftp.pl,v 1.3 1999/04/29 22:51:46 millert Exp $
+# $Header: /home/cvs/src/gnu/usr.bin/perl/lib/Attic/ftp.pl,v 1.4 2000/04/06 17:06:11 millert Exp $
 # $Log: ftp.pl,v $
-# Revision 1.3  1999/04/29 22:51:46  millert
-# perl5.005_03 (stock)
+# Revision 1.4  2000/04/06 17:06:11  millert
+# perl-5.6.0 + local changes
 #
 # Revision 1.17  1993/04/21  10:06:54  lmjm
 # Send all status reports to STDERR not to STDOUT (to allow use by ftpcat).

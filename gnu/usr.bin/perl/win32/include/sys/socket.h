@@ -47,9 +47,9 @@ typedef struct _OVERLAPPED {
 
 #endif
 #endif //_WINDOWS_
-#ifndef __GNUC__
+// #ifndef __GNUC__
 #include <winsock.h>
-#endif
+// #endif
 
 #define  ENOTSOCK	WSAENOTSOCK
 #undef   HOST_NOT_FOUND
@@ -142,7 +142,6 @@ void win32_endprotoent(void);
 void win32_endservent(void);
 
 #ifndef WIN32SCK_IS_STDSCK
-#ifndef PERL_OBJECT
 //
 // direct to our version
 //
@@ -204,7 +203,6 @@ void win32_endservent(void);
 #define FD_ZERO(p)	PERL_FD_ZERO(p)
 #endif	/* USE_SOCKETS_AS_HANDLES */
 
-#endif  /* PERL_OBJECT */
 #endif	/* WIN32SCK_IS_STDSCK */
 
 #ifdef __cplusplus

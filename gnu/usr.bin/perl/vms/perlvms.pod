@@ -17,7 +17,7 @@ subdirectory of the Perl distribution.
 We hope these notes will save you from confusion and lost 
 sleep when writing Perl scripts on VMS.  If you find we've 
 missed something you think should appear here, please don't 
-hesitate to drop a line to vmsperl@genetics.upenn.edu.
+hesitate to drop a line to vmsperl@newman.upenn.edu.
 
 =head1 Installation
 
@@ -194,11 +194,13 @@ so we can try to work around them.
 =head2 Wildcard expansion
 
 File specifications containing wildcards are allowed both on 
-the command line and within Perl globs (e.g. <CE<lt>*.cE<gt>>).  If 
+the command line and within Perl globs (e.g. <CE<lt>*.cE<gt>>).  If
 the wildcard filespec uses VMS syntax, the resultant 
 filespecs will follow VMS syntax; if a Unix-style filespec is 
 passed in, Unix-style filespecs will be returned.
 
+In both cases, VMS wildcard expansion is performed. (csh-style
+wildcard expansion is available if you use C<File::Glob::glob>.)
 If the wildcard filespec contains a device or directory 
 specification, then the resultant filespecs will also contain 
 a device and directory; otherwise, device and directory 
@@ -225,9 +227,9 @@ subprocesses around when Perl exits.
 
 You may also use backticks to invoke a DCL subprocess, whose 
 output is used as the return value of the expression.  The 
-string between the backticks is passed directly to lib$spawn 
-as the command to execute.  In this case, Perl will wait for 
-the subprocess to complete before continuing. 
+string between the backticks is handled as if it were the
+argument to the C<system> operator (see below).  In this case,
+Perl will wait for the subprocess to complete before continuing. 
 
 =head1 PERL5LIB and PERLLIB
 
@@ -456,12 +458,16 @@ handlers to the subprocess are limited.)
 If the call to C<exec> does not follow a call to C<fork>, it 
 will cause Perl to exit, and to invoke the command given as 
 an argument to C<exec> via C<lib$do_command>.  If the argument 
-begins with a '$' (other than as part of a filespec), then it 
+begins with '@' or '$' (other than as part of a filespec), then it 
 is executed as a DCL command.  Otherwise, the first token on 
 the command line is treated as the filespec of an image to 
 run, and an attempt is made to invoke it (using F<.Exe> and 
 the process defaults to expand the filespec) and pass the 
-rest of C<exec>'s argument to it as parameters.
+rest of C<exec>'s argument to it as parameters.  If the token
+has no file type, and matches a file with null type, then an
+attempt is made to determine whether the file is an executable
+image which should be invoked using C<MCR> or a text file which
+should be passed to DCL as a command procedure.
 
 You can use C<exec> in both ways within the same script, as 
 long as you call C<fork> and C<exec> in pairs.  Perl
@@ -549,9 +555,23 @@ though, so caveat scriptor.
 The C<system> operator creates a subprocess, and passes its 
 arguments to the subprocess for execution as a DCL command.  
 Since the subprocess is created directly via C<lib$spawn()>, any 
-valid DCL command string may be specified.  If LIST consists
-of the empty string, C<system> spawns an interactive DCL subprocess,
-in the same fashion as typiing B<SPAWN> at the DCL prompt.
+valid DCL command string may be specified.  If the string begins with
+'@', it is treated as a DCL command unconditionally.  Otherwise, if
+the first token contains a character used as a delimiter in file
+specification (e.g. C<:> or C<]>), an attempt is made to expand it
+using  a default type of F<.Exe> and the process defaults, and if
+successful, the resulting file is invoked via C<MCR>. This allows you
+to invoke an image directly simply by passing the file specification
+to C<system>, a common Unixish idiom.  If the token has no file type,
+and matches a file with null type, then an attempt is made to
+determine whether the file is an executable image which should be
+invoked using C<MCR> or a text file which should be passed to DCL
+as a command procedure.
+
+If LIST consists of the empty string, C<system> spawns an
+interactive DCL subprocess, in the same fashion as typiing
+B<SPAWN> at the DCL prompt.
+
 Perl waits for the subprocess to complete before continuing
 execution in the current process.  As described in L<perlfunc>,
 the return value of C<system> is a fake "status" which follows
@@ -648,48 +668,108 @@ takes precedence.
 
 =item %ENV 
 
-Reading the elements of the %ENV array returns the 
-translation of the logical name specified by the key, 
-according to the normal search order of access modes and 
-logical name tables.  If you append a semicolon to the
-logical name, followed by an integer, that integer is
-used as the translation index for the logical name,
-so that you can look up successive values for search
-list logical names.  For instance, if you say
+The operation of the C<%ENV> array depends on the translation
+of the logical name F<PERL_ENV_TABLES>.  If defined, it should
+be a search list, each element of which specifies a location
+for C<%ENV> elements.  If you tell Perl to read or set the
+element C<$ENV{>I<name>C<}>, then Perl uses the translations of
+F<PERL_ENV_TABLES> as follows:
+
+=over 4
+
+=item CRTL_ENV
+
+This string tells Perl to consult the CRTL's internal C<environ>
+array of key-value pairs, using I<name> as the key.  In most cases,
+this contains only a few keys, but if Perl was invoked via the C
+C<exec[lv]e()> function, as is the case for CGI processing by some
+HTTP servers, then the C<environ> array may have been populated by
+the calling program.
+
+=item CLISYM_[LOCAL]
+
+A string beginning with C<CLISYM_>tells Perl to consult the CLI's
+symbol tables, using I<name> as the name of the symbol.  When reading
+an element of C<%ENV>, the local symbol table is scanned first, followed
+by the global symbol table..  The characters following C<CLISYM_> are
+significant when an element of C<%ENV> is set or deleted: if the
+complete string is C<CLISYM_LOCAL>, the change is made in the local
+symbol table, otherwise the global symbol table is changed.
+
+=item Any other string
+
+If an element of F<PERL_ENV_TABLES> translates to any other string,
+that string is used as the name of a logical name table, which is
+consulted using I<name> as the logical name.  The normal search
+order of access modes is used.
+
+=back
+
+F<PERL_ENV_TABLES> is translated once when Perl starts up; any changes
+you make while Perl is running do not affect the behavior of C<%ENV>.
+If F<PERL_ENV_TABLES> is not defined, then Perl defaults to consulting
+first the logical name tables specified by F<LNM$FILE_DEV>, and then
+the CRTL C<environ> array.
+
+In all operations on %ENV, the key string is treated as if it 
+were entirely uppercase, regardless of the case actually 
+specified in the Perl expression.
+
+When an element of C<%ENV> is read, the locations to which
+F<PERL_ENV_TABLES> points are checked in order, and the value
+obtained from the first successful lookup is returned.  If the
+name of the C<%ENV> element contains a semi-colon, it and
+any characters after it are removed.  These are ignored when
+the CRTL C<environ> array or a CLI symbol table is consulted.
+However, the name is looked up in a logical name table, the
+suffix after the semi-colon is treated as the translation index
+to be used for the lookup.   This lets you look up successive values
+for search list logical names.  For instance, if you say
 
    $  Define STORY  once,upon,a,time,there,was
    $  perl -e "for ($i = 0; $i <= 6; $i++) " -
    _$ -e "{ print $ENV{'story;'.$i},' '}"
 
-Perl will print C<ONCE UPON A TIME THERE WAS>.
+Perl will print C<ONCE UPON A TIME THERE WAS>, assuming, of course,
+that F<PERL_ENV_TABLES> is set up so that the logical name C<story>
+is found, rather than a CLI symbol or CRTL C<environ> element with
+the same name.
 
-The key C<default> returns the current default device
-and directory specification, regardless of whether
-there is a logical name DEFAULT defined.  If you try to
-read an element of %ENV for which there is no corresponding
-logical name, and for which no corresponding CLI symbol
-exists (this is to identify "blocking" symbols only; to
-manipulate CLI symbols, see L<VMS::DCLSym>) then the key
-will be looked up in the CRTL-local environment array, and
-the corresponding value, if any returned.  This lets you
-get at C-specific keys like C<home>, C<path>,C<term>, and
-C<user>, as well as other keys which may have been passed
-directly into the C-specific array if Perl was called from
-another C program using the version of execve() or execle() 
-present in recent revisions of the DECCRTL.
+When an element of C<%ENV> is set to a defined string, the
+corresponding definition is made in the location to which the
+first translation of F<PERL_ENV_TABLES> points.  If this causes a
+logical name to be created, it is defined in supervisor mode.
+(The same is done if an existing logical name was defined in
+executive or kernel mode; an existing user or supervisor mode
+logical name is reset to the new value.)  If the value is an empty
+string, the logical name's translation is defined as a single NUL
+(ASCII 00) character, since a logical name cannot translate to a
+zero-length string.  (This restriction does not apply to CLI symbols
+or CRTL C<environ> values; they are set to the empty string.)
+An element of the CRTL C<environ> array can be set only if your
+copy of Perl knows about the CRTL's C<setenv()> function.  (This is
+present only in some versions of the DECCRTL; check C<$Config{d_setenv}>
+to see whether your copy of Perl was built with a CRTL that has this
+function.)
+          
+When an element of C<%ENV> is set to C<undef>,
+the element is looked up as if it were being read, and if it is
+found, it is deleted.  (An item "deleted" from the CRTL C<environ>
+array is set to the empty string; this can only be done if your
+copy of Perl knows about the CRTL C<setenv()> function.)  Using
+C<delete> to remove an element from C<%ENV> has a similar effect,
+but after the element is deleted, another attempt is made to
+look up the element, so an inner-mode logical name or a name in
+another location will replace the logical name just deleted.
+In either case, only the first value found searching PERL_ENV_TABLES
+is altered.  It is not possible at present to define a search list
+logical name via %ENV.
 
-Setting an element of %ENV defines a supervisor-mode logical 
-name in the process logical name table.  C<Undef>ing or 
-C<delete>ing an element of %ENV deletes the equivalent user-
-mode or supervisor-mode logical name from the process logical 
-name table.  If you use C<undef>, the %ENV element remains 
-empty.  If you use C<delete>, another attempt is made at 
-logical name translation after the deletion, so an inner-mode 
-logical name or a name in another logical name table will 
-replace the logical name just deleted.  It is not possible
-at present to define a search list logical name via %ENV.
-It is also not possible to delete an element from the
-C-local environ array.
+The element C<$ENV{DEFAULT}> is special: when read, it returns
+Perl's current default device and directory, and when set, it
+resets them, regardless of the definition of F<PERL_ENV_TABLES>.
+It cannot be cleared or deleted; attempts to do so are silently
+ignored.
 
 Note that if you want to pass on any elements of the
 C-local environ array to a subprocess which isn't
@@ -711,19 +791,14 @@ C<keys>, or C<values>,  you will incur a time penalty as all
 logical names are read, in order to fully populate %ENV.
 Subsequent iterations will not reread logical names, so they
 won't be as slow, but they also won't reflect any changes
-to logical name tables caused by other programs.  The C<each>
-operator is special: it returns each element I<already> in
-%ENV, but doesn't go out and look for more.   Therefore, if
-you've previously used C<keys> or C<values>, you'll see all
-the logical names visible to your process, and if not, you'll
-see only the names you've looked up so far.  (This is a
-consequence of the way C<each> is implemented now, and it
-may change in the future, so it wouldn't be a good idea
-to rely on it too much.)
+to logical name tables caused by other programs.
 
-In all operations on %ENV, the key string is treated as if it 
-were entirely uppercase, regardless of the case actually 
-specified in the Perl expression.
+You do need to be careful with the logicals representing process-permanent
+files, such as C<SYS$INPUT> and C<SYS$OUTPUT>.  The translations for these
+logicals are prepended with a two-byte binary value (0x1B 0x00) that needs to be
+stripped off if you want to use it. (In previous versions of perl it wasn't
+possible to get the values of these logicals, as the null byte acted as an
+end-of-string marker)
 
 =item $!
 
@@ -783,19 +858,18 @@ it's equivalent to calling fflush() and fsync() from C.
 
 =head2 SDBM_File
 
-SDBM_File works peroperly on VMS. It has, however, one minor
-difference. The database directory file created has a L<.sdbm_dir>
-extension rather than a L<.dir> extension. L<.dir> files are VMS filesystem
+SDBM_File works properly on VMS. It has, however, one minor
+difference. The database directory file created has a F<.sdbm_dir>
+extension rather than a F<.dir> extension. F<.dir> files are VMS filesystem
 directory files, and using them for other purposes could cause unacceptable
 problems.
 
 =head1 Revision date
 
-This document was last updated on 26-Feb-1998, for Perl 5, 
-patchlevel 5.
+This document was last updated on 26-Feb-2000, for Perl 5, 
+patchlevel 6.
 
 =head1 AUTHOR
 
-Charles Bailey  bailey@cor.newman.upenn.edu
-
-Last revision by Dan Sugalski  sugalskd@ous.edu
+Charles Bailey  <bailey@cor.newman.upenn.edu>
+Dan Sugalski  <dan@sidhe.org>

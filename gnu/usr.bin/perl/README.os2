@@ -809,10 +809,8 @@ Change to the directory of extraction.
 
 =head2 Application of the patches
 
-You need to apply the patches in F<./os2/diff.*> and
-F<./os2/POSIX.mkfifo> like this:
+You need to apply the patches in F<./os2/diff.*> like this:
 
-  gnupatch -p0 < os2\POSIX.mkfifo
   gnupatch -p0 < os2\diff.configure
 
 You may also need to apply the patches supplied with the binary
@@ -832,7 +830,7 @@ to EMX headers:
   +++ /emx/include/sys/stat.h	Sun Jul 12 14:11:32 1998
   @@ -53,7 +53,7 @@ struct stat
    #endif
- 
+
    #if !defined (S_IFMT)
   -#define S_IFMT   0160000  /* Mask for file type */
   +#define S_IFMT   0170000  /* Mask for file type */
@@ -938,6 +936,8 @@ The reasons for most important skipped tests are:
 =over 8
 
 =item F<op/fs.t>
+
+=over 4
 
 =item 18
 
@@ -1136,7 +1136,7 @@ Really really odious function to implement. Returns absolute name of
 file which would have C<name> if CWD were C<dir>.  C<Dir> defaults to the
 current dir.
 
-=item  C<Cwd::extLibpath([type])
+=item  C<Cwd::extLibpath([type])>
 
 Get current value of extended library search path. If C<type> is
 present and I<true>, works with END_LIBPATH, otherwise with

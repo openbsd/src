@@ -33,7 +33,7 @@
 #     library has everything old one did
 #     (i.e. /Define=DEBUGGING,EMBED,MULTIPLICITY)?
 #
-# Author: Charles Bailey  bailey@genetics.upenn.edu
+# Author: Charles Bailey  bailey@newman.upenn.edu
 
 require 5.000;
 
@@ -73,8 +73,10 @@ if ($docc) {
   open CONFIG, "< $config";
   while(<CONFIG>) {
     $debugging_enabled++ if /define\s+DEBUGGING/;
-    $hide_mymalloc++ if /define\s+EMBEDMYMALLOC/;
     $use_mymalloc++ if /define\s+MYMALLOC/;
+    $hide_mymalloc++ if /define\s+EMBEDMYMALLOC/;
+    $use_threads++ if /define\s+USE_THREADS/;
+    $care_about_case++ if /define\s+VMS_WE_ARE_CASE_SENSITIVE/;
   }
   
   # put quotes back onto defines - they were removed by DCL on the way in
@@ -90,15 +92,9 @@ if ($docc) {
 
   # check for gcc - if present, we'll need to use MACRO hack to
   # define global symbols for shared variables
-  $isvaxc = 0;
   $isgcc = `$cc_cmd _nla0:/Version` =~ /GNU/
            or 0; # make debug output nice
-  $isvaxc = (!$isgcc && $isvax &&
-             # Check exit status too, in case message is shut off
-             (`$cc_cmd /prefix=all _nla0:` =~ /IVQUAL/ || $? == 0x38240))
-            or 0; # again, make debug output nice
   print "\$isgcc: $isgcc\n" if $debug;
-  print "\$isvaxc: $isvaxc\n" if $debug;
   print "\$debugging_enabled: $debugging_enabled\n" if $debug;
 
 }
@@ -106,11 +102,8 @@ else {
   ($junk,$junk,$cpp_file,$cc_cmd) = split(/~~/,$cc_cmd,4);
   $isgcc = $cc_cmd =~ /case_hack/i
            or 0;  # for nice debug output
-  $isvaxc = (!$isgcc && $cc_cmd !~ /standard=/i)
-            or 0;  # again, for nice debug output
   $debugging_enabled = $cc_cmd =~ /\bdebugging\b/i;
   print "\$isgcc: \\$isgcc\\\n" if $debug;
-  print "\$isvaxc: \\$isvaxc\\\n" if $debug;
   print "\$debugging_enabled: \\$debugging_enabled\\\n" if $debug;
   print "Not running cc, preprocesor output in \\$cpp_file\\\n" if $debug;
 }
@@ -126,33 +119,6 @@ $extnames = shift @ARGV;
 print "\$extnames: \\$extnames\\\n" if $debug;
 $rtlopt = shift @ARGV;
 print "\$rtlopt: \\$rtlopt\\\n" if $debug;
-
-# This part gets tricky.  VAXC creates global symbols for each of the
-# constants in an enum if that enum is ever used as the data type of a
-# global[dr]ef.  We have to detect enums which are used in this way, so we
-# can set up the constants as universal symbols, since anything which
-# #includes perl.h will want to resolve these global symbols.
-# We're using a weak test here - we basically know that the only enums
-# we need to handle now are the big one in opcode.h, and the
-# "typedef enum { ... } expectation" in perl.h, so we hard code
-# appropriate tests below. Since we can't know in general whether a given
-# enum will be used elsewhere in a globaldef, it's hard to decide a
-# priori whether its constants need to be treated as global symbols.
-sub scan_enum {
-  my($line) = @_;
-
-  return unless $isvaxc;
-
-  return unless /^\s+(OP|X)/;  # we only want opcode and expectation enums
-  print "\tchecking for enum constant\n" if $debug > 1;
-  $line =~ s#/\*.+##;
-  $line =~ s/,?\s*\n?$//;
-  print "\tfiltered to \\$line\\\n" if $debug > 1;
-  if ($line =~ /(\w+)$/) {
-    print "\tconstant name is \\$1\\\n" if $debug > 1;
-    $enums{$1}++;
-  }
-}
 
 sub scan_var {
   my($line) = @_;
@@ -171,25 +137,13 @@ sub scan_var {
    if ($const) { $cvars{$1}++; }
    else        { $vars{$1}++;  }
   }
-  if ($isvaxc) {
-    my($type) = $line =~ /^\s*EXT\w*\s+(\w+)/;
-    print "\tchecking for use of enum (type is \"$type\")\n" if $debug > 2;
-    if ($type eq 'expectation') {
-      $used_expectation_enum++;
-      print "\tsaw global use of enum \"expectation\"\n" if $debug > 1;
-    }
-    if ($type eq 'opcode') {
-      $used_opcode_enum++;
-      print "\tsaw global use of enum \"opcode\"\n" if $debug > 1;
-    }
-  }
 }
 
 sub scan_func {
   my($line) = @_;
 
   print "\tchecking for global routine\n" if $debug > 1;
-  if ( $line =~ /(\w+)\s+\(/ ) {
+  if ( $line =~ /(\w+)\s*\(/ ) {
     print "\troutine name is \\$1\\\n" if $debug > 1;
     if ($1 eq 'main' || $1 eq 'perl_init_ext') {
       print "\tskipped\n" if $debug > 1;
@@ -203,7 +157,7 @@ if ($use_mymalloc) {
   $fcns{'Perl_malloc'}++;
   $fcns{'Perl_calloc'}++;
   $fcns{'Perl_realloc'}++;
-  $fcns{'Perl_myfree'}++;
+  $fcns{'Perl_mfree'}++;
 }
 
 $used_expectation_enum = $used_opcode_enum = 0; # avoid warnings
@@ -232,12 +186,6 @@ LINE: while (<CPP>) {
     print "opcode.h>> $_" if $debug > 2;
     if (/^OP \*\s/) { &scan_func($_); }
     if (/^\s*EXT/) { &scan_var($_); }
-    if (/^\s+OP_/) { &scan_enum($_); }
-    last LINE unless defined($_ = <CPP>);
-  }
-  while (/^typedef enum/ .. /^\s*\}/) {
-    print "global enum>> $_" if $debug > 2;
-    &scan_enum($_);
     last LINE unless defined($_ = <CPP>);
   }
   # Check for transition to new header file
@@ -262,18 +210,13 @@ LINE: while (<CPP>) {
 }
 close CPP;
 
-
-# Kluge to determine whether we need to add EMBED prefix to
-# symbols read from local list.  vmsreaddirversions() is a VMS-
-# specific function whose Perl_ prefix is added in vmsish.h
-# if EMBED is #defined.
-$embed = exists($fcns{'Perl_vmsreaddirversions'}) ? 'Perl_' : '';
 while (<DATA>) {
   next if /^#/;
   s/\s+#.*\n//;
   next if /^\s*$/;
   ($key,$array) = split('=',$_);
-  $key = "$embed$key";
+  if ($array eq 'vars') { $key = "PL_$key";   }
+  else                  { $key = "Perl_$key"; }
   print "Adding $key to \%$array list\n" if $debug > 1;
   ${$array}{$key}++;
 }
@@ -283,30 +226,6 @@ foreach (split /\s+/, $extnames) {
   $pkgname =~ s/::/__/g;
   $fcns{"boot_$pkgname"}++;
   print "Adding boot_$pkgname to \%fcns (for extension $_)\n" if $debug;
-}
-
-# If we're using VAXC, fold in the names of the constants for enums
-# we've seen as the type of global vars.
-if ($isvaxc) {
-  foreach (keys %enums) {
-    if (/^OP/) {
-      $vars{$_}++ if $used_opcode_enum;
-      next;
-    }
-    if (/^X/) {
-      $vars{$_}++ if $used_expectation_enum;
-      next;
-    }
-    print STDERR "Unrecognized enum constant \"$_\" ignored\n";
-  }
-}
-elsif ($isgcc) {
-  # gcc creates this as a SHR,WRT psect in globals.c, but we
-  # don't see it in the perl.h scan, since it's only declared
-  # if DOINIT is #defined.  Bleah.  It's cheaper to just add
-  # it by hand than to add /Define=DOINIT to the preprocessing
-  # run and wade through all the extra junk.
-  $vars{"${embed}Error"}++;
 }
 
 # Eventually, we'll check against existing copies here, so we can add new
@@ -320,10 +239,12 @@ if ($isvax) {
     or die "$0: Can't write to ${dir}perlshr_gbl${marord}.mar: $!\n";
   print MAR "\t.title perlshr_gbl$marord\n";
 }
+
 unless ($isgcc) {
   print OPTBLD "PSECT_ATTR=\$GLOBAL_RO_VARS,PIC,NOEXE,RD,NOWRT,SHR\n";
   print OPTBLD "PSECT_ATTR=\$GLOBAL_RW_VARS,PIC,NOEXE,RD,WRT,NOSHR\n";
 }
+print OPTBLD "case_sensitive=yes\n" if $care_about_case;
 foreach $var (sort (keys %vars,keys %cvars)) {
   if ($isvax) { print OPTBLD "UNIVERSAL=$var\n"; }
   else { print OPTBLD "SYMBOL_VECTOR=($var=DATA)\n"; }
@@ -359,10 +280,7 @@ if ($isvax) {
 
 open(OPTATTR,">${dir}perlshr_attr.opt")
   or die "$0: Can't write to ${dir}perlshr_attr.opt: $!\n";
-if ($isvaxc) {
-  print OPTATTR "PSECT_ATTR=\$CHAR_STRING_CONSTANTS,PIC,SHR,NOEXE,RD,NOWRT\n";
-}
-elsif ($isgcc) {
+if ($isgcc) {
   foreach $var (sort keys %cvars) {
     print OPTATTR "PSECT_ATTR=${var},PIC,OVR,RD,NOEXE,NOWRT,SHR\n";
   }
@@ -375,7 +293,7 @@ else {
 }
 close OPTATTR;
 
-$incstr = 'perl,globals';
+$incstr = 'PERL,GLOBALS';
 if ($isvax) {
   $drvrname = "Compile_shrmars.tmp_".time;
   open (DRVR,">$drvrname") or die "$0: Can't write to $drvrname: $!\n";
@@ -405,9 +323,26 @@ if ($isvax) {
 # Initial hack to permit building of compatible shareable images for a
 # given version of Perl.
 if ($ENV{PERLSHR_USE_GSMATCH}) {
-  my $major = int($] * 1000)                        & 0xFF;  # range 0..255
-  my $minor = int(($] * 1000 - $major) * 100 + 0.5) & 0xFF;  # range 0..255
-  print OPTBLD "GSMATCH=LEQUAL,$major,$minor\n";
+  if ($ENV{PERLSHR_USE_GSMATCH} eq 'INCLUDE_COMPILE_OPTIONS') {
+    # Build up a major ID. Since it can only be 8 bits, we encode the version
+    # number in the top four bits and use the bottom four for build options
+    # that'll cause incompatibilities
+    ($ver, $sub) = $] =~ /\.(\d\d\d)(\d\d)/;
+    $gsmatch = ($sub >= 50) ? "equal" : "lequal"; # Force an equal match for
+						  # dev, but be more forgiving
+						  # for releases
+
+    $ver *=16;
+    $ver += 8 if $debugging_enabled;	# If DEBUGGING is set
+    $ver += 4 if $use_threads;		# if we're threaded
+    $ver += 2 if $use_mymalloc;		# if we're using perl's malloc
+    print OPTBLD "GSMATCH=$gsmatch,$ver,$sub\n";
+  }
+  else {
+    my $major = int($] * 1000)                        & 0xFF;  # range 0..255
+    my $minor = int(($] * 1000 - $major) * 100 + 0.5) & 0xFF;  # range 0..255
+    print OPTBLD "GSMATCH=LEQUAL,$major,$minor\n";
+  }
   print OPTBLD 'CLUSTER=$$TRANSFER_VECTOR,,',
                map(",$_$objsuffix",@symfiles), "\n";
 }
@@ -430,22 +365,3 @@ __END__
 regkind=vars    # declared in regcomp.h
 simple=vars     # declared in regcomp.h
 varies=vars     # declared in regcomp.h
-watchaddr=vars  # declared in run.c
-watchok=vars    # declared in run.c
-yychar=vars     # generated by byacc in perly.c
-yycheck=vars    # generated by byacc in perly.c
-yydebug=vars    # generated by byacc in perly.c
-yydefred=vars   # generated by byacc in perly.c
-yydgoto=vars    # generated by byacc in perly.c
-yyerrflag=vars  # generated by byacc in perly.c
-yygindex=vars   # generated by byacc in perly.c
-yylen=vars      # generated by byacc in perly.c
-yylhs=vars      # generated by byacc in perly.c
-yylval=vars     # generated by byacc in perly.c
-yyname=vars     # generated by byacc in perly.c
-yynerrs=vars    # generated by byacc in perly.c
-yyrindex=vars   # generated by byacc in perly.c
-yyrule=vars     # generated by byacc in perly.c
-yysindex=vars   # generated by byacc in perly.c
-yytable=vars    # generated by byacc in perly.c
-yyval=vars      # generated by byacc in perly.c

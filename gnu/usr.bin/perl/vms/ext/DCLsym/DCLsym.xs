@@ -1,13 +1,13 @@
 /* VMS::DCLsym - manipulate DCL symbols
  *
  * Version:  1.0
- * Author:   Charles Bailey  bailey@genetics.upenn.edu
+ * Author:   Charles Bailey  bailey@newman.upenn.edu
  * Revised:  17-Aug-1995
  *
  *
  * Revision History:
  * 
- * 1.0  17-Aug-1995  Charles Bailey  bailey@genetics.upenn.edu
+ * 1.0  17-Aug-1995  Charles Bailey  bailey@newman.upenn.edu
  *      original production version
  */
 

@@ -1,6 +1,6 @@
 /*  sockadapt.c
  *
- *  Author: Charles Bailey  bailey@genetics.upenn.edu
+ *  Author: Charles Bailey  bailey@newman.upenn.edu
  *  Last Revised:  4-Mar-1997
  *
  *  This file should contain stubs for any of the TCP/IP functions perl5

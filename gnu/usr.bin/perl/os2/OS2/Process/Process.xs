@@ -7,18 +7,8 @@
 #define INCL_DOSERRORS
 #include <os2.h>
 
-static int
-not_here(s)
-char *s;
-{
-    croak("%s not implemented on this architecture", s);
-    return -1;
-}
-
 static unsigned long
-constant(name, arg)
-char *name;
-int arg;
+constant(char *name, int arg)
 {
     errno = 0;
     if (name[0] == 'P' && name[1] == '_') {

@@ -1,6 +1,6 @@
 /*  sockadapt.h
  *
- *  Authors: Charles Bailey  bailey@genetics.upenn.edu
+ *  Authors: Charles Bailey  bailey@newman.upenn.edu
  *           David Denholm  denholm@conmat.phys.soton.ac.uk
  *  Last Revised:  4-Mar-1997
  *
@@ -35,7 +35,7 @@
    void setservent(int);
    void endservent(void);
 #endif
-#  if defined(__DECC) && defined(__DECC_VER) && (__DECC_VER >= 50200000)
+#  if defined(__DECC) && defined(__DECC_VER) && (__DECC_VER >= 50200000) && !defined(Sock_size_t)
 #    define Sock_size_t unsigned int
 #  endif
 
@@ -182,7 +182,7 @@ int si_fileno(FILE *);
 #  undef getpeername
 #endif
 #define getpeername my_getpeername
-int my_getpeername _((int, struct sockaddr *, int *));
+int my_getpeername (int, struct sockaddr *, int *);
 
 #endif /* SOCKETSHR stuff */
 #endif /* include guard */

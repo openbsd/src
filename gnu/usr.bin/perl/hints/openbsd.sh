@@ -68,7 +68,11 @@ cat > UU/usethreads.cbu <<'EOCBU'
 case "$usethreads" in
 $define|true|[yY]*)
 	# any openbsd version dependencies with pthreads?
+	ccflags="-pthread $ccflags"
+	ldflags="-pthread $ldflags"
 	libswanted="$libswanted pthread"
+	# This is strange.
+	usevfork="$undef"
 esac
 EOCBU
 

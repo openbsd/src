@@ -1,8 +1,8 @@
 #   VMS::Stdio - VMS extensions to Perl's stdio calls
 #
 #   Author:  Charles Bailey  bailey@genetics.upenn.edu
-#   Version: 2.1
-#   Revised: 24-Mar-1998
+#   Version: 2.2
+#   Revised: 19-Jul-1998
 #   Docs revised: 13-Oct-1998 Dan Sugalski <sugalskd@ous.edu>
 
 package VMS::Stdio;
@@ -13,17 +13,17 @@ use Carp '&croak';
 use DynaLoader ();
 use Exporter ();
  
-$VERSION = '2.1';
+$VERSION = '2.2';
 @ISA = qw( Exporter DynaLoader IO::File );
 @EXPORT = qw( &O_APPEND &O_CREAT &O_EXCL  &O_NDELAY &O_NOWAIT
               &O_RDONLY &O_RDWR  &O_TRUNC &O_WRONLY );
-@EXPORT_OK = qw( &flush &getname &remove &rewind &sync &setdef &tmpnam
+@EXPORT_OK = qw( &binmode &flush &getname &remove &rewind &sync &setdef &tmpnam
                  &vmsopen &vmssysopen &waitfh &writeof );
 %EXPORT_TAGS = ( CONSTANTS => [ qw( &O_APPEND &O_CREAT &O_EXCL  &O_NDELAY
                                     &O_NOWAIT &O_RDONLY &O_RDWR &O_TRUNC
                                     &O_WRONLY ) ],
-                 FUNCTIONS => [ qw( &flush &getname &remove &rewind &setdef
-                                    &sync &tmpnam &vmsopen &vmssysopen
+                 FUNCTIONS => [ qw( &binmode &flush &getname &remove &rewind
+                                    &setdef &sync &tmpnam &vmsopen &vmssysopen
                                     &waitfh &writeof ) ] );
 
 bootstrap VMS::Stdio $VERSION;
@@ -100,6 +100,7 @@ VMS::Stdio - standard I/O functions via VMS extensions
   close($fh);
   remove("another.file");
   writeof($pipefh);
+  binmode($fh);
 
 =head1 DESCRIPTION
 
@@ -146,6 +147,22 @@ removed in a future release of this extension, so please
 update your code to use the new routines.
 
 =over
+
+=item binmode
+
+This function causes the file handle to be reopened with the CRTL's
+carriage control processing disabled; its effect is the same as that
+of the C<b> access mode in C<vmsopen>.  After the file is reopened,
+the file pointer is positioned as close to its position before the
+call as possible (I<i.e.> as close as fsetpos() can get it -- for
+some record-structured files, it's not possible to return to the
+exact byte offset in the file).  Because the file must be reopened,
+this function cannot be used on temporary-delete files. C<binmode>
+returns true if successful, and C<undef> if not.
+
+Note that the effect of C<binmode> differs from that of the binmode()
+function on operating systems such as Windows and MSDOS, and is not
+needed to process most types of file.
 
 =item flush
 
@@ -620,6 +637,6 @@ it encounters an error.
 =head1 REVISION
 
 This document was last revised on 13-Oct-1998, for Perl 5.004, 5.005, and
-5.006.
+5.6.0.
 
 =cut

@@ -1,7 +1,7 @@
 $!  Test.Com - DCL driver for perl5 regression tests
 $!
 $!  Version 1.1   4-Dec-1995
-$!  Charles Bailey  bailey@genetics.upenn.edu
+$!  Charles Bailey  bailey@newman.upenn.edu
 $
 $!  A little basic setup
 $   On Error Then Goto wrapup
@@ -32,12 +32,20 @@ $     Write Sys$Error "Descrip.MMS or used the AXE=1 macro in the MM[SK] command
 $     Write Sys$Error ""
 $     Exit 44
 $   EndIf
+$!
+$!  "debug" perl if second parameter is nonblank
+$!
+$   dbg = ""
+$   ndbg = ""
+$   if p2.nes."" then dbg  = "dbg"
+$   if p2.nes."" then ndbg = "ndbg"
+$!
 $!  Pick up a copy of perl to use for the tests
 $   Delete/Log/NoConfirm Perl.;*
-$   Copy/Log/NoConfirm [-]Perl'exe' []Perl.
+$   Copy/Log/NoConfirm [-]'ndbg'Perl'exe' []Perl.
 $
 $!  Make the environment look a little friendlier to tests which assume Unix
-$   cat = "Type"
+$   cat == "Type"
 $   Macro/NoDebug/NoList/Object=Echo.Obj Sys$Input
 		.title echo
 		.psect data,wrt,noexe
@@ -80,16 +88,16 @@ $   Macro/NoDebug/NoList/Object=Echo.Obj Sys$Input
 		.end echo
 $   Link/NoMap/NoTrace/Exe=Echo.Exe Echo.Obj;
 $   Delete/Log/NoConfirm Echo.Obj;*
-$   echo = "$" + F$Parse("Echo.Exe")
+$   echo == "$" + F$Parse("Echo.Exe")
 $
 $!  And do it
 $   Show Process/Accounting
 $   testdir = "Directory/NoHead/NoTrail/Column=1"
-$   Define/User Perlshr Sys$Disk:[-]PerlShr'exe'
-$   MCR Sys$Disk:[]Perl. "-I[-.lib]" - "''p2'" "''p3'" "''p4'" "''p5'" "''p6'"
+$   Define/User 'dbg'Perlshr Sys$Disk:[-]'dbg'PerlShr'exe'
+$   MCR Sys$Disk:[]Perl. "-I[-.lib]" - "''p3'" "''p4'" "''p5'" "''p6'"
 $   Deck/Dollar=$$END-OF-TEST$$
 # $RCSfile: TEST,v $$Revision: 4.1 $$Date: 92/08/07 18:27:00 $
-# Modified for VMS 30-Sep-1994  Charles Bailey  bailey@genetics.upenn.edu
+# Modified for VMS 30-Sep-1994  Charles Bailey  bailey@newman.upenn.edu
 #
 # This is written in a peculiar style, since we're trying to avoid
 # most of the constructs we'll be testing for.
@@ -100,10 +108,11 @@ $   Deck/Dollar=$$END-OF-TEST$$
 use Config;
 
 @compexcl=('cpp.t');
-@ioexcl=('argv.t','dup.t','fs.t','pipe.t');
+@ioexcl=('argv.t','dup.t','fs.t','pipe.t','openpid.t');
 @libexcl=('db-btree.t','db-hash.t','db-recno.t',
-          'gdbm.t','io_dup.t', 'io_pipe.t', 'io_sel.t', 'io_sock.t',
-          'ndbm.t','odbm.t','open2.t','open3.t', 'ph.t', 'posix.t');
+          'gdbm.t','io_dup.t', 'io_pipe.t', 'io_poll.t', 'io_sel.t',
+          'io_sock.t', 'io_unix.t',
+          'ndbm.t','odbm.t','open2.t','open3.t', 'ph.t', 'posix.t', 'dprof.t');
 
 # Note: POSIX is not part of basic build, but can be built
 # separately if you're using DECC
@@ -165,6 +174,7 @@ while ($test = shift) {
 	open(results,"\$ MCR Sys\$Disk:[]Perl. \"-I[-.lib]\" $switch $test |") || (print "can't run.\n");
     $ok = 0;
     $next = 0;
+    $pending_not = 0;
     while (<results>) {
 	if ($verbose) {
 	    print "$te$_";
@@ -181,7 +191,10 @@ while ($test = shift) {
 		$next = $1, $ok = 0, last if /^not ok ([0-9]*)/;
 		next if /^\s*$/; # our 'echo' substitute produces one more \n than Unix'
 		if (/^ok (.*)/ && $1 == $next) {
+		    $next = $1, $ok=0, last if $pending_not;
 		    $next = $next + 1;
+		} elsif (/^not/) {
+		    $pending_not = 1;
 		} else {
 		    $ok = 0;
 		}

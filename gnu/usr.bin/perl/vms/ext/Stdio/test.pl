@@ -1,4 +1,4 @@
-# Tests for VMS::Stdio v2.1
+# Tests for VMS::Stdio v2.2
 use VMS::Stdio;
 import VMS::Stdio qw(&flush &getname &rewind &sync &tmpnam);
 

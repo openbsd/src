@@ -2,7 +2,7 @@
 #   of VMS and Unix file specification syntax.
 #
 #   Version:  1.1
-#   Author:   Charles Bailey  bailey@genetics.upenn.edu
+#   Author:   Charles Bailey  bailey@newman.upenn.edu
 #   Revised:  08-Mar-1995
 
 =head1 NAME

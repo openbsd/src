@@ -9,31 +9,30 @@
 #ifndef  _INC_WIN32_PERL5
 #define  _INC_WIN32_PERL5
 
-#ifdef PERL_OBJECT
+#ifndef _WIN32_WINNT
+#  define _WIN32_WINNT 0x0400     /* needed for TryEnterCriticalSection() etc. */
+#endif
+
+#if defined(PERL_OBJECT) || defined(PERL_IMPLICIT_SYS) || defined(PERL_CAPI)
 #  define DYNAMIC_ENV_FETCH
 #  define ENV_HV_NAME "___ENV_HV_NAME___"
+#  define HAS_GETENV_LEN
 #  define prime_env_iter()
 #  define WIN32IO_IS_STDIO		/* don't pull in custom stdio layer */
+#  define WIN32SCK_IS_STDSCK		/* don't pull in custom wsock layer */
 #  ifdef PERL_GLOBAL_STRUCT
-#    error PERL_GLOBAL_STRUCT cannot be defined with PERL_OBJECT
+#    error PERL_GLOBAL_STRUCT cannot be defined with PERL_IMPLICIT_SYS
 #  endif
 #  define win32_get_privlib PerlEnv_lib_path
 #  define win32_get_sitelib PerlEnv_sitelib_path
+#  define win32_get_vendorlib PerlEnv_vendorlib_path
 #endif
 
 #ifdef __GNUC__
-typedef long long __int64;
-#  define Win32_Winsock
-/* GCC does not do __declspec() - render it a nop 
- * and turn on options to avoid importing data 
- */
-#ifndef __declspec
-#  define __declspec(x)
-#endif
-#  ifndef PERL_OBJECT
-#    define PERL_GLOBAL_STRUCT
-#    define MULTIPLICITY
+#  ifndef __int64		/* some versions seem to #define it already */
+#    define __int64 long long
 #  endif
+#  define Win32_Winsock
 #endif
 
 /* Define DllExport akin to perl's EXT, 
@@ -41,6 +40,8 @@ typedef long long __int64;
  * then Export the symbol, 
  * otherwise import it.
  */
+
+/* now even GCC supports __declspec() */
 
 #if defined(PERL_OBJECT)
 #define DllExport
@@ -70,6 +71,7 @@ typedef long long __int64;
 #include <stdio.h>
 #include <direct.h>
 #include <stdlib.h>
+#include <fcntl.h>
 #ifndef EXT
 #include "EXTERN.h"
 #endif
@@ -79,6 +81,18 @@ struct tms {
 	long	tms_stime;
 	long	tms_cutime;
 	long	tms_cstime;
+};
+
+#ifndef SYS_NMLN
+#define SYS_NMLN	257
+#endif
+
+struct utsname {
+    char sysname[SYS_NMLN];
+    char nodename[SYS_NMLN];
+    char release[SYS_NMLN];
+    char version[SYS_NMLN];
+    char machine[SYS_NMLN];
 };
 
 #ifndef START_EXTERN_C
@@ -106,15 +120,18 @@ struct tms {
 #define PERL_SOCK_SYSREAD_IS_RECV
 #define PERL_SOCK_SYSWRITE_IS_SEND
 
+#define PERL_NO_FORCE_LINK		/* no need for PL_force_link_funcs */
 
 /* if USE_WIN32_RTL_ENV is not defined, Perl uses direct Win32 calls
  * to read the environment, bypassing the runtime's (usually broken)
  * facilities for accessing the same.  See note in util.c/my_setenv(). */
 /*#define USE_WIN32_RTL_ENV */
 
-/* Define USE_FIXED_OSFHANDLE to fix VC's _open_osfhandle() on W95.
- * Can only enable it if not using the DLL CRT (it doesn't expose internals) */
-#if defined(_MSC_VER) && !defined(_DLL) && defined(_M_IX86)
+/* Define USE_FIXED_OSFHANDLE to fix MSVCRT's _open_osfhandle() on W95.
+   It now uses some black magic to work seamlessly with the DLL CRT and
+   works with MSVC++ 4.0+ or GCC/Mingw32
+	-- BKS 1-24-2000 */
+#if (defined(_M_IX86) && _MSC_VER >= 1000) || defined(__MINGW32__)
 #define USE_FIXED_OSFHANDLE
 #endif
 
@@ -128,12 +145,24 @@ struct tms {
 #define FILE_SHARE_DELETE		0x00000004
 #endif
 
+/* access() mode bits */
+#ifndef R_OK
+#  define	R_OK	4
+#  define	W_OK	2
+#  define	X_OK	1
+#  define	F_OK	0
+#endif
+
+#define PERL_GET_CONTEXT_DEFINED
+
 /* Compiler-specific stuff. */
 
 #ifdef __BORLANDC__		/* Borland C++ */
 
 #define _access access
 #define _chdir chdir
+#define _getpid getpid
+#define wcsicmp _wcsicmp
 #include <sys/types.h>
 
 #ifndef DllMain
@@ -149,13 +178,15 @@ struct tms {
 #pragma warn -use	/* "'foo' is declared but never used" */
 #pragma warn -csu	/* "comparing signed and unsigned values" */
 #pragma warn -pro	/* "call to function with no prototype" */
-
-#define USE_RTL_WAIT	/* Borland has a working wait() */
+#pragma warn -stu	/* "undefined structure 'foo'" */
 
 /* Borland is picky about a bare member function name used as its ptr */
 #ifdef PERL_OBJECT
-#define FUNC_NAME_TO_PTR(name)	&(name)
+#  define MEMBER_TO_FPTR(name)	&(name)
 #endif
+
+/* Borland C thinks that a pointer to a member variable is 12 bytes in size. */
+#define PERL_MEMBER_PTR_SIZE	12
 
 #endif
 
@@ -163,56 +194,11 @@ struct tms {
 
 typedef long		uid_t;
 typedef long		gid_t;
+typedef unsigned short	mode_t;
 #pragma  warning(disable: 4018 4035 4101 4102 4244 4245 4761)
 
-#ifndef PERL_OBJECT
-
 /* Visual C thinks that a pointer to a member variable is 16 bytes in size. */
-#define STRUCT_MGVTBL_DEFINITION					\
-struct mgvtbl {								\
-    union {								\
-	int	    (CPERLscope(*svt_get))	_((SV *sv, MAGIC* mg));	\
-	char	    handle_VC_problem1[16];				\
-    };									\
-    union {								\
-	int	    (CPERLscope(*svt_set))	_((SV *sv, MAGIC* mg));	\
-	char	    handle_VC_problem2[16];				\
-    };									\
-    union {								\
-	U32	    (CPERLscope(*svt_len))	_((SV *sv, MAGIC* mg));	\
-	char	    handle_VC_problem3[16];				\
-    };									\
-    union {								\
-	int	    (CPERLscope(*svt_clear))	_((SV *sv, MAGIC* mg));	\
-	char	    handle_VC_problem4[16];				\
-    };									\
-    union {								\
-	int	    (CPERLscope(*svt_free))	_((SV *sv, MAGIC* mg));	\
-	char	    handle_VC_problem5[16];				\
-    };									\
-}
-
-#define BASEOP_DEFINITION		\
-    OP*		op_next;		\
-    OP*		op_sibling;		\
-    OP*		(CPERLscope(*op_ppaddr))_((ARGSproto));		\
-    char	handle_VC_problem[12];	\
-    PADOFFSET	op_targ;		\
-    OPCODE	op_type;		\
-    U16		op_seq;			\
-    U8		op_flags;		\
-    U8		op_private;
-
-#define UNION_ANY_DEFINITION union any {		\
-    void*	any_ptr;				\
-    I32		any_i32;				\
-    IV		any_iv;					\
-    long	any_long;				\
-    void	(CPERLscope(*any_dptr)) _((void*));	\
-    char	handle_VC_problem[16];			\
-}
-
-#endif /* PERL_OBJECT */
+#define PERL_MEMBER_PTR_SIZE	16
 
 #endif /* _MSC_VER */
 
@@ -227,14 +213,7 @@ typedef long		gid_t;
 #define fcloseall	_fcloseall
 
 #ifdef PERL_OBJECT
-#define FUNC_NAME_TO_PTR(name)	&(name)
-#endif
-
-#ifndef _O_NOINHERIT
-#  define _O_NOINHERIT	0x0080
-#  ifndef _NO_OLDNAMES
-#    define O_NOINHERIT	_O_NOINHERIT
-#  endif
+#  define MEMBER_TO_FPTR(name)	&(name)
 #endif
 
 #ifndef _O_NOINHERIT
@@ -246,7 +225,51 @@ typedef long		gid_t;
 
 #endif /* __MINGW32__ */
 
+/* both GCC/Mingw32 and MSVC++ 4.0 are missing this, so we put it here */
+#ifndef CP_UTF8
+#  define CP_UTF8	65001
+#endif
+
 /* compatibility stuff for other compilers goes here */
+
+
+#if !defined(PERL_OBJECT) && defined(PERL_CAPI) && defined(PERL_MEMBER_PTR_SIZE)
+#  define STRUCT_MGVTBL_DEFINITION \
+struct mgvtbl {								\
+    union {								\
+	int	    (CPERLscope(*svt_get))(pTHX_ SV *sv, MAGIC* mg);	\
+	char	    handle_VC_problem1[PERL_MEMBER_PTR_SIZE];		\
+    };									\
+    union {								\
+	int	    (CPERLscope(*svt_set))(pTHX_ SV *sv, MAGIC* mg);	\
+	char	    handle_VC_problem2[PERL_MEMBER_PTR_SIZE];		\
+    };									\
+    union {								\
+	U32	    (CPERLscope(*svt_len))(pTHX_ SV *sv, MAGIC* mg);	\
+	char	    handle_VC_problem3[PERL_MEMBER_PTR_SIZE];		\
+    };									\
+    union {								\
+	int	    (CPERLscope(*svt_clear))(pTHX_ SV *sv, MAGIC* mg);	\
+	char	    handle_VC_problem4[PERL_MEMBER_PTR_SIZE];		\
+    };									\
+    union {								\
+	int	    (CPERLscope(*svt_free))(pTHX_ SV *sv, MAGIC* mg);	\
+	char	    handle_VC_problem5[PERL_MEMBER_PTR_SIZE];		\
+    };									\
+}
+
+#  define BASEOP_DEFINITION \
+    OP*		op_next;						\
+    OP*		op_sibling;						\
+    OP*		(CPERLscope(*op_ppaddr))(pTHX);				\
+    char	handle_VC_problem[PERL_MEMBER_PTR_SIZE-sizeof(OP*)];	\
+    PADOFFSET	op_targ;						\
+    OPCODE	op_type;						\
+    U16		op_seq;							\
+    U8		op_flags;						\
+    U8		op_private;
+
+#endif /* !PERL_OBJECT && PERL_CAPI && PERL_MEMBER_PTR_SIZE */
 
 
 START_EXTERN_C
@@ -271,8 +294,34 @@ extern	int	chown(const char *p, uid_t o, gid_t g);
 #define  init_os_extras Perl_init_os_extras
 
 DllExport void		Perl_win32_init(int *argcp, char ***argvp);
-DllExport void		Perl_init_os_extras(void);
+DllExport void		Perl_init_os_extras();
 DllExport void		win32_str_os_error(void *sv, DWORD err);
+DllExport int		RunPerl(int argc, char **argv, char **env);
+
+typedef struct {
+    HANDLE	childStdIn;
+    HANDLE	childStdOut;
+    HANDLE	childStdErr;
+    /*
+     * the following correspond to the fields of the same name
+     * in the STARTUPINFO structure. Embedders can use these to
+     * control the spawning process' look.
+     * Example - to hide the window of the spawned process:
+     *    dwFlags = STARTF_USESHOWWINDOW;
+     *	  wShowWindow = SW_HIDE;
+     */
+    DWORD	dwFlags;
+    DWORD	dwX; 
+    DWORD	dwY; 
+    DWORD	dwXSize; 
+    DWORD	dwYSize; 
+    DWORD	dwXCountChars; 
+    DWORD	dwYCountChars; 
+    DWORD	dwFillAttribute;
+    WORD	wShowWindow; 
+} child_IO_table;
+
+DllExport void		win32_get_child_IO(child_IO_table* ptr);
 
 #ifndef USE_SOCKETS_AS_HANDLES
 extern FILE *		my_fdopen(int, char *);
@@ -281,11 +330,16 @@ extern int		my_fclose(FILE *);
 extern int		do_aspawn(void *really, void **mark, void **sp);
 extern int		do_spawn(char *cmd);
 extern int		do_spawn_nowait(char *cmd);
-extern char		do_exec(char *cmd);
-extern char *		win32_get_privlib(char *pl);
-extern char *		win32_get_sitelib(char *pl);
+extern char *		win32_get_privlib(const char *pl);
+extern char *		win32_get_sitelib(const char *pl);
+extern char *		win32_get_vendorlib(const char *pl);
 extern int		IsWin95(void);
 extern int		IsWinNT(void);
+extern void		win32_argv2utf8(int argc, char** argv);
+
+#ifdef PERL_IMPLICIT_SYS
+extern void		win32_delete_internal_host(void *h);
+#endif
 
 extern char *		staticlinkmodules[];
 
@@ -309,50 +363,21 @@ typedef  char *		caddr_t;	/* In malloc.c (core address). */
 #define PERL_CORE
 #endif
 
-#ifdef USE_BINMODE_SCRIPTS
-#define PERL_SCRIPT_MODE "rb"
-EXT void win32_strip_return(struct sv *sv);
+#ifdef PERL_TEXTMODE_SCRIPTS
+#  define PERL_SCRIPT_MODE		"r"
 #else
-#define PERL_SCRIPT_MODE "r"
-#define win32_strip_return(sv) NOOP
-#endif
-
-#define HAVE_INTERP_INTERN
-struct interp_intern {
-    char *	w32_perlshell_tokens;
-    char **	w32_perlshell_vec;
-    long	w32_perlshell_items;
-    struct av *	w32_fdpid;
-#ifndef USE_RTL_WAIT
-    long	w32_num_children;
-    HANDLE	w32_child_pids[MAXIMUM_WAIT_OBJECTS];
-#endif
-};
-
-#define w32_perlshell_tokens	(PL_sys_intern.w32_perlshell_tokens)
-#define w32_perlshell_vec	(PL_sys_intern.w32_perlshell_vec)
-#define w32_perlshell_items	(PL_sys_intern.w32_perlshell_items)
-#define w32_fdpid		(PL_sys_intern.w32_fdpid)
-
-#ifndef USE_RTL_WAIT
-#  define w32_num_children	(PL_sys_intern.w32_num_children)
-#  define w32_child_pids	(PL_sys_intern.w32_child_pids)
+#  define PERL_SCRIPT_MODE		"rb"
 #endif
 
 /* 
  * Now Win32 specific per-thread data stuff 
  */
 
-#ifdef USE_THREADS
-#  ifndef USE_DECLSPEC_THREAD
-#    define HAVE_THREAD_INTERN
-
 struct thread_intern {
     /* XXX can probably use one buffer instead of several */
     char		Wstrerror_buffer[512];
     struct servent	Wservent;
     char		Wgetlogin_buffer[128];
-    char		Ww32_perllib_root[MAX_PATH+1];
 #    ifdef USE_SOCKETS_AS_HANDLES
     int			Winit_socktype;
 #    endif
@@ -363,7 +388,100 @@ struct thread_intern {
     void *		retv;	/* slot for thread return value */
 #    endif
 };
+
+#ifdef USE_THREADS
+#  ifndef USE_DECLSPEC_THREAD
+#    define HAVE_THREAD_INTERN
 #  endif /* !USE_DECLSPEC_THREAD */
 #endif /* USE_THREADS */
 
+#define HAVE_INTERP_INTERN
+typedef struct {
+    long	num;
+    DWORD	pids[MAXIMUM_WAIT_OBJECTS];
+    HANDLE	handles[MAXIMUM_WAIT_OBJECTS];
+} child_tab;
+
+struct interp_intern {
+    char *	perlshell_tokens;
+    char **	perlshell_vec;
+    long	perlshell_items;
+    struct av *	fdpid;
+    child_tab *	children;
+#ifdef USE_ITHREADS
+    DWORD	pseudo_id;
+    child_tab *	pseudo_children;
+#endif
+    void *	internal_host;
+#ifndef USE_THREADS
+    struct thread_intern	thr_intern;
+#endif
+};
+
+
+#define w32_perlshell_tokens	(PL_sys_intern.perlshell_tokens)
+#define w32_perlshell_vec	(PL_sys_intern.perlshell_vec)
+#define w32_perlshell_items	(PL_sys_intern.perlshell_items)
+#define w32_fdpid		(PL_sys_intern.fdpid)
+#define w32_children		(PL_sys_intern.children)
+#define w32_num_children	(w32_children->num)
+#define w32_child_pids		(w32_children->pids)
+#define w32_child_handles	(w32_children->handles)
+#define w32_pseudo_id		(PL_sys_intern.pseudo_id)
+#define w32_pseudo_children	(PL_sys_intern.pseudo_children)
+#define w32_num_pseudo_children		(w32_pseudo_children->num)
+#define w32_pseudo_child_pids		(w32_pseudo_children->pids)
+#define w32_pseudo_child_handles	(w32_pseudo_children->handles)
+#define w32_internal_host		(PL_sys_intern.internal_host)
+#ifdef USE_THREADS
+#  define w32_strerror_buffer	(thr->i.Wstrerror_buffer)
+#  define w32_getlogin_buffer	(thr->i.Wgetlogin_buffer)
+#  define w32_crypt_buffer	(thr->i.Wcrypt_buffer)
+#  define w32_servent		(thr->i.Wservent)
+#  define w32_init_socktype	(thr->i.Winit_socktype)
+#else
+#  define w32_strerror_buffer	(PL_sys_intern.thr_intern.Wstrerror_buffer)
+#  define w32_getlogin_buffer	(PL_sys_intern.thr_intern.Wgetlogin_buffer)
+#  define w32_crypt_buffer	(PL_sys_intern.thr_intern.Wcrypt_buffer)
+#  define w32_servent		(PL_sys_intern.thr_intern.Wservent)
+#  define w32_init_socktype	(PL_sys_intern.thr_intern.Winit_socktype)
+#endif /* USE_THREADS */
+
+/* UNICODE<>ANSI translation helpers */
+/* Use CP_ACP when mode is ANSI */
+/* Use CP_UTF8 when mode is UTF8 */
+
+#define A2WHELPER_LEN(lpa, alen, lpw, nBytes)\
+    (lpw[0] = 0, MultiByteToWideChar((IN_BYTE) ? CP_ACP : CP_UTF8, 0, \
+				    lpa, alen, lpw, (nBytes/sizeof(WCHAR))))
+#define A2WHELPER(lpa, lpw, nBytes)	A2WHELPER_LEN(lpa, -1, lpw, nBytes)
+
+#define W2AHELPER_LEN(lpw, wlen, lpa, nChars)\
+    (lpa[0] = '\0', WideCharToMultiByte((IN_BYTE) ? CP_ACP : CP_UTF8, 0, \
+				       lpw, wlen, (LPSTR)lpa, nChars,NULL,NULL))
+#define W2AHELPER(lpw, lpa, nChars)	W2AHELPER_LEN(lpw, -1, lpa, nChars)
+
+#define USING_WIDE() (PL_widesyscalls && PerlEnv_os_id() == VER_PLATFORM_WIN32_NT)
+
+#ifdef USE_ITHREADS
+#  define PERL_WAIT_FOR_CHILDREN \
+    STMT_START {							\
+	if (w32_pseudo_children && w32_num_pseudo_children) {		\
+	    long children = w32_num_pseudo_children;			\
+	    WaitForMultipleObjects(children,				\
+				   w32_pseudo_child_handles,		\
+				   TRUE, INFINITE);			\
+	    while (children)						\
+		CloseHandle(w32_pseudo_child_handles[--children]);	\
+	}								\
+    } STMT_END
+#endif
+
+/*
+ * This provides a layer of functions and macros to ensure extensions will
+ * get to use the same RTL functions as the core.
+ */
+#include "win32iop.h"
+
 #endif /* _INC_WIN32_PERL5 */
+

@@ -24,6 +24,8 @@ calls.
 #include <windows.h>
 #include <string.h>
 
+#define PERL_NO_GET_CONTEXT
+
 #include "EXTERN.h"
 #include "perl.h"
 #include "win32.h"
@@ -37,22 +39,22 @@ calls.
 static SV *error_sv;
 
 static char *
-OS_Error_String(CPERLarg)
+OS_Error_String(pTHXo)
 {
  DWORD err = GetLastError();
  STRLEN len;
  if (!error_sv)
-  error_sv = newSVpv("",0);
- win32_str_os_error(error_sv,err);
+  error_sv = newSVpvn("",0);
+ PerlProc_GetOSError(error_sv,err);
  return SvPV(error_sv,len);
 }
 
 #include "dlutils.c"	/* SaveError() etc	*/
 
 static void
-dl_private_init(CPERLarg)
+dl_private_init(pTHXo)
 {
-    (void)dl_generic_private_init(PERL_OBJECT_THIS);
+    (void)dl_generic_private_init(aTHXo);
 }
 
 /* 
@@ -94,7 +96,7 @@ dl_static_linked(char *filename)
 MODULE = DynaLoader	PACKAGE = DynaLoader
 
 BOOT:
-    (void)dl_private_init(PERL_OBJECT_THIS);
+    (void)dl_private_init(aTHXo);
 
 void *
 dl_load_file(filename,flags=0)
@@ -102,33 +104,35 @@ dl_load_file(filename,flags=0)
     int			flags
     PREINIT:
     CODE:
-    DLDEBUG(1,PerlIO_printf(PerlIO_stderr(),"dl_load_file(%s):\n", filename));
-    if (dl_static_linked(filename) == 0)
-	RETVAL = (void*) LoadLibraryEx(filename, NULL, LOAD_WITH_ALTERED_SEARCH_PATH ) ;
+  {
+    DLDEBUG(1,PerlIO_printf(Perl_debug_log,"dl_load_file(%s):\n", filename));
+    if (dl_static_linked(filename) == 0) {
+	RETVAL = PerlProc_DynaLoad(filename);
+    }
     else
 	RETVAL = (void*) GetModuleHandle(NULL);
-    DLDEBUG(2,PerlIO_printf(PerlIO_stderr()," libref=%x\n", RETVAL));
+    DLDEBUG(2,PerlIO_printf(Perl_debug_log," libref=%x\n", RETVAL));
     ST(0) = sv_newmortal() ;
     if (RETVAL == NULL)
-	SaveError(PERL_OBJECT_THIS_ "load_file:%s",
-		  OS_Error_String(PERL_OBJECT_THIS)) ;
+	SaveError(aTHXo_ "load_file:%s",
+		  OS_Error_String(aTHXo)) ;
     else
 	sv_setiv( ST(0), (IV)RETVAL);
-
+  }
 
 void *
 dl_find_symbol(libhandle, symbolname)
     void *	libhandle
     char *	symbolname
     CODE:
-    DLDEBUG(2,PerlIO_printf(PerlIO_stderr(),"dl_find_symbol(handle=%x, symbol=%s)\n",
+    DLDEBUG(2,PerlIO_printf(Perl_debug_log,"dl_find_symbol(handle=%x, symbol=%s)\n",
 		      libhandle, symbolname));
     RETVAL = (void*) GetProcAddress((HINSTANCE) libhandle, symbolname);
-    DLDEBUG(2,PerlIO_printf(PerlIO_stderr(),"  symbolref = %x\n", RETVAL));
+    DLDEBUG(2,PerlIO_printf(Perl_debug_log,"  symbolref = %x\n", RETVAL));
     ST(0) = sv_newmortal() ;
     if (RETVAL == NULL)
-	SaveError(PERL_OBJECT_THIS_ "find_symbol:%s",
-		  OS_Error_String(PERL_OBJECT_THIS)) ;
+	SaveError(aTHXo_ "find_symbol:%s",
+		  OS_Error_String(aTHXo)) ;
     else
 	sv_setiv( ST(0), (IV)RETVAL);
 
@@ -147,9 +151,11 @@ dl_install_xsub(perl_name, symref, filename="$Package")
     void *		symref 
     char *		filename
     CODE:
-    DLDEBUG(2,PerlIO_printf(PerlIO_stderr(),"dl_install_xsub(name=%s, symref=%x)\n",
+    DLDEBUG(2,PerlIO_printf(Perl_debug_log,"dl_install_xsub(name=%s, symref=%x)\n",
 		      perl_name, symref));
-    ST(0)=sv_2mortal(newRV((SV*)newXS(perl_name, (void(*)(CV* _CPERLarg))symref, filename)));
+    ST(0) = sv_2mortal(newRV((SV*)newXS(perl_name,
+					(void(*)(pTHXo_ CV *))symref,
+					filename)));
 
 
 char *

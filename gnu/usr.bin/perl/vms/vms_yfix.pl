@@ -6,7 +6,7 @@
 # If it finds that the input files are already patches for VMS,
 # it just copies the input to the output.
 #
-# Revised 20-Dec-1996 by Charles Bailey  bailey@genetics.upenn.edu
+# Revised 20-Dec-1996 by Charles Bailey  bailey@newman.upenn.edu
 
 $VERSION = '1.11';
 

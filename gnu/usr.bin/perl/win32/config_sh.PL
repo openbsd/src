@@ -10,19 +10,52 @@ sub mungepath {
     return join(' ', @p);
 }
 
-my %opt;
-while (@ARGV && $ARGV[0] =~ /^([\w_]+)=(.*)$/)
- {
-  $opt{$1}=$2;
-  shift(@ARGV);
- }
-
-$opt{VERSION} = $];
-$opt{INST_VER} =~ s|~VERSION~|$]|g;
-if ($] =~ /\.(\d\d\d)?(\d\d)?$/) { # should always be true
-  $opt{PATCHLEVEL} = int($1 || 0);
-  $opt{SUBVERSION} = $2 || '00';
+# generate an array of option strings from command-line args
+# or an option file
+#    -- added by BKS, 10-17-1999 to fix command-line overflow problems
+sub loadopts {
+    if ($ARGV[0] =~ /--cfgsh-option-file/) {
+	shift @ARGV;
+	my $optfile = shift @ARGV;
+	local (*F);
+	open OPTF, $optfile or die "Can't open $optfile: $!\n";
+	my @opts;
+	chomp(my $line = <OPTF>);
+	my @vars = split(/\t+~\t+/, $line);
+	for (@vars) {
+	    push(@opts, $_) unless (/^\s*$/);
+	}
+	close OPTF;
+	return \@opts;
+    }
+    else {
+	return \@ARGV;
+    }
 }
+
+my %opt;
+my $optref = loadopts();
+while (@{$optref} && $optref->[0] =~ /^([\w_]+)=(.*)$/) {
+    $opt{$1}=$2;
+    shift(@{$optref});
+}
+
+my $pl_h = '../patchlevel.h';
+
+if (-e $pl_h) {
+    open PL, "<$pl_h" or die "Can't open $pl_h: $!";
+    while (<PL>) {
+	if (/^#\s*define\s+(PERL_\w+)\s+([\d.]+)/) {
+	    $opt{$1} = $2;
+	}
+    }
+    close PL;
+}
+else {
+    die "Can't find $pl_h: $!";
+}
+$opt{VERSION} = "$opt{PERL_REVISION}.$opt{PERL_VERSION}.$opt{PERL_SUBVERSION}";
+$opt{INST_VER} =~ s|~VERSION~|$opt{VERSION}|g;
 
 $opt{'cf_by'} = $ENV{USERNAME} unless $opt{'cf_by'};
 $opt{'cf_email'} = $opt{'cf_by'} . '@' . (gethostbyname('localhost'))[0]
@@ -32,18 +65,19 @@ $opt{'usemymalloc'} = 'y' if $opt{'d_mymalloc'} eq 'define';
 $opt{libpth} = mungepath($opt{libpth}) if exists $opt{libpth};
 $opt{incpath} = mungepath($opt{incpath}) if exists $opt{incpath};
 
-while (<>)
- {
-  s/~([\w_]+)~/$opt{$1}/g;
-  if (/^([\w_]+)=(.*)$/) {
-    # this depends on cf_time being empty in the template (or we'll get a loop)
-    if ($1 eq 'cf_time') {
-      $_ = "$1='" . localtime(time) . "'\n" if $2 =~ /^\s*'\s*'/;
+while (<>) {
+    s/~([\w_]+)~/$opt{$1}/g;
+    if (/^([\w_]+)=(.*)$/) {
+	my($k,$v) = ($1,$2);
+	# this depends on cf_time being empty in the template (or we'll
+	# get a loop)
+	if ($k eq 'cf_time') {
+	    $_ = "$k='" . localtime(time) . "'\n" if $v =~ /^\s*'\s*'/;
+	}
+	elsif (exists $opt{$k}) {
+	    $_ = "$k='$opt{$k}'\n";
+	}
     }
-    elsif (exists $opt{$1}) {
-      $_ = "$1='$opt{$1}'\n";
-    }
-  }
-  print;
- }
+    print;
+}
 

@@ -113,6 +113,13 @@ DllExport  void		win32_free(void *block);
 DllExport  int		win32_open_osfhandle(long handle, int flags);
 DllExport  long		win32_get_osfhandle(int fd);
 
+DllExport  DIR*		win32_opendir(char *filename);
+DllExport  struct direct*	win32_readdir(DIR *dirp);
+DllExport  long		win32_telldir(DIR *dirp);
+DllExport  void		win32_seekdir(DIR *dirp, long loc);
+DllExport  void		win32_rewinddir(DIR *dirp);
+DllExport  int		win32_closedir(DIR *dirp);
+
 #ifndef USE_WIN32_RTL_ENV
 DllExport  char*	win32_getenv(const char *name);
 DllExport  int		win32_putenv(const char *name);
@@ -122,15 +129,22 @@ DllExport  unsigned 	win32_sleep(unsigned int);
 DllExport  int		win32_times(struct tms *timebuf);
 DllExport  unsigned 	win32_alarm(unsigned int sec);
 DllExport  int		win32_stat(const char *path, struct stat *buf);
+DllExport  char*	win32_longpath(char *path);
 DllExport  int		win32_ioctl(int i, unsigned int u, char *data);
+DllExport  int          win32_link(const char *oldname, const char *newname);
+DllExport  int		win32_unlink(const char *f);
 DllExport  int		win32_utime(const char *f, struct utimbuf *t);
+DllExport  int		win32_uname(struct utsname *n);
 DllExport  int		win32_wait(int *status);
 DllExport  int		win32_waitpid(int pid, int *status, int flags);
 DllExport  int		win32_kill(int pid, int sig);
+DllExport  unsigned long	win32_os_id(void);
+DllExport  void*	win32_dynaload(const char*filename);
+DllExport  int		win32_access(const char *path, int mode);
+DllExport  int		win32_chmod(const char *path, int mode);
+DllExport  int		win32_getpid(void);
 
-#if defined(HAVE_DES_FCRYPT) || defined(PERL_OBJECT)
 DllExport char *	win32_crypt(const char *txt, const char *salt);
-#endif
 
 END_EXTERN_C
 
@@ -152,7 +166,9 @@ END_EXTERN_C
 #undef times
 #undef alarm
 #undef ioctl
+#undef unlink
 #undef utime
+#undef uname
 #undef wait
 
 #ifdef __BORLANDC__
@@ -205,6 +221,7 @@ END_EXTERN_C
 #define abort()			win32_abort()
 #define fstat(fd,bufptr)   	win32_fstat(fd,bufptr)
 #define stat(pth,bufptr)   	win32_stat(pth,bufptr)
+#define longpath(pth)   	win32_longpath(pth)
 #define rename(old,new)		win32_rename(old,new)
 #define setmode(fd,mode)	win32_setmode(fd,mode)
 #define lseek(fd,offset,orig)	win32_lseek(fd,offset,orig)
@@ -242,6 +259,9 @@ END_EXTERN_C
 #define getchar			win32_getchar
 #undef putchar
 #define putchar			win32_putchar
+#define access(p,m)		win32_access(p,m)
+#define chmod(p,m)		win32_chmod(p,m)
+
 
 #if !defined(MYMALLOC) || !defined(PERL_CORE)
 #undef malloc
@@ -260,7 +280,10 @@ END_EXTERN_C
 #define times			win32_times
 #define alarm			win32_alarm
 #define ioctl			win32_ioctl
+#define link			win32_link
+#define unlink			win32_unlink
 #define utime			win32_utime
+#define uname			win32_uname
 #define wait			win32_wait
 #define waitpid			win32_waitpid
 #define kill			win32_kill
@@ -271,11 +294,11 @@ END_EXTERN_C
 #define seekdir			win32_seekdir
 #define rewinddir		win32_rewinddir
 #define closedir		win32_closedir
+#define os_id			win32_os_id
+#define getpid			win32_getpid
 
-#ifdef HAVE_DES_FCRYPT
 #undef crypt
-#define crypt			win32_crypt
-#endif
+#define crypt(t,s)		win32_crypt(t,s)
 
 #ifndef USE_WIN32_RTL_ENV
 #undef getenv

@@ -1,5 +1,5 @@
 # Pod::Text::Color -- Convert POD data to formatted color ASCII text
-# $Id: Color.pm,v 1.1.1.1 2000/04/06 16:09:48 millert Exp $
+# $Id: Color.pm,v 1.2 2000/04/06 17:06:49 millert Exp $
 #
 # Copyright 1999 by Russ Allbery <rra@stanford.edu>
 #
@@ -27,7 +27,7 @@ use vars qw(@ISA $VERSION);
 @ISA = qw(Pod::Text);
 
 # Use the CVS revision of this file as its version number.
-($VERSION = (split (' ', q$Revision: 1.1.1.1 $ ))[1]) =~ s/\.(\d)$/.0$1/;
+($VERSION = (split (' ', q$Revision: 1.2 $ ))[1]) =~ s/\.(\d)$/.0$1/;
 
 
 ############################################################################
