@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.351 2003/04/05 21:44:45 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.352 2003/04/05 23:56:32 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1568,8 +1568,15 @@ xhost		: not host			{
 		}
 		;
 
-host		: STRING			{ $$ = host($1, -1); }
-		| STRING '/' number		{ $$ = host($1, $3); }
+host		: STRING			{ $$ = host($1); }
+		| STRING '/' number		{
+			char	*buf;
+
+			if (asprintf(&buf, "%s/%u", $1, $3) == -1)
+				err(1, "host: asprintf");
+			$$ = host(buf);
+			free(buf);
+		}
 		| dynaddr
 		| dynaddr '/' number		{
 			struct node_host	*n;

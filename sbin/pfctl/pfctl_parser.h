@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.52 2003/04/03 15:52:24 cedric Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.53 2003/04/05 23:56:32 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -153,6 +153,6 @@ void			 set_ipmask(struct node_host *, u_int8_t);
 void			 ifa_load(void);
 struct node_host	*ifa_exists(const char *);
 struct node_host	*ifa_lookup(const char *, enum pfctl_iflookup_mode);
-struct node_host	*host(const char *, int);
+struct node_host	*host(const char *);
 
 #endif /* _PFCTL_PARSER_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.149 2003/04/03 15:52:24 cedric Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.150 2003/04/05 23:56:32 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -944,45 +944,28 @@ ifa_lookup(const char *ifa_name, enum pfctl_iflookup_mode mode)
 }
 
 struct node_host *
-host(const char *s, int mask)
+host(const char *s)
 {
 	struct node_host	*h = NULL;
-	int			 v4mask, v6mask, cont = 1;
-	char			*buf = NULL, *p, *q, *ps;
+	int			 mask, v4mask, v6mask, cont = 1;
+	char			*p, *q, *ps;
 
 	if ((p = strrchr(s, '/')) != NULL) {
-		if (mask != -1) {
-			fprintf(stderr, "address with netmask specified"
-			    " and extra netmask supplied\n");
-			return (NULL);
-		}
 		mask = strtol(p+1, &q, 0);
 		if (!q || *q) {
 			fprintf(stderr, "invalid netmask\n");
 			return (NULL);
 		}
-		if ((buf = strdup(s)) == NULL)
-			err(1, "host: strdup");
 		if ((ps = malloc(strlen(s) - strlen(p) + 1)) == NULL)
 			err(1, "host: malloc");
 		strlcpy(ps, s, strlen(s) - strlen(p) + 1);
 		v4mask = v6mask = mask;
 	} else {
-		if (asprintf(&ps, "%s", s) == -1)
-			err(1, "host: asprintf");
-		if (mask == -1) {
-			if (asprintf(&buf, "%s", s) == -1)
-				err(1, "host: asprintf");
-			v4mask = 32;
-			v6mask = 128;
-		} else if (mask <= 128) {
-			if (asprintf(&buf, "%s/%d", s, mask) == -1)
-				err(1, "host: asprintf");
-			v4mask = v6mask = mask;
-		} else {
-			fprintf(stderr, "illegal mask %d\n", mask);
-			return (NULL);
-		}
+		if ((ps = strdup(s)) == NULL)
+			err(1, "host: strdup");
+		v4mask = 32;
+		v6mask = 128;
+		mask = -1;
 	}
 
 	/* interface with this name exists? */
@@ -990,9 +973,8 @@ host(const char *s, int mask)
 		cont = 0;
 
 	/* IPv4 address? */
-	if (cont && (h = host_v4(buf, mask)) != NULL)
+	if (cont && (h = host_v4(s, mask)) != NULL)
 		cont = 0;
-	free(buf);
 
 	/* IPv6 address? */
 	if (cont && (h = host_v6(ps, v6mask)) != NULL)
