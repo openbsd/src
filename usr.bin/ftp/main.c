@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.29 1997/04/11 23:14:04 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.30 1997/04/23 20:33:19 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.21 1997/04/05 03:27:39 lukem Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.29 1997/04/11 23:14:04 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.30 1997/04/23 20:33:19 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -75,6 +75,7 @@ main(argc, argv)
 	struct passwd *pw = NULL;
 	char *cp, homedir[MAXPATHLEN];
 	int dumb_terminal = 0;
+	int outfd = -1;
 
 	sp = getservbyname("ftp", "tcp");
 	if (sp == 0)
@@ -116,8 +117,14 @@ main(argc, argv)
 			editing = 1;	/* editing mode on if from a tty */
 #endif
 	}
-	if (isatty(fileno(stdout)) && !dumb_terminal)
+
+	ttyout = stdout;
+	if (isatty(fileno(ttyout)) && !dumb_terminal)
 		progress = 1;		/* progress bar on if going to a tty */
+	else {
+		ttyout = stderr;
+		outfd = fileno(stdout);
+	}
 
 	while ((ch = getopt(argc, argv, "adeginpPr:tvV")) != -1) {
 		switch (ch) {
@@ -210,7 +217,7 @@ main(argc, argv)
 	if (argc > 0) {
 		if (strchr(argv[0], ':') != NULL) {
 			anonftp = 1;	/* Handle "automatic" transfers. */
-			rval = auto_fetch(argc, argv);
+			rval = auto_fetch(argc, argv, outfd);
 			if (rval >= 0)		/* -1 == connected and cd-ed */
 				exit(rval);
 		} else {
@@ -231,7 +238,7 @@ main(argc, argv)
 					break;
 				if (!connected) {
 					macnum = 0;
-					puts("Retrying...");
+					fputs("Retrying...\n", ttyout);
 					sleep(retry_connect);
 				}
 			} while (!connected);
@@ -314,14 +321,14 @@ cmdscanner(top)
 	    && !editing
 #endif /* !SMALL */
 	    )
-		(void)putchar('\n');
+		(void)putc('\n', ttyout);
 	for (;;) {
 #ifndef SMALL
 		if (!editing) {
 #endif /* !SMALL */
 			if (fromatty) {
-				fputs(prompt(), stdout);
-				(void)fflush(stdout);
+				fputs(prompt(), ttyout);
+				(void)fflush(ttyout);
 			}
 			if (fgets(line, sizeof(line), stdin) == NULL)
 				quit(0, 0);
@@ -333,7 +340,7 @@ cmdscanner(top)
 					break;
 				line[num] = '\0';
 			} else if (num == sizeof(line) - 2) {
-				puts("sorry, input line too long.");
+				fputs("sorry, input line too long.\n", ttyout);
 				while ((num = getchar()) != '\n' && num != EOF)
 					/* void */;
 				break;
@@ -349,7 +356,7 @@ cmdscanner(top)
 				if (num == 0)
 					break;
 			} else if (num >= sizeof(line)) {
-				puts("sorry, input line too long.");
+				fputs("sorry, input line too long.\n", ttyout);
 				break;
 			}
 			memcpy(line, buf, num);
@@ -363,7 +370,7 @@ cmdscanner(top)
 			continue;
 		c = getcmd(margv[0]);
 		if (c == (struct cmd *)-1) {
-			puts("?Ambiguous command.");
+			fputs("?Ambiguous command.\n", ttyout);
 			continue;
 		}
 		if (c == 0) {
@@ -375,17 +382,17 @@ cmdscanner(top)
 			 */
 			if (el_parse(el, margc, margv) != 0)
 #endif /* !SMALL */
-				puts("?Invalid command.");
+				fputs("?Invalid command.\n", ttyout);
 			continue;
 		}
 		if (c->c_conn && !connected) {
-			puts("Not connected.");
+			fputs("Not connected.\n", ttyout);
 			continue;
 		}
 		confirmrest = 0;
 		(*c->c_handler)(margc, margv);
 		if (bell && c->c_bell)
-			(void)putchar('\007');
+			(void)putc('\007', ttyout);
 		if (c->c_handler != help)
 			break;
 	}
@@ -617,7 +624,7 @@ help(argc, argv)
 		StringList *buf;
 
 		buf = sl_init();
-		printf("%sommands may be abbreviated.  Commands are:\n\n",
+		fprintf(ttyout, "%sommands may be abbreviated.  Commands are:\n\n",
 		    proxy ? "Proxy c" : "C");
 		for (c = cmdtab; c < &cmdtab[NCMDS]; c++)
 			if (c->c_name && (!proxy || c->c_proxy))
@@ -635,11 +642,11 @@ help(argc, argv)
 		arg = *++argv;
 		c = getcmd(arg);
 		if (c == (struct cmd *)-1)
-			printf("?Ambiguous help command %s\n", arg);
+			fprintf(ttyout, "?Ambiguous help command %s\n", arg);
 		else if (c == (struct cmd *)0)
-			printf("?Invalid help command %s\n", arg);
+			fprintf(ttyout, "?Invalid help command %s\n", arg);
 		else
-			printf("%-*s\t%s\n", HELPINDENT,
+			fprintf(ttyout, "%-*s\t%s\n", HELPINDENT,
 				c->c_name, c->c_help);
 	}
 }

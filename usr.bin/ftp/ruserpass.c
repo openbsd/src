@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruserpass.c,v 1.7 1997/04/10 00:17:10 millert Exp $	*/
+/*	$OpenBSD: ruserpass.c,v 1.8 1997/04/23 20:33:21 deraadt Exp $	*/
 /*	$NetBSD: ruserpass.c,v 1.13 1997/04/01 14:20:34 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ruserpass.c	8.4 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: ruserpass.c,v 1.7 1997/04/10 00:17:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: ruserpass.c,v 1.8 1997/04/23 20:33:21 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -191,12 +191,12 @@ next:
 				if (c != ' ' && c != '\t')
 					break;
 			if (c == EOF || c == '\n') {
-				puts("Missing macdef name argument.");
+				fputs("Missing macdef name argument.\n", ttyout);
 				goto bad;
 			}
 			if (macnum == 16) {
-				puts(
-"Limit of 16 macros have already been defined.");
+				fputs(
+"Limit of 16 macros have already been defined.\n", ttyout);
 				goto bad;
 			}
 			tmp = macros[macnum].mac_name;
@@ -206,8 +206,8 @@ next:
 				*tmp++ = c;
 			}
 			if (c == EOF) {
-				puts(
-"Macro definition missing null line terminator.");
+				fputs(
+"Macro definition missing null line terminator.\n", ttyout);
 				goto bad;
 			}
 			*tmp = '\0';
@@ -215,8 +215,8 @@ next:
 				while ((c=getc(cfile)) != EOF && c != '\n');
 			}
 			if (c == EOF) {
-				puts(
-"Macro definition missing null line terminator.");
+				fputs(
+"Macro definition missing null line terminator.\n", ttyout);
 				goto bad;
 			}
 			if (macnum == 0) {
@@ -229,8 +229,8 @@ next:
 			tmp = macros[macnum].mac_start;
 			while (tmp != macbuf + 4096) {
 				if ((c=getc(cfile)) == EOF) {
-				puts(
-"Macro definition missing null line terminator.");
+				fputs(
+"Macro definition missing null line terminator.\n", ttyout);
 					goto bad;
 				}
 				*tmp = c;
@@ -244,7 +244,7 @@ next:
 				tmp++;
 			}
 			if (tmp == macbuf + 4096) {
-				puts("4K macro buffer exceeded.");
+				fputs("4K macro buffer exceeded.\n", ttyout);
 				goto bad;
 			}
 			break;

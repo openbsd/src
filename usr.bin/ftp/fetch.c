@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.9 1997/04/18 18:56:49 millert Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.10 1997/04/23 20:33:06 deraadt Exp $	*/
 /*	$NetBSD: fetch.c,v 1.6 1997/04/14 09:09:19 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.9 1997/04/18 18:56:49 millert Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.10 1997/04/23 20:33:06 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -82,9 +82,10 @@ jmp_buf	httpabort;
  * Returns -1 on failure, 0 on success
  */
 int
-url_get(line, proxyenv)
+url_get(line, proxyenv, fd)
 	char *line;
 	char *proxyenv;
+	int fd;
 {
 	struct sockaddr_in sin;
 	int i, out, port, s;
@@ -145,7 +146,7 @@ url_get(line, proxyenv)
 		*portnum++ = '\0';
 
 	if (debug)
-		printf("host %s, port %s, path %s, save as %s.\n",
+		fprintf(ttyout, "host %s, port %s, path %s, save as %s.\n",
 		    host, portnum, path, savefile);
 
 	memset(&sin, 0, sizeof(sin));
@@ -198,9 +199,10 @@ url_get(line, proxyenv)
 	 * status of "200". Proxy requests don't want leading /.
 	 */
 	if (!proxy)
-		printf("Requesting %s:%d/%s\n", line, ntohs(port), path);
+		fprintf(ttyout, "Requesting %s:%d/%s\n", line, ntohs(port),
+		    path);
 	else
-		printf("Requesting %s (via %s)\n", line, proxyenv);
+		fprintf(ttyout, "Requesting %s (via %s)\n", line, proxyenv);
 	snprintf(buf, sizeof(buf), "GET %s%s HTTP/1.0\n\n",
 	    proxy ? "" : "/", path);
 	buflen = strlen(buf);
@@ -264,11 +266,14 @@ url_get(line, proxyenv)
 		goto improper;
 
 	/* Open the output file. */
-	out = open(savefile, O_CREAT | O_WRONLY | O_TRUNC, 0666);
-	if (out < 0) {
-		warn("Can't open %s", savefile);
-		goto cleanup_url_get;
-	}
+	if (fd == -1) {
+		out = open(savefile, O_CREAT | O_WRONLY | O_TRUNC, 0666);
+		if (out < 0) {
+			warn("Can't open %s", savefile);
+			goto cleanup_url_get;
+		}
+	} else
+		out = fd;
 
 	/* Trap signals */
 	oldintr = NULL;
@@ -297,17 +302,17 @@ url_get(line, proxyenv)
 		}
 		if (hash && !progress) {
 			while (bytes >= hashbytes) {
-				(void)putchar('#');
+				(void)putc('#', ttyout);
 				hashbytes += mark;
 			}
-			(void)fflush(stdout);
+			(void)fflush(ttyout);
 		}
 	}
 	if (hash && !progress && bytes > 0) {
 		if (bytes < mark)
-			(void)putchar('#');
-		(void)putchar('\n');
-		(void)fflush(stdout);
+			(void)putc('#', ttyout);
+		(void)putc('\n', ttyout);
+		(void)fflush(ttyout);
 	}
 	if (len != 0) {
 		warn("Reading from socket");
@@ -315,11 +320,12 @@ url_get(line, proxyenv)
 	}
 	progressmeter(1);
 	if (verbose)
-		puts("Successfully retrieved file.");
+		fputs("Successfully retrieved file.\n", ttyout);
 	(void)signal(SIGINT, oldintr);
 
 	close(s);
-	close(out);
+	if (fd != -1)
+		close(out);
 	if (proxy)
 		free(proxy);
 	return (0);
@@ -343,8 +349,8 @@ aborthttp(notused)
 {
 
 	alarmtimer(0);
-	puts("\nhttp fetch aborted.");
-	(void)fflush(stdout);
+	fputs("\nhttp fetch aborted.\n", ttyout);
+	(void)fflush(ttyout);
 	longjmp(httpabort, 1);
 }
 
@@ -363,9 +369,10 @@ aborthttp(notused)
  * Otherwise, 0 is returned if all files retrieved successfully.
  */
 int
-auto_fetch(argc, argv)
+auto_fetch(argc, argv, fd)
 	int argc;
 	char *argv[];
+	int fd;
 {
 	static char lasthost[MAXHOSTNAMELEN];
 	char *xargv[5];
@@ -374,7 +381,7 @@ auto_fetch(argc, argv)
 	char *ftpproxy, *httpproxy;
 	int rval, xargc, argpos;
 	int dirhasglob, filehasglob;
-	char rempath[MAXPATHLEN];
+	char rempath[MAXPATHLEN], fakedev[MAXPATHLEN];
 
 	argpos = 0;
 
@@ -408,7 +415,7 @@ auto_fetch(argc, argv)
 		 * Try HTTP URL-style arguments first.
 		 */
 		if (strncasecmp(line, HTTP_URL, sizeof(HTTP_URL) - 1) == 0) {
-			if (url_get(line, httpproxy) == -1)
+			if (url_get(line, httpproxy, fd) == -1)
 				rval = argpos + 1;
 			continue;
 		}
@@ -421,7 +428,7 @@ auto_fetch(argc, argv)
 		host = line;
 		if (strncasecmp(line, FTP_URL, sizeof(FTP_URL) - 1) == 0) {
 			if (ftpproxy) {
-				if (url_get(line, ftpproxy) == -1)
+				if (url_get(line, ftpproxy, fd) == -1)
 					rval = argpos + 1;
 				continue;
 			}
@@ -487,7 +494,7 @@ parsed_url:
 			}
 		}
 		if (debug)
-			printf("user %s:%s host %s port %s dir %s file %s\n",
+			fprintf(ttyout, "user %s:%s host %s port %s dir %s file %s\n",
 			    user, pass, host, portnum, dir, file);
 
 		/*
@@ -562,7 +569,7 @@ parsed_url:
 		}
 
 		if (!verbose)
-			printf("Retrieving %s/%s\n", dir ? dir : "", file);
+			fprintf(ttyout, "Retrieving %s/%s\n", dir ? dir : "", file);
 
 		if (dirhasglob) {
 			snprintf(rempath, sizeof(rempath), "%s/%s", dir, file);
@@ -570,6 +577,7 @@ parsed_url:
 		}
 
 		/* Fetch the file(s). */
+		xargc = 2;
 		xargv[0] = "get";
 		xargv[1] = file;
 		xargv[2] = NULL;
@@ -579,10 +587,16 @@ parsed_url:
 			ointeractive = interactive;
 			interactive = 0;
 			xargv[0] = "mget";
-			mget(2, xargv);
+			mget(xargc, xargv);
 			interactive = ointeractive;
-		} else
-			get(2, xargv);
+		} else {
+			if (fd != -1) {
+				xargv[2] = "-";
+				xargc++;
+			}
+			xargv[3] = NULL;
+			get(xargc, xargv);
+		}
 
 		if ((code / 100) != COMPLETE)
 			rval = argpos + 1;

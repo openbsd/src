@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.17 1997/04/16 05:02:54 millert Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.18 1997/04/23 20:33:13 deraadt Exp $	*/
 /*	$NetBSD: ftp.c,v 1.25 1997/04/14 09:09:22 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: ftp.c,v 1.17 1997/04/16 05:02:54 millert Exp $";
+static char rcsid[] = "$OpenBSD: ftp.c,v 1.18 1997/04/23 20:33:13 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -129,7 +129,7 @@ hookup(host, port)
 			hp->h_addr_list++;
 			memcpy(&hisctladdr.sin_addr, hp->h_addr_list[0],
 			    hp->h_length);
-			printf("Trying %s...\n", inet_ntoa(hisctladdr.sin_addr));
+			fprintf(ttyout, "Trying %s...\n", inet_ntoa(hisctladdr.sin_addr));
 			(void)close(s);
 			s = socket(hisctladdr.sin_family, SOCK_STREAM, 0);
 			if (s < 0) {
@@ -166,7 +166,7 @@ hookup(host, port)
 		goto bad;
 	}
 	if (verbose)
-		printf("Connected to %s.\n", hostname);
+		fprintf(ttyout, "Connected to %s.\n", hostname);
 	if (getreply(0) > 2) { 	/* read startup message from server */
 		if (cin)
 			(void)fclose(cin);
@@ -198,8 +198,8 @@ cmdabort(notused)
 {
 
 	alarmtimer(0);
-	putchar('\n');
-	(void)fflush(stdout);
+	putc('\n', ttyout);
+	(void)fflush(ttyout);
 	abrtflag++;
 	if (ptflag)
 		longjmp(ptabort, 1);
@@ -223,7 +223,7 @@ command(va_alist)
 
 	abrtflag = 0;
 	if (debug) {
-		fputs("---> ", stdout);
+		fputs("---> ", ttyout);
 #ifdef __STDC__
 		va_start(ap, fmt);
 #else
@@ -231,14 +231,14 @@ command(va_alist)
 		fmt = va_arg(ap, const char *);
 #endif
 		if (strncmp("PASS ", fmt, 5) == 0)
-			fputs("PASS XXXX", stdout);
+			fputs("PASS XXXX", ttyout);
 		else if (strncmp("ACCT ", fmt, 5) == 0)
-			fputs("ACCT XXXX", stdout);
+			fputs("ACCT XXXX", ttyout);
 		else
 			vprintf(fmt, ap);
 		va_end(ap);
-		putchar('\n');
-		(void)fflush(stdout);
+		putc('\n', ttyout);
+		(void)fflush(ttyout);
 	}
 	if (cout == NULL) {
 		warnx("No control connection for command.");
@@ -311,9 +311,9 @@ getreply(expecteof)
 				}
 				lostpeer();
 				if (verbose) {
-					puts(
-"421 Service not available, remote server has closed connection.");
-					(void)fflush(stdout);
+					fputs(
+"421 Service not available, remote server has closed connection.\n", ttyout);
+					(void)fflush(ttyout);
 				}
 				code = 421;
 				return (4);
@@ -323,8 +323,8 @@ getreply(expecteof)
 			    (n < '5' || !retry_connect)) {
 				if (proxflag &&
 				   (dig == 1 || (dig == 5 && verbose == 0)))
-					printf("%s:", hostname);
-				(void)putchar(c);
+					fprintf(ttyout, "%s:", hostname);
+				(void)putc(c, ttyout);
 			}
 			if (dig < 4 && isdigit(c))
 				code = code * 10 + (c - '0');
@@ -352,8 +352,8 @@ getreply(expecteof)
 		}
 		if (verbose > 0 || ((verbose > -1 && n == '5') &&
 		    (n < '5' || !retry_connect))) {
-			(void)putchar(c);
-			(void)fflush (stdout);
+			(void)putc(c, ttyout);
+			(void)fflush (ttyout);
 		}
 		if (line == 0) {
 			size_t len = cp - current_line;
@@ -403,8 +403,8 @@ abortsend(notused)
 	alarmtimer(0);
 	mflag = 0;
 	abrtflag = 0;
-	puts("\nsend aborted\nwaiting for remote to finish abort.");
-	(void)fflush(stdout);
+	fputs("\nsend aborted\nwaiting for remote to finish abort.\n", ttyout);
+	(void)fflush(ttyout);
 	longjmp(sendabort, 1);
 }
 
@@ -429,9 +429,9 @@ sendrequest(cmd, local, remote, printnames)
 	oprogress = progress;
 	if (verbose && printnames) {
 		if (local && *local != '-')
-			printf("local: %s ", local);
+			fprintf(ttyout, "local: %s ", local);
 		if (remote)
-			printf("remote: %s\n", remote);
+			fprintf(ttyout, "remote: %s\n", remote);
 	}
 	if (proxy) {
 		proxtrans(cmd, local, remote);
@@ -492,7 +492,7 @@ sendrequest(cmd, local, remote, printnames)
 		closefunc = fclose;
 		if (fstat(fileno(fin), &st) < 0 ||
 		    (st.st_mode & S_IFMT) != S_IFREG) {
-			printf("%s: not a plain file.\n", local);
+			fprintf(ttyout, "%s: not a plain file.\n", local);
 			(void)signal(SIGINT, oldintr);
 			(void)signal(SIGINFO, oldinti);
 			fclose(fin);
@@ -587,17 +587,17 @@ sendrequest(cmd, local, remote, printnames)
 					break;
 			if (hash && (!progress || filesize < 0) ) {
 				while (bytes >= hashbytes) {
-					(void)putchar('#');
+					(void)putc('#', ttyout);
 					hashbytes += mark;
 				}
-				(void)fflush(stdout);
+				(void)fflush(ttyout);
 			}
 		}
 		if (hash && (!progress || filesize < 0) && bytes > 0) {
 			if (bytes < mark)
-				(void)putchar('#');
-			(void)putchar('\n');
-			(void)fflush(stdout);
+				(void)putc('#', ttyout);
+			(void)putc('\n', ttyout);
+			(void)fflush(ttyout);
 		}
 		if (c < 0)
 			warn("local: %s", local);
@@ -613,8 +613,8 @@ sendrequest(cmd, local, remote, printnames)
 			if (c == '\n') {
 				while (hash && (!progress || filesize < 0) &&
 				    (bytes >= hashbytes)) {
-					(void)putchar('#');
-					(void)fflush(stdout);
+					(void)putc('#', ttyout);
+					(void)fflush(ttyout);
 					hashbytes += mark;
 				}
 				if (ferror(dout))
@@ -633,9 +633,9 @@ sendrequest(cmd, local, remote, printnames)
 		}
 		if (hash && (!progress || filesize < 0)) {
 			if (bytes < hashbytes)
-				(void)putchar('#');
-			(void)putchar('\n');
-			(void)fflush(stdout);
+				(void)putc('#', ttyout);
+			(void)putc('\n', ttyout);
+			(void)fflush(ttyout);
 		}
 		if (ferror(fin))
 			warn("local: %s", local);
@@ -693,8 +693,8 @@ abortrecv(notused)
 	alarmtimer(0);
 	mflag = 0;
 	abrtflag = 0;
-	puts("\nreceive aborted\nwaiting for remote to finish abort.");
-	(void)fflush(stdout);
+	fputs("\nreceive aborted\nwaiting for remote to finish abort.\n", ttyout);
+	(void)fflush(ttyout);
 	longjmp(recvabort, 1);
 }
 
@@ -724,9 +724,9 @@ recvrequest(cmd, local, remote, lmode, printnames)
 	is_retr = strcmp(cmd, "RETR") == 0;
 	if (is_retr && verbose && printnames) {
 		if (local && *local != '-')
-			printf("local: %s ", local);
+			fprintf(ttyout, "local: %s ", local);
 		if (remote)
-			printf("remote: %s\n", remote);
+			fprintf(ttyout, "remote: %s\n", remote);
 	}
 	if (proxy && is_retr) {
 		proxtrans(cmd, local, remote);
@@ -896,17 +896,17 @@ recvrequest(cmd, local, remote, lmode, printnames)
 			bytes += c;
 			if (hash && (!progress || filesize < 0)) {
 				while (bytes >= hashbytes) {
-					(void)putchar('#');
+					(void)putc('#', ttyout);
 					hashbytes += mark;
 				}
-				(void)fflush(stdout);
+				(void)fflush(ttyout);
 			}
 		}
 		if (hash && (!progress || filesize < 0) && bytes > 0) {
 			if (bytes < mark)
-				(void)putchar('#');
-			(void)putchar('\n');
-			(void)fflush(stdout);
+				(void)putc('#', ttyout);
+			(void)putc('\n', ttyout);
+			(void)fflush(ttyout);
 		}
 		if (c < 0) {
 			if (errno != EPIPE)
@@ -950,8 +950,8 @@ done:
 			while (c == '\r') {
 				while (hash && (!progress || filesize < 0) &&
 				    (bytes >= hashbytes)) {
-					(void)putchar('#');
-					(void)fflush(stdout);
+					(void)putc('#', ttyout);
+					(void)fflush(ttyout);
 					hashbytes += mark;
 				}
 				bytes++;
@@ -975,13 +975,13 @@ break2:
 		if (bare_lfs) {
 			printf(
 "WARNING! %d bare linefeeds received in ASCII mode.\n", bare_lfs);
-			puts("File may not have transferred correctly.");
+			fputs("File may not have transferred correctly.\n", ttyout);
 		}
 		if (hash && (!progress || filesize < 0)) {
 			if (bytes < hashbytes)
-				(void)putchar('#');
-			(void)putchar('\n');
-			(void)fflush(stdout);
+				(void)putc('#', ttyout);
+			(void)putc('\n', ttyout);
+			(void)fflush(ttyout);
 		}
 		if (ferror(din)) {
 			if (errno != EPIPE)
@@ -1077,7 +1077,7 @@ initconn()
 			       sizeof(on)) < 0)
 			warn("setsockopt (ignored)");
 		if (command("PASV") != COMPLETE) {
-			puts("Passive mode refused.");
+			fputs("Passive mode refused.\n", ttyout);
 			goto bad;
 		}
 
@@ -1091,8 +1091,8 @@ initconn()
 
 		if (sscanf(pasv, "%d,%d,%d,%d,%d,%d",
 			   &a0, &a1, &a2, &a3, &p0, &p1) != 6) {
-			puts(
-"Passive mode address scan failure. Shouldn't happen!");
+			fputs(
+"Passive mode address scan failure. Shouldn't happen!\n", ttyout);
 			goto bad;
 		}
 
@@ -1330,8 +1330,8 @@ abortpt(notused)
 {
 
 	alarmtimer(0);
-	putchar('\n');
-	(void)fflush(stdout);
+	putc('\n', ttyout);
+	(void)fflush(ttyout);
 	ptabflg++;
 	mflag = 0;
 	abrtflag = 0;
@@ -1360,12 +1360,13 @@ proxtrans(cmd, local, remote)
 	if (curtype != prox_type)
 		changetype(prox_type, 1);
 	if (command("PASV") != COMPLETE) {
-		puts("proxy server does not support third party transfers.");
+		fputs("proxy server does not support third party transfers.\n",
+		    ttyout);
 		return;
 	}
 	pswitch(0);
 	if (!connected) {
-		puts("No primary connection.");
+		fputs("No primary connection.\n", ttyout);
 		pswitch(1);
 		code = -1;
 		return;
@@ -1396,7 +1397,7 @@ proxtrans(cmd, local, remote)
 	(void)signal(SIGINT, oldintr);
 	pswitch(1);
 	ptflag = 0;
-	printf("local: %s remote: %s\n", local, remote);
+	fprintf(ttyout, "local: %s remote: %s\n", local, remote);
 	return;
 abort:
 	(void)signal(SIGINT, SIG_IGN);
@@ -1502,7 +1503,7 @@ gunique(local)
 	*cp++ = '.';
 	while (!d) {
 		if (++count == 100) {
-			puts("runique: can't find unique file name.");
+			fputs("runique: can't find unique file name.\n", ttyout);
 			return ((char *) 0);
 		}
 		*cp++ = ext;

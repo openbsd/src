@@ -1,4 +1,4 @@
-/*	$OpenBSD: complete.c,v 1.6 1997/04/16 05:02:43 millert Exp $	*/
+/*	$OpenBSD: complete.c,v 1.7 1997/04/23 20:33:00 deraadt Exp $	*/
 /*	$NetBSD: complete.c,v 1.7 1997/04/14 09:09:16 lukem Exp $	*/
 
 /*-
@@ -39,7 +39,7 @@
 
 #ifndef SMALL
 #ifndef lint
-static char rcsid[] = "$OpenBSD: complete.c,v 1.6 1997/04/16 05:02:43 millert Exp $";
+static char rcsid[] = "$OpenBSD: complete.c,v 1.7 1997/04/23 20:33:00 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -118,7 +118,7 @@ complete_ambiguous(word, list, words)
 		}
 	}
 
-	putchar('\n');
+	putc('\n', ttyout);
 	qsort(words->sl_str, words->sl_cur, sizeof(char *), comparstr);
 	list_vertical(words);
 	return (CC_REDISPLAY);
@@ -285,7 +285,7 @@ complete_remote(word, list)
 			sl_add(dirlist, tcp);
 		}
 		if (emesg != NULL) {
-			printf("\n%s\n", emesg);
+			fprintf(ttyout, "\n%s\n", emesg);
 			return (CC_REDISPLAY);
 		}
 		(void)strcpy(lastdir, dir);
@@ -366,7 +366,7 @@ complete(el, ch)
 		case 'r':			/* remote complete */
 		case 'R':
 			if (connected != -1) {
-				puts("\nMust be logged in to complete.");
+				fputs("\nMust be logged in to complete.\n", ttyout);
 				return (CC_REDISPLAY);
 			}
 			return (complete_remote(word, dolist));

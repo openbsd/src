@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.11 1997/04/16 05:02:50 millert Exp $
+.\" 	$OpenBSD: ftp.1,v 1.12 1997/04/23 20:33:09 deraadt Exp $
 .\" 	$NetBSD: ftp.1,v 1.20 1997/04/14 09:09:20 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -1059,7 +1059,10 @@ then the equivalent of
 .Ic "mget file"
 is performed.
 .Pp
-If the directory component of
+If standard output is redirected to a non-tty device, ftp will write
+the data file out to standard output.  This can be used to pipe data
+directly to another process.
+Otherwise if the directory component of
 .Ic file
 contains no globbing characters,
 it is stored in the current directory as the

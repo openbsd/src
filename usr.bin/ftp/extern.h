@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.12 1997/04/16 05:02:46 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.13 1997/04/23 20:33:04 deraadt Exp $	*/
 /*	$NetBSD: extern.h,v 1.15 1997/04/14 09:09:17 lukem Exp $	*/
 
 /*-
@@ -46,7 +46,7 @@ void    aborthttp __P((int));
 void	account __P((int, char **));
 void	alarmtimer __P((int));
 int	another __P((int *, char ***, const char *));
-int	auto_fetch __P((int, char **));
+int	auto_fetch __P((int, char **, int));
 void	blkfree __P((char **));
 void	cd __P((int, char **));
 void	cdup __P((int, char **));

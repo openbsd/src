@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp_var.h,v 1.11 1997/04/16 05:02:57 millert Exp $	*/
+/*	$OpenBSD: ftp_var.h,v 1.12 1997/04/23 20:33:16 deraadt Exp $	*/
 /*	$NetBSD: ftp_var.h,v 1.16 1997/04/14 09:09:23 lukem Exp $	*/
 
 /*
@@ -166,3 +166,5 @@ struct macel {
 int macnum;			/* number of defined macros */
 struct macel macros[16];
 char macbuf[4096];
+
+FILE	*ttyout;		/* stdout or stderr, depending on interactive */
