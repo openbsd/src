@@ -35,5 +35,5 @@
 
 RCSID("$KTH: constants.c,v 1.5 2000/07/14 21:53:01 joda Exp $");
 
-const char krb5_config_file[] = "/etc/krb5.conf";
+const char krb5_config_file[] = "/etc/kerberosV/krb5.conf";
 const char krb5_defkeyname[] = KEYTAB_DEFAULT;

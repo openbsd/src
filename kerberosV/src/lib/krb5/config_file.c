@@ -766,7 +766,7 @@ main(void)
 {
     krb5_config_section *c;
 
-    printf ("%d\n", krb5_config_parse_file ("/etc/krb5.conf", &c));
+    printf ("%d\n", krb5_config_parse_file ("/etc/kerberosV/krb5.conf", &c));
     print_config (stdout, c);
     printf ("[libdefaults]ticket_lifetime = %s\n",
 	    krb5_config_get_string (context, c,
