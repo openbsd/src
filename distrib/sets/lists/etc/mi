@@ -18,7 +18,6 @@
 ./etc/dhcpd.conf
 ./etc/dhcpd.interfaces
 ./etc/disktab
-./etc/dm.conf
 ./etc/dumpdates
 ./etc/exports
 ./etc/fbtab
