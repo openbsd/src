@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kdump.1,v 1.7 2000/03/08 03:11:30 aaron Exp $
+.\"	$OpenBSD: kdump.1,v 1.8 2002/06/23 20:01:25 deraadt Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -45,6 +45,7 @@
 .Op Fl e Ar emulation
 .Op Fl f Ar file
 .Op Fl m Ar maxdata
+.Op Fl p Ar pid
 .Op Fl t Op cenis
 .Sh DESCRIPTION
 .Nm
@@ -92,6 +93,10 @@ values are replaced with the
 string.
 Suppressing this feature yields a more consistent output format and is
 easily amenable to further processing.
+.It Fl p Ar pid
+Show output only for the
+.Ar pid
+specified.
 .It Fl R
 Display relative timestamps (time since previous entry).
 .It Fl T
