@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.39 2004/08/06 13:23:49 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.40 2004/09/30 21:46:38 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -183,9 +183,9 @@ m8820x_setup_board_config()
 	 *   all access to SRAM.
 	 *
 	 * Configuration 6, with 4 CMMUs par CPU, also allows a split on A14
-	 * address bit.
+	 * address bit (A16 for 88204).
 	 *
-	 * Setup the default A12/A14 split here. We should theoretically only
+	 * Setup the default A12/A14 scheme here. We should theoretically only
 	 * set the PCNFA and PCNFB on configurations 1, 2 and 6, since the
 	 * other ones do not have P bus decoders.
 	 * However, is it safe to write them anyways - the values will be

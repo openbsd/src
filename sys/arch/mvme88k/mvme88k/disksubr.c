@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.26 2004/07/20 20:33:21 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.27 2004/09/30 21:46:38 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -58,7 +58,6 @@ void printclp(struct cpu_disklabel *, char *);
  * Returns the ID of the SCSI disk based on Motorola's CLUN/DLUN stuff
  * bootdev == CLUN << 8 | DLUN.
  * This handles SBC SCSI and MVME32[78].
- * MVME328 daughter cards (DLUN >= 0x40) are not handled correctly yet.
  */
 int
 get_target(int *target, int *bus)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcore.h,v 1.1 2004/04/26 12:34:05 miod Exp $	*/
+/*	$OpenBSD: kcore.h,v 1.2 2004/09/30 21:46:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Miodrag Vallat.
@@ -32,7 +32,7 @@
 #define	NPHYS_RAM_SEGS	1
 
 typedef struct cpu_kcore_hdr {
-	int		cputype;	/* board type: 187, 188, 197 */
+	int		cputype;	/* cpu type: 88100, 88110 */
 	phys_ram_seg_t	ram_segs[NPHYS_RAM_SEGS];
 } cpu_kcore_hdr_t;
 
