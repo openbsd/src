@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.177 2003/02/08 20:13:19 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.178 2003/02/10 11:09:10 dhartmei Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1845,15 +1845,14 @@ option         = set ( [ timeout ( timeout | { timeout-list } ) ] |
 pf-rule        = action [ ( in | out ) ]
                  [ log | log-all ] [ quick ]
                  [ on ifspec ] [ route ] [ af ] [ protospec ]
-                 hosts [filteropt-list]
+                 hosts [ filteropt-list ]
 
 filteropt-list = filteropt-list filteropt | filteropt
-filteropt      = [ user ] | [ group ] | [ flags ] |
-                 [ icmp-type | icmp6-type ] | [ tos ] |
-                 [ ( keep | modulate ) state [ ( state-opts ) ] ] |
-                 [ fragment ] [ no-df ] [ min-ttl number ] |
-                 [ max-mss number ] [ fragmentation ] [ allow-opts ] |
-                 [ label string ] | [ queue string ]
+filteropt      = user | group | flags | icmp-type | icmp6-type | tos |
+                 ( keep | modulate ) state [ ( state-opts ) ] |
+                 fragment | no-df | min-ttl number | max-mss number |
+                 random-id | fragmentation | allow-opts |
+                 label string | queue string
 
 nat-rule       = [ no ] nat [ on ifspec ] [ af ] [ protospec ]
                  from ipspec to ipspec [ portspec ]
