@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.274 2004/02/03 08:42:19 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.275 2004/02/03 18:38:49 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1140,7 +1140,7 @@ viac3_rnd(void *v)
 {
 	struct timeout *tmo = v;
 	unsigned int *p, i, rv, creg0, len = VIAC3_RNG_BUFSIZ;
-	static int buffer[VIAC3_RNG_BUFSIZ + 2];
+	static int buffer[VIAC3_RNG_BUFSIZ + 2];	/* XXX why + 2? */
 
 	creg0 = rcr0();		/* Permit access to SIMD/FPU path */
 	lcr0(creg0 & ~(CR0_EM|CR0_TS));
@@ -1159,7 +1159,7 @@ viac3_rnd(void *v)
 	for (i = 0, p = buffer; i < VIAC3_RNG_BUFSIZ; i++, p++)
 		add_true_randomness(*p);
 
-	timeout_add(tmo, (hz>100)?(hz/100):1);
+	timeout_add(tmo, (hz > 100) ? (hz / 100) : 1);
 }
 
 #ifdef CRYPTO
@@ -1193,7 +1193,7 @@ void viac3_crypto_setup(void);
 int viac3_crypto_newsession(u_int32_t *, struct cryptoini *);
 int viac3_crypto_process(struct cryptop *);
 int viac3_crypto_freesession(u_int64_t);
-void viac3_crypto(void *, void *, void *, void *, int, void *, int);
+static __inline void viac3_cbc(void *, void *, void *, void *, int, void *);
 
 void
 viac3_crypto_setup(void)
@@ -1287,6 +1287,24 @@ viac3_crypto_freesession(u_int64_t tid)
 	return (0);
 }
 
+static __inline void
+viac3_cbc(void *cw, void *src, void *dst, void *key, int rep,
+    void *iv)
+{
+	unsigned int creg0;
+
+	creg0 = rcr0();		/* Permit access to SIMD/FPU path */
+	lcr0(creg0 & ~(CR0_EM|CR0_TS));
+
+	/* Do the deed */
+	__asm __volatile("pushfl; popfl");
+	__asm __volatile("rep xcrypt-cbc" :
+	    : "a" (iv), "b" (key), "c" (rep), "d" (cw), "S" (src), "D" (dst)
+	    : "memory", "cc");
+
+	lcr0(creg0);
+}
+
 int
 viac3_crypto_process(struct cryptop *crp)
 {
@@ -1373,8 +1391,8 @@ viac3_crypto_process(struct cryptop *crp)
 	else
 		bcopy(crp->crp_buf + crd->crd_skip, sc->op_buf, crd->crd_len);
 
-	viac3_crypto(&sc->op_cw, sc->op_buf, sc->op_buf, sc->op_key,
-	    crd->crd_len / 16, sc->op_iv, VIAC3_CRYPTOP_CBC);
+	viac3_cbc(&sc->op_cw, sc->op_buf, sc->op_buf, sc->op_key,
+	    crd->crd_len / 16, sc->op_iv);
 
 	if (crp->crp_flags & CRYPTO_F_IMBUF)
 		m_copyback((struct mbuf *)crp->crp_buf,
@@ -1406,51 +1424,6 @@ out:
 	crp->crp_etype = err;
 	crypto_done(crp);
 	return (err);
-}
-
-void
-viac3_crypto(void *cw, void *src, void *dst, void *key, int rep,
-    void *iv, int type)
-{
-	unsigned int creg0;
-
-	creg0 = rcr0();		/* Permit access to SIMD/FPU path */
-	lcr0(creg0 & ~(CR0_EM|CR0_TS));
-
-	/* Do the deed */
-	switch (type) {
-	case VIAC3_CRYPTOP_RNG:
-		__asm __volatile("rep xstore-rng" :
-		    : "a" (iv), "b" (key), "c" (rep), "d" (cw), "S" (src), "D" (dst)
-		    : "memory", "cc");
-		break;
-	case VIAC3_CRYPTOP_ECB:
-		__asm __volatile("pushfl; popfl");
-		__asm __volatile("rep xcrypt-ecb" :
-		    : "a" (iv), "b" (key), "c" (rep), "d" (cw), "S" (src), "D" (dst)
-		    : "memory", "cc");
-		break;
-	case VIAC3_CRYPTOP_CBC:
-		__asm __volatile("pushfl; popfl");
-		__asm __volatile("rep xcrypt-cbc" :
-		    : "a" (iv), "b" (key), "c" (rep), "d" (cw), "S" (src), "D" (dst)
-		    : "memory", "cc");
-		break;
-	case VIAC3_CRYPTOP_CFB:
-		__asm __volatile("pushfl; popfl");
-		__asm __volatile("rep xcrypt-cfb" :
-		    : "a" (iv), "b" (key), "c" (rep), "d" (cw), "S" (src), "D" (dst)
-		    : "memory", "cc");
-		break;
-	case VIAC3_CRYPTOP_OFB:
-		__asm __volatile("pushfl; popfl");
-		__asm __volatile("rep xcrypt-ofb" :
-		    : "a" (iv), "b" (key), "c" (rep), "d" (cw), "S" (src), "D" (dst)
-		    : "memory", "cc");
-		break;
-	}
-
-	lcr0(creg0);
 }
 
 #endif /* CRYPTO */
