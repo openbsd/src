@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_olf.h,v 1.5 1996/11/06 20:56:12 etheisen Exp $	*/
+/*	$OpenBSD: exec_olf.h,v 1.6 1997/03/27 08:40:36 niklas Exp $	*/
 /*
  * Copyright (c) 1996 Erik Theisen.  All rights reserved.
  *
@@ -91,7 +91,8 @@
 #define OOS_IRIX	10		/* SGI IRIX */
 #define OOS_SCO		11		/* SCO UNIX */
 #define OOS_DELL	13		/* DELL SVR4 */
-#define OOS_NUM		14		/* Number of systems */
+#define OOS_NCR		14		/* NCR SVR4 */
+#define OOS_NUM		15		/* Number of systems */
 /*
  * Lowercase and numbers ONLY.
  * No whitespace or punc.
