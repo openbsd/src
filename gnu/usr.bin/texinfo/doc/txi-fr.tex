@@ -1,0 +1,75 @@
+% txi-fr.tex -- TeX macros to handle French language for texinfo.tex documents.
+% $Id: txi-fr.tex,v 1.1.1.1 2002/06/10 13:21:49 espie Exp $
+%
+% Copyright (C) 1999 Free Software Foundation.
+%
+% This program is free software; you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation; either version 2 of the License, or
+% (at your option) any later version.
+%
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+%
+% You should have received a copy of the GNU General Public License
+% along with this program; if not, write to the Free Software
+% Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+% Set up fixed words for French.
+% Translated by Laurent Bourbeau <bourbeau@progiciels-bpi.ca>
+% Translation date: le 10 décembre 1999.
+% Transmitted to: Karl Berry <karl@cs.umb.edu>
+
+\gdef\putwordAppendix{Annexe}
+\gdef\putwordChapter{Chapitre}
+\gdef\putwordfile{fichier}
+\gdef\putwordin{dans}
+\gdef\putwordIndexIsEmpty{(Index est vide)}
+\gdef\putwordIndexNonexistent{(Index n'existe pas)}
+\gdef\putwordInfo{Info}
+\gdef\putwordInstanceVariableof{Variable d'instance de}
+\gdef\putwordMethodon{M\'ethode sur}
+\gdef\putwordNoTitle{Sans Titre}
+\gdef\putwordof{de}
+\gdef\putwordon{sur}
+\gdef\putwordpage{page}
+\gdef\putwordsection{section}
+\gdef\putwordSection{Section}
+\gdef\putwordsee{voir}
+\gdef\putwordSee{Voir}
+\gdef\putwordShortTOC{Sommaire}
+\gdef\putwordTOC{Table des mati\`eres}
+%
+\gdef\putwordMJan{janvier}
+\gdef\putwordMFeb{f\'evrier}
+\gdef\putwordMMar{mars}
+\gdef\putwordMApr{avril}
+\gdef\putwordMMay{mai}
+\gdef\putwordMJun{juin}
+\gdef\putwordMJul{juillet}
+\gdef\putwordMAug{ao\^ut}
+\gdef\putwordMSep{septembre}
+\gdef\putwordMOct{octobre}
+\gdef\putwordMNov{novembre}
+\gdef\putwordMDec{d\'ecembre}
+%
+\gdef\putwordDefmac{Macro}
+\gdef\putwordDefspec{Forme Sp\'eciale}
+\gdef\putwordDefvar{Variable}
+\gdef\putwordDefopt{Option de l'usager}
+\gdef\putwordDeftypevar{Variable}
+\gdef\putwordDeffunc{Fonction}
+\gdef\putwordDeftypefun{Fonction}
+
+% Produces Day Month Year style of output.
+% French datation - for instance: 10 janvier 2000.
+\def\today{%
+  \number\day\space
+  \ifcase\month
+  \or\putwordMJan\or\putwordMFeb\or\putwordMMar\or\putwordMApr
+  \or\putwordMMay\or\putwordMJun\or\putwordMJul\or\putwordMAug
+  \or\putwordMSep\or\putwordMOct\or\putwordMNov\or\putwordMDec
+  \fi
+  \space\number\year}

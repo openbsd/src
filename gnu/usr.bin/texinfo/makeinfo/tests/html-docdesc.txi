@@ -1,0 +1,14 @@
+\input texinfo
+@setfilename html-docdesc.info
+@settitle HTML docdesc test
+
+@documentdescription
+This is the explicit document description.
+@end documentdescription
+
+@node Top
+@top Top of HTML docdesc test
+
+This is the top.
+
+@bye

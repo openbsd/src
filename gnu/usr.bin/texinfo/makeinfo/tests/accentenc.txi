@@ -1,0 +1,11 @@
+\input texinfo
+@setfilename accentenc.info
+@settitle Accent encoding test
+@documentencoding ISO-8859-1
+
+@node Top
+@top Accent encoding test top
+
+@include accent-text.txi
+
+@bye

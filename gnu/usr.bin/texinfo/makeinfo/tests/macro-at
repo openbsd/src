@@ -1,0 +1,7 @@
+#!/bin/sh
+# Test @@ in macro expansions, etc.  --eliz, 14nov99.
+
+: ${srcdir=.}
+../makeinfo $srcdir/macro-at.txi || exit 1
+
+rm -f macro-at.info

@@ -1,0 +1,12 @@
+#!/bin/sh
+# Test that @documentdescription works.
+
+if ../makeinfo --html --no-split ${srcdir-.}/html-docdesc.txi; then
+  grep 'explicit document description' html-docdesc.html >/dev/null
+  exit_status=$?
+else
+  exit_status=1
+fi
+
+rm -f html-docdesc.html
+exit $exit_status

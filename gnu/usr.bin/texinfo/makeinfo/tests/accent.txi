@@ -1,0 +1,10 @@
+\input texinfo
+@setfilename accent.info
+@settitle Accent test
+
+@node Top
+@top Accent test top
+
+@include accent-text.txi
+
+@bye

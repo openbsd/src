@@ -1,0 +1,19 @@
+#!/bin/sh
+# Test encoded accent info output.
+
+: ${srcdir=.}
+input=`basename $0`.txi
+output=`basename $0`.info
+
+../makeinfo --enable-encoding --no-split -I$srcdir $srcdir/$input
+exit_status=$?
+if test $exit_status = 0; then
+  grep 'ì' $output >/dev/null \
+  && grep 'ï' $output >/dev/null \
+  && grep '/L' $output >/dev/null
+  exit_status=$?
+fi
+
+rm -f $output
+
+exit $exit_status

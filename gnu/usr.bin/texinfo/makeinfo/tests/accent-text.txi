@@ -1,0 +1,64 @@
+@c args with braces, without braces/following whitespace
+
+should be e`: @`{e} @`e
+
+should be e': @'{e} @'e
+
+should be e^: @^{e} @^e
+
+should be u": @"{u} @"u
+
+should be i`: @`{i} @`i
+
+should be i': @'{i} @'i
+
+should be i^: @^{i} @^i
+
+should be u": @"{u} @"u
+
+should be c,: @,{c} @,c
+
+should be n~: @~{n} @~n
+
+should be e=: @={e} @=e
+
+should be e@w{'}': @H{e} @H e
+
+should be e.: @dotaccent{e} @dotaccent e
+
+should be e*: @ringaccent{e} @ringaccent e
+
+should be ee[: @tieaccent{ee}
+
+should be e(: @u{e} @u e
+
+should be e_: @ubaraccent{e} @ubaraccent e
+
+should be .e: @udotaccent{e} @udotaccent e
+
+should be e<: @v{e} @v e
+
+upside down: @questiondown{} @exclamdown{}
+
+A-with-circle: @aa{},@AA{}
+
+AE, OE ligatures: @ae{} @AE{} @oe{} @OE{}
+
+dotless i, j: @dotless{i} @dotless{j}
+
+Polish suppressed-L: @l{} @L{}
+
+O-with-slash: @o{} @O{}
+
+es-zet or sharp S: @ss{}          
+
+pounds sterling: @pounds{}      
+
+@c arg is command
+should be dotless i`: @`{@dotless{i}}
+
+should be dotless i': @'{@dotless{i}}
+
+should be dotless i^: @^{@dotless{i}}
+
+should be dotless i": @"{@dotless{i}}

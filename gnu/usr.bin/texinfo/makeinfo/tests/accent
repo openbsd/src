@@ -1,0 +1,33 @@
+#!/bin/sh
+# Test accent output.
+
+: ${srcdir=.}
+input=`basename $0`.txi
+
+# html
+houtput=`basename $0`.html
+../makeinfo --html --no-split -I$srcdir $srcdir/$input
+hexit_status=$?
+if test $hexit_status = 0; then
+  grep '&igrave;' $houtput >/dev/null \
+  && grep '&acute;i' $houtput >/dev/null \
+  && grep '&Oslash;' $houtput >/dev/null \
+  && grep '/L' $houtput >/dev/null
+  hexit_status=$?
+fi
+
+# info
+ioutput=`basename $0`.info
+../makeinfo --no-split -I$srcdir $srcdir/$input
+iexit_status=$?
+if test $iexit_status = 0; then
+  grep 'i`' $ioutput >/dev/null \
+  && grep 'i"' $ioutput >/dev/null \
+  && grep '/L' $ioutput >/dev/null
+  iexit_status=$?
+fi
+
+rm -f $houtput $ioutput
+
+exit_status=`expr $hexit_status + $iexit_status`
+exit $exit_status
