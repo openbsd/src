@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.11 2005/03/03 16:39:54 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.12 2005/03/10 03:12:30 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -223,7 +223,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 
 	DPRINTF(ATH_DEBUG_ANY, ("%s: devid 0x%x\n", __func__, devid));
 
-	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
+	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	ah = ath_hal_attach(devid, sc, sc->sc_st, sc->sc_sh, &status);
 	if (ah == NULL) {
@@ -322,7 +322,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 		goto bad2;
 	}
 
-	memset(&qinfo, 0, sizeof(qinfo));
+	bzero(&qinfo, sizeof(qinfo));
 	qinfo.tqi_subtype = HAL_WME_AC_BE;
 	sc->sc_txhalq = ath_hal_setuptxqueue(ah, HAL_TX_QUEUE_DATA, &qinfo);
 	if (sc->sc_txhalq == (u_int) -1) {
@@ -379,7 +379,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	ic->ic_newstate = ath_newstate;
 	sc->sc_recv_mgmt = ic->ic_recv_mgmt;
 	ic->ic_recv_mgmt = ath_recv_mgmt;
-	memset(&sc->sc_broadcast_addr, 0xFF, IEEE80211_ADDR_LEN);
+	bcopy(etherbroadcastaddr, sc->sc_broadcast_addr, IEEE80211_ADDR_LEN);
 
 	/* complete initialization */
 	ieee80211_media_init(ifp, ath_media_change, ieee80211_media_status);
@@ -1035,13 +1035,6 @@ ath_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	s = splnet();
 	switch (cmd) {
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > ETHERMTU || ifr->ifr_mtu < ETHERMIN) {
-			error = EINVAL;
-		} else if (ifp->if_mtu != ifr->ifr_mtu) {
-			ifp->if_mtu = ifr->ifr_mtu;
-		}
-		break;
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 #ifdef INET
@@ -1131,9 +1124,9 @@ ath_initkeytable(struct ath_softc *sc)
 		else {
 			HAL_KEYVAL hk;
 
-			memset(&hk, 0, sizeof(hk));
+			bzero(&hk, sizeof(hk));
 			hk.wk_len = k->wk_len;
-			memcpy(hk.wk_key, k->wk_key, k->wk_len);
+			bcopy(k->wk_key, hk.wk_key, k->wk_len);
 			/* XXX return value */
 			ath_hal_keyset(ah, i, &hk);
 		}
@@ -1443,7 +1436,7 @@ ath_beacon_config(struct ath_softc *sc)
 		u_int32_t bmisstime;
 
 		/* NB: no PCF support right now */
-		memset(&bs, 0, sizeof(bs));
+		bzero(&bs, sizeof(bs));
 		bs.bs_intval = intval;
 		bs.bs_nexttbtt = nexttbtt;
 		bs.bs_dtimperiod = bs.bs_intval;
@@ -1723,7 +1716,7 @@ ath_node_copy(struct ieee80211com *ic,
 {
 	struct ath_softc *sc = ic->ic_if.if_softc;
 
-	memcpy(&dst[1], &src[1],
+	bcopy(&src[1], &dst[1],
 		sizeof(struct ath_node) - sizeof(struct ieee80211_node));
 	(*sc->sc_node_copy)(ic, dst, src);
 }
@@ -1989,10 +1982,10 @@ ath_rx_proc(void *arg, int npending)
 			 * and trim WEP header for ieee80211_input().
 			 */
 			wh->i_fc[1] &= ~IEEE80211_FC1_WEP;
-			memcpy(&whbuf, wh, sizeof(whbuf));
+			bcopy(wh, &whbuf, sizeof(whbuf));
 			m_adj(m, IEEE80211_WEP_IVLEN + IEEE80211_WEP_KIDLEN);
 			wh = mtod(m, struct ieee80211_frame *);
-			memcpy(wh, &whbuf, sizeof(whbuf));
+			bcopy(&whbuf, wh, sizeof(whbuf));
 			/*
 			 * Also trim WEP ICV from the tail.
 			 */
@@ -2079,7 +2072,7 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni,
 	pktlen = m0->m_pkthdr.len;
 
 	if (iswep) {
-		memcpy(hdrbuf, mtod(m0, caddr_t), hdrlen);
+		bcopy(mtod(m0, caddr_t), hdrbuf, hdrlen);
 		m_adj(m0, hdrlen);
 		M_PREPEND(m0, sizeof(hdrbuf), M_DONTWAIT);
 		if (m0 == NULL) {
@@ -2129,7 +2122,7 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni,
 		ivp[0] = iv >> 16;
 #endif
 		ivp[3] = ic->ic_wep_txkey << 6; /* Key ID and pad */
-		memcpy(mtod(m0, caddr_t), hdrbuf, sizeof(hdrbuf));
+		bcopy(hdrbuf, mtod(m0, caddr_t), sizeof(hdrbuf));
 		/*
 		 * The ICV length must be included into hdrlen and pktlen.
 		 */
@@ -3045,7 +3038,7 @@ ath_setcurmode(struct ath_softc *sc, enum ieee80211_phymode mode)
 	KASSERT(rt != NULL, ("no h/w rate set for phy mode %u", mode));
 	for (i = 0; i < rt->rateCount; i++)
 		sc->sc_rixmap[rt->info[i].dot11Rate & IEEE80211_RATE_VAL] = i;
-	memset(sc->sc_hwmap, 0, sizeof(sc->sc_hwmap));
+	bzero(sc->sc_hwmap, sizeof(sc->sc_hwmap));
 	for (i = 0; i < 32; i++)
 		sc->sc_hwmap[i] = rt->info[rt->rateCodeToIndex[i]].dot11Rate;
 	sc->sc_currates = rt;
