@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.12 2002/11/27 16:23:01 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.13 2002/11/28 14:44:57 henning Exp $	*/
 /*
  * Copyright (C) 2002
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
@@ -153,6 +153,8 @@ print_altq(const struct pf_altq *a, unsigned level)
 
 	printf("bandwidth %s tbrsize %u ", rate2str((double)a->ifbandwidth),
 	    a->tbrsize);
+	if (a->qlimit != DEFAULT_QLIMIT)
+		printf("qlimit %u ", a->qlimit);
 }
 
 void
