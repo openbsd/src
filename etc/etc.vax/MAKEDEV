@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.vax/MAKEDEV.md,v 1.16 2004/02/16 19:01:02 miod Exp 
-#	OpenBSD: MAKEDEV.common,v 1.1 2004/02/16 18:58:54 miod Exp 
+#	OpenBSD: etc.vax/MAKEDEV.md,v 1.17 2004/02/17 11:18:08 miod Exp 
+#	OpenBSD: MAKEDEV.common,v 1.2 2004/02/17 11:18:03 miod Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.72 2004/02/16 18:58:53 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.11 2004/02/16 18:58:53 miod Exp 
 #
@@ -34,7 +34,7 @@
 #	cd*	SCSI cdrom drives
 #	fd*	Floppy disk drives (3 1/2", 5 1/4")
 #	hk*	UNIBUS RK06 and RK07 disks
-#	hd*	HP300 HP-IB disks
+#	hd*	HDC9224 disks
 #	hp*	MASSBUSS disks
 #	ra*	MSCP disks
 #	rb*	730 IDC w/ RB80 and/or RB02
