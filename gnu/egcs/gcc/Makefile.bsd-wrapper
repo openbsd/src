@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.7 2001/01/29 16:56:10 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.8 2002/01/21 16:37:19 hugh Exp $
 
 MAN=		cccp.1 gcc.1 
 MLINKS+=	gcc.1 cc.1
@@ -12,6 +12,8 @@ MAN+= cp/g++.1 f/g77.1
 MLINKS+=	g++.1 c++.1
 MLINKS+=	g77.1 f77.1
 .endif
+
+VAXHOST_CFLAGS=	-DIN_GCC -DOPENBSD_NATIVE -DHAVE_CONFIG_H -O0
 
 GXX_INCDIR=	/usr/include/g++
 GNUCFLAGS=	CFLAGS="${CFLAGS} ${COPTS} -DOPENBSD_NATIVE"
@@ -36,8 +38,13 @@ M_ARCH=		${MACHINE_ARCH}
 GCCARCH=	${M_ARCH}-unknown-openbsd`uname -r`
 
 all:	config.status
+.if ${MACHINE_ARCH} == "vax"
+	${MAKE} ${GNUCFLAGS} CC="${CC}" LDFLAGS="${LDSTATIC}" \
+		HOST_CFLAGS="${VAXHOST_CFLAGS}" build_infodir=. all doc
+.else
 	${MAKE} ${GNUCFLAGS} CC="${CC}" LDFLAGS="${LDSTATIC}" \
 		build_infodir=. all doc
+.endif
 
 tree-check.h: config.status
 	${MAKE} ${GNUCFLAGS} CC="${CC}" LDFLAGS="${LDSTATIC}" \
