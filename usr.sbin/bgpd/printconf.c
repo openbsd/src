@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.6 2004/03/01 16:47:06 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.7 2004/03/01 17:04:07 henning Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -164,7 +164,7 @@ print_peer(struct peer_config *p)
 		printf("\n");
 
 	print_mrt(p->id, p->groupid, c == nada ? "\t" : "\t\t");
-	
+
 	printf("%s}\n", c);
 	if (p->group[0])
 		printf("}\n");

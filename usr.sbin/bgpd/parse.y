@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.65 2004/03/01 16:47:06 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.66 2004/03/01 17:04:07 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -724,7 +724,7 @@ lookup(char *s)
 		{ "prepend-self",	PREPEND},
 		{ "quick",		QUICK},
 		{ "remote-as",		REMOTEAS},
-		{ "route-collector",	ROUTECOLL},	
+		{ "route-collector",	ROUTECOLL},
 		{ "router-id",		ROUTERID},
 		{ "set",		SET},
 		{ "source-AS",		SOURCEAS},
