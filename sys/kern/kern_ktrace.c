@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.10 1998/06/02 14:50:47 csapuntz Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.11 1999/02/11 20:34:04 deraadt Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -67,6 +67,7 @@ ktrgetheader(type)
 
 	MALLOC(kth, struct ktr_header *, sizeof (struct ktr_header), 
 		M_TEMP, M_WAITOK);
+	bzero(kth, sizeof (struct ktr_header));
 	kth->ktr_type = type;
 	microtime(&kth->ktr_time);
 	kth->ktr_pid = p->p_pid;
