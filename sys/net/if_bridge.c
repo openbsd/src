@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.108 2003/01/07 09:00:33 kjc Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.109 2003/01/07 17:47:21 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -941,6 +941,10 @@ bridge_output(ifp, m, sa, rt)
 			if (dst_if != ifp &&
 			    (p->bif_flags & IFBIF_STP) &&
 			    (p->bif_state != BSTP_IFSTATE_FORWARDING))
+				continue;
+
+			if ((p->bif_flags & IFBIF_DISCOVER) == 0 &&
+			    (m->m_flags & (M_BCAST | M_MCAST)) == 0)
 				continue;
 
 #ifdef ALTQ
