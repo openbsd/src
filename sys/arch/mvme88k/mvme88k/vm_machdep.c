@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.43 2001/12/16 23:49:47 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.44 2001/12/22 10:23:50 smurph Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -434,7 +434,6 @@ int
 badvaddr(vm_offset_t va, int size)
 {
 	register int 	x;
-
 	if (badaddr(va, size)) {
 		return -1;
 	}
@@ -449,8 +448,10 @@ badvaddr(vm_offset_t va, int size)
 	case 4:
 		x = *(volatile unsigned long *)va;
 		break;
+	default:
+                return -1;
 	}
-	return(x);
+	return(0);
 }
 
 int
