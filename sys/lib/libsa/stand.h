@@ -1,4 +1,4 @@
-/*	$OpenBSD: stand.h,v 1.13 1996/10/29 07:59:29 mickey Exp $	*/
+/*	$OpenBSD: stand.h,v 1.14 1996/11/27 11:59:43 mickey Exp $	*/
 /*	$NetBSD: stand.h,v 1.13 1996/01/13 22:25:42 leo Exp $	*/
 
 /*-
@@ -53,8 +53,11 @@ struct stat;
  * Useful macros
  */
 #define NENTS(x)	sizeof(x)/sizeof(x[0])
+/* don't define if libker included */
+#ifndef LIBKERN_INLINE
 #define	max(a,b)	(((a)>(b))? (a) : (b))
 #define	min(a,b)	(((a)>(b))? (b) : (a))
+#endif
 
 /*
  * This structure is used to define file system operations in a file system
@@ -186,7 +189,7 @@ int	getchar __P((void));
 
 /* Machine dependent functions */
 int	devopen __P((struct open_file *, const char *, char **));
-void	machdep_start __P((char *, int, char *, char *, char *));
+void	machdep_exec __P((char *, int, char *, char *, char *));
 time_t	getsecs __P((void));
 void	putc __P((int));    
 int	getc __P((void));
