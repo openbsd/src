@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa11x0_ost.c,v 1.4 2005/01/11 21:00:17 deraadt Exp $ */
+/*	$OpenBSD: sa11x0_ost.c,v 1.5 2005/01/24 22:57:16 drahn Exp $ */
 /*	$NetBSD: sa11x0_ost.c,v 1.11 2003/07/15 00:24:51 lukem Exp $	*/
 
 /*
@@ -80,7 +80,9 @@ struct saost_softc {
 
 static struct saost_softc *saost_sc = NULL;
 
-#define TIMER_FREQUENCY         3686400         /* 3.6864MHz */
+#define DEF_TIMER_FREQUENCY         3686400         /* 3.6864MHz */
+int saost_timer_freq =DEF_TIMER_FREQUENCY;
+#define TIMER_FREQUENCY         saost_timer_freq
 #define TICKS_PER_MICROSECOND   (TIMER_FREQUENCY/1000000)
 
 #ifndef STATHZ
@@ -124,6 +126,11 @@ saost_attach(parent, self, aux)
 	sc->sc_baseaddr = sa->sa_addr;
 
 	saost_sc = sc;
+
+	/* XXX */
+	if ((cputype & ~CPU_ID_XSCALE_COREREV_MASK) == CPU_ID_PXA27X)
+		TIMER_FREQUENCY = 3250000; /* XXX */
+
 
 	if(bus_space_map(sa->sa_iot, sa->sa_addr, sa->sa_size, 0, 
 			&sc->sc_ioh))
