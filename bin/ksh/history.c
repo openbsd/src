@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.18 2003/04/06 23:39:17 deraadt Exp $	*/
+/*	$OpenBSD: history.c,v 1.19 2003/04/15 08:35:34 deraadt Exp $	*/
 
 /*
  * command history
@@ -1018,8 +1018,8 @@ histload(s, base, bytes)
 	register int bytes;
 {
 	State state;
-	int	lno;
-	unsigned char	*line;
+	int	lno = 0;
+	unsigned char	*line = NULL;
 
 	for (state = shdr; bytes-- > 0; base++) {
 		switch (state) {
