@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.20 2000/08/29 15:20:25 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.21 2000/08/30 00:13:33 deraadt Exp $
 #	from: OpenBSD: INST,v 1.19 1996/11/05 03:49:13 tholo Exp 
 #
 #	Install kernels no longer support X.
@@ -220,6 +220,9 @@ vr*	at pci? dev ? function ?		# VIA Rhine ethernet
 dc*	at pci? dev ? function ?		# 21143, "tulip" clone ethernet
 wb*	at pci? dev ? function ?		# Winbond W89C840F ethernet
 ti*	at pci? dev ? function ?		# Alteon Tigon 1Gb ethernet
+skc*	at pci? dev ? function ?		# SysKonnect GEnesis 984x
+sk*	at skc?					#  each port of above
+wx*	at pci? dev ? function ?		# Intel Pro/1000 ethernet
 
 # Wireless network cards
 wi*	at pcmcia? function ?			# WaveLAN IEEE 802.11DS
@@ -242,6 +245,8 @@ rlphy* at mii? phy ?				# RealTek 8139 internal PHYs
 dcphy*	at mii? phy ?				# Digital Clone PHYs
 dmphy*	at mii? phy ?				# Davicom DM9101 PHYs
 tqphy*	at mii? phy ?				# TDK 78Q212x PHYs
+brgphy*	at mii? phy ?				# Broadcom Gigabit PHYs
+xmphy*	at mii? phy ?				# XaQti XMAC-II PHYs
 ukphy*	at mii? phy ?				# "unknown" PHYs
 
 pseudo-device	loop	1		# network loopback
