@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380var.h,v 1.4 1996/05/26 00:27:02 deraadt Exp $	*/
+/*	$OpenBSD: ncr5380var.h,v 1.5 1997/09/11 01:07:13 kstailey Exp $	*/
 /*	$NetBSD: ncr5380var.h,v 1.6 1996/05/10 18:04:06 gwr Exp $	*/
 
 /*
@@ -110,6 +110,9 @@ struct ncr5380_softc {
 	int		sc_flags;	/* Misc. flags and capabilities */
 #define	NCR5380_PERMIT_RESELECT		1  /* Allow disconnect/reselect */
 #define	NCR5380_FORCE_POLLING		2  /* Do not use interrupts. */
+
+	/* Set bits in this to disable disconnect per-target. */
+	int	sc_no_disconnect;
 
 	/* Set bits in this to disable parity for some target. */
 	int		sc_parity_disable;
