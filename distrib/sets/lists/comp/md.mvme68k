@@ -121,7 +121,6 @@
 ./usr/lib/libpanel_pic.a
 ./usr/lib/libpcap_pic.a
 ./usr/lib/libreadline.a
-./usr/lib/libresolv_pic.a
 ./usr/lib/libskey_pic.a
 ./usr/lib/libssl_pic.a
 ./usr/lib/libstdc++_pic.a
