@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.6 1996/09/12 04:33:29 downsj Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.7 1996/12/05 13:22:10 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.16 1996/04/28 20:25:59 thorpej Exp $ */
 
 /*
@@ -145,6 +145,11 @@ readdisklabel(dev, strat, lp, clp)
 	if (lp->d_partitions[0].p_size == 0)
 		lp->d_partitions[0].p_size = 0x1fffffff;
 	lp->d_partitions[0].p_offset = 0;
+
+#if defined(CD9660)
+	if (iso_disklabelspoof(dev, strat, lp) == 0)
+		return (msg);
+#endif
 
 	/* obtain buffer to probe drive with */
 	bp = geteblk((int)lp->d_secsize);
