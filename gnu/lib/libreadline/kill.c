@@ -70,6 +70,11 @@ static int rl_kill_index;
 /* How many slots we have in the kill ring. */
 static int rl_kill_ring_length;
 
+static int _rl_copy_to_kill_ring PARAMS((char *, int));
+static int region_kill_internal PARAMS((int));
+static int _rl_copy_word_as_kill PARAMS((int, int));
+static int rl_yank_nth_arg_internal PARAMS((int, int, int));
+
 /* How to say that you only want to save a certain amount
    of kill material. */
 int
@@ -131,7 +136,7 @@ _rl_copy_to_kill_ring (text, append)
       int len;
       old = rl_kill_ring[slot];
       len = 1 + strlen (old) + strlen (text);
-      new = xmalloc (len);
+      new = (char *)xmalloc (len);
 
       if (append)
 	{
@@ -198,18 +203,21 @@ int
 rl_kill_word (count, key)
      int count, key;
 {
-  int orig_point = rl_point;
+  int orig_point;
 
   if (count < 0)
     return (rl_backward_kill_word (-count, key));
   else
     {
+      orig_point = rl_point;
       rl_forward_word (count, key);
 
       if (rl_point != orig_point)
 	rl_kill_text (orig_point, rl_point);
 
       rl_point = orig_point;
+      if (rl_editing_mode == emacs_mode)
+	rl_mark = rl_point;
     }
   return 0;
 }
@@ -219,16 +227,20 @@ int
 rl_backward_kill_word (count, ignore)
      int count, ignore;
 {
-  int orig_point = rl_point;
+  int orig_point;
 
   if (count < 0)
     return (rl_kill_word (-count, ignore));
   else
     {
+      orig_point = rl_point;
       rl_backward_word (count, ignore);
 
       if (rl_point != orig_point)
 	rl_kill_text (orig_point, rl_point);
+
+      if (rl_editing_mode == emacs_mode)
+	rl_mark = rl_point;
     }
   return 0;
 }
@@ -239,16 +251,19 @@ int
 rl_kill_line (direction, ignore)
      int direction, ignore;
 {
-  int orig_point = rl_point;
+  int orig_point;
 
   if (direction < 0)
     return (rl_backward_kill_line (1, ignore));
   else
     {
+      orig_point = rl_point;
       rl_end_of_line (1, ignore);
       if (orig_point != rl_point)
 	rl_kill_text (orig_point, rl_point);
       rl_point = orig_point;
+      if (rl_editing_mode == emacs_mode)
+	rl_mark = rl_point;
     }
   return 0;
 }
@@ -259,18 +274,22 @@ int
 rl_backward_kill_line (direction, ignore)
      int direction, ignore;
 {
-  int orig_point = rl_point;
+  int orig_point;
 
   if (direction < 0)
     return (rl_kill_line (1, ignore));
   else
     {
       if (!rl_point)
-	ding ();
+	rl_ding ();
       else
 	{
+	  orig_point = rl_point;
 	  rl_beg_of_line (1, ignore);
-	  rl_kill_text (orig_point, rl_point);
+	  if (rl_point != orig_point)
+	    rl_kill_text (orig_point, rl_point);
+	  if (rl_editing_mode == emacs_mode)
+	    rl_mark = rl_point;
 	}
     }
   return 0;
@@ -284,6 +303,7 @@ rl_kill_full_line (count, ignore)
   rl_begin_undo_group ();
   rl_point = 0;
   rl_kill_text (rl_point, rl_end);
+  rl_mark = 0;
   rl_end_undo_group ();
   return 0;
 }
@@ -301,7 +321,7 @@ rl_unix_word_rubout (count, key)
   int orig_point;
 
   if (rl_point == 0)
-    ding ();
+    rl_ding ();
   else
     {
       orig_point = rl_point;
@@ -318,6 +338,8 @@ rl_unix_word_rubout (count, key)
 	}
 
       rl_kill_text (orig_point, rl_point);
+      if (rl_editing_mode == emacs_mode)
+	rl_mark = rl_point;
     }
   return 0;
 }
@@ -333,11 +355,13 @@ rl_unix_line_discard (count, key)
      int count, key;
 {
   if (rl_point == 0)
-    ding ();
+    rl_ding ();
   else
     {
       rl_kill_text (rl_point, 0);
       rl_point = 0;
+      if (rl_editing_mode == emacs_mode)
+	rl_mark = rl_point;
     }
   return 0;
 }
@@ -350,16 +374,13 @@ region_kill_internal (delete)
 {
   char *text;
 
-  if (rl_mark == rl_point)
+  if (rl_mark != rl_point)
     {
-      _rl_last_command_was_kill++;
-      return 0;
+      text = rl_copy_text (rl_point, rl_mark);
+      if (delete)
+	rl_delete_text (rl_point, rl_mark);
+      _rl_copy_to_kill_ring (text, rl_point < rl_mark);
     }
-
-  text = rl_copy_text (rl_point, rl_mark);
-  if (delete)
-    rl_delete_text (rl_point, rl_mark);
-  _rl_copy_to_kill_ring (text, rl_point < rl_mark);
 
   _rl_last_command_was_kill++;
   return 0;
@@ -514,18 +535,20 @@ rl_yank_nth_arg_internal (count, ignore, history_skip)
 
   if (entry == 0)
     {
-      ding ();
+      rl_ding ();
       return -1;
     }
 
   arg = history_arg_extract (count, count, entry->line);
   if (!arg || !*arg)
     {
-      ding ();
+      rl_ding ();
       return -1;
     }
 
   rl_begin_undo_group ();
+
+  _rl_set_mark_at_pos (rl_point);
 
 #if defined (VI_MODE)
   /* Vi mode always inserts a space before yanking the argument, and it
@@ -594,7 +617,7 @@ rl_yank_last_arg (count, key)
 }
 
 /* A special paste command for users of Cygnus's cygwin32. */
-#if defined (__CYGWIN32__)
+#if defined (__CYGWIN__)
 #include <windows.h>
 
 int
@@ -614,12 +637,13 @@ rl_paste_from_clipboard (count, key)
       if (ptr)
 	{
 	  len = ptr - data;
-	  ptr = xmalloc (len + 1);
+	  ptr = (char *)xmalloc (len + 1);
 	  ptr[len] = '\0';
 	  strncpy (ptr, data, len);
 	}
       else
         ptr = data;
+      _rl_set_mark_at_pos (rl_point);
       rl_insert_text (ptr);
       if (ptr != data)
 	free (ptr);
@@ -627,4 +651,4 @@ rl_paste_from_clipboard (count, key)
     }
   return (0);
 }
-#endif /* __CYGWIN32__ */
+#endif /* __CYGWIN__ */

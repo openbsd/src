@@ -71,8 +71,8 @@ static char *legal_lang_values[] =
   0
 };
 
-static char *normalize_codeset __P((char *));
-static char *find_codeset __P((char *, size_t *));
+static char *normalize_codeset PARAMS((char *));
+static char *find_codeset PARAMS((char *, size_t *));
 #endif /* !HAVE_SETLOCALE */
 
 /* Check for LC_ALL, LC_CTYPE, and LANG and use the first with a value
@@ -105,9 +105,9 @@ _rl_init_eightbit ()
   /* We don't have setlocale.  Finesse it.  Check the environment for the
      appropriate variables and set eight-bit mode if they have the right
      values. */
-  lspec = get_env_value ("LC_ALL");
-  if (lspec == 0 || *lspec == '\0') lspec = get_env_value ("LC_CTYPE");
-  if (lspec == 0 || *lspec == '\0') lspec = get_env_value ("LANG");
+  lspec = sh_get_env_value ("LC_ALL");
+  if (lspec == 0 || *lspec == '\0') lspec = sh_get_env_value ("LC_CTYPE");
+  if (lspec == 0 || *lspec == '\0') lspec = sh_get_env_value ("LANG");
   if (lspec == 0 || *lspec == '\0' || (t = normalize_codeset (lspec)) == 0)
     return (0);
   for (i = 0; t && legal_lang_values[i]; i++)
@@ -141,10 +141,10 @@ normalize_codeset (codeset)
   all_digits = 1;
   for (len = 0, i = 0; i < namelen; i++)
     {
-      if (isalnum (codeset[i]))
+      if (ISALNUM ((unsigned char)codeset[i]))
 	{
 	  len++;
-	  all_digits &= isdigit (codeset[i]);
+	  all_digits &= _rl_digit_p (codeset[i]);
 	}
     }
 
@@ -162,9 +162,9 @@ normalize_codeset (codeset)
     }
 
   for (i = 0; i < namelen; i++)
-    if (isalpha (codeset[i]))
-      *wp++ = (isupper (codeset[i])) ? tolower (codeset[i]) : codeset[i];
-    else if (isdigit (codeset[i]))
+    if (ISALPHA ((unsigned char)codeset[i]))
+      *wp++ = _rl_to_lower (codeset[i]);
+    else if (_rl_digit_p (codeset[i]))
       *wp++ = codeset[i];
   *wp = '\0';
 

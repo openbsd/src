@@ -22,14 +22,11 @@
 #if !defined (_HISTLIB_H_)
 #define _HISTLIB_H_
 
-/* Function pointers can be declared as (Function *)foo. */
-#if !defined (_FUNCTION_DEF)
-#  define _FUNCTION_DEF
-typedef int Function ();
-typedef void VFunction ();
-typedef char *CPFunction ();
-typedef char **CPPFunction ();
-#endif /* _FUNCTION_DEF */
+#if defined (HAVE_STRING_H)
+#  include <string.h>
+#else
+#  include <strings.h>
+#endif /* !HAVE_STRING_H */
 
 #if !defined (STREQ)
 #define STREQ(a, b)	(((a)[0] == (b)[0]) && (strcmp ((a), (b)) == 0))
@@ -40,7 +37,7 @@ typedef char **CPPFunction ();
 #if !defined (savestring)
 #include <stdio.h>
 static char *
-xstrdup(char *s) 
+xstrdup(const char *s) 
 {
 	char * cp;
 	cp = strdup(s);

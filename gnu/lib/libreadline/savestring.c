@@ -20,14 +20,17 @@
    have a copy of the license, write to the Free Software Foundation,
    59 Temple Place, Suite 330, Boston, MA 02111 USA. */
 
+#include <config.h>
 #include <stdio.h>
-#include <string.h>
+#ifdef HAVE_STRING_H
+#  include <string.h>
+#endif
 
 /* Backwards compatibility, now that savestring has been removed from
    all `public' readline header files. */
-
 char *
-savestring(char *s) 
+savestring (s)
+     const char *s;
 {
 	char * cp;
 	cp = strdup(s);
@@ -37,4 +40,3 @@ savestring(char *s)
 	}
 	return(cp);
 }
-

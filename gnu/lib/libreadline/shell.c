@@ -44,28 +44,49 @@
 #  include <strings.h>
 #endif /* !HAVE_STRING_H */
 
+#if defined (HAVE_LIMITS_H)
+#  include <limits.h>
+#endif
+
 #include <fcntl.h>
 #include <pwd.h>
 
 #include <stdio.h>
 
+#include "rlstdc.h"
 #include "rlshell.h"
 #include "xmalloc.h"
 
 #if !defined (HAVE_GETPW_DECLS)
-extern struct passwd *getpwuid ();
+extern struct passwd *getpwuid PARAMS((uid_t));
 #endif /* !HAVE_GETPW_DECLS */
 
 #ifndef NULL
 #  define NULL 0
 #endif
 
+#ifndef CHAR_BIT
+#  define CHAR_BIT 8
+#endif
+
+/* Nonzero if the integer type T is signed.  */
+#define TYPE_SIGNED(t) (! ((t) 0 < (t) -1))
+
+/* Bound on length of the string representing an integer value of type T.
+   Subtract one for the sign bit if T is signed;
+   302 / 1000 is log10 (2) rounded up;
+   add one for integer division truncation;
+   add one more for a minus sign if t is signed.  */
+#define INT_STRLEN_BOUND(t) \
+  ((sizeof (t) * CHAR_BIT - TYPE_SIGNED (t)) * 302 / 1000 \
+   + 1 + TYPE_SIGNED (t))
+
 /* All of these functions are resolved from bash if we are linking readline
    as part of bash. */
 
 /* Does shell-like quoting using single quotes. */
 char *
-single_quote (string)
+sh_single_quote (string)
      char *string;
 {
   register int c;
@@ -96,7 +117,7 @@ single_quote (string)
 /* Set the environment variables LINES and COLUMNS to lines and cols,
    respectively. */
 void
-set_lines_and_columns (lines, cols)
+sh_set_lines_and_columns (lines, cols)
      int lines, cols;
 {
   char *b;
@@ -121,14 +142,14 @@ set_lines_and_columns (lines, cols)
 }
 
 char *
-get_env_value (varname)
-     char *varname;
+sh_get_env_value (varname)
+     const char *varname;
 {
   return ((char *)getenv (varname));
 }
 
 char *
-get_home_dir ()
+sh_get_home_dir ()
 {
   char *home_dir;
   struct passwd *entry;
@@ -147,7 +168,7 @@ get_home_dir ()
 #endif
 
 int
-unset_nodelay_mode (fd)
+sh_unset_nodelay_mode (fd)
      int fd;
 {
   int flags, bflags;
