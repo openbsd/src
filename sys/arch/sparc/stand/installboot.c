@@ -133,7 +133,7 @@ main(argc, argv)
 	if (sysctl(mib, 2, cpumodel, &size, NULL, 0) == -1)
 		err(1, "sysctl");
 
-	if (size < 5 || strncmp(cpumodel, "SUN/4", 5) != 0) /*XXX*/ 
+	if (size < 5 || strncmp(cpumodel, "SUN-4", 5) != 0) /*XXX*/ 
 		/* Assume a sun4c/sun4m */
 		hflag = 1;
 
