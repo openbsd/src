@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc-common,v 1.2 1996/08/24 07:47:07 etheisen Exp $
+.\"	$OpenBSD: doc-common,v 1.3 1996/09/03 07:40:40 etheisen Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -141,10 +141,11 @@
 .if !"\\$2"" \{\
 .	ds cH \\$2
 .\" .	if "\\$3"" \{\
-.		if \\$2>=1 .if \\$2<=8 \{\
-.			ds vT BSD Reference Manual
-.			if \\$2>1 .if \\$2<6 .ds vT BSD Programmer's Manual
-.			if "\\$2"8" .ds vT BSD System Manager's Manual
+.		if \\$2>=1 .if \\$2<=9 \{\
+.			ds vT OpenBSD Reference Manual
+.			if \\$2>1 .if \\$2<6 .ds vT OpenBSD Programmer's Manual
+.			if "\\$2"8" .ds vT OpenBSD System Manager's Manual
+.			if "\\$2"9" .ds vT OpenBSD Kernel Manual
 .			nr sN \\$2
 .		\}
 .		if "\\$2"unass"  .ds vT DRAFT
@@ -153,21 +154,33 @@
 .\" .	\}
 .\}
 .if !"\\$3"" \{\
-.	if "\\$3"USD"   .ds vT BSD User's Supplementary Documents
-.	if "\\$3"PS1"   .ds vT BSD Programmers's Supplementary Documents
-.	if "\\$3"AMD"   .ds vT BSD Ancestral Manual Documents
-.	if "\\$3"SMM"   .ds vT BSD System Manager's Manual
-.	if "\\$3"URM"   .ds vT BSD Reference Manual
-.	if "\\$3"PRM"   .ds vT BSD Programmers's Manual
-.	if "\\$3"IND"   .ds vT BSD Manual Master Index
-.\" .	if "\\$3"CON"   .ds vT BSD Contributed Software Manual
-.\" .	if "\\$3"IMP"	.ds vT BSD Implementation Notes
-.\" .	if "\\$3"HOW"	.ds vT BSD How Pocket Manual
-.	if "\\$3"LOCAL" .ds vT BSD Local Manual
-.	if "\\$3"tahoe" .as vT \ (Tahoe Architecture)
-.	if "\\$3"vax" .as vT \ (VAX Architecture)
+.	if "\\$3"USD"   .ds vT OpenBSD User's Supplementary Documents
+.	if "\\$3"PS1"   .ds vT OpenBSD Programmers's Supplementary Documents
+.	if "\\$3"AMD"   .ds vT OpenBSD Ancestral Manual Documents
+.	if "\\$3"SMM"   .ds vT OpenBSD System Manager's Manual
+.	if "\\$3"URM"   .ds vT OpenBSD Reference Manual
+.	if "\\$3"PRM"   .ds vT OpenBSD Programmers's Manual
+.	if "\\$3"KM"    .ds vT OpenBSD Kernel Manual
+.	if "\\$3"IND"   .ds vT OpenBSD Manual Master Index
+.\" .	if "\\$3"CON"   .ds vT OpenBSD Contributed Software Manual
+.\" .	if "\\$3"IMP"	.ds vT OpenBSD Implementation Notes
+.\" .	if "\\$3"HOW"	.ds vT OpenBSD How Pocket Manual
+.	if "\\$3"LOCAL" .ds vT OpenBSD Local Manual
+.	if "\\$3"amiga" .as vT \ (AMIGA Architecture)
+.	if "\\$3"da30"  .as vT \ (DA30 Architecture)
 .	if "\\$3"hp300" .as vT \ (HP300 Architecture)
+.	if "\\$3"i386"  .as vT \ (I386 Architecture)
+.	if "\\$3"mac68k" .as vT \ (MAC68K Architecture)
+.	if "\\$3"mvme68k" .as vT \ (MVME68K Architecture)
+.	if "\\$3"mvme88k" .as vT \ (MVME88K Architecture)
+.	if "\\$3"pc532" .as vT \ (PC532 Architecture)
+.	if "\\$3"pica"  .as vT \ (PICA  Architecture)
+.	if "\\$3"pmax"  .as vT \ (PMAX  Architecture)
 .	if "\\$3"sparc" .as vT \ (SPARC Architecture)
+.	if "\\$3"sun3"  .as vT \ (SUN3 Architecture)
+.	if "\\$3"tahoe" .as vT \ (TAHOE Architecture)
+.	if "\\$3"vax"   .as vT \ (VAX Architecture)
+.	if "\\$3"x68k"  .as vT \ (X68K Architecture)
 .	if "\\*(vT"LOCAL" .ds vT \\$3
 .\}
 ..
@@ -179,7 +192,7 @@
 .de Os
 .ds oS Null
 .if "\\$1"" \{\
-.	ds oS 4.4BSD
+.	ds oS OpenBSD 1.2
 .\}
 .if "\\$2"" \{\
 .	ds aa Non-Null
@@ -207,6 +220,21 @@
 .	if "\\$2"4.3t" .ds oS 4.3-Tahoe Berkeley Distribution
 .	if "\\$2"4.3r" .ds oS 4.3-Reno Berkeley Distribution
 .	if "\\$2"4.4"  .ds oS 4.4BSD
+.\}
+.if "\\$1"NetBSD" \{\
+.	ds oS NetBSD
+.	if "\\$2"0.8"  .as oS \00.8
+.	if "\\$2"0.8a" .as oS \00.8a
+.	if "\\$2"0.9"  .as oS \00.9
+.	if "\\$2"0.9a" .as oS \00.9a
+.	if "\\$2"1.0"  .as oS \01.0
+.	if "\\$2"1.0"  .as oS \01.0a
+.	if "\\$2"1.1"  .as oS \01.1
+.	if "\\$2"1.1"  .as oS \01.2
+.\}
+.if "\\$1"OpenBSD" \{\
+.	ds oS OpenBSD
+.	if "\\$2"1.2"  .as oS \01.2
 .\}
 .if "\\*(oS"Null" .ds oS \0\\$1
 .if "\\*(aa"Non-Null" .as oS \0\\$2
