@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.37 2003/08/26 08:33:12 itojun Exp $	*/
+/*	$OpenBSD: route.c,v 1.38 2003/08/27 00:01:38 itojun Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -679,8 +679,6 @@ rtrequest1(req, info, ret_nrt)
 			/* clean up any cloned children */
 			rtflushclone(rnh, rt);
 		}
-		if ((rn = rnh->rnh_deladdr(dst, netmask, rnh)) == NULL)
-			senderr(ESRCH);
 		if (rn->rn_flags & (RNF_ACTIVE | RNF_ROOT))
 			panic ("rtrequest delete");
 		rt = (struct rtentry *)rn;
