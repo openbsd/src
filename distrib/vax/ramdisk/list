@@ -1,8 +1,10 @@
-#	$OpenBSD: list,v 1.1 2001/02/24 10:55:02 hugh Exp $
+#	$OpenBSD: list,v 1.2 2001/03/16 04:50:36 hugh Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # extras
 LINK	instbin			sbin/disklabel
+#LINK	instbin			usr/bin/vi
+SYMLINK ../../instbin		usr/bin/build usr/bin/vi
 
 SYMLINK	../../instbin		usr/bin/basename
 SYMLINK ../../instbin		usr/bin/cksum usr/bin/sum
