@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.5 2000/04/24 22:40:11 jakob Exp $ */
+/* $OpenBSD: user.c,v 1.6 2000/04/24 22:52:36 jakob Exp $ */
 /* $NetBSD: user.c,v 1.17 2000/04/14 06:26:55 simonb Exp $ */
 
 /*
@@ -120,14 +120,6 @@ typedef struct user_t {
 
 #ifndef DEF_EXPIRE
 #define DEF_EXPIRE	(char *) NULL
-#endif
-
-#ifndef MASTER
-#define MASTER		"/etc/master.passwd"
-#endif
-
-#ifndef ETCGROUP
-#define ETCGROUP	"/etc/group"
 #endif
 
 #ifndef WAITSECS
@@ -267,15 +259,15 @@ creategid(char *group, int gid, char *name)
 		warnx("group `%s' already exists", group);
 		return 0;
 	}
-	if ((from = fopen(ETCGROUP, "r")) == (FILE *) NULL) {
-		warn("can't create gid for %s: can't open %s", name, ETCGROUP);
+	if ((from = fopen(_PATH_GROUP, "r")) == (FILE *) NULL) {
+		warn("can't create gid for %s: can't open %s", name, _PATH_GROUP);
 		return 0;
 	}
 	if (flock(fileno(from), LOCK_EX | LOCK_NB) < 0) {
-		warn("can't lock `%s'", ETCGROUP);
+		warn("can't lock `%s'", _PATH_GROUP);
 	}
 	(void) fstat(fileno(from), &st);
-	(void) snprintf(f, sizeof(f), "%s.XXXXXX", ETCGROUP);
+	(void) snprintf(f, sizeof(f), "%s.XXXXXX", _PATH_GROUP);
 	if ((fd = mkstemp(f)) < 0) {
 		(void) fclose(from);
 		warn("can't create gid: mkstemp failed");
@@ -300,11 +292,11 @@ creategid(char *group, int gid, char *name)
 	(void) fprintf(to, "%s:*:%d:%s\n", group, gid, name);
 	(void) fclose(from);
 	(void) fclose(to);
-	if (rename(f, ETCGROUP) < 0) {
-		warn("can't create gid: can't rename `%s' to `%s'", f, ETCGROUP);
+	if (rename(f, _PATH_GROUP) < 0) {
+		warn("can't create gid: can't rename `%s' to `%s'", f, _PATH_GROUP);
 		return 0;
 	}
-	(void) chmod(ETCGROUP, st.st_mode & 07777);
+	(void) chmod(_PATH_GROUP, st.st_mode & 07777);
 	return 1;
 }
 
@@ -323,15 +315,15 @@ modify_gid(char *group, char *newent)
 	int		fd;
 	int		cc;
 
-	if ((from = fopen(ETCGROUP, "r")) == (FILE *) NULL) {
-		warn("can't create gid for %s: can't open %s", group, ETCGROUP);
+	if ((from = fopen(_PATH_GROUP, "r")) == (FILE *) NULL) {
+		warn("can't create gid for %s: can't open %s", group, _PATH_GROUP);
 		return 0;
 	}
 	if (flock(fileno(from), LOCK_EX | LOCK_NB) < 0) {
-		warn("can't lock `%s'", ETCGROUP);
+		warn("can't lock `%s'", _PATH_GROUP);
 	}
 	(void) fstat(fileno(from), &st);
-	(void) snprintf(f, sizeof(f), "%s.XXXXXX", ETCGROUP);
+	(void) snprintf(f, sizeof(f), "%s.XXXXXX", _PATH_GROUP);
 	if ((fd = mkstemp(f)) < 0) {
 		(void) fclose(from);
 		warn("can't create gid: mkstemp failed");
@@ -370,11 +362,11 @@ modify_gid(char *group, char *newent)
 	}
 	(void) fclose(from);
 	(void) fclose(to);
-	if (rename(f, ETCGROUP) < 0) {
-		warn("can't create gid: can't rename `%s' to `%s'", f, ETCGROUP);
+	if (rename(f, _PATH_GROUP) < 0) {
+		warn("can't create gid: can't rename `%s' to `%s'", f, _PATH_GROUP);
 		return 0;
 	}
-	(void) chmod(ETCGROUP, st.st_mode & 07777);
+	(void) chmod(_PATH_GROUP, st.st_mode & 07777);
 	return 1;
 }
 
@@ -622,11 +614,11 @@ adduser(char *login, user_t *up)
 	if (!valid_login(login)) {
 		errx(EXIT_FAILURE, "`%s' is not a valid login name", login);
 	}
-	if ((masterfd = open(MASTER, O_RDONLY)) < 0) {
-		err(EXIT_FAILURE, "can't open `%s'", MASTER);
+	if ((masterfd = open(_PATH_MASTERPASSWD, O_RDONLY)) < 0) {
+		err(EXIT_FAILURE, "can't open `%s'", _PATH_MASTERPASSWD);
 	}
 	if (flock(masterfd, LOCK_EX | LOCK_NB) < 0) {
-		err(EXIT_FAILURE, "can't lock `%s'", MASTER);
+		err(EXIT_FAILURE, "can't lock `%s'", _PATH_MASTERPASSWD);
 	}
 	pw_init();
 	if ((ptmpfd = pw_lock(WAITSECS)) < 0) {
@@ -775,11 +767,11 @@ moduser(char *login, char *newlogin, user_t *up)
 	if ((pwp = getpwnam(login)) == (struct passwd *) NULL) {
 		errx(EXIT_FAILURE, "No such user `%s'", login);
 	}
-	if ((masterfd = open(MASTER, O_RDONLY)) < 0) {
-		err(EXIT_FAILURE, "can't open `%s'", MASTER);
+	if ((masterfd = open(_PATH_MASTERPASSWD, O_RDONLY)) < 0) {
+		err(EXIT_FAILURE, "can't open `%s'", _PATH_MASTERPASSWD);
 	}
 	if (flock(masterfd, LOCK_EX | LOCK_NB) < 0) {
-		err(EXIT_FAILURE, "can't lock `%s'", MASTER);
+		err(EXIT_FAILURE, "can't lock `%s'", _PATH_MASTERPASSWD);
 	}
 	pw_init();
 	if ((ptmpfd = pw_lock(WAITSECS)) < 0) {
@@ -790,7 +782,7 @@ moduser(char *login, char *newlogin, user_t *up)
 		(void) close(masterfd);
 		(void) close(ptmpfd);
 		(void) pw_abort();
-		err(EXIT_FAILURE, "can't fdopen fd for %s", MASTER);
+		err(EXIT_FAILURE, "can't fdopen fd for %s", _PATH_MASTERPASSWD);
 	}
 	if (up != (user_t *) NULL) {
 		if (up->u_mkdir) {
@@ -1301,7 +1293,7 @@ groupadd(int argc, char **argv)
 		warnx("warning - invalid group name `%s'", argv[optind]);
 	}
 	if (!creategid(argv[optind], gid, "")) {
-		err(EXIT_FAILURE, "can't add group: problems with %s file", ETCGROUP);
+		err(EXIT_FAILURE, "can't add group: problems with %s file", _PATH_GROUP);
 	}
 	return EXIT_SUCCESS;
 }
@@ -1332,7 +1324,7 @@ groupdel(int argc, char **argv)
 	}
 	checkeuid();
 	if (!modify_gid(argv[optind], NULL)) {
-		err(EXIT_FAILURE, "can't change %s file", ETCGROUP);
+		err(EXIT_FAILURE, "can't change %s file", _PATH_GROUP);
 	}
 	return EXIT_SUCCESS;
 }
@@ -1405,7 +1397,7 @@ groupmod(int argc, char **argv)
 			(cpp[1] == NULL) ? "" : ",");
 	}
 	if (!modify_gid(argv[optind], buf)) {
-		err(EXIT_FAILURE, "can't change %s file", ETCGROUP);
+		err(EXIT_FAILURE, "can't change %s file", _PATH_GROUP);
 	}
 	return EXIT_SUCCESS;
 }
