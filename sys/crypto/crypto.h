@@ -155,12 +155,13 @@ extern int crypto_register(u_int32_t, int,
     int (*)(struct cryptop *));
 extern int crypto_unregister(u_int32_t, int);
 extern int32_t crypto_get_driverid(void);
+extern void crypto_thread(void);
+extern int crypto_invoke(struct cryptop *);
 
 struct mbuf;
 int	mbuf2pages(struct mbuf *, int *, long *, int *, int, int *);
 
 extern struct cryptop *crypto_getreq(int);
 extern void crypto_freereq(struct cryptop *);
-extern void crypto_thread(void);
 #endif /* _KERNEL */
 #endif /* _CRYPTO_CRYPTO_H_ */

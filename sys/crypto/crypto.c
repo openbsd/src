@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.8 2000/06/18 03:07:11 angelos Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.9 2000/06/18 03:08:56 angelos Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -48,8 +48,6 @@ int crypto_queue_max = CRYPTO_MAX_CACHED;
 
 struct cryptop *crp_req_queue = NULL;
 struct cryptop **crp_req_queue_tail = NULL;
-
-int crypto_invoke(struct cryptop *);
 
 /*
  * Create a new session.
