@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmp_cfg.c,v 1.12 2002/06/07 21:59:22 ho Exp $	*/
+/*	$OpenBSD: isakmp_cfg.c,v 1.13 2002/06/08 17:35:06 ho Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist.  All rights reserved.
@@ -417,10 +417,10 @@ cfg_initiator_recv_ATTR (struct message *msg)
       break;
 
     default:
-      message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 0);
-      log_print ("cfg_responder_recv_ATTR: "
+      log_print ("cfg_initiator_recv_ATTR: "
 		 "unexpected configuration message type %d",
 		 attrp->p[ISAKMP_ATTRIBUTE_TYPE_OFF]);
+      message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 0);
       return -1;
     }
 
@@ -428,28 +428,40 @@ cfg_initiator_recv_ATTR (struct message *msg)
 		 GET_ISAKMP_GEN_LENGTH (attrp->p)
 		 - ISAKMP_TRANSFORM_SA_ATTRS_OFF, cfg_decode_attribute, ie);
   
-  if (attrp->p[ISAKMP_ATTRIBUTE_TYPE_OFF] == ISAKMP_CFG_ACK)
+  switch (attrp->p[ISAKMP_ATTRIBUTE_TYPE_OFF])
     {
-      /* SET / ACKNOWLEDGE */
-      const char *uk_addr = "<unknown>";
+    case ISAKMP_CFG_ACK:
+      {
+	/* SET/ACK -- Server side (ACK from client) */
 
-      msg->transport->vtbl->get_src (isakmp_sa->transport, &sa);
-      if (sockaddr2text (sa, &addr, 0) < 0)
-	addr = (char *)uk_addr;
+	/* XXX for now, just print what we got.  */
+	const char *uk_addr = "<unknown>";
+
+	msg->transport->vtbl->get_src (isakmp_sa->transport, &sa);
+	if (sockaddr2text (sa, &addr, 0) < 0)
+	  addr = (char *)uk_addr;
       
-      for (attr = LIST_FIRST (&ie->attrs); attr; attr = LIST_NEXT (attr, link))
-	LOG_DBG ((LOG_NEGOTIATION, 50, "cfg_responder_recv_ATTR: "
-		  "client %s ACKs attribute %s", addr,
-		  constant_name (isakmp_cfg_attr_cst, attr->type)));
+	for (attr = LIST_FIRST (&ie->attrs); attr;
+	     attr = LIST_NEXT (attr, link))
+	  LOG_DBG ((LOG_NEGOTIATION, 50, "cfg_initiator_recv_ATTR: "
+		    "client %s ACKs attribute %s", addr,
+		    constant_name (isakmp_cfg_attr_cst, attr->type)));
 
-      if (addr != uk_addr)
-	free (addr);
-    }
-  else /* ISAKMP_CFG_REPLY */
-    {
-      /*
-       * XXX REQ/REPLY: effect attributes we've gotten responses on.
-       */
+	if (addr != uk_addr)
+	  free (addr);
+      }
+      break;
+
+    case ISAKMP_CFG_REPLY:
+      {
+	/*
+	 * XXX REQ/REPLY: effect attributes we've gotten responses on.
+	 */
+      }
+      break;
+
+    default:
+      break;
     }
 
   return 0;
@@ -469,9 +481,12 @@ cfg_responder_recv_ATTR (struct message *msg)
   struct ipsec_exch *ie = exchange->data;
   struct sa *isakmp_sa = msg->isakmp_sa;
   struct ipsec_sa *isa = isakmp_sa->data;
+  struct isakmp_cfg_attr *attr;
+  struct sockaddr *sa;
   struct prf *prf;
   u_int8_t *hash, *comp_hash;
   size_t hash_len;
+  char *addr;
 
   if (exchange->phase == 2)
     {
@@ -526,16 +541,8 @@ cfg_responder_recv_ATTR (struct message *msg)
   switch (attrp->p[ISAKMP_ATTRIBUTE_TYPE_OFF])
     {
     case ISAKMP_CFG_REQUEST:
-      attribute_map (attrp->p + ISAKMP_ATTRIBUTE_ATTRS_OFF,
-		     GET_ISAKMP_GEN_LENGTH (attrp->p)
-		     - ISAKMP_TRANSFORM_SA_ATTRS_OFF, cfg_decode_attribute,
-		     ie);
-      break;
-
-#ifdef notyet
     case ISAKMP_CFG_SET:
       break;
-#endif
 
     default:
       message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 0);
@@ -543,6 +550,40 @@ cfg_responder_recv_ATTR (struct message *msg)
 		 "unexpected configuration message type %d",
 		 attrp->p[ISAKMP_ATTRIBUTE_TYPE_OFF]);
       return -1;
+    }
+
+  attribute_map (attrp->p + ISAKMP_ATTRIBUTE_ATTRS_OFF,
+		 GET_ISAKMP_GEN_LENGTH (attrp->p)
+		 - ISAKMP_TRANSFORM_SA_ATTRS_OFF, cfg_decode_attribute,
+		 ie);
+
+  switch (attrp->p[ISAKMP_ATTRIBUTE_TYPE_OFF])
+    {
+    case ISAKMP_CFG_REQUEST:
+      break;
+
+    case ISAKMP_CFG_SET:
+      {
+	/* SET/ACK -- Client side (SET from server) */
+	const char *uk_addr = "<unknown>";
+
+	msg->transport->vtbl->get_src (isakmp_sa->transport, &sa);
+	if (sockaddr2text (sa, &addr, 0) < 0)
+	  addr = (char *)uk_addr;
+      
+	for (attr = LIST_FIRST (&ie->attrs); attr;
+	     attr = LIST_NEXT (attr, link))
+	  LOG_DBG ((LOG_NEGOTIATION, 50, "cfg_responder_recv_ATTR: "
+		    "server %s sends SET attribute %s", addr,
+		    constant_name (isakmp_cfg_attr_cst, attr->type)));
+
+	if (addr != uk_addr)
+	  free (addr);
+      }
+      break;
+
+    default:
+      break;
     }
 
   return 0;
@@ -661,7 +702,7 @@ cfg_responder_send_ATTR (struct message *msg)
       goto fail;
     }
 
-  SET_ISAKMP_ATTRIBUTE_TYPE (attrp, ISAKMP_CFG_REPLY);
+  SET_ISAKMP_ATTRIBUTE_TYPE (attrp, ISAKMP_CFG_REPLY); /* XXX or ACK */
   SET_ISAKMP_ATTRIBUTE_ID (attrp, ie->cfg_id);
 
   off = ISAKMP_ATTRIBUTE_SZ;
