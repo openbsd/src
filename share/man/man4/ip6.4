@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ip6.4,v 1.2 1999/12/20 04:34:21 itojun Exp $
+.\"	$OpenBSD: ip6.4,v 1.3 1999/12/22 06:52:28 itojun Exp $
 .\"
 .\" Copyright (C) 1999 WIDE Project.
 .\" All rights reserved.
@@ -58,7 +58,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	KAME Id: ip6.4,v 1.3 1999/12/20 01:53:35 jinmei Exp
+.\"	KAME Id: ip6.4,v 1.6 1999/12/22 06:49:12 itojun Exp
 .\"
 .Dd December 17, 1999
 .Dt IP6 4
@@ -242,13 +242,13 @@ setsockopt(s, IPPROTO_IPV6, IPV6_PORTRANGE, &range, sizeof(range));
 .Ed
 .\"
 .Ss Advanced IPv6 sockets API
-The advanced IPv6 sockets API lets userland programs to specify, or obtain,
+The advanced IPv6 sockets API lets userland programs specify or obtain
 details about the IPv6 header and the IPv6 extension headers on packets.
 The advanced API uses ancillary data for passing data from/to the kernel.
 .Pp
 There are
 .Xr setsockopt 2 / Ns Xr getsockopt 2
-flags to get optional information on packets for incoming packets.
+options to get optional information on incoming packets.
 They are
 .Dv IPV6_PKTINFO ,
 .Dv IPV6_HOPLIMIT ,
@@ -268,13 +268,13 @@ setsockopt(fd, IPPROTO_IPV6, IPV6_RTHDR,    &on, sizeof(on));
 .Pp
 When any of these options are enabled, the corresponding data is
 returned as control information by
-.Xr recvmsg2 ,
+.Xr recvmsg 2 ,
 as one or more ancillary data objects.
 .Pp
 If
 .Dv IPV6_PKTINFO
-is enabled, destination IPv6 address and arriving interface index
-will be made available via
+is enabled, the destination IPv6 address and the arriving interface index
+will be available via
 .Li struct in6_pktinfo
 on ancillary data stream.
 You can pick the structure by checking for an ancillary data item with
@@ -290,7 +290,7 @@ If
 .Dv IPV6_HOPLIMIT
 is enabled, hoplimit value on the packet will be made available to the
 userland program.
-ancillary data stream will contain an integer data item with
+Ancillary data stream will contain an integer data item with
 .Li cmsg_level
 equals to
 .Dv IPPROTO_IPV6 ,
@@ -312,7 +312,8 @@ and friends will help you parse ancillary data items for
 .Dv IPV6_HOPOPTS
 and
 .Dv IPV6_DSTOPTS
-may appear multiple times on an ancillary data stream.
+may appear multiple times on an ancillary data stream
+(note that the behavior is slightly different than the specification).
 Other ancillary data item will appear no more than once.
 .Pp
 For outgoing direction,
@@ -450,9 +451,12 @@ field of the socket address passed to
 .Pp
 When conflicting options are given to the kernel,
 the kernel will get the value in the following preference:
-(1) options specified by using advanced API,
-(2) options specified by socket address, and lastly
-(3) options specified by using basic API.
+(1) options specified by using ancillary data,
+(2) options specified by a sticky option of the advanced API,
+(3) options specified by using the basic API, and lastly
+(4) options specified by a socket address.
+Note that the conflict resolution is undefined in the API specifcation
+and implementation dependent.
 .\"
 .Ss "Raw IPv6 Sockets"
 Raw
@@ -630,6 +634,16 @@ The ancillary data items were improperly formed, or option name was unknown.
 .%D December 1998
 .%T "Internet Protocol, Version 6 (IPv6) Specification"
 .Re
+.Rs
+.%A R. Gilligan
+.%A S. Thomson
+.%A J. Bound
+.%A W. Stevens
+.%R RFC
+.%N 2553
+.%D March 1999
+.%T "Basic Socket Interface Extensions for IPv6"
+.Re
 .\"
 .Sh STANDARDS
 Most of the socket options are defined in
@@ -645,3 +659,8 @@ which is decendant of WIDE hydrangea IPv6 stack kit
 .Pc .
 .Pp
 Part of the document was shamelessly copied from RFC2553 and RFC2292.
+.\"
+.Sh BUGS
+The
+.Dv IPV6_NEXTHOP
+object/option is not fully implemented as of writing this.
