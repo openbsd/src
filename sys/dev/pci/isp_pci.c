@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_pci.c,v 1.21 2001/08/25 14:52:57 jason Exp $	*/
+/*	$OpenBSD: isp_pci.c,v 1.22 2001/08/26 03:32:22 jason Exp $	*/
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -922,7 +922,7 @@ dmasync:
 mbxsync:
 	ISP_SWIZZLE_REQUEST(isp, rq);
 	isp_bus_dmamap_sync(pci->pci_dmat, pci->pci_rquest_dmap, 0,
-	    pci->pci_request_dmap->dm_mapsize, BUS_DMASYNC_PREWRITE);
+	    pci->pci_rquest_dmap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 	return (CMD_QUEUED);
 }
 
@@ -934,7 +934,7 @@ isp_pci_intr(void *arg)
 	struct isp_pcisoftc *p = (struct isp_pcisoftc *)isp;
 
 	isp_bus_dmamap_sync(p->pci_dmat, p->pci_result_dmap, 0,
-	    pcs->pci_result_dmap->dm_mapsize, BUS_DMASYNC_POSTREAD);
+	    p->pci_result_dmap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
 	isp->isp_osinfo.onintstack = 1;
 	r = isp_intr(arg);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcscp.c,v 1.5 2001/08/25 14:52:57 jason Exp $	*/
+/*	$OpenBSD: pcscp.c,v 1.6 2001/08/26 03:32:22 jason Exp $	*/
 /*	$NetBSD: pcscp.c,v 1.11 2000/11/14 18:42:58 thorpej Exp $	*/
 
 /*-
@@ -494,7 +494,7 @@ pcscp_dma_intr(sc)
 
 	WRITE_DMAREG(esc, DMA_CMD, DMACMD_IDLE | (datain ? DMACMD_DIR : 0));
 
-	pcscp_bus_dmamap_sync(esc->sc_dmat, dmap, 0, dmap_>dm_mapsize,
+	pcscp_bus_dmamap_sync(esc->sc_dmat, dmap, 0, dmap->dm_mapsize,
 	    datain ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_unload(esc->sc_dmat, dmap);
 

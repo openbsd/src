@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.5 2001/08/25 14:52:57 jason Exp $	*/
+/*	$OpenBSD: yds.c,v 1.6 2001/08/26 03:32:22 jason Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -1005,7 +1005,7 @@ yds_intr(p)
 
 			/* Sync play slot control data */
 			yds_bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map,
-			    sc->sc_pbankoff,
+			    sc->pbankoff,
 			    sizeof(struct play_slot_ctrl_bank) * (*sc->ptbl)*
 			    N_PLAY_SLOT_CTRL_BANK,
 			    BUS_DMASYNC_POSTWRITE|BUS_DMASYNC_POSTREAD);
@@ -1491,7 +1491,7 @@ yds_trigger_output(addr, start, end, blksize, intr, arg, param)
 	/* Sync play slot control data for both directions */
 	yds_bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map,
 	    sc->ptbloff, sizeof(struct play_slot_ctrl_bank) * channels *
-	    NPLAY_SLOT_CTRL_BANK, BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
+	    N_PLAY_SLOT_CTRL_BANK, BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 	/* Sync ring buffer */
 	yds_bus_dmamap_sync(sc->sc_dmatag, p->map, 0, blksize,
 	    BUS_DMASYNC_PREWRITE);
@@ -1589,7 +1589,7 @@ yds_trigger_input(addr, start, end, blksize, intr, arg, param)
 #endif
 	/* Now the rec slot for the next frame is set up!! */
 	/* Sync record slot control data */
-	yds_bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map, sc->sc_rbankoff,
+	yds_bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map, sc->rbankoff,
 	    sizeof(struct rec_slot_ctrl_bank) * N_REC_SLOT_CTRL *
 	    N_REC_SLOT_CTRL_BANK, BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 	/* Sync ring buffer */
@@ -1663,7 +1663,7 @@ yds_halt_input(addr)
 		sc->sc_rec.intr = 0;
 		/* Sync rec slot control data */
 		yds_bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map,
-		    sc->sc_rbankoff, sizeof(struct rec_slot_ctrl_bank)*
+		    sc->rbankoff, sizeof(struct rec_slot_ctrl_bank)*
 		    N_REC_SLOT_CTRL*N_REC_SLOT_CTRL_BANK,
 		    BUS_DMASYNC_POSTWRITE|BUS_DMASYNC_POSTREAD);
 		/* Sync ring buffer */
