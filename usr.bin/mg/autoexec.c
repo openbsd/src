@@ -1,4 +1,4 @@
-/* $OpenBSD: autoexec.c,v 1.4 2004/07/22 01:25:24 vincent Exp $ */
+/* $OpenBSD: autoexec.c,v 1.5 2005/03/10 16:58:57 deraadt Exp $ */
 /* this file is in the public domain */
 /* Author: Vincent Labrecque <vincent@openbsd.org>	April 2002 */
 
@@ -39,10 +39,6 @@ find_autoexec(const char *fname)
 	SLIST_FOREACH(ae, &autos, next) {
 		if (fnmatch(ae->pattern, fname, 0) == 0) {
 			if (used >= have) {
-				/*
-				 * XXX - realloc(NULL, ...) is not really
-				 *       portable
-				 */
 				npfl = realloc(pfl, (have + 8 + 1) * sizeof(PF));
 				if (npfl == NULL)
 					panic("out of memory");

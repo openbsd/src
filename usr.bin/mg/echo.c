@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.29 2004/07/22 01:25:24 vincent Exp $	*/
+/*	$OpenBSD: echo.c,v 1.30 2005/03/10 16:58:57 deraadt Exp $	*/
 /*
  *	Echo line reading and writing.
  *
@@ -301,7 +301,7 @@ veread(const char *fp, char *buf, size_t nbuf, int flag, va_list ap)
 		case CCHR('Q'):			/* quote next */
 			c = getkey(FALSE);
 			/* FALLTHROUGH */
-		default:		
+		default:
 			/* all the rest */
 			if (dynbuf && cpos + 1 >= nbuf) {
 				void *newp;

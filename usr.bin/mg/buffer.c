@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.35 2005/03/09 16:20:48 jfb Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.36 2005/03/10 16:58:57 deraadt Exp $	*/
 
 /*
  *		Buffer handling.
@@ -383,8 +383,8 @@ int
 anycb(int f)
 {
 	BUFFER *bp;
-	int     s = FALSE, save = FALSE;
-	char    prompt[NFILEN + 11];
+	int s = FALSE, save = FALSE;
+	char prompt[NFILEN + 11];
 
 	for (bp = bheadp; bp != NULL; bp = bp->b_bufp) {
 		if (bp->b_fname != NULL && *(bp->b_fname) != '\0' &&
@@ -575,9 +575,8 @@ bufferinsert(int f, int n)
 {
 	BUFFER *bp;
 	LINE   *clp;
-	int     clo;
-	int     nline;
-	char    bufn[NBUFN], *bufp;
+	int	clo, nline;
+	char	bufn[NBUFN], *bufp;
 
 	/* Get buffer to use from user */
 	if (curbp->b_altb != NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.47 2005/03/10 16:46:24 henning Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.48 2005/03/10 16:58:57 deraadt Exp $	*/
 
 /*
  *	POSIX fileio.c
@@ -109,7 +109,7 @@ ffputbuf(BUFFER *bp)
 		}
 		if (lforw(lp) != lpend)		/* no implied \n on last line */
 			putc('\n', ffp);
-	}	
+	}
 	/*
 	 * XXX should be variable controlled (once we have variables)
 	 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.31 2004/07/22 01:25:25 vincent Exp $	*/
+/*	$OpenBSD: extend.c,v 1.32 2005/03/10 16:58:57 deraadt Exp $	*/
 
 /*
  *	Extended (M-X) commands, rebinding, and	startup file processing.
@@ -85,11 +85,9 @@ insert(int f, int n)
  */
 static int
 remap(KEYMAP *curmap,		/* pointer to the map being changed */
-      int c,			/* character being changed */
-      PF funct,			/* function being changed to */
-      KEYMAP *pref_map		/* if funct==NULL, map to bind to or
-				   NULL for new */
-      )
+    int c,			/* character being changed */
+    PF funct,			/* function being changed to */
+    KEYMAP *pref_map)		/* if funct==NULL, map to bind to or NULL for new */
 {
 	int		 i, n1, n2, nold;
 	KEYMAP		*mp, *newmap;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: basic.c,v 1.16 2004/07/22 01:25:24 vincent Exp $	*/
+/*	$OpenBSD: basic.c,v 1.17 2005/03/10 16:58:57 deraadt Exp $	*/
 
 /*
  *		Basic cursor motion commands.
@@ -208,7 +208,7 @@ backline(int f, int n)
 void
 setgoal(void)
 {
-	curgoal = getcolpos();		/* Get the position.     */
+	curgoal = getcolpos();		/* Get the position. */
 	/* we can now display past end of display, don't chop! */
 }
 
