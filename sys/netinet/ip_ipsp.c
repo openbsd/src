@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.93 2000/06/18 19:05:46 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.94 2000/06/18 19:10:07 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -63,6 +63,7 @@
 #ifndef INET
 #include <netinet/in.h>
 #endif
+#include <netinet6/in6_var.h>
 #endif /* INET6 */
 
 #include <net/pfkeyv2.h>
@@ -328,7 +329,7 @@ check_ipsec_policy(struct inpcb *inp, void *daddr)
 
 #ifdef INET6
 	    case SENT_IP6:
-		DPRINTF(("ipsec: send SA request (%d), remote IPv6 address: %s, SA type: %d\n", i + 1, ip6_sprintf(dst->sen_ip6_dst), sa_require));
+		DPRINTF(("ipsec: send SA request (%d), remote IPv6 address: %s, SA type: %d\n", i + 1, ip6_sprintf(&dst->sen_ip6_dst), sa_require));
 		break;
 #endif /* INET6 */
 
@@ -1625,7 +1626,7 @@ ipsp_address(union sockaddr_union sa)
 
 #if INET6
 	case AF_INET6:
-	    return ip6_sprintf(sa.sin6.sin6_addr);
+	    return ip6_sprintf(&sa.sin6.sin6_addr);
 #endif /* INET6 */
 
 	default:
@@ -2161,7 +2162,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error)
 #ifdef INET6
 	if (gw->sen_type == SENT_IPSP6)
 	  DPRINTF(("ipsp_spd_lookup(): non-existant TDB for SA %s/%08x/%u\n",
-		   ip6_sprintf(gw->sen_ipsp6_dst), ntohl(gw->sen_ipsp6_spi),
+		   ip6_sprintf(&gw->sen_ipsp6_dst), ntohl(gw->sen_ipsp6_spi),
 		   gw->sen_ipsp6_sproto));
 #endif /* INET6 */	  
 
