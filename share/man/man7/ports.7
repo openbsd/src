@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.9 2000/03/19 19:25:37 aaron Exp $
+.\" $OpenBSD: ports.7,v 1.10 2000/04/19 01:39:58 espie Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
 .Dd January 25, 1998
@@ -67,8 +67,8 @@ Package System documentation
 .Pp
 .Sh PORTS MASTER MAKEFILE
 The ports master Makefile, normally located in
-.Pa /usr/ports/Makefile 
-(but see 
+.Pa /usr/ports/Makefile
+(but see
 .Ev PORTSDIR
 below)
 offers a few useful targets.
@@ -76,23 +76,59 @@ offers a few useful targets.
 .It Ar index
 rebuild the ports complete index,
 .Pa /usr/ports/INDEX
+.It Ar mirror-maker
+see
+.Xr mirroring-distfiles 7 ,
 .It Ar print-index
-display the contents of the index in a user-friendly way.
+display the contents of the index in a user-friendly way,
 .It Ar search
-invoked with a key, e.g., 
+invoked with a key, e.g.,
 .Ic make search key=foo ,
-retrieve information relevant to a given port.
+retrieve information relevant to a given port (obsolescent).
+.El
+.Sh SELECTING A SET OF PORTS
+If
+.Pa /usr/ports/INDEX
+is up to date, it is possible to select subsets by setting the following
+variables on the command line:
+.Bl -tag -width category
+.It Va key
+package name matching the given key,
+.It Va category
+port belonging to category,
+.It Va maintainer
+port maintained by a given person.
+.El
+
+For instance, to invoke clean on all ports in the x11 category, one can say:
+.Bd -literal -offset indent
+	make category=x11 clean
+.Ed
+
+The index search is done by a perl script, so all regular expressions from
+.Xr perlre 1
+apply.
 .Sh TARGETS
 Individual ports are controlled through a few documented targets.
 Some of these targets work recursively through subdirectories, so that
 someone can, for examples, install all of the net
 ports.
+.Pp
+In case of failure in a subdirectory, the shell fragment held in
+.Ev REPORT_PROBLEM
+is executed.
+Default behavior is to call exit, but this can be overriden on the command
+line, e.g., to avoid stopping after each problem.
+.Bd -literal -offset indent
+	make REPORT_PROBLEM=true
+.Ed
+
 The targets that do this are
-.Ar build , checksum , clean , configure , extract , fetch , fetch-list , 
+.Ar build , checksum , clean , configure , extract , fetch , fetch-list ,
 .Ar install , distclean , deinstall, reinstall, mirror-distfiles, obj ,
-.Ar list-distfiles 
+.Ar list-distfiles , package , cdrom-packages
 and
-.Ar package .
+.Ar ftp-packages .
 .Pp
 Target names starting with _ are private to the ports infrastructure,
 should not be invoked directly, and are liable to change without notice.
@@ -107,12 +143,12 @@ by
 .Ar install ,
 and so on all the way to
 .Ar fetch .
-Typical use only runs 
+Typical use only runs
 .Ar install
-explicitly (if root), or 
+explicitly (if root), or
 .Ar build
 (as user), then
-.Ar install 
+.Ar install
 (as root).
 .Bl -tag -width configure
 .It Ar fetch
@@ -144,7 +180,7 @@ targets, this is run in scattered pieces as
 .Ar fetch-depends , lib-depends , build-depends , run-depends , misc-depends .
 Defining
 .Ev NO_DEPENDS
-to 
+to
 .Dv Yes
 will skip this step.
 .It Ar extract
@@ -170,7 +206,7 @@ Install the port and register it with the package system.
 The following targets are not run during the normal install process.
 .Bl -tag -width fetch-list
 .It Ar fetch-list
-Build a script that lists the files needing to be fetched in order to 
+Build a script that lists the files needing to be fetched in order to
 build the port.
 .It Ar depends-list package-depends
 Print an ordered list of all the compile and run dependencies.
@@ -203,13 +239,13 @@ and
 .Ev PKGFILE .
 .El
 .Sh PORT VARIABLES
-These can be changed in the environment, or in 
+These can be changed in the environment, or in
 .Pa /etc/mk.conf
 for persistence.
 They can also be set on make's command line, e.g.,
 .Ic make VAR_FOO=foo
 .Pp
-Boolean variables should be set to 
+Boolean variables should be set to
 .Dv Yes
 instead of simply being defined, for uniformity and future compatibility.
 .Pp
@@ -275,25 +311,25 @@ Primary location(s) for distribution patch files if not found
 locally.
 .It Ev MASTER_SITE_OPENBSD
 If set to
-.Dv Yes , 
+.Dv Yes ,
 go to the master OpenBSD site for all files.
 .It Ev MASTER_SITE_FREEBSD
 If set to
-.Dv Yes , 
+.Dv Yes ,
 go to the master FreeBSD site for all files.
 .It Ev MASTER_SITE_OVERRIDE
 Try going to this site for all files and patches, first.
 .It Ev CLEANDEPENDS
-If set to 
+If set to
 .Dv Yes ,
-let 
-.Sq clean 
+let
+.Sq clean
 recurse to dependencies.
 .It Ev NOCLEANDEPENDS
 If defined, don't let
 .Sq clean
-recurse to dependencies (deprecated, use 
-.Ev CLEANDEPENDS 
+recurse to dependencies (deprecated, use
+.Ev CLEANDEPENDS
 instead).
 .It Ev FETCH_CMD
 Command to use to fetch files.

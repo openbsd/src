@@ -1,0 +1,178 @@
+.\" $OpenBSD: mirroring-ports.7,v 1.1 2000/04/19 01:39:58 espie Exp $
+.\"
+.\" Copyright (c) 2000 Marc Espie
+.\"
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE DEVELOPERS ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE DEVELOPERS BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd February 19, 2000
+.Dt MIRRORING-PORTS 7
+.Os
+.Sh NAME
+.Nm mirroring-ports
+.Nd how to build a mirror for ports distfiles
+.Sh DESCRIPTION
+The
+.Nm OpenBSD Ports Collection
+offers some powerful tools to mirror software sources.
+The ports infrastructure provides a
+.Ar mirror-maker
+target that can be used to build a Makefile to facilitate mirroring
+distfiles.
+This target builds
+.Ic ${DISTDIR}/Makefile ,
+which can be used on almost any Unix-like machine to mirror
+.Ox
+distfiles.
+.Pp
+A sample Makefile entry is formatted like this:
+.Bd -literal
+all:: audio/tracker/tracker-5.3
+.PHONY: audio/tracker/tracker-5.3
+audio/tracker/tracker-5.3::  tracker-5.3.tgz
+
+tracker-5.3.tgz: $F
+        @MAINTAINER="espie@openbsd.org" \\
+         SITES="ftp://ftp.uni-trier.de/pub/unix/audio/tracker/ " \\
+         CIPHER="sha1" CKSUM="b0973d6a9c363caebd3a71547412f42b0681f323" \\
+         ${FETCH} "$@"
+
+
+.Ed
+This Makefile is usually invoked by the user from the directory where
+they wish to mirror distfiles, with variables
+.Ev FETCH
+and
+.Ev F
+set on the command line, e.g.,
+.Bd -literal -offset indent
+	cd mirror && make -j 5 -f path_to_makefile FETCH=fetch_script
+.Ed
+
+Targets are set up so that each port is referenced by its full name, and
+retrieves all its distfiles.
+The default
+.Ar all
+target is used to retrieve all distfiles.
+Targets
+.Ar ftp
+and
+.Ar cdrom
+can be used to retrieve all distfiles necessary to build ftp and cdrom
+packages, respectively.
+Actual fetching is usually invoked with a parallel-make option, so that
+several retrievals through ftp can proceed simultaneously.
+.Pp
+The
+.Ev F
+variable can be set to a dummy name, or a recent filename, to force
+re-fetching of anything which is older than the filename.
+Its intended use is to force re-fetching existing files,
+or to checksum all files.
+.Pp
+The
+.Ev ${FETCH}
+script should be supplied by the user, and will download and verify the
+archive file.
+It must obey the following variables:
+.Bl -tag -width DIST_SUBDIR
+.It Ev MAINTAINER
+Port maintainer, used to report errors,
+.It Ev ERROR
+Some ports problems can be detected while building the Makefile, in which
+case this variable will be set to a proper error message.
+.It Ev DIST_SUBDIR
+See
+.Xr ports 7
+for more details.
+The
+.Ev ${FETCH}
+script is responsible for creating this subdirectory and cd'ing to it
+before performing the actual fetch.
+.It Ev SITES
+A list of sites to try for fetching the distribution file.
+.It Ev CIPHER
+The checksumming utility to use for verifying the distribution file.
+It will normally be set to
+.Xr sha1 1
+unless you tinker with
+.Ev PREFERRED_CIPHER
+while building the mirroring Makefile.
+.It Ev CKSUM
+The corresponding checksum.
+If neither
+.Ev CIPHER
+nor
+.Ev CKSUM
+nor
+.Ev ERROR
+are set, the distribution file needs not be checked.
+.El
+.Pp
+A standard fetch strategy is to try all sites in order: whenever the
+distribution file is found, download it; verify the checksum; erase the
+file and try the next site if it doesn't match.
+.Pp
+Mirroring sites should update their master Makefile fairly often.
+Activities a proper mirror should offer (in order of decreasing importance):
+.Bl -tag -width XXXXXXXXX
+.It Mirror new files
+Use a proper fetch script to download missing files,
+.It Verify all checksums
+All checksums should be verified from time to time, and maintainers
+notified of persistant discrepancies,
+.It Check mastersites liveliness
+Use a tool such as
+.Sq mirror
+to check that the master sites haven't fallen
+off the Earth.
+Even though the first site in the site list is the
+most important site, good mirrors will scan all sites and report all
+problems,
+.It Remove old files
+To gain room this, the mirror should maintain a list of
+.Sq active
+files (easy enough, just provide a fetch script that just lists the
+file names), and remove files that are no longer active.
+Since
+.Ox
+releases happen every six months, this delay should be longer than that.
+.El
+Sample scripts are provided in the
+.Pa ${PORTSDIR}/infrastructure/fetch
+directory.
+.Sh FILES
+.Bl -tag -width XXXXXXXXX -compact
+.It Pa ${DISTDIR}/Makefile
+Main mirroring Makefile
+.It Pa ${PORTSDIR}/infrastructure/fetch/fetch-all
+Sample script usable to retrieve distfiles.
+.It Pa ${PORTSDIR}/infrastructure/fetch/check-all
+Sample script to check all distfiles checksums.
+.El
+.Sh HISTORY
+This infrastructure was introduced for
+.Ox 2.7
+by Marc Espie, with feedback from Bob Beck, Todd Fries, Camiel Doobelbar,
+and a few other people.
+.Sh SEE ALSO
+.Xr ports 7
