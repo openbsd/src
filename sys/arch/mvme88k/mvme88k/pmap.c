@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.93 2003/12/14 22:06:39 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.94 2003/12/14 22:08:02 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -103,7 +103,7 @@ extern vaddr_t	virtual_avail, virtual_end;
 #define CD_COL		0x0020000	/* pmap_collect */
 #define CD_CBIT		0x0040000	/* pmap_changebit */
 #define CD_TBIT		0x0080000	/* pmap_testbit */
-#define CD_CREF		0x0100000	/* pmap_clear_reference */
+#define CD_USBIT	0x0100000	/* pmap_unsetbit */
 #define CD_PGMV		0x0200000	/* pagemove */
 #define CD_ALL		0x0FFFFFC
 
@@ -246,6 +246,7 @@ vaddr_t pmap_map(vaddr_t, paddr_t, paddr_t, vm_prot_t, u_int);
 pt_entry_t *pmap_pte(pmap_t, vaddr_t);
 void pmap_remove_all(struct vm_page *);
 void pmap_changebit(struct vm_page *, int, int);
+boolean_t pmap_unsetbit(struct vm_page *, int);
 boolean_t pmap_testbit(struct vm_page *, int);
 
 /*
@@ -2621,22 +2622,6 @@ next:
 }
 
 /*
- * Routine:	PMAP_CLEAR_MODIFY
- *
- * Function:
- *	Clears the modify bits on the specified physical page.
- */
-boolean_t
-pmap_clear_modify(struct vm_page *pg)
-{
-	boolean_t rv;
-
-	rv = pmap_testbit(pg, PG_M);
-	pmap_changebit(pg, 0, ~PG_M);
-	return rv;
-}
-
-/*
  * Routine:	PMAP_TESTBIT
  *
  * Function:
@@ -2671,8 +2656,8 @@ pmap_testbit(struct vm_page *pg, int bit)
 
 	SPLVM(spl);
 
-	pvl = pg_to_pvh(pg);
 testbit_Retry:
+	pvl = pg_to_pvh(pg);
 
 	if (pvl->pv_flags & bit) {
 		/* we've already cached this flag for this page,
@@ -2732,6 +2717,101 @@ next:
 }
 
 /*
+ * Routine:	PMAP_UNSETBIT
+ *
+ * Function:
+ *	Clears a pte bit and returns its previous state, for the
+ *	specified physical page.
+ *	This is an optimized version of:
+ *		rv = pmap_testbit(pg, bit);
+ *		pmap_changebit(pg, 0, ~bit);
+ *		return rv;
+ */
+boolean_t
+pmap_unsetbit(struct vm_page *pg, int bit)
+{
+	boolean_t rv = FALSE;
+	pv_entry_t pvl, pvep;
+	pt_entry_t *pte, opte;
+	pmap_t pmap;
+	int spl;
+	vaddr_t va;
+	u_int users;
+	boolean_t kflush;
+
+	SPLVM(spl);
+
+unsetbit_Retry:
+	pvl = pg_to_pvh(pg);
+
+	/*
+	 * Clear saved attributes
+	 */
+	pvl->pv_flags &= ~bit;
+
+	if (pvl->pv_pmap == PMAP_NULL) {
+#ifdef DEBUG
+		if (pmap_con_dbg & CD_USBIT)
+			printf("(pmap_unsetbit: %x) vm page 0x%x not mapped\n",
+			    curproc, pg);
+#endif
+		SPLX(spl);
+		return (FALSE);
+	}
+
+	/* for each listed pmap, update the specified bit */
+	for (pvep = pvl; pvep != PV_ENTRY_NULL; pvep = pvep->pv_next) {
+		pmap = pvep->pv_pmap;
+		if (!simple_lock_try(&pmap->pm_lock)) {
+			goto unsetbit_Retry;
+		}
+		users = pmap->pm_cpus;
+		if (pmap == kernel_pmap) {
+			kflush = TRUE;
+		} else {
+			kflush = FALSE;
+		}
+
+		va = pvep->pv_va;
+		pte = pmap_pte(pmap, va);
+
+		/*
+		 * Check for existing and valid pte
+		 */
+		if (pte == PT_ENTRY_NULL || !PDT_VALID(pte)) {
+			goto next;	 /* no page mapping */
+		}
+#ifdef DIAGNOSTIC
+		if (ptoa(PG_PFNUM(*pte)) != VM_PAGE_TO_PHYS(pg))
+			panic("pmap_unsetbit: pte %x in pmap %x %d doesn't point to page %x %x",
+			    *pte, pmap, kflush, pg, VM_PAGE_TO_PHYS(pg));
+#endif
+
+		/*
+		 * Update bits
+		 */
+		opte = *pte;
+		if (opte & bit) {
+			/*
+			 * Flush TLB of which cpus using pmap.
+			 *
+			 * Invalidate pte temporarily to avoid the specified
+			 * bit being written back by any other cpu.
+			 */
+			invalidate_pte(pte);
+			*pte = opte ^ bit;
+			flush_atc_entry(users, va, kflush);
+		} else
+			rv = TRUE;
+next:
+		simple_unlock(&pmap->pm_lock);
+	}
+	SPLX(spl);
+
+	return (rv);
+}
+
+/*
  * Routine:	PMAP_IS_MODIFIED
  *
  * Function:
@@ -2742,22 +2822,6 @@ boolean_t
 pmap_is_modified(struct vm_page *pg)
 {
 	return pmap_testbit(pg, PG_M);
-}
-
-/*
- * Routine:	PMAP_CLEAR_REFERENCE
- *
- * Function:
- *	Clear the reference bit on the specified physical page.
- */
-boolean_t
-pmap_clear_reference(struct vm_page *pg)
-{
-	boolean_t rv;
-
-	rv = pmap_testbit(pg, PG_U);
-	pmap_changebit(pg, 0, ~PG_U);
-	return rv;
 }
 
 /*

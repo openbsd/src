@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.31 2003/10/11 22:08:57 miod Exp $ */
+/*	$OpenBSD: pmap.h,v 1.32 2003/12/14 22:08:01 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1991 Carnegie Mellon University
@@ -65,10 +65,14 @@ extern	caddr_t		vmmap;
 #define pmap_phys_address(frame)        ((paddr_t)(ptoa(frame)))
 
 #define pmap_copy(dp,sp,d,l,s)		do { /* nothing */ } while (0)
-#define pmap_update(pmap)	do { /* nothing (yet) */ } while (0)
+#define pmap_update(pmap)		do { /* nothing (yet) */ } while (0)
+
+#define	pmap_clear_modify(pg)		pmap_unsetbit(pg, PG_M)
+#define	pmap_clear_reference(pg)	pmap_unsetbit(pg, PG_U)
 
 void pmap_bootstrap(vaddr_t, paddr_t *, paddr_t *, vaddr_t *, vaddr_t *);
 void pmap_cache_ctrl(pmap_t, vaddr_t, vaddr_t, u_int);
+boolean_t pmap_unsetbit(struct vm_page *, int);
 
 #endif	/* _KERNEL */
 
