@@ -1,3 +1,5 @@
+.\"	$OpenBSD: sendbug.1,v 1.9 2003/09/18 09:25:43 jmc Exp $
+.\"
 .\" -*- nroff -*-
 .\" ---------------------------------------------------------------------------
 .\"    man page for send-pr (by Heinz G. Seidl, hgs@cygnus.com)
@@ -25,15 +27,16 @@
 .Dt SENDBUG 1
 .Sh NAME
 .Nm sendbug
-.Nd report a bug in OpenBSD
+.Nd report a bug in
+.Ox
 .Sh SYNOPSIS
 .Nm sendbug
 .Op Fl LPV
 .Op Fl -version
 .Sh DESCRIPTION
 .Nm
-is a tool used to submit 
-.Em problem reports 
+is a tool used to submit
+.Em problem reports
 (PRs) to the
 .Ox
 bugs database.
@@ -70,10 +73,10 @@ The options are as follows:
 Print the list of available categories.
 No mail is sent.
 .It Fl P
-Print the form specified by the environment variable 
-.Ev PR_FORM 
+Print the form specified by the environment variable
+.Ev PR_FORM
 on standard output.
-If 
+If
 .Ev PR_FORM
 is not set, print the standard blank PR template.
 No mail is sent.
@@ -107,10 +110,11 @@ a form with the identification fields already completed).
 .El
 .Sh "HOW TO FILL OUT A PROBLEM REPORT"
 Problem reports have to be in a particular form so that a program can
-easily manage them.  Please remember the following guidelines:
+easily manage them.
+Please remember the following guidelines:
 .Bl -bullet
 .It
-Describe only 
+Describe only
 .Em one problem
 per problem report.
 .It
@@ -126,6 +130,7 @@ The contents of the PR is not confidential; it is sent out to a public
 mailing list.
 Sensitive, security-related issues should be sent via email to
 .Aq security@OpenBSD.org .
+.El
 .Sh "HOW TO SUBMIT TEST CASES, CODE, ETC."
 Submit small code samples with the PR.
 Contact
