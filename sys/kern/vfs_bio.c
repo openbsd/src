@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.25 1999/12/02 20:55:47 art Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.26 1999/12/05 08:09:01 art Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -282,6 +282,8 @@ bwrite(bp)
 	struct buf *bp;
 {
 	int rv, async, wasdelayed, s;
+	struct vnode *vp;
+	struct mount *mp;
 
 	/*
 	 * Remember buffer type, to switch on it later.  If the write was
@@ -296,6 +298,25 @@ bwrite(bp)
 		bdwrite(bp);
 		return (0);
 	}
+
+	/*
+	 * Collect statistics on synchronous and asynchronous writes.
+	 * Writes to block devices are charged to their associated
+	 * filesystem (if any).
+	 */
+	if ((vp = bp->b_vp) != NULL) {
+		if (vp->v_type == VBLK)
+			mp = vp->v_specmountpoint;
+		else
+			mp = vp->v_mount;
+		if (mp != NULL) {
+			if (async)
+				mp->mnt_stat.f_asyncwrites++;
+			else
+				mp->mnt_stat.f_syncwrites++;
+		}
+	}
+
 	wasdelayed = ISSET(bp->b_flags, B_DELWRI);
 	CLR(bp->b_flags, (B_READ | B_DONE | B_ERROR | B_DELWRI));
 
