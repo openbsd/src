@@ -1,4 +1,4 @@
-.\" $OpenBSD: pckbc.4,v 1.5 2002/02/18 18:13:31 jason Exp $
+.\" $OpenBSD: pckbc.4,v 1.6 2002/09/26 07:52:47 miod Exp $
 .\" $NetBSD: pckbc.4,v 1.2 2000/06/16 06:42:31 augustss Exp $
 .\"
 .Dd April 21, 1999
@@ -9,12 +9,10 @@
 .Nd PC (ISA) keyboard controller driver
 .Sh SYNOPSIS
 .Cd "pckbc* at isa?"
-.Cd "pckbc* at pnpbios? index ?"
 .Cd "pckbc* at ebus?"
-.Cd "pckbd* at pckbc? slot ?"
-.Cd "pms*   at pckbc? slot ?"
-.Cd "pmsi*  at pckbc? slot ?"
-.Cd "opms*  at pckbc? slot ?"
+.Cd "pckbd* at pckbc?"
+.Cd "pms*   at pckbc?"
+.Cd "pmsi*  at pckbc?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -25,17 +23,16 @@ It provides two logical connections for child devices, the
 slot for a keyboard and the
 .Dq auxiliary
 slot for mice (the latter might be missing in older keyboard controllers).
-.Pp
-The optional
-.Dq slot
-locator argument can be used to force unusual connections of devices to
-logical slots.
-This feature is for experimentation only, it will not be
-useful in normal operation.
+.\" .Pp
+.\" The optional
+.\" .Dq slot
+.\" locator argument can be used to force unusual connections of devices to
+.\" logical slots.
+.\" This feature is for experimentation only, it will not be
+.\" useful in normal operation.
 .Sh SEE ALSO
+.Xr ebus 4 ,
 .Xr isa 4 ,
 .Xr pckbd 4
-.\" .Xr pms 4 ,
-.\" .Xr pmsi 4 ,
-.\" .Xr pnpbios 4 ,
-.\" .Xr opms 4 .
+.Xr pms 4 ,
+.Xr pmsi 4 ,

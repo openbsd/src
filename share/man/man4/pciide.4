@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pciide.4,v 1.22 2002/09/10 13:27:40 gluk Exp $
+.\"	$OpenBSD: pciide.4,v 1.23 2002/09/26 07:52:47 miod Exp $
 .\"	$NetBSD: pciide.4,v 1.8 1999/03/16 01:19:17 garbled Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
@@ -39,7 +39,8 @@
 .Nd PCI IDE controller driver
 .Sh SYNOPSIS
 .Cd "pciide* at pci ? dev ? function ? flags 0x0000"
-.Cd "options PCIIDE_CMD064x_DISABLE"
+.Cd "option PCIIDE_CMD064x_DISABLE"
+.Cd "option PCIIDE_CMD0646U_ENABLEUDMA"
 .Sh DESCRIPTION
 The
 .Nm
@@ -96,17 +97,23 @@ cause a machine hang.
 .Sh SEE ALSO
 .Xr atapiscsi 4 ,
 .Xr intro 4 ,
+.Xr pci 4 ,
 .Xr scsi 4 ,
 .Xr wd 4 ,
 .Xr wdc 4
 .Sh BUGS
-There's no way to know reliably if a PCI064x controller is enabled or not.
+There's no way to know reliably if a CMD064x controller is enabled or not.
 If the driver finds a PCI064x, it will assume it is enabled unless
 .Dv PCIIDE_CMD064x_DISABLE
 is specified in the kernel config file.
 This will be a problem only if the controller has been disabled in the BIOS
 and another controller has been installed which uses the ISA legacy I/O ports
 and interrupts.
+.Pp
+The CMD0646U is reportedly unable to operate properly in UDMA mode. UDMA
+will not be enabled on this controller unless
+.Dv PCIIDE_CMD0646U_ENABLEUDMA
+is specified in the kernel config file.
 .Pp
 The OPTi controller code is disabled by default because the driver
 does not yet work around all bugs in current chipsets.
