@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.25 2000/10/03 23:17:07 mickey Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.26 2000/10/09 15:50:31 espie Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -170,24 +170,19 @@ lib${LIB}_pic.a:: ${SOBJS}
 	${RANLIB} lib${LIB}_pic.a
 
 .if (${MACHINE_ARCH} == "mips")
-lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}.a ${DPADD}
+lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: ${OBJS} ${DPADD}
 	@echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\)
 	@rm -f lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
-	$(LD) -x -shared --whole-archive -soname lib${LIB}.so.${SHLIB_MAJOR} \
-	    -o lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} lib${LIB}.a ${LDADD}
-.elif (${MACHINE_ARCH} == "powerpc" )  
-lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}_pic.a ${DPADD}
-	@echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\)
-	@rm -f lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
-	$(LD) -x -shared --whole-archive \
-	    -soname lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-	    -o lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} lib${LIB}_pic.a ${LDADD}
+	gcc -shared ${PICFLAG} -Wl,-soname,lib${LIB}.so.${SHLIB_MAJOR} \
+	    -o lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+	    `${LORDER} ${OBJS}|tsort -q` ${LDADD}
 .else
-lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}_pic.a ${DPADD}
+lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: ${SOBJS} ${DPADD}
 	@echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\)
 	@rm -f lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
-	$(LD) -x -Bshareable -Bforcearchive \
-	    -o lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} lib${LIB}_pic.a ${LDADD}
+	gcc -shared ${PICFLAG} \
+	    -o lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+	    `${LORDER} ${SOBJS}|tsort -q` ${LDADD}
 .endif
 
 LOBJS+=	${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
@@ -288,6 +283,9 @@ maninstall: afterinstall
 afterinstall: realinstall
 realinstall: beforeinstall
 .endif
+
+.PHONY: all clean cleandir afterdepend beforeinstall realinstall \
+	maninstall afterinstall install
 
 .if !defined(NOMAN)
 .include <bsd.man.mk>
