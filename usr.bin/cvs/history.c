@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.1.1.1 2004/07/13 22:02:40 jfb Exp $	*/
+/*	$OpenBSD: history.c,v 1.2 2004/07/29 18:34:23 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -58,15 +58,12 @@ static void  cvs_history_print  (struct cvs_hent *);
 
 extern char *__progname;
 
-extern struct cvsroot *cvs_root;
-
 
 /*
  * cvs_history()
  *
  * Handle the `cvs history' command.
  */
-
 
 int
 cvs_history(int argc, char **argv)
@@ -75,6 +72,7 @@ cvs_history(int argc, char **argv)
 	u_int nbmod, rep;
 	char *user, *zone, *tag, *cp;
 	char *modules[CVS_HISTORY_MAXMOD], histpath[MAXPATHLEN];
+	struct cvsroot *root;
 	struct cvs_hent *hent;
 	CVSHIST *hp;
 
@@ -148,8 +146,9 @@ cvs_history(int argc, char **argv)
 	else if (rep == 0)
 		flags |= CVS_HF_O;    /* use -o as default */
 
-	if (cvs_root->cr_method == CVS_METHOD_LOCAL) {
-		snprintf(histpath, sizeof(histpath), "%s/%s", cvs_root->cr_dir,
+	root = cvsroot_get(".");
+	if (root->cr_method == CVS_METHOD_LOCAL) {
+		snprintf(histpath, sizeof(histpath), "%s/%s", root->cr_dir,
 		    CVS_PATH_HISTORY);
 		hp = cvs_hist_open(histpath);
 		if (hp == NULL) {

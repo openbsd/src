@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.9 2004/07/28 01:49:14 jfb Exp $	*/
+/*	$OpenBSD: proto.c,v 1.10 2004/07/29 18:34:55 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -70,8 +70,6 @@ extern char *cvs_rsh;
 extern int   cvs_trace;
 extern int   cvs_nolog;
 extern int   cvs_readonly;
-
-extern struct cvsroot *cvs_root;
 
 
 
