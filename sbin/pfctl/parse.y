@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.254 2002/12/13 21:51:25 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.255 2002/12/16 22:50:11 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -732,8 +732,11 @@ altqif		: ALTQ interface queue_opts QUEUE qassign {
 				YYERROR;
 			}
 			a.scheduler = $3.scheduler.qtype;
-			a.pq_u.cbq_opts.flags =
-			    $3.scheduler.data.cbq_opts.flags;
+			switch (a.scheduler) {
+			case ALTQT_CBQ:
+				a.pq_u.cbq_opts =
+				    $3.scheduler.data.cbq_opts;
+			}
 			a.qlimit = $3.qlimit;
 			a.tbrsize = $3.tbrsize;
 			if ($5 == NULL) {
@@ -772,8 +775,10 @@ queuespec	: QUEUE STRING queue_opts qassign {
 			a.scheduler = $3.scheduler.qtype;
 			switch (a.scheduler) {
 			case ALTQT_CBQ:
-				a.pq_u.cbq_opts.flags =
-				    $3.scheduler.data.cbq_opts.flags;
+				a.pq_u.cbq_opts =
+				    $3.scheduler.data.cbq_opts;
+				break;
+			default:
 				break;
 			}
 			if (expand_queue(&a, $4, $3.queue_bwspec))
@@ -2815,7 +2820,7 @@ expand_altq(struct pf_altq *a, struct node_if *interfaces,
 			strlcpy(pb.ifname, interface->ifname, IFNAMSIZ);
 			pb.qlimit = pa.qlimit;
 			pb.scheduler = pa.scheduler;
-			pb.pq_u.cbq_opts.flags = pa.pq_u.cbq_opts.flags;
+			pb.pq_u.cbq_opts = pa.pq_u.cbq_opts;
 			if (eval_pfqueue(pf, &pb, pa.ifbandwidth, 0))
 				errs++;
 			else
