@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.10 2005/03/25 13:35:24 henning Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.11 2005/03/25 13:39:10 henning Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -83,7 +83,7 @@ main_sig_handler(int sig, short event, void *arg)
 		ospfd_shutdown();
 		/* NOTREACHED */
 	case SIGCHLD:
-		if (check_child(ospfe_pid, "ospfe engine")) {
+		if (check_child(ospfe_pid, "ospf engine")) {
 			ospfe_pid = 0;
 			ospfd_shutdown();
 		}
