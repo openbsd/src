@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rln_pcmcia.c,v 1.4 1999/08/18 05:24:42 d Exp $	*/
+/*	$OpenBSD: if_rln_pcmcia.c,v 1.5 1999/08/18 06:06:13 fgsch Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public domain.
  *
@@ -52,43 +52,36 @@ struct cfattach rln_pcmcia_ca = {
 };
 
 static struct rln_pcmcia_product {
-	const char	*name;
-	u_int32_t	manufacturer;
-	u_int32_t	product;
+	u_int16_t	manufacturer;
+	u_int16_t	product;
 	const char	*cis[4];
 	u_int8_t	flags;
 } rln_pcmcia_products[] = {
 	/* Digital RoamAbout 2400 FH, from d@openbsd.org */
-	{ PCMCIA_STR_PROXIM_ROAMABOUT_2400FH,
-	  PCMCIA_VENDOR_PROXIM,
+	{ PCMCIA_VENDOR_PROXIM,
 	  PCMCIA_PRODUCT_PROXIM_ROAMABOUT_2400FH,
 	  PCMCIA_CIS_PROXIM_ROAMABOUT_2400FH,
 	  0 },
 	/* AMP Wireless, from jimduchek@ou.edu */
-	{ PCMCIA_STR_COMPEX_AMP_WIRELESS,
-	  PCMCIA_VENDOR_COMPEX,
+	{ PCMCIA_VENDOR_COMPEX,
 	  PCMCIA_PRODUCT_COMPEX_AMP_WIRELESS,
 	  PCMCIA_CIS_COMPEX_AMP_WIRELESS,
 	  0 },
 	/* Proxim RangeLAN2 7401, from louis@bertrandtech.on.ca */
-	{ PCMCIA_STR_PROXIM_RANGELAN2_7401,
-	  PCMCIA_VENDOR_PROXIM,
+	{ PCMCIA_VENDOR_PROXIM,
 	  PCMCIA_PRODUCT_PROXIM_RANGELAN2_7401,
 	  PCMCIA_CIS_PROXIM_RANGELAN2_7401,
 	  0 },
 	/* Generic and clone cards matched by CIS alone */
-	{ PCMCIA_STR_PROXIM_RL2_7200,
-	  PCMCIA_VENDOR_INVALID,
+	{ PCMCIA_VENDOR_INVALID,
 	  PCMCIA_PRODUCT_INVALID,
 	  PCMCIA_CIS_PROXIM_RL2_7200,
 	  0 },
-	{ PCMCIA_STR_PROXIM_RL2_7400,
-	  PCMCIA_VENDOR_INVALID,
+	{ PCMCIA_VENDOR_INVALID,
 	  PCMCIA_PRODUCT_INVALID,
 	  PCMCIA_CIS_PROXIM_RL2_7400,
 	  0 },
-	{ PCMCIA_STR_PROXIM_SYMPHONY,
-	  PCMCIA_VENDOR_INVALID,
+	{ PCMCIA_VENDOR_INVALID,
 	  PCMCIA_PRODUCT_INVALID,
 	  PCMCIA_CIS_PROXIM_SYMPHONY,
 	  0 }
@@ -236,7 +229,6 @@ rln_pcmcia_attach(parent, self, aux)
 		printf(": couldn't establish interrupt\n",
 		    sc->sc_dev.dv_xname);
 
-	printf(" <%s>", rpp->name);
 #ifdef DIAGNOSTIC
 	if (rpp->manufacturer == 0)
 		printf(" manf %04x prod %04x", pa->manufacturer, pa->product);
