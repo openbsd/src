@@ -417,7 +417,9 @@ arg_match_long(struct getargs *args, size_t num_args,
 	    *flag = !negate;
 	    return 0;
 	} else if (*goptarg && strcmp(goptarg + 1, "maybe") == 0) {
-#ifdef HAVE_RANDOM
+#ifdef HAVE_ARC4RANDOM
+	    *flag = arc4random() & 1;
+#elif HAVE_RANDOM
 	    *flag = random() & 1;
 #else
 	    *flag = rand() & 1;
@@ -536,6 +538,8 @@ getarg(struct getargs *args, size_t num_args,
     int i;
     int ret = 0;
 
+#ifndef HAVE_ARC4RANDOM
+
 #if defined(HAVE_SRANDOMDEV)
     srandomdev();
 #elif defined(HAVE_RANDOM)
@@ -543,6 +547,9 @@ getarg(struct getargs *args, size_t num_args,
 #else
     srand (time(NULL));
 #endif
+
+#endif /* HAVE_ARC4RANDOM */
+
     (*goptind)++;
     for(i = *goptind; i < argc; i++) {
 	if(argv[i][0] != '-')
