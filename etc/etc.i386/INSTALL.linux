@@ -1,4 +1,4 @@
-$OpenBSD: INSTALL.linux,v 1.10 2001/04/18 14:22:20 aaron Exp $
+$OpenBSD: INSTALL.linux,v 1.11 2002/06/09 06:15:14 todd Exp $
 
    Linux + OpenBSD: it's possible
 
@@ -40,14 +40,14 @@ installation away. It is generally the case that you will install the
 machine, play with it for a week/a month, and find out that you don't like
 the setup, and then start over.
 
-Write down any interesting information you find out during your first 
+Write down any interesting information you find out during your first
 installation.  Don't do too many things to your box during the first month,
-as you will lose these while reinstalling, unless you can do backups 
+as you will lose these while reinstalling, unless you can do backups
 conveniently.
 
 Do you really need to have a dual-boot machines ? Most people don't need
 both Linux and OpenBSD.  Once you're satisfied with OpenBSD, you may find
-out you just want to erase Linux... 
+out you just want to erase Linux...
 
 Try to find out what your precise needs are, locate partitions whose size
 may change next to each other, as far as possible... Put partitions whose
@@ -60,9 +60,9 @@ temporary file instead of a partition, under both OpenBSD (svnd) and Linux.
 First principles
 ----------------
 OpenBSD doesn't only use the MBR partitions (the ones mapped in the Master
-Boot Record) for booting. Afterwards, it trusts some bsd specific 
-information called the disklabel, which is another completely distinct 
-description of your hard disk. It does not even have to be consistent with 
+Boot Record) for booting. Afterwards, it trusts some bsd specific
+information called the disklabel, which is another completely distinct
+description of your hard disk. It does not even have to be consistent with
 the usual DOS partitions information.
 [OpenBSD requires a primary MBR partition for booting, anything else is
 officially unsupported.]
@@ -111,7 +111,7 @@ BTW, just enough for /bin /sbin, a kernel and /etc).
 Mapping your disk
 -----------------
 Starting from Linux, get a grasp of your partitions. Use df to check which
-is what, then fdisk to get the actual setup of the disk. 
+is what, then fdisk to get the actual setup of the disk.
 
 Write down the setup onto a bit of paper, in case you make a mistake further
 down.  It can come in very handy.
@@ -163,12 +163,12 @@ match)
 
 There are some differences though, mostly because Linux fdisk has made
 some rather confusing choices:
-- in simple mode it starts numbering cylinders at 1... whereas 
+- in simple mode it starts numbering cylinders at 1... whereas
 everything else starts from 0.
 - in simple mode it shows blocks of 1024 bytes, which makes for half-blocks
 (marked with a +) and sizes halved from the real block size.
-- in expert mode it shows extended partitions offset from the start 
-of the extended partition. 
+- in expert mode it shows extended partitions offset from the start
+of the extended partition.
 - the hd/sec/cyl is a confusing order, as the sector number is computed
 from cyl/hd/sec, in that order.
 - it never shows and doesn't care about the real disk geometry.
@@ -177,7 +177,7 @@ You will notice that I don't have a linux swap partition visible. My
 linux setup currently uses the OpenBSD swap area.
 
 Before starting to install OpenBSD, now would be a good time to check the
-INSTALL.pt document...  Especially note the alignment restriction of 
+INSTALL.pt document...  Especially note the alignment restriction of
 partitions (first sector of a partition must be at head 0, sector 1 of a
 cylinder). This is enforced by Linux' fdisk.
 
@@ -186,15 +186,15 @@ lists. This will show up in OpenBSD's fdisk.
 
 Your clock and OpenBSD
 ----------------------
-OpenBSD expects your hardware clock to be in universal time, and uses 
-time zones to give you local time. With Linux, this depends... 
-most distributions use a small program called hwclock to set up the 
-system time from the hardware clock when booting... there is a --utc 
-option if your hardware clock is in universal time, but this is not 
+OpenBSD expects your hardware clock to be in universal time, and uses
+time zones to give you local time. With Linux, this depends...
+most distributions use a small program called hwclock to set up the
+system time from the hardware clock when booting... there is a --utc
+option if your hardware clock is in universal time, but this is not
 always what happens by default.
 
-For instance, on a redhat system, up to 5.2, this happens in 
-/etc/rc.d/rc.sysinit which loads an /etc/sysconfig/clock that defines a 
+For instance, on a redhat system, up to 5.2, this happens in
+/etc/rc.d/rc.sysinit which loads an /etc/sysconfig/clock that defines a
 variable called UTC, and then proceeds calling hwclock.
 - ensure UTC is set to true,
 - adjust your hardware clock from the system time if necessary, e.g.,
@@ -205,11 +205,11 @@ lets you do: set your hardware clock to GMT.
 
 The Linux partition table and OpenBSD
 -------------------------------------
-There used to be a problem with Linux's rc: it always mounts all file systems 
+There used to be a problem with Linux's rc: it always mounts all file systems
 even in single-user mode.  The 2.2 kernels fix that in a handy way: the
-partition recorded in the MBR is scanned for a disklabel, and marked with 
-a ! if one is found. Then, the rest of the disk is scanned, before 
-coming back to the disklabel itself. That way, changes to the 
+partition recorded in the MBR is scanned for a disklabel, and marked with
+a ! if one is found. Then, the rest of the disk is scanned, before
+coming back to the disklabel itself. That way, changes to the
 OpenBSD disklabel won't affect the setup of the rest of the disk.
 
 Anyhow, you may want to check that you can still boot from a Linux kernel
@@ -220,10 +220,10 @@ inittab and rc scripts to make deadly sure that single-user boot will work
 The OpenBSD installation
 ------------------------
 If you've got the space, you can install from your ext2fs partitions. This
-is what I did, a long time in the past, as I had a slip connection to the 
+is what I did, a long time in the past, as I had a slip connection to the
 rest of the world, and the OpenBSD install floppy does not include slip.
 
-REMEMBER TO BACKUP ALL IMPORTANT DATA ON YOUR DISK BEFORE DOING THE 
+REMEMBER TO BACKUP ALL IMPORTANT DATA ON YOUR DISK BEFORE DOING THE
 INSTALLATION !!!
 
 So you cp floppy*.fs /dev/fd0, then reboot from the floppy.
@@ -239,17 +239,17 @@ Offset: 0       Signatures: 0xAA55,0x0
          Starting        Ending
  #: id  cyl  hd sec -  cyl  hd sec [     start -       size]
 -------------------------------------------------------------------------
- 0: 06    0   1   1 -  210 127  63 [        63 -    1701441] DOS > 32MB  
+ 0: 06    0   1   1 -  210 127  63 [        63 -    1701441] DOS > 32MB
  1: 83  211   0   1 -  272 127  63 [   1701504 -     499968] Linux files*
- 2: A6  273   0   1 -  991 127  63 [   2201472 -    5798016] OpenBSD     
- 3: 00    0   0   0 -    0   0   0 [         0 -          0] unused      
+ 2: A6  273   0   1 -  991 127  63 [   2201472 -    5798016] OpenBSD
+ 3: 00    0   0   0 -    0   0   0 [         0 -          0] unused
 
-fdisk geometry tells me that I needn't worry about cylinder 1024. 
+fdisk geometry tells me that I needn't worry about cylinder 1024.
 This matches very  closely with what linux fdisk saw.
 
 If you had extended partitions, it would be a trifle bit harder:
-you just follow the extended partition links using select, jot down 
-whatever you need, add the OpenBSD partition into the MBR to look like 
+you just follow the extended partition links using select, jot down
+whatever you need, add the OpenBSD partition into the MBR to look like
 you want it to, and save everything.
 
 The * at the end of partition #1 means that the system normally boots under
@@ -265,21 +265,21 @@ OpenBSD partition that was declared in the MBR (what you just entered in
 fdisk, the `slice' from FreeBSD lingo). Most simple installation don't
 need to edit more than that, but you can use b 0 * to unlock the whole
 disk (this is a bad idea in most cases).
-- your real disk geometry becomes more relevant. The Berkeley fast file system 
-can't use partial cylinder groups, hence BSD partitions should start 
+- your real disk geometry becomes more relevant. The Berkeley fast file system
+can't use partial cylinder groups, hence BSD partitions should start
 on cylinder boundaries, as any remaining sectors  will be lost anyway.
 (Actually, what's important is the disk geometry that disklabel gives you.
-Trust it on that). In my case, sectors/cylinder=1008 and bytes/sector=512, 
+Trust it on that). In my case, sectors/cylinder=1008 and bytes/sector=512,
 so the granularity of disklabel partitions is 504 Kb.
 - units for size and offset can be given as sectors (default) or cylinders.
 
 After edition, this is what my disklabel looks like:
-# editing 
+# editing
 
 # using MBR partition 2: type A6 off 2201472 (0x219780) size 5798016 (0x587880)
 # /dev/rwd0c:
 type: ESDI
-disk: 
+disk:
 label: TOSHIBA MK4006M
 flags:
 bytes/sector: 512
@@ -294,7 +294,7 @@ trackskew: 0
 cylinderskew: 0
 headswitch: 0           # milliseconds
 track-to-track seek: 0  # milliseconds
-drivedata: 0 
+drivedata: 0
 
 16 partitions:
 #        size   offset    fstype   [fsize bsize   cpg]
@@ -312,7 +312,7 @@ drivedata: 0
   l:  1023120  3194352    4.2BSD     1024  8192    16   # (Cyl. 3169 - 4183)
 
 Things that check, more or less automatically:
-- this disklabel is saved in MBR partition #2 (basic DOS partition 2), 
+- this disklabel is saved in MBR partition #2 (basic DOS partition 2),
 as expected.
 - all the BSD partitions proper are aligned on a cylinder boundary (ie no '*').
 the root partition begins at the precise same offset the corresponding DOS
@@ -332,25 +332,25 @@ And here is the corresponding /etc/fstab:
 /dev/wd0f       /usr/obj   ffs    rw    1       2
 /dev/wd0i       /vbig      ffs    rw    1       2
 /dev/wd0j       /dos       msdos  rw    1       2
-/dev/wd0k       /linux     ext2fs rw    
-/dev/wd0b       /tmp       mfs    rw    
+/dev/wd0k       /linux     ext2fs rw
+/dev/wd0b       /tmp       mfs    rw
 
 One point that is somewhat laborious is that the disklabel -E mode
 (which you are currently using) tends to move partitions around to ensure
 that ALL defined partitions are contiguous. For that reason, it is better
 if you don't have to use b 0 *, otherwise partitions will be moved around to
 remove holes, without regard for the rigid MBR partitioning.
-ext2fs and DOS partitions  should be recognized and positioned 
-automatically if all goes well. 
+ext2fs and DOS partitions  should be recognized and positioned
+automatically if all goes well.
 
 Once the disklabel is written to disk, the installation proceeds as usual.
 
-ext2fs partitions are perfectly usable from OpenBSD. 
+ext2fs partitions are perfectly usable from OpenBSD.
 
 Booting
 -------
-First time I booted my system back, I did not get into OpenBSD as expected... 
-I plain forgot I had installed lilo in the master boot block, and lilo 
+First time I booted my system back, I did not get into OpenBSD as expected...
+I plain forgot I had installed lilo in the master boot block, and lilo
 does not heed the active partition flag. The fix was rather simple: from
 the Linux system, I just had to edit lilo.conf to add the OpenBSD entry:
 
@@ -389,7 +389,7 @@ your linux kernel to recognize BSD disklabels... Here is how it shows up
 on my box:
 
 Partition check:
- hda: hda1 hda2 hda3! < hda5 hda6 hda7 hda8 hda9 hda10 hda11 hda12 hda13 hda14 
+ hda: hda1 hda2 hda3! < hda5 hda6 hda7 hda8 hda9 hda10 hda11 hda12 hda13 hda14
 hda15 >
 
 - the disklabel is detected early, but handled later.
@@ -408,7 +408,7 @@ and here is my linux fstab:
 /dev/hda9               /bsd/usr/obj            ufs     ufstype=44bsd   1 2
 /dev/hda1               /dos                    vfat    defaults        1 2
 /dev/fd0                /mnt/floppy             ext2    noauto          0 0
-/dev/cdrom              /mnt/cdrom              iso9660 noauto,ro    
+/dev/cdrom              /mnt/cdrom              iso9660 noauto,ro
 
 2.2 kernels also include a working UFS, though you may run into problems when
 writing to ufs partitions.   Note the ufstype=44bsd. If you forget that
@@ -425,8 +425,8 @@ have to recompile anything, as this is the default setup.
 It's a good idea to mount your Linux file system under another point, then
 make symbolic links so that you can control what gets used precisely.
 
-As you have a complete linux system, don't bother with the ports 
-emul/linux_lib entry: it's only a set of Linux libraries for people who 
+As you have a complete linux system, don't bother with the ports
+emul/linux_lib entry: it's only a set of Linux libraries for people who
 don't have a Linux system running.
 
 A small detail that may cause problems: uname still says `OpenBSD', even
@@ -442,7 +442,7 @@ class with Linux.
 Similar shell scripts are easy to fix.  Binary programs that don't run
 suid can be coerced by using LD_PRELOAD.
 
-As a rule, this should be achieved on a program-by-program basis. 
+As a rule, this should be achieved on a program-by-program basis.
 The more networking programs that do tell they're running under OpenBSD,
 the merrier !
 
@@ -454,7 +454,7 @@ swap partition (even though I have 32 Mb of memory, largely enough for
 the installation). Since it uses a 2.0.36 kernel, it does NOT handle BSD
 disklabels, so I couldn't tell it to use my swap area (I have this bad
 feeling that distributed 2.2 boot kernels won't include BSD disklabel
-handling anyway). Instead, I had to back my last OpenBSD partition up, 
+handling anyway). Instead, I had to back my last OpenBSD partition up,
 fiddle with my fdisk setup to feed the last cylinder as a swap partition
 to their brain dead install CD. Then fetch the latest kernel source to the
 linux side, and recompile to get a fully working linux setup. Finally,
@@ -484,13 +484,13 @@ you know what you are doing, and don't expect there will always be someone
 to get you out of trouble. If your setup is really too weird, no-one can help.
 
 As far as the boot process goes, I think lilo allows you to boot from ANY
-partition recorded in the MBR, including extended partitions. The only 
+partition recorded in the MBR, including extended partitions. The only
 limitation is that the next stage bootstrap MUST take place entirely within
 the first 1024 cylinders of the disk, as seen by the BIOS.  OpenBSD
 MBR partitions that extend beyond cylinder 1024 are no problem, as long as
 the disklabel root (a) partition doesn't extend beyond cylinder 1024.
 
-Since Windows, OpenBSD, and linux all have that limitation, the easiest way 
+Since Windows, OpenBSD, and linux all have that limitation, the easiest way
 is to start with Windows partitions (entirely within the first 1024
 cylinders), follow with the linux boot partition (still within the first
 1024 cylinders), then the OpenBSD area (which can span the 1024 cylinders

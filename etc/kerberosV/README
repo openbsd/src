@@ -1,4 +1,4 @@
-#	$OpenBSD: README,v 1.1 2001/06/25 03:30:22 hin Exp $
+#	$OpenBSD: README,v 1.2 2002/06/09 06:15:15 todd Exp $
 
 Notes about the KerberosV support in OpenBSD:
 

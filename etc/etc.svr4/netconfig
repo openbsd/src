@@ -1,4 +1,4 @@
-#	$OpenBSD: netconfig,v 1.3 1997/04/11 09:07:00 niklas Exp $
+#	$OpenBSD: netconfig,v 1.4 2002/06/09 06:15:15 todd Exp $
 #	$NetBSD: netconfig,v 1.2 1996/04/11 12:59:47 christos Exp $
 # SVR4 Network configuration file
 #

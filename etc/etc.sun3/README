@@ -1,4 +1,4 @@
-# $OpenBSD: README,v 1.3 2000/05/01 02:24:11 miod Exp $ -*- text -*-
+# $OpenBSD: README,v 1.4 2002/06/09 06:15:15 todd Exp $ -*- text -*-
 
 OpenBSD/Sun3 Binary Snapshot
 
@@ -46,5 +46,5 @@ please contact the Sun3 portmaster: <miod@openbsd.org>
 I'm sorry this port isn't in good shape to be really usable now, but it
 will mature over the next few months.
 Enjoy anyway!
--- 
+--
   Miod Vallat

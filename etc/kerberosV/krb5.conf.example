@@ -1,4 +1,4 @@
-# $OpenBSD: krb5.conf.example,v 1.2 2002/02/21 21:13:11 hin Exp $
+# $OpenBSD: krb5.conf.example,v 1.3 2002/06/09 06:15:15 todd Exp $
 #
 # Example Kerberos 5 configuration file. You need to change the defaults
 # in this file to match your environment.

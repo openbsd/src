@@ -4,7 +4,7 @@
 #
 #	  Originally written by Toshiharu OHNO
 #
-# $OpenBSD: ppp.conf.sample,v 1.20 2001/09/12 19:35:31 brian Exp $
+# $OpenBSD: ppp.conf.sample,v 1.21 2002/06/09 06:15:15 todd Exp $
 #
 #################################################################
 
@@ -280,16 +280,16 @@ dodgynet:
     # If the remote host allowed IP forwarding and we wanted to use it, the
     # following rules could be split into two groups to separately validate
     # the source and destination addresses.
-    set filter dial  7 permit 172.17.16.0/20  172.17.20.248 
-    set filter dial  8 permit 172.17.36.0/22  172.17.20.248 
-    set filter dial  9 permit 172.17.118.0/26 172.17.20.248 
-    set filter dial 10 permit 10.123.5.0/24   172.17.20.248 
+    set filter dial  7 permit 172.17.16.0/20  172.17.20.248
+    set filter dial  8 permit 172.17.36.0/22  172.17.20.248
+    set filter dial  9 permit 172.17.118.0/26 172.17.20.248
+    set filter dial 10 permit 10.123.5.0/24   172.17.20.248
 
     # Once the link's up, limit outgoing access to the specified hosts
-    set filter out  0 4      172.17.16.0/20  172.17.20.248 
-    set filter out  1 4      172.17.36.0/22  172.17.20.248 
-    set filter out  2 4      172.17.118.0/26 172.17.20.248 
-    set filter out  3 deny ! 10.123.5.0/24   172.17.20.248 
+    set filter out  0 4      172.17.16.0/20  172.17.20.248
+    set filter out  1 4      172.17.36.0/22  172.17.20.248
+    set filter out  2 4      172.17.118.0/26 172.17.20.248
+    set filter out  3 deny ! 10.123.5.0/24   172.17.20.248
     # Allow established TCP connections
     set filter out  4 permit 0 0 tcp estab
     # And new connections to http, rlogin, rsh, telnet, ftp and ports
@@ -379,7 +379,7 @@ direct-client:
  set ifaddr 10.0.4.2 10.0.4.1
  enable lqr
  accept lqr
- 
+
 direct-server:
  set timeout 0
  set lqrperiod 10
@@ -390,7 +390,7 @@ direct-server:
 
 
 # Example to connect via compuserve (who insist on 7 bits even parity
-#  during the chat phase).  
+#  during the chat phase).
 #
 compuserve:
  set phone 1234567
@@ -436,7 +436,7 @@ loop:
  set login
  set ifaddr 127.0.0.2 127.0.0.3
  set server /var/tmp/loop "" 0177
- 
+
 loop-in:
  set timeout 0
  set log phase lcp ipcp command
@@ -510,8 +510,8 @@ mloop:
  clone 1 2 3
  link deflink remove
  # dial
- # link 2 dial 
- # link 3 dial 
+ # link 2 dial
+ # link 3 dial
 
 mloop-in:
  set timeout 0

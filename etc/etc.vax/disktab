@@ -1,9 +1,9 @@
-#	$OpenBSD: disktab,v 1.6 2002/04/05 03:10:04 deraadt Exp $
+#	$OpenBSD: disktab,v 1.7 2002/06/09 06:15:15 todd Exp $
 #	$NetBSD: disktab,v 1.2 1996/03/05 12:01:53 ragge Exp $
 #
 #	@(#)disktab	8.1 (Berkeley) 6/9/93
 #
-# Disk geometry and partition layout tables. 
+# Disk geometry and partition layout tables.
 # Key:
 #	dt	controller type
 #	ty	type of disk (fixed, removeable, simulated)

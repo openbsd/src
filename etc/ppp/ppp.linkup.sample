@@ -12,7 +12,7 @@
 #  3) If no label has been found, use MYADDR if it exists.
 #
 #
-# $OpenBSD: ppp.linkup.sample,v 1.3 1998/09/23 07:30:58 todd Exp $
+# $OpenBSD: ppp.linkup.sample,v 1.4 2002/06/09 06:15:15 todd Exp $
 #
 #########################################################################
 
@@ -44,6 +44,6 @@ pmdemand:
 # If your minimum call charge is 5 minutes, you may as well stay on
 # the line for that amount of time.  If we want a 60 second subsequent
 # timeout, set your timeout to 300 in ppp.conf and then do this:
-# 
+#
 min5minutes:
  !bg sh -c "sleep 240; pppctl -p mypassword 3000 set timeout 60"

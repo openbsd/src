@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV.md,v 1.6 2002/05/30 06:46:13 deraadt Exp $
+#	$OpenBSD: MAKEDEV.md,v 1.7 2002/06/09 06:15:14 todd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -21,7 +21,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.17 1996/02/03 15:02:42 briggs Exp $ 
+#	$NetBSD: MAKEDEV,v 1.17 1996/02/03 15:02:42 briggs Exp $
 #
 # Device "make" file.  Valid arguments:
 _TITLE(make)
@@ -231,7 +231,7 @@ st*)
 	st*) name=st;  chr=20; blk=5;;
 	esac
 	rm -f $name$unit n$name$unit e$name$unit en$name$unit \
-		r$name$unit nr$name$unit er$name$unit enr$name$unit 
+		r$name$unit nr$name$unit er$name$unit enr$name$unit
 	case $unit in
 	0|1|2|3|4|5|6)
 		mknod ${name}${unit}	b $blk $(( $unit * 16 + 0 ))
@@ -245,11 +245,11 @@ st*)
 		chown root.operator ${name}${unit} n${name}${unit} \
 			e$name$unit en$name$unit \
 			r${name}${unit} nr${name}${unit} \
-			er${name}${unit} enr${name}${unit} 
+			er${name}${unit} enr${name}${unit}
 		chmod 660 ${name}${unit} n${name}${unit} \
 			e$name$unit en$name$unit \
 			r${name}${unit} nr${name}${unit} \
-			er${name}${unit} enr${name}${unit} 
+			er${name}${unit} enr${name}${unit}
 		;;
 	*)
 		echo bad unit for tape in: $i
@@ -363,12 +363,12 @@ utty*)
 	chmod 660 utty$unit
 	;;
 
- 
+
 ttyCcfg)
 	major=67
 	minor=255
 	rm -f ttyCcfg
-	mknod ttyCcfg c $major $minor  
+	mknod ttyCcfg c $major $minor
 	chown root.wheel ttyCcfg
         ;;
 
@@ -475,7 +475,7 @@ wsmux|wsmouse|wskbd)
 
 wskbd*)
 	unit=${i##*[a-z]}
-	rm -f wskbd${unit} 
+	rm -f wskbd${unit}
 	mknod wskbd${unit} c 68 ${unit}
 	# XXX
 	chmod 660 wskbd${unit}
@@ -483,7 +483,7 @@ wskbd*)
 	;;
 wsmouse*)
 	unit=${i##*[a-z]}
-	rm -f wsmouse${unit} 
+	rm -f wsmouse${unit}
 	mknod wsmouse${unit} c 69 ${unit}
 	# XXX
 	chmod 660 wsmouse${unit}
@@ -492,8 +492,8 @@ wsmouse*)
 
 xfs*)
 	rm -f xfs$unit
-	mknod xfs$unit c 51 $unit 
-	chmod 600 xfs$unit 
+	mknod xfs$unit c 51 $unit
+	chmod 600 xfs$unit
 	chown root.wheel xfs$unit
 	;;
 

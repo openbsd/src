@@ -1,4 +1,4 @@
-#	$OpenBSD: disktab,v 1.13 2001/05/16 00:35:33 deraadt Exp $
+#	$OpenBSD: disktab,v 1.14 2002/06/09 06:15:14 todd Exp $
 #	$NetBSD: disktab,v 1.2 1995/10/13 03:09:39 cgd Exp $
 
 # A DEC RZ25, configured so that all of the free partition IDs are at

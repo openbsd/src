@@ -264,7 +264,7 @@ The last two bytes contain a 55AAH signature.
 0000:07f0 ........ ........ ........ ....55aa *..............U.*
 
 /end/
--- 
+--
 \\===============\\=======================\\
  \\  Hale Landis  \\      303-548-0567     \\
  // Niwot, CO USA // landis@sugs.tware.com //

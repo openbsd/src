@@ -1,4 +1,4 @@
-#     $OpenBSD: BSD.local.dist,v 1.11 2002/05/30 06:46:13 deraadt Exp $
+#     $OpenBSD: BSD.local.dist,v 1.12 2002/06/09 06:15:15 todd Exp $
 #     $FreeBSD: BSD.local.dist,v 1.32 1997/09/12 05:44:11 asami Exp $
 #
 
@@ -15,54 +15,54 @@
     libexec
     ..
     man
-        cat1            
+        cat1
         ..
-        cat2            
+        cat2
         ..
-        cat3            
+        cat3
         ..
 	cat3p
 	..
-        cat4            
+        cat4
         ..
-        cat5            
+        cat5
         ..
-        cat6            
+        cat6
         ..
-        cat7            
+        cat7
         ..
-        cat8            
+        cat8
         ..
-        cat9            
+        cat9
         ..
-        catl            
+        catl
         ..
-        catn            
+        catn
         ..
         ja_JP.EUC
-            cat1            
+            cat1
             ..
-            cat2            
+            cat2
             ..
-            cat3            
+            cat3
             ..
 	    cat3p
 	    ..
-            cat4            
+            cat4
             ..
-            cat5            
+            cat5
             ..
-            cat6            
+            cat6
             ..
-            cat7            
+            cat7
             ..
-            cat8            
+            cat8
             ..
-            cat9            
+            cat9
             ..
-            catl            
+            catl
             ..
-            catn            
+            catn
             ..
             man1
             ..

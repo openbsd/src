@@ -1,4 +1,4 @@
-set tterm='?'$TERM 
+set tterm='?'$TERM
 set noglob
 onintr finish
 eval `tset -s -Q $tterm`

@@ -1,9 +1,9 @@
-#	$OpenBSD: disktab,v 1.5 2001/01/28 23:31:28 niklas Exp $
+#	$OpenBSD: disktab,v 1.6 2002/06/09 06:15:14 todd Exp $
 
 #
 #	@(#)disktab	5.5 (Berkeley) 2/27/91
 #
-# Disk geometry and partition layout tables. 
+# Disk geometry and partition layout tables.
 # Key:
 #	ty	type of disk
 #	ns	#sectors/track

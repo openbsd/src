@@ -380,8 +380,8 @@
 171.64.7.222                    #afsdb1.stanford.edu
 171.64.7.234                    #afsdb2.stanford.edu
 171.64.7.246                    #afsdb3.stanford.edu
->olympia.stanford.edu     # Stanford DECathena AFS cell - local       
-36.53.0.106                   #olympia.stanford.edu           
+>olympia.stanford.edu     # Stanford DECathena AFS cell - local
+36.53.0.106                   #olympia.stanford.edu
 >slac.stanford.edu         # Stanford Linear Accelerator Center
 134.79.18.25                    #afsdb1.slac.stanford.edu
 134.79.18.26                    #afsdb2.slac.stanford.edu
@@ -561,7 +561,7 @@
 >lngs.infn.it              # INFN, Laboratori Nazionali di Gran Sasso, Italia
 192.84.135.3                    #rsgs02.lngs.infn.it
 >pi.infn.it                # INFN Sezione di Pisa
-192.84.133.7                    #aix.pi.infn.it 
+192.84.133.7                    #aix.pi.infn.it
 192.84.133.50                   #aix1.pi.infn.it
 >dis.uniroma1.it           # DIS, Univ. "La Sapienza", Rome, area Buonarotti
 151.100.5.21                    #peano.dis.uniroma1.it

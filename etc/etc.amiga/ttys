@@ -1,11 +1,11 @@
 #
-#	$OpenBSD: ttys,v 1.8 2002/05/30 06:46:13 deraadt Exp $
+#	$OpenBSD: ttys,v 1.9 2002/06/09 06:15:14 todd Exp $
 #
 # name	getty				type	status		comments
 #
 # If the console is marked insecure, single-user requires
 # the root password.
-console	"/usr/libexec/getty Pc"		vt220	off secure 
+console	"/usr/libexec/getty Pc"		vt220	off secure
 ttye0	"/usr/libexec/getty Pc"		vt220	on  secure	# custom chips
 ttye1	"/usr/libexec/getty Pc"		vt220	on  secure	# retina
 ttye2	"/usr/libexec/getty Pc"		vt220	on  secure	# retina

@@ -882,7 +882,7 @@ BIOS Type 10
    use this information.
 
 /end of part 2 of 2/
--- 
+--
 \\===============\\=======================\\
  \\  Hale Landis  \\      303-548-0567     \\
  // Niwot, CO USA // landis@sugs.tware.com //

@@ -1,4 +1,4 @@
-# $OpenBSD: dot.login,v 1.2 2000/05/01 20:38:41 jakob Exp $
+# $OpenBSD: dot.login,v 1.3 2002/06/09 06:15:15 todd Exp $
 #
 # csh login file
 

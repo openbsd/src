@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: install.sh,v 1.2 1998/09/23 07:30:58 todd Exp $
+# $OpenBSD: install.sh,v 1.3 2002/06/09 06:15:15 todd Exp $
 umask 0
 [ "$TARDIR" ] || { echo "$0: set TARDIR first" ; exit 1; }
 
