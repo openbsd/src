@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_pci.c,v 1.9 2000/11/10 09:42:15 niklas Exp $	*/
+/*	$OpenBSD: gdt_pci.c,v 1.10 2001/05/07 19:43:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -233,6 +233,7 @@ gdt_pci_attach(parent, self, aux)
 	case PCI_PRODUCT_VORTEX_GDT_6x29RD:
 	case PCI_PRODUCT_VORTEX_GDT_7x19RN:
 	case PCI_PRODUCT_VORTEX_GDT_7x29RN:
+	case PCI_PRODUCT_VORTEX_GDT_7x43RN:
 		gdt->sc_class = GDT_MPR;
 	}
 
