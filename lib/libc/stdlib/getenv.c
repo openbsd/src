@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1987 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1987, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: getenv.c,v 1.3 1996/08/19 08:33:31 tholo Exp $";
+static char *rcsid = "$OpenBSD: getenv.c,v 1.4 1998/07/16 18:02:33 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
@@ -53,18 +53,25 @@ __findenv(name, offset)
 	int *offset;
 {
 	extern char **environ;
-	register int len;
-	register char **P, *C;
-	register const char *cp;
+	register int len, i;
+	register const char *np;
+	register char **p, *cp;
 
-	for (cp = name, len = 0; *cp != '\0' && *cp != '='; ++cp, ++len);
-	for (P = environ; *P; ++P)
-		if (!strncmp(*P, name, len))
-			if (*(C = *P + len) == '=') {
-				*offset = P - environ;
-				return(++C);
-			}
-	return(NULL);
+	if (name == NULL || environ == NULL)
+		return (NULL);
+	for (np = name; *np && *np != '='; ++np)
+		;
+	len = np - name;
+	for (p = environ; (cp = *p) != NULL; ++p) {
+		for (np = name, i = len; i && *cp; i--)
+			if (*cp++ != *np++)
+				break;
+		if (i == 0 && *cp++ == '=') {
+			*offset = p - environ;
+			return (cp);
+		}
+	}
+	return (NULL);
 }
 
 /*
