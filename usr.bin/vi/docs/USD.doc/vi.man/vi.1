@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.1,v 1.17 2004/01/02 09:37:41 jmc Exp $
+.\"	$OpenBSD: vi.1,v 1.18 2004/01/02 21:37:48 jmc Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -375,7 +375,10 @@ screens.
 .It Aq Cm control-G
 Display the file information.
 .Pp
-.It Aq Cm control-H
+.It Xo
+.Op Ar count
+.Aq Cm control-H
+.Xc
 .It Xo
 .Op Ar count
 .Cm h
@@ -484,6 +487,7 @@ characters without changing the current line.
 .Op Ar count
 .Cm !\&
 .Ar motion shell-argument(s)
+.Aq Li carriage-return
 .Xc
 Replace text with results from a shell command.
 .Pp
@@ -569,15 +573,23 @@ Repeat the last
 .Nm vi
 command that modified text.
 .Pp
-.It / Ns Ar RE
+.It Xo
+.Pf / Ns Ar RE
+.Aq Li carriage-return
+.Xc
 .It Xo
 .Pf / Ns Ar RE Ns /
 .Op Ar offset
+.Aq Li carriage-return
 .Xc
-.It ?\& Ns Ar RE
+.It Xo
+.Pf ?\& Ns Ar RE
+.Aq Li carriage-return
+.Xc
 .It Xo
 .Pf ?\& Ns Ar RE Ns ?\&
 .Op Ar offset
+.Aq Li carriage-return
 .Xc
 .It Cm N
 .It Cm n
@@ -636,7 +648,7 @@ If a
 argument is given,
 the characters input are repeated
 .Ar count
-number of times.
+\- 1 number of times.
 .Pp
 .It Xo
 .Op Ar count
@@ -711,6 +723,12 @@ Move to the screen line
 .Cm I
 .Xc
 Enter input mode, inserting the text at the beginning of the line.
+If a
+.Ar count
+argument is given,
+the characters input are repeated
+.Ar count
+\- 1 number of times.
 .Pp
 .It Xo
 .Op Ar count
@@ -739,7 +757,7 @@ If a
 argument is given,
 the characters input are repeated
 .Ar count
-number of times.
+\- 1 number of times.
 .Pp
 .It Xo
 .Op Ar buffer
@@ -765,7 +783,7 @@ If a
 argument is given,
 the characters input are repeated
 .Ar count
-number of times.
+\- 1 number of times.
 .Pp
 .It Xo
 .Op Ar buffer
@@ -851,7 +869,7 @@ Move forward
 section boundaries.
 .Pp
 .It Cm ^
-Move to first non-blank character on the current line.
+Move to the first non-blank character on the current line.
 .Pp
 .It Xo
 .Op Ar count
@@ -871,7 +889,7 @@ If a
 argument is given,
 the characters input are repeated
 .Ar count
-number of times.
+\-1 number of times.
 .Pp
 .It Xo
 .Op Ar count
@@ -924,7 +942,7 @@ If a
 argument is given,
 the characters input are repeated
 .Ar count
-number of times.
+\-1 number of times.
 .Pp
 .It Xo
 .Cm m
@@ -940,6 +958,12 @@ as
 .Cm o
 .Xc
 Enter input mode, appending text in a new line under the current line.
+If a
+.Ar count
+argument is given,
+the characters input are repeated
+.Ar count
+\- 1 number of times.
 .Pp
 .It Xo
 .Op Ar buffer
