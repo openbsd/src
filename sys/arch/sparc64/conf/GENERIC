@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.17 2001/09/29 03:14:46 art Exp $
+#	$OpenBSD: GENERIC,v 1.18 2001/09/29 07:16:12 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -36,6 +36,7 @@ scsibus* at siop?
 #### Standard system devices -- all required for a given architecture
 
 auxio*	at ebus?
+beeper*	at ebus?
 
 com*	at ebus?
 

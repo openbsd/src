@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.15 2001/09/18 21:04:33 jason Exp $
+#	$OpenBSD: files.sparc64,v 1.16 2001/09/29 07:16:12 jason Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -68,6 +68,10 @@ device auxio
 attach auxio at ebus with auxio_ebus
 attach auxio at sbus with auxio_sbus
 file	arch/sparc64/dev/auxio.c		auxio
+
+device beeper
+attach beeper at ebus
+file	arch/sparc64/dev/beeper.c		beeper
 
 #
 # Console related stuff
