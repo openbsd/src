@@ -39,24 +39,52 @@ char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)accton.c	4.3 (Berkeley) 6/1/90"; */
-static char *rcsid = "$Id: accton.c,v 1.3 1997/07/04 20:32:13 todd Exp $";
+static char *rcsid = "$Id: accton.c,v 1.4 1998/12/18 20:48:33 deraadt Exp $";
 #endif /* not lint */
 
+#include <sys/types.h>
+#include <err.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+
+static void usage __P((void));
+
+void
+usage()
+{
+	fputs("usage: accton [file]\n", stderr);
+	exit(1);
+}
 
 int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	if (argc > 2) {
-		fputs("usage: accton [file]\n", stderr);
-		exit(1);
-	}
-	if (acct(argc == 2 ? argv[1] : (char *)NULL)) {
-		perror("accton");
-		exit(1);
+	int ch;
+
+	while ((ch = getopt(argc, argv, "")) != -1)
+		switch(ch) {
+		case '?':
+		default:
+			usage();
+		}
+	argc -= optind;
+	argv += optind;
+
+	switch(argc) {
+	case 0:
+		if (acct(NULL))
+			err(1, NULL);
+		break;
+	case 1:
+		if (acct(*argv))
+			err(1, "%s", *argv);
+		break;
+	default:
+		usage();
 	}
 	exit(0);
 }
