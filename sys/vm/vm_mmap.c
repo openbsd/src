@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_mmap.c,v 1.13 1998/02/25 22:13:46 deraadt Exp $	*/
+/*	$OpenBSD: vm_mmap.c,v 1.14 1998/05/11 19:43:11 niklas Exp $	*/
 /*	$NetBSD: vm_mmap.c,v 1.47 1996/03/16 23:15:23 christos Exp $	*/
 
 /*
@@ -56,6 +56,7 @@
 #include <sys/file.h>
 #include <sys/mman.h>
 #include <sys/conf.h>
+#include <sys/stat.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -131,6 +132,7 @@ sys_mmap(p, v, retval)
 		syscallarg(long) pad;
 		syscallarg(off_t) pos;
 	} */ *uap = v;
+	struct vattr va;
 	register struct filedesc *fdp = p->p_fd;
 	register struct file *fp;
 	struct vnode *vp;
@@ -248,13 +250,37 @@ sys_mmap(p, v, retval)
 		/*
 		 * If we are sharing potential changes (either via MAP_SHARED
 		 * or via the implicit sharing of character device mappings),
-		 * and we are trying to get write permission although we
-		 * opened it without asking for it, bail out.
+		 * there are security issues with giving out PROT_WRITE
 		 */
-		if (((flags & MAP_SHARED) != 0 || vp->v_type == VCHR) &&
-		    (fp->f_flag & FWRITE) == 0 && (prot & PROT_WRITE) != 0)
-			return (EACCES);
-		else
+		if ((flags & MAP_SHARED) || vp->v_type == VCHR) {
+
+			/* In case we opened the thing readonly... */
+			if (!(fp->f_flag & FWRITE)) {
+				/*
+				 * If we are trying to get write permission
+				 * bail out, otherwise go ahead but don't
+				 * raise maxprot to contain VM_PROT_WRITE, as
+				 * we have not asked for write permission at
+				 * all.
+				 */
+				if (prot & PROT_WRITE)
+					return (EACCES);
+
+			/*
+			 * If the file is writable, only add PROT_WRITE to
+			 * maxprot if the file is not immutable, append-only.
+			 * If it is, and if we are going for PROT_WRITE right
+			 * away, return EPERM.
+			 */
+			} else if ((error =
+			    VOP_GETATTR(vp, &va, p->p_ucred, p)))
+				return (error);
+			else if (va.va_flags & (IMMUTABLE|APPEND)) {
+				if (prot & PROT_WRITE)
+					return (EPERM);
+			} else
+				maxprot |= VM_PROT_WRITE;
+		} else
 			maxprot |= VM_PROT_WRITE;
 		handle = (caddr_t)vp;
 	} else {
