@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.36 2004/07/02 14:40:22 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.37 2004/08/09 20:52:11 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -339,9 +339,7 @@ ASLOCAL(master_start)
 	 ldcr	r2, VBR
 
 	/* still on int stack */
-	bsr.n	_C_LABEL(mvme_bootstrap)
-	 subu	r31, r31, 40
-	addu	r31, r31, 40
+	bsr	_C_LABEL(mvme_bootstrap)
 
 	/*
 	 * we now know our cpu number, so we
@@ -365,10 +363,8 @@ ASLOCAL(master_start)
 	/* make the call: main() */
 	or.u	r2, r0, hi16(UADDR)
 	or	r2, r2,lo16(UADDR)
-	addu	r2, r2, USIZE - 8
-	subu	r31, r31, 40
-	bsr	_C_LABEL(main)
-	addu	r31, r31, 40
+	bsr.n	_C_LABEL(main)
+	 addu	r2, r2, USIZE - 8
 	bsr	_C_LABEL(panic)
 
 /*
@@ -385,10 +381,9 @@ ASLOCAL(slave_start)
 	/* r31 <-- slavestack */
 	or.u	r31, r0,  hi16(_ASM_LABEL(slavestack_end))
 	or	r31, r31, lo16(_ASM_LABEL(slavestack_end))
-	clr	r31, r31, 3<0>	/* round down to 8-byte boundary */
 
 	bsr.n	_C_LABEL(slave_pre_main)	/* set cpu number */
-	 subu	r31, r31, 48    		/* allocate frame */
+	 clr	r31, r31, 3<0>	/* round down to 8-byte boundary */
 
 	bsr	_C_LABEL(get_slave_stack)
 	addu	r31, r2, INTSTACK_SIZE
@@ -402,8 +397,7 @@ ASLOCAL(slave_start)
 	or.u	r10, r0, hi16(_ASM_LABEL(inter_processor_lock))
 	st	r0, r10, lo16(_ASM_LABEL(inter_processor_lock))
 
-	br.n	_C_LABEL(slave_main)	/* does not return */
-	 subu	r31, r31, 40		/* allocate frame */
+	br	_C_LABEL(slave_main)	/* does not return */
 
 GLOBAL(spin_cpu)
 	or.u	r3,   r0,  hi16(_C_LABEL(start_text))
@@ -490,14 +484,12 @@ GLOBAL(curpcb)
  * user stack in exec.
  */
 GLOBAL(sigcode)			/* r31 points to sigframe */
-	ld	r2, r31, 0	/* signo */
 	ld	r3, r31, 4	/* siginfo_t* */
 	ld	r4, r31, 8	/* sigcontext* */
 	ld	r5, r31, 12	/* handler */
 	jsr.n	r5
-	 subu	r31, r31, 40	/* give some stack space */
-	addu	r31, r31, 40	/* restore old sp value  */
-	ld	r2,  r31, 8	/* sigcontext* */
+	 ld	r2, r31, 0	/* signo */
+	ld	r2, r31, 8	/* sigcontext* */
 	or	r13,  r0, SYS_sigreturn
 	tb0	0, r0, 128	/* syscall trap, calling sigreturn */
 	NOP			| failure return

@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.S,v 1.6 2004/08/02 17:30:08 miod Exp $	*/
+/*	$OpenBSD: process.S,v 1.7 2004/08/09 20:52:11 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -80,13 +80,11 @@ ENTRY(switch_exit)
 	addu	r31, r30, USIZE			/* now on idle_u stack */
 	or.u	r10, r0, hi16(_C_LABEL(curpcb))
 	st	r30, r10,lo16(_C_LABEL(curpcb))		/* curpcb = &idle_u */
-	or.u	r10, r0, hi16(_C_LABEL(curproc))
-	st	r0, r10, lo16(_C_LABEL(curproc))	/* curproc = NULL */
 
 	/* Schedule the vmspace and stack to be freed. */
+	or.u	r10, r0, hi16(_C_LABEL(curproc))
 	bsr.n	_C_LABEL(exit2)
-	 subu	r31, r31, 48		/* allocate stack  */
-	addu	r31, r31, 48		/* restore stack */
+	 st	r0, r10, lo16(_C_LABEL(curproc))	/* curproc = NULL */
 	bsr	_C_LABEL(cpu_switch)	/* goto final switch */
 
 /*
@@ -110,9 +108,7 @@ ENTRY(cpu_switch)
 	ld	r2, r11, lo16(_C_LABEL(curproc))
 	bcnd	eq0, r2, 1f
 
-	bsr.n	_C_LABEL(pmap_deactivate)
-	 subu	r31, r31,48
-	addu    r31, r31,48
+	bsr	_C_LABEL(pmap_deactivate)
 	or.u	r11, r0, hi16(_C_LABEL(curproc))
 
 1:
@@ -225,19 +221,15 @@ ASLOCAL(Ldoneloop)
 	st	r3, r10, lo16(_C_LABEL(curpcb))		/* curpcb = p->p_addr */
 
 	/* pmap_activate() the process' pmap */
-	or	r2, r0, r9		/* r2 = p */
 	or	r14, r0, r9		/* save p in r14 */
 	bsr.n	_C_LABEL(pmap_activate)
-	 subu	r31, r31,48
-	addu    r31, r31,48
+	 or	r2, r0, r9
 	or	r9, r0, r14		/* restore p saved in r14 */
 
 	or.u	r31, r0, hi16(_ASM_LABEL(intstack_end))
 	or	r31,r31, lo16(_ASM_LABEL(intstack_end))
-	subu	r31, r31,48
 	bsr.n    _C_LABEL(load_u_area)
 	 or	r2, r0, r9
-	addu	r31, r31,48
 
 	or.u	r10, r0,  hi16(_C_LABEL(curpcb))
 	ld	r10, r10,  lo16(_C_LABEL(curpcb))
@@ -265,10 +257,8 @@ ASLOCAL(Ldoneloop)
 	ld	r28,r10, PCB_R28
 	ld	r29,r10, PCB_R29
 	or	r14,r10, r0		/* preserve curpcb in a register... */
-	subu	r31,r31,32
 	bsr.n	_C_LABEL(setipl)
 	 ld	r2, r10, PCB_IPL	/* restore interrupt mask */
-	addu	r31,r31,32
 	ld	r1, r14, PCB_PC
 	ld	r30,r14, PCB_R30	/* restore frame pointer & stack */
 	ld	r31,r14, PCB_SP
@@ -310,13 +300,13 @@ ASLOCAL(__savectx)
 	 * We need to save r1 on the stack because we don't know if we were
 	 * called as savectx or __savectx.
 	 */
-	subu	r31, r31, 40		/* allocate stack for r1 and args */
-	st	r1,  r31, 32
+	subu	r31, r31, 16		/* allocate stack for r1 and args */
+	st	r1,  r31, 0
 	bsr.n	_C_LABEL(getipl)	/* get the current interrupt mask */
 	 or	r14, r0,  r2
 	st	r2,  r14, PCB_IPL	/* save interrupt mask */
-	ld	r1,  r31, 32		/* recover return address */
-	addu	r31, r31, 40		/* put stack pointer back */
+	ld	r1,  r31, 0		/* recover return address */
+	addu	r31, r31, 16		/* put stack pointer back */
 
 	/*
 	 * Save FP state.

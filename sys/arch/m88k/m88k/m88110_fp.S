@@ -1,4 +1,4 @@
-/* $OpenBSD: m88110_fp.S,v 1.1 2004/04/29 14:33:27 miod Exp $	*/
+/* $OpenBSD: m88110_fp.S,v 1.2 2004/08/09 20:52:11 miod Exp $	*/
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -54,9 +54,9 @@
 
 ASENTRY(m88110_Xfp_precise)
 	or	r29, r3, r0     /*  r29 is now the E.F. */
-	subu	r31, r31, 40
-	st	r1,  r31, 32
-	st	r29, r31, 36
+	subu	r31, r31, 16
+	st	r1,  r31, 0
+	st	r29, r31, 4
 
 	ld	r2, r29, EF_FPSR * 4
 	ld	r3, r29, EF_FPCR * 4
@@ -78,26 +78,26 @@ ASENTRY(m88110_Xfp_precise)
 	or.u	r4, r4, 0xffff
 
 ASLOCAL(m88110_FPuimp)
-	subu	r31,r31,40		/* allocate stack */
-	st	r1,r31,36		/* save return address */
-	st	r3,r31,32		/* save exception frame */
+	subu	r31,r31,16		/* allocate stack */
+	st	r1,r31,4		/* save return address */
+	st	r3,r31,0		/* save exception frame */
 	or	r2,r0,T_FPEPFLT		/* load trap type */
-	or	r3, r29, r0
-	bsr	_C_LABEL(m88110_trap)	/* trap */
-	ld	r1,r31,36		/* recover return address */
-	addu	r31,r31,40		/* deallocate stack */
- 	jmp	r1
+	bsr.n	_C_LABEL(m88110_trap)	/* trap */
+	 or	r3, r29, r0
+	ld	r1,r31,4		/* recover return address */
+ 	jmp.n	r1
+	 addu	r31,r31,16		/* deallocate stack */
 
 ASLOCAL(m88110_FPpriviol)
-	subu	r31,r31,40		/* allocate stack */
-	st	r1,r31,36		/* save return address */
-	st	r3,r31,32		/* save exception frame */
+	subu	r31,r31,16		/* allocate stack */
+	st	r1,r31,4		/* save return address */
+	st	r3,r31,0		/* save exception frame */
 	or	r2,r0,T_PRIVINFLT	/* load trap type */
-	or	r3, r29, r0
-	bsr	_C_LABEL(m88110_trap)	/* trap */
-	ld	r1,r31,36		/* recover return address */
+	bsr.n	_C_LABEL(m88110_trap)	/* trap */
+	 or	r3, r29, r0
+	ld	r1,r31,4		/* recover return address */
  	jmp.n	r1
-	 addu	r31,r31,40		/* deallocate stack */
+	 addu	r31,r31,16		/* deallocate stack */
 
 ENTRY(set_tcfp)
 	or.u	r2, r0, hi16(0x200000)

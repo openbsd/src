@@ -1,4 +1,4 @@
-/* $OpenBSD: m88100_fp.S,v 1.3 2004/08/09 20:18:14 miod Exp $	*/
+/* $OpenBSD: m88100_fp.S,v 1.4 2004/08/09 20:52:11 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991 Carnegie Mellon University
@@ -73,9 +73,9 @@
 
 ASENTRY(m88100_Xfp_precise)
 	or	r29, r3,  r0		/* r29 is now the E.F. */
-	subu	r31, r31, 40
-	st	r1,  r31, 32
-	st	r29, r31, 36
+	subu	r31, r31, 16
+	st	r1,  r31, 8
+	st	r29, r31, 12
 
 	ld	r2, r29, EF_FPSR * 4
 	ld	r3, r29, EF_FPCR * 4
@@ -118,16 +118,13 @@ ASENTRY(m88100_Xfp_precise)
 	or.u	r4, r4, 0xffff
 
 ASLOCAL(FPuimp)
-	subu	r31,r31,40		/* allocate stack */
-	st	r1,r31,36		/* save return address */
-#if 0
-	st	r3,r31,32		/* save exception frame */
-#endif
+	subu	r31,r31,16		/* allocate stack */
+	st	r1,r31,0		/* save return address */
 	or	r2,r0,T_FPEPFLT		/* load trap type */
-	or	r3, r29, r0
-	bsr	_C_LABEL(m88100_trap)
-	ld	r1,r31,36		/* recover return address */
-	addu	r31,r31,40		/* deallocate stack */
+	bsr.n	_C_LABEL(m88100_trap)
+	 or	r3, r29, r0
+	ld	r1,r31,0		/* recover return address */
+	addu	r31,r31,16		/* deallocate stack */
 	jmp	r1
 
 	/*
@@ -148,9 +145,9 @@ ASLOCAL(wrapup)
 	set	r10, r10, 1<PSR_INTERRUPT_DISABLE_BIT>
 	stcr	r10, cr1
 
-	ld	r1, r31, 32
-	ld	r29, r31, 36
-	addu	r31, r31, 40
+	ld	r1, r31, 8
+	ld	r29, r31, 12
+	addu	r31, r31, 16
 
 	fstcr	r2, FPSR	/* write revised value of FPSR */
 	fstcr	r3, FPCR	/* write revised value of FPCR */
@@ -166,8 +163,8 @@ ASLOCAL(wrapup)
 	/* unspecified register */
 	clr	r2, r2, 27<5>		/* perform equivalent of mod 32 */
 ASLOCAL(writesingle)
-	st	r6, r3 [r2]		/* write low word into memory */
-	jmp	r1
+	jmp.n	r1
+	 st	r6, r3 [r2]		/* write low word into memory */
 
 /*
  * Check if the numerator is zero. If the numerator is zero, then handle
@@ -175,8 +172,8 @@ ASLOCAL(writesingle)
  */
 
 ASLOCAL(FPdivzero)
-	st	r1,r31,0		/* save return address */
-	bb1	s1size,r9,1f		/* branch if numerator double */
+	bb1.n	s1size,r9,1f		/* branch if numerator double */
+	 st	r1,r31,0		/* save return address */
 /* single number */
 	clr	r10,r5,1<sign>	/* clear sign bit */
 	extu	r11,r6,3<29>	/* grab upper bits of lower word */
@@ -2303,9 +2300,9 @@ operation:
 ASENTRY(Xfp_imprecise)
 /* input: r3 is the exception frame */
 	or	r29, r3, r0		/* r29 is now the E.F. */
-	subu	r31, r31, 40
-	st	r1,  r31, 32
-	st	r29, r31, 36
+	subu	r31, r31, 16
+	st	r1,  r31, 4
+	st	r29, r31, 8
 
 	ld	r2 , r29, EF_FPSR  * 4
 	ld	r3 , r29, EF_FPCR  * 4
@@ -2337,9 +2334,9 @@ fpui_wrapup:
 #endif
 	set	r4, r4, 1<PSR_INTERRUPT_DISABLE_BIT>
 	stcr	r4, cr1
-	ld	r1, r31, 32
-	ld	r29,r31, 36
-	addu	r31, r31, 40
+	ld	r1, r31, 4
+	ld	r29,r31, 8
+	addu	r31, r31, 16
 
 	fstcr	r2, FPSR	/* write revised value of FPSR */
 	fstcr	r3, FPCR	/* write revised value of FPCR */
@@ -2352,5 +2349,5 @@ fpui_wrapup:
 	addu	r2, r2, 1
 	clr	r2, r2, 27<5>
 Iwritesingle:
-	st	r11, r3 [r2]
-	jmp	r1
+	jmp.n	r1
+	 st	r11, r3 [r2]
