@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipnat.c,v 1.15 1997/06/23 01:16:16 deraadt Exp $	*/
+/*	$OpenBSD: ipnat.c,v 1.16 1997/06/23 17:02:43 kstailey Exp $	*/
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
  *
@@ -53,7 +53,7 @@
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static  char    sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static	char	rcsid[] = "Id: ipnat.c,v 2.0.1.7 1997/01/30 12:02:32 darrenr Exp";
+static	char	rcsid[] = "$DRId: ipnat.c,v 2.0.1.8 1997/02/16 21:23:40 darrenr Exp $";
 #endif
 
 #if	SOLARIS
@@ -658,8 +658,12 @@ char *line;
 		ipn.in_pnext = portnum(tport, proto); /* target port */
 		s = NULL; /* That's all she wrote! */
 	}
+	ipn.in_inip &= ipn.in_inmsk;
+	ipn.in_outip &= ipn.in_outmsk;
+
 	if (!s)
 		return &ipn;
+
 	if (strcasecmp(s, "portmap")) {
 		fprintf(stderr, "expected \"portmap\" - got \"%s\"\n", s);
 		return NULL;
