@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.32 1997/05/16 04:55:05 millert Exp $
+#	$OpenBSD: install.sub,v 1.33 1997/05/16 16:36:53 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -633,8 +633,8 @@ install_url() {
 		echo -n "Do you want to use passive ftp? [${resp}] "
 		getresp "${resp}"
 		case "$resp" in
-			y*|N*)	_ftp_passive=-p ;;
-			*)	;;
+			y*|Y*)	_ftp_passive=-p ;;
+			*)	unset _ftp_passive ;;
 		esac
 	fi
 
