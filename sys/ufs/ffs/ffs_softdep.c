@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.18 2001/03/04 06:46:31 csapuntz Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.19 2001/03/04 07:00:33 csapuntz Exp $	*/
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -233,9 +233,9 @@ acquire_lock(lk, line)
 		original_line = lk->lkt_line;
 		FREE_LOCK(lk);
 		if (holder == CURPROC->p_pid)
-			panic("softdep_lock: locking against myself, acquired at line %d", original_line);
+			panic("softdep_lock: locking against myself, acquired at line %d, relocked at line %d", original_line, line);
 		else
-			panic("softdep_lock: lock held by %d, acquired at line %d", holder, original_line);
+			panic("softdep_lock: lock held by %d, acquired at line %d, relocked at line %d", holder, original_line, line);
 	}
 	lk->lkt_spl = splbio();
 	lk->lkt_held = CURPROC->p_pid;
@@ -266,11 +266,11 @@ acquire_lock_interlocked(lk, line)
 	if (lk->lkt_held != -1) {
 		holder = lk->lkt_held;
 		original_line = lk->lkt_line;
-		FREE_LOCK(lk);
+		FREE_LOCK_INTERLOCKED(lk);
 		if (holder == CURPROC->p_pid)
-			panic("softdep_lock: locking against myself, acquired at line %d", original_line);
+			panic("softdep_lock: locking against myself, acquired at line %d, relocked at line %d", original_line, line);
 		else
-			panic("softdep_lock: lock held by %d, acquired at line %d", holder, original_line);
+			panic("softdep_lock: lock held by %d, acquired at line %d, relocked at line %d", holder, original_line, line);
 	}
 	lk->lkt_held = CURPROC->p_pid;
 	lk->lkt_line = line;
