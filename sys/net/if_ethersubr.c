@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.59 2001/11/30 07:59:17 itojun Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.60 2001/12/09 13:09:13 jason Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -367,7 +367,7 @@ ether_output(ifp, m0, dst, rt0)
 		 */
 		aa = (struct at_ifaddr *)at_ifawithnet(
 			(struct sockaddr_at *)dst,
-			ifp->if_addrlist.tqh_first);
+			TAILQ_FIRST(&ifp->if_addrlist));
 		if (aa == 0)
 			goto bad;
 
@@ -722,12 +722,11 @@ ether_input(ifp, eh, m)
 			struct ifaddr *ifa;
 			struct sockaddr_dl *sdl = NULL;
 
-			for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
-			    ifa = ifa->ifa_list.tqe_next)
+			TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 				if ((sdl = (struct sockaddr_dl *)ifa->ifa_addr) &&
 				    sdl->sdl_family == AF_LINK)
 					break;
-
+			}
 			/*
 			 * If this is not a simplex interface, drop the packet
 			 * if it came from us.

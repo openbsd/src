@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_arcsubr.c,v 1.7 2001/06/15 03:38:33 itojun Exp $	*/
+/*	$OpenBSD: if_arcsubr.c,v 1.8 2001/12/09 13:09:13 jason Exp $	*/
 /*	$NetBSD: if_arcsubr.c,v 1.8 1996/05/07 02:40:29 thorpej Exp $	*/
 
 /*
@@ -562,8 +562,7 @@ arc_ifattach(ifp)
 		log(LOG_ERR,"%s: link address 0 reserved for broadcasts.  Please change it and ifconfig %s down up\n",
 		   ifp->if_xname, ifp->if_xname); 
 	}
-	for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
-	    ifa = ifa->ifa_list.tqe_next)
+	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 		if ((sdl = (struct sockaddr_dl *)ifa->ifa_addr) &&
 		    sdl->sdl_family == AF_LINK) {
 			sdl->sdl_type = IFT_ARCNET;
@@ -572,4 +571,5 @@ arc_ifattach(ifp)
 			      LLADDR(sdl), ifp->if_addrlen);
 			break;
 		}
+	}
 }
