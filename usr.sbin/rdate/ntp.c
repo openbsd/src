@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.15 2004/02/16 21:25:41 jakob Exp $	*/
+/*	$OpenBSD: ntp.c,v 1.16 2004/05/18 17:25:18 jakob Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 by N.M. Maclaren. All rights reserved.
@@ -242,11 +242,11 @@ int
 write_packet(int fd, const struct sockaddr *peer, struct ntp_data *data)
 {
 	u_char	transmit[NTP_PACKET_MIN];
-	int	length;
+	ssize_t	length;
 
 	pack_ntp(transmit, NTP_PACKET_MIN, data);
 	length = sendto(fd, transmit, NTP_PACKET_MIN, 0, peer, SA_LEN(peer));
-	if (length <= 0) {
+	if (length == -1) {
 		warnx("Unable to send NTP packet to server");
 		return 1;
 	}
