@@ -23,9 +23,8 @@ restrictive); see below for details.
 [ Zlib is now external. ]
 [ The make-ssh-known-hosts script is no longer included. ]
 [ TSS has been removed. ]
-
-The MD5 implementation in md5.c was taken from PGP and is due to Colin
-Plumb.  Comments in the file indicate that it is in the public domain.
+[ MD5 is now external. ]
+[ RC4 support bas been removed. ]
 
 The 32-bit CRC implementation in crc32.c is due to Gary S. Brown.
 Comments in the file indicate it may be used for any purpose without
