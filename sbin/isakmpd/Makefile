@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 1999/03/02 15:06:12 niklas Exp $
+#	$OpenBSD: Makefile,v 1.12 1999/03/24 16:01:24 niklas Exp $
 #	$EOM: Makefile,v 1.43 1999/03/02 14:27:47 niklas Exp $
 
 #
@@ -57,8 +57,8 @@ SRCS=		app.c asn.c asn_useful.c attribute.c cert.c constants.c \
 		util.c x509.c
 
 # Chose one of the IPSec SADB interfacing choices
-SRCS+=		pf_encap.c
-#SRCS+=		pf_key_v2.c
+#SRCS+=		pf_encap.c
+SRCS+=		pf_key_v2.c
 #SRCS+=		klips.c
 
 GENERATED=	exchange_num.h ipsec_fld.h ipsec_num.h isakmp_fld.h \
@@ -71,7 +71,7 @@ CFLAGS+=	-Wall -DNEED_SYSDEP_APP \
 		-I${.CURDIR} -I${.CURDIR}/sysdep/${OS} -I. \
 
 #If you use PF_KEYv2 do this:
-#CFLAGS+=	-DUSE_PF_KEY_V2
+CFLAGS+=	-DUSE_PF_KEY_V2
 
 # Different debugging & profiling suggestions
 #
