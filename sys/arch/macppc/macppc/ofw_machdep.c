@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.6 2002/01/02 17:13:25 drahn Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.7 2002/03/09 21:46:05 drahn Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -373,16 +373,115 @@ ofwconprobe()
 	return;
 }
 	
+#define DEVTREE_UNKNOWN 0
+#define DEVTREE_USB	1
+#define DEVTREE_ADB	2
+#define DEVTREE_HID	3
+int ofw_devtree = DEVTREE_UNKNOWN;
 
+#define OFW_HAVE_USBKBD 1
+#define OFW_HAVE_ADBKBD 2
+int ofw_have_kbd = 0;
+
+void ofw_recurse_keyboard(int pnode);
+void ofw_find_keyboard(void);
+
+void
+ofw_recurse_keyboard(int pnode)
+{
+	char name[32];
+	int old_devtree;
+	int len;
+	int node;
+
+	for (node = OF_child(pnode); node != 0; node = OF_peer(node)) {
+
+		len = OF_getprop(node, "name", name, 20);
+		if (len == 0)
+			continue;
+		name[len] = 0;
+		if (strcmp(name, "keyboard") == 0) {
+			/* found a keyboard node, where is it? */
+			if (ofw_devtree == DEVTREE_USB) {
+				ofw_have_kbd |= OFW_HAVE_USBKBD;
+			} else if (ofw_devtree == DEVTREE_ADB) {
+				ofw_have_kbd |= OFW_HAVE_ADBKBD;
+			} else {
+				/* hid or some other keyboard? igore */
+			}
+			continue;
+		}
+
+		old_devtree = ofw_devtree;
+
+		if (strcmp(name, "adb") == 0) {
+			ofw_devtree = DEVTREE_ADB;
+		}
+		if (strcmp(name, "usb") == 0) {
+			ofw_devtree = DEVTREE_USB;
+		}
+
+		ofw_recurse_keyboard(node);
+
+		ofw_devtree = old_devtree; /* nest? */
+	}
+}
+
+void
+ofw_find_keyboard()
+{
+	int stdin_node;
+	char iname[32];
+	int len;
+	int node;
+
+	stdin_node = OF_instance_to_package(OF_stdin);
+	len = OF_getprop(stdin_node, "name", iname, 20);
+	iname[len] = 0;
+	printf("console in [%s] ", iname);
+
+	/* GRR, apple removed the interface once used for keyboard
+	 * detection walk the OFW tree to find keyboards and what type.
+	 */
+
+	node = OF_peer(0);
+	ofw_recurse_keyboard(node);
+
+	if (ofw_have_kbd == 0) {
+		printf("no keyboard found, hoping USB will be present\n");
+#if NUKBD > 0
+		ukbd_cnattach();
+#endif
+	}
+
+	if (ofw_have_kbd == (OFW_HAVE_USBKBD|OFW_HAVE_ADBKBD)) {
+#if NUKBD > 0
+		printf("USB and ADB found, using USB\n");
+		ukbd_cnattach();
+#else 		
+		ofw_have_kbd = OFW_HAVE_ADBKBD; /* ??? */
+#endif
+	}
+	if (ofw_have_kbd == OFW_HAVE_USBKBD) {
+#if NUKBD > 0
+		printf("USB found\n");
+		ukbd_cnattach();
+#endif
+	} else if (ofw_have_kbd == OFW_HAVE_ADBKBD) {
+#if NAKBD >0
+		printf("ADB found\n");
+		akbd_cnattach();
+#endif 
+	}
+}
 
 void
 of_display_console()
 {
 #if NVGAFB_PCI > 0
 	char name[32];
-	char iname[32];
 	int len;
-	int stdout_node, stdin_node;
+	int stdout_node;
 	int err;
 	u_int32_t memtag, iotag;
 	struct ppc_pci_chipset pa;
@@ -420,41 +519,7 @@ of_display_console()
 		OF_interpret("frame-buffer-adr", 1, &cons_addr);
 	}
 
-	stdin_node = OF_instance_to_package(OF_stdin);
-	len = OF_getprop(stdin_node, "name", iname, 20);
-	iname[len] = 0;
-	printf("console in [%s] ", iname);
-	/* what to do about serial console? */
-	if (strcmp ("keyboard", iname) == 0) {
-		struct usb_kbd_ihandles *ukbds;
-#if NAKBD > 0
-		int akbd;
-#endif
-		/* if there is a usb keyboard, we want it, do not 
-		 * dereference the pointer that is returned
-		 */
-		if (OF_call_method("`usb-kbd-ihandles", OF_stdin, 0, 1, &ukbds)
-			!= -1 && ukbds != NULL)
-		{
-			printf("USB");
-			ukbd_cnattach();
-			goto kbd_found;
-		}
-#if NAKBD > 0
-		if (OF_call_method("`adb-kbd-ihandle", OF_stdin, 0, 1, &akbd)
-			!= -1 &&
-		   akbd != 0 &&
-		   OF_instance_to_package(akbd) != -1)
-		{
-			printf("ADB");
-			akbd_cnattach();
-			goto kbd_found;
-		}
-#endif
-		panic("no console keyboard");
-kbd_found:
-	}
-	printf("\n");
+	ofw_find_keyboard();
 
 	len = OF_getprop(stdout_node, "assigned-addresses", addr, sizeof(addr));
 	if (len == -1) {
