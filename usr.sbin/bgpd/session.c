@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.22 2003/12/20 21:31:37 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.23 2003/12/20 21:43:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1322,6 +1322,5 @@ void
 session_up(struct peer *peer)
 {
 	s2r_queued_writes += imsg_compose(s2r_sock, IMSG_SESSION_UP,
-	    peer->conf.id, &peer->remote_bgpid,
-	    sizeof(peer->remote_bgpid));
+	    peer->conf.id, &peer->remote_bgpid, sizeof(peer->remote_bgpid));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.14 2003/12/20 21:19:40 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.15 2003/12/20 21:43:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -252,8 +252,8 @@ rde_dispatch_imsg(int fd, int idx)
 			if (idx != PFD_PIPE_MAIN)
 				fatal("mrt request not from parent", 0);
 			/* ignore end message because a dump is atomic */
-			main_queued_writes += imsg_compose(fd,
-			    IMSG_MRT_END, imsg.hdr.peerid, NULL, 0);
+			main_queued_writes += imsg_compose(fd, IMSG_MRT_END,
+			    imsg.hdr.peerid, NULL, 0);
 			break;
 		default:
 			break;
@@ -504,8 +504,8 @@ rde_update_err(u_int32_t peerid, enum suberr_update errorcode)
 	u_int8_t	errcode;
 
 	errcode = errorcode;
-	se_queued_writes += imsg_compose(se_sock, IMSG_UPDATE_ERR,
-	    peerid, &errcode, sizeof(errcode));
+	se_queued_writes += imsg_compose(se_sock, IMSG_UPDATE_ERR, peerid,
+	    &errcode, sizeof(errcode));
 }
 
 

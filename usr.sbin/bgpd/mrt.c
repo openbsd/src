@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.4 2003/12/20 21:14:55 henning Exp $ */
+/*	$OpenBSD: mrt.c,v 1.5 2003/12/20 21:43:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <cjeker@diehard.n-r-g.com>
@@ -307,13 +307,13 @@ mrt_usr1(struct mrt_config *conf, int rfd, int *rwait
 				break;
 			case MRT_STATE_DONE:
 				m->state = MRT_STATE_OPEN;
-				*rwait += imsg_compose(rfd,
-				    IMSG_MRT_REQ, m->id, NULL, 0);
+				*rwait += imsg_compose(rfd, IMSG_MRT_REQ,
+				    m->id, NULL, 0);
 				break;
 			default:
 				m->state = MRT_STATE_REOPEN;
-				*rwait += imsg_compose(rfd,
-				    IMSG_MRT_END, m->id, NULL, 0);
+				*rwait += imsg_compose(rfd, IMSG_MRT_END,
+				    m->id, NULL, 0);
 				break;
 			}
 
