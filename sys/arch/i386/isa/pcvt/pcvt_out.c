@@ -1293,7 +1293,7 @@ vt_coldinit(void)
 
 			if (filllen > 0)
 				fillw(user_attr | ' ',
-				      (caddr_t)svsp->Crtat+svsp->cur_offset,
+				      (caddr_t)(svsp->Crtat+svsp->cur_offset),
 				      filllen);
 		}
 		svsp->smode.mode = VT_AUTO;
@@ -1423,7 +1423,7 @@ vt_coldmalloc(void)
 		{
 			vs[nscr].Crtat = vs[nscr].Memory;
 			fillw(user_attr | ' ',
-				(caddr_t)vs[nscr].Crtat,
+				(caddr_t)(vs[nscr].Crtat),
 				vs[nscr].maxcol * vs[nscr].screen_rowsize);
 			totalscreens++;
 		}
@@ -1643,7 +1643,7 @@ set_emulation_mode(struct video_state *svsp, int mode)
 	else if(mode == M_PUREVT)	/* hp/vt-mode -> vt-pure */
 	{
 		fillw(user_attr | ' ',
-		      (caddr_t)svsp->Crtat + svsp->screen_rows * svsp->maxcol,
+		      (caddr_t)(svsp->Crtat + svsp->screen_rows * svsp->maxcol),
 		      (svsp->screen_rowsize - svsp->screen_rows)
 		      * svsp->maxcol);
 
@@ -1919,7 +1919,7 @@ vt_col(struct video_state *svsp, int cols)
 		swritefkl(0,(u_char *)"132     COLUMNS*",svsp);
 
 	fillw(user_attr | ' ',
-		(caddr_t)svsp->Crtat,
+		(caddr_t)(svsp->Crtat),
 		svsp->maxcol * svsp->screen_rowsize);
 
 	clr_parms(svsp);		/* escape parameter init */
@@ -1966,7 +1966,7 @@ update_hp(struct video_state *svsp)
 		return;
 
 	fillw (user_attr | ' ',
-	       (caddr_t)svsp->Crtat + svsp->screen_rows * svsp->maxcol,
+	       (caddr_t)(svsp->Crtat + svsp->screen_rows * svsp->maxcol),
 	       (svsp->screen_rowsize - svsp->screen_rows) * svsp->maxcol);
 
 	if (!svsp->labels_on)
