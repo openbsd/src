@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sbus.4,v 1.4 2002/02/19 07:04:27 jason Exp $
+.\"	$OpenBSD: sbus.4,v 1.5 2002/02/19 07:07:21 deraadt Exp $
 .\"	$NetBSD: sbus.4,v 1.5 2002/01/21 17:54:10 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,11 +68,11 @@ includes machine-independent
 .Nm
 drivers, sorted by device type and driver name:
 .Ss Audio interfaces
-.Bl -tag -width xxxxxxxx -offset indent
-.It audioamd
+.Bl -tag -width 10n -offset ind
+.It Xr audioamd 4
 .Tn AMD
 7990 codecs
-.It audiocs
+.It Xr audiocs 4
 .Tn "Crystal Semiconductor"
 CS4231A codecs
 .El
