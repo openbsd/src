@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.10 1997/03/12 19:16:55 pefo Exp $	*/
+/*	$OpenBSD: bus.h,v 1.11 1997/03/26 14:44:38 pefo Exp $	*/
 
 /*
  * Copyright (c) 1997 Per Fogelstrom.  All rights reserved.
@@ -53,12 +53,11 @@ typedef u_int32_t bus_space_handle_t;
 typedef struct arc_bus_space *bus_space_tag_t;
 
 struct arc_bus_space {
-	u_int32_t	isa_io_base;
-	u_int32_t	isa_mem_base;
-	u_int8_t	isa_io_sparse1;	/* Sparse addressing shift count */
-	u_int8_t	isa_io_sparse2;	/* Sparse addressing shift count */
-	u_int8_t	isa_io_sparse4;	/* Sparse addressing shift count */
-	u_int8_t	isa_io_sparse8;	/* Sparse addressing shift count */
+	u_int32_t	bus_base;
+	u_int8_t	bus_sparse1;	/* Sparse addressing shift count */
+	u_int8_t	bus_sparse2;	/* Sparse addressing shift count */
+	u_int8_t	bus_sparse4;	/* Sparse addressing shift count */
+	u_int8_t	bus_sparse8;	/* Sparse addressing shift count */
 };
 
 extern struct arc_bus_space arc_bus;
@@ -67,7 +66,7 @@ extern struct arc_bus_space arc_bus;
  * Access methods for bus resources
  */
 #define bus_space_map(t, addr, size, cacheable, bshp)			      \
-    ((*(bshp) = (t)->isa_io_base + (addr)), 0)
+    ((*(bshp) = (t)->bus_base + (addr)), 0)
 
 #define bus_space_unmap(t, bsh, size)
 
@@ -76,7 +75,7 @@ static __inline CAT3(u_int,m,_t)					      \
 CAT(bus_space_read_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,	      \
      bus_addr_t ba)							      \
 {									      \
-	return *(volatile CAT3(u_int,m,_t) *)(bsh + ((ba) << CAT(bst->isa_io_sparse,n)));		      \
+	return *(volatile CAT3(u_int,m,_t) *)(bsh + ((ba) << CAT(bst->bus_sparse,n)));		      \
 }
 
 bus_space_read(1,8)
@@ -104,7 +103,7 @@ static __inline void							      \
 CAT(bus_space_write_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,	      \
      bus_addr_t ba, CAT3(u_int,m,_t) x)					      \
 {									      \
-	*(volatile CAT3(u_int,m,_t) *)(bsh + ((ba) << CAT(bst->isa_io_sparse,n))) = x;      \
+	*(volatile CAT3(u_int,m,_t) *)(bsh + ((ba) << CAT(bst->bus_sparse,n))) = x;      \
 }
 
 bus_space_write(1,8)
