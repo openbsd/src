@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.20 2000/08/08 17:11:27 deraadt Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.21 2000/09/06 02:09:18 rahnds Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -216,9 +216,9 @@ mpcpcibrattach(parent, self, aux)
 		lcp->lc_pc.pc_intr_establish = mpc_intr_establish;
 		lcp->lc_pc.pc_intr_disestablish = mpc_intr_disestablish;
 
-		printf(": MPC106, Revision 0x%x\n", 0);
-#if 0
+		printf(": MPC106, Revision 0x%x.\n", 
 				mpc_cfg_read_1(lcp, MPC106_PCI_REVID));
+#if 0
 		mpc_cfg_write_2(lcp, MPC106_PCI_STAT, 0xff80); /* Reset status */
 #endif
 		bridge = "MPC106";
