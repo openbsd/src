@@ -1,3 +1,4 @@
+/*      $OpenBSD: vm_machdep.c,v 1.9 1997/05/28 23:31:16 niklas Exp $       */
 /*      $NetBSD: vm_machdep.c,v 1.30 1997/01/11 11:23:09 ragge Exp $       */
 
 /*
@@ -439,7 +440,7 @@ reno_zmagic(p, epp)
 	    epp->ep_daddr + execp->a_data, NULLVP, 0,
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return exec_aout_setup_stack(p, epp);
+	return exec_setup_stack(p, epp);
 }
 
 void
