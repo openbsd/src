@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xlreg.h,v 1.5 1998/09/09 22:06:57 jason Exp $	*/
+/*	$OpenBSD: if_xlreg.h,v 1.6 1998/09/29 02:14:29 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$FreeBSD: if_xlreg.h,v 1.4 1998/09/04 16:22:15 wpaul Exp $
+ *	$FreeBSD: if_xlreg.h,v 1.5 1998/09/25 17:34:19 wpaul Exp $
  */
 
 #define XL_EE_READ	0x0080	/* read, 5 bit address */
@@ -166,7 +166,7 @@
 #define XL_STAT_INTREQ		0x0040  /* 6 */
 #define XL_STAT_STATSOFLOW	0x0080  /* 7 */
 #define XL_STAT_DMADONE		0x0100	/* 8 first generation */
-#define XL_STAT_LINKSTAT	0x0100	/* 8 3c509B */
+#define XL_STAT_LINKSTAT	0x0100	/* 8 3c905B */
 #define XL_STAT_DOWN_COMPLETE	0x0200	/* 9 */
 #define XL_STAT_UP_COMPLETE	0x0400	/* 10 */
 #define XL_STAT_DMABUSY		0x0800	/* 11 first generation */
@@ -439,7 +439,7 @@ struct xl_list_onefrag {
 
 #define XL_MAXFRAGS		63
 #define XL_RX_LIST_CNT		16
-#define XL_TX_LIST_CNT		10
+#define XL_TX_LIST_CNT		16
 #define XL_MIN_FRAMELEN		60
 
 struct xl_list_data {
