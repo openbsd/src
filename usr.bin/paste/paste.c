@@ -1,4 +1,4 @@
-/*	$OpenBSD: paste.c,v 1.7 1999/08/24 18:49:45 aaron Exp $	*/
+/*	$OpenBSD: paste.c,v 1.8 2000/06/07 14:20:15 aaron Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -44,7 +44,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)paste.c	5.7 (Berkeley) 10/30/90";*/
-static char rcsid[] = "$OpenBSD: paste.c,v 1.7 1999/08/24 18:49:45 aaron Exp $";
+static char rcsid[] = "$OpenBSD: paste.c,v 1.8 2000/06/07 14:20:15 aaron Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -143,8 +143,8 @@ parallel(argv)
 	}
 
 	for (opencnt = cnt; opencnt;) {
-		lbuf = NULL;
 		for (output = 0, lp = head; lp; lp = lp->next) {
+			lbuf = NULL;
 			if (!lp->fp) {
 				if (output && lp->cnt &&
 				    (ch = delim[(lp->cnt - 1) % delimcnt]))
@@ -163,7 +163,8 @@ parallel(argv)
 			if (*(buf + len - 1) == '\n')
 				*(buf + len - 1) = '\0';
 			else {
-				lbuf = (char *)malloc(len + 1);
+				if ((lbuf = malloc(len + 1)) == NULL)
+					err(1, NULL);
 				memcpy(lbuf, buf, len);
 				lbuf[len] = '\0';
 				buf = lbuf;
@@ -180,10 +181,8 @@ parallel(argv)
 			} else if ((ch = delim[(lp->cnt - 1) % delimcnt]))
 				putchar(ch);
 			(void)printf("%s", buf);
-			if (lbuf != NULL) {
+			if (lbuf)
 				free(lbuf);
-				lbuf = NULL;
-			}
 		}
 		if (output)
 			putchar('\n');
@@ -200,8 +199,8 @@ sequential(argv)
 	char *buf, *lbuf;
 	size_t len;
 
-	lbuf = NULL;
 	for (; (p = *argv); ++argv) {
+		lbuf = NULL;
 		if (p[0] == '-' && !p[1])
 			fp = stdin;
 		else if (!(fp = fopen(p, "r"))) {
@@ -214,7 +213,8 @@ sequential(argv)
 				if (*(buf + len - 1) == '\n')
 					*(buf + len - 1) = '\0';
 				else {
-					lbuf = (char *)malloc(len + 1);
+					if ((lbuf = malloc(len + 1)) == NULL)
+						err(1, NULL);
 					memcpy(lbuf, buf, len);
 					lbuf[len] = '\0';
 					buf = lbuf;
@@ -233,10 +233,8 @@ sequential(argv)
 		}
 		if (fp != stdin)
 			(void)fclose(fp);
-		if (lbuf != NULL) {
+		if (lbuf)
 			free(lbuf);
-			lbuf = NULL;
-		}
 	}
 }
 
