@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.49 2004/08/09 12:01:26 otto Exp $	*/
+/*	$OpenBSD: route.c,v 1.50 2004/09/16 22:31:30 henning Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -159,9 +159,6 @@ struct rt_label {
 };
 
 TAILQ_HEAD(rt_labels, rt_label)	rt_labels = TAILQ_HEAD_INITIALIZER(rt_labels);
-
-u_int16_t	 rtlabel_name2id(char *);
-void		 rtlabel_unref(u_int16_t);
 
 #ifdef IPSEC
 

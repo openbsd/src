@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.25 2004/09/16 00:21:11 henning Exp $	*/
+/*	$OpenBSD: route.h,v 1.26 2004/09/16 22:31:30 henning Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -295,6 +295,8 @@ struct sockaddr_rtlabel {
 };
 
 const char	*rtlabel_id2name(u_int16_t);
+u_int16_t	 rtlabel_name2id(char *);
+void		 rtlabel_unref(u_int16_t);
 
 #ifdef _KERNEL
 #define	RTFREE(rt) do { \

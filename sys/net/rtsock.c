@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.42 2004/08/03 11:22:15 henning Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.43 2004/09/16 22:31:29 henning Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -402,6 +402,13 @@ report:
 				rt->rt_ifa->ifa_rtrequest(RTM_ADD, rt, &info);
 			if (genmask)
 				rt->rt_genmask = genmask;
+			if (info.rti_info[RTAX_LABEL] != NULL) {
+				char *rtlabel = ((struct sockaddr_rtlabel *)
+				    info.rti_info[RTAX_LABEL])->sr_label;
+				rtlabel_unref(rt->rt_labelid);
+				rt->rt_labelid =
+				    rtlabel_name2id(rtlabel);
+			}
 			/* fallthrough */
 		case RTM_LOCK:
 			rt->rt_rmx.rmx_locks &= ~(rtm->rtm_inits);
