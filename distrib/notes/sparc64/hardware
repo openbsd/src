@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.25 2002/04/22 14:02:53 jason Exp $
+dnl	$OpenBSD: hardware,v 1.26 2002/05/04 05:00:44 brad Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- SBUS based workstations:
 		Ultra 1
@@ -19,6 +19,12 @@ dnl		Ultra 450 / Enterprise 450
 dnl		Enterprise 3000
 dnl		SUNBlade 1000
 dnl		SUNBlade 2000
+dnl		Netra 20
+dnl		Netra T1 100/105
+dnl		Netra T1 AC200/DC200
+dnl		Netra T 1120/1125
+dnl		Netra 20
+dnl		Netra T 1400/1405
 		SPARCengineUltra AX
 		SPARCengineUltra AXi
 	- CompactPCI boards:
