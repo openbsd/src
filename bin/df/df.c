@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.5 1996/12/07 09:09:06 deraadt Exp $	*/
+/*	$OpenBSD: df.c,v 1.6 1996/12/14 12:17:52 mickey Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: df.c,v 1.5 1996/12/07 09:09:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: df.c,v 1.6 1996/12/14 12:17:52 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -241,14 +241,14 @@ maketypelist(fslist)
 		which = IN_LIST;
 
 	/* Count the number of types. */
-	for (i = 1, nextcp = fslist; nextcp = strchr(nextcp, ','); i++)
+	for (i = 1, nextcp = fslist; (nextcp = strchr(nextcp, ',')) != NULL; i++)
 		++nextcp;
 
 	/* Build an array of that many types. */
 	if ((av = typelist = malloc((i + 1) * sizeof(char *))) == NULL)
 		err(1, NULL);
 	av[0] = fslist;
-	for (i = 1, nextcp = fslist; nextcp = strchr(nextcp, ','); i++) {
+	for (i = 1, nextcp = fslist; (nextcp = strchr(nextcp, ',')) != NULL; i++) {
 		*nextcp = '\0';
 		av[i] = ++nextcp;
 	}

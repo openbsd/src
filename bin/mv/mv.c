@@ -1,4 +1,4 @@
-/*	$OpenBSD: mv.c,v 1.4 1996/08/02 12:41:00 deraadt Exp $	*/
+/*	$OpenBSD: mv.c,v 1.5 1996/12/14 12:18:05 mickey Exp $	*/
 /*	$NetBSD: mv.c,v 1.9 1995/03/21 09:06:52 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: mv.c,v 1.4 1996/08/02 12:41:00 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mv.c,v 1.5 1996/12/14 12:18:05 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,6 +63,8 @@ static char rcsid[] = "$OpenBSD: mv.c,v 1.4 1996/08/02 12:41:00 deraadt Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <pwd.h>
+#include <grp.h>
 
 #include "pathnames.h"
 

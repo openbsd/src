@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.3 1996/10/20 00:55:08 millert Exp $	*/
+/*	$OpenBSD: var.c,v 1.4 1996/12/14 12:18:25 mickey Exp $	*/
 /*	$NetBSD: var.c,v 1.13 1995/05/11 21:30:39 christos Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: var.c,v 1.3 1996/10/20 00:55:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: var.c,v 1.4 1996/12/14 12:18:25 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -201,11 +201,12 @@ setvarsafe(name, val, flags)
 {
 	struct jmploc jmploc;
 	struct jmploc *volatile savehandler = handler;
-	int err = 0;
+	int err;
 
 	if (setjmp(jmploc.loc))
 		err = 1;
 	else {
+		err = 0;
 		handler = &jmploc;
 		setvar(name, val, flags);
 	}

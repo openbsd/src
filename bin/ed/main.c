@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.4 1996/10/12 19:38:38 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.5 1996/12/14 12:17:56 mickey Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -39,7 +39,7 @@ char *copyright =
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.4 1996/10/12 19:38:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.5 1996/12/14 12:17:56 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -160,7 +160,7 @@ top:
 #ifdef _POSIX_SOURCE
 	if (status = sigsetjmp(env, 1))
 #else
-	if (status = setjmp(env))
+	if ((status = setjmp(env)) != 0)
 #endif
 	{
 		fputs("\n?\n", stderr);
@@ -217,9 +217,9 @@ top:
 		isglobal = 0;
 		if ((status = extract_addr_range()) >= 0 &&
 		    (status = exec_command()) >= 0)
-			if (!status || status &&
+			if (!status || (status &&
 			    (status = display_lines(current_addr, current_addr,
-			        status)) >= 0)
+			        status)) >= 0))
 				continue;
 		switch (status) {
 		case EOF:
@@ -548,7 +548,7 @@ exec_command()
 			return ERR;
 		else if (build_active_list(c == 'g' || c == 'G') < 0)
 			return ERR;
-		else if (n = (c == 'G' || c == 'V'))
+		else if ((n = (c == 'G' || c == 'V')))
 			GET_COMMAND_SUFFIX();
 		isglobal++;
 		if (exec_global(n, gflag) < 0)
@@ -844,7 +844,7 @@ exec_command()
 		break;
 	case '=':
 		GET_COMMAND_SUFFIX();
-		printf("%d\n", addr_cnt ? second_addr : addr_last);
+		printf("%ld\n", addr_cnt ? second_addr : addr_last);
 		break;
 	case '!':
 		if (addr_cnt > 0) {
@@ -906,7 +906,7 @@ get_matching_node_addr(pat, dir)
 
 	if (!pat) return ERR;
 	do {
-		if (n = dir ? INC_MOD(n, addr_last) : DEC_MOD(n, addr_last)) {
+		if ((n = dir ? INC_MOD(n, addr_last) : DEC_MOD(n, addr_last))) {
 			lp = get_addressed_line_node(n);
 			if ((s = get_sbuf_line(lp)) == NULL)
 				return ERR;
@@ -1343,7 +1343,7 @@ strip_escapes(s)
 
 	REALLOC(file, filesz, MAXPATHLEN + 1, NULL);
 	/* assert: no trailing escape */
-	while (file[i++] = (*s == '\\') ? *++s : *s)
+	while ((file[i++] = (*s == '\\') ? *++s : *s) != '\0')
 		s++;
 	return file;
 }

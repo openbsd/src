@@ -1,4 +1,4 @@
-/*	$OpenBSD: sub.c,v 1.4 1996/10/12 19:38:42 millert Exp $	*/
+/*	$OpenBSD: sub.c,v 1.5 1996/12/14 12:17:58 mickey Exp $	*/
 /*	$NetBSD: sub.c,v 1.4 1995/03/21 09:04:50 cgd Exp $	*/
 
 /* sub.c: This file contains the substitution routines for the ed 
@@ -33,7 +33,7 @@
 #if 0
 static char *rcsid = "@(#)sub.c,v 1.1 1994/02/01 00:34:44 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: sub.c,v 1.4 1996/10/12 19:38:42 millert Exp $";
+static char rcsid[] = "$OpenBSD: sub.c,v 1.5 1996/12/14 12:17:58 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -103,7 +103,7 @@ extract_subst_template()
 			;
 		else if (!isglobal) {
 			while ((n = get_tty_line()) == 0 ||
-			    n > 0 && ibuf[n - 1] != '\n')
+			    (n > 0 && ibuf[n - 1] != '\n'))
 				clearerr(stdin);
 			if (n < 0)
 				return NULL;
@@ -219,7 +219,7 @@ substitute_matching_text(pat, lp, gflag, kth)
 				off += i;
 			}
 			txt += rm[0].rm_eo;
-		} while (*txt && (!changed || (gflag & GSG) && rm[0].rm_eo) &&
+		} while (*txt && (!changed || ((gflag & GSG) && rm[0].rm_eo)) &&
 		    !regexec(pat, txt, SE_MAX, rm, REG_NOTBOL));
 		i = eot - txt;
 		REALLOC(rbuf, rbufsz, off + i + 2, ERR);

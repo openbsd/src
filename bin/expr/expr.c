@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.4 1996/09/15 22:27:38 millert Exp $	*/
+/*	$OpenBSD: expr.c,v 1.5 1996/12/14 12:17:59 mickey Exp $	*/
 /*	$NetBSD: expr.c,v 1.3.6.1 1996/06/04 20:41:47 cgd Exp $	*/
 
 /*
@@ -213,7 +213,7 @@ nexttoken()
 	return;
 }
 
-void
+__dead void
 error()
 {
 	errx(2, "syntax error");
@@ -370,7 +370,7 @@ eval2()
 {
 	struct val     *l, *r;
 	enum token	op;
-	int             v, li, ri;
+	int             v = 0, li, ri;
 
 	l = eval3();
 	while ((op = token) == EQ || op == NE || op == LT || op == GT || op == LE || op == GE) {
@@ -397,6 +397,8 @@ eval2()
 			case NE:
 				v = (li != ri);
 				break;
+			default:
+				break;
 			}
 		} else {
 			to_string(l);
@@ -420,6 +422,8 @@ eval2()
 				break;
 			case NE:
 				v = (strcoll(l->u.s, r->u.s) != 0);
+				break;
+			default:
 				break;
 			}
 		} 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conv.c,v 1.3 1996/06/23 14:19:46 deraadt Exp $	*/
+/*	$OpenBSD: conv.c,v 1.4 1996/12/14 12:17:48 mickey Exp $	*/
 /*	$NetBSD: conv.c,v 1.6 1996/02/20 19:29:02 jtc Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)conv.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: conv.c,v 1.3 1996/06/23 14:19:46 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: conv.c,v 1.4 1996/12/14 12:17:48 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ def()
 	u_char *inp;
 	const u_char *t;
 
-	if (t = ctab)
+	if ((t = ctab) != NULL)
 		for (inp = in.dbp - (cnt = in.dbrcnt); cnt--; ++inp)
 			*inp = t[*inp];
 
@@ -118,7 +118,7 @@ void
 block()
 {
 	static int intrunc;
-	int ch, cnt, maxlen;
+	int ch = -1, cnt, maxlen;
 	u_char *inp, *outp;
 	const u_char *t;
 
@@ -148,7 +148,7 @@ block()
 	 */
 	for (inp = in.dbp - in.dbcnt, outp = out.dbp; in.dbcnt;) {
 		maxlen = MIN(cbsz, in.dbcnt);
-		if (t = ctab)
+		if ((t = ctab) != NULL)
 			for (cnt = 0;
 			    cnt < maxlen && (ch = *inp++) != '\n'; ++cnt)
 				*outp++ = t[ch];
@@ -233,7 +233,7 @@ unblock()
 	const u_char *t;
 
 	/* Translation and case conversion. */
-	if (t = ctab)
+	if ((t = ctab) != NULL)
 		for (cnt = in.dbrcnt, inp = in.dbp; cnt--;)
 			*--inp = t[*inp];
 	/*

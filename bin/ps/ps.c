@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.5 1996/08/06 19:33:47 deraadt Exp $	*/
+/*	$OpenBSD: ps.c,v 1.6 1996/12/14 12:18:10 mickey Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: ps.c,v 1.5 1996/08/06 19:33:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ps.c,v 1.6 1996/12/14 12:18:10 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -466,8 +466,8 @@ kludge_oldps_options(s)
 	 * if there's a trailing number, and not a preceding 'p' (pid) or
 	 * 't' (tty) flag, then assume it's a pid and insert a 'p' flag.
 	 */
-	if (isdigit(*cp) && (cp == s || cp[-1] != 't' && cp[-1] != 'p' &&
-	    (cp - 1 == s || cp[-2] != 't')))
+	if (isdigit(*cp) && (cp == s || (cp[-1] != 't' && cp[-1] != 'p' &&
+	    (cp - 1 == s || cp[-2] != 't'))))
 		*ns++ = 'p';
 	(void)strcpy(ns, cp);		/* and append the number */
 

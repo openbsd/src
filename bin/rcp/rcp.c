@@ -1,5 +1,5 @@
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
-/*	$OpenBSD: rcp.c,v 1.6 1996/08/02 12:41:04 deraadt Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.7 1996/12/14 12:18:13 mickey Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -101,6 +101,10 @@ char cmd[CMDNEEDS];		/* must hold "rcp -r -p -d\0" */
 #ifdef KERBEROS
 int	 kerberos __P((char **, char *, char *, char *));
 void	 oldw __P((const char *, ...));
+/* XXX from ../../usr.bin/rlogin/krcmd.c */
+int krcmd __P((char **, u_short, char *, char *, int *, char *));
+int krcmd_mutual __P((char **, u_short, char *, char *, int *, 
+		       char *, CREDENTIALS *, Key_schedule));
 #endif
 int	 response __P((void));
 void	 rsource __P((char *, struct stat *));
@@ -216,7 +220,7 @@ main(argc, argv)
 
 	(void)signal(SIGPIPE, lostconn);
 
-	if (targ = colon(argv[argc - 1]))	/* Dest is remote host. */
+	if ((targ = colon(argv[argc - 1])))	/* Dest is remote host. */
 		toremote(targ, argc, argv);
 	else {
 		tolocal(argc, argv);		/* Dest is local host. */
@@ -238,7 +242,7 @@ toremote(targ, argc, argv)
 	if (*targ == 0)
 		targ = ".";
 
-	if (thost = strchr(argv[argc - 1], '@')) {
+	if ((thost = strchr(argv[argc - 1], '@'))) {
 		/* user@host */
 		*thost++ = 0;
 		tuser = argv[argc - 1];
@@ -499,7 +503,7 @@ rsource(name, statp)
 		closedir(dirp);
 		return;
 	}
-	while (dp = readdir(dirp)) {
+	while ((dp = readdir(dirp)) != NULL) {
 		if (dp->d_ino == 0)
 			continue;
 		if (!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
@@ -529,7 +533,7 @@ sink(argc, argv)
 	BUF *bp;
 	off_t i, j;
 	int amt, count, exists, first, mask, mode, ofd, omode;
-	int setimes, size, targisdir, wrerrno;
+	int setimes, size, targisdir, wrerrno = 0;
 	char ch, *cp, *np, *targ, *why, *vect[1], buf[BUFSIZ];
 
 #define	atime	tv[0]

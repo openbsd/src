@@ -1,4 +1,4 @@
-/*	$OpenBSD: chio.c,v 1.4 1996/11/02 03:47:10 deraadt Exp $	*/
+/*	$OpenBSD: chio.c,v 1.5 1996/12/14 12:17:35 mickey Exp $	*/
 /*	$NetBSD: chio.c,v 1.1.1.1 1996/04/03 00:34:38 thorpej Exp $	*/
 
 /*
@@ -104,7 +104,6 @@ main(argc, argv)
 	char **argv;
 {
 	int ch, i;
-	char *cp;
 
 	while ((ch = getopt(argc, argv, "f:")) != -1) {
 		switch (ch) {
@@ -478,7 +477,12 @@ do_status(cname, argc, argv)
 	struct changer_params data;
 	u_int8_t *statusp;
 	int i, count, chet, schet, echet;
-	char *cmdname, *description;
+	char *description;
+
+#ifdef lint
+	count = 0;
+	description = NULL;
+#endif
 
 	/*
 	 * On a status command, we expect the following:

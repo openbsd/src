@@ -1,4 +1,4 @@
-/*	$OpenBSD: dd.c,v 1.3 1996/06/23 14:19:47 deraadt Exp $	*/
+/*	$OpenBSD: dd.c,v 1.4 1996/12/14 12:17:49 mickey Exp $	*/
 /*	$NetBSD: dd.c,v 1.6 1996/02/20 19:29:06 jtc Exp $	*/
 
 /*-
@@ -48,7 +48,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: dd.c,v 1.3 1996/06/23 14:19:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: dd.c,v 1.4 1996/12/14 12:17:49 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -152,12 +152,12 @@ setup()
 	 */
 	if (!(ddflags & (C_BLOCK|C_UNBLOCK))) {
 		if ((in.db = malloc(out.dbsz + in.dbsz - 1)) == NULL)
-			err(1, NULL);
+			err(1, "input buffer");
 		out.db = in.db;
 	} else if ((in.db =
 	    malloc((u_int)(MAX(in.dbsz, cbsz) + cbsz))) == NULL ||
 	    (out.db = malloc((u_int)(out.dbsz + cbsz))) == NULL)
-		err(1, NULL);
+		err(1, "output buffer");
 	in.dbp = in.db;
 	out.dbp = out.db;
 
@@ -171,7 +171,7 @@ setup()
 	 * Truncate the output file; ignore errors because it fails on some
 	 * kinds of output files, tapes, for example.
 	 */
-	if (ddflags & (C_OF | C_SEEK | C_NOTRUNC) == (C_OF | C_SEEK))
+	if ((ddflags & (C_OF | C_SEEK | C_NOTRUNC)) == (C_OF | C_SEEK))
 		(void)ftruncate(out.fd, (off_t)out.offset * out.dbsz);
 
 	/*

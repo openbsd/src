@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.2 1996/06/23 14:20:50 deraadt Exp $	*/
+/*	$OpenBSD: print.c,v 1.3 1996/12/14 12:18:09 mickey Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.2 1996/06/23 14:20:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.3 1996/12/14 12:18:09 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,6 +72,7 @@ static char rcsid[] = "$OpenBSD: print.c,v 1.2 1996/06/23 14:20:50 deraadt Exp $
 #include <string.h>
 #include <tzfile.h>
 #include <unistd.h>
+#include <pwd.h>
 
 #include "ps.h"
 
@@ -131,7 +132,7 @@ command(ki, ve)
 		left = -1;
 	if (needenv) {
 		argv = kvm_getenvv(kd, ki->ki_p, termwidth);
-		if (p = argv) {
+		if ((p = argv) != NULL) {
 			while (*p) {
 				fmt_puts(*p, &left);
 				p++;
@@ -142,7 +143,7 @@ command(ki, ve)
 	if (needcomm) {
 		if (!commandonly) {
 			argv = kvm_getargv(kd, ki->ki_p, termwidth);
-			if (p = argv) {
+			if ((p = argv) != NULL) {
 				while (*p) {
 					fmt_puts(*p, &left);
 					p++;
@@ -629,7 +630,7 @@ pagein(k, ve)
 	VAR *v;
 
 	v = ve->var;
-	(void)printf("%*d", v->width, 
+	(void)printf("%*ld", v->width, 
 	    k->ki_u.u_valid ? k->ki_u.u_ru.ru_majflt : 0);
 }
 
@@ -695,7 +696,7 @@ printval(bp, v)
 	if (v->flag & LJUST)
 		*cp++ = '-';
 	*cp++ = '*';
-	while (*cp++ = *fcp++);
+	while ((*cp++ = *fcp++));
 
 	/*
 	 * Note that the "INF127" check is nonsensical for types

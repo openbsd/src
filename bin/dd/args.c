@@ -1,4 +1,4 @@
-/*	$OpenBSD: args.c,v 1.4 1996/06/23 14:19:45 deraadt Exp $	*/
+/*	$OpenBSD: args.c,v 1.5 1996/12/14 12:17:47 mickey Exp $	*/
 /*	$NetBSD: args.c,v 1.7 1996/03/01 01:18:58 jtc Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: args.c,v 1.4 1996/06/23 14:19:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: args.c,v 1.5 1996/12/14 12:17:47 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -105,7 +105,7 @@ jcl(argv)
 
 	in.dbsz = out.dbsz = 512;
 
-	while (oper = *++argv) {
+	while ((oper = *++argv) != NULL) {
 		oper = strdup(oper);
 		if ((arg = strchr(oper, '=')) == NULL)
 			errx(1, "unknown operand %s", oper);

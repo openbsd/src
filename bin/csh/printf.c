@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.4 1996/09/15 22:00:26 millert Exp $	*/
+/*	$OpenBSD: printf.c,v 1.5 1996/12/14 12:17:41 mickey Exp $	*/
 /*	$NetBSD: printf.c,v 1.6 1995/03/21 09:03:15 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  */
 
-#if !defined(BUILTIN) && !defined(SHELL)
+#if !defined(BUILTIN)
 #ifndef lint
 static char copyright[] =
 "@(#) Copyright (c) 1989, 1993\n\
@@ -46,36 +46,18 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)printf.c	8.1 (Berkeley) 7/20/93";
 #else
-static char rcsid[] = "$OpenBSD: printf.c,v 1.4 1996/09/15 22:00:26 millert Exp $";
+static char rcsid[] = "$OpenBSD: printf.c,v 1.5 1996/12/14 12:17:41 mickey Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 
-#include <err.h>
 #include <errno.h>
 #include <limits.h>
-#ifdef SHELL
-#define	EOF	-1
-#else
 #include <stdio.h>
-#endif
 #include <stdlib.h>
 #include <string.h>
-
-/*
- * XXX
- * This *has* to go away.  TK.
- */
-#ifdef SHELL
-#define main printfcmd
-#define warnx(a, b, c) {						\
-	char buf[64];							\
-	(void)snprintf(buf, sizeof(buf), a, b, c);			\
-	error(buf);							\
-}
-#include "../../bin/sh/bltin/bltin.h"
-#endif
+#include <err.h>
 
 #define PF(f, func) { \
 	if (fieldwidth) \
@@ -264,7 +246,7 @@ escape(fmt)
 	register char *store;
 	register int value, c;
 
-	for (store = fmt; c = *fmt; ++fmt, ++store) {
+	for (store = fmt; (c = *fmt) != 0; ++fmt, ++store) {
 		if (c != '\\') {
 			*store = c;
 			continue;

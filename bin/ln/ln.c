@@ -1,4 +1,4 @@
-/*	$OpenBSD: ln.c,v 1.3 1996/08/02 12:40:56 deraadt Exp $	*/
+/*	$OpenBSD: ln.c,v 1.4 1996/12/14 12:18:01 mickey Exp $	*/
 /*	$NetBSD: ln.c,v 1.10 1995/03/21 09:06:10 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ln.c	8.2 (Berkeley) 3/31/94";
 #else
-static char rcsid[] = "$OpenBSD: ln.c,v 1.3 1996/08/02 12:40:56 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ln.c,v 1.4 1996/12/14 12:18:01 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -137,7 +137,7 @@ linkit(target, source, isdir)
 	}
 
 	/* If the source is a directory, append the target's name. */
-	if (isdir || !stat(source, &sb) && S_ISDIR(sb.st_mode)) {
+	if (isdir || (!stat(source, &sb) && S_ISDIR(sb.st_mode))) {
 		if ((p = strrchr(target, '/')) == NULL)
 			p = target;
 		else
@@ -150,7 +150,7 @@ linkit(target, source, isdir)
 	 * If the file exists, and -f was specified, unlink it.
 	 * Attempt the link.
 	 */
-	if (fflag && unlink(source) < 0 && errno != ENOENT ||
+	if ((fflag && unlink(source) < 0 && errno != ENOENT) ||
 	    (*linkf)(target, source)) {
 		warn("%s", source);
 		return (1);

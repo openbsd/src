@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.3 1996/08/02 11:45:01 deraadt Exp $	*/
+/*	$OpenBSD: print.c,v 1.4 1996/12/14 12:18:04 mickey Exp $	*/
 /*	$NetBSD: print.c,v 1.14 1995/09/07 06:43:00 jtc Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.3 1996/08/02 11:45:01 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.4 1996/12/14 12:18:04 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -101,7 +101,7 @@ printlong(dp)
 			continue;
 		sp = p->fts_statp;
 		if (f_inode)
-			(void)printf("%*lu ", dp->s_inode, sp->st_ino);
+			(void)printf("%*u ", dp->s_inode, sp->st_ino);
 		if (f_size)
 			(void)printf("%*qd ",
 			    dp->s_block, howmany(sp->st_blocks, blocksize));
@@ -192,7 +192,7 @@ printcol(dp)
 			    dp->s_block);
 			if ((base += numrows) >= num)
 				break;
-			while ((cnt = (chcnt + TAB & ~(TAB - 1))) <= endcol) {
+			while ((cnt = (chcnt + (TAB & ~(TAB - 1)))) <= endcol) {
 				(void)putchar('\t');
 				chcnt = cnt;
 			}
@@ -217,7 +217,7 @@ printaname(p, inodefield, sizefield)
 	sp = p->fts_statp;
 	chcnt = 0;
 	if (f_inode)
-		chcnt += printf("%*lu ", (int)inodefield, sp->st_ino);
+		chcnt += printf("%*u ", (int)inodefield, sp->st_ino);
 	if (f_size)
 		chcnt += printf("%*qd ",
 		    (int)sizefield, howmany(sp->st_blocks, blocksize));
