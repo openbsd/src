@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.57 2003/01/09 17:43:56 mickey Exp $	*/
+/*	$OpenBSD: apm.c,v 1.58 2003/01/29 00:00:44 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -686,7 +686,7 @@ apm_set_ver(self)
 			/* fix version for some endianess-challenged compaqs */
 			if (!apm_majver) {
 				apm_majver = 1;
-				apm_majver = 0;
+				apm_minver = 0;
 			}
 		}
 	}
