@@ -1,4 +1,4 @@
-/*	$OpenBSD: lofnvar.h,v 1.7 2002/05/09 19:13:09 jason Exp $	*/
+/*	$OpenBSD: lofnvar.h,v 1.8 2002/09/24 18:33:26 jason Exp $	*/
 
 /*
  * Copyright (c) 2001-2002 Jason L. Wright (jason@thought.net)
@@ -81,4 +81,3 @@ struct lofn_q {
 #define	LOFN_MODEXP_PAR_M	0
 #define	LOFN_MODEXP_PAR_E	1
 #define	LOFN_MODEXP_PAR_N	2
-#define	LOFN_MODEXP_PAR_C	3

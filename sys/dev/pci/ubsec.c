@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.114 2002/09/19 17:58:38 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.115 2002/09/24 18:33:26 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -1406,7 +1406,7 @@ ubsec_callback2(sc, q)
 
 		krp = me->me_krp;
 		rlen = (me->me_modbits + 7) / 8;
-		clen = (krp->krp_param[UBS_MODEXP_PAR_C].crp_nbits + 7) / 8;
+		clen = (krp->krp_param[krp->krp_iparams].crp_nbits + 7) / 8;
 
 		bus_dmamap_sync(sc->sc_dmat, me->me_M.dma_map,
 		    0, me->me_M.dma_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
@@ -1421,17 +1421,17 @@ ubsec_callback2(sc, q)
 			krp->krp_status = E2BIG;
 		else {
 			if (sc->sc_flags & UBS_FLAGS_HWNORM) {
-				bzero(krp->krp_param[UBS_MODEXP_PAR_C].crp_p,
-				    (krp->krp_param[UBS_MODEXP_PAR_C].crp_nbits
+				bzero(krp->krp_param[krp->krp_iparams].crp_p,
+				    (krp->krp_param[krp->krp_iparams].crp_nbits
 					+ 7) / 8);
 				bcopy(me->me_C.dma_vaddr,
-				    krp->krp_param[UBS_MODEXP_PAR_C].crp_p,
+				    krp->krp_param[krp->krp_iparams].crp_p,
 				    (me->me_modbits + 7) / 8);
 			} else
 				ubsec_kshift_l(me->me_shiftbits,
 				    me->me_C.dma_vaddr, me->me_normbits,
-				    krp->krp_param[UBS_MODEXP_PAR_C].crp_p,
-				    krp->krp_param[UBS_MODEXP_PAR_C].crp_nbits);
+				    krp->krp_param[krp->krp_iparams].crp_p,
+				    krp->krp_param[krp->krp_iparams].crp_nbits);
 		}
 		crypto_kdone(krp);
 
@@ -1882,7 +1882,7 @@ ubsec_kprocess_modexp_sw(sc, krp)
 	me->me_normbits = normbits;
 
 	/* Sanity check: result bits must be >= true modulus bits. */
-	if (krp->krp_param[UBS_MODEXP_PAR_C].crp_nbits < nbits) {
+	if (krp->krp_param[krp->krp_iparams].crp_nbits < nbits) {
 		err = ERANGE;
 		goto errout;
 	}
@@ -2084,7 +2084,7 @@ ubsec_kprocess_modexp_hw(sc, krp)
 	me->me_normbits = normbits;
 
 	/* Sanity check: result bits must be >= true modulus bits. */
-	if (krp->krp_param[UBS_MODEXP_PAR_C].crp_nbits < nbits) {
+	if (krp->krp_param[krp->krp_iparams].crp_nbits < nbits) {
 		err = ERANGE;
 		goto errout;
 	}

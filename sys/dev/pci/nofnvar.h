@@ -1,4 +1,4 @@
-/*	$OpenBSD: nofnvar.h,v 1.4 2002/05/16 22:52:17 jason Exp $	*/
+/*	$OpenBSD: nofnvar.h,v 1.5 2002/09/24 18:33:26 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -82,4 +82,3 @@ struct nofn_pk_q {
 #define	NOFN_MODEXP_PAR_M	0
 #define	NOFN_MODEXP_PAR_E	1
 #define	NOFN_MODEXP_PAR_N	2
-#define	NOFN_MODEXP_PAR_C	3

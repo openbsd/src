@@ -1,4 +1,4 @@
-/*	$OpenBSD: nofn.c,v 1.5 2002/09/18 04:32:59 jason Exp $	*/
+/*	$OpenBSD: nofn.c,v 1.6 2002/09/24 18:33:26 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -677,15 +677,15 @@ nofn_modexp_finish(sc, q)
 
 	reglen = ((PK_READ_4(sc, NOFN_PK_LENADDR(3)) & NOFN_PK_LENMASK) + 7)
 	    / 8;
-	crplen = (krp->krp_param[NOFN_MODEXP_PAR_C].crp_nbits + 7) / 8;
+	crplen = (krp->krp_param[krp->krp_iparams].crp_nbits + 7) / 8;
 
 	if (crplen <= reglen)
-		bcopy(sc->sc_pk_tmp.b, krp->krp_param[NOFN_MODEXP_PAR_C].crp_p,
+		bcopy(sc->sc_pk_tmp.b, krp->krp_param[krp->krp_iparams].crp_p,
 		    reglen);
 	else {
-		bcopy(sc->sc_pk_tmp.b, krp->krp_param[NOFN_MODEXP_PAR_C].crp_p,
+		bcopy(sc->sc_pk_tmp.b, krp->krp_param[krp->krp_iparams].crp_p,
 		    reglen);
-		bzero(krp->krp_param[NOFN_MODEXP_PAR_C].crp_p + reglen,
+		bzero(krp->krp_param[krp->krp_iparams].crp_p + reglen,
 		    crplen - reglen);
 	}
 	bzero(&sc->sc_pk_tmp, sizeof(sc->sc_pk_tmp));

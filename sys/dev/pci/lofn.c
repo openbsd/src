@@ -1,4 +1,4 @@
-/*	$OpenBSD: lofn.c,v 1.20 2002/09/18 04:32:59 jason Exp $	*/
+/*	$OpenBSD: lofn.c,v 1.21 2002/09/24 18:33:26 jason Exp $	*/
 
 /*
  * Copyright (c) 2001-2002 Jason L. Wright (jason@thought.net)
@@ -484,15 +484,15 @@ lofn_modexp_finish(sc, q)
 
 	reglen = ((READ_REG(sc, LOFN_LENADDR(LOFN_WIN_2, 3)) & LOFN_LENMASK) +
 	    7) / 8;
-	crplen = (krp->krp_param[LOFN_MODEXP_PAR_C].crp_nbits + 7) / 8;
+	crplen = (krp->krp_param[krp->krp_iparams].crp_nbits + 7) / 8;
 
 	if (crplen <= reglen)
-		bcopy(sc->sc_tmp.b, krp->krp_param[LOFN_MODEXP_PAR_C].crp_p,
+		bcopy(sc->sc_tmp.b, krp->krp_param[krp->krp_iparams].crp_p,
 		    reglen);
 	else {
-		bcopy(sc->sc_tmp.b, krp->krp_param[LOFN_MODEXP_PAR_C].crp_p,
+		bcopy(sc->sc_tmp.b, krp->krp_param[krp->krp_iparams].crp_p,
 		    reglen);
-		bzero(krp->krp_param[LOFN_MODEXP_PAR_C].crp_p + reglen,
+		bzero(krp->krp_param[krp->krp_iparams].crp_p + reglen,
 		    crplen - reglen);
 	}
 	bzero(&sc->sc_tmp, sizeof(sc->sc_tmp));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecvar.h,v 1.34 2002/07/03 00:24:29 jason Exp $	*/
+/*	$OpenBSD: ubsecvar.h,v 1.35 2002/09/24 18:33:26 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -78,7 +78,6 @@ struct ubsec_q2_rng {
 #define	UBS_MODEXP_PAR_M	0
 #define	UBS_MODEXP_PAR_E	1
 #define	UBS_MODEXP_PAR_N	2
-#define	UBS_MODEXP_PAR_C	3
 struct ubsec_q2_modexp {
 	struct ubsec_q2			me_q;
 	struct cryptkop *		me_krp;
