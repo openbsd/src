@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.ref,v 1.7 2001/01/29 01:58:36 niklas Exp $
+.\"	$OpenBSD: vi.ref,v 1.8 2004/01/12 18:12:30 millert Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -13,6 +13,10 @@
 .\"     @(#)vi.ref	8.88 (Berkeley) 10/19/96
 .\"
 .\"
+.if n \{\
+.po 5n
+.ll 70n
+.\}
 .so ref.so
 .tp
 .(l C
