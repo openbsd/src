@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.66 2003/12/18 23:46:20 tedu Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.67 2003/12/23 20:02:27 tedu Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -547,6 +547,9 @@ int vfs_sysctl(int *, u_int, void *, size_t *, void *, size_t,
 		    struct proc *);
 int sysctl_sysvipc(int *, u_int, void *, size_t *);
 int sysctl_wdog(int *, u_int, void *, size_t *, void *, size_t);
+
+extern int (*cpu_cpuspeed)(void *, size_t *, void *, size_t);
+extern int (*cpu_setperf)(void *, size_t *, void *, size_t);
 
 void sysctl_init(void);
 
