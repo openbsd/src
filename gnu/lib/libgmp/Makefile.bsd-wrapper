@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.8 1998/10/18 20:02:27 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.9 1999/03/04 03:50:54 niklas Exp $
 
 SUBDIR+=	mpn mpz mpf mpq
 
@@ -10,7 +10,7 @@ GNUCFLAGS= 	CFLAGS="${CFLAGS} ${COPTS}"
 
 all:	config.status
 	${MAKE} ${GNUCFLAGS} BISON=yacc CC=${CC} LDFLAGS=${LDSTATIC} \
-	build_infodir=. all
+	build_infodir=. all info
 
 .FORCE:	.IGNORE
 
