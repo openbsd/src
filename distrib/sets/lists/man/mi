@@ -361,7 +361,6 @@
 ./usr/share/man/cat1/machine.0
 ./usr/share/man/cat1/macppc
 ./usr/share/man/cat1/mail.0
-./usr/share/man/cat1/mailq.0
 ./usr/share/man/cat1/mailx.0
 ./usr/share/man/cat1/make.0
 ./usr/share/man/cat1/makeinfo.0
@@ -1677,6 +1676,7 @@
 ./usr/share/man/cat8/macppc/wsconscfg.0
 ./usr/share/man/cat8/macppc/wsconsctl.0
 ./usr/share/man/cat8/mail.local.0
+./usr/share/man/cat8/mailq.0
 ./usr/share/man/cat8/mailstats.0
 ./usr/share/man/cat8/mailwrapper.0
 ./usr/share/man/cat8/makedbm.0
