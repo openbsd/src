@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.26 1999/12/10 17:51:10 itojun Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.27 1999/12/15 16:37:20 provos Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -399,6 +399,19 @@ again:
 	if (flags & TH_FIN &&
 	    ((tp->t_flags & TF_SENTFIN) == 0 || tp->snd_nxt == tp->snd_una))
 		goto send;
+#ifdef TCP_SACK
+	/*
+	 * In SACK, it is possible for tcp_output to fail to send a segment 
+	 * after the retransmission timer has been turned off.  Make sure
+	 * that the retransmission timer is set.
+	 */
+	if (SEQ_GT(tp->snd_max, tp->snd_una) &&
+	    tp->t_timer[TCPT_REXMT] == 0 &&
+	    tp->t_timer[TCPT_PERSIST] == 0) {
+		tp->t_timer[TCPT_REXMT] = tp->t_rxtcur;
+		return (0);
+	}
+#endif /* TCP_SACK */
 
 	/*
 	 * TCP window updates are not reliable, rather a polling protocol

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.53 1999/12/14 22:20:28 provos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.54 1999/12/15 16:37:20 provos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -1578,18 +1578,6 @@ trimthenstep6:
 						tp->snd_cwnd = tp->snd_ssthresh+
 					           tp->t_maxseg * tp->t_dupacks;
 #endif /* TCP_FACK */
-						/* 
-						 * It is possible for 
-						 * tcp_output to fail to send
-						 * a segment.  If so, make 
-						 * sure that REMXT timer is set.
-						 */ 
-						if (SEQ_GT(tp->snd_max, 
-						    tp->snd_una) &&
-                        			tp->t_timer[TCPT_REXMT] == 0 &&
-                        			tp->t_timer[TCPT_PERSIST] == 0)
-                        			tp->t_timer[TCPT_REXMT] = 
-						    tp->t_rxtcur;
 						goto drop;
 					}
 #endif /* TCP_SACK */
@@ -2027,17 +2015,6 @@ dodata:							/* XXX */
 	 */
 	if (needoutput || (tp->t_flags & TF_ACKNOW)) {
 		(void) tcp_output(tp);
-#ifdef TCP_SACK
-	/* 
-	 * In SACK, it is possible for tcp_output() to fail to send a segment 
-	 * after the retransmission timer has been turned off.  Make sure that
-	 * the retransmission timer is set if we are in fast recovery. 
-	 */
-		if (needoutput && SEQ_GT(tp->snd_max, tp->snd_una) && 
-		    tp->t_timer[TCPT_REXMT] == 0 && 
-		    tp->t_timer[TCPT_PERSIST] == 0)
-			tp->t_timer[TCPT_REXMT] = tp->t_rxtcur;
-#endif
 	}
 	return;
 
