@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigsetops.3,v 1.7 2003/06/02 20:18:35 millert Exp $
+.\"	$OpenBSD: sigsetops.3,v 1.8 2004/12/17 10:18:03 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,16 +48,16 @@
 .Ft int
 .Fn sigdelset "sigset_t *set" "int signo"
 .Ft int
-.Fn sigismember "sigset_t *set" "int signo"
+.Fn sigismember "const sigset_t *set" "int signo"
 .Sh DESCRIPTION
 These functions manipulate signal sets stored in a
-.Li sigset_t .
+.Fa sigset_t .
 Either
 .Fn sigemptyset
 or
 .Fn sigfillset
 must be called for every object of type
-.Li sigset_t
+.Fa sigset_t
 before any other use of the object.
 .Fn sigemptyset
 and
@@ -109,6 +109,8 @@ is not a valid signal number.
 .Sh SEE ALSO
 .Xr kill 2 ,
 .Xr sigaction 2 ,
+.Xr sigpending 2 ,
+.Xr sigprocmask 2 ,
 .Xr sigsuspend 2
 .Sh STANDARDS
 These functions are defined by
