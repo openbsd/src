@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.17 2000/04/05 08:10:41 niklas Exp $
+$OpenBSD: usbdevs,v 1.18 2000/04/11 19:03:19 jakob Exp $
 /* $NetBSD: usbdevs,v 1.88 2000/04/03 12:09:43 augustss Exp $ */
 
 /*
@@ -515,6 +515,7 @@ product PHILIPS DSS350		0x0101	DSS 350 Digital Speaker System
 product PHILIPS DSS		0x0104	DSS XXX Digital Speaker System
 product PHILIPS HUB		0x0201	hub
 product PHILIPS DSS150		0x0471	DSS 150 Digital Speaker System
+product PHILIPS PCVC680K	0x0308	PCVC680K Vesta Pro PC Camera 
 
 /* P.I. Engineering products */
 product PIENGINEERING PS2USB	0x020b	PS2 to Mac USB Adapter
