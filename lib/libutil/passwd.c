@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.4 1996/06/19 12:36:01 deraadt Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.5 1996/12/06 01:55:33 deraadt Exp $	*/
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -86,7 +86,7 @@ pw_mkdb()
 	if (pid == 0) {
 		execl(_PATH_PWD_MKDB, "pwd_mkdb", "-p",
 		      _PATH_MASTERPASSWD_LOCK, NULL);
-		exit(1);
+		_exit(1);
 	}
 	pid = waitpid(pid, &pstat, 0);
 	if (pid == -1 || !WIFEXITED(pstat) || WEXITSTATUS(pstat) != 0)
