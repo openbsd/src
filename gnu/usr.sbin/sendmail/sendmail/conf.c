@@ -3246,8 +3246,10 @@ freediskspace(dir, bsize)
 			*bsize = FSBLOCKSIZE;
 		if (fs.SFS_BAVAIL <= 0)
 			return 0;
+#ifndef __OpenBSD__
 		else if (fs.SFS_BAVAIL > LONG_MAX)
 			return (long) LONG_MAX;
+#endif
 		else
 			return (long) fs.SFS_BAVAIL;
 	}
