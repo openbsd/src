@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.3 2005/01/04 04:54:56 jsg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.4 2005/01/09 21:39:04 jsg Exp $	*/
 /* $NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -3353,7 +3353,7 @@ rtw_attach(struct rtw_softc *sc)
 	switch (RTW_READ(&sc->sc_regs, RTW_TCR) & RTW_TCR_HWVERID_MASK) {
 	case RTW_TCR_HWVERID_F:
 		vers = 'F';
-		rf_write = rtw_rf_hostwrite;
+		rf_write = rtw_rf_macwrite;
 		break;
 	case RTW_TCR_HWVERID_D:
 		vers = 'D';
