@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.97 2004/07/11 12:13:58 deraadt Exp $
+$OpenBSD: usbdevs,v 1.98 2004/07/12 05:21:11 pvalchev Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -69,6 +69,7 @@ vendor NEC		0x0409	NEC
 vendor KODAK		0x040a	Eastman Kodak
 vendor MELCO		0x0411	Melco
 vendor CREATIVE		0x041e	Creative Labs
+vendor CREATIVE2	0x1292	Creative Labs
 vendor ADI		0x0422	ADI Systems
 vendor CATC		0x0423	Computer Access Technology
 vendor SMC2		0x0424	Standard Microsystems
@@ -616,6 +617,7 @@ product COREGA WLANUSB		0x0012	Wireless LAN Stick-11
 /* Creative Labs products */
 product CREATIVE NOMAD_II	0x1002	Nomad II
 product CREATIVE NOMAD_IIMG	0x4004	Nomad II MG
+product CREATIVE2 VOIP_BLASTER	0x0258	Voip Blaster
 
 /* Cambridge Silicon Radio products */
 product CSR BLUETOOTH		0x0001	Bluetooth
