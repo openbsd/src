@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530kbd.c,v 1.6 2002/01/25 03:24:53 jason Exp $	*/
+/*	$OpenBSD: z8530kbd.c,v 1.7 2002/01/31 16:39:17 jason Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -205,11 +205,6 @@ struct zskbd_softc {
 	u_int8_t zst_kbdstate;			/* keyboard state */
 	int zst_layout;				/* current layout */
 };
-
-/* Macros to clear/set/test flags. */
-#define SET(t, f)	(t) |= (f)
-#define CLR(t, f)	(t) &= ~(f)
-#define ISSET(t, f)	((t) & (f))
 
 /* Definition of the driver for autoconfig. */
 static int	zskbd_match(struct device *, void *, void *);
