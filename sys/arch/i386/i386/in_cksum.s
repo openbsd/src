@@ -176,7 +176,7 @@ in_cksum48:	popl	%edi			# restore %edi
 		popl	%ebp			# restore %ebp
 		ret				# return %eax
 
-in_cksum49:	pushl	panic			# push panic string
+in_cksum49:	pushl	$panic			# push panic string
 		call	_panic			# panic()
 		leal	4(%esp), %esp		#
 		jmp	in_cksum48		#
