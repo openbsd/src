@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.10 2005/03/07 10:28:14 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.11 2005/03/11 12:26:50 henning Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -178,7 +178,6 @@ if_new(struct kif *kif)
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
 		err(1, "if_new: socket");
 
-	
 	/* get type */
 	if ((kif->flags & IFF_POINTOPOINT))
 		iface->type = IF_TYPE_POINTOPOINT;
