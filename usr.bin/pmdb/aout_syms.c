@@ -1,4 +1,4 @@
-/*	$OpenBSD: aout_syms.c,v 1.6 2002/03/29 19:32:18 deraadt Exp $	*/
+/*	$OpenBSD: aout_syms.c,v 1.7 2002/06/09 04:59:04 fgsch Exp $	*/
 /*
  * Copyright (c) 2002 Federico Schwindt <fgsch@openbsd.org>
  * All rights reserved. 
@@ -24,6 +24,11 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
  */
 
+#include <sys/param.h>
+#include <sys/ptrace.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -31,11 +36,6 @@
 #include <string.h>
 #include <err.h>
 
-#include <sys/param.h>
-#include <sys/ptrace.h>
-#include <sys/mman.h>
-
-#include <sys/types.h>
 #include <a.out.h>
 #include <link.h>
 
@@ -98,6 +98,7 @@ struct sym_table *
 aout_open(const char *name)
 {
 	struct aout_symbol_handle *ash;
+	struct stat sb;
 	u_int32_t symoff, stroff;
 	struct exec ahdr;
 
@@ -122,6 +123,11 @@ aout_open(const char *name)
 		warnx("Bad magic.");
 		goto fail;
 	}
+
+	/* Don't go further for stripped files. */
+	if (fstat(ash->ash_fd, &sb) < 0 || N_SYMOFF(ahdr) == sb.st_size ||
+	    N_STROFF(ahdr) == sb.st_size)
+		goto fail;
 
 	symoff = N_SYMOFF(ahdr);
 	ash->ash_symsize = ahdr.a_syms;
