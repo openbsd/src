@@ -47,9 +47,15 @@ main(int argc, char **argv) {
 		exit(1);
 	}
 
+#ifndef HAVE_ARC4RANDOM
 	srand(0x12345678);
+#endif
 	while (bytes > 0) {
+#ifndef HAVE_ARC4RANDOM
 		unsigned short int x = (rand() & 0xFFFF);
+#else
+		unsigned short int x = (arc4random() & 0xFFFF);
+#endif
 		unsigned char c = x & 0xFF;
 		if (putc(c, fp) == EOF) {
 			printf("error writing to file\n");
