@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.58 1999/07/13 15:17:51 provos Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.59 1999/07/30 18:27:47 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1530,10 +1530,19 @@ sys_chflags(p, v, retval)
 	else if (SCARG(uap, flags) == VNOVAL)
 		error = EINVAL;
 	else {
+		if (suser(p->p_ucred, &p->p_acflag)) {
+			if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, p)) != 0)
+				goto out;
+			if (vattr.va_type == VCHR || vattr.va_type == VBLK) {
+				error = EINVAL;
+				goto out;
+			}
+		}
 		VATTR_NULL(&vattr);
 		vattr.va_flags = SCARG(uap, flags);
 		error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
 	}
+out:
 	vput(vp);
 	return (error);
 }
@@ -1567,10 +1576,20 @@ sys_fchflags(p, v, retval)
 	else if (SCARG(uap, flags) == VNOVAL)
 		error = EINVAL;
 	else {
+		if (suser(p->p_ucred, &p->p_acflag)) {
+			if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, p))
+			    != 0)
+				goto out;
+			if (vattr.va_type == VCHR || vattr.va_type == VBLK) {
+				error = EINVAL;
+				goto out;
+			}
+		}
 		VATTR_NULL(&vattr);
 		vattr.va_flags = SCARG(uap, flags);
 		error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
 	}
+out:
 	VOP_UNLOCK(vp, 0, p);
 	return (error);
 }
