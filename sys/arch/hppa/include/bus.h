@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.21 2003/09/29 19:23:02 mickey Exp $	*/
+/*	$OpenBSD: bus.h,v 1.22 2004/03/02 21:06:15 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -329,6 +329,8 @@ typedef struct hppa_bus_dmamap	*bus_dmamap_t;
  *	are suitable for programming into DMA registers.
  */
 struct hppa_bus_dma_segment {
+	vaddr_t		_ds_va;		/* needed for syncing */
+
 	bus_addr_t	ds_addr;	/* DMA address */
 	bus_size_t	ds_len;		/* length of transfer */
 };
@@ -418,7 +420,6 @@ struct hppa_bus_dmamap {
 	bus_size_t	_dm_maxsegsz;	/* largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
 	int		_dm_flags;	/* misc. flags */
-	vaddr_t		_dm_va;		/* needed for syncing */
 
 	void		*_dm_cookie;	/* cookie for bus-specific functions */
 

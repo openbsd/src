@@ -1,7 +1,7 @@
-/*	$OpenBSD: mainbus.c,v 1.54 2003/12/20 21:49:06 miod Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.55 2004/03/02 21:06:15 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998-2003 Michael Shalayeff
+ * Copyright (c) 1998-2004 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -691,7 +691,7 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		if (first) {
 			map->dm_segs[seg].ds_addr = curaddr;
 			map->dm_segs[seg].ds_len = sgsize;
-			map->_dm_va = vaddr;
+			map->dm_segs[seg]._ds_va = vaddr;
 			first = 0;
 		} else {
 			if (curaddr == lastaddr &&
@@ -706,6 +706,7 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 					break;
 				map->dm_segs[seg].ds_addr = curaddr;
 				map->dm_segs[seg].ds_len = sgsize;
+				map->dm_segs[seg]._ds_va = vaddr;
 			}
 		}
 
@@ -776,8 +777,6 @@ mbus_dmamap_load_mbuf(void *v, bus_dmamap_t map, struct mbuf *m0, int flags)
 	error = 0;
 	lastaddr = 0;
 	for (m = m0; m != NULL && error == 0; m = m->m_next) {
-		/* XXX as we later can only flush by pa -- flush now */
-		fdcache(HPPA_SID_KERNEL, (vaddr_t)m->m_data, m->m_len);
 		error = _bus_dmamap_load_buffer(NULL, map, m->m_data, m->m_len,
 		    NULL, flags, &lastaddr, &seg, first);
 		first = 0;
@@ -785,7 +784,6 @@ mbus_dmamap_load_mbuf(void *v, bus_dmamap_t map, struct mbuf *m0, int flags)
 	if (error == 0) {
 		map->dm_mapsize = m0->m_pkthdr.len;
 		map->dm_nsegs = seg + 1;
-		map->_dm_va = 0;	/* means sync by pa */
 	}
 
 	return (error);
@@ -872,7 +870,6 @@ mbus_dmamap_load_raw(void *v, bus_dmamap_t map, bus_dma_segment_t *segs,
 	bcopy(segs, map->dm_segs, nsegs * sizeof(*segs));
 	map->dm_nsegs = nsegs;
 	map->dm_mapsize = size;
-	map->_dm_va = segs->ds_addr;
 	return (0);
 }
 
@@ -880,32 +877,26 @@ void
 mbus_dmamap_sync(void *v, bus_dmamap_t map, bus_addr_t off, bus_size_t len,
     int ops)
 {
+	bus_dma_segment_t *ps = map->dm_segs,
+	    *es = &map->dm_segs[map->dm_nsegs];
+
+	if (off >= map->_dm_size)
+		return;
+
 	if ((off + len) > map->_dm_size)
 		len = map->_dm_size - off;
 
-	if (map->_dm_va) {
-		/*
-		 * cannot use purge since the data for dma is not
-		 * guarantied to be aligned in any way
-		 */
-		fdcache(HPPA_SID_KERNEL, map->_dm_va + off, len);
-	} else {
-		/* this is an mbuf chain thus flush by segs */
-		bus_dma_segment_t *ps = map->dm_segs,
-		    *es = &map->dm_segs[map->dm_nsegs];
-
-		for (; len && ps < es; ps++)
-			if (off > ps->ds_len)
-				off -= ps->ds_len;
-			else {
-				bus_size_t l = ps->ds_len - off;
-				if (l > len)
-					l = len;
-				fdcache(HPPA_SID_KERNEL, ps->ds_addr + off, l);
-				len -= l;
-				off = 0;
-			}
-	}
+	for (; len && ps < es; ps++)
+		if (off > ps->ds_len)
+			off -= ps->ds_len;
+		else {
+			bus_size_t l = ps->ds_len - off;
+			if (l > len)
+				l = len;
+			fdcache(HPPA_SID_KERNEL, ps->_ds_va + off, l);
+			len -= l;
+			off = 0;
+		}
 
 	/* for either operation sync the shit away */
 	__asm __volatile ("sync\n\tsyncdma\n\tsync\n\t"
@@ -929,7 +920,7 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 		return (ENOMEM);
 
 	pg = TAILQ_FIRST(&pglist);
-	segs[0].ds_addr = VM_PAGE_TO_PHYS(pg);
+	segs[0]._ds_va = segs[0].ds_addr = VM_PAGE_TO_PHYS(pg);
 	segs[0].ds_len = size;
 	*rsegs = 1;
 
