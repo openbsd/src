@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.6 1997/12/09 03:36:39 deraadt Exp $
+#	$OpenBSD: genassym.cf,v 1.7 1999/02/26 04:28:50 art Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -45,6 +45,10 @@ endif
 
 include <vm/vm.h>
 
+ifdef UVM
+include <uvm/uvm_extern.h>
+endif
+
 include <machine/trap.h>
 include <machine/pmap.h>
 include <machine/vmparam.h>
@@ -90,8 +94,13 @@ define	P_FLAG		offsetof(struct proc, p_flag)
 define	P_SYSTEM	P_SYSTEM
 
 # interrupt/fault metering
+ifdef UVM
+define	V_TRAP			offsetof(struct uvmexp, traps)
+define	V_INTR			offsetof(struct uvmexp, intrs)
+else
 define	V_TRAP		offsetof(struct vmmeter, v_trap)
 define	V_INTR		offsetof(struct vmmeter, v_intr)
+endif
 
 # pcb fields
 define	PCB_CR3		offsetof(struct pcb, pcb_cr3)
