@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.8 2001/12/04 21:42:32 lebel Exp $
+#	$OpenBSD: GENERIC,v 1.9 2001/12/12 19:19:46 jason Exp $
 #
 # PPC GENERIC config file
 #
@@ -55,6 +55,7 @@ vgafb0		at pci? dev ? function ?	# PCI VGA graphics
 pciide*		at pci? dev ? function ?
 macobio0	at pci? dev ? function ?
 gm*		at pci? dev ? function ?	# GMAC ethernet
+dc*		at pci? dev ? function ?	# DEC Tulip 21143 clones
 an*		at pci? dev ? function ?	# Cisco/Aironet
 iop*		at pci? dev ? function ?	# I2O processor
 ioprbs*		at iop? tid ?			# I2O arrays
@@ -74,6 +75,8 @@ sqphy*		at mii? phy ?			# Seeq 8022[013] PHYs
 brgphy*		at mii? phy ?			# Broadcom 10/100/1000 PHYs 
 bmtphy*		at mii? phy ?			# Broadcom 10/100 PHYs 
 ukphy*		at mii? phy ?			# generic unknown PHYs
+
+hifn*		at pci? dev ? function ?	# Hifn7751
 
 macintr0	at macobio?			# old interrupt controller
 openpic0	at macobio?			# openpic interrupt controller
