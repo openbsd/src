@@ -1,36 +1,36 @@
-#	$OpenBSD: LUCIFIER,v 1.24 2000/06/08 00:16:03 mickey Exp $
+#	$OpenBSD: LUCIFIER,v 1.25 2001/05/01 19:14:32 mickey Exp $
 #
 
 machine	i386
-maxusers 32
+maxusers 64
 #makeoption DEBUG="-g"
 
-#option	I386_CPU,I486_CPU
-option	I486_CPU,I586_CPU,I686_CPU
-option	UVM,DEVPAGER,SWAPPAGER
+option	I586_CPU,I686_CPU,DUMMY_NOPS
+option	UVM,UVM_SWAP_ENCRYPT,DEVPAGER,SWAPPAGER
 
-option	TIMEZONE=300,DST=1,NTP
+option	TIMEZONE=300,DST=1,NTP#,HZ=256
 option	XSERVER,APERTURE
 option	VM86,USER_LDT,LKM,KTRACE
-option	BUFCACHEPERCENT=20
+option	BUFCACHEPERCENT=25,MAXPHYS=0x20000,NKMEMCLUSTERS=8192
 option	COMPAT_SVR4,COMPAT_IBCS2,COMPAT_LINUX,COMPAT_FREEBSD,COMPAT_BSDOS
 option	COMPAT_11
 option	COMPAT_43
-#option	TCP_COMPAT_42
 
-option	DDB
-option	DIAGNOSTIC,DEBUG
+option	DDB,DDB_SAFE_CONSOLE
+option	DIAGNOSTIC,DEBUG,KMEMSTATS
 option	BOOT_CONFIG
 
+option	CRYPTO
+
 option	SYSVMSG,SYSVSEM,SYSVSHM
-#option	SHMMAXPGS=2048
+option	SHMMAXPGS=2048
 
 option	FFS,FFS_SOFTUPDATES #,QUOTA
 option	MFS
 #option	LFS
 
 option	NFSSERVER,NFSCLIENT
-option	XFS
+#option	XFS
 
 option	CD9660,MSDOSFS,EXT2FS
 option	FDESC,FIFO
@@ -38,9 +38,10 @@ option	KERNFS,PROCFS
 option	NULLFS,UNION,UMAPFS
 option	PORTAL
 
-option	GATEWAY#,MROUTING
+#option	MROUTING
 option	INET,IPSEC		# IP + ICMP + TCP + UDP + IPsec
-option	TCP_SACK,TCP_FACK	# TCP selective ack, fast ack
+option	INET6			# IPv6
+option	TCP_SACK#,TCP_FACK,TCP_SIGNATURE	# TCP selective ack, forward ack
 #option	NS,NSIP			# XNS, tunneling over IP
 option	IPX,IPXIP		# IPX, tunneling over IP
 #option	ISO,TPIP,EON		# OSI, tunneling over IP
@@ -54,69 +55,120 @@ mainbus0 at root
 
 bios0	at mainbus0
 apm0	at bios0 flags 0x0000	# flags 0x0101 to force protocol version 1.1
+option	PCIBIOSVERBOSE
+pcibios0 at bios0 flags 0x0000
 
 #option	EISAVERBOSE
 #eisa0	at mainbus0
 option	PCIVERBOSE
 pci0	at mainbus0 bus ?
 
-pchb*	at pci? dev ? function ?
+pchb*	at pci?
+ppb*	at pci?
 pci*	at pchb? bus ?
-ppb*	at pci? dev ? function ?
 pci*	at ppb? bus ?
 
-pcib*	at pci? dev ? function ?
+pcib*	at pci?
+uhci*	at pci?
+cbb*	at pci?
+cardslot* at cbb?
+cardbus* at cardslot?
+pcmcia*	at cardslot?
 
-ohci*	at pci? dev ? function ?
-usb*	at ohci?
+pciide0	at pci?
+twe*	at pci?
+scsibus* at twe?
+ahc*	at pci?
+scsibus* at ahc?
+#bha*	at pci?
+#scsibus* at bha?
+
+#ie0	at pci?
+fxp0	at pci?
+
+#emu*	at pci?
+auich*	at pci?
+bktr0	at pci?
+
+option	USBVERBOSE
+usb*	at uhci?
 uhub*	at usb?
 
-uhub*	at uhub? port ? configuration ? interface ?
-uhid*	at uhub? port ? configuration ? interface ?
-ugen*	at uhub? port ? configuration ? interface ?
+uhub*	at uhub? port ? configuration ?
+uhid*	at uhub? port ? configuration ?
+ugen*	at uhub? port ? configuration ?
+ulpt*	at uhub? port ? configuration ?
+#ucom*	at uhub? port ? configuration ?
+ukbd*	at uhub? port ? configuration ?
+ums*	at uhub? port ? configuration ?
+umodem*	at uhub? port ? configuration ?
+aue*	at uhub? port ? configuration ?
+cue*	at uhub? port ? configuration ?
+kue*	at uhub? port ? configuration ?
+umass*	at uhub? port ? configuration ?
+atapiscsi* at umass?
+scsibus* at umass?
+uaudio*	at uhub? port ? configuration ?
 
 isa0	at pcib?
 npx0	at isa? port 0xf0 irq 13
 isadma0	at isa?
 isapnp0	at isa?
 
-option	PCMCIAVERBOSE
-pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x4000
-pcic1	at isa? port 0x3e2 iomem 0xd4000 iosiz 0x4000
-pcmcia*	at pcic? controller ? socket ?
+option	PCMCIAVERBOSE#,PCMCIADEBUG,PCMCIACISDEBUG
+pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
+pcic1	at isa? port 0x3e2 iomem 0xe0000 iosiz 0x4000
+pcmcia*	at pcic?
 
-option	PCVT_NSCREENS=10
-vt0	at isa? port 0x60 irq 1		# musdie
-#vga*	at pci? dev ? function ?
-#pckbc0	at isa? port 0x60
-#pckbd0	at pckbc0
-#psm0	at pckbc0
+ne*	at pcmcia? function ?
+xe*	at pcmcia? function ?
+wi*	at pcmcia? function ?
+an*	at pcmcia? function ?
+option	RAY_DO_SIGLEV
+ray*	at pcmcia? function ?
+awi*	at pcmcia? function ?
+wdc2	at pcmcia? function ?
 
-#wsdisplay0	at vga0 console 0
-#wskbd0		at pckbd0 console 0
-#wsmouse0	at psm0 console 0
+vga*	at pci?
+pckbc0	at isa? port 0x60
+pckbd*	at pckbc0
+pms*	at pckbc0
+pmsi*	at pckbc0
+
+option	WSEMUL_VT100
+option	WSDISPLAY_DEFAULTSCREENS=10
+option	WS_KERNEL_BG=WSCOL_BLUE,WS_KERNEL_FG=WSCOL_WHITE
+option	WSDISPLAY_COMPAT_PCVT,WSCONS_SUPPORT_PCVTFONTS
+option	WSDISPLAY_COMPAT_SYSCONS,WSDISPLAY_COMPAT_USL,WSDISPLAY_COMPAT_RAWKBD
+
+wsdisplay*	at vga? console ?
+wskbd*		at pckbd? console ?
+wskbd*		at ukbd? console ? mux 1
+wsmouse*	at pms? mux 0
+wsmouse*	at pmsi? mux 0
+wsmouse*	at ums? mux 0
 
 pcppi0	at isa?
 sysbeep0 at pcppi?
 midi*	at pcppi?
 
-com0	at isa? port 0x3f8 irq 4
-com1	at isa? port 0x2f8 irq 3
-com*	at pcmcia? function ?
+pccom0	at isa? port 0x3f8 irq 4
+pccom1	at isa? port 0x2f8 irq 3
+pccom*	at pcmcia? function ?
 
 lpt0	at isa? port 0x378 irq 7
 lpt1	at isa? port 0x278
 lpt2	at isa? port 0x3bc
 
-ahc*	at pci? dev ? function ?
-scsibus* at ahc?
+#mcd0	at isa? port 0x300 irq 10	# Mitsumi CD-ROM drives
+#scd0	at isa? port 0x300 irq 10	# Sony CD-ROM drives
+#pcd0	at isa? port 0x300 irq 10	# Panasonic CD-ROM drives
 
-bktr0	at pci? dev ? function ?
-
-pciide0	at pci? dev ? function ?
 wdc0	at isa? port 0x1f0 irq 14
 wdc1	at isapnp?
-wdc2	at pcmcia?
+
+fdc0	at isa? port 0x3f0 irq 6 drq 2
+fdc1	at isa? port 0x370 irq ? drq ?
 
 wd*	at pciide? channel ? drive ?
 wd*	at wdc? channel ? drive ?
@@ -131,43 +183,47 @@ ch*	at scsibus? target ? lun ?
 ss*	at scsibus? target ? lun ?
 uk*	at scsibus? target ? lun ?
 
-fdc0	at isa? port 0x3f0 irq 6 drq 2
-fdc1	at isa? port 0x370 irq ? drq ?
 fd*	at fdc? drive ?
 
-#mcd0	at isa? port 0x300 irq 10	# Mitsumi CD-ROM drives
-#scd0	at isa? port 0x300 irq 10	# Sony CD-ROM drives
-#pcd0	at isa? port 0x300 irq 10	# Panasonic CD-ROM drives
+#audio*	at emu?
+audio*	at auich?
+audio*	at uaudio?
 
 option	I82596_DEBUG
 #ie1	at isa? port 0x300
-#ie0	at pci? dev ? function ?
-xl0	at pci? dev ? function ?
-sis0	at pci? dev ? function ?
-ne*	at pcmcia? function ?
 
 nsphy*	at mii? phy ?
+ukphy*	at mii? phy ?
 
 # Joystick driver. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
 
 pseudo-device	bpfilter 32
-pseudo-device	loop	4
+pseudo-device	loop	8
 #pseudo-device	null	1
 pseudo-device	bridge	2
+pseudo-device	vlan	4
+#pseudo-device	vrrp	4
+pseudo-device	gre	1
 pseudo-device	sl	2
 pseudo-device	ppp	2
 pseudo-device	tun	4
 #pseudo-device	strip	1
-pseudo-device	enc
+pseudo-device	enc	4
+pseudo-device	gif	2
+pseudo-device	faith	1
+
+pseudo-device	wsmux	2
 
 pseudo-device	pty	64
 
 pseudo-device	vnd	4
-pseudo-device	ccd	4
-pseudo-device	raid	5
+pseudo-device	ccd	2
+#pseudo-device	cbd	1
+#pseudo-device	raid	5
 
 pseudo-device	ksyms
 pseudo-device	tb
 pseudo-device	sequencer
 pseudo-device	pctr
+pseudo-device	mtrr
