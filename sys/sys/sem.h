@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.h,v 1.13 2002/12/17 23:11:31 millert Exp $	*/
+/*	$OpenBSD: sem.h,v 1.14 2003/12/17 20:40:56 millert Exp $	*/
 /*	$NetBSD: sem.h,v 1.8 1996/02/09 18:25:29 christos Exp $	*/
 
 /*
@@ -13,6 +13,7 @@
 #ifndef _SYS_IPC_H_
 #include <sys/ipc.h>
 #endif
+#include <sys/queue.h>
 
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 
@@ -127,7 +128,7 @@ union semun {
  * Undo structure (one per process)
  */
 struct sem_undo {
-	struct	sem_undo *un_next;	/* ptr to next active undo structure */
+	SLIST_ENTRY(sem_undo) un_next;	/* ptr to next active undo structure */
 	struct	proc *un_proc;		/* owner of this structure */
 	short	un_cnt;			/* # of active entries */
 	struct undo {
@@ -186,11 +187,7 @@ extern struct seminfo	seminfo;
 /* actual size of an undo structure */
 #define SEMUSZ	(sizeof(struct sem_undo)+sizeof(struct undo)*SEMUME)
 
-/*
- * Structures allocated in machdep.c, defined/initialized in sysv_sem.c
- */
 extern struct	semid_ds **sema;	/* semaphore id list */
-extern struct	sem_undo *semu_list;	/* list of undo structures */
 
 #endif /* _KERNEL */
 

@@ -1,8 +1,8 @@
-/*	$OpenBSD: sysv_sem.c,v 1.23 2003/12/03 19:03:42 millert Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.24 2003/12/17 20:40:57 millert Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
- * Copyright (c) 2002 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2002,2003 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -54,7 +54,7 @@
 int	semtot = 0;
 int	semutot = 0;
 struct	semid_ds **sema;	/* semaphore id list */
-struct	sem_undo *semu_list;	/* list of undo structures */
+SLIST_HEAD(, sem_undo) semu_list; /* list of undo structures */
 struct	pool sema_pool;		/* pool for struct semid_ds */
 struct	pool semu_pool;		/* pool for struct sem_undo (SEMUSZ) */
 unsigned short *semseqs;	/* array of sem sequence numbers */
@@ -77,7 +77,7 @@ seminit(void)
 	semseqs = malloc(seminfo.semmni * sizeof(unsigned short),
 	    M_SEM, M_WAITOK);
 	bzero(semseqs, seminfo.semmni * sizeof(unsigned short));
-	semu_list = NULL;
+	SLIST_INIT(&semu_list);
 }
 
 /*
@@ -87,7 +87,7 @@ seminit(void)
 struct sem_undo *
 semu_alloc(struct proc *p)
 {
-	struct sem_undo *suptr, *tmp;
+	struct sem_undo *suptr, *sutmp;
 
 	if (semutot == seminfo.semmnu)
 		return (NULL);		/* no space */
@@ -99,20 +99,19 @@ semu_alloc(struct proc *p)
 	 */
 	semutot++;
 	if ((suptr = pool_get(&semu_pool, 0)) == NULL) {
-		tmp = pool_get(&semu_pool, PR_WAITOK);
-		for (suptr = semu_list; suptr != NULL; suptr = suptr->un_next) {
+		sutmp = pool_get(&semu_pool, PR_WAITOK);
+		SLIST_FOREACH(suptr, &semu_list, un_next) {
 			if (suptr->un_proc == p) {
-				pool_put(&semu_pool, tmp);
+				pool_put(&semu_pool, sutmp);
 				semutot--;
 				return (suptr);
 			}
 		}
-		suptr = tmp;
+		suptr = sutmp;
 	}
 	suptr->un_cnt = 0;
 	suptr->un_proc = p;
-	suptr->un_next = semu_list;
-	semu_list = suptr;
+	SLIST_INSERT_HEAD(&semu_list, suptr, un_next);
 	return (suptr);
 }
 
@@ -132,7 +131,7 @@ semundo_adjust(struct proc *p, struct sem_undo **supptr, int semid, int semnum,
 	 */
 	suptr = *supptr;
 	if (suptr == NULL) {
-		for (suptr = semu_list; suptr != NULL; suptr = suptr->un_next) {
+		SLIST_FOREACH(suptr, &semu_list, un_next) {
 			if (suptr->un_proc == p) {
 				*supptr = suptr;
 				break;
@@ -164,23 +163,7 @@ semundo_adjust(struct proc *p, struct sem_undo **supptr, int semid, int semnum,
 			return (0);
 
 		if (--suptr->un_cnt == 0) {
-			struct sem_undo *suprev;
-
-			if (semu_list == suptr)
-				semu_list = suptr->un_next;
-			else {
-				/* this code path should be rare */
-				for (suprev = semu_list; suprev != NULL &&
-				    suprev->un_next != suptr;
-				    suprev = suprev->un_next)
-					/* NOTHING */;
-#ifdef DIAGNOSTIC
-				if (suprev == NULL)
-					panic("semundo_adjust: "
-					    "suptr not in semu_list");
-#endif
-				suprev->un_next = suptr->un_next;
-			}
+			SLIST_REMOVE(&semu_list, suptr, sem_undo, un_next);
 			pool_put(&semu_pool, suptr);
 			semutot--;
 		} else if (i < suptr->un_cnt)
@@ -206,11 +189,12 @@ semundo_adjust(struct proc *p, struct sem_undo **supptr, int semid, int semnum,
 void
 semundo_clear(int semid, int semnum)
 {
-	struct sem_undo *suptr, *suprev, *tmp;
+	struct sem_undo *suptr = SLIST_FIRST(&semu_list);
+	struct sem_undo *suprev = SLIST_END(&semu_list);
 	struct undo *sunptr;
 	int i;
 
-	for (suptr = semu_list; suptr != NULL; ) {
+	while (suptr != SLIST_END(&semu_list)) {
 		sunptr = &suptr->un_ent[0];
 		for (i = 0; i < suptr->un_cnt; i++, sunptr++) {
 			if (sunptr->un_id == semid) {
@@ -227,16 +211,18 @@ semundo_clear(int semid, int semnum)
 			}
 		}
 		if (suptr->un_cnt == 0) {
-			tmp = suptr;
-			if (suptr == semu_list)
-				suptr = semu_list = suptr->un_next;
+			struct sem_undo *sutmp = suptr;
+
+			if (suptr == SLIST_FIRST(&semu_list))
+				SLIST_REMOVE_HEAD(&semu_list, un_next);
 			else
-				suptr = suprev->un_next = suptr->un_next;
-			pool_put(&semu_pool, tmp);
+				SLIST_REMOVE_NEXT(&semu_list, suprev, un_next);
+			suptr = SLIST_NEXT(suptr, un_next);
+			pool_put(&semu_pool, sutmp);
 			semutot--;
 		} else {
 			suprev = suptr;
-			suptr = suptr->un_next;
+			suptr = SLIST_NEXT(suptr, un_next);
 		}
 	}
 }
@@ -765,8 +751,7 @@ semexit(struct proc *p)
 	 * Go through the chain of undo vectors looking for one associated with
 	 * this process.
 	 */
-	for (supptr = &semu_list; (suptr = *supptr) != NULL;
-	    supptr = &suptr->un_next) {
+	SLIST_FOREACH_PREVPTR(suptr, supptr, &semu_list, un_next) {
 		if (suptr->un_proc == p)
 			break;
 	}
@@ -825,7 +810,7 @@ semexit(struct proc *p)
 	 * Deallocate the undo vector.
 	 */
 	DPRINTF(("removing vector\n"));
-	*supptr = suptr->un_next;
+	*supptr = SLIST_NEXT(suptr, un_next);
 	pool_put(&semu_pool, suptr);
 	semutot--;
 }
