@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: aliases,v 1.6 1998/08/12 13:35:41 kstailey Exp $
+#	$OpenBSD: aliases,v 1.7 1999/03/08 07:54:11 todd Exp $
 #
 #  Aliases in this file will NOT be expanded in the header from
 #  Mail, but WILL be visible over networks or from /bin/mail.
@@ -27,7 +27,6 @@ ftp-bugs: root
 # root:
 # manager:
 # dumper:
-# operator:
 
 # uncomment this for msgs:
 # msgs: "|/usr/bin/msgs -s"
