@@ -67,7 +67,7 @@
 #define	CLKF_USERMODE(frame)	USERMODE((frame)->if_cs, (frame)->if_eflags)
 #define	CLKF_BASEPRI(frame)	((frame)->if_ppl == 0)
 #define	CLKF_PC(frame)		((frame)->if_eip)
-#define	CLKF_INTR(frame)	(0)	/* XXX should have an interrupt stack */
+#define	CLKF_INTR(frame)	(IDXSEL((frame)->if_cs) == GICODE_SEL)
 
 /*
  * Preempt the current process if in interrupt from user mode,
