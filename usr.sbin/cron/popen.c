@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.15 2002/07/08 18:11:02 millert Exp $	*/
+/*	$OpenBSD: popen.c,v 1.16 2002/07/09 00:24:50 millert Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -42,7 +42,7 @@
 #if 0
 static const sccsid[] = "@(#)popen.c	8.3 (Berkeley) 4/6/94";
 #else
-static const char rcsid[] = "$OpenBSD: popen.c,v 1.15 2002/07/08 18:11:02 millert Exp $";
+static const char rcsid[] = "$OpenBSD: popen.c,v 1.16 2002/07/09 00:24:50 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -117,7 +117,6 @@ cron_popen(char *program, char *type, entry *e) {
 			chdir(env_get("HOME", e->envp));
 #endif /* LOGIN_CAP */
 		}
-		closelog();
 		if (*type == 'r') {
 			if (pdes[1] != STDOUT) {
 				dup2(pdes[1], STDOUT);
