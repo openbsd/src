@@ -1,4 +1,4 @@
-/*	$OpenBSD: iop.c,v 1.6 2001/06/26 09:26:12 mickey Exp $	*/
+/*	$OpenBSD: iop.c,v 1.7 2001/06/26 10:18:21 mickey Exp $	*/
 /*	$NetBSD: iop.c,v 1.12 2001/03/21 14:27:05 ad Exp $	*/
 
 /*-
@@ -911,7 +911,7 @@ iop_status_get(struct iop_softc *sc, int nosleep)
 	mf.reserved[1] = 0;
 	mf.reserved[2] = 0;
 	mf.reserved[3] = 0;
-	mf.addrlow = pa & 0xffffffff;
+	mf.addrlow = pa & ~(u_int32_t)0;
 	mf.addrhigh = sizeof pa > sizeof mf.addrlow ? pa >> 32 : 0;
 	mf.length = sizeof(*st);
 
@@ -949,13 +949,13 @@ iop_ofifo_init(struct iop_softc *sc)
 	mf = (struct i2o_exec_outbound_init *)mb;
 	mf->msgflags = I2O_MSGFLAGS(i2o_exec_outbound_init);
 	mf->msgfunc = I2O_MSGFUNC(I2O_TID_IOP, I2O_EXEC_OUTBOUND_INIT);
-	mf->msgictx = 0;
+	mf->msgictx = IOP_ICTX;
 	mf->msgtctx = 0;
 	mf->pagesize = PAGE_SIZE;
 	mf->flags = IOP_INIT_CODE | ((IOP_MAX_MSG_SIZE >> 2) << 16);
-	mb[sizeof(*mf) / 4 + 1] = sizeof(*sw) |
-	    I2O_SGL_SIMPLE | I2O_SGL_END_BUFFER;
-	mb[sizeof(*mf) / 4 + 2] = sc->sc_scr_seg->ds_addr;
+	mb[sizeof(*mf) / 4 + 0] = sizeof(*sw) |
+	    I2O_SGL_SIMPLE | I2O_SGL_END_BUFFER | I2O_SGL_END;
+	mb[sizeof(*mf) / 4 + 1] = sc->sc_scr_seg->ds_addr;
 
 	*sw = 0;
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap, BUS_DMASYNC_PREREAD);
@@ -970,11 +970,13 @@ iop_ofifo_init(struct iop_softc *sc)
 		return (rv);
 
 	/* XXX */
-	POLL(2500,
+	POLL(5000,
 	    (bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap,
-	    BUS_DMASYNC_POSTREAD), *sw == I2O_EXEC_OUTBOUND_INIT_COMPLETE));
+	    BUS_DMASYNC_POSTREAD),
+	    *sw == htole32(I2O_EXEC_OUTBOUND_INIT_COMPLETE)));
 	if (*sw != htole32(I2O_EXEC_OUTBOUND_INIT_COMPLETE)) {
-		printf("%s: outbound FIFO init failed\n", sc->sc_dv.dv_xname);
+		printf("%s: outbound FIFO init failed (%d)\n",
+		    sc->sc_dv.dv_xname, letoh32(*sw));
 		return (EIO);
 	}
 
@@ -1371,7 +1373,7 @@ iop_reset(struct iop_softc *sc)
 	/* XXX */
 	POLL(2500,
 	    (bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap,
-	    BUS_DMASYNC_POSTREAD), *sw != 0));
+	    BUS_DMASYNC_POSTREAD), *sw != htole32(0)));
 	if (*sw != htole32(I2O_RESET_IN_PROGRESS)) {
 		printf("%s: reset rejected, status 0x%x\n",
 		    sc->sc_dv.dv_xname, letoh32(*sw));
