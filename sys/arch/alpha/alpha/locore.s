@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.8 1997/07/06 16:26:46 niklas Exp $	*/
+/*	$OpenBSD: locore.s,v 1.9 1997/07/08 10:55:53 niklas Exp $	*/
 /*	$NetBSD: locore.s,v 1.27 1996/12/03 19:54:16 cgd Exp $	*/
 
 /*
@@ -58,6 +58,7 @@ bootstack:
  * Arguments:
  *	a0 is the first free page frame number (PFN)
  *	a1 is the page table base register (PTBR)
+ *	a2 is the end of the symbol table
  *
  * All arguments are passed to alpha_init().
  */
@@ -77,7 +78,7 @@ Lstart1: LDGP(pv)
 	/*
 	 * Call alpha_init() to do pre-main initialization.
 	 * alpha_init() gets the arguments we were called with,
-	 * which are already in a0 and a1.
+	 * which are already in a0, a1 and a2.
 	 */
 	CALL(alpha_init)
 

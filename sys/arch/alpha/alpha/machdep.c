@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.20 1997/07/06 16:25:30 niklas Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.21 1997/07/08 10:55:54 niklas Exp $	*/
 /*	$NetBSD: machdep.c,v 1.61 1996/12/07 01:54:49 cgd Exp $	*/
 
 /*
@@ -120,7 +120,6 @@
 
 vm_map_t buffer_map;
 
-void	alpha_init __P((u_long, u_long));
 int	cpu_dump __P((void));
 int	cpu_dumpsize __P((void));
 void	do_sir __P((void));
@@ -189,15 +188,20 @@ int	alpha_unaligned_fix = 1;	/* fix up unaligned accesses */
 int	alpha_unaligned_sigbus = 0;	/* don't SIGBUS on fixed-up accesses */
 
 void
-alpha_init(pfn, ptb)
+alpha_init(pfn, ptb, symend)
 	u_long pfn;		/* first free PFN number */
 	u_long ptb;		/* PFN of current level 1 page table */
+	char *symend;		/* end of the symbol table */
 {
 	extern char _end[];
+	extern char *esym;
 	caddr_t start, v;
 	struct mddt *mddtp;
 	int i, mddtweird;
 	char *p;
+
+	/* Save the symbol table end */
+	esym = symend;
 
 	/*
 	 * Turn off interrupts and floating point.
@@ -359,7 +363,7 @@ alpha_init(pfn, ptb)
 	if (PAGE_SIZE != 8192)
 		panic("page size %d != 8192?!", PAGE_SIZE);
 
-	v = (caddr_t)alpha_round_page(_end);
+	v = (caddr_t)alpha_round_page(symend ? symend : _end);
 	/*
 	 * Init mapping for u page(s) for proc 0
 	 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.6 1997/01/24 19:57:10 niklas Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.7 1997/07/08 10:55:52 niklas Exp $	*/
 /*	$NetBSD: cpu.h,v 1.14 1996/12/07 01:54:50 cgd Exp $	*/
 
 /*
@@ -142,7 +142,7 @@ void	XentMM __P((u_int64_t, u_int64_t, u_int64_t));		/* MAGIC */
 void	XentRestart __P((void));				/* MAGIC */
 void	XentSys __P((u_int64_t, u_int64_t, u_int64_t));		/* MAGIC */
 void	XentUna __P((u_int64_t, u_int64_t, u_int64_t));		/* MAGIC */
-void	alpha_init __P((u_long, u_long));
+void	alpha_init __P((u_long, u_long, char *));
 void	ast __P((struct trapframe *));
 int	badaddr	__P((void *, size_t));
 void	child_return __P((struct proc *p));
