@@ -273,7 +273,7 @@ low quality, it should return a string explaining why that password
 should not be used.
 
 Code for a password quality checking function that uses the cracklib
-library can be found in @file{kpasswd/sample_password_check.c} in the
+library can be found in @file{lib/kadm5/sample_password_check.c} in the
 source code distribution.  It requires the cracklib library built with
 the patch available at
 @url{ftp://ftp.pdc.kth.se/pub/krb/src/cracklib.patch}.
