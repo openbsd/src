@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.74 1998/07/23 08:45:34 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.75 1998/08/06 16:39:09 mickey Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1020,6 +1020,7 @@
 #define	PCI_PRODUCT_TI_PCI1130	0xac12		/* PCI1130 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI1131	0xac15		/* PCI1131 */
 #define	PCI_PRODUCT_TI_PCI1250	0xac16		/* PCI1250 */
+#define	PCI_PRODUCT_TI_PCI1220	0xac17		/* PCI1220 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI2030	0xac20		/* PCI2030 */
 
 /* Toshiba products */
