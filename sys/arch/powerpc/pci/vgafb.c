@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.10 2001/05/25 05:48:54 drahn Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.11 2001/06/24 23:11:24 drahn Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -421,8 +421,16 @@ vgafb_mmap(v, offset, prot)
 	else if (offset >= 0x20000000 && offset < 0x30000000)
 		/* mmiosize... */
 		h = vc->vc_mmioh + (offset - 0x20000000);
-	else
-		return (-1);
+	else {
+		/* XXX - allow mapping of the actual physical
+		 * device address, if the address is read from
+		 * pci bus config space
+		 */
+
+		/* NEEDS TO BE RESTRICTED to valid addresses for this device */
+		 
+		h = offset;
+	}
 
 #ifdef alpha
 	port = (u_int32_t *)(h << 5);
