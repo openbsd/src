@@ -1,4 +1,4 @@
-/*	$OpenBSD: keynote_compat.c,v 1.2 2000/11/19 21:27:13 millert Exp $	*/
+/*	$OpenBSD: keynote_compat.c,v 1.3 2000/12/12 01:49:48 niklas Exp $	*/
 /*	$EOM: keynote_compat.c,v 1.1 2000/10/15 19:18:26 niklas Exp $	*/
 
 /*
@@ -35,13 +35,10 @@
  * updating some kind of version preprocessor symbol we can test.
  * Provide weak functions that can be used if the libkeynote version
  * we link against miss them.
- * XXX - Alpha does not currently support weak functions.
  */
 
-#ifndef __alpha__
 #pragma weak kn_get_string=_kn_get_string
 #pragma weak kn_free_key=_kn_free_key
-#endif
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
