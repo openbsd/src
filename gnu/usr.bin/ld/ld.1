@@ -1,4 +1,4 @@
-.\"
+.\"	$NetBSD: ld.1,v 1.14 1998/02/20 03:12:50 jonathan Exp $
 .\" Copyright (c) 1993 Paul Kranenburg
 .\" All rights reserved.
 .\"
@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: ld.1,v 1.8 1997/06/02 08:50:47 deraadt Exp $
+.\"	$Id: ld.1,v 1.9 1998/02/22 10:02:50 deraadt Exp $
 .\"
 .Dd October 14, 1993
 .Dt LD 1
@@ -221,6 +221,46 @@ Trace the manipulations inflicted on
 Make a
 .Dv ZMAGIC
 output file. This is the default.
+.Sh
+The following long options are exceptions to the normal option syntax
+described above, and are provided for compatibility with later versions of
+GNU 
+.Nm ld ":"
+.Bl -tag -width indent
+.It Fl rpath Ar dir
+Record the given 
+.Ar dir
+within the executable for run-time library
+search, as for 
+.Fl R "."
+This only applies to dynamically linked executables.
+.It Fl shared
+Instructs the linker to build a shared object from the object files rather
+than a normal executable image.
+.It Fl soname Ar library-name
+This option and its 
+.Ar libraryname
+argument are ignored. They are provided for compatibility with versions of
+.Nm ld ","
+which allow the user to specify an internal name and version number
+for dynamically-linked shared libraries.
+.It Fl Fl whole-archive
+A positional qualifier to force loading from archives.
+For each archive mentioned on the commandline after this option,
+include every object file from the archive in the link, rather than
+searching the archive for the required object files.  This is normally used
+when building shared libraries.
+
+The positional syntax is not currently implemented; 
+.Fl Fl whole-archive
+is treated exactly as
+.Fl B Ns Ar forcearchive .
+.It Fl Fl no-whole-archive
+This option  should turn off the effect of a preceding
+.Fl Fl whole-archive 
+for any subsequent archive files on the command line.
+It is currently ignored.
+.El
 .Sh ENVIRONMENT
 .Nm
 utilizes the following environment variables:
