@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.43 2003/08/17 17:08:09 grange Exp $
+.\"	$OpenBSD: printf.3,v 1.44 2004/09/18 19:28:06 otto Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -393,6 +393,47 @@ argument.
 The use of
 .Cm q
 has been deprecated as conversion character.
+.It
+The optional character
+.Cm t ,
+specifying that a following
+.Cm d ,
+.Cm i ,
+.Cm o ,
+.Cm u ,
+.Cm x ,
+or
+.Cm X
+conversion corresponds to a
+.Em ptrdiff_t
+or
+the corresponding unsigned integer type
+argument, or that a following
+.Cm n
+conversion corresponds to a pointer to a
+.Em ptrdiff_t
+argument.
+.It
+The optional character
+.Cm z ,
+specifying that a following
+.Cm d ,
+.Cm i ,
+.Cm o ,
+.Cm u ,
+.Cm x ,
+or
+.Cm X
+conversion corresponds to a
+.Em size_t
+or
+the corresponding signed integer type
+argument, or that a following
+.Cm n
+conversion corresponds to a pointer to a
+signed integer type corresponding to
+.Em size_t
+argument.
 .It
 The character
 .Cm L

@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: vfprintf.c,v 1.22 2004/09/16 20:21:03 otto Exp $";
+static char *rcsid = "$OpenBSD: vfprintf.c,v 1.23 2004/09/18 19:28:06 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -43,6 +43,7 @@ static char *rcsid = "$OpenBSD: vfprintf.c,v 1.22 2004/09/16 20:21:03 otto Exp $
 #include <sys/types.h>
 #include <sys/mman.h>
 
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -150,6 +151,9 @@ static int exponent(char *, int, int);
 #define	SHORTINT	0x040		/* short integer */
 #define	ZEROPAD		0x080		/* zero (as opposed to blank) pad */
 #define FPT		0x100		/* Floating point number */
+#define PTRINT		0x200		/* (unsigned) ptrdiff_t */
+#define SIZEINT		0x400		/* (signed) size_t */
+
 int
 vfprintf(fp, fmt0, ap)
 	FILE *fp;
@@ -247,11 +251,15 @@ vfprintf(fp, fmt0, ap)
 #define	SARG() \
 	(flags&QUADINT ? va_arg(ap, quad_t) : \
 	    flags&LONGINT ? GETARG(long) : \
+	    flags&PTRINT ? GETARG(ptrdiff_t) : \
+	    flags&SIZEINT ? GETARG(ssize_t) : \
 	    flags&SHORTINT ? (long)(short)GETARG(int) : \
 	    (long)GETARG(int))
 #define	UARG() \
 	(flags&QUADINT ? va_arg(ap, u_quad_t) : \
 	    flags&LONGINT ? GETARG(u_long) : \
+	    flags&PTRINT ? GETARG(ptrdiff_t) : /* XXX */ \
+	    flags&SIZEINT ? GETARG(size_t) : \
 	    flags&SHORTINT ? (u_long)(u_short)GETARG(int) : \
 	    (u_long)GETARG(u_int))
 
@@ -434,6 +442,12 @@ reswitch:	switch (ch) {
 		case 'q':
 			flags |= QUADINT;
 			goto rflag;
+		case 't':
+			flags |= PTRINT;
+			goto rflag;
+		case 'z':
+			flags |= SIZEINT;
+			goto rflag;
 		case 'c':
 			*(cp = buf) = GETARG(int);
 			size = 1;
@@ -524,6 +538,10 @@ reswitch:	switch (ch) {
 				*GETARG(long *) = ret;
 			else if (flags & SHORTINT)
 				*GETARG(short *) = ret;
+			else if (flags & PTRINT)
+				*GETARG(ptrdiff_t *) = ret;
+			else if (flags & SIZEINT)
+				*GETARG(ssize_t *) = ret;
 			else
 				*GETARG(int *) = ret;
 			continue;	/* no output */
@@ -784,6 +802,11 @@ error:
 #define T_LONG_DOUBLE	14
 #define TP_CHAR		15
 #define TP_VOID		16
+#define T_PTRINT	17
+#define TP_PTRINT	18
+#define T_SIZEINT	19
+#define T_SSIZEINT	20
+#define TP_SSIZEINT	21
 
 /*
  * Find all arguments when a positional parameter is encountered.  Returns a
@@ -917,6 +940,12 @@ reswitch:	switch (ch) {
 		case 'q':
 			flags |= QUADINT;
 			goto rflag;
+		case 't':
+			flags |= PTRINT;
+			goto rflag;
+		case 'z':
+			flags |= SIZEINT;
+			goto rflag;
 		case 'c':
 			ADDTYPE(T_INT);
 			break;
@@ -925,11 +954,14 @@ reswitch:	switch (ch) {
 			/*FALLTHROUGH*/
 		case 'd':
 		case 'i':
-			if (flags & QUADINT) {
+			if (flags & QUADINT)
 				ADDTYPE(T_QUAD);
-			} else {
+			else if (flags & PTRINT)
+				ADDTYPE(T_PTRINT);
+			else if (flags & SIZEINT)
+				ADDTYPE(T_SSIZEINT);
+			else
 				ADDSARG();
-			}
 			break;
 #ifdef FLOATING_POINT
 		case 'e':
@@ -950,6 +982,10 @@ reswitch:	switch (ch) {
 				ADDTYPE(TP_LONG);
 			else if (flags & SHORTINT)
 				ADDTYPE(TP_SHORT);
+			else if (flags & PTRINT)
+				ADDTYPE(TP_PTRINT);
+			else if (flags & SIZEINT)
+				ADDTYPE(TP_SSIZEINT);
 			else
 				ADDTYPE(TP_INT);
 			continue;	/* no output */
@@ -981,6 +1017,10 @@ reswitch:	switch (ch) {
 		case 'x':
 			if (flags & QUADINT)
 				ADDTYPE(T_U_QUAD);
+			else if (flags & PTRINT)
+				ADDTYPE(T_PTRINT);
+			else if (flags & SIZEINT)
+				ADDTYPE(T_SIZEINT);
 			else
 				ADDUARG();
 			break;
@@ -1057,6 +1097,21 @@ done:
 			break;
 		case TP_VOID:
 			(void) va_arg(ap, void *);
+			break;
+		case T_PTRINT:
+			(void) va_arg(ap, ptrdiff_t);
+			break;
+		case TP_PTRINT:
+			(void) va_arg(ap, ptrdiff_t *);
+			break;
+		case T_SIZEINT:
+			(void) va_arg(ap, size_t);
+			break;
+		case T_SSIZEINT:
+			(void) va_arg(ap, ssize_t);
+			break;
+		case TP_SSIZEINT:
+			(void) va_arg(ap, ssize_t *);
 			break;
 		}
 	}
