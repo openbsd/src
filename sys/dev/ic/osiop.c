@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.19 2004/01/09 21:32:23 brad Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.20 2004/03/15 13:03:44 miod Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -348,7 +348,6 @@ osiop_attach(sc)
 	sc->sc_link.openings = 4;
 	sc->sc_link.adapter_buswidth = OSIOP_NTGT;
 	sc->sc_link.adapter_target = sc->sc_id;
-	sc->sc_link.quirks = ADEV_NODOORLOCK;
 
 	/*
 	 * Now try to attach all the sub devices.
