@@ -95,6 +95,18 @@ Boston, MA 02111-1307, USA.  */
 /* We're not ELF yet */
 #undef HAS_INIT_SECTION
 
-/* can't use dwarf2-style exception handling as we're not elf... */
+/* Special handling, refer to defaults.h for the logic behind it:
+   if INCOMING_RETURN_ADDR_RTX is defined and DWARF2_UNWIND_INFO is
+   not, DWARF2_UNWIND_INFO becomes the default. Logically, this should
+   depend on the output format being/not being ELF. But we can't check
+   that directly. And INCOMING_RETURN_ADDR_RTX was added to alpha.h post
+   2.8.1. The following construct should work for all gcc versions.
+ */
+
+/* We dont't default to dwarf2-style exception handling as we're not 
+   elf... */
+#ifdef INCOMING_RETURN_ADDR_RTX
 #undef DWARF2_UNWIND_INFO
 #define DWARF2_UNWIND_INFO 0
+#endif
+
