@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_map.h,v 1.9 1999/02/26 01:48:51 art Exp $	*/
+/*	$OpenBSD: vm_map.h,v 1.10 2000/03/13 14:29:04 art Exp $	*/
 /*	$NetBSD: vm_map.h,v 1.11 1995/03/26 20:39:10 jtc Exp $	*/
 
 /* 
@@ -112,10 +112,10 @@ union vm_map_object {
 struct vm_map_entry {
 	struct vm_map_entry	*prev;		/* previous entry */
 	struct vm_map_entry	*next;		/* next entry */
-	vm_offset_t		start;		/* start address */
-	vm_offset_t		end;		/* end address */
+	vaddr_t			start;		/* start address */
+	vaddr_t			end;		/* end address */
 	union vm_map_object	object;		/* object I point to */
-	vm_offset_t		offset;		/* offset into object */
+	vsize_t			offset;		/* offset into object */
 #if defined(UVM)
 	/* etype is a bitmap that replaces the following 4 items */
 	int			etype;		/* entry type */
@@ -153,7 +153,7 @@ struct vm_map {
 	lock_data_t		lock;		/* Lock for map data */
 	struct vm_map_entry	header;		/* List of entries */
 	int			nentries;	/* Number of entries */
-	vm_size_t		size;		/* virtual size */
+	vsize_t			size;		/* virtual size */
 #ifndef UVM
 	boolean_t		is_main_map;	/* Am I a main map? */
 #endif
@@ -258,7 +258,7 @@ vm_map_t map;
 #define	MAX_KMAPENT	1000
 #endif
 
-#ifdef _KERNEL
+#if defined(_KERNEL) && !defined(UVM)
 boolean_t	 vm_map_check_protection __P((vm_map_t,
 		    vm_offset_t, vm_offset_t, vm_prot_t));
 int		 vm_map_copy __P((vm_map_t, vm_map_t, vm_offset_t,
@@ -306,5 +306,5 @@ void		 vm_map_simplify_entry __P((vm_map_t, vm_map_entry_t));
 void		 vm_map_startup __P((void));
 int		 vm_map_submap __P((vm_map_t,
 		    vm_offset_t, vm_offset_t, vm_map_t));
-#endif
+#endif /* _KERNEL & !UVM */
 #endif /* _VM_MAP_ */
