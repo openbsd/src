@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.10 2001/12/14 21:44:04 miod Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.11 2001/12/15 11:21:08 miod Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -2641,8 +2641,7 @@ pmap_enter_ptpage(pmap, va)
 			if (mmutype == MMU_68060) {
 				while (stpa < (paddr_t)pmap->pm_stpa +
 				    MACHINE_STSIZE) {
-					pmap_changebit(stpa, 0, ~PG_CCB);
-					pmap_changebit(stpa, PG_CI, ~0);
+					pmap_changebit(stpa, PG_CI, ~PG_CCB);
 					stpa += PAGE_SIZE;
 				}
 				DCIS();	/* XXX */
@@ -2734,10 +2733,8 @@ pmap_enter_ptpage(pmap, va)
 		pmap_enter(pmap, va, ptpa, VM_PROT_READ | VM_PROT_WRITE,
 		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 #if defined(M68060)
-		if (mmutype == MMU_68060) {
-			pmap_changebit(ptpa, 0, ~PG_CCB);
-			pmap_changebit(ptpa, PG_CI, ~0);
-		}
+		if (mmutype == MMU_68060)
+			pmap_changebit(ptpa, PG_CI, ~PG_CCB);
 #endif
 		pmap_update(pmap);
 #ifdef DEBUG
@@ -2793,13 +2790,13 @@ pmap_enter_ptpage(pmap, va)
 			       pmap == pmap_kernel() ? "Kernel" : "User",
 			       va, ptpa, pte, *pte);
 #endif
-		pmap_changebit(ptpa, 0, ~PG_CCB);
 #ifdef M68060
 		if (mmutype == MMU_68060) {
-			pmap_changebit(ptpa, PG_CI, ~0);
+			pmap_changebit(ptpa, PG_CI, ~PG_CCB);
 			DCIS();
-		}
+		} else
 #endif
+			pmap_changebit(ptpa, 0, ~PG_CCB);
 	}
 #endif
 	/*
