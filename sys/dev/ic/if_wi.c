@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.108 2004/03/18 16:16:10 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.109 2004/05/31 19:32:30 mcbride Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -126,7 +126,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.108 2004/03/18 16:16:10 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.109 2004/05/31 19:32:30 mcbride Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -1419,6 +1419,7 @@ wi_setmulti(sc)
 	mcast.wi_type = WI_RID_MCAST_LIST;
 	mcast.wi_len = ((ETHER_ADDR_LEN / 2) * 16) + 1;
 
+allmulti:
 	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
 		wi_write_record(sc, (struct wi_ltv_gen *)&mcast);
 		return;
@@ -1431,10 +1432,10 @@ wi_setmulti(sc)
 			break;
 		}
 
-		/* Punt on ranges. */
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
-		    sizeof(enm->enm_addrlo)) != 0)
-			break;
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			ifp->if_flags |= IFF_ALLMULTI;
+			goto allmulti;
+		}
 		bcopy(enm->enm_addrlo, (char *)&mcast.wi_mcast[i],
 		    ETHER_ADDR_LEN);
 		i++;
