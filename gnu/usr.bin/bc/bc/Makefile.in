@@ -282,10 +282,10 @@ install-exec install-data install uninstall all installdirs \
 mostlyclean-generic distclean-generic clean-generic \
 maintainer-clean-generic clean mostlyclean distclean maintainer-clean
 
+# Was $(LDADD), but depending on -lsomelib, is not working
+$(PROGRAMS): ../lib/libbc.a
 
-$(PROGRAMS): $(LDADD)
-
-scan.o: bc.h
+scan.o: $(srcdir)/bc.h
 global.o: libmath.h
 
 libmath.h: libmath.b
