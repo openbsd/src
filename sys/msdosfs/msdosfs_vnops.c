@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.52 2005/03/02 00:44:12 tom Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.53 2005/03/14 22:31:52 tom Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -1951,7 +1951,7 @@ fileidhash(uint64_t fileid)
 
 	/*
 	 * We now have the original fileid value, as 64-bit value.
-	 * We need to reduce it to 32-bits, with the toe bit set.
+	 * We need to reduce it to 32-bits, with the top bit set.
 	 */
 	fileid ^= ((c1 ^ fileid) >> 32);
 	fileid *= c1;
