@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.39 2000/11/26 02:30:30 art Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.40 2001/01/02 17:27:29 angelos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -846,11 +846,11 @@ domem()
 		if (first) {
 			(void)printf("Memory statistics by bucket size\n");
 			(void)printf(
-		"    Size   In Use   Free   Requests  HighWater  Couldfree\n");
+		"    Size   In Use   Free     Requests  HighWater  Couldfree\n");
 			first = 0;
 		}
 		size = 1 << i;
-		(void)printf("%8d %8ld %6ld %10ld %7ld %10ld\n", size,
+		(void)printf("%8d %8ld %6ld %12lu %7ld %10ld\n", size,
 			kp->kb_total - kp->kb_totalfree,
 			kp->kb_totalfree, kp->kb_calls,
 			kp->kb_highwat, kp->kb_couldfree);
