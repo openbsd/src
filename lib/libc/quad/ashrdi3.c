@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ashrdi3.c,v 1.3 2003/06/02 20:18:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: ashrdi3.c,v 1.4 2004/04/27 17:46:46 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "quad.h"
@@ -47,24 +47,28 @@ __ashrdi3(a, shift)
 {
 	union uu aa;
 
+	if (shift == 0)
+		return(a);
 	aa.q = a;
-	if (shift >= LONG_BITS) {
-		long s;
+	if (shift >= INT_BITS) {
+		int s;
 
 		/*
 		 * Smear bits rightward using the machine's right-shift
 		 * method, whether that is sign extension or zero fill,
 		 * to get the `sign word' s.  Note that shifting by
-		 * LONG_BITS is undefined, so we shift (LONG_BITS-1),
+		 * INT_BITS is undefined, so we shift (INT_BITS-1),
 		 * then 1 more, to get our answer.
 		 */
-		s = (aa.sl[H] >> (LONG_BITS - 1)) >> 1;
-		aa.ul[L] = shift >= QUAD_BITS ? s :
-		    aa.sl[H] >> (shift - LONG_BITS);
+		/* LINTED inherits machine dependency */
+		s = (aa.sl[H] >> (INT_BITS - 1)) >> 1;
+		/* LINTED inherits machine dependency*/
+		aa.ul[L] = aa.sl[H] >> (shift - INT_BITS);
 		aa.ul[H] = s;
-	} else if (shift > 0) {
+	} else {
 		aa.ul[L] = (aa.ul[L] >> shift) |
-		    (aa.ul[H] << (LONG_BITS - shift));
+		    (aa.ul[H] << (INT_BITS - shift));
+		/* LINTED inherits machine dependency */
 		aa.sl[H] >>= shift;
 	}
 	return (aa.q);

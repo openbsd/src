@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: floatdidf.c,v 1.3 2003/06/02 20:18:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: floatdidf.c,v 1.4 2004/04/27 17:46:46 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "quad.h"
@@ -58,12 +58,12 @@ __floatdidf(x)
 
 	/*
 	 * Now u.ul[H] has the factor of 2^32 (or whatever) and u.ul[L]
-	 * has the units.  Ideally we could just set d, add LONG_BITS to
+	 * has the units.  Ideally we could just set d, add INT_BITS to
 	 * its exponent, and then add the units, but this is portable
 	 * code and does not know how to get at an exponent.  Machine-
 	 * specific code may be able to do this more efficiently.
 	 */
-	d = (double)u.ul[H] * (((long)1 << (LONG_BITS - 2)) * 4.0);
+	d = (double)u.ul[H] * (((int)1 << (INT_BITS - 2)) * 4.0);
 	d += u.ul[L];
 
 	return (neg ? -d : d);

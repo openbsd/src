@@ -32,12 +32,12 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: fixunssfdi.c,v 1.3 2003/06/02 20:18:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: fixunssfdi.c,v 1.4 2004/04/27 17:46:46 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "quad.h"
 
-#define	ONE_FOURTH	((long)1 << (LONG_BITS - 2))
+#define	ONE_FOURTH	((int)1 << (INT_BITS - 2))
 #define	ONE_HALF	(ONE_FOURTH * 2.0)
 #define	ONE		(ONE_FOURTH * 4.0)
 
@@ -77,20 +77,20 @@ __fixunssfdi(float f)
 	 * between x and this is the bottom part (this may introduce
 	 * a few fuzzy bits, but what the heck).  With any luck this
 	 * difference will be nonnegative: x should wind up in the
-	 * range [0..ULONG_MAX].  For paranoia, we assume [LONG_MIN..
-	 * 2*ULONG_MAX] instead.
+	 * range [0..UINT_MAX].  For paranoia, we assume [INT_MIN..
+	 * 2*UINT_MAX] instead.
 	 */
-	t.ul[H] = (unsigned long)toppart;
+	t.ul[H] = (unsigned int)toppart;
 	t.ul[L] = 0;
 	x -= (double)t.uq;
 	if (x < 0) {
 		t.ul[H]--;
-		x += ULONG_MAX;
+		x += UINT_MAX;
 	}
-	if (x > ULONG_MAX) {
+	if (x > UINT_MAX) {
 		t.ul[H]++;
-		x -= ULONG_MAX;
+		x -= UINT_MAX;
 	}
-	t.ul[L] = (u_long)x;
+	t.ul[L] = (u_int)x;
 	return (t.uq);
 }

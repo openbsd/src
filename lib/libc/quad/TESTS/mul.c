@@ -38,14 +38,14 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: mul.c,v 1.3 2003/06/02 20:18:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: mul.c,v 1.4 2004/04/27 17:46:47 otto Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 
 main()
 {
-	union { long long q; unsigned long v[2]; } a, b, m;
+	union { long long q; unsigned int v[2]; } a, b, m;
 	char buf[300];
 	extern long long __muldi3(long long, long long);
 
@@ -53,17 +53,17 @@ main()
 		printf("> ");
 		if (fgets(buf, sizeof buf, stdin) == NULL)
 			break;
-		if (sscanf(buf, "%lu:%lu %lu:%lu",
+		if (sscanf(buf, "%u:%u %u:%u",
 			    &a.v[0], &a.v[1], &b.v[0], &b.v[1]) != 4 &&
-		    sscanf(buf, "0x%lx:%lx 0x%lx:%lx",
+		    sscanf(buf, "0x%x:%x 0x%x:%x",
 			    &a.v[0], &a.v[1], &b.v[0], &b.v[1]) != 4) {
 			printf("eh?\n");
 			continue;
 		}
 		m.q = __muldi3(a.q, b.q);
-		printf("%lx:%lx * %lx:%lx => %lx:%lx\n",
+		printf("%x:%x * %x:%x => %x:%x\n",
 		    a.v[0], a.v[1], b.v[0], b.v[1], m.v[0], m.v[1]);
-		printf("  = %lX%08lX * %lX%08lX => %lX%08lX\n",
+		printf("  = %X%08X * %X%08X => %X%08X\n",
 		    a.v[0], a.v[1], b.v[0], b.v[1], m.v[0], m.v[1]);
 	}
 	exit(0);

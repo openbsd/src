@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: lshrdi3.c,v 1.3 2003/06/02 20:18:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: lshrdi3.c,v 1.4 2004/04/27 17:46:46 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "quad.h"
@@ -47,14 +47,15 @@ __lshrdi3(a, shift)
 {
 	union uu aa;
 
+	if (shift == 0)
+		return(a);
 	aa.q = a;
-	if (shift >= LONG_BITS) {
-		aa.ul[L] = shift >= QUAD_BITS ? 0 :
-		    aa.ul[H] >> (shift - LONG_BITS);
+	if (shift >= INT_BITS) {
+		aa.ul[L] = aa.ul[H] >> (shift - INT_BITS);
 		aa.ul[H] = 0;
-	} else if (shift > 0) {
+	} else {
 		aa.ul[L] = (aa.ul[L] >> shift) |
-		    (aa.ul[H] << (LONG_BITS - shift));
+		    (aa.ul[H] << (INT_BITS - shift));
 		aa.ul[H] >>= shift;
 	}
 	return (aa.q);
