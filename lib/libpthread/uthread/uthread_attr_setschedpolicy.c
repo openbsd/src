@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_attr_setschedpolicy.c,v 1.2 1999/11/25 07:01:32 d Exp $	*/
+/*	$OpenBSD: uthread_attr_setschedpolicy.c,v 1.3 2001/08/09 12:04:14 fgsch Exp $	*/
 /*
  * Copyright (c) 1998 Daniel Eischen <eischen@vigrid.com>.
  * All rights reserved.
@@ -42,12 +42,17 @@ pthread_attr_setschedpolicy(pthread_attr_t *attr, int policy)
 {
 	int ret = 0;
 
-	if ((attr == NULL) || (*attr == NULL) || (policy < SCHED_FIFO) ||
-	    (policy > SCHED_RR))
+	if ((attr == NULL) || (*attr == NULL))
 		ret = EINVAL;
-	else
+	else if ((policy < SCHED_FIFO) || (policy > SCHED_RR)) {
+#ifdef NOT_YET
+		ret = ENOTSUP;
+#else
+		ret = EOPNOTSUPP;
+#endif
+	} else
 		(*attr)->sched_policy = policy;
 
-	return(ret);
+	return (ret);
 }
 #endif
