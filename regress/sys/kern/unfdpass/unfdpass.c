@@ -1,4 +1,4 @@
-/*	$OpenBSD: unfdpass.c,v 1.4 2002/02/09 13:56:29 art Exp $	*/
+/*	$OpenBSD: unfdpass.c,v 1.5 2002/02/11 04:57:55 art Exp $	*/
 /*	$NetBSD: unfdpass.c,v 1.3 1998/06/24 23:51:30 thorpej Exp $	*/
 
 /*-
@@ -52,6 +52,7 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -60,16 +61,6 @@
 int	main __P((int, char *[]));
 void	child __P((void));
 void	catch_sigchld __P((int));
-
-struct fdcmessage {
-	struct cmsghdr cm;
-	int files[2];
-};
-
-struct crcmessage {
-	struct cmsghdr cm;
-	char creds[SOCKCREDSIZE(NGROUPS)];
-};
 
 /* ARGSUSED */
 int
@@ -81,16 +72,18 @@ main(argc, argv)
 	int listensock, sock, fd, i, status;
 	char fname[16], buf[64];
 	struct cmsghdr *cmp;
-	struct {
-		struct fdcmessage fdcm;
-		struct crcmessage crcm;
-	} message;
 	int *files = NULL;
 	struct sockcred *sc = NULL;
 	struct sockaddr_un sun, csun;
 	int csunlen;
 	fd_set oob;
 	pid_t pid;
+	void *message;
+	int msglen;
+
+	msglen = CMSG_LEN(MAX(sizeof(int) * 2, SOCKCREDSIZE(NGROUPS)));
+	if ((message = malloc(msglen)) == NULL)
+		err(1, "malloc");
 
 	/*
 	 * Create the test files.
@@ -161,8 +154,8 @@ main(argc, argv)
 	 * Grab the descriptors and credentials passed to us.
 	 */
 	(void) memset(&msg, 0, sizeof(msg));
-	msg.msg_control = (caddr_t) &message;
-	msg.msg_controllen = sizeof(message);
+	msg.msg_control = (caddr_t) message;
+	msg.msg_controllen = msglen;
 
 	if (recvmsg(sock, &msg, 0) < 0)
 		err(1, "recvmsg");
@@ -184,7 +177,7 @@ main(argc, argv)
 
 		switch (cmp->cmsg_type) {
 		case SCM_RIGHTS:
-			if (cmp->cmsg_len != sizeof(message.fdcm))
+			if (cmp->cmsg_len != CMSG_LEN(sizeof(int) * 2))
 				errx(1, "bad fd control message length %d",
 				    cmp->cmsg_len);
 
@@ -256,9 +249,14 @@ child()
 	struct msghdr msg;
 	char fname[16], buf[64];
 	struct cmsghdr *cmp;
-	struct fdcmessage fdcm;
 	int i, fd, sock;
 	struct sockaddr_un sun;
+	struct cmsghdr *cmpf;
+	int *files;
+
+	if ((cmpf = malloc(CMSG_LEN(sizeof(int) * 2))) == NULL)
+		err(1, "malloc");
+	files = (int *)CMSG_DATA(cmpf);
 
 	/*
 	 * Create socket and connect to the receiver.
@@ -281,15 +279,15 @@ child()
 		(void) sprintf(fname, "file%d", i + 1);
 		if ((fd = open(fname, O_RDONLY, 0666)) == -1)
 			err(1, "child open %s", fname);
-		fdcm.files[i] = fd;
+		files[i] = fd;
 	}
 
 	(void) memset(&msg, 0, sizeof(msg));
-	msg.msg_control = (caddr_t) &fdcm;
-	msg.msg_controllen = sizeof(fdcm);
+	msg.msg_control = (caddr_t)cmpf;
+	msg.msg_controllen = CMSG_LEN(sizeof(int) * 2);
 
 	cmp = CMSG_FIRSTHDR(&msg);
-	cmp->cmsg_len = sizeof(fdcm);
+	cmp->cmsg_len = CMSG_LEN(sizeof(int) * 2);
 	cmp->cmsg_level = SOL_SOCKET;
 	cmp->cmsg_type = SCM_RIGHTS;
 
