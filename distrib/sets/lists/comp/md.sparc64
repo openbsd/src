@@ -23,7 +23,6 @@
 ./usr/include/sparc64/ctlreg.h
 ./usr/include/sparc64/db_machdep.h
 ./usr/include/sparc64/disklabel.h
-./usr/include/sparc64/dlfcn.h
 ./usr/include/sparc64/eeprom.h
 ./usr/include/sparc64/elf_abi.h
 ./usr/include/sparc64/endian.h
@@ -40,7 +39,6 @@
 ./usr/include/sparc64/intr.h
 ./usr/include/sparc64/kcore.h
 ./usr/include/sparc64/limits.h
-./usr/include/sparc64/link.h
 ./usr/include/sparc64/loadfile_machdep.h
 ./usr/include/sparc64/netbsd_machdep.h
 ./usr/include/sparc64/openfirm.h

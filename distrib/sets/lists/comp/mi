@@ -4813,6 +4813,7 @@
 ./usr/share/man/cat9/kthread_create.0
 ./usr/share/man/cat9/kthread_create_deferred.0
 ./usr/share/man/cat9/kthread_exit.0
+./usr/share/man/cat9/lock.0
 ./usr/share/man/cat9/log.0
 ./usr/share/man/cat9/m_adj.0
 ./usr/share/man/cat9/m_apply.0
