@@ -120,7 +120,7 @@ char *cmdfile;
 
 	printf("What would you like to call the saved version?\n");
 	for (c=fname;; c++)
-		if ((*c=getchar())=='\n') break;
+		if ((*c=getchar())=='\n' || *c == EOF) break;
 	*c=0;
 	if (save(fname) != 0) return;           /* Save failed */
 	printf("To resume, say \"adventure %s\".\n", fname);

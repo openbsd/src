@@ -83,6 +83,9 @@ char **wrd1,**wrd2;                     /* no prompt, usually           */
 				*s=0;
 				return;
 			}
+		    case EOF:
+			printf("user closed input stream, quitting...\n");
+			exit(0);
 		    default:
 			if (++numch>=MAXSTR)    /* string too long      */
 			{       printf("Give me a break!!\n");
@@ -99,10 +102,14 @@ char **wrd1,**wrd2;                     /* no prompt, usually           */
 confirm(mesg)                           /* confirm irreversible action  */
 char *mesg;
 {       register int result;
+	register int c;
 	printf("%s",mesg);              /* tell him what he did         */
-	if (getchar()=='y')             /* was his first letter a 'y'?  */
+	if ((c = getchar())=='y')             /* was his first letter a 'y'?  */
 		result=1;
-	else    result=0;
+	else if (c == EOF) {
+		printf("user closed input stream, quitting...\n");
+		exit(0);
+	} else result=0;
 	FLUSHLINE;
 	return(result);
 }
@@ -110,12 +117,16 @@ char *mesg;
 yes(x,y,z)                              /* confirm with rspeak          */
 int x,y,z;
 {       register int result;
-	register char ch;
+	register int ch;
 	for (;;)
 	{       rspeak(x);                     /* tell him what we want*/
 		if ((ch=getchar())=='y')
 			result=TRUE;
 		else if (ch=='n') result=FALSE;
+		else if (ch == EOF) {
+			printf("user closed input stream, quitting...\n");
+			exit(0);
+		}
 		FLUSHLINE;
 		if (ch=='y'|| ch=='n') break;
 		printf("Please answer the question.\n");
@@ -134,6 +145,10 @@ int x,y,z;
 		if ((ch=getchar())=='y')
 			result=TRUE;
 		else if (ch=='n') result=FALSE;
+		else if (ch == EOF) {
+			printf("user closed input stream, quitting...\n");
+			exit(0);
+		}
 		FLUSHLINE;
 		if (ch=='y'|| ch=='n') break;
 		printf("Please answer the question.\n");
