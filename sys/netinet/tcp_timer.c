@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.18 2000/12/11 19:12:22 provos Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.19 2000/12/12 08:12:04 provos Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -247,11 +247,15 @@ tcp_timers(tp, timer)
 		 * value here...
 		 */
 		if (ip_mtudisc && tp->t_inpcb &&
+		    TCPS_HAVEESTABLISHED(tp->t_state) &&
 		    tp->t_rxtshift > TCP_MAXRXTSHIFT / 6) {
 			struct inpcb *inp = tp->t_inpcb;
 			struct rtentry *rt = NULL;
 			struct sockaddr_in sin;
 
+			/* No data to send means path mtu is not a problem */
+			if (!inp->inp_socket->so_snd.sb_cc)
+				goto out;
 
 			rt = in_pcbrtentry(inp);
 			/* Check if path MTU discovery is disabled already */
