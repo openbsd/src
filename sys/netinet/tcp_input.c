@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.42 1999/07/17 23:41:46 provos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.43 1999/07/18 16:33:08 deraadt Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -631,7 +631,7 @@ findpcb:
 			    inp->inp_options = ip_srcroute();
 #if INET6
 			  }
-			};
+			}
 #endif /* INET6 */
 			in_pcbrehash(inp);
 			tp = intotcpcb(inp);
