@@ -1,4 +1,4 @@
-/*	$OpenBSD: wresize.c,v 1.5 1998/08/14 21:11:45 millert Exp $	*/
+/*	$OpenBSD: wresize.c,v 1.6 1998/08/15 18:44:47 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -47,10 +47,7 @@ static void *doalloc(void *p, size_t n)
 {
 	void *np;
 
-	if (p == 0)
-		np = malloc(n);
-	else
-		np = realloc(p, n);
+	np = p ? realloc(p, n) : malloc(n);
 	if (np == 0 && p != 0)
 		free(p);
 	return np;
