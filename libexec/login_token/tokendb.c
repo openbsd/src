@@ -1,4 +1,4 @@
-/*	$OpenBSD: tokendb.c,v 1.5 2002/11/21 22:00:49 millert Exp $	*/
+/*	$OpenBSD: tokendb.c,v 1.6 2002/11/21 22:17:41 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995 Migration Associates Corp. All Rights Reserved
@@ -196,7 +196,7 @@ tokendb_open(void)
 			must_set_perms++;
 #endif
 		}
-		if ((statb.st_mode & 0777) != 0620) {
+		if ((statb.st_mode & 0777) != 0640) {
 #ifdef PARANOID
 			printf("Authentication disabled\n");
 			fflush(stdout);
@@ -210,7 +210,7 @@ tokendb_open(void)
 		}
 	}
 	if (!(tokendb =
-	    dbopen(tt->db, O_CREAT | O_RDWR, 0620, DB_BTREE, 0)) )
+	    dbopen(tt->db, O_CREAT | O_RDWR, 0640, DB_BTREE, 0)) )
 		return (-1);
 
 	if (flock((tokendb->fd)(tokendb), LOCK_SH)) {
@@ -220,7 +220,7 @@ tokendb_open(void)
 	if (must_set_perms && fchown((tokendb->fd)(tokendb), 0, grp->gr_gid))
 		syslog(LOG_INFO,
 		    "Can't set owner/group of %s errno=%m", tt->db);
-	if (must_set_mode && fchmod((tokendb->fd)(tokendb), 0620))
+	if (must_set_mode && fchmod((tokendb->fd)(tokendb), 0640))
 		syslog(LOG_INFO,
 		    "Can't set mode of %s errno=%m", tt->db);
 
