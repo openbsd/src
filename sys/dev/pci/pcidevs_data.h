@@ -3435,6 +3435,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "PCI1221 PCI-CardBus",
 	},
 	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1450,
+	    0,
+	    "Texas Instruments",
+	    "PCI1450 PCI-CardBus",
+	},
+	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1225,
 	    0,
 	    "Texas Instruments",
@@ -3453,10 +3459,28 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "PCI1211 PCI-CardBus",
 	},
 	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1251B,
+	    0,
+	    "Texas Instruments",
+	    "PCI1251B PCI-CardBus",
+	},
+	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI2030,
 	    0,
 	    "Texas Instruments",
 	    "PCI2030 PCI-CardBus",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1420,
+	    0,
+	    "Texas Instruments",
+	    "PCI1420 PCI-CardBus",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1451,
+	    0,
+	    "Texas Instruments",
+	    "PCI1451 PCI-CardBus",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PERMEDIA,
@@ -3505,6 +3529,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Toshiba (2nd ID)",
 	    "ToPIC97 PCI-CardBus",
+	},
+	{
+	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ToPIC100,
+	    0,
+	    "Toshiba (2nd ID)",
+	    "ToPIC100 PCI-CardBus",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_TFIRO,
