@@ -1,8 +1,9 @@
-/*	$OpenBSD: types.h,v 1.2 2004/02/03 12:09:47 mickey Exp $	*/
-
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * William Jolitz.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,11 +13,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -31,50 +28,27 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)types.h	7.5 (Berkeley) 3/9/91
  */
 
-#ifndef	_MACHTYPES_H_
-#define	_MACHTYPES_H_
+#include <machine/asm.h>
 
-#include <sys/cdefs.h>
-
-#if defined(_KERNEL)
-typedef struct label_t {
-	long val[8];
-} label_t;
+#if defined(LIBC_SCCS)
+	.text
+	.asciz "$OpenBSD: alloca.S,v 1.1 2004/02/03 12:09:47 mickey Exp $"
 #endif
 
-typedef unsigned long	paddr_t;
-typedef unsigned long	psize_t;
-typedef unsigned long	vaddr_t;
-typedef unsigned long	vsize_t;
+/* like alloc, but automatic free in return */
 
-#define	__BIT_TYPES_DEFINED__
-typedef __signed char		int8_t;
-typedef	unsigned char		u_int8_t;
-typedef	unsigned char		uint8_t;
-typedef	short			int16_t;
-typedef	unsigned short		u_int16_t;
-typedef	unsigned short		uint16_t;
-typedef	int			int32_t;
-typedef	unsigned int		u_int32_t;
-typedef	unsigned int		uint32_t;
-typedef	long long		int64_t;
-typedef	unsigned long long	u_int64_t;
-typedef	unsigned long long	uint64_t;
-
-typedef long			register_t;
-
-/* The amd64 does not have strict alignment requirements. */
-#define	__NO_STRICT_ALIGNMENT
-
-#define	__HAVE_NWSCONS
-#define	__HAVE_CPU_COUNTER
-#define	__HAVE_SYSCALL_INTERN
-#define	__HAVE_MINIMAL_EMUL
-#define __HAVE_GENERIC_SOFT_INTERRUPTS
-#define __HAVE_CPU_MAXPROC
-
-#endif	/* _MACHTYPES_H_ */
+ENTRY(alloca)
+	popl	%edx		/*  pop return addr */
+	popl	%eax		/*  pop amount to allocate */
+	movl	%esp,%ecx
+	addl	$3,%eax		/*  round up to next word */
+	andl	$-4,%eax
+	subl	%eax,%esp
+	movl	%esp,%eax	/* base of newly allocated space */
+	pushl	8(%ecx)		/* copy possible saved registers */
+	pushl	4(%ecx)
+	pushl	0(%ecx)
+	pushl	%eax		/* dummy to pop at callsite */
+	jmp	*%edx		/* "return" */

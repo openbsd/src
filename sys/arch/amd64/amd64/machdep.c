@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.2 2004/01/29 13:21:10 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.3 2004/02/03 12:09:47 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -120,7 +120,6 @@
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/specialreg.h>
-#include <machine/bootinfo.h>
 #include <machine/fpu.h>
 #include <machine/mtrr.h>
 #include <machine/mpbiosvar.h>
@@ -143,9 +142,6 @@
 char machine[] = "amd64";		/* cpu "architecture" */
 char machine_arch[] = "x86_64";		/* machine == machine_arch */
 
-char bootinfo[BOOTINFO_MAXSIZE];
-
-struct bi_devmatch *x86_64_alldisks = NULL;
 int x86_64_ndisks = 0;
 
 #ifdef CPURESET_DELAY
@@ -541,7 +537,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	struct proc *p;
 {
 	dev_t consdev;
-	struct btinfo_bootpath *bibp;
 
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
@@ -556,6 +551,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
 		    sizeof consdev));
 
+#ifdef notyet
 	case CPU_BOOTED_KERNEL:
 	        bibp = lookup_bootinfo(BTINFO_BOOTPATH);
 	        if(!bibp)
@@ -567,6 +563,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_rdstruct(oldp, oldlenp, newp, x86_64_alldisks,
 		    sizeof (struct disklist) +
 			(x86_64_ndisks - 1) * sizeof (struct nativedisk_info)));
+#endif
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -1174,10 +1171,6 @@ init_x86_64(first_avail)
 	int x, first16q, ist;
 	u_int64_t seg_start, seg_end;
 	u_int64_t seg_start1, seg_end1;
-#if !defined(REALEXTMEM) && !defined(REALBASEMEM)
-	struct btinfo_memmap *bim;
-	u_int64_t addr, size, io_end;
-#endif
 
 	cpu_init_msrs(&cpu_info_primary);
 
@@ -1213,104 +1206,6 @@ init_x86_64(first_avail)
 	if (avail_start != PAGE_SIZE)
 		pmap_prealloc_lowmem_ptps();
 
-#if !defined(REALBASEMEM) && !defined(REALEXTMEM)
-
-	/*
-	 * Check to see if we have a memory map from the BIOS (passed
-	 * to us by the boot program.
-	 */
-	bim = lookup_bootinfo(BTINFO_MEMMAP);
-	if (bim != NULL && bim->num > 0) {
-#if DEBUG_MEMLOAD
-		printf("BIOS MEMORY MAP (%d ENTRIES):\n", bim->num);
-#endif
-		for (x = 0; x < bim->num; x++) {
-			addr = bim->entry[x].addr;
-			size = bim->entry[x].size;
-#if DEBUG_MEMLOAD
-			printf("    addr 0x%lx  size 0x%lx  type 0x%x\n",
-			    addr, size, bim->entry[x].type);
-#endif
-
-			/*
-			 * If the segment is not memory, skip it.
-			 */
-			switch (bim->entry[x].type) {
-			case BIM_Memory:
-			case BIM_ACPI:
-			case BIM_NVS:
-				break;
-			default:
-				continue;
-			}
-
-			seg_start = addr;
-			seg_end = addr + size;
-
-			if (seg_end > 0x100000000000ULL) {
-				printf("WARNING: skipping large "
-				    "memory map entry: "
-				    "0x%lx/0x%lx/0x%x\n",
-				    addr, size,
-				    bim->entry[x].type);
-				continue;
-			}
-
-			/*
-			 * Allocate the physical addresses used by RAM
-			 * from the iomem extent map.  This is done before
-			 * the addresses are page rounded just to make
-			 * sure we get them all.
-			 */
-			if (seg_start < 0x100000000UL) {
-				if (seg_end > 0x100000000UL)
-					io_end = 0x100000000UL;
-				else
-					io_end = seg_end;
-				if (extent_alloc_region(iomem_ex, seg_start,
-				    io_end - seg_start, EX_NOWAIT)) {
-					/* XXX What should we do? */
-					printf("WARNING: CAN'T ALLOCATE "
-					    "MEMORY SEGMENT %d "
-					    "(0x%lx/0x%lx/0l%x) FROM "
-					    "IOMEM EXTENT MAP!\n",
-					    x, seg_start, io_end - seg_start,
-					    bim->entry[x].type);
-				}
-			}
-
-			/*
-			 * If it's not free memory, skip it.
-			 */
-			if (bim->entry[x].type != BIM_Memory)
-				continue;
-
-			/* XXX XXX XXX */
-			if (mem_cluster_cnt >= VM_PHYSSEG_MAX)
-				panic("init386: too many memory segments");
-
-			seg_start = round_page(seg_start);
-			seg_end = trunc_page(seg_end);
-
-			if (seg_start == seg_end)
-				continue;
-
-			mem_clusters[mem_cluster_cnt].start = seg_start;
-			mem_clusters[mem_cluster_cnt].size =
-			    seg_end - seg_start;
-
-			if (avail_end < seg_end)
-				avail_end = seg_end;
-			physmem += atop(mem_clusters[mem_cluster_cnt].size);
-			mem_cluster_cnt++;
-		}
-	}
-#endif	/* ! REALBASEMEM && ! REALEXTMEM */
-
-	/*
-	 * If the loop above didn't find any valid segment, fall back to
-	 * former code.
-	 */
 	if (mem_cluster_cnt == 0) {
 		/*
 		 * Allocate the physical addresses used by RAM from the iomem
@@ -1631,20 +1526,8 @@ init_x86_64(first_avail)
 	cpu_init_idt();
 
 #ifdef DDB
-	{
-		extern caddr_t esym;
-		struct btinfo_symtab *symtab;
-
-		symtab = lookup_bootinfo(BTINFO_SYMTAB);
-		if (symtab) {
-			ssym = (char *)((vaddr_t)symtab->ssym + KERNBASE);
-			esym = (caddr_t)((vaddr_t)symtab->esym + KERNBASE);
-		}
-
-		db_machine_init();
-		ddb_init();
-	}
-
+	db_machine_init();
+	ddb_init();
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
@@ -1665,30 +1548,6 @@ init_x86_64(first_avail)
         /* Make sure maxproc is sane */ 
         if (maxproc > cpu_maxproc())
                 maxproc = cpu_maxproc();
-}
-
-void *
-lookup_bootinfo(type)
-	int type;
-{
-	struct btinfo_common *help;
-	int n = *(int*)bootinfo;
-	help = (struct btinfo_common *)(bootinfo + sizeof(int));
-	while(n--) {
-		if(help->type == type) {
-#if 0
-        		if (type == BTINFO_CONSOLE) {
-				struct btinfo_console *consinfo = (struct btinfo_console *)help;
-				snprintf(consinfo->devname, 16, "com");
-			        consinfo->speed = 9600;
-			        consinfo->addr = 0x3f8; 
-			}
-#endif
-			return(help);
-		}
-		help = (struct btinfo_common *)((char*)help + help->len);
-	}
-	return(0);
 }
 
 void

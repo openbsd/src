@@ -1,9 +1,8 @@
-/*	$OpenBSD: consinit.c,v 1.2 2004/02/03 12:09:47 mickey Exp $	*/
-/*	$NetBSD: consinit.c,v 1.2 2003/03/02 18:27:14 fvdl Exp $	*/
+/*	$OpenBSD: biosprobe.c,v 1.1 2004/02/03 12:09:47 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998
- *	Matthias Drochner.  All rights reserved.
+ * Copyright (c) 2002 Tobias Weingartner
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -24,37 +23,58 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/device.h>
-#include <machine/bus.h>
-
+#include <machine/biosvar.h>
+#include <machine/pio.h>
 #include <dev/cons.h>
+#include <sys/disklabel.h>
+#include "disk.h"
+#include "libsa.h"
+#include "biosdev.h"
 
-void
-consinit()
+
+void *
+getSYSCONFaddr(void)
 {
-	static int initted;
+ 	u_int32_t status;
+	u_int8_t *vers;
 
-	if (initted)
-		return;
-	initted = 1;
-	cninit();
+ 	__asm __volatile(DOINT(0x15) "\n\t"
+			"setc %%al\n\t"
+			: "=a" (status)
+			: "0" (0xC000)
+			: "%ebx", "%ecx", "%edx", "%esi", "%edi", "cc");
+
+	/* On failure we go for a NULL */
+	if(status)
+		return(NULL);
+
+	/* Calculate where the version bytes are */
+	vers = (void*)((BIOS_regs.biosr_es << 4) | BIOS_regs.biosr_bx);
+	return(vers);
 }
 
-#if (NPCKBC > 0) && (NPCKBD == 0)
-/*
- * glue code to support old console code with the
- * mi keyboard controller driver
- */
-int
-pckbc_machdep_cnattach(kbctag, kbcslot)
-	pckbc_tag_t kbctag;
-	pckbc_slot_t kbcslot;
+void *
+getEBDAaddr(void)
 {
-	return (ENXIO);
+	u_int32_t status;
+	u_int8_t *info;
+
+	info = getSYSCONFaddr();
+	if(!info) return(NULL);
+
+	__asm __volatile(DOINT(0x15) "\n\t"
+			"setc %%al"
+			: "=a" (status)
+			: "0" (0xC100)
+			: "%ebx", "%ecx", "%edx", "%esi", "%edi", "cc");
+
+	if(status) return(NULL);
+
+	info = (void *)(BIOS_regs.biosr_es << 4);
+
+	return(info);
 }
-#endif
+

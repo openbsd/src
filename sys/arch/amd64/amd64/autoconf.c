@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.1 2004/01/28 01:39:38 mickey Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.2 2004/02/03 12:09:47 mickey Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $	*/
 
 /*-
@@ -63,7 +63,6 @@
 
 #include <machine/pte.h>
 #include <machine/cpu.h>
-#include <machine/bootinfo.h>
 
 #include <dev/cons.h>
 
@@ -100,6 +99,7 @@ extern int x86_64_ndisks;
 int	cold = 1;	/* if 1, still working on cold-start */
 struct device *booted_device;
 int booted_partition;
+dev_t bootdev;
 
 /*
  * Determine i/o configuration for a machine.
@@ -139,11 +139,8 @@ cpu_configure(void)
 void
 diskconf(void)
 {
-printf("setroot\n");
 	setroot();
-printf("swapconf\n");
 	swapconf();
-printf("dumpconf\n");
 	dumpconf();
 }
 
@@ -498,77 +495,6 @@ getstr(cp, size)
 			*lp++ = c;
 		}
 	}
-}
-
-#include "pci.h"
-
-#include <dev/isa/isavar.h>
-#if NPCI > 0
-#include <dev/pci/pcivar.h>
-#endif
-
-void
-device_register(struct device *dev, void *aux)
-{
-	/*
-	 * Handle network interfaces here, the attachment information is
-	 * not available driver independantly later.
-	 * For disks, there is nothing useful available at attach time.
-	 */
-	if (dev->dv_class == DV_IFNET) {
-		struct btinfo_netif *bin = lookup_bootinfo(BTINFO_NETIF);
-		if (bin == NULL)
-			return;
-
-		/*
-		 * We don't check the driver name against the device name
-		 * passed by the boot ROM. The ROM should stay usable
-		 * if the driver gets obsoleted.
-		 * The physical attachment information (checked below)
-		 * must be sufficient to identify the device.
-		 */
-
-		if (bin->bus == BI_BUS_ISA &&
-		    !strcmp(dev->dv_parent->dv_cfdata->cf_driver->cd_name,
-		    "isa")) {
-			struct isa_attach_args *iaa = aux;
-
-			/* compare IO base address */
-			/* XXXJRT what about multiple I/O addrs? */
-			if (iaa->ipa_nio > 0 &&
-			    bin->addr.iobase == iaa->ipa_io[0].base)
-				goto found;
-		}
-#if NPCI > 0
-		if (bin->bus == BI_BUS_PCI &&
-		    !strcmp(dev->dv_parent->dv_cfdata->cf_driver->cd_name,
-		    "pci")) {
-			struct pci_attach_args *paa = aux;
-			int b, d, f;
-
-			/*
-			 * Calculate BIOS representation of:
-			 *
-			 *	<bus,device,function>
-			 *
-			 * and compare.
-			 */
-			pci_decompose_tag(paa->pa_pc, paa->pa_tag, &b, &d, &f);
-			if (bin->addr.tag == ((b << 8) | (d << 3) | f))
-				goto found;
-		}
-#endif
-	}
-	return;
-
-found:
-	if (booted_device) {
-		/* XXX should be a "panic()" */
-		printf("warning: double match for boot device (%s, %s)\n",
-		    booted_device->dv_xname, dev->dv_xname);
-		return;
-	}
-	booted_device = dev;
 }
 
 /* XXX */

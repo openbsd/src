@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.1 2004/01/28 01:39:38 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.2 2004/02/03 12:09:47 mickey Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 2003/04/26 19:34:45 fvdl Exp $	*/
 
 /*
@@ -129,7 +129,6 @@
 #include <machine/segments.h>
 #include <machine/specialreg.h>
 #include <machine/trap.h>
-#include <machine/bootinfo.h>
 #include <machine/frameasm.h>
 
 #if NLAPIC > 0
@@ -191,7 +190,7 @@ _C_LABEL(lapic_isr):
 
 	.globl	_C_LABEL(cpu_id),_C_LABEL(cpu_vendor), _C_LABEL(cpu_brand_id)
 	.globl	_C_LABEL(cpuid_level),_C_LABEL(cpu_feature)
-	.globl	_C_LABEL(esym),_C_LABEL(boothowto)
+	.globl	_C_LABEL(esym),_C_LABEL(boothowto),_C_LABEL(bootdev)
 	.globl	_C_LABEL(bootinfo),_C_LABEL(atdevbase)
 	.globl	_C_LABEL(proc0paddr),_C_LABEL(PTDpaddr)
 	.globl	_C_LABEL(biosbasemem),_C_LABEL(biosextmem)
@@ -257,80 +256,32 @@ tmpstk:
 	.globl	_C_LABEL(kernel_text)
 	.set	_C_LABEL(kernel_text),KERNTEXTOFF
 
-.code32
+	.code32
 
 	.globl	start
 start:	movw	$0x1234,0x472			# warm boot
 
 	/*
 	 * Load parameters from stack
-	 * (howto, [bootdev], bootinfo, esym, basemem, extmem).
+	 * (howto, bootdev, bootapiver, esym, cnvmem, extmem, ac, av)
 	 */
 	movl	4(%esp),%eax
-	movl	%eax,RELOC(boothowto)
-	movl	12(%esp),%eax
-	testl	%eax, %eax
-	jz	1f
-	movl	(%eax), %ebx		/* number of entries */
-	movl	$RELOC(bootinfo),%ebp
-	movl	%ebp, %edx
-	addl	$BOOTINFO_MAXSIZE,%ebp
-	movl	%ebx, (%edx)
-	addl	$4, %edx
-2:
-	testl	%ebx, %ebx
-	jz	1f
-	addl	$4, %eax
-	movl	(%eax), %ecx		/* address of entry */
-	pushl	%edi
-	pushl	%esi
-	pushl	%eax
+	movl	%eax,RELOC(_C_LABEL(boothowto))
+	movl	8(%esp),%eax
+	movl	%eax,RELOC(_C_LABEL(bootdev))
 
-	movl	(%ecx),%eax	/* len */
-	movl	%edx,%edi
-	addl	(%ecx), %edx		/* update dest pointer */
-	cmpl	%ebp, %edx
-	jg	2f
-	movl	%ecx,%esi
-	movl	%eax,%ecx
-	rep
-	movsb
-	popl	%eax
-	popl	%esi
-	popl	%edi
-	subl	$1, %ebx
-	jmp	2b
-2:	/* cleanup for overflow case */
-	popl	%eax
-	popl	%esi
-	popl	%edi
-	movl	$RELOC(bootinfo),%ebp
-	movl	%ebp, %edx
-	subl	%ebx, (%edx)		/* correct number of entries */
+        movl    16(%esp), %eax
+	testl   %eax,%eax
+	jz      1f
+	addl    $KERNBASE_LO,%eax
+	movl    $RELOC(esym),%ebp
+	movl    %eax,(%ebp)
+	movl    $KERNBASE_HI,4(%ebp)
 1:
-
- 	movl	16(%esp),%eax
-	testl	%eax,%eax
-	jz	1f
-	addl	$KERNBASE_LO,%eax
-1: 	movl	$RELOC(esym),%ebp
-	movl	%eax,(%ebp)
-	movl	$KERNBASE_HI,4(%ebp)
-
-	movl	$RELOC(biosextmem),%ebp
-	movl	(%ebp),%eax
-	testl	%eax,%eax
-	jnz	1f
-	movl	20(%esp),%eax
-	movl	%eax,(%ebp)
-1:
-	movl	$RELOC(biosbasemem),%ebp
-	movl	(%ebp),%eax
-	testl	%eax,%eax
-	jnz	1f
-	movl	24(%esp),%eax
-	movl	%eax,(%ebp)
-1:
+        movl    20(%esp), %eax
+	movl	%eax, RELOC(biosextmem)
+        movl    24(%esp), %eax
+	movl	%eax, RELOC(biosbasemem)
 
 	/* First, reset the PSL. */
 	pushl	$PSL_MBO
@@ -573,7 +524,7 @@ compat:
 	movl	$RELOC(farjmp64),%eax
 	ljmp	*(%eax)
 
-.code64
+	.code64
 longmode:
 	/*
 	 * 6.
