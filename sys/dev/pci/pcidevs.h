@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.727 2004/05/05 04:17:10 mickey Exp 
+ *	OpenBSD: pcidevs,v 1.728 2004/05/05 14:09:42 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2201,6 +2201,7 @@
 #define	PCI_PRODUCT_TI_TLAN	0x0500		/* TLAN */
 #define	PCI_PRODUCT_TI_PERMEDIA	0x3d04		/* 3DLabs Permedia */
 #define	PCI_PRODUCT_TI_PERMEDIA2	0x3d07		/* 3DLabs Permedia 2 */
+#define	PCI_PRODUCT_TI_TSB12LV21	0x8000		/* TSB12LB21 FireWire */
 #define	PCI_PRODUCT_TI_TSB12LV22	0x8009		/* TSB12LV22 FireWire */
 #define	PCI_PRODUCT_TI_PCI4450_FW	0x8011		/* PCI4450 FireWire */
 #define	PCI_PRODUCT_TI_PCI4410_FW	0x8017		/* PCI4410 FireWire */
@@ -2211,13 +2212,17 @@
 #define	PCI_PRODUCT_TI_TSB43AB23	0x8024		/* TSB43AB23 FireWire */
 #define	PCI_PRODUCT_TI_TSB43AB21	0x8026		/* TSB43AB21 FireWire */
 #define	PCI_PRODUCT_TI_PCI4451_FW	0x8027		/* PCI4451 FireWire */
+#define	PCI_PRODUCT_TI_PCI4510_FW	0x8029		/* PCI4510 FireWire */
+#define	PCI_PRODUCT_TI_PCI4520_FW	0x802A		/* PCI4520 FireWire */
+#define	PCI_PRODUCT_TI_PCI7410_FW	0x802B		/* PCI7(4-6)10 FireWire */
 #define	PCI_PRODUCT_TI_DWL520P	0x8400		/* DWL-520+ */
 #define	PCI_PRODUCT_TI_PCI1130	0xac12		/* PCI1130 CardBus */
-#define	PCI_PRODUCT_TI_PCI1031	0xac13		/* PCI1031 pcmcia */
+#define	PCI_PRODUCT_TI_PCI1031	0xac13		/* PCI1031 PCMCIA */
 #define	PCI_PRODUCT_TI_PCI1131	0xac15		/* PCI1131 CardBus */
 #define	PCI_PRODUCT_TI_PCI1250	0xac16		/* PCI1250 CardBus */
 #define	PCI_PRODUCT_TI_PCI1220	0xac17		/* PCI1220 CardBus */
 #define	PCI_PRODUCT_TI_PCI1221	0xac19		/* PCI1221 CardBus */
+#define	PCI_PRODUCT_TI_PCI1210	0xac1a		/* PCI1210 CardBus */
 #define	PCI_PRODUCT_TI_PCI1450	0xac1b		/* PCI1450 CardBus */
 #define	PCI_PRODUCT_TI_PCI1225	0xac1c		/* PCI1225 CardBus */
 #define	PCI_PRODUCT_TI_PCI1251	0xac1d		/* PCI1251 CardBus */
@@ -2225,15 +2230,26 @@
 #define	PCI_PRODUCT_TI_PCI1251B	0xac1f		/* PCI1251B CardBus */
 #define	PCI_PRODUCT_TI_PCI2030	0xac20		/* PCI2030 PCI-PCI */
 #define	PCI_PRODUCT_TI_PCI2031	0xac21		/* PCI2031 PCI-PCI */
+#define	PCI_PRODUCT_TI_PCI4450_CB	0xac40		/* PCI4450 CardBus */
+#define	PCI_PRODUCT_TI_PCI4410_CB	0xac41		/* PCI4410 CardBus */
 #define	PCI_PRODUCT_TI_PCI4451_CB	0xac42		/* PCI4451 CardBus */
-#define	PCI_PRODUCT_TI_PCI4510	0xac44		/* PCI4510 CardBus */
-#define	PCI_PRODUCT_TI_PCI4520	0xac46		/* PCI4520 CardBus */
+#define	PCI_PRODUCT_TI_PCI4510_CB	0xac44		/* PCI4510 CardBus */
+#define	PCI_PRODUCT_TI_PCI4520_CB	0xac46		/* PCI4520 CardBus */
+#define	PCI_PRODUCT_TI_PCI7510_CB	0xac47		/* PCI7510 CardBus */
+#define	PCI_PRODUCT_TI_PCI7610_CB	0xac48		/* PCI7610 CardBus */
+#define	PCI_PRODUCT_TI_PCI7410_CB	0xac49		/* PCI7410 CardBus */
+#define	PCI_PRODUCT_TI_PCI7610SM	0xac4A		/* PCI7610 CardBus (Smart Card mode) */
+#define	PCI_PRODUCT_TI_PCI7410SD	0xac4B		/* PCI7[46]10 CardBus (SD/MMC mode) */
+#define	PCI_PRODUCT_TI_PCI7410MS	0xac4C		/* PCI7[46]10 CardBus (Memory stick mode) */
 #define	PCI_PRODUCT_TI_PCI1410	0xac50		/* PCI1410 CardBus */
 #define	PCI_PRODUCT_TI_PCI1420	0xac51		/* PCI1420 CardBus */
 #define	PCI_PRODUCT_TI_PCI1451	0xac52		/* PCI1451 CardBus */
 #define	PCI_PRODUCT_TI_PCI1421	0xac53		/* PCI1421 CardBus */
+#define	PCI_PRODUCT_TI_PCI1620	0xac54		/* PCI1620 CardBus */
 #define	PCI_PRODUCT_TI_PCI1520	0xac55		/* PCI1520 CardBus */
 #define	PCI_PRODUCT_TI_PCI1510	0xac56		/* PCI1510 CardBus */
+#define	PCI_PRODUCT_TI_PCI1530	0xac57		/* PCI1530 CardBus */
+#define	PCI_PRODUCT_TI_PCI1515	0xac58		/* PCI1515 CardBus */
 #define	PCI_PRODUCT_TI_PCI2040	0xac60		/* PCI2040 DSP */
 
 /* TigerJet Network products */

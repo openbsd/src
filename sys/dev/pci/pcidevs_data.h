@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.727 2004/05/05 04:17:10 mickey Exp 
+ *	OpenBSD: pcidevs,v 1.728 2004/05/05 14:09:42 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -6283,6 +6283,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "3DLabs Permedia 2",
 	},
 	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB12LV21,
+	    "TSB12LB21 FireWire",
+	},
+	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB12LV22,
 	    "TSB12LV22 FireWire",
 	},
@@ -6323,6 +6327,18 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PCI4451 FireWire",
 	},
 	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4510_FW,
+	    "PCI4510 FireWire",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4520_FW,
+	    "PCI4520 FireWire",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7410_FW,
+	    "PCI7(4-6)10 FireWire",
+	},
+	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_DWL520P,
 	    "DWL-520+",
 	},
@@ -6332,7 +6348,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1031,
-	    "PCI1031 pcmcia",
+	    "PCI1031 PCMCIA",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1131,
@@ -6349,6 +6365,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1221,
 	    "PCI1221 CardBus",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1210,
+	    "PCI1210 CardBus",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1450,
@@ -6379,16 +6399,48 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PCI2031 PCI-PCI",
 	},
 	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4450_CB,
+	    "PCI4450 CardBus",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4410_CB,
+	    "PCI4410 CardBus",
+	},
+	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4451_CB,
 	    "PCI4451 CardBus",
 	},
 	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4510,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4510_CB,
 	    "PCI4510 CardBus",
 	},
 	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4520,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4520_CB,
 	    "PCI4520 CardBus",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7510_CB,
+	    "PCI7510 CardBus",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7610_CB,
+	    "PCI7610 CardBus",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7410_CB,
+	    "PCI7410 CardBus",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7610SM,
+	    "PCI7610 CardBus (Smart Card mode)",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7410SD,
+	    "PCI7[46]10 CardBus (SD/MMC mode)",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7410MS,
+	    "PCI7[46]10 CardBus (Memory stick mode)",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1410,
@@ -6407,12 +6459,24 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PCI1421 CardBus",
 	},
 	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1620,
+	    "PCI1620 CardBus",
+	},
+	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1520,
 	    "PCI1520 CardBus",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1510,
 	    "PCI1510 CardBus",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1530,
+	    "PCI1530 CardBus",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1515,
+	    "PCI1515 CardBus",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI2040,
