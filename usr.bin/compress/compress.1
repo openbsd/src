@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compress.1,v 1.4 1997/07/06 20:22:53 mickey Exp $
+.\"	$OpenBSD: compress.1,v 1.5 1997/08/19 06:33:37 denny Exp $
 .\"	$NetBSD: compress.1,v 1.5 1995/03/26 09:44:34 glass Exp $
 .\"
 .\" Copyright (c) 1986, 1990, 1993
@@ -173,7 +173,9 @@ time to compute.
 .Pp
 The
 .Nm compress
-utility exits 0 on success, and >0 if an error occurs.
+utility exits 0 on success, 1 if an error occurs, and 2 if one or
+more files were not compressed because they would have grown in
+size (and -f was not specifed).
 .Sh SEE ALSO
 .Rs
 .%A Welch, Terry A.
@@ -183,6 +185,12 @@ utility exits 0 on success, and >0 if an error occurs.
 .%V 17:6
 .%P pp. 8-19
 .Re
+.Sh STANDARDS
+The
+.Nm compress
+utility is compliant with the
+.St -p1003.2-92
+specification.
 .Sh HISTORY
 The
 .Nm
