@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.125 2003/08/17 01:01:06 nate Exp $
+dnl	$OpenBSD: hardware,v 1.126 2003/08/19 03:48:52 mickey Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PC's and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -374,6 +374,7 @@ Supported hardware {:-include-:}:
 		    Complex RL-100TX
 		    NDC Communications SOHOware SFA110A
 		    SVEC PN102-TX Fast Ethernet card
+		Myson Technologies MTD803 3-in-1 Fast Ethernet adapters
 		National Semiconductor DP83815-based PCI adapters,
 		  including: [B] [C]
 		    Netgear FA311/FA312
