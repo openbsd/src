@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.26 2001/09/30 05:49:58 mickey Exp $ */
+/* $OpenBSD: wskbd.c,v 1.27 2001/10/25 14:30:43 drahn Exp $ */
 /* $NetBSD: wskbd.c,v 1.38 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -546,6 +546,11 @@ wskbd_detach(self, flags)
 		timeout_del(&sc->sc_repeat_ch);
 	}
 #endif
+
+	if (sc->sc_isconsole) {
+		KASSERT(wskbd_console_device == sc);
+		wskbd_console_device = NULL;
+	}
 
 	evar = &sc->sc_events;
 	if (evar->io) {
