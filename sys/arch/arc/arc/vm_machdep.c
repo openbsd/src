@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.2 1996/08/26 11:11:57 pefo Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.3 1996/12/09 00:13:49 imp Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -39,10 +39,8 @@
  * from: Utah Hdr: vm_machdep.c 1.21 91/04/06
  *
  *	from: @(#)vm_machdep.c	8.3 (Berkeley) 1/4/94
- *      $Id: vm_machdep.c,v 1.2 1996/08/26 11:11:57 pefo Exp $
+ *      $Id: vm_machdep.c,v 1.3 1996/12/09 00:13:49 imp Exp $
  */
-
-
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +49,8 @@
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/user.h>
+#include <sys/core.h>
+#include <sys/exec.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -181,13 +181,21 @@ void cpu_exit(p)
 /*
  * Dump the machine specific header information at the start of a core dump.
  */
-cpu_coredump(p, vp, cred, core)
+cpu_coredump(p, vp, cred, chdr)
 	struct proc *p;
 	struct vnode *vp;
 	struct ucred *cred;
-	struct core *core;
+	struct core *chdr;
 {
+	int error;
+	/*register struct user *up = p->p_addr;*/
+	struct coreseg cseg;
 	extern struct proc *machFPCurProcPtr;
+
+	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MIPS, 0);
+	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
+	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
+	chdr->c_cpusize = sizeof (p -> p_addr -> u_pcb.pcb_regs);
 
 	/*
 	 * Copy floating point state from the FP chip if this process
@@ -196,9 +204,27 @@ cpu_coredump(p, vp, cred, core)
 	if (p == machFPCurProcPtr)
 		MachSaveCurFPState(p);
 
-	return (vn_rdwr(UIO_WRITE, vp, (caddr_t)p->p_addr, ctob(UPAGES),
-	    (off_t)0, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, (int *)NULL,
-	    p));
+	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MIPS, CORE_CPU);
+	cseg.c_addr = 0;
+	cseg.c_size = chdr->c_cpusize;
+
+	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
+	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE,
+	    IO_NODELOCKED|IO_UNIT, cred, (int *)NULL, p);
+	if (error)
+		return error;
+
+	error = vn_rdwr(UIO_WRITE, vp,
+			(caddr_t)(&(p -> p_addr -> u_pcb.pcb_regs)),
+			(off_t)chdr -> c_cpusize,
+	    		(off_t)(chdr->c_hdrsize + chdr->c_seghdrsize),
+			UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT,
+			cred, (int *)NULL, p);
+
+	if (!error)
+		chdr->c_nseg++;
+
+	return error;
 }
 
 /*
