@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.14 1997/02/05 15:48:23 deraadt Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.15 1997/02/28 04:03:47 angelos Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -61,6 +61,10 @@
 
 struct	in_addr zeroin_addr;
 
+extern u_char ipsec_auth_default_level;
+extern u_char ipsec_esp_trans_default_level;
+extern u_char ipsec_esp_network_default_level;
+
 /*
  * These configure the range of local port addresses assigned to
  * "unspecified" outgoing connections/packets/whatever.
@@ -99,6 +103,9 @@ in_pcballoc(so, v)
 	bzero((caddr_t)inp, sizeof(*inp));
 	inp->inp_table = table;
 	inp->inp_socket = so;
+	inp->inp_seclevel[SL_AUTH] = ipsec_auth_default_level;
+	inp->inp_seclevel[SL_ESP_TRANS] = ipsec_esp_trans_default_level;
+	inp->inp_seclevel[SL_ESP_NETWORK] = ipsec_esp_network_default_level;
 	s = splnet();
 	CIRCLEQ_INSERT_HEAD(&table->inpt_queue, inp, inp_queue);
 	LIST_INSERT_HEAD(INPCBHASH(table, &inp->inp_faddr, inp->inp_fport,
@@ -419,6 +426,9 @@ in_pcbdetach(v)
 	if (inp->inp_route.ro_rt)
 		rtfree(inp->inp_route.ro_rt);
 	ip_freemoptions(inp->inp_moptions);
+#ifdef IPSEC
+	/* XXX IPsec cleanup here */
+#endif
 	s = splnet();
 	LIST_REMOVE(inp, inp_hash);
 	CIRCLEQ_REMOVE(&inp->inp_table->inpt_queue, inp, inp_queue);

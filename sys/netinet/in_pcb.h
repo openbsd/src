@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.3 1996/07/29 02:34:30 downsj Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.4 1997/02/28 04:03:48 angelos Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -60,6 +60,10 @@ struct inpcb {
 	struct	  ip inp_ip;		/* header prototype; should have more */
 	struct	  mbuf *inp_options;	/* IP options */
 	struct	  ip_moptions *inp_moptions; /* IP multicast options */
+	u_char 	  inp_seclevel[4];	/* Only the first 3 are used for now */
+#define SL_AUTH           0             /* Authentication level */
+#define SL_ESP_TRANS      1             /* ESP transport level */
+#define SL_ESP_NETWORK    2             /* ESP network (encapsulation) level */
 };
 
 struct inpcbtable {

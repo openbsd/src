@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.8 1997/02/28 03:44:54 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.9 1997/02/28 04:03:48 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -807,15 +807,15 @@ ip_ctloutput(op, so, level, optname, mp)
 			
 			switch (optname) {
 			    case IP_AUTH_LEVEL:
-				so->so_seclevel[SL_AUTH] = optval;
+				inp->inp_seclevel[SL_AUTH] = optval;
 				break;
 
 			    case IP_ESP_TRANS_LEVEL:
-				so->so_seclevel[SL_ESP_TRANS] = optval;
+				inp->inp_seclevel[SL_ESP_TRANS] = optval;
 				break;
 				
 			    case IP_ESP_NETWORK_LEVEL:
-				so->so_seclevel[SL_ESP_NETWORK] = optval;
+				inp->inp_seclevel[SL_ESP_NETWORK] = optval;
 				break;
 			}
 			
@@ -908,15 +908,15 @@ ip_ctloutput(op, so, level, optname, mp)
 #else
 		    switch (optname) {
 			    case IP_AUTH_LEVEL:
-				    optval = so->so_seclevel[SL_AUTH];
+				    optval = inp->inp_seclevel[SL_AUTH];
 				    break;
 				
 			    case IP_ESP_TRANS_LEVEL:
-				    optval = so->so_seclevel[SL_ESP_TRANS];
+				    optval = inp->inp_seclevel[SL_ESP_TRANS];
 				    break;
 				
 			    case IP_ESP_NETWORK_LEVEL:
-				    optval = so->so_seclevel[SL_ESP_NETWORK];
+				    optval = inp->inp_seclevel[SL_ESP_NETWORK];
 				    break;
 		    }
 		    
