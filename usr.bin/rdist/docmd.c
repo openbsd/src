@@ -1,4 +1,4 @@
-/*	$OpenBSD: docmd.c,v 1.14 2003/05/06 22:10:11 millert Exp $	*/
+/*	$OpenBSD: docmd.c,v 1.15 2003/05/06 22:13:22 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: docmd.c,v 6.86 1996/01/30 02:29:43 mcooper Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: docmd.c,v 1.14 2003/05/06 22:10:11 millert Exp $";
+"$OpenBSD: docmd.c,v 1.15 2003/05/06 22:13:22 millert Exp $";
 #endif
 
 static char sccsid[] = "@(#)docmd.c	5.1 (Berkeley) 6/6/85";
@@ -860,6 +860,7 @@ extern int except(file)
 						 sizeof(ebuf));
 					error("Regex error \"%s\" for \"%s\".",
 					      ebuf, nl->n_name);
+					return(0);
 				}
 			}
 		}
