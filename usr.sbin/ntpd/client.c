@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.45 2004/11/10 11:47:28 henning Exp $ */
+/*	$OpenBSD: client.c,v 1.46 2004/12/08 15:47:38 mickey Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -153,8 +153,8 @@ client_query(struct ntp_peer *p)
 	 * Save the real transmit timestamp locally.
 	 */
 
-	p->query->msg.xmttime.int_part = arc4random();
-	p->query->msg.xmttime.fraction = arc4random();
+	p->query->msg.xmttime.int_partl = arc4random();
+	p->query->msg.xmttime.fractionl = arc4random();
 	p->query->xmttime = gettime();
 
 	if (ntp_sendmsg(p->query->fd, NULL, &p->query->msg,
@@ -194,8 +194,8 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime)
 
 	ntp_getmsg(buf, size, &msg);
 
-	if (msg.orgtime.int_part != p->query->msg.xmttime.int_part ||
-	    msg.orgtime.fraction != p->query->msg.xmttime.fraction)
+	if (msg.orgtime.int_partl != p->query->msg.xmttime.int_partl ||
+	    msg.orgtime.fractionl != p->query->msg.xmttime.fractionl)
 		return (0);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.9 2004/11/12 17:24:52 henning Exp $ */
+/*	$OpenBSD: util.c,v 1.10 2004/12/08 15:47:38 mickey Exp $ */
 
 /*
  * Copyright (c) 2004 Alexander Guy <alexander.guy@andern.org>
@@ -45,10 +45,10 @@ lfp_to_d(struct l_fixedpt lfp)
 {
 	double	ret;
 
-	lfp.int_part = ntohl(lfp.int_part);
-	lfp.fraction = ntohl(lfp.fraction);
+	lfp.int_partl = ntohl(lfp.int_partl);
+	lfp.fractionl = ntohl(lfp.fractionl);
 
-	ret = (double)(lfp.int_part) + ((double)lfp.fraction / UINT_MAX);
+	ret = (double)(lfp.int_partl) + ((double)lfp.fractionl / UINT_MAX);
 
 	return (ret);
 }
@@ -58,8 +58,8 @@ d_to_lfp(double d)
 {
 	struct l_fixedpt	lfp;
 
-	lfp.int_part = htonl((u_int32_t)d);
-	lfp.fraction = htonl((u_int32_t)((d - (u_int32_t)d) * UINT_MAX));
+	lfp.int_partl = htonl((u_int32_t)d);
+	lfp.fractionl = htonl((u_int32_t)((d - (u_int32_t)d) * UINT_MAX));
 
 	return (lfp);
 }
@@ -69,10 +69,10 @@ sfp_to_d(struct s_fixedpt sfp)
 {
 	double	ret;
 
-	sfp.int_part = ntohs(sfp.int_part);
-	sfp.fraction = ntohs(sfp.fraction);
+	sfp.int_parts = ntohs(sfp.int_parts);
+	sfp.fractions = ntohs(sfp.fractions);
 
-	ret = (double)(sfp.int_part) + ((double)sfp.fraction / USHRT_MAX);
+	ret = (double)(sfp.int_parts) + ((double)sfp.fractions / USHRT_MAX);
 
 	return (ret);
 }
@@ -82,8 +82,8 @@ d_to_sfp(double d)
 {
 	struct s_fixedpt	sfp;
 
-	sfp.int_part = htons((u_int16_t)d);
-	sfp.fraction = htons((u_int16_t)((d - (u_int16_t)d) * USHRT_MAX));
+	sfp.int_parts = htons((u_int16_t)d);
+	sfp.fractions = htons((u_int16_t)((d - (u_int16_t)d) * USHRT_MAX));
 
 	return (sfp);
 }

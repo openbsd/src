@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.h,v 1.9 2004/10/13 13:35:19 henning Exp $ */
+/*	$OpenBSD: ntp.h,v 1.10 2004/12/08 15:47:38 mickey Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -40,13 +40,13 @@
  *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 */
 struct l_fixedpt {
-	u_int32_t int_part;
-	u_int32_t fraction;
+	u_int32_t int_partl;
+	u_int32_t fractionl;
 };
 
 struct s_fixedpt {
-	u_int16_t int_part;
-	u_int16_t fraction;
+	u_int16_t int_parts;
+	u_int16_t fractions;
 };
 
 /* RFC Section 4
