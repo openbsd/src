@@ -10,7 +10,7 @@
  *
  * S/KEY misc routines.
  *
- * $Id: skeysubr.c,v 1.15 1997/07/17 05:48:38 millert Exp $
+ * $Id: skeysubr.c,v 1.16 1997/07/24 23:00:27 millert Exp $
  */
 
 #include <stdio.h>
@@ -91,7 +91,7 @@ keycrunch_md4(result, seed, passwd)
 
 	buflen = strlen(seed) + strlen(passwd);
 	if ((buf = (char *)malloc(buflen+1)) == NULL)
-		return -1;
+		return(-1);
 	(void)strcpy(buf, seed);
 	lowcase(buf);
 	(void)strcat(buf, passwd);
@@ -109,7 +109,7 @@ keycrunch_md4(result, seed, passwd)
 
 	(void)memcpy((void *)result, (void *)results, SKEY_BINKEY_SIZE);
 
-	return 0;
+	return(0);
 }
 
 static int
@@ -125,7 +125,7 @@ keycrunch_md5(result, seed, passwd)
 
 	buflen = strlen(seed) + strlen(passwd);
 	if ((buf = (char *)malloc(buflen+1)) == NULL)
-		return -1;
+		return(-1);
 	(void)strcpy(buf, seed);
 	lowcase(buf);
 	(void)strcat(buf, passwd);
@@ -143,7 +143,7 @@ keycrunch_md5(result, seed, passwd)
 
 	(void)memcpy((void *)result, (void *)results, SKEY_BINKEY_SIZE);
 
-	return 0;
+	return(0);
 }
 
 static int
@@ -159,7 +159,7 @@ keycrunch_sha1(result, seed, passwd)
 
 	buflen = strlen(seed) + strlen(passwd);
 	if ((buf = (char *)malloc(buflen+1)) == NULL)
-		return -1;
+		return(-1);
 	(void)strcpy(buf, seed);
 	lowcase(buf);
 	(void)strcat(buf, passwd);
@@ -178,7 +178,7 @@ keycrunch_sha1(result, seed, passwd)
 
 	(void)memcpy((void *)result, (void *)results, SKEY_BINKEY_SIZE);
 
-	return 0;
+	return(0);
 }
 
 static int
@@ -194,7 +194,7 @@ keycrunch_rmd160(result, seed, passwd)
 
 	buflen = strlen(seed) + strlen(passwd);
 	if ((buf = (char *)malloc(buflen+1)) == NULL)
-		return -1;
+		return(-1);
 	(void)strcpy(buf, seed);
 	lowcase(buf);
 	(void)strcat(buf, passwd);
@@ -213,7 +213,7 @@ keycrunch_rmd160(result, seed, passwd)
 
 	(void)memcpy((void *)result, (void *)results, SKEY_BINKEY_SIZE);
 
-	return 0;
+	return(0);
 }
 
 /*
@@ -339,7 +339,7 @@ readpass(buf, n)
 
 	sevenbit(buf);
 
-	return buf;
+	return(buf);
 }
 
 /* Read in an s/key OTP (does not turn off echo) */
@@ -351,9 +351,9 @@ readskey(buf, n)
 	(void)fgets(buf, n, stdin);
 	rip(buf);
 
-	sevenbit (buf);
+	sevenbit(buf);
 
-	return buf;
+	return(buf);
 }
 
 /* Signal handler for trapping ^C */
@@ -376,45 +376,47 @@ trapped(sig)
  */
 int
 atob8(out, in)
-	register char *out, *in;
+	register char *out;
+	register char *in;
 {
 	register int i;
 	register int val;
 
 	if (in == NULL || out == NULL)
-		return -1;
+		return(-1);
 
 	for (i=0; i < 8; i++) {
 		if ((in = skipspace(in)) == NULL)
-			return -1;
+			return(-1);
 		if ((val = htoi(*in++)) == -1)
-			return -1;
+			return(-1);
 		*out = val << 4;
 
 		if ((in = skipspace(in)) == NULL)
-			return -1;
+			return(-1);
 		if ((val = htoi(*in++)) == -1)
-			return -1;
+			return(-1);
 		*out++ |= val;
 	}
-	return 0;
+	return(0);
 }
 
 /* Convert 8-byte binary array to hex-ascii string */
 int
 btoa8(out, in)
-	register char *out, *in;
+	register char *out;
+	register char *in;
 {
 	register int i;
 
 	if (in == NULL || out == NULL)
-		return -1;
+		return(-1);
 
 	for (i=0; i < 8; i++) {
 		(void)sprintf(out, "%02x", *in++ & 0xff);
 		out += 2;
 	}
-	return 0;
+	return(0);
 }
 
 /* Convert hex digit to binary integer */
@@ -423,12 +425,12 @@ htoi(c)
 	register int c;
 {
 	if ('0' <= c && c <= '9')
-		return c - '0';
+		return(c - '0');
 	if ('a' <= c && c <= 'f')
-		return 10 + c - 'a';
+		return(10 + c - 'a');
 	if ('A' <= c && c <= 'F')
-		return 10 + c - 'A';
-	return -1;
+		return(10 + c - 'A');
+	return(-1);
 }
 
 /* Skip leading spaces from the string */
@@ -440,9 +442,9 @@ skipspace(cp)
 		cp++;
 
 	if (*cp == '\0')
-		return NULL;
+		return(NULL);
 	else
-		return cp;
+		return(cp);
 }
 
 /* Remove backspaced over charaters from the string */
@@ -490,11 +492,11 @@ skey_set_algorithm(new)
 	for (i = 0; i < SKEY_ALGORITH_LAST; i++) {
 		if (strcmp(new, skey_algorithm_table[i].name) == 0) {
 			skey_hash_type = i;
-			return new;
+			return(new);
 		}
 	}
 
-	return NULL;
+	return(NULL);
 }
 
 /* Get current hash type */
