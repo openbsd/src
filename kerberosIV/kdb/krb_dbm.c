@@ -1,26 +1,38 @@
-/*	$OpenBSD: krb_dbm.c,v 1.6 1997/12/12 11:29:24 art Exp $	*/
-/* $KTH: krb_dbm.c,v 1.27 1997/05/02 14:29:09 assar Exp $ */
+/*	$OpenBSD: krb_dbm.c,v 1.7 1998/05/15 06:10:48 art Exp $	*/
+/*	$KTH: krb_dbm.c,v 1.31 1997/12/14 22:48:17 assar Exp $	*/
+
+/*
+ * This source code is no longer held under any constraint of USA
+ * `cryptographic laws' since it was exported legally.  The cryptographic
+ * functions were removed from the code and a "Bones" distribution was
+ * made.  A Commodity Jurisdiction Request #012-94 was filed with the
+ * USA State Department, who handed it to the Commerce department.  The
+ * code was determined to fall under General License GTDA under ECCN 5D96G,
+ * and hence exportable.  The cryptographic interfaces were re-added by Eric
+ * Young, and then KTH proceeded to maintain the code in the free world.
+ *
+ */
 
 /* 
-  Copyright (C) 1989 by the Massachusetts Institute of Technology
-
-   Export of this software from the United States of America is assumed
-   to require a specific license from the United States Government.
-   It is the responsibility of any person or organization contemplating
-   export to obtain such a license before exporting.
-
-WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
-distribute this software and its documentation for any purpose and
-without fee is hereby granted, provided that the above copyright
-notice appear in all copies and that both that copyright notice and
-this permission notice appear in supporting documentation, and that
-the name of M.I.T. not be used in advertising or publicity pertaining
-to distribution of the software without specific, written prior
-permission.  M.I.T. makes no representations about the suitability of
-this software for any purpose.  It is provided "as is" without express
-or implied warranty.
-
-  */
+ *  Copyright (C) 1989 by the Massachusetts Institute of Technology
+ *
+ *  Export of this software from the United States of America is assumed
+ *  to require a specific license from the United States Government.
+ *  It is the responsibility of any person or organization contemplating
+ *  export to obtain such a license before exporting.
+ *
+ * WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
+ * distribute this software and its documentation for any purpose and
+ * without fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright notice and
+ * this permission notice appear in supporting documentation, and that
+ * the name of M.I.T. not be used in advertising or publicity pertaining
+ * to distribution of the software without specific, written prior
+ * permission.  M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is" without express
+ * or implied warranty.
+ *
+ */
 
 #include "kdb_locl.h"
 
@@ -154,7 +166,7 @@ static int mylock = 0;
 static int inited = 0;
 
 static int
-kerb_dbl_init()
+kerb_dbl_init(void)
 {
     if (!inited) {
 	char *filename = gen_dbsuffix (current_db_name, ".ok");
@@ -172,7 +184,7 @@ kerb_dbl_init()
 }
 
 static void
-kerb_dbl_fini()
+kerb_dbl_fini(void)
 {
     close(dblfd);
     dblfd = -1;
@@ -214,7 +226,7 @@ kerb_dbl_lock(int mode)
 }
 
 static void
-kerb_dbl_unlock()
+kerb_dbl_unlock(void)
 {
     if (!mylock) {		/* lock already unlocked */
 	fprintf(stderr, "Kerberos database lock not locked when unlocking.\n");
@@ -243,7 +255,7 @@ kerb_db_set_lockmode(int mode)
  */
 
 int
-kerb_db_init()
+kerb_db_init(void)
 {
     init = 1;
     return (0);
@@ -255,7 +267,7 @@ kerb_db_init()
  */
 
 void
-kerb_db_fini()
+kerb_db_fini(void)
 {
 }
 
@@ -287,7 +299,7 @@ kerb_db_set_name(char *name)
  */
 
 time_t
-kerb_get_db_age()
+kerb_get_db_age(void)
 {
     struct stat st;
     char *okname;
@@ -365,7 +377,7 @@ kerb_end_update(char *db_name, time_t age)
 }
 
 static time_t
-kerb_start_read()
+kerb_start_read(void)
 {
     return kerb_get_db_age();
 }
@@ -656,7 +668,9 @@ kerb_db_update(long *db, Principal *principal, unsigned int max)
     for (i = 0; i < max; i++) {
 	encode_princ_contents(&contents, principal);
 	encode_princ_key(&key, principal->name, principal->instance);
-	dbm_store((DBM *)db, key, contents, DBM_REPLACE);
+	if(dbm_store((DBM *)db, key, contents, DBM_REPLACE) < 0)
+	    return found; /* XXX some better mechanism to report
+			     failure should exist */
 #ifdef DEBUG
 	if (kerb_debug & 1) {
 	    fprintf(stderr, "\n put %s %s\n",
@@ -740,16 +754,11 @@ delta_stat(DB_stat *a, DB_stat *b, DB_stat *c)
  */
 
 int
-kerb_db_get_dba (char *dba_name, char *dba_inst, Dba *dba, unsigned int max, int *more);
-
-int
-kerb_db_get_dba(char *dba_name, char *dba_inst, Dba *dba,
-		unsigned max,
-		int *more)
-		/* could have wild card */
-		/* could have wild card */
-		/* max number of name structs to return */
-		/* where there more than 'max' tuples? */
+kerb_db_get_dba(char *dba_name,	/* could have wild card */
+		char *dba_inst,	/* could have wild card */
+		Dba *dba,
+		unsigned max,	/* max number of name structs to return */
+		int *more)	/* where there more than 'max' tuples? */
 {
     *more = 0;
     return (0);
