@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp_openbsd.c,v 1.8 2000/03/05 22:22:55 mjacob Exp $ */
+/* 	$OpenBSD: isp_openbsd.c,v 1.9 2000/04/06 05:47:54 mjacob Exp $ */
 /*
  * Platform (OpenBSD) dependent common attachment code for Qlogic adapters.
  *
@@ -116,27 +116,22 @@ isp_attach(isp)
 	 * Send a SCSI Bus Reset (used to be done as part of attach,
 	 * but now left to the OS outer layers).
 	 *
-	 * XXX: For now, skip resets for FC because the method by which
-	 * XXX: we deal with loop down after issuing resets (which causes
-	 * XXX: port logouts for all devices) needs interrupts to run so
-	 * XXX: that async events happen.
+	 * We don't do 'bus resets' for FC because the LIP that occurs
+	 * when we start the firmware does all that for us.
 	 */
 	if (IS_SCSI(isp)) {
-		/* XXX: There's some issue with resets && Ultra3 */
-		if (!IS_ULTRA3(isp)) {
-			int bus = 0;
+		int bus = 0;
+		(void) isp_control(isp, ISPCTL_RESET_BUS, &bus);
+		if (IS_DUALBUS(isp)) {
+			bus++;
 			(void) isp_control(isp, ISPCTL_RESET_BUS, &bus);
-			if (IS_DUALBUS(isp)) {
-				bus++;
-				(void) isp_control(isp, ISPCTL_RESET_BUS, &bus);
-			}
-			/*
-			 * wait for the bus to settle.
-			 */
-			printf("%s: waiting 4 seconds for bus reset settling\n",
-			    isp->isp_name);
-			delay(4 * 1000000);
 		}
+		/*
+		 * wait for the bus to settle.
+		 */
+		printf("%s: waiting 4 seconds for bus reset settling\n",
+		    isp->isp_name);
+		delay(4 * 1000000);
 	} else {
 		int i, j;
 		fcparam *fcp = isp->isp_param;
