@@ -1,4 +1,4 @@
-/*	$OpenBSD: hunt.c,v 1.6 1999/05/30 02:47:13 pjanzen Exp $	*/
+/*	$OpenBSD: hunt.c,v 1.7 1999/12/12 15:00:51 d Exp $	*/
 /*	$NetBSD: hunt.c,v 1.8 1998/09/13 15:27:28 hubertf Exp $	*/
 /*
  *  Hunt
@@ -6,8 +6,6 @@
  *  San Francisco, California
  */
 
-#include <sys/stat.h>
-#include <sys/time.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -16,17 +14,24 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
 #include <netdb.h>
+
+#include <sys/stat.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+#include <sys/ioctl.h>
+#include <sys/sockio.h>
 
+#include <netinet/in.h>
+#include <net/if.h>
+
+#include <arpa/inet.h>
 
 #include "hunt.h"
 #include "display.h"
 #include "client.h"
+#include "list.h"
 
 #ifndef __GNUC__
 #define __attribute__(x)
@@ -38,12 +43,11 @@ char	map_key[256];			/* what to map keys to */
 FLAG	no_beep = FALSE;
 char	*Send_message = NULL;
 
-static u_int16_t Server_port = HUNT_PORT;
 static char	*Sock_host;
 static char	*use_port;
 static FLAG	Query_driver = FALSE;
 static FLAG	Show_scores = FALSE;
-static struct sockaddr_in	Daemon;
+static struct sockaddr	Daemon;
 
 
 static char	name[NAMELEN];
@@ -51,14 +55,12 @@ static char	team = '-';
 
 static int	in_visual;
 
-static void	dump_scores __P((struct sockaddr_in));
+static void	dump_scores __P((void));
 static long	env_init __P((long));
 static void	fill_in_blanks __P((void));
 static void	leave __P((int, char *)) __attribute__((__noreturn__));
-static struct sockaddr_in *list_drivers __P((void));
 static void	sigterm __P((int));
-static void	find_driver __P((FLAG));
-static void	start_driver __P((void));
+static int	find_driver __P((void));
 
 /*
  * main:
@@ -73,6 +75,8 @@ main(ac, av)
 	extern int	optind;
 	extern char	*optarg;
 	long		enter_status;
+	int		option;
+	struct servent	*se;
 
 	/* Revoke privs: */
 	setegid(getgid());
@@ -88,7 +92,7 @@ main(ac, av)
 		case 't':
 			team = *optarg;
 			if (!isdigit(team) && team != ' ') {
-				warnx("Team names must be numeric");
+				warnx("Team names must be numeric or space");
 				team = '-';
 			}
 			break;
@@ -139,27 +143,30 @@ main(ac, av)
 	else if (optind + 1 == ac)
 		Sock_host = av[ac - 1];
 
-	if (Show_scores) {
-		struct sockaddr_in	*hosts;
+	if (Server_port == 0) {
+		se = getservbyname("hunt", "udp");
+		if (se != NULL)
+			Server_port = ntohs(se->s_port);
+		else
+			Server_port = HUNT_PORT;
+	}
 
-		for (hosts = list_drivers(); hosts->sin_port != 0; hosts += 1)
-			dump_scores(*hosts);
+	if (Show_scores) {
+		dump_scores();
 		exit(0);
 	}
+
 	if (Query_driver) {
-		struct sockaddr_in	*hosts;
+		struct driver		*driver;
 
-		for (hosts = list_drivers(); hosts->sin_port != 0; hosts += 1) {
-			struct	hostent	*hp;
-			int	num_players;
-
-			hp = gethostbyaddr((char *) &hosts->sin_addr,
-					sizeof hosts->sin_addr, AF_INET);
-			num_players = ntohs(hosts->sin_port);
+		probe_drivers(C_MESSAGE, Sock_host);
+		while ((driver = next_driver()) != NULL) {
 			printf("%d player%s hunting on %s!\n",
-				num_players, (num_players == 1) ? "" : "s",
-				hp != NULL ? hp->h_name :
-				inet_ntoa(hosts->sin_addr));
+			    driver->response,
+			    (driver->response == 1) ? "" : "s",
+			    driver_name(driver));
+			if (Sock_host)
+				break;
 		}
 		exit(0);
 	}
@@ -183,35 +190,42 @@ main(ac, av)
 	(void) signal(SIGTERM, sigterm);
 	/* (void) signal(SIGPIPE, SIG_IGN); */
 
-	for (;;) {
-		find_driver(TRUE);
-
-		if (Daemon.sin_port == 0) {
+	Daemon.sa_len = 0;
+    ask_driver:
+	while (!find_driver()) {
+		if (Am_monitor) {
 			errno = 0;
-			leave(1, "Game not found, try again");
+			leave(1, "No one playing");
 		}
 
-	jump_in:
-		do {
-			int	option;
-
-			Socket = socket(AF_INET, SOCK_STREAM, 0);
-			if (Socket < 0)
-				leave(1, "socket");
-			option = 1;
-			if (setsockopt(Socket, SOL_SOCKET, SO_USELOOPBACK,
-			    &option, sizeof option) < 0)
-				warn("setsockopt loopback");
+		if (Sock_host == NULL) {
 			errno = 0;
-			if (connect(Socket, (struct sockaddr *) &Daemon,
-			    sizeof Daemon) < 0) {
-				if (errno != ECONNREFUSED)
-					leave(1, "connect");
-			}
-			else
-				break;
-			sleep(1);
-		} while (close(Socket) == 0);
+			leave(1, "huntd not running");
+		}
+
+		sleep(3);
+	}
+	Socket = -1;
+
+	for (;;) {
+		if (Socket != -1)
+			close(Socket);
+
+		Socket = socket(Daemon.sa_family, SOCK_STREAM, 0);
+		if (Socket < 0)
+			leave(1, "socket");
+
+		option = 1;
+		if (setsockopt(Socket, SOL_SOCKET, SO_USELOOPBACK,
+		    &option, sizeof option) < 0)
+			warn("setsockopt loopback");
+
+		errno = 0;
+		if (connect(Socket, &Daemon, Daemon.sa_len) == -1)  {
+			if (errno == ECONNREFUSED)
+				goto ask_driver;
+			leave(1, "connect");
+		}
 
 		do_connect(name, team, enter_status);
 		if (Send_message != NULL) {
@@ -219,8 +233,7 @@ main(ac, av)
 			if (enter_status == Q_MESSAGE)
 				break;
 			Send_message = NULL;
-			/* don't continue as that will call find_driver */
-			goto jump_in;
+			continue;
 		}
 		playit();
 		if ((enter_status = quit(enter_status)) == Q_QUIT)
@@ -231,285 +244,149 @@ main(ac, av)
 	return(0);
 }
 
-# ifdef BROADCAST
+/*
+ * Set Daemon to be the address of a hunt driver, or return 0 on failure.
+ *
+ * We start quietly probing for drivers. As soon as one driver is found
+ * we show it in the list. If we run out of drivers and we only have one
+ * then we choose it. Otherwise we present a list of the found drivers.
+ */
 static int
-broadcast_vec(s, vector)
-	int			s;		/* socket */
-	struct	sockaddr	**vector;
+find_driver()
 {
-	char			if_buf[BUFSIZ];
-	struct	ifconf		ifc;
-	struct	ifreq		*ifr;
-	unsigned int		n;
-	int			vec_cnt;
+	int last_driver, numdrivers, waiting, is_current;
+	struct driver *driver;
+	int c;
+	char buf[80];
+	const char *name;
 
-	*vector = NULL;
-	ifc.ifc_len = sizeof if_buf;
-	ifc.ifc_buf = if_buf;
-	if (ioctl(s, SIOCGIFCONF, (char *) &ifc) < 0)
-		return 0;
-	vec_cnt = 0;
-	n = ifc.ifc_len / sizeof (struct ifreq);
-	*vector = (struct sockaddr *) malloc(n * sizeof (struct sockaddr));
-	if (*vector == NULL)
-		leave(1, "malloc");
-	for (ifr = ifc.ifc_req; n != 0; n--, ifr++)
-		if (ioctl(s, SIOCGIFBRDADDR, ifr) >= 0)
-			memcpy(&(*vector)[vec_cnt++], &ifr->ifr_addr,
-				sizeof (*vector)[0]));
-	return vec_cnt;
-}
-# endif
+	probe_drivers(Am_monitor ? C_MONITOR : C_PLAYER, Sock_host);
 
-static struct sockaddr_in	*
-list_drivers()
-{
-	u_short			msg;
-	u_short			port_num;
-	static struct sockaddr_in		test;
-	int			test_socket;
-	int			namelen;
-	char			local_name[MAXHOSTNAMELEN + 1];
-	static int		initial = TRUE;
-	static struct in_addr	local_address;
-	struct hostent		*hp;
-# ifdef BROADCAST
-	static	int		brdc;
-	static	struct sockaddr_in		*brdv;
-# else
-	u_long			local_net;
-# endif
-	int			i;
-	static	struct sockaddr_in		*listv;
-	static	unsigned int	listmax;
-	unsigned int		listc;
-	fd_set			mask;
-	struct timeval		wait;
-
-	if (initial) {			/* do one time initialization */
-# ifndef BROADCAST
-		sethostent(1);		/* don't bother to close host file */
-# endif
-		if (gethostname(local_name, sizeof local_name) < 0)
-			leave(1, "gethostname");
-		local_name[sizeof(local_name) - 1] = '\0';
-		if ((hp = gethostbyname(local_name)) == NULL)
-			leave(1, "gethostbyname");
-		local_address = * ((struct in_addr *) hp->h_addr);
-
-		listmax = 20;
-		listv = (struct sockaddr_in *) malloc(listmax * sizeof (struct sockaddr_in));
-		if (listv == NULL)
-			leave(1, "malloc");
-	} else if (Sock_host != NULL)
-		return listv;		/* address already valid */
-
-	test_socket = socket(AF_INET, SOCK_DGRAM, 0);
-	if (test_socket < 0)
-		leave(1, "socket");
-	test.sin_family = AF_INET;
-	test.sin_port = htons(Server_port);
-	listc = 0;
-
-	if (Sock_host != NULL) {	/* explicit host given */
-		if ((hp = gethostbyname(Sock_host)) == NULL) 
-			leave(1, "gethostbyname");
-		test.sin_addr = *((struct in_addr *) hp->h_addr);
-		goto test_one_host;
-	}
-
-	if (!initial) {
-		/* favor host of previous session by broadcasting to it first */
-		test.sin_addr = Daemon.sin_addr;
-		msg = htons(C_PLAYER);		/* Must be playing! */
-		(void) sendto(test_socket, (char *) &msg, sizeof msg, 0,
-		    (struct sockaddr *) &test, sizeof test);
-	}
-
-# ifdef BROADCAST
-	if (initial)
-		brdc = broadcast_vec(test_socket, (struct sockaddr **) &brdv);
-
-	if (brdc <= 0) {
-		initial = FALSE;
-		test.sin_addr = local_address;
-		goto test_one_host;
-	}
-
-# ifdef SO_BROADCAST
-	/* Sun's will broadcast even though this option can't be set */
-	option = 1;
-	if (setsockopt(test_socket, SOL_SOCKET, SO_BROADCAST,
-	    &option, sizeof option) < 0)
-		leave(1, "setsockopt broadcast");
-# endif
-
-	/* send broadcast packets on all interfaces */
-	msg = htons(C_TESTMSG());
-	for (i = 0; i < brdc; i++) {
-		test.sin_addr = brdv[i].sin_addr;
-		if (sendto(test_socket, (char *) &msg, sizeof msg, 0,
-		    (struct sockaddr *) &test, test) < 0)
-			leave(1, "sendto");
-	}
-# else /* !BROADCAST */
-	/* loop thru all hosts on local net and send msg to them. */
-	msg = htons(C_TESTMSG());
-	local_net = inet_netof(local_address);
-	sethostent(0);		/* rewind host file */
-	while ((hp = gethostent()) != NULL) {
-		if (local_net == inet_netof(* ((struct in_addr *) hp->h_addr))){
-			test.sin_addr = * ((struct in_addr *) hp->h_addr);
-			(void) sendto(test_socket, (char *) &msg, sizeof msg, 0,
-			    (struct sockaddr *) &test, sizeof test);
-		}
-	}
-#endif
-
-get_response:
-	namelen = sizeof listv[0];
-	errno = 0;
-	wait.tv_sec = 1;
-	wait.tv_usec = 0;
+	last_driver = -1;
+	numdrivers = 0;
+	waiting = 1;
 	for (;;) {
-		if (listc + 1 >= listmax) {
-			listmax += 20;
-			listv = (struct sockaddr_in *) realloc((char *) listv,
-						listmax * sizeof listv[0]);
-			if (listv == NULL)
-				leave(1, "realloc");
+		if (numdrivers == 0) {
+			/* Silently wait for at least one driver */
+			driver = next_driver();
+		} else if (!waiting || (driver = 
+		    next_driver_fd(STDIN_FILENO)) == (struct driver *)-1) {
+			/* We have a key waiting, or no drivers left */
+			c = getchar();
+			if (c == '\r' || c == '\n' || c == ' ') {
+				if (numdrivers == 1)
+					c = 'a';
+				else if (last_driver != -1)
+					c = 'a' + last_driver;
+			}
+			if (c < 'a' || c >= numdrivers + 'a') {
+				display_beep();
+				continue;
+			}
+			driver = &drivers[c - 'a'];
+			break;
 		}
 
-		FD_ZERO(&mask);
-		FD_SET(test_socket, &mask);
-		if (select(test_socket + 1, &mask, NULL, NULL, &wait) == 1 &&
-		    recvfrom(test_socket, (char *) &port_num, sizeof(port_num),
-		    0, (struct sockaddr *) &listv[listc], &namelen) > 0) {
-			/*
-			 * Note that we do *not* convert from network to host
-			 * order since the port number *should* be in network
-			 * order:
-			 */
-			for (i = 0; i < listc; i += 1)
-				if (listv[listc].sin_addr.s_addr
-				== listv[i].sin_addr.s_addr)
-					break;
-			if (i == listc)
-				listv[listc++].sin_port = port_num;
+		if (driver == NULL) {
+			waiting = 0;
+			if (numdrivers == 0) {
+				probe_cleanup();
+				return 0;	/* Failure */
+			}
+			if (numdrivers == 1) {
+				driver = &drivers[0];
+				break;
+			}
 			continue;
 		}
 
-		if (errno != 0 && errno != EINTR)
-			leave(1, "select/recvfrom");
+		/* Use the preferred host straight away. */
+		if (Sock_host)
+			break;
 
-		/* terminate list with local address */
-		listv[listc].sin_family = AF_INET;
-		listv[listc].sin_addr = local_address;
-		listv[listc].sin_port = htons(0);
-
-		(void) close(test_socket);
-		initial = FALSE;
-		return listv;
-	}
-
-test_one_host:
-	msg = htons(C_TESTMSG());
-	(void) sendto(test_socket, (char *) &msg, sizeof msg, 0,
-	    (struct sockaddr *) &test, sizeof test);
-	goto get_response;
-}
-
-static void
-find_driver(do_startup)
-	FLAG	do_startup;
-{
-	struct sockaddr_in	*hosts;
-
-	hosts = list_drivers();
-	if (hosts[0].sin_port != htons(0)) {
-		int	i, c;
-
-		if (hosts[1].sin_port == htons(0)) {
-			Daemon = hosts[0];
-			return;
+		if (numdrivers == 0) {
+			display_clear_the_screen();
+			display_move(1, 0);
+			display_put_str("Pick one:");
 		}
-		/* go thru list and return host that matches daemon */
-		display_clear_the_screen();
-		display_move(1, 0);
-		display_put_str("Pick one:");
-		for (i = 0; i < HEIGHT - 4 && hosts[i].sin_port != htons(0);
-								i += 1) {
-			struct	hostent	*hp;
-			char	buf[80];
 
-			display_move(3 + i, 0);
-			hp = gethostbyaddr((char *) &hosts[i].sin_addr,
-					sizeof hosts[i].sin_addr, AF_INET);
-			(void) snprintf(buf, sizeof buf,
-				"%8c    %.64s", 'a' + i,
-				hp != NULL ? hp->h_name
-				: inet_ntoa(hosts->sin_addr));
+		/* Mark the last driver we used with an asterisk */
+		is_current = (last_driver == -1 && Daemon.sa_len != 0 && 
+		    memcmp(&Daemon, &driver->addr, Daemon.sa_len) == 0);
+		if (is_current)
+			last_driver = numdrivers;
+
+		/* Display it in the list if there is room */
+		if (numdrivers < HEIGHT - 3) {
+			name = driver_name(driver);
+			display_move(3 + numdrivers, 0);
+			snprintf(buf, sizeof buf, "%6c %c    %s", 
+			    is_current ? '*' : ' ', 'a' + numdrivers, name);
 			display_put_str(buf);
 		}
-		display_move(4 + i, 0);
-		display_put_str("Enter letter: ");
+
+		/* Clear the last 'Enter letter' line if any */
+		display_move(4 + numdrivers, 0);
+		display_clear_eol();
+
+		if (last_driver != -1)
+			snprintf(buf, sizeof buf, "Enter letter [%c]: ", 
+			    'a' + last_driver);
+		else
+			snprintf(buf, sizeof buf, "Enter letter: ");
+
+		display_move(5 + numdrivers, 0);
+		display_put_str(buf);
 		display_refresh();
-		while (!islower(c = getchar()) || (c -= 'a') >= i) {
-			display_beep();
-			display_refresh();
+
+		numdrivers++;
+	}
+
+	display_clear_the_screen();
+	Daemon = driver->addr;
+
+	probe_cleanup();
+	return 1;		/* Success */
+}
+
+static void
+dump_scores()
+{
+	struct	driver *driver;
+	int	s, cnt, i;
+	char	buf[1024];
+
+	probe_drivers(C_SCORES, Sock_host);
+	while ((driver = next_driver()) != NULL) {
+		printf("\n%s:\n", driver_name(driver));
+		fflush(stdout);
+
+		if ((s = socket(driver->addr.sa_family, SOCK_STREAM, 0)) < 0) {
+			warn("socket");
+			continue;
 		}
-		Daemon = hosts[c];
-		display_clear_the_screen();
-		return;
+		if (connect(s, &driver->addr, driver->addr.sa_len) < 0) {
+			warn("connect");
+			close(s);
+			continue;
+		}
+		while ((cnt = read(s, buf, sizeof buf)) > 0) {
+			/* Whittle out bad characters */
+			for (i = 0; i < cnt; i++)
+				if ((buf[i] < ' ' || buf[i] > '~') &&
+				    buf[i] != '\n' && buf[i] != '\t')
+					buf[i] = '?';
+			fwrite(buf, cnt, 1, stdout);
+		}
+		if (cnt < 0)
+			warn("read");
+		(void)close(s);
+		if (Sock_host)
+			break;
 	}
-	if (!do_startup)
-		return;
-
-	start_driver();
-	sleep(2);
-	find_driver(FALSE);
+	probe_cleanup();
 }
 
-static void
-dump_scores(host)
-	struct sockaddr_in	host;
-{
-	struct	hostent	*hp;
-	int	s;
-	char	buf[BUFSIZ];
-	int	cnt;
-
-	hp = gethostbyaddr((char *) &host.sin_addr, sizeof host.sin_addr,
-								AF_INET);
-	printf("\n%s:\n", hp != NULL ? hp->h_name : inet_ntoa(host.sin_addr));
-	fflush(stdout);
-
-	s = socket(AF_INET, SOCK_STREAM, 0);
-	if (s < 0)
-		leave(1, "socket");
-	if (connect(s, (struct sockaddr *) &host, sizeof host) < 0)
-		leave(1, "connect");
-	while ((cnt = read(s, buf, sizeof buf)) > 0)
-		write(fileno(stdout), buf, cnt);
-	(void) close(s);
-}
-
-static void
-start_driver()
-{
-	if (Am_monitor) {
-		errno = 0;
-		leave(1, "No one playing");
-	}
-
-	if (Sock_host != NULL) {
-		sleep(3);
-		return;
-	}
-
-	errno = 0;
-	leave(1, "huntd not running");
-}
 
 /*
  * bad_con:
@@ -783,7 +660,7 @@ again:
 		i = getchar();
 		if (isdigit(i))
 			team = i;
-		else if (i == '\n' || i == EOF)
+		else if (i == '\n' || i == EOF || i == ' ')
 			team = ' ';
 		/* ignore trailing chars */
 		while (i != '\n' && i != EOF)
