@@ -1,4 +1,4 @@
-.\" $OpenBSD: dhclient.8,v 1.9 2000/10/20 13:19:10 aaron Exp $
+.\" $OpenBSD: dhclient.8,v 1.10 2000/10/30 02:35:33 deraadt Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -43,7 +43,7 @@
 .Nd Dynamic Host Configuration Protocol (DHCP) Client
 .Sh SYNOPSIS
 .Nm
-.Op Fl 1d
+.Op Fl 1du
 .Op Fl p Ar port
 .Op Ar interface ...
 .Sh DESCRIPTION
@@ -76,6 +76,9 @@ By default,
 .Nm
 runs in the foreground until it has configured an interface, and then
 will revert to running in the background.
+.It Fl u
+Forces dhclient to reject leases with unknown options in them. The default
+behaviour is to accept such lease offers
 .It Fl p Ar port
 Specifies the UDP
 .Ar port
