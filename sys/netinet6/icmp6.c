@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.45 2001/06/25 02:59:01 angelos Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.46 2001/06/26 19:58:57 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -618,14 +618,15 @@ icmp6_input(mp, offp, proto)
 			nicmp6 = (struct icmp6_hdr *)(nip6 + 1);
 			bcopy(icmp6, nicmp6, sizeof(struct icmp6_hdr));
 			noff = sizeof(struct ip6_hdr);
-			n->m_pkthdr.len = n->m_len =
-				noff + sizeof(struct icmp6_hdr);
+			n->m_len = noff + sizeof(struct icmp6_hdr);
 			/*
 			 * Adjust mbuf. ip6_plen will be adjusted in
 			 * ip6_output().
+			 * n->m_pkthdr.len == n0->m_pkthdr.len at this point.
 			 */
+			n->m_pkthdr.len += noff + sizeof(struct icmp6_hdr);
+			n->m_pkthdr.len -= (off + sizeof(struct icmp6_hdr));
 			m_adj(n0, off + sizeof(struct icmp6_hdr));
-			n->m_pkthdr.len += n0->m_pkthdr.len;
 			n->m_next = n0;
 		} else {
 			nip6 = mtod(n, struct ip6_hdr *);
