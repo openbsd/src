@@ -1,11 +1,12 @@
-#	$OpenBSD: Makefile.inc,v 1.14 2002/03/30 02:33:23 krw Exp $
+#	$OpenBSD: Makefile.inc,v 1.15 2002/03/30 20:35:31 millert Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 IMAGE=		mr.fs
 CBIN?=		instbin
-CRUNCHCONF?=    ${.CURDIR}/../common/${CBIN}.conf
+CRUNCHCONF?=	${CBIN}.conf
+CRUNCHCONFS?=	${.CURDIR}/../common/crunch.conf
 LISTS?=		${.CURDIR}/../common/list ${.CURDIR}
 
 MOUNT_POINT=	/mnt
@@ -104,6 +105,9 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk all
+
+${CRUNCHCONF}: ${CRUNCHCONFS}
+	cat ${CRUNCHCONFS} > ${CRUNCHCONF}
 
 do_files:
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
