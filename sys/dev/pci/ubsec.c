@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.3 2000/06/03 13:14:39 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.4 2000/06/10 03:49:29 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -226,7 +226,7 @@ ubsec_crypto(sc, q)
 	s = splnet();
 	stat = READ_REG(sc, BS_STAT);
 	if ((stat & BS_STAT_MCR1_FULL) == 0) {
-		WRITE_REG(sc, BS_MCR1, (u_int32_t)&q->q_mcr);
+		WRITE_REG(sc, BS_MCR1, (u_int32_t)vtophys(&q->q_mcr));
 		SIMPLEQ_INSERT_TAIL(&sc->sc_qchip, q, q_next);
 	} else {
 		SIMPLEQ_INSERT_TAIL(&sc->sc_queue, q, q_next);
