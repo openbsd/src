@@ -5,7 +5,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
 static char elsieid[] = "@(#)asctime.c	7.22";
-static char rcsid[] = "$OpenBSD: asctime.c,v 1.9 2004/10/28 19:44:11 dhartmei Exp $";
+static char rcsid[] = "$OpenBSD: asctime.c,v 1.10 2005/03/02 12:25:52 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*LINTLIBRARY*/
@@ -60,10 +60,10 @@ register const struct tm *	timeptr;
 char *				buf;
 int				bufsize;
 {
-	static const char	wday_name[][3] = {
+	static const char	wday_name[][4] = {
 		"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
 	};
-	static const char	mon_name[][3] = {
+	static const char	mon_name[][4] = {
 		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 	};
