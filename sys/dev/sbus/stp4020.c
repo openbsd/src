@@ -1,5 +1,5 @@
-/*	$OpenBSD: stp4020.c,v 1.1 2002/06/19 19:14:21 fgsch Exp $	*/
-/*	$NetBSD: stp4020.c,v 1.23 2002/06/01 23:51:03 lukem Exp $ */
+/*	$OpenBSD: stp4020.c,v 1.2 2002/06/19 20:57:15 fgsch Exp $	*/
+/*	$NetBSD: stp4020.c,v 1.23 2002/06/01 23:51:03 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -701,8 +701,8 @@ stp4020_map_window(struct stp4020_socket *h, int win, int speed)
 	 * Fill in the Address Space Select and Base Address
 	 * fields of this windows control register 0.
 	 */
-	v = ((delay << STP4020_WCR0_CMDDLY_S)&STP4020_WCR0_CMDDLY_M) |
-	    ((length << STP4020_WCR0_CMDLNG_S)&STP4020_WCR0_CMDLNG_M);
+	v = ((delay << STP4020_WCR0_CMDDLY_S) & STP4020_WCR0_CMDDLY_M) |
+	    ((length << STP4020_WCR0_CMDLNG_S) & STP4020_WCR0_CMDLNG_M);
 	switch (win) {
 	case STP_WIN_ATTR:
 		v |= STP4020_WCR0_ASPSEL_AM;
@@ -788,6 +788,7 @@ stp4020_chip_io_alloc(pch, start, size, align, pcihp)
 
 	pcihp->iot = h->tag;
 	pcihp->ioh = h->windows[STP_WIN_IO].winaddr;
+	pcihp->size = size;
 	return (0);
 }
 
