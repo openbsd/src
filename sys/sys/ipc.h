@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipc.h,v 1.5 1998/06/11 21:13:21 deraadt Exp $	*/
+/*	$OpenBSD: ipc.h,v 1.6 1998/11/15 19:19:53 deraadt Exp $	*/
 /*	$NetBSD: ipc.h,v 1.15 1996/02/09 18:25:12 christos Exp $	*/
 
 /*
@@ -105,7 +105,7 @@ void ipc_o2n __P((struct oipc_perm *, struct ipc_perm *));
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-key_t	ftok __P((const char *, char));
+key_t	ftok __P((const char *, int));
 __END_DECLS
 #endif
 #endif /* !_SYS_IPC_H_ */
