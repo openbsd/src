@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.92 2002/06/10 16:51:37 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.93 2002/06/10 19:31:44 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -126,7 +126,8 @@ int	yyparse(void);
 void	ipmask(struct pf_addr *, u_int8_t);
 void	expand_rdr(struct pf_rdr *, struct node_if *, struct node_host *,
     struct node_host *);
-void	expand_nat(struct pf_nat *, struct node_host *, struct node_host *);
+void	expand_nat(struct pf_nat *, struct node_host *, struct node_port *,
+    struct node_host *, struct node_port *);
 void	expand_label_addr(const char *, char *, u_int8_t, struct node_host *);
 void	expand_label_port(const char *, char *, struct node_port *);
 void	expand_label_proto(const char *, char *, u_int8_t);
@@ -1168,7 +1169,7 @@ redirection	: /* empty */			{ $$ = NULL; }
 		}
 		;
 
-natrule		: no NAT interface af proto FROM ipspec TO ipspec redirection
+natrule		: no NAT interface af proto fromto redirection
 		{
 			struct pf_nat nat;
 
@@ -1190,81 +1191,37 @@ natrule		: no NAT interface af proto FROM ipspec TO ipspec redirection
 				nat.proto = $5->proto;
 				free($5);
 			}
-			if ($7 != NULL && $9 != NULL && $7->af != $9->af) {
-				yyerror("nat ip versions must match");
-				YYERROR;
-			}
-			if ($7 != NULL) {
-				if ($7->addr.addr_dyn != NULL) {
-					if (!nat.af) {
-						yyerror("address family (inet/"
-						    "inet6) undefined");
-						YYERROR;
-					}
-					$7->af = nat.af;
-				}
-				if (nat.af && $7->af != nat.af) {
-					yyerror("nat ip versions must match");
-					YYERROR;
-				}
-				nat.af = $7->af;
-				memcpy(&nat.src.addr, &$7->addr,
-				    sizeof(nat.src.addr));
-				memcpy(&nat.src.mask, &$7->mask,
-				    sizeof(nat.src.mask));
-				nat.src.not = $7->not;
-			}
-			if ($9 != NULL) {
-				if ($9->addr.addr_dyn != NULL) {
-					if (!nat.af) {
-						yyerror("address family (inet/"
-						    "inet6) undefined");
-						YYERROR;
-					}
-					$9->af = nat.af;
-				}
-				if (nat.af && $9->af != nat.af) {
-					yyerror("nat ip versions must match");
-					YYERROR;
-				}
-				nat.af = $9->af;
-				memcpy(&nat.dst.addr, &$9->addr,
-				    sizeof(nat.dst.addr));
-				memcpy(&nat.dst.mask, &$9->mask,
-				    sizeof(nat.dst.mask));
-				nat.dst.not = $9->not;
-			}
-
 			if (nat.no) {
-				if ($10 != NULL) {
+				if ($7 != NULL) {
 					yyerror("'no nat' rule does not need '->'");
 					YYERROR;
 				}
 			} else {
-				if ($10 == NULL || $10->address == NULL) {
+				if ($7 == NULL || $7->address == NULL) {
 					yyerror("'nat' rule requires '-> address'");
 					YYERROR;
 				}
-				if ($10->address->addr.addr_dyn != NULL) {
+				if ($7->address->addr.addr_dyn != NULL) {
 					if (!nat.af) {
 						yyerror("address family (inet/"
 						    "inet6) undefined");
 						YYERROR;
 					}
-					$10->address->af = nat.af;
+					$7->address->af = nat.af;
 				}
-				if (nat.af && $10->address->af != nat.af) {
+				if (nat.af && $7->address->af != nat.af) {
 					yyerror("nat ip versions must match");
 					YYERROR;
 				}
-				nat.af = $10->address->af;
-				memcpy(&nat.raddr, &$10->address->addr,
+				nat.af = $7->address->af;
+				memcpy(&nat.raddr, &$7->address->addr,
 				    sizeof(nat.raddr));
-				free($10->address);
-				free($10);
+				free($7->address);
+				free($7);
 			}
 
-			expand_nat(&nat, $7, $9);
+			expand_nat(&nat, $6.src.host, $6.src.port,
+			    $6.dst.host, $6.dst.port);
 		}
 		;
 
@@ -1907,15 +1864,20 @@ expand_rule(struct pf_rule *r,
 
 void
 expand_nat(struct pf_nat *n, struct node_host *src_hosts,
-    struct node_host *dst_hosts)
+    struct node_port *src_ports, struct node_host *dst_hosts,
+    struct node_port *dst_ports)
 {
 	int af = n->af, added = 0;
 
 	CHECK_ROOT(struct node_host, src_hosts);
+	CHECK_ROOT(struct node_port, src_ports);
 	CHECK_ROOT(struct node_host, dst_hosts);
+	CHECK_ROOT(struct node_port, dst_ports);
 
 	LOOP_THROUGH(struct node_host, src_host, src_hosts,
+	LOOP_THROUGH(struct node_port, src_port, src_ports,
 	LOOP_THROUGH(struct node_host, dst_host, dst_hosts,
+	LOOP_THROUGH(struct node_port, dst_port, dst_ports,
 
 		n->af = af;
 		if ((n->af && src_host->af && n->af != src_host->af) ||
@@ -1930,15 +1892,28 @@ expand_nat(struct pf_nat *n, struct node_host *src_hosts,
 
 		n->src.addr = src_host->addr;
 		n->src.mask = src_host->mask;
+		n->src.noroute = src_host->noroute;
+		n->src.not = src_host->not;
+		n->src.port[0] = src_port->port[0];
+		n->src.port[1] = src_port->port[1];
+		n->src.port_op = src_port->op;
 		n->dst.addr = dst_host->addr;
 		n->dst.mask = dst_host->mask;
+		n->dst.noroute = dst_host->noroute;
+		n->dst.not = dst_host->not;
+		n->dst.port[0] = dst_port->port[0];
+		n->dst.port[1] = dst_port->port[1];
+		n->dst.port_op = dst_port->op;
 
 		pfctl_add_nat(pf, n);
 		added++;
-	));
+
+	))));
 
 	FREE_LIST(struct node_host, src_hosts);
+	FREE_LIST(struct node_port, src_ports);
 	FREE_LIST(struct node_host, dst_hosts);
+	FREE_LIST(struct node_port, dst_ports);
 
 	if (!added)
 		yyerror("nat rule expands to no valid combinations");

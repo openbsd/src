@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nat.conf.5,v 1.25 2002/06/03 16:18:53 kjell Exp $
+.\"	$OpenBSD: nat.conf.5,v 1.26 2002/06/10 19:31:44 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001 Ian Darwin.  All rights reserved.
 .\"
@@ -83,8 +83,7 @@ Syntax for filter rules in BNF:
 .Bd -literal
 rule      = [ "no" ] ( nat_rule | binat_rule | rdr_rule ) .
 
-nat_rule  = "nat" "on" [ "!" ] ifname [ protospec ] "from" ipspec
-            "to" ipspec [ "->" address ] .
+nat_rule  = "nat" "on" [ "!" ] ifname [ protospec ] hosts [ "->" address ] .
 
 binat_rule = "binat" "on" ifname [ protospec ] "from" address
              "to" ipspec [ "->" address ] .
@@ -94,11 +93,24 @@ rdr_rule  = "rdr" "on" [ "!" ] ifname [ protospec ] "from" ipspec
 
 protospec = "proto" ( number | "tcp" | "udp" | "icmp" ) .
 
-ipspec    = "any" | host .
-
-host      = [ "!" ] address [ "/" mask-bits ] .
+ipspec    = "any" | host | "{" host-list "}" .
 
 portspec  = "port" ( number | name ) [ ":" ( "*" | number | name ) ] .
+
+hosts     = "all" |
+            "from" ( "any" | host | "{" host-list "}" ) [ port ]
+            "to"   ( "any" | host | "{" host-list "}" ) [ port ] .
+
+host      = [ "!" ] address [ "/" mask-bits ] .
+address   = ( interface-name | "(" interface-name ")" | host-name |
+              ipv4-dotted-quad | ipv6-coloned-hex ) .
+host-list = host [ "," host-list ] .
+
+port      = "port" ( unary-op | binary-op | "{" op-list "}" ) .
+unary-op  = [ "=" | "!=" | "<" | "<=" | ">" | ">=" ]
+            ( name | number ) .
+binary-op = number ( "<>" | "><" ) number .
+op-list   = ( unary-op | binary-op ) [ "," op-list ] .
 .Ed
 .Pp
 Comments begin with the character `#'; empty lines are ignored.

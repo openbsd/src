@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.229 2002/06/10 17:05:10 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.230 2002/06/10 19:31:44 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -187,7 +187,8 @@ void			 pf_send_reset(int, struct tcphdr *,
 void			 pf_send_icmp(struct mbuf *, u_int8_t, u_int8_t, int);
 u_int16_t		 pf_map_port_range(struct pf_rdr *, u_int16_t);
 struct pf_nat		*pf_get_nat(struct ifnet *, u_int8_t,
-			    struct pf_addr *, struct pf_addr *, int);
+			    struct pf_addr *, u_int16_t,
+			    struct pf_addr *, u_int16_t, int);
 struct pf_binat		*pf_get_binat(int, struct ifnet *, u_int8_t,
 			    struct pf_addr *, struct pf_addr *, int);
 struct pf_rdr		*pf_get_rdr(struct ifnet *, u_int8_t,
@@ -1422,7 +1423,7 @@ found:
 
 struct pf_nat *
 pf_get_nat(struct ifnet *ifp, u_int8_t proto, struct pf_addr *saddr,
-    struct pf_addr *daddr, int af)
+    u_int16_t sport, struct pf_addr *daddr, u_int16_t dport, int af)
 {
 	struct pf_nat *n, *nm = NULL;
 
@@ -1436,10 +1437,18 @@ pf_get_nat(struct ifnet *ifp, u_int8_t proto, struct pf_addr *saddr,
 		    !n->src.addr.addr_dyn->undefined) &&
 		    PF_MATCHA(n->src.not, &n->src.addr.addr, &n->src.mask,
 		    saddr, af) &&
+		    (!n->src.port_op ||
+		    (proto != IPPROTO_TCP && proto != IPPROTO_UDP) ||
+		    pf_match_port(n->src.port_op, n->src.port[0],
+		    n->src.port[1], sport)) &&
 		    (n->dst.addr.addr_dyn == NULL ||
 		    !n->dst.addr.addr_dyn->undefined) &&
 		    PF_MATCHA(n->dst.not, &n->dst.addr.addr, &n->dst.mask,
-		    daddr, af))
+		    daddr, af) &&
+		    (!n->dst.port_op ||
+		    (proto != IPPROTO_TCP && proto != IPPROTO_UDP) ||
+		    pf_match_port(n->dst.port_op, n->dst.port[0],
+		    n->dst.port[1], dport)))
 			nm = n;
 		else
 			n = TAILQ_NEXT(n, entries);
@@ -1620,7 +1629,7 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		}
 		/* check outgoing packet for NAT */
 		else if ((nat = pf_get_nat(ifp, IPPROTO_TCP,
-		    saddr, daddr, af)) != NULL) {
+		    saddr, th->th_sport, daddr, th->th_dport, af)) != NULL) {
 			bport = th->th_sport;
 			error = pf_get_sport(IPPROTO_TCP, 50001,
 			    65535, &nport);
@@ -1879,7 +1888,7 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		}
 		/* check outgoing packet for NAT */
 		else if ((nat = pf_get_nat(ifp, IPPROTO_UDP,
-		    saddr, daddr, af)) != NULL) {
+		    saddr, uh->uh_sport, daddr, uh->uh_dport, af)) != NULL) {
 			bport = uh->uh_sport;
 			error = pf_get_sport(IPPROTO_UDP, 50001,
 			    65535, &nport);
@@ -2156,7 +2165,7 @@ pf_test_icmp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		}
 		/* check outgoing packet for NAT */
 		else if ((nat = pf_get_nat(ifp, pd->proto,
-		    saddr, daddr, af)) != NULL) {
+		    saddr, 0, daddr, 0, af)) != NULL) {
 			PF_ACPY(&baddr, saddr, af);
 			switch (af) {
 #ifdef INET
@@ -2383,7 +2392,7 @@ pf_test_other(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		}
 		/* check outgoing packet for NAT */
 		else if ((nat = pf_get_nat(ifp, pd->proto,
-		    saddr, daddr, af)) != NULL) {
+		    saddr, 0, daddr, 0, af)) != NULL) {
 			PF_ACPY(&baddr, saddr, af);
 			switch (af) {
 #ifdef INET

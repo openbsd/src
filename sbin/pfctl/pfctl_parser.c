@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.84 2002/06/09 20:20:58 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.85 2002/06/10 19:31:44 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -58,6 +58,8 @@ void		 print_port (u_int8_t, u_int16_t, u_int16_t, char *);
 void		 print_uid (u_int8_t, uid_t, uid_t, const char *);
 void		 print_gid (u_int8_t, gid_t, gid_t, const char *);
 void		 print_flags (u_int8_t);
+void		 print_fromto(struct pf_rule_addr *, struct pf_rule_addr *,
+		    u_int8_t, u_int8_t);
 
 char *tcpflags = "FSRPAUEW";
 
@@ -347,6 +349,53 @@ print_flags(u_int8_t f)
 }
 
 void
+print_fromto(struct pf_rule_addr *src, struct pf_rule_addr *dst,
+    u_int8_t af, u_int8_t proto)
+{
+	if (PF_AZERO(&src->addr.addr, AF_INET6) &&
+	    PF_AZERO(&src->mask, AF_INET6) &&
+	    !src->noroute && !dst->noroute &&
+	    !src->port_op && PF_AZERO(&dst->addr.addr, AF_INET6) &&
+	    PF_AZERO(&dst->mask, AF_INET6) && !dst->port_op)
+		printf("all ");
+	else {
+		printf("from ");
+		if (src->noroute)
+			printf("no-route ");
+		else if (PF_AZERO(&src->addr.addr, AF_INET6) &&
+		    PF_AZERO(&src->mask, AF_INET6))
+			printf("any ");
+		else {
+			if (src->not)
+				printf("! ");
+			print_addr(&src->addr, &src->mask, af);
+			printf(" ");
+		}
+		if (src->port_op)
+			print_port(src->port_op, src->port[0],
+			    src->port[1],
+			    proto == IPPROTO_TCP ? "tcp" : "udp");
+
+		printf("to ");
+		if (dst->noroute)
+			printf("no-route ");
+		else if (PF_AZERO(&dst->addr.addr, AF_INET6) &&
+		    PF_AZERO(&dst->mask, AF_INET6))
+			printf("any ");
+		else {
+			if (dst->not)
+				printf("! ");
+			print_addr(&dst->addr, &dst->mask, af);
+			printf(" ");
+		}
+		if (dst->port_op)
+			print_port(dst->port_op, dst->port[0],
+			    dst->port[1],
+			    proto == IPPROTO_TCP ? "tcp" : "udp");
+	}
+}
+
+void
 print_nat(struct pf_nat *n)
 {
 	if (n->no)
@@ -372,24 +421,7 @@ print_nat(struct pf_nat *n)
 		else
 			printf("proto %u ", n->proto);
 	}
-	printf("from ");
-	if (!PF_AZERO(&n->src.addr.addr, n->af) ||
-	    !PF_AZERO(&n->src.mask, n->af)) {
-		if (n->src.not)
-			printf("! ");
-		print_addr(&n->src.addr, &n->src.mask, n->af);
-		printf(" ");
-	} else
-		printf("any ");
-	printf("to ");
-	if (!PF_AZERO(&n->dst.addr.addr, n->af) ||
-	    !PF_AZERO(&n->dst.mask, n->af)) {
-		if (n->dst.not)
-			printf("! ");
-		print_addr(&n->dst.addr, &n->dst.mask, n->af);
-		printf(" ");
-	} else
-		printf("any ");
+	print_fromto(&n->src, &n->dst, n->af, n->proto);
 	if (!n->no) {
 		printf("-> ");
 		print_addr(&n->raddr, NULL, n->af);
@@ -631,47 +663,7 @@ print_rule(struct pf_rule *r)
 		else
 			printf("proto %u ", r->proto);
 	}
-	if (PF_AZERO(&r->src.addr.addr, AF_INET6) &&
-	    PF_AZERO(&r->src.mask, AF_INET6) &&
-	    !r->src.noroute && !r->dst.noroute &&
-	    !r->src.port_op && PF_AZERO(&r->dst.addr.addr, AF_INET6) &&
-	    PF_AZERO(&r->dst.mask, AF_INET6) && !r->dst.port_op)
-		printf("all ");
-	else {
-		printf("from ");
-		if (r->src.noroute)
-			printf("no-route ");
-		else if (PF_AZERO(&r->src.addr.addr, AF_INET6) &&
-		    PF_AZERO(&r->src.mask, AF_INET6))
-			printf("any ");
-		else {
-			if (r->src.not)
-				printf("! ");
-			print_addr(&r->src.addr, &r->src.mask, r->af);
-			printf(" ");
-		}
-		if (r->src.port_op)
-			print_port(r->src.port_op, r->src.port[0],
-			    r->src.port[1],
-			    r->proto == IPPROTO_TCP ? "tcp" : "udp");
-
-		printf("to ");
-		if (r->dst.noroute)
-			printf("no-route ");
-		else if (PF_AZERO(&r->dst.addr.addr, AF_INET6) &&
-		    PF_AZERO(&r->dst.mask, AF_INET6))
-			printf("any ");
-		else {
-			if (r->dst.not)
-				printf("! ");
-			print_addr(&r->dst.addr, &r->dst.mask, r->af);
-			printf(" ");
-		}
-		if (r->dst.port_op)
-			print_port(r->dst.port_op, r->dst.port[0],
-			    r->dst.port[1],
-			    r->proto == IPPROTO_TCP ? "tcp" : "udp");
-	}
+	print_fromto(&r->src, &r->dst, r->af, r->proto);
 	if (r->uid.op)
 		print_uid(r->uid.op, r->uid.uid[0], r->uid.uid[1], "user");
 	if (r->gid.op)
