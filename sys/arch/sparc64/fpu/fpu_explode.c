@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_explode.c,v 1.1 2001/09/08 22:33:51 jason Exp $	*/
+/*	$OpenBSD: fpu_explode.c,v 1.2 2001/09/10 16:05:17 jason Exp $	*/
 /*	$NetBSD: fpu_explode.c,v 1.5 2000/08/03 18:32:08 eeh Exp $ */
 
 /*
@@ -115,9 +115,9 @@ fpu_xtof(fp, i)
 	register struct fpn *fp;
 	register u_int64_t i;
 {
-
 	if (i == 0)
 		return (FPC_ZERO);
+
 	/*
 	 * The value FP_1 represents 2^FP_LG, so set the exponent
 	 * there and let normalization fix it up.  Convert negative
@@ -258,32 +258,40 @@ fpu_explode(fe, fp, type, reg)
 	s = space[0];
 	fp->fp_sign = s >> 31;
 	fp->fp_sticky = 0;
+	DPRINTF(FPE_INSN, ("fpu_explode: "));
 	switch (type) {
 #ifdef SUN4U
 	case FTYPE_LNG:
+		DPRINTF(FPE_INSN, ("LNG: %llx", l));
 		s = fpu_xtof(fp, l);
 		break;
 #endif /* SUN4U */
 
 	case FTYPE_INT:
+		DPRINTF(FPE_INSN, ("INT: %x", s));
 		s = fpu_itof(fp, s);
 		break;
 
 	case FTYPE_SNG:
+		DPRINTF(FPE_INSN, ("SNG: %x", s));
 		s = fpu_stof(fp, s);
 		break;
 
 	case FTYPE_DBL:
+		DPRINTF(FPE_INSN, ("DBL: %x %x", s, space[1]));
 		s = fpu_dtof(fp, s, space[1]);
 		break;
 
 	case FTYPE_EXT:
+		DPRINTF(FPE_INSN, ("EXT: %x %x %x %x", s, space[1],
+		    space[2], space[3]));
 		s = fpu_qtof(fp, s, space[1], space[2], space[3]);
 		break;
 
 	default:
 		panic("fpu_explode");
 	}
+	DPRINTF(FPE_INSN, ("\n"));
 
 	if (s == FPC_QNAN && (fp->fp_mant[0] & FP_QUIETBIT) == 0) {
 		/*
@@ -299,11 +307,11 @@ fpu_explode(fe, fp, type, reg)
 	}
 	fp->fp_class = s;
 	DPRINTF(FPE_REG, ("fpu_explode: %%%c%d => ", (type == FTYPE_LNG) ? 'x' :
-		((type == FTYPE_INT) ? 'i' : 
-			((type == FTYPE_SNG) ? 's' :
-				((type == FTYPE_DBL) ? 'd' :
-					((type == FTYPE_EXT) ? 'q' : '?')))), 
-		reg));
+	    ((type == FTYPE_INT) ? 'i' : 
+		((type == FTYPE_SNG) ? 's' :
+		    ((type == FTYPE_DBL) ? 'd' :
+			((type == FTYPE_EXT) ? 'q' : '?')))), 
+	    reg));
 	DUMPFPN(FPE_REG, fp);
 	DPRINTF(FPE_REG, ("\n"));
 }

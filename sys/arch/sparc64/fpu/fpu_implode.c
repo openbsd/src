@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_implode.c,v 1.2 2001/09/09 00:35:48 jason Exp $	*/
+/*	$OpenBSD: fpu_implode.c,v 1.3 2001/09/10 16:05:17 jason Exp $	*/
 /*	$NetBSD: fpu_implode.c,v 1.7 2000/08/03 18:32:08 eeh Exp $ */
 
 /*
@@ -508,30 +508,36 @@ fpu_implode(fe, fp, type, space)
 	int type;
 	register u_int *space;
 {
-
+	DPRINTF(FPE_INSN, ("fpu_implode: "));
 	switch (type) {
 
 #ifdef SUN4U
 	case FTYPE_LNG:
 		space[0] = fpu_ftox(fe, fp, space);
+		DPRINTF(FPE_INSN, ("LNG %x %x\n", space[0], space[1]));
 		break;
 #endif /* SUN4U */
 
 	case FTYPE_INT:
 		space[0] = fpu_ftoi(fe, fp);
+		DPRINTF(FPE_INSN, ("INT %x\n", space[0]));
 		break;
 
 	case FTYPE_SNG:
 		space[0] = fpu_ftos(fe, fp);
+		DPRINTF(FPE_INSN, ("SNG %x\n", space[0]));
 		break;
 
 	case FTYPE_DBL:
 		space[0] = fpu_ftod(fe, fp, space);
+		DPRINTF(FPE_INSN, ("DBL %x %x\n", space[0], space[1]));
 		break;
 
 	case FTYPE_EXT:
 		/* funky rounding precision options ?? */
 		space[0] = fpu_ftoq(fe, fp, space);
+		DPRINTF(FPE_INSN, ("EXT %x %x %x %x\n", space[0], space[1],
+		    space[2], space[3]));
 		break;
 
 	default:
