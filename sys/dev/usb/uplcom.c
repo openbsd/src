@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.10 2003/07/19 08:06:17 cedric Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.11 2003/11/07 20:22:35 jmc Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,8 +38,8 @@
 
 /*
  * Simple datasheet
- * http://www.prolific.com.tw/download/DataSheet/pl2303_ds11.PDF
- * http://www.nisseisg.co.jp/jyouhou/_cp/@gif/2303.pdf
+ * http://www.prolific.com.tw/PDF/PL-2303%20Market%20Spec.pdf
+ * http://www.hitachi-hitec.com/jyouhou/prolific/2303.pdf
  * 	(english)
  *
  */
