@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.162 2004/04/29 19:56:04 deraadt Exp $ */
+/*	$OpenBSD: session.c,v 1.163 2004/05/06 09:11:18 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1136,6 +1136,9 @@ session_update(u_int32_t peerid, void *data, size_t datalen)
 		log_warnx("no such peer: id=%u", peerid);
 		return;
 	}
+
+	if (p->state != STATE_ESTABLISHED)
+		return;
 
 	len = MSGSIZE_HEADER + datalen;
 
