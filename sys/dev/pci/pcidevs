@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.661 2003/08/04 08:17:53 markus Exp $
+	$OpenBSD: pcidevs,v 1.662 2003/08/07 17:39:17 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -52,9 +52,8 @@
  * List of known PCI vendors
  */
 
-vendor PEAK		0x001c	Peak
 vendor MARTINMARIETTA	0x003d	Martin-Marietta
-vendor HAUPPAUGE	0x0070	Hauppauge Computer Works Inc
+vendor HAUPPAUGE	0x0070	Hauppauge Computer Works
 vendor DYNALINK		0x0675	Dynalink
 vendor COMPAQ		0x0e11	Compaq
 vendor SYMBIOS		0x1000	Symbios Logic
@@ -62,30 +61,18 @@ vendor ATI		0x1002	ATI
 vendor ULSI		0x1003	ULSI Systems
 vendor VLSI		0x1004	VLSI Technology
 vendor AVANCE		0x1005	Avance Logic
-vendor REPLY		0x1006	Reply Group
-vendor NETFRAME		0x1007	NetFrame Systems
-vendor EPSON		0x1008	Epson
-vendor PHOENIX		0x100a	Phoenix Technologies
-vendor NS		0x100b	NS
 vendor TSENG		0x100c	Tseng Labs
 vendor AST		0x100d	AST Research
 vendor WEITEK		0x100e	Weitek
-vendor VIDEOLOGIC	0x1010	Video Logic
 vendor DEC		0x1011	DEC
-vendor MICRONICS	0x1012	Micronics
 vendor CIRRUS		0x1013	Cirrus Logic
 vendor IBM		0x1014	IBM
-vendor LSIL		0x1015	LSI Canada
-vendor ICLPERSONAL	0x1016	ICL Personal Systems
-vendor SPEA		0x1017	SPEA Software
 vendor UNISYS		0x1018	Unisys Systems
-vendor ELITEGROUP	0x1019	Elitegroup
 vendor NCR		0x101a	AT&T GIS
-vendor VITESSE		0x101b	Vitesse Semiconductor
 vendor WD		0x101c	Western Digital
 vendor AMI		0x101e	AMI
 vendor PICTURETEL	0x101f	PictureTel
-vendor HITACHICOMP	0x1020	Hitachi Computer Products
+vendor HITACHICOMP	0x1020	Hitachi Computer
 vendor OKI		0x1021	OKI Electric Industry
 vendor AMD		0x1022	AMD
 vendor TRIDENT		0x1023	Trident
@@ -93,7 +80,6 @@ vendor ZENITH		0x1024	Zenith Data Systems
 vendor ACER		0x1025	Acer
 vendor DELL		0x1028	Dell
 vendor SNI		0x1029	Siemens Nixdorf AG
-vendor LSILOGIC		0x102a	LSI Logic
 vendor MATROX		0x102b	Matrox
 vendor CHIPS		0x102c	Chips and Technologies
 vendor WYSE		0x102d	WYSE Technology
@@ -107,29 +93,19 @@ vendor BURNDY		0x1034	Burndy
 vendor COMPCOMM		0x1035	Comp. & Comm. Research Lab
 vendor FUTUREDOMAIN	0x1036	Future Domain
 vendor HITACHIMICRO	0x1037	Hitach Microsystems
-vendor AMP		0x1038	AMP
 vendor SIS		0x1039	SIS
-vendor SEIKOEPSON	0x103a	Seiko Epson
 vendor TATUNGAMERICA	0x103b	Tatung Co. of America
 vendor HP		0x103c	Hewlett-Packard
-vendor SOLLIDAY		0x103e	Solliday Engineering
-vendor LOGICMODELLING	0x103f	Logic Modeling
-vendor KPC		0x1040	Kubota Pacific
-vendor COMPUTREND	0x1041	Computrend
 vendor PCTECH		0x1042	PC Technology
 vendor ASUSTEK		0x1043	Asustek Computer
 vendor DPT		0x1044	DPT
 vendor OPTI		0x1045	Opti
-vendor IPCCORP		0x1046	IPC Corporation
-vendor GENOA		0x1047	Genoa Systems
 vendor ELSA		0x1048	Elsa
-vendor FOUNTAINTECH	0x1049	Fountain Technology
 vendor SGSTHOMSON	0x104a	SGS Thomson
 vendor BUSLOGIC		0x104b	BusLogic
 vendor TI		0x104c	Texas Instruments
 vendor SONY		0x104d	Sony
 vendor OAKTECH		0x104e	Oak Technology
-vendor COTIME		0x104f	Co-time Computer
 vendor WINBOND		0x1050	Winbond
 vendor ANIGMA		0x1051	Anigma
 vendor YOUNGMICRO	0x1052	Young Micro
@@ -238,7 +214,6 @@ vendor MITSUBISHIELEC	0x10ba	Mitsubishi Electronics
 vendor DAPHA		0x10bb	Dapha Electronics
 vendor ALR		0x10bc	Advanced Logic Research
 vendor SURECOM		0x10bd	Surecom Technology
-vendor TSENGLABS	0x10be	Tseng Labs International
 vendor MOST		0x10bf	Most
 vendor BOCA		0x10c0	Boca Research
 vendor ICM		0x10c1	ICM
@@ -395,9 +370,6 @@ vendor PARALLAX		0x115b	Parallax Graphics
 vendor XIRCOM		0x115d	Xircom
 vendor PEERPROTO	0x115e	Peer Protocols
 vendor MAXTOR		0x115f	Maxtor
-vendor MEGASOFT		0x1160	Megasoft
-vendor PFU		0x1161	PFU Limited
-vendor OALAB		0x1162	OA Laboratory
 vendor SYNEMA		0x1163	Synema
 vendor APT		0x1164	Advanced Peripherals Technologies
 vendor IMAGRAPH		0x1165	Imagraph
@@ -496,7 +468,7 @@ vendor COMPEX		0x11f6	Compex
 vendor PMCSIERRA	0x11f8	PMC-Sierra
 vendor CYCLADES		0x120e	Cyclades
 vendor ESSENTIAL	0x120f	Essential Communications
-vendor O2MICRO		0x1217	O2 Micro Inc
+vendor O2MICRO		0x1217	O2 Micro
 vendor 3DFX		0x121a	3DFX Interactive
 vendor ATML		0x121b	Advanced Telecommunications Modules
 vendor ARIEL		0x1220	Ariel
@@ -556,9 +528,9 @@ vendor INVERTEX		0x14e1	Invertex
 vendor BROADCOM		0x14e4	Broadcom
 vendor CONEXANT		0x14f1	Conexant
 vendor DELTA		0x1500	Delta
-vendor MYSON		0x1516	Myson Century Inc
+vendor MYSON		0x1516	Myson Century
 vendor TOPIC		0x151f	Topic/SmartLink
-vendor ENE		0x1524	ENE Technology Inc
+vendor ENE		0x1524	ENE Technology
 vendor TERRATEC		0x153b	TerraTec Electronic Gmbh
 vendor SYMBOL		0x1562	Symbol
 vendor SYBA		0x1592	Syba
@@ -608,7 +580,7 @@ vendor INVALID		0xffff	INVALID VENDOR ID
  * List of known products.  Grouped by vendor.
  */
 
-/* O2 Micro Inc */
+/* O2 Micro */
 product O2MICRO OZ6832		0x6832	OZ6832 and OZ6836 CardBus
 product O2MICRO OZ6836		0x6836	OZ6836 and OZ6860 CardBus
 product O2MICRO OZ6872		0x6872	OZ6812 and OZ6872 CardBus
@@ -798,7 +770,7 @@ product ADVSYS WIDE		0x2300	ABP-940UW
 product ADVSYS U2W		0x2500	ASP-3940U2W
 product ADVSYS U3W		0x2700	ASP-3940U3W
 
-/* Advanced Telecommunications Modules Ltd. */
+/* Advanced Telecommunications Modules */
 product ATML WAIKATO		0x3200	Waikato Dag3.2
 product ATML DAG35		0x3500	Endace Dag3.5
 product ATML DAG422GE		0x422e	Endace Dag4.22GE
@@ -872,7 +844,7 @@ product AMI MEGARAID		0x1960	MegaRAID
 product AMI MEGARAID428		0x9010	MegaRAID Series 428
 product AMI MEGARAID434		0x9060	MegaRAID Series 434
 
-/* Antares Microsystems, Inc. products */
+/* Antares Microsystems products */
 product ANTARES TC9021		0x1021	Antares Gigabit Ethernet
 
 /* Apple products */
@@ -1307,7 +1279,7 @@ product ENDACE DAG422GE		0x422e	Endace Dag4.22GE
 product ENDACE DAG423		0x4230	Endace Dag4.23
 product ENDACE DAG423GE		0x423e	Endace Dag4.23GE
 
-/* ENE Technology Inc products */
+/* ENE Technology products */
 product ENE CB1410		0x1410	CB-1410 PCI-CardBus
 
 /* Ensoniq products */
@@ -1315,7 +1287,7 @@ product ENSONIQ	AUDIOPCI97	0x1371	AudioPCI97
 product ENSONIQ AUDIOPCI	0x5000	AudioPCI
 product ENSONIQ CT5880		0x5880	CT5880
 
-/* ESS Technology Inc products */
+/* ESS Technology products */
 product ESSTECH	ES336H		0x0000	ES366H Fax/Modem (early)
 product ESSTECH	MAESTROII	0x1968	Maestro II
 product ESSTECH SOLO1		0x1969	SOLO-1 AudioDrive
@@ -1356,7 +1328,7 @@ product GLOBALSUN GL24110P02	0x1102	GL24110P02
 /* Guillemot products */
 product GEMTEK PR103		0x1001	PR103
 
-/* Hauppauge Computer Works Inc */
+/* Hauppauge Computer Works */
 product HAUPPAUGE WINTV		0x13eb	WinTV
 
 /* Hewlett-Packard products */
@@ -1812,7 +1784,7 @@ product MRTMAGMA DMA4		0x0011	DMA4 serial
 product MYLEX 960P		0x0001	DAC960P RAID
 product MYLEX ACCELERAID	0x0050	AcceleRAID
 
-/* Myson Century Inc products */
+/* Myson Century products */
 product MYSON MTD803		0x0803	MTD803
 
 /* Mutech products */
@@ -1869,10 +1841,10 @@ product NETGEAR GA620T		0x630a	GA620T
 /* NetMos */
 product NETMOS 2S1P		0x9835	2S1P
 
-/* Network Security Technologies, Inc. */
+/* Network Security Technologies */
 product NETSEC 7751		0x7751	7751
 
-/* C-Media Electronics Inc */
+/* C-Media Electronics */
 product CMI CMI8338A		0x0100	CMI8338A Audio
 product CMI CMI8338B		0x0101	CMI8338B Audio
 product CMI CMI8738		0x0111	CMI8738/C3DX Audio
@@ -2083,7 +2055,7 @@ product OXFORD VSCOM_PCI800H_0	0xa003	VScom PCI 400H/800H
 product OXFORD VSCOM_PCI800H_1	0xa004	VScom PCI 800H
 product OXFORD2 VSCOM_PCI011H	0x8403	VScom PCI 011H
 
-/* Packet Engines Inc. products */
+/* Packet Engines products */
 product PE GNIC2		0x0911	PMC/GNIC2
 
 /* PC Tech products */
@@ -2237,7 +2209,7 @@ product S3 TWISTER_K		0x8d02	Twister-K
 product S3 PROSAVAGE_DDR	0x8d04  ProSavage DDR
 product S3 SONICVIBES		0xca00	SonicVibes
 
-/* SafeNet, Inc. products */
+/* SafeNet products */
 product SAFENET SAFEXCEL	0x1141	SafeXcel
 
 /* Schneider & Koch (SysKonnect) */
@@ -2333,7 +2305,7 @@ product SMC 37C665		0x1000	FDC 37C665
 product SMC 37C922		0x1001	FDC 37C922
 product SMC 83C170		0x0005	83C170 (EPIC/100)
 
-/* Silicon Motion, Inc. products */
+/* Silicon Motion products */
 product SMI SM710		0x0710	LynxEM
 product SMI SM712		0x0712	LynxEM+
 product SMI SM720		0x0720	Lynx3DM
