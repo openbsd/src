@@ -1,4 +1,4 @@
-$OpenBSD: eisadevs,v 1.10 1998/11/22 16:23:16 mickey Exp $
+$OpenBSD: eisadevs,v 1.11 1998/11/27 01:17:34 mickey Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -103,6 +103,9 @@ product HWP 2051	EISA Test Adapter Card
 product HWP C000	Series 700 EISA System Board
 product HWP C010	Series 700 EISA System Board
 product HWP C051	Series 700 EISA System Board
+product HWP C091	EISA System Board
+product HWP C0D1	EISA System Board
+product HWP C0E1	EISA System Board
 
 /* 3Com products */
 product TCM 5091	3C509 Ethernet
