@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.47 2005/01/14 22:39:27 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.48 2005/01/18 13:32:56 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.91 1998/11/11 06:41:25 thorpej Exp $	*/
 
 /*
@@ -1995,7 +1995,7 @@ ASLOCAL(phys_badaddr)
 	rts
 ASLOCAL(catchbad)
 	ASRELOC(_bsave,a3)		| got a bus error, so restore handler
-	movl	a1@,BUSERR
+	movl	a3@,BUSERR
 	ASRELOC(_ssave,a3)
 	movl	a3@,sp			| and stack
 	moveq	#1,d0			| return fault
