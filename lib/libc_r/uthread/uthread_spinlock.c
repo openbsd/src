@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_spinlock.c,v 1.6 1999/11/25 07:01:46 d Exp $	*/
+/*	$OpenBSD: uthread_spinlock.c,v 1.7 2000/01/06 07:22:04 d Exp $	*/
 /*
  * Copyright (c) 1997 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -63,7 +63,7 @@ _spinlock(spinlock_t *lck)
 	}
 
 	/* The running thread now owns the lock: */
-	lck->lock_owner = (long) _thread_run;
+	lck->lock_owner = _thread_run;
 }
 
 /*
@@ -101,7 +101,7 @@ _spinlock_debug(spinlock_t *lck, const char *fname, int lineno)
 	}
 
 	/* The running thread now owns the lock: */
-	lck->lock_owner = (long) _thread_run;
+	lck->lock_owner = _thread_run;
 	lck->fname = fname;
 	lck->lineno = lineno;
 }
