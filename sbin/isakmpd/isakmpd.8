@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.35 2001/12/10 04:06:45 ho Exp $
+.\" $OpenBSD: isakmpd.8,v 1.36 2001/12/13 20:16:48 mpech Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -59,8 +59,8 @@
 The
 .Nm
 daemon establishes security associations for encrypted
-and/or authenticated network traffic.  At this moment,
-and probably forever, this means
+and/or authenticated network traffic.
+At this moment, and probably forever, this means
 .Xr ipsec 4
 traffic.
 .Pp
@@ -79,13 +79,14 @@ socket, and lastly by scheduled events triggered by timers running out.
 Most uses of 
 .Nm
 will be to implement so called "virtual private
-networks" or VPNs for short.  The
+networks" or VPNs for short.
+The
 .Xr vpn 8
 manual page describes how to setup 
 .Nm
-for a simple VPN.  For other
-uses, some more knowledge of IKE as a protocol is required.  One source
-of information are the RFCs mentioned below.
+for a simple VPN.
+For other uses, some more knowledge of IKE as a protocol is required.
+One source of information are the RFCs mentioned below.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -190,10 +191,12 @@ On the other hand, the port specified to capital
 will be what the daemon binds its local end to when acting as
 initiator.
 .It Fl L
-Enable IKE packet capture. When this option is given, 
+Enable IKE packet capture.
+When this option is given, 
 .Nm
 will capture to file an unencrypted copy of the negotiation packets it
-is sending and receiveing. This file can later be read by 
+is sending and receiveing.
+This file can later be read by 
 .Xr tcpdump 8
 and other utilities using 
 .Xr pcap 3 .
@@ -218,16 +221,17 @@ flag.
 .El
 .Ss Setting up an IKE public key infrastructure (a.k.a. PKI)
 In order to use public key based authentication, there has to be an
-infrastructure managing the key signing.  Either there is an already
-existing PKI
+infrastructure managing the key signing.
+Either there is an already existing PKI
 .Nm
-should take part in, or there will be a need to setup one.  In the former
-case, what is needed to be done varies depending on the actual Certificate
-Authority used, and is therefore not covered here, more than
-mentioning that
+should take part in, or there will be a need to setup one.
+In the former case, what is needed to be done varies depending on the
+actual Certificate Authority used, and is therefore not covered here,
+more than mentioning that
 .Xr openssl 1
 needs to be used to create a certificate signing request that the
-CA understands.  The latter case however is described here:
+CA understands.
+The latter case however is described here:
 .Pp
 .Bl -enum
 .It
@@ -240,10 +244,11 @@ Create your own CA as root.
 .Ed
 .Pp
 You are now being asked to enter information that will be incorporated
-into your certificate request.  What you are about to enter is what is
-called a Distinguished Name or a DN.  There are quite a few fields but
-you can leave some blank.  For some fields there will be a default
-value, if you enter '.', the field will be left blank.
+into your certificate request.
+What you are about to enter is what is called a Distinguished Name or a DN.
+There are quite a few fields but you can leave some blank.
+For some fields there will be a default value, if you enter '.', the field
+will be left blank.
 .Pp
 .Bd -literal
 # openssl x509 -req -days 365 -in /etc/ssl/private/ca.csr \\
@@ -253,13 +258,14 @@ value, if you enter '.', the field will be left blank.
 .Ed
 .Pp
 .It
-Create keys and certificates for your IKE peers.  This step as well
-as the next one, needs to be done for every peer.  Furthermore the
-last step will need to be done once for each ID you want the peer
-to have.  The 10.0.0.1 below symbolizes that ID, in this case an IPv4 ID,
-and should be changed for each invocation.  You will be asked for a DN
-for each run.  Encoding the ID in the common name is recommended, as
-it should be unique.
+Create keys and certificates for your IKE peers.
+This step as well as the next one, needs to be done for every peer.
+Furthermore the last step will need to be done once for each ID you
+want the peer to have.
+The 10.0.0.1 below symbolizes that ID, in this case an IPv4 ID,
+and should be changed for each invocation.
+You will be asked for a DN for each run.
+Encoding the ID in the common name is recommended, as it should be unique.
 .Pp
 .Bd -literal
 # openssl genrsa -out /etc/isakmpd/private/local.key 1024
@@ -268,8 +274,9 @@ it should be unique.
 .Ed
 .Pp
 Now take these certificate signing requests to your CA and process
-them like below.  You have to add some extensions to the certificate
-in order to make it usable for 
+them like below.
+You have to add some extensions to the certificate in order to make it
+usable for
 .Nm isakmpd .
 There are two possible ways to add the extensions to the certificate.
 Either you have to to run
@@ -315,7 +322,8 @@ somehost.somedomain instead of 10.0.0.1)
 .Pp
 Put the certificate (the file ending in .crt) in
 .Pa /etc/isakmpd/certs/
-on your local system.  Also carry over the CA cert
+on your local system.
+Also carry over the CA cert
 .Pa /etc/ssl/ca.crt
 and put it in
 .Pa /etc/isakmpd/ca/.
@@ -359,21 +367,23 @@ The directory where IKE certificates can be found, both the local
 certificate(s) and those of the peers, if a choice to have them kept
 permanently has been made.
 .It Pa /etc/isakmpd/isakmpd.conf
-The configuration file. As this file can contain sensitive information
+The configuration file.
+As this file can contain sensitive information
 it must not be readable by anyone but the user running
 .Nm isakmpd .
 .It Pa /etc/isakmpd/isakmpd.policy
-The keynote policy configuration file.  The same mode 
-requirements as
+The keynote policy configuration file.
+The same mode requirements as
 .Nm isakmpd.conf .
 .It Pa /etc/isakmpd/private/local.key
-A local private key for certificate based authentication.  There has
-to be a certificate for this key in the certificate directory mentioned
-above.  The same mode requirements as
+A local private key for certificate based authentication.
+There has to be a certificate for this key in the certificate directory
+mentioned above.
+The same mode requirements as
 .Nm isakmpd.conf .
 .It Pa /etc/isakmpd/pubkeys/
-Directory in which trusted public keys can be kept. The keys must be
-named after a fashion described above.
+Directory in which trusted public keys can be kept.
+The keys must be named after a fashion described above.
 .It Pa /var/run/isakmpd.pid
 The PID of the current daemon.
 .It Pa /var/run/isakmpd.fifo

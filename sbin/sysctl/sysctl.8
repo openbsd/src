@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.70 2001/12/06 20:37:16 ericj Exp $
+.\"	$OpenBSD: sysctl.8,v 1.71 2001/12/13 20:16:48 mpech Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -80,8 +80,8 @@ set psize=`sysctl -n hw.pagesize`
 If just a MIB style name is given,
 the corresponding value is retrieved.
 .It Fl w
-required to set a variable. The MIB name should be followed
-by an equal sign and the new value.
+required to set a variable.
+The MIB name should be followed by an equal sign and the new value.
 .El
 .Pp
 The information available from

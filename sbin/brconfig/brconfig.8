@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.29 2001/12/05 19:55:34 jason Exp $
+.\"	$OpenBSD: brconfig.8,v 1.30 2001/12/13 20:16:48 mpech Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -259,21 +259,25 @@ All other traffic trying to go into and be sent from fxp0 will be blocked.
 The bridge can also be used to tunnel ethernet frames over IPv4 or
 IPv6 by using the
 .Xr gif 4
-interface.  In addition to adding Ethernet interfaces,
+interface.
+In addition to adding Ethernet interfaces,
 one or more
 .Xr gif 4 ,
-interfaces are added as members of the bridge.  Ethernet frames sent
+interfaces are added as members of the bridge.
+Ethernet frames sent
 through the
 .Xr gif 4
 interfaces are encapsulated inside
 .Xr ip 4
 datagrams and sent across the network to another bridge, which
 decapsulates the datagram and then processes the resulting Ethernet
-frame as if it had originated on a normal Ethernet interface.  This
-effectively allows a layer-2 network to be extended from one point to
-another, possibly through the Internet. This mechanism may be used in
+frame as if it had originated on a normal Ethernet interface.
+This effectively allows a layer-2 network to be extended from one point to
+another, possibly through the Internet.
+This mechanism may be used in
 conjunction with IPsec, by specifying the appropriate IPsec flows
-between the two bridges. To only protect the bridge traffic between
+between the two bridges.
+To only protect the bridge traffic between
 the two bridges, the transport protocol 97 (etherip) selector may be
 used in
 .Xr ipsecadm 8
@@ -348,7 +352,8 @@ and
 files, using the ! operator.
 .Sh SPANNING TREE
 The bridge has support for 802.1D Spanning Tree Protocol (STP), which can
-be used to detect and remove loops in a network topology.  Using the
+be used to detect and remove loops in a network topology.
+Using the
 .Cm stp
 or
 .Cm -stp

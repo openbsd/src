@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.52 2001/09/15 18:06:56 mickey Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.53 2001/12/13 20:16:48 mpech Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -283,7 +283,8 @@ If the interface is a vlan pseudo interface, set the vlan tag value
 to
 .Ar vlan_tag .
 This value is a 16-bit number which is used to create an 802.1Q
-vlan header for packets sent from the vlan interface. Note that
+vlan header for packets sent from the vlan interface.
+Note that
 .Cm vlan
 and
 .Cm vlandev
@@ -294,17 +295,20 @@ If the interface is a vlan pseudo device, associate physical interface
 with it. Packets transmitted through the vlan interface will be
 diverted to the specified physical interface
 .Ar iface
-with 802.1Q vlan encapsulation. Packets with 802.1Q encapsulation received
+with 802.1Q vlan encapsulation.
+Packets with 802.1Q encapsulation received
 by the parent interface with the correct vlan tag will be diverted to
-the associated vlan pseudo-interface. The vlan interface is assigned a
+the associated vlan pseudo-interface.
+The vlan interface is assigned a
 copy of the parent interface's flags and the parent's ethernet address.
 The
 .Cm vlandev
 and
 .Cm vlan
-must both be set at the same time. If the vlan interface already has
-a physical interface associated with it, this command will fail. To
-change the association to another physical interface, the existing
+must both be set at the same time.
+If the vlan interface already has
+a physical interface associated with it, this command will fail.
+To change the association to another physical interface, the existing
 association must be cleared first.
 .Pp
 Note: if the
@@ -318,7 +322,8 @@ own (usually in firmware) and that it should pass packets to and from
 the parent unaltered.
 .It Fl vlandev
 If the driver is a vlan pseudo device, disassociate the physical interface
-from it. This breaks the link between the vlan interface and its parent,
+from it.
+This breaks the link between the vlan interface and its parent,
 clears its vlan tag, flags and its link address and shuts the interface down.
 .It Cm metric Ar n
 Set the routing metric of the interface to

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atactl.8,v 1.9 2001/09/03 21:24:07 deraadt Exp $
+.\"	$OpenBSD: atactl.8,v 1.10 2001/12/13 20:16:48 mpech Exp $
 .\"	$NetBSD: atactl.8,v 1.5 1999/02/24 18:49:14 jwise Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -120,18 +120,22 @@ management mode.
 .Ar power-management-level
 .Pp
 Enables and sets the advanced power management level to the requested
-level on the specified device (if supported). Device performance may
+level on the specified device (if supported).
+Device performance may
 increase with increasing power management levels at the cost of
-potentially requiring more power. Values up to and including 126 allow
-the device to go into standby mode and spin-down the disk. This 
+potentially requiring more power.
+Values up to and including 126 allow
+the device to go into standby mode and spin-down the disk.
+This 
 .Em may cause disk time-outs
 and is therefore
 .Em not
-recommended. These values are more suitable optimization for low power
-usage on infrequently used devices. Values 127 up to and including 253
-do not allow the device to go to standby mode and are more suitable for
-optimization for performance. Support for advanced power management is
-indicated by the device with
+recommended.
+These values are more suitable optimization for low power
+usage on infrequently used devices.
+Values 127 up to and including 253 do not allow the device to go to
+standby mode and are more suitable for optimization for performance.
+Support for advanced power management is indicated by the device with
 .Sq Advanced Power Management feature set
 in the output of the
 .Cm identify
@@ -149,11 +153,12 @@ warning.
 .Ar acoustic-management-level
 .Pp
 Enables and sets the automatic acoustic management level to the requested
-level on the specified device (if supported). Device performance may
+level on the specified device (if supported).
+Device performance may
 increase with increasing automatic acoustic management levels at the cost of
-potentially generating more noise and requiring more power. Valid values are
-0 up to and including 126. Support for automatic acoustic management is
-indicated by the device with
+potentially generating more noise and requiring more power.
+Valid values are 0 up to and including 126.
+Support for automatic acoustic management is indicated by the device with
 .Sq Automatic Acoustic Management feature set
 in the output of the
 .Cm identify
@@ -180,13 +185,13 @@ after a reset.
 .Cm puisenable
 .Pp
 Enables power-up in standby (puis) on the specified device, causing the 
-device to wait with spinning up the disks after power-up. This may cause
-problems at boot if the device is to slow in spin-up. This option is
-therefore
+device to wait with spinning up the disks after power-up.
+This may cause problems at boot if the device is to slow in spin-up.
+This option is therefore
 .Em not recommended
-unless the implications are understood. Note that the power-up in
-standby mode stays enabled over power-downs, hardware and software
-resets. 
+unless the implications are understood.
+Note that the power-up in standby mode stays enabled over power-downs,
+hardware and software resets. 
 Support for power-up in standby is indicated by the device with
 .Sq Power-up in standby feature set
 in the output of the
@@ -196,7 +201,8 @@ command.
 .Cm puisdisable
 .Pp
 Disables power-up in standby (puis) on the specified device, causing the 
-device to spin up the disks after power-up. This should be the factory
+device to spin up the disks after power-up.
+This should be the factory
 default setting of the device and it is recommended to leave this
 setting disabled.
 .Pp
@@ -207,8 +213,9 @@ power-up in standby was enabled).
 .Pp
 .Cm readaheadenable
 .Pp
-Enables read look-ahead on the specified device. This may increase
-performance. Support for and status of read look-ahead is indicated by
+Enables read look-ahead on the specified device.
+This may increase performance.
+Support for and status of read look-ahead is indicated by
 the device with
 .Sq read look-ahead
 in the output of the
@@ -217,8 +224,9 @@ command.
 .Pp
 .Cm readaheaddisable
 .Pp
-Disables read look-ahead on the specified device. This may decrease
-performance. Note that the device may use
+Disables read look-ahead on the specified device.
+This may decrease performance.
+Note that the device may use
 .Sq vendor specific
 behaviour in implementing this, so it is
 .Em not
@@ -228,9 +236,10 @@ mounted filesystems.
 .Cm smartenable
 .Pp
 Enables SMART (Self-Monitoring, Analysis, and Reporting Technology) on the
-specified device (if supported). This causes the device to record information
-for prediction of device degradation and/or faults. Support for SMART is
-indicated by the device with
+specified device (if supported).
+This causes the device to record information
+for prediction of device degradation and/or faults.
+Support for SMART is indicated by the device with
 .Sq SMART feature set
 in the output of the
 .Cm identify
@@ -238,24 +247,27 @@ command.
 .Pp
 .Cm smartdisable
 .Pp
-Disables support for SMART on the specified device. Note that this means that
-the device will no longer record any SMART information. 
+Disables support for SMART on the specified device.
+Note that this means that the device will no longer record any SMART
+information. 
 .Pp
 .Cm smartstatus
 .Pp
-Reads the reliability status of the specified device. If the device reports
+Reads the reliability status of the specified device.
+If the device reports
 that one of its thresholds is exceeded (a strong indication of imminent
 failure), the warning
 .Sq SMART threshold exceeded!
-is printed to stderr and a status of 2 is returned. Note that SMART
+is printed to stderr and a status of 2 is returned.
+Note that SMART
 .Em must
 be enabled or the device will return an error.
 .Pp
 .Cm writecachedisable
 .Pp
-Disable the write cache on the specified device (if supported). This may
-decrease performance.  Support for and status of write caching is
-indicated by the device with
+Disable the write cache on the specified device (if supported).
+This may decrease performance.
+Support for and status of write caching is indicated by the device with
 .Sq write cache
 in the output of the
 .Cm identify
@@ -263,8 +275,8 @@ command.
 .Pp
 .Cm writecacheenable
 .Pp
-Enables the write cache on the specified device (if supported). This may
-increase performance, however data still in the device's cache at
+Enables the write cache on the specified device (if supported).
+This may increase performance, however data still in the device's cache at
 powerdown
 .Em may be lost.
 The
@@ -289,8 +301,8 @@ In a
 .Xr crontab 5
 entry queries
 .Pa /dev/wd0
-each hour for early warning signs of failure. If the device exceeded one
-of the SMART thresholds,
+each hour for early warning signs of failure.
+If the device exceeded one of the SMART thresholds,
 .Nm
 will output
 .Sq SMART threshold exceeded!
@@ -298,15 +310,16 @@ to stderr and
 .Xr cron 8
 will mail it.
 .Sh DIAGNOSTICS
-Not all devices are created equally. Some may not support the feature sets 
+Not all devices are created equally.
+Some may not support the feature sets 
 and/or commands needed to perform the requested action, even when the
 .Cm identify
-command indicates support for the requested action. The device will
-typically respond with an
+command indicates support for the requested action.
+The device will typically respond with an
 .Sq ATA device returned Aborted Command
-if the requested action is not supported. Similarly a device might
-not implement all commands in a feature set, so even though disabling a
-feature works, enabling might not.
+if the requested action is not supported.
+Similarly a device might not implement all commands in a feature set,
+so even though disabling a feature works, enabling might not.
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr wd 4

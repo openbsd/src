@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ancontrol.8,v 1.13 2001/08/23 14:17:08 aaron Exp $
+.\"	$OpenBSD: ancontrol.8,v 1.14 2001/12/13 20:16:47 mpech Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ee.columbia.edu> All rights reserved.
@@ -237,7 +237,8 @@ sets the transmit diversity.
 .It Fl e Ar "0|1|2|3"
 Set the transmit WEP key to use.
 Note that until this command is issued, the device will use the
-last key programmed.  The transmit key is stored in NVRAM.
+last key programmed.
+The transmit key is stored in NVRAM.
 Currently set transmit key can be checked via
 .Fl C
 option.

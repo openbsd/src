@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.47 2001/12/10 03:26:51 ho Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.48 2001/12/13 20:16:48 mpech Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -291,10 +291,12 @@ Default action is to flush all types of security associations
 from the kernel.
 .It ipcomp
 Setup an IP Compression Association (IPCA) which will use the IPcomp
-transforms. Just like an SA, an IPCA consists of the destination
+transforms.
+Just like an SA, an IPCA consists of the destination
 address, a Compression Parameter Index (CPI) and a protocol (which is
-fixed to IPcomp). Compression algorithms are applied. Allowed
-modifiers are: 
+fixed to IPcomp).
+Compression algorithms are applied.
+Allowed modifiers are: 
 .Fl dst ,
 .Fl src ,
 .Fl cpi ,
@@ -302,9 +304,11 @@ modifiers are:
 and
 .Fl forcetunnel .
 To create an IPsec SA using compression, an IPCA and an SA must first
-be created. After this a IPCA/SA bundle must be created using the 
+be created.
+After this a IPCA/SA bundle must be created using the 
 .Nm group
-keyword. The IPCA must be applied first. 
+keyword.
+The IPCA must be applied first. 
 .El
 .Pp
 If no command is given
@@ -405,8 +409,8 @@ Also
 .Nm rmd160
 for both new ah and esp.
 .It Fl comp
-The compression algorithm to be used with the IPCA. The only possible value
-currently is:
+The compression algorithm to be used with the IPCA.
+The only possible value currently is:
 .Nm deflate .
 .It Fl key
 The secret symmetric key used for encryption and authentication.
@@ -433,7 +437,8 @@ One practical way of generating keys is by using the
 .Xr random 4
 device (e.g., dd if=/dev/urandom bs=1024 count=1 | sha1)
 .It Fl keyfile
-Read the key from a file.  May be used instead of the
+Read the key from a file.
+May be used instead of the
 .Fl key
 flag, and has the same syntax considerations.
 .It Fl authkey
@@ -454,7 +459,8 @@ One practical way of generating keys is by using the
 .Xr random 4
 device (e.g., dd if=/dev/urandom bs=1024 count=1 | sha1)
 .It Fl authkeyfile
-Read the authkey from a file.  May be used instead of the
+Read the authkey from a file.
+May be used instead of the
 .Fl authkey
 flag, and has the same syntax considerations.
 .It Fl iv
@@ -588,8 +594,8 @@ traffic.
 For
 .Nm flow ,
 specify that packets matching this flow must use IPsec, and establish
-SAs dynamically as needed. If no SAs are established, traffic is not
-allowed through.
+SAs dynamically as needed.
+If no SAs are established, traffic is not allowed through.
 .It Fl dontacq
 For
 .Nm flow ,

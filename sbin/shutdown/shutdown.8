@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shutdown.8,v 1.30 2001/10/11 19:54:29 miod Exp $
+.\"	$OpenBSD: shutdown.8,v 1.31 2001/12/13 20:16:48 mpech Exp $
 .\"	$NetBSD: shutdown.8,v 1.6 1995/03/18 15:01:07 cgd Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -51,7 +51,8 @@
 provides an automated shutdown procedure for superusers
 to nicely notify users when the system is shutting down,
 saving them from system administrators, hackers, and gurus, who
-would otherwise not bother with such niceties.  When the
+would otherwise not bother with such niceties.
+When the
 .Nm
 command is issued without options the system is placed in single
 user mode at the indicated time after shutting down all system
@@ -162,7 +163,7 @@ At shutdown time a message is written in the system log, containing the
 time of shutdown, who initiated the shutdown and the reason.
 A terminate
 signal is then sent to
-.Xr init
+.Em init
 to bring the system down to single-user state (depending on above
 options).
 The time of the shutdown and the warning message

@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.60 2001/12/10 03:45:03 ho Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.61 2001/12/13 20:16:48 mpech Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -80,7 +80,6 @@ To activate changes to
 without restarting
 .Nm isakmpd ,
 send a SIGHUP signal to the daemon process.
-.Pp
 .Ss Auto-generated parts of the configuration
 .Pp
 Some predefined section names are recognized by the daemon, voiding the need
@@ -102,16 +101,15 @@ pre-shared keys.
 Example 2: QM-ESP-3DES-SHA-PFS-SUITE means; ESP protocol, 3DES encryption, 
 SHA hash, and use Perfect Forward Security.
 .Pp
-There are two predefined lifetimes used. The Main Mode lifetime,
-named LIFE_MAIN_MODE, currently 
-defaults to one hour (minimum 60 seconds, maximum 1 day). The Quick Mode 
-lifetime,
-LIFE_QUICK_MODE,
+There are two predefined lifetimes used.
+The Main Mode lifetime, named LIFE_MAIN_MODE, currently 
+defaults to one hour (minimum 60 seconds, maximum 1 day).
+The Quick Mode lifetime, LIFE_QUICK_MODE,
 defaults to 20 minutes (minimum 60 seconds, maximum 1 day).
 .Pp
 In addition, the predefinitions include some default values for the special
-sections "General", and "X509-certificates".  These values are presented in
-the example below.
+sections "General", and "X509-certificates".
+These values are presented in the example below.
 .Pp
 Note that using the predefined section names imply some minor limitations.
 There are currently no predefined ESP+AH Quick Mode suites, and the 
@@ -189,8 +187,9 @@ updating an SA with its parameters a 2nd time will be ignored.
 .It Em Pubkey-directory
 The directory in which
 .Nm
-looks for explicitly trusted public keys. The default is
-"/etc/isakmpd/pubkeys". Read
+looks for explicitly trusted public keys.
+The default is "/etc/isakmpd/pubkeys".
+Read
 .Xr isakmpd 8
 for the required naming convention of the files in here.
 .El
@@ -200,8 +199,8 @@ ISAKMP SA negotiation parameter root
 .It Em <IP-address>
 A name of the ISAKMP peer at the given IP-address.
 .It Em Default
-A name of the default ISAKMP peer.  Incoming
-Phase 1 connections from other IP-addresses will use this peer name.
+A name of the default ISAKMP peer.
+Incoming Phase 1 connections from other IP-addresses will use this peer name.
 .It ""
 This name is used as the section name for further information to be found.
 Look at <ISAKMP-peer> below.
@@ -238,36 +237,39 @@ The credentials file contains
 .Xr keynote 4
 credentials that are sent to a remote IKE daemon when we use the
 associated ID, or credentials that we may want to consider when doing
-an exchange with a remote IKE daemon that uses that ID. Note that, in
-the former case, the last credential in the file MUST contain our
-public key in its Licensees field. More than one credentials may exist
-in the file. They are separated by whitelines (the format is
-essentially the same as that of the policy file). The credentials are
-of the same format as the policies described in
+an exchange with a remote IKE daemon that uses that ID.
+Note that, in the former case, the last credential in the file
+MUST contain our public key in its Licensees field.
+More than one credentials may exist in the file.
+They are separated by whitelines (the format is essentially the same as
+that of the policy file).
+The credentials are of the same format as the policies described in
 .Xr isakmpd.policy 5 .
 The only difference is that the Authorizer field contains a public
-key, and the assertion is signed. Signed assertions can be generated
-using the
+key, and the assertion is signed.
+Signed assertions can be generated using the
 .Xr keynote 1
 utility.
 .Pp
 The private_key file contains the private RSA key we use for
-authentication. If the directory (and the files) exist, they take
-precedence over X509-based authentication.
+authentication.
+If the directory (and the files) exist, they take precedence over X509-based
+authentication.
 .El
 .It Em X509-Certificates
 .Bl -tag -width 12n
 .It Em Ca-directory
 A directory containing PEM certificates of certification authorities
-that we trust to sign other certificates.  Note that for a CA to be
-really trusted, it needs to be somehow referred to by policy, in
+that we trust to sign other certificates.
+Note that for a CA to be really trusted, it needs to be somehow
+referred to by policy, in
 .Xr isakmpd.policy 5 .
 The certificates in this directory are used for the actual X.509
 authentication and for cross-referencing policies that refer to
-Distinguished Names (DNs). Keeping a separate directory (as opposed
-to integrating policies and X.509 CA certificates) allows for maintenance
-of a list of "well known" CAs without actually having to trust all (or any)
-of them.
+Distinguished Names (DNs).
+Keeping a separate directory (as opposed to integrating policies
+and X.509 CA certificates) allows for maintenance of a list of
+"well known" CAs without actually having to trust all (or any) of them.
 .It Em Cert-directory
 A directory containing PEM certificates that we trust to be valid.
 These certificates are used in preference to those passed in messages and
@@ -971,9 +973,10 @@ configuration files.
 .Xr isakmpd 8
 .Sh BUGS
 The RFCs does not permit differing DH groups in the same proposal for
-aggressive and quick mode exchanges.  As the predefined suites currently
-uses DH group 1 for MD5 suites and DH group 2 for SHA suites, combining
-a MD5 and a SHA suite in a proposal will cause the exchange to fail.
+aggressive and quick mode exchanges.
+As the predefined suites currently uses DH group 1 for MD5 suites and
+DH group 2 for SHA suites, combining a MD5 and a SHA suite in a proposal
+will cause the exchange to fail.
 .Pp
 The current recommended workaround is to either use MD5- or SHA-only
 suites, or to specify the suites manually.

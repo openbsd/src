@@ -1,4 +1,4 @@
-.\"	$OpenBSD: badsect.8,v 1.10 2000/03/18 22:55:54 aaron Exp $
+.\"	$OpenBSD: badsect.8,v 1.11 2001/12/13 20:16:48 mpech Exp $
 .\"	$NetBSD: badsect.8,v 1.8 1995/03/18 14:54:27 cgd Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -94,7 +94,7 @@ on the file system.
 The bad sectors should show up in two files
 or in the bad sector files and the free list.
 Have
-.Xr fsck
+.Em fsck
 remove files containing the offending bad sectors, but
 .Em do not
 have it remove the
@@ -111,11 +111,11 @@ system call,
 creating an illegal file whose first block address is the block containing
 bad sector and whose name is the bad sector number.
 When it is discovered by
-.Xr fsck
+.Em fsck
 it will ask
 .Dq Li "HOLD BAD BLOCK ?"
 A positive response will cause
-.Xr fsck
+.Em fsck
 to convert the inode to a regular file containing the bad block.
 .Sh DIAGNOSTICS
 .Nm

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pflogd.8,v 1.9 2001/12/06 03:58:29 deraadt Exp $
+.\"	$OpenBSD: pflogd.8,v 1.10 2001/12/13 20:16:48 mpech Exp $
 .\"
 .\" Copyright (c) 2001 Can Erkin Acar.  All rights reserved.
 .\"
@@ -88,7 +88,8 @@ Debugging mode.
 .Nm
 does not disassociate from the controlling terminal.
 .It Fl f Ar filename
-Log output filename. Default is
+Log output filename.
+Default is
 .Pa /var/log/pflog .
 .It Fl s Ar snaplen
 Analyze at most the first
@@ -100,6 +101,7 @@ Other file parsers may desire a higher snaplen.
 .It Ar expression
 selects which packets will be dumped, using the regular language of
 .Xr tcpdump 8 .
+.El
 .Sh EXAMPLES
 Log specific tcp packets to a different log file with a large snaplen
 (useful with a log-all rule to dump complete sessions)

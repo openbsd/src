@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.policy.5,v 1.23 2001/10/05 04:40:42 ho Exp $
+.\" $OpenBSD: isakmpd.policy.5,v 1.24 2001/12/13 20:16:48 mpech Exp $
 .\" $EOM: isakmpd.policy.5,v 1.24 2000/11/23 12:55:25 niklas Exp $
 .\"
 .\" Copyright (c) 1999-2001, Angelos D. Keromytis.  All rights reserved.
@@ -134,10 +134,11 @@ is read when
 .Xr isakmpd 8
 is first started, and every time it receives a
 .Dv SIGHUP
-signal. The new policies read will be used for all new Phase 2 (IPsec)
+signal.
+The new policies read will be used for all new Phase 2 (IPsec)
 SAs established from that point on (even if the associated Phase 1 SA
-was already established when the new policies were loaded). The policy
-change will not affect already established Phase 2 SAs.
+was already established when the new policies were loaded).
+The policy change will not affect already established Phase 2 SAs.
 .Pp
 For more details on KeyNote assertion format, please see
 .Xr keynote 5 .

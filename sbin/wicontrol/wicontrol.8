@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wicontrol.8,v 1.21 2001/08/02 18:37:34 mpech Exp $
+.\"	$OpenBSD: wicontrol.8,v 1.22 2001/12/13 20:16:48 mpech Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu> All rights reserved.
@@ -75,7 +75,8 @@ IEEE 802.11 protocol which the WaveLAN implements.
 This includes
 the station name, whether the station is operating in ad-hoc (point
 to point) or BSS (service set) mode, and the network name of a service
-set to join (IBSS) if BSS mode is enabled.  The
+set to join (IBSS) if BSS mode is enabled.
+The
 .Nm
 command can also be used to view the current settings of these parameters
 and to dump out the values of the card's statistics counters.
@@ -299,7 +300,8 @@ The legal values are
 .Ar 1
 (Roaming handled by firmware) and
 .Ar 3
-(Roaming Disabled). The default is 1.
+(Roaming Disabled).
+The default is 1.
 .It Fl S Ar max sleep interval
 Specify the sleep interval to use when power management is enabled.
 The
