@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.23 1997/05/05 22:17:45 grr Exp $
+#	$OpenBSD: MAKEDEV,v 1.24 1997/05/06 19:11:38 kstailey Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -164,7 +164,7 @@ all)
 	sh ${this} pty0 vnd0 vnd1 vnd2 vnd3 audio tun0 tun1 tun2 tun3
 	sh ${this} ccd0 ccd1 ccd2 ccd3
 	sh ${this} bpf0 bpf1 bpf2 bpf3
-#	sh ${this} ipl
+	sh ${this} ipl
 	sh ${this} bwtwo0 cgthree0 cgfour0 cgsix0
 	sh ${this} cgeight0
 	sh ${this} lkm random local
@@ -241,10 +241,10 @@ bpf*)
 	chown root.wheel bpf$unit
 	;;
 
-#ipl)
-#	mknod ipl c 59 0
-#	chown root.wheel ipl
-#	;;
+ipl)
+	mknod ipl c 59 0
+	chown root.wheel ipl
+	;;
 
 tun*)
 	rm -f tun$unit
