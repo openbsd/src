@@ -5613,6 +5613,7 @@ rs6000_initialize_trampoline (addr, fnaddr, cxt)
 			 GEN_INT (rs6000_trampoline_size ()), SImode,
 			 fnaddr, pmode,
 			 ctx_reg, pmode);
+      FINALIZE_TRAMPOLINE(addr);
       break;
 
     /* Under NT, update the first word to point to the ..LTRAMP1..0 header,

@@ -2223,6 +2223,7 @@ romp-*-openbsd*)
 	# Nothing special
 	;;
 powerpc-*-openbsd*)
+	tm_file="${tm_file} exec-stack.h"
 	tmake_file="${tmake_file} rs6000/t-rs6000 rs6000/t-openbsd"
 	;;
 powerpc-*-beos*)

@@ -9,3 +9,7 @@ MULTILIB_MATCHES        = ${MULTILIB_MATCHES_FLOAT} \
                           fPIC=mrelocatable \
                           fPIC=fpic           
 
+tramp.S: $(srcdir)/config/rs6000/tramp.asm
+	cat $(srcdir)/config/rs6000/tramp.asm > tramp.S
+
+LIB2FUNCS_EXTRA = tramp.S

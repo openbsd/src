@@ -1651,7 +1651,22 @@ typedef struct rs6000_args
 
 /* Length in units of the trampoline for entering a nested function.  */
 
+#ifdef __OpenBSD__
+	/* TRAMPOLINE_SIZE needs to be a constant, because
+	 * the function is not available in libgcc where this is used
+	 * this is the ABI_V4 32bit value.
+	 */
+#define TRAMPOLINE_SIZE 40
+#else
 #define TRAMPOLINE_SIZE rs6000_trampoline_size ()
+#endif
+
+/* Targets redefine this to invoke code to either flush the cache,
+   or enable stack execution (or both).  */
+
+#ifndef FINALIZE_TRAMPOLINE
+#define FINALIZE_TRAMPOLINE(TRAMP)
+#endif
 
 /* Emit RTL insns to initialize the variable parts of a trampoline.
    FNADDR is an RTX for the address of the function's pure code.

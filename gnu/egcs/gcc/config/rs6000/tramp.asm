@@ -37,7 +37,7 @@
 
 	.file	"tramp.asm"
 	.section ".text"
-	#include "ppc-asm.h"
+	#include "ginclude/ppc-asm.h"
 
 	.globl	__trampoline_initial
 	.type	__trampoline_initial,@object
