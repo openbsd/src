@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.5 2001/09/05 20:40:10 beck Exp $ */
+/*	$OpenBSD: util.c,v 1.6 2001/09/15 03:54:40 frantzen Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -95,10 +95,12 @@ get_proxy_env(int connected_fd, struct sockaddr_in *real_server_sa_ptr,
 
 	/*
 	 * Build up the pf natlook structure.
+	 * Just for IPv4 right now
 	 */
 	memset((void *)&natlook, 0, sizeof(natlook));
-	natlook.saddr = client_sa_ptr->sin_addr.s_addr;
-	natlook.daddr = real_server_sa_ptr->sin_addr.s_addr;
+	natlook.af = AF_INET;
+	natlook.saddr.addr32[0] = client_sa_ptr->sin_addr.s_addr;
+	natlook.daddr.addr32[0] = real_server_sa_ptr->sin_addr.s_addr;
 	natlook.proto = IPPROTO_TCP;
 	natlook.sport = client_sa_ptr->sin_port;
 	natlook.dport = real_server_sa_ptr->sin_port;
@@ -135,7 +137,7 @@ get_proxy_env(int connected_fd, struct sockaddr_in *real_server_sa_ptr,
 	 */
 	memset((void *)real_server_sa_ptr, 0, sizeof(struct sockaddr_in));
 	real_server_sa_ptr->sin_port = natlook.rdport;
-	real_server_sa_ptr->sin_addr.s_addr = natlook.rdaddr;
+	real_server_sa_ptr->sin_addr.s_addr = natlook.rdaddr.addr32[0];
 	real_server_sa_ptr->sin_len = sizeof(struct sockaddr_in);
 	real_server_sa_ptr->sin_family = AF_INET;
 	return(0);

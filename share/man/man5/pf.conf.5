@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.13 2001/08/28 08:48:57 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.14 2001/09/15 03:54:40 frantzen Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -46,16 +46,19 @@ Syntax for filter rules in BNF:
 .Bd -literal
 rule       = action ( "in" | "out" )
              [ "log" | "log-all" ] [ "quick" ]
-             [ "on" interface-name ]
+             [ "on" interface-name ] [ af ]
              [ "proto" ( proto-name | proto-number | "{" proto-list "}" ) ]
              hosts
-             [ flags ] [ icmp-type ] [ "keep-state" ] [ "modulate-state" ]
+             [ flags ] ( [ icmp-type ] | [ ipv6-icmp-type ] )
+             [ "keep-state" ] [ "modulate-state" ]
              [ "no-df" ] [ "min-ttl" number ] .
 
 action     = "pass" | "block" [ return ] | "scrub" .
 return     = "return-rst" |
-             "return-icmp" [ "(" ( icmp-code-name | icmp-code-number ) ")" ] .
+             "return-icmp" [ "(" ( icmp-code-name | icmp-code-number ) ")" ] |
+             "return-icmp6" [ "(" ( icmp-code-name | icmp-code-number ) ")" ] .
 
+af	   = "inet" | "inet6" .
 proto-list = ( proto-name | proto-number ) [ "," proto-list ] .
 
 hosts      = "all" |
@@ -73,8 +76,12 @@ binary-op  = port-number ( "<>" | "><" ) port-number .
 flags      = "flags" ( flag-set | flag-set "/" flag-set | "/" flag-set ) .
 flag-set   = [ "F" ] [ "S" ] [ "R" ] [ "P" ] [ "A" ] [ "U" ] .
 
-icmp-type  = "icmp-type" ( icmp-type-name | icmp-type-number )
-             [ "code" ( icmp-code-name | icmp-code-number ) ] .
+icmp-type  = "icmp-type" ( icmp-type-code | "{" icmp-list "}" ) . 
+ipv6-icmp-type = "ipv6-icmp-type" ( icmp-type-code | "{" icmp-list "}" ) . 
+icmp-type-code = ( icmp-type-name | icmp-type-number )
+                 [ "code" ( icmp-code-name | icmp-code-number ) ] .
+icmp-list  = icmp-type-code [ "," icmp-list ] . 
+
 .Ed
 .Sh FILTER RULES
 Filter rules are typically manipulated using
@@ -115,6 +122,7 @@ to the sender, where applicable.
 .It Em scrub
 The packet is run through normalization/defragmentation.
 Scrub rules are not considered last matching rules.
+IPv6 packets are not defragmented.
 .El
 .Sh LOGGING
 .Bl -tag -width Fl
@@ -160,9 +168,12 @@ To cover both directions, two rules are needed.
 .Ss on <interface>
 The rule applies only to packets coming in on or going out through this
 particular interface.
+.Ss <af>
+The rule applies only to packets of this address family.
+Supported values are inet and inet6.
 .Ss proto <protocol>
 The rule applies only to packets of this protocol.
-Common protocols used here are tcp, udp and icmp.
+Common protocols used here are tcp, udp, icmp and ipv6-icmp.
 .Ss from <source> port <source> to <dest> port <dest>
 The rule applies only to packets with the specified source and destination
 addresses/ports.
@@ -215,9 +226,13 @@ rule. This is more restrictive than the previous example.
 If the first set is not specified, it defaults to none.
 All of SYN, FIN, RST and ACK must be unset.
 .El
-.Ss icmp-type <type> code <code>
-The rule only applies to ICMP packets with the specified type and code.
-This parameter is only valid for rules that cover protocol icmp.
+.Ss icmp-type <type> code <code> and ipv6-icmp-type <type> code <code>
+The rule only applies to ICMP or ICMPV6 packets with the specified type
+and code.
+This parameter is only valid for rules that cover protocols icmp or
+ipv6-icmp.
+The protocol and the icmp type indicator (icmp-type or ipv6-icmp-type)
+must match.
 .Sh MACROS
 .Em pfctl
 supports macro definition and expansion like:

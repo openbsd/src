@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.50 2001/09/06 18:05:46 jasoni Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.51 2001/09/15 03:54:40 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -50,9 +50,137 @@ enum	{ PFTM_TCP_FIRST_PACKET=0, PFTM_TCP_OPENING=1, PFTM_TCP_ESTABLISHED=2,
 	  PFTM_ICMP_FIRST_PACKET=9, PFTM_ICMP_ERROR_REPLY=10, PFTM_FRAG=11,
 	  PFTM_INTERVAL=12, PFTM_MAX=13 };
 
+struct pf_addr {
+	union {
+		struct in_addr 		v4;
+		struct in6_addr 	v6;
+		u_int8_t		addr8[16];
+		u_int16_t		addr16[8];
+		u_int32_t		addr32[4];
+	} pfa;		    /* 128-bit address */
+#define v4	pfa.v4
+#define v6	pfa.v6
+#define addr8	pfa.addr8
+#define addr16	pfa.addr16
+#define addr32	pfa.addr32
+};
+
+/*
+ * Address manipulation macros
+ */
+
+#ifdef _KERNEL
+
+#ifdef INET
+#ifndef INET6
+#define PF_INET_ONLY
+#endif /* ! INET6 */
+#endif /* INET */
+
+#ifdef INET6
+#ifndef INET
+#define PF_INET6_ONLY
+#endif /* ! INET */
+#endif /* INET6 */
+
+#ifdef INET
+#ifdef INET6
+#define PF_INET_INET6
+#endif /* INET6 */
+#endif /* INET */
+
+#else
+
+#define PF_INET_INET6
+
+#endif /* _KERNEL */
+
+/* Both IPv4 and IPv6 */
+#ifdef PF_INET_INET6
+
+#define PF_AEQ(a, b, c) \
+	((c == AF_INET && (a)->addr32[0] == (b)->addr32[0]) || \
+	(c == AF_INET6 && (a)->addr32[0] == (b)->addr32[0] && \
+	(a)->addr32[1] == (b)->addr32[1] && \
+	(a)->addr32[2] == (b)->addr32[2] && \
+	(a)->addr32[3] == (b)->addr32[3])) \
+
+#define PF_ANEQ(a, b, c) \
+	((c == AF_INET && (a)->addr32[0] != (b)->addr32[0]) || \
+	(c == AF_INET6 && ((a)->addr32[0] != (b)->addr32[0] || \
+	(a)->addr32[1] != (b)->addr32[1] || \
+	(a)->addr32[2] != (b)->addr32[2] || \
+	(a)->addr32[3] != (b)->addr32[3]))) \
+
+#define PF_AZERO(a, c) \
+	((c == AF_INET && !(a)->addr32[0]) || \
+	(c == AF_INET6 && !(a)->addr32[0] && \
+	!(a)->addr32[1] && !(a)->addr32[2] && \
+	!(a)->addr32[3] )) \
+
+#define PF_MATCHA(n, a, m, b, f) \
+	pf_match_addr(n, a, m, b, f)
+
+#define PF_ACPY(a, b, f) \
+	pf_addrcpy(a, b, f)
+
+#else
+
+/* Just IPv6 */
+#ifdef PF_INET6_ONLY
+
+#define PF_AEQ(a, b, c) \
+	((a)->addr32[0] == (b)->addr32[0] && \
+	(a)->addr32[1] == (b)->addr32[1] && \
+	(a)->addr32[2] == (b)->addr32[2] && \
+	(a)->addr32[3] == (b)->addr32[3]) \
+
+#define PF_ANEQ(a, b, c) \
+	((a)->addr32[0] != (b)->addr32[0] || \
+	(a)->addr32[1] != (b)->addr32[1] || \
+	(a)->addr32[2] != (b)->addr32[2] || \
+	(a)->addr32[3] != (b)->addr32[3]) \
+
+#define PF_AZERO(a, c) \
+	(!(a)->addr32[0] && \
+	!(a)->addr32[1] && \
+	!(a)->addr32[2] && \
+	!(a)->addr32[3] ) \
+
+#define PF_MATCHA(n, a, m, b, f) \
+	pf_match_addr(n, a, m, b, f)
+
+#define PF_ACPY(a, b, f) \
+	pf_addrcpy(a, b, f)
+
+#else
+
+/* Just IPv4 */
+#ifdef PF_INET_ONLY
+
+#define PF_AEQ(a, b, c) \
+	((a)->addr32[0] == (b)->addr32[0])
+
+#define PF_ANEQ(a, b, c) \
+	((a)->addr32[0] != (b)->addr32[0])
+
+#define PF_AZERO(a, c) \
+	(!(a)->addr32[0])
+
+#define PF_MATCHA(n, a, m, b, f) \
+	pf_match_addr(n, a, m, b, f)
+
+#define PF_ACPY(a, b, f) \
+	(a)->v4.s_addr = (b)->v4.s_addr
+
+
+#endif /* PF_INET_ONLY */
+#endif /* PF_INET6_ONLY */
+#endif /* PF_INET_INET6 */
+
 struct pf_rule_addr {
-	u_int32_t	addr;
-	u_int32_t	mask;
+	struct pf_addr	addr;
+	struct pf_addr	mask;
 	u_int16_t	port[2];
 	u_int8_t	not;
 	u_int8_t	port_op;
@@ -81,9 +209,11 @@ struct pf_rule {
 #define PF_STATE_NORMAL		0x1
 #define PF_STATE_MODULATE	0x2
 	u_int8_t	 keep_state;
+	u_int8_t	 af;
 	u_int8_t	 proto;
 	u_int8_t	 type;
 	u_int8_t	 code;
+	
 
 	u_int8_t	 flags;
 	u_int8_t	 flagset;
@@ -96,7 +226,7 @@ struct pf_rule {
 #define	PFRULE_NODF		0x02
 
 struct pf_state_host {
-	u_int32_t	addr;
+	struct pf_addr	addr;
 	u_int16_t	port;
 };
 
@@ -120,31 +250,35 @@ struct pf_state {
 	u_int32_t	 expire;
 	u_int32_t	 packets;
 	u_int32_t	 bytes;
+	u_int8_t	 af;
 	u_int8_t	 proto;
 	u_int8_t	 direction;
 	u_int8_t	 log;
 };
 
-#define		MATCH_TUPLE(h,r,d,i) \
+#define		MATCH_TUPLE(h,r,d,i,a) \
 		( \
 		  (r->direction == d) && \
 		  (r->ifp == NULL || r->ifp == i) && \
 		  (!r->proto || r->proto == h->ip_p) && \
-		  (!r->src.mask || pf_match_addr(r->src.not, r->src.addr, \
-		   r->src.mask, h->ip_src.s_addr)) && \
-		  (!r->dst.mask || pf_match_addr(r->dst.not, r->dst.addr, \
-		   r->dst.mask, h->ip_dst.s_addr)) \
+		  (!r->src.mask.addr32[0] || \
+		   pf_match_addr(r->src.not, &(r)->src.addr, \
+		   &(r)->src.mask, (struct pf_addr *)&h->ip_src.s_addr, a)) && \
+		  (!r->dst.mask.addr32[0] || \
+		   pf_match_addr(r->dst.not, &(r)->dst.addr, \
+		   &(r)->dst.mask, (struct pf_addr *)&h->ip_dst.s_addr, a)) \
 		)
 
 struct pf_nat {
 	char		 ifname[IFNAMSIZ];
 	struct ifnet	*ifp;
 	TAILQ_ENTRY(pf_nat)	entries;
-	u_int32_t	 saddr;
-	u_int32_t	 smask;
-	u_int32_t	 daddr;
-	u_int32_t	 dmask;
-	u_int32_t	 raddr;
+	struct pf_addr	 saddr;
+	struct pf_addr	 smask;
+	struct pf_addr	 daddr;
+	struct pf_addr	 dmask;
+	struct pf_addr	 raddr;
+	u_int8_t	 af;
 	u_int8_t	 proto;
 	u_int8_t	 snot;
 	u_int8_t	 dnot;
@@ -155,10 +289,11 @@ struct pf_binat {
 	char		 ifname[IFNAMSIZ];
 	struct ifnet	*ifp;
 	TAILQ_ENTRY(pf_binat)	entries;
-	u_int32_t	 saddr;
-	u_int32_t	 daddr;
-	u_int32_t	 dmask;
-	u_int32_t	 raddr;
+	struct pf_addr	 saddr;
+	struct pf_addr	 daddr;
+	struct pf_addr	 dmask;
+	struct pf_addr	 raddr;
+	u_int8_t	 af;
 	u_int8_t	 proto;
 	u_int8_t	 dnot;
 };
@@ -167,14 +302,15 @@ struct pf_rdr {
 	char		 ifname[IFNAMSIZ];
 	struct ifnet	*ifp;
 	TAILQ_ENTRY(pf_rdr)	entries;
-	u_int32_t	 saddr;
-	u_int32_t	 smask;
-	u_int32_t	 daddr;
-	u_int32_t	 dmask;
-	u_int32_t	 raddr;
+	struct pf_addr	 saddr;
+	struct pf_addr	 smask;
+	struct pf_addr	 daddr;
+	struct pf_addr	 dmask;
+	struct pf_addr	 raddr;
 	u_int16_t	 dport;
 	u_int16_t	 dport2;
 	u_int16_t	 rport;
+	u_int8_t	 af;
 	u_int8_t	 proto;
 	u_int8_t	 snot;
 	u_int8_t	 dnot;
@@ -183,12 +319,35 @@ struct pf_rdr {
 };
 
 struct pf_tree_key {
-	struct in_addr	 addr[2];
+	struct pf_addr	 addr[2];
 	u_int16_t	 port[2];
 	u_int8_t	 proto;
+	u_int8_t	 af;
 };
 
 TAILQ_HEAD(pf_rulequeue, pf_rule);
+
+struct pf_pdesc {
+	struct pf_addr	*src;
+	struct pf_addr	*dst;
+	u_int16_t	*ip_sum;
+	u_int64_t	 tot_len; 	/* Make Mickey money */
+	u_int32_t	 p_len; 	/* total length of payload */
+
+	u_int16_t	 flags;		/* Let SCRUB trigger behavior in
+					 * state code. Easier than tags */
+	u_int8_t	 af;
+	u_int8_t	 proto;
+	union {
+		struct tcphdr		*tcp;
+		struct udphdr		*udp;
+		struct icmp		*icmp;
+#ifdef INET6
+		struct icmp6_hdr	*icmp6;
+#endif /* INET6 */
+		void			*any;
+	} hdr;
+};
 
 /* flags for RDR options */
 #define PF_DPORT_RANGE	0x01		/* Dest port uses range */
@@ -242,8 +401,8 @@ TAILQ_HEAD(pf_rulequeue, pf_rule);
 struct pf_status {
 	u_int64_t	counters[PFRES_MAX];
 	u_int64_t	fcounters[FCNT_MAX];
-	u_int64_t	pcounters[2][3];
-	u_int64_t	bcounters[2];
+	u_int64_t	pcounters[2][2][3];
+	u_int64_t	bcounters[2][2];
 	u_int32_t	running;
 	u_int32_t	states;
 	u_int32_t	since;
@@ -279,14 +438,15 @@ struct pfioc_changenat {
 };
 
 struct pfioc_natlook {
-	u_int32_t	 saddr;
-	u_int32_t	 daddr;
-	u_int32_t	 rsaddr;
-	u_int32_t	 rdaddr;
+	struct pf_addr	 saddr;
+	struct pf_addr	 daddr;
+	struct pf_addr	 rsaddr;
+	struct pf_addr	 rdaddr;
 	u_int16_t	 sport;
 	u_int16_t	 dport;
 	u_int16_t	 rsport;
 	u_int16_t	 rdport;
+	u_int8_t	 af;
 	u_int8_t	 proto;
 	u_int8_t	 direction;
 };
@@ -298,9 +458,9 @@ struct pfioc_binat {
 };
 
 struct pfioc_changebinat {
-	u_int32_t	 action;
-	struct pf_binat	 oldbinat;
-	struct pf_binat	 newbinat;
+	u_int32_t	action;
+	struct pf_binat	oldbinat;
+	struct pf_binat	newbinat;
 };
 
 struct pfioc_rdr {
@@ -382,7 +542,13 @@ struct pfioc_tm {
 
 #ifdef _KERNEL
 
+#ifdef INET
 int	pf_test(int, struct ifnet *, struct mbuf **);
+#endif /* INET */
+
+#ifdef INET6
+int	pf_test6(int, struct ifnet *, struct mbuf **);
+#endif /* INET */
 
 struct pf_tree_node;
 struct pf_state
@@ -393,7 +559,8 @@ int	pf_tree_remove(struct pf_tree_node **, struct pf_tree_node *,
 	    struct pf_tree_key *);
 
 int	pflog_packet(struct mbuf *, int, u_short, u_short, struct pf_rule *);
-int	pf_match_addr(u_int8_t, u_int32_t, u_int32_t, u_int32_t);
+int	pf_match_addr(u_int8_t, struct pf_addr *, struct pf_addr *,
+	    struct pf_addr *, int);
 int	pf_match_port(u_int8_t, u_int16_t, u_int16_t, u_int16_t);
 
 void	pf_normalize_init(void);

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.5 2001/09/05 12:34:44 dhartmei Exp $
+.\"	$OpenBSD: pf.4,v 1.6 2001/09/15 03:54:40 frantzen Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -37,7 +37,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-interface is a packet filter pseudo-device for IPv4.
+interface is a packet filter pseudo-device for IPv4 and IPv6.
 .Pp
 .Nm
 is administered using the
@@ -158,10 +158,10 @@ Gets the internal packet filter statistics.
 Looks up a state table entry by source and destination addresses and ports.
 .Bd -literal
 struct pfioc_natlook {
-	u_int32_t	 saddr;
-	u_int32_t	 daddr;
-	u_int32_t	 rsaddr;
-	u_int32_t	 rdaddr;
+	struct pf_addr	 saddr;
+	struct pf_addr	 daddr;
+	struct pf_addr	 rsaddr;
+	struct pf_addr	 rdaddr;
 	u_int16_t	 sport;
 	u_int16_t	 dport;
 	u_int16_t	 rsport;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.31 2001/09/12 16:37:14 markus Exp $	*/
+/*	$OpenBSD: parse.y,v 1.32 2001/09/15 03:54:40 frantzen Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -33,6 +33,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
+#include <netinet/icmp6.h>
 #include <net/pfvar.h>
 #include <arpa/inet.h>
 
@@ -65,8 +66,9 @@ struct node_proto {
 };
 
 struct node_host {
-	u_int32_t		 addr;
-	u_int32_t		 mask;
+	struct pf_addr		 addr;
+	struct pf_addr		 mask;
+	u_int8_t		 af;
 	u_int8_t		 not;
 	struct node_host	*next;
 };
@@ -77,6 +79,13 @@ struct node_port {
 	struct node_port	*next;
 };
 
+struct node_icmp {
+	u_int8_t		 code;
+	u_int8_t		 type;
+	u_int8_t		 proto;
+	struct node_icmp	*next;
+};
+
 struct peer {
 	struct node_host	*host;
 	struct node_port	*port;
@@ -85,19 +94,22 @@ struct peer {
 int			 rule_consistent(struct pf_rule *);
 int			 yyparse(void);
 struct pf_rule_addr	*new_addr(void);
-u_int32_t		 ipmask(u_int8_t);
+void		 	 ipmask(struct pf_addr *, u_int8_t, int);
 void			 expand_rule_hosts(struct pf_rule *,
 			    struct node_if *, struct node_proto *,
 			    struct node_host *, struct node_port *,
-			    struct node_host *, struct node_port *);
+			    struct node_host *, struct node_port *,
+			    struct node_icmp *);
 void			 expand_rule_protos(struct pf_rule *,
 			    struct node_if *, struct node_proto *,
 			    struct node_host *, struct node_port *,
-			    struct node_host *, struct node_port *);
+			    struct node_host *, struct node_port *,
+			    struct node_icmp *);
 void			 expand_rule(struct pf_rule *,
 			    struct node_if *, struct node_proto *,
 			    struct node_host *, struct node_port *,
-			    struct node_host *, struct node_port *);
+			    struct node_host *, struct node_port *,
+			    struct node_icmp *);
 
 struct sym {
 	struct sym *next;
@@ -126,6 +138,7 @@ typedef struct {
 		}			range;
 		struct node_if		*interface;
 		struct node_proto	*proto;
+		struct node_icmp	*icmp;
 		struct node_host	*host;
 		struct node_port	*port;
 		struct peer		peer;
@@ -139,20 +152,22 @@ typedef struct {
 %}
 
 %token	PASS BLOCK SCRUB RETURN IN OUT LOG LOGALL QUICK ON FROM TO FLAGS
-%token	RETURNRST RETURNICMP PROTO ALL ANY ICMPTYPE CODE KEEP MODULATE STATE
-%token	PORT RDR NAT ARROW NODF MINTTL ERROR BINAT
-%token	<v.string>	STRING
-%token	<v.number>	NUMBER
+%token	RETURNRST RETURNICMP RETURNICMP6 PROTO INET INET6 ALL ANY ICMPTYPE
+%token  ICMP6TYPE CODE KEEP MODULATE STATE PORT RDR NAT BINAT ARROW NODF
+%token	MINTTL IPV6ADDR ERROR
+%token	<v.string> STRING
+%token	<v.number> NUMBER
 %token	<v.i>	PORTUNARY PORTBINARY
 %type	<v.interface>	interface if_list if_item_not if_item
-%type	<v.number>	port icmptype minttl
-%type	<v.i>	dir log quick keep nodf
-%type	<v.b>	action icmpspec flag flags blockspec
+%type	<v.number>	port icmptype icmp6type minttl
+%type	<v.i>	dir log quick af keep nodf
+%type	<v.b>	action flag flags blockspec
 %type	<v.range>	dport rport
 %type	<v.proto>	proto proto_list proto_item
+%type	<v.icmp>	icmpspec icmp_list icmp6_list icmp_item icmp6_item
 %type	<v.fromto>	fromto
 %type	<v.peer>	ipportspec
-%type	<v.host>	ipspec xhost host address host_list
+%type	<v.host>	ipspec xhost host address host_list IPV6ADDR
 %type	<v.port>	portspec port_list port_item
 %%
 
@@ -176,7 +191,7 @@ varset		: STRING PORTUNARY STRING
 		}
 		;
 
-pfrule		: action dir log quick interface proto fromto flags icmpspec keep nodf minttl
+pfrule		: action dir log quick interface af proto fromto flags icmpspec keep nodf minttl
 		{
 			struct pf_rule r;
 
@@ -195,19 +210,19 @@ pfrule		: action dir log quick interface proto fromto flags icmpspec keep nodf m
 			r.log = $3;
 			r.quick = $4;
 
-			r.flags = $8.b1;
-			r.flagset = $8.b2;
-			r.type = $9.b1;
-			r.code = $9.b2;
-			r.keep_state = $10;
+			r.af = $6;
+			r.flags = $9.b1;
+			r.flagset = $9.b2;
 
-			if ($11)
-				r.rule_flag |= PFRULE_NODF;
+			r.keep_state = $11;
+
 			if ($12)
-				r.min_ttl = $12;
+				r.rule_flag |= PFRULE_NODF;
+			if ($13)
+				r.min_ttl = $13;
 
-			expand_rule(&r, $5, $6, $7.src.host, $7.src.port,
-			    $7.dst.host, $7.dst.port);
+			expand_rule(&r, $5, $7, $8.src.host, $8.src.port,
+			    $8.dst.host, $8.dst.port, $10);
 		}
 		;
 
@@ -222,10 +237,27 @@ blockspec	: /* empty */		{ $$.b2 = 0; $$.w = 0; }
 			$$.b2 = 0;
 			$$.w = (ICMP_UNREACH << 8) | ICMP_UNREACH_PORT;
 		}
+		| RETURNICMP6		{
+			$$.b2 = 0;
+			$$.w = (ICMP6_DST_UNREACH << 8) |
+			    ICMP6_DST_UNREACH_NOPORT;
+		}
 		| RETURNICMP '(' STRING ')'	{
 			struct icmpcodeent *p;
 
-			if ((p = geticmpcodebyname(ICMP_UNREACH, $3)) == NULL) {
+			if ((p = geticmpcodebyname(ICMP_UNREACH, $3,
+			    IPPROTO_ICMP)) == NULL) {
+				yyerror("unknown icmp code %s", $3);
+				YYERROR;
+			}
+			$$.w = (p->type << 8) | p->code;
+			$$.b2 = 0;
+		}
+		| RETURNICMP6 '(' STRING ')'	{
+			struct icmpcodeent *p;
+
+			if ((p = geticmpcodebyname(ICMP6_DST_UNREACH, $3,
+			    IPPROTO_ICMPV6)) == NULL) {
 				yyerror("unknown icmp code %s", $3);
 				YYERROR;
 			}
@@ -268,6 +300,10 @@ if_item		: STRING			{
 			$$->next = NULL;
 		}
 		;
+
+af		: /* empty */			{ $$ = 0; }
+		| INET				{ $$ = AF_INET; }
+		| INET6				{ $$ = AF_INET6; }
 
 proto		: /* empty */			{ $$ = NULL; }
 		| PROTO proto_item		{ $$ = $2; }
@@ -340,29 +376,51 @@ xhost		: '!' host			{ $$ = $2; $$->not = 1; }
 
 host		: address			{
 			$$ = $1;
-			$$->mask = 0xffffffff;
+			if ($$->af == AF_INET)
+				ipmask(&$$->mask, 32, AF_INET); 
+			else
+				ipmask(&$$->mask, 128, AF_INET6);
 		}
 		| address '/' NUMBER		{
-			if ($3 < 0 || $3 > 32) {
-				yyerror("illegal netmask value %d", $3);
-				YYERROR;
+			if ($$->af == AF_INET) {
+				if ($3 < 0 || $3 > 32) {
+					yyerror("illegal netmask value %d", $3);
+					YYERROR;
+				}
+			} else {
+				if ($3 < 0 || $3 > 128) {
+					yyerror("illegal netmask value %d", $3);
+					YYERROR;
+				}
 			}
 			$$ = $1;
-			$$->mask = ipmask($3);
+			ipmask(&$$->mask, $3, $$->af);
 		}
 		;
 
 address		: STRING			{
 			struct hostent *hp;
 
-			if ((hp = gethostbyname($1)) == NULL) {
-				yyerror("cannot resolve %s", $1);
-				YYERROR;
+			if ((hp = gethostbyname2($1, AF_INET)) == NULL) {
+				if ((hp = gethostbyname2($1, AF_INET6))
+				    == NULL) {
+					yyerror("cannot resolve %s", $1);
+					YYERROR;
+				} else {
+					$$ = calloc(1, sizeof(struct node_host));
+					if ($$ == NULL)
+						err(1, "address: calloc");
+					$$->af = AF_INET6;
+					memcpy(&$$->addr, hp->h_addr,
+					    sizeof(struct pf_addr));
+				}
+			} else {
+				$$ = calloc(1, sizeof(struct node_host));
+				if ($$ == NULL)
+					err(1, "address: calloc");
+				$$->af = AF_INET;
+				memcpy(&$$->addr, hp->h_addr, sizeof(u_int32_t));
 			}
-			$$ = calloc(1, sizeof(struct node_host));
-			if ($$ == NULL)
-				err(1, "address: calloc");
-			memcpy(&$$->addr, hp->h_addr, sizeof(u_int32_t));
 		}
 		| NUMBER '.' NUMBER '.' NUMBER '.' NUMBER {
 			if ($1 < 0 || $3 < 0 || $5 < 0 || $7 < 0 ||
@@ -374,8 +432,11 @@ address		: STRING			{
 			$$ = calloc(1, sizeof(struct node_host));
 			if ($$ == NULL)
 				err(1, "address: calloc");
-			$$->addr = htonl(($1 << 24) | ($3 << 16) | ($5 << 8) | $7);
+			$$->af = AF_INET;
+			$$->addr.addr32[0] = htonl(($1 << 24) |
+			    ($3 << 16) | ($5 << 8) | $7);
 		}
+		| IPV6ADDR			{ $$ = $1; }
 		;
 
 portspec	: port_item			{ $$ = $1; }
@@ -453,32 +514,105 @@ flags		: /* empty */			{ $$.b1 = 0; $$.b2 = 0; }
 		| FLAGS "/" flag		{ $$.b1 = 0; $$.b2 = $3.b1; }
 		;
 
-icmpspec	: /* empty */			{ $$.b1 = 0; $$.b2 = 0; }
-		| ICMPTYPE icmptype		{ $$.b1 = $2; $$.b2 = 0; }
-		| ICMPTYPE icmptype CODE NUMBER	{
-			if ($4 < 0 || $4 > 255) {
-				yyerror("illegal icmp code %d", $4);
+icmpspec	: /* empty */                   { $$ = NULL; }
+		| ICMPTYPE icmp_item		{ $$ = $2; }
+		| ICMPTYPE '{' icmp_list '}'	{ $$ = $3; }
+		| ICMP6TYPE icmp6_item		{ $$ = $2; }
+		| ICMP6TYPE '{' icmp6_list '}'	{ $$ = $3; }
+		;
+
+icmp_list	: icmp_item			{ $$ = $1; }
+		| icmp_list ',' icmp_item	{ $3->next = $1; $$ = $3; }
+		;
+
+icmp6_list	: icmp6_item			{ $$ = $1; }
+		| icmp6_list ',' icmp6_item	{ $3->next = $1; $$ = $3; }
+		;
+
+icmp_item	: icmptype		{ 
+			$$ = malloc(sizeof(struct node_icmp));
+			if ($$ == NULL)
+				err(1, "icmp_item: malloc");	
+			$$->type = $1;
+			$$->code = 0;
+			$$->proto = IPPROTO_ICMP;
+			$$->next = NULL;
+		}
+		| icmptype CODE NUMBER	{
+			$$ = malloc(sizeof(struct node_icmp));
+			if ($$ == NULL)
+				err(1, "icmp_item: malloc");
+			if ($3 < 0 || $3 > 255) {
+				yyerror("illegal icmp code %d", $3);
 				YYERROR;
 			}
-			$$.b1 = $2;
-			$$.b2 = $4 + 1;
+			$$->code = $1;
+			$$->type = $3 + 1;
+			$$->proto = IPPROTO_ICMP;
+			$$->next = NULL;
 		}
-		| ICMPTYPE icmptype CODE STRING	{
+		| icmptype CODE STRING	{
 			struct icmpcodeent *p;
 
-			$$.b1 = $2;
-			if ((p = geticmpcodebyname($2, $4)) == NULL) {
-				yyerror("unknown icmp-code %s", $4);
+			$$ = malloc(sizeof(struct node_icmp));
+			if ($$ == NULL)
+				err(1, "icmp_item: malloc");
+			$$->type = $1;
+			if ((p = geticmpcodebyname($1, $3,
+			    IPPROTO_ICMP)) == NULL) {
+				yyerror("unknown icmp-code %s", $3);
 				YYERROR;
 			}
-			$$.b2 = p->code + 1;
+			$$->code = p->code + 1;
+			$$->proto = IPPROTO_ICMP;
+			$$->next = NULL;
+		}
+		;
+
+icmp6_item	: icmp6type		{
+			$$ = malloc(sizeof(struct node_icmp));
+			if ($$ == NULL)
+				err(1, "icmp_item: malloc");
+			$$->type = $1;
+			$$->code = 0;
+			$$->proto = IPPROTO_ICMPV6;
+			$$->next = NULL;
+		}
+		| icmp6type CODE NUMBER	{
+			$$ = malloc(sizeof(struct node_icmp));
+			if ($$ == NULL)
+				err(1, "icmp_item: malloc");
+			if ($3 < 0 || $3 > 255) {
+				yyerror("illegal icmp6 code %d", $3);
+				YYERROR;
+			}
+			$$->type = $1;
+			$$->code = $3 + 1;
+			$$->proto = IPPROTO_ICMPV6;
+			$$->next = NULL;
+		}
+		| icmp6type CODE STRING	{
+			struct icmpcodeent *p;
+
+			$$ = malloc(sizeof(struct node_icmp));
+			if ($$ == NULL)
+				err(1, "icmp_item: malloc");
+			$$->type = $1;
+			if ((p = geticmpcodebyname($1, $3,
+			    IPPROTO_ICMPV6)) == NULL) {
+				yyerror("unknown icmp6-code %s", $3);
+				YYERROR;
+			}
+			$$->code = p->code + 1;
+			$$->proto = IPPROTO_ICMPV6;
+			$$->next = NULL;
 		}
 		;
 
 icmptype	: STRING			{
 			struct icmptypeent *p;
 
-			if ((p = geticmptypebyname($1)) == NULL) {
+			if ((p = geticmptypebyname($1, IPPROTO_ICMP)) == NULL) {
 				yyerror("unknown icmp-type %s", $1);
 				YYERROR;
 			}
@@ -493,6 +627,24 @@ icmptype	: STRING			{
 		}
 		;
 
+icmp6type	: STRING			{
+			struct icmptypeent *p;
+
+			if ((p = geticmptypebyname($1,
+			    IPPROTO_ICMPV6)) == NULL) {
+				yyerror("unknown ipv6-icmp-type %s", $1);
+				YYERROR;
+			}
+			$$ = p->type + 1;
+		}
+		| NUMBER			{
+			if ($1 < 0 || $1 > 255) {
+				yyerror("illegal icmp6 type %d", $1);
+				YYERROR;
+			}
+			$$ = $1 + 1;
+		}
+		;
 
 keep		: /* empty */			{ $$ = 0; }
 		| KEEP STATE			{ $$ = PF_STATE_NORMAL; }
@@ -532,15 +684,30 @@ natrule		: NAT interface proto FROM ipspec TO ipspec ARROW address
 				nat.proto = $3->proto;
 				free($3);
 			}
+			if ($5 != NULL && $7 != NULL) {
+				if ($5->af && $7->af && $5->af != $7->af) {
+					yyerror("nat ip versions must match");
+					YYERROR;
+				} else {
+					if ($5->af)
+						nat.af = $5->af;
+					else if ($7->af)
+						nat.af = $7->af;
+				}
+			}
 			if ($5 != NULL) {
-				nat.saddr = $5->addr;
-				nat.smask = $5->mask;
+				memcpy(&nat.saddr, &$5->addr,
+				    sizeof(nat.saddr));
+				memcpy(&nat.smask, &$5->mask,
+				    sizeof(nat.smask));
 				nat.snot  = $5->not;
 				free($5);
 			}
 			if ($7 != NULL) {
-				nat.daddr = $7->addr;
-				nat.dmask = $7->mask;
+				memcpy(&nat.daddr, &$7->addr,
+				    sizeof(nat.daddr));
+				memcpy(&nat.dmask, &$7->mask,
+				    sizeof(nat.dmask));
 				nat.dnot  = $7->not;
 				free($7);
 			}
@@ -549,7 +716,13 @@ natrule		: NAT interface proto FROM ipspec TO ipspec ARROW address
 				yyerror("nat rule requires redirection address");
 				YYERROR;
 			}
-			nat.raddr = $9->addr;
+			/* we don't support IPv4 <-> IPv6 nat... yet */
+			if (nat.af && $9->af != nat.af) {
+				yyerror("nat ip versions must match");
+				YYERROR;
+			} else
+				nat.af = $9->af;
+			memcpy(&nat.raddr, &$9->addr, sizeof(nat.raddr));
 			free($9);
 			pfctl_add_nat(pf, &nat);
 		}
@@ -573,13 +746,27 @@ binatrule	: BINAT interface proto FROM address TO ipspec ARROW address
 				binat.proto = $3->proto;
 				free($3);
 			}
+			if ($5 != NULL && $7 != NULL) {
+				if ($5->af && $7->af && $5->af != $7->af) {
+					yyerror("nat ip versions must match");
+					YYERROR;
+				} else {
+					if ($5->af)
+						binat.af = $5->af;
+					else if ($7->af)
+						binat.af = $7->af;
+				}
+			}
 			if ($5 != NULL) {
-				binat.saddr = $5->addr;
+				memcpy(&binat.saddr, &$5->addr,
+				    sizeof(binat.saddr));
 				free($5);
 			}
 			if ($7 != NULL) {
-				binat.daddr = $7->addr;
-				binat.dmask = $7->mask;
+				memcpy(&binat.daddr, &$7->addr,
+				    sizeof(binat.daddr));
+				memcpy(&binat.dmask, &$7->mask,
+				    sizeof(binat.dmask));
 				binat.dnot  = $7->not;
 				free($7);
 			}
@@ -588,7 +775,7 @@ binatrule	: BINAT interface proto FROM address TO ipspec ARROW address
 				yyerror("binat rule requires redirection address");
 				YYERROR;
 			}
-			binat.raddr = $9->addr;
+			memcpy(&binat.raddr, &$9->addr, sizeof(binat.raddr));
 			free($9);
 			pfctl_add_binat(pf, &binat);
 		}
@@ -612,15 +799,30 @@ rdrrule		: RDR interface proto FROM ipspec TO ipspec dport ARROW address rport
 				rdr.proto = $3->proto;
 				free($3);
 			}
+			if ($5 != NULL && $7 != NULL) {
+				if ($5->af && $7->af && $5->af != $7->af) {
+					yyerror("rdr ip versions must match");
+					YYERROR; 
+				} else {
+					if ($5->af)
+						rdr.af = $5->af;
+					else if ($7->af)
+						rdr.af = $7->af;
+				}
+			}
 			if ($5 != NULL) {
-				rdr.saddr = $5->addr;
-				rdr.smask = $5->mask;
+				memcpy(&rdr.saddr, &$5->addr,
+				    sizeof(rdr.saddr));
+				memcpy(&rdr.smask, &$5->mask,
+				    sizeof(rdr.smask));
 				rdr.snot  = $5->not;
 				free($5);
 			}
 			if ($7 != NULL) {
-				rdr.daddr = $7->addr;
-				rdr.dmask = $7->mask;
+				memcpy(&rdr.daddr, &$7->addr,
+				    sizeof(rdr.daddr));
+				memcpy(&rdr.dmask, &$7->mask,
+				    sizeof(rdr.dmask));
 				rdr.dnot  = $7->not;
 				free($7);
 			}
@@ -633,7 +835,12 @@ rdrrule		: RDR interface proto FROM ipspec TO ipspec dport ARROW address rport
 				yyerror("rdr rule requires redirection address");
 				YYERROR;
 			}
-			rdr.raddr = $10->addr;
+			if (rdr.af && $10->af != rdr.af) {
+				yyerror("rdr ip versions must match");
+				YYERROR;
+			} else 
+				rdr.af = $10->af;
+			memcpy(&rdr.raddr, &$10->addr, sizeof(rdr.raddr));
 			free($10);
 
 			rdr.rport  = $11.a;
@@ -726,8 +933,18 @@ rule_consistent(struct pf_rule *r)
 		yyerror("port only applies to tcp/udp");
 		problems++;
 	}
-	if (r->proto != IPPROTO_ICMP && (r->type || r->code)) {
+	if (r->proto != IPPROTO_ICMP && r->proto != IPPROTO_ICMPV6 &&
+	    (r->type || r->code)) {
 		yyerror("icmp-type/code only applies to icmp");
+		problems++;
+	}
+	if (!r->af && (r->type || r->code)) {
+		yyerror("must indicate address family with icmp-type/code");
+		problems++;
+	}
+	if ((r->proto == IPPROTO_ICMP && r->af == AF_INET6) ||
+	    (r->proto == IPPROTO_ICMPV6 && r->af == AF_INET)) {
+		yyerror("icmp version does not match address family");
 		problems++;
 	}
 	if (r->keep_state == PF_STATE_MODULATE && r->proto &&
@@ -761,10 +978,12 @@ rule_consistent(struct pf_rule *r)
 void expand_rule_hosts(struct pf_rule *r,
     struct node_if *interface, struct node_proto *proto,
     struct node_host *src_hosts, struct node_port *src_ports,
-    struct node_host *dst_hosts, struct node_port *dst_ports)
+    struct node_host *dst_hosts, struct node_port *dst_ports,
+    struct node_icmp *icmp_type)
 {
 	struct node_host *src_host, *dst_host;
 	struct node_port *src_port, *dst_port;
+	int nomatch = 0;
 
 	src_host = src_hosts;
 	while (src_host != NULL) {
@@ -789,7 +1008,28 @@ void expand_rule_hosts(struct pf_rule *r,
 					r->dst.port[0] = dst_port->port[0];
 					r->dst.port[1] = dst_port->port[1];
 					r->dst.port_op = dst_port->op;
-					if (rule_consistent(r) < 0)
+					r->type = icmp_type->type;
+					r->code = icmp_type->code;
+
+					if (src_host->af &&
+					    dst_host->af && 
+					    (src_host->af !=
+					    dst_host->af)) {
+						yyerror("address family"
+						    " mismatch");
+						nomatch++;
+					} else if (src_host->af)
+						r->af = src_host->af;
+					else if (dst_host->af)
+						r->af = dst_host->af;
+
+					if (icmp_type->proto &&
+					    r->proto != icmp_type->proto) {
+						yyerror("icmp-type mismatch");
+						nomatch++;
+					}
+
+					if (rule_consistent(r) < 0 || nomatch)
 						yyerror("skipping rule "
 						    "due to errors");
 					else
@@ -807,14 +1047,20 @@ void expand_rule_hosts(struct pf_rule *r,
 void expand_rule_protos(struct pf_rule *r,
     struct node_if *interface, struct node_proto *protos,
     struct node_host *src_hosts, struct node_port *src_ports,
-    struct node_host *dst_hosts, struct node_port *dst_ports)
+    struct node_host *dst_hosts, struct node_port *dst_ports,
+    struct node_icmp *icmp_types)
 {
 	struct node_proto *proto;
+	struct node_icmp *icmp_type;
 
 	proto = protos;
 	while (proto != NULL) {
-		expand_rule_hosts(r, interface, proto, src_hosts,
-		    src_ports, dst_hosts, dst_ports);
+		icmp_type = icmp_types;
+		while (icmp_type != NULL) {
+			expand_rule_hosts(r, interface, proto, src_hosts,
+			    src_ports, dst_hosts, dst_ports, icmp_type);
+			icmp_type = icmp_type->next;
+		}
 		proto = proto->next;
 	}
 }
@@ -823,7 +1069,8 @@ void
 expand_rule(struct pf_rule *r,
     struct node_if *interfaces, struct node_proto *protos,
     struct node_host *src_hosts, struct node_port *src_ports,
-    struct node_host *dst_hosts, struct node_port *dst_ports)
+    struct node_host *dst_hosts, struct node_port *dst_ports,
+    struct node_icmp *icmp_types)
 {
 	struct node_if *interface;
 
@@ -833,11 +1080,12 @@ expand_rule(struct pf_rule *r,
 	CHECK_ROOT(struct node_port, src_ports);
 	CHECK_ROOT(struct node_host, dst_hosts);
 	CHECK_ROOT(struct node_port, dst_ports);
+	CHECK_ROOT(struct node_icmp, icmp_types);
 
 	interface = interfaces;
 	while (interface != NULL) {
 		expand_rule_protos(r, interface, protos, src_hosts,
-		    src_ports, dst_hosts, dst_ports);
+		    src_ports, dst_hosts, dst_ports, icmp_types);
 		interface = interface->next;
 	}
 
@@ -847,6 +1095,8 @@ expand_rule(struct pf_rule *r,
 	FREE_LIST(struct node_port, src_ports);
 	FREE_LIST(struct node_host, dst_hosts);
 	FREE_LIST(struct node_port, dst_ports);
+	FREE_LIST(struct node_icmp, icmp_types);
+	
 }
 
 #undef FREE_LIST
@@ -868,7 +1118,10 @@ lookup(char *s)
 		{ "flags",	FLAGS},
 		{ "from",	FROM},
 		{ "icmp-type",	ICMPTYPE},
+		{ "ipv6-icmp-type", ICMP6TYPE},
 		{ "in",		IN},
+		{ "inet",	INET},
+		{ "inet6",	INET6},
 		{ "keep",	KEEP},
 		{ "log",	LOG},
 		{ "log-all",	LOGALL},
@@ -885,6 +1138,7 @@ lookup(char *s)
 		{ "rdr",	RDR},
 		{ "return",	RETURN},
 		{ "return-icmp",RETURNICMP},
+		{ "return-icmp6",RETURNICMP6},
 		{ "return-rst",	RETURNRST},
 		{ "scrub",	SCRUB},
 		{ "state",	STATE},
@@ -1085,6 +1339,42 @@ top:
 		break;
 	}
 
+        /* Need to parse v6 addresses before tokenizing numbers. ick */
+        if (isxdigit(c) || c == ':') {
+                struct node_host *node = NULL;
+		u_int32_t addr[4];
+		char lookahead[46];
+                int i = 0, notv6addr = 0;
+
+		lookahead[i] = c;
+
+		while (i < sizeof(lookahead) && 
+		    (isxdigit(c) || c == ':' || c == '.')) {
+			 	lookahead[++i] = c = lgetc(fin);
+		}
+
+		/* quick check avoids calling inet_pton too often */
+		if (isalnum(c)) {
+			notv6addr++;
+		}
+		lungetc(lookahead[i], fin);
+		lookahead[i] = '\0';
+
+		if(!notv6addr && inet_pton(AF_INET6, lookahead, &addr) == 1) {
+			node = calloc(1, sizeof(struct node_host));
+			node->af = AF_INET6;
+			memcpy (&node->addr, &addr, sizeof(addr));
+                	yylval.v.host = node;
+                	return IPV6ADDR;
+		} else {
+                	free(node);
+                	while (i > 1) {
+                        	lungetc(lookahead[--i], fin);
+			}
+			c = lookahead[--i];
+		}
+        }
+
 	if (isdigit(c)) {
 		int index = 0, base = 10;
 		u_int64_t n = 0;
@@ -1181,15 +1471,18 @@ parse_nat(FILE *input, struct pfctl *xpf)
 	return (errors ? -1 : 0);
 }
 
-u_int32_t
-ipmask(u_int8_t b)
+void
+ipmask(struct pf_addr *m, u_int8_t b, int af)
 {
-	u_int32_t m = 0;
-	int i;
+	int i, j = 0;
 
+	while (b >= 32) {
+		m->addr32[j++] = 0xffffffff;
+		b -= 32;
+	}
 	for (i = 31; i > 31-b; --i)
-		m |= (1 << i);
-	return (htonl(m));
+		m->addr32[j] |= (1 << i);
+	m->addr32[j] = htonl(m->addr32[j]);
 }
 
 struct pf_rule_addr *

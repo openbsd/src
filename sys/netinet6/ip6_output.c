@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.49 2001/08/22 14:18:36 niklas Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.50 2001/09/15 03:54:40 frantzen Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -65,6 +65,8 @@
  *	@(#)ip_output.c	8.3 (Berkeley) 1/21/94
  */
 
+#include "pf.h"
+
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
@@ -88,6 +90,10 @@
 #include <netinet/icmp6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
+
+#if NPF > 0
+#include <net/pfvar.h>
+#endif
 
 #ifdef IPSEC
 #include <netinet/ip_ah.h>
@@ -873,6 +879,13 @@ skip_ipsec2:;
 		m->m_flags &= ~M_LOOP; /* XXX */
 		m->m_pkthdr.rcvif = NULL;
 	}
+
+#if NPF > 0 
+        if (pf_test6(PF_OUT, ifp, &m) != PF_PASS) {
+                error = EHOSTUNREACH;
+                goto done;
+        }
+#endif 
 
 	/*
 	 * Send the packet to the outgoing interface.

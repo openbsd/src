@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.47 2001/09/06 18:05:46 jasoni Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.48 2001/09/15 03:54:40 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -37,6 +37,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
+#include <netinet/icmp6.h>
 #define TCPSTATES
 #include <netinet/tcp_fsm.h>
 #include <net/pfvar.h>
@@ -53,8 +54,9 @@
 
 #include "pfctl_parser.h"
 
-void		 print_addr (u_int32_t);
-void		 print_host (struct pf_state_host *);
+int		 unmask (struct pf_addr *, int);
+void		 print_addr (struct pf_addr *, struct pf_addr *, int);
+void		 print_host (struct pf_state_host *, int);
 void		 print_seq (struct pf_state_peer *);
 void		 print_port (u_int8_t, u_int16_t, u_int16_t, char *);
 void		 print_flags (u_int8_t);
@@ -90,6 +92,35 @@ struct icmptypeent icmp_type[] = {
 
 };
 
+struct icmptypeent icmp6_type[] = {
+	{ "unreach",	ICMP6_DST_UNREACH },
+	{ "toobig",	ICMP6_PACKET_TOO_BIG },
+	{ "timex",	ICMP6_TIME_EXCEEDED },
+	{ "paramprob",	ICMP6_PARAM_PROB },
+	{ "echoreq",	ICMP6_ECHO_REQUEST },
+	{ "echorep",	ICMP6_ECHO_REPLY },
+	{ "groupqry",	ICMP6_MEMBERSHIP_QUERY },
+	{ "listqry",	MLD6_LISTENER_QUERY },
+	{ "grouprep",	ICMP6_MEMBERSHIP_REPORT },
+	{ "listenrep",	MLD6_LISTENER_REPORT },
+	{ "groupterm",	ICMP6_MEMBERSHIP_REDUCTION },
+	{ "listendone", MLD6_LISTENER_DONE },
+	{ "routersol",	ND_ROUTER_SOLICIT },
+	{ "routeradv",	ND_ROUTER_ADVERT },
+	{ "neighbrsol", ND_NEIGHBOR_SOLICIT },
+	{ "neighbradv", ND_NEIGHBOR_ADVERT },
+	{ "redir",	ND_REDIRECT },
+	{ "routrrenum", ICMP6_ROUTER_RENUMBERING },
+	{ "wrureq",	ICMP6_WRUREQUEST },
+	{ "wrurep",	ICMP6_WRUREPLY },
+	{ "fqdnreq",	ICMP6_FQDN_QUERY },
+	{ "fqdnrep",	ICMP6_FQDN_REPLY },
+	{ "niqry",	ICMP6_NI_QUERY },
+	{ "nirep",	ICMP6_NI_REPLY },
+	{ "mtraceresp",	MLD6_MTRACE_RESP },
+	{ "mtrace",	MLD6_MTRACE }
+};
+	
 struct icmpcodeent icmp_code[] = {
 	{ "net-unr",		ICMP_UNREACH,	ICMP_UNREACH_NET },
 	{ "host-unr",		ICMP_UNREACH,	ICMP_UNREACH_HOST },
@@ -123,69 +154,154 @@ struct icmpcodeent icmp_code[] = {
 	{ "decrypt-fail",	ICMP_PHOTURIS,	ICMP_PHOTURIS_DECRYPT_FAILED }
 };
 
+struct icmpcodeent icmp6_code[] = {
+	{ "admin-unr", ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_NOROUTE },
+	{ "noroute-unr", ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADMIN },
+	{ "notnbr-unr",	ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_NOTNEIGHBOR },
+	{ "beyond-unr", ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_BEYONDSCOPE },
+	{ "addr-unr", ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADDR },
+	{ "port-unr", ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_NOPORT },
+	{ "transit", ICMP6_TIME_EXCEEDED, ICMP6_TIME_EXCEED_TRANSIT },
+	{ "reassemb", ICMP6_TIME_EXCEEDED, ICMP6_TIME_EXCEED_REASSEMBLY },
+	{ "badhead", ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER },
+	{ "nxthdr", ICMP6_PARAM_PROB, ICMP6_PARAMPROB_NEXTHEADER },
+	{ "redironlink", ND_REDIRECT, ND_REDIRECT_ONLINK },
+	{ "redirrouter", ND_REDIRECT, ND_REDIRECT_ROUTER }
+};
+	
+
 struct icmptypeent *
-geticmptypebynumber(u_int8_t type)
+geticmptypebynumber(u_int8_t type, u_int8_t proto)
 {
 	unsigned i;
 
-	for(i=0; i < (sizeof (icmp_type) / sizeof(icmp_type[0])); i++) {
-		if(type == icmp_type[i].type)
-			return (&icmp_type[i]);
+	if (proto == IPPROTO_ICMP) {
+		for(i=0; i < (sizeof (icmp_type) / sizeof(icmp_type[0])); i++) {
+			if(type == icmp_type[i].type)
+				return (&icmp_type[i]);
+		}
+	} else {
+		for(i=0; i < (sizeof (icmp6_type) /
+		    sizeof(icmp6_type[0])); i++) {
+			if(type == icmp6_type[i].type)
+				 return (&icmp6_type[i]);
+		}
 	}
-	return (0);
+	return (NULL);
 }
 
 struct icmptypeent *
-geticmptypebyname(char *w)
+geticmptypebyname(char *w, u_int8_t proto)
 {
 	unsigned i;
 
-	for(i=0; i < (sizeof (icmp_type) / sizeof(icmp_type[0])); i++) {
-		if(!strcmp(w, icmp_type[i].name))
-			return (&icmp_type[i]);
+	if (proto == IPPROTO_ICMP) {
+		for(i=0; i < (sizeof (icmp_type) / sizeof(icmp_type[0])); i++) {
+			if(!strcmp(w, icmp_type[i].name))
+				return (&icmp_type[i]);
+		}
+	} else {
+		for(i=0; i < (sizeof (icmp6_type) /
+		    sizeof(icmp6_type[0])); i++) {
+			if(!strcmp(w, icmp6_type[i].name))
+				return (&icmp6_type[i]);
+		}
 	}
-	return (0);
+	return (NULL);
 }
 
 struct icmpcodeent *
-geticmpcodebynumber(u_int8_t type, u_int8_t code)
+geticmpcodebynumber(u_int8_t type, u_int8_t code, u_int8_t proto)
 {
 	unsigned i;
 
-	for(i=0; i < (sizeof (icmp_code) / sizeof(icmp_code[0])); i++) {
-		if (type == icmp_code[i].type && code == icmp_code[i].code)
-			return (&icmp_code[i]);
+	if (proto == IPPROTO_ICMP) {
+		for(i=0; i < (sizeof (icmp_code) / sizeof(icmp_code[0])); i++) {
+			if (type == icmp_code[i].type &&
+			    code == icmp_code[i].code)
+				return (&icmp_code[i]);
+		}
+	} else {
+		for(i=0; i < (sizeof (icmp6_code) /
+		   sizeof(icmp6_code[0])); i++) {
+			if (type == icmp6_code[i].type &&
+			    code == icmp6_code[i].code)
+				return (&icmp6_code[i]);
+		}
 	}
-	return (0);
+	return (NULL);
 }
 
 struct icmpcodeent *
-geticmpcodebyname(u_long type, char *w)
+geticmpcodebyname(u_long type, char *w, u_int8_t proto)
 {
 	unsigned i;
 
-	for(i=0; i < (sizeof (icmp_code) / sizeof(icmp_code[0])); i++) {
-		if (type == icmp_code[i].type && !strcmp(w, icmp_code[i].name))
-			return (&icmp_code[i]);
+	if (proto == IPPROTO_ICMP) {
+		for(i=0; i < (sizeof (icmp_code) / sizeof(icmp_code[0])); i++) {
+			if (type == icmp_code[i].type &&
+			    !strcmp(w, icmp_code[i].name))
+				return (&icmp_code[i]);
+		}
+	} else {
+		for(i=0; i < (sizeof (icmp6_code) /
+		    sizeof(icmp6_code[0])); i++) {
+			if (type == icmp6_code[i].type &&
+			    !strcmp(w, icmp6_code[i].name))
+				return (&icmp6_code[i]);
+		}
 	}
-	return (0);
+	return (NULL);
+}
+
+int
+unmask(struct pf_addr *m, int af)
+{
+	int i = 31, j = 0, b = 0, msize;
+	u_int32_t tmp;
+
+	if (af == AF_INET)
+		msize = 1;
+	else
+		msize = 4;
+	while (j < msize && m->addr32[j] == 0xffffffff) {
+			b += 32;	
+			j++;
+	}
+	if (j < msize) {
+		tmp = ntohl(m->addr32[j]);
+		for (i = 31; tmp & (1 << i); --i)
+			b++;
+	}
+	return (b);
 }
 
 void
-print_addr(u_int32_t a)
+print_addr(struct pf_addr *addr, struct pf_addr *mask, int af)
 {
-	a = ntohl(a);
-	printf("%u.%u.%u.%u", (a>>24)&255, (a>>16)&255, (a>>8)&255, a&255);
+	char buf[48];
+	const char *bf;
+
+	bf = inet_ntop(af, addr, buf, sizeof(buf));
+	printf("%s", bf);
+	if (mask != NULL) {
+		if (!PF_AZERO(mask, af))
+			printf("/%u", unmask(mask, af));
+	} 
 }
 
 void
-print_host(struct pf_state_host *h)
+print_host(struct pf_state_host *h, int af)
 {
-	u_int32_t a = ntohl(h->addr);
 	u_int16_t p = ntohs(h->port);
 
-	printf("%u.%u.%u.%u:%u", (a>>24)&255, (a>>16)&255, (a>>8)&255, a&255, p);
+	print_addr(&h->addr, NULL, af);
+	if (af == AF_INET)
+		printf(":%u", p);
+	else
+		printf("[%u]", p);
 }
+		
 
 void
 print_seq(struct pf_state_peer *p)
@@ -250,31 +366,23 @@ print_nat(struct pf_nat *n)
 		printf("%s ", n->ifname);
 	}
 	printf("from ");
-	if (n->saddr || n->smask) {
+	if (!PF_AZERO(&n->saddr, n->af) || !PF_AZERO(&n->smask, n->af)) {
 		if (n->snot)
 			printf("! ");
-		print_addr(n->saddr);
-		if (n->smask != 0xFFFFFFFF) {
-			printf("/");
-			print_addr(n->smask);
-		}
+		print_addr(&n->saddr, &n->smask, n->af);
 		printf(" ");
 	} else
 		printf("any ");
 	printf("to ");
-	if (n->daddr || n->dmask) {
-		if (n->dnot)
+	if (!PF_AZERO(&n->daddr, n->af) || !PF_AZERO(&n->dmask, n->af)) {
+		if (n->snot)
 			printf("! ");
-		print_addr(n->daddr);
-		if (n->dmask != 0xFFFFFFFF) {
-			printf("/");
-			print_addr(n->dmask);
-		}
+		print_addr(&n->daddr, &n->dmask, n->af);
 		printf(" ");
 	} else
 		printf("any ");
 	printf("-> ");
-	print_addr(n->raddr);
+	print_addr(&n->raddr, NULL, n->af);
 	printf(" ");
 	switch (n->proto) {
 	case IPPROTO_TCP:
@@ -310,22 +418,18 @@ print_binat(struct pf_binat *b)
 		break;
 	}
 	printf("from ");
-	print_addr(b->saddr);
+	print_addr(&b->saddr, NULL, b->af);
 	printf(" ");
 	printf("to ");
-	if (b->daddr || b->dmask) {
+	if (!PF_AZERO(&b->daddr, b->af) || !PF_AZERO(&b->dmask, b->af)) {
 		if (b->dnot)
 			printf("! ");
-		print_addr(b->daddr);
-		if (b->dmask != 0xFFFFFFFF) {
-			printf("/");
-			print_addr(b->dmask);
-		}
+		print_addr(&b->daddr, &b->dmask, b->af);
 		printf(" ");
 	} else
 		printf("any ");
  	printf("-> ");
-	print_addr(b->raddr);
+	print_addr(&b->raddr, NULL, b->af);
 	printf("\n");
 }
 
@@ -348,26 +452,18 @@ print_rdr(struct pf_rdr *r)
 		break;
 	}
 	printf("from ");
-	if (r->saddr || r->smask) {
+	if (!PF_AZERO(&r->saddr, r->af) || !PF_AZERO(&r->smask, r->af)) {
 		if (r->snot)
 			printf("! ");
-		print_addr(r->saddr);
-		if (r->smask != 0xFFFFFFFF) {
-			printf("/");
-			print_addr(r->smask);
-		}
+		print_addr(&r->saddr, &r->smask, r->af);
 		printf(" ");
 	} else
 		printf("any ");
 	printf("to ");
-	if (r->daddr || r->dmask) {
-		if (r->dnot)
+	if (!PF_AZERO(&r->daddr, r->af) || !PF_AZERO(&r->dmask, r->af)) {
+		if (r->snot)
 			printf("! ");
-		print_addr(r->daddr);
-		if (r->dmask != 0xFFFFFFFF) {
-			printf("/");
-			print_addr(r->dmask);
-		}
+		print_addr(&r->daddr, &r->dmask, r->af);
 		printf(" ");
 	} else
 		printf("any ");
@@ -375,7 +471,7 @@ print_rdr(struct pf_rdr *r)
 	if (r->opts & PF_DPORT_RANGE)
 		printf(":%u", ntohs(r->dport2));
 	printf(" -> ");
-	print_addr(r->raddr);
+	print_addr(&r->raddr, NULL, r->af);
 	printf(" ");
 	printf("port %u", ntohs(r->rport));
 	if (r->opts & PF_RPORT_RANGE)
@@ -407,14 +503,22 @@ print_status(struct pf_status *s)
 			printf("Misc");
 			break;
 	}
-	printf("\nBytes In: %-10llu  Bytes Out: %-10llu\n",
-	    s->bcounters[PF_IN], s->bcounters[PF_OUT]);
-	printf("Inbound Packets:  Passed: %-10llu  Dropped: %-10llu\n",
-	    s->pcounters[PF_IN][PF_PASS],
-	    s->pcounters[PF_IN][PF_DROP]);
-	printf("Outbound Packets: Passed: %-10llu  Dropped: %-10llu\n",
-	    s->pcounters[PF_OUT][PF_PASS],
-	    s->pcounters[PF_OUT][PF_DROP]);
+	printf("\nBytes In IPv4: %-10llu  Bytes Out: %-10llu\n",
+	    s->bcounters[0][PF_IN], s->bcounters[0][PF_OUT]);
+	printf("         IPv6: %-10llu  Bytes Out: %-10llu\n",
+	    s->bcounters[1][PF_IN], s->bcounters[1][PF_OUT]);
+	printf("Inbound Packets IPv4:  Passed: %-10llu  Dropped: %-10llu\n",
+	    s->pcounters[0][PF_IN][PF_PASS],
+	    s->pcounters[0][PF_IN][PF_DROP]);
+	printf("                IPv6:  Passed: %-10llu  Dropped: %-10llu\n",
+	    s->pcounters[1][PF_IN][PF_PASS],
+	    s->pcounters[1][PF_IN][PF_DROP]);
+	printf("Outbound Packets IPv4: Passed: %-10llu  Dropped: %-10llu\n",
+	    s->pcounters[0][PF_OUT][PF_PASS],
+	    s->pcounters[0][PF_OUT][PF_DROP]);
+	printf("                 IPv6: Passed: %-10llu  Dropped: %-10llu\n",
+	    s->pcounters[1][PF_OUT][PF_PASS],
+	    s->pcounters[1][PF_OUT][PF_DROP]);
 	printf("States: %u\n", s->states);
 	printf("pf Counters\n");
 	for (i = 0; i < FCNT_MAX; i++)
@@ -446,6 +550,7 @@ print_state(struct pf_state *s)
 	case IPPROTO_UDP:
 		printf("UDP  ");
 		break;
+	case IPPROTO_ICMPV6:
 	case IPPROTO_ICMP:
 		printf("ICMP ");
 		break;
@@ -453,19 +558,20 @@ print_state(struct pf_state *s)
 		printf("???? ");
 		break;
 	}
-	if ((s->lan.addr != s->gwy.addr) || (s->lan.port != s->gwy.port)) {
-		print_host(&s->lan);
+	if (PF_ANEQ(&s->lan.addr, &s->gwy.addr, s->af) ||
+	    (s->lan.port != s->gwy.port)) {
+		print_host(&s->lan, s->af);
 		if (s->direction == PF_OUT)
 			printf(" -> ");
 		else
 			printf(" <- ");
 	}
-	print_host(&s->gwy);
+	print_host(&s->gwy, s->af);
 	if (s->direction == PF_OUT)
 		printf(" -> ");
 	else
 		printf(" <- ");
-	print_host(&s->ext);
+	print_host(&s->ext, s->af);
 
 	printf("    ");
 	if (s->proto == IPPROTO_TCP) {
@@ -515,7 +621,7 @@ print_rule(struct pf_rule *r)
 
 			printf("return-icmp");
 			ic = geticmpcodebynumber(r->return_icmp >> 8,
-			    r->return_icmp & 255);
+			    r->return_icmp & 255, r->proto);
 			if ((ic == NULL) || (ic->type != ICMP_UNREACH))
 				printf("(%u,%u) ", r->return_icmp >> 8,
 				    r->return_icmp & 255);
@@ -538,6 +644,12 @@ print_rule(struct pf_rule *r)
 		printf("quick ");
 	if (r->ifname[0])
 		printf("on %s ", r->ifname);
+	if (r->af) {
+		if (r->af == AF_INET) 
+			printf("inet ");
+		else
+			printf("inet6 ");
+	}
 	if (r->proto) {
 		struct protoent *p = getprotobynumber(r->proto);
 		if (p != NULL)
@@ -545,20 +657,20 @@ print_rule(struct pf_rule *r)
 		else
 			printf("proto %u ", r->proto);
 	}
-	if (!r->src.addr && !r->src.mask && !r->src.port_op && !r->dst.addr && ! r->dst.mask && !r->dst.port_op)
+	if (PF_AZERO(&r->src.addr, AF_INET6) &&
+	    PF_AZERO(&r->src.mask, AF_INET6) &&
+	    !r->src.port_op && PF_AZERO(&r->dst.addr, AF_INET6) &&
+	    PF_AZERO(&r->dst.mask, AF_INET6) && !r->dst.port_op)
 		printf("all ");
 	else {
 		printf("from ");
-		if (!r->src.addr && !r->src.mask)
+		if (PF_AZERO(&r->src.addr, AF_INET6) &&
+		    PF_AZERO(&r->src.mask, AF_INET6))
 			printf("any ");
 		else {
 			if (r->src.not)
 				printf("! ");
-			print_addr(r->src.addr);
-			if (r->src.mask != 0xFFFFFFFF) {
-				printf("/");
-				print_addr(r->src.mask);
-			}
+			print_addr(&r->src.addr, &r->src.mask, r->af);
 			printf(" ");
 		}
 		if (r->src.port_op)
@@ -567,16 +679,13 @@ print_rule(struct pf_rule *r)
 			    r->proto == IPPROTO_TCP ? "tcp" : "udp");
 
 		printf("to ");
-		if (!r->dst.addr && !r->dst.mask)
+		if (PF_AZERO(&r->dst.addr, AF_INET6) &&
+		    PF_AZERO(&r->dst.mask, AF_INET6))
 			printf("any ");
 		else {
 			if (r->dst.not)
 				printf("! ");
-			print_addr(r->dst.addr);
-			if (r->dst.mask != 0xFFFFFFFF) {
-				printf("/");
-				print_addr(r->dst.mask);
-			}
+			print_addr(&r->dst.addr, &r->dst.mask, r->af);
 			printf(" ");
 		}
 		if (r->dst.port_op)
@@ -594,7 +703,7 @@ print_rule(struct pf_rule *r)
 	if (r->type) {
 		struct icmptypeent *p;
 
-		p = geticmptypebynumber(r->type-1);
+		p = geticmptypebynumber(r->type-1, r->proto);
 		if (p != NULL)
 			printf("icmp-type %s ", p->name);
 		else
@@ -602,7 +711,7 @@ print_rule(struct pf_rule *r)
 		if (r->code) {
 			struct icmpcodeent *p;
 
-			p = geticmpcodebynumber(r->type-1, r->code-1);
+			p = geticmpcodebynumber(r->type-1, r->code-1, r->proto);
 			if (p != NULL)
 				printf("code %s ", p->name);
 			else
@@ -625,13 +734,13 @@ int
 parse_flags(char *s)
 {
 	char *p, *q;
-        u_int8_t f = 0;
+	u_int8_t f = 0;
 
-        for (p = s; *p; p++) {
+	for (p = s; *p; p++) {
 		if ((q = strchr(tcpflags, *p)) == NULL)
 			return -1;
 		else
 			f |= 1 << (q - tcpflags);
-        }
-        return (f ? f : 63);
+	}
+	return (f ? f : 63);
 }

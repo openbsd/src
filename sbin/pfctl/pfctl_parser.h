@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.9 2001/09/06 18:05:46 jasoni Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.10 2001/09/15 03:54:40 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -69,9 +69,9 @@ struct icmpcodeent {
 	u_int8_t code;
 };
 
-struct icmptypeent *geticmptypebynumber(u_int8_t);
-struct icmptypeent *geticmptypebyname(char *);
-struct icmpcodeent *geticmpcodebynumber(u_int8_t, u_int8_t);
-struct icmpcodeent *geticmpcodebyname(u_long, char *);
+struct icmptypeent *geticmptypebynumber(u_int8_t, u_int8_t);
+struct icmptypeent *geticmptypebyname(char *, u_int8_t);
+struct icmpcodeent *geticmpcodebynumber(u_int8_t, u_int8_t, u_int8_t);
+struct icmpcodeent *geticmpcodebyname(u_long, char *, u_int8_t);
 
 #endif /* _PFCTL_PARSER_H_ */

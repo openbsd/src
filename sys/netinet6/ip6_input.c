@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.32 2001/06/27 05:50:07 kjc Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.33 2001/09/15 03:54:40 frantzen Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -65,6 +65,8 @@
  *	@(#)ip_input.c	8.2 (Berkeley) 1/4/94
  */
 
+#include "pf.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -107,6 +109,10 @@
 #include "faith.h"
 #include "gif.h"
 #include "bpfilter.h"
+
+#if NPF > 0
+#include <net/pfvar.h>
+#endif
 
 extern struct domain inet6domain;
 extern struct ip6protosw inet6sw[];
@@ -253,6 +259,14 @@ ip6_input(m)
 #ifndef PULLDOWN_TEST
 	/* XXX is the line really necessary? */
 	IP6_EXTHDR_CHECK(m, 0, sizeof(struct ip6_hdr), /*nothing*/);
+#endif
+
+#if NPF > 0 
+        /*
+         * Packet filter
+         */
+        if (pf_test6(PF_IN, m->m_pkthdr.rcvif, &m) != PF_PASS)
+                goto bad;
 #endif
 
 	if (m->m_len < sizeof(struct ip6_hdr)) {

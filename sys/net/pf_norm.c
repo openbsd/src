@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.10 2001/09/08 02:10:33 provos Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.11 2001/09/15 03:54:40 frantzen Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -88,7 +88,7 @@ struct mbuf		*pf_reassemble(struct mbuf **, struct pf_fragment *,
 			    struct pf_frent *, int);
 u_int16_t		 pf_cksum_fixup(u_int16_t, u_int16_t, u_int16_t);
 int			 pf_normalize_tcp(int, struct ifnet *, struct mbuf *,
-			    int, int, struct ip *, struct tcphdr *);
+			    int, int, void *, struct pf_pdesc *);
 
 #define PFFRAG_FRENT_HIWAT	5000	/* Number of fragment entries */
 #define PFFRAG_FRAG_HIWAT	1000	/* Number of fragmented packets */
@@ -96,14 +96,18 @@ int			 pf_normalize_tcp(int, struct ifnet *, struct mbuf *,
 #define DPFPRINTF(x)		if (pf_status.debug) printf x
 
 #if NPFLOG > 0
-#define		 PFLOG_PACKET(x,a,b,c,d,e) \
-		do { \
-			HTONS((x)->ip_len); \
-			HTONS((x)->ip_off); \
-			pflog_packet(a,b,c,d,e); \
-			NTOHS((x)->ip_len); \
-			NTOHS((x)->ip_off); \
-		} while (0)
+#define PFLOG_PACKET(x,a,b,c,d,e) \
+        do { \
+                if (b == AF_INET) { \
+                        HTONS(((struct ip *)x)->ip_len); \
+                        HTONS(((struct ip *)x)->ip_off); \
+                        pflog_packet(a,b,c,d,e); \
+                        NTOHS(((struct ip *)x)->ip_len); \
+                        NTOHS(((struct ip *)x)->ip_off); \
+                } else { \
+                        pflog_packet(a,b,c,d,e); \
+                } \
+        } while (0)
 #else
 #define		 PFLOG_PACKET(x,a,b,c,d,e)	((void)0)
 #endif
@@ -194,8 +198,9 @@ void
 pf_ip2key(struct pf_tree_key *key, struct ip *ip)
 {
 	key->proto = ip->ip_p;
-	key->addr[0] = ip->ip_src;
-	key->addr[1] = ip->ip_dst;
+	key->af = AF_INET;
+	key->addr[0].addr32[0] = ip->ip_src.s_addr;
+	key->addr[1].addr32[0] = ip->ip_dst.s_addr;
 	key->port[0] = ip->ip_id;
 	key->port[1] = 0;
 }
@@ -227,8 +232,8 @@ pf_remove_fragment(struct pf_fragment *frag)
 	struct pf_tree_key key;
 
 	key.proto = frag->fr_p;
-	key.addr[0] = frag->fr_src;
-	key.addr[1] = frag->fr_dst;
+	key.addr[0].addr32[0] = frag->fr_src.s_addr;
+	key.addr[1].addr32[0] = frag->fr_dst.s_addr;
 	key.port[0] = frag->fr_id;
 	key.port[1] = 0;
 
@@ -440,7 +445,7 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 
 	TAILQ_FOREACH(r, pf_rules_active, entries) {
 		if ((r->action == PF_SCRUB) &&
-		    MATCH_TUPLE(h, r, dir, ifp))
+		    MATCH_TUPLE(h, r, dir, ifp, AF_INET))
 			break;
 	}
 
@@ -549,11 +554,12 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 
 int
 pf_normalize_tcp(int dir, struct ifnet *ifp, struct mbuf *m, int ipoff,
-    int off, struct ip *h, struct tcphdr *th)
+    int off, void *h, struct pf_pdesc *pd)
 {
 	struct pf_rule *r, *rm = NULL;
+	struct tcphdr *th = pd->hdr.tcp;
 	int rewrite = 0, reason;
-	u_int8_t flags;
+	u_int8_t flags, af = pd->af;
 
 	r = TAILQ_FIRST(pf_rules_active);
 	while (r != NULL) {
@@ -563,20 +569,25 @@ pf_normalize_tcp(int dir, struct ifnet *ifp, struct mbuf *m, int ipoff,
 		}
 		if (r->ifp != NULL && r->ifp != ifp)
 			r = r->skip[0];
-		else if (r->proto && r->proto != h->ip_p)
+		else if (r->af && r->af != af)
 			r = r->skip[1];
-		else if (r->src.mask && !pf_match_addr(r->src.not,
-			    r->src.addr, r->src.mask, h->ip_src.s_addr))
+		else if (r->proto && r->proto != pd->proto)
 			r = r->skip[2];
+		else if (!PF_AZERO(&r->src.mask, af) &&
+		    !PF_MATCHA(r->src.not, &r->src.addr, &r->src.mask,
+			    pd->src, af))
+			r = r->skip[3];
 		else if (r->src.port_op && !pf_match_port(r->src.port_op,
 			    r->src.port[0], r->src.port[1], th->th_sport))
-			r = r->skip[3];
-		else if (r->dst.mask && !pf_match_addr(r->dst.not,
-			    r->dst.addr, r->dst.mask, h->ip_dst.s_addr))
 			r = r->skip[4];
+		else if (!PF_AZERO(&r->dst.mask, af) &&
+			    !PF_MATCHA(r->dst.not,
+			    &r->dst.addr, &r->dst.mask,
+			    pd->dst, af))
+			r = r->skip[5];
 		else if (r->dst.port_op && !pf_match_port(r->dst.port_op,
 			    r->dst.port[0], r->dst.port[1], th->th_dport))
-			r = r->skip[5];
+			r = r->skip[6];
 		else if (r->direction != dir)
 			r = TAILQ_NEXT(r, entries);
 		else if (r->ifp != NULL && r->ifp != ifp)
