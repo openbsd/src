@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.31 2002/06/11 09:36:24 hugh Exp $ */
+/*	$OpenBSD: pmap.c,v 1.32 2002/09/17 13:36:23 miod Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
@@ -657,16 +657,26 @@ if (startpmapdebug)
 		if (v < 0x40000000) {
 			patch = (int *)pmap->pm_p0br;
 			i = (v >> VAX_PGSHIFT);
-			if (i >= (pmap->pm_p0lr & ~AST_MASK))
+			if (i >= (pmap->pm_p0lr & ~AST_MASK)) {
+				if (flags & PMAP_CANFAIL) {
+					RECURSEEND;
+					return (EFAULT);
+				}
 				panic("P0 too small in pmap_enter");
+			}
 			patch = (int *)pmap->pm_p0br;
 			newpte = (p >> VAX_PGSHIFT) |
 			    (prot & VM_PROT_WRITE ? PG_RW : PG_RO);
 		} else {
 			patch = (int *)pmap->pm_p1br;
 			i = (v - 0x40000000) >> VAX_PGSHIFT;
-			if (i < pmap->pm_p1lr)
+			if (i < pmap->pm_p1lr) {
+				if (flags & PMAP_CANFAIL) {
+					RECURSEEND;
+					return (EFAULT);
+				}
 				panic("pmap_enter: must expand P1");
+			}
 			if (v < pmap->pm_stack)
 				pmap->pm_stack = v;
 			newpte = (p >> VAX_PGSHIFT) |
@@ -916,18 +926,28 @@ if(startpmapdebug) printf("pmap_protect: pmap %p, start %lx, end %lx, prot %x\n"
 			if (start < pmap->pm_stack)
 				start = pmap->pm_stack;
 			pt = pmap->pm_p1br;
-#ifdef DIAGNOSTIC
-			if (((start & 0x3fffffff) >> VAX_PGSHIFT) < pmap->pm_p1lr)
+			if (((start & 0x3fffffff) >> VAX_PGSHIFT) <
+			    pmap->pm_p1lr) {
+#ifdef PMAPDEBUG
 				panic("pmap_protect: outside P1LR");
+#else
+				RECURSEEND;
+				return;
 #endif
+			}
 			start &= 0x3fffffff;
 			end = (end == KERNBASE ? end >> 1 : end & 0x3fffffff);
 		} else { /* P0 space */
 			pt = pmap->pm_p0br;
-#ifdef DIAGNOSTIC
-			if ((end >> VAX_PGSHIFT) > (pmap->pm_p0lr & ~AST_MASK))
+			if ((end >> VAX_PGSHIFT) >
+			    (pmap->pm_p0lr & ~AST_MASK)) {
+#ifdef PMAPDEBUG
 				panic("pmap_protect: outside P0LR");
+#else
+				RECURSEEND;
+				return;
 #endif
+			}
 		}
 		pr = (prot & VM_PROT_WRITE ? PROT_RW : PROT_RO);
 	}
