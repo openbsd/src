@@ -1,3 +1,4 @@
+/*	$OpenBSD: setjmp.S,v 1.4 1996/07/30 20:27:51 pefo Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,21 +36,14 @@
  */
 
 #include <sys/syscall.h>
-#include <machine/regnum.h>
-#if MACHINE==pica
 #include <machine/asm.h>
-#else
-#include <machine/machAsmDefs.h>
-#endif
+#include <machine/regnum.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)setjmp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: setjmp.S,v 1.3 1996/05/16 11:16:01 pefo Exp $")
+	ASMSTR("$Id: setjmp.S,v 1.4 1996/07/30 20:27:51 pefo Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-#ifdef ABICALLS
-	.abicalls
-#endif
 
 /*
  * C library -- setjmp, longjmp
@@ -66,15 +60,11 @@
 
 NON_LEAF(setjmp, SETJMP_FRAME_SIZE, ra)
 	.mask	0x80000000, (STAND_RA_OFFSET - STAND_FRAME_SIZE)
-#ifdef ABICALLS
-	.set	noreorder
-	.cpload	t9
-	.set	reorder
-#endif
 	subu	sp, sp, SETJMP_FRAME_SIZE	# allocate stack frame
 #ifdef ABICALLS
 	.cprestore 16
 #endif
+	.set	reorder
 	sw	ra, STAND_RA_OFFSET(sp)		# save state
 	sw	a0, SETJMP_FRAME_SIZE(sp)
 	move	a0, zero			# get current signal mask
@@ -127,12 +117,10 @@ END(setjmp)
 
 LEAF(longjmp)
 #ifdef ABICALLS
-	.set	noreorder
-	.cpload	t9
-	.set	reorder
 	subu	sp, sp, 32
 	.cprestore 16
 #endif
+	.set	reorder
 	sw	a1, ((V0 + 3) * 4)(a0)	# save return value in sc_regs[V0]
 	li	v0, SYS_sigreturn
 	syscall

@@ -1,3 +1,4 @@
+/*	$OpenBSD: SYS.h,v 1.3 1996/07/30 20:27:48 pefo Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,50 +35,48 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)SYS.h	8.1 (Berkeley) 6/4/93
- *      $Id: SYS.h,v 1.2 1996/05/16 11:15:57 pefo Exp $ 
+ *      $Id: SYS.h,v 1.3 1996/07/30 20:27:48 pefo Exp $ 
  */
 
 #include <sys/syscall.h>
-#if MACHINE==pica
 #include <machine/asm.h>
-#else
-#include <machine/machAsmDefs.h>
-#endif
 
 #ifdef __STDC__
-#ifdef ABICALLS
-#define RSYSCALL(x)     .abicalls; \
-			LEAF(x); .set noreorder; .cpload t9; .set reorder; \
-			li v0,SYS_ ## x; syscall; \
-			bne a3,zero,err; j ra; \
-			err: la t9, _C_LABEL(cerror); jr t9; END(x);
-#define PSEUDO(x,y)     .abicalls; \
-			LEAF(x); .set noreorder; .cpload t9; .set reorder; \
-			li v0,SYS_ ## y; syscall; \
-			bne a3,zero,err; j ra; \
-			err: la t9, _C_LABEL(cerror); jr t9; END(x);
+#define RSYSCALL(x)      \
+			LEAF(x);		\
+			li	v0,SYS_ ## x;	\
+			syscall;		\
+			bne	a3,zero,err;	\
+			j	ra;		\
+			err: la t9, cerror;	\
+			jr t9;			\
+			END(x);
+#define PSEUDO(x,y)     \
+			LEAF(x);		\
+			li	v0,SYS_ ## y;	\
+			syscall;		\
+			bne	a3,zero,err;	\
+			j	ra;		\
+			err: la t9, cerror;	\
+			jr t9;			\
+			END(x);
 #else
-#define RSYSCALL(x)     LEAF(x); li v0,SYS_ ## x; syscall; \
-			bne a3,zero,err; j ra; err: j _C_LABEL(cerror); END(x);
-#define PSEUDO(x,y)     LEAF(x); li v0,SYS_ ## y; syscall; \
-			bne a3,zero,err; j ra; err: j _C_LABEL(cerror); END(x);
-#endif
-#else
-#ifdef ABICALLS
-#define RSYSCALL(x)     .abicalls; \
-			LEAF(x); .set noreorder; .cpload t9; .set reorder; \
-			li v0,SYS_/**/x; syscall; \
-			bne a3,zero,err; j ra; \
-			err: la t9, _C_LABEL(cerror); jr t9; END(x);
-#define PSEUDO(x,y)     .abicalls; \
-			LEAF(x); .set noreorder; .cpload t9; .set reorder; \
-			li v0,SYS_/**/y; syscall; \
-			bne a3,zero,err; j ra; \
-			err: la t9, _C_LABEL(cerror); jr t9; END(x);
-#else
-#define RSYSCALL(x)     LEAF(x); li v0,SYS_/**/x; syscall; \
-			bne a3,zero,err; j ra; err: j _C_LABEL(cerror); END(x);
-#define PSEUDO(x,y)     LEAF(x); li v0,SYS_/**/y; syscall; \
-			bne a3,zero,err; j ra; err: j _C_LABEL(cerror); END(x);
-#endif
+#define RSYSCALL(x)     \
+			LEAF(x);		\
+			li	v0,SYS_/**/x;	\
+			syscall;		\
+			bne	a3,zero,err;	\
+			j	ra;		\
+			err: la t9, cerror;	\
+			jr	t9;		\
+			END(x);
+#define PSEUDO(x,y)     \
+			LEAF(x);		\
+			li	v0,SYS_/**/y;	\
+			syscall;		\
+			bne	a3,zero,err;	\
+			j	ra;		\
+			err: la t9, cerror;	\
+			jr t9;			\
+			END(x);
 #endif

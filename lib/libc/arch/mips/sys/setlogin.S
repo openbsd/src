@@ -1,3 +1,4 @@
+/*	$OpenBSD: setlogin.S,v 1.3 1996/07/30 20:28:00 pefo Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,21 +39,15 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)setlogin.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: setlogin.S,v 1.2 1996/05/16 11:16:11 pefo Exp $")
+	ASMSTR("$Id: setlogin.S,v 1.3 1996/07/30 20:28:00 pefo Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-#ifdef ABICALLS
-	.abicalls
-#endif
 
 LEAF(setlogin)
-#ifdef ABICALLS
-	.set	noreorder
-	.cpload	t9
 	.set	reorder
-#endif
 	li	v0, SYS_setlogin		# setlogin(name)
 	syscall
+
 	bne	a3, zero, 1f
 	sw	zero, _C_LABEL(__logname_valid)	# in getlogin()
 	j	ra

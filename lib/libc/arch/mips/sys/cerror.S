@@ -1,3 +1,4 @@
+/*	$OpenBSD: cerror.S,v 1.3 1996/07/30 20:27:57 pefo Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,12 +39,9 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)cerror.s	8.1 (Berkeley) 6/16/93")
-	ASMSTR("$Id: cerror.S,v 1.2 1996/05/16 11:16:08 pefo Exp $")
+	ASMSTR("$Id: cerror.S,v 1.3 1996/07/30 20:27:57 pefo Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-#ifdef ABICALLS
-	.abicalls
-#endif
 
 	.globl	_C_LABEL(errno)
 LEAF(cerror)

@@ -1,3 +1,4 @@
+/*	$OpenBSD: _setjmp.S,v 1.4 1996/07/30 20:27:49 pefo Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,19 +36,12 @@
  */
 
 #include <machine/regnum.h>
-#if MACHINE==pica
 #include <machine/asm.h>
-#else
-#include <machine/machAsmDefs.h>
-#endif
 
-#ifdef ABICALLS
-	.abicalls
-#endif
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)_setjmp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: _setjmp.S,v 1.3 1996/05/16 11:15:59 pefo Exp $")
+	ASMSTR("$Id: _setjmp.S,v 1.4 1996/07/30 20:27:49 pefo Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -61,12 +55,8 @@
  * The previous signal state is NOT restored.
  */
 
-	.set	noreorder
-
 LEAF(_setjmp)
-#ifdef ABICALLS 
-	.cpload t9
-#endif  
+	.set	noreorder
 	li	v0, 0xACEDBADE			# sigcontext magic number
 	sw	ra, (2 * 4)(a0)			# sc_pc = return address
 	sw	v0, (3 * 4)(a0)			#   saved in sc_regs[0]
@@ -100,13 +90,10 @@ END(_setjmp)
 
 LEAF(_longjmp)
 #ifdef ABICALLS 
-	.set    noreorder
-	.cpload t9
-	.set    reorder
 	subu	sp, sp, 32
 	.cprestore 16
-	.set    noreorder
 #endif  
+	.set    noreorder
 	lw	v0, (3 * 4)(a0)			# get magic number
 	lw	ra, (2 * 4)(a0)
 	bne	v0, 0xACEDBADE, botch		# jump if error

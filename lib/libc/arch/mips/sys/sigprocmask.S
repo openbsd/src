@@ -1,3 +1,4 @@
+/*	$OpenBSD: sigprocmask.S,v 1.3 1996/07/30 20:28:01 pefo Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,19 +39,12 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)sigprocmask.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: sigprocmask.S,v 1.2 1996/05/16 11:16:12 pefo Exp $")
+	ASMSTR("$Id: sigprocmask.S,v 1.3 1996/07/30 20:28:01 pefo Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-#ifdef ABICALLS
-	.abicalls
-#endif
 
 LEAF(sigprocmask)	# sigprocmask(how, new, old) sigset_t *new, *old;
-#ifdef ABICALLS
-	.set	noreorder
-	.cpload	t9
 	.set	reorder
-#endif
 	bne	a1, zero, gotptr	# if new sigset pointer not null
 	li	a0, 1			# how = SIG_BLOCK
 	b	doit			# mask = zero

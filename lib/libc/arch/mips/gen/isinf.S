@@ -1,3 +1,4 @@
+/*	$OpenBSD: isinf.S,v 1.3 1996/07/30 20:27:50 pefo Exp $	*/
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,25 +35,16 @@
  * SUCH DAMAGE.
  */
 
-#if MACHINE==pica
 #include <machine/asm.h>
-#else
-#include <machine/machAsmDefs.h>
-#endif
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)isinf.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: isinf.S,v 1.2 1996/05/16 11:16:00 pefo Exp $")
+	ASMSTR("$Id: isinf.S,v 1.3 1996/07/30 20:27:50 pefo Exp $")
 #endif /* LIBC_SCCS and not lint */
-
-#ifdef ABICALLS
-	.abicalls
-#endif
 
 
 #define DEXP_INF	0x7ff
 
-	.set	noreorder
 
 /*
  * isnan(x)
@@ -61,6 +53,7 @@
  * Return true if x is a NAN.
  */
 LEAF(isnan)
+	.set	noreorder
 	mfc1	v1, $f13		# get MSW of x
 	mfc1	t3, $f12		# get LSW of x
 	sll	t1, v1, 1		# get x exponent
@@ -86,6 +79,7 @@ END(isnan)
  * Return true if x is infinity.
  */
 LEAF(isinf)
+	.set	noreorder
 	mfc1	v1, $f13		# get MSW of x
 	mfc1	t3, $f12		# get LSW of x
 	sll	t1, v1, 1		# get x exponent

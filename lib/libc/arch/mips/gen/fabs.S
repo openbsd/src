@@ -1,3 +1,4 @@
+/*	$OpenBSD: fabs.S,v 1.3 1996/07/30 20:27:50 pefo Exp $	*/
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,22 +35,14 @@
  * SUCH DAMAGE.
  */
 
-#if MACHINE==pica
 #include <machine/asm.h>
-#else
-#include <machine/machAsmDefs.h>
-#endif
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)fabs.s	8.1 (Berkeley) 2/16/94")
-	ASMSTR("$Id: fabs.S,v 1.2 1996/05/16 11:16:00 pefo Exp $")
+	ASMSTR("$Id: fabs.S,v 1.3 1996/07/30 20:27:50 pefo Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-#ifdef ABICALLS
-	.abicalls
-#endif
 
-	.set	noreorder
 
 /*
  * fabs(x)
@@ -58,6 +51,7 @@
  * Return absolute value of x.
  */
 LEAF(fabs)
+	.set	noreorder
 	j	ra
 	abs.d	$f0, $f12		# compute absolute value of x
 END(fabs)

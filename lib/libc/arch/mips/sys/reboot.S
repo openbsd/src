@@ -1,3 +1,4 @@
+/*	$OpenBSD: reboot.S,v 1.3 1996/07/30 20:27:59 pefo Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,21 +39,16 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)reboot.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: reboot.S,v 1.2 1996/05/16 11:16:10 pefo Exp $")
+	ASMSTR("$Id: reboot.S,v 1.3 1996/07/30 20:27:59 pefo Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-#ifdef ABICALLS
-	.abicalls
-#endif
 
 LEAF(reboot)
 #ifdef ABICALLS
-	.set	noreorder
-	.cpload t9
-	.set	reorder
 	subu	sp, sp, 32
 	.cprestore 16
 #endif
+	.set	reorder
 	li	v0, SYS_reboot
 	syscall
 	bne	a3, zero, 1f

@@ -1,3 +1,4 @@
+/*	$OpenBSD: strcmp.S,v 1.3 1996/07/30 20:27:56 pefo Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,25 +35,19 @@
  * SUCH DAMAGE.
  */
 
-#if MACHINE==pica
 #include <machine/asm.h>
-#else
-#include <machine/machAsmDefs.h>
-#endif
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)strcmp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: strcmp.S,v 1.2 1996/05/16 11:16:06 pefo Exp $")
+	ASMSTR("$Id: strcmp.S,v 1.3 1996/07/30 20:27:56 pefo Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-#ifdef ABICALLS
-	.abicalls
-#endif
 
 /*
  * NOTE: this version assumes unsigned chars in order to be "8 bit clean".
  */
 LEAF(strcmp)
+	.set	reorder
 1:
 	lbu	t0, 0(a0)		# get two bytes and compare them
 	lbu	t1, 0(a1)

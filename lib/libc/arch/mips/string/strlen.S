@@ -1,3 +1,4 @@
+/*	$OpenBSD: strlen.S,v 1.3 1996/07/30 20:27:56 pefo Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,22 +35,16 @@
  * SUCH DAMAGE.
  */
 
-#if MACHINE==pica
 #include <machine/asm.h>
-#else
-#include <machine/machAsmDefs.h>
-#endif
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)strlen.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: strlen.S,v 1.2 1996/05/16 11:16:07 pefo Exp $")
+	ASMSTR("$Id: strlen.S,v 1.3 1996/07/30 20:27:56 pefo Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-#ifdef ABICALLS
-	.abicalls
-#endif
 
 LEAF(strlen)
+	.set	reorder
 	addu	v1, a0, 1
 1:
 	lb	v0, 0(a0)		# get byte from string

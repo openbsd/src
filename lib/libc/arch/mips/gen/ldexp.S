@@ -1,3 +1,4 @@
+/*	$OpenBSD: ldexp.S,v 1.3 1996/07/30 20:27:51 pefo Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,20 +35,13 @@
  * SUCH DAMAGE.
  */
 
-#if MACHINE==pica
 #include <machine/asm.h>
-#else
-#include <machine/machAsmDefs.h>
-#endif
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)ldexp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: ldexp.S,v 1.2 1996/05/16 11:16:01 pefo Exp $")
+	ASMSTR("$Id: ldexp.S,v 1.3 1996/07/30 20:27:51 pefo Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-#ifdef ABICALLS
-	.abicalls
-#endif
 
 #define DEXP_INF	0x7ff
 #define DEXP_BIAS	1023
@@ -69,6 +63,7 @@
  * Return x * (2**N), for integer values N.
  */
 LEAF(ldexp)
+	.set	reorder
 	mfc1	v1, $f13		# get MSW of x
 	mfc1	t3, $f12		# get LSW of x
 	sll	t1, v1, 1		# get x exponent

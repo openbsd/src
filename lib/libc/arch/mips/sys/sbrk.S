@@ -1,3 +1,4 @@
+/*	$OpenBSD: sbrk.S,v 1.3 1996/07/30 20:27:59 pefo Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,12 +39,8 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)sbrk.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: sbrk.S,v 1.2 1996/05/16 11:16:11 pefo Exp $")
+	ASMSTR("$Id: sbrk.S,v 1.3 1996/07/30 20:27:59 pefo Exp $")
 #endif /* LIBC_SCCS and not lint */
-
-#ifdef ABICALLS
-	.abicalls
-#endif
 
 	.globl	curbrk
 
@@ -52,15 +49,12 @@ curbrk:	.word	_C_LABEL(end)
 	.text
 
 LEAF(sbrk)
-#ifdef ABICALLS
-	.set	noreorder
-	.cpload	t9
 	.set	reorder
-#endif
 	lw	v1, curbrk
 	li	v0, SYS_break
 	addu	a0, a0, v1	# compute current break
 	syscall
+
 	bne	a3, zero, 1f
 	move	v0, v1		# return old val of curbrk from above
 	sw	a0, curbrk	# save current val of curbrk from above

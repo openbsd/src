@@ -1,3 +1,4 @@
+/*	$OpenBSD: sigsetjmp.S,v 1.4 1996/07/30 20:27:52 pefo Exp $	*/
 /*-
  * Copyright (c) 1991, 1993, 1995,
  *	The Regents of the University of California.  All rights reserved.
@@ -36,21 +37,14 @@
 
 #include <sys/syscall.h>
 #include <machine/regnum.h>
-#if MACHINE==pica
 #include <machine/asm.h>
-#else
-#include <machine/machAsmDefs.h>
-#endif
 #include <machine/setjmp.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)setjmp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: sigsetjmp.S,v 1.3 1996/05/16 11:16:02 pefo Exp $")
+	ASMSTR("$Id: sigsetjmp.S,v 1.4 1996/07/30 20:27:52 pefo Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-#ifdef ABICALLS
-	.abicalls
-#endif
 
 /*
  * C library -- sigsetjmp, siglongjmp
@@ -65,11 +59,7 @@
  */
 
 LEAF(sigsetjmp)
-#ifdef ABICALLS
-	.set	noreorder
-	.cpload	t9
 	.set	reorder
-#endif
 	sw	a1, (_JBLEN*4)(a0)		# save "savemask"
 	bne	a1, 0x0, 1f			# do saving of signal mask?
 	la	t9, _setjmp
@@ -80,11 +70,7 @@ LEAF(sigsetjmp)
 END(sigsetjmp)
 
 LEAF(siglongjmp)
-#ifdef ABICALLS
-	.set	noreorder
-	.cpload	t9
 	.set	reorder
-#endif
 	lw	t0, (_JBLEN * 4)(a0)		# get "savemask"
 	bne	t0, 0x0, 1f			# restore signal mask?
 	la	t9, _longjmp

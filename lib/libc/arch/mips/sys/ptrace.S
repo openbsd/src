@@ -1,3 +1,4 @@
+/*	$OpenBSD: ptrace.S,v 1.3 1996/07/30 20:27:59 pefo Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,19 +39,11 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)ptrace.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: ptrace.S,v 1.2 1996/05/16 11:16:10 pefo Exp $")
+	ASMSTR("$Id: ptrace.S,v 1.3 1996/07/30 20:27:59 pefo Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-#ifdef ABICALLS
-	.abicalls
-#endif
-
 LEAF(ptrace)
-#ifdef ABICALLS
-	.set	noreorder
-	.cpload	t9
 	.set	reorder
-#endif
 	sw	zero, _C_LABEL(errno)
 	li	v0, SYS_ptrace
 	syscall

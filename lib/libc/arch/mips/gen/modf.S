@@ -1,3 +1,4 @@
+/*	$OpenBSD: modf.S,v 1.4 1996/07/30 20:27:51 pefo Exp $	*/
 /*-
  * Copyright (c) 1991, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -38,22 +39,17 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)modf.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: modf.S,v 1.3 1996/07/25 09:58:33 pefo Exp $")
+	ASMSTR("$Id: modf.S,v 1.4 1996/07/30 20:27:51 pefo Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 
-#ifdef ABICALLS
-	.abicalls
-#endif
 /*
  * double modf(val, iptr)
  *	double val, *iptr;
  * returns: xxx and n (in *iptr) where val == n.xxx
  */
 LEAF(modf)
-        .set    noreorder
-        .cpload t9
-        .set    reorder
+	.set	reorder
 	cfc1	t0, $31			# get the control register
 	li.d	$f2, 4503599627370496e0 # f2 <- 2^52
 

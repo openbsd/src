@@ -1,3 +1,4 @@
+/*	$OpenBSD: htons.S,v 1.3 1996/07/30 20:27:53 pefo Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,27 +35,21 @@
  * SUCH DAMAGE.
  */
 
-#if MACHINE==pica
 #include <machine/asm.h>
-#else
-#include <machine/machAsmDefs.h>
-#endif
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)htons.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: htons.S,v 1.2 1996/05/16 11:16:03 pefo Exp $")
+	ASMSTR("$Id: htons.S,v 1.3 1996/07/30 20:27:53 pefo Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 
-#ifdef ABICALLS
-	.abicalls
-#endif
 /*
  * netorder = htons(hostorder)
  * hostorder = ntohs(netorder)
  */
-NLEAF(htons)
 ALEAF(ntohs)
+NLEAF(htons)
+	.set	reorder
 #ifdef MIPSEL
 	srl	v0, a0, 8
 	and	v0, v0, 0xff

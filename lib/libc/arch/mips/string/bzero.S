@@ -1,3 +1,4 @@
+/*	$OpenBSD: bzero.S,v 1.3 1996/07/30 20:27:54 pefo Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,20 +35,13 @@
  * SUCH DAMAGE.
  */
 
-#if MACHINE==pica
 #include <machine/asm.h>
-#else
-#include <machine/machAsmDefs.h>
-#endif
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)bzero.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: bzero.S,v 1.2 1996/05/16 11:16:05 pefo Exp $")
+	ASMSTR("$Id: bzero.S,v 1.3 1996/07/30 20:27:54 pefo Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-#ifdef ABICALLS
-	.abicalls
-#endif
 
 /* bzero(s1, n) */
 
@@ -58,7 +52,7 @@ LEAF(bzero)
 	and	a3, a3, 3
 	beq	a3, zero, 1f		# skip if word aligned
 	subu	a1, a1, a3		# subtract from remaining count
-	swr	zero, 0(a0)		# clear 1, 2, or 3 bytes to align
+	SWHI	zero, 0(a0)		# clear 1, 2, or 3 bytes to align
 	addu	a0, a0, a3
 1:
 	and	v0, a1, 3		# compute number of words left
