@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.c,v 1.22 2003/07/24 04:02:20 deraadt Exp $	*/
+/*	$OpenBSD: param.c,v 1.23 2004/01/01 20:17:34 millert Exp $	*/
 /*	$NetBSD: param.c,v 1.16 1996/03/12 03:08:40 mrg Exp $	*/
 
 /*
@@ -111,8 +111,8 @@ int	shmmaxpgs = SHMMAXPGS;
 #ifdef SYSVSHM
 #define	SHMMAX	SHMMAXPGS	/* shminit() performs a `*= PAGE_SIZE' */
 #define	SHMMIN	1
-#define	SHMMNI	32			/* <= SHMMMNI in shm.h */
-#define	SHMSEG	8
+#define	SHMMNI	128		/* <64k, see IPCID_TO_IX in ipc.h */
+#define	SHMSEG	128
 #define	SHMALL	(SHMMAXPGS)
 
 struct	shminfo shminfo = {
