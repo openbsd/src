@@ -1,4 +1,4 @@
-/* $OpenBSD: if_gx.c,v 1.5 2002/04/28 20:46:38 nate Exp $ */
+/* $OpenBSD: if_gx.c,v 1.6 2002/04/28 20:50:17 nate Exp $ */
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon
  * All rights reserved.
@@ -845,7 +845,7 @@ gx_ifmedia_upd(struct ifnet *ifp)
 			return (EINVAL);
 		}
 	} else {
-		ifm = &gx->gx_media;
+		ifm = &gx->gx_mii.mii_media;
 
 		/*
 		 * 1000TX half duplex does not work.
