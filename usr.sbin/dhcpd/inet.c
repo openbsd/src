@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.4 2004/05/04 20:28:40 deraadt Exp $	*/
+/*	$OpenBSD: inet.c,v 1.5 2004/09/16 21:27:44 claudio Exp $	*/
 
 /*
  * Subroutines to manipulate internet addresses in a safely portable
@@ -141,18 +141,13 @@ char *
 piaddr(struct iaddr addr)
 {
 	static char pbuf[32];
-	struct in_addr a;
-	char *s;
-
-	memcpy(&a, &(addr.iabuf), sizeof(struct in_addr));
+	const char *s;
 
 	if (addr.len == 0)
 		strlcpy(pbuf, "<null address>", sizeof(pbuf));
 	else {
-		s = inet_ntoa(a);
-		if (s != NULL)
-			strlcpy(pbuf, s, sizeof(pbuf));
-		else
+		s = inet_ntop(AF_INET, &addr.iabuf, pbuf, sizeof pbuf);
+		if (s == NULL)
 			strlcpy(pbuf, "<invalid address>", sizeof(pbuf));
 	}
 	return (pbuf);
