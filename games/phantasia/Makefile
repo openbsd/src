@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1996/03/09 01:33:30 niklas Exp $
+#	$OpenBSD: Makefile,v 1.3 1996/03/09 09:16:46 niklas Exp $
 #	$NetBSD: Makefile,v 1.4 1995/03/24 03:58:22 cgd Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
@@ -13,13 +13,14 @@ CLEANFILES+=map setup setup.o
 all: setup phantasia
 
 setup.o: setup.c
-	${HOSTCC} -c setup.c -o ${.TARGET}
+	${HOSTCC} -c ${CFLAGS} -o ${.TARGET} ${.CURDIR}/setup.c
 
 phantglobs.o.bld: phantglobs.c
-	${HOSTCC} -c phantglobs.c -o ${.TARGET}
+	${HOSTCC} -c ${CFLAGS} -o ${.TARGET} ${.CURDIR}/phantglobs.c
 
 setup: phantglobs.o.bld setup.o monsters.asc ${LIBM} 
-	${HOSTCC} phantglobs.o.bld setup.o -o ${.TARGET} -lm
+	${HOSTCC} ${CFLAGS} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} \
+		  phantglobs.o.bld setup.o ${LDADD}
 
 beforeinstall: 
 	./setup -m ${.CURDIR}/monsters.asc
