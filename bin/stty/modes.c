@@ -1,4 +1,4 @@
-/*	$OpenBSD: modes.c,v 1.8 2003/07/02 21:19:33 deraadt Exp $	*/
+/*	$OpenBSD: modes.c,v 1.9 2004/09/16 09:55:09 deraadt Exp $	*/
 /*	$NetBSD: modes.c,v 1.9 1996/05/07 18:20:09 jtc Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)modes.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: modes.c,v 1.8 2003/07/02 21:19:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: modes.c,v 1.9 2004/09/16 09:55:09 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -46,8 +46,8 @@ static char rcsid[] = "$OpenBSD: modes.c,v 1.8 2003/07/02 21:19:33 deraadt Exp $
 
 struct modes {
 	const char *name;
-	long set;
-	long unset;
+	unsigned int set;
+	unsigned int unset;
 };
 
 /*
