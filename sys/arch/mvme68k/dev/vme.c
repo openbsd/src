@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.6 1996/12/11 21:04:13 deraadt Exp $ */
+/*	$OpenBSD: vme.c,v 1.7 1996/12/24 20:30:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -520,6 +520,7 @@ vme2chip_init(sc)
 	    (6 << VME2_IRQL4_VME6SHIFT) | (5 << VME2_IRQL4_VME5SHIFT) |
 	    (4 << VME2_IRQL4_VME4SHIFT) | (3 << VME2_IRQL4_VME3SHIFT) |
 	    (2 << VME2_IRQL4_VME2SHIFT) | (1 << VME2_IRQL4_VME1SHIFT);
+	printf("vme2_irql4 = 0x%08x\n", vme2->vme2_irql4);
 
 #if NPCCTWO > 0
 	if (vmebustype == BUS_PCCTWO) {
@@ -532,6 +533,7 @@ vme2chip_init(sc)
 		vme2->vme2_irqen |= VME2_IRQ_AB;
 	}
 #endif
+	vme2->vme2_irqen = vme2->vme2_irqen | VME2_IRQ_ACF;
 }
 
 /*
