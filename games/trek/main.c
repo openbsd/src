@@ -159,7 +159,7 @@ main(argc, argv)
 int	argc;
 char	**argv;
 {
-	long			vect;
+	time_t			vect;
 	/* extern FILE		*f_log; */
 	register char		opencode;
 	int			prio;
