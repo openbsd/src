@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.36 2001/01/23 20:50:36 art Exp $
+#	$OpenBSD: RAMDISK,v 1.37 2001/02/05 11:05:49 art Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 
 machine	alpha			# architecture, used by config; REQUIRED
@@ -91,10 +91,8 @@ isa*	at	sio?
 mcclock* at	isa? port 0x70
 pckbc*	at	isa?				# PC keyboard controller
 pckbd*	at	pckbc?				# PC keyboard (kbd port)
-#pms*	at	pckbc?				# PS/2-style mouse (aux port)
 com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3
-#lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
 vga*	at	isa?				# ISA (EISA: XXX) VGA
 #we0	at 	isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC 80x3 ethernet series
 #we1	at 	isa? port 0x300 iomem 0xcc000 irq 10	#
