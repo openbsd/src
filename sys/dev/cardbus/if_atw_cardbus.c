@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atw_cardbus.c,v 1.5 2004/07/28 13:12:29 millert Exp $	*/
+/*	$OpenBSD: if_atw_cardbus.c,v 1.6 2004/08/04 01:05:54 millert Exp $	*/
 /*	$NetBSD: if_atw_cardbus.c,v 1.9 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -206,9 +206,6 @@ atw_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	/* Get revision info. */
 	sc->sc_rev = PCI_REVISION(ca->ca_class);
 
-	printf(": %s, revision %d.%d\n", acp->acp_product_name,
-	    (sc->sc_rev >> 4) & 0xf, sc->sc_rev & 0xf);
-
 #if 0
 	printf(": signature %08x\n%s",
 	    cardbus_conf_read(ct->ct_cc, ct->ct_cf, csc->sc_tag, 0x80),
@@ -263,7 +260,8 @@ atw_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	/* Remember which interrupt line. */
 	csc->sc_intrline = ca->ca_intrline;
 
-	printf(": %s: irq %d\n", acp->acp_product_name, csc->sc_intrline);
+	printf(": %s, revision %d.%d: irq %d\n", acp->acp_product_name,
+	    (sc->sc_rev >> 4) & 0xf, sc->sc_rev & 0xf, csc->sc_intrline);
 #if 0
 	/*
 	 * The CardBus cards will make it to store-and-forward mode as
