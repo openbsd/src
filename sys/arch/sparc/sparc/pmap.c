@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.108 2001/12/07 15:11:49 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.109 2001/12/07 18:06:49 mickey Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -5997,8 +5997,10 @@ pmap_phys_address(int x)
 void
 kvm_uncache(caddr_t va, int npages)
 {
+#if defined(SUN4) || defined(SUN4C)
 	int pte;
 	struct pvlist *pv;
+#endif
 
 	if (CPU_ISSUN4M) {
 		panic("kvm_uncache on 4m");
