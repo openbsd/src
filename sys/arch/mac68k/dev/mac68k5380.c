@@ -1,4 +1,4 @@
-/*	$OpenBSD: mac68k5380.c,v 1.17 2003/03/14 10:47:36 miod Exp $	*/
+/*	$OpenBSD: mac68k5380.c,v 1.18 2004/08/03 12:10:47 todd Exp $	*/
 /*	$NetBSD: mac68k5380.c,v 1.29 1997/02/28 15:50:50 scottr Exp $	*/
 
 /*
@@ -585,7 +585,7 @@ transfer_pdma(phasep, data, count)
 	while (    ((GET_5380_REG(NCR5380_IDSTAT) & SC_S_BSY) == 0)
 		&& (--scsi_timeout) );
 	if (!scsi_timeout) {
-#if DIAGNOSTIC
+#ifdef DIAGNOSTIC
 		printf("scsi timeout: waiting for BSY in %s.\n",
 			(*phasep == PH_DATAOUT) ? "pdma_out" : "pdma_in");
 #endif

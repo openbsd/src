@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.32 2004/02/23 06:19:32 drahn Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.33 2004/08/03 12:10:48 todd Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -1574,7 +1574,7 @@ Case2:
 		 * if we are going to promote the data to an anon we
 		 * allocate a blank anon here and plug it into our amap.
 		 */
-#if DIAGNOSTIC
+#ifdef DIAGNOSTIC
 		if (amap == NULL)
 			panic("uvm_fault: want to promote data, but no anon");
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.15 2003/06/02 23:27:49 millert Exp $	*/
+/*	$OpenBSD: clock.c,v 1.16 2004/08/03 12:10:47 todd Exp $	*/
 /*	$NetBSD: clock.c,v 1.36 1997/10/07 03:04:55 scottr Exp $	*/
 
 /*
@@ -342,7 +342,7 @@ inittodr(base)
 
 	timbuf = pramt_2_ugmt(pram_readtime());
 	if ((timbuf - (macos_boottime + 60 * tz.tz_minuteswest)) > 10 * 60) {
-#if DIAGNOSTIC
+#ifdef DIAGNOSTIC
 		printf(
 		    "PRAM time does not appear to have been read correctly.\n");
 		printf("PRAM: 0x%lx, macos_boottime: 0x%lx.\n",

@@ -1,4 +1,4 @@
-/* $OpenBSD: linux_getcwd.c,v 1.4 2004/06/22 23:52:18 jfb Exp $ */
+/* $OpenBSD: linux_getcwd.c,v 1.5 2004/08/03 12:10:47 todd Exp $ */
 /* $NetBSD: vfs_getcwd.c,v 1.3.2.3 1999/07/11 10:24:09 sommerfeld Exp $ */
 
 /*-
@@ -487,7 +487,7 @@ linux_getcwd_common (lvp, rvp, bpp, bufp, limit, flags, p)
 			error = linux_getcwd_scandir(&lvp, &uvp, &bp, bufp, p);
 		if (error)
 			goto out;
-#if DIAGNOSTIC		
+#ifdef DIAGNOSTIC		
 		if (lvp != NULL)
 			panic("getcwd: oops, forgot to null lvp");
 		if (bufp && (bp <= bufp)) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ae.c,v 1.22 2004/04/16 22:54:48 xsa Exp $	*/
+/*	$OpenBSD: if_ae.c,v 1.23 2004/08/03 12:10:47 todd Exp $	*/
 /*	$NetBSD: if_ae.c,v 1.62 1997/04/24 16:52:05 scottr Exp $	*/
 
 /*
@@ -443,7 +443,7 @@ outloop:
 	buffer = (sc->txb_new * ED_TXBUF_SIZE) << ED_PAGE_SHIFT;
 
 	len = ae_put(sc, m0, buffer);
-#if DIAGNOSTIC
+#ifdef DIAGNOSTIC
 	if (len != m0->m_pkthdr.len)
 		printf("aestart: len %d != m0->m_pkthdr.len %d.\n",
 			len, m0->m_pkthdr.len);

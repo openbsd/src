@@ -298,7 +298,7 @@ xfs_close_common(struct vnode *vp, int fflag,
 size_t
 xfs_uio_end_length (struct uio *uio)
 {
-#if DIAGNOSTIC
+#ifdef DIAGNOSTIC
     size_t sz = 0;
     int i;
 

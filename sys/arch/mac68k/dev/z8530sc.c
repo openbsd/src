@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530sc.c,v 1.5 2003/06/02 23:27:49 millert Exp $	*/
+/*	$OpenBSD: z8530sc.c,v 1.6 2004/08/03 12:10:47 todd Exp $	*/
 /*	$NetBSD: z8530sc.c,v 1.1 1996/05/18 18:54:28 briggs Exp $	*/
 
 /*
@@ -293,7 +293,7 @@ zsc_intr_hard(arg)
 	register struct zs_chanstate *cs_b;
 	register int rval;
 	register u_char rr3, rr3a;
-#if DIAGNOSTIC
+#ifdef DIAGNOSTIC
 	register int loopcount;
 	loopcount = ZS_INTERRUPT_CNT;
 #endif
@@ -307,7 +307,7 @@ zsc_intr_hard(arg)
 	rr3 = zs_read_reg(cs_a, 3);
 
 	while ((rr3 = zs_read_reg(cs_a, ZSRR_IPEND))
-#if DIAGNOSTIC
+#ifdef DIAGNOSTIC
 		 && --loopcount
 #endif
 		) {
@@ -332,7 +332,7 @@ zsc_intr_hard(arg)
 	
 		rr3a |= rr3;
 	}
-#if DIAGNOSTIC
+#ifdef DIAGNOSTIC
 	if (loopcount == 0) {
 		if (rr3 & (ZSRR3_IP_A_RX | ZSRR3_IP_A_TX | ZSRR3_IP_A_STAT))
 			cs_a->cs_flags |= ZS_FLAGS_INTERRUPT_OVERRUN;

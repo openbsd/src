@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.14 2003/02/16 21:30:13 deraadt Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.15 2004/08/03 12:10:48 todd Exp $	*/
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -165,7 +165,7 @@ pfkey_output(struct mbuf *mbuf, struct socket *socket)
 	void *message;
 	int error = 0;
 
-#if DIAGNOSTIC
+#ifdef DIAGNOSTIC
 	if (!mbuf || !(mbuf->m_flags & M_PKTHDR)) {
 		error = EINVAL;
 		goto ret;
