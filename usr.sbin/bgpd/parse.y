@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.150 2005/03/11 12:54:19 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.151 2005/03/13 15:27:30 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1173,7 +1173,7 @@ filter_set_opt	: LOCALPREF number		{
 				fatal(NULL);
 			$$->type = ACTION_SET_PREPEND_SELF;
 			if ($2 > 128) {
-				yyerror("to many prepends");
+				yyerror("too many prepends");
 				YYERROR;
 			}
 			$$->action.prepend = $2;
@@ -1183,7 +1183,7 @@ filter_set_opt	: LOCALPREF number		{
 				fatal(NULL);
 			$$->type = ACTION_SET_PREPEND_PEER;
 			if ($2 > 128) {
-				yyerror("to many prepends");
+				yyerror("too many prepends");
 				YYERROR;
 			}
 			$$->action.prepend = $2;
