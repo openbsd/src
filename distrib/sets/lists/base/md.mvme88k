@@ -401,6 +401,9 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/i2o/iopreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/i2o/iopspvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/i2o/iopvar.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/aic7xxx.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/aic7xxx_inline.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/aic7xxx_openbsd.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/amireg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/amivar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/apcdmareg.ph
